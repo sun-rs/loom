@@ -1,0 +1,423 @@
+{
+  "rawArchiveAttempts": 245,
+  "arms": {
+    "native": {
+      "rawResponses": 124,
+      "assistantResponses": 122,
+      "completedRounds": 12,
+      "usage": {
+        "input": {
+          "known": 6472941,
+          "complete": true
+        },
+        "output": {
+          "known": 108990,
+          "complete": true
+        },
+        "cachedInput": {
+          "known": 6025472,
+          "complete": false
+        },
+        "reasoningOutput": {
+          "known": 53787,
+          "complete": false
+        },
+        "requests": {
+          "known": 124,
+          "complete": true
+        }
+      },
+      "extraResponses": [
+        {
+          "responseId": "021791644328840612e4074fd6abbc441fdb5db4a1923c54fc5d4",
+          "round": 11,
+          "input": 70767,
+          "output": 1397,
+          "cachedInput": 0,
+          "reasoningOutput": 121
+        },
+        {
+          "responseId": "021791644340847f836aa75e744066f138d0c171bcc77799b77ed",
+          "round": 11,
+          "input": 4029,
+          "output": 980,
+          "cachedInput": 0,
+          "reasoningOutput": 191
+        }
+      ],
+      "compactions": [
+        {
+          "id": "4572b987",
+          "round": 11,
+          "usage": {
+            "input": 74796,
+            "output": 2377,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 312,
+            "totalTokens": 77173,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            }
+          }
+        }
+      ],
+      "compactionAggregateMatchesExtras": true,
+      "nativeFileSha256": "cab63e5f443bcc17fd299e55af58dae6658651fce243b532ed9c9168393f9c8b",
+      "providerCensus": {
+        "issues": [],
+        "providerPids": 12,
+        "sealedObservedPids": 12,
+        "attempts": 124,
+        "responseIdentities": 124,
+        "archiveRows": 124
+      }
+    },
+    "loom": {
+      "rawResponses": 121,
+      "assistantResponses": 119,
+      "completedRounds": 12,
+      "usage": {
+        "input": {
+          "known": 7028664,
+          "complete": true
+        },
+        "output": {
+          "known": 111828,
+          "complete": true
+        },
+        "cachedInput": {
+          "known": 6661376,
+          "complete": false
+        },
+        "reasoningOutput": {
+          "known": 55736,
+          "complete": false
+        },
+        "requests": {
+          "known": 121,
+          "complete": true
+        }
+      },
+      "extraResponses": [
+        {
+          "responseId": "021791643587853ba9f922dd9222ae26d697747c3d02688aab642",
+          "round": 11,
+          "input": 68379,
+          "output": 1575,
+          "cachedInput": 0,
+          "reasoningOutput": 10
+        },
+        {
+          "responseId": "0217916436262428f5df55c078e9f0cf923961e89d651d1fb882c",
+          "round": 11,
+          "input": 10230,
+          "output": 829,
+          "cachedInput": 0,
+          "reasoningOutput": 7
+        }
+      ],
+      "compactions": [
+        {
+          "id": "add838e3",
+          "round": 11,
+          "usage": {
+            "input": 78609,
+            "output": 2404,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 17,
+            "totalTokens": 81013,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            }
+          }
+        }
+      ],
+      "compactionAggregateMatchesExtras": true,
+      "nativeFileSha256": "7d52725dbd1afe5e5ba50a2138022375ef6f2dd0b14e4c60865c412977bc14f4",
+      "providerCensus": {
+        "issues": [],
+        "providerPids": 13,
+        "sealedObservedPids": 13,
+        "attempts": 121,
+        "responseIdentities": 121,
+        "archiveRows": 121
+      }
+    }
+  },
+  "snapshots": [
+    {
+      "arm": "native",
+      "round": 1,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "native",
+      "round": 2,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "native",
+      "round": 3,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "native",
+      "round": 4,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "native",
+      "round": 5,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "native",
+      "round": 6,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "native",
+      "round": 7,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "native",
+      "round": 8,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "native",
+      "round": 9,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "native",
+      "round": 10,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "native",
+      "round": 11,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "native",
+      "round": 12,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "loom",
+      "round": 1,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "loom",
+      "round": 2,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "loom",
+      "round": 3,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "loom",
+      "round": 4,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "loom",
+      "round": 5,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "loom",
+      "round": 6,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "loom",
+      "round": 7,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "loom",
+      "round": 8,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "loom",
+      "round": 9,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "loom",
+      "round": 10,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "loom",
+      "round": 11,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "loom",
+      "round": 12,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    }
+  ],
+  "kernel": {
+    "assistantIdentityAndPrimaryMatch": true,
+    "generations": 119,
+    "gaps": [
+      {
+        "run_attempt_id": "run_91a2206f-2dfe-499f-abef-d01adb447732",
+        "reason": "parse_error",
+        "provider": "pi-print-json/v1",
+        "occurrences": 1,
+        "first_observed_at": "2026-10-10T14:46:27.196Z",
+        "last_observed_at": "2026-10-10T14:46:27.196Z",
+        "recorded_at": "2026-10-10T14:46:27.196Z"
+      }
+    ],
+    "allProviderConsumptionRepresented": false,
+    "compactionExtraRemainsRawCost": true
+  },
+  "issues": [],
+  "limits": [
+    "One pair is not a general efficiency result.",
+    "Optional raw dimensions remain unknown when absent; native default zero cannot fill them.",
+    "Compaction aggregates are cross-checks, not independent per-response records.",
+    "README semantic review is separate from frozen automated snapshot verdicts."
+  ]
+}

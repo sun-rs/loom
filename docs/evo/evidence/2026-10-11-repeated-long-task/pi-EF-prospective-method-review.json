@@ -1,0 +1,40 @@
+{
+  "kind": "pi-EF-prospective-method-review/v1",
+  "recordedAt": "2026-10-10T15:21:46.580524+00:00",
+  "verdict": "method acceptable; implementation/free evidence/freeze/lead release still required",
+  "timing": "Prospective revision after observing D timeout; not the original six-pair preregistered stopping rule",
+  "sourceHead": "9b8fa44b82d42f8311c8a9b9b0b0e126cfed928d",
+  "slots": ["E", "F"],
+  "unchanged": [
+    "original task12",
+    "original per-slot ordering",
+    "exact Pi model/effort",
+    "per-slot unused budget",
+    "ordinary same-session native control",
+    "default retry/compaction and audited memory boundary"
+  ],
+  "noReplacement": ["A", "B", "C", "D"],
+  "narrowContinuationException": [
+    "Explicit local tool started and remained pending at registered per-turn timeout",
+    "All issued HTTP census and primary reported usage complete",
+    "Zero unclosed HTTP requests",
+    "All owned execution stopped safely",
+    "Frozen sources and original config unchanged",
+    "Known expense and failed-unknown status persist before next fixed slot"
+  ],
+  "stillBatchStop": [
+    "Unknown capture or primary quantity",
+    "Unclosed request",
+    "Unsafe cleanup or config/source drift",
+    "Other structural/session/runtime failure"
+  ],
+  "requiredProof": "Tests first plus actual free first-slot local tool timeout followed by next fixed slot; do not substitute a fabricated error-string classification for execution evidence.",
+  "reporting": [
+    "Original C-F stop and original fixed-six insufficiency remain unchanged",
+    "D never considered a comparable complete pair or quality pass",
+    "Every original A-F slot shown including failures/unstarted",
+    "Any complete subset ratio is descriptive and explicitly missing D; never six-pair primary ratio",
+    "E/F remain fixed two slots with no replacement or outcome-driven reruns"
+  ],
+  "paidAuthorization": "Reviewer does not authorize or launch paid; exact lead release required"
+}

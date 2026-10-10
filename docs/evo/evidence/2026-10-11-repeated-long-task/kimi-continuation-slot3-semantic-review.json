@@ -1,0 +1,37 @@
+{
+  "slot": 3,
+  "sourceFiles": 1925,
+  "sourceDrift": 0,
+  "nativeFinalMarkers": 12,
+  "rawAuditSha256": "dea0ed5fd4bcebfc1d5890aeb7c9de61bb1c7a13f3fb1cc6e12b30255e6bae62",
+  "quality": {
+    "immutableSnapshots": 24,
+    "functionalPassed": 24,
+    "selfTestsPassed": 24,
+    "originalPassed": 24
+  },
+  "readmeSemanticReview": {
+    "print": {
+      "sha256": "26e6b20bb0a02e1af2d2cd57f28f501b064576ebf01ee5e75a957cc20d12fd4e",
+      "findings": [],
+      "notes": "API, validation, cancelled skipping, exact aggregate net/tax, sorted grouping and CLI examples consistent with inspected source. Documents fixed precision100 explicitly; no universal arbitrary-size arithmetic proof claimed by reviewer."
+    },
+    "loom": {
+      "sha256": "e6494a7caa33cc76b5c57e62b6bc2755aced669d91ecc02d7394c66be6fa5d5b",
+      "findings": [],
+      "notes": "API, validation, unrelated keys, independently rounded net plus tax, category rules and CLI match inspected source. Stdin output contains marked ellipses as schematic example, not exact JSON output claim."
+    }
+  },
+  "cleanupRunnerReceipt": {
+    "authLinksRemoved": true,
+    "processesExited": true,
+    "liveOwnedPids": [],
+    "sourceHashesUnchanged": true,
+    "finalIssues": []
+  },
+  "limitations": [
+    "Single completed slot, not cohort verdict.",
+    "Reasoning optional incomplete both arms; subset not added to output.",
+    "Read-only source/README review; no candidate or provider execution."
+  ]
+}

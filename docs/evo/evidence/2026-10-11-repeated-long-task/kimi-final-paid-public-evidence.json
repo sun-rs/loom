@@ -1,0 +1,1352 @@
+{
+  "kind": "kimi-five-slot-paid-evidence/v1",
+  "status": "completed-independently-reviewed",
+  "runIdentity": "KIMI-FIVE-SLOT-20261010-CONTINUATION",
+  "startedAt": "2026-10-10T14:21:46.417Z",
+  "finishedAt": "2026-10-10T16:53:19.040Z",
+  "slots": [2, 3, 4, 5, 6],
+  "pairs": [
+    {
+      "slot": 2,
+      "arms": {
+        "print": {
+          "requests": 76,
+          "providerPids": 12,
+          "sameSession": true,
+          "input": 3034878,
+          "output": 28232,
+          "cachedInput": null,
+          "reasoning": null,
+          "primaryComplete": true,
+          "passiveComplete": true,
+          "wireMatches": true,
+          "kernelMatches": null
+        },
+        "loom": {
+          "requests": 80,
+          "providerPids": 12,
+          "sameSession": true,
+          "input": 3390820,
+          "output": 31579,
+          "cachedInput": 3334656,
+          "reasoning": 4984,
+          "primaryComplete": true,
+          "passiveComplete": true,
+          "wireMatches": true,
+          "kernelMatches": true
+        }
+      },
+      "comparisons": {
+        "full12": {
+          "from": 1,
+          "to": 12,
+          "numerator": {
+            "startedRounds": 12,
+            "executionComplete": true,
+            "primaryComplete": true,
+            "input": 3390820,
+            "output": 31579
+          },
+          "denominator": {
+            "startedRounds": 12,
+            "executionComplete": true,
+            "primaryComplete": true,
+            "input": 3034878,
+            "output": 28232
+          },
+          "executionComplete": true,
+          "inputRatio": 1.1172837919679144,
+          "outputRatio": 1.1185534145650327
+        },
+        "late6": {
+          "from": 7,
+          "to": 12,
+          "numerator": {
+            "startedRounds": 6,
+            "executionComplete": true,
+            "primaryComplete": true,
+            "input": 2127791,
+            "output": 15936
+          },
+          "denominator": {
+            "startedRounds": 6,
+            "executionComplete": true,
+            "primaryComplete": true,
+            "input": 1755126,
+            "output": 12927
+          },
+          "executionComplete": true,
+          "inputRatio": 1.212329485176563,
+          "outputRatio": 1.232768623810629
+        },
+        "commonStartedPrefix": {
+          "from": 1,
+          "to": 12,
+          "numerator": {
+            "startedRounds": 12,
+            "executionComplete": true,
+            "primaryComplete": true,
+            "input": 3390820,
+            "output": 31579
+          },
+          "denominator": {
+            "startedRounds": 12,
+            "executionComplete": true,
+            "primaryComplete": true,
+            "input": 3034878,
+            "output": 28232
+          },
+          "executionComplete": true,
+          "inputRatio": 1.1172837919679144,
+          "outputRatio": 1.1185534145650327
+        }
+      },
+      "quality": [
+        {
+          "arm": "print",
+          "round": 1,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 1,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 2,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 2,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 3,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 3,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 4,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 4,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 5,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 5,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 6,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 6,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 7,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 7,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 8,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 8,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 9,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 9,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 10,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 10,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 11,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 11,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 12,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 12,
+          "passed": true,
+          "sameBytesVerified": true
+        }
+      ]
+    },
+    {
+      "slot": 3,
+      "arms": {
+        "print": {
+          "requests": 69,
+          "providerPids": 12,
+          "sameSession": true,
+          "input": 2444778,
+          "output": 22816,
+          "cachedInput": 2366464,
+          "reasoning": null,
+          "primaryComplete": true,
+          "passiveComplete": true,
+          "wireMatches": true,
+          "kernelMatches": null
+        },
+        "loom": {
+          "requests": 89,
+          "providerPids": 12,
+          "sameSession": true,
+          "input": 3874945,
+          "output": 29216,
+          "cachedInput": 3817984,
+          "reasoning": null,
+          "primaryComplete": true,
+          "passiveComplete": true,
+          "wireMatches": true,
+          "kernelMatches": true
+        }
+      },
+      "comparisons": {
+        "full12": {
+          "from": 1,
+          "to": 12,
+          "numerator": {
+            "startedRounds": 12,
+            "executionComplete": true,
+            "primaryComplete": true,
+            "input": 3874945,
+            "output": 29216
+          },
+          "denominator": {
+            "startedRounds": 12,
+            "executionComplete": true,
+            "primaryComplete": true,
+            "input": 2444778,
+            "output": 22816
+          },
+          "executionComplete": true,
+          "inputRatio": 1.5849884938427947,
+          "outputRatio": 1.2805049088359046
+        },
+        "late6": {
+          "from": 7,
+          "to": 12,
+          "numerator": {
+            "startedRounds": 6,
+            "executionComplete": true,
+            "primaryComplete": true,
+            "input": 2658927,
+            "output": 16406
+          },
+          "denominator": {
+            "startedRounds": 6,
+            "executionComplete": true,
+            "primaryComplete": true,
+            "input": 1542076,
+            "output": 13114
+          },
+          "executionComplete": true,
+          "inputRatio": 1.7242515933066853,
+          "outputRatio": 1.2510294341924661
+        },
+        "commonStartedPrefix": {
+          "from": 1,
+          "to": 12,
+          "numerator": {
+            "startedRounds": 12,
+            "executionComplete": true,
+            "primaryComplete": true,
+            "input": 3874945,
+            "output": 29216
+          },
+          "denominator": {
+            "startedRounds": 12,
+            "executionComplete": true,
+            "primaryComplete": true,
+            "input": 2444778,
+            "output": 22816
+          },
+          "executionComplete": true,
+          "inputRatio": 1.5849884938427947,
+          "outputRatio": 1.2805049088359046
+        }
+      },
+      "quality": [
+        {
+          "arm": "print",
+          "round": 1,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 1,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 2,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 2,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 3,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 3,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 4,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 4,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 5,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 5,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 6,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 6,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 7,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 7,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 8,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 8,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 9,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 9,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 10,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 10,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 11,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 11,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 12,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 12,
+          "passed": true,
+          "sameBytesVerified": true
+        }
+      ]
+    },
+    {
+      "slot": 4,
+      "arms": {
+        "print": {
+          "requests": 79,
+          "providerPids": 12,
+          "sameSession": true,
+          "input": 3094765,
+          "output": 27968,
+          "cachedInput": 3005952,
+          "reasoning": null,
+          "primaryComplete": true,
+          "passiveComplete": true,
+          "wireMatches": true,
+          "kernelMatches": null
+        },
+        "loom": {
+          "requests": 68,
+          "providerPids": 12,
+          "sameSession": true,
+          "input": 2416053,
+          "output": 22483,
+          "cachedInput": 2373632,
+          "reasoning": null,
+          "primaryComplete": true,
+          "passiveComplete": true,
+          "wireMatches": true,
+          "kernelMatches": true
+        }
+      },
+      "comparisons": {
+        "full12": {
+          "from": 1,
+          "to": 12,
+          "numerator": {
+            "startedRounds": 12,
+            "executionComplete": true,
+            "primaryComplete": true,
+            "input": 2416053,
+            "output": 22483
+          },
+          "denominator": {
+            "startedRounds": 12,
+            "executionComplete": true,
+            "primaryComplete": true,
+            "input": 3094765,
+            "output": 27968
+          },
+          "executionComplete": true,
+          "inputRatio": 0.7806902947396652,
+          "outputRatio": 0.8038830091533181
+        },
+        "late6": {
+          "from": 7,
+          "to": 12,
+          "numerator": {
+            "startedRounds": 6,
+            "executionComplete": true,
+            "primaryComplete": true,
+            "input": 1292611,
+            "output": 11787
+          },
+          "denominator": {
+            "startedRounds": 6,
+            "executionComplete": true,
+            "primaryComplete": true,
+            "input": 2056447,
+            "output": 16604
+          },
+          "executionComplete": true,
+          "inputRatio": 0.6285651903501525,
+          "outputRatio": 0.7098891833293183
+        },
+        "commonStartedPrefix": {
+          "from": 1,
+          "to": 12,
+          "numerator": {
+            "startedRounds": 12,
+            "executionComplete": true,
+            "primaryComplete": true,
+            "input": 2416053,
+            "output": 22483
+          },
+          "denominator": {
+            "startedRounds": 12,
+            "executionComplete": true,
+            "primaryComplete": true,
+            "input": 3094765,
+            "output": 27968
+          },
+          "executionComplete": true,
+          "inputRatio": 0.7806902947396652,
+          "outputRatio": 0.8038830091533181
+        }
+      },
+      "quality": [
+        {
+          "arm": "loom",
+          "round": 1,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 1,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 2,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 2,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 3,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 3,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 4,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 4,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 5,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 5,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 6,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 6,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 7,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 7,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 8,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 8,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 9,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 9,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 10,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 10,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 11,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 11,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 12,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 12,
+          "passed": true,
+          "sameBytesVerified": true
+        }
+      ]
+    },
+    {
+      "slot": 5,
+      "arms": {
+        "print": {
+          "requests": 83,
+          "providerPids": 12,
+          "sameSession": true,
+          "input": 3413508,
+          "output": 28353,
+          "cachedInput": 3322112,
+          "reasoning": null,
+          "primaryComplete": true,
+          "passiveComplete": true,
+          "wireMatches": true,
+          "kernelMatches": null
+        },
+        "loom": {
+          "requests": 80,
+          "providerPids": 12,
+          "sameSession": true,
+          "input": 3220919,
+          "output": 28281,
+          "cachedInput": 3169536,
+          "reasoning": null,
+          "primaryComplete": true,
+          "passiveComplete": true,
+          "wireMatches": true,
+          "kernelMatches": true
+        }
+      },
+      "comparisons": {
+        "full12": {
+          "from": 1,
+          "to": 12,
+          "numerator": {
+            "startedRounds": 12,
+            "executionComplete": true,
+            "primaryComplete": true,
+            "input": 3220919,
+            "output": 28281
+          },
+          "denominator": {
+            "startedRounds": 12,
+            "executionComplete": true,
+            "primaryComplete": true,
+            "input": 3413508,
+            "output": 28353
+          },
+          "executionComplete": true,
+          "inputRatio": 0.9435803285066272,
+          "outputRatio": 0.9974605861813565
+        },
+        "late6": {
+          "from": 7,
+          "to": 12,
+          "numerator": {
+            "startedRounds": 6,
+            "executionComplete": true,
+            "primaryComplete": true,
+            "input": 2043087,
+            "output": 15672
+          },
+          "denominator": {
+            "startedRounds": 6,
+            "executionComplete": true,
+            "primaryComplete": true,
+            "input": 2288394,
+            "output": 15902
+          },
+          "executionComplete": true,
+          "inputRatio": 0.8928038615727886,
+          "outputRatio": 0.9855364105144007
+        },
+        "commonStartedPrefix": {
+          "from": 1,
+          "to": 12,
+          "numerator": {
+            "startedRounds": 12,
+            "executionComplete": true,
+            "primaryComplete": true,
+            "input": 3220919,
+            "output": 28281
+          },
+          "denominator": {
+            "startedRounds": 12,
+            "executionComplete": true,
+            "primaryComplete": true,
+            "input": 3413508,
+            "output": 28353
+          },
+          "executionComplete": true,
+          "inputRatio": 0.9435803285066272,
+          "outputRatio": 0.9974605861813565
+        }
+      },
+      "quality": [
+        {
+          "arm": "loom",
+          "round": 1,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 1,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 2,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 2,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 3,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 3,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 4,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 4,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 5,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 5,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 6,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 6,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 7,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 7,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 8,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 8,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 9,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 9,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 10,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 10,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 11,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 11,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 12,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 12,
+          "passed": true,
+          "sameBytesVerified": true
+        }
+      ]
+    },
+    {
+      "slot": 6,
+      "arms": {
+        "print": {
+          "requests": 71,
+          "providerPids": 12,
+          "sameSession": true,
+          "input": 2767780,
+          "output": 27611,
+          "cachedInput": 2681600,
+          "reasoning": null,
+          "primaryComplete": true,
+          "passiveComplete": true,
+          "wireMatches": true,
+          "kernelMatches": null
+        },
+        "loom": {
+          "requests": 84,
+          "providerPids": 12,
+          "sameSession": true,
+          "input": 3260224,
+          "output": 25793,
+          "cachedInput": 3211008,
+          "reasoning": 3383,
+          "primaryComplete": true,
+          "passiveComplete": true,
+          "wireMatches": true,
+          "kernelMatches": true
+        }
+      },
+      "comparisons": {
+        "full12": {
+          "from": 1,
+          "to": 12,
+          "numerator": {
+            "startedRounds": 12,
+            "executionComplete": true,
+            "primaryComplete": true,
+            "input": 3260224,
+            "output": 25793
+          },
+          "denominator": {
+            "startedRounds": 12,
+            "executionComplete": true,
+            "primaryComplete": true,
+            "input": 2767780,
+            "output": 27611
+          },
+          "executionComplete": true,
+          "inputRatio": 1.1779202104213484,
+          "outputRatio": 0.9341566766868277
+        },
+        "late6": {
+          "from": 7,
+          "to": 12,
+          "numerator": {
+            "startedRounds": 6,
+            "executionComplete": true,
+            "primaryComplete": true,
+            "input": 1932126,
+            "output": 13544
+          },
+          "denominator": {
+            "startedRounds": 6,
+            "executionComplete": true,
+            "primaryComplete": true,
+            "input": 1593979,
+            "output": 13534
+          },
+          "executionComplete": true,
+          "inputRatio": 1.2121401850338054,
+          "outputRatio": 1.0007388798581351
+        },
+        "commonStartedPrefix": {
+          "from": 1,
+          "to": 12,
+          "numerator": {
+            "startedRounds": 12,
+            "executionComplete": true,
+            "primaryComplete": true,
+            "input": 3260224,
+            "output": 25793
+          },
+          "denominator": {
+            "startedRounds": 12,
+            "executionComplete": true,
+            "primaryComplete": true,
+            "input": 2767780,
+            "output": 27611
+          },
+          "executionComplete": true,
+          "inputRatio": 1.1779202104213484,
+          "outputRatio": 0.9341566766868277
+        }
+      },
+      "quality": [
+        {
+          "arm": "print",
+          "round": 1,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 1,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 2,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 2,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 3,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 3,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 4,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 4,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 5,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 5,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 6,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 6,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 7,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 7,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 8,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 8,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 9,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 9,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 10,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 10,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 11,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 11,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "loom",
+          "round": 12,
+          "passed": true,
+          "sameBytesVerified": true
+        },
+        {
+          "arm": "print",
+          "round": 12,
+          "passed": true,
+          "sameBytesVerified": true
+        }
+      ]
+    }
+  ],
+  "totals": {
+    "input": 30918670,
+    "output": 272332,
+    "requests": 779
+  },
+  "byArm": {
+    "print": {
+      "input": 14755709,
+      "output": 134980,
+      "requests": 378,
+      "cachedInput": null,
+      "reasoning": null
+    },
+    "loom": {
+      "input": 16162961,
+      "output": 137352,
+      "requests": 401,
+      "cachedInput": 15906816,
+      "reasoning": null
+    }
+  },
+  "quality": {
+    "snapshots": 120,
+    "passed": 120
+  },
+  "limits": [
+    "Independent continuation after product repair, not six successful original slots. Original slot1 failure and all its cost remain separate.",
+    "Ordinary print versus formal ACP includes mode/tool/reminder and stochastic business trajectory differences; no causal protocol-only conclusion.",
+    "Provider token usage is not a billing receipt. Optional cache/reasoning gaps remain unknown.",
+    "Five preregistered continuation pairs are a small cohort, not proof of stability or model equivalence."
+  ],
+  "comparisons": {
+    "full12": {
+      "print": {
+        "input": 14755709,
+        "output": 134980
+      },
+      "loom": {
+        "input": 16162961,
+        "output": 137352
+      },
+      "inputRatio": 1.0953700022140582,
+      "outputRatio": 1.0175729737738923
+    },
+    "late6": {
+      "print": {
+        "input": 9236022,
+        "output": 72081
+      },
+      "loom": {
+        "input": 10054542,
+        "output": 73345
+      },
+      "inputRatio": 1.0886225693269245,
+      "outputRatio": 1.0175358277493376
+    }
+  },
+  "cleanup": {
+    "pids": 400,
+    "live": [],
+    "configSetsRemoved": 10,
+    "accountLockRemoved": true
+  },
+  "source": {
+    "head": "9b8fa44b82d42f8311c8a9b9b0b0e126cfed928d",
+    "count": 1925,
+    "changed": [],
+    "admissionSha256": "550a4c4c2b318ba41ecbe11f1d7b0afa83ff05d1194ab40ba1a9b0819bac0b24"
+  },
+  "independentSessions": 10,
+  "originalSlot1": {
+    "status": "failed",
+    "replacement": false,
+    "fullOriginalSixComplete": false,
+    "knownInput": 4293721,
+    "knownOutput": 44940,
+    "requests": 119,
+    "evidence": "[private-path]"
+  },
+  "allKnownConsumptionIncludingOriginalFailure": {
+    "input": 35212391,
+    "output": 317272,
+    "requests": 898
+  },
+  "independentReview": {
+    "files": [
+      {
+        "file": "kimi-continuation-slot2-independent.json",
+        "sha256": "fd7d7c32a446f599ca97a47aa27c8e6570203c6b08e83d7992be9844eb37e3b2"
+      },
+      {
+        "file": "kimi-continuation-slot2-semantic-review.json",
+        "sha256": "9689bf906ae9218aaca444434e24d7fccdf5b5ea25ff77ceab20d1b362892de0"
+      },
+      {
+        "file": "kimi-continuation-slot3-independent.json",
+        "sha256": "dea0ed5fd4bcebfc1d5890aeb7c9de61bb1c7a13f3fb1cc6e12b30255e6bae62"
+      },
+      {
+        "file": "kimi-continuation-slot3-semantic-review.json",
+        "sha256": "309b85018e0be10203c0207e73e9151d5476da00efae7b3f82d70d013e55d645"
+      },
+      {
+        "file": "kimi-continuation-slot4-independent.json",
+        "sha256": "b9494dc2b918d58aa54f784e7c40151affca2a162de0890b4471373b632e9a08"
+      },
+      {
+        "file": "kimi-continuation-slot4-semantic-review.json",
+        "sha256": "342ef33863afca6de4853eb514f5c194816a44302fcbdd00fbcf72e1abb9058f"
+      },
+      {
+        "file": "kimi-continuation-slot5-independent.json",
+        "sha256": "73376d3400eed2ce2ac88f3b742be98464df67d370bd23b088fb22cc6f7870d4"
+      },
+      {
+        "file": "kimi-continuation-slot5-semantic-review.json",
+        "sha256": "d26d7fd0d8cd8ff5e2af8d5c54d329440372f2b3da9e8bddecf30777e9348b20"
+      },
+      {
+        "file": "kimi-continuation-slot6-independent.json",
+        "sha256": "cf219cb3174a276e84bb63767f28d3f496637be964e0fa3a22442a6e667dc334"
+      },
+      {
+        "file": "kimi-continuation-slot6-semantic-review.json",
+        "sha256": "a05e4ba2837774a0273a8e58b388c85dd6ac9c77f30edc87b44c609722819e1f"
+      }
+    ],
+    "rawWireKernelPrimaryMatches": true,
+    "snapshotHashesMatch": true,
+    "finalReadmeReview": "No major contradiction found; slot2 Loom README argument-count wording has a minor omission, source/examples correct.",
+    "limits": "Bounded manual review and frozen oracle pass do not establish arbitrary-input correctness."
+  }
+}

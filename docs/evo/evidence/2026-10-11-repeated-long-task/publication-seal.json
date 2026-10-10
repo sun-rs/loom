@@ -1,0 +1,197 @@
+{
+  "scope": "Final published continuation evidence. Private-source hashes and published bytes are distinct; manifest excludes itself.",
+  "upstreamPublicationManifestSha256": "f64672e0f019e05a0c29a59f92455dbf0eeabcaa541f7ff65df946babb5def03",
+  "sourceReceipts": {
+    "continuation-summary-implementation-receipt.json": {
+      "file": "continuation-summary-implementation-receipt.json",
+      "privateOriginalSha256": "0355115da602e41276fb63dd472fdffe0df2628fdc42a7cf09894f4220ab61eb",
+      "publicationSha256": "0355115da602e41276fb63dd472fdffe0df2628fdc42a7cf09894f4220ab61eb",
+      "publicationTransform": "Remove private evidence locations/native session identities; JSON reserialized; no raw prompts/responses/thinking included."
+    },
+    "first-request-semantic-differences.json": {
+      "file": "first-request-semantic-differences.json",
+      "privateOriginalSha256": "00159de1c0fc21ca5942f44fdb3a633d0ab095418a70db716ed559c0244ccbec",
+      "publicationSha256": "00159de1c0fc21ca5942f44fdb3a633d0ab095418a70db716ed559c0244ccbec",
+      "publicationTransform": "Remove private evidence locations/native session identities; JSON reserialized; no raw prompts/responses/thinking included."
+    },
+    "kimi-continuation-slot2-independent.json": {
+      "file": "kimi-continuation-slot2-independent.json",
+      "privateOriginalSha256": "fd7d7c32a446f599ca97a47aa27c8e6570203c6b08e83d7992be9844eb37e3b2",
+      "publicationSha256": "f6a46479f8897afd54c32bdaa675d5d73f84bf0e6ff18fae5bc1c4ba379ebf99",
+      "publicationTransform": "Remove private evidence locations/native session identities; JSON reserialized; no raw prompts/responses/thinking included."
+    },
+    "kimi-continuation-slot2-semantic-review.json": {
+      "file": "kimi-continuation-slot2-semantic-review.json",
+      "privateOriginalSha256": "9689bf906ae9218aaca444434e24d7fccdf5b5ea25ff77ceab20d1b362892de0",
+      "publicationSha256": "9689bf906ae9218aaca444434e24d7fccdf5b5ea25ff77ceab20d1b362892de0",
+      "publicationTransform": "Remove private evidence locations/native session identities; JSON reserialized; no raw prompts/responses/thinking included."
+    },
+    "kimi-continuation-slot3-business-paths.json": {
+      "file": "kimi-continuation-slot3-business-paths.json",
+      "privateOriginalSha256": "abf8abba2ad764971f0a8016069f53573b4fe6ede5c371c0b39eab47a6927b33",
+      "publicationSha256": "abf8abba2ad764971f0a8016069f53573b4fe6ede5c371c0b39eab47a6927b33",
+      "publicationTransform": "Remove private evidence locations/native session identities; JSON reserialized; no raw prompts/responses/thinking included."
+    },
+    "kimi-continuation-slot3-independent.json": {
+      "file": "kimi-continuation-slot3-independent.json",
+      "privateOriginalSha256": "dea0ed5fd4bcebfc1d5890aeb7c9de61bb1c7a13f3fb1cc6e12b30255e6bae62",
+      "publicationSha256": "56227f45a60bbbb8d3d45823014daead52805f400679b3cb471e32004b99a255",
+      "publicationTransform": "Remove private evidence locations/native session identities; JSON reserialized; no raw prompts/responses/thinking included."
+    },
+    "kimi-continuation-slot3-semantic-review.json": {
+      "file": "kimi-continuation-slot3-semantic-review.json",
+      "privateOriginalSha256": "309b85018e0be10203c0207e73e9151d5476da00efae7b3f82d70d013e55d645",
+      "publicationSha256": "309b85018e0be10203c0207e73e9151d5476da00efae7b3f82d70d013e55d645",
+      "publicationTransform": "Remove private evidence locations/native session identities; JSON reserialized; no raw prompts/responses/thinking included."
+    },
+    "kimi-continuation-slot4-independent.json": {
+      "file": "kimi-continuation-slot4-independent.json",
+      "privateOriginalSha256": "b9494dc2b918d58aa54f784e7c40151affca2a162de0890b4471373b632e9a08",
+      "publicationSha256": "335430bc2b34cad122c503e8b3410f139024655bb8120d61235c6f96ae6b7c88",
+      "publicationTransform": "Remove private evidence locations/native session identities; JSON reserialized; no raw prompts/responses/thinking included."
+    },
+    "kimi-continuation-slot4-semantic-review.json": {
+      "file": "kimi-continuation-slot4-semantic-review.json",
+      "privateOriginalSha256": "342ef33863afca6de4853eb514f5c194816a44302fcbdd00fbcf72e1abb9058f",
+      "publicationSha256": "67aee34f614bde31b3ce7ef225d64331d6ffceab371f2263c8e74a7e74936e18",
+      "publicationTransform": "Remove private evidence locations/native session identities; JSON reserialized; no raw prompts/responses/thinking included."
+    },
+    "kimi-continuation-slot5-independent.json": {
+      "file": "kimi-continuation-slot5-independent.json",
+      "privateOriginalSha256": "73376d3400eed2ce2ac88f3b742be98464df67d370bd23b088fb22cc6f7870d4",
+      "publicationSha256": "80c3616c536b3047363876db3b85728fb0ebcdd553e7bcaf3d44691b2ff5b8fe",
+      "publicationTransform": "Private paths/session identities removed; JSON reserialized; no raw request or hidden thinking."
+    },
+    "kimi-continuation-slot5-semantic-review.json": {
+      "file": "kimi-continuation-slot5-semantic-review.json",
+      "privateOriginalSha256": "d26d7fd0d8cd8ff5e2af8d5c54d329440372f2b3da9e8bddecf30777e9348b20",
+      "publicationSha256": "d26d7fd0d8cd8ff5e2af8d5c54d329440372f2b3da9e8bddecf30777e9348b20",
+      "publicationTransform": "Private paths/session identities removed; JSON reserialized; no raw request or hidden thinking."
+    },
+    "kimi-continuation-slot6-independent.json": {
+      "file": "kimi-continuation-slot6-independent.json",
+      "privateOriginalSha256": "cf219cb3174a276e84bb63767f28d3f496637be964e0fa3a22442a6e667dc334",
+      "publicationSha256": "bef335cd90f28ddc4bea025b6d6375dcfd185505b639f89acfb20563175314d7",
+      "publicationTransform": "Private paths/session identities removed; JSON reserialized; no raw request or hidden thinking."
+    },
+    "kimi-continuation-slot6-semantic-review.json": {
+      "file": "kimi-continuation-slot6-semantic-review.json",
+      "privateOriginalSha256": "a05e4ba2837774a0273a8e58b388c85dd6ac9c77f30edc87b44c609722819e1f",
+      "publicationSha256": "a05e4ba2837774a0273a8e58b388c85dd6ac9c77f30edc87b44c609722819e1f",
+      "publicationTransform": "Private paths/session identities removed; JSON reserialized; no raw request or hidden thinking."
+    },
+    "kimi-final-cleanup-receipt.json": {
+      "file": "kimi-final-cleanup-receipt.json",
+      "publicationSha256": "cc60b243ef0da39d14851b21dffeaf99008e241ed296b900febd0c8a1234393f",
+      "privateOriginalSha256": null,
+      "publicationTransform": "New publication summary/draft/receipt; no separate original evidence file. Underlying original hashes are cited in content."
+    },
+    "kimi-final-paid-public-evidence.json": {
+      "file": "kimi-final-paid-public-evidence.json",
+      "publicationSha256": "214200d5e2c2880746f4c5a3c1f73e4919bbc61cb288346dbdcae66efb362013",
+      "privateOriginalSha256": "51089aac1867a7b732c01a18a94b76c7c9376c8657801c37bc8827ddbd1c933f",
+      "publicationTransform": "Original final paid public evidence; private locations/session identities removed, JSON reserialized."
+    },
+    "kimi-five-slots-final-independent.json": {
+      "file": "kimi-five-slots-final-independent.json",
+      "privateOriginalSha256": "4f1aec73aa27b3d1e7ef40998924483df94956832c3f0483467fd2a008547e2e",
+      "publicationSha256": "4f1aec73aa27b3d1e7ef40998924483df94956832c3f0483467fd2a008547e2e",
+      "publicationTransform": "Private paths/session identities removed; JSON reserialized; no raw request or hidden thinking."
+    },
+    "pi-EF-bound-timeout-ready-review.json": {
+      "file": "pi-EF-bound-timeout-ready-review.json",
+      "privateOriginalSha256": "d7db35592593cebfffd9673b42135bac58e98d6e5a76a3908630e4a94a2aeaf5",
+      "publicationSha256": "d7db35592593cebfffd9673b42135bac58e98d6e5a76a3908630e4a94a2aeaf5",
+      "publicationTransform": "Remove private evidence locations/native session identities; JSON reserialized; no raw prompts/responses/thinking included."
+    },
+    "pi-EF-prospective-method-review.json": {
+      "file": "pi-EF-prospective-method-review.json",
+      "privateOriginalSha256": "5c518b31c6a45e56e0638915d1eb5e4a4ef3632740b8a507044d696c2133b3e1",
+      "publicationSha256": "5c518b31c6a45e56e0638915d1eb5e4a4ef3632740b8a507044d696c2133b3e1",
+      "publicationTransform": "Remove private evidence locations/native session identities; JSON reserialized; no raw prompts/responses/thinking included."
+    },
+    "pi-continuation-C-independent.json": {
+      "file": "pi-continuation-C-independent.json",
+      "privateOriginalSha256": "28945a67a3a669ca66f8e383b5ebd76820ee1a798313b1761692a81d78c42826",
+      "publicationSha256": "b3c844c956369609e4e4dd7c322679dcc45283341106b2b9d1c51d24ccf0d010",
+      "publicationTransform": "Remove private evidence locations/native session identities; JSON reserialized; no raw prompts/responses/thinking included."
+    },
+    "pi-continuation-C-review.json": {
+      "file": "pi-continuation-C-review.json",
+      "privateOriginalSha256": "dba77e7e89852706afc6e4cf02e851118e12360bfaa0a5b1a76cfe1d5cc06118",
+      "publicationSha256": "dba77e7e89852706afc6e4cf02e851118e12360bfaa0a5b1a76cfe1d5cc06118",
+      "publicationTransform": "Remove private evidence locations/native session identities; JSON reserialized; no raw prompts/responses/thinking included."
+    },
+    "pi-continuation-D-stop-independent.json": {
+      "file": "pi-continuation-D-stop-independent.json",
+      "privateOriginalSha256": "ba6480ad69e10c5873bdcafdfffc63b8fdd1031cd1bd1279cb1fa44dd720c1f6",
+      "publicationSha256": "8e9e4226e96da263311d126b01697f5fedbbd79587a5cf18a5bf412d5131b506",
+      "publicationTransform": "Remove private evidence locations/native session identities; JSON reserialized; no raw prompts/responses/thinking included."
+    },
+    "pi-continuation-E-independent.json": {
+      "file": "pi-continuation-E-independent.json",
+      "privateOriginalSha256": "a67cc957fc4f1d966ea12aceac0beafce7bfbd20c302649c1f9d54ce6618b5a0",
+      "publicationSha256": "badc3b26850a6dc860af520dd979e495d52ee7d040c5f86feb24da6f6e257dcb",
+      "publicationTransform": "Remove private evidence locations/native session identities; JSON reserialized; no raw prompts/responses/thinking included."
+    },
+    "pi-continuation-E-review.json": {
+      "file": "pi-continuation-E-review.json",
+      "privateOriginalSha256": "cb1f976d51cba723bab20c226477b6e4b56116e8c6bba15fdd3f78a65aacb404",
+      "publicationSha256": "00e4e8592db3e609eaf446e5dea4bd67a993dd2a9122a5549af8ae97cc8db7c4",
+      "publicationTransform": "Remove private evidence locations/native session identities; JSON reserialized; no raw prompts/responses/thinking included."
+    },
+    "pi-continuation-F-independent.json": {
+      "file": "pi-continuation-F-independent.json",
+      "privateOriginalSha256": "d3718cb0e522afb532fe43b2bd2769cac33247409cea416417a966ee14d05f3a",
+      "publicationSha256": "9b84cb8a83d3fe37e51a3750b02636bf7696dea1a94e2a1761eb9abfbd5fc73d",
+      "publicationTransform": "Private paths/session identities removed; JSON reserialized; no raw request or hidden thinking."
+    },
+    "pi-continuation-F-review.json": {
+      "file": "pi-continuation-F-review.json",
+      "privateOriginalSha256": "074005c5d8e6eb3943d727110dbfc924ee34b311cf53838f9c6f34e5ed10984c",
+      "publicationSha256": "074005c5d8e6eb3943d727110dbfc924ee34b311cf53838f9c6f34e5ed10984c",
+      "publicationTransform": "Private paths/session identities removed; JSON reserialized; no raw request or hidden thinking."
+    },
+    "pi-six-slots-final-independent.json": {
+      "file": "pi-six-slots-final-independent.json",
+      "privateOriginalSha256": "ed68be47749e1b53f4b0ae032d2cafe966023c5431bb4c5182a3cff5fe2fa05c",
+      "publicationSha256": "ed68be47749e1b53f4b0ae032d2cafe966023c5431bb4c5182a3cff5fe2fa05c",
+      "publicationTransform": "Private paths/session identities removed; JSON reserialized; no raw request or hidden thinking."
+    },
+    "summary.json": {
+      "file": "summary.json",
+      "publicationSha256": "e36e6e9e3304904c9cb862710dcbaa766be88978ae9a06c2ea92a9aa2d331661",
+      "privateOriginalSha256": null,
+      "publicationTransform": "New publication summary/draft/receipt; no separate original evidence file. Underlying original hashes are cited in content."
+    }
+  },
+  "publicationFiles": {
+    "continuation-summary-implementation-receipt.json": "0355115da602e41276fb63dd472fdffe0df2628fdc42a7cf09894f4220ab61eb",
+    "first-request-semantic-differences.json": "00159de1c0fc21ca5942f44fdb3a633d0ab095418a70db716ed559c0244ccbec",
+    "kimi-continuation-slot2-independent.json": "f6a46479f8897afd54c32bdaa675d5d73f84bf0e6ff18fae5bc1c4ba379ebf99",
+    "kimi-continuation-slot2-semantic-review.json": "9689bf906ae9218aaca444434e24d7fccdf5b5ea25ff77ceab20d1b362892de0",
+    "kimi-continuation-slot3-business-paths.json": "abf8abba2ad764971f0a8016069f53573b4fe6ede5c371c0b39eab47a6927b33",
+    "kimi-continuation-slot3-independent.json": "56227f45a60bbbb8d3d45823014daead52805f400679b3cb471e32004b99a255",
+    "kimi-continuation-slot3-semantic-review.json": "309b85018e0be10203c0207e73e9151d5476da00efae7b3f82d70d013e55d645",
+    "kimi-continuation-slot4-independent.json": "335430bc2b34cad122c503e8b3410f139024655bb8120d61235c6f96ae6b7c88",
+    "kimi-continuation-slot4-semantic-review.json": "67aee34f614bde31b3ce7ef225d64331d6ffceab371f2263c8e74a7e74936e18",
+    "kimi-continuation-slot5-independent.json": "80c3616c536b3047363876db3b85728fb0ebcdd553e7bcaf3d44691b2ff5b8fe",
+    "kimi-continuation-slot5-semantic-review.json": "d26d7fd0d8cd8ff5e2af8d5c54d329440372f2b3da9e8bddecf30777e9348b20",
+    "kimi-continuation-slot6-independent.json": "bef335cd90f28ddc4bea025b6d6375dcfd185505b639f89acfb20563175314d7",
+    "kimi-continuation-slot6-semantic-review.json": "a05e4ba2837774a0273a8e58b388c85dd6ac9c77f30edc87b44c609722819e1f",
+    "kimi-final-cleanup-receipt.json": "cc60b243ef0da39d14851b21dffeaf99008e241ed296b900febd0c8a1234393f",
+    "kimi-final-paid-public-evidence.json": "d1170c9fc76355f39de62477a7465398fcf55d268f8046b969c4fab2853bbe98",
+    "kimi-five-slots-final-independent.json": "8e69285477d8596af961f2cfe319a69b2fc4ff2654b8f2b7bfe02013f5a88e08",
+    "pi-EF-bound-timeout-ready-review.json": "d7db35592593cebfffd9673b42135bac58e98d6e5a76a3908630e4a94a2aeaf5",
+    "pi-EF-prospective-method-review.json": "0014c14044013e2d92121f1e61b97bc71ef7bebfedec420395bb8e1a46791abe",
+    "pi-continuation-C-independent.json": "b3c844c956369609e4e4dd7c322679dcc45283341106b2b9d1c51d24ccf0d010",
+    "pi-continuation-C-review.json": "dba77e7e89852706afc6e4cf02e851118e12360bfaa0a5b1a76cfe1d5cc06118",
+    "pi-continuation-D-stop-independent.json": "8e9e4226e96da263311d126b01697f5fedbbd79587a5cf18a5bf412d5131b506",
+    "pi-continuation-E-independent.json": "badc3b26850a6dc860af520dd979e495d52ee7d040c5f86feb24da6f6e257dcb",
+    "pi-continuation-E-review.json": "1e72623d9d08188dbf7332e3c923c9685cc7e0667633c4525cdcac36745df927",
+    "pi-continuation-F-independent.json": "9b84cb8a83d3fe37e51a3750b02636bf7696dea1a94e2a1761eb9abfbd5fc73d",
+    "pi-continuation-F-review.json": "074005c5d8e6eb3943d727110dbfc924ee34b311cf53838f9c6f34e5ed10984c",
+    "pi-six-slots-final-independent.json": "8294b8a50b38bef4c1929963a7407bace4fad0097aaf46e9dc47a15ef888c1d3",
+    "summary.json": "f685b14233ca5bd738fe05184937f0096479d0b67ec62c1297d12bb225a31d1d"
+  }
+}

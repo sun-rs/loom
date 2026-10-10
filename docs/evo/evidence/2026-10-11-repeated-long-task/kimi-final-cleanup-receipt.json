@@ -1,0 +1,9 @@
+{
+  "source": "Kimi runner final sealed cleanup/source/public evidence",
+  "privateOriginalSha256": "51089aac1867a7b732c01a18a94b76c7c9376c8657801c37bc8827ddbd1c933f",
+  "sourceFiles": 1925,
+  "sourceDrift": 0,
+  "ownedPidsExited": 400,
+  "temporaryConfigsRemoved": 10,
+  "scope": "Owner final cleanup receipt; independent per-slot raw/hash/quality audits linked separately."
+}

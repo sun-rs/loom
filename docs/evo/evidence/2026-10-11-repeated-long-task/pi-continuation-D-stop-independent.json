@@ -1,0 +1,88 @@
+{
+  "kind": "pi-D-terminal-independent/v1",
+  "originalOutcome": "unknown/structural-stop; native turn timeout",
+  "resultSha256": "a18be477042fab5bf6f68cb168f2f25c96988a24a9765dbef8be8494570f06ad",
+  "stdoutSha256": "1a770a1a6bc6a69e4ef664799d907319cdd752e0224a6489d7a40a765aff90bd",
+  "rawPrimary": {
+    "responses": 3,
+    "input": 6097,
+    "output": 834,
+    "cachedInput": 3712,
+    "reasoningOutputSubset": 470,
+    "allHTTP200CompleteSealed": true,
+    "unclosedHTTP": 0,
+    "rawNativeLegacyResponseIdsMatch": true
+  },
+  "runtime": {
+    "nativeBusinessStarted": true,
+    "nativeCompletedRounds": 0,
+    "loomBusinessStarted": false,
+    "loomModelHTTPObserved": 0,
+    "loomAvailabilityProbeStarted": true,
+    "loomKernelRuns": 0,
+    "normalFinal": false,
+    "toolsStarted": 6,
+    "toolsEnded": 5,
+    "pendingTool": "Two whole-filesystem find pipelines searching invoice source/test names; no tool end before timeout",
+    "earlierTools": "Workspace directory discovery, invoice.py/README reads completed; same-generation environment/parent-directory discovery completed. No body/env values published."
+  },
+  "processCapture": {
+    "expectedProviderProcesses": 2,
+    "sealedProcesses": 2,
+    "complete": true
+  },
+  "diagnosticArtifacts": {
+    "native": "captured, hashes verified, quality unknown",
+    "loom": "initialized workspace captured, hashes verified; not evidence of business execution"
+  },
+  "cleanup": {
+    "complete": true,
+    "configRemoved": true,
+    "daemonExit": {
+      "code": 0,
+      "signal": null
+    },
+    "issues": [
+      "loom-primary-mismatch",
+      "kernel-mismatch-or-gap",
+      "loom-request-coverage",
+      "loom-passive-capture-incomplete"
+    ]
+  },
+  "sixOriginalSlots": [
+    {
+      "id": "A",
+      "originalStatus": "completed"
+    },
+    {
+      "id": "B",
+      "originalStatus": "structural-stop",
+      "posthoc": "normal native12 final adjudicated; native12 artifact quality unknown"
+    },
+    {
+      "id": "C",
+      "originalStatus": "completed in continuation"
+    },
+    {
+      "id": "D",
+      "originalStatus": "native1 timeout, no completed pair"
+    },
+    {
+      "id": "E",
+      "originalStatus": "not-started"
+    },
+    {
+      "id": "F",
+      "originalStatus": "not-started"
+    }
+  ],
+  "fixedSixMainRatio": null,
+  "DPairRatio": null,
+  "limits": [
+    "Three completed provider responses establish reported usage, not invoice certainty.",
+    "Loom zero observed requests does not form a zero-cost completed comparator.",
+    "Pending full-disk search directly observed; exact OS-level reason for lack of completion not established by this trace.",
+    "No hidden thinking used for diagnosis; no model/test execution added.",
+    "Original failure and diagnostic quality unknown retained."
+  ]
+}

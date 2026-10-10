@@ -1,0 +1,34 @@
+{
+  "slot": 6,
+  "rawAuditSha256": "cf219cb3174a276e84bb63767f28d3f496637be964e0fa3a22442a6e667dc334",
+  "sourceFiles": 1925,
+  "sourceDrift": 0,
+  "quality": {
+    "originalPassed": 24,
+    "functionalPassed": 24,
+    "selfTestsPassed": 24,
+    "snapshotHashesMatch": true
+  },
+  "readmeReview": {
+    "print": {
+      "sha256": "95fbf1f60050ef7e56381ce1458c85e4d28e187f84973dc59aef4aac422c9f30",
+      "findings": []
+    },
+    "loom": {
+      "sha256": "da0f742ca2186cb83989432c435b998599f891e89ca0d1a1896db4870076c67a",
+      "findings": []
+    }
+  },
+  "semanticScope": "Read validation/cancellation/unrelated keys/grouping/aggregate rounding/CLI and examples against source. Print3+0.30=3.30; Loom25-0.50+2.45=26.95 and0.15+0.02=0.17. Native documents precision100; Loom sizes precision from row count. No new execution or arbitrary-size proof.",
+  "cleanup": {
+    "authLinksRemoved": true,
+    "processesExited": true,
+    "liveOwnedPids": [],
+    "sourceHashesUnchanged": true,
+    "finalIssues": []
+  },
+  "limits": [
+    "Small fixed cohort, not stability/equivalence proof.",
+    "Reasoning is subset of output and incomplete for native."
+  ]
+}

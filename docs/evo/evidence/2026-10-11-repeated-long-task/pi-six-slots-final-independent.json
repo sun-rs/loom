@@ -1,0 +1,328 @@
+{
+  "cohort": "pi",
+  "slots": [
+    {
+      "id": "A",
+      "binding": "pi/aihubmix/deepseek-v4.1-flash/low",
+      "status": "completed",
+      "native": {
+        "completedRounds": 12,
+        "primaryComplete": true,
+        "input": 5695697,
+        "output": 98004,
+        "requests": 122,
+        "cachedInput": 5445760,
+        "reasoningOutput": 40116,
+        "quality": {
+          "passed": 12,
+          "functionalPassed": 12,
+          "selfTestsPassed": 12,
+          "unknown": 0
+        }
+      },
+      "loom": {
+        "completedRounds": 12,
+        "primaryComplete": true,
+        "input": 5370618,
+        "output": 77646,
+        "requests": 108,
+        "cachedInput": null,
+        "reasoningOutput": null,
+        "quality": {
+          "passed": 8,
+          "functionalPassed": 12,
+          "selfTestsPassed": 8,
+          "unknown": 0
+        }
+      }
+    },
+    {
+      "id": "B",
+      "binding": "pi/aihubmix/deepseek-v4.1-flash/low",
+      "status": "failed",
+      "native": {
+        "completedRounds": 11,
+        "primaryComplete": true,
+        "input": 6126564,
+        "output": 89903,
+        "requests": 115,
+        "cachedInput": null,
+        "reasoningOutput": 39178,
+        "quality": {
+          "passed": 11,
+          "functionalPassed": 11,
+          "selfTestsPassed": 11,
+          "unknown": 1
+        }
+      },
+      "loom": {
+        "completedRounds": 12,
+        "primaryComplete": true,
+        "input": 10103326,
+        "output": 125265,
+        "requests": 170,
+        "cachedInput": null,
+        "reasoningOutput": null,
+        "quality": {
+          "passed": 8,
+          "functionalPassed": 12,
+          "selfTestsPassed": 8,
+          "unknown": 0
+        }
+      }
+    },
+    {
+      "id": "C",
+      "binding": "pi/aihubmix/deepseek-v4.1-flash/low",
+      "status": "completed",
+      "native": {
+        "completedRounds": 12,
+        "primaryComplete": true,
+        "input": 6472941,
+        "output": 108990,
+        "requests": 124,
+        "cachedInput": null,
+        "reasoningOutput": null,
+        "quality": {
+          "passed": 12,
+          "functionalPassed": 12,
+          "selfTestsPassed": 12,
+          "unknown": 0
+        }
+      },
+      "loom": {
+        "completedRounds": 12,
+        "primaryComplete": true,
+        "input": 7028664,
+        "output": 111828,
+        "requests": 121,
+        "cachedInput": null,
+        "reasoningOutput": null,
+        "quality": {
+          "passed": 12,
+          "functionalPassed": 12,
+          "selfTestsPassed": 12,
+          "unknown": 0
+        }
+      }
+    },
+    {
+      "id": "D",
+      "binding": "pi/aihubmix/deepseek-v4.1-flash/low",
+      "status": "failed",
+      "native": {
+        "completedRounds": 0,
+        "primaryComplete": true,
+        "input": 6097,
+        "output": 834,
+        "requests": 3,
+        "cachedInput": 3712,
+        "reasoningOutput": 470,
+        "quality": {
+          "unknown": 1
+        }
+      },
+      "loom": null,
+      "businessNotStartedArms": ["loom"]
+    },
+    {
+      "id": "E",
+      "binding": "pi/aihubmix/deepseek-v4.1-flash/low",
+      "status": "completed",
+      "native": {
+        "completedRounds": 12,
+        "primaryComplete": true,
+        "input": 6285181,
+        "output": 97922,
+        "requests": 122,
+        "cachedInput": null,
+        "reasoningOutput": null,
+        "quality": {
+          "passed": 12,
+          "functionalPassed": 12,
+          "selfTestsPassed": 12,
+          "unknown": 0
+        }
+      },
+      "loom": {
+        "completedRounds": 12,
+        "primaryComplete": true,
+        "input": 6533960,
+        "output": 99946,
+        "requests": 115,
+        "cachedInput": null,
+        "reasoningOutput": null,
+        "quality": {
+          "passed": 8,
+          "functionalPassed": 12,
+          "selfTestsPassed": 8,
+          "unknown": 0
+        }
+      }
+    },
+    {
+      "id": "F",
+      "binding": "pi/aihubmix/deepseek-v4.1-flash/low",
+      "status": "completed",
+      "native": {
+        "completedRounds": 12,
+        "primaryComplete": true,
+        "input": 4611169,
+        "output": 78932,
+        "requests": 94,
+        "cachedInput": null,
+        "reasoningOutput": 34414,
+        "quality": {
+          "passed": 12,
+          "functionalPassed": 12,
+          "selfTestsPassed": 12,
+          "unknown": 0
+        }
+      },
+      "loom": {
+        "completedRounds": 12,
+        "primaryComplete": true,
+        "input": 4723204,
+        "output": 81452,
+        "requests": 94,
+        "cachedInput": null,
+        "reasoningOutput": null,
+        "quality": {
+          "passed": 8,
+          "functionalPassed": 12,
+          "selfTestsPassed": 8,
+          "unknown": 0
+        }
+      }
+    }
+  ],
+  "statisticalUnit": "whole session pair",
+  "primary": null,
+  "originalFixedSixPrimary": null,
+  "allObserved": {
+    "native": {
+      "input": 29197649,
+      "output": 474585,
+      "requests": 580,
+      "primaryComplete": true,
+      "cachedInput": null,
+      "cachedInputKnownSubtotal": 27597824,
+      "reasoningOutput": null,
+      "reasoningOutputKnownSubtotal": 208827,
+      "uncachedInput": null
+    },
+    "loom": {
+      "input": 33759772,
+      "output": 496137,
+      "requests": 608,
+      "primaryComplete": true,
+      "cachedInput": null,
+      "cachedInputKnownSubtotal": 32208256,
+      "reasoningOutput": null,
+      "reasoningOutputKnownSubtotal": 225018,
+      "uncachedInput": null
+    }
+  },
+  "descriptiveCompleteSubset": {
+    "ids": ["A", "C", "E", "F"],
+    "ratios": {
+      "input": 1.0256431089407028,
+      "output": 0.9661949521685668,
+      "requests": 0.948051948051948,
+      "cachedInput": null,
+      "uncachedInput": null
+    },
+    "warning": "Descriptive complete subset only; selection/missing-outcome risk. Not original six-pair primary."
+  },
+  "perPair": [
+    {
+      "id": "A",
+      "status": "completed",
+      "ratios": {
+        "input": 0.9429255102580071,
+        "output": 0.7922737847434799,
+        "requests": 0.8852459016393442,
+        "cachedInput": null,
+        "uncachedInput": null
+      }
+    },
+    {
+      "id": "B",
+      "status": "failed",
+      "ratios": null
+    },
+    {
+      "id": "C",
+      "status": "completed",
+      "ratios": {
+        "input": 1.0858532466154103,
+        "output": 1.026039086154693,
+        "requests": 0.9758064516129032,
+        "cachedInput": null,
+        "uncachedInput": null
+      }
+    },
+    {
+      "id": "D",
+      "status": "failed",
+      "ratios": null
+    },
+    {
+      "id": "E",
+      "status": "completed",
+      "ratios": {
+        "input": 1.0395818354316289,
+        "output": 1.020669512469108,
+        "requests": 0.9426229508196722,
+        "cachedInput": null,
+        "uncachedInput": null
+      }
+    },
+    {
+      "id": "F",
+      "status": "completed",
+      "ratios": {
+        "input": 1.0242964419651504,
+        "output": 1.0319262149698474,
+        "requests": 1.0,
+        "cachedInput": null,
+        "uncachedInput": null
+      }
+    }
+  ],
+  "bootstrap": null,
+  "limitations": [
+    "Known failed and unpaired expense retained; unknown is not zero.",
+    "Quality failures never remove consumption.",
+    "No within-session rounds treated as independent samples.",
+    "No equivalence or stability guarantee; no exploratory interval computed.",
+    "Kimi original failed slot1 expense must be attached separately, never pooled as a complete pair."
+  ],
+  "BPosthocTerminal": "Original stop remains. Native R12 normal final and post-final compaction were proven offline after parser repair; original snapshot absent and workspace deleted, quality unknown.",
+  "correctedCompletedTrajectoryDescriptive": {
+    "ids": ["A", "B", "C", "E", "F"],
+    "warning": "Posthoc corrected B terminal; missing B12 quality and excluded failed D. Selected descriptive subset, never fixed-six primary.",
+    "ratios": {
+      "input": 1.1564911656632713,
+      "output": 1.0472526707067638,
+      "requests": 1.0537261698440208
+    }
+  },
+  "optionalKnownIncludingPartial": {
+    "native": {
+      "cachedInput": 27597824,
+      "reasoningOutput": 208827
+    },
+    "loom": {
+      "cachedInput": 32208256,
+      "reasoningOutput": 225018
+    }
+  },
+  "combinedKnown": {
+    "input": 62957421,
+    "output": 970722,
+    "requests": 1188
+  },
+  "qualityBasis": "Frozen original verdicts, not rerun or changed; README reviews separately linked. D diagnosis is not a quality snapshot.",
+  "crossRevision": "A/B original; C/D repair continuation; E/F prospective post-D local-tool-timeout policy. No sample replacement."
+}

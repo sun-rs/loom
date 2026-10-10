@@ -1,0 +1,35 @@
+{
+  "slot": 5,
+  "rawAuditSha256": "73376d3400eed2ce2ac88f3b742be98464df67d370bd23b088fb22cc6f7870d4",
+  "quality": {
+    "originalPassed": 24,
+    "functionalPassed": 24,
+    "selfTestsPassed": 24,
+    "snapshotHashesMatch": true
+  },
+  "readmeReview": {
+    "print": {
+      "sha256": "a984ba24e63d8cdee249f31136d000d48b6f597eab9f8c0af79717da06cdfdb0",
+      "findings": []
+    },
+    "loom": {
+      "sha256": "23f5375600f83738572a97475ce75e9a7966816beeeb65206c811f07729c722b",
+      "findings": []
+    }
+  },
+  "semanticScope": "Read API, validation, cancellation, unrelated keys, grouping, exact aggregate tax, CLI and examples against source. Native example gross20.045/net18.045/tax1.8045 rounds20.05/18.05/1.80 total19.85; Loom5+0.50=5.50. No new candidate execution or arbitrary-size proof.",
+  "cleanup": {
+    "authLinksRemoved": true,
+    "processesExited": true,
+    "liveOwnedPids": [],
+    "sourceHashesUnchanged": true,
+    "finalIssues": []
+  },
+  "sourceVerificationScope": "Independently reread all frozen manifest files after slot5 seal; raw and snapshots independently recomputed.",
+  "limits": [
+    "Single pair only; fixed five pending.",
+    "Reasoning optional incomplete; never added to output."
+  ],
+  "sourceFiles": 1925,
+  "sourceDrift": 0
+}

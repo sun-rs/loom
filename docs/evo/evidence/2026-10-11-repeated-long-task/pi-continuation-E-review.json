@@ -1,0 +1,119 @@
+{
+  "slot": "E",
+  "rawResponses": 237,
+  "windows": {
+    "full12": {
+      "arms": {
+        "native": {
+          "input": 6285181,
+          "output": 97922,
+          "requests": 122,
+          "cachedInput": null,
+          "reasoningKnownSubtotal": 40862,
+          "reasoningComplete": false
+        },
+        "loom": {
+          "input": 6533960,
+          "output": 99946,
+          "requests": 115,
+          "cachedInput": null,
+          "reasoningKnownSubtotal": 44413,
+          "reasoningComplete": false
+        }
+      },
+      "ratios": {
+        "input": 1.0395818354316289,
+        "output": 1.020669512469108,
+        "requests": 0.9426229508196722
+      },
+      "meanInputPerRequestFactor": 1.1028607297622497
+    },
+    "late6": {
+      "arms": {
+        "native": {
+          "input": 4205946,
+          "output": 51418,
+          "requests": 57,
+          "cachedInput": null,
+          "reasoningKnownSubtotal": 23189,
+          "reasoningComplete": true
+        },
+        "loom": {
+          "input": 5158674,
+          "output": 56192,
+          "requests": 66,
+          "cachedInput": 4938624,
+          "reasoningKnownSubtotal": 25781,
+          "reasoningComplete": true
+        }
+      },
+      "ratios": {
+        "input": 1.2265193133720689,
+        "output": 1.0928468629662764,
+        "requests": 1.1578947368421053
+      },
+      "meanInputPerRequestFactor": 1.059266679730423
+    }
+  },
+  "quality": {
+    "native": {
+      "passed": 12,
+      "functionalPassed": 12,
+      "selfTestsPassed": 12
+    },
+    "loom": {
+      "passed": 8,
+      "functionalPassed": 12,
+      "selfTestsPassed": 8
+    }
+  },
+  "compaction": {
+    "native": {
+      "extraHTTP": 2,
+      "aggregateEntries": 1,
+      "aggregateMatches": true
+    },
+    "loom": {
+      "extraHTTP": 2,
+      "aggregateEntries": 1,
+      "aggregateMatches": true
+    }
+  },
+  "sourceAuditSha256": "a67cc957fc4f1d966ea12aceac0beafce7bfbd20c302649c1f9d54ce6618b5a0",
+  "kernel": {
+    "assistantIdentityAndPrimaryMatch": true,
+    "generations": 113,
+    "gaps": [
+      {
+        "run_attempt_id": "run_7db464dd-d5fa-429a-8c56-2f33c6ff526a",
+        "reason": "parse_error",
+        "provider": "pi-print-json/v1",
+        "occurrences": 1,
+        "first_observed_at": "2026-10-10T15:57:04.949Z",
+        "last_observed_at": "2026-10-10T15:57:04.949Z",
+        "recorded_at": "2026-10-10T15:57:04.950Z"
+      }
+    ],
+    "allProviderConsumptionRepresented": false,
+    "compactionExtraRemainsRawCost": true
+  },
+  "readmeReview": {
+    "native": "API/cancelled/validation/grouping/CLI and money examples consistent. Exact net40.982→40.98 plus tax3.07=44.05; groups separately38.68 and5.38 correctly need not sum grand44.05.",
+    "loom": "API/validation/rounding/grouping/CLI examples consistent:8.25 minus .125 yields net8.125→8.13; tax.8125→.81; total8.94.",
+    "limits": "Static inspection, original oracle unchanged, no new execution."
+  },
+  "limits": [
+    "Single pair, not original six-primary; D failure and B12qualityunknown retained.",
+    "Compaction all raw cost included but Kernel only assistant generations.",
+    "Optional cache/reasoning absent remains unknown."
+  ],
+  "qualityFailureExplanation": {
+    "arm": "loom",
+    "rounds": [9, 10, 11, 12],
+    "originalPassed": false,
+    "functionalPassed": true,
+    "selftestExit": 1,
+    "observed": "Python3.13 SyntaxWarning for unescaped backslash-dot in invoice.py docstrings reaches CLI stderr; own success tests assert empty stderr. Original failures retained, not reclassified.",
+    "notClaimed": "No blanket equivalence despite all functional cases passing."
+  }
+}

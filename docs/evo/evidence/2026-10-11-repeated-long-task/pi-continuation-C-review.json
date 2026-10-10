@@ -1,0 +1,110 @@
+{
+  "slot": "C",
+  "windows": {
+    "full12": {
+      "arms": {
+        "native": {
+          "input": 6472941,
+          "output": 108990,
+          "requests": 124,
+          "cachedInput": null,
+          "reasoningKnownSubtotal": 53787,
+          "reasoningComplete": false
+        },
+        "loom": {
+          "input": 7028664,
+          "output": 111828,
+          "requests": 121,
+          "cachedInput": null,
+          "reasoningKnownSubtotal": 55736,
+          "reasoningComplete": false
+        }
+      },
+      "ratios": {
+        "input": 1.0858532466154103,
+        "output": 1.026039086154693,
+        "requests": 0.9758064516129032
+      },
+      "meanInputPerRequestFactor": 1.1127752279364533
+    },
+    "late6": {
+      "arms": {
+        "native": {
+          "input": 5409900,
+          "output": 68181,
+          "requests": 75,
+          "cachedInput": null,
+          "reasoningKnownSubtotal": 36657,
+          "reasoningComplete": false
+        },
+        "loom": {
+          "input": 4405820,
+          "output": 57761,
+          "requests": 56,
+          "cachedInput": 4225152,
+          "reasoningKnownSubtotal": 28181,
+          "reasoningComplete": true
+        }
+      },
+      "ratios": {
+        "input": 0.8143995267934713,
+        "output": 0.8471714993913261,
+        "requests": 0.7466666666666667
+      },
+      "meanInputPerRequestFactor": 1.0907136519555418
+    }
+  },
+  "quality": {
+    "native": {
+      "passed": 12,
+      "functionalPassed": 12,
+      "selfTestsPassed": 12
+    },
+    "loom": {
+      "passed": 12,
+      "functionalPassed": 12,
+      "selfTestsPassed": 12
+    }
+  },
+  "compaction": {
+    "native": {
+      "extraHTTP": 2,
+      "aggregateEntries": 1,
+      "aggregateMatches": true
+    },
+    "loom": {
+      "extraHTTP": 2,
+      "aggregateEntries": 1,
+      "aggregateMatches": true
+    }
+  },
+  "sourceAuditSha256": "28945a67a3a669ca66f8e383b5ebd76820ee1a798313b1761692a81d78c42826",
+  "kernel": {
+    "assistantIdentityAndPrimaryMatch": true,
+    "generations": 119,
+    "gaps": [
+      {
+        "run_attempt_id": "run_91a2206f-2dfe-499f-abef-d01adb447732",
+        "reason": "parse_error",
+        "provider": "pi-print-json/v1",
+        "occurrences": 1,
+        "first_observed_at": "2026-10-10T14:46:27.196Z",
+        "last_observed_at": "2026-10-10T14:46:27.196Z",
+        "recorded_at": "2026-10-10T14:46:27.196Z"
+      }
+    ],
+    "allProviderConsumptionRepresented": false,
+    "compactionExtraRemainsRawCost": true
+  },
+  "readmeReview": {
+    "native": "Read API/validation/cancelled/grouping/exact rational arithmetic/CLI and examples; no contradiction found. Uses Fraction exact arithmetic, documented explicitly.",
+    "loom": "Read API/validation/cancelled/grouping/Decimal precision/CLI and examples; example31-2+2.32=31.32 and group arithmetic consistent. No contradiction found.",
+    "method": "Static review against final source and original tests; no new execution."
+  },
+  "limits": [
+    "Single pair descriptive only; remaining continuation slots still running.",
+    "All raw compaction consumption counted; Kernel gaps and aggregate-only crosschecks remain explicit.",
+    "Original B12 quality stays unknown; no retroactive quality pass.",
+    "Missing optional dimensions remain unknown."
+  ]
+}

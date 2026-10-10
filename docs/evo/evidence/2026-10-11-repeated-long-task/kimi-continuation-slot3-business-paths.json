@@ -1,0 +1,109 @@
+{
+  "slot": 3,
+  "arms": {
+    "print": {
+      "firstResponseInput": 20140,
+      "explicitProtocolToolCalls": 0,
+      "toolNames": {
+        "Read": 11,
+        "Write": 5,
+        "Bash": 19,
+        "Edit": 24
+      },
+      "exactCurrentTaskUserOccurrenceHistogram": {
+        "1": 69
+      },
+      "wireSha256": "c9fadaa0c8b57b75bda5aa320ca7d8c32e55416bbe41941c4d9bfe1d68a9f56c"
+    },
+    "loom": {
+      "firstResponseInput": 21767,
+      "explicitProtocolToolCalls": 0,
+      "toolNames": {
+        "Write": 5,
+        "Bash": 26,
+        "Edit": 35,
+        "Read": 15
+      },
+      "exactCurrentTaskUserOccurrenceHistogram": {
+        "1": 89
+      },
+      "wireSha256": "8041dc3708ee9dfa5bbd0af002e5cfd0a6e54b20149eacbdb51b2ae296d53574"
+    }
+  },
+  "roundCounts": [
+    {
+      "round": 1,
+      "print": 8,
+      "loom": 5
+    },
+    {
+      "round": 2,
+      "print": 4,
+      "loom": 4
+    },
+    {
+      "round": 3,
+      "print": 4,
+      "loom": 5
+    },
+    {
+      "round": 4,
+      "print": 5,
+      "loom": 5
+    },
+    {
+      "round": 5,
+      "print": 6,
+      "loom": 7
+    },
+    {
+      "round": 6,
+      "print": 7,
+      "loom": 13
+    },
+    {
+      "round": 7,
+      "print": 8,
+      "loom": 8
+    },
+    {
+      "round": 8,
+      "print": 6,
+      "loom": 7
+    },
+    {
+      "round": 9,
+      "print": 7,
+      "loom": 8
+    },
+    {
+      "round": 10,
+      "print": 6,
+      "loom": 6
+    },
+    {
+      "round": 11,
+      "print": 3,
+      "loom": 13
+    },
+    {
+      "round": 12,
+      "print": 5,
+      "loom": 8
+    }
+  ],
+  "facts": {
+    "round6": "Native7 vs Loom13 responses: both implement stricter validation and adjust older tests; Loom observed failure+two errors, then remaining oversized-input error, repeated test/grep/arithmetic-probe/edit recovery; native one error then correction and pass.",
+    "round11": "Native3 vs Loom13: native adds regression tests and passes73; Loom reads/edits implementation and extends87 tests, then invalid huge-row fixture and half-cent expected0.04 versusactual0.05 failures, repeated edit/test/error inspection until pass.",
+    "round12": "Native5 vs Loom8: Loom additionally reads tests and adds two regressions (89 total) before README rewrite and final file/stdin examples; native ends73.",
+    "net": "R6+6, R11+10, R12+3; R1-3 offsets part of later increases; total+20 responses."
+  },
+  "limits": [
+    "Observed business/tool recovery sequences, not causal attribution to standing prompt.",
+    "Zero explicit Worker calls excludes communication-tool loops only, not indirect prompt effects.",
+    "Current-task check counts exact original prompt in user messages only, not semantic paraphrases.",
+    "No hidden reasoning text inspected and no character-to-token estimates.",
+    "All actual cost retained; no failed/tool or larger-test-suite cost subtraction."
+  ],
+  "firstInputFactor": 1.0807845084409136
+}

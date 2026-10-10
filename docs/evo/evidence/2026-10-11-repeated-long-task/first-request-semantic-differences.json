@@ -1,0 +1,153 @@
+{
+  "method": "Earliest actual passive request start timestamp for each arm. Read only first request messages/tools/settings, no assistant thinking.",
+  "cases": {
+    "kimi-slot2": {
+      "arms": {
+        "print": {
+          "requestSha256": "c5536f03233b6e545460430a859201c3cbe42bf7bfa0bf4e1e491fb41ba2d2a6",
+          "roles": {
+            "system": 1,
+            "user": 3
+          },
+          "model": "k3-256k",
+          "effort": {
+            "type": "enabled",
+            "effort": "low",
+            "keep": "all"
+          },
+          "toolCount": 27,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "systemDeveloperSha256": [
+            "ed045782525ed9f18354bcc6883424b50189a9b9b404c0eb2c56dc4a17cd178d"
+          ]
+        },
+        "loom": {
+          "requestSha256": "ac5464fbb69d42a494a1916189b2a94f708b1a086e0879e411b9a7cfbd93fde8",
+          "roles": {
+            "system": 1,
+            "user": 2
+          },
+          "model": "k3-256k",
+          "effort": {
+            "type": "enabled",
+            "effort": "low",
+            "keep": "all"
+          },
+          "toolCount": 27,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "systemDeveloperSha256": [
+            "2b303826dcc4ffbe116568edb4e76fc92ff9bfa039e9e9b7400155a1d1854695"
+          ]
+        }
+      },
+      "firstToolsExactEqual": true,
+      "requestedModelEffortEqual": true,
+      "nativeSystemEqualAfterOnlyCwdNormalization": true,
+      "standingPlacement": "First user message before business wake",
+      "nativeOnlyAutoPermissionReminder": true
+    },
+    "kimi-slot3": {
+      "arms": {
+        "print": {
+          "requestSha256": "c25516471a42c4d3437ec647d3170c253493cd6af850aa5c70d6abc76584d46d",
+          "roles": {
+            "system": 1,
+            "user": 3
+          },
+          "model": "k3-256k",
+          "effort": {
+            "type": "enabled",
+            "effort": "low",
+            "keep": "all"
+          },
+          "toolCount": 27,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "systemDeveloperSha256": [
+            "b11c3de5d77ce974bc55d0c0367533b164101283b7383de87c85a8364630789a"
+          ]
+        },
+        "loom": {
+          "requestSha256": "7ba0ccf355b7c8e9c88133f2c3c64d25ae45853984974a1e766ab5e18f7bf916",
+          "roles": {
+            "system": 1,
+            "user": 2
+          },
+          "model": "k3-256k",
+          "effort": {
+            "type": "enabled",
+            "effort": "low",
+            "keep": "all"
+          },
+          "toolCount": 27,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "systemDeveloperSha256": [
+            "7f03948bdd423ad70c6c6002487140bfe503599ab539ab426626a91720fe257a"
+          ]
+        }
+      },
+      "firstToolsExactEqual": true,
+      "requestedModelEffortEqual": true,
+      "nativeSystemEqualAfterOnlyCwdNormalization": true,
+      "standingPlacement": "First user message before business wake",
+      "nativeOnlyAutoPermissionReminder": true
+    },
+    "pi-C": {
+      "arms": {
+        "native": {
+          "requestSha256": "9e3b104786191050918e644117c33bf8bd22b1046a9b225aa12a749123bbfa60",
+          "roles": {
+            "developer": 1,
+            "user": 1
+          },
+          "model": "deepseek-v4.1-flash",
+          "effort": "low",
+          "toolCount": 4,
+          "toolsSha256": "c96f354565801dfe8e928de863c64b468e0ababe36c33573974566fd1e9b8cc3",
+          "systemDeveloperSha256": [
+            "9a7e58741db55281148f563eaa9b4fc4ec10fe80403863d86c65b790eca4a7f9"
+          ]
+        },
+        "loom": {
+          "requestSha256": "5ca2f48bf98349841944e65ab3f81fa1aea201492c2f3c9a2cb09598896c1be5",
+          "roles": {
+            "developer": 1,
+            "user": 1
+          },
+          "model": "deepseek-v4.1-flash",
+          "effort": "low",
+          "toolCount": 4,
+          "toolsSha256": "c96f354565801dfe8e928de863c64b468e0ababe36c33573974566fd1e9b8cc3",
+          "systemDeveloperSha256": [
+            "89e754d7771361bfbd3e0f6fefed7ec4d4da3eb60fdb692697e3c720a58b92d1"
+          ]
+        }
+      },
+      "firstToolsExactEqual": true,
+      "requestedModelEffortEqual": true,
+      "nativeDeveloperPrefixBeforeAddendumExactEqual": true,
+      "standingPlacement": "Developer addendum; native addendum only Follow the user requests"
+    }
+  },
+  "interpretation": {
+    "directAdditionalBusinessQualityDemand": "No Loom-only instruction explicitly requires more tests, production-grade implementation, exhaustive business validation, or a larger test suite. Both task texts explicitly require add/extend unittest and run tests.",
+    "sharedKimiDefault": "Both arms already have native Kimi Delivering work directions requiring standard build/tests and original scenario end-to-end; these are not Loom-added. Both share native skill discovery and comments/docstrings maintenance directions.",
+    "loomOnlyFrame": [
+      "Persistent worker identity in a multi-agent Room, participant/host/workspace identifiers and channel memory",
+      "Authority/causal cursor/Task ownership/communication policy, optional Tasks rather than prerequisite",
+      "Complete all current work before stopping; do not stop unfinished work after progress; substantive results instead of plans/acknowledgements",
+      "Task-specific Human approval language and multiple legacy Worker reply instructions followed by native-final exception",
+      "Kimi supplies recovery standing-file instruction in initial user payload; Pi appends standing as developer addendum"
+    ],
+    "hypothesesOnly": [
+      "Room/Task/authority/persistence framing could change completion criteria or attention even without an extra test requirement.",
+      "Legacy message-post instructions plus native-final exception create additional rule reconciliation; zero observed protocol calls does not prove zero cognitive effect.",
+      "Kimi print-only auto-permission reminder versus ACP omission is native mode context difference.",
+      "Different role identity/cwd and instruction hierarchy (Kimi user versus Pi developer) may influence exploration; these are not isolated causal factors."
+    ]
+  },
+  "limits": [
+    "First-request semantic comparison cannot prove why a later trajectory added requests.",
+    "No prompt changes, model requests, hidden thinking reading, or token estimates from text length.",
+    "Tool-schema equality is checked for these first requests only; later native Kimi dynamic schemas may differ."
+  ]
+}

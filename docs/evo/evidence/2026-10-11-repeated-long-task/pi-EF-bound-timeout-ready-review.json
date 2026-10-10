@@ -1,0 +1,27 @@
+{
+  "verdict": "ready for final freeze and lead release; no remaining implementation blocker",
+  "freeEvidenceSha256": "1b1ca28adb2e2378be41affba5f17f189bc3236483e3d6ba17de22a8b48e4e78",
+  "independentRaw": [
+    {
+      "slot": "E",
+      "requests": 7,
+      "outcome": "local-tool-timeout"
+    },
+    {
+      "slot": "F",
+      "requests": 12,
+      "outcome": "completed"
+    }
+  ],
+  "totalRequests": 19,
+  "historyIsolation": "currentTimeoutFrames selects unique wrapperPid and checks round/session path and prior session ID; no historical final merged. Actual E R1 normal then R2 pending bash timeout still correctly classified.",
+  "batchFailedRemainsVisible": true,
+  "diagnosticQuality": "unknown; only attempted missing-snapshot arm",
+  "scope": "E/F original order/model/budget, forward-looking exception after D; D not replaced; original six main ratio remains unavailable",
+  "sourceClosure": "all supplied sourceHashes currently match",
+  "limits": [
+    "Final exact HEAD/manifest freeze still required before lead release",
+    "Free 2s timeout is not paid 600s elapsed demonstration; same registered-timer code path",
+    "No provider requests or candidate changes by reviewer"
+  ]
+}

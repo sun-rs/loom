@@ -1,0 +1,306 @@
+{
+  "sourceResultSha256": "e591d9633cb7af8f620e6488a9e6b9ee967bfd972bcef666be8f596582806bfa",
+  "rawResponses": 158,
+  "arms": {
+    "print": {
+      "wirePrimaryIdentityMatches": 69,
+      "wireSha256": "c9fadaa0c8b57b75bda5aa320ca7d8c32e55416bbe41941c4d9bfe1d68a9f56c",
+      "sessionCount": 1,
+      "rawResponses": 69
+    },
+    "loom": {
+      "wirePrimaryIdentityMatches": 89,
+      "wireSha256": "8041dc3708ee9dfa5bbd0af002e5cfd0a6e54b20149eacbdb51b2ae296d53574",
+      "sessionCount": 1,
+      "rawResponses": 89
+    }
+  },
+  "snapshots": [
+    {
+      "arm": "print",
+      "round": 1,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0
+    },
+    {
+      "arm": "print",
+      "round": 2,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0
+    },
+    {
+      "arm": "print",
+      "round": 3,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0
+    },
+    {
+      "arm": "print",
+      "round": 4,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0
+    },
+    {
+      "arm": "print",
+      "round": 5,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0
+    },
+    {
+      "arm": "print",
+      "round": 6,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0
+    },
+    {
+      "arm": "print",
+      "round": 7,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0
+    },
+    {
+      "arm": "print",
+      "round": 8,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0
+    },
+    {
+      "arm": "print",
+      "round": 9,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0
+    },
+    {
+      "arm": "print",
+      "round": 10,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0
+    },
+    {
+      "arm": "print",
+      "round": 11,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0
+    },
+    {
+      "arm": "print",
+      "round": 12,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0
+    },
+    {
+      "arm": "loom",
+      "round": 1,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0
+    },
+    {
+      "arm": "loom",
+      "round": 2,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0
+    },
+    {
+      "arm": "loom",
+      "round": 3,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0
+    },
+    {
+      "arm": "loom",
+      "round": 4,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0
+    },
+    {
+      "arm": "loom",
+      "round": 5,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0
+    },
+    {
+      "arm": "loom",
+      "round": 6,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0
+    },
+    {
+      "arm": "loom",
+      "round": 7,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0
+    },
+    {
+      "arm": "loom",
+      "round": 8,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0
+    },
+    {
+      "arm": "loom",
+      "round": 9,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0
+    },
+    {
+      "arm": "loom",
+      "round": 10,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0
+    },
+    {
+      "arm": "loom",
+      "round": 11,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0
+    },
+    {
+      "arm": "loom",
+      "round": 12,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0
+    }
+  ],
+  "windows": {
+    "full12": {
+      "arms": {
+        "print": {
+          "input": 2444778,
+          "output": 22816,
+          "requests": 69,
+          "cachedInput": 2366464,
+          "reasoningKnownSubtotal": 2317,
+          "reasoningComplete": false
+        },
+        "loom": {
+          "input": 3874945,
+          "output": 29216,
+          "requests": 89,
+          "cachedInput": 3817984,
+          "reasoningKnownSubtotal": 3295,
+          "reasoningComplete": false
+        }
+      },
+      "ratios": {
+        "input": 1.5849884938427947,
+        "output": 1.2805049088359046,
+        "requests": 1.289855072463768
+      },
+      "meanInputPerRequestFactor": 1.2288113042152002
+    },
+    "late6": {
+      "arms": {
+        "print": {
+          "input": 1542076,
+          "output": 13114,
+          "requests": 35,
+          "cachedInput": 1495808,
+          "reasoningKnownSubtotal": 1393,
+          "reasoningComplete": false
+        },
+        "loom": {
+          "input": 2658927,
+          "output": 16406,
+          "requests": 50,
+          "cachedInput": 2629120,
+          "reasoningKnownSubtotal": 2142,
+          "reasoningComplete": false
+        }
+      },
+      "ratios": {
+        "input": 1.7242515933066853,
+        "output": 1.2510294341924661,
+        "requests": 1.4285714285714286
+      },
+      "meanInputPerRequestFactor": 1.2069761153146796
+    }
+  },
+  "limits": [
+    "One independently completed pair; not a batch or stability verdict.",
+    "Reasoning is output subset; missing optional dimensions stay unknown.",
+    "Provider-reported usage is not an independently certified invoice."
+  ],
+  "kernel": {
+    "identityAndPrimaryMatches": 89,
+    "gapCount": 0
+  },
+  "runnerFinalChecks": {
+    "authLinksRemoved": true,
+    "sourceHashesUnchanged": true,
+    "liveOwnedPids": [],
+    "processesExited": true,
+    "finalIssues": []
+  }
+}

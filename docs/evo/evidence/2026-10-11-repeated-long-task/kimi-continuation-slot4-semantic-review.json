@@ -1,0 +1,35 @@
+{
+  "slot": 4,
+  "rawAuditSha256": "b9494dc2b918d58aa54f784e7c40151affca2a162de0890b4471373b632e9a08",
+  "sourceFiles": 1925,
+  "sourceDrift": 0,
+  "nativeFinalMarkers": 12,
+  "quality": {
+    "originalPassed": 24,
+    "functionalPassed": 24,
+    "selfTestsPassed": 24,
+    "snapshotHashesMatch": true
+  },
+  "readmeReview": {
+    "print": {
+      "sha256": "e42d8e99d487e60e0de655efa11f22d4bee02e5f54724c68999660864a335506",
+      "findings": []
+    },
+    "loom": {
+      "sha256": "25ea468e4e5916957de854310ee97189db15b438b8b4083e699a34fbdb95522b",
+      "findings": []
+    }
+  },
+  "semanticScope": "Read API/cancelled skipping/validation/unrelated keys/sorted categories/grand totals/rounding/CLI and example arithmetic with source. Loom example3.05*10%=0.305→0.31,total3.36 and pergroup0.30/0.01 consistent. Native documents scaled precision; Loom fixed200. No new execution or arbitrary-size proof.",
+  "cleanup": {
+    "authLinksRemoved": true,
+    "processesExited": true,
+    "liveOwnedPids": [],
+    "sourceHashesUnchanged": true,
+    "finalIssues": []
+  },
+  "limits": [
+    "Single pair descriptive only; fixed-five pending.",
+    "Reasoning incomplete both arms; do not add to output."
+  ]
+}

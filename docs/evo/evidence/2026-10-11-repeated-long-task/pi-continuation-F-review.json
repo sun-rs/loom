@@ -1,0 +1,94 @@
+{
+  "slot": "F",
+  "rawResponses": 188,
+  "windows": {
+    "full12": {
+      "arms": {
+        "native": {
+          "input": 4611169,
+          "output": 78932,
+          "requests": 94,
+          "cachedInput": null,
+          "reasoningOutput": 34414
+        },
+        "loom": {
+          "input": 4723204,
+          "output": 81452,
+          "requests": 94,
+          "cachedInput": null,
+          "reasoningOutput": null
+        }
+      },
+      "ratios": {
+        "input": 1.0242964419651504,
+        "output": 1.0319262149698474,
+        "requests": 1.0
+      },
+      "meanInputPerRequestFactor": 1.0242964419651504
+    },
+    "late6": {
+      "arms": {
+        "native": {
+          "input": 3663249,
+          "output": 42921,
+          "requests": 49,
+          "cachedInput": 3538816,
+          "reasoningOutput": 20533
+        },
+        "loom": {
+          "input": 3591437,
+          "output": 46799,
+          "requests": 48,
+          "cachedInput": null,
+          "reasoningOutput": null
+        }
+      },
+      "ratios": {
+        "input": 0.9803966369744453,
+        "output": 1.0903520421239021,
+        "requests": 0.9795918367346939
+      },
+      "meanInputPerRequestFactor": 1.0008215669114129
+    }
+  },
+  "quality": {
+    "native": {
+      "passed": 12,
+      "functionalPassed": 12,
+      "selfTestsPassed": 12
+    },
+    "loom": {
+      "passed": 8,
+      "functionalPassed": 12,
+      "selfTestsPassed": 8
+    }
+  },
+  "kernel": {
+    "assistantIdentityAndPrimaryMatch": true,
+    "generations": 94,
+    "gaps": [],
+    "allProviderConsumptionRepresented": true,
+    "compactionExtraRemainsRawCost": false
+  },
+  "sourceAuditSha256": "d3718cb0e522afb532fe43b2bd2769cac33247409cea416417a966ee14d05f3a",
+  "readmeReview": {
+    "native": {
+      "sha256": "00d263e4c96ddb9cf4e602742cb96bef281447d9db7c06192f7549ba895ec529",
+      "findings": []
+    },
+    "loom": {
+      "sha256": "cc149d4cd9dd8596414902562ee023126507672d47d011d1499a4a1f6a834c6e",
+      "findings": [
+        "Wording says optional category is required when grouping, contradicted by later correct uncategorized rule; source and frozen tests implement missing categories."
+      ]
+    }
+  },
+  "semanticScope": "Read full README and verified examples: native14 gross/1discount/1.30tax/14.30total; Loom44.98 gross/3.998 exactdiscount/40.982net/3.381015tax gives44.36. Original automated outcomes unchanged.",
+  "selfTestFailure": "Loom R9-R12 original false: unescaped backslash-dot docstrings emit Python3.13 SyntaxWarning, violating own CLI stderr-empty assertion; functional checks remain true.",
+  "cleanupEvidence": "Owner cleanup-F receipt:39361source/config unchanged,51PID exited,daemon0/config removed; raw provider census independently verified.",
+  "limits": [
+    "No compaction in either F native session; all188 raw responses mapped to assistant usage.",
+    "Cache incomplete both arms, uncached unknown; reasoning subset not extra output.",
+    "Original six-pair primary remains null; B12 quality unknown and D failed retained."
+  ]
+}

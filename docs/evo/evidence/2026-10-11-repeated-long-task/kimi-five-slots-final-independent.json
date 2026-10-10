@@ -1,0 +1,336 @@
+{
+  "cohort": "kimi",
+  "slots": [
+    {
+      "id": 2,
+      "status": "completed",
+      "binding": "kimi/kimi-code/k3-256k/low",
+      "native": {
+        "input": 3034878,
+        "output": 28232,
+        "requests": 76,
+        "cachedInput": null,
+        "completedRounds": 12,
+        "primaryComplete": true,
+        "reasoningOutput": null,
+        "quality": {
+          "passed": 12,
+          "functionalPassed": 12,
+          "selfTestsPassed": 12
+        }
+      },
+      "loom": {
+        "input": 3390820,
+        "output": 31579,
+        "requests": 80,
+        "cachedInput": 3334656,
+        "completedRounds": 12,
+        "primaryComplete": true,
+        "reasoningOutput": 4984,
+        "quality": {
+          "passed": 12,
+          "functionalPassed": 12,
+          "selfTestsPassed": 12
+        }
+      }
+    },
+    {
+      "id": 3,
+      "status": "completed",
+      "binding": "kimi/kimi-code/k3-256k/low",
+      "native": {
+        "input": 2444778,
+        "output": 22816,
+        "requests": 69,
+        "cachedInput": 2366464,
+        "completedRounds": 12,
+        "primaryComplete": true,
+        "reasoningOutput": null,
+        "quality": {
+          "passed": 12,
+          "functionalPassed": 12,
+          "selfTestsPassed": 12
+        }
+      },
+      "loom": {
+        "input": 3874945,
+        "output": 29216,
+        "requests": 89,
+        "cachedInput": 3817984,
+        "completedRounds": 12,
+        "primaryComplete": true,
+        "reasoningOutput": null,
+        "quality": {
+          "passed": 12,
+          "functionalPassed": 12,
+          "selfTestsPassed": 12
+        }
+      }
+    },
+    {
+      "id": 4,
+      "status": "completed",
+      "binding": "kimi/kimi-code/k3-256k/low",
+      "native": {
+        "input": 3094765,
+        "output": 27968,
+        "requests": 79,
+        "cachedInput": 3005952,
+        "completedRounds": 12,
+        "primaryComplete": true,
+        "reasoningOutput": null,
+        "quality": {
+          "passed": 12,
+          "functionalPassed": 12,
+          "selfTestsPassed": 12
+        }
+      },
+      "loom": {
+        "input": 2416053,
+        "output": 22483,
+        "requests": 68,
+        "cachedInput": 2373632,
+        "completedRounds": 12,
+        "primaryComplete": true,
+        "reasoningOutput": null,
+        "quality": {
+          "passed": 12,
+          "functionalPassed": 12,
+          "selfTestsPassed": 12
+        }
+      }
+    },
+    {
+      "id": 5,
+      "status": "completed",
+      "binding": "kimi/kimi-code/k3-256k/low",
+      "native": {
+        "input": 3413508,
+        "output": 28353,
+        "requests": 83,
+        "cachedInput": 3322112,
+        "completedRounds": 12,
+        "primaryComplete": true,
+        "reasoningOutput": null,
+        "quality": {
+          "passed": 12,
+          "functionalPassed": 12,
+          "selfTestsPassed": 12
+        }
+      },
+      "loom": {
+        "input": 3220919,
+        "output": 28281,
+        "requests": 80,
+        "cachedInput": 3169536,
+        "completedRounds": 12,
+        "primaryComplete": true,
+        "reasoningOutput": null,
+        "quality": {
+          "passed": 12,
+          "functionalPassed": 12,
+          "selfTestsPassed": 12
+        }
+      }
+    },
+    {
+      "id": 6,
+      "status": "completed",
+      "binding": "kimi/kimi-code/k3-256k/low",
+      "native": {
+        "input": 2767780,
+        "output": 27611,
+        "requests": 71,
+        "cachedInput": 2681600,
+        "completedRounds": 12,
+        "primaryComplete": true,
+        "reasoningOutput": null,
+        "quality": {
+          "passed": 12,
+          "functionalPassed": 12,
+          "selfTestsPassed": 12
+        }
+      },
+      "loom": {
+        "input": 3260224,
+        "output": 25793,
+        "requests": 84,
+        "cachedInput": 3211008,
+        "completedRounds": 12,
+        "primaryComplete": true,
+        "reasoningOutput": 3383,
+        "quality": {
+          "passed": 12,
+          "functionalPassed": 12,
+          "selfTestsPassed": 12
+        }
+      }
+    }
+  ],
+  "statisticalUnit": "whole session pair",
+  "primary": {
+    "input": 1.0953700022140582,
+    "output": 1.0175729737738923,
+    "requests": 1.060846560846561,
+    "cachedInput": null,
+    "uncachedInput": null
+  },
+  "originalFixedSixPrimary": null,
+  "allObserved": {
+    "native": {
+      "input": 14755709,
+      "output": 134980,
+      "requests": 378,
+      "primaryComplete": true,
+      "cachedInput": null,
+      "cachedInputKnownSubtotal": 14301440,
+      "reasoningOutput": null,
+      "reasoningOutputKnownSubtotal": 17438,
+      "uncachedInput": null
+    },
+    "loom": {
+      "input": 16162961,
+      "output": 137352,
+      "requests": 401,
+      "primaryComplete": true,
+      "cachedInput": 15906816,
+      "cachedInputKnownSubtotal": 15906816,
+      "reasoningOutput": null,
+      "reasoningOutputKnownSubtotal": 19348,
+      "uncachedInput": 256145
+    }
+  },
+  "descriptiveCompleteSubset": {
+    "ids": [2, 3, 4, 5, 6],
+    "ratios": {
+      "input": 1.0953700022140582,
+      "output": 1.0175729737738923,
+      "requests": 1.060846560846561,
+      "cachedInput": null,
+      "uncachedInput": null
+    },
+    "warning": "Descriptive complete subset only; selection/missing-outcome risk. Not original six-pair primary."
+  },
+  "perPair": [
+    {
+      "id": 2,
+      "status": "completed",
+      "ratios": {
+        "input": 1.1172837919679144,
+        "output": 1.1185534145650327,
+        "requests": 1.0526315789473684,
+        "cachedInput": null,
+        "uncachedInput": null
+      }
+    },
+    {
+      "id": 3,
+      "status": "completed",
+      "ratios": {
+        "input": 1.5849884938427947,
+        "output": 1.2805049088359046,
+        "requests": 1.289855072463768,
+        "cachedInput": 1.6133708351363045,
+        "uncachedInput": 0.7273412161299384
+      }
+    },
+    {
+      "id": 4,
+      "status": "completed",
+      "ratios": {
+        "input": 0.7806902947396652,
+        "output": 0.8038830091533181,
+        "requests": 0.8607594936708861,
+        "cachedInput": 0.7896440129449838,
+        "uncachedInput": 0.477644038597953
+      }
+    },
+    {
+      "id": 5,
+      "status": "completed",
+      "ratios": {
+        "input": 0.9435803285066272,
+        "output": 0.9974605861813565,
+        "requests": 0.963855421686747,
+        "cachedInput": 0.9540725899668645,
+        "uncachedInput": 0.5622018469079609
+      }
+    },
+    {
+      "id": 6,
+      "status": "completed",
+      "ratios": {
+        "input": 1.1779202104213484,
+        "output": 0.9341566766868277,
+        "requests": 1.1830985915492958,
+        "cachedInput": 1.1974224343675417,
+        "uncachedInput": 0.5710837781387793
+      }
+    }
+  ],
+  "bootstrap": null,
+  "limitations": [
+    "Known failed and unpaired expense retained; unknown is not zero.",
+    "Quality failures never remove consumption.",
+    "No within-session rounds treated as independent samples.",
+    "No equivalence or stability guarantee; no exploratory interval computed.",
+    "Kimi original failed slot1 expense must be attached separately, never pooled as a complete pair."
+  ],
+  "auditHashes": {
+    "2": "fd7d7c32a446f599ca97a47aa27c8e6570203c6b08e83d7992be9844eb37e3b2",
+    "3": "dea0ed5fd4bcebfc1d5890aeb7c9de61bb1c7a13f3fb1cc6e12b30255e6bae62",
+    "4": "b9494dc2b918d58aa54f784e7c40151affca2a162de0890b4471373b632e9a08",
+    "5": "73376d3400eed2ce2ac88f3b742be98464df67d370bd23b088fb22cc6f7870d4",
+    "6": "cf219cb3174a276e84bb63767f28d3f496637be964e0fa3a22442a6e667dc334"
+  },
+  "originalFailedSlot1": {
+    "status": "failed-preprompt-wire-race",
+    "completedCommonRounds": 9,
+    "native": {
+      "input": 1643451,
+      "output": 17956,
+      "requests": 52
+    },
+    "loom": {
+      "input": 2650270,
+      "output": 26984,
+      "requests": 67
+    },
+    "originalFixedSixPrimary": null,
+    "includedInFivePairRatio": false
+  },
+  "optionalKnownIncludingPartial": {
+    "native": {
+      "reasoningOutput": 17438
+    },
+    "loom": {
+      "reasoningOutput": 19348
+    }
+  },
+  "fixedLate6": {
+    "ratios": {
+      "input": 1.0886225693269245,
+      "output": 1.0175358277493376,
+      "requests": 1.0695187165775402
+    },
+    "scope": "Rounds7-12 per fixed complete session pair; descriptive, not independent replicates."
+  },
+  "status": "final-five-cohort",
+  "observedPairInputRange": {
+    "min": 0.7806902947396652,
+    "max": 1.5849884938427947,
+    "meaning": "Observed five-pair range, not population confidence interval."
+  },
+  "totalKnownIncludingOriginalFailedSlot1": {
+    "native": {
+      "input": 16399160,
+      "output": 152936,
+      "requests": 430
+    },
+    "loom": {
+      "input": 18813231,
+      "output": 164336,
+      "requests": 468
+    }
+  }
+}

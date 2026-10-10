@@ -1,0 +1,24 @@
+{
+  "kind": "continuation-summary-implementation-receipt/v1",
+  "recordedAt": "2026-10-10T15:58:40.560906+00:00",
+  "timing": "Implementation after paid continuation launch; prior reporting method unchanged. Original method and reports not overwritten.",
+  "tests": 7,
+  "red": "Missing module before implementation",
+  "green": "7 pass",
+  "invariants": [
+    "Kimi primary only fixed slots2-6 all completed12x2 with primary coverage",
+    "Ratio of sums not mean pair ratio",
+    "Quality false retained with cost",
+    "Missing slots explicit and primary null",
+    "Failed known cost retained; optional unknown independent",
+    "Pi original six primary always null in this post-stop report",
+    "Mixed binding/duplicate slots rejected"
+  ],
+  "finalAssembly": "Original Kimi slot1 cost attached separately; Pi original A/B+continuations retain statuses and B12qualityunknown. No bootstrap implemented.",
+  "hashes": {
+    "continuation_summary.py": "c47bdc7ebcd9ccf331393393e7954e9a04764b678f6936b9be9a91f8bae38244",
+    "continuation_summary_test.py": "0745ea0a2384351ccde5727460cc952eda4f610e36432393aab5f8b26ab6bfd4",
+    "continuation-summary-red.log": "2c8a002bd43b46a873b94ed19ad0490b07b9763893366c687a1b90e452d09218",
+    "continuation-summary-green.log": "83166b089fbcb82fac63f22522fa6ae99bb5e46368cd35d756277fd463dd6346"
+  }
+}

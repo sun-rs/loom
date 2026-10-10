@@ -1,0 +1,160 @@
+{
+  "scope": "Provider-reported tokens, not financial billing. Original fixed-six primary remains null for both CLIs.",
+  "kimiFixedFive": {
+    "slots": [2, 3, 4, 5, 6],
+    "primary": {
+      "input": 1.0953700022140582,
+      "output": 1.0175729737738923,
+      "requests": 1.060846560846561,
+      "cachedInput": null,
+      "uncachedInput": null
+    },
+    "late6": {
+      "ratios": {
+        "input": 1.0886225693269245,
+        "output": 1.0175358277493376,
+        "requests": 1.0695187165775402
+      },
+      "scope": "Rounds7-12 per fixed complete session pair; descriptive, not independent replicates."
+    },
+    "perPair": [
+      {
+        "id": 2,
+        "status": "completed",
+        "ratios": {
+          "input": 1.1172837919679144,
+          "output": 1.1185534145650327,
+          "requests": 1.0526315789473684,
+          "cachedInput": null,
+          "uncachedInput": null
+        }
+      },
+      {
+        "id": 3,
+        "status": "completed",
+        "ratios": {
+          "input": 1.5849884938427947,
+          "output": 1.2805049088359046,
+          "requests": 1.289855072463768,
+          "cachedInput": 1.6133708351363045,
+          "uncachedInput": 0.7273412161299384
+        }
+      },
+      {
+        "id": 4,
+        "status": "completed",
+        "ratios": {
+          "input": 0.7806902947396652,
+          "output": 0.8038830091533181,
+          "requests": 0.8607594936708861,
+          "cachedInput": 0.7896440129449838,
+          "uncachedInput": 0.477644038597953
+        }
+      },
+      {
+        "id": 5,
+        "status": "completed",
+        "ratios": {
+          "input": 0.9435803285066272,
+          "output": 0.9974605861813565,
+          "requests": 0.963855421686747,
+          "cachedInput": 0.9540725899668645,
+          "uncachedInput": 0.5622018469079609
+        }
+      },
+      {
+        "id": 6,
+        "status": "completed",
+        "ratios": {
+          "input": 1.1779202104213484,
+          "output": 0.9341566766868277,
+          "requests": 1.1830985915492958,
+          "cachedInput": 1.1974224343675417,
+          "uncachedInput": 0.5710837781387793
+        }
+      }
+    ],
+    "observedInputRange": {
+      "min": 0.7806902947396652,
+      "max": 1.5849884938427947,
+      "meaning": "Observed five-pair range, not population confidence interval."
+    },
+    "quality": "120 frozen functional/self-test passes; final README separately reviewed.",
+    "originalFailedSlot1": {
+      "status": "failed-preprompt-wire-race",
+      "completedCommonRounds": 9,
+      "native": {
+        "input": 1643451,
+        "output": 17956,
+        "requests": 52
+      },
+      "loom": {
+        "input": 2650270,
+        "output": 26984,
+        "requests": 67
+      },
+      "originalFixedSixPrimary": null,
+      "includedInFivePairRatio": false
+    },
+    "allKnownIncludingFailure": {
+      "native": {
+        "input": 16399160,
+        "output": 152936,
+        "requests": 430
+      },
+      "loom": {
+        "input": 18813231,
+        "output": 164336,
+        "requests": 468
+      }
+    }
+  },
+  "piAllSix": {
+    "primary": null,
+    "allObserved": {
+      "native": {
+        "input": 29197649,
+        "output": 474585,
+        "requests": 580,
+        "primaryComplete": true,
+        "cachedInput": null,
+        "cachedInputKnownSubtotal": 27597824,
+        "reasoningOutput": null,
+        "reasoningOutputKnownSubtotal": 208827,
+        "uncachedInput": null
+      },
+      "loom": {
+        "input": 33759772,
+        "output": 496137,
+        "requests": 608,
+        "primaryComplete": true,
+        "cachedInput": null,
+        "cachedInputKnownSubtotal": 32208256,
+        "reasoningOutput": null,
+        "reasoningOutputKnownSubtotal": 225018,
+        "uncachedInput": null
+      }
+    },
+    "combinedKnown": {
+      "input": 62957421,
+      "output": 970722,
+      "requests": 1188
+    },
+    "selectedPosthocDescription": {
+      "ids": ["A", "B", "C", "E", "F"],
+      "warning": "Posthoc corrected B terminal; missing B12 quality and excluded failed D. Selected descriptive subset, never fixed-six primary.",
+      "ratios": {
+        "input": 1.1564911656632713,
+        "output": 1.0472526707067638,
+        "requests": 1.0537261698440208
+      }
+    },
+    "quality": "B native12 snapshot absent, quality unknown. D native1 timeout, quality unknown; Loom no business execution. Original A/B/E/F self-test false verdicts retained."
+  },
+  "limits": [
+    "Small samples do not establish stable overhead or equivalence.",
+    "Pi descriptive subset excludes failed D and includes posthoc corrected B terminal; selection/missing-quality risk.",
+    "Unknown optional dimensions retained. Reasoning is part of output, not additional tokens.",
+    "No new provider calls or candidate reruns during this audit."
+  ]
+}

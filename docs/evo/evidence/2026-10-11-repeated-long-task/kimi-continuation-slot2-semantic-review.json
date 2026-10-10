@@ -1,0 +1,43 @@
+{
+  "slot": 2,
+  "sourceFilesRechecked": 1925,
+  "sourceDrift": 0,
+  "nativeFinalSelections": 12,
+  "uniqueMarkerEachTurn": true,
+  "automatedQuality": {
+    "passed": 24,
+    "functionalPassed": 24,
+    "selfTestsPassed": 24,
+    "originalVerdictsUnchanged": true
+  },
+  "readmeReview": {
+    "print": {
+      "sha256": "b45e921f2b68a7dd12aaac96fa65ef672a27cc39b8928cb3b28ea44a3b274738",
+      "findings": [],
+      "reviewed": "API/strict numeric validation/cancelled-before-row-validation/group sorting/exact aggregate rounding/FILE and stdin/printed example arithmetic match code and task."
+    },
+    "loom": {
+      "sha256": "1c97f4b7a2357f25aa016c20252754898271f1fd86cba846528de51df4308ced",
+      "findings": [
+        {
+          "severity": "minor-documentation-wording",
+          "text": "Exactly one argument is required; zero or more arguments is an error",
+          "assessment": "Second clause should say zero or more than one; first clause/examples and source len(argv)!=2 are correct. Not a functional failure; original oracle unchanged."
+        }
+      ],
+      "reviewed": "Other API/validation/rounding/grouping/CLI semantics and example arithmetic match code and task."
+    }
+  },
+  "cleanupEvidence": {
+    "authLinksRemoved": true,
+    "processesExited": true,
+    "liveOwnedPids": [],
+    "sourceHashesUnchanged": true,
+    "finalIssues": []
+  },
+  "limits": [
+    "Cleanup process states reflect sealed runner checks, not a proof against PID reuse at later review.",
+    "Static semantic review plus original immutable tests; no new candidate execution.",
+    "Single-pair ratios remain descriptive, not a five-pair or original six-pair verdict."
+  ]
+}

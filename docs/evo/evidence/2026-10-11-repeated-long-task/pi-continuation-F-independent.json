@@ -1,0 +1,339 @@
+{
+  "rawArchiveAttempts": 188,
+  "arms": {
+    "native": {
+      "rawResponses": 94,
+      "assistantResponses": 94,
+      "completedRounds": 12,
+      "usage": {
+        "input": {
+          "known": 4611169,
+          "complete": true
+        },
+        "output": {
+          "known": 78932,
+          "complete": true
+        },
+        "cachedInput": {
+          "known": 4361344,
+          "complete": false
+        },
+        "reasoningOutput": {
+          "known": 34414,
+          "complete": true
+        },
+        "requests": {
+          "known": 94,
+          "complete": true
+        }
+      },
+      "extraResponses": [],
+      "compactions": [],
+      "compactionAggregateMatchesExtras": true,
+      "nativeFileSha256": "abee3fcb4dd322d163a0ed28f34f6f16e19a3a0a9a202da0f2301fd670147cc8",
+      "providerCensus": {
+        "issues": [],
+        "providerPids": 12,
+        "sealedObservedPids": 12,
+        "attempts": 94,
+        "responseIdentities": 94,
+        "archiveRows": 94
+      }
+    },
+    "loom": {
+      "rawResponses": 94,
+      "assistantResponses": 94,
+      "completedRounds": 12,
+      "usage": {
+        "input": {
+          "known": 4723204,
+          "complete": true
+        },
+        "output": {
+          "known": 81452,
+          "complete": true
+        },
+        "cachedInput": {
+          "known": 4493568,
+          "complete": false
+        },
+        "reasoningOutput": {
+          "known": 36801,
+          "complete": false
+        },
+        "requests": {
+          "known": 94,
+          "complete": true
+        }
+      },
+      "extraResponses": [],
+      "compactions": [],
+      "compactionAggregateMatchesExtras": true,
+      "nativeFileSha256": "895650d413a4b0a3a3593d999345f8c2e357ddfeaa5693b87821f712885617dc",
+      "providerCensus": {
+        "issues": [],
+        "providerPids": 13,
+        "sealedObservedPids": 13,
+        "attempts": 94,
+        "responseIdentities": 94,
+        "archiveRows": 94
+      }
+    }
+  },
+  "snapshots": [
+    {
+      "arm": "native",
+      "round": 1,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "native",
+      "round": 2,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "native",
+      "round": 3,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "native",
+      "round": 4,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "native",
+      "round": 5,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "native",
+      "round": 6,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "native",
+      "round": 7,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "native",
+      "round": 8,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "native",
+      "round": 9,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "native",
+      "round": 10,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "native",
+      "round": 11,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "native",
+      "round": 12,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "loom",
+      "round": 1,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "loom",
+      "round": 2,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "loom",
+      "round": 3,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "loom",
+      "round": 4,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "loom",
+      "round": 5,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "loom",
+      "round": 6,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "loom",
+      "round": 7,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "loom",
+      "round": 8,
+      "hashesMatch": true,
+      "passed": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "loom",
+      "round": 9,
+      "hashesMatch": true,
+      "passed": false,
+      "functionalPassed": true,
+      "selfTestsPassed": false,
+      "selfTestsExitCode": 1,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "loom",
+      "round": 10,
+      "hashesMatch": true,
+      "passed": false,
+      "functionalPassed": true,
+      "selfTestsPassed": false,
+      "selfTestsExitCode": 1,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "loom",
+      "round": 11,
+      "hashesMatch": true,
+      "passed": false,
+      "functionalPassed": true,
+      "selfTestsPassed": false,
+      "selfTestsExitCode": 1,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "loom",
+      "round": 12,
+      "hashesMatch": true,
+      "passed": false,
+      "functionalPassed": true,
+      "selfTestsPassed": false,
+      "selfTestsExitCode": 1,
+      "selfTestsFailureKind": null
+    }
+  ],
+  "kernel": {
+    "assistantIdentityAndPrimaryMatch": true,
+    "generations": 94,
+    "gaps": [],
+    "allProviderConsumptionRepresented": true,
+    "compactionExtraRemainsRawCost": false
+  },
+  "issues": [],
+  "limits": [
+    "One pair is not a general efficiency result.",
+    "Optional raw dimensions remain unknown when absent; native default zero cannot fill them.",
+    "Compaction aggregates are cross-checks, not independent per-response records.",
+    "README semantic review is separate from frozen automated snapshot verdicts."
+  ]
+}
