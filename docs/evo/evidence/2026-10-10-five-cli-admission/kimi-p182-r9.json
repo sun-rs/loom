@@ -1,0 +1,35 @@
+{
+  "scope": "Separate writable temp copies; frozen sandbox/env/Python maintained, only verbosity2 diagnostic and second wall limit8s differ. Originalfalse retained. No provider request.",
+  "results": [
+    {
+      "wallLimitSeconds": 3,
+      "cpuLimitSecondsPerProcess": 5,
+      "elapsedSeconds": 3.006036249920726,
+      "exit": -9,
+      "timedOut": true,
+      "logSha256": "8b424e0179fcda207b9e127e47a73f6216c7bfc6430040dcc3bfcb2f37580ca9",
+      "tail": [
+        "test_arg_count_errors (test_invoice.CliTests.test_arg_count_errors) ... ok",
+        "test_bad_json_and_missing_file (test_invoice.CliTests.test_bad_json_and_missing_file) ... "
+      ]
+    },
+    {
+      "wallLimitSeconds": 8,
+      "cpuLimitSecondsPerProcess": 5,
+      "elapsedSeconds": 8.005071042105556,
+      "exit": -9,
+      "timedOut": true,
+      "logSha256": "5696f8edf743a3820659c1a9e0c479fc73ea9970249bb6e573f6a859fef9b67a",
+      "tail": [
+        "test_arg_count_errors (test_invoice.CliTests.test_arg_count_errors) ... ok",
+        "test_bad_json_and_missing_file (test_invoice.CliTests.test_bad_json_and_missing_file) ... ok",
+        "test_invalid_rows_propagate_as_error (test_invoice.CliTests.test_invalid_rows_propagate_as_error) ... ok",
+        "test_reject_unknown_and_missing_keys (test_invoice.CliTests.test_reject_unknown_and_missing_keys) ... "
+      ]
+    }
+  ],
+  "sourceHashes": {
+    "invoice.py": "4ad6e33282ed7b7c100fb9c494d47540598e2b1ef0da42de30ba8548a8b2a7f9",
+    "tests/test_invoice.py": "d7c9b17679128eb98b8c4dc218c96cc4ae098d86b36f002b5b657ab92c96c873"
+  }
+}

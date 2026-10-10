@@ -1,0 +1,361 @@
+{
+  "status": "five-cli-observed-results-reviewed; no universal efficiency acceptance",
+  "scope": "Single-instance same-session fixed long task. Claude/OpenCode/Codex/Kimi completed12pairs; Pi budget stopped after8pairs plus native9. No multi-agent collaboration acceptance.",
+  "unit": "Provider-reported sampling response tokens including cached input and all business work; request count means successful sampling/response records in these completed samples, not universal transport-attempt census.",
+  "uncachedDefinition": "total input minus reported cache-read input; not currency, no assumed cache price.",
+  "rows": [
+    {
+      "cli": "Claude",
+      "batch": "P170",
+      "model": "sonnet (resolved claude-sonnet-5-5)",
+      "effort": "low",
+      "mode": "persistent stream-json",
+      "full12": {
+        "native": {
+          "input": 3024437,
+          "output": 35290,
+          "requests": 87,
+          "cachedInput": 2953472,
+          "uncachedInput": 70965
+        },
+        "loom": {
+          "input": 2809108,
+          "output": 33345,
+          "requests": 76,
+          "cachedInput": 2745088,
+          "uncachedInput": 64020
+        },
+        "loomOverNative": {
+          "input": 0.9288036087377585,
+          "output": 0.9448852366109379,
+          "requests": 0.8735632183908046,
+          "uncachedInput": 0.9021348552103149
+        }
+      },
+      "late7to12": {
+        "native": {
+          "input": 2219809,
+          "output": 19977,
+          "requests": 49,
+          "cachedInput": 2185472,
+          "uncachedInput": 34337
+        },
+        "loom": {
+          "input": 1700100,
+          "output": 16484,
+          "requests": 34,
+          "cachedInput": 1671680,
+          "uncachedInput": 28420
+        },
+        "loomOverNative": {
+          "input": 0.7658767038064986,
+          "output": 0.8251489212594484,
+          "requests": 0.6938775510204082,
+          "uncachedInput": 0.8276785974313423
+        }
+      },
+      "quality": "24 functional+selftest snapshots pass; Loom final README says count3 for2 rows, so not equal quality across all deliverables."
+    },
+    {
+      "cli": "OpenCode",
+      "batch": "P171",
+      "model": "aihubmix/deepseek-v4.1-flash",
+      "effort": "low",
+      "mode": "native run control versus warm serve product",
+      "full12": {
+        "native": {
+          "input": 4753679,
+          "output": 62331,
+          "requests": 102,
+          "cachedInput": 4590720,
+          "uncachedInput": 162959
+        },
+        "loom": {
+          "input": 4965736,
+          "output": 65519,
+          "requests": 101,
+          "cachedInput": 4864896,
+          "uncachedInput": 100840
+        },
+        "loomOverNative": {
+          "input": 1.0446090280811977,
+          "output": 1.0511462995941026,
+          "requests": 0.9901960784313726,
+          "uncachedInput": 0.6188059573266895
+        }
+      },
+      "late7to12": {
+        "native": {
+          "input": 3375675,
+          "output": 35669,
+          "requests": 48,
+          "cachedInput": 3265536,
+          "uncachedInput": 110139
+        },
+        "loom": {
+          "input": 3455467,
+          "output": 33596,
+          "requests": 48,
+          "cachedInput": 3410944,
+          "uncachedInput": 44523
+        },
+        "loomOverNative": {
+          "input": 1.023637346604753,
+          "output": 0.941882306764978,
+          "requests": 1.0,
+          "uncachedInput": 0.40424372837959305
+        }
+      },
+      "quality": "24 snapshots pass; both final READMEs reviewed without material inconsistency."
+    },
+    {
+      "cli": "Codex",
+      "batch": "P176",
+      "model": "gpt-6-luna",
+      "effort": "low",
+      "mode": "ordinary exec/resume",
+      "full12": {
+        "native": {
+          "input": 2352494,
+          "output": 18905,
+          "requests": 75,
+          "cachedInput": 2234112,
+          "uncachedInput": 118382
+        },
+        "loom": {
+          "input": 1968717,
+          "output": 19154,
+          "requests": 69,
+          "cachedInput": 1847040,
+          "uncachedInput": 121677
+        },
+        "loomOverNative": {
+          "input": 0.8368637709596709,
+          "output": 1.013171118751653,
+          "requests": 0.92,
+          "uncachedInput": 1.027833623354902
+        }
+      },
+      "late7to12": {
+        "native": {
+          "input": 1721698,
+          "output": 10482,
+          "requests": null,
+          "cachedInput": 1663488,
+          "uncachedInput": 58210
+        },
+        "loom": {
+          "input": 1344985,
+          "output": 10868,
+          "requests": null,
+          "cachedInput": 1286912,
+          "uncachedInput": 58073
+        },
+        "loomOverNative": {
+          "input": 0.7811968184896538,
+          "output": 1.0368250333905744,
+          "requests": null,
+          "uncachedInput": 0.9976464524995705
+        }
+      },
+      "quality": "24 snapshots pass; both final READMEs reviewed without material inconsistency.",
+      "additionalCompleted": {
+        "native": {
+          "count": 12,
+          "input": 91980,
+          "output": 0
+        },
+        "loom": {
+          "count": 11,
+          "input": 84315,
+          "output": 0
+        },
+        "loomRound6": "Native startup_prewarm_resolve timed_out at 14843 ms, no startup websocket warmup span; 10 actual websocket requests matched 10 successful sampling usages. Do not fabricate a twelfth startup usage."
+      },
+      "allCompletedReported": {
+        "native": {
+          "count": 87,
+          "input": 2444474,
+          "output": 18905
+        },
+        "loom": {
+          "count": 80,
+          "input": 2053032,
+          "output": 19154
+        }
+      },
+      "allCompletedInputRatio": 0.8398665725223504,
+      "allCompletedOutputRatio": 1.013171118751653,
+      "coverageLimits": [
+        "OTel usage event lacks response ID; startup association uses source/timing evidence.",
+        "Completed-event reported tokens are not an invoice.",
+        "Normal successful sampling records and exported attempt trees reconcile; no theoretical lossless exporter guarantee."
+      ],
+      "fairnessLimit": "Shared original CODEX_HOME is not strong native-session-file isolation. No such read observed in recorded tool invocations."
+    },
+    {
+      "cli": "Pi",
+      "batch": "P181",
+      "model": "aihubmix/deepseek-v4.1-flash",
+      "effort": "low",
+      "mode": "ordinary print/json",
+      "full12": null,
+      "late7to12": null,
+      "commonPrefix8AllReported": {
+        "native": {
+          "input": 2451268,
+          "output": 54134,
+          "requests": 74,
+          "cachedInput": 2335872,
+          "uncachedInput": 115396
+        },
+        "loom": {
+          "input": 5537155,
+          "output": 94651,
+          "requests": 92,
+          "cachedInput": null,
+          "uncachedInput": null
+        },
+        "ratios": {
+          "input": 2.258894172322243,
+          "output": 1.7484575313111907,
+          "requests": 1.2432432432432432,
+          "uncachedInput": null
+        },
+        "notFullTask": true
+      },
+      "native9Unpaired": {
+        "input": 567883,
+        "output": 4524,
+        "requests": 8,
+        "cachedInput": 561920,
+        "uncachedInput": 5963
+      },
+      "allObserved": {
+        "native": {
+          "input": 3019151,
+          "output": 58658,
+          "requests": 82,
+          "cachedInput": 2897792,
+          "uncachedInput": 121359
+        },
+        "loom": {
+          "input": 5537155,
+          "output": 94651,
+          "requests": 92,
+          "cachedInput": null,
+          "uncachedInput": null
+        }
+      },
+      "accountingLimit": "Raw174responses complete primary; Loom2compaction responses82296/3108 matched native aggregate but missing Kernel;90sampling matched. One raw cache breakdown missing, aggregateuncached unknown.",
+      "samplingOnlyPrefix8Alternative": {
+        "nativeInput": 2451268,
+        "nativeOutput": 54134,
+        "nativeResponses": 74,
+        "loomInput": 5454859,
+        "loomOutput": 91543,
+        "loomResponses": 90,
+        "inputRatio": 2.2253213438922224,
+        "outputRatio": 1.6910444452654525,
+        "requestsRatio": 1.2162162162162162,
+        "use": "Secondary scope only; do not subtract compaction cost from full observed consumption."
+      },
+      "quality": "17 snapshots originalfunctional+selftests pass; commonR8README reviewed, no finalR12claim.",
+      "source": "/Users/sun/.loom/reviews/2026-10-10-five-cli-final-review/p181-independent-review.json",
+      "sourceSha256": "8473cc8e2afa10fe5ef2fa80d474bbcb787aab13cf4531929bb5747dac676813"
+    },
+    {
+      "cli": "Kimi",
+      "batch": "P182",
+      "model": "kimi-code/k3-256k",
+      "effort": "low",
+      "mode": "native print versus product cold ACP",
+      "full12": {
+        "native": {
+          "input": 2757171,
+          "output": 26950,
+          "cachedInput": 2673408,
+          "reasoningOutput": 3241,
+          "requests": 75,
+          "uncachedInput": 83763
+        },
+        "loom": {
+          "input": 4005653,
+          "output": 29297,
+          "cachedInput": 3947776,
+          "reasoningOutput": null,
+          "requests": 96,
+          "uncachedInput": 57877
+        },
+        "ratios": {
+          "input": 1.4528126837254562,
+          "output": 1.08708719851577,
+          "requests": 1.28,
+          "uncachedInput": 0.6909614030061005
+        }
+      },
+      "late7to12": {
+        "native": {
+          "input": 1813409,
+          "output": 15252,
+          "cachedInput": 1764864,
+          "reasoningOutput": 2403,
+          "requests": 40,
+          "uncachedInput": 48545
+        },
+        "loom": {
+          "input": 2532594,
+          "output": 15633,
+          "cachedInput": 2502400,
+          "reasoningOutput": null,
+          "requests": 48,
+          "uncachedInput": 30194
+        },
+        "ratios": {
+          "input": 1.3965928259978857,
+          "output": 1.0249803304484657,
+          "requests": 1.2,
+          "uncachedInput": 0.6219796065506231
+        }
+      },
+      "quality": "24 functional snapshots pass; LoomR9\u201312 selftesttimeout retained:20/24 overalltrue, not fullquality acceptance. Final README/source arithmetic consistent.",
+      "dynamicTools": {
+        "nativeChangedRequests": 11,
+        "loomChangedRequests": 0,
+        "changes": {
+          "07a67bd6273d1e2ddcf5cf2063345f3bfd60ed93731bb270b2628a935fdf3f03": {
+            "missing": ["ReadMediaFile"],
+            "added": []
+          }
+        },
+        "meaning": "Native resumed first request can omit ReadMediaFile; no all-turn schema-equivalence claim."
+      },
+      "orderLimitation": "Native first every round; order/provider-load/shared-cache effects not isolated.",
+      "source": "/Users/sun/.loom/reviews/2026-10-10-five-cli-final-review/p182-independent-review.json",
+      "sourceSha256": "a1d1e3ea77960eb3fc8f8381219f4c4f18337bd15854891110c25585fc50bd8b"
+    }
+  ],
+  "globalLimits": [
+    "One trajectory per exact CLI/model/effort; no variance/confidence estimate or universal causal claim.",
+    "Do not aggregate ratios across different providers/models or infer monetary savings.",
+    "Codex all-completed startup usage is shown separately; do not silently compare that broader boundary with other CLI sampling-only totals.",
+    "Normal native conversation history retained; disabled automatic-memory evidence is provider/version specific.",
+    "Token reductions can result from different business trajectories; zero communication calls does not isolate standing prompt overhead.",
+    "Failed predecessor batches and known consumption remain separate historical evidence, not erased by successful followups.",
+    "Pi common-prefix all-reported includes compaction; its full12 and prespecified late6 remain unknown. Sampling alternative is separately labeled, never deletes consumed cost."
+  ],
+  "sources": [
+    {
+      "path": "docs/evo/evidence/2026-10-10-native-final-own-post/claude-p170.json",
+      "sha256": "37c20747c4f3a3ec94cd97c7fd0250cee7548e4c70c1097166ca682de2a1ac88"
+    },
+    {
+      "path": "docs/evo/evidence/2026-10-10-native-final-own-post/opencode-p171.json",
+      "sha256": "934abd5998819932bb9fed112270678d0df3abcde8849682fda5e9340cd00e5a"
+    },
+    {
+      "path": "docs/evo/evidence/2026-10-10-five-cli-admission/codex-p176.json",
+      "sha256": "f41939f21cf73209869098c53be96e002ab96bd7ad0a6164dbf98bc71bd2162e"
+    }
+  ]
+}

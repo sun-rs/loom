@@ -1,0 +1,359 @@
+{
+  "batch": "P182",
+  "status": "complete-accounting-with-preserved-quality-failures",
+  "model": "kimi-code/k3-256k",
+  "effort": "low",
+  "independentVerification": "Original observer census+raw SSE duplicate equality and bodySHA; original wire step.end responseID; read-only Kernel SQLite;24 artifact receipts independently checked.",
+  "full12": {
+    "native": {
+      "input": 2757171,
+      "output": 26950,
+      "cachedInput": 2673408,
+      "reasoningOutput": 3241,
+      "requests": 75,
+      "uncachedInput": 83763
+    },
+    "loom": {
+      "input": 4005653,
+      "output": 29297,
+      "cachedInput": 3947776,
+      "reasoningOutput": null,
+      "requests": 96,
+      "uncachedInput": 57877
+    },
+    "ratios": {
+      "input": 1.4528126837254562,
+      "output": 1.08708719851577,
+      "requests": 1.28,
+      "uncachedInput": 0.6909614030061005
+    }
+  },
+  "plannedLate7to12": {
+    "native": {
+      "input": 1813409,
+      "output": 15252,
+      "cachedInput": 1764864,
+      "reasoningOutput": 2403,
+      "requests": 40,
+      "uncachedInput": 48545
+    },
+    "loom": {
+      "input": 2532594,
+      "output": 15633,
+      "cachedInput": 2502400,
+      "reasoningOutput": null,
+      "requests": 48,
+      "uncachedInput": 30194
+    },
+    "ratios": {
+      "input": 1.3965928259978857,
+      "output": 1.0249803304484657,
+      "requests": 1.2,
+      "uncachedInput": 0.6219796065506231
+    }
+  },
+  "kernelMatchedResponses": 96,
+  "kernelGapRows": 0,
+  "schemaHashes": {
+    "native": {
+      "2f801ade948b0c0622fcd53d2ab50d186fdfdd5539126bf0d5338f2ca24f1bd1": 64,
+      "07a67bd6273d1e2ddcf5cf2063345f3bfd60ed93731bb270b2628a935fdf3f03": 11
+    },
+    "loom": {
+      "2f801ade948b0c0622fcd53d2ab50d186fdfdd5539126bf0d5338f2ca24f1bd1": 96
+    }
+  },
+  "snapshots": [
+    {
+      "arm": "native",
+      "round": 1,
+      "hashesMatch": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "native",
+      "round": 10,
+      "hashesMatch": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "native",
+      "round": 11,
+      "hashesMatch": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "native",
+      "round": 12,
+      "hashesMatch": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "native",
+      "round": 2,
+      "hashesMatch": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "native",
+      "round": 3,
+      "hashesMatch": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "native",
+      "round": 4,
+      "hashesMatch": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "native",
+      "round": 5,
+      "hashesMatch": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "native",
+      "round": 6,
+      "hashesMatch": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "native",
+      "round": 7,
+      "hashesMatch": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "native",
+      "round": 8,
+      "hashesMatch": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "native",
+      "round": 9,
+      "hashesMatch": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "loom",
+      "round": 1,
+      "hashesMatch": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "loom",
+      "round": 10,
+      "hashesMatch": true,
+      "functionalPassed": true,
+      "selfTestsPassed": false,
+      "passed": false,
+      "selfTestsExitCode": 124,
+      "selfTestsFailureKind": "timeout"
+    },
+    {
+      "arm": "loom",
+      "round": 11,
+      "hashesMatch": true,
+      "functionalPassed": true,
+      "selfTestsPassed": false,
+      "passed": false,
+      "selfTestsExitCode": 124,
+      "selfTestsFailureKind": "timeout"
+    },
+    {
+      "arm": "loom",
+      "round": 12,
+      "hashesMatch": true,
+      "functionalPassed": true,
+      "selfTestsPassed": false,
+      "passed": false,
+      "selfTestsExitCode": 124,
+      "selfTestsFailureKind": "timeout"
+    },
+    {
+      "arm": "loom",
+      "round": 2,
+      "hashesMatch": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "loom",
+      "round": 3,
+      "hashesMatch": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "loom",
+      "round": 4,
+      "hashesMatch": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "loom",
+      "round": 5,
+      "hashesMatch": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "loom",
+      "round": 6,
+      "hashesMatch": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "loom",
+      "round": 7,
+      "hashesMatch": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "loom",
+      "round": 8,
+      "hashesMatch": true,
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "passed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null
+    },
+    {
+      "arm": "loom",
+      "round": 9,
+      "hashesMatch": true,
+      "functionalPassed": true,
+      "selfTestsPassed": false,
+      "passed": false,
+      "selfTestsExitCode": 124,
+      "selfTestsFailureKind": "timeout"
+    }
+  ],
+  "readmeReview": {
+    "bothFinalReadWithImplementation": true,
+    "materialContradictionsFound": [],
+    "nativeExample": "2 x1.50=3.00 plus10%tax0.30 yields3.30; grouped output explicitly abbreviated using ellipses, not literal complete JSON.",
+    "loomExample": "20.00 gross-2.00 discount=18.00net; tax1.80,total19.80; one group and empty input example consistent.",
+    "limits": "Source/semantic review and original oracle only, not all-input correctness proof."
+  },
+  "limits": [
+    "Original evaluator selftest timeout failures are retained despite hidden functional checks passing. Local R9 bounded diagnostic is not a replacement verdict.",
+    "Fixed native-first order every round, not randomized; shared cache/time effects not isolated.",
+    "Tool schema observations are per-request, not assumed invariant from first matching schema.",
+    "One CLI/model long trajectory; no invoice estimate, no universal efficiency acceptance.",
+    "Explicit communication absence cannot rule out indirect effect of Loom standing context."
+  ],
+  "sourceHashes": {
+    "result.private.json": "0eb10f713d7704166fe700a3cc116154c8cdc7e93e0acc56237bd5bda0787b4f",
+    "native/wire.private.jsonl": "abd10cb4657bfe0be8987e03b5dabb56f329cd064183081391d4c02dbdc2b1ba",
+    "loom/wire.private.jsonl": "428486b989184b65fcf94d57aa1eddba93384c3ebe9da15338ee6d59947d6889"
+  },
+  "rawIdProofSha256": "b055c3d8dc3814f926e438e826fe8d87d5f4e1ead821969d00a62a80d441d4cf",
+  "sessionCounts": {
+    "native": 1,
+    "loom": 1
+  },
+  "kernelCompletion": {
+    "activationStates": {
+      "completed": 12
+    },
+    "markerKinds": {
+      "final-output": 12
+    }
+  },
+  "dynamicToolLimitation": {
+    "nativeChangedRequests": 11,
+    "loomChangedRequests": 0,
+    "changes": {
+      "07a67bd6273d1e2ddcf5cf2063345f3bfd60ed93731bb270b2628a935fdf3f03": {
+        "missing": ["ReadMediaFile"],
+        "added": []
+      }
+    },
+    "meaning": "Native resumed first request can omit ReadMediaFile; no all-turn schema-equivalence claim."
+  },
+  "ownerCleanup": {
+    "sourceCount": 4987,
+    "ownerReportedSourceMatches": true,
+    "ownerReportedExitedPids": 80,
+    "temporaryConfigsAndAuthLinksRemoved": true,
+    "evidence": "/Users/sun/.loom/reviews/2026-10-10-kimi-p182/handoff-audit/public-evidence.json",
+    "independentFullSourceSweepNotRepeated": true
+  }
+}

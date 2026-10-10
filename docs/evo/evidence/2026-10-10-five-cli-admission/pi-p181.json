@@ -1,0 +1,166 @@
+{
+  "batch": "P181",
+  "status": "stopped-at-pre-arm-output-budget",
+  "model": "pi/aihubmix/deepseek-v4.1-flash",
+  "effort": "low",
+  "plannedPairs": 12,
+  "completedPairs": 8,
+  "additionalCompletedNativeRound": 9,
+  "newPaidAttempts": 1,
+  "retry": false,
+  "stop": {
+    "before": "Loom R9",
+    "outputLimit": 150000,
+    "observedCombinedOutput": 153309,
+    "combinedInput": 8556306,
+    "requests": 174,
+    "boundary": "Combined raw-observed totals checked before each arm, not a hard in-flight cap."
+  },
+  "primaryAccounting": {
+    "rawRequests": {
+      "native": 82,
+      "loom": 92
+    },
+    "rawPrimaryComplete": true,
+    "knownTotals": {
+      "native": {
+        "input": 3019151,
+        "output": 58658,
+        "cachedInput": 2897792
+      },
+      "loom": {
+        "input": 5537155,
+        "output": 94651,
+        "cachedInput": 5260800
+      }
+    },
+    "samplingNativeUniqueResponses": {
+      "native": 82,
+      "loom": 90
+    },
+    "kernelUniqueResponses": 90,
+    "assistantPrimaryThreeWayMatch": true,
+    "allRequestsThreeWayMatch": false,
+    "compaction": {
+      "arm": "loom",
+      "round": 8,
+      "rawResponses": 2,
+      "input": 82296,
+      "output": 3108,
+      "cachedInput": 0,
+      "nativeCompactionAggregateMatches": true,
+      "exactNativePerResponseIdsAvailable": false,
+      "kernelIncludesCompaction": false
+    }
+  },
+  "windows": {
+    "prefix8": {
+      "native": {
+        "requests": 74,
+        "input": 2451268,
+        "output": 54134,
+        "cachedInput": 2335872,
+        "cachedInputComplete": true,
+        "uncachedInput": 115396
+      },
+      "loom": {
+        "requests": 92,
+        "input": 5537155,
+        "output": 94651,
+        "cachedInput": 5260800,
+        "cachedInputComplete": false,
+        "uncachedInput": null
+      },
+      "ratios": {
+        "requests": 1.2432432432432432,
+        "input": 2.258894172322243,
+        "output": 1.7484575313111907,
+        "cachedInput": null,
+        "uncachedInput": null
+      }
+    },
+    "nativeExtra9": {
+      "native": {
+        "requests": 8,
+        "input": 567883,
+        "output": 4524,
+        "cachedInput": 561920,
+        "cachedInputComplete": true,
+        "uncachedInput": 5963
+      },
+      "loom": {
+        "requests": 0,
+        "input": 0,
+        "output": 0,
+        "cachedInput": 0,
+        "cachedInputComplete": true,
+        "uncachedInput": 0
+      }
+    }
+  },
+  "full12Ratio": null,
+  "fixedR7To12Ratio": null,
+  "cacheLimitation": {
+    "arm": "loom",
+    "round": 4,
+    "input": 41948,
+    "output": 353,
+    "rawCachedInputMissing": true,
+    "cacheAndUncachedRatio": null,
+    "rule": "Preserve known cache sum; do not treat missing optional detail as zero."
+  },
+  "functionalQuality": {
+    "frozenSnapshots": 17,
+    "allPassed": true,
+    "finalRound12DocumentationRequirement": "not reached on either arm",
+    "independentDeliveredVersionReview": {
+      "path": "/Users/sun/.loom/reviews/2026-10-10-five-cli-final-review/p181-independent-review.json",
+      "sha256": "8473cc8e2afa10fe5ef2fa80d474bbcb787aab13cf4531929bb5747dac676813",
+      "snapshotsContentHashesVerified": 17,
+      "round8BothReadmeConsistentWithDeliveredImplementation": true,
+      "notFinalRound12DocumentAcceptance": true
+    }
+  },
+  "cleanup": {
+    "at": "2026-10-10T04:22:03.459018+00:00",
+    "runnerExitCode": 1,
+    "reason": "pre-arm combined raw output threshold reached",
+    "daemonExit": {
+      "code": 0,
+      "signal": null
+    },
+    "temporaryConfigRemoved": true,
+    "configHashesMatch": true,
+    "recordedProviderAndWrapperPids": 36,
+    "aliveRecordedPids": [],
+    "sourcePostcheck": {
+      "matched": true,
+      "checked": 39240,
+      "changed": []
+    },
+    "launchCount": 18,
+    "authCopied": false,
+    "scope": "Recorded owned PIDs and runner only; no comprehensive port census."
+  },
+  "hashes": {
+    "paid-admission.json": "2faa439df0a6dae4020511c349d30a4f8acee21f178de29984a65afc5b5b86e3",
+    "candidate-plan.json": "0b1cf26bdfedeaa8781cc98b22993aaeac61fb3abec2cd1c59e979851bc975a3",
+    "runs/1791604761567-paid/result.json": "447e9e8c4032f8d115fe43432c71efc0cfc040de1a2f4c2937c1830861eee9bd",
+    "runs/1791604761567-paid/final-accounting.private.json": "ce575e41c3d0360fde4f0aab594574871d1b12236ea6405eac2b2ff421c61be5",
+    "handoff-audit/accounting-review.json": "05c39efb1d8d8544a784e5c687430d388a5bac6c6a515eab6a981314c8bf41ac",
+    "handoff-audit/cleanup-and-freeze.json": "af2e05e675e8c7b155ce6ebcd9f4619ec55c5e7146ae4765066cc69ce0311c43"
+  },
+  "limitations": [
+    "One fixed model trajectory; no complete 12-pair efficiency verdict.",
+    "P177/P178 evidence unchanged.",
+    "Original runner conservative native/Kernel mismatch verdict preserved; new audit explains aggregate compaction without fabricating response-level native identities.",
+    "Token quantities are not monetary invoice amounts.",
+    "Controlled paired CLI extension/context discovery isolation is not unrestricted Pi default behavior."
+  ],
+  "independentAudit": {
+    "path": "/Users/sun/.loom/reviews/2026-10-10-five-cli-final-review/p181-independent-review.json",
+    "sha256": "8473cc8e2afa10fe5ef2fa80d474bbcb787aab13cf4531929bb5747dac676813",
+    "rawSamplingAndCompactionReconciled": true,
+    "kernelCompactionOmissionPreserved": true
+  }
+}

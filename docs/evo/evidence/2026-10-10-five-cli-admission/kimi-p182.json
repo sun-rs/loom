@@ -1,0 +1,1443 @@
+{
+  "batch": "P182",
+  "status": "completed-independent-audit-passed-with-quality-and-fairness-limitations",
+  "sourceHead": "416e76d80d400d56637cb8b21453b4ec65baa0dc",
+  "cli": "Kimi 2.1.1",
+  "model": "kimi-code/k3-256k",
+  "effort": "low",
+  "startedAt": "2026-10-10T03:59:27.304Z",
+  "finishedAt": "2026-10-10T04:34:06.128Z",
+  "paidExecutions": 1,
+  "reruns": 0,
+  "full12": {
+    "rounds": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+    "native": {
+      "finished": true,
+      "input": 2757171,
+      "output": 26950,
+      "generations": 75
+    },
+    "loom": {
+      "finished": true,
+      "input": 4005653,
+      "output": 29297,
+      "generations": 96
+    },
+    "complete": true,
+    "ratios": {
+      "input": 1.4528126837254562,
+      "output": 1.08708719851577,
+      "cachedInput": 1.4766829455137414,
+      "uncachedInput": 0.6909614030061005,
+      "inputPlusOutput": 1.4492724992915178
+    }
+  },
+  "predeclaredLate6": {
+    "rounds": [7, 8, 9, 10, 11, 12],
+    "native": {
+      "finished": true,
+      "input": 1813409,
+      "output": 15252,
+      "generations": 40
+    },
+    "loom": {
+      "finished": true,
+      "input": 2532594,
+      "output": 15633,
+      "generations": 48
+    },
+    "complete": true,
+    "ratios": {
+      "input": 1.3965928259978857,
+      "output": 1.0249803304484657,
+      "uncachedInput": 0.6219796065506231
+    },
+    "cacheDimensions": {
+      "native": {
+        "input": 1813409,
+        "cachedInput": 1764864,
+        "uncachedInput": 48545
+      },
+      "loom": {
+        "input": 2532594,
+        "cachedInput": 2502400,
+        "uncachedInput": 30194
+      }
+    }
+  },
+  "knownTotals": {
+    "native": {
+      "complete": true,
+      "errors": [],
+      "input": 2757171,
+      "output": 26950,
+      "cachedInput": 2673408,
+      "reasoning": 3241,
+      "httpAttempts": 75,
+      "reportedGenerations": 75,
+      "failedHttpAttempts": 0,
+      "billingCoverage": "not-observed"
+    },
+    "loom": {
+      "complete": true,
+      "errors": [],
+      "input": 4005653,
+      "output": 29297,
+      "cachedInput": 3947776,
+      "reasoning": null,
+      "httpAttempts": 96,
+      "reportedGenerations": 96,
+      "failedHttpAttempts": 0,
+      "billingCoverage": "not-observed"
+    }
+  },
+  "perRound": [
+    {
+      "arm": "native",
+      "round": 1,
+      "status": "completed",
+      "usage": {
+        "input": 171089,
+        "output": 1787,
+        "httpAttempts": 8
+      },
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsFailureKind": null,
+      "qualityPassed": true,
+      "transport": null,
+      "ordinaryPosts": null
+    },
+    {
+      "arm": "native",
+      "round": 2,
+      "status": "completed",
+      "usage": {
+        "input": 92742,
+        "output": 903,
+        "httpAttempts": 4
+      },
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsFailureKind": null,
+      "qualityPassed": true,
+      "transport": null,
+      "ordinaryPosts": null
+    },
+    {
+      "arm": "native",
+      "round": 3,
+      "status": "completed",
+      "usage": {
+        "input": 124166,
+        "output": 1011,
+        "httpAttempts": 5
+      },
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsFailureKind": null,
+      "qualityPassed": true,
+      "transport": null,
+      "ordinaryPosts": null
+    },
+    {
+      "arm": "native",
+      "round": 4,
+      "status": "completed",
+      "usage": {
+        "input": 165041,
+        "output": 2695,
+        "httpAttempts": 6
+      },
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsFailureKind": null,
+      "qualityPassed": true,
+      "transport": null,
+      "ordinaryPosts": null
+    },
+    {
+      "arm": "native",
+      "round": 5,
+      "status": "completed",
+      "usage": {
+        "input": 152454,
+        "output": 2043,
+        "httpAttempts": 5
+      },
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsFailureKind": null,
+      "qualityPassed": true,
+      "transport": null,
+      "ordinaryPosts": null
+    },
+    {
+      "arm": "native",
+      "round": 6,
+      "status": "completed",
+      "usage": {
+        "input": 238270,
+        "output": 3259,
+        "httpAttempts": 7
+      },
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsFailureKind": null,
+      "qualityPassed": true,
+      "transport": null,
+      "ordinaryPosts": null
+    },
+    {
+      "arm": "native",
+      "round": 7,
+      "status": "completed",
+      "usage": {
+        "input": 226072,
+        "output": 3407,
+        "httpAttempts": 6
+      },
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsFailureKind": null,
+      "qualityPassed": true,
+      "transport": null,
+      "ordinaryPosts": null
+    },
+    {
+      "arm": "native",
+      "round": 8,
+      "status": "completed",
+      "usage": {
+        "input": 412780,
+        "output": 2317,
+        "httpAttempts": 10
+      },
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsFailureKind": null,
+      "qualityPassed": true,
+      "transport": null,
+      "ordinaryPosts": null
+    },
+    {
+      "arm": "native",
+      "round": 9,
+      "status": "completed",
+      "usage": {
+        "input": 265665,
+        "output": 2073,
+        "httpAttempts": 6
+      },
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsFailureKind": null,
+      "qualityPassed": true,
+      "transport": null,
+      "ordinaryPosts": null
+    },
+    {
+      "arm": "native",
+      "round": 10,
+      "status": "completed",
+      "usage": {
+        "input": 477326,
+        "output": 2276,
+        "httpAttempts": 10
+      },
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsFailureKind": null,
+      "qualityPassed": true,
+      "transport": null,
+      "ordinaryPosts": null
+    },
+    {
+      "arm": "native",
+      "round": 11,
+      "status": "completed",
+      "usage": {
+        "input": 209306,
+        "output": 2894,
+        "httpAttempts": 4
+      },
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsFailureKind": null,
+      "qualityPassed": true,
+      "transport": null,
+      "ordinaryPosts": null
+    },
+    {
+      "arm": "native",
+      "round": 12,
+      "status": "completed",
+      "usage": {
+        "input": 222260,
+        "output": 2285,
+        "httpAttempts": 4
+      },
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsFailureKind": null,
+      "qualityPassed": true,
+      "transport": null,
+      "ordinaryPosts": null
+    },
+    {
+      "arm": "loom",
+      "round": 1,
+      "status": "completed",
+      "usage": {
+        "input": 236309,
+        "output": 2743,
+        "httpAttempts": 10
+      },
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsFailureKind": null,
+      "qualityPassed": true,
+      "transport": "native-final-output",
+      "ordinaryPosts": 0
+    },
+    {
+      "arm": "loom",
+      "round": 2,
+      "status": "completed",
+      "usage": {
+        "input": 104289,
+        "output": 765,
+        "httpAttempts": 4
+      },
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsFailureKind": null,
+      "qualityPassed": true,
+      "transport": "native-final-output",
+      "ordinaryPosts": 0
+    },
+    {
+      "arm": "loom",
+      "round": 3,
+      "status": "completed",
+      "usage": {
+        "input": 165298,
+        "output": 1042,
+        "httpAttempts": 6
+      },
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsFailureKind": null,
+      "qualityPassed": true,
+      "transport": "native-final-output",
+      "ordinaryPosts": 0
+    },
+    {
+      "arm": "loom",
+      "round": 4,
+      "status": "completed",
+      "usage": {
+        "input": 237186,
+        "output": 1785,
+        "httpAttempts": 8
+      },
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsFailureKind": null,
+      "qualityPassed": true,
+      "transport": "native-final-output",
+      "ordinaryPosts": 0
+    },
+    {
+      "arm": "loom",
+      "round": 5,
+      "status": "completed",
+      "usage": {
+        "input": 194226,
+        "output": 1740,
+        "httpAttempts": 6
+      },
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsFailureKind": null,
+      "qualityPassed": true,
+      "transport": "native-final-output",
+      "ordinaryPosts": 0
+    },
+    {
+      "arm": "loom",
+      "round": 6,
+      "status": "completed",
+      "usage": {
+        "input": 535751,
+        "output": 5589,
+        "httpAttempts": 14
+      },
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsFailureKind": null,
+      "qualityPassed": true,
+      "transport": "native-final-output",
+      "ordinaryPosts": 0
+    },
+    {
+      "arm": "loom",
+      "round": 7,
+      "status": "completed",
+      "usage": {
+        "input": 259426,
+        "output": 2950,
+        "httpAttempts": 6
+      },
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsFailureKind": null,
+      "qualityPassed": true,
+      "transport": "native-final-output",
+      "ordinaryPosts": 0
+    },
+    {
+      "arm": "loom",
+      "round": 8,
+      "status": "completed",
+      "usage": {
+        "input": 321258,
+        "output": 1804,
+        "httpAttempts": 7
+      },
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsFailureKind": null,
+      "qualityPassed": true,
+      "transport": "native-final-output",
+      "ordinaryPosts": 0
+    },
+    {
+      "arm": "loom",
+      "round": 9,
+      "status": "completed",
+      "usage": {
+        "input": 495240,
+        "output": 2757,
+        "httpAttempts": 10
+      },
+      "functionalPassed": true,
+      "selfTestsPassed": false,
+      "selfTestsFailureKind": "timeout",
+      "qualityPassed": false,
+      "transport": "native-final-output",
+      "ordinaryPosts": 0
+    },
+    {
+      "arm": "loom",
+      "round": 10,
+      "status": "completed",
+      "usage": {
+        "input": 370209,
+        "output": 1540,
+        "httpAttempts": 7
+      },
+      "functionalPassed": true,
+      "selfTestsPassed": false,
+      "selfTestsFailureKind": "timeout",
+      "qualityPassed": false,
+      "transport": "native-final-output",
+      "ordinaryPosts": 0
+    },
+    {
+      "arm": "loom",
+      "round": 11,
+      "status": "completed",
+      "usage": {
+        "input": 223706,
+        "output": 2532,
+        "httpAttempts": 4
+      },
+      "functionalPassed": true,
+      "selfTestsPassed": false,
+      "selfTestsFailureKind": "timeout",
+      "qualityPassed": false,
+      "transport": "native-final-output",
+      "ordinaryPosts": 0
+    },
+    {
+      "arm": "loom",
+      "round": 12,
+      "status": "completed",
+      "usage": {
+        "input": 862755,
+        "output": 4050,
+        "httpAttempts": 14
+      },
+      "functionalPassed": true,
+      "selfTestsPassed": false,
+      "selfTestsFailureKind": "timeout",
+      "qualityPassed": false,
+      "transport": "native-final-output",
+      "ordinaryPosts": 0
+    }
+  ],
+  "firstGeneration": {
+    "native": {
+      "input": 20134,
+      "output": 90,
+      "requestBytes": 90058
+    },
+    "loom": {
+      "input": 21726,
+      "output": 97,
+      "requestBytes": 96960
+    }
+  },
+  "structure": {
+    "native": [
+      {
+        "round": 1,
+        "requests": 8,
+        "firstGeneration": {
+          "input": 20134,
+          "output": 90,
+          "requestBytes": 90058
+        },
+        "toolCounts": {
+          "Read": 2,
+          "Write": 2,
+          "Bash": 2,
+          "Edit": 2
+        },
+        "protocolToolCalls": [],
+        "toolTotal": 8,
+        "finalGeneration": {
+          "input": 22299,
+          "output": 294
+        }
+      },
+      {
+        "round": 2,
+        "requests": 4,
+        "firstGeneration": {
+          "input": 21915,
+          "output": 120,
+          "requestBytes": 97240
+        },
+        "toolCounts": {
+          "Read": 1,
+          "Edit": 1,
+          "Bash": 1
+        },
+        "protocolToolCalls": [],
+        "toolTotal": 3,
+        "finalGeneration": {
+          "input": 23883,
+          "output": 163
+        }
+      },
+      {
+        "round": 3,
+        "requests": 5,
+        "firstGeneration": {
+          "input": 23366,
+          "output": 126,
+          "requestBytes": 103427
+        },
+        "toolCounts": {
+          "Edit": 2,
+          "Read": 1,
+          "Bash": 1
+        },
+        "protocolToolCalls": [],
+        "toolTotal": 4,
+        "finalGeneration": {
+          "input": 25751,
+          "output": 153
+        }
+      },
+      {
+        "round": 4,
+        "requests": 6,
+        "firstGeneration": {
+          "input": 25236,
+          "output": 95,
+          "requestBytes": 111186
+        },
+        "toolCounts": {
+          "Read": 1,
+          "Edit": 3,
+          "Bash": 1
+        },
+        "protocolToolCalls": [],
+        "toolTotal": 5,
+        "finalGeneration": {
+          "input": 29106,
+          "output": 238
+        }
+      },
+      {
+        "round": 5,
+        "requests": 5,
+        "firstGeneration": {
+          "input": 28699,
+          "output": 281,
+          "requestBytes": 123796
+        },
+        "toolCounts": {
+          "Edit": 3,
+          "Bash": 1
+        },
+        "protocolToolCalls": [],
+        "toolTotal": 4,
+        "finalGeneration": {
+          "input": 31525,
+          "output": 264
+        }
+      },
+      {
+        "round": 6,
+        "requests": 7,
+        "firstGeneration": {
+          "input": 31200,
+          "output": 870,
+          "requestBytes": 133764
+        },
+        "toolCounts": {
+          "Write": 1,
+          "Edit": 3,
+          "Bash": 2
+        },
+        "protocolToolCalls": [],
+        "toolTotal": 6,
+        "finalGeneration": {
+          "input": 35483,
+          "output": 322
+        }
+      },
+      {
+        "round": 7,
+        "requests": 6,
+        "firstGeneration": {
+          "input": 35169,
+          "output": 1107,
+          "requestBytes": 151025
+        },
+        "toolCounts": {
+          "Write": 1,
+          "Edit": 3,
+          "Bash": 1
+        },
+        "protocolToolCalls": [],
+        "toolTotal": 5,
+        "finalGeneration": {
+          "input": 39356,
+          "output": 300
+        }
+      },
+      {
+        "round": 8,
+        "requests": 10,
+        "firstGeneration": {
+          "input": 38998,
+          "output": 293,
+          "requestBytes": 168503
+        },
+        "toolCounts": {
+          "Edit": 5,
+          "Read": 3,
+          "Bash": 1
+        },
+        "protocolToolCalls": [],
+        "toolTotal": 9,
+        "finalGeneration": {
+          "input": 43047,
+          "output": 192
+        }
+      },
+      {
+        "round": 9,
+        "requests": 6,
+        "firstGeneration": {
+          "input": 42610,
+          "output": 224,
+          "requestBytes": 184795
+        },
+        "toolCounts": {
+          "Read": 1,
+          "Bash": 2,
+          "Edit": 2
+        },
+        "protocolToolCalls": [],
+        "toolTotal": 5,
+        "finalGeneration": {
+          "input": 45643,
+          "output": 290
+        }
+      },
+      {
+        "round": 10,
+        "requests": 10,
+        "firstGeneration": {
+          "input": 45312,
+          "output": 68,
+          "requestBytes": 196989
+        },
+        "toolCounts": {
+          "Read": 2,
+          "Edit": 5,
+          "Grep": 1,
+          "Bash": 1
+        },
+        "protocolToolCalls": [],
+        "toolTotal": 9,
+        "finalGeneration": {
+          "input": 49517,
+          "output": 247
+        }
+      },
+      {
+        "round": 11,
+        "requests": 4,
+        "firstGeneration": {
+          "input": 49082,
+          "output": 940,
+          "requestBytes": 212619
+        },
+        "toolCounts": {
+          "Read": 1,
+          "Edit": 1,
+          "Bash": 1
+        },
+        "protocolToolCalls": [],
+        "toolTotal": 3,
+        "finalGeneration": {
+          "input": 53984,
+          "output": 456
+        }
+      },
+      {
+        "round": 12,
+        "requests": 4,
+        "firstGeneration": {
+          "input": 53772,
+          "output": 457,
+          "requestBytes": 232076
+        },
+        "toolCounts": {
+          "Bash": 2,
+          "Write": 1
+        },
+        "protocolToolCalls": [],
+        "toolTotal": 3,
+        "finalGeneration": {
+          "input": 56741,
+          "output": 406
+        }
+      }
+    ],
+    "loom": [
+      {
+        "round": 1,
+        "requests": 10,
+        "firstGeneration": {
+          "input": 21726,
+          "output": 97,
+          "requestBytes": 96960
+        },
+        "toolCounts": {
+          "Read": 2,
+          "Write": 2,
+          "Bash": 4,
+          "Edit": 2
+        },
+        "protocolToolCalls": [],
+        "toolTotal": 10,
+        "finalGeneration": {
+          "input": 25200,
+          "output": 246
+        }
+      },
+      {
+        "round": 2,
+        "requests": 4,
+        "firstGeneration": {
+          "input": 25596,
+          "output": 112,
+          "requestBytes": 111781
+        },
+        "toolCounts": {
+          "Read": 1,
+          "Edit": 1,
+          "Bash": 1
+        },
+        "protocolToolCalls": [],
+        "toolTotal": 3,
+        "finalGeneration": {
+          "input": 26453,
+          "output": 195
+        }
+      },
+      {
+        "round": 3,
+        "requests": 6,
+        "firstGeneration": {
+          "input": 26796,
+          "output": 49,
+          "requestBytes": 116690
+        },
+        "toolCounts": {
+          "Read": 1,
+          "Edit": 3,
+          "Bash": 1
+        },
+        "protocolToolCalls": [],
+        "toolTotal": 5,
+        "finalGeneration": {
+          "input": 28171,
+          "output": 175
+        }
+      },
+      {
+        "round": 4,
+        "requests": 8,
+        "firstGeneration": {
+          "input": 28505,
+          "output": 292,
+          "requestBytes": 123507
+        },
+        "toolCounts": {
+          "Edit": 4,
+          "Read": 2,
+          "Bash": 1
+        },
+        "protocolToolCalls": [],
+        "toolTotal": 7,
+        "finalGeneration": {
+          "input": 30784,
+          "output": 238
+        }
+      },
+      {
+        "round": 5,
+        "requests": 6,
+        "firstGeneration": {
+          "input": 31205,
+          "output": 94,
+          "requestBytes": 134048
+        },
+        "toolCounts": {
+          "Read": 1,
+          "Edit": 3,
+          "Bash": 1
+        },
+        "protocolToolCalls": [],
+        "toolTotal": 5,
+        "finalGeneration": {
+          "input": 33280,
+          "output": 251
+        }
+      },
+      {
+        "round": 6,
+        "requests": 14,
+        "firstGeneration": {
+          "input": 33770,
+          "output": 861,
+          "requestBytes": 144773
+        },
+        "toolCounts": {
+          "Write": 1,
+          "Read": 3,
+          "Edit": 7,
+          "Bash": 2
+        },
+        "protocolToolCalls": [],
+        "toolTotal": 13,
+        "finalGeneration": {
+          "input": 40785,
+          "output": 433
+        }
+      },
+      {
+        "round": 7,
+        "requests": 6,
+        "firstGeneration": {
+          "input": 41408,
+          "output": 1099,
+          "requestBytes": 176707
+        },
+        "toolCounts": {
+          "Write": 1,
+          "Read": 1,
+          "Edit": 2,
+          "Bash": 1
+        },
+        "protocolToolCalls": [],
+        "toolTotal": 5,
+        "finalGeneration": {
+          "input": 44415,
+          "output": 298
+        }
+      },
+      {
+        "round": 8,
+        "requests": 7,
+        "firstGeneration": {
+          "input": 44882,
+          "output": 270,
+          "requestBytes": 192322
+        },
+        "toolCounts": {
+          "Edit": 4,
+          "Read": 1,
+          "Bash": 1
+        },
+        "protocolToolCalls": [],
+        "toolTotal": 6,
+        "finalGeneration": {
+          "input": 46899,
+          "output": 206
+        }
+      },
+      {
+        "round": 9,
+        "requests": 10,
+        "firstGeneration": {
+          "input": 47303,
+          "output": 118,
+          "requestBytes": 202833
+        },
+        "toolCounts": {
+          "Read": 3,
+          "Bash": 3,
+          "Edit": 3
+        },
+        "protocolToolCalls": [],
+        "toolTotal": 9,
+        "finalGeneration": {
+          "input": 51195,
+          "output": 268
+        }
+      },
+      {
+        "round": 10,
+        "requests": 7,
+        "firstGeneration": {
+          "input": 51668,
+          "output": 75,
+          "requestBytes": 221907
+        },
+        "toolCounts": {
+          "Read": 2,
+          "Edit": 3,
+          "Bash": 1
+        },
+        "protocolToolCalls": [],
+        "toolTotal": 6,
+        "finalGeneration": {
+          "input": 53899,
+          "output": 204
+        }
+      },
+      {
+        "round": 11,
+        "requests": 4,
+        "firstGeneration": {
+          "input": 54249,
+          "output": 565,
+          "requestBytes": 232811
+        },
+        "toolCounts": {
+          "Read": 1,
+          "Edit": 1,
+          "Bash": 1
+        },
+        "protocolToolCalls": [],
+        "toolTotal": 3,
+        "finalGeneration": {
+          "input": 57032,
+          "output": 548
+        }
+      },
+      {
+        "round": 12,
+        "requests": 14,
+        "firstGeneration": {
+          "input": 57738,
+          "output": 64,
+          "requestBytes": 247760
+        },
+        "toolCounts": {
+          "Read": 4,
+          "Bash": 3,
+          "Edit": 5,
+          "Write": 1
+        },
+        "protocolToolCalls": [],
+        "toolTotal": 13,
+        "finalGeneration": {
+          "input": 64891,
+          "output": 388
+        }
+      }
+    ]
+  },
+  "quality": {
+    "snapshots": 24,
+    "unchangedSnapshots": 24,
+    "passed": 20,
+    "failed": [
+      {
+        "arm": "loom",
+        "round": 9,
+        "functionalPassed": true,
+        "selfTestsFailureKind": "timeout"
+      },
+      {
+        "arm": "loom",
+        "round": 10,
+        "functionalPassed": true,
+        "selfTestsFailureKind": "timeout"
+      },
+      {
+        "arm": "loom",
+        "round": 11,
+        "functionalPassed": true,
+        "selfTestsFailureKind": "timeout"
+      },
+      {
+        "arm": "loom",
+        "round": 12,
+        "functionalPassed": true,
+        "selfTestsFailureKind": "timeout"
+      }
+    ],
+    "finalReadme": "Both final READMEs independently reviewed against implementation and example arithmetic; no substantive mismatch found. Native grouped example explicitly uses ellipses and is illustrative, not executable JSON."
+  },
+  "toolEnvironment": {
+    "initialSchemaMatched": true,
+    "initialSchemaSha256": "2f801ade948b0c0622fcd53d2ab50d186fdfdd5539126bf0d5338f2ca24f1bd1",
+    "allRequestsUseInitialSchema": false,
+    "dynamicSchemaObservations": {
+      "native": [
+        {
+          "requestIndex": 8,
+          "toolsSha256": "07a67bd6273d1e2ddcf5cf2063345f3bfd60ed93731bb270b2628a935fdf3f03",
+          "toolNames": [
+            "Agent",
+            "AgentSwarm",
+            "AskUserQuestion",
+            "Bash",
+            "CreateGoal",
+            "CronCreate",
+            "CronDelete",
+            "CronList",
+            "Edit",
+            "EnterPlanMode",
+            "ExitPlanMode",
+            "FetchURL",
+            "GetGoal",
+            "Glob",
+            "Grep",
+            "Read",
+            "SetGoalBudget",
+            "Skill",
+            "TaskList",
+            "TaskOutput",
+            "TaskStop",
+            "TodoList",
+            "UpdateGoal",
+            "WaitFor",
+            "WebSearch",
+            "Write"
+          ]
+        },
+        {
+          "requestIndex": 12,
+          "toolsSha256": "07a67bd6273d1e2ddcf5cf2063345f3bfd60ed93731bb270b2628a935fdf3f03",
+          "toolNames": [
+            "Agent",
+            "AgentSwarm",
+            "AskUserQuestion",
+            "Bash",
+            "CreateGoal",
+            "CronCreate",
+            "CronDelete",
+            "CronList",
+            "Edit",
+            "EnterPlanMode",
+            "ExitPlanMode",
+            "FetchURL",
+            "GetGoal",
+            "Glob",
+            "Grep",
+            "Read",
+            "SetGoalBudget",
+            "Skill",
+            "TaskList",
+            "TaskOutput",
+            "TaskStop",
+            "TodoList",
+            "UpdateGoal",
+            "WaitFor",
+            "WebSearch",
+            "Write"
+          ]
+        },
+        {
+          "requestIndex": 17,
+          "toolsSha256": "07a67bd6273d1e2ddcf5cf2063345f3bfd60ed93731bb270b2628a935fdf3f03",
+          "toolNames": [
+            "Agent",
+            "AgentSwarm",
+            "AskUserQuestion",
+            "Bash",
+            "CreateGoal",
+            "CronCreate",
+            "CronDelete",
+            "CronList",
+            "Edit",
+            "EnterPlanMode",
+            "ExitPlanMode",
+            "FetchURL",
+            "GetGoal",
+            "Glob",
+            "Grep",
+            "Read",
+            "SetGoalBudget",
+            "Skill",
+            "TaskList",
+            "TaskOutput",
+            "TaskStop",
+            "TodoList",
+            "UpdateGoal",
+            "WaitFor",
+            "WebSearch",
+            "Write"
+          ]
+        },
+        {
+          "requestIndex": 23,
+          "toolsSha256": "07a67bd6273d1e2ddcf5cf2063345f3bfd60ed93731bb270b2628a935fdf3f03",
+          "toolNames": [
+            "Agent",
+            "AgentSwarm",
+            "AskUserQuestion",
+            "Bash",
+            "CreateGoal",
+            "CronCreate",
+            "CronDelete",
+            "CronList",
+            "Edit",
+            "EnterPlanMode",
+            "ExitPlanMode",
+            "FetchURL",
+            "GetGoal",
+            "Glob",
+            "Grep",
+            "Read",
+            "SetGoalBudget",
+            "Skill",
+            "TaskList",
+            "TaskOutput",
+            "TaskStop",
+            "TodoList",
+            "UpdateGoal",
+            "WaitFor",
+            "WebSearch",
+            "Write"
+          ]
+        },
+        {
+          "requestIndex": 28,
+          "toolsSha256": "07a67bd6273d1e2ddcf5cf2063345f3bfd60ed93731bb270b2628a935fdf3f03",
+          "toolNames": [
+            "Agent",
+            "AgentSwarm",
+            "AskUserQuestion",
+            "Bash",
+            "CreateGoal",
+            "CronCreate",
+            "CronDelete",
+            "CronList",
+            "Edit",
+            "EnterPlanMode",
+            "ExitPlanMode",
+            "FetchURL",
+            "GetGoal",
+            "Glob",
+            "Grep",
+            "Read",
+            "SetGoalBudget",
+            "Skill",
+            "TaskList",
+            "TaskOutput",
+            "TaskStop",
+            "TodoList",
+            "UpdateGoal",
+            "WaitFor",
+            "WebSearch",
+            "Write"
+          ]
+        },
+        {
+          "requestIndex": 35,
+          "toolsSha256": "07a67bd6273d1e2ddcf5cf2063345f3bfd60ed93731bb270b2628a935fdf3f03",
+          "toolNames": [
+            "Agent",
+            "AgentSwarm",
+            "AskUserQuestion",
+            "Bash",
+            "CreateGoal",
+            "CronCreate",
+            "CronDelete",
+            "CronList",
+            "Edit",
+            "EnterPlanMode",
+            "ExitPlanMode",
+            "FetchURL",
+            "GetGoal",
+            "Glob",
+            "Grep",
+            "Read",
+            "SetGoalBudget",
+            "Skill",
+            "TaskList",
+            "TaskOutput",
+            "TaskStop",
+            "TodoList",
+            "UpdateGoal",
+            "WaitFor",
+            "WebSearch",
+            "Write"
+          ]
+        },
+        {
+          "requestIndex": 41,
+          "toolsSha256": "07a67bd6273d1e2ddcf5cf2063345f3bfd60ed93731bb270b2628a935fdf3f03",
+          "toolNames": [
+            "Agent",
+            "AgentSwarm",
+            "AskUserQuestion",
+            "Bash",
+            "CreateGoal",
+            "CronCreate",
+            "CronDelete",
+            "CronList",
+            "Edit",
+            "EnterPlanMode",
+            "ExitPlanMode",
+            "FetchURL",
+            "GetGoal",
+            "Glob",
+            "Grep",
+            "Read",
+            "SetGoalBudget",
+            "Skill",
+            "TaskList",
+            "TaskOutput",
+            "TaskStop",
+            "TodoList",
+            "UpdateGoal",
+            "WaitFor",
+            "WebSearch",
+            "Write"
+          ]
+        },
+        {
+          "requestIndex": 51,
+          "toolsSha256": "07a67bd6273d1e2ddcf5cf2063345f3bfd60ed93731bb270b2628a935fdf3f03",
+          "toolNames": [
+            "Agent",
+            "AgentSwarm",
+            "AskUserQuestion",
+            "Bash",
+            "CreateGoal",
+            "CronCreate",
+            "CronDelete",
+            "CronList",
+            "Edit",
+            "EnterPlanMode",
+            "ExitPlanMode",
+            "FetchURL",
+            "GetGoal",
+            "Glob",
+            "Grep",
+            "Read",
+            "SetGoalBudget",
+            "Skill",
+            "TaskList",
+            "TaskOutput",
+            "TaskStop",
+            "TodoList",
+            "UpdateGoal",
+            "WaitFor",
+            "WebSearch",
+            "Write"
+          ]
+        },
+        {
+          "requestIndex": 57,
+          "toolsSha256": "07a67bd6273d1e2ddcf5cf2063345f3bfd60ed93731bb270b2628a935fdf3f03",
+          "toolNames": [
+            "Agent",
+            "AgentSwarm",
+            "AskUserQuestion",
+            "Bash",
+            "CreateGoal",
+            "CronCreate",
+            "CronDelete",
+            "CronList",
+            "Edit",
+            "EnterPlanMode",
+            "ExitPlanMode",
+            "FetchURL",
+            "GetGoal",
+            "Glob",
+            "Grep",
+            "Read",
+            "SetGoalBudget",
+            "Skill",
+            "TaskList",
+            "TaskOutput",
+            "TaskStop",
+            "TodoList",
+            "UpdateGoal",
+            "WaitFor",
+            "WebSearch",
+            "Write"
+          ]
+        },
+        {
+          "requestIndex": 67,
+          "toolsSha256": "07a67bd6273d1e2ddcf5cf2063345f3bfd60ed93731bb270b2628a935fdf3f03",
+          "toolNames": [
+            "Agent",
+            "AgentSwarm",
+            "AskUserQuestion",
+            "Bash",
+            "CreateGoal",
+            "CronCreate",
+            "CronDelete",
+            "CronList",
+            "Edit",
+            "EnterPlanMode",
+            "ExitPlanMode",
+            "FetchURL",
+            "GetGoal",
+            "Glob",
+            "Grep",
+            "Read",
+            "SetGoalBudget",
+            "Skill",
+            "TaskList",
+            "TaskOutput",
+            "TaskStop",
+            "TodoList",
+            "UpdateGoal",
+            "WaitFor",
+            "WebSearch",
+            "Write"
+          ]
+        },
+        {
+          "requestIndex": 71,
+          "toolsSha256": "07a67bd6273d1e2ddcf5cf2063345f3bfd60ed93731bb270b2628a935fdf3f03",
+          "toolNames": [
+            "Agent",
+            "AgentSwarm",
+            "AskUserQuestion",
+            "Bash",
+            "CreateGoal",
+            "CronCreate",
+            "CronDelete",
+            "CronList",
+            "Edit",
+            "EnterPlanMode",
+            "ExitPlanMode",
+            "FetchURL",
+            "GetGoal",
+            "Glob",
+            "Grep",
+            "Read",
+            "SetGoalBudget",
+            "Skill",
+            "TaskList",
+            "TaskOutput",
+            "TaskStop",
+            "TodoList",
+            "UpdateGoal",
+            "WaitFor",
+            "WebSearch",
+            "Write"
+          ]
+        }
+      ],
+      "loom": []
+    },
+    "interpretation": "Later native dynamic tool availability is a fairness limitation; it does not change independently reconciled usage coverage. Causes are not inferred."
+  },
+  "sourcePostcheck": {
+    "checked": 4987,
+    "changed": []
+  },
+  "cleanup": {
+    "observedPidCount": 80,
+    "allObservedExited": true,
+    "runnerExit": 0,
+    "daemonExit": 0,
+    "temporaryCredentialsAndConfigAbsent": {
+      "native": {
+        "credentials": true,
+        "oauth": true,
+        "config.toml": true
+      },
+      "loom": {
+        "credentials": true,
+        "oauth": true,
+        "config.toml": true
+      }
+    },
+    "accountLockAbsent": true,
+    "workspacesPreserved": true
+  },
+  "limitations": [
+    "One trajectory; native-first ordering and concurrent host load are confounds.",
+    "Native print and product cold ACP are different native execution modes.",
+    "Initial actual provider/model/effort/capabilities and complete schema matched; later native dynamic tool availability changes retained, no claim of full-session schema identity.",
+    "Optional Loom reasoning usage missing in some responses; no zero imputation.",
+    "CLI/provider token reports are not billing invoices.",
+    "All business recovery and extra tests/docs costs retained; no subtraction for model stochasticity.",
+    "Frozen evaluator timeout verdicts for Loom rounds9\u201312 remain failures; posthoc diagnostics do not replace them."
+  ],
+  "evidenceSha256": {
+    "independent-accounting.json": "a566b0b97bf7b5b8ed059b688f382b7dbbe33dcb184f346b5ebb0160e6f1d92e",
+    "snapshot-audit.json": "cda8ec9ea2c45658dfe9d0acf10adeda7ccbdde5499c4464c5a9cce9e655674b",
+    "cleanup-source.json": "93bb61472fa4e8a191bbdc1be7e47545c99146c9e2f97c7c03d0931fb328986f",
+    "request-structure.json": "d56ce9257724da05b098d8db739da262a9749efa6224d567a1184d6418473060",
+    "P182-admission.json": "9de95e30bb8914eb5c8e5cdaefa51f4d2b36426a2ff556d161d138c84e3ab62e",
+    "candidate-plan.json": "733e1bf16ff3c20f3bf7f9b957bb9064bc680edeade850f5ca069c0b1176f82e",
+    "publication-timing.json": "0468308217799c44251d452a9b82f2b2820232e844b74daf02e309a4c27e2cbe"
+  },
+  "publication": {
+    "uniqueFinalMarkers": 12,
+    "transports": {
+      "native-final-output": 12
+    },
+    "sameNativeSession": true,
+    "ordinaryPosts": 0,
+    "observedRequestsAfterPublication": 0
+  },
+  "independentReview": {
+    "evidence": "p182-independent-review.json",
+    "sha256": "a1d1e3ea77960eb3fc8f8381219f4c4f18337bd15854891110c25585fc50bd8b",
+    "rawResponseIds": 171,
+    "nativeWireExactMatches": 171,
+    "kernelLoomExactMatches": 96,
+    "kernelUsageGaps": 0
+  },
+  "toolEnvironmentSummary": {
+    "initialSchemaMatched": true,
+    "nativeRequestsMissingReadMediaFile": 11,
+    "loomRequestsWithAll27Tools": 96,
+    "causeOfDynamicAvailabilityChange": "not proven",
+    "actualReadMediaFileCalls": 0
+  }
+}

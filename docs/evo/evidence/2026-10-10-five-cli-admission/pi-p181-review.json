@@ -1,0 +1,585 @@
+{
+  "batch": "P181",
+  "status": "budget-stopped-after-native9-before-Loom9",
+  "reviewMethod": "Independent read-only raw SSE parsing and exact duplicate-usage dedup; native session and SQLite checks; no model requests or new business tests",
+  "rawAllComplete": true,
+  "rawCounts": {
+    "native": 82,
+    "loom": 92
+  },
+  "allObserved": {
+    "native": {
+      "input": 3019151,
+      "output": 58658,
+      "requests": 82,
+      "cachedInput": 2897792,
+      "uncachedInput": 121359
+    },
+    "loom": {
+      "input": 5537155,
+      "output": 94651,
+      "requests": 92,
+      "cachedInput": null,
+      "uncachedInput": null
+    }
+  },
+  "commonPrefix8": {
+    "native": {
+      "input": 2451268,
+      "output": 54134,
+      "requests": 74,
+      "cachedInput": 2335872,
+      "uncachedInput": 115396
+    },
+    "loom": {
+      "input": 5537155,
+      "output": 94651,
+      "requests": 92,
+      "cachedInput": null,
+      "uncachedInput": null
+    },
+    "ratios": {
+      "input": 2.258894172322243,
+      "output": 1.7484575313111907,
+      "requests": 1.2432432432432432,
+      "uncachedInput": null
+    },
+    "notFullTask": true
+  },
+  "native9Unpaired": {
+    "input": 567883,
+    "output": 4524,
+    "requests": 8,
+    "cachedInput": 561920,
+    "uncachedInput": 5963
+  },
+  "full12": null,
+  "plannedLate7to12": null,
+  "coverage": {
+    "nativeSamplingMatched": 82,
+    "loomSamplingMatchedNativeAndKernel": 90,
+    "kernelGapRows": 0,
+    "extraRawCompactionResponses": [
+      {
+        "id": "0217916058721743335ce5dc727daeef6b2fdeb6cd96fc2bc56db",
+        "round": 8,
+        "input": 78642,
+        "output": 2083,
+        "cachedInput": 0
+      },
+      {
+        "id": "0217916058872508b056a623bf426f62c797dc732369cf9cb9632",
+        "round": 8,
+        "input": 3654,
+        "output": 1025,
+        "cachedInput": 0
+      }
+    ],
+    "compactionNativeAggregate": {
+      "input": 82296,
+      "output": 3108,
+      "cacheRead": 0,
+      "cacheWrite": 0
+    },
+    "compactionRawAggregateMatches": true,
+    "productUsageCoverageGap": "Two complete compaction responses are present in raw and one native compaction usage aggregate but absent from Kernel usage. Preserve original runner mismatch; do not claim174-way response-ID matching."
+  },
+  "snapshots": [
+    {
+      "snapshot": "loom-1",
+      "passed": true,
+      "hashesMatch": true,
+      "receiptSha256": "bc831448df8dff34b197da005c83722c86dd8aed00c235d520581da701c5ae49"
+    },
+    {
+      "snapshot": "loom-2",
+      "passed": true,
+      "hashesMatch": true,
+      "receiptSha256": "74c8ec531daca8f9bfc5346e6b5e3f6061571416f4d18649c2c9f7377bb3f2f1"
+    },
+    {
+      "snapshot": "loom-3",
+      "passed": true,
+      "hashesMatch": true,
+      "receiptSha256": "3de0b4342ad9a82c395bd0dc98f30928e829f31ff25075387d2a5f112517b315"
+    },
+    {
+      "snapshot": "loom-4",
+      "passed": true,
+      "hashesMatch": true,
+      "receiptSha256": "fc2bf12c9c3742b0e35df6b8fa6c0a417849e4f34acb4a712f0c95ac0526dade"
+    },
+    {
+      "snapshot": "loom-5",
+      "passed": true,
+      "hashesMatch": true,
+      "receiptSha256": "b2ab65716a28c832de42ec49824f45c45522e8a22c92c7fca0eeba673f4b56b3"
+    },
+    {
+      "snapshot": "loom-6",
+      "passed": true,
+      "hashesMatch": true,
+      "receiptSha256": "bac25af35c0b575d78d463282fadc55ee65980196e75cde77b8864dc388a5e9a"
+    },
+    {
+      "snapshot": "loom-7",
+      "passed": true,
+      "hashesMatch": true,
+      "receiptSha256": "f1ee844f9a3212b096e73cce39a3ba0e9c273ad794d42d98ea8c8b2eda3b4335"
+    },
+    {
+      "snapshot": "loom-8",
+      "passed": true,
+      "hashesMatch": true,
+      "receiptSha256": "0ca97ab61d231d218709b9b7404f6dd29ea1894132c9ac955d102ed21eadd9da"
+    },
+    {
+      "snapshot": "native-1",
+      "passed": true,
+      "hashesMatch": true,
+      "receiptSha256": "b883fe7703be8ba76a40ca8e0020bb905c90082e3f546c7973b9bdc10e45c1b0"
+    },
+    {
+      "snapshot": "native-2",
+      "passed": true,
+      "hashesMatch": true,
+      "receiptSha256": "0add0afe66257e7385b171e13a4d55857a7d6b569666fe68f920a4bfd5f3c8db"
+    },
+    {
+      "snapshot": "native-3",
+      "passed": true,
+      "hashesMatch": true,
+      "receiptSha256": "21138fcef0b884c96bedbde9d63ab08e9d969b57e5e2ab36b848230287461357"
+    },
+    {
+      "snapshot": "native-4",
+      "passed": true,
+      "hashesMatch": true,
+      "receiptSha256": "5a0aa9dd09b7b6b997de943b8985d0ba3540bfa43fd4f034a98e82e50cae8739"
+    },
+    {
+      "snapshot": "native-5",
+      "passed": true,
+      "hashesMatch": true,
+      "receiptSha256": "966c1d5c86ea99306c223561472b31fd80192fdc990b39827bb58a850e473b80"
+    },
+    {
+      "snapshot": "native-6",
+      "passed": true,
+      "hashesMatch": true,
+      "receiptSha256": "fce4ad1aaeb38491b3ec5e158a26dc0d6fd30b7533c042f647f7f854e93c106b"
+    },
+    {
+      "snapshot": "native-7",
+      "passed": true,
+      "hashesMatch": true,
+      "receiptSha256": "43330256accba2c790d8d85a14128ed61c85604916b1302e61bd87e4f8805308"
+    },
+    {
+      "snapshot": "native-8",
+      "passed": true,
+      "hashesMatch": true,
+      "receiptSha256": "7e7a43b78d3950ebd2e05f99be7322cff291465d32618be6845f49a49cd1e26c"
+    },
+    {
+      "snapshot": "native-9",
+      "passed": true,
+      "hashesMatch": true,
+      "receiptSha256": "0eebeb3b93e5d91c946d3dc3c676eae63ec61ae558127e64570d3d6b8e984c99"
+    }
+  ],
+  "readmeReview": {
+    "round": 8,
+    "bothReadWithImplementation": true,
+    "materialContradictionsFound": [],
+    "limits": [
+      "Both explain grouped output adds groups despite introductory five-key wording. Neither includes numerical usage examples.",
+      "Only requirements through R8 reviewed, not R12 final docs or all possible inputs."
+    ]
+  },
+  "sourceAndCleanup": {
+    "ownerEvidence": "/Users/sun/.loom/reviews/2026-10-10-pi-p181/handoff-audit/cleanup-and-freeze.json",
+    "reportedSourceCount": 39240,
+    "ownerReportedAllHashesMatch": true,
+    "ownerReportedRecordedProcessesExited": true,
+    "reviewerDoesNotRepeatFullManifestHash": true,
+    "ownerEvidenceSha256": "af2e05e675e8c7b155ce6ebcd9f4619ec55c5e7146ae4765066cc69ce0311c43"
+  },
+  "limits": [
+    "Prefix8 includes all2 compaction response costs; no deduction as infrastructure.",
+    "Budget stop is primary stop; final product-coverage mismatch independently preserved.",
+    "No completed12-round or fixed late6 ratio; no monetary or general multi-model conclusion."
+  ],
+  "sourceHashes": {
+    "result.json": "447e9e8c4032f8d115fe43432c71efc0cfc040de1a2f4c2937c1830861eee9bd",
+    "native-session.private.jsonl": "8095558ddd47db70593be2049492880571f0a746c102307516e3cfd1480e1599",
+    "loom-session.private.jsonl": "942f15bd20606d9c5ce6f0e4f945683dedfa18b6d8d335abed44cea7d45b85b8",
+    "final-accounting.private.json": "ce575e41c3d0360fde4f0aab594574871d1b12236ea6405eac2b2ff421c61be5"
+  },
+  "rawHashesSha256": "68133f9eed6822b001536c2308c5d29b2af29411118067b705b126c1e0f334cc",
+  "contextAndBusinessPath": {
+    "rounds": {
+      "native": [
+        {
+          "round": 1,
+          "responses": 9,
+          "input": 48541,
+          "output": 5721,
+          "minimumRequestInput": 1789,
+          "maximumRequestInput": 8129,
+          "toolCountsAndResultCharacters": {
+            "bash": 3,
+            "toolResultCharacters": 3253,
+            "read": 2,
+            "write": 3,
+            "edit": 1
+          },
+          "artifactBytes": {
+            "invoice.py": 4362,
+            "tests/test_invoice.py": 4119,
+            "README.md": 1126
+          }
+        },
+        {
+          "round": 2,
+          "responses": 5,
+          "input": 47220,
+          "output": 1209,
+          "minimumRequestInput": 8556,
+          "maximumRequestInput": 10024,
+          "toolCountsAndResultCharacters": {
+            "read": 1,
+            "toolResultCharacters": 1748,
+            "edit": 2,
+            "bash": 1
+          },
+          "artifactBytes": {
+            "invoice.py": 4362,
+            "tests/test_invoice.py": 5348,
+            "README.md": 1217
+          }
+        },
+        {
+          "round": 3,
+          "responses": 6,
+          "input": 71746,
+          "output": 2732,
+          "minimumRequestInput": 10325,
+          "maximumRequestInput": 13010,
+          "toolCountsAndResultCharacters": {
+            "edit": 4,
+            "toolResultCharacters": 588,
+            "toolErrors": 1,
+            "bash": 1
+          },
+          "artifactBytes": {
+            "invoice.py": 4629,
+            "tests/test_invoice.py": 7719,
+            "README.md": 1529
+          }
+        },
+        {
+          "round": 4,
+          "responses": 8,
+          "input": 139647,
+          "output": 5720,
+          "minimumRequestInput": 13366,
+          "maximumRequestInput": 19864,
+          "toolCountsAndResultCharacters": {
+            "read": 2,
+            "toolResultCharacters": 3972,
+            "edit": 4,
+            "bash": 1
+          },
+          "artifactBytes": {
+            "invoice.py": 5270,
+            "tests/test_invoice.py": 11524,
+            "README.md": 1778
+          }
+        },
+        {
+          "round": 5,
+          "responses": 9,
+          "input": 248917,
+          "output": 9963,
+          "minimumRequestInput": 20313,
+          "maximumRequestInput": 31976,
+          "toolCountsAndResultCharacters": {
+            "read": 2,
+            "toolResultCharacters": 7842,
+            "edit": 3,
+            "toolErrors": 1,
+            "bash": 2,
+            "write": 1
+          },
+          "artifactBytes": {
+            "invoice.py": 6205,
+            "tests/test_invoice.py": 15659,
+            "README.md": 2077
+          }
+        },
+        {
+          "round": 6,
+          "responses": 19,
+          "input": 812485,
+          "output": 14031,
+          "minimumRequestInput": 32551,
+          "maximumRequestInput": 49734,
+          "toolCountsAndResultCharacters": {
+            "write": 1,
+            "toolResultCharacters": 13355,
+            "edit": 8,
+            "toolErrors": 1,
+            "bash": 3,
+            "read": 6
+          },
+          "artifactBytes": {
+            "invoice.py": 8045,
+            "tests/test_invoice.py": 20823,
+            "README.md": 2434
+          }
+        },
+        {
+          "round": 7,
+          "responses": 12,
+          "input": 691319,
+          "output": 9423,
+          "minimumRequestInput": 50441,
+          "maximumRequestInput": 61378,
+          "toolCountsAndResultCharacters": {
+            "read": 5,
+            "toolResultCharacters": 7114,
+            "edit": 4,
+            "bash": 2
+          },
+          "artifactBytes": {
+            "invoice.py": 9464,
+            "tests/test_invoice.py": 26997,
+            "README.md": 2954
+          }
+        },
+        {
+          "round": 8,
+          "responses": 6,
+          "input": 391393,
+          "output": 5335,
+          "minimumRequestInput": 61965,
+          "maximumRequestInput": 67123,
+          "toolCountsAndResultCharacters": {
+            "edit": 4,
+            "toolResultCharacters": 561,
+            "bash": 1
+          },
+          "artifactBytes": {
+            "invoice.py": 10025,
+            "tests/test_invoice.py": 30588,
+            "README.md": 3300
+          }
+        }
+      ],
+      "loom": [
+        {
+          "round": 1,
+          "responses": 9,
+          "input": 121189,
+          "output": 15696,
+          "minimumRequestInput": 3520,
+          "maximumRequestInput": 21496,
+          "toolCountsAndResultCharacters": {
+            "bash": 6,
+            "toolResultCharacters": 7156,
+            "read": 4,
+            "toolErrors": 1,
+            "write": 3
+          },
+          "artifactBytes": {
+            "invoice.py": 5640,
+            "tests/test_invoice.py": 5588,
+            "README.md": 1691
+          }
+        },
+        {
+          "round": 2,
+          "responses": 5,
+          "input": 118238,
+          "output": 2254,
+          "minimumRequestInput": 22115,
+          "maximumRequestInput": 24632,
+          "toolCountsAndResultCharacters": {
+            "read": 1,
+            "toolResultCharacters": 2101,
+            "edit": 2,
+            "bash": 1
+          },
+          "artifactBytes": {
+            "invoice.py": 5640,
+            "tests/test_invoice.py": 7723,
+            "README.md": 1836
+          }
+        },
+        {
+          "round": 3,
+          "responses": 5,
+          "input": 136844,
+          "output": 3545,
+          "minimumRequestInput": 25081,
+          "maximumRequestInput": 28608,
+          "toolCountsAndResultCharacters": {
+            "edit": 3,
+            "toolResultCharacters": 1155,
+            "bash": 1
+          },
+          "artifactBytes": {
+            "invoice.py": 6157,
+            "tests/test_invoice.py": 10395,
+            "README.md": 2180
+          }
+        },
+        {
+          "round": 4,
+          "responses": 11,
+          "input": 415011,
+          "output": 10443,
+          "minimumRequestInput": 29126,
+          "maximumRequestInput": 43254,
+          "toolCountsAndResultCharacters": {
+            "read": 4,
+            "toolResultCharacters": 16210,
+            "edit": 4,
+            "bash": 2,
+            "toolErrors": 1
+          },
+          "artifactBytes": {
+            "invoice.py": 7669,
+            "tests/test_invoice.py": 14287,
+            "README.md": 2483
+          }
+        },
+        {
+          "round": 5,
+          "responses": 7,
+          "input": 356708,
+          "output": 10671,
+          "minimumRequestInput": 44043,
+          "maximumRequestInput": 54401,
+          "toolCountsAndResultCharacters": {
+            "edit": 4,
+            "toolResultCharacters": 483,
+            "bash": 2
+          },
+          "artifactBytes": {
+            "invoice.py": 8863,
+            "tests/test_invoice.py": 19163,
+            "README.md": 2877
+          }
+        },
+        {
+          "round": 6,
+          "responses": 27,
+          "input": 2042295,
+          "output": 26065,
+          "minimumRequestInput": 55135,
+          "maximumRequestInput": 86240,
+          "toolCountsAndResultCharacters": {
+            "read": 8,
+            "toolResultCharacters": 19727,
+            "edit": 10,
+            "bash": 8
+          },
+          "artifactBytes": {
+            "invoice.py": 11026,
+            "tests/test_invoice.py": 25412,
+            "README.md": 3356
+          }
+        },
+        {
+          "round": 7,
+          "responses": 15,
+          "input": 1462932,
+          "output": 14811,
+          "minimumRequestInput": 86950,
+          "maximumRequestInput": 104782,
+          "toolCountsAndResultCharacters": {
+            "read": 5,
+            "toolResultCharacters": 13139,
+            "edit": 6,
+            "bash": 3
+          },
+          "artifactBytes": {
+            "invoice.py": 12937,
+            "tests/test_invoice.py": 31844,
+            "README.md": 3868
+          }
+        },
+        {
+          "round": 8,
+          "responses": 13,
+          "input": 883938,
+          "output": 11166,
+          "minimumRequestInput": 3654,
+          "maximumRequestInput": 111569,
+          "toolCountsAndResultCharacters": {
+            "edit": 5,
+            "toolResultCharacters": 6693,
+            "toolErrors": 2,
+            "bash": 4,
+            "read": 1
+          },
+          "artifactBytes": {
+            "invoice.py": 13555,
+            "tests/test_invoice.py": 33484,
+            "README.md": 4186
+          }
+        }
+      ]
+    },
+    "prefixMeanInputRatio": 1.8169366168678913,
+    "firstSamplingInput": {
+      "native": 1789,
+      "loom": 3520
+    },
+    "laterRoundStartInput": {
+      "R2": {
+        "native": 8556,
+        "loom": 22115
+      },
+      "R6": {
+        "native": 32551,
+        "loom": 55135
+      },
+      "R7": {
+        "native": 50441,
+        "loom": 86950
+      }
+    },
+    "dominantObservedDifferences": [
+      "R1 equal9 responses, but output5721 native versus15696 Loom; larger business history already appears by R2.",
+      "R6 native19 responses/812485input versus Loom27/2042295; Loom uses8read10edit8bash versus6read8edit3bash1write, repeatedly inspecting/updating tests and computing precision expectations.",
+      "R7 native12responses/691319input versus Loom15/1462932; both read/edit/test grouping but Loom starts from much larger history.",
+      "Loom artifacts consistently longer; R8 invoice13555bytes versus10025, tests33484versus30588. Bytes are structural evidence, never converted to token estimates.",
+      "Two compaction responses account for82296input and3108output, retained; only2.67%of the3085887 prefix input difference, so they do not explain most excess."
+    ],
+    "startupExploration": {
+      "nativeOwnCwdListing": "succeeded",
+      "loomOwnCwdListing": "succeeded",
+      "loomActions": "Environment/RAH inspection, own AGENTS.md/MEMORY.md reads, parent listing and attempted private runner directory listing.",
+      "privateRunnerListing": "Operation not permitted: correct boundary denial, not broken own-workspace tooling.",
+      "memoryFiles": "31-byte planted isolation sentinel files, not actual platform memory.",
+      "instructionEvidence": "Native Pi rules explicitly permit inspecting PI_* environment for current model/session; Loom standing supplies RAH_FROM_SEQ/TO_SEQ/Worker path context but explicitly says complete wake needs no message-check/read. No requirement found to inspect parent/runner directories or read AGENTS/MEMORY files.",
+      "causalityLimit": "Prompt presence plausibly influences exploration, but one trajectory does not identify a causal effect; no blanket attribution to random model variation."
+    },
+    "noObservedExplicitWorkerCommands": true,
+    "limits": [
+      "No provider wire request bodies archived for exact repeated-system byte accounting; persisted history does not prove what was retransmitted per request.",
+      "Zero explicit Worker calls does not remove standing context or its possible indirect impact.",
+      "Longer history and more business steps co-occur; comparison is descriptive, not a controlled causal decomposition."
+    ]
+  },
+  "rawOptionalCacheGap": {
+    "responseId": "as-uthqnts0ng",
+    "round": 4,
+    "input": 41948,
+    "output": 353,
+    "effect": "Preserve complete primary totals; whole Loom cache/uncached and their ratios unknown."
+  }
+}

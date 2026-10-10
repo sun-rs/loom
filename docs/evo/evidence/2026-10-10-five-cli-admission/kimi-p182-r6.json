@@ -1,0 +1,218 @@
+{
+  "batch": "P182",
+  "round": 6,
+  "scope": "Read-only completed R6 only; ongoing run untouched; no long-task verdict",
+  "arms": {
+    "native": {
+      "responses": 7,
+      "input": 238270,
+      "output": 3259,
+      "toolCounts": {
+        "Write": 1,
+        "Edit": 3,
+        "Bash": 2
+      },
+      "observedCommunicationToolCalls": 0,
+      "start": "2026-10-10T04:10:06.592Z",
+      "end": "2026-10-10T04:11:48.001Z",
+      "generationResponseIds": [
+        "chatcmpl-BwnKKAR7Oi0laNjxSXUd3bzS",
+        "chatcmpl-peA6gtC2mRpFAiJ1nHbuEGOt",
+        "chatcmpl-Kl1VpucxuyemIa6sBIIavGFL",
+        "chatcmpl-Cr4yS9xPqXbxBRLubXHnnVdd",
+        "chatcmpl-DLeo7DYLmPC4pIE0YhGK30e5",
+        "chatcmpl-XPZXpEiiAPB8QjFrVJm3IAKP",
+        "chatcmpl-uJ3AAafOxBQRSq6fSGvMsk8z"
+      ],
+      "wireEvidence": {
+        "source": "/Users/sun/.loom/reviews/2026-10-10-kimi-p182/paid-P182/native/wire.private.jsonl",
+        "method": "Immutable completed-round timestamp subset copied read-only from ongoing cumulative archive",
+        "excerpt": "/Users/sun/.loom/reviews/2026-10-10-five-cli-final-review/p182-r6-native-wire-excerpt.private.json",
+        "sha256": "cb42922944d384fcb6cc22f59b64d6bd04434a10e3d96666bcdab8462d3b6aad"
+      },
+      "toolSequence": [
+        {
+          "id": "tool_I95ayL5NiK92qWGeooK80Q3V",
+          "name": "Write",
+          "target": "invoice.py",
+          "command": null,
+          "argumentsSha256": "eb51f66675cb598616941f80f1573853f49ce731a430e35729965a45113ad75a"
+        },
+        {
+          "id": "tool_ahGB3jAlXWGeaIcHQmxEuvPW",
+          "name": "Edit",
+          "target": "tests/test_invoice.py",
+          "command": null,
+          "argumentsSha256": "618c88c0998ab6d067324b26bc623af960d01cbb883ab17756982833e331930b"
+        },
+        {
+          "id": "tool_8BaIbUrvhLjt057OTbbgEJ95",
+          "name": "Edit",
+          "target": "tests/test_invoice.py",
+          "command": null,
+          "argumentsSha256": "9aae27632b002adc89a9c4e473713c806b97cb37e42bd15779b0e28e43f8a370"
+        },
+        {
+          "id": "tool_Hx6FkHTECHrrh2k8ualNjVBb",
+          "name": "Bash",
+          "target": null,
+          "command": "cat >> tests/test_invoice.py <<'EOF'\n\nif __name__ == \"__main__\":\n    unittest.main()\nEOF\npython3 -m unittest discover -s tests",
+          "argumentsSha256": "d9056fa061169a3eaa308e55bdb1645ff36b7aaa4b2703d76889e590f5b4d96b"
+        },
+        {
+          "id": "tool_rIkTBhn1mrwhFEbbVp6JYPiC",
+          "name": "Edit",
+          "target": "tests/test_invoice.py",
+          "command": null,
+          "argumentsSha256": "185c1ef63aaa1eac88e2374dcdbebde3b7ebda672081ce857ea6d45ebadc1548"
+        },
+        {
+          "id": "tool_35xL0PUsyUmRHy1y9XS3QYnp",
+          "name": "Bash",
+          "target": null,
+          "command": "python3 -m unittest discover -s tests",
+          "argumentsSha256": "ea7a439639a4438d54ac103e0f43b843afd1c9ef301a99b7b91ed48709585b5b"
+        }
+      ]
+    },
+    "loom": {
+      "responses": 14,
+      "input": 535751,
+      "output": 5589,
+      "toolCounts": {
+        "Write": 1,
+        "Read": 3,
+        "Edit": 7,
+        "Bash": 2
+      },
+      "observedCommunicationToolCalls": 0,
+      "start": "2026-10-10T04:11:48.001Z",
+      "end": "2026-10-10T04:15:18.488Z",
+      "generationResponseIds": [
+        "chatcmpl-Q5krIspx5n8om8hU2ShnmoGi",
+        "chatcmpl-nAENwSxFVtDJLJQ29nmFBruC",
+        "chatcmpl-Y2a7Nppngvg5X25LUWxyr3fB",
+        "chatcmpl-Gj21fXIxd7ghVxBtTNDwTqtf",
+        "chatcmpl-3QHiMmPjqWnffMq2EOosfCq6",
+        "chatcmpl-K8S7uBK0YHeVey20owgpuUxi",
+        "chatcmpl-oT7fTwqd8azuaJdBGlIAQRb4",
+        "chatcmpl-2CM1sdAlLUrUzJciRohSCzSr",
+        "chatcmpl-WYoWALGy8tzkfsXr76K4te98",
+        "chatcmpl-xHcnmLeWvUHxVLkFF8TIHBNj",
+        "chatcmpl-5BZzXziD6VxQWwxJFPM3eZ6d",
+        "chatcmpl-APve64pUugDlBdyyufMPbrFv",
+        "chatcmpl-aEP228igK3JZeO7TNbLySMSs",
+        "chatcmpl-ceVJBqkYCc6hVNVoxRJRcuvR"
+      ],
+      "wireEvidence": {
+        "source": "/Users/sun/.loom/reviews/2026-10-10-kimi-p182/paid-P182/loom/wire.private.jsonl",
+        "method": "Immutable completed-round timestamp subset copied read-only from ongoing cumulative archive",
+        "excerpt": "/Users/sun/.loom/reviews/2026-10-10-five-cli-final-review/p182-r6-loom-wire-excerpt.private.json",
+        "sha256": "1a67d877098d8d3c3ec37cad7466e8ec71cdda790b3a7776192a012a10054226"
+      },
+      "toolSequence": [
+        {
+          "id": "tool_G0j3pS8p9lHEdrPySXGT0K7k",
+          "name": "Write",
+          "target": "invoice.py",
+          "command": null,
+          "argumentsSha256": "4fdd51c392beb2fa2b42023e309861abe53d9b25fb6626988d8de1d23117e19a"
+        },
+        {
+          "id": "tool_gRSz3at7D1aslwA5Tr7T0m7C",
+          "name": "Read",
+          "target": "tests/test_invoice.py",
+          "command": null,
+          "argumentsSha256": "662f07c25bd2ec23b9a2439f25a50b168911e9622066c8fe88f66f49e965d3ad"
+        },
+        {
+          "id": "tool_HGmKRTFk4s7zaElnR1tQcJPE",
+          "name": "Edit",
+          "target": "tests/test_invoice.py",
+          "command": null,
+          "argumentsSha256": "27feab062b83302d5a40be0d10cb1cda00346515804c01f7c0974161c41d149a"
+        },
+        {
+          "id": "tool_yrtzw0jmifaNxsGQHHJh99Sr",
+          "name": "Edit",
+          "target": "tests/test_invoice.py",
+          "command": null,
+          "argumentsSha256": "108a6f3c50714da89556c5b69e31ca51a35917ee9e656ce0441c911e2d787419"
+        },
+        {
+          "id": "tool_s7W8llCNa039oeRPmPBefUfM",
+          "name": "Read",
+          "target": "tests/test_invoice.py",
+          "command": null,
+          "argumentsSha256": "8026e8d6284e2450e19ba6871273994f3945b7f30530e7a6b4f9364e7741dcd6"
+        },
+        {
+          "id": "tool_EI89QjJKxcVCNCXOwezr53TN",
+          "name": "Edit",
+          "target": "tests/test_invoice.py",
+          "command": null,
+          "argumentsSha256": "f80312d1f5f14324e851476d5525ed73133825f1972f17bcfe38fb2aa74385fc"
+        },
+        {
+          "id": "tool_4eaQsI8qhfUdGIZRwebp1C5k",
+          "name": "Edit",
+          "target": "tests/test_invoice.py",
+          "command": null,
+          "argumentsSha256": "da046ebc9389ce7cfc5279d766d5e5a6421e339063856eedacdfde25fbdb9754"
+        },
+        {
+          "id": "tool_dod1Yex1ekPHvKTf6qbNJolX",
+          "name": "Read",
+          "target": "tests/test_invoice.py",
+          "command": null,
+          "argumentsSha256": "aaf387b093bbf365c92edf577863bca0f593447902140351512d0a1b3e671e9b"
+        },
+        {
+          "id": "tool_85A2Oddi2iDtRGMIGrghaIUz",
+          "name": "Edit",
+          "target": "tests/test_invoice.py",
+          "command": null,
+          "argumentsSha256": "3434b31a3e91bf1f22c4f149a817e99179622578665565e5b32d9a23533930a3"
+        },
+        {
+          "id": "tool_ewpbKTDAgLLrU3PrfFKGLzXb",
+          "name": "Bash",
+          "target": null,
+          "command": "python3 -c \"\nfrom decimal import Decimal, localcontext\nwith localcontext() as c:\n    c.prec = 50\n    print(Decimal('999999999999') * Decimal('999999999999.999999'))\n\"",
+          "argumentsSha256": "ee4cd16f807480c9d49bddd97fd366d50ac2aae630f7d46c680115ee0386cda5"
+        },
+        {
+          "id": "tool_9g4yOlJRlRNwwvh6z7JAK2jO",
+          "name": "Edit",
+          "target": "tests/test_invoice.py",
+          "command": null,
+          "argumentsSha256": "1be1f71c3c19b77f00ee22eb755664a15c5896b3ed8fdc9f90213485c1eae6f4"
+        },
+        {
+          "id": "tool_MIGBrhWP7hYAaQHKzd2WdhIQ",
+          "name": "Bash",
+          "target": null,
+          "command": "python3 -m unittest discover -s tests 2>&1 | tail -5",
+          "argumentsSha256": "2d2c6a1ea9028c0dbd99fb0774c64cbb54cbe139d1cfddfb442aae6c14742592"
+        },
+        {
+          "id": "tool_mntCG2wVY0zol72I2IMPZSa6",
+          "name": "Edit",
+          "target": "README.md",
+          "command": null,
+          "argumentsSha256": "71ec2c220181b813b57ab227610cd7028651a1853f59a6fc4be83b9ce402a5ec"
+        }
+      ]
+    }
+  },
+  "observedBusinessDifferences": [
+    "Loom added3 Read calls and4 Edit calls; each assistant tool generation had one tool call, explaining7 more tool generations.",
+    "Loom initial Edit failed due nonunique old_string, then retried with more context.",
+    "Loom test insertion clipped __main__ guard; a read and subsequent edit repaired it.",
+    "Loom separately computed large decimal product with Python then corrected its guessed test expectation.",
+    "Loom additionally edited README validation section.",
+    "Native also incurred a failed test run from historical20-digit test data conflicting with new12-digit requirement, corrected test and reran successfully."
+  ],
+  "interpretation": "Observed extra generations are business editing/testing/recovery, not Room protocol tools. Total input also depends on context per generation. Retain all consumed usage; do not infer protocol causality or universal stochastic behavior from one turn.",
+  "causalityLimit": "Zero observed protocol calls only excludes explicit Room communication tool generations. Loom context may indirectly affect business decisions; this single trajectory neither proves nor excludes that effect. Do not attribute the difference purely to randomness. All consumed tokens remain included."
+}
