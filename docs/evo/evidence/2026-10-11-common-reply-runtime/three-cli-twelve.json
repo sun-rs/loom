@@ -1,0 +1,461 @@
+{
+  "status": "actual CLI local fake twelve-round whole-arm loops completed",
+  "paidCalls": 0,
+  "summary": [
+    {
+      "cli": "pi",
+      "arms": 3,
+      "roundsPerArm": 12,
+      "requests": 108,
+      "wholeArmSequential": true,
+      "nativeInvocations": 1
+    },
+    {
+      "cli": "codex",
+      "arms": 3,
+      "roundsPerArm": 12,
+      "requests": 72,
+      "wholeArmSequential": true,
+      "nativeInvocations": 1
+    },
+    {
+      "cli": "opencode",
+      "arms": 3,
+      "roundsPerArm": 12,
+      "requests": 72,
+      "wholeArmSequential": true,
+      "nativeInvocations": 1
+    }
+  ],
+  "cases": [
+    {
+      "cli": "pi",
+      "arm": "native",
+      "run": "/Users/sun/.loom/reviews/2026-10-11-common-reply-twelve-free/pi/native/free-runs/1791673278169/A/runs/1791673278569-free",
+      "resultSha256": "df528ba2a111181410ad8c0ab11c50bee2e2be93a5c10236cbc0a3b9525de784",
+      "rounds": 12,
+      "requests": 36,
+      "oneSession": true,
+      "snapshotCount": 12,
+      "snapshotHashesSha256": "9960fb4b91635d0e29a941cee253e301eaecc195fa6ea18a1693a2b1f0ef611f",
+      "quality": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "deliveryAck": [],
+      "coverage": {
+        "rawNative": true,
+        "passiveLegacy": true,
+        "kernel": null,
+        "configurationRemoved": true
+      },
+      "ownedPidsExited": 25,
+      "sourcePost": {
+        "matched": true,
+        "checked": 1876
+      }
+    },
+    {
+      "cli": "pi",
+      "arm": "current",
+      "run": "/Users/sun/.loom/reviews/2026-10-11-common-reply-twelve-free/pi/current/free-runs/1791673296017/A/runs/1791673296427-free",
+      "resultSha256": "ecd55a8e925bad45d798544dbc2857a336f39aab95c3c2426b3ced56c8da6ef3",
+      "rounds": 12,
+      "requests": 36,
+      "oneSession": true,
+      "snapshotCount": 12,
+      "snapshotHashesSha256": "bf20d360fdbce169fe30f2baaaad81b31ba0926a65432cc245392118e00851b6",
+      "quality": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "deliveryAck": [
+        ["completed", 4, 103],
+        ["completed", 13, 103],
+        ["completed", 22, 103],
+        ["completed", 31, 103],
+        ["completed", 40, 103],
+        ["completed", 49, 103],
+        ["completed", 58, 103],
+        ["completed", 67, 103],
+        ["completed", 76, 103],
+        ["completed", 85, 103],
+        ["completed", 94, 103],
+        ["completed", 103, 103]
+      ],
+      "coverage": {
+        "rawNative": true,
+        "passiveLegacy": true,
+        "kernel": true,
+        "configurationRemoved": true
+      },
+      "ownedPidsExited": 28,
+      "sourcePost": {
+        "matched": true,
+        "checked": 1876
+      }
+    },
+    {
+      "cli": "pi",
+      "arm": "candidate",
+      "run": "/Users/sun/.loom/reviews/2026-10-11-common-reply-twelve-free/pi/candidate/free-runs/1791673329876/A/runs/1791673330291-free",
+      "resultSha256": "89ece7018b52a271766dd2683bb9591467711bf9814d1a466b45458849fe5197",
+      "rounds": 12,
+      "requests": 36,
+      "oneSession": true,
+      "snapshotCount": 12,
+      "snapshotHashesSha256": "d4d3c791461ae868fc43970daf568cd146a98e198b0f49e6ec848e84cd2195a1",
+      "quality": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "deliveryAck": [
+        ["completed", 4, 103],
+        ["completed", 13, 103],
+        ["completed", 22, 103],
+        ["completed", 31, 103],
+        ["completed", 40, 103],
+        ["completed", 49, 103],
+        ["completed", 58, 103],
+        ["completed", 67, 103],
+        ["completed", 76, 103],
+        ["completed", 85, 103],
+        ["completed", 94, 103],
+        ["completed", 103, 103]
+      ],
+      "coverage": {
+        "rawNative": true,
+        "passiveLegacy": true,
+        "kernel": true,
+        "configurationRemoved": true
+      },
+      "ownedPidsExited": 28,
+      "sourcePost": {
+        "matched": true,
+        "checked": 1876
+      }
+    },
+    {
+      "cli": "codex",
+      "arm": "native",
+      "run": "/Users/sun/.loom/reviews/2026-10-11-common-reply-twelve-free/codex/native/runs/1791673278582-free",
+      "resultSha256": "4732ce1434f2f7db8d0a253a9d7a68979e0b351f30481465c726c6921a8221fc",
+      "rounds": 12,
+      "requests": 24,
+      "oneSession": true,
+      "snapshotCount": 12,
+      "snapshotHashesSha256": "9a33e70f0dac75c0e1bb01a6d379335e788ad5b6b7e70b4f650681aac20fe8ba",
+      "quality": [
+        true,
+        false,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "deliveryAck": [],
+      "coverage": {
+        "otelAndNative": true,
+        "samplingAndAllCompletedSeparate": true,
+        "originalConfigUnchanged": true,
+        "temporaryFakeConfigRetained": true
+      },
+      "ownedPidsExited": 97,
+      "sourcePost": {
+        "matched": true,
+        "checked": 1878
+      }
+    },
+    {
+      "cli": "codex",
+      "arm": "current",
+      "run": "/Users/sun/.loom/reviews/2026-10-11-common-reply-twelve-free/codex/current/runs/1791673301680-free",
+      "resultSha256": "1b2bab8802abefae9befd900387f82da7674a0c7a226956ab7c7ddc60d992446",
+      "rounds": 12,
+      "requests": 24,
+      "oneSession": true,
+      "snapshotCount": 12,
+      "snapshotHashesSha256": "645e488fd449b068b70be6f953272d4bd7887ba23049add520bdfd6727dce822",
+      "quality": [
+        true,
+        false,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "deliveryAck": [
+        ["completed", 4, 103],
+        ["completed", 13, 103],
+        ["completed", 22, 103],
+        ["completed", 31, 103],
+        ["completed", 40, 103],
+        ["completed", 49, 103],
+        ["completed", 58, 103],
+        ["completed", 67, 103],
+        ["completed", 76, 103],
+        ["completed", 85, 103],
+        ["completed", 94, 103],
+        ["completed", 103, 103]
+      ],
+      "coverage": {
+        "otelAndNative": true,
+        "samplingAndAllCompletedSeparate": true,
+        "originalConfigUnchanged": true,
+        "temporaryFakeConfigRetained": true
+      },
+      "ownedPidsExited": 104,
+      "sourcePost": {
+        "matched": true,
+        "checked": 1878
+      }
+    },
+    {
+      "cli": "codex",
+      "arm": "candidate",
+      "run": "/Users/sun/.loom/reviews/2026-10-11-common-reply-twelve-free/codex/candidate/runs/1791673340593-free",
+      "resultSha256": "444d96afcd7728e568684c6a538ee69dd900bf56d691ed8110db18b57bfe25a6",
+      "rounds": 12,
+      "requests": 24,
+      "oneSession": true,
+      "snapshotCount": 12,
+      "snapshotHashesSha256": "7ad20d11195603b28adb046462caeffe1926297de00fce48ce3e18d5ba6b6f06",
+      "quality": [
+        true,
+        false,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "deliveryAck": [
+        ["completed", 4, 103],
+        ["completed", 13, 103],
+        ["completed", 22, 103],
+        ["completed", 31, 103],
+        ["completed", 40, 103],
+        ["completed", 49, 103],
+        ["completed", 58, 103],
+        ["completed", 67, 103],
+        ["completed", 76, 103],
+        ["completed", 85, 103],
+        ["completed", 94, 103],
+        ["completed", 103, 103]
+      ],
+      "coverage": {
+        "otelAndNative": true,
+        "samplingAndAllCompletedSeparate": true,
+        "originalConfigUnchanged": true,
+        "temporaryFakeConfigRetained": true
+      },
+      "ownedPidsExited": 104,
+      "sourcePost": {
+        "matched": true,
+        "checked": 1878
+      }
+    },
+    {
+      "cli": "opencode",
+      "arm": "native",
+      "run": "/Users/sun/.loom/reviews/2026-10-11-common-reply-twelve-free/opencode/native/runs/1791673278609-paid-runner-free",
+      "resultSha256": "254111b685e45a5edeb9ebd205fb77565880fae688506262892fcfc887653aae",
+      "rounds": 12,
+      "requests": 24,
+      "oneSession": true,
+      "snapshotCount": 12,
+      "snapshotHashesSha256": "73baa3f3c2b5705f2eb012be2ffdd4a2dc68f1cbbdf65ae1e86f585f42e79a28",
+      "quality": [
+        true,
+        false,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "deliveryAck": [],
+      "coverage": {
+        "rawNativePrimary": true,
+        "optionalDetailComplete": false,
+        "configurationRemoved": true
+      },
+      "ownedPidsExited": 25,
+      "sourcePost": {
+        "matched": true,
+        "checked": 1867
+      }
+    },
+    {
+      "cli": "opencode",
+      "arm": "current",
+      "run": "/Users/sun/.loom/reviews/2026-10-11-common-reply-twelve-free/opencode/current/runs/1791673312034-paid-runner-free",
+      "resultSha256": "48ddcf58074fbdcc573be80c7f42ceaeb6a9024de87df1bb6b00d6e874a1ceb8",
+      "rounds": 12,
+      "requests": 24,
+      "oneSession": true,
+      "snapshotCount": 12,
+      "snapshotHashesSha256": "ff143913b051a976ad7195bfccbe410283d6bd6510d9255157e698a5a2602d5f",
+      "quality": [
+        true,
+        false,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "deliveryAck": [
+        ["completed", 4, 114],
+        ["completed", 14, 114],
+        ["completed", 24, 114],
+        ["completed", 34, 114],
+        ["completed", 44, 114],
+        ["completed", 54, 114],
+        ["completed", 64, 114],
+        ["completed", 74, 114],
+        ["completed", 84, 114],
+        ["completed", 94, 114],
+        ["completed", 104, 114],
+        ["completed", 114, 114]
+      ],
+      "coverage": {
+        "rawNativePrimary": true,
+        "optionalDetailComplete": false,
+        "configurationRemoved": true
+      },
+      "ownedPidsExited": 18,
+      "sourcePost": {
+        "matched": true,
+        "checked": 1867
+      }
+    },
+    {
+      "cli": "opencode",
+      "arm": "candidate",
+      "run": "/Users/sun/.loom/reviews/2026-10-11-common-reply-twelve-free/opencode/candidate/runs/1791673342087-paid-runner-free",
+      "resultSha256": "bff7c93ecc874fc437466d7563747513d1fb25b8b001e2e3cbc0bf2755c89638",
+      "rounds": 12,
+      "requests": 24,
+      "oneSession": true,
+      "snapshotCount": 12,
+      "snapshotHashesSha256": "6f0662c16db43d9d761b840b246458a44e146bc843718eb78850dafef5035e5b",
+      "quality": [
+        true,
+        false,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "deliveryAck": [
+        ["completed", 4, 114],
+        ["completed", 14, 114],
+        ["completed", 24, 114],
+        ["completed", 34, 114],
+        ["completed", 44, 114],
+        ["completed", 54, 114],
+        ["completed", 64, 114],
+        ["completed", 74, 114],
+        ["completed", 84, 114],
+        ["completed", 94, 114],
+        ["completed", 104, 114],
+        ["completed", 114, 114]
+      ],
+      "coverage": {
+        "rawNativePrimary": true,
+        "optionalDetailComplete": false,
+        "configurationRemoved": true
+      },
+      "ownedPidsExited": 18,
+      "sourcePost": {
+        "matched": true,
+        "checked": 1867
+      }
+    }
+  ],
+  "mappingSha256": "9092962f19d5de4320e3b9ba0ae55440889e774e9bc48a07091281cd5bec5680",
+  "commands": [
+    "node run-pi.mjs --fake --rounds 12",
+    "node run-codex.mjs --fake --rounds 12",
+    "node run-opencode.mjs --fake --rounds 12"
+  ],
+  "roundsPolicy": {
+    "allowed": [2, 12],
+    "default": 2,
+    "sameForAllThreeArms": true
+  },
+  "limitations": [
+    "Synthetic replies/usages are plumbing evidence, not model-following, quality equivalence or token efficiency.",
+    "Pi synthetic provider executes recoverable failed tool then business tool plus final each turn; fake does not implement invoice requirements, so quality false retained.",
+    "Codex/OpenCode deliberate round-2 quality negative retained.",
+    "No paid entry enabled; exact new batch release and cap still to be frozen by lead.",
+    "Codex coverage is native OTel completed/sampling, not actual paid HTTP body coverage.",
+    "Provider context/tools settings inherited unchanged; OpenCode fake compaction remains disabled as prior P171 preflight.",
+    "Room delivery ACK is not Task or Inbox completion.",
+    "Old double-two evidence and any failed preparation samples remain unmodified."
+  ]
+}

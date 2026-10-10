@@ -426,3 +426,11 @@ P187/P188后的修复免费验证（不计作付费成本验收）：
 | P191 | Pi同绑定；只执行原E/F，观察D后的前瞻停止策略修订                     | E/F双12全部完成，237+188=425HTTP；E输入1.039582/输出1.020670，F输入1.024296/输出1.031926。两臂功能通过，Loom两组R9–12自测false保留（SyntaxWarning污染stderr）；F README轻微矛盾单列。所有源、配置及所属进程清理通过                               | 新策略仅在原生对照当前launch的bash工具触发注册超时、全部主量封账/无在途HTTP/安全清理/源配置一致时保留失败后继续下一原固定槽；真实免费故障验证通过，E/F付费未触发例外。不重跑D、不回写旧停止，不冒称原预注册方法。[方法](evidence/2026-10-11-repeated-long-task/pi-EF-prospective-method-review.json)、[E](evidence/2026-10-11-repeated-long-task/pi-continuation-E-review.json)、[F](evidence/2026-10-11-repeated-long-task/pi-continuation-F-review.json) |
 
 Pi原A–F全部已知1188HTTP/62,957,421input/970,722output，包括D失败；原六组主倍率仍null。A/B/C/E/F正常终态的事后描述输入1.156491/输出1.047253/请求1.053726，显式含选择/缺测风险，B原生R12原质量unknown、A/B/E/F原自测false不改。压缩原流计量完整不等于Kernel压缩账本完整。小样本和单一工作负载不证明稳定或等效，不能宣布五CLI整体达标。[Pi六槽及限制](evidence/2026-10-11-repeated-long-task/pi-six-slots-final-independent.json)。
+
+## 共用回复语义候选的五CLI免费长链路（2026-10-11）
+
+基于 `8e058e8` 的隔离current源码与仅两份共用说明文件变更的candidate，实际Codex、Claude、OpenCode、Kimi、Pi分别运行原生／现行／候选三臂，每臂连续12轮。共15个session、180轮、396次localhost合成请求；120次Loom最终回复的精确Run/consumer ACK经独审。每CLI只运行一个原生臂，普通Codex使用exec/resume；当前原题单次出现、候选规则实际进入请求、源隔离和进程清理通过。原生自动记忆关闭，正常session历史保留。
+
+**新增付费调用为0，不产生真实成本倍率或质量结论。** 合成答案的质量false、初始准备失败及先前两轮检查全部保留；旧session升级仅有单独fake不变量检查。OpenCode最初误用了旧v3准备器，缺候选指令的请求已判无效，随后改用已验收P171模板完成全12轮；历史P156原已记为无效，后续P157/P160/P164/P167/P168/P171实际请求有standing，未改写历史判定。
+
+[完整摘要与源文件封印](evidence/2026-10-11-common-reply-runtime/summary.json)、[Pi/Codex/OpenCode独审](evidence/2026-10-11-common-reply-runtime/three-cli-twelve-review.json)、[Kimi/Claude独审](evidence/2026-10-11-common-reply-runtime/kimi-claude-twelve-review.json)。候选仍未合入或部署；后续重复三臂付费pilot尚未放行，不把免费结果提升为五家效率验收。

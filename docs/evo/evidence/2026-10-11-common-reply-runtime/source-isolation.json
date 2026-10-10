@@ -1,0 +1,25 @@
+{
+  "head": "8e058e87809a4fcd819ce210e845b1ce08041d5a",
+  "onlyCandidateDifferences": [
+    "packages/agent-host/src/standing-protocol.ts",
+    "packages/agent-host/src/worker-help-topics.ts"
+  ],
+  "workspaceResolution": {
+    "baseline-source": {
+      "agent-host": "/Users/sun/.loom/reviews/2026-10-11-common-reply-runtime/baseline-source/packages/agent-host",
+      "kernel": "/Users/sun/.loom/reviews/2026-10-11-common-reply-runtime/baseline-source/packages/kernel",
+      "protocol": "/Users/sun/.loom/reviews/2026-10-11-common-reply-runtime/baseline-source/packages/protocol",
+      "daemon": "/Users/sun/.loom/reviews/2026-10-11-common-reply-runtime/baseline-source/packages/daemon",
+      "core": "/Users/sun/.loom/reviews/2026-10-11-common-reply-runtime/baseline-source/packages/core"
+    },
+    "source": {
+      "agent-host": "/Users/sun/.loom/reviews/2026-10-11-common-reply-runtime/source/packages/agent-host",
+      "kernel": "/Users/sun/.loom/reviews/2026-10-11-common-reply-runtime/source/packages/kernel",
+      "protocol": "/Users/sun/.loom/reviews/2026-10-11-common-reply-runtime/source/packages/protocol",
+      "daemon": "/Users/sun/.loom/reviews/2026-10-11-common-reply-runtime/source/packages/daemon",
+      "core": "/Users/sun/.loom/reviews/2026-10-11-common-reply-runtime/source/packages/core"
+    }
+  },
+  "installedDependencyIsolation": "Each tree npm ci --offline --ignore-scripts completed exit0; no node_modules symlink to main.",
+  "mainGitStatus": ""
+}

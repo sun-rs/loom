@@ -1,0 +1,2461 @@
+{
+  "status": "free-three-arm-12-verified",
+  "paidRequests": 0,
+  "order": ["native", "current", "candidate"],
+  "fixture": "2026-10-10-cost-fixture-v6",
+  "fixtureManifestSha256": "76ea47f066d64a225b15c63086fd1dbf8bd84a8622e31504d8e901779bbbb5f7",
+  "reports": [
+    {
+      "cli": "kimi",
+      "arm": "native",
+      "runPath": "/Users/sun/.loom/reviews/2026-10-11-common-reply-three-arm/kimi-claude/kimi-native/runs/kimi-five-slot-free-1791673298862/block-2",
+      "resultSha256": "b454252a181cf6263c1829bd07f69236f516e80fddfd4efcdd7945e2c90d5c3b",
+      "rounds": 12,
+      "sameSession": true,
+      "providerLaunches": 12,
+      "httpResponses": 24,
+      "knownUsage": {
+        "complete": true,
+        "httpPrimaryComplete": true,
+        "wireMatches": true,
+        "kernelMatches": null,
+        "errors": [],
+        "input": 240,
+        "output": 48,
+        "cachedInput": 0,
+        "reasoning": 0,
+        "httpAttempts": 24,
+        "reportedGenerations": 24,
+        "failedHttpAttempts": 0,
+        "billingCoverage": "not-observed",
+        "transportComplete": true,
+        "passiveIntegrity": true,
+        "providerCensus": {
+          "providerPids": [
+            6011, 6117, 6292, 6369, 6498, 6619, 6890, 7194, 7515, 7872, 8162,
+            8419
+          ],
+          "passivePids": [
+            6498, 7515, 7194, 6890, 6011, 6369, 6619, 8419, 6117, 8162, 6292,
+            7872
+          ]
+        },
+        "configurationMatches": true,
+        "primaryUsageComplete": true,
+        "crossCheckErrors": [],
+        "transportErrors": [],
+        "configurationErrors": []
+      },
+      "finalMarkers": 0,
+      "activationStates": {},
+      "quality": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "requests": [
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "a748ccba974785af7698fe48b235c9a5f30b0a25743eba274cd9b458387c0e37",
+          "bytes": 90075,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "a595309b6d1521a05e23163d6e8d95c4d4922b82b94139eb667d5cc4577a5bc1",
+          "bytes": 90943,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "7eabd7a3866dc8045672b8e3a15ea68550f4cb87317b239a496ce23b3368a06e",
+          "bytes": 87848,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "b9d205279fbb270c48c0578d8d5f9a7135762ec2ec883ccc1540da2fc274b91e",
+          "tools": 26
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "13804e45c9e30f0d24e496696cf4deba318c2521fda2e724d7938290a0098b92",
+          "bytes": 92971,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "02a0a09d6a054724a3a0e9875e83987fa09bccb1b16e6faf4f199d0ed6ad6475",
+          "bytes": 89874,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "b9d205279fbb270c48c0578d8d5f9a7135762ec2ec883ccc1540da2fc274b91e",
+          "tools": 26
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "f702a9bb2afbeb63138d327620479d978a896b15d893a71d7f87985927a324c2",
+          "bytes": 94941,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "55ab0420d0729e04bac79b6b93dc9cc9cf7c375a39c67bf7b05c37960dbac0fd",
+          "bytes": 91877,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "b9d205279fbb270c48c0578d8d5f9a7135762ec2ec883ccc1540da2fc274b91e",
+          "tools": 26
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "e3b2202d76ec6ec0b0b20d545ad74cdb1167ebec9b20f819dca72f0606241eb6",
+          "bytes": 96944,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "9f3e66ef9b4aa34dad14630e41c674f1ad275e11dc09e52a1abcd94f2aacb904",
+          "bytes": 94030,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "b9d205279fbb270c48c0578d8d5f9a7135762ec2ec883ccc1540da2fc274b91e",
+          "tools": 26
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "549a6a1566b27aa33d1279b74d25d37713095860affc83d8a9c4f585422634ca",
+          "bytes": 99097,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "c891cbc1e6d94dbb75afa7bb6ee9ff2b160f4f0d3947cfc60bd855e922828a33",
+          "bytes": 96347,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "b9d205279fbb270c48c0578d8d5f9a7135762ec2ec883ccc1540da2fc274b91e",
+          "tools": 26
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "75da8ac4104870cf33ba245c9e32a22dc1fdfd12f21d5a0f178cd01b5611e1e2",
+          "bytes": 101414,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "cc4e718df22ff3bc95a34f332e0cb01f5003c0eaa836ee0d5778fb5116095703",
+          "bytes": 98537,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "b9d205279fbb270c48c0578d8d5f9a7135762ec2ec883ccc1540da2fc274b91e",
+          "tools": 26
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "27a4d8192c3a7009a6daa8faf011850fbb94472776c71dd4349011d37b63592e",
+          "bytes": 103604,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "cf963b432cb3bd3a62b714e3eeb7fd01aa76c1da89636c175834cc0bf40038dc",
+          "bytes": 100613,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "b9d205279fbb270c48c0578d8d5f9a7135762ec2ec883ccc1540da2fc274b91e",
+          "tools": 26
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "f678ad938c0559c451260958e51fb1d041f919498091c30f083f444854d0b433",
+          "bytes": 105680,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "2380f3a1077083ca0952e3107c6bfda9b579fa494076685852f38760fbd58485",
+          "bytes": 102818,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "b9d205279fbb270c48c0578d8d5f9a7135762ec2ec883ccc1540da2fc274b91e",
+          "tools": 26
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "996be3c5b36531e110e3c1f7ad1a0655d21f30bd2a8908717474772fa0db18e0",
+          "bytes": 107885,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "60eb62de51ea724b54929ece02ed73d8278bdf441a26571ea463b29ff1e20d31",
+          "bytes": 105061,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "b9d205279fbb270c48c0578d8d5f9a7135762ec2ec883ccc1540da2fc274b91e",
+          "tools": 26
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "2482272c555b4102888215c64f903522364375b05a4f4f6144a9d5d7ae2f1e96",
+          "bytes": 110132,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "136f3e0a7edd964eefce941d9e2dbbd3fc3d7e2a233768db678eee5f028550c5",
+          "bytes": 107042,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "b9d205279fbb270c48c0578d8d5f9a7135762ec2ec883ccc1540da2fc274b91e",
+          "tools": 26
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "ad03a3ed764f64af3097a465bc76c04d1df0efa1fba6cc1f379a92293d612773",
+          "bytes": 112113,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "39c5092e39b1796fcb257d42d153941decdf1a4057cf180eee4508dd2fe4e0e7",
+          "bytes": 109065,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "b9d205279fbb270c48c0578d8d5f9a7135762ec2ec883ccc1540da2fc274b91e",
+          "tools": 26
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "3bc37fca925863b183ace70c2b65e37bed31261615b3a259003906eb33d8389a",
+          "bytes": 114136,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        }
+      ]
+    },
+    {
+      "cli": "kimi",
+      "arm": "current",
+      "runPath": "/Users/sun/.loom/reviews/2026-10-11-common-reply-three-arm/kimi-claude/kimi-current/runs/kimi-five-slot-free-1791673317946/block-2",
+      "resultSha256": "52b7bc4f4eecf9719e2baf3f87d903c4eaf10d8144c25f40207d285f12d996e4",
+      "rounds": 12,
+      "sameSession": true,
+      "providerLaunches": 27,
+      "httpResponses": 24,
+      "knownUsage": {
+        "complete": true,
+        "httpPrimaryComplete": true,
+        "wireMatches": true,
+        "kernelMatches": true,
+        "errors": [],
+        "input": 240,
+        "output": 48,
+        "cachedInput": 0,
+        "reasoning": 0,
+        "httpAttempts": 24,
+        "reportedGenerations": 24,
+        "failedHttpAttempts": 0,
+        "billingCoverage": "not-observed",
+        "transportComplete": true,
+        "passiveIntegrity": true,
+        "providerCensus": {
+          "providerPids": [
+            9606, 10226, 10851, 11372, 12016, 12639, 13373, 14096, 14728, 15635,
+            16489, 17319
+          ],
+          "passivePids": [
+            11372, 14096, 9606, 13373, 12639, 12016, 14728, 15635, 16489, 17319,
+            10851, 10226
+          ]
+        },
+        "configurationMatches": true,
+        "primaryUsageComplete": true,
+        "crossCheckErrors": [],
+        "transportErrors": [],
+        "configurationErrors": []
+      },
+      "finalMarkers": 12,
+      "activationStates": {
+        "completed": 12
+      },
+      "quality": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "requests": [
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "71935e06dd3ff11734a40b6362116e6f1db571d259de7ad6e5497f5a75f5c87f",
+          "bytes": 97110,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "44c552823ff096fd177afea895a8ead01b46a4d2676d7768dbbbba3b4433722f",
+          "bytes": 98076,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "317a5a9f66cc9c81862b791d5a0dbfba5eb14aa5b16f55afd100fb6ce16ca074",
+          "bytes": 98813,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "ef14d5b74d2ddb4cd680db69dcb7a3c5cfefe385ebfdfc2c48d1c57239701ef0",
+          "bytes": 99835,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "905025c22084106cbf91480cca1d8d1cd0bbb3467fe4c9884e3ab9f0b83e7404",
+          "bytes": 100570,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "db7f98d9fdb1813b28572e1d3cd04bab664d7840e63dbb86a2cc719ed7a909a6",
+          "bytes": 101536,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "48b6c1f9928b2648a623bbe1cd077a5327126d0d6698e81b76277706e8af8b25",
+          "bytes": 102304,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "2f9456998e5d5cbd421a9a435ba6bd4ef7714135c269ea12f69766c05aed0943",
+          "bytes": 103270,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "62ea577080fe85e7a28a6780d7b5ba81f319ba27cf7255df6584404074e25ab1",
+          "bytes": 104188,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "31e7e2d95f09efc83729b84ede8ae9ee643e9811975e327accbdd23860d581cf",
+          "bytes": 105154,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "2f0ba7a9c28953a84fd1509daed20734a66a7d8f4fe86903807c6d7b8e034e97",
+          "bytes": 106236,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "c70e767e3ad74c3ad1c428eee5a1bde5dec0bf280612afad7626edd131c7aa55",
+          "bytes": 107202,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "e182d4b568055afea1b291c4d8e2cd56b48478f368378f80410147aa18024bb3",
+          "bytes": 108157,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "2d846b63201e96892ea66bf9396deb2142066805d8193ae445471c9c4af69363",
+          "bytes": 109123,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "87d2e2d5dcaf6f68b98607ff8a13ba41d2f8b01c6e5513a2b999de4bfb70492e",
+          "bytes": 109964,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "d6c8652659edb197a6fa534d82682176a56b68e67a8f14421a0b285e7c400d84",
+          "bytes": 110930,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "471f92efb918e4cc811d38c13316455a3f953e192b992e3bb7c9dc56123cb26b",
+          "bytes": 111900,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "754aee933e4ce347b8566440faf864515d9100e58181efd9c2b45e891752f06e",
+          "bytes": 112866,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "3a3ed3fb5da08bce053579c20229faa2eb8c485885209f62d05bf8879fc4e56e",
+          "bytes": 113874,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "5772247611d9b40c91b23545d2da9f83b950641a0d9d71ffbc59f828e11dbc55",
+          "bytes": 114845,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "de2b890e0314b14ee0a7351b2f61e9f70e7b8b229d48f7c4b50b0e67ab02047f",
+          "bytes": 115587,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "411374e117ddfc294fe841891306190b2f4892245787c4a1ed41d4a7556a7a4d",
+          "bytes": 116558,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "a9a2bf777a42fa5e34a13d5baf53d75c1efe8ac6bc0de72f565900a93edd6908",
+          "bytes": 117344,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "39385d132a3c785b969e429b2ebe2f18f45b4b1d9d843746ecbd6dcd703ac470",
+          "bytes": 118315,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        }
+      ]
+    },
+    {
+      "cli": "kimi",
+      "arm": "candidate",
+      "runPath": "/Users/sun/.loom/reviews/2026-10-11-common-reply-three-arm/kimi-claude/kimi-candidate/runs/kimi-five-slot-free-1791673366458/block-2",
+      "resultSha256": "19cce599b08b076697f1c1f8f2f74bf5d5e29ce211cfd996387451517f1faf37",
+      "rounds": 12,
+      "sameSession": true,
+      "providerLaunches": 27,
+      "httpResponses": 24,
+      "knownUsage": {
+        "complete": true,
+        "httpPrimaryComplete": true,
+        "wireMatches": true,
+        "kernelMatches": true,
+        "errors": [],
+        "input": 240,
+        "output": 48,
+        "cachedInput": 0,
+        "reasoning": 0,
+        "httpAttempts": 24,
+        "reportedGenerations": 24,
+        "failedHttpAttempts": 0,
+        "billingCoverage": "not-observed",
+        "transportComplete": true,
+        "passiveIntegrity": true,
+        "providerCensus": {
+          "providerPids": [
+            18667, 18991, 19296, 19584, 19826, 20070, 20246, 20445, 20675,
+            20938, 21173, 21396
+          ],
+          "passivePids": [
+            19296, 19826, 21173, 18667, 20938, 18991, 21396, 20675, 20445,
+            20070, 20246, 19584
+          ]
+        },
+        "configurationMatches": true,
+        "primaryUsageComplete": true,
+        "crossCheckErrors": [],
+        "transportErrors": [],
+        "configurationErrors": []
+      },
+      "finalMarkers": 12,
+      "activationStates": {
+        "completed": 12
+      },
+      "quality": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "requests": [
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "9845b67497567739498cb5d889ebbf43e2e9db9fce376d24af92418600699b4e",
+          "bytes": 97571,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "58b23e6dbebabfc87f389568fd9f63e9bfb1aa2ea021836ed67dd29cce44bbc1",
+          "bytes": 98530,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "6b7675be5a0030e9d805a760951a06c620b634359aa625e9f7429c95973aa56e",
+          "bytes": 99267,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "a1e472b94788e6b2492c78b891f25c21c203c9f97d1a53627084ed8002b17359",
+          "bytes": 100282,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "caf43d87fe7dc131017bb83bca9d388c3723237d2e577d4f51d12361d34a4180",
+          "bytes": 101017,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "a082a2be26ff021a12a0fa1f035a5754560f2f0fbfd2014bd8d5f5108506cfcf",
+          "bytes": 101976,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "df53d87af45677db2c52fbdcd6443731316fc5c45c4b9f18a397df1c281628b6",
+          "bytes": 102744,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "f4cef78b41cc6f9813ecaa90086ed5db0477c5520533f99725306d66e3810dfa",
+          "bytes": 103703,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "37530d209faa31aa93612bfefe52c62aeafa4c9317796fc6dc143d4ccd3d421f",
+          "bytes": 104621,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "626bedbe55b29c91f4ecadecdb73cac91b215d92b2aceadcc42661b0141b35f8",
+          "bytes": 105580,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "35ce4758de2c947275e49263171b890f2a7f2d2a12d8c995359ca958215b1b02",
+          "bytes": 106662,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "d55b242a0bf319fa95c47139863650d264335f5e39b29643e0bc89db76b26763",
+          "bytes": 107621,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "ace59f6ca9057715b2a93e32b7149ab31f676562c81c3e92478bf487482ad74b",
+          "bytes": 108576,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "26650e4a2e015832b4b5298835559984bdd92d4e64003e250163928586ebd2c1",
+          "bytes": 109535,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "5b09098e22fb6c8ca068d0aac0d62cf1aef1f410136b94ed518fbdea1f8a6774",
+          "bytes": 110376,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "72f43ab2a3f276dec7c87a22661581b98cca0de9d7e95bd228ecb81d9f36260f",
+          "bytes": 111335,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "cf9fd1e5988fc1a5a176217ebb7bef1bde5fc589c6036e327f8f1728adb60801",
+          "bytes": 112305,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "a899b245fee14a12a735e860d44027bf620300ebc2a02b1e456900066168bed3",
+          "bytes": 113264,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "ee027bdf3819c71f1bfb8977c51397b13b8e363c135020d6d9594fd11d4b30bc",
+          "bytes": 114272,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "6dbce09e33c3e183d1ec2b994caf8cd68e8bfea927ea7a9e3c99faf0165e558f",
+          "bytes": 115236,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "f6140e34aaee72a355dcb338a17c29e468316a8031ee14f142c6416a055babe6",
+          "bytes": 115978,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "230a81edffaa8c393fd8cf81677c22d13566606ee0b51248edf689125c22b56a",
+          "bytes": 116942,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "8227f2797dfd8002fe8222f5693357d636d449389ecc0be16da43c7fe9a63392",
+          "bytes": 117728,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "c8893f0ec336d850ef46fe100f3acb3f36a67ffc987f6a65ce752817e8d20568",
+          "bytes": 118692,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "7f431bde7099f2e1b7d7480c6907206623b935f11300dde2b4c974ba91ee4401",
+          "tools": 27
+        }
+      ]
+    },
+    {
+      "cli": "claude",
+      "arm": "native",
+      "runPath": "/Users/sun/.loom/reviews/2026-10-11-common-reply-three-arm/kimi-claude/claude-native/runs/1791673323641-free",
+      "resultSha256": "19a2e5dd267af492b2e6c3951c3a89c50372a2ab7d7ae7f65383124a18d147d4",
+      "rounds": 12,
+      "sameSession": true,
+      "providerLaunches": 2,
+      "httpResponses": 24,
+      "knownUsage": {
+        "requests": 24,
+        "requestCoverage": "complete",
+        "billingCoverage": "unknown",
+        "knownTotals": {
+          "input": 2400,
+          "cachedInput": 0,
+          "cacheCreationInput": 0,
+          "uncachedInput": 2400,
+          "output": 240,
+          "generations": 24
+        },
+        "generations": [
+          {
+            "responseId": "msg_v3_1",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_2",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_3",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_4",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_5",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_6",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_7",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_8",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_9",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_10",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_11",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_12",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_13",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_14",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_15",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_16",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_17",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_18",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_19",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_20",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_21",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_22",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_23",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_24",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          }
+        ],
+        "incomplete": [],
+        "duplicates": [],
+        "conflicts": []
+      },
+      "finalMarkers": 0,
+      "activationStates": {},
+      "quality": [
+        true,
+        false,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "requests": [
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "f88eb53052204c29f5e9c2393b3d968230899051dd5de836a2ac808eae007136",
+          "bytes": 52037,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "c63dd4a902870539924879369ef2716e0b927130dd1d0f581af79d9dd5751d25",
+          "bytes": 56139,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "fcd27322869c392efe6f71957e155e61328008929e78f1ae37bee7139e6ac0f6",
+          "bytes": 56781,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "a0d1490270337daf6fd5ed9dd8b8087d07f057db5134e62b85375da3b577f5ee",
+          "bytes": 58344,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "cff7283681d49bf218656fff785961cb09fa7a563602bb3ae49aed7b69bab438",
+          "bytes": 58984,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "2297bd99f317ca952d5e68152e9a35a30e994f1a5dea93af580c9833d952b18d",
+          "bytes": 63086,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "94efb8e4c91c538dda4822380721347318a36a96e83095af153a74ad0689e8c4",
+          "bytes": 63759,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "2332a960514bf04a7b3022602d9def93bdcda5aa583e78881ef7a6c15a443ba7",
+          "bytes": 67861,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "da898186219358e534061829206efa80783383ff502379c41c90ec3934556cbe",
+          "bytes": 68684,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "025b1ed5fef139aff72cd17e0af166baa2edfbf27a290f2260deb92c881f8500",
+          "bytes": 72786,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "d0618257250d6e719b3e9f756a105480d69584f9529f6fe4a93d3be9c6ce3d99",
+          "bytes": 73773,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "097a13d86d118096a874c6464e0c1b8483dabb7325617cbde2e2d7e48fb6a8d9",
+          "bytes": 77877,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "cdf9c66ac7fed7c3a2e97e8021e695675798e0d2a2b92b3fc2eb4c6d12212d0d",
+          "bytes": 78737,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "f246de0b550b6d40062190ee0727554a9b44f5d7e0da3f622999df7a33796a03",
+          "bytes": 82841,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "48779c0448e1a99bcc0d2a88bdb170a40d7ca733ff779a55fabd239f68ba34a4",
+          "bytes": 83587,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "9b4d0490f7b17ad213413024fd183a5bb6127e385c9c1d48cc98fabb70741bd6",
+          "bytes": 87691,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "811df440212ff36fabf9f71b247fc96e7b9f06d614d9325cdc3fe5aa48a63089",
+          "bytes": 88566,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "59beda0416a522a8bd9ba3bae590e9c19e23dfaf221dccc787bd0d5f865f3ff1",
+          "bytes": 92670,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "3dfa0276acac07a4daf89b422e1fd88252f40e5ca149fece25409377c822a8db",
+          "bytes": 93583,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "264681408f314cc41f8d43036913ec9c9d840c0c517dadb2b979e9ee0135b7a5",
+          "bytes": 97687,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "071014c66a0b38a40e95fa4e54b27c533ef84bf4deccb0824abe0a07a64c28fc",
+          "bytes": 98334,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "a7ec803d3f728d347e830e26b8b1308288aaf519fc8dda8da2cb9204229eee40",
+          "bytes": 102438,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "e5af22c1fe238c271599b7b0e392b5081bec8645de027782f139f8ad6fee4257",
+          "bytes": 103127,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "db0ba01ed8d44e506a0856596155ce94cc3e34371ff20b41b69cbd254c781439",
+          "bytes": 107231,
+          "candidateGuidance": false,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        }
+      ]
+    },
+    {
+      "cli": "claude",
+      "arm": "current",
+      "runPath": "/Users/sun/.loom/reviews/2026-10-11-common-reply-three-arm/kimi-claude/claude-current/runs/1791673336127-free",
+      "resultSha256": "5c2abfca68ccb734b96928823c650ff48d86ea8495191c0f660632e168fdf179",
+      "rounds": 12,
+      "sameSession": true,
+      "providerLaunches": 5,
+      "httpResponses": 24,
+      "knownUsage": {
+        "requests": 24,
+        "requestCoverage": "complete",
+        "billingCoverage": "unknown",
+        "knownTotals": {
+          "input": 2400,
+          "cachedInput": 0,
+          "cacheCreationInput": 0,
+          "uncachedInput": 2400,
+          "output": 240,
+          "generations": 24
+        },
+        "generations": [
+          {
+            "responseId": "msg_v3_1",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_2",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_3",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_4",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_5",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_6",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_7",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_8",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_9",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_10",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_11",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_12",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_13",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_14",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_15",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_16",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_17",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_18",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_19",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_20",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_21",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_22",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_23",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_24",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          }
+        ],
+        "incomplete": [],
+        "duplicates": [],
+        "conflicts": []
+      },
+      "finalMarkers": 12,
+      "activationStates": {
+        "completed": 12
+      },
+      "quality": [
+        true,
+        false,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "requests": [
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "fe481773317cd029345d35341e3d11e9c77c0909ffde94e1a7686bd33c3db761",
+          "bytes": 59261,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "f19b3e5b94b1c5196c83121c700e5b2e9de633761cb33188dcba4dc9823f2abf",
+          "bytes": 64040,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "0e2e19192aad635816cbf1a5cedac9fc743c3e6a2aa06331cfc8c02f62c82175",
+          "bytes": 64914,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "6e2fbb66e3d7168ca1a6d4a5b08167e391e74a9337bb1275712fb769bd10495a",
+          "bytes": 67154,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "25a90cf9b371f352996d935a2855b4162e356f93d630715d05b68baa41e35a19",
+          "bytes": 68026,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "f73eb6a84625ca38cdbb272b450e63097bd31086c474e66811a5ac75c066c4ab",
+          "bytes": 72805,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "aadfecfbd75e6c4f675b5374cb90f6d23d375302a0a6f6635cdedacb6d1059ef",
+          "bytes": 73710,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "e229a726a8e9630cb0b476dd258e886211379f0f6c0ed1042110b31a214e203c",
+          "bytes": 78489,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "9f896fd6ba80d8cb625bc5bc51201d39d8750e10ce98bf62a9af301225636af7",
+          "bytes": 79544,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "9cb2a73b48ffa5bcac490fd8a140c665f4b63a972c9c997c5fc1370efaba321f",
+          "bytes": 84323,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "4a80035b4b9eb763cd625081a4ed3a5a684528a36ee62fe9b8830aa7ca41fdd1",
+          "bytes": 85542,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "86300f03dc4f5033782608b797f6c83736fc7c89d49e96c8c545db7d70d7c0bc",
+          "bytes": 90323,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "0671297f7ad379e9fc723bb2fe9e7a5e85bbef7e8194c86363edd5d02c6fd75d",
+          "bytes": 91415,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "39a24f6f5e66827b247b7f4dd05eafc50309e894dbe4894aec7011bd5559e3a5",
+          "bytes": 96196,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "41534b9c0abf34374ad5dcc4ddda3c316e3ea98e63287e769e17be8e70aaeb10",
+          "bytes": 97174,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "743bf4254fe310bd37f87dfd249db8644dc5acd69950ff670bb4a7734b368a4b",
+          "bytes": 101955,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "a17015e83cf1a5b012a4882e945fbf6a5c3b33f1a03840690cfd6225a1e06081",
+          "bytes": 103062,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "d19564a025bd6c6f389c2f923822a8feaf360317e338627a1dd51060ef679985",
+          "bytes": 107843,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "97c3279166339b33524ea6faded502406bdadc1fc86862b11b3a3509fcba9f0c",
+          "bytes": 108988,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "f7952209c26f2f0d6c1205cb91e3a66c14f257ef6db3faa2cd91b4fefa832a1f",
+          "bytes": 113769,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "fff2a85f673c170f6fa8e707b9200633b58b248a189717bfe451d653df147c25",
+          "bytes": 114650,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "eef90e114a57583e8331d48c1a12d2126dc24a7e7fa0aed5a7153956c3dd1025",
+          "bytes": 119431,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "55fcea95436b586583b320fe136fba182ac0666d1847ed7c7bae6a70e8b771aa",
+          "bytes": 120354,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "5334985dd10b8ce405a39017d17737132be9c717e4e6b7d46a7a7d5acd0ab0f1",
+          "bytes": 125135,
+          "candidateGuidance": false,
+          "oldUnconditional": true,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        }
+      ]
+    },
+    {
+      "cli": "claude",
+      "arm": "candidate",
+      "runPath": "/Users/sun/.loom/reviews/2026-10-11-common-reply-three-arm/kimi-claude/claude-candidate/runs/1791673361070-free",
+      "resultSha256": "629560a28b32ebf8449118737018d2f50f363b5ebece4f3795f31155eb1437fb",
+      "rounds": 12,
+      "sameSession": true,
+      "providerLaunches": 5,
+      "httpResponses": 24,
+      "knownUsage": {
+        "requests": 24,
+        "requestCoverage": "complete",
+        "billingCoverage": "unknown",
+        "knownTotals": {
+          "input": 2400,
+          "cachedInput": 0,
+          "cacheCreationInput": 0,
+          "uncachedInput": 2400,
+          "output": 240,
+          "generations": 24
+        },
+        "generations": [
+          {
+            "responseId": "msg_v3_1",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_2",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_3",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_4",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_5",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_6",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_7",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_8",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_9",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_10",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_11",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_12",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_13",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_14",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_15",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_16",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_17",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_18",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_19",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_20",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_21",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_22",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_23",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_24",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          }
+        ],
+        "incomplete": [],
+        "duplicates": [],
+        "conflicts": []
+      },
+      "finalMarkers": 12,
+      "activationStates": {
+        "completed": 12
+      },
+      "quality": [
+        true,
+        false,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "requests": [
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "60b82157b5a056c28197149b2b1699c056e95942e17cf6107cf84ea24a8d76d2",
+          "bytes": 59722,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "4693dd25a81f7e76525b08a59bd55332aa15156faa57ef0ef539d46a1c48db33",
+          "bytes": 64494,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "620b191dec62c7a4725894eec59f74ec56e18e221a6df2cef8b8feb6be7ca474",
+          "bytes": 65368,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "5cf6d00592d05478628052ba5af56869c5d5a1fc05e3993e8dfae8943a742959",
+          "bytes": 67601,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "ea08ed4203c69d498cb9609be60c9101c860da65fceccef0e4eeef1f3e872687",
+          "bytes": 68473,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "f0b86bf0292d5cd8b570f35e414e1a8f1c85b0376de3726c9cce2e3dc233e2ec",
+          "bytes": 73245,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "9a8e7609ffa3faf2fa5140ea0df0005ac83a86bd26ca928c2d018cd98477200b",
+          "bytes": 74150,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "422a7fbe4c9e4ccecf89cd873ccf8c8e0648c9084f3654bed960d029ab0aecae",
+          "bytes": 78922,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "7cffa22214d7263524fa7ca768f643bd43504d523dbae767958325826d591a72",
+          "bytes": 79977,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "ae0222f6de301585b833876558998712b711d3043d25dee1f417bbc78126d368",
+          "bytes": 84749,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "8bcc1fe6224913e1439ee25eb7152be8d06bfe76ea7fa573bfb0f97dbcb02229",
+          "bytes": 85968,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "3f515aa7d46799c549ef33395f9787642311ac11d995069ddc1174adc2332bf8",
+          "bytes": 90742,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "da8dfcc30b0d1536ad41b140ca390ddeb11032b2575d17c85dd652e020b2fec4",
+          "bytes": 91834,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "dffec3484877448e1a5092bd6ee50bfcbab1213823efe158223ea11f3ca11a09",
+          "bytes": 96608,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "d554b3e537146bb186bb13b75d8bbcf92186a44c4890bb64baaaeb09ebb99892",
+          "bytes": 97586,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "7d28046d5ac317cd90c615b80dca02e85376e2c59a09d84ec28102813a577850",
+          "bytes": 102360,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "bfa4f77f675259a307b36ef4824be875d06c5ae2a299e2759f09d086687b2e3c",
+          "bytes": 103467,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "8da9e2212777004ffd5da2cf533bcea5fdf0b657ac81b8816e7b8696aa61dcb4",
+          "bytes": 108241,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "2985f5bb5c0d7a454ce9fc49479b3b3fbb72dd375842211acefa9f1039900474",
+          "bytes": 109386,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "906471377648f03b675bbc516116e59c95fa25dafc5863e2f5641b87215486c2",
+          "bytes": 114160,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "6f9a762326d22f9d5ef2a53b9f0a6c697fde50773fb78393a861e7ad8a21548e",
+          "bytes": 115041,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "7e28ae0ffa80a2b9fc14f90e7cc5a27bec40680200840085f7d9c0f3edc5c69d",
+          "bytes": 119815,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "8b12db51736375e0089d4da14a5f05a55e9cc84b7cbfe7f56312e333232c2811",
+          "bytes": 120738,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        },
+        {
+          "currentTaskOccurrencesInTaskBlock": 1,
+          "bodySha256": "80a7c939083a38cf3d7c3c74d32289ed96ff40d183c6f5b48496c2761e0f0c47",
+          "bytes": 125512,
+          "candidateGuidance": true,
+          "oldUnconditional": false,
+          "toolsSha256": "95babc82051b09e22f83f196b1fc0d266db025d767013610924cdd5326a3e529",
+          "tools": 16
+        }
+      ]
+    }
+  ],
+  "actualHttpResponses": 144,
+  "ownedPidsExited": 161,
+  "sourceDrift": [],
+  "limits": [
+    "Synthetic answers and usage do not prove model instruction following or efficiency.",
+    "Only selected arm is launched/accounted; other arms absent, not zero.",
+    "Kimi fake writes/checks a round file plus Worker read; it does not implement invoice, so quality false remains. Claude uses deliberate incomplete round 2 response; later fixed reference responses are synthetic.",
+    "Native Kimi print versus product ACP remains a mode difference. Claude native uses persistent stream-json matching warm product; default native tool policy retained from baseline harness.",
+    "Whole-arm fixed order is an explicit order confound; no token or causal claim.",
+    "Early harness failures preserved with their known usage; no paid retry.",
+    "Product/source worktrees unchanged; actual service untouched."
+  ],
+  "retainedHarnessFailures": [
+    {
+      "cli": "kimi",
+      "arm": "current",
+      "resultPath": "/Users/sun/.loom/reviews/2026-10-11-common-reply-three-arm/kimi-claude/kimi-current/runs/kimi-five-slot-free-1791673146008/block-2/result.private.json",
+      "resultSha256": "5a09502157d71ca7adb84365ea3b36f41294f0cd27242e0d31efb49eb75c7aaa",
+      "status": "stopped-final-audit",
+      "failures": [
+        {
+          "time": "2026-10-10T22:59:09.194Z",
+          "error": "AssertionError [ERR_ASSERTION]: Daemon startup failed\n\n1 !== null\n",
+          "stack": "AssertionError [ERR_ASSERTION]: Daemon startup failed\n\n1 !== null\n\n    at file:///Users/sun/.loom/reviews/2026-10-11-common-reply-three-arm/kimi-claude/kimi-current/gate-daemon.mjs:158:14\n    at wait (file:///Users/sun/.loom/reviews/2026-10-11-common-reply-runtime/baseline-source/scripts/cli-efficiency/common.mjs:21:18)\n    at async Object.start (file:///Users/sun/.loom/reviews/2026-10-11-common-reply-three-arm/kimi-claude/kimi-current/gate-daemon.mjs:157:5)\n    at async productArm (file:///Users/sun/.loom/reviews/2026-10-11-common-reply-three-arm/kimi-claude/kimi-current/product-arm.mjs:14:2)\n    at async file:///Users/sun/.loom/reviews/2026-10-11-common-reply-three-arm/kimi-claude/kimi-current/block-run.mjs:26:1383"
+        }
+      ],
+      "knownUsage": {
+        "loom": {
+          "complete": false,
+          "httpPrimaryComplete": true,
+          "wireMatches": false,
+          "kernelMatches": false,
+          "errors": [
+            "wire: AssertionError [ERR_ASSERTION]: Exactly one native session wire\n\n0 !== 1\n",
+            "Kernel: TypeError: Cannot read properties of undefined (reading 'stateDirectory')",
+            "capture root unavailable",
+            "passive archive incomplete",
+            "legacy archive incomplete",
+            "no independently recorded provider launch",
+            "observer census not sealed",
+            "wire coverage incomplete"
+          ],
+          "input": 0,
+          "output": 0,
+          "cachedInput": 0,
+          "reasoning": 0,
+          "httpAttempts": 0,
+          "reportedGenerations": 0,
+          "failedHttpAttempts": 0,
+          "billingCoverage": "not-observed",
+          "transportComplete": false,
+          "passiveIntegrity": false,
+          "providerCensus": {
+            "providerPids": [],
+            "passivePids": []
+          },
+          "configurationMatches": true,
+          "primaryUsageComplete": false,
+          "crossCheckErrors": [
+            "wire: AssertionError [ERR_ASSERTION]: Exactly one native session wire\n\n0 !== 1\n",
+            "Kernel: TypeError: Cannot read properties of undefined (reading 'stateDirectory')",
+            "wire coverage incomplete"
+          ],
+          "transportErrors": [
+            "capture root unavailable",
+            "passive archive incomplete",
+            "legacy archive incomplete",
+            "no independently recorded provider launch"
+          ],
+          "configurationErrors": []
+        }
+      },
+      "notReplaced": true
+    },
+    {
+      "cli": "claude",
+      "arm": "native",
+      "resultPath": "/Users/sun/.loom/reviews/2026-10-11-common-reply-three-arm/kimi-claude/claude-native/runs/1791673155329-free/result.private.json",
+      "resultSha256": "8c50c37c19743802cca8c13b923a1c3416fa7eaa8520576cffbd23858d89b859",
+      "status": "failed",
+      "failures": {
+        "message": "Error: ENOENT: no such file or directory, open '/private/tmp/loom-p170-AOqXja/native/work/isolation-proof.txt'",
+        "stack": "Error: ENOENT: no such file or directory, open '/private/tmp/loom-p170-AOqXja/native/work/isolation-proof.txt'\n    at readFileSync (node:fs:436:20)\n    at file:///Users/sun/.loom/reviews/2026-10-11-common-reply-three-arm/kimi-claude/claude-native/run.mjs:32:53\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"
+      },
+      "knownUsage": {
+        "native": {
+          "requests": 2,
+          "requestCoverage": "complete",
+          "billingCoverage": "unknown",
+          "knownTotals": {
+            "input": 200,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 200,
+            "output": 20,
+            "generations": 2
+          },
+          "generations": [
+            {
+              "responseId": "msg_v3_1",
+              "model": "claude-sonnet-5-5",
+              "input": 100,
+              "cachedInput": 0,
+              "cacheCreationInput": 0,
+              "uncachedInput": 100,
+              "output": 10
+            },
+            {
+              "responseId": "msg_v3_2",
+              "model": "claude-sonnet-5-5",
+              "input": 100,
+              "cachedInput": 0,
+              "cacheCreationInput": 0,
+              "uncachedInput": 100,
+              "output": 10
+            }
+          ],
+          "incomplete": [],
+          "duplicates": [],
+          "conflicts": []
+        }
+      },
+      "notReplaced": true
+    },
+    {
+      "cli": "claude",
+      "arm": "current",
+      "resultPath": "/Users/sun/.loom/reviews/2026-10-11-common-reply-three-arm/kimi-claude/claude-current/runs/1791673227838-free/result.private.json",
+      "resultSha256": "497d9c974800f50fcfd57987166c5dba4d1d01f59dde293fbcc49134914cc89d",
+      "status": "failed",
+      "failures": {
+        "message": "Error: ENOENT: no such file or directory, open '/Users/sun/.loom/reviews/2026-10-11-common-reply-three-arm/kimi-claude/claude-current/runs/1791673227838-free/loom/channel-workspaces/room_6663a08f-24a9-43cb-9e1b-90ba03cc4697/isolation-proof.txt'",
+        "stack": "Error: ENOENT: no such file or directory, open '/Users/sun/.loom/reviews/2026-10-11-common-reply-three-arm/kimi-claude/claude-current/runs/1791673227838-free/loom/channel-workspaces/room_6663a08f-24a9-43cb-9e1b-90ba03cc4697/isolation-proof.txt'\n    at readFileSync (node:fs:436:20)\n    at file:///Users/sun/.loom/reviews/2026-10-11-common-reply-three-arm/kimi-claude/claude-current/run.mjs:32:53\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"
+      },
+      "knownUsage": {
+        "loom": {
+          "requests": 2,
+          "requestCoverage": "complete",
+          "billingCoverage": "unknown",
+          "knownTotals": {
+            "input": 200,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 200,
+            "output": 20,
+            "generations": 2
+          },
+          "generations": [
+            {
+              "responseId": "msg_v3_1",
+              "model": "claude-sonnet-5-5",
+              "input": 100,
+              "cachedInput": 0,
+              "cacheCreationInput": 0,
+              "uncachedInput": 100,
+              "output": 10
+            },
+            {
+              "responseId": "msg_v3_2",
+              "model": "claude-sonnet-5-5",
+              "input": 100,
+              "cachedInput": 0,
+              "cacheCreationInput": 0,
+              "uncachedInput": 100,
+              "output": 10
+            }
+          ],
+          "incomplete": [],
+          "duplicates": [],
+          "conflicts": []
+        }
+      },
+      "notReplaced": true
+    }
+  ],
+  "tdd": {
+    "admissionRed": "red.log",
+    "admissionGreen": "green-final.log",
+    "roundsRed": "rounds-red.log",
+    "roundsGreen": "rounds-green.log",
+    "scope": "Static entry selection and final-accounting invariants; actual CLI acceptance separately reported."
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "status": "Passed targeted fake-runtime continuity and three-mode boundaries; full original lease suite has one expected historical hash-pin failure, retained. Not real CLI or cost acceptance.",
+  "workspaceResolution": {
+    "packages": ["agent-host", "protocol", "kernel", "daemon", "core"],
+    "allResolveInsideIsolatedCandidate": true
+  },
+  "suites": [
+    {
+      "name": "provider-session-store + session-protocol-upgrade",
+      "passed": 16,
+      "failed": 0,
+      "evidence": "continuity.log",
+      "scope": "Fake CLI registry/Host and session store, accepted protocol updates and identity continuity."
+    },
+    {
+      "name": "OpenCode warm selected final modes",
+      "passed": 13,
+      "failed": 0,
+      "evidence": "three-modes.log",
+      "scope": "Fake provider HTTP + real Host/Kernel, Worker/default diagnostic, JSON final, native text, stale/cancel/unknown/fallback/Task boundary."
+    },
+    {
+      "name": "standing-prompt-lease original unmodified",
+      "passed": 10,
+      "failed": 1,
+      "evidence": "lease-original-pins.log",
+      "failure": "Old protocol hash43b49986b67f vs candidate8834a18b14f3; assertion not relaxed or source edited."
+    }
+  ],
+  "supplemental": {
+    "compilerHelpHelpersConsistency": true,
+    "evidence": "upgrade-card-check.log",
+    "initialScriptImportTypo": "Private supplemental script first failed module resolution before checks; corrected dated directory and reran successfully. Candidate untouched."
+  },
+  "candidateSourceHashes": {
+    "standing-protocol.ts": "d362ebee28cca34fa878d878ccd570f6792c6306fdba674b6d81e1bfc879fd9f",
+    "worker-help-topics.ts": "7264aef7cdfb6a9ddb68de6f3c855a9bab4ff40cfae9102138becb6719cd78c2"
+  },
+  "limits": [
+    "No installed CLI behavior demonstrated by these fake fixtures.",
+    "No automatic native session replacement or protocol migration success inferred merely from digest change.",
+    "All helpers unchanged; original business-JSON instruction limitation not repaired.",
+    "Paid resource caps, quality criteria and exact ordering remain to be sealed. No paid release."
+  ],
+  "logs": {
+    "continuity.log": "78f6f27a6f9834341e074e1651983c98e0c4e02426ce85cbb76a1df047d46f04",
+    "three-modes.log": "3fdc31ea357e5cff2f2ed13e199865f523e1308a69c4e9cfb0d1ee4dc08fbea1",
+    "lease-original-pins.log": "672e0a1773761f7c7d42309f8400d4da8258b1ea1045a49774a9aca7a8ac8499",
+    "upgrade-card-check.log": "6a026042d7c968dc94fa15e6f088ce1e4ea42f084ba4c14d3bf04f9b8b478e3d"
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "kind": "common-reply-runtime-free-summary/v1",
+  "sourceRevision": "8e058e87809a4fcd819ce210e845b1ce08041d5a",
+  "candidatePatchSha256": "e42c52e56c9ff399dff741a55a6062cee99833e8dd15442bcdcb9f2ffc0d5c3f",
+  "paidCalls": 0,
+  "fullTwelve": {
+    "clis": ["codex", "claude", "opencode", "kimi", "pi"],
+    "arms": ["native", "current", "candidate"],
+    "sessions": 15,
+    "turns": 180,
+    "localSyntheticRequests": 396,
+    "loomFinalDeliveries": 120
+  },
+  "verified": [
+    "continuous session per arm",
+    "one ordinary native session per CLI, no duplicate denominator",
+    "candidate guidance visible in actual model requests",
+    "exact Run/consumer delivery ACK for Loom arms",
+    "primary raw usage and CLI-specific cross checks",
+    "source isolation and owned-process cleanup"
+  ],
+  "limits": [
+    "Synthetic replies and quantities do not prove model behavior, quality equivalence, efficiency or financial savings.",
+    "All failed preparation samples and synthetic quality false remain in source evidence.",
+    "Fresh actual sessions do not establish real old-session protocol migration; separate fake tests only.",
+    "Codex paid accounting uses OTel sampling/completed, not uniform HTTP body capture.",
+    "Initial OpenCode preparation accidentally reused obsolete v3; rejected, retained and replaced before paid calls with previously audited P171 template. Historical P156 was already invalid; later P157/P160/P164/P167/P168/P171 source frames were present.",
+    "No product merge, service restart or real paid admission in this evidence."
+  ],
+  "files": {
+    "three-cli-twelve.json": "4c4e0a9bfa3fe2beafd477230ad6d8fafa848b6161a4db5039465ff72119b4d4",
+    "three-cli-twelve-review.json": "43127b7019a790db2ec8e6e09a7a95b8b7478c02bbedaf160611607079c6e68a",
+    "kimi-claude-twelve.json": "1476187481a25d2a707a0dacfbf3c3551fad59eda996c7d34bccee3dd899a964",
+    "kimi-claude-twelve-review.json": "ad36aa03ffabcd3f8e57cad3c398bafb50ccd1ac1e7868b905a3cf6ec2dab618",
+    "source-isolation.json": "81ca2f351db8301b940b9d6126d10975ad5a05c178c9704a0300eeace0d6871d",
+    "boundary-review.json": "269eec9f6ef6dd8c8a0532d6bbc300a706ba6376c90e7ebb538366d58dfbe749",
+    "opencode-template-history.json": "3696dadfffa4bafa0394cb5530223bf6587ca434899be9a8c67f2ef7656812c4"
+  },
+  "sourceFileHashes": {
+    "three-cli-twelve.json": "1f8f4e87584585210ec50518eb39b5f3d7072cf61641a881a351167ac9a258aa",
+    "three-cli-twelve-review.json": "43127b7019a790db2ec8e6e09a7a95b8b7478c02bbedaf160611607079c6e68a",
+    "kimi-claude-twelve.json": "cd306f6dd296935557d285638d38c165a08fd476501c19ec8358515a404219b6",
+    "kimi-claude-twelve-review.json": "c77683b278d9fa61920f70f3fdd1675c1903ede17266b39b6a093d1adf47067b",
+    "source-isolation.json": "81ca2f351db8301b940b9d6126d10975ad5a05c178c9704a0300eeace0d6871d",
+    "boundary-review.json": "05306cf35b8d5a090ecd5a61139039de9ff606be4059249a2ed57c439e6bf797",
+    "opencode-template-history.json": "3696dadfffa4bafa0394cb5530223bf6587ca434899be9a8c67f2ef7656812c4"
+  },
+  "publicationFormatting": "Published JSON is Prettier formatted; sourceFileHashes refer to original private evidence bytes, files to published bytes. Payloads unchanged."
+}

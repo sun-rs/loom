@@ -1,0 +1,1132 @@
+{
+  "verdict": "Kimi/Claude actual 12-turn three-arm free mechanical checks passed; not paid admission",
+  "sourceEvidenceSha256": "cd306f6dd296935557d285638d38c165a08fd476501c19ec8358515a404219b6",
+  "currentExecutionHashesMatched": 225,
+  "cases": [
+    {
+      "cli": "kimi",
+      "arm": "native",
+      "resultSha256": "b454252a181cf6263c1829bd07f69236f516e80fddfd4efcdd7945e2c90d5c3b",
+      "requests": 24,
+      "rounds": 12,
+      "continuousDistinctSession": true,
+      "currentTaskExactOnceAcrossUserMessages": true,
+      "candidateExposureAllRequests": true,
+      "knownUsage": {
+        "complete": true,
+        "httpPrimaryComplete": true,
+        "wireMatches": true,
+        "kernelMatches": null,
+        "errors": [],
+        "input": 240,
+        "output": 48,
+        "cachedInput": 0,
+        "reasoning": 0,
+        "httpAttempts": 24,
+        "reportedGenerations": 24,
+        "failedHttpAttempts": 0,
+        "billingCoverage": "not-observed",
+        "transportComplete": true,
+        "passiveIntegrity": true,
+        "providerCensus": {
+          "providerPids": [
+            6011, 6117, 6292, 6369, 6498, 6619, 6890, 7194, 7515, 7872, 8162,
+            8419
+          ],
+          "passivePids": [
+            6498, 7515, 7194, 6890, 6011, 6369, 6619, 8419, 6117, 8162, 6292,
+            7872
+          ]
+        },
+        "configurationMatches": true,
+        "primaryUsageComplete": true,
+        "crossCheckErrors": [],
+        "transportErrors": [],
+        "configurationErrors": []
+      },
+      "quality": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "ownedPidsCheckedGone": 24,
+      "exactRunConsumerAck": 0
+    },
+    {
+      "cli": "kimi",
+      "arm": "current",
+      "resultSha256": "52b7bc4f4eecf9719e2baf3f87d903c4eaf10d8144c25f40207d285f12d996e4",
+      "requests": 24,
+      "rounds": 12,
+      "continuousDistinctSession": true,
+      "currentTaskExactOnceAcrossUserMessages": true,
+      "candidateExposureAllRequests": true,
+      "knownUsage": {
+        "complete": true,
+        "httpPrimaryComplete": true,
+        "wireMatches": true,
+        "kernelMatches": true,
+        "errors": [],
+        "input": 240,
+        "output": 48,
+        "cachedInput": 0,
+        "reasoning": 0,
+        "httpAttempts": 24,
+        "reportedGenerations": 24,
+        "failedHttpAttempts": 0,
+        "billingCoverage": "not-observed",
+        "transportComplete": true,
+        "passiveIntegrity": true,
+        "providerCensus": {
+          "providerPids": [
+            9606, 10226, 10851, 11372, 12016, 12639, 13373, 14096, 14728, 15635,
+            16489, 17319
+          ],
+          "passivePids": [
+            11372, 14096, 9606, 13373, 12639, 12016, 14728, 15635, 16489, 17319,
+            10851, 10226
+          ]
+        },
+        "configurationMatches": true,
+        "primaryUsageComplete": true,
+        "crossCheckErrors": [],
+        "transportErrors": [],
+        "configurationErrors": []
+      },
+      "quality": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "ownedPidsCheckedGone": 55,
+      "exactRunConsumerAck": 12
+    },
+    {
+      "cli": "kimi",
+      "arm": "candidate",
+      "resultSha256": "19cce599b08b076697f1c1f8f2f74bf5d5e29ce211cfd996387451517f1faf37",
+      "requests": 24,
+      "rounds": 12,
+      "continuousDistinctSession": true,
+      "currentTaskExactOnceAcrossUserMessages": true,
+      "candidateExposureAllRequests": true,
+      "knownUsage": {
+        "complete": true,
+        "httpPrimaryComplete": true,
+        "wireMatches": true,
+        "kernelMatches": true,
+        "errors": [],
+        "input": 240,
+        "output": 48,
+        "cachedInput": 0,
+        "reasoning": 0,
+        "httpAttempts": 24,
+        "reportedGenerations": 24,
+        "failedHttpAttempts": 0,
+        "billingCoverage": "not-observed",
+        "transportComplete": true,
+        "passiveIntegrity": true,
+        "providerCensus": {
+          "providerPids": [
+            18667, 18991, 19296, 19584, 19826, 20070, 20246, 20445, 20675,
+            20938, 21173, 21396
+          ],
+          "passivePids": [
+            19296, 19826, 21173, 18667, 20938, 18991, 21396, 20675, 20445,
+            20070, 20246, 19584
+          ]
+        },
+        "configurationMatches": true,
+        "primaryUsageComplete": true,
+        "crossCheckErrors": [],
+        "transportErrors": [],
+        "configurationErrors": []
+      },
+      "quality": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "ownedPidsCheckedGone": 55,
+      "exactRunConsumerAck": 12
+    },
+    {
+      "cli": "claude",
+      "arm": "native",
+      "resultSha256": "19a2e5dd267af492b2e6c3951c3a89c50372a2ab7d7ae7f65383124a18d147d4",
+      "requests": 24,
+      "rounds": 12,
+      "continuousDistinctSession": true,
+      "currentTaskExactOnceAcrossUserMessages": true,
+      "candidateExposureAllRequests": true,
+      "knownUsage": {
+        "requests": 24,
+        "requestCoverage": "complete",
+        "billingCoverage": "unknown",
+        "knownTotals": {
+          "input": 2400,
+          "cachedInput": 0,
+          "cacheCreationInput": 0,
+          "uncachedInput": 2400,
+          "output": 240,
+          "generations": 24
+        },
+        "generations": [
+          {
+            "responseId": "msg_v3_1",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_2",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_3",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_4",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_5",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_6",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_7",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_8",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_9",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_10",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_11",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_12",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_13",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_14",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_15",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_16",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_17",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_18",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_19",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_20",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_21",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_22",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_23",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_24",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          }
+        ],
+        "incomplete": [],
+        "duplicates": [],
+        "conflicts": []
+      },
+      "quality": [
+        true,
+        false,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "ownedPidsCheckedGone": 5,
+      "exactRunConsumerAck": 0
+    },
+    {
+      "cli": "claude",
+      "arm": "current",
+      "resultSha256": "5c2abfca68ccb734b96928823c650ff48d86ea8495191c0f660632e168fdf179",
+      "requests": 24,
+      "rounds": 12,
+      "continuousDistinctSession": true,
+      "currentTaskExactOnceAcrossUserMessages": true,
+      "candidateExposureAllRequests": true,
+      "knownUsage": {
+        "requests": 24,
+        "requestCoverage": "complete",
+        "billingCoverage": "unknown",
+        "knownTotals": {
+          "input": 2400,
+          "cachedInput": 0,
+          "cacheCreationInput": 0,
+          "uncachedInput": 2400,
+          "output": 240,
+          "generations": 24
+        },
+        "generations": [
+          {
+            "responseId": "msg_v3_1",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_2",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_3",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_4",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_5",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_6",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_7",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_8",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_9",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_10",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_11",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_12",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_13",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_14",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_15",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_16",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_17",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_18",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_19",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_20",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_21",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_22",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_23",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_24",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          }
+        ],
+        "incomplete": [],
+        "duplicates": [],
+        "conflicts": []
+      },
+      "quality": [
+        true,
+        false,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "ownedPidsCheckedGone": 11,
+      "exactRunConsumerAck": 12
+    },
+    {
+      "cli": "claude",
+      "arm": "candidate",
+      "resultSha256": "629560a28b32ebf8449118737018d2f50f363b5ebece4f3795f31155eb1437fb",
+      "requests": 24,
+      "rounds": 12,
+      "continuousDistinctSession": true,
+      "currentTaskExactOnceAcrossUserMessages": true,
+      "candidateExposureAllRequests": true,
+      "knownUsage": {
+        "requests": 24,
+        "requestCoverage": "complete",
+        "billingCoverage": "unknown",
+        "knownTotals": {
+          "input": 2400,
+          "cachedInput": 0,
+          "cacheCreationInput": 0,
+          "uncachedInput": 2400,
+          "output": 240,
+          "generations": 24
+        },
+        "generations": [
+          {
+            "responseId": "msg_v3_1",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_2",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_3",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_4",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_5",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_6",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_7",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_8",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_9",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_10",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_11",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_12",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_13",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_14",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_15",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_16",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_17",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_18",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_19",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_20",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_21",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_22",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_23",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          },
+          {
+            "responseId": "msg_v3_24",
+            "model": "claude-sonnet-5-5",
+            "input": 100,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 100,
+            "output": 10
+          }
+        ],
+        "incomplete": [],
+        "duplicates": [],
+        "conflicts": []
+      },
+      "quality": [
+        true,
+        false,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "ownedPidsCheckedGone": 11,
+      "exactRunConsumerAck": 12
+    }
+  ],
+  "totalRequests": 144,
+  "retainedHarnessFailures": [
+    {
+      "cli": "kimi",
+      "arm": "current",
+      "resultPath": "/Users/sun/.loom/reviews/2026-10-11-common-reply-three-arm/kimi-claude/kimi-current/runs/kimi-five-slot-free-1791673146008/block-2/result.private.json",
+      "resultSha256": "5a09502157d71ca7adb84365ea3b36f41294f0cd27242e0d31efb49eb75c7aaa",
+      "status": "stopped-final-audit",
+      "failures": [
+        {
+          "time": "2026-10-10T22:59:09.194Z",
+          "error": "AssertionError [ERR_ASSERTION]: Daemon startup failed\n\n1 !== null\n",
+          "stack": "AssertionError [ERR_ASSERTION]: Daemon startup failed\n\n1 !== null\n\n    at file:///Users/sun/.loom/reviews/2026-10-11-common-reply-three-arm/kimi-claude/kimi-current/gate-daemon.mjs:158:14\n    at wait (file:///Users/sun/.loom/reviews/2026-10-11-common-reply-runtime/baseline-source/scripts/cli-efficiency/common.mjs:21:18)\n    at async Object.start (file:///Users/sun/.loom/reviews/2026-10-11-common-reply-three-arm/kimi-claude/kimi-current/gate-daemon.mjs:157:5)\n    at async productArm (file:///Users/sun/.loom/reviews/2026-10-11-common-reply-three-arm/kimi-claude/kimi-current/product-arm.mjs:14:2)\n    at async file:///Users/sun/.loom/reviews/2026-10-11-common-reply-three-arm/kimi-claude/kimi-current/block-run.mjs:26:1383"
+        }
+      ],
+      "knownUsage": {
+        "loom": {
+          "complete": false,
+          "httpPrimaryComplete": true,
+          "wireMatches": false,
+          "kernelMatches": false,
+          "errors": [
+            "wire: AssertionError [ERR_ASSERTION]: Exactly one native session wire\n\n0 !== 1\n",
+            "Kernel: TypeError: Cannot read properties of undefined (reading 'stateDirectory')",
+            "capture root unavailable",
+            "passive archive incomplete",
+            "legacy archive incomplete",
+            "no independently recorded provider launch",
+            "observer census not sealed",
+            "wire coverage incomplete"
+          ],
+          "input": 0,
+          "output": 0,
+          "cachedInput": 0,
+          "reasoning": 0,
+          "httpAttempts": 0,
+          "reportedGenerations": 0,
+          "failedHttpAttempts": 0,
+          "billingCoverage": "not-observed",
+          "transportComplete": false,
+          "passiveIntegrity": false,
+          "providerCensus": {
+            "providerPids": [],
+            "passivePids": []
+          },
+          "configurationMatches": true,
+          "primaryUsageComplete": false,
+          "crossCheckErrors": [
+            "wire: AssertionError [ERR_ASSERTION]: Exactly one native session wire\n\n0 !== 1\n",
+            "Kernel: TypeError: Cannot read properties of undefined (reading 'stateDirectory')",
+            "wire coverage incomplete"
+          ],
+          "transportErrors": [
+            "capture root unavailable",
+            "passive archive incomplete",
+            "legacy archive incomplete",
+            "no independently recorded provider launch"
+          ],
+          "configurationErrors": []
+        }
+      },
+      "notReplaced": true
+    },
+    {
+      "cli": "claude",
+      "arm": "native",
+      "resultPath": "/Users/sun/.loom/reviews/2026-10-11-common-reply-three-arm/kimi-claude/claude-native/runs/1791673155329-free/result.private.json",
+      "resultSha256": "8c50c37c19743802cca8c13b923a1c3416fa7eaa8520576cffbd23858d89b859",
+      "status": "failed",
+      "failures": {
+        "message": "Error: ENOENT: no such file or directory, open '/private/tmp/loom-p170-AOqXja/native/work/isolation-proof.txt'",
+        "stack": "Error: ENOENT: no such file or directory, open '/private/tmp/loom-p170-AOqXja/native/work/isolation-proof.txt'\n    at readFileSync (node:fs:436:20)\n    at file:///Users/sun/.loom/reviews/2026-10-11-common-reply-three-arm/kimi-claude/claude-native/run.mjs:32:53\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"
+      },
+      "knownUsage": {
+        "native": {
+          "requests": 2,
+          "requestCoverage": "complete",
+          "billingCoverage": "unknown",
+          "knownTotals": {
+            "input": 200,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 200,
+            "output": 20,
+            "generations": 2
+          },
+          "generations": [
+            {
+              "responseId": "msg_v3_1",
+              "model": "claude-sonnet-5-5",
+              "input": 100,
+              "cachedInput": 0,
+              "cacheCreationInput": 0,
+              "uncachedInput": 100,
+              "output": 10
+            },
+            {
+              "responseId": "msg_v3_2",
+              "model": "claude-sonnet-5-5",
+              "input": 100,
+              "cachedInput": 0,
+              "cacheCreationInput": 0,
+              "uncachedInput": 100,
+              "output": 10
+            }
+          ],
+          "incomplete": [],
+          "duplicates": [],
+          "conflicts": []
+        }
+      },
+      "notReplaced": true
+    },
+    {
+      "cli": "claude",
+      "arm": "current",
+      "resultPath": "/Users/sun/.loom/reviews/2026-10-11-common-reply-three-arm/kimi-claude/claude-current/runs/1791673227838-free/result.private.json",
+      "resultSha256": "497d9c974800f50fcfd57987166c5dba4d1d01f59dde293fbcc49134914cc89d",
+      "status": "failed",
+      "failures": {
+        "message": "Error: ENOENT: no such file or directory, open '/Users/sun/.loom/reviews/2026-10-11-common-reply-three-arm/kimi-claude/claude-current/runs/1791673227838-free/loom/channel-workspaces/room_6663a08f-24a9-43cb-9e1b-90ba03cc4697/isolation-proof.txt'",
+        "stack": "Error: ENOENT: no such file or directory, open '/Users/sun/.loom/reviews/2026-10-11-common-reply-three-arm/kimi-claude/claude-current/runs/1791673227838-free/loom/channel-workspaces/room_6663a08f-24a9-43cb-9e1b-90ba03cc4697/isolation-proof.txt'\n    at readFileSync (node:fs:436:20)\n    at file:///Users/sun/.loom/reviews/2026-10-11-common-reply-three-arm/kimi-claude/claude-current/run.mjs:32:53\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"
+      },
+      "knownUsage": {
+        "loom": {
+          "requests": 2,
+          "requestCoverage": "complete",
+          "billingCoverage": "unknown",
+          "knownTotals": {
+            "input": 200,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 200,
+            "output": 20,
+            "generations": 2
+          },
+          "generations": [
+            {
+              "responseId": "msg_v3_1",
+              "model": "claude-sonnet-5-5",
+              "input": 100,
+              "cachedInput": 0,
+              "cacheCreationInput": 0,
+              "uncachedInput": 100,
+              "output": 10
+            },
+            {
+              "responseId": "msg_v3_2",
+              "model": "claude-sonnet-5-5",
+              "input": 100,
+              "cachedInput": 0,
+              "cacheCreationInput": 0,
+              "uncachedInput": 100,
+              "output": 10
+            }
+          ],
+          "incomplete": [],
+          "duplicates": [],
+          "conflicts": []
+        }
+      },
+      "notReplaced": true
+    }
+  ],
+  "limits": [
+    "Synthetic provider requests and quantities do not prove model-following, efficiency or actual model-quality.",
+    "Kimi native print and product ACP remain different modes; dynamic native tool schema retained.",
+    "Whole arms ordered native/current/candidate here; future Latin pilot order not yet free validated by this receipt.",
+    "Exact Run-consumer ACK independently supplements marker/Activation-only owner audit.",
+    "Old source/failed samples unmodified; no calls to any provider in this review."
+  ]
+}
