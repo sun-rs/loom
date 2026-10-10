@@ -1,0 +1,101 @@
+{
+  "scope": "Digests of published files after formatting; originalPrivateSha256 refers to unchanged source analysis. Only publicationDigestScope metadata added to source seals. This manifest excludes itself.",
+  "files": [
+    {
+      "name": "fixture-v6.json",
+      "publishedSha256": "6c511e11be10e2ee696f04e1cc84e258f594cb12dd91d68b4c774de9c212e6f8",
+      "originalPrivateSha256": "6c511e11be10e2ee696f04e1cc84e258f594cb12dd91d68b4c774de9c212e6f8",
+      "jsonDataEquivalent": true,
+      "source": "2026-10-10-cost-fixture-v6/public-evidence.json"
+    },
+    {
+      "name": "independent-seal.json",
+      "publishedSha256": "b150f1f63ba3b951b85f6f0f966986dfc9b8d63a8335d3523a2b63857174ae04",
+      "originalPrivateSha256": "1d8ac75927221b2b6d15dd2bccbb9530d5197fca22466d228e50ed583e7c81f3",
+      "jsonDataEquivalent": true,
+      "source": "2026-10-10-long-task-analysis/public-staging/independent-seal.json"
+    },
+    {
+      "name": "kimi-B2-path-summary.json",
+      "publishedSha256": "0eb2d64a373d82cc58bfcd921ac6c6c2cf3e03e40fcc747413ad0197dd2f742a",
+      "originalPrivateSha256": "0eb2d64a373d82cc58bfcd921ac6c6c2cf3e03e40fcc747413ad0197dd2f742a",
+      "jsonDataEquivalent": true,
+      "source": "2026-10-10-long-task-analysis/public-staging/kimi-B2-path-summary.json"
+    },
+    {
+      "name": "kimi-admission-review.json",
+      "publishedSha256": "6f20a1f411fc4eb8df4e6877ea6a716da930b5b0ba50101eb7cb9a905bfa60fb",
+      "originalPrivateSha256": "6f20a1f411fc4eb8df4e6877ea6a716da930b5b0ba50101eb7cb9a905bfa60fb",
+      "jsonDataEquivalent": true,
+      "source": "2026-10-10-long-task-design-review/kimi-final-executable-review.json"
+    },
+    {
+      "name": "kimi-block1-root-cause.json",
+      "publishedSha256": "c271dbd9eb630c3e3364e171983accefe0ad677540135a3593a807bbd9510f5d",
+      "originalPrivateSha256": "4d5886443be5eb6cd93b74cd81142acdb3a8fd05c4efcce09897f82b11328636",
+      "jsonDataEquivalent": true,
+      "source": "2026-10-10-long-task-analysis/kimi-B1-root-cause.json"
+    },
+    {
+      "name": "kimi-final-seal.json",
+      "publishedSha256": "0ee9e9f2eb137db56b87ab991c6e2b1e83a5a457fd8b674ddd907e455f916815",
+      "originalPrivateSha256": "e4254397ea9512a12a9708e4dc6f91b3de61038a9db94b1fe0e6ece7e091d504",
+      "jsonDataEquivalent": true,
+      "source": "2026-10-10-kimi-three-arm-plan/handoff-paid-b/final-seal.json"
+    },
+    {
+      "name": "kimi-first-request.json",
+      "publishedSha256": "1b2a12bc9dee7c1b8740bf4626038e120d4228a9bb79c42e27516bbe7a151135",
+      "originalPrivateSha256": "1b2a12bc9dee7c1b8740bf4626038e120d4228a9bb79c42e27516bbe7a151135",
+      "jsonDataEquivalent": true,
+      "source": "2026-10-10-long-task-analysis/first-http-input.json"
+    },
+    {
+      "name": "kimi-independent.json",
+      "publishedSha256": "f932938ee48b668bb8c52d16e92012af5c742901cfe03a0133853a13d09276ab",
+      "originalPrivateSha256": "de8c1e50cfb612f0d565ca4455fd711c1c1bc1f74ef6ca0294692169724e116c",
+      "jsonDataEquivalent": true,
+      "source": "2026-10-10-long-task-analysis/public-staging/kimi-independent.json"
+    },
+    {
+      "name": "kimi-p186.json",
+      "publishedSha256": "9d87afc545575fd043b5544b823953ca8094b5374a592fc1355e374a085a9fd5",
+      "originalPrivateSha256": "71a65e2a315e3b03c4840d19543774d6195574bbfd7de676f04f988cdc42b3f4",
+      "jsonDataEquivalent": true,
+      "source": "2026-10-10-kimi-three-arm-plan/handoff-paid-b/public-evidence.json"
+    },
+    {
+      "name": "kimi-posthoc-unrelated-key.json",
+      "publishedSha256": "331051a209b3bbbcd501eb20f9c4a01fd70bacbab2645dd6ab9c9e07bd58b6ab",
+      "originalPrivateSha256": "331051a209b3bbbcd501eb20f9c4a01fd70bacbab2645dd6ab9c9e07bd58b6ab",
+      "jsonDataEquivalent": true,
+      "source": "2026-10-10-long-task-analysis/public-staging/kimi-posthoc-unrelated-key.json"
+    },
+    {
+      "name": "pi-admission-review.json",
+      "publishedSha256": "a39b682583e3e3df385cca1ed770028f200a54013ffc63c3ba917aa9e8e7004d",
+      "originalPrivateSha256": "a39b682583e3e3df385cca1ed770028f200a54013ffc63c3ba917aa9e8e7004d",
+      "jsonDataEquivalent": true,
+      "source": "2026-10-10-long-task-design-review/pi-final-executable-review.json"
+    },
+    {
+      "name": "pi-independent.json",
+      "publishedSha256": "2fd748c916459a03b0170f8ebd92ffd3bf0be811f1e4cb6eeb3038ac7a8cda26",
+      "originalPrivateSha256": "2fd748c916459a03b0170f8ebd92ffd3bf0be811f1e4cb6eeb3038ac7a8cda26",
+      "jsonDataEquivalent": true,
+      "source": "2026-10-10-long-task-analysis/public-staging/pi-independent.json"
+    },
+    {
+      "name": "pi-p185.json",
+      "publishedSha256": "fad2f55c5b01acb20f73c334ca695bc744f3870c0831f75e3f564f7bbacc1efd",
+      "originalPrivateSha256": "a7ff6ab78a66cdb8b2b08f46d594cf1b11b625ecbfaf6d891e39130e2db88ad9",
+      "jsonDataEquivalent": true,
+      "source": "2026-10-10-pi-two-pair-candidate/paid-runs/1791623194920/handoff/public-evidence.json"
+    },
+    {
+      "name": "summary.json",
+      "publishedSha256": "4e03befa157fabc45bab278cffe98a1abb770b8de9631b77c4a4cc8aa24dae12",
+      "origin": "Lead-authored synthesis of cited evidence"
+    }
+  ]
+}

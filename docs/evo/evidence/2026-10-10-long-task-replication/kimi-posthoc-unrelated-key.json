@@ -1,0 +1,314 @@
+{
+  "scope": "Separate posthoc static screening of all six Kimi final snapshots and bounded execution of an unchanged copied Loom B2 artifact. Original snapshots/oracle/verdicts unchanged.",
+  "screening": [
+    {
+      "block": 1,
+      "arm": "print",
+      "sha256": "337363e40c2aae7ad0916833a9942b1388022b2c122d54323e2c32eb04114ceb",
+      "activeMentions": []
+    },
+    {
+      "block": 1,
+      "arm": "bridge",
+      "sha256": "c27ac84ddcb43bf5e631b2db4acfe261b91f89b9f4b5403493914468a2ef6d94",
+      "activeMentions": [
+        {
+          "line": 35,
+          "text": "def _summarize_active(rows, rate):"
+        },
+        {
+          "line": 71,
+          "text": "active = []"
+        },
+        {
+          "line": 89,
+          "text": "active.append((quantity, unit_price, discount_percent, row.get(\"category\")))"
+        },
+        {
+          "line": 90,
+          "text": "result = _summarize_active("
+        },
+        {
+          "line": 91,
+          "text": "[(q, p, d) for q, p, d, _ in active], rate"
+        },
+        {
+          "line": 95,
+          "text": "for q, p, d, category in active:"
+        },
+        {
+          "line": 102,
+          "text": "dict(category=category, **_summarize_active(categories[category], rate))"
+        }
+      ]
+    },
+    {
+      "block": 1,
+      "arm": "loom",
+      "sha256": "95f6d2fa7febe95e264ada4290473c0f3b8fdc50af947f9e336997ac61d6822d",
+      "activeMentions": []
+    },
+    {
+      "block": 2,
+      "arm": "print",
+      "sha256": "2fb53e6e8c0a6d3a774bcd3a800aded2e9086ab84fd3c7eb20d4b6d1ab358e43",
+      "activeMentions": [
+        {
+          "line": 30,
+          "text": "def _active_rows(rows):"
+        },
+        {
+          "line": 31,
+          "text": "active = []"
+        },
+        {
+          "line": 49,
+          "text": "active.append((row, amount, discount))"
+        },
+        {
+          "line": 50,
+          "text": "return active"
+        },
+        {
+          "line": 53,
+          "text": "def _summarize_active(active, rate):"
+        },
+        {
+          "line": 56,
+          "text": "for _, amount, row_discount in active:"
+        },
+        {
+          "line": 66,
+          "text": "\"count\": len(active),"
+        },
+        {
+          "line": 82,
+          "text": "active = _active_rows(rows)"
+        },
+        {
+          "line": 83,
+          "text": "result = _summarize_active(active, rate)"
+        },
+        {
+          "line": 86,
+          "text": "for entry in active:"
+        },
+        {
+          "line": 94,
+          "text": "{\"category\": category, **_summarize_active(by_category[category], rate)}"
+        }
+      ]
+    },
+    {
+      "block": 2,
+      "arm": "bridge",
+      "sha256": "ca05e62dbbcbf5fcf9e86c867635473450ae384aba0a4dfa940b839e47734f03",
+      "activeMentions": []
+    },
+    {
+      "block": 2,
+      "arm": "loom",
+      "sha256": "c12f40f8bbd5984e60ce0e6a09061d977bd93781cfabd91c791927e2aa947921",
+      "activeMentions": [
+        {
+          "line": 37,
+          "text": "def _active_rows(rows):"
+        },
+        {
+          "line": 44,
+          "text": "if not row.get(\"active\", True):"
+        },
+        {
+          "line": 50,
+          "text": "\"\"\"Accumulate exact subtotal and discount over active rows.\"\"\""
+        },
+        {
+          "line": 103,
+          "text": "active = list(_active_rows(rows))"
+        },
+        {
+          "line": 105,
+          "text": "count, subtotal, discount_total = _aggregate(active)"
+        },
+        {
+          "line": 110,
+          "text": "for row in active:"
+        }
+      ]
+    }
+  ],
+  "posthoc": {
+    "block": 2,
+    "arm": "loom",
+    "round": 12,
+    "sourceSha256": "c12f40f8bbd5984e60ce0e6a09061d977bd93781cfabd91c791927e2aa947921",
+    "copiedBytesExact": true,
+    "exitCode": 0,
+    "observed": {
+      "withoutUnrelatedKey": {
+        "count": 1,
+        "subtotal": "2.00",
+        "discount": "0.00",
+        "tax": "0.00",
+        "total": "2.00"
+      },
+      "withUnrelatedKey": {
+        "count": 0,
+        "subtotal": "0.00",
+        "discount": "0.00",
+        "tax": "0.00",
+        "total": "0.00"
+      }
+    },
+    "required": "Both inputs must have count 1 and subtotal 2.00 because unrelated row keys are ignored.",
+    "defectConfirmed": true
+  },
+  "originalAutomatedQuality": "72/72 remains the original recorded result, not complete semantic proof.",
+  "additionalPiFinalScreening": [
+    {
+      "block": "A",
+      "arm": "native",
+      "sha256": "171829a979b4c4ff7d94f96c5d265a6487ed1805793c7cf253b0d256f433cc2c",
+      "activeMentions": [
+        {
+          "line": 129,
+          "text": "def _aggregate(active_rows, tax_percent):"
+        },
+        {
+          "line": 130,
+          "text": "\"\"\"Compute the five summary fields for validated active rows.\"\"\""
+        },
+        {
+          "line": 133,
+          "text": "for row in active_rows:"
+        },
+        {
+          "line": 177,
+          "text": "\"count\": len(active_rows),"
+        },
+        {
+          "line": 188,
+          "text": "``rows`` must be a list of dicts.  Each active row must provide"
+        },
+        {
+          "line": 200,
+          "text": "raised.  The grand totals are always recomputed from all active rows,"
+        },
+        {
+          "line": 205,
+          "text": "* ``count`` - integer number of active (non-cancelled) input rows"
+        },
+        {
+          "line": 217,
+          "text": "validated for every active row, so malformed or missing values raise"
+        },
+        {
+          "line": 228,
+          "text": "active_rows = []"
+        },
+        {
+          "line": 252,
+          "text": "active_rows.append(row)"
+        },
+        {
+          "line": 254,
+          "text": "# Grand totals are recomputed from all active rows, never by adding the"
+        },
+        {
+          "line": 256,
+          "text": "overall = _aggregate(active_rows, tax_percent)"
+        },
+        {
+          "line": 262,
+          "text": "for row in active_rows:"
+        }
+      ]
+    },
+    {
+      "block": "A",
+      "arm": "loom",
+      "sha256": "757a2216773a381e426a2708206761f787db1080acd7771d521055508a7ed57b",
+      "activeMentions": [
+        {
+          "line": 157,
+          "text": "``rows`` must be a list of dicts.  Each active row provides"
+        },
+        {
+          "line": 173,
+          "text": "totals are always recomputed from every active row rather than summed"
+        },
+        {
+          "line": 228,
+          "text": "# Grand totals come straight from all active rows, never from the"
+        }
+      ]
+    },
+    {
+      "block": "B",
+      "arm": "native",
+      "sha256": "b4d09a015d808167bba1e3e24165eb9108cf506689d2ba84769df45e42734622",
+      "activeMentions": [
+        {
+          "line": 7,
+          "text": "``rows`` must be a ``list`` of ``dict`` rows.  Each active row must contain a"
+        },
+        {
+          "line": 36,
+          "text": "active rows."
+        },
+        {
+          "line": 198,
+          "text": "``tax`` and ``total``.  ``count`` is the number of active input rows and"
+        },
+        {
+          "line": 203,
+          "text": "recalculated from every active row) and an additional ``groups`` list"
+        },
+        {
+          "line": 255,
+          "text": "# Grand totals are always recalculated from every active row, never by"
+        }
+      ]
+    },
+    {
+      "block": "B",
+      "arm": "loom",
+      "sha256": "375abd385c1ba2bebd4179be6c8e92a19d0ee649de93d243443c652c75eff6d4",
+      "activeMentions": [
+        {
+          "line": 10,
+          "text": "* ``count``     -- integer number of active input rows"
+        },
+        {
+          "line": 28,
+          "text": "computed independently over that group's active rows.  The top-level summary"
+        },
+        {
+          "line": 29,
+          "text": "is the grand total computed from all active rows, never by summing the rounded"
+        },
+        {
+          "line": 143,
+          "text": "def _collect_active_rows(rows):"
+        },
+        {
+          "line": 144,
+          "text": "\"\"\"Validate ``rows`` and return the parsed active row data."
+        },
+        {
+          "line": 189,
+          "text": "\"\"\"Return the five summary fields for one set of active rows.\"\"\""
+        },
+        {
+          "line": 271,
+          "text": ") = _collect_active_rows(rows)"
+        },
+        {
+          "line": 273,
+          "text": "# Grand totals always come from all active rows, never from summing the"
+        }
+      ]
+    }
+  ],
+  "screeningConclusion": "Among six Kimi final artifacts, only B2 Loom reads the unrelated active key. Other occurrences are local variables or documentation terminology. Additional Pi final artifacts screened below; screening is not a full semantic proof."
+}

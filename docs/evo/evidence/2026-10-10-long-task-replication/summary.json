@@ -1,0 +1,79 @@
+{
+  "sourceRevision": "af46545b5e5837dbc478c4d23c55d2d146dd98fa",
+  "scope": "Two independent 12-turn pairs for Pi; two independent three-arm 12-turn blocks for Kimi; ordinary native controls plus production Loom; no replacement or in-run budget change",
+  "verdict": "Complete raw primary accounting for this batch; stable multi-model efficiency remains unproven and product cost acceptance is not closed",
+  "totalObserved": {
+    "httpRequests": 888,
+    "input": 41718066,
+    "output": 575243,
+    "armTurns": 120
+  },
+  "models": [
+    {
+      "cli": "Pi",
+      "binding": "aihubmix/deepseek-v4.1-flash",
+      "effort": "low"
+    },
+    {
+      "cli": "Kimi",
+      "binding": "kimi-code/k3-256k",
+      "effort": "low"
+    }
+  ],
+  "quality": {
+    "piA": "24 overall passes",
+    "piB": "20 overall passes; native R9–12 frozen selftest failures retained, all independent business cases pass",
+    "kimi": "72 frozen automatic checks passed; separate posthoc counterexample proves block2 Loom incorrectly filters unrelated active:false, so semantic equivalence fails",
+    "boundary": "Original automatic verdicts never overwritten; independent semantic findings have equal visibility. Lower token consumption is not evidence of equal-quality success."
+  },
+  "observations": [
+    "All completed comparisons have independently replayable primary input/output; absent optional cache/reasoning remains unknown, never zero or a reason to erase known primary usage.",
+    "All Pi compaction costs included in raw totals; Kernel still marks compaction coverage gap rather than reporting complete product consumption.",
+    "Pi A input/output 1.084167876/0.952933519; B 0.662095319/0.678306208. Kimi block1 1.758266703/1.393990690; block2 0.666127672/0.865575199. Each is a trajectory sample, not a platform constant.",
+    "Kimi block1 excess requests are directly visible business code/test repair, not explicit Worker communication. Current and prior task text is not duplicated in examined request histories.",
+    "First Kimi HTTP input is 20139 in both ordinary controls and 21752/21767 in Loom; this observed ~8% first-request difference does not establish pure prompt causality. Subsequent request counts and growing business/thinking/tool history dominate the observed path differences.",
+    "Kimi block2 automatic oracle missed a semantic defect: active:false is an unrelated key under round6, yet Loom skips its row. A frozen-copy posthoc counterexample yields 0.00 instead of 2.00; no model rerun or historical verdict replacement."
+  ],
+  "admissionCorrections": [
+    "Withdrawn Kimi candidate a was never launched; zero-start attestation and filesystem census preserved. Initial independent review missed runtime integration and was explicitly superseded.",
+    "Both actual executors now gate passive archive integrity, independently recorded provider PID seals, cross-observer request census, final accounting and cleanup before continuation; failure injections retain known costs and stop further work.",
+    "Removed effective Kimi retry override of 1 before any paid run; installed default is 10 attempts. Paid controls preserve normal retry/compaction/history; automatic memory audited/disabled.",
+    "Earlier free Python3.9 setup failures produced no model requests; released controller uses Python3.13 PATH."
+  ],
+  "decisions": [
+    "Keep existing authenticated room-first scheduling and native-final experiment boundary; evidence does not justify wholesale backend replacement.",
+    "Next isolate deterministic transport/prompt growth with identical scripted trajectories and free capture replay before any new paid ablation. Such replay measures requests/bytes, not model token savings or quality.",
+    "Use actual multi-CLI/model long tasks to evaluate business path/quality variability separately; no additional paid batch launched to select a favorable ratio.",
+    "Do not subtract failed work, reasoning, retries, compaction or extra business steps from user consumption.",
+    "Raft/Aexus absorption remains after cost mainline; no upstream code imported in this batch.",
+    "New v6 unrelated-key invariance coverage is free-verified for future workload reuse; this paid batch and all historical verdicts remain v5."
+  ],
+  "limits": [
+    "Two trajectories per exact binding do not establish a stable distribution or other models/CLIs/multi-agent acceptance.",
+    "Kimi no-Room bridge uses production ACP implementation and manual permission behavior, not an independent official client or pure causal control.",
+    "Historical P181/P182 observations and failures remain valid at their original scope; changing fixture accounting and trajectory prevents claiming 2.26 to 1.08 as causal optimization.",
+    "Reported tokens are not invoice prices; cache details and thinking subsets must remain separate."
+  ],
+  "evidence": [
+    "pi-p185.json",
+    "kimi-p186.json",
+    "kimi-first-request.json",
+    "kimi-block1-root-cause.json",
+    "pi-admission-review.json",
+    "kimi-admission-review.json",
+    "pi-independent.json",
+    "kimi-independent.json",
+    "kimi-posthoc-unrelated-key.json",
+    "independent-seal.json",
+    "kimi-final-seal.json",
+    "fixture-v6.json"
+  ],
+  "fixtureRepair": {
+    "version": "v6",
+    "paidBatchUsed": "v5; unchanged",
+    "changes": "Exactly two cases from round6 onward; all38 prior cases byte-structurally preserved; prompts/evaluator/reference unchanged",
+    "redGreen": "Old v5 accepts frozen defective artifact; v6 rejects exactly the two added cases; reference passes all12 rounds",
+    "verification": "30 Python and 2 Node tests pass; all31 v5 file hashes unchanged; no model calls or retrospective replacement",
+    "evidence": "fixture-v6.json"
+  }
+}

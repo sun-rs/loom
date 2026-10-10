@@ -1,0 +1,782 @@
+{
+  "batch": "PI-TWO-PAIR-20261010-A",
+  "generatedAt": "2026-10-10T10:10:11.744721+00:00",
+  "scope": "Exactly two preregistered independent session pairs,12turns each,4sessions48armturns; no rerun/replacement",
+  "model": {
+    "cli": "Pi",
+    "binding": "aihubmix/deepseek-v4.1-flash",
+    "effort": "low"
+  },
+  "budget": {
+    "perPair": {
+      "input": 18000000,
+      "output": 300000,
+      "requests": 400,
+      "minutes": 90,
+      "turnMinutes": 10
+    },
+    "aggregate": {
+      "input": 36000000,
+      "output": 600000,
+      "requests": 800,
+      "minutes": 180
+    },
+    "boundary": "Eacharm launch thresholds, not hard inflight token ceilings; no changes during execution"
+  },
+  "allObserved": {
+    "requests": 451,
+    "input": 24740513,
+    "output": 417351,
+    "primaryComplete": true
+  },
+  "blocks": [
+    {
+      "block": "A",
+      "completed": {
+        "native": 12,
+        "loom": 12
+      },
+      "executionExit": {
+        "code": 0,
+        "signal": null
+      },
+      "arms": {
+        "native": {
+          "requests": 97,
+          "rawPrimaryComplete": true,
+          "reported": {
+            "input": {
+              "known": 5400861,
+              "complete": true
+            },
+            "output": {
+              "known": 98329,
+              "complete": true
+            },
+            "cachedInput": {
+              "known": 5097600,
+              "complete": false
+            },
+            "reasoningOutput": {
+              "known": 46650,
+              "complete": true
+            }
+          },
+          "uncachedInput": null,
+          "sampling": {
+            "requests": 95,
+            "input": 5322222,
+            "output": 96196
+          },
+          "compaction": {
+            "requests": 2,
+            "input": 78639,
+            "output": 2133,
+            "coverage": "Native aggregate independently matches full raw extras; no invented perresponse native IDs"
+          },
+          "toolCalls": {
+            "business": 86,
+            "protocolOrEnvironment": 0
+          },
+          "normalToolSchemaHashes": [
+            "98d02b1aa0893b1bcf902471a8652b6064923217c40272cee3f3f41f6aa79482"
+          ],
+          "requestStructure": {
+            "meanBodyBytes": 218066.22680412373,
+            "meanHistoricalReasoningCharacters": 72188.73195876289,
+            "meanSerializedCharactersByRole": {
+              "system": 0.0,
+              "developer": 2815.979381443299,
+              "user": 8177.40206185567,
+              "assistant": 152608.6494845361,
+              "tool": 51297.59793814433
+            },
+            "interpretation": "Actual transmitted characters/bytes, not tokens or causal attribution; compaction included in overall means"
+          }
+        },
+        "loom": {
+          "requests": 108,
+          "rawPrimaryComplete": true,
+          "reported": {
+            "input": {
+              "known": 5855440,
+              "complete": true
+            },
+            "output": {
+              "known": 93701,
+              "complete": true
+            },
+            "cachedInput": {
+              "known": 5611136,
+              "complete": false
+            },
+            "reasoningOutput": {
+              "known": 43067,
+              "complete": true
+            }
+          },
+          "uncachedInput": null,
+          "sampling": {
+            "requests": 106,
+            "input": 5773773,
+            "output": 91485
+          },
+          "compaction": {
+            "requests": 2,
+            "input": 81667,
+            "output": 2216,
+            "coverage": "Native aggregate independently matches full raw extras; no invented perresponse native IDs"
+          },
+          "toolCalls": {
+            "business": 97,
+            "protocolOrEnvironment": 0
+          },
+          "normalToolSchemaHashes": [
+            "98d02b1aa0893b1bcf902471a8652b6064923217c40272cee3f3f41f6aa79482"
+          ],
+          "requestStructure": {
+            "meanBodyBytes": 214750.47222222222,
+            "meanHistoricalReasoningCharacters": 76907.04629629629,
+            "meanSerializedCharactersByRole": {
+              "system": 0.0,
+              "developer": 9717.166666666666,
+              "user": 8836.787037037036,
+              "assistant": 159276.08333333334,
+              "tool": 33730.81481481482
+            },
+            "interpretation": "Actual transmitted characters/bytes, not tokens or causal attribution; compaction included in overall means"
+          }
+        }
+      },
+      "windows": {
+        "full": {
+          "rounds": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+          "requests": {
+            "native": 97,
+            "loom": 108
+          },
+          "ratios": {
+            "input": 1.084167876196036,
+            "output": 0.9529335191042317,
+            "cachedInput": null,
+            "reasoningOutput": 0.9231939978563772
+          },
+          "requestFactor": 1.1134020618556701,
+          "meanInputFactor": 0.9737433702871806,
+          "inputFactorProduct": 1.0841678761960363
+        },
+        "late": {
+          "rounds": [7, 8, 9, 10, 11, 12],
+          "requests": {
+            "native": 53,
+            "loom": 57
+          },
+          "ratios": {
+            "input": 1.070700641184583,
+            "output": 0.8814836279339322,
+            "cachedInput": 1.0758634868421053,
+            "reasoningOutput": 0.7482787890219749
+          },
+          "requestFactor": 1.0754716981132075,
+          "meanInputFactor": 0.9955637540839104,
+          "inputFactorProduct": 1.070700641184583
+        },
+        "prefix": {
+          "rounds": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+          "requests": {
+            "native": 97,
+            "loom": 108
+          },
+          "ratios": {
+            "input": 1.084167876196036,
+            "output": 0.9529335191042317,
+            "cachedInput": null,
+            "reasoningOutput": 0.9231939978563772
+          },
+          "requestFactor": 1.1134020618556701,
+          "meanInputFactor": 0.9737433702871806,
+          "inputFactorProduct": 1.0841678761960363
+        }
+      },
+      "productKernel": {
+        "samplingMatches": true,
+        "gapsExpected": true,
+        "productAllConsumptionComplete": false
+      },
+      "qualitySnapshots": {
+        "native": [
+          {
+            "round": 1,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          },
+          {
+            "round": 2,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          },
+          {
+            "round": 3,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          },
+          {
+            "round": 4,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          },
+          {
+            "round": 5,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          },
+          {
+            "round": 6,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          },
+          {
+            "round": 7,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          },
+          {
+            "round": 8,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          },
+          {
+            "round": 9,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          },
+          {
+            "round": 10,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          },
+          {
+            "round": 11,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          },
+          {
+            "round": 12,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          }
+        ],
+        "loom": [
+          {
+            "round": 1,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          },
+          {
+            "round": 2,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          },
+          {
+            "round": 3,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          },
+          {
+            "round": 4,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          },
+          {
+            "round": 5,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          },
+          {
+            "round": 6,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          },
+          {
+            "round": 7,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          },
+          {
+            "round": 8,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          },
+          {
+            "round": 9,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          },
+          {
+            "round": 10,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          },
+          {
+            "round": 11,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          },
+          {
+            "round": 12,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          }
+        ]
+      },
+      "readmeSemanticReview": "Independent review found no material README/implementation mismatch",
+      "independentEvidence": {
+        "path": "/Users/sun/.loom/reviews/2026-10-10-long-task-analysis/pi-A-independent.json",
+        "sha256": "717fb7284a4975511d03ea583ad454a53eb9aeb0afc64c033dcaf90bbbd6283f"
+      },
+      "strictSameQualityPass": true
+    },
+    {
+      "block": "B",
+      "completed": {
+        "native": 12,
+        "loom": 12
+      },
+      "executionExit": {
+        "code": 0,
+        "signal": null
+      },
+      "arms": {
+        "native": {
+          "requests": 126,
+          "rawPrimaryComplete": true,
+          "reported": {
+            "input": {
+              "known": 8112779,
+              "complete": true
+            },
+            "output": {
+              "known": 134255,
+              "complete": true
+            },
+            "cachedInput": {
+              "known": 7751808,
+              "complete": true
+            },
+            "reasoningOutput": {
+              "known": 72449,
+              "complete": true
+            }
+          },
+          "uncachedInput": 360971,
+          "sampling": {
+            "requests": 125,
+            "input": 8031283,
+            "output": 132437
+          },
+          "compaction": {
+            "requests": 1,
+            "input": 81496,
+            "output": 1818,
+            "coverage": "Native aggregate independently matches full raw extras; no invented perresponse native IDs"
+          },
+          "toolCalls": {
+            "business": 121,
+            "protocolOrEnvironment": 0
+          },
+          "normalToolSchemaHashes": [
+            "98d02b1aa0893b1bcf902471a8652b6064923217c40272cee3f3f41f6aa79482"
+          ],
+          "requestStructure": {
+            "meanBodyBytes": 251361.77777777778,
+            "meanHistoricalReasoningCharacters": 93968.73015873016,
+            "meanSerializedCharactersByRole": {
+              "system": 0.0,
+              "developer": 2847.9761904761904,
+              "user": 7948.563492063492,
+              "assistant": 179732.6507936508,
+              "tool": 57365.98412698413
+            },
+            "interpretation": "Actual transmitted characters/bytes, not tokens or causal attribution; compaction included in overall means"
+          }
+        },
+        "loom": {
+          "requests": 120,
+          "rawPrimaryComplete": true,
+          "reported": {
+            "input": {
+              "known": 5371433,
+              "complete": true
+            },
+            "output": {
+              "known": 91066,
+              "complete": true
+            },
+            "cachedInput": {
+              "known": 5120384,
+              "complete": true
+            },
+            "reasoningOutput": {
+              "known": 39300,
+              "complete": true
+            }
+          },
+          "uncachedInput": 251049,
+          "sampling": {
+            "requests": 118,
+            "input": 5291552,
+            "output": 88594
+          },
+          "compaction": {
+            "requests": 2,
+            "input": 79881,
+            "output": 2472,
+            "coverage": "Native aggregate independently matches full raw extras; no invented perresponse native IDs"
+          },
+          "toolCalls": {
+            "business": 109,
+            "protocolOrEnvironment": 0
+          },
+          "normalToolSchemaHashes": [
+            "98d02b1aa0893b1bcf902471a8652b6064923217c40272cee3f3f41f6aa79482"
+          ],
+          "requestStructure": {
+            "meanBodyBytes": 179866.95833333334,
+            "meanHistoricalReasoningCharacters": 45372.99166666667,
+            "meanSerializedCharactersByRole": {
+              "system": 0.0,
+              "developer": 9734.85,
+              "user": 8239.116666666667,
+              "assistant": 119430.14166666666,
+              "tool": 39325.541666666664
+            },
+            "interpretation": "Actual transmitted characters/bytes, not tokens or causal attribution; compaction included in overall means"
+          }
+        }
+      },
+      "windows": {
+        "full": {
+          "rounds": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+          "requests": {
+            "native": 126,
+            "loom": 120
+          },
+          "ratios": {
+            "input": 0.6620953190022802,
+            "output": 0.6783062083348851,
+            "cachedInput": 0.6605406119449811,
+            "reasoningOutput": 0.5424505514223799
+          },
+          "requestFactor": 0.9523809523809523,
+          "meanInputFactor": 0.6952000849523943,
+          "inputFactorProduct": 0.6620953190022802
+        },
+        "late": {
+          "rounds": [7, 8, 9, 10, 11, 12],
+          "requests": {
+            "native": 66,
+            "loom": 60
+          },
+          "ratios": {
+            "input": 0.7529840739172488,
+            "output": 0.7313444331762924,
+            "cachedInput": 0.7472444511550657,
+            "reasoningOutput": 0.5971522754326527
+          },
+          "requestFactor": 0.9090909090909091,
+          "meanInputFactor": 0.8282824813089736,
+          "inputFactorProduct": 0.7529840739172488
+        },
+        "prefix": {
+          "rounds": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+          "requests": {
+            "native": 126,
+            "loom": 120
+          },
+          "ratios": {
+            "input": 0.6620953190022802,
+            "output": 0.6783062083348851,
+            "cachedInput": 0.6605406119449811,
+            "reasoningOutput": 0.5424505514223799
+          },
+          "requestFactor": 0.9523809523809523,
+          "meanInputFactor": 0.6952000849523943,
+          "inputFactorProduct": 0.6620953190022802
+        }
+      },
+      "productKernel": {
+        "samplingMatches": true,
+        "gapsExpected": true,
+        "productAllConsumptionComplete": false
+      },
+      "qualitySnapshots": {
+        "native": [
+          {
+            "round": 1,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          },
+          {
+            "round": 2,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          },
+          {
+            "round": 3,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          },
+          {
+            "round": 4,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          },
+          {
+            "round": 5,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          },
+          {
+            "round": 6,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          },
+          {
+            "round": 7,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          },
+          {
+            "round": 8,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          },
+          {
+            "round": 9,
+            "passed": false,
+            "functionalPassed": true,
+            "selfTestsPassed": false
+          },
+          {
+            "round": 10,
+            "passed": false,
+            "functionalPassed": true,
+            "selfTestsPassed": false
+          },
+          {
+            "round": 11,
+            "passed": false,
+            "functionalPassed": true,
+            "selfTestsPassed": false
+          },
+          {
+            "round": 12,
+            "passed": false,
+            "functionalPassed": true,
+            "selfTestsPassed": false
+          }
+        ],
+        "loom": [
+          {
+            "round": 1,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          },
+          {
+            "round": 2,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          },
+          {
+            "round": 3,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          },
+          {
+            "round": 4,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          },
+          {
+            "round": 5,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          },
+          {
+            "round": 6,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          },
+          {
+            "round": 7,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          },
+          {
+            "round": 8,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          },
+          {
+            "round": 9,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          },
+          {
+            "round": 10,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          },
+          {
+            "round": 11,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          },
+          {
+            "round": 12,
+            "passed": true,
+            "functionalPassed": true,
+            "selfTestsPassed": true
+          }
+        ]
+      },
+      "readmeSemanticReview": "Independent review found no material README/implementation mismatch",
+      "independentEvidence": {
+        "path": "/Users/sun/.loom/reviews/2026-10-10-long-task-analysis/pi-B-independent.json",
+        "sha256": "b7a29dd1cd414ce7f2f1a79fef8d9c44033410e1cc10517261e79318b2bb9619"
+      },
+      "strictSameQualityPass": false
+    }
+  ],
+  "limitations": [
+    "Two samples show trajectory variation, not statistical stability or universal Pi/multiCLI efficiency.",
+    "Block B native R9\u2013R12 frozen overall quality=false: functional oracle cases passed, candidate selftests stderr-empty assertions fail on Python3.13 SyntaxWarning from invalid docstring escapes. No hiddenfeedback, repair or reevaluation replaced original outcomes.",
+    "Both product Kernel ledgers retain expected compaction usage gap; normal assistant IDs/usage match, but product all-consumption reporting remains partial. Full raw consumption includes compaction.",
+    "Block A cached-input details incomplete; exact cached/uncached full-window values remain unknown. Missing optional details did not erase complete input/output.",
+    "All request model and reasoning fixed; normal sampling has identical4tool schema, compaction has0tools. Actual CLI-generated max_completion_tokens varies across requests/arms; no claim every settings payload identical.",
+    "Historical reasoning character counts and request body sizes are structure diagnostics, not token estimates. Reported reasoning tokens are a subset of output, not additional output.",
+    "Input ratio factorization is arithmetic, not proof protocol or randomness alone caused differences. Actual business tool steps remain in total consumption.",
+    "Original account/settings shared symmetrically with controlled --offline --no-extensions --no-skills --no-context-files --no-prompt-templates --no-mcp. Default retry/compaction/cachewarming not disabled. No account configuration or credentials copied.",
+    "Token reports are not an invoice/billing assertion."
+  ],
+  "evidence": {
+    "planSha256": "fa8bc15db8c6ed4574179dd0968b59353da07295fb88782615de3a51c19d270f",
+    "manifestSha256": "dde882b120545581939c3c91f3fd08a3424fa3401847a9c2c350822772169bc3",
+    "releaseSha256": "f2251144bbbd279bb05eb338937a3b757987ffd829cdde7dc4e1129f58ed7b77",
+    "privateArithmeticAndStructureSha256": "ebb44dd4b9db7c2968dff2b262fb62ad9fe9ca8e2e36552053413c7e27c4c3e3",
+    "cleanupAndSource": {
+      "path": "/Users/sun/.loom/reviews/2026-10-10-pi-two-pair-candidate/paid-runs/1791623194920/handoff/cleanup-and-source.json",
+      "sha256": "d2935a28c9d1390a3313eede44b15c023df579ce8f9b184968028fec4ffdf9bc"
+    },
+    "latestFreeSha256": "c08168ebbae1c825b6c96c119cca6b940516250484ed5d6ccd850673b3a9a862"
+  },
+  "cleanup": {
+    "at": "2026-10-10T10:07:58.037880+00:00",
+    "head": "af46545b5e5837dbc478c4d23c55d2d146dd98fa",
+    "dirty": "",
+    "sourcesChecked": 39308,
+    "sourceChanged": [],
+    "configChanged": [],
+    "ownedPidsChecked": 105,
+    "alivePids": [],
+    "batchSourceAfter": {
+      "changed": []
+    },
+    "blocks": [
+      {
+        "block": "A",
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "configRemoved": true,
+        "daemonExit": {
+          "code": 0,
+          "signal": null
+        },
+        "source": {
+          "matched": true,
+          "checked": 39308,
+          "changed": []
+        },
+        "providerLaunches": 25,
+        "sealedProviders": 25,
+        "captureComplete": true,
+        "requests": {
+          "native": 97,
+          "loom": 108
+        }
+      },
+      {
+        "block": "B",
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "configRemoved": true,
+        "daemonExit": {
+          "code": 0,
+          "signal": null
+        },
+        "source": {
+          "matched": true,
+          "checked": 39308,
+          "changed": []
+        },
+        "providerLaunches": 25,
+        "sealedProviders": 25,
+        "captureComplete": true,
+        "requests": {
+          "native": 126,
+          "loom": 120
+        }
+      }
+    ],
+    "firstPidPresenceCheck": [6978],
+    "pidRecheckAt": "2026-10-10T10:08:20.043720+00:00",
+    "pidPresenceLimitation": "PID6978 present transiently in first kill(0) sample, absent from immediate ps identity query and followup kill(0); original provider has exitreceipt+captureseal. Bare PID reuse cannot identify a provider."
+  }
+}

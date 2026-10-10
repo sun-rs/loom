@@ -1,0 +1,154 @@
+{
+  "block": "Kimi block1",
+  "status": "independent-read-only-root-cause-observation",
+  "exactRequestExcessLoomVsPrint": 25,
+  "perRoundRequestDifference": [3, 0, 0, 1, 3, 7, -1, -1, 4, 5, 3, 1],
+  "directFacts": {
+    "toolCounts": {
+      "print": {
+        "Read": 6,
+        "Write": 7,
+        "Bash": 17,
+        "Edit": 19
+      },
+      "bridge": {
+        "Read": 8,
+        "Write": 7,
+        "Bash": 18,
+        "Edit": 29
+      },
+      "loom": {
+        "Read": 6,
+        "Write": 5,
+        "Bash": 25,
+        "Edit": 39
+      }
+    },
+    "explicitWorkerCommunicationCalls": {
+      "print": 0,
+      "bridge": 0,
+      "loom": 0
+    },
+    "all214RequestsCurrentTaskOnce": true,
+    "eachEarlierUserTaskOnce": true,
+    "firstProviderSettingsEqualExceptIndependentSessionCacheKey": true,
+    "settings": {
+      "model": "k3-256k",
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      },
+      "thinking": {
+        "type": "enabled",
+        "effort": "low",
+        "keep": "all"
+      },
+      "max_completion_tokens": 262144
+    },
+    "initialTools27Equal": true,
+    "laterTools": "Print11resume-first requests temporarily26; other48print and all71bridge/84Loom27. Preserve native dynamic schema difference.",
+    "firstRequestR1CharacterBreakdown": {
+      "print": {
+        "system": 8245,
+        "user": 1808,
+        "assistantText": 0,
+        "assistantReasoning": 0,
+        "assistantToolArguments": 0,
+        "toolOutput": 0
+      },
+      "bridge": {
+        "system": 8246,
+        "user": 1606,
+        "assistantText": 0,
+        "assistantReasoning": 0,
+        "assistantToolArguments": 0,
+        "toolOutput": 0
+      },
+      "loom": {
+        "system": 8347,
+        "user": 8598,
+        "assistantText": 0,
+        "assistantReasoning": 0,
+        "assistantToolArguments": 0,
+        "toolOutput": 0
+      }
+    },
+    "firstRequestR12CharacterBreakdown": {
+      "print": {
+        "system": 8245,
+        "user": 13731,
+        "assistantText": 10571,
+        "assistantReasoning": 6027,
+        "assistantToolArguments": 52594,
+        "toolOutput": 13677
+      },
+      "bridge": {
+        "system": 8246,
+        "user": 7941,
+        "assistantText": 10441,
+        "assistantReasoning": 8472,
+        "assistantToolArguments": 59172,
+        "toolOutput": 21049
+      },
+      "loom": {
+        "system": 8347,
+        "user": 16838,
+        "assistantText": 13300,
+        "assistantReasoning": 11847,
+        "assistantToolArguments": 66769,
+        "toolOutput": 22744
+      }
+    }
+  },
+  "observedBusinessRepairs": [
+    {
+      "round": 1,
+      "extraRequests": 3,
+      "observation": "Loom implementation count was rows, but tests expected quantity sums;3test assertions corrected after failed suite; extra suite rerun."
+    },
+    {
+      "round": 5,
+      "extraRequests": 3,
+      "observation": "Loom rereads invoice and applies5separate edits vsprint3, including correcting exact discount/net use and additional tests."
+    },
+    {
+      "round": 6,
+      "extraRequests": 7,
+      "observation": "Loom rereads/rewrites, inspects test tail, rejects valid upper-bound fractional string, corrects code and obsolete test cases, then corrects erroneous large-product expected result after further suite failure.5Bash vsprint3."
+    },
+    {
+      "round": 9,
+      "extraRequests": 4,
+      "observation": "Loom CLI insertion uses nonunique Edit and retries with larger context; two tail reads,5Edit vsprint1Edit+1Write; final tests pass."
+    },
+    {
+      "round": 10,
+      "extraRequests": 5,
+      "observation": "Loom added stdin tests then test cleanup fails Directory not empty; examines failure and edits cleanup.5Edit3Bash vsprint2Edit1Bash."
+    },
+    {
+      "round": 11,
+      "extraRequests": 3,
+      "observation": "Loom regression test refers to Decimal without import; suite errors, import corrected, reruns.3Bash2Edit vsprint1Write1Bash."
+    },
+    {
+      "rounds": [7, 8],
+      "extraRequests": -2,
+      "observation": "Loom uses fewer requests here; no selective removal of opposite-direction rounds."
+    }
+  ],
+  "promptAssessment": {
+    "sharedNativeSystem": "All three native Kimi system prompts already recommend dedicated tools, parallel independent toolcalls, project-fit code; fixture explicitly asks add/update unittests and run them in every turn.",
+    "LoomSpecific": "First user contains standing Room/Worker instructions; complete wake explicitly says no initial message-check/read needed, Task optional, do not publish plans/acknowledgments before work. No additional mandate found to generate more business tests or inspect parent/environment.",
+    "BridgeSpecific": "Fresh shared bridge control reads its standing-instructions file once via Read. This is a tool in existing first request, not an extra total R1 request (bothprint andbridge4).",
+    "ReasoningHistory": "Actual later requests contain prior reasoning_content; this is direct wire evidence, not merely transcript inference.",
+    "NoPureAttribution": "Loom longer standing prompt and native mode/environment differences can affect choices indirectly. Zero explicitcommunication excludes direct Worker tool rounds only; cannot prove decisions independent of platform context."
+  },
+  "interpretation": [
+    "25extra requests are largely visible code/test/edit repairs and finer step granularity, not messagebox protocol retry loops.",
+    "Larger accumulated generated code/tool arguments, tool outputs and reasoning are present in later actual requests. This explains structural sources of extra history, not exact token attribution.",
+    "FirstR12 Loom-print toolarguments +14175chars, tooloutput +9067chars, reasoning +5820chars, assistanttext +2729chars; bytes/chars are never token estimates.",
+    "Do not label all extra cost unavoidable model randomness, nor claim prompt causality from one block.",
+    "Pi A1.0842input versus historical P1812.2589prefix8 is not measured optimization effect: different trajectories/windows/evaluator/capture/retry-history and sample variance; no controlled implementation ablation."
+  ]
+}

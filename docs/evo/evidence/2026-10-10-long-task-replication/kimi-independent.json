@@ -1,0 +1,318 @@
+{
+  "scope": "Actual paid observed-token accounting; separate independent trajectory sets, not invoice dollars or statistical stability proof.",
+  "family": "kimi",
+  "blocks": {
+    "B1": {
+      "rawAttempts": 214,
+      "windows": {
+        "full12": {
+          "totals": {
+            "print": {
+              "requests": 59,
+              "input": 1982834,
+              "output": 21267,
+              "cachedInput": 1916672,
+              "reasoningOutput": 2274,
+              "uncachedInput": 66162
+            },
+            "bridge": {
+              "requests": 71,
+              "input": 2592567,
+              "output": 25386,
+              "cachedInput": 2547200,
+              "reasoningOutput": null,
+              "uncachedInput": 45367
+            },
+            "loom": {
+              "requests": 84,
+              "input": 3486351,
+              "output": 29646,
+              "cachedInput": 3433216,
+              "reasoningOutput": 3786,
+              "uncachedInput": 53135
+            }
+          },
+          "ratios": {
+            "loom/print": {
+              "requests": 1.423728813559322,
+              "input": 1.7582667031128174,
+              "output": 1.3939906898011003,
+              "cachedInput": 1.7912381461199411,
+              "reasoningOutput": 1.6649076517150396,
+              "uncachedInput": 0.8031045010731236,
+              "averageInputPerRequestFactor": 1.2349730414720979
+            },
+            "loom/bridge": {
+              "requests": 1.1830985915492958,
+              "input": 1.3447486603046324,
+              "output": 1.1678090285984402,
+              "cachedInput": 1.3478391959798994,
+              "reasoningOutput": null,
+              "uncachedInput": 1.1712257808539246,
+              "averageInputPerRequestFactor": 1.136632796209868
+            },
+            "bridge/print": {
+              "requests": 1.2033898305084745,
+              "input": 1.3075058224742968,
+              "output": 1.1936803498377768,
+              "cachedInput": 1.3289702150394016,
+              "reasoningOutput": null,
+              "uncachedInput": 0.6856957165744687,
+              "averageInputPerRequestFactor": 1.0865189229011762
+            }
+          }
+        },
+        "late6": {
+          "totals": {
+            "print": {
+              "requests": 31,
+              "input": 1253367,
+              "output": 12089,
+              "cachedInput": 1215744,
+              "reasoningOutput": 1492,
+              "uncachedInput": 37623
+            },
+            "bridge": {
+              "requests": 33,
+              "input": 1509574,
+              "output": 13178,
+              "cachedInput": 1487360,
+              "reasoningOutput": null,
+              "uncachedInput": 22214
+            },
+            "loom": {
+              "requests": 42,
+              "input": 2161050,
+              "output": 15239,
+              "cachedInput": 2136576,
+              "reasoningOutput": 1822,
+              "uncachedInput": 24474
+            }
+          },
+          "ratios": {
+            "loom/print": {
+              "requests": 1.3548387096774193,
+              "input": 1.7241957064451194,
+              "output": 1.2605674580196873,
+              "cachedInput": 1.7574226152874288,
+              "reasoningOutput": 1.2211796246648794,
+              "uncachedInput": 0.6505063392073998,
+              "averageInputPerRequestFactor": 1.2726206404713976
+            },
+            "loom/bridge": {
+              "requests": 1.2727272727272727,
+              "input": 1.4315628117601389,
+              "output": 1.1563970253452724,
+              "cachedInput": 1.4364888123924269,
+              "reasoningOutput": null,
+              "uncachedInput": 1.1017376429278833,
+              "averageInputPerRequestFactor": 1.1247993520972521
+            },
+            "bridge/print": {
+              "requests": 1.064516129032258,
+              "input": 1.2044149877888919,
+              "output": 1.0900818926296634,
+              "cachedInput": 1.2234154558854495,
+              "reasoningOutput": null,
+              "uncachedInput": 0.5904367009542035,
+              "averageInputPerRequestFactor": 1.1314201400441104
+            }
+          }
+        }
+      },
+      "quality": {
+        "snapshots": 36,
+        "overallPassed": 36,
+        "functionalPassed": 36,
+        "failed": []
+      },
+      "readmeReview": {
+        "print": "Final README example20subtotal/2tax/22total/count1 correct; documented precision100 matches source.",
+        "bridge": "Final README grouped7subtotal/0.70tax/7.70total/count1 correct; precision50 matches source.",
+        "loom": "Final README13subtotal/1discount/0.90tax/12.90total/count2 correct. Group tax0.23+0.68 differs from grand0.90 legitimately; grand recomputed exact. Precision50 and stdin sentinel match source.",
+        "verdict": "No material semantic or example arithmetic discrepancy identified; not exhaustive proof."
+      },
+      "limitations": [
+        "Bridge reuses production ACP implementation without Room: diagnostic, not independent official client.",
+        "Prompt/mode/context differ; ratios are not pure causal differences.",
+        "Reasoning is output subset, never added to output again.",
+        "One block is a single trajectory set, not stable population evidence."
+      ]
+    },
+    "B2": {
+      "rawAttempts": 223,
+      "windows": {
+        "full12": {
+          "totals": {
+            "print": {
+              "requests": 81,
+              "input": 3177520,
+              "output": 27547,
+              "cachedInput": 3090688,
+              "reasoningOutput": null,
+              "uncachedInput": 86832
+            },
+            "bridge": {
+              "requests": 85,
+              "input": 3621647,
+              "output": 30202,
+              "cachedInput": 3565056,
+              "reasoningOutput": null,
+              "uncachedInput": 56591
+            },
+            "loom": {
+              "requests": 57,
+              "input": 2116634,
+              "output": 23844,
+              "cachedInput": 2073344,
+              "reasoningOutput": null,
+              "uncachedInput": 43290
+            }
+          },
+          "ratios": {
+            "loom/print": {
+              "requests": 0.7037037037037037,
+              "input": 0.6661276718950628,
+              "output": 0.8655751987512251,
+              "cachedInput": 0.6708357491924128,
+              "reasoningOutput": null,
+              "uncachedInput": 0.49854892205638474,
+              "averageInputPerRequestFactor": 0.9466024811140366
+            },
+            "loom/bridge": {
+              "requests": 0.6705882352941176,
+              "input": 0.5844396209790739,
+              "output": 0.7894841401231707,
+              "cachedInput": 0.5815740341806692,
+              "reasoningOutput": null,
+              "uncachedInput": 0.7649626265660617,
+              "averageInputPerRequestFactor": 0.8715327681266891
+            },
+            "bridge/print": {
+              "requests": 1.0493827160493827,
+              "input": 1.1397715828696593,
+              "output": 1.0963807311140958,
+              "cachedInput": 1.1534829785471714,
+              "reasoningOutput": null,
+              "uncachedInput": 0.6517297770407223,
+              "averageInputPerRequestFactor": 1.0861352730875578
+            }
+          }
+        },
+        "late6": {
+          "totals": {
+            "print": {
+              "requests": 36,
+              "input": 1826149,
+              "output": 12826,
+              "cachedInput": 1783296,
+              "reasoningOutput": null,
+              "uncachedInput": 42853
+            },
+            "bridge": {
+              "requests": 40,
+              "input": 2202849,
+              "output": 14778,
+              "cachedInput": 2177536,
+              "reasoningOutput": null,
+              "uncachedInput": 25313
+            },
+            "loom": {
+              "requests": 27,
+              "input": 1252907,
+              "output": 12817,
+              "cachedInput": 1232640,
+              "reasoningOutput": null,
+              "uncachedInput": 20267
+            }
+          },
+          "ratios": {
+            "loom/print": {
+              "requests": 0.75,
+              "input": 0.6860924272882443,
+              "output": 0.9992983003274598,
+              "cachedInput": 0.6912144702842378,
+              "reasoningOutput": null,
+              "uncachedInput": 0.47294238443049497,
+              "averageInputPerRequestFactor": 0.9147899030509924
+            },
+            "loom/bridge": {
+              "requests": 0.675,
+              "input": 0.5687666290335833,
+              "output": 0.8673027473271079,
+              "cachedInput": 0.5660710086997414,
+              "reasoningOutput": null,
+              "uncachedInput": 0.8006557895152688,
+              "averageInputPerRequestFactor": 0.8426172281979013
+            },
+            "bridge/print": {
+              "requests": 1.1111111111111112,
+              "input": 1.2062810865926055,
+              "output": 1.152190862310931,
+              "cachedInput": 1.22107378696526,
+              "reasoningOutput": null,
+              "uncachedInput": 0.5906937670641496,
+              "averageInputPerRequestFactor": 1.085652977933345
+            }
+          }
+        }
+      },
+      "quality": {
+        "snapshots": 36,
+        "overallPassed": 36,
+        "functionalPassed": 36,
+        "failed": []
+      },
+      "readmeReview": {
+        "print": "Reviewed final README API, validation, CLI and monetary examples; no material contradiction identified in this bounded read.",
+        "bridge": "Reviewed final README API, validation, CLI and monetary examples; no material contradiction identified in this bounded read.",
+        "loom": {
+          "verdict": "semantic-defect-found-despite-frozen-tests-passing",
+          "finding": "The implementation skips any row with a falsey unrelated active key; README documents active=False skipping. Round 6 requires unrelated row keys to be ignored.",
+          "codeLines": [44, 45],
+          "invoiceSha256": "c12f40f8bbd5984e60ce0e6a09061d977bd93781cfabd91c791927e2aa947921",
+          "readmeSha256": "be9924e8adc0c162f15d97655c2d169713aa10605b73cef0292e9d727a2b9b0c",
+          "planSha256": "f05f55e589f684fc48e1c7f4f4724bd0ec6207446f6b22d25454637b75e62e1d",
+          "counterexampleByStaticInspection": {
+            "rows": [
+              {
+                "quantity": 1,
+                "unit_price": "2",
+                "active": false
+              }
+            ],
+            "requiredCount": 1,
+            "requiredSubtotal": "2.00",
+            "implementedCount": 0,
+            "implementedSubtotal": "0.00"
+          },
+          "verification": "Static code and task-contract inspection only; no new candidate execution, no changed original quality verdict."
+        }
+      },
+      "limitations": [
+        "Bridge reuses production ACP implementation without Room: diagnostic, not independent official client.",
+        "Prompt/mode/context differ; ratios are not pure causal differences.",
+        "Reasoning is output subset, never added to output again.",
+        "One block is a single trajectory set, not stable population evidence.",
+        "Frozen automated quality 36/36 passing does not establish complete semantic equivalence: independent final code/README inspection found an unrelated active key incorrectly changes Loom B2 row inclusion."
+      ]
+    }
+  },
+  "independentEvidenceHashes": [
+    {
+      "name": "kimi-B1-independent.json",
+      "sha256": "d27e99475d4d56d4ae0cacfcb5faa40d71070642e092b591c7603752d135274f"
+    },
+    {
+      "name": "kimi-B2-independent.json",
+      "sha256": "1ceb4a6652e495cf9e1c643f6bbc3fecaffd01ad1742e8970ac2acf29d82ba00"
+    }
+  ],
+  "sharedLimits": [
+    "Request ratio times mean input per request ratio is an arithmetic decomposition, not causal attribution.",
+    "Reasoning output is included in output, never added twice.",
+    "Missing optional dimensions remain null.",
+    "All raw responses including compaction and failures retained; quality is separately reported.",
+    "Shared machine execution prevents latency acceptance."
+  ]
+}

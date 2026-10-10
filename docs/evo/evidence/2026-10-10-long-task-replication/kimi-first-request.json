@@ -1,0 +1,53 @@
+{
+  "scope": "First actual HTTP request per arm, provider reported usage; no character-to-token conversion",
+  "blocks": [
+    {
+      "block": 1,
+      "arms": {
+        "print": {
+          "input": 20139,
+          "output": 86,
+          "requestBytes": 90075
+        },
+        "bridge": {
+          "input": 20090,
+          "output": 136,
+          "requestBytes": 89842
+        },
+        "loom": {
+          "input": 21752,
+          "output": 118,
+          "requestBytes": 97048
+        }
+      },
+      "loomVsPrintInputRatio": 1.0800933512090969,
+      "loomVsPrintInputDelta": 1613
+    },
+    {
+      "block": 2,
+      "arms": {
+        "print": {
+          "input": 20139,
+          "output": 84,
+          "requestBytes": 90075
+        },
+        "bridge": {
+          "input": 20092,
+          "output": 103,
+          "requestBytes": 89842
+        },
+        "loom": {
+          "input": 21767,
+          "output": 1360,
+          "requestBytes": 97048
+        }
+      },
+      "loomVsPrintInputRatio": 1.0808381746859328,
+      "loomVsPrintInputDelta": 1628
+    }
+  ],
+  "limits": [
+    "Only first request direct measured difference, not a counterfactual or full-run causal attribution",
+    "Different modes, cwd and activation payload remain; prompts may indirectly affect later business paths"
+  ]
+}

@@ -1,0 +1,199 @@
+{
+  "scope": "Actual paid observed-token accounting; separate independent trajectory sets, not invoice dollars or statistical stability proof.",
+  "family": "pi",
+  "blocks": {
+    "A": {
+      "rawAttempts": 205,
+      "windows": {
+        "full12": {
+          "native": {
+            "requests": 97,
+            "input": 5400861,
+            "output": 98329,
+            "cachedInput": null,
+            "reasoningOutput": 46650,
+            "uncachedInput": null
+          },
+          "loom": {
+            "requests": 108,
+            "input": 5855440,
+            "output": 93701,
+            "cachedInput": null,
+            "reasoningOutput": 43067,
+            "uncachedInput": null
+          },
+          "ratios": {
+            "requests": 1.1134020618556701,
+            "input": 1.084167876196036,
+            "output": 0.9529335191042317,
+            "cachedInput": null,
+            "reasoningOutput": 0.9231939978563772,
+            "uncachedInput": null
+          },
+          "averageInputPerRequestFactor": 0.9737433702871806
+        },
+        "late6": {
+          "native": {
+            "requests": 53,
+            "input": 3904024,
+            "output": 48314,
+            "cachedInput": 3735552,
+            "reasoningOutput": 21206,
+            "uncachedInput": 168472
+          },
+          "loom": {
+            "requests": 57,
+            "input": 4180041,
+            "output": 42588,
+            "cachedInput": 4018944,
+            "reasoningOutput": 15868,
+            "uncachedInput": 161097
+          },
+          "ratios": {
+            "requests": 1.0754716981132075,
+            "input": 1.070700641184583,
+            "output": 0.8814836279339322,
+            "cachedInput": 1.0758634868421053,
+            "reasoningOutput": 0.7482787890219749,
+            "uncachedInput": 0.9562241796856451
+          },
+          "averageInputPerRequestFactor": 0.9955637540839104
+        }
+      },
+      "quality": {
+        "snapshots": 24,
+        "overallPassed": 24,
+        "functionalPassed": 24,
+        "failed": []
+      },
+      "readmeReview": {
+        "native": "Read final README and source arithmetic/API/CLI sections: exact mantissa/exponent engine documented; examples16.50gross/1.00discount/1.16tax/16.66total and grouped rounding correct. No material contradiction found.",
+        "loom": "Read final README and source Decimal implementation: examples25.00gross/2.00discount/1.90tax/24.90total and stdin count1 correct. No material contradiction found.",
+        "verdict": "No material semantic/documentation discrepancy identified; not exhaustive equivalence proof."
+      },
+      "limitations": [
+        "One trajectory per arm in this block; no stability claim.",
+        "Raw all-response totals include compaction, not only assistant generations.",
+        "Optional dimensions unknown if absent in any response.",
+        "Independent raw/body audit does not prove actual provider invoice."
+      ]
+    },
+    "B": {
+      "rawAttempts": 246,
+      "windows": {
+        "full12": {
+          "native": {
+            "requests": 126,
+            "input": 8112779,
+            "output": 134255,
+            "cachedInput": 7751808,
+            "reasoningOutput": 72449,
+            "uncachedInput": 360971
+          },
+          "loom": {
+            "requests": 120,
+            "input": 5371433,
+            "output": 91066,
+            "cachedInput": 5120384,
+            "reasoningOutput": 39300,
+            "uncachedInput": 251049
+          },
+          "ratios": {
+            "requests": 0.9523809523809523,
+            "input": 0.6620953190022802,
+            "output": 0.6783062083348851,
+            "cachedInput": 0.6605406119449811,
+            "reasoningOutput": 0.5424505514223799,
+            "uncachedInput": 0.6954824625800965
+          },
+          "averageInputPerRequestFactor": 0.6952000849523943
+        },
+        "late6": {
+          "native": {
+            "requests": 66,
+            "input": 5292513,
+            "output": 77899,
+            "cachedInput": 5086464,
+            "reasoningOutput": 43684,
+            "uncachedInput": 206049
+          },
+          "loom": {
+            "requests": 60,
+            "input": 3985178,
+            "output": 56971,
+            "cachedInput": 3800832,
+            "reasoningOutput": 26086,
+            "uncachedInput": 184346
+          },
+          "ratios": {
+            "requests": 0.9090909090909091,
+            "input": 0.7529840739172488,
+            "output": 0.7313444331762924,
+            "cachedInput": 0.7472444511550657,
+            "reasoningOutput": 0.5971522754326527,
+            "uncachedInput": 0.8946706851282947
+          },
+          "averageInputPerRequestFactor": 0.8282824813089736
+        }
+      },
+      "quality": {
+        "snapshots": 24,
+        "overallPassed": 20,
+        "functionalPassed": 24,
+        "failed": [
+          {
+            "arm": "native",
+            "round": 9,
+            "functionalPassed": true,
+            "selfTestsPassed": false
+          },
+          {
+            "arm": "native",
+            "round": 10,
+            "functionalPassed": true,
+            "selfTestsPassed": false
+          },
+          {
+            "arm": "native",
+            "round": 11,
+            "functionalPassed": true,
+            "selfTestsPassed": false
+          },
+          {
+            "arm": "native",
+            "round": 12,
+            "functionalPassed": true,
+            "selfTestsPassed": false
+          }
+        ]
+      },
+      "readmeReview": {
+        "native": "Arithmetic and examples47.49subtotal/3.75discount/3.28tax/47.02total; grouped47.50/47.03 andstdin examples correct; no material API/rounding description issue found. Actual artifact retains SyntaxWarning from invalid docstring escapes, consistent with failed selftests.",
+        "loom": "Examples7.50/0.62/8.12 and grouped17.50subtotal/0.75discount/1.38tax/18.13total correct; group sum18.14 vsgrand18.13 is expected independent rounding. No material documentation issue identified."
+      },
+      "limitations": [
+        "One trajectory per arm in this block; no stability claim.",
+        "Raw all-response totals include compaction, not only assistant generations.",
+        "Optional dimensions unknown if absent in any response.",
+        "Independent raw/body audit does not prove actual provider invoice."
+      ]
+    }
+  },
+  "independentEvidenceHashes": [
+    {
+      "name": "pi-A-independent.json",
+      "sha256": "717fb7284a4975511d03ea583ad454a53eb9aeb0afc64c033dcaf90bbbd6283f"
+    },
+    {
+      "name": "pi-B-independent.json",
+      "sha256": "b7a29dd1cd414ce7f2f1a79fef8d9c44033410e1cc10517261e79318b2bb9619"
+    }
+  ],
+  "sharedLimits": [
+    "Request ratio times mean input per request ratio is an arithmetic decomposition, not causal attribution.",
+    "Reasoning output is included in output, never added twice.",
+    "Missing optional dimensions remain null.",
+    "All raw responses including compaction and failures retained; quality is separately reported.",
+    "Shared machine execution prevents latency acceptance."
+  ]
+}

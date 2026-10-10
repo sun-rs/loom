@@ -1,0 +1,22 @@
+{
+  "files": [
+    {
+      "name": "kimi-B2-path-summary.json",
+      "sha256": "0eb2d64a373d82cc58bfcd921ac6c6c2cf3e03e40fcc747413ad0197dd2f742a"
+    },
+    {
+      "name": "kimi-independent.json",
+      "sha256": "de8c1e50cfb612f0d565ca4455fd711c1c1bc1f74ef6ca0294692169724e116c"
+    },
+    {
+      "name": "kimi-posthoc-unrelated-key.json",
+      "sha256": "331051a209b3bbbcd501eb20f9c4a01fd70bacbab2645dd6ab9c9e07bd58b6ab"
+    },
+    {
+      "name": "pi-independent.json",
+      "sha256": "2fd748c916459a03b0170f8ebd92ffd3bf0be811f1e4cb6eeb3038ac7a8cda26"
+    }
+  ],
+  "note": "Independent offline analysis only. Original paid archives, evaluator results and source were not changed. Posthoc defect is separate from original quality.",
+  "publicationDigestScope": "Hashes in this source seal refer to the original private analysis bytes. Repository JSON may be reformatted; publication-provenance.json records original and published file digests."
+}

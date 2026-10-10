@@ -1,0 +1,42 @@
+{
+  "sealedAt": "2026-10-10T10:40:06.203400+00:00",
+  "batch": "kimi-three-arm-paid-20261010-b",
+  "execution": "completed once; no rerun",
+  "primaryEvidence": {
+    "path": "/Users/sun/.loom/reviews/2026-10-10-kimi-three-arm-plan/handoff-paid-b/public-evidence.json",
+    "sha256": "71a65e2a315e3b03c4840d19543774d6195574bbfd7de676f04f988cdc42b3f4"
+  },
+  "independentReviews": [
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-10-long-task-analysis/kimi-B1-independent.json",
+      "sha256": "d27e99475d4d56d4ae0cacfcb5faa40d71070642e092b591c7603752d135274f"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-10-long-task-analysis/kimi-B2-independent.json",
+      "sha256": "1ceb4a6652e495cf9e1c643f6bbc3fecaffd01ad1742e8970ac2acf29d82ba00"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-10-long-task-analysis/public-staging/kimi-posthoc-unrelated-key.json",
+      "sha256": "331051a209b3bbbcd501eb20f9c4a01fd70bacbab2645dd6ab9c9e07bd58b6ab"
+    }
+  ],
+  "accounting": "Raw primary usage complete; independent raw/wire/Kernel identity checks agree. All paid costs preserved.",
+  "quality": {
+    "frozenEvaluator": {
+      "passed": 72,
+      "total": 72,
+      "overwritten": false
+    },
+    "semanticEquivalence": false,
+    "postHocIssue": {
+      "arm": "block2/loom",
+      "file": "invoice.py:44",
+      "issue": "Reads undefined active field and skips falsey values, contradicting R6 requirement to ignore unrelated keys. README documents this unsupported extension.",
+      "counterexample": "Otherwise valid quantity=1/unit_price=2 with active:false produces 0.00 instead of 2.00.",
+      "scope": "Independent final six-implementation review found this extra field read only in block2 Loom; original artifacts and evaluator verdicts unchanged."
+    }
+  },
+  "interpretation": "Token ratios remain valid observed costs, but cannot be presented as fully equal-quality efficiency acceptance or stable causal savings.",
+  "cleanup": "233 recorded PIDs gone, six temporary configs and credential links removed, account lock absent; 1924 frozen files unchanged before root documentation updates.",
+  "publicationDigestScope": "Hashes in this source seal refer to the original private analysis bytes. Repository JSON may be reformatted; publication-provenance.json records original and published file digests."
+}

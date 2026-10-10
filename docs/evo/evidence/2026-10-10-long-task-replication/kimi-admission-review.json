@@ -1,0 +1,33 @@
+{
+  "verdict": "no-unresolved-blocker-on-fixed-admission-checklist",
+  "authorization": "Awaiting lead release under existing owner authorization. Reviewer has not released or invoked paid/CLI.",
+  "priorOpinion": "Earlier Kimi no-blocker withdrawn; this new record supersedes it after runtime gates were actually connected.",
+  "detail": {
+    "candidate": "/Users/sun/.loom/reviews/2026-10-10-kimi-three-arm-plan",
+    "free": "runs/kimi-three-arm-free-1791622202151",
+    "code": {
+      "captureAndPIDAndRequestCensus": "runtime-capture.mjs:3-19; block-run.mjs:15,20 (account after turn, before budget and finally)",
+      "budgetStopAndFailedFinal": "run.mjs parent requires exit0/completed before next block; block-run.mjs finally settleAccounting",
+      "rawVsCrossLayer": "block-run.mjs:20 primaryUsageComplete=httpPrimaryComplete&&transportComplete; summary.mjs:1",
+      "release": "release-gate.mjs:2; run.mjs exact release and unique claim before spawn",
+      "defaults": "wrapper.mjs removed KIMI_LOOP_MAX_ATTEMPTS_PER_STEP=1; records retryOverridePresent=false"
+    },
+    "negativeEvidence": [
+      "runs/kimi-three-arm-free-1791622157663: missing initialization stops after first print, known20/4 preserved",
+      "runs/kimi-three-arm-free-1791622179784: missing seal stops after first print, known20/4 preserved",
+      "handoff-capture-repair/no-release.log: actual entry refusal before claim/provider"
+    ],
+    "independentOfflineCheck": "Invoked actual readRuntimeCapture against legacy archive for all six final free arm/block combinations: complete, each4 attempts with PID/seal and response SHA multiset matching.",
+    "freeze": "Root independently verified1924 hashes. Prior release withdrawn without paid launch.",
+    "limits": [
+      "Controller Python3.13 PATH required for tomllib; earlier zero-request setup failures preserved.",
+      "Shared bridge is diagnostic, not independent official baseline; synthetic quality false retained.",
+      "Installed main bundle and Node frozen, not entire transitive installed dependency closure."
+    ]
+  },
+  "sharedLimits": [
+    "Soft thresholds checked before next turn; in-flight may exceed.",
+    "Known failed/unpaired usage retained; unknown request coverage cannot yield complete total ratio.",
+    "Shared-machine concurrent batches do not establish latency acceptance."
+  ]
+}

@@ -1,0 +1,95 @@
+{
+  "version": "private-fixture-v6",
+  "at": "2026-10-10T10:43:40.953794+00:00",
+  "scope": "Exactly two round6+ unrelated row key regression cases; no business prompt/oracle prior vectors/evaluation timeout/sandbox change",
+  "paidCalls": 0,
+  "modelCalls": 0,
+  "productSourceChanges": false,
+  "futureRunnerSwitched": false,
+  "oldHistoryVerdictsChanged": false,
+  "v5SourceFilesChecked": 31,
+  "v5HashChanges": [],
+  "unchangedPlanSha256": "f05f55e589f684fc48e1c7f4f4724bd0ec6207446f6b22d25454637b75e62e1d",
+  "unchangedEvaluatorSha256": "2025463cd47e75bf83f2cbad8dac21bff002ff37bbc0534bcbeba434c7bbb325",
+  "oldCasesSha256": "c8f93225f3c4c51bd0880808823bd9430f90b0c3b257a51f7ee3f7019c86fd2f",
+  "newCasesSha256": "97a3dc64dcb0590bd719f47841d2810d1f5acd78481b5ac778ba2f258e4f7744",
+  "originalCaseCount": 38,
+  "newCaseCount": 40,
+  "oldCasesPreservedExactly": true,
+  "addedCases": [
+    {
+      "id": "unrelated-active-false-counted",
+      "fromRound": 6,
+      "input": {
+        "rows": [
+          {
+            "quantity": 1,
+            "unit_price": "2.00",
+            "active": false
+          }
+        ]
+      },
+      "expected": {
+        "count": 1,
+        "subtotal": "2.00",
+        "discount": "0.00",
+        "tax": "0.00",
+        "total": "2.00"
+      }
+    },
+    {
+      "id": "unrelated-active-false-still-validates",
+      "fromRound": 6,
+      "input": {
+        "rows": [
+          {
+            "unit_price": "2.00",
+            "active": false
+          }
+        ]
+      },
+      "error": true
+    }
+  ],
+  "realArtifact": {
+    "invoiceSha256": "c12f40f8bbd5984e60ce0e6a09061d977bd93781cfabd91c791927e2aa947921",
+    "source": "Frozen Kimi B2 Loom R12 snapshot; only bounded copied snapshot execution",
+    "oldV5Verdict": true,
+    "newV6Verdict": false,
+    "exactNewFailures": [
+      "unrelated-active-false-counted",
+      "unrelated-active-false-still-validates"
+    ],
+    "oldAcceptanceSha256": "72e7e42da02cea7bb7d8ac8b1278706484def85547b0c9f241706ddf13442dac",
+    "newRejectionSha256": "bc07b55c293dc96c57b556b77be5338c80788952c1d670271af92d11f6dbc9a9"
+  },
+  "tests": {
+    "tddRed": {
+      "log": "unrelated-red.log",
+      "sha256": "f14dd0802754b0b5028a9120fc8957c3555b55c456ca88c91d74c8a965927879",
+      "expectedFailures": 2
+    },
+    "tddGreen": {
+      "log": "unrelated-green.log",
+      "sha256": "45f49cf2d47ccb13edd05a6a78a03c4860c0f8c6af34c7330fe5ba9cdc877a8b"
+    },
+    "fullPython": {
+      "passed": 30,
+      "log": "all-python.log",
+      "sha256": "ef52c2ac0787493611c12b344707255ffecbc96c6aa24b0db88c7b94d2ec52ff",
+      "referenceAll12RoundsPassed": true
+    },
+    "node": {
+      "passed": 2,
+      "log": "all-node.log",
+      "sha256": "98dffefd46d90102b6d05e973ff4bb19fb3327810ef253a683559dc3b2971056"
+    },
+    "countAssertionUpdate": "v6 copied test_v3 expected check count38\u219240; preserved all original38 vectors via exact prefix assertion; original failing count log retained"
+  },
+  "manifestSha256": "76ea47f066d64a225b15c63086fd1dbf8bd84a8622e31504d8e901779bbbb5f7",
+  "limitations": [
+    "v5 historical true verdicts remain original; new offline replay is separate evidence of oracle gap.",
+    "Only these two unrelated-field cases added; not a claim of exhaustive semantic coverage.",
+    "No paid runner was migrated or rerun."
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "verdict": "no-unresolved-blocker-on-fixed-admission-checklist",
+  "authorization": "Awaiting lead release under existing owner authorization. Reviewer has not released or invoked paid/CLI.",
+  "priorOpinion": "Earlier Kimi no-blocker withdrawn; this new record supersedes it after runtime gates were actually connected.",
+  "detail": {
+    "candidate": "/Users/sun/.loom/reviews/2026-10-10-pi-two-pair-candidate",
+    "free": "free-runs/1791622073113",
+    "code": {
+      "captureAndPIDAndRequestCensus": "boundary-gates.mjs:4-7; run-block.mjs:47,81",
+      "budgetStopAndFailedFinal": "boundary-gates.mjs:3; run-batch.mjs:7",
+      "rawVsCrossLayer": "run-block.mjs:81 (summary complete requires requestCensus/passive, not Kernel/native match)",
+      "release": "release-guard.mjs:4-5; run-batch.mjs:5",
+      "defaults": "wrapper.mjs:6,20 (frozen settings; no retry/compaction/cachewarming override)"
+    },
+    "negativeEvidence": [
+      "boundary-red.log / final-boundary-unit-green.log: budget plus final audit failure stops B",
+      "free-runs/1791621758297: actual missing capture stops before next arm/B, known306/30 preserved",
+      "census-real-replay.json: copied actual archive missing legacy request rejected despite individual observer completeness"
+    ],
+    "independentOfflineCheck": "Invoked actual captureBoundary and classifyBlock on final free A/B: complete, each12 attempts, completed classification.",
+    "freeze": "Root independently verified39308 hashes. Freeze receipt reviewed; no paid release created.",
+    "limits": [
+      "Runtime census matches arm/round request counts; response IDs/usage validated by existing parser, exact new-vs-old per-response body comparison remains final audit.",
+      "Two synthetic pairs with two turns each do not prove long-task performance."
+    ]
+  },
+  "sharedLimits": [
+    "Soft thresholds checked before next turn; in-flight may exceed.",
+    "Known failed/unpaired usage retained; unknown request coverage cannot yield complete total ratio.",
+    "Shared-machine concurrent batches do not establish latency acceptance."
+  ]
+}

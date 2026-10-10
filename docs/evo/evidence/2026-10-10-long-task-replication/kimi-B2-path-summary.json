@@ -1,0 +1,437 @@
+{
+  "scope": "Kimi B2 observed business path and request decomposition; no causal experiment.",
+  "arms": {
+    "print": {
+      "toolsTotal": 71,
+      "toolCounts": {
+        "Read": 10,
+        "Write": 5,
+        "Bash": 21,
+        "Edit": 35
+      },
+      "explicitCommunicationToolCalls": 0,
+      "rounds": [
+        {
+          "round": 1,
+          "requests": 7,
+          "tools": {
+            "Read": 2,
+            "Write": 2,
+            "Bash": 2,
+            "Edit": 1
+          }
+        },
+        {
+          "round": 2,
+          "requests": 3,
+          "tools": {
+            "Edit": 1,
+            "Bash": 1
+          }
+        },
+        {
+          "round": 3,
+          "requests": 5,
+          "tools": {
+            "Read": 1,
+            "Edit": 2,
+            "Bash": 1
+          }
+        },
+        {
+          "round": 4,
+          "requests": 10,
+          "tools": {
+            "Edit": 6,
+            "Bash": 3
+          }
+        },
+        {
+          "round": 5,
+          "requests": 8,
+          "tools": {
+            "Read": 1,
+            "Edit": 4,
+            "Bash": 2
+          }
+        },
+        {
+          "round": 6,
+          "requests": 12,
+          "tools": {
+            "Write": 1,
+            "Edit": 6,
+            "Read": 2,
+            "Bash": 2
+          }
+        },
+        {
+          "round": 7,
+          "requests": 5,
+          "tools": {
+            "Read": 1,
+            "Write": 1,
+            "Edit": 1,
+            "Bash": 1
+          }
+        },
+        {
+          "round": 8,
+          "requests": 4,
+          "tools": {
+            "Edit": 2,
+            "Bash": 1
+          }
+        },
+        {
+          "round": 9,
+          "requests": 9,
+          "tools": {
+            "Read": 2,
+            "Edit": 4,
+            "Bash": 2
+          }
+        },
+        {
+          "round": 10,
+          "requests": 5,
+          "tools": {
+            "Edit": 3,
+            "Bash": 1
+          }
+        },
+        {
+          "round": 11,
+          "requests": 6,
+          "tools": {
+            "Edit": 2,
+            "Bash": 3
+          }
+        },
+        {
+          "round": 12,
+          "requests": 7,
+          "tools": {
+            "Read": 1,
+            "Edit": 3,
+            "Write": 1,
+            "Bash": 2
+          }
+        }
+      ]
+    },
+    "bridge": {
+      "toolsTotal": 76,
+      "toolCounts": {
+        "Read": 14,
+        "Write": 6,
+        "Bash": 21,
+        "Edit": 35
+      },
+      "explicitCommunicationToolCalls": 0,
+      "rounds": [
+        {
+          "round": 1,
+          "requests": 13,
+          "tools": {
+            "Read": 3,
+            "Write": 3,
+            "Bash": 5,
+            "Edit": 3
+          }
+        },
+        {
+          "round": 2,
+          "requests": 4,
+          "tools": {
+            "Read": 1,
+            "Edit": 1,
+            "Bash": 1
+          }
+        },
+        {
+          "round": 3,
+          "requests": 5,
+          "tools": {
+            "Read": 1,
+            "Edit": 2,
+            "Bash": 1
+          }
+        },
+        {
+          "round": 4,
+          "requests": 5,
+          "tools": {
+            "Edit": 3,
+            "Bash": 1
+          }
+        },
+        {
+          "round": 5,
+          "requests": 10,
+          "tools": {
+            "Read": 1,
+            "Edit": 5,
+            "Bash": 3
+          }
+        },
+        {
+          "round": 6,
+          "requests": 8,
+          "tools": {
+            "Write": 1,
+            "Edit": 4,
+            "Bash": 2
+          }
+        },
+        {
+          "round": 7,
+          "requests": 5,
+          "tools": {
+            "Read": 1,
+            "Edit": 2,
+            "Bash": 1
+          }
+        },
+        {
+          "round": 8,
+          "requests": 7,
+          "tools": {
+            "Read": 2,
+            "Edit": 3,
+            "Bash": 1
+          }
+        },
+        {
+          "round": 9,
+          "requests": 8,
+          "tools": {
+            "Read": 1,
+            "Edit": 3,
+            "Bash": 2,
+            "Write": 1
+          }
+        },
+        {
+          "round": 10,
+          "requests": 8,
+          "tools": {
+            "Read": 1,
+            "Edit": 5,
+            "Bash": 1
+          }
+        },
+        {
+          "round": 11,
+          "requests": 7,
+          "tools": {
+            "Read": 1,
+            "Edit": 3,
+            "Bash": 2
+          }
+        },
+        {
+          "round": 12,
+          "requests": 5,
+          "tools": {
+            "Read": 2,
+            "Edit": 1,
+            "Write": 1,
+            "Bash": 1
+          }
+        }
+      ]
+    },
+    "loom": {
+      "toolsTotal": 47,
+      "toolCounts": {
+        "Write": 7,
+        "Bash": 15,
+        "Edit": 18,
+        "Read": 7
+      },
+      "explicitCommunicationToolCalls": 0,
+      "rounds": [
+        {
+          "round": 1,
+          "requests": 5,
+          "tools": {
+            "Write": 2,
+            "Bash": 2,
+            "Edit": 1
+          }
+        },
+        {
+          "round": 2,
+          "requests": 4,
+          "tools": {
+            "Read": 1,
+            "Edit": 1,
+            "Bash": 1
+          }
+        },
+        {
+          "round": 3,
+          "requests": 5,
+          "tools": {
+            "Edit": 2,
+            "Read": 1,
+            "Bash": 1
+          }
+        },
+        {
+          "round": 4,
+          "requests": 5,
+          "tools": {
+            "Read": 1,
+            "Edit": 2,
+            "Bash": 1
+          }
+        },
+        {
+          "round": 5,
+          "requests": 4,
+          "tools": {
+            "Edit": 2,
+            "Bash": 1
+          }
+        },
+        {
+          "round": 6,
+          "requests": 7,
+          "tools": {
+            "Write": 1,
+            "Read": 1,
+            "Edit": 3,
+            "Bash": 1
+          }
+        },
+        {
+          "round": 7,
+          "requests": 4,
+          "tools": {
+            "Write": 1,
+            "Edit": 1,
+            "Bash": 1
+          }
+        },
+        {
+          "round": 8,
+          "requests": 4,
+          "tools": {
+            "Edit": 2,
+            "Bash": 1
+          }
+        },
+        {
+          "round": 9,
+          "requests": 4,
+          "tools": {
+            "Edit": 1,
+            "Write": 1,
+            "Bash": 1
+          }
+        },
+        {
+          "round": 10,
+          "requests": 7,
+          "tools": {
+            "Edit": 3,
+            "Read": 1,
+            "Bash": 2
+          }
+        },
+        {
+          "round": 11,
+          "requests": 4,
+          "tools": {
+            "Bash": 2,
+            "Write": 1
+          }
+        },
+        {
+          "round": 12,
+          "requests": 4,
+          "tools": {
+            "Read": 2,
+            "Write": 1,
+            "Bash": 1
+          }
+        }
+      ]
+    }
+  },
+  "requestDifferences": [
+    {
+      "round": 1,
+      "loomMinusPrint": -2,
+      "bridgeMinusPrint": 6
+    },
+    {
+      "round": 2,
+      "loomMinusPrint": 1,
+      "bridgeMinusPrint": 1
+    },
+    {
+      "round": 3,
+      "loomMinusPrint": 0,
+      "bridgeMinusPrint": 0
+    },
+    {
+      "round": 4,
+      "loomMinusPrint": -5,
+      "bridgeMinusPrint": -5
+    },
+    {
+      "round": 5,
+      "loomMinusPrint": -4,
+      "bridgeMinusPrint": 2
+    },
+    {
+      "round": 6,
+      "loomMinusPrint": -5,
+      "bridgeMinusPrint": -4
+    },
+    {
+      "round": 7,
+      "loomMinusPrint": -1,
+      "bridgeMinusPrint": 0
+    },
+    {
+      "round": 8,
+      "loomMinusPrint": 0,
+      "bridgeMinusPrint": 3
+    },
+    {
+      "round": 9,
+      "loomMinusPrint": -5,
+      "bridgeMinusPrint": -1
+    },
+    {
+      "round": 10,
+      "loomMinusPrint": 2,
+      "bridgeMinusPrint": 3
+    },
+    {
+      "round": 11,
+      "loomMinusPrint": -2,
+      "bridgeMinusPrint": 1
+    },
+    {
+      "round": 12,
+      "loomMinusPrint": -3,
+      "bridgeMinusPrint": -2
+    }
+  ],
+  "facts": [
+    "All three arms have zero explicit Worker communication tool calls in the archived tool sequence. This does not exclude indirect effects of Loom context.",
+    "Loom used 57 requests versus print 81; tool calls 47 versus 71. Both differences equal 24 in this observed trajectory.",
+    "B1 had the opposite direction: Loom 84 versus print 59 requests. Two blocks do not establish stable overhead.",
+    "B2 Loom final artifact fails a separate unrelated-active-key semantic probe despite original frozen quality passing; lower usage cannot establish equivalent quality."
+  ],
+  "limits": [
+    "Character volumes are not token estimates.",
+    "Bridge shares production ACP implementation without Room; it is not an independent official CLI baseline.",
+    "All actual reported consumption retained, including business corrections; no cost subtraction for randomness."
+  ]
+}
