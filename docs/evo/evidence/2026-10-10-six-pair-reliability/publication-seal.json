@@ -92,10 +92,15 @@
     "observed-cost-mechanisms.json": {
       "privateSourceBasename": "observed-cost-mechanisms.json",
       "privateSourceSha256": "8612c119ea8337f37f3ecb751b70aff10a62dfe5949a2351aae65cc7aa80dc93"
+    },
+    "deployment.json": {
+      "privateSourceBasename": "deployment-public-evidence.json",
+      "privateSourceSha256": "599cfd577e7838852d7bd5fa067dff5ad539118a4dff16995aec36eb2e0149c8"
     }
   },
   "publicationFiles": {
     "continuations-ready-review.json": "33f0dd29e118f9269f2dd2adfde769301acb3c4fa4dfec88a3965c0ce537bf40",
+    "deployment.json": "599cfd577e7838852d7bd5fa067dff5ad539118a4dff16995aec36eb2e0149c8",
     "kimi-five-continuation-method-review.json": "99d2ac98cec99435a191034e8a9d8aa6e705105d964d91df5ea229ee5ad1a586",
     "kimi-free-repair.json": "92fb2c12fc6fb6f395d49258227f3356108ad94f0f7c170c3b1a96f4678251ac",
     "kimi-six-slots.json": "934ee13bcb24d790aa2368c96d0eedc9e0e44f054b1d90b0e01d40f2d490c129",
