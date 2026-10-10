@@ -1,0 +1,49 @@
+{
+  "batch": "P178",
+  "scope": "Free-only private accounting repair; P177 frozen evidence unchanged. No paid calls.",
+  "run": "1791602719290-free",
+  "tests": {
+    "red": "61f5bd53ca3eaf485c7d633505dee27b2a4d15501c1b3e4bfca65af3701c435a",
+    "green": "d5984deff10ff96fc124d243a306a4d33f17695292438d1ab5a3f79f45ba2eb9",
+    "passed": 8
+  },
+  "realP177Replay": {
+    "responses": 11,
+    "complete": true,
+    "input": 64227,
+    "output": 5985,
+    "cachedInput": 54784,
+    "sha256": "5cd275d5ec06d8e18de24eeed0afe50c2b6a105fa3703832806e75522ee7c096"
+  },
+  "actualCliFake": {
+    "nativeRounds": 2,
+    "loomRounds": 2,
+    "httpRequests": 12,
+    "usageReports": {
+      "native": 12,
+      "loom": 12
+    },
+    "perArm": {
+      "input": 639,
+      "output": 60
+    },
+    "rawNativeKernelMatch": true,
+    "quality": "Four original frozen oracle results retained; synthetic fixture does not implement invoice business and is not business acceptance.",
+    "configHashesMatch": true,
+    "configRemoved": true,
+    "daemonExit": {
+      "code": 0,
+      "signal": null
+    },
+    "observedPidsExited": 11
+  },
+  "implementationHashes": {
+    "run.mjs": "a699338fc842adfb9598fa058dc57646eeeccbafc23356758f40f041976a1531",
+    "wrapper.mjs": "6c0545c37a75aff6b7373aed1dde41dbda7d6c5a01b0839cd3881c1405986a2e",
+    "accounting.mjs": "9b0fa70a5ac92022b437d06d63e607b171ab8360418e79721313ee067ffb9a28",
+    "accounting.test.mjs": "58049c35e8e99c67bfa139a85f1b383b86fe8c0090f492c5c97a240c559268ef",
+    "fetch-observer.mjs": "d13a073c8e832b999433ab7707145fd6383f906cf3095e7e034d87e1dd509d13"
+  },
+  "noPaidClaim": true,
+  "noPaidAdmission": true
+}

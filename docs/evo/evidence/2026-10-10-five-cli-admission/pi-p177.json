@@ -1,0 +1,200 @@
+{
+  "batch": "P177",
+  "originalStatus": "failed",
+  "failureOwner": "private benchmark SSE accounting",
+  "reason": "Two identical usage reports for the same response ID were rejected by usage.length===1; original frozen result preserved.",
+  "postHocRecovery": {
+    "requests": 11,
+    "responses": 11,
+    "nativeMatches": true,
+    "known": {
+      "input": 64227,
+      "output": 5985,
+      "cachedInput": 54784,
+      "reasoningOutput": 2017
+    },
+    "responsesDetail": [
+      {
+        "responseId": "021791602425019c4b4c21807da17f108ce4c4545791d8e279776",
+        "usage": {
+          "input": 8538,
+          "output": 86,
+          "cachedInput": 8064,
+          "reasoningOutput": 13
+        },
+        "usageReports": 2,
+        "identical": true,
+        "nativeMatched": true,
+        "rawSha256": "c37c6e35cf10426b2a283804a55b844fa941c4994efc418febb2be8ed2608d96",
+        "metadataSha256": "b017797e308be97317448ab01f7ea0f612966f2e52a1eac91475f00985440ae5"
+      },
+      {
+        "responseId": "021791602410256dbb26dcaf774bd0633eca8434ac673a322f4f9",
+        "usage": {
+          "input": 7157,
+          "output": 377,
+          "cachedInput": 5888,
+          "reasoningOutput": 149
+        },
+        "usageReports": 2,
+        "identical": true,
+        "nativeMatched": true,
+        "rawSha256": "f33cf577523e3ef57e57c43bae0e03cdcbcd1d48c14e9bbb22f5c3372693f152",
+        "metadataSha256": "6246aa193be58bc346fda2ce5c8b5de4ce929dfe2c533a511b56f378aa3d71f8"
+      },
+      {
+        "responseId": "02179160237696196188f7c040816dd3fe5310871d7143a76ed34",
+        "usage": {
+          "input": 1791,
+          "output": 70,
+          "cachedInput": 0,
+          "reasoningOutput": 8
+        },
+        "usageReports": 2,
+        "identical": true,
+        "nativeMatched": true,
+        "rawSha256": "b27085816002ec73c6ddb2e923db0b95dc642af75abd52a9e438683d9e1a4589",
+        "metadataSha256": "479bd5437d1803eefa26ca0144fddf1d5e53b7ac9951bdb0d92ead270f67357b"
+      },
+      {
+        "responseId": "0217916023808699147904061828da2e34644a32f13ef276c694b",
+        "usage": {
+          "input": 2135,
+          "output": 2324,
+          "cachedInput": 1920,
+          "reasoningOutput": 1299
+        },
+        "usageReports": 2,
+        "identical": true,
+        "nativeMatched": true,
+        "rawSha256": "cf3591e762e4c73a6c149d5d776be79951392dc3ee851745c65fae0244f36bf3",
+        "metadataSha256": "ca2128495fbc2bd5d5d3261cb7f67d0f9cb8685d4ec413beb44f18f44c9d41be"
+      },
+      {
+        "responseId": "021791602379312418dc372c31e32e536f515bc41512c8637c1f1",
+        "usage": {
+          "input": 1976,
+          "output": 66,
+          "cachedInput": 1664,
+          "reasoningOutput": 0
+        },
+        "usageReports": 2,
+        "identical": true,
+        "nativeMatched": true,
+        "rawSha256": "d24fa7ca0a3a0596bb2e9a381591e0614452b1f21623d4eab45d1505c68ce071",
+        "metadataSha256": "2111f74f51a679acde18014629e798dc958a05cd764d5ddc6084643d0953cf7c"
+      },
+      {
+        "responseId": "0217916024281049c7b2eaa153a36ce82f7dc9a614e7feb821401",
+        "usage": {
+          "input": 8651,
+          "output": 430,
+          "cachedInput": 8448,
+          "reasoningOutput": 0
+        },
+        "usageReports": 2,
+        "identical": true,
+        "nativeMatched": true,
+        "rawSha256": "f9e0f836bc87d1acaed0ee02a70a1954f1db42b3dcba98f7940e398209f105b6",
+        "metadataSha256": "e6b81d0f89a75a425008685fe56d9d16aaec52a867f9ee487393c73f00947d93"
+      },
+      {
+        "responseId": "02179160241919613e3cfc91b78ae8df851b156ce35e24dd38410",
+        "usage": {
+          "input": 7886,
+          "output": 137,
+          "cachedInput": 7552,
+          "reasoningOutput": 62
+        },
+        "usageReports": 2,
+        "identical": true,
+        "nativeMatched": true,
+        "rawSha256": "f6d989d42208dcee5f6181778f6c9928d5fec9d1b228c1c8b8354989bf16672e",
+        "metadataSha256": "5b7a7883d2291335927eae40c86470d12c62528defa9a62aa0fd407c8e7b6259"
+      },
+      {
+        "responseId": "021791602421640fd2367ab9d84aba0106fa01cb6cae01ae689c2",
+        "usage": {
+          "input": 8127,
+          "output": 387,
+          "cachedInput": 7808,
+          "reasoningOutput": 20
+        },
+        "usageReports": 2,
+        "identical": true,
+        "nativeMatched": true,
+        "rawSha256": "1c8035d7a2164c1a177a8648cabdbe587bfa1567f103b774b38e808647701a09",
+        "metadataSha256": "177ea5f10cb7eff733a34f363b32d8802d0628e420c146ec36be21daba602582"
+      },
+      {
+        "responseId": "0217916024148368df7a849f41ce9ab0b158347df2accb1c0f133",
+        "usage": {
+          "input": 7560,
+          "output": 300,
+          "cachedInput": 7040,
+          "reasoningOutput": 143
+        },
+        "usageReports": 2,
+        "identical": true,
+        "nativeMatched": true,
+        "rawSha256": "353134cff39b0d98f0d6f3e9762d63626d4ee7f5055b1a4237320fabece5e79d",
+        "metadataSha256": "f959ac7005e1a5136b53e50d3a66ac61b0199cbb79c3ab3ee53c57f213cf9895"
+      },
+      {
+        "responseId": "021791602396897c4b4c21807da17f108ce4c4545791d8ee53662",
+        "usage": {
+          "input": 4477,
+          "output": 1431,
+          "cachedInput": 2048,
+          "reasoningOutput": 21
+        },
+        "usageReports": 2,
+        "identical": true,
+        "nativeMatched": true,
+        "rawSha256": "c8b9a6bfbc61def9a1e59e635d2231f26da290c5fc9a0ef990688ee100666a06",
+        "metadataSha256": "019b642c3f635e30469a23bec51567bd51cc22dc3f352ab52da4f5dce00afb45"
+      },
+      {
+        "responseId": "02179160240602811f0f19ac6c045766b433dd71333664db2257b",
+        "usage": {
+          "input": 5929,
+          "output": 377,
+          "cachedInput": 4352,
+          "reasoningOutput": 302
+        },
+        "usageReports": 2,
+        "identical": true,
+        "nativeMatched": true,
+        "rawSha256": "9e74b2e22043d7522cd7e62106f3fd36c3cb5af71d2241fab29843be2c3148d0",
+        "metadataSha256": "ec8e81660b3982887a22e10e1880783760fc8ee695e0a81656c630bafda0a913"
+      }
+    ]
+  },
+  "loomBusinessRuns": 0,
+  "completePairs": 0,
+  "full12Ratio": null,
+  "late6Ratio": null,
+  "quality": "not evaluated: stopped before first capture",
+  "configHashesMatch": true,
+  "sourcePostcheck": {
+    "matched": true,
+    "checked": 18802,
+    "changed": []
+  },
+  "cleanup": {
+    "daemonExit": {
+      "code": 0,
+      "signal": null
+    },
+    "configRemoved": true,
+    "observedProcessIdsChecked": 5,
+    "observedProcessIdsStillLive": []
+  },
+  "billing": "token report only; not invoice",
+  "paidReruns": 0,
+  "testEvidence": {
+    "redSha256": "f75d4763220ec5c6b92567da69a9d39b01c9819728b530fa490ee14d28f43c1b",
+    "greenSha256": "9f1e501a4687609b7b61ff4fd767b84ef67b62238333faf516660b93a1c4afd5",
+    "tests": 4
+  }
+}
