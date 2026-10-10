@@ -1,0 +1,33 @@
+{
+  "cliVersion": "1.1.0",
+  "scope": "Installed CLI source/settings and controlled benchmark launch; no model calls or account mutation",
+  "builtInAutomaticLongTermMemory": "No built-in durable automatic long-term memory setting/engine identified in reviewed settings, resource-loader, session and CLI sources. No memory-off flag is invented. This is a version-scoped source audit, not a universal claim about extensions.",
+  "officialProjectContext": {
+    "source": "dist/core/resource-loader.js:165-191; dist/core/system-prompt.js:99",
+    "semantics": "Reads existing project/global context into system prompt, not automatic memory generation. --no-context-files is symmetric benchmark isolation, not evidence of disabling an automatic memory engine."
+  },
+  "extensions": {
+    "source": "dist/core/resource-loader.js:405,501",
+    "semantics": "noExtensions keeps only explicit CLI extension paths. Candidate uses --no-extensions and no explicit -e/--extension; --no-mcp also disables built-in MCP resources. Thus custom memory-writing extensions are excluded in this controlled experiment; production defaults are not changed.",
+    "configuredSettingsExtensionKeys": [],
+    "configurationSha256": "b4d46800dc25a3feae7291f0f086b35b21eaff9171a7d0f0241dbe385423cd40"
+  },
+  "compaction": {
+    "source": "dist/core/settings-manager.js:621-660",
+    "semantics": "Normal same-session compaction retained with original settings on both paid arms; no task/turn rotation."
+  },
+  "cacheWarming": {
+    "source": "dist/core/settings-manager.js:703-705",
+    "originalConfigured": null,
+    "nativeDefault": "streaming",
+    "candidatePaidPolicy": "Preserve original. All observed attempts counted. Extra responses lacking reconciled usage make coverage unknown; never assume prewarm free."
+  },
+  "hashes": {
+    "/opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/dist/core/settings-manager.js": "7ded026cd47cbc9890e9e4e7076d2ee3182bfd43a8d9e9a567913af92581ff26",
+    "/opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/dist/core/resource-loader.js": "0d2ed0d85c39d05d611cd5904c6e696f7e2d16b2316e35d19f9b1f747ee62444",
+    "/opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/dist/core/system-prompt.js": "ab02924fa078eef81addcf39bc0e43d3663f06d627cb42ead403662a004a9e5c",
+    "/opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/dist/core/agent-session.js": "0ba5c847b4fd2fd838f71ea84885b9f3a4f15d9bf4b5493e2e88a41d1507e20b",
+    "/opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/dist/modes/print-mode.js": "f2eb170b9620c1d37e68b788ff71257a4402a23e7f3999575feee8e5d9e13b3f",
+    "/opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/dist/cli/args.js": "231eca0304b149165a35b12730052586603f23208667e3a57355638017450175"
+  }
+}

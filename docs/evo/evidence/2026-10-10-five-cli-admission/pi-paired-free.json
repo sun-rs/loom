@@ -1,0 +1,188 @@
+{
+  "status": "candidate-complete-awaiting-root-review-and-owner-Pi-row-approval",
+  "paidCalls": 0,
+  "claimExists": false,
+  "admissionExists": false,
+  "entry": "run.mjs",
+  "proposedOnly": {
+    "provider": "pi",
+    "model": "aihubmix/deepseek-v4.1-flash",
+    "effort": "low",
+    "binding": "local:pi-cli/v1:aihubmix/deepseek-v4.1-flash"
+  },
+  "candidateManifestSha256": "01b1f9299b42a94a11e98b87b347a52c4146f2935d82cb259bb5b18ac60841d3",
+  "planSha256": "d4af115ea435e44b17951826085119e045ef2cc3cb225a0294e4e7bcecadb593",
+  "proposedDiffSha256": "43dec55560cea782ec5d98e06880a6d820cfcf59ee2f86d8c4638b563a788b0e",
+  "free": {
+    "run": "1791601648676-free",
+    "nativeTurns": 2,
+    "loomTurns": 2,
+    "requests": 12,
+    "perArmKnown": {
+      "native": {
+        "input": 639,
+        "output": 60,
+        "cachedInput": 0
+      },
+      "loom": {
+        "input": 639,
+        "output": 60,
+        "cachedInput": 0
+      }
+    },
+    "upstreamNativeKernelMatched": true,
+    "modelSettingsHashesUnchanged": true,
+    "explicitLowWithConfiguredDefaultMedium": true,
+    "markerTransports": ["native-final-output", "native-final-output"],
+    "snapshots": [
+      {
+        "name": "loom-2",
+        "sha256": "5dc6d65d464b41df065b81e8109e332dfa6740208debfa8fd3763a7478e9a9a9",
+        "qualityPassed": false,
+        "unchanged": true
+      },
+      {
+        "name": "loom-1",
+        "sha256": "456e665a3aa8d58f1cc3c5e8362403bd9795b24fba5cfd9fdb7544631726cc3f",
+        "qualityPassed": false,
+        "unchanged": true
+      },
+      {
+        "name": "native-1",
+        "sha256": "6919724568068a7c5e94fb9fd7a8362f4637eb96b15d61d38168a90c8f5a90a2",
+        "qualityPassed": false,
+        "unchanged": true
+      },
+      {
+        "name": "native-2",
+        "sha256": "f293b03c823bca29d4708ee776be16cbd45f7267097334823d96a58c73c91309",
+        "qualityPassed": false,
+        "unchanged": true
+      }
+    ],
+    "launches": [
+      {
+        "arm": "loom",
+        "print": true,
+        "argvPrefix": [
+          "--print",
+          "--mode",
+          "json",
+          "--provider",
+          "fake-local",
+          "--model",
+          "fake-final",
+          "--thinking",
+          "low"
+        ],
+        "launchSha256": "54481d26bc93051c71cf09361a9d3b383feea75de2fba8878afa4aefac026f66",
+        "exitSha256": "2b8af0e3168166adfa93ac5c14c181efa4a9969551203b4b491576590788924b"
+      },
+      {
+        "arm": "loom",
+        "print": true,
+        "argvPrefix": [
+          "--print",
+          "--mode",
+          "json",
+          "--provider",
+          "fake-local",
+          "--model",
+          "fake-final",
+          "--thinking",
+          "low"
+        ],
+        "launchSha256": "f00c492afab726a66ea1f72f785bf252b1aa3e26f65a7e75be72176165083e70",
+        "exitSha256": "2b8af0e3168166adfa93ac5c14c181efa4a9969551203b4b491576590788924b"
+      },
+      {
+        "arm": "loom",
+        "print": false,
+        "argvPrefix": [
+          "--offline",
+          "--mode",
+          "rpc",
+          "--no-session",
+          "--no-extensions",
+          "--no-skills",
+          "--no-context-files",
+          "--no-prompt-templates",
+          "--no-mcp"
+        ],
+        "launchSha256": "14f6a531eafd587e1f06df2e68e5a9190d3154a9a9754e44152a2148b31ef3ef",
+        "exitSha256": "2b8af0e3168166adfa93ac5c14c181efa4a9969551203b4b491576590788924b"
+      },
+      {
+        "arm": "native",
+        "print": true,
+        "argvPrefix": [
+          "--print",
+          "--mode",
+          "json",
+          "--provider",
+          "fake-local",
+          "--model",
+          "fake-final",
+          "--thinking",
+          "low"
+        ],
+        "launchSha256": "0102971a26dd5eab3f9b09a1ff1b25662d16f92e9f181830e735efaf33edef03",
+        "exitSha256": "2b8af0e3168166adfa93ac5c14c181efa4a9969551203b4b491576590788924b"
+      },
+      {
+        "arm": "native",
+        "print": true,
+        "argvPrefix": [
+          "--print",
+          "--mode",
+          "json",
+          "--provider",
+          "fake-local",
+          "--model",
+          "fake-final",
+          "--thinking",
+          "low"
+        ],
+        "launchSha256": "2fcac49de5566a3b1e588aacf87aa3bbb2e1a648fbd5fc6cbc87da6b21c39111",
+        "exitSha256": "2b8af0e3168166adfa93ac5c14c181efa4a9969551203b4b491576590788924b"
+      }
+    ],
+    "allOwnedPidsExited": 11,
+    "configRemoved": true,
+    "daemonExit": {
+      "code": 0,
+      "signal": null
+    },
+    "resultSha256": "9b6a31fc3a6dbb8648b2d6a10936e68f3bbec4a7ce2f69ac1750ff1d389f0ccc",
+    "accountingSha256": "fe3219610231bd6ababf48e1ded26cae5795459af0d924d9ef6023fc06af8db3"
+  },
+  "interruptionRegression": {
+    "run": "1791601619565-free",
+    "knownInput": 101,
+    "knownOutput": 10,
+    "secondRequestCoverage": "unknown retained after SIGTERM",
+    "completeFullRatio": null,
+    "noLoomLaunch": true,
+    "evidenceSha256": "6aaa01bc29c186cf3618b3bd75b7820022110a0411f7f0e86e15bf68801b3c2a"
+  },
+  "helperTests": "7 passed. Red/green regression for unknown-round global coverage, independently retained partial dimensions, model/effort mismatch and failed final audit; original observer replacement and network cutoffs remain.",
+  "accountAccess": "Paid mode directly references original native account directory. No auth copy, migration, login or settings write. Only model/settings hashes enforce drift; native account refresh store is not frozen as model config.",
+  "memoryAuditSha256": "6e8bb77fb73832e78e2f191dbca459bdccc7ee5ea1b1138140e171d0b15bfe3b",
+  "modelDriftBoundary": "Offline resolver fuzzy fallback exists. Frozen settings/catalog checks and observed response metadata do not prove no TOCTOU or no pre-request substitution.",
+  "usageBoundary": "Observer preserves installed selected OpenAI-completions HTTP behavior; cache warming remains native default streaming in paid. Unmatched or incomplete attempts stop coverage; cannot call them free.",
+  "baselineBoundary": "Both arms receive symmetric offline/no-extensions/no-skills/no-context-files/no-prompt-templates/no-mcp benchmark isolation; ordinary built-in business tools and original paid retry/compaction/cache settings remain. Not everyday fully customized Pi parity.",
+  "postFreeDelta": "Only candidate plan/manifest/summary metadata finalized; final normal free used final code.",
+  "capacityBoundary": {
+    "product": "Pi driver stdout capture32MiB and cumulative native session32MiB: exceeding it rejects proof and records gap; not waived for this benchmark.",
+    "nativeControlCapture": "32MiB stdout and32MiB stderr in-memory; raw wrapper logs retained. Session same-ID persists without rotation.",
+    "observer": "Observer raw-response copy is async. CLI close before complete copy leaves terminal=false/unknown, never inferred complete or free; native/HTTP census mismatch fails batch.",
+    "failureHandling": "All observed fields retained independently; unattributed errors invalidate whole-arm coverage, malformed/missing output retains valid input; final drift/mismatch/cleanup fails exit status and comparability."
+  },
+  "installedDependencyFreeze": {
+    "packageRoot": "/opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent",
+    "allPackageAndDependencyFiles": 15052,
+    "nodeExecutable": "/opt/homebrew/Cellar/node/25.9.0_2/bin/node",
+    "nodeSha256": "32e234a5b6bec67d72a016f2baadf7fadf3afd328470b395b73af473fdee0d85",
+    "noCredentialsIncluded": true
+  }
+}
