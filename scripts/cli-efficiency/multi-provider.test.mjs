@@ -19,8 +19,17 @@ const env = (c) => ({
   RAH_EFFICIENCY_MODEL: c.model,
   RAH_EFFICIENCY_EFFORT: c.effort ?? "none",
 });
-test("business long manifest records every approved provider binding without widening approvals", () => {
+test("business long manifest records supported approvals and rejects Pi until this runner supports it", () => {
   for (const c of APPROVED_GATE_MODELS) {
+    // Pi has a separately verified print-session paired gate. Approval alone
+    // must not silently enable this older business-long runner's adapters.
+    if (c.provider === "pi") {
+      assert.throws(
+        () => businessLongPlan(["--plan", "--pair=1"], "1.1.0", env(c)),
+        /RAH_EFFICIENCY_PROVIDER must be codex, claude, kimi or opencode/,
+      );
+      continue;
+    }
     const p = businessLongPlan(
       ["--plan", "--pair=1"],
       versions[c.provider],

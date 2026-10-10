@@ -8,6 +8,7 @@ const row = (provider, model, effort, approvedOn, note) =>
   Object.freeze({ provider, model, effort, approvedOn, note });
 
 export const APPROVED_GATE_MODELS = Object.freeze([
+  row("pi", "aihubmix/deepseek-v4.1-flash", "low", "2026-10-10"),
   row(
     "codex",
     "gpt-6-sol",

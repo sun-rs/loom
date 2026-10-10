@@ -183,6 +183,7 @@ and only with owner approval.
 | OpenCode    | `aihubmix/deepseek-v4.1-flash` | `low`     | 2026-09-30 |
 | Kimi CLI    | `kimi-code/k3`                 | `high`    | 2026-09-09 |
 | Kimi CLI    | `kimi-code/k3-256k`            | `low`     | 2026-09-25 |
+| Pi          | `aihubmix/deepseek-v4.1-flash` | `low`     | 2026-10-10 |
 
 The 2026-10-03 additions are owner-approved for the Loom advantage discussion test.
 

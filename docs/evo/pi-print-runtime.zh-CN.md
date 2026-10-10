@@ -1,6 +1,6 @@
 # Pi 普通 CLI 接入
 
-本批把已安装 Pi 接入现有 Role / Instance / RunAttempt 路径，为五 CLI 成本对照补齐正式运行时。它不构成 Pi 成本验收；真实付费用量与批准组合仍以[运行台账](paid-runs.zh-CN.md)及 `scripts/cli-efficiency/approved-models.mjs` 为准。当前批准表没有 Pi 行。
+本批把已安装 Pi 接入现有 Role / Instance / RunAttempt 路径，为五 CLI 成本对照补齐正式运行时。它不构成 Pi 成本验收；真实付费用量与批准组合仍以[运行台账](paid-runs.zh-CN.md)及 `scripts/cli-efficiency/approved-models.mjs` 为准。负责人于2026-10-10批准 Pi / aihubmix/deepseek-v4.1-flash / low；批准组合不等于已完成付费验收。当前 Pi 使用独立核验的 print-session 双臂测试包；旧通用 efficiency/business-long runner 尚不支持 Pi，仍在模型启动前拒绝，不能仅因批准表新增一行而隐式启用。
 
 ## 所有权与执行
 
