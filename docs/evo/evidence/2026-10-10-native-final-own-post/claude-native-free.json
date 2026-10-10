@@ -1,0 +1,122 @@
+{
+  "scope": "P170 actual formal entry free preflight; not paid or efficiency acceptance",
+  "paidRequests": 0,
+  "run": "1791593899462-free",
+  "arms": {
+    "native": {
+      "sameSession": true,
+      "responses": 4,
+      "input": 400,
+      "output": 40,
+      "syntheticUsage": true,
+      "quality": [true, false],
+      "pythonVersion": "3.9.6 (default, Oct 17 2025, 17:15:53) \n[Clang 17.0.0 (clang-1700.4.4.1)]",
+      "pythonExecutable": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+      "pythonPathClass": "Common base path only"
+    },
+    "loom": {
+      "sameSession": true,
+      "responses": 4,
+      "input": 400,
+      "output": 40,
+      "syntheticUsage": true,
+      "quality": [true, false],
+      "pythonVersion": "3.9.6 (default, Oct 17 2025, 17:15:53) \n[Clang 17.0.0 (clang-1700.4.4.1)]",
+      "pythonExecutable": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+      "pythonPathClass": "Product instance Worker bin then common base path"
+    }
+  },
+  "model": "sonnet -> claude-sonnet-5-5",
+  "effort": "low",
+  "tools": 16,
+  "allRawHashesVerified": true,
+  "rawToTranscriptToKernelReconciled": true,
+  "realWorkerReads": 2,
+  "uniqueFinalPublications": 2,
+  "ordinaryProgressPublications": 2,
+  "realWorkerOrdinaryPosts": 2,
+  "oracleRepoPeerDenied": true,
+  "immutableSnapshots": 4,
+  "recordedPidsExited": 14,
+  "temporaryConfigsRemoved": true,
+  "requests": [
+    {
+      "arm": "native",
+      "round": 1,
+      "request": 1,
+      "requestSha256": "fcd322cccccd4ba67acac628f033397895c04d2f60f3b2c470824a1639f25187",
+      "responseSha256": "994f803a7a7f89a69e3a592bfe04e2a0448d0f7b086a6d2ccd487264ec34c462"
+    },
+    {
+      "arm": "native",
+      "round": 1,
+      "request": 2,
+      "requestSha256": "fb82df2d8eb5d0870b6c6e296e0e40ffc422c764f54a89e4ef6f3ff0a20393ea",
+      "responseSha256": "e0c207387049428dd67409df674a3d7844665c63b6b1e5bda05971ffba03197e"
+    },
+    {
+      "arm": "native",
+      "round": 2,
+      "request": 3,
+      "requestSha256": "2a04bf37952def36f086ab00585f05b46ae5a4f7213eba5623c33b5506ae4154",
+      "responseSha256": "c5982a6bb8cc330c9b567d3582a23d7cf50c7529ec6b6b32af6b2deabaa5b139"
+    },
+    {
+      "arm": "native",
+      "round": 2,
+      "request": 4,
+      "requestSha256": "187db6c5a49e475ac7c34b836000d1654db1d6e6a3c39aa1514bbceea1dc44f1",
+      "responseSha256": "f4c045d24e5c4d63093efc34007b707a6b7139a46e5074d32f6b30f2713e12b2"
+    },
+    {
+      "arm": "loom",
+      "round": 1,
+      "request": 1,
+      "requestSha256": "2c622ebea55dda8360b6220562130ac9613191e8ad7ea594d32dc8f10bc2ffa2",
+      "responseSha256": "2fa0b86d2961479f1e360b4e32e65d715b4660e43fc9f641c3d95d6981b59759"
+    },
+    {
+      "arm": "loom",
+      "round": 1,
+      "request": 2,
+      "requestSha256": "4362da7b0c9bdc77a96c988f0e0adffeb3b8b1233cc7d1d4749011282af5ce1f",
+      "responseSha256": "b4f28b7c478aaa4ebb465b65f0b99f05cd0e4f73e4e0afa33c71e391a71a31b6"
+    },
+    {
+      "arm": "loom",
+      "round": 2,
+      "request": 3,
+      "requestSha256": "026e2bd8029bd3001da64b5544851620e26d7badfa0f23409c33d4bfc7baef14",
+      "responseSha256": "863dc60478dc3b678210178fe4e15085d305790d77161f028004c23af1d6639b"
+    },
+    {
+      "arm": "loom",
+      "round": 2,
+      "request": 4,
+      "requestSha256": "7425ae199994e4ed0f60a70f106484e812985f6d461c9024b0a95f00d3f64180",
+      "responseSha256": "2216e6aa990fd1d8ec4b7cb29bcf5a3e35a01823165afd1b99a9351e82998460"
+    }
+  ],
+  "businessEnvironment": {
+    "sameResolvedPythonBothArms": true,
+    "sameBasePATH": true,
+    "fullPathStringsEqual": false,
+    "difference": "Only product has instance-owned Worker bin prefix, without a python executable.",
+    "evaluatorVersion": "Python 3.13.10",
+    "interpretation": "Both business CLIs usePython3.9.6; immutable evaluator uses3.13.10. Warning compatibility failures remain visible; task and warning settings unchanged."
+  },
+  "references": {
+    "scripts/cli-efficiency/worker-turn-sandbox.mjs": "93294d0d31d5eada0e906c02e5feed389ba953d11a6e6103c766eeed0f8cbca5",
+    "scripts/cli-efficiency/paired-usage-summary.mjs": "f3675e75c117c753c9a59062aeba4f89d5392f94f216da32a707a791f02c546b",
+    "scripts/cli-efficiency/final-message-selection.mjs": "aa2b2b8759b6757c2c7aa8dea8e8ef1b161c7ce565e82b81259c0e1c34176cdc"
+  },
+  "sourceSha256": {
+    "run.mjs": "986d37aeb74b8cc8fbc8f219f2237b46c534e7a4022c51b394cf3d3bfb0ff6c3",
+    "wrapper.mjs": "bc45cbe241254948dd81ecd077241ac60db1d46d75a6ccf5ba2e7a2bb1993c59",
+    "fake.mjs": "a465160956f4cecb33e2296695b91a37ea8c35c4c1fdd086b5198cdb4db93fac",
+    "paired-summary.mjs": "e6da290a4f3e40defb0a88bc319c1f948e81f41bed8b857e43df53ad64c6a11c"
+  },
+  "resultSha256": "a05433deabc9ac00b18910b853415ae6af86a05b874e5cdeb0c2fdb4ebd79af5",
+  "pairedSummarySha256": "909780d1f905f10c46aecc90f0df37654aa9704eb7a1df69d2e5690988d737bd",
+  "qualityMeaning": "Synthetic fixture R1 deliberatelycorrect/R2 deliberatelyincorrect; no real model quality claim."
+}

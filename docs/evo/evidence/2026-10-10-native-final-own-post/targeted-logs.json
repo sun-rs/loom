@@ -1,0 +1,22 @@
+{
+  "kernelRed": {
+    "path": "~/.loom/reviews/p169-kernel-red.log",
+    "sha256": "89907c5ed812d3637b6ca46e609fee9a3cba8a701bd7942efdf110541d9fdc01"
+  },
+  "kernelGreen": {
+    "path": "~/.loom/reviews/p169-kernel-green.log",
+    "sha256": "2c3867dee2c8a96b0284dec9a2b0368fcf08f0f3eb4763fbb3c113a8d88b6856"
+  },
+  "kernelSuite": {
+    "path": "~/.loom/reviews/p169-kernel-suite.log",
+    "sha256": "6e5d353f98fe172edf80b8ccda025cb3c410fc587a82ad13ca1d2090918bcc9a"
+  },
+  "hostFinal": {
+    "path": "~/.loom/reviews/2026-10-10-native-final-own-post/host-final.log",
+    "sha256": "8dca5b76bc8591a5ae554003074df792c4ac78a1f6bb986fdafeac7b17c755ff"
+  },
+  "selector": {
+    "path": "~/.loom/reviews/2026-10-10-native-final-own-post/selector.log",
+    "sha256": "298a2541df35d0f4d1265467a75dfa2a69d337da41bea0434799685e288483f8"
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "check": "passed",
+  "format": "passed",
+  "diff": "passed",
+  "frontendSourceUnchanged": true,
+  "initialFailuresRetained": [
+    "old schema receipt expected83",
+    "new Host test missing TypeScript array row narrowing"
+  ],
+  "logs": {
+    "check.log": {
+      "path": "~/.loom/reviews/2026-10-10-native-final-own-post/check.log",
+      "sha256": "61a8eb580207f498b10f5c2ea1c0bd75fd697e3ef5380293447eb37ae38edfe7"
+    },
+    "check-final.log": {
+      "path": "~/.loom/reviews/2026-10-10-native-final-own-post/check-final.log",
+      "sha256": "b3e90f7a3c663b27b3b5050ab2779bf0db13a721db66561d7e9804e6384bea73"
+    },
+    "check-green.log": {
+      "path": "~/.loom/reviews/2026-10-10-native-final-own-post/check-green.log",
+      "sha256": "aa8082b08e5c1a7e71578313efb747b3c5a0fceda5f6780a49a7aab3bd093562"
+    },
+    "format-final.log": {
+      "path": "~/.loom/reviews/2026-10-10-native-final-own-post/format-final.log",
+      "sha256": "fb5ffe51bf83c7a6ac683f386a5c903f6ff2c086dbe1bf27cc1f12efddaf7e3f"
+    },
+    "migration-green.log": {
+      "path": "~/.loom/reviews/2026-10-10-native-final-own-post/migration-green.log",
+      "sha256": "9a5bd9c1e853c35cb78a058820f98f28b2a22360dfca6bf955d9a4f5f0ade7bf"
+    }
+  }
+}

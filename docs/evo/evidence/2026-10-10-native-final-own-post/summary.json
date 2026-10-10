@@ -1,0 +1,41 @@
+{
+  "state": "implemented; full automated and real-CLI synthetic preflights passed; paid and deployment pending",
+  "owner": "Kernel",
+  "schema": 84,
+  "sourceBase": "752746ce335d4e5a9c40ee3219307551bc6d21b6",
+  "problem": "P169 ordinary Worker post made native final stale against its own message. Benchmark also rejected legal progress or explicit Worker final by assuming exactly one message and only native-final provenance.",
+  "change": [
+    "Exact new event to Run mapping committed with origin/target Worker posts; historical events and deduplicated replays never adopted.",
+    "Only final-output freshness excludes current-Run same-author same-target proven writes; original causal floor unchanged, intervening external facts remain held.",
+    "Benchmark selects the unique durable final message and records native-final-output versus worker-final; other messages and costs remain visible."
+  ],
+  "preserved": [
+    "Human and different Run facts",
+    "ordinary progress is not final",
+    "delivery ACK and Task independence",
+    "unknown write is not retried",
+    "explicit final marker conflict rules",
+    "existing history"
+  ],
+  "checks": {
+    "kernelSuite": "800 passed",
+    "hostCoexistenceSuite": "12 passed, including native-selected explicit Worker final",
+    "sourceRatchet": "passed",
+    "typescript": "passed",
+    "fullRepository": "npm run check passed; core3051 passed/22 skipped, web487, console59, efficiency545",
+    "finalMessageSelection": "13 passed",
+    "independentReview": "no blocking findings; review.json",
+    "initialRepositoryCheck": "3049 passed, 22 skipped, 1 stale schema receipt expectation (83 instead of84) failed; updated expected migration version without changing protection assertions",
+    "migrationTargeted": "passed after updating schema expectation",
+    "typecheckCorrection": "Latest Host test added explicit row existence narrowing; static check passed on final rerun",
+    "format": "npm run format:check passed",
+    "diff": "git diff --check passed"
+  },
+  "paid": "P170/P171 pending release; P169 failure retained",
+  "deployment": "pending; formal experimental flags will remain disabled",
+  "freeEvidence": [
+    "claude-native-free.json",
+    "claude-worker-final-free.json",
+    "opencode-dual-final-free.json"
+  ]
+}

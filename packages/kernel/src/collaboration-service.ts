@@ -1,3 +1,4 @@
+import { latestExternalTargetMessageSeq } from "./worker-run-message-writes.ts";
 import { assertNoUnresolvedRuntimeCleanup } from "./runtime-process-cleanup.ts";
 import {
   requireActiveInstancePrivateBox,
@@ -1953,6 +1954,7 @@ export class CollaborationService {
       revisedBody?: string;
       continueAnyway?: boolean;
       freshnessFloorSeq?: number;
+      finalOutputRunAttemptId?: string;
       heldDraftId?: string;
       idempotencyKey: string;
       recipients: MessageRecipient[];
@@ -2141,10 +2143,16 @@ export class CollaborationService {
       throw new Error("message body or attachment is required");
     }
 
-    const latestTargetSeq = this.#latestTargetMessageSeq(
-      input.roomId,
-      input.threadId,
-    );
+    const latestTargetSeq =
+      input.finalOutputRunAttemptId === undefined
+        ? this.#latestTargetMessageSeq(input.roomId, input.threadId)
+        : latestExternalTargetMessageSeq(
+            this.#database,
+            input.roomId,
+            input.threadId,
+            input.finalOutputRunAttemptId,
+            actor.principalId,
+          );
     if (latestTargetSeq > freshnessFloorSeq && input.continueAnyway !== true) {
       const heldDraftId = this.#createId("held_draft");
       const reholdCount =

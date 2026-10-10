@@ -1,3 +1,4 @@
+import { recordWorkerRunMessageWrite } from "./worker-run-message-writes.ts";
 import * as HeldReadCoverage from "./held-read-coverage.ts";
 import { heldRevisionWindow } from "./held-draft-revision.ts";
 import * as ReadCoverage from "./activation-read-coverage.ts";
@@ -502,6 +503,11 @@ export class WorkerTargetContextService {
             ...(typeof body === "string" ? { body } : {}),
           }),
         });
+      recordWorkerRunMessageWrite(
+        this.#context.database,
+        origin.runAttemptId,
+        result,
+      );
       if ("event" in result && !result.deduplicated)
         this.#context.files().consume(attachments, result.event.aggregateId);
       this.#context.attachmentComments().bindWorkerResult(metadata, result);

@@ -1,0 +1,305 @@
+{
+  "scope": "actual OpenCode 1.18.35 plus localhost synthetic model; zero paid calls; not quality or efficiency acceptance",
+  "paidReleased": false,
+  "runs": [
+    {
+      "run": "1791594299600-paid-runner-free",
+      "status": "completed",
+      "resultSha256": "9847bf20fb67ba056fcddca570520fc85701c66424c38b68e1851742fa2a4f1f",
+      "requestCount": 8,
+      "temporaryProviderConfigsRemoved": true,
+      "recordedPidsStillLive": [],
+      "activationStates": [
+        {
+          "activation_id": "activation_1ff2c7b4-f221-4172-96b7-ab05e0b18648",
+          "state": "completed",
+          "to_seq": 4
+        },
+        {
+          "activation_id": "activation_58313a4e-ed67-47ac-9611-6b52967a94dd",
+          "state": "completed",
+          "to_seq": 13
+        }
+      ],
+      "ackCursors": [
+        {
+          "consumer_id": "local-workbench-host-5d867744-0391-42f3-abc0-50754baf8c24:runtime",
+          "last_seq": 13
+        }
+      ],
+      "sessionsPerArm": {
+        "native": 1,
+        "loom": 1
+      },
+      "usage": {
+        "native": {
+          "input": 418,
+          "output": 58,
+          "complete": true,
+          "requestCoverageComplete": true,
+          "identityCoverageComplete": true,
+          "dimensions": {
+            "input": {
+              "known": 418,
+              "knownRequests": 4,
+              "unknownRequests": 0,
+              "complete": true
+            },
+            "output": {
+              "known": 58,
+              "knownRequests": 4,
+              "unknownRequests": 0,
+              "complete": true
+            },
+            "cachedInput": {
+              "known": 100,
+              "knownRequests": 4,
+              "unknownRequests": 0,
+              "complete": true
+            },
+            "reasoningOutput": {
+              "known": 8,
+              "knownRequests": 4,
+              "unknownRequests": 0,
+              "complete": true
+            }
+          }
+        },
+        "loom": {
+          "input": 418,
+          "output": 58,
+          "complete": true,
+          "requestCoverageComplete": true,
+          "identityCoverageComplete": true,
+          "dimensions": {
+            "input": {
+              "known": 418,
+              "knownRequests": 4,
+              "unknownRequests": 0,
+              "complete": true
+            },
+            "output": {
+              "known": 58,
+              "knownRequests": 4,
+              "unknownRequests": 0,
+              "complete": true
+            },
+            "cachedInput": {
+              "known": 75,
+              "knownRequests": 3,
+              "unknownRequests": 1,
+              "complete": false
+            },
+            "reasoningOutput": {
+              "known": 6,
+              "knownRequests": 3,
+              "unknownRequests": 1,
+              "complete": false
+            }
+          }
+        }
+      },
+      "rounds": [
+        {
+          "arm": "loom",
+          "round": 1,
+          "qualityPassed": true,
+          "transport": "worker-final",
+          "messageCount": 1,
+          "ordinaryPostCount": 0,
+          "nativeDiagnosticEqualsPublishedFinal": false,
+          "markerKinds": [null]
+        },
+        {
+          "arm": "native",
+          "round": 1,
+          "qualityPassed": true,
+          "transport": null,
+          "messageCount": 0,
+          "ordinaryPostCount": 0,
+          "nativeDiagnosticEqualsPublishedFinal": null,
+          "markerKinds": []
+        },
+        {
+          "arm": "native",
+          "round": 2,
+          "qualityPassed": false,
+          "transport": null,
+          "messageCount": 0,
+          "ordinaryPostCount": 0,
+          "nativeDiagnosticEqualsPublishedFinal": null,
+          "markerKinds": []
+        },
+        {
+          "arm": "loom",
+          "round": 2,
+          "qualityPassed": false,
+          "transport": "worker-final",
+          "messageCount": 1,
+          "ordinaryPostCount": 0,
+          "nativeDiagnosticEqualsPublishedFinal": false,
+          "markerKinds": [null]
+        }
+      ],
+      "archivedSources": {
+        "paid-run.mjs": "852e3c6fcbb29c1e16589a83f0df2fdb123443b57a21de89d6d49420590ce3dc",
+        "fake.mjs": "405ed24fa2e62bf33bc4854a971ca67e052db413e6f1d56175cad9aefd766076",
+        "product-arm.mjs": "76518d6f0942072819d69c23315a9b618f476fe4b42927e291fe55292aacd639"
+      }
+    },
+    {
+      "run": "1791594320737-paid-runner-free",
+      "status": "completed",
+      "resultSha256": "d96fa039c97200667b06feee16719be13f1e1ce626f531a1c8c6c9b27c2fa5ff",
+      "requestCount": 8,
+      "temporaryProviderConfigsRemoved": true,
+      "recordedPidsStillLive": [],
+      "activationStates": [
+        {
+          "activation_id": "activation_1c3fa1ad-bc5e-433a-b925-654cfad98a70",
+          "state": "completed",
+          "to_seq": 4
+        },
+        {
+          "activation_id": "activation_5dbbfca3-c5dd-4b04-b531-8af622770b3e",
+          "state": "completed",
+          "to_seq": 14
+        }
+      ],
+      "ackCursors": [
+        {
+          "consumer_id": "local-workbench-host-3509e62b-1eb3-4e36-a383-2592cf3509d4:runtime",
+          "last_seq": 14
+        }
+      ],
+      "sessionsPerArm": {
+        "native": 1,
+        "loom": 1
+      },
+      "usage": {
+        "native": {
+          "input": 418,
+          "output": 58,
+          "complete": true,
+          "requestCoverageComplete": true,
+          "identityCoverageComplete": true,
+          "dimensions": {
+            "input": {
+              "known": 418,
+              "knownRequests": 4,
+              "unknownRequests": 0,
+              "complete": true
+            },
+            "output": {
+              "known": 58,
+              "knownRequests": 4,
+              "unknownRequests": 0,
+              "complete": true
+            },
+            "cachedInput": {
+              "known": 100,
+              "knownRequests": 4,
+              "unknownRequests": 0,
+              "complete": true
+            },
+            "reasoningOutput": {
+              "known": 8,
+              "knownRequests": 4,
+              "unknownRequests": 0,
+              "complete": true
+            }
+          }
+        },
+        "loom": {
+          "input": 418,
+          "output": 58,
+          "complete": true,
+          "requestCoverageComplete": true,
+          "identityCoverageComplete": true,
+          "dimensions": {
+            "input": {
+              "known": 418,
+              "knownRequests": 4,
+              "unknownRequests": 0,
+              "complete": true
+            },
+            "output": {
+              "known": 58,
+              "knownRequests": 4,
+              "unknownRequests": 0,
+              "complete": true
+            },
+            "cachedInput": {
+              "known": 75,
+              "knownRequests": 3,
+              "unknownRequests": 1,
+              "complete": false
+            },
+            "reasoningOutput": {
+              "known": 6,
+              "knownRequests": 3,
+              "unknownRequests": 1,
+              "complete": false
+            }
+          }
+        }
+      },
+      "rounds": [
+        {
+          "arm": "loom",
+          "round": 1,
+          "qualityPassed": true,
+          "transport": "native-final-output",
+          "messageCount": 2,
+          "ordinaryPostCount": 1,
+          "nativeDiagnosticEqualsPublishedFinal": true,
+          "markerKinds": ["final-output"]
+        },
+        {
+          "arm": "native",
+          "round": 1,
+          "qualityPassed": true,
+          "transport": null,
+          "messageCount": 0,
+          "ordinaryPostCount": 0,
+          "nativeDiagnosticEqualsPublishedFinal": null,
+          "markerKinds": []
+        },
+        {
+          "arm": "native",
+          "round": 2,
+          "qualityPassed": false,
+          "transport": null,
+          "messageCount": 0,
+          "ordinaryPostCount": 0,
+          "nativeDiagnosticEqualsPublishedFinal": null,
+          "markerKinds": []
+        },
+        {
+          "arm": "loom",
+          "round": 2,
+          "qualityPassed": false,
+          "transport": "native-final-output",
+          "messageCount": 2,
+          "ordinaryPostCount": 1,
+          "nativeDiagnosticEqualsPublishedFinal": true,
+          "markerKinds": ["final-output"]
+        }
+      ],
+      "archivedSources": {
+        "paid-run.mjs": "da64ba0dc4a3ebdd304cbb6c4d7334a57c4c15b0919ec67f27578a9510dbed63",
+        "fake.mjs": "405ed24fa2e62bf33bc4854a971ca67e052db413e6f1d56175cad9aefd766076",
+        "product-arm.mjs": "76518d6f0942072819d69c23315a9b618f476fe4b42927e291fe55292aacd639"
+      }
+    }
+  ],
+  "failurePreserved": "1791594206989-paid-runner-free: fixture omitted explicit based-on-room-seq; Worker final correctly rejected; subsequent fake refusals retained",
+  "previousCoexistEvidenceSha256": "9e3f1a4c2aa1251b95f883bec6473bc1bcda6c1be470e5c2b5265ccbeb1f7d97",
+  "sources": {
+    "~/.loom/reviews/2026-10-10-opencode-p171/paid-run.mjs": "da64ba0dc4a3ebdd304cbb6c4d7334a57c4c15b0919ec67f27578a9510dbed63",
+    "~/.loom/reviews/2026-10-10-opencode-p171/fake.mjs": "405ed24fa2e62bf33bc4854a971ca67e052db413e6f1d56175cad9aefd766076",
+    "~/.loom/reviews/2026-10-10-opencode-p171/product-arm.mjs": "76518d6f0942072819d69c23315a9b618f476fe4b42927e291fe55292aacd639",
+    "~/Code/repos/rah_os/scripts/cli-efficiency/final-message-selection.mjs": "aa2b2b8759b6757c2c7aa8dea8e8ef1b161c7ce565e82b81259c0e1c34176cdc"
+  },
+  "sourceDeltaNote": "Fallback launch archived an additional nonempty-native-diagnostic assertion; it passed. Final runner removes that requirement only for Worker final, which may legitimately interrupt native completion. Native-output mode still requires exact final diagnostic equality. Coexistence verification uses final runner."
+}

@@ -1,3 +1,4 @@
+import { recordWorkerRunMessageWrite } from "./worker-run-message-writes.ts";
 import * as HeldReadCoverage from "./held-read-coverage.ts";
 import * as ReadCoverage from "./activation-read-coverage.ts";
 import type { AttachmentCommentsService } from "./attachment-comments.ts";
@@ -29,6 +30,7 @@ import { workerMessageAttachments } from "./worker-message-attachments.ts";
 /** Called inside the Kernel's existing transaction. Files and the canonical
  * message commit together; a freshness-held draft never publishes the files. */
 export function postWorkerMessageTransaction(context: {
+  finalOutput?: boolean;
   comments: AttachmentCommentsService;
   database: DatabaseSync;
   collaboration: CollaborationService;
@@ -147,6 +149,9 @@ export function postWorkerMessageTransaction(context: {
     context.principal,
     {
       activationId: scope.activationId,
+      ...(context.finalOutput
+        ? { finalOutputRunAttemptId: scope.runAttemptId }
+        : {}),
       basedOnRoomSeq,
       // No presented floor here, and the omission is load-bearing rather than
       // an oversight. This route's own gate is `basedOnRoomSeq === scope.toSeq`
@@ -171,6 +176,7 @@ export function postWorkerMessageTransaction(context: {
       ...(route.threadId === undefined ? {} : { threadId: route.threadId }),
     },
   );
+  recordWorkerRunMessageWrite(database, scope.runAttemptId, result);
   if ("event" in result && !result.deduplicated)
     files.consume(attachments, result.event.aggregateId);
   context.comments.bindWorkerResult(attachmentComment, result);

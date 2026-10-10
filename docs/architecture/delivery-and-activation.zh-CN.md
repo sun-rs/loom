@@ -190,6 +190,8 @@ Agent 提交 claim、status、artifact 或 answer 等业务 mutation 时携带 `
 
 普通 Agent Room reply 直接实现 Raft held-draft 语义：根消息和同 Thread 各自比较最新 `message.posted`；旧草稿写入 `held_message_drafts`，返回有限 `newerMessages`，不进入 canonical Room，并由已落账的 peer Message 产生 follow-up Activation。follow-up 可正常改写、发送保存原稿（再次检查）、保持静默；只有原稿已经再次被 hold、响应明确建议后，才允许显式 send-anyway。保持静默不写假事件，十分钟有效期到达后由 Kernel 维护解析为 expired。Task 等其他 mutation 继续使用 `stale_context`。两类判断都由业务 Kernel 持久执行，不依赖某个 CLI session 是否仍然活着。
 
+最终输出提交与同轮普通发帖共存时，Kernel 保留原 `basedOnRoomSeq`，只从新鲜度候选消息中排除有持久证据证明由**当前 Run、本人、同一目标**新提交的消息。来源映射和消息在同一事务写入，旧消息或幂等重放不能补归属；它不是另一份消息记录或已读游标。任何夹在自身帖子之前、之间或之后的相关 Human／其他执行新事实仍触发 hold，不能用最新自身帖序号抬高整个窗口。普通帖子可以是进度，不生成最终回复标记，也不能据其正文吞掉后续原生最终回复；既有显式 final、取消、未知写不重发和 delivery ACK 围栏保持。实现与验证状态见 [evo 当前状态](../evo/status.zh-CN.md)。
+
 ### 7.1 Activation 的业务履约证明
 
 `acknowledge` 只证明 Agent 已经读取到指定 Room 序号；Runtime 退出只证明本次进程已经终止。两者都不能证明 reviewer 已审查、复开的 Task 已继续、改派后的新负责人已处理，或驳回后的返工已产生结果。

@@ -1,3 +1,4 @@
+import { WORKER_RUN_MESSAGE_WRITES_SCHEMA } from "./worker-run-message-writes.ts";
 import { ROLE_CATALOG_SCHEMA } from "./role-catalog-schema.ts";
 import { CHANNEL_MEMORY_SCHEMA } from "./channel-memory-schema.ts";
 import { MEMORY_INDEX_MARKS_SCHEMA } from "./channel-memory-index.ts";
@@ -24,6 +25,7 @@ export const SCHEMA_OBJECT_SQL = `${ROLE_CATALOG_SCHEMA}
 ${RUN_ATTEMPT_USAGE_SCHEMA}
 ${RUNTIME_PROCESS_CLEANUP_SCHEMA}
 ${RUN_ATTEMPT_FINAL_REPLY_SCHEMA}
+${WORKER_RUN_MESSAGE_WRITES_SCHEMA}
 ${INSTANCE_RUNTIME_SCHEMA}
 ${INSTANCE_SESSION_SCHEMA}
 ${INSTANCE_WAKE_GUARD_SCHEMA}

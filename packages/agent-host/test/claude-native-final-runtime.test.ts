@@ -82,6 +82,67 @@ test("Claude native text: two replies publish once each in one session, without 
   }
 });
 
+for (const newerHuman of [false, true]) {
+  test(`Claude native text: ordinary Worker progress then final ${newerHuman ? "still holds for a newer Human fact" : "publishes without holding against its own progress"}`, async () => {
+    const state = await harness({ nativeFinalText: true });
+    const originalFetch = globalThis.fetch;
+    let publications = 0;
+    globalThis.fetch = async (input, init) => {
+      if (String(input).endsWith("/v1/worker/messages/final-output")) {
+        publications++;
+        assert.equal(
+          sql(
+            state,
+            "SELECT * FROM messages WHERE actor_id=?",
+            state.participantId,
+          ).length,
+          1,
+          "ordinary Worker post committed before native final submission",
+        );
+        assert.equal(
+          sql(state, "SELECT * FROM run_attempt_final_replies").length,
+          0,
+        );
+        if (newerHuman) state.post("new Human fact after ordinary progress");
+      }
+      return originalFetch(input, init);
+    };
+    try {
+      state.post("[fake:post-nofinal] [fake:native-final] progress then final");
+      const result = await state.current.agentHost.reconcileOnce();
+      assert.equal(
+        result.state,
+        newerHuman ? "failed" : "completed",
+        JSON.stringify(result),
+      );
+      assert.equal(publications, 1);
+      const posted = sql(
+        state,
+        "SELECT body FROM messages WHERE actor_id=? ORDER BY rowid",
+        state.participantId,
+      );
+      assert.match(String(posted[0]?.body), /^FAKE final answer for /u);
+      assert.equal(posted.length, newerHuman ? 1 : 2);
+      if (!newerHuman) assert.equal(posted[1]?.body, "FAKE NATIVE ANSWER 1");
+      assert.equal(
+        sql(state, "SELECT * FROM run_attempt_final_replies").length,
+        newerHuman ? 0 : 1,
+      );
+      assert.equal(
+        sql(state, "SELECT * FROM held_message_drafts WHERE state='held'")
+          .length,
+        newerHuman ? 1 : 0,
+      );
+      assert.equal(turns(state).length, 1);
+      assert.equal(events(state, "worker").length, 2);
+      assert.equal(state.credentialEvents.at(-1), "revoked");
+    } finally {
+      globalThis.fetch = originalFetch;
+      await state.cleanup();
+    }
+  });
+}
+
 for (const [label, directive, options] of [
   ["missing assistant proof", "native-missing", {}],
   ["length-stopped output", "native-length", {}],
@@ -293,6 +354,44 @@ test("Claude native text: cancelling after native completion aborts the pending 
     controller.abort();
     globalThis.fetch = originalFetch;
     await running;
+    await state.cleanup();
+  }
+});
+
+test("Claude native text: an explicit Worker final completes from its durable marker without another publication", async () => {
+  const state = await harness({ nativeFinalText: true });
+  const originalFetch = globalThis.fetch;
+  let nativePublications = 0;
+  globalThis.fetch = async (input, init) => {
+    if (String(input).endsWith("/v1/worker/messages/final-output"))
+      nativePublications++;
+    return originalFetch(input, init);
+  };
+  try {
+    state.post("[fake:final] [fake:native-final] explicit Worker final");
+    const result = await state.current.agentHost.reconcileOnce();
+    assert.equal(result.state, "completed", JSON.stringify(result));
+    assert.equal(nativePublications, 0);
+    const messages = sql(
+      state,
+      "SELECT body FROM messages WHERE actor_id=?",
+      state.participantId,
+    );
+    assert.equal(messages.length, 1);
+    assert.ok(messages[0]);
+    assert.match(String(messages[0].body), /^FAKE final answer for /u);
+    const markers = sql(
+      state,
+      "SELECT submission_kind FROM run_attempt_final_replies",
+    );
+    assert.equal(markers.length, 1);
+    assert.ok(markers[0]);
+    assert.equal(markers[0].submission_kind, null);
+    assert.equal(sql(state, "SELECT * FROM held_message_drafts").length, 0);
+    assert.equal(turns(state).length, 1);
+    assert.equal(state.credentialEvents.at(-1), "revoked");
+  } finally {
+    globalThis.fetch = originalFetch;
     await state.cleanup();
   }
 });

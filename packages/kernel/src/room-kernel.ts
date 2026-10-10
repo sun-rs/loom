@@ -438,7 +438,7 @@ import { RunGuardPolicy } from "./run-guard-policy.ts";
 import { RunWatchdogService } from "./run-watchdog-service.ts";
 const DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS = 5_000;
 const DEFAULT_RUNTIME_OFFER_MAX_TTL_MS = 5 * 60_000;
-export const KERNEL_SCHEMA_VERSION = 83;
+export const KERNEL_SCHEMA_VERSION = 84;
 
 export class RoomKernel {
   static #referenceSchema: Map<string, string> | undefined;
@@ -1813,7 +1813,7 @@ export class RoomKernel {
           scope,
           raw,
           post: (input) =>
-            this.#postWorkerOriginMessage(execution, scope, input),
+            this.#postWorkerOriginMessage(execution, scope, input, true),
         });
       }),
     );
@@ -1837,8 +1837,10 @@ export class RoomKernel {
     execution: AuthenticatedWorkerExecutionContext,
     scope: ActivationCredentialScope,
     input: WorkerMessagePostRequest,
+    finalOutput = false,
   ) {
     return postWorkerMessageTransaction({
+      finalOutput,
       comments: this.attachmentComments,
       database: this.#database,
       collaboration: this.#collaboration,

@@ -402,9 +402,16 @@ async function wait(turn, ms) {
 
 async function tool(turn, handle, command) {
   const id = `tool-${String(Math.random()).slice(2, 10)}`;
+  const native = turn.text.includes("[fake:native-final]");
+  if (native)
+    send({
+      type: "stream_event",
+      event: { type: "message_start", message: { id } },
+    });
   send({
     type: "assistant",
     message: {
+      ...(native ? { id } : {}),
       role: "assistant",
       content: [
         {
@@ -416,6 +423,13 @@ async function tool(turn, handle, command) {
       ],
     },
   });
+  if (native) {
+    send({
+      type: "stream_event",
+      event: { type: "message_delta", delta: { stop_reason: "tool_use" } },
+    });
+    send({ type: "stream_event", event: { type: "message_stop" } });
+  }
   const cli = env.RAH_WORKER_CLI;
   if (!cli || !handle) {
     record({ event: "worker", uuid: turn.uuid, skipped: true });

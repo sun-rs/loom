@@ -87,6 +87,7 @@ export const ROOM_DELETION_REFERENCED_TABLES = new Set([
   "rooms",
   "run_attempt_cli_costs",
   "run_attempt_final_replies",
+  "worker_run_message_writes",
   "run_attempt_usage",
   "run_attempt_usage_gaps",
   "runtime_process_cleanups",

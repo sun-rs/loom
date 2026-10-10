@@ -1,0 +1,12 @@
+{
+  "reviewer": "independent subagent ordinary_codex_next",
+  "blockingFindings": [],
+  "reviewed": [
+    "Current Run event provenance and unchanged causal floor",
+    "Intervening external facts, older Runs and missing provenance remain stale candidates",
+    "Unique final marker -> Run/Activation/event/message and two explicit source kinds",
+    "Native-selected explicit Worker final Host test and P170 transport-specific body comparison"
+  ],
+  "limitation": "The new Host test directly covers explicit-final interrupt winning. Natural-exit/marker conflict takeover is supported by existing code inspection, not separately exercised by this new test.",
+  "modificationsByReviewer": false
+}
