@@ -1,0 +1,29 @@
+{
+  "scope": "private fresh-session native-final standing prototype; Pi and Kimi flags",
+  "sourceHead": "05cccd18755f869af2fb4b72e2b66f77a0318c5b",
+  "owner": "daemon standing compiler",
+  "mode": "native-final-v1",
+  "changes": [
+    "platform Worker protocol and startup only",
+    "mode participates in digest",
+    "Pi existing trial flag selects mode",
+    "Kimi existing native-final trial flag also selects mode for independent free reviewer"
+  ],
+  "unchanged": [
+    "identity",
+    "runtime-context",
+    "initial-role including arbitrary user content",
+    "channel-memory",
+    "authority",
+    "credential-hygiene",
+    "reminders",
+    "communication-style",
+    "formatting",
+    "workspace-policy",
+    "default prompt and digest",
+    "driver native-final instructions"
+  ],
+  "continuity": "Fresh runner data home, instance and provider session only. Mode participates in digest but Role instance stable identity store does NOT reject changed digest. No old-session migration/reset/compatibility bridge supported. Same newly created candidate session must continue all12turns.",
+  "helpProtocolLimit": "Candidate startup explicitly makes current selected native-final text a conditional exception including generic help protocol; existing driver exception retained. Upgrade/migration behavior unverified.",
+  "paid": false
+}

@@ -1,0 +1,29 @@
+{
+  "verdict": "Ready for one authorized free actual-CLI fixed-trajectory experiment only",
+  "candidateSourceHashes": {
+    "packages/daemon/src/native-final-standing.ts": "8e4108c9e53e16d9e712a9f183850bd253b97615cf234841fb6797a73d936a66",
+    "packages/daemon/src/standing-prompt-compiler.ts": "1b365cdd6926837009a937efc50b96d1283a9021d8924f0874d191ca2e8880fe",
+    "packages/daemon/src/standing-prompt-lease.ts": "1ae42d82c0888cc09bacb3ba73832a530656ff19be34abe8d4ffa777122c3dd1",
+    "packages/daemon/src/runtime-profile-composition.ts": "463cbf1c65f3c18ea00ab0c1808aecd0d0b2e8982aeecfe6c3f83c96d79eb6c7"
+  },
+  "independentTests": {
+    "command": "node --test candidate.test.mjs method.test.mjs",
+    "passed": 8,
+    "exitCode": 0
+  },
+  "checks": [
+    "Default prompt and digest byte-exact across delivery/role/memory matrix.",
+    "Only platform/startup layers change; role instructions, memory and other layers remain byte-exact.",
+    "Turn handle universal; target/sequence and --final scoped to message-post; business JSON/command explanations not prohibited.",
+    "Selected native-final conditional exception preserves unselected/multitarget Worker fallback and authority/stale/unknown/Task/credential rules.",
+    "Role ProviderSessionStore unchanged; digest is audit identity, not a mode-switch or old-session gate.",
+    "Private runner uses exclusive new execution root and asserts state directory absent before prepareLocalWorkbench.",
+    "Private entry admits only --fake and run-block paid is constant false; synthetic localhost credentials/config."
+  ],
+  "limits": [
+    "Existing-session migration and protocol-upgrade interactions are not validated.",
+    "Substring prompt tests do not prove model adherence; fixed synthetic responses do not prove paid quality or token savings.",
+    "No product source was changed by this reviewer; candidate exists only in isolated source copy."
+  ],
+  "correction": "Earlier recommendation to reject changed prompt mode by standing digest was withdrawn: Role instance continuity deliberately preserves native session across digest revisions."
+}

@@ -1,0 +1,705 @@
+{
+  "verdict": "Pass only for fixed synthetic transport comparison; no paid optimization or promotion verdict.",
+  "lifecycle": {
+    "providerLaunches": 36,
+    "passiveProcesses": 36,
+    "exactPidCensus": true,
+    "allSealed": true,
+    "observedProviderPidsGone": true,
+    "loopbackOrigins": 3,
+    "capturedResponses": 72,
+    "sessionsPerArm": {
+      "print": 1,
+      "bridge": 1,
+      "loom": 1
+    },
+    "tools": {
+      "print": {
+        "calls": 12,
+        "successfulExactFileOutputs": 12
+      },
+      "bridge": {
+        "calls": 12,
+        "successfulExactFileOutputs": 12
+      },
+      "loom": {
+        "calls": 12,
+        "successfulExactFileOutputs": 12
+      }
+    },
+    "sourceAndCleanup": "Runner source manifest unchanged, auth links removed; independently checked all 36 actual execution provider PIDs."
+  },
+  "bodyBytes": {
+    "print": 2232965,
+    "bridge": 2201754,
+    "baselineLoom": 2398882,
+    "candidateLoom": 2386882
+  },
+  "perLoomRequestByteDelta": -500,
+  "cumulativeLoomByteDelta": -12000,
+  "candidateFourSourceHashes": {
+    "packages/daemon/src/native-final-standing.ts": "8e4108c9e53e16d9e712a9f183850bd253b97615cf234841fb6797a73d936a66",
+    "packages/daemon/src/standing-prompt-compiler.ts": "1b365cdd6926837009a937efc50b96d1283a9021d8924f0874d191ca2e8880fe",
+    "packages/daemon/src/standing-prompt-lease.ts": "1ae42d82c0888cc09bacb3ba73832a530656ff19be34abe8d4ffa777122c3dd1",
+    "packages/daemon/src/runtime-profile-composition.ts": "463cbf1c65f3c18ea00ab0c1808aecd0d0b2e8982aeecfe6c3f83c96d79eb6c7"
+  },
+  "actualCandidateLoadedEvidence": "Frozen gate-daemon imports and spawned daemon path use isolated source; all 24 captured Loom request histories contain the new candidate-only Worker/final scoped instructions.",
+  "perRequestComparison": [
+    {
+      "arm": "bridge",
+      "round": 1,
+      "stage": 0,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "bridge",
+      "round": 1,
+      "stage": 1,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "bridge",
+      "round": 2,
+      "stage": 0,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "bridge",
+      "round": 2,
+      "stage": 1,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "bridge",
+      "round": 3,
+      "stage": 0,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "bridge",
+      "round": 3,
+      "stage": 1,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "bridge",
+      "round": 4,
+      "stage": 0,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "bridge",
+      "round": 4,
+      "stage": 1,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "bridge",
+      "round": 5,
+      "stage": 0,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "bridge",
+      "round": 5,
+      "stage": 1,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "bridge",
+      "round": 6,
+      "stage": 0,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "bridge",
+      "round": 6,
+      "stage": 1,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "bridge",
+      "round": 7,
+      "stage": 0,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "bridge",
+      "round": 7,
+      "stage": 1,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "bridge",
+      "round": 8,
+      "stage": 0,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "bridge",
+      "round": 8,
+      "stage": 1,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "bridge",
+      "round": 9,
+      "stage": 0,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "bridge",
+      "round": 9,
+      "stage": 1,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "bridge",
+      "round": 10,
+      "stage": 0,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "bridge",
+      "round": 10,
+      "stage": 1,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "bridge",
+      "round": 11,
+      "stage": 0,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "bridge",
+      "round": 11,
+      "stage": 1,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "bridge",
+      "round": 12,
+      "stage": 0,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "bridge",
+      "round": 12,
+      "stage": 1,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "loom",
+      "round": 1,
+      "stage": 0,
+      "bodyByteDelta": -500,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "loom",
+      "round": 1,
+      "stage": 1,
+      "bodyByteDelta": -500,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "loom",
+      "round": 2,
+      "stage": 0,
+      "bodyByteDelta": -500,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "loom",
+      "round": 2,
+      "stage": 1,
+      "bodyByteDelta": -500,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "loom",
+      "round": 3,
+      "stage": 0,
+      "bodyByteDelta": -500,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "loom",
+      "round": 3,
+      "stage": 1,
+      "bodyByteDelta": -500,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "loom",
+      "round": 4,
+      "stage": 0,
+      "bodyByteDelta": -500,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "loom",
+      "round": 4,
+      "stage": 1,
+      "bodyByteDelta": -500,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "loom",
+      "round": 5,
+      "stage": 0,
+      "bodyByteDelta": -500,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "loom",
+      "round": 5,
+      "stage": 1,
+      "bodyByteDelta": -500,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "loom",
+      "round": 6,
+      "stage": 0,
+      "bodyByteDelta": -500,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "loom",
+      "round": 6,
+      "stage": 1,
+      "bodyByteDelta": -500,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "loom",
+      "round": 7,
+      "stage": 0,
+      "bodyByteDelta": -500,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "loom",
+      "round": 7,
+      "stage": 1,
+      "bodyByteDelta": -500,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "loom",
+      "round": 8,
+      "stage": 0,
+      "bodyByteDelta": -500,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "loom",
+      "round": 8,
+      "stage": 1,
+      "bodyByteDelta": -500,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "loom",
+      "round": 9,
+      "stage": 0,
+      "bodyByteDelta": -500,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "loom",
+      "round": 9,
+      "stage": 1,
+      "bodyByteDelta": -500,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "loom",
+      "round": 10,
+      "stage": 0,
+      "bodyByteDelta": -500,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "loom",
+      "round": 10,
+      "stage": 1,
+      "bodyByteDelta": -500,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "loom",
+      "round": 11,
+      "stage": 0,
+      "bodyByteDelta": -500,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "loom",
+      "round": 11,
+      "stage": 1,
+      "bodyByteDelta": -500,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "loom",
+      "round": 12,
+      "stage": 0,
+      "bodyByteDelta": -500,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "loom",
+      "round": 12,
+      "stage": 1,
+      "bodyByteDelta": -500,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "print",
+      "round": 1,
+      "stage": 0,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "print",
+      "round": 1,
+      "stage": 1,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "print",
+      "round": 2,
+      "stage": 0,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "print",
+      "round": 2,
+      "stage": 1,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "print",
+      "round": 3,
+      "stage": 0,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "print",
+      "round": 3,
+      "stage": 1,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "print",
+      "round": 4,
+      "stage": 0,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "print",
+      "round": 4,
+      "stage": 1,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "print",
+      "round": 5,
+      "stage": 0,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "print",
+      "round": 5,
+      "stage": 1,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "print",
+      "round": 6,
+      "stage": 0,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "print",
+      "round": 6,
+      "stage": 1,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "print",
+      "round": 7,
+      "stage": 0,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "print",
+      "round": 7,
+      "stage": 1,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "print",
+      "round": 8,
+      "stage": 0,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "print",
+      "round": 8,
+      "stage": 1,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "print",
+      "round": 9,
+      "stage": 0,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "print",
+      "round": 9,
+      "stage": 1,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "print",
+      "round": 10,
+      "stage": 0,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "print",
+      "round": 10,
+      "stage": 1,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "print",
+      "round": 11,
+      "stage": 0,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "print",
+      "round": 11,
+      "stage": 1,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "print",
+      "round": 12,
+      "stage": 0,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    },
+    {
+      "arm": "print",
+      "round": 12,
+      "stage": 1,
+      "bodyByteDelta": 0,
+      "bodyExact": false,
+      "toolsExact": true,
+      "settingsExcludingIndependentCacheKeyExact": true
+    }
+  ],
+  "limitations": [
+    "P/B corresponding body lengths unchanged, not asserted byte-identical: independent cache keys, wall time and session/runtime identifiers differ.",
+    "Same-input compiler change is496 raw text bytes; observed fresh Kimi standing shrinks492, so runtime path/context contributes4 bytes. Actual JSON wire shrink500 is not pure prompt-text effect.",
+    "Actual business file result fixed, complete tool output includes dynamic wall time.",
+    "No model reasoning, compaction, arbitrary format adherence or fallback quality is exercised by the scripted read/final.",
+    "Mode/session continuity verified only for fresh isolated experiment; no existing-session migration or deployed product change.",
+    "No token or billing inference from byte deltas."
+  ]
+}

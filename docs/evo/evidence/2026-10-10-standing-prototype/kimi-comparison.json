@@ -1,0 +1,895 @@
+{
+  "kind": "kimi-native-standing-candidate-fixed-trajectory/v1",
+  "baseline": {
+    "path": "/Users/sun/.loom/reviews/2026-10-10-kimi-fixed-trajectory-free/handoff/public-evidence.json",
+    "sha256": "08b409e5d88d5090817fbacfcf0153fa87800970e25ef010294136a517add67d"
+  },
+  "candidate": {
+    "path": "/Users/sun/.loom/reviews/2026-10-10-kimi-standing-candidate-free/handoff/public-evidence.json",
+    "sha256": "46e3a77e7faf8ab16474d32797e01e3fb2c36af43e737e85212ff8bae57d0bc8"
+  },
+  "paidRequests": 0,
+  "candidateSource": "/Users/sun/.loom/reviews/2026-10-10-native-standing-candidate/source",
+  "candidateHashes": {
+    "packages/daemon/src/native-final-standing.ts": "8e4108c9e53e16d9e712a9f183850bd253b97615cf234841fb6797a73d936a66",
+    "packages/daemon/src/standing-prompt-compiler.ts": "1b365cdd6926837009a937efc50b96d1283a9021d8924f0874d191ca2e8880fe",
+    "packages/daemon/src/standing-prompt-lease.ts": "1ae42d82c0888cc09bacb3ba73832a530656ff19be34abe8d4ffa777122c3dd1",
+    "packages/daemon/src/runtime-profile-composition.ts": "463cbf1c65f3c18ea00ab0c1808aecd0d0b2e8982aeecfe6c3f83c96d79eb6c7"
+  },
+  "arms": {
+    "print": {
+      "systemJsonByteDeltaPerRequest": [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+      ],
+      "baselineBodyBytes": {
+        "first": 89102,
+        "last": 100832,
+        "sumAcross24Requests": 2232965
+      },
+      "candidateBodyBytes": {
+        "first": 89102,
+        "last": 100832,
+        "sumAcross24Requests": 2232965
+      },
+      "cumulativeBodyByteDelta": 0,
+      "initialStandingByteDelta": 0,
+      "standingPointerByteDelta": 0,
+      "allToolSchemaEqual": true,
+      "allReminderSizesEqual": true,
+      "newWakeWrapperSizesEqual": true,
+      "rows": [
+        {
+          "round": 1,
+          "phase": "tool",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 1,
+          "phase": "final",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 2,
+          "phase": "tool",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 2,
+          "phase": "final",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 3,
+          "phase": "tool",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 3,
+          "phase": "final",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 4,
+          "phase": "tool",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 4,
+          "phase": "final",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 5,
+          "phase": "tool",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 5,
+          "phase": "final",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 6,
+          "phase": "tool",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 6,
+          "phase": "final",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 7,
+          "phase": "tool",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 7,
+          "phase": "final",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 8,
+          "phase": "tool",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 8,
+          "phase": "final",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 9,
+          "phase": "tool",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 9,
+          "phase": "final",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 10,
+          "phase": "tool",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 10,
+          "phase": "final",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 11,
+          "phase": "tool",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 11,
+          "phase": "final",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 12,
+          "phase": "tool",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 12,
+          "phase": "final",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        }
+      ]
+    },
+    "bridge": {
+      "systemJsonByteDeltaPerRequest": [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+      ],
+      "baselineBodyBytes": {
+        "first": 88869,
+        "last": 94615,
+        "sumAcross24Requests": 2201754
+      },
+      "candidateBodyBytes": {
+        "first": 88869,
+        "last": 94615,
+        "sumAcross24Requests": 2201754
+      },
+      "cumulativeBodyByteDelta": 0,
+      "initialStandingByteDelta": 0,
+      "standingPointerByteDelta": 0,
+      "allToolSchemaEqual": true,
+      "allReminderSizesEqual": true,
+      "newWakeWrapperSizesEqual": true,
+      "rows": [
+        {
+          "round": 1,
+          "phase": "tool",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 1,
+          "phase": "final",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 2,
+          "phase": "tool",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 2,
+          "phase": "final",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 3,
+          "phase": "tool",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 3,
+          "phase": "final",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 4,
+          "phase": "tool",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 4,
+          "phase": "final",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 5,
+          "phase": "tool",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 5,
+          "phase": "final",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 6,
+          "phase": "tool",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 6,
+          "phase": "final",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 7,
+          "phase": "tool",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 7,
+          "phase": "final",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 8,
+          "phase": "tool",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 8,
+          "phase": "final",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 9,
+          "phase": "tool",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 9,
+          "phase": "final",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 10,
+          "phase": "tool",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 10,
+          "phase": "final",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 11,
+          "phase": "tool",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 11,
+          "phase": "final",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 12,
+          "phase": "tool",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 12,
+          "phase": "final",
+          "bodyByteDelta": 0,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        }
+      ]
+    },
+    "loom": {
+      "systemJsonByteDeltaPerRequest": [
+        4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4
+      ],
+      "baselineBodyBytes": {
+        "first": 96109,
+        "last": 103804,
+        "sumAcross24Requests": 2398882
+      },
+      "candidateBodyBytes": {
+        "first": 95609,
+        "last": 103304,
+        "sumAcross24Requests": 2386882
+      },
+      "cumulativeBodyByteDelta": -12000,
+      "initialStandingByteDelta": -492,
+      "standingPointerByteDelta": 0,
+      "allToolSchemaEqual": true,
+      "allReminderSizesEqual": true,
+      "newWakeWrapperSizesEqual": true,
+      "rows": [
+        {
+          "round": 1,
+          "phase": "tool",
+          "bodyByteDelta": -500,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 1,
+          "phase": "final",
+          "bodyByteDelta": -500,
+          "historyJsonByteDelta": 0,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 2,
+          "phase": "tool",
+          "bodyByteDelta": -500,
+          "historyJsonByteDelta": -504,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 2,
+          "phase": "final",
+          "bodyByteDelta": -500,
+          "historyJsonByteDelta": -504,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 3,
+          "phase": "tool",
+          "bodyByteDelta": -500,
+          "historyJsonByteDelta": -504,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 3,
+          "phase": "final",
+          "bodyByteDelta": -500,
+          "historyJsonByteDelta": -504,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 4,
+          "phase": "tool",
+          "bodyByteDelta": -500,
+          "historyJsonByteDelta": -504,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 4,
+          "phase": "final",
+          "bodyByteDelta": -500,
+          "historyJsonByteDelta": -504,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 5,
+          "phase": "tool",
+          "bodyByteDelta": -500,
+          "historyJsonByteDelta": -504,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 5,
+          "phase": "final",
+          "bodyByteDelta": -500,
+          "historyJsonByteDelta": -504,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 6,
+          "phase": "tool",
+          "bodyByteDelta": -500,
+          "historyJsonByteDelta": -504,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 6,
+          "phase": "final",
+          "bodyByteDelta": -500,
+          "historyJsonByteDelta": -504,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 7,
+          "phase": "tool",
+          "bodyByteDelta": -500,
+          "historyJsonByteDelta": -504,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 7,
+          "phase": "final",
+          "bodyByteDelta": -500,
+          "historyJsonByteDelta": -504,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 8,
+          "phase": "tool",
+          "bodyByteDelta": -500,
+          "historyJsonByteDelta": -504,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 8,
+          "phase": "final",
+          "bodyByteDelta": -500,
+          "historyJsonByteDelta": -504,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 9,
+          "phase": "tool",
+          "bodyByteDelta": -500,
+          "historyJsonByteDelta": -504,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 9,
+          "phase": "final",
+          "bodyByteDelta": -500,
+          "historyJsonByteDelta": -504,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 10,
+          "phase": "tool",
+          "bodyByteDelta": -500,
+          "historyJsonByteDelta": -504,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 10,
+          "phase": "final",
+          "bodyByteDelta": -500,
+          "historyJsonByteDelta": -504,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 11,
+          "phase": "tool",
+          "bodyByteDelta": -500,
+          "historyJsonByteDelta": -504,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 11,
+          "phase": "final",
+          "bodyByteDelta": -500,
+          "historyJsonByteDelta": -504,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 12,
+          "phase": "tool",
+          "bodyByteDelta": -500,
+          "historyJsonByteDelta": -504,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        },
+        {
+          "round": 12,
+          "phase": "final",
+          "bodyByteDelta": -500,
+          "historyJsonByteDelta": -504,
+          "newWakeWrapperByteDelta": 0,
+          "toolSchemaEqual": true,
+          "reminderMessagesEqual": true,
+          "reminderBytesEqual": true,
+          "toolTimeWrapperByteDelta": 0
+        }
+      ]
+    }
+  },
+  "limits": [
+    "Only the Loom standing prompt compiler changes; fresh source-directory and session/cwd paths also differ.",
+    "Actual tool-result Wall time values vary; fixed tool command and business stdout do not make whole request history byte-identical.",
+    "Same fake model response trajectory measures actual byte structure, not provider tokens, cache billing, quality, or causal efficiency.",
+    "P uses official print auto mode; B reuses production ACP bridge without Room; L uses explicitly enabled native-final trial, not deployment default."
+  ],
+  "loomFirstRequestDecomposition": {
+    "standingUtf8TextDelta": -492,
+    "standingJsonStringDelta": -504,
+    "systemCwdPathJsonDelta": 4,
+    "totalBodyDelta": -500,
+    "note": "First raw body differs only in session cache key, system cwd path, and first user standing text/identities. Cache key byte length unchanged; cwd +4 bytes. These are observed serialized bytes, not token estimates."
+  }
+}

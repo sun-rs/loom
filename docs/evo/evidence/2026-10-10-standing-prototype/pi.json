@@ -1,0 +1,253 @@
+{
+  "schemaVersion": 1,
+  "status": "completed-free-private-prototype",
+  "paidRequests": 0,
+  "sourceProductChanged": false,
+  "candidateSource": "/Users/sun/.loom/reviews/2026-10-10-native-standing-candidate/source",
+  "scope": "Pi installed CLI native vs formal private daemon, fixed read+final,12 paired turns; synthetic fake-local/fake-final low",
+  "entry": "node run.mjs --fake",
+  "directory": "/Users/sun/.loom/reviews/2026-10-10-native-standing-candidate",
+  "run": "/Users/sun/.loom/reviews/2026-10-10-native-standing-candidate/free-runs/1791630915603/A/runs/1791630915990-free",
+  "trial": "LOOM_PI_NATIVE_FINAL_TRIAL=1; not deployment default",
+  "continuity": "Explicit fresh datahome/instance/provider sessions only; stable Role identity ignores changed standing digest. No migration/reset/compatibility behavior implemented. Same candidate session12turns.",
+  "tests": {
+    "candidate": 5,
+    "method": 3,
+    "existingStanding": 59,
+    "existingRuntime": 12,
+    "logs": [
+      {
+        "path": "/Users/sun/.loom/reviews/2026-10-10-native-standing-candidate/candidate-red.log",
+        "sha256": "2d637b7d6b1e8c91a6d3564df5f11bb02465a7ec3d09d90ed5fb2fac6d58b7e0"
+      },
+      {
+        "path": "/Users/sun/.loom/reviews/2026-10-10-native-standing-candidate/argument-scope-red.log",
+        "sha256": "89d91d38e93208a0cf8718980a39267effa263a05f88b8971fd99d07c0cccf61"
+      },
+      {
+        "path": "/Users/sun/.loom/reviews/2026-10-10-native-standing-candidate/answer-format-red.log",
+        "sha256": "83a4a73e15d7382c1b1e09563753bf3945c5833bbd5bf985d210a6332418915b"
+      },
+      {
+        "path": "/Users/sun/.loom/reviews/2026-10-10-native-standing-candidate/fresh-state-red.log",
+        "sha256": "a2b692ce184c34cb9a5c470b5be78100cb49123857b1473bf747522d7bd56bb9"
+      },
+      {
+        "path": "/Users/sun/.loom/reviews/2026-10-10-native-standing-candidate/candidate-green.log",
+        "sha256": "6d4b5a92f04877dd2af3a5ec5a2c21a07c752791a61961b0c7d908c982b25de6"
+      },
+      {
+        "path": "/Users/sun/.loom/reviews/2026-10-10-native-standing-candidate/method-green.log",
+        "sha256": "3dd1a737a04c407ddd7ca8c31bf0d9acc7fe4ae3d315538334b36e6626c8d560"
+      },
+      {
+        "path": "/Users/sun/.loom/reviews/2026-10-10-native-standing-candidate/existing-standing-tests.log",
+        "sha256": "9b98ff978accdd1e7d862267310c7a6f0e788fe846abead9a50465d66869ed30"
+      },
+      {
+        "path": "/Users/sun/.loom/reviews/2026-10-10-native-standing-candidate/existing-runtime-tests.log",
+        "sha256": "418a5fbfa17792af2469e30525e376587f63bdd116d73efe616467015288e1cc"
+      }
+    ]
+  },
+  "requests": 48,
+  "actualReadToolSuccesses": 24,
+  "sessions": {
+    "native": 1,
+    "loom": 1,
+    "distinct": true
+  },
+  "layers": [
+    {
+      "layer": "identity",
+      "beforeUtf8Bytes": 290,
+      "afterUtf8Bytes": 290,
+      "unchanged": true
+    },
+    {
+      "layer": "authority",
+      "beforeUtf8Bytes": 398,
+      "afterUtf8Bytes": 398,
+      "unchanged": true
+    },
+    {
+      "layer": "platform",
+      "beforeUtf8Bytes": 2366,
+      "afterUtf8Bytes": 1237,
+      "unchanged": false
+    },
+    {
+      "layer": "credential-hygiene",
+      "beforeUtf8Bytes": 560,
+      "afterUtf8Bytes": 560,
+      "unchanged": true
+    },
+    {
+      "layer": "reminders",
+      "beforeUtf8Bytes": 174,
+      "afterUtf8Bytes": 174,
+      "unchanged": true
+    },
+    {
+      "layer": "communication-style",
+      "beforeUtf8Bytes": 196,
+      "afterUtf8Bytes": 196,
+      "unchanged": true
+    },
+    {
+      "layer": "formatting",
+      "beforeUtf8Bytes": 231,
+      "afterUtf8Bytes": 231,
+      "unchanged": true
+    },
+    {
+      "layer": "initial-role",
+      "beforeUtf8Bytes": 62,
+      "afterUtf8Bytes": 62,
+      "unchanged": true
+    },
+    {
+      "layer": "startup",
+      "beforeUtf8Bytes": 1471,
+      "afterUtf8Bytes": 2104,
+      "unchanged": false
+    },
+    {
+      "layer": "channel-memory",
+      "beforeUtf8Bytes": 23,
+      "afterUtf8Bytes": 23,
+      "unchanged": true
+    }
+  ],
+  "comparison": {
+    "unit": "actual HTTP UTF8 bytes, NOT tokens or cost",
+    "baseline": {
+      "nativeBodyBytes": 212958,
+      "loomBodyBytes": 408382,
+      "bodyByteRatio": 1.9176645160078514
+    },
+    "candidate": {
+      "nativeBodyBytes": 212958,
+      "loomBodyBytes": 396238,
+      "bodyByteRatio": 1.8606391870697507
+    },
+    "loomReductionBytes": 12144,
+    "perRequestSerializedSystemReductionBytes": 506,
+    "loomBodyReductionFraction": 0.02973686401457459,
+    "candidateLoomMinusNative": {
+      "bodyBytes": 183280,
+      "systemBytes": 156960,
+      "systemTextBytes": 154944,
+      "toolsBytes": 0,
+      "settingsBytes": 0,
+      "currentTaskBytes": 0,
+      "currentUserTextBytes": 3960,
+      "currentWakeWrapperBytes": 3960,
+      "currentUserComponentBytes": 4056,
+      "retainedHistoryBytes": 22264,
+      "currentTurnAfterUserBytes": 0
+    },
+    "firstLast": {
+      "native": {
+        "first": {
+          "bodyBytes": 6067,
+          "systemBytes": 2868,
+          "currentWakeWrapperBytes": 0,
+          "retainedHistoryBytes": 0
+        },
+        "last": {
+          "bodyBytes": 11684,
+          "systemBytes": 2868,
+          "currentWakeWrapperBytes": 0,
+          "retainedHistoryBytes": 5328
+        },
+        "systemVariants": 1,
+        "roleAnchorCounts": [1],
+        "nativeInstructionCounts": [0]
+      },
+      "loom": {
+        "first": {
+          "bodyBytes": 12774,
+          "systemBytes": 9408,
+          "currentWakeWrapperBytes": 163,
+          "retainedHistoryBytes": 0
+        },
+        "last": {
+          "bodyBytes": 20252,
+          "systemBytes": 9408,
+          "currentWakeWrapperBytes": 167,
+          "retainedHistoryBytes": 7185
+        },
+        "systemVariants": 1,
+        "roleAnchorCounts": [1],
+        "nativeInstructionCounts": [1]
+      }
+    },
+    "interpretation": "All observed savings are constant system text retransmission. Current wake wrapper and accumulated history overhead unchanged. Safety-preserving rewrite yields modest savings only.",
+    "controlledCompilerSameInputTextReductionBytes": 496,
+    "observedSystemTextReductionBytesPerRequest": 494,
+    "runtimeContextDifference": "Independent fresh-run runtime-context and channel-memory headed sections each grew1byte; measured raw text saving494 vs controlled same-input496. Actual serialized savings506 include JSON escaping; no token inference."
+  },
+  "checks": {
+    "sameToolResultHashEveryPairedTurn": true,
+    "sameCompleteToolSchema": true,
+    "sameSettings": true,
+    "currentTaskExactlyOnce": true,
+    "normal12UserHistoryRetained": true,
+    "twoContinuousDistinctSessions": true,
+    "ownedProviderWrapperDaemonPids": 51,
+    "alivePids": [],
+    "configRemoved": true,
+    "daemonExit": {
+      "code": 0,
+      "signal": null
+    },
+    "sourcesChecked": 1856,
+    "sourceChanged": [],
+    "providerCaptureProcessCount": 25,
+    "eachProviderPidSealed": true
+  },
+  "evidence": {
+    "rawStructure": {
+      "path": "/Users/sun/.loom/reviews/2026-10-10-native-standing-candidate/request-structure-evidence.json",
+      "sha256": "8bdc8ab411181b0cc0ca5cf202929b064fa271ce98a6f21c39aada2ea72e228b"
+    },
+    "baselineStructure": {
+      "path": "/Users/sun/.loom/reviews/2026-10-10-pi-fixed-trajectory-free/request-structure-evidence.json",
+      "sha256": "2e3a9bdfe9788adb4f08223acb00e14a665c3bcc851437e14a5baafae4aabd10"
+    },
+    "patch": {
+      "path": "/Users/sun/.loom/reviews/2026-10-10-native-standing-candidate/candidate.patch",
+      "sha256": "9a4ebb2783a5bdf364b4d0eae7a9ff8154da81767b32a31609f6a28b6673071c"
+    },
+    "candidateHashes": {
+      "path": "/Users/sun/.loom/reviews/2026-10-10-native-standing-candidate/candidate-source-hashes.json",
+      "sha256": "113aed38fa77c91079828b6cfc3f0a95e6ded7641633caeedfed1ef3d953abf1"
+    },
+    "sourceManifest": {
+      "path": "/Users/sun/.loom/reviews/2026-10-10-native-standing-candidate/source-before.json",
+      "sha256": "382b6c6c3b94768e23a22c2fbf75bc0d73fa79104df9aa9129835c2baecb3c8e"
+    },
+    "freshState": {
+      "path": "/Users/sun/.loom/reviews/2026-10-10-native-standing-candidate/free-runs/1791630915603/A/runs/1791630915990-free/fresh-state.json",
+      "sha256": "01c9367b67bcc6d8f2147346d800d616364e7907fd1900219006300ae8f8ab04"
+    },
+    "independentReview": {
+      "path": "/Users/sun/.loom/reviews/2026-10-10-fixed-trajectory-design/candidate-pi-independent-review.json",
+      "sha256": "34366b358c151bfa842a20b3221bf7638129d34fd59b1303c1acbeb67438f361"
+    }
+  },
+  "limits": [
+    "No thinking/compaction produced in this fixed synthetic script; no claim paid provider/model full serialization identical.",
+    "JSON component byte sums exclude enclosing separators; bodyBytes is actual transmitted UTF8 length.",
+    "Current task explicitly asks literal final token; final-string presence in users is not automatically duplicate Room reply.",
+    "Synthetic usage is plumbing only and intentionally omitted from this report.",
+    "No invoice business validation; read tool actually executed successfully, file unchanged, native final publication validated.",
+    "No paid provider or quality/instruction-following test; fixed responses cannot show whether a model obeys the revised prompt.",
+    "Same candidate fresh session only; mode digest does not protect existing Role session from a policy switch.",
+    "Existing help card unchanged; candidate adds explicit conditional native-final exception. Future protocol upgrade/migration unverified.",
+    "No product repository modification, deployment, or default flag changes.",
+    "Fake-local without thinking/compaction is not the approved paid DeepSeek serialization path.",
+    "Baseline vs candidate native requests have identical measured lengths, not identical raw bytes:24body hashes differ due fresh runtime identities/cwd. Tool schemas/settings are exact matches."
+  ]
+}

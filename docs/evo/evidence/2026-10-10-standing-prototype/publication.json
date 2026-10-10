@@ -1,0 +1,73 @@
+{
+  "note": "Source evidence hashes refer to original private bytes. Candidate patch is archived, not applied to product.",
+  "files": [
+    {
+      "file": "README.md",
+      "publishedSha256": "1e47c42caafafb1200d7165be767af28e7e68a31919e5643f8bf39564cf9d2aa",
+      "transformation": "Lead conclusions; independently reviewed"
+    },
+    {
+      "file": "candidate-source-hashes.json",
+      "publishedSha256": "113aed38fa77c91079828b6cfc3f0a95e6ded7641633caeedfed1ef3d953abf1",
+      "sourcePath": "/Users/sun/.loom/reviews/2026-10-10-native-standing-candidate/candidate-source-hashes.json",
+      "sourceSha256": "113aed38fa77c91079828b6cfc3f0a95e6ded7641633caeedfed1ef3d953abf1",
+      "transformation": "Formatting only; JSON values or patch bytes unchanged"
+    },
+    {
+      "file": "candidate.patch",
+      "publishedSha256": "7556b172ad17047d9626d49b4c55b38d06ed40c874fc5106048dd9233d0102e8",
+      "sourcePath": "/Users/sun/.loom/reviews/2026-10-10-native-standing-candidate/candidate.patch",
+      "sourceSha256": "9a4ebb2783a5bdf364b4d0eae7a9ff8154da81767b32a31609f6a28b6673071c",
+      "transformation": "Equivalent zero-context diff regenerated from baseline and hash-verified candidate files; avoids trailing whitespace in blank context lines. Check/apply with git apply --unidiff-zero. Original private patch remains unchanged."
+    },
+    {
+      "file": "design.json",
+      "publishedSha256": "50be7850fa0723500c5d2b829e016b41fe36e3c39cdd3a55ddce188b83b2583c",
+      "sourcePath": "/Users/sun/.loom/reviews/2026-10-10-native-standing-candidate/design.json",
+      "sourceSha256": "50be7850fa0723500c5d2b829e016b41fe36e3c39cdd3a55ddce188b83b2583c",
+      "transformation": "Formatting only; JSON values or patch bytes unchanged"
+    },
+    {
+      "file": "kimi-comparison.json",
+      "publishedSha256": "9a6f01a3496675c3eb21325eaf7bc058e40a64afba8cd9bbaa84ce4b3a283a7d",
+      "sourcePath": "/Users/sun/.loom/reviews/2026-10-10-kimi-standing-candidate-free/handoff/comparison.json",
+      "sourceSha256": "fd1c89604c19c09ec3b7b794f36d46ec2178fa9993b07f4a0cda5cfd433b7bc8",
+      "transformation": "Formatting only; JSON values or patch bytes unchanged"
+    },
+    {
+      "file": "kimi-independent.json",
+      "publishedSha256": "eee89248bac96567d4b0d444891486452d2e2e17b32c6da60f95676c3b1e36a7",
+      "sourcePath": "/Users/sun/.loom/reviews/2026-10-10-fixed-trajectory-design/candidate-kimi-independent-review.json",
+      "sourceSha256": "eee89248bac96567d4b0d444891486452d2e2e17b32c6da60f95676c3b1e36a7",
+      "transformation": "Formatting only; JSON values or patch bytes unchanged"
+    },
+    {
+      "file": "kimi.json",
+      "publishedSha256": "c5b024608b90deee02ae1f00a3f07982ab6c813f6088408787a779ca01185285",
+      "sourcePath": "/Users/sun/.loom/reviews/2026-10-10-kimi-standing-candidate-free/handoff/public-evidence.json",
+      "sourceSha256": "46e3a77e7faf8ab16474d32797e01e3fb2c36af43e737e85212ff8bae57d0bc8",
+      "transformation": "Formatting only; JSON values or patch bytes unchanged"
+    },
+    {
+      "file": "pi-independent.json",
+      "publishedSha256": "34366b358c151bfa842a20b3221bf7638129d34fd59b1303c1acbeb67438f361",
+      "sourcePath": "/Users/sun/.loom/reviews/2026-10-10-fixed-trajectory-design/candidate-pi-independent-review.json",
+      "sourceSha256": "34366b358c151bfa842a20b3221bf7638129d34fd59b1303c1acbeb67438f361",
+      "transformation": "Formatting only; JSON values or patch bytes unchanged"
+    },
+    {
+      "file": "pi.json",
+      "publishedSha256": "a41426d007769a74eaba2fd93da40e9aba727e8d3a4ac927f1d7580799b7185c",
+      "sourcePath": "/Users/sun/.loom/reviews/2026-10-10-native-standing-candidate/public-evidence.json",
+      "sourceSha256": "2e540742d60d9b9dd82acd6ad57378b7a5be2c605013cd3c4ab430233e38937b",
+      "transformation": "Formatting only; JSON values or patch bytes unchanged"
+    },
+    {
+      "file": "readiness-review.json",
+      "publishedSha256": "f6e197d2e30375a61bdd86a40cf821068ee84edaeb79b6babbdee6d7f192e9bf",
+      "sourcePath": "/Users/sun/.loom/reviews/2026-10-10-fixed-trajectory-design/native-standing-readiness-review.json",
+      "sourceSha256": "f6e197d2e30375a61bdd86a40cf821068ee84edaeb79b6babbdee6d7f192e9bf",
+      "transformation": "Formatting only; JSON values or patch bytes unchanged"
+    }
+  ]
+}

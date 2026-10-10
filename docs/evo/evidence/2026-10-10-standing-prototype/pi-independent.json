@@ -1,0 +1,1249 @@
+{
+  "verdict": "Bounded free candidate validated; no paid token/quality verdict or automatic promotion.",
+  "candidateRequests": 48,
+  "nativeBodySizesAllEqualToBaseline": true,
+  "nativeBodiesByteExactMatches": 0,
+  "loomWireDeltaEachRequest": -506,
+  "loomTotalWireByteDelta": -12144,
+  "totalWireBytes": {
+    "native": 212958,
+    "baselineLoom": 408382,
+    "candidateLoom": 396238
+  },
+  "sourceHashes": {
+    "files": 1856,
+    "changed": 0
+  },
+  "differences": [
+    {
+      "arm": "loom",
+      "round": 1,
+      "stage": 0,
+      "wireByteDelta": -506,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": -506,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": false
+        }
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 1,
+      "stage": 1,
+      "wireByteDelta": -506,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": -506,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": false
+        }
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 2,
+      "stage": 0,
+      "wireByteDelta": -506,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": -506,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": false
+        }
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 2,
+      "stage": 1,
+      "wireByteDelta": -506,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": -506,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": false
+        }
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 3,
+      "stage": 0,
+      "wireByteDelta": -506,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": -506,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": false
+        }
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 3,
+      "stage": 1,
+      "wireByteDelta": -506,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": -506,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": false
+        }
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 4,
+      "stage": 0,
+      "wireByteDelta": -506,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": -506,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": false
+        }
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 4,
+      "stage": 1,
+      "wireByteDelta": -506,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": -506,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": false
+        }
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 5,
+      "stage": 0,
+      "wireByteDelta": -506,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": -506,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": false
+        }
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 5,
+      "stage": 1,
+      "wireByteDelta": -506,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": -506,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": false
+        }
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 6,
+      "stage": 0,
+      "wireByteDelta": -506,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": -506,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": false
+        }
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 6,
+      "stage": 1,
+      "wireByteDelta": -506,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": -506,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": false
+        }
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 7,
+      "stage": 0,
+      "wireByteDelta": -506,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": -506,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": false
+        }
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 7,
+      "stage": 1,
+      "wireByteDelta": -506,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": -506,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": false
+        }
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 8,
+      "stage": 0,
+      "wireByteDelta": -506,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": -506,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": false
+        }
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 8,
+      "stage": 1,
+      "wireByteDelta": -506,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": -506,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": false
+        }
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 9,
+      "stage": 0,
+      "wireByteDelta": -506,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": -506,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": false
+        }
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 9,
+      "stage": 1,
+      "wireByteDelta": -506,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": -506,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": false
+        }
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 10,
+      "stage": 0,
+      "wireByteDelta": -506,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": -506,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": false
+        }
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 10,
+      "stage": 1,
+      "wireByteDelta": -506,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": -506,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": false
+        }
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 11,
+      "stage": 0,
+      "wireByteDelta": -506,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": -506,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": false
+        }
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 11,
+      "stage": 1,
+      "wireByteDelta": -506,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": -506,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": false
+        }
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 12,
+      "stage": 0,
+      "wireByteDelta": -506,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": -506,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": false
+        }
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 12,
+      "stage": 1,
+      "wireByteDelta": -506,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": -506,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": false
+        }
+      }
+    },
+    {
+      "arm": "native",
+      "round": 1,
+      "stage": 0,
+      "wireByteDelta": 0,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": 0,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": true
+        }
+      }
+    },
+    {
+      "arm": "native",
+      "round": 1,
+      "stage": 1,
+      "wireByteDelta": 0,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": 0,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": true
+        }
+      }
+    },
+    {
+      "arm": "native",
+      "round": 2,
+      "stage": 0,
+      "wireByteDelta": 0,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": 0,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": true
+        }
+      }
+    },
+    {
+      "arm": "native",
+      "round": 2,
+      "stage": 1,
+      "wireByteDelta": 0,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": 0,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": true
+        }
+      }
+    },
+    {
+      "arm": "native",
+      "round": 3,
+      "stage": 0,
+      "wireByteDelta": 0,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": 0,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": true
+        }
+      }
+    },
+    {
+      "arm": "native",
+      "round": 3,
+      "stage": 1,
+      "wireByteDelta": 0,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": 0,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": true
+        }
+      }
+    },
+    {
+      "arm": "native",
+      "round": 4,
+      "stage": 0,
+      "wireByteDelta": 0,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": 0,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": true
+        }
+      }
+    },
+    {
+      "arm": "native",
+      "round": 4,
+      "stage": 1,
+      "wireByteDelta": 0,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": 0,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": true
+        }
+      }
+    },
+    {
+      "arm": "native",
+      "round": 5,
+      "stage": 0,
+      "wireByteDelta": 0,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": 0,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": true
+        }
+      }
+    },
+    {
+      "arm": "native",
+      "round": 5,
+      "stage": 1,
+      "wireByteDelta": 0,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": 0,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": true
+        }
+      }
+    },
+    {
+      "arm": "native",
+      "round": 6,
+      "stage": 0,
+      "wireByteDelta": 0,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": 0,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": true
+        }
+      }
+    },
+    {
+      "arm": "native",
+      "round": 6,
+      "stage": 1,
+      "wireByteDelta": 0,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": 0,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": true
+        }
+      }
+    },
+    {
+      "arm": "native",
+      "round": 7,
+      "stage": 0,
+      "wireByteDelta": 0,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": 0,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": true
+        }
+      }
+    },
+    {
+      "arm": "native",
+      "round": 7,
+      "stage": 1,
+      "wireByteDelta": 0,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": 0,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": true
+        }
+      }
+    },
+    {
+      "arm": "native",
+      "round": 8,
+      "stage": 0,
+      "wireByteDelta": 0,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": 0,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": true
+        }
+      }
+    },
+    {
+      "arm": "native",
+      "round": 8,
+      "stage": 1,
+      "wireByteDelta": 0,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": 0,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": true
+        }
+      }
+    },
+    {
+      "arm": "native",
+      "round": 9,
+      "stage": 0,
+      "wireByteDelta": 0,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": 0,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": true
+        }
+      }
+    },
+    {
+      "arm": "native",
+      "round": 9,
+      "stage": 1,
+      "wireByteDelta": 0,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": 0,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": true
+        }
+      }
+    },
+    {
+      "arm": "native",
+      "round": 10,
+      "stage": 0,
+      "wireByteDelta": 0,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": 0,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": true
+        }
+      }
+    },
+    {
+      "arm": "native",
+      "round": 10,
+      "stage": 1,
+      "wireByteDelta": 0,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": 0,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": true
+        }
+      }
+    },
+    {
+      "arm": "native",
+      "round": 11,
+      "stage": 0,
+      "wireByteDelta": 0,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": 0,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": true
+        }
+      }
+    },
+    {
+      "arm": "native",
+      "round": 11,
+      "stage": 1,
+      "wireByteDelta": 0,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": 0,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": true
+        }
+      }
+    },
+    {
+      "arm": "native",
+      "round": 12,
+      "stage": 0,
+      "wireByteDelta": 0,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": 0,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": true
+        }
+      }
+    },
+    {
+      "arm": "native",
+      "round": 12,
+      "stage": 1,
+      "wireByteDelta": 0,
+      "bodyByteExact": false,
+      "parts": {
+        "tools": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "settings": {
+          "byteDelta": 0,
+          "exactEqual": true
+        },
+        "system": {
+          "byteDelta": 0,
+          "exactEqual": false
+        },
+        "otherMessages": {
+          "byteDelta": 0,
+          "exactEqual": true
+        }
+      }
+    }
+  ],
+  "lifecycle": {
+    "providerLaunches": 25,
+    "passiveProcesses": 25,
+    "exactPidCensus": true,
+    "allSealed": true,
+    "observedProviderPidsGone": true,
+    "loopbackOrigins": 1,
+    "capturedResponses": 48,
+    "sessionsPerArm": {
+      "native": 1,
+      "loom": 1
+    },
+    "tools": {
+      "native": {
+        "calls": 12,
+        "successfulExactFileOutputs": 12
+      },
+      "loom": {
+        "calls": 12,
+        "successfulExactFileOutputs": 12
+      }
+    },
+    "sourceAndCleanup": "Runner final integrity empty and temp config removed; independently checked all 25 actual provider PIDs, including availability probe."
+  },
+  "limits": [
+    "All measured byte-size reduction is in system-message components; other-message byte lengths unchanged but IDs/paths can differ. Native equal size is not byte-identical content.",
+    "Compiler same-input text reduction is496 bytes; observed system text494 has2 bytes runtime-context confound. Serialized actual difference506 includes JSON representation and context, not pure instruction text.",
+    "Fake-local/fake-final synthetic script has no model choice, reasoning or compaction. No token/quality/savings conclusion.",
+    "Fresh data home only; existing Role session migration is not tested."
+  ]
+}

@@ -1,0 +1,79 @@
+--- a/packages/daemon/src/native-final-standing.ts
++++ b/packages/daemon/src/native-final-standing.ts
+@@ -0,0 +1,15 @@
++/** Private fresh-session experiment: only platform-owned protocol layers. */
++export function nativeFinalWorkerRules(): string {
++  return `## Worker actions
++
++Use \`"$RAH_WORKER_CLI" worker\` for other Room/Task operations, one command at a time; never read, print, copy or forward its credential file. Read command stdout; on held, unknown or error follow Effect and Next action, never blindly resend. A held send delivered nothing; a saved draft is not delivery. Mention other members with @handle, not yourself; join only when addressed. The Room is the isolation boundary.
++
++Task is optional tracking. Creating/converting requires Channel permission; on refusal do not retry, continue authorized ordinary work. Existing open Tasks may be claimed; a failed claim locks conflicting execution. Act as owner only if task-get shows assigned to you or unassigned and open. Do not mark done before Human approval. Read \`worker help tasks\` for commands; \`worker help messages\` for other message operations.`;
++}
++export function nativeFinalStartupRules(): string {
++  return `Each wake is a new Activation: use current environment, Worker path, Room and RAH_FROM_SEQ through RAH_TO_SEQ; earlier events are context only, not grounds for business actions. Pass a wake's --turn to every Worker command. For message-post use exact current Reply context target and --based-on-room-seq; msg=<ref> is a short message id.
++
++When the wake selects native-final-text, finish the requested work then return the final answer as ordinary assistant text for its single target, without duplicating that answer through Worker. This selection is a conditional exception to generic message-post instructions, including help protocol. Wakes without that selection use Worker message-post with exact Reply context; for multiple targets post separately with each target and shared seq/turn. Pass the body on stdin. Only after all work use message-post --final; ordinary posts are progress, not completion. Do not wrap the answer in a Room command envelope or append transport flags; preserve the format/content the user requested.
++
++Complete wakes already contain messages: do not first message-check or message-read. If messages are missing use message-check --startup; with no reply needed message-check once; obey message-check first when explicitly requested. Errors never prove no work or missing memory. Delivery confirmation is not Inbox acknowledgement, Task or review completion. Outside selected native-final text, provider prose/session/exit remain diagnostic. Finish all current work before stopping; never stop unfinished work after progress, never poll for peer replies; after a completed handoff await a new wake.`;
++}
+--- a/packages/daemon/src/standing-prompt-compiler.ts
++++ b/packages/daemon/src/standing-prompt-compiler.ts
+@@ -0,0 +1,4 @@
++import {
++  nativeFinalWorkerRules,
++  nativeFinalStartupRules,
++} from "./native-final-standing.ts";
+@@ -47,0 +52 @@
++  protocolMode?: "native-final-v1";
+@@ -126,0 +132 @@
++  nativeFinal = false,
+@@ -127,0 +134 @@
++  const worker = nativeFinal ? nativeFinalWorkerRules() : workerCliSection();
+@@ -132 +139 @@
+-${workerCliSection()}`;
++${worker}`;
+@@ -139 +146 @@
+-${workerCliSection()}`;
++${worker}`;
+@@ -192 +199,8 @@
+-    { id: "platform", text: platformLayer(agent, channelMemory) },
++    {
++      id: "platform",
++      text: platformLayer(
++        agent,
++        channelMemory,
++        input?.protocolMode === "native-final-v1",
++      ),
++    },
+@@ -206 +220,9 @@
+-    { id: "startup", text: startupLayer(input?.runtimeContext?.deliveryMode) },
++    {
++      id: "startup",
++      text:
++        input?.protocolMode === "native-final-v1"
++          ? `${deliveryInstructions(input?.runtimeContext?.deliveryMode)}
++
++${nativeFinalStartupRules()}`
++          : startupLayer(input?.runtimeContext?.deliveryMode),
++    },
+@@ -229,0 +252,3 @@
++    ...(input?.protocolMode === undefined
++      ? {}
++      : { protocolMode: input.protocolMode }),
+--- a/packages/daemon/src/standing-prompt-lease.ts
++++ b/packages/daemon/src/standing-prompt-lease.ts
+@@ -25,0 +26 @@
++  protocolMode?: "native-final-v1";
+@@ -70,0 +72,3 @@
++    ...(options.protocolMode === undefined
++      ? {}
++      : { protocolMode: options.protocolMode }),
+--- a/packages/daemon/src/runtime-profile-composition.ts
++++ b/packages/daemon/src/runtime-profile-composition.ts
+@@ -196,0 +197,6 @@
++          ...((runtimeId === "pi" &&
++            process.env.LOOM_PI_NATIVE_FINAL_TRIAL === "1") ||
++          (runtimeId === "kimi" &&
++            process.env.LOOM_KIMI_NATIVE_FINAL_TRIAL === "1")
++            ? { protocolMode: "native-final-v1" as const }
++            : {}),
