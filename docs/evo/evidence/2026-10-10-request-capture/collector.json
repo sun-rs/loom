@@ -1,0 +1,64 @@
+{
+  "owner": "benchmark scripts/cli-efficiency only; no business state or product changes",
+  "interface": {
+    "preload": "passive-http-capture.mjs via Node --import",
+    "reader": "readPassiveHttpCapture(root) from passive-http-capture-reader.mjs",
+    "env": [
+      "LOOM_REQUEST_CAPTURE_DIR",
+      "LOOM_REQUEST_CAPTURE_ARM",
+      "LOOM_REQUEST_CAPTURE_ROUND",
+      "LOOM_REQUEST_CAPTURE_MAX_BYTES",
+      "LOOM_REQUEST_CAPTURE_MAX_ATTEMPTS"
+    ],
+    "defaults": {
+      "byteCapPerProcess": 536870912,
+      "attemptCapPerProcess": 1000
+    },
+    "files": "UUID process directory/events.jsonl, attempt.request and attempt.response private0600;directory0700",
+    "dependencies": "Only Node builtins, no localimports"
+  },
+  "captureContract": [
+    "Passively subscribe Undici request diagnostics, do not wrapfetch or changebody/header/auth/retry.",
+    "Only paths ending/chat/completions; archive full raw request/response bytes; noheaders/query/errorbody inmetadata.",
+    "Safe contentEncoding category preserved; encodedbody not implicitlydecoded.",
+    "Require requestbodySent,responsetrailers,normalprocessseal,census,archivedsize/hash; errors/incomplete/limit/missingseal unknown.",
+    "Transport429 can be fully archived; archivecomplete is not generation/usage/billingcomplete.",
+    "Synchronous bytewrites reserve globalperprocess cap across concurrentrequests; byte/attempt exhaustion records gap without abortingprovider."
+  ],
+  "testEvidence": {
+    "red": "red.log missingmodule intendedfailure",
+    "green": "green-expanded.log7actualLoopbacktests",
+    "covered": [
+      "UTF8bytechunks fullrequestandresponse",
+      "HTTP429thenclientretry uniqueattemptids",
+      "abortpartialretainsbytes",
+      "bytelimit bounded without changingproviderresult",
+      "realSIGKILL lacksseal",
+      "nonmatchingrequest excluded andemptycaptureunknown",
+      "gzipwirebytes plus safemetadata",
+      "writeSyncfailure no providerthrow andnoseal"
+    ]
+  },
+  "scopeLimits": [
+    "Only NodeUndici diagnostic HTTP path; WebSocket/nonUndici requests unsupported and mustnot be represented bycompleteflag.",
+    "Perprocess cap not wholebatch diskcap; runner must countprocesses/budget/storage.",
+    "No originalprovider/paidcalls performed.",
+    "Normalexitseal doesnot attest fsync/powerloss durability; reader verifies presentfiles.",
+    "Reader integrity doesnot supply proofthat other unobservedtransports wereunused.",
+    "ExactNodeevent compatibility must be freeverified on actualCLI; missingbodySent failsclosed."
+  ],
+  "sources": [
+    {
+      "path": "scripts/cli-efficiency/passive-http-capture.mjs",
+      "sha256": "28aaffcf93ab22c5f40c57671e4fedc0d8ae8e410d1470c37471565fc294378e"
+    },
+    {
+      "path": "scripts/cli-efficiency/passive-http-capture-reader.mjs",
+      "sha256": "bd152fa5a22d7d7eeb79da654a9cd7402035af456909cdaee598e7209b8e8731"
+    },
+    {
+      "path": "scripts/cli-efficiency/passive-http-capture.test.mjs",
+      "sha256": "e1bf93672ac59d107c2c1402acc3aac0b1aed6f958b15ee0bcfdb85250df7b29"
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "paidHardlock": "Entry refuses missing --free before admission, config or provider spawn",
+  "preflights": [
+    {
+      "phase": "hash-rejection",
+      "providerRequests": 0,
+      "log": "prelaunch-hash-rejection.log"
+    },
+    {
+      "run": "free-paid-path-1791610146721-P184",
+      "providerRequests": 0,
+      "cause": "Node preload resolver lacked ancestor metadata permission; exact file contents were allowed; fixed metadata-only ancestors and retained repo/AGENTS denies"
+    },
+    {
+      "run": "free-paid-path-1791610173208-P184",
+      "providerRequests": 8,
+      "status": "completed",
+      "note": "Synthetic business quality deliberately not implemented: original invoice prompts preserved, fixture exercises legal Worker read/file write/isolation"
+    }
+  ],
+  "hashes": {
+    "paid-run.mjs": "a7266e56d6f7de642e5893166c641e0449006a90d0c2ef2815ae51f7a0826131",
+    "wrapper.mjs": "9e2886ecac8dfb20846f0bf2f555ad4070a976710c310abc9df9f9683ee26596",
+    "fake.mjs": "584fc8a5ddc08f9f35d9ea3c4e8779d78ac746f5cada5e019bd150639f115ce1",
+    "audit.mjs": "0761360429d1e6bdad88a18f634fdfb9fe4558d0cbc61d920d942b22c82280fc",
+    "candidate-plan.json": "4e3c940ea1962353d87e2eb06ed9e7335df5fbe65b734a04224cefa5c051b180",
+    "matched-mode-plan.json": "5c4062346aafcb59e6660560d6d3ad378dbc832d0989771cc42dac6be6f98817",
+    "free-admission.json": "cd4bdc9ed79bcfc0aed90fa0b805161f95942a33ccae14ce422514c26c499a65",
+    "prelaunch-hash-rejection.log": "895cd7d5a1c787218936913f3ffb1b8aa766a81ee29c26bfa5c916f4fc0346ce",
+    "repo/passive-http-capture.mjs": "28aaffcf93ab22c5f40c57671e4fedc0d8ae8e410d1470c37471565fc294378e",
+    "repo/passive-http-capture-reader.mjs": "bd152fa5a22d7d7eeb79da654a9cd7402035af456909cdaee598e7209b8e8731",
+    "repo/chat-request-evidence.mjs": "8ccefa9caf72a74a50d9a75fc5e8f7c7f5b1c967593e7e225187d3971793e832"
+  }
+}

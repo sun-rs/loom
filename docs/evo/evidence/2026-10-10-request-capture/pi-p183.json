@@ -1,0 +1,111 @@
+{
+  "batch": "P183",
+  "status": "actual-cli-free-capture-and-accounting-passed",
+  "run": "1791610144707-free",
+  "paidCalls": 0,
+  "paidEntry": "hard rejected; no admission or claim",
+  "fixture": "private-v5 business/oracle identical to v4; same3second policy with interpreter/group cleanup repair",
+  "preservedFailedCaptureRun": {
+    "run": "1791610089168-free",
+    "productSucceededButNewCaptureIncomplete": true,
+    "reason": "Seatbelt allowed first mkdir but denied existing per-arm capture directory metadata; explicit owned capture metadata access fixed. No body/peer/oracle read permissions added."
+  },
+  "actualCli": {
+    "mode": "ordinary Pi print JSON native control and real Role/daemon Pi native-final",
+    "arms": 2,
+    "roundsEach": 2,
+    "sameSessionEachArm": true,
+    "productSameSession": true,
+    "productSessionProof": "Two actual launch stdout session frames have identical native session ID"
+  },
+  "capture": {
+    "requests": 12,
+    "completeEachArm": {
+      "native": true,
+      "loom": true
+    },
+    "processSeals": {
+      "native": 2,
+      "loom": 3
+    },
+    "bodyBytesEqualLoopbackServer": true,
+    "allToolsSchemasEqual": true,
+    "allSettingsEqual": true,
+    "currentBusinessTaskExactlyOnce": true,
+    "secondTurnPreservesFirstUserHistory": true,
+    "differentSystems": "Expected product standing and wake guidance; hashes reported, no false claim of identical system prompt."
+  },
+  "accounting": {
+    "oldAndNewPrimaryMatch": true,
+    "nativeInput": 639,
+    "loomInput": 639,
+    "outputEach": 60,
+    "syntheticOnlyNotEfficiency": true,
+    "nativeTranscriptKernelMatch": true,
+    "optionalDetails": "Synthetic raw omitscache/reasoning; unknown, not zero."
+  },
+  "runtimePolicy": {
+    "fakeCredential": true,
+    "loopbackOnlySandbox": true,
+    "extensionsAndContextSameIsolation": true,
+    "compactionRetryCacheWarming": "No fake setting overrides; installed defaults remain. Tiny2turn does not prove real compaction/retry firing.",
+    "providerAccountUnchanged": true
+  },
+  "quality": {
+    "verdicts": [false, false, false, false],
+    "meaning": "Deliberate synthetic nonimplementation; do not turn retained false into business acceptance."
+  },
+  "cleanup": {
+    "configRemoved": true,
+    "configHashesMatch": true,
+    "daemonExit": {
+      "code": 0,
+      "signal": null
+    },
+    "recordedPids": 10,
+    "aliveRecordedPids": []
+  },
+  "sourceEvidence": {
+    "/Users/sun/.loom/reviews/2026-10-10-pi-p183/run.mjs": {
+      "sha256": "3602de51c30353c7b640676a75ab0aec228a17ba0a7ea1baa2cd1bdacd5de019",
+      "mtime": "2026-10-10T05:26:25.516792+00:00"
+    },
+    "/Users/sun/.loom/reviews/2026-10-10-pi-p183/wrapper.mjs": {
+      "sha256": "8534846a8230cec720ba41405b2f65be76278a30b909ebfaf5d08d3d794b294f",
+      "mtime": "2026-10-10T05:29:04.316359+00:00"
+    },
+    "/Users/sun/.loom/reviews/2026-10-10-pi-p183/fetch-observer.mjs": {
+      "sha256": "d13a073c8e832b999433ab7707145fd6383f906cf3095e7e034d87e1dd509d13",
+      "mtime": "2026-10-10T02:54:30.473946+00:00"
+    },
+    "/Users/sun/.loom/reviews/2026-10-10-pi-p183/accounting.mjs": {
+      "sha256": "9b0fa70a5ac92022b437d06d63e607b171ab8360418e79721313ee067ffb9a28",
+      "mtime": "2026-10-10T03:25:18.309288+00:00"
+    },
+    "/Users/sun/.loom/reviews/2026-10-10-pi-p183/request-structure.json": {
+      "sha256": "948fc358d9312221ba2effc6d4aaa57835827e51422c7eaee37839c6b4878fc5",
+      "mtime": "2026-10-10T05:30:15.489564+00:00"
+    },
+    "/Users/sun/.loom/reviews/2026-10-10-pi-p183/audit.mjs": {
+      "sha256": "7c99618a929d9c8733de5de31693143e07e45965e9fd3d5839d9f8836d200dda",
+      "mtime": "2026-10-10T05:30:15.435184+00:00"
+    },
+    "/Users/sun/Code/repos/rah_os/scripts/cli-efficiency/passive-http-capture.mjs": {
+      "sha256": "28aaffcf93ab22c5f40c57671e4fedc0d8ae8e410d1470c37471565fc294378e",
+      "mtime": "2026-10-10T05:28:26.479197+00:00"
+    },
+    "/Users/sun/Code/repos/rah_os/scripts/cli-efficiency/passive-http-capture-reader.mjs": {
+      "sha256": "bd152fa5a22d7d7eeb79da654a9cd7402035af456909cdaee598e7209b8e8731",
+      "mtime": "2026-10-10T05:28:26.490558+00:00"
+    },
+    "/Users/sun/Code/repos/rah_os/scripts/cli-efficiency/chat-request-evidence.mjs": {
+      "sha256": "8ccefa9caf72a74a50d9a75fc5e8f7c7f5b1c967593e7e225187d3971793e832",
+      "mtime": "2026-10-10T05:29:32.103917+00:00"
+    }
+  },
+  "limitations": [
+    "Capture body completeness does not alone prove provider billing coverage.",
+    "Default policy retained but long-context compaction not triggered in this free sample.",
+    "No paid runner switched or approved from synthetic usage."
+  ]
+}

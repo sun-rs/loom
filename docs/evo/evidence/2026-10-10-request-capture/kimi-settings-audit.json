@@ -1,0 +1,246 @@
+{
+  "batch": "P184",
+  "scope": "Offline actual request settings comparison; no CLI calls. Safe fields only; no headers/auth/business text.",
+  "arms": {
+    "native": [
+      {
+        "index": 1,
+        "round": 1,
+        "keys": [
+          "model",
+          "stream",
+          "stream_options",
+          "prompt_cache_key",
+          "thinking",
+          "max_completion_tokens"
+        ],
+        "model": "k3-256k",
+        "stream": true,
+        "stream_options": {
+          "include_usage": true
+        },
+        "thinking": {
+          "type": "enabled",
+          "effort": "low",
+          "keep": "all"
+        },
+        "max_completion_tokens": 262144,
+        "temperaturePresent": false,
+        "top_pPresent": false,
+        "promptCacheKeySha256": "6893b5b4ac50bf27c3468892a66389eec2b879fe65948a69e4926085f44db8b8",
+        "promptCacheKeyMatchesNativeSession": true
+      },
+      {
+        "index": 2,
+        "round": 1,
+        "keys": [
+          "model",
+          "stream",
+          "stream_options",
+          "prompt_cache_key",
+          "thinking",
+          "max_completion_tokens"
+        ],
+        "model": "k3-256k",
+        "stream": true,
+        "stream_options": {
+          "include_usage": true
+        },
+        "thinking": {
+          "type": "enabled",
+          "effort": "low",
+          "keep": "all"
+        },
+        "max_completion_tokens": 262132,
+        "temperaturePresent": false,
+        "top_pPresent": false,
+        "promptCacheKeySha256": "6893b5b4ac50bf27c3468892a66389eec2b879fe65948a69e4926085f44db8b8",
+        "promptCacheKeyMatchesNativeSession": true
+      },
+      {
+        "index": 3,
+        "round": 2,
+        "keys": [
+          "model",
+          "stream",
+          "stream_options",
+          "prompt_cache_key",
+          "thinking",
+          "max_completion_tokens"
+        ],
+        "model": "k3-256k",
+        "stream": true,
+        "stream_options": {
+          "include_usage": true
+        },
+        "thinking": {
+          "type": "enabled",
+          "effort": "low",
+          "keep": "all"
+        },
+        "max_completion_tokens": 262132,
+        "temperaturePresent": false,
+        "top_pPresent": false,
+        "promptCacheKeySha256": "6893b5b4ac50bf27c3468892a66389eec2b879fe65948a69e4926085f44db8b8",
+        "promptCacheKeyMatchesNativeSession": true
+      },
+      {
+        "index": 4,
+        "round": 2,
+        "keys": [
+          "model",
+          "stream",
+          "stream_options",
+          "prompt_cache_key",
+          "thinking",
+          "max_completion_tokens"
+        ],
+        "model": "k3-256k",
+        "stream": true,
+        "stream_options": {
+          "include_usage": true
+        },
+        "thinking": {
+          "type": "enabled",
+          "effort": "low",
+          "keep": "all"
+        },
+        "max_completion_tokens": 262132,
+        "temperaturePresent": false,
+        "top_pPresent": false,
+        "promptCacheKeySha256": "6893b5b4ac50bf27c3468892a66389eec2b879fe65948a69e4926085f44db8b8",
+        "promptCacheKeyMatchesNativeSession": true
+      }
+    ],
+    "loom": [
+      {
+        "index": 1,
+        "round": 1,
+        "keys": [
+          "model",
+          "stream",
+          "stream_options",
+          "prompt_cache_key",
+          "thinking",
+          "max_completion_tokens"
+        ],
+        "model": "k3-256k",
+        "stream": true,
+        "stream_options": {
+          "include_usage": true
+        },
+        "thinking": {
+          "type": "enabled",
+          "effort": "low",
+          "keep": "all"
+        },
+        "max_completion_tokens": 262144,
+        "temperaturePresent": false,
+        "top_pPresent": false,
+        "promptCacheKeySha256": "083430f110c72b0f4265332da9ad39d69f2b663a17c38ba6ff82808b81db35fc",
+        "promptCacheKeyMatchesNativeSession": true
+      },
+      {
+        "index": 2,
+        "round": 1,
+        "keys": [
+          "model",
+          "stream",
+          "stream_options",
+          "prompt_cache_key",
+          "thinking",
+          "max_completion_tokens"
+        ],
+        "model": "k3-256k",
+        "stream": true,
+        "stream_options": {
+          "include_usage": true
+        },
+        "thinking": {
+          "type": "enabled",
+          "effort": "low",
+          "keep": "all"
+        },
+        "max_completion_tokens": 262132,
+        "temperaturePresent": false,
+        "top_pPresent": false,
+        "promptCacheKeySha256": "083430f110c72b0f4265332da9ad39d69f2b663a17c38ba6ff82808b81db35fc",
+        "promptCacheKeyMatchesNativeSession": true
+      },
+      {
+        "index": 3,
+        "round": 2,
+        "keys": [
+          "model",
+          "stream",
+          "stream_options",
+          "prompt_cache_key",
+          "thinking",
+          "max_completion_tokens"
+        ],
+        "model": "k3-256k",
+        "stream": true,
+        "stream_options": {
+          "include_usage": true
+        },
+        "thinking": {
+          "type": "enabled",
+          "effort": "low",
+          "keep": "all"
+        },
+        "max_completion_tokens": 262132,
+        "temperaturePresent": false,
+        "top_pPresent": false,
+        "promptCacheKeySha256": "083430f110c72b0f4265332da9ad39d69f2b663a17c38ba6ff82808b81db35fc",
+        "promptCacheKeyMatchesNativeSession": true
+      },
+      {
+        "index": 4,
+        "round": 2,
+        "keys": [
+          "model",
+          "stream",
+          "stream_options",
+          "prompt_cache_key",
+          "thinking",
+          "max_completion_tokens"
+        ],
+        "model": "k3-256k",
+        "stream": true,
+        "stream_options": {
+          "include_usage": true
+        },
+        "thinking": {
+          "type": "enabled",
+          "effort": "low",
+          "keep": "all"
+        },
+        "max_completion_tokens": 262132,
+        "temperaturePresent": false,
+        "top_pPresent": false,
+        "promptCacheKeySha256": "083430f110c72b0f4265332da9ad39d69f2b663a17c38ba6ff82808b81db35fc",
+        "promptCacheKeyMatchesNativeSession": true
+      }
+    ]
+  },
+  "pairedDifferences": [
+    {
+      "requestIndex": 1,
+      "differingFields": ["prompt_cache_key"]
+    },
+    {
+      "requestIndex": 2,
+      "differingFields": ["prompt_cache_key"]
+    },
+    {
+      "requestIndex": 3,
+      "differingFields": ["prompt_cache_key"]
+    },
+    {
+      "requestIndex": 4,
+      "differingFields": ["prompt_cache_key"]
+    }
+  ],
+  "conclusion": "Only prompt_cache_key differs between corresponding requests. Each arm uses its independent native session key, stable over both turns. Safe settings model/stream/include_usage/thinking/max_completion_tokens match at corresponding generation. No temperature/top_p/seed explicitly transmitted; provider defaults remain unknown.",
+  "limits": "Independent session cache namespaces are native behavior and a cache-reuse confound, not evidence of an incorrect model/effort setting. This synthetic two-turn proof does not establish paid P182 full settings identity because old complete outgoing bodies were not retained."
+}

@@ -1,0 +1,96 @@
+{
+  "scope": "Offline original CLI stdout replay through unchanged Pi usage normalizer; no provider execution or source edits",
+  "adapterInputAssistantMessages": 90,
+  "adapterProducedGenerations": 90,
+  "adapterProducedGaps": 0,
+  "kernelRecords": 90,
+  "kernelResponseIdsAndPrimaryExact": true,
+  "nativeCompactionFrames": [
+    {
+      "file": "/Users/sun/.loom/reviews/2026-10-10-pi-p181/runs/1791604761567-paid/launch-loom-1791605829070-33416.stdout",
+      "type": "compaction_start",
+      "reason": "threshold"
+    },
+    {
+      "file": "/Users/sun/.loom/reviews/2026-10-10-pi-p181/runs/1791604761567-paid/launch-loom-1791605829070-33416.stdout",
+      "type": "compaction_end",
+      "reason": "threshold",
+      "aborted": false,
+      "willRetry": false
+    }
+  ],
+  "nativeCompactionEntry": {
+    "id": "9af6ed2a",
+    "timestamp": "2026-10-10T04:18:14.832Z",
+    "usage": {
+      "input": 82296,
+      "output": 3108,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "reasoning": 105,
+      "totalTokens": 85404,
+      "cost": {
+        "input": 0,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0
+      }
+    },
+    "tokensBefore": 112091
+  },
+  "missingPrimary": {
+    "input": 82296,
+    "output": 3108
+  },
+  "location": "Provider driver filters only message_end assistant at pi-print-driver.mjs199 and279. Both streaming and final-pass ignore compaction; snapshot read at295 is only native-final proof, not usage census.",
+  "ownershipConclusion": "Adapter did not emit a compaction usage fact or coverage gap. The90 emitted assistant records all arrive unchanged at Kernel; no evidence of Host attribution discard or Kernel storage loss.",
+  "sourceHashes": {
+    "packages/agent-host/src/pi-print-driver.mjs": {
+      "current": "9f1356f6c91f456ded056214315e278bee5173bc74e24f22500a644c1589b456",
+      "paidFrozen": "9f1356f6c91f456ded056214315e278bee5173bc74e24f22500a644c1589b456",
+      "sameAsPaid": true
+    },
+    "packages/agent-host/src/pi-usage.mjs": {
+      "current": "7a771ff525deeeccf8289497ef4266838854698ca39bd29a4dc9a04432f3f5f1",
+      "paidFrozen": "7a771ff525deeeccf8289497ef4266838854698ca39bd29a4dc9a04432f3f5f1",
+      "sameAsPaid": true
+    },
+    "packages/agent-host/src/generic-process-adapter.ts": {
+      "current": "e17f05660c59375cdffc62fb07e9161d12bdbbd88128dc5277fa980f093f372f",
+      "paidFrozen": "e17f05660c59375cdffc62fb07e9161d12bdbbd88128dc5277fa980f093f372f",
+      "sameAsPaid": true
+    },
+    "packages/agent-host/src/agent-host.ts": {
+      "current": "5b9e301d785e030f0e4ae53194827c5f77bbb81f89e15560a0cba0b0062d9473",
+      "paidFrozen": "5b9e301d785e030f0e4ae53194827c5f77bbb81f89e15560a0cba0b0062d9473",
+      "sameAsPaid": true
+    },
+    "packages/kernel/src/run-attempt-usage.ts": {
+      "current": "e22a837ed8664ec4186ea7faab733752c61d50bd3c2e19bc5001eb3fbdc6d2cf",
+      "paidFrozen": "e22a837ed8664ec4186ea7faab733752c61d50bd3c2e19bc5001eb3fbdc6d2cf",
+      "sameAsPaid": true
+    }
+  },
+  "rawHashes": {
+    "/Users/sun/.loom/reviews/2026-10-10-pi-p181/runs/1791604761567-paid/launch-loom-1791604762280-85711.stdout": "b9b0dd3d6ff77c4e76f6e53951ee9ddbd7eb6cd88f7261e3b34174e4666f5a2d",
+    "/Users/sun/.loom/reviews/2026-10-10-pi-p181/runs/1791604761567-paid/launch-loom-1791604814746-87941.stdout": "ccf7c7b725340cc465a1aefbf3070869adfa0c15927552a76e8e99b7fb8d6252",
+    "/Users/sun/.loom/reviews/2026-10-10-pi-p181/runs/1791604761567-paid/launch-loom-1791604937432-93175.stdout": "f2d9a8c38920cd06d37e4ea6b768eca4b67edacddcd05468facdeba041c9fefd",
+    "/Users/sun/.loom/reviews/2026-10-10-pi-p181/runs/1791604761567-paid/launch-loom-1791605004043-96050.stdout": "b3d63c78278b569ad1c68ce252fe47487b12c52100f214c6b19a8b85ed7c8230",
+    "/Users/sun/.loom/reviews/2026-10-10-pi-p181/runs/1791604761567-paid/launch-loom-1791605037122-97665.stdout": "ea715d0fc5182c30ad685dd278fdf384406894c76a5b30b21b807779ae2d605b",
+    "/Users/sun/.loom/reviews/2026-10-10-pi-p181/runs/1791604761567-paid/launch-loom-1791605237309-6761.stdout": "4fa61767ea96df700a174acdf2edd62c5a3685c46dfbc61c072ebade1d0ae03e",
+    "/Users/sun/.loom/reviews/2026-10-10-pi-p181/runs/1791604761567-paid/launch-loom-1791605306765-10152.stdout": "ace3d427424ce696573cda9bbf49a326b49d3fd27265a90c30ba7f9a988eb038",
+    "/Users/sun/.loom/reviews/2026-10-10-pi-p181/runs/1791604761567-paid/launch-loom-1791605714753-28531.stdout": "3f48c9d5e463ca9648f772b361c19317fe9f2e51b1087b936827b5d8528876ae",
+    "/Users/sun/.loom/reviews/2026-10-10-pi-p181/runs/1791604761567-paid/launch-loom-1791605829070-33416.stdout": "f93ca0f374527fdf5f2284db6142140e7a1309cdd6dcd31067d3023ea6c7b8c4",
+    "/Users/sun/.loom/reviews/2026-10-10-pi-p181/runs/1791604761567-paid/loom-session.private.jsonl": "942f15bd20606d9c5ce6f0e4f945683dedfa18b6d8d335abed44cea7d45b85b8",
+    "/Users/sun/.loom/reviews/2026-10-10-pi-p181/runs/1791604761567-paid/final-accounting.private.json": "ce575e41c3d0360fde4f0aab594574871d1b12236ea6405eac2b2ff421c61be5"
+  },
+  "minimalExistingProtocolFix": "Detect compaction start/end for current run and emit existing parse_error usage gap; preserve known assistant amounts and native aggregate diagnostics. Current responseId/per-generation schema cannot honestly represent multi-response aggregate as a single provider response.",
+  "regressionTests": [
+    "Actual P181 compaction frames plus90normal messages retains90 and adds coverage gap",
+    "Prior-session compaction outside current append-only suffix does not mark next run",
+    "Cancelled/incomplete compaction marks current run partial despite successful prior generations",
+    "Normal final and delivery ACK remain business-success independent of usage gap",
+    "Do not fabricate response IDs, split aggregate, or double-count assistant usage"
+  ]
+}

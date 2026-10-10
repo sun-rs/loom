@@ -1,0 +1,49 @@
+{
+  "scope": "Benchmark instrumentation and offline root-cause evidence only; no product runtime change or deployment/restart claim",
+  "baseRevision": "a1ff28b66988bec2877b1038c40f90d3e4c367ff",
+  "paidCalls": 0,
+  "tdd": {
+    "collector": "Missing module red, seven loopback tests green",
+    "summary": "Missing module, system hash and trailing reminder regressions red before implementation; six tests green"
+  },
+  "checks": {
+    "npm run check": {
+      "exitCode": 0,
+      "corePassed": 3075,
+      "coreSkipped": 22,
+      "webPassed": 487,
+      "consolePassed": 59,
+      "efficiencyPassed": 558
+    },
+    "targetedNewTests": {
+      "passed": 13,
+      "failed": 0
+    },
+    "npm run format:check": {
+      "exitCode": 0
+    },
+    "git diff --check": {
+      "exitCode": 0
+    }
+  },
+  "logHashes": {
+    "/tmp/loom-request-capture-check.log": "8150124b1475ee8efb68d1d8cbbd94fa8ed1c55181c651e61fc9bef3e8540de1",
+    "/tmp/loom-request-capture-format.log": "fb5ffe51bf83c7a6ac683f386a5c903f6ff2c086dbe1bf27cc1f12efddaf7e3f",
+    "/tmp/loom-request-capture-focused.log": "57aef33873958a7430863b20f677f65b12166a062d5fe3b2bdf7e86519799338"
+  },
+  "limits": [
+    "No new paid efficiency result; historic Pi/Kimi ratios unchanged",
+    "Raw request bodies stay private; historic uncaptured paid bodies cannot be reconstructed",
+    "Pi compaction missing usage located but product not repaired",
+    "Free synthetic task quality false retained",
+    "Full runner process census and total batch storage limit remain caller responsibilities",
+    "Prior evidence snapshots retain their original helper hash; final helper adds explicit all-user task positions"
+  ],
+  "sourceHashes": {
+    "scripts/cli-efficiency/passive-http-capture-reader.mjs": "bd152fa5a22d7d7eeb79da654a9cd7402035af456909cdaee598e7209b8e8731",
+    "scripts/cli-efficiency/passive-http-capture.mjs": "28aaffcf93ab22c5f40c57671e4fedc0d8ae8e410d1470c37471565fc294378e",
+    "scripts/cli-efficiency/passive-http-capture.test.mjs": "e1bf93672ac59d107c2c1402acc3aac0b1aed6f958b15ee0bcfdb85250df7b29",
+    "scripts/cli-efficiency/chat-request-evidence.mjs": "61c2a7bbca383b7ab67a81a2862566ef09bb3be8144654cedb5807f9cd7b525f",
+    "scripts/cli-efficiency/chat-request-evidence.test.mjs": "9a7ec166e87eb55ad5f6bc89582233852d17fa3131c34cc4d455cce4a5a2b016"
+  }
+}

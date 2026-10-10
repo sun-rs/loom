@@ -1,0 +1,477 @@
+{
+  "batch": "P184",
+  "paidRequests": 0,
+  "run": "free-paid-path-1791610173208-P184",
+  "originalStatus": "completed",
+  "sourceHashesUnchanged": true,
+  "finalIssues": [],
+  "arms": {
+    "native": {
+      "complete": true,
+      "requests": [
+        {
+          "round": 1,
+          "summary": {
+            "bodyBytes": 90058,
+            "bodySha256": "f8ef8bcb08c4977cf3bb8544ba6b9b0000dcf241f34bff9932574bcefa060164",
+            "settingsSha256": "6760ee234a33f53681a149ac9323ca1126e86532c85edd830f7cd99c360387b9",
+            "systemSha256": "48c5b927ed8953c287260e989106cc4bdd96f0a490de17afef72aff91b9a608f",
+            "toolsSha256": "2f801ade948b0c0622fcd53d2ab50d186fdfdd5539126bf0d5338f2ca24f1bd1",
+            "toolCount": 27,
+            "messagesSha256": "e23b07d623b54b21dab8ba82f2edd93c6f815866a010fb881f58d26cae584d88",
+            "messageCount": 4,
+            "roleCounts": {
+              "system": 1,
+              "user": 3
+            },
+            "reasoningCharacters": 0,
+            "textClassificationComplete": true,
+            "latestUser": {
+              "index": 3,
+              "textCharacters": 508,
+              "textSha256": "a4aba228b94f1df0dbcb2c31983d203fa39b5efdefa72350dbbf7328db5696ad",
+              "currentTaskOccurrences": 0,
+              "earlierTaskOccurrences": []
+            },
+            "interpretation": "Hashes preserve parsed JSON property/array order; differences are structural, not proof of semantic inequality. Text counts are not token estimates. Transport completeness and business comparability are separate."
+          },
+          "model": "k3-256k",
+          "thinking": {
+            "type": "enabled",
+            "effort": "low",
+            "keep": "all"
+          },
+          "bodyPermissions": 384,
+          "currentTaskMessageIndex": 1,
+          "currentTaskOccurrences": 1,
+          "earlierTaskCounts": [],
+          "autoPermissionReminderCount": 1,
+          "sourceResponseSha256": "c9853f6453ed854a32540f6578632814349d238729d3b931d1df469a38c0bd0c",
+          "sourceRequestSha256": "f8ef8bcb08c4977cf3bb8544ba6b9b0000dcf241f34bff9932574bcefa060164"
+        },
+        {
+          "round": 1,
+          "summary": {
+            "bodyBytes": 90832,
+            "bodySha256": "284472262cde097863fdc6a49fe52b5a06ec7e3b4279e7ae25e7fb4cfa1c68f7",
+            "settingsSha256": "4ee4c5129d2eb301e3c06308a39cb75c1f2d1d55ac4817e78ff1ed9427f6ca04",
+            "systemSha256": "48c5b927ed8953c287260e989106cc4bdd96f0a490de17afef72aff91b9a608f",
+            "toolsSha256": "2f801ade948b0c0622fcd53d2ab50d186fdfdd5539126bf0d5338f2ca24f1bd1",
+            "toolCount": 27,
+            "messagesSha256": "419dae4e2a8a0226887146b545ab621ffa2ad19d1ffe99534d90aa465d255150",
+            "messageCount": 6,
+            "roleCounts": {
+              "system": 1,
+              "user": 3,
+              "assistant": 1,
+              "tool": 1
+            },
+            "reasoningCharacters": 0,
+            "textClassificationComplete": true,
+            "latestUser": {
+              "index": 3,
+              "textCharacters": 508,
+              "textSha256": "a4aba228b94f1df0dbcb2c31983d203fa39b5efdefa72350dbbf7328db5696ad",
+              "currentTaskOccurrences": 0,
+              "earlierTaskOccurrences": []
+            },
+            "interpretation": "Hashes preserve parsed JSON property/array order; differences are structural, not proof of semantic inequality. Text counts are not token estimates. Transport completeness and business comparability are separate."
+          },
+          "model": "k3-256k",
+          "thinking": {
+            "type": "enabled",
+            "effort": "low",
+            "keep": "all"
+          },
+          "bodyPermissions": 384,
+          "currentTaskMessageIndex": 1,
+          "currentTaskOccurrences": 1,
+          "earlierTaskCounts": [],
+          "autoPermissionReminderCount": 1,
+          "sourceResponseSha256": "9a128cc37a08663e1860f0a0bdb77e622c68196933012aadee284cb5da656fe0",
+          "sourceRequestSha256": "284472262cde097863fdc6a49fe52b5a06ec7e3b4279e7ae25e7fb4cfa1c68f7"
+        },
+        {
+          "round": 2,
+          "summary": {
+            "bodyBytes": 87737,
+            "bodySha256": "0c3113e85f15d661c7daab77ef8ca32543b9e680230f651db1202b2ecfe192d7",
+            "settingsSha256": "4ee4c5129d2eb301e3c06308a39cb75c1f2d1d55ac4817e78ff1ed9427f6ca04",
+            "systemSha256": "48c5b927ed8953c287260e989106cc4bdd96f0a490de17afef72aff91b9a608f",
+            "toolsSha256": "07a67bd6273d1e2ddcf5cf2063345f3bfd60ed93731bb270b2628a935fdf3f03",
+            "toolCount": 26,
+            "messagesSha256": "d8f8c0843e31b0622f00503e2b235bc1e703d43f59fccdb1153b264836927d27",
+            "messageCount": 9,
+            "roleCounts": {
+              "system": 1,
+              "user": 5,
+              "assistant": 2,
+              "tool": 1
+            },
+            "reasoningCharacters": 0,
+            "textClassificationComplete": true,
+            "latestUser": {
+              "index": 8,
+              "textCharacters": 508,
+              "textSha256": "a4aba228b94f1df0dbcb2c31983d203fa39b5efdefa72350dbbf7328db5696ad",
+              "currentTaskOccurrences": 0,
+              "earlierTaskOccurrences": [0]
+            },
+            "interpretation": "Hashes preserve parsed JSON property/array order; differences are structural, not proof of semantic inequality. Text counts are not token estimates. Transport completeness and business comparability are separate."
+          },
+          "model": "k3-256k",
+          "thinking": {
+            "type": "enabled",
+            "effort": "low",
+            "keep": "all"
+          },
+          "bodyPermissions": 384,
+          "currentTaskMessageIndex": 7,
+          "currentTaskOccurrences": 1,
+          "earlierTaskCounts": [1],
+          "autoPermissionReminderCount": 2,
+          "sourceResponseSha256": "dbe9f1ba5f8a865a47a35a616b9c5ba0c0d8458cd6fe2e06f5d2f1d1fd07c5a1",
+          "sourceRequestSha256": "0c3113e85f15d661c7daab77ef8ca32543b9e680230f651db1202b2ecfe192d7"
+        },
+        {
+          "round": 2,
+          "summary": {
+            "bodyBytes": 92766,
+            "bodySha256": "f85fc636edb6f8138a9a528e007ea99690fe88cf6142639772a0abf221a30e3f",
+            "settingsSha256": "4ee4c5129d2eb301e3c06308a39cb75c1f2d1d55ac4817e78ff1ed9427f6ca04",
+            "systemSha256": "48c5b927ed8953c287260e989106cc4bdd96f0a490de17afef72aff91b9a608f",
+            "toolsSha256": "2f801ade948b0c0622fcd53d2ab50d186fdfdd5539126bf0d5338f2ca24f1bd1",
+            "toolCount": 27,
+            "messagesSha256": "f3f144f9c6c34516e363dad41d36fb4b830101506c2835542438a0cabd2606e1",
+            "messageCount": 11,
+            "roleCounts": {
+              "system": 1,
+              "user": 5,
+              "assistant": 3,
+              "tool": 2
+            },
+            "reasoningCharacters": 0,
+            "textClassificationComplete": true,
+            "latestUser": {
+              "index": 8,
+              "textCharacters": 508,
+              "textSha256": "a4aba228b94f1df0dbcb2c31983d203fa39b5efdefa72350dbbf7328db5696ad",
+              "currentTaskOccurrences": 0,
+              "earlierTaskOccurrences": [0]
+            },
+            "interpretation": "Hashes preserve parsed JSON property/array order; differences are structural, not proof of semantic inequality. Text counts are not token estimates. Transport completeness and business comparability are separate."
+          },
+          "model": "k3-256k",
+          "thinking": {
+            "type": "enabled",
+            "effort": "low",
+            "keep": "all"
+          },
+          "bodyPermissions": 384,
+          "currentTaskMessageIndex": 7,
+          "currentTaskOccurrences": 1,
+          "earlierTaskCounts": [1],
+          "autoPermissionReminderCount": 2,
+          "sourceResponseSha256": "40b4e005b30263ae7ea1f0981d03feb9d05124509743215238d238a7330382f7",
+          "sourceRequestSha256": "f85fc636edb6f8138a9a528e007ea99690fe88cf6142639772a0abf221a30e3f"
+        }
+      ],
+      "totals": {
+        "input": 40,
+        "output": 8
+      },
+      "oldObserverResponseBytesExactlyMatch": true,
+      "oneContinuousSession": true,
+      "qualityVerdicts": [
+        {
+          "round": 1,
+          "passed": false,
+          "checks": [
+            {
+              "id": "basic",
+              "passed": false,
+              "exitCode": 1
+            }
+          ],
+          "functionalPassed": false,
+          "selfTestsPassed": false,
+          "selfTestsExitCode": 1,
+          "selfTestsFailureKind": null,
+          "selfTestsDiagnostic": "No agent tests found"
+        },
+        {
+          "round": 2,
+          "passed": false,
+          "checks": [
+            {
+              "id": "basic",
+              "passed": false,
+              "exitCode": 1
+            },
+            {
+              "id": "many-and-zero",
+              "passed": false,
+              "exitCode": 1
+            },
+            {
+              "id": "empty",
+              "passed": false,
+              "exitCode": 1
+            }
+          ],
+          "functionalPassed": false,
+          "selfTestsPassed": false,
+          "selfTestsExitCode": 1,
+          "selfTestsFailureKind": null,
+          "selfTestsDiagnostic": "No agent tests found"
+        }
+      ],
+      "markerCounts": null,
+      "transports": null,
+      "observedPids": 4,
+      "allObservedExited": true,
+      "credentialLinksAbsent": true,
+      "configAbsent": true
+    },
+    "loom": {
+      "complete": true,
+      "requests": [
+        {
+          "round": 1,
+          "summary": {
+            "bodyBytes": 97008,
+            "bodySha256": "249fa419f6f252242a560b7d82523cb04a4dc646ff29818b9bd5eb31fe71b402",
+            "settingsSha256": "599e7ffcb8f7240b701a77a433a369152cafe8d4c008b3d44212ac1500de8e14",
+            "systemSha256": "56bae891595ecf93be92f4ea43d7ceacb4dd5148e27e6bb4f92b444e7ba8ed2d",
+            "toolsSha256": "2f801ade948b0c0622fcd53d2ab50d186fdfdd5539126bf0d5338f2ca24f1bd1",
+            "toolCount": 27,
+            "messagesSha256": "aa656fc864c4103fb9faf47d5063d021de207cea8afc8cc88426aae1eb2c62b3",
+            "messageCount": 3,
+            "roleCounts": {
+              "system": 1,
+              "user": 2
+            },
+            "reasoningCharacters": 0,
+            "textClassificationComplete": true,
+            "latestUser": {
+              "index": 2,
+              "textCharacters": 227,
+              "textSha256": "7b42062485a86ca582ceb90f6fb3052bf15fcb4afa222ea5542bcb03194d2f41",
+              "currentTaskOccurrences": 0,
+              "earlierTaskOccurrences": []
+            },
+            "interpretation": "Hashes preserve parsed JSON property/array order; differences are structural, not proof of semantic inequality. Text counts are not token estimates. Transport completeness and business comparability are separate."
+          },
+          "model": "k3-256k",
+          "thinking": {
+            "type": "enabled",
+            "effort": "low",
+            "keep": "all"
+          },
+          "bodyPermissions": 384,
+          "currentTaskMessageIndex": 1,
+          "currentTaskOccurrences": 1,
+          "earlierTaskCounts": [],
+          "autoPermissionReminderCount": 0,
+          "sourceResponseSha256": "307c25020676a11e3be1f241ff542d13e01ae8261934d831f59cf3fd90f69892",
+          "sourceRequestSha256": "249fa419f6f252242a560b7d82523cb04a4dc646ff29818b9bd5eb31fe71b402"
+        },
+        {
+          "round": 1,
+          "summary": {
+            "bodyBytes": 97878,
+            "bodySha256": "869f5ff7aec3b738c925a8f539f513c96b8b66b046f07019d2cc9d01aa05d524",
+            "settingsSha256": "0dcff98187a726f3a205779e6b1604f6228383d60c4cf097c9fe0ff0566558c1",
+            "systemSha256": "56bae891595ecf93be92f4ea43d7ceacb4dd5148e27e6bb4f92b444e7ba8ed2d",
+            "toolsSha256": "2f801ade948b0c0622fcd53d2ab50d186fdfdd5539126bf0d5338f2ca24f1bd1",
+            "toolCount": 27,
+            "messagesSha256": "a18d6c3282206865fe5885917fbd96e9f5912dd098648e337605938896f9f3eb",
+            "messageCount": 5,
+            "roleCounts": {
+              "system": 1,
+              "user": 2,
+              "assistant": 1,
+              "tool": 1
+            },
+            "reasoningCharacters": 0,
+            "textClassificationComplete": true,
+            "latestUser": {
+              "index": 2,
+              "textCharacters": 227,
+              "textSha256": "7b42062485a86ca582ceb90f6fb3052bf15fcb4afa222ea5542bcb03194d2f41",
+              "currentTaskOccurrences": 0,
+              "earlierTaskOccurrences": []
+            },
+            "interpretation": "Hashes preserve parsed JSON property/array order; differences are structural, not proof of semantic inequality. Text counts are not token estimates. Transport completeness and business comparability are separate."
+          },
+          "model": "k3-256k",
+          "thinking": {
+            "type": "enabled",
+            "effort": "low",
+            "keep": "all"
+          },
+          "bodyPermissions": 384,
+          "currentTaskMessageIndex": 1,
+          "currentTaskOccurrences": 1,
+          "earlierTaskCounts": [],
+          "autoPermissionReminderCount": 0,
+          "sourceResponseSha256": "9a128cc37a08663e1860f0a0bdb77e622c68196933012aadee284cb5da656fe0",
+          "sourceRequestSha256": "869f5ff7aec3b738c925a8f539f513c96b8b66b046f07019d2cc9d01aa05d524"
+        },
+        {
+          "round": 2,
+          "summary": {
+            "bodyBytes": 98615,
+            "bodySha256": "cca1045adaa7cc54d2820026e54f7f21e5c858d98acbb8be524139951cebbe52",
+            "settingsSha256": "0dcff98187a726f3a205779e6b1604f6228383d60c4cf097c9fe0ff0566558c1",
+            "systemSha256": "56bae891595ecf93be92f4ea43d7ceacb4dd5148e27e6bb4f92b444e7ba8ed2d",
+            "toolsSha256": "2f801ade948b0c0622fcd53d2ab50d186fdfdd5539126bf0d5338f2ca24f1bd1",
+            "toolCount": 27,
+            "messagesSha256": "3bda7ccf9bbae613538e92c34a8217b20671e61a5d9d679e0edb5cd807270111",
+            "messageCount": 7,
+            "roleCounts": {
+              "system": 1,
+              "user": 3,
+              "assistant": 2,
+              "tool": 1
+            },
+            "reasoningCharacters": 0,
+            "textClassificationComplete": true,
+            "latestUser": {
+              "index": 6,
+              "textCharacters": 618,
+              "textSha256": "9721c95f65e1567713414eb9d671a1d7e204350fbbe9fc28a3ef54672d6ed118",
+              "currentTaskOccurrences": 1,
+              "earlierTaskOccurrences": [0]
+            },
+            "interpretation": "Hashes preserve parsed JSON property/array order; differences are structural, not proof of semantic inequality. Text counts are not token estimates. Transport completeness and business comparability are separate."
+          },
+          "model": "k3-256k",
+          "thinking": {
+            "type": "enabled",
+            "effort": "low",
+            "keep": "all"
+          },
+          "bodyPermissions": 384,
+          "currentTaskMessageIndex": 6,
+          "currentTaskOccurrences": 1,
+          "earlierTaskCounts": [1],
+          "autoPermissionReminderCount": 0,
+          "sourceResponseSha256": "da25f2ba485838cc5f007d67f1052776cf5a63c563de76284c4dc309de5c7b52",
+          "sourceRequestSha256": "cca1045adaa7cc54d2820026e54f7f21e5c858d98acbb8be524139951cebbe52"
+        },
+        {
+          "round": 2,
+          "summary": {
+            "bodyBytes": 99541,
+            "bodySha256": "f8ae74af9c43b545c801da117bdc2345f5d25a1068edf34119a910c4dd9f46f2",
+            "settingsSha256": "0dcff98187a726f3a205779e6b1604f6228383d60c4cf097c9fe0ff0566558c1",
+            "systemSha256": "56bae891595ecf93be92f4ea43d7ceacb4dd5148e27e6bb4f92b444e7ba8ed2d",
+            "toolsSha256": "2f801ade948b0c0622fcd53d2ab50d186fdfdd5539126bf0d5338f2ca24f1bd1",
+            "toolCount": 27,
+            "messagesSha256": "7d2111af3d904750c78f181b6fbe7334ea318d9825371b7c9e284cb9f532c616",
+            "messageCount": 9,
+            "roleCounts": {
+              "system": 1,
+              "user": 3,
+              "assistant": 3,
+              "tool": 2
+            },
+            "reasoningCharacters": 0,
+            "textClassificationComplete": true,
+            "latestUser": {
+              "index": 6,
+              "textCharacters": 618,
+              "textSha256": "9721c95f65e1567713414eb9d671a1d7e204350fbbe9fc28a3ef54672d6ed118",
+              "currentTaskOccurrences": 1,
+              "earlierTaskOccurrences": [0]
+            },
+            "interpretation": "Hashes preserve parsed JSON property/array order; differences are structural, not proof of semantic inequality. Text counts are not token estimates. Transport completeness and business comparability are separate."
+          },
+          "model": "k3-256k",
+          "thinking": {
+            "type": "enabled",
+            "effort": "low",
+            "keep": "all"
+          },
+          "bodyPermissions": 384,
+          "currentTaskMessageIndex": 6,
+          "currentTaskOccurrences": 1,
+          "earlierTaskCounts": [1],
+          "autoPermissionReminderCount": 0,
+          "sourceResponseSha256": "40b4e005b30263ae7ea1f0981d03feb9d05124509743215238d238a7330382f7",
+          "sourceRequestSha256": "f8ae74af9c43b545c801da117bdc2345f5d25a1068edf34119a910c4dd9f46f2"
+        }
+      ],
+      "totals": {
+        "input": 40,
+        "output": 8
+      },
+      "oldObserverResponseBytesExactlyMatch": true,
+      "oneContinuousSession": true,
+      "qualityVerdicts": [
+        {
+          "round": 1,
+          "passed": false,
+          "checks": [
+            {
+              "id": "basic",
+              "passed": false,
+              "exitCode": 1
+            }
+          ],
+          "functionalPassed": false,
+          "selfTestsPassed": false,
+          "selfTestsExitCode": 1,
+          "selfTestsFailureKind": null,
+          "selfTestsDiagnostic": "No agent tests found"
+        },
+        {
+          "round": 2,
+          "passed": false,
+          "checks": [
+            {
+              "id": "basic",
+              "passed": false,
+              "exitCode": 1
+            },
+            {
+              "id": "many-and-zero",
+              "passed": false,
+              "exitCode": 1
+            },
+            {
+              "id": "empty",
+              "passed": false,
+              "exitCode": 1
+            }
+          ],
+          "functionalPassed": false,
+          "selfTestsPassed": false,
+          "selfTestsExitCode": 1,
+          "selfTestsFailureKind": null,
+          "selfTestsDiagnostic": "No agent tests found"
+        }
+      ],
+      "markerCounts": [1, 1],
+      "transports": ["native-final-output", "native-final-output"],
+      "observedPids": 14,
+      "allObservedExited": true,
+      "credentialLinksAbsent": true,
+      "configAbsent": true
+    }
+  },
+  "limits": [
+    "Synthetic responses only; no business quality or paid efficiency acceptance.",
+    "Ordinary print native versus formal ACP product deliberately preserved as end-to-end modes, not matched-mode isolation.",
+    "Only two turns, not long-session efficiency evidence."
+  ],
+  "findings": {
+    "actualBusinessOnce": true,
+    "historyPreserved": true,
+    "nativeAutoRemindersInFirstRequests": [1, 2],
+    "loomAutoRemindersInFirstRequests": [0, 0],
+    "initialFullToolSchemaMatched": true,
+    "fullRequestAndResponseCaptured": true
+  }
+}

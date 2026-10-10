@@ -368,3 +368,11 @@ v2 显式使用 OpenCode stdin 传原生题面，避免官方 positional argv �
 - 分开实际消费记录、质量判定与因果解释。固定12轮是一条相关长轨迹，不是12个独立样本；稳定性结论需预注册独立配对及先后顺序，全部结果保留。预算中止仅报告共同前缀及单边费用，不伪称完整长任务。
 
 P182后四轮自测timeout已归因于旧评估器选择Apple Python启动器、沙箱拒绝其xcrun缓存写入；相同业务代码仅统一PATH后四轮通过。原始paid记录不改，但不得继续将这些false作为业务代码质量缺陷。[新版私有v5](../evo/evidence/2026-10-10-cost-root-cause/evaluator-v5.json)仅统一子解释器并在超时清理所属进程组，题目、oracle、沙箱与时限不变；红绿测试、完整免费测试和[独审](../evo/evidence/2026-10-10-cost-root-cause/evaluator-v5-review.json)通过。现有paid runner尚未切换，未来使用需冻结新版实现及依赖；没有新增付费验收。
+
+### 实际出站正文采集（免费验证，2026-10-10）
+
+新增 benchmark 专用 `scripts/cli-efficiency/passive-http-capture.mjs`，通过 Node `--import` 预载，设置 `LOOM_REQUEST_CAPTURE_DIR`、`LOOM_REQUEST_CAPTURE_ARM`、`LOOM_REQUEST_CAPTURE_ROUND`。它被动订阅 Undici `/chat/completions` 诊断，不替换 fetch，不改请求、权限或重试。实际请求和响应字节只存私有目录（目录0700、文件0600），不保存认证头；不得提交原始正文。每进程默认512 MiB、1000次请求，可用 `LOOM_REQUEST_CAPTURE_MAX_BYTES` / `LOOM_REQUEST_CAPTURE_MAX_ATTEMPTS` 限制；整批存储与进程总数仍由runner控制。
+
+`readPassiveHttpCapture` 校验正文长度/hash、请求/响应结束、进程封账和请求清单；中断、写入失败、额度耗尽、缺少封账保留已知字节并报告不完整。它只证明已观测传输的归档完整性，不证明其他传输不存在，也不证明计费、业务成功或对照公平。gzip保留原始压缩字节，不暗中解码。`summarizeChatRequest` 仅输出结构hash/计数，不把字符或字节当token；任务定位遍历user消息，不能假定最后一条user就是任务（CLI可能后加权限/日期提醒）。未知内容形态显式标记；`textClassificationComplete`仅覆盖已识别的content/reasoning字段，不代表tool arguments或任意供应商扩展字段均已语义分类。
+
+[P183 Pi](../evo/evidence/2026-10-10-request-capture/pi-p183.json) 与 [P184 Kimi](../evo/evidence/2026-10-10-request-capture/kimi-p184.json) 已在真实CLI、loopback合成模型上各双臂两轮验证，共20次HTTP，请求/响应完整、旧主用量一致，私有v5评估器已接入这两个免费候选。Pi工具和settings一致；Kimi真实正文确认print/auto与ACP/manual提醒及动态工具差异；[settings差异复核](../evo/evidence/2026-10-10-request-capture/kimi-settings-audit.json)表明本次仅独立会话缓存键不同，模型/effort/输出上限一致，未发送的温度等默认值未知。每轮当前业务题只出现一次，续轮保留正常历史。合成回答故意未完成业务，质量false保留；不作成本/质量验收。旧付费正文缺失不能追补，现有付费runner未切换，压缩长上下文与多次独立轨迹尚未覆盖。

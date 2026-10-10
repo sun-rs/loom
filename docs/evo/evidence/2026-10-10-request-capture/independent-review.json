@@ -1,0 +1,59 @@
+{
+  "verdict": "no-blocking-findings-for-free-capture-milestone",
+  "scope": "Read-only source review and independent offline reread; no CLI/model invocation, no paid admission.",
+  "helper": {
+    "file": "scripts/cli-efficiency/chat-request-evidence.mjs",
+    "sha256": "61c2a7bbca383b7ab67a81a2862566ef09bb3be8144654cedb5807f9cd7b525f",
+    "privacy": "Only hashes, lengths, counts and fixed interpretation returned; malformed payload errors generic. No prompt, thinking, tool arguments, settings values or unknown role strings returned.",
+    "history": "Current task occurrences collected in user messages; historical assistant messages are not labeled duplicate wake. Trailing native reminder does not imply task missing.",
+    "limits": [
+      "textClassificationComplete classifies recognized message.content and reasoning_content representations; not a guarantee of all extension fields/tool argument semantics.",
+      "Task occurrence equality is literal substring evidence, not semantic instruction-following.",
+      "Hashes preserve JSON key order, hence unequal hashes do not by themselves prove unequal semantics.",
+      "No billing, token, transport completeness or fairness verdict is inferred."
+    ]
+  },
+  "independentArchiveReread": [
+    {
+      "batch": "P183",
+      "arm": "native",
+      "complete": true,
+      "uniqueResponses": 6,
+      "input": 639,
+      "output": 60
+    },
+    {
+      "batch": "P183",
+      "arm": "loom",
+      "complete": true,
+      "uniqueResponses": 6,
+      "input": 639,
+      "output": 60
+    },
+    {
+      "batch": "P184",
+      "arm": "native",
+      "complete": true,
+      "uniqueResponses": 4,
+      "input": 40,
+      "output": 8
+    },
+    {
+      "batch": "P184",
+      "arm": "loom",
+      "complete": true,
+      "uniqueResponses": 4,
+      "input": 40,
+      "output": 8
+    }
+  ],
+  "verification": "Reader reran byte length/SHA/private-file/seal checks; response SSE independently parsed, repeated identical usage deduplicated per response, response IDs unique per arm. Owner audit code inspected for server/old-observer cross checks.",
+  "preservedLimits": [
+    "Synthetic business quality false retained; not paid efficiency acceptance.",
+    "P184 print native versus ACP is an end-to-end mode comparison, not matched-mode causal isolation.",
+    "P184 resume native permission reminders accumulate and dynamic tool schema changes remain visible.",
+    "Kimi corresponding settings differ only by native session prompt_cache_key in supplied exact-field audit; this free proof cannot retroactively prove paid P182 outgoing bodies.",
+    "Capture initialization failures preserved; process census must remain an external runner obligation because absence of initialized capture cannot prove no requests.",
+    "Tiny two-turn samples retain defaults but do not exercise long-context compaction."
+  ]
+}

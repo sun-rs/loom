@@ -1,0 +1,47 @@
+{
+  "status": "design-only; no additional paid run started",
+  "goal": "Separate transport/context inflation, runtime-mode effects, business path variation, and accounting defects without replacing the ordinary native baseline.",
+  "blockingProductAccountingIssue": "Pi compression has raw/native usage evidence but missing Kernel entries; retain it in total consumption and repair its product reporting separately.",
+  "baselines": [
+    {
+      "name": "ordinary-native-end-to-end",
+      "purpose": "User-facing total overhead",
+      "constraints": [
+        "Same CLI/version/model/effort, initial task/materials and automatic-memory policy",
+        "One continuous independent native session per arm; preserve ordinary history",
+        "Capture and report every observed attempt, including compaction, retry, warmup and unfinished work",
+        "Keep initial setup in whole-session total; report predeclared late segment separately"
+      ]
+    },
+    {
+      "name": "matched-mode-diagnostic",
+      "purpose": "Isolate runtime mode, not replace ordinary baseline",
+      "constraints": [
+        "For Kimi, independently validate native ACP control and official approval semantics",
+        "Keep modes and permission policy explicit; never weaken Loom execution fences",
+        "Report per-request tools/settings/system/history differences; session cache keys may legitimately differ"
+      ]
+    }
+  ],
+  "beforePaidLaunch": [
+    "Freeze exact source/fixture/model binding and requested budgets using existing authorized gate rules",
+    "Free-test final runner, isolation, automatic-memory policy, complete request/response capture, usage deduplication, failure ledger and cleanup",
+    "Freeze independent trajectory count and arm order/counterbalancing; do not select from completed outcomes"
+  ],
+  "analysis": [
+    "Report each CLI/model separately and retain failures; do not pool providers into one claimed ratio",
+    "Use complete independent session pairs as replication units; twelve dependent turns are not twelve independent samples",
+    "Report ratio of summed paired consumption alongside pair-level variation, outputs and business quality",
+    "Keep all-input, cached/uncached where provided, reasoning/output and all-attempt/request counts separate; missing remains unknown",
+    "Token totals do not establish monetary cost; use actual applicable billing evidence before making price claims",
+    "Request bytes/history hashes locate mechanisms but are not token estimates or proof of causality",
+    "Do not truncate reasoning/history or remove failed steps from totals to manufacture parity"
+  ],
+  "notYetDemonstrated": [
+    "Long-context capture with actual provider compaction",
+    "Multi-model repeated distribution",
+    "Matched-mode Kimi diagnostic",
+    "Product Pi compaction accounting repair",
+    "Efficiency acceptance against target contract section 6"
+  ]
+}
