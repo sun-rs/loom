@@ -1,0 +1,27 @@
+{
+  "date": "2026-10-10T02:55:12.000Z",
+  "sourceCommit": "e728c63b9c25c40e0ffdf0b1c1a5d8b007ad9882",
+  "sourceSha256": "76397e1629b2ba60930f4b259537790fdf8184e5f5ed8846a1025ad8ae06effb",
+  "pushed": true,
+  "service": "com.loom.evo",
+  "schema": 84,
+  "backup": {
+    "verified": true,
+    "databases": 2,
+    "files": 302
+  },
+  "businessTablesUnchanged": 11,
+  "gracefulRestart": true,
+  "sevenTrialFlagsOff": true,
+  "freshRealPage": {
+    "historyVerified": true,
+    "pageErrors": [],
+    "roles": 39,
+    "memoryListSucceeded": true
+  },
+  "limits": [
+    "Only existing page/history and read APIs checked, not all UI interactions",
+    "Frontend unchanged; frontend build identity is not backend source identity",
+    "No paid Pi acceptance"
+  ]
+}
