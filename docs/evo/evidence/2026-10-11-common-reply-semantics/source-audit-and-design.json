@@ -1,0 +1,171 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-11",
+  "sourceHead": "8aee6cebad7d08caddd30903194ff269fc2672f6",
+  "status": "source audit complete; isolated candidate preparation; no paid evidence or deployed optimization",
+  "sources": [
+    {
+      "path": "packages/daemon/src/standing-prompt-compiler.ts",
+      "sha256": "ca82065e431909e55cdc210e7f011784c4860da439e091119f345622c00e51f4"
+    },
+    {
+      "path": "packages/agent-host/src/standing-protocol.ts",
+      "sha256": "cf005ba1fbf67acc10d02cfe0c54b30eebf6f48674803fafc8a49f9a63cb435f"
+    },
+    {
+      "path": "packages/agent-host/src/worker-help-topics.ts",
+      "sha256": "451c389b53e72dcf74f091069eab32220a35dbd08a3a4f8f5a565d6eb806f5b5"
+    },
+    {
+      "path": "packages/agent-host/src/final-output-instructions.js",
+      "sha256": "fbdfdaef357394a1160368a3cdfbd94911e1f7992042c48035dfb73cedf3718d"
+    }
+  ],
+  "sharedHelperCallers": {
+    "claude": {
+      "path": "packages/agent-host/src/claude-warm-driver.mjs",
+      "sha256": "63b16fc1c17248806a575a10c1aff3732e2733f965bd05b8165827f54b45b000"
+    },
+    "codex": {
+      "path": "packages/agent-host/src/codex-exec-driver.mjs",
+      "sha256": "c259b1b3d3bc49da659eefba0cdbe71efbc182d64a006307e7c97798219dd14e"
+    },
+    "opencode": {
+      "path": "packages/agent-host/src/opencode-warm-driver.mjs",
+      "sha256": "713b755698bffe00cf148dce75d9d8540c97902b2d3c775a559b61fc6132b346"
+    },
+    "kimi": {
+      "path": "packages/agent-host/src/kimi-acp-driver.mjs",
+      "sha256": "daa965671a6db0f2e8bb2cae448801680917b193ff9dc36265054930a5610e54"
+    },
+    "pi": {
+      "path": "packages/agent-host/src/pi-print-driver.mjs",
+      "sha256": "af6105d60553462402913bca19565d2f27647e08d4f9a4d60b8b256bad999335"
+    }
+  },
+  "observations": [
+    {
+      "id": "shared-default",
+      "owner": "agent-host standing-protocol; daemon compiler composes it",
+      "fact": "startup requires message-post and calls provider prose diagnostic without qualifying selected final transport; worker section gives unconditional reply command."
+    },
+    {
+      "id": "shared-exception",
+      "owner": "agent-host final-output-instructions",
+      "fact": "All five listed drivers call the same nativeFinalTextInstructions helper, adding an explicit native-final-text exception. The existing explicit-JSON final-output mode is distinct."
+    },
+    {
+      "id": "help-path",
+      "owner": "agent-host worker-help-topics and standing-protocol",
+      "fact": "help messages says provider final prose alone is not a Room reply. help protocol renders the default startup rules. Candidate must preserve the distinction between authorized transport and proof of committed publication."
+    },
+    {
+      "id": "causality",
+      "fact": "Rule plus explicit exception is logically resolvable; source inspection proves neither model confusion nor extra token causation. Existing zero Worker-call trajectories do not exclude an indirect semantic effect."
+    }
+  ],
+  "candidate": {
+    "factor": "Condition shared reply-route instructions on the current explicitly selected transport; avoid unconditional rule followed by exception.",
+    "sameForAllProviders": true,
+    "preserve": [
+      "identity",
+      "completion standard",
+      "Task policy",
+      "authority",
+      "credentials",
+      "memory",
+      "custom role instructions",
+      "runtime helper schemas",
+      "provider-native tools",
+      "scheduling",
+      "session continuity",
+      "default trial flags",
+      "business prompts"
+    ],
+    "excluded": [
+      "Pi-specific instructions",
+      "fixing generated invoice code",
+      "discarding failed samples",
+      "byte-only success verdict",
+      "prior larger compact-standing candidate"
+    ],
+    "owner": "shared protocol rendering; daemon remains composition owner; no second runtime state",
+    "states": {
+      "default": "Existing Worker reply path",
+      "native-final-text": "Existing Host-validated ordinary final text",
+      "final-output": "Existing explicit room.reply JSON command"
+    },
+    "unknownSelection": "No new permission; existing runtime validation/error behavior, not inferred native eligibility"
+  },
+  "experimentDesign": {
+    "status": "design only; executable batch resource limits and immutable fixture hashes must be sealed before paid start",
+    "arms": [
+      "native",
+      "current Loom native-final",
+      "candidate Loom native-final"
+    ],
+    "primaryCausalContrast": "candidate/current within each exact CLI/model/effort; native anchors product overhead",
+    "blocksPerBinding": 6,
+    "roundsPerArm": 12,
+    "independentUnit": "Independent matched block containing three separately continuous sessions; comparisons and any resampling preserve block membership, not rounds or individual HTTP requests.",
+    "orders": [
+      ["native", "current", "candidate"],
+      ["native", "candidate", "current"],
+      ["current", "native", "candidate"],
+      ["current", "candidate", "native"],
+      ["candidate", "native", "current"],
+      ["candidate", "current", "native"]
+    ],
+    "proposedBindings": [
+      {
+        "cli": "codex",
+        "model": "gpt-6-luna",
+        "effort": "low"
+      },
+      {
+        "cli": "claude",
+        "model": "sonnet",
+        "effort": "low"
+      },
+      {
+        "cli": "claude",
+        "model": "haiku",
+        "effort": null
+      },
+      {
+        "cli": "opencode",
+        "model": "aihubmix/deepseek-v4.1-flash",
+        "effort": "low"
+      },
+      {
+        "cli": "kimi",
+        "model": "kimi-code/k3-256k",
+        "effort": "low"
+      },
+      {
+        "cli": "pi",
+        "model": "aihubmix/deepseek-v4.1-flash",
+        "effort": "low"
+      }
+    ],
+    "inference": "Report each binding separately; no pooled five-CLI ratio. Six blocks exploratory, not guaranteed statistical power. Model failures and environment blockers remain visible. No performance conclusion from unavailable bindings.",
+    "metrics": [
+      "ratio of summed input",
+      "ratio of summed output",
+      "requests",
+      "known cache fields",
+      "full failure cost",
+      "fixed common quality",
+      "author self-test separately",
+      "diagnostic warnings separately",
+      "late rounds 7-12 separately without omitting startup"
+    ],
+    "failurePolicy": "Keep fixed slot identities, no replacement/rerun. Incomplete or missing-usage arms have no full ratio; keep measured subtotal. Other independent slots proceed only after exact owned-process cleanup and evidence capture.",
+    "nativeControl": "Same native model/effort; automatic memory verified off at every launch/resume; same-session history retained.",
+    "falsification": "If candidate has no reproducible advantage across examined bindings, or lowers quality/reliability, do not promote the semantic hypothesis to a cost fix. A differing direction is reported, not tuned per CLI.",
+    "limits": "One task family cannot establish general collaboration value; paid test package still requires independent admission review, without reasking owner authorization already given.",
+    "completePrimary": "A planned whole-binding primary requires all six fixed blocks with complete comparable arms. Otherwise retain failures and known costs, publish partial/subset descriptions explicitly, never replace slots.",
+    "roundScheduling": "Within-block arm and round scheduling must be explicitly fixed in the executable manifest; the listed six orders alone do not define interleaving."
+  },
+  "releaseBoundary": "Private candidate static checks are not actual CLI or model acceptance. Formal source, service and trial flags unchanged in this research batch."
+}

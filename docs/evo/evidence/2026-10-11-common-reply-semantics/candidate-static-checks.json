@@ -1,0 +1,43 @@
+{
+  "version": 2,
+  "baseHead": "8aee6cebad7d08caddd30903194ff269fc2672f6",
+  "scope": "Private static text compilation candidate only; no driver/runtime/permission/Task/tool/role/memory/scheduler changes",
+  "files": {
+    "packages/agent-host/src/standing-protocol.ts": {
+      "baseline": "cf005ba1fbf67acc10d02cfe0c54b30eebf6f48674803fafc8a49f9a63cb435f",
+      "candidate": "d362ebee28cca34fa878d878ccd570f6792c6306fdba674b6d81e1bfc879fd9f",
+      "byteDelta": 157
+    },
+    "packages/agent-host/src/worker-help-topics.ts": {
+      "baseline": "451c389b53e72dcf74f091069eab32220a35dbd08a3a4f8f5a565d6eb806f5b5",
+      "candidate": "7264aef7cdfb6a9ddb68de6f3c855a9bab4ff40cfae9102138becb6719cd78c2",
+      "byteDelta": 637
+    }
+  },
+  "patchSha256": "e42c52e56c9ff399dff741a55a6062cee99833e8dd15442bcdcb9f2ffc0d5c3f",
+  "checks": {
+    "v2Red": "2 fail,2 pass expected before short guidance implementation",
+    "v2Green": "4 pass",
+    "isolatedTypecheckExit": 0,
+    "baselineExistingHelpTests": "See baseline-existing-help-tests.log; executes unchanged repository, not candidate runtime",
+    "baselineExistingHelpTestsExit": 0,
+    "patchApplyCheckExit": 0
+  },
+  "limits": [
+    "Static assertions verify explicit rendered text, not LLM adherence, model outputs, correctness or cost.",
+    "Existing transport helpers remain authoritative for selected format, including JSON; this candidate does not change their content rules.",
+    "Unknown selections gain no permissions or new runtime fallback from this text-only change.",
+    "Protocol digest changes; rollout/session update semantics are not validated by this private test.",
+    "Version1 broader draft and logs preserved in version1; not proposed for integration."
+  ],
+  "provenance": "Local wording change, no copied upstream source.",
+  "rendered": {
+    "baselineVersion": "43b49986b67f",
+    "candidateVersion": "8834a18b14f3",
+    "byteDelta": {
+      "workerCliSection": 394,
+      "startupRulesSection": 61,
+      "renderStandingProtocolCard": 455
+    }
+  }
+}

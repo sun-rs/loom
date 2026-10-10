@@ -1,0 +1,187 @@
+{
+  "verdict": "Static candidate and compile-only evidence independently verified; no actual CLI, behavioral or cost acceptance.",
+  "candidateTests": {
+    "passed": 4,
+    "failed": 0,
+    "extraTopicExistenceChecks": 5,
+    "undefinedEqualityFalsePositive": false
+  },
+  "candidateDiffReview": "Only shared reply guidance and Worker-operation scope changed in two private source copies. Existing native/JSON helpers unchanged; no business-JSON repair claimed. Authority/Tasks/completion/credential semantics preserved. Default prompt/protocol version text changes, not default runtime activation.",
+  "qualityCompile": {
+    "interpreter": "3.13.10 (main, Dec  2 2025, 12:49:50) [Clang 17.0.0 (clang-1700.4.4.1)]",
+    "cases": [
+      {
+        "cli": "pi",
+        "slot": "A",
+        "arm": "native",
+        "round": 9,
+        "sha256": "ff0ef5deaa67200fcbc8f725ed80adfbfeb24c4e54c9ebec16c5a7db3d5da530",
+        "warningCount": 0
+      },
+      {
+        "cli": "pi",
+        "slot": "A",
+        "arm": "loom",
+        "round": 9,
+        "sha256": "3474fd2ce94f64bd4b9bd6dd294aa9d0b18e27069553ee04e796d74a9c5b705c",
+        "warningCount": 2
+      },
+      {
+        "cli": "pi",
+        "slot": "B",
+        "arm": "native",
+        "round": 9,
+        "sha256": "41dc3cc898a839f8ec02fd270db139045c32a4b9833b39f8135aac8995e7cc9d",
+        "warningCount": 0
+      },
+      {
+        "cli": "pi",
+        "slot": "B",
+        "arm": "loom",
+        "round": 9,
+        "sha256": "36c06a3444703f202d40688e3ad4c76dc6bf4c97f529a42a27ce86750e908885",
+        "warningCount": 2
+      },
+      {
+        "cli": "pi",
+        "slot": "C",
+        "arm": "native",
+        "round": 9,
+        "sha256": "0db346ed7a85a8cb51d3f8a56c7baa1a77bacd867040d741908d46dab077fa36",
+        "warningCount": 0
+      },
+      {
+        "cli": "pi",
+        "slot": "C",
+        "arm": "loom",
+        "round": 9,
+        "sha256": "dff36f2af67b2d664ce42d1970cf29e4eb6b4b06558e596e329a22f4f00a5dbc",
+        "warningCount": 0
+      },
+      {
+        "cli": "pi",
+        "slot": "E",
+        "arm": "native",
+        "round": 9,
+        "sha256": "9f83f3c67b23035f17f684dff475f6bdbd957d030ba0de089f118463fe34d3c4",
+        "warningCount": 0
+      },
+      {
+        "cli": "pi",
+        "slot": "E",
+        "arm": "loom",
+        "round": 9,
+        "sha256": "3cf58823c31eae317c1f5ac57adbcdb5b2b11e500b061d04933ce3ab8183476a",
+        "warningCount": 2
+      },
+      {
+        "cli": "pi",
+        "slot": "F",
+        "arm": "native",
+        "round": 9,
+        "sha256": "9ad008ea4de6b316b964cb775bc678f04ddb0d7f12f93b742a49772a9dde1dcf",
+        "warningCount": 0
+      },
+      {
+        "cli": "pi",
+        "slot": "F",
+        "arm": "loom",
+        "round": 9,
+        "sha256": "1ecc64a00626e5b0908eda6f5c79cbc1ed77285fb23fc81f5fc8313415257ab1",
+        "warningCount": 2
+      },
+      {
+        "cli": "kimi",
+        "slot": "2",
+        "arm": "print",
+        "round": 9,
+        "sha256": "9c21784eacaf968ff2709de7aeb715a92df1a51fd29eb144f0642d1f17a29d82",
+        "warningCount": 0
+      },
+      {
+        "cli": "kimi",
+        "slot": "2",
+        "arm": "loom",
+        "round": 9,
+        "sha256": "4bd0c85a9753dbe653ad7b710c32f31bc86ae2109a9ad26e49f619f50e2d35fc",
+        "warningCount": 0
+      },
+      {
+        "cli": "kimi",
+        "slot": "3",
+        "arm": "print",
+        "round": 9,
+        "sha256": "f63f675f52e47652450837f36af927c8a9e517f725255a53da5278423a190f01",
+        "warningCount": 0
+      },
+      {
+        "cli": "kimi",
+        "slot": "3",
+        "arm": "loom",
+        "round": 9,
+        "sha256": "3900da0032e04dda64e97971ccf84935c131c194d1f261d8b1bfce42efd3cbff",
+        "warningCount": 0
+      },
+      {
+        "cli": "kimi",
+        "slot": "4",
+        "arm": "print",
+        "round": 9,
+        "sha256": "434197d41d2448b0f9f983dce37a6d8b211c26c4d21656d435dc02c91af7cbf1",
+        "warningCount": 0
+      },
+      {
+        "cli": "kimi",
+        "slot": "4",
+        "arm": "loom",
+        "round": 9,
+        "sha256": "278c9658366c35c5c305867c2450885fce0880df60a6a40ade01b88ec07bafe8",
+        "warningCount": 0
+      },
+      {
+        "cli": "kimi",
+        "slot": "5",
+        "arm": "print",
+        "round": 9,
+        "sha256": "a46a7540f0c70543577ddf65f3468df0e8be1fa3959a9a96a686bec8a092f158",
+        "warningCount": 0
+      },
+      {
+        "cli": "kimi",
+        "slot": "5",
+        "arm": "loom",
+        "round": 9,
+        "sha256": "bf7241a5c924e8ce0c4d2a6410807d732858f338e3bde3c18b359e1b7375eb4f",
+        "warningCount": 0
+      },
+      {
+        "cli": "kimi",
+        "slot": "6",
+        "arm": "print",
+        "round": 9,
+        "sha256": "d4ffbeea92f720527c9fecd3cbad6e9d3cf3ef5314d817d83b6b2a97b6bdaf68",
+        "warningCount": 0
+      },
+      {
+        "cli": "kimi",
+        "slot": "6",
+        "arm": "loom",
+        "round": 9,
+        "sha256": "5ccabe5c985dcefa106472888a0b83e35cd2ad2d7534649c36ec9956b9d01cbc",
+        "warningCount": 0
+      }
+    ],
+    "sourceHashesMatch": true,
+    "warningsExactlyMatch": true,
+    "totalWarnings": 8,
+    "candidateCodeExecuted": false,
+    "pycCreatedOrModified": false
+  },
+  "limitations": [
+    "Static text assertions cannot establish instruction following or savings.",
+    "Five topic names are actual nonempty strings in both baseline/candidate; existing equality test alone does not enforce existence against future regressions.",
+    "Round9 compile-only warnings do not replace historical selftests or prove all later rounds.",
+    "Different generated selftest assertion strength remains separate from common functional quality.",
+    "No paid calls, product changes or historical evidence modifications."
+  ]
+}

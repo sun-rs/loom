@@ -1,0 +1,37 @@
+{
+  "status": "private research candidate; no product source changed, no paid calls, no restart required",
+  "sourceQualityAuditSha256": "1c2b55dd1f88f316efee6accc3255f4008cfac8f30e5bd9b3355b408129f011b",
+  "publicationTransform": "Private evidence root replaced with $PRIVATE_EVIDENCE; case source hashes unchanged. Format may differ from private originals.",
+  "candidatePaidVerdict": "not run",
+  "candidateActualCliVerdict": "not run",
+  "candidateStaticVerdict": "Four text tests passed, independently rerun; five unchanged help topics verified nonempty. No model/CLI runtime claim.",
+  "nextRequired": [
+    "isolated integration of same two-file patch and protocol-update checks",
+    "actual CLI with local fake provider for each available runtime",
+    "freeze executable repeated three-arm batch and full accounting admission",
+    "paid repeated model comparisons; no universal claim from one CLI"
+  ],
+  "productState": "existing deployed code and all seven disabled trial flags unchanged",
+  "staticArtifacts": {
+    "static-red.txt": {
+      "originalSha256": "507b0d707a200e30e329474f7889a1e2d059d835f651959f50761397e973b25f",
+      "publishedSha256": "59e700218ab16bcffe45320b4dca0cddca993548818d9d238fc9355ea101d231"
+    },
+    "static-green.txt": {
+      "originalSha256": "be09d00fc4bff6824fdc912fbddcf58773bd12c6a4300f795e9bc0e56060b62e",
+      "publishedSha256": "be09d00fc4bff6824fdc912fbddcf58773bd12c6a4300f795e9bc0e56060b62e"
+    },
+    "static-tests.mjs.txt": {
+      "originalSha256": "1015c8c7d912d218dd9ddd4d056205c3269141667f62c96948a0603467f84cb2",
+      "publishedSha256": "1015c8c7d912d218dd9ddd4d056205c3269141667f62c96948a0603467f84cb2"
+    }
+  },
+  "qualityIndependentVerdict": "20 source hashes and compile warnings matched; three supporting source hashes matched; no generated artifact executed or bytecode written.",
+  "documentationChecks": {
+    "statusLocalLinks": 104,
+    "sourceHashesMatched": 9,
+    "formatCheck": "passed",
+    "diffCheck": "passed",
+    "patchApplyCheck": "passed"
+  }
+}

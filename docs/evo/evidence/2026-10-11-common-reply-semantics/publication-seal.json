@@ -1,0 +1,14 @@
+{
+  "files": {
+    "candidate-static-checks.json": "4afb8bb29ad22984991c641eb0ec6434ee35bcdf06179d081009597c08712a53",
+    "candidate-v2.patch": "e42c52e56c9ff399dff741a55a6062cee99833e8dd15442bcdcb9f2ffc0d5c3f",
+    "independent-review.json": "865ff29872e93c42e32496dbdaf80069a959af0eb13785913e7269432670fcb0",
+    "publication.json": "7e67737669d02e5fe5772d2c24a76979b0fe640d519bee80715e5c06935d785b",
+    "quality-fairness.json": "f4fb0f8ddc5949dfa6cf3aad3d5be29a2d9c4b79801c65e5b0237ecaf764a69a",
+    "source-audit-and-design.json": "2ba4b14508709daa899e10484e03abf89c35736f090b04acbc71251ee2269afb",
+    "static-green.txt": "be09d00fc4bff6824fdc912fbddcf58773bd12c6a4300f795e9bc0e56060b62e",
+    "static-red.txt": "59e700218ab16bcffe45320b4dca0cddca993548818d9d238fc9355ea101d231",
+    "static-tests.mjs.txt": "1015c8c7d912d218dd9ddd4d056205c3269141667f62c96948a0603467f84cb2"
+  },
+  "scope": "Published research artifacts; no paid or runtime acceptance."
+}

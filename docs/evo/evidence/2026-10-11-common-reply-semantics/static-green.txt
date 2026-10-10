@@ -1,0 +1,12 @@
+✔ short common guidance delegates selected transports without duplicating schemas or content rules (0.721042ms)
+✔ advanced help only scopes Worker operations; no repeated native schema (0.077209ms)
+✔ old unconditional answer-post and diagnostic rules no longer conflict (0.05425ms)
+✔ unrelated policies and topics stay byte-identical (0.108ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 112.340084

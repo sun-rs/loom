@@ -1,0 +1,75 @@
+--- a/packages/agent-host/src/standing-protocol.ts
++++ b/packages/agent-host/src/standing-protocol.ts
+@@ -3,6 +3,7 @@
+ import {
+   WORKER_HELP_TOPIC_NAMES,
+   staticWorkerHelpTopic,
++  replyTransportGuidance,
+ } from "./worker-help-topics.ts";
+ 
+ /**
+@@ -55,9 +56,11 @@
+ 
+ Use \`"$RAH_WORKER_CLI" worker\` for Room/Task reads and writes, one command at a time, and never read, print, copy, or forward its credential file. Commands print human-readable text on stdout — read that text. On errors follow the printed Effect and Next action; never blindly resend.
+ 
++${replyTransportGuidance()}
++
+ Act on events process.env.RAH_FROM_SEQ through RAH_TO_SEQ; events before RAH_FROM_SEQ are context only and must not cause a message, Task command, file change or other business action.
+ 
+-\`message-post\` publishes without ending execution. Only after completing all current work may you explicitly add \`--final\` to end the turn; never use it for a plan, progress, or a trial post. After a peer handoff, stop and await its next wake. Use \`"$RAH_WORKER_CLI" worker message-post <Reply context arguments> <<'${MESSAGE_HEREDOC_DELIMITER}'\`, the body, then \`${MESSAGE_HEREDOC_DELIMITER}\`; always reuse the exact \`target\` from the received message. A held send delivered nothing — a saved draft is never a delivery; follow the paths it prints. Address members with \`@<handle>\` in the \`message-post\` body; mention others, not yourself; the Room is the isolation boundary. Join only when addressed.
++\`message-post\` publishes without ending execution. Only after completing all current work may you explicitly add \`--final\` to end the turn; never use it for a plan, progress, or a trial post. After a peer handoff, stop and await its next wake. For Worker replies and other explicit posts, use \`"$RAH_WORKER_CLI" worker message-post <Reply context arguments> <<'${MESSAGE_HEREDOC_DELIMITER}'\`, the body, then \`${MESSAGE_HEREDOC_DELIMITER}\`; always reuse the exact \`target\` from the received message. A held send delivered nothing — a saved draft is never a delivery; follow the paths it prints. Address members with \`@<handle>\` in the \`message-post\` body; mention others, not yourself; the Room is the isolation boundary. Join only when addressed.
+ 
+ ### Tasks
+ 
+@@ -98,9 +101,9 @@
+  * The daemon places the launch delivery-mode section before these rules.
+  */
+ export function startupRulesSection(): string {
+-  return `Each wake is a new Activation: use the current environment, never a previous turn's Room, range or Worker path. \`msg=<ref>\` is a short message id; pass a wake's \`--turn <handle>\` to every Worker command. Do the requested work, then publish the answer with \`message-post\` using its \`Reply context:\` arguments. For multiple targets, post separately with each target and the shared seq/turn. Complete wakes already supply the messages; no \`message-check\` or \`message-read\` first. With no reply needed, run \`message-check\` once; when a wake says \`message-check first\`, run it before replying. Never infer missing memory or no work from an error.
++  return `Each wake is a new Activation: use the current environment, never a previous turn's Room, range or Worker path. \`msg=<ref>\` is a short message id; pass a wake's \`--turn <handle>\` to every Worker command. Do the requested work, then use the current wake's reply transport as described above. For multiple targets, post separately with each target and the shared seq/turn. Complete wakes already supply the messages; no \`message-check\` or \`message-read\` first. With no reply needed, run \`message-check\` once; when a wake says \`message-check first\`, run it before replying. Never infer missing memory or no work from an error.
+ 
+-Delivery confirmation is automatic in \`message-check\` or a \`--based-on-room-seq\` reply; it does not complete your reply, Task, or review. Provider prose, transcript, exit code, and session state are diagnostics only. Complete all your work before stopping; never poll for future peer replies nor stop unfinished work merely because you posted progress.`;
++Delivery confirmation is automatic in \`message-check\` or a \`--based-on-room-seq\` reply; it does not complete your reply, Task, or review. Without an explicit final reply transport selection, provider prose is diagnostic only; transcript, exit code and session state never prove Room publication. Complete all your work before stopping; never poll for future peer replies nor stop unfinished work merely because you posted progress.`;
+ }
+ 
+ /** In prompt order; the version and the help card cover exactly these. */
+--- a/packages/agent-host/src/worker-help-topics.ts
++++ b/packages/agent-host/src/worker-help-topics.ts
+@@ -13,12 +13,19 @@
+ const PEER_HANDOFF_GUIDANCE =
+   "Wake peers: bare `@<handle>` in body. Names without @ do not wake. Mention others, not yourself. After a handoff, finish other current work, then end this turn. Addressed replies wake you automatically; do not poll for them.";
+ 
++/** Shared reply routing guidance; selection belongs to the current wake, not help. */
++export function replyTransportGuidance(): string {
++  return `When the current wake explicitly selects \`native-final-text\` or \`final-output\`, follow that transport's existing instructions for the ordinary final reply. Without an explicit selection, use Worker \`message-post\` with the current Reply context arguments. Selection does not prove publication or Task completion. Help does not change the selection.`;
++}
++
+ const TOPICS = {
+   messages: `## Messages: read and write
+ 
+ A complete wake already contains the messages. Work from them; message-check is needed when the wake requests it or no reply is needed. Read additional history with \`message-read --target TARGET\`.
+ 
+-Publish your answer on stdin:
++${replyTransportGuidance()}
++
++For Worker replies and other explicit posts, publish the body on stdin:
+ \`\`\`sh
+ ${CLI} worker message-post <Reply context arguments> <<'${EOF}'
+ <your answer>
+@@ -26,13 +33,15 @@
+ \`\`\`
+ Replace <Reply context arguments> with the wake's exact target and --based-on-room-seq, plus --turn when supplied; these are arguments, not literal text. Pass that --turn to reads too. For multiple targets post separately, sharing the supplied seq/turn. Message content is always read from stdin; choose a heredoc delimiter absent from the body.
+ 
+-A successful post publishes without ending execution. Use --final only when all current work is complete, never for a plan or progress. Provider final prose alone is not a Room reply. Delivery confirmation happens in message-check or a based-on reply; Task completion stays separate.
++A successful post publishes without ending execution. Use --final only when all current work is complete, never for a plan or progress. Delivery confirmation happens in message-check or a based-on reply; Task completion stays separate.
+ 
+ ${PEER_HANDOFF_GUIDANCE}
+ 
+ On failure or a held draft follow the printed Effect and Next action, never blindly resend. For draft recovery, notices or thread conflicts: \`${CLI} worker help messages-advanced\`.`,
+ 
+   "messages-advanced": `## Messages: reading, sending, drafts
++
++This section describes Worker operations and does not change the current wake's selected final transport.
+ 
+ - **Reply to a Room**: \`${CLI} worker message-post --target "#room-slug" <<'${EOF}'\`, then the message body, then \`${EOF}\`
+ - **Reply to a DM**: the same with \`--target dm:@peer-handle\`

@@ -1,0 +1,76 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import * as base from "./baseline/standing-protocol.ts";
+import * as candidate from "./candidate/standing-protocol.ts";
+const card = candidate.renderStandingProtocolCard();
+test("short common guidance delegates selected transports without duplicating schemas or content rules", () => {
+  for (const text of [card, candidate.workerHelpTopic("messages")]) {
+    assert.match(
+      text,
+      /explicitly selects `native-final-text` or `final-output`/,
+    );
+    assert.match(text, /follow that transport's existing instructions/);
+    assert.match(text, /Without an explicit selection, use Worker/);
+    assert.match(
+      text,
+      /Selection does not prove publication or Task completion/,
+    );
+    assert.match(text, /Help does not change the selection/);
+    assert.doesNotMatch(
+      text,
+      /"kind":"room.reply"|Replace 123|Business content may itself|unknown selection/,
+    );
+  }
+});
+test("advanced help only scopes Worker operations; no repeated native schema", () => {
+  const text = candidate.workerHelpTopic("messages-advanced");
+  assert.match(
+    text,
+    /This section describes Worker operations and does not change the current wake's selected final transport/,
+  );
+  assert.doesNotMatch(
+    text,
+    /"kind":"room.reply"|explicitly selects `native-final-text`/,
+  );
+});
+test("old unconditional answer-post and diagnostic rules no longer conflict", () => {
+  assert.doesNotMatch(
+    candidate.startupRulesSection(),
+    /then publish the answer with `message-post`/,
+  );
+  assert.doesNotMatch(
+    card,
+    /Provider prose, transcript, exit code, and session state are diagnostics only/,
+  );
+  assert.doesNotMatch(
+    candidate.workerHelpTopic("messages"),
+    /Provider final prose alone is not a Room reply/,
+  );
+  assert.match(card, /A held send delivered nothing/);
+  assert.match(card, /never blindly resend/);
+});
+test("unrelated policies and topics stay byte-identical", () => {
+  for (const fn of [
+    "authoritySection",
+    "credentialHygieneSection",
+    "remindersSection",
+    "communicationStyleSection",
+    "formattingSection",
+  ])
+    assert.equal(candidate[fn](), base[fn]());
+  for (const topic of ["tasks", "history", "memory", "errors", "constraints"])
+    assert.equal(candidate.workerHelpTopic(topic), base.workerHelpTopic(topic));
+  assert.equal(
+    candidate.workerCliSection().split("### Tasks")[1],
+    base.workerCliSection().split("### Tasks")[1],
+  );
+  assert.notEqual(
+    candidate.STANDING_PROTOCOL_VERSION,
+    base.STANDING_PROTOCOL_VERSION,
+  );
+  assert.match(
+    card,
+    /Delivery confirmation is automatic in `message-check` or a `--based-on-room-seq` reply/,
+  );
+  assert.match(card, /it does not complete your reply, Task, or review/);
+});
