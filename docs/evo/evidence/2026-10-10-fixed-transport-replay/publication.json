@@ -1,0 +1,43 @@
+{
+  "note": "Hashes inside source evidence refer to original private bytes. This manifest records published files after formatting. No raw requests or credentials published.",
+  "files": [
+    {
+      "file": "README.md",
+      "publishedSha256": "0f28218d96b36af7e85c29134dfae548a98a2a8fba17aa97ca5f2c47f5b46b15",
+      "transformation": "Lead-authored plan/conclusions; plan state updated to completed"
+    },
+    {
+      "file": "independent-review.json",
+      "publishedSha256": "5fb3c3ef5fbb719b5f4c3b760b62d3d70b6e2b72c7d930794080106c8d66c760",
+      "sourcePath": "/Users/sun/.loom/reviews/2026-10-10-fixed-trajectory-design/public-independent-review.json",
+      "sourceSha256": "5fb3c3ef5fbb719b5f4c3b760b62d3d70b6e2b72c7d930794080106c8d66c760",
+      "transformation": "Formatting only; parsed JSON equal"
+    },
+    {
+      "file": "kimi.json",
+      "publishedSha256": "815a9dce249dd884d068bb0d09bd511246435c97ed1c56a8dacb6ea5c2e19644",
+      "sourcePath": "/Users/sun/.loom/reviews/2026-10-10-kimi-fixed-trajectory-free/handoff/public-evidence.json",
+      "sourceSha256": "08b409e5d88d5090817fbacfcf0153fa87800970e25ef010294136a517add67d",
+      "transformation": "Formatting only; parsed JSON equal"
+    },
+    {
+      "file": "pi.json",
+      "publishedSha256": "1b9e7df6581758c08bc2be020e8e4d9ef6ac0dfb3a0a8639ebf8d4ba0f94d89f",
+      "sourcePath": "/Users/sun/.loom/reviews/2026-10-10-pi-fixed-trajectory-free/request-structure-evidence.json",
+      "sourceSha256": "2e3a9bdfe9788adb4f08223acb00e14a665c3bcc851437e14a5baafae4aabd10",
+      "transformation": "Lead compact extract: retains arm first/last/cumulative, scalar checks and census summary; omits redundant per-request/per-round records and passive archive listings. Raw evidence unchanged."
+    },
+    {
+      "file": "plan.json",
+      "publishedSha256": "87eccb35d6e951b774fd095516ed39a33b7208cb8b770d5098e466e44b51ed2f",
+      "transformation": "Lead-authored plan/conclusions; plan state updated to completed"
+    },
+    {
+      "file": "source-findings.json",
+      "publishedSha256": "188d445109bf852c59b400c832575403e05daea3d0a5cb32dc1139e8224be85b",
+      "sourcePath": "/Users/sun/.loom/reviews/2026-10-10-fixed-trajectory-design/lead-source-findings.json",
+      "sourceSha256": "188d445109bf852c59b400c832575403e05daea3d0a5cb32dc1139e8224be85b",
+      "transformation": "Formatting only; parsed JSON equal"
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "sourceHead": "ed3810833e4ef231a806541907a2d628b323e1ba",
+  "status": "Read-only design findings; no proposed change is implemented",
+  "owners": [
+    {
+      "file": "packages/daemon/src/standing-prompt-compiler.ts",
+      "owner": "Composition of initial identity, runtime, platform, authority, role, memory and startup layers"
+    },
+    {
+      "file": "packages/agent-host/src/standing-protocol.ts",
+      "owner": "Shared Worker protocol and on-demand help source"
+    },
+    {
+      "file": "packages/agent-host/src/final-output-instructions.js",
+      "owner": "Native-final experiment adds a conditional exception to normal explicit Worker reply instructions"
+    },
+    {
+      "file": "packages/agent-host/src/wake-message-input.ts",
+      "owner": "Per-delivery messages and causal reply metadata; constant rules already moved out of repeated wake"
+    },
+    {
+      "file": "packages/agent-host/src/pi-print-driver.mjs",
+      "owner": "Appends standing text through native --append-system-prompt; cannot infer repeated history insertion from per-launch argv alone"
+    }
+  ],
+  "interpretation": [
+    "Fixed insertion and repeated HTTP transmission are distinct. A once-inserted rule can remain in every later request.",
+    "Each new wake wrapper also remains in normal session history, so cumulative transmitted bytes include older wrappers.",
+    "Do not remove Room ledger, causal sequence, membership fences or session history to reduce measured bytes."
+  ],
+  "nextCandidate": "Compare a delivery-mode-specific standing instruction compiler against the current generic Worker rules plus native-final exception. Keep nonreply tools, stale/unknown-write rules and fallback scopes explicit. This is a candidate design, not a proven optimization.",
+  "validationOrder": [
+    "Specify supported native-final/fallback cases and preserving tests before implementation",
+    "Free exact-trajectory comparison before/after with byte categories and complete request census",
+    "Multi-CLI/model fixed-batch paid ablation only after correctness gates; include quality and all requests, not just shorter prompts"
+  ],
+  "prohibitions": [
+    "Do not call zero extra scripted requests model reliability proof",
+    "Do not predict token or billing savings from these bytes",
+    "Do not replace previous paid high/low ratios with this synthetic workload"
+  ]
+}

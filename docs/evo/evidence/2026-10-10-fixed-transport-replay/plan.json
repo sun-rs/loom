@@ -1,0 +1,32 @@
+{
+  "status": "completed; independent mechanical transport audit passed",
+  "sourceHead": "ed3810833e4ef231a806541907a2d628b323e1ba",
+  "question": "With identical successful business operations, how many model requests and how many serialized context bytes does each launch path send?",
+  "scope": {
+    "pi": "native and formal Loom, twelve turns each",
+    "kimi": "print/shared production ACP bridge/formal Loom, twelve turns each"
+  },
+  "paidCallsAuthorizedForThisBatch": false,
+  "method": [
+    "Local fake provider only, actual installed CLI and isolated formal daemon",
+    "One identical read operation and fixed final per turn, normal continuous session history",
+    "Capture actual requests and prove tool execution/result equivalence",
+    "Report first/last/cumulative HTTP bytes separately from canonical content bytes and message counts",
+    "Separate standing insertion count, retransmission, new wake wrappers, settings and CLI mode differences",
+    "Native-final is explicit experimental path, not deployed default"
+  ],
+  "limits": [
+    "No token or billing inference from bytes or synthetic usage",
+    "No claims about model instruction-following or random task trajectories",
+    "Pi/Kimi only; not five-provider acceptance",
+    "Shared ACP bridge is diagnostic, not independent reference implementation",
+    "Short fixture does not test automatic compaction"
+  ],
+  "owners": {
+    "pi": "ordinary_codex_next",
+    "kimi": "claude_final_driver",
+    "independent": "claude_native_integration_tests",
+    "lead": "source review, evidence synthesis and handoff"
+  },
+  "next": "Design delivery-mode-specific standing instructions with preserved safety/fallback tests; no token savings proven"
+}

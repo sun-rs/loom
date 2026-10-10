@@ -1,0 +1,302 @@
+{
+  "verdict": "Pass for bounded free installed-CLI transport diagnosis only; not a paid efficiency or business-quality verdict.",
+  "experiments": {
+    "kimi": {
+      "lifecycle": {
+        "providerLaunches": 36,
+        "passiveProcesses": 36,
+        "exactPidCensus": true,
+        "allSealed": true,
+        "observedProviderPidsGone": true,
+        "loopbackOrigins": 3,
+        "capturedResponses": 72,
+        "sessionsPerArm": {
+          "print": 1,
+          "bridge": 1,
+          "loom": 1
+        },
+        "tools": {
+          "print": {
+            "calls": 12,
+            "successfulExactFileOutputs": 12
+          },
+          "bridge": {
+            "calls": 12,
+            "successfulExactFileOutputs": 12
+          },
+          "loom": {
+            "calls": 12,
+            "successfulExactFileOutputs": 12
+          }
+        },
+        "sourceAndCleanup": "Runner source manifest unchanged, auth links removed; independently checked all 36 actual execution provider PIDs."
+      },
+      "payloadAccounting": {
+        "arms": {
+          "bridge": {
+            "requests": 24,
+            "rounds": {
+              "10": 2,
+              "9": 2,
+              "4": 2,
+              "6": 2,
+              "5": 2,
+              "3": 2,
+              "2": 2,
+              "1": 2,
+              "8": 2,
+              "12": 2,
+              "7": 2,
+              "11": 2
+            },
+            "originalWireBytes": 2201754,
+            "canonicalJsonBytes": 2201754,
+            "categoryCanonicalBytes": {
+              "tools": 1907640,
+              "settings": 5472,
+              "message:system": 201960,
+              "message:user": 32760,
+              "message:assistant": 37209,
+              "message:tool": 15561,
+              "jsonStructuralRemainder": 1152
+            },
+            "toolOutputHashes": [
+              "071af85d9dbe2de797e0f041816e76b7bdc4451821b9e04f774f8b45e500d0e8",
+              "1a3683765d9493f88fd3a135a2e48d629efddabe7f10ddfc3444badf58934852",
+              "26e4f5351fd026507ed062a0f39989628268b448d8f037c6dd89e43372c85103",
+              "461cb68a27743cfc3c6ae23d9d0858c460553fe51cca88617c558011bad71271",
+              "4fc504698b40add2d44fcd19ccd7629dc88938bda28745944f3dd1702695958e",
+              "63b14405b851ac377443fea6148f2a79fae0fe3a23a0981c8dae0384c3ac5a4e",
+              "7f279dfac003f4867a316f2e517283de321835e1f865ceb0b143658493e4a816",
+              "98f6c427807063d5e6f846aab7baf2211360b1cd29f842fb66a2a2f53d6ac881",
+              "f44f8936c2191ebe2f45dd14bd4c27d79b632737f48c4341cb37b741a3bcd5b2"
+            ],
+            "distinctToolOutputBytes": 9
+          },
+          "loom": {
+            "requests": 24,
+            "rounds": {
+              "5": 2,
+              "6": 2,
+              "4": 2,
+              "3": 2,
+              "7": 2,
+              "2": 2,
+              "10": 2,
+              "8": 2,
+              "9": 2,
+              "12": 2,
+              "1": 2,
+              "11": 2
+            },
+            "originalWireBytes": 2398882,
+            "canonicalJsonBytes": 2398882,
+            "categoryCanonicalBytes": {
+              "tools": 1907640,
+              "settings": 5472,
+              "message:system": 204792,
+              "message:user": 227056,
+              "message:assistant": 37209,
+              "message:tool": 15561,
+              "jsonStructuralRemainder": 1152
+            },
+            "toolOutputHashes": [
+              "071af85d9dbe2de797e0f041816e76b7bdc4451821b9e04f774f8b45e500d0e8",
+              "0dea9cb4a699e51da035cede6dc8b902a5ab85ae691cf07c0ee1604e1eb78460",
+              "26e4f5351fd026507ed062a0f39989628268b448d8f037c6dd89e43372c85103",
+              "478bf0f9a2618318b7c18950fe5cb6745dfcec3dca5f79dda0263196c8f32859",
+              "4fc504698b40add2d44fcd19ccd7629dc88938bda28745944f3dd1702695958e",
+              "98f6c427807063d5e6f846aab7baf2211360b1cd29f842fb66a2a2f53d6ac881",
+              "efa4b84662d676c8841ec583b65f32e0bfeba57745ca9da86d5051a37fc49eb8"
+            ],
+            "distinctToolOutputBytes": 7
+          },
+          "print": {
+            "requests": 24,
+            "rounds": {
+              "2": 2,
+              "12": 2,
+              "9": 2,
+              "4": 2,
+              "1": 2,
+              "11": 2,
+              "7": 2,
+              "6": 2,
+              "3": 2,
+              "10": 2,
+              "5": 2,
+              "8": 2
+            },
+            "originalWireBytes": 2232965,
+            "canonicalJsonBytes": 2232965,
+            "categoryCanonicalBytes": {
+              "tools": 1861451,
+              "settings": 5472,
+              "message:system": 201936,
+              "message:user": 110028,
+              "message:assistant": 37209,
+              "message:tool": 15561,
+              "jsonStructuralRemainder": 1308
+            },
+            "toolOutputHashes": [
+              "14005275d752ec3cf8b7ad05f8b00845dfa877f4cbe9637a748795f94e329b22",
+              "7e0076c713605b4c245ff23fc5ed615ddd5104460207199aee60c389ef5f1628",
+              "b337e2bc0c546b5adf786a0cc9564951fca9c545835f7de234e7f999d196b32e",
+              "c9c242bdc2a139948812f56dcd01b712bcdcdd4b5ea60e461776bb4078025b00"
+            ],
+            "distinctToolOutputBytes": 4
+          }
+        },
+        "rawArchiveErrors": [],
+        "rawRequests": 72,
+        "scopeLimits": [
+          "Bytes are not tokens or bills.",
+          "Synthetic response stream contains no reasoning and does not trigger compaction.",
+          "Kimi full tool output has varying wall-clock prefix despite fixed file bytes."
+        ]
+      },
+      "executionSourceHashes": {
+        "run.mjs": "4c4abea6ed10b980a63c9f97a99c5f313c72ea2fa6f6161376cdd77d01cac215",
+        "wrapper.mjs": "aa60b0a13e1b4c6ba0c95e577e833055e0a12c85ff320c8d1e7b5c58a26f069f",
+        "block-run.mjs": "75fd24e04c879ec2057e98410a56876d59d0417be66ed7decd7a0d6063befaa6",
+        "fixed-trajectory.mjs": "00892cc68a3832ec25dc6929795fbaac2dfae4c44831f1b6a599f37857be28c3",
+        "fake.mjs": "d9713dd9234236da119bfa5943dffb89a6742924552b048816052617cf5bdf84",
+        "config.mjs": "b629e22bc7e4b0206bad0ce44ed20944e0f70bbbf2d811a12abb0622a79326c6"
+      },
+      "methodTests": 7,
+      "archiveChecks": "Original request/response SHA, complete HTTP200 SSE/DONE, exact 2 requests/round/arm for 12 rounds; one current task occurrence; exact fixed tool args; actual successful file output checked."
+    },
+    "pi": {
+      "lifecycle": {
+        "providerLaunches": 25,
+        "passiveProcesses": 25,
+        "exactPidCensus": true,
+        "allSealed": true,
+        "observedProviderPidsGone": true,
+        "loopbackOrigins": 1,
+        "capturedResponses": 48,
+        "sessionsPerArm": {
+          "native": 1,
+          "loom": 1
+        },
+        "tools": {
+          "native": {
+            "calls": 12,
+            "successfulExactFileOutputs": 12
+          },
+          "loom": {
+            "calls": 12,
+            "successfulExactFileOutputs": 12
+          }
+        },
+        "sourceAndCleanup": "Runner final integrity empty and temp config removed; independently checked all 25 actual provider PIDs, including availability probe."
+      },
+      "payloadAccounting": {
+        "arms": {
+          "loom": {
+            "requests": 24,
+            "rounds": {
+              "12": 2,
+              "7": 2,
+              "1": 2,
+              "11": 2,
+              "10": 2,
+              "6": 2,
+              "3": 2,
+              "5": 2,
+              "2": 2,
+              "9": 2,
+              "8": 2,
+              "4": 2
+            },
+            "originalWireBytes": 408382,
+            "canonicalJsonBytes": 408382,
+            "categoryCanonicalBytes": {
+              "tools": 68184,
+              "settings": 3480,
+              "message:developer": 237936,
+              "message:user": 55804,
+              "message:assistant": 30609,
+              "message:tool": 11241,
+              "jsonStructuralRemainder": 1128
+            },
+            "toolOutputHashes": [
+              "5a1777419a9db08392bafe258f57fc19f4c3bd94d9372d34ae985dd5782ec975"
+            ],
+            "distinctToolOutputBytes": 1
+          },
+          "native": {
+            "requests": 24,
+            "rounds": {
+              "3": 2,
+              "10": 2,
+              "11": 2,
+              "12": 2,
+              "1": 2,
+              "5": 2,
+              "8": 2,
+              "7": 2,
+              "6": 2,
+              "4": 2,
+              "9": 2,
+              "2": 2
+            },
+            "originalWireBytes": 212958,
+            "canonicalJsonBytes": 212958,
+            "categoryCanonicalBytes": {
+              "tools": 68184,
+              "settings": 3480,
+              "message:developer": 68832,
+              "message:user": 29484,
+              "message:assistant": 30609,
+              "message:tool": 11241,
+              "jsonStructuralRemainder": 1128
+            },
+            "toolOutputHashes": [
+              "5a1777419a9db08392bafe258f57fc19f4c3bd94d9372d34ae985dd5782ec975"
+            ],
+            "distinctToolOutputBytes": 1
+          }
+        },
+        "rawArchiveErrors": [],
+        "rawRequests": 48,
+        "scopeLimits": [
+          "Bytes are not tokens or bills.",
+          "Synthetic response stream contains no reasoning and does not trigger compaction.",
+          "Pi fake-local/fake-final does not establish DeepSeek-specific thinking serialization."
+        ]
+      },
+      "executionSourceHashes": {
+        "run.mjs": "5bb58e86cd0b6a94624ca072855637c9979ec274f9c6c17a11dac78df51649f0",
+        "wrapper.mjs": "ba416d6896b0d8a3c75abe216056111fdf531d3e435afe43c0c384267c9c31bf",
+        "run-block.mjs": "1fa1fecfda10aab923796586b17bd17cbab46d76f79d42d35c7dbad6af45b4bb",
+        "method.mjs": "16d67cba93af69572718eca14b911abb4a319471ebaafd69605b09d114094e06"
+      },
+      "methodTests": 2,
+      "archiveChecks": "Original request/response SHA, complete HTTP200 SSE/DONE, exact 2 requests/round/arm for 12 rounds; one current task occurrence; exact fixed tool args; actual successful file output checked.",
+      "productSourceBeforeAfter": {
+        "packages/agent-host/src/pi-print-runtime.ts": "ceec41379e62e8c0ddfb9c8b26e5f31b6ea1d2cb11694b713b38ad7f5fad617c",
+        "packages/agent-host/src/pi-print-driver.mjs": "0713b1a68ec50358015c5d789aad6be0b3f0fe6ae1bffbe4d1c1beee50e5fabb",
+        "packages/agent-host/src/pi-final-output.mjs": "8aecca1f73c380cdff69ae26a81072438b5c09a3a792b64ac6f17f9e7ddfc934",
+        "packages/agent-host/src/pi-usage.mjs": "7a771ff525deeeccf8289497ef4266838854698ca39bd29a4dc9a04432f3f5f1",
+        "packages/agent-host/src/provider-launch-arguments.js": "313d4a04f468c6fa0091dcdc28902b4b6a059e7d8f7c43ab37fb2866eff1eb1b",
+        "packages/agent-host/src/pi-model-catalog-probe.ts": "e7744d49a510e60e55662bd305fd25ba9259ad0ba4ad0474ae7b2b24e0e7380d",
+        "packages/daemon/src/runtime-profile-composition.ts": "d4310f669ef0b819937757e4f669a394814f7d92ac2a4fa065848f57bb9894e1"
+      }
+    }
+  },
+  "limits": [
+    "All responses are localhost synthetic. Scripted usage values have no model-cost meaning.",
+    "Kimi business file bytes and tool command are fixed, but full tool results include variable wall-time prefixes; history bytes are not wholly identical.",
+    "Pi uses fake-local/fake-final, with no DeepSeek thinking stream, so this does not establish provider-specific reasoning serialization.",
+    "No compaction was triggered. Ordinary native history is retained; this is not a long-context compaction test.",
+    "Native and product follow different standing/wake contexts; byte differences are measured, not converted to token ratios or billed savings.",
+    "No hidden reasoning, prompt text, auth content, or account secret is included in this report."
+  ],
+  "independentAnalysisHashes": {
+    "audit_actual.py": "26ce6eb0196d33f4510256325608115ab4e18f47f85ee1b5f72217e190a15553",
+    "audit_lifecycle.py": "f4da97bb0f0d5cd86a7ef42cde1f7f5751261eb6c38652ef12cb16c041a19e5b",
+    "actual-fixed-byte-audit.json": "3b0ff691c8376c75719381f69762a92866f727a2fb9580658ccbcacf699abe82",
+    "actual-fixed-lifecycle-audit.json": "d2c771dd2ad398ec0d140e41ad3ae10cc3894e5b67a91003afb523e088e856f0"
+  }
+}
