@@ -1,0 +1,35 @@
+{
+  "at": "2026-10-10T03:38:44.956Z",
+  "sourceCommit": "afda1046005b8d1010c2c4b7cf8a0ada5e862de7",
+  "sourceSha256": "a33ceacb0737a19e788febccf8d600e5e3a8b105085e54b2810371b509dd667b",
+  "pushed": true,
+  "service": "com.loom.evo",
+  "schema": 84,
+  "backup": {
+    "verified": true,
+    "databases": 2,
+    "files": 302
+  },
+  "gracefulRestart": true,
+  "businessTablesUnchanged": 11,
+  "sevenTrialFlagsOff": true,
+  "page": {
+    "historyVerified": true,
+    "errors": [],
+    "roles": 39,
+    "memoryListSucceeded": true
+  },
+  "checks": {
+    "fullRepository": "passed",
+    "corePassed": 3075,
+    "coreSkipped": 22,
+    "efficiencyPassed": 545,
+    "format": "passed",
+    "diff": "passed"
+  },
+  "limits": [
+    "Backend/runtime unchanged since Pi implementation except gate-only approval and exact-version audit registration",
+    "Fresh existing page and read APIs, not exhaustive UI acceptance",
+    "No complete five-CLI performance acceptance"
+  ]
+}
