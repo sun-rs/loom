@@ -230,6 +230,7 @@ test("audited native versions are not-applicable, never falsely memory-off, and 
   try {
     for (const [provider, version] of [
       ["kimi", "0.39.1"],
+      ["kimi", "2.1.1"],
       ["opencode", "1.18.32"],
       ["opencode", "1.18.35"],
     ]) {
@@ -305,7 +306,7 @@ test("audited native versions are not-applicable, never falsely memory-off, and 
       }
       writeFileSync(
         executable,
-        `#!${process.execPath}\nconsole.log('999.0.0');`,
+        `#!${process.execPath}\nconsole.log(${JSON.stringify(provider === "kimi" ? "2.1.2" : "999.0.0")});`,
         { mode: 0o700 },
       );
       assert.throws(

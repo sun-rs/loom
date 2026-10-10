@@ -3,8 +3,9 @@ import { isAbsolute } from "node:path";
 // Bounded source audits, not invented disable switches. An upgrade requires review.
 export const NATIVE_MEMORY_VERSION_AUDITS = Object.freeze({
   kimi: Object.freeze({
-    version: "0.39.1",
-    sourceRevision: "5efca0c3116743855c28426000073bfe34a4862f",
+    version: "2.1.1",
+    sourceRevision:
+      "installed-bundle-sha256:2563a338c94868a34e1bfd2e5579067d5a472acf4cb0bf350a3bfe1092bbe59d",
   }),
   opencode: Object.freeze({
     version: "1.18.35",
@@ -12,6 +13,10 @@ export const NATIVE_MEMORY_VERSION_AUDITS = Object.freeze({
   }),
 });
 // Historical exact-version evidence remains verifiable; this is not a semver range.
+const PREVIOUS_KIMI_AUDIT = Object.freeze({
+  version: "0.39.1",
+  sourceRevision: "5efca0c3116743855c28426000073bfe34a4862f",
+});
 const PREVIOUS_OPENCODE_AUDIT = Object.freeze({
   version: "1.18.32",
   sourceRevision: "545f51d26cc39a907d2867492d498d9607ea5fa4",
@@ -19,6 +24,8 @@ const PREVIOUS_OPENCODE_AUDIT = Object.freeze({
 export function nativeMemoryAuditForVersion(provider, version) {
   const current = NATIVE_MEMORY_VERSION_AUDITS[provider];
   if (current?.version === version) return current;
+  if (provider === "kimi" && version === PREVIOUS_KIMI_AUDIT.version)
+    return PREVIOUS_KIMI_AUDIT;
   if (provider === "opencode" && version === PREVIOUS_OPENCODE_AUDIT.version)
     return PREVIOUS_OPENCODE_AUDIT;
 }

@@ -1,0 +1,67 @@
+{
+  "scope": "Read-only installed source review; zero CLI/model/auth calls. No credential file content read or copied.",
+  "version": "2.1.1",
+  "source": "/opt/homebrew/lib/node_modules/@moonshot-ai/kimi-code/dist/main.mjs",
+  "sourceSha256": "2563a338c94868a34e1bfd2e5579067d5a472acf4cb0bf350a3bfe1092bbe59d",
+  "packageSha256": "61fa2d6169c8b6b46ca47f529d5ea52415735faddac5640e960d2c3a7a13d441",
+  "priorVersion": "0.39.1",
+  "priorBundleSha256": "ed24f532d07e5d00777ae20b42ed18437e116b050bbcfc6ae0f3bc90affca337",
+  "differenceLimit": "Installed bundle changed. Old bundle byte content not present in this narrow review; cannot assert semantic equivalence based on version or symbols alone.",
+  "memory": {
+    "automaticLongTermFeature": "No dedicated native auto-memory generation/load feature, MEMORY.md default or disable flag found in audited bundled feature regions. Supports provisional not-applicable source audit, not a fabricated off switch.",
+    "notAutoMemory": [
+      "contextMemory retains same-session messages and compaction",
+      "klient transports/memory is in-process RPC",
+      "Anthropic SDK memory-store resource classes are vendor API bindings, not evidence Kimi automatically invokes them"
+    ],
+    "fileInstructions": {
+      "lines": "119723-119781",
+      "paths": [
+        "brandHome/AGENTS.md",
+        "HOME/.agents/AGENTS.md or agents.md",
+        "project ancestor .kimi-code/AGENTS.md",
+        "project ancestor AGENTS.md or agents.md"
+      ],
+      "constraint": "Official AGENTS files are automatically loaded and watched; both arms must use same controlled policy and prove planted unrelated instructions absent. Do not claim these are disabled by absence of auto-memory."
+    },
+    "currentGate": "scripts/cli-efficiency/native-memory-version.mjs still recognizes only exact Kimi0.39.1; 2.1.1 must receive explicit source audit + TDD before paid admission."
+  },
+  "usage": {
+    "lines": ["184876-184909", "193373-193386", "269938-269973"],
+    "nativeFields": [
+      "inputOther",
+      "inputCacheRead",
+      "inputCacheCreation",
+      "output"
+    ],
+    "inputFormula": "inputOther + inputCacheRead + inputCacheCreation",
+    "sourceZeroFilling": "parseOpenAIUsage uses prompt_tokens??0/output??0 and cached??0. endMachineStep substitutes emptyUsage when absent. Native zero is therefore not proof provider reported zero.",
+    "requiredEvidence": "Capture every actual HTTP attempt and raw primary usage; compare unique request/response/native wire/Kernel. Missing primary stays unknown; optional cache/reasoning absence must not erase reported input/output. No inferred zero.",
+    "stepEnd": [
+      "turnId",
+      "uuid(stepUuid)",
+      "step",
+      "finishReason",
+      "usage",
+      "messageId",
+      "providerFinishReason",
+      "rawFinishReason"
+    ]
+  },
+  "tools": {
+    "lines": "265242 and276087-276132",
+    "construction": "Selected tool registry shaped dynamically; tool schemas cannot be certified by an old fixed tool count.",
+    "requiredEvidence": "New actual installed CLI localhost two-arm capture must compare complete nonempty model-facing schemas with same model/effort and prove real Worker read plus peer/oracle denial."
+  },
+  "wire": {
+    "line": "127710 AGENT_WIRE_RECORD_KEY=wire.jsonl",
+    "journal": "Scoped append/read APIs and persisted turn/step IDs remain visible; source symbols alone do not prove old parser compatibility.",
+    "requiredEvidence": "Actual ACP two-turn same-session and raw HTTP↔step.end↔Kernel correlation before paid; freeze current bundle/dependencies/config."
+  },
+  "cacheProbe": {
+    "lines": "216315-216369",
+    "meaning": "Listens to existing usage first fork record and emits telemetry; inspected service does not issue its own model request.",
+    "limit": "Does not prove no other feature issues model requests; request census remains necessary."
+  },
+  "account": "Reuse current native auth through existing single owner. No automatic login, credential copy, downgrade or account repair authorized by this source audit."
+}
