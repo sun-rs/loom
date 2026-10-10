@@ -18,10 +18,12 @@ import {
 } from "./drift-opencode-guard.mjs";
 import { assertKimiRequests, kimiWireRound } from "./kimi-usage.mjs";
 // Exact-format admission evidence: docs/evo/evidence/2026-10-09-production-cost-preflight/provider-format-audit.json
+// Kimi 2.1.1: docs/evo/evidence/2026-10-10-five-cli-admission/kimi-211-source-review.json
+// Each paid batch still verifies actual wire/HTTP/Kernel coverage before release.
 export const MULTI_PROVIDER_VERSIONS = Object.freeze({
   codex: ["codex-cli 0.160.0", "codex-cli 0.160.1"],
   claude: ["2.1.287 (Claude Code)", "2.1.293 (Claude Code)"],
-  kimi: ["0.39.1"],
+  kimi: ["0.39.1", "2.1.1"],
   opencode: ["1.18.32", "1.18.35"],
 });
 export function assertMultiProviderVersion(provider, version) {

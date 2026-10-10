@@ -62,6 +62,8 @@ test("business long manifest records supported approvals and rejects Pi until th
     /profile/,
   );
   assert.throws(() => assertMultiProviderVersion("kimi", "0.40.0"), /version/);
+  assert.doesNotThrow(() => assertMultiProviderVersion("kimi", "2.1.1"));
+  assert.throws(() => assertMultiProviderVersion("kimi", "2.1.2"), /version/);
 });
 const at = "2026-10-07T00:00:01.000Z";
 const round = {
