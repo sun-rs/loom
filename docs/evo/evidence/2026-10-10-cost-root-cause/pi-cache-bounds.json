@@ -1,0 +1,11 @@
+{
+  "scope": "Exact mathematical bounds given 0<=missingCached<=thatResponsePrompt; no estimation or missing-as-zero substitution",
+  "loomCachedRange": [5260800, 5302748],
+  "loomUncachedRange": [234407, 276355],
+  "nativeUncached": 115396,
+  "uncachedRatioRange": [2.031326909078304, 2.3948403757495926],
+  "cachedRatioRange": [2.25217820154529, 2.2701363773357444],
+  "exactCachedAndUncachedRemainUnknown": true,
+  "threeCategoryConditional": "If both arms share fixed nonnegative cached-input/uncached-input/output unit prices with at least one positive price, all three quantities are strictly greater in Loom, hence calculated charge is greater. Not an observed invoice and does not assume provider billing rules.",
+  "assertionsPassed": true
+}

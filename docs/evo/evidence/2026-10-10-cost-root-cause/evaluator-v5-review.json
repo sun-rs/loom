@@ -1,0 +1,78 @@
+{
+  "scope": "Independent read-only v5 versus frozen v4 evaluator review; no CLI/model execution or old-result edits",
+  "verdict": "No blocking defect found for future runner admission under current ordinary subprocess assumptions; not a switch of existing runners or paid validation",
+  "preserved": [
+    {
+      "file": "plan.json",
+      "byteIdentical": true,
+      "sha256": "f05f55e589f684fc48e1c7f4f4724bd0ec6207446f6b22d25454637b75e62e1d"
+    },
+    {
+      "file": "schemas.json",
+      "byteIdentical": true,
+      "sha256": "5a41752182bfc0c7cd6c0a8ff3911d9859377123ba021713ea4c07ad628dd566"
+    },
+    {
+      "file": "capture.py",
+      "byteIdentical": true,
+      "sha256": "940462ca04aad56d6ef8abef370f57bc8f4078fde826908165dda6903bf4e548"
+    },
+    {
+      "file": "snapshot.py",
+      "byteIdentical": true,
+      "sha256": "640dc6a617096b7a9676e7b06fd24d16166d19d1c9ea3d8585af287ad0f7dcc5"
+    },
+    {
+      "file": "policy.mjs",
+      "byteIdentical": true,
+      "sha256": "d7b646f4dfc21e3ed4434956bd3cca8b16ee593e5dd39dda72056b54472e4d59"
+    },
+    {
+      "file": "oracle/cases.json",
+      "byteIdentical": true,
+      "sha256": "c8f93225f3c4c51bd0880808823bd9430f90b0c3b257a51f7ee3f7019c86fd2f"
+    },
+    {
+      "file": "oracle/reference.py",
+      "byteIdentical": true,
+      "sha256": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03"
+    },
+    {
+      "file": "workspace/README.md",
+      "byteIdentical": true,
+      "sha256": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2"
+    },
+    {
+      "file": "workspace/invoice.py",
+      "byteIdentical": true,
+      "sha256": "f2b52da25575936bbde949b3c0740ad3a255cbc3e92e1951766fde1c168a40d1"
+    }
+  ],
+  "evaluatorChanges": {
+    "pythonPATH": "Prepend directory of exact evaluator PYTHON to original /usr/bin:/bin. Nested barepython3 now resolves same interpreter, while controller absolutepath unchanged. Other names in that directory may also resolve there; this is intentional environment normalization, not unchangedPATH.",
+    "timeout": "communicate timeout stays3seconds. start_new_session creates owned process group; timeout signals onlyp.pid group TERM, waits0.25s thenKILL and drains. Original124/candidate timedout verdict retained. Cleanupgrace is not extra evaluationtime.",
+    "normalCompletion": "Returns sameactual exit/stdout/stderr without signals. New session detaches from inherited controllingterminal/processgroup; evaluator already pipebased, no TTYcontract.",
+    "sandbox": "Profile text/candidate snapshot construction/readwrite/network restrictions unchanged."
+  },
+  "tddEvidence": {
+    "readExistingRedLog": "Both nestedinterpreter mismatch and survivingowneddescendant reproduced",
+    "readExistingGreenLog": "2tests pass",
+    "readExistingAllPython": "27tests pass",
+    "readExistingAllNode": "2tests pass",
+    "independentReviewerReranTests": false
+  },
+  "limits": [
+    "Process-group cleanup covers descendants remaining in ownedgroup; not a new strong isolation framework against deliberate setsidescape.",
+    "Final communicate is unbounded if an escaped process keeps inheritedpipes; no such behavior observed in currentfixture. Do not market as adversarial process containment.",
+    "Normal-success detachedbackgroundchildren are not cleanedbytimeout branch; currentcandidatecontract expects synchronousselftests.",
+    "Changes improve futuremeasurement; historical selftestfalse/results remain frozen."
+  ],
+  "hashes": {
+    "evaluator.py": "2025463cd47e75bf83f2cbad8dac21bff002ff37bbc0534bcbeba434c7bbb325",
+    "test_process_boundary.py": "3f321191e2297ba86ea4aac1040498fe154dcd965e30512c3f468c237534682b",
+    "process-red-final.log": "59811951384356def92bd40b1376212296740df8a1536dcbe2ee332796f6fddc",
+    "process-green.log": "0c1ba216c810a4b184b299614c38b480a61a47d0fc70cd5ccdae8c4bfc4e4f8b",
+    "all-python.log": "d3b11dcf721c6c02cff1139ebdbd9a7ab8f0f84d1c3f8bdd61ae9d0b0d0f2b2c",
+    "all-node.log": "857da6ceadf2b1874af126ac9568f12529086763d840e5f0a13d0797b34b1711"
+  }
+}

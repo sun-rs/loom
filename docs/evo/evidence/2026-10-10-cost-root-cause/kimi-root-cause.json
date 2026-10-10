@@ -1,0 +1,347 @@
+{
+  "batch": "P182",
+  "scope": "Offline root-cause and accounting audit; zero new provider requests; original evidence unchanged.",
+  "accounting": {
+    "verifiedResponseCount": 171,
+    "native": {
+      "input": 2757171,
+      "output": 26950,
+      "cachedInput": 2673408,
+      "uncachedInput": 83763,
+      "requests": 75,
+      "meanInput": 36762.28
+    },
+    "loom": {
+      "input": 4005653,
+      "output": 29297,
+      "cachedInput": 3947776,
+      "uncachedInput": 57877,
+      "requests": 96,
+      "meanInput": 41725.552083333336
+    },
+    "errorFound": false,
+    "cacheDefinition": "cached_tokens equals prompt_tokens_details.cached_tokens on every response; cached is subset of prompt_tokens, not added again; uncached=prompt-cached; total_tokens=prompt+completion on all171.",
+    "duplicateUsageFrames": {
+      "native": {
+        "1": 75
+      },
+      "loom": {
+        "1": 96
+      }
+    },
+    "billingNotObserved": true
+  },
+  "descriptiveDecomposition": {
+    "inputRatio": 1.4528126837254562,
+    "requestCountRatio": 1.28,
+    "meanInputRatio": 1.1350099091605128,
+    "identity": "input ratio = request-count ratio \u00d7 average-input-per-request ratio; descriptive identity, not causal attribution",
+    "extraTotalInput": 1248482,
+    "extraRequests": 21,
+    "firstRequestDifference": 1592,
+    "cacheDefinition": "cached_tokens equals prompt_tokens_details.cached_tokens on every response; cached is subset of prompt_tokens, not added again; uncached=prompt-cached; total_tokens=prompt+completion on all171."
+  },
+  "perRoundFirstRequest": [
+    {
+      "round": 1,
+      "nativeFirstInput": 20134,
+      "loomFirstInput": 21726,
+      "difference": 1592,
+      "nativeRequests": 8,
+      "loomRequests": 10,
+      "nativeMessageCount": 3,
+      "loomMessageCount": 2
+    },
+    {
+      "round": 2,
+      "nativeFirstInput": 21915,
+      "loomFirstInput": 25596,
+      "difference": 3681,
+      "nativeRequests": 4,
+      "loomRequests": 4,
+      "nativeMessageCount": 21,
+      "loomMessageCount": 23
+    },
+    {
+      "round": 3,
+      "nativeFirstInput": 23366,
+      "loomFirstInput": 26796,
+      "difference": 3430,
+      "nativeRequests": 5,
+      "loomRequests": 6,
+      "nativeMessageCount": 30,
+      "loomMessageCount": 31
+    },
+    {
+      "round": 4,
+      "nativeFirstInput": 25236,
+      "loomFirstInput": 28505,
+      "difference": 3269,
+      "nativeRequests": 6,
+      "loomRequests": 8,
+      "nativeMessageCount": 41,
+      "loomMessageCount": 43
+    },
+    {
+      "round": 5,
+      "nativeFirstInput": 28699,
+      "loomFirstInput": 31205,
+      "difference": 2506,
+      "nativeRequests": 5,
+      "loomRequests": 6,
+      "nativeMessageCount": 54,
+      "loomMessageCount": 59
+    },
+    {
+      "round": 6,
+      "nativeFirstInput": 31200,
+      "loomFirstInput": 33770,
+      "difference": 2570,
+      "nativeRequests": 7,
+      "loomRequests": 14,
+      "nativeMessageCount": 65,
+      "loomMessageCount": 71
+    },
+    {
+      "round": 7,
+      "nativeFirstInput": 35169,
+      "loomFirstInput": 41408,
+      "difference": 6239,
+      "nativeRequests": 6,
+      "loomRequests": 6,
+      "nativeMessageCount": 80,
+      "loomMessageCount": 99
+    },
+    {
+      "round": 8,
+      "nativeFirstInput": 38998,
+      "loomFirstInput": 44882,
+      "difference": 5884,
+      "nativeRequests": 10,
+      "loomRequests": 7,
+      "nativeMessageCount": 93,
+      "loomMessageCount": 111
+    },
+    {
+      "round": 9,
+      "nativeFirstInput": 42610,
+      "loomFirstInput": 47303,
+      "difference": 4693,
+      "nativeRequests": 6,
+      "loomRequests": 10,
+      "nativeMessageCount": 114,
+      "loomMessageCount": 125
+    },
+    {
+      "round": 10,
+      "nativeFirstInput": 45312,
+      "loomFirstInput": 51668,
+      "difference": 6356,
+      "nativeRequests": 10,
+      "loomRequests": 7,
+      "nativeMessageCount": 127,
+      "loomMessageCount": 145
+    },
+    {
+      "round": 11,
+      "nativeFirstInput": 49082,
+      "loomFirstInput": 54249,
+      "difference": 5167,
+      "nativeRequests": 4,
+      "loomRequests": 4,
+      "nativeMessageCount": 148,
+      "loomMessageCount": 159
+    },
+    {
+      "round": 12,
+      "nativeFirstInput": 53772,
+      "loomFirstInput": 57738,
+      "difference": 3966,
+      "nativeRequests": 4,
+      "loomRequests": 14,
+      "nativeMessageCount": 157,
+      "loomMessageCount": 167
+    }
+  ],
+  "actualHttpEvidence": {
+    "systemDifference": "First request system differs only cwd: native8228/Loom8303 characters. No ACP-only large system instruction block.",
+    "systemVariants": {
+      "native": [
+        {
+          "sha256": "c96bdf2fc3b909c1504af383a2e362e66d98512499667ac72e20f04476a1dcc1",
+          "chars": 8228,
+          "requests": 75
+        }
+      ],
+      "loom": [
+        {
+          "sha256": "9b8446948b4b7458a0860c45a2cdb3f3a289fb2ec485e60b52245d38b9a03170",
+          "chars": 8303,
+          "requests": 96
+        }
+      ]
+    },
+    "modelThinking": {
+      "native": {
+        "models": ["k3-256k"],
+        "thinking": [
+          "{\"effort\": \"low\", \"keep\": \"all\", \"type\": \"enabled\"}"
+        ]
+      },
+      "loom": {
+        "models": ["k3-256k"],
+        "thinking": [
+          "{\"effort\": \"low\", \"keep\": \"all\", \"type\": \"enabled\"}"
+        ]
+      }
+    },
+    "schemaVariants": {
+      "native": [
+        {
+          "sha256": "2f801ade948b0c0622fcd53d2ab50d186fdfdd5539126bf0d5338f2ca24f1bd1",
+          "requests": 64
+        },
+        {
+          "sha256": "07a67bd6273d1e2ddcf5cf2063345f3bfd60ed93731bb270b2628a935fdf3f03",
+          "requests": 11
+        }
+      ],
+      "loom": [
+        {
+          "sha256": "2f801ade948b0c0622fcd53d2ab50d186fdfdd5539126bf0d5338f2ca24f1bd1",
+          "requests": 96
+        }
+      ]
+    },
+    "fullRequestBodyRetained": false,
+    "missingEvidence": "Recorder retained response bytes, requestBytes, actual system strings, model/thinking, tools SHA/names, but not full request.messages/tools. Native wire cannot prove byte-exact HTTP history/material transmission.",
+    "recorderSourceSha256": "c166aebe9bdbcaebceb34c29c3d84edce1edaa0babb992f9f948a6ea072121a8"
+  },
+  "nativeWireEvidence": {
+    "all12BusinessPromptsExactSubstringOnceBothArms": true,
+    "olderCompleteTasksRepeatedInNewPrompt": 0,
+    "previousFinalRepeatedInNewPrompt": false,
+    "loomFirstBusinessChars": 1044,
+    "loomFirstTurnChars": 8327,
+    "loomFirstAdditionalChars": 7283,
+    "nativeFirstAdditionalChars": 29,
+    "loomSubsequentWrapperChars": [
+      173, 173, 173, 173, 173, 173, 173, 173, 173, 173, 175
+    ],
+    "standingRepeatedLater": false,
+    "compactionEvents": {
+      "native": [],
+      "loom": []
+    },
+    "memoryInterpretation": "Normal same-session accumulated history remains. No new turn repeats full prior tasks/final reply; that does not mean prior conversation disappears from model input.",
+    "permissionModes": {
+      "native": ["auto"],
+      "loom": ["manual"]
+    },
+    "nativePermissionReminder": {
+      "count": 12,
+      "eachChars": 508
+    },
+    "loomLocalApprovalInteractions": 63,
+    "modelSettingsMatch": {
+      "modelAlias": "kimi-code/k3-256k",
+      "model": "k3-256k",
+      "effort": "low",
+      "thinkingKeep": "all",
+      "maxTokens": 262144
+    },
+    "configurationMatch": {
+      "matched": true,
+      "native": {
+        "providerId": "managed:kimi-code",
+        "providerType": "kimi",
+        "modelAlias": "kimi-code/k3-256k",
+        "model": "k3-256k",
+        "effort": "low",
+        "capabilities": [
+          "thinking",
+          "always_thinking",
+          "image_in",
+          "tool_use",
+          "dynamically_loaded_tools"
+        ]
+      },
+      "loom": {
+        "providerId": "managed:kimi-code",
+        "providerType": "kimi",
+        "modelAlias": "kimi-code/k3-256k",
+        "model": "k3-256k",
+        "effort": "low",
+        "capabilities": [
+          "thinking",
+          "always_thinking",
+          "image_in",
+          "tool_use",
+          "dynamically_loaded_tools"
+        ]
+      }
+    }
+  },
+  "realConfounds": [
+    "Native print auto permission vs product ACP manual permission with Host approvals: native injects508-char reminder every launch; product does not. Different execution and tool-routing modes, not pure prompt A/B.",
+    "Native-first order each round, shared machine/provider and cache state; no causal cost-savings attribution.",
+    "Initial schema matches; eleven native requests later omit ReadMediaFile while all96 product requests retain27 tools. No actual ReadMediaFile calls, cause not proven.",
+    "First platform standing is7283 chars above task (native29); subsequent room transport wrappers add173/175chars. Both this standing and prior business/tool history can persist in native context.",
+    "Loom generated21 extra responses; R6/R12 account for17 of these (7 and10). Both involve real code/test/doc review, all costs retained; no proof prompt overhead caused these choices."
+  ],
+  "errorsAndLimits": [
+    "No token summation/cache double-count error found: original1.45281268 reproduces independently.",
+    "Calling1.453 a billing-price multiplier would be incorrect; uncached input is0.6909614\u00d7 and actual invoice absent.",
+    "Claiming full HTTP prompt/history identity would exceed saved evidence. Only actual system/settings/schema digests plus native-wire prompts are available.",
+    "Original evaluator selftest timeouts for Loom R9\u201312 remain in frozen evidence, but controlled offline diagnosis establishes an evaluator PATH/Apple launcher/sandbox defect. They are not evidence of inferior generated business code. With only child python3 PATH fixed and unchanged source/sandbox/3-second deadline, all four selftests pass."
+  ],
+  "nextMinimalMeasurement": [
+    "If another approved run is requested, retain redacted/raw private full outgoing request JSON at the existing observer boundary, without headers/credentials. Do not infer HTTP history from wire events.",
+    "Use matched native execution/permission mode if the purpose is isolating Host protocol effect; otherwise explicitly label print-vs-ACP end-to-end comparison.",
+    "Retain exact usage and all extra business requests; analyze fixed first-generation/number/history dimensions without subtracting presumed randomness."
+  ],
+  "evidenceSha256": {
+    "independent-request-audit.json": "0c80bc17b49ef37f6c7ccf5dc02f13caa93493e4a6f3f6bb673fe59e2c9af49b",
+    "new-turn-repeat-audit.json": "37a39ecbb2db858e0a7a84322a937e89307c84630bef73b068aa243c57c004a1",
+    "system-diff.private.txt": "6d7455385a38ed1a2896cecccacb1d8275ef4d8a81d160fa194f5a050cf7ccc7",
+    "controller/kimi-r9-root-cause.json": "1c29dc620d0d8cef1d5c1b5b801c0c583129283bf61c97b0558d551803da8297",
+    "controller/kimi-r9-r12-path-replay.json": "8f18646e8d5a1dab0ab5cf82da0c8809c9a974b3fbaa3d60a78e6692b038ce53",
+    "public-root-cause.before-evaluator-diagnosis.json": "f63a9e47377bd0767b22815047660c98fde35849cf89a3c991d9fb071cf3d99b"
+  },
+  "postHocEvaluatorDiagnosis": {
+    "rootCause": "Bare python3 resolves Apple launcher; sandbox denies xcrun_db cache writes, adding about one second and stderr noise per child invocation. Direct same-version CLT Python3.9 also passes, excluding a Python3.13 semantics fix.",
+    "originalPaidRecordsAndVerdictsUnchanged": true,
+    "providerCalls": 0,
+    "fourRounds": [
+      {
+        "round": 9,
+        "returncode": 0,
+        "seconds": 0.21878741635009646,
+        "sourceUnchanged": true
+      },
+      {
+        "round": 10,
+        "returncode": 0,
+        "seconds": 0.326682916842401,
+        "sourceUnchanged": true
+      },
+      {
+        "round": 11,
+        "returncode": 0,
+        "seconds": 0.3404392912052572,
+        "sourceUnchanged": true
+      },
+      {
+        "round": 12,
+        "returncode": 0,
+        "seconds": 0.3131851670332253,
+        "sourceUnchanged": true
+      }
+    ],
+    "tests": [54, 59, 68, 69],
+    "onlyPathChanged": true,
+    "sameSandboxAndThreeSecondLimit": true,
+    "accountingAndPermissionAnalysisUnchanged": true,
+    "cleanupRisk": "Historical evaluator timeout path only kills direct child; potential descendant cleanup risk is a source finding, not observed leaked-process evidence."
+  }
+}

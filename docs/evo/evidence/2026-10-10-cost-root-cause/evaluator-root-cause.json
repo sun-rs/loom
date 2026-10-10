@@ -1,0 +1,52 @@
+{
+  "rootCause": "Evaluator PATH chooses Apple /usr/bin/python3 launcher for model-written subprocess tests; evaluator sandbox denies xcrun cache outside its private temp, adding roughly 1 second and stderr diagnostics per launch.",
+  "evidence": {
+    "originalSandbox54Tests": {
+      "seconds": 8.828,
+      "childInvocations": 9,
+      "individualChildSecondsRange": [0.924, 1.184],
+      "result": "1 failure due solely to unexpected launcher stderr; historical3/8sec evaluator would time out"
+    },
+    "sameSourceWithoutSandbox": {
+      "seconds": 0.249,
+      "result": "54passed"
+    },
+    "sameSandboxHomebrewChild": {
+      "seconds": 0.164,
+      "result": "54passed"
+    },
+    "sameSandboxDirectCLTPython39": {
+      "wallSeconds": 0.2988807503134012,
+      "result": "54passed; bypass same-version system launcher, not a Python3.13 semantic repair"
+    }
+  },
+  "excluded": {
+    "stdinEOF": "Parent communicate input empty closes pipe. invoice.py main rejects arg count then reads FILE; no stdin read. No hang on EOF.",
+    "testSleep": "None in frozen test/code.",
+    "slowBusiness": "All54 run under0.3sec when bypassing launcher, both Python3.9 and3.13.",
+    "genericInterpreterStartup": "Earlier simple startup probe did not represent nine launcher invocations under this exact subprocess/environment path."
+  },
+  "minimalFutureRepair": "Evaluator should set deterministic python3 resolution to the same verified interpreter used by controller (private bin/PATH) for all candidates, preserving sandbox denies. Do not globally allow xcrun caches or alter frozen P182 artifacts/verdicts. Validate real nested subprocess help/FILE CLI, stderr cleanliness, same-version bypass and unchanged oracle isolation before future gate.",
+  "oldVerdictsPreserved": true,
+  "modelCalls": 0,
+  "limits": "Each independent temporary-copy run10sec deadline; owned process group TERM/KILL on timeout; all runs exited naturally; no persistent child left.",
+  "hashes": {
+    "kimi-r9-diagnose.py": "a0e61928dc27f2519f8992ebcda95636c6dbbf1b1e04b24f67ffe65576ea7561",
+    "kimi-r9-diagnostic.json": "b46b308d43c692c3ff506aa9dc2fb8afdb49deeed222d848dff8bd0daa8ab987",
+    "kimi-r9-python39-direct.py": "5c0ee664e0ec810fc53ca99496e01d76a0b3df74acb128a8c8b9444570cea7bb",
+    "kimi-r9-python39-direct.json": "be8a5f509047ef73bde84a9c042c153d44368d6494bcac1107a93910d6c352f7"
+  },
+  "postHocRounds9To12": {
+    "path": "/Users/sun/.loom/reviews/2026-10-10-cost-root-cause/controller/kimi-r9-r12-path-replay.json",
+    "sha256": "8f18646e8d5a1dab0ab5cf82da0c8809c9a974b3fbaa3d60a78e6692b038ce53",
+    "allPassed": true,
+    "testCounts": [54, 59, 68, 69],
+    "elapsedSeconds": [
+      0.21878741635009646, 0.326682916842401, 0.3404392912052572,
+      0.3131851670332253
+    ],
+    "onlyPathChanged": true,
+    "candidateSourceAndOriginalVerdictsUnchanged": true,
+    "interpretation": "Original selftest timeout is an evaluator launcher/sandbox defect, not established candidate code-quality failure. Post-hoc isolated selftests pass; not a new paid run and not rewriting historical qualification."
+  }
+}

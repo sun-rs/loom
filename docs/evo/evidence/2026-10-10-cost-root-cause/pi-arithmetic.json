@@ -1,0 +1,45 @@
+{
+  "batch": "P181",
+  "independentArithmeticConfirmed": true,
+  "files": {
+    "arithmetic-audit.json": "87ef2aec13dc032905e1202f36ecbf10ded84fe7b99a61834fbc324876437f9b",
+    "audit.py": "0f11f9219eabea1f7aa6334d72f25b3b0d2bd460999113ac60674ac483c1df4f"
+  },
+  "primaryConclusion": "The 2.258894 input and 1.748458 output ratios for paired R1-8 are reproducible directly from raw SSE. Not caused by counting duplicate usage frames or adding cache/reasoning twice.",
+  "factorization": {
+    "requestCountFactor": 1.2432432432432432,
+    "meanInputNative": 33125.24324324324,
+    "meanInputLoom": 60186.467391304344,
+    "meanInputFactor": 1.8169366168678913,
+    "product": 2.258894172322243,
+    "compactionInput": 82296,
+    "compactionShareOfLoomInput": 0.014862506106475257,
+    "compactionShareOfInputDifference": 0.026668507304382826,
+    "samplingOnlyInputRatioForDiagnosis": 2.2253213438922224,
+    "doNotSubtractFromObservedCost": true
+  },
+  "statisticalDefects": [
+    {
+      "finding": "Two extra compaction requests absent from assistant JSONL/Kernel rows",
+      "impact": "Runner finally conflates non-assistant request type with missing raw primary; reports global mismatch. Raw main quantities remain known; Kernel product usage is incomplete by82296/3108.",
+      "correction": "Separate all-consumption HTTP census, assistant generation census, and native compaction aggregate; never fabricate individual native response IDs."
+    },
+    {
+      "finding": "One raw R4 response has no cache/reasoning details; native normalization fills0",
+      "impact": "Native JSONL alone falsely suggests detailed zero known. Raw cache/uncached/reasoning ratios cannot be exact. Does not invalidate total input/output."
+    },
+    {
+      "finding": "Native9 exists without Loom9; original fixed12 and late7-12 incomplete",
+      "impact": "All observed totals must not be used as paired ratio. Report R1-8 explicitly, plus native9 standalone."
+    },
+    {
+      "finding": "345 usage frames represent174 responses",
+      "impact": "Naive frame summation would double count171 repeats. P178 fixed reconciliation and this independent parser both deduplicate identical same-response frames. No remaining primary double count found."
+    },
+    {
+      "finding": "Total input includes cached tokens; output includes reasoning",
+      "impact": "Not equivalent to money ratio. Never add cache to raw prompt_tokens or add reasoning to completion_tokens."
+    }
+  ],
+  "causalLimit": "Request-count and mean-context factorization describes where tokens accumulate, not why model behavior differed. Need prompt/tool trajectory analysis to identify controllable causes; cannot dismiss the observed cost as randomness."
+}

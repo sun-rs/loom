@@ -1,0 +1,163 @@
+{
+  "batch": "P181",
+  "kind": "root-cause-evidence-by-strength",
+  "accountingBoundary": "Rawproviderreportedtokens, noinvoiceestimate; all observedcosts retained",
+  "directObserved": {
+    "round1": {
+      "native": {
+        "input": 48541,
+        "output": 5721,
+        "reasoningOutput": 2110,
+        "responses": 9
+      },
+      "loom": {
+        "input": 121189,
+        "output": 15696,
+        "reasoningOutput": 11037,
+        "responses": 9
+      }
+    },
+    "outputDifference": {
+      "total": 9975,
+      "reasoning": 8927,
+      "reasoningFraction": 0.894937343358396,
+      "nonReasoning": 1048,
+      "meaning": "Provider-reported completion and reasoning counts; no conversion from characters. One Loom business generation output11069 includes9611reasoning, concerning precision/implementation/test choices, not communication tools."
+    },
+    "largestLoomGeneration": {
+      "output": 11069,
+      "reasoningOutput": 9611,
+      "themeSummary": "Business implementation alternatives for exact Decimal arithmetic, precision and test design; no explicit Worker tool exchange in this generation.",
+      "doesNotContainHiddenReasoningText": true
+    },
+    "standingPrompt": {
+      "nativeCharacters": 27,
+      "loomCharacters": 6795,
+      "sameArmAppendShaStableAllLaunches": true,
+      "notEstimatedTokens": true
+    },
+    "userHistory": "One current task user entry per turn; no earlier own final reply duplicated as another user entry observed.",
+    "nextRoundFirstInput": {
+      "native": 8556,
+      "loom": 22115
+    },
+    "legitimateCwdListingBothSucceeded": true,
+    "privateRunnerDirectoryDeniedAsExpected": true
+  },
+  "sourceSupportedMechanism": {
+    "actualAssistantModelIdentity": {
+      "provider": "aihubmix",
+      "api": "openai-completions",
+      "model": "deepseek-v4.1-flash",
+      "responseModelDiagnostic": "deepseek-v4-1-flash-260910"
+    },
+    "chain": [
+      "sdk.js:261/278: native convertToLlm with image filter; absent extensionRunner transformContext returns messages unchanged.",
+      "messages.js:111-115: ordinary assistant messages pass through unchanged.",
+      "transform-messages.js:66-81: provider/api/model equality keeps signed thinking blocks; not cut at subsequent user.",
+      "transcript.js:95-103: collapse only system messages; other messages preserved.",
+      "openai-completions.js:984-1009: default requiresThinkingAsText=false; signed thinking becomes assistant[thinkingSignature], with actual stored signature reasoning_content. No last-user stripping in this conversion."
+    ],
+    "offlineReplayResult": "Same-model installed pure converter supplied real R1history+newR2user retains native5/Loom9 prior reasoning blocks (9116/45368characters). No network/auth/provider initialization.",
+    "limitation": "Frozen source plus offline converter prove a preservation path and no user-boundary purge in serializer. Archived paid HTTP requests omit body, so neither actual per-request inclusion nor provider input-token accounting of those fields is independently observed. Do not treat8927extra output reasoning as8927known future input tokens."
+  },
+  "configuration": {
+    "sameOriginalSettingsAndModelRoute": true,
+    "originalSettingsExplicitCompactionRetryWarmingOverrides": false,
+    "sourceDefaults": {
+      "compactionEnabled": true,
+      "reserveTokens": 16384,
+      "keepRecentTokens": 20000,
+      "retryEnabled": true,
+      "agentMaxRetries": 3,
+      "baseDelayMs": 2000,
+      "cacheWarming": "streaming"
+    },
+    "sameBenchmarkIsolation": true,
+    "paidSchemaBodyNotCaptured": true,
+    "automaticContextFilesVsExplicitReads": "no-context-files symmetric; Loom explicitly read planted31-byteAGENTS/MEMORY sentinels. This is not official automatic memory loading."
+  },
+  "methodIssues": [
+    "Final benchmark helper matched all raw responses only to assistant messages, missing native compaction usage entries; original mismatch retained, offline independent raw accounting recovers both compaction responses.",
+    "Current product Kernel omitted2compaction responses82296input/3108output; this lowers displayed sampling usage, does not explain high raw comparison by overcount.",
+    "One Loom cache field missing: cache/uncached aggregate unknown despite full input/output.",
+    "Incomplete12task: common8ratio cannot stand in for12or fixed late6; native9cost kept separately."
+  ],
+  "causalConclusion": "Large first-round business reasoning and larger accumulated history are observed dominant contributors, together with later extra business steps. Current trace does not identify how much the additional Loom instructions caused those decisions. Not pure randomness, not proven prompt-only cause, not arithmetic overcount.",
+  "sourceEvidence": [
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-10-pi-p181/run.mjs",
+      "sha256": "30c143178cdf1fee6b6bdf7d3505ad22d599ac3b6c980845428a0c180856be6e",
+      "matchedFrozenAdmission": true
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-10-pi-p181/wrapper.mjs",
+      "sha256": "6c0545c37a75aff6b7373aed1dde41dbda7d6c5a01b0839cd3881c1405986a2e",
+      "matchedFrozenAdmission": true
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-10-pi-p181/fetch-observer.mjs",
+      "sha256": "d13a073c8e832b999433ab7707145fd6383f906cf3095e7e034d87e1dd509d13",
+      "matchedFrozenAdmission": true
+    },
+    {
+      "path": "/opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/dist/core/settings-manager.js",
+      "sha256": "7ded026cd47cbc9890e9e4e7076d2ee3182bfd43a8d9e9a567913af92581ff26",
+      "matchedFrozenAdmission": true
+    },
+    {
+      "path": "/opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/node_modules/@earendil-works/pi-ai/dist/api/openai-completions.js",
+      "sha256": "5a79cc5aa41dee180692695e65771720d1ea556e9a978649dc2040278be51753",
+      "matchedFrozenAdmission": true
+    },
+    {
+      "path": "/opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/dist/core/cache-warmer.js",
+      "sha256": "9c4b000930d6d3c567073102f6b6a52660110bb0f79cf78dd72c4dd1ebc87fc0",
+      "matchedFrozenAdmission": true
+    },
+    {
+      "path": "/opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/dist/core/sdk.js",
+      "sha256": "8155c0b7d819d2248a1bbf0fa4b8e40d15552ff7fa6a772154cbbccb6ae59235",
+      "matchedFrozenAdmission": true
+    },
+    {
+      "path": "/opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/dist/core/messages.js",
+      "sha256": "8688b3f6eb28865f779cac998bd4754d1a4f08703200dfe0dd5a799aa0d42ef6",
+      "matchedFrozenAdmission": true
+    },
+    {
+      "path": "/opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/node_modules/@earendil-works/pi-ai/dist/api/transform-messages.js",
+      "sha256": "9d747a3d64c533f7bfaf2a66e8446dc006086559d364a09d4c51d1c8c9c332e5",
+      "matchedFrozenAdmission": true
+    },
+    {
+      "path": "/opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/node_modules/@earendil-works/pi-ai/dist/utils/transcript.js",
+      "sha256": "4c772c6691be0c5b4c308a09e3eeaa4d965b59e39652442b3aef0600ffb5fccb",
+      "matchedFrozenAdmission": true
+    }
+  ],
+  "minimalNextSteps": [
+    {
+      "order": 1,
+      "kind": "free structural falsification",
+      "plan": "On isolated actualPi+localhostfake, instrument request metadata only: full tools hash; system/instruction hash+length; message role/id/hash sequence; reasoning fieldpresence/hash+length before andafternewuser. Same installedCLI/model config/effort; no originalauth. Tests should fail if observer misses a request or historical assistant item is duplicated.",
+      "falsifies": "Assumed serializer replay or assumed no repeated standing/own reply could be wrong at actualrequestcomposition.",
+      "limit": "Synthetic endpoint validates wire shape only, no realmodelcost verdict."
+    },
+    {
+      "order": 2,
+      "kind": "offline product accounting repair",
+      "plan": "Use preserved nativecompactionentry+two rawresponsecounts as red test for singleusageowner; maintain sampled versuscompaction categories and avoid counting aggregate twice. No paid rerun needed.",
+      "falsifies": "Displayed Kernel usage complete claim currently contradicted by knowncompactioncost."
+    },
+    {
+      "order": 3,
+      "kind": "optional separatelyauthorized causal experiment",
+      "plan": "Pre-register a small sameCLI/samemodel/sameeffort matched task with normal native and proposed conciseLoom standing instructions, equal files/tools/memory, counterbalancedorder, requeststructureevidence and allreasoning/primaryusage. Keep originalsystem/account/sessioncontract; no favorable retries. This is a new hypothesis test, never a replacement ofP181.",
+      "falsifies": "If verbosebusinessreasoning/context inflation persists despite reducedstandingmaterial acrossmatchedobservations, standinglengthalone is insufficient explanation.",
+      "limit": "Singlepair cannot estimate inherentmodelvariance; define repetitions/stopbudget beforehand, not until desiredresult."
+    }
+  ],
+  "noNewModelCalls": true,
+  "noFrozenRecordsChanged": true
+}

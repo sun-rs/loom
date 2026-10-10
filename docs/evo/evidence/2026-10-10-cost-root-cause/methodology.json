@@ -1,0 +1,40 @@
+{
+  "scope": "Five CLI interpretation audit, not new execution",
+  "findings": [
+    {
+      "issue": "Unequal completed task windows",
+      "detail": "ClaudeP170/OpenCodeP171/CodexP176/KimiP182 full12 versus PiP181 onlycommon8+unpairednative9; no all-five fulltask efficiency ranking."
+    },
+    {
+      "issue": "Different accounting boundaries",
+      "detail": "Codex sampling75/69 excludes23extra completed startup events; Pi all174 includes2compaction responses absent Kernel. Both broader totals retained separately; sampling-only alternatives not universal invoice coverage."
+    },
+    {
+      "issue": "Cached-input denominators",
+      "detail": "Input includes cache reads. Codex lower totalinput but slightlyhigheruncached/output; Kimi higher totalinput but loweruncached. Pi cache missingone prevents uncached comparison. Tokens cannot be collapsed tocurrency."
+    },
+    {
+      "issue": "Quality differs",
+      "detail": "Claude has README error despite24functional passes; Kimi20/24 overall due4Loom selftesttimeouts despite24functional passes; Pi17prefixsnapshots true but noR12. Not equivalent successfuldeliverables for allfive."
+    },
+    {
+      "issue": "Provider/model/runtime incomparable",
+      "detail": "Different model reasoning implementations/catalogs and CLI startup modes; one trajectory each. No averaged multiplier acrossCLIs."
+    },
+    {
+      "issue": "Fairness evidence unequal",
+      "detail": "Pi paid originalrequestbody/tool schemas missing; Kimi actualnative11requests omitReadMediaFile and fixednative-first order; Codex originalCODEX_HOME readable in principle but toolaudit clean. Sharedhost timing/cacheeffects not isolated."
+    },
+    {
+      "issue": "Harness faults retained",
+      "detail": "Pi original assistant-only comparator falsely flags nativecompaction as unmatched, while productKernel genuinely omitsit. Kimi CLI selftest timeout remains originalfalse; separate diagnostics do not silently turn itgreen."
+    }
+  ],
+  "recommendedPresentation": "Separate per-CLI rows with exact taskwindow, primarytotal, requests, uncachedknown/unknown, qualityandcoverage columns. ShowCodexallcompleted andPi compaction alongside sampling scopes, not a single fiveCLI successbadge.",
+  "notClaimed": [
+    "No prices/webbillingresearch",
+    "No universalcausal attribution",
+    "No subtractionoflegitimate business/recovery costs",
+    "No replacementoffailed predecessorrecords"
+  ]
+}

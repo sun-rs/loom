@@ -1,0 +1,70 @@
+{
+  "scope": "Post-hoc selftest diagnostic only; no replacement of original frozen oracle results; only PATH changed to controller interpreter; sandbox unchanged",
+  "paidCalls": 0,
+  "rows": [
+    {
+      "round": 9,
+      "returncode": 0,
+      "timeout": false,
+      "seconds": 0.21878741635009646,
+      "stdout": "",
+      "stderr": "......................................................\n----------------------------------------------------------------------\nRan 54 tests in 0.177s\n\nOK\n",
+      "sourceHashes": {
+        "README.md": "6dc96fc36d9078487c711fc1d18e132f76e53c24edd104902841264a62052376",
+        "invoice.py": "4ad6e33282ed7b7c100fb9c494d47540598e2b1ef0da42de30ba8548a8b2a7f9",
+        "tests/test_invoice.py": "d7c9b17679128eb98b8c4dc218c96cc4ae098d86b36f002b5b657ab92c96c873",
+        "__pycache__/invoice.cpython-313.pyc": "e2ec836cc0e12c4aac3111ac877bdb254129f24572c10d01797d9542057e311d",
+        "tests/__pycache__/test_invoice.cpython-313.pyc": "e632a568e35201b0cbc9112e1d7ebfc82d34e15c69f29c12d01166ebcf4b313e"
+      },
+      "sourceUnchanged": true
+    },
+    {
+      "round": 10,
+      "returncode": 0,
+      "timeout": false,
+      "seconds": 0.326682916842401,
+      "stdout": "",
+      "stderr": "...........................................................\n----------------------------------------------------------------------\nRan 59 tests in 0.286s\n\nOK\n",
+      "sourceHashes": {
+        "README.md": "a9587234d6911cda672fa9536b7dbef98532c9b12ca601acd6a0ff352104a10b",
+        "invoice.py": "ff1071351a0e635e87d0a5cfe6b1349bbfd3812a552db5dd57e5a64ac804f995",
+        "tests/test_invoice.py": "17ad3b8cdc5f4158675e03b3d891e2edb043f2b1b5ffcc1404cfa84d4b80e654",
+        "__pycache__/invoice.cpython-313.pyc": "42eed98506372f40c6f33d7479a01a082a45a57cd47382868109453838b2a2c5",
+        "tests/__pycache__/test_invoice.cpython-313.pyc": "d487ea6ce80ba7750239efd5da74dee9d43778f658a77a067eaac48d50211e33"
+      },
+      "sourceUnchanged": true
+    },
+    {
+      "round": 11,
+      "returncode": 0,
+      "timeout": false,
+      "seconds": 0.3404392912052572,
+      "stdout": "",
+      "stderr": "....................................................................\n----------------------------------------------------------------------\nRan 68 tests in 0.299s\n\nOK\n",
+      "sourceHashes": {
+        "README.md": "a9587234d6911cda672fa9536b7dbef98532c9b12ca601acd6a0ff352104a10b",
+        "invoice.py": "ff1071351a0e635e87d0a5cfe6b1349bbfd3812a552db5dd57e5a64ac804f995",
+        "tests/test_invoice.py": "5626033c55d71ca52b4582762cc659c65f4b7c33869294ce18fe43b864c743c8",
+        "__pycache__/invoice.cpython-313.pyc": "42eed98506372f40c6f33d7479a01a082a45a57cd47382868109453838b2a2c5",
+        "tests/__pycache__/test_invoice.cpython-313.pyc": "81cc25f0a93745fc67f6d0210916808c22aa3c2d4dab7a8552979ac87de0e984"
+      },
+      "sourceUnchanged": true
+    },
+    {
+      "round": 12,
+      "returncode": 0,
+      "timeout": false,
+      "seconds": 0.3131851670332253,
+      "stdout": "",
+      "stderr": ".....................................................................\n----------------------------------------------------------------------\nRan 69 tests in 0.273s\n\nOK\n",
+      "sourceHashes": {
+        "README.md": "b900b4ca2870aa2a15dc8382b33cf686f2cdf6731252cfe3dc8ee5dfca6a3ac8",
+        "invoice.py": "13c894d65d39544f1b2fadf6bd4cb7859e05305bf91922209236dd71543d1fb8",
+        "tests/test_invoice.py": "2d366210a2aa20ee5849770a82cf249c22ad14f67749b57f7716fec17bee205a",
+        "__pycache__/invoice.cpython-313.pyc": "62f043184724f72700ca92e08c32561ba554a0de932c6eefc6de2ec95415b6e7",
+        "tests/__pycache__/test_invoice.cpython-313.pyc": "c5cf5a60d9e2cfc67ed5e3d68656b6bb16feb4e0c0f57aa26aadcb564d4e5a6e"
+      },
+      "sourceUnchanged": true
+    }
+  ]
+}

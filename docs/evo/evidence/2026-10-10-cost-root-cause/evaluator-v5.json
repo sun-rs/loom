@@ -1,0 +1,48 @@
+{
+  "version": "private cost fixture v5",
+  "status": "implemented-private-tests-passed-not-adopted-by-paid-runner",
+  "changes": [
+    "PATH python3 resolves same pinned controller interpreter",
+    "Each candidate gets owned process group; on3second timeout terminate group and reap direct process",
+    "Isolation failure test mock moved from run to Popen; semantic assertion unchanged"
+  ],
+  "unchangedBusinessAndOracleSha256": {
+    "plan.json": "f05f55e589f684fc48e1c7f4f4724bd0ec6207446f6b22d25454637b75e62e1d",
+    "schemas.json": "5a41752182bfc0c7cd6c0a8ff3911d9859377123ba021713ea4c07ad628dd566",
+    "oracle/cases.json": "c8f93225f3c4c51bd0880808823bd9430f90b0c3b257a51f7ee3f7019c86fd2f",
+    "oracle/reference.py": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03",
+    "workspace/README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+    "workspace/invoice.py": "f2b52da25575936bbde949b3c0740ad3a255cbc3e92e1951766fde1c168a40d1"
+  },
+  "timeoutSeconds": 3,
+  "sandboxPolicyUnchanged": true,
+  "tdd": {
+    "red": "process-red-final.log",
+    "redFailures": [
+      "interpreter resolution mismatch",
+      "owned descendant remained alive after old timeout; test finally killed it"
+    ],
+    "green": "process-green.log",
+    "newTestsPassed": 2,
+    "allPythonTestsPassed": 27,
+    "nodeTestsPassed": 2,
+    "initialFixtureAttempt": "process-red.log retained: first descendant detector was too narrow; corrected before final red and implementation"
+  },
+  "priorDiagnostic": "/Users/sun/.loom/reviews/2026-10-10-cost-root-cause/controller/kimi-r9-r12-path-replay.json",
+  "oldV4Unchanged": true,
+  "historicalVerdictsUnchanged": true,
+  "paidCalls": 0,
+  "futureRunnersSwitched": false,
+  "limitations": [
+    "Timeout group cleanup covers descendants that remain in owned group; no claim to contain intentionally detached groups.",
+    "No new paid/model acceptance or replacement of historicalP182 frozen verdicts."
+  ],
+  "hashes": {
+    "manifest.json": "713f67f50129709e7f8675de3af16802b5c0dfca95e0deda873da7845aa0fa46",
+    "repair.patch": "11a63fc08a6d15c7cc1821fe4b7cd3d82c34bb6c249545a23d9a86b31403fe32",
+    "process-red-final.log": "59811951384356def92bd40b1376212296740df8a1536dcbe2ee332796f6fddc",
+    "process-green.log": "0c1ba216c810a4b184b299614c38b480a61a47d0fc70cd5ccdae8c4bfc4e4f8b",
+    "all-python.log": "d3b11dcf721c6c02cff1139ebdbd9a7ab8f0f84d1c3f8bdd61ae9d0b0d0f2b2c",
+    "all-node.log": "857da6ceadf2b1874af126ac9568f12529086763d840e5f0a13d0797b34b1711"
+  }
+}

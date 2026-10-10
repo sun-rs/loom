@@ -1,0 +1,61 @@
+{
+  "scope": "Offline audit of saved P181/P182; zero new paid/model requests; original paid records unchanged",
+  "verdict": {
+    "arithmetic": "Independent raw-SSE parsers reproduce both input/output ratios; no cache/reasoning or duplicate-frame double counting found in current totals.",
+    "causality": "The original experiments measure particular end-to-end trajectories, not isolated platform overhead. A large ratio alone does not prove a deterministic Loom defect or pure model randomness.",
+    "qualityCorrection": "Kimi R9-12 selftest failures traced to evaluator launcher/sandbox conflict. Same frozen source, sandbox and3s deadline pass with matched Python PATH; prior code-quality implication withdrawn."
+  },
+  "pi": {
+    "pairedWindow": "R1-8, excludes unpaired native9 from ratio but retains its consumed costs",
+    "inputRatio": 2.258894172322243,
+    "requestFactor": 1.2432432432432432,
+    "meanRequestInputFactor": 1.8169366168678913,
+    "firstRoundExtraOutput": 9975,
+    "firstRoundExtraReasoningOutput": 8927,
+    "reasoningShareOfFirstRoundOutputDifference": 0.894937343358396,
+    "mechanism": "Both arms same native serializer can preserve reasoning_content across user turns; observed larger thought/tool/code history precedes larger future inputs. Offline installed serializer replay supports the retention path, not exact historical wire billing attribution.",
+    "remainingQuestion": "Does added Loom standing context systematically induce more exploration/reasoning, or is the observed branch variation? One trajectory and missing paid request bodies cannot distinguish.",
+    "compaction": "Raw all-consumption includes82296/3108; product Kernel misses it. This is an undercount in product, not cause of inflated raw ratio.",
+    "cache": "Exact breakdown remains unknown; strict uncached input ratio bounds2.031327..2.394840 are arithmetic bounds, not estimated missing token values."
+  },
+  "kimi": {
+    "pairedWindow": "R1-12",
+    "inputRatio": 1.4528126837254562,
+    "requestFactor": 1.28,
+    "meanRequestInputFactor": 1.1350099091605128,
+    "extraResponses": 21,
+    "round6And12ExtraResponses": 17,
+    "fixedFirstRequestDifference": 1592,
+    "newTurnAudit": "Wire contains each current business prompt once; no extra copies of old complete task/final and no full standing reinjection on later turns. Full HTTP message bodies unavailable.",
+    "confounds": [
+      "print/auto permission versus ACP/manual with Host approval",
+      "508-character native permission reminder each launch",
+      "11 native requests omit ReadMediaFile",
+      "native-first arm ordering"
+    ],
+    "billing": "Raw cached counts are subsets of prompt_tokens; uncached ratio0.690961 is not an invoice."
+  },
+  "requiredMethodChanges": [
+    "Capture complete outgoing request and response privately with exact hashes and request identity, bounded retention and explicit coverage failure; no auth headers in evidence.",
+    "Keep all-model-consumption ledger distinct from assistant sampling, native compaction aggregate and warmup; missing detail remains unknown.",
+    "Use two explicitly named comparisons: everyday-native versus product end-to-end, and same-mode/same-permission controlled protocol ablation. Never present the first as pure prompt effect.",
+    "Use deterministic same-history serialization replay for context duplication and prefix size; do not infer token/quality savings from bytes.",
+    "For actual cost stability predeclare independent repeated paired sessions and counterbalanced ordering.12 dependent turns are one sample, not12 statistical replicates; retain all outcomes and original budgets.",
+    "Use corrected versioned evaluator with matched child interpreter and owned process-group cleanup, preserve original v4/history."
+  ],
+  "notChanged": [
+    "No product prompt/runtime/compaction policy changed by this audit",
+    "No native history/thinking stripped to manufacture lower cost",
+    "No old failed sample replaced or paid rerun launched"
+  ],
+  "evaluatorRepair": {
+    "status": "Private v5 implemented, red/green and independent review passed; future paid runners not switched",
+    "pythonTestsPassed": 27,
+    "nodeTestsPassed": 2,
+    "oldFixtureUnchanged": true,
+    "policyAndTimeoutUnchanged": true,
+    "evidence": "evaluator-v5.json",
+    "review": "evaluator-v5-review.json",
+    "patch": "evaluator-v5.patch"
+  }
+}
