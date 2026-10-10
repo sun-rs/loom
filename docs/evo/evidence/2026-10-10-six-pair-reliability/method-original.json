@@ -1,0 +1,72 @@
+{
+  "scope": "Pure offline aggregate and preregistered-method review; no product mutation or paid execution.",
+  "entry": "aggregateSixPairs({binding, plannedPairIds, pairs}) from aggregate.mjs",
+  "inputSchema": {
+    "binding": {
+      "cli": "exact CLI identity",
+      "model": "exact model binding",
+      "effort": "exact reasoning level"
+    },
+    "plannedPairIds": "Exactly six distinct precommitted identifiers",
+    "pairs": [
+      {
+        "id": "planned identifier",
+        "binding": "must exactly match top-level",
+        "status": "completed | budget-stopped | failed | running | not-started",
+        "native": "arm or null if not observed",
+        "loom": "arm or null if not observed"
+      }
+    ],
+    "arm": {
+      "roundsCompleted": "0..12 business rounds actually completed, not CLI spawns",
+      "requestCoverageComplete": "independently validated request census+transport coverage",
+      "usage": {
+        "input": "{known: nonnegative safe integer, complete: boolean}",
+        "output": "same",
+        "requests": "same; count attempts under frozen request definition, not usage chunks",
+        "cachedInput": "same; unknown partial subtotal remains known but complete=false",
+        "reasoningOutput": "same optional; absence yields unknown, never zero-complete"
+      },
+      "quality": {
+        "passed": "completed rounds passing original frozen verdict",
+        "failed": "completed rounds failing original frozen verdict",
+        "unknown": "completed rounds without established verdict; counts sum to roundsCompleted"
+      }
+    }
+  },
+  "rules": [
+    "Main fixedN ratios unavailable unless six terminal completed pairs each have both12-round sessions. Within that group each dimension separately requires complete request census and dimension coverage.",
+    "Complete12 subset is descriptive only when planned six are not all completed; count and IDs exposed, potential stopping selection bias explicit.",
+    "All observed and outside-complete12 totals retain failed/truncated/unpaired known costs; no efficiency ratios for these imbalanced groups.",
+    "Qualityfalse remains in costs; compare quality independently. No selecting successful pairs or good rounds.",
+    "Complete ratios are sum Loom / sum native, not mean of ratios. Pair ratio vector and min/max labelled observed ranges.",
+    "Uncached available only when input and cached both complete; missing optional does not erase complete input/output. Reasoning is an output subset, never added.",
+    "Unknown/zero denominator yields null, not zero/infinity; arithmetic safe-integer overflow rejects.",
+    "Duplicate/unplanned identifiers and mixed CLI/model/effort reject. Missing planned pairs explicitly not-started."
+  ],
+  "bootstrap": {
+    "unit": "One entire paired set of continuous sessions, same sampled indices for native and Loom",
+    "resamples": 46656,
+    "enumeration": "All ordered six-index sequences from six pairs with replacement, 6^6; no random seed noise",
+    "statistic": "ratio of sums per dimension",
+    "interval": "Exploratory 2.5th/97.5th percentiles with linear interpolation, only all six completed and that dimension fully covered. Any possible zero-denominator resampling prevents interval.",
+    "limits": "n=6 empirical percentile interval is not stability, population coverage or independence proof. Same account/cache/time ordering can still create dependencies. Rounds/requests are not replicates.",
+    "reference": "https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.bootstrap.html"
+  },
+  "admissionMethodReview": {
+    "ordering": "Frozen balanced order mitigates order confounding; it does not eliminate shared provider cache, load or time drift. Keep session cache keys native; do not purge/change cache to manufacture independence.",
+    "budget": "Pi18M/300k/400 and Kimi10M/120k/300 perpair exceed observed earlier completed pairs, but prior n=2 cannot guarantee completion. Caps are prelaunch soft thresholds, not hard bill ceilings; in-flight overrun remains possible.",
+    "fixedN": "No optional stopping after favorable ratios, no replacement failed pair, no increased caps mid-run. Missing slots remain visible after stop.",
+    "fatalGates": "Unknown primary/capture, model/config/source/cleanup errors stop this CLI; other CLI may continue. Pure budget policy must be explicitly frozen before paid; Pi/Kimi currently differ and root notified.",
+    "endpoint": "Actual paid path remains current original native-final product configuration; private compact standing candidate excluded."
+  },
+  "tdd": {
+    "logs": ["red.log", "terminal-red.log", "reasoning-red.log", "green.log"],
+    "passed": 12
+  },
+  "hashes": {
+    "aggregate.mjs": "ea8926d2f93af65f7e197db7c721bdf1f43270b2fea9a50d3368e480990cf101",
+    "aggregate.test.mjs": "08966990a2fab3d643eddd6e9705806bc2a4e0c9e5052037e45bb09589def540",
+    "green.log": "422472446737d429789c78940723106298b328395475d3494b2dbe3ae0f54ed4"
+  }
+}

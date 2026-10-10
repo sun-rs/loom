@@ -1,0 +1,44 @@
+{
+  "verdict": "No remaining blocker in reviewed combined helper+driver patch and actual free chain",
+  "patchSha256": "a1df521ec7a8eb429f3e3308a9d02d197b3863220f70578d67479c3b42638837",
+  "sourceHashes": {
+    "packages/agent-host/src/pi-final-output.mjs": "e73eaac62faa4cc9647b80cc4d8ec44ca0b350eea4e7d0d78013c612938897c9",
+    "packages/agent-host/src/pi-print-driver.mjs": "af6105d60553462402913bca19565d2f27647e08d4f9a4d60b8b256bad999335",
+    "packages/agent-host/test/pi-print-proof.test.mjs": "5d18b4a58881328d43a0ab0c796734ef3fe040fd50aae1bca717d36b4512670f",
+    "packages/agent-host/test/pi-print-driver.test.mjs": "c21f66a6d2e8f5a5ba08052b63de0324e7b6efd99cd8eb8a5717ba7dfe034368",
+    "packages/agent-host/test/fixtures/fake-pi-print.mjs": "dc11924c18da5a085632fee6fa804acb950b7407647805dee7f80a4609a8e89c"
+  },
+  "delta": "Single shared strict terminal-tail validator replaces duplicate driver adjacency check; real compaction usage gap retained.",
+  "actualFree": {
+    "runId": "1791639140125-free",
+    "paid": false,
+    "httpAttempts": 18,
+    "perArm": {
+      "rawResponses": 9,
+      "assistantResponses": 6,
+      "compactionResponses": 3,
+      "compactionEntries": 2,
+      "sessionCount": 1,
+      "completedTurns": 2
+    },
+    "rawNativePrimaryIdentityMatch": true,
+    "kernelAssistantIdentityMatches": 6,
+    "nativeFinalMarkers": 2,
+    "usageGaps": {
+      "runCount": 2,
+      "occurrencesPerRun": 1,
+      "reason": "parse_error"
+    },
+    "allProviderConsumptionInKernel": false,
+    "allRawConsumptionRetained": true,
+    "snapshotHashesVerified": 4,
+    "runnerIntegrityIssues": [],
+    "runnerCleanupComplete": true
+  },
+  "independentRawAuditSha256": "9779ed80623aa3147a4b05336e7a926bdac3741ff8271ca41bf7f9f0d1ab1a79",
+  "limits": [
+    "Actual installed CLI plus synthetic localhost model validates integration, not paid model quality or efficiency.",
+    "Original failed free attempts and original paid stop remain unchanged.",
+    "Main-repository full combined check remains separate; old helper-only check is not final integration acceptance."
+  ]
+}

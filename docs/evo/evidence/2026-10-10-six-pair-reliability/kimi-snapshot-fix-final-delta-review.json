@@ -1,0 +1,11 @@
+{
+  "verdict": "Reviewed final conservative delta; no remaining blocker",
+  "sourceSha256": "8283c7a0772a5a3c3cc5a195240d47ec892ac9eee06e555b558e6436714ddc40",
+  "gitDiffSha256": "2f8730eef6a9197c7c30fd8543afbb6a1afd68643a0a5f7e06fd78fdbd69d31e",
+  "verified": [
+    "Both descriptor-stat and subsequent path-stat observed shrink fail immediately.",
+    "New lstat mutation test uses Object.defineProperty and restores original in finally; no product effect from type repair.",
+    "Prior retry/prefix/identity/terminal scope unchanged."
+  ],
+  "evidenceLimit": "Actual CLI free evidence precedes this extra fail-closed guard; not represented as same-byte final source. Full final suite still implementer-owned."
+}

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { isDeepStrictEqual } from "node:util";
 const parse = (text) => {
   assert.ok(
     typeof text === "string" && text.endsWith("\n"),
@@ -11,6 +12,46 @@ const body = (message) =>
     .filter((c) => c.type === "text")
     .map((c) => c.text)
     .join("");
+/** Shared stdout terminal shape; session binding remains in inspectPiTurn. */
+export function piTerminalCompactions(frames) {
+  if (
+    frames.filter((x) => x.type === "agent_start").length !== 1 ||
+    frames.filter((x) => x.type === "agent_end").length !== 1 ||
+    frames.filter((x) => x.type === "agent_settled").length !== 1 ||
+    frames.at(-1)?.type !== "agent_settled" ||
+    frames.at(-1).aborted !== false ||
+    frames.find((x) => x.type === "agent_end").willRetry !== false
+  )
+    return undefined;
+  // Pi 1.1.0 may persist threshold compaction after agent_end, before settled.
+  // Only that closed native tail is allowed; it is never a new final or usage record.
+  const tail = frames.slice(
+    frames.findIndex((x) => x.type === "agent_end") + 1,
+    -1,
+  );
+  if (tail.length !== 0 && tail.length !== 2) return undefined;
+  const compactions = [];
+  for (let i = 0; i < tail.length; i += 2) {
+    const start = tail[i],
+      end = tail[i + 1];
+    if (
+      start.type !== "compaction_start" ||
+      start.reason !== "threshold" ||
+      end.type !== "compaction_end" ||
+      end.reason !== start.reason ||
+      end.aborted !== false ||
+      end.willRetry !== false ||
+      !end.result ||
+      typeof end.result.summary !== "string" ||
+      typeof end.result.firstKeptEntryId !== "string" ||
+      !Number.isSafeInteger(end.result.tokensBefore) ||
+      end.result.tokensBefore < 0
+    )
+      return undefined;
+    compactions.push(end.result);
+  }
+  return compactions;
+}
 /** Native evidence only. Kernel remains the sole owner of publication and ACK. */
 export function inspectPiTurn(e) {
   const frames = parse(e.stdout),
@@ -64,16 +105,8 @@ export function inspectPiTurn(e) {
   const input = { sessionId, turnId: users[0].id };
   const result = { input, messages };
   if (e.exit.code !== 0 || e.exit.signal != null) return result;
-  if (
-    frames.filter((x) => x.type === "agent_start").length !== 1 ||
-    frames.filter((x) => x.type === "agent_end").length !== 1 ||
-    frames.filter((x) => x.type === "agent_settled").length !== 1 ||
-    frames.at(-1)?.type !== "agent_settled" ||
-    frames.at(-1).aborted !== false ||
-    frames.at(-2)?.type !== "agent_end" ||
-    frames.at(-2).willRetry !== false
-  )
-    return result;
+  const compactions = piTerminalCompactions(frames);
+  if (!compactions) return result;
   let openAssistant = false;
   for (const frame of frames) {
     if (frame.type === "message_start" && frame.message?.role === "assistant") {
@@ -108,7 +141,23 @@ export function inspectPiTurn(e) {
     messages.some((x) => !["stop", "toolUse"].includes(x.stopReason))
   )
     return result;
-  const entry = appended.at(-1);
+  const entryIndex = appended.length - compactions.length - 1;
+  const entry = appended[entryIndex];
+  for (let i = 0; i < compactions.length; i++) {
+    const saved = appended[entryIndex + i + 1],
+      emitted = compactions[i];
+    if (
+      saved?.type !== "compaction" ||
+      ![
+        "summary",
+        "firstKeptEntryId",
+        "tokensBefore",
+        "details",
+        "usage",
+      ].every((key) => isDeepStrictEqual(saved[key], emitted[key]))
+    )
+      return result;
+  }
   if (
     entry?.message?.responseId !== final.responseId ||
     !final.content.every((x) => ["text", "thinking"].includes(x.type))

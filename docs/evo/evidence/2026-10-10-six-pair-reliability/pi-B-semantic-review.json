@@ -1,0 +1,16 @@
+{
+  "scope": "Pi B immutable Loom R12 and native R11 semantic review; no native R12 frozen snapshot",
+  "findings": [
+    "Loom R12 README specifies exact integer-coefficient arithmetic, rounding and strict validation; inspected implementation agrees with this method.",
+    "Loom file example recomputed: gross17-discount1=net16, tax1.32,total17.32; separately rounded group totals7.58+9.74 agree in this example, without implying summed groups are grand-total method.",
+    "Both inspected README snapshots explicitly ignore unrelated row keys and define cancelled only; no active-field semantics introduced.",
+    "Original Loom R9–12 qualityfalse retained; functional cases pass, self-tests fail on SyntaxWarning stderr.",
+    "Native R12 runtime normal final can be independently diagnosed, but missing snapshot and deleted workspace leave R12 artifact quality unknown."
+  ],
+  "files": {
+    "native-11/README.md": "8ceebd79eb88657b14b1cd63658b8531d40eb947581d217d9d8ce28af66ca5bd",
+    "native-11/invoice.py": "4fed29a27578e1f7a847b812094b2659a96673647968c42b1bb27cb1e64251cc",
+    "loom-12/README.md": "b720d9785cf16adfb7aaa63ca945842568119d0961689b7b9332cd96d29a882f",
+    "loom-12/invoice.py": "a873ab8bdcde58526509ab9aa13450bef993c893e72e0ba73af87be29a69fd72"
+  }
+}

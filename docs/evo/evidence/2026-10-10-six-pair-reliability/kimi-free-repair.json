@@ -1,0 +1,100 @@
+{
+  "kind": "kimi-wire-baseline-race-free/v1",
+  "paidRequests": 0,
+  "scope": "Actual installed Kimi 2.1.1 and formal Role/daemon with loopback synthetic model. Controlled fs preload appends a config.update diagnostic exactly during the baseline read; this is not claimed as spontaneous native race reproduction.",
+  "cases": [
+    {
+      "mode": "red",
+      "id": "1791636649741",
+      "status": "failed",
+      "accountingComplete": false,
+      "sourceHashesUnchanged": true,
+      "processesExited": true,
+      "authLinksRemoved": true,
+      "arms": {},
+      "failure": "AssertionError [ERR_ASSERTION]: Product Run failed; preserve all attempts and stop the batch",
+      "recordedPids": 13,
+      "livePids": [],
+      "injections": [
+        {
+          "pid": 92593,
+          "event": "controlled-config-append-during-baseline",
+          "bytes": 86
+        }
+      ],
+      "runtimeErrors": ["Kimi wire changed while reading"]
+    },
+    {
+      "mode": "green",
+      "id": "1791636685502",
+      "status": "failed",
+      "accountingComplete": false,
+      "sourceHashesUnchanged": true,
+      "processesExited": true,
+      "authLinksRemoved": true,
+      "arms": {},
+      "failure": "AssertionError [ERR_ASSERTION]: Delegated tool sandbox must deny sentinel",
+      "recordedPids": 6,
+      "livePids": [],
+      "injections": [],
+      "runtimeErrors": []
+    },
+    {
+      "mode": "green",
+      "id": "1791636721310",
+      "status": "completed",
+      "accountingComplete": true,
+      "sourceHashesUnchanged": true,
+      "processesExited": true,
+      "authLinksRemoved": true,
+      "arms": {
+        "print": {
+          "responses": 4,
+          "passiveComplete": true,
+          "input": 40,
+          "output": 8,
+          "sameSession": true,
+          "quality": [false, false],
+          "markers": null
+        },
+        "loom": {
+          "responses": 4,
+          "passiveComplete": true,
+          "input": 40,
+          "output": 8,
+          "sameSession": true,
+          "quality": [false, false],
+          "markers": [1, 1]
+        }
+      },
+      "failure": null,
+      "recordedPids": 21,
+      "livePids": [],
+      "injections": [
+        {
+          "pid": 96834,
+          "event": "controlled-config-append-during-baseline",
+          "bytes": 86
+        },
+        {
+          "pid": 97361,
+          "event": "controlled-config-append-during-baseline",
+          "bytes": 86
+        }
+      ],
+      "runtimeErrors": [],
+      "frozenSources": 2793,
+      "admissionSha256": "9bc2d7c1db684651ad3f9ae9c0fe6fe023b92036106330f58db3175b0cd5f847"
+    }
+  ],
+  "source": {
+    "path": "<private>/kimi-acp-final-capture.mjs",
+    "sha256": "f3ae93468ee5d7717684bddf81a73475cce8cc5682030be6b18d1e5a3bda1f62"
+  },
+  "limits": [
+    "Red has no model HTTP; never-started native control lacks a wire so old strict overall accounting is unknown, retained unchanged.",
+    "First green preparation failed its AGENTS sandbox sentinel before model HTTP; explicit equivalent worktree AGENTS deny was added and fresh green retained both records.",
+    "Synthetic responses and intentional R2 quality false validate execution/accounting, not task quality or paid cost.",
+    "No original paid run/source was modified or resumed."
+  ]
+}

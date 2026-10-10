@@ -1,0 +1,131 @@
+{
+  "scope": "Sanitized publication only; private-source hashes identify original bytes, not reformatted publication bytes",
+  "sourceReceipts": {
+    "summary.json": {
+      "privateSourceBasename": "original-batches-independent-summary.json",
+      "privateSourceSha256": "71d3c03d2347cceefabb56a0a714628251f3136cb389582861cca2dc6129e0ee"
+    },
+    "pi-six-slots.json": {
+      "privateSourceBasename": "pi-paid-aggregate.json",
+      "privateSourceSha256": "13a815c40e8ceb8befac7886e2a270f90337013b9ba1accda5b3419010b81693"
+    },
+    "kimi-six-slots.json": {
+      "privateSourceBasename": "kimi-paid-aggregate.json",
+      "privateSourceSha256": "7c0c593daf5e551db5999c56a7818e855cbaba3f865b99aaa9fc329c27568c5b"
+    },
+    "pi-A-independent.json": {
+      "privateSourceBasename": "pi-A-independent.json",
+      "privateSourceSha256": "6775b322ba01fc12e24cd1df67fa7bf5d50fbd774aaf0a0b45822dc9ec92ddc3"
+    },
+    "pi-B-independent.json": {
+      "privateSourceBasename": "pi-B-independent.json",
+      "privateSourceSha256": "62fb366586f25a1332e998f90844f3fe65b56ce4ac300c1d24557b116532e948"
+    },
+    "pi-A-semantic-review.json": {
+      "privateSourceBasename": "pi-A-semantic-review.json",
+      "privateSourceSha256": "2d720cacd9f02b7551c540580615f37ee3cf6b4e3875bd31a91905deed4b4d91"
+    },
+    "pi-B-semantic-review.json": {
+      "privateSourceBasename": "pi-B-semantic-review.json",
+      "privateSourceSha256": "120f3a73bcdd16c737fc128418b84d2b49df9d7b76546de9dbcdd278bf09213e"
+    },
+    "kimi-terminal-independent.json": {
+      "privateSourceBasename": "kimi-terminal-independent.json",
+      "privateSourceSha256": "ee370a6fd5236935e8b356b3aa5539f958db5045b2d47205e03a7e6ee25df78d"
+    },
+    "kimi-terminal-snapshots.json": {
+      "privateSourceBasename": "kimi-terminal-snapshots.json",
+      "privateSourceSha256": "9de0918153a4981f8d449b735da754e6512be1651aeaf52af3103d458f319906"
+    },
+    "kimi-terminal-review-seal.json": {
+      "privateSourceBasename": "kimi-terminal-review-seal.json",
+      "privateSourceSha256": "aceacedf282e0a25a4421376e66c5f00590f357343ea2a3368405faa1dc17667"
+    },
+    "post-launch-implementation-delta.json": {
+      "privateSourceBasename": "post-launch-implementation-delta.json",
+      "privateSourceSha256": "42aab6bacf1dbea5538c03a010234126a2a69e510e59178ef2e804e42a33337d"
+    },
+    "live-result-implementation-delta.json": {
+      "privateSourceBasename": "live-result-implementation-delta.json",
+      "privateSourceSha256": "86a18552ba0bf818eb61efda31132b9a1df1887620fda20802dca344127c3db4"
+    },
+    "pi-post-final-compaction-review.json": {
+      "privateSourceBasename": "pi-post-final-compaction-review.json",
+      "privateSourceSha256": "0036800321eb7ec3a2039ad98ac7045fb9f7aeb618a4778e42f514ef1f18b126"
+    },
+    "kimi-snapshot-fix-review.json": {
+      "privateSourceBasename": "kimi-snapshot-fix-review.json",
+      "privateSourceSha256": "1c47f6c1877b50a60eb10308103196350ab9279d0b986ccca4e912fae4eed8f0"
+    },
+    "kimi-snapshot-fix-final-delta-review.json": {
+      "privateSourceBasename": "kimi-snapshot-fix-final-delta-review.json",
+      "privateSourceSha256": "07b89d2f1a88f803ea72a77c18b40314628a129ac1c53173d6b1f0e9dcbac815"
+    },
+    "remaining-four-method-review.json": {
+      "privateSourceBasename": "remaining-four-method-review.json",
+      "privateSourceSha256": "18bd61b2c66df1e0d94f8f08f3f742515e9034654b10418147d412b8fd36c4f8"
+    },
+    "method-original.json": {
+      "privateSourceBasename": "method.json",
+      "privateSourceSha256": "cb55ab11e7a433659bd37dc8313fa2eb8dc783a5c10b292f99c3589f12517f89"
+    },
+    "pi-shared-tail-final-review.json": {
+      "privateSourceBasename": "pi-shared-tail-final-review.json",
+      "privateSourceSha256": "e1661281e9b0aed186c8baf31514bb5d008b4d2a61a9063ff546a25e48b50734"
+    },
+    "pi-free-repair.json": {
+      "privateSourceBasename": "public-evidence.json",
+      "privateSourceSha256": "3ba20f18876337130af8a693374a1f394c92995f7287330532c7a9888006553a"
+    },
+    "kimi-free-repair.json": {
+      "privateSourceBasename": "free-public-evidence.json",
+      "privateSourceSha256": "c19cddd0e7f6b41a03bf29cd3aef662a352432978a42d2ec8ea5f985a544ce43"
+    },
+    "kimi-five-continuation-method-review.json": {
+      "privateSourceBasename": "kimi-five-continuation-method-review.json",
+      "privateSourceSha256": "34160454fcb30d4c3574826c9cc1cd4c74206bbfe23565f5e0fd5a560e3cd0e6"
+    },
+    "continuations-ready-review.json": {
+      "privateSourceBasename": "continuations-ready-review.json",
+      "privateSourceSha256": "90a968b78ffbd5af6618f4323611abfd0bb749f036be22328433f124d310a790"
+    },
+    "observed-cost-mechanisms.json": {
+      "privateSourceBasename": "observed-cost-mechanisms.json",
+      "privateSourceSha256": "8612c119ea8337f37f3ecb751b70aff10a62dfe5949a2351aae65cc7aa80dc93"
+    }
+  },
+  "publicationFiles": {
+    "continuations-ready-review.json": "33f0dd29e118f9269f2dd2adfde769301acb3c4fa4dfec88a3965c0ce537bf40",
+    "kimi-five-continuation-method-review.json": "99d2ac98cec99435a191034e8a9d8aa6e705105d964d91df5ea229ee5ad1a586",
+    "kimi-free-repair.json": "92fb2c12fc6fb6f395d49258227f3356108ad94f0f7c170c3b1a96f4678251ac",
+    "kimi-six-slots.json": "934ee13bcb24d790aa2368c96d0eedc9e0e44f054b1d90b0e01d40f2d490c129",
+    "kimi-snapshot-fix-final-delta-review.json": "07b89d2f1a88f803ea72a77c18b40314628a129ac1c53173d6b1f0e9dcbac815",
+    "kimi-snapshot-fix-review.json": "1c47f6c1877b50a60eb10308103196350ab9279d0b986ccca4e912fae4eed8f0",
+    "kimi-terminal-independent.json": "ee370a6fd5236935e8b356b3aa5539f958db5045b2d47205e03a7e6ee25df78d",
+    "kimi-terminal-review-seal.json": "0dad5aff4d34f5e64471151acfd8c342af0fe5c3072a9eb7401a15ec534d09b5",
+    "kimi-terminal-snapshots.json": "6fca2812126cc93b3524fc8379d9cf55c372b448b068fe948203f82d46c53e68",
+    "live-result-implementation-delta.json": "86a18552ba0bf818eb61efda31132b9a1df1887620fda20802dca344127c3db4",
+    "method-original.json": "38494d9308a2f5200cfafae16f992dce51462e650e8880fd3c6084908e3ed829",
+    "method-publication-addendum.json": "60a9d9cbea8b38fc0ace939731b2e3178728ca86333d26e34d50bd284d8d91b0",
+    "observed-cost-mechanisms.json": "d54a3d1d361569cf5e1bf585c2118fb035113b212ee2fb8bb2856e1ce5a05aa7",
+    "pi-A-independent.json": "5acf1bc376415a365499ac3291f9f5cc5bc4b39ef9cd34122b7aec96204e2d45",
+    "pi-A-semantic-review.json": "1ffc3d0180550f934d710a20d97bd8746c7bff20a551f024386f7b407830d19c",
+    "pi-B-independent.json": "1745f93379e86c6ec7965c48f7d043658a5af8dd8748c2f054588f4b8996580e",
+    "pi-B-native12-adjudication.json": "78ebafccb2617a975a7c91c6cd7cdb7f53a1f85bfbf401dc747cf8dab2914a14",
+    "pi-B-semantic-review.json": "1358989155c2d30a080d017299982e75375e157fd6dc36592b486c234d0e7326",
+    "pi-free-repair.json": "046f464bedba4a9a0871dea2c5fe36847f0803b1326eb1d74f68b54fdc09d9cf",
+    "pi-post-final-compaction-review.json": "0036800321eb7ec3a2039ad98ac7045fb9f7aeb618a4778e42f514ef1f18b126",
+    "pi-shared-tail-final-review.json": "e1661281e9b0aed186c8baf31514bb5d008b4d2a61a9063ff546a25e48b50734",
+    "pi-six-slots.json": "82629e8f22ea1ff837fe18274a2c97d7d5ab6031f23d332777c4294e53ff384d",
+    "post-launch-implementation-delta.json": "191ac65bf1498d51459a040dbf2e0ebb76dbb64d42aea3ef1b47cfb45e8d5fbe",
+    "remaining-four-method-review.json": "18bd61b2c66df1e0d94f8f08f3f742515e9034654b10418147d412b8fd36c4f8",
+    "summary.json": "f50c5acfeeea7ba6b0b3c585539be92dc2b5b3816df99c42d218bb85f38a6a7e",
+    "verification.json": "150c979daea7b46b48ed5c510314ae8c670e3df8e1a2696101cbc49cd8862713"
+  },
+  "excluded": [
+    "raw request/response bodies",
+    "transcript and hidden reasoning text",
+    "credentials or account configurations",
+    "tool arguments containing private filesystem paths"
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "rawAttempts": 119,
+  "arms": {
+    "print": {
+      "rawResponses": 52,
+      "wireIdentityAndPrimaryMatches": 52,
+      "input": 1643451,
+      "output": 17956,
+      "cachedInput": 1589248,
+      "reasoningKnownSubtotal": 1947,
+      "reasoningComplete": false
+    },
+    "loom": {
+      "rawResponses": 67,
+      "wireIdentityAndPrimaryMatches": 67,
+      "input": 2650270,
+      "output": 26984,
+      "cachedInput": 2604032,
+      "reasoningKnownSubtotal": 2085,
+      "reasoningComplete": false
+    }
+  },
+  "failureRound": {
+    "print": {
+      "requests": 0,
+      "input": 0,
+      "output": 0
+    },
+    "loom": {
+      "requests": 0,
+      "input": 0,
+      "output": 0
+    }
+  },
+  "kernel": {
+    "identityPrimaryMatches": 67,
+    "gaps": []
+  },
+  "fixedNAvailable": false,
+  "limits": [
+    "Failed first pair retained; later five not started. No complete12 or fixed-six ratio.",
+    "Optional reasoning incomplete; known subtotal is not additional output.",
+    "Raw reported usage does not certify invoices."
+  ]
+}

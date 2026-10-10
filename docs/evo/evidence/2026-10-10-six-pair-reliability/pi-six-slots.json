@@ -1,0 +1,312 @@
+{
+  "binding": {
+    "cli": "pi",
+    "model": "aihubmix/deepseek-v4.1-flash",
+    "effort": "low"
+  },
+  "plannedPairs": 6,
+  "statisticalUnit": "Independent continuous-session pair; rounds are not replicates.",
+  "fixedPlanCompleted": false,
+  "allObserved": {
+    "count": 2,
+    "pairIds": ["A", "B"],
+    "native": {
+      "input": {
+        "known": 11822261,
+        "complete": true
+      },
+      "output": {
+        "known": 187907,
+        "complete": true
+      },
+      "cachedInput": {
+        "known": 11307136,
+        "complete": false
+      },
+      "requests": {
+        "known": 237,
+        "complete": true
+      },
+      "reasoningOutput": {
+        "known": 79294,
+        "complete": true
+      },
+      "uncachedInput": {
+        "known": null,
+        "complete": false
+      }
+    },
+    "loom": {
+      "input": {
+        "known": 15473944,
+        "complete": true
+      },
+      "output": {
+        "known": 202911,
+        "complete": true
+      },
+      "cachedInput": {
+        "known": 14817408,
+        "complete": false
+      },
+      "requests": {
+        "known": 278,
+        "complete": true
+      },
+      "reasoningOutput": {
+        "known": 88068,
+        "complete": false
+      },
+      "uncachedInput": {
+        "known": null,
+        "complete": false
+      }
+    },
+    "allQualityPassed": false
+  },
+  "outsideComplete12": {
+    "count": 1,
+    "pairIds": ["B"],
+    "native": {
+      "input": {
+        "known": 6126564,
+        "complete": true
+      },
+      "output": {
+        "known": 89903,
+        "complete": true
+      },
+      "cachedInput": {
+        "known": 5861376,
+        "complete": false
+      },
+      "requests": {
+        "known": 115,
+        "complete": true
+      },
+      "reasoningOutput": {
+        "known": 39178,
+        "complete": true
+      },
+      "uncachedInput": {
+        "known": null,
+        "complete": false
+      }
+    },
+    "loom": {
+      "input": {
+        "known": 10103326,
+        "complete": true
+      },
+      "output": {
+        "known": 125265,
+        "complete": true
+      },
+      "cachedInput": {
+        "known": 9620608,
+        "complete": false
+      },
+      "requests": {
+        "known": 170,
+        "complete": true
+      },
+      "reasoningOutput": {
+        "known": 55333,
+        "complete": false
+      },
+      "uncachedInput": {
+        "known": null,
+        "complete": false
+      }
+    },
+    "allQualityPassed": false
+  },
+  "fixedN": {
+    "available": false,
+    "ratios": {
+      "input": null,
+      "output": null,
+      "cachedInput": null,
+      "requests": null,
+      "reasoningOutput": null,
+      "uncachedInput": null
+    }
+  },
+  "limits": [
+    "Complete12 subset may be selection-biased after stopping; it is not the fixed-n six-pair result.",
+    "Quality failures remain in all cost aggregates; cheaper work is not equivalent-quality evidence.",
+    "Unknown optional dimensions do not erase known primary dimensions.",
+    "All observed totals include failed, truncated and unpaired consumption; they are not a full12 efficiency ratio.",
+    "No CLI/model/effort pooling and no per-round pseudoreplication.",
+    "Six pairs do not prove a stable cost distribution."
+  ],
+  "slots": [
+    {
+      "id": "A",
+      "status": "completed",
+      "native": {
+        "usage": {
+          "input": {
+            "known": 5695697,
+            "complete": true
+          },
+          "output": {
+            "known": 98004,
+            "complete": true
+          },
+          "cachedInput": {
+            "known": 5445760,
+            "complete": true
+          },
+          "reasoningOutput": {
+            "known": 40116,
+            "complete": true
+          },
+          "requests": {
+            "known": 122,
+            "complete": true
+          }
+        },
+        "requestCoverageComplete": true,
+        "roundsCompleted": 12,
+        "quality": {
+          "passed": 12,
+          "failed": 0,
+          "unknown": 0
+        }
+      },
+      "loom": {
+        "usage": {
+          "input": {
+            "known": 5370618,
+            "complete": true
+          },
+          "output": {
+            "known": 77646,
+            "complete": true
+          },
+          "cachedInput": {
+            "known": 5196800,
+            "complete": false
+          },
+          "reasoningOutput": {
+            "known": 32735,
+            "complete": false
+          },
+          "requests": {
+            "known": 108,
+            "complete": true
+          }
+        },
+        "requestCoverageComplete": true,
+        "roundsCompleted": 12,
+        "quality": {
+          "passed": 8,
+          "failed": 4,
+          "unknown": 0
+        }
+      },
+      "complete12": true
+    },
+    {
+      "id": "B",
+      "status": "failed",
+      "native": {
+        "usage": {
+          "input": {
+            "known": 6126564,
+            "complete": true
+          },
+          "output": {
+            "known": 89903,
+            "complete": true
+          },
+          "cachedInput": {
+            "known": 5861376,
+            "complete": false
+          },
+          "reasoningOutput": {
+            "known": 39178,
+            "complete": true
+          },
+          "requests": {
+            "known": 115,
+            "complete": true
+          }
+        },
+        "requestCoverageComplete": true,
+        "roundsCompleted": 11,
+        "quality": {
+          "passed": 11,
+          "failed": 0,
+          "unknown": 0
+        }
+      },
+      "loom": {
+        "usage": {
+          "input": {
+            "known": 10103326,
+            "complete": true
+          },
+          "output": {
+            "known": 125265,
+            "complete": true
+          },
+          "cachedInput": {
+            "known": 9620608,
+            "complete": false
+          },
+          "reasoningOutput": {
+            "known": 55333,
+            "complete": false
+          },
+          "requests": {
+            "known": 170,
+            "complete": true
+          }
+        },
+        "requestCoverageComplete": true,
+        "roundsCompleted": 12,
+        "quality": {
+          "passed": 8,
+          "failed": 4,
+          "unknown": 0
+        }
+      },
+      "complete12": false
+    },
+    {
+      "id": "C",
+      "status": "not-started",
+      "native": null,
+      "loom": null,
+      "complete12": false
+    },
+    {
+      "id": "D",
+      "status": "not-started",
+      "native": null,
+      "loom": null,
+      "complete12": false
+    },
+    {
+      "id": "E",
+      "status": "not-started",
+      "native": null,
+      "loom": null,
+      "complete12": false
+    },
+    {
+      "id": "F",
+      "status": "not-started",
+      "native": null,
+      "loom": null,
+      "complete12": false
+    }
+  ],
+  "complete12DescriptiveSubset": {
+    "count": 1,
+    "pairIds": ["A"],
+    "notThePlannedSixResult": true
+  }
+}

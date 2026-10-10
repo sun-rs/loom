@@ -218,6 +218,7 @@ for (const mode of [
   "compact start-only",
   "compact end-only",
   "compact suffix-only",
+  "post-final compact",
 ]) {
   test(`Pi ${mode} marks usage partial without replacing native final or known generations`, () => {
     const d = mkdtempSync(join(tmpdir(), "pi-driver-"));
@@ -231,12 +232,14 @@ for (const mode of [
       assert.equal(known.length, 1);
       assert.equal(known[0].inputTokens, 10);
       assert.equal(known[0].outputTokens, 2);
-      assert.ok(
-        first.frames.some(
+      assert.equal(
+        first.frames.filter(
           (f) =>
             f.protocol === "rah-provider-usage-gap/v1" &&
             f.reason === "parse_error",
-        ),
+        ).length,
+        1,
+        "only the compaction coverage gap, not a false unfinished-stream gap",
       );
       assert.equal(
         first.frames.filter((f) => f.protocol === "rah-delivery-accepted/v1")

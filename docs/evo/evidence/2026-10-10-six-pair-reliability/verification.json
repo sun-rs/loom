@@ -1,0 +1,39 @@
+{
+  "scope": "Final integrated Pi terminal-compaction and Kimi wire-snapshot repairs; no frontend source changes",
+  "checks": {
+    "npm run check": {
+      "exit": 0,
+      "logSha256": "ec6f479d403ae7cca837715c3227e92cebf43bf4a399e1029a6ac464a1e94aec"
+    },
+    "npm run format:check": {
+      "exit": 0,
+      "logSha256": "fb5ffe51bf83c7a6ac683f386a5c903f6ff2c086dbe1bf27cc1f12efddaf7e3f",
+      "laterDocumentationDelta": "Added mechanism receipt and status paragraph separately formatted and checked"
+    },
+    "git diff --check": {
+      "exit": 0
+    },
+    "localDocumentationLinks": {
+      "checked": 555,
+      "missing": 0
+    }
+  },
+  "sourceHashes": {
+    "packages/agent-host/src/kimi-acp-final-capture.mjs": "8283c7a0772a5a3c3cc5a195240d47ec892ac9eee06e555b558e6436714ddc40",
+    "packages/agent-host/src/pi-final-output.mjs": "e73eaac62faa4cc9647b80cc4d8ec44ca0b350eea4e7d0d78013c612938897c9",
+    "packages/agent-host/src/pi-print-driver.mjs": "af6105d60553462402913bca19565d2f27647e08d4f9a4d60b8b256bad999335",
+    "packages/agent-host/test/fixtures/fake-pi-print.mjs": "dc11924c18da5a085632fee6fa804acb950b7407647805dee7f80a4609a8e89c",
+    "packages/agent-host/test/kimi-acp-final-capture.test.ts": "5e43eb41cdd6dcd19ae928803b3f7ab98fc266af91623c3961b0472d5f325075",
+    "packages/agent-host/test/pi-print-driver.test.mjs": "c21f66a6d2e8f5a5ba08052b63de0324e7b6efd99cd8eb8a5717ba7dfe034368",
+    "packages/agent-host/test/pi-print-proof.test.mjs": "5d18b4a58881328d43a0ab0c796734ef3fe040fd50aae1bca717d36b4512670f"
+  },
+  "supersededCheck": "Earlier combined-check exit0 began before final Pi driver delta; not final-version acceptance",
+  "claims": {
+    "implemented": true,
+    "automatedChecksPassed": true,
+    "syntheticProviderActualCliRepairsVerified": true,
+    "paidContinuationStarted": false,
+    "efficiencyAccepted": false,
+    "deployed": false
+  }
+}

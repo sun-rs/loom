@@ -1,0 +1,278 @@
+{
+  "snapshots": [
+    {
+      "arm": "print",
+      "round": 1,
+      "status": "completed",
+      "hashesMatch": true,
+      "evaluation": {
+        "round": 1,
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "selfTestsFailureKind": null
+      }
+    },
+    {
+      "arm": "print",
+      "round": 2,
+      "status": "completed",
+      "hashesMatch": true,
+      "evaluation": {
+        "round": 2,
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "selfTestsFailureKind": null
+      }
+    },
+    {
+      "arm": "print",
+      "round": 3,
+      "status": "completed",
+      "hashesMatch": true,
+      "evaluation": {
+        "round": 3,
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "selfTestsFailureKind": null
+      }
+    },
+    {
+      "arm": "print",
+      "round": 4,
+      "status": "completed",
+      "hashesMatch": true,
+      "evaluation": {
+        "round": 4,
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "selfTestsFailureKind": null
+      }
+    },
+    {
+      "arm": "print",
+      "round": 5,
+      "status": "completed",
+      "hashesMatch": true,
+      "evaluation": {
+        "round": 5,
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "selfTestsFailureKind": null
+      }
+    },
+    {
+      "arm": "print",
+      "round": 6,
+      "status": "completed",
+      "hashesMatch": true,
+      "evaluation": {
+        "round": 6,
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "selfTestsFailureKind": null
+      }
+    },
+    {
+      "arm": "print",
+      "round": 7,
+      "status": "completed",
+      "hashesMatch": true,
+      "evaluation": {
+        "round": 7,
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "selfTestsFailureKind": null
+      }
+    },
+    {
+      "arm": "print",
+      "round": 8,
+      "status": "completed",
+      "hashesMatch": true,
+      "evaluation": {
+        "round": 8,
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "selfTestsFailureKind": null
+      }
+    },
+    {
+      "arm": "print",
+      "round": 9,
+      "status": "completed",
+      "hashesMatch": true,
+      "evaluation": {
+        "round": 9,
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "selfTestsFailureKind": null
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 1,
+      "status": "completed",
+      "hashesMatch": true,
+      "evaluation": {
+        "round": 1,
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "selfTestsFailureKind": null
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 2,
+      "status": "completed",
+      "hashesMatch": true,
+      "evaluation": {
+        "round": 2,
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "selfTestsFailureKind": null
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 3,
+      "status": "completed",
+      "hashesMatch": true,
+      "evaluation": {
+        "round": 3,
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "selfTestsFailureKind": null
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 4,
+      "status": "completed",
+      "hashesMatch": true,
+      "evaluation": {
+        "round": 4,
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "selfTestsFailureKind": null
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 5,
+      "status": "completed",
+      "hashesMatch": true,
+      "evaluation": {
+        "round": 5,
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "selfTestsFailureKind": null
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 6,
+      "status": "completed",
+      "hashesMatch": true,
+      "evaluation": {
+        "round": 6,
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "selfTestsFailureKind": null
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 7,
+      "status": "completed",
+      "hashesMatch": true,
+      "evaluation": {
+        "round": 7,
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "selfTestsFailureKind": null
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 8,
+      "status": "completed",
+      "hashesMatch": true,
+      "evaluation": {
+        "round": 8,
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "selfTestsFailureKind": null
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 9,
+      "status": "completed",
+      "hashesMatch": true,
+      "evaluation": {
+        "round": 9,
+        "passed": true,
+        "functionalPassed": true,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "selfTestsFailureKind": null
+      }
+    },
+    {
+      "arm": "loom",
+      "round": 10,
+      "status": "failed",
+      "hashesMatch": true,
+      "evaluation": {
+        "round": 10,
+        "passed": false,
+        "functionalPassed": false,
+        "selfTestsPassed": true,
+        "selfTestsExitCode": 0,
+        "selfTestsFailureKind": null
+      }
+    }
+  ],
+  "sessions": {
+    "print": ["session_dec88680-38b5-4fac-af33-8e0d7c39f76a"],
+    "loom": ["session_61bf5445-5fda-4332-aca4-92fd59c923c3"]
+  },
+  "limits": [
+    "Failure snapshot diagnostic retained separately; does not make failed round complete.",
+    "R12 README requirement not reached; no final-deliverable claim."
+  ]
+}

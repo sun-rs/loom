@@ -1,0 +1,30 @@
+{
+  "recordedAt": "2026-10-10T12:23:08.015887+00:00",
+  "phase": "after paid launch; before any paid result aggregation",
+  "originalMethodSha256": "cb55ab11e7a433659bd37dc8313fa2eb8dc783a5c10b292f99c3589f12517f89",
+  "methodUnchanged": true,
+  "implementationChanges": [
+    {
+      "description": "Add actual Pi/Kimi result adapters and six-slot directory discovery, with missing-result raw salvage.",
+      "tests": [
+        "normalize-red.log",
+        "adapter-green.log",
+        "batch-adapter-red.log"
+      ]
+    },
+    {
+      "description": "Fix aggregator completeness when a started failed pair has no result/arm objects; preserve other known tokens but mark total coverage unknown.",
+      "tests": ["missing-result-red.log", "green.log"]
+    }
+  ],
+  "unchangedPrinciples": [
+    "fixed six pairs, no successful-only selection",
+    "ratio of sums per CLI/model/effort",
+    "quality failures remain in consumption",
+    "missing/failed consumption never silently zero",
+    "all six completed twelve-round pairs required for fixed-n main result"
+  ],
+  "paidResultsUsedToChooseMethod": false,
+  "originalMethodFilePreserved": true,
+  "readinessSha256": "4b44ed473502e96660d43e6ab24779ff6ed90015960a77ee9a1f321124f1e6f2"
+}

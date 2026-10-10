@@ -1,0 +1,67 @@
+{
+  "schema": "pi-post-final-compaction-free/v1",
+  "paidCalls": 0,
+  "run": "<private>/1791639140125-free",
+  "installedPi": "1.1.0",
+  "provider": "fake-local",
+  "model": "fake-final",
+  "effort": "low",
+  "method": "Real installed CLI + localhost provider, synthetic usage triggers normal threshold compaction; stdout was not fabricated. Formal Role/daemon runs isolated repaired source.",
+  "arms": {
+    "native": {
+      "normalPostFinalTails": 2,
+      "requests": 9,
+      "rawPrimaryComplete": true,
+      "nativeCrosscheckComplete": true,
+      "compactionRounds": [1, 2]
+    },
+    "loom": {
+      "normalPostFinalTails": 2,
+      "requests": 9,
+      "rawPrimaryComplete": true,
+      "nativeCrosscheckComplete": true,
+      "compactionRounds": [1, 2]
+    }
+  },
+  "sameNativeSession": true,
+  "formalFinalTransports": ["native-final-output", "native-final-output"],
+  "kernelSamplingMatches": true,
+  "kernelCompactionGapOccurrences": [1, 1],
+  "productAllConsumptionComplete": false,
+  "capture": {
+    "complete": true,
+    "launches": 5,
+    "sealed": 5
+  },
+  "cleanup": {
+    "runnerExit": 0,
+    "daemonExit": {
+      "code": 0,
+      "signal": null
+    },
+    "temporaryConfigRemoved": true,
+    "ownedPidsChecked": 11,
+    "liveOwnedPids": []
+  },
+  "sourceBeforeEqualsAfter": true,
+  "sourceHashes": {
+    "packages/agent-host/src/pi-print-runtime.ts": "ceec41379e62e8c0ddfb9c8b26e5f31b6ea1d2cb11694b713b38ad7f5fad617c",
+    "packages/agent-host/src/pi-print-driver.mjs": "af6105d60553462402913bca19565d2f27647e08d4f9a4d60b8b256bad999335",
+    "packages/agent-host/src/pi-final-output.mjs": "e73eaac62faa4cc9647b80cc4d8ec44ca0b350eea4e7d0d78013c612938897c9",
+    "packages/agent-host/src/pi-usage.mjs": "7a771ff525deeeccf8289497ef4266838854698ca39bd29a4dc9a04432f3f5f1",
+    "packages/agent-host/src/provider-launch-arguments.js": "313d4a04f468c6fa0091dcdc28902b4b6a059e7d8f7c43ab37fb2866eff1eb1b",
+    "packages/agent-host/src/pi-model-catalog-probe.ts": "e7744d49a510e60e55662bd305fd25ba9259ad0ba4ad0474ae7b2b24e0e7380d",
+    "packages/daemon/src/runtime-profile-composition.ts": "d4310f669ef0b819937757e4f669a394814f7d92ac2a4fa065848f57bb9894e1"
+  },
+  "evidenceHashes": {
+    "/Users/sun/.loom/reviews/2026-10-10-pi-post-final-compaction-free/free-runs/attempt-3/A/runs/1791639140125-free/result.json": "ac2c791b3245ef54d343a35ebb6f52828a397c2fdc6855a12a3378696cf95a5a",
+    "/Users/sun/.loom/reviews/2026-10-10-pi-post-final-compaction-free/free-runs/attempt-3/A/runs/1791639140125-free/source-before.json": "3a82792f9c761706abca62a97cedffa7bc3a0f6183cf073357d33c5e926fca00",
+    "/Users/sun/.loom/reviews/2026-10-10-pi-post-final-compaction-free/free-runs/attempt-3/A/runs/1791639140125-free/source-after.json": "3a82792f9c761706abca62a97cedffa7bc3a0f6183cf073357d33c5e926fca00"
+  },
+  "limits": [
+    "Synthetic token values are not an efficiency or cost result.",
+    "Invoice quality remains deliberately false; fake trajectory only exercises tools, final and compaction.",
+    "Attempt1 fake-provider rejected compaction request schema; preserved. Attempt2 exposed duplicate driver gap; preserved.",
+    "Original paid B12 failure and missing quality snapshot are unchanged; no paid rerun."
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "verdict": "No remaining blocker in reviewed narrow snapshot patch; full checks owned by lead/implementer",
+  "scope": "Read-only review of isolated source; main repository and paid evidence unchanged",
+  "sourceHashes": {
+    "packages/agent-host/src/kimi-acp-final-capture.mjs": "f3ae93468ee5d7717684bddf81a73475cce8cc5682030be6b18d1e5a3bda1f62",
+    "packages/agent-host/test/kimi-acp-final-capture.test.ts": "36909b483d4cd8459357d95781c0e10ea9cc67751e719e98458acee902285919"
+  },
+  "verified": [
+    "Only pre-prompt baseline capture retries at most three attempts.",
+    "Each fully read extended prefix becomes next anchor with device/inode/offset/hash validation.",
+    "Already observed truncation fails immediately, cannot be hidden by restoration.",
+    "Path lstat inode and symlink validation rejects replacement while descriptor still references old file.",
+    "Terminal suffix path does not retry; does not resend prompt or change completion proof."
+  ],
+  "testsReviewed": [
+    "bounded two appends converge; new prompt suffix excluded from baseline",
+    "continuous append fails within six fstat calls",
+    "rewrite/shrink/replacement reject",
+    "second extended prefix rewrite rejects on fifth stat",
+    "observed shrink then restore: reproduced failure before guard; four capture tests green afterward"
+  ],
+  "limits": [
+    "Bounded consistency observation, not a filesystem lock or proof against mutations after snapshot.",
+    "No paid rerun; historical failure not overwritten.",
+    "Full suite not independently rerun in this read-only review."
+  ]
+}

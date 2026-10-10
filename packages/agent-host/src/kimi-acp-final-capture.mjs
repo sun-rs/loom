@@ -13,6 +13,13 @@ import { dirname, isAbsolute } from "node:path";
 import { createKimiAcpFinalOutput } from "./kimi-acp-final-output.js";
 import { kimiMainWirePath } from "./kimi-wire-usage.js";
 
+class UnstableWireSnapshot extends Error {
+  constructor(baseline) {
+    super("Kimi wire changed while reading");
+    this.baseline = baseline;
+  }
+}
+
 function readSnapshot(path, prior) {
   const fd = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW);
   try {
@@ -43,7 +50,7 @@ function readSnapshot(path, prior) {
       hash.update(chunk.subarray(0, n));
       pos += n;
     }
-    const prefixSha256 = hash.digest("hex");
+    const prefixSha256 = hash.copy().digest("hex");
     if (prior && prefixSha256 !== prior.prefixSha256)
       throw new Error("Kimi wire prefix changed");
     const suffix = Buffer.alloc(stat.size - offset);
@@ -54,8 +61,27 @@ function readSnapshot(path, prior) {
       read += n;
     }
     const after = fstatSync(fd);
+    if (after.size < stat.size)
+      throw new Error("Kimi wire truncated while reading");
+    const current = lstatSync(path);
+    if (current.size < stat.size)
+      throw new Error("Kimi wire truncated while reading");
+    if (
+      current.isSymbolicLink() ||
+      current.dev !== stat.dev ||
+      current.ino !== stat.ino
+    )
+      throw new Error("Kimi wire identity changed while reading");
+    const endSha256 = hash.update(suffix).digest("hex");
+    const baseline = {
+      path,
+      device: String(stat.dev),
+      inode: String(stat.ino),
+      offset: stat.size,
+      prefixSha256: endSha256,
+    };
     if (after.size !== stat.size || after.mtimeMs !== stat.mtimeMs)
-      throw new Error("Kimi wire changed while reading");
+      throw new UnstableWireSnapshot(baseline);
     return {
       path,
       device: String(stat.dev),
@@ -63,17 +89,31 @@ function readSnapshot(path, prior) {
       offset,
       prefixSha256,
       suffix: new TextDecoder("utf-8", { fatal: true }).decode(suffix),
+      baseline,
     };
   } finally {
     closeSync(fd);
   }
 }
 export function captureKimiWire(path) {
-  const { suffix, ...baseline } = readSnapshot(path);
-  return baseline;
+  let anchor;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      return readSnapshot(path, anchor).baseline;
+    } catch (error) {
+      if (!(error instanceof UnstableWireSnapshot) || attempt === 2)
+        throw error;
+      anchor = error.baseline;
+    }
+  }
+  throw new Error("Kimi wire snapshot unavailable");
 }
 export function readKimiWireSuffix(baseline) {
-  return readSnapshot(baseline.path, baseline);
+  const { baseline: captured, ...snapshot } = readSnapshot(
+    baseline.path,
+    baseline,
+  );
+  return snapshot;
 }
 
 export function createKimiFinalCapture(options, wake, environment) {

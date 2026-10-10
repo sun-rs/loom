@@ -206,3 +206,91 @@ test("Pi a dangling assistant generation cannot be hidden by settled trailer", (
   });
   assert.equal(inspectPiTurn(f.e()).final, undefined);
 });
+
+function postFinalCompaction(f) {
+  const result = {
+    summary: "summary",
+    firstKeptEntryId: "user",
+    tokensBefore: 100,
+    estimatedTokensAfter: 20,
+    usage: { input: 100, output: 10 },
+    details: { readFiles: [] },
+  };
+  f.frames.splice(
+    -1,
+    0,
+    { type: "compaction_start", reason: "threshold" },
+    {
+      type: "compaction_end",
+      reason: "threshold",
+      result,
+      aborted: false,
+      willRetry: false,
+    },
+  );
+  const { estimatedTokensAfter, ...persisted } = result;
+  f.entries.push({
+    type: "compaction",
+    id: "compact",
+    parentId: "final",
+    ...persisted,
+  });
+  return f;
+}
+test("Pi normal final survives matching post-agent_end threshold compaction", () => {
+  const f = postFinalCompaction(fixture()),
+    p = inspectPiTurn(f.e());
+  assert.equal(p.final?.text, "done");
+  assert.equal(p.final.nativeMessageId, "final");
+  assert.equal(p.messages.length, 1);
+});
+test("Pi post-final compaction cannot disguise abort, retry, mismatch or new work", () => {
+  for (const mutate of [
+    (f) => (f.frames.at(-2).aborted = true),
+    (f) => (f.frames.at(-2).willRetry = true),
+    (f) => (f.frames.at(-1).aborted = true),
+    (f) => f.frames.splice(-2, 1),
+    (f) => f.frames.splice(-3, 1),
+    (f) => f.frames.splice(-1, 0, { type: "unknown" }),
+    (f) =>
+      f.frames.splice(-1, 0, {
+        type: "message_start",
+        message: { role: "assistant" },
+      }),
+    (f) => (f.entries.at(-1).summary = "foreign"),
+    (f) => (f.entries.at(-1).usage = { input: 101, output: 10 }),
+    (f) => (f.entries.at(-1).type = "custom"),
+    (f) => (f.frames.at(-2).reason = "unknown"),
+    (f) => (f.frames.at(-2).result = undefined),
+    (f) => f.frames.splice(-1, 0, { type: "agent_end", willRetry: false }),
+    (f) => (f.input.exit.code = 1),
+    (f) => (f.entries.at(-2).message.stopReason = "error"),
+    (f) =>
+      f.entries.at(-2).message.content.push({
+        type: "toolCall",
+        id: "pending",
+        name: "bash",
+        arguments: {},
+      }),
+  ]) {
+    const f = postFinalCompaction(fixture());
+    mutate(f);
+    assert.equal(inspectPiTurn(f.e()).final, undefined);
+  }
+});
+
+test("Pi does not generalize the observed single post-final compaction to repeated tails", () => {
+  const f = postFinalCompaction(fixture());
+  f.frames.splice(
+    -1,
+    0,
+    structuredClone(f.frames.at(-3)),
+    structuredClone(f.frames.at(-2)),
+  );
+  f.entries.push({
+    ...structuredClone(f.entries.at(-1)),
+    id: "compact-2",
+    parentId: "compact",
+  });
+  assert.equal(inspectPiTurn(f.e()).final, undefined);
+});

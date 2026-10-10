@@ -1,0 +1,30 @@
+{
+  "sourceSha256": "5592139c26c2c5fa13d9abb1d62ddc4e3be4f524d89b393b0b8a7d257d5f0f27",
+  "evidenceOwner": "Pi runner owner; independent reviewer checked original stdout event-type sequence/session suffix and exit receipt",
+  "originalResult": "native12 terminal proof rejected; original batch stopped",
+  "observedSequence": [
+    "assistant message_end stop",
+    "turn_end stop",
+    "agent_end",
+    "compaction_start threshold",
+    "compaction_end aborted=false",
+    "agent_settled aborted=false"
+  ],
+  "actualExit": {
+    "code": 0,
+    "signal": null
+  },
+  "toolCallsClosed": 9,
+  "nativeSessionTail": [
+    "assistant toolUse",
+    "toolResult",
+    "assistant stop",
+    "compaction"
+  ],
+  "offlineCorrection": "Bounded compatibility fix accepts normal final preceding matched post-final compaction; no rerun and no edited historical result",
+  "quality": "unknown: original native12 snapshot was not captured; temporary work tree deleted",
+  "limits": [
+    "Runtime completion and artifact quality are different claims.",
+    "Offline prefix reconstruction is not actual Host pre-prompt capture."
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "scope": "Independent semantic read, Pi pair A final immutable round12 artifacts",
+  "files": {
+    "native/README.md": "6722e0c1a76379297a391a1e2709e71f8c10e4dc46648a6da15d032ab49d9d54",
+    "native/invoice.py": "13266a11a5b00630d433378328fefdf35a4eabc59079550688bdd1013e1523a6",
+    "loom/README.md": "bd1f7c3b5cd65c83b41c9d5e47f3c039314ba87c9ca722a4198b7bfcbeaa850a",
+    "loom/invoice.py": "b0415a3974c60433c30370533de25c7f6be78260d0dd7eda405d6b49304a4fc4"
+  },
+  "findings": [
+    "Both final READMEs document numeric grammar, cancelled-row handling, independent gross/discount/net/tax rounding, category grouping, file and stdin CLI.",
+    "README example arithmetic checked manually: native 25.00-0.50+2.45=26.95 and 19.99+1.50=21.49; Loom 6.50+0.54=7.04.",
+    "Inspected implementation reads only declared business row keys, without treating active:false as cancellation.",
+    "Native automated24-stage comparison not claimed: actual arm quality native12 pass, Loom8 pass/4 fail; Loom R9–12 self-tests fail due docstring SyntaxWarning on Python3.13 while functional checks pass."
+  ],
+  "limitations": [
+    "Read review is not exhaustive proof; original v6 oracle results unchanged.",
+    "No candidate code execution or feedback to model."
+  ]
+}

@@ -14,7 +14,7 @@ import {
   mkdirSync,
 } from "node:fs";
 import { dirname, isAbsolute } from "node:path";
-import { inspectPiTurn } from "./pi-final-output.mjs";
+import { inspectPiTurn, piTerminalCompactions } from "./pi-final-output.mjs";
 import { piUsageFrames } from "./pi-usage.mjs";
 import { ProviderUsageWriter } from "./provider-usage.js";
 import {
@@ -278,11 +278,7 @@ async function main() {
       if (frame.type === "message_end" && frame.message?.role === "assistant")
         openAssistant = false;
     }
-    const settled =
-      parsedFrames.at(-1)?.type === "agent_settled" &&
-      parsedFrames.at(-1)?.aborted === false &&
-      parsedFrames.at(-2)?.type === "agent_end" &&
-      parsedFrames.at(-2)?.willRetry === false;
+    const settled = piTerminalCompactions(parsedFrames) !== undefined;
     const messages = stdout
       .trim()
       .split("\n")

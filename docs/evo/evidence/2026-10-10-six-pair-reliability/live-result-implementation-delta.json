@@ -1,0 +1,9 @@
+{
+  "phase": "after paid launch, before sealed paid aggregate",
+  "finding": "Pi writes result.json progress snapshots before finalAccounting; file existence is not a terminal receipt.",
+  "fix": "Require finalAccounting for Pi or finalAccountingComplete field for Kimi before terminal raw completeness; live snapshot status running, known raw dimensions retained.",
+  "methodChange": false,
+  "red": "live-result-red.log",
+  "green": "adapter-green.log",
+  "sourceSha256": "05e96bfc508e289c69cf00d17a8be296de9c05a805bdd3d7927a840426671dd4"
+}

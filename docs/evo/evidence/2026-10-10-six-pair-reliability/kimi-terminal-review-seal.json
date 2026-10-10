@@ -1,0 +1,27 @@
+{
+  "verdict": "stopped experiment; reported raw primary fully reconciled; no fixed-six result",
+  "independentFiles": {
+    "kimi-terminal-independent.json": "ee370a6fd5236935e8b356b3aa5539f958db5045b2d47205e03a7e6ee25df78d",
+    "kimi-terminal-snapshots.json": "9de0918153a4981f8d449b735da754e6512be1651aeaf52af3103d458f319906",
+    "kimi-paid-normalized.json": "48e4cd08907182e7af62cf04a34d2568f82a7198c65defabfe4c258643584ad9",
+    "kimi-paid-aggregate.json": "7c0c593daf5e551db5999c56a7818e855cbaba3f865b99aaa9fc329c27568c5b"
+  },
+  "independentChecks": [
+    "119 sealed HTTP responses, unique identities; exact wire primary totals",
+    "67 Loom Kernel generations match raw IDs and primary counts; zero gaps",
+    "Provider PID census matches passive capture processes through shared independent normalization",
+    "19 immutable snapshots hashes verified; failed L10 snapshot remains diagnostic",
+    "Two continuous sessions; five later planned pair slots not started"
+  ],
+  "ownerReceipt": {
+    "path": "[private]/paid-stop-public-evidence.json",
+    "sha256": "63fab26290f20bd5278425e69758866ea450d48f3463338186eb3d596e084b93",
+    "scope": "Source1922/PID67/credential cleanup checked by experiment owner; not independently rerun large hash traversal here"
+  },
+  "limits": [
+    "L10 observed zero model HTTP; not a provider invoice assertion",
+    "No complete twelve-round pair and no six-pair or late-six result",
+    "Optional reasoning incomplete; known subset never added to output",
+    "Failure root cause handled separately; no rerun or substitution"
+  ]
+}

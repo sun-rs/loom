@@ -1,0 +1,325 @@
+{
+  "scope": "Original stopped six-pair batches; independent raw reported token accounting, not invoices",
+  "cliResults": {
+    "pi": {
+      "binding": {
+        "cli": "pi",
+        "model": "aihubmix/deepseek-v4.1-flash",
+        "effort": "low"
+      },
+      "slots": [
+        {
+          "id": "A",
+          "status": "completed",
+          "nativeCapturedRounds": 12,
+          "loomCapturedRounds": 12,
+          "quality": {
+            "native": {
+              "passed": 12,
+              "failed": 0,
+              "unknown": 0
+            },
+            "loom": {
+              "passed": 8,
+              "failed": 4,
+              "unknown": 0
+            }
+          }
+        },
+        {
+          "id": "B",
+          "status": "failed",
+          "nativeCapturedRounds": 11,
+          "loomCapturedRounds": 12,
+          "quality": {
+            "native": {
+              "passed": 11,
+              "failed": 0,
+              "unknown": 0
+            },
+            "loom": {
+              "passed": 8,
+              "failed": 4,
+              "unknown": 0
+            }
+          }
+        },
+        {
+          "id": "C",
+          "status": "not-started",
+          "nativeCapturedRounds": null,
+          "loomCapturedRounds": null,
+          "quality": {
+            "native": null,
+            "loom": null
+          }
+        },
+        {
+          "id": "D",
+          "status": "not-started",
+          "nativeCapturedRounds": null,
+          "loomCapturedRounds": null,
+          "quality": {
+            "native": null,
+            "loom": null
+          }
+        },
+        {
+          "id": "E",
+          "status": "not-started",
+          "nativeCapturedRounds": null,
+          "loomCapturedRounds": null,
+          "quality": {
+            "native": null,
+            "loom": null
+          }
+        },
+        {
+          "id": "F",
+          "status": "not-started",
+          "nativeCapturedRounds": null,
+          "loomCapturedRounds": null,
+          "quality": {
+            "native": null,
+            "loom": null
+          }
+        }
+      ],
+      "allObserved": {
+        "count": 2,
+        "pairIds": ["A", "B"],
+        "native": {
+          "input": {
+            "known": 11822261,
+            "complete": true
+          },
+          "output": {
+            "known": 187907,
+            "complete": true
+          },
+          "cachedInput": {
+            "known": 11307136,
+            "complete": false
+          },
+          "requests": {
+            "known": 237,
+            "complete": true
+          },
+          "reasoningOutput": {
+            "known": 79294,
+            "complete": true
+          },
+          "uncachedInput": {
+            "known": null,
+            "complete": false
+          }
+        },
+        "loom": {
+          "input": {
+            "known": 15473944,
+            "complete": true
+          },
+          "output": {
+            "known": 202911,
+            "complete": true
+          },
+          "cachedInput": {
+            "known": 14817408,
+            "complete": false
+          },
+          "requests": {
+            "known": 278,
+            "complete": true
+          },
+          "reasoningOutput": {
+            "known": 88068,
+            "complete": false
+          },
+          "uncachedInput": {
+            "known": null,
+            "complete": false
+          }
+        },
+        "allQualityPassed": false
+      },
+      "fixedN": {
+        "available": false,
+        "ratios": {
+          "input": null,
+          "output": null,
+          "cachedInput": null,
+          "requests": null,
+          "reasoningOutput": null,
+          "uncachedInput": null
+        }
+      }
+    },
+    "kimi": {
+      "binding": {
+        "cli": "kimi",
+        "model": "kimi-code/k3-256k",
+        "effort": "low"
+      },
+      "slots": [
+        {
+          "id": "1",
+          "status": "failed",
+          "nativeCapturedRounds": 9,
+          "loomCapturedRounds": 9,
+          "quality": {
+            "native": {
+              "passed": 9,
+              "failed": 0,
+              "unknown": 0
+            },
+            "loom": {
+              "passed": 9,
+              "failed": 0,
+              "unknown": 0
+            }
+          }
+        },
+        {
+          "id": "2",
+          "status": "not-started",
+          "nativeCapturedRounds": null,
+          "loomCapturedRounds": null,
+          "quality": {
+            "native": null,
+            "loom": null
+          }
+        },
+        {
+          "id": "3",
+          "status": "not-started",
+          "nativeCapturedRounds": null,
+          "loomCapturedRounds": null,
+          "quality": {
+            "native": null,
+            "loom": null
+          }
+        },
+        {
+          "id": "4",
+          "status": "not-started",
+          "nativeCapturedRounds": null,
+          "loomCapturedRounds": null,
+          "quality": {
+            "native": null,
+            "loom": null
+          }
+        },
+        {
+          "id": "5",
+          "status": "not-started",
+          "nativeCapturedRounds": null,
+          "loomCapturedRounds": null,
+          "quality": {
+            "native": null,
+            "loom": null
+          }
+        },
+        {
+          "id": "6",
+          "status": "not-started",
+          "nativeCapturedRounds": null,
+          "loomCapturedRounds": null,
+          "quality": {
+            "native": null,
+            "loom": null
+          }
+        }
+      ],
+      "allObserved": {
+        "count": 1,
+        "pairIds": ["1"],
+        "native": {
+          "input": {
+            "known": 1643451,
+            "complete": true
+          },
+          "output": {
+            "known": 17956,
+            "complete": true
+          },
+          "cachedInput": {
+            "known": 1589248,
+            "complete": true
+          },
+          "requests": {
+            "known": 52,
+            "complete": true
+          },
+          "reasoningOutput": {
+            "known": 1947,
+            "complete": false
+          },
+          "uncachedInput": {
+            "known": 54203,
+            "complete": true
+          }
+        },
+        "loom": {
+          "input": {
+            "known": 2650270,
+            "complete": true
+          },
+          "output": {
+            "known": 26984,
+            "complete": true
+          },
+          "cachedInput": {
+            "known": 2604032,
+            "complete": true
+          },
+          "requests": {
+            "known": 67,
+            "complete": true
+          },
+          "reasoningOutput": {
+            "known": 2085,
+            "complete": false
+          },
+          "uncachedInput": {
+            "known": 46238,
+            "complete": true
+          }
+        },
+        "allQualityPassed": false
+      },
+      "fixedN": {
+        "available": false,
+        "ratios": {
+          "input": null,
+          "output": null,
+          "cachedInput": null,
+          "requests": null,
+          "reasoningOutput": null,
+          "uncachedInput": null
+        }
+      }
+    }
+  },
+  "statisticalVerdict": "Neither original batch completed its pre-registered six pairs; fixed-six primary ratios unavailable. No successful-subset substitution.",
+  "continuationNotYetExecuted": true,
+  "piTerminalCorrectionBoundary": "B native12 completed normal final then compaction; frozen parser rejected tail. Original status preserved. Corrected runtime interpretation possible from raw, but no original R12 artifact snapshot; artifact quality unknown.",
+  "evidenceHashes": {
+    "pi-A-independent.json": "6775b322ba01fc12e24cd1df67fa7bf5d50fbd774aaf0a0b45822dc9ec92ddc3",
+    "pi-B-independent.json": "62fb366586f25a1332e998f90844f3fe65b56ce4ac300c1d24557b116532e948",
+    "pi-A-semantic-review.json": "2d720cacd9f02b7551c540580615f37ee3cf6b4e3875bd31a91905deed4b4d91",
+    "pi-B-semantic-review.json": "120f3a73bcdd16c737fc128418b84d2b49df9d7b76546de9dbcdd278bf09213e",
+    "kimi-terminal-independent.json": "ee370a6fd5236935e8b356b3aa5539f958db5045b2d47205e03a7e6ee25df78d",
+    "kimi-terminal-snapshots.json": "9de0918153a4981f8d449b735da754e6512be1651aeaf52af3103d458f319906"
+  },
+  "publicationIdentifiers": {
+    "pi": "P187",
+    "kimi": "P188"
+  },
+  "units": {
+    "input": "provider-reported input tokens including reported cached input",
+    "output": "provider-reported total output tokens; reasoning is a subset",
+    "requests": "observed chat-completions HTTP attempts, not SSE usage chunks",
+    "known": "deduplicated reported subtotal; complete=false does not mean zero",
+    "cost": "No currency or actual billing claim"
+  }
+}

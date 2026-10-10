@@ -1,0 +1,27 @@
+{
+  "verdict": "Method eligible for preparation; not a paid release",
+  "originalExperiment": "P188 fixed six-pair experiment remains stopped with slot1 failed after nine completed paired rounds; five slots not started",
+  "newContinuationCohort": {
+    "slots": [2, 3, 4, 5, 6],
+    "plannedPairs": 5,
+    "turnsPerArm": 12,
+    "selection": "All previously unstarted slots, fixed before seeing continuation outcomes; no replacement of slot1",
+    "primaryDescription": "Per CLI/model sum Loom / sum native across all five only when each has both12 rounds and primary request coverage complete",
+    "distribution": "Five individual pair ratios, observed min/max; not population interval or stability guarantee",
+    "quality": "No quality filtering; report false/unknown independently of cost"
+  },
+  "incompleteContinuation": "If any of five stops or truncates, fixed-five description insufficient; show all known costs and explicitly labelled completed subset, no hidden slot deletion",
+  "accounting": [
+    "Original slot1 full reported costs separate and included in overall expense ledger",
+    "Never combine nine-round original prefix with twelve-round groups as equally complete pair",
+    "Optional cache/reasoning dimensions independent; reasoning not added to output",
+    "Cross-layer diagnostic gaps do not erase independently proven raw costs"
+  ],
+  "invariants": [
+    "Same original tasks/v6, model/effort, slot ordering and launch budgets",
+    "No paid experiment added by this review",
+    "Final source/config freeze and lead release required",
+    "No outcome-driven interim stopping or replacing failed runs"
+  ],
+  "budgetConstraint": "Only unused five-pair allocation; no original slot1 budget transferred or extra retry authorized"
+}

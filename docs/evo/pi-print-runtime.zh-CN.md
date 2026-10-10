@@ -17,6 +17,8 @@ Daemon 仍是 standing prompt 的唯一组装者。Pi 通过原生 append-system
 
 默认沿用显式 Worker 发表。`LOOM_PI_NATIVE_FINAL_TRIAL=1` 才选择原生最终文本：Host 校验当前 session、当前追加分支、原始唤醒正文、模型与 effort、完整工具终态和原生成功终态，再通过原 `WorkerFinalOutput` 提交。CLI `exit 0` 本身不证明成功；中间文本、未结束工具、abort、retry、错误终态不能成为 native final。一次工具失败后恢复并正常结束可以交付。未知写入结果不重发；普通消息或进程退出不会完成 Task。
 
+Pi 1.1.0 可在 `agent_end` 后、`agent_settled` 前完成一次正常的 threshold 压缩。该尾部必须成对结束、未取消且不重试，并与同一追加分支的持久压缩记录逐项一致；最终消息仍是压缩前已验证的当前回答。未知尾事件、第二组压缩、额外消息、缺失或不匹配的记录均拒绝。压缩记录不成为新的回答或 generation，用量覆盖 gap 规则不变。
+
 ## 模型与用量证据
 
 Catalog 使用离线、无 prompt 的只读 RPC，禁用探测阶段的扩展、MCP 等资源加载，查询 available models、当前 state 和当前模型的 thinking levels。只发布当前模型的精确绑定及原生报告的级别，不调用 `set_model`，不修改用户设置，也不根据 `reasoning: true` 猜测 effort。实际离线检查已识别 `local:pi-cli/v1:aihubmix/deepseek-v4.1-flash`；这是模型发现证据，不是付费批准。

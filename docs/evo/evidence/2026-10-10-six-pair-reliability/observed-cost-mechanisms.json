@@ -1,0 +1,754 @@
+{
+  "scope": "Observed cost mechanisms only; incomplete fixed-six batches, no stability or quality-equivalence verdict",
+  "experiments": [
+    {
+      "experiment": "P187 A",
+      "arms": {
+        "native": {
+          "requests": 122,
+          "input": 5695697,
+          "output": 98004,
+          "categories": {
+            "other-tool-call": {
+              "requests": 108,
+              "input": 5040708,
+              "output": 90744
+            },
+            "assistant-without-tool-call": {
+              "requests": 12,
+              "input": 568197,
+              "output": 4919
+            },
+            "non-assistant-compaction": {
+              "requests": 2,
+              "input": 86792,
+              "output": 2341
+            }
+          },
+          "toolCalls": 110,
+          "toolNames": {
+            "bash": 37,
+            "read": 18,
+            "write": 7,
+            "edit": 48
+          },
+          "explicitProtocolCalls": 0,
+          "toolFailures": 4,
+          "unknownToolResultStatus": 0,
+          "rounds": {
+            "1": {
+              "requests": 11,
+              "input": 82301,
+              "output": 8759
+            },
+            "2": {
+              "requests": 4,
+              "input": 53876,
+              "output": 1183
+            },
+            "3": {
+              "requests": 6,
+              "input": 98615,
+              "output": 2280
+            },
+            "4": {
+              "requests": 9,
+              "input": 193972,
+              "output": 4289
+            },
+            "5": {
+              "requests": 7,
+              "input": 199453,
+              "output": 5952
+            },
+            "6": {
+              "requests": 13,
+              "input": 600467,
+              "output": 19215
+            },
+            "7": {
+              "requests": 8,
+              "input": 471387,
+              "output": 7799
+            },
+            "8": {
+              "requests": 8,
+              "input": 523388,
+              "output": 4379
+            },
+            "9": {
+              "requests": 10,
+              "input": 705380,
+              "output": 4572
+            },
+            "10": {
+              "requests": 9,
+              "input": 679528,
+              "output": 4087
+            },
+            "11": {
+              "requests": 10,
+              "input": 840326,
+              "output": 12811
+            },
+            "12": {
+              "requests": 27,
+              "input": 1247004,
+              "output": 22678
+            }
+          }
+        },
+        "loom": {
+          "requests": 108,
+          "input": 5370618,
+          "output": 77646,
+          "categories": {
+            "other-tool-call": {
+              "requests": 94,
+              "input": 4730156,
+              "output": 70672
+            },
+            "assistant-without-tool-call": {
+              "requests": 12,
+              "input": 631153,
+              "output": 6305
+            },
+            "explicit-protocol-tool": {
+              "requests": 2,
+              "input": 9309,
+              "output": 669
+            }
+          },
+          "toolCalls": 100,
+          "toolNames": {
+            "bash": 34,
+            "read": 16,
+            "write": 6,
+            "edit": 44
+          },
+          "explicitProtocolCalls": 2,
+          "toolFailures": 2,
+          "unknownToolResultStatus": 0,
+          "rounds": {
+            "1": {
+              "requests": 13,
+              "input": 110793,
+              "output": 6862
+            },
+            "2": {
+              "requests": 5,
+              "input": 70355,
+              "output": 1206
+            },
+            "3": {
+              "requests": 5,
+              "input": 84751,
+              "output": 2798
+            },
+            "4": {
+              "requests": 12,
+              "input": 278744,
+              "output": 6436
+            },
+            "5": {
+              "requests": 10,
+              "input": 322029,
+              "output": 6916
+            },
+            "6": {
+              "requests": 9,
+              "input": 418562,
+              "output": 10730
+            },
+            "7": {
+              "requests": 12,
+              "input": 722047,
+              "output": 8246
+            },
+            "8": {
+              "requests": 7,
+              "input": 459821,
+              "output": 3053
+            },
+            "9": {
+              "requests": 8,
+              "input": 556202,
+              "output": 3760
+            },
+            "10": {
+              "requests": 9,
+              "input": 665266,
+              "output": 4037
+            },
+            "11": {
+              "requests": 8,
+              "input": 676561,
+              "output": 16160
+            },
+            "12": {
+              "requests": 10,
+              "input": 1005487,
+              "output": 7442
+            }
+          }
+        }
+      },
+      "sourceResultSha256": "83d596db99a72fc2bce55df07bccab5b5059b4c84de865924ddf66a5e7d5d6ff",
+      "algebraicDecomposition": {
+        "inputRatio": 0.9429255102580071,
+        "requestFactor": 0.8852459016393442,
+        "meanInputPerRequestFactor": 1.065156594921082
+      },
+      "perRoundRequestDifferences": [
+        {
+          "round": 1,
+          "extraRequests": 2,
+          "inputDifference": 28492
+        },
+        {
+          "round": 2,
+          "extraRequests": 1,
+          "inputDifference": 16479
+        },
+        {
+          "round": 3,
+          "extraRequests": -1,
+          "inputDifference": -13864
+        },
+        {
+          "round": 4,
+          "extraRequests": 3,
+          "inputDifference": 84772
+        },
+        {
+          "round": 5,
+          "extraRequests": 3,
+          "inputDifference": 122576
+        },
+        {
+          "round": 6,
+          "extraRequests": -4,
+          "inputDifference": -181905
+        },
+        {
+          "round": 7,
+          "extraRequests": 4,
+          "inputDifference": 250660
+        },
+        {
+          "round": 8,
+          "extraRequests": -1,
+          "inputDifference": -63567
+        },
+        {
+          "round": 9,
+          "extraRequests": -2,
+          "inputDifference": -149178
+        },
+        {
+          "round": 10,
+          "extraRequests": 0,
+          "inputDifference": -14262
+        },
+        {
+          "round": 11,
+          "extraRequests": -2,
+          "inputDifference": -163765
+        },
+        {
+          "round": 12,
+          "extraRequests": -17,
+          "inputDifference": -241517
+        }
+      ]
+    },
+    {
+      "experiment": "P187 B observed, including native12 costs",
+      "arms": {
+        "native": {
+          "requests": 115,
+          "input": 6126564,
+          "output": 89903,
+          "categories": {
+            "other-tool-call": {
+              "requests": 101,
+              "input": 5415628,
+              "output": 82279
+            },
+            "assistant-without-tool-call": {
+              "requests": 12,
+              "input": 631258,
+              "output": 4959
+            },
+            "non-assistant-compaction": {
+              "requests": 2,
+              "input": 79678,
+              "output": 2665
+            }
+          },
+          "toolCalls": 103,
+          "toolNames": {
+            "bash": 34,
+            "read": 22,
+            "write": 10,
+            "edit": 37
+          },
+          "explicitProtocolCalls": 0,
+          "toolFailures": 5,
+          "unknownToolResultStatus": 0,
+          "rounds": {
+            "1": {
+              "requests": 7,
+              "input": 37742,
+              "output": 6843
+            },
+            "2": {
+              "requests": 5,
+              "input": 52867,
+              "output": 1814
+            },
+            "3": {
+              "requests": 6,
+              "input": 82677,
+              "output": 2830
+            },
+            "4": {
+              "requests": 10,
+              "input": 215487,
+              "output": 7502
+            },
+            "5": {
+              "requests": 8,
+              "input": 252386,
+              "output": 6056
+            },
+            "6": {
+              "requests": 17,
+              "input": 767794,
+              "output": 12862
+            },
+            "7": {
+              "requests": 8,
+              "input": 465577,
+              "output": 8036
+            },
+            "8": {
+              "requests": 9,
+              "input": 572052,
+              "output": 3300
+            },
+            "9": {
+              "requests": 15,
+              "input": 1042048,
+              "output": 5599
+            },
+            "10": {
+              "requests": 8,
+              "input": 598472,
+              "output": 3602
+            },
+            "11": {
+              "requests": 10,
+              "input": 883360,
+              "output": 20101
+            },
+            "12": {
+              "requests": 12,
+              "input": 1156102,
+              "output": 11358
+            }
+          }
+        },
+        "loom": {
+          "requests": 170,
+          "input": 10103326,
+          "output": 125265,
+          "categories": {
+            "explicit-protocol-tool": {
+              "requests": 2,
+              "input": 20356,
+              "output": 681
+            },
+            "other-tool-call": {
+              "requests": 154,
+              "input": 9267053,
+              "output": 117153
+            },
+            "assistant-without-tool-call": {
+              "requests": 12,
+              "input": 735544,
+              "output": 5205
+            },
+            "non-assistant-compaction": {
+              "requests": 2,
+              "input": 80373,
+              "output": 2226
+            }
+          },
+          "toolCalls": 162,
+          "toolNames": {
+            "bash": 60,
+            "read": 38,
+            "write": 5,
+            "edit": 59
+          },
+          "explicitProtocolCalls": 2,
+          "toolFailures": 2,
+          "unknownToolResultStatus": 0,
+          "rounds": {
+            "1": {
+              "requests": 13,
+              "input": 137375,
+              "output": 10156
+            },
+            "2": {
+              "requests": 7,
+              "input": 134395,
+              "output": 2327
+            },
+            "3": {
+              "requests": 6,
+              "input": 144246,
+              "output": 4062
+            },
+            "4": {
+              "requests": 24,
+              "input": 888809,
+              "output": 14631
+            },
+            "5": {
+              "requests": 11,
+              "input": 558832,
+              "output": 7881
+            },
+            "6": {
+              "requests": 30,
+              "input": 2142295,
+              "output": 21822
+            },
+            "7": {
+              "requests": 20,
+              "input": 1845212,
+              "output": 11261
+            },
+            "8": {
+              "requests": 10,
+              "input": 1023465,
+              "output": 5403
+            },
+            "9": {
+              "requests": 8,
+              "input": 873206,
+              "output": 5084
+            },
+            "10": {
+              "requests": 10,
+              "input": 408157,
+              "output": 7533
+            },
+            "11": {
+              "requests": 15,
+              "input": 739378,
+              "output": 21125
+            },
+            "12": {
+              "requests": 16,
+              "input": 1207956,
+              "output": 13980
+            }
+          }
+        }
+      },
+      "sourceResultSha256": "c59670c49401073f97aff5465e06baede38a0255b53a6b756ebdec86be23b0d4",
+      "algebraicDecomposition": {
+        "inputRatio": 1.649101519220235,
+        "requestFactor": 1.4782608695652173,
+        "meanInputPerRequestFactor": 1.1155686747666296
+      },
+      "perRoundRequestDifferences": [
+        {
+          "round": 1,
+          "extraRequests": 6,
+          "inputDifference": 99633
+        },
+        {
+          "round": 2,
+          "extraRequests": 2,
+          "inputDifference": 81528
+        },
+        {
+          "round": 3,
+          "extraRequests": 0,
+          "inputDifference": 61569
+        },
+        {
+          "round": 4,
+          "extraRequests": 14,
+          "inputDifference": 673322
+        },
+        {
+          "round": 5,
+          "extraRequests": 3,
+          "inputDifference": 306446
+        },
+        {
+          "round": 6,
+          "extraRequests": 13,
+          "inputDifference": 1374501
+        },
+        {
+          "round": 7,
+          "extraRequests": 12,
+          "inputDifference": 1379635
+        },
+        {
+          "round": 8,
+          "extraRequests": 1,
+          "inputDifference": 451413
+        },
+        {
+          "round": 9,
+          "extraRequests": -7,
+          "inputDifference": -168842
+        },
+        {
+          "round": 10,
+          "extraRequests": 2,
+          "inputDifference": -190315
+        },
+        {
+          "round": 11,
+          "extraRequests": 5,
+          "inputDifference": -143982
+        },
+        {
+          "round": 12,
+          "extraRequests": 4,
+          "inputDifference": 51854
+        }
+      ]
+    },
+    {
+      "experiment": "P188 original slot1 observed nine-pair prefix",
+      "arms": {
+        "print": {
+          "requests": 52,
+          "input": 1643451,
+          "output": 17956,
+          "categories": {
+            "other-tool-call": {
+              "requests": 43,
+              "input": 1352054,
+              "output": 15658
+            },
+            "assistant-without-tool-call": {
+              "requests": 9,
+              "input": 291397,
+              "output": 2298
+            }
+          },
+          "toolCalls": 43,
+          "toolNames": {
+            "Read": 3,
+            "Write": 4,
+            "Bash": 14,
+            "Edit": 22
+          },
+          "explicitProtocolCalls": 0,
+          "toolFailures": 1,
+          "unknownToolResultStatus": 42,
+          "rounds": {
+            "1": {
+              "requests": 7,
+              "input": 148919,
+              "output": 1746
+            },
+            "2": {
+              "requests": 4,
+              "input": 92844,
+              "output": 675
+            },
+            "3": {
+              "requests": 4,
+              "input": 97908,
+              "output": 793
+            },
+            "4": {
+              "requests": 5,
+              "input": 131845,
+              "output": 1444
+            },
+            "5": {
+              "requests": 4,
+              "input": 115163,
+              "output": 1581
+            },
+            "6": {
+              "requests": 14,
+              "input": 479739,
+              "output": 5705
+            },
+            "7": {
+              "requests": 4,
+              "input": 154880,
+              "output": 2736
+            },
+            "8": {
+              "requests": 4,
+              "input": 163696,
+              "output": 1233
+            },
+            "9": {
+              "requests": 6,
+              "input": 258457,
+              "output": 2043
+            }
+          }
+        },
+        "loom": {
+          "requests": 67,
+          "input": 2650270,
+          "output": 26984,
+          "categories": {
+            "other-tool-call": {
+              "requests": 58,
+              "input": 2286203,
+              "output": 24733
+            },
+            "assistant-without-tool-call": {
+              "requests": 9,
+              "input": 364067,
+              "output": 2251
+            }
+          },
+          "toolCalls": 59,
+          "toolNames": {
+            "Read": 10,
+            "Write": 4,
+            "Bash": 12,
+            "Edit": 33
+          },
+          "explicitProtocolCalls": 0,
+          "toolFailures": 2,
+          "unknownToolResultStatus": 57,
+          "rounds": {
+            "1": {
+              "requests": 9,
+              "input": 212675,
+              "output": 2544
+            },
+            "2": {
+              "requests": 4,
+              "input": 105709,
+              "output": 781
+            },
+            "3": {
+              "requests": 6,
+              "input": 169110,
+              "output": 1609
+            },
+            "4": {
+              "requests": 8,
+              "input": 257699,
+              "output": 4051
+            },
+            "5": {
+              "requests": 7,
+              "input": 258085,
+              "output": 3480
+            },
+            "6": {
+              "requests": 11,
+              "input": 478780,
+              "output": 5169
+            },
+            "7": {
+              "requests": 8,
+              "input": 395504,
+              "output": 4289
+            },
+            "8": {
+              "requests": 6,
+              "input": 320201,
+              "output": 2004
+            },
+            "9": {
+              "requests": 8,
+              "input": 452507,
+              "output": 3057
+            }
+          }
+        }
+      },
+      "sourceResultSha256": "7ecac225daf619ca42ac5b6ca86d88d4a975365e7ff7d31a30cdecb43e8325bc",
+      "algebraicDecomposition": {
+        "inputRatio": 1.6126248972436659,
+        "requestFactor": 1.2884615384615385,
+        "meanInputPerRequestFactor": 1.2515894724876215
+      },
+      "perRoundRequestDifferences": [
+        {
+          "round": 1,
+          "extraRequests": 2,
+          "inputDifference": 63756
+        },
+        {
+          "round": 2,
+          "extraRequests": 0,
+          "inputDifference": 12865
+        },
+        {
+          "round": 3,
+          "extraRequests": 2,
+          "inputDifference": 71202
+        },
+        {
+          "round": 4,
+          "extraRequests": 3,
+          "inputDifference": 125854
+        },
+        {
+          "round": 5,
+          "extraRequests": 3,
+          "inputDifference": 142922
+        },
+        {
+          "round": 6,
+          "extraRequests": -3,
+          "inputDifference": -959
+        },
+        {
+          "round": 7,
+          "extraRequests": 4,
+          "inputDifference": 240624
+        },
+        {
+          "round": 8,
+          "extraRequests": 2,
+          "inputDifference": 156505
+        },
+        {
+          "round": 9,
+          "extraRequests": 2,
+          "inputDifference": 194050
+        }
+      ]
+    }
+  ],
+  "limits": [
+    "Factorization is arithmetic identity, not causal attribution.",
+    "Other-tool-call includes business work and environment exploration; not all is proven necessary.",
+    "A model response may contain multiple tool calls; call counts are not request counts.",
+    "Zero explicit Worker/protocol calls excludes only visible communication-tool generations, not indirect platform-context effects.",
+    "Assistant-without-tool-call combines final and intermediate text; content not inspected for causal labels.",
+    "Compaction category is tied to independently audited raw/native-extra IDs and native aggregate; all consumption retained.",
+    "No hidden reasoning text inspected or character-to-token estimation.",
+    "Pair B normal native12 runtime adjudication does not provide missing artifact quality.",
+    "Category input totals are whole requests containing that tool call, not marginal tokens caused by the tool. No subtraction from actual spend."
+  ],
+  "explicitProtocolVerification": {
+    "piA": ["Worker message-check --startup", "Worker message-read"],
+    "piB": ["Worker message-check --startup", "Worker message-check --startup"],
+    "kimi": "No explicit Worker invocation found in recorded tool-call arguments; this does not rule out indirect prompt influence."
+  }
+}

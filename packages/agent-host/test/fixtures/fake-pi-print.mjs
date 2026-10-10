@@ -31,7 +31,15 @@ if (rows.length === 1) {
 const user = { role: "user", content: [{ type: "text", text: wake }] };
 add("message", { message: user });
 const compaction = wake.includes("compact");
-if (compaction)
+const postFinal = wake.includes("post-final compact");
+const compactResult = {
+  summary: "summary",
+  firstKeptEntryId: parent,
+  tokensBefore: 100,
+  details: {},
+  usage: { input: 100, output: 10 },
+};
+if (compaction && !postFinal)
   add("compaction", {
     usage: { input: 82296, output: 3108, cacheRead: 0, cacheWrite: 0 },
   });
@@ -49,6 +57,7 @@ const message = {
   rawStopReason: "stop",
 };
 add("message", { message });
+if (postFinal) add("compaction", compactResult);
 writeFileSync(path, rows.map(JSON.stringify).join("\n") + "\n", {
   mode: 0o600,
 });
@@ -61,7 +70,7 @@ for (const f of [
   rows[0],
   { type: "agent_start" },
   { type: "message_end", message: user },
-  ...(compaction && !wake.includes("suffix-only")
+  ...(compaction && !postFinal && !wake.includes("suffix-only")
     ? [
         ...(wake.includes("end-only")
           ? []
@@ -80,6 +89,18 @@ for (const f of [
     : []),
   { type: "message_end", message },
   { type: "agent_end", willRetry: false },
+  ...(postFinal
+    ? [
+        { type: "compaction_start", reason: "threshold" },
+        {
+          type: "compaction_end",
+          reason: "threshold",
+          result: compactResult,
+          aborted: false,
+          willRetry: false,
+        },
+      ]
+    : []),
   { type: "agent_settled", aborted: false },
 ]) {
   const encoded = Buffer.from(JSON.stringify(f) + "\n");

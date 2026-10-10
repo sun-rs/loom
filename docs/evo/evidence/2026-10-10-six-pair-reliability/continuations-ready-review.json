@@ -1,0 +1,58 @@
+{
+  "verdict": "Ready for final committed-source freeze and lead release; review is not paid authorization",
+  "reviewedSourceHashes": {
+    "pi-six-pair-continuation": {
+      "run-batch.mjs": "44d72f465a371eb850b005722557ca70537f65d4915c3c88914e28fcf940dcbd",
+      "run-block.mjs": "dd51d82140ab9abf89192bc1582c82765b0bea68a8fb07f97d525a9cdb922d75",
+      "schedule.mjs": "16f153900b6e01289ecd5dc336df75e19d018454809e5b836ea80a8eefeedd17",
+      "release-guard.mjs": "bd570ccd2276fb7b29a5b80eada041221bea36e7249eb648c94167076428fa6d",
+      "diagnostic-copy.mjs": "5187f71fd321ffe14ed66567f1a8dcc49b03fda13838591fcbd11973899984bd",
+      "diagnostic-copy.test.mjs": "8efdd1b449829fc2e6b8a66f17824b76e00aa086e90437148b47fc17c75c1497",
+      "candidate-plan.json": "97b3ace20d37729e0e6f78347258032782e4bf2e16df391ead64665b9f6f57df"
+    },
+    "kimi-five-slot-continuation": {
+      "run.mjs": "70da038172e1e70b92f053eed5465fb813dd938c321e11f86c6dbb7ebff0d97d",
+      "continuation.mjs": "a5500c37552cfdabe87d09fa832bf05671fde97892d4b76902d8f1081fcd2dd0",
+      "release-gate.mjs": "78402cc8e87e65f87918aa154c78dfb95fe03e1b51cf0f7a50d790469372a9bb",
+      "block-run.mjs": "ff67a3b6e62eedcb9422a80b937964783714d43ed14e37f52c22bcfe34f2e569",
+      "candidate-plan.json": "ddaa6facd5b933fab3701273b3e7cedcbc2587f82a60153ea6359951bd7f36e6"
+    }
+  },
+  "pi": {
+    "slots": ["C", "D", "E", "F"],
+    "mandatoryContinuation": "Both public runner and verifyRelease reject missing field; exact original priorBatch/slots/noReplacement checked.",
+    "diagnosticRetention": "After owned processes confirmed stopped, missing-current-round artifacts copied via existing no-symlink v6 snapshot before config deletion; bounded10seconds, qualityunknown and no evaluator; failures recorded, not invented pass.",
+    "freeFinal": {
+      "requests": 48,
+      "sessions": 8,
+      "snapshots": 16,
+      "independentRawNativeKernelMatch": true
+    },
+    "testsReportedAndReviewed": 11
+  },
+  "kimi": {
+    "slots": [2, 3, 4, 5, 6],
+    "dispatcherCorrection": "Persist running/root before spawn and PID immediately after; missing result maps running to failed-unknown, never not-started or synthetic zero.",
+    "freeFinal": {
+      "requests": 40,
+      "sessions": 10,
+      "rawPrimaryComplete": true
+    },
+    "testsReportedAndReviewed": 45,
+    "freeAfterDelta": "Free raw business path predates metadata-only dispatcher state correction; no provider/prompt/tool/accounting/budget behavior changed."
+  },
+  "method": [
+    "Only original unstarted slots; no A/B or slot1 replacements",
+    "Original failed batches and all costs stay unchanged",
+    "Fixed original six-pair success remains unavailable",
+    "Continuation cohorts predeclared; no quality filtering or favorable stopping",
+    "Remaining per-slot and total budgets unchanged from unused allocation; in-flight soft overrun boundary preserved"
+  ],
+  "independentFreeEvidenceSha256": "d735d9f4f4997e0f850b5627726c657f16bb6a78a573e2df49a442c3187c1a7a",
+  "remainingAdmissionConditions": [
+    "Final main-repository combined checks/commit",
+    "Freeze actual final HEAD and exact execution/config dependency manifests",
+    "Lead explicit release bound to plan/head/hashes and unique claim"
+  ],
+  "paidCallsByReviewer": 0
+}
