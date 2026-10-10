@@ -1,0 +1,112 @@
+{
+  "name": "Shared production ACP bridge, no-Room control vs formal Loom ACP",
+  "paidRequests": 0,
+  "independentOfficialClient": false,
+  "doesNotIndependentlyValidateBridge": true,
+  "ordinaryPrintBaselineUnchanged": true,
+  "actualControlRoomProtocolTokensFound": [],
+  "permissionModes": {
+    "native": ["manual"],
+    "loom": ["manual"]
+  },
+  "approvals": {
+    "native": [
+      {
+        "decision": "approved",
+        "selectedLabel": "Approve once"
+      },
+      {
+        "decision": "approved",
+        "selectedLabel": "Approve once"
+      }
+    ],
+    "loom": [
+      {
+        "decision": "approved",
+        "selectedLabel": "Approve once"
+      },
+      {
+        "decision": "approved",
+        "selectedLabel": "Approve once"
+      }
+    ]
+  },
+  "promptLengths": {
+    "native": [1379, 445],
+    "loom": [8363, 618]
+  },
+  "requests": [
+    {
+      "request": 1,
+      "toolsIdentical": true,
+      "toolCount": 27,
+      "bashDefinitionIdentical": true,
+      "settingsIdenticalExceptIndependentCacheKey": true,
+      "nativeSystemChars": 8228,
+      "loomSystemChars": 8339
+    },
+    {
+      "request": 2,
+      "toolsIdentical": true,
+      "toolCount": 27,
+      "bashDefinitionIdentical": true,
+      "settingsIdenticalExceptIndependentCacheKey": true,
+      "nativeSystemChars": 8228,
+      "loomSystemChars": 8339
+    },
+    {
+      "request": 3,
+      "toolsIdentical": true,
+      "toolCount": 27,
+      "bashDefinitionIdentical": true,
+      "settingsIdenticalExceptIndependentCacheKey": true,
+      "nativeSystemChars": 8228,
+      "loomSystemChars": 8339
+    },
+    {
+      "request": 4,
+      "toolsIdentical": true,
+      "toolCount": 27,
+      "bashDefinitionIdentical": true,
+      "settingsIdenticalExceptIndependentCacheKey": true,
+      "nativeSystemChars": 8228,
+      "loomSystemChars": 8339
+    }
+  ],
+  "limitations": [
+    "Control fresh prompt still includes shared bridge standing-file/Run/no-credential recovery guidance; it is measured and not described as official bare ACP default.",
+    "Control and product cwd/cache key differ by isolated session; no account or memory policy weakened.",
+    "Product fixture Bash additionally executes legal Worker message-read; control has no Room/Worker credential. Thus tool definitions/approval policy match, but fixture tool commands are deliberately not byte-identical.",
+    "Two synthetic turns validate request/permission/schema capture only, not long-task efficiency or independent ACP bridge correctness."
+  ],
+  "cleanup": {
+    "sourceFiles": 1910,
+    "changed": [],
+    "observedPids": 21,
+    "livePids": [],
+    "temporaryConfigAndCredentialLinksAbsent": {
+      "native": {
+        "config.toml": true,
+        "credentials": true,
+        "oauth": true
+      },
+      "loom": {
+        "config.toml": true,
+        "credentials": true,
+        "oauth": true
+      }
+    },
+    "daemonExits": [
+      {
+        "pid": 19619,
+        "startedAt": "2026-10-10T07:27:30.696Z",
+        "finishedAt": "2026-10-10T07:27:40.267Z",
+        "exit": {
+          "code": 0,
+          "signal": null
+        }
+      }
+    ],
+    "runnerExit": 0
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "verdict": "eligible-for-free-evidence-archive-no-blocking-findings",
+  "independentChecks": [
+    "Reopened both passive archives: request/response bytes, SHA, file privacy and complete seals validate.",
+    "Exactly 4 responses per arm, identical repeated usage deduplicated, totals each40input/8output.",
+    "Actual corresponding request tools deep-equal at all4positions; settings deep-equal after excluding messages/tools/independent prompt_cache_key.",
+    "Actual message arrays contain no auto permission reminder in either arm."
+  ],
+  "ownerRecordsChecked": {
+    "sourceFiles": 1910,
+    "sourceChanges": 0,
+    "observedPids": 21,
+    "reportedLivePids": 0,
+    "daemonExit": 0,
+    "runnerExit": 0,
+    "finalIssues": []
+  },
+  "reviewBoundary": "Full1910hash/PID census is owner evidence inspected, not independently repeated here. No CLI invocation or source edits.",
+  "requiredLimits": [
+    "Shared production ACP bridge control without Room is not independent official native baseline and cannot independently prove bridge correctness.",
+    "Synthetic product Bash additionally performs Worker read; commands/results are not byte-identical business material.",
+    "Different system/standing prompts and independent session cache keys remain.",
+    "Business quality remains false; two synthetic turns prove capture/schema/permissions only, not efficiency.",
+    "Original print baseline and historical paid evidence unchanged."
+  ],
+  "sampleIdentity": {
+    "run": "1791617247246",
+    "inheritedBatchLabel": "P184 reused field, not prior print-mode run1791610173208",
+    "name": "Kimi matched ACP free diagnostic"
+  },
+  "independentPidCensus": {
+    "nativeProviderAndWrapper": 4,
+    "loomProviderAndWrapperIncludingProbes": 14,
+    "nativeBridgeControllers": 2,
+    "daemon": 1,
+    "uniqueTotal": 21,
+    "liveCount": 0,
+    "source": "launches.jsonl + native turn-1/2.exit.json + result.processes"
+  }
+}

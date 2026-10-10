@@ -1,0 +1,533 @@
+{
+  "batch": "P184",
+  "paidRequests": 0,
+  "run": "free-paid-path-1791617247246-P184",
+  "originalStatus": "completed",
+  "sourceHashesUnchanged": true,
+  "finalIssues": [],
+  "arms": {
+    "native": {
+      "complete": true,
+      "requests": [
+        {
+          "round": 1,
+          "summary": {
+            "bodyBytes": 89824,
+            "bodySha256": "585ec60b0736664c22fb8741e2b7518100cca12b8f3d99d608301b250835def6",
+            "settingsSha256": "6eb09c3150686ad76da3b4ee43c09c450fb2c2c5f98f831cea9671658f7b3af7",
+            "systemSha256": "dfd2d4adcd56d24b1d068585397bab7dfefea38b3ca20fc7cf1235ec047a396b",
+            "toolsSha256": "2f801ade948b0c0622fcd53d2ab50d186fdfdd5539126bf0d5338f2ca24f1bd1",
+            "toolCount": 27,
+            "messagesSha256": "9b7743e0ce3ea74581e51ff872d0c388af7eeb6fb59050e21e181acf1052cb01",
+            "messageCount": 3,
+            "roleCounts": {
+              "system": 1,
+              "user": 2
+            },
+            "reasoningCharacters": 0,
+            "textClassificationComplete": true,
+            "latestUser": {
+              "index": 2,
+              "textCharacters": 227,
+              "textSha256": "7b42062485a86ca582ceb90f6fb3052bf15fcb4afa222ea5542bcb03194d2f41",
+              "currentTaskOccurrences": 0,
+              "earlierTaskOccurrences": []
+            },
+            "currentTaskUserMessages": [
+              {
+                "index": 1,
+                "occurrences": 1
+              }
+            ],
+            "currentTaskOccurrencesInUserMessages": 1,
+            "interpretation": "Hashes preserve parsed JSON property/array order; differences are structural, not proof of semantic inequality. Text counts are not token estimates. Transport completeness and business comparability are separate."
+          },
+          "model": "k3-256k",
+          "thinking": {
+            "type": "enabled",
+            "effort": "low",
+            "keep": "all"
+          },
+          "bodyPermissions": 384,
+          "currentTaskMessageIndex": 1,
+          "currentTaskOccurrences": 1,
+          "earlierTaskCounts": [],
+          "autoPermissionReminderCount": 0,
+          "sourceResponseSha256": "c68b51a8e8407553470425b8386eabc066b1a1463d39dfa360f14bd5c00972ee",
+          "sourceRequestSha256": "585ec60b0736664c22fb8741e2b7518100cca12b8f3d99d608301b250835def6"
+        },
+        {
+          "round": 1,
+          "summary": {
+            "bodyBytes": 90610,
+            "bodySha256": "8804408188a9142dbe1091002e447ee8dffdd073fc70bb129ca09273a87db440",
+            "settingsSha256": "bdff552d221f13aecc810fcd0d94f603274277f8b06a64b1d6f5826461766f9e",
+            "systemSha256": "dfd2d4adcd56d24b1d068585397bab7dfefea38b3ca20fc7cf1235ec047a396b",
+            "toolsSha256": "2f801ade948b0c0622fcd53d2ab50d186fdfdd5539126bf0d5338f2ca24f1bd1",
+            "toolCount": 27,
+            "messagesSha256": "6be2331163f5042d5c8000daf725387d4bdc992cc7e6207d575189108bdee864",
+            "messageCount": 5,
+            "roleCounts": {
+              "system": 1,
+              "user": 2,
+              "assistant": 1,
+              "tool": 1
+            },
+            "reasoningCharacters": 0,
+            "textClassificationComplete": true,
+            "latestUser": {
+              "index": 2,
+              "textCharacters": 227,
+              "textSha256": "7b42062485a86ca582ceb90f6fb3052bf15fcb4afa222ea5542bcb03194d2f41",
+              "currentTaskOccurrences": 0,
+              "earlierTaskOccurrences": []
+            },
+            "currentTaskUserMessages": [
+              {
+                "index": 1,
+                "occurrences": 1
+              }
+            ],
+            "currentTaskOccurrencesInUserMessages": 1,
+            "interpretation": "Hashes preserve parsed JSON property/array order; differences are structural, not proof of semantic inequality. Text counts are not token estimates. Transport completeness and business comparability are separate."
+          },
+          "model": "k3-256k",
+          "thinking": {
+            "type": "enabled",
+            "effort": "low",
+            "keep": "all"
+          },
+          "bodyPermissions": 384,
+          "currentTaskMessageIndex": 1,
+          "currentTaskOccurrences": 1,
+          "earlierTaskCounts": [],
+          "autoPermissionReminderCount": 0,
+          "sourceResponseSha256": "9a128cc37a08663e1860f0a0bdb77e622c68196933012aadee284cb5da656fe0",
+          "sourceRequestSha256": "8804408188a9142dbe1091002e447ee8dffdd073fc70bb129ca09273a87db440"
+        },
+        {
+          "round": 2,
+          "summary": {
+            "bodyBytes": 91170,
+            "bodySha256": "ef1e6bba24c57c52274bed847866befb20642c2a3184075fbc9b0d4620d8e433",
+            "settingsSha256": "bdff552d221f13aecc810fcd0d94f603274277f8b06a64b1d6f5826461766f9e",
+            "systemSha256": "dfd2d4adcd56d24b1d068585397bab7dfefea38b3ca20fc7cf1235ec047a396b",
+            "toolsSha256": "2f801ade948b0c0622fcd53d2ab50d186fdfdd5539126bf0d5338f2ca24f1bd1",
+            "toolCount": 27,
+            "messagesSha256": "e33d628abf2a46a7081443aaeb920c9e7461c0132691d96d650edf61cbf7bd0d",
+            "messageCount": 7,
+            "roleCounts": {
+              "system": 1,
+              "user": 3,
+              "assistant": 2,
+              "tool": 1
+            },
+            "reasoningCharacters": 0,
+            "textClassificationComplete": true,
+            "latestUser": {
+              "index": 6,
+              "textCharacters": 445,
+              "textSha256": "8daa2e5ae2eae02dda8f3c3f1166bbf0449276fbf468a611cb5408e95b40fcb3",
+              "currentTaskOccurrences": 1,
+              "earlierTaskOccurrences": [0]
+            },
+            "currentTaskUserMessages": [
+              {
+                "index": 6,
+                "occurrences": 1
+              }
+            ],
+            "currentTaskOccurrencesInUserMessages": 1,
+            "interpretation": "Hashes preserve parsed JSON property/array order; differences are structural, not proof of semantic inequality. Text counts are not token estimates. Transport completeness and business comparability are separate."
+          },
+          "model": "k3-256k",
+          "thinking": {
+            "type": "enabled",
+            "effort": "low",
+            "keep": "all"
+          },
+          "bodyPermissions": 384,
+          "currentTaskMessageIndex": 6,
+          "currentTaskOccurrences": 1,
+          "earlierTaskCounts": [1],
+          "autoPermissionReminderCount": 0,
+          "sourceResponseSha256": "806a5faa568cc9ddfb3e3f473b30c1b0f53124652d7b7cf9847fdc6e4806c01e",
+          "sourceRequestSha256": "ef1e6bba24c57c52274bed847866befb20642c2a3184075fbc9b0d4620d8e433"
+        },
+        {
+          "round": 2,
+          "summary": {
+            "bodyBytes": 92012,
+            "bodySha256": "3d1e4fa84e3595d519b354f7cfd879bb5894d7fd8471a34bd2461df504631db4",
+            "settingsSha256": "bdff552d221f13aecc810fcd0d94f603274277f8b06a64b1d6f5826461766f9e",
+            "systemSha256": "dfd2d4adcd56d24b1d068585397bab7dfefea38b3ca20fc7cf1235ec047a396b",
+            "toolsSha256": "2f801ade948b0c0622fcd53d2ab50d186fdfdd5539126bf0d5338f2ca24f1bd1",
+            "toolCount": 27,
+            "messagesSha256": "e40ddd68f7f28f72ea5e299f8300a0c630868e1b57b4df1c6111843a92874d06",
+            "messageCount": 9,
+            "roleCounts": {
+              "system": 1,
+              "user": 3,
+              "assistant": 3,
+              "tool": 2
+            },
+            "reasoningCharacters": 0,
+            "textClassificationComplete": true,
+            "latestUser": {
+              "index": 6,
+              "textCharacters": 445,
+              "textSha256": "8daa2e5ae2eae02dda8f3c3f1166bbf0449276fbf468a611cb5408e95b40fcb3",
+              "currentTaskOccurrences": 1,
+              "earlierTaskOccurrences": [0]
+            },
+            "currentTaskUserMessages": [
+              {
+                "index": 6,
+                "occurrences": 1
+              }
+            ],
+            "currentTaskOccurrencesInUserMessages": 1,
+            "interpretation": "Hashes preserve parsed JSON property/array order; differences are structural, not proof of semantic inequality. Text counts are not token estimates. Transport completeness and business comparability are separate."
+          },
+          "model": "k3-256k",
+          "thinking": {
+            "type": "enabled",
+            "effort": "low",
+            "keep": "all"
+          },
+          "bodyPermissions": 384,
+          "currentTaskMessageIndex": 6,
+          "currentTaskOccurrences": 1,
+          "earlierTaskCounts": [1],
+          "autoPermissionReminderCount": 0,
+          "sourceResponseSha256": "40b4e005b30263ae7ea1f0981d03feb9d05124509743215238d238a7330382f7",
+          "sourceRequestSha256": "3d1e4fa84e3595d519b354f7cfd879bb5894d7fd8471a34bd2461df504631db4"
+        }
+      ],
+      "totals": {
+        "input": 40,
+        "output": 8
+      },
+      "oldObserverResponseBytesExactlyMatch": true,
+      "oneContinuousSession": true,
+      "qualityVerdicts": [
+        {
+          "round": 1,
+          "passed": false,
+          "checks": [
+            {
+              "id": "basic",
+              "passed": false,
+              "exitCode": 1
+            }
+          ],
+          "functionalPassed": false,
+          "selfTestsPassed": false,
+          "selfTestsExitCode": 1,
+          "selfTestsFailureKind": null,
+          "selfTestsDiagnostic": "No agent tests found"
+        },
+        {
+          "round": 2,
+          "passed": false,
+          "checks": [
+            {
+              "id": "basic",
+              "passed": false,
+              "exitCode": 1
+            },
+            {
+              "id": "many-and-zero",
+              "passed": false,
+              "exitCode": 1
+            },
+            {
+              "id": "empty",
+              "passed": false,
+              "exitCode": 1
+            }
+          ],
+          "functionalPassed": false,
+          "selfTestsPassed": false,
+          "selfTestsExitCode": 1,
+          "selfTestsFailureKind": null,
+          "selfTestsDiagnostic": "No agent tests found"
+        }
+      ],
+      "markerCounts": null,
+      "transports": null,
+      "observedPids": 4,
+      "allObservedExited": true,
+      "credentialLinksAbsent": true,
+      "configAbsent": true
+    },
+    "loom": {
+      "complete": true,
+      "requests": [
+        {
+          "round": 1,
+          "summary": {
+            "bodyBytes": 97032,
+            "bodySha256": "66cbe79219c128c0a5c0d11660241ce8372cc66de30ad42080d3b7aca37ed99e",
+            "settingsSha256": "5fa354fafe2c05e6fb3180991833cb4147d49b536ddf5e29270f3aefecae0227",
+            "systemSha256": "dfad0069aceb0131dd86015ba2c19d99c66866dd7d39479f352a9028715c3507",
+            "toolsSha256": "2f801ade948b0c0622fcd53d2ab50d186fdfdd5539126bf0d5338f2ca24f1bd1",
+            "toolCount": 27,
+            "messagesSha256": "5cec005ea04d413d2392d2cc3b7d773593edacfb887f8517ccc38570689316ce",
+            "messageCount": 3,
+            "roleCounts": {
+              "system": 1,
+              "user": 2
+            },
+            "reasoningCharacters": 0,
+            "textClassificationComplete": true,
+            "latestUser": {
+              "index": 2,
+              "textCharacters": 227,
+              "textSha256": "7b42062485a86ca582ceb90f6fb3052bf15fcb4afa222ea5542bcb03194d2f41",
+              "currentTaskOccurrences": 0,
+              "earlierTaskOccurrences": []
+            },
+            "currentTaskUserMessages": [
+              {
+                "index": 1,
+                "occurrences": 1
+              }
+            ],
+            "currentTaskOccurrencesInUserMessages": 1,
+            "interpretation": "Hashes preserve parsed JSON property/array order; differences are structural, not proof of semantic inequality. Text counts are not token estimates. Transport completeness and business comparability are separate."
+          },
+          "model": "k3-256k",
+          "thinking": {
+            "type": "enabled",
+            "effort": "low",
+            "keep": "all"
+          },
+          "bodyPermissions": 384,
+          "currentTaskMessageIndex": 1,
+          "currentTaskOccurrences": 1,
+          "earlierTaskCounts": [],
+          "autoPermissionReminderCount": 0,
+          "sourceResponseSha256": "10f5ab18b8f6769416d85ff8d41e52ba487ec934230c932db9f910b061596296",
+          "sourceRequestSha256": "66cbe79219c128c0a5c0d11660241ce8372cc66de30ad42080d3b7aca37ed99e"
+        },
+        {
+          "round": 1,
+          "summary": {
+            "bodyBytes": 97914,
+            "bodySha256": "0bafaa726a8560a27fdc0facee23f6d5fb72c723c83b5d6b48c1075887a57b00",
+            "settingsSha256": "f1565b194afddea0170f73e97e5936e272f4c362af51c0412e7e4606d2990670",
+            "systemSha256": "dfad0069aceb0131dd86015ba2c19d99c66866dd7d39479f352a9028715c3507",
+            "toolsSha256": "2f801ade948b0c0622fcd53d2ab50d186fdfdd5539126bf0d5338f2ca24f1bd1",
+            "toolCount": 27,
+            "messagesSha256": "6b57b318cca0fb0b0a61363df8f7631a5c07b1507e57b1ea69cec376a45923b1",
+            "messageCount": 5,
+            "roleCounts": {
+              "system": 1,
+              "user": 2,
+              "assistant": 1,
+              "tool": 1
+            },
+            "reasoningCharacters": 0,
+            "textClassificationComplete": true,
+            "latestUser": {
+              "index": 2,
+              "textCharacters": 227,
+              "textSha256": "7b42062485a86ca582ceb90f6fb3052bf15fcb4afa222ea5542bcb03194d2f41",
+              "currentTaskOccurrences": 0,
+              "earlierTaskOccurrences": []
+            },
+            "currentTaskUserMessages": [
+              {
+                "index": 1,
+                "occurrences": 1
+              }
+            ],
+            "currentTaskOccurrencesInUserMessages": 1,
+            "interpretation": "Hashes preserve parsed JSON property/array order; differences are structural, not proof of semantic inequality. Text counts are not token estimates. Transport completeness and business comparability are separate."
+          },
+          "model": "k3-256k",
+          "thinking": {
+            "type": "enabled",
+            "effort": "low",
+            "keep": "all"
+          },
+          "bodyPermissions": 384,
+          "currentTaskMessageIndex": 1,
+          "currentTaskOccurrences": 1,
+          "earlierTaskCounts": [],
+          "autoPermissionReminderCount": 0,
+          "sourceResponseSha256": "9a128cc37a08663e1860f0a0bdb77e622c68196933012aadee284cb5da656fe0",
+          "sourceRequestSha256": "0bafaa726a8560a27fdc0facee23f6d5fb72c723c83b5d6b48c1075887a57b00"
+        },
+        {
+          "round": 2,
+          "summary": {
+            "bodyBytes": 98651,
+            "bodySha256": "fb821f4ccf94d5cad8a05295b7ef4b98abd77b25955bb0db9ff15a0f7a848fc8",
+            "settingsSha256": "f1565b194afddea0170f73e97e5936e272f4c362af51c0412e7e4606d2990670",
+            "systemSha256": "dfad0069aceb0131dd86015ba2c19d99c66866dd7d39479f352a9028715c3507",
+            "toolsSha256": "2f801ade948b0c0622fcd53d2ab50d186fdfdd5539126bf0d5338f2ca24f1bd1",
+            "toolCount": 27,
+            "messagesSha256": "2e5b351cbcf364e50d8c7b68702b7a39800155fae26fb9738663ca7a5e7476a4",
+            "messageCount": 7,
+            "roleCounts": {
+              "system": 1,
+              "user": 3,
+              "assistant": 2,
+              "tool": 1
+            },
+            "reasoningCharacters": 0,
+            "textClassificationComplete": true,
+            "latestUser": {
+              "index": 6,
+              "textCharacters": 618,
+              "textSha256": "ebf498184c7537a8af00c74b56d73319dfa3b4385a2961ec318d627fa4f0aabe",
+              "currentTaskOccurrences": 1,
+              "earlierTaskOccurrences": [0]
+            },
+            "currentTaskUserMessages": [
+              {
+                "index": 6,
+                "occurrences": 1
+              }
+            ],
+            "currentTaskOccurrencesInUserMessages": 1,
+            "interpretation": "Hashes preserve parsed JSON property/array order; differences are structural, not proof of semantic inequality. Text counts are not token estimates. Transport completeness and business comparability are separate."
+          },
+          "model": "k3-256k",
+          "thinking": {
+            "type": "enabled",
+            "effort": "low",
+            "keep": "all"
+          },
+          "bodyPermissions": 384,
+          "currentTaskMessageIndex": 6,
+          "currentTaskOccurrences": 1,
+          "earlierTaskCounts": [1],
+          "autoPermissionReminderCount": 0,
+          "sourceResponseSha256": "0c91883d2da325f4d3d68d9b81c9353562fc4d35e242bcc706a87c2ad2b3aaaf",
+          "sourceRequestSha256": "fb821f4ccf94d5cad8a05295b7ef4b98abd77b25955bb0db9ff15a0f7a848fc8"
+        },
+        {
+          "round": 2,
+          "summary": {
+            "bodyBytes": 99589,
+            "bodySha256": "1ec8fbff7102f1d41f442bd57e61bdcb764ae670139b7ff569aec84624810002",
+            "settingsSha256": "f1565b194afddea0170f73e97e5936e272f4c362af51c0412e7e4606d2990670",
+            "systemSha256": "dfad0069aceb0131dd86015ba2c19d99c66866dd7d39479f352a9028715c3507",
+            "toolsSha256": "2f801ade948b0c0622fcd53d2ab50d186fdfdd5539126bf0d5338f2ca24f1bd1",
+            "toolCount": 27,
+            "messagesSha256": "6c4b46074a81479bb4b0333b51e468eb03367ed171c47ebb9253b3153359a75a",
+            "messageCount": 9,
+            "roleCounts": {
+              "system": 1,
+              "user": 3,
+              "assistant": 3,
+              "tool": 2
+            },
+            "reasoningCharacters": 0,
+            "textClassificationComplete": true,
+            "latestUser": {
+              "index": 6,
+              "textCharacters": 618,
+              "textSha256": "ebf498184c7537a8af00c74b56d73319dfa3b4385a2961ec318d627fa4f0aabe",
+              "currentTaskOccurrences": 1,
+              "earlierTaskOccurrences": [0]
+            },
+            "currentTaskUserMessages": [
+              {
+                "index": 6,
+                "occurrences": 1
+              }
+            ],
+            "currentTaskOccurrencesInUserMessages": 1,
+            "interpretation": "Hashes preserve parsed JSON property/array order; differences are structural, not proof of semantic inequality. Text counts are not token estimates. Transport completeness and business comparability are separate."
+          },
+          "model": "k3-256k",
+          "thinking": {
+            "type": "enabled",
+            "effort": "low",
+            "keep": "all"
+          },
+          "bodyPermissions": 384,
+          "currentTaskMessageIndex": 6,
+          "currentTaskOccurrences": 1,
+          "earlierTaskCounts": [1],
+          "autoPermissionReminderCount": 0,
+          "sourceResponseSha256": "40b4e005b30263ae7ea1f0981d03feb9d05124509743215238d238a7330382f7",
+          "sourceRequestSha256": "1ec8fbff7102f1d41f442bd57e61bdcb764ae670139b7ff569aec84624810002"
+        }
+      ],
+      "totals": {
+        "input": 40,
+        "output": 8
+      },
+      "oldObserverResponseBytesExactlyMatch": true,
+      "oneContinuousSession": true,
+      "qualityVerdicts": [
+        {
+          "round": 1,
+          "passed": false,
+          "checks": [
+            {
+              "id": "basic",
+              "passed": false,
+              "exitCode": 1
+            }
+          ],
+          "functionalPassed": false,
+          "selfTestsPassed": false,
+          "selfTestsExitCode": 1,
+          "selfTestsFailureKind": null,
+          "selfTestsDiagnostic": "No agent tests found"
+        },
+        {
+          "round": 2,
+          "passed": false,
+          "checks": [
+            {
+              "id": "basic",
+              "passed": false,
+              "exitCode": 1
+            },
+            {
+              "id": "many-and-zero",
+              "passed": false,
+              "exitCode": 1
+            },
+            {
+              "id": "empty",
+              "passed": false,
+              "exitCode": 1
+            }
+          ],
+          "functionalPassed": false,
+          "selfTestsPassed": false,
+          "selfTestsExitCode": 1,
+          "selfTestsFailureKind": null,
+          "selfTestsDiagnostic": "No agent tests found"
+        }
+      ],
+      "markerCounts": [1, 1],
+      "transports": ["native-final-output", "native-final-output"],
+      "observedPids": 14,
+      "allObservedExited": true,
+      "credentialLinksAbsent": true,
+      "configAbsent": true
+    }
+  },
+  "limits": [
+    "Synthetic responses only; no business quality or paid efficiency acceptance.",
+    "Control reuses production ACP transport bridge with no Room/Worker credentials; not an independent official ACP client and cannot independently validate the bridge.",
+    "Only two turns, not long-session efficiency evidence."
+  ],
+  "findings": {
+    "actualBusinessOnce": true,
+    "historyPreserved": true,
+    "nativeAutoRemindersInFirstRequests": [0, 0],
+    "loomAutoRemindersInFirstRequests": [0, 0],
+    "initialFullToolSchemaMatched": true,
+    "fullRequestAndResponseCaptured": true
+  }
+}

@@ -11,6 +11,6 @@
     "format": "fb5ffe51bf83c7a6ac683f386a5c903f6ff2c086dbe1bf27cc1f12efddaf7e3f"
   },
   "paidCalls": 0,
-  "deployment": "pending separate receipt",
+  "deployment": "verified separately in deployment.json",
   "history": "P181 raw totals unchanged; old RunAttempt records not rewritten"
 }

@@ -1,0 +1,27 @@
+{
+  "at": "2026-10-10T07:38:52.959Z",
+  "sourceCommit": "0ae3fc9c4d453693f9b4bd79b81e61696b020cb3",
+  "sourceSha256": "67dcb6c526c255a26ef401dca1df189de173a03270f57596d4d19795b1d223f6",
+  "pushed": true,
+  "service": "com.loom.evo",
+  "schema": 84,
+  "backup": {
+    "verified": true,
+    "databases": 2,
+    "files": 302
+  },
+  "gracefulRestart": true,
+  "businessTablesUnchanged": 11,
+  "sevenTrialFlagsOff": true,
+  "page": {
+    "historyVerified": true,
+    "errors": [],
+    "roles": 39,
+    "memoryListSucceeded": true
+  },
+  "limits": [
+    "Fresh existing page and read APIs, not exhaustive UI or paid Pi compression acceptance",
+    "Product now marks compaction coverage gap; precise compaction aggregate is still not accounted as generations",
+    "Frontend unchanged; health frontend build identity is not backend source commit"
+  ]
+}
