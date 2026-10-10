@@ -1,0 +1,24 @@
+{
+  "date": "2026-10-10",
+  "check": {
+    "exitCode": 0,
+    "core": {
+      "tests": 3097,
+      "pass": 3075,
+      "skip": 22
+    },
+    "efficiency": {
+      "pass": 545
+    }
+  },
+  "postDeltaPiTests": {
+    "pass": 14,
+    "fail": 0
+  },
+  "typecheck": "passed",
+  "format": "passed",
+  "diffCheck": "passed",
+  "realCli": "Installed Pi with loopback synthetic model only; default Worker and native-final paths each two turns",
+  "paidPi": "not run; approved-model table has no Pi combination",
+  "frontendChanged": false
+}

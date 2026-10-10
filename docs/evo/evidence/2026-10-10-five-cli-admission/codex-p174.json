@@ -1,0 +1,87 @@
+{
+  "batch": "P174",
+  "status": "two-native-turns-completed-observed-accounting-verified",
+  "purpose": "Normal ordinary Codex exec/resume observation admission; not paired cost benchmark",
+  "model": "gpt-6-luna",
+  "effort": "low",
+  "installedVersion": "0.161.0",
+  "sameSession": true,
+  "turns": 2,
+  "automaticMemory": {
+    "launchFlagsEveryTurn": true,
+    "rolloutMemoryModes": ["disabled"]
+  },
+  "sampling": {
+    "attempts": 2,
+    "responseIdsUnique": 2,
+    "jsonlAndSamplingSpansAgree": true,
+    "totals": {
+      "input": 17341,
+      "output": 20,
+      "cachedInput": 7936,
+      "reasoningOutput": 0
+    }
+  },
+  "additionalPrewarmLikeCompletions": {
+    "count": 2,
+    "input": 15330,
+    "output": 0,
+    "correlation": "Distinct timestamps and startup-warmup timing plus source generate=false; no response ID in OTel completion event"
+  },
+  "allDistinctCompletionReported": {
+    "count": 4,
+    "input": 32671,
+    "output": 20,
+    "billingComplete": null
+  },
+  "limitations": [
+    "OTel response.completed lacks response identity; prewarm association is source/timing evidence rather than exact ID join.",
+    "Reported token quantities are not an invoice or evidence startup tokens are free.",
+    "Observed successful sampling ancestry is verified; no theoretical lossless-exporter guarantee.",
+    "Original HOME/auth/provider/WS and global instructions preserved. This is not a clean paired baseline.",
+    "stdout turn.completed usage is session-cumulative, never summed across turns."
+  ],
+  "environment": {
+    "authCopied": false,
+    "accountConfigModified": false,
+    "providerRouteOverridden": false,
+    "telemetryChange": "Fixed loopback OTLP and process-local NO_PROXY union localhost,127.0.0.1 only; preserves remote provider route"
+  },
+  "freezeCleanup": {
+    "at": "2026-10-10T02:27:17.250123+00:00",
+    "sourcesChecked": 975,
+    "sourceMismatches": [],
+    "originalConfigUnchanged": true,
+    "ownedLivePids": [],
+    "collectorClosed": true,
+    "head": "dc57976a06ba98eadf425db7eb34d606b9f4c2e3",
+    "rolloutSha256": "c0743fc01b63ccb01b5f72055c96ae853a44109c2a4900640b497bdda6982566"
+  },
+  "evidenceHashes": {
+    "plan.json": "9253df65b15d7d7798d043507d0ab6aee641c2e77f33413d28776b53d7127e09",
+    "admission.json": "5463b9d4175622d433310eec7a027f3eee573b6fd16621dc224509ada95c91ca",
+    "free-public-evidence.json": "facca17c790402582b4706bd21f0e1cf4ad521a6103ebbb47d4626c8a5a662d1",
+    "handoff-audit/prewarm-source-review.json": "f9220eb2e89829d57c178520a3a391b05f2cf9dfdcc4bba845bff92866ad8ae1",
+    "run-1791599198046-P174/coverage-2.json": "6e158d32a90392acf25a2a401f15d0b9fa2afa07907801c6ce24eda6fa63010c",
+    "run-1791599198046-P174/current-session.private.jsonl": "c0743fc01b63ccb01b5f72055c96ae853a44109c2a4900640b497bdda6982566",
+    "run-1791599198046-P174/result.private.json": "07d744cb97a32a241f0adf645962409daff7f9453f72658950755b80c2bcfaf6",
+    "run-1791599198046-P174/freeze-cleanup.json": "29db2d6c33b2373d955056dcf35eee8c7dc4d267974ad3b07e6af2eafb3800a5"
+  },
+  "rawOtelHashes": {
+    "otel-1.private.json": "71792adf3fc08df1583048e8e9acbd3a68111094c80bdb98e191775f46341ff6",
+    "otel-10.private.json": "04ca5a268b3931e11a8cbc8c50b9c62f56ba6392894742e79c6dbef080ebca64",
+    "otel-11.private.json": "31b7eab46bd66234a6e6be1a2ec66bf100527020d97052d3d66ff802aa7ba9fc",
+    "otel-12.private.json": "0c9607f4f300e6697f79039440a4eb934caf50c9152085f2f55985e143b3f364",
+    "otel-13.private.json": "ab3dd1f9c6fcc4b55eaa24e048dc576ec09fe1ee413d9369addb3d9a0670a077",
+    "otel-14.private.json": "0b107fa0e905caa4b965baa6a7141f6af20484936921230f5fb64428d3c20ef7",
+    "otel-15.private.json": "bdb5fcce436d8e9defb22683db4c1e260efe47539ff21f0d78de4cec77ebcb9a",
+    "otel-2.private.json": "ccd3428b1653112d3fbfceb55eea2f6fab49fca0ccb645f5087dc0bdf7018f01",
+    "otel-3.private.json": "66158a00b4844b6c4e5beada55495c68acef52667015a1c0bc20c9c442817cd4",
+    "otel-4.private.json": "4bc72ce5ea07ed789e2e937272ba6edb9d3ce67105e5d53a80ca1784c7839f33",
+    "otel-5.private.json": "703f7b341d2cbdb2726a1c4407c6bf6f31ff4fa0de9296f8bce69160c279d100",
+    "otel-6.private.json": "c1fd8f152746b0391f301cd4a518483bf12c51a70937bbb6008b3ce8998b81e9",
+    "otel-7.private.json": "f16f242a78babadc0bab29894cd8955a6132a7d436f97f578e4c564f9a910b67",
+    "otel-8.private.json": "599ce09dd4a24b24a066592e54b7b3c8fc718ab32119db6960bc00fee6ffb6ed",
+    "otel-9.private.json": "19119bb3b8d01748d5914594363c5f2a07f0ac1db1ae140271bbba69b6c71a4e"
+  }
+}

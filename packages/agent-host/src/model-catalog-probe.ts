@@ -1,3 +1,7 @@
+import {
+  parsePiModelCatalog,
+  probePiModelCatalog,
+} from "./pi-model-catalog-probe.ts";
 import { execFile, spawn } from "node:child_process";
 import { promisify } from "node:util";
 
@@ -19,7 +23,11 @@ const MAX_CLAUDE_CONTROL_OUTPUT_BYTES = 4 * 1_024 * 1_024;
 let claudeCatalogRequestSequence = 0;
 
 export type LocalModelCatalogKind =
-  "claude-cli/v1" | "codex-cli/v1" | "kimi-cli/v1" | "opencode-cli/v1";
+  | "claude-cli/v1"
+  | "codex-cli/v1"
+  | "kimi-cli/v1"
+  | "opencode-cli/v1"
+  | "pi-cli/v1";
 
 export type LocalModelCatalogProbeInput = {
   cwd: string;
@@ -95,6 +103,7 @@ export class LocalModelCatalogProbeCache {
 export async function probeLocalModelCatalog(
   input: LocalModelCatalogProbeInput,
 ): Promise<RuntimeModelBinding[]> {
+  if (input.kind === "pi-cli/v1") return await probePiModelCatalog(input);
   if (input.kind === "claude-cli/v1") {
     return await probeClaudeModelCatalog(input);
   }
@@ -319,6 +328,7 @@ export function parseLocalModelCatalog(
   kind: LocalModelCatalogKind,
   serialized: string,
 ): RuntimeModelBinding[] {
+  if (kind === "pi-cli/v1") return parsePiModelCatalog(serialized);
   const bindings =
     kind === "claude-cli/v1"
       ? parseClaudeCatalog(serialized)

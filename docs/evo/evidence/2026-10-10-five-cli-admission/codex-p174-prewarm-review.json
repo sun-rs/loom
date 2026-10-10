@@ -1,0 +1,60 @@
+{
+  "scope": "Read-only startup-prewarm usage source and OTel review; no new provider calls",
+  "upstreamRevision": "979011409de0a60b52f179721948e65531d26144",
+  "sourceHashes": {
+    "client.rs": "6a725a3e1548e667e8fadbbe8e7b39288fd9393daf188276e6f9554cf008c2bb",
+    "session_telemetry.rs": "220aa5d87aac1444c9257bd800c0fdeda7e05361b46ff45278f9898a92d77625"
+  },
+  "sourceChain": [
+    {
+      "file": "client.rs",
+      "line": 1908,
+      "fact": "Warmup uses session telemetry clone; normal request uses per-request metadata."
+    },
+    {
+      "file": "client.rs",
+      "line": 2023,
+      "fact": "Warmup response.create generate=false."
+    },
+    {
+      "file": "client.rs",
+      "line": 2165,
+      "fact": "Prewarm disables inference trace and consumes Completed."
+    },
+    {
+      "file": "client.rs",
+      "line": 2444,
+      "fact": "Shared stream mapper still emits sse_event_completed for supplied token_usage."
+    },
+    {
+      "file": "session_telemetry.rs",
+      "line": 1104,
+      "fact": "Completed telemetry records provider usage values without response_id."
+    }
+  ],
+  "observations": [
+    {
+      "file": "otel-2.private.json",
+      "time": "2026-10-10T02:26:44.363Z",
+      "input": 7665,
+      "output": 0,
+      "sameTimestampAs": "startup_prewarm_websocket_warmup",
+      "sha256": "ccd3428b1653112d3fbfceb55eea2f6fab49fca0ccb645f5087dc0bdf7018f01"
+    },
+    {
+      "file": "otel-9.private.json",
+      "time": "2026-10-10T02:26:53.738Z",
+      "input": 7665,
+      "output": 0,
+      "sameTimestampAs": "startup_prewarm_websocket_warmup",
+      "sha256": "19119bb3b8d01748d5914594363c5f2a07f0ac1db1ae140271bbba69b6c71a4e"
+    }
+  ],
+  "conclusions": [
+    "These are native telemetry usage observations outside sampling rollouts; do not drop them because generate=false.",
+    "Separate timestamps and separate startup lifetimes provide evidence against duplicate export of one same-time event.",
+    "Timing plus source establishes strong prewarm attribution, but missing response IDs prevent authoritative per-response reconciliation.",
+    "Retain 15330 input / 0 output as separately observed startup usage, not proof of billed cost or a complete bill.",
+    "Do not silently merge into complete sampling totals or declare free."
+  ]
+}

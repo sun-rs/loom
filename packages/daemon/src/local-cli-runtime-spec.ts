@@ -5,6 +5,25 @@ export function localCliRuntimeSpec(
   executable: string,
   workspaceCwd: string,
 ): LocalWorkbenchRuntimeSpec | undefined {
+  if (executable === "pi") {
+    return {
+      adapterKind: "pi-print-json/v1",
+      agentHandle: "Pi",
+      avatarKey: "pi",
+      cliId: "pi",
+      description: "Pi connected through its configured local provider.",
+      displayName: "Pi",
+      executable,
+      instructions:
+        "Work from canonical Room context and report verified outcomes.",
+      modelCatalogProbe: { kind: "pi-cli/v1" },
+      reasoning: "default",
+      role: "Pi Agent using the configured provider and model",
+      runtimeProfileId: "local-workbench-profile-pi",
+      toolAccessMode: "full_access",
+      workspaceCwd,
+    };
+  }
   if (executable === "claude") {
     return {
       adapterKind: "claude-stream-json/v1",

@@ -1,0 +1,76 @@
+{
+  "batch": "P173",
+  "status": "blocked-native-credential-unavailable",
+  "probeCount": 1,
+  "installedVersion": "0.39.1",
+  "modelBinding": "kimi-code/k3-256k",
+  "requestedEffort": "low",
+  "actualModelResponse": null,
+  "actualRequestEffort": null,
+  "limits": {
+    "wallMs": 120000,
+    "nativeAttemptsPerStep": 1,
+    "intendedModelRequests": 1,
+    "unexpectedAdditionalAttempt": "terminate owned process group; preserve already observed request and unknown cost"
+  },
+  "exit": {
+    "code": 1,
+    "signal": null
+  },
+  "nativeDiagnostic": "provider managed:kimi-code has no credential configured",
+  "historicalInvalidGrantReproduced": false,
+  "observedModelAttempts": 0,
+  "knownModelUsage": {
+    "input": 0,
+    "output": 0
+  },
+  "knownUsageInterpretation": "No model request observed; zero known usage does not establish total billing or auth HTTP coverage.",
+  "authHttpCoverage": "unknown; existing passive observer is scoped to /chat/completions",
+  "billingCoverage": "unknown",
+  "memory": {
+    "provider": "kimi",
+    "supported": true,
+    "status": "not-applicable",
+    "scope": "provider-native-auto-memory",
+    "mechanism": "version-audit",
+    "version": "0.39.1",
+    "sourceRevision": "5efca0c3116743855c28426000073bfe34a4862f",
+    "evidence": "audited-cli-version"
+  },
+  "credentialContentsReadOrCopied": false,
+  "accountConfigurationChanged": false,
+  "nativeRefreshLockDisabled": false,
+  "authLinks": {
+    "credentials": {
+      "realpath": "/Users/sun/.kimi-code/credentials",
+      "inode": 665702725
+    },
+    "oauth": {
+      "realpath": "/Users/sun/.kimi-code/oauth",
+      "inode": 665708909
+    }
+  },
+  "cleanup": {
+    "authLinksRemoved": true,
+    "isolatedConfigRemoved": true,
+    "ownedPidsChecked": 2,
+    "liveOwnedPids": [],
+    "wrapperExitReceipts": [
+      {
+        "prefix": "launch-1791598667729-93221",
+        "code": 1,
+        "signal": null
+      }
+    ],
+    "sourceHashesUnchanged": true
+  },
+  "nextAction": "User authenticates original managed Kimi Code account using kimi login against original KIMI_CODE_HOME=/Users/sun/.kimi-code; no account substitution or copied token. New paid probe only after renewed release.",
+  "evidence": {
+    "result.private.json": "a8495c5f3f82c406ef810f88f77bd9e0a22090722e99074a4106dcd5bd9fd6bc",
+    "stdout.private.jsonl": "3cbc1a870faf9117cfca4ab08a15e03b1842fdf4922fe9be25f630fad198199b",
+    "stderr.private.txt": "08d31205367b0edd41172da86b26a389b6f21aa60cf8567a4a17c39d4e5543aa",
+    "wire.private.jsonl": "8ad3bc266c387b5671129f63061d93702166297632fd19756b7cf9bb31b6c354"
+  },
+  "supplementalCredentialReview": "kimi-p173-credential-review.json",
+  "credentialAuditScope": "At probe launch credentials were not inspected or copied. Subsequent offline supplemental review parsed only token-presence booleans and native classification; see supplemental review."
+}

@@ -7,6 +7,48 @@ import {
   localCliRuntimeSpec,
   localWorkbenchWorkerPrompt,
 } from "../src/local-cli-runtime-spec.ts";
+import { KNOWN_LOCAL_CLIS } from "../src/local-runtime-inventory.ts";
+import {
+  RuntimeProfileManifestV3Schema,
+  LocalRuntimeInventoryEntrySchema,
+  WorkerRuntimePublicMetadataSchema,
+} from "@rah-os/protocol";
+
+test("Pi discovery produces a native print profile and public CLI identity", () => {
+  assert.ok(KNOWN_LOCAL_CLIS.some((cli) => cli.executable === "pi"));
+  const spec = localCliRuntimeSpec("pi", "/tmp/pi-workspace");
+  assert.ok(spec);
+  assert.equal(spec.adapterKind, "pi-print-json/v1");
+  assert.equal(spec.modelCatalogProbe?.kind, "pi-cli/v1");
+  assert.equal(spec.toolAccessMode, "full_access");
+  assert.equal(spec.cliId, "pi");
+  assert.equal(
+    LocalRuntimeInventoryEntrySchema.shape.cliId.parse(spec.cliId),
+    "pi",
+  );
+  assert.equal(
+    WorkerRuntimePublicMetadataSchema.shape.cliId.parse(spec.cliId),
+    "pi",
+  );
+  RuntimeProfileManifestV3Schema.parse({
+    manifestVersion: 3,
+    runtimeProfileId: spec.runtimeProfileId,
+    displayName: spec.displayName,
+    protocolFamily: "rah-worker-process/v1",
+    adapter: {
+      kind: spec.adapterKind,
+      executable: spec.executable,
+      fixedArgs: [],
+      config: { diagnosticByteLimit: 262144, terminationGraceMs: 5000 },
+    },
+    staticEnv: {},
+    credentialSlots: [],
+    declaredCapabilities: [],
+    recoveryDrivers: [],
+    workspacePolicy: { allowedModes: ["in_place"] },
+    modelCatalogProbe: spec.modelCatalogProbe,
+  });
+});
 
 test("known local CLI specs share the frozen Agent and canonical Worker contract", () => {
   const workspaceCwd = "/tmp/rah-workspace";

@@ -167,6 +167,7 @@ export function createConfiguredRuntime(input: {
         "claude-stream-json/v1": "claude",
         "kimi-acp/v1": "kimi",
         "opencode-server/v1": "opencode",
+        "pi-print-json/v1": "pi",
       } as Record<string, string>
     )[input.runtimeProfileRevision.manifest.adapter.kind];
     const launchEnv =
@@ -198,11 +199,12 @@ export function createConfiguredRuntime(input: {
             : {
                 channelMemory: {
                   index: memoryIndex,
-                  // OpenCode rebuilds its system layer from the launch
+                  // OpenCode and Pi rebuild their system layer from the launch
                   // prompt on every request; others keep the first one.
                   carryIndexSeq:
                     scope.agent.instanceSessionRequired !== true ||
-                    runtimeId === "opencode",
+                    runtimeId === "opencode" ||
+                    runtimeId === "pi",
                 },
               }),
           deliveryMode,
@@ -352,7 +354,10 @@ export function createConfiguredRuntime(input: {
       (input.runtimeProfileRevision.manifest.adapter.kind === "codex-exec/v1" &&
         process.env.LOOM_CODEX_EXEC_NATIVE_FINAL_TRIAL === "1") ||
       (input.runtimeProfileRevision.manifest.adapter.kind === "kimi-acp/v1" &&
-        process.env.LOOM_KIMI_NATIVE_FINAL_TRIAL === "1"),
+        process.env.LOOM_KIMI_NATIVE_FINAL_TRIAL === "1") ||
+      (input.runtimeProfileRevision.manifest.adapter.kind ===
+        "pi-print-json/v1" &&
+        process.env.LOOM_PI_NATIVE_FINAL_TRIAL === "1"),
     supervisorDirectory: input.supervisorDirectory,
   } satisfies RuntimeCreationOptions;
   runtime =

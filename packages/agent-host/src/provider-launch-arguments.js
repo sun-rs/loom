@@ -20,6 +20,7 @@ const base = {
   ],
   kimi: ["acp"],
   opencode: ["serve", "--pure"],
+  pi: ["--print", "--mode", "json"],
 };
 const managed = new Set([
   "--",
@@ -90,6 +91,15 @@ const managed = new Set([
   "-y",
   "--auto",
   "--plan",
+  // Pi's session/transport and resource-trust controls are host-owned.
+  "--mode",
+  "--provider",
+  "--thinking",
+  "--session",
+  "--session-dir",
+  "--no-session",
+  "--approve",
+  "--no-approve",
 ]);
 function validateShape(args) {
   if (

@@ -32,7 +32,7 @@ export const WorkerRuntimePublicMetadataSchema = z
     hostId: IdentifierSchema,
     runtimeProfileId: IdentifierSchema,
     runtimeProfileRevisionId: IdentifierSchema,
-    cliId: z.enum(["codex", "kimi", "claude", "opencode"]).optional(),
+    cliId: z.enum(["codex", "kimi", "claude", "opencode", "pi"]).optional(),
     displayName: z.string().min(1).max(256),
     executionMode: z.literal("byoc"),
   })

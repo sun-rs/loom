@@ -1,0 +1,32 @@
+{
+  "network": "OS deny network*",
+  "promptSent": false,
+  "modelMutationRPCSent": false,
+  "configurationHashesUnchanged": true,
+  "bindingCount": 1,
+  "bindings": [
+    {
+      "modelBindingId": "local:pi-cli/v1:aihubmix/deepseek-v4.1-flash",
+      "provider": "aihubmix",
+      "modelId": "aihubmix/deepseek-v4.1-flash",
+      "displayName": "DeepSeek V4.1 Flash",
+      "capabilityClasses": ["deep_coding"],
+      "supportedReasoning": ["off", "minimal", "low", "medium", "high"],
+      "supportedServiceTiers": ["default"],
+      "defaultReasoning": "medium",
+      "evidence": "probed",
+      "adapterMapping": {
+        "kind": "generic-process-argv/v1",
+        "config": {
+          "modelArguments": [
+            "--provider",
+            "aihubmix",
+            "--model",
+            "deepseek-v4.1-flash"
+          ],
+          "reasoningArguments": ["--thinking", "{reasoning}"]
+        }
+      }
+    }
+  ]
+}

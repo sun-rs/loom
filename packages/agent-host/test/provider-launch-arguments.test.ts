@@ -6,6 +6,33 @@ import {
   validateProviderLaunchOverride,
 } from "../src/provider-launch-arguments.js";
 
+test("Pi launch owns print transport, session, provider and effort without changing resource trust", () => {
+  assert.deepEqual(providerLaunchArguments("pi", {}), [
+    "--print",
+    "--mode",
+    "json",
+  ]);
+  for (const arg of [
+    "--mode",
+    "--provider",
+    "--thinking",
+    "--session",
+    "--session-dir",
+    "--no-session",
+    "--approve",
+    "--no-approve",
+  ]) {
+    assert.throws(
+      () => validateProviderLaunchArgs([arg, "unexpected"]),
+      /managed/,
+    );
+  }
+  assert.throws(
+    () => validateProviderLaunchOverride("pi", ["--print", "--mode", "rpc"]),
+    /required/,
+  );
+});
+
 test("all four launchers preserve argv boundaries and isolate provider settings", () => {
   for (const runtimeId of ["codex", "claude", "kimi", "opencode"]) {
     const args = providerLaunchArguments(runtimeId, {

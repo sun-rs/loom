@@ -1,0 +1,205 @@
+{
+  "synthetic": true,
+  "paidProviderCalls": 0,
+  "installedCli": "Pi 1.1.0",
+  "modes": [
+    {
+      "runId": "1791599936960-native",
+      "transport": "native-final-output",
+      "rounds": 2,
+      "coldCliProcesses": 2,
+      "sameSession": true,
+      "completedActivations": 2,
+      "uniqueFinalMarkers": 2,
+      "responseCount": 6,
+      "rawNativeKernelMatched": true,
+      "usageGaps": 0,
+      "syntheticInputTokens": 621,
+      "syntheticOutputTokens": 60,
+      "realFileWrites": 2,
+      "realWorkerReads": 2,
+      "failedToolRecoveries": 2,
+      "cli": [
+        {
+          "argvPrefix": [
+            "--print",
+            "--mode",
+            "json",
+            "--provider",
+            "fake-local",
+            "--model",
+            "fake-final",
+            "--thinking",
+            "low"
+          ],
+          "pidExited": true,
+          "exit": {
+            "code": 0,
+            "signal": null
+          },
+          "sessionId": "01a123ad-901f-76bc-b413-8ab252de323b",
+          "assistantResponses": 3,
+          "toolResults": {
+            "failedButClosed": 1,
+            "successful": 1
+          },
+          "stdoutSha256": "a7a1cf312949b3f0d67c995de718ee0096fd0bd5601e18bc00d98730f8b42329",
+          "launchSha256": "b0f7659bd89119bff78b186e07d23cfd77801bf52de8969bd6ae76a45993da30",
+          "sessionArgument": "<run>/state/supervisors/pi-sessions/0f7a30700fc150aed64ddff55374b52a4d6ec0c52010d7fd8fb82166c1c70671.jsonl"
+        },
+        {
+          "argvPrefix": [
+            "--print",
+            "--mode",
+            "json",
+            "--provider",
+            "fake-local",
+            "--model",
+            "fake-final",
+            "--thinking",
+            "low"
+          ],
+          "pidExited": true,
+          "exit": {
+            "code": 0,
+            "signal": null
+          },
+          "sessionId": "01a123ad-901f-76bc-b413-8ab252de323b",
+          "assistantResponses": 3,
+          "toolResults": {
+            "failedButClosed": 1,
+            "successful": 1
+          },
+          "stdoutSha256": "0f17dc038cf6a8299787f965f9e2c59c356ec4ddba0110b0a63b0b6ec66990b9",
+          "launchSha256": "8671b6fd91a48a36600a2fdd828201149292690e1aff2cc629c02610428c3a57",
+          "sessionArgument": "<run>/state/supervisors/pi-sessions/0f7a30700fc150aed64ddff55374b52a4d6ec0c52010d7fd8fb82166c1c70671.jsonl"
+        }
+      ],
+      "cleanup": {
+        "daemonExit0": true,
+        "wrapperExitedAfterActualCliClose": true,
+        "syntheticConfigRemoved": true
+      },
+      "frozenCoreSources": {
+        "packages/agent-host/src/pi-print-runtime.ts": "ee4975cd57080b1a89c77bde30502c92f85423c668d8d5daed4b80e1360ae6c2",
+        "packages/agent-host/src/pi-print-driver.mjs": "9f1356f6c91f456ded056214315e278bee5173bc74e24f22500a644c1589b456",
+        "packages/agent-host/src/pi-final-output.mjs": "8aecca1f73c380cdff69ae26a81072438b5c09a3a792b64ac6f17f9e7ddfc934",
+        "packages/agent-host/src/pi-usage.mjs": "7a771ff525deeeccf8289497ef4266838854698ca39bd29a4dc9a04432f3f5f1",
+        "packages/agent-host/src/provider-launch-arguments.js": "313d4a04f468c6fa0091dcdc28902b4b6a059e7d8f7c43ab37fb2866eff1eb1b",
+        "packages/agent-host/src/pi-model-catalog-probe.ts": "e7744d49a510e60e55662bd305fd25ba9259ad0ba4ad0474ae7b2b24e0e7380d",
+        "packages/daemon/src/runtime-profile-composition.ts": "d4310f669ef0b819937757e4f669a394814f7d92ac2a4fa065848f57bb9894e1"
+      },
+      "files": {
+        "native-session.private.jsonl": "70a3c9480ad29e3e97e75f7ba92685aa9647e1ba77f226942a5076a6d02dcee4",
+        "kernel-usage.private.json": "be7548834f6e8f7e0d9643c9f2ca3e7bb66cf79359d38b7bff3bf5a79059826d",
+        "result.json": "88ced8a250874406f26dc263e4061e6afde2939bd042a664780b7d27bd059314",
+        "accepted.json": "d58741e98357f2a59f94ace7b2b8467a0f80e22593605d455c30513209c57a10",
+        "source-before.json": "6f01c3f24706aa1d072989403fe86d9cca75e692de83b1eadeec0821642bff26",
+        "source-after.json": "6f01c3f24706aa1d072989403fe86d9cca75e692de83b1eadeec0821642bff26"
+      }
+    },
+    {
+      "runId": "1791599950081-worker",
+      "transport": "worker-final",
+      "rounds": 2,
+      "coldCliProcesses": 2,
+      "sameSession": true,
+      "completedActivations": 2,
+      "uniqueFinalMarkers": 2,
+      "responseCount": 6,
+      "rawNativeKernelMatched": true,
+      "usageGaps": 0,
+      "syntheticInputTokens": 621,
+      "syntheticOutputTokens": 60,
+      "realFileWrites": 2,
+      "realWorkerReads": 2,
+      "failedToolRecoveries": 2,
+      "cli": [
+        {
+          "argvPrefix": [
+            "--print",
+            "--mode",
+            "json",
+            "--provider",
+            "fake-local",
+            "--model",
+            "fake-final",
+            "--thinking",
+            "low"
+          ],
+          "pidExited": true,
+          "exit": {
+            "code": 0,
+            "signal": null
+          },
+          "sessionId": "01a123ad-c690-714c-b24f-8c6bed6e1706",
+          "assistantResponses": 3,
+          "toolResults": {
+            "failedButClosed": 1,
+            "successful": 1
+          },
+          "stdoutSha256": "5355f80c08ad480e3b6f53355b28b38c991677e141f39e303b27c6f817fdcaaf",
+          "launchSha256": "a9959fbe7d450846e670bdbd59c20e2885db109de3b0202d6c464bfb869ec44e",
+          "sessionArgument": "<run>/state/supervisors/pi-sessions/e66397890a35e24a67bcf97b7980c9c64bdc29337e43bdda047bf7f3c4103d7a.jsonl"
+        },
+        {
+          "argvPrefix": [
+            "--print",
+            "--mode",
+            "json",
+            "--provider",
+            "fake-local",
+            "--model",
+            "fake-final",
+            "--thinking",
+            "low"
+          ],
+          "pidExited": true,
+          "exit": {
+            "code": 0,
+            "signal": null
+          },
+          "sessionId": "01a123ad-c690-714c-b24f-8c6bed6e1706",
+          "assistantResponses": 3,
+          "toolResults": {
+            "failedButClosed": 1,
+            "successful": 1
+          },
+          "stdoutSha256": "444557a82609f759b634c4caa208252b21264cd324ef2ebacae25c4eab2f2916",
+          "launchSha256": "eaaf7cd4b8c29497a1296236a3fec6776903d061061aa7c10dfe60e740556183",
+          "sessionArgument": "<run>/state/supervisors/pi-sessions/e66397890a35e24a67bcf97b7980c9c64bdc29337e43bdda047bf7f3c4103d7a.jsonl"
+        }
+      ],
+      "cleanup": {
+        "daemonExit0": true,
+        "wrapperExitedAfterActualCliClose": true,
+        "syntheticConfigRemoved": true
+      },
+      "frozenCoreSources": {
+        "packages/agent-host/src/pi-print-runtime.ts": "ee4975cd57080b1a89c77bde30502c92f85423c668d8d5daed4b80e1360ae6c2",
+        "packages/agent-host/src/pi-print-driver.mjs": "9f1356f6c91f456ded056214315e278bee5173bc74e24f22500a644c1589b456",
+        "packages/agent-host/src/pi-final-output.mjs": "8aecca1f73c380cdff69ae26a81072438b5c09a3a792b64ac6f17f9e7ddfc934",
+        "packages/agent-host/src/pi-usage.mjs": "7a771ff525deeeccf8289497ef4266838854698ca39bd29a4dc9a04432f3f5f1",
+        "packages/agent-host/src/provider-launch-arguments.js": "313d4a04f468c6fa0091dcdc28902b4b6a059e7d8f7c43ab37fb2866eff1eb1b",
+        "packages/agent-host/src/pi-model-catalog-probe.ts": "e7744d49a510e60e55662bd305fd25ba9259ad0ba4ad0474ae7b2b24e0e7380d",
+        "packages/daemon/src/runtime-profile-composition.ts": "d4310f669ef0b819937757e4f669a394814f7d92ac2a4fa065848f57bb9894e1"
+      },
+      "files": {
+        "native-session.private.jsonl": "3de53141eadfb46179b6c76ede78a659f4f252dff8cbf616668115924c564ada",
+        "kernel-usage.private.json": "02604f2fb0331639bd2b50345f060109dff75f28f75801fb96b6f022c03c4232",
+        "result.json": "223be3e9472898b6de4116d7583f54e39a0c26056e27e6e163820871d80a9373",
+        "accepted.json": "2129a24958f1547bcee8689de1145ab42bb4fec816b61977ee697abc22a8ad3b",
+        "source-before.json": "6f01c3f24706aa1d072989403fe86d9cca75e692de83b1eadeec0821642bff26",
+        "source-after.json": "6f01c3f24706aa1d072989403fe86d9cca75e692de83b1eadeec0821642bff26"
+      }
+    }
+  ],
+  "priorFailuresPreserved": ["1791599723005-native", "1791599770434-native"],
+  "boundaries": [
+    "Production DaemonApplication -> RuntimeImplementationRegistry/createConfiguredRuntime -> AgentHost scheduling, real Role and Channel home, real installed Pi, local synthetic provider.",
+    "Wrapper adds offline/no-extensions/no-skills/no-context-files/no-prompt-templates/no-mcp for benchmark isolation; these are not asserted as production defaults.",
+    "Known synthetic usage proves accounting plumbing only, not paid-provider efficiency or billing completeness.",
+    "Platform memory empty index visible; no nonempty memory replacement experiment in this run.",
+    "No cancel/unknown HTTP response fault injection in this actual CLI sample; shared WorkerFinalOutput handling reviewed, not newly end-to-end tested."
+  ]
+}

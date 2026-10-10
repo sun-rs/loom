@@ -780,6 +780,10 @@ test("built-in runtime implementations produce profile-bound immutable probe evi
       "generic-process-adapter/v1",
     );
     assert.equal(
+      implementations.adapterImplementationVersion("pi-print-json/v1"),
+      "pi-print-json-driver/v1",
+    );
+    assert.equal(
       implementations.adapterImplementationVersion("unknown-adapter/v1"),
       undefined,
     );

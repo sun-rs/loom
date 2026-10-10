@@ -61,7 +61,7 @@ test("an S6 standing prompt carries one memory pointer line and the index last; 
 
 async function composition(
   t: test.TestContext,
-  options: { withKernel?: boolean; kernelThrows?: boolean } = {},
+  options: { withKernel?: boolean; kernelThrows?: boolean; pi?: boolean } = {},
 ) {
   const directory = await mkdtemp(join(tmpdir(), "rah-memory-injection-"));
   const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
@@ -180,7 +180,17 @@ async function composition(
     implementations,
     probeReport,
     runtimeProfileRegistry: registry,
-    runtimeProfileRevision: revision,
+    runtimeProfileRevision: options.pi
+      ? {
+          ...revision,
+          manifest: {
+            ...manifest,
+            manifestVersion: 3,
+            adapter: { ...manifest.adapter, kind: "pi-print-json/v1" },
+            modelCatalogProbe: { kind: "pi-cli/v1" },
+          },
+        }
+      : revision,
     supervisorDirectory: directory,
     credentialEnvironment: new RuntimeCredentialEnvironmentBinding({
       manifest,
@@ -282,6 +292,19 @@ test("a resumed S6 session keeps the index it already holds: no launch seq", asy
     c.scope("resume", { channelId: "channel-1", sessionRequired: true }),
   );
   assert.equal(c.seen[0]!.env.RAH_MEMORY_INDEX_SEQ, undefined);
+});
+
+test("Pi resumes with its rebuilt system index and does not materialize platform memory", async (t) => {
+  const c = await composition(t, { pi: true });
+  await c.start(
+    c.scope("resume", { channelId: "channel-1", sessionRequired: true }),
+  );
+  assert.equal(c.seen[0]!.env.RAH_MEMORY_INDEX_SEQ, "41");
+  assert.match(c.seen[0]!.prompt, /how releases ship/u);
+  assert.equal(c.seen[0]!.env.RAH_AGENT_MEMORY_DIR, undefined);
+  await assert.rejects(lstat(join(c.directory, "agent-memory")), {
+    code: "ENOENT",
+  });
 });
 
 test("a legacy persona Agent keeps its per-instance MEMORY.md unchanged", async (t) => {

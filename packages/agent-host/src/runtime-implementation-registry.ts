@@ -1,5 +1,6 @@
 import { createKimiNativeFinalTransport } from "./kimi-native-final-lease.ts";
 import { createCodexExecRuntime } from "./codex-exec-runtime.ts";
+import { createPiPrintRuntime } from "./pi-print-runtime.ts";
 import {
   createStandingPromptDigestLedger,
   providerSessionKey,
@@ -195,6 +196,11 @@ export class RuntimeImplementationRegistry {
     this.#adapterImplementations.set("codex-exec/v1", {
       create: createCodexExecRuntime,
       implementationVersion: "codex-exec-driver/v1",
+      recoveryDrivers,
+    });
+    this.#adapterImplementations.set("pi-print-json/v1", {
+      create: createPiPrintRuntime,
+      implementationVersion: "pi-print-json-driver/v1",
       recoveryDrivers,
     });
     this.#adapterImplementations.set("codex-app-server/v1", {

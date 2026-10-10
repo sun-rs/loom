@@ -51,6 +51,7 @@ export type LocalWorkbenchRuntimeSpec = {
     | "claude-stream-json/v1"
     | "codex-app-server/v1"
     | "codex-exec/v1"
+    | "pi-print-json/v1"
     | "generic-process/v1"
     | "kimi-acp/v1"
     | "opencode-server/v1";
@@ -63,7 +64,12 @@ export type LocalWorkbenchRuntimeSpec = {
   instructions: string;
 
   modelCatalogProbe?: {
-    kind: "claude-cli/v1" | "codex-cli/v1" | "kimi-cli/v1" | "opencode-cli/v1";
+    kind:
+      | "claude-cli/v1"
+      | "codex-cli/v1"
+      | "kimi-cli/v1"
+      | "opencode-cli/v1"
+      | "pi-cli/v1";
   };
   reasoning: "default" | "low" | "medium" | "high";
   role: string;

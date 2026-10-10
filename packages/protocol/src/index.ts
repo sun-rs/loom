@@ -438,6 +438,7 @@ export const RuntimeProfileManifestV3Schema = z
           "claude-stream-json/v1",
           "codex-app-server/v1",
           "codex-exec/v1",
+          "pi-print-json/v1",
           "kimi-acp/v1",
           "opencode-server/v1",
         ]),
@@ -471,10 +472,21 @@ export const RuntimeProfileManifestV3Schema = z
       z.object({ kind: z.literal("codex-cli/v1") }).strict(),
       z.object({ kind: z.literal("kimi-cli/v1") }).strict(),
       z.object({ kind: z.literal("opencode-cli/v1") }).strict(),
+      z.object({ kind: z.literal("pi-cli/v1") }).strict(),
     ]),
   })
   .strict()
   .superRefine((manifest, context) => {
+    if (
+      manifest.adapter.kind === "pi-print-json/v1" &&
+      manifest.modelCatalogProbe.kind !== "pi-cli/v1"
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "pi-print-json/v1 requires the pi-cli/v1 model catalog probe",
+        path: ["modelCatalogProbe", "kind"],
+      });
+    }
     if (
       manifest.adapter.kind === "claude-stream-json/v1" &&
       manifest.modelCatalogProbe.kind !== "claude-cli/v1"

@@ -1,0 +1,71 @@
+{
+  "scope": "Pi formal cold same-session AgentHost slice; no paid model validation",
+  "implemented": [
+    "packages/agent-host/src/pi-print-runtime.ts",
+    "packages/agent-host/src/pi-print-driver.mjs",
+    "packages/agent-host/src/pi-final-output.mjs",
+    "packages/agent-host/src/pi-usage.mjs",
+    "packages/agent-host/test/pi-print-runtime.test.ts",
+    "packages/agent-host/test/pi-print-driver.test.mjs",
+    "packages/agent-host/test/pi-print-proof.test.mjs",
+    "packages/agent-host/test/fixtures/fake-pi-print.mjs"
+  ],
+  "sourceHashes": {
+    "packages/agent-host/src/pi-print-runtime.ts": "ceec41379e62e8c0ddfb9c8b26e5f31b6ea1d2cb11694b713b38ad7f5fad617c",
+    "packages/agent-host/src/pi-print-driver.mjs": "9f1356f6c91f456ded056214315e278bee5173bc74e24f22500a644c1589b456",
+    "packages/agent-host/src/pi-final-output.mjs": "8aecca1f73c380cdff69ae26a81072438b5c09a3a792b64ac6f17f9e7ddfc934",
+    "packages/agent-host/src/pi-usage.mjs": "7a771ff525deeeccf8289497ef4266838854698ca39bd29a4dc9a04432f3f5f1",
+    "packages/agent-host/test/pi-print-runtime.test.ts": "8ed144c9d8c9d0d7532bb11e59c72b32fde94381a4748e2857f5844a72b14317",
+    "packages/agent-host/test/pi-print-driver.test.mjs": "a9a9d72f0c5dc3e091a684ac82793d139e3e06e75a12b291eb5fb68f417d840d",
+    "packages/agent-host/test/pi-print-proof.test.mjs": "0f9ce04f88a2e1637b130ee85b12c727e381d9d11299c29b982e7388a7d2959e",
+    "packages/agent-host/test/fixtures/fake-pi-print.mjs": "e2b348773327521e573173d421ffbf44036205fad35b743850239213a1d13699"
+  },
+  "tests": {
+    "slice": "slice-green.log: 14 passed before mandatory argv fix",
+    "argvRegression": "print-mode-red.log -> print-mode-green.log: 6 driver tests passed; actual launch requires --print --mode json",
+    "fullRepository": "Parent running; not claimed passed",
+    "finalSlice": "slice-final-green.log: all 14 passed after argv and binding guard fixes",
+    "bindingRegression": "binding-red.log Missing expected exception -> binding-green.log pass"
+  },
+  "sessionReview": {
+    "nativeSessionPath": "SHA256(provider session key plus instanceSessionGeneration), stable supervisor directory",
+    "resume": "ProviderSessionStore native ID required; mismatched/missing native file fails closed; no replacement",
+    "fileEvidence": "owner-private directories, no-follow owned regular file, before/after inode/device and exact byte-prefix checked",
+    "sameUIDBoundary": "Not strong isolation from same-UID provider tools"
+  },
+  "modelReview": {
+    "catalog": "Explicit binding required; runtime_default/custom rejected; explicit reasoning required",
+    "afterExecution": "Native session and every assistant must match provider/model/thinking; mismatches cannot publish",
+    "preRequestLimitation": "Installed Pi model resolver allows fuzzy substitution if config changes after probe; see model-drift-offline.json. No claim of dynamic-config zero-substitution",
+    "factory": "Explicit binding modelId must equal resolvedModel.modelId before launch; mismatch TDD passed",
+    "admissionConstraint": "Future free/paid runner freezes model config and native dependencies, verifies exact catalog before launch and unchanged hashes afterward; concurrent config TOCTOU remains explicit. Pi has no paid gate approval."
+  },
+  "evidence": [
+    "catalog-proof.json",
+    "features-1791599104446/features-result.json",
+    "model-drift-offline.json"
+  ],
+  "formalDaemonFree": {
+    "evidence": "/Users/sun/.loom/reviews/2026-10-10-pi-daemon-free/public-evidence.json",
+    "reportedSha256": "15389832ea241e6316fdb62a1429b7574bf902ea87ea9a70d029ac094493dfe7",
+    "owner": "claude_final_driver",
+    "nativeRun": "1791599936960-native",
+    "workerDefaultOffRun": "1791599950081",
+    "reportedResult": "Each 2 turns same native session, actual failed tool recovery/file writes/Worker read, 2 correct marker/ACK, 6 synthetic responses with 621 input/60 output, raw/native/Kernel matched, zero gaps and cleanup complete. No paid request.",
+    "postFreeDelta": "factory now rejects resolved modelId mismatching exact binding; test only otherwise. Driver unchanged after successful free."
+  },
+  "limits": [
+    "Cold per-activation print launches with continuous native session; no warm pool; warm target unchanged.",
+    "Only full_access; attached directories explicitly unavailable.",
+    "Source runtime only; SEA packaging unavailable.",
+    "Native final opt-in defaults off; default Worker --final path retained.",
+    "Native session/evidence capture bounded to 32MiB and fails closed; long-session limit not auto-rotated.",
+    "Only verified rawStopReason stop path currently; no universal cross-provider final-shape claim.",
+    "Known message_end usage emitted immediately; interrupted later generations produce gap; hard kill may prevent trailing gap and terminal proof remains required.",
+    "Previously emitted conflicting usage cannot be retracted; gap means partial, not corrected invoice total.",
+    "reasoning/context unknown remain null; native token use is not billing proof.",
+    "Platform memory sent in system transport, not dedicated memory files; native diagnostic session still persists prompt.",
+    "Product preserves native configured resources/trust; no automatic approve/no-approve mapping. Benchmark isolation flags are free-wrapper-only.",
+    "No Pi paid-approved binding; no real-provider efficiency conclusion."
+  ]
+}

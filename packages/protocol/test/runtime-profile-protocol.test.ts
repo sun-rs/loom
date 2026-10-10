@@ -31,6 +31,40 @@ const manifest = {
   },
 } as const;
 
+test("Pi profiles accept only their native catalog binding", () => {
+  const pi = {
+    ...manifest,
+    manifestVersion: 3,
+    staticEnv: {},
+    credentialSlots: [],
+    adapter: {
+      ...manifest.adapter,
+      kind: "pi-print-json/v1",
+      executable: "pi",
+      fixedArgs: [],
+    },
+    modelCatalogProbe: { kind: "pi-cli/v1" },
+  };
+  assert.equal(
+    RuntimeProfileManifestV3Schema.parse(pi).adapter.kind,
+    "pi-print-json/v1",
+  );
+  assert.equal(
+    RuntimeProfileManifestV3Schema.safeParse({
+      ...pi,
+      modelCatalogProbe: { kind: "opencode-cli/v1" },
+    }).success,
+    false,
+  );
+  assert.equal(
+    RuntimeProfileManifestV3Schema.safeParse({
+      ...pi,
+      adapter: { ...pi.adapter, kind: "opencode-server/v1" },
+    }).success,
+    false,
+  );
+});
+
 test("RuntimeProfileManifestV1 is strict and shell-free", () => {
   const parsed = RuntimeProfileManifestV1Schema.parse(manifest);
   assert.equal(parsed.manifestVersion, 1);

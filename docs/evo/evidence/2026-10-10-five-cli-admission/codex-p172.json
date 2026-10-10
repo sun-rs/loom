@@ -1,0 +1,88 @@
+{
+  "batch": "P172",
+  "scope": "Single ordinary native Codex successful-generation accounting probe, not paired cost benchmark",
+  "status": "firstNativeTurnSucceeded-observationAdmissionFailed-secondTurnNotLaunched",
+  "model": "gpt-6-luna",
+  "effort": "low",
+  "installedVersion": "0.161.0",
+  "plannedTurns": 2,
+  "completedTurns": 1,
+  "knownNativeReportedUsage": {
+    "input_tokens": 8657,
+    "cached_input_tokens": 1792,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 10,
+    "reasoning_output_tokens": 0,
+    "total_tokens": 8667
+  },
+  "nativeResponseIds": 1,
+  "nativeFinalCollectorPassed": true,
+  "stdoutCompletionMatchesJsonl": true,
+  "memoryMode": "disabled",
+  "sameSessionResume": "not exercised by paid sample; free2turnsverified",
+  "otel": {
+    "receivedBatches": 0,
+    "rejectedBatches": 0,
+    "attemptCoverage": "unknown",
+    "normalGenerationUsage": "one valid exact native record; missing independent attempt evidence does not erase known tokens"
+  },
+  "route": {
+    "provider": "openai",
+    "originalHomeAndAuthUsed": true,
+    "authCopied": false,
+    "providerEndpointOrWSOverridden": false,
+    "configShaUnchanged": true,
+    "baseline": "Inherited global instructions; not clean paired baseline"
+  },
+  "stop": "Concrete missing observation after completed first turn; no second turn/no paid retry",
+  "freeze": {
+    "head": "dc57976a06ba98eadf425db7eb34d606b9f4c2e3",
+    "sourceCount": 3699,
+    "mismatches": [],
+    "auditedAt": "2026-10-10T02:21:53.765032+00:00"
+  },
+  "cleanup": {
+    "recordedOwnedProcessesRemaining": 0,
+    "collectorClosed": true,
+    "exitReceipts": [
+      {
+        "code": 0,
+        "signal": null
+      },
+      {
+        "code": 0,
+        "signal": null
+      },
+      {
+        "code": 0,
+        "signal": null
+      },
+      {
+        "code": 0,
+        "signal": null
+      },
+      {
+        "code": 0,
+        "signal": null
+      },
+      {
+        "code": 0,
+        "signal": null
+      }
+    ]
+  },
+  "rootCause": {
+    "classification": "Local telemetry proxy bypass missing; deterministic free differential reproduced and repaired without changing remote provider proxy configuration",
+    "diagnosticEvidence": "/Users/sun/.loom/reviews/2026-10-10-codex-otel-proxy-diagnosis/public-evidence.json",
+    "diagnosticSha256": "58ff1268f1898fcb4ebd0f84bcf40ad6fcf1059d52343caed72f6cfb92d1d063",
+    "limit": "P172 own zeroexport evidence retained; no paid rerun or retroactive completeness claim."
+  },
+  "hashes": {
+    "result.private.json": "5c0097086f30a7800560eea3a8efbe0aa40f0ba174652d8e6b9482489a36238c",
+    "current-session.private.jsonl": "1f09f75becb43ab84c3853d8f8b3bd0db092972aec46d7bf5fd5b235222100be",
+    "turn-1.stdout": "55a42c8a780e6485b0cc150ad454921f8de6df127eca50257e7418e2fa15f092",
+    "turn-1.proof.json": "316b6692135eee69f8fea89c70d5c11d612fc781b2acae6cf8a233ca3d9bf27d",
+    "freeze-cleanup.json": "2c45d191a6262f5e75574b822fb2aef3c547258a32fd671fa8d890c71e92cf9f"
+  },
+  "limit": "Provider-reported known tokens are not full request census or billed money; no ratio computed."
+}

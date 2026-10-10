@@ -1,0 +1,7 @@
+{
+  "scope": "offline installed native resolver, synthetic metadata, no CLI or provider request",
+  "requested": "deepseek-v4.1-flash",
+  "actual": "deepseek-v4.1-flash-different",
+  "error": null,
+  "substituted": true
+}

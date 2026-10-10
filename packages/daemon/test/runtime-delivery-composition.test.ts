@@ -257,6 +257,43 @@ for (const mode of ["direct", "gated", undefined] as const) {
       );
       if (mode !== undefined) assert.notEqual(prompts[0], prompts[1]);
       assert.equal(prompts[0], prompts[2]);
+      if (mode === undefined) {
+        await t.test(
+          "Pi native final is opt-in and cannot select another CLI",
+          () => {
+            const before = process.env.LOOM_PI_NATIVE_FINAL_TRIAL;
+            try {
+              for (const [flag, kind, expected] of [
+                [undefined, "pi-print-json/v1", false],
+                ["true", "pi-print-json/v1", false],
+                ["1", "pi-print-json/v1", true],
+                ["1", "generic-process/v1", false],
+              ] as const) {
+                if (flag === undefined)
+                  delete process.env.LOOM_PI_NATIVE_FINAL_TRIAL;
+                else process.env.LOOM_PI_NATIVE_FINAL_TRIAL = flag;
+                createConfiguredRuntime({
+                  ...runtimeInput,
+                  runtimeProfileRevision: {
+                    ...revision,
+                    manifest: {
+                      ...manifest,
+                      manifestVersion: 3,
+                      adapter: { ...manifest.adapter, kind },
+                      modelCatalogProbe: { kind: "pi-cli/v1" },
+                    },
+                  },
+                });
+                assert.equal(options?.nativeFinalText, expected);
+              }
+            } finally {
+              if (before === undefined)
+                delete process.env.LOOM_PI_NATIVE_FINAL_TRIAL;
+              else process.env.LOOM_PI_NATIVE_FINAL_TRIAL = before;
+            }
+          },
+        );
+      }
       if (mode === undefined)
         await t.test(
           "final-output switches select only their own CLI and preserve the default",
