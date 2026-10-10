@@ -1,0 +1,109 @@
+{
+  "scope": "Independent read-only review; no new model/CLI calls, no frozen-result rewrites",
+  "run": "1791602885314-P176",
+  "sampling": {
+    "native": {
+      "input": 2352494,
+      "cachedInput": 2234112,
+      "output": 18905,
+      "generations": 75
+    },
+    "loom": {
+      "input": 1968717,
+      "cachedInput": 1847040,
+      "output": 19154,
+      "generations": 69
+    }
+  },
+  "allCompleted": {
+    "native": {
+      "complete": true,
+      "count": 87,
+      "duplicates": 0,
+      "input": 2444474,
+      "output": 18905,
+      "cachedInput": 2234112,
+      "detailComplete": true,
+      "errors": []
+    },
+    "loom": {
+      "complete": true,
+      "count": 80,
+      "duplicates": 0,
+      "input": 2053032,
+      "output": 19154,
+      "cachedInput": 1847040,
+      "detailComplete": true,
+      "errors": []
+    }
+  },
+  "rawVerification": "Independently parsed original OTLP logs, summed unique completed usage events, matched stated totals; no responseID attributes so no claim of OTel per-ID attribution.",
+  "extraCompleted": {
+    "native": {
+      "count": 12,
+      "eachInput": 7665,
+      "eachOutput": 0
+    },
+    "loom": {
+      "count": 11,
+      "eachInput": 7665,
+      "eachOutput": 0
+    },
+    "limit": "All-completed minus sampling, not inferred billing or business generations."
+  },
+  "kernel": {
+    "usageRows": 69,
+    "uniqueResponseIds": 69,
+    "allPrimaryMatchedNative": true,
+    "usageGaps": 0,
+    "finalOutputMarkers": 12,
+    "markersJoinRunEvent": 12,
+    "completedActivations": 12
+  },
+  "windows": {
+    "allCompletedReported": {
+      "full": {
+        "input": 0.8398665725223504,
+        "output": 1.013171118751653,
+        "cachedInput": 0.8267445857683052,
+        "reasoningOutput": null
+      },
+      "fixedLate7to12": {
+        "input": 0.7868894284511746,
+        "output": 1.0368250333905744,
+        "cachedInput": 0.7736226531240382,
+        "reasoningOutput": null
+      }
+    },
+    "samplingOnly": {
+      "full": {
+        "input": 0.8368637709596709,
+        "output": 1.013171118751653,
+        "cachedInput": 0.8267445857683052,
+        "reasoningOutput": null
+      },
+      "fixedLate7to12": {
+        "input": 0.7811968184896538,
+        "output": 1.0368250333905744,
+        "cachedInput": 0.7736226531240382,
+        "reasoningOutput": null
+      }
+    }
+  },
+  "quality": {
+    "immutableSnapshots": 24,
+    "allHashesIndependentlyMatched": true,
+    "originalOracleAllPassed": true,
+    "README": "Both final README and implementations inspected. Decimal/rounding/discount/grouping/input validation/file+stdin CLI descriptions consistent; no conflicting worked output counts found. Fixed workload only; not exhaustive correctness.",
+    "noNewTasksOrEvaluationRuns": true
+  },
+  "fairness": {
+    "nativeTools": 63,
+    "loomTools": 57,
+    "observed": "Native stored function/custom tool arguments reviewed for paths and executed business commands. Only own cwd discovery, invoice/tests/README edits and selftests observed. No old/peer transcript/session/oracle/private-review reads observed.",
+    "limit": "Shared original CODEX_HOME remains accessible; observed review is not strong isolation or proof against unobserved actions.",
+    "pendingIssueResolved": "Independent observed-tool review now complete; preserve frozen original result and annotate separately."
+  },
+  "cleanup": "Owner independently checking all process/source receipts; this review does not duplicate 24160-source census. Both telemetry receivers closed with no errors in final result.",
+  "conclusion": "One complete fixed12 same-model paired trajectory. Report sampling and all-completed token ratios separately; not invoice, pooled CLI or causal universal efficiency verdict."
+}

@@ -1,0 +1,210 @@
+{
+  "batch": "P176",
+  "status": "completed-independent-accounting-and-quality-reviewed",
+  "scope": "One fixed gpt-6-luna/low ordinary Codex exec/resume 12-pair trajectory; does not generalize to other models or all CLI runtimes",
+  "predecessor": "P175 failed harness-capacity sample and its costs retained; P176 is a distinct authorized sample, not a replacement result",
+  "completedPairs": 12,
+  "functionalSnapshotsPassed": 24,
+  "readmeSemanticReview": "Both final README examples and documented implementation checked; no material inconsistency found",
+  "sameSessionEachArm": true,
+  "model": "gpt-6-luna",
+  "effort": "low",
+  "automaticMemoryOffEveryLaunch": true,
+  "originalAccountAuthSharedNotCopied": true,
+  "originalConfigUnchanged": true,
+  "sampling": {
+    "native": {
+      "responses": 75,
+      "input": 2352494,
+      "cachedInput": 2234112,
+      "output": 18905,
+      "generations": 75
+    },
+    "loom": {
+      "responses": 69,
+      "input": 1968717,
+      "cachedInput": 1847040,
+      "output": 19154,
+      "generations": 69
+    }
+  },
+  "allCompletedReported": {
+    "native": {
+      "count": 87,
+      "input": 2444474,
+      "output": 18905
+    },
+    "loom": {
+      "count": 80,
+      "input": 2053032,
+      "output": 19154
+    }
+  },
+  "windows": {
+    "allCompletedReported": {
+      "full": {
+        "rounds": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+        "native": {
+          "input": 2444474,
+          "output": 18905,
+          "cachedInput": 2234112
+        },
+        "loom": {
+          "input": 2053032,
+          "output": 19154,
+          "cachedInput": 1847040
+        },
+        "ratios": {
+          "input": 0.8398665725223504,
+          "output": 1.013171118751653,
+          "cachedInput": 0.8267445857683052,
+          "reasoningOutput": null,
+          "uncachedInput": 0.9792262861163138
+        },
+        "uncachedInput": {
+          "native": 210362,
+          "loom": 205992
+        }
+      },
+      "late": {
+        "rounds": [7, 8, 9, 10, 11, 12],
+        "native": {
+          "input": 1767688,
+          "output": 10482,
+          "cachedInput": 1663488
+        },
+        "loom": {
+          "input": 1390975,
+          "output": 10868,
+          "cachedInput": 1286912
+        },
+        "ratios": {
+          "input": 0.7868894284511746,
+          "output": 1.0368250333905744,
+          "cachedInput": 0.7736226531240382,
+          "reasoningOutput": null,
+          "uncachedInput": 0.9986852207293666
+        },
+        "uncachedInput": {
+          "native": 104200,
+          "loom": 104063
+        }
+      }
+    },
+    "samplingOnly": {
+      "full": {
+        "rounds": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+        "native": {
+          "input": 2352494,
+          "output": 18905,
+          "cachedInput": 2234112
+        },
+        "loom": {
+          "input": 1968717,
+          "output": 19154,
+          "cachedInput": 1847040
+        },
+        "ratios": {
+          "input": 0.8368637709596709,
+          "output": 1.013171118751653,
+          "cachedInput": 0.8267445857683052,
+          "reasoningOutput": null,
+          "uncachedInput": 1.027833623354902
+        },
+        "uncachedInput": {
+          "native": 118382,
+          "loom": 121677
+        }
+      },
+      "late": {
+        "rounds": [7, 8, 9, 10, 11, 12],
+        "native": {
+          "input": 1721698,
+          "output": 10482,
+          "cachedInput": 1663488
+        },
+        "loom": {
+          "input": 1344985,
+          "output": 10868,
+          "cachedInput": 1286912
+        },
+        "ratios": {
+          "input": 0.7811968184896538,
+          "output": 1.0368250333905744,
+          "cachedInput": 0.7736226531240382,
+          "reasoningOutput": null,
+          "uncachedInput": 0.9976464524995705
+        },
+        "uncachedInput": {
+          "native": 58210,
+          "loom": 58073
+        }
+      }
+    }
+  },
+  "samplingInputDecomposition": {
+    "requestCountFactor": 0.92,
+    "averageInputFactor": 0.9096345336518161,
+    "product": 0.8368637709596709,
+    "meaning": "Observed arithmetic, not isolated causal attribution"
+  },
+  "firstSamplingGenerationInput": {
+    "native": 8838,
+    "loom": 10547
+  },
+  "additionalCompletedReported": {
+    "native": {
+      "count": 12,
+      "input": 91980,
+      "output": 0
+    },
+    "loom": {
+      "count": 11,
+      "input": 84315,
+      "output": 0
+    },
+    "loomRound6": "Native startup_prewarm_resolve timed_out at 14843 ms, no startup websocket warmup span; 10 actual websocket requests matched 10 successful sampling usages. Do not fabricate a twelfth startup usage."
+  },
+  "qualityAndFairness": {
+    "reviewedTools": {
+      "native": 63,
+      "loom": 57
+    },
+    "observedOldPeerOrOracleReads": false,
+    "allFinalMarkers": "12 native-final-output markers join actual Run/event and completed Activation",
+    "limitation": "Shared original CODEX_HOME is not strong native-session-file isolation. No such read observed in recorded tool invocations."
+  },
+  "coverage": {
+    "nativeUniqueResponseRows": 144,
+    "kernelLoomGenerationsVerified": 69,
+    "allDistinctCompletedEvents": 167,
+    "collectorRejectedExports": 0,
+    "allReportedArchiveBytes": 308957727,
+    "knownSamplingMatchesNativeAndKernel": true,
+    "allReportedCompleteWithinObservedBoundary": true,
+    "limits": [
+      "OTel usage event lacks response ID; startup association uses source/timing evidence.",
+      "Completed-event reported tokens are not an invoice.",
+      "Normal successful sampling records and exported attempt trees reconcile; no theoretical lossless exporter guarantee."
+    ]
+  },
+  "costInterpretation": "Sampling total input was lower, but sampling uncached input and output were slightly higher. No monetary savings claim; no comparison of all-reported coverage directly against other CLI sampling-only totals.",
+  "comparisonVerdict": "This fixed sample has matched functional/documentation quality and observed accounting coverage; not universal efficiency acceptance. Original runner pending-manual-review flag remains immutable, resolved only in this audited report.",
+  "sourceFreeze": {
+    "files": 24160,
+    "mismatches": []
+  },
+  "cleanup": {
+    "recordedWrapperAndChildPids": 294,
+    "live": [],
+    "collectorsClosed": true,
+    "configUnchanged": true
+  },
+  "hashes": {
+    "plan": "2d92db87c9a29d592562ca8a879241e7ba37b64a9a0c42853bd04cd680bb5677",
+    "admission": "1941a295b4ed829470e2a6207463d078ab38c4fce962c9d7ab02900fac8285b3",
+    "result": "ed52272181309b07521aabca680af6f4ffd3deb14a130c0e640b3a607281a4f1",
+    "accountingAudit": "c4a9b66d694babdb288ff9f49b07bb6d6a8091fcfff8eb1d6b717162b380744f",
+    "independentQualityFairness": "75441fdeac2747d7b18f6facad877d503626a58951a44f3c041c1ffb0992e903"
+  }
+}

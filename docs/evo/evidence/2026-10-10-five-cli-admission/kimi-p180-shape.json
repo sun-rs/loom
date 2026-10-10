@@ -1,0 +1,144 @@
+{
+  "scope": "P180 free-only provider-shape repair",
+  "paidCalls": 0,
+  "run": "free-paid-path-1791604056426-P180",
+  "originalStatus": "stopped",
+  "sourceDesignSha256": "6977d777a17e245916030e6624103e292a97bea2ca82bda01de4cf1ea7ba2a4d",
+  "sourceReviewSha256": "5231a7c5c1a272d77eea5f8f703b5d45d1cbca61b3ff2906ef9d7abe62fc5f6c",
+  "realP179Replay": {
+    "requests": 7,
+    "requestShapePassed": true,
+    "pairedSchemaFairness": null,
+    "reason": "P179 has no Loom business requests; cannot prove paired fairness."
+  },
+  "arms": {
+    "native": {
+      "accounting": {
+        "complete": true,
+        "errors": [],
+        "input": 40,
+        "output": 8,
+        "cachedInput": 0,
+        "reasoning": 0,
+        "httpAttempts": 4,
+        "reportedGenerations": 4,
+        "failedHttpAttempts": 0,
+        "billingCoverage": "not-observed"
+      },
+      "requests": [
+        {
+          "model": "k3-256k",
+          "reasoning": {
+            "type": "enabled",
+            "effort": "low",
+            "keep": "all"
+          },
+          "toolsSha256": "2f801ade948b0c0622fcd53d2ab50d186fdfdd5539126bf0d5338f2ca24f1bd1",
+          "toolCount": 27
+        },
+        {
+          "model": "k3-256k",
+          "reasoning": {
+            "type": "enabled",
+            "effort": "low",
+            "keep": "all"
+          },
+          "toolsSha256": "2f801ade948b0c0622fcd53d2ab50d186fdfdd5539126bf0d5338f2ca24f1bd1",
+          "toolCount": 27
+        },
+        {
+          "model": "k3-256k",
+          "reasoning": {
+            "type": "enabled",
+            "effort": "low",
+            "keep": "all"
+          },
+          "toolsSha256": "07a67bd6273d1e2ddcf5cf2063345f3bfd60ed93731bb270b2628a935fdf3f03",
+          "toolCount": 26
+        },
+        {
+          "model": "k3-256k",
+          "reasoning": {
+            "type": "enabled",
+            "effort": "low",
+            "keep": "all"
+          },
+          "toolsSha256": "2f801ade948b0c0622fcd53d2ab50d186fdfdd5539126bf0d5338f2ca24f1bd1",
+          "toolCount": 27
+        }
+      ]
+    },
+    "loom": {
+      "accounting": {
+        "complete": true,
+        "errors": [],
+        "input": 40,
+        "output": 8,
+        "cachedInput": 0,
+        "reasoning": 0,
+        "httpAttempts": 4,
+        "reportedGenerations": 4,
+        "failedHttpAttempts": 0,
+        "billingCoverage": "not-observed"
+      },
+      "requests": [
+        {
+          "model": "k3-256k",
+          "reasoning": {
+            "type": "enabled",
+            "effort": "low",
+            "keep": "all"
+          },
+          "toolsSha256": "2f801ade948b0c0622fcd53d2ab50d186fdfdd5539126bf0d5338f2ca24f1bd1",
+          "toolCount": 27
+        },
+        {
+          "model": "k3-256k",
+          "reasoning": {
+            "type": "enabled",
+            "effort": "low",
+            "keep": "all"
+          },
+          "toolsSha256": "2f801ade948b0c0622fcd53d2ab50d186fdfdd5539126bf0d5338f2ca24f1bd1",
+          "toolCount": 27
+        },
+        {
+          "model": "k3-256k",
+          "reasoning": {
+            "type": "enabled",
+            "effort": "low",
+            "keep": "all"
+          },
+          "toolsSha256": "2f801ade948b0c0622fcd53d2ab50d186fdfdd5539126bf0d5338f2ca24f1bd1",
+          "toolCount": 27
+        },
+        {
+          "model": "k3-256k",
+          "reasoning": {
+            "type": "enabled",
+            "effort": "low",
+            "keep": "all"
+          },
+          "toolsSha256": "2f801ade948b0c0622fcd53d2ab50d186fdfdd5539126bf0d5338f2ca24f1bd1",
+          "toolCount": 27
+        }
+      ]
+    }
+  },
+  "initialSchemasMatch": true,
+  "initialSchemaMatchesRealP179": true,
+  "dynamicDifference": {
+    "nativeRound2FirstRequest": "26 tools; ReadMediaFile absent, returns next request",
+    "loom": "27 each request",
+    "otherDefinitionsByteEqual": true,
+    "cause": "Observed difference; dynamic registration source exists but exact event cause unproven."
+  },
+  "billingCoverage": "not observed; fake transport only",
+  "quality": "Synthetic runtime prompts are not business acceptance. Frozen oracle failures retained.",
+  "auth": "Entirely synthetic OAuth scoped to loopback, original account denied, no copied original credentials.",
+  "network": "OS loopback restriction on daemon and native wrapper",
+  "finalAccountingComplete": true,
+  "sourceHashesUnchanged": true,
+  "authLinksRemoved": true,
+  "remaining": "Parent decision on accounting versus tool-environment comparability; no hidden rerun to erase difference."
+}

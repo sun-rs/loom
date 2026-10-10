@@ -1,0 +1,21 @@
+{
+  "batch": "P180-verdict-split",
+  "paidCalls": 0,
+  "newCliLaunchesAfterRuling": 0,
+  "implemented": "Separate actual paired configuration/initial schema gate from later tool availability diagnostics and independently complete usage.",
+  "redLogSha256": "e739caf8e8839faa0a93f7bf5ffd419cdd6490650a72e101ffa3b4634b009e27",
+  "greenLogSha256": "238ad4a1a1d59e9983be09b5bf328326c2402b0073a7c18996c4828ea6d3ea97",
+  "allTestsLogSha256": "285e89d1b3307f27692ceec9be6358872112d3ede97038293d60e9280b9f47c2",
+  "replaySha256": "37b64f92dce50e9cf2bc71f4bb0590a8ecde9d6fb91e7c25d15a71fd24b5cff0",
+  "candidatePlanSha256": "6dfc44c0f563cdbdcc5fa2b8bfb2c8f961ad88eaa98d33c04f4cf05c3fafa888",
+  "nextFreeAdmissionSha256": "14fa8f91f809603151f88dc395aa6318c08b1463c88c4217c43cb61a853b3fed",
+  "originalResultSha256": "b16e8df10c06b07f1be93297362a6a2f09d186927fbeecc9a87ad52675225c42",
+  "limits": [
+    "The new configuration prelaunch assertion is unit-tested and wired, but was not exercised by a new CLI run after this ruling. Historical configuration parity is reconstructed from preserved frozen factory bytes, explicitly not a surviving config capture.",
+    "The 26-to-27 tool observation remains a real environment difference; exact event cause is unknown.",
+    "No paid fairness or efficiency verdict."
+  ],
+  "testsPassed": 17,
+  "requestOrderRedSha256": "b520890b57df49178b2a4547a68d825d6d22c089523a75772b2dc25a925b61fc",
+  "requestOrder": "Preserve observer start.time and sort actual request chronology before selecting first schema; PID filename order is not chronology."
+}

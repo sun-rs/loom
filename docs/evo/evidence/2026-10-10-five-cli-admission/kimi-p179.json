@@ -1,0 +1,172 @@
+{
+  "batch": "P179",
+  "status": "stopped-final-audit",
+  "paidLaunches": 1,
+  "reruns": 0,
+  "sourceHead": "ddf76f5bcbc18904b8dfdfefc3f4defae4059c86",
+  "admissionSha256": "35a956384b10861ddea8fd581fd494f3db955e38b7d840001f0efa1714dcc491",
+  "reason": "Free fixture provider configuration did not represent real kimi provider reasoning encoding and native tool additions; strict request-schema gate rejected actual native first turn.",
+  "nativeFirstTurn": {
+    "exit": {
+      "code": 0,
+      "signal": null
+    },
+    "functionalPassed": true,
+    "selfTestsPassed": true,
+    "finishedBeforeRejection": true
+  },
+  "primaryAccounting": {
+    "complete": true,
+    "errors": [],
+    "input": 150553,
+    "output": 1903,
+    "cachedInput": 146176,
+    "reasoning": null,
+    "httpAttempts": 7,
+    "reportedGenerations": 7,
+    "failedHttpAttempts": 0,
+    "billingCoverage": "not-observed"
+  },
+  "responses": [
+    {
+      "responseId": "chatcmpl-e5vfYtccGUhH2lQSVM8UaKJI",
+      "status": 200,
+      "input": 20133,
+      "output": 84,
+      "cachedInput": 18944,
+      "reasoningOutput": 5,
+      "requestModel": "k3-256k",
+      "requestReasoning": {
+        "type": "enabled",
+        "effort": "low",
+        "keep": "all"
+      },
+      "toolCount": 27,
+      "toolsSha256": "2f801ade948b0c0622fcd53d2ab50d186fdfdd5539126bf0d5338f2ca24f1bd1"
+    },
+    {
+      "responseId": "chatcmpl-PEXjROr0bip3Xc0kTjDrvRe7",
+      "status": 200,
+      "input": 20430,
+      "output": 891,
+      "cachedInput": 19968,
+      "reasoningOutput": 43,
+      "requestModel": "k3-256k",
+      "requestReasoning": {
+        "type": "enabled",
+        "effort": "low",
+        "keep": "all"
+      },
+      "toolCount": 27,
+      "toolsSha256": "2f801ade948b0c0622fcd53d2ab50d186fdfdd5539126bf0d5338f2ca24f1bd1"
+    },
+    {
+      "responseId": "chatcmpl-tH7kgWi7qiDn0uipxl4Qju8S",
+      "status": 200,
+      "input": 21389,
+      "output": 265,
+      "cachedInput": 20224,
+      "reasoningOutput": 16,
+      "requestModel": "k3-256k",
+      "requestReasoning": {
+        "type": "enabled",
+        "effort": "low",
+        "keep": "all"
+      },
+      "toolCount": 27,
+      "toolsSha256": "2f801ade948b0c0622fcd53d2ab50d186fdfdd5539126bf0d5338f2ca24f1bd1"
+    },
+    {
+      "responseId": "chatcmpl-8ZYNEp8nJoSX7p900kilbdVR",
+      "status": 200,
+      "input": 21693,
+      "output": 87,
+      "cachedInput": 21248,
+      "reasoningOutput": null,
+      "requestModel": "k3-256k",
+      "requestReasoning": {
+        "type": "enabled",
+        "effort": "low",
+        "keep": "all"
+      },
+      "toolCount": 27,
+      "toolsSha256": "2f801ade948b0c0622fcd53d2ab50d186fdfdd5539126bf0d5338f2ca24f1bd1"
+    },
+    {
+      "responseId": "chatcmpl-XN7miCHbijO8N9MbsYCm0VGn",
+      "status": 200,
+      "input": 22028,
+      "output": 265,
+      "cachedInput": 21504,
+      "reasoningOutput": 39,
+      "requestModel": "k3-256k",
+      "requestReasoning": {
+        "type": "enabled",
+        "effort": "low",
+        "keep": "all"
+      },
+      "toolCount": 27,
+      "toolsSha256": "2f801ade948b0c0622fcd53d2ab50d186fdfdd5539126bf0d5338f2ca24f1bd1"
+    },
+    {
+      "responseId": "chatcmpl-aBytTKPD9eh8eMYvu5ofj2PW",
+      "status": 200,
+      "input": 22332,
+      "output": 87,
+      "cachedInput": 22016,
+      "reasoningOutput": null,
+      "requestModel": "k3-256k",
+      "requestReasoning": {
+        "type": "enabled",
+        "effort": "low",
+        "keep": "all"
+      },
+      "toolCount": 27,
+      "toolsSha256": "2f801ade948b0c0622fcd53d2ab50d186fdfdd5539126bf0d5338f2ca24f1bd1"
+    },
+    {
+      "responseId": "chatcmpl-O9rYXSoa40NTN6dxNcD6WiX4",
+      "status": 200,
+      "input": 22548,
+      "output": 224,
+      "cachedInput": 22272,
+      "reasoningOutput": null,
+      "requestModel": "k3-256k",
+      "requestReasoning": {
+        "type": "enabled",
+        "effort": "low",
+        "keep": "all"
+      },
+      "toolCount": 27,
+      "toolsSha256": "2f801ade948b0c0622fcd53d2ab50d186fdfdd5539126bf0d5338f2ca24f1bd1"
+    }
+  ],
+  "loomBusinessRuns": 0,
+  "full12Ratio": null,
+  "plannedLastSixRatio": null,
+  "completedPairs": 0,
+  "finalReadme": "Not reached; README completion required in round12, no final documentation verdict.",
+  "limitation": "Independent raw/wire primary coverage is complete for observed native turn; original benchmark result remains failed. Missing reasoning detail remains unknown, not zero; tokens are not invoice.",
+  "sourcePostcheck": {
+    "checked": 4977,
+    "changed": []
+  },
+  "cleanup": {
+    "daemon": [
+      {
+        "pid": 43966,
+        "startedAt": "2026-10-10T03:41:43.399Z",
+        "finishedAt": "2026-10-10T03:42:49.733Z",
+        "exit": {
+          "code": 0,
+          "signal": null
+        }
+      }
+    ],
+    "observedPidsChecked": 9,
+    "observedPidsStillLive": [],
+    "authLinksRemoved": true,
+    "accountLockRemoved": true
+  },
+  "frozenResultSha256": "474c42098eb65ab3d36e797fd26fe1819edf4025278cd25de2a641485524de37"
+}
