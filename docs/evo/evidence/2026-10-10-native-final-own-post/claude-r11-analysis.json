@@ -1,0 +1,43 @@
+{
+  "batch": "P170",
+  "round": 11,
+  "reviewer": "independent subagent claude_native_integration_tests",
+  "native": {
+    "requests": 11,
+    "tools": 10,
+    "toolKinds": {
+      "Edit": 5,
+      "Bash": 5
+    },
+    "input": 563863,
+    "output": 5639,
+    "firstRequestInput": 47405,
+    "testExecutions": 3,
+    "observedPath": [
+      "Add regression tests; 71 tests yielded2errors: missing Decimal import and numeric string cap",
+      "Fix import and numeric validation; next tests yielded3failures/1error: allowed-1 and retained string cap",
+      "Fix _amount/cap_strings and call sites;71tests passed"
+    ]
+  },
+  "loom": {
+    "requests": 3,
+    "tools": 2,
+    "toolKinds": {
+      "Write": 1,
+      "Bash": 1
+    },
+    "input": 168119,
+    "output": 2962,
+    "firstRequestInput": 54218,
+    "testExecutions": 1,
+    "observedPath": ["Write regression file;74tests passed first run"]
+  },
+  "workerCommunicationToolCalls": 0,
+  "qualityBothPassed": true,
+  "method": "Raw SSE totals and HTTP200/message_stop/unique response IDs; tools filtered to exact round response IDs, not cumulative session row.toolCalls",
+  "limits": [
+    "All actual usage retained",
+    "Reverse-direction example to R6; not a claim of8communication requests saved by Loom",
+    "Cannot causally isolate standing instructions from model and prior artifact trajectory"
+  ]
+}

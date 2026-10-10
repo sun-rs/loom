@@ -1,0 +1,242 @@
+{
+  "batch": "P170",
+  "kind": "independent-final-audit",
+  "status": "completed-accounted-with-documentation-defect",
+  "paidCallsByReviewer": 0,
+  "scope": "One approved sonnet/low matched persistent-mode12pair trajectory; no default interactive-mode or multi-CLI conclusion.",
+  "sourceAdmission": {
+    "commit": "d90e0d5cd989196406b36aeef3b5414411244887",
+    "filesVerified": 3723,
+    "mismatches": [],
+    "freeToPaidDelta": [
+      "Daemon test upgrade receipt expectation 83 to 84",
+      "Host explicit-final test assert.ok row narrowing; production and shared selector unchanged"
+    ]
+  },
+  "windows": {
+    "full12": {
+      "complete": true,
+      "native": {
+        "input": 3024437,
+        "cachedInput": 2953472,
+        "cacheCreationInput": 0,
+        "baseInput": 70965,
+        "output": 35290,
+        "generations": 87,
+        "toolCalls": 77,
+        "protocolRelatedToolCalls": 0,
+        "meanInputPerGeneration": 34763.64367816092,
+        "nonCacheReadInput": 70965
+      },
+      "loom": {
+        "input": 2809108,
+        "cachedInput": 2745088,
+        "cacheCreationInput": 0,
+        "baseInput": 64020,
+        "output": 33345,
+        "generations": 76,
+        "toolCalls": 64,
+        "protocolRelatedToolCalls": 0,
+        "meanInputPerGeneration": 36961.94736842105,
+        "nonCacheReadInput": 64020
+      },
+      "ratios": {
+        "input": 0.9288036087377585,
+        "output": 0.9448852366109379,
+        "generations": 0.8735632183908046
+      },
+      "meanInputFactor": 1.0632357100024339
+    },
+    "plannedLastSix": {
+      "complete": true,
+      "native": {
+        "input": 2219809,
+        "cachedInput": 2185472,
+        "cacheCreationInput": 0,
+        "baseInput": 34337,
+        "output": 19977,
+        "generations": 49,
+        "toolCalls": 44,
+        "protocolRelatedToolCalls": 0,
+        "meanInputPerGeneration": 45302.22448979592,
+        "nonCacheReadInput": 34337
+      },
+      "loom": {
+        "input": 1700100,
+        "cachedInput": 1671680,
+        "cacheCreationInput": 0,
+        "baseInput": 28420,
+        "output": 16484,
+        "generations": 34,
+        "toolCalls": 28,
+        "protocolRelatedToolCalls": 0,
+        "meanInputPerGeneration": 50002.94117647059,
+        "nonCacheReadInput": 28420
+      },
+      "ratios": {
+        "input": 0.7658767038064986,
+        "output": 0.8251489212594484,
+        "generations": 0.6938775510204082
+      },
+      "meanInputFactor": 1.103763484897601
+    }
+  },
+  "allConsumedTotals": {
+    "input": 5833545,
+    "cachedInput": 5698560,
+    "cacheCreationInput": 0,
+    "baseInput": 134985,
+    "output": 68635,
+    "generations": 163
+  },
+  "accounting": {
+    "uniqueProviderResponseIds": 163,
+    "rawTranscriptResponseIdUsageAllMatched": true,
+    "kernelDbRowsIndependentlyVerified": 76,
+    "optionalCacheFieldsExplicitAndValid": true,
+    "noRequestGapsOrDuplicateIds": true,
+    "tokenCountsNotInvoices": true
+  },
+  "sessions": {
+    "native": 1,
+    "loom": 1
+  },
+  "quality": {
+    "immutableSnapshotsVerified": 24,
+    "functionalAndSelfTestPass": 24,
+    "equalQualityAllDeliverablesClaim": false,
+    "readmeReview": {
+      "native": "Reviewed required API/rounding/validation/CLI/test sections; shown grouped arithmetic/count correct. File example lacks accompanying request.json body, so standalone reproducibility limited.",
+      "loom": "Required sections present, but file example has two active rows and reports count3; correct count2. Shown money arithmetic11.00-0.50+1.05=11.55 is correct.",
+      "defects": [
+        {
+          "arm": "loom",
+          "round": 12,
+          "file": "README.md",
+          "kind": "incorrect example row count",
+          "observed": 3,
+          "expected": 2,
+          "functionalImplementationUnaffectedByThisFinding": true
+        }
+      ],
+      "files": {
+        "native": {
+          "sha256": "d34fdc467c8ce1fb993d6ffe47cbdb0be12fd2a66a318b4affa16cabb5fb3751"
+        },
+        "loom": {
+          "sha256": "8e59ddfa8402ad22eea89dbef7e51bbd9ead8a5d88d2cf9eb9f4689338730bd7"
+        }
+      }
+    }
+  },
+  "kernelCompletion": {
+    "activationStates": {
+      "completed": 12
+    },
+    "finalOutputMarkers": 12
+  },
+  "memory": {
+    "native": {
+      "actualLaunches": 2,
+      "allLaunchesMemoryOff": true
+    },
+    "loom": {
+      "actualLaunches": 4,
+      "allLaunchesMemoryOff": true
+    }
+  },
+  "cleanup": {
+    "knownOwnedPids": 15,
+    "livePidsAtAudit": [],
+    "wrapperReceipts": {
+      "native": {
+        "launches": 2,
+        "exits": 2,
+        "missingExitPrefixes": [],
+        "unexpectedExitPrefixes": [],
+        "exitCodes": [
+          {
+            "code": 0,
+            "signal": null
+          },
+          {
+            "code": 0,
+            "signal": null
+          }
+        ]
+      },
+      "loom": {
+        "launches": 4,
+        "exits": 4,
+        "missingExitPrefixes": [],
+        "unexpectedExitPrefixes": [],
+        "exitCodes": [
+          {
+            "code": 0,
+            "signal": null
+          },
+          {
+            "code": 143,
+            "signal": null
+          },
+          {
+            "code": 0,
+            "signal": null
+          },
+          {
+            "code": 0,
+            "signal": null
+          }
+        ]
+      }
+    },
+    "allRecordedConfigPathsRemoved": true,
+    "daemonReceipts": [
+      {
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "finishedAt": "2026-10-10T02:02:28.662Z"
+      }
+    ],
+    "nativeProcessExit": {
+      "code": 0,
+      "signal": null
+    },
+    "cleanupErrors": {},
+    "limitations": [
+      "PID reuse possible; any live PID needs command/start-time verification before interpretation",
+      "Wrapper exit receipt absence is retained even when PID has exited"
+    ]
+  },
+  "costInterpretation": {
+    "allConsumptionRetained": true,
+    "whole": "Fewer Loom generations76vs87 outweigh its larger mean input per generation. No communication tool calls observed.",
+    "withinRun": "R6 Loom2.39023xinput from19vs9requests with edit failure and repeated test repair; later native R11 takes a longer business trajectory. Preserve both, never subtract business work or infer protocol causality from one sample.",
+    "qualityLimit": "Ratios describe consumed tokens for this trajectory; README defect prevents unqualified equal-quality success across every requested deliverable."
+  },
+  "evidenceHashes": {
+    "rawAudit": "6e5c56c741ad09b670b8514090886c13316790e5d2094ab9e96c354df6515a79",
+    "result": "cfb8e17f16f42c51380a2f9e6344ed5e80663e2b65247b3c54878cf21a25a045",
+    "admission": "4c1131219860f14f7a6e2fffca950611061fa533daad907e412ef3a5b4de379b",
+    "plan": "f430add6a7062163b8a45a8fa25a2409fbb6a5529bfd11a72f5b6da5cabb42c3",
+    "cleanup": "9f0a271ce87a6c39ebbe6ea0942df63baeec42a8687bf5c6918a9cd72296bd7c"
+  },
+  "rawMetadataHashes": {
+    "native": "42bd053f21422501b5ec3f5e1fd69dde394e23c7c1a713d737bbc7ba12c93481",
+    "loom": "e05d142c3e66849b1a5a6de8b6b1af54a9f55cf773941ae8f326d20def8e606a"
+  },
+  "limitations": [
+    "Actual response token accounting is not an invoice or money estimate.",
+    "Other provider work overlapped on the shared host; no quiet-host timing verdict.",
+    "Cleanup proves recorded processes and configs, not every possible unrecorded descendant or port.",
+    "Product wrapper has one exit143 receipt during normal shutdown; daemon and native persistent final exits0; all recorded processes absent.",
+    "Request chars are structural diagnosis only, not estimated token billing."
+  ],
+  "reportSourceHashes": {
+    "audit-paid.py": "e4f545c1f3462d59be8cbe481177a1d9146dc95bab13dc264d2a7218a471d152",
+    "audit-cleanup.py": "7e2a59106eb279c2d51e5a2e5a6c3c0d0ea1bc7aa8d6e53308d8976dc1be6c45",
+    "finalize.py": "52b221ca5de2b01c998e6243fd913fc67304572a3a300b2af9ddbbd34979ee2e"
+  }
+}

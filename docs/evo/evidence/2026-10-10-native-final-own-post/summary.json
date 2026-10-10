@@ -1,5 +1,5 @@
 {
-  "state": "implemented; full automated and real-CLI synthetic preflights passed; paid and deployment pending",
+  "state": "implemented, automated checks passed, deployed; two complete paid accounting samples, Claude documentation quality defect retained",
   "owner": "Kernel",
   "schema": 84,
   "sourceBase": "752746ce335d4e5a9c40ee3219307551bc6d21b6",
@@ -31,11 +31,86 @@
     "format": "npm run format:check passed",
     "diff": "git diff --check passed"
   },
-  "paid": "P170/P171 pending release; P169 failure retained",
-  "deployment": "pending; formal experimental flags will remain disabled",
+  "paid": {
+    "P170": {
+      "cli": "Claude Code2.1.293",
+      "model": "sonnet -> claude-sonnet-5-5",
+      "effort": "low",
+      "pairedTurns": 12,
+      "native": {
+        "input": 3024437,
+        "output": 35290,
+        "requests": 87
+      },
+      "loom": {
+        "input": 2809108,
+        "output": 33345,
+        "requests": 76
+      },
+      "wholeRatio": {
+        "input": 0.9288036087377585,
+        "output": 0.9448852366109379
+      },
+      "fixedLate6Ratio": {
+        "input": 0.7658767038064986,
+        "output": 0.8251489212594484
+      },
+      "functionalSnapshotsPassed": 24,
+      "documentation": "Loom README two active rows incorrectly reports count3; expected2; retained, not repaired by rerun",
+      "equalQualityPerformanceAcceptance": false,
+      "evidence": "claude-p170.json",
+      "fullRunEvidence": "claude-p170-run.json"
+    },
+    "P171": {
+      "cli": "OpenCode1.18.35",
+      "model": "aihubmix/deepseek-v4.1-flash",
+      "effort": "low",
+      "pairedTurns": 12,
+      "native": {
+        "input": 4753679,
+        "output": 62331,
+        "requests": 102
+      },
+      "loom": {
+        "input": 4965736,
+        "output": 65519,
+        "requests": 101
+      },
+      "wholeRatio": {
+        "input": 1.0446090280811977,
+        "output": 1.0511462995941026
+      },
+      "fixedLate6Ratio": {
+        "input": 1.023637346604753,
+        "output": 0.941882306764978
+      },
+      "functionalSnapshotsPassed": 24,
+      "documentation": "Both final READMEs reviewed; no material defect found",
+      "evidence": "opencode-p171.json"
+    },
+    "scope": "One continuous12-turn paired trajectory per CLI/model; all actual consumption retained; reported tokens not invoice price; no five-CLI/multimodel/multiparty general acceptance",
+    "actualTransport": "Both paid runs used native-final-output for all12 product turns, zero Worker communication tools and ordinary posts; own-post coexistence and Worker-final fallback were exercised by real-CLI synthetic preflights, not these paid traces"
+  },
+  "deployment": {
+    "verified": true,
+    "evidence": "deployment.json",
+    "formalExperimentalFlags": "all six disabled"
+  },
   "freeEvidence": [
     "claude-native-free.json",
     "claude-worker-final-free.json",
     "opencode-dual-final-free.json"
+  ],
+  "sourceCommit": "d90e0d5cd989196406b36aeef3b5414411244887",
+  "interpretation": {
+    "measurement": "Whole-response identity and primary/cache evidence reconciled; optional unknown dimensions never erase known primary totals; quality remains separate",
+    "causality": "Claude R6 extra business correction loops raised consumption; R11 native correction loops reversed the direction. Both recorded in total; no causal claim that standing prompt has no influence or that fewer business steps prove platform savings.",
+    "analysis": ["claude-r6-analysis.json", "claude-r11-analysis.json"]
+  },
+  "remaining": [
+    "Claude README sample quality defect",
+    "Codex normal successful current-route request coverage cross-check",
+    "Kimi authentication; Haiku approved binding/effort drift; Pi production adapter and approved gate binding",
+    "Repeated independent trajectories, other models and multiplayer acceptance"
   ]
 }

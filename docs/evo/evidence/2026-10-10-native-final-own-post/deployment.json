@@ -1,0 +1,88 @@
+{
+  "sourceCommit": "d90e0d5cd989196406b36aeef3b5414411244887",
+  "sourceSha256": "f75af45029687ef8b1dbf7b6846cd4946a5e2901161187b7529837877d32515d",
+  "service": "com.loom.evo",
+  "stateHome": "~/.loom/evo/state",
+  "schemaVersion": 84,
+  "backupVerified": {
+    "databases": 2,
+    "files": 302,
+    "path": "~/.loom/evo/backups/pre-restart-native-final-own-post-7c9d69cf-dd24-4cf1-9279-e2979bc6e613"
+  },
+  "gracefulStopAndLaunchdReplacement": true,
+  "businessTablesUnchanged": {
+    "messages": {
+      "rows": 235,
+      "sha256": "c7e1fe0ff2db90f81eb3e4db8695dbe28dfe8783c7aa4b0d361f2cb91817c888"
+    },
+    "tasks": {
+      "rows": 9,
+      "sha256": "a04b56b278ac8b942bf35c96db144a3ba261e1d1d8838b7483ef36d65ba2fd52"
+    },
+    "role_templates": {
+      "rows": 39,
+      "sha256": "c11295d87be6062fde6ef8ff20b4495a6b984a7ab75e72e00c512ef11ab42d1a"
+    },
+    "role_revisions": {
+      "rows": 39,
+      "sha256": "79f791e267b7c7544b5c6b881ac486bd519145424c8dc7c805750f6ed1c61a2d"
+    },
+    "role_instances": {
+      "rows": 65,
+      "sha256": "f93603dff830fa409d737a13de1433eb1d0943af07b509d3ed573637d97cd3b3"
+    },
+    "memory_entries": {
+      "rows": 4,
+      "sha256": "d0d2bb98894716fcfbda8ea5f4b3112a99595d70192c7df088ac553b00cef08b"
+    },
+    "memory_revisions": {
+      "rows": 4,
+      "sha256": "21b7e112c7deda7a547b68d235b562c0d88bb8103ef385d553673e0f044d5893"
+    },
+    "role_instance_sessions": {
+      "rows": 63,
+      "sha256": "a6323123619a9eb57b6876b8849b859c2cfd79b56f50667af3a89d16cf93ba33"
+    },
+    "room_events": {
+      "rows": 2059,
+      "sha256": "3a9e068af9fd153a004722bc9c3b02b9af8a8c59b464cf9654ede9a0528095e0"
+    },
+    "agent_definitions": {
+      "rows": 69,
+      "sha256": "044111c4fc6d2be52ea7f677d06eaf40917bb7e2c87f40b7573d8aeb3633281a"
+    },
+    "inbox_items": {
+      "rows": 163,
+      "sha256": "c13bd14439ab1ed317ecc8b405bb7e57024406db140b2386e88d7f808e3f9c79"
+    }
+  },
+  "noProvenanceBackfill": true,
+  "allSixTrialFlagsDisabled": true,
+  "freshBrowser": {
+    "at": "2026-10-10T01:37:25.832Z",
+    "url": "http://127.0.0.1:4176/?room=room_242c2d4a-1443-4555-b0f3-37ca6c0e4bea",
+    "title": "RAH OS",
+    "historyVerified": true,
+    "pageErrors": [],
+    "roles": 39,
+    "roleResponseKeys": ["roles", "instances"],
+    "memoryResponseKeys": ["channelId", "entries", "total", "truncated"],
+    "health": {
+      "buildIdentity": {
+        "schemaVersion": 1,
+        "kind": "development",
+        "version": "0.0.0-dev+local",
+        "builtAt": "2026-10-03T03:43:43.718Z",
+        "buildId": "85a2d52a33dc2848"
+      },
+      "service": "rah-os-local-core",
+      "state": "online"
+    }
+  },
+  "pageScreenshotPrivate": "~/.loom/reviews/2026-10-10-native-final-own-post/page.png",
+  "limits": [
+    "Read-only page/Role/memory-list checks; not every UI interaction or memory body",
+    "Frontend unchanged; existing frontend build identity does not identify this backend commit",
+    "Paid result independent from deployment"
+  ]
+}

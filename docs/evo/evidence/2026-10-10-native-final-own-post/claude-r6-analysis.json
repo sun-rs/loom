@@ -1,0 +1,52 @@
+{
+  "batch": "P170",
+  "round": 6,
+  "reviewer": "independent subagent ordinary_codex_next",
+  "loom": {
+    "requests": 19,
+    "tools": 18,
+    "toolKinds": {
+      "Read": 3,
+      "Write": 1,
+      "Edit": 4,
+      "Bash": 10
+    },
+    "input": 653086,
+    "output": 6960,
+    "cached": 639232,
+    "firstRequestInput": 27814,
+    "testExecutionsOrFilters": 7
+  },
+  "native": {
+    "requests": 9,
+    "tools": 8,
+    "toolKinds": {
+      "Write": 1,
+      "Edit": 5,
+      "Bash": 2
+    },
+    "input": 273231,
+    "output": 4197,
+    "cached": 266752,
+    "firstRequestInput": 27406,
+    "testExecutionsOrFilters": 2
+  },
+  "workerCommunicationToolCalls": 0,
+  "qualityBothPassed": true,
+  "inputRatioDecomposition": "2.39023 = 2.11111 requests x 1.132216 mean request input",
+  "observedLoomPath": [
+    "Edit exact-string match failure, grep/read/Python replacement",
+    "Repeated corrections around prior high-precision tests, numeric limits and assertions",
+    "More tool arguments, outputs and generated history recur in subsequent request context"
+  ],
+  "limits": [
+    "All extra usage remains in total; no randomness discount",
+    "Single trajectory cannot isolate whether standing instructions influenced business path",
+    "No claim all CLI/model overhead has this cause"
+  ],
+  "evidence": [
+    "P170 loom upstream request24-42",
+    "P170 native upstream request30-38",
+    "Both turn-6.transcript.private.jsonl"
+  ]
+}
