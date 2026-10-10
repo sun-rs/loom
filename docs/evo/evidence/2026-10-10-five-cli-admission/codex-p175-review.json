@@ -1,0 +1,64 @@
+{
+  "scope": "Independent read-only audit; no CLI/model requests, reruns or frozen helper modifications",
+  "run": "1791600899399-P175",
+  "failureOwner": "Private benchmark OTel receiver cumulative 64MiB limit; not production model completion or a duplicated native ledger",
+  "evidence": {
+    "loomAcceptedOtelFiles": 133,
+    "loomAcceptedOtelBytes": 66125582,
+    "loomRejectedExports": 11,
+    "nativeSpans": 21346,
+    "loomSpans": 28116,
+    "nativeUniqueSpans": 21346,
+    "loomUniqueSpans": 28116,
+    "spanVolumeInterpretation": "Dominated by receiving/handle_responses event spans and repeated source/thread metadata; file volume is not model input tokens."
+  },
+  "missingSamplingEvidence": {
+    "nativeRows": 31,
+    "uniqueResponseIds": 31,
+    "capturedSamplingUsage": 28,
+    "missingKnownInput": 84885,
+    "missingKnownOutput": 666,
+    "note": "Native response IDs known from persisted usage. OTel lacks response-ID attribute; missing set identified by ordered unique token tuples, not claimed ID-level telemetry correlation.",
+    "nativeResponses": [
+      "resp_009ee68fae247f6f016ac9aa48623487d1ae067605da15db13",
+      "resp_009ee68fae247f6f016ac9aa4fc66887d1a64f55e2b4ae38a2",
+      "resp_009ee68fae247f6f016ac9aa53ebb887d194a52dbd0d3ba057"
+    ]
+  },
+  "knownSamplingTotals": {
+    "native": {
+      "input": 306333,
+      "cachedInput": 246784,
+      "output": 6340,
+      "generations": 23
+    },
+    "loom": {
+      "input": 546443,
+      "cachedInput": 473856,
+      "output": 8578,
+      "generations": 31
+    }
+  },
+  "allCompletedCoverage": "Loom partial 499883 input/7912 output includes other completed startup quantities. Never substitute this for full total or subtract from native sampling ledger to infer missing amount.",
+  "quality": {
+    "capturedSnapshots": 10,
+    "allFrozenOraclePassed": true,
+    "allArtifactHashesIndependentlyVerified": true,
+    "rounds": "Both arms R1-R5 only",
+    "readmes": "All 10 snapshots retain initial exercise README. Do not claim final README feature/example parity; final documentation task was not reached.",
+    "loomR6": "Product completed publication but accounting audit stopped before snapshot capture. No frozen R6 quality verdict; no native R6 pair."
+  },
+  "fairness": {
+    "observedNativeToolCalls": 18,
+    "observedLoomToolCalls": 25,
+    "finding": "Archived native tool arguments confined to cwd discovery, local invoice/tests/README reads and edits, selftests. No observed old/peer session/transcript, oracle or private review reads.",
+    "limit": "Observed tool trace review, not strong isolation from shared CODEX_HOME nor proof of unobserved actions."
+  },
+  "product": {
+    "markerCount": 6,
+    "allTransport": "native-final-output",
+    "ordinaryPostCount": 0,
+    "note": "Runner marker/event selector and recorded receipts verified; not solely stdout text."
+  },
+  "verdict": "Incomplete fixed 12-pair task; no full12/late6 efficiency claim. Report any first5 prefix separately and retain R6 known expense and missing observation."
+}

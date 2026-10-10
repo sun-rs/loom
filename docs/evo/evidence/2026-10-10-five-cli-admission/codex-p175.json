@@ -1,0 +1,87 @@
+{
+  "batch": "P175",
+  "status": "failed-harness-telemetry-capacity",
+  "cause": "Private observer cumulative 64 MiB cap rejected 11 Loom OTLP exports with HTTP 413 during round 6. This is a measurement harness defect, not a demonstrated CLI/product task failure.",
+  "completedPairs": 5,
+  "completedFunctionalSnapshots": 10,
+  "functionalSnapshotsPassed": 10,
+  "loomRound6": {
+    "nativeGenerationCompleted": true,
+    "kernelUsageRecorded": true,
+    "runnerSnapshotCaptured": false,
+    "samplingInput": 135170,
+    "samplingOutput": 2316
+  },
+  "nativeRound6Launched": false,
+  "knownNativeSessionUsage": {
+    "native": {
+      "responses": 23,
+      "input": 306333,
+      "output": 6340,
+      "cachedInput": 246784
+    },
+    "loom": {
+      "responses": 31,
+      "input": 546443,
+      "output": 8578,
+      "cachedInput": 473856
+    }
+  },
+  "capturedNativeOTel": {
+    "native": {
+      "samplingCount": 23,
+      "allCompletedCount": 28,
+      "allReportedInput": 344658,
+      "allReportedOutput": 6340,
+      "coverage": "observed completed prefix"
+    },
+    "loom": {
+      "samplingCount": 28,
+      "allCompletedCount": 33,
+      "allReportedInputKnown": 499883,
+      "allReportedOutputKnown": 7912,
+      "coverage": "partial; 11 rejected exports, must not be treated as complete"
+    }
+  },
+  "quantityUnmatchedNativeResponses": [
+    {
+      "responseId": "resp_009ee68fae247f6f016ac9aa48623487d1ae067605da15db13",
+      "input": 27309,
+      "output": 341
+    },
+    {
+      "responseId": "resp_009ee68fae247f6f016ac9aa4fc66887d1a64f55e2b4ae38a2",
+      "input": 28449,
+      "output": 119
+    },
+    {
+      "responseId": "resp_009ee68fae247f6f016ac9aa53ebb887d194a52dbd0d3ba057",
+      "input": 29127,
+      "output": 206
+    }
+  ],
+  "identityLimit": "OTel usage lacks response IDs. Missing native records identified by unique quantities and ordering, not authoritative cross-source ID join.",
+  "full12Ratio": null,
+  "plannedLate6Ratio": null,
+  "allReportedRatio": null,
+  "noRetry": true,
+  "samplingAndStartupAreDifferentCoverage": "Both retained; captured OTel includes additional startup-like quantities outside native sampling usage. These are not invoices and are not silently dropped.",
+  "fairnessAndReadme": "Full 12 and R12 README not reached. Independent tool-trace audit is separate; shared original CODEX_HOME is not strong history isolation.",
+  "freeze": {
+    "files": 24158,
+    "mismatches": []
+  },
+  "cleanup": {
+    "recordedWrapperAndChildPids": 138,
+    "live": [],
+    "collectorsClosed": true,
+    "configUnchanged": true
+  },
+  "hashes": {
+    "accountingFinal": "33b940aed4bb762e0324659792b058d6f2c3f042700ae64006c39ce817c77649",
+    "result": "5fd749f68281b03dd48d6d4676065239f2038ab335a9e9dc75b9be0413d08400",
+    "admission": "59dba73f91935d58674b041bffadfd29c2a238c2d3d2dc925dfa9aa3723d9f1c",
+    "plan": "0316797be76aea5694a215791eb5e9fd350338571c60702b5a4cee721f612521"
+  },
+  "next": "New P176 collector fix/free only; P175 frozen evidence and failed verdict retained."
+}
