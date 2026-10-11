@@ -10,7 +10,7 @@
       "model": "gpt-6-luna",
       "effort": "low",
       "status": "paid cohort running",
-      "metric": "distinct native OTel completed-event reported tokens; not HTTP census or invoice"
+      "metric": "Frozen all-native-completed-event statistic includes generate=false startup prewarm; separately report sampling-only logical usage and prewarm. Neither HTTP census nor unique billable expense/invoice."
     },
     "claude": {
       "model": "sonnet (install resolves claude-sonnet-5-5)",
@@ -27,12 +27,15 @@
     "kimi": {
       "model": "kimi-code/k3-256k",
       "effort": "low",
-      "status": "not admitted on frozen source; EOF defect discovered before paid"
+      "status": "paid cohort running on repaired source; old release permanently refused",
+      "sourceRevision": "a92d5ec21c02bdde887cd022bcd1f5fc8e9da64a",
+      "limitation": "Native print versus ACP; initial tools match, later native dynamic tool availability can differ. End-to-end comparison, not pure prompt causal isolation."
     },
     "opencode": {
       "model": "aihubmix/deepseek-v4.1-flash",
       "effort": "low",
-      "status": "not admitted on frozen source; auto-compaction final-parent defect discovered before paid"
+      "status": "paid cohort running on repaired source; old release permanently refused",
+      "sourceRevision": "a92d5ec21c02bdde887cd022bcd1f5fc8e9da64a"
     }
   },
   "primaryRatios": null,
@@ -42,7 +45,10 @@
     "Native compaction requests must not be rejected for missing current task/tool list",
     "Claude summary has raw reported expense but may be absent from ordinary CLI generation list",
     "Missing-final child failures need raw-tail recovery, not zero expense",
-    "Native and Loom arms must compare actual configuration/tool schemas across independent processes"
+    "Native and Loom arms must compare actual configuration/tool schemas across independent processes",
+    "Codex startup generate=false completed events report tokens but are connection setup, not sampling; do not label their sum with sampling as unique billable tokens"
   ],
-  "publicCostConclusion": "Pending fixed cohorts; synthetic input/output is not efficiency evidence"
+  "publicCostConclusion": "Pending fixed cohorts; synthetic input/output is not efficiency evidence",
+  "revisionBoundary": "Codex/Claude/Pi retain186f7c3; Kimi/OpenCode original unadmitted slots run repaireda92d5ec. No in-flight source replacement.",
+  "cohortSplit": "Same original four pairs/model/caps; repaired two inherit original absolute deadline and only remaining numerical budget; no extra paid samples or replaced failures."
 }

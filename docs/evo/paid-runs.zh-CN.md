@@ -452,3 +452,7 @@ Pi Σ现行/Σ原生输入0.916212、输出0.991582，Σ候选/Σ现行输入0.9
 Kimi/OpenCode在付费前分别暴露EOF500ms退出窗口、自动压缩后最终父消息变化的产品缺陷，原冻结版本暂缓，未以失败为零或替换成短对话。独立修复后的Kimi2.1.1免费连续12轮同session通过（4轮自然退出超过旧500ms）；OpenCode1.18.35默认压缩加两续轮共3轮/8HTTP、3个可信marker通过。OpenCode首次修复probe私有wrapper漏转发信号导致cleanup失败，原receipt保留，精确清理后另新probe验证，未冒充原尝试通过。修复未混入进行中付费源码。
 
 [固定方法与状态](evidence/2026-10-11-v7-long-task/study.json)、[免费修复凭据及限制](evidence/2026-10-11-v7-long-task/repair.json)。整仓check/typecheck/format/diff通过；修复`a92d5ec`已提交推送、备份重启并完成真实页面验证，见[部署凭据](evidence/2026-10-11-v7-long-task/deployment.json)。付费汇总随后以实际凭据更新，不从本节推导已达成本目标。
+
+修复版后续：Kimi `kimi-code/k3-256k/low`、OpenCode `aihubmix/deepseek-v4.1-flash/low` 已在独立冻结 `a92d5ec` 启动原四组双12槽。旧版两家永久不放行；原剩余数值预算和原绝对截止继承，不增加样本、不替换失败。Kimi最终入口免费双12及消费后崩溃留账、OpenCode普通/默认压缩双12及异常父进程清理均通过独审。两家原始费用、质量与完整性继续分别记录；Kimi print/ACP后续动态工具可用性差异是比较限制。
+
+额外计量辨析：Codex已封账样本中每次原生启动都有 `generate=false` 连接预热completed事件，带输入token但不属于采样推理；其与普通生成相加的冻结统计不能解释为唯一可计费输入或账单。保留原统计，同时分列sampling与startup，不中途换口径。Claude首组Loom后四轮业务功能通过而生成自测因转义警告失败，原费用保留，不能当作同质量验收。五家完整重复结果仍待收齐。
