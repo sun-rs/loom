@@ -56,7 +56,12 @@
     },
     "format": "passed: npm run format:check",
     "diff": "passed: git diff --check",
-    "deployment": "pending; previous verified deployment remains active until safe restart",
+    "deployment": {
+      "verified": true,
+      "codeCommit": "ffecbfe7c8fea836c85685c3222ee752578909f9",
+      "evidence": "deployment.json",
+      "trialFlagsEnabled": false
+    },
     "localLinks": "all local links in changed Markdown resolve",
     "targeted": "31 passed; 19 new Kernel + 2 Host collaboration + 10 existing native-own-progress",
     "firstFullCheck": {
