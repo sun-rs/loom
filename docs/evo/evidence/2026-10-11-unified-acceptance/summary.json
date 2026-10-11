@@ -1,0 +1,552 @@
+{
+  "kind": "loom-unified-acceptance-preflight/v1",
+  "date": "2026-10-11",
+  "status": "P0 operational preparation complete; four CLI schema checks passed, Kimi strict fairness exception retained",
+  "scope": "Installed real CLI processes against localhost synthetic responses; no paid provider inference",
+  "sourceRevision": "f1561877eedab9ce30de9065ed4bc960a76fef0c",
+  "productRevision": "41dafbbec105e99cc2ba1fdc9715cf3f318d4d3a",
+  "privateRoot": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance",
+  "paidReleased": false,
+  "performanceAccepted": false,
+  "productionChanged": false,
+  "common": {
+    "kind": "unified-common-freeze-verification/v1",
+    "manifestSha256": "f2eaa0c8e462867d2fa8df1e73123fa722460ec1d051d4a74f7a4cb477cb2f68",
+    "files": 22835,
+    "realpaths": 43,
+    "passed": true,
+    "mismatches": [],
+    "paidReleased": false
+  },
+  "paidRefusal": {
+    "kind": "unified-paid-refusal/v1",
+    "passed": true,
+    "authorized": false,
+    "refusal": "common release authorized false rejected before admission",
+    "stateCreated": false,
+    "providerSpawnAttempted": false
+  },
+  "changes": [
+    "All five entries reference the same frozen product source, fixture and common dependency closure.",
+    "Kimi isolates the complete ACP driver, CLI and delegated terminal subtree; only the exact parent process ledger is additionally allowed.",
+    "OpenCode preloads the same existing rg binary in both isolated caches; actual builtin grep must work.",
+    "Timestamp-only free-run directory collisions fixed with mkdtemp; obsolete deadline expectations corrected.",
+    "P0 parent/direct child paid entries reject old release reuse; free synthetic releases are not paid authorization."
+  ],
+  "measurementRules": [
+    "Native automatic memory disabled on every launch; normal same-session history retained.",
+    "Synthetic token counts validate collection only and are not model costs.",
+    "Consumed failures preserve known spend, stop the binding and never substitute a successful sample.",
+    "Accounting completeness and independent process cleanup are separate verdicts.",
+    "Codex generate=false startup events remain separate from sampling and cannot be equated with billable HTTP."
+  ],
+  "limitations": [
+    "No new real-model quality or efficiency result; old paid results and fairness verdicts unchanged.",
+    "One synthetic pair per CLI tests entry wiring, not stochastic model equivalence.",
+    "One existing model binding per CLI and one v7 workload remain draft configuration, not a multi-model/multi-task acceptance design.",
+    "Current arms exercise opt-in native-final; seven production trial flags remain off.",
+    "This round does not claim fresh compaction coverage when no compaction occurred.",
+    "Kimi print versus ACP dynamic tools remain an end-to-end mode comparison boundary.",
+    "README semantic quality still requires review beyond the existing automated oracle.",
+    "Kimi native resumed first-request schema has 26 tools versus current ACP 27; exact equality is disproven, not assumed from successful replies."
+  ],
+  "providers": {
+    "claude": {
+      "readinessPath": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/claude/final-review/readiness.json",
+      "readinessSha256": "640bb90d8aa66b38ae89d32e34e20fdf3d6a578e1c46fe036b88947154af7e4d",
+      "evidence": {
+        "status": "ready-for-independent-review",
+        "codeFrozen": true,
+        "paidRelease": false,
+        "entry": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/claude/free-preflight.mjs",
+        "normalArgs": [],
+        "faultArgs": ["--fault"],
+        "cwd": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/claude",
+        "sourceRevision": "f1561877eedab9ce30de9065ed4bc960a76fef0c",
+        "commonManifest": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/paid-admission/common-manifest.json",
+        "commonSha256": "f2eaa0c8e462867d2fa8df1e73123fa722460ec1d051d4a74f7a4cb477cb2f68",
+        "bindingManifest": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/free-runs/claude-1791713534797-BnVMfg/binding-manifest.json",
+        "bindingSha256": "4cf81e64f719450564cea525651eb47f90ae069ac9e2b19ca266cb2a52c12c4b",
+        "fileCount": 50,
+        "realpathCount": 2,
+        "closureMatchesNow": true,
+        "normal": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/free-runs/claude-1791713534797-BnVMfg",
+        "fault": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/free-runs/claude-1791713534801-kbMiCn",
+        "paidEntryRejectionTests": 7,
+        "offlineTests": 40,
+        "proof": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/claude/final-review/free-proof.json"
+      }
+    },
+    "codex": {
+      "readinessPath": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/codex/final-review/readiness.json",
+      "readinessSha256": "776c1bb7f552619f5fc58439b4b8304eac4c334a41acebca2a1f7575b5087d0a",
+      "evidence": {
+        "status": "ready-for-independent-review",
+        "codeFrozen": true,
+        "paidRelease": false,
+        "entry": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/codex/preflight.mjs",
+        "normalArgs": ["--fake"],
+        "faultArgs": ["--fake", "--fault"],
+        "cwd": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/codex",
+        "sourceRevision": "f1561877eedab9ce30de9065ed4bc960a76fef0c",
+        "commonManifest": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/paid-admission/common-manifest.json",
+        "commonSha256": "f2eaa0c8e462867d2fa8df1e73123fa722460ec1d051d4a74f7a4cb477cb2f68",
+        "bindingManifest": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/free-runs/codex-1791713534747/binding-manifest.json",
+        "bindingSha256": "6fcf77529aba3f80c856b93b8b6df89c30db37a4ad61cb071ec4f8da72ec75f5",
+        "fileCount": 36,
+        "realpathCount": 2,
+        "closureMatchesNow": true,
+        "normal": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/free-runs/codex-1791713534747",
+        "fault": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/free-runs/codex-1791713534747-fault",
+        "paidEntryRejectionTests": 7,
+        "offlineTests": 46,
+        "proof": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/codex/final-review/free-proof.json"
+      }
+    },
+    "pi": {
+      "readinessPath": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/pi-review/readiness.json",
+      "readinessSha256": "c26efd718d07f5e10cb6a213fb459a784b5f6fa26d17abfad55d5fa219949790",
+      "evidence": {
+        "kind": "pi-unified-p0-readiness/v1",
+        "scope": "Local actual Pi CLI plus synthetic loopback provider, no real model/provider calls",
+        "paidReady": false,
+        "p0Ready": true,
+        "futureApprovedBinding": {
+          "model": "aihubmix/deepseek-v4.1-flash",
+          "effort": "low"
+        },
+        "syntheticBinding": {
+          "provider": "fake-local",
+          "model": "fake-final",
+          "effort": "low",
+          "notSubstitutionForPaidEvidence": true
+        },
+        "sourceRevision": "f1561877eedab9ce30de9065ed4bc960a76fef0c",
+        "productRevision": "41dafbb",
+        "normal": {
+          "root": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/pi/free-preflight-1791713484233",
+          "parent": "pi/run-pi.mjs --fake --first-block",
+          "roundsPerArm": 12,
+          "nativeRequests": 36,
+          "currentRequests": 36,
+          "inputPerArm": 4266,
+          "outputPerArm": 360,
+          "sameModelEffortToolsAll72": true,
+          "memoryOffActualLaunches": 24,
+          "singleNativeSessionPerArm": true,
+          "currentFinalAndAck": 12,
+          "cleanupPassed": true,
+          "sourcePostcheck": true
+        },
+        "failure": {
+          "root": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/pi/free-preflight-1791713564010-fault",
+          "kind": "Consumed responses but missing passive capture",
+          "status": "failed sealed binding stopped current not started",
+          "knownInput": 306,
+          "knownOutput": 30,
+          "knownRequests": 3,
+          "primaryComplete": false,
+          "sourcePostcheck": true
+        },
+        "unitTests": 18,
+        "compaction": "0 entries this free pair; unit and byte-identical 186f actual prior evidence bridged in compaction-version-bridge.json; no new compaction probe",
+        "methodReview": "pi-review/method-review.json",
+        "independentPairReview": "pi-review/pair-independent.json",
+        "limitations": [
+          "No model quality or paid efficiency verdict.",
+          "One fake pair proves entry wiring; future fixed four-pair order covered deterministic tests.",
+          "No new paid release or actual provider call."
+        ],
+        "p0PaidEntry": "openPilot rejects all paid before any manifest read; shared by parent/direct child, old releases unusable",
+        "supersededProcessEvidence": [
+          "pi/free-preflight-1791713127503",
+          "pi/free-preflight-1791713249868-fault"
+        ]
+      }
+    },
+    "kimi": {
+      "readinessPath": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/kimi-review/readiness.json",
+      "readinessSha256": "ca34ef0f49ecba71703b5c66c04a7af6c820140d9ada5aa2a5e10b7983de6d53",
+      "evidence": {
+        "kind": "unified-p0-kimi-readiness/v1",
+        "paidReady": false,
+        "paidEntry": "pilot-context requires fake plan plus fake argv; rejects paid even with legacy release",
+        "sourceRevision": "f1561877eedab9ce30de9065ed4bc960a76fef0c",
+        "commonManifestSha256": "f2eaa0c8e462867d2fa8df1e73123fa722460ec1d051d4a74f7a4cb477cb2f68",
+        "cliVersion": "2.1.1",
+        "model": "kimi-code/k3-256k",
+        "effort": "low",
+        "entrypoint": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/kimi/free-preflight.mjs",
+        "normal": [
+          {
+            "arm": "native",
+            "result": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/free-runs/kimi-1791713671316/runs/1-native/result.private.json",
+            "sha256": "d4fed22cc14331ae2e367b4ea54f5b77c45901ec18c124f06c38eb0ded466fb9",
+            "status": "completed",
+            "rounds": 12,
+            "usage": {
+              "input": 240,
+              "output": 48,
+              "httpAttempts": 24
+            },
+            "accountingComplete": true,
+            "cleanup": true,
+            "sourceHashesUnchanged": true
+          },
+          {
+            "arm": "current",
+            "result": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/free-runs/kimi-1791713671316/runs/1-current/result.private.json",
+            "sha256": "e323faad153ba301cf99f50d5574ec8d06419f819bdbd18efd46614352328578",
+            "status": "completed",
+            "rounds": 12,
+            "usage": {
+              "input": 240,
+              "output": 48,
+              "httpAttempts": 24
+            },
+            "accountingComplete": true,
+            "cleanup": true,
+            "sourceHashesUnchanged": true
+          }
+        ],
+        "fault": {
+          "receipt": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/free-runs/kimi-1791713805705-fault/runs/1-native-parent/receipt.json",
+          "sha256": "bc0db79add838e2c7167984a84ccc10c5b830a7ab9d08db3626bdbbea9c5af45",
+          "status": "failed",
+          "cleanup": {
+            "unregisteredMembers": [],
+            "verified": true,
+            "unexpectedRemainder": false,
+            "signals": [],
+            "identityMismatches": [],
+            "remaining": [],
+            "errors": [],
+            "recorded": 9
+          },
+          "failureTail": {
+            "input": 40,
+            "output": 8,
+            "httpAttempts": 4,
+            "primaryComplete": false,
+            "errors": [],
+            "coverage": "known lower bound only; missing dimensions/requests remain unknown"
+          },
+          "failureSeal": {
+            "bindingId": "kimi",
+            "slotId": "1/native",
+            "status": "failed",
+            "usage": {
+              "input": 40,
+              "output": 8,
+              "httpAttempts": 4
+            },
+            "errors": [
+              "primaryComplete",
+              "httpTerminal",
+              "captureComplete",
+              "sourceMatches",
+              "configMatches",
+              "sessionMatches",
+              "memoryDisabled",
+              "ownedCleanup",
+              "Execution incomplete"
+            ],
+            "bindingStatus": "stopped"
+          }
+        },
+        "closure": {
+          "manifest": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/free-runs/kimi-1791713671316/synthetic-binding-manifest.json",
+          "sha256": "dc4abce9a84ee02e5f93e3474bea4523f798d6b21fd8ae324881d2ea0023889a",
+          "files": 1276,
+          "realpaths": 3,
+          "allHashesMatch": true,
+          "allRealpathsMatch": true
+        },
+        "limitations": [
+          "Installed CLI with localhost synthetic responses; no paid-provider/model-quality/cost-ratio acceptance.",
+          "Native automatic memory disabled with audited CLI isolation; normal continuous conversation retained.",
+          "Trusted test daemon outside Seatbelt; full ACP driver and terminal descendants inherit exact narrow profile. Product security unchanged.",
+          "Previous failed attempts retained, including native consumed24 requests before current zero-provider ledger permission failure."
+        ],
+        "preservedAttempts": [
+          "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/free-runs/kimi-1791713252650",
+          "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/free-runs/kimi-1791713367711"
+        ],
+        "permissionTest": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/kimi/ledger-policy-green.log"
+      }
+    },
+    "opencode": {
+      "readinessPath": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/opencode-review/readiness.json",
+      "readinessSha256": "9b48123a9ef617599466512158ac721677d4f05c00e62698f17c5250081a0060",
+      "evidence": {
+        "kind": "unified-p0-opencode-readiness/v1",
+        "paidReady": false,
+        "entrypoints": {
+          "preparation": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/opencode/prepare-free.mjs",
+          "normal": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/opencode/run-batch.mjs --fake",
+          "fault": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/opencode/run-batch.mjs --fake --fail-accounting"
+        },
+        "paidEntry": "parent/paid-run executionPolicy and direct child admission require fake; legacy authorized release cannot bypass",
+        "cliVersion": "1.18.35",
+        "model": "aihubmix/deepseek-v4.1-flash",
+        "effort": "low",
+        "sourceRevision": "f1561877eedab9ce30de9065ed4bc960a76fef0c",
+        "commonManifestSha256": "f2eaa0c8e462867d2fa8df1e73123fa722460ec1d051d4a74f7a4cb477cb2f68",
+        "normal": [
+          {
+            "arm": "native",
+            "result": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/opencode/free-preflight-1791713806929/runs/1-native/result.private.json",
+            "sha256": "63cc9b27cf7d56864e2acd94bae998e8175c0fc009403845a38cb8553fae7c6d",
+            "status": "completed",
+            "rounds": 12,
+            "usage": {
+              "input": 2825,
+              "output": 575,
+              "requests": 25,
+              "primaryComplete": true,
+              "detailsComplete": false
+            },
+            "receipt": {
+              "input": 2825,
+              "output": 575,
+              "httpAttempts": 25,
+              "primaryComplete": true,
+              "status": "completed",
+              "completedRounds": 12,
+              "qualityPassed": false,
+              "httpTerminal": true,
+              "captureComplete": true,
+              "sourceMatches": true,
+              "configMatches": true,
+              "sessionMatches": true,
+              "memoryDisabled": true,
+              "ownedCleanup": true
+            },
+            "sessionIds": ["ses_ed588ba9dfferjaqJoAD40VOMo"],
+            "builtinGrepRequested": 1,
+            "builtinGrepReturned": 1,
+            "ripgrep": {
+              "path": "/private/tmp/loom-oc-production-D6CCgS/native/cache/opencode/bin/rg",
+              "source": "/Users/sun/.codex/packages/app-server-daemon/releases/0.162.1-aarch64-apple-darwin/codex-path/rg",
+              "realpath": "/Users/sun/.codex/packages/app-server-daemon/releases/0.162.1-aarch64-apple-darwin/codex-path/rg",
+              "sha256": "cdd3c7bcc328730ac6bfbc04d19c0cfa1d23c1a3a838a8dc45ea7d84fda11b15",
+              "origin": "existing local binary; isolated copy; no installation"
+            },
+            "parentReceipt": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/opencode/free-preflight-1791713806929/runs/1-native/parent-receipt.json"
+          },
+          {
+            "arm": "current",
+            "result": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/opencode/free-preflight-1791713806929/runs/1-current/result.private.json",
+            "sha256": "118d23edaac4ae94f6d220c25d3ba4c1fbf244f5092716e59d40641375274745",
+            "status": "completed",
+            "rounds": 12,
+            "usage": {
+              "input": 2825,
+              "output": 575,
+              "requests": 25,
+              "primaryComplete": true,
+              "detailsComplete": false
+            },
+            "receipt": {
+              "input": 2825,
+              "output": 575,
+              "httpAttempts": 25,
+              "primaryComplete": true,
+              "status": "completed",
+              "completedRounds": 12,
+              "qualityPassed": false,
+              "httpTerminal": true,
+              "captureComplete": true,
+              "sourceMatches": true,
+              "configMatches": true,
+              "sessionMatches": true,
+              "memoryDisabled": true,
+              "ownedCleanup": true
+            },
+            "sessionIds": ["ses_ed587e2deffe0eTUZ61V243CgS"],
+            "builtinGrepRequested": 1,
+            "builtinGrepReturned": 1,
+            "ripgrep": {
+              "path": "/private/tmp/loom-oc-production-ebUQVk/loom/cache/opencode/bin/rg",
+              "source": "/Users/sun/.codex/packages/app-server-daemon/releases/0.162.1-aarch64-apple-darwin/codex-path/rg",
+              "realpath": "/Users/sun/.codex/packages/app-server-daemon/releases/0.162.1-aarch64-apple-darwin/codex-path/rg",
+              "sha256": "cdd3c7bcc328730ac6bfbc04d19c0cfa1d23c1a3a838a8dc45ea7d84fda11b15",
+              "origin": "existing local binary; isolated copy; no installation"
+            },
+            "parentReceipt": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/opencode/free-preflight-1791713806929/runs/1-current/parent-receipt.json"
+          }
+        ],
+        "fault": {
+          "receipt": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/opencode/free-preflight-1791713940316/runs/1-native/parent-receipt.json",
+          "sha256": "59008d632b94d3dade2c9651ded53008f8d44062767ffdcf6fbcbefd85f7f3b2",
+          "sealed": {
+            "bindingId": "opencode",
+            "slotId": "1/native",
+            "status": "failed",
+            "usage": {
+              "input": 306,
+              "output": 36,
+              "httpAttempts": 3
+            },
+            "errors": [
+              "primaryComplete",
+              "httpTerminal",
+              "captureComplete",
+              "sourceMatches",
+              "configMatches",
+              "sessionMatches",
+              "memoryDisabled",
+              "Execution incomplete"
+            ],
+            "bindingStatus": "stopped"
+          },
+          "exit": {
+            "code": 1,
+            "signal": null,
+            "pid": 37972,
+            "reason": null,
+            "cleanup": {
+              "unregisteredMembers": [],
+              "verified": true,
+              "unexpectedRemainder": false,
+              "signals": [],
+              "identityMismatches": [],
+              "remaining": [],
+              "errors": [],
+              "recorded": 8
+            },
+            "diagnostics": []
+          },
+          "childReceipt": {
+            "input": 306,
+            "output": 36,
+            "httpAttempts": 3,
+            "primaryComplete": true,
+            "status": "failed",
+            "completedRounds": 0,
+            "qualityPassed": false,
+            "httpTerminal": true,
+            "captureComplete": true,
+            "sourceMatches": true,
+            "configMatches": true,
+            "sessionMatches": false,
+            "memoryDisabled": true,
+            "ownedCleanup": true
+          },
+          "currentNotStarted": true
+        },
+        "closure": {
+          "manifest": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/opencode/free-preflight-1791713806929/binding-manifest.json",
+          "sha256": "a7b705678e0dafbd6d9c1cd37673576c5f78a067b78fab0c3b5687924c70322b",
+          "files": 61,
+          "realpaths": 2,
+          "allHashesMatch": true,
+          "allRealpathsMatch": true
+        },
+        "tests": [
+          "no-paid-red.log",
+          "no-paid-green.log",
+          "prepare-rg-red.log",
+          "prepare-rg-green.log",
+          "fake-grep-red.log",
+          "preparation-green.log",
+          "cli-closure-red.log",
+          "cli-closure-green.log"
+        ],
+        "limitations": [
+          "Installed CLI with synthetic localhost responses only; no paid-provider/model-quality/cost acceptance.",
+          "Fake workload intentionally fails quality oracle; free tool/transport checks do not replace paid quality.",
+          "Each arm has one extra synthetic grep request proving built-in tool capability; not a cost ratio.",
+          "Automatic compaction configuration retained but this normal short synthetic payload does not trigger compaction.",
+          "Optional cache/reasoning completeness remains unknown; primary input/output/request census complete.",
+          "Earlier preliminary free attempts preserved, including pre-launch deadline failure; only final closure listed is acceptance evidence."
+        ]
+      }
+    }
+  },
+  "finalClosureChecks": [
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/paid-admission/common-manifest.json",
+      "sha256": "f2eaa0c8e462867d2fa8df1e73123fa722460ec1d051d4a74f7a4cb477cb2f68",
+      "files": 22835,
+      "realpaths": 43,
+      "passed": true,
+      "mismatches": []
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/free-runs/claude-1791713534797-BnVMfg/binding-manifest.json",
+      "sha256": "4cf81e64f719450564cea525651eb47f90ae069ac9e2b19ca266cb2a52c12c4b",
+      "files": 50,
+      "realpaths": 2,
+      "passed": true,
+      "mismatches": []
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/free-runs/codex-1791713534747/binding-manifest.json",
+      "sha256": "6fcf77529aba3f80c856b93b8b6df89c30db37a4ad61cb071ec4f8da72ec75f5",
+      "files": 36,
+      "realpaths": 2,
+      "passed": true,
+      "mismatches": []
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/pi/free-preflight-1791713484233/synthetic-binding-manifest.json",
+      "sha256": "d757b0ff0e9c7de36653f3c89b3852ef789544108b4e5fd5e0640f263c933ab2",
+      "files": 15087,
+      "realpaths": 10,
+      "passed": true,
+      "mismatches": []
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/free-runs/kimi-1791713671316/synthetic-binding-manifest.json",
+      "sha256": "dc4abce9a84ee02e5f93e3474bea4523f798d6b21fd8ae324881d2ea0023889a",
+      "files": 1276,
+      "realpaths": 3,
+      "passed": true,
+      "mismatches": []
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/opencode/free-preflight-1791713806929/binding-manifest.json",
+      "sha256": "a7b705678e0dafbd6d9c1cd37673576c5f78a067b78fab0c3b5687924c70322b",
+      "files": 61,
+      "realpaths": 2,
+      "passed": true,
+      "mismatches": []
+    }
+  ],
+  "preflightReady": false,
+  "operationalPreflightPassed": true,
+  "fairnessException": {
+    "cli": "kimi",
+    "finding": "Native resumed turns 2-12 first request exposes 26 tools without ReadMediaFile; native subsequent requests and all current ACP requests expose 27 tools.",
+    "verdict": "Cross-arm tool schemas are not identical. No claim of strict equivalent tools or full five-CLI fair acceptance.",
+    "scope": "Known print/ACP dynamic tool mode boundary; no paid experiment or provider-specific prompt adjustment in this batch.",
+    "next": "Resolve or explicitly predeclare this mode comparison before Kimi strict fairness acceptance; other CLI work can proceed independently."
+  },
+  "independentReview": {
+    "path": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/pi-review/package-independent.json",
+    "sha256": "33c065f234304f9fcdd4b70796bf3878a6364a7608f5b88c4b0e979d09b8f026",
+    "operationalFiveCli": "passed",
+    "strictCrossArmSchema": "codex claude pi opencode passed; kimi failed equality",
+    "paidReady": false
+  },
+  "verification": {
+    "commonGuardTests": 18,
+    "claudeOffline": 40,
+    "codexOffline": 46,
+    "piOffline": 18,
+    "providerChanges": "Red-green regressions and final actual-CLI synthetic normal/fault runs; exact logs in private readiness evidence",
+    "documentation": "repository format:check, new local links and git diff --check",
+    "productCodeChanged": false,
+    "productRestartRequired": false
+  },
+  "nextPriorities": [
+    "Resolve or explicitly define Kimi native print/ACP tool-set comparison; keep other CLI work independent.",
+    "Freeze a bounded multi-model/multi-workload repeated design with quality criteria and complete all-cost accounting before paid release.",
+    "Run the fixed long-session cost study; only then expand busy multi-instance collaboration and upstream reuse."
+  ],
+  "finalPackageManifest": {
+    "path": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/final-manifest.json",
+    "sha256": "c753171e1eae64d2f07ebded461f41e1e2d776a6e6c84a8dec674167922e187f"
+  }
+}
