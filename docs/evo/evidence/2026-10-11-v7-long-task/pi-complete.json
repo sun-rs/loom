@@ -1,0 +1,282 @@
+{
+  "kind": "pi-v7-complete-public-audit/v1",
+  "sourceRevision": "186f7c3694ff784c9ecd4eff1c6d7cff13352556",
+  "cli": "Pi 1.1.0",
+  "model": "aihubmix/deepseek-v4.1-flash",
+  "effort": "low",
+  "complete": true,
+  "statistics": {
+    "sums": {
+      "native": {
+        "input": 26431276,
+        "output": 414855,
+        "httpAttempts": 496
+      },
+      "current": {
+        "input": 24519508,
+        "output": 362144,
+        "httpAttempts": 450
+      }
+    },
+    "ratios": {
+      "input": 0.9276702343087787,
+      "output": 0.872941148111991,
+      "httpAttempts": 0.907258064516129
+    },
+    "pairs": [
+      {
+        "block": 1,
+        "complete": true,
+        "ratio": {
+          "input": 0.7276792005180772,
+          "output": 0.5710645485388122,
+          "cachedInput": 0.7373006193274516,
+          "reasoningOutput": 0.4394788398569687,
+          "httpAttempts": 0.7552447552447552
+        }
+      },
+      {
+        "block": 2,
+        "complete": true,
+        "ratio": {
+          "input": 0.9124882836838732,
+          "output": 0.9956804999591536,
+          "cachedInput": 0.9374632296864446,
+          "reasoningOutput": 0.9921950102998398,
+          "httpAttempts": 0.8527131782945736
+        }
+      },
+      {
+        "block": 3,
+        "complete": true,
+        "ratio": {
+          "input": 0.9774599327434613,
+          "output": 0.9910144962875361,
+          "cachedInput": 0.9745766665111723,
+          "reasoningOutput": 0.9050932446898416,
+          "httpAttempts": 0.981651376146789
+        }
+      },
+      {
+        "block": 4,
+        "complete": true,
+        "ratio": {
+          "input": 1.1759944170286596,
+          "output": 1.0754981958340166,
+          "cachedInput": 1.202808887283237,
+          "reasoningOutput": 1.0939919071076707,
+          "httpAttempts": 1.0869565217391304
+        }
+      }
+    ]
+  },
+  "arms": [
+    {
+      "slot": "1/native",
+      "status": "completed",
+      "knownExpense": {
+        "input": 8423455,
+        "output": 137354,
+        "httpAttempts": 143
+      },
+      "complete": true,
+      "usage": {
+        "input": 8423455,
+        "output": 137354,
+        "cachedInput": 8081024,
+        "reasoningOutput": 72991
+      },
+      "httpAttempts": 143,
+      "nativeMatched": true,
+      "aggregate": null,
+      "qualityPassed": 12,
+      "qualityRounds": 12,
+      "memoryVerifiedLaunches": 12
+    },
+    {
+      "slot": "1/current",
+      "status": "completed",
+      "knownExpense": {
+        "input": 6129573,
+        "output": 78438,
+        "httpAttempts": 108
+      },
+      "complete": true,
+      "usage": {
+        "input": 6129573,
+        "output": 78438,
+        "cachedInput": 5958144,
+        "reasoningOutput": 32078
+      },
+      "httpAttempts": 108,
+      "nativeMatched": true,
+      "aggregate": {
+        "complete": true,
+        "expectedEntries": 0,
+        "observedEntries": 0,
+        "errors": [],
+        "productAllConsumptionComplete": false
+      },
+      "qualityPassed": 12,
+      "qualityRounds": 12,
+      "memoryVerifiedLaunches": 12
+    },
+    {
+      "slot": "2/current",
+      "status": "completed",
+      "knownExpense": {
+        "input": 5749627,
+        "output": 97505,
+        "httpAttempts": 110
+      },
+      "complete": true,
+      "usage": {
+        "input": 5749627,
+        "output": 97505,
+        "cachedInput": 5506944,
+        "reasoningOutput": 43349
+      },
+      "httpAttempts": 110,
+      "nativeMatched": true,
+      "aggregate": {
+        "complete": true,
+        "expectedEntries": 1,
+        "observedEntries": 1,
+        "errors": [],
+        "productAllConsumptionComplete": false
+      },
+      "qualityPassed": 12,
+      "qualityRounds": 12,
+      "memoryVerifiedLaunches": 12
+    },
+    {
+      "slot": "2/native",
+      "status": "completed",
+      "knownExpense": {
+        "input": 6301042,
+        "output": 97928,
+        "httpAttempts": 129
+      },
+      "complete": true,
+      "usage": {
+        "input": 6301042,
+        "output": 97928,
+        "cachedInput": 5874304,
+        "reasoningOutput": 43690
+      },
+      "httpAttempts": 129,
+      "nativeMatched": true,
+      "aggregate": null,
+      "qualityPassed": 12,
+      "qualityRounds": 12,
+      "memoryVerifiedLaunches": 12
+    },
+    {
+      "slot": "3/native",
+      "status": "completed",
+      "knownExpense": {
+        "input": 5675582,
+        "output": 82021,
+        "httpAttempts": 109
+      },
+      "complete": true,
+      "usage": {
+        "input": 5675582,
+        "output": 82021,
+        "cachedInput": 5487872,
+        "reasoningOutput": 35498
+      },
+      "httpAttempts": 109,
+      "nativeMatched": true,
+      "aggregate": null,
+      "qualityPassed": 12,
+      "qualityRounds": 12,
+      "memoryVerifiedLaunches": 12
+    },
+    {
+      "slot": "3/current",
+      "status": "completed",
+      "knownExpense": {
+        "input": 5547654,
+        "output": 81284,
+        "httpAttempts": 107
+      },
+      "complete": true,
+      "usage": {
+        "input": 5547654,
+        "output": 81284,
+        "cachedInput": 5348352,
+        "reasoningOutput": 32129
+      },
+      "httpAttempts": 107,
+      "nativeMatched": true,
+      "aggregate": {
+        "complete": true,
+        "expectedEntries": 0,
+        "observedEntries": 0,
+        "errors": [],
+        "productAllConsumptionComplete": false
+      },
+      "qualityPassed": 12,
+      "qualityRounds": 12,
+      "memoryVerifiedLaunches": 12
+    },
+    {
+      "slot": "4/current",
+      "status": "completed",
+      "knownExpense": {
+        "input": 7092654,
+        "output": 104917,
+        "httpAttempts": 125
+      },
+      "complete": true,
+      "usage": {
+        "input": 7092654,
+        "output": 104917,
+        "cachedInput": 6818560,
+        "reasoningOutput": 49746
+      },
+      "httpAttempts": 125,
+      "nativeMatched": true,
+      "aggregate": {
+        "complete": true,
+        "expectedEntries": 1,
+        "observedEntries": 1,
+        "errors": [],
+        "productAllConsumptionComplete": false
+      },
+      "qualityPassed": 12,
+      "qualityRounds": 12,
+      "memoryVerifiedLaunches": 12
+    },
+    {
+      "slot": "4/native",
+      "status": "completed",
+      "knownExpense": {
+        "input": 6031197,
+        "output": 97552,
+        "httpAttempts": 115
+      },
+      "complete": true,
+      "usage": {
+        "input": 6031197,
+        "output": 97552,
+        "cachedInput": 5668864,
+        "reasoningOutput": 45472
+      },
+      "httpAttempts": 115,
+      "nativeMatched": true,
+      "aggregate": null,
+      "qualityPassed": 12,
+      "qualityRounds": 12,
+      "memoryVerifiedLaunches": 12
+    }
+  ],
+  "verification": "All 8 arms raw HTTP/native usage/Kernel compaction aggregates, session continuity, memory disablement and exact cleanup independently verified. Final frozen source and binding closures matched.",
+  "limitations": [
+    "Single workload and approved model/effort, four pairs descriptive; no invoice or guaranteed savings claim.",
+    "Raw usage includes native compaction once; aggregate is the same expense, never added twice.",
+    "Independent primary accounting is complete; product usage may still show partial/unknown dimensions.",
+    "Native-final trial; seven-flags-off deployed default and multi-instance collaboration not accepted by this result."
+  ]
+}

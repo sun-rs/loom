@@ -18,12 +18,33 @@
     "failure": "Daemon process.cwd EPERM before model execution"
   },
   "cause": "Private parent omitted per-arm cwd. Free entry inherited repository cwd; paid entry inherited provider parent cwd denied by daemon sandbox. Pure OS reproducer: repository and arm cwd succeed, provider parent cwd fails. Not an account/model/product EOF error.",
-  "resolution": "Old failed cohort remains unchanged. Preparing a separate new 4-pair cohort with shared launcher and actual free/paid cwd, PATH and environment assertions; no old native reuse.",
+  "resolution": "Old failed cohort remains unchanged. Separate fresh 4-pair cohort started after outer-launch full12+12 and consumed-failure synthetic tests plus independent raw/passive/wire/Kernel review. No old native arm reused.",
   "remainingOriginalKimiBudget": {
     "input": 45247856,
     "output": 777588,
     "requests": 1363
   },
   "clock": "Original absolute 12h deadline unchanged; failed batch expense deducted, not erased.",
-  "limitations": "New cohort is additional measurement after a harness failure, not success of the original preregistration; no new result yet."
+  "limitations": "New cohort is additional measurement after a harness failure, not success of the original preregistration; no new result yet.",
+  "newCohort": {
+    "batchId": "v7-kimi-cwd-repair-20261011-v1",
+    "sourceRevision": "a92d5ec21c02bdde887cd022bcd1f5fc8e9da64a",
+    "commonManifestSha256": "6e42f1b5825b385004c393a8f81a65325d98fe83e0b0bdf6735f95351791fef3",
+    "bindingManifestSha256": "a4e601eccac7821289d79eb08dffd120966719009467c4fc3139de32ab71d314",
+    "status": "running; no complete cohort ratio yet",
+    "offlineTests": 26,
+    "guardTests": 20,
+    "freeArms": {
+      "nativeRounds": 12,
+      "currentRounds": 12,
+      "requestsPerArm": 24,
+      "syntheticOnly": true
+    },
+    "faultKnownSyntheticExpense": {
+      "input": 40,
+      "output": 8,
+      "requests": 4
+    },
+    "limitations": "Authentication/provider networking and stochastic model behavior not proven by synthetic tests."
+  }
 }
