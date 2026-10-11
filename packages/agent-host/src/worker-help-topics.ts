@@ -18,7 +18,7 @@ const TOPICS = {
 
 A complete wake already contains the messages. Work from them; message-check is needed when the wake requests it or no reply is needed. Read additional history with \`message-read --target TARGET\`.
 
-Publish your answer on stdin:
+Use the current wake's selected reply transport. Without a selected reply transport, publish your answer on stdin:
 \`\`\`sh
 ${CLI} worker message-post <Reply context arguments> <<'${EOF}'
 <your answer>
@@ -26,7 +26,7 @@ ${EOF}
 \`\`\`
 Replace <Reply context arguments> with the wake's exact target and --based-on-room-seq, plus --turn when supplied; these are arguments, not literal text. Pass that --turn to reads too. For multiple targets post separately, sharing the supplied seq/turn. Message content is always read from stdin; choose a heredoc delimiter absent from the body.
 
-A successful post publishes without ending execution. Use --final only when all current work is complete, never for a plan or progress. Provider final prose alone is not a Room reply. Delivery confirmation happens in message-check or a based-on reply; Task completion stays separate.
+A successful post publishes without ending execution. Use --final only when all current work is complete, never for a plan or progress. Outside a selected final reply transport, provider prose is diagnostic only. Delivery confirmation happens in message-check or a based-on reply; Task completion stays separate.
 
 ${PEER_HANDOFF_GUIDANCE}
 

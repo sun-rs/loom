@@ -2062,7 +2062,10 @@ export class CollaborationService {
           `idempotency key ${input.idempotencyKey} was already used for another mutation`,
         );
       }
-      return this.#heldMessageDraftResult(previousHeld);
+      return this.#heldMessageDraftResult(
+        previousHeld,
+        input.finalOutputRunAttemptId === undefined,
+      );
     }
 
     const recipients = this.#normalizeRecipients(
@@ -2199,6 +2202,7 @@ export class CollaborationService {
               "SELECT * FROM held_message_drafts WHERE held_draft_id = ?",
             )
             .get(heldDraftId)!,
+          input.finalOutputRunAttemptId === undefined,
         ),
         ...replacedDraft,
       };
@@ -2294,6 +2298,7 @@ export class CollaborationService {
 
   #heldMessageDraftResult(
     row: Row,
+    presentsContextToWorker: boolean,
   ): Extract<WorkerMessagePostResult, { state: "held" }> {
     const roomId = text(row, "room_id");
     const threadId = nullableText(row, "thread_id") ?? undefined;
@@ -2310,14 +2315,17 @@ export class CollaborationService {
     // (`handleMessageSend`, held branch): the hold showed this participant the
     // messages it had not seen, so the target's read position advances here —
     // and only here — as part of sending.
-    recordWorkerTargetReadPosition(this.#database, {
-      messageSeqs: holdContext.newerMessages.map((event) => event.roomSeq),
-      participantId: text(row, "participant_id"),
-      roomId,
-      ...(threadId === undefined ? {} : { threadId }),
-      throughRoomSeq: seenUpToSeq,
-      updatedAt: this.#timestamp(),
-    });
+    // A Host-settled final returns only a status to the Host: its newer
+    // messages never reached the model. Do not suppress them on the next wake.
+    if (presentsContextToWorker)
+      recordWorkerTargetReadPosition(this.#database, {
+        messageSeqs: holdContext.newerMessages.map((event) => event.roomSeq),
+        participantId: text(row, "participant_id"),
+        roomId,
+        ...(threadId === undefined ? {} : { threadId }),
+        throughRoomSeq: seenUpToSeq,
+        updatedAt: this.#timestamp(),
+      });
     const recoveryTarget = heldDraftRecoveryTarget(this.#database, row);
     return {
       activationIds: [],

@@ -127,9 +127,10 @@ test("worker help protocol renders the current compact rules card", async () => 
     ),
   );
   assert.equal(protocolUpdateNotice("x").includes("\n"), false);
+  assert.doesNotMatch(protocolUpdateNotice("x"), /Task creation now requires/u);
   assert.match(
     protocolUpdateNotice("x"),
-    /message-post publishes without ending execution.*--final remains explicit for completed work only/u,
+    /current wake.*selected reply transport.*help protocol/u,
   );
 });
 

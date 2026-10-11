@@ -106,11 +106,10 @@ test("known local CLI specs share the frozen Agent and canonical Worker contract
     /Do not persist.*current date or time.*one-off query.*failed lookup.*test probe.*raw transcript/isu,
   );
   assert.match(prompt, /across Rooms, RuntimeProfiles, models/isu);
-  assert.match(prompt, /RAH_FROM_SEQ/u);
-  assert.match(prompt, /RAH_TO_SEQ/u);
+  assert.match(prompt, /current wake's actionable events/u);
   assert.match(
     prompt,
-    /before RAH_FROM_SEQ.*context only.*must not.*business action/isu,
+    /earlier events are context only.*must not.*business action/isu,
   );
   assert.match(
     prompt,

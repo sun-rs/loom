@@ -136,5 +136,7 @@
     "repair-tests.log": "/Users/sun/.loom/reviews/2026-10-11-architecture-audit/repair-tests.log"
   },
   "finalKimi": "../2026-10-11-v7-long-task/kimi-complete.json",
-  "fairnessSnapshotCorrection": "独立fairness.md写于Kimi7臂时；最终8臂计量完成见kimi-complete.json，隔离缺陷裁决不变。"
+  "fairnessSnapshotCorrection": "独立fairness.md写于Kimi7臂时；最终8臂计量完成见kimi-complete.json，隔离缺陷裁决不变。",
+  "followup": "../2026-10-11-audit-repair/summary.json",
+  "followupCorrection": "Human-action-required was existing intentional policy. The subsequent recovery regression uncovered a distinct real defect: Host-only held output incorrectly advanced target read position, omitting unread facts on next wake. See repair evidence; original audit did not prove absence of all bugs."
 }

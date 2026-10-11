@@ -249,11 +249,10 @@ test("compiled agent prompt keeps every platform contract assertion", () => {
     /Do not persist.*current date or time.*one-off query.*failed lookup.*test probe.*raw transcript/isu,
   );
   assert.match(prompt, /across Rooms, RuntimeProfiles, models/isu);
-  assert.match(prompt, /RAH_FROM_SEQ/u);
-  assert.match(prompt, /RAH_TO_SEQ/u);
+  assert.match(prompt, /current wake's actionable events/u);
   assert.match(
     prompt,
-    /before RAH_FROM_SEQ.*context only.*must not.*business action/isu,
+    /earlier events are context only.*must not.*business action/isu,
   );
   // S1-g: the prompt keeps the owner rule; the exact env-bound wording lives
   // in `worker help tasks`.
@@ -591,7 +590,10 @@ test("S1-g: the startup sequence keeps only what no wake input already states", 
   );
   // Step 6: delivery confirmation, stated once.
   assert.equal(prompt.split("Delivery confirmation is automatic").length, 2);
-  assert.match(prompt, /diagnostics only/u);
+  assert.match(
+    prompt,
+    /Outside the selected reply transport, provider output is diagnostic only/u,
+  );
   assert.doesNotMatch(withHelp(prompt), /worker acknowledge --through-seq/);
 });
 

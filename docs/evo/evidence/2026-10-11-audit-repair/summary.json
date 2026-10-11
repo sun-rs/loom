@@ -1,0 +1,110 @@
+{
+  "kind": "loom-audit-repair/v1",
+  "date": "2026-10-11",
+  "baseRevision": "34206bb2121aa91242a1c9b4b0b410d499d40dc1",
+  "scope": "Deterministic repairs following three-way audit; no new paid cohort, no production native-final enablement",
+  "changes": [
+    {
+      "owner": "Kernel CollaborationService",
+      "type": "reproduced correctness bug",
+      "problem": "Host-only final held response recorded newerMessages as model-presented, advancing target read position and suppressing unread facts in the next wake.",
+      "fix": "Fresh and idempotently replayed final-output held results do not write model presentation/read position; regular Worker held output retains its original path.",
+      "red": "New recovery test failed because the new fact was missing from next presented delta.",
+      "evidence": [
+        "../../../../packages/kernel/src/collaboration-service.ts",
+        "../../../../packages/kernel/test/native-final-human-recovery.test.ts"
+      ],
+      "limits": "No auto recovery, unknown resend or policy change; does not establish cause of quiet Claude cost ratio."
+    },
+    {
+      "owner": "Shared Worker standing protocol/help",
+      "type": "instruction consistency",
+      "fix": "Current wake selects ordinary reply transport; absent selection uses Worker post. Explicit progress/attachments/other targets retain tools. Warm scope references current wake/turn, not changing process env. Existing sessions use protocol notice/help without reset.",
+      "red": "Three composition checks and protocol notice check failed against old instructions.",
+      "evidence": [
+        "../../../../packages/agent-host/src/standing-protocol.ts",
+        "../../../../packages/agent-host/src/worker-help-topics.ts",
+        "../../../../packages/daemon/test/standing-prompt-reply-contract.test.ts"
+      ],
+      "limits": "No default enablement, provider-specific prompt strategy, source/prompt budget expansion or demonstrated paid token improvement."
+    }
+  ],
+  "humanRecovery": {
+    "steps": [
+      "Human abandons blocked Activation via instance.activation.abandon",
+      "Human explicitly sends a new request; abandon alone does not recreate queued work",
+      "Fresh Run receives new facts, confirms presented delivery and publishes one new answer"
+    ],
+    "proven": [
+      "Original failed Run preserved",
+      "Old credentials rejected",
+      "Abandon and final replay idempotent",
+      "Unread newer fact remains in delta",
+      "Native final ACK asserted before helper cleanup",
+      "Old held draft body retained, replaced by new answer"
+    ],
+    "notProven": [
+      "Human UI reading/editing original held draft",
+      "Automatic recovery",
+      "Real-model busy collaboration efficiency"
+    ],
+    "testBoundary": "Abandon uses real Client HTTP over temporary service; original/new Human messages and runtime lifecycle use Kernel fixture. No paid CLI or real-page workflow claimed."
+  },
+  "verification": {
+    "sharedProtocolTargeted": 79,
+    "kernelTargeted": 50,
+    "independentKernelReview": "passed; new regression independently rerun",
+    "fullCheck": {
+      "exitCode": 0,
+      "main": {
+        "tests": 3139,
+        "pass": 3117,
+        "skip": 22,
+        "fail": 0
+      },
+      "efficiencyUnit": 558,
+      "webUnit": 487,
+      "consoleUnit": 61
+    },
+    "format": "repository format:check passed",
+    "deployment": "pending",
+    "typecheck": "passed again after product files stabilized",
+    "diff": "git diff --check passed"
+  },
+  "performanceVerdict": "Not remeasured; prior ratios/fairness limits unchanged. Real paid gate required before accepting efficiency.",
+  "auditCorrection": "Prior audit P1 held recovery boundary was intentional Human-action policy, not itself a fence bug. Subsequent vertical test found the distinct, reproduced unread-position bug repaired here.",
+  "benchmarkSuccessor": {
+    "owner": "Private benchmark CLI admission",
+    "path": "/Users/sun/.loom/reviews/2026-10-11-fairness-successor",
+    "changes": [
+      "Full ACP driver subtree must share narrow policy with terminal/create and CLI; provider-only sandbox was disproved by actual fake-model integration.",
+      "OpenCode actual PATH/cache rg must perform a real fixture search under actual CLI policy before provider spawn; no download"
+    ],
+    "offlineTests": 11,
+    "independentReview": "11/11 rerun; 12 frozen-source lineage hashes unchanged; runtime allowlist excludes docs/evidence/test",
+    "integration": "OpenCode actual builtin grep through localhost fake-model passed (2 requests). Kimi full ACP policy correction still in verification; not accepted.",
+    "paidRelease": false,
+    "oldResults": "Unchanged; original Kimi fairness failed and OpenCode capability limitation remain recorded",
+    "offlineTestsLimit": "11/11 wrapper tests were insufficient: actual ACP Host-delegated shell escaped provider-only policy. The failure is retained and repair targets driver subtree."
+  },
+  "evidenceLogs": {
+    "held-recovery-red.log": {
+      "sha256": "b3759bae500594c9b6de6ca236c92650fda64165ba784aaf4804770de67e3fac"
+    },
+    "held-recovery-green.log": {
+      "sha256": "58bcca15a29f233e93323fa9003ca1834e5958c0f519b8f8373d8d94f6b5d897"
+    },
+    "reply-contract/loom-reply-contract-final.log": {
+      "sha256": "99feb20a95850a15545700a282effd66652057656f55cbddc4bb6478842ac23f"
+    },
+    "reply-contract/loom-reply-contract-red.log": {
+      "sha256": "9c264cae4b9af900cbaa7ef593d59ee76e0d2e68770caeafc0434c061bd4824c"
+    },
+    "reply-contract/loom-reply-notice-red.log": {
+      "sha256": "4b4bc48df58a33d70c380e95881ef22c32c6d3b38a97c20317862fc3a9acbb59"
+    },
+    "full-check.log": {
+      "sha256": "efb05ce7fd5027c6a7eca6649ebbfae72c55bdb258f89fe1b4b75e092544a549"
+    }
+  }
+}

@@ -278,3 +278,13 @@ usage 只验证请求到 Kernel 的核账完整性，不能替代多 CLI、多�
 P169 暴露普通 Worker post 成功后，原生最终输出仍携带原交付序号，从而被自身帖子触发 freshness hold。修复由 Kernel 持有精确的事件与 Run 来源映射，和新消息在同一事务记录；历史消息和幂等重放不补来源。最终输出只排除当前 Run、同作者、同目标的已证明自身消息，保留原因果序号，仍逐条检查相关外部消息。不能跳到最新自身序号而越过其前的 Human 插话，也不把普通 post 推断为 final。
 
 Host 不增加补读、模型纠错轮或自动重试；既有最终标记互斥、未知回执、取消和 ACK 处理不变。测试按精确 final marker 对应的事件与消息核验最终回复，保留普通帖子及全部消耗，不用“消息总数必须为一”拒绝合法进度。P169 原失败保留；修复及新批次验收结论见 [当前状态](status.zh-CN.md)和[运行账本](paid-runs.zh-CN.md)。
+
+## 审计后修正：回复规则与 held 未读事实（2026-10-11）
+
+共享 standing/startup/help 现在以本轮选择的 reply transport 为普通回复的唯一入口；未选择时继续使用 Worker message-post，进度、附件、其他目标和显式业务动作仍用工具。warm 会话以当前 wake/turn handle 为范围，不再要求从常驻进程环境读取每轮序号。协议版本变化沿既有 notice/help 更新路径进入旧 session，不重置 session；试验开关继续默认关闭。该调整只消除指引冲突，不证明真实模型费用降低。
+
+恢复测试发现 `CollaborationService` 的 held 返回路径曾无条件登记 newerMessages 的目标读取位置。普通 Worker 工具会将这些消息输出给模型，但 native/explicit final 的 Host 只处理状态，未呈现正文；登记位置会让下一次自动 delta 漏掉新事实。现在可信 final-output 路径的新建与精确重放均不登记这份未交付上下文，普通 Worker 路径保留，权限、stale、幂等和消费证明不变。
+
+既有 Human 恢复是 `instance.activation.abandon` 放弃被阻塞的执行，然后发送新请求；abandon 本身不自动重试或重新激活已合并的旧通知。新 Run 使用新凭据、取得此前未读的新事实后发表新答案，旧失败 Run 不改写，旧暂存正文仍保留。回归验证通过真实 Client HTTP 命令执行 abandon、幂等重放、旧凭据失效、新事实呈现及新 final 的自动 ACK/唯一发表。此路径不等于原草稿编辑恢复；目前未验证 Human UI 可直接查看/编辑暂存正文，不新增此界面或自动恢复政策。
+
+[本批修复与验证](evidence/2026-10-11-audit-repair/summary.json)。本批不追加付费样本，五家既有比例及公平性限制保持原结论。

@@ -96,10 +96,10 @@ test("the prompt keeps Channel-authorized Task creation separate from ordinary w
  * (warm) the turn handle. History then grows by the bodies, not boilerplate.
  */
 const MOVED_RULES: readonly RegExp[] = [
-  /use the current environment, never a previous turn's Room, range or Worker path/giu,
+  /use its Room, range and Worker path, never a previous turn's/giu,
   /`msg=<ref>` is a short message id/giu,
   /pass a wake's `--turn <handle>` to every Worker command/giu,
-  /publish the answer with `message-post` using its `Reply context:` arguments/giu,
+  /Without a selected reply transport, publish with `message-post` using its `Reply context:` arguments/giu,
   /With no reply needed, run `message-check` once/giu,
   /when a wake says `message-check first`, run it before replying/giu,
   /Never infer missing memory or no work from an error/giu,

@@ -13,11 +13,10 @@ import { readWorkerTargetReadPosition } from "./worker-target-read-position.ts";
  *
  * Raft's long-lived agent session filters notifications for messages already
  * put in front of the model (`filterUncontributedMessages` /
- * `pruneContributedToPending`). RAH cannot drop the wake — the per-Activation
- * acknowledge fence means a message shown during an earlier Activation was
- * never acknowledged, so a second Activation is structurally required. The port
- * is therefore to carry the already-presented fact in the delivery instead of
- * suppressing the delivery.
+ * `pruneContributedToPending`). RAH only cancels a never-started wake when
+ * activation-read-coverage proves exact consumption by a successful Run in
+ * the same session generation. Without that proof this projection annotates
+ * prior presentation, never suppressing delivery or treating it as an ACK.
  *
  * Nothing here writes: target high-water positions and exact message receipts
  * are read as recorded. A high-water mark alone cannot annotate a message.
