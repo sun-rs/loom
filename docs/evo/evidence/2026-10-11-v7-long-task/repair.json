@@ -50,7 +50,7 @@
     "retainedFailure": "Earlier private wrapper forgot signal relay for detached serve; failed cleanup receipt retained, exact owned group cleaned, new isolated probe fixed relay and passed; no product claim from failed cleanup"
   },
   "fullCheck": "passed",
-  "deployed": false,
+  "deployed": true,
   "paidCallsInRepairProbes": 0,
   "efficiencyAcceptance": false,
   "costStudyBoundary": "Paid Codex/Claude/Pi still use frozen186f7c3; repairs never mutate that source or its release",
@@ -74,5 +74,7 @@
     "diffCheck": true,
     "localLinksChecked": 574,
     "fullCheckLogSha256": "942ccc5c7f3e59390eb504ac0c9df59cb26fe722bd3b244f441db95b6af9495b"
-  }
+  },
+  "deploymentEvidence": "deployment.json",
+  "repairCommit": "a92d5ec21c02bdde887cd022bcd1f5fc8e9da64a"
 }
