@@ -1,0 +1,369 @@
+{
+  "scope": "Read-only decomposition of already-paid Task B pairs; no new requests or prompt edits.",
+  "byteDefinition": {
+    "opencodeAndKimi": "UTF8 compact JSON ensure_ascii=false of message arrays/tools. System/developer separated. Prior history is non-system messages strictly before unique user message containing exact round business prompt. Delivery is non-system messages from that anchor to end of first request, including any native reminders. Business bytes are exact common task prompt UTF8. Arrays include JSON delimiters. No token estimates.",
+    "pi": "UTF-8 compact JSON ensure_ascii=False sort_keys=True separators=(comma,colon); text bytes separately. Bytes are not tokens. History includes earlier user/model/tool content; differences are descriptive, not isolated causal effects."
+  },
+  "pairs": [
+    {
+      "cli": "opencode",
+      "pair": 2,
+      "firstAndLastRoundDifference": [
+        {
+          "round": 1,
+          "input": -8909,
+          "output": 402,
+          "requests": -2,
+          "firstInput": 1816,
+          "firstOutput": 55,
+          "systemBytes": 7221,
+          "toolsBytes": 0,
+          "businessPromptBytes": 0,
+          "deliveryBytes": 176,
+          "priorHistoryBytes": 0,
+          "toolsEqual": true,
+          "businessPromptEqual": true
+        },
+        {
+          "round": 12,
+          "input": -1860,
+          "output": 445,
+          "requests": -1,
+          "firstInput": 8184,
+          "firstOutput": 45,
+          "systemBytes": 7221,
+          "toolsBytes": 0,
+          "businessPromptBytes": 0,
+          "deliveryBytes": 209,
+          "priorHistoryBytes": 19852,
+          "toolsEqual": true,
+          "businessPromptEqual": true
+        }
+      ]
+    },
+    {
+      "cli": "opencode",
+      "pair": 3,
+      "firstAndLastRoundDifference": [
+        {
+          "round": 1,
+          "input": -118,
+          "output": 637,
+          "requests": -1,
+          "firstInput": 1825,
+          "firstOutput": -42,
+          "systemBytes": 7221,
+          "toolsBytes": 0,
+          "businessPromptBytes": 0,
+          "deliveryBytes": 176,
+          "priorHistoryBytes": 0,
+          "toolsEqual": true,
+          "businessPromptEqual": true
+        },
+        {
+          "round": 12,
+          "input": -21250,
+          "output": 241,
+          "requests": -2,
+          "firstInput": 8086,
+          "firstOutput": 60,
+          "systemBytes": 7221,
+          "toolsBytes": 0,
+          "businessPromptBytes": 0,
+          "deliveryBytes": 209,
+          "priorHistoryBytes": 17271,
+          "toolsEqual": true,
+          "businessPromptEqual": true
+        }
+      ]
+    },
+    {
+      "cli": "kimi",
+      "pair": 2,
+      "firstAndLastRoundDifference": [
+        {
+          "round": 1,
+          "input": -16267,
+          "output": 10,
+          "requests": -1,
+          "firstInput": 1608,
+          "firstOutput": 0,
+          "systemBytes": 62,
+          "toolsBytes": 0,
+          "businessPromptBytes": 0,
+          "deliveryBytes": 6939,
+          "priorHistoryBytes": 0,
+          "toolsEqual": true,
+          "businessPromptEqual": true
+        },
+        {
+          "round": 12,
+          "input": 5639,
+          "output": -9,
+          "requests": 0,
+          "firstInput": 2450,
+          "firstOutput": 0,
+          "systemBytes": 62,
+          "toolsBytes": 4199,
+          "businessPromptBytes": 0,
+          "deliveryBytes": -365,
+          "priorHistoryBytes": 5703,
+          "toolsEqual": false,
+          "businessPromptEqual": true
+        }
+      ]
+    },
+    {
+      "cli": "kimi",
+      "pair": 3,
+      "firstAndLastRoundDifference": [
+        {
+          "round": 1,
+          "input": 4901,
+          "output": 79,
+          "requests": 0,
+          "firstInput": 1612,
+          "firstOutput": 10,
+          "systemBytes": 62,
+          "toolsBytes": 0,
+          "businessPromptBytes": 0,
+          "deliveryBytes": 6939,
+          "priorHistoryBytes": 0,
+          "toolsEqual": true,
+          "businessPromptEqual": true
+        },
+        {
+          "round": 12,
+          "input": 2497,
+          "output": -182,
+          "requests": 0,
+          "firstInput": 1479,
+          "firstOutput": 3,
+          "systemBytes": 62,
+          "toolsBytes": 4199,
+          "businessPromptBytes": 0,
+          "deliveryBytes": -365,
+          "priorHistoryBytes": 2316,
+          "toolsEqual": false,
+          "businessPromptEqual": true
+        }
+      ]
+    },
+    {
+      "cli": "pi",
+      "pair": 2,
+      "firstAndLastRoundDifference": [
+        {
+          "round": 1,
+          "toolsIdentical": true,
+          "businessPromptIdentical": true,
+          "systemIdentical": false,
+          "inputDelta": 15238,
+          "firstRequestInputDelta": 1724,
+          "systemTextByteDelta": 6979,
+          "extraCurrentUserTextByteDelta": 163,
+          "priorHistoryByteDelta": 0
+        },
+        {
+          "round": 12,
+          "toolsIdentical": true,
+          "businessPromptIdentical": true,
+          "systemIdentical": false,
+          "inputDelta": 50986,
+          "firstRequestInputDelta": 12222,
+          "systemTextByteDelta": 6979,
+          "extraCurrentUserTextByteDelta": 167,
+          "priorHistoryByteDelta": 32216
+        }
+      ]
+    },
+    {
+      "cli": "pi",
+      "pair": 3,
+      "firstAndLastRoundDifference": [
+        {
+          "round": 1,
+          "toolsIdentical": true,
+          "businessPromptIdentical": true,
+          "systemIdentical": false,
+          "inputDelta": 11286,
+          "firstRequestInputDelta": 1738,
+          "systemTextByteDelta": 6979,
+          "extraCurrentUserTextByteDelta": 163,
+          "priorHistoryByteDelta": 0
+        },
+        {
+          "round": 12,
+          "toolsIdentical": true,
+          "businessPromptIdentical": true,
+          "systemIdentical": false,
+          "inputDelta": 13348,
+          "firstRequestInputDelta": 3348,
+          "systemTextByteDelta": 6979,
+          "extraCurrentUserTextByteDelta": 167,
+          "priorHistoryByteDelta": 3734
+        }
+      ]
+    }
+  ],
+  "piFixedSystemOrigin": {
+    "block": 2,
+    "arms": {
+      "native": {
+        "launchCount": 12,
+        "appendBytes": 27,
+        "appendUniqueHashes": [
+          "034e3ab07a96391e6adeca8c1da16f40b01819c1018e50b01434eb06c1b49089"
+        ],
+        "systemBytes": [2794],
+        "normalizedBaseHashes": [
+          "4c1cc335db1f1440a22dc168485750e85534dde84797ea5224b5be33595af918"
+        ],
+        "everyRequestExactlyOneAppend": true,
+        "roleInstructionOccurrences": 1
+      },
+      "current": {
+        "launchCount": 12,
+        "appendBytes": 6897,
+        "appendUniqueHashes": [
+          "b9a6cf9e6f7eb07d9dc3b1035c0bac4eb17ba9ff6a14f6b34ac4ddc05ef9adc8"
+        ],
+        "systemBytes": [9773],
+        "normalizedBaseHashes": [
+          "4c1cc335db1f1440a22dc168485750e85534dde84797ea5224b5be33595af918"
+        ],
+        "everyRequestExactlyOneAppend": true,
+        "roleInstructionOccurrences": 1
+      }
+    },
+    "systemTextDifferenceBytes": 6979,
+    "productStandingAppendDifferenceBytes": 6870,
+    "nativeCLICwdPathDifferenceBytes": 109,
+    "classification": "Product generated standing instructions account for 6870 bytes net of common role instruction. Remaining 109 bytes are longer harness-selected channel cwd rendered by Pi. No append accumulation across 12 rounds; serialized once per request. Byte counts are not token estimates.",
+    "constructionChain": [
+      "packages/daemon/src/runtime-profile-composition.ts:196",
+      "packages/daemon/src/standing-prompt-lease.ts:54",
+      "packages/daemon/src/standing-prompt-compiler.ts:178",
+      "packages/agent-host/src/pi-print-driver.mjs:150",
+      "packages/agent-host/src/final-output-instructions.js:9"
+    ],
+    "harnessCommonRole": "pi/current/run-block.mjs:72; native --append-system-prompt common 27-byte instruction",
+    "source": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/source"
+  },
+  "sharedStandingOrigin": {
+    "scope": "Read-only frozen-source/request attribution; no new requests or cost estimation",
+    "sharedOrigin": {
+      "compiler": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/source/packages/daemon/src/standing-prompt-compiler.ts:83",
+      "compilerEntry": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/source/packages/daemon/src/standing-prompt-compiler.ts:223",
+      "lease": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/source/packages/daemon/src/standing-prompt-lease.ts:110",
+      "meaning": "Shared product standing-prompt compiler supplies identity/runtime/Room/Worker instructions; provider drivers transport it in different locations. Not byte-identical across instances."
+    },
+    "opencode": {
+      "transport": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/source/packages/agent-host/src/opencode-warm-driver.mjs:993",
+      "rulesFile": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/source/packages/agent-host/src/opencode-standing-instructions.js:73",
+      "observed": "B first request current system includes Instructions from: rah-standing-<digest>.md followed by product Room-first workplace text. Raw content diff has 7032-byte inserted instruction-file header/body segment; compact whole-system JSON net delta is 7221, also incorporating cwd/path and JSON escaping. Do not equate all 7221 with a pure compiler string."
+    },
+    "pi": {
+      "transport": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/source/packages/agent-host/src/pi-print-driver.mjs:152",
+      "mechanism": "[Loom standing instructions] + nativeFinalTextInstructions(o.prompt,...), passed with --append-system-prompt at line166. Same product compiler origin, different wrapper/native system layout."
+    },
+    "kimi": {
+      "transport": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/source/packages/agent-host/src/kimi-acp-driver.mjs:97",
+      "observed": "B R1 net system +62 compact UTF8 bytes; principal initial extra instructions are in user delivery (+6939), not system. Later that initial material resides in history. Both B pairs show same byte differences.",
+      "schemaLimitation": "ReadMediaFile print/ACP dynamic registration difference remains. No strict schema parity claim."
+    },
+    "limits": [
+      "Byte observations describe serialized input, not tokens or money.",
+      "Raw input already includes cached input; do not add cache again.",
+      "Model outputs/tool choices shape subsequent histories; no pure-protocol causal conclusion from this decomposition."
+    ]
+  },
+  "productAccountingLimitation": {
+    "externalRawCensusCompleteForPi": true,
+    "productCurrentArmAllConsumptionComplete": {
+      "1/A": false,
+      "2/B": true,
+      "3/B": true,
+      "4/A": false
+    },
+    "reason": "Current A arms include native compaction; Kernel retains parse_error gaps. Independently matched summary aggregates do not prove all HTTP consumption. External benchmark totals include all captured raw responses, including summary/retry costs, once.",
+    "auditHelperWarning": "aggregateCoverage.productAllConsumptionComplete is always false by design; arm-level completeness comes from current/coverage.mjs, not that helper field.",
+    "sources": [
+      "pi/aggregate-coverage.mjs:16",
+      "pi/current/coverage.mjs:20",
+      "source/packages/kernel/src/run-attempt-usage-aggregate.ts:132"
+    ]
+  },
+  "conclusions": [
+    "Extra standing content is retained in context; it is not accumulated as a fresh duplicate each turn.",
+    "Business prompts match, but sampled output/tool paths create different future histories; preserve paired repeats and per-task results.",
+    "Pi B request counts are equal while input differs; request count alone cannot explain overhead. OpenCode B has fewer requests and lower summed input despite larger first requests.",
+    "Shared standing/delivery content is a concrete cross-CLI optimization candidate; this observation does not prove shortening it will reduce complete-task cost."
+  ],
+  "limits": [
+    "Bytes are not tokens; no estimated token or monetary allocation.",
+    "Kimi initial extra content is mainly in user delivery, not system; later it is part of history. Its dynamic tool-schema difference remains.",
+    "The two repeats per task do not isolate causal effects or establish statistical equivalence."
+  ],
+  "evidence": [
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-11-mixed-study/paid-review/b-decomposition.json",
+      "sha256": "fb6a985d134456db08907f73709eb175babf50b0d5f144ba1257022e03efbe5f"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-11-mixed-study/runtime-review/pi/b-decomposition.json",
+      "sha256": "06102529ab325bb966228db5b49d21a07e3d2bf1fed75e07d5e8bd248a6cc400"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-11-mixed-study/runtime-review/pi/fixed-system-origin.json",
+      "sha256": "cce3bfc0bb19a324fdb791d6a27e439f0949bc9c959b51167af5bf26397b94f6"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-11-mixed-study/paid-review/standing-origin.json",
+      "sha256": "1627ccc1ee5f32c97ec4d535102afe6403bea814aeae024df09ab2f590874ea1"
+    }
+  ],
+  "priorCandidate": {
+    "reference": "../2026-10-10-standing-prototype/README.md",
+    "result": "Earlier shared mode-specific candidate reduced compiler text by 496 bytes and fixed-trace request bodies by 2.97% (Pi) / 0.50% (Kimi); not merged, not paid-validated.",
+    "decision": "This batch does not reverse the prior decision to stop small prompt-trimming as the main cost work. A standing payload observation is not a new demonstrated optimization."
+  },
+  "piHistoryAttribution": {
+    "scope": "Task B, prior history in first request of round 12, current minus native, UTF8 compact JSON bytes",
+    "pair2": {
+      "total": 32216,
+      "toolResults": 12179,
+      "toolArguments": 10820,
+      "reasoning": 6075,
+      "assistantBody": 913,
+      "priorUserDelivery": 1857,
+      "structure": 372,
+      "observedBehavior": "Current rounds 2-11 reread all evidence/*.md; round 2 also printed complete report.md/report.json. Native primarily read newly released material. Repeated explicit cd prefixes add 3726 bytes within tool arguments."
+    },
+    "pair3": {
+      "total": 3734,
+      "toolResults": 6858,
+      "priorUserDelivery": 1857,
+      "assistantBody": 965,
+      "toolArguments": -5511,
+      "reasoning": -675,
+      "observedBehavior": "Current reads incrementally but verification prints the full report.json each round; native more often prints compact metrics.",
+      "structure": 240
+    },
+    "limitation": "Actual recorded task-work strategies, not extra mandatory message-box operations; no proof that Loom necessarily causes these choices, and no scenario-specific prompt prescription.",
+    "evidence": {
+      "path": "/Users/sun/.loom/reviews/2026-10-11-mixed-study/runtime-review/pi/history-attribution.json",
+      "sha256": "de146c9ff7f91dca1d85cd6656dbbd385c2ab2de0dc4eccbfb877e5bcb5851ed"
+    }
+  },
+  "crossCliHistoryCheck": {
+    "scope": "First request of B round 12, prior rounds 1-11 counted once",
+    "kimi": "Both pairs and both sides use 11 incremental evidence reads and no shell. Current tool-result bytes are 1038/426 fewer than native; Pi full-reread pattern is not reproduced.",
+    "opencode": "Both current pairs use 11 evidence reads; pair 2 native also 11, pair 3 native initially reads a/b using shell. Current report write/edit function bytes exceed native by 12791/9367; total assistant-history bytes by 15783/12955; tool results by 1823/2070. Function bytes are nested in assistant history, not additive categories.",
+    "limit": "Observed behavior differs by CLI and replicate; not a universal repeated-box mechanism or token allocation.",
+    "evidence": {
+      "path": "/Users/sun/.loom/reviews/2026-10-11-mixed-study/paid-review/history-census.json",
+      "sha256": "a6dcf311a64a5c25dd2e0371edda7cb68f3673cbc141153915924f0ae7df9ccd"
+    }
+  }
+}

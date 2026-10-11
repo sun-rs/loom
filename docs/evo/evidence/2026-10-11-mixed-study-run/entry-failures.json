@@ -1,0 +1,88 @@
+{
+  "scope": "Read-only review of current frozen paid batch; no rerun, replacement or mutation",
+  "codex": {
+    "status": "withheld before provider startup",
+    "rootCause": "prepare-paid-binding.mjs copied raw plan cliVersion codex-cli 0.161.0 to manifest; guard requires a version starting with digits.",
+    "locations": {
+      "generator": "codex/prepare-paid-binding.mjs:13",
+      "plan": "codex/codex-plan.json:6",
+      "guard": "guard/guard.mjs:230",
+      "oldPositiveFixture": "codex/preflight.mjs hardcodes cliVersion 0.161.0"
+    },
+    "whyTestsMissed": "Successful synthetic preflight used normalized literal, while new binding constructor used raw version. Offline paid entry tests stopped at missing/false authorization before binding validation. Hash verification proved byte identity, not valid manifest semantics.",
+    "zeroStartupEvidence": {
+      "bindingInSharedLedger": false,
+      "executionDirectoryExists": false,
+      "parentLogExists": false
+    },
+    "minimalFutureFix": "In a new package, separate normalized manifest version from exact raw CLI --version string retained for executable checks. Add a positive offline construction test using the actual generated binding data under explicitly synthetic test authorization; retain negative paid-release tests. Do not edit this frozen binding or substitute this batch sample."
+  },
+  "claude": {
+    "status": "first native arm failed before round 1 admission",
+    "rootCause": "Error: Pilot state lock held; no admission issued",
+    "retryPolicy": "pilot-hooks.mjs locked retries PILOT_LOCKED at 25ms up to index 200; approximately 5 seconds before propagating failure.",
+    "observed": {
+      "rounds": 0,
+      "processes": [],
+      "nativeProcess": null,
+      "childExit": {
+        "code": 1,
+        "signal": null
+      },
+      "psExit": 1,
+      "psOutput": "",
+      "launches": [],
+      "exits": [],
+      "ownedPids": [],
+      "livingPids": []
+    },
+    "receipt": {
+      "input": 0,
+      "output": 0,
+      "httpAttempts": 0,
+      "primaryComplete": true,
+      "status": "failed",
+      "completedRounds": 0,
+      "qualityPassed": false,
+      "httpTerminal": false,
+      "captureComplete": false,
+      "sourceMatches": true,
+      "configMatches": true,
+      "sessionMatches": true,
+      "memoryDisabled": false,
+      "ownedCleanup": false
+    },
+    "cleanupInterpretation": "No provider/daemon was instantiated before before(1); owned cleanup receipt remains conservatively false because empty launch set has no group proof. Independent child pid check shows exited; no observed owned process requires termination.",
+    "contentionBoundary": "Full closure source checks run inside the shared guard transaction lock. With multiple bindings starting concurrently the short wrapper retry budget can expire. Which specific process held the lock during every retry is not logged and is not asserted.",
+    "minimalFutureFix": "In a new package use a shared elapsed-time bounded lock-wait policy for all controllers sized for measured frozen-closure critical-section duration; add deterministic lock contention recovery/timeout tests. Keep exact per-turn gate, no stale-lock deletion, no paid retry and no relaxation of usage accounting."
+  },
+  "frozenSourceHashes": {
+    "codex/prepare-paid-binding.mjs": "13ed6179883c2446c54e23344dec1f9e32d4c769da6d58bf1ec21d5426cbb429",
+    "codex/codex-plan.json": "a6fad1da0f822dd0cb6651e048fa2361ae250954624f24e86b884419fa9f6eda",
+    "paid-admission/codex-manifest.json": "a395ce0b218c0314d8ecf573d46fd0ebba89222b2af40bdd9c3048daa0254117",
+    "claude/pilot-hooks.mjs": "43d06258456a5c0a4ab9440dde20c04df6c90ae19bc85f61a5700f1067ba83b1",
+    "guard/guard.mjs": "ac50bf3d11ec86941cff86d6d8c208851ff6e2c04f0ba1b064855157486a8a77"
+  },
+  "actions": "Read files and ps only; no provider call, file repair, cleanup signal, rerun or claim mutation.",
+  "repair": {
+    "status": "Prepared separately; not integrated into frozen batch or paid-validated",
+    "providerCalls": 0,
+    "testsPassed": 13,
+    "evidence": {
+      "path": "/Users/sun/.loom/reviews/2026-10-11-mixed-entry-repair/readiness.json",
+      "sha256": "993f10ab33bbadc38b773e959d67914998fbcdc0c4c1145d8720724751bf1578"
+    },
+    "rootRepeatLog": {
+      "path": "/Users/sun/.loom/reviews/2026-10-11-mixed-entry-repair/lead-review-tests.log",
+      "sha256": "20c1fc8d33fb787954b8a7fc0bd1a7ac63add9671fc7fbf95763f7bd1ccc3b56"
+    },
+    "changes": [
+      "Normalize Codex manifest version while retaining exact CLI version text; positive test consumes actual generated manifest.",
+      "Bound Claude shared-lock waiting by monotonic elapsed time and admission expiry; failure accounting tail retains a finite wait. No stale-lock stealing or paid sample retry."
+    ]
+  },
+  "originalAudit": {
+    "path": "/Users/sun/.loom/reviews/2026-10-11-mixed-study/runtime-review/codex-claude-admission.json",
+    "sha256": "79d3da654632f54f1925081db37582191360a57d794f4ff59dbccab06e3b1bc3"
+  }
+}

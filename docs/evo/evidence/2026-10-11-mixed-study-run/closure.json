@@ -1,0 +1,54 @@
+{
+  "scope": "Post-batch read-only hash and realpath verification; proves unchanged execution closure, not semantic validity of the failed Codex manifest.",
+  "verifiedAt": "2026-10-11T14:01:11.387261+00:00",
+  "manifests": [
+    {
+      "manifest": "/Users/sun/.loom/reviews/2026-10-11-mixed-study/paid-admission/common-manifest.json",
+      "manifestSha256": "2250c4cf54d45cfd3a24e40e5ec028be1719e80474d50fafab913a15e2a70bcd",
+      "files": 22875,
+      "realpaths": 43,
+      "allMatch": true,
+      "errors": []
+    },
+    {
+      "manifest": "/Users/sun/.loom/reviews/2026-10-11-mixed-study/paid-admission/codex-manifest.json",
+      "manifestSha256": "a395ce0b218c0314d8ecf573d46fd0ebba89222b2af40bdd9c3048daa0254117",
+      "files": 44,
+      "realpaths": 2,
+      "allMatch": true,
+      "errors": []
+    },
+    {
+      "manifest": "/Users/sun/.loom/reviews/2026-10-11-mixed-study/paid-admission/claude-manifest.json",
+      "manifestSha256": "2a764797d61a3f2cfd26e4c09a420e7bcd1d49581818dd3902c70e1168c41a08",
+      "files": 37,
+      "realpaths": 2,
+      "allMatch": true,
+      "errors": []
+    },
+    {
+      "manifest": "/Users/sun/.loom/reviews/2026-10-11-mixed-study/paid-admission/opencode/binding-manifest.json",
+      "manifestSha256": "686fab76c905ec399214007fb1347fe79a4dd3f08fa6ff0b3416785265e283ad",
+      "files": 67,
+      "realpaths": 2,
+      "allMatch": true,
+      "errors": []
+    },
+    {
+      "manifest": "/Users/sun/.loom/reviews/2026-10-11-mixed-study/paid-admission/kimi/binding-manifest.json",
+      "manifestSha256": "ded6b29ebe66a24576671b12c92df4d787e6861c26bf895186374e7c5b344239",
+      "files": 1289,
+      "realpaths": 3,
+      "allMatch": true,
+      "errors": []
+    },
+    {
+      "manifest": "/Users/sun/.loom/reviews/2026-10-11-mixed-study/paid-admission/pi-manifest.json",
+      "manifestSha256": "0dfd8bfd21873e71b46706770e8e51aeff1eba725e219593751248a4815ffe08",
+      "files": 15081,
+      "realpaths": 10,
+      "allMatch": true,
+      "errors": []
+    }
+  ]
+}

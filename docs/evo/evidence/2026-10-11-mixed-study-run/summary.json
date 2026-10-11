@@ -1,0 +1,581 @@
+{
+  "kind": "loom-mixed-study-closed-results/v1",
+  "batchId": "mixed-two-task-20261011-v1",
+  "verdict": "Fixed batch closed with three complete CLI cohorts and two pre-model harness failures; not five-CLI efficiency acceptance.",
+  "authorization": {
+    "path": "/Users/sun/.loom/reviews/2026-10-11-mixed-study/paid-admission/owner-authorization.json",
+    "sha256": "0f9efa5708ecc999dc7781a8ec31894e3760d6020ce669d3ba84602ac5cf6cc4"
+  },
+  "source": {
+    "archiveRevision": "f1561877eedab9ce30de9065ed4bc960a76fef0c",
+    "productRevision": "41dafbb",
+    "productOrDeploymentChanged": false,
+    "defaultTrialFlagsRemainOff": true,
+    "treatment": "Isolated native-final-text trial; not production-default Worker workflow"
+  },
+  "method": {
+    "plannedClis": 5,
+    "plannedModelFamilies": 4,
+    "actualPaidClis": 3,
+    "actualPaidModelFamilies": 2,
+    "plannedMaximumArms": 40,
+    "plannedMaximumBusinessRounds": 480,
+    "completedArms": 24,
+    "completedBusinessRounds": 288,
+    "tasks": {
+      "A": "invoice-v7 code changes",
+      "B": "incrementally revised materials and report artifacts"
+    },
+    "pairsPerTaskPerBinding": 2,
+    "continuousRoundsPerArm": 12,
+    "pairTaskOrder": ["A", "B", "B", "A"],
+    "sideOrder": [
+      ["native", "current"],
+      ["current", "native"],
+      ["native", "current"],
+      ["current", "native"]
+    ],
+    "retries": 0,
+    "replacements": 0,
+    "automaticMemoryDisabledEveryNativeLaunch": true,
+    "ordinaryHistoryAndNativeCompactionRetained": true,
+    "ratioRule": "sum(current) / sum(native), separately per binding/task/pair; no averaging of ratios or cross-model pooled ratio",
+    "frozenPlan": "../2026-10-11-mixed-study/plan.json"
+  },
+  "bindings": {
+    "codex": {
+      "model": "gpt-6-luna",
+      "effort": "low",
+      "status": "withheld-before-model",
+      "completedArms": 0,
+      "completedRounds": 0,
+      "ratioCurrentOverNative": null,
+      "reason": "Manifest version prefix rejected by guard",
+      "noObservedProviderStart": true,
+      "failureEvidence": "entry-failures.json"
+    },
+    "claude": {
+      "model": "sonnet",
+      "effort": "low",
+      "status": "failed-before-model",
+      "completedArms": 0,
+      "completedRounds": 0,
+      "ratioCurrentOverNative": null,
+      "reason": "Shared usage-ledger lock wait expired before first model launch",
+      "noObservedProviderStart": true,
+      "failureEvidence": "entry-failures.json"
+    },
+    "opencode": {
+      "model": "aihubmix/deepseek-v4.1-flash",
+      "effort": "low",
+      "status": "complete",
+      "completedArms": 8,
+      "completedRounds": 96,
+      "machineQualityPassed": 96,
+      "overall": {
+        "sums": {
+          "native": {
+            "input": 8385306,
+            "output": 128492,
+            "httpAttempts": 274
+          },
+          "current": {
+            "input": 10946220,
+            "output": 165818,
+            "httpAttempts": 264
+          }
+        },
+        "ratioCurrentOverNative": {
+          "input": 1.305404954810236,
+          "output": 1.2904927933256545,
+          "httpAttempts": 0.9635036496350365
+        }
+      },
+      "tasks": {
+        "A": {
+          "sums": {
+            "native": {
+              "input": 6760127,
+              "output": 101354,
+              "httpAttempts": 173
+            },
+            "current": {
+              "input": 9366994,
+              "output": 128346,
+              "httpAttempts": 189
+            }
+          },
+          "ratioCurrentOverNative": {
+            "input": 1.3856239683071043,
+            "output": 1.2663141069913373,
+            "httpAttempts": 1.092485549132948
+          }
+        },
+        "B": {
+          "sums": {
+            "native": {
+              "input": 1625179,
+              "output": 27138,
+              "httpAttempts": 101
+            },
+            "current": {
+              "input": 1579226,
+              "output": 37472,
+              "httpAttempts": 75
+            }
+          },
+          "ratioCurrentOverNative": {
+            "input": 0.9717243454413329,
+            "output": 1.3807944579556342,
+            "httpAttempts": 0.7425742574257426
+          }
+        }
+      },
+      "pairs": [
+        {
+          "pair": 1,
+          "task": "A",
+          "sums": {
+            "native": {
+              "input": 2958469,
+              "output": 50717,
+              "httpAttempts": 81
+            },
+            "current": {
+              "input": 5588615,
+              "output": 71696,
+              "httpAttempts": 105
+            }
+          },
+          "ratioCurrentOverNative": {
+            "input": 1.889022666791506,
+            "output": 1.4136482836129898,
+            "httpAttempts": 1.2962962962962963
+          }
+        },
+        {
+          "pair": 2,
+          "task": "B",
+          "sums": {
+            "native": {
+              "input": 842246,
+              "output": 14311,
+              "httpAttempts": 50
+            },
+            "current": {
+              "input": 818422,
+              "output": 19687,
+              "httpAttempts": 37
+            }
+          },
+          "ratioCurrentOverNative": {
+            "input": 0.9717137273433177,
+            "output": 1.375655090489833,
+            "httpAttempts": 0.74
+          }
+        },
+        {
+          "pair": 3,
+          "task": "B",
+          "sums": {
+            "native": {
+              "input": 782933,
+              "output": 12827,
+              "httpAttempts": 51
+            },
+            "current": {
+              "input": 760804,
+              "output": 17785,
+              "httpAttempts": 38
+            }
+          },
+          "ratioCurrentOverNative": {
+            "input": 0.9717357679392745,
+            "output": 1.3865284166211898,
+            "httpAttempts": 0.7450980392156863
+          }
+        },
+        {
+          "pair": 4,
+          "task": "A",
+          "sums": {
+            "native": {
+              "input": 3801658,
+              "output": 50637,
+              "httpAttempts": 92
+            },
+            "current": {
+              "input": 3778379,
+              "output": 56650,
+              "httpAttempts": 84
+            }
+          },
+          "ratioCurrentOverNative": {
+            "input": 0.9938766190961943,
+            "output": 1.118747161166736,
+            "httpAttempts": 0.9130434782608695
+          }
+        }
+      ],
+      "audit": {
+        "path": "/Users/sun/.loom/reviews/2026-10-11-mixed-study/paid-review/opencode-final.json",
+        "sha256": "7fc9885c0fdac938b62a75e0f955263a58e737e13614ec87c2030a53590df2c9"
+      },
+      "strictToolSchemaParity": true
+    },
+    "pi": {
+      "model": "aihubmix/deepseek-v4.1-flash",
+      "effort": "low",
+      "status": "complete",
+      "completedArms": 8,
+      "completedRounds": 96,
+      "machineQualityPassed": 96,
+      "overall": {
+        "sums": {
+          "native": {
+            "input": 11283211,
+            "output": 193659,
+            "httpAttempts": 311
+          },
+          "current": {
+            "input": 12218998,
+            "output": 236963,
+            "httpAttempts": 295
+          }
+        },
+        "ratioCurrentOverNative": {
+          "input": 1.0829362315390538,
+          "output": 1.2236095404809484,
+          "httpAttempts": 0.9485530546623794
+        }
+      },
+      "tasks": {
+        "A": {
+          "sums": {
+            "native": {
+              "input": 10023916,
+              "output": 157376,
+              "httpAttempts": 211
+            },
+            "current": {
+              "input": 10446466,
+              "output": 196151,
+              "httpAttempts": 195
+            }
+          },
+          "ratioCurrentOverNative": {
+            "input": 1.0421541840534179,
+            "output": 1.2463844550630339,
+            "httpAttempts": 0.9241706161137441
+          }
+        },
+        "B": {
+          "sums": {
+            "native": {
+              "input": 1259295,
+              "output": 36283,
+              "httpAttempts": 100
+            },
+            "current": {
+              "input": 1772532,
+              "output": 40812,
+              "httpAttempts": 100
+            }
+          },
+          "ratioCurrentOverNative": {
+            "input": 1.4075589913403928,
+            "output": 1.12482429788055,
+            "httpAttempts": 1.0
+          }
+        }
+      },
+      "pairs": [
+        {
+          "pair": 1,
+          "task": "A",
+          "sums": {
+            "native": {
+              "input": 4561616,
+              "output": 82003,
+              "httpAttempts": 100
+            },
+            "current": {
+              "input": 5716146,
+              "output": 99654,
+              "httpAttempts": 106
+            }
+          },
+          "ratioCurrentOverNative": {
+            "input": 1.2530967095871288,
+            "output": 1.2152482226260015,
+            "httpAttempts": 1.06
+          }
+        },
+        {
+          "pair": 2,
+          "task": "B",
+          "sums": {
+            "native": {
+              "input": 610000,
+              "output": 17080,
+              "httpAttempts": 50
+            },
+            "current": {
+              "input": 997982,
+              "output": 23198,
+              "httpAttempts": 50
+            }
+          },
+          "ratioCurrentOverNative": {
+            "input": 1.6360360655737705,
+            "output": 1.3581967213114754,
+            "httpAttempts": 1.0
+          }
+        },
+        {
+          "pair": 3,
+          "task": "B",
+          "sums": {
+            "native": {
+              "input": 649295,
+              "output": 19203,
+              "httpAttempts": 50
+            },
+            "current": {
+              "input": 774550,
+              "output": 17614,
+              "httpAttempts": 50
+            }
+          },
+          "ratioCurrentOverNative": {
+            "input": 1.1929092323212098,
+            "output": 0.9172525126282352,
+            "httpAttempts": 1.0
+          }
+        },
+        {
+          "pair": 4,
+          "task": "A",
+          "sums": {
+            "native": {
+              "input": 5462300,
+              "output": 75373,
+              "httpAttempts": 111
+            },
+            "current": {
+              "input": 4730320,
+              "output": 96497,
+              "httpAttempts": 89
+            }
+          },
+          "ratioCurrentOverNative": {
+            "input": 0.8659941782765501,
+            "output": 1.280259509373383,
+            "httpAttempts": 0.8018018018018018
+          }
+        }
+      ],
+      "audit": {
+        "path": "/Users/sun/.loom/reviews/2026-10-11-mixed-study/runtime-review/pi/final.json",
+        "sha256": "be6edab270c14074eebef596e37548f4a2054a15668ee7bed95ce2d89ec8db52"
+      },
+      "strictToolSchemaParity": true
+    },
+    "kimi": {
+      "model": "kimi-code/k3-256k",
+      "effort": "low",
+      "status": "complete",
+      "completedArms": 8,
+      "completedRounds": 96,
+      "machineQualityPassed": 96,
+      "overall": {
+        "sums": {
+          "native": {
+            "input": 8881433,
+            "output": 78284,
+            "httpAttempts": 241
+          },
+          "current": {
+            "input": 7180137,
+            "output": 72137,
+            "httpAttempts": 207
+          }
+        },
+        "ratioCurrentOverNative": {
+          "input": 0.8084435248230776,
+          "output": 0.9214782075519902,
+          "httpAttempts": 0.8589211618257261
+        }
+      },
+      "tasks": {
+        "A": {
+          "sums": {
+            "native": {
+              "input": 6822641,
+              "output": 55709,
+              "httpAttempts": 166
+            },
+            "current": {
+              "input": 5073809,
+              "output": 48879,
+              "httpAttempts": 135
+            }
+          },
+          "ratioCurrentOverNative": {
+            "input": 0.7436722817454414,
+            "output": 0.8773986249977562,
+            "httpAttempts": 0.8132530120481928
+          }
+        },
+        "B": {
+          "sums": {
+            "native": {
+              "input": 2058792,
+              "output": 22575,
+              "httpAttempts": 75
+            },
+            "current": {
+              "input": 2106328,
+              "output": 23258,
+              "httpAttempts": 72
+            }
+          },
+          "ratioCurrentOverNative": {
+            "input": 1.0230892678813595,
+            "output": 1.0302547065337764,
+            "httpAttempts": 0.96
+          }
+        }
+      },
+      "pairs": [
+        {
+          "pair": 1,
+          "task": "A",
+          "sums": {
+            "native": {
+              "input": 4491434,
+              "output": 31876,
+              "httpAttempts": 101
+            },
+            "current": {
+              "input": 2553570,
+              "output": 24186,
+              "httpAttempts": 69
+            }
+          },
+          "ratioCurrentOverNative": {
+            "input": 0.5685422517619094,
+            "output": 0.7587526665830091,
+            "httpAttempts": 0.6831683168316832
+          }
+        },
+        {
+          "pair": 2,
+          "task": "B",
+          "sums": {
+            "native": {
+              "input": 1035810,
+              "output": 10700,
+              "httpAttempts": 38
+            },
+            "current": {
+              "input": 1055228,
+              "output": 11666,
+              "httpAttempts": 36
+            }
+          },
+          "ratioCurrentOverNative": {
+            "input": 1.0187466813411725,
+            "output": 1.0902803738317757,
+            "httpAttempts": 0.9473684210526315
+          }
+        },
+        {
+          "pair": 3,
+          "task": "B",
+          "sums": {
+            "native": {
+              "input": 1022982,
+              "output": 11875,
+              "httpAttempts": 37
+            },
+            "current": {
+              "input": 1051100,
+              "output": 11592,
+              "httpAttempts": 36
+            }
+          },
+          "ratioCurrentOverNative": {
+            "input": 1.0274863096320366,
+            "output": 0.9761684210526316,
+            "httpAttempts": 0.972972972972973
+          }
+        },
+        {
+          "pair": 4,
+          "task": "A",
+          "sums": {
+            "native": {
+              "input": 2331207,
+              "output": 23833,
+              "httpAttempts": 65
+            },
+            "current": {
+              "input": 2520239,
+              "output": 24693,
+              "httpAttempts": 66
+            }
+          },
+          "ratioCurrentOverNative": {
+            "input": 1.0810876082647316,
+            "output": 1.0360844207611295,
+            "httpAttempts": 1.0153846153846153
+          }
+        }
+      ],
+      "audit": {
+        "path": "/Users/sun/.loom/reviews/2026-10-11-mixed-study/paid-review/kimi-final.json",
+        "sha256": "e1b22822c7223185938f41553618e699e89e6237128221f2769196063708bd69"
+      },
+      "strictToolSchemaParity": false
+    }
+  },
+  "checks": {
+    "outerRunnerExitCode": 1,
+    "outerRunnerFailureReason": "Two pre-model entry failures; three complete cohorts retained",
+    "rootRecomputedDurableSumsMatchIndependentRawAudits": true,
+    "completedArmsHaveCompleteReceipts": true,
+    "all288MachineQualityRoundsPassed": true,
+    "postBatchClosure": "closure.json",
+    "controller": {
+      "path": "/Users/sun/.loom/reviews/2026-10-11-mixed-study/execution/controller.json",
+      "sha256": "503bc815c4576f67b77e2d744fdb22ac37950f63233dda7ebace2d45f4a6d097"
+    },
+    "controllerUsageSummary": {
+      "path": "/Users/sun/.loom/reviews/2026-10-11-mixed-study/execution/usage-summary.json",
+      "sha256": "4c085ce4656decc5bb5ba27d94be0a8b4adba580abcd584678d248d78900c0db"
+    },
+    "durableLedger": {
+      "path": "/Users/sun/.loom/reviews/2026-10-11-mixed-study/execution/claims/state.json",
+      "sha256": "e3f16ffd0d3d5a1d3ab9cb91487c6bd4a15c4857bcc49dd2244392fa3b66f75b"
+    }
+  },
+  "limits": [
+    "Only two workloads and two paired repeats per task; descriptive observations, not confidence bounds or equivalence proof.",
+    "Input includes cached input; output includes reasoning where supplied. These subsets are not added again. No invoice or monetary ratio.",
+    "Optional cache/reasoning fields can be incomplete while primary input/output is complete; unknown is not zero.",
+    "Kimi print/ACP dynamic ReadMediaFile schema difference remains; valid comparison of actual execution modes, not strict tool-schema parity or pure protocol attribution.",
+    "Machine artifact/business oracles do not prove every free-form sentence correct.",
+    "External raw request census is complete for these three cohorts; product UI independently retains partial accounting where native compaction leaves gaps.",
+    "Failed/withheld Codex and Claude cohorts are not zero-cost successful samples and cannot borrow prior-study results.",
+    "This batch is not the full contract section 6 latency and protocol-generation gate, nor multi-instance collaboration acceptance."
+  ],
+  "interpretation": {
+    "observed": "Overall ratios conceal task differences; inspect tasks and repeated pairs before judging improvement.",
+    "sharedCandidate": "Product standing instructions and delivery wrapper remain in context; generated history, tool paths and compaction also change subsequent request size.",
+    "causalLimit": "Measured byte differences are not token estimates and do not allocate every excess token to platform instructions.",
+    "nextEngineeringScope": "First integrate and positively verify test-entry repairs. Preserve the earlier decision not to expand prompt-trimming experiments for a small byte gain. Use the captured history paths to specify one discriminating shared intervention before another paid batch; preserve authorization/delivery/business actions and avoid per-model prompt workarounds. These ratios alone do not justify an architecture rewrite.",
+    "newPaidBatchStarted": false
+  },
+  "relatedEvidence": ["entry-failures.json", "context-analysis.json"]
+}
