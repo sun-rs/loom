@@ -16,8 +16,9 @@
     "claude": {
       "model": "sonnet (install resolves claude-sonnet-5-5)",
       "effort": "low",
-      "status": "paid cohort running",
-      "metric": "raw HTTP includes native summary once, independently from business generations"
+      "status": "complete; accounting valid, efficiency and quality not accepted",
+      "metric": "raw HTTP includes native summary once, independently from business generations",
+      "results": "claude-complete.json"
     },
     "pi": {
       "model": "aihubmix/deepseek-v4.1-flash",
@@ -48,7 +49,11 @@
       "output": 0.9340230756730404,
       "count": 0.9488054607508533
     },
-    "claude": null,
+    "claude": {
+      "input": 1.4802090514304833,
+      "output": 1.2592649740496564,
+      "generationHttp": 1.1898734177215189
+    },
     "pi": {
       "input": 0.9276702343087787,
       "output": 0.872941148111991,
@@ -67,7 +72,7 @@
     "Codex startup generate=false completed events report tokens but are connection setup, not sampling; do not label their sum with sampling as unique billable tokens",
     "Kimi free/paid entry cwd differed; same source entry alone did not prove sandbox topology equivalence."
   ],
-  "publicCostConclusion": "Codex and Pi fixed cohorts complete for their respective binding/workload only; Claude/OpenCode/fresh Kimi pending. No five-CLI efficiency acceptance.",
+  "publicCostConclusion": "Cross-CLI goal not fully achieved: Codex/Pi totals near native in this cohort, Claude input1.480209 and lower quality. OpenCode/fresh Kimi remain pending; no automatic next experiment or product-default acceptance.",
   "revisionBoundary": "Codex/Claude/Pi retain186f7c3; Kimi/OpenCode original unadmitted slots run repaireda92d5ec. No in-flight source replacement.",
   "cohortSplit": "Codex/Claude/Pi original source; Kimi/OpenCode admitted repaired source. Kimi cohort subsequently failed on private harness cwd; separate fresh cohort running, previous costs deducted and original absolute deadline retained. No old native arm reused.",
   "closeoutPolicy": "Finish already-started fixed cohorts only; no additional experiments or diagnostic scope. Report ratios, quality, evidence validity and engineering decision; limitations do not automatically trigger another experiment."

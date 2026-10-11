@@ -1,0 +1,203 @@
+{
+  "kind": "claude-v7-complete-public-audit/v1",
+  "sourceRevision": "186f7c3694ff784c9ecd4eff1c6d7cff13352556",
+  "cli": "Claude Code 2.1.293",
+  "model": "sonnet (resolved claude-sonnet-5-5)",
+  "effort": "low",
+  "complete": true,
+  "statistics": {
+    "sums": {
+      "native": {
+        "input": 11118795,
+        "output": 142580,
+        "generationHttp": 316,
+        "auxiliaryHttp": 0,
+        "qualityPassed": 44,
+        "qualityRounds": 48
+      },
+      "current": {
+        "input": 16458141,
+        "output": 179546,
+        "generationHttp": 376,
+        "auxiliaryHttp": 1,
+        "qualityPassed": 33,
+        "qualityRounds": 48
+      }
+    },
+    "ratios": {
+      "input": 1.4802090514304833,
+      "output": 1.2592649740496564,
+      "generationHttp": 1.1898734177215189
+    }
+  },
+  "arms": [
+    {
+      "slot": "1/native",
+      "complete": true,
+      "rawResponseCount": 80,
+      "nativeResponseCount": 80,
+      "summaryResponseCount": 0,
+      "kernelResponseCount": null,
+      "kernelGapCount": null,
+      "amountsAndRunAttributionMatched": true,
+      "rounds": 12,
+      "qualityPassed": 12,
+      "launchMemoryVerified": 2,
+      "allRecordedGroupsEmpty": true,
+      "totals": {
+        "input": 2795763,
+        "output": 33677
+      },
+      "auxiliaryHttpCount": 0,
+      "rejectedRouteCount": 0
+    },
+    {
+      "slot": "1/current",
+      "complete": true,
+      "rawResponseCount": 101,
+      "nativeResponseCount": 101,
+      "summaryResponseCount": 0,
+      "kernelResponseCount": 101,
+      "kernelGapCount": 0,
+      "amountsAndRunAttributionMatched": true,
+      "rounds": 12,
+      "qualityPassed": 8,
+      "launchMemoryVerified": 5,
+      "allRecordedGroupsEmpty": true,
+      "totals": {
+        "input": 4426364,
+        "output": 42644
+      },
+      "auxiliaryHttpCount": 0,
+      "rejectedRouteCount": 0
+    },
+    {
+      "slot": "2/current",
+      "complete": true,
+      "rawResponseCount": 89,
+      "nativeResponseCount": 89,
+      "summaryResponseCount": 0,
+      "kernelResponseCount": 89,
+      "kernelGapCount": 0,
+      "amountsAndRunAttributionMatched": true,
+      "rounds": 12,
+      "qualityPassed": 12,
+      "launchMemoryVerified": 5,
+      "allRecordedGroupsEmpty": true,
+      "totals": {
+        "input": 3794500,
+        "output": 46766
+      },
+      "auxiliaryHttpCount": 1,
+      "rejectedRouteCount": 0
+    },
+    {
+      "slot": "2/native",
+      "complete": true,
+      "rawResponseCount": 85,
+      "nativeResponseCount": 85,
+      "summaryResponseCount": 0,
+      "kernelResponseCount": null,
+      "kernelGapCount": null,
+      "amountsAndRunAttributionMatched": true,
+      "rounds": 12,
+      "qualityPassed": 12,
+      "launchMemoryVerified": 2,
+      "allRecordedGroupsEmpty": true,
+      "totals": {
+        "input": 2878746,
+        "output": 32490
+      },
+      "auxiliaryHttpCount": 0,
+      "rejectedRouteCount": 0
+    },
+    {
+      "slot": "3/native",
+      "complete": true,
+      "rawResponseCount": 85,
+      "nativeResponseCount": 85,
+      "summaryResponseCount": 0,
+      "kernelResponseCount": null,
+      "kernelGapCount": null,
+      "amountsAndRunAttributionMatched": true,
+      "rounds": 12,
+      "qualityPassed": 12,
+      "launchMemoryVerified": 2,
+      "allRecordedGroupsEmpty": true,
+      "totals": {
+        "input": 3139887,
+        "output": 41094
+      },
+      "auxiliaryHttpCount": 0,
+      "rejectedRouteCount": 0
+    },
+    {
+      "slot": "3/current",
+      "complete": true,
+      "rawResponseCount": 101,
+      "nativeResponseCount": 101,
+      "summaryResponseCount": 0,
+      "kernelResponseCount": 101,
+      "kernelGapCount": 0,
+      "amountsAndRunAttributionMatched": true,
+      "rounds": 12,
+      "qualityPassed": 8,
+      "launchMemoryVerified": 5,
+      "allRecordedGroupsEmpty": true,
+      "totals": {
+        "input": 4631285,
+        "output": 47874
+      },
+      "auxiliaryHttpCount": 0,
+      "rejectedRouteCount": 0
+    },
+    {
+      "slot": "4/current",
+      "complete": true,
+      "rawResponseCount": 85,
+      "nativeResponseCount": 85,
+      "summaryResponseCount": 0,
+      "kernelResponseCount": 85,
+      "kernelGapCount": 0,
+      "amountsAndRunAttributionMatched": true,
+      "rounds": 12,
+      "qualityPassed": 5,
+      "launchMemoryVerified": 5,
+      "allRecordedGroupsEmpty": true,
+      "totals": {
+        "input": 3605992,
+        "output": 42262
+      },
+      "auxiliaryHttpCount": 0,
+      "rejectedRouteCount": 0
+    },
+    {
+      "slot": "4/native",
+      "complete": true,
+      "rawResponseCount": 66,
+      "nativeResponseCount": 66,
+      "summaryResponseCount": 0,
+      "kernelResponseCount": null,
+      "kernelGapCount": null,
+      "amountsAndRunAttributionMatched": true,
+      "rounds": 12,
+      "qualityPassed": 8,
+      "launchMemoryVerified": 2,
+      "allRecordedGroupsEmpty": true,
+      "totals": {
+        "input": 2304399,
+        "output": 35319
+      },
+      "auxiliaryHttpCount": 0,
+      "rejectedRouteCount": 0
+    }
+  ],
+  "verification": "All sealed arms; independent raw SSE/hash/native projects/Kernel read-only SQL/memory launch/session/cleanup checks. No paid rerun or closure changes.",
+  "verdict": "Measured input remains 1.480209 times native, output 1.259265; native quality44/48 versus current33/48. No efficiency or quality acceptance. Costs of failed-quality rounds retained.",
+  "limitations": [
+    "Four pairs of one workload/model/effort; not a universal or currency claim.",
+    "Generation HTTP counted separately from one auxiliary count_tokens call; no missing generation inferred from auxiliary request ID gap.",
+    "Raw SSE primary usage, native transcript responses, current Kernel response/run attribution, session/memory/cleanup and frozen closures independently matched.",
+    "Native-final trial, not deployed seven-flags-off default."
+  ]
+}
