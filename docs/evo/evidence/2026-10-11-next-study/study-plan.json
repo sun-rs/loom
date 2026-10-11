@@ -1,0 +1,134 @@
+{
+  "kind": "loom-two-workload-study-plan/v1",
+  "status": "design frozen; fixture interface verified; provider runner integration pending",
+  "batchId": "two-workload-20261011-v1",
+  "productSourceRevision": "f1561877eedab9ce30de9065ed4bc960a76fef0c",
+  "sourceDirectory": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/source",
+  "bindings": [
+    {
+      "cli": "codex",
+      "model": "gpt-6-luna",
+      "effort": "low"
+    },
+    {
+      "cli": "claude",
+      "model": "sonnet",
+      "effort": "low"
+    },
+    {
+      "cli": "opencode",
+      "model": "aihubmix/deepseek-v4.1-flash",
+      "effort": "low"
+    },
+    {
+      "cli": "kimi",
+      "model": "kimi-code/k3-256k",
+      "effort": "low"
+    },
+    {
+      "cli": "pi",
+      "model": "aihubmix/deepseek-v4.1-flash",
+      "effort": "low"
+    }
+  ],
+  "schedulePerBinding": [
+    {
+      "block": 1,
+      "task": "A",
+      "order": ["native", "loom"]
+    },
+    {
+      "block": 2,
+      "task": "B",
+      "order": ["loom", "native"]
+    },
+    {
+      "block": 3,
+      "task": "B",
+      "order": ["native", "loom"]
+    },
+    {
+      "block": 4,
+      "task": "A",
+      "order": ["loom", "native"]
+    }
+  ],
+  "roundsPerArm": 12,
+  "maximumArms": 40,
+  "maximumTurns": 480,
+  "resourceCaps": {
+    "global": {
+      "input": 336000000,
+      "output": 4800000,
+      "httpAttempts": 7520,
+      "wallHours": 12
+    },
+    "perBindingArm": {
+      "codex": {
+        "input": 6000000,
+        "output": 100000,
+        "httpAttempts": 180,
+        "wallMinutes": 45
+      },
+      "claude": {
+        "input": 6000000,
+        "output": 100000,
+        "httpAttempts": 180,
+        "wallMinutes": 45
+      },
+      "opencode": {
+        "input": 12000000,
+        "output": 150000,
+        "httpAttempts": 200,
+        "wallMinutes": 45
+      },
+      "kimi": {
+        "input": 6000000,
+        "output": 100000,
+        "httpAttempts": 180,
+        "wallMinutes": 45
+      },
+      "pi": {
+        "input": 12000000,
+        "output": 150000,
+        "httpAttempts": 200,
+        "wallMinutes": 45
+      }
+    }
+  },
+  "paidReleased": false,
+  "primaryEstimand": "End-to-end usage for the installed native CLI versus Loom production adapter with opt-in native-final, same task/model/effort and memory policy. Count all naturally occurring transport/context/tool differences; do not subtract treatment costs.",
+  "kimiDecision": {
+    "includeInEndToEndStratum": true,
+    "strictIdenticalSchema": false,
+    "reason": "Print-resume and ACP status-driven tool registration is an installed CLI lifecycle difference exposed by Loom chosen transport; preserve it as part of actual user-path cost. Do not remove native tools or change per-CLI prompts to manufacture equality.",
+    "sourceEvidence": "kimi-cause.json",
+    "notClaimed": "A pure communication-protocol causal effect or identical per-request tool schema."
+  },
+  "quality": "Deterministic finite artifact/fact/citation/delivery checks per task; narrative semantic review supplementary with reviewer type and evidence, not model-generated ground truth. No-quality-cost equivalence claim when quality differs.",
+  "statistics": {
+    "primaryPerBindingTask": "For each complete two-pair cell, sum Loom input / sum native input; separately output and actual generation/request measures, plus both individual pair ratios. Show paired absolute differences. Incomplete fixed cell => primary=null. A complete-task result may still be shown when another task failed, but cannot stand in for the all-task binding result.",
+    "bindingOverall": "Only after all four planned pairs complete, report sum Loom / sum native as workload-weighted descriptive ratio, alongside task-specific ratios. Do not pool CLI/model families into one token-cost verdict or average ratios without denominators.",
+    "scopeOfCost": "Capture all provider activity from arm start through final drain, including compaction summaries, retries, protocol follow-ups and failed requests. First-turn setup is included in long-task totals; also show first-request difference and per-turn trajectories. No subtraction of unfavorable business-path divergence from the observed total.",
+    "cache": "Record raw provider input/cache-read/cache-write/output/reasoning fields and their published inclusion relationships. Normalize only when semantics are verified; never add cache tokens already included in input or reasoning already included in output. Unknown remains null. Report warm/cold cache proportions and launch order; do not clear native history or fabricate uncached usage. Cross-model token ratios are not currency ratios.",
+    "generationVersusHTTP": "Keep actual model generations distinct from transport attempts, cached/prewarm telemetry and native compaction aggregates. Codex OTel observed-event counts are not an independent HTTP census; unavailable HTTP remains unknown. Never label unknown retries as zero. Deduplicate only exact stable identity/content replay, preserve conflicts/gaps.",
+    "aggregate": "Native aggregate compaction records are displayed separately with provenance; do not add overlapping aggregates to generation totals. Wire totals, native totals and Kernel observations reconcile without inventing response IDs or clearing known gaps.",
+    "failures": "Keep raw request/response hashes, native/session capture, guard state, partial usage and cleanup receipts for every attempt. Known lower bounds stay visible; primary=null for incomplete planned cohort. A parent cleanup proof does not turn incomplete accounting into complete accounting.",
+    "contract": "Evaluate contract section 6 directly from its authoritative table; do not copy or relax its numeric acceptance targets into this proposal. User goal of near-native cost is stricter than merely passing that historical table, so report real ratios and quality rather than declaring product value from table compliance alone.",
+    "uncertainty": "Publish all pair results, range and direction consistency; with two replicates per task avoid significance/equivalence claims or treating 12 turns as n=12. Describe overhead decomposition, but do not infer causation from stochastic tool-use differences."
+  },
+  "stop": {
+    "sampleCap": "Exactly the predeclared 40 arms maximum; withheld slots stay absent, never redistributed. No optional stopping for a favorable ratio and no extra pairs after an unfavorable one.",
+    "proposedResourceCaps": "Keep per-arm and aggregate ceilings from unified method.json as planning maxima only; identical total arm count does not enlarge authorization. The eventual new batch needs its own explicit authorization/release and absolute deadline. Resource ceilings are not performance targets. This design itself authorizes no spending.",
+    "admission": "Run deterministic fixture/oracle negatives and final-parent synthetic normal/failure checks only for changed components; refuse drift, missing memory proof, broken isolation, unsupported model/effort or inadequate capture before paid start. Do not repeatedly rerun already proved unchanged components.",
+    "duringRun": "Execution/capture/config/session/memory/isolation failure or per-binding cap stops that binding; common closure drift or global cap stops all. Preserve consumed costs and unfinished slots. Fully captured ordinary model quality failure is not a harness abort.",
+    "finish": "At all scheduled completions or first applicable hard stop, drain owned processes, seal ledgers and write one fixed report. No model-judge calls, candidate-prompt tuning, replacement failures, new metrics or automatic follow-up batch. If evidence is insufficient, report the bounded reason and stop."
+  },
+  "taskA": "Immutable invoice-v7 12-turn workload",
+  "taskB": "workload-review: Harbor local evidence corrections, 12 fixed turns; future packets delivered only before their assigned turn",
+  "admissionRemaining": [
+    "Wire existing provider runners to fixed workload selection and canonical final capture",
+    "Final frozen package preflight for changed paths",
+    "Explicit batch release under current AGENTS contract before any paid execution"
+  ]
+}

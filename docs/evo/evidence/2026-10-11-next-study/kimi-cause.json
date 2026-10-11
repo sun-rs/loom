@@ -1,0 +1,150 @@
+{
+  "kind": "kimi-schema-cause/v1",
+  "scope": "Read-only installed source and existing raw, plus extracted-class pure code probe. No CLI/provider calls, no frozen modifications.",
+  "cli": {
+    "version": "2.1.1",
+    "source": "/opt/homebrew/lib/node_modules/@moonshot-ai/kimi-code/dist/main.mjs",
+    "sha256": "2563a338c94868a34e1bfd2e5579067d5a472acf4cb0bf350a3bfe1092bbe59d"
+  },
+  "observed": {
+    "native": {
+      "root": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/free-runs/kimi-1791713671316/runs/1-native/print",
+      "requests": 24,
+      "toolCounts": [
+        27, 27, 26, 27, 26, 27, 26, 27, 26, 27, 26, 27, 26, 27, 26, 27, 26, 27,
+        26, 27, 26, 27, 26, 27
+      ]
+    },
+    "current": {
+      "root": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/free-runs/kimi-1791713671316/runs/1-current/loom",
+      "requests": 24,
+      "toolCounts": [
+        27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27,
+        27, 27, 27, 27, 27, 27
+      ]
+    }
+  },
+  "cause": {
+    "classification": "Native print resume versus ACP pre-prompt control/event lifecycle difference; not random model behavior.",
+    "mechanism": [
+      "Media registrar initially refreshes, then subscribes only to AgentStatusUpdated and runtime change; media registration depends on image/video capability.",
+      "Session replay executes events silently and skips observable event publication; registrar does not subscribe to restore-complete.",
+      "Native resumed launches pass same model and get effort from identical config. setModel with unchanged alias is no-op; first resumed HTTP request lacks ReadMediaFile.",
+      "ACP driver explicitly sets thinking before each prompt. setThinking always dispatches config/status even unchanged, refreshing registrar before request.",
+      "Live token-count measurement/status can refresh registrar after first model response, consistent with all second requests restoring ReadMediaFile."
+    ],
+    "confidence": "Source mechanisms and existing per-request pattern strongly support this lifecycle explanation. Extracted class reproduces stale registration until status event. No new instrumented full CLI run; exact first live refresh trigger on each historical turn is not independently traced."
+  },
+  "codeReferences": [
+    {
+      "path": "/opt/homebrew/lib/node_modules/@moonshot-ai/kimi-code/dist/main.mjs",
+      "line": 271728,
+      "fact": "Registration capability guard"
+    },
+    {
+      "path": "/opt/homebrew/lib/node_modules/@moonshot-ai/kimi-code/dist/main.mjs",
+      "line": 271821,
+      "fact": "Initial refresh and event/runtime listeners; no restore hook"
+    },
+    {
+      "path": "/opt/homebrew/lib/node_modules/@moonshot-ai/kimi-code/dist/main.mjs",
+      "line": 271842,
+      "fact": "Refresh resolves current model capabilities and registration key"
+    },
+    {
+      "path": "/opt/homebrew/lib/node_modules/@moonshot-ai/kimi-code/dist/main.mjs",
+      "line": 184486,
+      "fact": "Replay calls executeEvent with silent=true"
+    },
+    {
+      "path": "/opt/homebrew/lib/node_modules/@moonshot-ai/kimi-code/dist/main.mjs",
+      "line": 184361,
+      "fact": "Silent event returns before observable publish"
+    },
+    {
+      "path": "/opt/homebrew/lib/node_modules/@moonshot-ai/kimi-code/dist/main.mjs",
+      "line": 274069,
+      "fact": "Same model alias does not update profile"
+    },
+    {
+      "path": "/opt/homebrew/lib/node_modules/@moonshot-ai/kimi-code/dist/main.mjs",
+      "line": 274086,
+      "fact": "setThinking always invokes update"
+    },
+    {
+      "path": "/opt/homebrew/lib/node_modules/@moonshot-ai/kimi-code/dist/main.mjs",
+      "line": 274236,
+      "fact": "Config update emits status"
+    },
+    {
+      "path": "/opt/homebrew/lib/node_modules/@moonshot-ai/kimi-code/dist/main.mjs",
+      "line": 312007,
+      "fact": "ACP setThinking forwards even same level"
+    },
+    {
+      "path": "/opt/homebrew/lib/node_modules/@moonshot-ai/kimi-code/dist/main.mjs",
+      "line": 264016,
+      "fact": "Token counting emits status"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-11-unified-acceptance/source/packages/agent-host/src/kimi-acp-driver.mjs",
+      "line": 533,
+      "fact": "Driver sets/validates thinking via ACP before prompt"
+    }
+  ],
+  "probe": {
+    "path": "/Users/sun/.loom/reviews/2026-10-11-next-study/kimi-registrar-probe.mjs",
+    "result": {
+      "scope": "Extracted installed class with stubbed services; verifies missing restoration refresh mechanism, not a new end-to-end CLI run",
+      "before": false,
+      "afterSilentRestore": false,
+      "afterStatus": true
+    }
+  },
+  "fairness": {
+    "primaryUsage": "Unaffected census accounting validity; all actually sent requests remain counted. This does not prove equal input/tool configuration.",
+    "endToEnd": "May compare actual native print and Loom ACP user paths with dynamic tool difference explicitly disclosed; preserves real mode overhead.",
+    "pureProtocolAttribution": "Fails exact schema parity; cannot attribute all difference solely to Loom prompt/message protocol.",
+    "noCostInference": "Schema bytes reported as serialized UTF-8 only; no token/cost estimate or claim of negligible effect."
+  },
+  "minimalRecommendations": [
+    "Do not remove native tools, add task prompts, or alter provider install to force parity.",
+    "Keep a general per-request tool-schema timeline and distinguish end-to-end mode comparison from equal-schema causal experiments.",
+    "If strict schema equality is required, hold that causal claim pending upstream lifecycle fix or separately approved comparable transport baseline; do not relabel existing frozen results."
+  ],
+  "configurationEvidence": {
+    "native": {
+      "providerId": "managed:kimi-code",
+      "providerType": "kimi",
+      "modelAlias": "kimi-code/k3-256k",
+      "model": "k3-256k",
+      "effort": "low",
+      "capabilities": [
+        "thinking",
+        "always_thinking",
+        "image_in",
+        "tool_use",
+        "dynamically_loaded_tools"
+      ]
+    },
+    "current": {
+      "providerId": "managed:kimi-code",
+      "providerType": "kimi",
+      "modelAlias": "kimi-code/k3-256k",
+      "model": "k3-256k",
+      "effort": "low",
+      "capabilities": [
+        "thinking",
+        "always_thinking",
+        "image_in",
+        "tool_use",
+        "dynamically_loaded_tools"
+      ]
+    },
+    "equal": true
+  },
+  "fullPrivateEvidence": {
+    "path": "/Users/sun/.loom/reviews/2026-10-11-next-study/kimi-cause.json",
+    "sha256": "339e1a8bf86ef4ceced608c32ccf1708361d70894962cbb481ea8d26d565c4b2"
+  }
+}

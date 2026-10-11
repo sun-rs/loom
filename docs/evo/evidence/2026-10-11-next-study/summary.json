@@ -1,0 +1,88 @@
+{
+  "kind": "loom-next-cost-study-preparation/v1",
+  "date": "2026-10-11",
+  "status": "Kimi cause investigation and bounded two-task design complete; Task B local interface verified; provider integration pending",
+  "privateRoot": "/Users/sun/.loom/reviews/2026-10-11-next-study",
+  "paidProviderCalls": 0,
+  "actualCliCallsThisBatch": 0,
+  "productChanged": false,
+  "deploymentChanged": false,
+  "kimiDecision": {
+    "includeInEndToEndStratum": true,
+    "strictIdenticalSchema": false,
+    "reason": "Print-resume and ACP status-driven tool registration is an installed CLI lifecycle difference exposed by Loom chosen transport; preserve it as part of actual user-path cost. Do not remove native tools or change per-CLI prompts to manufacture equality.",
+    "sourceEvidence": "kimi-cause.json",
+    "notClaimed": "A pure communication-protocol causal effect or identical per-request tool schema."
+  },
+  "matrix": {
+    "cliBindings": 5,
+    "modelBindingFamilies": 4,
+    "taskFamilies": 2,
+    "pairsPerTaskPerBinding": 2,
+    "turnsPerArm": 12,
+    "maximumArms": 40,
+    "maximumTurns": 480,
+    "schedule": [
+      {
+        "block": 1,
+        "task": "A",
+        "order": ["native", "loom"]
+      },
+      {
+        "block": 2,
+        "task": "B",
+        "order": ["loom", "native"]
+      },
+      {
+        "block": 3,
+        "task": "B",
+        "order": ["native", "loom"]
+      },
+      {
+        "block": 4,
+        "task": "A",
+        "order": ["loom", "native"]
+      }
+    ],
+    "limits": "Descriptive repeated screening only; not every CLI on multiple models, not statistical equivalence, not multi-agent acceptance."
+  },
+  "taskB": {
+    "scope": "Local evidence synthesis with fixed corrections, withdrawal/conflict resolution and final recommendation",
+    "oracle": "Independent fixed factual/numeric/citation answers; no constraint on tool-call strategy",
+    "interface": "Host releases only current materials and snapshots artifacts; actual final must come from caller, not reconstructed from report",
+    "notYet": "Not wired to five CLI runners; actual sandbox denial and canonical final provenance remain unverified",
+    "readinessPath": "/Users/sun/.loom/reviews/2026-10-11-next-study/workload-review/readiness.json",
+    "readinessSha256": "b3aa45ccf9184e03bb478f155107c896b1698308fe5d70129a4ff3350b351777"
+  },
+  "reporting": [
+    "Include first-turn setup, all ordinary tool/thinking paths, compaction and known failures in totals.",
+    "No favorable-sample replacement or quality-failure exclusion.",
+    "Report task-specific and all-task sums per binding; incomplete cells remain null.",
+    "Deterministic artifact/factual quality separate from supplemental semantic review; model-assisted review explicitly labeled.",
+    "End-to-end ratios do not establish pure protocol causality or monetary cost.",
+    "No threshold invented to replace the owner near-native goal or contract section 6."
+  ],
+  "remaining": [
+    "Wire Task B release/capture to existing provider runners without changing native capabilities",
+    "Verify hidden future/oracle denial and actual final provenance on changed execution paths",
+    "Freeze new batch execution closure and bounded release before paid calls"
+  ],
+  "noChanges": [
+    "Frozen P0 package, old paid samples and their fairness verdicts",
+    "Product code, installed CLI/account configuration, native tools and provider-specific prompts",
+    "Target contract and production trial flags"
+  ],
+  "verification": {
+    "taskBTests": 24,
+    "independentOracle": "14 tests plus equivalent-format variants passed",
+    "independentInterface": "22-test review found controller state default; fixed with two red-green regressions and lead rerun of all24",
+    "finalReview": "task-b-final-review.json",
+    "kimiProbe": "Extracted installed registrar class reproduced missing restore refresh until status event; no new CLI/model execution",
+    "limits": "Does not establish actual sandbox denial or canonical final provenance for Task B"
+  },
+  "package": {
+    "manifestPath": "/Users/sun/.loom/reviews/2026-10-11-next-study/final-manifest.json",
+    "manifestSha256": "5c98a561db0448260e036e3c2d7558a39550c4c8199db068588d326a0b0fddab",
+    "files": 44
+  }
+}
