@@ -1,0 +1,143 @@
+{
+  "kind": "two-task-integration-summary/v1",
+  "date": "2026-10-11",
+  "verdict": "Five installed CLI Task B synthetic integration paths passed; no new cost acceptance",
+  "sourceRevision": "f1561877eedab9ce30de9065ed4bc960a76fef0c",
+  "productRevision": "41dafbb",
+  "productChanged": false,
+  "serviceRestarted": false,
+  "productionNativeFinalFlags": "all seven remain off",
+  "execution": {
+    "providers": ["codex", "claude", "opencode", "kimi", "pi"],
+    "finalNormalSessions": 10,
+    "finalNormalTurns": 120,
+    "roundsPerArm": 12,
+    "arms": ["native", "current"],
+    "responseSource": "localhost synthetic provider; actual installed CLI and actual tools",
+    "paidProviderCalls": 0,
+    "costRatio": null,
+    "modelQualityVerdict": null,
+    "paidReady": false,
+    "workload": "Task B synthetic-only override; not the mixed 1A/2B/3B/4A schedule",
+    "plannedFortyArmsExecuted": false
+  },
+  "verified": [
+    "Round materials released sequentially; future materials remain hidden",
+    "Actual native final answer or selected canonical Room final supplied to capture; never reconstructed from report files",
+    "Archived artifacts, public evidence hashes and synthetic fixture grading verified per round",
+    "Actual OS read/write rejection probes for hidden answers, future evidence and controller state",
+    "One continuous native session per arm; automatic memory disabled each launch",
+    "Normal accounting and process cleanup; consumed-failure stops before current arm",
+    "Common and all five binding file hashes and realpaths independently rechecked"
+  ],
+  "fixes": [
+    "Codex peer-root write denial added to existing read isolation",
+    "Claude own channel cwd explicitly writable under reviews write denial",
+    "Overbroad temporary-directory write restriction narrowed to preserve CLI own HOME/config writes"
+  ],
+  "failures": {
+    "priorAttempts": "Preserved separately in console-review/all-attempts.json; no failed rounds stitched into passing pairs",
+    "consumedFaults": "All five recorded; incomplete accounting retains known lower bounds and primary incompleteness",
+    "codexFault": "Child receipt ownedCleanup=false remains; separate parent exact process cleanup verified true",
+    "faultsAreSynthetic": true
+  },
+  "tests": {
+    "guard": 18,
+    "sharedBridge": 5,
+    "frozenTaskBFixture": 24,
+    "claude": 45,
+    "codex": 51,
+    "otherProviderEvidence": "See per-provider readiness and private logs; not a product full-suite run"
+  },
+  "limitations": [
+    "Synthetic gold responses prove runner plumbing and fixture grading, not model reasoning or prose quality",
+    "Kimi native print/ACP ReadMediaFile schema difference retained; strict schema parity false; end-to-end comparison does not isolate pure communication-protocol cost",
+    "Kimi forbidden-arm sentinel is not a separate live peer session; no same-UID security claim",
+    "Task A prior P0 coverage retained separately; mixed schedule selection unit-tested but full mixed execution remains outstanding",
+    "New integration parent and direct child paid entries remain refused; formal batch entry/release still requires preparation",
+    "Snapshot hashes verify captured contents; not permanent filesystem immutability"
+  ],
+  "closure": [
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-11-two-task-integration/paid-admission/common-manifest.json",
+      "sha256": "12ed5468626cca023f31ed1bbedb35e2dcabcff775b0c3b1ad9019f5de77eed2",
+      "files": 22872,
+      "realpaths": 43,
+      "passed": true,
+      "mismatches": []
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-11-two-task-integration/free-runs/codex-1791719854017/binding-manifest.json",
+      "sha256": "40b679c4d6e381fbd1a2af569e6eb6018a3f26d9af0e87d8ed4ed46a0079ee29",
+      "files": 37,
+      "realpaths": 2,
+      "passed": true,
+      "mismatches": []
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-11-two-task-integration/free-runs/claude-1791719852930-hCg557/binding-manifest.json",
+      "sha256": "c0df1868b657458c70efc1f755ab61bccb075432ce1d9be3c3b86d0fc08a1af9",
+      "files": 53,
+      "realpaths": 2,
+      "passed": true,
+      "mismatches": []
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-11-two-task-integration/pi/free-preflight-1791719664997/synthetic-binding-manifest.json",
+      "sha256": "cc077f3fa2e13c9170855abc230e8cfeb16b3ff3f601f5d33e7b8699739edd5e",
+      "files": 15089,
+      "realpaths": 10,
+      "passed": true,
+      "mismatches": []
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-11-two-task-integration/free-runs/kimi-1791719674476/synthetic-binding-manifest.json",
+      "sha256": "2cdb09848cba606abcc30296572612f8d989ff051594179517f640e563473fc7",
+      "files": 1279,
+      "realpaths": 3,
+      "passed": true,
+      "mismatches": []
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-11-two-task-integration/opencode/free-preflight-1791719675607/binding-manifest.json",
+      "sha256": "1edaa70bf6d32905e2cd8cf636b547fb6320a92eb6a00d1d6701162a3320054d",
+      "files": 63,
+      "realpaths": 2,
+      "passed": true,
+      "mismatches": []
+    }
+  ],
+  "readiness": {
+    "codex": {
+      "path": "/Users/sun/.loom/reviews/2026-10-11-two-task-integration/codex/taskb-review/readiness.json",
+      "sha256": "b5c7c16161c05e514b504931334fd36e1f4f2d5004984cbc108e0cb6c1b9718e"
+    },
+    "claude": {
+      "path": "/Users/sun/.loom/reviews/2026-10-11-two-task-integration/claude/taskb-review/readiness.json",
+      "sha256": "ab4fe5f2f3c2e2ad531057105697035c8cfa63722656c787fbef30bbdb9a6558"
+    },
+    "pi": {
+      "path": "/Users/sun/.loom/reviews/2026-10-11-two-task-integration/pi-review/readiness.json",
+      "sha256": "0b3759ad17e4ec9aa791dcdc024eae7504a3deef910579bf02a1f4f5ccb6b7d5"
+    },
+    "kimi": {
+      "path": "/Users/sun/.loom/reviews/2026-10-11-two-task-integration/kimi-review/readiness.json",
+      "sha256": "3789b7529dbb7707656339e2d533ee0e6b1effdaf9be231ecc8d5fe2927058a5"
+    },
+    "opencode": {
+      "path": "/Users/sun/.loom/reviews/2026-10-11-two-task-integration/opencode-review/readiness.json",
+      "sha256": "5fe1b3e00fc88ee959bfc9ffc7671d5110312161474e9df25e7af5f8a62eee06"
+    }
+  },
+  "independentReview": {
+    "path": "/Users/sun/.loom/reviews/2026-10-11-two-task-integration/pi-review/package-independent.json",
+    "sha256": "0ca10bbbf9aa82a0645236b95ec79415b0170ed74271dc6190543af432845052",
+    "pending": []
+  },
+  "privateEvidenceManifest": {
+    "path": "/Users/sun/.loom/reviews/2026-10-11-two-task-integration/evidence-manifest.json",
+    "sha256": "083a1b9992db5445c42823f03d66245514d25f5dc05caa0c0e9664fb04e8c79d"
+  },
+  "previousDesign": "../2026-10-11-next-study/summary.json",
+  "next": "Freeze the formal mixed two-task repeated-study execution entry and bounded release package before real provider execution; no additional workload or synthetic fault matrix required."
+}
