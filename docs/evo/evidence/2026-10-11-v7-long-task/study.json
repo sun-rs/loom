@@ -30,11 +30,13 @@
     "kimi": {
       "model": "kimi-code/k3-256k",
       "effort": "low",
-      "status": "stopped: private harness cwd failure before first current arm provider launch; old failed cohort retained",
+      "status": "fresh four-pair cohort complete; accounting audited, sandbox fairness not passed",
       "sourceRevision": "a92d5ec21c02bdde887cd022bcd1f5fc8e9da64a",
       "limitation": "Native print versus ACP; initial tools match, later native dynamic tool availability can differ. End-to-end comparison, not pure prompt causal isolation.",
       "failureEvidence": "kimi-cwd-failure.json",
-      "newIndependentCohort": "v7-kimi-cwd-repair-20261011-v1 running; old failed cohort retained, no reused native arms"
+      "newIndependentCohort": "v7-kimi-cwd-repair-20261011-v1 complete; 4 new pairs, no reused native arm; fairness not passed",
+      "results": "kimi-complete.json",
+      "originalCohortStatus": "failed private harness cwd before first current provider launch; expense and null original primary retained in failureEvidence"
     },
     "opencode": {
       "model": "aihubmix/deepseek-v4.1-flash",
@@ -60,7 +62,12 @@
       "output": 0.872941148111991,
       "httpAttempts": 0.907258064516129
     },
-    "kimi": null,
+    "kimi": {
+      "input": 1.1161382953887202,
+      "output": 1.049254309509975,
+      "totalTokens": 1.1155314776931398,
+      "requests": 1.0471380471380471
+    },
     "opencode": {
       "input": 0.9954901290680825,
       "output": 0.9961420145172828,
@@ -77,8 +84,10 @@
     "Codex startup generate=false completed events report tokens but are connection setup, not sampling; do not label their sum with sampling as unique billable tokens",
     "Kimi free/paid entry cwd differed; same source entry alone did not prove sandbox topology equivalence."
   ],
-  "publicCostConclusion": "Cross-CLI goal not fully achieved: Codex/Pi/OpenCode totals near native in this cohort, Claude input1.480209 and lower quality. Fresh Kimi pending. OpenCode shared tool-download limitation retained. No automatic next experiment or product-default acceptance.",
+  "publicCostConclusion": "All five fixed four-pair cohorts closed. No universal acceptance: Claude higher input and lower quality; Kimi measurement valid but sandbox fairness failed; OpenCode dependency limitation. No invoice/default/multi-model guarantee.",
   "revisionBoundary": "Codex/Claude/Pi retain186f7c3; Kimi/OpenCode original unadmitted slots run repaireda92d5ec. No in-flight source replacement.",
-  "cohortSplit": "Codex/Claude/Pi original source; Kimi/OpenCode admitted repaired source. Kimi cohort subsequently failed on private harness cwd; separate fresh cohort running, previous costs deducted and original absolute deadline retained. No old native arm reused.",
-  "closeoutPolicy": "Finish already-started fixed cohorts only; no additional experiments or diagnostic scope. Report ratios, quality, evidence validity and engineering decision; limitations do not automatically trigger another experiment."
+  "cohortSplit": "Codex/Claude/Pi186f7c3; OpenCode/Kimi a92d5ec. Original Kimi cwd-failed expense separate; fresh Kimi full four pairs complete, no reused arms.",
+  "closeoutPolicy": "Finish already-started fixed cohorts only; no additional experiments or diagnostic scope. Report ratios, quality, evidence validity and engineering decision; limitations do not automatically trigger another experiment.",
+  "audit": "../2026-10-11-architecture-audit/summary.json",
+  "qualityScope": "Automatic function oracle and generated selftests, not exhaustive README/business quality"
 }

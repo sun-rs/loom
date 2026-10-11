@@ -1,0 +1,140 @@
+{
+  "kind": "loom-architecture-and-benchmark-audit/v1",
+  "date": "2026-10-11",
+  "reviewedHead": "f3dfa04ea51202da065673134639710585880375",
+  "productRevision": "a92d5ec21c02bdde887cd022bcd1f5fc8e9da64a",
+  "scope": "Room/Inbox/Activation/Host/Run/final路径、上下文/工具与五CLI v7统计公平性；不是全仓安全/UI/远端协议认证。三路独立审计，lead复核。",
+  "verdict": {
+    "accounting": "五家固定四对现已闭账；按声明口径可用，不等于实际账单。",
+    "fairness": "未全通过：Kimi读取能力不等、OpenCode工具依赖受限。",
+    "qualityEfficiency": "未通过跨CLI验收；Claude成本和自动质量失败，其余有样本/环境边界。",
+    "architecture": "未发现需要推倒room-first Kernel的证据；普通单目标零模型通信工具路径已实现但默认关闭。",
+    "milestone": "可确认传输/计量阶段成果；不能宣布五CLI、多模型、多人、生产默认效率里程碑。"
+  },
+  "findings": [
+    {
+      "id": "F1",
+      "priority": "P1",
+      "kind": "benchmark defect",
+      "finding": "Kimi native/current sandbox读取能力不对等；current继承daemon对冻结源码及旧同题证据的读取能力。",
+      "proven": "同一个历史答案材料，保存的native策略下cat退出1，current退出0。",
+      "notProven": "未证明模型实际读取或结果已经污染；不是token算术错误。",
+      "evidence": ["kimi-policy-read-proof.json"],
+      "action": "下一测试器版本隔离daemon与CLI权限；双方对同一历史证据文件拒读的离线测试，保留本批费用。"
+    },
+    {
+      "id": "F2",
+      "priority": "P1",
+      "kind": "benchmark capability limitation",
+      "finding": "OpenCode共享空XDG和loopback隔离阻断首次ripgrep下载，current第一臂两次grep失败。",
+      "notProven": "未证明单边禁用；不能说是模型参数误用或完整原生环境。",
+      "evidence": ["../2026-10-11-v7-long-task/opencode-complete.json"],
+      "action": "冻结前验证双方原生工具依赖可用，不以付费实验发现安装依赖。"
+    },
+    {
+      "id": "F3",
+      "priority": "P1",
+      "kind": "failed acceptance",
+      "finding": "Claude计量闭合，但input比1.480209、output比1.259265，自动质量native44/48、current33/48。",
+      "proven": "48个current轮均native-final；未识别到Worker通信工具调用。P170与本轮相关prompt/Claude driver源码和实际16工具schema相同。",
+      "notProven": "常驻规则可能影响业务决策，但未证明导致全部差额；单对P170不能当稳定基准，也不能仅归因随机性。",
+      "evidence": ["../2026-10-11-v7-long-task/claude-complete.json"],
+      "action": "保留全部成本和失败；优先审查业务编辑/测试修复轨迹，禁止为一家CLI定制提示或选成功子集。"
+    },
+    {
+      "id": "F4",
+      "priority": "P1",
+      "kind": "product availability boundary",
+      "finding": "native-final生成期间同目标出现新事实，会将这份回复持久hold；现路径要求Human恢复。",
+      "proven": "freshness fence正确，自己的同Run进度不再误触发；串行安静测试不覆盖多人场景回复可达率。",
+      "evidence": [
+        "../../../../packages/kernel/src/collaboration-service.ts",
+        "../../../../packages/agent-host/src/worker-final-output.ts",
+        "../../../../packages/kernel/test/worker-final-output-own-progress.test.ts"
+      ],
+      "action": "用已有Activation/held draft设计有限恢复；先确定性验证忙时新事实，不解除freshness或重试unknown写入。"
+    },
+    {
+      "id": "F5",
+      "priority": "P2",
+      "kind": "protocol expression debt",
+      "finding": "常驻规则要求message-post并称prose仅诊断，尾部再加native-final例外；warm环境范围文案也与每轮turn handle机制不符。",
+      "notProven": "未发现由此发生越权；旧P170已存在相同规则，不能作为新倍率上升的确证。",
+      "evidence": [
+        "../../../../packages/agent-host/src/standing-protocol.ts",
+        "../../../../packages/agent-host/src/final-output-instructions.js",
+        "../../../../packages/agent-host/src/worker-turn-handle.ts"
+      ],
+      "action": "共享transport selector生成唯一当前回复规则，特殊操作按需help；旧精简候选尚无稳定收益，不盲目复活。"
+    },
+    {
+      "id": "F6",
+      "priority": "P2",
+      "kind": "measurement interpretation",
+      "finding": "Codex冻结completed-event口径含generate=false预热；自动质量oracle不覆盖README全部语义；四对单题不能证明多模型普遍等价。",
+      "evidence": [
+        "../2026-10-11-v7-long-task/codex-complete.json",
+        "../2026-10-10-native-final-own-post/claude-p170.json"
+      ],
+      "action": "分列sampling与预热、功能与文档质量、试验与默认；不从tokens推账单金额或混加跨CLI请求。"
+    }
+  ],
+  "ordinaryChat": {
+    "flow": [
+      "Loom读取并呈现未读delta",
+      "原生CLI执行用户任务并返回最终正文",
+      "Host绑定原Run/目标/已呈现序号",
+      "Kernel验证权限、幂等、freshness和消费证明后发表"
+    ],
+    "zeroModelCommunicationCalls": true,
+    "eligibility": "完整呈现、无notice、单一回复目标、普通message而非Task/Review；可信原生终态。",
+    "stillExplicit": [
+      "按需历史读取",
+      "中途进度/其他目标发言",
+      "附件/Artifact发布",
+      "Task状态",
+      "memory变更",
+      "无回复的消费确认和异常恢复"
+    ],
+    "apiBoundary": "可以免模型调用message-send；不能删除平台内部确定性提交和领域校验。"
+  },
+  "verification": {
+    "deterministicTests": 65,
+    "passed": 65,
+    "groups": [
+      {
+        "tests": 59,
+        "scope": "catch-up/target positions/read-covered/native-final/held/unknown"
+      },
+      {
+        "tests": 6,
+        "scope": "Kimi EOF/OpenCode compaction lineage"
+      }
+    ],
+    "newPaidBatches": 0,
+    "sourceChanged": false,
+    "deploymentChanged": false,
+    "fullRepositoryCheckThisAudit": "not run; read-only audit and evidence docs only"
+  },
+  "finiteNextSteps": [
+    "修复测试隔离与工具可用性，仅离线确定性验收。",
+    "共享回复协议按transport只给一个普通回复路径，保留特殊业务操作。",
+    "补忙时新事实→held draft恢复的垂直业务验收，再讨论默认启用。",
+    "以上边界明确后再定固定多题/多模型效率批次；本轮不自动追加付费。"
+  ],
+  "remainingUnknowns": [
+    "Claude差额的反事实因果份额",
+    "多人忙时held频率和实际恢复成本",
+    "相同修订下五CLI多模型多任务稳定效率",
+    "真实账单费用与缓存价格影响"
+  ],
+  "supportingPrivateAudits": {
+    "kernel.md": "/Users/sun/.loom/reviews/2026-10-11-architecture-audit/kernel.md",
+    "context.md": "/Users/sun/.loom/reviews/2026-10-11-architecture-audit/context.md",
+    "fairness.md": "/Users/sun/.loom/reviews/2026-10-11-architecture-audit/fairness.md",
+    "kernel-tests.log": "/Users/sun/.loom/reviews/2026-10-11-architecture-audit/kernel-tests.log",
+    "repair-tests.log": "/Users/sun/.loom/reviews/2026-10-11-architecture-audit/repair-tests.log"
+  },
+  "finalKimi": "../2026-10-11-v7-long-task/kimi-complete.json",
+  "fairnessSnapshotCorrection": "独立fairness.md写于Kimi7臂时；最终8臂计量完成见kimi-complete.json，隔离缺陷裁决不变。"
+}

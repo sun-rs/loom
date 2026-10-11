@@ -1,0 +1,104 @@
+{
+  "kind": "kimi-fixed-four-pair-complete-audit/v1",
+  "at": "2026-10-11T09:14:13.574Z",
+  "bindingStatus": "completed",
+  "allEightArmsAudited": true,
+  "completedPairs": 4,
+  "model": "kimi-code/k3-256k",
+  "effort": "low",
+  "sourceRevision": "a92d5ec21c02bdde887cd022bcd1f5fc8e9da64a",
+  "native": {
+    "arms": 4,
+    "input": 11278149,
+    "output": 103260,
+    "totalTokens": 11381409,
+    "cachedInput": 10952960,
+    "reasoning": null,
+    "httpAttempts": 297,
+    "qualityPassed": 48,
+    "qualityTotal": 48
+  },
+  "current": {
+    "arms": 4,
+    "input": 12587974,
+    "output": 108346,
+    "totalTokens": 12696320,
+    "cachedInput": 12379648,
+    "reasoning": null,
+    "httpAttempts": 311,
+    "qualityPassed": 48,
+    "qualityTotal": 48
+  },
+  "aggregateRatio": {
+    "input": 1.1161382953887202,
+    "output": 1.049254309509975,
+    "totalTokens": 1.1155314776931398,
+    "requests": 1.0471380471380471
+  },
+  "pairs": [
+    {
+      "block": 1,
+      "complete": true,
+      "ratio": {
+        "input": 1.0762937483332353,
+        "output": 0.9830260462393913,
+        "totalTokens": 1.0754609496995442,
+        "requests": 1.027027027027027
+      }
+    },
+    {
+      "block": 2,
+      "complete": true,
+      "ratio": {
+        "input": 1.418838467566706,
+        "output": 1.134452312265058,
+        "totalTokens": 1.415851398249038,
+        "requests": 1.2459016393442623
+      }
+    },
+    {
+      "block": 3,
+      "complete": true,
+      "ratio": {
+        "input": 1.1558278748520041,
+        "output": 1.2431609424920127,
+        "totalTokens": 1.1565473960246226,
+        "requests": 1
+      }
+    },
+    {
+      "block": 4,
+      "complete": true,
+      "ratio": {
+        "input": 0.9578026963421575,
+        "output": 0.9326123356482117,
+        "totalTokens": 0.9575784879573292,
+        "requests": 0.9666666666666667
+      }
+    }
+  ],
+  "sessionContinuousPerArm": true,
+  "distinctArmSessions": 8,
+  "cleanupAllPassed": true,
+  "memoryGatesAllPassed": true,
+  "oldFailedCohort": {
+    "excludedFromRatios": true,
+    "input": 2752144,
+    "output": 22412,
+    "httpAttempts": 77,
+    "status": "failed; no reuse or stitching",
+    "evidence": "kimi-cwd-failure.json"
+  },
+  "billingCoverage": "not-observed; ratios are token/request measurements, not actual money",
+  "fairness": {
+    "passed": false,
+    "issue": "Native explicit-cli sandbox denies source evidence path while current inherited-daemon sandbox permits it; policy mismatch proven, actual model access/contamination not proven",
+    "evidence": "../2026-10-11-architecture-audit/kimi-policy-read-proof.json"
+  },
+  "limits": [
+    "Four fixed pairs measure this CLI/model/task; stochastic variability remains.",
+    "Native print versus ACP transport; no pure prompt-only causal claim.",
+    "Reasoning output dimension is unknown if any provider record omits it."
+  ],
+  "qualityScope": "Functional oracle and generated selftests only; README semantics not exhaustively checked"
+}

@@ -1,0 +1,19 @@
+{
+  "noProviderOrNetwork": true,
+  "operation": "read-only /bin/cat, discarded contents; saved completed-arm sandbox policy",
+  "results": [
+    {
+      "arm": "native",
+      "profile": "sealed first arm explicit-cli profile",
+      "target": "frozen-source/docs/evo/evidence/2026-10-10-native-final-own-post/claude-p170-run.json",
+      "readExitCode": 1
+    },
+    {
+      "arm": "current",
+      "profile": "sealed first arm inherited-daemon profile",
+      "target": "frozen-source/docs/evo/evidence/2026-10-10-native-final-own-post/claude-p170-run.json",
+      "readExitCode": 0
+    }
+  ],
+  "interpretation": "Capability mismatch proven; actual model access or contamination not proven. Finite scan of 274 current tool arguments found no direct reference."
+}
