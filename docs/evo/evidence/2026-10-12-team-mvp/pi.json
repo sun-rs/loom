@@ -1,0 +1,191 @@
+{
+  "kind": "synthetic-real-cli-team-proof",
+  "paid": false,
+  "models": {
+    "A": "codex/gpt-6-luna/low",
+    "B": "pi/aihubmix/deepseek-v4.1-flash/low"
+  },
+  "arms": {
+    "native": {
+      "root": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/pi/native/runs/1791741550887",
+      "status": "passed",
+      "raw": [
+        {
+          "n": 1,
+          "member": "A",
+          "case": "normal",
+          "input": 100,
+          "output": 20,
+          "sampling": true,
+          "schemaSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
+        },
+        {
+          "n": 2,
+          "member": "B",
+          "case": "normal",
+          "input": 100,
+          "output": 20,
+          "sampling": true,
+          "schemaSha256": "b72b0ec532c465c9e8b78520d7cc7ed3664d9a720ea87dc99c78336184f010c0"
+        },
+        {
+          "n": 3,
+          "member": "A",
+          "case": "normal",
+          "input": 100,
+          "output": 20,
+          "sampling": true,
+          "schemaSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
+        },
+        {
+          "n": 4,
+          "member": "A",
+          "case": "missing-at",
+          "input": 100,
+          "output": 20,
+          "sampling": true,
+          "schemaSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
+        }
+      ],
+      "knownSyntheticInput": 400,
+      "knownSyntheticOutput": 80,
+      "http": 4,
+      "cases": [],
+      "sameCodexSession": true,
+      "cleanup": "exact process-group empty",
+      "piNativeUsage": {
+        "input": 100,
+        "output": 20,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "reasoning": 0,
+        "totalTokens": 120,
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0
+        }
+      }
+    },
+    "loom": {
+      "root": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/pi/loom/runs/1791741552834",
+      "status": "passed",
+      "raw": [
+        {
+          "n": 1,
+          "member": "A",
+          "case": "normal",
+          "input": 100,
+          "output": 20,
+          "sampling": true,
+          "schemaSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
+        },
+        {
+          "n": 2,
+          "member": "B",
+          "case": "normal",
+          "input": 100,
+          "output": 20,
+          "sampling": true,
+          "schemaSha256": "b72b0ec532c465c9e8b78520d7cc7ed3664d9a720ea87dc99c78336184f010c0"
+        },
+        {
+          "n": 3,
+          "member": "A",
+          "case": "normal",
+          "input": 100,
+          "output": 20,
+          "sampling": true,
+          "schemaSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
+        },
+        {
+          "n": 4,
+          "member": "A",
+          "case": "missing-at",
+          "input": 100,
+          "output": 20,
+          "sampling": true,
+          "schemaSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
+        }
+      ],
+      "knownSyntheticInput": 400,
+      "knownSyntheticOutput": 80,
+      "http": 4,
+      "cases": [
+        {
+          "name": "normal",
+          "completedActivations": 3,
+          "canonicalMessages": 3,
+          "kernelUsageRows": 3,
+          "usageGaps": 0,
+          "runtimeProcessProof": "terminated, exit 0"
+        },
+        {
+          "name": "missing-at",
+          "completedActivations": 1,
+          "canonicalMessages": 1,
+          "kernelUsageRows": 1,
+          "usageGaps": 0,
+          "runtimeProcessProof": "terminated, exit 0"
+        }
+      ],
+      "sessionEvidence": [
+        {
+          "path": "/private/tmp/loom-team-relay-hoYq3J/normal/B/supervisors/pi-sessions/1457dce8b1975ce3742811324eaa4d4565748c85c0d8eed808c856c8184b4912.jsonl",
+          "sessionId": "01a12c1e-71b8-77f7-bbef-ae612d8f6fec"
+        }
+      ]
+    }
+  },
+  "primaryCostRatio": null,
+  "limits": [
+    "Localhost synthetic usage and replies; no real-model quality, cost ratio, or paid acceptance",
+    "Pi B has one normal turn: Pi resume not exercised; Codex A continuous session is exercised",
+    "No compaction or business tool action in this transport slice",
+    "Runtime offers/revision digest are test fixtures; actual runtime uses current repository source",
+    "Two cases normal and missing-at, not independent statistical repeats"
+  ],
+  "allAttempts": [
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/pi/native/runs/1791741460087/result.json",
+      "status": "completed",
+      "http": 4
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/pi/native/runs/1791741550887/result.json",
+      "status": "completed",
+      "http": 4
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/pi/loom/runs/1791741552834/result.json",
+      "status": "completed",
+      "http": 4
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/pi/loom/runs/1791741483327/result.json",
+      "status": "failed",
+      "http": 1
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/pi/loom/runs/1791741520220/result.json",
+      "status": "completed",
+      "http": 4
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/pi/loom/runs/1791741466198/result.json",
+      "status": "failed",
+      "http": 0
+    }
+  ],
+  "files": {
+    "pi-policy.mjs": "55c20138ea4376e7daf2e49b90912032ead5e77fcb6c1343f9e85f4187ac9d1d",
+    "policy.mjs": "dad52b85c44ed6b840ab758038da2389e5b4e99736e7369e40e4e94e926110ea",
+    "policy.test.mjs": "fc9c3a3c5f0f56f2cb40607e9a7bc91e241f57f5d11d8c45a9239ca398322574",
+    "native/run.mjs": "68232fc4ddf2d4c8c2b498d0a755f4500b7fc3a67330ca063f863f2d85859535",
+    "native/relay.mjs": "3d37c3ab5459a515ae0906a7b3e6e0c76a89abbfe20acde0253eeaca520d01de",
+    "loom/run.mjs": "40b3d4aeba24c3460502c36f6b4833792cb126f17636ac66135485b59dd9ba17"
+  },
+  "sourceRevision": "231ab784504539cce862b95e7077e5c073f2cf09"
+}

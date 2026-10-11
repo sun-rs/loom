@@ -1,0 +1,115 @@
+{
+  "status": "passed-limited-synthetic-transport",
+  "paid": false,
+  "nativeRun": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/kimi/native/runs/1791741423759",
+  "loomRun": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/kimi/runs/1791741565518",
+  "cliVersions": {
+    "codex": "codex-cli 0.161.0",
+    "kimi": "2.1.1"
+  },
+  "normal": "actual Codex A -> Kimi B -> same Codex A session; canonical final/Room Activation/ACK and received public delta verified",
+  "missingMention": "A only; Kimi local provider-list probe occurs, but no B ACP execution, Activation or model request",
+  "accounting": {
+    "nativeObservedRequests": 4,
+    "loomObservedRequests": 4,
+    "allComplete": true,
+    "realCostRatio": null,
+    "usage": "synthetic100/20, optional cache/reasoning unknown"
+  },
+  "cleanup": {
+    "nativeGroupsEmpty": true,
+    "loomProcessExits": [
+      ["process_exit", 0],
+      ["process_exit", 0],
+      ["process_exit", 0],
+      ["process_exit", 0]
+    ],
+    "noProcessCommandReferencesFinalTemporaryRoots": true,
+    "notFullOSDescendantTreeProof": true
+  },
+  "memory": {
+    "actualConfigHashesChecked": 9,
+    "codex": "three memory switches false each exec/resume",
+    "kimi": "installed2.1.1 audited no independent automatic memory; fresh config/HOME/empty skills, cron disabled; ordinary native session history retained"
+  },
+  "isolation": {
+    "network": "CLI native subtree and whole ACP driver subtree loopback-only",
+    "difference": "ACP requires current repo read allowance; native denies /Users/sun entirely. No strict matched source/history-isolation acceptance; no tools executed. No real credential reading; isolated fakeOAuth only."
+  },
+  "limits": [
+    "Synthetic provider finals do not test model quality or real costs",
+    "Kimi print vs ACP tools/schema differ",
+    "Kimi B has one turn; only Codex A resume covered",
+    "Fixture Role runtime placement mapped to actual local Kimi profile; not deployed daemon discovery",
+    "No business tool actions, Herdr, paid readiness, or product change",
+    "Initial setup failures retained; model-free provider-list probing is not model activation"
+  ],
+  "failedAttempts": [
+    {
+      "root": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/kimi/runs/1791741429013",
+      "status": "failed",
+      "observedRequests": 0,
+      "knownSyntheticInput": 0,
+      "knownSyntheticOutput": 0,
+      "error": "Error: Runtime Registry directory must be owner-private: /private/tmp/loom-team-relay-XjqeEU/normal/B"
+    },
+    {
+      "root": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/kimi/runs/1791741445445",
+      "status": "failed",
+      "observedRequests": 0,
+      "knownSyntheticInput": 0,
+      "knownSyntheticOutput": 0,
+      "error": "AssertionError [ERR_ASSERTION]: exact local synthetic Kimi model"
+    },
+    {
+      "root": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/kimi/runs/1791741482092",
+      "status": "failed",
+      "observedRequests": 1,
+      "knownSyntheticInput": 100,
+      "knownSyntheticOutput": 20,
+      "error": "AssertionError [ERR_ASSERTION]: [{\"activationId\":\"activation_1c6237fa-f7f4-4f56-95e4-2256223e0633\",\"roomId\":\"room_baac957f-e423-40d9-a98d-e0beb2d01639\",\"participantId\":\"principal_2485d17e-13c8-4f79-8618-7a045b6bd713\",\"fromSeq\":6,\"toSeq\":6,\"reason\":\"mention\",\"state\":\"completed\",\"attemptCount\":1,\"availableAt\":\"2026-10-11T17:58:03.415Z\",\"createdAt\":\"2026-10-11T17:58:03.415Z\",\"updatedAt\":\"2026-10-11T17:58:04.004Z\"},{\"activationId\":\"activation_0b8c95b2-849f-4e5a-b912-2803d6919839\",\"roomId\":\"room_baac957f-e423-40d9-a98d-e0beb2d01639\",\"participantId\":\"principal_92d11130-86a9-4e64-a9a1-65c0d864e9c0\",\"fromSeq\":11,\"toSeq\":11,\"reason\":\"mention\",\"state\":\"quarantined\",\"attemptCount\":3,\"availableAt\":\"2026-10-11T17:58:04.051Z\",\"lastError\":\"Provider session placement does not match the configured RuntimeProfile\",\"createdAt\":\"2026-10-11T17:58:03.997Z\",\"updatedAt\":\"2026-10-11T17:58:04.072Z\"}]"
+    },
+    {
+      "root": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/kimi/runs/1791741500536",
+      "status": "failed",
+      "observedRequests": 1,
+      "knownSyntheticInput": 100,
+      "knownSyntheticOutput": 20,
+      "error": "AssertionError [ERR_ASSERTION]: [{\"activationId\":\"activation_30f6e627-40c6-45f7-b5e6-85c4f3f50216\",\"roomId\":\"room_dc30322e-dea4-42d7-94ad-bdead445c03b\",\"participantId\":\"principal_9a3329bc-e4c9-474c-9d83-6760dc758a91\",\"fromSeq\":6,\"toSeq\":6,\"reason\":\"mention\",\"state\":\"completed\",\"attemptCount\":1,\"availableAt\":\"2026-10-11T17:58:21.781Z\",\"createdAt\":\"2026-10-11T17:58:21.781Z\",\"updatedAt\":\"2026-10-11T17:58:22.393Z\"},{\"activationId\":\"activation_4d7238aa-ab27-4ee2-9309-2edc3a99952f\",\"roomId\":\"room_dc30322e-dea4-42d7-94ad-bdead445c03b\",\"participantId\":\"principal_f2932be1-8fcc-41e2-baf0-c8401f864520\",\"fromSeq\":11,\"toSeq\":11,\"reason\":\"mention\",\"state\":\"quarantined\",\"attemptCount\":1,\"availableAt\":\"2026-10-11T17:58:22.383Z\",\"lastError\":\"runtime exited with code 1\",\"createdAt\":\"2026-10-11T17:58:22.383Z\",\"updatedAt\":\"2026-10-11T17:58:22.526Z\"}]"
+    },
+    {
+      "root": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/kimi/runs/1791741547768",
+      "status": "failed",
+      "observedRequests": 1,
+      "knownSyntheticInput": 100,
+      "knownSyntheticOutput": 20,
+      "error": "AssertionError [ERR_ASSERTION]: [{\"activationId\":\"activation_54d0326a-219c-46e7-b0be-b6c7446f8fd3\",\"roomId\":\"room_b82d3582-a169-40b4-ba67-6b05dd5c8c2d\",\"participantId\":\"principal_9efc6d40-6a9c-4bb0-b1ff-030e11a89bd4\",\"fromSeq\":6,\"toSeq\":6,\"reason\":\"mention\",\"state\":\"completed\",\"attemptCount\":1,\"availableAt\":\"2026-10-11T17:59:09.168Z\",\"createdAt\":\"2026-10-11T17:59:09.168Z\",\"updatedAt\":\"2026-10-11T17:59:09.785Z\"},{\"activationId\":\"activation_03ba0d43-b294-4f25-9f93-4f2d234be298\",\"roomId\":\"room_b82d3582-a169-40b4-ba67-6b05dd5c8c2d\",\"participantId\":\"principal_7bc97b36-adf4-4633-a060-5312b434f872\",\"fromSeq\":11,\"toSeq\":11,\"reason\":\"mention\",\"state\":\"quarantined\",\"attemptCount\":1,\"availableAt\":\"2026-10-11T17:59:09.777Z\",\"lastError\":\"runtime exited with code 1\",\"createdAt\":\"2026-10-11T17:59:09.777Z\",\"updatedAt\":\"2026-10-11T17:59:09.931Z\"}]"
+    }
+  ],
+  "closure": [
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/kimi/audit.mjs",
+      "sha256": "af17fbf1cc0f0a1126ab67f34adc7dfe8bda19a68b6355b9ffdd17d4b0e35bd4"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/kimi/driver-preload.mjs",
+      "sha256": "b29398bf72df7bf6f6bd4e3331509628b7959d047c24a860147880a97b6c4d35"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/kimi/loom.mjs",
+      "sha256": "acb2158d1693621ba5a180f4f89c208993f4ec8b0d2d80ecc860ae650267da4e"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/kimi/policy.mjs",
+      "sha256": "dad52b85c44ed6b840ab758038da2389e5b4e99736e7369e40e4e94e926110ea"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/kimi/setup.mjs",
+      "sha256": "b980c231431992d37d7106b5ed696453921d51505885a2c7949e2863136eb5c3"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/kimi/setup.test.mjs",
+      "sha256": "f5a84cdd44bfc9755c65325bb1d1e99df048498535509bc976d34731563cc6bc"
+    }
+  ]
+}

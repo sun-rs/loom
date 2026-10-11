@@ -1,0 +1,120 @@
+{
+  "kind": "claude-team-mvp-synthetic/v1",
+  "status": "passed",
+  "paid": false,
+  "sourceRevision": "231ab784504539cce862b95e7077e5c073f2cf09",
+  "productRevision": "ffecbfe",
+  "arms": {
+    "native": {
+      "root": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/native/runs/1791741398293",
+      "status": "passed",
+      "cliVersions": {
+        "codex": "codex-cli 0.161.0",
+        "claude": "2.1.293 (Claude Code)"
+      },
+      "requests": 4,
+      "rawHashesVerified": true,
+      "normal": {
+        "nativeSessions": 2,
+        "turns": 3,
+        "AResumeSameSession": true,
+        "BResumeCovered": false
+      },
+      "negative": {
+        "turns": 1,
+        "BLaunched": false
+      },
+      "memoryConfigHashesVerified": true,
+      "cleanupVerified": true
+    },
+    "loom": {
+      "root": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/loom/runs/1791741404804",
+      "status": "passed",
+      "cliVersions": {
+        "codex": "codex-cli 0.161.0",
+        "claude": "2.1.293 (Claude Code)"
+      },
+      "requests": 4,
+      "rawHashesVerified": true,
+      "normal": {
+        "nativeSessions": 2,
+        "turns": 3,
+        "AResumeSameSession": true,
+        "BResumeCovered": false
+      },
+      "negative": {
+        "turns": 1,
+        "BLaunched": false
+      },
+      "memoryConfigHashesVerified": true,
+      "cleanupVerified": true
+    }
+  },
+  "transport": "A Codex exec/resume; B native Claude print stream-json versus product CLAUDE_WARM_DRIVER; actual public final routed by mention",
+  "modelBindings": {
+    "codex": {
+      "binding": "gpt-6-luna",
+      "effort": "low"
+    },
+    "claude": {
+      "binding": "sonnet",
+      "effort": "low",
+      "observedWireModel": "claude-sonnet-5-5"
+    }
+  },
+  "failurePreserved": {
+    "root": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/native/runs/1791741358294",
+    "observedRequests": 2,
+    "cause": "CLI responses completed; cleanup kill(-pgid,0) EPERM; rejected rather than assumed clear. Successor uses exact ps group census only after EPERM."
+  },
+  "isolation": "localhost only Seatbelt; personal /Users/sun read/write denied except exact installed Claude executable; isolated HOME/config; explicit dummy auth; Claude automatic memory off and user setting sources excluded",
+  "limits": [
+    "Synthetic model text, no paid/quality/cost claim",
+    "B only one turn; A resume verified",
+    "Fixture profile/offer and brief synthetic standing prompt, not deployment/default acceptance",
+    "No real model tool actions in this minimal chain",
+    "Optional usage not supplied by raw stays unknown; synthetic tokens are not price evidence"
+  ],
+  "closure": [
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/native/run.mjs",
+      "sha256": "269c9d1c4cf346fe38a77b72ad7e044a01cd3032ef86fb3c45db703d54c46b52"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/native/relay.mjs",
+      "sha256": "3d37c3ab5459a515ae0906a7b3e6e0c76a89abbfe20acde0253eeaca520d01de"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/native/cleanup.mjs",
+      "sha256": "35137ed23479d2a2a6d65d6bccf55e47a51f4c07a978f5121ed36be1b93f939a"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/loom/run.mjs",
+      "sha256": "e37f23cb130a61caf8c08cf87588979e954def971236c118f8dcc79f9c974ac5"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/loom/policy.mjs",
+      "sha256": "dad52b85c44ed6b840ab758038da2389e5b4e99736e7369e40e4e94e926110ea"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/audit.mjs",
+      "sha256": "a259a1a48144257cfa5875f72e175917261be662c29cf22d10ba5ac22a8462d8"
+    },
+    {
+      "path": "/Users/sun/Code/repos/rah_os/packages/agent-host/src/claude-warm-driver.mjs",
+      "sha256": "63b16fc1c17248806a575a10c1aff3732e2733f965bd05b8165827f54b45b000"
+    },
+    {
+      "path": "/Users/sun/Code/repos/rah_os/packages/agent-host/src/codex-warm-adapter.ts",
+      "sha256": "171b5dba530c64d93f23723d86f57976558af55dd8dca5e3b1665285dfa47010"
+    },
+    {
+      "path": "/Users/sun/Code/repos/rah_os/packages/agent-host/src/provider-launch-arguments.js",
+      "sha256": "313d4a04f468c6fa0091dcdc28902b4b6a059e7d8f7c43ab37fb2866eff1eb1b"
+    },
+    {
+      "path": "/Users/sun/Code/repos/rah_os/packages/agent-host/src/worker-final-output.ts",
+      "sha256": "8d20be4fd1acb0d2baa561a327bf21eca89337575833102a3633b4c89ac3fbf1"
+    }
+  ]
+}

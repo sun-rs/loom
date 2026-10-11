@@ -1,0 +1,39 @@
+{
+  "kind": "shared-team-tool-and-artifact-pipeline-synthetic/v1",
+  "status": "passed",
+  "paid": false,
+  "realCostRatio": null,
+  "arms": [
+    {
+      "arm": "native",
+      "root": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/business/tool-probe/native-control/runs/1791741448066",
+      "requests": 8,
+      "toolGenerations": 4,
+      "finalGenerations": 4,
+      "sharedArtifactSha256": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03",
+      "rawHashesVerified": true,
+      "latestToolOutputProof": true,
+      "archivedFunctionalOracle": true,
+      "archivedSelfTests": true
+    },
+    {
+      "arm": "loom",
+      "root": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/business/tool-probe/runs/1791741467306",
+      "requests": 8,
+      "toolGenerations": 4,
+      "finalGenerations": 4,
+      "sharedArtifactSha256": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03",
+      "rawHashesVerified": true,
+      "latestToolOutputProof": true,
+      "archivedFunctionalOracle": true,
+      "archivedSelfTests": true
+    }
+  ],
+  "limits": [
+    "Implementation and tool instructions supplied by synthetic server using reference.py; not model-generated work or task quality evidence.",
+    "README semantic quality not evaluated; this does not satisfy complete business quality acceptance.",
+    "Existing short synthetic opening used for transport; full real-business opening is separately prepared in ../manifest.json.",
+    "No actual Herdr or paid repeated-team comparison."
+  ],
+  "reviewRepair": "Initial validator accepted any prior successful tool output. A regression test rejected that behavior; latest-output-only validator rechecked every captured final request without additional CLI calls."
+}

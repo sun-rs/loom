@@ -1,0 +1,70 @@
+{
+  "date": "2026-10-12",
+  "kind": "team-vertical-mvp-preparation/v1",
+  "sourceHead": "231ab784504539cce862b95e7077e5c073f2cf09",
+  "productHead": "ffecbfe7c8fea836c85685c3222ee752578909f9",
+  "productChanged": false,
+  "serviceRestarted": false,
+  "paidCalls": 0,
+  "realCostRatio": null,
+  "status": "Five CLI families covered by bounded two-member synthetic handoffs; shared artifact/tool pipeline verified for Codex/OpenCode. Real business and repeated cost not accepted.",
+  "coverage": {
+    "alreadyVerified": "Codex/OpenCode pair; ../2026-10-12-team-loom/summary.json",
+    "newPairs": ["Codex/Claude", "Codex/Kimi", "Codex/Pi"],
+    "perPair": "Both native public-final relay and actual Loom Kernel/Host/native-final A→B→A; missing @ stops before peer model execution.",
+    "continuity": "Codex A resumes; each B has only one turn. This is not arbitrary topology or all-provider resume coverage."
+  },
+  "independentReview": {
+    "claude": "root reran read-only audit and inspected evidence",
+    "kimi": "aggregate_host_wiring read-only raw/config/session/canonical/cleanup audit",
+    "pi": "root source/raw hash and native session/public/negative plus Loom completion review",
+    "businessTools": "aggregate_contract_kernel checked fresh call IDs/tool outputs, artifact hashes and snapshot oracle"
+  },
+  "knownSyntheticRequestCensus": {
+    "claudeAllAttempts": 10,
+    "kimiAllAttempts": 11,
+    "piAllAttempts": 17,
+    "businessToolBothArms": 16,
+    "note": "Includes preserved failures/intermediate successes. Synthetic counts are transport observations, not provider cost or statistical samples."
+  },
+  "business": {
+    "task": "Existing invoice-v7 public requirements and private evaluator reused; all 12 requirements available initially, no forced twelve-turn controller.",
+    "pipeline": "Actual CLI tools read public requirements, write shared artifact and run tests; second member reads/tests same artifact. Host snapshots and evaluates archived bytes.",
+    "limit": "Synthetic server supplied reference implementation. Functional oracle success demonstrates evaluation wiring, not model competence or complete business quality; README semantics remain unchecked."
+  },
+  "blockingPaidAdmission": [
+    "Full product standing-prompt path and actual-provider metering/budget wiring must replace synthetic fixtures.",
+    "Kimi ACP source-read exception differs from native isolation; strict business comparison remains blocked for that pair until existing narrow policy is reused.",
+    "Concrete cohort/budgets and a new batch release remain required; no prior release reused."
+  ],
+  "next": "One Codex/Claude complete business vertical first; reuse existing capture and authorization primitives. Do not build a generic multi-provider framework or hold runnable pairs for Kimi.",
+  "evidence": {
+    "claude": {
+      "file": "claude.json",
+      "privateOriginalSha256": "bec283f7ed2b84fa022e5db57b2e2d19c48fea47b1a427e57d69b2a76a70e7f2"
+    },
+    "kimi": {
+      "file": "kimi.json",
+      "privateOriginalSha256": "54631a3b97544dcb87319fd0aef52f2b868a07066a3669f69247629a23caecf6"
+    },
+    "pi": {
+      "file": "pi.json",
+      "privateOriginalSha256": "5ea1966bc9ebfbbeadbb3ddc3112edc96c3bdfed12c10409c78d892f1d0a7758"
+    },
+    "business-tools": {
+      "file": "business-tools.json",
+      "privateOriginalSha256": "9a6d98ce004b8e44152ce9ffe76b9b3507159f5a64599e57aab6b485b11e60cd"
+    },
+    "business-task": {
+      "file": "business-task.json",
+      "privateOriginalSha256": "9a51f20a27e927f7e4b61a07be5a8c3eaf5295d1407e015d7c5ff4197b6c5898"
+    }
+  },
+  "offlineVerification": {
+    "testsPassed": 17,
+    "logSha256": "34c99811cb311bc08c04458fbad7814b8ffb419a591f7b551139c75483cf1b68",
+    "repositoryFormatCheck": "passed",
+    "diffCheck": "passed",
+    "productChecks": "not rerun; no product code changed"
+  }
+}

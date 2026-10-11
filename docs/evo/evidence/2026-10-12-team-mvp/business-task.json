@@ -1,0 +1,15 @@
+{
+  "taskId": "invoice-v7-team-complete-v1",
+  "requirements": 12,
+  "fixtureManifestSha256": "0d163fff3c91d4024342eb96577b1d977cb534ffcbd1d139d3b63e89e03c9713",
+  "publicFiles": {
+    "README.md": "0d93b31616379d7e64702617535798b8d586116271c436a5e4cd16ba7c8600b5",
+    "TEAM_TASK.md": "ee84472e99c095135061800092f026e282c5ca5f6702027d507775049d674ed1",
+    "invoice.py": "d3caf3a244cf57ab6cce44dd7dd3b25dfcc93369d9da13d06658b52d0761c8c5"
+  },
+  "evaluation": "Host-only capture.py WORKSPACE 12 FRESH_ARCHIVE; README semantic review remains manual",
+  "quality": "Artifact oracle and candidate tests plus independent review/handoff evidence; silence or a completion phrase alone never passes",
+  "opening": "@implementer Complete the shared task in TEAM_TASK.md. You implement; reviewer independently reviews the actual files. Hand over using the public mention syntax (`@reviewer`); the reviewer hands back to you. Deliver the tested final artifact and a final summary after resolving review findings. All requirements are available now; no further Human turns are scheduled.",
+  "paidAuthorized": false,
+  "runnablePaid": false
+}
