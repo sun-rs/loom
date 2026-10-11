@@ -1,0 +1,1090 @@
+{
+  "reviews": [
+    {
+      "binding": "kimi",
+      "slot": "1/native",
+      "reviewer": "lead raw re-audit; not an additional independent agent",
+      "resultSha256": "a4d1fec4e807f872ab08e54526a0acf94b2b8676c6f3798698351e3f14f43362",
+      "record": {
+        "block": 1,
+        "arm": "native",
+        "status": "complete",
+        "rounds": 12,
+        "primaryComplete": true,
+        "input": 2271102,
+        "output": 25835,
+        "httpAttempts": 65,
+        "cachedInput": 2197248,
+        "reasoning": 2757,
+        "quality": true
+      },
+      "functionalPassed": 12,
+      "selfTestsPassed": 12,
+      "qualityFailures": [],
+      "snapshotsVerified": 12,
+      "exactConsumerAck": null,
+      "ownedPidsAbsent": 24,
+      "readmeSha256": "743bec09d5bc5244ac666d34ef2307c15c2235f5117e5e2d4366b1356c71bf41",
+      "compaction": {
+        "nativeAggregates": null,
+        "additionalRawResponses": null,
+        "input": null,
+        "output": null,
+        "kernelGaps": null
+      }
+    },
+    {
+      "binding": "kimi",
+      "slot": "1/current",
+      "reviewer": "lead raw re-audit; not an additional independent agent",
+      "resultSha256": "f85cde37eb1bf1ab4d847383dc93c5873038ce487b6b25103e195f6c7beec7c1",
+      "record": {
+        "block": 1,
+        "arm": "current",
+        "status": "complete",
+        "rounds": 12,
+        "primaryComplete": true,
+        "input": 2206102,
+        "output": 20232,
+        "httpAttempts": 63,
+        "cachedInput": 2166528,
+        "reasoning": null,
+        "quality": true
+      },
+      "functionalPassed": 12,
+      "selfTestsPassed": 12,
+      "qualityFailures": [],
+      "snapshotsVerified": 12,
+      "exactConsumerAck": 12,
+      "ownedPidsAbsent": 55,
+      "readmeSha256": "e8b895d76859b1fb980c5b9503f3389740b21554423b55d80e895be79d5f4ab6",
+      "compaction": {
+        "nativeAggregates": null,
+        "additionalRawResponses": null,
+        "input": null,
+        "output": null,
+        "kernelGaps": null
+      }
+    },
+    {
+      "binding": "kimi",
+      "slot": "1/candidate",
+      "reviewer": "lead raw re-audit; not an additional independent agent",
+      "resultSha256": "0bb5fc5bb15c8572a0c695f32743effa9e6570cd08afcd9c91c08ba0b1f3ab81",
+      "record": {
+        "block": 1,
+        "arm": "candidate",
+        "status": "complete",
+        "rounds": 12,
+        "primaryComplete": true,
+        "input": 2700961,
+        "output": 26292,
+        "httpAttempts": 72,
+        "cachedInput": 2653696,
+        "reasoning": null,
+        "quality": true
+      },
+      "functionalPassed": 12,
+      "selfTestsPassed": 12,
+      "qualityFailures": [],
+      "snapshotsVerified": 12,
+      "exactConsumerAck": 12,
+      "ownedPidsAbsent": 55,
+      "readmeSha256": "92b86fbc00e19503770c4cbb92e06bde0a7888ee4229491a1c619620829b8f7b",
+      "compaction": {
+        "nativeAggregates": null,
+        "additionalRawResponses": null,
+        "input": null,
+        "output": null,
+        "kernelGaps": null
+      }
+    },
+    {
+      "binding": "kimi",
+      "slot": "2/current",
+      "reviewer": "lead raw re-audit; not an additional independent agent",
+      "resultSha256": "62cb9a7e8f8527a068972d0dd51b46412db47795ca81dfd33f2d3e20fca3d40c",
+      "record": {
+        "block": 2,
+        "arm": "current",
+        "status": "complete",
+        "rounds": 12,
+        "primaryComplete": true,
+        "input": 2711842,
+        "output": 24091,
+        "httpAttempts": 70,
+        "cachedInput": 2665216,
+        "reasoning": null,
+        "quality": true
+      },
+      "functionalPassed": 12,
+      "selfTestsPassed": 12,
+      "qualityFailures": [],
+      "snapshotsVerified": 12,
+      "exactConsumerAck": 12,
+      "ownedPidsAbsent": 55,
+      "readmeSha256": "8859a3bbe6e75fa14991cef613c58efdb7057e33b57b4c4f78584a4d884519d4",
+      "compaction": {
+        "nativeAggregates": null,
+        "additionalRawResponses": null,
+        "input": null,
+        "output": null,
+        "kernelGaps": null
+      }
+    },
+    {
+      "binding": "kimi",
+      "slot": "2/candidate",
+      "reviewer": "lead raw re-audit; not an additional independent agent",
+      "resultSha256": "aac988213cf28e551e128064f005244c21526276b6497f6ead06d695c640acad",
+      "record": {
+        "block": 2,
+        "arm": "candidate",
+        "status": "complete",
+        "rounds": 12,
+        "primaryComplete": true,
+        "input": 2526880,
+        "output": 22591,
+        "httpAttempts": 71,
+        "cachedInput": 2485248,
+        "reasoning": null,
+        "quality": true
+      },
+      "functionalPassed": 12,
+      "selfTestsPassed": 12,
+      "qualityFailures": [],
+      "snapshotsVerified": 12,
+      "exactConsumerAck": 12,
+      "ownedPidsAbsent": 55,
+      "readmeSha256": "8966fd1bde98f6da928d134f6e3ae5f4d4646cc6dfb800d074e39c5367afbdb7",
+      "compaction": {
+        "nativeAggregates": null,
+        "additionalRawResponses": null,
+        "input": null,
+        "output": null,
+        "kernelGaps": null
+      }
+    },
+    {
+      "binding": "kimi",
+      "slot": "2/native",
+      "reviewer": "lead raw re-audit; not an additional independent agent",
+      "resultSha256": "00a044aa588686740d2700a302dd75aaef25c0cd7689dc0230c240f8d341f178",
+      "record": {
+        "block": 2,
+        "arm": "native",
+        "status": "complete",
+        "rounds": 12,
+        "primaryComplete": true,
+        "input": 2111454,
+        "output": 22201,
+        "httpAttempts": 61,
+        "cachedInput": 2041088,
+        "reasoning": 2070,
+        "quality": true
+      },
+      "functionalPassed": 12,
+      "selfTestsPassed": 12,
+      "qualityFailures": [],
+      "snapshotsVerified": 12,
+      "exactConsumerAck": null,
+      "ownedPidsAbsent": 24,
+      "readmeSha256": "ff1946f41c9673af8b7ad0b2408839e0cb33c8edb3925b552acb033cde63c772",
+      "compaction": {
+        "nativeAggregates": null,
+        "additionalRawResponses": null,
+        "input": null,
+        "output": null,
+        "kernelGaps": null
+      }
+    },
+    {
+      "binding": "kimi",
+      "slot": "3/candidate",
+      "reviewer": "lead raw re-audit; not an additional independent agent",
+      "resultSha256": "976f422e16831519c416e6df8e73e90a942bde10163f6f25ef083ba692a957ad",
+      "record": {
+        "block": 3,
+        "arm": "candidate",
+        "status": "complete",
+        "rounds": 12,
+        "primaryComplete": true,
+        "input": 2282731,
+        "output": 24167,
+        "httpAttempts": 63,
+        "cachedInput": 2239488,
+        "reasoning": null,
+        "quality": true
+      },
+      "functionalPassed": 12,
+      "selfTestsPassed": 12,
+      "qualityFailures": [],
+      "snapshotsVerified": 12,
+      "exactConsumerAck": 12,
+      "ownedPidsAbsent": 55,
+      "readmeSha256": "53b9e7f53326e1cafde8f27aea0c94a69c846185c42f526e74852f0cb581940a",
+      "compaction": {
+        "nativeAggregates": null,
+        "additionalRawResponses": null,
+        "input": null,
+        "output": null,
+        "kernelGaps": null
+      }
+    },
+    {
+      "binding": "kimi",
+      "slot": "3/native",
+      "reviewer": "lead raw re-audit; not an additional independent agent",
+      "resultSha256": "a7420730fa52579627bf98e3ac51009ccea68e84783cc491e9d123e876439aba",
+      "record": {
+        "block": 3,
+        "arm": "native",
+        "status": "complete",
+        "rounds": 12,
+        "primaryComplete": true,
+        "input": 3677998,
+        "output": 36507,
+        "httpAttempts": 84,
+        "cachedInput": 3567872,
+        "reasoning": 3922,
+        "quality": true
+      },
+      "functionalPassed": 12,
+      "selfTestsPassed": 12,
+      "qualityFailures": [],
+      "snapshotsVerified": 12,
+      "exactConsumerAck": null,
+      "ownedPidsAbsent": 24,
+      "readmeSha256": "e3517eb0587c8dc7e8c5bf14aeee53d09a80d5e788e95cd97bcccf6338a7c791",
+      "compaction": {
+        "nativeAggregates": null,
+        "additionalRawResponses": null,
+        "input": null,
+        "output": null,
+        "kernelGaps": null
+      }
+    },
+    {
+      "binding": "kimi",
+      "slot": "3/current",
+      "reviewer": "lead raw re-audit; not an additional independent agent",
+      "resultSha256": "58538074414c252fc4ec33af1330e16285f79c44d30abd30e13f62a655cd6c93",
+      "record": {
+        "block": 3,
+        "arm": "current",
+        "status": "complete",
+        "rounds": 12,
+        "primaryComplete": true,
+        "input": 2854875,
+        "output": 27903,
+        "httpAttempts": 68,
+        "cachedInput": 2804992,
+        "reasoning": null,
+        "quality": true
+      },
+      "functionalPassed": 12,
+      "selfTestsPassed": 12,
+      "qualityFailures": [],
+      "snapshotsVerified": 12,
+      "exactConsumerAck": 12,
+      "ownedPidsAbsent": 55,
+      "readmeSha256": "89ac8956c16863a3f045bda9de2b84c7457a730536d19541ed10d34f59fdad32",
+      "compaction": {
+        "nativeAggregates": null,
+        "additionalRawResponses": null,
+        "input": null,
+        "output": null,
+        "kernelGaps": null
+      }
+    },
+    {
+      "binding": "pi",
+      "slot": "1/native",
+      "reviewer": "lead raw re-audit; not an additional independent agent",
+      "resultSha256": "2c4cb4abea0d3fc01a33ba9f252895c52402433dcacba7739638b0ef1aab3fbe",
+      "record": {
+        "block": 1,
+        "arm": "native",
+        "status": "complete",
+        "rounds": 12,
+        "primaryComplete": true,
+        "input": 6432136,
+        "output": 107166,
+        "httpAttempts": 130,
+        "cachedInput": 6174720,
+        "reasoning": 53598,
+        "quality": false
+      },
+      "functionalPassed": 0,
+      "selfTestsPassed": 12,
+      "qualityFailures": [
+        {
+          "round": 1,
+          "checks": ["basic"],
+          "selfTestsFailureKind": null
+        },
+        {
+          "round": 2,
+          "checks": ["basic", "many-and-zero", "empty"],
+          "selfTestsFailureKind": null
+        },
+        {
+          "round": 3,
+          "checks": [
+            "basic",
+            "many-and-zero",
+            "empty",
+            "cancelled-skips-validation"
+          ],
+          "selfTestsFailureKind": null
+        },
+        {
+          "round": 4,
+          "checks": [
+            "basic",
+            "many-and-zero",
+            "empty",
+            "cancelled-skips-validation",
+            "tax-half-up",
+            "aggregate-tax-once",
+            "tax-on-exact-unrounded-net"
+          ],
+          "selfTestsFailureKind": null
+        },
+        {
+          "round": 5,
+          "checks": [
+            "basic",
+            "many-and-zero",
+            "empty",
+            "cancelled-skips-validation",
+            "tax-half-up",
+            "aggregate-tax-once",
+            "discount-before-tax",
+            "fractional-discounts-aggregate",
+            "tax-on-exact-unrounded-net"
+          ],
+          "selfTestsFailureKind": null
+        },
+        {
+          "round": 6,
+          "checks": [
+            "basic",
+            "many-and-zero",
+            "empty",
+            "cancelled-skips-validation",
+            "tax-half-up",
+            "aggregate-tax-once",
+            "discount-before-tax",
+            "fractional-discounts-aggregate",
+            "large-decimal-precision",
+            "tax-on-exact-unrounded-net",
+            "unrelated-active-false-counted"
+          ],
+          "selfTestsFailureKind": null
+        },
+        {
+          "round": 7,
+          "checks": [
+            "basic",
+            "many-and-zero",
+            "empty",
+            "cancelled-skips-validation",
+            "tax-half-up",
+            "aggregate-tax-once",
+            "discount-before-tax",
+            "fractional-discounts-aggregate",
+            "groups-grand-not-sum-rounded",
+            "large-decimal-precision",
+            "tax-on-exact-unrounded-net",
+            "unrelated-active-false-counted"
+          ],
+          "selfTestsFailureKind": null
+        },
+        {
+          "round": 8,
+          "checks": [
+            "basic",
+            "many-and-zero",
+            "empty",
+            "cancelled-skips-validation",
+            "tax-half-up",
+            "aggregate-tax-once",
+            "discount-before-tax",
+            "fractional-discounts-aggregate",
+            "groups-grand-not-sum-rounded",
+            "missing-groups-sort",
+            "large-decimal-precision",
+            "tax-on-exact-unrounded-net",
+            "unrelated-active-false-counted"
+          ],
+          "selfTestsFailureKind": null
+        },
+        {
+          "round": 9,
+          "checks": [
+            "basic",
+            "many-and-zero",
+            "empty",
+            "cancelled-skips-validation",
+            "tax-half-up",
+            "aggregate-tax-once",
+            "discount-before-tax",
+            "fractional-discounts-aggregate",
+            "groups-grand-not-sum-rounded",
+            "missing-groups-sort",
+            "cli-file",
+            "large-decimal-precision",
+            "tax-on-exact-unrounded-net",
+            "unrelated-active-false-counted"
+          ],
+          "selfTestsFailureKind": null
+        },
+        {
+          "round": 10,
+          "checks": [
+            "basic",
+            "many-and-zero",
+            "empty",
+            "cancelled-skips-validation",
+            "tax-half-up",
+            "aggregate-tax-once",
+            "discount-before-tax",
+            "fractional-discounts-aggregate",
+            "groups-grand-not-sum-rounded",
+            "missing-groups-sort",
+            "cli-file",
+            "cli-stdin",
+            "large-decimal-precision",
+            "tax-on-exact-unrounded-net",
+            "unrelated-active-false-counted"
+          ],
+          "selfTestsFailureKind": null
+        },
+        {
+          "round": 11,
+          "checks": [
+            "basic",
+            "many-and-zero",
+            "empty",
+            "cancelled-skips-validation",
+            "tax-half-up",
+            "aggregate-tax-once",
+            "discount-before-tax",
+            "fractional-discounts-aggregate",
+            "groups-grand-not-sum-rounded",
+            "missing-groups-sort",
+            "cli-file",
+            "cli-stdin",
+            "no-per-line-rounding",
+            "large-decimal-precision",
+            "tax-on-exact-unrounded-net",
+            "unrelated-active-false-counted"
+          ],
+          "selfTestsFailureKind": null
+        },
+        {
+          "round": 12,
+          "checks": [
+            "basic",
+            "many-and-zero",
+            "empty",
+            "cancelled-skips-validation",
+            "tax-half-up",
+            "aggregate-tax-once",
+            "discount-before-tax",
+            "fractional-discounts-aggregate",
+            "groups-grand-not-sum-rounded",
+            "missing-groups-sort",
+            "cli-file",
+            "cli-stdin",
+            "no-per-line-rounding",
+            "empty-grouped",
+            "large-decimal-precision",
+            "tax-on-exact-unrounded-net",
+            "unrelated-active-false-counted"
+          ],
+          "selfTestsFailureKind": null
+        }
+      ],
+      "snapshotsVerified": 12,
+      "exactConsumerAck": null,
+      "ownedPidsAbsent": 24,
+      "readmeSha256": "5950c08c810ea0a251e15ea074fdbdebe84c50f216b9cb5576561dbdad35b8de",
+      "compaction": {
+        "nativeAggregates": 1,
+        "additionalRawResponses": 2,
+        "input": 80914,
+        "output": 1796,
+        "kernelGaps": null
+      }
+    },
+    {
+      "binding": "pi",
+      "slot": "1/current",
+      "reviewer": "lead raw re-audit; not an additional independent agent",
+      "resultSha256": "6b6342d8c03b3161e40e04cc9e7555147ed1bd7a8be662178db35ebd9f858774",
+      "record": {
+        "block": 1,
+        "arm": "current",
+        "status": "complete",
+        "rounds": 12,
+        "primaryComplete": true,
+        "input": 4894152,
+        "output": 96426,
+        "httpAttempts": 93,
+        "cachedInput": 4667392,
+        "reasoning": 47104,
+        "quality": true
+      },
+      "functionalPassed": 12,
+      "selfTestsPassed": 12,
+      "qualityFailures": [],
+      "snapshotsVerified": 12,
+      "exactConsumerAck": 12,
+      "ownedPidsAbsent": 26,
+      "readmeSha256": "eed96a1597da2ee350c961b9481398f50c184635e383569f3e97f9efc5e603b9",
+      "compaction": {
+        "nativeAggregates": 1,
+        "additionalRawResponses": 2,
+        "input": 80350,
+        "output": 3079,
+        "kernelGaps": 1
+      }
+    },
+    {
+      "binding": "pi",
+      "slot": "1/candidate",
+      "reviewer": "lead raw re-audit; not an additional independent agent",
+      "resultSha256": "f2382d6c7655223ef6a04afc19ab43705ffe0ddadef1c8c56315c75fd517298b",
+      "record": {
+        "block": 1,
+        "arm": "candidate",
+        "status": "complete",
+        "rounds": 12,
+        "primaryComplete": true,
+        "input": 5604637,
+        "output": 87133,
+        "httpAttempts": 102,
+        "cachedInput": 5409920,
+        "reasoning": 34113,
+        "quality": true
+      },
+      "functionalPassed": 12,
+      "selfTestsPassed": 12,
+      "qualityFailures": [],
+      "snapshotsVerified": 12,
+      "exactConsumerAck": 12,
+      "ownedPidsAbsent": 26,
+      "readmeSha256": "1df011d433d1dc5eaff92ba9fc0e1db7a5403875b37954b8e0b46a3effed1300",
+      "compaction": {
+        "nativeAggregates": 1,
+        "additionalRawResponses": 2,
+        "input": 77072,
+        "output": 2980,
+        "kernelGaps": 1
+      }
+    },
+    {
+      "binding": "pi",
+      "slot": "2/current",
+      "reviewer": "lead raw re-audit; not an additional independent agent",
+      "resultSha256": "2831efd475e14880f61e26caeb5e6cd16f2be33e950c69292b5ddba68f08eaed",
+      "record": {
+        "block": 2,
+        "arm": "current",
+        "status": "complete",
+        "rounds": 12,
+        "primaryComplete": true,
+        "input": 6637052,
+        "output": 126763,
+        "httpAttempts": 115,
+        "cachedInput": 6352640,
+        "reasoning": 69279,
+        "quality": true
+      },
+      "functionalPassed": 12,
+      "selfTestsPassed": 12,
+      "qualityFailures": [],
+      "snapshotsVerified": 12,
+      "exactConsumerAck": 12,
+      "ownedPidsAbsent": 26,
+      "readmeSha256": "565cc463e8a8f42f04e3164234e7167404df5807dd6c213c826a6b3d9dfb47b0",
+      "compaction": {
+        "nativeAggregates": 1,
+        "additionalRawResponses": 2,
+        "input": 75349,
+        "output": 2960,
+        "kernelGaps": 1
+      }
+    },
+    {
+      "binding": "pi",
+      "slot": "2/candidate",
+      "reviewer": "lead raw re-audit; not an additional independent agent",
+      "resultSha256": "030754cd4ca09cda862edf4fd45b63441062761cdf2d6bbab4c1e4e569108491",
+      "record": {
+        "block": 2,
+        "arm": "candidate",
+        "status": "complete",
+        "rounds": 12,
+        "primaryComplete": true,
+        "input": 5328901,
+        "output": 76040,
+        "httpAttempts": 100,
+        "cachedInput": 5222272,
+        "reasoning": 28040,
+        "quality": false
+      },
+      "functionalPassed": 5,
+      "selfTestsPassed": 12,
+      "qualityFailures": [
+        {
+          "round": 6,
+          "checks": [
+            "unrelated-active-false-counted",
+            "unrelated-active-false-still-validates"
+          ],
+          "selfTestsFailureKind": null
+        },
+        {
+          "round": 7,
+          "checks": [
+            "unrelated-active-false-counted",
+            "unrelated-active-false-still-validates"
+          ],
+          "selfTestsFailureKind": null
+        },
+        {
+          "round": 8,
+          "checks": [
+            "unrelated-active-false-counted",
+            "unrelated-active-false-still-validates"
+          ],
+          "selfTestsFailureKind": null
+        },
+        {
+          "round": 9,
+          "checks": [
+            "unrelated-active-false-counted",
+            "unrelated-active-false-still-validates"
+          ],
+          "selfTestsFailureKind": null
+        },
+        {
+          "round": 10,
+          "checks": [
+            "unrelated-active-false-counted",
+            "unrelated-active-false-still-validates"
+          ],
+          "selfTestsFailureKind": null
+        },
+        {
+          "round": 11,
+          "checks": [
+            "unrelated-active-false-counted",
+            "unrelated-active-false-still-validates"
+          ],
+          "selfTestsFailureKind": null
+        },
+        {
+          "round": 12,
+          "checks": [
+            "unrelated-active-false-counted",
+            "unrelated-active-false-still-validates"
+          ],
+          "selfTestsFailureKind": null
+        }
+      ],
+      "snapshotsVerified": 12,
+      "exactConsumerAck": 12,
+      "ownedPidsAbsent": 26,
+      "readmeSha256": "f27cc154211a935eb49df616636ed2c20f92f6b535204272fdb3901625d2d385",
+      "compaction": {
+        "nativeAggregates": 0,
+        "additionalRawResponses": 0,
+        "input": 0,
+        "output": 0,
+        "kernelGaps": 0
+      }
+    },
+    {
+      "binding": "pi",
+      "slot": "2/native",
+      "reviewer": "lead raw re-audit; not an additional independent agent",
+      "resultSha256": "ee1648e564e03dd812b76d1889affddd2c6e8281acf7ab5b90c00ef2898cbd31",
+      "record": {
+        "block": 2,
+        "arm": "native",
+        "status": "complete",
+        "rounds": 12,
+        "primaryComplete": true,
+        "input": 5056504,
+        "output": 74342,
+        "httpAttempts": 104,
+        "cachedInput": 4954368,
+        "reasoning": 31543,
+        "quality": true
+      },
+      "functionalPassed": 12,
+      "selfTestsPassed": 12,
+      "qualityFailures": [],
+      "snapshotsVerified": 12,
+      "exactConsumerAck": null,
+      "ownedPidsAbsent": 24,
+      "readmeSha256": "1f9c1e1c215a83201015f3661d0c647561ae4604671c678ac410f5e8ce7791a4",
+      "compaction": {
+        "nativeAggregates": 0,
+        "additionalRawResponses": 0,
+        "input": 0,
+        "output": 0,
+        "kernelGaps": null
+      }
+    },
+    {
+      "binding": "pi",
+      "slot": "3/candidate",
+      "reviewer": "lead raw re-audit; not an additional independent agent",
+      "resultSha256": "852c6bb41581ea016a478efe70a3f46a397146a92e0cc15d88059dbf2122dfbc",
+      "record": {
+        "block": 3,
+        "arm": "candidate",
+        "status": "complete",
+        "rounds": 12,
+        "primaryComplete": true,
+        "input": 5548093,
+        "output": 95487,
+        "httpAttempts": 100,
+        "cachedInput": 5312384,
+        "reasoning": 45864,
+        "quality": true
+      },
+      "functionalPassed": 12,
+      "selfTestsPassed": 12,
+      "qualityFailures": [],
+      "snapshotsVerified": 12,
+      "exactConsumerAck": 12,
+      "ownedPidsAbsent": 26,
+      "readmeSha256": "aa8db2eda78125e85a44cd93309ee91a48c57ac549902da9bb545da101f7cc0f",
+      "compaction": {
+        "nativeAggregates": 1,
+        "additionalRawResponses": 2,
+        "input": 79541,
+        "output": 2600,
+        "kernelGaps": 1
+      }
+    },
+    {
+      "binding": "pi",
+      "slot": "3/native",
+      "reviewer": "lead raw re-audit; not an additional independent agent",
+      "resultSha256": "d31d3d92b3824544b734a9066db2e2b981347dd5d528b8c0691e7f7c0d44b31b",
+      "record": {
+        "block": 3,
+        "arm": "native",
+        "status": "complete",
+        "rounds": 12,
+        "primaryComplete": true,
+        "input": 6969940,
+        "output": 122016,
+        "httpAttempts": 119,
+        "cachedInput": 6695040,
+        "reasoning": 60433,
+        "quality": true
+      },
+      "functionalPassed": 12,
+      "selfTestsPassed": 12,
+      "qualityFailures": [],
+      "snapshotsVerified": 12,
+      "exactConsumerAck": null,
+      "ownedPidsAbsent": 24,
+      "readmeSha256": "ba19640efe61e2019852024634864f3296aaefb3ba48391d708dcefeef04487d",
+      "compaction": {
+        "nativeAggregates": 1,
+        "additionalRawResponses": 2,
+        "input": 78036,
+        "output": 2109,
+        "kernelGaps": null
+      }
+    },
+    {
+      "binding": "pi",
+      "slot": "3/current",
+      "reviewer": "lead raw re-audit; not an additional independent agent",
+      "resultSha256": "4580978305943a063cf411f9baa42d17ee1040e28a844f19805809aad57f1df4",
+      "record": {
+        "block": 3,
+        "arm": "current",
+        "status": "complete",
+        "rounds": 12,
+        "primaryComplete": true,
+        "input": 5380761,
+        "output": 77780,
+        "httpAttempts": 109,
+        "cachedInput": 5272576,
+        "reasoning": 33638,
+        "quality": true
+      },
+      "functionalPassed": 12,
+      "selfTestsPassed": 12,
+      "qualityFailures": [],
+      "snapshotsVerified": 12,
+      "exactConsumerAck": 12,
+      "ownedPidsAbsent": 26,
+      "readmeSha256": "99f77f53e2c32cd5e0d8f96531530db0f13c8f93d3e3e4468b4901a957192bca",
+      "compaction": {
+        "nativeAggregates": 0,
+        "additionalRawResponses": 0,
+        "input": 0,
+        "output": 0,
+        "kernelGaps": 0
+      }
+    }
+  ],
+  "records": {
+    "kimi": [
+      {
+        "block": 1,
+        "arm": "native",
+        "status": "complete",
+        "rounds": 12,
+        "primaryComplete": true,
+        "input": 2271102,
+        "output": 25835,
+        "httpAttempts": 65,
+        "cachedInput": 2197248,
+        "reasoning": 2757,
+        "quality": true
+      },
+      {
+        "block": 1,
+        "arm": "current",
+        "status": "complete",
+        "rounds": 12,
+        "primaryComplete": true,
+        "input": 2206102,
+        "output": 20232,
+        "httpAttempts": 63,
+        "cachedInput": 2166528,
+        "reasoning": null,
+        "quality": true
+      },
+      {
+        "block": 1,
+        "arm": "candidate",
+        "status": "complete",
+        "rounds": 12,
+        "primaryComplete": true,
+        "input": 2700961,
+        "output": 26292,
+        "httpAttempts": 72,
+        "cachedInput": 2653696,
+        "reasoning": null,
+        "quality": true
+      },
+      {
+        "block": 2,
+        "arm": "current",
+        "status": "complete",
+        "rounds": 12,
+        "primaryComplete": true,
+        "input": 2711842,
+        "output": 24091,
+        "httpAttempts": 70,
+        "cachedInput": 2665216,
+        "reasoning": null,
+        "quality": true
+      },
+      {
+        "block": 2,
+        "arm": "candidate",
+        "status": "complete",
+        "rounds": 12,
+        "primaryComplete": true,
+        "input": 2526880,
+        "output": 22591,
+        "httpAttempts": 71,
+        "cachedInput": 2485248,
+        "reasoning": null,
+        "quality": true
+      },
+      {
+        "block": 2,
+        "arm": "native",
+        "status": "complete",
+        "rounds": 12,
+        "primaryComplete": true,
+        "input": 2111454,
+        "output": 22201,
+        "httpAttempts": 61,
+        "cachedInput": 2041088,
+        "reasoning": 2070,
+        "quality": true
+      },
+      {
+        "block": 3,
+        "arm": "candidate",
+        "status": "complete",
+        "rounds": 12,
+        "primaryComplete": true,
+        "input": 2282731,
+        "output": 24167,
+        "httpAttempts": 63,
+        "cachedInput": 2239488,
+        "reasoning": null,
+        "quality": true
+      },
+      {
+        "block": 3,
+        "arm": "native",
+        "status": "complete",
+        "rounds": 12,
+        "primaryComplete": true,
+        "input": 3677998,
+        "output": 36507,
+        "httpAttempts": 84,
+        "cachedInput": 3567872,
+        "reasoning": 3922,
+        "quality": true
+      },
+      {
+        "block": 3,
+        "arm": "current",
+        "status": "complete",
+        "rounds": 12,
+        "primaryComplete": true,
+        "input": 2854875,
+        "output": 27903,
+        "httpAttempts": 68,
+        "cachedInput": 2804992,
+        "reasoning": null,
+        "quality": true
+      }
+    ],
+    "pi": [
+      {
+        "block": 1,
+        "arm": "native",
+        "status": "complete",
+        "rounds": 12,
+        "primaryComplete": true,
+        "input": 6432136,
+        "output": 107166,
+        "httpAttempts": 130,
+        "cachedInput": 6174720,
+        "reasoning": 53598,
+        "quality": false
+      },
+      {
+        "block": 1,
+        "arm": "current",
+        "status": "complete",
+        "rounds": 12,
+        "primaryComplete": true,
+        "input": 4894152,
+        "output": 96426,
+        "httpAttempts": 93,
+        "cachedInput": 4667392,
+        "reasoning": 47104,
+        "quality": true
+      },
+      {
+        "block": 1,
+        "arm": "candidate",
+        "status": "complete",
+        "rounds": 12,
+        "primaryComplete": true,
+        "input": 5604637,
+        "output": 87133,
+        "httpAttempts": 102,
+        "cachedInput": 5409920,
+        "reasoning": 34113,
+        "quality": true
+      },
+      {
+        "block": 2,
+        "arm": "current",
+        "status": "complete",
+        "rounds": 12,
+        "primaryComplete": true,
+        "input": 6637052,
+        "output": 126763,
+        "httpAttempts": 115,
+        "cachedInput": 6352640,
+        "reasoning": 69279,
+        "quality": true
+      },
+      {
+        "block": 2,
+        "arm": "candidate",
+        "status": "complete",
+        "rounds": 12,
+        "primaryComplete": true,
+        "input": 5328901,
+        "output": 76040,
+        "httpAttempts": 100,
+        "cachedInput": 5222272,
+        "reasoning": 28040,
+        "quality": false
+      },
+      {
+        "block": 2,
+        "arm": "native",
+        "status": "complete",
+        "rounds": 12,
+        "primaryComplete": true,
+        "input": 5056504,
+        "output": 74342,
+        "httpAttempts": 104,
+        "cachedInput": 4954368,
+        "reasoning": 31543,
+        "quality": true
+      },
+      {
+        "block": 3,
+        "arm": "candidate",
+        "status": "complete",
+        "rounds": 12,
+        "primaryComplete": true,
+        "input": 5548093,
+        "output": 95487,
+        "httpAttempts": 100,
+        "cachedInput": 5312384,
+        "reasoning": 45864,
+        "quality": true
+      },
+      {
+        "block": 3,
+        "arm": "native",
+        "status": "complete",
+        "rounds": 12,
+        "primaryComplete": true,
+        "input": 6969940,
+        "output": 122016,
+        "httpAttempts": 119,
+        "cachedInput": 6695040,
+        "reasoning": 60433,
+        "quality": true
+      },
+      {
+        "block": 3,
+        "arm": "current",
+        "status": "complete",
+        "rounds": 12,
+        "primaryComplete": true,
+        "input": 5380761,
+        "output": 77780,
+        "httpAttempts": 109,
+        "cachedInput": 5272576,
+        "reasoning": 33638,
+        "quality": true
+      }
+    ]
+  },
+  "limits": [
+    "Quality oracle retains return-container ambiguity.",
+    "Pi compaction is reconciled in raw/native aggregate, not invented as Kernel generations.",
+    "Later arms reviewed by lead because monitoring agents exhausted quota.",
+    "Kimi2/current earlier independent receipt has incorrect slot label kimi/1/current; its source/result hashes and amounts match block2. Original receipt retained; this re-audit corrects association."
+  ]
+}

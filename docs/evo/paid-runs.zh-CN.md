@@ -434,3 +434,11 @@ Pi原A–F全部已知1188HTTP/62,957,421input/970,722output，包括D失败；�
 **新增付费调用为0，不产生真实成本倍率或质量结论。** 合成答案的质量false、初始准备失败及先前两轮检查全部保留；旧session升级仅有单独fake不变量检查。OpenCode最初误用了旧v3准备器，缺候选指令的请求已判无效，随后改用已验收P171模板完成全12轮；历史P156原已记为无效，后续P157/P160/P164/P167/P168/P171实际请求有standing，未改写历史判定。
 
 [完整摘要与源文件封印](evidence/2026-10-11-common-reply-runtime/summary.json)、[Pi/Codex/OpenCode独审](evidence/2026-10-11-common-reply-runtime/three-cli-twelve-review.json)、[Kimi/Claude独审](evidence/2026-10-11-common-reply-runtime/kimi-claude-twelve-review.json)。候选仍未合入或部署；后续重复三臂付费pilot尚未放行，不把免费结果提升为五家效率验收。
+
+## 共用回复规则三组付费长任务（2026-10-11）
+
+沿用负责人持续授权；Pi1.1.0 / aihubmix/deepseek-v4.1-flash / low、Kimi2.1.1 / kimi-code/k3-256k / low。每家三组，每组原生/现行/候选独立连续12轮会话，N/C/T、C/T/N、T/N/C固定顺序。共18session、216轮、1589HTTP、75,196,121input/1,092,972output全部封账，无重跑/替换；原生自动记忆关闭，正常历史及原生压缩保留。
+
+Pi Σ现行/Σ原生输入0.916212、输出0.991582，Σ候选/Σ现行输入0.974554、输出0.859424；Kimi对应0.964303/0.854311、0.966261/1.011409。均为三组描述而非稳定性、等效性或货币成本结论。Pi原生24/36、现行36/36、候选29/36功能通过，作者自测各36/36；首组原生容器歧义与第二组候选active字段错误分别保留。Kimi各路径功能/自测36/36。Pi原始主量含压缩，不等于Kernel无gap。前三CLI无本批新增付费重复结果。
+
+原流/封账/快照/144次Loom精确consumer ACK复核，源文件/路径和清理核验通过；前八臂子代理独审、lead补核全部18臂，后十臂不冒称独立代理复审。候选不合入、不部署，不接受为成本优化胜利。[结果及限制](evidence/2026-10-11-common-reply-pilot/README.md)、[全部主量](evidence/2026-10-11-common-reply-pilot/summary.json)、[逐臂核账](evidence/2026-10-11-common-reply-pilot/raw-audit.json)、[出处及收据标签更正](evidence/2026-10-11-common-reply-pilot/provenance.json)。

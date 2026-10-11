@@ -1,0 +1,61 @@
+{
+  "authorization": "Owner standing authorization for paid multi-CLI/model tests; no additional approval requested.",
+  "manifestSha256": "dcd82225a76789ab8e71921f31b12edd5e114a73d183d08bfb6dc61b98547af0",
+  "releaseSha256": "fd99fbbfb0656baeecf9a4907528bf7b84dc55c4e4a86a31464a08d474a60f89",
+  "methodSha256": "95daa9c5bd826e501dfef79c3810787990a17f1a6ba49e4bd80bb41bb43cdcdc",
+  "planSha256": "618429aa2104d0e6b9edbd7642396c5d1faa6f6abe5d32e721b08d5077b6dd4e",
+  "guardFinalSha256": "e595b4f962cfe5e79f390e5380379457c3066a50719233770548eefe1312451a",
+  "leadAuditCodeSha256": "bb2b972c500a4b72cd876d6ba0a507e19e8f3fe8e3460185e7198bb676674e43",
+  "leadAuditDataSha256": "37e427139b7530c0492ecc7dd26ded1388e970d7a77267ef16039435c994af7c",
+  "frozenAnalysisCodeSha256": "5e0e27a4c365190feb62df3b3d9a56ebf461f755743d1b4e649b3530f7b9a473",
+  "analysisTests": {
+    "passed": 7,
+    "runAfterCompletion": false,
+    "meaning": "Re-run before final Kimi completion; aggregation code unchanged."
+  },
+  "independentReceipts": [
+    {
+      "file": "kimi-block1-candidate-review.json",
+      "sha256": "1281f7b93ea5ade9c0102726e739f0fddab4c251d87f2e0973511414f84b3016",
+      "slotAsWritten": "kimi/1/current"
+    },
+    {
+      "file": "kimi-block1-current-review.json",
+      "sha256": "12a22deb5ca7b3f44f10d4f070ccf83546d4b74c53a794d58ee162b1e8d93259",
+      "slotAsWritten": "kimi/1/current"
+    },
+    {
+      "file": "kimi-block1-native-review.json",
+      "sha256": "88b168f9fbbe8f1e9bec69949c9ebd87166e45243350de3cbd1830aeb2a8a690",
+      "slotAsWritten": "kimi/1/native"
+    },
+    {
+      "file": "kimi-block2-current-review.json",
+      "sha256": "1d61ac135ae6394409d689cf6412cc52726654d40b2f3ebf77ba282ad87a48ed",
+      "slotAsWritten": "kimi/1/current"
+    },
+    {
+      "file": "pi-block1-candidate-review.json",
+      "sha256": "885294a1a339789ed5e3cd0401488bf740973d2b3baab3730df36e1979f5d762",
+      "slotAsWritten": "pi/1/candidate"
+    },
+    {
+      "file": "pi-block1-current-review.json",
+      "sha256": "babd921071c27f273f74980b165709c70d2724b085f2ffcbcbaef3cbab449641",
+      "slotAsWritten": "pi/1/current"
+    },
+    {
+      "file": "pi-block1-native-review.json",
+      "sha256": "afa9d24140b102e955cc18941ad825ca9462a88cbb5e7aa10e18f79d4b707b1e",
+      "slotAsWritten": "pi/1/native"
+    },
+    {
+      "file": "pi-block2-current-review.json",
+      "sha256": "03c9d9eb75e43f24c83920d77eeb545acb4c2a2fc4fc28c186cb862c095930d2",
+      "slotAsWritten": "pi/2/current"
+    }
+  ],
+  "receiptCorrection": "kimi-block2-current-review.json has copied slot label kimi/1/current. Its result hash and totals refer to block2/current. Original not rewritten; lead raw-audit verifies correct source and association.",
+  "privateEvidenceRoot": "/Users/sun/.loom/reviews/2026-10-11-common-reply-pilot",
+  "publication": "Only sanitized summaries; raw provider/session contents remain local."
+}

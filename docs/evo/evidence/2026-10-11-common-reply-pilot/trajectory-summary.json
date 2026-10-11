@@ -1,0 +1,485 @@
+{
+  "records": [
+    {
+      "binding": "pi",
+      "block": 1,
+      "arm": "native",
+      "requests": 130,
+      "toolCategoryCounts": {
+        "business-tests": 28,
+        "business-or-context-read": 18,
+        "business-artifact-write": 52,
+        "other-shell": 19
+      },
+      "requestKinds": {
+        "sampling": 128,
+        "compaction-linked-by-native-aggregate": 2
+      },
+      "sourceSha256": "410653ef8abf82877bd08c336de93a975897872582a5b3b7e46c3e435d887074"
+    },
+    {
+      "binding": "pi",
+      "block": 1,
+      "arm": "current",
+      "requests": 93,
+      "toolCategoryCounts": {
+        "business-artifact-write": 44,
+        "business-tests": 15,
+        "business-or-context-read": 15,
+        "other-shell": 8
+      },
+      "requestKinds": {
+        "sampling": 91,
+        "compaction-linked-by-native-aggregate": 2
+      },
+      "sourceSha256": "fc91785723d5bcb1e159aa1a2d0795669199a2f3910a58f2db3e0e554aaf7fb9",
+      "workerActions": [],
+      "workerAuditSha256": "c7f906aaf1b75894e37aa2d5c220a84e00f9029e382339af6a2a563218cd6087"
+    },
+    {
+      "binding": "pi",
+      "block": 1,
+      "arm": "candidate",
+      "requests": 102,
+      "toolCategoryCounts": {
+        "business-artifact-write": 50,
+        "business-or-context-read": 13,
+        "business-tests": 18,
+        "other-shell": 11,
+        "loom-worker-communication": 2
+      },
+      "requestKinds": {
+        "sampling": 100,
+        "compaction-linked-by-native-aggregate": 2
+      },
+      "sourceSha256": "0bdde89865d5d2a33ede166e1ed8e80b3d7648799311b938fff7c9e1e533cca7",
+      "workerActions": [
+        {
+          "callIdHash": "5b80e6f456658e4c8d17e519b471dadad9e22a2a69b50cf6c15dae0301bac5b9",
+          "responseIdHash": "2a6f2a5090bc3f52a4b876506eb11896e4f6ddcd26307e39e5505d0a526c52d1",
+          "round": 1,
+          "requestSha256": "eeb9afd4b1157c9a013b9f06ea7ed7553c2dbec4232f505ef2bdace8f395b9e5",
+          "directInvocation": true,
+          "actionTokens": ["message-check"],
+          "startup": true,
+          "visibleAssistantTextPresent": false,
+          "nativeToolIsError": false,
+          "workerOutcome": "successful-delivery-read",
+          "workerErrorCodes": [],
+          "resultBytes": 1948,
+          "resultSha256": "797eb95fcfb686d9f291065477236ec6825f67d6f6c36190faa5aafc9ebac1e2"
+        },
+        {
+          "callIdHash": "08b1c7ba0b0e25a2f9cdc739a02f7b7f975b326c00969149b306523591bfae53",
+          "responseIdHash": "3382849f1decb4ad7c78335c717e9e3ff66ec4dad4391e57c96fb33c3bfd4692",
+          "round": 2,
+          "requestSha256": "4fc38f75df4607c4c399ef1d8bc416d59318afffd710c38eeee73dd2c1241c7b",
+          "directInvocation": true,
+          "actionTokens": ["message-check"],
+          "startup": true,
+          "visibleAssistantTextPresent": false,
+          "nativeToolIsError": false,
+          "workerOutcome": "successful-delivery-read",
+          "workerErrorCodes": [],
+          "resultBytes": 2089,
+          "resultSha256": "4c4cb7a07c1861d5f0f9f8c39cc93672659c2c976ac8edfed8e2ac41995df696"
+        }
+      ],
+      "workerAuditSha256": "cdfa0ed0ad6673c4ed6df84e49d14624460a181d86ffe02d5afc9bf8206bb593"
+    },
+    {
+      "binding": "pi",
+      "block": 2,
+      "arm": "native",
+      "requests": 104,
+      "toolCategoryCounts": {
+        "business-artifact-write": 47,
+        "business-tests": 14,
+        "business-or-context-read": 18,
+        "other-shell": 14
+      },
+      "requestKinds": {
+        "sampling": 104
+      },
+      "sourceSha256": "1ee933f9c680d2b170f61ca0d865d65a82cb45729e80e5a66450574e235b66bb"
+    },
+    {
+      "binding": "pi",
+      "block": 2,
+      "arm": "current",
+      "requests": 115,
+      "toolCategoryCounts": {
+        "business-tests": 17,
+        "business-artifact-write": 37,
+        "other-shell": 25,
+        "business-or-context-read": 19,
+        "loom-worker-communication": 3
+      },
+      "requestKinds": {
+        "sampling": 113,
+        "compaction-linked-by-native-aggregate": 2
+      },
+      "sourceSha256": "fa37a756ffe76b3477dbad4a1f3b28d2b1aaf05be7e4d6bf10697bfceb8154c2",
+      "workerActions": [
+        {
+          "callIdHash": "6d78164228266edefac5509df605106fd8461407ad8812e2976d247e3314f4a8",
+          "responseIdHash": "5eaaea3b45d6d4216d8125abfe435ea5b98b8631dce8607aee610f654445c211",
+          "round": 1,
+          "requestSha256": "735b82154edd23f5fb15ab188a6df66ed93c75e8b5b695fb691dcab2f4ce2c43",
+          "directInvocation": true,
+          "actionTokens": ["help"],
+          "startup": false,
+          "visibleAssistantTextPresent": false,
+          "nativeToolIsError": false,
+          "workerOutcome": "help-document",
+          "workerErrorCodes": [],
+          "resultBytes": 2474,
+          "resultSha256": "819ecf296e073e541c019a4a7d0845f3113130ed687bc820de4fb6cfae45d43e"
+        },
+        {
+          "callIdHash": "f9e0287c29a0651f6cfdc37f4874e9b296b3a9603c6315fddbc5e03c400bc8ae",
+          "responseIdHash": "33cbf9e02e74e15f7de7d58463a0c2fce794fcec28db768248afef0975c07bc7",
+          "round": 1,
+          "requestSha256": "d5036030d7dec9284b3fedc653f170b0660be654befdb3005ab8dca2069beb21",
+          "directInvocation": true,
+          "actionTokens": ["message-read"],
+          "startup": false,
+          "visibleAssistantTextPresent": false,
+          "nativeToolIsError": false,
+          "workerOutcome": "worker-error",
+          "workerErrorCodes": ["INVALID_ARG"],
+          "resultBytes": 96,
+          "resultSha256": "22c69ab3ed496fb9ad7d927ec6977406799e434ee4bec135d636ab5e3f226114"
+        },
+        {
+          "callIdHash": "cc43b9c9da38223a53f557c2d1619212826ecfcca629feef6739bdcb9b92ab1c",
+          "responseIdHash": "dd7840e767da4ca234fde71eadd4b383d1f2d3d841c3fd4ccfc738d03db134fc",
+          "round": 1,
+          "requestSha256": "e36d1aae50ec778748d3e11bb07eb6fcbb76d4083389b7269c43588101ba0209",
+          "directInvocation": true,
+          "actionTokens": ["message-read"],
+          "startup": false,
+          "visibleAssistantTextPresent": false,
+          "nativeToolIsError": false,
+          "workerOutcome": "successful-history-read",
+          "workerErrorCodes": [],
+          "resultBytes": 1254,
+          "resultSha256": "4657a9a3eaf1826b7f9269851c17d3432375c6fc5ddc30020706cbefc79c2470"
+        }
+      ],
+      "workerAuditSha256": "94b0555fb5ed0c3aa08817d2cc4a5d2948061239c9f1dfe2e83f55a232e093cc"
+    },
+    {
+      "binding": "pi",
+      "block": 2,
+      "arm": "candidate",
+      "requests": 100,
+      "toolCategoryCounts": {
+        "business-artifact-write": 45,
+        "other-shell": 17,
+        "business-or-context-read": 14,
+        "business-tests": 15,
+        "loom-worker-communication": 4
+      },
+      "requestKinds": {
+        "sampling": 100
+      },
+      "sourceSha256": "7a79ebc6b487e8d4a01febcc61127f595bc79641064e5463d1a6f6ef0d1898ed",
+      "workerActions": [
+        {
+          "callIdHash": "3264417b0513b1f248f200802631104ca99f0f04bc68d0a7cbfebcad700be5cc",
+          "responseIdHash": "7f64268898588b73b5f2dbfe09ef2f336ba757140e07e63c1ca417a05c52ad66",
+          "round": 1,
+          "requestSha256": "7ecc4c6b69a82d0d9e1ef0bbf2270e404d638a0ba19a08a8e424572c970098e1",
+          "directInvocation": false,
+          "actionTokens": [],
+          "startup": false,
+          "visibleAssistantTextPresent": false,
+          "nativeToolIsError": false,
+          "workerOutcome": "unknown",
+          "workerErrorCodes": [],
+          "resultBytes": 227,
+          "resultSha256": "3bdf8993ee40f1b925f3e180b5091833b95974fd1c0d9c7c49f80c9a540df079"
+        },
+        {
+          "callIdHash": "1fdb19de1262f5b0023eca260fc529827af7fb55895c395ab09e04b8cc91efd1",
+          "responseIdHash": "4176a26d6b0f90625637e593ec28089477ea4f4906a637548455c62754462f24",
+          "round": 1,
+          "requestSha256": "0c2e9baa09a749d87209617a607824aa7aa4ee022a0b631060a085ea396c8b3b",
+          "directInvocation": true,
+          "actionTokens": ["message-check"],
+          "startup": true,
+          "visibleAssistantTextPresent": false,
+          "nativeToolIsError": false,
+          "workerOutcome": "successful-delivery-read",
+          "workerErrorCodes": [],
+          "resultBytes": 1948,
+          "resultSha256": "beaf912da0b97d2749c5b3ac16c33275430d0087e1eef0258318275078e9417f"
+        },
+        {
+          "callIdHash": "0ec2dfb57e3c20a011247eeae12811f5d9469b4952f31128f40e3cd42b36fce0",
+          "responseIdHash": "09e5d9e7dcce9620f804987577ba2729af5610b217f1c1e0e8e3a4af9d30e0de",
+          "round": 2,
+          "requestSha256": "74df230e420aea31d0b56f9ae25fa1df9f38207039b49e21a4d919e84360f00c",
+          "directInvocation": true,
+          "actionTokens": ["message-check"],
+          "startup": true,
+          "visibleAssistantTextPresent": false,
+          "nativeToolIsError": false,
+          "workerOutcome": "successful-delivery-read",
+          "workerErrorCodes": [],
+          "resultBytes": 2528,
+          "resultSha256": "a0599db230cf624a920709f94713cbc4cb5901eed8c58388bebd79dd96efe797"
+        },
+        {
+          "callIdHash": "751352b59532a2158a966981d84dbba473014a9ed79745c3bf076a0d35ced2c1",
+          "responseIdHash": "09e5d9e7dcce9620f804987577ba2729af5610b217f1c1e0e8e3a4af9d30e0de",
+          "round": 2,
+          "requestSha256": "74df230e420aea31d0b56f9ae25fa1df9f38207039b49e21a4d919e84360f00c",
+          "directInvocation": true,
+          "actionTokens": [],
+          "startup": false,
+          "visibleAssistantTextPresent": false,
+          "nativeToolIsError": false,
+          "workerOutcome": "worker-error",
+          "workerErrorCodes": ["INVALID_ARG"],
+          "resultBytes": 57,
+          "resultSha256": "d48167f99878ccedc0f58b4f7c53c1ddfe75001c08418311f0abf076de610624"
+        }
+      ],
+      "workerAuditSha256": "af0152ae1fb8ec6e4aa20e4ad83d50fd53acc7e24c07f415de380f2a7e8dda73"
+    },
+    {
+      "binding": "pi",
+      "block": 3,
+      "arm": "native",
+      "requests": 119,
+      "toolCategoryCounts": {
+        "business-tests": 22,
+        "business-artifact-write": 42,
+        "other-shell": 18,
+        "business-or-context-read": 24
+      },
+      "requestKinds": {
+        "sampling": 117,
+        "compaction-linked-by-native-aggregate": 2
+      },
+      "sourceSha256": "94fc64639738ebc9c9c75acb6265ebf7dc10051758a40e8f3d4b78591218996b"
+    },
+    {
+      "binding": "pi",
+      "block": 3,
+      "arm": "current",
+      "requests": 109,
+      "toolCategoryCounts": {
+        "business-tests": 23,
+        "business-artifact-write": 50,
+        "business-or-context-read": 17,
+        "other-shell": 13
+      },
+      "requestKinds": {
+        "sampling": 109
+      },
+      "sourceSha256": "3594bcfb75df8cc7f84ef98fa71ecb8ebbd773ca4ef8f4b76af6dabbd6738372",
+      "workerActions": [],
+      "workerAuditSha256": "3c0d4fdbfc0f0f6e6fa16ceb74908baeca17fc0cff888f86cce9f5007aba63cc"
+    },
+    {
+      "binding": "pi",
+      "block": 3,
+      "arm": "candidate",
+      "requests": 100,
+      "toolCategoryCounts": {
+        "business-artifact-write": 41,
+        "other-shell": 20,
+        "business-tests": 16,
+        "business-or-context-read": 10,
+        "loom-worker-communication": 3
+      },
+      "requestKinds": {
+        "compaction-linked-by-native-aggregate": 2,
+        "sampling": 98
+      },
+      "sourceSha256": "8b6b7e41ca1ce1886d698ea8192aed36bbba6cf6e13bc6e2f3c9352c08be2750",
+      "workerActions": [
+        {
+          "callIdHash": "832cf40425a812ccd2c01a59b61aa17b934c1790b8b275781df9fbdef09197d5",
+          "responseIdHash": "3deb92e1e5714412136be95cea674dc14e0ea7b4746567ed8663d09434000037",
+          "round": 1,
+          "requestSha256": "e58e35f920fd038e456cebd0f7c76bcdacc4cc134ca3c6dd4be7f9aa1a31dad6",
+          "directInvocation": false,
+          "actionTokens": [],
+          "startup": false,
+          "visibleAssistantTextPresent": false,
+          "nativeToolIsError": false,
+          "workerOutcome": "unknown",
+          "workerErrorCodes": [],
+          "resultBytes": 4057,
+          "resultSha256": "9be5f7e96b35be3e9ce44ddd5724d8eaa4303909ce4977ac01960bc41078379e"
+        },
+        {
+          "callIdHash": "406e3fd4dfab6c099b251ea41e7d2d90d7e8a8bcaf2c7681ff292fb63ea480fa",
+          "responseIdHash": "0f5a870f3ee9a0081209bb7a4249ed9cb107cb5783aaf83390cc401f0a6412a4",
+          "round": 1,
+          "requestSha256": "6f2afb3765124f55f8403158aa6c0498d60a32bc015d815a2538d6d7373588b6",
+          "directInvocation": true,
+          "actionTokens": ["help"],
+          "startup": false,
+          "visibleAssistantTextPresent": false,
+          "nativeToolIsError": false,
+          "workerOutcome": "unknown",
+          "workerErrorCodes": [],
+          "resultBytes": 2791,
+          "resultSha256": "7416270fcbfba0273370a962ff9ef5c8c33b1ee9f98d0e97b707c5e6a56e9a89"
+        },
+        {
+          "callIdHash": "e3a055790f8344458ae63a71dc64452392f94dfa41e3d4532f6f298aa18ce13d",
+          "responseIdHash": "3eec8114bb9ec7e81685eb7f40fecb87d93dbddf05bf3374e140fbc142677940",
+          "round": 1,
+          "requestSha256": "c36c5e933b4638d51bf94c36c6b50feed9125bc14e1c494c8a6fcc04291d13bc",
+          "directInvocation": true,
+          "actionTokens": ["message-read"],
+          "startup": false,
+          "visibleAssistantTextPresent": false,
+          "nativeToolIsError": false,
+          "workerOutcome": "successful-history-read",
+          "workerErrorCodes": [],
+          "resultBytes": 1254,
+          "resultSha256": "5cb5ee22e4a8b65c96256bf41fb183dc56b555eada3bd3bcb3ad17f70fd6240f"
+        }
+      ],
+      "workerAuditSha256": "5e276a5b5fb9bd6da5db1065f597cc9c6b57259a3633093c80b8be4adf940f16"
+    },
+    {
+      "binding": "kimi",
+      "block": 1,
+      "arm": "native",
+      "requests": 65,
+      "categoryRequestCountsOverlap": {
+        "business-read": 3,
+        "business-edit": 10,
+        "business-test": 37,
+        "business-shell-unclassified": 4,
+        "no-tool-generation": 12
+      },
+      "sourceSha256": "e341fdae3975b19dca0ac3edb612905c8bb87891a575a66ba3450d6d7024563a"
+    },
+    {
+      "binding": "kimi",
+      "block": 1,
+      "arm": "current",
+      "requests": 63,
+      "categoryRequestCountsOverlap": {
+        "business-edit": 10,
+        "business-test": 35,
+        "no-tool-generation": 12,
+        "business-read": 6
+      },
+      "sourceSha256": "a9471770e9c0da4acbaaf49827769a3d3ae19111b2e6b073e0e90ebb4cd72152"
+    },
+    {
+      "binding": "kimi",
+      "block": 1,
+      "arm": "candidate",
+      "requests": 72,
+      "categoryRequestCountsOverlap": {
+        "business-edit": 15,
+        "business-test": 36,
+        "no-tool-generation": 12,
+        "business-read": 4,
+        "business-shell-unclassified": 6
+      },
+      "sourceSha256": "748926d133a8e8565a8c4964c869daee170d41d87358c58f2f1ff7548bc6f715"
+    },
+    {
+      "binding": "kimi",
+      "block": 2,
+      "arm": "native",
+      "requests": 61,
+      "categoryRequestCountsOverlap": {
+        "business-read": 4,
+        "business-edit": 10,
+        "business-test": 35,
+        "no-tool-generation": 12,
+        "business-shell-unclassified": 2
+      },
+      "sourceSha256": "b44693595962637be370ace310f555e8d5140f049f4c97c5d4daac85d6578808"
+    },
+    {
+      "binding": "kimi",
+      "block": 2,
+      "arm": "current",
+      "requests": 70,
+      "categoryRequestCountsOverlap": {
+        "business-read": 5,
+        "business-edit": 14,
+        "business-test": 37,
+        "no-tool-generation": 12,
+        "business-shell-unclassified": 3
+      },
+      "sourceSha256": "a549744bb2fdc7de54281751aa9fb14c47db2d36a06a83c6e5f999b8fe8aa1e8"
+    },
+    {
+      "binding": "kimi",
+      "block": 2,
+      "arm": "candidate",
+      "requests": 71,
+      "categoryRequestCountsOverlap": {
+        "business-read": 2,
+        "business-edit": 21,
+        "business-test": 37,
+        "no-tool-generation": 12,
+        "business-shell-unclassified": 3
+      },
+      "sourceSha256": "a48640931c3124db474aff30d8af3c66ffb0478db3dc6a57bd14ef7e983de35b"
+    },
+    {
+      "binding": "kimi",
+      "block": 3,
+      "arm": "native",
+      "requests": 84,
+      "categoryRequestCountsOverlap": {
+        "business-read": 6,
+        "business-edit": 26,
+        "business-test": 39,
+        "no-tool-generation": 12,
+        "business-shell-unclassified": 1
+      },
+      "sourceSha256": "6fdc100e70674d2331df8b8526fc5204b3c29cd1bd2e5ad0db6fb9feb7b294f8"
+    },
+    {
+      "binding": "kimi",
+      "block": 3,
+      "arm": "current",
+      "requests": 68,
+      "categoryRequestCountsOverlap": {
+        "business-edit": 11,
+        "business-test": 39,
+        "no-tool-generation": 12,
+        "business-read": 5,
+        "business-shell-unclassified": 2
+      },
+      "sourceSha256": "fb24bb6818b9a5a548be87c9369d951c06682bd35d593012f5ad48fa7664b06a"
+    },
+    {
+      "binding": "kimi",
+      "block": 3,
+      "arm": "candidate",
+      "requests": 63,
+      "categoryRequestCountsOverlap": {
+        "business-edit": 16,
+        "business-test": 31,
+        "no-tool-generation": 12,
+        "business-read": 5,
+        "business-shell-unclassified": 1
+      },
+      "sourceSha256": "11ca870c72ee705d10fbc3d08e4c0b40a59e0f2daa0a80b4c657ebc78f5d8780"
+    }
+  ],
+  "limits": [
+    "Lexical categories, not causal attribution or token apportionment. Pi tool counts and Kimi overlapping request categories are different units; do not pool.",
+    "No detected Worker pattern is not proof arbitrary shell indirection is absent.",
+    "Direct invocation and environment exploration separated; successful read is not Task completion.",
+    "No private thinking text or provider credentials published."
+  ]
+}

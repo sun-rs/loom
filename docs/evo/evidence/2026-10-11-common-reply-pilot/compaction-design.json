@@ -1,0 +1,82 @@
+{
+  "kind": "pi-compaction-observability-design/v1",
+  "status": "read-only proposal, no implementation or provider tests",
+  "observedEvidence": {
+    "piCurrentBlock1": "93 raw responses include91assistant IDs recorded in Kernel plus2compaction responses; native compaction aggregate80350input/3079output matches those2 raw responses; Kernel retains one parse_error gap.",
+    "important": "Native compaction aggregate is not a response ID or a request count. It cannot be inserted into the existing generation ledger as a synthetic generation."
+  },
+  "currentPath": [
+    {
+      "file": "packages/agent-host/src/pi-print-driver.mjs",
+      "lines": [176, 180, 210, 325],
+      "behavior": "One gap immediately on current stream compaction_start/end; validated new session suffix is fallback; gap survives later kill. Assistant message_end usage remains independently recorded."
+    },
+    {
+      "file": "packages/agent-host/src/pi-usage.mjs",
+      "lines": [3, 8, 44],
+      "behavior": "Only assistant records with responseId and proven counters produce generation frames; Pi primary input adds native input/cacheRead/cacheWrite, output already includes reasoning."
+    },
+    {
+      "file": "packages/agent-host/src/provider-usage.js",
+      "lines": [369, 375],
+      "behavior": "Writer deduplicates response IDs and keeps gap as separate frame."
+    },
+    {
+      "file": "packages/agent-host/src/generic-process-adapter.ts",
+      "lines": [415, 624, 628],
+      "behavior": "Host-private usage/gap frame validation and dispatch."
+    },
+    {
+      "file": "packages/agent-host/src/agent-host.ts",
+      "lines": [774, 789],
+      "behavior": "AgentHost passes execution-bound usage and gaps to control."
+    },
+    {
+      "file": "packages/kernel/src/run-attempt-usage.ts",
+      "lines": [136, 145, 178],
+      "behavior": "Kernel durable response identity/idempotency and independent gaps; no aggregate shape currently."
+    }
+  ],
+  "minimalDesign": {
+    "preferredFirstSlice": "Expose known native compaction usage as a separately typed aggregate diagnostic, keyed by verified native session identity+append-only compaction entry ID and bound current Run. Keep assistant generation totals and existing coverage gap separate. Do not silently add aggregates to generation counts or claim full per-response coverage.",
+    "singleOwners": {
+      "protocol": "Define aggregate evidence semantics distinct from response usage; explicit aggregation kind, native entry identity and coverage status.",
+      "agentHost": "Validate stream end against persisted new suffix/current branch and file identity; deliver aggregate diagnostic with stable provenance. Never scan prior session history as new usage.",
+      "kernel": "Persist immutable idempotent aggregate evidence and surface separate known-compaction totals, without duplicating generation ownership.",
+      "readModel": "Show generation-known and compaction-aggregate-known separately; all-consumption/request coverage can remain partial."
+    },
+    "beforeAnyCombinedTotal": "Verify installed native source defines compaction aggregate as disjoint costs of compaction-generated requests, not inclusive session/assistant totals. Current sample equality alone is not a universal non-overlap proof. Until proved, do not add the separate aggregate to existing generation total in product.",
+    "missingOrConflicting": "Missing/invalid primary field or mismatched stream/persisted aggregate retains unknown and existing known assistant costs; optional missing dimensions stay unknown independently. Conflicting same native entry must not silently sum or overwrite.",
+    "completion": "No change to final text, Room ACK, session continuity or existing compaction-tail final proof.",
+    "scope": "This is usage-observation support, not prompt optimization and not a request proxy framework."
+  },
+  "tddMinimum": [
+    "Existing assistant-only exact behavior unchanged.",
+    "Two compaction provider calls represented by one native aggregate never become one fake generation or two guessed identities.",
+    "Same compaction end and persisted suffix repeated count once; old resume entry counts zero new.",
+    "Two distinct valid entries remain two aggregates without inferred response count.",
+    "Missing usage/start-only/aborted/mismatched entry preserves gap and prior known assistant costs.",
+    "Same entry conflict does not add both values.",
+    "Post-final compaction retains final/delivery proof and exactly the existing expected gap; no extra unfinished-stream gap.",
+    "Kernel replay idempotency and instance/session/Run isolation."
+  ],
+  "existingTests": [
+    "packages/agent-host/test/pi-print-driver.test.mjs:188,230-260 (kill gap, normal final and historical resume isolation)",
+    "packages/agent-host/test/pi-print-proof.test.mjs:159-195 (usage failures/dedup/frame contract),240-282 (post-final compaction identity/tail negatives)"
+  ],
+  "sourceSha256": {
+    "packages/agent-host/src/pi-print-driver.mjs": "af6105d60553462402913bca19565d2f27647e08d4f9a4d60b8b256bad999335",
+    "packages/agent-host/src/pi-usage.mjs": "7a771ff525deeeccf8289497ef4266838854698ca39bd29a4dc9a04432f3f5f1",
+    "packages/agent-host/src/pi-final-output.mjs": "e73eaac62faa4cc9647b80cc4d8ec44ca0b350eea4e7d0d78013c612938897c9",
+    "packages/agent-host/src/provider-usage.js": "8d1877dda422c6275a1f4487da085b24d2ef4852a80b45e7b3b47b3c119c1f3f",
+    "packages/agent-host/src/generic-process-adapter.ts": "e17f05660c59375cdffc62fb07e9161d12bdbbd88128dc5277fa980f093f372f",
+    "packages/agent-host/src/agent-host.ts": "5b9e301d785e030f0e4ae53194827c5f77bbb81f89e15560a0cba0b0062d9473",
+    "packages/protocol/src/runtime-usage.ts": "d78e7bee14f31f7b3d26fdbc396a56db85d071d8c28246e4042cbb6560ceab14",
+    "packages/kernel/src/run-attempt-usage.ts": "e22a837ed8664ec4186ea7faab733752c61d50bd3c2e19bc5001eb3fbdc6d2cf"
+  },
+  "limitations": [
+    "No new protocol shape is approved/implemented by this receipt.",
+    "Installed compaction accumulation source still needs explicit disjointness audit before any summed product total.",
+    "Original paid archives and Kernel records remain unchanged."
+  ]
+}

@@ -1,0 +1,88 @@
+{
+  "kind": "pilot-comparability-review/v1",
+  "scope": "Read-only interpretation audit; no run, prompt, queue or oracle changes.",
+  "fixedWithinBinding": [
+    "Exact CLI install/model/low binding and frozen nonsecret model configuration.",
+    "Same v6 twelve business prompts and initial workspace; same evaluator/Python environment.",
+    "Independent fresh session/workspace per arm; each arm retains its own history across twelve rounds.",
+    "Same per-arm resource thresholds; same capture and whole-session accounting principles.",
+    "Provider automatic-memory/resource-isolation policy on every launch; ordinary native history retained.",
+    "Current/candidate use the same formal Role/daemon delivery path; only frozen two-file common reply-semantics source patch is the intended treatment."
+  ],
+  "notControlledOrNotEquivalent": [
+    {
+      "factor": "Native versus Loom",
+      "detail": "Native has no Room delivery, identity/Worker credentials or standing/wake wrapper. Loom has those by design; this contrast measures combined execution context, not only the two edited sentences."
+    },
+    {
+      "factor": "Kimi invocation",
+      "detail": "Native print and current/candidate ACP differ in native mode, history/reminder construction and terminal/tool mediation. Native dynamic tool availability may differ across requests; equal initial schemas do not prove full-history tool parity."
+    },
+    {
+      "factor": "Pi invocation",
+      "detail": "Native and formal Loom both use print/JSON but launch arguments, standing context, Worker access and delivery framing differ. Current/candidate are the narrower contrast."
+    },
+    {
+      "factor": "Tools and permissions",
+      "detail": "Each arm has its own writable workspace and denied oracle/peer roots. Loom additionally needs authenticated Worker paths and source/runtime read permissions. This is matched business access with necessary role-specific exceptions, not identical full OS capabilities."
+    },
+    {
+      "factor": "Isolation vs ordinary defaults",
+      "detail": "Pi wrapper explicitly disables extensions, skills, context files, prompt templates and MCP; Kimi supplies isolated skills/config resources. Results are for this frozen benchmark environment, not arbitrary user CLI customization."
+    },
+    {
+      "factor": "History and execution",
+      "detail": "Responses, tool calls, files, tool output, errors, compaction and cache hits evolve independently. Fixed tasks are not fixed realized model/tool trajectories."
+    },
+    {
+      "factor": "Cache and time",
+      "detail": "Same provider/account and sequential arms do not equal cold caches. Cross-arm cache warming, provider load/version behavior and other-binding concurrent machine load remain possible."
+    }
+  ],
+  "latinDesign": {
+    "supports": [
+      "Each arm appears once in each of three positions, reducing systematic association with ordinal position.",
+      "Each block is a matched three-session unit; three blocks provide three observed contrasts per binding."
+    ],
+    "doesNotSupport": [
+      "Not all six permutations: transitions N→C, C→T, T→N recur, reverse transitions are not balanced within blocks. Carryover/cache effects are not eliminated.",
+      "Deterministic Latin order is not randomized treatment assignment and does not neutralize arbitrary time trends or interactions.",
+      "Three blocks cannot establish stability, equivalence, generalization to five CLIs or statistical power.",
+      "Rounds are correlated within one persistent session, not 36 independent replications.",
+      "No cross-binding pooling: CLI and model differ."
+    ]
+  },
+  "qualityInterpretation": {
+    "originalResults": "Keep functional oracle, selftests, warnings, final artifacts and semantic findings separately; no quality-based exclusion.",
+    "returnShape": "Early v6 return-container ambiguity remains documented; strict dict failures do not alone prove early instruction violation.",
+    "completeButQualityFalse": "Structurally complete token/request ratios describe consumption of executed trajectories with their observed quality. They are not cost per correct solution or efficiency superiority at equal task success.",
+    "incompleteCohort": "Any missing/failed fixed arm makes planned full-cohort primary null; preserve all known failed/unpaired usage and label complete subsets descriptive with selection risk."
+  },
+  "measurementRules": [
+    "Report input tokens, output tokens and request count separately; request-factor × mean-input-per-request factor is an arithmetic decomposition, not causal attribution.",
+    "Reasoning is an output subset; cached input is an input subset. Do not add either twice.",
+    "Missing optional cache/reasoning remains unknown without erasing known primary input/output.",
+    "Input/output token ratios are not billed-currency ratios. No pricing or invoice evidence is captured here.",
+    "All model HTTP usage includes compaction and failures where provider usage is reported; successful final delivery alone does not prove full usage coverage.",
+    "Small prompt-byte changes can cause large semantic/trajectory changes; byte reduction is neither token estimation nor proof of negligible behavioral effect.",
+    "Do not infer absence of indirect prompt effects merely from zero explicit Worker communication tool calls."
+  ],
+  "reportWording": {
+    "allowed": "Observed per-binding candidate/current ratio of summed reported tokens over all three predeclared complete blocks, with per-block values and separate quality.",
+    "disallowed": [
+      "Candidate saves X percent money.",
+      "Latin order proves prompt causality.",
+      "Quality-failed outputs have equal utility.",
+      "Three blocks establish stable production efficiency."
+    ]
+  },
+  "sourceHashes": {
+    "method.json": "95daa9c5bd826e501dfef79c3810787990a17f1a6ba49e4bd80bb41bb43cdcdc",
+    "execution-plan.paid.json": "618429aa2104d0e6b9edbd7642396c5d1faa6f6abe5d32e721b08d5077b6dd4e",
+    "pi/native/wrapper.mjs": "cd4d37ffeb75f79d5bff3be03628bf86381aa8a249b1b32eee0687da6b7ab255",
+    "kimi/native/wrapper.mjs": "3065c1726b79ee62fc877cb8bb15b60c58795e03bf39d12930ab083658241f2f"
+  },
+  "limitations": [
+    "This review is a method boundary receipt, not a final cohort verdict. Actual per-arm treatment/config/schema/usage integrity remains independently checked on sealing."
+  ]
+}

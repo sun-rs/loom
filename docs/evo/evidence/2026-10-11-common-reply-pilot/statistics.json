@@ -1,0 +1,473 @@
+{
+  "kimi": {
+    "unit": "matched block",
+    "scope": "one CLI/model/effort binding; descriptive three-block pilot",
+    "blocks": [
+      {
+        "block": 1,
+        "arms": {
+          "native": {
+            "block": 1,
+            "arm": "native",
+            "status": "complete",
+            "rounds": 12,
+            "primaryComplete": true,
+            "input": 2271102,
+            "output": 25835,
+            "httpAttempts": 65,
+            "cachedInput": 2197248,
+            "reasoning": 2757,
+            "quality": true
+          },
+          "current": {
+            "block": 1,
+            "arm": "current",
+            "status": "complete",
+            "rounds": 12,
+            "primaryComplete": true,
+            "input": 2206102,
+            "output": 20232,
+            "httpAttempts": 63,
+            "cachedInput": 2166528,
+            "reasoning": null,
+            "quality": true
+          },
+          "candidate": {
+            "block": 1,
+            "arm": "candidate",
+            "status": "complete",
+            "rounds": 12,
+            "primaryComplete": true,
+            "input": 2700961,
+            "output": 26292,
+            "httpAttempts": 72,
+            "cachedInput": 2653696,
+            "reasoning": null,
+            "quality": true
+          }
+        },
+        "contrasts": {
+          "input": {
+            "candidateOverCurrent": 1.2243137443327643,
+            "currentOverNative": 0.9713795329315901,
+            "candidateOverNative": 1.1892733131316868
+          },
+          "output": {
+            "candidateOverCurrent": 1.2995255041518388,
+            "currentOverNative": 0.7831236694406812,
+            "candidateOverNative": 1.0176891813431392
+          },
+          "httpAttempts": {
+            "candidateOverCurrent": 1.1428571428571428,
+            "currentOverNative": 0.9692307692307692,
+            "candidateOverNative": 1.1076923076923078
+          }
+        }
+      },
+      {
+        "block": 2,
+        "arms": {
+          "native": {
+            "block": 2,
+            "arm": "native",
+            "status": "complete",
+            "rounds": 12,
+            "primaryComplete": true,
+            "input": 2111454,
+            "output": 22201,
+            "httpAttempts": 61,
+            "cachedInput": 2041088,
+            "reasoning": 2070,
+            "quality": true
+          },
+          "current": {
+            "block": 2,
+            "arm": "current",
+            "status": "complete",
+            "rounds": 12,
+            "primaryComplete": true,
+            "input": 2711842,
+            "output": 24091,
+            "httpAttempts": 70,
+            "cachedInput": 2665216,
+            "reasoning": null,
+            "quality": true
+          },
+          "candidate": {
+            "block": 2,
+            "arm": "candidate",
+            "status": "complete",
+            "rounds": 12,
+            "primaryComplete": true,
+            "input": 2526880,
+            "output": 22591,
+            "httpAttempts": 71,
+            "cachedInput": 2485248,
+            "reasoning": null,
+            "quality": true
+          }
+        },
+        "contrasts": {
+          "input": {
+            "candidateOverCurrent": 0.9317946989537002,
+            "currentOverNative": 1.2843481316666145,
+            "candidateOverNative": 1.1967487806980404
+          },
+          "output": {
+            "candidateOverCurrent": 0.9377360840147773,
+            "currentOverNative": 1.0851313003918743,
+            "candidateOverNative": 1.0175667762713392
+          },
+          "httpAttempts": {
+            "candidateOverCurrent": 1.0142857142857142,
+            "currentOverNative": 1.1475409836065573,
+            "candidateOverNative": 1.1639344262295082
+          }
+        }
+      },
+      {
+        "block": 3,
+        "arms": {
+          "native": {
+            "block": 3,
+            "arm": "native",
+            "status": "complete",
+            "rounds": 12,
+            "primaryComplete": true,
+            "input": 3677998,
+            "output": 36507,
+            "httpAttempts": 84,
+            "cachedInput": 3567872,
+            "reasoning": 3922,
+            "quality": true
+          },
+          "current": {
+            "block": 3,
+            "arm": "current",
+            "status": "complete",
+            "rounds": 12,
+            "primaryComplete": true,
+            "input": 2854875,
+            "output": 27903,
+            "httpAttempts": 68,
+            "cachedInput": 2804992,
+            "reasoning": null,
+            "quality": true
+          },
+          "candidate": {
+            "block": 3,
+            "arm": "candidate",
+            "status": "complete",
+            "rounds": 12,
+            "primaryComplete": true,
+            "input": 2282731,
+            "output": 24167,
+            "httpAttempts": 63,
+            "cachedInput": 2239488,
+            "reasoning": null,
+            "quality": true
+          }
+        },
+        "contrasts": {
+          "input": {
+            "candidateOverCurrent": 0.7995905249792022,
+            "currentOverNative": 0.7762035215897344,
+            "candidateOverNative": 0.6206449813186413
+          },
+          "output": {
+            "candidateOverCurrent": 0.8661075869978139,
+            "currentOverNative": 0.764319171665708,
+            "candidateOverNative": 0.6619826334675541
+          },
+          "httpAttempts": {
+            "candidateOverCurrent": 0.9264705882352942,
+            "currentOverNative": 0.8095238095238095,
+            "candidateOverNative": 0.75
+          }
+        }
+      }
+    ],
+    "primary": {
+      "input": {
+        "candidateOverCurrent": 0.9662610180424889,
+        "currentOverNative": 0.9643033220793509,
+        "candidateOverNative": 0.9317687096941476
+      },
+      "output": {
+        "candidateOverCurrent": 1.0114086340099133,
+        "currentOverNative": 0.8543108240776883,
+        "candidateOverNative": 0.8640573436002981
+      },
+      "httpAttempts": {
+        "candidateOverCurrent": 1.0248756218905473,
+        "currentOverNative": 0.9571428571428572,
+        "candidateOverNative": 0.9809523809523809
+      }
+    },
+    "allKnown": {
+      "input": 23343945,
+      "output": 229819,
+      "httpAttempts": 617
+    },
+    "allKnownMeaning": "Sum only of recorded quantities, not a complete cost claim; absent slots are not zero-cost observations.",
+    "unknownDimensions": [],
+    "optional": {
+      "cachedInput": {
+        "totals": {
+          "native": 7806208,
+          "current": 7636736,
+          "candidate": 7378432
+        },
+        "contrasts": {
+          "candidateOverCurrent": 0.9661761255070229,
+          "currentOverNative": 0.9782900993670679,
+          "candidateOverNative": 0.945200537828354
+        }
+      },
+      "reasoning": null
+    },
+    "qualityFalseArms": 0,
+    "limitation": "No round-level independence, equivalence claim, cross-binding pooling or monetary conversion. Reasoning is included in output, never added again."
+  },
+  "pi": {
+    "unit": "matched block",
+    "scope": "one CLI/model/effort binding; descriptive three-block pilot",
+    "blocks": [
+      {
+        "block": 1,
+        "arms": {
+          "native": {
+            "block": 1,
+            "arm": "native",
+            "status": "complete",
+            "rounds": 12,
+            "primaryComplete": true,
+            "input": 6432136,
+            "output": 107166,
+            "httpAttempts": 130,
+            "cachedInput": 6174720,
+            "reasoning": 53598,
+            "quality": false
+          },
+          "current": {
+            "block": 1,
+            "arm": "current",
+            "status": "complete",
+            "rounds": 12,
+            "primaryComplete": true,
+            "input": 4894152,
+            "output": 96426,
+            "httpAttempts": 93,
+            "cachedInput": 4667392,
+            "reasoning": 47104,
+            "quality": true
+          },
+          "candidate": {
+            "block": 1,
+            "arm": "candidate",
+            "status": "complete",
+            "rounds": 12,
+            "primaryComplete": true,
+            "input": 5604637,
+            "output": 87133,
+            "httpAttempts": 102,
+            "cachedInput": 5409920,
+            "reasoning": 34113,
+            "quality": true
+          }
+        },
+        "contrasts": {
+          "input": {
+            "candidateOverCurrent": 1.1451701949592084,
+            "currentOverNative": 0.7608906279344839,
+            "candidateOverNative": 0.8713492687343676
+          },
+          "output": {
+            "candidateOverCurrent": 0.9036255781635658,
+            "currentOverNative": 0.8997816471642125,
+            "candidateOverNative": 0.8130657111397271
+          },
+          "httpAttempts": {
+            "candidateOverCurrent": 1.096774193548387,
+            "currentOverNative": 0.7153846153846154,
+            "candidateOverNative": 0.7846153846153846
+          }
+        }
+      },
+      {
+        "block": 2,
+        "arms": {
+          "native": {
+            "block": 2,
+            "arm": "native",
+            "status": "complete",
+            "rounds": 12,
+            "primaryComplete": true,
+            "input": 5056504,
+            "output": 74342,
+            "httpAttempts": 104,
+            "cachedInput": 4954368,
+            "reasoning": 31543,
+            "quality": true
+          },
+          "current": {
+            "block": 2,
+            "arm": "current",
+            "status": "complete",
+            "rounds": 12,
+            "primaryComplete": true,
+            "input": 6637052,
+            "output": 126763,
+            "httpAttempts": 115,
+            "cachedInput": 6352640,
+            "reasoning": 69279,
+            "quality": true
+          },
+          "candidate": {
+            "block": 2,
+            "arm": "candidate",
+            "status": "complete",
+            "rounds": 12,
+            "primaryComplete": true,
+            "input": 5328901,
+            "output": 76040,
+            "httpAttempts": 100,
+            "cachedInput": 5222272,
+            "reasoning": 28040,
+            "quality": false
+          }
+        },
+        "contrasts": {
+          "input": {
+            "candidateOverCurrent": 0.8029018003776376,
+            "currentOverNative": 1.3125772272700664,
+            "candidateOverNative": 1.053870618909824
+          },
+          "output": {
+            "candidateOverCurrent": 0.5998595804769531,
+            "currentOverNative": 1.705133033816685,
+            "candidateOverNative": 1.022840386322671
+          },
+          "httpAttempts": {
+            "candidateOverCurrent": 0.8695652173913043,
+            "currentOverNative": 1.1057692307692308,
+            "candidateOverNative": 0.9615384615384616
+          }
+        }
+      },
+      {
+        "block": 3,
+        "arms": {
+          "native": {
+            "block": 3,
+            "arm": "native",
+            "status": "complete",
+            "rounds": 12,
+            "primaryComplete": true,
+            "input": 6969940,
+            "output": 122016,
+            "httpAttempts": 119,
+            "cachedInput": 6695040,
+            "reasoning": 60433,
+            "quality": true
+          },
+          "current": {
+            "block": 3,
+            "arm": "current",
+            "status": "complete",
+            "rounds": 12,
+            "primaryComplete": true,
+            "input": 5380761,
+            "output": 77780,
+            "httpAttempts": 109,
+            "cachedInput": 5272576,
+            "reasoning": 33638,
+            "quality": true
+          },
+          "candidate": {
+            "block": 3,
+            "arm": "candidate",
+            "status": "complete",
+            "rounds": 12,
+            "primaryComplete": true,
+            "input": 5548093,
+            "output": 95487,
+            "httpAttempts": 100,
+            "cachedInput": 5312384,
+            "reasoning": 45864,
+            "quality": true
+          }
+        },
+        "contrasts": {
+          "input": {
+            "candidateOverCurrent": 1.0310982033953933,
+            "currentOverNative": 0.771995311293928,
+            "candidateOverNative": 0.7960029785048365
+          },
+          "output": {
+            "candidateOverCurrent": 1.2276549241450245,
+            "currentOverNative": 0.6374573826383425,
+            "candidateOverNative": 0.7825776947285602
+          },
+          "httpAttempts": {
+            "candidateOverCurrent": 0.9174311926605505,
+            "currentOverNative": 0.9159663865546218,
+            "candidateOverNative": 0.8403361344537815
+          }
+        }
+      }
+    ],
+    "primary": {
+      "input": {
+        "candidateOverCurrent": 0.9745544648419033,
+        "currentOverNative": 0.9162115937412304,
+        "candidateOverNative": 0.8928980994204321
+      },
+      "output": {
+        "candidateOverCurrent": 0.8594240602852785,
+        "currentOverNative": 0.9915822142565333,
+        "candidateOverNative": 0.8521896126830169
+      },
+      "httpAttempts": {
+        "candidateOverCurrent": 0.9526813880126183,
+        "currentOverNative": 0.8980169971671388,
+        "candidateOverNative": 0.8555240793201133
+      }
+    },
+    "allKnown": {
+      "input": 51852176,
+      "output": 863153,
+      "httpAttempts": 972
+    },
+    "allKnownMeaning": "Sum only of recorded quantities, not a complete cost claim; absent slots are not zero-cost observations.",
+    "unknownDimensions": [],
+    "optional": {
+      "cachedInput": {
+        "totals": {
+          "native": 17824128,
+          "current": 16292608,
+          "candidate": 15944576
+        },
+        "contrasts": {
+          "candidateOverCurrent": 0.9786386562544191,
+          "currentOverNative": 0.9140760209980539,
+          "candidateOverNative": 0.8945501289039217
+        }
+      },
+      "reasoning": {
+        "totals": {
+          "native": 145574,
+          "current": 150021,
+          "candidate": 108017
+        },
+        "contrasts": {
+          "candidateOverCurrent": 0.7200125315789123,
+          "currentOverNative": 1.0305480374242653,
+          "candidateOverNative": 0.7420075013395249
+        }
+      }
+    },
+    "qualityFalseArms": 2,
+    "limitation": "No round-level independence, equivalence claim, cross-binding pooling or monetary conversion. Reasoning is included in output, never added again."
+  }
+}

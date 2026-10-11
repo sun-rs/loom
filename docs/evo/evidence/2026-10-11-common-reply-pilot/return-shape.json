@@ -1,0 +1,44 @@
+{
+  "verdict": "Early API return container underspecified; strict dict oracle failures alone do not prove instruction violation.",
+  "scope": "Read all 12 frozen prompts, seed README and invoice stub, evaluator strict comparison. No execution or modifications.",
+  "findings": [
+    {
+      "rounds": "1–6",
+      "evidence": "R1 enumerates count and four money fields but does not specify dict/mapping/object, named keys, or a return example. A five-element tuple of specified field values is a plausible interpretation. Input rows explicitly being dicts does not specify output container."
+    },
+    {
+      "round": 7,
+      "evidence": "Grouped result adds a groups list of objects with named fields; this suggests object-shaped output but does not explicitly declare Python dict return for the ungrouped API."
+    },
+    {
+      "round": 8,
+      "evidence": "Ungrouped results omit the groups key is the first direct key-based result requirement."
+    },
+    {
+      "rounds": "9–12",
+      "evidence": "CLI JSON result and prior requirements retained; no retroactive explicit clarification of R1 container type."
+    },
+    {
+      "seed": "README/stub",
+      "evidence": "No return annotation, example, dict instruction or schema."
+    },
+    {
+      "oracle": "evaluator.py",
+      "evidence": "API result is JSON serialized; tuple becomes array. strict_equal requires matching Python types against dict expected values."
+    }
+  ],
+  "consequence": [
+    "Retain original functional false and selfTests true separately.",
+    "Do not attribute early strict-shape failures to disobeying explicit dict instructions.",
+    "Equal ambiguous prompts across arms do not eliminate interpretation-induced business-path/cost variation.",
+    "This does not establish monetary/accounting failure, nor justify changing frozen results.",
+    "Pilot quality and treatment comparisons need this method limitation; continuation/stop decision belongs to lead."
+  ],
+  "sourceSha256": {
+    "plan.json": "f05f55e589f684fc48e1c7f4f4724bd0ec6207446f6b22d25454637b75e62e1d",
+    "workspace/README.md": "3af2b431ca8a8cc413534216a650366e753b3a6296f4ddd469af5b15b920fba2",
+    "workspace/invoice.py": "f2b52da25575936bbde949b3c0740ad3a255cbc3e92e1951766fde1c168a40d1",
+    "evaluator.py": "2025463cd47e75bf83f2cbad8dac21bff002ff37bbc0534bcbeba434c7bbb325",
+    "oracle/reference.py": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03"
+  }
+}

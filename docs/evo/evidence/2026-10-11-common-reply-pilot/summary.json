@@ -1,0 +1,192 @@
+{
+  "batch": "common-reply-pilot-20261011-v1",
+  "sourceRevision": "8e058e87809a4fcd819ce210e845b1ce08041d5a",
+  "bindings": {
+    "pi": {
+      "cli": "Pi1.1.0",
+      "model": "aihubmix/deepseek-v4.1-flash",
+      "effort": "low"
+    },
+    "kimi": {
+      "cli": "Kimi2.1.1",
+      "model": "kimi-code/k3-256k",
+      "effort": "low"
+    }
+  },
+  "design": {
+    "blocks": 3,
+    "arms": ["native", "current", "candidate"],
+    "roundsPerSession": 12,
+    "sessions": 18,
+    "rounds": 216,
+    "order": [
+      ["native", "current", "candidate"],
+      ["current", "candidate", "native"],
+      ["candidate", "native", "current"]
+    ],
+    "unit": "matched independent continuous-session block; descriptive pilot, not rounds as independent samples"
+  },
+  "totals": {
+    "kimi": {
+      "native": {
+        "input": 8060554,
+        "output": 84543,
+        "httpAttempts": 210
+      },
+      "current": {
+        "input": 7772819,
+        "output": 72226,
+        "httpAttempts": 201
+      },
+      "candidate": {
+        "input": 7510572,
+        "output": 73050,
+        "httpAttempts": 206
+      }
+    },
+    "pi": {
+      "native": {
+        "input": 18458580,
+        "output": 303524,
+        "httpAttempts": 353
+      },
+      "current": {
+        "input": 16911965,
+        "output": 300969,
+        "httpAttempts": 317
+      },
+      "candidate": {
+        "input": 16481631,
+        "output": 258660,
+        "httpAttempts": 302
+      }
+    }
+  },
+  "primary": {
+    "kimi": {
+      "input": {
+        "candidateOverCurrent": 0.9662610180424889,
+        "currentOverNative": 0.9643033220793509,
+        "candidateOverNative": 0.9317687096941476
+      },
+      "output": {
+        "candidateOverCurrent": 1.0114086340099133,
+        "currentOverNative": 0.8543108240776883,
+        "candidateOverNative": 0.8640573436002981
+      },
+      "httpAttempts": {
+        "candidateOverCurrent": 1.0248756218905473,
+        "currentOverNative": 0.9571428571428572,
+        "candidateOverNative": 0.9809523809523809
+      }
+    },
+    "pi": {
+      "input": {
+        "candidateOverCurrent": 0.9745544648419033,
+        "currentOverNative": 0.9162115937412304,
+        "candidateOverNative": 0.8928980994204321
+      },
+      "output": {
+        "candidateOverCurrent": 0.8594240602852785,
+        "currentOverNative": 0.9915822142565333,
+        "candidateOverNative": 0.8521896126830169
+      },
+      "httpAttempts": {
+        "candidateOverCurrent": 0.9526813880126183,
+        "currentOverNative": 0.8980169971671388,
+        "candidateOverNative": 0.8555240793201133
+      }
+    }
+  },
+  "arithmeticDecomposition": {
+    "kimi": {
+      "currentOverNative": {
+        "inputRatio": 0.9643033220793509,
+        "requestCountRatio": 0.9571428571428572,
+        "meanInputPerHttpRatio": 1.0074810827694711
+      },
+      "candidateOverNative": {
+        "inputRatio": 0.9317687096941476,
+        "requestCountRatio": 0.9809523809523809,
+        "meanInputPerHttpRatio": 0.9498613059988883
+      },
+      "candidateOverCurrent": {
+        "inputRatio": 0.9662610180424889,
+        "requestCountRatio": 1.0248756218905473,
+        "meanInputPerHttpRatio": 0.9428080807113605
+      }
+    },
+    "pi": {
+      "currentOverNative": {
+        "inputRatio": 0.9162115937412304,
+        "requestCountRatio": 0.8980169971671388,
+        "meanInputPerHttpRatio": 1.0202608599074268
+      },
+      "candidateOverNative": {
+        "inputRatio": 0.8928980994204321,
+        "requestCountRatio": 0.8555240793201133,
+        "meanInputPerHttpRatio": 1.043685526806002
+      },
+      "candidateOverCurrent": {
+        "inputRatio": 0.9745544648419033,
+        "requestCountRatio": 0.9526813880126183,
+        "meanInputPerHttpRatio": 1.0229594879300774
+      }
+    }
+  },
+  "allConsumedAcrossBindings": {
+    "input": 75196121,
+    "output": 1092972,
+    "httpAttempts": 1589
+  },
+  "decompositionLimit": "Arithmetic identity only, includes mixed generation/compaction HTTP. No causal cost separation or monetary conversion.",
+  "quality": {
+    "kimi": {
+      "native": {
+        "functionalPassed": 36,
+        "selfTestsPassed": 36,
+        "rounds": 36
+      },
+      "current": {
+        "functionalPassed": 36,
+        "selfTestsPassed": 36,
+        "rounds": 36
+      },
+      "candidate": {
+        "functionalPassed": 36,
+        "selfTestsPassed": 36,
+        "rounds": 36
+      }
+    },
+    "pi": {
+      "native": {
+        "functionalPassed": 24,
+        "selfTestsPassed": 36,
+        "rounds": 36
+      },
+      "current": {
+        "functionalPassed": 36,
+        "selfTestsPassed": 36,
+        "rounds": 36
+      },
+      "candidate": {
+        "functionalPassed": 29,
+        "selfTestsPassed": 36,
+        "rounds": 36
+      }
+    }
+  },
+  "decision": "Do not promote candidate as cost optimization; no consistent improvement or equal-quality efficiency evidence. No product code merge/deployment.",
+  "limits": [
+    "Pi native block1 return container ambiguous: original functional0/12 retained, not blanket instruction failure.",
+    "Pi candidate block2 unrelated active field incorrectly filters rows: functional5/12, all selftests pass.",
+    "Kimi native print vs Loom ACP mode differences remain.",
+    "No repeated paid results for other three CLIs in this pilot; prior free five-CLI checks do not establish efficiency.",
+    "Three blocks and one workload per binding do not prove equivalence/stability or causal effect.",
+    "Kernel Pi compaction gap remains although experiment raw totals include compaction.",
+    "Late arms reviewed by lead after subagent quota exhaustion; not represented as separate independent-agent review."
+  ],
+  "productChanged": false,
+  "serviceRestarted": false,
+  "trialFlagsEnabledInDeployment": false
+}
