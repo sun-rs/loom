@@ -522,3 +522,13 @@ Owner在审阅固定40会话／480轮与预算后明确回复“开始”，据�
 新增轨迹分解确认：固定说明留在上下文但没有逐轮叠加副本；Pi材料题第2对多在全量重读材料、报告写入和回显，第3对改为增量读仍有整份报告回显。Kimi两对均增量读，OpenCode主要多在报告写入与assistant历史，不能归为通用“反复读box”，也不能把全部差额称为随机性。此前小幅文案精简收益有限的决定保留；下一步需要单一可检验干预，不追加无假设的大批付费或单CLI特调。
 
 [完整总体／逐题／逐对结果](evidence/2026-10-11-mixed-study-run/summary.json)、[上下文与历史分解](evidence/2026-10-11-mixed-study-run/context-analysis.json)、[入口失败与隔离修复](evidence/2026-10-11-mixed-study-run/entry-failures.json)。13项离线修复测试通过，修复仅在隔离副本，未混入原冻结包、未补跑或新增模型调用。[冻结方案](evidence/2026-10-11-mixed-study/plan.json)与[准备证据](evidence/2026-10-11-mixed-study/summary.json)保留原时点，不改写为五家成功。本次产品、正式部署和试验开关未变，无服务重启；不能宣布成本目标或多人协作验收完成。
+
+## 团队原生中继入口免费验证（2026-10-12）
+
+实际安装 Codex 0.161.0（配置 gpt-6-luna/low）与 OpenCode 1.18.35（配置 aihubmix/deepseek-v4.1-flash/low）仅连接 localhost 合成模型。正常链为 A→B→A，共两个原生 session、三轮；A 同 session 续接，B 仅单轮。缺 @ 负例另开 A 一轮，B 未启动；不补点名或固定调用下一人。B 首次收到同一 Human 开场与真实 A final，A 续轮只新增真实 B final，原生历史自然保留。没有实际业务工具执行，不能证明真实模型自主协作。
+
+最终四对请求／响应及逐次启动配置哈希、进程清理经独立核对。Codex 每次显式关闭自动记忆；OpenCode 使用该精确版本的 not-applicable 审计证据，不从新 HOME 推定记忆关闭。OS 限定 localhost 出站并拒绝个人目录读取，使用独立 HOME/XDG 和假认证；新增付费调用为0，无成本倍率。
+
+两次失败和旧 smoke 全部保留：首次 loopback 503、旧 smoke 缺少 B 的原始公开任务、后来验证器错误地在序列化 JSON 中查多行原文而产生 fixture 500／重试／超时。新回归修复后才运行最终链，不改写这些结果。离线团队统计／候选样本／路由共18项测试通过，整队作为独立样本；缺测不作零，失败费用不剔除，不混合模型／指标定义。普通中继不是 Herdr，也未经过 Loom 调度；后续仍需 Loom 臂、另外三家入口及实际业务质量验证，尚不可放行付费队列。产品和正式部署未改。
+
+[免费链路证据](evidence/2026-10-12-team-acceptance/native-relay.json)、[统计准备与剩余入口](evidence/2026-10-12-team-acceptance/summary.json)、[候选重复方案](evidence/2026-10-12-team-acceptance/plan.json)。

@@ -1,0 +1,118 @@
+{
+  "kind": "synthetic-native-relay-evidence/v1",
+  "status": "passed-bounded-transport-smoke",
+  "paid": false,
+  "finalRun": "private live-probe/runs/1791739823746",
+  "cliVersions": {
+    "codex": "codex-cli 0.161.0",
+    "opencode": "1.18.35"
+  },
+  "normal": {
+    "members": ["Codex A", "OpenCode B"],
+    "nativeSessions": 2,
+    "turns": 3,
+    "AResumeSameSession": true,
+    "BResumeTested": false,
+    "handoff": "actual canonical CLI final, exact product mention parser",
+    "publicContext": "B first receives original Human task + actual A final; A resume receives only B final"
+  },
+  "negative": {
+    "stop": "missing canonical @; no repair",
+    "nativeSessions": 1,
+    "BLaunched": false
+  },
+  "memory": {
+    "everyLaunchConfigHash": true,
+    "codex": {
+      "explicitOffSwitches": [
+        "features.memories",
+        "memories.generate_memories",
+        "memories.use_memories"
+      ],
+      "policyLineage": "prior unified-acceptance Codex native launcher, explicit memory-off settings",
+      "limit": "explicit launch configuration evidence, not inferred from fresh HOME"
+    },
+    "opencode": {
+      "version": "1.18.35",
+      "sourceRevision": "53d1eabb61e21162157817bf677da0a4ad3332e3",
+      "status": "not-applicable",
+      "evidence": "audited-cli-version"
+    }
+  },
+  "isolation": {
+    "network": "Seatbelt localhost only, explicit fake endpoint, Codex no auth requirement / OpenCode dummy credential",
+    "personalFiles": "Seatbelt denies /Users/sun read/write; fresh per-member HOME and XDG; no personal hooks/MCP/skills loaded",
+    "autoUpdate": false
+  },
+  "rawAccounting": {
+    "completeSuccessfulResponses": 4,
+    "rawHashesRecomputed": true,
+    "syntheticOnly": true,
+    "unknownOptionalFields": ["cached input tokens", "reasoning output tokens"],
+    "costConclusion": null
+  },
+  "cleanup": "all 4 exact owned process groups empty",
+  "preservedAttempts": [
+    {
+      "path": "private live-probe/runs/1791739574553",
+      "status": "failed",
+      "cause": "Codex localhost fixture 503 Connection Closed, zero server requests; cleared proxy env and changed loopback hostname together"
+    },
+    {
+      "path": "private live-probe/runs/1791739604231",
+      "status": "passed earlier smoke",
+      "limit": "B first lacked original Human task; superseded"
+    },
+    {
+      "path": "private live-probe/runs/1791739760246",
+      "status": "failed",
+      "cause": "fixture raw JSON substring validation mishandled multiline prompt; false fixture500 followed retries, 60s timeout and cleanup; successful A response retained"
+    }
+  ],
+  "tests": {
+    "unit": 5,
+    "redLogs": [
+      "loom-team-relay-red.log",
+      "loom-team-relay-mention-red.log",
+      "loom-team-public-context-red.log",
+      "loom-team-multiline-red.log"
+    ]
+  },
+  "closure": [
+    {
+      "path": "run.mjs",
+      "sha256": "ba1c9fe81b226ff0d61420d9a774095a73ff765f2a58a138da871c14989b44a5"
+    },
+    {
+      "path": "relay.mjs",
+      "sha256": "3d37c3ab5459a515ae0906a7b3e6e0c76a89abbfe20acde0253eeaca520d01de"
+    },
+    {
+      "path": "relay.test.mjs",
+      "sha256": "cf520969b90742e70cacc8cafb740ee238ea7672dbb3917f0d6be77caf694d6f"
+    },
+    {
+      "path": "message-mention.ts",
+      "sha256": "a39c583ba033e57bfd29d99a1c59454508f566bee87d7d18340fefadbb156038"
+    },
+    {
+      "path": "opencode-usage.mjs",
+      "sha256": "8db56bf522214db1c678bd522b26c7470a0a91b9c8d2887c7d35b2975390177a"
+    },
+    {
+      "path": "native-memory-version.mjs",
+      "sha256": "7ed1e27a22a510777e9284591702d31c09151f11b12fefeb3565ad10f5a89770"
+    },
+    {
+      "path": "process-cleanup.mjs",
+      "sha256": "45f26f7e38aba92329be21a19051ae0b2781a896f283f5aa609e4e0431ac24ec"
+    }
+  ],
+  "limits": [
+    "Not Loom or Herdr execution",
+    "Synthetic replies, no real model collaboration or quality claim",
+    "Not paid ready and no cost ratio",
+    "Only A native resume tested; B one turn",
+    "No actual tool execution in this minimal relay"
+  ]
+}

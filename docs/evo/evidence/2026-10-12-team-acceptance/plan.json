@@ -1,0 +1,112 @@
+{
+  "kind": "loom-team-preparation/v1",
+  "status": "Offline preparation only; live adapters and batch authorization outstanding",
+  "paidAuthorized": false,
+  "runnablePaid": false,
+  "productRevision": "ffecbfe7c8fea836c85685c3222ee752578909f9",
+  "fixture": {
+    "manifestSha256": "0d163fff3c91d4024342eb96577b1d977cb534ffcbd1d139d3b63e89e03c9713",
+    "verifiedFiles": 18,
+    "requirements": 12,
+    "materialPolicy": "Both teams see identical 12 requirements initially; final v7 artifact oracle retained. New teamwork task, not directly interchangeable with earlier sequential single-session trials."
+  },
+  "nativeTransport": "unselected: real Herdr or explicitly labeled native relay; cannot mix transports within a stratum",
+  "memory": "Provider automatic memory off on every initial/resume launch; ordinary session history retained; implementation must prove this before admission",
+  "roles": {
+    "implementer": "Implement the shared requirements, ask the reviewer explicitly, incorporate verified corrections and deliver final artifact.",
+    "reviewer": "Independently inspect and test the actual artifact, report concrete defects or supporting evidence, and explicitly hand back to implementer."
+  },
+  "handoff": "One Human opening addressed to implementer; subsequent wakes only from actual explicit addressed messages. No injected missing mentions or scheduled fake next speaker.",
+  "completion": "Quiet/no mention is not success; final artifacts must pass independent quality evaluation and required review/handoff evidence.",
+  "fairness": "Same worktree snapshot and access policy, shared artifact access, exact bindings and normal continuous member sessions in both arms; no hidden prior-result access.",
+  "concurrency": "Parallel non-directed append boundary already deterministic-tested; this initial review chain does not establish paid overlap or Human-correction coverage.",
+  "accounting": "All planned members, responses, failures and recovery included. Any LLM coordinator requires a separately declared matched team design; no hidden coordinator. Captures must normalize and prove metric semantics before arithmetic.",
+  "remainingAdmission": [
+    "Current exact CLI catalog/version and credentials preflight",
+    "Actual two-session dynamic CLI/Host adapters, no inherited fixed-round driver",
+    "Every-launch memory and matched filesystem restrictions",
+    "Loopback synthetic-provider end-to-end delivery and failure ledger",
+    "Binding/response/attempt census independently checked against raw streams",
+    "Concrete request/input/output/deadline caps and explicit batch release",
+    "Isolated Herdr topology and caller context if actual Herdr selected"
+  ],
+  "proposedCohort": {
+    "status": "candidate; not an approved or runnable paid batch",
+    "teams": [
+      {
+        "members": [
+          {
+            "memberId": "implementer",
+            "provider": "codex",
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "inputMetric": "cache-inclusive-input-tokens",
+            "outputMetric": "reasoning-inclusive-output-tokens",
+            "coordinator": false
+          },
+          {
+            "memberId": "reviewer",
+            "provider": "claude",
+            "model": "sonnet",
+            "effort": "low",
+            "inputMetric": "cache-inclusive-input-tokens",
+            "outputMetric": "reasoning-inclusive-output-tokens",
+            "coordinator": false
+          }
+        ],
+        "independentPairs": 4
+      },
+      {
+        "members": [
+          {
+            "memberId": "implementer",
+            "provider": "opencode",
+            "model": "aihubmix/deepseek-v4.1-flash",
+            "effort": "low",
+            "inputMetric": "cache-inclusive-input-tokens",
+            "outputMetric": "reasoning-inclusive-output-tokens",
+            "coordinator": false
+          },
+          {
+            "memberId": "reviewer",
+            "provider": "kimi",
+            "model": "kimi-code/k3-256k",
+            "effort": "low",
+            "inputMetric": "cache-inclusive-input-tokens",
+            "outputMetric": "reasoning-inclusive-output-tokens",
+            "coordinator": false
+          }
+        ],
+        "independentPairs": 4
+      },
+      {
+        "members": [
+          {
+            "memberId": "implementer",
+            "provider": "pi",
+            "model": "aihubmix/deepseek-v4.1-flash",
+            "effort": "low",
+            "inputMetric": "cache-inclusive-input-tokens",
+            "outputMetric": "reasoning-inclusive-output-tokens",
+            "coordinator": false
+          },
+          {
+            "memberId": "reviewer",
+            "provider": "codex",
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "inputMetric": "cache-inclusive-input-tokens",
+            "outputMetric": "reasoning-inclusive-output-tokens",
+            "coordinator": false
+          }
+        ],
+        "independentPairs": 4
+      }
+    ],
+    "independentTeamSamples": 24,
+    "continuousMemberSessions": 48,
+    "order": "alternate native/loom then loom/native by pair, no outcome-based reorder or replacement",
+    "limits": "One task and one fixed assignment per team; no role-swap/general multi-model claim. Runtime binding checks and finite batch budgets pending."
+  },
+  "loomTransport": "Proposed isolated native-final trials on verified code; exact per-CLI launch settings pending. Not the production default Worker mode; never change live flags for this study."
+}

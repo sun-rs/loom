@@ -1,0 +1,60 @@
+{
+  "date": "2026-10-12",
+  "kind": "team-acceptance-preparation/v1",
+  "baseHead": "f344662a4fabf273dacb1ae6ef5e8322fd2d60fa",
+  "status": "Offline accounting and bounded two-CLI native-relay transport verified; paid team comparison not ready",
+  "productChanged": false,
+  "serviceRestarted": false,
+  "paidCalls": 0,
+  "realCostRatio": null,
+  "findings": [
+    "Existing discussion scripts lack an independent native-team control; their native transcript reconciliation is not a baseline arm. This does not invalidate separately recorded single-CLI paired studies.",
+    "Private prior long-task controllers force fixed turns and cannot demonstrate autonomous peer handoff without new team wiring.",
+    "Herdr 0.9.1 server reachable and protocol compatible; current command process has no managed caller context. No existing pane controlled and no actual Herdr test run."
+  ],
+  "accounting": {
+    "unit": "one entire team completing one task",
+    "implemented": [
+      "exact task/CLI/model/effort/metric strata",
+      "all planned samples and members remain in denominator accounting",
+      "all known failed-attempt costs included",
+      "mean/median/range/population standard deviation and ratio of team means",
+      "missing usage remains unknown, with known lower bounds",
+      "same CLI/session response receipts deduplicated; conflicts rejected",
+      "no monetary savings or confidence claim"
+    ],
+    "reviewRepairs": [
+      "Native session IDs namespaced by CLI; same CLI reuse between members or independent samples rejected",
+      "Empty response evidence cannot be converted to complete zero usage even with a success flag"
+    ],
+    "limits": [
+      "Consumes normalized ledger; actual model binding, metric semantics and attempt completeness require upstream proof",
+      "Candidate manifest does not implement live two-team CLI admission or budget guards"
+    ]
+  },
+  "verification": {
+    "offlineTestsPassed": 18,
+    "accountingTests": 11,
+    "cohortPreparationTests": 2,
+    "relayUnitTests": 5,
+    "tdd": true,
+    "independentReview": "passed: accounting fixes plus 7 code hashes, 4 request/response pairs, launch configuration, session continuity, public-context equality, negative stop and cleanup",
+    "actualCliProbe": "native-relay.json",
+    "actualCliProbeScope": "Codex and OpenCode with localhost synthetic replies, 3 normal turns plus one missing-mention turn; no business tool execution or real model performance claim",
+    "offlineLogSha256": "bae396a2ce7f3d50d5f66c03e6fdc7c65015dff8019586da538def8998c34add"
+  },
+  "candidatePlan": "plan.json",
+  "next": [
+    "Wire same dynamic public-context/handoff path through isolated Loom real-CLI arm",
+    "Complete other three CLI bindings and same-workspace/automatic-memory/raw-usage proof",
+    "Freeze exact paired cohort and bounded budget before owner batch authorization",
+    "Execute repeated team tasks only after both arms pass free lifecycle/failure accounting; report unknown strata rather than substitute successes"
+  ],
+  "privatePreparationClosure": {
+    "accounting/accounting.mjs": "2a341fa9a6f9ab6998bfa26d4842ff4f70ac1eb4bca7168e244c3fced94eb550",
+    "accounting/accounting.test.mjs": "1ef749757aced6e8150de2b59cf9c00a874b5cf3794cc35b4e7e9bd6ae0477ce",
+    "prepare.mjs": "7aa93c7f6ec081bb02e2cc1c8e8dfa173f85ccb44313585bd87efa3fc4a7f067",
+    "prepare.test.mjs": "dd50cff8eeabe05a8d8e7e836ad142530a48b6c19a93d5025505d272e645df6a",
+    "plan.json": "0490ace1d277c5bb3361a7fc6e279e3a6dd50e35935b3bf15b3da3afc20a142e"
+  }
+}
