@@ -1,0 +1,481 @@
+{
+  "kind": "loom-upstream-collaboration-policy-study/v1",
+  "date": "2026-10-12",
+  "loomRevision": "6685269befa20ad652ab653c19d9e5730c299a8c",
+  "scope": "Read-only fixed official sources and official LangGraph runtime documentation; no upstream scripts executed, no model calls, no source port, no product or target-contract change.",
+  "headVerification": "GitHub API verified the recorded Raft, AutoGen, current Multica, Aexus and LangGraph commits at study time. Multica also compares an older local snapshot explicitly.",
+  "projects": {
+    "raft": {
+      "kind": "raft-fixed-source-freshness-review/v1",
+      "revision": "26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6",
+      "repository": "https://github.com/botiverse/raft-source",
+      "workingTreeClean": true,
+      "readOnly": true,
+      "upstreamScriptsRun": false,
+      "paidProviderCalls": 0,
+      "findings": [
+        {
+          "id": "actual-cli-route",
+          "claim": "Current message send calls messages.sendV2, and always includes numeric draftReholdCount (zero on a new draft). This alone requests freshness even without an existing seenUpToSeq.",
+          "fixedURLs": [
+            {
+              "file": "packages/cli/src/commands/message/send.ts",
+              "lines": "819-836",
+              "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/cli/src/commands/message/send.ts#L819-L836"
+            },
+            {
+              "file": "packages/cli/src/commands/message/send.ts",
+              "lines": "867-872",
+              "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/cli/src/commands/message/send.ts#L867-L872"
+            },
+            {
+              "file": "packages/server/src/routes/internalAgentApi.ts",
+              "lines": "4408-4415",
+              "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/server/src/routes/internalAgentApi.ts#L4408-L4415"
+            }
+          ]
+        },
+        {
+          "id": "feature-gate",
+          "claim": "Source default SLOCK_ATTESTED_SEND_MODE is on. on/force/1/true enable; allowlist requires matching server/agent or wildcard; other values disable. shouldRunSendFreshness = enabled && (requested || mode===force). Disabled + requested returns 403, not successful unchecked send. Actual deployment environment not inspected.",
+          "fixedURLs": [
+            {
+              "file": "packages/server/src/routes/internalAgentApi.ts",
+              "lines": "1166-1177",
+              "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/server/src/routes/internalAgentApi.ts#L1166-L1177"
+            },
+            {
+              "file": "packages/server/src/routes/internalAgentApi.ts",
+              "lines": "4505-4512",
+              "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/server/src/routes/internalAgentApi.ts#L4505-L4512"
+            }
+          ]
+        },
+        {
+          "id": "current-server-hold",
+          "claim": "On enabled current CLI path, same-target external unseen newMessageCount>0 and !continueAnyway means held. Nonthread uses receiver-specific attention facts; thread uses target messages. Excludes own sender and exact/contiguous model-seen evidence. No Human/peer exemption; formal mentions are annotation rather than exemption.",
+          "fixedURLs": [
+            {
+              "file": "packages/server/src/routes/internalAgentApi.ts",
+              "lines": "4581-4662",
+              "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/server/src/routes/internalAgentApi.ts#L4581-L4662"
+            },
+            {
+              "file": "packages/server/src/services/attestedSendService.ts",
+              "lines": "308-371",
+              "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/server/src/services/attestedSendService.ts#L308-L371"
+            }
+          ]
+        },
+        {
+          "id": "ordinary-peer-fact-conditions",
+          "claim": "Ordinary top-level persisted messages generate facts for channel-member agents, without requiring @. A different member B ordinary reply therefore gives A an attention fact if A belongs to the resolved audience and fact is not suppressed. Nonthread mute suppresses non-personally-mentioned messages at/after muteFromSeq; a muted/missing receiver is not an unconditional freshness fact. Attention query itself does not require personalMention=true or sender=Human. Thus B ordinary reply can hold A under default-enabled source settings when its fact is newer than A genuine seen boundary; not every deployment/audience/muted configuration necessarily does.",
+          "fixedURLs": [
+            {
+              "file": "packages/server/src/services/messageService.ts",
+              "lines": "1398-1432",
+              "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/server/src/services/messageService.ts#L1398-L1432"
+            },
+            {
+              "file": "packages/server/src/services/messageService.ts",
+              "lines": "1597-1605",
+              "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/server/src/services/messageService.ts#L1597-L1605"
+            },
+            {
+              "file": "packages/server/src/services/inboxNotificationService.ts",
+              "lines": "346-382",
+              "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/server/src/services/inboxNotificationService.ts#L346-L382"
+            },
+            {
+              "file": "packages/server/src/services/inboxMutePolicy.ts",
+              "lines": "5-15",
+              "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/server/src/services/inboxMutePolicy.ts#L5-L15"
+            },
+            {
+              "file": "packages/server/src/services/attestedSendService.ts",
+              "lines": "308-332",
+              "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/server/src/services/attestedSendService.ts#L308-L332"
+            }
+          ]
+        },
+        {
+          "id": "daemon-current-vs-legacy",
+          "claim": "Current v2 daemon proxy forwards only, enriches seen boundary/exact evidence, sets localHold:false; server owns decision. Legacy send still has same-target pending local hold. Do not use legacy state-machine or proxy tests to claim current v2 adds a local hold.",
+          "fixedURLs": [
+            {
+              "file": "packages/daemon/src/agentCredentialProxy.ts",
+              "lines": "842-858",
+              "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/daemon/src/agentCredentialProxy.ts#L842-L858"
+            },
+            {
+              "file": "packages/daemon/src/agentCredentialProxy.test.ts",
+              "lines": "5243-5260",
+              "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/daemon/src/agentCredentialProxy.test.ts#L5243-L5260"
+            },
+            {
+              "file": "packages/daemon/src/agentInboxStateMachine.ts",
+              "lines": "137-235",
+              "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/daemon/src/agentInboxStateMachine.ts#L137-L235"
+            }
+          ]
+        },
+        {
+          "id": "legacy-E1-only",
+          "claim": "Legacy internal Agent send exempts stale sends if a formally notifiable @currentAgent exists after old seen boundary (and boundary>0). This refers to recipient mention, not sender self-request; source labels direct mention exemption. Current Agent API has no E1 exemption, with explicit test that unread formal mention remains held.",
+          "fixedURLs": [
+            {
+              "file": "packages/server/src/routes/internal.ts",
+              "lines": "2396-2401",
+              "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/server/src/routes/internal.ts#L2396-L2401"
+            },
+            {
+              "file": "packages/server/src/routes/internal.ts",
+              "lines": "2569-2585",
+              "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/server/src/routes/internal.ts#L2569-L2585"
+            },
+            {
+              "file": "packages/server/src/services/attestedSendService.ts",
+              "lines": "457-492",
+              "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/server/src/services/attestedSendService.ts#L457-L492"
+            },
+            {
+              "file": "packages/server/src/routes/internalAgentApi.send.test.ts",
+              "lines": "1267-1292",
+              "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/server/src/routes/internalAgentApi.send.test.ts#L1267-L1292"
+            }
+          ]
+        },
+        {
+          "id": "recovery-and-threshold",
+          "claim": "Held returns inline bounded context and saves local draft; model can revise content, send saved draft unchanged, or abandon. CLI records rendered context as consumed except reviewer isolation. No server automatic semantic rewrite or mandatory Human recovery is established. Three reholds is a continueAnyway suggestion threshold, not hard authorization minimum: server and CLI require sendDraft, but do not enforce >=3. Further model/tool cost depends on actual behavior and was not measured.",
+          "fixedURLs": [
+            {
+              "file": "packages/cli/src/commands/message/send.ts",
+              "lines": "315-319",
+              "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/cli/src/commands/message/send.ts#L315-L319"
+            },
+            {
+              "file": "packages/cli/src/commands/message/send.ts",
+              "lines": "379-393",
+              "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/cli/src/commands/message/send.ts#L379-L393"
+            },
+            {
+              "file": "packages/cli/src/commands/message/send.ts",
+              "lines": "969-996",
+              "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/cli/src/commands/message/send.ts#L969-L996"
+            },
+            {
+              "file": "packages/server/src/routes/internalAgentApi.ts",
+              "lines": "4441-4445",
+              "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/server/src/routes/internalAgentApi.ts#L4441-L4445"
+            },
+            {
+              "file": "packages/server/src/routes/internalAgentApi.ts",
+              "lines": "4858",
+              "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/server/src/routes/internalAgentApi.ts#L4858"
+            }
+          ]
+        },
+        {
+          "id": "parallel-sends",
+          "claim": "Different Agents do not get a freshness exception. Legacy target gate serializes check+send in one server process; its test expects concurrent thread first replies to yield one sent and one held. Current Agent API handler does not use that helper: checks then calls broadcastAndDeliver. Do not transfer the legacy test to a guarantee of current v2 concurrent atomicity, or infer all current simultaneous sends must hold.",
+          "fixedURLs": [
+            {
+              "file": "packages/server/src/services/attestedSendService.ts",
+              "lines": "79-101",
+              "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/server/src/services/attestedSendService.ts#L79-L101"
+            },
+            {
+              "file": "packages/server/src/routes/internal.ts",
+              "lines": "2664-2668",
+              "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/server/src/routes/internal.ts#L2664-L2668"
+            },
+            {
+              "file": "packages/server/src/routes/internal.attestedSend.api.test.ts",
+              "lines": "730-771",
+              "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/server/src/routes/internal.attestedSend.api.test.ts#L730-L771"
+            },
+            {
+              "file": "packages/server/src/routes/internalAgentApi.ts",
+              "lines": "4919-4942",
+              "url": "https://github.com/botiverse/raft-source/blob/26f77ef97c40d3d91aa2c5e42b0fd66b8bf39fe6/packages/server/src/routes/internalAgentApi.ts#L4919-L4942"
+            }
+          ]
+        }
+      ],
+      "conclusion": "Raft current CLI with default source gate still can hold A for an ordinary unmentioned peer reply. Its recovery returns context to the model and allows explicit draft retry/anyway instead of requiring Human solely because final was held. This is not proof of zero extra generations or superior cost. Receiver-target scoping, recovery and explicit escape hatches are reference designs; changing Loom freshness remains an owner contract decision.",
+      "limits": [
+        "Static fixed-source inspection, not actual upstream deployment or runtime test.",
+        "No model/provider/Herdr cost or quality measurement.",
+        "Legacy routes/tests explicitly distinguished from current CLI v2.",
+        "Current v2 check/commit concurrency atomicity was not experimentally tested.",
+        "Public source defaults do not prove a deployed server environment or audience/mute settings."
+      ]
+    },
+    "autogen": {
+      "commit": "027ecf0a379bcc1d09956d46d12d44a3ad9cee14",
+      "scope": "Read-only fixed official Python AgentChat source; no project execution, model calls, code reuse or Loom changes.",
+      "findings": [
+        "RoundRobin, Selector and Swarm select one speaker per turn: serialized scheduling, not a solution to concurrent publication.",
+        "GraphFlow returns all ready nodes; manager requests all and tracks active speakers. Results append as each completes; only next selection waits for all active speakers.",
+        "Agent container holds a per-agent FIFO across its generation request; peer response is buffered after ongoing request finishes. Publishing the finished response has no room-high-water freshness check or peer-arrival hold in this path.",
+        "Peers receive response.chat_message, not peer inner tool events; manager thread separately receives inner_messages. This is not proof that arbitrary team/application views exclude diagnostics.",
+        "Graph dependency activation all/any and batch barrier coordinate workflows; they do not establish Loom auth, durable Inbox/ACK, Task, causal revision or unknown-write safety equivalence.",
+        "Transferable design principle is separating ordinary completed chat publication from next-work scheduling. Existing Loom freshness contract would still require explicit owner decision, not silent bypass."
+      ],
+      "references": [
+        {
+          "id": "roundrobin",
+          "path": "_round_robin_group_chat.py",
+          "start": 72,
+          "end": 82,
+          "url": "https://github.com/microsoft/autogen/blob/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_round_robin_group_chat.py#L72-L82"
+        },
+        {
+          "id": "selector",
+          "path": "_selector_group_chat.py",
+          "start": 152,
+          "end": 217,
+          "url": "https://github.com/microsoft/autogen/blob/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_selector_group_chat.py#L152-L217"
+        },
+        {
+          "id": "swarm",
+          "path": "_swarm_group_chat.py",
+          "start": 82,
+          "end": 98,
+          "url": "https://github.com/microsoft/autogen/blob/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_swarm_group_chat.py#L82-L98"
+        },
+        {
+          "id": "peer_buffer",
+          "path": "_chat_agent_container.py",
+          "start": 42,
+          "end": 66,
+          "url": "https://github.com/microsoft/autogen/blob/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_chat_agent_container.py#L42-L66"
+        },
+        {
+          "id": "publish",
+          "path": "_chat_agent_container.py",
+          "start": 130,
+          "end": 149,
+          "url": "https://github.com/microsoft/autogen/blob/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_chat_agent_container.py#L130-L149"
+        },
+        {
+          "id": "per_agent_FIFO",
+          "path": "_sequential_routed_agent.py",
+          "start": 61,
+          "end": 70,
+          "url": "https://github.com/microsoft/autogen/blob/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_sequential_routed_agent.py#L61-L70"
+        },
+        {
+          "id": "graph_ready_batch",
+          "path": "_graph/_digraph_group_chat.py",
+          "start": 458,
+          "end": 468,
+          "url": "https://github.com/microsoft/autogen/blob/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_graph/_digraph_group_chat.py#L458-L468"
+        },
+        {
+          "id": "manager_accept_then_barrier",
+          "path": "_base_group_chat_manager.py",
+          "start": 135,
+          "end": 164,
+          "url": "https://github.com/microsoft/autogen/blob/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_base_group_chat_manager.py#L135-L164"
+        },
+        {
+          "id": "manager_request_batch",
+          "path": "_base_group_chat_manager.py",
+          "start": 172,
+          "end": 193,
+          "url": "https://github.com/microsoft/autogen/blob/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_base_group_chat_manager.py#L172-L193"
+        },
+        {
+          "id": "graph_dependencies",
+          "path": "_graph/_digraph_group_chat.py",
+          "start": 392,
+          "end": 425,
+          "url": "https://github.com/microsoft/autogen/blob/027ecf0a379bcc1d09956d46d12d44a3ad9cee14/python/packages/autogen-agentchat/src/autogen_agentchat/teams/_group_chat/_graph/_digraph_group_chat.py#L392-L425"
+        }
+      ],
+      "costClaims": "No token/cost ratios inferred."
+    },
+    "multica": {
+      "localRevision": "11861145abc59a0d39c8c8f24ad837d4584e664f",
+      "localIsCurrent": false,
+      "currentRevisionReviewed": "a820c9a0efe680993f48b7f8b1410c58afbfdcec",
+      "currentRevisionSource": "Root supplied GitHub HEAD; relevant files independently fetched at exact revision.",
+      "conclusion": "For the inspected ordinary issue-comment append and chat assistant-outcome persistence, another ordinary peer message is not itself a stale-context rejection condition. This is append semantics with authority/task/parent checks, not absence of database locks.",
+      "commentChain": [
+        {
+          "path": "server/internal/handler/comment.go",
+          "line": 1702,
+          "url": "https://github.com/multica-ai/multica/blob/a820c9a0efe680993f48b7f8b1410c58afbfdcec/server/internal/handler/comment.go#L1702"
+        },
+        {
+          "path": "server/internal/handler/comment.go",
+          "line": 1887,
+          "url": "https://github.com/multica-ai/multica/blob/a820c9a0efe680993f48b7f8b1410c58afbfdcec/server/internal/handler/comment.go#L1887"
+        },
+        {
+          "path": "server/internal/handler/comment.go",
+          "line": 1950,
+          "url": "https://github.com/multica-ai/multica/blob/a820c9a0efe680993f48b7f8b1410c58afbfdcec/server/internal/handler/comment.go#L1950"
+        },
+        {
+          "path": "server/internal/handler/wakeup_actor.go",
+          "line": 17,
+          "url": "https://github.com/multica-ai/multica/blob/a820c9a0efe680993f48b7f8b1410c58afbfdcec/server/internal/handler/wakeup_actor.go#L17"
+        },
+        {
+          "path": "server/pkg/db/queries/comment.sql",
+          "line": 436,
+          "url": "https://github.com/multica-ai/multica/blob/a820c9a0efe680993f48b7f8b1410c58afbfdcec/server/pkg/db/queries/comment.sql#L436"
+        },
+        {
+          "path": "server/internal/service/task.go",
+          "line": 7513,
+          "url": "https://github.com/multica-ai/multica/blob/a820c9a0efe680993f48b7f8b1410c58afbfdcec/server/internal/service/task.go#L7513"
+        }
+      ],
+      "commentChecks": "Handler verifies issue access, content/type, parent belongs to issue, task trigger/coalesced reply-parent scope and squad no_action; current adds steer/suppression and transactional attachments. wakeupWrite adds authenticated actor/source settings and a transaction. SQL updates issue revision by +1 WHERE issue_id AND workspace_id, then inserts comment; no supplied prior revision comparison. Locks serialize the write, not model thinking. Automatic agent comments use the same SQL.",
+      "chatChain": [
+        {
+          "path": "server/internal/service/task.go",
+          "line": 4409,
+          "url": "https://github.com/multica-ai/multica/blob/a820c9a0efe680993f48b7f8b1410c58afbfdcec/server/internal/service/task.go#L4409"
+        },
+        {
+          "path": "server/internal/service/task.go",
+          "line": 4482,
+          "url": "https://github.com/multica-ai/multica/blob/a820c9a0efe680993f48b7f8b1410c58afbfdcec/server/internal/service/task.go#L4482"
+        },
+        {
+          "path": "server/internal/service/task.go",
+          "line": 4643,
+          "url": "https://github.com/multica-ai/multica/blob/a820c9a0efe680993f48b7f8b1410c58afbfdcec/server/internal/service/task.go#L4643"
+        },
+        {
+          "path": "server/internal/service/task.go",
+          "line": 3111,
+          "url": "https://github.com/multica-ai/multica/blob/a820c9a0efe680993f48b7f8b1410c58afbfdcec/server/internal/service/task.go#L3111"
+        },
+        {
+          "path": "server/pkg/db/queries/chat.sql",
+          "line": 481,
+          "url": "https://github.com/multica-ai/multica/blob/a820c9a0efe680993f48b7f8b1410c58afbfdcec/server/pkg/db/queries/chat.sql#L481"
+        },
+        {
+          "path": "server/pkg/db/queries/agent.sql",
+          "line": 1017,
+          "url": "https://github.com/multica-ai/multica/blob/a820c9a0efe680993f48b7f8b1410c58afbfdcec/server/pkg/db/queries/agent.sql#L1017"
+        }
+      ],
+      "chatChecks": "CompleteTaskWithTransition locks chat session and CAS-updates own running task; writeChatCompletionOutcome -> createAssistantChatMessage -> INSERT chat_message. Same transaction reanchors next queued direct input. Ordinary peer append is not a condition in these writes; cancelled/terminal task, permission, missing/deleted resources remain distinct fences.",
+      "versionDifferences": "Current whole files differ from local snapshot. Current CreateComment has attribution/attachment/steer changes; current CompleteTask delegates to CompleteTaskWithTransition and settles terminal state. createAssistantChatMessage, writeChatCompletionOutcome, CreateChatMessage SQL and CompleteAgentTask SQL bodies match local reviewed bodies. CreateComment SQL adds suppressed_agent_ids but no prior-context compare.",
+      "limits": [
+        "Multica issue comments and agent-centric direct/external Slack/Lark chat are not Loom Room multi-instance semantics.",
+        "No runtime experiment; no guarantee of no other auth, cancelled-task, DB-trigger or outbound-integration rejection anywhere in repository. Findings concern explicit append paths above.",
+        "Did not audit all ingestion middleware, DB migrations/triggers or external-channel outbound suppression. Do not conclude all channels support unrestricted simultaneous turns.",
+        "Revision-incrementing writes are locked/transactional; describing these as no locks would be false."
+      ]
+    },
+    "aexus": {
+      "revision": "202181f9ce1312aeeb6db523a9f52376b3baa5c1",
+      "matchesRootReportedCurrent": true,
+      "conclusion": "Concrete channel.message-post path checks membership/mute/body/idempotency and that reply belongs to a previously delivered operator/Secretary discussion, then appends a new sequence. An intervening peer message does not itself invalidate that root or introduce a newest-message CAS.",
+      "chain": [
+        {
+          "path": "Infra/src/main/channels.ts",
+          "line": 291,
+          "url": "https://github.com/Daijunfan/Aexus/blob/202181f9ce1312aeeb6db523a9f52376b3baa5c1/Infra/src/main/channels.ts#L291"
+        },
+        {
+          "path": "Infra/src/main/channel-discussion.ts",
+          "line": 86,
+          "url": "https://github.com/Daijunfan/Aexus/blob/202181f9ce1312aeeb6db523a9f52376b3baa5c1/Infra/src/main/channel-discussion.ts#L86"
+        },
+        {
+          "path": "Infra/src/main/channel-discussion.ts",
+          "line": 73,
+          "url": "https://github.com/Daijunfan/Aexus/blob/202181f9ce1312aeeb6db523a9f52376b3baa5c1/Infra/src/main/channel-discussion.ts#L73"
+        },
+        {
+          "path": "Infra/src/main/channel-discussion.ts",
+          "line": 51,
+          "url": "https://github.com/Daijunfan/Aexus/blob/202181f9ce1312aeeb6db523a9f52376b3baa5c1/Infra/src/main/channel-discussion.ts#L51"
+        },
+        {
+          "path": "Infra/src/main/channel-discussion.ts",
+          "line": 80,
+          "url": "https://github.com/Daijunfan/Aexus/blob/202181f9ce1312aeeb6db523a9f52376b3baa5c1/Infra/src/main/channel-discussion.ts#L80"
+        }
+      ],
+      "checks": "rootRequest follows parent.request_id to an operator/Secretary request and verifies channel_deliveries for caller. publishMessage creates MAX(sequence)+1, transactional INSERT plus frozen delivery recipients, excludes author, acknowledges addressed delivered entry and routes after insert. No baseline/head precondition on this append. Idempotency conflicts and unrelated/not-delivered roots still rejected.",
+      "separateSessionBoundary": {
+        "source": {
+          "path": "Infra/src/main/sessions.ts",
+          "line": 379,
+          "url": "https://github.com/Daijunfan/Aexus/blob/202181f9ce1312aeeb6db523a9f52376b3baa5c1/Infra/src/main/sessions.ts#L379"
+        },
+        "meaning": "sendMessage rejects running/acknowledging session as busy. This serial session admission is different from rejecting an already-produced public reply because B posted first."
+      },
+      "limits": [
+        "Inspected actual channel command handler through append/root authorization, not all plugin mailbox transports or group-chat variants.",
+        "Ordinary assistant output remains private by policy; public channel reply requires explicit channel.message-post. Not the same native-final transport as Loom.",
+        "No empirical concurrency, efficiency, or collaboration-quality claim. No code copied."
+      ]
+    },
+    "langgraph": {
+      "revision": "799c2f04fd3a56186e24e9fb8bbf3568e543cfbe",
+      "references": [
+        {
+          "path": "libs/langgraph/langgraph/pregel/_algo.py",
+          "url": "https://github.com/langchain-ai/langgraph/blob/799c2f04fd3a56186e24e9fb8bbf3568e543cfbe/libs/langgraph/langgraph/pregel/_algo.py#L233-L321",
+          "sha256": "39a8eab7c318ca866b8b394447063444403ea668df6fd173af21bfcb5270e976"
+        },
+        {
+          "path": "libs/langgraph/langgraph/pregel/_loop.py",
+          "url": "https://github.com/langchain-ai/langgraph/blob/799c2f04fd3a56186e24e9fb8bbf3568e543cfbe/libs/langgraph/langgraph/pregel/_loop.py#L714-L745",
+          "sha256": "0887f03bb3316b2741d45ed55d616c50a91a4bd99610c66c85b01dccb6567338"
+        },
+        {
+          "path": "libs/langgraph/langgraph/channels/last_value.py",
+          "url": "https://github.com/langchain-ai/langgraph/blob/799c2f04fd3a56186e24e9fb8bbf3568e543cfbe/libs/langgraph/langgraph/channels/last_value.py#L56-L64",
+          "sha256": "36cbc586aeaac0f8c9b5a8d8b903039023a7d24294408391eb8c7f10aab3a308"
+        },
+        {
+          "path": "libs/langgraph/langgraph/graph/message.py",
+          "url": "https://github.com/langchain-ai/langgraph/blob/799c2f04fd3a56186e24e9fb8bbf3568e543cfbe/libs/langgraph/langgraph/graph/message.py#L61-L90",
+          "sha256": "8e1c990a606efbc5699d0a45c85e3d31641efdc95531293204860cd306282a2c"
+        }
+      ],
+      "documentation": [
+        "https://docs.langchain.com/oss/python/langgraph/pregel",
+        "https://docs.langchain.com/oss/python/langgraph/errors/INVALID_CONCURRENT_GRAPH_UPDATE"
+      ],
+      "findings": [
+        "Pregel executes selected nodes in parallel against the step state; channel updates become visible in the next step. after_tick applies writes after all tasks finish.",
+        "apply_writes orders tasks deterministically and groups writes per channel. Channel-specific update/reducer behavior decides how to combine values.",
+        "add_messages appends distinct message IDs and replaces an existing message with the same ID; this is not an immutable event ledger.",
+        "LastValue rejects multiple writes in a step. Concurrent state overwrites are not automatically treated as appendable conversation.",
+        "The transferable distinction is between message accumulation and conflicting business-state updates. A global step barrier would block independent ongoing Loom instances and is not proposed."
+      ],
+      "limits": "Static source/documentation study, not an executed graph or native CLI comparison. Reducers do not prove Loom authority, ACK, cancellation or Task safety equivalence."
+    }
+  },
+  "synthesis": {
+    "confirmed": "Mature implementations use different consistency policies. Raft still has peer-triggered freshness holds with model-facing recovery; AutoGen GraphFlow, appropriately reduced LangGraph state, and the inspected Multica/Aexus append paths allow concurrent results without requiring every author to have seen every earlier-finishing reply.",
+    "recommendation": "Keep Loom independent instance lanes, canonical append ledger, Host final publication and actual read positions. Separate ordinary discussion append from business-state mutations. The preceding narrow exception for ordinary peer messages not directed to the current instance remains a proposed owner decision, not an upstream universal rule or an implemented change.",
+    "preserve": "Human new facts, explicit requests including @all, Task/Review/memory state policies, authentication, membership, idempotency, execution fences, actual ACK evidence and unknown-result handling remain within their current boundaries until an explicit contract decision.",
+    "avoid": [
+      "Do not adopt a global speaker lock or graph barrier that undermines independent instance work.",
+      "Do not assume Raft model-facing held recovery is free or necessarily cheaper than Human recovery.",
+      "Do not treat chat append as approval for a Task transition or overwrite.",
+      "Do not infer cost ratios from source, project reputation or fewer tool names."
+    ],
+    "nextAcceptance": "After the bounded policy decision: TDD for peer-only concurrent publication and protected Human/directed/state-changing boundaries, then repeated same-task team-vs-team native/Herdr comparison including all participants, recovery, quality and Human interventions.",
+    "costVerdict": "No new measured ratio. This study cannot establish Loom versus Herdr or any library cost superiority."
+  },
+  "verification": {
+    "sourceReview": "Three delegated independent source reviews plus root inspection of routing, append, buffer and reducer implementations. Runtime tests not run for this documentation-only study.",
+    "formatAndLinks": "npm run format:check and git diff --check passed. Verified 60 fixed source paths and line anchors against local pinned source or exact remote raw source; checked the local design-to-evidence link."
+  }
+}
