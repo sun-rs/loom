@@ -1,0 +1,112 @@
+{
+  "kind": "mixed-study-preparation-summary/v1",
+  "date": "2026-10-11",
+  "status": "Implementation and offline review complete; frozen package awaits explicit owner batch authorization",
+  "batchId": "mixed-two-task-20261011-v1",
+  "paidAuthorized": false,
+  "paidCalls": 0,
+  "newRealCliModelTrials": 0,
+  "formalCohortExecuted": false,
+  "newCostRatio": null,
+  "productChanged": false,
+  "serviceRestarted": false,
+  "sourceRevision": "f1561877eedab9ce30de9065ed4bc960a76fef0c",
+  "productRevision": "41dafbb",
+  "scope": "Private benchmark entry and statistical reporting preparation only; production seven native/final flags remain off",
+  "plan": "plan.json",
+  "changes": [
+    "All five parent and direct-child routes require exact new common/binding release before provider launch; paid task overrides, shortening and fault injection refused",
+    "One outer coordinator with five bindings sharing one canonical durable ledger; changing state directory cannot restart allowance",
+    "Absolute expiresAt preserved across reopen; no new admission after expiry, failure tails can still be recorded",
+    "Fixed A/B/B/A workload and alternating arm order, eight continuous12 arms per binding; no retry or replacement",
+    "Per-binding per-task/per-pair/whole-cohort sum ratios; incomplete cohorts null, all known failed costs and quality failures retained",
+    "Final completion checked against durable fixed cohort, never parent exit code alone",
+    "Kimi parent reuses canonical controller launch; verified paid preserves original auth/upstream transport, fake remains loopback; ACP subtree filesystem isolation retained",
+    "Codex write policy permits original CLI HOME writes consistently while preserving historical-read denial; paid Task B does not require synthetic proof files"
+  ],
+  "checks": {
+    "commonAndFiveBindingClosures": {
+      "commonRebindReason": "Global launch now uses Kimi canonical controllerLaunch; earlier manifests preserved under pre-final-freeze",
+      "closures": [
+        {
+          "binding": "common",
+          "manifest": "/Users/sun/.loom/reviews/2026-10-11-mixed-study/paid-admission/common-manifest.json",
+          "sha256": "2250c4cf54d45cfd3a24e40e5ec028be1719e80474d50fafab913a15e2a70bcd",
+          "files": 22875,
+          "realpaths": 43,
+          "verified": true
+        },
+        {
+          "binding": "codex",
+          "manifest": "/Users/sun/.loom/reviews/2026-10-11-mixed-study/paid-admission/codex-manifest.json",
+          "sha256": "a395ce0b218c0314d8ecf573d46fd0ebba89222b2af40bdd9c3048daa0254117",
+          "files": 44,
+          "realpaths": 2,
+          "verified": true
+        },
+        {
+          "binding": "claude",
+          "manifest": "/Users/sun/.loom/reviews/2026-10-11-mixed-study/paid-admission/claude-manifest.json",
+          "sha256": "2a764797d61a3f2cfd26e4c09a420e7bcd1d49581818dd3902c70e1168c41a08",
+          "files": 37,
+          "realpaths": 2,
+          "verified": true
+        },
+        {
+          "binding": "opencode",
+          "manifest": "/Users/sun/.loom/reviews/2026-10-11-mixed-study/paid-admission/opencode/binding-manifest.json",
+          "sha256": "686fab76c905ec399214007fb1347fe79a4dd3f08fa6ff0b3416785265e283ad",
+          "files": 67,
+          "realpaths": 2,
+          "verified": true
+        },
+        {
+          "binding": "kimi",
+          "manifest": "/Users/sun/.loom/reviews/2026-10-11-mixed-study/paid-admission/kimi/binding-manifest.json",
+          "sha256": "ded6b29ebe66a24576671b12c92df4d787e6861c26bf895186374e7c5b344239",
+          "files": 1289,
+          "realpaths": 3,
+          "verified": true
+        },
+        {
+          "binding": "pi",
+          "manifest": "/Users/sun/.loom/reviews/2026-10-11-mixed-study/paid-admission/pi-manifest.json",
+          "sha256": "0dfd8bfd21873e71b46706770e8e51aeff1eba725e219593751248a4815ffe08",
+          "files": 15081,
+          "realpaths": 10,
+          "verified": true
+        }
+      ],
+      "allReleasesAuthorized": false,
+      "sharedClaimsExist": false
+    },
+    "sharedTests": 33,
+    "workloadBridgeTests": 5,
+    "claudeTests": 46,
+    "codexTests": 57,
+    "kimiOpenCodeChangedTests": 6,
+    "piEntryTests": "See pi-review/preparation.json and logs",
+    "globalUnsignedLaunch": "Actual coordinator refused before any process/claim; execution directory remains empty",
+    "independentReviews": [
+      "claude/mixed-review/public-review.json",
+      "review-budget.json",
+      "pi-review/preparation.json"
+    ]
+  },
+  "limits": [
+    "Five CLI bindings across four model families, not multiple models per CLI",
+    "Kimi actual print/ACP dynamic tool-schema difference remains; end-to-end path comparison only",
+    "Two pairs per task are descriptive, not equivalence or universal stability proof",
+    "Current arm is isolated native-final trial, not production with seven flags off",
+    "Input/output/request counts are separately reported quantities, not invoices; Codex request field is telemetry events",
+    "Preparation is offline and OS-level; it is not a new full mixed actual-CLI synthetic run or real model acceptance",
+    "Numeric limits are turn-boundary observed-usage thresholds; in-flight concurrent work can overshoot. Absolute deadline is admission cutoff; existing timeout and cleanup can drain later",
+    "Initial provider preparation reports retain pre-final hashes; final-closure-verification.json is the authoritative post-Kimi-launch rebind, previous manifests preserved under pre-final-freeze"
+  ],
+  "privateRoot": "/Users/sun/.loom/reviews/2026-10-11-mixed-study",
+  "evidenceManifest": {
+    "path": "/Users/sun/.loom/reviews/2026-10-11-mixed-study/evidence-manifest.json",
+    "sha256": "6649079f69009628cea7b458c91bd0e8d7a43f62d94790b42ad6f8dbcb7213ab"
+  },
+  "authorizationRequirement": "AGENTS.md Authorized paid CLI gate models and Verification and evidence require explicit owner authorization per paid batch. No authorization inferred from preparation."
+}

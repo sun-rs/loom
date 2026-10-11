@@ -1,0 +1,132 @@
+{
+  "kind": "mixed-study-reviewable-plan/v1",
+  "batchId": "mixed-two-task-20261011-v1",
+  "sourceRevision": "f1561877eedab9ce30de9065ed4bc960a76fef0c",
+  "productRevision": "41dafbb",
+  "bindings": [
+    {
+      "id": "codex",
+      "model": "gpt-6-luna",
+      "effort": "low",
+      "armCaps": {
+        "input": 6000000,
+        "output": 100000,
+        "httpAttempts": 180,
+        "wallMinutes": 45
+      }
+    },
+    {
+      "id": "claude",
+      "model": "sonnet",
+      "effort": "low",
+      "armCaps": {
+        "input": 6000000,
+        "output": 100000,
+        "httpAttempts": 180,
+        "wallMinutes": 45
+      }
+    },
+    {
+      "id": "opencode",
+      "model": "aihubmix/deepseek-v4.1-flash",
+      "effort": "low",
+      "armCaps": {
+        "input": 12000000,
+        "output": 150000,
+        "httpAttempts": 200,
+        "wallMinutes": 45
+      }
+    },
+    {
+      "id": "kimi",
+      "model": "kimi-code/k3-256k",
+      "effort": "low",
+      "armCaps": {
+        "input": 6000000,
+        "output": 100000,
+        "httpAttempts": 180,
+        "wallMinutes": 45
+      }
+    },
+    {
+      "id": "pi",
+      "model": "aihubmix/deepseek-v4.1-flash",
+      "effort": "low",
+      "armCaps": {
+        "input": 12000000,
+        "output": 150000,
+        "httpAttempts": 200,
+        "wallMinutes": 45
+      }
+    }
+  ],
+  "schedule": [
+    {
+      "block": 1,
+      "task": "A",
+      "armOrder": ["native", "current"]
+    },
+    {
+      "block": 2,
+      "task": "B",
+      "armOrder": ["current", "native"]
+    },
+    {
+      "block": 3,
+      "task": "B",
+      "armOrder": ["native", "current"]
+    },
+    {
+      "block": 4,
+      "task": "A",
+      "armOrder": ["current", "native"]
+    }
+  ],
+  "roundsPerArm": 12,
+  "maximumSessions": 40,
+  "maximumBusinessTurns": 480,
+  "globalAdmissionThresholds": {
+    "input": 336000000,
+    "output": 4800000,
+    "httpAttempts": 7520,
+    "wallHours": 12
+  },
+  "budgetMeaning": "All bindings share one durable claims directory. Numeric limits and absolute deadline are admission/turn-boundary thresholds, not hard in-flight billing or force-kill limits. In-flight work uses existing per-arm/turn timeout and owned cleanup.",
+  "stopPolicy": "Any execution failure, cap, raw accounting/capture incomplete, source/config/session/memory drift or unsafe cleanup stops affected binding; all known costs preserved. Quality false with normal fully accounted arm continues.",
+  "statistics": {
+    "unit": "Independent matched pair of continuous 12-turn sessions, not turn",
+    "primary": "Per binding and task: sum(current usage)/sum(native usage) over its two fixed pairs; per binding overall: sums across all four pairs. Incomplete planned cohort yields primary null; preserve known all-cost ledger.",
+    "outputs": [
+      "input",
+      "output",
+      "request count",
+      "optional cache/reasoning only when fully provided",
+      "per-pair ratios",
+      "function/selftest quality and artifacts"
+    ],
+    "limits": "Descriptive replicated two-workload study; no currency, equivalence or default-product efficiency claim.",
+    "quality": "Machine artifact/fact acceptance reported separately without excluding failed arms; narrative semantics require separately labelled review."
+  },
+  "treatmentScope": "current=shared native-final trial on actual Loom daemon/Role path; NOT deployed seven-flags-off product default; no private prompt candidate",
+  "memory": "Native automatic memory disabled every initial/resume, verifiable in captured invocation/config; normal session history and native compaction/retry preserved",
+  "realPaidCallsThisPreparation": 0,
+  "launchCommand": [
+    "node",
+    "/Users/sun/.loom/reviews/2026-10-11-mixed-study/launch.mjs",
+    "--paid"
+  ],
+  "paidAuthorization": false,
+  "oldReleasesReusable": false,
+  "requiresBeforeStart": [
+    "Explicit owner approval of this exact batch",
+    "Record owner approval, frozen method and exact model/effort combinations",
+    "Fill current absolute expiresAt and exact common/binding releases; recheck closure before launch"
+  ],
+  "limitations": [
+    "Five CLI bindings across four model families, not multiple models per CLI",
+    "Kimi actual print/ACP dynamic tool-schema difference remains; end-to-end path comparison only",
+    "Two pairs per task are descriptive, not equivalence or universal stability proof",
+    "Current arm is isolated native-final trial, not production with seven flags off",
+    "Input/output/request counts are separately reported quantities, not invoices; Codex request field is telemetry events"
+  ]
+}
