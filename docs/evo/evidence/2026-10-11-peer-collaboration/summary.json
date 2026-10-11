@@ -1,0 +1,80 @@
+{
+  "kind": "loom-native-final-peer-collaboration-closeout/v1",
+  "baseRevision": "71a7b0e4519a0ee428c152851932bb319e3bd52e",
+  "scope": "Deterministic collaboration integration and comparison design; no product behavior change",
+  "paidProviderCalls": 0,
+  "realHerdrRun": false,
+  "deploymentChanged": false,
+  "test": "../../../../packages/agent-host/test/native-final-peer-collaboration.test.ts",
+  "actualPath": [
+    "Two real Role instances in one temporary Kernel database, each with its own execution lane",
+    "One Human @all opening, both executions bound to that same sequence",
+    "Real MultiLaneAgentHost with FakeRuntimeAdapter supplying synthetic native text",
+    "Worker message-present HTTP, nativeFinalSequence/envelope, WorkerFinalOutput HTTP, actual Host settlement",
+    "Real Human Client HTTP abandon, followed by an explicit new request"
+  ],
+  "observations": [
+    "B completes and publishes while A still owns its lane.",
+    "B's undirected top-level reply alone makes A's later final held. There is no intervening Human message.",
+    "A does not silently publish stale text, ACK unseen peer facts or automatically retry; action_required requires Human recovery.",
+    "After Human abandon plus a new request, A receives the peer fact and publishes the exact synthetic @B text once. The test does not add recipients to that reply.",
+    "B receives the handoff; its subsequent directed request contains only the new delta, not the old opening or handoff.",
+    "The failed RunAttempt remains unchanged. The whole chain has five RunAttempts and four canonical final replies, with no queued or leased work left."
+  ],
+  "limitRootCause": {
+    "condition": "A newer external message on the same room and exact target (top level or same thread) exceeds the final's genuine causal floor.",
+    "notRequired": "An @ to A, a semantic dependency, or a new Human correction",
+    "existingExceptions": "Different room/target, system notices, and exact proven writes from A's own current run do not cause this peer-only hold.",
+    "kernel": "../../../../packages/kernel/src/worker-run-message-writes.ts",
+    "decision": "../../../../packages/kernel/src/collaboration-service.ts",
+    "host": "../../../../packages/agent-host/src/worker-final-output.ts",
+    "impact": "Independent execution lanes do not yet imply smooth parallel ordinary conversation. With native-final enabled, one peer's successful reply can force Human recovery for another. This is a deterministic policy interaction, not evidence of model randomness."
+  },
+  "proposedDecisionNotImplemented": {
+    "recommendation": "Consider excluding ordinary peer message appends not explicitly directed to A from the freshness barrier for A's ordinary reply. Keep the actual old basedOnRoomSeq and append at the real current ledger sequence; never backdate or acknowledge unseen messages.",
+    "requiresOwnerContractApproval": true,
+    "tradeoff": "Accept explicitly concurrent ordinary replies whose authors have not yet seen one another; preserve later idle delta delivery without adding a model generation solely for publication.",
+    "preserve": [
+      "Human messages and explicitly directed peer requests (including broadcasts targeting A) remain subject to freshness holds",
+      "Task, Review, memory and other business-state mutations retain their existing policies",
+      "Authentication, membership, execution fencing, idempotency, original read evidence and unknown-write handling",
+      "One Kernel policy for Worker and native-final facades; no Host bypass or second queue"
+    ],
+    "alternative": "A bounded re-read/revision continuation preserves the current freshness rule but costs another model generation and can encounter another newer message. It is not a zero-cost fix and must not reset its retry bound through follow-up Activations. No such continuation was implemented."
+  },
+  "comparisonDesign": "../../../design/cli-efficiency-gate.zh-CN.md#多实例协作收口口径2026-10-11",
+  "limits": [
+    "Synthetic runtime replies do not establish actual provider parsing, native session continuation, autonomous model cooperation or token efficiency.",
+    "The present test proves safe recovery and exposes a usability limitation; passing it does not mean autonomous collaboration is accepted.",
+    "The default deployed native-final flags remain unchanged; do not generalize this Human-recovery behavior to every legacy Worker execution mode.",
+    "No current Herdr comparative cost claim: this environment is not a Herdr-managed session and no Herdr controls were used.",
+    "Existing P89/P92 real collaboration evidence remains valid within its original revisions and modes."
+  ],
+  "verification": {
+    "relatedTestsBeforeAddition": {
+      "passed": 26,
+      "failed": 0
+    },
+    "independentReview": "Passed: peer-only causality, authentic Role/Host/HTTP path, unchanged failed Run, exact @ routing and delta assertions checked separately.",
+    "fullCheck": {
+      "command": "npm run check",
+      "exitCode": 0,
+      "backend": {
+        "passed": 3118,
+        "skipped": 22,
+        "failed": 0
+      },
+      "webUnit": 487,
+      "consoleUnit": 61,
+      "efficiencyUnit": 558,
+      "additionalChecks": "Repository/release/launch policy, UI contracts, typecheck, parity and browser-policy checks passed as part of check; this is not a new real-browser deployment acceptance."
+    },
+    "formatAndDiff": "npm run format:check and git diff --check passed; 49 local link targets checked and the new comparison heading exists.",
+    "combinedAndRelatedTests": {
+      "passed": 7,
+      "failed": 0
+    },
+    "initialFullCheck": "Failed on circular inference in the new test; explicit FakeRuntimeAdapter annotation fixed it, and typecheck then passed. Full check rerun is recorded below."
+  },
+  "testSha256": "757331df0bcbedaae0465e45f8d5e524b096a3f8f4d5e3aa4d713bafcd7640cc"
+}
