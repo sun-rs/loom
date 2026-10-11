@@ -176,7 +176,7 @@ Claude 连接配置隔离修复（2026-09-29）：冷/热 driver 只继承用户
 - Kimi 延迟：触发条件为下一次 Kimi 效率门禁，按交替顺序与多样本判定。
 - Codex 续轮额外 `message-read`：P41 出现、P42 消失，判模型侧；若复现为稳定行为再评估（会改四家协议版本，需四家付费复验）。
 - 真实 CLI 已覆盖（P43，Codex+Claude haiku）：私聊排队与隔离、平台记忆写入/读回与读开关拒绝、重启后原 session 续聊。
-- 真实 CLI 待补范围：P89四CLI并发与P92频道并行已有实证，不再笼统列为未覆盖。当前native-final的FakeRuntime组合已验证普通peer并行直接发表、真实未读位置及后续delta、定向peer触发held／Human恢复／原文@交接；[真实 Codex／OpenCode 本地合成双臂](evidence/2026-10-12-team-loom/summary.json)已验证 A→B→A、同 session 续接及缺 @ 停止；后继[团队纵向 MVP](evidence/2026-10-12-team-mvp/summary.json)补齐 Claude／Kimi／Pi 的有限双臂交接，并验证两家真实工具的共享产物及归档评价链。均为本地合成响应，Kimi权限差异保留；未执行真实模型自主工作或并发业务场景，不能把传输通过当作自主协作达标；热模式取消、首轮中断、OpenCode abort时序、Claude后台任务轮竞态按拟采用运行模式限定验证范围。旧第六十二至六十五节的dated缺口不能直接当作当前全局失败，按[有限收口清单](evidence/2026-10-11-claude-closeout/finish-inventory.json)核对；本次未新增付费或启用正式开关。
+- 真实 CLI 待补范围：P89四CLI并发与P92频道并行已有实证，不再笼统列为未覆盖。当前native-final的FakeRuntime组合已验证普通peer并行直接发表、真实未读位置及后续delta、定向peer触发held／Human恢复／原文@交接；[真实 Codex／OpenCode 本地合成双臂](evidence/2026-10-12-team-loom/summary.json)已验证 A→B→A、同 session 续接及缺 @ 停止；后继[团队纵向 MVP](evidence/2026-10-12-team-mvp/summary.json)补齐 Claude／Kimi／Pi 的有限双臂交接，并验证两家真实工具的共享产物及归档评价链。后继[Codex／Claude完整业务入口](evidence/2026-10-12-team-mvp/paid-entry-readiness.json)已完成团队计量／授权／清理接线和免费预检，固定4对候选等待本批付费授权。均为本地合成响应，Kimi权限差异保留；未执行真实模型自主工作或并发业务场景，不能把传输通过当作自主协作达标；热模式取消、首轮中断、OpenCode abort时序、Claude后台任务轮竞态按拟采用运行模式限定验证范围。旧第六十二至六十五节的dated缺口不能直接当作当前全局失败，按[有限收口清单](evidence/2026-10-11-claude-closeout/finish-inventory.json)核对；本次未新增付费或启用正式开关。
 - 记忆：已删除条目 Worker 无列举入口；30 条增量上限为有损摘要；Codex/Claude 压缩后增量可能只剩摘要。
 - 控制台：急停状态只看已同步事件窗口；RunAttempt 列表只取最近 20 条活动。触发：phase 4 前端接入。
 

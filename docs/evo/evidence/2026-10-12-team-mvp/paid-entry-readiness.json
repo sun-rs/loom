@@ -1,0 +1,100 @@
+{
+  "kind": "codex-claude-team-business-runner-readiness/v1",
+  "paidCalls": 0,
+  "status": "implemented; bounded synthetic preflight verified; paid batch not authorized or run",
+  "productChanged": false,
+  "serviceRestarted": false,
+  "offlineTestsPassed": 27,
+  "offlineLogSha256": "e2853bab884d1e38ee08ed445f9dea8b86292b677f9efa731a02e3bd2aa29f53",
+  "rootAuditSha256": "8c594779cb3262461792cd14e247cf9ce37d8d1f93e3a21000f78d5c6c8b5d7d",
+  "rawReplayedArms": [
+    {
+      "root": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/paid/runs/1791742797164-native",
+      "usage": {
+        "codex": {
+          "input": 200,
+          "output": 40,
+          "requests": 2,
+          "complete": true
+        },
+        "claude": {
+          "input": 100,
+          "output": 20,
+          "requests": 1,
+          "complete": true
+        }
+      },
+      "cleanup": true,
+      "quality": "failed as expected for untouched synthetic seed",
+      "reportSchema": "older fields: derive execution from turns; do not rewrite original"
+    },
+    {
+      "root": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/paid/runs/1791742813986-loom",
+      "usage": {
+        "codex": {
+          "input": 200,
+          "output": 40,
+          "requests": 2,
+          "complete": true
+        },
+        "claude": {
+          "input": 100,
+          "output": 20,
+          "requests": 1,
+          "complete": true
+        }
+      },
+      "cleanup": true,
+      "quality": "failed as expected for untouched synthetic seed",
+      "reportSchema": "explicit execution/quality fields"
+    }
+  ],
+  "attempts": [
+    {
+      "run": "1791742604755-native",
+      "resultSha256": "3617502dac374e12ffdd9b035f747f5300fc69e090301c2928d34e89c7a6d335",
+      "status": "failed"
+    },
+    {
+      "run": "1791742673755-native",
+      "resultSha256": "fd276e20b2100291d76403dfdb7e174591965d52651fa46b0f1e9c4885b0181f",
+      "status": "synthetic-transport-passed"
+    },
+    {
+      "run": "1791742689706-loom",
+      "resultSha256": "75dabe6e1956ce3e442cf6444de10b1d969860332f2d1cd666e0ee164e227477",
+      "status": "synthetic-transport-passed"
+    },
+    {
+      "run": "1791742797164-native",
+      "resultSha256": "5eeb812c96aa3491e536d80924f6340e09af7d8b930b059b56dc20510a547f6d",
+      "status": "synthetic-transport-passed"
+    },
+    {
+      "run": "1791742813986-loom",
+      "resultSha256": "5732708c1735e069350da025e24eb4d343088bcd2352788f1842ccc0ea165fc9",
+      "status": "synthetic-transport-passed"
+    }
+  ],
+  "syntheticRequestsAllAttempts": 12,
+  "initialFailure": "Owned anchor missing before HTTP; zero observed requests is not accepted zero consumption; unresolved gate receipt preserved. Later runs use separately identified preflight batches.",
+  "verified": [
+    "Whole-team cumulative usage includes both members without adding cached subfields twice",
+    "Unknown consumption or unproved cleanup blocks next sample; no silent retry or replacement",
+    "Exact manifest/release/state binding; missing release denied before provider setup",
+    "Actual native A-B-A and Kernel/Host A-B-A, Codex same-session resume, current product prompt",
+    "No peer mention is only candidate stop; unchanged seed correctly fails actual archived artifact oracle",
+    "Parent deadline and exact process cleanup tested with exit7, ignoreTERM, orphan grandchild and parentTERM"
+  ],
+  "limits": [
+    "No real upstream model calls or credentials acceptance in this preflight",
+    "Synthetic responses contain no business tool work; previous Codex/OpenCode tool probe is separate evidence",
+    "Native final preflight predates explicit execution/quality report columns; original evidence not rewritten",
+    "Parent seals sample failed while independent quality review is pending; use separate execution, oracle and manual review fields; retain all cost",
+    "Fixture Role/profile placement is not full daemon discovery; production default switches remain off",
+    "Kimi strict isolation unresolved; this candidate covers Codex/Claude only",
+    "Native relay is not measured Herdr; four pairs on one task only support descriptive results"
+  ],
+  "batchPlan": "team-batch-plan.json",
+  "next": "Owner batch approval, then fixed eight-sample run and per-sample artifact/README/reviewer review; report all outcomes and unknowns."
+}

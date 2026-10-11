@@ -25,19 +25,22 @@
     "kimiAllAttempts": 11,
     "piAllAttempts": 17,
     "businessToolBothArms": 16,
-    "note": "Includes preserved failures/intermediate successes. Synthetic counts are transport observations, not provider cost or statistical samples."
+    "note": "Includes preserved failures/intermediate successes. Synthetic counts are transport observations, not provider cost or statistical samples.",
+    "currentProductPromptAndRecorder": 6,
+    "budgetedBusinessEntryAllAttempts": 12
   },
   "business": {
     "task": "Existing invoice-v7 public requirements and private evaluator reused; all 12 requirements available initially, no forced twelve-turn controller.",
     "pipeline": "Actual CLI tools read public requirements, write shared artifact and run tests; second member reads/tests same artifact. Host snapshots and evaluates archived bytes.",
-    "limit": "Synthetic server supplied reference implementation. Functional oracle success demonstrates evaluation wiring, not model competence or complete business quality; README semantics remain unchecked."
+    "limit": "Synthetic server supplied reference implementation. Functional oracle success demonstrates evaluation wiring, not model competence or complete business quality; README semantics remain unchecked.",
+    "currentPromptEntry": "Codex/Claude shared complete task input and current standingPromptLease verified through actual model requests; Claude recorder forwarded to localhost upstream and reconciled complete primary usage. No tool artifact or real model quality claim.",
+    "budgetedEntry": "Codex/Claude real-provider-capable entry implemented; localhost preflight with whole-team gate and parent cleanup verified. Actual model business quality and cost remain untested."
   },
   "blockingPaidAdmission": [
-    "Full product standing-prompt path and actual-provider metering/budget wiring must replace synthetic fixtures.",
-    "Kimi ACP source-read exception differs from native isolation; strict business comparison remains blocked for that pair until existing narrow policy is reused.",
-    "Concrete cohort/budgets and a new batch release remain required; no prior release reused."
+    "Frozen four-pair Codex/Claude batch still requires explicit owner authorization; no paid release exists.",
+    "Kimi ACP source-read exception differs from native isolation; that pair remains outside this candidate."
   ],
-  "next": "One Codex/Claude complete business vertical first; reuse existing capture and authorization primitives. Do not build a generic multi-provider framework or hold runnable pairs for Kimi.",
+  "next": "Execute the frozen Codex/Claude complete business task batch after authorization; report repeated team-level usage and quality, no further framework expansion.",
   "evidence": {
     "claude": {
       "file": "claude.json",
@@ -58,6 +61,16 @@
     "business-task": {
       "file": "business-task.json",
       "privateOriginalSha256": "9a51f20a27e927f7e4b61a07be5a8c3eaf5295d1407e015d7c5ff4197b6c5898"
+    },
+    "businessEntry": {
+      "file": "business-entry.json",
+      "privateOriginalSha256": "318ebd5df385d157a84ad18fa13aae6e43e3a8e881fcd0777cc66f87c3906eef"
+    },
+    "paidEntryReadiness": {
+      "file": "paid-entry-readiness.json"
+    },
+    "teamBatchPlan": {
+      "file": "team-batch-plan.json"
     }
   },
   "offlineVerification": {

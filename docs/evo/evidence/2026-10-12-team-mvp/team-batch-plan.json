@@ -1,0 +1,91 @@
+{
+  "kind": "loom-team-batch/v1",
+  "batchId": "codex-claude-invoice-team-20261012-v1",
+  "members": ["codex", "claude"],
+  "bindings": [
+    {
+      "provider": "codex",
+      "model": "gpt-6-luna",
+      "effort": "low"
+    },
+    {
+      "provider": "claude",
+      "model": "sonnet",
+      "effort": "low"
+    }
+  ],
+  "versions": {
+    "codex": "codex-cli 0.161.0",
+    "claude": "2.1.293 (Claude Code)"
+  },
+  "samples": [
+    {
+      "id": "pair1-native",
+      "pairId": "pair1",
+      "arm": "native"
+    },
+    {
+      "id": "pair1-loom",
+      "pairId": "pair1",
+      "arm": "loom"
+    },
+    {
+      "id": "pair2-loom",
+      "pairId": "pair2",
+      "arm": "loom"
+    },
+    {
+      "id": "pair2-native",
+      "pairId": "pair2",
+      "arm": "native"
+    },
+    {
+      "id": "pair3-native",
+      "pairId": "pair3",
+      "arm": "native"
+    },
+    {
+      "id": "pair3-loom",
+      "pairId": "pair3",
+      "arm": "loom"
+    },
+    {
+      "id": "pair4-loom",
+      "pairId": "pair4",
+      "arm": "loom"
+    },
+    {
+      "id": "pair4-native",
+      "pairId": "pair4",
+      "arm": "native"
+    }
+  ],
+  "limits": {
+    "maxActivations": 96,
+    "maxRequests": 400,
+    "maxInputTokens": 12000000,
+    "maxOutputTokens": 150000,
+    "maxDurationMs": 5400000
+  },
+  "analysis": {
+    "unit": "whole two-member team task; sum both member sessions",
+    "repetitions": 4,
+    "order": "AB BA AB BA",
+    "retry": "none; preserve failures and costs; unknown usage or cleanup stops remaining samples",
+    "quality": "archive oracle + independent README semantics and actual reviewer evidence; no stop-phrase oracle",
+    "primary": "per-arm total/mean/median/range input and output, ratio of arm totals, individual sample values and failure counts; no money conversion",
+    "limitations": [
+      "one task, two CLI/model families, small descriptive sample, not five-family generalization",
+      "native public reply relay, not actual Herdr",
+      "isolated Loom native-final path; production default switches stay off",
+      "token/request limits checked between activations; in-flight turn may exceed thresholds",
+      "ledger terminal failed can mean quality review pending; do not relabel execution failure or omit such consumption",
+      "Codex OTel observed coverage is not theoretical lossless attestation; unknown remains unknown"
+    ]
+  },
+  "status": "frozen candidate; awaits explicit batch authorization",
+  "manifestSha256": "83f35e875a9a887e7c1f1f6200197f23eed609357082a387d1b5fb73cea4dc72",
+  "sourceFileCount": 3752,
+  "privateManifest": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/paid/candidate/manifest.json",
+  "paidReleaseCreated": false
+}

@@ -1,0 +1,86 @@
+{
+  "status": "passed-synthetic-business-input-and-current-prompt-transport",
+  "paid": false,
+  "paidReady": false,
+  "sourceRevision": "231ab784504539cce862b95e7077e5c073f2cf09",
+  "productRevision": "ffecbfe",
+  "runs": {
+    "native": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/native/runs/1791741825505",
+    "loom": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/loom/runs/1791741826376"
+  },
+  "completedScope": [
+    "Shared public TEAM_TASK includes all12 requirements up front; both members share each arm workspace",
+    "Actual Codex exec/resume plus Claude print/warm actual-final A->B->A",
+    "Current daemon standingPromptLease with actual Kernel memory index; digest captured per launch",
+    "Existing Claude recorder actually forwards requests to localhost fixture; full raw SSE accounting complete",
+    "No paid arguments or prior authorization opens either entry"
+  ],
+  "notCompleted": [
+    "No real model or business artifact quality acceptance; no tools emitted, no capture run",
+    "No real-account upstream connected",
+    "No new team authorization/budget release installed; old fixed12 completion cannot define autonomous team stop",
+    "Fixture Role/profile placement still used, not complete daemon discovery"
+  ],
+  "compiledPrompts": [
+    {
+      "member": "A",
+      "runAttemptId": "run_18575f81-effc-480a-bacf-f3530d8307e8",
+      "digest": "042abf9563b2fb426f5b92fd9527e0b63afd1f7567b659be7d978538588f2214",
+      "protocolVersion": "c02e62583fbd"
+    },
+    {
+      "member": "B",
+      "runAttemptId": "run_be04cba5-4eba-434a-be12-4a18abd8a977",
+      "digest": "7f1e7c6d5e136806105220752807aeb4240f53fb42f912d37521017a92e8b013",
+      "protocolVersion": "c02e62583fbd"
+    },
+    {
+      "member": "A",
+      "runAttemptId": "run_bda71e84-d8fa-44b5-85da-cd27cd5dc90d",
+      "digest": "042abf9563b2fb426f5b92fd9527e0b63afd1f7567b659be7d978538588f2214",
+      "protocolVersion": "c02e62583fbd"
+    }
+  ],
+  "actualRecorder": {
+    "nativePrimary": "complete",
+    "loomPrimary": "complete",
+    "requestsPerArm": 1,
+    "source": "mixed-study/claude/recorder.mjs createRecorder + claude-response-coverage.mjs reconcileAnthropicRecords"
+  },
+  "nextMinimalPaidWiring": {
+    "account": "createIsolatedClaudeEnvironment/claudeConnectionEnvironment; actual upstream to recorder; retain CLI loopback and auth headers",
+    "authorization": "new explicit owner release and team closure; reuse verifyStudyRelease/createPilotGuard primitives, never old authorization",
+    "budget": "adapt fixed completedRounds=12 to actual team stop; retain admitTurn/source/config/session/memory caps and failed-tail ledger; no controller-created handoffs",
+    "quality": "After actual autonomous completion use host-only capture.py WORKSPACE 12 FRESH_ARCHIVE and semantic review; no synthetic fallback"
+  },
+  "closure": [
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/contract.mjs",
+      "sha256": "52b682c246ebc19c7900a68de4b930d0eb5749fec82fe7bac700d53d24f4aa2d"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/contract.test.mjs",
+      "sha256": "01b000a56132d1c03d33d7f532442908824a8ea78d2dd601032e846f7dc4d594"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/policy.mjs",
+      "sha256": "3cdb0718f473c89f363f906e532a798edc25096f37727cff6ab5b85cc41e92b9"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/role-fixture.ts",
+      "sha256": "3c869bda3009365b9975fd287cf2a1f9f1058bd50f04112e2dc33da1a3edcb40"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/native/run.mjs",
+      "sha256": "0f4e0e28624c5f14b5b1f3a5ac49866a09820d02165badfad0f4ee8aaf69bf2a"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/loom/run.mjs",
+      "sha256": "11f919e23e3e9610c09deba6e89d044c7d0faeefe7e74e3a6315e3fa0eb276c2"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/audit.py",
+      "sha256": "ec4d12ef8a879e4a0915f2adfb571ace710f0e6edeb15307a4611ede1c08445d"
+    }
+  ]
+}
