@@ -1572,3 +1572,31 @@ test("warm OpenCode native Task fallback acknowledges via Worker but never silen
     await state.cleanup();
   }
 });
+
+for (const human of [false, true]) {
+  test(`warm native final compaction continuation ${human ? "rejects ordinary Human" : "retains current turn proof"}`, async () => {
+    const state = await harness({
+      nativeFinalText: true,
+      env: {
+        FAKE_SCENARIO:
+          "native-final+native-compact" + (human ? "+native-human" : ""),
+      },
+    });
+    try {
+      state.post("complete after default native compression");
+      const result = await state.current.agentHost.reconcileOnce();
+      assert.equal(
+        result.state,
+        human ? "failed" : "completed",
+        JSON.stringify(result),
+      );
+      assert.equal(
+        sql(state, "SELECT * FROM run_attempt_final_replies").length,
+        human ? 0 : 1,
+      );
+      assert.equal(prompts(state).length, 1);
+    } finally {
+      await state.cleanup();
+    }
+  });
+}

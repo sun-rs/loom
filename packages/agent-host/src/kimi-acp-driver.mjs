@@ -1,3 +1,4 @@
+import { waitForKimiEofExit } from "./kimi-eof-drain.mjs";
 import { createKimiFinalCapture } from "./kimi-acp-final-capture.mjs";
 import { nativeFinalTextInstructions } from "./final-output-instructions.js";
 import { withWorkerMcpGuidance } from "./worker-mcp-guidance.js";
@@ -325,16 +326,8 @@ try {
     );
   }
   kimi.stdin.end();
-  const graceful = await Promise.race([
-    processExited.then(() => true),
-    delay(500).then(() => false),
-  ]);
-  if (!graceful && kimi.exitCode === null && kimi.signalCode === null) {
-    kimi.kill("SIGTERM");
-    await processExited;
-  }
+  const nativeExit = await waitForKimiEofExit(processExited);
   await cleanupTerminals();
-  const nativeExit = await processExited;
   finalCapture?.write(
     stopping ||
       cancelRequested ||

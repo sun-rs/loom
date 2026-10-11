@@ -75,9 +75,24 @@ function establish() {
   });
 }
 record({ event: "launch", args, disableCron: env.KIMI_DISABLE_CRON });
-process.on("SIGTERM", () => process.exit(0));
+process.on("SIGTERM", () => {
+  record({ event: "terminated" });
+  if (env.FAKE_KIMI_IGNORE_TERM !== "1") process.exit(0);
+});
 const lines = createInterface({ input: process.stdin });
-lines.on("close", () => process.exit(0));
+lines.on("close", () => {
+  record({ event: "eof" });
+  setTimeout(
+    () => {
+      record({
+        event: "native-exit",
+        code: Number(env.FAKE_KIMI_EXIT_CODE ?? 0),
+      });
+      process.exit(Number(env.FAKE_KIMI_EXIT_CODE ?? 0));
+    },
+    Number(env.FAKE_KIMI_EOF_DELAY_MS ?? 0),
+  );
+});
 lines.on("line", (line) => {
   const f = JSON.parse(line);
   if (f.method === "initialize")
@@ -156,6 +171,13 @@ lines.on("line", (line) => {
     pending = f.id;
     return;
   }
+  if (env.FAKE_KIMI_PENDING_TOOL === "1")
+    update({
+      sessionUpdate: "tool_call",
+      toolCallId: "unfinished",
+      status: "in_progress",
+      title: "FAKE unfinished",
+    });
   const body = "FAKE KIMI NATIVE ANSWER " + (turn + 1),
     messageId = "fake-message-" + turn;
   const usage = {

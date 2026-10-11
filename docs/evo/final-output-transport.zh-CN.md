@@ -2,6 +2,16 @@
 
 2026-10-04 完成四家免费传输研究；负责人随后要求继续，2026-10-05 接入 OpenCode warm 纵向路径。当前通过真实安装 CLI＋本地假模型的两轮 Worker／Kernel／Host 全链：每轮一次假模型请求、同 session、两个完成的 Activation、两个可信 final-output marker、没有 Worker 发帖工具调用。随后 P108 真实三轮传输和数值预算通过（输入1.140倍，双方生成2/1/1），但实质审查质量失败，**不是整体验收通过**。 当前正式部署见 [status](status.zh-CN.md)，预算和目标合同不变。
 
+## 2026-10-11 正常退出与压缩续接的来源修正
+
+所有者仍是 AgentHost 的原生结束证据适配器；Kernel 发布事务、Worker 身份与交付围栏不变，不修改 prompt 或试验默认开关。
+
+Kimi 在正常 EOF 后最多等待 5 秒，仅真实正常退出且原终态证明完整时可发表。超过期限先判失败，再走既有 TERM/KILL；不能把平台终止后返回的 exit0 当作正常完成。取消期限不延长。实际 Kimi 2.1.1 免费连续12轮中，4轮自然退出耗时超过旧500ms窗口，修复后同session正常发表；非0、取消、工具未结束和超时仍拒绝。
+
+OpenCode 原生自动压缩后，最终 assistant 的父消息可能是 synthetic continuation。仅当前 HTTP 请求已经接受、观察到本轮压缩且使用 native-text 的路径，可从既有有限持久消息窗口证明原输入→压缩→成功summary→原生续接→当前最终回复的连续来源链。缺原输入、跨session、普通Human消息、旧turn和不完整summary仍拒绝；最终工具/状态检查和abort barrier不变。不建立第二cursor或扩大窗口，压缩事件丢失或64条窗口不足时仍保守不可用。实际 OpenCode 1.18.35 默认压缩及后两轮同session续接已通过免费API/marker/raw用量核验。
+
+上述免费测试验证生命周期与传输，不证明付费效率。进行中的Codex/Claude/Pi四组成本对照使用冻结修复前版本，未混入新源码；Kimi/OpenCode修复版须另行记录付费验收。[实现、负例及实际CLI凭据](evidence/2026-10-11-v7-long-task/repair.json)。
+
 ## 2026-10-09 普通 Codex exec/resume 纵向接入（默认关闭）
 
 新增显式 RuntimeProfile `codex-exec/v1`，使用普通 `codex exec --json` 与

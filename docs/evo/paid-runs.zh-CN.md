@@ -442,3 +442,13 @@ Pi原A–F全部已知1188HTTP/62,957,421input/970,722output，包括D失败；�
 Pi Σ现行/Σ原生输入0.916212、输出0.991582，Σ候选/Σ现行输入0.974554、输出0.859424；Kimi对应0.964303/0.854311、0.966261/1.011409。均为三组描述而非稳定性、等效性或货币成本结论。Pi原生24/36、现行36/36、候选29/36功能通过，作者自测各36/36；首组原生容器歧义与第二组候选active字段错误分别保留。Kimi各路径功能/自测36/36。Pi原始主量含压缩，不等于Kernel无gap。前三CLI无本批新增付费重复结果。
 
 原流/封账/快照/144次Loom精确consumer ACK复核，源文件/路径和清理核验通过；前八臂子代理独审、lead补核全部18臂，后十臂不冒称独立代理复审。候选不合入、不部署，不接受为成本优化胜利。[结果及限制](evidence/2026-10-11-common-reply-pilot/README.md)、[全部主量](evidence/2026-10-11-common-reply-pilot/summary.json)、[逐臂核账](evidence/2026-10-11-common-reply-pilot/raw-audit.json)、[出处及收据标签更正](evidence/2026-10-11-common-reply-pilot/provenance.json)。
+
+## v7 四组连续长任务重验与预检修复（2026-10-11，进行中）
+
+沿用负责人多CLI、多模型持续付费授权。冻结`186f7c3`、明确首轮字典返回的v7题目；每绑定四组独立原生/现行连续12轮会话，N/C、C/N、N/C、C/N固定顺序，不重跑或替换失败样本。原生自动记忆每次启动关闭，正常历史/原生压缩保留。Codex gpt-6-luna/low、Claude sonnet/low、Pi aihubmix/deepseek-v4.1-flash/low已分别启动，完整队列统计尚未出齐，暂不报告主倍率。现行臂是native-final试验，不能代表默认关闭七个试验开关的正式服务。
+
+免费预检修正了测试器对原生压缩请求的误拒绝、Claude摘要响应与业务generation不能一一对应的假设、失败子进程无最终结果时的尾账恢复以及进程清理证明。每个获准绑定均经过实际CLI双12轮和消费后失败验证；合成token不作为成本数据。Codex主量是原生OTel完成事件报告，不宣称HTTP请求全量或账单；Claude摘要费用单列来源并计入raw总量一次；Pi压缩聚合与普通generation独立核对。
+
+Kimi/OpenCode在付费前分别暴露EOF500ms退出窗口、自动压缩后最终父消息变化的产品缺陷，原冻结版本暂缓，未以失败为零或替换成短对话。独立修复后的Kimi2.1.1免费连续12轮同session通过（4轮自然退出超过旧500ms）；OpenCode1.18.35默认压缩加两续轮共3轮/8HTTP、3个可信marker通过。OpenCode首次修复probe私有wrapper漏转发信号导致cleanup失败，原receipt保留，精确清理后另新probe验证，未冒充原尝试通过。修复未混入进行中付费源码。
+
+[固定方法与状态](evidence/2026-10-11-v7-long-task/study.json)、[免费修复凭据及限制](evidence/2026-10-11-v7-long-task/repair.json)。整仓check/typecheck/format/diff通过，提交/部署及付费汇总随后以实际凭据更新，不从本节推导已达成本目标。

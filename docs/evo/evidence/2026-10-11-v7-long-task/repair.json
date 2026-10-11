@@ -1,0 +1,78 @@
+{
+  "kind": "loom-native-final-lifecycle-repair/v1",
+  "owner": "packages/agent-host; no new Room state, queue, cursor or publication authority",
+  "codeImplemented": true,
+  "targetContractChanged": false,
+  "promptChanged": false,
+  "defaultTrialFlagsChanged": false,
+  "kimi": {
+    "problem": "EOF500ms could terminate a legitimate closing process; a TERM-induced zero exit could also look successful",
+    "change": "Bound normal EOF shutdown to5000ms; timeout fails before existing TERM/KILL cleanup; only real normal exit plus complete final evidence can publish",
+    "fakeTests": 107,
+    "realCli": "Kimi2.1.1 + localhost synthetic provider",
+    "continuousTurns": 12,
+    "singleSession": true,
+    "naturalExitRangeMs": [377, 707],
+    "turnsBeyondOld500ms": 4,
+    "rawWireKernelMatched": true,
+    "processesExited": true,
+    "credentialLinksRemoved": true,
+    "evidenceSha256": "149897114a5994de81696bb7d11fe93fc3029574e3cfef03b43733df90f82a33"
+  },
+  "opencode": {
+    "problem": "Auto-compaction changes final assistant parent to native synthetic continuation; strict original-parent lookup rejected valid final",
+    "change": "Only accepted native-text turn with observed compaction and mismatched parent may prove a contiguous persisted compaction-summary-continuation chain inside current HTTP boundary",
+    "negativeFences": [
+      "foreign session",
+      "ordinary Human user",
+      "missing original/summary/continuation/current final",
+      "unfinished summary",
+      "prior turn",
+      "incomplete tool/final state"
+    ],
+    "limits": [
+      "Missing compacted event or original message outside existing64-message window still refuses conservatively"
+    ],
+    "fakeTests": 46,
+    "realCli": "OpenCode1.18.35 + localhost synthetic provider",
+    "continuousTurns": 3,
+    "defaultCompaction": true,
+    "singleSession": true,
+    "completedActivations": 3,
+    "durableFinalMarkers": 3,
+    "syntheticHttp": 8,
+    "syntheticInput": 125734,
+    "syntheticOutput": 116,
+    "rawNativeKernelMatched": true,
+    "captureHashesMatched": true,
+    "ownedCleanup": true,
+    "evidenceSha256": "f3a9b6178e63ee3514a23aa997c544a62600f4ad0817dc88ecbd0f888214ce9c",
+    "retainedFailure": "Earlier private wrapper forgot signal relay for detached serve; failed cleanup receipt retained, exact owned group cleaned, new isolated probe fixed relay and passed; no product claim from failed cleanup"
+  },
+  "fullCheck": "passed",
+  "deployed": false,
+  "paidCallsInRepairProbes": 0,
+  "efficiencyAcceptance": false,
+  "costStudyBoundary": "Paid Codex/Claude/Pi still use frozen186f7c3; repairs never mutate that source or its release",
+  "sourceFiles": {
+    "packages/agent-host/src/kimi-acp-driver.mjs": "617b4332be858dd035a6d74443b19de3c5d9d0e96c9c94578dc4135019f05898",
+    "packages/agent-host/src/kimi-eof-drain.mjs": "0d0a6f939e693dabf22615bbc46ff970ce4cc774cd3283cc1a69c3a4bbf55f8b",
+    "packages/agent-host/src/opencode-warm-driver.mjs": "8342e0cb08ecfedb0a04013dafa9783eabc452e69834e2d8be75681fa0106966",
+    "packages/agent-host/src/opencode-compaction-lineage.js": "d65a80ed2f5acaa78957883be51f4c717b55c43d84da9e6990814846d001891d",
+    "packages/agent-host/src/opencode-compaction-lineage.d.ts": "739efe1db1bccfefa895628d2d3ec9e47c906c86de5b7a73d0ec98b77ab9f9e9"
+  },
+  "checks": {
+    "npmRunCheck": true,
+    "mainSuite": {
+      "tests": 3135,
+      "passed": 3113,
+      "skippedOptIn": 22,
+      "failed": 0
+    },
+    "efficiencyUnitTests": 558,
+    "formatCheck": true,
+    "diffCheck": true,
+    "localLinksChecked": 574,
+    "fullCheckLogSha256": "942ccc5c7f3e59390eb504ac0c9df59cb26fe722bd3b244f441db95b6af9495b"
+  }
+}

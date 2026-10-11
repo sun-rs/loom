@@ -242,6 +242,7 @@ function updateMessage(s, info) {
 }
 
 function updatePart(s, part) {
+  part = { ...part, sessionID: s.id };
   const message = s.messages.find((m) => m.info.id === part.messageID);
   if (message) {
     const index = message.parts.findIndex((p) => p.id === part.id);
@@ -422,11 +423,42 @@ async function runPrompt(s, body, res) {
     streams.clear();
     record({ event: "sse-dropped" });
   }
-  const first = newAssistant(s, lastUser);
+  let first = newAssistant(s, lastUser);
   run.current = first;
   modelRequest(s, lastUser, "step");
   updatePart(s, { id: nextId("prt"), messageID: first.id, type: "step-start" });
   if (tokens.has("final-envelope") || tokens.has("native-final")) {
+    if (tokens.has("native-compact")) {
+      first.finish = "stop";
+      first.time = { ...first.time, completed: Date.now() };
+      updateMessage(s, first);
+      const compact = { id: nextId("msg"), role: "user", sessionID: s.id };
+      updateMessage(s, compact);
+      updatePart(s, {
+        id: nextId("prt"),
+        messageID: compact.id,
+        type: "compaction",
+        auto: true,
+        overflow: false,
+      });
+      const summary = newAssistant(s, compact, { summary: true });
+      summary.finish = "stop";
+      summary.time = { ...summary.time, completed: Date.now() };
+      updateMessage(s, summary);
+      publish("session.compacted", { sessionID: s.id });
+      const continuation = { id: nextId("msg"), role: "user", sessionID: s.id };
+      updateMessage(s, continuation);
+      updatePart(s, {
+        id: nextId("prt"),
+        messageID: continuation.id,
+        type: "text",
+        synthetic: !tokens.has("native-human"),
+        metadata: { compaction_continue: true },
+        text: "Continue",
+      });
+      first = newAssistant(s, continuation);
+      run.current = first;
+    }
     if (tokens.has("envelope-wait")) {
       record({ event: "envelope-waiting" });
       while (!run.cancelled && !existsSync(env.FAKE_RELEASE)) {

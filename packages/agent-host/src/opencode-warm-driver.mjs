@@ -1,3 +1,4 @@
+import { openCodeCompactionParent } from "./opencode-compaction-lineage.js";
 import {
   finalOutputInstructions,
   nativeFinalTextInstructions,
@@ -272,6 +273,7 @@ function beginTurn(command) {
 function createTurn(runAttemptId, text) {
   const turn = {
     accepted: false,
+    sawCompaction: false,
     deliveryReported: false,
     errors: [],
     finalEnded: false,
@@ -646,6 +648,7 @@ async function handleEvent(event) {
     turn.errors.push(message);
     return;
   }
+  if (event.type === "session.compacted") turn.sawCompaction = true;
   if (event.type === "session.idle") {
     turn.idle = true;
     turn.wakeIdle();
@@ -876,6 +879,29 @@ async function settleTurn(turn, response, error) {
     ]);
   if (!turn.idle)
     emit("unattributed", { method: "session.idle", reason: "missing_idle" });
+  let finalParentId = turn.messageId;
+  if (
+    !turn.stopRequested &&
+    !turn.finalEnded &&
+    turn.errors.length === 0 &&
+    turn.accepted &&
+    turn.sawCompaction &&
+    options.finalOutputMode === "native-text" &&
+    response?.info?.parentID !== turn.messageId
+  ) {
+    // Only the response of this accepted prompt may use a persisted native
+    // compaction chain. Missing/truncated history or a listing failure keeps
+    // the original parent fence and therefore refuses the candidate.
+    try {
+      finalParentId =
+        openCodeCompactionParent(response, await recentMessages(), {
+          sessionId,
+          parentId: turn.messageId,
+        }) ?? turn.messageId;
+    } catch {
+      /* final publication stays unavailable */
+    }
+  }
   // The next turn is admitted only after every abort is answered; an
   // unknown outcome retires the server (with an exit proof) before the drain.
   let replaceError;
@@ -923,7 +949,7 @@ async function settleTurn(turn, response, error) {
       ? {
           finalOutputCandidate: openCodeFinalOutputCandidate(response, {
             sessionId,
-            parentId: turn.messageId,
+            parentId: finalParentId,
             nativeText: options.finalOutputMode === "native-text",
           }),
         }

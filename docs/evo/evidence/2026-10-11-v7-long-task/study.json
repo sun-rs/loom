@@ -1,0 +1,48 @@
+{
+  "kind": "loom-v7-long-task-study-state/v1",
+  "sourceRevision": "186f7c3694ff784c9ecd4eff1c6d7cff13352556",
+  "fixture": "v7; explicit first-turn dictionary result; remaining11rounds and40oracle cases unchanged",
+  "design": "4 independently paired continuous12-turn sessions per binding; complete arms; N/C,C/N,N/C,C/N; no rerun or replacement",
+  "nativeMemory": "Disabled every initial/resume; normal history/compaction/retry retained",
+  "scope": "Shared native-final trial, NOT deployed seven-flags-off default; no private prompt candidate",
+  "bindings": {
+    "codex": {
+      "model": "gpt-6-luna",
+      "effort": "low",
+      "status": "paid cohort running",
+      "metric": "distinct native OTel completed-event reported tokens; not HTTP census or invoice"
+    },
+    "claude": {
+      "model": "sonnet (install resolves claude-sonnet-5-5)",
+      "effort": "low",
+      "status": "paid cohort running",
+      "metric": "raw HTTP includes native summary once, independently from business generations"
+    },
+    "pi": {
+      "model": "aihubmix/deepseek-v4.1-flash",
+      "effort": "low",
+      "status": "paid cohort running",
+      "metric": "raw HTTP inclusive; native compaction entry versus Kernel aggregate independently checked"
+    },
+    "kimi": {
+      "model": "kimi-code/k3-256k",
+      "effort": "low",
+      "status": "not admitted on frozen source; EOF defect discovered before paid"
+    },
+    "opencode": {
+      "model": "aihubmix/deepseek-v4.1-flash",
+      "effort": "low",
+      "status": "not admitted on frozen source; auto-compaction final-parent defect discovered before paid"
+    }
+  },
+  "primaryRatios": null,
+  "statisticalRule": "Per binding ratio of summed whole-arm tokens; full planned cohort required for primary. Failure expenses retained, optional missing data unknown, quality separate; no cross-model pooled ratio or currency claim",
+  "preflight": "Actual CLI local synthetic full12+12 and consumed-failure evidence for each admitted binding; parent exit does not substitute terminal receipt; exact common and independent binding file/realpath closures",
+  "discoveredMeasurementDefects": [
+    "Native compaction requests must not be rejected for missing current task/tool list",
+    "Claude summary has raw reported expense but may be absent from ordinary CLI generation list",
+    "Missing-final child failures need raw-tail recovery, not zero expense",
+    "Native and Loom arms must compare actual configuration/tool schemas across independent processes"
+  ],
+  "publicCostConclusion": "Pending fixed cohorts; synthetic input/output is not efficiency evidence"
+}
