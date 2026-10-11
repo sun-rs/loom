@@ -1,0 +1,185 @@
+{
+  "kind": "team-business-paid-batch-outcome/v1",
+  "batchId": "codex-claude-invoice-team-20261012-v1",
+  "manifestSha256": "83f35e875a9a887e7c1f1f6200197f23eed609357082a387d1b5fb73cea4dc72",
+  "authorization": "Owner explicitly approved the frozen four-pair batch",
+  "status": "stopped-after-first-sample; no retry or replacement",
+  "plannedSamples": [
+    {
+      "id": "pair1-native",
+      "pairId": "pair1",
+      "arm": "native"
+    },
+    {
+      "id": "pair1-loom",
+      "pairId": "pair1",
+      "arm": "loom"
+    },
+    {
+      "id": "pair2-loom",
+      "pairId": "pair2",
+      "arm": "loom"
+    },
+    {
+      "id": "pair2-native",
+      "pairId": "pair2",
+      "arm": "native"
+    },
+    {
+      "id": "pair3-native",
+      "pairId": "pair3",
+      "arm": "native"
+    },
+    {
+      "id": "pair3-loom",
+      "pairId": "pair3",
+      "arm": "loom"
+    },
+    {
+      "id": "pair4-loom",
+      "pairId": "pair4",
+      "arm": "loom"
+    },
+    {
+      "id": "pair4-native",
+      "pairId": "pair4",
+      "arm": "native"
+    }
+  ],
+  "executedSample": "pair1-native",
+  "unrunSamples": [
+    "pair1-loom",
+    "pair2-loom",
+    "pair2-native",
+    "pair3-native",
+    "pair3-loom",
+    "pair4-loom",
+    "pair4-native"
+  ],
+  "run": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/paid/runs/1791758495405-pair1-native",
+  "observedUsage": {
+    "complete": true,
+    "count": 26,
+    "duplicates": 0,
+    "input": 338618,
+    "output": 5994,
+    "cachedInput": 268032,
+    "detailComplete": true,
+    "errors": []
+  },
+  "primaryRatio": null,
+  "modelsObserved": {
+    "gpt-6-luna": 26,
+    "claude": 0
+  },
+  "modelEffortEvidence": "24 completed-event records explicitly low; two omit effort. Launch exact gpt-6-luna/low.",
+  "causes": [
+    {
+      "owner": "benchmark provider capability preflight",
+      "finding": "features.multi_agent=false was present but actual telemetry includes successful spawn_agent and wait_agent. Two Codex conversation IDs have 21 and 5 completed events; intended Claude peer never launched. CLI feature listing also reports false. Precise provider/runtime reason for ineffective disablement remains unresolved.",
+      "effect": "Planned Codex/Claude collaboration topology failed; cannot use as matched native team baseline."
+    },
+    {
+      "owner": "private benchmark failure classification",
+      "finding": "run.mjs invokes conservative recoverTeamTail for any child nonzero/status failed, including post-execution reviewPath assertion. It downgrades settled usage and introduces unknown Claude zero although Claude was never admitted.",
+      "effect": "Guard stopped all subsequent samples. Original failed ledger remains unchanged; separate raw replay proves observed totals but does not resume or rewrite frozen batch."
+    }
+  ],
+  "quality": {
+    "collaboration": "failed: only one outer member turn, no public peer handoff",
+    "functionalOracle": "40/40 postmortem archive checks passed",
+    "candidateUnittests": "10 passed",
+    "readmeLeadReview": "API, exact rounding/validation, file and stdin examples present; this does not repair missing external review",
+    "archive": "postmortem-capture; original sample failed before its normal capture stage"
+  },
+  "cleanup": true,
+  "configMatches": true,
+  "newProductCode": false,
+  "serviceRestarted": false,
+  "sourceEvidence": {
+    "resultSha256": "c5ec63d131433eac112093806da3f709bc2d07e037018e155c9c7ef283b87b5c",
+    "stateSha256": "83beb25d26e6abbea66cec3960f14451d04659997601d18fb1977e330a2371c3",
+    "rawReplaySha256": "f2c1773011d17bcbf6bb9ac5d3a0059c8e39318ab4ba284616a228d7753730e6",
+    "rawFiles": {
+      "otel-1.private.json": "f0a1bcbc4b4776814de05a9debb4c1078dca95bdefaa8db9a4e0b710d5836566",
+      "otel-10.private.json": "c315b32a1e658426dec34b6d7fe69a02eb9fdd912c2dec950a9c347c1a7eef8d",
+      "otel-11.private.json": "0ae2beefa60608998558275b6d1750d6fd284c8ecb2d7cb848f8aeb73c342f48",
+      "otel-12.private.json": "6e93db86a4b7ca1557a899ee519c10ca56d9dc1480e66d10cb7a77365f89bcb0",
+      "otel-13.private.json": "bedc2fe766adea9ccba0229f0fb84013a0dfce281e5a6bf79966b3c995c82a00",
+      "otel-14.private.json": "4e2e4dd0de21ead6ece4a10d0023956fb408e806fb8a930c014a420907186964",
+      "otel-15.private.json": "9e89a479b3a5b569c4723cc4da50222122be756c9517c22c33e43a4428ff6f5d",
+      "otel-16.private.json": "0537651cef761ac88d9c9b144ea1e486c493865b5426e0951337575184c2f6c6",
+      "otel-17.private.json": "7428689d55272510b22d57a417969782004628341cf3efbdaf7855e46b39bf91",
+      "otel-18.private.json": "ce9fe82474df30d20eabf9e57723d2ecbf8aadb336cfc8ec09c48cd5551e6c34",
+      "otel-19.private.json": "eaacd1dd075cfe0d9e1d44fd660aefc8e9d13838789f7d9817009efa3a5effef",
+      "otel-2.private.json": "a7b362b433b354d9ac1b0b4882e8bed3a9954ffc6860f7dd78c1b495ce3ccda1",
+      "otel-20.private.json": "e1bfda9fb09edc993411c2edb355ec4e78b704e1415d0482cb98afa61e47ca09",
+      "otel-21.private.json": "df4461b1e928ec31d07a327820c21f21cc4c9bb39ef1790f04598c86dd97b75a",
+      "otel-22.private.json": "365a89c742eb38126946434992be39b363f297cf936343a0f9d3a2547c1edfc6",
+      "otel-23.private.json": "0681ca2190c8ecc60f72eb50bbe23128c8ec56ce1d9d1bea488fb70b7507a36d",
+      "otel-24.private.json": "de0cb434e2ef870608839b491aa53d480a19603e6c8133a4ae2b0b6458cd349e",
+      "otel-25.private.json": "c80b4808bb24e6e76c262a3dc10322b68ca67c4e5f54c9a7e70e5d428dc4423a",
+      "otel-26.private.json": "092793262037b4cc0591f1c32f12cd9aae248d4b4e556ec894e63eb8092a936f",
+      "otel-27.private.json": "d5cdb7620bfe835e4fb2dfacf94f39715d5a82dd8b60cb3428f90a62a5ed4cd2",
+      "otel-28.private.json": "df28708f825f9bc01067564eb746eda6845cef035bb9f7e9e59ab4a3452382b3",
+      "otel-29.private.json": "5edd195c2a54236fbeddf822c0bcadf226915ab6492c1a0235dc8380b932480a",
+      "otel-3.private.json": "bb5fa5b38ee6abe12d548830a314fe9c08fb712c7f12a200c6b8c70e3aac1453",
+      "otel-30.private.json": "79872005b1494abe7366dca63828824a390804437a8776a465d53e4bae25e230",
+      "otel-31.private.json": "64cc15f0dcd5f903edd8d9347d070b1183ae5ae87c9759e15ae87f04b9d9eeb6",
+      "otel-32.private.json": "82dfb8b96bf0ecd840442abe4f46d188a50f0c61bef6590f17aa2f6c77174719",
+      "otel-33.private.json": "7ffd41486f56618d174107cf840bb5a390cb61e45842f84b2131ad1b4d3b20d9",
+      "otel-34.private.json": "f79661ca97a1488f42fef2176c5995564832117f5059b7c25543c31de505aefe",
+      "otel-35.private.json": "1b1d2dfb45831ebbb74214b6a691e1438adcf18e47a415f4e1eff1751bff2ad5",
+      "otel-36.private.json": "512a0cba12c0b3a3d7d7c1858e250c046b76a20ca04004783b7120038ecf476b",
+      "otel-37.private.json": "5a69fd36df4bec399e865df4fb68ca73ffcd9fd8ecc2e9e1a69483ab53a18524",
+      "otel-38.private.json": "206e24041932465f9060a325f5e6e2ffde64f3c2ba7abd4924f17500d497f2f3",
+      "otel-39.private.json": "c67a3dc1c33ea52a7208cf8a6cc9b5aa82a2dab7cd7e04524408bbefa2e9c589",
+      "otel-4.private.json": "eea3416865b8f1eeefebc4758eabb8000d223284b0abe72ea227fb7cbefaedc4",
+      "otel-40.private.json": "5ca4f2c6ad541ab9d5bce7ae60358e9b9adf88ebce68e8446caff5ab39d393f9",
+      "otel-41.private.json": "aac7877f460d9eaf79a4f68f429c8e8c3a5af387c5577c7bfa916a600b92554c",
+      "otel-42.private.json": "0f51a9cf2b29b0bcae67d460e87bd9c745bf0d515c2e7675c6fb7ae5dd3b1f4e",
+      "otel-43.private.json": "b3770488e29b352859cfcaa319c9044f7bd823faece20620fa0a2aac3a17371f",
+      "otel-44.private.json": "3828a5d7241f01b800fad8e5e2d63af91efba7904fb3313587d435fbdfe07aff",
+      "otel-45.private.json": "314e06e6092622f007aa4f7cfaa3b5b386d96063269711dc9a05405dbd7d8783",
+      "otel-46.private.json": "0f3d968cc21ee7203a97a31926874fe724badb9f8771cf1e1c04d55cd5b3a34a",
+      "otel-47.private.json": "9db40bd5bb6a0dc94f1b527d0ea210b3ef4d1befb420222e18231bbf97a241bf",
+      "otel-48.private.json": "92aa20f6c8d2a05ea77fd82b899a65c2c0dde286d6ea370393d98a1ff7c2c013",
+      "otel-49.private.json": "832ff2f19abe746a6ebbaf014c799f8bb8a29559d9a81891035e0009dc41166b",
+      "otel-5.private.json": "9279ab3637764780ab30ec17c5c4c75d00f5632a34b019684792cf2c5d95a0ad",
+      "otel-50.private.json": "60958d8472d416504a2b7c79e6f597ce64c40730b1b0f7047506f9ecb21932ab",
+      "otel-51.private.json": "93447b43c33230d13f9ffbfaa59627dcb73ed48c04b29f3a314401ba80e17525",
+      "otel-52.private.json": "3ddb5bac1b710203da76beb79e0eb6fdba9587c508ba09c69d712dd68c5f554e",
+      "otel-53.private.json": "a6b2f96a90ed354f31f8750a4b6c8c2ecd1bb39a2b0864522f1c1f93674c3cc2",
+      "otel-54.private.json": "3a8a3ef9dfbf8ea1e8d9180676f9e7aa96690370b78640bde6d7002325fda3ea",
+      "otel-55.private.json": "27e69b70d9080978697d1866ccb3a8b4393b56754c9e9381273bfa60b79583ce",
+      "otel-56.private.json": "3e93d32de6751338f539de15e86c415681d52c567f57050ee011b9dc614a22ce",
+      "otel-57.private.json": "c61b148785cd603c7e38acfb1bf60a28f159db1b53cecb1969cdeeeaf586c89b",
+      "otel-58.private.json": "da25c2e8543095ab5a1b6a6e8984b0f185fe0adccca6aa4169b239383765bcd2",
+      "otel-59.private.json": "fb4e46b780b6605eec8c735b5741508dda9b349f49c757c71492ba30a2b384d8",
+      "otel-6.private.json": "f92833b779cc5967117c49726d80429b0f35739c2cc8187049015d125f10511b",
+      "otel-60.private.json": "12b4d0c3fa7d14f5f362e10511dc06f235c8e5e2b048401670eb2331fcb6f879",
+      "otel-61.private.json": "215e70f41b13c26904f7eefe2cef3866ec7912953a46e0646f65556d60c3e933",
+      "otel-62.private.json": "72ae4e9ee0497e67ee263227c10a6d92181f5e5e3c2b1e717c91a0cc56c6def0",
+      "otel-63.private.json": "6adfd93916cf0253c51d79b93c4654847b3128f961249f23c4311f44c4d601f3",
+      "otel-64.private.json": "253188e32a3dfce11e11fabe064bb0e16a2ac774899764379ef08e177a54f46d",
+      "otel-65.private.json": "e0d7f231878d898d9fe4b2475828c6e7a96bad38f5e2a4b96bc44d5a44b8f4d1",
+      "otel-66.private.json": "f9d9c1126991fdac601d7ee616746a9970377f019c1a7d5171c884f078326f9d",
+      "otel-67.private.json": "b3fe6a264d39dec8a2db5daa4f490985cdbc12110e06aa9ab5972fded2656ec8",
+      "otel-68.private.json": "0de02ec31ab791209bee7fa5979a7b33a98d14b04c56e6439ae96c70464746db",
+      "otel-69.private.json": "e5139490373ec761ff5996f824bf212df1b5e356bf1f22fd2563bf99abffe501",
+      "otel-7.private.json": "2f88a8f5173cb6136ad351a91ecbf1837dc7d06640b385adadbbc923cbe58537",
+      "otel-70.private.json": "7f62f267fc88c23191fbbab28e5fe7b6b7f752ee480dba91fcdb910e98b0874a",
+      "otel-71.private.json": "db35fef9f311c73d426a6d220f65e56ccbfa322c73b11451236269d6a2943e1e",
+      "otel-72.private.json": "74972b75589fccc396d7e90dbf447b91937ed021a7cf1aad8cedb2da9c48314e",
+      "otel-8.private.json": "2f392489829ccb24f4e1f63b8a15125a891b955b6ee6d889c7517826d30c4628",
+      "otel-9.private.json": "95d7ec802153ebec74107e618584ca958942a26086d47b34a1a5a8017d4f9547"
+    }
+  },
+  "repair": {
+    "scope": "Private candidate settlement helper only; frozen entry and product unchanged",
+    "tests": "2 regression tests red then green",
+    "path": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/failure-repair",
+    "notYetProved": "Not integrated into a replacement paid entry; does not fix CLI subagent exposure"
+  },
+  "next": "Verify actual provider tool exposure without paid reruns, then integrate execution/accounting/quality separation in a new reviewed entry. Do not tune product prompts or infer Loom cost from this failed control."
+}

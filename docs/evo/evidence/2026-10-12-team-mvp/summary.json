@@ -37,10 +37,11 @@
     "budgetedEntry": "Codex/Claude real-provider-capable entry implemented; localhost preflight with whole-team gate and parent cleanup verified. Actual model business quality and cost remain untested."
   },
   "blockingPaidAdmission": [
-    "Frozen four-pair Codex/Claude batch still requires explicit owner authorization; no paid release exists.",
-    "Kimi ACP source-read exception differs from native isolation; that pair remains outside this candidate."
+    "Authorized first batch stopped at native control: internal Codex subagent replaced the external Claude handoff despite disabled multi_agent flag.",
+    "Private runner also downgraded fully observed usage on business validation failure; candidate helper regression passed but not integrated.",
+    "Kimi isolation exception remains outside this two-provider batch."
   ],
-  "next": "Execute the frozen Codex/Claude complete business task batch after authorization; report repeated team-level usage and quality, no further framework expansion.",
+  "next": "Resolve actual tool exposure and failure classification before a new batch; do not silently rerun or continue the frozen stopped batch.",
   "evidence": {
     "claude": {
       "file": "claude.json",
@@ -79,5 +80,6 @@
     "repositoryFormatCheck": "passed",
     "diffCheck": "passed",
     "productChecks": "not rerun; no product code changed"
-  }
+  },
+  "successorPaidBatch": "../2026-10-12-team-business-run/summary.json"
 }
