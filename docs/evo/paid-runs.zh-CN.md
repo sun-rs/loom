@@ -532,3 +532,11 @@ Owner在审阅固定40会话／480轮与预算后明确回复“开始”，据�
 两次失败和旧 smoke 全部保留：首次 loopback 503、旧 smoke 缺少 B 的原始公开任务、后来验证器错误地在序列化 JSON 中查多行原文而产生 fixture 500／重试／超时。新回归修复后才运行最终链，不改写这些结果。离线团队统计／候选样本／路由共18项测试通过，整队作为独立样本；缺测不作零，失败费用不剔除，不混合模型／指标定义。普通中继不是 Herdr，也未经过 Loom 调度；后续仍需 Loom 臂、另外三家入口及实际业务质量验证，尚不可放行付费队列。产品和正式部署未改。
 
 [免费链路证据](evidence/2026-10-12-team-acceptance/native-relay.json)、[统计准备与剩余入口](evidence/2026-10-12-team-acceptance/summary.json)、[候选重复方案](evidence/2026-10-12-team-acceptance/plan.json)。
+
+## 两 CLI 团队双臂免费传输验证（2026-10-12）
+
+实际 Codex 0.161.0 与 OpenCode 1.18.35 仅连接 localhost 合成模型；普通原生公开回复中继与现行源码的隔离 Loom native-final 臂均走通 A→B→A，并通过缺 @ 不启动 B 的负例。修正两臂共同开场：仅有效点名 A，B 的示例地址置于行内代码，避免 Loom 按真实 Human 点名规则同时唤醒两人。Loom 使用真实 Kernel、MultiLaneAgentHost、Codex exec/resume 与 OpenCode warm/serve 适配器；实际 canonical 回复产生下一次 Activation，没有测试器强制下一人或补点名。
+
+两臂最终各四次合成采样请求，正常两会话加负例一会话。原流哈希与公开内容独立复核：B 收到原 Human 任务及 A final；A 续用原 session，新增输入为 B 回复和投递元信息，旧历史由 CLI 保留。Codex 每次关闭自动记忆；OpenCode 沿用精确版本 not-applicable 证据及隔离配置。此前私有测试器的 placement 字段、warm-driver 参数和退出顺序错误全部留账，不合并为成功样本。
+
+本次只证明两家实际 CLI 的双臂传输与公开交接，不证明模型自主质量、业务工具执行、Herdr 通讯或成本目标；合成 token 不计算倍率。OpenCode 原生 run／Loom serve 模式和 Loom 投递包装差异仍需在正式对照中如实记录。另外三家团队入口及重复整队任务验收仍待完成。新增付费为0，产品与正式服务未改、未重启。[证据与失败记录](evidence/2026-10-12-team-loom/summary.json)。

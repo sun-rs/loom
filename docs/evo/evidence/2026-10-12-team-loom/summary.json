@@ -1,0 +1,100 @@
+{
+  "date": "2026-10-12",
+  "kind": "two-cli-team-transport-synthetic/v1",
+  "sourceHead": "088a06652035ee802a2d0744f2bcbdc410075b91",
+  "productHead": "ffecbfe7c8fea836c85685c3222ee752578909f9",
+  "productChanged": false,
+  "serviceRestarted": false,
+  "paidCalls": 0,
+  "realCostRatio": null,
+  "status": "Real installed Codex/OpenCode native relay and isolated Loom native-final team handoff verified with localhost synthetic model replies",
+  "cliVersions": {
+    "codex": "codex-cli 0.161.0",
+    "opencode": "1.18.35"
+  },
+  "binding": {
+    "codex": "gpt-6-luna/low",
+    "opencode": "aihubmix/deepseek-v4.1-flash/low"
+  },
+  "verified": [
+    "Shared opening mentions only A; B mention syntax is an inline-code example. Canonical Human mention rules are not bypassed.",
+    "Native public-final relay and real Loom Kernel/MultiLaneAgentHost/native adapters each complete A→B→A; Loom canonical replies cause the subsequent Activations.",
+    "Each normal arm uses two native sessions; A resumes its existing session. B receives original Human task and actual A final. A receives B final as new delta while normal native history remains.",
+    "Missing-mention case uses one fresh A session and starts no B, with no controller repair.",
+    "Each final arm records four actual synthetic sampling requests including the negative case; request/response hashes checked.",
+    "Codex explicit automatic-memory-off settings on initial/resume; OpenCode exact-version not-applicable policy and isolated configuration."
+  ],
+  "comparisonLimits": [
+    "No actual business tool execution, real model quality or real cost measurement. Synthetic usage numbers cannot establish a cost ratio.",
+    "Native arm is a public-final relay, not Herdr.",
+    "Native OpenCode run and Loom OpenCode serve use different runtime modes; transport success is not identical tool/prompt proof.",
+    "Loom adds delivery/Room metadata; handle-normalized public content equality is not byte-identical model input.",
+    "Claude, Kimi and Pi team arms, business-task execution, complete paid admission and repeated-team cost acceptance remain outstanding.",
+    "Fixture runtime offer/profile metadata and a short synthetic standing prompt were used; deployed discovery and production prompt cost were not exercised. A resume covered; B resume not covered."
+  ],
+  "attempts": [
+    {
+      "id": "1791740662714",
+      "result": "failed",
+      "requests": 0,
+      "reason": "Private harness read placement.activation.participantId instead of placement.participantId."
+    },
+    {
+      "id": "1791740756280",
+      "result": "failed",
+      "requests": 1,
+      "reason": "Private OpenCode warm-driver arguments used CLI --variant rather than driver --effort; A handoff remained recorded."
+    },
+    {
+      "id": "1791740771766",
+      "result": "transport passed; teardown accounting warning",
+      "requests": 4,
+      "reason": "Private harness stopped Host before terminating idle warm pool; process exit accounting rejected inactive Host."
+    },
+    {
+      "id": "1791740816358",
+      "result": "final transport passed",
+      "requests": 4,
+      "reason": "Idle warm pool shutdown before Host deactivation."
+    }
+  ],
+  "nativeRun": "native-control/runs/1791740698355",
+  "loomRun": "runs/1791740816358",
+  "privateEvidenceRoot": "/Users/sun/.loom/reviews/2026-10-12-team-loom",
+  "resultSha256": "cce3092a7728c92853550c5e0260f032591ce75a2dcf113c5de790861a5f90e3",
+  "rootAudit": {
+    "status": "passed",
+    "scope": "raw hashes, canonical public handoffs, normalized shared task, peer public context, A native continuity and new delta, missing-at no B",
+    "requests": 4,
+    "realCostRatio": null,
+    "paid": false,
+    "notVerified": [
+      "real model quality",
+      "business tool execution",
+      "Herdr",
+      "other three CLIs",
+      "paid repeated-team cost",
+      "cleanup independently reviewed separately"
+    ],
+    "result": "/Users/sun/.loom/reviews/2026-10-12-team-loom/runs/1791740816358/result.json"
+  },
+  "harnessSourceSha256": {
+    "run.mjs": "aa63a8c7e5056f672646457f980a3b906ff32bc6f7b4cf246323e0b6422b9b7a",
+    "policy.mjs": "dad52b85c44ed6b840ab758038da2389e5b4e99736e7369e40e4e94e926110ea",
+    "policy.test.mjs": "223099c368cf0d5562994e12f962aa31b8ad0f18192dd18d3dc0c828f3ef3ff8",
+    "audit.mjs": "592f867f4cc22e77f4ddcbe9eb377624ff804dc45a5d1bc8ac1b7c015bf77c69"
+  },
+  "independentReview": {
+    "publicContentAndRawAccounting": "root audit passed",
+    "configurationAndCleanup": "independent aggregate_console review passed",
+    "cleanup": {
+      "ordinaryExecExit0": 3,
+      "warmTurnQuiesced": 1,
+      "runtimeProcessesTerminated": 4,
+      "instanceRuntimeTerminated": 1,
+      "warmPidConfirmedAbsent": true
+    },
+    "limit": "Recorded process and warm PID verification; not an independent whole process-tree OS proof."
+  },
+  "offlineTestsPassed": 7
+}
