@@ -473,6 +473,157 @@ test("GenericProcessAdapter routes Provider usage frames to the usage owner, nev
   }
 });
 
+test("GenericProcessAdapter binds aggregate diagnostics to its run without inventing generations", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-os-usage-aggregate-"));
+  try {
+    const aggregate = {
+      protocol: "rah-provider-usage-aggregate/v1",
+      provider: "fixture-provider/v1",
+      kind: "compaction",
+      nativeSessionId: "native-session-1",
+      entryId: "compact-entry-1",
+      inputTokens: 1000,
+      cachedInputTokens: 900,
+      outputTokens: 40,
+      reasoningOutputTokens: null,
+      observedAt: "2026-09-24T01:00:00.000Z",
+    };
+    const frames = [
+      { ...aggregate, entryId: "bad-entry", cachedInputTokens: 1001 },
+      aggregate,
+    ];
+    const recorded: unknown[] = [];
+    const generations: unknown[] = [];
+    const gaps: unknown[] = [];
+    const trajectory: unknown[] = [];
+    const adapter = new GenericProcessAdapter({
+      args: [
+        "-e",
+        `require('node:fs').writeSync(3, ${JSON.stringify(frames.map((frame) => JSON.stringify(frame)).join("\n"))});`,
+      ],
+      command: process.execPath,
+      cwd: directory,
+    });
+    const run = await adapter.start(activationEnvelope(), {
+      recordUsageAggregate: async (input) => {
+        recorded.push(input);
+      },
+      recordUsage: async (input) => {
+        generations.push(input);
+      },
+      recordUsageGap: async (input) => {
+        gaps.push(input);
+      },
+      recordTrajectory: async (input) => {
+        trajectory.push(input);
+      },
+      registerPrepared: async () => undefined,
+    });
+    assert.equal((await adapter.reap(run)).code, 0);
+    const { protocol: _protocol, ...fields } = aggregate;
+    const scope = { runAttemptId: "run-process-test", runtimeRunId: run.runId };
+    assert.deepEqual(recorded, [{ ...fields, ...scope }]);
+    assert.deepEqual(gaps, [
+      {
+        provider: aggregate.provider,
+        reason: "parse_error",
+        observedAt: aggregate.observedAt,
+        ...scope,
+      },
+    ]);
+    assert.deepEqual(generations, []);
+    assert.deepEqual(trajectory, []);
+    // An aggregate-only consumer must also receive the final unterminated frame.
+    const aggregateOnly: unknown[] = [];
+    const secondRun = await adapter.start(activationEnvelope(), {
+      recordUsageAggregate: async (input) => {
+        aggregateOnly.push(input);
+      },
+      registerPrepared: async () => undefined,
+    });
+    assert.equal((await adapter.reap(secondRun)).code, 0);
+    assert.deepEqual(aggregateOnly, [
+      {
+        ...fields,
+        runAttemptId: "run-process-test",
+        runtimeRunId: secondRun.runId,
+      },
+    ]);
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
+test("GenericProcessAdapter preserves a coverage gap when aggregate attribution is rejected", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "rah-os-aggregate-rejected-"));
+  try {
+    const aggregate = {
+      protocol: "rah-provider-usage-aggregate/v1",
+      provider: "fixture-provider/v1",
+      kind: "compaction",
+      nativeSessionId: "native-session-1",
+      entryId: "already-attributed-entry",
+      inputTokens: 1000,
+      outputTokens: 40,
+      cachedInputTokens: null,
+      reasoningOutputTokens: null,
+      observedAt: "2026-09-24T01:00:00.000Z",
+    };
+    const generation = {
+      protocol: "rah-provider-usage/v1",
+      provider: aggregate.provider,
+      responseId: "response-after-rejection",
+      inputTokens: 500,
+      cachedInputTokens: 400,
+      outputTokens: 20,
+      reasoningOutputTokens: null,
+      contextWindow: null,
+      contextUsedTokens: null,
+      observedAt: aggregate.observedAt,
+    };
+    const generations: unknown[] = [];
+    const gaps: unknown[] = [];
+    let attempts = 0;
+    const adapter = new GenericProcessAdapter({
+      args: [
+        "-e",
+        `for (const frame of ${JSON.stringify([aggregate, generation])}) require('node:fs').writeSync(3, JSON.stringify(frame)+'\\n');`,
+      ],
+      command: process.execPath,
+      cwd: directory,
+    });
+    const run = await adapter.start(activationEnvelope(), {
+      recordUsageAggregate: async () => {
+        attempts++;
+        throw new Error("entry attribution conflict");
+      },
+      recordUsage: async (input) => {
+        generations.push(input);
+      },
+      recordUsageGap: async (input) => {
+        gaps.push(input);
+      },
+      registerPrepared: async () => undefined,
+    });
+    assert.equal((await adapter.reap(run)).code, 0);
+    assert.equal(attempts, 1);
+    const scope = { runAttemptId: "run-process-test", runtimeRunId: run.runId };
+    assert.deepEqual(gaps, [
+      {
+        provider: aggregate.provider,
+        reason: "parse_error",
+        observedAt: aggregate.observedAt,
+        ...scope,
+      },
+    ]);
+    const { protocol: _protocol, ...fields } = generation;
+    assert.deepEqual(generations, [{ ...fields, ...scope }]);
+    assert.match(adapter.diagnostics(run).stderr, /entry attribution conflict/);
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
+  }
+});
+
 test("GenericProcessAdapter applies activation-scoped arguments and sanitized setup diagnostics", async () => {
   const directory = mkdtempSync(join(tmpdir(), "rah-os-process-launch-lease-"));
   try {

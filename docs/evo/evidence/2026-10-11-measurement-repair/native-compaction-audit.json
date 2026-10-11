@@ -1,0 +1,46 @@
+{
+  "kind": "native-compaction-accounting-source-audit/v1",
+  "providerPackage": {
+    "name": "@earendil-works/pi-coding-agent",
+    "version": "1.1.0",
+    "packageJsonSha256": "c662a36f8bc47843393a60dc8616a34dfcc8376e8fcc96dbc2f1020c60e38e2a",
+    "source": "/opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent",
+    "sourceFiles": {
+      "dist/core/compaction/compaction.js": "573f0321e9a93a4e8dca8c327f6459082ac438d1bc8b6c3c171d90894dd1543c",
+      "dist/core/agent-session.js": "0ba5c847b4fd2fd838f71ea84885b9f3a4f15d9bf4b5493e2e88a41d1507e20b",
+      "dist/core/session-manager.js": "046b6a1109ac3f0ed893bb85bf0648709362fa926a5da75761216cf2fcf9d926",
+      "dist/core/usage-totals.js": "aa324545a6bdc16293380b8b0d09dd960356b99c2f5d4870f1bc2046e590c465",
+      "node_modules/@earendil-works/pi-ai/dist/utils/retry.js": "310ea86dfa001bb3942d16f5d77ce976f5ba35bfb29515b265b87a17836b45f1"
+    }
+  },
+  "reuse": "Read installed source and invoked native exported functions through supplied fake streams; no upstream implementation copied or ported into product.",
+  "tests": {
+    "passed": 6,
+    "paidCalls": 0,
+    "providerProcessesStarted": 0,
+    "network": "Supplied fake stream for every call; global fetch throws. No provider/account setup invoked.",
+    "codeSha256": "78db353a4b01ec65b90c3a2c4070421bc86ad50349cae54bee3469da7b228169",
+    "logSha256": "0370299e4b4a3844604290ee2a044eb81c16e89d0a9a536f8886516ab74f7643",
+    "cases": [
+      "Unsplit counts new summary response, excludes historic assistant usage and tokensBefore.",
+      "Split with history sums exactly two successful summary responses.",
+      "Split without history uses one prefix response.",
+      "Success after retry excludes reported usage of failed attempt.",
+      "Second-stage failure returns no aggregate despite successful first stage.",
+      "Optional reasoning present on only one stage still yields number, so aggregate alone cannot prove full reasoning coverage."
+    ]
+  },
+  "findings": {
+    "disjointness": "For audited native default compaction path, usage is taken from new summary calls, not session totals. tokensBefore is context size, never cost.",
+    "incompleteness": "retryAssistantCall returns successful/final response only. compact returns usage only after all required summary calls succeed. Aggregate is known reported consumption, not all-attempt/request coverage.",
+    "extensions": "agent-session accepts extensionCompaction.usage and stores fromHook. Default-path disjointness proof must not be applied to extension-provided or unverified provenance.",
+    "identity": "Persistent compaction entry has native entry ID, not provider response ID; never synthesize generation or HTTP count.",
+    "optionalSplits": "combineUsage may zero-fill one missing optional reasoning field; do not infer complete reasoning breakdown from aggregate numeric presence alone."
+  },
+  "productDecision": "Expose typed known aggregate separately, retain partial/gap. No silent generation-total merge or removal of parse_error solely because compaction_end has usage. No product code changed in this audit.",
+  "limits": [
+    "Installed version only; other CLI/model/version behavior not established.",
+    "Fake failure cases prove possible accounting boundaries, not a claim historical paid traces had missing costs.",
+    "Previous paid pilot raw HTTP totals remain complete; no retrospective verdict changes."
+  ]
+}

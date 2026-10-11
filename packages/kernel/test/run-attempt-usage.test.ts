@@ -387,7 +387,7 @@ test("an unsupported Provider (Kimi ACP) reports unavailable usage with its reas
 test("schema 61 adds run_attempt_usage keyed by RunAttempt and response", () => {
   const state = fixture();
   try {
-    assert.equal(KERNEL_SCHEMA_VERSION, 84);
+    assert.equal(KERNEL_SCHEMA_VERSION, 85);
     const database = new DatabaseSync(state.databasePath);
     try {
       const columns = database
@@ -557,6 +557,7 @@ test("finished RunAttempts accept no new usage and Channel deletion erases it", 
   try {
     const { kernel, host } = state;
     kernel.runAttemptUsage.record(host, usage(state, "kept-until-delete"));
+    kernel.runAttemptUsage.recordAggregate(host, aggregate(state));
     kernel.runAttemptUsage.recordGap(host, gap(state, "correction_frame"));
     kernel.recordRuntimeTermination(host, {
       exit: { code: 0 },
@@ -576,6 +577,26 @@ test("finished RunAttempts accept no new usage and Channel deletion erases it", 
       () => kernel.runAttemptUsage.recordGap(host, gap(state, "parse_error")),
       ConflictError,
       "a finished RunAttempt accepts no late gap either",
+    );
+    assert.throws(
+      () =>
+        kernel.runAttemptUsage.recordAggregate(
+          host,
+          aggregate(state, { entryId: "late-aggregate" }),
+        ),
+      ConflictError,
+    );
+    assert.equal(
+      kernel.runAttemptUsage.recordAggregate(host, aggregate(state)).entryId,
+      "compact-a",
+    );
+    assert.throws(
+      () =>
+        kernel.runAttemptUsage.recordAggregate(
+          host,
+          aggregate(state, { runtimeRunId: "wrong-ended-runtime" }),
+        ),
+      ConflictError,
     );
     // Settle the Activation directly: deletion only requires inactive work.
     const database = new DatabaseSync(state.databasePath);
@@ -650,7 +671,7 @@ test("a schema 60 database upgrades to the current schema without touching exist
     try {
       assert.equal(
         database.prepare("PRAGMA user_version").get()!.user_version,
-        84,
+        85,
       );
       assert.equal(
         database
@@ -705,7 +726,7 @@ function cleanup(
 test("S2-0 schema 64 records leftover cleanup per RunAttempt and exposes it on the usage read", () => {
   const state = fixture();
   try {
-    assert.equal(KERNEL_SCHEMA_VERSION, 84);
+    assert.equal(KERNEL_SCHEMA_VERSION, 85);
     const recorded = state.kernel.runtimeProcessCleanup.record(
       state.host,
       cleanup(state, "cleanup-1"),
@@ -1277,5 +1298,199 @@ test("S2-b: a per-turn (cold) run records its measured session resume once and t
     );
   } finally {
     state.cleanup();
+  }
+});
+
+function aggregate(state: ReturnType<typeof fixture>, overrides = {}) {
+  return {
+    provider: "pi-rpc/v1",
+    kind: "compaction" as const,
+    nativeSessionId: "native-a",
+    entryId: "compact-a",
+    inputTokens: 400,
+    outputTokens: 30,
+    cachedInputTokens: null,
+    reasoningOutputTokens: null,
+    observedAt: "2026-09-24T01:00:06.000Z",
+    runAttemptId: state.runAttemptId,
+    runtimeRunId: state.runtimeRunId,
+    ...overrides,
+  };
+}
+test("native aggregate persists separately, replays once and never clears incomplete coverage", () => {
+  const state = fixture();
+  try {
+    const { kernel, host } = state;
+    assert.equal(read(state).aggregateUsage?.totals.inputTokens, null);
+    kernel.runAttemptUsage.record(host, usage(state, "response-a"));
+    const before = read(state).totals;
+    const first = kernel.runAttemptUsage.recordAggregate(
+      host,
+      aggregate(state),
+    );
+    assert.deepEqual(
+      kernel.runAttemptUsage.recordAggregate(host, aggregate(state)),
+      first,
+    );
+    const result = read(state);
+    assert.deepEqual(result.totals, before);
+    assert.equal(result.completeness, "partial");
+    assert.equal(
+      result.gaps.find((g) => g.reason === "parse_error")?.occurrences,
+      1,
+    );
+    assert.deepEqual(result.aggregateUsage?.totals, {
+      entries: 1,
+      inputTokens: 400,
+      outputTokens: 30,
+      cachedInputTokens: null,
+      reasoningOutputTokens: null,
+    });
+    assert.throws(
+      () =>
+        kernel.runAttemptUsage.recordAggregate(
+          host,
+          aggregate(state, { inputTokens: 401 }),
+        ),
+      ConflictError,
+    );
+    assert.throws(
+      () =>
+        kernel.runAttemptUsage.recordAggregate(
+          state.otherHost,
+          aggregate(state),
+        ),
+      ForbiddenError,
+    );
+    assert.throws(
+      () =>
+        kernel.runAttemptUsage.recordAggregate(
+          host,
+          aggregate(state, { runtimeRunId: "wrong" }),
+        ),
+      ConflictError,
+    );
+    assert.equal(read(state).aggregateUsage?.entries.length, 1);
+  } finally {
+    state.cleanup();
+  }
+});
+test("aggregate alone retains unavailable generation totals and existing gap occurrence count", () => {
+  const state = fixture();
+  try {
+    state.kernel.runAttemptUsage.recordGap(
+      state.host,
+      gap(state, "parse_error"),
+    );
+    state.kernel.runAttemptUsage.recordAggregate(state.host, aggregate(state));
+    state.kernel.runAttemptUsage.recordAggregate(
+      state.host,
+      aggregate(state, { entryId: "compact-b", cachedInputTokens: 300 }),
+    );
+    const result = read(state);
+    assert.equal(result.completeness, "unavailable");
+    assert.equal(result.totals.generations, null);
+    assert.equal(result.gaps[0]?.occurrences, 1);
+    assert.equal(result.aggregateUsage?.totals.inputTokens, 800);
+    assert.equal(result.aggregateUsage?.totals.cachedInputTokens, null);
+  } finally {
+    state.cleanup();
+  }
+});
+
+test("native aggregate entry cannot be billed again in another Run or after reset", () => {
+  const state = fixture();
+  const db = new DatabaseSync(state.databasePath);
+  try {
+    state.kernel.runAttemptUsage.recordAggregate(state.host, aggregate(state));
+    const original = db
+      .prepare("SELECT * FROM run_attempts WHERE run_attempt_id=?")
+      .get(state.runAttemptId)!;
+    const next: typeof original = {
+      ...original,
+      run_attempt_id: "aggregate-next-run",
+      attempt_number: 2,
+    };
+    const columns = Object.keys(next);
+    db.prepare(
+      `INSERT INTO run_attempts(${columns.join(",")}) VALUES(${columns.map(() => "?").join(",")})`,
+    ).run(...columns.map((k) => next[k]!));
+    state.kernel.prepareRunAttemptRuntime(state.host, {
+      runAttemptId: String(next.run_attempt_id),
+      runtimeRunId: "aggregate-next-runtime",
+      recoveryDescriptor: {
+        driver: "test-runtime",
+        metadata: {},
+        recoveryKey: "aggregate-next-runtime",
+      },
+    });
+    assert.throws(
+      () =>
+        state.kernel.runAttemptUsage.recordAggregate(
+          state.host,
+          aggregate(state, {
+            runAttemptId: String(next.run_attempt_id),
+            runtimeRunId: "aggregate-next-runtime",
+          }),
+        ),
+      ConflictError,
+    );
+    db.prepare(
+      "INSERT INTO role_instance_sessions(instance_id,generation,bound,updated_at) VALUES(?,1,0,?) ON CONFLICT(instance_id) DO UPDATE SET generation=generation+1",
+    ).run(state.participantId, "2026-09-24T01:00:07.000Z");
+    assert.throws(
+      () =>
+        state.kernel.runAttemptUsage.recordAggregate(
+          state.host,
+          aggregate(state, {
+            runAttemptId: String(next.run_attempt_id),
+            runtimeRunId: "aggregate-next-runtime",
+          }),
+        ),
+      ConflictError,
+    );
+    assert.equal(
+      db
+        .prepare("SELECT COUNT(*) AS n FROM run_attempt_usage_aggregates")
+        .get()!.n,
+      1,
+    );
+    assert.equal(read(state).aggregateUsage?.totals.inputTokens, 400);
+  } finally {
+    db.close();
+    state.cleanup();
+  }
+});
+
+test("schema 84 migration adds aggregate storage without changing generation facts", () => {
+  const state = fixture();
+  let upgraded: RoomKernel | undefined;
+  try {
+    state.kernel.runAttemptUsage.record(state.host, usage(state, "kept"));
+    state.kernel.close();
+    const db = new DatabaseSync(state.databasePath);
+    db.exec("DROP TABLE run_attempt_usage_aggregates; PRAGMA user_version=84");
+    db.close();
+    upgraded = new RoomKernel({ databasePath: state.databasePath });
+    upgraded.initialize();
+    const audit = new DatabaseSync(state.databasePath);
+    assert.equal(audit.prepare("PRAGMA user_version").get()!.user_version, 85);
+    assert.equal(
+      audit.prepare("SELECT COUNT(*) AS n FROM run_attempt_usage").get()!.n,
+      1,
+    );
+    assert.equal(
+      audit
+        .prepare("SELECT COUNT(*) AS n FROM run_attempt_usage_aggregates")
+        .get()!.n,
+      0,
+    );
+    audit.close();
+  } finally {
+    upgraded?.close();
+    rmSync(state.databasePath.replace(/\/room.db$/, ""), {
+      recursive: true,
+      force: true,
+    });
   }
 });

@@ -37,7 +37,7 @@ const compactResult = {
   firstKeptEntryId: parent,
   tokensBefore: 100,
   details: {},
-  usage: { input: 100, output: 10 },
+  usage: { input: 100, output: 10, cacheRead: 20, cacheWrite: 3 },
 };
 if (compaction && !postFinal)
   add("compaction", {
@@ -57,7 +57,9 @@ const message = {
   rawStopReason: "stop",
 };
 add("message", { message });
-if (postFinal) add("compaction", compactResult);
+if (postFinal)
+  add("compaction", { ...compactResult, fromHook: wake.includes("hook") });
+if (wake.includes("bad-branch")) rows.at(-1).parentId = "unrelated-parent";
 writeFileSync(path, rows.map(JSON.stringify).join("\n") + "\n", {
   mode: 0o600,
 });

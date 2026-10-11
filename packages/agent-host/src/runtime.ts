@@ -7,6 +7,7 @@ import type {
   RuntimeTrajectoryAppendInput,
   RuntimeFailure,
   RunAttemptCostRecordInput,
+  RunAttemptUsageAggregateRecordInput,
   RunAttemptUsageGapRecordInput,
   RunAttemptUsageRecordInput,
 } from "@rah-os/protocol";
@@ -87,6 +88,10 @@ export type RuntimeStartLifecycle = {
   recordTrajectory?(activity: RuntimeTrajectoryAppendInput): Promise<void>;
   /** Native per-generation token usage; diagnostics, never trajectory. */
   recordUsage?(usage: RunAttemptUsageRecordInput): Promise<void>;
+  /** Native aggregate tokens, separate from per-generation usage. */
+  recordUsageAggregate?(
+    usage: RunAttemptUsageAggregateRecordInput,
+  ): Promise<void>;
   /** A usage capture gap: the RunAttempt's usage is partial or unavailable. */
   recordUsageGap?(gap: RunAttemptUsageGapRecordInput): Promise<void>;
   /** evo §40: a CLI-reported cost fact (never a Loom estimate). */

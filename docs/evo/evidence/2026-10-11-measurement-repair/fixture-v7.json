@@ -1,0 +1,42 @@
+{
+  "version": "private-fixture-v7",
+  "workloadVersion": 4,
+  "evaluatorVersion": 4,
+  "privateRoot": "/Users/sun/.loom/reviews/2026-10-11-cost-fixture-v7",
+  "manifestSha256": "0d163fff3c91d4024342eb96577b1d977cb534ffcbd1d139d3b63e89e03c9713",
+  "paidCalls": 0,
+  "runnerMigrated": false,
+  "oldVerdictsChanged": false,
+  "parentSourceFilesVerified": 17,
+  "parentSourceDrift": [],
+  "changedInheritedFiles": [
+    "plan.json",
+    "workspace/README.md",
+    "workspace/invoice.py"
+  ],
+  "newPrompt": "Create invoice.py with summarize(rows, tax_percent=\"0\", group_by=None). rows is a list of dicts, not objects with attributes: read row['quantity'] and row['unit_price']. For now implement ungrouped rows having these keys. Return a Python dict, not a tuple or list, with exactly these string keys: count (integer number of active input rows), subtotal, discount, tax, total. The four money fields are two-decimal strings. Use Decimal arithmetic and ROUND_HALF_UP. Compute exact quantity × unit_price products and aggregate before rounding; do not round individual lines. Until their later features arrive, discount and tax are \"0.00\", total equals subtotal. Inputs used now are nonnegative integer values or ordinary decimal strings; do not use binary floats internally.\nModify the workspace files and add or extend standard-library unittest tests under tests/. Run your tests. Preserve all requirements from earlier turns. You may explain your changes normally in chat. Use sufficient Decimal precision or equivalent exact arithmetic: default precision 28 is not guaranteed for the permitted input range.",
+  "newSeedApi": "\"\"\"Implement the invoice API as requested in the exercise turns.\"\"\"\ndef summarize(rows, tax_percent=\"0\", group_by=None) -> dict:\n    raise NotImplementedError(\"Implement the requested invoice behavior\")\n",
+  "newSeedReadme": "# Invoice exercise\n\nUse Python 3 standard library only. Implement invoice.py, maintain unittest tests,\nand update this README as requirements arrive. This is an isolated exercise.\n\nThe summarize API returns a Python dict. Its ungrouped result has exactly the\nstring keys count, subtotal, discount, tax and total. count is an integer; the\nfour money values are two-decimal strings. Later turns add grouped results.\n",
+  "unchanged": {
+    "rounds2Through12": true,
+    "oracleCases": 40,
+    "oracleCasesSha256": "97a3dc64dcb0590bd719f47841d2810d1f5acd78481b5ac778ba2f258e4f7744",
+    "oracleReferenceSha256": "d26957af8fa6726c01437593de9eada5862c99b16168007443c41b14f52e9d03",
+    "evaluatorSha256": "2025463cd47e75bf83f2cbad8dac21bff002ff37bbc0534bcbeba434c7bbb325"
+  },
+  "tests": {
+    "intendedRedFailures": 2,
+    "redLogSha256": "0be61042c83902f09b929fa0d76147b9a8c16d7be48b88a8fed077df5f4b25c7",
+    "pythonPassed": 33,
+    "pythonLogSha256": "59190e78e286738c8b3ce9a38b0d2cca3ee7e359457e440a5116094391dedff7",
+    "referencePassedAll12Rounds": true,
+    "nodePassed": 2,
+    "nodeLogSha256": "0741cb2917371fb2f9419d714855226fcf53a591468836d505b33becf707ac55",
+    "preparationError": "First unittest command used parent v6 cwd and produced ImportError. Correct cwd run reproduced two intended failures before edits; no paid call."
+  },
+  "limits": [
+    "Free fixture validation, not new model quality/efficiency acceptance.",
+    "Same source cases/requirements retain limits; clarified return type does not make semantic coverage exhaustive.",
+    "No automatic runner migration; future launch must explicitly pin this manifest."
+  ]
+}

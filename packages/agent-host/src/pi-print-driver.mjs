@@ -15,6 +15,7 @@ import {
 } from "node:fs";
 import { dirname, isAbsolute } from "node:path";
 import { inspectPiTurn, piTerminalCompactions } from "./pi-final-output.mjs";
+import { piCompactionUsage } from "./pi-compaction-usage.mjs";
 import { piUsageFrames } from "./pi-usage.mjs";
 import { ProviderUsageWriter } from "./provider-usage.js";
 import {
@@ -317,14 +318,19 @@ async function main() {
       exit,
     });
     // inspectPiTurn has verified the exact prefix, session, and current branch.
-    if (
-      after.text
-        .slice(before?.text.length ?? 0)
-        .trim()
-        .split("\n")
-        .some((line) => JSON.parse(line).type === "compaction")
-    )
+    const appended = after.text
+      .slice(before?.text.length ?? 0)
+      .trim()
+      .split("\n")
+      .map(JSON.parse);
+    if (appended.some((entry) => entry.type === "compaction"))
       markCompactionGap();
+    for (const aggregate of piCompactionUsage(
+      appended,
+      parsedFrames,
+      p.input.sessionId,
+    ))
+      usage.emit(aggregate);
     emit({
       protocol: "rah-delivery-accepted/v1",
       provider: PROVIDER,

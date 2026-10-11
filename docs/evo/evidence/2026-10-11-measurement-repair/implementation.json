@@ -1,0 +1,100 @@
+{
+  "kind": "loom-native-aggregate-implementation/v1",
+  "date": "2026-10-11",
+  "schema": 85,
+  "paidCalls": 0,
+  "newRealCliGate": false,
+  "efficiencyAccepted": false,
+  "implementation": {
+    "owners": [
+      "Protocol: rah-provider-usage-aggregate/v1",
+      "Host: current verified native suffix, fd3 validation and authenticated runtime binding",
+      "Kernel: independent aggregate table, immutable Run attribution and cross-Run/reset entry dedup",
+      "Console: separate known aggregate subtotal"
+    ],
+    "normalGenerationTotals": "unchanged",
+    "coverage": "partial/unavailable retained; aggregates never prove retry/aborted request completeness",
+    "source": "Pi 1.1.0 default native compaction only; extensions and unknown provenance excluded",
+    "history": "no old-Run backfill, no old-session replay counting",
+    "remoteComputer": "unchanged"
+  },
+  "verification": {
+    "check": {
+      "exitCode": 0,
+      "mainSuite": {
+        "passed": 3099,
+        "skipped": 22,
+        "failed": 0
+      },
+      "webUnit": 487,
+      "consoleUnit": 61,
+      "efficiencyUnit": 558
+    },
+    "finalTargeted": {
+      "passed": 68,
+      "failed": 0,
+      "files": [
+        "process-runtime.test.ts",
+        "pi-print-driver.test.mjs",
+        "pi-compaction-usage.test.mjs",
+        "provider-usage.test.ts"
+      ]
+    },
+    "typecheck": true,
+    "formatCheck": true,
+    "diffCheck": true,
+    "consoleBuild": true,
+    "browser": {
+      "kind": "fake service and explicitly labelled aggregate response fixture",
+      "passed": true,
+      "viewports": ["1440x1000", "390x844"],
+      "newRow": "verified separately with visible desktop screenshot; generation totals unchanged, partial and gap match API",
+      "negativeProbe": "removing aggregate row fails assertion; restoring passes",
+      "initialFailure": "existing queued-count timing assertion failed before new path; retained, not weakened",
+      "correctedFixture": "initial aggregate overlay retained complete from base API; corrected to representative partial + parse_error before final acceptance"
+    },
+    "docsRelativeLinks": {
+      "checked": 145,
+      "missing": 0
+    }
+  },
+  "tdd": [
+    "driver absent aggregate 0 != 1 before implementation",
+    "fd3 aggregate dropped and Host lifecycle absent before wiring",
+    "Kernel aggregate tests before implementation",
+    "terminal exact replay Conflict before fix",
+    "writer TypeScript union rejected aggregate before declaration fix",
+    "Host rejected aggregate missing gap before catch fix"
+  ],
+  "review": {
+    "independent": [
+      "Kernel auth/attribution/dedup/partial reviewed by Host agent",
+      "Pi parser/driver/writer source and native upstream semantics reviewed by Host agent"
+    ],
+    "lead": [
+      "all production diffs",
+      "declaration omission fixed",
+      "bad-branch negative driver case added",
+      "console screenshot corrected to reachable partial state"
+    ]
+  },
+  "logSha256": {
+    "loom-aggregate-check.log": "1a138e6c6d9991e51a350c08782368c7eb7c80f4ecd212fff3a2b1e43d8f76af",
+    "loom-aggregate-replay-red.log": "670b629a5751149b515091af5ae92fea7e1e09d8b056e661c7a657dc8a0af104",
+    "loom-aggregate-build.log": "4bf09134c2d98ca996fa4975f1e8b45cfe3df5f62f06b0ce2064fba0e503d7da",
+    "loom-aggregate-console-browser-visible.log": "51492afd61d495c67f2a9dc957b2a402f4204153b3c20e686900e0c5aac67059",
+    "loom-aggregate-final-targeted.log": "1f09d191f7d6892d075392033c0a95f5cc51388ee404f72c4c8288b24df93e86",
+    "loom-aggregate-console-browser-partial.log": "eb7770788202d6eb1eec268072869c461b09a8456a5d023b07509a28b1cf2086",
+    "loom-aggregate-red.log": "3737a964e9acb53ecc79bf8e1de6c4939e4f253da76b43073c5c952a75e72f27",
+    "loom-aggregate-final-typecheck.log": "bef9d01c948fead061ff8f64b8496f8847391051512f3460e767e2602ceab0f8",
+    "loom-aggregate-replay-green.log": "a07f6b4c69d06b082d4ffab587f7ce5650ef0696411e39128b68e57c4fa4dcef",
+    "loom-aggregate-green.log": "2fc1fd34d081ab807517638250f17ac44ebae34a53fd4caafc6e94a2e433b075",
+    "loom-aggregate-format-final.log": "fb5ffe51bf83c7a6ac683f386a5c903f6ff2c086dbe1bf27cc1f12efddaf7e3f",
+    "loom-aggregate-writer-type-red.log": "cdb47af528489475306daa408e658d8a3009c874b5c7546b4ac3fbee7eea1cbc"
+  },
+  "limits": [
+    "No new paid ratio or multi-model efficiency verdict",
+    "Only RunAttempt aggregate subtotal added; generation/instance/channel totals not silently redefined",
+    "Original raw pilot usage and quality verdicts unchanged"
+  ]
+}

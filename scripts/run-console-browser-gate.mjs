@@ -821,6 +821,12 @@ if (args.join(" ") === "debug models --bundled") {
     channelRunIds[0],
   );
   await screenshot("run-detail-1440x1000.png");
+  await checkAggregateRunDetailFixture(
+    instance.agentId,
+    channelRunIds[0],
+    card,
+    channelRun.raw,
+  );
 
   // --- 5c. Private box: open, send, and the Channel never shows it. ---
   await click(`${card} .action-open-direct`);
@@ -2155,6 +2161,93 @@ async function screenshot(name) {
   screenshots.push(path);
 }
 
+// Browser-only FIXTURE: exercise known aggregate values without manufacturing
+// provider generations or changing the fixture service's durable ledger.
+async function checkAggregateRunDetailFixture(
+  agentId,
+  runAttemptId,
+  card,
+  raw,
+) {
+  const fixture = {
+    ...raw,
+    completeness: "partial",
+    gaps: [
+      ...raw.gaps,
+      {
+        provider: "FIXTURE-aggregate",
+        reason: "parse_error",
+        occurrences: 1,
+        firstObservedAt: "2026-10-11T00:00:00.000Z",
+        lastObservedAt: "2026-10-11T00:00:00.000Z",
+      },
+    ],
+    aggregateUsage: {
+      entries: [],
+      totals: {
+        entries: 2,
+        inputTokens: 12_345,
+        outputTokens: 200,
+        cachedInputTokens: null,
+        reasoningOutputTokens: 0,
+      },
+      truncated: true,
+    },
+  };
+  await evaluate(
+    browser,
+    `(() => {
+    window.__aggregateFixtureFetch = window.fetch;
+    window.fetch = (input, init) => String(input).endsWith("/v3/client/agents/run-usage/get")
+      ? Promise.resolve(new Response(JSON.stringify(${JSON.stringify(fixture)}), { status: 200, headers: { "content-type": "application/json" } }))
+      : window.__aggregateFixtureFetch(input, init);
+    return true;
+  })()`,
+  );
+  const fixtureClient = { request: async () => fixture };
+  try {
+    await click(`${card} .run-open`);
+    await checkRunDetail(fixtureClient, agentId, runAttemptId);
+    // Negative control: the same assertion must reject a missing summary row.
+    await evaluate(
+      browser,
+      `document.querySelector('[data-field="已知压缩聚合用量"]').remove()`,
+    );
+    await assert.rejects(
+      checkRunDetail(fixtureClient, agentId, runAttemptId),
+      /known compaction aggregate subtotal matches the API/u,
+    );
+    await click(`${card} .run-open`);
+    await checkRunDetail(fixtureClient, agentId, runAttemptId);
+    await evaluate(
+      browser,
+      `document.querySelector('[data-field="已知压缩聚合用量"]').scrollIntoView({ block: "center" })`,
+    );
+    const summaryVisible = await evaluate(
+      browser,
+      `(() => {
+      const node = document.querySelector('[data-field="已知压缩聚合用量"]');
+      const rect = node.getBoundingClientRect();
+      return rect.width > 0 && rect.height > 0 && rect.top >= 0 && rect.bottom <= innerHeight;
+    })()`,
+    );
+    assert.equal(
+      summaryVisible,
+      true,
+      "aggregate summary is visible in the viewport",
+    );
+    await screenshot("run-detail-aggregate-FIXTURE-1440x1000.png");
+    process.stdout.write(
+      "CONSOLE_AGGREGATE_FIXTURE negative missing-row control and restored summary passed\n",
+    );
+  } finally {
+    await evaluate(
+      browser,
+      `(() => { window.fetch = window.__aggregateFixtureFetch; delete window.__aggregateFixtureFetch; return true; })()`,
+    );
+  }
+}
+
 /**
  * The open run-detail panel shows exactly what `agent.run.usage.get` returns:
  * formatted numbers, and "未知" (never 0) for every null the API reports.
@@ -2173,6 +2266,7 @@ async function checkRunDetail(client, agentId, runAttemptId) {
     browser,
     `({
       generations: document.querySelectorAll("#run-detail .run-generations li").length,
+      gaps: [...document.querySelectorAll("#run-detail .run-gaps li")].map((node) => node.textContent),
       rows: Object.fromEntries([...document.querySelectorAll("#run-detail [data-field]")].map((node) => [node.getAttribute("data-field"), node.querySelector(".field-value").textContent])),
     })`,
   );
@@ -2204,6 +2298,27 @@ async function checkRunDetail(client, agentId, runAttemptId) {
     context === undefined
       ? "未知"
       : `${count(context.contextUsedTokens)} / ${count(context.contextWindow)}`,
+  );
+  assert.equal(
+    view.rows["用量完整性"],
+    raw.completeness === "complete"
+      ? "完整"
+      : raw.completeness === "partial"
+        ? "部分（有采集缺口）"
+        : "无记录（未知）",
+  );
+  assert.deepEqual(
+    view.gaps,
+    raw.gaps.map(
+      (gap) => `${gap.reason} × ${String(gap.occurrences)}（${gap.provider}）`,
+    ),
+  );
+  const aggregate = raw.aggregateUsage?.totals;
+  const aggregateCount = (value) => (value == null ? "未知" : count(value));
+  assert.equal(
+    view.rows["已知压缩聚合用量"],
+    `记录 ${aggregateCount(aggregate?.entries)}；输入 ${aggregateCount(aggregate?.inputTokens)}（缓存 ${aggregateCount(aggregate?.cachedInputTokens)}）；输出 ${aggregateCount(aggregate?.outputTokens)}（推理 ${aggregateCount(aggregate?.reasoningOutputTokens)}）；并不代表所有请求完整计量`,
+    "known compaction aggregate subtotal matches the API",
   );
   // Contract §5: the run's observed compactions, as the API reports them.
   assert.equal(

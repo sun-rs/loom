@@ -62,6 +62,9 @@ export type AgentHostControlPort = {
   recordRunAttemptUsage?(
     input: Parameters<RoomKernel["runAttemptUsage"]["record"]>[1],
   ): Promise<ReturnType<RoomKernel["runAttemptUsage"]["record"]>>;
+  recordRunAttemptUsageAggregate?(
+    input: Parameters<RoomKernel["runAttemptUsage"]["recordAggregate"]>[1],
+  ): Promise<ReturnType<RoomKernel["runAttemptUsage"]["recordAggregate"]>>;
   recordRunAttemptUsageGap?(
     input: Parameters<RoomKernel["runAttemptUsage"]["recordGap"]>[1],
   ): Promise<ReturnType<RoomKernel["runAttemptUsage"]["recordGap"]>>;
@@ -262,6 +265,8 @@ export function createKernelAgentHostControlPort(
       kernel.recordRuntimeTermination(host, input),
     recordRunAttemptUsage: async (input) =>
       kernel.runAttemptUsage.record(host, input),
+    recordRunAttemptUsageAggregate: async (input) =>
+      kernel.runAttemptUsage.recordAggregate(host, input),
     recordRunAttemptUsageGap: async (input) =>
       kernel.runAttemptUsage.recordGap(host, input),
     recordRunAttemptCost: async (input) =>

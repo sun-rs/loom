@@ -363,7 +363,10 @@ export class ProviderUsageWriter {
   emit(usage) {
     if (usage === undefined) return;
     let frame;
-    if (usage.costId !== undefined) {
+    if (usage.kind === "compaction" && usage.entryId !== undefined) {
+      // Kernel owns stable entry idempotency and detects conflicting replays.
+      frame = { protocol: "rah-provider-usage-aggregate/v1", ...usage };
+    } else if (usage.costId !== undefined) {
       if (this.#emittedCosts.has(usage.costId)) return;
       this.#emittedCosts.add(usage.costId);
       frame = { protocol: "rah-provider-cost/v1", ...usage };

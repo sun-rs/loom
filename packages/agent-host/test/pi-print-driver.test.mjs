@@ -264,3 +264,75 @@ for (const mode of [
     }
   });
 }
+
+test("Pi verified native compaction is separately counted once and never clears the gap", () => {
+  const d = mkdtempSync(join(tmpdir(), "pi-aggregate-"));
+  try {
+    const first = run(d, 1, "post-final compact", ["--native-final-text"]);
+    const aggregates = first.frames.filter(
+      (f) => f.protocol === "rah-provider-usage-aggregate/v1",
+    );
+    assert.equal(aggregates.length, 1);
+    assert.equal(aggregates[0].inputTokens, 123);
+    assert.equal(aggregates[0].outputTokens, 10);
+    assert.equal(aggregates[0].cachedInputTokens, 20);
+    assert.equal(aggregates[0].reasoningOutputTokens, null);
+    assert.equal(aggregates[0].nativeSessionId, "pi-session");
+    assert.ok(aggregates[0].entryId);
+    assert.equal(
+      first.frames.filter((f) => f.protocol === "rah-provider-usage/v1")[0]
+        .inputTokens,
+      10,
+    );
+    assert.equal(
+      first.frames.filter((f) => f.protocol === "rah-provider-usage-gap/v1")
+        .length,
+      1,
+    );
+    assert.equal(JSON.parse(readFileSync(first.proof)).text, "done");
+    const resumed = run(d, 2, "ordinary wake", [
+      "--resume-session",
+      "pi-session",
+    ]);
+    assert.equal(
+      resumed.frames.filter(
+        (f) => f.protocol === "rah-provider-usage-aggregate/v1",
+      ).length,
+      0,
+    );
+    const hook = run(d, 3, "post-final compact hook", [
+      "--resume-session",
+      "pi-session",
+    ]);
+    assert.equal(
+      hook.frames.filter(
+        (f) => f.protocol === "rah-provider-usage-aggregate/v1",
+      ).length,
+      0,
+    );
+  } finally {
+    rmSync(d, { recursive: true, force: true });
+  }
+});
+
+test("Pi rejects aggregate when current branch inspection fails", () => {
+  const d = mkdtempSync(join(tmpdir(), "pi-bad-aggregate-"));
+  try {
+    const r = run(d, 1, "post-final compact bad-branch", [
+      "--native-final-text",
+    ]);
+    assert.equal(
+      r.frames.filter((f) => f.protocol === "rah-provider-usage-aggregate/v1")
+        .length,
+      0,
+    );
+    assert.equal(
+      r.frames.filter((f) => f.protocol === "rah-delivery-accepted/v1").length,
+      0,
+    );
+    assert.equal(existsSync(r.proof), false);
+    assert.ok(r.frames.some((f) => f.protocol === "rah-provider-usage-gap/v1"));
+  } finally {
+    rmSync(d, { recursive: true, force: true });
+  }
+});

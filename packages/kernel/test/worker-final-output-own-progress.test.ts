@@ -260,7 +260,7 @@ test("schema 83 upgrade preserves events without backfilling write provenance", 
     });
     try {
       upgraded.initialize();
-      assert.equal(f.db.prepare("PRAGMA user_version").get()!.user_version, 84);
+      assert.equal(f.db.prepare("PRAGMA user_version").get()!.user_version, 85);
       assert.equal(
         f.db.prepare("SELECT count(*) n FROM worker_run_message_writes").get()!
           .n,

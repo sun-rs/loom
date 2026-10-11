@@ -1053,6 +1053,69 @@ function usageResponse(overrides: Record<string, unknown>) {
   } as Parameters<typeof runUsageDetail>[0];
 }
 
+test("RunAttempt compaction aggregates stay separate from generations and preserve partial gaps", () => {
+  const detail = runUsageDetail(
+    usageResponse({
+      aggregateUsage: {
+        entries: [],
+        totals: {
+          entries: 2,
+          inputTokens: 12_345,
+          outputTokens: 200,
+          cachedInputTokens: null,
+          reasoningOutputTokens: 0,
+        },
+        truncated: true,
+      },
+      completeness: "partial",
+      gaps: [{ reason: "parse_error", occurrences: 1, provider: "pi" }],
+    }),
+  );
+  const field = (label: string) =>
+    detail.rows.find((row) => row.label === label)?.value;
+  assert.equal(
+    field("已知压缩聚合用量"),
+    "记录 2；输入 12,345（缓存 未知）；输出 200（推理 0）；并不代表所有请求完整计量",
+  );
+  assert.equal(field("生成次数"), "1（部分）");
+  assert.equal(field("输入 token"), "1,000（部分）");
+  assert.equal(field("输出 token"), "50（部分）");
+  assert.equal(field("用量完整性"), "部分（有采集缺口）");
+  assert.equal(detail.generations.length, 1);
+  assert.deepEqual(detail.gaps, ["parse_error × 1（pi）"]);
+  // Aggregate totals come from the server, even if its detail list is cut.
+  assert.equal(detail.truncated, false);
+});
+
+test("RunAttempt compaction aggregates from older servers or empty records remain unknown", () => {
+  for (const overrides of [
+    {},
+    {
+      aggregateUsage: {
+        entries: [],
+        totals: {
+          entries: null,
+          inputTokens: null,
+          outputTokens: null,
+          cachedInputTokens: null,
+          reasoningOutputTokens: null,
+        },
+        truncated: false,
+      },
+    },
+  ]) {
+    const detail = runUsageDetail(usageResponse(overrides));
+    assert.equal(
+      detail.rows.find((row) => row.label === "已知压缩聚合用量")?.value,
+      "记录 未知；输入 未知（缓存 未知）；输出 未知（推理 未知）；并不代表所有请求完整计量",
+    );
+    assert.equal(
+      detail.rows.find((row) => row.label === "生成次数")?.value,
+      "1",
+    );
+  }
+});
+
 test("RunAttempt cost is the recorded subtotal: with a collection gap the whole-run completeness is marked unknown and no missing amount is estimated", () => {
   const detail = runUsageDetail(
     usageResponse({

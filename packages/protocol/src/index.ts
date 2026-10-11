@@ -1695,3 +1695,5 @@ export { canonicalAgentIdField } from "./agent-id-compat.ts";
 export { isWorkerShortRef, shortWorkerRef } from "./worker-short-ref.ts";
 export * from "./worker-mcp.ts";
 export * from "./worker-mcp-receipt.ts";
+
+export * from "./runtime-usage-aggregate.ts";

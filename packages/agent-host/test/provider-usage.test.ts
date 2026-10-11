@@ -572,3 +572,29 @@ test("P90: unfinished Claude generation marks a gap at the turn boundary without
   );
   assert.equal(tracker.finish(), undefined);
 });
+
+test("aggregate writer preserves separate identity and conflicting evidence for Kernel validation", () => {
+  const written: string[] = [];
+  const writer = new ProviderUsageWriter((value) => written.push(value));
+  const aggregate = {
+    provider: "pi-print-json/v1",
+    kind: "compaction" as const,
+    nativeSessionId: "session",
+    entryId: "entry",
+    inputTokens: 10,
+    outputTokens: 2,
+    cachedInputTokens: 0,
+    reasoningOutputTokens: null,
+    observedAt: "2026-10-11T00:00:00.000Z",
+  };
+  writer.emit(aggregate);
+  writer.emit({ ...aggregate, inputTokens: 11 });
+  assert.deepEqual(
+    written.map((line) => JSON.parse(line).protocol),
+    ["rah-provider-usage-aggregate/v1", "rah-provider-usage-aggregate/v1"],
+  );
+  assert.deepEqual(
+    written.map((line) => JSON.parse(line).inputTokens),
+    [10, 11],
+  );
+});

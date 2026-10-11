@@ -194,6 +194,19 @@ test("AgentHost records runtime Provider usage through its own Host credential",
           runAttemptId: input.runAttemptId,
           runtimeRunId: run.runId,
         });
+        await lifecycle.recordUsageAggregate?.({
+          provider: "fixture-provider/v1",
+          kind: "compaction",
+          nativeSessionId: "fixture-session",
+          entryId: "compaction-entry",
+          inputTokens: 100,
+          outputTokens: 5,
+          cachedInputTokens: null,
+          reasoningOutputTokens: null,
+          observedAt: "2026-09-24T01:00:00.500Z",
+          runAttemptId: input.runAttemptId,
+          runtimeRunId: run.runId,
+        });
         await lifecycle.recordUsageGap?.({
           provider: "fixture-provider/v1",
           reason: "correction_frame",
@@ -225,8 +238,26 @@ test("AgentHost records runtime Provider usage through its own Host credential",
     assert.equal(result.state, "completed");
     const runAttemptId = kernel.listRunAttempts({ roomId: room.roomId })[0]
       ?.runAttemptId;
+    assert.ok(runAttemptId);
     const audit = new DatabaseSync(databasePath, { readOnly: true });
     try {
+      assert.deepEqual(
+        audit
+          .prepare(
+            "SELECT run_attempt_id, input_tokens, output_tokens, native_session_id, entry_id FROM run_attempt_usage_aggregates",
+          )
+          .all()
+          .map((row) => ({ ...row })),
+        [
+          {
+            run_attempt_id: runAttemptId,
+            input_tokens: 100,
+            output_tokens: 5,
+            native_session_id: "fixture-session",
+            entry_id: "compaction-entry",
+          },
+        ],
+      );
       assert.deepEqual(
         audit
           .prepare(
@@ -247,7 +278,7 @@ test("AgentHost records runtime Provider usage through its own Host credential",
       assert.deepEqual(
         audit
           .prepare(
-            "SELECT run_attempt_id, reason, occurrences FROM run_attempt_usage_gaps",
+            "SELECT run_attempt_id, reason, occurrences FROM run_attempt_usage_gaps ORDER BY reason",
           )
           .all()
           .map((row) => ({ ...row })),
@@ -255,6 +286,11 @@ test("AgentHost records runtime Provider usage through its own Host credential",
           {
             occurrences: 1,
             reason: "correction_frame",
+            run_attempt_id: runAttemptId,
+          },
+          {
+            occurrences: 1,
+            reason: "parse_error",
             run_attempt_id: runAttemptId,
           },
         ],

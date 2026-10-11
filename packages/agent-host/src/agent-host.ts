@@ -785,6 +785,10 @@ export class AgentHost {
                     notice.accepted = true;
                   },
                 }),
+            recordUsageAggregate: async (usage) => {
+              lastProgressMs = this.#now();
+              await this.#control.recordRunAttemptUsageAggregate?.(usage);
+            },
             recordUsageGap: async (gap) => {
               await this.#control.recordRunAttemptUsageGap?.(gap);
             },

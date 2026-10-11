@@ -1,3 +1,11 @@
+import {
+  RunAttemptUsageAggregateService,
+  aggregateUsageForRun,
+} from "./run-attempt-usage-aggregate.ts";
+import type {
+  RunAttemptUsageAggregateRecordInput,
+  RunAttemptUsageAggregate,
+} from "@rah-os/protocol";
 import type { DatabaseSync } from "node:sqlite";
 
 import {
@@ -170,6 +178,16 @@ export class RunAttemptUsageService {
           .get(input.runAttemptId, input.responseId)!,
       );
     });
+  }
+
+  recordAggregate(
+    host: AuthenticatedHostContext,
+    input: RunAttemptUsageAggregateRecordInput,
+  ): RunAttemptUsageAggregate {
+    return new RunAttemptUsageAggregateService(this.#options).record(
+      host,
+      input,
+    );
   }
 
   /** One aggregated row per gap reason; the live runtime must still own it. */
@@ -421,6 +439,7 @@ export class RunAttemptUsageService {
         )
         .all(input.runAttemptId, RUN_ATTEMPT_CLI_COST_READ_LIMIT)
         .map(costFromRow),
+      aggregateUsage: aggregateUsageForRun(this.#database, input.runAttemptId),
       compactionCount: observedCompactionCount(this.#database, {
         sql: "?",
         parameters: [input.runAttemptId],

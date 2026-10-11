@@ -1,11 +1,16 @@
 import type {
   ProviderCostFrame,
   ProviderUsageFrame,
+  ProviderUsageAggregateFrame,
   ProviderUsageGapFrame,
   ProviderUsageGapReason,
 } from "@rah-os/protocol";
 
 export type ProviderUsage = Omit<ProviderUsageFrame, "protocol">;
+export type ProviderUsageAggregate = Omit<
+  ProviderUsageAggregateFrame,
+  "protocol"
+>;
 export type ProviderUsageGap = Omit<ProviderUsageGapFrame, "protocol">;
 export type ProviderCost = Omit<ProviderCostFrame, "protocol">;
 
@@ -44,6 +49,11 @@ export function openCodeStepFinishUsage(
 export class ProviderUsageWriter {
   constructor(write?: (value: string) => void);
   emit(
-    usage: ProviderUsage | ProviderUsageGap | ProviderCost | undefined,
+    usage:
+      | ProviderUsage
+      | ProviderUsageAggregate
+      | ProviderUsageGap
+      | ProviderCost
+      | undefined,
   ): void;
 }

@@ -4,6 +4,12 @@ Claude 具体版本自定义模型的显式 effort 由 Protocol 提交许可表�
 
 状态：最小 AgentHost、Fake/Generic Runtime、Host generation fencing、deadline、Outbox wake、持久 `prepared -> active` RunAttempt/RuntimeProcess 和 scoped Worker API 已实现；Codex `gpt-5.6-sol/low`、Kimi `kimi-code/k3` 与 OpenCode `deepseek/deepseek-v4-flash/max` 已通过 opt-in 本机完整 Task gate，fake process 已通过 InputRequest 无 listening 恢复 gate。主动逃离 process group 的 descendant、完整 Artifact/Review workflow 和 Windows tree recovery 尚未实现或验证。
 
+## evo 原生聚合用量诊断（2026-10-11）
+
+`rah-provider-usage-aggregate/v1` 与既有逐response用量分开。Protocol定义原生压缩聚合；Host验证当前runtime/session追加记录并附加Run绑定；Kernel独占持久归属和幂等，以实例/provider/native session/entry唯一键防跨Run和reset重复记账，session代际仅保留来源。认证及Host generation fence先于精确重放；新增条目必须属于活动Run/runtime，同Run相同事实的终态重放可返回原收据，冲突不覆盖。
+
+RunAttempt API的可选`aggregateUsage`及控制台只展示已知小计，不改generation数量/总量，也不把聚合数当HTTP次数。缺项保持null，收到聚合至少保留用量gap，不能从成功摘要推断重试、中止或可选维度完整。当前仅Pi默认压缩路径有经源码核实的采集来源；扩展或未知来源不据此估数，远程Computer机制不扩展。历史Run不自动补账；这项诊断不影响Room/Task/ACK状态。[实现、验证与限制](../evo/evidence/2026-10-11-measurement-repair/README.md)。
+
 ## evo 显式最终输出命令（2026-10-05 可选接入）
 
 OpenCode/Codex warm 的可选最终输出路径接收严格 `room.reply` JSON 命令，而非自动发表 stdout 或自然语言答案。模型显式提供本轮因果序号；原生正常终态和原请求身份只证明传输，Worker 身份、原目标、freshness、幂等与消费确认仍由 Kernel 校验。Host 在原 Run 凭据释放前完成有界提交，并保持续租和取消；业务收据不改写原生退出事实。结果未知或 held 不自动重新执行。Codex仅接受原thread/turn的唯一完整final_answer项与正常completed终态，commentary不参与发布；各CLI开关独立，默认关闭。Claude/Kimi与远程Computer协议不扩展。开关、迁移和验收边界见[实现记录](../evo/final-output-transport.zh-CN.md)。

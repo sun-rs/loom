@@ -774,6 +774,7 @@ export function runUsageDetail(
             notes.length === 0 ? "" : `（${notes.join("；")}）`
           }`;
   }
+  const aggregate = response.aggregateUsage?.totals;
   const lastContextText =
     lastContext === undefined
       ? UNKNOWN
@@ -837,6 +838,10 @@ export function runUsageDetail(
             : response.compactionCount === null
               ? `${UNKNOWN}（本轮无运行轨迹）`
               : String(response.compactionCount),
+      },
+      {
+        label: "已知压缩聚合用量",
+        value: `记录 ${formatCount(aggregate?.entries)}；输入 ${formatCount(aggregate?.inputTokens)}（缓存 ${formatCount(aggregate?.cachedInputTokens)}）；输出 ${formatCount(aggregate?.outputTokens)}（推理 ${formatCount(aggregate?.reasoningOutputTokens)}）；并不代表所有请求完整计量`,
       },
       { label: "已记录费用小计（CLI 自报）", value: costText },
     ],

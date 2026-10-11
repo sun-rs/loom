@@ -88,6 +88,7 @@ export const ROOM_DELETION_REFERENCED_TABLES = new Set([
   "run_attempt_cli_costs",
   "run_attempt_final_replies",
   "worker_run_message_writes",
+  "run_attempt_usage_aggregates",
   "run_attempt_usage",
   "run_attempt_usage_gaps",
   "runtime_process_cleanups",
@@ -344,6 +345,8 @@ export class RoomDeletionService {
       `DELETE FROM managed_mcp_calls WHERE room_id=?`,
       `DELETE FROM context_manifests WHERE run_attempt_id IN
          (SELECT run_attempt_id FROM run_attempts WHERE room_id=?)`,
+      `DELETE FROM run_attempt_usage_aggregates WHERE run_attempt_id IN
+        (SELECT run_attempt_id FROM run_attempts WHERE room_id = ?)`,
       `DELETE FROM run_attempt_usage WHERE run_attempt_id IN
          (SELECT run_attempt_id FROM run_attempts WHERE room_id=?)`,
       `DELETE FROM run_attempt_usage_gaps WHERE run_attempt_id IN

@@ -1,3 +1,4 @@
+import { RunAttemptUsageAggregateSummarySchema } from "./runtime-usage-aggregate.ts";
 import { z } from "zod";
 
 import { IdentifierSchema, TimestampSchema } from "./common.ts";
@@ -433,6 +434,8 @@ export const ClientRunAttemptUsageGetResponseSchema = z
      * Compactions outside a Loom-managed turn are not observed.
      */
     compactionCount: z.number().int().nonnegative().nullable().optional(),
+    /** Separate native aggregates; never added to generation totals. */
+    aggregateUsage: RunAttemptUsageAggregateSummarySchema.optional(),
   })
   .strict();
 export type ClientRunAttemptUsageGetResponse = z.infer<

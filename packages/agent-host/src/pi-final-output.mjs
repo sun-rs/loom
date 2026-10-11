@@ -24,7 +24,7 @@ export function piTerminalCompactions(frames) {
   )
     return undefined;
   // Pi 1.1.0 may persist threshold compaction after agent_end, before settled.
-  // Only that closed native tail is allowed; it is never a new final or usage record.
+  // Only that closed native tail is allowed; it is never a new final or response generation.
   const tail = frames.slice(
     frames.findIndex((x) => x.type === "agent_end") + 1,
     -1,

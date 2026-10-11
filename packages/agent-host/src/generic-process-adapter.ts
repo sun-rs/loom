@@ -21,6 +21,7 @@ import type {
 } from "@rah-os/protocol";
 import {
   ProviderCostFrameSchema,
+  ProviderUsageAggregateFrameSchema,
   ProviderUsageFrameSchema,
   ProviderUsageGapFrameSchema,
   RuntimeTrajectoryAppendInputSchema,
@@ -368,6 +369,7 @@ export class RuntimeTrajectoryCollector {
     if (
       this.#lifecycle.recordTrajectory !== undefined ||
       this.#lifecycle.recordUsage !== undefined ||
+      this.#lifecycle.recordUsageAggregate !== undefined ||
       this.#lifecycle.recordCost !== undefined ||
       this.#recordProviderSessionEvidence !== undefined ||
       this.#recordDeliveryAcceptance !== undefined ||
@@ -408,6 +410,48 @@ export class RuntimeTrajectoryCollector {
         ]),
       ),
     };
+  }
+
+  /** Aggregate evidence has no response identity and never becomes a generation. */
+  async #recordUsageAggregate(frame: Record<string, unknown>): Promise<void> {
+    const parsed = ProviderUsageAggregateFrameSchema.safeParse(frame);
+    if (!parsed.success) {
+      this.#diagnostics.append(
+        "[rah-os] ignored invalid Provider usage aggregate frame\n",
+      );
+      await this.#recordUsageGap({
+        protocol: "rah-provider-usage-gap/v1",
+        provider:
+          typeof frame.provider === "string" && frame.provider.trim() !== ""
+            ? frame.provider.slice(0, 128)
+            : "unknown",
+        reason: "parse_error",
+        observedAt:
+          typeof frame.observedAt === "string" &&
+          !Number.isNaN(Date.parse(frame.observedAt))
+            ? new Date(Date.parse(frame.observedAt)).toISOString()
+            : new Date().toISOString(),
+      });
+      return;
+    }
+    const { protocol: _protocol, ...usage } = parsed.data;
+    try {
+      await this.#lifecycle.recordUsageAggregate?.({
+        ...usage,
+        runAttemptId: this.#runAttemptId,
+        runtimeRunId: this.#runtimeRunId,
+      });
+    } catch (error) {
+      this.#diagnostics.append(
+        `[rah-os] Provider usage aggregate was not recorded: ${errorMessage(error)}\n`,
+      );
+      await this.#recordUsageGap({
+        protocol: "rah-provider-usage-gap/v1",
+        provider: usage.provider,
+        reason: "parse_error",
+        observedAt: usage.observedAt,
+      });
+    }
   }
 
   /** Host-private usage evidence: validated, then handed to its owner. */
@@ -619,6 +663,13 @@ export class RuntimeTrajectoryCollector {
         }
         if (isRecord(frame) && frame.protocol === "rah-session-resume/v1") {
           await this.#recordSessionResume(frame);
+          return;
+        }
+        if (
+          isRecord(frame) &&
+          frame.protocol === "rah-provider-usage-aggregate/v1"
+        ) {
+          await this.#recordUsageAggregate(frame);
           return;
         }
         if (isRecord(frame) && frame.protocol === "rah-provider-usage/v1") {
