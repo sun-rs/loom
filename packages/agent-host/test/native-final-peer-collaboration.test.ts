@@ -21,7 +21,12 @@ import { WorkerFinalOutput } from "../src/worker-final-output.ts";
 
 // Synthetic native text only: real Role/Kernel/MultiLaneAgentHost/Worker HTTP.
 // This does not exercise a provider parser, real CLI, or model cooperation.
-test("native-final peers run independently, hold stale peer replies, and hand off exact text with delta after Human recovery", async () => {
+for (const directed of [false, true]) {
+  test(`native-final peers: ${directed ? "addressed peer holds and Human recovers" : "ordinary peer permits original final without consuming unread facts"}, then exact handoff and delta`, () =>
+    peerCollaboration(directed));
+}
+
+async function peerCollaboration(directed: boolean) {
   const f = roleInstanceFixture();
   const kernel = new RoomKernel({
     databasePath: String(f.db.prepare("PRAGMA database_list").get()!.file),
@@ -61,9 +66,10 @@ test("native-final peers run independently, hold stale peer replies, and hand of
   const submissions = new Map<string, WorkerFinalOutput>();
   const envelopes = new Map<string, string>();
   const credentials: Array<{ revoke(): void }> = [];
+  const sentSequences = new Map<string, number>();
   const texts = [
-    "FAKE obsolete A answer",
-    "FAKE B independent answer",
+    "FAKE original A answer",
+    `${directed ? "@" + handles[0] + " " : ""}FAKE B independent answer`,
     handoff,
     "FAKE B verified handoff",
     "FAKE B next answer",
@@ -115,6 +121,13 @@ test("native-final peers run independently, hold stale peer replies, and hand of
           origin: worker.origin,
           accessToken: issued.accessToken,
           isActive: () => true,
+          fetcher: async (url, init) => {
+            sentSequences.set(
+              input.runAttemptId,
+              JSON.parse(String(init?.body)).basedOnRoomSeq,
+            );
+            return fetch(url, init);
+          },
         }),
       );
       envelopes.set(
@@ -220,41 +233,79 @@ test("native-final peers run independently, hold stale peer replies, and hand of
       "A has received only the original opening, never B's later reply",
     );
     release();
-    await waitFor(
-      () =>
+    if (directed) {
+      await waitFor(
+        () =>
+          f.db
+            .prepare(
+              "SELECT count(*) n FROM activation_retry_fences WHERE retry_disposition='action_required'",
+            )
+            .get()!.n === 1,
+      );
+      assert.equal(
+        runtime.starts.length,
+        2,
+        "held output must not automatically retry or self-wake",
+      );
+      assert.equal(
+        f.db.prepare("SELECT body FROM held_message_drafts").get()!.body,
+        texts[0],
+      );
+      const old = runtime.starts.find((x) => x.participantId === ids[0])!;
+      const failed = f.db
+        .prepare("SELECT * FROM run_attempts WHERE run_attempt_id=?")
+        .get(old.runAttemptId);
+      await client.request("instance.activation.abandon", {
+        instanceId: ids[0]!,
+        activationId: old.activationId,
+        basedOnRoomSeq: f.head(f.home.roomId),
+        idempotencyKey: "abandon",
+      });
+      assert.deepEqual(
+        f.db
+          .prepare("SELECT * FROM run_attempts WHERE run_attempt_id=?")
+          .get(old.runAttemptId),
+        failed,
+      );
+    } else {
+      await waitFor(() => completed() === 2);
+      assert.equal(
+        runtime.starts.length,
+        2,
+        "ordinary peer replies create no automatic follow-up or self wake",
+      );
+      assert.equal(
+        f.db.prepare("SELECT count(*) n FROM held_message_drafts").get()!.n,
+        0,
+      );
+      assert.equal(
         f.db
           .prepare(
-            "SELECT count(*) n FROM activation_retry_fences WHERE retry_disposition='action_required'",
+            "SELECT count(*) n FROM messages WHERE actor_id=? AND body=?",
           )
-          .get()!.n === 1,
-    );
+          .get(ids[0]!, texts[0]!)!.n,
+        1,
+      );
+      assert.equal(
+        f.db
+          .prepare(
+            "SELECT last_seq FROM subscription_cursors WHERE room_id=? AND participant_id=? AND consumer_id=?",
+          )
+          .get(f.home.roomId, ids[0]!, firstA.consumerId)!.last_seq,
+        firstA.toSeq,
+        "publishing past an ordinary peer does not ACK unread B",
+      );
+      assert.deepEqual(presentations.get(firstA.runAttemptId), [
+        "@all FAKE Human opening",
+      ]);
+    }
     assert.equal(
-      runtime.starts.length,
-      2,
-      "held output must not automatically retry or self-wake",
-    );
-    assert.equal(
-      f.db.prepare("SELECT body FROM held_message_drafts").get()!.body,
-      texts[0],
-    );
-    const old = runtime.starts.find((x) => x.participantId === ids[0])!;
-    const failed = f.db
-      .prepare("SELECT * FROM run_attempts WHERE run_attempt_id=?")
-      .get(old.runAttemptId);
-    await client.request("instance.activation.abandon", {
-      instanceId: ids[0]!,
-      activationId: old.activationId,
-      basedOnRoomSeq: f.head(f.home.roomId),
-      idempotencyKey: "abandon",
-    });
-    assert.deepEqual(
-      f.db
-        .prepare("SELECT * FROM run_attempts WHERE run_attempt_id=?")
-        .get(old.runAttemptId),
-      failed,
+      sentSequences.get(firstA.runAttemptId),
+      firstA.toSeq,
+      "native final retains the original delivered basedOnRoomSeq",
     );
     post(0, "FAKE explicitly review peer facts and hand off", "recover");
-    await waitFor(() => completed() === 3);
+    await waitFor(() => completed() === (directed ? 3 : 4));
     assert.equal(runtime.starts.length, 4);
     assert.ok(
       presentations.get(runtime.starts[2]!.runAttemptId)!.includes(texts[1]!),
@@ -270,7 +321,7 @@ test("native-final peers run independently, hold stale peer replies, and hand of
       "the exact fake-native @ body, not a test-added recipient, wakes B",
     );
     post(1, "FAKE next B request", "next-b");
-    await waitFor(() => completed() === 4);
+    await waitFor(() => completed() === (directed ? 4 : 5));
     const last = presentations.get(runtime.starts[4]!.runAttemptId)!;
     assert.deepEqual(
       last,
@@ -287,7 +338,7 @@ test("native-final peers run independently, hold stale peer replies, and hand of
     );
     assert.equal(
       f.db.prepare("SELECT count(*) n FROM run_attempt_final_replies").get()!.n,
-      4,
+      directed ? 4 : 5,
     );
     assert.equal(kernel.listRunAttempts({ roomId: f.home.roomId }).length, 5);
     assert.equal(
@@ -308,4 +359,4 @@ test("native-final peers run independently, hold stale peer replies, and hand of
     kernel.close();
     f.close();
   }
-});
+}

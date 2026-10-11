@@ -1,5 +1,7 @@
 # 最终回复传输：显式 JSON 与原生正文
 
+2026-10-12 经 owner 批准，普通同频道 Role 同伴消息不再单独使普通无附件回复 held；Human、明确 @ 当前实例／广播和附件仍按原规则。Worker 与 Host 共用 Kernel 判定，保留真实旧 `basedOnRoomSeq`，不将尚未呈现的 peer 消息记成已读，后续 delta 补入。Task/Review/记忆状态围栏不变。以下早期“外部新事实仍 hold”的实验记录按当时修订理解；当前边界以[目标合同 §3](target-contract.zh-CN.md#3-调度与交流)及[本批证据](evidence/2026-10-12-peer-append-policy/summary.json)为准。
+
 2026-10-04 完成四家免费传输研究；负责人随后要求继续，2026-10-05 接入 OpenCode warm 纵向路径。当前通过真实安装 CLI＋本地假模型的两轮 Worker／Kernel／Host 全链：每轮一次假模型请求、同 session、两个完成的 Activation、两个可信 final-output marker、没有 Worker 发帖工具调用。随后 P108 真实三轮传输和数值预算通过（输入1.140倍，双方生成2/1/1），但实质审查质量失败，**不是整体验收通过**。 当前正式部署见 [status](status.zh-CN.md)，预算和目标合同不变。
 
 ## 2026-10-11 正常退出与压缩续接的来源修正

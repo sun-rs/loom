@@ -1,0 +1,104 @@
+{
+  "date": "2026-10-12",
+  "kind": "owner-approved-kernel-behavior-change",
+  "baseCommit": "974e44f45e923b1e3d11e2c3318dcbba9545284a",
+  "owner": "Kernel CollaborationService shared reply freshness policy",
+  "behavior": {
+    "allow": "Same-channel Role ordinary attachment-free reply despite newer undirected attachment-free peer posts",
+    "preserved": [
+      "real basedOnRoomSeq and read floor",
+      "unseen peer retained for next delta",
+      "Human and canonical directed/broadcast freshness holds",
+      "attachments and attachment comments do not qualify",
+      "Task/Review/memory state-mutation fences",
+      "authentication, membership, execution and idempotency",
+      "native-final own-progress proof"
+    ],
+    "unchanged": [
+      "private-box and legacy behavior",
+      "trial flags",
+      "model prompts",
+      "no automatic model retry or global speaker queue"
+    ]
+  },
+  "tdd": {
+    "red": "Worker/native-final ordinary peer publication failed under prior policy; Host ordinary peer case quarantined A. Directed protective case passed.",
+    "green": {
+      "kernelNewCases": 19,
+      "hostCollaborationCases": 2,
+      "independentKernelIncludingOwnProgress": 29
+    },
+    "independentReview": "No blocking issue. Explicit contextReceipt path statically reviewed; existing hasNewerTargetMessages deliberately preserved, no new dedicated receipt case.",
+    "scope": [
+      "worker activation origin",
+      "worker explicit channel target",
+      "Host/native-final",
+      "peer posted during two concurrently running lanes",
+      "exact directed handoff and next-turn delta"
+    ],
+    "daemonRegression": {
+      "before": "Old two-Role integration required exactly one published reply; failed after approved semantic change.",
+      "after": "Both actual identities publish their own body exactly once, no held drafts, reconnect recovers each message exactly once; Task assertions preserved.",
+      "fileCasesPassed": 21
+    }
+  },
+  "verification": {
+    "fullCheck": {
+      "command": "npm run check",
+      "exitCode": 0,
+      "backendPassed": 3138,
+      "backendSkipped": 22,
+      "webPassed": 487,
+      "consolePassed": 61,
+      "efficiencyHarnessPassed": 558,
+      "typecheck": "passed",
+      "otherConfiguredChecks": "passed"
+    },
+    "format": "passed: npm run format:check",
+    "diff": "passed: git diff --check",
+    "deployment": "pending; previous verified deployment remains active until safe restart",
+    "localLinks": "all local links in changed Markdown resolve",
+    "targeted": "31 passed; 19 new Kernel + 2 Host collaboration + 10 existing native-own-progress",
+    "firstFullCheck": {
+      "backendPassed": 3136,
+      "backendSkipped": 22,
+      "failures": [
+        {
+          "test": "Human API drives two Workspace Agents through daemon v4 and reconnect recovery",
+          "reason": "Old assertion required exactly one peer reply; updated to approved two-reply contract with stronger identity/no-held/reconnect assertions; full file 21 passed"
+        },
+        {
+          "test": "Tailnet gateway also serves loopback and closes both listeners",
+          "reason": "EADDRINUSE on ephemeral loopback bind; unmodified test passed isolated rerun"
+        }
+      ],
+      "finalFullCheck": "passed without failures"
+    }
+  },
+  "limits": [
+    "Deterministic FakeRuntime and Kernel/HTTP tests, not paid CLI acceptance",
+    "No new paid batch or team cost ratio",
+    "Actual multi-CLI collaboration and repeated native-team/Herdr controls remain pending",
+    "Seven final/native-final trial flags stay off",
+    "Known Task target-read fixture synthetic root issue not repaired in this slice"
+  ],
+  "provenance": "Local implementation informed by upstream design comparison; no copied or structurally ported upstream source.",
+  "logs": {
+    "loom-peer-kernel-red.log": {
+      "sha256": "860e84ac8fe21b8efdb1318d05f5733f624160b548d01c450480b47b07327be9",
+      "publicContents": false
+    },
+    "loom-peer-exception-red.log": {
+      "sha256": "0c248545779c91e9b24d3c1fafb912d9fd470a9c8da0d9a44a1fbf3f25454eb1",
+      "publicContents": false
+    },
+    "loom-peer-final-targeted.log": {
+      "sha256": "222ba3d1cf4eec1d2507ff5d2af4dc6037a9505333b45ab180d6d9d8f87c7510",
+      "publicContents": false
+    },
+    "loom-peer-append-check-final.log": {
+      "sha256": "c2142d0c3c6dad10258d03b89fe84f343b6e618703e7bd16cdc82c7f6f597195",
+      "publicContents": false
+    }
+  }
+}

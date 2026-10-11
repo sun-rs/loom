@@ -552,12 +552,26 @@ await import(${JSON.stringify(new URL("../../agent-host/test/fixtures/fake-cli.m
             agents.some(
               (agent) => agent.principal.principalId === candidate.actorId,
             ),
-          ).length === 1 &&
+          ).length === 2 &&
         activeObserver
           .listActivations({ roomId })
           .every((activation) => activation.state === "completed"),
       5_000,
     );
+    const heldObserver = new DatabaseSync(databasePath, { readOnly: true });
+    try {
+      assert.equal(
+        heldObserver
+          .prepare(
+            "SELECT count(*) AS n FROM held_message_drafts WHERE room_id=?",
+          )
+          .get(roomId)!.n,
+        0,
+        "parallel non-directed peer replies must not create held drafts",
+      );
+    } finally {
+      heldObserver.close();
+    }
     const postMessageDelivery = await requireJson<{ latestRoomSeq: number }>(
       await clientRequest(firstOrigin, "/v3/client/rooms/sync", {
         consumerId: "p3c-browser-main",
@@ -676,13 +690,18 @@ await import(${JSON.stringify(new URL("../../agent-host/test/fixtures/fake-cli.m
       );
     assert.equal(
       agentReplies.length,
-      1,
-      "freshness must publish one concurrent chat reply and hold its stale peer",
+      2,
+      "both Role instances publish their independent ordinary replies exactly once",
     );
-    assert.ok(
-      agentReplies[0]?.body === "Canonical daemon reply from Agent 0" ||
-        agentReplies[0]?.body === "Canonical daemon reply from Agent 1",
-    );
+    for (const [index, agent] of agents.entries()) {
+      assert.deepEqual(
+        agentReplies
+          .filter((reply) => reply.actorId === agent.principal.principalId)
+          .map((reply) => reply.body),
+        [`Canonical daemon reply from Agent ${String(index)}`],
+        "reply identity and body must match the actual runtime, with no duplicate",
+      );
+    }
     assert.deepEqual(
       activeObserver
         .listMessages(humanActor, {
@@ -831,7 +850,7 @@ await import(${JSON.stringify(new URL("../../agent-host/test/fixtures/fake-cli.m
     const recovered = await requireJson<{
       cursorAfter: number;
       cursorBefore: number;
-      events: Array<{ type: string }>;
+      events: Array<{ type: string; aggregateId: string }>;
     }>(
       await clientRequest(restartedOrigin, "/v3/client/rooms/sync", {
         consumerId: "p3c-browser-main",
@@ -840,6 +859,17 @@ await import(${JSON.stringify(new URL("../../agent-host/test/fixtures/fake-cli.m
     );
     assert.equal(recovered.cursorBefore, initialDelivery.cursorAfter);
     const recoveredTypes = recovered.events.map((event) => event.type);
+    for (const published of agentReplies) {
+      assert.equal(
+        recovered.events.filter(
+          (event) =>
+            event.type === "message.posted" &&
+            event.aggregateId === published.messageId,
+        ).length,
+        1,
+        "reconnect recovers each committed peer reply once from the durable ledger",
+      );
+    }
     for (const expectedType of [
       "message.posted",
       "thread.created",

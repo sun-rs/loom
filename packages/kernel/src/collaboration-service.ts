@@ -1,4 +1,4 @@
-import { latestExternalTargetMessageSeq } from "./worker-run-message-writes.ts";
+import { latestBlockingReplyMessageSeq } from "./reply-message-freshness.ts";
 import { assertNoUnresolvedRuntimeCleanup } from "./runtime-process-cleanup.ts";
 import {
   requireActiveInstancePrivateBox,
@@ -2146,16 +2146,14 @@ export class CollaborationService {
       throw new Error("message body or attachment is required");
     }
 
-    const latestTargetSeq =
-      input.finalOutputRunAttemptId === undefined
-        ? this.#latestTargetMessageSeq(input.roomId, input.threadId)
-        : latestExternalTargetMessageSeq(
-            this.#database,
-            input.roomId,
-            input.threadId,
-            input.finalOutputRunAttemptId,
-            actor.principalId,
-          );
+    const latestTargetSeq = latestBlockingReplyMessageSeq(this.#database, {
+      roomId: input.roomId,
+      threadId: input.threadId,
+      actorId: actor.principalId,
+      afterSeq: freshnessFloorSeq,
+      finalOutputRunAttemptId: input.finalOutputRunAttemptId,
+      ordinaryReply: attachments.length === 0 && !input.attachmentComment,
+    });
     if (latestTargetSeq > freshnessFloorSeq && input.continueAnyway !== true) {
       const heldDraftId = this.#createId("held_draft");
       const reholdCount =
