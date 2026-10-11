@@ -1,0 +1,196 @@
+{
+  "kind": "loom-claude-bounded-closeout-audit/v1",
+  "providerCalls": 0,
+  "productChanged": false,
+  "deploymentChanged": false,
+  "verdict": "Bounded diagnosis complete; no demonstrated new Loom transport defect. Original cost/quality failures remain, and current deployed native-final adoption is not accepted by this audit.",
+  "quality": {
+    "originalScoresPreserved": true,
+    "counts": {
+      "native": {
+        "rounds": 48,
+        "combinedPass": 44,
+        "functionalPass": 48,
+        "selfTestsPass": 44,
+        "selfTestFailureNames": {
+          "test_success_ungrouped (test_invoice.TestCli.test_success_ungrouped)": 4,
+          "test_success_from_stdin_dash (test_invoice.TestCli.test_success_from_stdin_dash)": 3
+        }
+      },
+      "current": {
+        "rounds": 48,
+        "combinedPass": 33,
+        "functionalPass": 41,
+        "selfTestsPass": 36,
+        "selfTestFailureNames": {
+          "test_success_basic (test_invoice.TestCli.test_success_basic)": 4,
+          "test_stdin_dash_reads_request (test_invoice.TestCli.test_stdin_dash_reads_request)": 3,
+          "test_basic_request (test_cli.CliTests.test_basic_request)": 4,
+          "test_stdin_dash_success (test_cli.StdinCliTests.test_stdin_dash_success)": 3,
+          "test_success_file_argument (test_invoice.CliTests.test_success_file_argument)": 4,
+          "test_stdin_dash_reads_request (test_invoice.CliTests.test_stdin_dash_reads_request)": 3
+        }
+      }
+    },
+    "failureClusters": [
+      {
+        "slot": "1-current",
+        "failedRounds": [9, 10, 11, 12],
+        "functionalFailureRounds": [],
+        "selfTestFailureRounds": [9, 10, 11, 12]
+      },
+      {
+        "slot": "3-current",
+        "failedRounds": [9, 10, 11, 12],
+        "functionalFailureRounds": [],
+        "selfTestFailureRounds": [9, 10, 11, 12]
+      },
+      {
+        "slot": "4-current",
+        "failedRounds": [6, 7, 8, 9, 10, 11, 12],
+        "functionalFailureRounds": [6, 7, 8, 9, 10, 11, 12],
+        "selfTestFailureRounds": [9, 10, 11, 12]
+      },
+      {
+        "slot": "4-native",
+        "failedRounds": [9, 10, 11, 12],
+        "functionalFailureRounds": [],
+        "selfTestFailureRounds": [9, 10, 11, 12]
+      }
+    ],
+    "artifactHashesVerifiedRounds": 96,
+    "sandboxReplays": 11,
+    "precisionMechanism": {
+      "exactProduct": "999998938757699633383970.424994792494",
+      "defaultPrecisionProduct": "999998938757699633383970.4250",
+      "independentExpectedSubtotal": "999998938757699633383970.42",
+      "source": "4-current snapshot-6/invoice.py: _validate_rows multiplies before summarize enters localcontext; later higher precision cannot restore lost digits. Same observable failure reproduced in snapshots 6-12."
+    },
+    "warningInterpretation": "Generated source contains non-raw docstring escapes. Under evaluator Python 3.13, SyntaxWarning violates generated tests requiring empty stderr. Appears on both sides; no evidence of model-tool interpreter version, so do not call evaluator false positive or attribute to Loom.",
+    "independence": "The precision issue persists across seven rounds in one session; warning failures persist across four-round clusters. These are not independent model failures.",
+    "productBoundary": "invoice.py and its tests are generated workload artifacts, not Loom backend source. No automatic product patch follows from these failures.",
+    "evidence": {
+      "path": "/Users/sun/.loom/reviews/2026-10-11-claude-closeout/quality-audit.json",
+      "sha256": "a3ad270e74e4a665fa6a17930f6dc906505ea53c7935e45a10ca52d258f15df0"
+    }
+  },
+  "cost": {
+    "totals": {
+      "native": {
+        "input": 11118795,
+        "output": 142580,
+        "generations": 316
+      },
+      "current": {
+        "input": 16458141,
+        "output": 179546,
+        "generations": 376
+      }
+    },
+    "ratios": {
+      "input": 1.4802090514304833,
+      "output": 1.2592649740496564,
+      "generations": 1.1898734177215189
+    },
+    "toolCalls": {
+      "native": {
+        "Bash": 103,
+        "Read": 16,
+        "Write": 21,
+        "Edit": 154
+      },
+      "current": {
+        "Write": 23,
+        "Edit": 172,
+        "Bash": 126,
+        "Read": 18
+      }
+    },
+    "generationStructure": {
+      "native": {
+        "stopReasons": {
+          "tool_use": 268,
+          "end_turn": 48
+        },
+        "toolCallsPerGeneration": {
+          "1": 244,
+          "2": 22,
+          "0": 48,
+          "3": 2
+        }
+      },
+      "current": {
+        "stopReasons": {
+          "tool_use": 328,
+          "end_turn": 48
+        },
+        "toolCallsPerGeneration": {
+          "1": 318,
+          "0": 48,
+          "2": 9,
+          "3": 1
+        }
+      }
+    },
+    "ratioAverageInputOverall": 1.244005479393704,
+    "limits": [
+      "Initial fixed-input delta does not isolate causal token effect across later stochastic trajectories.",
+      "Generation count includes every raw /messages response; auxiliary count_tokens requests remain separate.",
+      "Tool counts are calls, not generation counts; one generation may call several tools.",
+      "Original per-round correct flags in arms come from historical runner and do not replace lead current oracle replay correction above.",
+      "Compact UTF-8 JSON byte measures are diagnostic, not token estimates.",
+      "Raw CLI model resolves sonnet to claude-sonnet-5-5 with low effort; results apply to this fixed old cohort, not current five-CLI acceptance."
+    ],
+    "initialInputExtraPerPair": [1651, 1642, 1659, 1657],
+    "workerCommunicationCallsObserved": 0,
+    "currentNativeFinalRounds": 48,
+    "causalLimit": "More business tool generations and longer history are observed. This does not isolate why the model chose those paths or prove a backend defect."
+  },
+  "entryRepair": {
+    "status": "Integrated into isolated copied real parent/guard with synthetic child; old paid batch remains unchanged",
+    "testsPassed": 13,
+    "leadRerunPassed": true,
+    "lockHoldRecoveredMs": 6200,
+    "failureKnownLowerBound": {
+      "input": 33,
+      "output": 7,
+      "httpAttempts": 1
+    },
+    "failurePrimaryComplete": false,
+    "laterArmStarted": false,
+    "limits": [
+      "No real Claude CLI, model, provider network, full mixed cohort or five-way actual contention in this bounded check.",
+      "Synthetic child declares normal session/memory/quality/cleanup gates; this is controller wiring evidence, not new verification of those provider properties.",
+      "Normal receipts are synthetic amounts; fault SSE is synthetic. No cost or efficiency inference.",
+      "Synthetic closure hashes cover local harness and required method; not a newly approved full paid closure.",
+      "30-second maximum remains finite and can fail under longer contention.",
+      "Original failed paid sample unchanged; no rerun or replacement."
+    ],
+    "evidence": {
+      "path": "/Users/sun/.loom/reviews/2026-10-11-claude-lock-integration/readiness.json",
+      "sha256": "3cc12167efe767fc7a155d93ccf9e6891b43c9f4b9fe59defd84a8b8dc19aa6d"
+    },
+    "leadLog": {
+      "path": "/Users/sun/.loom/reviews/2026-10-11-claude-closeout/lock-lead-verification.log",
+      "sha256": "7813fce0233c41698140b8767b8530fc2e9a32a2dbfa6db85db4759b59e926ec"
+    }
+  },
+  "decision": {
+    "stop": "Do not reopen transport/prompt optimization merely for the old 1.48 ratio. No new product bug was demonstrated here.",
+    "retain": "Actual excess spend and generated-artifact quality failures remain valid historical observations; no success reclassification.",
+    "claudeCurrent": "New mixed batch failed before model start. Old one-task results cannot prove current generic cost or quality. Any future verification uses a fixed cohort and distribution-based interpretation, not repeat-until-pass.",
+    "backend": "Core mechanisms have prior deterministic and real-CLI evidence. Finish requires a narrow current-path adoption and operational acceptance, not rebuilding every subsystem.",
+    "nextPriority": "Combine actual multi-instance parallelism, busy Human input and held recovery into one bounded vertical acceptance, then check session continuity and accounting labels at the chosen deployment scope.",
+    "paidRunStatus": "No new paid batch launched or frozen by this audit."
+  },
+  "evidence": [
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-11-claude-closeout/cost-audit.json",
+      "sha256": "76b8c52a232e2a9b62d69bc64ef55dfc719eea6e20ea11458f920259a8370c7b"
+    },
+    {
+      "path": "../2026-10-11-v7-long-task/claude-complete.json",
+      "sha256": "68606dbbb8b8ed22700db67e33a3d4f0e2dd08b77e5f02722149d1e324b67c3b"
+    }
+  ]
+}

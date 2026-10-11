@@ -1,0 +1,55 @@
+{
+  "kind": "loom-backend-bounded-finish-inventory/v1",
+  "status": "Evidence inventory, not newly executed acceptance",
+  "paidProviderCalls": 0,
+  "items": [
+    {
+      "area": "native-final adoption",
+      "alreadyProven": "Single-instance controlled paths and repeated costs exist; seven production trial flags remain off.",
+      "remainingTriggerAndAcceptance": "At adoption, choose CLI/runtime scope and verify actual formal entry plus existing-session continuation; retain Worker fallback for other operations.",
+      "evidence": [
+        "../../status.zh-CN.md",
+        "../2026-10-11-mixed-study-run/summary.json"
+      ]
+    },
+    {
+      "area": "parallel channel delivery",
+      "alreadyProven": "P89 four CLI concurrency and P92 channel parallelism already exist; independent lanes have integration tests.",
+      "remainingTriggerAndAcceptance": "For current native-final scope, demonstrate B responds while A is busy, directed wake targets only intended instance, and handoff consumes delta once.",
+      "evidence": [
+        "../2026-10-01-held-revision-four-cli-p89.json",
+        "../../../../packages/agent-host/test/role-broadcast-parallel.test.ts"
+      ]
+    },
+    {
+      "area": "Human facts while busy",
+      "alreadyProven": "Steer/queue/private-box boundaries are tested; earlier real insertion evidence exists.",
+      "remainingTriggerAndAcceptance": "Same vertical scenario: actual steer where supported, queued follow-up otherwise; no lost message, false read receipt or stale publish.",
+      "evidence": [
+        "../../../../packages/kernel/test/channel-steer.test.ts",
+        "../../status.zh-CN.md"
+      ]
+    },
+    {
+      "area": "held recovery",
+      "alreadyProven": "Held unread-cursor defect is repaired and deployed; Client HTTP + Kernel recovery tests pass.",
+      "remainingTriggerAndAcceptance": "When current actual CLI reply is held, perform Human abandon plus new request through existing entry, consume newer facts and publish once; preserve old draft/failure.",
+      "evidence": [
+        "../2026-10-11-audit-repair/summary.json",
+        "../../../../packages/kernel/test/native-final-human-recovery.test.ts"
+      ]
+    },
+    {
+      "area": "session/accounting operations",
+      "alreadyProven": "Long native session continuity, raw usage and cleanup audited; older restart evidence exists.",
+      "remainingTriggerAndAcceptance": "For adopted runtime, cover relevant idle-reap/restart continuation and cancellation accounting. Keep unknown/partial labels; do not require eliminating all unknown fields.",
+      "evidence": ["../../target-contract.zh-CN.md", "../../status.zh-CN.md"]
+    }
+  ],
+  "scopeLimits": [
+    "Existing multi-CLI tests must not be erased by old blanket uncovered statements.",
+    "These five concerns can share a small vertical scenario; they are not five new frameworks or full cost matrices.",
+    "No frontend expansion, automatic held recovery, fork/side or remote-Computer work added.",
+    "Current production remains on existing default path; this document does not enable trial flags."
+  ]
+}
