@@ -1,0 +1,29 @@
+{
+  "kind": "kimi-v7-cwd-failure/v1",
+  "sourceRevision": "a92d5ec21c02bdde887cd022bcd1f5fc8e9da64a",
+  "model": "kimi-code/k3-256k",
+  "effort": "low",
+  "status": "failed fixed cohort; primary ratio unavailable",
+  "native": {
+    "completedRounds": 12,
+    "qualityPassed": 12,
+    "input": 2752144,
+    "cachedInput": 2674176,
+    "output": 22412,
+    "requests": 77
+  },
+  "current": {
+    "completedRounds": 0,
+    "providerRequests": 0,
+    "failure": "Daemon process.cwd EPERM before model execution"
+  },
+  "cause": "Private parent omitted per-arm cwd. Free entry inherited repository cwd; paid entry inherited provider parent cwd denied by daemon sandbox. Pure OS reproducer: repository and arm cwd succeed, provider parent cwd fails. Not an account/model/product EOF error.",
+  "resolution": "Old failed cohort remains unchanged. Preparing a separate new 4-pair cohort with shared launcher and actual free/paid cwd, PATH and environment assertions; no old native reuse.",
+  "remainingOriginalKimiBudget": {
+    "input": 45247856,
+    "output": 777588,
+    "requests": 1363
+  },
+  "clock": "Original absolute 12h deadline unchanged; failed batch expense deducted, not erased.",
+  "limitations": "New cohort is additional measurement after a harness failure, not success of the original preregistration; no new result yet."
+}

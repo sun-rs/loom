@@ -9,8 +9,9 @@
     "codex": {
       "model": "gpt-6-luna",
       "effort": "low",
-      "status": "paid cohort running",
-      "metric": "Frozen all-native-completed-event statistic includes generate=false startup prewarm; separately report sampling-only logical usage and prewarm. Neither HTTP census nor unique billable expense/invoice."
+      "status": "complete; all 4 pairs and 96 quality checks independently audited",
+      "metric": "Frozen all-native-completed-event statistic includes generate=false startup prewarm; separately report sampling-only logical usage and prewarm. Neither HTTP census nor unique billable expense/invoice.",
+      "results": "codex-complete.json"
     },
     "claude": {
       "model": "sonnet (install resolves claude-sonnet-5-5)",
@@ -27,9 +28,10 @@
     "kimi": {
       "model": "kimi-code/k3-256k",
       "effort": "low",
-      "status": "paid cohort running on repaired source; old release permanently refused",
+      "status": "stopped: private harness cwd failure before first current arm provider launch; old failed cohort retained",
       "sourceRevision": "a92d5ec21c02bdde887cd022bcd1f5fc8e9da64a",
-      "limitation": "Native print versus ACP; initial tools match, later native dynamic tool availability can differ. End-to-end comparison, not pure prompt causal isolation."
+      "limitation": "Native print versus ACP; initial tools match, later native dynamic tool availability can differ. End-to-end comparison, not pure prompt causal isolation.",
+      "failureEvidence": "kimi-cwd-failure.json"
     },
     "opencode": {
       "model": "aihubmix/deepseek-v4.1-flash",
@@ -38,7 +40,17 @@
       "sourceRevision": "a92d5ec21c02bdde887cd022bcd1f5fc8e9da64a"
     }
   },
-  "primaryRatios": null,
+  "primaryRatios": {
+    "codex": {
+      "input": 0.933867970370454,
+      "output": 0.9340230756730404,
+      "count": 0.9488054607508533
+    },
+    "claude": null,
+    "pi": null,
+    "kimi": null,
+    "opencode": null
+  },
   "statisticalRule": "Per binding ratio of summed whole-arm tokens; full planned cohort required for primary. Failure expenses retained, optional missing data unknown, quality separate; no cross-model pooled ratio or currency claim",
   "preflight": "Actual CLI local synthetic full12+12 and consumed-failure evidence for each admitted binding; parent exit does not substitute terminal receipt; exact common and independent binding file/realpath closures",
   "discoveredMeasurementDefects": [
@@ -46,9 +58,10 @@
     "Claude summary has raw reported expense but may be absent from ordinary CLI generation list",
     "Missing-final child failures need raw-tail recovery, not zero expense",
     "Native and Loom arms must compare actual configuration/tool schemas across independent processes",
-    "Codex startup generate=false completed events report tokens but are connection setup, not sampling; do not label their sum with sampling as unique billable tokens"
+    "Codex startup generate=false completed events report tokens but are connection setup, not sampling; do not label their sum with sampling as unique billable tokens",
+    "Kimi free/paid entry cwd differed; same source entry alone did not prove sandbox topology equivalence."
   ],
-  "publicCostConclusion": "Pending fixed cohorts; synthetic input/output is not efficiency evidence",
+  "publicCostConclusion": "Codex fixed cohort complete for this binding/workload only; other bindings pending or failed. No five-CLI efficiency acceptance.",
   "revisionBoundary": "Codex/Claude/Pi retain186f7c3; Kimi/OpenCode original unadmitted slots run repaireda92d5ec. No in-flight source replacement.",
-  "cohortSplit": "Same original four pairs/model/caps; repaired two inherit original absolute deadline and only remaining numerical budget; no extra paid samples or replaced failures."
+  "cohortSplit": "Codex/Claude/Pi original source; Kimi/OpenCode admitted repaired source. Kimi cohort subsequently failed on private harness cwd; separate fresh cohort preparing, previous costs deducted and original absolute deadline retained. No old native arm reused."
 }

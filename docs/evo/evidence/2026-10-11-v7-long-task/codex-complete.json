@@ -1,0 +1,253 @@
+{
+  "kind": "codex-v7-complete-public-audit/v1",
+  "sourceRevision": "186f7c3694ff784c9ecd4eff1c6d7cff13352556",
+  "cli": "Codex 0.161.0",
+  "model": "gpt-6-luna",
+  "effort": "low",
+  "complete": true,
+  "statistics": {
+    "allReported": {
+      "native": {
+        "input": 7089545,
+        "output": 73844,
+        "count": 293
+      },
+      "current": {
+        "input": 6620699,
+        "output": 68972,
+        "count": 278
+      },
+      "ratio": {
+        "input": 0.933867970370454,
+        "output": 0.9340230756730404,
+        "count": 0.9488054607508533
+      }
+    },
+    "sampling": {
+      "native": {
+        "input": 6721625,
+        "output": 73844,
+        "count": 245
+      },
+      "current": {
+        "input": 6252779,
+        "output": 68972,
+        "count": 230
+      },
+      "ratio": {
+        "input": 0.9302481170847823,
+        "output": 0.9340230756730404,
+        "count": 0.9387755102040817
+      }
+    }
+  },
+  "arms": [
+    {
+      "slot": "1/native",
+      "rounds": 12,
+      "qualityPassed": 12,
+      "memoryDisabledLaunches": 12,
+      "resumeLaunches": 11,
+      "exactCleanup": true,
+      "allReported": {
+        "input": 1321271,
+        "output": 20379,
+        "count": 54
+      },
+      "sampling": {
+        "input": 1229291,
+        "output": 20379,
+        "count": 42
+      },
+      "prewarm": {
+        "input": 91980,
+        "output": 0,
+        "count": 12
+      },
+      "rolloutUniqueIds": 42,
+      "prewarmEvidence": "12 startup launches,12 websocket warmup spans,12 same-timestamp warmup phases, each bounded by startup_prewarm span; output0,input7665 each"
+    },
+    {
+      "slot": "1/current",
+      "rounds": 12,
+      "qualityPassed": 12,
+      "memoryDisabledLaunches": 12,
+      "resumeLaunches": 11,
+      "exactCleanup": true,
+      "allReported": {
+        "input": 1494467,
+        "output": 17357,
+        "count": 72
+      },
+      "sampling": {
+        "input": 1402487,
+        "output": 17357,
+        "count": 60
+      },
+      "prewarm": {
+        "input": 91980,
+        "output": 0,
+        "count": 12
+      },
+      "rolloutUniqueIds": 60,
+      "prewarmEvidence": "12 startup launches,12 websocket warmup spans,12 same-timestamp warmup phases, each bounded by startup_prewarm span; output0,input7665 each"
+    },
+    {
+      "slot": "2/current",
+      "rounds": 12,
+      "qualityPassed": 12,
+      "memoryDisabledLaunches": 12,
+      "resumeLaunches": 11,
+      "exactCleanup": true,
+      "allReported": {
+        "input": 1877856,
+        "output": 18493,
+        "count": 76
+      },
+      "sampling": {
+        "input": 1785876,
+        "output": 18493,
+        "count": 64
+      },
+      "prewarm": {
+        "input": 91980,
+        "output": 0,
+        "count": 12
+      },
+      "rolloutUniqueIds": 64,
+      "prewarmEvidence": "12 startup launches,12 websocket warmup spans,12 same-timestamp warmup phases, each bounded by startup_prewarm span; output0,input7665 each"
+    },
+    {
+      "slot": "2/native",
+      "rounds": 12,
+      "qualityPassed": 12,
+      "memoryDisabledLaunches": 12,
+      "resumeLaunches": 11,
+      "exactCleanup": true,
+      "allReported": {
+        "input": 2018917,
+        "output": 18370,
+        "count": 81
+      },
+      "sampling": {
+        "input": 1926937,
+        "output": 18370,
+        "count": 69
+      },
+      "prewarm": {
+        "input": 91980,
+        "output": 0,
+        "count": 12
+      },
+      "rolloutUniqueIds": 69,
+      "prewarmEvidence": "12 startup launches,12 websocket warmup spans,12 same-timestamp warmup phases, each bounded by startup_prewarm span; output0,input7665 each"
+    },
+    {
+      "slot": "3/native",
+      "rounds": 12,
+      "qualityPassed": 12,
+      "memoryDisabledLaunches": 12,
+      "resumeLaunches": 11,
+      "exactCleanup": true,
+      "allReported": {
+        "input": 2020230,
+        "output": 18628,
+        "count": 82
+      },
+      "sampling": {
+        "input": 1928250,
+        "output": 18628,
+        "count": 70
+      },
+      "prewarm": {
+        "input": 91980,
+        "output": 0,
+        "count": 12
+      },
+      "rolloutUniqueIds": 70,
+      "prewarmEvidence": "12 startup launches,12 websocket warmup spans,12 same-timestamp warmup phases, each bounded by startup_prewarm span; output0,input7665 each"
+    },
+    {
+      "slot": "3/current",
+      "rounds": 12,
+      "qualityPassed": 12,
+      "memoryDisabledLaunches": 12,
+      "resumeLaunches": 11,
+      "exactCleanup": true,
+      "allReported": {
+        "input": 835278,
+        "output": 15236,
+        "count": 44
+      },
+      "sampling": {
+        "input": 743298,
+        "output": 15236,
+        "count": 32
+      },
+      "prewarm": {
+        "input": 91980,
+        "output": 0,
+        "count": 12
+      },
+      "rolloutUniqueIds": 32,
+      "prewarmEvidence": "12 startup launches,12 websocket warmup spans,12 same-timestamp warmup phases, each bounded by startup_prewarm span; output0,input7665 each"
+    },
+    {
+      "slot": "4/current",
+      "rounds": 12,
+      "qualityPassed": 12,
+      "memoryDisabledLaunches": 12,
+      "resumeLaunches": 11,
+      "exactCleanup": true,
+      "allReported": {
+        "input": 2413098,
+        "output": 17886,
+        "count": 86
+      },
+      "sampling": {
+        "input": 2321118,
+        "output": 17886,
+        "count": 74
+      },
+      "prewarm": {
+        "input": 91980,
+        "output": 0,
+        "count": 12
+      },
+      "rolloutUniqueIds": 74,
+      "prewarmEvidence": "12 startup launches,12 websocket warmup spans,12 same-timestamp warmup phases, each bounded by startup_prewarm span; output0,input7665 each"
+    },
+    {
+      "slot": "4/native",
+      "rounds": 12,
+      "qualityPassed": 12,
+      "memoryDisabledLaunches": 12,
+      "resumeLaunches": 11,
+      "exactCleanup": true,
+      "allReported": {
+        "input": 1729127,
+        "output": 16467,
+        "count": 76
+      },
+      "sampling": {
+        "input": 1637147,
+        "output": 16467,
+        "count": 64
+      },
+      "prewarm": {
+        "input": 91980,
+        "output": 0,
+        "count": 12
+      },
+      "rolloutUniqueIds": 64,
+      "prewarmEvidence": "12 startup launches,12 websocket warmup spans,12 same-timestamp warmup phases, each bounded by startup_prewarm span; output0,input7665 each"
+    }
+  ],
+  "limitations": [
+    "AllReported is predeclared OTel completed-event sum, not unique billed inference input or HTTP census.",
+    "Per-arm91980 native generate=false prewarm input is independently established in all8arms; chargeability and possible overlap with subsequent logical input are unknown.",
+    "Sampling subset reconciles distinct rollout response IDs and amounts; retain both statistics without retroactively replacing frozen primary.",
+    "Native-final trial source186f7c3; no cross-CLI conclusion or default product acceptance."
+  ],
+  "independentAudit": "All 8 arms, 96 quality checks, source/config closures, memory-disabled launches, same-session resumes, raw OTel versus native rollout unique sampling response IDs and exact cleanup verified."
+}
