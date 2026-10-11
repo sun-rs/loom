@@ -1,0 +1,183 @@
+{
+  "status": "independent-audit-passed",
+  "sourceRevision": "a92d5ec21c02bdde887cd022bcd1f5fc8e9da64a",
+  "model": "aihubmix/deepseek-v4.1-flash",
+  "effort": "low",
+  "cliVersion": "1.18.35",
+  "scope": "native-final controlled trial, not production seven-flags-off default; raw full usage, not invoice",
+  "blocks": 4,
+  "arms": 8,
+  "qualityPassedRounds": 96,
+  "totalRounds": 96,
+  "totals": {
+    "native": {
+      "input": 18171030,
+      "output": 255833,
+      "httpAttempts": 402
+    },
+    "current": {
+      "input": 18089081,
+      "output": 254846,
+      "httpAttempts": 381
+    }
+  },
+  "aggregateRatios": {
+    "input": 0.9954901290680825,
+    "output": 0.9961420145172828,
+    "httpAttempts": 0.9477611940298507
+  },
+  "pairs": [
+    {
+      "block": 1,
+      "native": {
+        "input": 4418790,
+        "output": 70248,
+        "httpAttempts": 93
+      },
+      "current": {
+        "input": 6258225,
+        "output": 67671,
+        "httpAttempts": 118
+      },
+      "ratios": {
+        "input": 1.4162757225394282,
+        "output": 0.9633156815852408,
+        "httpAttempts": 1.2688172043010753
+      }
+    },
+    {
+      "block": 2,
+      "native": {
+        "input": 3565718,
+        "output": 56013,
+        "httpAttempts": 93
+      },
+      "current": {
+        "input": 4250999,
+        "output": 76105,
+        "httpAttempts": 89
+      },
+      "ratios": {
+        "input": 1.1921859776908885,
+        "output": 1.3587024440754825,
+        "httpAttempts": 0.956989247311828
+      }
+    },
+    {
+      "block": 3,
+      "native": {
+        "input": 5817904,
+        "output": 71874,
+        "httpAttempts": 118
+      },
+      "current": {
+        "input": 4004838,
+        "output": 59853,
+        "httpAttempts": 87
+      },
+      "ratios": {
+        "input": 0.688364400650131,
+        "output": 0.8327489773770765,
+        "httpAttempts": 0.7372881355932204
+      }
+    },
+    {
+      "block": 4,
+      "native": {
+        "input": 4368618,
+        "output": 57698,
+        "httpAttempts": 98
+      },
+      "current": {
+        "input": 3575019,
+        "output": 51217,
+        "httpAttempts": 87
+      },
+      "ratios": {
+        "input": 0.8183409490140818,
+        "output": 0.8876737495233804,
+        "httpAttempts": 0.8877551020408163
+      }
+    }
+  ],
+  "compactionRequests": 0,
+  "launchCleanupChecks": [
+    {
+      "slot": "1/native",
+      "launches": 12,
+      "matchingExits": 12,
+      "memoryAuditAll": true,
+      "pureNonVersionLaunches": true,
+      "configRemoved": true,
+      "exactCleanup": true
+    },
+    {
+      "slot": "1/current",
+      "launches": 8,
+      "matchingExits": 8,
+      "memoryAuditAll": true,
+      "pureNonVersionLaunches": true,
+      "configRemoved": true,
+      "exactCleanup": true
+    },
+    {
+      "slot": "2/current",
+      "launches": 8,
+      "matchingExits": 8,
+      "memoryAuditAll": true,
+      "pureNonVersionLaunches": true,
+      "configRemoved": true,
+      "exactCleanup": true
+    },
+    {
+      "slot": "2/native",
+      "launches": 12,
+      "matchingExits": 12,
+      "memoryAuditAll": true,
+      "pureNonVersionLaunches": true,
+      "configRemoved": true,
+      "exactCleanup": true
+    },
+    {
+      "slot": "3/native",
+      "launches": 12,
+      "matchingExits": 12,
+      "memoryAuditAll": true,
+      "pureNonVersionLaunches": true,
+      "configRemoved": true,
+      "exactCleanup": true
+    },
+    {
+      "slot": "3/current",
+      "launches": 8,
+      "matchingExits": 8,
+      "memoryAuditAll": true,
+      "pureNonVersionLaunches": true,
+      "configRemoved": true,
+      "exactCleanup": true
+    },
+    {
+      "slot": "4/current",
+      "launches": 8,
+      "matchingExits": 8,
+      "memoryAuditAll": true,
+      "pureNonVersionLaunches": true,
+      "configRemoved": true,
+      "exactCleanup": true
+    },
+    {
+      "slot": "4/native",
+      "launches": 12,
+      "matchingExits": 12,
+      "memoryAuditAll": true,
+      "pureNonVersionLaunches": true,
+      "configRemoved": true,
+      "exactCleanup": true
+    }
+  ],
+  "limitations": [
+    "First-pair input ratio was 1.4162757; aggregate four-pair input ratio is near 1. Neither alone proves a universal overhead factor.",
+    "Shared isolated empty XDG_DATA plus loopback-only networking restricts initial ripgrep download; current first pair encountered two grep failures. One-sided sandbox difference not established; do not attribute these errors to model misuse.",
+    "This paid cohort had zero compaction/summary requests, so paid automatic compaction is not covered; actual installed CLI fake compaction acceptance is separate. No retries or excluded paid arms."
+  ]
+}
