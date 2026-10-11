@@ -1,0 +1,32 @@
+{
+  "kind": "evo-audit-repair-deployment/v1",
+  "at": "2026-10-11T09:51:45.840Z",
+  "productRevision": "41dafbbec105e99cc2ba1fdc9715cf3f318d4d3a",
+  "service": "com.loom.evo",
+  "sourceSha256": "9165b1ff041bddd228eb93219e41515fe721bcb50bb81d5a83b0e79d0c5e77b2",
+  "backupVerified": true,
+  "databases": 2,
+  "stateFiles": 302,
+  "businessTablesUnchanged": 11,
+  "gracefulRestart": true,
+  "processAndStateIdentityVerified": true,
+  "sevenTrialFlagsOff": true,
+  "realPage": {
+    "historyVerified": true,
+    "roles": 39,
+    "consoleVerified": true,
+    "aggregateApiVerified": true,
+    "pageErrors": [],
+    "url": "http://127.0.0.1:4176"
+  },
+  "consoleAssets": {
+    "app-R8vQ_QWp.js": "a9d61602f70d3de73607a3380af7f91db3255af3460aed7e77de56ea4965939e",
+    "index-C2hZhemy.js": "5074c275d1ba1a81607fcaa367a1b4ce6458e43fe09861ea70f5f942a2eaf245",
+    "index-mk0OQi78.css": "c54c81c8c9690b2cc17a916e589a928d440b0012cfcf4390dacc718a6fff0952"
+  },
+  "limits": [
+    "No paid model call or efficiency acceptance",
+    "No new Human held-draft UI/edit acceptance",
+    "Web source/assets unchanged; old frontend buildIdentity is not backend source identity"
+  ]
+}

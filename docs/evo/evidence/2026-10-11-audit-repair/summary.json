@@ -67,7 +67,7 @@
       "consoleUnit": 61
     },
     "format": "repository format:check passed",
-    "deployment": "pending",
+    "deployment": "deployment.json: backup, graceful restart and fresh real page passed",
     "typecheck": "passed again after product files stabilized",
     "diff": "git diff --check passed"
   },
@@ -77,15 +77,26 @@
     "owner": "Private benchmark CLI admission",
     "path": "/Users/sun/.loom/reviews/2026-10-11-fairness-successor",
     "changes": [
-      "Full ACP driver subtree must share narrow policy with terminal/create and CLI; provider-only sandbox was disproved by actual fake-model integration.",
+      "Private test daemon launches the full ACP driver under narrow policy; CLI and terminal/create tools inherit it. Exact runtime files plus ancestor metadata allowed, historical evidence denied. Broad daemon inheritance refused.",
       "OpenCode actual PATH/cache rg must perform a real fixture search under actual CLI policy before provider spawn; no download"
     ],
     "offlineTests": 11,
     "independentReview": "11/11 rerun; 12 frozen-source lineage hashes unchanged; runtime allowlist excludes docs/evidence/test",
-    "integration": "OpenCode actual builtin grep through localhost fake-model passed (2 requests). Kimi full ACP policy correction still in verification; not accepted.",
+    "integration": "passed within scope: actual Kimi ACP current12 same-session/12completed/12native-finals/24synthetic requests; every delegated Bash denies old evidence and Worker succeeds. Independent reviewer verified per-launch driver/CLI policy. Native12 separately retained, no paired cost ratio. OpenCode actual builtin grep loopback passed.",
     "paidRelease": false,
     "oldResults": "Unchanged; original Kimi fairness failed and OpenCode capability limitation remain recorded",
-    "offlineTestsLimit": "11/11 wrapper tests were insufficient: actual ACP Host-delegated shell escaped provider-only policy. The failure is retained and repair targets driver subtree."
+    "offlineTestsLimit": "11/11 wrapper tests were insufficient: actual ACP Host-delegated shell escaped provider-only policy. The failure is retained and repair targets driver subtree.",
+    "evidence": "kimi-free-integration.json",
+    "scopeLimit": "Private offline-only successor, frozen product source a92d5ec, no new paid admission/release or full cost matrix. Product41dafbb verified by deterministic tests/deployment separately.",
+    "opencodeEvidence": "opencode-free-grep.json",
+    "finalManifest": {
+      "path": "/Users/sun/.loom/reviews/2026-10-11-fairness-successor/final-summary.json",
+      "sha256": "d531e229d0c293313fe22d25a8b4d0671f35156181ea32e58fa12e3b6e88f53e",
+      "implementationFiles": 103,
+      "runtimeDependencies": 249,
+      "persistentLaunchPolicies": 12
+    },
+    "offlineTestsFinal": "11/11 rerun passed after full-driver fix; prior passing snapshot retained as insufficient alone"
   },
   "evidenceLogs": {
     "held-recovery-red.log": {
@@ -106,5 +117,6 @@
     "full-check.log": {
       "sha256": "efb05ce7fd5027c6a7eca6649ebbfae72c55bdb258f89fe1b4b75e092544a549"
     }
-  }
+  },
+  "productRevision": "41dafbbec105e99cc2ba1fdc9715cf3f318d4d3a"
 }

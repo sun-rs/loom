@@ -1,0 +1,107 @@
+{
+  "scope": "independent read-only final current free evidence; not paired cost acceptance",
+  "completedRounds": 12,
+  "singleSession": true,
+  "activationsCompleted": 12,
+  "runsExitedZero": 12,
+  "runtimeProcessesTerminated": 12,
+  "finalMarkers": 12,
+  "cursorCoversAll12": true,
+  "syntheticRequests": 24,
+  "syntheticInput": 240,
+  "syntheticOutput": 48,
+  "all12DelegatedBashHistoryDeniedAndWorkerReadSucceeded": true,
+  "driverAndCliPolicyPairs": [
+    {
+      "round": 1,
+      "match": true
+    },
+    {
+      "round": 2,
+      "match": true
+    },
+    {
+      "round": 3,
+      "match": true
+    },
+    {
+      "round": 4,
+      "match": true
+    },
+    {
+      "round": 5,
+      "match": true
+    },
+    {
+      "round": 6,
+      "match": true
+    },
+    {
+      "round": 7,
+      "match": true
+    },
+    {
+      "round": 8,
+      "match": true
+    },
+    {
+      "round": 9,
+      "match": true
+    },
+    {
+      "round": 10,
+      "match": true
+    },
+    {
+      "round": 11,
+      "match": true
+    },
+    {
+      "round": 12,
+      "match": true
+    }
+  ],
+  "liveOwnedPids": [],
+  "finalIssues": [],
+  "sourceHashesUnchangedAtRuntime": true,
+  "reviewedCurrentSourceHashes": {
+    "kimi/current/pair-stop-policy.mjs": "dd1a0626dbba5577eefbe27628158270b13b23b4881d9eb24b6908e3c6f8dbef",
+    "kimi/current/sandbox.mjs": "cdad7e6ecd43a9b7eb9543e33b82b6af63f2398e437f2c738e0bdc9b86456947",
+    "kimi/current/sandbox-launch.mjs": "13963abc2f11ffa4c0ab340006e6f030fb817666948a4c471ba3178a277f5bf8",
+    "kimi/current/capture-proof.mjs": "ec86e2f7787d30c54cd46976f9994451d1f2d17c4b1d44d3c77c15375db2e232",
+    "kimi/current/final-accounting.mjs": "c4c5b923a9025214b6826a0b8aa642a30d772a0b01642ebda8e3a33973717ef8",
+    "kimi/current/runtime-capture.mjs": "8f32e8f09a925718c14fa7953911182e1b9509b79888db1ef5053cf8e08e1af7",
+    "kimi/current/final-verdict.mjs": "c92d7e73a63e0762bf318b8ad9753765d60dcfdaf3f88482fe649f3a66932243",
+    "kimi/current/profile.mjs": "14ba2c02f5c0c3698789aee0148d2e096211f177749ab253d9121320f1ca9896",
+    "kimi/current/capture-preload.mjs": "c166aebe9bdbcaebceb34c29c3d84edce1edaa0babb992f9f948a6ea072121a8",
+    "kimi/current/gate-daemon.mjs": "11db98e46470a5d44b790cfe868ebfdba9c92e3469cf7f1e56304f0d1c8c2140",
+    "kimi/current/daemon-sandbox-reviewed.mjs": "e5626eaef2fd19772f7f3b8522a053be444b0458085cbd5c2be5a34f33332179",
+    "kimi/current/wrapper.mjs": "aba2a31cc3e8b27b9a1378b2a5972690a6ef2e114cfd224730264a3518db2c15",
+    "kimi/current/capture-reader.mjs": "021ed9c3281a8d7b867146fc8ad64026e5d571ddc1b0c55b5d6201589510b1de",
+    "kimi/current/offline-arm.mjs": "516a33392e8e175bed59c897241f8e46184debd5b51c44c940ac7b9dfb7d6d5b",
+    "kimi/current/single-arm.mjs": "aba81511627cdcbadae8019ab8f37201ef7d70a51d6c65be5b1d08452dbacc18",
+    "kimi/current/fake.mjs": "8a238ffcd661221ba77a4805d3ee9d72bbf9c673873a788d6ebc18157b709f18",
+    "kimi/current/product-arm.mjs": "a07371ce9345ba073661cb2f547495c9dcdd1ff3e2a222e73fc283a52ea9f6d5",
+    "kimi/current/offline-context.mjs": "d8858d6ec78e3eea1a78f69ccc7c7e566681f2e42200b47d8e5eeb99cc040167",
+    "kimi/current/human-connection.mjs": "b8fb83fde439ff56e2a27f948fb964689835f850dd9cc3b4b4eee4029cd106b1",
+    "kimi/current/fake-store.mjs": "e52c5805e0db04fb31ef9089fd9ecdd612d032e80a507a1a0b87b326f5ea8868",
+    "kimi/current/request-shape.mjs": "d420fa51713dcb82add3f13d600dc986bf266e7c13c8cacd7062e5f8a8926e76",
+    "kimi/current/daemon-sandbox.mjs": "fb862f39df96e9abae2f350a0d55689901f55f17c5f540b191fd2be3fafbb941",
+    "kimi/current/arm.mjs": "3a15b9759a3ea8e6129e53f458b8cd74c04e972288e3384bf909bc404fb1cc40",
+    "kimi/current/request-accounting.mjs": "12da530ebe003da8a6ae07fca3d085b95ee0437fa23815bc94c71b4d8695f8da",
+    "kimi/current/accounting.mjs": "e4774fdfa95950d097790fe2d34048f607f5ac52fc8675d9d8a716f41a11c483",
+    "kimi/current/config.mjs": "b629e22bc7e4b0206bad0ce44ed20944e0f70bbbf2d811a12abb0622a79326c6",
+    "kimi/current/driver-preload.mjs": "5d4529c5a4829272f601dc920dcd479e9e5fbc3d1a0f79d7b44f539eb2a13e19",
+    "kimi/current/worker-source-allowlist.json": "e9b24999842c6e965a473ee1e8991e51078f0291de7888b0ad25002bf37f832f",
+    "kimi/current/driver-source-allowlist.json": "d6d175efcd3ffcfb409cf820148c4835c40d957ad6e726f5e5837b6a1c5e16aa",
+    "cli-admission.mjs": "f91ca530f2c4eae544fe39c71a36946a3211130b1f5589a577b25349baaa74dd"
+  },
+  "limitations": [
+    "Native 12 rounds are separate earlier free evidence, not a paired comparison.",
+    "Same-UID hostile test harness spoofing is not a claimed security boundary.",
+    "Current raw synthetic tokens prove collection, not real model efficiency.",
+    "Initial 11 offline tests remain partial historical evidence; ACP red failure is retained."
+  ],
+  "evidenceRoot": "private fairness-successor/free-current-1791712440288",
+  "provider": "actual installed Kimi 2.1.1 with localhost synthetic model only"
+}
