@@ -1,0 +1,1473 @@
+{
+  "kind": "loom-existing-evidence-variability-reanalysis/v1",
+  "providerCalls": 0,
+  "productChanged": false,
+  "deploymentChanged": false,
+  "scope": "10 separate task/batch/CLI strata; no pooling across tasks, versions, providers or CLIs.",
+  "samplingUnit": "One fresh native or Loom session completing the entire continuous 12-turn task. Turns and HTTP requests are not independent replicates.",
+  "method": [
+    "Retain every completed original pair, including failed quality. Never select favorable traces.",
+    "Report both arms' mean, median, sample SD/CV, observed range, ratio of means and paired direction count.",
+    "With equal arm counts, ratio of means equals ratio of sums. The prior cumulative arithmetic was valid; the interpretation of individual ratios needed correction.",
+    "CV and min/max describe observed samples; with n=2 or n=4 they do not establish a population distribution, prediction interval or statistical equivalence.",
+    "Total tokens are input plus output; cache/reasoning subsets are already included, not added again. Token ratios are not invoice ratios or context-window occupancy.",
+    "The owner considers roughly 20-30% overhead potentially acceptable. This is practical guidance for interpretation, not an automatic per-pair gate or a rewrite of target contract section 6.",
+    "Overlapping observed ranges do not prove no systematic overhead. High variance does not cancel real extra consumption or quality failures.",
+    "Old revisions and known fairness limits remain separate. Native variability includes sampled work paths and runtime effects, not proven pure model randomness."
+  ],
+  "strata": [
+    {
+      "cli": "pi",
+      "batch": "mixed",
+      "task": "A",
+      "measurement": "raw input/output",
+      "pairs": [
+        {
+          "pair": 1,
+          "native": {
+            "input": 4561616,
+            "output": 82003,
+            "httpAttempts": 100
+          },
+          "current": {
+            "input": 5716146,
+            "output": 99654,
+            "httpAttempts": 106
+          }
+        },
+        {
+          "pair": 4,
+          "native": {
+            "input": 5462300,
+            "output": 75373,
+            "httpAttempts": 111
+          },
+          "current": {
+            "input": 4730320,
+            "output": 96497,
+            "httpAttempts": 89
+          }
+        }
+      ],
+      "metrics": {
+        "input": {
+          "native": {
+            "n": 2,
+            "sum": 10023916,
+            "mean": 5011958,
+            "median": 5011958.0,
+            "sampleStandardDeviation": 636879.7641062244,
+            "sampleCoefficientOfVariation": 0.12707204731289137,
+            "observedMin": 4561616,
+            "observedMax": 5462300,
+            "observedMaxOverMin": 1.1974484480938334
+          },
+          "current": {
+            "n": 2,
+            "sum": 10446466,
+            "mean": 5223233,
+            "median": 5223233.0,
+            "sampleStandardDeviation": 697084.2496700094,
+            "sampleCoefficientOfVariation": 0.133458386725235,
+            "observedMin": 4730320,
+            "observedMax": 5716146,
+            "observedMaxOverMin": 1.2084057738165705
+          },
+          "ratioOfMeans": 1.0421541840534179,
+          "ratioOfMedians": 1.0421541840534179,
+          "pairedCurrentHigherCount": 1,
+          "pairedRatios": [1.2530967095871288, 0.8659941782765501]
+        },
+        "output": {
+          "native": {
+            "n": 2,
+            "sum": 157376,
+            "mean": 78688,
+            "median": 78688.0,
+            "sampleStandardDeviation": 4688.11795926681,
+            "sampleCoefficientOfVariation": 0.05957856292276854,
+            "observedMin": 75373,
+            "observedMax": 82003,
+            "observedMaxOverMin": 1.087962533002534
+          },
+          "current": {
+            "n": 2,
+            "sum": 196151,
+            "mean": 98075.5,
+            "median": 98075.5,
+            "sampleStandardDeviation": 2232.3361082059305,
+            "sampleCoefficientOfVariation": 0.022761404307966113,
+            "observedMin": 96497,
+            "observedMax": 99654,
+            "observedMaxOverMin": 1.0327160429857922
+          },
+          "ratioOfMeans": 1.2463844550630339,
+          "ratioOfMedians": 1.2463844550630339,
+          "pairedCurrentHigherCount": 2,
+          "pairedRatios": [1.2152482226260015, 1.280259509373383]
+        },
+        "totalTokens": {
+          "native": {
+            "n": 2,
+            "sum": 10181292,
+            "mean": 5090646,
+            "median": 5090646.0,
+            "sampleStandardDeviation": 632191.6461469575,
+            "sampleCoefficientOfVariation": 0.12418691972432527,
+            "observedMin": 4643619,
+            "observedMax": 5537673,
+            "observedMaxOverMin": 1.192533883593809
+          },
+          "current": {
+            "n": 2,
+            "sum": 10642617,
+            "mean": 5321308.5,
+            "median": 5321308.5,
+            "sampleStandardDeviation": 699316.5857782153,
+            "sampleCoefficientOfVariation": 0.13141816261511907,
+            "observedMin": 4826817,
+            "observedMax": 5815800,
+            "observedMaxOverMin": 1.2048934111237282
+          },
+          "ratioOfMeans": 1.0453110469673201,
+          "ratioOfMedians": 1.0453110469673201,
+          "pairedCurrentHigherCount": 1,
+          "pairedRatios": [1.25242833229858, 0.8716327237090381]
+        }
+      },
+      "source": {
+        "path": "../2026-10-11-mixed-study-run/summary.json",
+        "sha256": "b3c21c89082a3aff1d41f19e7c64e22e94e0aeceafd094afa9ba9c8d82d00061"
+      },
+      "limitations": [
+        "Two pairs only; observed spread is not an acceptance or prediction interval."
+      ]
+    },
+    {
+      "cli": "pi",
+      "batch": "mixed",
+      "task": "B",
+      "measurement": "raw input/output",
+      "pairs": [
+        {
+          "pair": 2,
+          "native": {
+            "input": 610000,
+            "output": 17080,
+            "httpAttempts": 50
+          },
+          "current": {
+            "input": 997982,
+            "output": 23198,
+            "httpAttempts": 50
+          }
+        },
+        {
+          "pair": 3,
+          "native": {
+            "input": 649295,
+            "output": 19203,
+            "httpAttempts": 50
+          },
+          "current": {
+            "input": 774550,
+            "output": 17614,
+            "httpAttempts": 50
+          }
+        }
+      ],
+      "metrics": {
+        "input": {
+          "native": {
+            "n": 2,
+            "sum": 1259295,
+            "mean": 629647.5,
+            "median": 629647.5,
+            "sampleStandardDeviation": 27785.760966725386,
+            "sampleCoefficientOfVariation": 0.04412907375432347,
+            "observedMin": 610000,
+            "observedMax": 649295,
+            "observedMaxOverMin": 1.0644180327868853
+          },
+          "current": {
+            "n": 2,
+            "sum": 1772532,
+            "mean": 886266,
+            "median": 886266.0,
+            "sampleStandardDeviation": 157990.2823340727,
+            "sampleCoefficientOfVariation": 0.17826508332043955,
+            "observedMin": 774550,
+            "observedMax": 997982,
+            "observedMaxOverMin": 1.2884668517203537
+          },
+          "ratioOfMeans": 1.4075589913403928,
+          "ratioOfMedians": 1.4075589913403928,
+          "pairedCurrentHigherCount": 2,
+          "pairedRatios": [1.6360360655737705, 1.1929092323212098]
+        },
+        "output": {
+          "native": {
+            "n": 2,
+            "sum": 36283,
+            "mean": 18141.5,
+            "median": 18141.5,
+            "sampleStandardDeviation": 1501.1876964590404,
+            "sampleCoefficientOfVariation": 0.08274881881096052,
+            "observedMin": 17080,
+            "observedMax": 19203,
+            "observedMaxOverMin": 1.1242974238875878
+          },
+          "current": {
+            "n": 2,
+            "sum": 40812,
+            "mean": 20406,
+            "median": 20406.0,
+            "sampleStandardDeviation": 3948.4842661456814,
+            "sampleCoefficientOfVariation": 0.1934962396425405,
+            "observedMin": 17614,
+            "observedMax": 23198,
+            "observedMaxOverMin": 1.3170205518337685
+          },
+          "ratioOfMeans": 1.12482429788055,
+          "ratioOfMedians": 1.12482429788055,
+          "pairedCurrentHigherCount": 1,
+          "pairedRatios": [1.3581967213114754, 0.9172525126282352]
+        },
+        "totalTokens": {
+          "native": {
+            "n": 2,
+            "sum": 1295578,
+            "mean": 647789,
+            "median": 647789.0,
+            "sampleStandardDeviation": 29286.948663184427,
+            "sampleCoefficientOfVariation": 0.04521062979331916,
+            "observedMin": 627080,
+            "observedMax": 668498,
+            "observedMaxOverMin": 1.0660489889647253
+          },
+          "current": {
+            "n": 2,
+            "sum": 1813344,
+            "mean": 906672,
+            "median": 906672.0,
+            "sampleStandardDeviation": 161938.76660021837,
+            "sampleCoefficientOfVariation": 0.17860788311563427,
+            "observedMin": 792164,
+            "observedMax": 1021180,
+            "observedMaxOverMin": 1.289101751657485
+          },
+          "ratioOfMeans": 1.3996409324641204,
+          "ratioOfMedians": 1.3996409324641204,
+          "pairedCurrentHigherCount": 2,
+          "pairedRatios": [1.6284684569751866, 1.1849908301894696]
+        }
+      },
+      "source": {
+        "path": "../2026-10-11-mixed-study-run/summary.json",
+        "sha256": "b3c21c89082a3aff1d41f19e7c64e22e94e0aeceafd094afa9ba9c8d82d00061"
+      },
+      "limitations": [
+        "Two pairs only; observed spread is not an acceptance or prediction interval."
+      ]
+    },
+    {
+      "cli": "opencode",
+      "batch": "mixed",
+      "task": "A",
+      "measurement": "raw input/output",
+      "pairs": [
+        {
+          "pair": 1,
+          "native": {
+            "input": 2958469,
+            "output": 50717,
+            "httpAttempts": 81
+          },
+          "current": {
+            "input": 5588615,
+            "output": 71696,
+            "httpAttempts": 105
+          }
+        },
+        {
+          "pair": 4,
+          "native": {
+            "input": 3801658,
+            "output": 50637,
+            "httpAttempts": 92
+          },
+          "current": {
+            "input": 3778379,
+            "output": 56650,
+            "httpAttempts": 84
+          }
+        }
+      ],
+      "metrics": {
+        "input": {
+          "native": {
+            "n": 2,
+            "sum": 6760127,
+            "mean": 3380063.5,
+            "median": 3380063.5,
+            "sampleStandardDeviation": 596224.6597219039,
+            "sampleCoefficientOfVariation": 0.17639451439947915,
+            "observedMin": 2958469,
+            "observedMax": 3801658,
+            "observedMaxOverMin": 1.2850085635509447
+          },
+          "current": {
+            "n": 2,
+            "sum": 9366994,
+            "mean": 4683497,
+            "median": 4683497.0,
+            "sampleStandardDeviation": 1280030.151148011,
+            "sampleCoefficientOfVariation": 0.2733064953704488,
+            "observedMin": 3778379,
+            "observedMax": 5588615,
+            "observedMaxOverMin": 1.479103869675329
+          },
+          "ratioOfMeans": 1.3856239683071043,
+          "ratioOfMedians": 1.3856239683071043,
+          "pairedCurrentHigherCount": 1,
+          "pairedRatios": [1.889022666791506, 0.9938766190961943]
+        },
+        "output": {
+          "native": {
+            "n": 2,
+            "sum": 101354,
+            "mean": 50677,
+            "median": 50677.0,
+            "sampleStandardDeviation": 56.568542494923804,
+            "sampleCoefficientOfVariation": 0.001116256733723855,
+            "observedMin": 50637,
+            "observedMax": 50717,
+            "observedMaxOverMin": 1.0015798724253016
+          },
+          "current": {
+            "n": 2,
+            "sum": 128346,
+            "mean": 64173,
+            "median": 64173.0,
+            "sampleStandardDeviation": 10639.128629732793,
+            "sampleCoefficientOfVariation": 0.1657882385073597,
+            "observedMin": 56650,
+            "observedMax": 71696,
+            "observedMaxOverMin": 1.2655957634598411
+          },
+          "ratioOfMeans": 1.2663141069913373,
+          "ratioOfMedians": 1.2663141069913373,
+          "pairedCurrentHigherCount": 2,
+          "pairedRatios": [1.4136482836129898, 1.118747161166736]
+        },
+        "totalTokens": {
+          "native": {
+            "n": 2,
+            "sum": 6861481,
+            "mean": 3430740.5,
+            "median": 3430740.5,
+            "sampleStandardDeviation": 596168.091179409,
+            "sampleCoefficientOfVariation": 0.1737724235276346,
+            "observedMin": 3009186,
+            "observedMax": 3852295,
+            "observedMaxOverMin": 1.2801784269898904
+          },
+          "current": {
+            "n": 2,
+            "sum": 9495340,
+            "mean": 4747670,
+            "median": 4747670.0,
+            "sampleStandardDeviation": 1290669.2797777439,
+            "sampleCoefficientOfVariation": 0.2718531995226593,
+            "observedMin": 3835029,
+            "observedMax": 5660311,
+            "observedMaxOverMin": 1.4759499862973657
+          },
+          "ratioOfMeans": 1.3838615890651011,
+          "ratioOfMedians": 1.3838615890651011,
+          "pairedCurrentHigherCount": 1,
+          "pairedRatios": [1.881010678635352, 0.995517996415124]
+        }
+      },
+      "source": {
+        "path": "../2026-10-11-mixed-study-run/summary.json",
+        "sha256": "b3c21c89082a3aff1d41f19e7c64e22e94e0aeceafd094afa9ba9c8d82d00061"
+      },
+      "limitations": [
+        "Two pairs only; observed spread is not an acceptance or prediction interval."
+      ]
+    },
+    {
+      "cli": "opencode",
+      "batch": "mixed",
+      "task": "B",
+      "measurement": "raw input/output",
+      "pairs": [
+        {
+          "pair": 2,
+          "native": {
+            "input": 842246,
+            "output": 14311,
+            "httpAttempts": 50
+          },
+          "current": {
+            "input": 818422,
+            "output": 19687,
+            "httpAttempts": 37
+          }
+        },
+        {
+          "pair": 3,
+          "native": {
+            "input": 782933,
+            "output": 12827,
+            "httpAttempts": 51
+          },
+          "current": {
+            "input": 760804,
+            "output": 17785,
+            "httpAttempts": 38
+          }
+        }
+      ],
+      "metrics": {
+        "input": {
+          "native": {
+            "n": 2,
+            "sum": 1625179,
+            "mean": 812589.5,
+            "median": 812589.5,
+            "sampleStandardDeviation": 41940.624512517694,
+            "sampleCoefficientOfVariation": 0.05161354473878593,
+            "observedMin": 782933,
+            "observedMax": 842246,
+            "observedMaxOverMin": 1.0757574402918257
+          },
+          "current": {
+            "n": 2,
+            "sum": 1579226,
+            "mean": 789613,
+            "median": 789613.0,
+            "sampleStandardDeviation": 40742.078518406495,
+            "sampleCoefficientOfVariation": 0.05159752754628723,
+            "observedMin": 760804,
+            "observedMax": 818422,
+            "observedMaxOverMin": 1.0757330403099878
+          },
+          "ratioOfMeans": 0.9717243454413329,
+          "ratioOfMedians": 0.9717243454413329,
+          "pairedCurrentHigherCount": 0,
+          "pairedRatios": [0.9717137273433177, 0.9717357679392745]
+        },
+        "output": {
+          "native": {
+            "n": 2,
+            "sum": 27138,
+            "mean": 13569,
+            "median": 13569.0,
+            "sampleStandardDeviation": 1049.3464632808366,
+            "sampleCoefficientOfVariation": 0.07733410444991057,
+            "observedMin": 12827,
+            "observedMax": 14311,
+            "observedMaxOverMin": 1.1156934591096905
+          },
+          "current": {
+            "n": 2,
+            "sum": 37472,
+            "mean": 18736,
+            "median": 18736.0,
+            "sampleStandardDeviation": 1344.9170978168133,
+            "sampleCoefficientOfVariation": 0.07178250949064972,
+            "observedMin": 17785,
+            "observedMax": 19687,
+            "observedMaxOverMin": 1.1069440539780715
+          },
+          "ratioOfMeans": 1.3807944579556342,
+          "ratioOfMedians": 1.3807944579556342,
+          "pairedCurrentHigherCount": 2,
+          "pairedRatios": [1.375655090489833, 1.3865284166211898]
+        },
+        "totalTokens": {
+          "native": {
+            "n": 2,
+            "sum": 1652317,
+            "mean": 826158.5,
+            "median": 826158.5,
+            "sampleStandardDeviation": 42989.97097579853,
+            "sampleCoefficientOfVariation": 0.052035984591090614,
+            "observedMin": 795760,
+            "observedMax": 856557,
+            "observedMaxOverMin": 1.0764011762340404
+          },
+          "current": {
+            "n": 2,
+            "sum": 1616698,
+            "mean": 808349,
+            "median": 808349.0,
+            "sampleStandardDeviation": 42086.99561622331,
+            "sampleCoefficientOfVariation": 0.05206537722719185,
+            "observedMin": 778589,
+            "observedMax": 838109,
+            "observedMaxOverMin": 1.0764459811273983
+          },
+          "ratioOfMeans": 0.9784429985287327,
+          "ratioOfMedians": 0.9784429985287327,
+          "pairedCurrentHigherCount": 0,
+          "pairedRatios": [0.9784626125289969, 0.9784218859957776]
+        }
+      },
+      "source": {
+        "path": "../2026-10-11-mixed-study-run/summary.json",
+        "sha256": "b3c21c89082a3aff1d41f19e7c64e22e94e0aeceafd094afa9ba9c8d82d00061"
+      },
+      "limitations": [
+        "Two pairs only; observed spread is not an acceptance or prediction interval."
+      ]
+    },
+    {
+      "cli": "kimi",
+      "batch": "mixed",
+      "task": "A",
+      "measurement": "raw input/output",
+      "pairs": [
+        {
+          "pair": 1,
+          "native": {
+            "input": 4491434,
+            "output": 31876,
+            "httpAttempts": 101
+          },
+          "current": {
+            "input": 2553570,
+            "output": 24186,
+            "httpAttempts": 69
+          }
+        },
+        {
+          "pair": 4,
+          "native": {
+            "input": 2331207,
+            "output": 23833,
+            "httpAttempts": 65
+          },
+          "current": {
+            "input": 2520239,
+            "output": 24693,
+            "httpAttempts": 66
+          }
+        }
+      ],
+      "metrics": {
+        "input": {
+          "native": {
+            "n": 2,
+            "sum": 6822641,
+            "mean": 3411320.5,
+            "median": 3411320.5,
+            "sampleStandardDeviation": 1527511.160602272,
+            "sampleCoefficientOfVariation": 0.4477770882572517,
+            "observedMin": 2331207,
+            "observedMax": 4491434,
+            "observedMaxOverMin": 1.9266560198214917
+          },
+          "current": {
+            "n": 2,
+            "sum": 5073809,
+            "mean": 2536904.5,
+            "median": 2536904.5,
+            "sampleStandardDeviation": 23568.576123728817,
+            "sampleCoefficientOfVariation": 0.009290289060439137,
+            "observedMin": 2520239,
+            "observedMax": 2553570,
+            "observedMaxOverMin": 1.013225332994212
+          },
+          "ratioOfMeans": 0.7436722817454414,
+          "ratioOfMedians": 0.7436722817454414,
+          "pairedCurrentHigherCount": 1,
+          "pairedRatios": [0.5685422517619094, 1.0810876082647316]
+        },
+        "output": {
+          "native": {
+            "n": 2,
+            "sum": 55709,
+            "mean": 27854.5,
+            "median": 27854.5,
+            "sampleStandardDeviation": 5687.259841083402,
+            "sampleCoefficientOfVariation": 0.2041774162553053,
+            "observedMin": 23833,
+            "observedMax": 31876,
+            "observedMaxOverMin": 1.3374732513741452
+          },
+          "current": {
+            "n": 2,
+            "sum": 48879,
+            "mean": 24439.5,
+            "median": 24439.5,
+            "sampleStandardDeviation": 358.5031380615796,
+            "sampleCoefficientOfVariation": 0.014669004605723505,
+            "observedMin": 24186,
+            "observedMax": 24693,
+            "observedMaxOverMin": 1.0209625403125775
+          },
+          "ratioOfMeans": 0.8773986249977562,
+          "ratioOfMedians": 0.8773986249977562,
+          "pairedCurrentHigherCount": 1,
+          "pairedRatios": [0.7587526665830091, 1.0360844207611295]
+        },
+        "totalTokens": {
+          "native": {
+            "n": 2,
+            "sum": 6878350,
+            "mean": 3439175,
+            "median": 3439175.0,
+            "sampleStandardDeviation": 1533198.4204433553,
+            "sampleCoefficientOfVariation": 0.4458041304799422,
+            "observedMin": 2355040,
+            "observedMax": 4523310,
+            "observedMaxOverMin": 1.9206934914056661
+          },
+          "current": {
+            "n": 2,
+            "sum": 5122688,
+            "mean": 2561344,
+            "median": 2561344.0,
+            "sampleStandardDeviation": 23210.072985667237,
+            "sampleCoefficientOfVariation": 0.009061677379402078,
+            "observedMin": 2544932,
+            "observedMax": 2577756,
+            "observedMaxOverMin": 1.0128977905892966
+          },
+          "ratioOfMeans": 0.744755355572194,
+          "ratioOfMedians": 0.744755355572194,
+          "pairedCurrentHigherCount": 1,
+          "pairedRatios": [0.5698826744132063, 1.0806321760989197]
+        }
+      },
+      "source": {
+        "path": "../2026-10-11-mixed-study-run/summary.json",
+        "sha256": "b3c21c89082a3aff1d41f19e7c64e22e94e0aeceafd094afa9ba9c8d82d00061"
+      },
+      "limitations": [
+        "Two pairs only; observed spread is not an acceptance or prediction interval.",
+        "Print/ACP dynamic ReadMediaFile mismatch remains; no pure protocol attribution."
+      ]
+    },
+    {
+      "cli": "kimi",
+      "batch": "mixed",
+      "task": "B",
+      "measurement": "raw input/output",
+      "pairs": [
+        {
+          "pair": 2,
+          "native": {
+            "input": 1035810,
+            "output": 10700,
+            "httpAttempts": 38
+          },
+          "current": {
+            "input": 1055228,
+            "output": 11666,
+            "httpAttempts": 36
+          }
+        },
+        {
+          "pair": 3,
+          "native": {
+            "input": 1022982,
+            "output": 11875,
+            "httpAttempts": 37
+          },
+          "current": {
+            "input": 1051100,
+            "output": 11592,
+            "httpAttempts": 36
+          }
+        }
+      ],
+      "metrics": {
+        "input": {
+          "native": {
+            "n": 2,
+            "sum": 2058792,
+            "mean": 1029396,
+            "median": 1029396.0,
+            "sampleStandardDeviation": 9070.765789061032,
+            "sampleCoefficientOfVariation": 0.008811735997673424,
+            "observedMin": 1022982,
+            "observedMax": 1035810,
+            "observedMaxOverMin": 1.012539810084635
+          },
+          "current": {
+            "n": 2,
+            "sum": 2106328,
+            "mean": 1053164,
+            "median": 1053164.0,
+            "sampleStandardDeviation": 2918.936792738068,
+            "sampleCoefficientOfVariation": 0.0027715880838483542,
+            "observedMin": 1051100,
+            "observedMax": 1055228,
+            "observedMaxOverMin": 1.0039273142422225
+          },
+          "ratioOfMeans": 1.0230892678813595,
+          "ratioOfMedians": 1.0230892678813595,
+          "pairedCurrentHigherCount": 2,
+          "pairedRatios": [1.0187466813411725, 1.0274863096320366]
+        },
+        "output": {
+          "native": {
+            "n": 2,
+            "sum": 22575,
+            "mean": 11287.5,
+            "median": 11287.5,
+            "sampleStandardDeviation": 830.8504678941933,
+            "sampleCoefficientOfVariation": 0.07360801487434714,
+            "observedMin": 10700,
+            "observedMax": 11875,
+            "observedMaxOverMin": 1.1098130841121496
+          },
+          "current": {
+            "n": 2,
+            "sum": 23258,
+            "mean": 11629,
+            "median": 11629.0,
+            "sampleStandardDeviation": 52.32590180780452,
+            "sampleCoefficientOfVariation": 0.004499604592639481,
+            "observedMin": 11592,
+            "observedMax": 11666,
+            "observedMaxOverMin": 1.006383712905452
+          },
+          "ratioOfMeans": 1.0302547065337764,
+          "ratioOfMedians": 1.0302547065337764,
+          "pairedCurrentHigherCount": 1,
+          "pairedRatios": [1.0902803738317757, 0.9761684210526316]
+        },
+        "totalTokens": {
+          "native": {
+            "n": 2,
+            "sum": 2081367,
+            "mean": 1040683.5,
+            "median": 1040683.5,
+            "sampleStandardDeviation": 8239.915321166838,
+            "sampleCoefficientOfVariation": 0.007917791836967569,
+            "observedMin": 1034857,
+            "observedMax": 1046510,
+            "observedMaxOverMin": 1.0112604929956506
+          },
+          "current": {
+            "n": 2,
+            "sum": 2129586,
+            "mean": 1064793,
+            "median": 1064793.0,
+            "sampleStandardDeviation": 2971.262694545873,
+            "sampleCoefficientOfVariation": 0.002790460394222983,
+            "observedMin": 1062692,
+            "observedMax": 1066894,
+            "observedMaxOverMin": 1.0039541089986563
+          },
+          "ratioOfMeans": 1.0231669859279984,
+          "ratioOfMedians": 1.0231669859279984,
+          "pairedCurrentHigherCount": 2,
+          "pairedRatios": [1.0194780747436718, 1.0268974360708774]
+        }
+      },
+      "source": {
+        "path": "../2026-10-11-mixed-study-run/summary.json",
+        "sha256": "b3c21c89082a3aff1d41f19e7c64e22e94e0aeceafd094afa9ba9c8d82d00061"
+      },
+      "limitations": [
+        "Two pairs only; observed spread is not an acceptance or prediction interval.",
+        "Print/ACP dynamic ReadMediaFile mismatch remains; no pure protocol attribution."
+      ]
+    },
+    {
+      "cli": "pi",
+      "batch": "v7",
+      "task": "A",
+      "measurement": "raw input/output",
+      "pairs": [
+        {
+          "pair": 1,
+          "native": {
+            "input": 8423455,
+            "output": 137354
+          },
+          "current": {
+            "input": 6129573,
+            "output": 78438
+          }
+        },
+        {
+          "pair": 2,
+          "native": {
+            "input": 6301042,
+            "output": 97928
+          },
+          "current": {
+            "input": 5749627,
+            "output": 97505
+          }
+        },
+        {
+          "pair": 3,
+          "native": {
+            "input": 5675582,
+            "output": 82021
+          },
+          "current": {
+            "input": 5547654,
+            "output": 81284
+          }
+        },
+        {
+          "pair": 4,
+          "native": {
+            "input": 6031197,
+            "output": 97552
+          },
+          "current": {
+            "input": 7092654,
+            "output": 104917
+          }
+        }
+      ],
+      "metrics": {
+        "input": {
+          "native": {
+            "n": 4,
+            "sum": 26431276,
+            "mean": 6607819,
+            "median": 6166119.5,
+            "sampleStandardDeviation": 1237228.7537447014,
+            "sampleCoefficientOfVariation": 0.18723708287783025,
+            "observedMin": 5675582,
+            "observedMax": 8423455,
+            "observedMaxOverMin": 1.4841570432776763
+          },
+          "current": {
+            "n": 4,
+            "sum": 24519508,
+            "mean": 6129877,
+            "median": 5939600.0,
+            "sampleStandardDeviation": 685690.2430821077,
+            "sampleCoefficientOfVariation": 0.11186035920167856,
+            "observedMin": 5547654,
+            "observedMax": 7092654,
+            "observedMaxOverMin": 1.2784960994323005
+          },
+          "ratioOfMeans": 0.9276702343087787,
+          "ratioOfMedians": 0.9632638485193159,
+          "pairedCurrentHigherCount": 1,
+          "pairedRatios": [
+            0.7276792005180772, 0.9124882836838732, 0.9774599327434613,
+            1.1759944170286596
+          ]
+        },
+        "output": {
+          "native": {
+            "n": 4,
+            "sum": 414855,
+            "mean": 103713.75,
+            "median": 97740.0,
+            "sampleStandardDeviation": 23619.793174016857,
+            "sampleCoefficientOfVariation": 0.2277402289861938,
+            "observedMin": 82021,
+            "observedMax": 137354,
+            "observedMaxOverMin": 1.6746199144121627
+          },
+          "current": {
+            "n": 4,
+            "sum": 362144,
+            "mean": 90536,
+            "median": 89394.5,
+            "sampleStandardDeviation": 12745.472791021393,
+            "sampleCoefficientOfVariation": 0.14077795342207955,
+            "observedMin": 78438,
+            "observedMax": 104917,
+            "observedMaxOverMin": 1.3375787245977715
+          },
+          "ratioOfMeans": 0.872941148111991,
+          "ratioOfMedians": 0.9146153059136485,
+          "pairedCurrentHigherCount": 1,
+          "pairedRatios": [
+            0.5710645485388122, 0.9956804999591536, 0.9910144962875361,
+            1.0754981958340166
+          ]
+        },
+        "totalTokens": {
+          "native": {
+            "n": 4,
+            "sum": 26846131,
+            "mean": 6711532.75,
+            "median": 6263859.5,
+            "sampleStandardDeviation": 1260573.54521672,
+            "sampleCoefficientOfVariation": 0.18782200611577438,
+            "observedMin": 5757603,
+            "observedMax": 8560809,
+            "observedMaxOverMin": 1.4868703173872877
+          },
+          "current": {
+            "n": 4,
+            "sum": 24881652,
+            "mean": 6220413,
+            "median": 6027571.5,
+            "sampleStandardDeviation": 693823.4518843152,
+            "sampleCoefficientOfVariation": 0.11153977266209096,
+            "observedMin": 5628938,
+            "observedMax": 7197571,
+            "observedMaxOverMin": 1.2786729930228402
+          },
+          "ratioOfMeans": 0.9268245021973558,
+          "ratioOfMedians": 0.962277570242436,
+          "pairedCurrentHigherCount": 1,
+          "pairedRatios": [
+            0.7251663949049675, 0.9137614334807008, 0.9776530267890996,
+            1.1743948071621142
+          ]
+        }
+      },
+      "source": {
+        "path": "../2026-10-11-v7-long-task/pi-complete.json",
+        "sha256": "e64f5a6e2f18238dfae0c6d5134b699c371a06174fe8e9fabcd62d411a13506f"
+      },
+      "limitations": [
+        "Single workload and approved model/effort, four pairs descriptive; no invoice or guaranteed savings claim.",
+        "Raw usage includes native compaction once; aggregate is the same expense, never added twice.",
+        "Independent primary accounting is complete; product usage may still show partial/unknown dimensions.",
+        "Native-final trial; seven-flags-off deployed default and multi-instance collaboration not accepted by this result."
+      ]
+    },
+    {
+      "cli": "opencode",
+      "batch": "v7",
+      "task": "A",
+      "measurement": "raw input/output",
+      "pairs": [
+        {
+          "pair": 1,
+          "native": {
+            "input": 4418790,
+            "output": 70248,
+            "httpAttempts": 93
+          },
+          "current": {
+            "input": 6258225,
+            "output": 67671,
+            "httpAttempts": 118
+          }
+        },
+        {
+          "pair": 2,
+          "native": {
+            "input": 3565718,
+            "output": 56013,
+            "httpAttempts": 93
+          },
+          "current": {
+            "input": 4250999,
+            "output": 76105,
+            "httpAttempts": 89
+          }
+        },
+        {
+          "pair": 3,
+          "native": {
+            "input": 5817904,
+            "output": 71874,
+            "httpAttempts": 118
+          },
+          "current": {
+            "input": 4004838,
+            "output": 59853,
+            "httpAttempts": 87
+          }
+        },
+        {
+          "pair": 4,
+          "native": {
+            "input": 4368618,
+            "output": 57698,
+            "httpAttempts": 98
+          },
+          "current": {
+            "input": 3575019,
+            "output": 51217,
+            "httpAttempts": 87
+          }
+        }
+      ],
+      "metrics": {
+        "input": {
+          "native": {
+            "n": 4,
+            "sum": 18171030,
+            "mean": 4542757.5,
+            "median": 4393704.0,
+            "sampleStandardDeviation": 935645.4612617253,
+            "sampleCoefficientOfVariation": 0.20596421034178586,
+            "observedMin": 3565718,
+            "observedMax": 5817904,
+            "observedMaxOverMin": 1.6316220183424488
+          },
+          "current": {
+            "n": 4,
+            "sum": 18089081,
+            "mean": 4522270.25,
+            "median": 4127918.5,
+            "sampleStandardDeviation": 1190538.8204633438,
+            "sampleCoefficientOfVariation": 0.26326131669449515,
+            "observedMin": 3575019,
+            "observedMax": 6258225,
+            "observedMaxOverMin": 1.7505431439665076
+          },
+          "ratioOfMeans": 0.9954901290680825,
+          "ratioOfMedians": 0.9395076454854492,
+          "pairedCurrentHigherCount": 2,
+          "pairedRatios": [
+            1.4162757225394282, 1.1921859776908885, 0.688364400650131,
+            0.8183409490140818
+          ]
+        },
+        "output": {
+          "native": {
+            "n": 4,
+            "sum": 255833,
+            "mean": 63958.25,
+            "median": 63973.0,
+            "sampleStandardDeviation": 8257.073346531446,
+            "sampleCoefficientOfVariation": 0.12910098926301838,
+            "observedMin": 56013,
+            "observedMax": 71874,
+            "observedMaxOverMin": 1.2831664077981897
+          },
+          "current": {
+            "n": 4,
+            "sum": 254846,
+            "mean": 63711.5,
+            "median": 63762.0,
+            "sampleStandardDeviation": 10650.149216482056,
+            "sampleCoefficientOfVariation": 0.16716211698801717,
+            "observedMin": 51217,
+            "observedMax": 76105,
+            "observedMaxOverMin": 1.4859324052560674
+          },
+          "ratioOfMeans": 0.9961420145172828,
+          "ratioOfMedians": 0.9967017335438388,
+          "pairedCurrentHigherCount": 1,
+          "pairedRatios": [
+            0.9633156815852408, 1.3587024440754825, 0.8327489773770765,
+            0.8876737495233804
+          ]
+        },
+        "totalTokens": {
+          "native": {
+            "n": 4,
+            "sum": 18426863,
+            "mean": 4606715.75,
+            "median": 4457677.0,
+            "sampleStandardDeviation": 942131.5933832793,
+            "sampleCoefficientOfVariation": 0.20451263861532573,
+            "observedMin": 3621731,
+            "observedMax": 5889778,
+            "observedMaxOverMin": 1.626232870414727
+          },
+          "current": {
+            "n": 4,
+            "sum": 18343927,
+            "mean": 4585981.75,
+            "median": 4195897.5,
+            "sampleStandardDeviation": 1195432.3119659473,
+            "sampleCoefficientOfVariation": 0.26067097017251484,
+            "observedMin": 3626236,
+            "observedMax": 6325896,
+            "observedMaxOverMin": 1.7444799511118416
+          },
+          "ratioOfMeans": 0.9954991796487552,
+          "ratioOfMedians": 0.9412744575257471,
+          "pairedCurrentHigherCount": 2,
+          "pairedRatios": [
+            1.4091874472882608, 1.1947612895601578, 0.6901263511120453,
+            0.8192447172773024
+          ]
+        }
+      },
+      "source": {
+        "path": "../2026-10-11-v7-long-task/opencode-complete.json",
+        "sha256": "a4758d2d6ed756bace7f0b88c7e3dd2193f74881a8a0f76b5a1034d483b891f5"
+      },
+      "limitations": [
+        "First-pair input ratio was 1.4162757; aggregate four-pair input ratio is near 1. Neither alone proves a universal overhead factor.",
+        "Shared isolated empty XDG_DATA plus loopback-only networking restricts initial ripgrep download; current first pair encountered two grep failures. One-sided sandbox difference not established; do not attribute these errors to model misuse.",
+        "This paid cohort had zero compaction/summary requests, so paid automatic compaction is not covered; actual installed CLI fake compaction acceptance is separate. No retries or excluded paid arms.",
+        "Restricted search dependency in old cohort; retain as qualified historical evidence, not repaired-environment acceptance."
+      ]
+    },
+    {
+      "cli": "claude",
+      "batch": "v7",
+      "task": "A",
+      "measurement": "raw input/output",
+      "pairs": [
+        {
+          "pair": 1,
+          "native": {
+            "input": 2795763,
+            "output": 33677
+          },
+          "current": {
+            "input": 4426364,
+            "output": 42644
+          }
+        },
+        {
+          "pair": 2,
+          "native": {
+            "input": 2878746,
+            "output": 32490
+          },
+          "current": {
+            "input": 3794500,
+            "output": 46766
+          }
+        },
+        {
+          "pair": 3,
+          "native": {
+            "input": 3139887,
+            "output": 41094
+          },
+          "current": {
+            "input": 4631285,
+            "output": 47874
+          }
+        },
+        {
+          "pair": 4,
+          "native": {
+            "input": 2304399,
+            "output": 35319
+          },
+          "current": {
+            "input": 3605992,
+            "output": 42262
+          }
+        }
+      ],
+      "metrics": {
+        "input": {
+          "native": {
+            "n": 4,
+            "sum": 11118795,
+            "mean": 2779698.75,
+            "median": 2837254.5,
+            "sampleStandardDeviation": 349148.4143115217,
+            "sampleCoefficientOfVariation": 0.1256065659314779,
+            "observedMin": 2304399,
+            "observedMax": 3139887,
+            "observedMaxOverMin": 1.3625622125335066
+          },
+          "current": {
+            "n": 4,
+            "sum": 16458141,
+            "mean": 4114535.25,
+            "median": 4110432.0,
+            "sampleStandardDeviation": 491699.8650310811,
+            "sampleCoefficientOfVariation": 0.11950313587204803,
+            "observedMin": 3605992,
+            "observedMax": 4631285,
+            "observedMaxOverMin": 1.2843303590246455
+          },
+          "ratioOfMeans": 1.4802090514304833,
+          "ratioOfMedians": 1.4487357408367842,
+          "pairedCurrentHigherCount": 4,
+          "pairedRatios": [
+            1.5832400672016906, 1.318108648696342, 1.474984609318743,
+            1.5648297018007733
+          ]
+        },
+        "output": {
+          "native": {
+            "n": 4,
+            "sum": 142580,
+            "mean": 35645,
+            "median": 34498.0,
+            "sampleStandardDeviation": 3813.3504952993767,
+            "sampleCoefficientOfVariation": 0.10698135770232506,
+            "observedMin": 32490,
+            "observedMax": 41094,
+            "observedMaxOverMin": 1.264819944598338
+          },
+          "current": {
+            "n": 4,
+            "sum": 179546,
+            "mean": 44886.5,
+            "median": 44705.0,
+            "sampleStandardDeviation": 2850.408333321152,
+            "sampleCoefficientOfVariation": 0.06350257501300284,
+            "observedMin": 42262,
+            "observedMax": 47874,
+            "observedMaxOverMin": 1.132790686668875
+          },
+          "ratioOfMeans": 1.2592649740496564,
+          "ratioOfMedians": 1.2958722244767813,
+          "pairedCurrentHigherCount": 4,
+          "pairedRatios": [
+            1.2662648098108502, 1.4393967374576793, 1.1649875894291137,
+            1.1965797446133808
+          ]
+        },
+        "totalTokens": {
+          "native": {
+            "n": 4,
+            "sum": 11261375,
+            "mean": 2815343.75,
+            "median": 2870338.0,
+            "sampleStandardDeviation": 350858.22422774986,
+            "sampleCoefficientOfVariation": 0.12462358254751302,
+            "observedMin": 2339718,
+            "observedMax": 3180981,
+            "observedMaxOverMin": 1.3595574338445915
+          },
+          "current": {
+            "n": 4,
+            "sum": 16637687,
+            "mean": 4159421.75,
+            "median": 4155137.0,
+            "sampleStandardDeviation": 492776.4892676158,
+            "sampleCoefficientOfVariation": 0.11847235478528134,
+            "observedMin": 3648254,
+            "observedMax": 4679159,
+            "observedMaxOverMin": 1.2825748974715028
+          },
+          "ratioOfMeans": 1.4774116837419942,
+          "ratioOfMedians": 1.4476124414615978,
+          "pairedCurrentHigherCount": 4,
+          "pairedRatios": [
+            1.5794673150870844, 1.319462249024126, 1.470979864387747,
+            1.5592708181071393
+          ]
+        }
+      },
+      "source": {
+        "path": "../2026-10-11-v7-long-task/claude-complete.json",
+        "sha256": "68606dbbb8b8ed22700db67e33a3d4f0e2dd08b77e5f02722149d1e324b67c3b"
+      },
+      "limitations": [
+        "Four pairs of one workload/model/effort; not a universal or currency claim.",
+        "Generation HTTP counted separately from one auxiliary count_tokens call; no missing generation inferred from auxiliary request ID gap.",
+        "Raw SSE primary usage, native transcript responses, current Kernel response/run attribution, session/memory/cleanup and frozen closures independently matched.",
+        "Native-final trial, not deployed seven-flags-off default.",
+        "Quality 44/48 native vs 33/48 current; no equal-quality acceptance despite valid accounting."
+      ]
+    },
+    {
+      "cli": "codex",
+      "batch": "v7",
+      "task": "A",
+      "measurement": "OTel all completed events including non-sampling startup; not unique billable usage",
+      "pairs": [
+        {
+          "pair": 1,
+          "native": {
+            "input": 1321271,
+            "output": 20379
+          },
+          "current": {
+            "input": 1494467,
+            "output": 17357
+          }
+        },
+        {
+          "pair": 2,
+          "native": {
+            "input": 2018917,
+            "output": 18370
+          },
+          "current": {
+            "input": 1877856,
+            "output": 18493
+          }
+        },
+        {
+          "pair": 3,
+          "native": {
+            "input": 2020230,
+            "output": 18628
+          },
+          "current": {
+            "input": 835278,
+            "output": 15236
+          }
+        },
+        {
+          "pair": 4,
+          "native": {
+            "input": 1729127,
+            "output": 16467
+          },
+          "current": {
+            "input": 2413098,
+            "output": 17886
+          }
+        }
+      ],
+      "metrics": {
+        "input": {
+          "native": {
+            "n": 4,
+            "sum": 7089545,
+            "mean": 1772386.25,
+            "median": 1874022.0,
+            "sampleStandardDeviation": 330444.2800245098,
+            "sampleCoefficientOfVariation": 0.18644033151606193,
+            "observedMin": 1321271,
+            "observedMax": 2020230,
+            "observedMaxOverMin": 1.5290050262209645
+          },
+          "current": {
+            "n": 4,
+            "sum": 6620699,
+            "mean": 1655174.75,
+            "median": 1686161.5,
+            "sampleStandardDeviation": 663850.4484100692,
+            "sampleCoefficientOfVariation": 0.4010757464793788,
+            "observedMin": 835278,
+            "observedMax": 2413098,
+            "observedMaxOverMin": 2.8889758858727275
+          },
+          "ratioOfMeans": 0.933867970370454,
+          "ratioOfMedians": 0.899755445773849,
+          "pairedCurrentHigherCount": 2,
+          "pairedRatios": [
+            1.1310828739902714, 0.9301303619712945, 0.4134568836221618,
+            1.395558567994138
+          ]
+        },
+        "output": {
+          "native": {
+            "n": 4,
+            "sum": 73844,
+            "mean": 18461,
+            "median": 18499.0,
+            "sampleStandardDeviation": 1601.1381368680634,
+            "sampleCoefficientOfVariation": 0.0867308453966775,
+            "observedMin": 16467,
+            "observedMax": 20379,
+            "observedMaxOverMin": 1.2375660411732556
+          },
+          "current": {
+            "n": 4,
+            "sum": 68972,
+            "mean": 17243,
+            "median": 17621.5,
+            "sampleStandardDeviation": 1416.2149083619572,
+            "sampleCoefficientOfVariation": 0.08213274420703806,
+            "observedMin": 15236,
+            "observedMax": 18493,
+            "observedMaxOverMin": 1.2137700183775268
+          },
+          "ratioOfMeans": 0.9340230756730404,
+          "ratioOfMedians": 0.9525650035137034,
+          "pairedCurrentHigherCount": 2,
+          "pairedRatios": [
+            0.8517100937239315, 1.0066956995100709, 0.8179085248013743,
+            1.0861723446893787
+          ]
+        },
+        "totalTokens": {
+          "native": {
+            "n": 4,
+            "sum": 7163389,
+            "mean": 1790847.25,
+            "median": 1891440.5,
+            "sampleStandardDeviation": 329680.6073251049,
+            "sampleCoefficientOfVariation": 0.18409197508336061,
+            "observedMin": 1341650,
+            "observedMax": 2038858,
+            "observedMaxOverMin": 1.5196645921067342
+          },
+          "current": {
+            "n": 4,
+            "sum": 6689671,
+            "mean": 1672417.75,
+            "median": 1704086.5,
+            "sampleStandardDeviation": 665052.4007346464,
+            "sampleCoefficientOfVariation": 0.39765925752381326,
+            "observedMin": 850514,
+            "observedMax": 2430984,
+            "observedMaxOverMin": 2.858252774204775
+          },
+          "ratioOfMeans": 0.9338695692778934,
+          "ratioOfMedians": 0.9009463950888225,
+          "pairedCurrentHigherCount": 2,
+          "pairedRatios": [
+            1.1268393396191256, 0.9308207434691332, 0.4171521508609231,
+            1.3926399838679555
+          ]
+        }
+      },
+      "source": {
+        "path": "../2026-10-11-v7-long-task/codex-complete.json",
+        "sha256": "61026c470c717ed5e6e2e0f0e65cbc1c4fa9ff5c36274d9df6074d5a60e372ef"
+      },
+      "limitations": [
+        "AllReported is predeclared OTel completed-event sum, not unique billed inference input or HTTP census.",
+        "Per-arm91980 native generate=false prewarm input is independently established in all8arms; chargeability and possible overlap with subsequent logical input are unknown.",
+        "Sampling subset reconciles distinct rollout response IDs and amounts; retain both statistics without retroactively replacing frozen primary.",
+        "Native-final trial source186f7c3; no cross-CLI conclusion or default product acceptance."
+      ],
+      "supplementarySampling": {
+        "native": {
+          "input": 6721625,
+          "output": 73844,
+          "count": 245
+        },
+        "current": {
+          "input": 6252779,
+          "output": 68972,
+          "count": 230
+        },
+        "ratio": {
+          "input": 0.9302481170847823,
+          "output": 0.9340230756730404,
+          "count": 0.9387755102040817
+        }
+      }
+    }
+  ],
+  "notPooledOrPromoted": {
+    "mixedCodexClaude": "No model launch in current batch; no current ratio, and prior results cannot fill those cells.",
+    "oldKimi": {
+      "source": {
+        "path": "../2026-10-11-v7-long-task/kimi-complete.json",
+        "sha256": "3c87c1ca72f4df05ffe99f91988c4b40027234afec72b0c4e187d9b313314411"
+      },
+      "ratio": {
+        "input": 1.1161382953887202,
+        "output": 1.049254309509975,
+        "totalTokens": 1.1155314776931398,
+        "requests": 1.0471380471380471
+      },
+      "reason": "Historical permission asymmetry disqualifies strict fairness; aggregate-only public evidence not used to invent an arm distribution."
+    }
+  },
+  "decisions": {
+    "piAndOpencode": "Prior four-pair results and current task-dependent directions do not establish generally unacceptable overhead. Stop treating individual high ratios as a product repair trigger.",
+    "mixedPiB": "Two pairs both higher; mean input ratio about 1.408 with low observed native spread. Keep as a focused signal, not dismissed as noise and not enough to establish a universal defect.",
+    "mixedOpencodeA": "One higher pair and one near parity; mean input ratio about 1.386. Keep actual spend visible; no consistent direction established from two pairs.",
+    "oldClaude": "All four pairs higher, about 1.48 mean input ratio and worse measured quality. Stronger engineering signal, still tied to old source/model/task rather than proof of current defect.",
+    "kimi": "Current B both slightly higher but mean input ratio about 1.023; repeated direction alone is not evidence of unacceptable magnitude. A has broad native spread; no guaranteed saving claim.",
+    "next": "Do not modify prompts/scheduling or buy further large sweeps to force ratios to 1.0. Prioritize reproducible correctness/accounting failures; cost intervention requires a specific shared mechanism and predetermined material-overhead criterion."
+  },
+  "futureComparisonRules": [
+    "Freeze task commit/materials, success criteria, provider/model/effort, CLI version and memory policy on both sides.",
+    "Use independent fresh sessions for repeats while retaining normal history within each long task. Interleave or randomize side order to reduce time-order effects.",
+    "Retain pairing/blocking for fair conditions, but judge distributions and aggregate magnitude rather than demanding each pair approach 1.0.",
+    "Predeclare sample count or bounded stopping rule and practical margin before new calls. Small n remains inconclusive rather than inviting endless reruns.",
+    "A provider switch creates a separate stratum; never switch within an arm or construct a pair from different providers."
+  ],
+  "ownerProviderFallback": {
+    "authorized": "If aihubmix is exhausted, DeepSeek provider may be used for OpenCode and Pi.",
+    "implementation": "Verify the installed binding and exact matched configuration when needed; no provider/account changes or paid calls in this reanalysis."
+  }
+}

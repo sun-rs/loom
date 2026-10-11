@@ -1,6 +1,6 @@
 # evo 分支现状
 
-更新：2026-10-11（两任务固定重复批已闭账：三CLI／两模型族完成288轮，两CLI在模型启动前受测试入口缺陷阻断）。成本目标仍未收口，不能宣布五家整体达标；现行臂为native-final隔离试验，正式七个试验开关继续关闭。详见[本批结果](evidence/2026-10-11-mixed-study-run/summary.json)，旧批费用与公平性裁决保留。目标以[目标合同](target-contract.zh-CN.md)为准。
+更新：2026-10-11（两任务固定重复批已闭账：三CLI／两模型族完成288轮，两CLI在模型启动前受测试入口缺陷阻断）。成本解释已按原生重复样本修正：以分布与实际增幅判断，不再把单对偏离1.0作为修复触发。五家本批覆盖不完整，不能宣布整体验收完成；现行臂为native-final隔离试验，正式七个试验开关继续关闭。详见[本批结果](evidence/2026-10-11-mixed-study-run/summary.json)，旧批费用与公平性裁决保留。目标以[目标合同](target-contract.zh-CN.md)为准。
 
 P94 同会话重试暴露的旧 claim/start 回执问题已有代码修复：执行认领的默认身份区分 Run，业务创建／交付幂等不变；同 Activation 前次 Run 终止后可重新认领，状态入口不再把过期租约当作有效。确定性回归通过；P95 普通 Task／频道四轮通过，但未真实制造同 Activation 过期故障；[原始证据](evidence/2026-10-02-task-retry-p94.md)、[修复边界](conversation-delivery-design.zh-CN.md#p94-续办修复执行认领与业务幂等分开)。
 
@@ -10,7 +10,7 @@ P93 定位核查：[原生对照与归因边界](evidence/2026-10-02-claude-dire
 
 - 施工历史：2026-09-21 至 2026-09-27 的第一至六十五节全文在 [状态历史日志](log/status-history-2026-09.zh-CN.md)，节号不变。本仓库其他文档中的“status 第 N 节”“status §N”均指该日志的同号节。
 - 轻量回复：Claude warm、普通 Codex exec/resume、OpenCode warm、Kimi cold ACP 已接入显式选择的 native-text 路径；Host 验证原 Run/身份/交付序号和原生终态，再经原 WorkerFinalOutput 事务发表，保留权限、stale、幂等与 delivery ACK；Task/Inbox 不因回复自动完成，未知写不重发。七个 final/native 试验开关默认关闭。Pi 已有正式 cold print/json 接入，实际 CLI＋假模型在正式 daemon 的默认 Worker 与 native-final 两模式各两轮通过；Kimi 既有免费两轮通过；忙时插话、多人、各模型长期成本与质量仍未整体验收。
-- 当前验收：两任务各两对、每臂连续12轮的固定批已结束，Kimi／Pi／OpenCode各8会话96轮完成，288轮机器判分全通过；实际原流、原生记录、Kernel、禁用自动记忆、连续会话与清理经独审。总体Σ现行/Σ原生输入分别为0.808444／1.082936／1.305405，输出分别为0.921478／1.223610／1.290493；这些是token比，不是账单或统计等效证明。Pi材料任务输入1.407559，OpenCode代码任务1.385624，不能用总体掩盖任务差异。Codex版本清单格式、Claude共享锁等待两处测试入口缺陷在启动模型前阻断，主倍率null；不补跑、替换或借旧批补成五家。**成本未收口，五CLI整体效率未通过验收**。[总体／逐题／逐对及限制](evidence/2026-10-11-mixed-study-run/summary.json)。此前[v7结果](evidence/2026-10-11-v7-long-task/study.json)与[旧重复队列](evidence/2026-10-11-repeated-long-task/summary.json)独立保留。
+- 当前验收：两任务各两对、每臂连续12轮的固定批已结束，Kimi／Pi／OpenCode各8会话96轮完成，288轮机器判分全通过；实际原流、原生记录、Kernel、禁用自动记忆、连续会话与清理经独审。总体Σ现行/Σ原生输入分别为0.808444／1.082936／1.305405，输出分别为0.921478／1.223610／1.290493；这些是token比，不是账单或统计等效证明。Pi材料任务输入1.407559，OpenCode代码任务1.385624，不能用总体掩盖任务差异。Codex版本清单格式、Claude共享锁等待两处测试入口缺陷在启动模型前阻断，主倍率null；不补跑、替换或借旧批补成五家。**五CLI本批覆盖不完整，不据单对倍率判定产品成本失败**。仅重算既有记录、无新付费：分CLI／版本／任务共10个分层分别给出原生与现行均值、中位数、样本波动与方向；旧Pi／OpenCode接近原生且非持续单向偏高，Pi材料题两对偏高是有限信号，旧Claude四对偏高且质量较差单独保留。Owner认为约20%–30%额外token可接受，用于解释实际幅度，不作单对硬门槛，也未改目标合同；观察极值不是验收区间，小样本不能证明统计等效。暂停为追求1.0反复改提示／调度，具体可复现缺陷仍需处理。[原生波动重分析与后续判断规则](evidence/2026-10-11-native-variability/summary.json)。[总体／逐题／逐对及限制](evidence/2026-10-11-mixed-study-run/summary.json)。此前[v7结果](evidence/2026-10-11-v7-long-task/study.json)与[旧重复队列](evidence/2026-10-11-repeated-long-task/summary.json)独立保留。
 - 付费与真实 CLI 运行：见 [付费运行台账](paid-runs.zh-CN.md)，下表以台账编号（P01…）引用。
 - Jev 研究与取舍：[P80–P84 结论及经验](jev-research-decision.zh-CN.md)：不引入核心调度或默认上下文过滤；按需检索仅保留为实验。
 - 后续顺序与复用授权：负责人已确认拥有 Raft 和 Aexus 完整复用授权；先成本验收，再吸收有明确缺口的组件，实际采用仍记录来源、版本、改动与测试。本批未复制上游代码。[决定记录](evidence/2026-10-10-cost-mainline/reuse-owner-decision.json)。
