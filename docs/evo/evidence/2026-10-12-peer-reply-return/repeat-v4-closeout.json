@@ -1,0 +1,147 @@
+{
+  "batchId": "actual-herdr-loom-opencode-claude-reply-20261012-v4",
+  "authorized": true,
+  "status": "closed-unknown-native-consumption",
+  "started": 2,
+  "unstarted": 6,
+  "retries": 0,
+  "samples": [
+    {
+      "sampleId": "pair1-loom",
+      "root": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-reply-v4/business-runs/1791813275398-pair1-loom",
+      "resultSha256": "a10114b30e67fbf4bff40fa2c846ebcc1d01cf5b6bf02f2dadb54f616acc1fe3",
+      "status": "awaiting-quality-audit",
+      "reason": "quiescent",
+      "usage": {
+        "opencode": {
+          "input": 549461,
+          "output": 24592,
+          "requests": 20,
+          "complete": true
+        },
+        "claude": {
+          "input": 227869,
+          "output": 5823,
+          "requests": 10,
+          "complete": true
+        },
+        "total": {
+          "input": 777330,
+          "output": 30415,
+          "requests": 30,
+          "complete": true
+        }
+      },
+      "functional": {
+        "passed": 40,
+        "total": 40
+      },
+      "automaticReturns": 2
+    },
+    {
+      "sampleId": "pair1-native",
+      "root": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-reply-v4/business-runs/1791813765857-pair1-native",
+      "resultSha256": "c1a2eeafe4a35054831b0d671ad231ec7bb5e20867cb7a33fe9a81f821191330",
+      "status": "execution-failed",
+      "reason": "budget-or-provider-stop",
+      "usage": {
+        "opencode": {
+          "input": 802972,
+          "output": 22145,
+          "requests": 30,
+          "complete": false
+        },
+        "claude": {
+          "input": 722937,
+          "output": 12147,
+          "requests": 23,
+          "complete": false
+        },
+        "total": {
+          "input": 1525909,
+          "output": 34292,
+          "requests": 53,
+          "complete": false
+        }
+      },
+      "functional": {
+        "passed": 40,
+        "total": 40
+      },
+      "automaticReturns": 0
+    }
+  ],
+  "sourceFilesUnchanged": 3798,
+  "cleanup": {
+    "registeredProcessesAbsent": true,
+    "settingsRemoved": 4,
+    "ownedPanesClosed": ["wA:pF", "wA:pG"]
+  },
+  "comparativeRatio": null,
+  "causes": [
+    "Native sample 15-minute coordinator timeout aborted upstream OpenCode response 30 before usage.",
+    "Original native-check rejects any error and marked both providers incomplete. Independent audit verifies Claude only; OpenCode remains unknown."
+  ],
+  "qualityNotes": {
+    "loom": "40 functionality and 59 documented tests; actual external review; delivered. README says subtotal is aggregate net, a wording defect requiring correction; not full quality acceptance. Extra last reviewer activation was explicit mention in delivery, not automatic reply loop.",
+    "native": "40 functionality; actual external review and requirements dispute; deadline-censored with in-flight work. Do not classify as ordinary completed task."
+  },
+  "next": "v5 free-only candidate adds admission stop and bounded drain; production unchanged; no additional paid release.",
+  "posthocAccounting": {
+    "originalResultPreserved": true,
+    "measured": {
+      "opencode": {
+        "input": 802972,
+        "output": 22145,
+        "requests": 30,
+        "complete": false
+      },
+      "claude": {
+        "input": 722937,
+        "output": 12147,
+        "requests": 23,
+        "complete": true
+      },
+      "total": {
+        "input": 1525909,
+        "output": 34292,
+        "requests": 53,
+        "complete": false
+      }
+    },
+    "native": {
+      "opencode": {
+        "complete": false,
+        "error": "AssertionError [ERR_ASSERTION]: {\"identityCoverageComplete\":true,\"requestCoverageComplete\":false,\"primaryComplete\":false,\"detailsComplete\":false,\"requests\":30,\"uniqueRequests\":30,\"assistants\":30,\"input\":802972,\"output\":22145,\"cachedInput\":null,\"reasoningOutput\":null,\"unknownRequests\":1,\"dimensions\":{\"input\":{\"known\":802972,\"knownRequests\":29,\"unknownRequests\":1,\"complete\":false},\"output\":{\"known\":22145,\"knownRequests\":29,\"unknownRequests\":1,\"complete\":false},\"cachedInput\":{\"known\":731264,\"knownRequests\":29,\"unknownRequests\":1,\"complete\":false},\"reasoningOutput\":{\"known\":11062,\"knownRequests\":29,\"unknownRequests\":1,\"complete\":false}},\"streamCoverageComplete\":false,\"complete\":false,\"errors\":[],\"label\":\"complete refers to primary input/output and request/native coverage; optional detail completeness is reported independently; observed usage on incomplete streams is partial, not a final total\"}\n\nfalse !== true\n"
+      },
+      "claude": {
+        "complete": true,
+        "responses": 23,
+        "sessions": ["2cae1695-1187-4313-b13a-97466e43b7fd"]
+      },
+      "complete": false
+    },
+    "partialOpenCodeStreams": [
+      {
+        "id": 30,
+        "status": 200,
+        "aborted": true,
+        "done": false,
+        "usage": null,
+        "responseBytes": 50696,
+        "capturedBytes": 50696
+      }
+    ],
+    "conclusion": "One real upstream generation was truncated by coordinator deadline. Its tokens are unknown; not a zero-cost local rejection. Claude can be verified independently. No complete ratio."
+  },
+  "evidence": [
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-reply-v4/closeout.json",
+      "sha256": "5a89e4b298ea617211518e559fd2fbe8c8192762dda5cce44a53d1f4399ae98a"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-reply-v4/deadline-accounting-audit.json",
+      "sha256": "d9139971e0f82ec3c3a5507b6fcd91f8a55c94391a187fa66987886b95a858d6"
+    }
+  ]
+}

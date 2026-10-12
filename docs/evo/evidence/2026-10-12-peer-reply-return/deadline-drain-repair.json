@@ -1,0 +1,120 @@
+{
+  "kind": "deadline-drain-repair/v1",
+  "paidCalls": 0,
+  "productCodeChanged": false,
+  "automatedTests": {
+    "passed": 43,
+    "failed": 0
+  },
+  "localStreamingTest": "one request started before deadline completes with usage; later request rejected before upstream",
+  "actualCliFaultInjection": {
+    "cli": "OpenCode 1.18.35",
+    "model": "localhost synthetic, not paid",
+    "sampleDeadlineMs": 10000,
+    "firstResponseDelayMs": 15000,
+    "executionStatus": "execution-failed",
+    "expectedTaskFailure": true,
+    "usage": {
+      "input": 101,
+      "output": 20,
+      "requests": 1,
+      "complete": true
+    },
+    "nativeLocalRejected": 3,
+    "ledgerComplete": true,
+    "unusedClaudeNeverStarted": true,
+    "cleanupVerified": true
+  },
+  "policy": {
+    "graceMs": 60000,
+    "sampleNewRequestDeadlineMs": 900000,
+    "batchDrainReserveMs": 60000,
+    "policy": "refuse new upstream work, settle in-flight capture, then stop CLI; unresolved stream remains unknown"
+  },
+  "coverageLimits": [
+    "Actual CLI injections cover Loom and native Herdr OpenCode paths. Real-provider failures and Claude deadline fault injection remain untested.",
+    "Bounded drain cannot guarantee usage when upstream disconnects or exceeds grace; such amounts remain unknown.",
+    "Loom probe preceded final diagnostic wording and batch-minute-reserve changes; 43 tests and native Herdr probe used final candidate.",
+    "Proposed paid scope is remaining three pairs; does not replace or repair original pair1, whose native cost remains partial."
+  ],
+  "candidate": {
+    "batchId": "actual-herdr-loom-opencode-claude-reply-20261012-v5",
+    "manifestSha256": "beb318d8cea2c730d1149a133f5468cb5a52c90bf9e96dbf90adb2e2073c8caa",
+    "sourceFiles": 3803,
+    "paidAuthorized": false,
+    "plannedPairs": 3,
+    "plannedSamples": [
+      "pair2-native",
+      "pair2-loom",
+      "pair3-loom",
+      "pair3-native",
+      "pair4-native",
+      "pair4-loom"
+    ],
+    "limits": {
+      "maxActivations": 72,
+      "maxRequests": 450,
+      "maxInputTokens": 12000000,
+      "maxOutputTokens": 240000,
+      "maxDurationMs": 7200000
+    }
+  },
+  "evidence": [
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-reply-v5/business-runs/1791815264391-pair1-loom/result.json",
+      "sha256": "cba54f3373f0beab7efebe698b1a012fd8c5f5ff9ca1875aa1dc2aa36672f7d6"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-reply-v5/drain-policy.mjs",
+      "sha256": "03ec1ad26f4b609ee72c36588e17ea80423dbb2035bec056d639f441229eb3ef"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-reply-v5/drain-policy.test.mjs",
+      "sha256": "6b959158f200521ed7dcebfb914fc204a90302bf52613e7c3378172d3f6194b0"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-reply-v5/drain-stream.test.mjs",
+      "sha256": "e1a5afd4c7fe1a9d7a1e7388439289f6878585ab108360a7820a8d491d88e9ff"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-reply-v5/native-error-accounting.mjs",
+      "sha256": "2bd47f318986f752e402b75063523f70c89cb169b5b2ec20323e043d81ebb118"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-reply-v5/native-error-accounting.test.mjs",
+      "sha256": "e1483ba5137096bcddce6ebb6ef8d8b4ccbd91543962c34c06c6049822dc5227"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-reply-v5/business.mjs",
+      "sha256": "f8cb9cbf963a3816a6b7d5ea462aadb7c96ebcd7e266c6ad799472e02a1e5537"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-reply-v5/candidate/manifest.json",
+      "sha256": "beb318d8cea2c730d1149a133f5468cb5a52c90bf9e96dbf90adb2e2073c8caa"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-reply-v5/business-runs/1791815666664-pair1-native/result.json",
+      "sha256": "509956a9f97720a81d7ba336fde60512bb7f554927f66a721c60556793aedeb7"
+    }
+  ],
+  "actualNativeCliFaultInjection": {
+    "cli": "OpenCode 1.18.35 in actual Herdr pane",
+    "sampleDeadlineMs": 30000,
+    "firstResponseDelayMs": 40000,
+    "executionStatus": "execution-failed",
+    "expectedTaskFailure": true,
+    "usage": {
+      "input": 101,
+      "output": 20,
+      "requests": 1,
+      "complete": true
+    },
+    "nativeLocalRejected": 1,
+    "cleanupVerified": true
+  },
+  "earlierNativeFreeAttempt": {
+    "result": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-reply-v5/business-runs/1791815563839-pair1-native/result.json",
+    "purpose": "startup-only deadline hit before prompt; no generation; not accepted as stream-drain verification",
+    "retained": true
+  }
+}
