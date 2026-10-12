@@ -23,6 +23,8 @@ P93 定位核查：[原生对照与归因边界](evidence/2026-10-02-claude-dire
 ## 1. 环境与服务
 
 - `main`：冻结的 UI 里程碑，只接受紧急修复；worktree `~/Code/repos/loom-main`，不运行。`ref/role-ui-draft`（`789ffc6`）：9/21–9/23 检查点，仅作参考。
+- 最新纵向收口（2026-10-12）：新v2固定四对批仅执行首原生样本；Codex中间交接后内部等待，最终只有代码格式提及，外部Claude未启动。两臂共同任务缺少final-only交接／结束回合说明；已免费准备补充，未复测模型。原始CLI遥测另有一次完成事件缺主用量，已知输入296657／输出6018仅下界，剩余7样本停止，无团队倍率。归档40项功能及7项自测通过不代表外部审查通过。产品与正式开关不变；[本批证据](evidence/2026-10-12-team-v2-closeout/summary.json)。
+
 - `evo`：负责人于 2026-10-02 授权开始窄 phase 4。第一刀接入 Role 列表／保存配置／创建频道实例／进入聊天，第二刀接入 Role 修订与频道设置；main 不变，原实例资料侧栏保留。控制台暂保留，完整设置、记忆和私聊布局尚未迁入产品 UI。见[第一刀设计与验收](phase4-first-slice.zh-CN.md)及[第二刀设计与验收](phase4-slice2.zh-CN.md)。
 - 本地服务：launchd `com.loom.evo`，端口 4176（loopback 控制台 `/_rah/console/`），以仓库工作树的 `scripts/run-local-workbench.mjs` 运行；部署版本必须同时记录 HEAD 与未提交改动。数据目录 `~/.loom/evo`（与路径绑定，挂载回执存绝对路径，不可搬迁），日志 `~/.loom/evo/logs/`。频道主目录根 `~/.loom/channel-workspaces/`。
 - 重复测试根因结论：没有证据把先前单组高倍率当作固定的数倍协议开销，也没有因此豁免实际费用。Pi B的R4/R6/R7及Kimi续槽3的R6/R11主要多在代码、测试修复和重复执行；Kimi续槽3全部158个请求中当前原题恰出现一次，未见显式Worker循环。输入倍率同时受请求数量和每次上下文增长影响。[业务路径](evidence/2026-10-11-repeated-long-task/kimi-continuation-slot3-business-paths.json)。首请求共有的强验证要求/工具schema一致；Loom额外身份、Room/Task、完成规则与旧Worker发帖规则加native-final例外，可能影响决策路径，但不是已证因果。提示字节差小不能推出语义影响小；下一步优先验证规则语义与原生的等效性，不继续仅靠压字节，也不按某条贵轨迹改题或挑样本。[首请求语义](evidence/2026-10-11-repeated-long-task/first-request-semantic-differences.json)。

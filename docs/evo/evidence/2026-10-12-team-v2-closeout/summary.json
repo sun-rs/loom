@@ -1,0 +1,131 @@
+{
+  "kind": "loom-team-v2-bounded-acceptance/v1",
+  "batchId": "codex-claude-invoice-team-20261012-v2",
+  "status": "stopped after first native sample; no paired result",
+  "authorization": "Owner 请开始 after vertical MVP and bounded repeated team-cost plan; same four-pair model/cap scope as prior approved batch. New v2 release; old stopped batch untouched.",
+  "manifestSha256": "91b880159ae5821b6d5daa45695b4164223fe77be18b5a0df1a14b1539dd0521",
+  "frozenFilesVerified": 3757,
+  "bindings": [
+    {
+      "provider": "codex",
+      "model": "gpt-6-luna",
+      "effort": "low"
+    },
+    {
+      "provider": "claude",
+      "model": "sonnet",
+      "effort": "low"
+    }
+  ],
+  "limits": {
+    "maxActivations": 96,
+    "maxRequests": 400,
+    "maxInputTokens": 12000000,
+    "maxOutputTokens": 150000,
+    "maxDurationMs": 5400000
+  },
+  "plannedSamples": [
+    {
+      "id": "pair1-native",
+      "pairId": "pair1",
+      "arm": "native"
+    },
+    {
+      "id": "pair1-loom",
+      "pairId": "pair1",
+      "arm": "loom"
+    },
+    {
+      "id": "pair2-loom",
+      "pairId": "pair2",
+      "arm": "loom"
+    },
+    {
+      "id": "pair2-native",
+      "pairId": "pair2",
+      "arm": "native"
+    },
+    {
+      "id": "pair3-native",
+      "pairId": "pair3",
+      "arm": "native"
+    },
+    {
+      "id": "pair3-loom",
+      "pairId": "pair3",
+      "arm": "loom"
+    },
+    {
+      "id": "pair4-loom",
+      "pairId": "pair4",
+      "arm": "loom"
+    },
+    {
+      "id": "pair4-native",
+      "pairId": "pair4",
+      "arm": "native"
+    }
+  ],
+  "executedSamples": 1,
+  "remainingSamplesStarted": 0,
+  "sample": {
+    "id": "pair1-native",
+    "root": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/paid-v2/runs/1791776348955-pair1-native",
+    "resultSha256": "8e0a43a9c6943a4ea438aa4bc098d0f5ff0d54790216a8e1d7bc61ef8bbdd8bf",
+    "executionStatus": "completed",
+    "failurePhase": "business-validation",
+    "businessHandoffPassed": false,
+    "externalClaudeStarted": false,
+    "cleanup": true,
+    "configMatches": true,
+    "knownUsageLowerBound": {
+      "input": 296657,
+      "output": 6018,
+      "requests": 22,
+      "complete": false
+    },
+    "completionEvents": 22,
+    "quantityBearingCompletionEvents": 21,
+    "coverageUncoveredAttempts": 1,
+    "missingUsageEvidence": {
+      "file": "codex/otel/otel-74.private.json",
+      "sha256": "81261ff926ce391bd8268e146b9c84107af6a842fa4b4e8961a4dcd51391837f",
+      "eventName": "event otel/src/events/session_telemetry.rs:1092",
+      "timestamp": "2026-10-12T03:41:47.337Z",
+      "fieldsMissing": ["input_token_count", "output_token_count"],
+      "interpretation": "CLI telemetry completion lacks primary quantities; cannot assign zero or claim complete provider billing."
+    }
+  },
+  "rootCauses": [
+    "External handoff appeared in intermediate commentary, then the CLI called internal wait_agent. Only terminal public reply is relayed; final mentioned @B inside backticks and contained no routable mention.",
+    "Shared task explained external identities but omitted final-only handoff and end-turn mechanics. Native control transport instructions are incomplete; do not attribute this failure to Loom scheduling.",
+    "Unlike previous v1 false downgrade, v2 raw telemetry already contains missing primary usage; correct business-failure settlement cannot make that complete. Generic failure recovery also adds an unstarted Claude unknown-zero row; this is ledger conservatism, not evidence Claude consumed tokens."
+  ],
+  "posthocArtifact": {
+    "sameBytesVerified": true,
+    "functionalChecksPassed": 40,
+    "functionalChecksTotal": 40,
+    "selfTestsPassed": true,
+    "selfTestCount": 7,
+    "businessReviewPassed": false,
+    "note": "Artifact correctness does not replace actual external Claude review."
+  },
+  "freeFollowup": {
+    "privateCandidate": "/Users/sun/.loom/reviews/2026-10-12-team-v2-closeout/task-next.mjs",
+    "candidateSha256": "4a41c875669937b6d06587ab429c6d8e1be36438656b206ee380153fcb75f93e",
+    "tests": 2,
+    "redBeforeGreen": true,
+    "verified": "Recorded code-formatted mention does not route; plain final mention does. Candidate explicitly explains final-only relay, ending turn and later peer reply for both native and Loom handle forms; opening still targets implementer only.",
+    "notVerified": "No new model call; model compliance and real collaboration not demonstrated. Not wired into frozen paid-v2 or deployed product."
+  },
+  "checks": {
+    "entryUnitTests": 31,
+    "frozenSourceUnchanged": true,
+    "prelaunchFailure": "Initial command referenced nonexistent tsx loader before executing runner/provider; corrected invocation to repository native Node TypeScript support. No sample or provider launch on that command."
+  },
+  "productChanged": false,
+  "productionFlagsChanged": false,
+  "serviceRestarted": false,
+  "efficiencyVerdict": "Unavailable; no Loom sample, incomplete native primary usage. Do not restart, replace failed sample or publish a ratio.",
+  "next": "Use explicit common handoff protocol for next approved acceptance; resolve complete Codex quantity source before another repeated cost batch. Do not expand scheduler or disable native subagents."
+}

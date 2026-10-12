@@ -1,0 +1,225 @@
+{
+  "round": 12,
+  "artifactHashes": {
+    "README.md": "038a744a9d9f849b92015e5ce9eaa04cba7dbe1b364b6015004d691f69b399a9",
+    "TEAM_TASK.md": "ee84472e99c095135061800092f026e282c5ca5f6702027d507775049d674ed1",
+    "__pycache__/invoice.cpython-313.pyc": "4944b4cf2b30e54e1d58449afebb5941a46e475273a3a25521ca2e40f8a2e452",
+    "invoice.py": "b8921e64e921812227437327528cf601ae511e14c36f973b44c9ceaee892bdf8",
+    "tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "tests/__pycache__/__init__.cpython-313.pyc": "edc9a679237166d6fb6174e74b3e14d8921e37ca7ce8f2cbd9e9cbb6b3d7e31e",
+    "tests/__pycache__/test_invoice.cpython-313.pyc": "cc4476f2625caa824e9641816a447af8570e1661635d5a51a9a14a908b072d97",
+    "tests/test_invoice.py": "b8594be16e2f8bfa4cb05891880715bb256550cb1ec323187326128d0baf3ff6"
+  },
+  "evaluation": {
+    "round": 12,
+    "passed": true,
+    "checks": [
+      {
+        "id": "basic",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "many-and-zero",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "empty",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "cancelled-skips-validation",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "tax-half-up",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "aggregate-tax-once",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "discount-before-tax",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "fractional-discounts-aggregate",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "invalid-negative",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "invalid-nan",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "invalid-float",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "invalid-boolean",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "invalid-exponent",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "invalid-whitespace",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "invalid-too-many-decimals",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "missing-price",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "discount-over-100",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "bad-cancelled",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "tax-over-100",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "groups-grand-not-sum-rounded",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "missing-groups-sort",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "cli-file",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "cli-stdin",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "cli-error",
+        "passed": true,
+        "exitCode": 1
+      },
+      {
+        "id": "no-per-line-rounding",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "empty-grouped",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "large-decimal-precision",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "integer-over-range",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "negative-price",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "negative-discount",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "tax-float",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "tax-on-exact-unrounded-net",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "unsupported-grouping",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "cli-malformed-json",
+        "passed": true,
+        "exitCode": 1
+      },
+      {
+        "id": "cli-unknown-request-key",
+        "passed": true,
+        "exitCode": 1
+      },
+      {
+        "id": "cli-no-argument",
+        "passed": true,
+        "exitCode": 2
+      },
+      {
+        "id": "cli-missing-file",
+        "passed": true,
+        "exitCode": 1
+      },
+      {
+        "id": "cli-two-arguments",
+        "passed": true,
+        "exitCode": 2
+      },
+      {
+        "id": "unrelated-active-false-counted",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "unrelated-active-false-still-validates",
+        "passed": true,
+        "exitCode": 0
+      }
+    ],
+    "functionalPassed": true,
+    "selfTestsPassed": true,
+    "selfTestsExitCode": 0,
+    "selfTestsFailureKind": null,
+    "selfTestsDiagnostic": ".......\n----------------------------------------------------------------------\nRan 7 tests in 0.107s\n\nOK\n"
+  },
+  "sameBytesVerified": true
+}
