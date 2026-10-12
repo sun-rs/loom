@@ -94,7 +94,14 @@
     "Native background child cancellation/idle reclamation under each actual provider",
     "Repeated real Codex/Claude team business quality and cost; old frozen paid batch stays stopped"
   ],
-  "deployment": "pending checked restart",
+  "deployment": {
+    "status": "verified",
+    "codeRevision": "087be0cf333269951dcc16ab36d71f8ed1634f3c",
+    "evidence": "deployment.json",
+    "businessTablesUnchanged": 11,
+    "realHistoryPageVerified": true,
+    "consoleAndApiVerified": true
+  },
   "privateRoot": "/Users/sun/.loom/reviews/2026-10-12-native-subagents",
   "privateCandidate": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/paid-v2",
   "sourceHashes": {
