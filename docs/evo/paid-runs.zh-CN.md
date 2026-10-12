@@ -683,3 +683,21 @@ Loom前三份各两Activation完成后空闲、无held／quarantine；Claude实�
 Owner继续后，实现通用Kernel回复返回，不增加场景工作流。真实OpenCode1.18.35和Claude2.1.293仅连接localhost合成模型；隔离启动、自动记忆关闭、外部IP禁止，新增付费0。A明确@B请求，B普通final不带@，Kernel派生reply投递，A沿原session继续并普通收尾。三Activation全部完成，六次合成生成，双方原生DB／JSONL核对一致；无Human代转或救场，未再启动B，CLI及包装进程退出。
 
 合成模型指示真实工具执行共享文件读写，只验证调度／传输／session续接，不是模型自主讨论、业务作品或成本倍率。13项定向检查通过，最初三条路由测试复现0次后续执行；generation负例复现后修正。Worker-target重放夹具补上该路径通常需要的target read，未降低幂等断言。没有重开已结束的付费批。[证据与限制](evidence/2026-10-12-peer-reply-return/summary.json)。
+
+## 修复后重复验收包：免费预检（2026-10-12）
+
+新v3候选保留v2任务及双方职责，新增Room回复来源留证，不重开旧付费批。33项准入／任务公平性／核账检查通过；真实Claude2.1.293与OpenCode1.18.35连接localhost合成模型，再次完成A请求、B无@最终回复、A原session续接，三Activation／六次合成生成，原生记录核账完整。登记进程均退出，两份临时settings删除，新增付费0。合成用量不是费用或自主业务质量证据。
+
+候选冻结3796份源文件，固定四对、L/H H/L L/H H/L顺序，不重跑或补成功样本。拟定整批检查阈值为2000万输入、30万输出、600次生成、120分钟，每样本仍15分钟；阈值在请求间检查，在途响应可能越过。阈值调整发生在新批启动前，旧批预算与失败不改写。两CLI／模型族及一个协作任务不能代替五家整体验收。新release为未授权，付费入口已验证在启动provider前拒绝；正式产品配置与部署未改。后续须取得本批授权，再按业务完整性、独立审查和双方全量消耗判断发布，不凭免费成功打开全部试验开关。[候选与证据](evidence/2026-10-12-peer-reply-return/repeat-readiness.json)。
+
+## 修复后v3付费批：测试能力过期，停止剩余样本（2026-10-12）
+
+Owner在具体四对与预算请求后回复“继续”，v3已获授权并启动L1。实际OpenCode aihubmix/deepseek-v4.1-flash／low与Claude sonnet／low（响应claude-sonnet-5-5）完成设计、实现和实际文件审查；A两次请求、B两次显式Worker定向交回，本份没有触发自动replyReturn。产物40/40功能、归档36项自测通过。B报告审查完成后，A的最后Activation持久化queued而未执行，不记完整业务成功。
+
+只读数据库证实测试入口只发布一次RuntimeOffer：13:30:39 UTC发布，Kernel把夹具报告的十分钟租期限制到13:35:39；最后交接在13:36:42入队，运行能力已过期。Host仍存活，Kernel拒绝调度符合围栏；正式daemon有RuntimeOfferPublisher周期刷新，本测试直接组合Kernel/Host却漏接这一生命周期。此前免费三轮过快，没有覆盖租期。此次不能归因模型随机性、漏@或消息丢失，也不能据此修改产品过期校验。
+
+本批在明确夹具缺陷后停止，release关闭，剩余七份未启动，没有重跑／补样本。输入654872（OpenCode317305、Claude337567），输出24324（16897、7427），生成28（各14）；被动响应与两家原生记录完整核对。没有原生对照或成本倍率。3796份冻结源文件未改，原result保留execution-failed；数据库快照、原流及产物留存，进程退出、两份临时settings删除、实验窗格关闭并恢复原布局。修复在独立v4免费候选进行，新增假时钟回归先复现后通过：不续租仍拒绝，认证API周期续租后16分钟的新请求可调度。[封账证据](evidence/2026-10-12-peer-reply-return/repeat-v3-closeout.json)。
+
+## v4测试入口续租修复：实际CLI跨五分钟免费验证（2026-10-12）
+
+v4与已封账v3分开，未新增付费。夹具运行期间每分钟经认证publishRuntimeOffer刷新相同能力，不放宽Kernel五分钟TTL，不改变任务、模型或产品代码。新增假时钟先复现后通过，合计35项测试通过。实际Claude／OpenCode连接localhost假模型，故意让B首响应延迟310秒；超过原租期后，B无@普通final产生一次replyReturn，A同session自动续接，三Activation／六合成生成全部通过，原生记录核账一致。进程全部退出、临时settings删除。新候选冻结3798文件、release未授权；正式服务未改，无需重启。这证明修复了本次时间边界，不是付费业务或成本验收。[修复及长时证据](evidence/2026-10-12-peer-reply-return/offer-renewal-repair.json)。

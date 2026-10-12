@@ -1,0 +1,66 @@
+{
+  "batchId": "actual-herdr-loom-opencode-claude-reply-20261012-v3",
+  "status": "closed-harness-defect",
+  "startedSamples": 1,
+  "unstartedSamples": 7,
+  "sample": "pair1-loom",
+  "functional": {
+    "passed": 40,
+    "total": 40
+  },
+  "automaticReturnEvents": 0,
+  "cause": "Fixture publishes its RuntimeOffer once and omits daemon renewal lifecycle. Kernel caps TTL at 300000 ms. Follow-up is queued after expiry, so scheduler refuses placement. Host remained alive. No message loss or model-mention failure established.",
+  "offer": {
+    "observed_at": "2026-10-12T13:30:39.774Z",
+    "lease_until": "2026-10-12T13:35:39.775Z"
+  },
+  "offerObservations": 1,
+  "completeBusiness": false,
+  "costRatio": null,
+  "originalResultPreserved": true,
+  "sourceFilesUnchanged": 3796,
+  "cleanup": {
+    "registeredProcessesAbsent": true,
+    "settingsRemoved": 2,
+    "experimentPanesClosed": ["wA:pD", "wA:pE"]
+  },
+  "repair": "Separate v4 candidate and fake-clock test; frozen paid v3 source unchanged; no paid replacement authorized or launched.",
+  "usage": {
+    "opencode": {
+      "input": 317305,
+      "output": 16897,
+      "requests": 14,
+      "complete": true
+    },
+    "claude": {
+      "input": 337567,
+      "output": 7427,
+      "requests": 14,
+      "complete": true
+    },
+    "total": {
+      "input": 654872,
+      "output": 24324,
+      "requests": 28,
+      "complete": true
+    }
+  },
+  "selfTests": {
+    "passed": 36,
+    "exitCode": 0
+  },
+  "evidence": [
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-reply-v3/closeout.json",
+      "sha256": "6885e171bd6b8577d379b88109fa3d6c8c4c32df080d567cbbca9ab6738c3eef"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-reply-v3/failure-snapshot.db",
+      "sha256": "7323af8236a52125e5701f7256939e7ac58a2a826da134fbf520cddb08a3a95b"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-reply-v3/artifact-selftest.json",
+      "sha256": "95c44c8ea8640f31588bf046067fbf62e47349e8072590322ec3037383a9e5b7"
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "kind": "test-harness-runtime-offer-renewal-repair/v1",
+  "productCodeChanged": false,
+  "paidCalls": 0,
+  "unitTests": {
+    "passed": 35,
+    "failed": 0
+  },
+  "tdd": "Unrefreshed offer remains unschedulable; refresh case failed before implementation, then both passed after authenticated renewal. Fake clock covers 16 minutes.",
+  "actualCliSynthetic": {
+    "status": "passed",
+    "cli": ["Claude 2.1.293", "OpenCode 1.18.35"],
+    "deliberateReviewerDelayMs": 310000,
+    "activationSpanSeconds": 314.758,
+    "completedActivations": 3,
+    "generationRequests": 6,
+    "automaticReturnEvents": 1,
+    "plainFinalMentionsEmpty": true,
+    "nativeHistoryAccountingComplete": true,
+    "registeredProcessesAbsent": true,
+    "temporarySettingsRemoved": true
+  },
+  "manifestSha256": "4685aefbcee1f1e13b67fdba9eb20823781de9eedb639cce8a1a4114cc9a50f5",
+  "sourceFiles": 3798,
+  "paidReleaseAuthorized": false,
+  "limitations": [
+    "Synthetic local model only; no paid business or cost acceptance.",
+    "Fixture renewal is test plumbing; production daemon already publishes periodically.",
+    "Closed v3 sample is retained, never replaced or relabelled successful."
+  ],
+  "evidence": [
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-reply-v4/reply-free-kM50Mb/result.json",
+      "sha256": "97af426b7acbdac962155a95fa03564900b00c6f64254652644362ae303529ec"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-reply-v4/long-free-snapshot.db",
+      "sha256": "51a696edf902dc00090cf0bd21f75b3fc7c8fc810f738ba8c77286841cc09574"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-reply-v4/offer-renewal.mjs",
+      "sha256": "fc8e2b63d52989d147823073e7ec2eb7cd59e684aef740f74ae369610a42d219"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-reply-v4/offer-renewal.test.mjs",
+      "sha256": "556e1497a6b85ead3b4a04948fb3c2b0726c28763c16e87d5815037591a71022"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-reply-v4/candidate/manifest.json",
+      "sha256": "4685aefbcee1f1e13b67fdba9eb20823781de9eedb639cce8a1a4114cc9a50f5"
+    }
+  ]
+}

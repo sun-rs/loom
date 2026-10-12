@@ -1,0 +1,52 @@
+{
+  "kind": "reply-return-release-readiness/v1",
+  "productRevision": "7c25680cd65e6ebf526ce36ce2205370fac3ef51",
+  "paidCalls": 0,
+  "manifestSha256": "13dde2da0cb9d064deda35356169688a67fd09df7456fcda0d83ec2e486dec33",
+  "limits": {
+    "maxActivations": 96,
+    "maxRequests": 600,
+    "maxInputTokens": 20000000,
+    "maxOutputTokens": 300000,
+    "maxDurationMs": 7200000
+  },
+  "unitTests": {
+    "passed": 33,
+    "failed": 0
+  },
+  "taskUnchangedFromV2": true,
+  "addedObservability": "replyRouting records Room event return source; no prompt or runtime policy change",
+  "coverage": "Two CLI/model families in one collaboration task; does not establish five-family or default deployment acceptance",
+  "production": "unchanged; final trial switches remain disabled",
+  "pending": [
+    "Explicit owner approval for this new paid batch",
+    "Four actual Herdr controls and four repaired Loom executions",
+    "Independent functional, README and external review quality audit",
+    "Consumption reconciliation and descriptive repeated comparison",
+    "Promotion decision based on complete evidence"
+  ],
+  "actualCliSynthetic": {
+    "status": "passed",
+    "activations": 3,
+    "generationRequests": 6,
+    "nativeAccountingComplete": true,
+    "registeredProcessesAbsent": true,
+    "temporarySettingsRemoved": true
+  },
+  "sourceFiles": 3796,
+  "paidReleaseAuthorized": false,
+  "evidence": [
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-reply-v3/readiness.json",
+      "sha256": "92bf4737d7be64e9e561477d21afe380ca27febecc40b5f35a4fcda3dce20ddd"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-reply-v3/candidate/manifest.json",
+      "sha256": "13dde2da0cb9d064deda35356169688a67fd09df7456fcda0d83ec2e486dec33"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-reply-v3/reply-free-bFVLrX/result.json",
+      "sha256": "ed55ec3a6a9165d0128d144361a5ae523800721b26811b32a5f1500679f7915b"
+    }
+  ]
+}
