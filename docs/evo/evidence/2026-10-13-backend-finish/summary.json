@@ -1,0 +1,201 @@
+{
+  "date": "2026-10-13",
+  "kind": "bounded-backend-mvp-closeout/v2",
+  "scope": "Local single-Human, channel instances, existing serial lanes and continuous sessions. MVP close-out, not every target feature.",
+  "currentRevision": "ab35e39787baa6a447e89e47a6bbf146500f17b2",
+  "productCodeChanged": false,
+  "paidCalls": 0,
+  "backendFullyAccepted": false,
+  "remaining": [
+    {
+      "priority": 1,
+      "area": "Autonomous collaboration quality and total team cost",
+      "already": "Real complete external design/implementation/review exists; v7 totals reconcile; directed ordinary-final returns observed.",
+      "work": "One fixed repeated cohort, no model rescue/replacement/retry-until-green. Report task outcomes separately from proven delivery failures and instrument interruptions. Every attempt cost stays visible.",
+      "doneWhen": "Recorded outcomes and complete bounded cost evidence support a concrete supported scope decision; a prose-only missed recipient does not by itself justify a new scheduler or permanent 100% model obedience requirement.",
+      "evidence": "../2026-10-12-peer-reply-return/repeat-v7-closeout.json"
+    },
+    {
+      "priority": 2,
+      "area": "Adoption through formal composition and existing sessions",
+      "already": "Seven switches off; native-final shared implementations and synthetic real-CLI entry evidence exist.",
+      "work": "For chosen CLI/runtime scope, verify formal daemon/API path, existing-session continuation and safe fallback for unsupported operations before enabling.",
+      "doneWhen": "Explicit scope and rollout/rollback proof; no surprise global switch-on from an isolated successful experiment."
+    },
+    {
+      "priority": 3,
+      "area": "Busy Human input, queued peer reply, held recovery and restart continuity",
+      "already": "Independent lanes, private box, delivery proofs, Human fences and recovery have code and dated real evidence; 21 targeted checks rerun at current revision.",
+      "work": "Combine relevant boundaries in one small vertical operational acceptance for adopted runtimes, not one new framework per edge.",
+      "doneWhen": "No lost accepted request, false ACK, cross-instance/private delivery or silent replacement of native session; unavailable measurements stay unknown."
+    }
+  ],
+  "deferred": [
+    "Fork/Side S4/S5 by owner order",
+    "Remote Computer expansion (frozen mechanism retained)",
+    "Per-channel prewarm tuning",
+    "Phase-4 UI migration and Raft/Aexus reuse",
+    "Perfect model obedience or every stochastic token ratio equal to 1.0"
+  ],
+  "reportingRules": [
+    "Transport correctness, business outcome, cost, deployment are separate verdicts.",
+    "Same artifact quality definition for both arms; failed attempt costs are included in cohort totals.",
+    "Report fixed-cohort attempted/completed/model-failed/instrument-interrupted counts, input/output/requests, mean/median/range.",
+    "Per-completed-task cost includes all attempts; descriptive only, not a retry-cost forecast or statistical equivalence proof.",
+    "If instrumentation interrupts or consumption is unknown, comparison is null, observed spend and reason remain.",
+    "No automatic release from a token ratio and no automatic new cohort until every model sample succeeds."
+  ],
+  "newCandidate": {
+    "root": "/Users/sun/.loom/reviews/2026-10-13-team-closeout-v8",
+    "manifestSha256": "970f91de9b2fbb5c2445b4c57f0defefad519f00e49d49a93842503175dab051",
+    "frozenFiles": 3815,
+    "paidAuthorized": false,
+    "sequence": [
+      "pair1-loom",
+      "pair1-native",
+      "pair2-native",
+      "pair2-loom",
+      "pair3-loom",
+      "pair3-native"
+    ],
+    "bindings": [
+      {
+        "provider": "opencode",
+        "model": "aihubmix/deepseek-v4.1-flash",
+        "effort": "low"
+      },
+      {
+        "provider": "claude",
+        "model": "sonnet",
+        "effort": "low"
+      }
+    ],
+    "limits": {
+      "maxActivations": 72,
+      "maxRequests": 450,
+      "maxInputTokens": 12000000,
+      "maxOutputTokens": 240000,
+      "maxDurationMs": 7200000
+    },
+    "newCode": "Automatic captured-request audit in shared batch finalizer; cohort outcome/cost report. Product instructions unchanged since 3046a2d.",
+    "tests": {
+      "private": 54,
+      "vertical": 21,
+      "redLogs": [
+        "/tmp/loom-v8-audit-red.log",
+        "/tmp/loom-v8-cohort-red.log",
+        "/tmp/loom-v8-disposition-red.log"
+      ],
+      "greenLog": "/tmp/loom-v8-tests-final.log"
+    },
+    "recordReplay": {
+      "samples": 6,
+      "memberRecords": 12,
+      "forwardedRequests": 183,
+      "claudeLocalTitleRejections": 12,
+      "opencodeLocalStopRejections": 1,
+      "priorLedgersUnchanged": true
+    },
+    "newActualCliFreeProbe": {
+      "resultPath": "/Users/sun/.loom/reviews/2026-10-13-team-closeout-v8/business-runs/1791842562512-pair1-loom/result.json",
+      "resultSha256": "c59e4af2ff90750a2f8e9b83329050b9b55d04309080be2e7fd8d5db8649ac64",
+      "upstream": "localhost synthetic only",
+      "requests": 10,
+      "nativeCheck": {
+        "opencode": {
+          "complete": true,
+          "sessions": ["ses_ecddc4156ffelNvqDpXfwVFf03"],
+          "input": 422,
+          "output": 80,
+          "responses": 4,
+          "localRejected": 0
+        },
+        "claude": {
+          "complete": true,
+          "responses": 6,
+          "sessions": ["2ac28999-4990-4b03-8ffb-dde00223d81b"]
+        },
+        "complete": true
+      },
+      "requestAudit": {
+        "opencode": {
+          "forwarded": 4,
+          "firstForwardedId": 1,
+          "locallyRejected": [],
+          "fullTask": true,
+          "fullCommunication": true,
+          "allForwardedModelEffortApproved": true,
+          "requestHashesVerified": true
+        },
+        "claude": {
+          "forwarded": 6,
+          "firstForwardedId": 1,
+          "locallyRejected": [],
+          "fullTask": true,
+          "fullCommunication": true,
+          "allForwardedModelEffortApproved": true,
+          "requestHashesVerified": true
+        }
+      },
+      "newGuidancePresentInBothActualRequests": true,
+      "activationReasons": ["mention", "mention", "reply", "mention"],
+      "scope": "Loom arm; verifies startup, shared guide delivery, reply transport and accounting, not model obedience or invoice task quality. Native Herdr arm not rerun; audit replay covers previous native records.",
+      "cleanup": {
+        "recordedProcessesAbsent": true,
+        "removedSettings": [
+          "/private/tmp/team-oc-claude-paid-iFCLAi/claude/settings.json",
+          "/private/tmp/team-oc-claude-paid-iFCLAi/opencode/settings.json"
+        ],
+        "createdHerdrPanes": false
+      }
+    },
+    "freezeNote": "Free transport probe preceded addition of outcome-report-only module and final freeze. Runtime/recorder/audit entry used by probe unchanged; private full test suite rerun after report changes."
+  },
+  "v7NewDescriptiveReport": {
+    "arms": {
+      "loom": {
+        "attempted": 3,
+        "completed": 2,
+        "instrumentInterrupted": 0,
+        "modelFailures": 1,
+        "batchCompletionRate": 0.6666666666666666,
+        "successRate": 0.6666666666666666,
+        "input": 1610090,
+        "output": 53518,
+        "requests": 60,
+        "inputMean": 536696.6666666666,
+        "inputMedian": 407033,
+        "inputRange": [51920, 1151137],
+        "comparable": true,
+        "inputPerCompleted": 805045,
+        "outputPerCompleted": 26759
+      },
+      "native": {
+        "attempted": 3,
+        "completed": 2,
+        "instrumentInterrupted": 1,
+        "modelFailures": 0,
+        "batchCompletionRate": 0.6666666666666666,
+        "successRate": null,
+        "input": 3547842,
+        "output": 84221,
+        "requests": 123,
+        "inputMean": 1182614,
+        "inputMedian": 1231984,
+        "inputRange": [359844, 1956014],
+        "comparable": false,
+        "inputPerCompleted": null,
+        "outputPerCompleted": null
+      }
+    },
+    "descriptiveInputPerCompletedRatio": null,
+    "descriptiveOutputPerCompletedRatio": null,
+    "acceptance": "not automatically decided",
+    "limitations": [
+      "All attempt costs retained, including model failures; no success-only cost subset.",
+      "Cost per completed task is a descriptive cohort statistic, not a predicted retry cost or statistical equivalence proof.",
+      "Small fixed cohorts report uncertainty and task success separately; no release decision from token ratio alone."
+    ]
+  },
+  "deployment": "No product changes or restart this batch; code 3046a2d remains deployed, seven switches off."
+}
