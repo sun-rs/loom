@@ -63,9 +63,10 @@
         "test:ui:bilateral-captures",
         "test:cli:efficiency:unit"
       ],
-      "remainingStagesExitCode": 0
+      "remainingStagesExitCode": 0,
+      "recheckFileExitCode": 0
     },
-    "deployment": "pending",
+    "deployment": "backup + graceful com.loom.evo restart + fresh browser/console/API verified; see deployment.json",
     "format": "npm run format:check passed",
     "diff": "git diff --check passed",
     "frozenRealCliSourceFiles": 3767,
@@ -136,5 +137,6 @@
     },
     "paidCalls": 0,
     "modelGeneratedBusinessQuality": false
-  }
+  },
+  "deployed": true
 }

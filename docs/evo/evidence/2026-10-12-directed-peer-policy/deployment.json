@@ -1,0 +1,65 @@
+{
+  "codeCommit": "6688ae34ba8c9e031d16008825688e7e93ada756",
+  "sourceSha256": "78a7c345c00733eca5d4906407dbdaf081d62aac7c730fb374ca05faf571b317",
+  "schema": 86,
+  "backupVerified": true,
+  "databases": 2,
+  "stateFiles": 302,
+  "businessTablesUnchanged": 11,
+  "gracefulRestartVerified": true,
+  "trialFlags": "all seven remain off",
+  "page": {
+    "consoleAssets": {
+      "app-R8vQ_QWp.js": "a9d61602f70d3de73607a3380af7f91db3255af3460aed7e77de56ea4965939e",
+      "index-C2hZhemy.js": "5074c275d1ba1a81607fcaa367a1b4ce6458e43fe09861ea70f5f942a2eaf245",
+      "index-mk0OQi78.css": "c54c81c8c9690b2cc17a916e589a928d440b0012cfcf4390dacc718a6fff0952"
+    },
+    "aggregateApiVerified": true,
+    "consoleVerified": true,
+    "at": "2026-10-12T08:31:18.898Z",
+    "url": "http://127.0.0.1:4176/_rah/console/",
+    "title": "Loom 控制台（evo 临时）",
+    "historyVerified": true,
+    "pageErrors": [],
+    "roles": 39,
+    "roleResponseKeys": ["roles", "instances"],
+    "memoryResponseKeys": ["channelId", "entries", "total", "truncated"],
+    "health": {
+      "buildIdentity": {
+        "schemaVersion": 1,
+        "kind": "development",
+        "version": "0.0.0-dev+local",
+        "builtAt": "2026-10-03T03:43:43.718Z",
+        "buildId": "85a2d52a33dc2848"
+      },
+      "service": "rah-os-local-core",
+      "state": "online"
+    }
+  },
+  "evidence": [
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-directed-peer-policy/deployment/restart.json",
+      "sha256": "668960bd6acca0fa8de69bf5e7050954d60924884f3be6a9d660d54639245099"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-directed-peer-policy/deployment/restart.log",
+      "sha256": "e98850b8b877e53b20177b69040dda771bd2a88f84aec26a547f845813008439"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-directed-peer-policy/deployment/page.json",
+      "sha256": "af8155c94b179e501592cbd2f95cc5fa9318320f8819c2c353f5b51d7e6645d7"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-directed-peer-policy/deployment/page.log",
+      "sha256": "fb7f114c1daf3f95d776baa109e5f9dfea7440daf3f5c5c6ff6e123c28db4e42"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-directed-peer-policy/deployment/page.png",
+      "sha256": "c86d37d7c38ac7a10dcd69f358b103e7fb373a681c9e839d81329ba2d842a81f"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-directed-peer-policy/deployment/console.png",
+      "sha256": "fd89fdd40d783e534afb68a9ac769d70f3e8a7177012d079a9c25bc2c93ff2fb"
+    }
+  ]
+}
