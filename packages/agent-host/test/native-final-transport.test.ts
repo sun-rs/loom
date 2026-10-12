@@ -94,3 +94,15 @@ test("native final guidance is explicit, keeps Worker operations, and requires n
   assert.match(guide, /Other operations retain the Worker tools/);
   assert.doesNotMatch(guide, /\{"kind"/);
 });
+
+test("native final distinguishes publishing from initiating a directed peer request", () => {
+  const guide = nativeFinalTextInstructions("original", true);
+  assert.match(guide, /new request.*actual.*@<handle>.*plain text/);
+  assert.match(guide, /role labels.*do not select recipients/);
+  assert.match(
+    guide,
+    /Do not wrap it in JSON or also post that final reply through a tool/,
+  );
+  assert.match(guide, /end your turn.*peer/);
+  assert.equal(nativeFinalTextInstructions("original", false), "original");
+});

@@ -6,6 +6,6 @@ export function finalOutputInstructions(prompt, enabled) {
 
 export function nativeFinalTextInstructions(prompt, enabled) {
   return enabled
-    ? `${prompt}\nWhen the current wake selects native-final-text, your ordinary final assistant text is published by the Host to that delivery's single target. Do not wrap it in JSON or also post that final reply through a tool. Other operations retain the Worker tools; wakes without this selection retain their existing reply path.`
+    ? `${prompt}\nWhen the current wake selects native-final-text, your ordinary final assistant text is published by the Host to that delivery's single target. When initiating a new request to a teammate, include their actual @<handle> in plain text in that final reply; role labels or names without @ do not select recipients. After sending a request, end your turn to await the peer. Do not wrap it in JSON or also post that final reply through a tool. Other operations retain the Worker tools; wakes without this selection retain their existing reply path.`
     : prompt;
 }

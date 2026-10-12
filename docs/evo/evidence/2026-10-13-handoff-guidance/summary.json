@@ -1,0 +1,43 @@
+{
+  "date": "2026-10-13",
+  "scope": "Shared native-final guidance only; no routing, workflow, tool, queue or model retry changes.",
+  "cause": "Standing protocol placed @ guidance under message-post; native-final override only described publication to a target, not initiating a directed request. Paid v7 L3 omitted @ despite separate experiment guidance; this prompt gap is not proven to be its sole cause.",
+  "owner": "AgentHost owns provider-facing instructions; Kernel retains recipient selection and causal reply return.",
+  "change": "Every shared native-final consumer now explains actual @handle in plain final text for a new teammate request, no role-label routing, turn end when waiting, no duplicate message-post. Disabled path identical.",
+  "consumers": [
+    "Claude warm",
+    "Codex exec/resume",
+    "OpenCode warm",
+    "Kimi ACP",
+    "Pi print"
+  ],
+  "verification": {
+    "tddRed": "/tmp/loom-handoff-red.log",
+    "tddGreen": "/tmp/loom-handoff-green.log",
+    "focusedGuideTests": 4,
+    "kernelRoutingTests": 23,
+    "fullCheck": "passed on full second run, exit 0; first run retained one exact wording failure",
+    "formatCheck": "passed",
+    "paidRun": false,
+    "realProviderBehaviorAcceptance": false,
+    "efficiencyAcceptance": false,
+    "combinedGuideAndDaemonContractTests": 7,
+    "contractGreen": "/tmp/loom-handoff-contract-green.log",
+    "fullCheckLogs": [
+      "/tmp/loom-handoff-check.log",
+      "/tmp/loom-handoff-check-2.log"
+    ],
+    "fullCheckSha256": "a42ca495a62a53f8816aa98f9201c9c799f732c0d98cba90339a46bb8dbc9cb7"
+  },
+  "limits": [
+    "Clearer instructions cannot guarantee model compliance or eliminate every missed initial handoff.",
+    "No natural-language recipient inference or automatic broadcast.",
+    "Existing source/session proofs and single-hop return unchanged.",
+    "No repeated paid cohort launched; previous failures and costs retained.",
+    "Five consumers share the code, not five-model behavioral evidence."
+  ],
+  "sourceHashes": {
+    "packages/agent-host/src/final-output-instructions.js": "080cf3838dd6902924f69cca8ad1bd38e20a5ae7d6a5c7f74f70c5aea576731e",
+    "packages/agent-host/test/native-final-transport.test.ts": "cc29455d959f69f954225dddfb0137ba8f6df2a4aab43395d18bcf5c86c6d039"
+  }
+}
