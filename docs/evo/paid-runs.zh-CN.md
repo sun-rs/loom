@@ -640,3 +640,15 @@ Codex缺量不再阻断其他组合：新私有入口采用Claude2.1.293／sonne
 失败保留：首Loom夹具假定最后一条message是工具结果，被Claude附加system提示打破；类型化工具结果检查红后绿，重验通过，旧超时及Host-inactive清理警告不改写。Herdr OpenCode完整TUI启动崩溃、无生成，mini可用；script包装隐藏进程身份，移除后Herdr识别成功。原生effort嵌套配置未进入请求，被本地守卫拦下；改用model options.reasoningEffort与agent顶层reasoningEffort后，最终两臂原流均为low。Herdr父控制器在完整交接后达到六分钟管理时限，exit1及deadline原样保留，不能称父进程全绿；随后只读独核全部响应、连续session、idle状态和PID清理通过。
 
 5项新增策略回归、14项既有准入／失败尾账测试通过。仅结束并关闭本批pane，伙伴会话未动；产品、默认开关与部署未改，无服务重启。此入口明确拒绝付费：真实凭据、已有整队预算／父清理守卫与共同业务oracle尚待接入；OpenCode现有自动记忆证据helper约束run --pure，不能直接冒充本次TUI严格记忆准入。下一步限定为这些付费前置条件，再冻结独立四对平衡顺序业务批，不补旧Codex批、不做工作流产品硬编码。[证据、原流哈希及限制](evidence/2026-10-12-claude-opencode-team/summary.json)。
+
+## Claude／OpenCode真实协作：夹具指令不对等，停止批次（2026-10-12）
+
+补齐OpenCode原生mini的精确版本记忆审计：官方1.18.35同一revision中，--pure为全局参数，mini转入RunCommand.handler；外部Claude指令／skills及项目配置隔离，两臂保留同session历史。真实Herdr和Loom免费预检均完成8次本地合成生成及双方续聊，HTTP记录与原生DB／JSONL交叉一致。Herdr父控制器在空闲且用量完整后正常退出，修复前一批收尾deadline。隐藏oracle读取拒绝、共同TASK读取允许已在实际sandbox验证。免费守卫误拒debug config／serve、脚本化双初始唤醒超出固定回应序列等开发失败留存，未花费真实模型费用。
+
+按owner继续指令冻结Claude sonnet/low（实际claude-sonnet-5-5，2.1.293）＋OpenCode aihubmix/deepseek-v4.1-flash/low（1.18.35）的新4对平衡顺序批，只执行pair1-loom。负责人检查实际请求时发现复用的roleInstanceFixture带入“Initial role: Review / Instructions: Review only.”，连实现者也被限制为只审查；OpenCode6次、Claude3次真实请求均含该指令，而Herdr任务无对应限制。这是已证实的对照不对等，不能当作模型随机性，也不能据此推定具体影响倍率或断言过去所有单聊结果无效。已关闭该批release，其余7样本未执行，不替换、不补跑。
+
+本次OpenCode输入81156／输出5408／6请求；Claude47104／1251／3请求；整队128260／6659／9请求。原流完整并与两家各唯一原生session核对，缓存没有重复相加；这是已观察token完整性，不是精确账单声明。两个Activation完成、无held；OpenCode提出设计并@Claude，Claude设计审查final没有@回实现者，随后空闲。代码未变，功能0/40，尚无代码独立审查。漏交接与夹具限制分开记录，不声称已证明因果。本样本不计算成本倍率。
+
+另建私有修正版夹具，通用Role改为Collaborator及中性协作说明，两臂任务说明包含同一中性要求；实现／审查分工仍只在任务prompt，产品未增加工作流。回归先复现Review限制，再验证修复；遗漏必填instructions导致的免费schema失败也留存。最终32项私有检查通过；真实两CLI／本地合成模型完成4个Activation、双方同session续聊和8次生成，逐请求检查已无Review only，独立原生核账及清理通过。修正后尚未付费重验，不能宣布业务或效率通过。
+
+已核实本批所有登记进程退出，两实验pane回到shell后关闭，原布局恢复；产品、试验开关和正式部署未变，无需服务重启。[原档哈希、完整计量、偏差与修复证据](evidence/2026-10-12-team-fixture-fairness/summary.json)。

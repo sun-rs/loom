@@ -1,0 +1,196 @@
+{
+  "kind": "team-fixture-fairness-audit",
+  "date": "2026-10-12",
+  "productChanges": false,
+  "deploymentChanged": false,
+  "productionTrialFlags": "unchanged, off",
+  "paid": {
+    "root": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-business/business-runs/1791803067129-pair1-loom",
+    "resultSha256": "32edf0a65bde0e03ea97ac7674f25ccb496d0f4f6e55db3d88c520b9feb44763",
+    "manifestSha256": "e9042ee1ebb2efc69ede5d83ad4f56961010c311e7dd9a3a8592492ea0ac11fd",
+    "bindings": [
+      {
+        "cli": "opencode",
+        "model": "aihubmix/deepseek-v4.1-flash",
+        "effort": "low",
+        "version": "1.18.35"
+      },
+      {
+        "cli": "claude",
+        "binding": "sonnet",
+        "actualModel": "claude-sonnet-5-5",
+        "effort": "low",
+        "version": "2.1.293"
+      }
+    ],
+    "usage": {
+      "opencode": {
+        "input": 81156,
+        "output": 5408,
+        "requests": 6,
+        "complete": true
+      },
+      "claude": {
+        "input": 47104,
+        "output": 1251,
+        "requests": 3,
+        "complete": true
+      },
+      "total": {
+        "input": 128260,
+        "output": 6659,
+        "requests": 9,
+        "complete": true
+      }
+    },
+    "nativeCrossCheck": {
+      "opencode": {
+        "complete": true,
+        "sessions": ["ses_ed036ebfaffe6LRBWMYr8SSKgX"],
+        "input": 81156,
+        "output": 5408,
+        "responses": 6
+      },
+      "claude": {
+        "complete": true,
+        "responses": 3,
+        "sessions": ["cb507c18-d005-4757-bfd5-03422c81bbc8"]
+      }
+    },
+    "localPreForwardClaudeRejected": 0,
+    "functionalChecks": {
+      "passed": 0,
+      "total": 40
+    },
+    "business": "design proposal and design review only; original invoice implementation unchanged; no code review",
+    "activations": ["completed", "completed"],
+    "cleanup": [
+      {
+        "pid": 26337,
+        "absent": true
+      },
+      {
+        "pid": 26373,
+        "absent": true
+      },
+      {
+        "pid": 26946,
+        "absent": true
+      },
+      {
+        "pid": 26958,
+        "absent": true
+      },
+      {
+        "pid": 26960,
+        "absent": true
+      },
+      {
+        "pid": 26961,
+        "absent": true
+      },
+      {
+        "pid": 28643,
+        "absent": true
+      }
+    ],
+    "remainingSamples": "7 not started; original release disabled and cohort retained; no replacement samples",
+    "costRatio": null
+  },
+  "finding": {
+    "source": "packages/kernel/test/role-instance-fixture.ts configuration role=Review; instructions=Review only.",
+    "actualWire": "Both real Loom providers received Initial role / Review / Instructions / Review only. Herdr business prompt has no matching review-only restriction.",
+    "requestsContainingRestriction": {
+      "opencode": 6,
+      "claude": 3
+    },
+    "impact": "Proven asymmetry, not proof of its effect size or cause of omitted mention; first paid sample cannot support efficiency acceptance.",
+    "handoff": "Claude design-review final contained no directed @ and mentions_json was empty; two Activations completed without holds, no next activation; no leader rescue.",
+    "historicalScope": "Earlier cohorts have not been exhaustively audited for this instruction; no blanket invalidation of earlier single-agent results."
+  },
+  "repair": {
+    "owner": "private benchmark fixture only; no product workflow change",
+    "root": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-business-v2",
+    "role": "Collaborator",
+    "instructions": "Follow the Human task and agreed collaboration.",
+    "commonTask": "same neutral instruction included in both arm communication files; task roles remain experiment prompt",
+    "fixtureTest": "failed on Review before repair, passes after neutral role; required instruction schema omission also failed in free preparation and is retained",
+    "actualWireCheck": "synthetic local upstream rejects Review only. in every request; final eight generations pass",
+    "resultSha256": "9528f9f7525193429d453d6a586ce2f7335462af41e20769eeae001e3f02c3f6",
+    "freeOnly": true,
+    "activations": ["completed", "completed", "completed", "completed"],
+    "nativeCrossCheck": {
+      "opencode": {
+        "complete": true,
+        "sessions": ["ses_ed03223deffe4WgQUhhHBA2GrF"],
+        "input": 414,
+        "output": 80,
+        "responses": 4
+      },
+      "claude": {
+        "complete": true,
+        "responses": 4,
+        "sessions": ["89613ec9-35f0-4fe9-89d1-5e4ee1bf7425"]
+      }
+    },
+    "cleanup": [
+      {
+        "pid": 38672,
+        "absent": true
+      },
+      {
+        "pid": 38808,
+        "absent": true
+      }
+    ],
+    "testsPassed": 32,
+    "paidRevalidation": false
+  },
+  "preflight": {
+    "memory": "Official exact revision shows global --pure sets OPENCODE_PURE; --mini calls runMini and RunCommand.handler; serve uses the same Server. Environment disables external Claude instructions/skills and project config. Native history retained.",
+    "sourceRevision": "53d1eabb61e21162157817bf677da0a4ad3332e3",
+    "sourceHashes": {
+      "packages_opencode_src_effect_runtime-flags.ts": "5b580cb96f9d5300f8ff995a29ec5e602e0e3e0200661dfff971998562f2a1a9",
+      "packages_opencode_src_cli_cmd_run.ts": "bde848ca17f30834beb4ef0dfecb3b819730746ec2023c1ac55ecef7ca25dd37",
+      "packages_opencode_src_cli_cmd_serve.ts": "4cdec5fb55b58a3215aec3d58c6e15a3ef0db75dd6f613180c901214be67983f",
+      "packages_opencode_src_cli_cmd_tui.ts": "09c6591126d56aa7faf3f5607c4a8e9e847de556a7eb52892dd222d1b99d2a34",
+      "packages_opencode_src_index.ts": "bddea4eb640adb6fe72193f292c1ae75526ff1bf5bc507ff7c539e4e93825dbc",
+      "packages_opencode_src_plugin_index.ts": "47c62b7cfae891d268e6b239edb0f1c46df5cb35eb11ccfd8bd4186c156024e9"
+    },
+    "sourceURL": "https://github.com/anomalyco/opencode/tree/53d1eabb61e21162157817bf677da0a4ad3332e3/packages/opencode/src",
+    "businessEntryFreeRuns": [
+      "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-business/business-runs/1791802811193-pair1-loom",
+      "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-business/business-runs/1791802865033-pair1-native"
+    ],
+    "nativeController": "eight synthetic generations then idle/complete-accounting settlement, normal parent exit; no deadline failure in final attempt",
+    "oracleIsolation": "actual sandbox probes deny hidden cases.json and permit TASK.json for both providers",
+    "retainedFreeFailures": [
+      "Guard initially rejected read-only config probe and local serve; explicit entry tests red/green after source check",
+      "Fixed synthetic eight-request script did not support simultaneous initial wakes; business opening aligned to one initiating A in both arms before paid freeze",
+      "Neutral fixture initially omitted mandatory instruction field; schema rejected before model execution; zero paid calls"
+    ]
+  },
+  "rawRequestHashes": {
+    "opencode": {
+      "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-business/business-runs/1791803067129-pair1-loom/opencode-http/request-1.private.json": "662e809aef4e0a3e4d7ea91e35376a788bb53b7707af363c1f28cb349848eee1",
+      "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-business/business-runs/1791803067129-pair1-loom/opencode-http/request-2.private.json": "228d2da1fe05536780a6cc64a860b55cd914e1178e7bd800be6f4aafc294e511",
+      "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-business/business-runs/1791803067129-pair1-loom/opencode-http/request-3.private.json": "50d0701753f2d286ee2c12d1c817320d118d012edd9626843f2abbdb04d85aff",
+      "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-business/business-runs/1791803067129-pair1-loom/opencode-http/request-4.private.json": "8658b11a3b3fac94a19d2ad97486e2766c80a5921b626b015fd5f4f1851872d3",
+      "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-business/business-runs/1791803067129-pair1-loom/opencode-http/request-5.private.json": "1e1a1323a954f43a13cd7fc15494d30dfefde9cf3ce3fa0c8b6ab7226db5a5e3",
+      "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-business/business-runs/1791803067129-pair1-loom/opencode-http/request-6.private.json": "2d3ee232f4bc18f2f43183d9c4415e33983e913d28ee7a8b4dc9795b7e6ba70a"
+    },
+    "claude": {
+      "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-business/business-runs/1791803067129-pair1-loom/claude-http/request-1.private.json": "cd4a107f46d570091ea27f57ff0e0ef72e9040560030982fcfed50f1b3c23cf7",
+      "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-business/business-runs/1791803067129-pair1-loom/claude-http/request-2.private.json": "fca445924624165a1dd3c422f7be0294e9d89a78b1f70fa0b6260e9ebc56b09e",
+      "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-business/business-runs/1791803067129-pair1-loom/claude-http/request-3.private.json": "dcb85297367b738708639809b6f605b6bdc8092530bd4a9eab0d8ee9a571214f"
+    }
+  },
+  "limits": [
+    "One methodologically invalid paid sample, no native paid comparator and no ratio",
+    "Synthetic preflight does not prove autonomous business success",
+    "Native transcript cross-check does not guarantee provider invoice coverage",
+    "OpenCode full TUI crash remains uninvestigated; native mini used",
+    "No revised paid cohort started; no changes to older paid records"
+  ],
+  "herdrCleanup": "Created panes wA:p9 and wA:pA verified back at shell and closed; root wA:p2 layout restored; other sessions untouched"
+}
