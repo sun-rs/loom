@@ -100,6 +100,17 @@ never installs them or configures their accounts.
   materialized as instance or Channel files (contract §4, "Memory boundary").
   Channels created before the home directory keep their instances' private cwds.
 
+Native subagents are permitted as internal execution of their parent instance
+(owner approved 2026-10-12; target contract §2). The continuous session is the
+main session; child sessions do not become Channel members or replace it.
+Parent authority, responsibility, lifecycle and total usage cover its child
+work. Match subagent capability policy across benchmark arms; actual fan-out
+may differ. Count descendants without double-counting provider aggregates,
+retain unknown coverage, and apply batch model and automatic-memory rules to
+child work. Internal delegation cannot substitute for an explicitly requested
+peer instance's participation. This does not authorize native schedulers or
+new independent instance lanes.
+
 Instances run in parallel; each has one serial lane. A Channel `@instance` is a
 public directed request; when a Human message's canonical @ names enabled
 instance members, only those are woken (message-level set; no such @

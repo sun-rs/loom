@@ -176,6 +176,7 @@ Claude 连接配置隔离修复（2026-09-29）：冷/热 driver 只继承用户
 - Kimi 延迟：触发条件为下一次 Kimi 效率门禁，按交替顺序与多样本判定。
 - Codex 续轮额外 `message-read`：P41 出现、P42 消失，判模型侧；若复现为稳定行为再评估（会改四家协议版本，需四家付费复验）。
 - 真实 CLI 已覆盖（P43，Codex+Claude haiku）：私聊排队与隔离、平台记忆写入/读回与读开关拒绝、重启后原 session 续聊。
+- 原生子代理口径（owner 2026-10-12）：允许实例主session委派内部子代理，同伴只依赖父实例交付；子代理不是独立频道成员。成员计量包含全部所属子工作，两臂能力政策对等，指定成员参与不能被内部助手替代。目标与验收规则已更新，产品Codex仍带 `features.multi_agent=false`，移除该旧策略及子工作生命周期／用量覆盖尚待代码验收；私有runner业务失败误降级消费的候选回归尚待接入。未新增付费、未改运行代码或正式部署。见[目标合同](target-contract.zh-CN.md#原生子代理owner-2026-10-12-确认)及[验收口径](../design/cli-efficiency-gate.zh-CN.md#多实例协作收口口径2026-10-11)。
 - 真实 CLI 待补范围：P89四CLI并发与P92频道并行已有实证，不再笼统列为未覆盖。当前native-final的FakeRuntime组合已验证普通peer并行直接发表、真实未读位置及后续delta、定向peer触发held／Human恢复／原文@交接；[真实 Codex／OpenCode 本地合成双臂](evidence/2026-10-12-team-loom/summary.json)已验证 A→B→A、同 session 续接及缺 @ 停止；后继[团队纵向 MVP](evidence/2026-10-12-team-mvp/summary.json)补齐 Claude／Kimi／Pi 的有限双臂交接，并验证两家真实工具的共享产物及归档评价链。后继[Codex／Claude完整业务入口](evidence/2026-10-12-team-mvp/paid-entry-readiness.json)已完成团队计量／授权／清理接线和免费预检，固定4对批已授权，但[首原生样本](evidence/2026-10-12-team-business-run/summary.json)因内部Codex子代理代替外部Claude交接失败，私有计量降级缺陷触发剩余样本停止，尚无团队倍率。此前免费链路均为本地合成响应，Kimi权限差异保留；尚未完成真实跨CLI自主协作或并发业务验收，不能把传输通过当作自主协作达标；热模式取消、首轮中断、OpenCode abort时序、Claude后台任务轮竞态按拟采用运行模式限定验证范围。旧第六十二至六十五节的dated缺口不能直接当作当前全局失败，按[有限收口清单](evidence/2026-10-11-claude-closeout/finish-inventory.json)核对；后继付费失败单独留账，未启用正式开关。
 - 记忆：已删除条目 Worker 无列举入口；30 条增量上限为有损摘要；Codex/Claude 压缩后增量可能只剩摘要。
 - 控制台：急停状态只看已同步事件窗口；RunAttempt 列表只取最近 20 条活动。触发：phase 4 前端接入。
