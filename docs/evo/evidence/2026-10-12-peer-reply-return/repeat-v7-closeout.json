@@ -1,0 +1,662 @@
+{
+  "kind": "loom-team-repeat-v7-closeout/v1",
+  "date": "2026-10-13",
+  "productRevision": "dde12a757cf60fd3e3f2e0bb4d970af4f2b14d41",
+  "repositoryRevisionAtRun": "532402e673a8dcb18490a407683ae341c19b837c",
+  "authorization": "Owner requested backend assessment, repairs and rerun; exact previously proposed three-pair cohort, no retries.",
+  "candidateManifest": "/Users/sun/.loom/reviews/2026-10-13-team-bootstrap-v7/candidate/manifest.json",
+  "manifestSha256": "2a4162156abb97492686c4dd96b0ceda0725b9848f0b71661a2be49bb1fea512",
+  "frozenFiles": 3811,
+  "frozenHashesUnchanged": true,
+  "limits": {
+    "maxActivations": 72,
+    "maxRequests": 450,
+    "maxInputTokens": 12000000,
+    "maxOutputTokens": 240000,
+    "maxDurationMs": 7200000
+  },
+  "versions": {
+    "opencode": "1.18.35",
+    "claude": "2.1.293 (Claude Code)"
+  },
+  "bindings": [
+    {
+      "provider": "opencode",
+      "model": "aihubmix/deepseek-v4.1-flash",
+      "effort": "low"
+    },
+    {
+      "provider": "claude",
+      "model": "sonnet",
+      "effort": "low"
+    }
+  ],
+  "actualModels": {
+    "opencode": "deepseek-v4.1-flash",
+    "claude": "claude-sonnet-5-5"
+  },
+  "allForwardedGenerationsEffort": "low",
+  "sequence": [
+    "pair1-loom",
+    "pair1-native",
+    "pair2-native",
+    "pair2-loom",
+    "pair3-loom",
+    "pair3-native"
+  ],
+  "samples": [
+    {
+      "sample": "pair1-loom",
+      "arm": "loom",
+      "root": "/Users/sun/.loom/reviews/2026-10-13-team-bootstrap-v7/business-runs/1791821566770-pair1-loom",
+      "status": "awaiting-quality-audit",
+      "reason": "quiescent",
+      "usage": {
+        "input": 1151137,
+        "output": 31511,
+        "requests": 37,
+        "complete": true
+      },
+      "members": {
+        "opencode": {
+          "input": 759264,
+          "output": 26403,
+          "requests": 23,
+          "complete": true
+        },
+        "claude": {
+          "input": 391873,
+          "output": 5108,
+          "requests": 14,
+          "complete": true
+        }
+      },
+      "functionalPassed": true,
+      "functionalChecks": 40,
+      "selfTestsDiagnostic": "..........................................................\n----------------------------------------------------------------------\nRan 58 tests in 0.339s\n\nOK\n",
+      "qualityPassed": true,
+      "qualityNote": "API, exact arithmetic and HALF_UP, validation, grouping, CLI, documented test command present; no material documentation defect found.",
+      "publicActivations": 11,
+      "automaticReplies": 5,
+      "nativeCheck": {
+        "opencode": {
+          "complete": true,
+          "sessions": ["ses_ecf1c89b6ffecreGscaxn20kXo"],
+          "input": 759264,
+          "output": 26403,
+          "responses": 23,
+          "localRejected": 0
+        },
+        "claude": {
+          "complete": true,
+          "responses": 14,
+          "sessions": ["f75206cc-12ca-450d-853e-9855f68a4722"]
+        },
+        "complete": true
+      },
+      "firstForwardedRequestAudit": {
+        "opencode": {
+          "fullTask": true,
+          "fullCommunication": true,
+          "firstForwardedId": 1,
+          "forwarded": 23,
+          "allForwardedEffort": "low",
+          "locallyRejected": 0,
+          "localRejectedIds": [],
+          "firstModel": "deepseek-v4.1-flash"
+        },
+        "claude": {
+          "fullTask": true,
+          "fullCommunication": true,
+          "firstForwardedId": 1,
+          "forwarded": 14,
+          "allForwardedEffort": "low",
+          "locallyRejected": 0,
+          "localRejectedIds": [],
+          "firstModel": "claude-sonnet-5-5"
+        }
+      },
+      "cleanupAllAbsent": true,
+      "hashes": {
+        "result.json": "b19653fa04b5a5c2e21e08252d1626adec4faecf476863b5aa4366a0ddb92c77",
+        "lead-audit.json": "f26a30f3f20c3e488c86cb5b555784e3c96310e96690781a1946f629358cbf6c",
+        "first-request-audit.json": "ad7d05c5b040baada5d65bc3dcd32866e883eb2119d9040e01065e111cc1fb0e",
+        "artifact.evidence.json": "123ab92134e376ca3ae872ae356082053341cdcbc5735d0f35b01829d6a706de"
+      }
+    },
+    {
+      "sample": "pair1-native",
+      "arm": "native",
+      "root": "/Users/sun/.loom/reviews/2026-10-13-team-bootstrap-v7/business-runs/1791821975489-pair1-native",
+      "status": "awaiting-quality-audit",
+      "reason": "quiescent",
+      "usage": {
+        "input": 1231984,
+        "output": 28325,
+        "requests": 45,
+        "complete": true
+      },
+      "members": {
+        "opencode": {
+          "input": 779113,
+          "output": 19996,
+          "requests": 29,
+          "complete": true
+        },
+        "claude": {
+          "input": 452871,
+          "output": 8329,
+          "requests": 16,
+          "complete": true
+        }
+      },
+      "functionalPassed": true,
+      "functionalChecks": 40,
+      "selfTestsDiagnostic": "....................................................\n----------------------------------------------------------------------\nRan 52 tests in 0.240s\n\nOK\n",
+      "qualityPassed": true,
+      "qualityNote": "Lead reviewed README: subtotal before discount, exact net tax and rounding, validation, CLI and documented tests consistent with delivered behavior; actual code/test/docs review and independent probes observed.",
+      "publicActivations": 0,
+      "automaticReplies": 0,
+      "nativeCheck": {
+        "opencode": {
+          "complete": true,
+          "sessions": ["ses_ecf150228ffemGu73LLV67iZuU"],
+          "input": 779113,
+          "output": 19996,
+          "responses": 29,
+          "localRejected": 0
+        },
+        "claude": {
+          "complete": true,
+          "responses": 16,
+          "sessions": ["45ef0ac9-8d94-40b1-8c44-548e49fd9616"]
+        },
+        "complete": true
+      },
+      "firstForwardedRequestAudit": {
+        "opencode": {
+          "fullTask": true,
+          "fullCommunication": true,
+          "firstForwardedId": 1,
+          "forwarded": 29,
+          "allForwardedEffort": "low",
+          "locallyRejected": 0,
+          "localRejectedIds": [],
+          "firstModel": "deepseek-v4.1-flash"
+        },
+        "claude": {
+          "fullTask": true,
+          "fullCommunication": true,
+          "firstForwardedId": 2,
+          "forwarded": 16,
+          "allForwardedEffort": "low",
+          "locallyRejected": 4,
+          "localRejectedIds": [1, 3, 8, 17],
+          "firstModel": "claude-sonnet-5-5"
+        }
+      },
+      "cleanupAllAbsent": true,
+      "hashes": {
+        "result.json": "f5270e7f9d5916a793a7ddeb619f27ed53e0ae7f50cd95aced6eed790681c65d",
+        "lead-audit.json": "5a81dd5602514d38c011951cd87563061b703669171e7c6a282d4960ea6db7a5",
+        "first-request-audit.json": "94fa32e4da9cdf1fa23031877e12ede21047f11a9928b384fc43accdf0c6fdca",
+        "artifact.evidence.json": "203202dbc96b86fc358329a39b7ad16e7cf969caf3d19bd141b31a7451ce3d59"
+      }
+    },
+    {
+      "sample": "pair2-native",
+      "arm": "native",
+      "root": "/Users/sun/.loom/reviews/2026-10-13-team-bootstrap-v7/business-runs/1791822712395-pair2-native",
+      "status": "awaiting-quality-audit",
+      "reason": "quiescent",
+      "usage": {
+        "input": 1956014,
+        "output": 36769,
+        "requests": 62,
+        "complete": true
+      },
+      "members": {
+        "opencode": {
+          "input": 1305273,
+          "output": 27136,
+          "requests": 41,
+          "complete": true
+        },
+        "claude": {
+          "input": 650741,
+          "output": 9633,
+          "requests": 21,
+          "complete": true
+        }
+      },
+      "functionalPassed": true,
+      "functionalChecks": 40,
+      "selfTestsDiagnostic": ".......................................................................\n----------------------------------------------------------------------\nRan 71 tests in 0.269s\n\nOK\n",
+      "qualityPassed": true,
+      "qualityNote": "Lead reviewed API, pre-discount subtotal, exact-net tax, independent rounding, validation, CLI and corrected complete example. Reviewer read real code/tests/docs, ran 14 probes, found README error; A corrected and added regression, B confirmed and wrote durable review. Documented 71 tests pass.",
+      "publicActivations": 0,
+      "automaticReplies": 0,
+      "nativeCheck": {
+        "opencode": {
+          "complete": true,
+          "sessions": ["ses_ecf099747ffeOaxxeoQnD9I3sG"],
+          "input": 1305273,
+          "output": 27136,
+          "responses": 41,
+          "localRejected": 0
+        },
+        "claude": {
+          "complete": true,
+          "responses": 21,
+          "sessions": ["604a2dbb-292b-45db-82b9-e511e80e5855"]
+        },
+        "complete": true
+      },
+      "firstForwardedRequestAudit": {
+        "opencode": {
+          "fullTask": true,
+          "fullCommunication": true,
+          "firstForwardedId": 1,
+          "forwarded": 41,
+          "allForwardedEffort": "low",
+          "locallyRejected": 0,
+          "localRejectedIds": [],
+          "firstModel": "deepseek-v4.1-flash"
+        },
+        "claude": {
+          "fullTask": true,
+          "fullCommunication": true,
+          "firstForwardedId": 2,
+          "forwarded": 21,
+          "allForwardedEffort": "low",
+          "locallyRejected": 6,
+          "localRejectedIds": [1, 3, 7, 10, 20, 24],
+          "firstModel": "claude-sonnet-5-5"
+        }
+      },
+      "cleanupAllAbsent": true,
+      "hashes": {
+        "result.json": "8e85c3e130c3a054402bc7fa724a2f9ede736601503205918ac9e68c04ccdb7b",
+        "lead-audit.json": "2eb4bc036881bafb693221345f7f375a3eb3792dae266dc8bd07c2e3bc206080",
+        "first-request-audit.json": "096e9674c14d837d9baafef147fc8c21e2517c8372e0d949334eb235ca8053e6",
+        "artifact.evidence.json": "3bae12e3be33a787c9f0aeec2804baa73c50d7baaa061fac224790d31e7181f4"
+      }
+    },
+    {
+      "sample": "pair2-loom",
+      "arm": "loom",
+      "root": "/Users/sun/.loom/reviews/2026-10-13-team-bootstrap-v7/business-runs/1791823315494-pair2-loom",
+      "status": "awaiting-quality-audit",
+      "reason": "quiescent",
+      "usage": {
+        "input": 407033,
+        "output": 17800,
+        "requests": 19,
+        "complete": true
+      },
+      "members": {
+        "opencode": {
+          "input": 270846,
+          "output": 13855,
+          "requests": 13,
+          "complete": true
+        },
+        "claude": {
+          "input": 136187,
+          "output": 3945,
+          "requests": 6,
+          "complete": true
+        }
+      },
+      "functionalPassed": true,
+      "functionalChecks": 40,
+      "selfTestsDiagnostic": "..................................................\n----------------------------------------------------------------------\nRan 50 tests in 0.248s\n\nOK\n",
+      "qualityPassed": true,
+      "qualityNote": "Lead verified README API, gross subtotal, exact-net tax, validation, grouping, CLI example and documented 50 passing tests. Meaningful design discussion precedes implementation; B reads actual three files and independently probes API/CLI, reports no defects and explicitly delivers to Human. Explicit @owner suppresses auto-return as specified, no required defect correction outstanding.",
+      "publicActivations": 4,
+      "automaticReplies": 0,
+      "nativeCheck": {
+        "opencode": {
+          "complete": true,
+          "sessions": ["ses_ecf01e418ffeeyeI5dZi18S5BH"],
+          "input": 270846,
+          "output": 13855,
+          "responses": 13,
+          "localRejected": 0
+        },
+        "claude": {
+          "complete": true,
+          "responses": 6,
+          "sessions": ["6deb9d45-4558-40db-a767-7c9b2399b21e"]
+        },
+        "complete": true
+      },
+      "firstForwardedRequestAudit": {
+        "opencode": {
+          "fullTask": true,
+          "fullCommunication": true,
+          "firstForwardedId": 1,
+          "forwarded": 13,
+          "allForwardedEffort": "low",
+          "locallyRejected": 0,
+          "localRejectedIds": [],
+          "firstModel": "deepseek-v4.1-flash"
+        },
+        "claude": {
+          "fullTask": true,
+          "fullCommunication": true,
+          "firstForwardedId": 1,
+          "forwarded": 6,
+          "allForwardedEffort": "low",
+          "locallyRejected": 0,
+          "localRejectedIds": [],
+          "firstModel": "claude-sonnet-5-5"
+        }
+      },
+      "cleanupAllAbsent": true,
+      "hashes": {
+        "result.json": "8a92f958d89d1372fef97f11f2f5f497722b9cba8ff1d3b15569e5658f065b35",
+        "lead-audit.json": "532320ebded03d6699e31b0d743ff5dcd16a27c529b6991151519fbcb1eba212",
+        "first-request-audit.json": "f462c04b86f6817eb959080b943b833cc6eed5ea4b98284236fcc0993b5a0472",
+        "artifact.evidence.json": "a042b4b4493cc8e4b17a74cf02cfccda8692750c35553d2909c164c2fc21024f"
+      }
+    },
+    {
+      "sample": "pair3-loom",
+      "arm": "loom",
+      "root": "/Users/sun/.loom/reviews/2026-10-13-team-bootstrap-v7/business-runs/1791823596411-pair3-loom",
+      "status": "awaiting-quality-audit",
+      "reason": "quiescent",
+      "usage": {
+        "input": 51920,
+        "output": 4207,
+        "requests": 4,
+        "complete": true
+      },
+      "members": {
+        "opencode": {
+          "input": 36566,
+          "output": 4087,
+          "requests": 3,
+          "complete": true
+        },
+        "claude": {
+          "input": 15354,
+          "output": 120,
+          "requests": 1,
+          "complete": true
+        }
+      },
+      "functionalPassed": false,
+      "functionalChecks": 40,
+      "selfTestsDiagnostic": "No agent tests found",
+      "qualityPassed": false,
+      "qualityNote": "A design final addressed B only as a prose role label; no canonical @handle, so no B Inbox/Activation. Artifact remains seeded stub. No lost accepted directed delivery or failed automatic return observed.",
+      "publicActivations": 1,
+      "automaticReplies": 0,
+      "nativeCheck": {
+        "opencode": {
+          "complete": true,
+          "sessions": ["ses_ecefd96cfffeDF1ZJtRrppct5L"],
+          "input": 36566,
+          "output": 4087,
+          "responses": 3,
+          "localRejected": 0
+        },
+        "claude": {
+          "complete": true,
+          "responses": 1,
+          "sessions": ["11cdc13b-e86e-457f-a596-4858007974dc"]
+        },
+        "complete": true
+      },
+      "firstForwardedRequestAudit": {
+        "opencode": {
+          "fullTask": true,
+          "fullCommunication": true,
+          "firstForwardedId": 1,
+          "forwarded": 3,
+          "allForwardedEffort": "low",
+          "locallyRejected": 0,
+          "localRejectedIds": [],
+          "firstModel": "deepseek-v4.1-flash"
+        },
+        "claude": {
+          "fullTask": true,
+          "fullCommunication": true,
+          "firstForwardedId": 1,
+          "forwarded": 1,
+          "allForwardedEffort": "low",
+          "locallyRejected": 0,
+          "localRejectedIds": [],
+          "firstModel": "claude-sonnet-5-5"
+        }
+      },
+      "cleanupAllAbsent": true,
+      "hashes": {
+        "result.json": "b86b3407b07d734278f9c38218990718e65ba2523fa1ec652fdbf12d5641ba6e",
+        "lead-audit.json": "5cd33f4c6a1cca0d6f7068da57fb379bad4cad50490d287d1f8de306024bacd7",
+        "first-request-audit.json": "2a3c0d828bdf5bbe666cc1c59a378d3b1585c6e597e31290c3b95cd178c0c9e0",
+        "artifact.evidence.json": "1cb23d3dc4ca54de29d75129c64796cc7d5ad4d29d0c19826fd2b30096747095"
+      }
+    },
+    {
+      "sample": "pair3-native",
+      "arm": "native",
+      "root": "/Users/sun/.loom/reviews/2026-10-13-team-bootstrap-v7/business-runs/1791823696417-pair3-native",
+      "status": "execution-failed",
+      "reason": "budget-or-provider-stop",
+      "usage": {
+        "input": 359844,
+        "output": 19127,
+        "requests": 16,
+        "complete": true
+      },
+      "members": {
+        "opencode": {
+          "input": 321269,
+          "output": 17436,
+          "requests": 14,
+          "complete": true
+        },
+        "claude": {
+          "input": 38575,
+          "output": 1691,
+          "requests": 2,
+          "complete": true
+        }
+      },
+      "functionalPassed": true,
+      "functionalChecks": 40,
+      "selfTestsDiagnostic": "...........................................................\n----------------------------------------------------------------------\nRan 59 tests in 0.227s\n\nOK\n",
+      "qualityPassed": false,
+      "qualityNote": "Lead stopped the coordinator after misclassifying local rejected Claude title calls as forwarded medium-effort calls. Actual forwarded requests all low. Interrupted outcome, not a model/backend failure. No retry.",
+      "publicActivations": 0,
+      "automaticReplies": 0,
+      "nativeCheck": {
+        "opencode": {
+          "complete": true,
+          "sessions": ["ses_ecefa98c8ffeRI7WKwPkOgQ6u5"],
+          "input": 321269,
+          "output": 17436,
+          "responses": 14,
+          "localRejected": 1
+        },
+        "claude": {
+          "complete": true,
+          "responses": 2,
+          "sessions": ["40c984cc-45a5-4b0d-bae8-332061e1bec6"]
+        },
+        "complete": true
+      },
+      "firstForwardedRequestAudit": {
+        "opencode": {
+          "fullTask": true,
+          "fullCommunication": true,
+          "firstForwardedId": 1,
+          "forwarded": 14,
+          "allForwardedEffort": "low",
+          "locallyRejected": 1,
+          "localRejectedIds": [15],
+          "firstModel": "deepseek-v4.1-flash"
+        },
+        "claude": {
+          "fullTask": true,
+          "fullCommunication": true,
+          "firstForwardedId": 2,
+          "forwarded": 2,
+          "allForwardedEffort": "low",
+          "locallyRejected": 2,
+          "localRejectedIds": [1, 3],
+          "firstModel": "claude-sonnet-5-5"
+        }
+      },
+      "cleanupAllAbsent": true,
+      "hashes": {
+        "result.json": "337b7af18b39871507d342d6603389efe2eff3281667c3a9ee0ef9ea39c8e82f",
+        "lead-audit.json": "339079849915d49cc1a1a99aa0f6f3aab197a7f7fba738acf63afc1a06733a8d",
+        "first-request-audit.json": "02cd9b8e92c0d7f537f808d71830bd5afe77a2e51ec6259990f4ec2094da7dd0",
+        "artifact.evidence.json": "2b35468bf499f23a16c261763219596c0d96592cb9f08d3331a4e1691ff5bcb3"
+      }
+    }
+  ],
+  "totals": {
+    "input": 5157932,
+    "output": 137739,
+    "requests": 183
+  },
+  "allUsageComplete": true,
+  "verdict": {
+    "backendFinished": false,
+    "repeatedSameQualityEfficiency": "inconclusive",
+    "primaryRatio": null,
+    "reason": "L3 has no canonical first handoff; H3 lead interrupted due to wrong classification. Predeclared all-three-pair quality condition not met. No selected-success ratio.",
+    "loomCompleted": 2,
+    "loomAttempted": 3,
+    "herdrCompleted": 2,
+    "herdrInterruptedByLead": 1
+  },
+  "leadError": {
+    "trigger": "Globbed first raw request without consulting metadata: locally rejected Claude TUI session-title request used medium. Mistook it for forwarded business generation.",
+    "action": "Sent SIGTERM to H3 coordinator; existing drain settled outstanding response and rejected later request. All usage complete.",
+    "correction": "All medium requests were already locally rejected with no upstream status/bytes. No unauthorized effort was sent. Generation admission guard worked; prior ledger totals remain correct.",
+    "localClaudeTitleRejections": 12,
+    "opencodeDeadlineRejections": 1,
+    "noRetry": true,
+    "freeRepair": "Audit selects forwarded records only with explicit rejection/no-status/no-bytes proof; ambiguous or unknown remains counted. Three tests red/green, twelve real provider records replay match original totals.",
+    "repairSourceHashes": {
+      "/Users/sun/.loom/reviews/2026-10-13-request-audit-repair/audit.test.mjs": "8fcfc673ac5933194f7f9eb57fa9e188a780eff70a113ab8d21b49ff5dd916b4",
+      "/Users/sun/.loom/reviews/2026-10-13-request-audit-repair/real-record-replay.json": "7bebc44638af1ee26567341207ce1f384b4afc0b8734bc0f4ebc4e62a62961d6",
+      "/Users/sun/.loom/reviews/2026-10-13-request-audit-repair/audit.mjs": "d82988b3d37f8294cbff4e696abc85dbe9d5cd097337421e2da08c675e846ff1"
+    },
+    "redTestLogSha256": "3cb644c4eba4098744a38811ef66b9d118603442cf617ddeb07c4a902062061c",
+    "greenTestLogSha256": "c8ae5c64357715606ff19ea7723af7290bf590d0a1047f474a6600424d54d3ec"
+  },
+  "interpretation": [
+    "Successful runs demonstrate real external design, implementation, independent code/tests/README review and delivery; they do not erase failed/interrupted samples.",
+    "L1 includes 5 bounded automatic replies; closing messages with fresh explicit @ created extra work. L2 explicitly delivered final review to Human, no automatic reply required.",
+    "L3 final says A to B in prose but mentions list empty: no accepted directed request was lost; automatic return cannot operate before a request exists.",
+    "Do not infer recipients from arbitrary prose or hard-code implementer/reviewer workflow to make this fixture pass.",
+    "Native Herdr pane reads actually truncated review conclusions and caused repeated reads/file handoff. Screen layout is a method limitation; not a universal Herdr cost claim.",
+    "Single task/two CLI-model families/small cohort; no five-family or deployed-default acceptance.",
+    "Raw token counts include caching once and are not currency billing. Native automatic memory disabled; normal session history retained."
+  ],
+  "deployment": {
+    "productChanged": false,
+    "formalTrialSwitches": "all seven remain off",
+    "restarted": false,
+    "reason": "Private test/audit and documentation only."
+  },
+  "memoryAudit": [
+    {
+      "sample": "pair1-native",
+      "member": "opencode",
+      "generationLaunches": 1,
+      "configProbes": 0,
+      "memoryDisabled": true
+    },
+    {
+      "sample": "pair1-native",
+      "member": "claude",
+      "generationLaunches": 1,
+      "configProbes": 0,
+      "memoryDisabled": true
+    },
+    {
+      "sample": "pair2-native",
+      "member": "opencode",
+      "generationLaunches": 1,
+      "configProbes": 0,
+      "memoryDisabled": true
+    },
+    {
+      "sample": "pair2-native",
+      "member": "claude",
+      "generationLaunches": 1,
+      "configProbes": 0,
+      "memoryDisabled": true
+    },
+    {
+      "sample": "pair3-loom",
+      "member": "opencode",
+      "generationLaunches": 1,
+      "configProbes": 1,
+      "memoryDisabled": true
+    },
+    {
+      "sample": "pair3-loom",
+      "member": "claude",
+      "generationLaunches": 1,
+      "configProbes": 0,
+      "memoryDisabled": true
+    },
+    {
+      "sample": "pair1-loom",
+      "member": "opencode",
+      "generationLaunches": 1,
+      "configProbes": 1,
+      "memoryDisabled": true
+    },
+    {
+      "sample": "pair1-loom",
+      "member": "claude",
+      "generationLaunches": 1,
+      "configProbes": 0,
+      "memoryDisabled": true
+    },
+    {
+      "sample": "pair3-native",
+      "member": "opencode",
+      "generationLaunches": 1,
+      "configProbes": 0,
+      "memoryDisabled": true
+    },
+    {
+      "sample": "pair3-native",
+      "member": "claude",
+      "generationLaunches": 1,
+      "configProbes": 0,
+      "memoryDisabled": true
+    },
+    {
+      "sample": "pair2-loom",
+      "member": "opencode",
+      "generationLaunches": 1,
+      "configProbes": 1,
+      "memoryDisabled": true
+    },
+    {
+      "sample": "pair2-loom",
+      "member": "claude",
+      "generationLaunches": 1,
+      "configProbes": 0,
+      "memoryDisabled": true
+    }
+  ],
+  "cleanup": {
+    "recordedProcessesAbsent": true,
+    "generatedSettingsRemoved": 12,
+    "ownedPanesClosed": ["wA:pS", "wA:pR"],
+    "releaseClosed": true
+  }
+}
