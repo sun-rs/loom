@@ -260,12 +260,52 @@ test("schema 83 upgrade preserves events without backfilling write provenance", 
     });
     try {
       upgraded.initialize();
-      assert.equal(f.db.prepare("PRAGMA user_version").get()!.user_version, 85);
+      assert.equal(f.db.prepare("PRAGMA user_version").get()!.user_version, 86);
       assert.equal(
         f.db.prepare("SELECT count(*) n FROM worker_run_message_writes").get()!
           .n,
         0,
       );
+      assert.deepEqual(
+        f.db
+          .prepare("SELECT * FROM room_events ORDER BY room_id,room_seq")
+          .all(),
+        before,
+      );
+      assert.deepEqual(f.db.prepare("PRAGMA foreign_key_check").all(), []);
+    } finally {
+      upgraded.close();
+    }
+  } finally {
+    f.close();
+  }
+});
+
+test("schema 85 write provenance keeps history but never invents session generation", () => {
+  const f = roleInstanceFixture();
+  try {
+    const w = startInstanceRun(f);
+    const post = f.kernel.postWorkerMessage(w.execution, {
+      body: "old generation unknown",
+    });
+    assert.ok("event" in post);
+    f.db.exec(
+      "ALTER TABLE worker_run_message_writes DROP COLUMN session_generation; PRAGMA user_version=85",
+    );
+    const before = f.db
+      .prepare("SELECT * FROM room_events ORDER BY room_id,room_seq")
+      .all();
+    const upgraded = new RoomKernel({
+      databasePath: String(f.db.prepare("PRAGMA database_list").get()!.file),
+    });
+    try {
+      upgraded.initialize();
+      assert.equal(f.db.prepare("PRAGMA user_version").get()!.user_version, 86);
+      const row = f.db
+        .prepare("SELECT * FROM worker_run_message_writes WHERE event_id=?")
+        .get(post.event.eventId)!;
+      assert.equal(row.run_attempt_id, w.run.runAttemptId);
+      assert.equal(row.session_generation, null);
       assert.deepEqual(
         f.db
           .prepare("SELECT * FROM room_events ORDER BY room_id,room_seq")

@@ -1,9 +1,8 @@
 import type { DatabaseSync } from "node:sqlite";
-import { messageHasBroadcastMention } from "@rah-os/protocol";
 import { NOT_SYSTEM_NOTICE_SQL } from "./freshness-hold-context.ts";
 
 /** Kernel-owned ordinary reply policy, shared by Worker and Host publication.
- * Excluding an unrelated peer append never advances the caller's read floor.
+ * Excluding a peer append never advances the caller's read floor.
  * Task/Review/state mutations keep their existing freshness owners. */
 export function latestBlockingReplyMessageSeq(
   database: DatabaseSync,
@@ -24,11 +23,11 @@ export function latestBlockingReplyMessageSeq(
       )
       .get(input.actorId, input.roomId) !== undefined;
   // Inspect only new target messages, newest first. A later ordinary peer post
-  // must not hide an earlier Human correction or explicit request.
+  // must not hide an earlier Human correction or attachment.
   const rows = database
     .prepare(
-      `SELECT messages.actor_id, messages.body, messages.mentions_json,
-        messages.attachments_json, room_events.room_seq, room_events.payload_json,
+      `SELECT messages.actor_id,
+        messages.attachments_json, room_events.room_seq, room_events.event_id, room_events.payload_json,
         peer.instance_id AS peer_instance_id
       FROM messages JOIN room_events
         ON room_events.room_id=messages.room_id
@@ -55,30 +54,36 @@ export function latestBlockingReplyMessageSeq(
   for (const row of rows) {
     if (
       allowPeerAppend &&
+      row.actor_id === input.actorId &&
+      row.attachments_json === "[]" &&
+      JSON.parse(String(row.payload_json)).attachmentComment === undefined &&
+      database
+        .prepare(
+          `SELECT 1 FROM worker_run_message_writes w
+        JOIN run_attempts r ON r.run_attempt_id=w.run_attempt_id
+        JOIN activations a ON a.activation_id=r.activation_id
+        LEFT JOIN role_instance_sessions ss ON ss.instance_id=r.participant_id
+        WHERE w.event_id=? AND r.participant_id=? AND r.room_id=?
+          AND r.state='exited' AND (r.exit_code=0 OR r.exit_code IS NULL)
+          AND a.state='completed'
+          AND w.session_generation=COALESCE(ss.generation,0)
+        LIMIT 1`,
+        )
+        .get(String(row.event_id), input.actorId, input.roomId)
+    )
+      continue;
+    if (
+      allowPeerAppend &&
       row.peer_instance_id !== null &&
       row.actor_id !== input.actorId &&
-      row.attachments_json === "[]" &&
-      !messageHasBroadcastMention(String(row.body))
+      row.attachments_json === "[]"
     ) {
       const payload = JSON.parse(String(row.payload_json)) as {
         attachmentComment?: unknown;
-        recipients?: { participantId?: string; reason?: string }[];
       };
-      const mentions: unknown = JSON.parse(String(row.mentions_json ?? "null"));
-      // Bindings are immutable Principal IDs, not a rematch against today's
-      // handle. Unknown historical addressing stays blocking.
-      if (
-        payload.attachmentComment === undefined &&
-        Array.isArray(mentions) &&
-        !mentions.some((mention) => mention?.principalId === input.actorId) &&
-        Array.isArray(payload.recipients) &&
-        !payload.recipients.some(
-          (recipient) =>
-            recipient.participantId === input.actorId &&
-            recipient.reason === "mention",
-        )
-      )
-        continue;
+      // Peer addressing still owns delivery, never synthetic read progress.
+      // Ordinary chat may finish before a queued peer correction is read.
+      if (payload.attachmentComment === undefined) continue;
     }
     return Number(row.room_seq);
   }

@@ -1,3 +1,4 @@
+import { migrateWorkerRunMessageWrites } from "./worker-run-message-writes.ts";
 import { submitWorkerFinalOutputTransaction } from "./worker-final-output.ts";
 import * as HeldReadCoverage from "./held-read-coverage.ts";
 import { backfillTaskThreadFollows } from "./task-thread-follow-backfill.ts";
@@ -438,7 +439,7 @@ import { RunGuardPolicy } from "./run-guard-policy.ts";
 import { RunWatchdogService } from "./run-watchdog-service.ts";
 const DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS = 5_000;
 const DEFAULT_RUNTIME_OFFER_MAX_TTL_MS = 5 * 60_000;
-export const KERNEL_SCHEMA_VERSION = 85;
+export const KERNEL_SCHEMA_VERSION = 86;
 
 export class RoomKernel {
   static #referenceSchema: Map<string, string> | undefined;
@@ -851,6 +852,7 @@ export class RoomKernel {
     });
     unit("activation-presented-window-compatibility", "transactional", () => {
       migrateActivationPresentedWindows(this.#database);
+      migrateWorkerRunMessageWrites(this.#database);
       migrateRunAttemptFinalReplyFacts(this.#database);
     });
     unit("collaboration-v7", "external", () =>

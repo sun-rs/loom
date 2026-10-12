@@ -1,0 +1,140 @@
+{
+  "kind": "directed-peer-policy/v1",
+  "ownerApproval": "User approved narrow directed ordinary-peer exception on 2026-10-12",
+  "owner": "Kernel ordinary-reply freshness predicate; Worker and native final share it",
+  "schema": 86,
+  "behavior": [
+    "Same-channel Role ordinary text including directed/broadcast peer does not alone hold ordinary reply",
+    "Unread positions and basedOnRoomSeq preserved; directed wake queues a real follow-up",
+    "Own prior ordinary reply excluded only by authenticated write provenance in same session generation and successful Run/Activation; warm completed turn may lack process exit code",
+    "Human, attachment/comment and business mutation fences preserved; no automated Human abandon/retry"
+  ],
+  "migration": "Nullable session_generation added to worker_run_message_writes; historical rows not backfilled; event and business history preserved",
+  "realCliLocalModel": {
+    "result": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/herdr-loom-directed-final/runs/1791791072316-pair1-loom/result.json",
+    "status": "synthetic-transport-passed",
+    "cleanup": true,
+    "activations": ["completed", "completed", "completed"],
+    "rawSyntheticUsage": {
+      "claude": {
+        "input": 100,
+        "output": 20,
+        "requests": 1,
+        "complete": true
+      },
+      "codex": {
+        "input": 300,
+        "output": 60,
+        "requests": 3,
+        "complete": true
+      }
+    },
+    "paidCalls": 0,
+    "quality": "No generated business artifact; synthetic transport and command tool only",
+    "deployment": "private real Kernel/Host; production switches stay off"
+  },
+  "failuresRetained": [
+    "Initial six directed/broadcast kernel assertions failed before implementation",
+    "Host follow-up failed on own prior reply before provenance fix",
+    "Initial whole check failed on those in-progress cases",
+    "Second whole check stopped on SQL row optional typing, corrected",
+    "Private actual CLI first attempt stopped on synthetic telemetry coverage: raw event line changed from1041 to1068",
+    "Herdr real completion1119 lacking primary usage remains unknown, not filtered out",
+    "Four old schema85 version assertions corrected to86; history assertions unchanged. Final whole command had one unrelated directory cleanup failure; complete test-file recheck and remaining command stages passed."
+  ],
+  "telemetryFix": "Private pinned Codex0.162.1 parser excludes raw transport1068; two red/green tests retain unknown1119. No paid ledger overwritten.",
+  "performanceVerdict": "not measured; meaningful scheduling change requires later explicitly authorized paid batch",
+  "verification": {
+    "targeted": {
+      "tests": 44,
+      "passed": 44,
+      "log": "/Users/sun/.loom/reviews/2026-10-12-directed-peer-policy/loom-directed-target-final.log"
+    },
+    "wholeCheck": {
+      "command": "npm run check",
+      "exitCode": 1,
+      "failure": "Single pre-existing codex-warm-runtime.test.ts cleanup ENOTEMPTY after test body; original failure preserved",
+      "recheck": "Entire unchanged codex-warm-runtime.test.ts file passed; all interrupted remaining check stages independently passed",
+      "remainingStages": [
+        "test:web:unit",
+        "test:console:unit",
+        "test:parity:regression",
+        "test:formal-browser-policy",
+        "test:ui:bilateral-captures",
+        "test:cli:efficiency:unit"
+      ],
+      "remainingStagesExitCode": 0
+    },
+    "deployment": "pending",
+    "format": "npm run format:check passed",
+    "diff": "git diff --check passed",
+    "frozenRealCliSourceFiles": 3767,
+    "frozenRealCliSourceDrift": []
+  },
+  "sources": [
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/herdr-loom-directed-final/runs/1791791072316-pair1-loom/result.json",
+      "sha256": "90f113b2425abc0ee422ff622d03e77aae95bc1b7bd64d38d539918201587f62"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-directed-peer-policy/loom-directed-red.log",
+      "sha256": "fbd430ccbbb8592ae2e2405eeb26f332e4c018cf2d8484e183d3e1cfbf5e46c9"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-directed-peer-policy/loom-directed-host.log",
+      "sha256": "c8bafb4c785f4a921cf71ec4b31b52d12fcf788c9bcc4f05d399b477723875b4"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-directed-peer-policy/loom-directed-target-final.log",
+      "sha256": "5e6aaf7904fc506737483c8f7ab9bccb9e6068e09e47fb382e02d51d3636242b"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-directed-peer-policy/loom-warm-own-red.log",
+      "sha256": "935cfe3a2bae7aacb45f0c3b35b0afd98ac2d320907d3863e807b4a419d4c8ed"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/herdr-loom-directed-both-resume/runs/1791792229693-pair1-loom/result.json",
+      "sha256": "01f80e36fe6b8ba9f85f7c47dc44f24418a4d8e85a69ac17dc3d2c023122bcec"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-directed-peer-policy/loom-directed-check-complete.log",
+      "sha256": "0457c66319f39f7aa23bfff9aba5d9ca7384c454ee9d001c80d4eed354d26b24"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-directed-peer-policy/loom-directed-warm-file-recheck.log",
+      "sha256": "a21578478b17221bf98b913d918a262bd3129f0a835c817d29930ba045d08a77"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-directed-peer-policy/loom-directed-format-final.log",
+      "sha256": "fb5ffe51bf83c7a6ac683f386a5c903f6ff2c086dbe1bf27cc1f12efddaf7e3f"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-directed-peer-policy/loom-directed-upgrade.log",
+      "sha256": "a3330bb1a6c3ed9e8ea661992431cd9455107a4445ec70febd7cbc31883d65cb"
+    }
+  ],
+  "realCliBothResume": {
+    "result": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/herdr-loom-directed-both-resume/runs/1791792229693-pair1-loom/result.json",
+    "status": "synthetic-transport-passed",
+    "activations": ["completed", "completed", "completed", "completed"],
+    "cleanup": true,
+    "codexSameThreadVerified": true,
+    "claudeSameWarmRuntimeAndSingleSessionBinding": true,
+    "rawSyntheticUsage": {
+      "claude": {
+        "input": 200,
+        "output": 40,
+        "requests": 2,
+        "complete": true
+      },
+      "codex": {
+        "input": 300,
+        "output": 60,
+        "requests": 3,
+        "complete": true
+      }
+    },
+    "paidCalls": 0,
+    "modelGeneratedBusinessQuality": false
+  }
+}

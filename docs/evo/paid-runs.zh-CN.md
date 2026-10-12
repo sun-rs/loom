@@ -604,3 +604,11 @@ Herdr 已知输入977093、输出13952，仅下界：Codex35条完成中1条缺�
 新私有副本锁定可信Codex主程序和内部命令助手的哈希，版本探测与实际启动统一路径，未改旧付费批或系统quarantine。35项私有测试通过；另26项既有Kernel/Host围栏与恢复测试通过。真实Codex/Claude仅连localhost合成模型，Loom正式适配路径中的命令工具返回标记且exit0，不再出现助手协商超时。但随后Codex final因期间新定向peer消息held，Activation隔离，实验失败并正确清理。合成用量不算费用，Codex complete=false原样保留，新增付费0。
 
 使用真实认证peer发帖的恢复测试确认：当前规则下无自动下一次lease，必须Human abandon后发新请求，才读取新事实并成功发表一次；不改写旧Run或重发旧草稿。这是合同规定的协作阻塞，不是模型随机性或工具失败。已提出仅对同频道Role普通文本回复扩展peer例外，保留Human/附件/业务修改围栏及真实未读位置；目标合同需owner明确裁定，尚未实施。产品、开关、部署未改。[分离证据及具体方案](evidence/2026-10-12-directed-peer-preflight/summary.json)。
+
+## 普通定向peer例外：实现后免费真实CLI验证（2026-10-12）
+
+Owner明确批准窄范围合同变更后，Kernel普通回复新鲜度判定允许同频道Role无附件文本的定向／广播追加，Human、附件和业务修改围栏不变。Host测试另复现排队窗口早于自己上一轮发表的自阻挡；schema86为认证写入记录session generation，只排除同代成功运行的自产普通消息，历史NULL不猜测，不移动未读位置。
+
+真实Codex0.162.1/gpt-6-luna低与Claude2.1.293/sonnet低仅连接localhost合成模型：命令工具成功，A同session resume读取B定向回复，3个Activation完成，无Human救场，进程清理通过。4次合成生成用量完整，只是夹具数值，无付费调用、无业务作品或成本倍率。此前免费尝试的工具成功／计量失败保留：新Codex原始完成遥测位置1068未被旧解析器排除，误报缺量；私有精确版本回归修复后通过。真实Herdr缺量1119是另一事件，继续未知，不改写原付费账目。[实现、失败和边界](evidence/2026-10-12-directed-peer-policy/summary.json)。
+
+同批进一步验证双方续接：真实CLI／localhost合成响应完成4个Activation，Codex两次启动使用相同thread，Claude两轮使用同一warm runtime及唯一session绑定；全部完成、清理通过。5次合成生成，真实付费0；此前单侧续接证据保留，不把脚本化合成回复称模型自主协作。

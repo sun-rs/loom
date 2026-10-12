@@ -21,12 +21,14 @@ import { WorkerFinalOutput } from "../src/worker-final-output.ts";
 
 // Synthetic native text only: real Role/Kernel/MultiLaneAgentHost/Worker HTTP.
 // This does not exercise a provider parser, real CLI, or model cooperation.
-for (const directed of [false, true]) {
-  test(`native-final peers: ${directed ? "addressed peer holds and Human recovers" : "ordinary peer permits original final without consuming unread facts"}, then exact handoff and delta`, () =>
-    peerCollaboration(directed));
+for (const mode of ["plain", "directed", "human"] as const) {
+  test(`native-final peers: ${mode}: ordinary peer may publish; Human facts still hold, then exact handoff and delta`, () =>
+    peerCollaboration(mode));
 }
 
-async function peerCollaboration(directed: boolean) {
+async function peerCollaboration(mode: "plain" | "directed" | "human") {
+  const directed = mode !== "plain";
+  const humanBlock = mode === "human";
   const f = roleInstanceFixture();
   const kernel = new RoomKernel({
     databasePath: String(f.db.prepare("PRAGMA database_list").get()!.file),
@@ -232,8 +234,9 @@ async function peerCollaboration(directed: boolean) {
       ["@all FAKE Human opening"],
       "A has received only the original opening, never B's later reply",
     );
+    if (humanBlock) post(0, "FAKE Human correction", "human-block");
     release();
-    if (directed) {
+    if (humanBlock) {
       await waitFor(
         () =>
           f.db
@@ -267,7 +270,7 @@ async function peerCollaboration(directed: boolean) {
           .get(old.runAttemptId),
         failed,
       );
-    } else {
+    } else if (!directed) {
       await waitFor(() => completed() === 2);
       assert.equal(
         runtime.starts.length,
@@ -299,14 +302,37 @@ async function peerCollaboration(directed: boolean) {
         "@all FAKE Human opening",
       ]);
     }
+    await waitFor(() => sentSequences.has(firstA.runAttemptId));
     assert.equal(
       sentSequences.get(firstA.runAttemptId),
       firstA.toSeq,
       "native final retains the original delivered basedOnRoomSeq",
     );
-    post(0, "FAKE explicitly review peer facts and hand off", "recover");
-    await waitFor(() => completed() === (directed ? 3 : 4));
+    if (!directed || humanBlock)
+      post(0, "FAKE explicitly review peer facts and hand off", "recover");
+    await waitFor(() => completed() === (humanBlock ? 3 : 4));
     assert.equal(runtime.starts.length, 4);
+    if (mode === "directed") {
+      assert.equal(
+        f.db.prepare("SELECT count(*) n FROM held_message_drafts").get()!.n,
+        0,
+      );
+      assert.equal(
+        f.db
+          .prepare("SELECT count(*) n FROM messages WHERE actor_id=?")
+          .get(f.actor.principalId)!.n,
+        1,
+        "directed peer follow-up requires no Human recovery",
+      );
+      assert.equal(
+        f.db
+          .prepare(
+            "SELECT count(*) n FROM messages WHERE actor_id=? AND body=?",
+          )
+          .get(ids[0]!, texts[0]!)!.n,
+        1,
+      );
+    }
     assert.ok(
       presentations.get(runtime.starts[2]!.runAttemptId)!.includes(texts[1]!),
     );
@@ -321,7 +347,7 @@ async function peerCollaboration(directed: boolean) {
       "the exact fake-native @ body, not a test-added recipient, wakes B",
     );
     post(1, "FAKE next B request", "next-b");
-    await waitFor(() => completed() === (directed ? 4 : 5));
+    await waitFor(() => completed() === (humanBlock ? 4 : 5));
     const last = presentations.get(runtime.starts[4]!.runAttemptId)!;
     assert.deepEqual(
       last,
@@ -338,7 +364,7 @@ async function peerCollaboration(directed: boolean) {
     );
     assert.equal(
       f.db.prepare("SELECT count(*) n FROM run_attempt_final_replies").get()!.n,
-      directed ? 4 : 5,
+      humanBlock ? 4 : 5,
     );
     assert.equal(kernel.listRunAttempts({ roomId: f.home.roomId }).length, 5);
     assert.equal(

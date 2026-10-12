@@ -171,7 +171,7 @@ test("Task follow backfill preserves explicit unfollow and creates no read evide
       .run(task.threadId);
     f.db.exec("PRAGMA user_version=80");
     f.kernel.initialize();
-    assert.equal(f.db.prepare("PRAGMA user_version").get()!.user_version, 85);
+    assert.equal(f.db.prepare("PRAGMA user_version").get()!.user_version, 86);
     assert.equal(
       f.db
         .prepare(

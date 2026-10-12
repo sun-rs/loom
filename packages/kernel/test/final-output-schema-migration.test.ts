@@ -30,7 +30,7 @@ test("schema 82 final markers survive upgrade without gaining trusted final-outp
     const upgraded = new RoomKernel({ databasePath: path });
     try {
       upgraded.initialize();
-      assert.equal(f.db.prepare("PRAGMA user_version").get()!.user_version, 85);
+      assert.equal(f.db.prepare("PRAGMA user_version").get()!.user_version, 86);
       assert.equal(
         f.db
           .prepare("SELECT submission_kind FROM run_attempt_final_replies")

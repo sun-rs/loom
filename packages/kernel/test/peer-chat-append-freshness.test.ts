@@ -64,76 +64,78 @@ for (const transport of ["worker", "worker-target", "native-final"] as const) {
           body: "Independent completed reply",
           basedOnRoomSeq: p.a.scope.toSeq,
         });
-  test(`${transport}: undirected peer append preserves causal floor, unread delta, and idempotency`, () => {
-    const p = parallelPeers(),
-      { f, a, b } = p;
-    try {
-      const peer = p.peerPost("Independent peer result; no request to A");
-      const answer = send(p);
-      assert.ok(
-        "event" in answer,
-        "ordinary undirected peer chat must not hold an already generating reply",
-      );
-      assert.equal(answer.event.payload.basedOnRoomSeq, a.scope.toSeq);
-      assert.ok(answer.event.roomSeq > peer.event.roomSeq);
-      const replay = send(p);
-      assert.ok("event" in replay && replay.deduplicated);
-      const cursor = f.db
-        .prepare(
-          "SELECT last_seq FROM subscription_cursors WHERE room_id=? AND participant_id=? AND consumer_id='worker'",
-        )
-        .get(f.home.roomId, f.instance.instanceId);
-      assert.equal(
-        Number(cursor!.last_seq),
-        a.scope.toSeq,
-        "publication cannot ACK unseen peer",
-      );
-      assert.equal(
-        f.db
+  for (const addressing of ["plain", "mention", "all"] as const) {
+    test(`${transport}: ${addressing} peer append preserves causal floor, unread delta, and idempotency`, () => {
+      const p = parallelPeers(),
+        { f, a, b } = p;
+      try {
+        const body = `${addressing === "mention" ? "@" + p.handle : addressing === "all" ? "@all" : ""} Independent peer result`;
+        const peer = p.peerPost(body);
+        const answer = send(p);
+        assert.ok(
+          "event" in answer,
+          "ordinary peer chat must not hold an already generating reply",
+        );
+        assert.equal(answer.event.payload.basedOnRoomSeq, a.scope.toSeq);
+        assert.ok(answer.event.roomSeq > peer.event.roomSeq);
+        const replay = send(p);
+        assert.ok("event" in replay && replay.deduplicated);
+        const cursor = f.db
           .prepare(
-            "SELECT count(*) n FROM worker_message_presentations WHERE participant_id=? AND room_seq=?",
+            "SELECT last_seq FROM subscription_cursors WHERE room_id=? AND participant_id=? AND consumer_id='worker'",
           )
-          .get(f.instance.instanceId, peer.event.roomSeq)!.n,
-        0,
-      );
-      a.finish(0);
-      b.finish(0);
-      f.kernel.postMessage(f.actor, {
-        roomId: f.home.roomId,
-        body: "Now review the peer result",
-        recipients: [
-          { participantId: f.instance.instanceId, reason: "mention" },
-        ],
-        idempotencyKey: "next",
-      });
-      const next = startInstanceRunFromQueue(f);
-      const delivery = f.kernel.presentWorkerMessages(next.execution);
-      assert.match(
-        JSON.stringify(delivery.events),
-        /Independent peer result; no request to A/,
-      );
-    } finally {
-      f.close();
-    }
-  });
+          .get(f.home.roomId, f.instance.instanceId);
+        assert.equal(
+          Number(cursor!.last_seq),
+          a.scope.toSeq,
+          "publication cannot ACK unseen peer",
+        );
+        assert.equal(
+          f.db
+            .prepare(
+              "SELECT count(*) n FROM worker_message_presentations WHERE participant_id=? AND room_seq=?",
+            )
+            .get(f.instance.instanceId, peer.event.roomSeq)!.n,
+          0,
+        );
+        a.finish(0);
+        b.finish(0);
+        if (addressing === "plain")
+          f.kernel.postMessage(f.actor, {
+            roomId: f.home.roomId,
+            body: "Now review the peer result",
+            recipients: [
+              { participantId: f.instance.instanceId, reason: "mention" },
+            ],
+            idempotencyKey: "next",
+          });
+        const next = startInstanceRunFromQueue(f);
+        const delivery = f.kernel.presentWorkerMessages(next.execution);
+        assert.match(
+          JSON.stringify(delivery.events),
+          /Independent peer result/,
+        );
+      } finally {
+        f.close();
+      }
+    });
+  }
   for (const blocker of ["human", "mention", "all"] as const) {
     test(`${transport}: later undirected peer cannot hide earlier ${blocker} fact`, () => {
       const p = parallelPeers(),
         { f } = p;
       try {
-        if (blocker === "human")
-          f.kernel.postMessage(f.actor, {
-            roomId: f.home.roomId,
-            body: "Human correction",
-            recipients: [],
-            idempotencyKey: "correction",
-          });
-        else
-          p.peerPost(
+        f.kernel.postMessage(f.actor, {
+          roomId: f.home.roomId,
+          body:
             blocker === "all"
-              ? "@all new requested action"
-              : `@${p.handle} new requested action`,
-          );
+              ? "@all Human correction"
+              : blocker === "mention"
+                ? `@${p.handle} Human correction`
+                : "Human correction",
+          recipients: [],
+          idempotencyKey: "correction",
+        });
         p.peerPost("Later ordinary peer observation");
         const answer = send(p);
         assert.ok("state" in answer && answer.state === "held");
@@ -313,6 +315,73 @@ for (const transport of ["worker", "native-final"] as const) {
               basedOnRoomSeq: a.scope.toSeq,
             });
       assert.ok("state" in reply && reply.state === "held");
+    } finally {
+      f.close();
+    }
+  });
+}
+
+for (const proof of [
+  "confirmed",
+  "warm-completed",
+  "other-generation",
+  "unknown-generation",
+  "failed-run",
+] as const) {
+  test(`queued peer follow-up excludes own earlier reply only with ${proof} provenance`, () => {
+    const p = parallelPeers(),
+      { f, a, b } = p;
+    try {
+      p.peerPost(`@${p.handle} queued peer request`);
+      const first = f.kernel.submitWorkerFinalOutput(a.execution, {
+        body: "Own earlier completed answer",
+        basedOnRoomSeq: a.scope.toSeq,
+      });
+      assert.ok("event" in first);
+      a.finish(0);
+      b.finish(0);
+      if (proof === "other-generation")
+        f.db
+          .prepare(
+            "UPDATE worker_run_message_writes SET session_generation=session_generation+1 WHERE run_attempt_id=?",
+          )
+          .run(a.run.runAttemptId);
+      if (proof === "unknown-generation")
+        f.db
+          .prepare(
+            "UPDATE worker_run_message_writes SET session_generation=NULL WHERE run_attempt_id=?",
+          )
+          .run(a.run.runAttemptId);
+      if (proof === "warm-completed")
+        f.db
+          .prepare(
+            "UPDATE run_attempts SET exit_code=NULL WHERE run_attempt_id=?",
+          )
+          .run(a.run.runAttemptId);
+      if (proof === "failed-run")
+        f.db
+          .prepare(
+            "UPDATE run_attempts SET state='failed' WHERE run_attempt_id=?",
+          )
+          .run(a.run.runAttemptId);
+      const next = startInstanceRunFromQueue(f);
+      assert.ok(
+        next.scope.toSeq < first.event.roomSeq,
+        "queued peer precedes own publication",
+      );
+      f.kernel.presentWorkerMessages(next.execution);
+      f.kernel.markPresentedDeliverySent(f.host, {
+        activationId: next.activation.activationId,
+        consumerId: "worker",
+        runAttemptId: next.run.runAttemptId,
+      });
+      const reply = f.kernel.submitWorkerFinalOutput(next.execution, {
+        body: "Respond to queued peer",
+        basedOnRoomSeq: next.scope.toSeq,
+      });
+      if (proof === "confirmed" || proof === "warm-completed")
+        assert.ok("event" in reply);
+      else assert.ok("state" in reply && reply.state === "held");
     } finally {
       f.close();
     }

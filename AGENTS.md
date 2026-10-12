@@ -433,3 +433,9 @@ Never announce a completion percentage from source callback counts; coverage
 needs a deduplicated inventory with per-row evidence. Report frontend, backend
 and verification gaps separately. Verify commit, push, deployment and restart
 claims at handoff; a local commit does not mean pushed or deployed.
+
+Ordinary reply freshness (owner 2026-10-12): same-Channel Role text messages,
+including directed and broadcast peer messages, do not alone hold an in-flight
+ordinary text reply. They retain delivery and follow-up obligations; unread
+positions never advance on publication. Human facts, attachments and business
+state mutations retain their causal barriers. See target contract §3.
