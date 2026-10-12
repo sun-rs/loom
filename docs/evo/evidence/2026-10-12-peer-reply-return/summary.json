@@ -60,7 +60,7 @@
   },
   "efficiencyAcceptance": false,
   "realModelBusinessAcceptance": false,
-  "deployment": "pending required checks and restart; seven trial flags remain off",
+  "deployment": "dde12a7 deployed; graceful exact-service restart, 11 business tables unchanged, new Web/console and real history verified; seven trial flags remain off",
   "limitations": [
     "Synthetic model proves transport and scheduling, not autonomous business or token efficiency.",
     "Only confirmed top-level final path gains automatic return; other routes remain explicit.",

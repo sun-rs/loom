@@ -1,0 +1,75 @@
+{
+  "codeCommit": "dde12a757cf60fd3e3f2e0bb4d970af4f2b14d41",
+  "sourceSha256": "17dda374be77ce5f240f5ddafc94d0cced50bacea1151e306a90dc0b20319c7e",
+  "schema": 86,
+  "backupVerified": true,
+  "databases": 2,
+  "stateFiles": 302,
+  "businessTablesUnchanged": 11,
+  "gracefulRestartVerified": true,
+  "restartMethod": "exact launchd service bootout after drain checks and verified backup, then bootstrap same service with new immutable Web snapshot; no forced kill",
+  "webSnapshot": "/Users/sun/Code/repos/rah_os/.workbench-web/6bd387fab1030e4ed56b6205ed70b5284680b8138b0a0cf49e614707c9487bc6",
+  "trialFlags": "all seven remain off",
+  "page": {
+    "consoleAssets": {
+      "app-kUDm_V0g.js": "dd3c3f76272a4c54e805e5350ed1048cdb80f1a58f4967dcf894251ecdb755a8",
+      "index-D3hI0G87.js": "ebc6794d87a07975ecb7f5d2d11b873fd87d3d470ab45842a8ed7b2cd4c5c925",
+      "index-mk0OQi78.css": "c54c81c8c9690b2cc17a916e589a928d440b0012cfcf4390dacc718a6fff0952"
+    },
+    "aggregateApiVerified": true,
+    "consoleVerified": true,
+    "at": "2026-10-12T12:56:23.638Z",
+    "url": "http://127.0.0.1:4176/_rah/console/",
+    "title": "Loom 控制台（evo 临时）",
+    "historyVerified": true,
+    "pageErrors": [],
+    "roles": 39,
+    "roleResponseKeys": ["roles", "instances"],
+    "memoryResponseKeys": ["channelId", "entries", "total", "truncated"],
+    "health": {
+      "buildIdentity": {
+        "schemaVersion": 1,
+        "kind": "development",
+        "version": "0.0.0-dev+local",
+        "builtAt": "2026-10-12T12:49:18.973Z",
+        "buildId": "6c76c5348a13401f"
+      },
+      "service": "rah-os-local-core",
+      "state": "online"
+    }
+  },
+  "evidence": [
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-peer-reply-return/deployment/restart.mjs",
+      "sha256": "d09297bd2f3dbcb93aa6868fc916df971e8c050481f4765d25afe1cc673b7ad3"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-peer-reply-return/deployment/restart.json",
+      "sha256": "6d9f065e43389bcba8018849f23dc88821aee7123722fced381b697a145410a4"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-peer-reply-return/deployment/restart.log",
+      "sha256": "f3c7f174109e4e4acdff94e48b5e5ab9bdbf2003cbfe91720874a76f5007fe22"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-peer-reply-return/deployment/page.mjs",
+      "sha256": "b388b73381bd833640c295ad7c1e6bdff28fedf9e1a1a830e7071b353ee1c542"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-peer-reply-return/deployment/page.json",
+      "sha256": "337b228a80d7ae88488246a3f52abab79253117e3a0f7fb2ea03119b4c7c0e14"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-peer-reply-return/deployment/page.log",
+      "sha256": "aa3e1ff371615f976c78a3ec2967162b77eec08caf6d5a3dd7c5aa9067c8937a"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-peer-reply-return/deployment/page.png",
+      "sha256": "b50dd39aacf5dccbb8fe4b3fce1dfa47cf321e87d9aa6921225011d6e49cd2c9"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-peer-reply-return/deployment/console.png",
+      "sha256": "fd89fdd40d783e534afb68a9ac769d70f3e8a7177012d079a9c25bc2c93ff2fb"
+    }
+  ]
+}
