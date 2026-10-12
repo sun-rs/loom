@@ -586,3 +586,15 @@ Owner要求实际Herdr对照后，核对当前CODEX_THREAD_ID与Herdr窗格中co
 保留启动故障：Codex首次本地请求受代理干扰返回503，未到达合成上游；实验启动环境显式移除代理并改localhost后通过。Herdr对快速合成回复返回prompt_stalled，但回复已出现，因此没有盲目重发。更严重的是负责人未先核对原生启动界面，Herdr把更新提示识别为idle，发送提示的Enter触发Homebrew升级，Codex由0.161.0变成0.162.1。升级子进程随后被中断；最终brew list与CLI --version均确认0.162.1，未回滚安装。必须明确这次意外安装变化，不能报告环境未变。后续免费Codex使用本机既有0.162.1可执行文件，普通--no-daemon交互模式，并关闭实验进程启动更新检查。
 
 两个实验CLI均退出到shell后，仅关闭本批创建窗格；合成服务已退出，原会话焦点恢复，现有伙伴没有被提示或停止。产品和正式服务未改。真实Herdr访问阻塞已解除；下一关是完整计量与两臂版本一致，旧固定0.161.0的批次不能直接复用。本轮没有自主协作任务或有效倍率。[证据与限制](evidence/2026-10-12-herdr-transport/summary.json)。
+
+## 真实 Herdr／Loom 协作业务先导（2026-10-12）
+
+Owner“开始实验”后运行 Codex gpt-6-luna/low＋Claude sonnet/low（实际 claude-sonnet-5-5）。真实 Herdr 新建两实验 pane，模型自行发 peer prompt，完成设计讨论、实现、独立审查及最终交付；共同 invoice-v7 全部12项要求一次提供，不强制轮数。归档同字节40项功能及9项自测通过，README与真实审查记录已核对。实验 pane 已退出并关闭，原伙伴 session 未改。
+
+Herdr 已知输入977093、输出13952，仅下界：Codex35条完成中1条缺主用量；该事件比同伴消息插入早1ms，仅时间相关，不认定为零消费或已证明中断因果。Claude15次转发用量完整，另3次medium标题请求在上游转发前被本地准入拒绝，不计付费生成。53条本地记录不能直接称53次付费请求；4次/models失败也不是生成缺量。缓存是输入子项，不重复相加。
+
+随后独立 Loom 同题先导失败，无重跑：Claude设计发帖成功，Codex四次命令工具调用均在内部code-mode host协商时超时，未读取工作区或实现。失败final又被期间新定向事实held，Activation quarantined，测试器据此停止并清理；这项协作恢复边界单独保留，不把全部终态归咎工具。原始已观察用量Codex66080/462、Claude61381/1250（输入/输出），合计127461/1712；任务未完成，不能与Herdr计算节省倍率。
+
+两边Codex均0.162.1，主程序与助手各自哈希相同，但Loom走Homebrew路径且二者带quarantine，Herdr走可信release包。后续只用localhost合成模型，在原失败沙箱下运行可信包的普通codex exec，真实命令工具执行成功（2次本地请求，0付费）；未移除quarantine，尚不能证明唯一根因或宣称付费修复通过。普通CLI本身也会启动内部工具助手，不能将其误称另选了host-mode产品。
+
+公平性限制：仅各一先导；启动路径和首次唤醒时序不同；Herdr隔离账号bootstrap失败后沿原CODEX_HOME入口，自动记忆关闭但历史文件不是强隔离；Loom使用真实Kernel/Host加私有Role夹具而非正式daemon发现。私有计量的跨成员等待、catalog错误混入生成缺口两处已红后绿修正，33项离线测试通过，未改产品代码。现阶段结论是Herdr真实业务通过、Loom失败及计量下界均留账，不能宣布成本收口。正式开关和部署未改，无服务重启。[证据与原流哈希](evidence/2026-10-12-real-herdr-business/summary.json)、[产物检查](evidence/2026-10-12-real-herdr-business/artifact-result.json)。

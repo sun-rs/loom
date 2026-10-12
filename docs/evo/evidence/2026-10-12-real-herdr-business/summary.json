@@ -1,0 +1,174 @@
+{
+  "kind": "real-herdr-loom-business-pilot/v1",
+  "date": "2026-10-12",
+  "sourceRevision": "2978d972eadd9d138cfa66a6548a9bc7ab45be2a",
+  "models": {
+    "codex": "gpt-6-luna/low",
+    "claude": "sonnet/low (resolved claude-sonnet-5-5)"
+  },
+  "versions": {
+    "codex": "codex-cli 0.162.1",
+    "claude": "2.1.293 (Claude Code)"
+  },
+  "taskSha256": "3cf87a5a64073a69906846ae95038951b95d8f3b479611b7d27814267da3f170",
+  "herdr": {
+    "business": "design discussion, implementation, external Claude review and final delivery completed through real Herdr peer prompts",
+    "functionalChecks": 40,
+    "functionalPassed": true,
+    "selfTests": 9,
+    "selfTestsPassed": true,
+    "sameArtifactBytesVerified": true,
+    "knownInput": 977093,
+    "knownOutput": 13952,
+    "usageComplete": false,
+    "codex": {
+      "knownInput": 622302,
+      "knownOutput": 6823,
+      "completionEvents": 35,
+      "missingUsageEvents": 1
+    },
+    "claude": {
+      "input": 354791,
+      "output": 7129,
+      "forwardedGenerations": 15,
+      "localPreForwardTitleRejections": 3
+    },
+    "countCaveat": "53 local records include 3 rejected title requests; not 53 paid generations. Four /models GET failures are catalog diagnostics, not generation failures. One real completion remains quantity-less. Cache is a subset, not added twice.",
+    "gapTimestamp": "2026-10-12T05:14:22.270Z",
+    "peerMessageTimestamp": "2026-10-12T05:14:22.271Z",
+    "gapInference": "Temporal association only; neither causality nor zero consumption established.",
+    "panesClosed": ["wA:p5", "wA:p6"]
+  },
+  "loom": {
+    "businessQuality": false,
+    "status": "failed",
+    "rawUsage": {
+      "claude": {
+        "input": 61381,
+        "output": 1250,
+        "requests": 4,
+        "complete": true
+      },
+      "codex": {
+        "input": 66080,
+        "output": 462,
+        "requests": 6,
+        "complete": true
+      }
+    },
+    "input": 127461,
+    "output": 1712,
+    "cleanup": true,
+    "failure": "Four Codex command-tool attempts timed out negotiating with the code-mode host; workspace unread and no implementation.",
+    "secondaryOutcome": "Claude sent directed design messages while Codex was active. Codex final was held by newer directed facts, activation quarantined; follow-up cancelled. The harness stopped on quarantine. This is separate from the tool failure and remains a collaboration acceptance boundary.",
+    "scope": "Kernel/MultiLaneAgentHost/native-final using private Role fixtures and provider resolver, not full deployed daemon discovery"
+  },
+  "probe": {
+    "code": 0,
+    "timedOut": false,
+    "executed": true,
+    "localRequests": 2,
+    "paidCalls": 0,
+    "executable": "/Users/sun/.codex/packages/app-server-daemon/releases/0.162.1-aarch64-apple-darwin/bin/codex",
+    "meaning": "Actual ordinary codex exec and code-mode command tool using the successful trusted package under the prior failing sandbox, with local synthetic model only."
+  },
+  "installation": {
+    "mainSha256": "74c6a6d263f40d65f99c27a815275f5b4ed0bcc2baecc396b4cf3255498bdfc0",
+    "helperSha256": "0960435a104cf926e18bb938b8f6f8fcdf7e27be0c8d88e1911bc22a1de7d3e6",
+    "equalBytes": true,
+    "homebrewQuarantine": true,
+    "trustedReleaseQuarantine": false,
+    "inference": "Successful ordinary codex exec with trusted package under prior sandbox narrows failure to launch/package environment. Quarantine causality not proven; no xattrs changed.",
+    "verifiedFiles": [
+      {
+        "path": "/opt/homebrew/Caskroom/codex/0.162.1/bin/codex",
+        "sha256": "74c6a6d263f40d65f99c27a815275f5b4ed0bcc2baecc396b4cf3255498bdfc0",
+        "xattrNames": ["com.apple.provenance", "com.apple.quarantine"]
+      },
+      {
+        "path": "/opt/homebrew/Caskroom/codex/0.162.1/bin/codex-code-mode-host",
+        "sha256": "0960435a104cf926e18bb938b8f6f8fcdf7e27be0c8d88e1911bc22a1de7d3e6",
+        "xattrNames": ["com.apple.provenance", "com.apple.quarantine"]
+      },
+      {
+        "path": "/Users/sun/.codex/packages/app-server-daemon/releases/0.162.1-aarch64-apple-darwin/bin/codex",
+        "sha256": "74c6a6d263f40d65f99c27a815275f5b4ed0bcc2baecc396b4cf3255498bdfc0",
+        "xattrNames": ["com.apple.provenance"]
+      },
+      {
+        "path": "/Users/sun/.codex/packages/app-server-daemon/releases/0.162.1-aarch64-apple-darwin/bin/codex-code-mode-host",
+        "sha256": "0960435a104cf926e18bb938b8f6f8fcdf7e27be0c8d88e1911bc22a1de7d3e6",
+        "xattrNames": ["com.apple.provenance"]
+      }
+    ]
+  },
+  "limitations": [
+    "One pilot each, no repeated cost acceptance.",
+    "Different executable paths and initial launch timing (Herdr staggered, Loom wakes both); not a controlled cost comparison.",
+    "Herdr Codex uses original CODEX_HOME after isolated routing bootstrap failed; automatic memory off but historical files technically readable.",
+    "Claude medium-effort title requests locally rejected before forwarding to preserve approved model/effort.",
+    "Native internal subagents allowed; telemetry scope is observed tree, not provider invoice reconciliation."
+  ],
+  "harnessCorrections": [
+    "Own-member settle only: removed private instrumentation cross-member waiting, red/green regression.",
+    "Preserve request endpoint; exclude only proven catalog failures from generation-gap classification, red/green regression.",
+    "33 offline tests passed before Loom pilot."
+  ],
+  "ratio": null,
+  "verdict": "Herdr business pilot passed; Loom business pilot failed; no valid efficiency ratio or backend completion claim.",
+  "productChanged": false,
+  "serviceRestarted": false,
+  "paidRetry": false,
+  "evidence": [
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-herdr-live/usage.json",
+      "sha256": "51ff63552664c25d554f8216987bf572d52c6c926fcf252623edded236490d80"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-herdr-live/runtime.json",
+      "sha256": "3aaa3572c6cf51480702724dbdeed67d9156fb9e150a38a328a748f8f67e4dcc"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-herdr-live/release.json",
+      "sha256": "9b50632424eb0a168d7f7145cc3939390e6a1039464e1826d49da015913dc553"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-herdr-live/artifact-result.json",
+      "sha256": "b8c38650970b64afe2c399d71e62fae8df3162a37136f5a299d03bdbefbb61a8"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-herdr-live/codex-completed-screen.txt",
+      "sha256": "78c7b24e91e2e34e3bededc6c4f50ee72127be3834d494de6688547ac0e18a51"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-herdr-live/claude-completed-screen.txt",
+      "sha256": "e49ee268399eb83fa9846e1fbb2c19d3fb1f7529bc952509b2614b18ca5cb359"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-herdr-live/tool-probe-result.json",
+      "sha256": "c92632edcd77200b290834f307d84a4a91453933ce2f05d9155df9ecffbc8f71"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-herdr-live/tool-probe.stdout",
+      "sha256": "35b235bafa4ea665c82f116224c499c3e5d67552890a7b76544e5a51abd39836"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-herdr-live/tool-probe.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/herdr-loom-pilot/runs/1791783088540-pair1-loom/result.json",
+      "sha256": "63b51069481f7581944f2a12f8c52e2c69a6861d231aef4679c6c3a095d5b5a8"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/herdr-loom-pilot/candidate/manifest.json",
+      "sha256": "336ab834fb0277ade8c4f92983917ecfde279e1e28976c5b25a0170098792e85"
+    }
+  ],
+  "verification": {
+    "formatCheck": "passed",
+    "gitDiffCheck": "passed",
+    "newEvidenceLinksAndHashes": "passed",
+    "productSuite": "not run: evidence-only repository changes"
+  }
+}
