@@ -120,7 +120,11 @@ owner ruling 2026-10-02). Unfollowed Task bodies are not automatic catch-up;
 explicit history reads retain Channel membership permissions. The private box shares the instance session (so it
 affects later context), queues while busy, never steers Channel work and is
 invisible to other instances. Only Human messages steer; other instances'
-replies are read when idle. The legacy persona-Agent path is being removed from
+replies are read when idle. A unique, actually delivered top-level peer request
+may receive one Kernel-derived final reply return without a repeated @ (contract
+§3, owner 2026-10-12). It uses the existing Inbox/lane/chain guard; automatic
+returns do not grant another automatic return. Ambiguous origins, threads,
+private boxes and attachments retain explicit addressing. The legacy persona-Agent path is being removed from
 the evo backend; old data is not migrated. A new data home seeds no persona
 Agent, and every Kernel unconditionally creates no Inbox item or Activation
 for a persona Agent (an Agent definition that is not a Role instance). Phase-4

@@ -56,7 +56,9 @@ export function allowsAgentChannelAttention(
     .prepare("SELECT kind FROM rooms WHERE room_id=?")
     .get(event.roomId);
   if (room?.kind !== "channel") return true;
-  if (["mention", "dm", "thread_subscription"].includes(recipient.reason))
+  if (
+    ["mention", "reply", "dm", "thread_subscription"].includes(recipient.reason)
+  )
     return true;
   // RAH typed direct responsibility is the local equivalent of a personal task assignment receipt.
   if (

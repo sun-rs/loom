@@ -481,6 +481,9 @@ export class WorkerTargetContextService {
         .postActivationMessage(principal, {
           ...(metadata ? { attachmentComment: metadata } : {}),
           activationId: origin.activationId,
+          ...(input.final === true
+            ? { replyReturnRunAttemptId: origin.runAttemptId }
+            : {}),
           roomId: target.roomId,
           basedOnRoomSeq: window.basedOnRoomSeq,
           freshnessFloorSeq: window.freshnessFloorSeq,

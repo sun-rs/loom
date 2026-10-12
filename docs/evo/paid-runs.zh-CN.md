@@ -677,3 +677,9 @@ Loom前三份各两Activation完成后空闲、无held／quarantine；Claude实�
 本批没有完整成功的Loom团队任务，因此不计算同质量成本倍率，不能把Loom仅366967输入／24251输出的部分工作当成节省。证据支持优先处理通用交接可靠性，不支持五CLI普遍结论或推倒架构。常驻@规则写在message-post说明内，native-final说明未重申，属于待验证的清晰度问题；有明确来源的有界回复返回仅为研究候选，改变显式@合同须owner裁定，尚未实施。保留长生成handle与Herdr短名、warm路径与原生mini界面等方法限制。
 
 所有登记进程已退出，两个实验窗格回到shell后关闭，原布局恢复；16份仅本批生成的凭据settings已删除，原账号配置和诊断证据保留。release关闭，原账本不改写。产品、正式开关、部署未改，无需服务重启。[结果、每样本证据与限制](evidence/2026-10-12-neutral-team-repeat/summary.json)、[原档哈希](evidence/2026-10-12-neutral-team-repeat/raw-hashes.json)、[预算拒绝后审](evidence/2026-10-12-neutral-team-repeat/budget-stop-audit.json)、[后续方案边界](evidence/2026-10-12-neutral-team-repeat/routing-research.json)。
+
+## 单跳回复返回：真实CLI免费贯通（2026-10-12）
+
+Owner继续后，实现通用Kernel回复返回，不增加场景工作流。真实OpenCode1.18.35和Claude2.1.293仅连接localhost合成模型；隔离启动、自动记忆关闭、外部IP禁止，新增付费0。A明确@B请求，B普通final不带@，Kernel派生reply投递，A沿原session继续并普通收尾。三Activation全部完成，六次合成生成，双方原生DB／JSONL核对一致；无Human代转或救场，未再启动B，CLI及包装进程退出。
+
+合成模型指示真实工具执行共享文件读写，只验证调度／传输／session续接，不是模型自主讨论、业务作品或成本倍率。13项定向检查通过，最初三条路由测试复现0次后续执行；generation负例复现后修正。Worker-target重放夹具补上该路径通常需要的target read，未降低幂等断言。没有重开已结束的付费批。[证据与限制](evidence/2026-10-12-peer-reply-return/summary.json)。

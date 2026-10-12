@@ -14,9 +14,10 @@ import { integer, nullableInteger, text } from "./sqlite-row.ts";
  * facade (Worker CLI, MCP, any future path) is held to the same rule.
  *
  * - An agent-authored `message.posted` (Role instance or legacy Agent) wakes
- *   another agent only through a `mention` recipient that the message's
+ *   another agent through a `mention` recipient that the message's
  *   canonical mentions (bound participant IDs) prove; implicit routes (room policy, Thread
- *   followers, reply chains, Thread root) never do. Multica's rule: agent
+ *   followers and Thread root) never do. A Kernel-proven single-hop `reply`
+ *   return is the owner-approved exception. Multica's original rule: agent
  *   authors skip implicit routing (`comment.go:2685`).
  * - Each Channel counts consecutive instance-to-instance wakes since its last
  *   Human message. A Human `message.posted` anywhere in the Channel (top level
@@ -183,8 +184,15 @@ export function decideInstanceWake(
     return { kind: "not_instance_wake" };
   if (principalKind(database, event.actorId) !== "agent")
     return { kind: "not_instance_wake" };
-  if (recipient.reason !== "mention") return { kind: "implicit_route_refused" };
+  const returned = event.payload.replyReturn as
+    { participantId?: string } | undefined;
+  const isReturn =
+    recipient.reason === "reply" &&
+    returned?.participantId === recipient.participantId;
+  if (recipient.reason !== "mention" && !isReturn)
+    return { kind: "implicit_route_refused" };
   if (
+    !isReturn &&
     !canonicallyMentions(event, recipient.participantId) &&
     !broadcasts(event)
   )
@@ -240,5 +248,5 @@ export function decideInstanceWake(
 }
 
 export function instanceWakeLimitNotice(limit: number): string {
-  return `【Loom 系统】自上一条 Human 消息以来，本频道实例之间已连续唤醒 ${String(limit)} 次（上限 ${String(limit)}）。为防止循环，实例的 @ 暂不再唤醒其他实例；消息仍保留在频道里。Human 在本频道发任意一条消息即重置计数并恢复唤醒。`;
+  return `【Loom 系统】自上一条 Human 消息以来，本频道实例之间已连续唤醒 ${String(limit)} 次（上限 ${String(limit)}）。为防止循环，实例消息暂不再唤醒其他实例；消息仍保留在频道里。Human 在本频道发任意一条消息即重置计数并恢复唤醒。`;
 }

@@ -1,0 +1,103 @@
+{
+  "kind": "bounded-peer-reply-return",
+  "date": "2026-10-12",
+  "ownerDecision": "Owner asked Loom to collect replies and notify members; continued after explicit bounded request/reply proposal.",
+  "singleOwner": "Kernel, shared Worker/native-final path; existing Inbox/Activation/Outbox and channel chain guard",
+  "implementation": {
+    "automatic": "Unique top-level peer request, one canonical directed recipient, authenticated same-generation requester, exact current-run delivered body; final returns once without changing body/mentions",
+    "precedence": "Any canonical explicit mention or broadcast suppresses implicit return",
+    "stopping": "Automatic return does not grant another return; no semantic classifier or automatic broadcast",
+    "schema": 86,
+    "protocol": "ActivationReason adds reply; Room event records replyReturn provenance; no database schema change",
+    "deferred": [
+      "ambiguous origins",
+      "threads and Task threads",
+      "private box",
+      "attachments",
+      "missing current-run presentation evidence"
+    ]
+  },
+  "tests": {
+    "red": "All three native-final/Worker/Worker-target tests first failed 0 != 1; generation fence then reproduced and repaired. Target replay fixture needed its normal target read before stable replay.",
+    "targeted": 13,
+    "additionalTypecheck": "passed",
+    "fullCheck": "Initial npm run check reached full 3186-test suite: 3161 passed, 3 old Host count expectations failed, 22 skipped. Corrected exact expected extra return and delta, then all 61 focused cases passed. Remaining Web/console/parity/browser-policy/capture/558 efficiency unit checks passed separately. Original full command is not claimed green.",
+    "focusedFinal": 61,
+    "webAndConsoleBuilds": "passed; shared protocol reply reason included, frontend product source unchanged"
+  },
+  "realCliSynthetic": {
+    "paidCalls": 0,
+    "resultPath": "/Users/sun/.loom/reviews/2026-10-12-peer-reply-return/free-F1AC0L/result.json",
+    "resultSha256": "b582a64f0fb8a6258d75ef72d8cf5c0fa4f2541f9b9da0a29f03a61ea78b2f57",
+    "cliVersions": {
+      "opencode": "1.18.35",
+      "claude": "2.1.293"
+    },
+    "modelsAreSynthetic": true,
+    "requests": 6,
+    "activations": ["completed", "completed", "completed"],
+    "plainPeerFinal": "SYNTHETIC review approved; continue.",
+    "plainPeerMentions": [],
+    "requesterFinal": "SYNTHETIC implementation complete.",
+    "requesterFinalMentions": [],
+    "nativeCrossCheck": {
+      "opencode": {
+        "complete": true,
+        "sessions": ["ses_ecfdeb456ffexX3MOPFcz7jVKS"],
+        "input": 414,
+        "output": 80,
+        "responses": 4
+      },
+      "claude": {
+        "complete": true,
+        "responses": 2,
+        "sessions": ["35ea9afe-aadc-404e-8584-525e6f361f7e"]
+      }
+    },
+    "sameSession": "OpenCode both activations use one native session; one Claude session. No Human rescue.",
+    "cleanup": "registered wrappers and CLI processes absent",
+    "network": "sandbox denies external outbound IP; parents forward only to localhost synthetic model"
+  },
+  "efficiencyAcceptance": false,
+  "realModelBusinessAcceptance": false,
+  "deployment": "pending required checks and restart; seven trial flags remain off",
+  "limitations": [
+    "Synthetic model proves transport and scheduling, not autonomous business or token efficiency.",
+    "Only confirmed top-level final path gains automatic return; other routes remain explicit.",
+    "Owner goals for broader multi-member discussion remain outside this narrow repair."
+  ],
+  "verificationLogs": [
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-peer-reply-return/check.log",
+      "sha256": "5792274a8d5dc5adcb5ec8280358a2d4dd326149191d2d1d25de6d05f3379d46"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-peer-reply-return/remaining.log",
+      "sha256": "da84a635f34ff1d6ad6da23a37ab704a29d44290e14f3b578b5c8a537069ad01"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-peer-reply-return/focused-final.log",
+      "sha256": "8c38851743420a384ea850536a384bb91613574c1052c3866f0cbec279178b48"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-peer-reply-return/target.log",
+      "sha256": "309310ad26fda7bbab55fb65c9a0c2955fb53564dd55ab5aef8d9c9956e0547a"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-peer-reply-return/typecheck-final2.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-peer-reply-return/format.log",
+      "sha256": "fb5ffe51bf83c7a6ac683f386a5c903f6ff2c086dbe1bf27cc1f12efddaf7e3f"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-peer-reply-return/web-build.log",
+      "sha256": "b712c31ac9aeb7a7da2154dab1b9794d5cab5f04dcc8216b6a9f3d24a1fecf15"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-peer-reply-return/console-build.log",
+      "sha256": "652a9b0203c3af846143affd0703fa8cd0809cb43eb83438129c3e0d2f50af06"
+    }
+  ]
+}

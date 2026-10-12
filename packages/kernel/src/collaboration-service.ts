@@ -1,3 +1,4 @@
+import { peerReplyReturn } from "./peer-reply-return.ts";
 import { latestBlockingReplyMessageSeq } from "./reply-message-freshness.ts";
 import { assertNoUnresolvedRuntimeCleanup } from "./runtime-process-cleanup.ts";
 import {
@@ -1955,6 +1956,7 @@ export class CollaborationService {
       continueAnyway?: boolean;
       freshnessFloorSeq?: number;
       finalOutputRunAttemptId?: string;
+      replyReturnRunAttemptId?: string;
       heldDraftId?: string;
       idempotencyKey: string;
       recipients: MessageRecipient[];
@@ -2246,6 +2248,23 @@ export class CollaborationService {
         )
         .run(createdAt, input.threadId);
     }
+    const replyReturn = peerReplyReturn(this.#database, {
+      runAttemptId: input.replyReturnRunAttemptId,
+      activationId: input.activationId,
+      participantId: actor.principalId,
+      roomId: input.roomId,
+      messageId,
+    });
+    if (replyReturn) {
+      recipients.push({
+        participantId: replyReturn.participantId,
+        reason: "reply",
+      });
+      recipientPayload.push({
+        participantId: replyReturn.participantId,
+        reason: "reply",
+      });
+    }
     const event = this.#events.append({
       actorId: actor.principalId,
       aggregateId: messageId,
@@ -2253,6 +2272,7 @@ export class CollaborationService {
       idempotencyKey: input.idempotencyKey,
       payload: {
         activationId: input.activationId,
+        ...(replyReturn ? { replyReturn } : {}),
         basedOnRoomSeq: input.basedOnRoomSeq,
         body,
         ...(attachments.length ? { attachments } : {}),

@@ -61,3 +61,11 @@ Task 长期归属与短期 claim 租约、P94 旧成功回执问题另列为紧�
 Host 的 `worker-read-render.ts` 继续单独拥有 bodied wake 的文本投影。连续事件只有完整 Room ID、完整 Thread ID 与显示目标均相同时，才可使用一个 `Target:` 标题；单条及 UTF-8 字节没有严格减少的分组保留逐条目标。不按短引用合并，不重排事件，不跨 `Since your last read` / `For you` 分区，每次渲染重新声明目标。正文、Room seq、作者、消息引用、mentions、附件、Reply context、notice、重试及恢复信息保持原语义。
 
 仅 `instance.created` 投影隐藏顶层 `provisionEventId` 和 `requestDigest`；完整实例及其他字段保留，其他事件不删字段。Kernel 事件、完整 Worker 响应、contentDigest 和 ACK 所有权不变；原生 session 的既有历史不改写。这是本地显示实现，无上游代码复制。实际字节、免费链路、自动检查及部署状态分开记于[本批证据](evidence/2026-10-06-compact-wake-projection.md)，不由文本压缩推断效率达标。
+
+## 明确请求的单跳回复返回（2026-10-12）
+
+Owner在“模型回复后由Loom接收并通知相关成员”的讨论后同意继续。Kernel拥有收件推导，Host仅提交认证final；不增加适配器队列、模型调用或工作流。目标边界见[合同§3](target-contract.zh-CN.md#3-调度与交流)。
+
+对于频道顶层、无附件、唯一明确点名来源，当前Run的已送达正文记录与原请求者同代认证写入共同证明返回资格。普通native final和Worker final均在原消息事务中记录`replyReturn: {sourceEventId, participantId}`，派生`reply`原因的Inbox／Activation／Outbox，沿用成员权限、忙时排队及频道链上限。消息正文与canonical mentions保持原样，来源元数据证明路由，不能代替已读、任务完成或内容正确性。
+
+显式点名／广播优先；返回不会再生成自动返回资格，已有显式回信不再补投。多来源、线程、附件、私有box及缺少当前运行送达证据维持原明确收件方式。普通Human新事实仍可能hold，held不产生任何返回投递。规则不识别“请继续”等语义，不内置实现者／审查者角色。当前实现不扩展为全员自动讨论。

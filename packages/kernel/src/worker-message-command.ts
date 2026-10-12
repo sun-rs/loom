@@ -149,6 +149,9 @@ export function postWorkerMessageTransaction(context: {
     context.principal,
     {
       activationId: scope.activationId,
+      ...(context.finalOutput || parsed.final === true
+        ? { replyReturnRunAttemptId: scope.runAttemptId }
+        : {}),
       ...(context.finalOutput
         ? { finalOutputRunAttemptId: scope.runAttemptId }
         : {}),

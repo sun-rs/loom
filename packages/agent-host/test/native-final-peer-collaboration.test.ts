@@ -87,7 +87,9 @@ async function peerCollaboration(mode: "plain" | "directed" | "human") {
           .length - 1;
       const text =
         input.participantId === ids[0]
-          ? texts[ordinal === 0 ? 0 : 2]
+          ? ordinal > 1
+            ? "FAKE A completed returned review"
+            : texts[ordinal === 0 ? 0 : 2]
           : texts[ordinal === 0 ? 1 : ordinal === 1 ? 3 : 4];
       const issued = worker.issueActivationCredential(f.host, input);
       credentials.push(issued);
@@ -310,8 +312,11 @@ async function peerCollaboration(mode: "plain" | "directed" | "human") {
     );
     if (!directed || humanBlock)
       post(0, "FAKE explicitly review peer facts and hand off", "recover");
-    await waitFor(() => completed() === (humanBlock ? 3 : 4));
-    assert.equal(runtime.starts.length, 4);
+    await waitFor(() => completed() === (humanBlock ? 4 : 5));
+    assert.equal(runtime.starts.length, 5);
+    assert.ok(
+      presentations.get(runtime.starts[4]!.runAttemptId)!.includes(texts[3]!),
+    );
     if (mode === "directed") {
       assert.equal(
         f.db.prepare("SELECT count(*) n FROM held_message_drafts").get()!.n,
@@ -347,11 +352,14 @@ async function peerCollaboration(mode: "plain" | "directed" | "human") {
       "the exact fake-native @ body, not a test-added recipient, wakes B",
     );
     post(1, "FAKE next B request", "next-b");
-    await waitFor(() => completed() === (humanBlock ? 4 : 5));
-    const last = presentations.get(runtime.starts[4]!.runAttemptId)!;
+    await waitFor(() => completed() === (humanBlock ? 5 : 6));
+    const last = presentations.get(runtime.starts[5]!.runAttemptId)!;
     assert.deepEqual(
       last,
-      [`@${handles[1]} FAKE next B request`],
+      [
+        "FAKE A completed returned review",
+        `@${handles[1]} FAKE next B request`,
+      ],
       "acknowledged opening and handoff are not repeatedly delivered",
     );
     assert.deepEqual(
@@ -360,13 +368,13 @@ async function peerCollaboration(mode: "plain" | "directed" | "human") {
     );
     assert.deepEqual(
       runtime.starts.slice(2).map((x) => x.participantId),
-      [ids[0], ids[1], ids[1]],
+      [ids[0], ids[1], ids[0], ids[1]],
     );
     assert.equal(
       f.db.prepare("SELECT count(*) n FROM run_attempt_final_replies").get()!.n,
-      humanBlock ? 4 : 5,
+      humanBlock ? 5 : 6,
     );
-    assert.equal(kernel.listRunAttempts({ roomId: f.home.roomId }).length, 5);
+    assert.equal(kernel.listRunAttempts({ roomId: f.home.roomId }).length, 6);
     assert.equal(
       kernel
         .listActivations({ roomId: f.home.roomId })

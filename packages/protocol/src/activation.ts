@@ -4,6 +4,7 @@ import { IdentifierSchema, TimestampSchema } from "./common.ts";
 
 export const ActivationReasonSchema = z.enum([
   "mention",
+  "reply",
   "dm",
   "task_assigned",
   "task_available",
