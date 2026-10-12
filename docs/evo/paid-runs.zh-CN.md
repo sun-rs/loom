@@ -598,3 +598,9 @@ Herdr 已知输入977093、输出13952，仅下界：Codex35条完成中1条缺�
 两边Codex均0.162.1，主程序与助手各自哈希相同，但Loom走Homebrew路径且二者带quarantine，Herdr走可信release包。后续只用localhost合成模型，在原失败沙箱下运行可信包的普通codex exec，真实命令工具执行成功（2次本地请求，0付费）；未移除quarantine，尚不能证明唯一根因或宣称付费修复通过。普通CLI本身也会启动内部工具助手，不能将其误称另选了host-mode产品。
 
 公平性限制：仅各一先导；启动路径和首次唤醒时序不同；Herdr隔离账号bootstrap失败后沿原CODEX_HOME入口，自动记忆关闭但历史文件不是强隔离；Loom使用真实Kernel/Host加私有Role夹具而非正式daemon发现。私有计量的跨成员等待、catalog错误混入生成缺口两处已红后绿修正，33项离线测试通过，未改产品代码。现阶段结论是Herdr真实业务通过、Loom失败及计量下界均留账，不能宣布成本收口。正式开关和部署未改，无服务重启。[证据与原流哈希](evidence/2026-10-12-real-herdr-business/summary.json)、[产物检查](evidence/2026-10-12-real-herdr-business/artifact-result.json)。
+
+## 定向协作停顿：免费分离验证（2026-10-12）
+
+新私有副本锁定可信Codex主程序和内部命令助手的哈希，版本探测与实际启动统一路径，未改旧付费批或系统quarantine。35项私有测试通过；另26项既有Kernel/Host围栏与恢复测试通过。真实Codex/Claude仅连localhost合成模型，Loom正式适配路径中的命令工具返回标记且exit0，不再出现助手协商超时。但随后Codex final因期间新定向peer消息held，Activation隔离，实验失败并正确清理。合成用量不算费用，Codex complete=false原样保留，新增付费0。
+
+使用真实认证peer发帖的恢复测试确认：当前规则下无自动下一次lease，必须Human abandon后发新请求，才读取新事实并成功发表一次；不改写旧Run或重发旧草稿。这是合同规定的协作阻塞，不是模型随机性或工具失败。已提出仅对同频道Role普通文本回复扩展peer例外，保留Human/附件/业务修改围栏及真实未读位置；目标合同需owner明确裁定，尚未实施。产品、开关、部署未改。[分离证据及具体方案](evidence/2026-10-12-directed-peer-preflight/summary.json)。

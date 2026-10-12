@@ -23,7 +23,7 @@ P93 定位核查：[原生对照与归因边界](evidence/2026-10-02-claude-dire
 ## 1. 环境与服务
 
 - `main`：冻结的 UI 里程碑，只接受紧急修复；worktree `~/Code/repos/loom-main`，不运行。`ref/role-ui-draft`（`789ffc6`）：9/21–9/23 检查点，仅作参考。
-- 最新纵向收口（2026-10-12）：真实 Herdr 中 Codex／Claude 已自主讨论、实施及外部审查，同字节产物40项功能和9项自测通过。Herdr已知输入977093／输出13952，一条Codex完成遥测缺量，仍是下界。Loom同题先导失败：Codex内部命令助手四次协商超时，未读到工作区；其失败final又因期间新定向消息held，Activation隔离。两套CLI同版本同哈希但路径／quarantine属性不同，可信安装包在原沙箱下免费真实工具探针通过，尚未付费复验。首次唤醒时序也不同，不构成公平倍率；重复团队成本及Loom自主业务仍未验收。产品和正式开关未改。[本批证据](evidence/2026-10-12-real-herdr-business/summary.json)。
+- 最新纵向收口（2026-10-12）：真实 Herdr 中 Codex／Claude 已自主讨论、实施及外部审查，同字节产物40项功能和9项自测通过。Herdr已知输入977093／输出13952，一条Codex完成遥测缺量，仍是下界。Loom同题先导失败：Codex内部命令助手四次协商超时，未读到工作区；其失败final又因期间新定向消息held，Activation隔离。两套CLI同版本同哈希但路径／quarantine属性不同，可信安装包在原沙箱下免费真实工具探针通过，尚未付费复验。首次唤醒时序也不同，不构成公平倍率；重复团队成本及Loom自主业务仍未验收。产品和正式开关未改。[本批证据](evidence/2026-10-12-real-herdr-business/summary.json)。 后续[免费分离验证](evidence/2026-10-12-directed-peer-preflight/summary.json)已让真实Codex经完整私有Loom入口成功执行命令，但合成同伴定向消息仍使final held；确定当前规则存在自主协作停顿。Human恢复测试通过，不等于自主恢复。普通定向peer聊天的围栏调整方案待owner裁定，未改变合同。
 
 - `evo`：负责人于 2026-10-02 授权开始窄 phase 4。第一刀接入 Role 列表／保存配置／创建频道实例／进入聊天，第二刀接入 Role 修订与频道设置；main 不变，原实例资料侧栏保留。控制台暂保留，完整设置、记忆和私聊布局尚未迁入产品 UI。见[第一刀设计与验收](phase4-first-slice.zh-CN.md)及[第二刀设计与验收](phase4-slice2.zh-CN.md)。
 - 本地服务：launchd `com.loom.evo`，端口 4176（loopback 控制台 `/_rah/console/`），以仓库工作树的 `scripts/run-local-workbench.mjs` 运行；部署版本必须同时记录 HEAD 与未提交改动。数据目录 `~/.loom/evo`（与路径绑定，挂载回执存绝对路径，不可搬迁），日志 `~/.loom/evo/logs/`。频道主目录根 `~/.loom/channel-workspaces/`。

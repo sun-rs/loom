@@ -1,0 +1,88 @@
+{
+  "kind": "directed-peer-preflight/v1",
+  "paidCalls": 0,
+  "productChanged": false,
+  "deployed": false,
+  "privateHarness": "fresh copy; old failed paid batches unchanged",
+  "binaryPin": "trusted Codex 0.162.1 executable and companion hash checked before launch; sandbox permits only these package files plus ancestor metadata",
+  "checks": {
+    "privateTests": 35,
+    "existingKernelAndHostTests": 26,
+    "realCodexCommandTool": true,
+    "toolMarker": "LOOM_PINNED_WRAPPER_TOOL_OK",
+    "toolExitCode": 0,
+    "realCliSyntheticLoomBusinessStatus": "failed",
+    "cleanup": true
+  },
+  "result": "Actual Codex exec command tool now works in full private Loom wrapper; subsequent final held after authenticated directed peer arrived. No code-mode-host timeout. Local synthetic model removes LLM behavior variability from this reproduction.",
+  "recovery": "Private authenticated-peer variant of existing Human recovery integration test passes: old answer never published, no automatic lease, Human abandon + new request reads newer fact and publishes once. Not autonomous recovery.",
+  "usage": {
+    "rawSynthetic": {
+      "claude": {
+        "input": 100,
+        "output": 20,
+        "requests": 1,
+        "complete": true
+      },
+      "codex": {
+        "input": 200,
+        "output": 40,
+        "requests": 4,
+        "complete": false
+      }
+    },
+    "interpretation": "Synthetic counters only; Codex completeness false retained, no cost claim. No real provider traffic admitted."
+  },
+  "proposal": {
+    "owner": "Kernel shared ordinary-message freshness predicate, consumed by Worker and native final; no adapter queue or automatic Human actions",
+    "scope": "Same-channel Role-instance ordinary text messages, including explicit peer mentions, may coexist with an in-flight ordinary text reply; directed messages still wake/enqueue follow-up work.",
+    "preserve": [
+      "Human facts still hold",
+      "Attachments still hold",
+      "Task/Artifact/Review/memory and other business state mutations keep existing causal barriers",
+      "No cursor advancement or ACK for unread new messages",
+      "One serial lane per instance; durable queued follow-up reads new peer message",
+      "No automatic rerun, abandon, rewrite or silent replacement of held drafts",
+      "No parsing the content to decide whether a suggestion is harmless"
+    ],
+    "tradeoff": "Current reply may precede a peer correction it has not read; later turn sees correction. This is asynchronous chat semantics, not proof that current answer reflects latest peer facts.",
+    "acceptance": [
+      "Directed peer during A execution: A ordinary final publishes once, newer peer remains unread until following run",
+      "Follow-up continues original session and receives peer delta once",
+      "Intervening Human/attachment and business mutation remain held",
+      "Existing explicit Human recovery preserved",
+      "Real CLI localhost two-member tool/communication preflight before new paid cohort"
+    ],
+    "approvalRequired": "AGENTS.md: Change the target contract only with owner approval. Current ordinary-peer exception excludes directed messages."
+  },
+  "sources": [
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/herdr-loom-preflight-v2/runs/1791787513002-pair1-loom/result.json",
+      "sha256": "ff3681167f3d652d1c6b4ccee7c6ed510dadddf09c99842f92dc3319fec56568"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/herdr-loom-preflight-v2/binary-pin.mjs",
+      "sha256": "2262429dedad046eb46c434f32a7c3a3f4b315c8bbd001eead64b528c5b6e452"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/herdr-loom-preflight-v2/binary-pin.test.mjs",
+      "sha256": "580a4cfc8adc29ba1c633bc312185156c8997fba4d064bd567d3b8d28acee7a2"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/herdr-loom-preflight-v2/directed-peer-recovery.test.ts",
+      "sha256": "efae08938888b1d26397dae9893cf0c6dc684313473f2c1e6a7458bfa701e30e"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/herdr-loom-preflight-v2/providers.mjs",
+      "sha256": "1969a455b362d70bd459348d4125a95f7a27465415c130be75b85d2a3e150925"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/herdr-loom-preflight-v2/codex/codex-wrapper.mjs",
+      "sha256": "c4157fdeb3bb53fc2185f699d6fb74d4998755f5a767bb52e462cfc7d80c3490"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/herdr-loom-preflight-v2/candidate/manifest.json",
+      "sha256": "f1592604599195a8eddfcf19cee5ac505ccb655ba514cf1fb131768474335a6c"
+    }
+  ]
+}
