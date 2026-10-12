@@ -1,0 +1,406 @@
+{
+  "kind": "loom-team-repeat-closeout/v1",
+  "batchId": "actual-herdr-loom-opencode-claude-reply-20261012-v5",
+  "closedAt": "2026-10-12T15:29:45.135359+00:00",
+  "authorization": "Owner explicitly approved remaining pairs 2–4 only; pair1 not rerun.",
+  "manifestSha256": "beb318d8cea2c730d1149a133f5468cb5a52c90bf9e96dbf90adb2e2073c8caa",
+  "frozenFilesUnchanged": 3803,
+  "models": [
+    {
+      "cli": "OpenCode",
+      "version": "1.18.35",
+      "binding": "aihubmix/deepseek-v4.1-flash",
+      "effort": "low"
+    },
+    {
+      "cli": "Claude Code",
+      "version": "2.1.293",
+      "binding": "sonnet",
+      "resolved": "claude-sonnet-5-5",
+      "effort": "low"
+    }
+  ],
+  "limits": {
+    "input": 12000000,
+    "output": 240000,
+    "requests": 450,
+    "minutes": 120
+  },
+  "samples": [
+    {
+      "sampleId": "pair2-native",
+      "root": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-reply-v5/business-runs/1791817051913-pair2-native",
+      "status": "awaiting-quality-audit",
+      "reason": "quiescent",
+      "durationSeconds": 542.714,
+      "usage": {
+        "opencode": {
+          "input": 908261,
+          "output": 24299,
+          "requests": 32,
+          "complete": true
+        },
+        "claude": {
+          "input": 319582,
+          "output": 7827,
+          "requests": 11,
+          "complete": true
+        },
+        "total": {
+          "input": 1227843,
+          "output": 32126,
+          "requests": 43,
+          "complete": true
+        }
+      },
+      "qualityPassed": true,
+      "qualityFailures": [],
+      "functionalPassed": true,
+      "functionalChecks": 40,
+      "selfTestsDiagnostic": "..............................................................\n----------------------------------------------------------------------\nRan 62 tests in 0.403s\n\nOK\n",
+      "externalReview": true,
+      "reviewerToolCalls": 11,
+      "autoReturnCount": 0,
+      "activations": [],
+      "nativeCheck": {
+        "opencode": {
+          "complete": true,
+          "sessions": ["ses_ecf611c70ffenfd4Cg5Ayq9UAY"],
+          "input": 908261,
+          "output": 24299,
+          "responses": 32,
+          "localRejected": 0
+        },
+        "claude": {
+          "complete": true,
+          "responses": 11,
+          "sessions": ["6882a177-b2c9-48fa-9f3e-1697547d99eb"]
+        },
+        "complete": true
+      },
+      "cleanupComplete": true,
+      "artifactHashes": {
+        "COMMUNICATION.txt": "167706abc94506c9ed2d5bb7ff10c856e2fcf9382e6f285d6b8f97789e095d24",
+        "README.md": "e04bdbecc061f466a3c2d5eb22c96fbf173b5b355f47719196a7839b7c342545",
+        "REVIEW_B.md": "40b9ac85e5d3a047514ee1f3b20f3180da093a06907fc7abe43e72dc5fd679b5",
+        "TASK.json": "3cf87a5a64073a69906846ae95038951b95d8f3b479611b7d27814267da3f170",
+        "invoice.py": "0dc53176a565855db79539bb8f46d3b3efd79ff05fe6e054e41bf72208e25fb8",
+        "tests/test_cli.py": "fe39bf9e6b848fda6e45097feaace68f0aae5514b5fcf94c88747da415e0b44b",
+        "tests/test_invoice.py": "5274c936699eb1bdb6fe7221eda6900b7900a35dd8906cc61c5a8282431dc66e"
+      },
+      "resultSha256": "158bc832ca6c2cdc26c60d5221a61ce6ba86c3c268071019d65d4286f86b6825",
+      "auditSha256": "7f685727890ff83a5d13759b5ff736c1ac64225b8b475d0e08e62a81a49331ff"
+    },
+    {
+      "sampleId": "pair2-loom",
+      "root": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-reply-v5/business-runs/1791817639221-pair2-loom",
+      "status": "awaiting-quality-audit",
+      "reason": "quiescent",
+      "durationSeconds": 248.989,
+      "usage": {
+        "opencode": {
+          "input": 369366,
+          "output": 20842,
+          "requests": 15,
+          "complete": true
+        },
+        "claude": {
+          "input": 147000,
+          "output": 2625,
+          "requests": 7,
+          "complete": true
+        },
+        "total": {
+          "input": 516366,
+          "output": 23467,
+          "requests": 22,
+          "complete": true
+        }
+      },
+      "qualityPassed": false,
+      "qualityFailures": [
+        "A implemented before any public design discussion with B."
+      ],
+      "functionalPassed": true,
+      "functionalChecks": 40,
+      "selfTestsDiagnostic": "...................................................\n----------------------------------------------------------------------\nRan 51 tests in 0.211s\n\nOK\n",
+      "externalReview": true,
+      "reviewerToolCalls": 7,
+      "autoReturnCount": 0,
+      "activations": [
+        ["mention", "completed"],
+        ["mention", "completed"],
+        ["mention", "completed"],
+        ["mention", "completed"]
+      ],
+      "nativeCheck": {
+        "opencode": {
+          "complete": true,
+          "sessions": ["ses_ecf589087ffe32P5UJasnUVBbF"],
+          "input": 369366,
+          "output": 20842,
+          "responses": 15,
+          "localRejected": 0
+        },
+        "claude": {
+          "complete": true,
+          "responses": 7,
+          "sessions": ["7c71a1a6-5bbe-42f4-9e68-652130b8bcbb"]
+        },
+        "complete": true
+      },
+      "cleanupComplete": true,
+      "artifactHashes": {
+        "COMMUNICATION.txt": "77b1667f1ee088018db6ddae50e73d9d684ecdc2f8e1bf204816035e29ea9fbb",
+        "README.md": "526823231edfd505f21d2070f5ce8fa27166293124939f8767eade2404fc5be8",
+        "TASK.json": "3cf87a5a64073a69906846ae95038951b95d8f3b479611b7d27814267da3f170",
+        "invoice.py": "d84077c4cf46cab6e61dd374a8e3ff15347cf5b2abc8d7f683959fc76fbe390a",
+        "tests/test_invoice.py": "0b19a5e791ac75a30e4a7e46c9839168f7814ba6bf5440c86b2599393a03d7e6"
+      },
+      "resultSha256": "d6e1f2a40f52c181e6768243760e576358130a2896d7af3c0dd8271042601279",
+      "auditSha256": "fbc360f39a5bbc0c140afc98b2bdc6d6708d5ff5870c997e1718b40e80780b7d"
+    },
+    {
+      "sampleId": "pair3-loom",
+      "root": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-reply-v5/business-runs/1791817906069-pair3-loom",
+      "status": "awaiting-quality-audit",
+      "reason": "quiescent",
+      "durationSeconds": 465.552,
+      "usage": {
+        "opencode": {
+          "input": 515534,
+          "output": 20750,
+          "requests": 20,
+          "complete": true
+        },
+        "claude": {
+          "input": 330118,
+          "output": 7786,
+          "requests": 13,
+          "complete": true
+        },
+        "total": {
+          "input": 845652,
+          "output": 28536,
+          "requests": 33,
+          "complete": true
+        }
+      },
+      "qualityPassed": true,
+      "qualityFailures": [],
+      "functionalPassed": true,
+      "functionalChecks": 40,
+      "selfTestsDiagnostic": "....................................................................................\n----------------------------------------------------------------------\nRan 84 tests in 0.005s\n\nOK\n",
+      "externalReview": true,
+      "reviewerToolCalls": 13,
+      "autoReturnCount": 1,
+      "activations": [
+        ["mention", "completed"],
+        ["mention", "completed"],
+        ["reply", "completed"],
+        ["mention", "completed"],
+        ["mention", "completed"]
+      ],
+      "nativeCheck": {
+        "opencode": {
+          "complete": true,
+          "sessions": ["ses_ecf547e15ffeqERNeHBhOr17bV"],
+          "input": 515534,
+          "output": 20750,
+          "responses": 20,
+          "localRejected": 0
+        },
+        "claude": {
+          "complete": true,
+          "responses": 13,
+          "sessions": ["b8baa154-29e5-4349-99ef-b2466dc1660c"]
+        },
+        "complete": true
+      },
+      "cleanupComplete": true,
+      "artifactHashes": {
+        "COMMUNICATION.txt": "77b1667f1ee088018db6ddae50e73d9d684ecdc2f8e1bf204816035e29ea9fbb",
+        "README.md": "d7135f989a09413a9aca9e948a077382352270fea3155943bf74aadf1d1c47e0",
+        "TASK.json": "3cf87a5a64073a69906846ae95038951b95d8f3b479611b7d27814267da3f170",
+        "invoice.py": "7e97f7ff78399f8c70ada4bcb764d5834bc28df746456488e0e0a6f06c79cefe",
+        "tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "tests/test_cli.py": "be36e7775495b90eca7de3848d7bf9278b4b5b7839433d899b3c685663ef9d51",
+        "tests/test_invoice.py": "cbe715e38bc7f99bc18bc41a61840b0272342ea785b1defd2ba162ab2b709e88",
+        "tests/test_regression.py": "685b6ddfbacf374c339172ab61ea5dc637f66f528261ceb9afa6985858ee95bd"
+      },
+      "resultSha256": "6ccea4eef5a74e46a035000395084af2b373a44bcfee602c64c6a384846d95ab",
+      "auditSha256": "8021ce5aa9c39b594d35a46f68287e541221f0990c004eaa30e7ce6798701b47"
+    },
+    {
+      "sampleId": "pair3-native",
+      "root": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-reply-v5/business-runs/1791818408408-pair3-native",
+      "status": "awaiting-quality-audit",
+      "reason": "quiescent",
+      "durationSeconds": 156.921,
+      "usage": {
+        "opencode": {
+          "input": 88828,
+          "output": 9705,
+          "requests": 7,
+          "complete": true
+        },
+        "claude": {
+          "input": 17121,
+          "output": 1072,
+          "requests": 1,
+          "complete": true
+        },
+        "total": {
+          "input": 105949,
+          "output": 10777,
+          "requests": 8,
+          "complete": true
+        }
+      },
+      "qualityPassed": false,
+      "qualityFailures": [
+        "A sent design request then ended its turn; B replied with plain text without a Herdr handoff. Both became idle/done and task remained unimplemented."
+      ],
+      "functionalPassed": false,
+      "functionalChecks": 40,
+      "selfTestsDiagnostic": "No agent tests found",
+      "externalReview": false,
+      "reviewerToolCalls": 0,
+      "autoReturnCount": 0,
+      "activations": [],
+      "nativeCheck": {
+        "opencode": {
+          "complete": true,
+          "sessions": ["ses_ecf4cb148ffegXEF0Smzv659Ul"],
+          "input": 88828,
+          "output": 9705,
+          "responses": 7,
+          "localRejected": 0
+        },
+        "claude": {
+          "complete": true,
+          "responses": 1,
+          "sessions": ["9738198a-2a35-4d36-8f4d-58f53963929d"]
+        },
+        "complete": true
+      },
+      "cleanupComplete": true,
+      "artifactHashes": {
+        "COMMUNICATION.txt": "167706abc94506c9ed2d5bb7ff10c856e2fcf9382e6f285d6b8f97789e095d24",
+        "README.md": "0d93b31616379d7e64702617535798b8d586116271c436a5e4cd16ba7c8600b5",
+        "TASK.json": "3cf87a5a64073a69906846ae95038951b95d8f3b479611b7d27814267da3f170",
+        "invoice.py": "d3caf3a244cf57ab6cce44dd7dd3b25dfcc93369d9da13d06658b52d0761c8c5"
+      },
+      "resultSha256": "c4b191c25f8c95935adae8cc9dd26b616097f13d61c84418469b5c88c011239e",
+      "auditSha256": "3517a6a7c6d913a558ff0941c764f17c9f79b86f8af432edd7ecc21d6e70ad95"
+    },
+    {
+      "sampleId": "pair4-native",
+      "root": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-reply-v5/business-runs/1791818651846-pair4-native",
+      "status": "execution-failed",
+      "reason": "budget-or-provider-stop",
+      "durationSeconds": 78.951,
+      "usage": {
+        "opencode": {
+          "input": 0,
+          "output": 0,
+          "requests": 1,
+          "complete": false
+        },
+        "claude": {
+          "input": 0,
+          "output": 0,
+          "requests": 0,
+          "complete": true
+        },
+        "total": {
+          "input": 0,
+          "output": 0,
+          "requests": 1,
+          "complete": false
+        }
+      },
+      "qualityPassed": false,
+      "qualityFailures": [
+        "Upstream request transport error before any HTTP response; task never started."
+      ],
+      "functionalPassed": false,
+      "functionalChecks": 40,
+      "selfTestsDiagnostic": "No agent tests found",
+      "externalReview": false,
+      "reviewerToolCalls": 0,
+      "autoReturnCount": 0,
+      "activations": [],
+      "nativeCheck": {
+        "opencode": {
+          "complete": false,
+          "error": "AssertionError [ERR_ASSERTION]: {\"identityCoverageComplete\":true,\"requestCoverageComplete\":false,\"primaryComplete\":false,\"detailsComplete\":false,\"requests\":1,\"uniqueRequests\":1,\"assistants\":1,\"input\":0,\"output\":0,\"cachedInput\":null,\"reasoningOutput\":null,\"unknownRequests\":1,\"dimensions\":{\"input\":{\"known\":0,\"knownRequests\":0,\"unknownRequests\":1,\"complete\":false},\"output\":{\"known\":0,\"knownRequests\":0,\"unknownRequests\":1,\"complete\":false},\"cachedInput\":{\"known\":0,\"knownRequests\":0,\"unknownRequests\":1,\"complete\":false},\"reasoningOutput\":{\"known\":0,\"knownRequests\":0,\"unknownRequests\":1,\"complete\":false}},\"streamCoverageComplete\":false,\"complete\":false,\"errors\":[],\"label\":\"complete refers to primary input/output and request/native coverage; optional detail completeness is reported independently; observed usage on incomplete streams is partial, not a final total\"}\n\nfalse !== true\n"
+        },
+        "claude": {
+          "complete": true,
+          "responses": 0,
+          "sessions": []
+        },
+        "complete": false
+      },
+      "cleanupComplete": true,
+      "artifactHashes": {
+        "COMMUNICATION.txt": "167706abc94506c9ed2d5bb7ff10c856e2fcf9382e6f285d6b8f97789e095d24",
+        "README.md": "0d93b31616379d7e64702617535798b8d586116271c436a5e4cd16ba7c8600b5",
+        "TASK.json": "3cf87a5a64073a69906846ae95038951b95d8f3b479611b7d27814267da3f170",
+        "invoice.py": "d3caf3a244cf57ab6cce44dd7dd3b25dfcc93369d9da13d06658b52d0761c8c5"
+      },
+      "resultSha256": "cbb4f5fdeed60960c5c696f145c1cf143e5523373e008ccd7b379e08b5c8760f",
+      "auditSha256": "d9c6d392918be63bb10b45a7e7f317f41763c983db9e99020ccc79a0f7b2af29"
+    }
+  ],
+  "unstarted": ["pair4-loom"],
+  "totals": {
+    "knownInput": 2695810,
+    "knownOutput": 94906,
+    "attemptedGenerationRequests": 107,
+    "completeResponseRequests": 106,
+    "unknownRequests": 1,
+    "complete": false
+  },
+  "quality": {
+    "strictPassed": ["pair2-native", "pair3-loom"],
+    "artifactFunctionalPassed": ["pair2-native", "pair2-loom", "pair3-loom"],
+    "pair2LoomLimitation": "Implemented before external design discussion; real artifact review and delivery succeeded.",
+    "pair3NativeFailure": "A ended after sending design; B plain final did not notify A. B made no tools calls, did not read common task/communication files. No implementation, tests or code review.",
+    "validRepeatedMatchedQualityPairs": 0,
+    "formalEfficiencyRatio": null,
+    "reason": "Do not divide cheap incomplete tasks or select unmatched successful samples as repeated matched acceptance."
+  },
+  "fault": {
+    "sampleId": "pair4-native",
+    "provider": "opencode",
+    "request": 1,
+    "upstreamError": true,
+    "httpStatus": null,
+    "responseBytes": 0,
+    "usage": null,
+    "classification": "transport error before upstream HTTP response, not sample deadline or response killed by drain",
+    "subcause": "Unknown: recorder error listener drops error code/cause; DNS/TLS/reset cannot be distinguished retrospectively.",
+    "claude": "No generation request/assistant; independently verified zero observed usage. Original gate conservatively marks pending because process had started; retained unchanged.",
+    "rule": "An attempted remote request without provider usage is unknown, not zero. Release closed; last sample not started."
+  },
+  "comparisonLimitations": [
+    "Only this two-CLI/two-model combination was tested; not five-family acceptance.",
+    "Shared TASK.json retains historical A: Codex label, overridden by both actual opening prompts; source frozen and left unchanged.",
+    "Herdr B gets A-generated prompt rather than automatic delivery envelope; communication-instruction discovery is part of observed liveness variance. Do not generalize a failed unaided run to Herdr with human coordination.",
+    "No mid-batch prompt edits, retries, replacement or model substitution.",
+    "Gate quality=false statuses are conservative pending independent audit; original state and result never rewritten.",
+    "Tokens are provider-reported complete input/output where available, not a dollar billing claim.",
+    "No paid sample reached the deadline, so no new paid deadline-drain success claim."
+  ],
+  "productConclusion": "Real bounded automatic return and complete collaborative workflow verified in pair3-loom; no demonstrated repeated matched cost verdict. Product code and deployed trial flags unchanged.",
+  "cleanup": {
+    "generatedSettingsDeleted": 10,
+    "ownedPanesClosed": ["wA:pJ", "wA:pK"],
+    "callerLayoutRestored": true,
+    "allRecordedProcessesAbsentAtFinish": true,
+    "releaseClosed": true
+  },
+  "next": "Keep verified reply routing. Do not rewrite backend for model task-order variance. Before another paid repeated comparison, ensure both native participants independently receive the same shared task/communication context, and retain sanitized transport error codes in a separate tested recorder revision. Do not rerun this batch."
+}
