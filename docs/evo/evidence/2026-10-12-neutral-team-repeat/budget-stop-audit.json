@@ -1,0 +1,70 @@
+{
+  "kind": "posthoc-read-only-budget-stop-audit",
+  "originalNativeCheck": {
+    "complete": false,
+    "error": "AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert.ok(!m.error)\n"
+  },
+  "originalLedgerComplete": false,
+  "observedForwardedUsageComplete": true,
+  "opencode": {
+    "identityCoverageComplete": true,
+    "requestCoverageComplete": true,
+    "primaryComplete": true,
+    "detailsComplete": true,
+    "requests": 4,
+    "uniqueRequests": 4,
+    "assistants": 4,
+    "input": 51562,
+    "output": 7631,
+    "cachedInput": 34560,
+    "reasoningOutput": 4813,
+    "unknownRequests": 0,
+    "dimensions": {
+      "input": {
+        "known": 51562,
+        "knownRequests": 4,
+        "unknownRequests": 0,
+        "complete": true
+      },
+      "output": {
+        "known": 7631,
+        "knownRequests": 4,
+        "unknownRequests": 0,
+        "complete": true
+      },
+      "cachedInput": {
+        "known": 34560,
+        "knownRequests": 4,
+        "unknownRequests": 0,
+        "complete": true
+      },
+      "reasoningOutput": {
+        "known": 4813,
+        "knownRequests": 4,
+        "unknownRequests": 0,
+        "complete": true
+      }
+    },
+    "streamCoverageComplete": true,
+    "complete": true,
+    "errors": [],
+    "label": "complete refers to primary input/output and request/native coverage; optional detail completeness is reported independently; observed usage on incomplete streams is partial, not a final total"
+  },
+  "claude": {
+    "complete": true,
+    "responses": 2
+  },
+  "localPreForwardRejections": [5, 6, 7],
+  "nativeLocalErrors": [
+    "msg_13008ee9c001PQimXpFg0WbIXM",
+    "msg_13008ef5b001KatJWa8xUQj7ST",
+    "msg_13008efec001aUgtjqY41FOAjf"
+  ],
+  "proof": "Recorder sets admissionRejected and throws before upstream request construction. All three zero-response local rejections correspond in count and order to trailing zero-usage local 422 native errors; all four forwarded OpenCode responses reconcile with four successful native messages. Both Claude IDs/usage match JSONL. Frozen checker rejects any native error unconditionally and downgrades both members.",
+  "limits": [
+    "Frozen gate verdict and result files unchanged",
+    "No provider invoice assertion",
+    "Budget-censored task is not a quality success",
+    "No recovery of unknown remote failures is attempted"
+  ]
+}

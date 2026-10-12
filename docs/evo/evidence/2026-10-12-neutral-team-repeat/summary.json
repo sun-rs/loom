@@ -1,0 +1,908 @@
+{
+  "kind": "neutral-team-repeat-closeout",
+  "date": "2026-10-12",
+  "sourceRevision": "fb5e5febd06705219a3c605cabc6ae7219767b2c",
+  "productChanges": false,
+  "deploymentChanged": false,
+  "productionTrialFlags": "all seven unchanged, off",
+  "plan": {
+    "batchId": "actual-herdr-loom-opencode-claude-neutral-20261012-v2",
+    "manifestSha256": "987a80762d2c981c7a8e1b19c0a81b5f362a4f49fd667fce302b8a200d6103fb",
+    "frozenSourceFiles": 3791,
+    "sourceClosureUnchanged": true,
+    "order": [
+      "pair1-loom",
+      "pair1-native",
+      "pair2-native",
+      "pair2-loom",
+      "pair3-loom",
+      "pair3-native",
+      "pair4-native",
+      "pair4-loom"
+    ],
+    "versions": {
+      "opencode": "1.18.35",
+      "claude": "2.1.293 (Claude Code)"
+    },
+    "bindings": [
+      {
+        "provider": "opencode",
+        "model": "aihubmix/deepseek-v4.1-flash",
+        "effort": "low"
+      },
+      {
+        "provider": "claude",
+        "model": "sonnet",
+        "effort": "low"
+      }
+    ],
+    "taskSha256": "3cf87a5a64073a69906846ae95038951b95d8f3b479611b7d27814267da3f170",
+    "quality": "40 hidden functional checks, own unittest suite, independent actual-file review, README semantics",
+    "authorization": "Owner continue following neutral fixture proposal; no model change, no replacement, no extra batch",
+    "memory": "Both arms exact-version memory-off policy; same-session history retained",
+    "limits": {
+      "maxActivations": 96,
+      "maxRequests": 400,
+      "maxInputTokens": 12000000,
+      "maxOutputTokens": 150000,
+      "maxDurationMs": 5400000
+    }
+  },
+  "samples": [
+    {
+      "sampleId": "pair1-loom",
+      "root": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-business-v2/business-runs/1791804000249-pair1-loom",
+      "resultSha256": "d6a58003b3cddba4c0fa6d529a258aa09eb7af2c3a11948ad0e9ca5dc753f4dc",
+      "functionalPassed": 0,
+      "functionalTotal": 40,
+      "actualExternalCodeReview": false,
+      "readmeSemanticReview": false,
+      "qualityPassed": false,
+      "usage": {
+        "opencode": {
+          "input": 94034,
+          "output": 5781,
+          "requests": 7,
+          "complete": true
+        },
+        "claude": {
+          "input": 30836,
+          "output": 1025,
+          "requests": 2,
+          "complete": true
+        },
+        "total": {
+          "input": 124870,
+          "output": 6806,
+          "requests": 9,
+          "complete": true
+        }
+      },
+      "verdict": "design review only; reviewer final has no directed mention; no implementation",
+      "costRatio": null,
+      "executionStatus": "awaiting-quality-audit",
+      "executionReason": "quiescent",
+      "nativeCrossCheck": {
+        "opencode": {
+          "complete": true,
+          "sessions": ["ses_ed028a922ffey37xf6GWaLeRsN"],
+          "input": 94034,
+          "output": 5781,
+          "responses": 7
+        },
+        "claude": {
+          "complete": true,
+          "responses": 2,
+          "sessions": ["dcb3dd5d-9325-4621-83ec-ee11351f4ec1"]
+        }
+      },
+      "cleanupVerified": true,
+      "artifactHashes": {
+        "COMMUNICATION.txt": "77b1667f1ee088018db6ddae50e73d9d684ecdc2f8e1bf204816035e29ea9fbb",
+        "README.md": "0d93b31616379d7e64702617535798b8d586116271c436a5e4cd16ba7c8600b5",
+        "TASK.json": "3cf87a5a64073a69906846ae95038951b95d8f3b479611b7d27814267da3f170",
+        "invoice.py": "d3caf3a244cf57ab6cce44dd7dd3b25dfcc93369d9da13d06658b52d0761c8c5"
+      },
+      "selfTestsPassed": false,
+      "activationStates": ["completed", "completed"],
+      "wire": [
+        {
+          "provider": "opencode",
+          "forwardedRequests": 7,
+          "localPreForwardRejected": 0,
+          "actualBindings": [["deepseek-v4.1-flash", "low"]],
+          "forwardedReviewOnlyInstructions": 0,
+          "metadataSha256": "074b37e0294c1612297a9b9fdab30c6cb9dd79847e7ab06ec9c7f6a12b2d93ee"
+        },
+        {
+          "provider": "claude",
+          "forwardedRequests": 2,
+          "localPreForwardRejected": 0,
+          "actualBindings": [["claude-sonnet-5-5", "low"]],
+          "forwardedReviewOnlyInstructions": 0,
+          "metadataSha256": "b64b5d1ce9898e3d9deb0e3830135a57f61d57667726b0cdc4988079f977fa05"
+        }
+      ],
+      "peerReplies": [
+        {
+          "body": "I'm A. B (@collaborator-a8334494b6ce3ccc8777d73a) hasn't posted yet. Per the task, I'll open with the design discussion before implementing.\n\n---\n\n@collaborator-a8334494b6ce3ccc8777d73a — A here (OpenCode implementer). I've read TASK.json (12 requirements) and the workspace. Current `invoice.py` is a stub, `tests/` is empty. Proposal for your review before I implement; flag anything you'd change.\n\n**1. Numeric model.** Validate, then parse each accepted value to `Decimal` (never float). Run all aggregation inside `decimal.localcontext` with a generous precision (I propose `prec=200`; worst single line is ~18×18 digit product ×18-digit discount /100 ≈ 56 significant digits, plus integer digits from summing many rows, so 200 is safely above range while still \"Decimal arithmetic\"). Round only at output via `quantize(Decimal(\"0.01\"), ROUND_HALF_UP)`. Alternative: `Fraction` accumulation converted once — exact too, but you asked me to use Decimal; I'll stay with Decimal unless you object.\n\n**2. Rounding order (reqs 4–5).** Exact: `subtotal_exact = Σ qty*price`; `discount_exact = Σ qty*price*disc/100`; `net_exact = subtotal_exact - discount_exact`; `tax_exact = net_exact * tax/100`. Outputs: `subtotal=round(subtotal_exact)`, `discount=round(discount_exact)`, `tax=round(tax_exact)`, `total=round(net_exact)+round(tax_exact)` — each rounded independently, total adds the two rounded values (not round of net+tax). No per-line rounding anywhere.\n\n**3. Validation (req 6).** `_num(value, cap)` → accept `int` (not `bool`, checked first) in `0..999999999999`, or `str` fullmatch `[0-9]{1,12}(\\.[0-9]{1,6})?`; everything else (float, Decimal, exponent, whitespace, NaN/inf, >6 frac digits, negative) → `ValueError`. `quantity`, `unit_price` required; `discount_percent` default `\"0\"`; `tax_percent` default `\"0\"`. `tax_percent` and `discount_percent` additionally `<= 100`. `rows` must be `list` of `dict`. `cancelled` if present must be `bool`; if it `is True`, skip the row *before* touching any other field (missing/malformed qty or price ignored).\n\n**4. Grouping (reqs 7–8).** `group_by is None` → ungrouped, no `groups` key. `\"category\"` → dict of active rows keyed by category; missing/`None`/`\"\"` → `\"uncategorized\"`; other values must be `str` else `ValueError`; labels verbatim (no strip/case-fold); groups sorted ascending by Python string order; each group summarized with the same exact rules; grand totals recomputed from all rows (never sum rounded groups). Any other `group_by` → `ValueError`. Empty grouped → `groups: []`.\n\n**5. CLI (reqs 9–10).** Exactly one arg after `invoice.py`; `-` means stdin (sentinel, never opened); other arg is a file path. Zero or ≥2 args, unreadable file, bad JSON, non-object request, unknown request keys (only `rows`/`tax_percent`/`group_by` allowed), or business `ValueError` → nonempty stderr, no stdout, nonzero exit. Success → one `json.dumps(result)` + `\\n` on stdout, exit 0. Never write the input file. `summarize` stays importable; stdlib only.\n\n**6. Tests/docs.** `tests/` unittest suite via `python3 -m unittest discover`, covering every requirement incl. req 11 regressions (half-cent aggregate rounding, discount-before-tax, cancelled malformed rows, all invalid numeric types). README gains API, rounding/validation rules, and file + stdin CLI examples.\n\nOpen questions: (a) Decimal `prec=200` vs Fraction — preference? (b) exit code choice for CLI errors (I'll use 2) — ok? (c) any extra edge cases you want in the suite? Confirm or revise and I'll implement immediately, then you examine the actual files and run independent checks.",
+          "mentions": [
+            {
+              "start": 10,
+              "end": 48,
+              "handle": "collaborator-a8334494b6ce3ccc8777d73a",
+              "principalId": "principal_9839e876-8ffb-4cbd-8a2c-4e60ac222eaf",
+              "agentId": "agent_definition_317f72e9-d96f-48e4-ba31-e423937edfd3"
+            },
+            {
+              "start": 147,
+              "end": 185,
+              "handle": "collaborator-a8334494b6ce3ccc8777d73a",
+              "principalId": "principal_9839e876-8ffb-4cbd-8a2c-4e60ac222eaf",
+              "agentId": "agent_definition_317f72e9-d96f-48e4-ba31-e423937edfd3"
+            }
+          ]
+        },
+        {
+          "body": "B here. I've read TASK.json (all 12 requirements) and your proposal — it matches the contract on every point I checked. Approved with a few confirmations and small review notes:\n\n**Confirmations:**\n- (a) Decimal with `prec=200` is fine — stays inside \"Decimal arithmetic\" per req 1, well above worst-case ~56 significant digits. No need for Fraction.\n- (b) Exit code 2 for CLI errors is fine; the spec only requires nonzero.\n- (c) Edge cases I want explicitly covered in the suite: (1) half-cent aggregate rounding where per-line rounding would differ from aggregate rounding (e.g., 3 × \"0.005\"-class prices summing across lines); (2) discount_before_tax: verify tax is computed on exact net, not on rounded subtotal minus rounded discount; (3) cancelled row with missing quantity *and* malformed unit_price ignored; also cancelled=true with `category` present excluded from groups and count; (4) invalid numeric types: float, bool, Decimal, exponent-string, whitespace-padded string, negative int, >6 fractional digits, value >999999999999, tax/discount >100; (5) group_by with non-string category (int category → ValueError); (6) `-` as filename never opened (e.g., a file literally named `-` should still read stdin); (7) unknown top-level request key rejected; (8) zero args with valid JSON on stdin still errors.\n\n**Review notes (not blockers, flag now so implementation avoids them):**\n1. **Unknown row keys** must be ignored (req 6) — including weird ones like `\"tax_percent\"` on a row. Only `rows`/`tax_percent`/`group_by` are restricted at the top level of the request (req 9).\n2. **`count` in grouped mode**: count should presumably still be the total active-row count at top level, and each group's count its own. Your plan implies this; just make it explicit in the result shape.\n3. **Empty string handling**: category `\"\"` → `\"uncategorized\"`, but for *numeric validation* an empty string is invalid — don't let the category rule leak into number parsing.\n4. **Rounding of `total`**: keep it exactly as you said — `round(net_exact) + round(tax_exact)`, never `round(net_exact + tax_exact)`. This is the subtlest point of reqs 4–5; the regression suite must have a case where these two differ.\n5. **Ungrouped result must omit `groups` entirely** (req 8), grouped result adds *exactly* `groups` plus the same five fields — no extra keys in either mode, and no extra keys in group objects beyond `category` + the five fields.\n\nGo ahead and implement. When you're done, I'll examine the actual files and run independent checks against the requirements.",
+          "mentions": []
+        }
+      ]
+    },
+    {
+      "sampleId": "pair1-native",
+      "root": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-business-v2/business-runs/1791804135105-pair1-native",
+      "resultSha256": "cad1266868d44b3b7410af5f85da5fdb36f58d8612827f954dc9fd350583e54b",
+      "functionalPassed": 40,
+      "functionalTotal": 40,
+      "actualExternalCodeReview": true,
+      "readmeSemanticReview": true,
+      "qualityPassed": true,
+      "usage": {
+        "opencode": {
+          "input": 1057572,
+          "output": 23183,
+          "requests": 37,
+          "complete": true
+        },
+        "claude": {
+          "input": 619321,
+          "output": 10520,
+          "requests": 21,
+          "complete": true
+        },
+        "total": {
+          "input": 1676893,
+          "output": 33703,
+          "requests": 58,
+          "complete": true
+        }
+      },
+      "verdict": "completed design, implementation and independent actual-file review",
+      "costRatio": null,
+      "executionStatus": "awaiting-quality-audit",
+      "executionReason": "quiescent",
+      "nativeCrossCheck": {
+        "opencode": {
+          "complete": true,
+          "sessions": ["ses_ed0261c01ffedl7f2bV71driDH"],
+          "input": 1057572,
+          "output": 23183,
+          "responses": 37
+        },
+        "claude": {
+          "complete": true,
+          "responses": 21,
+          "sessions": ["96ecfccc-dbec-45fd-a456-3c3718c92bd4"]
+        }
+      },
+      "cleanupVerified": true,
+      "artifactHashes": {
+        "COMMUNICATION.txt": "167706abc94506c9ed2d5bb7ff10c856e2fcf9382e6f285d6b8f97789e095d24",
+        "DESIGN_B.md": "f9873fc69f306b3f7d87e380878893616cbbe13d8d4977509fb485414fa6d01f",
+        "HANDOFF_A.md": "ce5f3d8816ea9ebecc637cbd73b288aa59ee2b639e7f924ca927eb5bb1766afa",
+        "README.md": "fc31d145a6b254025d399f369dbf2a5e7a98296167c95139b819d1f5e28a0ab6",
+        "REVIEW_B.md": "1822f7795f003b71d740b205bc931b4e81d84246fdc9aafb717c6b71fa1212ac",
+        "TASK.json": "3cf87a5a64073a69906846ae95038951b95d8f3b479611b7d27814267da3f170",
+        "invoice.py": "7d60d9ab7048c4e117c3444fc4d2b4ae4ca96fa39437db937c9045bae3e0e7ef",
+        "tests/test_invoice.py": "2669767c5b9eaed0f7e5685710b55746906086026efa6f305befef3735354570"
+      },
+      "selfTestsPassed": true,
+      "activationStates": [],
+      "wire": [
+        {
+          "provider": "opencode",
+          "forwardedRequests": 37,
+          "localPreForwardRejected": 0,
+          "actualBindings": [["deepseek-v4.1-flash", "low"]],
+          "forwardedReviewOnlyInstructions": 0,
+          "metadataSha256": "bea7f30e27adb25139d4d68208e1bc6b86514d1196f4142055384480008d9cb5"
+        },
+        {
+          "provider": "claude",
+          "forwardedRequests": 21,
+          "localPreForwardRejected": 4,
+          "actualBindings": [["claude-sonnet-5-5", "low"]],
+          "forwardedReviewOnlyInstructions": 0,
+          "metadataSha256": "03dd1498d9cb573633f115d727f36e5379cf56a81e5e636ae8f3d419d24e4a17"
+        }
+      ]
+    },
+    {
+      "sampleId": "pair2-native",
+      "root": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-business-v2/business-runs/1791804861492-pair2-native",
+      "resultSha256": "4296e84cc46c5d027b8428471947a5d4c3c5dfabd4c3bf3e3a45c45ece6b7f0b",
+      "functionalPassed": 40,
+      "functionalTotal": 40,
+      "actualExternalCodeReview": true,
+      "reviewToolEvidence": [
+        {
+          "id": "tool_1O21wuLAe4SIuOZmVn35ob5z",
+          "name": "Bash"
+        },
+        {
+          "id": "tool_MDQkep4xwScyjAJW4Y3LOLjs",
+          "name": "Bash"
+        },
+        {
+          "id": "tool_rzS68daLfGR8BRhCacLowUV8",
+          "name": "Read"
+        },
+        {
+          "id": "tool_l3MLL6i7CX4PLbNiA4dPZ5SZ",
+          "name": "Read"
+        },
+        {
+          "id": "tool_RIPUFLRbpk9lPCBltzL2xgeR",
+          "name": "Bash"
+        },
+        {
+          "id": "tool_69S9EGmvkWY3TCrWJ2655fhb",
+          "name": "Bash"
+        },
+        {
+          "id": "tool_WnEQSd1NnX0mayFbr1pxMw41",
+          "name": "Bash"
+        }
+      ],
+      "readmeSemanticReview": true,
+      "documentationCaveat": "Tax formula reuses subtotal/discount symbols ambiguously, but surrounding text explicitly requires exact active-row aggregates and no premature rounding. Report as documentation ambiguity, not a code failure.",
+      "qualityPassed": true,
+      "usage": {
+        "opencode": {
+          "input": 753713,
+          "output": 29821,
+          "requests": 24,
+          "complete": true
+        },
+        "claude": {
+          "input": 361488,
+          "output": 9196,
+          "requests": 13,
+          "complete": true
+        },
+        "total": {
+          "input": 1115201,
+          "output": 39017,
+          "requests": 37,
+          "complete": true
+        }
+      },
+      "costRatio": null,
+      "executionStatus": "awaiting-quality-audit",
+      "executionReason": "quiescent",
+      "nativeCrossCheck": {
+        "opencode": {
+          "complete": true,
+          "sessions": ["ses_ed01ab67dffeOhNwB91IXCxR2l"],
+          "input": 753713,
+          "output": 29821,
+          "responses": 24
+        },
+        "claude": {
+          "complete": true,
+          "responses": 13,
+          "sessions": ["dc97be00-74fe-43ea-9f3c-4d7d01182504"]
+        }
+      },
+      "cleanupVerified": true,
+      "artifactHashes": {
+        "COMMUNICATION.txt": "167706abc94506c9ed2d5bb7ff10c856e2fcf9382e6f285d6b8f97789e095d24",
+        "README.md": "53bd637a3f5ad8967034785d204b821e1e439eaf37632ee8d8ad39256c0e38e2",
+        "TASK.json": "3cf87a5a64073a69906846ae95038951b95d8f3b479611b7d27814267da3f170",
+        "invoice.py": "bfedc3049de7ea0e0199d940408a0b05841c84f1baf33f09f2d1d0ce42cd55d5",
+        "tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "tests/test_invoice.py": "3405ae6c8807e4371ec1fbdc95274b0c8f1233d1af51c4589102dd57f9541e26"
+      },
+      "selfTestsPassed": true,
+      "activationStates": [],
+      "wire": [
+        {
+          "provider": "opencode",
+          "forwardedRequests": 24,
+          "localPreForwardRejected": 0,
+          "actualBindings": [["deepseek-v4.1-flash", "low"]],
+          "forwardedReviewOnlyInstructions": 0,
+          "metadataSha256": "69b5e5f95e6f226324424805e5ea526765687ab6a862114dfbdc1b3643fba2bb"
+        },
+        {
+          "provider": "claude",
+          "forwardedRequests": 13,
+          "localPreForwardRejected": 2,
+          "actualBindings": [["claude-sonnet-5-5", "low"]],
+          "forwardedReviewOnlyInstructions": 0,
+          "metadataSha256": "01629a0447142776ab66bbda410f762920886d0f6ec4dcbd77eb4e3d376105c6"
+        }
+      ]
+    },
+    {
+      "sampleId": "pair2-loom",
+      "root": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-business-v2/business-runs/1791805571512-pair2-loom",
+      "resultSha256": "6a9fdeef05408055a2cfeffd6513270346bd6231cb198718fdbcb8e1f0206030",
+      "functionalPassed": 0,
+      "functionalTotal": 40,
+      "actualExternalCodeReview": false,
+      "qualityPassed": false,
+      "usage": {
+        "opencode": {
+          "input": 48573,
+          "output": 3939,
+          "requests": 4,
+          "complete": true
+        },
+        "claude": {
+          "input": 30440,
+          "output": 1098,
+          "requests": 2,
+          "complete": true
+        },
+        "total": {
+          "input": 79013,
+          "output": 5037,
+          "requests": 6,
+          "complete": true
+        }
+      },
+      "verdict": "design review only; reviewer final again has no directed mention; no implementation",
+      "costRatio": null,
+      "executionStatus": "awaiting-quality-audit",
+      "executionReason": "quiescent",
+      "nativeCrossCheck": {
+        "opencode": {
+          "complete": true,
+          "sessions": ["ses_ed010b425ffeoneQX8x8A2Cdve"],
+          "input": 48573,
+          "output": 3939,
+          "responses": 4
+        },
+        "claude": {
+          "complete": true,
+          "responses": 2,
+          "sessions": ["23f792cc-61eb-4fd3-938a-2fa5a4987dce"]
+        }
+      },
+      "cleanupVerified": true,
+      "artifactHashes": {
+        "COMMUNICATION.txt": "77b1667f1ee088018db6ddae50e73d9d684ecdc2f8e1bf204816035e29ea9fbb",
+        "README.md": "0d93b31616379d7e64702617535798b8d586116271c436a5e4cd16ba7c8600b5",
+        "TASK.json": "3cf87a5a64073a69906846ae95038951b95d8f3b479611b7d27814267da3f170",
+        "invoice.py": "d3caf3a244cf57ab6cce44dd7dd3b25dfcc93369d9da13d06658b52d0761c8c5"
+      },
+      "selfTestsPassed": false,
+      "activationStates": ["completed", "completed"],
+      "wire": [
+        {
+          "provider": "opencode",
+          "forwardedRequests": 4,
+          "localPreForwardRejected": 0,
+          "actualBindings": [["deepseek-v4.1-flash", "low"]],
+          "forwardedReviewOnlyInstructions": 0,
+          "metadataSha256": "85764b3198955040b78fc0a2898d10e1cd005b20f2141311f1bafc280ac966ba"
+        },
+        {
+          "provider": "claude",
+          "forwardedRequests": 2,
+          "localPreForwardRejected": 0,
+          "actualBindings": [["claude-sonnet-5-5", "low"]],
+          "forwardedReviewOnlyInstructions": 0,
+          "metadataSha256": "8731bf9e9d634324292b6f49a7b0ccd939a5616fbe0806717d126aefbe670ea7"
+        }
+      ],
+      "peerReplies": [
+        {
+          "body": "@collaborator-cf2a4202b5bc23fe1ea0f8a4 Design proposal before I implement — please confirm or challenge the points below.\n\n**Exact arithmetic.** All parsing yields `Decimal`; I'll wrap the whole computation in `localcontext()` with `prec` ~ 100 (well above the contract's max: 12 int + 6 frac digits, product ×percent gives ~50 significant digits) so every product, discount and tax is exact. No binary floats internally. Only the four aggregates get `quantize(Decimal(\"0.01\"), ROUND_HALF_UP)`, each rounded once from exact sums.\n\n**Rounding model.**\n- `subtotal = rnd(Σ qᵢ·pᵢ)`\n- `discount = rnd(Σ qᵢ·pᵢ·dᵢ/100)`\n- `net_exact = Σ qᵢ·pᵢ·(1 − dᵢ/100)`\n- `tax = rnd(net_exact · tax_percent/100)`\n- `total = rnd(net_exact) + tax` (both rounded independently)\n- no discount/tax → discount/tax `\"0.00\"`, total == subtotal.\n\n**Validation.** One `_num(value, name)` helper: `bool` is rejected outright (bool is an int subclass); int accepted iff `0 ≤ v ≤ 999999999999`; `str` accepted iff it matches `^[0-9]{1,12}(\\.[0-9]{1,6})?$`; everything else (float, negative, exponent, whitespace, NaN/inf, extra fraction digits) → `ValueError`. `tax_percent`/`discount_percent` additionally `≤ 100`. `rows` must be `list` of `dict`. `cancelled`, when present, must be `bool` (else `ValueError`) and `True` skips the row before any other field is touched.\n\n**Grouping.** `group_by` must be `None` or `\"category\"`, else `ValueError`. When grouped, result has the five grand-total keys (recomputed from all active rows, never by summing rounded groups) plus exactly `groups`, each `{category, count, subtotal, discount, tax, total}`. Category: missing/`None`/`\"\"` → `\"uncategorized\"`; non-string otherwise → `ValueError`; labels verbatim; sorted by Python string ordering; empty input → `groups: []`. Ungrouped omits `groups`.\n\n**CLI.** Exactly one argv after the script; `\"-\"` is a stdin sentinel (never opened as a file); zero or ≥2 args → stderr + exit≠0. Request JSON must be an object with required `rows` and only optional `tax_percent`/`group_by`; any other key → error. Success prints one JSON result + newline, exit 0; any unreadable file / bad JSON / business `ValueError` → nonempty stderr, no stdout, nonzero. Input file is only ever read.\n\n**Tests.** `unittest` under `tests/`, discovered via `python3 -m unittest discover`, covering every requirement plus turn-11 regressions (half-cent aggregate rounding, discount-before-tax, cancelled-with-malformed-fields, all invalid numeric types).\n\nTwo decisions I want your independent read on: (1) Decimal with high precision vs. `fractions.Fraction` internally — I prefer Decimal since the contract names it and the inputs are finite decimals; (2) whether `cancelled=true` should tolerate any other key types (I say yes, it short-circuits before validation). If you agree, I'll implement now and hand you the actual files for review; if you see a flaw, say so and I'll adjust first.",
+          "mentions": [
+            {
+              "start": 0,
+              "end": 38,
+              "handle": "collaborator-cf2a4202b5bc23fe1ea0f8a4",
+              "principalId": "principal_a1d1d0c9-7d02-48ed-b9a4-35215de41231",
+              "agentId": "agent_definition_349fa943-c6b0-4974-bc0a-723094d36503"
+            }
+          ]
+        },
+        {
+          "body": "I've reviewed the design against all 12 requirements. My verdict: **approve, implement as proposed.** Specific confirmation on your two questions and a few checks I ran against the contract:\n\n**1. Decimal vs Fraction:** Decimal is the right call. The contract explicitly names Decimal + ROUND_HALF_UP (reqs 1, 4, 5), inputs are finite decimals bounded to 12 int + 6 frac digits, and `localcontext(prec=100)` makes every intermediate exact (worst case: q·p·d/100 ≈ 12+6+12+3+6 ≈ 39 significant digits; tax adds ~14 more — 100 is comfortable). Fraction would be exact too but adds conversion friction at the I/O boundary with zero benefit here.\n\n**2. cancelled short-circuit:** Agreed, with one refinement: check `cancelled` presence/type *first* — if present and not a bool, raise ValueError (req 6: \"cancelled when supplied must be a bool\"); if it's exactly `True`, skip before touching any other key; `False` falls through to full row validation. This matches \"skip entirely before looking at its other fields\" including missing/malformed quantity/price (req 3, regression case for turn 11).\n\nOther points I verified and endorse:\n- Rounding model matches reqs 4–5 exactly: each of the four aggregates rounded exactly once from exact sums, `total = rnd(net) + rnd(tax)` — never rounding net before computing tax.\n- Grand totals recomputed from all active rows, never summed from rounded groups (req 7) — good catch in your proposal.\n- `bool` rejection must come *before* the int check since `isinstance(True, int)` — your `_num` helper handles it; turn-11 regression tests should include `True`/`False` as quantity values explicitly.\n- CLI: zero args error even with valid stdin JSON (req 10), `-` never opened as a file, stderr nonempty + stdout empty + nonzero exit on every failure path, input only read.\n- Validation regex `^[0-9]{1,12}(\\.[0-9]{1,6})?$` is ASCII-exact, rejects whitespace/exponents/leading signs; int bound 0..999999999999 matches 12 digits; percent ≤ 100 cap.\n\nNo blocking findings. Implement and hand me the actual files (`invoice.py`, `tests/`, README when you reach req 12) and I'll review the artifact itself and run independent checks.",
+          "mentions": []
+        }
+      ]
+    },
+    {
+      "sampleId": "pair3-loom",
+      "root": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-business-v2/business-runs/1791805690481-pair3-loom",
+      "resultSha256": "f1fe7107218461cdfe618cceda6283e3068a8cf1fff5dffcf171c6fd47312ae7",
+      "functionalPassed": 0,
+      "functionalTotal": 40,
+      "actualExternalCodeReview": false,
+      "qualityPassed": false,
+      "usage": {
+        "opencode": {
+          "input": 33584,
+          "output": 2343,
+          "requests": 3,
+          "complete": true
+        },
+        "claude": {
+          "input": 47271,
+          "output": 995,
+          "requests": 3,
+          "complete": true
+        },
+        "total": {
+          "input": 80855,
+          "output": 3338,
+          "requests": 6,
+          "complete": true
+        }
+      },
+      "verdict": "third design-only stop; reviewer final mentions_json empty; no implementation",
+      "costRatio": null,
+      "executionStatus": "awaiting-quality-audit",
+      "executionReason": "quiescent",
+      "nativeCrossCheck": {
+        "opencode": {
+          "complete": true,
+          "sessions": ["ses_ed00ee4e4ffe2yBps64I488PU4"],
+          "input": 33584,
+          "output": 2343,
+          "responses": 3
+        },
+        "claude": {
+          "complete": true,
+          "responses": 3,
+          "sessions": ["e5dcfdb9-6e40-4844-b6a9-9f7c5ffa98d8"]
+        }
+      },
+      "cleanupVerified": true,
+      "artifactHashes": {
+        "COMMUNICATION.txt": "77b1667f1ee088018db6ddae50e73d9d684ecdc2f8e1bf204816035e29ea9fbb",
+        "README.md": "0d93b31616379d7e64702617535798b8d586116271c436a5e4cd16ba7c8600b5",
+        "TASK.json": "3cf87a5a64073a69906846ae95038951b95d8f3b479611b7d27814267da3f170",
+        "invoice.py": "d3caf3a244cf57ab6cce44dd7dd3b25dfcc93369d9da13d06658b52d0761c8c5"
+      },
+      "selfTestsPassed": false,
+      "activationStates": ["completed", "completed"],
+      "wire": [
+        {
+          "provider": "opencode",
+          "forwardedRequests": 3,
+          "localPreForwardRejected": 0,
+          "actualBindings": [["deepseek-v4.1-flash", "low"]],
+          "forwardedReviewOnlyInstructions": 0,
+          "metadataSha256": "a04d4ea53b5218a7c3f2d87220b9678e9b4b3a619aba31eaff7b9369c22b0da9"
+        },
+        {
+          "provider": "claude",
+          "forwardedRequests": 3,
+          "localPreForwardRejected": 0,
+          "actualBindings": [["claude-sonnet-5-5", "low"]],
+          "forwardedReviewOnlyInstructions": 0,
+          "metadataSha256": "c557c1a3e06e4ab048215514bf87f908237d998e1ef1138d352bd4bff270d678"
+        }
+      ],
+      "peerReplies": [
+        {
+          "body": "I've read the task, requirements, and current stubs. Here's my proposed design for review before I implement.\n\n@collaborator-2d3e48e89c449ae15a2a5e85 (B) — proposed design for `invoice.py`, please review/challenge:\n\n**Exact arithmetic**\n- Parse every accepted numeric into `Decimal` from its string form (accept real `int` by `str(v)`).\n- All middle work (`qty×price`, discounts, net, tax base) is exact. Run inside `decimal.localcontext()` with high precision; default prec 28 is explicitly insufficient. I'll size precision to the permitted range (products ≈36 digits, discount ≈42, summed over many rows) — plan: set precision dynamically from input digit lengths plus a row-count margin, or a safe large constant with a documented bound. Fraction isn't used since the contract requires Decimal.\n- Rounding only at the very end, one `ROUND_HALF_UP` quantize to cents per aggregate: `subtotal` from exact Σ products; `discount` from exact Σ discounts; `net = subtotal_exact − discount_exact`; `tax = round_half_up(net × tax_percent/100)`; `total = round_half_up(net) + tax_rounded`.\n\n**Validation (reqs 6)**\n- `rows` must be `list` of `dict`, else `ValueError`.\n- Numeric fields: `bool` rejected first (bool is `int` subclass), then accept `int` in `[0, 999999999999]` or ASCII `str` matching `^[0-9]{1,12}(\\.[0-9]{1,6})?$`. Reject float, exponent, whitespace, NaN/inf, negatives, >6 fractional digits, missing/extra.\n- `tax_percent`/`discount_percent` additionally ≤100.\n- `cancelled` when present must be `bool`; `True` skips rest of row entirely.\n- Ignore unrelated keys.\n\n**Grouping (reqs 7–8)**\n- `group_by` in `{None,\"category\"}` else `ValueError`.\n- Group active rows by category; missing/`None`/`\"\"` → `\"uncategorized\"`; non-string non-null → `ValueError`. Verbatim labels, sort ascending via Python `str` ordering. `groups=[]` for empty grouped input. Grand totals recomputed from all active rows, never by summing rounded groups. Ungrouped omits `groups`.\n\n**CLI (reqs 9–10)**\n- Exactly one arg after `invoice.py`: file path or literal `-` (stdin sentinel, never opened). Zero/more-than-one → stderr message + exit nonzero, no stdout.\n- Request JSON object with required `rows` and only optional `tax_percent`/`group_by`; other keys rejected. Success → one JSON line to stdout, exit 0. Unreadable file / malformed JSON/business `ValueError` → stderr + nonzero. Never writes the input file.\n- Keep `summarize` importable; stdlib only.\n\n**Tests** — `tests/` unittest covering all 12 reqs incl. half-cent rounding, discounts-before-tax, cancelled malformed rows, invalid types, CLI and stdin paths.\n\nQuestions for you: (1) any disagreement on the dynamic-precision approach vs. a fixed bound? (2) For grouped grand totals, confirm you read req 7/8 the same way — recompute from active rows, not sum groups. (3) Any edge in validation you want explicitly tested. If you agree, say so and I'll implement and hand back the artifact for your independent review.",
+          "mentions": [
+            {
+              "start": 111,
+              "end": 149,
+              "handle": "collaborator-2d3e48e89c449ae15a2a5e85",
+              "principalId": "principal_ae32a0eb-2f2e-496d-a038-d0eb6489d356",
+              "agentId": "agent_definition_0ee70309-c4cb-4801-9921-c1e38f6bed96"
+            }
+          ]
+        },
+        {
+          "body": "Reviewed TASK.json, README, the stub, and A's proposal (B here). My answers:\n\n1. **Precision**: fixed bound is fine and simpler — a safe constant is preferable to dynamic precision. Worst case is bounded: each of qty/price/discount ≤ 12 integer + 6 fraction digits, products ≈ 24 fraction digits, discount multiply/divide by 100 stays ≤ 26 fraction digits; exact integer-digit sums stay well under 60 digits even for thousands of rows. So `decimal.localcontext()` with prec=80 (documented bound) is exact for the permitted range. Dynamic sizing adds code paths for no correctness gain.\n\n2. **Grand totals**: confirmed — req 7 says \"recalculated from all active rows, never by summing rounded groups.\" Recompute from all active rows with the same exact aggregation, even though per-group and grand rounding can diverge by a cent. One nuance to test explicitly: construct a case where a grand total differs from the sum of rounded group totals and assert the grand recomputed value.\n\n3. **Validation edges to test**: `True`/`False` rejected as numerics (bool before int); `Decimal`-typed inputs rejected (contract says int or ASCII str only — confirm you reject other types, not coerce); `\"\"`/`\" \"`/`\"1e3\"`/`\"NaN\"`/`\"+1\"`/`\".5\"`/`\"1.\"`/fractional strings with 7 digits rejected; `\"0\"`/0 accepted; `tax_percent=\"100\"` accepted, `\"100.000001\"` rejected; category non-string (e.g. `123`) raises only when group_by is set (req 8 says \"when grouping is requested\" — validation of category should not fire in ungrouped mode); `group_by=\"Category\"` (wrong case) rejected; cancelled row with missing quantity/price and a garbage category must still be skipped silently in grouped mode; stdin `-` never opened as a file even if a file named `-` exists in cwd.\n\nOne more check on your rounding chain, agree: `total = round(net) + round(net × tax/100)` — this matches req 4/5 (\"independently rounded net plus rounded aggregate tax\"), and can differ from `round(net + tax_unrounded)`; test a half-cent case pinning the specified behavior.\n\nDesign approved from my side — implement and hand back the artifact (invoice.py + tests/ + README) and I'll review the actual files and run independent checks.",
+          "mentions": []
+        }
+      ]
+    },
+    {
+      "sampleId": "pair3-native",
+      "root": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-business-v2/business-runs/1791805802995-pair3-native",
+      "resultSha256": "5cedfa1f321f7ad86b01ab72f9b2dce44a2e35436b11ebbcedfc96f61b61035d",
+      "functionalPassed": 40,
+      "functionalTotal": 40,
+      "actualExternalCodeReview": true,
+      "readmeSemanticReview": true,
+      "qualityPassed": true,
+      "reviewToolEvidence": [
+        "tool_OW5UfPa8DOgm30SnymP5sjqf",
+        "tool_dkcc3yYhlx9BmbYneiw58hGo",
+        "tool_6exJVOCuiLM4YCLygMPzdHjt",
+        "tool_JYjlqilVcgrpQwDHPIsi2FcU",
+        "tool_9j2jDmJyzJ0H5XTkJYMZVCl6"
+      ],
+      "usage": {
+        "opencode": {
+          "input": 695091,
+          "output": 17357,
+          "requests": 29,
+          "complete": true
+        },
+        "claude": {
+          "input": 232273,
+          "output": 8826,
+          "requests": 9,
+          "complete": true
+        },
+        "total": {
+          "input": 927364,
+          "output": 26183,
+          "requests": 38,
+          "complete": true
+        }
+      },
+      "costRatio": null,
+      "executionStatus": "awaiting-quality-audit",
+      "executionReason": "quiescent",
+      "nativeCrossCheck": {
+        "opencode": {
+          "complete": true,
+          "sessions": ["ses_ed00c978effeYz9AnSutnt8G1h"],
+          "input": 695091,
+          "output": 17357,
+          "responses": 29
+        },
+        "claude": {
+          "complete": true,
+          "responses": 9,
+          "sessions": ["60046206-b4f3-49c7-acf2-2bbca7d69ecc"]
+        }
+      },
+      "cleanupVerified": true,
+      "artifactHashes": {
+        "COMMUNICATION.txt": "167706abc94506c9ed2d5bb7ff10c856e2fcf9382e6f285d6b8f97789e095d24",
+        "README.md": "6ec84a8fa0827e064338c7496187425431f311767cff7acf08938ed280ea7e80",
+        "TASK.json": "3cf87a5a64073a69906846ae95038951b95d8f3b479611b7d27814267da3f170",
+        "invoice.py": "bbc5e9fb6bd223e9e1cc227b092a34bed0d064071889b0ed15167b43f3f2fea9",
+        "tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "tests/test_invoice.py": "4c164671875fe01a1c3bcda5a00a8a49ecf6b43d8c0f606b47191ee30cfed733"
+      },
+      "selfTestsPassed": true,
+      "activationStates": [],
+      "wire": [
+        {
+          "provider": "opencode",
+          "forwardedRequests": 29,
+          "localPreForwardRejected": 0,
+          "actualBindings": [["deepseek-v4.1-flash", "low"]],
+          "forwardedReviewOnlyInstructions": 0,
+          "metadataSha256": "fd7f9fe4cae375fb24f9ab767c1066639c70722c4d983f02a51521c8b122d73e"
+        },
+        {
+          "provider": "claude",
+          "forwardedRequests": 9,
+          "localPreForwardRejected": 3,
+          "actualBindings": [["claude-sonnet-5-5", "low"]],
+          "forwardedReviewOnlyInstructions": 0,
+          "metadataSha256": "2b131a855e2bbbefc99419f15a9780873d192aada3ca615972d0ce17b736810c"
+        }
+      ]
+    },
+    {
+      "sampleId": "pair4-native",
+      "root": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-business-v2/business-runs/1791806610496-pair4-native",
+      "resultSha256": "934a8cd82397ea66b166e8455d58fd642ff1cd767a5dc45da103dc8a4a2fca92",
+      "functionalPassed": 40,
+      "functionalTotal": 40,
+      "actualExternalCodeReview": true,
+      "readmeSemanticReview": true,
+      "qualityPassed": true,
+      "reviewToolEvidence": [
+        "tool_44I9y6LKMJufg41UonidfiE8",
+        "tool_898iJaOrySiyKPLjqSJPZSbw",
+        "tool_8j3FPqaf5XRHP1X9PIubza63",
+        "tool_8gRfirqg1AbSzYkEoX72bpwi",
+        "tool_smyC1jaKPQvAviOaBTdcFWcx"
+      ],
+      "usage": {
+        "opencode": {
+          "input": 959746,
+          "output": 21621,
+          "requests": 36,
+          "complete": true
+        },
+        "claude": {
+          "input": 497137,
+          "output": 8797,
+          "requests": 18,
+          "complete": true
+        },
+        "total": {
+          "input": 1456883,
+          "output": 30418,
+          "requests": 54,
+          "complete": true
+        }
+      },
+      "costRatio": null,
+      "executionStatus": "awaiting-quality-audit",
+      "executionReason": "quiescent",
+      "nativeCrossCheck": {
+        "opencode": {
+          "complete": true,
+          "sessions": ["ses_ed000ac34ffeStUO1LjA1SteVx"],
+          "input": 959746,
+          "output": 21621,
+          "responses": 36
+        },
+        "claude": {
+          "complete": true,
+          "responses": 18,
+          "sessions": ["cf244a6a-c089-473c-a974-6551c8cdf2e7"]
+        }
+      },
+      "cleanupVerified": true,
+      "artifactHashes": {
+        "COMMUNICATION.txt": "167706abc94506c9ed2d5bb7ff10c856e2fcf9382e6f285d6b8f97789e095d24",
+        "README.md": "6489fe5df34cf770d919828e46190acd4503cce236b4f7fef750f464387d17b0",
+        "TASK.json": "3cf87a5a64073a69906846ae95038951b95d8f3b479611b7d27814267da3f170",
+        "invoice.py": "c3cfc10910c690fb32ced7ba6d307427b6f97d022b3004dba8f945318dbe7300",
+        "tests/test_invoice.py": "b2dde5ef65750ee1940b3729499fa2fc8d447dafd2ce5a2fea826c2637d0d35f"
+      },
+      "selfTestsPassed": true,
+      "activationStates": [],
+      "wire": [
+        {
+          "provider": "opencode",
+          "forwardedRequests": 36,
+          "localPreForwardRejected": 0,
+          "actualBindings": [["deepseek-v4.1-flash", "low"]],
+          "forwardedReviewOnlyInstructions": 0,
+          "metadataSha256": "44eeb87237617e1de6ee0c7899388dbdf4c40739f207c6263f356ee6eca06bef"
+        },
+        {
+          "provider": "claude",
+          "forwardedRequests": 18,
+          "localPreForwardRejected": 3,
+          "actualBindings": [["claude-sonnet-5-5", "low"]],
+          "forwardedReviewOnlyInstructions": 0,
+          "metadataSha256": "d64a2e067fb81a6c3e3711c6c1ae0d60cf62ad47ab4a4d8900aed596f6c2e338"
+        }
+      ]
+    },
+    {
+      "sampleId": "pair4-loom",
+      "root": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-business-v2/business-runs/1791807158528-pair4-loom",
+      "resultSha256": "89f72d179cae49c402fee0fbec602d100ff078b0d491418fffeef5676092189e",
+      "functionalPassed": 40,
+      "functionalTotal": 40,
+      "selfTestsPassed": false,
+      "actualExternalCodeReview": false,
+      "readmeSemanticReview": false,
+      "qualityPassed": false,
+      "qualityStatus": "budget-censored; not an uncensored business failure",
+      "handoff": "reviewer used actual directed mention; implementer resumed same session and wrote implementation",
+      "usage": {
+        "opencode": {
+          "input": 51562,
+          "output": 7631,
+          "requests": 4,
+          "complete": false
+        },
+        "claude": {
+          "input": 30667,
+          "output": 1439,
+          "requests": 2,
+          "complete": false
+        },
+        "total": {
+          "input": 82229,
+          "output": 9070,
+          "requests": 6,
+          "complete": false
+        }
+      },
+      "posthocAccounting": "budget-stop-audit.json; all six forwarded responses match native records; frozen checker rejected three proven local pre-forward budget errors",
+      "costRatio": null,
+      "executionStatus": "execution-failed",
+      "executionReason": "execution-error",
+      "nativeCrossCheck": {
+        "complete": false,
+        "error": "AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert.ok(!m.error)\n"
+      },
+      "cleanupVerified": true,
+      "artifactHashes": {
+        "COMMUNICATION.txt": "77b1667f1ee088018db6ddae50e73d9d684ecdc2f8e1bf204816035e29ea9fbb",
+        "README.md": "0d93b31616379d7e64702617535798b8d586116271c436a5e4cd16ba7c8600b5",
+        "TASK.json": "3cf87a5a64073a69906846ae95038951b95d8f3b479611b7d27814267da3f170",
+        "invoice.py": "78c5064c23a46f456e2bb84237a141af685565479be4f8db985c56539146f2e9"
+      },
+      "activationStates": ["completed", "completed", "quarantined"],
+      "wire": [
+        {
+          "provider": "opencode",
+          "forwardedRequests": 4,
+          "localPreForwardRejected": 3,
+          "actualBindings": [["deepseek-v4.1-flash", "low"]],
+          "forwardedReviewOnlyInstructions": 0,
+          "metadataSha256": "4f9c2323fab12bbdb3f44ae4389500b05e13cc925bc1e8fc824ac4d9e592c76c"
+        },
+        {
+          "provider": "claude",
+          "forwardedRequests": 2,
+          "localPreForwardRejected": 0,
+          "actualBindings": [["claude-sonnet-5-5", "low"]],
+          "forwardedReviewOnlyInstructions": 0,
+          "metadataSha256": "a0567269d786c3e5cdddc1c0b56a4b05cd07445d8262d8575890e74bdf8c2f5c"
+        }
+      ],
+      "peerReplies": [
+        {
+          "body": "I've read TASK.json, COMMUNICATION.txt, the current stub `invoice.py`, and the wake. Nothing is implemented yet; I'm A (implementer), B is `collaborator-4ce04e4cb106b57099ccccc3`. Per the task I'll settle the design with B before writing code.\n\nHere's my design proposal to B:\n\n@collaborator-4ce04e4cb106b57099ccccc3 — design proposal for the invoice tool before I implement. Please confirm or push back; I'll code once we agree.\n\n**Arithmetic / precision.** Parse every accepted value into an exact `Decimal`. Do all products and aggregates inside a scoped `decimal.localcontext()` with `prec=80` (input fields are ≤12 integer digits + ≤6 fractional; q×p ≤ ~1e24, then ×percent/100 adds digits, ×N rows adds log10(N) — 80 covers the permitted range and never mutates global context). Round only at the very end with a helper `_money(x) = x.quantize(Decimal(\"0.01\"), rounding=ROUND_HALF_UP)`. Never round per line.\n\n**Ungrouped result** (exact aggregate then independent rounding):\n- `gross = Σ q·p`, `disc = Σ q·p·discount_percent/100`, `net = gross − disc`\n- `subtotal = _money(gross)`, `discount = _money(disc)`, `tax = _money(net · tax_percent/100)`\n- `total = _money(net) + _money(net · tax_percent/100)` (rounded net plus the same rounded tax)\n- `count` = number of active (non-cancelled) rows, zero-quantity rows included, cancelled rows excluded. Keys exactly `count, subtotal, discount, tax, total`.\n\n**Validation** (`_to_decimal(value, field, max100=False)`):\n- accept Python `int` in `[0, 999999999999]` (explicitly reject `bool`), or ASCII `str` matching `^[0-9]{1,12}(\\.[0-9]{1,6})?$`; otherwise `ValueError` (covers negatives, floats, exponent/NaN/inf, whitespace, extra digits, Decimal, None, missing).\n- `tax_percent`/`discount_percent` additionally `≤ 100`.\n- `rows` must be `list` of `dict`; unrelated keys ignored; `cancelled`, when present, must be `bool`; `cancelled is True` skips the row before touching any other field (missing/malformed ignored).\n\n**Grouping.** `group_by=None` → no `groups` key. `group_by==\"category\"` → add `groups`; any other value → `ValueError`. Category of each active row: missing key / `None` / `\"\"` → `\"uncategorized\"`; non-str (and not None) → `ValueError`; labels verbatim, no stripping/case-folding. Sort groups ascending by Python string ordering of category. Each group carries `category` plus the same five fields recomputed from that group's exact sums (never sum rounded groups). Grand totals always from all active rows. Empty grouped input → `groups=[]`.\n\n**CLI.** `python3 invoice.py FILE` or `python3 invoice.py -` (literal `-` sentinel → stdin; never open a file named `-`). Exactly one arg required; zero or ≥2 → error. Read JSON object, require `rows`, allow only optional `tax_percent`/`group_by`, reject other request keys. On success print one JSON line + newline, exit 0. Any error (arg count, unreadable file, bad JSON/request, business `ValueError`) → nonempty stderr, no stdout, nonzero exit; never write the input file. Stdlib only; `summarize` stays importable.\n\nOpen questions for you: (a) OK to use `prec=80` scoped Decimal rather than integer-scaled math? (b) For grouped grand totals, confirm you read requirement 7 as \"grand totals = same as ungrouped over all active rows\" (I do). (c) Any objection to rejecting `Decimal`/`float` inputs outright, per \"integers or ASCII strings only\"? Awaiting your confirmation before implementing.",
+          "mentions": [
+            {
+              "start": 278,
+              "end": 316,
+              "handle": "collaborator-4ce04e4cb106b57099ccccc3",
+              "principalId": "principal_5560192b-cee8-4601-b2c7-e2746ed6a547",
+              "agentId": "agent_definition_b2ff6b84-d4a8-45dc-b037-82c325bb2ad7"
+            }
+          ]
+        },
+        {
+          "body": "I've read TASK.json, COMMUNICATION.txt, and the stub. A's proposal is solid — confirming, with a few small notes to lock in before implementation.\n\nDesign confirmation for @collaborator-a5b240bc9ba1f6c23147744a — agreed, proceed with implementation.\n\n**Answers to your open questions:**\n- (a) Yes — scoped `decimal.localcontext()` with prec=80 (or any generous fixed precision) is fine, and never touch the global context. Your bound analysis is right; even `prec=40` would do, 80 is comfortably safe.\n- (b) Confirmed — requirement 7 says \"Grand totals are recalculated from all active rows, never by summing rounded groups,\" so grand totals = ungrouped result over all active rows, independent of grouping.\n- (c) No objection — rejecting float/Decimal inputs outright is the correct reading of requirement 6 (\"integers... or ASCII strings only\"). Explicit `bool` rejection matters since `bool` is an `int` subclass.\n\n**A few points to pin down so my review checks against them:**\n\n1. **Money fields are strings.** Requirement 1 says the four money fields are two-decimal strings — that applies everywhere, including group objects. `count` is an int. So the pipeline should be: compute exact Decimals → `_money()` (quantize ROUND_HALF_UP to \"0.01\") → `str()`. For `total`, add the two already-rounded Decimal values, then format — never requantize after addition (it can't produce a third digit, but keep the shape simple and consistent).\n2. **Group objects carry `category` plus the same five summary fields** (count, subtotal, discount, tax, total) — count included, computed from that group's active rows.\n3. **Rounding order.** Aggregate exact sums first (`gross`, `disc`, `net`), then round each independently: subtotal=_money(gross), discount=_money(disc), tax=_money(net·t/100), total=_money(net)+_money(net·t/100). This matches req 4/5 exactly — total is *rounded net plus rounded tax*, which can differ from rounding the unrounded sum, and that's intended.\n4. **Validation acceptance set:** non-empty ASCII digits, ≤12 integer digits, ≤6 fractional digits, no sign, no whitespace, no exponent. Both `int` 0..999999999999 (bool excluded) and matching strings. Percents additionally ≤ 100. Everything else → ValueError.\n5. **CLI:** exactly one arg; `-` is stdin sentinel, never opened as a file; request object allows exactly `rows` (required), `tax_percent`, `group_by`; any other key → error. Success: one JSON line + newline, exit 0. Any failure: nonempty stderr, empty stdout, nonzero exit. Never write the input file. Keep `summarize` importable (guard with `if __name__ == \"__main__\"`).\n6. **Tests:** stdlib unittest under tests/, run via discovery. Please include regression coverage for req 11: half-cent aggregate rounding, discount-before-tax ordering, cancelled rows with malformed fields, and the full invalid-numeric-types matrix.\n\nNo blockers — implement when ready, and I'll review the actual files and run my own independent checks against the requirements.",
+          "mentions": [
+            {
+              "start": 172,
+              "end": 210,
+              "handle": "collaborator-a5b240bc9ba1f6c23147744a",
+              "principalId": "principal_f8db9799-a334-4b51-afe9-4e7f12534360",
+              "agentId": "agent_definition_45d9a669-21c6-4251-80ec-c4ead0baef04"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "statistics": {
+    "loom": {
+      "started": 4,
+      "qualityPassed": 0,
+      "budgetCensored": 1,
+      "uncensoredBusinessFailures": 3,
+      "costRatio": null,
+      "input": {
+        "sum": 366967,
+        "mean": 91741.75,
+        "median": 81542.0,
+        "min": 79013,
+        "max": 124870
+      },
+      "output": {
+        "sum": 24251,
+        "mean": 6062.75,
+        "median": 5921.5,
+        "min": 3338,
+        "max": 9070
+      },
+      "requests": {
+        "sum": 27,
+        "mean": 6.75,
+        "median": 6.0,
+        "min": 6,
+        "max": 9
+      },
+      "interpretation": "partial-task consumption including three design-only stops and one budget-censored implementation; not comparable full-task cost"
+    },
+    "native": {
+      "started": 4,
+      "qualityPassed": 4,
+      "budgetCensored": 0,
+      "uncensoredBusinessFailures": 0,
+      "costRatio": null,
+      "input": {
+        "sum": 5176341,
+        "mean": 1294085.25,
+        "median": 1286042.0,
+        "min": 927364,
+        "max": 1676893
+      },
+      "output": {
+        "sum": 129321,
+        "mean": 32330.25,
+        "median": 32060.5,
+        "min": 26183,
+        "max": 39017
+      },
+      "requests": {
+        "sum": 187,
+        "mean": 46.75,
+        "median": 46.0,
+        "min": 37,
+        "max": 58
+      },
+      "interpretation": "all four completed business tasks; descriptive small-sample baseline"
+    }
+  },
+  "batchAccounting": {
+    "frozenState": {
+      "input": 5543308,
+      "output": 153572,
+      "requests": 214,
+      "complete": false
+    },
+    "posthocObservedTotals": {
+      "input": 5543308,
+      "output": 153572,
+      "requests": 214,
+      "complete": true
+    },
+    "posthocQualification": "Seven samples pass frozen native cross-check. Eighth fails overly strict any-native-error assertion; separate read-only audit matches all six forwarded responses and proves three local budget rejects before forwarding. Original state remains false. Not invoice coverage.",
+    "outputThresholdExceededBy": 3572,
+    "thresholdBehavior": "Last in-flight response returned 4404 output with 832 remaining; usage known on completion, subsequent three requests rejected locally. No new upstream calls after threshold.",
+    "sameQualityCostRatio": null
+  },
+  "findings": [
+    "Neutral role restriction repaired in actual forwarded requests; no Review only. in any corrected-cohort request.",
+    "First three Loom B design replies omit explicit @; two completed activations then quiescence, no held/quarantine. Expected current explicit-mention-only routing, observed usability failure.",
+    "Fourth Loom B mentions A; third activation starts same session and implementation passes 40/40. Batch budget then ends work before own tests or code review. Do not count as a fourth missing-mention failure.",
+    "Herdr controls complete four tasks with independent external review; CLI waiting/quoting mistakes and repeated tool requests remain in their totals.",
+    "Standing prompt places @ addressing in message-post instruction; native-final paragraph does not restate it. Possible clarity issue, not established cause.",
+    "Small fixed cohort supports a priority on handoff reliability, not a cross-model failure rate, architecture rewrite, or performance acceptance."
+  ],
+  "testEvidence": {
+    "privateOfflineTestsPassed": 33,
+    "productSuiteRun": false,
+    "productSourceChanged": false
+  },
+  "limits": [
+    "One task and two CLI/model families; no five-family generalization.",
+    "Long generated Loom handles versus short Herdr names; both Loom roles have neutral Collaborator name. Surface differences retained, not byte-identical whole prompts.",
+    "Isolated real Kernel/Host plus private fixture and native-final; not production daemon adoption.",
+    "Fourth Loom right-censored by whole-batch budget; not a fair full-duration quality comparison.",
+    "No successful full Loom team task in this cohort; all ratio claims withheld.",
+    "Native observed range is descriptive, not a confidence interval or acceptance band."
+  ],
+  "cleanup": {
+    "registeredProcessesInitiallyAbsent": true,
+    "currentlyLiveRecordedPidNumbers": [],
+    "generatedCredentialSettingsRemoved": [
+      "/private/tmp/team-oc-claude-paid-FKJScX/claude/settings.json",
+      "/private/tmp/team-oc-claude-paid-FKJScX/opencode/settings.json",
+      "/private/tmp/team-oc-claude-paid-JkVeKj/claude/settings.json",
+      "/private/tmp/team-oc-claude-paid-JkVeKj/opencode/settings.json",
+      "/private/tmp/team-oc-claude-paid-FOdwpx/claude/settings.json",
+      "/private/tmp/team-oc-claude-paid-FOdwpx/opencode/settings.json",
+      "/private/tmp/team-oc-claude-paid-xFwt2Y/claude/settings.json",
+      "/private/tmp/team-oc-claude-paid-xFwt2Y/opencode/settings.json",
+      "/private/tmp/team-oc-claude-paid-O5Egsw/claude/settings.json",
+      "/private/tmp/team-oc-claude-paid-O5Egsw/opencode/settings.json",
+      "/private/tmp/team-oc-claude-paid-r5HxfK/claude/settings.json",
+      "/private/tmp/team-oc-claude-paid-r5HxfK/opencode/settings.json",
+      "/private/tmp/team-oc-claude-paid-uo4Arz/claude/settings.json",
+      "/private/tmp/team-oc-claude-paid-uo4Arz/opencode/settings.json",
+      "/private/tmp/team-oc-claude-paid-b2VFF0/claude/settings.json",
+      "/private/tmp/team-oc-claude-paid-b2VFF0/opencode/settings.json"
+    ],
+    "accountSourcesUntouched": true,
+    "herdrPanesClosed": ["wA:pC", "wA:pB"],
+    "rootLayoutRestored": "wA:p2 sole pane, 79x76",
+    "manifestSha256": "987a80762d2c981c7a8e1b19c0a81b5f362a4f49fd667fce302b8a200d6103fb",
+    "productionChanged": false
+  },
+  "next": "routing-research.json contains research, not an approved target-contract change"
+}

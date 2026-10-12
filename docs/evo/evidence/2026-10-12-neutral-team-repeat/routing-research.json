@@ -1,0 +1,30 @@
+{
+  "status": "research only after closed cohort; target contract not changed",
+  "trigger": "three completed, fully metered Loom samples end after B design approval without @; native controls proceed via explicit Herdr communication",
+  "currentRule": "target-contract §3: instance posts wake only explicit mentions; observed idle is expected behavior under that rule",
+  "candidate": "A generic bounded reply return for an unambiguous directed peer request, using durable causal identity rather than a model inferring who to wake from prose",
+  "requiredBoundaries": [
+    "No scenario-specific implementer/reviewer code or prompts",
+    "Kernel owns durable causal relation and at-most-once return delivery; adapters only expose authenticated final output",
+    "No broadcast and no semantic classification of phrases like go ahead",
+    "One automatic return hop; an automatic return must not by itself create another automatic return capability",
+    "Ambiguous origins, Human requests, private box and special business mutations retain existing behavior until explicitly designed",
+    "Human freshness, membership, session generation, idempotency and read positions stay enforced",
+    "Explicit routing and clarification questions need a precise precedence rule; not solved by merely appending @ to all replies"
+  ],
+  "acceptanceFirst": [
+    "No-model directed request -> plain reply -> origin activation -> neutral final stops without ping-pong",
+    "Duplicate/restart and ambiguous-origin tests",
+    "Then fresh pre-registered repeated paid cohort with the same task and quality oracle"
+  ],
+  "approvalRequired": "Owner must approve changing the explicit-mention-only target contract before product implementation",
+  "nonConclusion": "Four Herdr tasks completed; three Loom design-only stops, fourth Loom correct handoff but budget-censored. No same-quality ratio or five-family generalization.",
+  "promptObservation": "Actual standing prompt says Address members with @<handle> in the message-post body. Native-final paragraph selects host publication but does not repeat recipient rule; task communication does request actual public handle in plain text. This is a clarity risk, not proven causal attribution.",
+  "fixtureBoundary": "Both Loom roles use neutral Collaborator with long generated distinct handles; Herdr uses short distinct agent names. Native mini and Loom warm driver have different native surfaces. No inference that every production configuration or CLI family behaves identically.",
+  "decisionSequence": [
+    "Close the frozen cohort without rescue or prompt changes; preserve successful Herdr work and failed Loom work separately.",
+    "Document selected-transport routing consistently as a generic prompt requirement; no workflow-specific instructions or provider-specific tuning. This is a testable clarity repair, not a guarantee that models always comply.",
+    "Consider owner-approved bounded causal reply return only if product semantics should make direct replies dependable without another model addressing decision; do not change explicit-mention-only contract silently.",
+    "Any routing implementation begins with deterministic safety and no-ping-pong tests; repeat whole-task paid comparisons only after the agreed behavior is proven locally."
+  ]
+}
