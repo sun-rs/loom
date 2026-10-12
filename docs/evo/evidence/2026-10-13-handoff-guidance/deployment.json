@@ -1,0 +1,91 @@
+{
+  "date": "2026-10-13",
+  "codeRevision": "3046a2dab3e83fef0e85ccae845235bf45156762",
+  "sourceSha256": "2ef88cadb2981d922abf26bb5345c4136cb90e2dd6bc6914ad64d24c7dae1a78",
+  "restartVerified": true,
+  "backup": "/Users/sun/.loom/evo/backups/pre-restart-handoff-guidance-5d7ab513-7842-4349-8293-9767ff75204b",
+  "databases": 2,
+  "stateFiles": 302,
+  "businessTablesUnchanged": {
+    "messages": {
+      "rows": 235,
+      "sha256": "c7e1fe0ff2db90f81eb3e4db8695dbe28dfe8783c7aa4b0d361f2cb91817c888"
+    },
+    "tasks": {
+      "rows": 9,
+      "sha256": "a04b56b278ac8b942bf35c96db144a3ba261e1d1d8838b7483ef36d65ba2fd52"
+    },
+    "role_templates": {
+      "rows": 39,
+      "sha256": "c11295d87be6062fde6ef8ff20b4495a6b984a7ab75e72e00c512ef11ab42d1a"
+    },
+    "role_revisions": {
+      "rows": 39,
+      "sha256": "79f791e267b7c7544b5c6b881ac486bd519145424c8dc7c805750f6ed1c61a2d"
+    },
+    "role_instances": {
+      "rows": 65,
+      "sha256": "f93603dff830fa409d737a13de1433eb1d0943af07b509d3ed573637d97cd3b3"
+    },
+    "memory_entries": {
+      "rows": 4,
+      "sha256": "d0d2bb98894716fcfbda8ea5f4b3112a99595d70192c7df088ac553b00cef08b"
+    },
+    "memory_revisions": {
+      "rows": 4,
+      "sha256": "21b7e112c7deda7a547b68d235b562c0d88bb8103ef385d553673e0f044d5893"
+    },
+    "role_instance_sessions": {
+      "rows": 63,
+      "sha256": "a6323123619a9eb57b6876b8849b859c2cfd79b56f50667af3a89d16cf93ba33"
+    },
+    "room_events": {
+      "rows": 2059,
+      "sha256": "3a9e068af9fd153a004722bc9c3b02b9af8a8c59b464cf9654ede9a0528095e0"
+    },
+    "agent_definitions": {
+      "rows": 69,
+      "sha256": "044111c4fc6d2be52ea7f677d06eaf40917bb7e2c87f40b7573d8aeb3633281a"
+    },
+    "inbox_items": {
+      "rows": 163,
+      "sha256": "c13bd14439ab1ed317ecc8b405bb7e57024406db140b2386e88d7f808e3f9c79"
+    }
+  },
+  "sameDataHome": "/Users/sun/.loom/evo",
+  "formalTrialFlags": "all seven disabled",
+  "freshPage": {
+    "consoleAssets": {
+      "app-kUDm_V0g.js": "dd3c3f76272a4c54e805e5350ed1048cdb80f1a58f4967dcf894251ecdb755a8",
+      "index-D3hI0G87.js": "ebc6794d87a07975ecb7f5d2d11b873fd87d3d470ab45842a8ed7b2cd4c5c925",
+      "index-mk0OQi78.css": "c54c81c8c9690b2cc17a916e589a928d440b0012cfcf4390dacc718a6fff0952"
+    },
+    "aggregateApiVerified": true,
+    "consoleVerified": true,
+    "at": "2026-10-12T17:47:45.817Z",
+    "url": "http://127.0.0.1:4176/_rah/console/",
+    "title": "Loom 控制台（evo 临时）",
+    "historyVerified": true,
+    "pageErrors": [],
+    "roles": 39,
+    "roleResponseKeys": ["roles", "instances"],
+    "memoryResponseKeys": ["channelId", "entries", "total", "truncated"],
+    "health": {
+      "buildIdentity": {
+        "schemaVersion": 1,
+        "kind": "development",
+        "version": "0.0.0-dev+local",
+        "builtAt": "2026-10-12T12:49:18.973Z",
+        "buildId": "6c76c5348a13401f"
+      },
+      "service": "rah-os-local-core",
+      "state": "online"
+    }
+  },
+  "webRebuilt": false,
+  "reasonNoWebBuild": "No frontend or public protocol change; served existing verified immutable assets.",
+  "receiptHashes": {
+    "restart.json": "3ec28c16b3af0cf784cb409efc29da3d8eedd11b34952eecc9521915c4a6020b",
+    "page.json": "dd461a25a02b1e9ee2e81f93443fd823aa7bffb2cc36f8ccc5383fd56e90bcdb"
+  }
+}
