@@ -1,3 +1,5 @@
+// 2026-10-12 owner-approved identity update: only the retired native
+// multi_agent=false switch was removed; old paid evidence stays unchanged.
 import assert from "node:assert/strict";
 import test from "node:test";
 import { businessSmokePlan } from "../test-cli-business-smoke.mjs";
@@ -21,7 +23,7 @@ test("business smoke is product-first bounded six stages per arm with no automat
   );
   assert.equal(
     multiMcpObservationPlan(["--plan"], "codex-cli 0.160.0").baselineIdentity,
-    "45103559dfffa51d269112bcbffe41122d62947756626c0247b72c06e4918682",
+    "f927a8faa5b3569d0471ff7528bca00d48d5b963095bb2a1f090167d3e046b90",
   );
 });
 

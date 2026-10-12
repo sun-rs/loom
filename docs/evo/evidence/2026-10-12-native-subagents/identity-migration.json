@@ -1,0 +1,38 @@
+[
+  {
+    "profile": "multiPlan",
+    "old": "348f47792f5f22fda10193562f558ccfcb77576c735fd73141ede0a38332a42c",
+    "new": "17d48b59c7d290418282d28535a480296d45491dd67c537e1eb3ddc8990f6589",
+    "onlyChange": "Removal of -c features.multi_agent=false from nativeInvocationPolicy.args"
+  },
+  {
+    "profile": "multiInlinePlan",
+    "old": "6701d39611ff38c41512a69cdb9988b75f1a9024ace38fd7246b1047b7199056",
+    "new": "04cb1ec169bef08cc649f19dd06bd8d81820d13dd3a6d00668782b5c327bfcc8",
+    "onlyChange": "Removal of -c features.multi_agent=false from nativeInvocationPolicy.args"
+  },
+  {
+    "profile": "multiLongPlan",
+    "old": "4a89cd04ce54b1f7f03429118fb13813f3c194d0279741f963293b76328e9ab9",
+    "new": "d17baef38da9bc9e8f8565fe0c2add87767f87f1f82f07123dea363daeec0028",
+    "onlyChange": "Removal of -c features.multi_agent=false from nativeInvocationPolicy.args"
+  },
+  {
+    "profile": "multiMcpPlan",
+    "old": "25c57119ac664b208e06f270cf76b4a1119fe82dd8bf00cff7f7236a792527f3",
+    "new": "6a3f430ac58947c6bf328e193b66b550e99c2ecfb518a5ba3d5867bcf6bc8b22",
+    "onlyChange": "Removal of -c features.multi_agent=false from nativeInvocationPolicy.args"
+  },
+  {
+    "profile": "multiMcpObservationPlan",
+    "old": "45103559dfffa51d269112bcbffe41122d62947756626c0247b72c06e4918682",
+    "new": "f927a8faa5b3569d0471ff7528bca00d48d5b963095bb2a1f090167d3e046b90",
+    "onlyChange": "Removal of -c features.multi_agent=false from nativeInvocationPolicy.args"
+  },
+  {
+    "profile": "businessSmokePlan",
+    "old": "b50b4a54d7a79c407ed2365a73480cae0d1fa44f900403e560fa2eeda119b685",
+    "new": "79958d6bc7ecb4e7a875b0366d85b5f06d454256bd3c67f9b4e687097b0380d1",
+    "onlyChange": "Removal of -c features.multi_agent=false from nativeInvocationPolicy.args"
+  }
+]

@@ -199,6 +199,10 @@ test("Codex isolation: notify first, plugins/apps/hooks/skills off, native web s
         codexExecutable: executable,
         cwd,
       }).args;
+      assert.equal(
+        args.some((arg) => arg.startsWith("features.multi_agent=")),
+        false,
+      );
       const pairs = configPairs(args);
       assert.equal(args.length, pairs.length * 2, "only -c pairs");
       assert.equal(pairs[0], "notify=[]", "notify is disabled first");
@@ -206,7 +210,6 @@ test("Codex isolation: notify first, plugins/apps/hooks/skills off, native web s
         "features.memories=false",
         "memories.generate_memories=false",
         "memories.use_memories=false",
-        "features.multi_agent=false",
         "features.goals=false",
         "features.sleep_tool=false",
         "features.in_app_local_automation=false",

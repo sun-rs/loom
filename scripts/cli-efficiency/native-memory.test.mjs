@@ -102,7 +102,10 @@ test("Codex control drops only the three memory switches", () => {
     assert.ok(experiment.args.includes(`${key}=false`));
     assert.ok(!control.args.some((a) => a.startsWith(key + "=")));
   }
-  assert.ok(control.args.includes("features.multi_agent=false"));
+  assert.equal(
+    control.args.some((arg) => arg.startsWith("features.multi_agent=")),
+    false,
+  );
   assert.ok(control.args.includes("mcp_servers.demo.enabled=false"));
   assert.deepEqual(control.threadConfig, { model_reasoning_effort: "low" });
   assert.equal(experiment.threadConfig["features.memories"], false);

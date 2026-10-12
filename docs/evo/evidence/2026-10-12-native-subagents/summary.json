@@ -1,0 +1,143 @@
+{
+  "kind": "native-subagent-policy-and-accounting-repair/v1",
+  "ownerDecision": "Native subagents are internal work of the parent instance; peers depend on parent delivery, not internal work allocation.",
+  "implementation": {
+    "product": "Removed forced features.multi_agent=false from shared Codex launch policy. Native controls share this policy. CLI capability remains provider/user choice, not forced on. Memory, goals, cron and other scheduler fences unchanged. Claude Agent/Task tools remain available.",
+    "privateRunner": "New paid-v2 candidate separates post-execution business validation failure from runtime failure. A completed/settled failed handoff preserves observed costs without inventing an unstarted peer receipt. Pending/incomplete usage or unproved cleanup still recover conservatively and block next sample. The original paid runner, release and results are not edited.",
+    "nativeControl": "Candidate now uses current product launch policy/model guard; old helper imported frozen policy and would have retained the retired switch."
+  },
+  "checks": {
+    "targetedProductTests": 67,
+    "nativeBaselineTests": 21,
+    "candidateTests": 30,
+    "redBeforeImplementation": true,
+    "repositoryCheck": "Initial npm run check passed all preceding stages and failed four baseline-identity snapshots in final CLI-efficiency stage. Verified sole policy difference, updated exact identities; reran full final stage: 558 passed. Whole command was not rerun after test-only snapshot updates.",
+    "formatCheck": "passed",
+    "diffCheck": "passed",
+    "identityMigration": "Six prior identities reproduced by restoring only retired -c features.multi_agent=false; identity-migration.json",
+    "cliEfficiencyTestsAfterSnapshotUpdate": 558
+  },
+  "freeCLI": {
+    "paidCalls": 0,
+    "attempts": [
+      {
+        "run": "1791771461167-fixture-missing-handoff",
+        "status": "failed",
+        "executionStatus": "completed",
+        "failurePhase": "business-validation",
+        "cleanup": true,
+        "usage": {
+          "codex": {
+            "input": 100,
+            "output": 20,
+            "requests": 1,
+            "complete": true
+          }
+        },
+        "complete": true
+      },
+      {
+        "run": "1791771793652-fixture-loom",
+        "status": "failed",
+        "executionStatus": null,
+        "failurePhase": null,
+        "cleanup": false,
+        "usage": null,
+        "complete": false
+      },
+      {
+        "run": "1791771819958-fixture-missing-handoff",
+        "status": "failed",
+        "executionStatus": "completed",
+        "failurePhase": "business-validation",
+        "cleanup": true,
+        "usage": {
+          "codex": {
+            "input": 100,
+            "output": 20,
+            "requests": 1,
+            "complete": true
+          }
+        },
+        "complete": true
+      },
+      {
+        "run": "1791771822159-fixture-loom",
+        "status": "synthetic-transport-passed",
+        "executionStatus": "completed",
+        "failurePhase": null,
+        "cleanup": true,
+        "usage": {
+          "codex": {
+            "input": 200,
+            "output": 40,
+            "requests": 2,
+            "complete": true
+          },
+          "claude": {
+            "input": 100,
+            "output": 20,
+            "requests": 1,
+            "complete": true
+          }
+        },
+        "complete": true
+      }
+    ],
+    "observedSyntheticRequests": 5,
+    "note": "First preflight missing-handoff then deadline before second child; retained. Separate sequential cohort completed both samples (1 + 3). No actual nested subagent workload or cost ratio."
+  },
+  "paidCalls": 0,
+  "efficiencyVerdict": "not measured; no cost acceptance or real nested-subagent workload claim",
+  "uncovered": [
+    "Actual descendant memory/model policy propagation and complete provider usage coverage across all five CLIs",
+    "Native background child cancellation/idle reclamation under each actual provider",
+    "Repeated real Codex/Claude team business quality and cost; old frozen paid batch stays stopped"
+  ],
+  "deployment": "pending checked restart",
+  "privateRoot": "/Users/sun/.loom/reviews/2026-10-12-native-subagents",
+  "privateCandidate": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/paid-v2",
+  "sourceHashes": {
+    "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/paid-v2/entry.mjs": "44496f738671f2a4db4b3b065ee4c03d80013857de2046561e49a9f5c6201025",
+    "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/paid-v2/run.mjs": "48f1e0d1bb230d412ccc434778e4d96fe6a9d6789c6cb5211e8a109f7766b927",
+    "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/paid-v2/usage.mjs": "37fe94e34dd4ca4e56fb746b65c7bbdd177d43ed85c9723f908a1ea65a4090f4",
+    "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/paid-v2/role-fixture.ts": "b1177aa01062d693a69009638597755265f88f6bdc65014b4511dc3f65987958",
+    "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/paid-v2/providers.test.mjs": "9668e8c635b8d80768a2713b3836ddd6dbe93743d591e1e0497d3b0afa9c94c6",
+    "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/paid-v2/entry.test.mjs": "74db027ecb510d222df850b18686f0e268d7ca2be92d0d927bdb89f84d948d3f",
+    "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/paid-v2/usage.test.mjs": "81b839cd36c66b3194a3034273e3e4889db2205682bb830ed6fce06981ed2b1d",
+    "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/paid-v2/providers.mjs": "dc3f1067249ec72f19c064c32a83e6ef01e24866614fc0485bfabcba10cacc40",
+    "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/paid-v2/supervised-child.test.mjs": "de98a777a8276e8b165c006275d3230847f1003eedb39cae8d6b7479eef7fc63",
+    "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/paid-v2/failure-tail.test.mjs": "c711c2e50af519807de66e56567fe76c2d9329d2a6c4f0ecef842b811d3a01f0",
+    "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/paid-v2/child.mjs": "21fa464ce9732916f27d7b6261eff61322d9e117fea74b59a728eb48782d11d3",
+    "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/paid-v2/synthetic.mjs": "91729443e9e3cd5efcfefe9972339c38b791780fd4ad335ea48bb37ae5831d25",
+    "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/paid-v2/team-gate.mjs": "335cd46d561c488f5c25199966c5f4fed738b470f51e6f2b1c3ea9e86e2ffc8e",
+    "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/paid-v2/loom.mjs": "dca07f5b131e08ca4c59d310628d33d5fc7c02bc2bf9a406292f887dfcd3fbc0",
+    "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/paid-v2/native.mjs": "2b2d3769d66f65011427769008f0445e47548162db829ca348030e6d970653a2",
+    "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/paid-v2/settlement.test.mjs": "1a21dce8c25b776d94d1fc76570f18ac0f935927cb3c63872be9af0806c7c525",
+    "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/paid-v2/supervised-child.mjs": "9264dd7a02752b302f55dd1cc05d943f526e2906b7e12d09a260efd614b40a9d",
+    "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/paid-v2/audit.mjs": "45bf68b1a509fd5fad2e1a1658bea7c7b0eecb61978397b22573c898c9903ef8",
+    "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/paid-v2/settlement.mjs": "8951ee4b22b3af9dd2f76cab16053b103b42f961ddb88417bf97a969924b6479",
+    "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/paid-v2/team-gate.test.mjs": "0552116904a3695efb2fed64d1506723824393322d6933233cd974bba784a379",
+    "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/paid-v2/failure-tail.mjs": "7ba3d206a74ab93354edd7a8c9dcd0f10a44267c14d9f46745096aeb8b4cde37",
+    "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/paid-v2/claude/sandbox.mjs": "47ce86ae8308f81e9b1a2f47fd206859ac99908c3115cb5a86674347e97a1bfe",
+    "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/paid-v2/claude/owned-cleanup.mjs": "2c5a888c8c580b41116f450b355259793c489f4d8cb905247bd6c3fc9a0f3fa2",
+    "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/paid-v2/claude/wrapper.mjs": "1b9f8deb79537775d7486aede8394fb309fc3ece563c7998feef1bedabcb2c17",
+    "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/paid-v2/codex/sandbox.mjs": "47ce86ae8308f81e9b1a2f47fd206859ac99908c3115cb5a86674347e97a1bfe",
+    "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/paid-v2/codex/loopback-env.mjs": "0c81ca797b35ee26ba677ef3add07e38c967396b3a4cc19f79010e91db75045a",
+    "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/paid-v2/codex/native-control.mjs": "0c2c3e556935c400aa72d19a2f6e12c3992e985b0fc0491620abdcdbf5459f63",
+    "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/paid-v2/codex/exact-owned.mjs": "1af9cc48f28fc5365f0691503cd0ea2c62a18860d8ab2419a4211ce5ac5745e4",
+    "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/paid-v2/codex/codex-wrapper.mjs": "e47fe0163cc80180dca7555f2edfc977eb94be9fa0747d84fad59766bd573d78"
+  },
+  "testsEvidence": {
+    "format.log": "fb5ffe51bf83c7a6ac683f386a5c903f6ff2c086dbe1bf27cc1f12efddaf7e3f",
+    "red.log": "8ecc91a8e6380706cc719f5eeb8a2705f7ae7a1d8f868252dc7188509ea299c1",
+    "settlement-green.log": "74284a821bd96d5b1008b2eda6e9cbba2a55bf4a329332427f2583bf9e7f2782",
+    "targeted.log": "b6c45ec18365f757c5301d971da0dc260d441ad0acf40ee02f613d1781e21d70",
+    "settlement-red.log": "dc4306d6fa95a7dad715e637dc5cbceb4b343d95038e59b79abbdabc1483efab",
+    "targeted-green.log": "d0d85e697ec6fd2d1f82d8e9365f4537beaef78585c21413f899b2b5b148ec98",
+    "native-tests.log": "835396515d323d95cfa88631e68fa372811ae3b0c29db1a1186293f416349af3",
+    "check.log": "886798df5379bc7468171a565af3b25c46a65940efdd4a0b00250f945d83138e",
+    "gate-green.log": "6eba54941fdbf4fde276b771f090cedd4bd91179c721248e6834cc18de7648df",
+    "format-final.log": "fb5ffe51bf83c7a6ac683f386a5c903f6ff2c086dbe1bf27cc1f12efddaf7e3f"
+  }
+}

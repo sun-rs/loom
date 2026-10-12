@@ -13,7 +13,7 @@ import { providerLaunchSwitches } from "../../packages/agent-host/src/provider-l
 import { codexWorkerMcpConfig } from "../../packages/agent-host/src/codex-worker-mcp-config.mjs";
 import { startGuardedUnixProxy } from "./ws-guard.mjs";
 
-// The product's process-only Codex switches (memory, multi_agent, goals,
+// The product's process-only Codex switches (memory, goals,
 // global personal-config isolation), exactly as the product passes them.
 // Per-name user MCP disables are admitted only as `enabled=false`.
 const FINAL_OUTPUT_SCHEMA = WorkerFinalOutputEnvelopeSchema.toJSONSchema({

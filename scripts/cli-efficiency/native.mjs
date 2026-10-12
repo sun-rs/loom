@@ -8,9 +8,9 @@ import {
   providerLaunchSwitches,
 } from "../../packages/agent-host/src/provider-launch-arguments.js";
 
-// Same process switches as the product app-server (memory and autonomy:
-// multi_agent/goals off), so the native baseline takes the same single-agent
-// path (Codex review of batches 3-4 P2-2). `launchArgs` is the product
+// Same process switches as the product app-server: memory and independent
+// scheduling stay off; native subagent capability remains a CLI choice
+// (owner 2026-10-12). `launchArgs` is the product
 // launch policy resolved for the native run's cwd and environment (it lists
 // the user's MCP servers through `codex mcp list --json`).
 export function codexNativeArgs({

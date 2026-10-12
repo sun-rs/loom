@@ -137,8 +137,6 @@ test("memory policy displayed in settings is the same launch contract consumed b
     "-c",
     "memories.use_memories=false",
     "-c",
-    "features.multi_agent=false",
-    "-c",
     "features.goals=false",
     "-c",
     "features.sleep_tool=false",
@@ -241,4 +239,27 @@ test("Claude launches disallow plan mode, self-scheduling, remote routines and u
     "RemoteTrigger",
     "AskUserQuestion",
   ]);
+});
+
+test("native subagent capability remains a CLI choice while memory and independent schedulers stay disabled", async () => {
+  const { providerLaunchSwitches } =
+    await import("../src/provider-launch-arguments.js");
+  const { CLAUDE_DISALLOWED_TOOLS } =
+    await import("../src/claude-stream-launch.js");
+  const args = providerLaunchSwitches("codex").args;
+  assert.equal(
+    args.some((arg) => arg.startsWith("features.multi_agent=")),
+    false,
+  );
+  for (const key of [
+    "features.memories",
+    "memories.generate_memories",
+    "memories.use_memories",
+    "features.goals",
+    "features.in_app_local_automation",
+  ]) {
+    assert.ok(args.includes(`${key}=false`), key);
+  }
+  assert.equal(CLAUDE_DISALLOWED_TOOLS.split(",").includes("Agent"), false);
+  assert.equal(CLAUDE_DISALLOWED_TOOLS.split(",").includes("Task"), false);
 });

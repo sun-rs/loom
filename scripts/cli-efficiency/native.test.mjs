@@ -20,7 +20,10 @@ test("native Codex arm carries every product launch-policy -c switch", () => {
     "mcp_servers.user_mcp.enabled=false",
   ];
   const policy = pairs(launchArgs);
-  assert.ok(policy.includes("features.multi_agent=false"));
+  assert.equal(
+    policy.some((arg) => arg.startsWith("features.multi_agent=")),
+    false,
+  );
   assert.ok(policy.includes("features.goals=false"));
   assert.ok(policy.includes("memories.use_memories=false"));
   for (const sessionId of [undefined, "019a0000-0000-7000-8000-000000000001"]) {

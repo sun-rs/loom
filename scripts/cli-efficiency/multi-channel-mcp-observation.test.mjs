@@ -1,3 +1,5 @@
+// 2026-10-12 owner-approved identity update: only the retired native
+// multi_agent=false switch was removed; old paid evidence stays unchanged.
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
@@ -185,7 +187,7 @@ test("observation summary keeps failed cost and does not claim statistical stabi
   assert.equal(summary.budgetVerdict, "not-assessed");
   assert.equal(summary.checkpoints[0].total.ratios, null);
 });
-test("new profile does not change P119 identity and never requests repeats", () => {
+test("observation profile stays distinct under native-subagent policy and never requests repeats", () => {
   const p = multiMcpObservationPlan(["--plan"], "codex-cli 0.160.0");
   assert.notEqual(
     p.baselineIdentity,
@@ -193,7 +195,7 @@ test("new profile does not change P119 identity and never requests repeats", () 
   );
   assert.equal(
     multiMcpPlan(["--plan"], "codex-cli 0.160.0").baselineIdentity,
-    "25c57119ac664b208e06f270cf76b4a1119fe82dd8bf00cff7f7236a792527f3",
+    "6a3f430ac58947c6bf328e193b66b550e99c2ecfb518a5ba3d5867bcf6bc8b22",
   );
   assert.equal(
     p.validationPolicy.repeatPolicy,

@@ -1,3 +1,5 @@
+// 2026-10-12 owner-approved identity update: only the retired native
+// multi_agent=false switch was removed; old paid evidence stays unchanged.
 import assert from "node:assert/strict";
 import test from "node:test";
 import { mkdtempSync, writeFileSync, readFileSync, rmSync } from "node:fs";
@@ -79,10 +81,10 @@ test("long entry refuses absent, unknown, duplicated or rearranged arguments", (
     assert.throws(() => businessLongPlan(args, version));
 });
 
-test("smoke identity is unchanged", () => {
+test("smoke identity pins the owner-approved native-subagent policy", () => {
   assert.equal(
     businessSmokePlan(["--plan"], version).baselineIdentity,
-    "b50b4a54d7a79c407ed2365a73480cae0d1fa44f900403e560fa2eeda119b685",
+    "79958d6bc7ecb4e7a875b0366d85b5f06d454256bd3c67f9b4e687097b0380d1",
   );
 });
 

@@ -1,3 +1,5 @@
+// 2026-10-12 owner-approved identity update: only the retired native
+// multi_agent=false switch was removed; old paid evidence stays unchanged.
 import assert from "node:assert/strict";
 import test from "node:test";
 import { multiMcpPlan } from "../test-cli-multi-channel-mcp.mjs";
@@ -33,15 +35,15 @@ test("MCP inline profile is separately registered with candidate flags disabled"
   assert.ok(!JSON.stringify(p).includes('"answer"'));
   assert.throws(() => multiMcpPlan(["--paid", "--plan"], "codex-cli 0.160.0"));
 });
-test("existing profiles retain their exact baseline identities", () => {
+test("existing profiles pin exact identities under the approved native-subagent policy", () => {
   assert.deepEqual(
     [multiPlan, multiInlinePlan, multiLongPlan].map(
       (f) => f(["--plan"], "codex-cli 0.160.0").baselineIdentity,
     ),
     [
-      "348f47792f5f22fda10193562f558ccfcb77576c735fd73141ede0a38332a42c",
-      "6701d39611ff38c41512a69cdb9988b75f1a9024ace38fd7246b1047b7199056",
-      "4a89cd04ce54b1f7f03429118fb13813f3c194d0279741f963293b76328e9ab9",
+      "17d48b59c7d290418282d28535a480296d45491dd67c537e1eb3ddc8990f6589",
+      "04cb1ec169bef08cc649f19dd06bd8d81820d13dd3a6d00668782b5c327bfcc8",
+      "d17baef38da9bc9e8f8565fe0c2add87767f87f1f82f07123dea363daeec0028",
     ],
   );
 });

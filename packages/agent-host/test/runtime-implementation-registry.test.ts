@@ -279,8 +279,6 @@ rl.on("line", (line) => {
       "-c",
       "memories.use_memories=false",
       "-c",
-      "features.multi_agent=false",
-      "-c",
       "features.goals=false",
       "-c",
       "features.sleep_tool=false",
