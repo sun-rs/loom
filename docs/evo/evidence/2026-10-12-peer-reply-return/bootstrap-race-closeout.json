@@ -1,0 +1,602 @@
+{
+  "kind": "loom-team-bootstrap-race-closeout/v1",
+  "closedAt": "2026-10-12T16:09:17.697943+00:00",
+  "paidBatch": {
+    "batchId": "actual-herdr-loom-opencode-claude-reply-20261012-v6",
+    "authorization": "Owner explicitly approved three fixed pairs; sample L1 started, then known fixture defect stopped the remaining five.",
+    "root": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-reply-v6/business-runs/1791820544955-pair1-loom",
+    "manifestSha256": "c11fea6eb685a83c1c17952aa3a4e39a126836732c339dabfe211e8528978c35",
+    "frozenFilesUnchanged": 3809,
+    "started": ["pair1-loom"],
+    "unstarted": [
+      "pair1-native",
+      "pair2-native",
+      "pair2-loom",
+      "pair3-loom",
+      "pair3-native"
+    ],
+    "status": "execution-failed",
+    "usage": {
+      "opencode": {
+        "input": 50851,
+        "output": 2645,
+        "requests": 4,
+        "complete": true
+      },
+      "claude": {
+        "input": 15374,
+        "output": 126,
+        "requests": 1,
+        "complete": true
+      },
+      "total": {
+        "input": 66225,
+        "output": 2771,
+        "requests": 5,
+        "complete": true
+      }
+    },
+    "nativeCheck": {
+      "opencode": {
+        "complete": true,
+        "sessions": ["ses_ecf2c253fffe9ynm6O3VOVZkxg"],
+        "input": 50851,
+        "output": 2645,
+        "responses": 4,
+        "localRejected": 0
+      },
+      "claude": {
+        "complete": true,
+        "responses": 1,
+        "sessions": ["4f1e8b38-3f79-4348-be08-3068ec617ae0"]
+      },
+      "complete": true
+    },
+    "businessPassed": false,
+    "ratio": null,
+    "releaseClosed": true,
+    "noRetries": true,
+    "cleanup": [
+      {
+        "pid": 18711,
+        "absent": true
+      },
+      {
+        "pid": 18733,
+        "absent": true
+      },
+      {
+        "pid": 19093,
+        "absent": true
+      }
+    ],
+    "resultSha256": "78bcc42c5929ecbcffa53babc74d720d764838e7d65a5372eaa48c127a1ede2b",
+    "databaseSnapshotSha256": "03ee04718fe24de96f2b7d774c2bf0a77c17ed63691d2d29aaa5cf05542580b0"
+  },
+  "cause": {
+    "owner": "private benchmark initialization coordinator, not model token randomness or a product cost regression",
+    "sequence": {
+      "6": "Human briefed B publicly",
+      "11": "B acknowledgement explicitly @A; A activation/placement created from this fact",
+      "17": "Coordinator posted a second Human opening to A after B completion, despite A already being reserved/running",
+      "22": "A final held and activation quarantined; new Human fact preserved by freshness barrier"
+    },
+    "events": [
+      {
+        "room_seq": 1,
+        "type": "room.created",
+        "actor_id": "principal_ef1226b6-577e-4bcb-8d03-d64184c87519"
+      },
+      {
+        "room_seq": 2,
+        "type": "membership.added",
+        "actor_id": "principal_ef1226b6-577e-4bcb-8d03-d64184c87519"
+      },
+      {
+        "room_seq": 3,
+        "type": "instance.created",
+        "actor_id": "principal_ef1226b6-577e-4bcb-8d03-d64184c87519"
+      },
+      {
+        "room_seq": 4,
+        "type": "membership.added",
+        "actor_id": "principal_ef1226b6-577e-4bcb-8d03-d64184c87519"
+      },
+      {
+        "room_seq": 5,
+        "type": "instance.created",
+        "actor_id": "principal_ef1226b6-577e-4bcb-8d03-d64184c87519"
+      },
+      {
+        "room_seq": 6,
+        "type": "message.posted",
+        "actor_id": "principal_ef1226b6-577e-4bcb-8d03-d64184c87519"
+      },
+      {
+        "room_seq": 7,
+        "type": "placement.reserved",
+        "actor_id": "principal_system"
+      },
+      {
+        "room_seq": 8,
+        "type": "run.created",
+        "actor_id": "principal_system"
+      },
+      {
+        "room_seq": 9,
+        "type": "run.runtime_prepared",
+        "actor_id": "principal_system"
+      },
+      {
+        "room_seq": 10,
+        "type": "run.started",
+        "actor_id": "principal_system"
+      },
+      {
+        "room_seq": 11,
+        "type": "message.posted",
+        "actor_id": "principal_c4463f1b-de93-4898-a7bb-b1b095c68024"
+      },
+      {
+        "room_seq": 12,
+        "type": "placement.reserved",
+        "actor_id": "principal_system"
+      },
+      {
+        "room_seq": 13,
+        "type": "run.created",
+        "actor_id": "principal_system"
+      },
+      {
+        "room_seq": 14,
+        "type": "run.turn_quiesced",
+        "actor_id": "principal_system"
+      },
+      {
+        "room_seq": 15,
+        "type": "run.finished",
+        "actor_id": "principal_system"
+      },
+      {
+        "room_seq": 16,
+        "type": "activation.finished",
+        "actor_id": "principal_system"
+      },
+      {
+        "room_seq": 17,
+        "type": "message.posted",
+        "actor_id": "principal_ef1226b6-577e-4bcb-8d03-d64184c87519"
+      },
+      {
+        "room_seq": 18,
+        "type": "run.runtime_prepared",
+        "actor_id": "principal_system"
+      },
+      {
+        "room_seq": 19,
+        "type": "run.started",
+        "actor_id": "principal_system"
+      },
+      {
+        "room_seq": 20,
+        "type": "run.turn_quiesced",
+        "actor_id": "principal_system"
+      },
+      {
+        "room_seq": 21,
+        "type": "run.finished",
+        "actor_id": "principal_system"
+      },
+      {
+        "room_seq": 22,
+        "type": "activation.retry_blocked",
+        "actor_id": "principal_system"
+      }
+    ],
+    "heldDrafts": [
+      {
+        "state": "held",
+        "based_on_room_seq": 11,
+        "seen_up_to_seq": 17,
+        "reply_based_on_room_seq": 11,
+        "read_proof_json": "{\"runAttemptId\":\"run_f01eb474-638e-4b95-8044-2dba1bbaf40d\",\"generation\":0,\"readReceiptId\":\"80a608a9-837f-483f-8576-2d59c6b1f1ef\",\"messageSeqs\":[17],\"windowDigest\":\"ec8ec2de2c9e4c89b7a71857e5e397f2eed177d396171456b5ead4964ac35517\",\"delivered\":false}"
+      }
+    ],
+    "statement": "Do not depend on a model omitting canonical mentions to keep initialization passive. Do not relax the Human freshness barrier.",
+    "oldFreeProbeGap": "v6 synthetic bootstrap emitted only a neutral acknowledgement; it did not exercise an acknowledgement containing @A."
+  },
+  "freeRepair": {
+    "sourceDirectory": "/Users/sun/.loom/reviews/2026-10-13-team-bootstrap-v7",
+    "kind": "Private briefing with existing instance private box; no product behavior change",
+    "loom": "B full-task bootstrap goes through existing private box; even explicit @A cannot wake the public channel. Then Human opens channel task for A with full task/communication contents. B resumes same native session in channel.",
+    "native": "Only B CLI is started during its direct briefing. A CLI is created after B completion, then receives the full initial Human task. This schedule is part of the fixture and recorded, not model self-report.",
+    "tdd": "Isolation test failed with public briefing, passed with private box. Real CLI synthetic B deliberately mentions A during bootstrap.",
+    "tests": 47,
+    "testsLogSha256": "44b482cfebdca8ab4db2c1be99bd7ed18a32872c1a3fe55130d0df3ae9355416",
+    "realCliSyntheticEvidence": [
+      {
+        "root": "/Users/sun/.loom/reviews/2026-10-13-team-bootstrap-v7/business-runs/1791820916668-pair1-loom",
+        "arm": "loom",
+        "firstRequestProof": {
+          "opencode": {
+            "fullTask": true,
+            "fullCommunication": true
+          },
+          "claude": {
+            "fullTask": true,
+            "fullCommunication": true
+          }
+        },
+        "bootstrap": {
+          "member": "claude",
+          "completed": true,
+          "accountingIncluded": true,
+          "publicActivationsBeforeOpening": 0,
+          "activations": [
+            {
+              "activationId": "activation_f4b68164-7a7b-4d91-ba8c-b9ff98da63d4",
+              "roomId": "room_b3eac92f-7a78-4b2f-bc64-99f55ce1a209",
+              "participantId": "principal_bd841675-b714-4bae-9aa7-664b15f7d582",
+              "fromSeq": 2,
+              "toSeq": 2,
+              "reason": "room_policy",
+              "state": "completed",
+              "attemptCount": 1,
+              "availableAt": "2026-10-12T16:01:57.124Z",
+              "createdAt": "2026-10-12T16:01:57.124Z",
+              "updatedAt": "2026-10-12T16:01:58.029Z"
+            }
+          ]
+        },
+        "usage": {
+          "input": 1055,
+          "output": 200,
+          "requests": 10,
+          "complete": true
+        },
+        "nativeCheck": {
+          "opencode": {
+            "complete": true,
+            "sessions": ["ses_ecf268b6bffeNHtLy42LMS54Xe"],
+            "input": 422,
+            "output": 80,
+            "responses": 4,
+            "localRejected": 0
+          },
+          "claude": {
+            "complete": true,
+            "responses": 6,
+            "sessions": ["79229a0c-01a1-4bcc-addd-1e1e343a658b"]
+          },
+          "complete": true
+        },
+        "syntheticRequests": [
+          {
+            "n": 1,
+            "provider": "claude",
+            "round": 0,
+            "bootstrap": true,
+            "tool": true,
+            "model": "claude-sonnet-5-5",
+            "effort": "low",
+            "complete": true
+          },
+          {
+            "n": 2,
+            "provider": "claude",
+            "round": 0,
+            "bootstrap": true,
+            "tool": false,
+            "model": "claude-sonnet-5-5",
+            "effort": "low",
+            "complete": true
+          },
+          {
+            "n": 3,
+            "provider": "opencode",
+            "round": 1,
+            "bootstrap": false,
+            "tool": true,
+            "model": "deepseek-v4.1-flash",
+            "effort": "low",
+            "complete": true
+          },
+          {
+            "n": 4,
+            "provider": "opencode",
+            "round": 1,
+            "bootstrap": false,
+            "tool": false,
+            "model": "deepseek-v4.1-flash",
+            "effort": "low",
+            "complete": true
+          },
+          {
+            "n": 5,
+            "provider": "claude",
+            "round": 1,
+            "bootstrap": false,
+            "tool": true,
+            "model": "claude-sonnet-5-5",
+            "effort": "low",
+            "complete": true
+          },
+          {
+            "n": 6,
+            "provider": "claude",
+            "round": 1,
+            "bootstrap": false,
+            "tool": false,
+            "model": "claude-sonnet-5-5",
+            "effort": "low",
+            "complete": true
+          },
+          {
+            "n": 7,
+            "provider": "opencode",
+            "round": 2,
+            "bootstrap": false,
+            "tool": true,
+            "model": "deepseek-v4.1-flash",
+            "effort": "low",
+            "complete": true
+          },
+          {
+            "n": 8,
+            "provider": "opencode",
+            "round": 2,
+            "bootstrap": false,
+            "tool": false,
+            "model": "deepseek-v4.1-flash",
+            "effort": "low",
+            "complete": true
+          },
+          {
+            "n": 9,
+            "provider": "claude",
+            "round": 2,
+            "bootstrap": false,
+            "tool": true,
+            "model": "claude-sonnet-5-5",
+            "effort": "low",
+            "complete": true
+          },
+          {
+            "n": 10,
+            "provider": "claude",
+            "round": 2,
+            "bootstrap": false,
+            "tool": false,
+            "model": "claude-sonnet-5-5",
+            "effort": "low",
+            "complete": true
+          }
+        ],
+        "publicActivationReasons": ["mention", "mention", "reply", "mention"],
+        "cleanup": [
+          {
+            "pid": 37742,
+            "absent": true
+          },
+          {
+            "pid": 37766,
+            "absent": true
+          },
+          {
+            "pid": 37767,
+            "absent": true
+          },
+          {
+            "pid": 37771,
+            "absent": true
+          },
+          {
+            "pid": 37861,
+            "absent": true
+          },
+          {
+            "pid": 37902,
+            "absent": true
+          }
+        ]
+      },
+      {
+        "root": "/Users/sun/.loom/reviews/2026-10-13-team-bootstrap-v7/business-runs/1791820992710-pair1-native",
+        "arm": "native",
+        "firstRequestProof": {
+          "opencode": {
+            "fullTask": true,
+            "fullCommunication": true
+          },
+          "claude": {
+            "fullTask": true,
+            "fullCommunication": true
+          }
+        },
+        "bootstrap": {
+          "completed": true,
+          "accountingIncluded": true,
+          "opencodeNotStarted": true
+        },
+        "usage": {
+          "input": 1055,
+          "output": 200,
+          "requests": 10,
+          "complete": true
+        },
+        "nativeCheck": {
+          "opencode": {
+            "complete": true,
+            "sessions": ["ses_ecf239feaffeddL0o3dk4iqSwG"],
+            "input": 424,
+            "output": 80,
+            "responses": 4,
+            "localRejected": 0
+          },
+          "claude": {
+            "complete": true,
+            "responses": 6,
+            "sessions": ["74fc7d1f-9db5-4f39-beca-bcd52372020a"]
+          },
+          "complete": true
+        },
+        "syntheticRequests": [
+          {
+            "n": 1,
+            "provider": "claude",
+            "round": 0,
+            "bootstrap": true,
+            "tool": true,
+            "model": "claude-sonnet-5-5",
+            "effort": "low",
+            "complete": true
+          },
+          {
+            "n": 2,
+            "provider": "claude",
+            "round": 0,
+            "bootstrap": true,
+            "tool": false,
+            "model": "claude-sonnet-5-5",
+            "effort": "low",
+            "complete": true
+          },
+          {
+            "n": 3,
+            "provider": "opencode",
+            "round": 1,
+            "bootstrap": false,
+            "tool": true,
+            "model": "deepseek-v4.1-flash",
+            "effort": "low",
+            "complete": true
+          },
+          {
+            "n": 4,
+            "provider": "claude",
+            "round": 1,
+            "bootstrap": false,
+            "tool": true,
+            "model": "claude-sonnet-5-5",
+            "effort": "low",
+            "complete": true
+          },
+          {
+            "n": 5,
+            "provider": "opencode",
+            "round": 1,
+            "bootstrap": false,
+            "tool": false,
+            "model": "deepseek-v4.1-flash",
+            "effort": "low",
+            "complete": true
+          },
+          {
+            "n": 6,
+            "provider": "claude",
+            "round": 1,
+            "bootstrap": false,
+            "tool": false,
+            "model": "claude-sonnet-5-5",
+            "effort": "low",
+            "complete": true
+          },
+          {
+            "n": 7,
+            "provider": "opencode",
+            "round": 2,
+            "bootstrap": false,
+            "tool": true,
+            "model": "deepseek-v4.1-flash",
+            "effort": "low",
+            "complete": true
+          },
+          {
+            "n": 8,
+            "provider": "claude",
+            "round": 2,
+            "bootstrap": false,
+            "tool": true,
+            "model": "claude-sonnet-5-5",
+            "effort": "low",
+            "complete": true
+          },
+          {
+            "n": 9,
+            "provider": "opencode",
+            "round": 2,
+            "bootstrap": false,
+            "tool": false,
+            "model": "deepseek-v4.1-flash",
+            "effort": "low",
+            "complete": true
+          },
+          {
+            "n": 10,
+            "provider": "claude",
+            "round": 2,
+            "bootstrap": false,
+            "tool": false,
+            "model": "claude-sonnet-5-5",
+            "effort": "low",
+            "complete": true
+          }
+        ],
+        "publicActivationReasons": [],
+        "cleanup": [
+          {
+            "pid": 42598,
+            "absent": true
+          },
+          {
+            "pid": 45916,
+            "absent": true
+          },
+          {
+            "pid": 47767,
+            "absent": true
+          },
+          {
+            "pid": 48657,
+            "absent": true
+          },
+          {
+            "pid": 48677,
+            "absent": true
+          }
+        ]
+      }
+    ],
+    "paidCalls": 0,
+    "manifestSha256": "2a4162156abb97492686c4dd96b0ceda0725b9848f0b71661a2be49bb1fea512",
+    "frozenFiles": 3811,
+    "paidAuthorized": false,
+    "cleanup": {
+      "generatedSettingsRemoved": [
+        "/private/tmp/team-oc-claude-paid-nnZubM/opencode/settings.json",
+        "/private/tmp/team-oc-claude-paid-nnZubM/claude/settings.json",
+        "/private/tmp/team-oc-claude-paid-lV11pY/opencode/settings.json",
+        "/private/tmp/team-oc-claude-paid-lV11pY/claude/settings.json",
+        "/private/tmp/team-oc-claude-paid-PcQKmo/opencode/settings.json",
+        "/private/tmp/team-oc-claude-paid-PcQKmo/claude/settings.json"
+      ],
+      "processesAbsentAtFinish": true
+    }
+  },
+  "boundaries": [
+    "Free probes use real Claude/OpenCode but localhost synthetic model; they do not implement invoice or measure actual provider cost.",
+    "Each repaired arm has ten complete synthetic generations including two bootstrap generations; four native sessions total, one per member/arm.",
+    "First actual request for all four members contains full TASK and COMMUNICATION; A first request does not contain private B acknowledgement.",
+    "Normal history and private-box influence on B same session are retained; automatic memory disabled.",
+    "Task scenario remains prompt-only; no product workflow, extra queue or dispatch policy introduced.",
+    "Five paid samples were not run; no new batch or replacement launched under the old authorization.",
+    "Original paid result, gate state, manifest and failed artifact are unchanged.",
+    "Formal service/build/flags unchanged; no restart required for private fixture and evidence only."
+  ],
+  "cleanup": {
+    "generatedSettingsDeletedAcrossPaidAndFree": 6,
+    "ownedPanesClosed": ["wA:pP", "wA:pQ"],
+    "callerLayoutRestored": true
+  },
+  "conclusion": "This paid batch failed because the newly added public bootstrap created a duplicate Human opening race. Accounting is complete. Free regression verifies the private-box fix; cost acceptance remains open."
+}
