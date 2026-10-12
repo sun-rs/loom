@@ -1,0 +1,114 @@
+{
+  "date": "2026-10-12",
+  "kind": "real-herdr-loom-repeat-closeout/v1",
+  "codeRevision": "4a2313c7f139fc9301219b0097e8cdf4b8ac597f",
+  "batchId": "actual-herdr-loom-repeat-20261012-v1",
+  "privateRoot": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/herdr-repeat-v1",
+  "manifestSha256": "14d1f42056186754f7a1e6ffc0f0cda9328a8e4ea7bb102a13ea100c78eeaca6",
+  "releaseSha256": "d49538e0bbdeb825badb4a5fd75a55532a4cb2f1fba818d7efd0f923c2d6d463",
+  "resultSha256": "86027d613728e7fcd0413da196b629971720c8921c50519db4a5fda5362daa8e",
+  "stateSha256": "ce65cc9ab752d04806acf12996db7368a89d12cda11542c97392dbd336c138c9",
+  "models": {
+    "codex": "gpt-6-luna/low",
+    "claude": "sonnet/low"
+  },
+  "versions": {
+    "codex": "codex-cli 0.162.1",
+    "claude": "2.1.293 (Claude Code)"
+  },
+  "plannedOrder": [
+    "pair1-loom",
+    "pair1-native",
+    "pair2-native",
+    "pair2-loom",
+    "pair3-loom",
+    "pair3-native",
+    "pair4-native",
+    "pair4-loom"
+  ],
+  "executed": ["pair1-loom"],
+  "remainingSamples": "not started; unknown usage stops the frozen batch; no replacement or retry",
+  "business": {
+    "passed": false,
+    "stop": {
+      "kind": "candidate-no-peer-mention",
+      "member": "codex"
+    },
+    "externalDesignParticipation": true,
+    "externalImplementationReview": false,
+    "handoff": "Both Codex posts have empty canonical mentions; explicit peer handles and communication instructions were supplied. No inference from natural-language B.",
+    "activations": ["completed", "completed", "cancelled"],
+    "functionalPassed": 39,
+    "functionalTotal": 40,
+    "selfTestsPassed": 8,
+    "failedCheck": "large-decimal-precision",
+    "precisionCause": "line products use localcontext prec=80, but subtotal/group accumulation occurs outside it at default precision; one-row subtotal rounds .43 instead of .42",
+    "diagnosticReplay": "Unmodified archived module under ambient precision 80 returns the expected .42. This diagnostic does not amend the original failed score.",
+    "testBoundary": "reviewPath=true means participation only, not independent review; result remains failed and independently unaccepted."
+  },
+  "usage": {
+    "members": {
+      "claude": {
+        "input": 61126,
+        "output": 1077,
+        "requests": 4,
+        "complete": true
+      },
+      "codex": {
+        "input": 308218,
+        "output": 4624,
+        "requests": 21,
+        "complete": false
+      }
+    },
+    "knownInputLowerBound": 369344,
+    "knownOutputLowerBound": 5701,
+    "cachedInputAlreadyIncluded": 252672,
+    "codexSamplingAttempts": 21,
+    "coveredSamplingAttempts": 17,
+    "uncoveredSamplingAttempts": 4,
+    "quantitylessFailureEvents": [
+      {
+        "source": "otel-12.private.json",
+        "sha256": "5a55c72682f6c58e32e0ecbbec259052dfb79ae9ebc7f1b0c47c1faf81e5f5b9",
+        "eventName": "event otel/src/events/session_telemetry.rs:1119",
+        "error": "stream disconnected before completion: IO error: peer closed connection without sending TLS close_notify: https://docs.rs/rustls/latest/rustls/manual/_03_howto/index.html#unexpected-eof"
+      },
+      {
+        "source": "otel-33.private.json",
+        "sha256": "3d946a9639e54e30a8b217cff88b66fb3b4598a621ef61eed85a3ec4b6d4adb4",
+        "eventName": "event otel/src/events/session_telemetry.rs:1119",
+        "error": "stream disconnected before completion: idle timeout waiting for websocket"
+      },
+      {
+        "source": "otel-6.private.json",
+        "sha256": "a7cec5b77723dfa88c17d4b42cb6c4902fe372ef00ad463575e44c87105c60b0",
+        "eventName": "event otel/src/events/session_telemetry.rs:1119",
+        "error": "stream disconnected before completion: IO error: peer closed connection without sending TLS close_notify: https://docs.rs/rustls/latest/rustls/manual/_03_howto/index.html#unexpected-eof"
+      }
+    ],
+    "otherErrors": "TLS handshake eof on /responses; /models refresh failures excluded from generation coverage. Three missing completion events and four uncovered attempts are distinct counts, not assumed one-to-one.",
+    "archiveIncompleteRecords": 0,
+    "interpretation": "Actual stream failures omit provider usage; not fixed by counting raw transport events or filling zero. Final session totals cannot prove missing failed-attempt billing.",
+    "ratio": null
+  },
+  "cleanup": true,
+  "configMatches": true,
+  "newHerdrPanes": 0,
+  "verification": {
+    "privateOfflineTestsPassed": 37,
+    "artifactHashes": {
+      "COMMUNICATION.txt": "165990c769c311dd4d4d7b35fc9a93ab430f81f26ff40f5934cbad101d97a4e9",
+      "README.md": "9e3c9382f0de7b488731f1d8405a04e61ac88684636c29a96a108340d9b2aa77",
+      "TASK.json": "3cf87a5a64073a69906846ae95038951b95d8f3b479611b7d27814267da3f170",
+      "__pycache__/invoice.cpython-313.pyc": "1d082a3efd23fee9590a9218df6da3320c4e5d2f1354233242fd879daee9d9aa",
+      "invoice.py": "33014409ece9aea3b79163b32fef020d5f3b5ffd34c7ed37f616fb7ac8710e94",
+      "tests/__pycache__/test_invoice.cpython-313.pyc": "d7120418feb18b2748619179fe02fe0a1e096c1b2c067c42942662b909c13019",
+      "tests/test_invoice.py": "22ae0acfea18748951d0aa68661d74b65b0fd863d1f71b7642c58de4b5ed74cb"
+    }
+  },
+  "productChanged": false,
+  "deploymentChanged": false,
+  "productionNativeFinalFlags": "remain OFF",
+  "next": "Do not retune architecture from one stochastic sample. Before another cohort, establish authoritative failed-attempt accounting or explicitly predeclare incomplete-cost reporting; retain task success rate and all failed samples. Never compare this partial unfinished task with the older successful Herdr task."
+}
