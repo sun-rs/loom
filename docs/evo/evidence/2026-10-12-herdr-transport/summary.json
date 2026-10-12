@@ -1,0 +1,87 @@
+{
+  "kind": "real-herdr-cli-transport-preflight/v1",
+  "status": "native interactive CLI prompt/read verified with local synthetic responses; no business or cost acceptance",
+  "context": {
+    "finding": "Current conversation is inside Herdr. Tool commands execute through detached Codex app-server without HERDR variables.",
+    "proof": "Herdr pane process-info resumed session ID equals current CODEX_THREAD_ID. User explicitly confirmed current Herdr context.",
+    "previousConclusionCorrected": "Missing HERDR_ENV was insufficient to infer that the conversation was outside Herdr."
+  },
+  "herdrVersion": "0.9.1",
+  "serverProtocol": 22,
+  "realCliVersions": {
+    "codexInitial": "0.161.0",
+    "codexVerifiedFinal": "0.162.1",
+    "claude": "2.1.293"
+  },
+  "tests": {
+    "claude": "Native interactive session received prompt; real agent read retrieved synthetic reply.",
+    "codex": "Native interactive session --no-daemon --no-alt-screen received prompt; real agent read retrieved synthetic reply. Uses existing trusted 0.162.1 binary; ordinary CLI execution, not host-mode invocation.",
+    "syntheticRecords": [
+      {
+        "n": 1,
+        "provider": "claude",
+        "sampling": true
+      },
+      {
+        "n": 2,
+        "provider": "claude",
+        "sampling": true
+      },
+      {
+        "n": 3,
+        "provider": "codex",
+        "sampling": true
+      },
+      {
+        "n": 4,
+        "provider": "codex",
+        "sampling": true
+      }
+    ],
+    "syntheticRequestCount": 4,
+    "paidModelCalls": 0,
+    "peerToolCommunicationVerified": false,
+    "note": "Controller invoked actual Herdr prompt/read; models did not autonomously send to each other. Do not label this a collaboration task or paired cost sample."
+  },
+  "observedFailures": [
+    {
+      "type": "local-proxy-interference",
+      "detail": "First Codex custom-provider attempt returned 503 and reached no synthetic server request; cancelled. Explicit launch environment removed upper/lower-case proxies and selected localhost."
+    },
+    {
+      "type": "fast-reply-state-observation",
+      "detail": "Herdr prompt --wait reported agent_prompt_stalled although synthetic reply was present. No blind retry; screen and archived local requests used to check receipt."
+    },
+    {
+      "type": "startup-update-prompt-misclassification",
+      "detail": "Herdr reported idle before Codex update dialog was ruled out. Prompt Enter triggered Homebrew upgrade. Lead failed to inspect actual startup screen first. This is an unintended installation change, not authorized product work.",
+      "impact": "Homebrew codex changed 0.161.0 to 0.162.1. Upgrade subprocess interrupted with Ctrl+C; subsequent brew list reports 0.162.1 and /opt/homebrew/bin/codex --version successfully reports 0.162.1. No rollback performed.",
+      "prevention": "Read native startup screen and verify exact executable/version before any prompt; experimental launcher suppresses startup update check. Do not treat idle alone as readiness."
+    }
+  ],
+  "cleanup": {
+    "bothExperimentalClisExitedToShell": true,
+    "onlyCreatedPanesClosed": true,
+    "syntheticServerExited": true,
+    "originalConversationFocusRestored": true,
+    "existingPartnerSessionsPromptedOrStopped": false
+  },
+  "evidenceHashes": {
+    "codex-screen.txt": "c271b726465eea6df6d7dba4255bb28b410e676f6e135f10757b434531782d52",
+    "claude-final-screen.txt": "52a71b82caa71bce119ddedc18552c287ee84d100d9cf9ce86bb5e1426bf907b",
+    "codex-final-screen.txt": "527a2f7bc5f693f75b26b1b86ff296a029bf1d3bbbaf179d2a278e688a38e155",
+    "claude-screen.txt": "cddc84c9c130819205356c774991c032b017274c78543b86cdceaa56e539a340",
+    "requests.json": "be5292bd13cfbdbf0290ba7b57c21fbf6e5442e4f601b42ef3ed99394e2c0961",
+    "codex.sh": "d0016a6e33ac1bbd77ea7e66d995871626615df0e64f3bd54d072a22bd5e658a"
+  },
+  "privateRoot": "/Users/sun/.loom/reviews/2026-10-12-herdr-transport",
+  "productChanged": false,
+  "serviceRestarted": false,
+  "formalFlagsChanged": false,
+  "remaining": [
+    "Autonomous real Herdr peer send/read business workflow not yet tested.",
+    "Codex complete primary usage remains unresolved from previous batch; native TUI rollout/HTTP/telemetry coverage must be established before ratios.",
+    "Frozen prior runner pins Codex 0.161.0; cannot silently reuse it with 0.162.1 or mix versions between arms.",
+    "No real-model Herdr/Loom paired or repeated task results in this preflight."
+  ]
+}
