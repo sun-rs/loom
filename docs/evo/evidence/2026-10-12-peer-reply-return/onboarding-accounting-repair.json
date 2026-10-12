@@ -1,0 +1,287 @@
+{
+  "kind": "loom-team-onboarding-accounting-repair/v1",
+  "date": "2026-10-12",
+  "paidCalls": 0,
+  "productCodeChanged": false,
+  "deploymentChanged": false,
+  "sourceDirectory": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-reply-v6",
+  "implemented": [
+    "Both arms brief B with full shared task and arm-specific communication instructions before starting A; briefing requests included in all totals.",
+    "Native A also receives full task and communication in its first Human prompt; Loom A receives the same body via durable channel delta and its directed opening.",
+    "Correct stale TASK.json A:Codex label to OpenCode identically in both arms; 12 business requirements unchanged.",
+    "Local copy of OpenCode recorder retains bounded request/stream error codes and safe syscall/causeCode; no raw error message, credential or endpoint copied into new diagnostic fields."
+  ],
+  "ownership": "Private benchmark coordinator owns bootstrap order; no new product queue, cursor, workflow or role policy.",
+  "verification": {
+    "tests": 46,
+    "tdd": [
+      "bootstrap test first exposed stale Codex participant; corrected common task only after red",
+      "local HTTP connection refusal test failed on missing transportFailure, then passed with ECONNREFUSED and usage:null",
+      "sanitized diagnostic shape test verifies credential/message/endpoint omission"
+    ],
+    "testsLogSha256": "57ff164fb3a5345b8c8b82b01f9d3762e847047508bd0d49e83c30f9c9faf860",
+    "actualCliFreeProbes": [
+      {
+        "root": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-reply-v6/business-runs/1791819994660-pair2-loom",
+        "arm": "loom",
+        "firstRequestProof": {
+          "opencode": {
+            "fullTask": true,
+            "fullCommunication": true,
+            "memoryLaunches": [
+              {
+                "generation": false,
+                "kind": "configuration-probe"
+              },
+              {
+                "memoryDisabled": true,
+                "status": "not-applicable",
+                "version": "1.18.35",
+                "sourceRevision": "53d1eabb61e21162157817bf677da0a4ad3332e3",
+                "mechanism": "exact-version source audit, global --pure, isolated HOME/XDG/project/external instructions; normal session history retained"
+              }
+            ]
+          },
+          "claude": {
+            "fullTask": true,
+            "fullCommunication": true,
+            "memoryLaunches": [
+              {
+                "memoryDisabled": true,
+                "status": "disabled",
+                "version": "2.1.293 (Claude Code)",
+                "mechanism": "CLAUDE_CODE_DISABLE_AUTO_MEMORY=1"
+              }
+            ]
+          }
+        },
+        "nativeCheck": {
+          "opencode": {
+            "complete": true,
+            "sessions": ["ses_ecf349d49ffeZFvQoZv55iRqas"],
+            "input": 422,
+            "output": 80,
+            "responses": 4,
+            "localRejected": 0
+          },
+          "claude": {
+            "complete": true,
+            "responses": 6,
+            "sessions": ["808c4876-81b1-41a8-89bb-c146146bc1aa"]
+          },
+          "complete": true
+        },
+        "usage": {
+          "input": 1055,
+          "output": 200,
+          "requests": 10,
+          "complete": true
+        },
+        "bootstrapRequests": 2,
+        "allSyntheticResponsesComplete": true,
+        "artifact": "SYNTHETIC_claude_0\nSYNTHETIC_opencode_1\nSYNTHETIC_claude_1\nSYNTHETIC_opencode_2\nSYNTHETIC_claude_2\n",
+        "activationReasons": [
+          "mention",
+          "mention",
+          "mention",
+          "reply",
+          "mention"
+        ],
+        "cleanup": [
+          {
+            "pid": 89688,
+            "absent": true
+          },
+          {
+            "pid": 89839,
+            "absent": true
+          },
+          {
+            "pid": 89909,
+            "absent": true
+          }
+        ]
+      },
+      {
+        "root": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-reply-v6/business-runs/1791820060422-pair2-native",
+        "arm": "native",
+        "firstRequestProof": {
+          "opencode": {
+            "fullTask": true,
+            "fullCommunication": true,
+            "memoryLaunches": [
+              {
+                "memoryDisabled": true,
+                "status": "not-applicable",
+                "version": "1.18.35",
+                "sourceRevision": "53d1eabb61e21162157817bf677da0a4ad3332e3",
+                "mechanism": "exact-version source audit, global --pure, isolated HOME/XDG/project/external instructions; normal session history retained"
+              }
+            ]
+          },
+          "claude": {
+            "fullTask": true,
+            "fullCommunication": true,
+            "memoryLaunches": [
+              {
+                "memoryDisabled": true,
+                "status": "disabled",
+                "version": "2.1.293 (Claude Code)",
+                "mechanism": "CLAUDE_CODE_DISABLE_AUTO_MEMORY=1"
+              }
+            ]
+          }
+        },
+        "nativeCheck": {
+          "opencode": {
+            "complete": true,
+            "sessions": ["ses_ecf3377f7ffe3Flv65zRsgxMk1"],
+            "input": 424,
+            "output": 80,
+            "responses": 4,
+            "localRejected": 0
+          },
+          "claude": {
+            "complete": true,
+            "responses": 6,
+            "sessions": ["fec34208-228c-43ce-bd8c-5d10ccc34377"]
+          },
+          "complete": true
+        },
+        "usage": {
+          "input": 1055,
+          "output": 200,
+          "requests": 10,
+          "complete": true
+        },
+        "bootstrapRequests": 2,
+        "allSyntheticResponsesComplete": true,
+        "artifact": "SYNTHETIC_claude_0\nSYNTHETIC_opencode_1\nSYNTHETIC_claude_1\nSYNTHETIC_opencode_2\nSYNTHETIC_claude_2\n",
+        "activationReasons": [],
+        "cleanup": [
+          {
+            "pid": 94109,
+            "absent": true
+          },
+          {
+            "pid": 94094,
+            "absent": true
+          },
+          {
+            "pid": 97016,
+            "absent": true
+          },
+          {
+            "pid": 97024,
+            "absent": true
+          },
+          {
+            "pid": 97030,
+            "absent": true
+          },
+          {
+            "pid": 98320,
+            "absent": true
+          },
+          {
+            "pid": 98322,
+            "absent": true
+          }
+        ]
+      }
+    ],
+    "syntheticOnly": true,
+    "sandbox": "actual CLI outbound IP restricted to localhost; isolated fake credentials only",
+    "nativeMemoryDisabled": true,
+    "sameSessionPerMember": true,
+    "oracle": "Synthetic tools write collaboration markers; no invoice implementation or business quality claim.",
+    "normalSyntheticRequests": 20,
+    "bootstrapRequestsIncluded": 4,
+    "oneLoomPlainReplyReturn": true
+  },
+  "developmentFailuresRetained": [
+    {
+      "kind": "free invocation order",
+      "detail": "Attempted L2 against H2-first manifest; SAMPLE_ORDER rejected before CLI startup. Free-only manifest reordered explicitly."
+    },
+    {
+      "root": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-reply-v6/business-runs/1791819924601-pair2-loom",
+      "kind": "outdated synthetic terminal response",
+      "detail": "10 synthetic responses completed, then unexpected auto-return requested an 11th; local fake rejected. Fixed fake terminal reply to explicit @owner, kept B earlier reply plain to exercise automatic return. No product change."
+    }
+  ],
+  "limitations": [
+    "Request content proves delivery, not model understanding or instruction obedience.",
+    "Bootstrap adds a real B turn to both arms; all of its model/tool requests count. Real models may take more than two bootstrap requests.",
+    "Loom exposes B briefing through normal shared channel history; native A is briefed directly. Common task content is proven present, whole request envelopes are not byte-identical.",
+    "No paid efficiency, business success, five-CLI coverage or real remote DNS/TLS/reset recovery claimed.",
+    "OpenCode request refusal was injected locally; old v5 failure cannot be retroactively classified beyond upstream pre-response transport failure.",
+    "Native initial prompts were submitted once by lead via Herdr, with recorded B completion before A; peer handoffs were executed by real CLI tools."
+  ],
+  "candidate": {
+    "manifestSha256": "c11fea6eb685a83c1c17952aa3a4e39a126836732c339dabfe211e8528978c35",
+    "frozenFiles": 3809,
+    "samples": [
+      {
+        "id": "pair1-loom",
+        "pairId": "pair1",
+        "arm": "loom"
+      },
+      {
+        "id": "pair1-native",
+        "pairId": "pair1",
+        "arm": "native"
+      },
+      {
+        "id": "pair2-native",
+        "pairId": "pair2",
+        "arm": "native"
+      },
+      {
+        "id": "pair2-loom",
+        "pairId": "pair2",
+        "arm": "loom"
+      },
+      {
+        "id": "pair3-loom",
+        "pairId": "pair3",
+        "arm": "loom"
+      },
+      {
+        "id": "pair3-native",
+        "pairId": "pair3",
+        "arm": "native"
+      }
+    ],
+    "limits": {
+      "maxActivations": 72,
+      "maxRequests": 450,
+      "maxInputTokens": 12000000,
+      "maxOutputTokens": 240000,
+      "maxDurationMs": 7200000
+    },
+    "authorized": false,
+    "newIndependentCohort": true,
+    "retryPolicy": "none; preserve failures, unknown accounting stops remaining samples",
+    "analysis": "All samples/failures retained; do not select successful subsets as repeated matched acceptance. Three same-quality matched pairs required for cohort efficiency verdict.",
+    "postProbeSourceDelta": {
+      "changedAfterFreeProbe": [
+        "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-reply-v6/freeze.py"
+      ],
+      "runtimeSourceChanged": false,
+      "reason": "new cohort pairs1-3 instead of old remaining pairs2-4; fixed acceptance and failure reporting before approval"
+    }
+  },
+  "cleanup": {
+    "ownedPanesClosed": ["wA:pM", "wA:pN"],
+    "callerLayoutRestored": true,
+    "generatedSettingsDeleted": 6,
+    "allRecordedProcessesAbsentAtFinish": true
+  },
+  "oldEvidence": "v5 manifest all3803files hash unchanged; failures/state/results untouched",
+  "provenance": {
+    "recorderLocalCopyFrom": "/Users/sun/.loom/reviews/2026-10-11-mixed-study/opencode/recorder.mjs",
+    "sourceSha256": "43e775b609f0ee59a51c4684218316458d6cbf157022d278868029f75b2e9f03",
+    "classification": "copy of prior local benchmark helper plus local sanitized diagnostics; no upstream product code reused"
+  }
+}
