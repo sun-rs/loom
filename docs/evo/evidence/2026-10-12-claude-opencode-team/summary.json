@@ -1,0 +1,217 @@
+{
+  "date": "2026-10-12",
+  "kind": "claude-opencode-herdr-loom-free-transport/v1",
+  "sourceHead": "953a4ceb96ff39b119f9d65ab354a897ce21114f",
+  "paidCalls": 0,
+  "productChanged": false,
+  "deploymentChanged": false,
+  "costRatio": null,
+  "privateRoot": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-team",
+  "versions": {
+    "opencode": "1.18.35",
+    "claude": "2.1.293"
+  },
+  "bindings": {
+    "opencode": "aihubmix/deepseek-v4.1-flash/low",
+    "claude": "sonnet/low; actual claude-sonnet-5-5"
+  },
+  "verified": [
+    "Actual installed CLIs; upstream restricted to localhost by macOS sandbox; fake credentials and isolated homes.",
+    "Loom uses real Kernel, WorkerApplicationService, MultiLaneAgentHost and both native-final warm adapters with current full standingPromptLease. Four completed Activations in A/B/A/B order.",
+    "Herdr uses actual recognized native interactive agents, OpenCode --mini and Claude TUI. Three CLI tool-executed herdr agent prompt calls have actual agent_prompted receipts. Lead supplies only the opening; no lead final-message relay.",
+    "Both arms perform actual shared file writes/reads. Four unique tool markers; A and B retain their own first-turn tool results on continuation.",
+    "Two native sessions per arm; Herdr OpenCode database has one session, two user messages and four assistant generations; Claude JSONL has one session with four assistant generations. Loom has two persistent native bindings and four completed Activations.",
+    "Each final arm has eight fully captured local synthetic generation responses; actual request model/effort checked before upstream forwarding.",
+    "Herdr Claude issued two medium auxiliary requests rejected locally before forwarding; not silently relabeled low or counted as paid usage.",
+    "All recorded final-run CLI PIDs absent after cleanup; only owned experimental panes wA:p7/p8 closed. Existing partner sessions and global user focus untouched."
+  ],
+  "attempts": [
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-team/runs/1791800418402/result.json",
+      "sha256": "5a3fd44564e4537726b1ffb9db652666a2e655115b7031696b9bcbd3ffcb4f22",
+      "status": "failed",
+      "recordRows": 23,
+      "completedSyntheticRequests": 4,
+      "controllerDeadline": false,
+      "error": "AssertionError [ERR_ASSERTION]: four activation timeout\n    at runLoom (file:///Users/sun/.loom/reviews/2026-10-12-claude-opencode-team/loom.mjs:30:298)\n    at async file:///Users/sun/.loom/reviews/2026-10-12-claude-opencode-team/free.mjs:13:54"
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-team/runs/1791800583730/result.json",
+      "sha256": "d5a803e0c78a33ebf3f44161d30b799143f19adb47049ac0802685ebc2178063",
+      "status": "passed",
+      "recordRows": 8,
+      "completedSyntheticRequests": 8,
+      "controllerDeadline": false,
+      "error": null
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-team/runs/1791801275193/result.json",
+      "sha256": "30e8d60f5cff6dfdfa96d30c293eaee5fc8fc50bae1979ac8dbcefe52b0af364",
+      "status": "passed",
+      "recordRows": 8,
+      "completedSyntheticRequests": 8,
+      "controllerDeadline": false,
+      "error": null
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-team/herdr-runs/1791800597711/result.json",
+      "sha256": "557ddb3a49c6a5cdba06a19a32f0c8bf3f2db375497a05dfb68b238a369c7b94",
+      "status": "incomplete",
+      "recordRows": 0,
+      "completedSyntheticRequests": 0,
+      "controllerDeadline": true,
+      "error": null
+    },
+    {
+      "path": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-team/herdr-runs/1791801261253/result.json",
+      "sha256": "d2ccec5604f9fccf5ca3bfe6b41bc28289e3ce33a73be2044f22c95af46475a5",
+      "status": "synthetic-records-completed",
+      "recordRows": 8,
+      "completedSyntheticRequests": 8,
+      "controllerDeadline": true,
+      "error": null
+    }
+  ],
+  "corrections": [
+    "First Loom fixture checked only last message for tool output; Claude appends a system token hint. Added typed tool-result search, with user/system-prose counterexamples, then passed. Failed local attempt and its teardown Host-inactive warning retained.",
+    "Native OpenCode full TUI crashed before generation; --mini runs. A script terminal wrapper hid process identity from Herdr; removed it. Native executable symlink name retained rather than version-only realpath to preserve detection.",
+    "Initial native effort configuration nested reasoning_effort under agent.options; native wire omitted effort and was rejected before forwarding. Model options.reasoningEffort and agent.reasoningEffort fixed locally; final two arms both observed low.",
+    "Herdr controller reached its six-minute administrative deadline after the full eight-response conversation had completed; exit code1/deadline retained. Subsequent independent audit verifies all records, idle final state, continuous sessions and exact-PID cleanup. It is not reported as a clean parent exit."
+  ],
+  "verification": {
+    "newPolicyTests": 5,
+    "existingAdmissionAndFailedTailTests": 14,
+    "independentLeadReadOnlyReplay": "passed",
+    "subagentReview": false,
+    "audit": {
+      "paidCalls": 0,
+      "costRatio": null,
+      "arms": {
+        "loom": {
+          "root": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-team/runs/1791801275193",
+          "resultSha256": "30e8d60f5cff6dfdfa96d30c293eaee5fc8fc50bae1979ac8dbcefe52b0af364",
+          "requests": 8,
+          "artifactSha256": "8441e80e864e522830fffc71ebd699d611a7fc2d411f149b181f189567669787",
+          "rawHashes": {
+            "request-1": "11d81bdbd9fdd6a6f85348c79fb73168ed9bc695907b611748433d61beb4b644",
+            "response-1": "6d22c24f61e82af1c9719a07d0c2fbf387d9e473188f43bd3616635ebb2166ff",
+            "request-2": "133b99a8b1c0085afbd57a0e80ae9d08b6a7292c80845076f3e5338428e95721",
+            "response-2": "c6ffe999ef42270b0aecb56fe691b14c77ffa83ee028a954c0d03f5b1cafba8f",
+            "request-3": "8ede9cad11155e453ad405edab29a5ae2521e584e5c4471dba6f7f9907047450",
+            "response-3": "be88994b799441748358280f558b1dd738ecd75471a3336d8fdf4f870436cbd7",
+            "request-4": "f073730d3020862453d61df8528e3f94023897b50a2e374c499391836d8c1139",
+            "response-4": "d289bcfc02a0173d60e1a162430fdcb15556d556abb4edd01cc94502165ee21b",
+            "request-5": "decd6c55acadc300280c3a099bc268d0d6ce1f56479187083b73e7228915e345",
+            "response-5": "1bdea90cd8b1152cecfb5ddabb1a4bb342a316ed66b9c9a91357db095e6ab696",
+            "request-6": "830595aeb07f5eb17333a05ef86807731b24432660a33937c655385f0d8d550b",
+            "response-6": "716f5d898b230b588cb5defd2bc4c1aa969e735e542b9948042d863ffa123c9f",
+            "request-7": "fccd00a9a8c233e2dac727530b7345a17839d444fc178848a34e425cdd39b1e2",
+            "response-7": "b11246011c37bcb51c13f42d50f63ea2a3e6cab855ce5981fd7c72a17b3cec80",
+            "request-8": "2e733ded582167fbe116e4f1440efb851e17bc3a88157ebe3d0373d7af80f8cd",
+            "response-8": "ba9f62bc351e710212990c51b783fd2a2939829b00a8b9a15f6a4b04c9ec452e"
+          },
+          "syntheticClaudeUsage": {
+            "input": 422,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 422,
+            "output": 80,
+            "generations": 4
+          },
+          "syntheticOpenCodeUsage": {
+            "input": 414,
+            "output": 80
+          },
+          "localRejected": 0,
+          "pids": [
+            {
+              "provider": "opencode",
+              "pid": 38163,
+              "absent": true
+            },
+            {
+              "provider": "opencode",
+              "pid": 38184,
+              "absent": true
+            },
+            {
+              "provider": "claude",
+              "pid": 38318,
+              "absent": true
+            }
+          ],
+          "controllerDeadline": false
+        },
+        "herdr": {
+          "root": "/Users/sun/.loom/reviews/2026-10-12-claude-opencode-team/herdr-runs/1791801261253",
+          "resultSha256": "d2ccec5604f9fccf5ca3bfe6b41bc28289e3ce33a73be2044f22c95af46475a5",
+          "requests": 8,
+          "artifactSha256": "8441e80e864e522830fffc71ebd699d611a7fc2d411f149b181f189567669787",
+          "rawHashes": {
+            "request-1": "311b88e091ab95d5eac54e622db4a9fb501efecf72fb00f5ad8f62d23c8ec41e",
+            "response-1": "67d207acbe37c90283172bab2557ab45b637bcad33e15d11a4927ed703fabeb8",
+            "request-2": "fc330ba8d79b8b904e4b33ad4ac602b821f5f3f8f6cef136d2f289677e6b3a5e",
+            "response-2": "66ce6c4d8f4b8d50947c5d587d216eb3380df8fdfa36d80840e52f8713eb887b",
+            "request-3": "35a6eb83d69d3159e077a37645f9c800364428eba99a63e6e046c841d76ec8ff",
+            "response-3": "036a757a7fe75f2908df4773d80781688c6e483d5b6ad00565f377379b65d071",
+            "request-4": "fadd81c027830eac144bddb33f268215c8934f2b9c387cb29a2b761d269687c6",
+            "response-4": "76cb4459cda870a02db6cf339531f78e918551e36f124d9525ad361dea071488",
+            "request-5": "0fae1461804c0ddfd0908bca0c916caf3b9f6993265d4efdc7881c5a588fb42c",
+            "response-5": "3cdc859d3d6d69512fad358e580077b7e3e57a9f78982cb25713071e94361b49",
+            "request-6": "aa1fa0398110caeefa4571eb2d78f48c35911f05d828adcd2684e9f96901f23c",
+            "response-6": "ee6aaed014766223ffbe53ede1ea12f7dbbe8b7d08b1688d213e3e92140220a1",
+            "request-7": "3eb105d5f5758d8048023ed4dc394ac0682d2621ef2df43e95141c11ee6e8ce0",
+            "response-7": "b11246011c37bcb51c13f42d50f63ea2a3e6cab855ce5981fd7c72a17b3cec80",
+            "request-8": "70183cfee24c3bef82b9641b05dd0fdaf1fcfeeb2c5db5077441667b222f7708",
+            "response-8": "ba9f62bc351e710212990c51b783fd2a2939829b00a8b9a15f6a4b04c9ec452e"
+          },
+          "syntheticClaudeUsage": {
+            "input": 422,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "uncachedInput": 422,
+            "output": 80,
+            "generations": 4
+          },
+          "syntheticOpenCodeUsage": {
+            "input": 414,
+            "output": 80
+          },
+          "localRejected": 2,
+          "pids": [
+            {
+              "provider": "opencode",
+              "pid": 38109,
+              "absent": true
+            },
+            {
+              "provider": "claude",
+              "pid": 38115,
+              "absent": true
+            }
+          ],
+          "controllerDeadline": true
+        }
+      }
+    },
+    "scriptHashes": {
+      "free.mjs": "9433ab4c5d59a1c00dbc32fff858a317d1502268352d20abe80aa20d2b801514",
+      "loom.mjs": "c8a8d7cad4d74959552946921de2a845a48f18153ad0d021d014667eab4ae11f",
+      "policy.mjs": "a4396a80d986eb40ea64656508d594a833a8a22b7e5e7b0dbb345e7345f2989e",
+      "policy.test.mjs": "bbeba14394a86aad3709faedf854906e5fca59bc41f2c0f056d26192d1af0ae2",
+      "herdr-free.mjs": "44a006a13a1e34840f9c8e1cc07ca25948b18103aa65978c1a3758820d3e5a67",
+      "audit.mjs": "3f2efb211af63f588efba4193e24293a594ace58c0fb8a06c6e4de89c0b04d56",
+      "prepare.mjs": "05f1d8ad475fb3286fe2313143c557970ab124fc960f5e6c64527a463fb54c1f",
+      "launch-native.mjs": "ad80d6dfb92e31b9d279d5f0622ddab9937aab0babf8ee4c97f863772db94427",
+      "model.mjs": "32633f1a1494e170a71d6b4495aaee0795567d4d34376cc52e868bd5205f181b"
+    }
+  },
+  "limits": [
+    "Scripted synthetic model replies demonstrate transport, not autonomous model choices, independent review quality, business completion, real tokens, efficiency ratios or statistical equivalence.",
+    "Not a release-ready paid runner: paid upstream credentials, cumulative team budget/owned-process parent guard and common business oracle still need integration using existing proven components. This free entry rejects --paid.",
+    "Claude automatic memory disabled explicitly. OpenCode isolated config disables external skills and Claude compatibility, plugin list empty; current exact-version memory audit helper requires native run --pure and has not been extended/verified for this interactive TUI entry. Do not call strict paid memory admission complete.",
+    "The synthetic sandbox proves outbound model traffic cannot leave localhost, not a completed paid-workspace/oracle isolation audit.",
+    "OpenCode full-TUI crash root cause remains unknown; native --mini is the only verified Herdr mode in this batch."
+  ],
+  "next": "Keep Codex gaps isolated. Complete the bounded paid-entry safeguards for this pair, then freeze a new four-pair balanced-order business cohort; no substitution for the stopped Codex/Claude cohort and no scenario-specific product workflow."
+}

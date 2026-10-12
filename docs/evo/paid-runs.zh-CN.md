@@ -630,3 +630,13 @@ Claude用量61126输入/1077输出完整；Codex已知308218/4624，缺量。原
 另发现旧Herdr采集器中有第二会话，其遥测model为gpt-5.6-luna、low，11548输入/19输出（含5633输入/0输出一条）。这笔量已包含在此前Codex622302/6823与整队977093/13952中，原合计未算错；但此前只报告gpt-6-luna＋sonnet遗漏了实际模型边界。当前已查的session目录和threads表中没有第二会话，不能认定为标题、记忆或主会话模型切换，也不删除它美化原生基线。gpt-5.6-luna虽在全局批准表内，并不自动成为本批精确组合的一部分；旧Herdr先导仍有业务通过证据，但不是严格双模型效率验收。
 
 独立核账脚本9项离线回归红后绿，复现两边原有已知总数；未发现缓存重复相加或完成事件重复计数。三条／一条失败缺量仍分别保留，没有独立服务端账目可以补回。官方遥测文档仅说明事件计数，不构成完整账单证明。目标仍是原生CLI token对照，不要求所有样本达到财务账单精度；完整已观察用量与精确账单是两回事，已有失败缺量也不能被session累计数消除。后续免费准入须核对全部观察到的会话／模型，而不只看启动参数；Codex缺量诊断单列，其他可完整核账CLI组合可独立推进，不能因此阻断整个项目。任何描述性已知token结果与严格成本验收分栏，不能改变合同缺量不通过的标准。[原档哈希、差额与模型边界](evidence/2026-10-12-accounting-audit/summary.json)。产品、正式开关、部署均未修改，无重启。
+
+## Claude／OpenCode替代组合：真实Herdr与Loom免费贯通（2026-10-12）
+
+Codex缺量不再阻断其他组合：新私有入口采用Claude2.1.293／sonnet低（实际claude-sonnet-5-5）与OpenCode1.18.35／aihubmix/deepseek-v4.1-flash低，只连接localhost合成模型，macOS sandbox禁止外部IP出站，新增付费0。Loom使用真实Kernel／Host、当前完整常驻指令和两家warm native-final；四个Activation完成，双方同session续接。真实Herdr中新建的两实验pane运行Claude TUI与OpenCode原生mini，CLI工具实际执行三次herdr agent prompt，原流保存agent_prompted回执；负责人只发送开场，没有代转final。
+
+最终两臂各8次合成生成完整，各自四次真实文件读写留下共享工件标记；双方续轮原流含自己的前轮工具结果。Herdr本地数据库／JSONL各唯一session，Loom两原生绑定／四运行。Herdr Claude另有两次medium请求，在转发前拒绝，不能伪装成low或算作付费消耗。合成用量不构成倍率，不证明模型自主业务或真实审查能力。
+
+失败保留：首Loom夹具假定最后一条message是工具结果，被Claude附加system提示打破；类型化工具结果检查红后绿，重验通过，旧超时及Host-inactive清理警告不改写。Herdr OpenCode完整TUI启动崩溃、无生成，mini可用；script包装隐藏进程身份，移除后Herdr识别成功。原生effort嵌套配置未进入请求，被本地守卫拦下；改用model options.reasoningEffort与agent顶层reasoningEffort后，最终两臂原流均为low。Herdr父控制器在完整交接后达到六分钟管理时限，exit1及deadline原样保留，不能称父进程全绿；随后只读独核全部响应、连续session、idle状态和PID清理通过。
+
+5项新增策略回归、14项既有准入／失败尾账测试通过。仅结束并关闭本批pane，伙伴会话未动；产品、默认开关与部署未改，无服务重启。此入口明确拒绝付费：真实凭据、已有整队预算／父清理守卫与共同业务oracle尚待接入；OpenCode现有自动记忆证据helper约束run --pure，不能直接冒充本次TUI严格记忆准入。下一步限定为这些付费前置条件，再冻结独立四对平衡顺序业务批，不补旧Codex批、不做工作流产品硬编码。[证据、原流哈希及限制](evidence/2026-10-12-claude-opencode-team/summary.json)。
