@@ -1,0 +1,151 @@
+{
+  "date": "2026-10-12",
+  "kind": "native-accounting-crosscheck/v1",
+  "paidCalls": 0,
+  "productChanged": false,
+  "deploymentChanged": false,
+  "oldLedgersRewritten": false,
+  "privateAuditRoot": "/Users/sun/.loom/reviews/2026-10-12-accounting-audit",
+  "replay": {
+    "loom-repeat": {
+      "knownInput": 308218,
+      "knownOutput": 4624,
+      "groups": {
+        "01a12f48-d800-71b0-b74c-73d977bb012e": {
+          "models": ["gpt-6-luna"],
+          "input": 308218,
+          "output": 4624,
+          "quantityRecords": 18,
+          "zeroOutputInputs": [8446],
+          "sessionTotal": {
+            "input_tokens": 299772,
+            "cached_input_tokens": 252672,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 4624,
+            "reasoning_output_tokens": 0,
+            "total_tokens": 304396
+          },
+          "delta": {
+            "input": 8446,
+            "output": 0
+          }
+        }
+      },
+      "quantitylessFailures": 3,
+      "invalidQuantityEvents": 3,
+      "rawTransportEvents": 0,
+      "duplicates": 0,
+      "unexpectedModels": [],
+      "mainSessionDelta": {
+        "input": 8446,
+        "output": 0
+      },
+      "billingProven": false,
+      "completionQuantitiesComplete": false,
+      "boundary": "Recorded counters are not an independent provider billing source; matching final counters cannot resolve missing failed-request usage. Unknown model/helper records remain included and separately flagged.",
+      "inputArchive": {
+        "root": "/Users/sun/.loom/reviews/2026-10-12-team-mvp/claude/business-entry/herdr-repeat-v1/runs/1791794659669-pair1-loom/codex/otel",
+        "fileCount": 90,
+        "manifestSha256": "60546a3b156a43612dc9a85c836b7737bf073ad8da980bdbd4976af0de3833fc",
+        "sessionHashes": {
+          "rollout-2026-10-12T16-44-25-01a12f48-d800-71b0-b74c-73d977bb012e.jsonl": "1a71fad1c23b1afefec675f60b6b2fbb1c2758be3011c59b74a73e04a40716e3"
+        }
+      }
+    },
+    "herdr-pilot": {
+      "knownInput": 622302,
+      "knownOutput": 6823,
+      "groups": {
+        "01a12e7f-1a6d-7f70-b680-7febcc7241f8": {
+          "models": ["gpt-6-luna"],
+          "input": 610754,
+          "output": 6804,
+          "quantityRecords": 32,
+          "zeroOutputInputs": [8446],
+          "sessionTotal": {
+            "input_tokens": 602308,
+            "cached_input_tokens": 548096,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 6804,
+            "reasoning_output_tokens": 0,
+            "total_tokens": 609112
+          },
+          "delta": {
+            "input": 8446,
+            "output": 0
+          }
+        },
+        "01a12e84-f5fe-7d10-be60-745eafb9c400": {
+          "models": ["gpt-5.6-luna"],
+          "input": 11548,
+          "output": 19,
+          "quantityRecords": 2,
+          "zeroOutputInputs": [5633]
+        }
+      },
+      "quantitylessFailures": 1,
+      "invalidQuantityEvents": 1,
+      "rawTransportEvents": 0,
+      "duplicates": 0,
+      "unexpectedModels": ["gpt-5.6-luna"],
+      "mainSessionDelta": {
+        "input": 8446,
+        "output": 0
+      },
+      "billingProven": false,
+      "completionQuantitiesComplete": false,
+      "boundary": "Recorded counters are not an independent provider billing source; matching final counters cannot resolve missing failed-request usage. Unknown model/helper records remain included and separately flagged.",
+      "inputArchive": {
+        "root": "/Users/sun/.loom/reviews/2026-10-12-herdr-live/codex-otel",
+        "fileCount": 166,
+        "manifestSha256": "0f1a542678292bc84770d63a7536e365159a49d0f4d2169fcb9d6272d921dcf2",
+        "sessionHashes": {
+          "rollout-2026-10-12T13-04-04-01a12e7f-1a6d-7f70-b680-7febcc7241f8.jsonl": "4dbc0d7e6b0185719a17da1786d499f750b928a1417879feaba9e98d51bf25b0"
+        }
+      }
+    }
+  },
+  "verification": {
+    "tests": 9,
+    "red": "test_audit import failed before audit.py existed",
+    "green": "Nine independent offline reconciliation tests passed; final added field-separation test also failed before implementation.",
+    "scriptHashes": {
+      "audit.py": "815be17859097569322de9877d0e18dce2a81d796a314857da227b715996dab9",
+      "test_audit.py": "c75c3040a63efa4336378e92d8049444bcbbd1deaadc3898df41933acbafe175",
+      "replay.py": "609106fb571f28c3d885fa2a30ebd4b99edec97e3846f37f6400828401542b72"
+    },
+    "invariants": [
+      "Cumulative session total does not resolve quantityless stream failures",
+      "Zero-output completed records retain input",
+      "Cache is not added twice",
+      "Different model/conversation records remain counted and flagged",
+      "Exact duplicate records counted once",
+      "Pinned raw transport duplicates are not separate completions",
+      "Missing is not zero",
+      "No client counter is treated as independent billing proof"
+    ]
+  },
+  "findings": [
+    "Latest Loom: session final and JSONL both report input 299772/output 4624; raw completion records report 308218/4624. Difference is one input 8446/output 0 completion.",
+    "Older Herdr: principal session reports 602308/6804; its raw completions total 610754/6804, again an extra 8446/0 completion.",
+    "Herdr additionally recorded conversation 01a12e84-f5fe-7d10-be60-745eafb9c400 with telemetry model gpt-5.6-luna, effort low, 11548 input and 19 output. Included in the previously reported total, never deducted as an assumed free helper.",
+    "The additional Herdr conversation has no matching session file in the checked date directory and no row in the current local threads database. Purpose/parent ownership unresolved. No evidence here proves title generation, memory, model substitution of the principal, or a user-created subagent.",
+    "Launch argument validation alone missed the additional actual model. The historical pilot is not a verified exact two-model comparison; gpt-5.6-luna is globally approved but not part of the declared gpt-6-luna/sonnet batch pair.",
+    "Original known Codex totals reproduce exactly for both samples; no discovered cache double-addition or duplicated completion overcount. Missing failed-request counts remain unresolved.",
+    "Official telemetry documentation describes emitted event counters, not an account billing reconciliation source. No supported recovery of these missing failed-request quantities was established by this audit."
+  ],
+  "officialReference": {
+    "url": "https://learn.chatgpt.com/docs/config-file/config-advanced",
+    "scope": "Observability section: API attempts, SSE completion token counts and per-turn usage; documentation only, not proof of an exact local build or billing recovery."
+  },
+  "decision": {
+    "oldPaidCohort": "Remains sealed/stopped. Do not refill, omit failed samples, or use another cohort as its control.",
+    "benchmark": "Compare recorded native CLI token usage under contract §6, not an exact monetary bill. Separate observed completion quantity completeness from billing proof. Missing failed-request usage still prevents strict efficiency acceptance; matching counters do not repair it.",
+    "nextFiniteWork": [
+      "Require observed model/session inventory as well as launch checks in any future free admission audit. Unknown auxiliary work stays in costs and blocks exact-model claims.",
+      "Validate a complete-accounting CLI pair independently; do not require all other CLI work to wait for Codex failure billing recovery. Any new paid cohort needs its own concrete fixed plan, equal task/quality criteria and existing authorization.",
+      "For Codex, obtain a verified upstream request accounting source or demonstrate a bounded transport fix in free failure-injection tests before another cost cohort. Native final counters are not a fallback for this gap.",
+      "Preserve autonomous handoff failures as outcome data; do not hardcode reviewer workflow or change prompts between measured samples."
+    ]
+  }
+}
