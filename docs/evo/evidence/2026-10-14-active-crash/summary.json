@@ -1,0 +1,355 @@
+{
+  "date": "2026-10-14",
+  "codeUnderTest": "cbf70cf (product c15d004)",
+  "scope": "installed CLI + isolated real daemon + loopback synthetic model; not formal user service",
+  "paidCalls": 0,
+  "attempts": [
+    {
+      "attempt": "1791915018345-codex",
+      "provider": "codex",
+      "requests": 2,
+      "passed": false,
+      "failure": "temporary quarantine incorrectly rejected",
+      "runtimeStates": [
+        {
+          "state": "terminated",
+          "n": 2
+        }
+      ],
+      "independentProofAudit": {},
+      "resultSha256": "b394a5b34e01dedf2b89c5e95124849402a27a4533b85067db1471fb71c347e3",
+      "requestSha256": [
+        "d8ec2942e90bf814202faaf6384d976f1f7d091cc5d356d10e40ee2fe45d39fd",
+        "f81c8ac64992f2f720ffa663a76bd3d2484337b84050d7de627e27287600c34c"
+      ]
+    },
+    {
+      "attempt": "1791915036330-opencode",
+      "provider": "opencode",
+      "requests": 2,
+      "passed": false,
+      "failure": "temporary quarantine incorrectly rejected",
+      "runtimeStates": [
+        {
+          "state": "terminated",
+          "n": 2
+        }
+      ],
+      "independentProofAudit": {},
+      "resultSha256": "2f55999c2d5f49bbdae133bc89b37a7927826a713f43eca4f4eb595dcce9e71b",
+      "requestSha256": [
+        "a28a2789a4be5eaf187420d90b2f3f1cd3107107b3d58bd3cfb2ef809d153e80",
+        "860f2ca912494ba8f8f33bdd773922ca2a7b21c13781b78856ec8a4b9cf88067"
+      ]
+    },
+    {
+      "attempt": "1791915036331-kimi",
+      "provider": "kimi",
+      "requests": 2,
+      "passed": false,
+      "failure": "temporary quarantine incorrectly rejected",
+      "runtimeStates": [
+        {
+          "state": "orphaned",
+          "n": 1
+        },
+        {
+          "state": "terminated",
+          "n": 1
+        }
+      ],
+      "independentProofAudit": {},
+      "resultSha256": "9d96a373fed4b0e49301aee30bb207dcdf95292b3f3ba0c30c0ff5b5a61a75f0",
+      "requestSha256": [
+        "7b5efbf65505fd5bfa6556f60cf595126fedca9a61adba2401189c1fa9055535",
+        "f88322ae092c44451feef1bdc9defb30ba4b9eed858b2e9c5c571fddf245acce"
+      ]
+    },
+    {
+      "attempt": "1791915036334-pi",
+      "provider": "pi",
+      "requests": 2,
+      "passed": false,
+      "failure": "temporary quarantine incorrectly rejected",
+      "runtimeStates": [
+        {
+          "state": "orphaned",
+          "n": 1
+        },
+        {
+          "state": "terminated",
+          "n": 1
+        }
+      ],
+      "independentProofAudit": {},
+      "resultSha256": "a812e552012885fa3ade868abc6927c85b01ca769caf6b0c4d8d86321c9ac907",
+      "requestSha256": [
+        "9a82ec16aa52f9d3ffc830e2755881df54d9c7fe01e7aed4e88c4482d170d9e6",
+        "aff716bc897ca2362abfdd4baa952d6f89fe0346cde6408aec88b816ff269200"
+      ]
+    },
+    {
+      "attempt": "1791915036340-claude",
+      "provider": "claude",
+      "requests": 2,
+      "passed": false,
+      "failure": "temporary quarantine incorrectly rejected",
+      "runtimeStates": [
+        {
+          "state": "terminated",
+          "n": 2
+        }
+      ],
+      "independentProofAudit": {},
+      "resultSha256": "ffd66766dfa0e4aa900d515015c3504f59ed45f92243c773cf9bad569707522d",
+      "requestSha256": [
+        "49e4397386cf877985382826d25146c4cb618c41e7fe91029348a3af3d4d2064",
+        "ddae5fd59f5e49eb56bc7a099839064a8e0a83cfd2a82198c428fac932e64eed"
+      ]
+    },
+    {
+      "attempt": "1791915198354-kimi",
+      "provider": "kimi",
+      "requests": 3,
+      "passed": false,
+      "failure": "normal process exit incorrectly equated with business completion",
+      "runtimeStates": [
+        {
+          "state": "terminated",
+          "n": 3
+        }
+      ],
+      "independentProofAudit": {},
+      "resultSha256": "49e2788b33887c686f9af1f21452889dc933c7b7d561a9f0700505cb6bd52bb2",
+      "requestSha256": [
+        "fe124ce50465fc9f92fef4b8eda4abc1cc648689988e39c87273e7d867e22800",
+        "7f95f5b5270b2d367d248ebae4bc4e4f4d6b4ccd53cf1ddd46fea132ec954f6b",
+        "354b3c28b392fb8a317f2949f58ad5255e23acf406921db6da603e485d29d1f6"
+      ]
+    },
+    {
+      "attempt": "1791915198356-codex",
+      "provider": "codex",
+      "requests": 3,
+      "passed": true,
+      "failure": null,
+      "runtimeStates": [
+        {
+          "state": "terminated",
+          "n": 3
+        }
+      ],
+      "independentProofAudit": {
+        "oldWriteCount": 0,
+        "successors": 1,
+        "oldExitMatchesProof": true,
+        "terminalBeforeSuccessor": true,
+        "oldState": "failed",
+        "proofKind": "process_exit"
+      },
+      "resultSha256": "2b69096d9c8f1937bb352330062b381e165e74db6956d19f4274bfdd1ebbf77e",
+      "requestSha256": [
+        "7024770f445d2cd48b01f4a30217813681f8e1566b92dd3ce10881299c656840",
+        "33ec94e005c02a8f60ef7c78e133f206396085d6f8dd4d32d2b12f738813b159",
+        "0757079872033559a8abe13282da3000656910a5fd09229b3b59175fb1fafec2"
+      ]
+    },
+    {
+      "attempt": "1791915198364-opencode",
+      "provider": "opencode",
+      "requests": 3,
+      "passed": true,
+      "failure": null,
+      "runtimeStates": [
+        {
+          "state": "terminated",
+          "n": 3
+        }
+      ],
+      "independentProofAudit": {
+        "oldWriteCount": 0,
+        "successors": 1,
+        "oldExitMatchesProof": true,
+        "terminalBeforeSuccessor": true,
+        "oldState": "failed",
+        "proofKind": "process_exit"
+      },
+      "resultSha256": "10d10775c10dc171102c7bbdb923940b9de8a2619314dfc0f1ff0985c077f0e8",
+      "requestSha256": [
+        "2d5247b6a2eb882a0a82a4a5a9c73532bcf49a9da552cb462d6c7e6d0e849308",
+        "d84ba7e5e1836804ed315e976462c0dcf67176ef1382b89c49b03a2b89a877b1",
+        "6601bcbd5db0c8a7ff476bbe86dbcecf12ef35401ee04e672048b9dd69935efb"
+      ]
+    },
+    {
+      "attempt": "1791915198375-pi",
+      "provider": "pi",
+      "requests": 3,
+      "passed": true,
+      "failure": null,
+      "runtimeStates": [
+        {
+          "state": "terminated",
+          "n": 3
+        }
+      ],
+      "independentProofAudit": {
+        "oldWriteCount": 0,
+        "successors": 1,
+        "oldExitMatchesProof": true,
+        "terminalBeforeSuccessor": true,
+        "oldState": "failed",
+        "proofKind": "process_exit"
+      },
+      "resultSha256": "fbc77e3a459f1dd9ec82ec1ab2452ee4f370f8532ef02938c488bd03838a2da2",
+      "requestSha256": [
+        "c46ffda334fcb3cc18baad2d10e9132b010dc36bd961a0a050d9cbb70df811b6",
+        "a4a6b492ac4ce9010c4943dade7e59c35057f53a19f149759f738ce77005ea43",
+        "9f345020a5d410bee4821ade317a91a2b43b841fa83e3e105d58789f57431f8c"
+      ]
+    },
+    {
+      "attempt": "1791915198383-claude",
+      "provider": "claude",
+      "requests": 3,
+      "passed": true,
+      "failure": null,
+      "runtimeStates": [
+        {
+          "state": "terminated",
+          "n": 3
+        }
+      ],
+      "independentProofAudit": {
+        "oldWriteCount": 0,
+        "successors": 1,
+        "oldExitMatchesProof": true,
+        "terminalBeforeSuccessor": true,
+        "oldState": "failed",
+        "proofKind": "process_exit"
+      },
+      "resultSha256": "c883eb4ab431f43123bbe83955bfe02e4fbaa5725b4f9e14275d43850eefec99",
+      "requestSha256": [
+        "2e963d8d0ac0f738b12ecb36f4fa2866b7454b5599579e54c8e5c6f021675d2a",
+        "a3f6c540bdf20cb2e0be5382cb14e542850015616099d8f6908524d0dad9726d",
+        "de0cd9ad2c0d9ea069c27b0cd568a1ad03f91bfc6cdee718620826925bb01fb3"
+      ]
+    },
+    {
+      "attempt": "1791915417953-kimi",
+      "provider": "kimi",
+      "requests": 3,
+      "passed": true,
+      "failure": null,
+      "runtimeStates": [
+        {
+          "state": "terminated",
+          "n": 3
+        }
+      ],
+      "independentProofAudit": {
+        "oldWriteCount": 0,
+        "successors": 1,
+        "oldExitMatchesProof": true,
+        "terminalBeforeSuccessor": true,
+        "oldState": "exited",
+        "proofKind": "process_exit"
+      },
+      "resultSha256": "de5325f5db24efc66f2272a83ef98e7cc911f111676cea680025876cd7efaed4",
+      "requestSha256": [
+        "fc772463b79e599dcfbb9abbd043311491c4de062bf224a0d9e0f46360d9d98d",
+        "544bf538f521a9a84c1e77dd724d9a8ca57f24e78f8e0950479a89bdcffcd45b",
+        "ce4395f4a3ea239ad24cb04b90526d928104ba5dfb0b6cfc2cf78d4ab02397fb"
+      ]
+    }
+  ],
+  "totalRequests": 28,
+  "cleanup": {
+    "recordedPidsChecked": 72,
+    "allExited": true,
+    "generatedSettingsRemoved": 19,
+    "retainedAbandonedLedgerOrphans": 2,
+    "note": "Two early-abandoned fixtures retain orphaned runtime ledger records; all 72 recorded OS process IDs have exited. Do not rewrite historical terminal evidence."
+  },
+  "limitations": [
+    "No paid model quality or efficiency inference",
+    "No arbitrary external tool side-effect exactly-once guarantee",
+    "No filesystem power-loss injection",
+    "Host ownership timeout intentionally preserved"
+  ],
+  "committedFinalResponseLoss": {
+    "cases": 3,
+    "result": "passed",
+    "scenario": "A requests B, B plain final returns to A, A final; lose the successful HTTP response on each turn in separate tests; one HTTP write only and durable marker verification"
+  },
+  "repair": {
+    "problem": "Final reply durably committed before Host crash, but termination recovery requeues original Activation and may execute again",
+    "owner": "Kernel",
+    "schema": 89,
+    "newProofFields": ["consumer_id", "delivery_to_seq"],
+    "tests": {
+      "red": "Both no-follow-up and follow-up cases reproduced queued instead of completed",
+      "focusedRecoveryTests": 9,
+      "schemaMigration": "88 -> 89 preserves events, leaves historical scope NULL",
+      "guards": [
+        "termination proof",
+        "latest attempt only",
+        "exact ACK consumer",
+        "full Activation range",
+        "session generation",
+        "existing Task/first-run obligations"
+      ],
+      "databaseReopen": "automatic initialization settles proven final; follow-up remains independent"
+    },
+    "limits": [
+      "Deterministic actual Kernel tests, not a new paid model batch",
+      "Arbitrary external tools may have non-idempotent side effects",
+      "Historical final markers without scope retain existing recovery behavior"
+    ],
+    "status": "implemented, checked, committed, pushed and deployed",
+    "commit": "13d27f092e1cdccdb51c592f6499efa4d6e3e3ea"
+  },
+  "verification": {
+    "npmRunCheck": {
+      "exitCode": 1,
+      "backend": {
+        "passed": 3242,
+        "failed": 4,
+        "skipped": 22
+      },
+      "failures": "four historical migration assertions expected schema 88 instead of 89; data-retention assertions unchanged"
+    },
+    "migrationRecheck": {
+      "passed": 54,
+      "failed": 0
+    },
+    "remainingCheckStages": {
+      "exitCode": 0,
+      "web": 487,
+      "console": 63,
+      "parity": 34,
+      "browserPolicy": 15,
+      "bilateralCaptures": 3,
+      "efficiencyUnit": 558
+    },
+    "focusedRecovery": 9,
+    "lostResponseAfterRepair": 3,
+    "sourceSizeRatchet": "passed; not raised",
+    "logsSha256": {
+      "red.log": "fc5317eea9fd70309bb73e53ab3b27b422edd86bc5b72802e1b109e2740cd5f0",
+      "check.log": "4b6cd097da86ceebf33b77d19d060b23d49fd7a1669aed8f89918ccb0a10fe56",
+      "migration-recheck.log": "7661f443215ba2a78ed201f82d3cc57248192c0923e6a89bdabafc167b1ac6bb",
+      "remaining-checks.log": "bd2d08ae35732aebb22c46fe011ba6c16d34b101bfd59b106bb8070d2a5690c1",
+      "recovery-final.log": "d208d13fb88e7effa2cb65e1ac126cbcd9897cbecf6a2cd64d62f24b65e777a4",
+      "lost-response-after-repair.log": "99dc1703fe4522a06ba709994272ce1b84c374dc087874c82b7dcf0de8c14559",
+      "source-boundary.log": "e3c14f6454c48f830046c3da25c11185225f26a0f3b801720a0a514be089456a",
+      "format-final.log": "fb5ffe51bf83c7a6ac683f386a5c903f6ff2c086dbe1bf27cc1f12efddaf7e3f",
+      "typecheck-final.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "remainingLogNote": "Remaining-stage log starts after the first Web output chunk; all stage summaries and final exit are retained.",
+    "formatCheck": "passed",
+    "finalTypecheck": "passed",
+    "diffCheck": "passed"
+  },
+  "deploymentEvidence": "deployment.json"
+}
