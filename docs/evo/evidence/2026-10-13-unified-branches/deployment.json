@@ -1,0 +1,121 @@
+{
+  "at": "2026-10-13T12:54:10.263Z",
+  "codeCommit": "385c54edd1eb2e09ae3b239a9ff13aca6ebd55f2",
+  "service": "com.loom.evo",
+  "schemaVersion": 88,
+  "stateHomeUnchanged": "/Users/sun/.loom/evo/state",
+  "backup": {
+    "path": "/Users/sun/.loom/evo/backups/pre-restart-unified-branches-99245679-884b-4e39-b25a-0d4e5f7de0d0",
+    "databases": 2,
+    "files": 318
+  },
+  "gracefulRestartVerified": true,
+  "businessTablesUnchanged": {
+    "principals": {
+      "rows": 74,
+      "sha256": "71626744fb8b9f76f94bb7ebeebbfdf8e893c2f83363fcb83e7bbde4678809ef"
+    },
+    "agent_definition_revisions": {
+      "rows": 89,
+      "sha256": "89639899b7177fb2c942755209692a2f5fa4242b619e8b20040249a4309cfe29"
+    },
+    "execution_policy_revisions": {
+      "rows": 89,
+      "sha256": "65b5468188c9e0cfd33afb2ef023c0eefd003c562621afca13c3ebdabfb9a659"
+    },
+    "messages": {
+      "rows": 249,
+      "sha256": "84e3e11c8f5b7fd78d29000dde1e65c1dc059181495b271317a88982fc75bbef"
+    },
+    "tasks": {
+      "rows": 9,
+      "sha256": "a04b56b278ac8b942bf35c96db144a3ba261e1d1d8838b7483ef36d65ba2fd52"
+    },
+    "role_templates": {
+      "rows": 42,
+      "sha256": "8c1ea4a78b19f0a605a39e291b96447c084673f244e33bf5c473be471df3c8da"
+    },
+    "role_revisions": {
+      "rows": 43,
+      "sha256": "1d8fb5fe30ef8deb58a383733aadbaa2ad41b07f42db174aee57499aca1ce393"
+    },
+    "role_instances": {
+      "rows": 68,
+      "sha256": "ef7eb9f5cf4f234707b9bd3c386e4c8242cc8765286a8cc4418a144062d7da7b"
+    },
+    "memory_entries": {
+      "rows": 4,
+      "sha256": "d0d2bb98894716fcfbda8ea5f4b3112a99595d70192c7df088ac553b00cef08b"
+    },
+    "memory_revisions": {
+      "rows": 4,
+      "sha256": "21b7e112c7deda7a547b68d235b562c0d88bb8103ef385d553673e0f044d5893"
+    },
+    "role_instance_sessions": {
+      "rows": 66,
+      "sha256": "76b0adc6c3bcadc8188c214270e67460ba03d8fe6ae5872f28b5b555235f1251"
+    },
+    "room_events": {
+      "rows": 2202,
+      "sha256": "4d6a60629e7f2534d2a84cc7e8ad82e0461e787fb229295b20d536ee1d0fe7f6"
+    },
+    "agent_definitions": {
+      "rows": 72,
+      "sha256": "ad4945f537267198d856ce492b79bbd8dec0bb66021f19f05c56538e69e688ac"
+    },
+    "inbox_items": {
+      "rows": 179,
+      "sha256": "7a96e866b550ef974dd49056926c3193dc9d09acf7234aad3b07c98aac38ff86"
+    },
+    "side_sessions": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    }
+  },
+  "sourceSha256": "f2b614547dcc3cc3458c3b26e908ce9278ac8b8f34767b67afa66294c351c7f7",
+  "webBuildIdentity": {
+    "schemaVersion": 1,
+    "kind": "development",
+    "version": "0.0.0-dev+local",
+    "builtAt": "2026-10-13T12:39:13.536Z",
+    "buildId": "22370806bd25778f"
+  },
+  "webSourceUnchanged": true,
+  "webRebuiltForRuntimeCapabilityProtocol": true,
+  "staticDirectory": "/Users/sun/Code/repos/rah_os/.workbench-web/5d2b7f5935b0eba630fba3ef10cf5e8986bcbc492d8e5c8fe79721b814d3a257",
+  "consoleDirectory": "/Users/sun/.loom/evo/console-builds/74e2e1cc4313477d760bbd3ea313aecc71bb47be5bf7218eae471063f6778741",
+  "consoleAssets": {
+    "app-cRAJPcqj.js": "54ea6dbf0e64b6804eb6d95ee8f6fc4a31994d9de24a2739033cea69079cd3c5",
+    "index-CMS0EqB1.js": "7dcd28d9b5ac13b563fb24b6cf36e6716d1b6b814eb9d3a038a31876a76791e9",
+    "index-DaexJMn4.css": "f58c6496457ed2e4206d838f48d443fec9bab9c8559422c3013975713c322db2"
+  },
+  "freshRealHistoryVerified": true,
+  "authenticatedRoleMemoryUsageApisVerified": true,
+  "runtimeCapabilitiesVerified": ["codex:fork,side", "opencode:fork,side"],
+  "sidePreviews": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "configuredCodexCapabilityEnabled": true
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "configuredCodexCapabilityEnabled": true
+    }
+  ],
+  "pageErrors": [],
+  "productionInstancesCreatedOrReset": false,
+  "nativeFinalEnabled": ["claude", "opencode"],
+  "otherFiveFinalFlagsOff": true,
+  "paidCalls": 0,
+  "privateEvidence": "/Users/sun/.loom/reviews/2026-10-13-unified-branches/deployment",
+  "evidenceHashes": {
+    "restart.json": "20babed8de065ccaa94a4bbe8767f772a4adf906d399a355c4fe46373c1c611c",
+    "page.json": "e74a5de007b2999bca3adb88398ed71c8a6924e97010466e468f89e4362c25a3"
+  }
+}

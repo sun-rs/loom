@@ -247,5 +247,7 @@
     "codex": "0.162.1",
     "opencode": "1.18.35"
   },
-  "sourceSha256": "f2b614547dcc3cc3458c3b26e908ce9278ac8b8f34767b67afa66294c351c7f7"
+  "sourceSha256": "f2b614547dcc3cc3458c3b26e908ce9278ac8b8f34767b67afa66294c351c7f7",
+  "codeCommit": "385c54edd1eb2e09ae3b239a9ff13aca6ebd55f2",
+  "deployment": "deployment.json"
 }
