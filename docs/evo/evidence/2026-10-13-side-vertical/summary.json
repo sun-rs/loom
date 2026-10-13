@@ -223,5 +223,7 @@
       "sha256": "05fd0ce74fe6571309612a1de5cb7fa9add96800e9c3d8469f5a33d5a8cbc41a"
     }
   },
-  "sourceSha256": "0545f2d6983088ae70d115172a519cf75f541f4e07c08afaeccb0d076eed9f57"
+  "sourceSha256": "0545f2d6983088ae70d115172a519cf75f541f4e07c08afaeccb0d076eed9f57",
+  "codeCommit": "1c8836f59901fb00ab4679db9467b1830e285186",
+  "deployment": "deployment.json"
 }

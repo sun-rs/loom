@@ -1,0 +1,116 @@
+{
+  "at": "2026-10-13T12:09:40.918Z",
+  "codeCommit": "1c8836f59901fb00ab4679db9467b1830e285186",
+  "service": "com.loom.evo",
+  "schemaVersion": 88,
+  "stateHomeUnchanged": "/Users/sun/.loom/evo/state",
+  "backup": {
+    "path": "/Users/sun/.loom/evo/backups/pre-restart-side-de7860e3-6285-43da-b512-c2726d48db9d",
+    "databases": 2,
+    "files": 318
+  },
+  "gracefulRestartVerified": true,
+  "businessTablesUnchanged": {
+    "principals": {
+      "rows": 74,
+      "sha256": "71626744fb8b9f76f94bb7ebeebbfdf8e893c2f83363fcb83e7bbde4678809ef"
+    },
+    "agent_definition_revisions": {
+      "rows": 89,
+      "sha256": "89639899b7177fb2c942755209692a2f5fa4242b619e8b20040249a4309cfe29"
+    },
+    "execution_policy_revisions": {
+      "rows": 89,
+      "sha256": "65b5468188c9e0cfd33afb2ef023c0eefd003c562621afca13c3ebdabfb9a659"
+    },
+    "messages": {
+      "rows": 249,
+      "sha256": "84e3e11c8f5b7fd78d29000dde1e65c1dc059181495b271317a88982fc75bbef"
+    },
+    "tasks": {
+      "rows": 9,
+      "sha256": "a04b56b278ac8b942bf35c96db144a3ba261e1d1d8838b7483ef36d65ba2fd52"
+    },
+    "role_templates": {
+      "rows": 42,
+      "sha256": "8c1ea4a78b19f0a605a39e291b96447c084673f244e33bf5c473be471df3c8da"
+    },
+    "role_revisions": {
+      "rows": 43,
+      "sha256": "1d8fb5fe30ef8deb58a383733aadbaa2ad41b07f42db174aee57499aca1ce393"
+    },
+    "role_instances": {
+      "rows": 68,
+      "sha256": "ef7eb9f5cf4f234707b9bd3c386e4c8242cc8765286a8cc4418a144062d7da7b"
+    },
+    "memory_entries": {
+      "rows": 4,
+      "sha256": "d0d2bb98894716fcfbda8ea5f4b3112a99595d70192c7df088ac553b00cef08b"
+    },
+    "memory_revisions": {
+      "rows": 4,
+      "sha256": "21b7e112c7deda7a547b68d235b562c0d88bb8103ef385d553673e0f044d5893"
+    },
+    "role_instance_sessions": {
+      "rows": 66,
+      "sha256": "76b0adc6c3bcadc8188c214270e67460ba03d8fe6ae5872f28b5b555235f1251"
+    },
+    "room_events": {
+      "rows": 2202,
+      "sha256": "4d6a60629e7f2534d2a84cc7e8ad82e0461e787fb229295b20d536ee1d0fe7f6"
+    },
+    "agent_definitions": {
+      "rows": 72,
+      "sha256": "ad4945f537267198d856ce492b79bbd8dec0bb66021f19f05c56538e69e688ac"
+    },
+    "inbox_items": {
+      "rows": 179,
+      "sha256": "7a96e866b550ef974dd49056926c3193dc9d09acf7234aad3b07c98aac38ff86"
+    }
+  },
+  "sourceSha256": "0545f2d6983088ae70d115172a519cf75f541f4e07c08afaeccb0d076eed9f57",
+  "webBuildIdentity": {
+    "schemaVersion": 1,
+    "kind": "development",
+    "version": "0.0.0-dev+local",
+    "builtAt": "2026-10-13T11:51:11.755Z",
+    "buildId": "cbab798c77f3376c"
+  },
+  "webSourceUnchanged": true,
+  "webRebuiltForRoomProtocol": true,
+  "staticDirectory": "/Users/sun/Code/repos/rah_os/.workbench-web/2768c4464d37f5cfbd14c400b59b4378a8d5d51e2b2a2a8710001d795df47a77",
+  "consoleDirectory": "/Users/sun/.loom/evo/console-builds/1ecb7fa9bb80fafc153423eb08e7464a89d8758acbc2e52f71ba6480e846977a",
+  "consoleAssets": {
+    "app-C_FkPp_J.js": "1a3f9b67d9c7cfce95bb5bb202d6a01a7a2dd49463995ac0ec8394ec0d6b1b9c",
+    "index-Cm17u-Mz.js": "f52d81bde80101da0dd5ca53d17ed693af518326cfe041d38f503d320e151a49",
+    "index-DaexJMn4.css": "f58c6496457ed2e4206d838f48d443fec9bab9c8559422c3013975713c322db2"
+  },
+  "freshRealHistoryVerified": true,
+  "authenticatedRoleMemoryUsageApisVerified": true,
+  "sidePreviews": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "unsupportedCodexDisabled": true
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "unsupportedCodexDisabled": true
+    }
+  ],
+  "pageErrors": [],
+  "productionInstancesCreatedOrReset": false,
+  "nativeFinalEnabled": ["claude", "opencode"],
+  "otherFiveFinalFlagsOff": true,
+  "paidCalls": 0,
+  "privateEvidence": "/Users/sun/.loom/reviews/2026-10-13-side-vertical/deployment",
+  "evidenceHashes": {
+    "restart.json": "5591600853be948ee5ea3710e0606c855a754804beb407a9d2f7a2444483d6e5",
+    "page.json": "1132266bf614a9f7e2839208b3a7fb988861249bea3618008f13749b791b53c9"
+  }
+}
