@@ -1,0 +1,571 @@
+{
+  "date": "2026-10-13",
+  "kind": "bounded-team-cohort-closeout/v8",
+  "sourceRevision": "a8464ec",
+  "productCodeChanged": false,
+  "productionSwitchesChanged": false,
+  "serviceRestarted": false,
+  "authorization": "Owner explicitly approved this fixed three-pair batch; release now closed. No retries, replacements or Human business rescue.",
+  "manifestSha256": "970f91de9b2fbb5c2445b4c57f0defefad519f00e49d49a93842503175dab051",
+  "frozenFiles": 3815,
+  "frozenMismatches": [],
+  "versions": {
+    "claude": "2.1.293",
+    "opencode": "1.18.35"
+  },
+  "bindings": [
+    {
+      "cli": "claude",
+      "binding": "sonnet",
+      "actualModel": "claude-sonnet-5-5",
+      "effort": "low"
+    },
+    {
+      "cli": "opencode",
+      "binding": "aihubmix/deepseek-v4.1-flash",
+      "actualModel": "deepseek-v4.1-flash",
+      "effort": "low"
+    }
+  ],
+  "limits": {
+    "maxActivations": 72,
+    "maxRequests": 450,
+    "maxInputTokens": 12000000,
+    "maxOutputTokens": 240000,
+    "maxDurationMs": 7200000
+  },
+  "order": [
+    "pair1-loom",
+    "pair1-native",
+    "pair2-native",
+    "pair2-loom",
+    "pair3-loom",
+    "pair3-native"
+  ],
+  "samples": [
+    {
+      "sampleId": "pair1-loom",
+      "arm": "loom",
+      "input": 719118,
+      "output": 26344,
+      "requests": 27,
+      "complete": true,
+      "usageComplete": true,
+      "qualityPassed": true,
+      "instrumentInterrupted": false,
+      "functionalPassed": true,
+      "root": "/Users/sun/.loom/reviews/2026-10-13-team-closeout-v8/business-runs/1791852561721-pair1-loom",
+      "resultSha256": "53da9bd95e1cdb490fb3153e98bb272c00078b052bedc9cdedeeeb6be8f261f6",
+      "auditSha256": "ae90117ffd574de66c22c4b1c82baa8d0e6a6d3cc3b8d77a16a206f8744737e4",
+      "members": {
+        "opencode": {
+          "input": 303727,
+          "output": 15984,
+          "requests": 13,
+          "complete": true
+        },
+        "claude": {
+          "input": 415391,
+          "output": 10360,
+          "requests": 14,
+          "complete": true
+        }
+      },
+      "requestAudit": {
+        "opencode": {
+          "forwarded": 13,
+          "firstForwardedId": 1,
+          "locallyRejected": [],
+          "fullTask": true,
+          "fullCommunication": true,
+          "allForwardedModelEffortApproved": true,
+          "requestHashesVerified": true
+        },
+        "claude": {
+          "forwarded": 14,
+          "firstForwardedId": 1,
+          "locallyRejected": [],
+          "fullTask": true,
+          "fullCommunication": true,
+          "allForwardedModelEffortApproved": true,
+          "requestHashesVerified": true
+        }
+      },
+      "nativeCheck": {
+        "opencode": {
+          "complete": true,
+          "sessions": ["ses_ecd4397adffeGbb1Vsy8ceTTIf"],
+          "input": 303727,
+          "output": 15984,
+          "responses": 13,
+          "localRejected": 0
+        },
+        "claude": {
+          "complete": true,
+          "responses": 14,
+          "sessions": ["6c258534-2b08-440a-9e55-03a014556e99"]
+        },
+        "complete": true
+      },
+      "reviewLimitations": [],
+      "publicActivations": 8,
+      "replyReturns": 2,
+      "selfTests": 41
+    },
+    {
+      "sampleId": "pair1-native",
+      "arm": "native",
+      "input": 1158847,
+      "output": 34409,
+      "requests": 40,
+      "complete": true,
+      "usageComplete": true,
+      "qualityPassed": true,
+      "instrumentInterrupted": false,
+      "functionalPassed": true,
+      "root": "/Users/sun/.loom/reviews/2026-10-13-team-closeout-v8/business-runs/1791853088735-pair1-native",
+      "resultSha256": "6e3aa1e931879e39bdf2bbbef180995e86f8d3b521526fb1ecaba92555ae83c1",
+      "auditSha256": "d741a748738a778b51ff454b9c43ab466fb00135f4ca370b2ab828372b11f9b5",
+      "members": {
+        "opencode": {
+          "input": 633793,
+          "output": 22877,
+          "requests": 23,
+          "complete": true
+        },
+        "claude": {
+          "input": 525054,
+          "output": 11532,
+          "requests": 17,
+          "complete": true
+        }
+      },
+      "requestAudit": {
+        "opencode": {
+          "forwarded": 23,
+          "firstForwardedId": 1,
+          "locallyRejected": [],
+          "fullTask": true,
+          "fullCommunication": true,
+          "allForwardedModelEffortApproved": true,
+          "requestHashesVerified": true
+        },
+        "claude": {
+          "forwarded": 17,
+          "firstForwardedId": 2,
+          "locallyRejected": [1, 5, 8, 20],
+          "fullTask": true,
+          "fullCommunication": true,
+          "allForwardedModelEffortApproved": true,
+          "requestHashesVerified": true
+        }
+      },
+      "nativeCheck": {
+        "opencode": {
+          "complete": true,
+          "sessions": ["ses_ecd3a331dffeUny8oufZhWguJV"],
+          "input": 633793,
+          "output": 22877,
+          "responses": 23,
+          "localRejected": 0
+        },
+        "claude": {
+          "complete": true,
+          "responses": 17,
+          "sessions": ["650028f8-44aa-4e57-9d01-ae4e0adb2bae"]
+        },
+        "complete": true
+      },
+      "reviewLimitations": [],
+      "publicActivations": 0,
+      "replyReturns": 0,
+      "selfTests": 53
+    },
+    {
+      "sampleId": "pair2-native",
+      "arm": "native",
+      "input": 100935,
+      "output": 6730,
+      "requests": 7,
+      "complete": true,
+      "usageComplete": true,
+      "qualityPassed": false,
+      "instrumentInterrupted": false,
+      "functionalPassed": false,
+      "root": "/Users/sun/.loom/reviews/2026-10-13-team-closeout-v8/business-runs/1791853582928-pair2-native",
+      "resultSha256": "7ec7db129a68eeaf87fed693a0c1fbb3bf68600984e072ca7cb269c31de582c9",
+      "auditSha256": "ccd7d149511f423d9becd8bfaae315fd4dfc76556d1d71054f393b4db73afa16",
+      "members": {
+        "opencode": {
+          "input": 62366,
+          "output": 5028,
+          "requests": 5,
+          "complete": true
+        },
+        "claude": {
+          "input": 38569,
+          "output": 1702,
+          "requests": 2,
+          "complete": true
+        }
+      },
+      "requestAudit": {
+        "opencode": {
+          "forwarded": 5,
+          "firstForwardedId": 1,
+          "locallyRejected": [],
+          "fullTask": true,
+          "fullCommunication": true,
+          "allForwardedModelEffortApproved": true,
+          "requestHashesVerified": true
+        },
+        "claude": {
+          "forwarded": 2,
+          "firstForwardedId": 2,
+          "locallyRejected": [1, 3],
+          "fullTask": true,
+          "fullCommunication": true,
+          "allForwardedModelEffortApproved": true,
+          "requestHashesVerified": true
+        }
+      },
+      "nativeCheck": {
+        "opencode": {
+          "complete": true,
+          "sessions": ["ses_ecd32a65cffemXrjSQAtn9nlOZ"],
+          "input": 62366,
+          "output": 5028,
+          "responses": 5,
+          "localRejected": 0
+        },
+        "claude": {
+          "complete": true,
+          "responses": 2,
+          "sessions": ["ea4ca42c-46f3-4e7e-aae4-d8b228c21a84"]
+        },
+        "complete": true
+      },
+      "reviewLimitations": [],
+      "publicActivations": 0,
+      "replyReturns": 0,
+      "selfTests": 0
+    },
+    {
+      "sampleId": "pair2-loom",
+      "arm": "loom",
+      "input": 686932,
+      "output": 20606,
+      "requests": 28,
+      "complete": true,
+      "usageComplete": true,
+      "qualityPassed": true,
+      "instrumentInterrupted": false,
+      "functionalPassed": true,
+      "root": "/Users/sun/.loom/reviews/2026-10-13-team-closeout-v8/business-runs/1791853830134-pair2-loom",
+      "resultSha256": "4f1466684a95e84692af6212eb322ff14618a8cee9e1f71763e0af6ddfc698ab",
+      "auditSha256": "75d0a7739a82e0eb7ee738256631b3bbe582001deb1d25ca00561609c9dc70ab",
+      "members": {
+        "opencode": {
+          "input": 316751,
+          "output": 14491,
+          "requests": 14,
+          "complete": true
+        },
+        "claude": {
+          "input": 370181,
+          "output": 6115,
+          "requests": 14,
+          "complete": true
+        }
+      },
+      "requestAudit": {
+        "opencode": {
+          "forwarded": 14,
+          "firstForwardedId": 1,
+          "locallyRejected": [],
+          "fullTask": true,
+          "fullCommunication": true,
+          "allForwardedModelEffortApproved": true,
+          "requestHashesVerified": true
+        },
+        "claude": {
+          "forwarded": 14,
+          "firstForwardedId": 1,
+          "locallyRejected": [],
+          "fullTask": true,
+          "fullCommunication": true,
+          "allForwardedModelEffortApproved": true,
+          "requestHashesVerified": true
+        }
+      },
+      "nativeCheck": {
+        "opencode": {
+          "complete": true,
+          "sessions": ["ses_ecd303f87ffe5Y9Dt13iVCv9Fu"],
+          "input": 316751,
+          "output": 14491,
+          "responses": 14,
+          "localRejected": 0
+        },
+        "claude": {
+          "complete": true,
+          "responses": 14,
+          "sessions": ["903ab1a0-1cd9-4dce-8dca-1fe4354c0f81"]
+        },
+        "complete": true
+      },
+      "reviewLimitations": [],
+      "publicActivations": 7,
+      "replyReturns": 1,
+      "selfTests": 52
+    },
+    {
+      "sampleId": "pair3-loom",
+      "arm": "loom",
+      "input": 601547,
+      "output": 22402,
+      "requests": 25,
+      "complete": true,
+      "usageComplete": true,
+      "qualityPassed": true,
+      "instrumentInterrupted": false,
+      "functionalPassed": true,
+      "root": "/Users/sun/.loom/reviews/2026-10-13-team-closeout-v8/business-runs/1791854139412-pair3-loom",
+      "resultSha256": "d0ad493cc21468b52f551ab2d3c1df3bcf22adbc01ec1693d31e2de3d7da8762",
+      "auditSha256": "b83d9ec3524aa102b50c9fb025f5d21d79a8ff8101ed3d8188af5cbe76f16f07",
+      "members": {
+        "opencode": {
+          "input": 311086,
+          "output": 15401,
+          "requests": 13,
+          "complete": true
+        },
+        "claude": {
+          "input": 290461,
+          "output": 7001,
+          "requests": 12,
+          "complete": true
+        }
+      },
+      "requestAudit": {
+        "opencode": {
+          "forwarded": 13,
+          "firstForwardedId": 1,
+          "locallyRejected": [],
+          "fullTask": true,
+          "fullCommunication": true,
+          "allForwardedModelEffortApproved": true,
+          "requestHashesVerified": true
+        },
+        "claude": {
+          "forwarded": 12,
+          "firstForwardedId": 1,
+          "locallyRejected": [],
+          "fullTask": true,
+          "fullCommunication": true,
+          "allForwardedModelEffortApproved": true,
+          "requestHashesVerified": true
+        }
+      },
+      "nativeCheck": {
+        "opencode": {
+          "complete": true,
+          "sessions": ["ses_ecd2b8705ffegJyiQ2vY0FwoMQ"],
+          "input": 311086,
+          "output": 15401,
+          "responses": 13,
+          "localRejected": 0
+        },
+        "claude": {
+          "complete": true,
+          "responses": 12,
+          "sessions": ["a5f25180-0a41-4a9c-9a7d-2eb54e8d027a"]
+        },
+        "complete": true
+      },
+      "reviewLimitations": [],
+      "publicActivations": 8,
+      "replyReturns": 1,
+      "selfTests": 59
+    },
+    {
+      "sampleId": "pair3-native",
+      "arm": "native",
+      "input": 680221,
+      "output": 30527,
+      "requests": 25,
+      "complete": true,
+      "usageComplete": true,
+      "qualityPassed": true,
+      "instrumentInterrupted": false,
+      "functionalPassed": true,
+      "root": "/Users/sun/.loom/reviews/2026-10-13-team-closeout-v8/business-runs/1791854478522-pair3-native",
+      "resultSha256": "0007b47f9b9e34b4fa4d7c4e614ebf626e214aa9cdfdc7645a20055741740283",
+      "auditSha256": "90ee574dea5450e2859ddc31edceab7f4c5def6d1d35804508bcd5e0b63792d5",
+      "members": {
+        "opencode": {
+          "input": 466567,
+          "output": 24480,
+          "requests": 17,
+          "complete": true
+        },
+        "claude": {
+          "input": 213654,
+          "output": 6047,
+          "requests": 8,
+          "complete": true
+        }
+      },
+      "requestAudit": {
+        "opencode": {
+          "forwarded": 17,
+          "firstForwardedId": 1,
+          "locallyRejected": [],
+          "fullTask": true,
+          "fullCommunication": true,
+          "allForwardedModelEffortApproved": true,
+          "requestHashesVerified": true
+        },
+        "claude": {
+          "forwarded": 8,
+          "firstForwardedId": 2,
+          "locallyRejected": [1, 3, 5],
+          "fullTask": true,
+          "fullCommunication": true,
+          "allForwardedModelEffortApproved": true,
+          "requestHashesVerified": true
+        }
+      },
+      "nativeCheck": {
+        "opencode": {
+          "complete": true,
+          "sessions": ["ses_ecd24f41cffeuE4R45HHgbxseT"],
+          "input": 466567,
+          "output": 24480,
+          "responses": 17,
+          "localRejected": 0
+        },
+        "claude": {
+          "complete": true,
+          "responses": 8,
+          "sessions": ["b9d82526-9025-413b-9d63-a80e34d7dff3"]
+        },
+        "complete": true
+      },
+      "reviewLimitations": [
+        "B claimed mutation testing of cancellation behavior; no recorded tool operation performs it. A repeated the unsupported claim. Not credited as performed verification.",
+        "B read first 40 README lines only; full documentation semantics independently reviewed by lead."
+      ],
+      "publicActivations": 0,
+      "replyReturns": 0,
+      "selfTests": 66
+    }
+  ],
+  "report": {
+    "arms": {
+      "loom": {
+        "attempted": 3,
+        "completed": 3,
+        "instrumentInterrupted": 0,
+        "modelFailures": 0,
+        "batchCompletionRate": 1,
+        "successRate": 1,
+        "input": 2007597,
+        "output": 69352,
+        "requests": 80,
+        "inputMean": 669199,
+        "inputMedian": 686932,
+        "inputRange": [601547, 719118],
+        "comparable": true,
+        "inputPerCompleted": 669199,
+        "outputPerCompleted": 23117.333333333332
+      },
+      "native": {
+        "attempted": 3,
+        "completed": 2,
+        "instrumentInterrupted": 0,
+        "modelFailures": 1,
+        "batchCompletionRate": 0.6666666666666666,
+        "successRate": 0.6666666666666666,
+        "input": 1940003,
+        "output": 71666,
+        "requests": 72,
+        "inputMean": 646667.6666666666,
+        "inputMedian": 680221,
+        "inputRange": [100935, 1158847],
+        "comparable": true,
+        "inputPerCompleted": 970001.5,
+        "outputPerCompleted": 35833
+      }
+    },
+    "descriptiveInputPerCompletedRatio": 0.6898948094410163,
+    "descriptiveOutputPerCompletedRatio": 0.6451408850314886,
+    "acceptance": "not automatically decided",
+    "limitations": [
+      "All attempt costs retained, including model failures; no success-only cost subset.",
+      "Cost per completed task is a descriptive cohort statistic, not a predicted retry cost or statistical equivalence proof.",
+      "Small fixed cohorts report uncertainty and task success separately; no release decision from token ratio alone."
+    ]
+  },
+  "totals": {
+    "input": 3947600,
+    "output": 141018,
+    "requests": 152
+  },
+  "accounting": {
+    "allSixComplete": true,
+    "allTwelveNativeRecordsReconciled": true,
+    "allFirstForwardedRequestsHaveFullTaskAndCommunication": true,
+    "allForwardedModelEffortApproved": true,
+    "automaticMemoryDisabled": true,
+    "oneContinuousSessionPerMember": true,
+    "localClaudeTitleRequestsExcluded": 9,
+    "rawGateQualityPlaceholderUnchanged": true,
+    "qualitySource": "Independent lead-audit sidecars; original gate state may retain failed/quality:false pending-audit placeholders."
+  },
+  "nativeGeometry": {
+    "cols": 100,
+    "rows": 40,
+    "method": "Owned supported terminal stream controllers; both PTY stty sizes verified before native runs; identical for all three native samples.",
+    "limitation": "Outer Herdr layout initially only 79x5. Fixed owned PTY geometry differs from prior v7; no causal v7-v8 cost attribution. No caller/server changes."
+  },
+  "failure": {
+    "sample": "pair2-native",
+    "classification": "model communication omission",
+    "detail": "A sent design request through Herdr then ended turn. B answered only in ordinary final text, with no Herdr prompt to A. Both idle/done, no accepted pending peer request, no implementation. Frozen 30-second quiet rule closed sample. All consumed tokens retained."
+  },
+  "qualityLimits": [
+    "Completion means archived artifact/oracle, independent README semantics and real external design/review evidence. It does not validate every model sentence or prove exhaustive code review.",
+    "H3 reviewer claimed mutation testing, but no tool record supports it; A repeated claim. The claim is explicitly not credited. Actual source reading, suite, probes and final artifact checks are independently evidenced.",
+    "L3 reviewer inspected test names and first 60 README lines, H3 first 40 README lines; lead reviewed complete README semantics. Do not claim full peer line-by-line review of those files.",
+    "L2 reviewer attempted old Worker message-post before native-final fallback; the rejected extra call and all final sign-offs stay in measured costs."
+  ],
+  "routing": {
+    "loomPublicActivations": 23,
+    "boundedAutomaticReturns": 4,
+    "lostAcceptedDirectedRequestsObserved": false,
+    "newSchedulerDefectFound": false,
+    "limitations": "Explicit new @ signoffs are new requests; this batch contains both directed replies and ordinary automatic returns, not every turn using automatic return."
+  },
+  "decision": {
+    "costInvestigation": "This bounded two-model team slice has sufficient usable cost/accounting evidence to stop token-ratio chasing and proceed to formal adoption acceptance. No architecture rewrite justified by these samples.",
+    "fullyAcceptedBackend": false,
+    "productionRolloutApprovedByThisReport": false,
+    "remaining": [
+      "Formal daemon/API native-final adoption with existing-session continuation and safe unsupported fallback.",
+      "One vertical busy-Human/queued-peer/held recovery/restart continuity acceptance for adopted runtimes."
+    ],
+    "generalization": "One coding task, three independent repetitions per arm, two CLI/model families only. Not five-family acceptance, statistical equivalence, billing savings or expected retry-cost forecast.",
+    "upstreamReuse": "Raft/Aexus absorption remains after operational closeout; no source copied in this batch."
+  },
+  "cleanup": {
+    "releaseAuthorized": false,
+    "allRecordedProviderProcessesAbsentAtSampleClose": true,
+    "generatedSettingsDeleted": 12,
+    "ownedTerminalControllersStopped": 2,
+    "ownedPanesClosed": 2,
+    "workspaceRemainingCallerPane": "wA:p2",
+    "businessDataUntouched": true
+  },
+  "privateEvidenceRoot": "/Users/sun/.loom/reviews/2026-10-13-team-closeout-v8"
+}

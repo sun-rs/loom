@@ -10,10 +10,11 @@
     {
       "priority": 1,
       "area": "Autonomous collaboration quality and total team cost",
-      "already": "Real complete external design/implementation/review exists; v7 totals reconcile; directed ordinary-final returns observed.",
-      "work": "One fixed repeated cohort, no model rescue/replacement/retry-until-green. Report task outcomes separately from proven delivery failures and instrument interruptions. Every attempt cost stays visible.",
+      "already": "v8 fixed cohort: Loom 3/3 artifacts/workflows complete; native 2/3 complete; all six usage records fully reconciled, all attempt costs retained. Reporting-claim limits explicit.",
+      "work": "No further token-ratio tuning or repeat-until-green cohort. Broader families remain outside this result.",
       "doneWhen": "Recorded outcomes and complete bounded cost evidence support a concrete supported scope decision; a prose-only missed recipient does not by itself justify a new scheduler or permanent 100% model obedience requirement.",
-      "evidence": "../2026-10-12-peer-reply-return/repeat-v7-closeout.json"
+      "evidence": "team-v8.json",
+      "status": "bounded two-model cost investigation closed; proceed to operational adoption"
     },
     {
       "priority": 2,
@@ -149,7 +150,8 @@
         "createdHerdrPanes": false
       }
     },
-    "freezeNote": "Free transport probe preceded addition of outcome-report-only module and final freeze. Runtime/recorder/audit entry used by probe unchanged; private full test suite rerun after report changes."
+    "freezeNote": "Free transport probe preceded addition of outcome-report-only module and final freeze. Runtime/recorder/audit entry used by probe unchanged; private full test suite rerun after report changes.",
+    "paidAuthorizationUpdate": "Owner subsequently approved; six paid samples complete, release closed. See team-v8.json; paidAuthorized:false above describes preparation time."
   },
   "v7NewDescriptiveReport": {
     "arms": {
@@ -197,5 +199,6 @@
       "Small fixed cohorts report uncertainty and task success separately; no release decision from token ratio alone."
     ]
   },
-  "deployment": "No product changes or restart this batch; code 3046a2d remains deployed, seven switches off."
+  "deployment": "No product changes or restart this batch; code 3046a2d remains deployed, seven switches off.",
+  "latestCloseout": "team-v8.json"
 }
