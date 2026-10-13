@@ -38,6 +38,10 @@ import {
 } from "@rah-os/protocol";
 import {
   type RoleCreateRequest,
+  type RoleDeleteRequest,
+  type RoleDeleteResponse,
+  RoleDeleteRequestSchema,
+  RoleDeleteResponseSchema,
   type RoleReviseRequest,
   type RoleCreateResponse,
   type RoleListRequest,
@@ -452,6 +456,7 @@ export type RahClientOperationMap = ComposerOperationMap &
       input: ClientAgentManageRequest;
       output: ClientAgentManageResponse;
     };
+    "role.delete": { input: RoleDeleteRequest; output: RoleDeleteResponse };
     "role.revise": { input: RoleReviseRequest; output: RoleCreateResponse };
     "role.create": { input: RoleCreateRequest; output: RoleCreateResponse };
     "role.list": { input: RoleListRequest; output: RoleListResponse };
@@ -911,6 +916,13 @@ const operationDefinitions: Record<RahClientOperation, OperationDefinition> = {
     method: "POST",
     output: ClientAgentManageResponseSchema,
     path: "/v3/client/agents/manage",
+  },
+  "role.delete": {
+    authenticated: true,
+    input: RoleDeleteRequestSchema,
+    output: RoleDeleteResponseSchema,
+    method: "POST",
+    path: "/v3/client/roles/delete",
   },
   "role.revise": {
     authenticated: true,

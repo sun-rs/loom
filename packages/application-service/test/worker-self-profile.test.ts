@@ -319,7 +319,7 @@ test("authenticated self profile update keeps distinct control/work Room causali
     );
     assert.equal(
       f.run.launch.agentContext.agentDefinitionRevision.displayName,
-      "Alice",
+      "Alice-1",
     );
   } finally {
     await f.close();

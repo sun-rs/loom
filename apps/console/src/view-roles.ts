@@ -17,6 +17,7 @@ import {
   reportOutcome,
 } from "./intent-view.ts";
 import { disclosure, friendlyCli, isTestRecord } from "./presentation.ts";
+import { roleDelete } from "./role-delete.ts";
 import { Poller } from "./poll.ts";
 
 const LIST_POLL_MS = 15_000;
@@ -32,12 +33,7 @@ function roleFields(prefix: string, choices: () => RuntimeChoice[]) {
   const displayName = el("input", {
     attrs: { autocomplete: "off", id: `${prefix}-display-name` },
   });
-  const handle = el("input", {
-    attrs: { autocomplete: "off", id: `${prefix}-handle` },
-  });
-  const roleText = el("input", {
-    attrs: { autocomplete: "off", id: `${prefix}-role` },
-  });
+  let legacyHandle = `role-${crypto.randomUUID()}`;
   const instructions = el("textarea", {
     attrs: { id: `${prefix}-instructions`, rows: "4" },
   });
@@ -83,30 +79,19 @@ function roleFields(prefix: string, choices: () => RuntimeChoice[]) {
   };
   runtime.addEventListener("change", syncBindings);
   binding.addEventListener("change", syncReasoning);
-  const controls = [
-    displayName,
-    handle,
-    roleText,
-    instructions,
-    runtime,
-    binding,
-    reasoning,
-  ];
+  const controls = [displayName, instructions, runtime, binding, reasoning];
   let locked = false;
   return {
     elements: [
-      labelled("显示名", displayName),
-      labelled("handle", handle, "字母或数字开头，可含 . _ -"),
-      labelled("职责简介", roleText),
-      labelled("详细指令", instructions),
+      labelled("名称", displayName, "角色名称唯一；实例自动添加数字后缀"),
+      labelled("角色 Prompt", instructions),
       labelled("CLI", runtime),
       labelled("模型", binding),
       labelled("推理强度", reasoning),
     ],
     fill: (form: RoleForm) => {
       displayName.value = form.displayName;
-      handle.value = form.handle;
-      roleText.value = form.role;
+      legacyHandle = form.handle;
       instructions.value = form.instructions;
       syncRuntimes();
       runtime.value = form.runtimeOfferId;
@@ -123,11 +108,11 @@ function roleFields(prefix: string, choices: () => RuntimeChoice[]) {
     },
     read: (): RoleForm => ({
       displayName: displayName.value,
-      handle: handle.value,
+      handle: legacyHandle,
       instructions: instructions.value,
       modelBindingId: binding.value,
       reasoning: reasoning.value,
-      role: roleText.value,
+      role: displayName.value,
       runtimeOfferId: runtime.value,
     }),
     syncRuntimes,
@@ -194,7 +179,7 @@ export function mountRoles(
     }
     revisePanel.hidden = false;
     revising = role;
-    reviseTarget.textContent = `修订 ${role.configuration.displayName}（${role.roleId}），基于修订 ${role.roleRevisionId}；已有实例保持原快照，显示为“Role 已有新修订”。`;
+    reviseTarget.textContent = `编辑 ${role.configuration.displayName}；已有实例保留原名称和配置。`;
     reviseFields.fill(roleFormFrom(role.configuration));
     reviseSubmit.disabled = false;
     setStatus(reviseStatus, "info", "");
@@ -347,6 +332,11 @@ export function mountRoles(
       .catch(() => undefined);
   });
 
+  const deletion = roleDelete(context, () => {
+    revisePanel.hidden = true;
+    revising = undefined;
+    poller.runNow();
+  });
   const list = el("div", { attrs: { id: "role-list" } }, [
     el("p", { className: "muted", text: "加载中…" }),
   ]);
@@ -372,6 +362,7 @@ export function mountRoles(
       list,
     ]),
     revisePanel,
+    deletion.panel,
     disclosure("创建角色", [form], "role-create"),
   );
 
@@ -416,10 +407,7 @@ export function mountRoles(
                   },
                   [
                     el("strong", { text: role.configuration.displayName }),
-                    el("span", {
-                      className: "muted",
-                      text: ` @${role.configuration.handle}`,
-                    }),
+
                     field(
                       "CLI",
                       friendlyCli(role.configuration.runtimeOfferId),
@@ -441,6 +429,9 @@ export function mountRoles(
                       "role-instances",
                     ),
                     el("div", { className: "form-actions" }, [
+                      button("删除…", () => deletion.open(role), {
+                        className: "secondary role-delete-open",
+                      }),
                       button("修订…", () => startRevision(role), {
                         className: "secondary role-revise-open",
                       }),

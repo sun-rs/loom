@@ -90,6 +90,36 @@ test("retired provision is 404 while real HTTP role create/instantiate/list/revi
     )!;
     assert.equal(frozen.roleRevisionId, created.role.roleRevisionId);
     assert.equal(frozen.isCurrent, false);
+    const remove = {
+      roleId: created.role.roleId,
+      expectedRoleRevisionId: revised.role.roleRevisionId,
+      basedOnRoomSeq: f.head(f.controlRoomId),
+      idempotencyKey: "http-delete",
+    };
+    assert.equal(
+      (await client.request("role.delete", remove)).deduplicated,
+      false,
+    );
+    assert.equal(
+      (await client.request("role.delete", remove)).deduplicated,
+      true,
+    );
+    assert.equal(
+      (
+        await client.request("role.list", { controlRoomId: f.controlRoomId })
+      ).roles.some((r) => r.roleId === created.role.roleId),
+      false,
+    );
+    assert.equal(
+      (await client.request("role.instantiate", instantiate)).instance
+        .instanceId,
+      instance.instance.instanceId,
+    );
+    assert.equal(
+      (await client.request("role.create", create)).role.roleId,
+      created.role.roleId,
+    );
+
     assert.equal(
       f.db.prepare("SELECT count(*) n FROM run_attempts").get()!.n,
       0,

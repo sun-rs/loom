@@ -47,7 +47,7 @@ export function mountDirect(
       return `${context.identity.displayName}（Human）`;
     }
     if (actorId === instance?.instanceId) {
-      return `${instance.roleName ?? actorId} @${instance.handle ?? "?"}`;
+      return instance.handle ?? instance.roleName ?? actorId;
     }
     return actorId;
   };
@@ -68,7 +68,7 @@ export function mountDirect(
         text:
           privateBox === undefined
             ? roomId
-            : `私聊 · ${instance?.roleName ?? privateBox.instanceId}${instance?.handle === undefined ? "" : ` @${instance.handle}`}`,
+            : `私聊 · ${instance?.handle ?? instance?.roleName ?? privateBox.instanceId}`,
       }),
       privateBox === undefined
         ? el("p", {
@@ -129,7 +129,7 @@ export function mountDirect(
         ),
         context.client.request(
           "agent.list",
-          { controlRoomId: identity.controlRoomId },
+          { controlRoomId: identity.controlRoomId, includeDeleted: true },
           { signal },
         ),
         context.client.request(
@@ -144,12 +144,13 @@ export function mountDirect(
       const role = roleList.roles.find(
         ({ roleId }) => roleId === listed?.roleId,
       );
+      const agent = agents.agents.find(
+        ({ definition }) => definition.participantId === privateBox.instanceId,
+      );
       instance = {
-        agentId: listed?.agentId,
+        agentId: agent?.definition.agentId,
         channelId: listed?.channelId,
-        handle: agents.agents.find(
-          ({ definition }) => definition.agentId === listed?.agentId,
-        )?.handle,
+        handle: agent?.handle,
         instanceId: privateBox.instanceId,
         roleName: role?.configuration.displayName,
       };

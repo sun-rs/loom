@@ -659,8 +659,13 @@ if (args.join(" ") === "debug models --bundled") {
   );
   await click("#role-create > summary");
   await setValue("#role-display-name", "FIXTURE 门禁 Reviewer");
-  await setValue("#role-handle", "console-gate-reviewer");
-  await setValue("#role-role", "fixture reviewer");
+  assert.equal(
+    await evaluate(
+      browser,
+      "document.querySelector('#role-handle') === null && document.querySelector('#role-role') === null",
+    ),
+    true,
+  );
   await setValue(
     "#role-instructions",
     "FIXTURE ONLY: console browser gate role.",
@@ -681,7 +686,8 @@ if (args.join(" ") === "debug models --bundled") {
   await waitForText("#role-create-status", "已创建 Role");
   const roles = await client.request("role.list", { controlRoomId });
   const role = roles.roles.find(
-    ({ configuration }) => configuration.handle === "console-gate-reviewer",
+    ({ configuration }) =>
+      configuration.displayName === "FIXTURE 门禁 Reviewer",
   );
   assert.deepEqual(role?.configuration.modelIntent, {
     exactBindingIds: [binding.modelBindingId],
@@ -730,7 +736,7 @@ if (args.join(" ") === "debug models --bundled") {
   await navigateHash("#/roles");
   const roleCard = `.role-card[data-role-id=${JSON.stringify(role.roleId)}]`;
   await click(`${roleCard} .role-revise-open`);
-  await waitForText("#role-revise-target", role.roleRevisionId);
+  await waitForText("#role-revise-target", role.configuration.displayName);
   assert.equal(
     await evaluate(
       browser,
@@ -2064,6 +2070,27 @@ if (args.join(" ") === "debug models --bundled") {
       `unexpected failed request ${String(url)}`,
     );
   }
+  // Delete only the Role configuration: existing identities and snapshots survive.
+  await navigateHash("#/roles");
+  await click(`${roleCard} .role-delete-open`);
+  await waitForText("#role-delete-confirm", "已有实例、对话和配置快照继续保留");
+  await click("#role-delete-confirm button.danger");
+  await waitUntil(
+    async () =>
+      !(await client.request("role.list", { controlRoomId })).roles.some(
+        (r) => r.roleId === role.roleId,
+      ),
+    10_000,
+  );
+  assert.equal(
+    await evaluate(
+      browser,
+      "document.querySelector('#role-delete-confirm').hidden",
+    ),
+    true,
+  );
+  await navigateHash(`#/direct/${encodeURIComponent(directId)}`);
+  await waitForText("#direct-title", "FIXTURE 门禁 Reviewer-1");
   const modes = existsSync(fakeCodexModes)
     ? [
         ...new Set(

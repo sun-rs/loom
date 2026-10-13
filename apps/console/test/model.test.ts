@@ -412,7 +412,11 @@ test("instance status joins role.list, room activity, private boxes and recent f
   assert.equal(removed?.member, false, "absent from the Room activity list");
   assert.equal(removed?.stateLabel, "已移出频道");
   assert.equal(removed?.queuedLabel, "—");
-  assert.equal(first?.roleName, "Fixture Reviewer");
+  assert.equal(
+    first?.roleName,
+    "reviewer-fixture1",
+    "visible name matches the mention target even after Role rename",
+  );
   assert.equal(first?.isCurrent, true);
   assert.equal(first?.stateLabel, "排队或启动中");
   assert.equal(first?.privateBoxLabel, "私聊可用");
@@ -547,10 +551,27 @@ test("instance status loads through role.list, room.agent.activity.list and agen
   assert.deepEqual(calls, [
     ["role.list", { controlRoomId: "room-control" }],
     ["room.agent.activity.list", { roomId: "room-a" }],
-    ["agent.list", { controlRoomId: "room-control" }],
+    ["agent.list", { controlRoomId: "room-control", includeDeleted: true }],
     ["agent.activity.list", { agentId: "agent-1", limit: 20 }],
     ["room.agent.activity.list", { roomId: "room-private-1" }],
   ]);
+  const authorNames = new Map<string, string>();
+  const removedClient = new FakeRahClient(async (operation, input) =>
+    operation === "role.list"
+      ? { roles: [], instances: [] }
+      : client.request(operation, input as never),
+  );
+  await loadInstanceStatuses(removedClient, {
+    controlRoomId: "room-control",
+    roomId: "room-a",
+    rooms: [],
+    authorNames,
+  });
+  assert.equal(
+    authorNames.get("instance-1"),
+    "reviewer-fixture1",
+    "history keeps readable authors after all instances leave",
+  );
 });
 
 function usageFigure(

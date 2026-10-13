@@ -812,6 +812,7 @@ export const ClientAgentConfigureRequestSchema =
   ClientAgentProvisionRequestSchema.omit({ controlRoomId: true }).extend({
     action: z.literal("configure"),
     agentId: IdentifierSchema,
+    handle: z.string().trim().min(1).max(128),
   });
 export type ClientAgentConfigureRequest = z.infer<
   typeof ClientAgentConfigureRequestSchema

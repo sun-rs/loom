@@ -90,6 +90,7 @@ test("RahClient covers every existing Human API v3 operation", () => {
     "push.test",
     "push.unsubscribe",
     "role.create",
+    "role.delete",
     "role.instantiate",
     "role.list",
     "role.revise",

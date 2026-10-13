@@ -132,6 +132,7 @@ test("RahCore is a headless lifecycle boundary over canonical Room state and mul
       "createThread",
       "createWorkspace",
       "deleteChannelMemory",
+      "deleteRole",
       "deleteTask",
       "deleteWorkspaceRoom",
       "discoverPublicChannels",

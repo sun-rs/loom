@@ -84,10 +84,18 @@ never installs them or configures their accounts.
 
 - **Role** is configuration, not an entity: CLI + model + effort + prompt +
   skills, with a stable Role ID. Every save creates an immutable Revision.
-  Editing a Role never changes existing instances; they show as out of date.
+  Active names are unique within a workspace (case/NFKC normalized); renaming
+  preserves the ID and deletion/recreation gives a new ID. Deleting configuration
+  retains existing instances and snapshots. Editing a Role never changes existing
+  instances; they show as out of date.
 - **Instance** is a Channel member and principal (Instance ID) with a frozen
   Role Revision snapshot; one Role may have several instances per Channel. It
-  may switch model/effort natively, never CLI. Removal stops delivery, safely
+  uses a readable Role-name suffix as both display and mention name. Existing
+  instances retain their names and configuration. It may switch model/effort
+  natively; switching CLI requires the owner-approved explicit session restart
+  with a chosen new Role Revision (target contract §2; not yet implemented by
+  the naming slice). Ordinary service restart never changes configuration.
+  Removal stops delivery, safely
   ends execution and keeps history; re-adding creates a new instance.
 - **Session** is the instance's native CLI session. Each instance has its own
   execution lane and one continuous session that is never silently replaced and

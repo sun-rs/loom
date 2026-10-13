@@ -327,10 +327,7 @@ function instanceCard(input: {
       ...present(
         el("div", { className: "instance-head" }, [
           el("strong", { className: "instance-name", text: next.roleName }),
-          el("span", {
-            className: "muted instance-handle",
-            text: ` @${next.handle}`,
-          }),
+
           el("span", {
             className: `revision ${next.isCurrent ? "is-current" : "is-stale"}`,
             text: next.isCurrent ? "Role 为最新修订" : "Role 已有新修订",
@@ -359,7 +356,7 @@ function instanceCard(input: {
                 input.runDetail.show(
                   next.agentId,
                   run.runAttemptId,
-                  `${next.roleName} @${next.handle}`,
+                  next.handle,
                 ),
               ),
             ])
@@ -401,6 +398,7 @@ export function mountChannel(
     className: "lifecycle-list",
   });
   let statuses: InstanceStatus[] = [];
+  const authorNames = new Map<string, string>();
   let roles: RoleListResponse["roles"] = [];
   const cards = new Map<string, CardView>();
   const cardList = el("ul", {
@@ -417,9 +415,7 @@ export function mountChannel(
       return `${context.identity.displayName}（Human）`;
     }
     const instance = statuses.find(({ instanceId }) => instanceId === actorId);
-    return instance === undefined
-      ? actorId
-      : `${instance.roleName} @${instance.handle}`;
+    return instance?.handle ?? authorNames.get(actorId) ?? "未知成员";
   };
 
   // --- Messages: this Channel only (a private box has its own page). ---
@@ -756,8 +752,8 @@ export function mountChannel(
       mention,
       statuses
         .filter(({ member }) => member)
-        .map(({ handle, instanceId, roleName }) => ({
-          label: `@${handle}（${roleName}）`,
+        .map(({ handle, instanceId }) => ({
+          label: `@${handle}`,
           value: instanceId,
         })),
       "不 @ 任何实例",
@@ -829,7 +825,12 @@ export function mountChannel(
     try {
       const next = await loadInstanceStatuses(
         context.client,
-        { controlRoomId: identity.controlRoomId, roomId, rooms: context.rooms },
+        {
+          controlRoomId: identity.controlRoomId,
+          roomId,
+          rooms: context.rooms,
+          authorNames,
+        },
         { signal },
       );
       const roleList = await context.client.request(
@@ -862,16 +863,16 @@ export function mountChannel(
       setOptions(
         roleSelect,
         roles.map((role) => ({
-          label: `${role.configuration.displayName} @${role.configuration.handle}`,
+          label: role.configuration.displayName,
           value: role.roleId,
         })),
         roles.length === 0 ? "还没有 Role（先到 Role 页创建）" : "选择 Role",
       );
       renderInstances();
       memory.setInstances(
-        statuses.map(({ handle, instanceId, member, roleName }) => ({
+        statuses.map(({ handle, instanceId, member }) => ({
           instanceId,
-          label: `${roleName} @${handle}`,
+          label: handle,
           member,
         })),
       );

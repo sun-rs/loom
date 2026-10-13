@@ -411,7 +411,10 @@ export function assembleInstanceStatuses(input: {
         queuedLabel: member ? queued.label : "—",
         recentProblems: recentProblems(records),
         roleId: instance.roleId,
-        roleName: role?.configuration.displayName ?? instance.roleId,
+        roleName:
+          input.agentHandles.get(instance.agentId) ??
+          role?.configuration.displayName ??
+          instance.roleId,
         runs: runAttemptsInRoom(records, input.roomId).slice(0, 5),
         state: current?.state,
         stateLabel: member ? stateLabel(current?.state) : "已移出频道",
@@ -423,7 +426,12 @@ export function assembleInstanceStatuses(input: {
 
 export async function loadInstanceStatuses(
   client: RahClient,
-  input: { controlRoomId: string; roomId: string; rooms: readonly Room[] },
+  input: {
+    controlRoomId: string;
+    roomId: string;
+    rooms: readonly Room[];
+    authorNames?: Map<string, string>;
+  },
   { signal }: Signal = {},
 ): Promise<InstanceStatus[]> {
   const roleList = await client.request(
@@ -440,14 +448,15 @@ export async function loadInstanceStatuses(
     ({ channelId }) => channelId === input.roomId,
   );
   const agentHandles = new Map<string, string>();
-  if (instances.length > 0) {
+  if (instances.length > 0 || input.authorNames !== undefined) {
     const agents = await client.request(
       "agent.list",
-      { controlRoomId: input.controlRoomId },
+      { controlRoomId: input.controlRoomId, includeDeleted: true },
       options(signal),
     );
     for (const agent of agents.agents) {
       agentHandles.set(agent.definition.agentId, agent.handle);
+      input.authorNames?.set(agent.definition.participantId, agent.handle);
     }
   }
   const agentActivities = new Map<string, readonly AgentActivityRecord[]>();

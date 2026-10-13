@@ -319,6 +319,19 @@ function configureAgent(
     throw new ConflictError("a tombstoned Agent cannot be configured");
   }
   const participantId = text(definitionRow, "participant_id");
+  // Role instance names may include spaces; retaining their assigned name is
+  // valid. Other configure writes retain the legacy handle lexical contract.
+  const retainedRoleName = owner.database
+    .prepare(
+      "SELECT 1 FROM role_instances i JOIN principals p ON p.principal_id=i.instance_id WHERE i.instance_id=? AND p.handle=?",
+    )
+    .get(participantId, input.handle);
+  if (
+    !retainedRoleName &&
+    (input.handle.length > 64 ||
+      !/^[\p{L}\p{N}][\p{L}\p{N}._-]*$/u.test(input.handle))
+  )
+    throw new ConflictError("Invalid principal handle");
   const handleOwner = owner.database
     .prepare(
       "SELECT p.principal_id FROM principals p LEFT JOIN agent_definitions a ON a.participant_id=p.principal_id WHERE p.handle = ? COLLATE BINARY AND (a.state IS NULL OR a.state<>'tombstoned')",

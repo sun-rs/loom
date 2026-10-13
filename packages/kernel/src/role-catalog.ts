@@ -7,6 +7,7 @@ import {
   requireHumanControlRoomManager,
   requireRoomManager,
 } from "./collaboration-policy.ts";
+import { assertRoleNameAvailable, allocateInstanceName } from "./role-names.ts";
 import { canonicalDigest } from "./canonical-digest.ts";
 import { text, integer, type Row } from "./sqlite-row.ts";
 import {
@@ -58,6 +59,52 @@ export class RoleCatalog {
     if (!row) throw new NotFoundError("Role not found");
     return this.role(row);
   }
+  private requireActive(id: string) {
+    if (
+      this.context.database
+        .prepare("SELECT deleted_at FROM role_templates WHERE role_id=?")
+        .get(id)?.deleted_at != null
+    )
+      throw new ConflictError("Role has been deleted");
+  }
+  delete(auth: AuthenticatedActorContext, raw: P.RoleDeleteRequest) {
+    const input = P.RoleDeleteRequestSchema.parse(raw),
+      c = this.context;
+    return c.transaction(() => {
+      const actorId = c.requireActor(auth),
+        role = this.requireRole(input.roleId);
+      requireHumanControlRoomManager(c.database, role.controlRoomId, actorId);
+      const requestDigest = canonicalDigest(input);
+      const prior = this.replay(
+        actorId,
+        role.controlRoomId,
+        input.idempotencyKey,
+        "role.deleted",
+        requestDigest,
+      );
+      if (prior)
+        return { roleId: role.roleId, event: prior, deduplicated: true };
+      this.requireActive(role.roleId);
+      if (role.roleRevisionId !== input.expectedRoleRevisionId)
+        throw new ConflictError(
+          "Role revision changed; reload before deleting",
+        );
+      this.fresh(role.controlRoomId, input.basedOnRoomSeq);
+      c.database
+        .prepare("UPDATE role_templates SET deleted_at=? WHERE role_id=?")
+        .run(c.now().toISOString(), role.roleId);
+      const event = c.events.append({
+        actorId,
+        aggregateId: role.roleId,
+        aggregateType: "role",
+        roomId: role.controlRoomId,
+        idempotencyKey: input.idempotencyKey,
+        type: "role.deleted",
+        payload: { roleId: role.roleId, requestDigest },
+      });
+      return { roleId: role.roleId, event, deduplicated: false };
+    });
+  }
   private snapshot(revisionId: string) {
     const row = this.context.database
       .prepare(
@@ -97,9 +144,16 @@ export class RoleCatalog {
           event: prior,
           deduplicated: true,
         };
+      this.requireActive(current.roleId);
       if (current.roleRevisionId !== input.expectedRoleRevisionId)
         throw new ConflictError("Role revision changed; reload before editing");
       this.fresh(current.controlRoomId, input.basedOnRoomSeq);
+      assertRoleNameAvailable(
+        c.database,
+        current.controlRoomId,
+        input.configuration.displayName,
+        current.roleId,
+      );
       const role = P.RoleTemplateSchema.parse({
         ...current,
         configuration: input.configuration,
@@ -161,7 +215,7 @@ export class RoleCatalog {
         })),
       roles: this.context.database
         .prepare(
-          "SELECT * FROM role_templates WHERE control_room_id=? ORDER BY created_at,role_id",
+          "SELECT * FROM role_templates WHERE control_room_id=? AND deleted_at IS NULL ORDER BY created_at,role_id",
         )
         .all(controlRoomId)
         .map((row) => this.role(row)),
@@ -231,6 +285,11 @@ export class RoleCatalog {
           deduplicated: true,
         };
       this.fresh(input.controlRoomId, input.basedOnRoomSeq);
+      assertRoleNameAvailable(
+        c.database,
+        input.controlRoomId,
+        input.configuration.displayName,
+      );
       const role = P.RoleTemplateSchema.parse({
         roleId: c.createId("role"),
         roleRevisionId: c.createId("role_revision"),
@@ -239,7 +298,9 @@ export class RoleCatalog {
         createdAt: c.now().toISOString(),
       });
       c.database
-        .prepare("INSERT INTO role_templates VALUES(?,?,?,?,?)")
+        .prepare(
+          "INSERT INTO role_templates(role_id,role_revision_id,control_room_id,configuration_json,created_at) VALUES(?,?,?,?,?)",
+        )
         .run(
           role.roleId,
           role.roleRevisionId,
@@ -307,11 +368,16 @@ export class RoleCatalog {
           deduplicated: true,
         });
       }
+      this.requireActive(role.roleId);
       this.fresh(input.channelId, input.basedOnRoomSeq);
       const suffix = c
         .createId("instance")
         .replace(/[^a-zA-Z0-9]/g, "")
         .slice(-24);
+      const instanceName = allocateInstanceName(
+        c.database,
+        role.configuration.displayName,
+      );
       const control = c.database
         .prepare("SELECT next_seq FROM rooms WHERE room_id=?")
         .get(role.controlRoomId)!;
@@ -332,7 +398,8 @@ export class RoleCatalog {
           ...(avatarKey === undefined ? {} : { avatarKey }),
           ...(description === undefined ? {} : { description }),
           ...(toolAccessMode === undefined ? {} : { toolAccessMode }),
-          handle: `${role.configuration.handle.slice(0, 38)}-${suffix}`,
+          handle: instanceName,
+          displayName: instanceName,
           controlRoomId: role.controlRoomId,
           basedOnRoomSeq: integer(control, "next_seq") - 1,
           idempotencyKey: `role-provision:${suffix}`,

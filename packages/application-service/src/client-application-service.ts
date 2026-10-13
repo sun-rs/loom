@@ -1,4 +1,6 @@
 import {
+  RoleDeleteRequestSchema,
+  RoleDeleteResponseSchema,
   RoleCreateRequestSchema,
   RoleReviseRequestSchema,
   RoleCreateResponseSchema,
@@ -420,6 +422,7 @@ const CLIENT_V3_DATA_PATHS = new Set([
   "/agents/rooms/list",
   "/agents/manage",
   "/roles/create",
+  "/roles/delete",
   "/roles/revise",
   "/roles/list",
   "/roles/instantiate",
@@ -1275,6 +1278,15 @@ export class ClientApplicationService {
         ClientAgentManageResponseSchema.parse(
           await manageAgentAfterTerminalProof(this.#human, actor, command),
         ),
+      );
+      return;
+    }
+    if (path === "/roles/delete") {
+      const command = parseClientRequest(RoleDeleteRequestSchema, body);
+      writeJson(
+        response,
+        200,
+        RoleDeleteResponseSchema.parse(this.#human.deleteRole(actor, command)),
       );
       return;
     }

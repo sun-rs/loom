@@ -71,6 +71,18 @@ export const RoleReviseRequestSchema = RoleCreateRequestSchema.omit({
   })
   .strict();
 export type RoleReviseRequest = z.infer<typeof RoleReviseRequestSchema>;
+export const RoleDeleteRequestSchema = RoleReviseRequestSchema.omit({
+  configuration: true,
+});
+export const RoleDeleteResponseSchema = z
+  .object({
+    roleId: IdentifierSchema,
+    event: RoomEventSchema,
+    deduplicated: z.boolean(),
+  })
+  .strict();
+export type RoleDeleteRequest = z.infer<typeof RoleDeleteRequestSchema>;
+export type RoleDeleteResponse = z.infer<typeof RoleDeleteResponseSchema>;
 export const RoleInstantiateRequestSchema = z
   .object({
     roleId: IdentifierSchema,

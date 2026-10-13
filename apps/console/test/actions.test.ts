@@ -279,7 +279,7 @@ test("a Role configuration only accepts a published binding and one of its reaso
         fallback: "disabled",
         reasoning: "low",
       },
-      role: "reviewer",
+      role: "Fixture Reviewer",
       runtimeOfferId: "offer-fixture",
     },
   });
@@ -513,10 +513,10 @@ test("a Role revision keeps configuration fields the console does not edit and o
   assert.deepEqual(form, {
     displayName: "Fixture Reviewer",
     handle: "fixture-reviewer",
-    instructions: "FIXTURE ONLY",
+    instructions: "reviewer\n\nFIXTURE ONLY",
     modelBindingId: "binding-fixture",
     reasoning: "low",
-    role: "reviewer",
+    role: "Fixture Reviewer",
     runtimeOfferId: "offer-fixture",
   });
   const choices = runtimeChoices(inventory);
@@ -529,6 +529,7 @@ test("a Role revision keeps configuration fields the console does not edit and o
     ok: true,
     value: {
       ...base,
+      role: "Fixture Reviewer",
       instructions: "FIXTURE revised",
       modelIntent: {
         exactBindingIds: ["binding-fixture"],
@@ -569,4 +570,31 @@ test("D2-2: the lifecycle list names a Human abandon of a blocked Activation", (
   assert.equal(events.length, 1);
   assert.equal(events[0]?.label, "Human 放弃了被阻塞的激活（执行通道已释放）");
   assert.equal(events[0]?.subject, "instance-fixture");
+});
+
+test("the single Role prompt preserves legacy text and does not duplicate it on another save", () => {
+  const base = {
+    displayName: "Tom",
+    handle: "old-tom",
+    role: "Review changes",
+    instructions: "Check correctness",
+    runtimeOfferId: "offer-fixture",
+    modelIntent: {
+      fallback: "disabled" as const,
+      exactBindingIds: ["binding-fixture"],
+      reasoning: "low" as const,
+    },
+  };
+  const form = roleFormFrom(base);
+  assert.equal(form.instructions, "Review changes\n\nCheck correctness");
+  const saved = buildRoleConfiguration(
+    { ...form, displayName: "Jerry" },
+    runtimeChoices(inventory),
+    base,
+  );
+  assert.equal(saved.ok, true);
+  if (!saved.ok) return;
+  assert.equal(saved.value.handle, base.handle);
+  assert.equal(saved.value.role, "Jerry");
+  assert.equal(roleFormFrom(saved.value).instructions, form.instructions);
 });

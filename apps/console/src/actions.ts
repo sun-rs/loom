@@ -82,6 +82,7 @@ export const REPLAY_BEFORE_FRESHNESS: Readonly<Record<string, string>> = {
     "room.member.remove: collaboration-service.ts replay :1316-1333 -> fresh :1340",
   message:
     "message.post: collaboration-service.ts postMessage replay :1840-1858 -> #assertFreshContext :1871",
+  "role-delete": "role.delete: replay before revision and freshness checks",
   "role-create": "role.create: role-catalog.ts replay :202-213 -> fresh :215",
   "role-revise":
     "role.revise: role-catalog.ts replay :85-96 -> revision check :98, fresh :100",
@@ -488,10 +489,14 @@ export function roleFormFrom(configuration: RoleConfiguration): RoleForm {
   return {
     displayName: configuration.displayName,
     handle: configuration.handle,
-    instructions: configuration.instructions,
+    instructions:
+      configuration.role === configuration.displayName ||
+      configuration.role === configuration.instructions
+        ? configuration.instructions
+        : `${configuration.role}\n\n${configuration.instructions}`,
     modelBindingId: configuration.modelIntent.exactBindingIds?.[0] ?? "",
     reasoning: configuration.modelIntent.reasoning ?? "",
-    role: configuration.role,
+    role: configuration.displayName,
     runtimeOfferId: configuration.runtimeOfferId,
   };
 }
@@ -533,7 +538,7 @@ export function buildRoleConfiguration(
       fallback: "disabled",
       ...(binding.reasoning.length === 0 ? {} : { reasoning: form.reasoning }),
     },
-    role: form.role.trim(),
+    role: form.displayName.trim(),
     runtimeOfferId: runtime.runtimeOfferId,
   });
   return parsed.success

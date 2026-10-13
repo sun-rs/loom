@@ -43,7 +43,9 @@ test("schema 59 Role becomes an immutable revision without altering its configur
     const original = first.roles.create(auth, input);
     first.close();
     firstClosed = true;
-    db.exec("DROP TABLE role_revisions; PRAGMA user_version=59");
+    db.exec(
+      "DROP TABLE role_revisions; ALTER TABLE role_templates DROP COLUMN deleted_at; PRAGMA user_version=59",
+    );
     db.close();
     reopened = new RoomKernel({ databasePath });
     reopened.initialize();

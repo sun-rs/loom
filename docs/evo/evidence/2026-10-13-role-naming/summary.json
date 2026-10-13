@@ -1,0 +1,74 @@
+{
+  "date": "2026-10-13",
+  "scope": "Role naming, configuration deletion and single Prompt in the throwaway console",
+  "owners": {
+    "identity": "Kernel RoleCatalog",
+    "protocol": "packages/protocol",
+    "presentation": "apps/console"
+  },
+  "changes": [
+    "Active Role names unique per workspace, case/NFKC normalized; stable IDs and immutable revisions retained.",
+    "New instances receive readable Role-name-number names shared by display and mention. Existing instances and sessions are not renamed or recreated.",
+    "Human revision-checked/idempotent Role deletion retains original template, revisions and instances; creating the same name creates a distinct Role ID.",
+    "One visible Prompt preserves legacy role plus instructions; the compatibility handle is internal to the form.",
+    "Assigned Unicode/space instance names remain valid for native model configuration.",
+    "Historical authors resolve from retained agent identities, including removed/tombstoned members; reopening a private box does not require a currently listed Role instance."
+  ],
+  "schema": {
+    "from": 86,
+    "to": 87,
+    "change": "Nullable role_templates.deleted_at; pre-existing rows remain active, no identity rewrite."
+  },
+  "verification": {
+    "tdd": "Confirmed failing uniqueness, readable name, rename, deletion, single Prompt and configure regressions before their implementations.",
+    "targeted": "98 Role/console checks plus 6 naming/migration checks passed; HTTP deletion/replay included.",
+    "browser": "Fake CLI gate passed 1440x1000 and 390x844 including create/revise/instantiate/delete, private box, message, memory, usage and unknown write recovery.",
+    "fullCheck": {
+      "passed": true,
+      "backendPassed": 3172,
+      "backendSkipped": 22,
+      "webPassed": 487,
+      "consolePassed": 63,
+      "efficiencyUnitPassed": 558,
+      "otherCheckStagesPassed": true
+    },
+    "formatCheck": true,
+    "diffCheck": true,
+    "paidProvidersRun": false,
+    "deployed": false,
+    "initialFullCheck": {
+      "passed": false,
+      "backendTests": 3194,
+      "backendPassed": 3148,
+      "backendFailed": 24,
+      "backendSkipped": 22,
+      "causes": [
+        "23 obsolete expected values: instance names, explicit API capability lists, and schema version 86; corrected to the new contract.",
+        "One existing Codex warm-runtime retry exceeded its 1500ms start budget; isolated unchanged test passed. No runtime timeout policy was changed."
+      ]
+    },
+    "relatedRechecks": {
+      "migrationTests": 216,
+      "migrationPassed": 216,
+      "httpSdkCoreTests": 17,
+      "httpSdkCorePassed": 17,
+      "daemonWorkflowPassed": true,
+      "historicalAuthorNames": "Removed instance and deleted Role private-box browser regression failed with a principal ID, then passed after resolving retained agent names by participant ID."
+    },
+    "remainingCheckStages": "Web, console, parity, formal-browser-policy, bilateral-capture and CLI efficiency unit scripts all exited successfully; no paid provider calls.",
+    "logs": {
+      "loom-role-naming-check.log": "9a3b32cce91eb42a6fb4e05efe88255b454f635e5862be8be00489b9d4a79bcd",
+      "loom-role-naming-check-final.log": "d0c2c0eebe1b3c95344e61ef43d2f75ac0e7ede9a544348b49bc7c59ba408b51",
+      "loom-role-naming-browser-accepted.log": "b9884a930bd54b168b05b6b34d7831839c197003c95be1d3402d1325c9fc9445",
+      "loom-role-check-failure-isolated.log": "822ecf7544fe86fb751265982e7eadeb4b07cbefcabca70d38a9b26fc6d16b31",
+      "loom-role-migrations-green-final.log": "c64293044a006f6cab27e64cf163a02ef0b5bd69137e58b41973832d4b934e6b"
+    }
+  },
+  "boundaries": [
+    "Existing duplicate Role names are retained, not silently merged or renamed. New collisions are refused.",
+    "Historical legacy instance names are retained. The readable suffix scheme applies to newly created instances.",
+    "Explicit restart with optional latest Role configuration (including switching CLI) is owner-approved follow-up, not implemented in this naming slice. Existing reset behavior remains unchanged.",
+    "Bounded context restoration into a fresh session is not implemented or efficiency-tested in this slice. Existing history reads retain instance/channel/private-box scope fences.",
+    "No new CLI reliability, token savings or paid efficiency claim."
+  ]
+}

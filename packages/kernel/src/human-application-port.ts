@@ -63,6 +63,7 @@ export type HumanApplicationPort = Pick<
   | "updateWorkspaceRoom"
   | "updateTaskWorkflowStatus"
 > & {
+  deleteRole: RoomKernel["roles"]["delete"];
   reviseRole: RoomKernel["roles"]["revise"];
   createRole: RoomKernel["roles"]["create"];
   listRoles: RoomKernel["roles"]["list"];
@@ -126,6 +127,7 @@ export function createHumanApplicationPort(
   kernel: RoomKernel,
 ): HumanApplicationPort {
   const port: HumanApplicationPort = {
+    deleteRole: (actor, input) => kernel.roles.delete(actor, input),
     reviseRole: (actor, input) => kernel.roles.revise(actor, input),
     createRole: (actor, input) => kernel.roles.create(actor, input),
     listRoles: (actor, input) => kernel.roles.list(actor, input),

@@ -6,7 +6,8 @@ CREATE TABLE IF NOT EXISTS role_templates (
  role_revision_id TEXT NOT NULL UNIQUE,
  control_room_id TEXT NOT NULL REFERENCES rooms(room_id),
  configuration_json TEXT NOT NULL,
- created_at TEXT NOT NULL
+ created_at TEXT NOT NULL,
+ deleted_at TEXT
 ) STRICT;
 CREATE TABLE IF NOT EXISTS role_revisions (
  role_revision_id TEXT PRIMARY KEY,

@@ -17,8 +17,12 @@
 | Session  | 实例的原生 CLI session。一个实例始终延续同一个 session，不按任务、轮数或 token 自动轮换                                |
 | Channel  | 协作记录与消息盒子；成员是实例，不是 Role。拥有一个平台创建的主工作目录与可选附加目录（见 §2a）                        |
 
-- 修改 Role 不影响已有实例；实例显示"与当前 Role 配置不一致"。
-- 实例可以切换模型和 effort（原生能力），不能切换 CLI。CLI 升级产生新的 RuntimeOffer ID 时，配置修改允许显式选择同 Host、同 RuntimeProfile 的有效入口；入口 ID 变化本身不算切换 CLI，不重置实例的 session 绑定。不同 Host / Profile 仍拒绝。
+- 同一工作区当前有效的 Role 名称唯一（忽略大小写与 Unicode 兼容写法），Role ID 创建后不变；改名只产生新 Revision。删除 Role 配置保留旧实例、修订与历史，同名重建得到新 Role ID（owner 2026-10-13）。
+- 新实例使用 Role 名称加可读数字后缀，显示名与 @ 名称一致，Instance ID 不变；历史实例不自动改名。名称不替代历史消息中已绑定的实例 ID。角色编辑只显示一个 Prompt，旧职责简介与详细指令合并保留。
+- 修改 Role 不影响已有实例的名称或配置；实例显示"与当前 Role 配置不一致"。
+- 普通连续 session 内可以切换模型和 effort（原生能力），不能直接切换 CLI。CLI 升级产生新的 RuntimeOffer ID 时，配置修改允许显式选择同 Host、同 RuntimeProfile 的有效入口；入口 ID 变化本身不算切换 CLI，不重置实例的 session 绑定。不同 Host / Profile 仍拒绝。
+- **显式重启的新目标（owner 2026-10-13，本次命名切片尚未实现）**：用户选择保留实例旧名称与配置，或采用指定的最新 Role Revision（名称、Prompt、CLI、模型与 effort）；后一种允许更换 CLI，同时保留 Instance ID 与历史。仅用户主动重启原生 session 才适用，服务进程重启与 Role 保存不能触发配置更新。必须先验证旧执行和清理已结束，再原子切换配置与 session generation；陈旧 Role Revision 拒绝而不悄悄采用未确认配置。
+- 新 session 的历史恢复目标是有界的近期上下文加按需历史读取，不自动回灌整个频道或 Provider 工具／思考轨迹；历史仍持久存在，不等于已被新模型阅读。现有权限化分页 history 可复用，重启恢复的具体窗口、交付凭据和成本仍需在下一纵向切片验证。
 - 移除实例：停止投递、安全终止当前执行、保留历史；重新加入同一 Role = 新实例。
 - **旧的人格 Agent 模型被替代，evo 后端不再维护旧 Agent 路径。**旧数据不迁移（owner 2026-09-24 已退役旧环境并确认）。
 

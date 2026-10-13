@@ -439,7 +439,7 @@ import { RunGuardPolicy } from "./run-guard-policy.ts";
 import { RunWatchdogService } from "./run-watchdog-service.ts";
 const DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS = 5_000;
 const DEFAULT_RUNTIME_OFFER_MAX_TTL_MS = 5 * 60_000;
-export const KERNEL_SCHEMA_VERSION = 86;
+export const KERNEL_SCHEMA_VERSION = 87;
 
 export class RoomKernel {
   static #referenceSchema: Map<string, string> | undefined;
@@ -849,6 +849,15 @@ export class RoomKernel {
     unit("base-schema", "transactional", () => {
       this.#database.exec(SCHEMA_OBJECT_SQL);
       initializeHeldMessageDrafts(this.#database, this.#now());
+      if (
+        !this.#database
+          .prepare("PRAGMA table_info(role_templates)")
+          .all()
+          .some((column) => column.name === "deleted_at")
+      )
+        this.#database.exec(
+          "ALTER TABLE role_templates ADD COLUMN deleted_at TEXT",
+        );
     });
     unit("activation-presented-window-compatibility", "transactional", () => {
       migrateActivationPresentedWindows(this.#database);

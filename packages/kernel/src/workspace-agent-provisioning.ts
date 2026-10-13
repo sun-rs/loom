@@ -63,7 +63,10 @@ export function provisionWorkspaceAgentTransaction(
   owner: WorkspaceAgentProvisioningOwner,
   input: WorkspaceAgentProvisionInput,
 ): WorkspaceAgentProvisionResult {
-  const normalized = normalizeWorkspaceAgentProvisionInput(input);
+  const normalized = normalizeWorkspaceAgentProvisionInput(
+    input,
+    owner.roleInstance !== undefined,
+  );
   const requestDigest = canonicalDigest({
     domain: "rah/workspace-agent-provision/v1",
     ...normalized,
@@ -610,6 +613,7 @@ export function workspaceAgentProvisionResult(
 
 function normalizeWorkspaceAgentProvisionInput(
   input: WorkspaceAgentProvisionInput,
+  roleInstance = false,
 ): WorkspaceAgentProvisionInput & {
   sessionPolicy: "prefer_resume";
   toolAccessMode: "full_access";
@@ -628,8 +632,12 @@ function normalizeWorkspaceAgentProvisionInput(
   ) {
     throw new Error("standard Raft policy requires full_access");
   }
-  const handle = requiredBoundedText(input.handle, "handle", 64);
-  if (!/^[\p{L}\p{N}][\p{L}\p{N}._-]*$/u.test(handle)) {
+  const handle = requiredBoundedText(
+    input.handle,
+    "handle",
+    roleInstance ? 128 : 64,
+  );
+  if (!roleInstance && !/^[\p{L}\p{N}][\p{L}\p{N}._-]*$/u.test(handle)) {
     throw new Error(
       "handle may only contain letters, numbers, dots, underscores, and hyphens",
     );

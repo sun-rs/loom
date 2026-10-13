@@ -769,7 +769,7 @@ await import(${JSON.stringify(new URL("../../agent-host/test/fixtures/fake-cli.m
         idempotencyKey: "p3c-review-instance",
       }),
     );
-    assert.ok(provisionedAgent.agent.handle.startsWith("review-agent-"));
+    assert.equal(provisionedAgent.agent.handle, "Review Agent-1");
     assert.equal(
       provisionedAgent.agent.currentRevision.executionWorkspace?.kind,
       "agent_private",
