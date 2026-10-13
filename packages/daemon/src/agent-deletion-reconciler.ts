@@ -2,7 +2,9 @@ import { setTimeout } from "node:timers/promises";
 import type { RoomKernel } from "@rah-os/core";
 /** Cadence only. Restart recovery consumes the existing Kernel deletion intents. */
 export async function runAgentDeletionReconciler(
-  kernel: Pick<RoomKernel, "reconcileAgentDeletions">,
+  kernel: Pick<RoomKernel, "reconcileAgentDeletions"> & {
+    roles: Pick<RoomKernel["roles"], "reconcileSideDiscards">;
+  },
   signal: AbortSignal,
   onFailure: (message: string) => void,
   /**
@@ -16,6 +18,7 @@ export async function runAgentDeletionReconciler(
 ): Promise<void> {
   while (!signal.aborted) {
     try {
+      kernel.roles.reconcileSideDiscards();
       kernel.reconcileAgentDeletions((change) => {
         onStatus(
           change.kind === "cleared"

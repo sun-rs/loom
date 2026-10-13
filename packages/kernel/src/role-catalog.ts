@@ -1,4 +1,4 @@
-import { discardSide } from "./side-lifecycle.ts";
+import { discardSide, reconcileSideDiscards } from "./side-lifecycle.ts";
 import { sideProjection } from "./side-session.ts";
 import { forkInstance, type CopyInstanceSession } from "./instance-fork.ts";
 import { adoptInstanceRoleRevision } from "./instance-restart-config.ts";
@@ -81,6 +81,9 @@ export class RoleCatalog {
   }
   discardSide(auth: AuthenticatedActorContext, input: P.SideDiscardRequest) {
     return discardSide(this.context, auth, input);
+  }
+  reconcileSideDiscards() {
+    return reconcileSideDiscards(this.context);
   }
   private role(row: Row) {
     return P.RoleTemplateSchema.parse({

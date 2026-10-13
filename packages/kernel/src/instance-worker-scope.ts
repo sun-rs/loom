@@ -77,7 +77,7 @@ export function requireInstanceReplyTarget(
 export function activeInstancePrivateBoxPredicate(room: string) {
   return `NOT EXISTS (
     SELECT 1 FROM rooms r WHERE r.room_id=${room} AND (
-      EXISTS (SELECT 1 FROM side_sessions s WHERE s.room_id=r.room_id AND s.discarded_at IS NOT NULL)
+      EXISTS (SELECT 1 FROM side_sessions s WHERE s.room_id=r.room_id AND (s.discarded_at IS NOT NULL OR EXISTS (SELECT 1 FROM room_events e WHERE e.room_id=s.room_id AND e.aggregate_id=s.instance_id AND e.type='side.discard_requested')))
       OR (r.kind='direct' AND EXISTS (
         SELECT 1 FROM memberships peer JOIN role_instances i ON i.instance_id=peer.principal_id
         WHERE peer.room_id=r.room_id
@@ -114,6 +114,10 @@ export function withInstancePrivateBox<
             sourceInstanceId: String(side.source_instance_id),
             sourceChannelId: String(side.source_channel_id),
             discarded: side.discarded_at != null,
+            ...(side.discarded_at == null &&
+            Number(side.discard_requested) === 1
+              ? { discarding: true }
+              : {}),
           },
         }
       : {}),

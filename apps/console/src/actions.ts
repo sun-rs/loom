@@ -70,7 +70,7 @@ export const REPLAY_BEFORE_FRESHNESS: Readonly<Record<string, string>> = {
   "side-create":
     "instance-fork.ts: private creation replay before source freshness, native copy never blindly repeated",
   "side-discard":
-    "side-lifecycle.ts: exact replay before freshness and idle checks",
+    "side-lifecycle.ts: exact replay before freshness; terminal-proof discard completion",
   "instance-fork":
     "instance-fork.ts: committed replay before source/freshness checks; unknown native copies never retried",
   "task-policy":

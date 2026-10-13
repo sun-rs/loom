@@ -67,7 +67,16 @@ export function messagePanel(input: {
     attrs: { id: "composer-status", role: "status" },
     className: "action-status",
   });
+  const canPost = () =>
+    context.rooms.find((room) => room.roomId === roomId)?.instancePrivateBox
+      ?.active !== false;
+  const updateComposer = () => {
+    composer.disabled = !canPost();
+    send.disabled = slot.state !== "idle" || !canPost();
+    send.textContent = slot.state === "pending" ? "发送中…" : "发送";
+  };
   const submit = () => {
+    if (!canPost()) return;
     if (slot.state === "unknown") {
       setStatus(composerStatus, "error", INTENT_BUSY_UNKNOWN);
       return;
@@ -115,10 +124,7 @@ export function messagePanel(input: {
       })
       .catch(() => undefined);
   };
-  slot.onChange((state) => {
-    send.disabled = state !== "idle";
-    send.textContent = state === "pending" ? "发送中…" : "发送";
-  });
+  slot.onChange(updateComposer);
   send.addEventListener("click", submit);
   composer.addEventListener("keydown", (event) => {
     if (composerKeyAction(event) !== "submit") return;
@@ -128,6 +134,7 @@ export function messagePanel(input: {
   });
 
   const render = () => {
+    updateComposer();
     if (messageWindow === undefined) return;
     const nearBottom =
       list.scrollHeight - list.scrollTop - list.clientHeight < 48;

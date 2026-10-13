@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS side_sessions (
 export function sideSession(db: DatabaseSync, instanceId: string) {
   return db
     .prepare(
-      "SELECT s.*,i.agent_id FROM side_sessions s JOIN role_instances i ON i.instance_id=s.instance_id WHERE s.instance_id=?",
+      "SELECT s.*,i.agent_id,EXISTS(SELECT 1 FROM room_events e WHERE e.room_id=s.room_id AND e.aggregate_id=s.instance_id AND e.type='side.discard_requested') AS discard_requested FROM side_sessions s JOIN role_instances i ON i.instance_id=s.instance_id WHERE s.instance_id=?",
     )
     .get(instanceId);
 }
@@ -29,7 +29,11 @@ export function sideProjection(db: DatabaseSync, instanceId: string) {
     sourceInstanceId: String(s.source_instance_id),
     sourceChannelId: String(s.source_channel_id),
     state:
-      s.discarded_at == null ? ("active" as const) : ("discarded" as const),
+      s.discarded_at != null
+        ? ("discarded" as const)
+        : Number(s.discard_requested) === 1
+          ? ("discarding" as const)
+          : ("active" as const),
   };
 }
 /** Default-deny for Worker capabilities. Explicit conversation paths opt in. */
@@ -40,7 +44,11 @@ export function requireSideCapability(
 ) {
   const side = sideSession(db, scope.participantId);
   if (!side) return;
-  if (side.discarded_at != null || side.room_id !== scope.roomId)
+  if (
+    side.discarded_at != null ||
+    Number(side.discard_requested) === 1 ||
+    side.room_id !== scope.roomId
+  )
     throw new ForbiddenError(
       "Side conversation has been discarded or is outside this execution",
     );
@@ -54,6 +62,7 @@ export function sideReadGrant(db: DatabaseSync, instanceId: string) {
   if (!side) return;
   if (
     side.discarded_at != null ||
+    Number(side.discard_requested) === 1 ||
     !db
       .prepare(
         `SELECT 1 FROM rooms r

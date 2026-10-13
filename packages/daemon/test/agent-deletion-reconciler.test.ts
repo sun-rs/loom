@@ -15,6 +15,7 @@ async function runTicks(
   const controller = new AbortController();
   let tick = 0;
   const kernel = {
+    roles: { reconcileSideDiscards: () => 0 },
     reconcileAgentDeletions: (report?: (change: never) => void) => {
       tick += 1;
       if (report) onTick(tick, report as NonNullable<BlockChange>);
@@ -70,6 +71,7 @@ test("reconciler failures stay on onFailure and the cadence keeps running", asyn
   const controller = new AbortController();
   let tick = 0;
   const kernel = {
+    roles: { reconcileSideDiscards: () => 0 },
     reconcileAgentDeletions: () => {
       tick += 1;
       if (tick >= 2) controller.abort();
@@ -92,6 +94,7 @@ test("without an explicit status sink the existing failure sink receives block c
   const sink = { failures: [] as string[], status: [] as string[] };
   const controller = new AbortController();
   const kernel = {
+    roles: { reconcileSideDiscards: () => 0 },
     reconcileAgentDeletions: (report?: (change: never) => void) => {
       report?.({ agentId: "agent_2", kind: "cleared" } as never);
       controller.abort();
@@ -104,4 +107,24 @@ test("without an explicit status sink the existing failure sink receives block c
   assert.deepEqual(sink.status, []);
   assert.equal(sink.failures.length, 1);
   assert.match(sink.failures[0]!, /unblocked and completed: agent_2/);
+});
+
+test("existing lifecycle cadence resumes durable Side discards without a client retry", async () => {
+  const controller = new AbortController();
+  let calls = 0;
+  await runAgentDeletionReconciler(
+    {
+      reconcileAgentDeletions: () => 0,
+      roles: {
+        reconcileSideDiscards: () => {
+          calls++;
+          controller.abort();
+          return 1;
+        },
+      },
+    } as never,
+    controller.signal,
+    () => controller.abort(),
+  );
+  assert.equal(calls, 1);
 });

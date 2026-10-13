@@ -1,0 +1,303 @@
+{
+  "scope": "Unified Side busy discard; actual installed CLIs, isolated homes, loopback synthetic models only",
+  "baseline": "6afe0c0",
+  "paidCalls": 0,
+  "syntheticRequests": 33,
+  "attempts": [
+    {
+      "attempt": "1791905234915-kimi",
+      "cli": "kimi",
+      "syntheticRequests": 0,
+      "paidCalls": 0,
+      "passed": false,
+      "checks": ["daemon-drain"],
+      "failure": "fixture startup import missing",
+      "rawResultSha256": "b20a5d565bdfc5896bda0401d51d2caab72cdedb673ed2fdc26be9f8c9755e29"
+    },
+    {
+      "attempt": "1791905284561-kimi",
+      "cli": "kimi",
+      "syntheticRequests": 2,
+      "paidCalls": 0,
+      "passed": false,
+      "checks": [
+        "source-established",
+        "side-native-zero-generation-idempotent",
+        "busy-discard-accepted",
+        "daemon-drain"
+      ],
+      "failure": "fixture expected 409 for permission denial; actual 403; corrected fixture only",
+      "rawResultSha256": "95a09e7588a0aa8b0323ff9ea30fbec245121bb4b46a9ec9a558a1e7ea8d1f1a"
+    },
+    {
+      "attempt": "1791905311575-codex",
+      "cli": "codex",
+      "syntheticRequests": 2,
+      "paidCalls": 0,
+      "passed": false,
+      "checks": [
+        "source-established",
+        "side-native-zero-generation-idempotent",
+        "busy-discard-accepted",
+        "daemon-drain"
+      ],
+      "failure": "fixture expected 409 for permission denial; actual 403; corrected fixture only",
+      "rawResultSha256": "8b4f3e3d2270ad9a87a6df4fda7a008a496cc1c1920ed6d1b656f119b2758ecf"
+    },
+    {
+      "attempt": "1791905311579-claude",
+      "cli": "claude",
+      "syntheticRequests": 2,
+      "paidCalls": 0,
+      "passed": false,
+      "checks": [
+        "source-established",
+        "side-native-zero-generation-idempotent",
+        "busy-discard-accepted",
+        "daemon-drain"
+      ],
+      "failure": "fixture expected 409 for permission denial; actual 403; corrected fixture only",
+      "rawResultSha256": "2274f2f0fcb2db0b2cede7c03f056bd61ebc8a5776c0df3042658149aa3fc75a"
+    },
+    {
+      "attempt": "1791905311583-opencode",
+      "cli": "opencode",
+      "syntheticRequests": 2,
+      "paidCalls": 0,
+      "passed": false,
+      "checks": [
+        "source-established",
+        "side-native-zero-generation-idempotent",
+        "busy-discard-accepted",
+        "daemon-drain"
+      ],
+      "failure": "fixture expected 409 for permission denial; actual 403; corrected fixture only",
+      "rawResultSha256": "317303125d27f608939ebd48bc888a5aa82b782687acf2bde9b80579d06f5a06"
+    },
+    {
+      "attempt": "1791905311683-pi",
+      "cli": "pi",
+      "syntheticRequests": 2,
+      "paidCalls": 0,
+      "passed": false,
+      "checks": [
+        "source-established",
+        "side-native-zero-generation-idempotent",
+        "busy-discard-accepted",
+        "daemon-drain"
+      ],
+      "failure": "fixture expected 409 for permission denial; actual 403; corrected fixture only",
+      "rawResultSha256": "e9b1ab4fb615a26b5285b5058102b4abff9906033c5c5b9efcc60225cafacc29"
+    },
+    {
+      "attempt": "1791905595841-codex",
+      "cli": "codex",
+      "syntheticRequests": 3,
+      "paidCalls": 0,
+      "passed": true,
+      "checks": [
+        "source-established",
+        "side-native-zero-generation-idempotent",
+        "busy-discard-accepted",
+        "discard-completed-after-terminal-proof-no-late-output",
+        "parent-session-preserved-and-continued",
+        "daemon-drain",
+        "all-activations-terminal"
+      ],
+      "failure": null,
+      "rawResultSha256": "ed46fd5c4bf2d97215c78c5af08c5505678899a798bf030d6cf688be779c94ef"
+    },
+    {
+      "attempt": "1791905595842-claude",
+      "cli": "claude",
+      "syntheticRequests": 3,
+      "paidCalls": 0,
+      "passed": true,
+      "checks": [
+        "source-established",
+        "side-native-zero-generation-idempotent",
+        "busy-discard-accepted",
+        "discard-completed-after-terminal-proof-no-late-output",
+        "parent-session-preserved-and-continued",
+        "daemon-drain",
+        "all-activations-terminal"
+      ],
+      "failure": null,
+      "rawResultSha256": "c46ffa64141690bc4232064d1219093da5ceb6e391cf294e2f26de55bb3ed2cf"
+    },
+    {
+      "attempt": "1791905595852-opencode",
+      "cli": "opencode",
+      "syntheticRequests": 3,
+      "paidCalls": 0,
+      "passed": true,
+      "checks": [
+        "source-established",
+        "side-native-zero-generation-idempotent",
+        "busy-discard-accepted",
+        "discard-completed-after-terminal-proof-no-late-output",
+        "parent-session-preserved-and-continued",
+        "daemon-drain",
+        "all-activations-terminal"
+      ],
+      "failure": null,
+      "rawResultSha256": "6992cb5e6696840a305a3e208e48a62f28ac110ca3f7d1c1aab8c4df80439f55"
+    },
+    {
+      "attempt": "1791905595963-kimi",
+      "cli": "kimi",
+      "syntheticRequests": 3,
+      "paidCalls": 0,
+      "passed": true,
+      "checks": [
+        "source-established",
+        "side-native-zero-generation-idempotent",
+        "busy-discard-accepted",
+        "discard-completed-after-terminal-proof-no-late-output",
+        "parent-session-preserved-and-continued",
+        "daemon-drain",
+        "all-activations-terminal"
+      ],
+      "failure": null,
+      "rawResultSha256": "cb612728f6680122688edea536db7f79e6eb4b8df87e7726a28b01f7b2b6eb48"
+    },
+    {
+      "attempt": "1791905595976-pi",
+      "cli": "pi",
+      "syntheticRequests": 3,
+      "paidCalls": 0,
+      "passed": true,
+      "checks": [
+        "source-established",
+        "side-native-zero-generation-idempotent",
+        "busy-discard-accepted",
+        "discard-completed-after-terminal-proof-no-late-output",
+        "parent-session-preserved-and-continued",
+        "daemon-drain",
+        "all-activations-terminal"
+      ],
+      "failure": null,
+      "rawResultSha256": "3d61aa912e73b4064a1d2bf0c108679503886187c25245e154a0b5b3fe75d822"
+    },
+    {
+      "attempt": "1791905705158-pi",
+      "cli": "pi",
+      "syntheticRequests": 3,
+      "paidCalls": 0,
+      "passed": true,
+      "checks": [
+        "source-established",
+        "side-native-zero-generation-idempotent",
+        "browser-busy-discard-pointer-pending-desktop-mobile",
+        "busy-discard-accepted",
+        "discard-completed-after-terminal-proof-no-late-output",
+        "parent-session-preserved-and-continued",
+        "daemon-drain",
+        "all-activations-terminal"
+      ],
+      "failure": null,
+      "rawResultSha256": "7e43c8e07cb2c33c09b2a734da5bd49deaf5a4844f4297ff5255feb4e6d884f9"
+    },
+    {
+      "attempt": "1791906001551-pi",
+      "cli": "pi",
+      "syntheticRequests": 2,
+      "paidCalls": 0,
+      "passed": false,
+      "checks": [
+        "source-established",
+        "side-native-zero-generation-idempotent",
+        "daemon-drain"
+      ],
+      "failure": "Browser reproducer: pending Side still offered sending; fixed shared composer permission rendering",
+      "rawResultSha256": "50349439061cabd11ff9a648ee313a06b03c57acb85dee5bcbc47135d50338cb"
+    },
+    {
+      "attempt": "1791906056863-pi",
+      "cli": "pi",
+      "syntheticRequests": 3,
+      "paidCalls": 0,
+      "passed": true,
+      "checks": [
+        "source-established",
+        "side-native-zero-generation-idempotent",
+        "browser-busy-discard-pointer-pending-desktop-mobile",
+        "busy-discard-accepted",
+        "discard-completed-after-terminal-proof-no-late-output",
+        "parent-session-preserved-and-continued",
+        "daemon-drain",
+        "all-activations-terminal"
+      ],
+      "failure": null,
+      "rawResultSha256": "3443bf215656725e12c4479a64586dcb48def4e4a63b5b21b9e6e13159e4131f"
+    }
+  ],
+  "launcherFailures": {
+    "count": 5,
+    "reason": "executor mistakenly added unavailable tsx loader; failed before harness or CLI started",
+    "syntheticRequests": 0
+  },
+  "cleanup": {
+    "recordedProcessesExited": 148,
+    "generatedWrapperSettingsRemoved": 18,
+    "onlyIsolatedTemporarySettings": true
+  },
+  "behavior": [
+    "Durable discard intent and immediate permission/enable fences",
+    "Existing Host cancellation owns stopping",
+    "Terminal and cleanup proof before queue cancellation and archival",
+    "Reconstruction from ledger on existing daemon cadence",
+    "Source Room and provider binding unchanged; source resumes same session"
+  ],
+  "browser": {
+    "actualCli": "pi",
+    "viewports": ["1440x1000", "390x844"],
+    "pointerDiscard": true,
+    "pendingDisabled": true,
+    "syntheticCleanupBarrier": true,
+    "pageErrors": [],
+    "composerDisabled": true,
+    "screenshots": {
+      "discarding-390.png": "7298f1f82e2f9cc3aa48c4f8c534f182d722a9a6854164fca2c98e7e62c7f9e6",
+      "discarding-1440.png": "d3890c4efad75f0037ea5bd46027699a1ffa361c82eb50c9f007e9575ea61eb2"
+    }
+  },
+  "limitations": [
+    "No paid model quality or token efficiency claim",
+    "Missing termination or cleanup proof leaves discarding, never synthetic completion",
+    "Side creation still requires idle established source",
+    "Full-access same-UID filesystem is not strong isolation",
+    "Product third-column and Claude/Pi SEA remain outstanding"
+  ],
+  "verification": {
+    "focused": "9 passed",
+    "fullCheck": {
+      "exitCode": 0,
+      "backend": {
+        "passed": 3228,
+        "skipped": 22,
+        "failed": 0
+      },
+      "webUnit": 487,
+      "consoleUnit": 63,
+      "cliEfficiencyUnit": 558
+    },
+    "deployment": "pending formal restart",
+    "finalConsoleTypecheck": "passed",
+    "browserRegression": "npm run test:console:browser passed; fake CLI, desktop/mobile",
+    "formatCheck": "passed; final documentation refresh checked separately",
+    "diffCheck": "passed"
+  },
+  "evidenceLogs": {
+    "check.log": "d7b3de73ece2de32194b054f635bd6d7f33a885048e427add2861334d657550e",
+    "focused.log": "8bee666dee90766fd916ff78eabfb76efdc6c965cf719afaa9493746c09c59fb",
+    "kernel.log": "fd281afecf0b8601c29da5eaf7e445adb27277fe0fb892209a874143cfd7a2a0",
+    "console-browser.log": "9119847f2095dafca2941f914156fbdf2588aa6a2245baa0ffef9e1ee916bf17",
+    "console-typecheck.log": "fe669881d2096671cf59f0c3f4c645e714ec40b6e4314fcf7ebcaa17f0181495",
+    "red.log": "4dd419395388df77b9a1fe5b2485a6f15c94aa5ddb07d97df85a35d4f8155681",
+    "revival-red.log": "944c801aa116a4ac1d46ee8b84bb1bbcaead6d07a02b821b8820e7fa7dff8e6c",
+    "cadence-red.log": "e7a104e949311caa396c5b39571bdfc46983183cdb9027881b885dc362fd2683",
+    "pi-browser-red.log": "75126fb7835dbc4975a1fc0372b9995e9bbdb273a9e6e8b979a1dd1142e91d4b",
+    "pi-browser-green.log": "778e8a91c7dc48a0e2495c0e8d142ead9b7e3a500a1eaacfea0baa1cc922c5ea"
+  }
+}

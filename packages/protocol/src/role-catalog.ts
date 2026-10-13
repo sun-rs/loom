@@ -204,7 +204,7 @@ export const SideSessionSchema = z
     roomId: IdentifierSchema,
     sourceInstanceId: IdentifierSchema,
     sourceChannelId: IdentifierSchema,
-    state: z.enum(["active", "discarded"]),
+    state: z.enum(["active", "discarding", "discarded"]),
   })
   .strict();
 export const SideCreateResponseSchema = z

@@ -89,9 +89,11 @@ export function mountDirect(
               "私聊状态",
               privateBox.active
                 ? "可用"
-                : side?.discarded
-                  ? "Side 已丢弃（历史只读）"
-                  : "已停用（实例已移出频道；历史只读）",
+                : side?.discarding
+                  ? "Side 正在停止（等待进程退出与清理）"
+                  : side?.discarded
+                    ? "Side 已丢弃（历史只读）"
+                    : "已停用（实例已移出频道；历史只读）",
               "direct-active",
             ),
             el("p", {
@@ -141,11 +143,14 @@ export function mountDirect(
         },
         { className: "secondary side-discard" },
       );
-      discard.disabled = side.discarded || sideIntent.state !== "idle";
+      discard.disabled =
+        side.discarded ||
+        side.discarding === true ||
+        sideIntent.state !== "idle";
       header.append(
         el("p", {
           className: "muted",
-          text: "当前仅支持空闲后丢弃；有排队或运行中的工作时会拒绝。",
+          text: "丢弃会停止 Side 的工作；确认进程退出和清理完成后关闭，不影响源实例。",
         }),
         discard,
         sideResult,
@@ -281,6 +286,7 @@ export function mountDirect(
   renderHeader();
   const unsubscribe = subscribe(context, () => {
     renderHeader();
+    messages.render();
     if (instance === undefined && box() !== undefined) poller.runNow();
   });
   poller.start();

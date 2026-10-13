@@ -86,15 +86,6 @@ test("Side is a private independent native branch, never a source member or deli
       idempotencyKey: "side-question",
       recipients: [{ participantId: side.instanceId, reason: "mention" }],
     });
-    assert.throws(
-      () =>
-        f.kernel.roles.discardSide(f.actor, {
-          sideId: side.instanceId,
-          basedOnRoomSeq: f.head(side.roomId),
-          idempotencyKey: "discard-queued",
-        }),
-      /pending|running/,
-    );
     const run = claimInstanceRun({
       ...f,
       home: { ...f.home, roomId: side.roomId },
@@ -163,15 +154,6 @@ test("Side is a private independent native branch, never a source member or deli
           limit: 50,
         }),
       /unavailable|scope/,
-    );
-    assert.throws(
-      () =>
-        f.kernel.roles.discardSide(f.actor, {
-          sideId: side.instanceId,
-          basedOnRoomSeq: f.head(side.roomId),
-          idempotencyKey: "discard-busy",
-        }),
-      /pending|running/,
     );
     assert.equal(f.head(f.home.roomId), sourceHead);
     assert.throws(

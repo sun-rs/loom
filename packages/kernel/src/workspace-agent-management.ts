@@ -1,3 +1,4 @@
+import { sideSession } from "./side-session.ts";
 import type { DatabaseSync } from "node:sqlite";
 
 import {
@@ -589,6 +590,13 @@ function setAgentState(
     throw new ConflictError("an Agent must be disabled before deletion");
   }
   const participantId = text(definitionRow, "participant_id");
+  const side = sideSession(owner.database, participantId);
+  if (
+    input.state === "enabled" &&
+    side &&
+    (side.discarded_at != null || Number(side.discard_requested) === 1)
+  )
+    throw new ConflictError("A discarding or discarded Side cannot be enabled");
   if (input.state === "tombstoned") {
     assertAgentQuiescent(owner.database, participantId);
   }

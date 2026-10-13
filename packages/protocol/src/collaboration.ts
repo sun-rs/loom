@@ -86,6 +86,7 @@ export const RoomSchema = z
         sourceInstanceId: IdentifierSchema,
         sourceChannelId: IdentifierSchema,
         discarded: z.boolean(),
+        discarding: z.boolean().optional(),
       })
       .strict()
       .optional(),
