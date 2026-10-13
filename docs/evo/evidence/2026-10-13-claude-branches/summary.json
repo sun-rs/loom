@@ -182,5 +182,8 @@
       "pi-next-probe.json": "ced1cbb810f7d99d7bc9d0955b6b46064b274aecf4ba18acc34d55d77d4f700f",
       "pi-next-fork-probe.json": "1226bf4893b0d36922e56edc6f30a7019aced3c6792c529bf084b66307ffac21"
     }
-  }
+  },
+  "codeCommit": "ae564116e71edd715265c516d88da8de68a02a7b",
+  "sourceSha256": "03228d96f51dde8ae212e58523a94b75c753a65220c1b4ec9dc2f9d30e2f46a4",
+  "deployment": "deployment.json"
 }
