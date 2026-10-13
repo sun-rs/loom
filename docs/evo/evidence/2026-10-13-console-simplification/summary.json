@@ -30,7 +30,7 @@
       "efficiencyUnitPassed": 558,
       "otherStagesPassed": true
     },
-    "format": "passed",
+    "format": "npm run format:check passed",
     "diff": "passed",
     "logs": {
       "/tmp/loom-console-simple-red.log": "6be365111dfefb46f4e67f94e6291d38f96096dc5be99d7be4d8958d9b9520d8",
@@ -38,10 +38,17 @@
       "/tmp/loom-console-astra-red.log": "d8acb53610e1383dd23da823606aa68f6cc9b556c0fd90b7dc639bc297d23071",
       "/tmp/loom-console-simple-browser-final.log": "584b5fa26e057c7f1dcd57d88c1fbcc5121147d1979f7dfa3ae499d9347ded73",
       "/tmp/loom-console-simple-check.log": "99e28d082aa12f3b8089e01c690669b6661698df0218c5fafff8abb8fb5dedf2"
-    }
+    },
+    "freshRealPages": "1440x1000 and 390x844: channel list 2 by default / 40 with test records; Role list 0 / 39; both reversible, keyboard disclosures work, no horizontal overflow/page errors."
   },
   "paidCalls": 0,
-  "deployment": "pending",
+  "deployment": {
+    "verified": true,
+    "codeRevision": "eeccf2d4353359c95b9b81573c68c3ea2bde2a64",
+    "evidence": "deployment.json",
+    "desktopAndMobileReadOnlyChecksPassed": true,
+    "businessTableHashesUnchanged": 11
+  },
   "limitations": [
     "Temporary console remains, not a product UI redesign.",
     "Name filter is neither permission enforcement nor a reliable permanent test-data classification.",
