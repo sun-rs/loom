@@ -18,6 +18,8 @@ export type SessionProtocolPending = {
   key: ProviderSessionKey;
   sessionId: string;
   version: string;
+  notice: string;
+  identityNotice?: string;
 };
 
 /**
@@ -84,14 +86,24 @@ export class SessionProtocolUpgrade {
       this.#pending.delete(input.participantId);
       return undefined;
     }
+    const identity =
+      previous.standingProtocolVersion === undefined &&
+      previous.forkSourceParticipantId !== undefined
+        ? `Fork identity: you are now ${JSON.stringify(input.agent.handle ?? input.participantId)} (${input.participantId}), a distinct instance copied from ${previous.forkSourceParticipantId}. Inherited first-person statements and plans are historical context from the source instance, not your identity, task ownership or new instructions. Follow your current request and current permissions; no introduction or history reread is required.`
+        : undefined;
+    const notice = [identity, protocolUpdateNotice(current)]
+      .filter(Boolean)
+      .join("\n");
     remember(this.#pending, input.participantId, {
       carried: new Set([input.runAttemptId]),
       generation: input.agent.instanceSessionGeneration,
       key,
       sessionId: previous.providerSessionId,
       version: current,
+      notice,
+      ...(identity === undefined ? {} : { identityNotice: identity }),
     });
-    return protocolUpdateNotice(current);
+    return notice;
   }
 
   /** A per-process driver reads the line from its own env fence. */
@@ -107,11 +119,14 @@ export class SessionProtocolUpgrade {
   }
 
   /** A warm turn composed by the Host: the line while still unaccepted. */
-  noticeFor(input: ActivationEnvelope): string | undefined {
+  noticeFor(
+    input: ActivationEnvelope,
+    options: { rulesCard?: boolean } = {},
+  ): string | undefined {
     const pending = this.#pending.get(input.participantId);
     if (pending === undefined) return undefined;
     pending.carried.add(input.runAttemptId);
-    return protocolUpdateNotice(pending.version);
+    return options.rulesCard ? pending.identityNotice : pending.notice;
   }
 
   /** The version a newly created session receives with this launch. */

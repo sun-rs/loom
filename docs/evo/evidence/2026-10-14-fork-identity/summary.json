@@ -1,0 +1,297 @@
+{
+  "baseline": "c7c15d4",
+  "scope": "One-time copied-session identity notice; actual installed CLI, isolated homes and loopback synthetic model only",
+  "paidCalls": 0,
+  "attempts": [
+    {
+      "attempt": "1791908294322-kimi",
+      "cli": "kimi",
+      "requests": 2,
+      "paidCalls": 0,
+      "passed": false,
+      "checks": [
+        "source-established",
+        "fork-native-zero-generation-idempotent",
+        "child-resumed-and-published-as-new-member",
+        "daemon-drain"
+      ],
+      "failure": "Kimi rules card dropped identity notice; reproduced, wiring fixed and rerun",
+      "rawResultSha256": "3061a8feeb8c3552b5b05b988992dfbf17e2adb32a8154eda8e82639af283a4a"
+    },
+    {
+      "attempt": "1791908294322-opencode",
+      "cli": "opencode",
+      "requests": 4,
+      "paidCalls": 0,
+      "passed": true,
+      "checks": [
+        "source-established",
+        "fork-native-zero-generation-idempotent",
+        "child-resumed-and-published-as-new-member",
+        "fork-identity-first-request",
+        "fork-identity-not-reappended-on-second-turn",
+        "parent-retained-native-session",
+        "daemon-drain",
+        "all-activations-terminal"
+      ],
+      "failure": null,
+      "rawResultSha256": "1de7bb1d5036057d6c79324970436c708fe56cd6852615f613db53f14044848d"
+    },
+    {
+      "attempt": "1791908294323-pi",
+      "cli": "pi",
+      "requests": 4,
+      "paidCalls": 0,
+      "passed": true,
+      "checks": [
+        "source-established",
+        "fork-native-zero-generation-idempotent",
+        "child-resumed-and-published-as-new-member",
+        "fork-identity-first-request",
+        "fork-identity-not-reappended-on-second-turn",
+        "parent-retained-native-session",
+        "daemon-drain",
+        "all-activations-terminal"
+      ],
+      "failure": null,
+      "rawResultSha256": "2a907a48c9932c00ca4a45234ae4d6c1f92172aff02b93290ff4b8fbe254c74e"
+    },
+    {
+      "attempt": "1791908294325-codex",
+      "cli": "codex",
+      "requests": 4,
+      "paidCalls": 0,
+      "passed": true,
+      "checks": [
+        "source-established",
+        "fork-native-zero-generation-idempotent",
+        "child-resumed-and-published-as-new-member",
+        "fork-identity-first-request",
+        "fork-identity-not-reappended-on-second-turn",
+        "parent-retained-native-session",
+        "daemon-drain",
+        "all-activations-terminal"
+      ],
+      "failure": null,
+      "rawResultSha256": "1fb1d63618be9ca6f020377797663767c1ef83fb4c1db339be5ca5a8852b3a65"
+    },
+    {
+      "attempt": "1791908294327-claude",
+      "cli": "claude",
+      "requests": 4,
+      "paidCalls": 0,
+      "passed": true,
+      "checks": [
+        "source-established",
+        "fork-native-zero-generation-idempotent",
+        "child-resumed-and-published-as-new-member",
+        "fork-identity-first-request",
+        "fork-identity-not-reappended-on-second-turn",
+        "parent-retained-native-session",
+        "daemon-drain",
+        "all-activations-terminal"
+      ],
+      "failure": null,
+      "rawResultSha256": "cec2c048f4d3177432e3a3f8811cb7617cf74d9d35293f3a0fc72b4f3badca61"
+    },
+    {
+      "attempt": "1791908397452-kimi",
+      "cli": "kimi",
+      "requests": 4,
+      "paidCalls": 0,
+      "passed": true,
+      "checks": [
+        "source-established",
+        "fork-native-zero-generation-idempotent",
+        "child-resumed-and-published-as-new-member",
+        "fork-identity-first-request",
+        "fork-identity-not-reappended-on-second-turn",
+        "parent-retained-native-session",
+        "daemon-drain",
+        "all-activations-terminal"
+      ],
+      "failure": null,
+      "rawResultSha256": "ed714429fe5198091b5cd2fac9f3d73a745afb53631fe714612717752d6c95c9"
+    }
+  ],
+  "syntheticRequests": 22,
+  "cleanup": {
+    "recordedProcessesExited": 72,
+    "generatedWrapperSettingsRemoved": 8
+  },
+  "design": {
+    "owner": "AgentHost ProviderSessionStore copy provenance and existing SessionProtocolUpgrade delivery receipt",
+    "scope": "new Fork and Side bindings, no source privileges",
+    "firstTurn": "new handle, participant id, source id; historical first-person and plans are not new identity or instructions",
+    "repetition": "retry until carrying run accepted; never append after accepted, native history retains original",
+    "kimi": "rules card replaces protocol reminder only, preserves identity notice",
+    "roomSchema": 88
+  },
+  "verification": {
+    "focused": 19,
+    "typecheck": "passed",
+    "historyRegression": "31 passed: history bounds, membership floor, reads, fork identity and store",
+    "fullCheck": {
+      "exitCode": 0,
+      "backend": {
+        "passed": 3233,
+        "skipped": 22,
+        "failed": 0
+      },
+      "webUnit": 487,
+      "consoleUnit": 63,
+      "efficiencyUnit": 558
+    },
+    "deployment": "pending",
+    "formatCheck": "passed",
+    "diffCheck": "passed"
+  },
+  "limits": [
+    "Synthetic replies prove transport, not autonomous model understanding",
+    "No paid efficiency or model-quality acceptance",
+    "Old copied bindings lacking provenance are not retroactively inferred",
+    "First-join pre-membership history remains explicit-read only; research proposes bounded bootstrap but does not implement it",
+    "No automatic summaries, session rotation, additional model generation or new queue"
+  ],
+  "requestAudit": [
+    {
+      "cli": "opencode",
+      "attempt": "1791908294322-opencode",
+      "requests": [
+        {
+          "phase": "parent",
+          "identityNoticeOccurrences": 0,
+          "sha256": "81f3edb263391cfe22438be097d6509ded58e9e9b41aed7718104238e1fb7a93"
+        },
+        {
+          "phase": "child",
+          "identityNoticeOccurrences": 1,
+          "sha256": "46c5734e564eecd4cb09cb04f1ab4fc00d1242849cbed404abd80682d695a2d6"
+        },
+        {
+          "phase": "child-second",
+          "identityNoticeOccurrences": 1,
+          "sha256": "b5d16dd601ce06b115df1182e34d0605649a4a32d994ef53914e13672b70af25"
+        },
+        {
+          "phase": "parent-after",
+          "identityNoticeOccurrences": 0,
+          "sha256": "9b7b903c5da5099c42e46f81e25c9397398c1e62b1a8a363102762f49b719dd9"
+        }
+      ]
+    },
+    {
+      "cli": "pi",
+      "attempt": "1791908294323-pi",
+      "requests": [
+        {
+          "phase": "parent",
+          "identityNoticeOccurrences": 0,
+          "sha256": "9ea982257fc1d6bb435fa66e65795cd270a4ce83035d3c16ed4bb66d66becc97"
+        },
+        {
+          "phase": "child",
+          "identityNoticeOccurrences": 1,
+          "sha256": "76107cd0a99ee8dadd023055ca3043ed9056964552d4c26bc5573caff1fcb444"
+        },
+        {
+          "phase": "child-second",
+          "identityNoticeOccurrences": 1,
+          "sha256": "689df2e6dd10b687136719f8fa4a878094fe5e334cf64d376ffd225653398a30"
+        },
+        {
+          "phase": "parent-after",
+          "identityNoticeOccurrences": 0,
+          "sha256": "241e72f2fe78a1112fa67f304002eca21f7d06fcf034949b95d6ebd1e8218b3c"
+        }
+      ]
+    },
+    {
+      "cli": "codex",
+      "attempt": "1791908294325-codex",
+      "requests": [
+        {
+          "phase": "parent",
+          "identityNoticeOccurrences": 0,
+          "sha256": "d5e86ec9b1185cfd0ba41281a8ee2835c2fcd6a0a42e46e7d8b2b4da01c44376"
+        },
+        {
+          "phase": "child",
+          "identityNoticeOccurrences": 1,
+          "sha256": "e31876f79116a1d7fd1cd12ec40e516fcd5bcc087e069e1a8a6330f04c6e81e6"
+        },
+        {
+          "phase": "child-second",
+          "identityNoticeOccurrences": 1,
+          "sha256": "8a9636074e9d3671996cbab75ad48fc60e7670693b7bce7e05cb7415b364de07"
+        },
+        {
+          "phase": "parent-after",
+          "identityNoticeOccurrences": 0,
+          "sha256": "7b4b26eef4922bf84ef17f50d42bf1fc0348ce151f726f71391151a4c1258410"
+        }
+      ]
+    },
+    {
+      "cli": "claude",
+      "attempt": "1791908294327-claude",
+      "requests": [
+        {
+          "phase": "parent",
+          "identityNoticeOccurrences": 0,
+          "sha256": "9fe1423869c6408af43c865058499725e3fa703d53259be9c73c52521b221820"
+        },
+        {
+          "phase": "child",
+          "identityNoticeOccurrences": 1,
+          "sha256": "40c4f39057900b46b3802138fbe6ae257acefede4478a3579486b18f3db87ee1"
+        },
+        {
+          "phase": "child-second",
+          "identityNoticeOccurrences": 1,
+          "sha256": "f5689b74310bbb41575556c00cb95924c0a7d6ef6b7a5dacf1735e25636903d2"
+        },
+        {
+          "phase": "parent-after",
+          "identityNoticeOccurrences": 0,
+          "sha256": "ea2d203a474229d73a3dc0d85f2312184647dce9de4d7a834aef872a8ed7e89e"
+        }
+      ]
+    },
+    {
+      "cli": "kimi",
+      "attempt": "1791908397452-kimi",
+      "requests": [
+        {
+          "phase": "parent",
+          "identityNoticeOccurrences": 0,
+          "sha256": "6c2a95998ed9a3f78e7039b1bf03eb2feadcbe7030e0c251ec158d3c98c3423f"
+        },
+        {
+          "phase": "child",
+          "identityNoticeOccurrences": 1,
+          "sha256": "d8ca53498bd86f75ecc78ab831177b4eaf5587023742d4af9cb1ef726c417ae6"
+        },
+        {
+          "phase": "child-second",
+          "identityNoticeOccurrences": 1,
+          "sha256": "1764025800285c66272b81ad9b14018b738b8864efa8cdfddc4e07a48f0a5eb3"
+        },
+        {
+          "phase": "parent-after",
+          "identityNoticeOccurrences": 0,
+          "sha256": "1c04428685c318432e739e1f6ab5323436fece2c7a49a28f45eef3a2489cd8df"
+        }
+      ]
+    }
+  ],
+  "evidenceLogs": {
+    "red.log": "576b7221eb62c5b54b89db84a73fcc50b77ce15249b6999c6dc6e2c526d8ea5a",
+    "rules-card-red.log": "fb5d1f689b886d00dc11b8fff22a12556e431892a109d1970b754aa5692f1358",
+    "focused-final.log": "b42dd6ee99f5f32d7c6eb35f11fd41ae948ccf61eedf037fed671bc546607c00",
+    "history-and-store.log": "bdae7528f6be12fd514bc7a3a23cb3e953e4335619cd23ebb4424f66c6fb9921",
+    "check.log": "51e0353dbdc82e0d6d40fb3cd4e7927a4690d3aa82857894a918e7d7f55d256b",
+    "typecheck-final.log": "bef9d01c948fead061ff8f64b8496f8847391051512f3460e767e2602ceab0f8",
+    "format-check-final.log": "fb5ffe51bf83c7a6ac683f386a5c903f6ff2c086dbe1bf27cc1f12efddaf7e3f"
+  }
+}

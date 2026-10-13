@@ -38,6 +38,8 @@ export type ProviderSessionKey = Readonly<{
 export type ProviderSessionRecord = ProviderSessionKey &
   Readonly<{
     providerSessionId: string;
+    /** Copy provenance only; never grants source authority. */
+    forkSourceParticipantId?: string;
     systemMemorySha256?: string;
     /**
      * P2-3: the standing protocol version this native session actually
@@ -60,6 +62,7 @@ export type ProviderSessionRecord = ProviderSessionKey &
 
 /** The per-session facts a rewrite of the same session carries forward. */
 type SessionFacts = {
+  forkSourceParticipantId?: string | undefined;
   systemMemorySha256?: string | undefined;
   standingProtocolVersion?: string | undefined;
   compactionCount?: number | undefined;
@@ -67,13 +70,14 @@ type SessionFacts = {
   rulesCardCompactionId?: string | undefined;
 };
 
-function compactionFacts(
+function preservedSessionFacts(
   record: ProviderSessionRecord | null,
   providerSessionId: string,
 ): SessionFacts {
   if (record === null || record.providerSessionId !== providerSessionId)
     return {};
   return {
+    forkSourceParticipantId: record.forkSourceParticipantId,
     compactionCount: record.compactionCount,
     lastCompactionId: record.lastCompactionId,
     rulesCardCompactionId: record.rulesCardCompactionId,
@@ -184,6 +188,7 @@ export class ProviderSessionStore {
     uncheckedKey: ProviderSessionKey,
     providerSessionId: string,
     metadata: {
+      forkSourceParticipantId?: string;
       systemMemorySha256?: string | undefined;
       instance?: boolean;
       instanceGeneration?: number | undefined;
@@ -214,8 +219,9 @@ export class ProviderSessionStore {
       metadata.instance ? instanceKey(validated, generation) : validated,
       providerSessionId,
       {
-        // S2-c2: compaction facts belong to the session, not to one run.
-        ...compactionFacts(previous, providerSessionId),
+        forkSourceParticipantId: metadata.forkSourceParticipantId,
+        // Copy provenance and compaction facts belong to this native session.
+        ...preservedSessionFacts(previous, providerSessionId),
         systemMemorySha256: metadata.systemMemorySha256,
         standingProtocolVersion: protocolVersion,
       },
@@ -321,6 +327,7 @@ export class ProviderSessionStore {
     facts: SessionFacts,
   ): Promise<ProviderSessionRecord> {
     const {
+      forkSourceParticipantId,
       systemMemorySha256,
       standingProtocolVersion,
       compactionCount,
@@ -338,6 +345,7 @@ export class ProviderSessionStore {
     }
     const value: ProviderSessionRecord = Object.freeze({
       ...key,
+      ...forkSourceMetadata(forkSourceParticipantId),
       ...systemMemoryMetadata(systemMemorySha256),
       ...(standingProtocolVersion === undefined
         ? {}
@@ -737,6 +745,9 @@ function validateRecord(value: unknown): ProviderSessionRecord {
     "runtimeProfileRevisionId",
     "schemaVersion",
     "workspaceMountRevisionId",
+    ...(record.forkSourceParticipantId === undefined
+      ? []
+      : ["forkSourceParticipantId"]),
     ...(record.systemMemorySha256 === undefined ? [] : ["systemMemorySha256"]),
     ...(record.standingPromptDigest === undefined
       ? []
@@ -767,6 +778,7 @@ function validateRecord(value: unknown): ProviderSessionRecord {
   }
   return Object.freeze({
     ...key,
+    ...forkSourceMetadata(record.forkSourceParticipantId),
     ...systemMemoryMetadata(record.systemMemorySha256),
     ...(record.standingProtocolVersion === undefined
       ? {}
@@ -919,4 +931,18 @@ function instanceGenerationOf(value: number | undefined): number {
   if (!Number.isSafeInteger(value) || value < 0)
     throw new Error("Instance session generation is invalid");
   return value;
+}
+
+function forkSourceMetadata(value: unknown): {
+  forkSourceParticipantId?: string;
+} {
+  return value === undefined
+    ? {}
+    : {
+        forkSourceParticipantId: requiredText(
+          value,
+          "forkSourceParticipantId",
+          MAX_IDENTIFIER_LENGTH,
+        ),
+      };
 }

@@ -102,6 +102,7 @@ export async function forkProviderSession(
     // No source delivery, protocol, memory or compaction receipts cross identity.
     return store.record(input.target, receipt.providerSessionId, {
       instance: true,
+      forkSourceParticipantId: input.source.participantId,
     });
   };
   const previous = await read();

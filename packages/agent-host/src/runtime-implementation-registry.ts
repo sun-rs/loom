@@ -1319,11 +1319,13 @@ function createKimiAcpRuntime(
           preparedCards.set(input.runAttemptId, card);
         }
         return await wake.withBodiedWake(input, {
-          // The card states the current rules itself; the notice line would
-          // only repeat that they changed.
-          ...(card === undefined
-            ? protocolUpgrade.withNotice(resumed.lease, protocolNotice)
-            : resumed.lease),
+          // The rules card replaces only the protocol reminder, never identity.
+          ...protocolUpgrade.withNotice(
+            resumed.lease,
+            card === undefined
+              ? protocolNotice
+              : protocolUpgrade.noticeFor(input, { rulesCard: true }),
+          ),
           args: [
             ...(lease.args ?? []),
             "--resume-session",
