@@ -161,5 +161,8 @@
     "legacy private cwd"
   ],
   "performance": "Copy zero generation, not paid token ratio or autonomous model-quality acceptance. Native-final flag was opt-in in two fixtures; default Worker fixture independently accepted. Formal flags remain unchanged.",
-  "privateEvidenceDirectory": "/Users/sun/.loom/reviews/2026-10-13-pi-branches"
+  "privateEvidenceDirectory": "/Users/sun/.loom/reviews/2026-10-13-pi-branches",
+  "codeCommit": "50e311ac462b11e8120cdd6366ed6656a428b672",
+  "sourceSha256": "2bb39b702e9b6af45e70dd61cc81ad6cdb1407ca66079beec45750c85c54e6ca",
+  "deployment": "deployment.json"
 }
