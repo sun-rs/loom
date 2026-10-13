@@ -16,6 +16,7 @@ import {
   intentControls,
   reportOutcome,
 } from "./intent-view.ts";
+import { disclosure, friendlyCli, isTestRecord } from "./presentation.ts";
 import { Poller } from "./poll.ts";
 
 const LIST_POLL_MS = 15_000;
@@ -96,10 +97,10 @@ function roleFields(prefix: string, choices: () => RuntimeChoice[]) {
     elements: [
       labelled("显示名", displayName),
       labelled("handle", handle, "字母或数字开头，可含 . _ -"),
-      labelled("职责（role）", roleText),
-      labelled("指令（instructions）", instructions),
-      labelled("CLI（runtimeOfferId）", runtime),
-      labelled("模型（Host 目录发布的 binding）", binding),
+      labelled("职责简介", roleText),
+      labelled("详细指令", instructions),
+      labelled("CLI", runtime),
+      labelled("模型", binding),
       labelled("推理强度", reasoning),
     ],
     fill: (form: RoleForm) => {
@@ -191,6 +192,7 @@ export function mountRoles(
       setStatus(reviseStatus, "error", INTENT_BUSY_UNKNOWN);
       return;
     }
+    revisePanel.hidden = false;
     revising = role;
     reviseTarget.textContent = `修订 ${role.configuration.displayName}（${role.roleId}），基于修订 ${role.roleRevisionId}；已有实例保持原快照，显示为“Role 已有新修订”。`;
     reviseFields.fill(roleFormFrom(role.configuration));
@@ -348,24 +350,29 @@ export function mountRoles(
   const list = el("div", { attrs: { id: "role-list" } }, [
     el("p", { className: "muted", text: "加载中…" }),
   ]);
-  container.replaceChildren(
-    el("section", { className: "panel" }, [el("h2", { text: "Role" }), list]),
-    el("section", { className: "panel" }, [
-      el("h2", { text: "修订 Role" }),
+  const revisePanel = el(
+    "section",
+    { className: "panel", attrs: { hidden: "" } },
+    [
+      el("h2", { text: "编辑角色" }),
       el("p", {
         className: "muted",
-        text: "保存会生成新的不可变修订；已有实例不随之改变。模型只能从 Host 目录中选择。",
+        text: "修改用于之后创建的实例，已有实例保持原配置。",
       }),
       reviseForm,
-    ]),
+    ],
+  );
+  const showTests = el("input", {
+    attrs: { type: "checkbox", id: "show-test-roles" },
+  });
+  container.replaceChildren(
     el("section", { className: "panel" }, [
-      el("h2", { text: "创建 Role（最小）" }),
-      el("p", {
-        className: "muted",
-        text: "每次保存都是新的不可变修订；已有实例不随之改变。",
-      }),
-      form,
+      el("h2", { text: "角色" }),
+      labelled("显示测试 / 验收记录（按名称筛选）", showTests),
+      list,
     ]),
+    revisePanel,
+    disclosure("创建角色", [form], "role-create"),
   );
 
   const poller = new Poller(LIST_POLL_MS, async (signal) => {
@@ -379,13 +386,23 @@ export function mountRoles(
       );
       if (signal.aborted) return;
       roles = response.roles;
+      const visibleRoles = roles.filter(
+        (role) =>
+          showTests.checked || !isTestRecord(role.configuration.displayName),
+      );
       list.replaceChildren(
-        roles.length === 0
-          ? el("p", { className: "muted", text: "还没有 Role" })
+        visibleRoles.length === 0
+          ? el("p", {
+              className: "muted",
+              text:
+                roles.length === 0
+                  ? "还没有角色，创建一个开始协作。"
+                  : "测试角色已收起，可以创建自己的角色。",
+            })
           : el(
               "ul",
               { className: "role-list" },
-              roles.map((role) => {
+              visibleRoles.map((role) => {
                 const intent = role.configuration.modelIntent;
                 const instances = response.instances.filter(
                   ({ roleId }) => roleId === role.roleId,
@@ -403,9 +420,14 @@ export function mountRoles(
                       className: "muted",
                       text: ` @${role.configuration.handle}`,
                     }),
-                    field("Role", role.roleId),
-                    field("当前修订", role.roleRevisionId, "role-revision"),
-                    field("CLI", role.configuration.runtimeOfferId),
+                    field(
+                      "CLI",
+                      friendlyCli(role.configuration.runtimeOfferId),
+                    ),
+                    disclosure("技术详情", [
+                      field("Role", role.roleId),
+                      field("当前修订", role.roleRevisionId, "role-revision"),
+                    ]),
                     field(
                       "模型",
                       `${intent.exactBindingIds?.join(", ") ?? "未指定"} · ${intent.reasoning ?? "未指定强度"}`,
@@ -439,6 +461,7 @@ export function mountRoles(
     }
   });
   void loadInventory();
+  showTests.addEventListener("change", () => poller.runNow());
   poller.start();
   let hadIdentity = context.identity !== undefined;
   const unsubscribe = subscribe(context, () => {

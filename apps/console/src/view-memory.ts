@@ -1,3 +1,4 @@
+import { disclosure } from "./presentation.ts";
 /**
  * Channel memory panel (S6 batch B): the channel's platform memory index,
  * body and revision history, Human changes, read/write switches and the
@@ -981,40 +982,52 @@ export function memoryPanel(
       listStatus,
       list,
       detailBox,
-      el("h3", { text: "记忆开关（读 / 写）" }),
-      policyBase,
-      policyStale,
-      policyFields,
-      el("div", { className: "form-actions" }, [
-        policySubmit,
-        button(
-          "重新读取开关",
-          () => {
-            void reloadPolicy().then((next) => {
-              if (next !== undefined) {
-                setStatus(
-                  policyStatus,
-                  "info",
-                  `已重新读取开关修订 ${String(next.revision)}`,
-                );
-              }
-            });
-          },
-          { attrs: { id: "memory-policy-reload" }, className: "secondary" },
-        ),
-      ]),
-      policyStatus,
-      intentControls(policySlot, "memory-policy", policyStatus),
-      el("h3", { text: "导入旧记忆（一次性 Human 操作）" }),
-      el("p", {
-        attrs: { id: "memory-import-note" },
-        className: "muted",
-        text: MEMORY_IMPORT_NOTE,
-      }),
-      importList,
-      importStatus,
-      intentControls(importSlot, "memory-import", importStatus),
-      importResults,
+      disclosure(
+        "记忆权限",
+        [
+          el("h3", { text: "记忆开关（读 / 写）" }),
+          policyBase,
+          policyStale,
+          policyFields,
+          el("div", { className: "form-actions" }, [
+            policySubmit,
+            button(
+              "重新读取开关",
+              () => {
+                void reloadPolicy().then((next) => {
+                  if (next !== undefined) {
+                    setStatus(
+                      policyStatus,
+                      "info",
+                      `已重新读取开关修订 ${String(next.revision)}`,
+                    );
+                  }
+                });
+              },
+              { attrs: { id: "memory-policy-reload" }, className: "secondary" },
+            ),
+          ]),
+          policyStatus,
+          intentControls(policySlot, "memory-policy", policyStatus),
+        ],
+        "memory-permissions",
+      ),
+      disclosure(
+        "维护：导入旧记忆",
+        [
+          el("h3", { text: "导入旧记忆（一次性 Human 操作）" }),
+          el("p", {
+            attrs: { id: "memory-import-note" },
+            className: "muted",
+            text: MEMORY_IMPORT_NOTE,
+          }),
+          importList,
+          importStatus,
+          intentControls(importSlot, "memory-import", importStatus),
+          importResults,
+        ],
+        "memory-maintenance",
+      ),
     ],
   );
 

@@ -22,11 +22,12 @@ export function runDetailPanel(context: ConsoleContext): RunDetailPanel {
   ]);
   const element = el(
     "section",
-    { attrs: { id: "run-detail" }, className: "panel" },
+    { attrs: { id: "run-detail", hidden: "" }, className: "panel" },
     [el("h2", { text: "运行详情（RunAttempt）" }), body],
   );
   let request = 0;
   const show = (agentId: string, runAttemptId: string, label: string) => {
+    element.hidden = false;
     request += 1;
     const current = request;
     body.replaceChildren(el("p", { className: "muted", text: "读取中…" }));

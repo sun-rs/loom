@@ -13,6 +13,7 @@ import { errorText, isAbort } from "./api.ts";
 import type { ConsoleContext } from "./context.ts";
 import { button, el, field, labelled, setStatus } from "./dom.ts";
 import { settingsRows } from "./model.ts";
+import { disclosure, friendlyCli } from "./presentation.ts";
 import { Poller } from "./poll.ts";
 
 const LIST_POLL_MS = 15_000;
@@ -103,30 +104,54 @@ export function mountSettings(
       el("input", {
         attrs: { id, inputmode: "decimal", value },
       });
+    const rows = SCALAR_FIELDS.map(({ hint, key, label }) => {
+      const control = input(`settings-${key}`, values[key]);
+      inputs.set(key, control);
+      const row = labelled(label, control, hint);
+      // Watchdog rows apply to running work at once (settingScope).
+      row.setAttribute("data-scope", settingScope(key));
+      return row;
+    });
+    const runtimeRows = settings.runtimes.map((runtime) => {
+      const control = input(
+        `settings-runtime-${runtime.runtimeProfileId}`,
+        values.runtimes[runtime.runtimeProfileId] ?? "",
+      );
+      control.setAttribute("data-runtime-profile-id", runtime.runtimeProfileId);
+      runtimeInputs.set(runtime.runtimeProfileId, control);
+      return labelled(
+        `CLI ${friendlyCli(runtime.runtimeProfileId)} 同时运行上限（供给上限 ${String(runtime.offerMaxConcurrent)}）`,
+        control,
+      );
+    });
     fields.replaceChildren(
-      ...SCALAR_FIELDS.map(({ hint, key, label }) => {
-        const control = input(`settings-${key}`, values[key]);
-        inputs.set(key, control);
-        const row = labelled(label, control, hint);
-        // Watchdog rows apply to running work at once (settingScope).
-        row.setAttribute("data-scope", settingScope(key));
-        return row;
-      }),
-      ...settings.runtimes.map((runtime) => {
-        const control = input(
-          `settings-runtime-${runtime.runtimeProfileId}`,
-          values.runtimes[runtime.runtimeProfileId] ?? "",
-        );
-        control.setAttribute(
-          "data-runtime-profile-id",
-          runtime.runtimeProfileId,
-        );
-        runtimeInputs.set(runtime.runtimeProfileId, control);
-        return labelled(
-          `CLI ${runtime.runtimeProfileId} 同时运行上限（供给上限 ${String(runtime.offerMaxConcurrent)}）`,
-          control,
-        );
-      }),
+      rows[0]!,
+      disclosure(
+        "高级运行设置",
+        [
+          el("p", {
+            className: "muted",
+            attrs: { id: "settings-scope-future" },
+            text: SETTINGS_SCOPE_NOTES.future,
+          }),
+          ...rows.slice(1, 4),
+          ...rows.slice(7),
+          ...runtimeRows,
+        ],
+        "settings-advanced",
+      ),
+      disclosure(
+        "运行保护（修改可能中断当前工作）",
+        [
+          el("p", {
+            className: "settings-immediate",
+            attrs: { id: "settings-scope-immediate" },
+            text: SETTINGS_SCOPE_NOTES.immediate,
+          }),
+          ...rows.slice(4, 7),
+        ],
+        "settings-protection",
+      ),
     );
     baseLabel.textContent = `表单基于修订 ${String(settings.revision)}`;
     renderStale();
@@ -172,17 +197,6 @@ export function mountSettings(
     submit.textContent = pending ? "保存中…" : "保存";
   });
   const form = el("form", { attrs: { id: "settings-form" } }, [
-    el("p", {
-      attrs: { id: "settings-scope-future" },
-      className: "muted",
-      text: SETTINGS_SCOPE_NOTES.future,
-    }),
-    el("p", {
-      attrs: { id: "settings-scope-immediate" },
-      className: "muted settings-immediate",
-      text: SETTINGS_SCOPE_NOTES.immediate,
-    }),
-    baseLabel,
     staleNotice,
     fields,
     el("div", { className: "form-actions" }, [
@@ -265,12 +279,13 @@ export function mountSettings(
 
   container.replaceChildren(
     el("section", { className: "panel" }, [
-      el("h2", { text: "运行设置（当前值）" }),
-      body,
-    ]),
-    el("section", { className: "panel" }, [
-      el("h2", { text: "修改运行设置" }),
+      el("h2", { text: "运行设置" }),
+      el("p", {
+        className: "muted",
+        text: "通常保持默认即可。并发调整只影响之后开始的工作。",
+      }),
       form,
+      disclosure("查看当前生效值", [baseLabel, body], "settings-current"),
     ]),
   );
   const poller = new Poller(LIST_POLL_MS, async (signal) => {
@@ -285,6 +300,7 @@ export function mountSettings(
       else renderStale();
     } catch (error) {
       if (signal.aborted || isAbort(error)) return;
+      setStatus(status, "error", `运行设置读取失败：${errorText(error)}`);
       body.replaceChildren(
         el("p", {
           className: "error",

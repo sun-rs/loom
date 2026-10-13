@@ -1,3 +1,4 @@
+import { disclosure } from "./presentation.ts";
 import { taskPanel } from "./view-tasks.ts";
 import type { RoleListResponse } from "@rah-os/protocol";
 
@@ -321,6 +322,7 @@ function instanceCard(input: {
         `#/direct/${encodeURIComponent(next.privateBoxRoomId)}`,
       );
     }
+    const historyOpen = info.querySelector("details")?.open ?? false;
     info.replaceChildren(
       ...present(
         el("div", { className: "instance-head" }, [
@@ -334,7 +336,6 @@ function instanceCard(input: {
             text: next.isCurrent ? "Role 为最新修订" : "Role 已有新修订",
           }),
         ]),
-        field("实例", next.instanceId, "instance-id"),
         field("状态", next.stateLabel, "instance-state"),
         field("排队", next.queuedLabel, "instance-queued"),
         field("压缩次数", next.compactionLabel, "instance-compactions"),
@@ -352,13 +353,16 @@ function instanceCard(input: {
           : field("看门狗", next.watchdogWarning, "watchdog-warning"),
         field("私聊", next.privateBoxLabel, "private-box"),
         next.member
-          ? runList(next.runs, (run) =>
-              input.runDetail.show(
-                next.agentId,
-                run.runAttemptId,
-                `${next.roleName} @${next.handle}`,
+          ? disclosure("运行记录", [
+              field("实例", next.instanceId, "instance-id"),
+              runList(next.runs, (run) =>
+                input.runDetail.show(
+                  next.agentId,
+                  run.runAttemptId,
+                  `${next.roleName} @${next.handle}`,
+                ),
               ),
-            )
+            ])
           : null,
         next.recentProblems.length === 0
           ? null
@@ -377,6 +381,8 @@ function instanceCard(input: {
             ]),
       ),
     );
+    const history = info.querySelector("details");
+    if (history) history.open = historyOpen;
   };
   update(input.initial);
   return { root, update };
@@ -625,18 +631,26 @@ export function mountChannel(
   container.replaceChildren(
     header,
     notice,
-    el("section", { className: "panel sos-panel" }, [
-      el("h2", { text: "频道急停" }),
-      el("div", { className: "field" }, [
-        el("span", { className: "field-label", text: "状态" }),
-        sosLabel,
+    disclosure("频道控制 / 急停", [
+      el("section", { className: "panel sos-panel" }, [
+        el("h2", { text: "频道急停" }),
+        el("div", { className: "field" }, [
+          el("span", { className: "field-label", text: "状态" }),
+          sosLabel,
+        ]),
+        el("div", { className: "form-actions" }, [stopButton]),
+        sosConfirm,
+        disclosure(
+          "恢复频道",
+          [
+            labelled("恢复指引", guidance),
+            el("div", { className: "form-actions" }, [resumeButton]),
+          ],
+          "channel-recovery",
+        ),
+        sosStatus,
+        intentControls(sosSlot, "sos", sosStatus),
       ]),
-      el("div", { className: "form-actions" }, [stopButton]),
-      sosConfirm,
-      labelled("恢复指引", guidance),
-      el("div", { className: "form-actions" }, [resumeButton]),
-      sosStatus,
-      intentControls(sosSlot, "sos", sosStatus),
     ]),
     el("div", { className: "channel-body" }, [
       el("section", { className: "panel" }, [
@@ -652,11 +666,13 @@ export function mountChannel(
       messages.element,
     ]),
     runDetail.element,
-    memory.element,
-    tasks.element,
-    el("section", { className: "panel" }, [
-      el("h2", { text: "最近生命周期事件（已同步的事件窗口）" }),
-      lifecycleList,
+    disclosure("频道记忆", [memory.element], "channel-memory"),
+    disclosure("任务", [tasks.element], "channel-tasks"),
+    disclosure("诊断记录", [
+      el("section", { className: "panel" }, [
+        el("h2", { text: "最近生命周期事件（已同步的事件窗口）" }),
+        lifecycleList,
+      ]),
     ]),
   );
 
@@ -750,7 +766,17 @@ export function mountChannel(
 
   const renderEvents = () => {
     const events = roomSession(context.client, roomId).state.events;
-    sosLabel.textContent = sosState(events).label;
+    const emergency = sosState(events);
+    sosLabel.textContent = emergency.label;
+    if (emergency.kind === "stopped" || emergency.kind === "stopping") {
+      const control = container.querySelector<HTMLDetailsElement>(
+        "details:has(.sos-panel)",
+      );
+      if (control) control.open = true;
+      const recovery =
+        container.querySelector<HTMLDetailsElement>("#channel-recovery");
+      if (recovery && emergency.kind === "stopped") recovery.open = true;
+    }
     const lifecycle = lifecycleEvents(events);
     lifecycleList.replaceChildren(
       ...(lifecycle.length === 0

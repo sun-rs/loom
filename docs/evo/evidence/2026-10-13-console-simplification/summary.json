@@ -1,0 +1,50 @@
+{
+  "date": "2026-10-13",
+  "scope": "Throwaway apps/console only; presentation simplification, no backend policy or production apps/web changes.",
+  "owner": "apps/console presentation; all commands still use existing client and write-intent contracts.",
+  "changes": [
+    "Runtime settings default to total concurrency; advanced scheduling, protection and current values are collapsed.",
+    "Channel messages and instance state remain primary; memory, tasks, legacy import and diagnostics open on demand. Stopped emergency state exposes recovery.",
+    "Role revision form appears only after selecting a role; internal identifiers live in details.",
+    "New channel needs only a name; optional stable slug generated once before the frozen write intent.",
+    "Recognizable historical test/acceptance names filtered from channel and Role lists by default, with explicit reveal checkbox. Not deletion, archiving or a new backend state."
+  ],
+  "testRecordBoundary": {
+    "classification": "Explicit name patterns, a convenience filter only; can hide a similarly named user record until checkbox selected.",
+    "recordsDeleted": 0,
+    "recordsRenamed": 0,
+    "instancesStopped": 0,
+    "testCodeRetained": true,
+    "directLinksAndMembershipUnchanged": true
+  },
+  "verification": {
+    "tdd": "Old UI failed browser assertion that only total concurrency is visible; initial name classifier failed regression cases.",
+    "unit": "62 console checks passed; name-only creation and reversible filter covered in browser gate.",
+    "browser": "Final fake-provider gate passed at 1440x1000 and 390x844; only one default runtime input, advanced controls accessible, name-only channel creation, reversible test-record filter, existing create/revise/instantiate/message/task/private-box/memory/settings/unknown-write/recovery workflows preserved.",
+    "fullCheck": {
+      "passed": true,
+      "backendPassed": 3167,
+      "backendSkipped": 22,
+      "webPassed": 487,
+      "consolePassed": 62,
+      "efficiencyUnitPassed": 558,
+      "otherStagesPassed": true
+    },
+    "format": "passed",
+    "diff": "passed",
+    "logs": {
+      "/tmp/loom-console-simple-red.log": "6be365111dfefb46f4e67f94e6291d38f96096dc5be99d7be4d8958d9b9520d8",
+      "/tmp/loom-console-records-red.log": "2fadc5fbe9fefc9fc5402e2683678baa568c2ad57737cef19c313fe5121b00cc",
+      "/tmp/loom-console-astra-red.log": "d8acb53610e1383dd23da823606aa68f6cc9b556c0fd90b7dc639bc297d23071",
+      "/tmp/loom-console-simple-browser-final.log": "584b5fa26e057c7f1dcd57d88c1fbcc5121147d1979f7dfa3ae499d9347ded73",
+      "/tmp/loom-console-simple-check.log": "99e28d082aa12f3b8089e01c690669b6661698df0218c5fafff8abb8fb5dedf2"
+    }
+  },
+  "paidCalls": 0,
+  "deployment": "pending",
+  "limitations": [
+    "Temporary console remains, not a product UI redesign.",
+    "Name filter is neither permission enforcement nor a reliable permanent test-data classification.",
+    "Historical records retained; apps/web list is unchanged."
+  ]
+}

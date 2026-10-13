@@ -347,12 +347,46 @@ if (args.join(" ") === "debug models --bundled") {
   assert.match(connectionText, new RegExp(escapeRegExp(humanName), "u"));
   assert.match(connectionText, new RegExp(escapeRegExp(workspace.name), "u"));
 
+  // Default view exposes only the everyday control; advanced values remain editable.
+  await navigateHash("#/settings");
+  await waitForBrowserValue(
+    browser,
+    `document.querySelector("#settings-maxConcurrentRuns") !== null`,
+    { description: "basic settings" },
+  );
+  assert.deepEqual(
+    await evaluate(
+      browser,
+      `[...document.querySelectorAll('#settings-form input')].filter(n => n.checkVisibility()).map(n => n.id)`,
+    ),
+    ["settings-maxConcurrentRuns"],
+  );
+  await click("#settings-advanced > summary");
+  assert.equal(
+    await evaluate(
+      browser,
+      `document.querySelector('#settings-maxConcurrentStarts').checkVisibility()`,
+    ),
+    true,
+  );
+  await click("#settings-protection > summary");
+  assert.equal(
+    await evaluate(
+      browser,
+      `document.querySelector('#settings-maxRunMinutes').checkVisibility()`,
+    ),
+    true,
+  );
+  await navigateHash("#/channels");
+
   // --- 1. Create a Channel through the UI (with attached directory). ---
   await waitForBrowserValue(
     browser,
     `document.querySelector("#create-channel-form") !== null`,
     { description: "create channel form" },
   );
+  await click("#channel-create > summary");
+  await click("#create-channel-form details > summary");
   const channelsBefore = (await listChannels()).length;
   await setValue("#create-channel-name", "console-gate-fixture");
   await setValue("#create-channel-slug", "console-gate-fixture");
@@ -486,6 +520,21 @@ if (args.join(" ") === "debug models --bundled") {
     await textOf("#create-channel-result .primary-directory .field-value"),
     primaryDirectory,
   );
+  assert.equal(
+    await evaluate(
+      browser,
+      `document.querySelector('#channel-list [data-room-id="${channelId}"]') === null`,
+    ),
+    true,
+    "test channel is absent from default list, not deleted",
+  );
+  await click("#show-test-channels");
+  await waitForBrowserValue(
+    browser,
+    `document.querySelector('#channel-list [data-room-id="${channelId}"]') !== null`,
+    { description: "test records can be revealed" },
+  );
+  assert.ok((await listChannels()).some((room) => room.roomId === channelId));
   await screenshot("create-channel-1440x1000.png");
 
   // --- 2. Channel page: XSS probe posted through the composer. ---
@@ -515,6 +564,10 @@ if (args.join(" ") === "debug models --bundled") {
 
   // Task policy and Human creation use the real client API, with no instances yet.
   await waitForText("#task-policy", "实例自主创建已关闭");
+  await evaluate(
+    browser,
+    `document.querySelector("#channel-tasks").open = true`,
+  );
   await click("#task-policy-toggle");
   await waitForText("#task-policy", "允许实例自主创建任务");
   assert.equal(
@@ -604,6 +657,7 @@ if (args.join(" ") === "debug models --bundled") {
       .map((entry) => entry.runtimeOfferId),
     "CLI choices are exactly the published available offers",
   );
+  await click("#role-create > summary");
   await setValue("#role-display-name", "FIXTURE 门禁 Reviewer");
   await setValue("#role-handle", "console-gate-reviewer");
   await setValue("#role-role", "fixture reviewer");
@@ -1783,11 +1837,23 @@ if (args.join(" ") === "debug models --bundled") {
   );
 
   // --- 11. Channel emergency stop and resume. ---
+  await evaluate(
+    browser,
+    `document.querySelector("details:has(.sos-panel)").open = true`,
+  );
   await click("#sos-stop");
   await waitForText("#sos-confirm .confirm-box", "急停会终止");
   await click(".confirm-sos-stop");
   await waitForText("#sos-status", "已急停");
   await waitForText("#sos-state", "已急停");
+  assert.equal(
+    await evaluate(
+      browser,
+      `document.querySelector("#sos-guidance").checkVisibility()`,
+    ),
+    true,
+    "stopped state reveals recovery instead of hiding it",
+  );
   await setValue("#sos-guidance", "FIXTURE resume guidance");
   await click("#sos-resume");
   await waitForText("#sos-status", "已恢复");
@@ -1837,6 +1903,22 @@ if (args.join(" ") === "debug models --bundled") {
   );
   assert.equal(instantiateRequests.length, 2);
   assert.deepEqual(instantiateRequests[1], instantiateRequests[0]);
+
+  // Name alone creates a channel; the generated short name is still durable.
+  await navigateHash("#/channels");
+  await waitForBrowserValue(
+    browser,
+    `document.querySelector('#channel-create') !== null`,
+    { description: "channel creation entry" },
+  );
+  await click("#channel-create > summary");
+  await setValue("#create-channel-name", "Simple user channel");
+  await click("#create-channel-submit");
+  await waitForText("#create-channel-status", "已创建 #Simple user channel");
+  const simpleRoom = (await listChannels()).find(
+    (room) => room.name === "Simple user channel",
+  );
+  assert.match(simpleRoom.slug, /^channel-[0-9a-f-]+$/);
 
   // --- 11c. An invalid percent-encoding in the hash is an invalid route. ---
   await navigateHash("#/channel/%E0%A4%A");
@@ -2122,6 +2204,14 @@ async function pressEnter({ shift = false } = {}) {
 
 /** Real pointer click at the element centre; it must be the hit target. */
 async function click(selector) {
+  await evaluate(
+    browser,
+    `(() => {
+    const target = document.querySelector(${JSON.stringify(selector)});
+    let node = target?.tagName === "SUMMARY" ? target.parentElement?.parentElement : target?.parentElement;
+    while (node) { if (node.tagName === 'DETAILS') node.open = true; node = node.parentElement; }
+  })()`,
+  );
   const point = await waitForBrowserValue(
     browser,
     `(() => {

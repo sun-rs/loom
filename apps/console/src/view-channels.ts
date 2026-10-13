@@ -1,3 +1,4 @@
+import { disclosure, isTestRecord } from "./presentation.ts";
 import { WriteIntentSlot, parseAttachedDirectoryLines } from "./actions.ts";
 import { roomSession } from "./api.ts";
 import { subscribe, type ConsoleContext } from "./context.ts";
@@ -42,7 +43,7 @@ function channelCard(summary: ChannelSummary): HTMLElement {
         className: "channel-name",
         text: `#${summary.name}`,
       }),
-      channelDirectories(summary),
+      disclosure("工作目录", [channelDirectories(summary)]),
     ],
   );
 }
@@ -61,7 +62,11 @@ function createChannelForm(context: ConsoleContext): {
     attrs: { autocomplete: "off", id: "create-channel-name", required: "" },
   });
   const slug = el("input", {
-    attrs: { autocomplete: "off", id: "create-channel-slug", required: "" },
+    attrs: {
+      autocomplete: "off",
+      id: "create-channel-slug",
+      placeholder: "留空自动生成",
+    },
   });
   const autonomous = el("input", {
     attrs: { id: "create-channel-autonomous-tasks", type: "checkbox" },
@@ -116,13 +121,15 @@ function createChannelForm(context: ConsoleContext): {
   });
   const form = el("form", { attrs: { id: "create-channel-form" } }, [
     labelled("名称", name),
-    labelled("允许实例自主创建任务（默认关闭）", autonomous),
-    labelled("slug", slug, "频道的稳定短名，创建后不可改"),
-    labelled(
-      "附加目录（每行一个绝对路径，可留空）",
-      directories,
-      "创建后不可改；平台只校验，不创建或删除这些目录",
-    ),
+    disclosure("更多选项", [
+      labelled("允许实例自主创建任务（默认关闭）", autonomous),
+      labelled("频道短名", slug, "留空自动生成，创建后不可改"),
+      labelled(
+        "附加目录（每行一个绝对路径，可留空）",
+        directories,
+        "创建后不可改；平台只校验，不创建或删除这些目录",
+      ),
+    ]),
     el("div", { className: "form-actions" }, [submit]),
     status,
     intentControls(slot, "create-channel", status),
@@ -140,8 +147,8 @@ function createChannelForm(context: ConsoleContext): {
       setStatus(status, "error", "尚未连接，无法创建");
       return;
     }
-    if (name.value.trim() === "" || slug.value.trim() === "") {
-      setStatus(status, "error", "名称和 slug 不能为空");
+    if (name.value.trim() === "") {
+      setStatus(status, "error", "请填写频道名称");
       return;
     }
     const attached = parseAttachedDirectoryLines(directories.value);
@@ -158,7 +165,7 @@ function createChannelForm(context: ConsoleContext): {
           additionalDirectories: attached.value,
           allowInstanceTaskCreation: autonomous.checked,
           name: name.value.trim(),
-          slug: slug.value.trim(),
+          slug: slug.value.trim() || `channel-${crypto.randomUUID()}`,
           workspaceId: identity.workspaceId,
         },
         session: roomSession(context.client, identity.controlRoomId),
@@ -233,15 +240,32 @@ export function mountChannelList(
 ): () => void {
   const list = el("section", { className: "panel" });
   const create = createChannelForm(context);
-  container.replaceChildren(create.element, list);
+  const showTests = el("input", {
+    attrs: { type: "checkbox", id: "show-test-channels" },
+  });
+  const filter = labelled("显示测试 / 验收记录（按名称筛选）", showTests);
+  container.replaceChildren(
+    list,
+    disclosure("创建频道", [create.element], "channel-create"),
+  );
   const render = () => {
-    const summaries = summarizeChannels(context.rooms);
+    const all = summarizeChannels(context.rooms);
+    const summaries = all.filter(
+      (item) => showTests.checked || !isTestRecord(item.name),
+    );
     list.replaceChildren(
       el("h2", { text: "频道" }),
+      filter,
       !context.roomsLoaded
         ? el("p", { className: "muted", text: "加载中…" })
         : summaries.length === 0
-          ? el("p", { className: "muted", text: "没有未归档的频道" })
+          ? el("p", {
+              className: "muted",
+              text:
+                all.length === 0
+                  ? "还没有频道，创建一个开始协作。"
+                  : "测试记录已收起，可以创建新频道开始协作。",
+            })
           : el(
               "ul",
               { attrs: { id: "channel-list" }, className: "channel-list" },
@@ -254,6 +278,7 @@ export function mountChannelList(
     );
     create.refresh();
   };
+  showTests.addEventListener("change", render);
   render();
   const unsubscribe = subscribe(context, render);
   return () => {
