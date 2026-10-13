@@ -1,0 +1,57 @@
+{
+  "at": "2026-10-13T08:47:55.495Z",
+  "codeRevision": "1b0ebfd7e5dd6261ea9f91f25df0eac76a4087a7",
+  "sourceSha256": "6e7cd402625e860fc15c4009c4d336d60c33bd049832b78fd259a1cd00290590",
+  "service": "com.loom.evo",
+  "schemaVersion": 87,
+  "backup": {
+    "name": "pre-restart-instance-restart-1717889a-ccce-4d2d-a9cf-f218497f2b2b",
+    "databases": 2,
+    "stateFiles": 317
+  },
+  "businessTablesUnchanged": 14,
+  "consoleBuild": "6c526a2fb5936be02cd230c99adbeb25097cb1e7869bd0d91f0627a7d0ba2e36",
+  "consoleAssets": {
+    "app-D7tgXsW_.js": "b468fb64538402ecebca3b98a1b9469264a80965d470ce426761d072062b5ffc",
+    "index-DaexJMn4.css": "f58c6496457ed2e4206d838f48d443fec9bab9c8559422c3013975713c322db2",
+    "index-N-Nzeuqd.js": "e1b2a9683b2c6329c087a3549e968ecd5e92dbd57883ac1c098c65a3b3ae9fd5"
+  },
+  "webBuildId": "6c76c5348a13401f",
+  "realPage": {
+    "historyVerified": true,
+    "apiVerified": true,
+    "consoleVerified": true,
+    "restartDialog": [
+      {
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "defaultKeep": true,
+        "optionCount": 2,
+        "previewVerified": true,
+        "cancelWithoutMutation": true,
+        "horizontalOverflow": false,
+        "pageErrors": []
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "defaultKeep": true,
+        "optionCount": 2,
+        "previewVerified": true,
+        "cancelWithoutMutation": true,
+        "horizontalOverflow": false,
+        "pageErrors": []
+      }
+    ]
+  },
+  "nativeFinalEnabled": ["claude", "opencode"],
+  "paidProviderCalls": 0,
+  "limits": [
+    "Formal page verification opened, previewed and cancelled restart; it did not rotate any user instance session",
+    "New CLI switching and history-recovery model quality/efficiency were not paid-gated in this batch"
+  ]
+}

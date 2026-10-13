@@ -39,7 +39,11 @@
       "scope": "Completed before final internal configuration idempotency-key namespacing correction; that correction has separate post-review verification"
     },
     "formatAndDiff": "passed",
-    "deployment": "awaiting backed-up service restart",
+    "deployment": {
+      "verified": true,
+      "evidence": "deployment.json",
+      "codeRevision": "1b0ebfd7e5dd6261ea9f91f25df0eac76a4087a7"
+    },
     "fullCheckBeforeFinalNameReview": {
       "exitCode": 0,
       "backend": {
