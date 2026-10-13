@@ -30,6 +30,7 @@ export const LocalRuntimeInventoryEntrySchema = z
     ),
     available: z.boolean(),
     configured: z.boolean(),
+    sessionBranches: z.array(z.enum(["fork", "side"])).optional(),
     customModelRuntime: z.enum(["claude", "codex"]).optional(),
     cliId: z.enum(["codex", "kimi", "opencode", "claude", "pi"]).optional(),
     displayName: z.string().trim().min(1),

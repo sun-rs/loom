@@ -1777,29 +1777,29 @@ if (args.join(" ") === "debug models --bundled") {
     description: "idle before reset",
     timeoutMs: 20_000,
   });
-  // Fork capability is truthful: this gate's Codex fixture is not an enabled
-  // product Fork adapter. Merely showing the action must not publish a child.
+  // The configured Codex adapter advertises native copying. Preview/cancel
+  // must never create a child, even though the capability enables confirmation.
   const beforeForkPreview = await head(channelId);
   await click(`${card} .action-fork`);
-  await waitForText(`${card} .confirm-box`, "其他 CLI 暂未接入正式 Fork");
+  await waitForText(`${card} .confirm-box`, "源实例须空闲且已建立会话");
   assert.equal(
     await evaluate(
       browser,
       `document.querySelector(${JSON.stringify(`${card} .confirm-fork`)})?.disabled`,
     ),
-    true,
+    false,
   );
   await click(`${card} .confirm-cancel`);
   assert.equal(await head(channelId), beforeForkPreview);
   await click(`${card} .action-side`);
   await waitForText(`${card} .confirm-box`, "Side 只能读取源频道");
-  await waitForText(`${card} .confirm-box`, "其他 CLI 暂未接入正式 Fork");
+  await waitForText(`${card} .confirm-box`, "源实例须空闲且已建立会话");
   assert.equal(
     await evaluate(
       browser,
       `document.querySelector(${JSON.stringify(`${card} .confirm-fork`)})?.disabled`,
     ),
-    true,
+    false,
   );
   await click(`${card} .confirm-cancel`);
   assert.equal(await head(channelId), beforeForkPreview);

@@ -14,6 +14,7 @@ import {
   buildLocalRuntimeInventoryResponse,
   discoverKnownLocalClis,
   mergeLocalRuntimeInventory,
+  configuredRuntimeSnapshot,
 } from "../src/local-runtime-inventory.ts";
 
 test("configured Runtime availability follows the current canonical Offer", () => {
@@ -239,5 +240,39 @@ test("local CLI discovery resolves executable identity and bounded version witho
     assert.deepEqual(claude?.modelBindingDescriptors, []);
   } finally {
     rmSync(directory, { force: true, recursive: true });
+  }
+});
+
+test("session branch capability comes from the configured native adapter, not the CLI label", () => {
+  for (const [kind, expected] of [
+    ["codex-app-server/v1", ["fork", "side"]],
+    ["opencode-server/v1", ["fork", "side"]],
+    ["acp/v1", []],
+  ] as const) {
+    const input = {
+      runtimeOfferId: "offer",
+      probeReport: { available: true, modelBindingDescriptors: [] },
+      runtimeProfileRevision: {
+        runtimeProfileId: "profile",
+        runtimeProfileRevisionId: "revision",
+        manifest: {
+          manifestVersion: 2,
+          displayName: "fixture",
+          executable: "fixture",
+          adapter: { kind },
+          credentialSlots: [],
+          staticEnv: {},
+        },
+      },
+    };
+    const snapshot = configuredRuntimeSnapshot(input as never);
+    assert.deepEqual(snapshot.sessionBranches, expected);
+    input.runtimeProfileRevision.manifest.credentialSlots = [
+      { target: { variable: "HOME" } },
+    ] as never;
+    assert.deepEqual(
+      configuredRuntimeSnapshot(input as never).sessionBranches,
+      [],
+    );
   }
 });

@@ -25,6 +25,8 @@ import {
   type SkillsConfiguration,
 } from "./daemon-agent-skills.ts";
 
+import { nativeSessionCopyAdapter } from "../../agent-host/src/native-session-copy.ts";
+
 const execFileAsync = promisify(execFile);
 
 export const KNOWN_LOCAL_CLIS = Object.freeze([
@@ -36,6 +38,7 @@ export const KNOWN_LOCAL_CLIS = Object.freeze([
 ]);
 
 export type ConfiguredLocalRuntime = {
+  sessionBranches?: LocalRuntimeInventoryEntry["sessionBranches"];
   customModelRuntime?: "claude" | "codex";
   cliId?: LocalRuntimeInventoryEntry["cliId"];
   agentBindings: LocalRuntimeInventoryEntry["agentBindings"];
@@ -135,6 +138,12 @@ export function configuredRuntimeSnapshot(input: {
           resolvedExecutablePath:
             probeReport.executableIdentity.resolvedExecutablePath,
         }),
+    sessionBranches:
+      runtimeProfileRevision.manifest.manifestVersion !== 1 &&
+      runtimeProfileRevision.manifest.credentialSlots.length === 0 &&
+      nativeSessionCopyAdapter(runtimeProfileRevision.manifest.adapter.kind)
+        ? ["fork", "side"]
+        : [],
     skillsConfiguration: resolveSkillsConfiguration(
       runtimeProfileRevision,
       probeReport,

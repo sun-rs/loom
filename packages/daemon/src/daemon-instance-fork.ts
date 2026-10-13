@@ -8,12 +8,15 @@ import {
 import type { RoomKernel, AuthenticatedHostContext } from "@rah-os/core";
 import type { ClientApplicationServiceOptions } from "@rah-os/application-service";
 import { ConflictError } from "../../kernel/src/errors.ts";
-import { copyOpenCodeSession } from "../../agent-host/src/opencode-session-fork.ts";
+import {
+  nativeSessionCopyAdapter,
+  type NativeSessionCopyAdapter,
+} from "../../agent-host/src/native-session-copy.ts";
 import type { ConfiguredLocalRuntimeSnapshot } from "./local-runtime-inventory.ts";
 
 /** Composition only: Kernel authorizes/CASes membership; Host owns durable native copying. */
 type BranchOptions = {
-  copyNative?: typeof copyOpenCodeSession;
+  copyNative?: NativeSessionCopyAdapter["copy"];
   kernel: RoomKernel;
   host: AuthenticatedHostContext;
   stateDirectory: string;
@@ -47,13 +50,9 @@ function createDaemonSessionCopy(input: BranchOptions): CopyInstanceSession {
     const runtime = input.configured.find(
       (r) => r.runtimeProfileRevisionId === plan.runtimeProfileRevisionId,
     );
-    if (
-      plan.hostId !== input.host.hostId ||
-      !runtime?.available ||
-      runtime.cliId !== "opencode"
-    )
+    if (plan.hostId !== input.host.hostId || !runtime?.available)
       throw new ConflictError(
-        "Fork currently supports established local OpenCode sessions only",
+        "Session copying requires an available local runtime",
       );
     const placement = plan.nativePlacement;
     if (
@@ -78,9 +77,14 @@ function createDaemonSessionCopy(input: BranchOptions): CopyInstanceSession {
         ),
     );
     const revision = registry?.getActiveRevision(plan.runtimeProfileId);
-    if (!revision || revision.manifest.adapter.kind !== "opencode-server/v1")
+    if (!revision)
       throw new ConflictError("Fork runtime profile is no longer active");
     const manifest = revision.manifest;
+    const adapter = nativeSessionCopyAdapter(manifest.adapter.kind);
+    if (!adapter)
+      throw new ConflictError(
+        "This runtime has no native session-copy adapter",
+      );
     if (manifest.manifestVersion === 1 || manifest.credentialSlots.length)
       throw new ConflictError(
         "Fork cannot resolve this runtime credential environment safely",
@@ -93,7 +97,7 @@ function createDaemonSessionCopy(input: BranchOptions): CopyInstanceSession {
     if (!cwd) throw new ConflictError("Fork Channel home is unavailable");
     const source = {
       participantId: plan.sourceInstanceId,
-      provider: "opencode-server/v1",
+      provider: adapter.provider,
       runtimeProfileRevisionId: placement.runtimeProfileRevisionId,
       workspaceMountRevisionId: placement.workspaceMountRevisionId,
     };
@@ -105,7 +109,7 @@ function createDaemonSessionCopy(input: BranchOptions): CopyInstanceSession {
         target: { ...source, participantId: plan.targetInstanceId },
       },
       (binding) =>
-        (input.copyNative ?? copyOpenCodeSession)({
+        (input.copyNative ?? adapter.copy)({
           executable: runtime.resolvedExecutablePath ?? runtime.executable,
           env: { ...process.env, ...manifest.staticEnv },
           cwd,

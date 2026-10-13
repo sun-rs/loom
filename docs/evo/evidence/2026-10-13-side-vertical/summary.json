@@ -225,5 +225,11 @@
   },
   "sourceSha256": "0545f2d6983088ae70d115172a519cf75f541f4e07c08afaeccb0d076eed9f57",
   "codeCommit": "1c8836f59901fb00ab4679db9467b1830e285186",
-  "deployment": "deployment.json"
+  "deployment": "deployment.json",
+  "erratum": {
+    "date": "2026-10-13",
+    "scope": "Actual source history tool-read claim only",
+    "finding": "The synthetic request contained the SIDE_READ_OK command, but the actual tool output was TURN_HANDLE_REQUIRED. This did not prove a successful source history read. Other copy/private reply/isolation/discard evidence remains.",
+    "replacement": "../2026-10-13-unified-branches/summary.json"
+  }
 }

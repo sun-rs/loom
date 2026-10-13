@@ -1,7 +1,7 @@
 # Fork / Side：当前实施边界
 
 负责人于 2026-10-13 授权开始，语义见[目标合同 §3](target-contract.zh-CN.md#3-调度与交流)。
-本页区分原生能力探针、OpenCode Fork／Side 首个纵向实现与尚未接通的其他 CLI；不是 S4/S5 全部完成声明。
+本页区分原生能力探针、统一 Loom 分支接口、Codex／OpenCode Fork／Side 纵向实现与尚未接通的其他 CLI；不是 S4/S5 全部完成声明。
 
 ## 产品语义
 
@@ -53,7 +53,7 @@ Kernel 在异步复制前后重新核实 Human 管理权限、Host 凭据与代�
 ## 验收边界
 
 Host 单测覆盖源绑定保留、独立目标、新身份不继承投递回执、并发、重启重放、未知结果、绑定写入失败恢复及损坏回执。
-OpenCode Fork 的 Kernel/API/控制台入口已实现；检查与部署以本批证据和状态页为准。其他 CLI 正式适配、Side 凭据／只读 box／独立对话／丢弃完整链、真实付费模型的有界接入验收尚未完成。
+OpenCode Fork 的 Kernel/API/控制台入口已实现；检查与部署以本批证据和状态页为准。该首家 Fork 批次未验证 Side；Side 与 Codex 后继接入见下文。Claude／Pi／Kimi 正式适配、忙时丢弃与真实付费模型的有界接入验收尚未完成。
 不能将首家 Fork 接入登记为五家 Fork 或 Side 已完成。
 
 ## OpenCode Side 纵向切片（2026-10-13）
@@ -67,3 +67,15 @@ Worker 身份从认证执行推导。Side 的业务能力默认拒绝，只有�
 首版丢弃要求无排队／租约／运行／隔离待处理工作，并通过已有进程清理围栏。成功后禁用该执行身份、归档自身 Room，后续消息和 Worker 访问被拒绝；重放不重复变更；响应丢失时，即便状态轮询已显示丢弃，仍保留原操作的核实／放弃入口，绝不换键自动重发。**忙时一键取消尚未实现，因此不是“可随时丢弃”的完整 S5 验收。** 未增加停止队列或假装信号已证明进程退出。历史、源会话和共享目录不删除；同 UID 的 full-access CLI 不构成文件系统只读沙箱。
 
 实际 OpenCode＋本地合成模型已跑通父会话→浏览器创建 Side→新 session 继承上下文并调用真实 Worker 历史读取→私有回复→父会话续原 session 且不含 Side 文本→浏览器丢弃及精确重放。完整链4次合成请求，复制阶段0次。桌面和手机显示真实合成回复与独立名称。无新增付费，不作多 CLI、模型自主遵循或成本结论。[本批证据](evidence/2026-10-13-side-vertical/summary.json)。
+
+## 统一 Loom API 与原生适配（2026-10-13）
+
+上层保持三项厂商无关操作：`instance.fork`（`POST /v3/client/instances/fork`）、`side.create`（`POST /v3/client/sides/create`）、`side.discard`（`POST /v3/client/sides/discard`）。调用者只提交 Instance ID、因果位置与幂等键，不传 CLI 类型、原生 session ID 或凭据。Kernel 共用源状态双重校验、Role 配置快照、成员／Side 身份和执行围栏；Side 不成为普通频道成员。
+
+AgentHost 的 `nativeSessionCopyAdapter` 按受信 runtime manifest 的 adapter kind 选择原生实现。统一输入是源原生 ID、可执行文件、冻结环境和 cwd，返回独立的新原生 ID；`ProviderSessionStore.forkInstance` 继续单独拥有复制回执与绑定恢复。daemon 只组合 Kernel 与 Host，不按 CLI 显示名分叉业务规则。未知 adapter 直接拒绝，没有空白会话回退。
+
+`host.runtime.list` 的可选 `sessionBranches` 返回该配置支持的 `fork`／`side`。旧响应缺该字段时，界面视为不可用；发现可执行文件不等于支持复制。仅配置了复制适配器、且无待解析动态凭据的 manifest 宣告能力。控制台按此能力显示预览，不维护厂商名单。它是运行时能力，不证明某个实例空闲、已有 session 或其当前 placement/configuration 满足条件；真正执行仍以 Kernel／Host 的检查为准。
+
+当前正式实现为 `opencode-server/v1` 与 `codex-app-server/v1`。Codex 使用 CLI 自带 app-server 的 `initialize → thread/fork`，不调用 `turn/start`；沿现有启动策略禁用自动记忆、个人 MCP 和自动触发机制，复制后确认进程退出。相同 provider key 使后续 Fork／Side 进入既有 Codex 启动／续聊链。Claude、Pi、Kimi 的独立探针不等于可用 adapter，仍不宣告能力。
+
+实际 Codex／隔离 HOME／禁止外网／本地合成模型验证了正式 Fork、Side、父子独立续聊与零生成复制。Side 另外验证正式默认 Worker 回帖路径，不依赖启用生产的实验性 final-output 开关；本批不修改正式服务开关。测试曾漏传 turn、使用不存在的 `message-history` 命令，旧断言误把命令回显当作成功；修正为 `message-read --turn ... --target ...` 并检查工具输出中的源消息。旧证据的历史读取声明据此降级，保留失败与重测记录，不据此声称模型自主用对工具或效率验收。完整检查、浏览器与部署状态见[本批证据](evidence/2026-10-13-unified-branches/summary.json)。

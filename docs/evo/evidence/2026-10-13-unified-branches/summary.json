@@ -1,0 +1,251 @@
+{
+  "date": "2026-10-13",
+  "baseCommit": "ab08e17bd314f3a3e6446ddcd2e3faef95d5d78c",
+  "scope": "Unified Loom session branching API / native adapters; Codex added, OpenCode regression; not five-provider completion",
+  "owners": {
+    "kernel": "unchanged Role snapshot, source CAS, identity, Side grants and execution lanes",
+    "agentHost": "nativeSessionCopyAdapter and existing ProviderSessionStore receipt/binding",
+    "daemon": "composition only",
+    "client": "SDK operations and host.runtime.list sessionBranches; no CLI-name allowlist"
+  },
+  "interfaces": ["instance.fork", "side.create", "side.discard"],
+  "implementedAdapters": ["codex-app-server/v1", "opencode-server/v1"],
+  "unsupported": [
+    "Claude",
+    "Pi",
+    "Kimi",
+    "busy Side discard",
+    "product third-column UI",
+    "remote Host",
+    "dynamic credential slots",
+    "legacy private cwd"
+  ],
+  "codexNativeCopy": {
+    "root": "/private/tmp/loom-copy-codex-u6nYp3",
+    "source": "4128ac7e-57ae-4905-9a39-9b2c594cc58e",
+    "child": "01a1353b-b60f-71c2-81db-bc605b286ce6",
+    "historyInherited": true,
+    "sourceUnchanged": true,
+    "paidCalls": 0,
+    "networkDenied": true
+  },
+  "paidCalls": 0,
+  "syntheticRequestsAllAttempts": 60,
+  "runs": [
+    {
+      "run": "1791894547740-codex",
+      "provider": "codex",
+      "syntheticRequests": 0,
+      "error": "Error: unexpected quarantine [{\"state\":\"quarantined\"}]\n    at file:///Users/sun/.loom/reviews/2026-10-13-unified-branches/vertical-codex.mjs:36:160\n    at wait (file:///Users/sun/.loom/reviews/2026-10-13-unified-branches/vertical-codex.mjs:17:73)\n    at async settled (file:///Users/sun/.loom/reviews/2026-10-13-unified-branches/vertical-codex.mjs:36:26)\n    at async file:///Users/sun/.loom/reviews/2026-10-13-unified-branches/vertical-codex.mjs:55:61",
+      "checks": ["daemon-drain"],
+      "resultSha256": "ea3c3fe1171c057221ce7477b5896a0319cf94ef5419ec1871aab6551ec1fefd"
+    },
+    {
+      "run": "1791894678514-codex",
+      "provider": "codex",
+      "syntheticRequests": 4,
+      "error": null,
+      "checks": [
+        "source-established",
+        "side-native-zero-generation-idempotent",
+        "side-resumed-private-only",
+        "parent-retained-native-session",
+        "side-discarded-source-untouched",
+        "daemon-drain",
+        "all-activations-terminal"
+      ],
+      "resultSha256": "27bf8b5cfda04ca907a90527e23b0554e9037bb4d4400a9ef595eb0ff561029d"
+    },
+    {
+      "run": "1791894748048-codex",
+      "provider": "codex",
+      "syntheticRequests": 3,
+      "error": null,
+      "checks": [
+        "source-established",
+        "fork-native-zero-generation-idempotent",
+        "child-resumed-and-published-as-new-member",
+        "parent-retained-native-session",
+        "daemon-drain",
+        "all-activations-terminal"
+      ],
+      "resultSha256": "49f0252e9d44375ff9357d830f6793b5f5b2d510fc678c07a310facf674b7835"
+    },
+    {
+      "run": "1791894909179-codex",
+      "provider": "codex",
+      "syntheticRequests": 35,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n2 !== 1\n\n    at file:///Users/sun/.loom/reviews/2026-10-13-unified-branches/vertical-codex-worker.mjs:68:208",
+      "checks": [
+        "source-established",
+        "side-native-zero-generation-idempotent",
+        "daemon-drain"
+      ],
+      "resultSha256": "e8b69657f062843becf31d02d527651ff85f7b98d84a943272e434263ac61b90"
+    },
+    {
+      "run": "1791894998279-codex",
+      "provider": "codex",
+      "syntheticRequests": 5,
+      "error": "AssertionError [ERR_ASSERTION]: source history must be in successful tool OUTPUT, never just echoed command\n    at file:///Users/sun/.loom/reviews/2026-10-13-unified-branches/vertical-codex-worker.mjs:76:308",
+      "checks": [
+        "source-established",
+        "side-native-zero-generation-idempotent",
+        "side-resumed-private-only",
+        "parent-retained-native-session",
+        "daemon-drain"
+      ],
+      "resultSha256": "0d3b09964d73794139b1596d23459a1db7e8e4a671b874e64f50916b524e8822"
+    },
+    {
+      "run": "1791895081839-codex",
+      "provider": "codex",
+      "syntheticRequests": 5,
+      "error": null,
+      "checks": [
+        "source-established",
+        "side-native-zero-generation-idempotent",
+        "side-resumed-private-only",
+        "parent-retained-native-session",
+        "side-discarded-source-untouched",
+        "daemon-drain",
+        "all-activations-terminal"
+      ],
+      "resultSha256": "04e5df04f4710b19847503880b0ca5dc7ee49c8f83a60cc0d6d76d3af96c99c0"
+    },
+    {
+      "run": "1791895132778-codex",
+      "provider": "codex",
+      "syntheticRequests": 4,
+      "error": null,
+      "checks": [
+        "source-established",
+        "side-native-zero-generation-idempotent",
+        "side-resumed-private-only",
+        "parent-retained-native-session",
+        "real-console-side-create-private-page-desktop-mobile",
+        "side-discarded-source-untouched",
+        "daemon-drain",
+        "all-activations-terminal"
+      ],
+      "resultSha256": "bc5ae9deddf49c59d815a411594ceb0f8c622ffdea99ab19117a93217df9b3ac"
+    },
+    {
+      "run": "1791895176552-opencode",
+      "provider": "opencode",
+      "syntheticRequests": 4,
+      "error": null,
+      "checks": [
+        "source-established",
+        "side-native-zero-generation-idempotent",
+        "side-resumed-private-only",
+        "parent-retained-native-session",
+        "side-discarded-source-untouched",
+        "daemon-drain",
+        "all-activations-terminal"
+      ],
+      "resultSha256": "84e42f34df5fa4cbcbb54252e2ed29f9d4926f8d3883f9dc066d31240c19528f"
+    }
+  ],
+  "acceptedRuns": {
+    "codexFork": "1791894748048-codex",
+    "codexSideDefaultWorker": "1791895081839-codex",
+    "codexSideBrowserDesktopMobile": "1791895132778-codex",
+    "opencodeSideStrictHistoryRead": "1791895176552-opencode"
+  },
+  "testCorrections": [
+    "First Codex loopback address intercepted by local proxy: no synthetic requests, temporary daemon drained; switched isolated fixture URL to localhost.",
+    "Initial Side history command lacked --turn and used nonexistent message-history; old oracle matched the command text, not successful output. Previous reports of real source-history read are downgraded. Corrected command message-read --turn --target, assertion now requires source message plus success marker in tool OUTPUT. Kernel/API read tests were independently valid.",
+    "First default Worker synthetic script repeatedly issued final writes instead of ending after successful tool output; failed 35-request fixture retained. Corrected fixture returns a diagnostic final after the successful write if Host interrupt has not arrived. No product behavior changed to accommodate the script.",
+    "First browser runner construction failed before launching a CLI (page not defined); corrected runner passed.",
+    "Console gate old assumption that Codex is unsupported failed; updated capability preview/cancel check to expect configured adapter support, preserving no-mutation assertion."
+  ],
+  "verification": {
+    "focusedTests": 37,
+    "focusedPassed": true,
+    "consoleBrowserPassed": true,
+    "viewports": ["1440x1000", "390x844"],
+    "webRebuilt": true,
+    "fullCheck": "passed",
+    "logs": {
+      "focused.log": "a431d047b312cc012542bdb8b73261e636a54370d332a30f5ffe3ad2063f7a9e",
+      "browser-2.log": "5d3cb6e5f5a9371780e7ef7818671d2b08f922e3b93b0417ef0a68bd6a5c5829",
+      "format.log": "fb5ffe51bf83c7a6ac683f386a5c903f6ff2c086dbe1bf27cc1f12efddaf7e3f",
+      "build-web.log": "abcfa5b46cc624fb98fcec7167ca1f04233ba6c866a3d2b1d845ae0669511271",
+      "check.log": "874001e0f2d8663d98af49d3363fef44c0ee0a28180c2664ed1368cd443ccd4c"
+    },
+    "backend": {
+      "passed": 3212,
+      "skipped": 22,
+      "failed": 0
+    }
+  },
+  "sourceReuse": "Local glue invoking native vendor interfaces; no copied or structurally ported upstream code.",
+  "performance": "Copy zero generation; synthetic protocol checks are not paid efficiency acceptance or autonomous model quality.",
+  "privateEvidenceDirectory": "/Users/sun/.loom/reviews/2026-10-13-unified-branches",
+  "cleanup": [
+    {
+      "run": "1791894547740-codex",
+      "recordedProcessesExited": 4,
+      "settingsRemoved": [
+        "/private/tmp/loom-formal-mvp-Kzr7gG/codex/settings.json"
+      ]
+    },
+    {
+      "run": "1791894678514-codex",
+      "recordedProcessesExited": 8,
+      "settingsRemoved": [
+        "/private/tmp/loom-formal-mvp-tyAd4V/codex/settings.json"
+      ]
+    },
+    {
+      "run": "1791894748048-codex",
+      "recordedProcessesExited": 8,
+      "settingsRemoved": [
+        "/private/tmp/loom-formal-mvp-quRbnD/codex/settings.json"
+      ]
+    },
+    {
+      "run": "1791894909179-codex",
+      "recordedProcessesExited": 8,
+      "settingsRemoved": [
+        "/private/tmp/loom-formal-mvp-PFUQVO/codex/settings.json"
+      ]
+    },
+    {
+      "run": "1791894998279-codex",
+      "recordedProcessesExited": 8,
+      "settingsRemoved": [
+        "/private/tmp/loom-formal-mvp-BBcgmp/codex/settings.json"
+      ]
+    },
+    {
+      "run": "1791895081839-codex",
+      "recordedProcessesExited": 8,
+      "settingsRemoved": [
+        "/private/tmp/loom-formal-mvp-ozP9I7/codex/settings.json"
+      ]
+    },
+    {
+      "run": "1791895132778-codex",
+      "recordedProcessesExited": 8,
+      "settingsRemoved": [
+        "/private/tmp/loom-formal-mvp-BNa5je/codex/settings.json"
+      ]
+    },
+    {
+      "run": "1791895176552-opencode",
+      "recordedProcessesExited": 8,
+      "settingsRemoved": [
+        "/private/tmp/loom-formal-mvp-sKE7no/claude/settings.json",
+        "/private/tmp/loom-formal-mvp-sKE7no/opencode/settings.json"
+      ]
+    }
+  ],
+  "versions": {
+    "node": "25.9.0",
+    "codex": "0.162.1",
+    "opencode": "1.18.35"
+  },
+  "sourceSha256": "f2b614547dcc3cc3458c3b26e908ce9278ac8b8f34767b67afa66294c351c7f7"
+}

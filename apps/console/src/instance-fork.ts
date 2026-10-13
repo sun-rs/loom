@@ -49,13 +49,13 @@ export function instanceForkDialog(
           r.runtimeOfferId === current.policy.required.allowedOfferIds?.[0],
       );
       const supported =
-        runtime?.cliId === "opencode" &&
+        runtime?.sessionBranches?.includes(side ? "side" : "fork") === true &&
         runtime.available &&
         current.agent.currentRevision.executionWorkspace?.kind ===
           "channel_home";
       note.textContent = supported
         ? "源实例须空闲且已建立会话。复制本身不调用模型；新成员之后的对话正常计费。"
-        : "当前版本仅支持共享频道目录中的本机 OpenCode 会话。其他 CLI 暂未接入正式 Fork。";
+        : "此运行时尚未接入原生会话复制，或实例未使用共享频道目录。";
       submit.disabled = !supported;
     })
     .catch((error) => {
