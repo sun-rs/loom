@@ -439,7 +439,7 @@ import { RunGuardPolicy } from "./run-guard-policy.ts";
 import { RunWatchdogService } from "./run-watchdog-service.ts";
 const DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS = 5_000;
 const DEFAULT_RUNTIME_OFFER_MAX_TTL_MS = 5 * 60_000;
-export const KERNEL_SCHEMA_VERSION = 88;
+export const KERNEL_SCHEMA_VERSION = 89;
 
 export class RoomKernel {
   static #referenceSchema: Map<string, string> | undefined;
@@ -6448,6 +6448,21 @@ export class RoomKernel {
       throw new ConflictError(
         `activation ${activationId} has unverified runtime termination`,
       );
+    }
+
+    const completed = ReadCoverage.recoverCommittedFinal(
+      this.#database,
+      this.#roomEvents,
+      this.#activationObligations,
+      row,
+      "resolverHostId" in resolution
+        ? resolution.resolverHostId
+        : SYSTEM_PRINCIPAL_ID,
+      this.#timestamp(),
+    );
+    if (completed) {
+      this.roomAgentSos.settleTerminalStop(text(row, "room_id"));
+      return completed;
     }
 
     const followUp = this.#database

@@ -46,6 +46,8 @@ CREATE TABLE IF NOT EXISTS run_attempt_final_replies (
   event_id TEXT NOT NULL,
   room_seq INTEGER NOT NULL CHECK (room_seq > 0),
   committed_at TEXT NOT NULL,
+  consumer_id TEXT,
+  delivery_to_seq INTEGER CHECK (delivery_to_seq IS NULL OR delivery_to_seq > 0),
   submission_kind TEXT CHECK (submission_kind IS NULL OR submission_kind = 'final-output'),
   interrupt_sent INTEGER CHECK (interrupt_sent IS NULL OR interrupt_sent IN (0, 1)),
   preempted_follow_up TEXT CHECK (preempted_follow_up IS NULL OR preempted_follow_up IN ('true', 'false', 'unknown')),
@@ -69,6 +71,14 @@ export function migrateRunAttemptFinalReplyFacts(database: DatabaseSync): void {
       .map((row) => String(row.name)),
   );
   if (columns.size === 0) return;
+  if (!columns.has("consumer_id"))
+    database.exec(
+      "ALTER TABLE run_attempt_final_replies ADD COLUMN consumer_id TEXT",
+    );
+  if (!columns.has("delivery_to_seq"))
+    database.exec(
+      "ALTER TABLE run_attempt_final_replies ADD COLUMN delivery_to_seq INTEGER CHECK (delivery_to_seq IS NULL OR delivery_to_seq > 0)",
+    );
   if (!columns.has("submission_kind"))
     database.exec(
       "ALTER TABLE run_attempt_final_replies ADD COLUMN submission_kind TEXT CHECK (submission_kind IS NULL OR submission_kind = 'final-output')",
@@ -141,8 +151,8 @@ export class RunAttemptFinalReplyService {
     const inserted = this.#database
       .prepare(
         `INSERT OR IGNORE INTO run_attempt_final_replies(
-           run_attempt_id, activation_id, room_id, event_id, room_seq, committed_at
-         ) VALUES(?, ?, ?, ?, ?, ?)`,
+           run_attempt_id, activation_id, room_id, event_id, room_seq, committed_at, consumer_id, delivery_to_seq
+         ) VALUES(?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .run(
         scope.runAttemptId,
@@ -151,6 +161,8 @@ export class RunAttemptFinalReplyService {
         event.eventId,
         event.roomSeq,
         this.#now().toISOString(),
+        scope.consumerId,
+        scope.toSeq,
       );
     if (Number(inserted.changes) > 0)
       this.#pendingHints.push(scope.runAttemptId);

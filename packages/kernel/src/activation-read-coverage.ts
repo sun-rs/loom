@@ -1,3 +1,4 @@
+import { resolveRecoveredActivationCancellation } from "./activation-cancellation.ts";
 import { activationProjectionFromRow } from "./delivery-projection.ts";
 import { resolveActivationRetryFence } from "./activation-retry-fence.ts";
 import {
@@ -308,4 +309,61 @@ export function complete(
       .prepare("SELECT * FROM activations WHERE activation_id=?")
       .get(activationId)!,
   );
+}
+
+/** A committed final survives Host loss. Never infer ACK or successful process exit. */
+export function recoverCommittedFinal(
+  database: DatabaseSync,
+  events: RoomEventWriter,
+  obligations: ActivationObligationService,
+  row: Row,
+  recoveryHostId: string,
+  now: string,
+) {
+  const activationId = text(row, "activation_id");
+  const marker = database
+    .prepare(
+      `SELECT f.consumer_id FROM run_attempt_final_replies f
+ JOIN run_attempts r ON r.run_attempt_id=f.run_attempt_id
+ JOIN worker_run_message_writes w ON w.event_id=f.event_id AND w.run_attempt_id=r.run_attempt_id
+ JOIN role_instances i ON i.instance_id=r.participant_id
+ LEFT JOIN role_instance_sessions s ON s.instance_id=i.instance_id
+ JOIN subscription_cursors c ON c.room_id=r.room_id AND c.participant_id=r.participant_id AND c.consumer_id=f.consumer_id
+ WHERE f.activation_id=? AND f.room_id=? AND r.participant_id=?
+ AND f.delivery_to_seq>=? AND c.last_seq>=?
+ AND w.session_generation=COALESCE(s.generation,0)
+ AND NOT EXISTS(SELECT 1 FROM run_attempts n WHERE n.activation_id=r.activation_id AND n.attempt_number>r.attempt_number)
+ AND NOT EXISTS(SELECT 1 FROM run_attempts n WHERE n.activation_id=r.activation_id AND n.state IN ('starting','running'))
+ AND NOT EXISTS(SELECT 1 FROM held_message_drafts d WHERE d.activation_id=r.activation_id AND d.state='held')`,
+    )
+    .get(
+      activationId,
+      text(row, "room_id"),
+      text(row, "participant_id"),
+      integer(row, "to_seq"),
+      integer(row, "to_seq"),
+    );
+  if (!marker) return;
+  try {
+    obligations.assertSatisfied(activationId);
+    assertAgentFirstRunSatisfied(database, row);
+  } catch (error) {
+    if (
+      error instanceof TaskSubmissionProofError ||
+      error instanceof DeliveryProofError
+    )
+      return;
+    throw error;
+  }
+  const result = complete(
+    database,
+    events,
+    obligations,
+    row,
+    text(marker, "consumer_id"),
+    recoveryHostId,
+    now,
+  );
+  resolveRecoveredActivationCancellation(database, row, now);
+  return result;
 }
