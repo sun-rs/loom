@@ -142,7 +142,7 @@
       "consoleUnit": 63,
       "efficiencyUnit": 558
     },
-    "deployment": "pending",
+    "deployment": "verified: deployment.json",
     "formatCheck": "passed",
     "diffCheck": "passed"
   },
