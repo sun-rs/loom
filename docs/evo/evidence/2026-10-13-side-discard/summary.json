@@ -282,10 +282,10 @@
       "consoleUnit": 63,
       "cliEfficiencyUnit": 558
     },
-    "deployment": "pending formal restart",
+    "deployment": "verified: deployment.json",
     "finalConsoleTypecheck": "passed",
     "browserRegression": "npm run test:console:browser passed; fake CLI, desktop/mobile",
-    "formatCheck": "passed; final documentation refresh checked separately",
+    "formatCheck": "passed",
     "diffCheck": "passed"
   },
   "evidenceLogs": {

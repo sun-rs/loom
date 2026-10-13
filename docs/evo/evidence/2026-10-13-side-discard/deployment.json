@@ -1,0 +1,115 @@
+{
+  "at": "2026-10-13T15:45:16.563Z",
+  "codeCommit": "023fddf8863daaeebe3118b71e5acddd1b22b482",
+  "service": "com.loom.evo",
+  "schemaVersion": 88,
+  "stateHomeUnchanged": "/Users/sun/.loom/evo/state",
+  "backup": {
+    "path": "/Users/sun/.loom/evo/backups/pre-restart-side-discard-7ceb72cc-84d2-437d-a69e-aa499e19fad0",
+    "databases": 2,
+    "files": 318
+  },
+  "gracefulRestartVerified": true,
+  "businessTablesUnchanged": {
+    "principals": {
+      "rows": 74,
+      "sha256": "71626744fb8b9f76f94bb7ebeebbfdf8e893c2f83363fcb83e7bbde4678809ef"
+    },
+    "agent_definition_revisions": {
+      "rows": 89,
+      "sha256": "89639899b7177fb2c942755209692a2f5fa4242b619e8b20040249a4309cfe29"
+    },
+    "execution_policy_revisions": {
+      "rows": 89,
+      "sha256": "65b5468188c9e0cfd33afb2ef023c0eefd003c562621afca13c3ebdabfb9a659"
+    },
+    "messages": {
+      "rows": 249,
+      "sha256": "84e3e11c8f5b7fd78d29000dde1e65c1dc059181495b271317a88982fc75bbef"
+    },
+    "tasks": {
+      "rows": 9,
+      "sha256": "a04b56b278ac8b942bf35c96db144a3ba261e1d1d8838b7483ef36d65ba2fd52"
+    },
+    "role_templates": {
+      "rows": 42,
+      "sha256": "8c1ea4a78b19f0a605a39e291b96447c084673f244e33bf5c473be471df3c8da"
+    },
+    "role_revisions": {
+      "rows": 43,
+      "sha256": "1d8fb5fe30ef8deb58a383733aadbaa2ad41b07f42db174aee57499aca1ce393"
+    },
+    "role_instances": {
+      "rows": 68,
+      "sha256": "ef7eb9f5cf4f234707b9bd3c386e4c8242cc8765286a8cc4418a144062d7da7b"
+    },
+    "memory_entries": {
+      "rows": 4,
+      "sha256": "d0d2bb98894716fcfbda8ea5f4b3112a99595d70192c7df088ac553b00cef08b"
+    },
+    "memory_revisions": {
+      "rows": 4,
+      "sha256": "21b7e112c7deda7a547b68d235b562c0d88bb8103ef385d553673e0f044d5893"
+    },
+    "role_instance_sessions": {
+      "rows": 66,
+      "sha256": "76b0adc6c3bcadc8188c214270e67460ba03d8fe6ae5872f28b5b555235f1251"
+    },
+    "room_events": {
+      "rows": 2202,
+      "sha256": "4d6a60629e7f2534d2a84cc7e8ad82e0461e787fb229295b20d536ee1d0fe7f6"
+    },
+    "agent_definitions": {
+      "rows": 72,
+      "sha256": "ad4945f537267198d856ce492b79bbd8dec0bb66021f19f05c56538e69e688ac"
+    },
+    "inbox_items": {
+      "rows": 179,
+      "sha256": "7a96e866b550ef974dd49056926c3193dc9d09acf7234aad3b07c98aac38ff86"
+    },
+    "side_sessions": {
+      "rows": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    }
+  },
+  "sourceSha256": "ae3d7058dcb97ac19ea1aa60f55ca2cd167e82ea26ea1064ea7e64845f849114",
+  "dependencies": {
+    "package-lock.json": "12d036963fbcde813a75b82261485460f0a5dbaaa71e02a82ae098786c60e61f",
+    "node_modules/@anthropic-ai/claude-agent-sdk/package.json": "a2f4bd57129cb99253877099ab6deed575b3bdd37aa0e09aa6469a63bc81690f",
+    "node_modules/@anthropic-ai/claude-agent-sdk/sdk.mjs": "5cf6f15237f9c84e6e5b724a10180478732457168921d7aa3e02632037cce299"
+  },
+  "webBuildId": "22370806bd25778f",
+  "consoleAssets": {
+    "app-CSoSHM5a.js": "157392136972507dd424602253af0befa962cb68f6444d157f8dbe52338cde3c",
+    "index-BukJk0JQ.js": "b07672b5b022791b5a1a1a139a1167999ea3f94fbc68f81b836003a4b2156629",
+    "index-DaexJMn4.css": "f58c6496457ed2e4206d838f48d443fec9bab9c8559422c3013975713c322db2"
+  },
+  "realPage": {
+    "historyVerified": true,
+    "consoleVerified": true,
+    "pageErrors": [],
+    "roleCount": 42,
+    "memoryApiVerified": true,
+    "aggregateUsageApiVerified": true,
+    "fiveProviderForkSideCapabilitiesVerified": true,
+    "sidePreviews": [
+      {
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "configuredCodexCapabilityEnabled": true
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "configuredCodexCapabilityEnabled": true
+      }
+    ]
+  },
+  "nativeFinalEnabled": ["claude", "opencode"],
+  "otherFiveTrialFlagsRemainOff": true,
+  "paidCalls": 0
+}
