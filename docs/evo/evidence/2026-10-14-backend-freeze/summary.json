@@ -1,0 +1,234 @@
+{
+  "date": "2026-10-14",
+  "milestoneTag": "milestone-evo-backend-mvp-2026-10-14",
+  "decision": "Owner-approved backend MVP development freeze after a single full green check",
+  "baseline": {
+    "at": "2026-10-13T18:57:55.855Z",
+    "head": "bbaeb6d39d6aecdc66dfabb3aca0d27287b965f5",
+    "tree": "a36828f31c9a1b3ec07f4e5908a897bf6d1fd9db",
+    "sourceSha256": "197590aad26ac6e8dde4a6ce716295496949848c56e25ad8ea2e72f9b425730e",
+    "deployedCodeCommit": "13d27f092e1cdccdb51c592f6499efa4d6e3e3ea",
+    "sourceMatchesDeployment": true,
+    "worktreeClean": true,
+    "paidCalls": 0
+  },
+  "verification": {
+    "checkCommand": "npm run check",
+    "exitCode": 0,
+    "singleUninterruptedRun": true,
+    "stages": [
+      {
+        "stage": "test:repository-identity",
+        "tests": 4,
+        "pass": 4,
+        "fail": 0,
+        "skipped": 0,
+        "duration_ms": 154.77425
+      },
+      {
+        "stage": "test:ci-workflow",
+        "tests": 9,
+        "pass": 9,
+        "fail": 0,
+        "skipped": 0,
+        "duration_ms": 70.291958
+      },
+      {
+        "stage": "test:release-identity",
+        "tests": 19,
+        "pass": 19,
+        "fail": 0,
+        "skipped": 0,
+        "duration_ms": 253.555084
+      },
+      {
+        "stage": "test:workbench-launch",
+        "tests": 20,
+        "pass": 20,
+        "fail": 0,
+        "skipped": 0,
+        "duration_ms": 81.727792
+      },
+      {
+        "stage": "test:ui:component-spec",
+        "tests": 40,
+        "pass": 40,
+        "fail": 0,
+        "skipped": 0,
+        "duration_ms": 355.847167
+      },
+      {
+        "stage": "check:raft-parity",
+        "tests": 34,
+        "pass": 34,
+        "fail": 0,
+        "skipped": 0,
+        "duration_ms": 467.958
+      },
+      {
+        "stage": "test",
+        "tests": 3268,
+        "pass": 3246,
+        "fail": 0,
+        "skipped": 22,
+        "duration_ms": 1056761.318833
+      },
+      {
+        "stage": "test:web:unit",
+        "tests": 487,
+        "pass": 487,
+        "fail": 0,
+        "skipped": 0,
+        "duration_ms": 3002.571083
+      },
+      {
+        "stage": "test:console:unit",
+        "tests": 63,
+        "pass": 63,
+        "fail": 0,
+        "skipped": 0,
+        "duration_ms": 243.352
+      },
+      {
+        "stage": "test:parity:regression",
+        "tests": 34,
+        "pass": 34,
+        "fail": 0,
+        "skipped": 0,
+        "duration_ms": 876.982958
+      },
+      {
+        "stage": "test:formal-browser-policy",
+        "tests": 15,
+        "pass": 15,
+        "fail": 0,
+        "skipped": 0,
+        "duration_ms": 66.923458
+      },
+      {
+        "stage": "test:ui:bilateral-captures",
+        "tests": 3,
+        "pass": 3,
+        "fail": 0,
+        "skipped": 0,
+        "duration_ms": 62.749333
+      },
+      {
+        "stage": "test:cli:efficiency:unit",
+        "tests": 558,
+        "pass": 558,
+        "fail": 0,
+        "skipped": 0,
+        "duration_ms": 13011.703583
+      }
+    ],
+    "formatCheck": "passed",
+    "gitDiffCheck": "passed",
+    "paidProviderRunsStarted": 0,
+    "skippedTests": [
+      "﹣ Claude probe: the policy drops user CLAUDE.md/rules/skills/commands/agents, settings hooks and user MCP; project CLAUDE.md stays (0.64675ms) # set LOOM_CLI_ISOLATION_PROBE=1 to run the local CLI probe",
+      "﹣ Codex probe: notify, user/agents skills, user MCP, hooks and native web search are off; only the global AGENTS.md remains (known limitation) (0.046459ms) # set LOOM_CLI_ISOLATION_PROBE=1 to run the local CLI probe",
+      "﹣ Codex probe: MCP servers resolve through Codex's own TOML parser; unparseable or unaddressable configs refuse the launch (0.047417ms) # set LOOM_CLI_ISOLATION_PROBE=1 to run the local CLI probe",
+      "﹣ Codex probe: a user MCP server declared as a root inline table is not started under the Loom policy (0.034375ms) # set LOOM_CLI_ISOLATION_PROBE=1 to run the local CLI probe",
+      "﹣ OpenCode probe: ~/.claude/CLAUDE.md, ~/.claude/skills and ~/.agents/skills stay out of the system prompt (0.04ms) # set LOOM_CLI_ISOLATION_PROBE=1 to run the local CLI probe",
+      "﹣ opt-in real lead CLI splits, reworks, resumes the blocked parent and reaches Human acceptance for all tasks (0.602625ms) # SKIP",
+      "﹣ opt-in real busy freshness hold republishes the original result and the follow-up exactly once (0.844208ms) # SKIP",
+      "﹣ opt-in real Agent CLI submits a durable Room Task through the Worker API (0.629875ms) # SKIP",
+      "﹣ opt-in original Codex session preserves B -> A -> DM -> A targets (0.627166ms) # SKIP",
+      "﹣ opt-in checkpoint: correction survives actual provider reset across Room and DM (0.62275ms) # SKIP",
+      "﹣ opt-in real core-chain gate covers cross-Room, DM continuity, memory control and a live model switch (0.649375ms) # SKIP",
+      "﹣ opt-in checkpoint: original scenario 4 live switch and ordered daemon restart (0.647208ms) # SKIP",
+      "﹣ opt-in two independent threads preserve targets during busy append (0.657834ms) # SKIP",
+      "﹣ saved dual-thread ledger satisfies corrected target and causal verifier (0.029041ms) # SKIP",
+      "﹣ opt-in codex, kimi, opencode keep ordinary chat as Messages and elect one automatic Task owner (0.632084ms) # SKIP",
+      "﹣ opt-in dialogue rounds reaches goal without Human nudges (0.659167ms) # SKIP",
+      "﹣ opt-in codex native-busy delivers an append before original run exits (0.704583ms) # SKIP",
+      "﹣ opt-in private memory control: negative DM precedes any public disclosure (0.650083ms) # SKIP",
+      "﹣ opt-in native DeepSeek and Kimi reject a frozen submission, rework, approve and retain Human acceptance (0.747042ms) # SKIP",
+      "﹣ opt-in real gate records how the same Human request is handled across two CLIs and two roles (0.652084ms) # SKIP",
+      "﹣ opt-in codex audit new Agent preserves B/A/DM/A targets (0.636833ms) # SKIP",
+      "﹣ opt-in opencode audit new Agent preserves B/A/DM/A targets (0.047709ms) # SKIP"
+    ],
+    "logSha256": {
+      "check.log": "9dd21d272747ba3e86b385a4797eac225d7ff9811e77c99e5a2ecc5e16436ef8",
+      "format.log": "fb5ffe51bf83c7a6ac683f386a5c903f6ff2c086dbe1bf27cc1f12efddaf7e3f",
+      "service.json": "81aa2e293767d9d325c9ba2df8505b61fc076a4b6d414d8c0d76dc5abfa14b6f",
+      "deployment/page.json": "e83e15cd35f7e756d17eb233b457457c300a003a53db68fa38b61f22de54dab8"
+    }
+  },
+  "service": {
+    "at": "2026-10-13T19:16:58.980Z",
+    "sourceUnchangedThroughoutCheck": true,
+    "worktreeCleanAfterCheck": true,
+    "sourceSha256": "197590aad26ac6e8dde4a6ce716295496949848c56e25ad8ea2e72f9b425730e",
+    "dependenciesMatchDeployment": true,
+    "servicePid": 82124,
+    "schema": 89,
+    "integrity": "ok",
+    "restartedThisBatch": false,
+    "reason": "No product changes; existing deployed repair and backup remain verified."
+  },
+  "freshPage": {
+    "sidePreviews": [
+      {
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "configuredCodexCapabilityEnabled": true
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "configuredCodexCapabilityEnabled": true
+      }
+    ],
+    "consoleAssets": {
+      "app-CSoSHM5a.js": "157392136972507dd424602253af0befa962cb68f6444d157f8dbe52338cde3c",
+      "index-BukJk0JQ.js": "b07672b5b022791b5a1a1a139a1167999ea3f94fbc68f81b836003a4b2156629",
+      "index-DaexJMn4.css": "f58c6496457ed2e4206d838f48d443fec9bab9c8559422c3013975713c322db2"
+    },
+    "aggregateApiVerified": true,
+    "consoleVerified": true,
+    "at": "2026-10-13T19:16:27.342Z",
+    "url": "http://127.0.0.1:4176/_rah/console/",
+    "title": "Loom 控制台（evo 临时）",
+    "historyVerified": true,
+    "pageErrors": [],
+    "roles": 42,
+    "roleResponseKeys": ["roles", "instances"],
+    "memoryResponseKeys": ["channelId", "entries", "total", "truncated"],
+    "health": {
+      "buildIdentity": {
+        "schemaVersion": 1,
+        "kind": "development",
+        "version": "0.0.0-dev+local",
+        "builtAt": "2026-10-13T12:39:13.536Z",
+        "buildId": "22370806bd25778f"
+      },
+      "service": "rah-os-local-core",
+      "state": "online"
+    }
+  },
+  "freeze": {
+    "scope": "Local single-Human backend MVP, with Claude/OpenCode native-final collaboration formally adopted; implemented five-CLI Fork/Side and bounded history retain their existing evidence limits",
+    "maintenance": "Reproduced defects, regressions, security/data integrity and necessary compatibility fixes; no speculative backend expansion or architecture churn without a new owner request",
+    "unchangedLimits": [
+      "Five paid-model quality/cost gates are not all accepted",
+      "No new paid-provider or real-model efficiency acceptance in this batch",
+      "Claude/Pi SEA helpers and product Side column remain outside this milestone",
+      "No guarantee of exactly-once arbitrary external tool side effects or arbitrary filesystem power loss"
+    ]
+  },
+  "priorEvidence": {
+    "repair": "../2026-10-14-active-crash/summary.json",
+    "deploymentAndBackup": "../2026-10-14-active-crash/deployment.json",
+    "forkSideRecovery": "../2026-10-14-backend-reliability/summary.json",
+    "forkIdentity": "../2026-10-14-fork-identity/summary.json",
+    "boundedHistory": "../2026-10-14-channel-onboarding/summary.json",
+    "paidTeamEvidence": "../2026-10-13-backend-finish/team-v8.json"
+  },
+  "historicalFailures": "Prior harness errors, paid failures and stale-schema assertion failures remain in their original records; this result does not rewrite them."
+}

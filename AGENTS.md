@@ -175,6 +175,19 @@ working capabilities have product UI replacements (contract §8). Each slice: te
 commit and push to `evo`. After S1, measure against contract §6; if far from
 target, stop and re-evaluate the architecture.
 
+## Backend MVP freeze
+
+The owner froze the local single-Human backend MVP on 2026-10-14, at
+`milestone-evo-backend-mvp-2026-10-14`. Evidence and retained limits are in
+[the freeze record](docs/evo/evidence/2026-10-14-backend-freeze/summary.json).
+Backend maintenance is limited to reproduced defects, regressions,
+security/data-integrity issues and necessary compatibility fixes. New backend
+capabilities, architecture changes or exploratory optimization require a new
+owner request. Do not restart open-ended audits or cost experiments merely to
+improve a single sample's ratio. The target contract and unresolved evidence
+limits remain intact; freezing the MVP neither enables unreleased paths nor
+turns skipped or failed gates into acceptance.
+
 ## TDD is mandatory
 
 For every behavior change:
