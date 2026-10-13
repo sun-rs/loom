@@ -1,6 +1,6 @@
 # evo 分支现状
 
-更新：2026-10-13。固定v8三对团队实测已完成并完整核账：Loom 3/3交付，Herdr 2/3交付；全部尝试计费后，每份完成任务输入比0.690、输出比0.645。**当前两个模型的协作成本排查可收口，转入正式采用及运行恢复验收；后端尚未全面验收完成。** 仍欠轻量回复正式daemon/API入口及旧session续接、忙时Human输入／同伴排队／held恢复／重启的组合验证。不为追求单次1.0继续改提示或调度；不把三次成功外推为五家CLI或稳定成功率。正式七个试验开关继续关闭，本批无产品改动或服务重启。[六样本、计量及判定边界](evidence/2026-10-13-backend-finish/team-v8.json)、[有限收口清单](evidence/2026-10-13-backend-finish/summary.json)。目标以[目标合同](target-contract.zh-CN.md)为准。
+更新：2026-10-13。固定v8三对团队实测已完整核账：Loom 3/3交付，Herdr 2/3交付；全部尝试计费后，每份完成任务输入比0.690、输出比0.645。当前两个模型的协作成本排查已收口；**剩余正式入口及运行恢复组合已通过实际CLI／本地合成模型验收，检查已执行并保留一条夹具启动超时、未改代码复验通过，等待部署收口。** Claude/OpenCode均覆盖旧session采用、同伴忙时排队及自动返回、Human新事实暂存、显式恢复、重启和回滚。只修正daemon的Claude warm入口选择，不再为单次1.0改调度、不增加付费队列；不是五CLI效率或全部目标能力完成。[成本证据](evidence/2026-10-13-backend-finish/team-v8.json)、[运行收口与边界](evidence/2026-10-13-backend-finish/operational-mvp.json)。目标以[目标合同](target-contract.zh-CN.md)为准。
 
 P94 同会话重试暴露的旧 claim/start 回执问题已有代码修复：执行认领的默认身份区分 Run，业务创建／交付幂等不变；同 Activation 前次 Run 终止后可重新认领，状态入口不再把过期租约当作有效。确定性回归通过；P95 普通 Task／频道四轮通过，但未真实制造同 Activation 过期故障；[原始证据](evidence/2026-10-02-task-retry-p94.md)、[修复边界](conversation-delivery-design.zh-CN.md#p94-续办修复执行认领与业务幂等分开)。
 

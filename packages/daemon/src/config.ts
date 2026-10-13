@@ -73,7 +73,8 @@ const ProcessHygieneConfigSchema = z
 /**
  * S2-a warm instance runtimes, per CLI: Codex and OpenCode run warm unless
  * `enabled: false` (on by default since their real smoke gates); Claude runs
- * warm only with `claude.enabled: true`; Kimi has no warm runtime (per-turn,
+ * warm with `claude.enabled: true` or native-final adoption (explicit false
+ * still selects cold); Kimi has no warm runtime (per-turn,
  * contract §6a exception). Instance prewarming is a separate Human runtime
  * setting (`prewarm`, off by default).
  *

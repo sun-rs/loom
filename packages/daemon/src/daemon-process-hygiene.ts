@@ -58,14 +58,20 @@ export function createDaemonRuntimeHygiene(
 /**
  * The runtime adapter kinds whose Role instances run warm. Codex and OpenCode
  * are on by default since the eighth review (`enabled: false` opts out);
- * Claude stays opt-in (`enabled: true`).
+ * Claude stays opt-in: explicit warm configuration or native-final adoption.
+ * An explicit cold policy takes precedence over the adoption switch.
  */
 export function warmRuntimeAdapterKinds(
   config: DaemonConfig["warmRuntimes"],
 ): ReadonlySet<string> {
   const kinds = new Set<string>();
   if (config?.codex?.enabled !== false) kinds.add("codex-app-server/v1");
-  if (config?.claude?.enabled === true) kinds.add("claude-stream-json/v1");
+  if (
+    config?.claude?.enabled === true ||
+    (config?.claude?.enabled === undefined &&
+      process.env.LOOM_CLAUDE_NATIVE_FINAL_TRIAL === "1")
+  )
+    kinds.add("claude-stream-json/v1");
   if (config?.opencode?.enabled !== false) kinds.add("opencode-server/v1");
   return kinds;
 }

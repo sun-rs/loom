@@ -3,7 +3,7 @@
   "kind": "bounded-backend-mvp-closeout/v2",
   "scope": "Local single-Human, channel instances, existing serial lanes and continuous sessions. MVP close-out, not every target feature.",
   "currentRevision": "ab35e39787baa6a447e89e47a6bbf146500f17b2",
-  "productCodeChanged": false,
+  "productCodeChanged": true,
   "paidCalls": 0,
   "backendFullyAccepted": false,
   "remaining": [
@@ -19,16 +19,20 @@
     {
       "priority": 2,
       "area": "Adoption through formal composition and existing sessions",
-      "already": "Seven switches off; native-final shared implementations and synthetic real-CLI entry evidence exist.",
-      "work": "For chosen CLI/runtime scope, verify formal daemon/API path, existing-session continuation and safe fallback for unsupported operations before enabling.",
-      "doneWhen": "Explicit scope and rollout/rollback proof; no surprise global switch-on from an isolated successful experiment."
+      "already": "Claude/OpenCode formal daemon/API old Worker session adoption and rollback passed with installed CLI and localhost synthetic responses.",
+      "work": "Final repository checks and backup/restart of local service; only Claude/OpenCode native-final switches selected.",
+      "doneWhen": "Explicit scope and rollout/rollback proof; no surprise global switch-on from an isolated successful experiment.",
+      "status": "runtime acceptance passed; deployment pending",
+      "evidence": "operational-mvp.json"
     },
     {
       "priority": 3,
       "area": "Busy Human input, queued peer reply, held recovery and restart continuity",
-      "already": "Independent lanes, private box, delivery proofs, Human fences and recovery have code and dated real evidence; 21 targeted checks rerun at current revision.",
-      "work": "Combine relevant boundaries in one small vertical operational acceptance for adopted runtimes, not one new framework per edge.",
-      "doneWhen": "No lost accepted request, false ACK, cross-instance/private delivery or silent replacement of native session; unavailable measurements stay unknown."
+      "already": "Both adopted runtimes passed peer queue while busy, one serial lane, automatic return, Human freshness hold, explicit abandon, restart and same-session recovery.",
+      "work": "No additional scenario framework or paid cohort; preserve limitations for arbitrary crash and other runtimes.",
+      "doneWhen": "No lost accepted request, false ACK, cross-instance/private delivery or silent replacement of native session; unavailable measurements stay unknown.",
+      "status": "bounded operational chain passed with synthetic models",
+      "evidence": "operational-mvp.json"
     }
   ],
   "deferred": [
@@ -199,6 +203,7 @@
       "Small fixed cohorts report uncertainty and task success separately; no release decision from token ratio alone."
     ]
   },
-  "deployment": "No product changes or restart this batch; code 3046a2d remains deployed, seven switches off.",
-  "latestCloseout": "team-v8.json"
+  "deployment": "Pending current operational adoption; previously deployed 3046a2d with seven switches off.",
+  "latestCloseout": "operational-mvp.json",
+  "operationalMvp": "operational-mvp.json"
 }

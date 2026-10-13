@@ -1,0 +1,188 @@
+{
+  "date": "2026-10-13",
+  "scope": "Local single-Human vertical backend MVP; native-final adoption for Claude and OpenCode only. Existing Worker behavior for other entries remains.",
+  "productChange": {
+    "owner": "daemon",
+    "file": "packages/daemon/src/daemon-process-hygiene.ts",
+    "behavior": "Claude native-final switch selects required warm entry when warm config is unspecified; explicit false still selects cold Worker fallback. No Kernel, prompt, session or authority changes."
+  },
+  "acceptance": [
+    {
+      "provider": "claude",
+      "root": "/Users/sun/.loom/reviews/2026-10-13-formal-mvp/1791857817224-claude",
+      "resultSha256": "01d908f3974ed1e35fb46656ffa7c0248b36b0fc5eae5877739bda115f430b91",
+      "syntheticGenerationRequests": 9,
+      "checks": [
+        "old-worker-session",
+        "daemon-drain",
+        "native-adoption-same-session",
+        "peer-queued-while-busy",
+        "peer-drained-and-auto-return",
+        "human-held",
+        "daemon-drain",
+        "restart-held-recovery-same-session",
+        "daemon-drain",
+        "rollback-same-session",
+        "daemon-drain"
+      ],
+      "continuousSession": {
+        "kernel": [
+          {
+            "instance_id": "principal_b1bf78d8-3d5e-41c6-8e7a-a2a76323d908",
+            "generation": 0,
+            "bound": 1,
+            "bound_run_attempt_id": "run_6aaf21d2-a184-4683-8e14-0b7de4151350",
+            "bound_at": "2026-10-13T02:16:59.782Z"
+          }
+        ],
+        "native": [
+          {
+            "provider": "claude-stream-json/v1",
+            "providerSessionId": "ba9af2b5-45cf-427a-afa0-8699a1729c34"
+          }
+        ]
+      },
+      "peerCounts": {
+        "a": 2,
+        "b": 2
+      },
+      "finalReplyMarkers": 8,
+      "usageGaps": 0,
+      "unpublishedHeldDraft": {
+        "state": "replaced",
+        "body": "SYNTHETIC_OUTDATED_MUST_NOT_PUBLISH"
+      },
+      "allActivationsTerminal": true,
+      "actualCli": true,
+      "model": "localhost synthetic only",
+      "paidCalls": 0
+    },
+    {
+      "provider": "opencode",
+      "root": "/Users/sun/.loom/reviews/2026-10-13-formal-mvp/1791857850570-opencode",
+      "resultSha256": "b9b5c1da1fe4e7ea877c7e9063f8ebcf0fdac4e7cbbb01dc71751ed9c4345c1a",
+      "syntheticGenerationRequests": 11,
+      "checks": [
+        "old-worker-session",
+        "daemon-drain",
+        "native-adoption-same-session",
+        "peer-queued-while-busy",
+        "peer-drained-and-auto-return",
+        "human-held",
+        "daemon-drain",
+        "restart-held-recovery-same-session",
+        "daemon-drain",
+        "rollback-same-session",
+        "daemon-drain"
+      ],
+      "continuousSession": {
+        "kernel": [
+          {
+            "instance_id": "principal_07a4af10-509f-43f0-8c82-c87d6a217fea",
+            "generation": 0,
+            "bound": 1,
+            "bound_run_attempt_id": "run_e1401fd4-bea5-4a45-9f98-eecd9965bf52",
+            "bound_at": "2026-10-13T02:17:34.299Z"
+          }
+        ],
+        "native": [
+          {
+            "provider": "opencode-server/v1",
+            "providerSessionId": "ses_eccf2f8c6ffe7OO8PkFMrAdC1v"
+          }
+        ]
+      },
+      "peerCounts": {
+        "a": 2,
+        "b": 2
+      },
+      "finalReplyMarkers": 8,
+      "usageGaps": 0,
+      "unpublishedHeldDraft": {
+        "state": "replaced",
+        "body": "SYNTHETIC_OUTDATED_MUST_NOT_PUBLISH"
+      },
+      "allActivationsTerminal": true,
+      "actualCli": true,
+      "model": "localhost synthetic only",
+      "paidCalls": 0
+    }
+  ],
+  "verification": {
+    "newRegression": "Intended assertion failed before implementation; 6 new/composition tests passed after fix.",
+    "transportAndFallback": "13 targeted checks passed.",
+    "peerRouting": "16 targeted checks passed.",
+    "typecheck": "passed after implementation",
+    "fullCheck": "Executed; exit 1: 3166 passed, 22 skipped, one existing process-recovery fixture exceeded its 2-second startup-file deadline before recovery assertions. Same unchanged test independently passed. Not reported as a single green full run.",
+    "format": "npm run format:check passed",
+    "diff": "git diff --check passed",
+    "fullCheckFailure": {
+      "test": "packages/agent-host/test/process-recovery-integration.test.ts",
+      "error": "timed out waiting for target-launched.json",
+      "limitMs": 2000,
+      "targetedRecheck": "passed unchanged, 1/1",
+      "productLogicChangedForFailure": false
+    },
+    "remainingCheckStages": {
+      "web": 487,
+      "console": 61,
+      "parityRegression": 34,
+      "formalBrowserPolicy": 15,
+      "bilateralCaptures": 3,
+      "efficiencyUnit": 558,
+      "allPassed": true
+    },
+    "localDocLinks": "all local file targets in changed Markdown exist",
+    "logHashes": {
+      "/tmp/loom-formal-mvp-check-final.log": "65595b68151ee6916765ba95a8b40064fb3704f748ed46448c4a97573ae7cb74",
+      "/tmp/loom-formal-mvp-recovery-recheck.log": "d16723cc5b04ed4eebdf664f6fdf6de6662bda40668de87ff11ca4164f6722da",
+      "/tmp/loom-formal-mvp-format.log": "fb5ffe51bf83c7a6ac683f386a5c903f6ff2c086dbe1bf27cc1f12efddaf7e3f",
+      "/Users/sun/.loom/reviews/2026-10-13-formal-mvp/check-tail.log": "0a2e9bf8eb037662d1399fb42226450275bf9db9be385f64b605f5c06bd05ed2"
+    }
+  },
+  "modelBoundary": "Installed Claude2.1.293 and OpenCode1.18.35 with loopback-only network sandbox and synthetic credentials. Actual subprocesses, native parsers, sessions, daemon, authenticated API, Kernel and restarts; no paid upstream calls. Does not test new stochastic model quality/cost. Prior v8 paid evidence remains separate.",
+  "paidCalls": 0,
+  "failureHistory": {
+    "failedProbes": 4,
+    "causes": [
+      "Initial synthetic Worker command omitted required current turn handle.",
+      "Initial session equality compared mutable updated_at, corrected to immutable binding/generation and actual opaque provider session ID.",
+      "Paid-cohort wrapper did not admit non-generation OpenCode model-catalog probe.",
+      "Rollback synthetic parser selected stale turn handle from history instead of current wake."
+    ],
+    "productDefectsFound": "Only the formal Claude warm selection gap required product change; probe errors did not change runtime rules.",
+    "totalProbes": 10,
+    "totalSyntheticRequestsIncludingFailures": 70
+  },
+  "cleanup": {
+    "allRecordedProbeProcessesAbsent": true,
+    "generatedSettingsDeleted": 20,
+    "npmDownloadCacheClearedAfterDiskExhaustion": true,
+    "businessDataAndEvidencePreserved": true
+  },
+  "runnerSha256": "e7e6d679ce6b0a997ce91af11868772110de9421ab0b5d32ca4f696fcf39fb54",
+  "deployment": {
+    "state": "pending",
+    "target": "com.loom.evo",
+    "enabledAfterVerification": [
+      "LOOM_CLAUDE_NATIVE_FINAL_TRIAL",
+      "LOOM_OPENCODE_NATIVE_FINAL_TRIAL"
+    ],
+    "otherFiveSwitches": "remain off",
+    "backupRequired": true,
+    "dataHome": "/Users/sun/.loom/evo",
+    "userReviewUrl": "http://127.0.0.1:4176/"
+  },
+  "deferred": [
+    "Fork/Side",
+    "Remote Computer expansion",
+    "Raft/Aexus reuse and frontend migration",
+    "Other native-final CLI adoption and broad statistical efficiency claims",
+    "Automatic interpretation of model prose, new scenario workflows, or automatic held-draft resend"
+  ],
+  "limitations": [
+    "Held native reply still needs explicit Human abandon and fresh request; no silent draft resend.",
+    "Graceful restart with idle runtimes or a held lane is verified, not arbitrary power-loss recovery at every byte boundary.",
+    "Unsupported wake shapes keep Worker tools; native-final does not auto-complete Tasks."
+  ]
+}

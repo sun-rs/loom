@@ -1,5 +1,7 @@
 # 最终回复传输：显式 JSON 与原生正文
 
+2026-10-13 有限采用：daemon 沿用 `LOOM_CLAUDE_NATIVE_FINAL_TRIAL=1` 和 `LOOM_OPENCODE_NATIVE_FINAL_TRIAL=1` 选择轻量回复。Claude 的开关同时选择所需 warm 入口，否则本地 workbench 默认冷启动会使开关无效；明确 `warmRuntimes.claude.enabled=false` 仍优先，保留原 Worker 路径。入口选择归 daemon，消息事务／队列／ACK 仍归原 Kernel，不增加会话或迁移数据。关闭开关后恢复原路径，原生 session 不替换。两家实际 CLI 对 localhost 合成模型已通过旧会话采用、忙时同伴排队、Human held、重启后明确放弃并重新请求、关闭开关回退；不把它当作新增付费模型遵循或效率实验。Task、多目标、截断等未选择 native-final 的 wake 继续 Worker，未扩大自动发表范围。部署状态与证据见 [MVP 运行收口](evidence/2026-10-13-backend-finish/operational-mvp.json)。
+
 2026-10-13 补齐五家 CLI 共用的 native-final 指引：普通最终正文发到原频道，不等于发起了同伴请求。主动请求须在正文使用真实 `@handle`，角色代称或不带 @ 的名字不选择收件人；交接后结束当前轮，且不再为同一 final 调用 message-post。非 native-final 路径原样保留。这是提示说明修正，不是模型遵循保证；首次漏点名不推断、不自动广播，Kernel 的单跳回复返回规则不变。未新增付费或宣称成本验收通过。
 
 2026-10-12 经 owner 批准，普通同频道 Role 同伴消息不再单独使普通无附件回复 held；Human、明确 @ 当前实例／广播和附件仍按原规则。Worker 与 Host 共用 Kernel 判定，保留真实旧 `basedOnRoomSeq`，不将尚未呈现的 peer 消息记成已读，后续 delta 补入。Task/Review/记忆状态围栏不变。以下早期“外部新事实仍 hold”的实验记录按当时修订理解；当前边界以[目标合同 §3](target-contract.zh-CN.md#3-调度与交流)及[本批证据](evidence/2026-10-12-peer-append-policy/summary.json)为准。
