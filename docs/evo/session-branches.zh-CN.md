@@ -1,7 +1,7 @@
 # Fork / Side：当前实施边界
 
 负责人于 2026-10-13 授权开始，语义见[目标合同 §3](target-contract.zh-CN.md#3-调度与交流)。
-本页区分原生能力探针、统一 Loom 分支接口、Claude／Codex／OpenCode Fork／Side 纵向实现与尚未接通的其他 CLI；不是 S4/S5 全部完成声明。
+本页区分原生能力探针、统一 Loom 分支接口、Claude／Codex／OpenCode／Pi Fork／Side 纵向实现与尚未接通的其他 CLI；不是 S4/S5 全部完成声明。
 
 ## 产品语义
 
@@ -53,7 +53,7 @@ Kernel 在异步复制前后重新核实 Human 管理权限、Host 凭据与代�
 ## 验收边界
 
 Host 单测覆盖源绑定保留、独立目标、新身份不继承投递回执、并发、重启重放、未知结果、绑定写入失败恢复及损坏回执。
-OpenCode Fork 的 Kernel/API/控制台入口已实现；检查与部署以本批证据和状态页为准。该首家 Fork 批次未验证 Side；Side 与 Codex 后继接入见下文。Pi／Kimi 正式适配、忙时丢弃与真实付费模型的有界接入验收尚未完成。
+OpenCode Fork 的 Kernel/API/控制台入口已实现；检查与部署以本批证据和状态页为准。该首家 Fork 批次未验证 Side；Side 与 Codex 后继接入见下文。Kimi 正式适配、忙时丢弃与真实付费模型的有界接入验收尚未完成。
 不能将首家 Fork 接入登记为五家 Fork 或 Side 已完成。
 
 ## OpenCode Side 纵向切片（2026-10-13）
@@ -76,7 +76,7 @@ AgentHost 的 `nativeSessionCopyAdapter` 按受信 runtime manifest 的 adapter 
 
 `host.runtime.list` 的可选 `sessionBranches` 返回该配置支持的 `fork`／`side`。旧响应缺该字段时，界面视为不可用；发现可执行文件不等于支持复制。仅配置了复制适配器、且无待解析动态凭据的 manifest 宣告能力。控制台按此能力显示预览，不维护厂商名单。它是运行时能力，不证明某个实例空闲、已有 session 或其当前 placement/configuration 满足条件；真正执行仍以 Kernel／Host 的检查为准。
 
-当前正式实现为 `opencode-server/v1` 与 `codex-app-server/v1`。Codex 使用 CLI 自带 app-server 的 `initialize → thread/fork`，不调用 `turn/start`；沿现有启动策略禁用自动记忆、个人 MCP 和自动触发机制，复制后确认进程退出。相同 provider key 使后续 Fork／Side 进入既有 Codex 启动／续聊链。该批次未开放 Claude、Pi、Kimi；Claude 的后继接入见下文，Pi／Kimi 仍不宣告能力。
+当前正式实现为 `opencode-server/v1` 与 `codex-app-server/v1`。Codex 使用 CLI 自带 app-server 的 `initialize → thread/fork`，不调用 `turn/start`；沿现有启动策略禁用自动记忆、个人 MCP 和自动触发机制，复制后确认进程退出。相同 provider key 使后续 Fork／Side 进入既有 Codex 启动／续聊链。该批次未开放 Claude、Pi、Kimi；Claude／Pi 的后继接入见下文，Kimi 仍不宣告能力。
 
 实际 Codex／隔离 HOME／禁止外网／本地合成模型验证了正式 Fork、Side、父子独立续聊与零生成复制。Side 另外验证正式默认 Worker 回帖路径，不依赖启用生产的实验性 final-output 开关；本批不修改正式服务开关。测试曾漏传 turn、使用不存在的 `message-history` 命令，旧断言误把命令回显当作成功；修正为 `message-read --turn ... --target ...` 并检查工具输出中的源消息。旧证据的历史读取声明据此降级，保留失败与重测记录，不据此声称模型自主用对工具或效率验收。完整检查、浏览器与部署状态见[本批证据](evidence/2026-10-13-unified-branches/summary.json)。
 
@@ -92,4 +92,12 @@ AgentHost 固定依赖官方 `@anthropic-ai/claude-agent-sdk@0.3.296`，仅调�
 
 复用分类：官方 npm 包作为未修改依赖，完整版本／integrity 由 lockfile 固定，保留上游包的 notices；license 元数据为 `SEE LICENSE IN README.md`。本地新增的是进程隔离、结果验证及注册表接线，未复制或结构移植 SDK 源码。磁盘接口参考 [官方会话浏览器示例](https://platform.claude.com/cookbook/claude-agent-sdk-05-building-a-session-browser)。[本批证据](evidence/2026-10-13-claude-branches/summary.json)。
 
-Pi 后续入口复核（同日，仅隔离探针）：RPC 先 resume 再 `clone` 会在合成源会话追加 `thinking_level_change`，不满足源文件不变；CLI `--fork` 在启动前复制，实际 1.1.0 进程已证明新 ID、有效消息相同、源字节不变且零模型请求。尚未接入 Loom：现有 Pi runtime 使用 Host 管理的确定性 session 文件路径，需在同一文件位置所有者下接好目标文件，不能仅返回一个新 UUID 就宣告可续聊。两次探针均禁止外网并已退出，失败保留于本批证据。
+Pi 后续入口复核（同日，仅隔离探针）：RPC 先 resume 再 `clone` 会在合成源会话追加 `thinking_level_change`，不满足源文件不变；CLI `--fork` 在启动前复制，实际 1.1.0 进程已证明新 ID、有效消息相同、源字节不变且零模型请求。该探针时尚未接入 Loom：现有 Pi runtime 使用 Host 管理的确定性 session 文件路径，需在同一文件位置所有者下接好目标文件，不能仅返回一个新 UUID 就宣告可续聊。两次探针均禁止外网并已退出，失败保留于本批证据。
+
+## Pi 原生文件复制与续聊（2026-10-13）
+
+`pi-print-json/v1` 接入同一注册表，继续使用 `instance.fork`／`side.create`／`side.discard`，无 Pi 专用业务端点。唯一位置所有者为 AgentHost 的 `pi-session-files.ts`：新会话沿用原有按配置计算的路径，已绑定会话按原生 ID 在 Host 私有 `pi-sessions` 目录中读取文件头并定位。原生 ID 仍来自既有 ProviderSessionStore 绑定，文件查找不重建 Room 事实，不迁移或重命名已有文件，不按最新文件或提示词变更创建替代 session。找不到或重复 ID 拒绝；未写完的其他会话头不阻塞已绑定会话，链接／非普通文件拒绝。
+
+复制调用用户已安装 Pi 的 `--offline --mode rpc --fork <源文件> --session-dir <Host目录>`，只发 `get_state`，不 resume 源、不发送 prompt；扩展、MCP、skills 和 context files 在复制进程关闭。先证明复制进程退出，再核对新 ID、目标目录与文件头、完整原生条目保留以及源字节不变，才交给既有幂等回执发布绑定。目标使用原生文件名，后续普通 print runtime 按绑定 ID 定位，无须再复制一次。没有新增 npm 依赖，也没有安装或修改用户 CLI／账户。代码为本地胶水，未移植 Pi 源码；原生入口与安装版本哈希见证据。
+
+实际 Pi1.1.0 经正式 daemon/API 的 Fork、Side、桌面／手机私聊、默认 Worker 回帖通过，复制均零生成；测试均为隔离配置与仅 loopback 的合成回复，非付费效率或模型自主质量验收。默认 Worker 脚本首次漏读当前消息，被新鲜度围栏拒绝；补上 `message-check` 后通过，失败保留，产品权限未放宽。连续两个 Host runtime 的同 ID 续聊、中文路径在管道中分段的 UTF-8 解码均有自动化回归。SEA 仍不可用，Kimi、忙时丢弃和产品第三栏仍未完成。[本批证据](evidence/2026-10-13-pi-branches/summary.json)。

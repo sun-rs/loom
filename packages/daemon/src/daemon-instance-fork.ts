@@ -114,6 +114,7 @@ function createDaemonSessionCopy(input: BranchOptions): CopyInstanceSession {
           env: { ...process.env, ...manifest.staticEnv },
           cwd,
           sourceId: binding.providerSessionId,
+          supervisorDirectory: join(input.stateDirectory, "supervisors"),
         }),
     );
   };

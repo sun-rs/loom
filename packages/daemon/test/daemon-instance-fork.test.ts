@@ -22,6 +22,7 @@ for (const provider of [
   "opencode-server/v1",
   "codex-app-server/v1",
   "claude-stream-json/v1",
+  "pi-print-json/v1",
 ])
   for (const mode of ["fork", "side"])
     test(`Daemon ${provider} ${mode} binds independent context through the shared pipeline without copying twice`, async () => {
@@ -130,6 +131,7 @@ for (const provider of [
             copies++;
             assert.equal(args.sourceId, "native-source");
             assert.equal(args.cwd, root);
+            assert.equal(args.supervisorDirectory, join(root, "supervisors"));
             assert.equal(args.env.FIXTURE_SETTING, "frozen");
             assert.equal(
               f.db.prepare("SELECT count(*) AS n FROM role_instances").get()?.n,

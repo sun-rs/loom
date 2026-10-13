@@ -860,3 +860,9 @@ Claude CLI 的两条本地合成回复只证明其 fork 续聊携带历史；纯
 复制使用固定官方 SDK0.3.296 的离线磁盘函数，后续运行仍用已安装 CLI。自动化合成存储覆盖普通和两类压缩历史、新消息 ID、嵌套压缩引用、源文件不变及并发环境隔离；只证明这些可重现的生命周期与传输属性，不是付费效率门禁或模型自主遵循验收。Node 部署可用；SEA helper、Pi／Kimi、运行中丢弃及产品第三栏仍未完成。[证据与局限](evidence/2026-10-13-claude-branches/summary.json)。
 
 同批后续入口探查：Pi 1.1.0 两次隔离实际 CLI 运行，外网禁止、模型请求0。先 resume 再 RPC `clone` 的源字节不变断言失败（启动追加配置）；改用 CLI `--fork` 的新 ID／消息继承／源字节不变探针通过。两次进程均退出，原始结果与哈希见上述 summary 的 `nextAdapterExploration`；这不是 Pi 的 Loom Fork／Side 接入验收，能力仍未开放。
+
+## Pi Fork／Side：统一适配层免费验收（2026-10-13）
+
+无新增付费。实际 Pi1.1.0、隔离 HOME 与 `PI_CODING_AGENT_DIR`、虚构 provider／凭据、外网禁止且仅允许 loopback；正式 daemon/API 完成 Fork（3次合成请求）、Side 桌面／手机创建私聊与丢弃（4次）、默认 Worker Side（7次）。复制均零生成，新 ID 独立续聊，Side 的源消息读取断言检查实际 tool 输出，私聊未进入源会话或频道。
+
+默认 Worker 首次脚本漏 `message-check` 而直接 post，触发新鲜度持留，随后脚本不处理持留导致隔离；4次请求及失败保留。修正测试脚本按原有读取要求执行后通过，没有改变产品围栏。全部四次尝试共18次本地合成请求，非模型随机质量、token 倍率或付费门禁。原生 copy 只调用 `--fork` 和 RPC `get_state`，不启用付费模型；Node 部署可用，Pi SEA／Kimi／忙时丢弃／产品第三栏未完成。[完整证据](evidence/2026-10-13-pi-branches/summary.json)。

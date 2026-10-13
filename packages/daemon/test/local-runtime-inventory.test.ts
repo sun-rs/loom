@@ -248,6 +248,7 @@ test("session branch capability comes from the configured native adapter, not th
     ["codex-app-server/v1", ["fork", "side"]],
     ["opencode-server/v1", ["fork", "side"]],
     ["claude-stream-json/v1", ["fork", "side"]],
+    ["pi-print-json/v1", ["fork", "side"]],
     ["acp/v1", []],
   ] as const) {
     const input = {

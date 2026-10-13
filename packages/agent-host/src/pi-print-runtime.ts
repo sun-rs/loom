@@ -1,4 +1,5 @@
-import { createHash, randomUUID } from "node:crypto";
+import { resolvePiSessionFile } from "./pi-session-files.ts";
+import { randomUUID } from "node:crypto";
 import { constants } from "node:fs";
 import { mkdtemp, open, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -203,12 +204,14 @@ export function createPiPrintRuntime(
           throw new Error(
             "ordinary Pi instance requires durable session binding",
           );
+        let boundSessionId: string | undefined;
         if (key && providerSessionStore) {
           const previous = await providerSessionStore.load(key, {
             requireExisting: input.agent?.instanceSessionRequired === true,
             instance: input.agent?.instanceChannelId !== undefined,
             instanceGeneration: input.agent?.instanceSessionGeneration,
           });
+          boundSessionId = previous?.providerSessionId;
           lease = protocol.withNotice(
             lease,
             protocol.prepare(input, lease, key, previous),
@@ -228,17 +231,11 @@ export function createPiPrintRuntime(
         directory = await mkdtemp(join(tmpdir(), "rah-pi-final-"));
         const sessionPath =
           key && processOptions.supervisorDirectory
-            ? join(
+            ? await resolvePiSessionFile(
                 processOptions.supervisorDirectory,
-                "pi-sessions",
-                createHash("sha256")
-                  .update(
-                    JSON.stringify([
-                      key,
-                      input.agent?.instanceSessionGeneration ?? 0,
-                    ]),
-                  )
-                  .digest("hex") + ".jsonl",
+                key,
+                input.agent?.instanceSessionGeneration ?? 0,
+                boundSessionId,
               )
             : join(directory, "session.jsonl");
         if (key && providerSessionStore && !processOptions.supervisorDirectory)

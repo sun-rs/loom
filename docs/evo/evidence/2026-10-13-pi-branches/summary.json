@@ -1,0 +1,165 @@
+{
+  "date": "2026-10-13",
+  "baseCommit": "ac45f18ac0d5db5769d4eeb5fbe213e15f031908",
+  "scope": "Pi Fork/Side through shared Loom API; Node only",
+  "implementedAdapters": [
+    "codex-app-server/v1",
+    "opencode-server/v1",
+    "claude-stream-json/v1",
+    "pi-print-json/v1"
+  ],
+  "interfaces": ["instance.fork", "side.create", "side.discard"],
+  "owner": "AgentHost pi-session-files.ts owns file allocation and bound-ID lookup; ProviderSessionStore remains binding/receipt owner; Kernel and client business paths unchanged",
+  "nativeCopy": "installed Pi --offline --mode rpc --fork source --session-dir HostRoot; get_state only; extensions, MCP, skills and context files disabled; exit proof before binding",
+  "nativeVersion": "1.1.0",
+  "sourceReuse": "Local glue invoking installed CLI; no copied/ported upstream implementation and no new npm dependency",
+  "nativeFiles": {
+    "package.json": "c662a36f8bc47843393a60dc8616a34dfcc8376e8fcc96dbc2f1020c60e38e2a",
+    "dist/bundle/cli.js": "e79626f2dd6f94aa45d30f3fa63cd84319a6eefcd150b353cfaf274366926774",
+    "dist/core/session-manager.js": "046b6a1109ac3f0ed893bb85bf0648709362fa926a5da75761216cf2fcf9d926",
+    "dist/main.js": "866d65f2d42f74d2bb72ed4a755c8ace1b8a2c497a32cb57cc4db594a4fcb2bf"
+  },
+  "sourcePreserved": true,
+  "newNativeIdentity": true,
+  "copyModelRequests": 0,
+  "paidCalls": 0,
+  "syntheticRequestsAllAttempts": 18,
+  "runs": [
+    {
+      "run": "1791900676446-pi",
+      "requests": 3,
+      "error": null,
+      "checks": [
+        "source-established",
+        "fork-native-zero-generation-idempotent",
+        "child-resumed-and-published-as-new-member",
+        "parent-retained-native-session",
+        "daemon-drain",
+        "all-activations-terminal"
+      ],
+      "resultSha256": "03febf53cf5905f9241933c2d727123aa9c7731a8502352dd6c6c98a5a633dd7"
+    },
+    {
+      "run": "1791900729779-pi",
+      "requests": 4,
+      "error": null,
+      "checks": [
+        "source-established",
+        "side-native-zero-generation-idempotent",
+        "side-resumed-private-only",
+        "parent-retained-native-session",
+        "real-console-side-create-private-page-desktop-mobile",
+        "side-discarded-source-untouched",
+        "daemon-drain",
+        "all-activations-terminal"
+      ],
+      "resultSha256": "f2fdbb88db64a9a62a4e2420d34998132ca6848a3a1bd879578826cb96dbde9e"
+    },
+    {
+      "run": "1791900765870-pi",
+      "requests": 4,
+      "error": "Error: unexpected quarantine [{\"state\":\"quarantined\"}]\n    at file:///Users/sun/.loom/reviews/2026-10-13-pi-branches/side-worker.mjs:37:160\n    at wait (file:///Users/sun/.loom/reviews/2026-10-13-pi-branches/side-worker.mjs:17:73)\n    at async settled (file:///Users/sun/.loom/reviews/2026-10-13-pi-branches/side-worker.mjs:37:26)\n    at async file:///Users/sun/.loom/reviews/2026-10-13-pi-branches/side-worker.mjs:56:61",
+      "checks": ["daemon-drain"],
+      "resultSha256": "97b979dceaab9b17bcaca7c42b1bf93ba6218e5d0cab3af4087818bb8de26824"
+    },
+    {
+      "run": "1791900837097-pi",
+      "requests": 7,
+      "error": null,
+      "checks": [
+        "source-established",
+        "side-native-zero-generation-idempotent",
+        "side-resumed-private-only",
+        "parent-retained-native-session",
+        "side-discarded-source-untouched",
+        "daemon-drain",
+        "default-worker-final-mode",
+        "all-activations-terminal"
+      ],
+      "resultSha256": "32bf52dbb1ac1050d4b23c63ce325d64cdbb22672ca8f911fd296daba41be493"
+    }
+  ],
+  "cleanup": [
+    {
+      "run": "1791900676446-pi",
+      "recordedProcessesExited": 11,
+      "settingsRemoved": [
+        "/private/tmp/loom-formal-mvp-bUTirH/pi/settings.json"
+      ]
+    },
+    {
+      "run": "1791900729779-pi",
+      "recordedProcessesExited": 11,
+      "settingsRemoved": [
+        "/private/tmp/loom-formal-mvp-qA7S4j/pi/settings.json"
+      ]
+    },
+    {
+      "run": "1791900765870-pi",
+      "recordedProcessesExited": 9,
+      "settingsRemoved": [
+        "/private/tmp/loom-formal-mvp-ImqaS5/pi/settings.json"
+      ]
+    },
+    {
+      "run": "1791900837097-pi",
+      "recordedProcessesExited": 11,
+      "settingsRemoved": [
+        "/private/tmp/loom-formal-mvp-vvUVkl/pi/settings.json"
+      ]
+    }
+  ],
+  "verification": {
+    "focusedTests": 44,
+    "focusedPassed": true,
+    "typecheckPassed": true,
+    "consoleBrowserPassed": true,
+    "viewports": ["1440x1000", "390x844"],
+    "fullCheck": "passed",
+    "hostRecreationSameSession": true,
+    "missingOrAmbiguousBindingFailsClosed": true,
+    "sideReadOracle": "source marker and success marker in successful tool output, not command echo",
+    "splitUtf8Paths": true,
+    "backend": {
+      "passed": 3222,
+      "failed": 0,
+      "skipped": 22
+    },
+    "formatPassed": true,
+    "diffCheckPassed": true,
+    "localDocumentationLinksPassed": true,
+    "logs": {
+      "red.log": "24476bbda3b4dd69372a65a9a870c2cb9e041d7673035163da0ad5a9233fb938",
+      "registry-red.log": "916b0bb28d7036c1a4e354d66352e7341984b0a20faad1bb084d07cd5d16dada",
+      "runtime-red.log": "bd972b1de2c6fe53370cb1f8a6f0ffff1cd65097522c981076157830ee47c94b",
+      "runtime-red-2.log": "1d1a4f3e8620f80fa6fb5ea851aedac6b1b14b6a837574a95f88884835251852",
+      "incomplete-red.log": "20744b47234ab959d0e7b86d819c667a3394717bc04c8e6f0ae41851af22e101",
+      "unicode-red.log": "6b8ed4f76c0a851c88ecf6983d67861ed717c79463244718097b4a367923effb",
+      "unicode-green.log": "f9074c5a212284d39ad239d051f204ce25ebbe33bc0d0b0186fac3c055687d0d",
+      "focused.log": "357b628e680641ebb13c23d05d5be56cc6806798a7113483ae63cf2ebc14e606",
+      "check.log": "942954fac863e0086f9968dad98737833b4db7c4d5fa7eaee5b23f3d87b8edfc",
+      "typecheck.log": "bef9d01c948fead061ff8f64b8496f8847391051512f3460e767e2602ceab0f8",
+      "format.log": "fb5ffe51bf83c7a6ac683f386a5c903f6ff2c086dbe1bf27cc1f12efddaf7e3f",
+      "browser.log": "337e137e6cffdcd89b0e6bbceb7485c91b5a5a634f424968334c2c0636131560"
+    }
+  },
+  "failures": [
+    "Missing module and unsupported registry failures preceded implementation.",
+    "Runtime fixture initially lacked a model probe; corrected fixture then reproduced bound fork exit 1 before runtime wiring.",
+    "Linked-file assertion first saw raw ELOOP; file-open failure now uses sanitized native-file error.",
+    "Incomplete unpublished native header originally blocked valid bound lookup; regression now skips incomplete/unparseable headers without following links.",
+    "Initial default Worker synthetic script omitted message-check and ignored freshness hold. Four requests failed visibly; corrected fixture reads current delivery first. Production fencing unchanged.",
+    "A split UTF-8 Chinese path reproduced copy failure; stdout now uses stream UTF-8 decoding. Red/green tests retained; the full serial suite reached the Pi file afterward and passed it."
+  ],
+  "unsupported": [
+    "Kimi",
+    "Claude/Pi SEA",
+    "busy Side discard",
+    "product third-column UI",
+    "remote Host",
+    "dynamic credential slots",
+    "legacy private cwd"
+  ],
+  "performance": "Copy zero generation, not paid token ratio or autonomous model-quality acceptance. Native-final flag was opt-in in two fixtures; default Worker fixture independently accepted. Formal flags remain unchanged.",
+  "privateEvidenceDirectory": "/Users/sun/.loom/reviews/2026-10-13-pi-branches"
+}
