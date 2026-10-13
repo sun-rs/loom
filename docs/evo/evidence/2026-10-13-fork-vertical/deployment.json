@@ -1,0 +1,109 @@
+{
+  "at": "2026-10-13T10:55:11.037Z",
+  "codeCommit": "6846a4e21fed89a2d0aeeb6c47c51bcb4e047f57",
+  "service": "com.loom.evo",
+  "schemaVersion": 87,
+  "stateHomeUnchanged": "/Users/sun/.loom/evo/state",
+  "backup": {
+    "path": "/Users/sun/.loom/evo/backups/pre-restart-fork-435f5583-f7a3-4847-8055-2578821a98d4",
+    "databases": 2,
+    "files": 318
+  },
+  "gracefulRestartVerified": true,
+  "businessTablesUnchanged": {
+    "principals": {
+      "rows": 74,
+      "sha256": "71626744fb8b9f76f94bb7ebeebbfdf8e893c2f83363fcb83e7bbde4678809ef"
+    },
+    "agent_definition_revisions": {
+      "rows": 89,
+      "sha256": "89639899b7177fb2c942755209692a2f5fa4242b619e8b20040249a4309cfe29"
+    },
+    "execution_policy_revisions": {
+      "rows": 89,
+      "sha256": "65b5468188c9e0cfd33afb2ef023c0eefd003c562621afca13c3ebdabfb9a659"
+    },
+    "messages": {
+      "rows": 249,
+      "sha256": "84e3e11c8f5b7fd78d29000dde1e65c1dc059181495b271317a88982fc75bbef"
+    },
+    "tasks": {
+      "rows": 9,
+      "sha256": "a04b56b278ac8b942bf35c96db144a3ba261e1d1d8838b7483ef36d65ba2fd52"
+    },
+    "role_templates": {
+      "rows": 42,
+      "sha256": "8c1ea4a78b19f0a605a39e291b96447c084673f244e33bf5c473be471df3c8da"
+    },
+    "role_revisions": {
+      "rows": 43,
+      "sha256": "1d8fb5fe30ef8deb58a383733aadbaa2ad41b07f42db174aee57499aca1ce393"
+    },
+    "role_instances": {
+      "rows": 68,
+      "sha256": "ef7eb9f5cf4f234707b9bd3c386e4c8242cc8765286a8cc4418a144062d7da7b"
+    },
+    "memory_entries": {
+      "rows": 4,
+      "sha256": "d0d2bb98894716fcfbda8ea5f4b3112a99595d70192c7df088ac553b00cef08b"
+    },
+    "memory_revisions": {
+      "rows": 4,
+      "sha256": "21b7e112c7deda7a547b68d235b562c0d88bb8103ef385d553673e0f044d5893"
+    },
+    "role_instance_sessions": {
+      "rows": 66,
+      "sha256": "76b0adc6c3bcadc8188c214270e67460ba03d8fe6ae5872f28b5b555235f1251"
+    },
+    "room_events": {
+      "rows": 2202,
+      "sha256": "4d6a60629e7f2534d2a84cc7e8ad82e0461e787fb229295b20d536ee1d0fe7f6"
+    },
+    "agent_definitions": {
+      "rows": 72,
+      "sha256": "ad4945f537267198d856ce492b79bbd8dec0bb66021f19f05c56538e69e688ac"
+    },
+    "inbox_items": {
+      "rows": 179,
+      "sha256": "7a96e866b550ef974dd49056926c3193dc9d09acf7234aad3b07c98aac38ff86"
+    }
+  },
+  "sourceSha256": "8ca2f27f859012d73e46e4c2748fcffaec95d8093dba538e238e4ae1798c927b",
+  "consoleAssets": {
+    "app-jOy6KoZ_.js": "c526d1eead636c9a162d255dd43a8ba7cbf743d2fc39f86c40b3870e3a4f8eef",
+    "index-DaexJMn4.css": "f58c6496457ed2e4206d838f48d443fec9bab9c8559422c3013975713c322db2",
+    "index-jluITvac.js": "fce7d625b3ef9d00a170155e89ae521097aed6c22424eda149bbd16c05425704"
+  },
+  "freshRealHistoryVerified": true,
+  "apiVerified": true,
+  "pageErrors": [],
+  "forkPreviews": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "unsupportedCodexDisabled": true
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "unsupportedCodexDisabled": true
+    }
+  ],
+  "formalUserInstancesForked": 0,
+  "paidCalls": 0,
+  "nativeFinalFlags": ["claude", "opencode"],
+  "unchangedWebBuildId": "6c76c5348a13401f",
+  "evidence": {
+    "restart.mjs": "4ff65da948e2c2f8ede7b8647c58f1b25c0cd3c999f66c2c5681ffcb44823887",
+    "restart.json": "2e0ab2fd0191462f8b44e9b998347faa1fd286a747f3ed2f2caeddcc7c26ff6f",
+    "restart.log": "0e4986a680ec8db0f86641cf7deaa48adf9fc7598b21c384d5c2713da51a7758",
+    "page.mjs": "df0be3eb5d89ae9a5d3acbd01c874e1301f43d413111241a4e12fc19e48efb06",
+    "page.json": "bb34f6ae4167f4b7703d4600c37d59f441626c0851155be04617528858c0ef79",
+    "fork-1440.png": "889d43610d86ea2cd46ad6d38b1025e275fe0756f1f6b3c528c91747af17dd97",
+    "fork-390.png": "903c562df6262f009190e4964b15fc921c7b1a88199a08681b02ab671fed3cbe"
+  }
+}

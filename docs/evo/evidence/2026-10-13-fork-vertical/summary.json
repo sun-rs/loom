@@ -50,7 +50,9 @@
     "localDocumentationLinks": "passed"
   },
   "deployment": {
-    "state": "not deployed"
+    "state": "deployed and fresh-page verified",
+    "codeCommit": "6846a4e21fed89a2d0aeeb6c47c51bcb4e047f57",
+    "evidence": "deployment.json"
   },
   "limits": [
     "OpenCode only",
