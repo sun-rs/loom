@@ -1780,6 +1780,13 @@ if (args.join(" ") === "debug models --bundled") {
   const beforeReset = await head(channelId);
   await click(`${card} .action-reset`);
   await waitForText(`${card} .confirm-box`, "新的原生 CLI session");
+  assert.equal(
+    await evaluate(
+      browser,
+      `document.querySelector(${JSON.stringify(`${card} .restart-config-choice`)})?.value`,
+    ),
+    "keep",
+  );
   // Full review 2 A-P2-4: no "private memory" claim; the S6 Channel memory.
   const resetText = await textOf(`${card} .confirm-box`);
   assert.ok(!resetText.includes("私有记忆"), resetText);
@@ -1806,6 +1813,32 @@ if (args.join(" ") === "debug models --bundled") {
   );
   assert.equal(resetEvent?.payload.instanceId, instanceId);
   assert.equal(resetEvent.actorId, humanId);
+  assert.equal(
+    (await client.request("role.list", { controlRoomId })).instances.find(
+      (i) => i.instanceId === instanceId,
+    ).roleRevisionId,
+    role.roleRevisionId,
+    "default reset retains the actual old configuration",
+  );
+  await click(`${card} .action-reset`);
+  await waitForBrowserValue(
+    browser,
+    `document.querySelector(${JSON.stringify(`${card} .restart-config-choice`)})?.options.length === 2`,
+    { description: "restart configuration choices" },
+  );
+  await setValue(`${card} .restart-config-choice`, revisedRole.roleRevisionId);
+  await waitForText(`${card} .confirm-box`, "采用最新配置会更新");
+  await click(`${card} .confirm-reset`);
+  await waitForText(`${card} .action-result`, "session 已重置");
+  await waitForText(`${card} .revision`, "Role 为最新修订");
+  const adoptedRestart = await client.request("agent.get", {
+    agentId: instance.agentId,
+  });
+  assert.equal(
+    adoptedRestart.agent.currentRevision.instructions,
+    revisedRole.configuration.instructions,
+  );
+  assert.equal(adoptedRestart.agent.definition.participantId, instanceId);
 
   // --- 10. Removal: refused with active work (reason + hint), then done. ---
   // Only the probe below may hold the removal back: earlier turns' leftover

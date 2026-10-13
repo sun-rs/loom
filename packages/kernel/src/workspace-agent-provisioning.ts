@@ -1,3 +1,4 @@
+import { roleRuntimeOffer } from "./role-runtime-offer.ts";
 import { requestAgentFirstRun } from "./agent-first-run.ts";
 import { reconcileAllChannelMemberships } from "./all-channel-membership.ts";
 import { allocateRecreatedAgentHandle } from "./message-reference-identity.ts";
@@ -137,15 +138,11 @@ export function provisionWorkspaceAgentTransaction(
   const offer =
     live(pinned) || owner.roleInstance === undefined
       ? pinned
-      : (owner.database
-          .prepare(
-            `SELECT * FROM runtime_offers
-              WHERE host_id = ? AND runtime_profile_id = ? AND runtime_offer_id <> ?
-              ORDER BY observed_at_ms DESC`,
-          )
-          .all(pinned.hostId, pinned.runtimeProfileId, pinned.runtimeOfferId)
-          .map((row) => currentRuntimeOfferFromRow(row))
-          .find(live) ?? pinned);
+      : roleRuntimeOffer(
+          owner.database,
+          normalized.runtimeOfferId,
+          owner.now().getTime(),
+        );
   if (!live(offer)) {
     throw new ConflictError(
       `RuntimeOffer ${pinned.runtimeOfferId} is not currently available`,

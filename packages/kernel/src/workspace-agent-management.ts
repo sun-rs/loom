@@ -48,6 +48,8 @@ import type { AgentDefinitionRecord } from "./types.ts";
 
 export type WorkspaceAgentManagementOwner = {
   deletionRequest?: RoomEvent;
+  /** Trusted Role reset transaction only; never parsed from a client request. */
+  restartingInstanceId?: string;
   actorId: string;
   createId: (prefix: string) => string;
   database: DatabaseSync;
@@ -327,6 +329,7 @@ function configureAgent(
     )
     .get(participantId, input.handle);
   if (
+    owner.restartingInstanceId !== participantId &&
     !retainedRoleName &&
     (input.handle.length > 64 ||
       !/^[\p{L}\p{N}][\p{L}\p{N}._-]*$/u.test(input.handle))
@@ -400,6 +403,7 @@ function configureAgent(
   // CLI upgrades publish new Offer IDs. Match the same Host/profile identity
   // used by Role instantiation, never an entry name or executable path.
   if (
+    owner.restartingInstanceId !== participantId &&
     currentOfferId !== input.runtimeOfferId &&
     (currentOfferRow === undefined ||
       text(currentOfferRow, "host_id") !== offerBinding.hostId ||
@@ -410,9 +414,17 @@ function configureAgent(
       .get(input.agentId)
   ) {
     throw new ConflictError(
-      "Role instance cannot switch runtime; create another instance",
+      "Role instance cannot switch runtime without an explicit session restart",
     );
   }
+  if (
+    owner.restartingInstanceId === participantId &&
+    (!currentOfferRow ||
+      text(currentOfferRow, "host_id") !== offerBinding.hostId)
+  )
+    throw new ConflictError(
+      "Instance restart must retain its Host and workspace",
+    );
   let hostChanged = false;
   if (currentOfferId !== undefined) {
     if (

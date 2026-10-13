@@ -89,6 +89,8 @@ export function renderCatchUp(
         ? firstInstanceChannelFloor(database, input)
         : integer(cursor, "last_seq") + 1;
   }
+  if (floor === null && input.conversations?.recoveryGeneration !== undefined)
+    floor = input.fromSeq;
   if (floor === null) return none(null);
   floor = conversationFloor(input.conversations, floor);
   const selection = conversationPredicate(input.conversations);
@@ -118,7 +120,8 @@ export function renderCatchUp(
     if (
       !relevant ||
       isExecutionAuditEvent(type) ||
-      (type === "message.posted" &&
+      (input.conversations?.recoveryGeneration === undefined &&
+        type === "message.posted" &&
         text(row, "actor_id") === input.participantId)
     ) {
       covered.push({ seq });
@@ -190,7 +193,7 @@ function omittedSummary(
          FROM room_events
         WHERE room_id=? AND room_seq BETWEEN ? AND ?
           AND type NOT IN (${audit.map(() => "?").join(",")})
-          AND NOT (type='message.posted' AND actor_id=?) AND ${selection.sql}`,
+          AND NOT (type='message.posted' AND actor_id=? AND ?=0) AND ${selection.sql}`,
     )
     .get(
       input.roomId,
@@ -198,6 +201,7 @@ function omittedSummary(
       toSeq,
       ...audit,
       input.participantId,
+      input.conversations?.recoveryGeneration === undefined ? 0 : 1,
       ...selection.params,
     ) as Row;
   const count = integer(row, "n");

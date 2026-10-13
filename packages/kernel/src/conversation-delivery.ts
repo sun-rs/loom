@@ -1,5 +1,6 @@
 import type { DatabaseSync } from "node:sqlite";
 import type { ActivationCredentialScope, RoomEvent } from "@rah-os/protocol";
+import { instanceSessionState } from "./instance-session.ts";
 import { integer, text } from "./sqlite-row.ts";
 
 /** Frozen automatic-delivery selection, not an ACL or another cursor. */
@@ -7,6 +8,8 @@ export type ConversationDelivery = {
   floors: Record<string, number>;
   directed: number[];
   eventFloor?: number;
+  /** One bounded restore per Room after an explicit Human session reset. */
+  recoveryGeneration?: number;
 };
 
 export function conversationDelivery(
@@ -29,7 +32,66 @@ export function conversationDelivery(
     WHERE i.instance_id=? AND i.channel_id=? AND e.room_id=i.channel_id`,
     )
     .get(scope.participantId, scope.roomId);
-  if (!joined) return undefined; // private box and historical persona contract unchanged
+  const session = instanceSessionState(db, scope.participantId);
+  const restore =
+    session.generation > 0 &&
+    !(
+      session.required &&
+      db
+        .prepare(
+          `SELECT 1 FROM activation_presented_windows w
+    JOIN activations a ON a.activation_id=w.activation_id WHERE a.participant_id=? AND a.room_id=?
+    AND w.sent_at IS NOT NULL AND json_extract(w.catch_up_json,'$.conversations.recoveryGeneration')=? LIMIT 1`,
+        )
+        .get(scope.participantId, scope.roomId, session.generation)
+    ) &&
+    Boolean(
+      db
+        .prepare(
+          `SELECT 1 FROM room_events WHERE aggregate_id=? AND type='instance.session_reset'
+      AND json_extract(payload_json,'$.sessionGeneration')=?
+      AND json_extract(payload_json,'$.historyRecovery')='bounded_current_room' LIMIT 1`,
+        )
+        .get(scope.participantId, session.generation),
+    );
+  if (!joined) {
+    // The execution scope was authenticated by the caller. Never look across
+    // Rooms: private-box context cannot leak into Channel work.
+    if (
+      !restore ||
+      !db
+        .prepare(
+          `SELECT 1 FROM role_instances i JOIN rooms r ON r.room_id=? WHERE i.instance_id=? AND r.kind='direct'`,
+        )
+        .get(scope.roomId, scope.participantId)
+    )
+      return undefined;
+    const floors: Record<string, number> = { "": 0 };
+    for (const row of db
+      .prepare("SELECT thread_id FROM threads WHERE room_id=?")
+      .all(scope.roomId))
+      floors[text(row, "thread_id")] = 0;
+    return {
+      floors,
+      directed: [],
+      eventFloor: Math.min(
+        Number(
+          db
+            .prepare(
+              "SELECT last_seq FROM subscription_cursors WHERE participant_id=? AND room_id=? AND consumer_id=?",
+            )
+            .get(scope.participantId, scope.roomId, scope.consumerId)
+            ?.last_seq ?? 0,
+        ),
+        Number(
+          db
+            .prepare("SELECT from_seq FROM activations WHERE activation_id=?")
+            .get(scope.activationId)!.from_seq,
+        ) - 1,
+      ),
+      recoveryGeneration: session.generation,
+    };
+  }
   const origin = integer(joined, "room_seq");
   const floors: Record<string, number> = { "": origin };
   for (const row of db
@@ -69,7 +131,9 @@ export function conversationDelivery(
   const activation = db
     .prepare("SELECT from_seq FROM activations WHERE activation_id=?")
     .get(scope.activationId)!;
+  if (restore) for (const key of Object.keys(floors)) floors[key] = origin;
   return {
+    ...(restore ? { recoveryGeneration: session.generation } : {}),
     floors,
     directed,
     eventFloor: Math.min(

@@ -133,6 +133,8 @@ export type InstanceSessionBindingRecordInput = z.infer<
 export const InstanceSessionResetRequestSchema = z
   .object({
     instanceId: IdentifierSchema,
+    /** Omitted: retain actual current config. Supplied: CAS the source Role revision. */
+    adoptRoleRevisionId: IdentifierSchema.optional(),
     basedOnRoomSeq: z.number().int().nonnegative(),
     idempotencyKey: IdentifierSchema,
   })

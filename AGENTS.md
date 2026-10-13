@@ -93,8 +93,10 @@ never installs them or configures their accounts.
   uses a readable Role-name suffix as both display and mention name. Existing
   instances retain their names and configuration. It may switch model/effort
   natively; switching CLI requires the owner-approved explicit session restart
-  with a chosen new Role Revision (target contract §2; not yet implemented by
-  the naming slice). Ordinary service restart never changes configuration.
+  with a chosen current Role Revision (target contract §2). The default retains
+  actual current configuration, including native overrides; adopting requires
+  no live run, unresolved cleanup or leased/reserved execution. Ordinary service
+  restart never changes configuration.
   Removal stops delivery, safely
   ends execution and keeps history; re-adding creates a new instance.
 - **Session** is the instance's native CLI session. Each instance has its own

@@ -28,7 +28,7 @@ export const UNKNOWN = "未知";
  * the index again through the standing prompt, subject to the read switch.
  */
 export const SESSION_RESET_CONSEQUENCE =
-  "重置后，该实例下一次运行会启动新的原生 CLI session，之前的对话上下文不再延续；Room 历史与频道记忆保留，新 session 启动时按读开关重新提供频道记忆索引。实例有运行中的工作时服务端会拒绝。因会话连续性失败而隔离的激活会在新 session 中重新排队。";
+  "重置后，该实例下一次运行会启动新的原生 CLI session，原生 session 上下文重新开始；近期对话按窗口补入，更早历史按需读取，不会一次灌入全部历史。Room 历史与频道记忆保留，新 session 启动时按读开关重新提供频道记忆索引。实例有运行中的工作时服务端会拒绝。因会话连续性失败而隔离的激活会在新 session 中重新排队。";
 
 type Signal = { signal?: AbortSignal };
 const options = (signal: AbortSignal | undefined) =>

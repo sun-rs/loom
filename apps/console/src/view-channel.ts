@@ -1,3 +1,4 @@
+import { instanceRestartDialog } from "./instance-restart.ts";
 import { disclosure } from "./presentation.ts";
 import { taskPanel } from "./view-tasks.ts";
 import type { RoleListResponse } from "@rah-os/protocol";
@@ -27,7 +28,6 @@ import {
   reportOutcome,
 } from "./intent-view.ts";
 import {
-  SESSION_RESET_CONSEQUENCE,
   SYSTEM_PRINCIPAL_ID,
   loadInstanceStatuses,
   summarizeChannels,
@@ -101,7 +101,7 @@ function instanceCard(input: {
     }
     return slot.state === "pending";
   };
-  const reset = () => {
+  const reset = (adoptRoleRevisionId?: string) => {
     if (refusedWhileUnknown()) return;
     confirmArea.replaceChildren();
     hint.textContent = "";
@@ -109,13 +109,16 @@ function instanceCard(input: {
     void slot
       .submit({
         action: "session-reset",
-        payload: { instanceId: status.instanceId },
+        payload: {
+          instanceId: status.instanceId,
+          ...(adoptRoleRevisionId === undefined ? {} : { adoptRoleRevisionId }),
+        },
         session: roomSession(context.client, roomId),
         send: (payload, basedOnRoomSeq, idempotencyKey) =>
           context.client.request("instance.session.reset", {
             basedOnRoomSeq,
             idempotencyKey,
-            instanceId: payload.instanceId,
+            ...payload,
           }),
         onSettled: (outcome) =>
           reportOutcome(result, outcome, "重置被拒绝", (response) => {
@@ -229,15 +232,13 @@ function instanceCard(input: {
     "重置 session…",
     () => {
       confirmArea.replaceChildren(
-        confirmBox({
-          confirmClass: "confirm-reset",
-          confirmLabel: "确认重置",
-          consequence: SESSION_RESET_CONSEQUENCE,
-          onCancel: () => confirmArea.replaceChildren(),
-          onConfirm: reset,
-        }),
+        instanceRestartDialog(
+          context,
+          status,
+          () => confirmArea.replaceChildren(),
+          reset,
+        ),
       );
-      renderSlot(slot.state);
     },
     { className: "secondary action-reset" },
   );

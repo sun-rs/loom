@@ -1,0 +1,67 @@
+{
+  "date": "2026-10-13",
+  "scope": "Human explicit instance restart: keep current configuration or adopt the selected current Role revision, with bounded current-Room history recovery",
+  "owner": "Kernel RoleCatalog, existing immutable Agent configuration revisions and presented message windows; Console is a client",
+  "implemented": [
+    "Default keeps actual instance configuration, including native model/effort overrides; deleted Role does not prevent keep",
+    "Adoption CAS checks the original Role ID's current revision; atomic configuration revision, instance snapshot and session generation; immutable Instance ID and retained history",
+    "Explicit adoption permits CLI/profile change on the same Host; ordinary configure still refuses cross-CLI changes; workspace, instruction/skill references and memory policy are retained",
+    "Live execution and unresolved runtime cleanup refuse all resets; leased/reserved execution additionally refuses configuration adoption",
+    "Host/profile-matched successor Offers support CLI upgrades without switching identities",
+    "Restored history uses the existing shared 20-event / 64-KiB wake budget, current request first, newest background messages next, with omission counts; includes own earlier replies",
+    "Restoration is scoped to current Channel or current private box, without cursor rewind; same-generation native binding plus Host delivery receipt prevents repeated restoration",
+    "Console defaults to keep and previews selected name, CLI, model, effort and Prompt; retries freeze selected Role revision, deleted Role offers keep only",
+    "Only newly marked explicit reset events enable recovery; historical reset events are not backfilled, so deployment alone cannot restore old context"
+  ],
+  "tdd": {
+    "configuration": "New selected-revision request rejected as unknown before implementation",
+    "history": "Own prior reply and bounded private history missing before implementation",
+    "browser": "Default restart configuration selector absent before implementation",
+    "deployment": "Legacy-reset regression verifies a previously read request is not re-injected after upgrade"
+  },
+  "verification": {
+    "focusedKernelTests": "passed: 45 tests covering 7 new restart tests plus lifecycle, catch-up and runtime-offer successor regressions",
+    "browser": "passed with fake CLI: 1440x1000 and 390x844; default retains old snapshot, explicit selection adopts current revision",
+    "fullCheck": {
+      "exitCode": 0,
+      "backend": {
+        "pass": 3179,
+        "skip": 22,
+        "fail": 0
+      },
+      "webUnit": 487,
+      "consoleUnit": 63,
+      "efficiencyGateUnit": 558
+    },
+    "formatAndDiff": "passed",
+    "deployment": "awaiting backed-up service restart"
+  },
+  "limits": [
+    "No paid provider calls or new real-CLI quality/efficiency acceptance in this batch",
+    "Delivery receipt proves transport, not semantic comprehension; omitted history remains available via authenticated on-demand reads",
+    "No cross-Host or directory relocation, no automatic summary, no full provider transcript or thinking replay",
+    "Normal service restart and Role save do not rotate sessions or update instances"
+  ],
+  "logs": {
+    "check.log": {
+      "path": "/Users/sun/.loom/reviews/2026-10-13-instance-restart/check.log",
+      "sha256": "ade94f51125c951e71c727416e8f767441d8f6472deb4ece94ccf4064330ee6b"
+    },
+    "focused.log": {
+      "path": "/Users/sun/.loom/reviews/2026-10-13-instance-restart/focused.log",
+      "sha256": "68456bde80f167099800cf6e00c59295fe0ef8e7e1c92d131d6dce8f450abd29"
+    },
+    "browser.log": {
+      "path": "/Users/sun/.loom/reviews/2026-10-13-instance-restart/browser.log",
+      "sha256": "254942a2f4538dd583089370274fd92746953febe9fbe18e3b4503f8a195dbac"
+    },
+    "typecheck.log": {
+      "path": "/Users/sun/.loom/reviews/2026-10-13-instance-restart/typecheck.log",
+      "sha256": "bef9d01c948fead061ff8f64b8496f8847391051512f3460e767e2602ceab0f8"
+    },
+    "format.log": {
+      "path": "/Users/sun/.loom/reviews/2026-10-13-instance-restart/format.log",
+      "sha256": "fb5ffe51bf83c7a6ac683f386a5c903f6ff2c086dbe1bf27cc1f12efddaf7e3f"
+    }
+  }
+}

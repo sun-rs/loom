@@ -1,3 +1,4 @@
+import { adoptInstanceRoleRevision } from "./instance-restart-config.ts";
 import { assertNoUnresolvedRuntimeCleanup } from "./runtime-process-cleanup.ts";
 import type { DatabaseSync } from "node:sqlite";
 import * as P from "@rah-os/protocol";
@@ -482,6 +483,9 @@ export class RoleCatalog {
       requireRoomManager(c.database, channelId, actorId);
       const requestDigest = canonicalDigest({
         instanceId: input.instanceId,
+        ...(input.adoptRoleRevisionId === undefined
+          ? {}
+          : { adoptRoleRevisionId: input.adoptRoleRevisionId }),
       });
       const prior = this.replay(
         actorId,
@@ -513,6 +517,8 @@ export class RoleCatalog {
           "Role instance has running work; wait for it to finish before resetting its session",
         );
       assertNoUnresolvedRuntimeCleanup(c.database, input.instanceId);
+      if (input.adoptRoleRevisionId !== undefined)
+        adoptInstanceRoleRevision({ ...c, actorId }, input);
       const resetAt = c.now().toISOString();
       const sessionGeneration = advanceInstanceSessionGeneration(
         c.database,
@@ -537,6 +543,10 @@ export class RoleCatalog {
         payload: {
           instanceId: input.instanceId,
           notice: "context continuity interrupted by Human reset",
+          historyRecovery: "bounded_current_room",
+          ...(input.adoptRoleRevisionId === undefined
+            ? {}
+            : { roleRevisionId: input.adoptRoleRevisionId }),
           recovery: {
             resumedActivationIds: resumed.map((retry) => retry.activationId),
           },
