@@ -30,7 +30,8 @@ import {
  * - Without a cursor, a Role instance starts after its atomic creation/join
  *   event in its own Channel. Already being a member is distinct from having
  *   run before. Private boxes and legacy consumers keep their existing path;
- *   no pre-membership history is injected.
+ *   first ordinary Channel delivery may widen only the top-level message floor
+ *   for bounded pre-join context (conversation-delivery.ts).
  * - The Activation's `from_seq` is untouched: it is the latency anchor and the
  *   obligation interval. Only the rendering's stored start moves, and a
  *   re-present in the same RunAttempt reuses that stored start, so a cursor

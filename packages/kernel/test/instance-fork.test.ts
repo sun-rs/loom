@@ -95,6 +95,14 @@ test("Fork publishes an independent bound member only after native copy and repl
     assert.equal(child.agentContext?.participantId, result.instance.instanceId);
     assert.equal(child.agentContext?.instanceSessionRequired, true);
     assert.equal(child.agentContext?.instanceSessionGeneration, 0);
+    assert.deepEqual(
+      f.kernel
+        .presentWorkerMessages(child.execution)
+        .events.filter((e) => e.type === "message.posted")
+        .map((e) => e.payload.body),
+      ["hello fork"],
+      "Fork inherits native history and must not receive ordinary pre-join onboarding",
+    );
     child.finish(0);
   } finally {
     f.close();

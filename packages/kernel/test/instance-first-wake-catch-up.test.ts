@@ -125,7 +125,7 @@ test("a private-box first wake does not use the Channel membership floor", () =>
   }
 });
 
-test("first wake excludes pre-instance history, other channels and private-box contents", () => {
+test("first wake includes pre-join Channel context but excludes other channels and private boxes", () => {
   const f = roleInstanceFixture();
   try {
     f.kernel.postMessage(f.actor, {
@@ -161,7 +161,7 @@ test("first wake excludes pre-instance history, other channels and private-box c
     const run = startInstanceRunFromQueue({ ...f, instance: b.instance });
     assert.deepEqual(
       bodies(f.kernel.presentWorkerMessages(run.execution).events),
-      ["after joining", "first direct request"],
+      ["before new member", "after joining", "first direct request"],
     );
   } finally {
     f.close();
@@ -181,13 +181,21 @@ test("first catch-up keeps shared budget, reports omitted range and freezes its 
           recipients: [],
         }).event.roomSeq,
       );
+    const late = f.kernel.roles.instantiate(f.actor, {
+      roleId: f.role.roleId,
+      channelId: f.home.roomId,
+      basedOnRoomSeq: f.head(f.home.roomId),
+      idempotencyKey: "late-budget",
+    });
     const wake = f.kernel.postMessage(f.actor, {
       roomId: f.home.roomId,
       body: "current request",
       idempotencyKey: "wake",
-      recipients: [{ participantId: f.instance.instanceId, reason: "mention" }],
+      recipients: [
+        { participantId: late.instance.instanceId, reason: "mention" },
+      ],
     });
-    const run = startInstanceRunFromQueue(f),
+    const run = startInstanceRunFromQueue({ ...f, instance: late.instance }),
       first = f.kernel.presentWorkerMessages(run.execution);
     assert.equal(first.events.length, WAKE_BODY_MAX_MESSAGES);
     assert.equal(bodies(first.events)[0], "unaddressed 6");
@@ -195,9 +203,30 @@ test("first catch-up keeps shared budget, reports omitted range and freezes its 
     assert.equal(first.catchUpOmittedCount, 6);
     assert.equal(first.catchUpOmittedFromSeq, seqs[0]);
     assert.equal(first.catchUpOmittedToSeq, seqs[5]);
-    f.kernel.acknowledgeWorkerCursor(run.execution, {
-      throughSeq: wake.event.roomSeq,
+    f.kernel.markPresentedDeliverySent(f.host, run.scope);
+    f.kernel.postWorkerMessage(run.execution, {
+      body: "done",
+      basedOnRoomSeq: wake.event.roomSeq,
+      idempotencyKey: "done",
     });
+    assert.equal(
+      f.db
+        .prepare(
+          `SELECT count(*) n FROM worker_message_presentations
+      WHERE participant_id=? AND room_id=? AND room_seq<=?`,
+        )
+        .get(late.instance.instanceId, f.home.roomId, seqs[5]!)!.n,
+      0,
+      "omitted history must not receive read receipts",
+    );
+    const older = f.kernel.workerReads.history(run.execution, {
+      channel: `#${f.home.slug}`,
+      limit: 50,
+    });
+    assert.ok(
+      JSON.stringify(older).includes("unaddressed 0"),
+      "omitted history stays readable",
+    );
     const again = f.kernel.presentWorkerMessages(run.execution);
     assert.equal(again.contentDigest, first.contentDigest);
     assert.deepEqual(again.events, first.events);

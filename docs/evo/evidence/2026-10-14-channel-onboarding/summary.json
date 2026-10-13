@@ -1,0 +1,225 @@
+{
+  "baseline": "97e7f18",
+  "scope": "Bounded pre-join Channel onboarding; actual installed CLI with isolated homes and loopback synthetic model",
+  "paidCalls": 0,
+  "attempts": [
+    {
+      "attempt": "1791912231480-codex",
+      "cli": "codex",
+      "requests": 2,
+      "paidCalls": 0,
+      "passed": true,
+      "checks": [
+        {
+          "kind": "first-input-bounded-prejoin",
+          "included": 19,
+          "omitted": 6,
+          "current": 1,
+          "extraGenerations": 0
+        },
+        {
+          "kind": "second-input-native-history-without-reinjection",
+          "oldMessageOccurrences": 1
+        },
+        {
+          "kind": "daemon-drain",
+          "code": 0,
+          "signal": null
+        },
+        {
+          "kind": "all-activations-terminal",
+          "states": [
+            {
+              "state": "completed"
+            },
+            {
+              "state": "completed"
+            }
+          ]
+        }
+      ],
+      "rawResultSha256": "90d3d8db4c66c91dbe9f71cf32302f04b8e9177073dcbaf994299af3d9e8e9dd"
+    },
+    {
+      "attempt": "1791912259461-kimi",
+      "cli": "kimi",
+      "requests": 2,
+      "paidCalls": 0,
+      "passed": true,
+      "checks": [
+        {
+          "kind": "first-input-bounded-prejoin",
+          "included": 19,
+          "omitted": 6,
+          "current": 1,
+          "extraGenerations": 0
+        },
+        {
+          "kind": "second-input-native-history-without-reinjection",
+          "oldMessageOccurrences": 1
+        },
+        {
+          "kind": "daemon-drain",
+          "code": 0,
+          "signal": null
+        },
+        {
+          "kind": "all-activations-terminal",
+          "states": [
+            {
+              "state": "completed"
+            },
+            {
+              "state": "completed"
+            }
+          ]
+        }
+      ],
+      "rawResultSha256": "1aed9696c07f45b09387a35cb980f68feb8adea6c491c463cbf4b2db48b47fb3"
+    },
+    {
+      "attempt": "1791912259470-claude",
+      "cli": "claude",
+      "requests": 2,
+      "paidCalls": 0,
+      "passed": true,
+      "checks": [
+        {
+          "kind": "first-input-bounded-prejoin",
+          "included": 19,
+          "omitted": 6,
+          "current": 1,
+          "extraGenerations": 0
+        },
+        {
+          "kind": "second-input-native-history-without-reinjection",
+          "oldMessageOccurrences": 1
+        },
+        {
+          "kind": "daemon-drain",
+          "code": 0,
+          "signal": null
+        },
+        {
+          "kind": "all-activations-terminal",
+          "states": [
+            {
+              "state": "completed"
+            },
+            {
+              "state": "completed"
+            }
+          ]
+        }
+      ],
+      "rawResultSha256": "c5d5394e59d7d55ec1dc06ea90dc984ddc7dc79c909af1f659c3b7ed319fe5cf"
+    },
+    {
+      "attempt": "1791912259470-pi",
+      "cli": "pi",
+      "requests": 2,
+      "paidCalls": 0,
+      "passed": true,
+      "checks": [
+        {
+          "kind": "first-input-bounded-prejoin",
+          "included": 19,
+          "omitted": 6,
+          "current": 1,
+          "extraGenerations": 0
+        },
+        {
+          "kind": "second-input-native-history-without-reinjection",
+          "oldMessageOccurrences": 1
+        },
+        {
+          "kind": "daemon-drain",
+          "code": 0,
+          "signal": null
+        },
+        {
+          "kind": "all-activations-terminal",
+          "states": [
+            {
+              "state": "completed"
+            },
+            {
+              "state": "completed"
+            }
+          ]
+        }
+      ],
+      "rawResultSha256": "07f6e251e898db0dc38e36f05133512e3bec2ddf759917be5962fbc041b08c43"
+    },
+    {
+      "attempt": "1791912259476-opencode",
+      "cli": "opencode",
+      "requests": 2,
+      "paidCalls": 0,
+      "passed": true,
+      "checks": [
+        {
+          "kind": "first-input-bounded-prejoin",
+          "included": 19,
+          "omitted": 6,
+          "current": 1,
+          "extraGenerations": 0
+        },
+        {
+          "kind": "second-input-native-history-without-reinjection",
+          "oldMessageOccurrences": 1
+        },
+        {
+          "kind": "daemon-drain",
+          "code": 0,
+          "signal": null
+        },
+        {
+          "kind": "all-activations-terminal",
+          "states": [
+            {
+              "state": "completed"
+            },
+            {
+              "state": "completed"
+            }
+          ]
+        }
+      ],
+      "rawResultSha256": "c57626debdc588dc634eec9f0a58fc897ce75157d34adfa654b040e96b492d45"
+    }
+  ],
+  "totalRequests": 10,
+  "cleanup": {
+    "recordedProcessesExited": 22,
+    "generatedSettingsRemoved": 7,
+    "runtimeStates": [
+      "terminated",
+      "terminated",
+      "terminated",
+      "terminated",
+      "terminated",
+      "terminated",
+      "terminated",
+      "terminated",
+      "terminated",
+      "terminated"
+    ]
+  },
+  "limitations": [
+    "Synthetic model responses do not establish real model comprehension or paid token efficiency.",
+    "Recent context is not complete history; omitted messages remain explicitly readable.",
+    "Database omission count is aggregate work, not a constant-time guarantee for arbitrary history."
+  ],
+  "verification": {
+    "fullCheck": "passed",
+    "checkLogSha256": "b546ecc736c2db32f59b2826b9ad72376b91c83eb77a10b624430cffec0543aa",
+    "suitePassCounts": [4, 9, 19, 20, 40, 34, 3237, 487, 63, 34, 15, 3, 558],
+    "tdd": "Pre-join inclusion and shared-budget tests failed before implementation; pre-bind failure retry failed before its binding guard fix.",
+    "initialCheck": "Test fixture SQL argument was typed possibly undefined; fixed the known populated sequence assertion before final check.",
+    "sourceSha256": {
+      "packages/kernel/src/conversation-delivery.ts": "15c5b6dbaa5f5f539eefc7d6c92b595658baea4a3bda51b1dac991a9f90a1a63",
+      "packages/kernel/src/activation-catch-up.ts": "fe1a0592c253166b5ed2fb5a1e17cc293f47d412806c4a12ce20b14648ac003b"
+    }
+  }
+}

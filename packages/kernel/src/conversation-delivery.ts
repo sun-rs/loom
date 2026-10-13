@@ -26,7 +26,7 @@ export function conversationDelivery(
     return JSON.parse(String(stored.catch_up_json ?? "{}")).conversations;
   const joined = db
     .prepare(
-      `SELECT e.room_seq FROM role_instances i
+      `SELECT e.room_seq, e.payload_json FROM role_instances i
     JOIN room_events e ON e.aggregate_id=i.instance_id AND e.type='instance.created'
     JOIN memberships m ON m.room_id=i.channel_id AND m.principal_id=i.instance_id
     WHERE i.instance_id=? AND i.channel_id=? AND e.room_id=i.channel_id`,
@@ -132,6 +132,25 @@ export function conversationDelivery(
     .prepare("SELECT from_seq FROM activations WHERE activation_id=?")
     .get(scope.activationId)!;
   if (restore) for (const key of Object.keys(floors)) floors[key] = origin;
+  // First ordinary Channel delivery only. Private-box sessions do not consume
+  // this opportunity; Fork already carries native history. Existing transport
+  // receipts prevent repeating bootstrap, but are never promoted to read ACKs.
+  if (
+    session.generation === 0 &&
+    !JSON.parse(text(joined, "payload_json")).sourceInstanceId &&
+    !cursor &&
+    !(
+      session.required &&
+      db
+        .prepare(
+          `SELECT 1 FROM activation_presented_windows w
+      JOIN activations a ON a.activation_id=w.activation_id
+      WHERE a.participant_id=? AND a.room_id=? AND w.sent_at IS NOT NULL LIMIT 1`,
+        )
+        .get(scope.participantId, scope.roomId)
+    )
+  )
+    floors[""] = 0;
   return {
     ...(restore ? { recoveryGeneration: session.generation } : {}),
     floors,
