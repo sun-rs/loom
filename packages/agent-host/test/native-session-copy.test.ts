@@ -12,12 +12,11 @@ test("native session copying uses runtime adapters, never CLI display names or a
     nativeSessionCopyAdapter("codex-app-server/v1")?.provider,
     "codex-app-server/v1",
   );
-  for (const kind of [
-    "codex-exec/v1",
+  assert.equal(
+    nativeSessionCopyAdapter("claude-stream-json/v1")?.provider,
     "claude-stream-json/v1",
-    "acp/v1",
-    "unknown",
-  ])
+  );
+  for (const kind of ["codex-exec/v1", "acp/v1", "unknown"])
     assert.equal(nativeSessionCopyAdapter(kind), undefined);
 });
 

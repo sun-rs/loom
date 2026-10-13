@@ -1,0 +1,186 @@
+{
+  "date": "2026-10-13",
+  "scope": "Claude native adapter behind existing unified Loom Fork/Side API; Node deployment only",
+  "baseCommit": "6e202efc589458435caca25ba019384fc75f2a97",
+  "interfaces": ["instance.fork", "side.create", "side.discard"],
+  "implementedAdapters": [
+    "codex-app-server/v1",
+    "opencode-server/v1",
+    "claude-stream-json/v1"
+  ],
+  "unsupported": [
+    "Pi",
+    "Kimi",
+    "Claude in SEA executable",
+    "busy Side discard",
+    "product third-column UI",
+    "remote Host",
+    "dynamic credential slots",
+    "legacy private cwd"
+  ],
+  "versions": {
+    "claude": "2.1.293",
+    "claudeAgentSdk": "0.3.296"
+  },
+  "sdkOperation": "forkSession and getSessionMessages only; isolated helper, no query or SDK runner",
+  "paidCalls": 0,
+  "syntheticRequestsAllAttempts": 11,
+  "nativeCopyRequests": 0,
+  "runs": [
+    {
+      "run": "1791897208318-claude",
+      "provider": "claude",
+      "syntheticRequests": 4,
+      "error": null,
+      "checks": [
+        "source-established",
+        "side-native-zero-generation-idempotent",
+        "side-resumed-private-only",
+        "parent-retained-native-session",
+        "side-discarded-source-untouched",
+        "daemon-drain",
+        "all-activations-terminal"
+      ],
+      "resultSha256": "0f948e0a19797c496ea332ba53485a54dcbc1d150e2dae01fcc9022a72951327"
+    },
+    {
+      "run": "1791897312108-claude",
+      "provider": "claude",
+      "syntheticRequests": 3,
+      "error": null,
+      "checks": [
+        "source-established",
+        "fork-native-zero-generation-idempotent",
+        "child-resumed-and-published-as-new-member",
+        "parent-retained-native-session",
+        "daemon-drain",
+        "all-activations-terminal"
+      ],
+      "resultSha256": "817aeb46f2c68560873dab4ead0285a51fe29f086f5f7721c2393127c17280a8"
+    },
+    {
+      "run": "1791897361103-claude",
+      "provider": "claude",
+      "syntheticRequests": 4,
+      "error": null,
+      "checks": [
+        "source-established",
+        "side-native-zero-generation-idempotent",
+        "side-resumed-private-only",
+        "parent-retained-native-session",
+        "real-console-side-create-private-page-desktop-mobile",
+        "side-discarded-source-untouched",
+        "daemon-drain",
+        "all-activations-terminal"
+      ],
+      "resultSha256": "fdfbfcaa3804179af207fdacee39e9c2a91c52b72571243ef7f5773dd6174677"
+    }
+  ],
+  "cleanup": [
+    {
+      "run": "1791897208318-claude",
+      "recordedProcessesExited": 7,
+      "settingsRemoved": [
+        "/private/tmp/loom-formal-mvp-dardkA/claude/settings.json",
+        "/private/tmp/loom-formal-mvp-dardkA/opencode/settings.json"
+      ]
+    },
+    {
+      "run": "1791897312108-claude",
+      "recordedProcessesExited": 7,
+      "settingsRemoved": [
+        "/private/tmp/loom-formal-mvp-uQIbsn/claude/settings.json",
+        "/private/tmp/loom-formal-mvp-uQIbsn/opencode/settings.json"
+      ]
+    },
+    {
+      "run": "1791897361103-claude",
+      "recordedProcessesExited": 7,
+      "settingsRemoved": [
+        "/private/tmp/loom-formal-mvp-mRjKnP/claude/settings.json",
+        "/private/tmp/loom-formal-mvp-mRjKnP/opencode/settings.json"
+      ]
+    }
+  ],
+  "verification": {
+    "focusedTests": 39,
+    "focusedPassed": true,
+    "consoleBrowserPassed": true,
+    "viewports": ["1440x1000", "390x844"],
+    "fullCheck": "passed",
+    "compactionVariants": [
+      "continuation after anchor",
+      "continuation after preserved tail"
+    ],
+    "concurrentConfigIsolation": true,
+    "sourceBytesUnchanged": true,
+    "sideReadOracle": "source marker and success marker in actual successful tool_result output, not echoed command",
+    "tdd": [
+      "missing module failed before implementation",
+      "registry rejected Claude before registration",
+      "canonical cwd corrected in temporary fixture"
+    ],
+    "startSchedulerFakeClockTests": 8,
+    "backend": {
+      "passed": 3216,
+      "failed": 0,
+      "skipped": 22
+    },
+    "initialFullCheck": "failed: start callback measured 39ms against 40ms; retained check-initial.log",
+    "formatPassed": true,
+    "diffCheckPassed": true,
+    "localDocumentationLinksPassed": true,
+    "logs": {
+      "focused.log": "eb70adecb2e9b8d7e29bf61956673ca19414d894ec76d0eb0192d6010d9b8032",
+      "browser.log": "a66da2f69a9b74209cbe26f5b39f1ea6f54b52eb7922b9537f58e16d72fdd5ed",
+      "format.log": "fb5ffe51bf83c7a6ac683f386a5c903f6ff2c086dbe1bf27cc1f12efddaf7e3f",
+      "check-initial.log": "62168f5d600e2cf53c6c89b63f938102e710d5392d3a06c3349c3fd86f0a9715",
+      "check.log": "263f48c12aad3edad282c6571271814e6bf789c3fbd410fab392f2273ddfc1f1",
+      "start-clock.log": "f3c22f58404b821f94ce722a46f03ab28b0a49ffa6c134ff770afe75fc89cc01"
+    }
+  },
+  "sourceReuse": {
+    "kind": "Local glue; unmodified exact npm dependency, no copied SDK implementation",
+    "package": "@anthropic-ai/claude-agent-sdk@0.3.296",
+    "license": "SEE LICENSE IN README.md",
+    "sources": [
+      "https://platform.claude.com/cookbook/claude-agent-sdk-05-building-a-session-browser",
+      "https://github.com/anthropics/claude-agent-sdk-typescript/issues/472"
+    ]
+  },
+  "performance": "Native copies generate no model request. Synthetic CLI protocol runs are not paid efficiency or autonomous model-quality acceptance.",
+  "privateEvidenceDirectory": "/Users/sun/.loom/reviews/2026-10-13-claude-branches",
+  "testCorrections": [
+    "Initial full check exposed a pre-existing wall-clock start-spacing assertion failure. AgentStartGate records admission before the async start callback; callback scheduling delay can shorten the measured callback gap. Replaced only that test with mocked Date/setTimeout and exact before-deadline/at-deadline assertions; production scheduler unchanged. Initial full-run failure retained, full rerun required."
+  ],
+  "nextAdapterExploration": {
+    "provider": "pi",
+    "version": "1.1.0",
+    "integrated": false,
+    "attempts": [
+      {
+        "entry": "resume then RPC clone",
+        "passed": false,
+        "reason": "resuming the synthetic source appended thinking_level_change before clone; byte-preservation assertion failed",
+        "evidence": "pi-next-probe.json"
+      },
+      {
+        "entry": "CLI --fork then RPC get_state/get_messages",
+        "passed": true,
+        "sourceBytesUnchanged": true,
+        "effectiveMessagesEqual": true,
+        "newNativeId": true,
+        "evidence": "pi-next-fork-probe.json"
+      }
+    ],
+    "externalNetworkDenied": true,
+    "paidCalls": 0,
+    "modelRequests": 0,
+    "processesExited": true,
+    "remaining": "Map native copied file into the existing Host-owned Pi session path before advertising capability; no production binding or API acceptance yet",
+    "hashes": {
+      "pi-next-probe.json": "ced1cbb810f7d99d7bc9d0955b6b46064b274aecf4ba18acc34d55d77d4f700f",
+      "pi-next-fork-probe.json": "1226bf4893b0d36922e56edc6f30a7019aced3c6792c529bf084b66307ffac21"
+    }
+  }
+}

@@ -1,3 +1,5 @@
+import { isSea } from "node:sea";
+import { copyClaudeSession } from "./claude-session-fork.ts";
 import { copyOpenCodeSession } from "./opencode-session-fork.ts";
 import { copyCodexSession } from "./codex-session-fork.ts";
 
@@ -16,6 +18,10 @@ export type NativeSessionCopyAdapter = Readonly<{
 }>;
 const adapters: Readonly<Record<string, NativeSessionCopyAdapter>> =
   Object.freeze({
+    "claude-stream-json/v1": {
+      provider: "claude-stream-json/v1",
+      copy: copyClaudeSession,
+    },
     "opencode-server/v1": {
       provider: "opencode-server/v1",
       copy: copyOpenCodeSession,
@@ -29,5 +35,7 @@ const adapters: Readonly<Record<string, NativeSessionCopyAdapter>> =
 export function nativeSessionCopyAdapter(
   kind: string,
 ): NativeSessionCopyAdapter | undefined {
+  // The SDK storage helper ships with the Node distribution, not the frozen SEA assets.
+  if (kind === "claude-stream-json/v1" && isSea()) return undefined;
   return Object.hasOwn(adapters, kind) ? adapters[kind] : undefined;
 }

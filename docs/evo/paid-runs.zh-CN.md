@@ -852,3 +852,11 @@ Claude CLI 的两条本地合成回复只证明其 fork 续聊携带历史；纯
 **前批证据更正：** OpenCode 首家 Side 和本批早期 Codex 的历史读取命令漏带 turn、并使用不存在的 `message-history`，原断言只查请求里有成功标记而误含了命令回显；实际输出为拒绝，不能证明读源 box 成功。现改为 `message-read --turn ... --target ...`，严格检查实际工具输出同时包含源消息与成功标记，两家复验通过。此前 Kernel／API 的权限与只读测试不受此断言错误影响，复制、独立回复及丢弃证据仍保留。
 
 各次运行与失败全数保留：本机代理拦截首轮回环地址、脚本未结束导致重复 final 工具请求、漏 turn／错误命令、浏览器脚本构造错误及旧 Codex 禁用预期均列出。不是模型自主行为、随机成本比较或五家效率验收。[全部尝试与接受范围](evidence/2026-10-13-unified-branches/summary.json)。
+
+## Claude Fork／Side：统一适配层免费验收（2026-10-13）
+
+没有新增付费。实际 Claude Code2.1.293 在隔离 HOME／虚构凭据／仅 loopback 的本地合成模型环境，经正式 daemon/API 完成 Fork 与 Side，后者也经过控制台桌面1440×1000／手机390×844的创建、私聊与丢弃。三次完整运行共11次合成请求（Side4、Fork3、Side浏览器4）；复制阶段均零模型请求。Side 使用当前 turn 的 `message-read`，断言核实的是实际 `tool_result` 中的源消息和成功标记，未使用请求回显作为证据。
+
+复制使用固定官方 SDK0.3.296 的离线磁盘函数，后续运行仍用已安装 CLI。自动化合成存储覆盖普通和两类压缩历史、新消息 ID、嵌套压缩引用、源文件不变及并发环境隔离；只证明这些可重现的生命周期与传输属性，不是付费效率门禁或模型自主遵循验收。Node 部署可用；SEA helper、Pi／Kimi、运行中丢弃及产品第三栏仍未完成。[证据与局限](evidence/2026-10-13-claude-branches/summary.json)。
+
+同批后续入口探查：Pi 1.1.0 两次隔离实际 CLI 运行，外网禁止、模型请求0。先 resume 再 RPC `clone` 的源字节不变断言失败（启动追加配置）；改用 CLI `--fork` 的新 ID／消息继承／源字节不变探针通过。两次进程均退出，原始结果与哈希见上述 summary 的 `nextAdapterExploration`；这不是 Pi 的 Loom Fork／Side 接入验收，能力仍未开放。

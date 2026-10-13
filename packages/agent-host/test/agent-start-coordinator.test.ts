@@ -100,28 +100,39 @@ test("the gate never lets more Agents start at once than its capacity", async ()
   });
 });
 
-test("three Agents woken together are spaced by the minimum start interval", async () => {
+test("three Agents woken together are spaced by the minimum start interval", async (t) => {
   const intervalMs = 40;
+  const epoch = 1_000;
+  t.mock.timers.enable({ apis: ["Date", "setTimeout"], now: epoch });
   const gate = new AgentStartGate({
     maxConcurrentStarts: 5,
     minStartIntervalMs: intervalMs,
   });
   const startedAt: number[] = [];
-  await Promise.all(
-    ["agent-a", "agent-b", "agent-c"].map((agentId) =>
-      gate.runStart(agentId, async () => {
-        startedAt.push(Date.now());
-      }),
-    ),
+  const runs = ["agent-a", "agent-b", "agent-c"].map((agentId) =>
+    gate.runStart(agentId, async () => {
+      startedAt.push(Date.now());
+    }),
   );
-  assert.equal(startedAt.length, 3);
-  for (let index = 1; index < startedAt.length; index += 1) {
-    const gap = (startedAt[index] ?? 0) - (startedAt[index - 1] ?? 0);
-    assert.ok(
-      gap >= intervalMs,
-      `start ${index} came ${gap}ms after the previous one; expected at least ${intervalMs}ms`,
+  // Drain promise continuations without advancing the controlled clock. A real
+  // callback timestamp can lag admission and falsely shorten the measured gap.
+  const settle = () => new Promise<void>((resolve) => setImmediate(resolve));
+  await settle();
+  assert.deepEqual(startedAt, [epoch]);
+  for (let index = 1; index < 3; index += 1) {
+    t.mock.timers.tick(intervalMs - 1);
+    await settle();
+    assert.equal(
+      startedAt.length,
+      index,
+      "next start must remain queued before its deadline",
     );
+    t.mock.timers.tick(1);
+    await settle();
+    assert.equal(startedAt.length, index + 1);
+    assert.equal(startedAt[index], epoch + index * intervalMs);
   }
+  await Promise.all(runs);
 });
 
 test("a failed start still releases its slot and pumps the queue", async () => {

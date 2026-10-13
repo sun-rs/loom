@@ -18,7 +18,11 @@ import {
 } from "../../kernel/test/role-instance-fixture.ts";
 import type { ConfiguredLocalRuntimeSnapshot } from "../src/local-runtime-inventory.ts";
 
-for (const provider of ["opencode-server/v1", "codex-app-server/v1"])
+for (const provider of [
+  "opencode-server/v1",
+  "codex-app-server/v1",
+  "claude-stream-json/v1",
+])
   for (const mode of ["fork", "side"])
     test(`Daemon ${provider} ${mode} binds independent context through the shared pipeline without copying twice`, async () => {
       const f = roleInstanceFixture();
