@@ -43,16 +43,19 @@ export async function forkInstance(
   host: AuthenticatedHostContext,
   raw: P.InstanceForkRequest,
   copy: CopyInstanceSession,
+  side = false,
 ): Promise<P.RoleInstantiateResponse> {
   const input = P.InstanceForkRequestSchema.parse(raw);
   const actorId = c.requireActor(auth);
   const requestDigest = canonicalDigest(input);
   const operationId = canonicalDigest({
     actorId,
+    ...(side ? { kind: "side" } : {}),
     instanceId: input.instanceId,
     key: input.idempotencyKey,
   });
-  const targetInstanceId = `principal_fork_${operationId.slice(7)}`;
+  const targetInstanceId = `principal_${side ? "side" : "fork"}_${operationId.slice(7)}`;
+  const sideRoomId = `room_side_${operationId.slice(7)}`;
   const replay = () => {
     const { channelId } = forkSourceIdentity(
       c.database,
@@ -63,12 +66,12 @@ export async function forkInstance(
       .prepare(
         "SELECT * FROM room_events WHERE room_id=? AND idempotency_key=?",
       )
-      .get(channelId, input.idempotencyKey);
+      .get(side ? sideRoomId : channelId, input.idempotencyKey);
     if (!row) return;
     const event = c.events.eventFromRow(row);
     if (
       event.actorId !== actorId ||
-      event.type !== "instance.created" ||
+      event.type !== (side ? "side.created" : "instance.created") ||
       event.payload.sourceInstanceId !== input.instanceId ||
       event.payload.requestDigest !== requestDigest
     )
@@ -142,10 +145,27 @@ export async function forkInstance(
       throw new ConflictError(
         "Fork source changed during native copying; copied session was not published",
       );
+    const targetRoomId = side ? sideRoomId : source.channelId;
     const name = allocateInstanceName(
       c.database,
-      source.role.configuration.displayName,
+      source.role.configuration.displayName + (side ? "-side" : ""),
     );
+    if (side) {
+      const workspaceId = c.database
+        .prepare("SELECT workspace_id FROM rooms WHERE room_id=?")
+        .get(source.channelId)!.workspace_id;
+      c.database
+        .prepare(
+          "INSERT INTO rooms(room_id,workspace_id,kind,slug,name,next_seq,created_at) VALUES(?,?,'direct',?,?,1,?)",
+        )
+        .run(
+          targetRoomId,
+          workspaceId!,
+          `dm-${targetRoomId}`,
+          name,
+          c.now().toISOString(),
+        );
+    }
     const {
       avatarKey,
       description,
@@ -163,11 +183,16 @@ export async function forkInstance(
         roleInstance: {
           roleId: source.role.roleId,
           roleRevisionId: source.role.roleRevisionId,
-          channelId: source.channelId,
+          channelId: targetRoomId,
         },
       },
       {
         ...configuration,
+        ...(side
+          ? {
+              instructions: `${configuration.instructions}\n\nSide conversation: independent private dialogue. Source Channel ${source.channelId} is read-only via message history (--channel ${source.channelId}); reply only in this conversation. No Task, membership or memory mutations.`,
+            }
+          : {}),
         ...(avatarKey === undefined ? {} : { avatarKey }),
         ...(description === undefined ? {} : { description }),
         ...(executionWorkspace === undefined ? {} : { executionWorkspace }),
@@ -191,23 +216,52 @@ export async function forkInstance(
       agentId: created.agent.definition.agentId,
       roleId: source.role.roleId,
       roleRevisionId: source.role.roleRevisionId,
-      channelId: source.channelId,
+      channelId: targetRoomId,
     };
     const now = c.now().toISOString();
     c.database
       .prepare(
         "INSERT INTO memberships(room_id,principal_id,role,joined_at) VALUES(?,?,'member',?)",
       )
-      .run(source.channelId, targetInstanceId, now);
+      .run(targetRoomId, targetInstanceId, now);
     c.events.append({
       actorId,
       aggregateId: targetInstanceId,
       aggregateType: "membership",
-      roomId: source.channelId,
+      roomId: targetRoomId,
       idempotencyKey: `${input.idempotencyKey}:membership`,
       type: "membership.added",
       payload: { participantId: targetInstanceId, role: "member" },
     });
+    if (side) {
+      c.database
+        .prepare(
+          "INSERT INTO memberships(room_id,principal_id,role,joined_at) VALUES(?,?,'owner',?)",
+        )
+        .run(targetRoomId, actorId, now);
+      const workspaceId = c.database
+        .prepare("SELECT workspace_id FROM rooms WHERE room_id=?")
+        .get(targetRoomId)!.workspace_id;
+      const pair = [actorId, targetInstanceId].sort((a, b) =>
+        a.localeCompare(b),
+      );
+      c.database
+        .prepare(
+          "INSERT INTO direct_room_pairs(workspace_id,left_principal_id,right_principal_id,room_id) VALUES(?,?,?,?)",
+        )
+        .run(workspaceId!, pair[0]!, pair[1]!, targetRoomId);
+      c.database
+        .prepare(
+          "INSERT INTO side_sessions(instance_id,room_id,source_instance_id,source_channel_id,owner_id) VALUES(?,?,?,?,?)",
+        )
+        .run(
+          targetInstanceId,
+          targetRoomId,
+          input.instanceId,
+          source.channelId,
+          actorId,
+        );
+    }
     // Explicit copy evidence, not a fabricated RunAttempt or source consumption receipt.
     c.database
       .prepare(
@@ -218,9 +272,9 @@ export async function forkInstance(
       actorId,
       aggregateId: targetInstanceId,
       aggregateType: "instance",
-      roomId: source.channelId,
+      roomId: targetRoomId,
       idempotencyKey: input.idempotencyKey,
-      type: "instance.created",
+      type: side ? "side.created" : "instance.created",
       payload: {
         instance,
         sourceInstanceId: input.instanceId,

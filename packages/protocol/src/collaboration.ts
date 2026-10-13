@@ -81,6 +81,14 @@ export const RoomSchema = z
     // S3: present only on a Role instance's private box, in room.list and
     // room.direct.open. `active` is false once new private work is refused
     // (the instance or the Human left the instance's channel).
+    side: z
+      .object({
+        sourceInstanceId: IdentifierSchema,
+        sourceChannelId: IdentifierSchema,
+        discarded: z.boolean(),
+      })
+      .strict()
+      .optional(),
     instancePrivateBox: z
       .object({ instanceId: IdentifierSchema, active: z.boolean() })
       .strict()

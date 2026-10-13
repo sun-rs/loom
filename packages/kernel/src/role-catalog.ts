@@ -1,3 +1,5 @@
+import { discardSide } from "./side-lifecycle.ts";
+import { sideProjection } from "./side-session.ts";
 import { forkInstance, type CopyInstanceSession } from "./instance-fork.ts";
 import { adoptInstanceRoleRevision } from "./instance-restart-config.ts";
 import { assertNoUnresolvedRuntimeCleanup } from "./runtime-process-cleanup.ts";
@@ -55,6 +57,30 @@ export class RoleCatalog {
     copy: CopyInstanceSession,
   ) {
     return forkInstance(this.context, auth, host, input, copy);
+  }
+  async createSide(
+    auth: AuthenticatedActorContext,
+    host: AuthenticatedHostContext,
+    input: P.InstanceForkRequest,
+    copy: CopyInstanceSession,
+  ): Promise<P.SideCreateResponse> {
+    const result = await forkInstance(
+      this.context,
+      auth,
+      host,
+      input,
+      copy,
+      true,
+    );
+    return P.SideCreateResponseSchema.parse({
+      side: sideProjection(this.context.database, result.instance.instanceId),
+      agent: result.agent,
+      event: result.event,
+      deduplicated: result.deduplicated,
+    });
+  }
+  discardSide(auth: AuthenticatedActorContext, input: P.SideDiscardRequest) {
+    return discardSide(this.context, auth, input);
   }
   private role(row: Row) {
     return P.RoleTemplateSchema.parse({
@@ -212,7 +238,7 @@ export class RoleCatalog {
           `SELECT i.*,t.role_revision_id AS current_revision_id FROM role_instances i
         JOIN role_templates t ON t.role_id=i.role_id
         JOIN memberships m ON m.room_id=i.channel_id AND m.principal_id=i.instance_id
-        WHERE t.control_room_id=? ORDER BY i.instance_id`,
+        WHERE t.control_room_id=? AND NOT EXISTS (SELECT 1 FROM side_sessions s WHERE s.instance_id=i.instance_id) ORDER BY i.instance_id`,
         )
         .all(controlRoomId)
         .map((row) => ({

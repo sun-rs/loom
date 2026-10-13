@@ -229,47 +229,58 @@ function instanceCard(input: {
       .catch(() => undefined);
   };
 
-  const forkButton = button(
-    "Fork…",
-    () => {
-      if (refusedWhileUnknown()) return;
-      confirmArea.replaceChildren(
-        instanceForkDialog(
-          context,
-          status,
-          () => confirmArea.replaceChildren(),
-          () => {
-            if (refusedWhileUnknown()) return;
-            confirmArea.replaceChildren();
-            setStatus(result, "info", "正在复制原生上下文…");
-            void slot
-              .submit({
-                action: "instance-fork",
-                payload: { instanceId: status.instanceId },
-                session: roomSession(context.client, roomId),
-                send: (payload, basedOnRoomSeq, idempotencyKey) =>
-                  context.client.request("instance.fork", {
-                    ...payload,
-                    basedOnRoomSeq,
-                    idempotencyKey,
-                  }),
-                onSettled: (outcome) =>
-                  reportOutcome(result, outcome, "分叉未完成", (response) => {
-                    setStatus(
-                      result,
-                      "ok",
-                      `已创建 ${response.agent.handle}${response.deduplicated ? "（已核实原请求）" : ""}`,
-                    );
-                    input.refresh();
-                  }),
-              })
-              .catch(() => undefined);
-          },
-        ),
-      );
-    },
-    { className: "secondary action-fork" },
-  );
+  const branchButton = (side: boolean) =>
+    button(
+      side ? "Side…" : "Fork…",
+      () => {
+        if (refusedWhileUnknown()) return;
+        confirmArea.replaceChildren(
+          instanceForkDialog(
+            context,
+            status,
+            () => confirmArea.replaceChildren(),
+            () => {
+              if (refusedWhileUnknown()) return;
+              confirmArea.replaceChildren();
+              setStatus(result, "info", "正在复制原生上下文…");
+              void slot
+                .submit({
+                  action: side ? "side-create" : "instance-fork",
+                  payload: { instanceId: status.instanceId },
+                  session: roomSession(context.client, roomId),
+                  send: (payload, basedOnRoomSeq, idempotencyKey) =>
+                    context.client.request(
+                      side ? "side.create" : "instance.fork",
+                      {
+                        ...payload,
+                        basedOnRoomSeq,
+                        idempotencyKey,
+                      },
+                    ),
+                  onSettled: (outcome) =>
+                    reportOutcome(result, outcome, "分叉未完成", (response) => {
+                      setStatus(
+                        result,
+                        "ok",
+                        `已创建 ${response.agent.handle}${response.deduplicated ? "（已核实原请求）" : ""}`,
+                      );
+                      input.refresh();
+                      if ("side" in response) {
+                        context.refreshRooms();
+                        window.location.hash = `#/direct/${encodeURIComponent(response.side.roomId)}`;
+                      }
+                    }),
+                })
+                .catch(() => undefined);
+            },
+            side,
+          ),
+        );
+      },
+      { className: side ? "secondary action-side" : "secondary action-fork" },
+    );
+  const forkButton = branchButton(false),
+    sideButton = branchButton(true);
   const resetButton = button(
     "重置 session…",
     () => {
@@ -322,6 +333,7 @@ function instanceCard(input: {
   const boxLink = el("a", { className: "open-direct-link", text: "查看私聊" });
   const actions = el("div", { className: "form-actions instance-actions" }, [
     forkButton,
+    sideButton,
     resetButton,
     abandonButton,
     removeButton,
@@ -331,6 +343,7 @@ function instanceCard(input: {
   const renderSlot = (state: IntentState) => {
     const busy = state !== "idle";
     forkButton.disabled = busy;
+    sideButton.disabled = busy;
     resetButton.disabled = busy;
     abandonButton.disabled = busy;
     removeButton.disabled = busy;

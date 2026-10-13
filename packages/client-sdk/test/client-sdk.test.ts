@@ -121,6 +121,8 @@ test("RahClient covers every existing Human API v3 operation", () => {
     "runtime.settings.read",
     "runtime.settings.update",
     "search",
+    "side.create",
+    "side.discard",
     "sidebar.get",
     "sidebar.patch",
     "task.amend",

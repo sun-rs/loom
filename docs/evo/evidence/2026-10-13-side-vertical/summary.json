@@ -1,0 +1,227 @@
+{
+  "date": "2026-10-13",
+  "scope": "OpenCode Side first vertical MVP; idle-only discard, other providers and product inspector not complete",
+  "schema": 88,
+  "paidCalls": 0,
+  "cli": "OpenCode 1.18.35",
+  "syntheticRequestsTotal": 25,
+  "runs": [
+    {
+      "root": "/Users/sun/.loom/reviews/2026-10-13-side-vertical/1791890762157-opencode",
+      "sha256": "2e2c69a421344766e271cfa2f0d46b141b444edf2ed4adb25a9e82dc34260a7d",
+      "syntheticRequests": 4,
+      "error": null,
+      "checks": [
+        "source-established",
+        "side-native-zero-generation-idempotent",
+        "side-resumed-private-only",
+        "parent-retained-native-session",
+        "side-discarded-source-untouched",
+        "daemon-drain",
+        "all-activations-terminal"
+      ],
+      "processesExited": true,
+      "generatedSettingsRemoved": true
+    },
+    {
+      "root": "/Users/sun/.loom/reviews/2026-10-13-side-vertical/1791891265657-opencode",
+      "sha256": "fbd2fefbd4e77f02b461163365555c35b7d4b97a9ceebedee6a48f2e81c2e106",
+      "syntheticRequests": 1,
+      "error": "Error: local workbench session token is malformed\n    at new LocalWorkbenchGateway (file:///Users/sun/Code/repos/rah_os/packages/daemon/src/local-workbench-gateway.ts:117:13)\n    at file:///Users/sun/.loom/reviews/2026-10-13-side-vertical/vertical-browser.mjs:62:10",
+      "checks": ["source-established", "daemon-drain"],
+      "processesExited": true,
+      "generatedSettingsRemoved": true
+    },
+    {
+      "root": "/Users/sun/.loom/reviews/2026-10-13-side-vertical/1791891337029-opencode",
+      "sha256": "cc7670396c037e7cc3b43f27fd80eeaebf9eb858bb7d62fe99a0cd2b0cbeb4cd",
+      "syntheticRequests": 4,
+      "error": null,
+      "checks": [
+        "source-established",
+        "side-native-zero-generation-idempotent",
+        "side-resumed-private-only",
+        "parent-retained-native-session",
+        "real-console-side-create-private-page-desktop-mobile",
+        "side-discarded-source-untouched",
+        "daemon-drain",
+        "all-activations-terminal"
+      ],
+      "processesExited": true,
+      "generatedSettingsRemoved": true
+    },
+    {
+      "root": "/Users/sun/.loom/reviews/2026-10-13-side-vertical/1791891470870-opencode",
+      "sha256": "dc87f970b61c053661947b4d1753c4c18d2ad9cac13974ed6a60f37b9d48f40d",
+      "syntheticRequests": 4,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ 'principal_side_7ea1780d4953049d03f9ea462d4639a56a9a5e220dcc0191614e1ad338aa8e91'\n- 'SYNTHETIC opencode-side-1'\n\n    at file:///Users/sun/.loom/reviews/2026-10-13-side-vertical/vertical-browser.mjs:81:408",
+      "checks": [
+        "source-established",
+        "side-native-zero-generation-idempotent",
+        "side-resumed-private-only",
+        "parent-retained-native-session",
+        "daemon-drain"
+      ],
+      "processesExited": true,
+      "generatedSettingsRemoved": true
+    },
+    {
+      "root": "/Users/sun/.loom/reviews/2026-10-13-side-vertical/1791891506977-opencode",
+      "sha256": "4b73abd4e56a5ba98fc604bfef356b77f16f8502515bfef7871ccd650998b51a",
+      "syntheticRequests": 4,
+      "error": null,
+      "checks": [
+        "source-established",
+        "side-native-zero-generation-idempotent",
+        "side-resumed-private-only",
+        "parent-retained-native-session",
+        "real-console-side-create-private-page-desktop-mobile",
+        "side-discarded-source-untouched",
+        "daemon-drain",
+        "all-activations-terminal"
+      ],
+      "processesExited": true,
+      "generatedSettingsRemoved": true
+    },
+    {
+      "root": "/Users/sun/.loom/reviews/2026-10-13-side-vertical/1791892632536-opencode",
+      "sha256": "21017a01107240264b9bf6cbfc848293b471a511d8703fe9a64a1b2c6fef67fa",
+      "syntheticRequests": 4,
+      "error": "locator.waitFor: Timeout 3000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#side-discard-retry') to be visible\u001b[22m\n\n    at /Users/sun/.loom/reviews/2026-10-13-side-vertical/vertical-unknown.mjs:87:44",
+      "checks": [
+        "source-established",
+        "side-native-zero-generation-idempotent",
+        "side-resumed-private-only",
+        "parent-retained-native-session",
+        "real-console-side-create-private-page-desktop-mobile",
+        "daemon-drain"
+      ],
+      "processesExited": true,
+      "generatedSettingsRemoved": true
+    },
+    {
+      "root": "/Users/sun/.loom/reviews/2026-10-13-side-vertical/1791892707046-opencode",
+      "sha256": "7b3e4e0a1e9fc24edb80356376b95ae4c8d4fe4ab5aa45899dc35f9ad4acf83e",
+      "syntheticRequests": 4,
+      "error": null,
+      "checks": [
+        "source-established",
+        "side-native-zero-generation-idempotent",
+        "side-resumed-private-only",
+        "parent-retained-native-session",
+        "real-console-side-create-private-page-desktop-mobile",
+        "side-discard-lost-response-explicit-original-verification-source-untouched",
+        "daemon-drain",
+        "all-activations-terminal"
+      ],
+      "processesExited": true,
+      "generatedSettingsRemoved": true
+    }
+  ],
+  "finalAcceptedRun": "/Users/sun/.loom/reviews/2026-10-13-side-vertical/1791892707046-opencode",
+  "finalFlow": [
+    "source native session",
+    "console Side create",
+    "exact creation replay",
+    "independent native session inherits source history",
+    "real Worker source history read",
+    "private final reply",
+    "source continues without Side messages",
+    "desktop 1440x1000 and mobile 390x844 show new reply and readable instance name",
+    "lost discard response: background projection becomes discarded, original verification remains visible, explicit same-key retry returns deduplicated, exactly one discard event",
+    "all Activations terminal and safe daemon drain"
+  ],
+  "nativeCopyModelRequests": 0,
+  "checks": {
+    "full": "passed: npm run check, exit 0",
+    "focused": {
+      "passed": 95,
+      "log": "/Users/sun/.loom/reviews/2026-10-13-side-vertical/focused-final.log"
+    },
+    "console": "passed desktop 1440x1000 and mobile 390x844, unsupported Codex Fork/Side disabled; native browser lost-discard-response path also passed",
+    "realCliBrowser": "passed; actual CLI with local synthetic model, not paid/model reasoning test",
+    "format": "passed",
+    "diff": "passed",
+    "migrationRegression": {
+      "passed": 42,
+      "log": "/Users/sun/.loom/reviews/2026-10-13-side-vertical/migration-final.log"
+    },
+    "webBuild": "passed; frontend product sources unchanged, bundle rebuilt for new Room protocol field",
+    "firstFullAttempt": {
+      "passed": 3187,
+      "skipped": 22,
+      "failed": 18,
+      "causes": {
+        "outdatedExpectedSchemaVersion": 16,
+        "sdkOperationInventorySort": 1,
+        "newTableDeletionCoverageInventory": 1
+      },
+      "resolution": "current schema assertions, exhaustive SDK order and explicit Side deletion coverage corrected; final full npm run check passed"
+    },
+    "typecheck": "passed",
+    "localLinks": {
+      "checked": 671,
+      "missing": 0
+    },
+    "backend": {
+      "passed": 3205,
+      "skipped": 22,
+      "failed": 0
+    },
+    "webUnit": 487,
+    "consoleUnit": 63,
+    "parity": 34,
+    "formalBrowserPolicy": 15,
+    "bilateral": 3,
+    "efficiencyUnit": 558
+  },
+  "limits": [
+    "OpenCode local shared Channel home/current runtime revision only",
+    "No dynamic credential slots or remote Host copy",
+    "Source must be idle and bound",
+    "Side discard rejects queued/leased/running/quarantined/unclean work; automatic active cancellation is not implemented",
+    "Source message history only; no source private-box access, no source consumption receipts",
+    "Existing Worker catalog remains broad but Kernel denies business mutation capabilities",
+    "Same-UID full-access CLI is not an OS sandbox",
+    "Third-column product UI and paid quality/efficiency acceptance unrun"
+  ],
+  "nativeBrowserHarness": {
+    "path": "/Users/sun/.loom/reviews/2026-10-13-side-vertical/vertical-unknown.mjs",
+    "sha256": "560329229836a65c48a9dca0bd0229ced94d783eba9a2a87b5c5c194a4e3a067"
+  },
+  "logs": {
+    "check.log": {
+      "path": "/Users/sun/.loom/reviews/2026-10-13-side-vertical/check.log",
+      "sha256": "b9206f4fb0069577014531baeb3b8647393e4fe0198b2e21d6aea12666d2ba0c"
+    },
+    "check-final.log": {
+      "path": "/Users/sun/.loom/reviews/2026-10-13-side-vertical/check-final.log",
+      "sha256": "2548b2931ac7788c6ae162f103805b4a7bf08cce71a9dc73cbbf15dd89c1f323"
+    },
+    "focused-final.log": {
+      "path": "/Users/sun/.loom/reviews/2026-10-13-side-vertical/focused-final.log",
+      "sha256": "e5cf51a70451b2895d3a4e8f7e0d8a36cb9da88b8a9f9ff203717980ba73ebc4"
+    },
+    "migration-final.log": {
+      "path": "/Users/sun/.loom/reviews/2026-10-13-side-vertical/migration-final.log",
+      "sha256": "bb25ba662e5256942e65fded46f9676d8aed1e8fd693698f465a8000e30db6c2"
+    },
+    "browser-handoff.log": {
+      "path": "/Users/sun/.loom/reviews/2026-10-13-side-vertical/browser-handoff.log",
+      "sha256": "2e801a3799483d862f3a3d2785782c245317cdd31b87013a7c4f4797ba5e5f1e"
+    },
+    "typecheck-final.log": {
+      "path": "/Users/sun/.loom/reviews/2026-10-13-side-vertical/typecheck-final.log",
+      "sha256": "bef9d01c948fead061ff8f64b8496f8847391051512f3460e767e2602ceab0f8"
+    },
+    "build-web.log": {
+      "path": "/Users/sun/.loom/reviews/2026-10-13-side-vertical/build-web.log",
+      "sha256": "4a89118dcf9c1ac08079616ea0826c58fafa68fb6f05432b1352375db2122f16"
+    },
+    "vertical-unknown-final.log": {
+      "path": "/Users/sun/.loom/reviews/2026-10-13-side-vertical/vertical-unknown-final.log",
+      "sha256": "05fd0ce74fe6571309612a1de5cb7fa9add96800e9c3d8469f5a33d5a8cbc41a"
+    }
+  },
+  "sourceSha256": "0545f2d6983088ae70d115172a519cf75f541f4e07c08afaeccb0d076eed9f57"
+}

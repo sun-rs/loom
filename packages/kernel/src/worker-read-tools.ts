@@ -1,3 +1,4 @@
+import { sideHistoryTarget } from "./side-session.ts";
 import * as HeldReadCoverage from "./held-read-coverage.ts";
 import * as ReadCoverage from "./activation-read-coverage.ts";
 import { readPresentedWindow } from "./activation-presented-window.ts";
@@ -221,7 +222,9 @@ export class WorkerReadService {
   ): P.WorkerHistoryResponse {
     return this.#read(execution, (origin) => {
       const parsed = P.WorkerHistoryRequestSchema.parse(raw);
-      const scope = resolveWorkerReadTarget(this.#db, origin, parsed.channel);
+      const sideTarget = sideHistoryTarget(this.#db, origin, parsed.channel);
+      const scope =
+        sideTarget ?? resolveWorkerReadTarget(this.#db, origin, parsed.channel);
       const input = {
         ...parsed,
         threadId: workerReadThread(scope, parsed.threadId),
@@ -313,25 +316,28 @@ export class WorkerReadService {
       // last showed this participant for this target, so the Agent never has to
       // carry it back on a send. MAX() semantics mean an older page never
       // rewinds the position, and a Thread page never advances its Room.
-      const readReceiptId = ReadCoverage.record(
-        this.#db,
-        origin,
-        scope.roomId,
-        rows.map((row) => integer(row, "event_order")),
-      );
-      recordWorkerTargetReadPosition(this.#db, {
-        messageSeqs: rows.map((row) => integer(row, "event_order")),
-        participantId: scope.participantId,
-        roomId: scope.roomId,
-        ...(input.threadId === undefined || input.threadId === null
-          ? {}
-          : { threadId: input.threadId }),
-        throughRoomSeq: rows.reduce(
-          (highest, row) => Math.max(highest, integer(row, "event_order")),
-          0,
-        ),
-        updatedAt: (this.#context.now?.() ?? new Date()).toISOString(),
-      });
+      const readReceiptId = sideTarget
+        ? undefined
+        : ReadCoverage.record(
+            this.#db,
+            origin,
+            scope.roomId,
+            rows.map((row) => integer(row, "event_order")),
+          );
+      if (!sideTarget)
+        recordWorkerTargetReadPosition(this.#db, {
+          messageSeqs: rows.map((row) => integer(row, "event_order")),
+          participantId: scope.participantId,
+          roomId: scope.roomId,
+          ...(input.threadId === undefined || input.threadId === null
+            ? {}
+            : { threadId: input.threadId }),
+          throughRoomSeq: rows.reduce(
+            (highest, row) => Math.max(highest, integer(row, "event_order")),
+            0,
+          ),
+          updatedAt: (this.#context.now?.() ?? new Date()).toISOString(),
+        });
       // Owner ruling 2026-09-29 (tool contract, not a prompt rule): bodies this
       // run's sent wake already put in front of the model are marked, so the
       // CLI shows a reference instead of repeating them into the session.
@@ -513,7 +519,9 @@ export class WorkerReadService {
   ): P.WorkerVisibleProfile {
     return this.#read(execution, (origin) => {
       const parsed = P.WorkerProfileReadRequestSchema.parse(raw);
-      const scope = resolveWorkerReadTarget(this.#db, origin, parsed.channel);
+      const sideTarget = sideHistoryTarget(this.#db, origin, parsed.channel);
+      const scope =
+        sideTarget ?? resolveWorkerReadTarget(this.#db, origin, parsed.channel);
       const input = parsed;
       const target = input.target ?? scope.participantId;
       const rows = this.#db
@@ -541,7 +549,9 @@ export class WorkerReadService {
   ): P.WorkerTaskListResponse {
     return this.#read(execution, (origin) => {
       const parsed = P.WorkerTaskListRequestSchema.parse(raw);
-      const scope = resolveWorkerReadTarget(this.#db, origin, parsed.channel);
+      const sideTarget = sideHistoryTarget(this.#db, origin, parsed.channel);
+      const scope =
+        sideTarget ?? resolveWorkerReadTarget(this.#db, origin, parsed.channel);
       const input = parsed;
       const page = this.#page(scope, "room_events", "task-list", input);
       const where = ["t.room_id=?", "e.room_seq<=?", "e.room_seq<?"];
@@ -583,7 +593,10 @@ export class WorkerReadService {
       execution,
       (origin) => {
         const parsed = P.WorkerTaskHistoryRequestSchema.parse(raw);
-        const scope = resolveWorkerReadTarget(this.#db, origin, parsed.channel);
+        const sideTarget = sideHistoryTarget(this.#db, origin, parsed.channel);
+        const scope =
+          sideTarget ??
+          resolveWorkerReadTarget(this.#db, origin, parsed.channel);
         const input = parsed;
         requireWorkerTaskVisibility(this.#db, scope, input.taskId);
         // Raft's `recordConsumedSeqs` rule, applied to the Task surface: the

@@ -195,3 +195,40 @@ export const InstanceForkRequestSchema = z
   })
   .strict();
 export type InstanceForkRequest = z.infer<typeof InstanceForkRequestSchema>;
+
+/** A private branch is not a member of its source Channel. */
+export const SideSessionSchema = z
+  .object({
+    instanceId: IdentifierSchema,
+    agentId: IdentifierSchema,
+    roomId: IdentifierSchema,
+    sourceInstanceId: IdentifierSchema,
+    sourceChannelId: IdentifierSchema,
+    state: z.enum(["active", "discarded"]),
+  })
+  .strict();
+export const SideCreateResponseSchema = z
+  .object({
+    side: SideSessionSchema,
+    agent: RoleInstantiateResponseSchema.shape.agent,
+    event: RoomEventSchema,
+    deduplicated: z.boolean(),
+  })
+  .strict();
+export const SideDiscardRequestSchema = z
+  .object({
+    sideId: IdentifierSchema,
+    basedOnRoomSeq: z.number().int().nonnegative(),
+    idempotencyKey: IdentifierSchema,
+  })
+  .strict();
+export const SideDiscardResponseSchema = z
+  .object({
+    side: SideSessionSchema,
+    event: RoomEventSchema,
+    deduplicated: z.boolean(),
+  })
+  .strict();
+export type SideCreateResponse = z.infer<typeof SideCreateResponseSchema>;
+export type SideDiscardRequest = z.infer<typeof SideDiscardRequestSchema>;
+export type SideDiscardResponse = z.infer<typeof SideDiscardResponseSchema>;

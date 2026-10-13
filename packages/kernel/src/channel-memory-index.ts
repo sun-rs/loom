@@ -1,3 +1,4 @@
+import { sideSession, sideReadGrant } from "./side-session.ts";
 import type { DatabaseSync } from "node:sqlite";
 
 import * as P from "@rah-os/protocol";
@@ -110,9 +111,9 @@ export function clearPresentedMemoryDescription(
          FROM activation_presented_windows w
          JOIN run_attempts r ON r.run_attempt_id=w.run_attempt_id
          JOIN role_instances i ON i.instance_id=r.participant_id
-        WHERE i.channel_id=? AND w.memory_json IS NOT NULL`,
+        WHERE (i.channel_id=? OR i.instance_id IN (SELECT instance_id FROM side_sessions WHERE source_channel_id=?)) AND w.memory_json IS NOT NULL`,
     )
-    .all(channelId);
+    .all(channelId, channelId);
   const update = database.prepare(
     `UPDATE activation_presented_windows SET memory_json=?
       WHERE activation_id=? AND consumer_id=? AND run_attempt_id=?`,
@@ -194,6 +195,8 @@ export function channelMemoryHeadSeq(
 }
 
 function instanceChannel(database: DatabaseSync, instanceId: string): string {
+  const side = sideSession(database, instanceId);
+  if (side) return text(side, "source_channel_id");
   const instance = database
     .prepare("SELECT channel_id FROM role_instances WHERE instance_id=?")
     .get(instanceId);
@@ -214,12 +217,22 @@ export function instanceMemoryIndex(
   instanceId: string,
 ): P.InstanceMemoryIndex {
   const channelId = instanceChannel(database, instanceId);
+  const side = sideSession(database, instanceId);
+  const sourceInstanceId = side ? text(side, "source_instance_id") : instanceId;
+  let grant = true;
+  try {
+    sideReadGrant(database, instanceId);
+  } catch {
+    grant = false;
+  }
   const member =
+    grant &&
     database
       .prepare("SELECT 1 FROM memberships WHERE room_id=? AND principal_id=?")
-      .get(channelId, instanceId) !== undefined;
+      .get(channelId, sourceInstanceId) !== undefined;
   const readEnabled =
-    member && effectiveMemorySwitches(database, channelId, instanceId).read;
+    member &&
+    effectiveMemorySwitches(database, channelId, sourceInstanceId).read;
   const throughSeq = channelMemoryHeadSeq(database, channelId);
   if (!readEnabled)
     return { channelId, readEnabled: false, entries: [], total: 0, throughSeq };

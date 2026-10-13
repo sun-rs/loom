@@ -25,6 +25,9 @@ import { TaskReassignmentService } from "./task-reassignment-service.ts";
  * individual constructor wiring. Business authority remains in each service.
  */
 export function createHumanCommandServices(options: {
+  requireMemoryWorker?: (
+    worker: AuthenticatedWorkerExecutionContext,
+  ) => import("@rah-os/protocol").ActivationCredentialScope;
   requireWorker: (
     worker: AuthenticatedWorkerExecutionContext,
   ) => import("@rah-os/protocol").ActivationCredentialScope;
@@ -45,7 +48,10 @@ export function createHumanCommandServices(options: {
   };
   return Object.freeze({
     roles: new RoleCatalog(options),
-    memory: new ChannelMemoryService(options),
+    memory: new ChannelMemoryService({
+      ...options,
+      requireWorker: options.requireMemoryWorker ?? options.requireWorker,
+    }),
     followHumanThread: (
       actor: AuthenticatedActorContext,
       input: Parameters<HumanActivity["follow"]>[1],

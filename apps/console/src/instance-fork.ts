@@ -9,19 +9,27 @@ export function instanceForkDialog(
   status: InstanceStatus,
   cancel: () => void,
   confirm: () => void,
+  side = false,
 ): HTMLElement {
   const note = el("p", { text: "正在核实原生 Fork 支持…" });
-  const submit = button("创建分叉成员", confirm, { className: "confirm-fork" });
+  const submit = button(side ? "打开 Side" : "创建分叉成员", confirm, {
+    className: "confirm-fork",
+  });
   submit.disabled = true;
   const root = el(
     "div",
     {
       className: "confirm-box",
-      attrs: { role: "alertdialog", "aria-label": "分叉实例" },
+      attrs: {
+        role: "alertdialog",
+        "aria-label": side ? "打开 Side" : "分叉实例",
+      },
     },
     [
       el("p", {
-        text: "创建同 Role、同现有配置的新频道成员，并继承此刻的原生上下文。源实例保持不变；任务负责人和私聊权限不复制。",
+        text: side
+          ? "继承当前上下文，开启独立私有对话。Side 只能读取源频道消息和获准的记忆，不能发回频道或修改主会话；空闲后可丢弃。CLI 文件访问仍沿用本机权限。"
+          : "创建同 Role、同现有配置的新频道成员，并继承此刻的原生上下文。源实例保持不变；任务负责人和私聊权限不复制。",
       }),
       note,
       el("div", { className: "form-actions" }, [

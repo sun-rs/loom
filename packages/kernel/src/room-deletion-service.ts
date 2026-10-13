@@ -79,6 +79,9 @@ export const ROOM_DELETION_REFERENCED_TABLES = new Set([
   "room_agent_sos_operations",
   "room_agent_sos_targets",
   "room_events",
+  // Side Rooms are direct; their source Channels retain a Role instance.
+  // Both are refused by the existing kind/Role-instance deletion fences.
+  "side_sessions",
   "role_instance_sessions",
   "role_instances",
   "role_revisions",

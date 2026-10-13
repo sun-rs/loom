@@ -1,4 +1,12 @@
 import {
+  SideCreateResponseSchema,
+  SideDiscardRequestSchema,
+  SideDiscardResponseSchema,
+  type SideCreateResponse,
+  type SideDiscardRequest,
+  type SideDiscardResponse,
+} from "@rah-os/protocol";
+import {
   InstanceForkRequestSchema,
   type InstanceForkRequest,
   type RoleInstantiateResponse,
@@ -246,6 +254,14 @@ import {
 } from "@rah-os/protocol";
 
 export type ClientApplicationServiceOptions = {
+  sideCreate?: (
+    actor: AuthenticatedActorContext,
+    input: InstanceForkRequest,
+  ) => Promise<SideCreateResponse>;
+  sideDiscard?: (
+    actor: AuthenticatedActorContext,
+    input: SideDiscardRequest,
+  ) => SideDiscardResponse;
   instanceFork?: (
     actor: AuthenticatedActorContext,
     input: InstanceForkRequest,
@@ -436,6 +452,8 @@ const CLIENT_V3_DATA_PATHS = new Set([
   "/roles/list",
   "/roles/instantiate",
   "/instances/fork",
+  "/sides/create",
+  "/sides/discard",
   "/instances/session/reset",
   "/instances/activation/abandon",
   "/messages/forward",
@@ -484,6 +502,8 @@ type ClientSession = {
 };
 
 export class ClientApplicationService {
+  readonly #sideCreate: ClientApplicationServiceOptions["sideCreate"];
+  readonly #sideDiscard: ClientApplicationServiceOptions["sideDiscard"];
   readonly #instanceFork: ClientApplicationServiceOptions["instanceFork"];
   readonly #computerFiles: ClientApplicationServiceOptions["computerFiles"];
   readonly #agentExecutionAdministration:
@@ -516,6 +536,8 @@ export class ClientApplicationService {
 
   constructor(options: ClientApplicationServiceOptions) {
     this.#instanceFork = options.instanceFork;
+    this.#sideCreate = options.sideCreate;
+    this.#sideDiscard = options.sideDiscard;
     this.#computerFiles = options.computerFiles;
     this.#agentExecutionAdministration = options.agentExecutionAdministration;
     this.#agentMemoryAdministration = options.agentMemoryAdministration;
@@ -1337,6 +1359,36 @@ export class ClientApplicationService {
         RoleInstantiateResponseSchema.parse(
           this.#human.instantiateRole(actor, command),
         ),
+      );
+      return;
+    }
+    if (path === "/sides/create") {
+      const command = parseClientRequest(InstanceForkRequestSchema, body);
+      if (!this.#sideCreate)
+        throw new HttpRequestError(
+          "side_unavailable",
+          "Native Side is unavailable on this Computer",
+          503,
+        );
+      writeJson(
+        response,
+        200,
+        SideCreateResponseSchema.parse(await this.#sideCreate(actor, command)),
+      );
+      return;
+    }
+    if (path === "/sides/discard") {
+      const command = parseClientRequest(SideDiscardRequestSchema, body);
+      if (!this.#sideDiscard)
+        throw new HttpRequestError(
+          "side_unavailable",
+          "Side is unavailable on this Computer",
+          503,
+        );
+      writeJson(
+        response,
+        200,
+        SideDiscardResponseSchema.parse(this.#sideDiscard(actor, command)),
       );
       return;
     }

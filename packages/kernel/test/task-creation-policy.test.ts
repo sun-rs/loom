@@ -370,7 +370,7 @@ test("schema 79 migration defaults existing Channels off and preserves existing 
           ?.title,
         "preserved",
       );
-      assert.equal(read.prepare("PRAGMA user_version").get()?.user_version, 87);
+      assert.equal(read.prepare("PRAGMA user_version").get()?.user_version, 88);
     } finally {
       read.close();
     }

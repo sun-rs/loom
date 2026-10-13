@@ -44,6 +44,7 @@ export function readForkSource(
     .prepare("SELECT * FROM rooms WHERE room_id=?")
     .get(identity.channelId)!;
   if (
+    room.kind !== "channel" ||
     room.archived_at != null ||
     !db
       .prepare("SELECT 1 FROM memberships WHERE room_id=? AND principal_id=?")

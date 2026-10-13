@@ -1,4 +1,12 @@
 import {
+  SideCreateResponseSchema,
+  SideDiscardRequestSchema,
+  SideDiscardResponseSchema,
+  type SideCreateResponse,
+  type SideDiscardRequest,
+  type SideDiscardResponse,
+} from "@rah-os/protocol";
+import {
   InstanceForkRequestSchema,
   type InstanceForkRequest,
 } from "@rah-os/protocol";
@@ -468,6 +476,8 @@ export type RahClientOperationMap = ComposerOperationMap &
       input: RoleInstantiateRequest;
       output: RoleInstantiateResponse;
     };
+    "side.create": { input: InstanceForkRequest; output: SideCreateResponse };
+    "side.discard": { input: SideDiscardRequest; output: SideDiscardResponse };
     "instance.fork": {
       input: InstanceForkRequest;
       output: RoleInstantiateResponse;
@@ -959,6 +969,20 @@ const operationDefinitions: Record<RahClientOperation, OperationDefinition> = {
     output: RoleInstantiateResponseSchema,
     method: "POST",
     path: "/v3/client/roles/instantiate",
+  },
+  "side.create": {
+    authenticated: true,
+    input: InstanceForkRequestSchema,
+    output: SideCreateResponseSchema,
+    method: "POST",
+    path: "/v3/client/sides/create",
+  },
+  "side.discard": {
+    authenticated: true,
+    input: SideDiscardRequestSchema,
+    output: SideDiscardResponseSchema,
+    method: "POST",
+    path: "/v3/client/sides/discard",
   },
   "instance.fork": {
     authenticated: true,

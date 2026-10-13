@@ -1,3 +1,4 @@
+import { sideSession, sideReadGrant } from "./side-session.ts";
 import type { DatabaseSync } from "node:sqlite";
 
 import type { ActivationCredentialScope } from "@rah-os/protocol";
@@ -9,9 +10,8 @@ import { integer, nullableInteger, text } from "./sqlite-row.ts";
 export type MemoryAccess = "read" | "write";
 
 /**
- * The kind of Worker credential asking. Every credential issued today is a
- * main-session credential; contract §3 Side sessions (S5, not implemented)
- * must be issued as "side", and this decision refuses them any write. The
+ * The credential kind comes from durable Side provenance, never a client field.
+ * Side conversations cannot write, even when the source write switch is on. The
  * decision lives in the Kernel, so a side prompt cannot talk its way past it.
  */
 export type MemoryCredentialKind = "main" | "side";
@@ -48,11 +48,12 @@ export function decideMemoryAccess(
   return { allowed: true };
 }
 
-/** Today every Worker credential is a main-session credential (see above). */
+/** Credential authority is derived from the authenticated execution principal. */
 export function workerMemoryCredentialKind(
-  _scope: Readonly<ActivationCredentialScope>,
+  database: DatabaseSync,
+  scope: Readonly<ActivationCredentialScope>,
 ): MemoryCredentialKind {
-  return "main";
+  return sideSession(database, scope.participantId) ? "side" : "main";
 }
 
 export type MemoryPolicyState = {
@@ -121,6 +122,12 @@ export function workerMemoryChannel(
   database: DatabaseSync,
   scope: Readonly<ActivationCredentialScope>,
 ): string {
+  const side = sideReadGrant(database, scope.participantId);
+  if (side) {
+    if (side.room_id !== scope.roomId)
+      throw new ForbiddenError("Side memory is outside this conversation");
+    return text(side, "source_channel_id");
+  }
   const instance = database
     .prepare("SELECT channel_id FROM role_instances WHERE instance_id=?")
     .get(scope.participantId);
@@ -162,11 +169,14 @@ function workerMemoryDecision(
   const switches = effectiveMemorySwitches(
     database,
     channelId,
-    scope.participantId,
+    String(
+      sideSession(database, scope.participantId)?.source_instance_id ??
+        scope.participantId,
+    ),
   );
   const decision = decideMemoryAccess(
     {
-      credential: workerMemoryCredentialKind(scope),
+      credential: workerMemoryCredentialKind(database, scope),
       readEnabled: switches.read,
       writeEnabled: switches.write,
     },

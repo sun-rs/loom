@@ -168,7 +168,9 @@ Phase-3 slice order (contract §8): S1 per-turn efficiency -> S2 session
 lifecycle plus usage/context/compaction visibility -> S3 private box gaps -> S4
 fork -> S5 side -> S6 platform memory. The owner approved implementing S6
 before S4/S5; the owner has now authorized a narrow phase-4 UI slice after close-out
-acceptance (2026-10-02); S4/S5 remain deferred. Keep the console until its
+acceptance (2026-10-02), and authorized S4/S5 implementation on 2026-10-13.
+The first OpenCode Fork/Side slices use the console; provider coverage and
+remaining lifecycle limits are recorded in status. Keep the console until its
 working capabilities have product UI replacements (contract §8). Each slice: tests first, implementation, visible in the console,
 commit and push to `evo`. After S1, measure against contract §6; if far from
 target, stop and re-evaluate the architecture.
@@ -363,7 +365,9 @@ does not scrub provider sessions, diagnostics, backups or SQLite residue. Read
 and write switches default per Channel with per-member overrides, enforced by
 the Kernel on the authenticated Worker path. New sessions receive a light index
 (3 KiB, pinned first) plus per-turn deltas; bodies are read on demand. Side
-sessions are read-only by design, but side credentials are not issued yet (S5).
+sessions derive their read-only authority from Kernel provenance, never a
+client-supplied mode. Source read switches apply; Side may reply only inside
+its own private conversation. Current provider/lifecycle coverage is in status (S5).
 
 The per-instance `MEMORY.md` plus `notes/` is no longer loaded or materialized
 for Role instances; old directories stay read-only and can be imported only by

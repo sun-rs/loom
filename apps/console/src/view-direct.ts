@@ -1,11 +1,13 @@
+import { WriteIntentSlot } from "./actions.ts";
+import { intentControls, reportOutcome } from "./intent-view.ts";
 /**
  * An instance's private box: its own messages, composer, state and runs.
  * It reads only the private-box Room; the Channel page never shows it.
  * Throwaway: deleted in phase 4.
  */
-import { errorText, isAbort } from "./api.ts";
+import { errorText, isAbort, roomSession } from "./api.ts";
 import { subscribe, type ConsoleContext } from "./context.ts";
-import { el, field, present } from "./dom.ts";
+import { button, el, field, present } from "./dom.ts";
 import { DIRECT_MEMORY_SCOPE_NOTE } from "./memory.ts";
 import {
   SYSTEM_PRINCIPAL_ID,
@@ -32,6 +34,10 @@ export function mountDirect(
   context: ConsoleContext,
   roomId: string,
 ): () => void {
+  const sideIntent = new WriteIntentSlot();
+  const sideResult = el("p");
+  // One listener set per mounted Room; polling must not replace an unknown intent.
+  const sideControls = intentControls(sideIntent, "side-discard", sideResult);
   const header = el("section", { className: "panel direct-header" });
   const statusBody = el("div", { attrs: { id: "direct-instance" } });
   const runDetail = runDetailPanel(context);
@@ -62,13 +68,14 @@ export function mountDirect(
   const renderHeader = () => {
     const room = box();
     const privateBox = room?.instancePrivateBox;
+    const side = room?.side;
     header.replaceChildren(
       el("h2", {
         attrs: { id: "direct-title" },
         text:
           privateBox === undefined
             ? roomId
-            : `私聊 · ${instance?.handle ?? instance?.roleName ?? privateBox.instanceId}`,
+            : `${side ? "Side" : "私聊"} · ${instance?.handle ?? instance?.roleName ?? privateBox.instanceId}`,
       }),
       privateBox === undefined
         ? el("p", {
@@ -80,13 +87,19 @@ export function mountDirect(
         : el("div", {}, [
             field(
               "私聊状态",
-              privateBox.active ? "可用" : "已停用（实例已移出频道；历史只读）",
+              privateBox.active
+                ? "可用"
+                : side?.discarded
+                  ? "Side 已丢弃（历史只读）"
+                  : "已停用（实例已移出频道；历史只读）",
               "direct-active",
             ),
             el("p", {
               attrs: { id: "direct-memory-scope" },
               className: "muted",
-              text: DIRECT_MEMORY_SCOPE_NOTE,
+              text: side
+                ? "独立的 Side 会话。源频道仅可读；不会发回频道或改变主实例。丢弃保留历史，不清除原生记录。"
+                : DIRECT_MEMORY_SCOPE_NOTE,
             }),
             instance?.channelId === undefined
               ? null
@@ -98,7 +111,49 @@ export function mountDirect(
                 }),
           ]),
     );
+    // A lost successful discard still needs explicit same-key verification.
+    if (
+      side &&
+      privateBox &&
+      (!side.discarded || sideIntent.state !== "idle")
+    ) {
+      const discard = button(
+        "丢弃 Side",
+        () => {
+          void sideIntent
+            .submit({
+              action: "side-discard",
+              payload: { sideId: privateBox.instanceId },
+              session: roomSession(context.client, roomId),
+              send: (payload, basedOnRoomSeq, idempotencyKey) =>
+                context.client.request("side.discard", {
+                  ...payload,
+                  basedOnRoomSeq,
+                  idempotencyKey,
+                }),
+              onSettled: (outcome) =>
+                reportOutcome(sideResult, outcome, "丢弃未完成", () => {
+                  context.refreshRooms();
+                  poller.runNow();
+                }),
+            })
+            .catch(() => undefined);
+        },
+        { className: "secondary side-discard" },
+      );
+      discard.disabled = side.discarded || sideIntent.state !== "idle";
+      header.append(
+        el("p", {
+          className: "muted",
+          text: "当前仅支持空闲后丢弃；有排队或运行中的工作时会拒绝。",
+        }),
+        discard,
+        sideResult,
+        sideControls,
+      );
+    }
   };
+  sideIntent.onChange(() => renderHeader());
 
   container.replaceChildren(
     header,
@@ -149,7 +204,7 @@ export function mountDirect(
       );
       instance = {
         agentId: agent?.definition.agentId,
-        channelId: listed?.channelId,
+        channelId: box()?.side?.sourceChannelId ?? listed?.channelId,
         handle: agent?.handle,
         instanceId: privateBox.instanceId,
         roleName: role?.configuration.displayName,
@@ -171,7 +226,11 @@ export function mountDirect(
       const agentId = instance.agentId;
       statusBody.replaceChildren(
         ...present(
-          field("实例", privateBox.instanceId, "instance-id"),
+          field(
+            "实例",
+            instance.handle ?? instance.roleName ?? "加载中…",
+            "instance-id",
+          ),
           field(
             "状态",
             entry === undefined

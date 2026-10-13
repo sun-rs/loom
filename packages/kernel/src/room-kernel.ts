@@ -1,3 +1,4 @@
+import { requireWorkerExecution } from "./worker-execution-authorization.ts";
 import { migrateWorkerRunMessageWrites } from "./worker-run-message-writes.ts";
 import { submitWorkerFinalOutputTransaction } from "./worker-final-output.ts";
 import * as HeldReadCoverage from "./held-read-coverage.ts";
@@ -189,7 +190,6 @@ import {
   createAccessToken,
   createHostAccessToken,
   hashAccessToken,
-  isIssuedWorkerExecutionContext,
   issueAuthenticatedActorContext,
   issueAuthenticatedHostContext,
   issueAuthenticatedWorkerExecutionContext,
@@ -439,7 +439,7 @@ import { RunGuardPolicy } from "./run-guard-policy.ts";
 import { RunWatchdogService } from "./run-watchdog-service.ts";
 const DEFAULT_RUNTIME_OFFER_CLOCK_SKEW_MS = 5_000;
 const DEFAULT_RUNTIME_OFFER_MAX_TTL_MS = 5 * 60_000;
-export const KERNEL_SCHEMA_VERSION = 87;
+export const KERNEL_SCHEMA_VERSION = 88;
 
 export class RoomKernel {
   static #referenceSchema: Map<string, string> | undefined;
@@ -568,7 +568,7 @@ export class RoomKernel {
       now: this.#now,
       openDirect,
       requireWorker: (worker) =>
-        this.#requireAuthenticatedWorkerExecution(worker),
+        this.#requireAuthenticatedWorkerExecution(worker, true),
       transaction: (operation) => this.#transaction(operation),
       eventFromRow: (row) => this.#eventFromRow(row),
       snapshot: (roomId) => this.#snapshot(roomId),
@@ -587,7 +587,7 @@ export class RoomKernel {
       now: this.#now,
       openDirect,
       requireWorker: (worker) =>
-        this.#requireAuthenticatedWorkerExecution(worker),
+        this.#requireAuthenticatedWorkerExecution(worker, true),
       transaction: (operation) => this.#transaction(operation),
     });
     this.#agentExclusiveOperations = new AgentExclusiveOperationService({
@@ -662,6 +662,8 @@ export class RoomKernel {
       transaction: (operation) => this.#transaction(operation),
     });
     const humanCommands = createHumanCommandServices({
+      requireMemoryWorker: (worker) =>
+        this.#requireAuthenticatedWorkerExecution(worker, true),
       assertFreshContext: (roomId, actorId, seq) =>
         this.#assertFreshContext(roomId, actorId, seq),
       requireWorker: (worker) =>
@@ -748,7 +750,7 @@ export class RoomKernel {
       transaction: (fn) => this.#transaction(fn),
       requireActor: (actor) => this.getAuthenticatedPrincipal(actor),
       requireWorker: (worker) =>
-        this.#requireAuthenticatedWorkerExecution(worker),
+        this.#requireAuthenticatedWorkerExecution(worker, true),
       collaboration: this.#collaboration,
       events: this.#roomEvents,
     });
@@ -1818,7 +1820,10 @@ export class RoomKernel {
   ) {
     return this.finalReplies.hinting(() =>
       this.#transaction(() => {
-        const scope = this.#requireAuthenticatedWorkerExecution(execution);
+        const scope = this.#requireAuthenticatedWorkerExecution(
+          execution,
+          true,
+        );
         return submitWorkerFinalOutputTransaction({
           database: this.#database,
           scope,
@@ -1838,7 +1843,10 @@ export class RoomKernel {
       if (input.channel !== undefined || input.reviseDraftId !== undefined)
         return this.workerTargetContext.post(execution, input);
       return this.#transaction(() => {
-        const scope = this.#requireAuthenticatedWorkerExecution(execution);
+        const scope = this.#requireAuthenticatedWorkerExecution(
+          execution,
+          true,
+        );
         return this.#postWorkerOriginMessage(execution, scope, input);
       });
     });
@@ -1882,7 +1890,7 @@ export class RoomKernel {
     request: { memoryIndexSeq?: number } = {},
   ): RenderedPresentedWindow {
     return this.#transaction(() => {
-      const scope = this.#requireAuthenticatedWorkerExecution(execution);
+      const scope = this.#requireAuthenticatedWorkerExecution(execution, true);
       return MemoryIndex.withPresentedMemory(
         this.#database,
         scope,
@@ -1913,7 +1921,7 @@ export class RoomKernel {
   /** Phase-table fields for one RunAttempt's wake delivery. Read-only, and it
    * measures nothing: see `readPresentedDeliveryPhases`. */
   readPresentedDeliveryPhases(execution: AuthenticatedWorkerExecutionContext) {
-    const scope = this.#requireAuthenticatedWorkerExecution(execution);
+    const scope = this.#requireAuthenticatedWorkerExecution(execution, true);
     return readPresentedDeliveryPhases(this.#database, scope);
   }
 
@@ -5135,7 +5143,7 @@ export class RoomKernel {
     return this.#transaction(() =>
       ReadCoverage.freeze(
         this.#database,
-        this.#requireAuthenticatedWorkerExecution(execution),
+        this.#requireAuthenticatedWorkerExecution(execution, true),
       ),
     );
   }
@@ -5145,7 +5153,7 @@ export class RoomKernel {
     input: WorkerDeliveryAcknowledgement,
   ): void {
     this.#transaction(() => {
-      const scope = this.#requireAuthenticatedWorkerExecution(execution);
+      const scope = this.#requireAuthenticatedWorkerExecution(execution, true);
       recordCheckedWorkerMessages(
         this.#database,
         scope,
@@ -5181,7 +5189,7 @@ export class RoomKernel {
     input: AutomaticWorkerSyncInput,
   ): WorkerSyncResult {
     return this.#transaction(() => {
-      const scope = this.#requireAuthenticatedWorkerExecution(execution);
+      const scope = this.#requireAuthenticatedWorkerExecution(execution, true);
       return syncAutomaticWorker(
         this.#database,
         scope,
@@ -5920,38 +5928,14 @@ export class RoomKernel {
 
   #requireAuthenticatedWorkerExecution(
     execution: AuthenticatedWorkerExecutionContext,
+    conversation = false,
   ): ActivationCredentialScope {
-    if (!isIssuedWorkerExecutionContext(execution)) {
-      throw new UnauthenticatedError("worker execution context is invalid");
-    }
-    const scope = ActivationCredentialScopeSchema.parse(execution.scope);
-    const instance = this.#database
-      .prepare(
-        "SELECT credential_id, instance_id, state FROM agent_hosts WHERE host_id = ?",
-      )
-      .get(scope.hostId);
-    if (
-      !instance ||
-      nullableText(instance, "credential_id") !== execution.hostCredentialId ||
-      text(instance, "instance_id") !== execution.hostInstanceId ||
-      text(instance, "state") === "offline"
-    ) {
-      throw new UnauthenticatedError("worker execution context is invalid");
-    }
-    const row = this.#database
-      .prepare(
-        "SELECT host_id, participant_ids_json FROM agent_host_credentials WHERE credential_id = ? AND revoked_at IS NULL",
-      )
-      .get(execution.hostCredentialId);
-    if (
-      !row ||
-      text(row, "host_id") !== scope.hostId ||
-      !stringArray(row, "participant_ids_json").includes(scope.participantId)
-    ) {
-      throw new UnauthenticatedError("worker execution context is invalid");
-    }
-    this.#assertWorkerExecutionScope(scope);
-    return scope;
+    return requireWorkerExecution(
+      this.#database,
+      execution,
+      (scope) => this.#assertWorkerExecutionScope(scope),
+      conversation,
+    );
   }
 
   #assertWorkerGrantScope(scope: ActivationCredentialScope): {

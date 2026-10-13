@@ -1,3 +1,4 @@
+import { sideSession } from "./side-session.ts";
 import type { DatabaseSync } from "node:sqlite";
 import { ForbiddenError } from "./errors.ts";
 
@@ -75,13 +76,16 @@ export function requireInstanceReplyTarget(
  * Historical private messages remain readable to their original Human. */
 export function activeInstancePrivateBoxPredicate(room: string) {
   return `NOT EXISTS (
-    SELECT 1 FROM rooms r
-    JOIN memberships peer ON peer.room_id=r.room_id
-    JOIN role_instances i ON i.instance_id=peer.principal_id
-    WHERE r.room_id=${room} AND r.kind='direct'
-      AND EXISTS (SELECT 1 FROM memberships member WHERE member.room_id=r.room_id
-        AND NOT EXISTS (SELECT 1 FROM memberships source
-          WHERE source.room_id=i.channel_id AND source.principal_id=member.principal_id))
+    SELECT 1 FROM rooms r WHERE r.room_id=${room} AND (
+      EXISTS (SELECT 1 FROM side_sessions s WHERE s.room_id=r.room_id AND s.discarded_at IS NOT NULL)
+      OR (r.kind='direct' AND EXISTS (
+        SELECT 1 FROM memberships peer JOIN role_instances i ON i.instance_id=peer.principal_id
+        WHERE peer.room_id=r.room_id
+          AND EXISTS (SELECT 1 FROM memberships member WHERE member.room_id=r.room_id
+            AND NOT EXISTS (SELECT 1 FROM memberships source
+              WHERE source.room_id=i.channel_id AND source.principal_id=member.principal_id))
+      ))
+    )
   )`;
 }
 /** The Room projection's `instancePrivateBox`: which instance a Direct Room
@@ -101,8 +105,18 @@ export function withInstancePrivateBox<
     )
     .get(room.roomId);
   if (row === undefined) return room;
+  const side = sideSession(database, String(row.instance_id));
   return {
     ...room,
+    ...(side
+      ? {
+          side: {
+            sourceInstanceId: String(side.source_instance_id),
+            sourceChannelId: String(side.source_channel_id),
+            discarded: side.discarded_at != null,
+          },
+        }
+      : {}),
     instancePrivateBox: {
       instanceId: String(row.instance_id),
       active: Number(row.active) === 1,
