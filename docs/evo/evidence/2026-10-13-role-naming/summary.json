@@ -35,7 +35,7 @@
     "formatCheck": true,
     "diffCheck": true,
     "paidProvidersRun": false,
-    "deployed": false,
+    "deployed": true,
     "initialFullCheck": {
       "passed": false,
       "backendTests": 3194,
@@ -62,7 +62,8 @@
       "loom-role-naming-browser-accepted.log": "b9884a930bd54b168b05b6b34d7831839c197003c95be1d3402d1325c9fc9445",
       "loom-role-check-failure-isolated.log": "822ecf7544fe86fb751265982e7eadeb4b07cbefcabca70d38a9b26fc6d16b31",
       "loom-role-migrations-green-final.log": "c64293044a006f6cab27e64cf163a02ef0b5bd69137e58b41973832d4b934e6b"
-    }
+    },
+    "deploymentEvidence": "deployment.json"
   },
   "boundaries": [
     "Existing duplicate Role names are retained, not silently merged or renamed. New collisions are refused.",

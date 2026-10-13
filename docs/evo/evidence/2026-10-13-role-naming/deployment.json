@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-13",
+  "codeCommit": "167f69e41ed5732ddf6d4e07d89de7aceb1cdc39",
+  "codePushed": true,
+  "service": "com.loom.evo",
+  "schemaVersion": 87,
+  "backup": {
+    "verified": true,
+    "databases": 2,
+    "stateFiles": 317
+  },
+  "restart": {
+    "graceful": true,
+    "newProcessVerified": true,
+    "forcedKill": false,
+    "businessTablesUnchanged": 14,
+    "roleDeletionColumnOnly": "All pre-existing deleted_at values NULL; all pre-existing Role columns unchanged."
+  },
+  "sourceSha256": "70a4606e774629f4ffc1815521b9c8ce8ed9999e4f0bf967e549a0a7cd6de365",
+  "consoleBuild": "e0ebc05da0bd25677f196919369542b73412a03cdeeca48f45bff38dea014fb5",
+  "consoleAssets": {
+    "app-C-jR7Eb4.js": "43d0bf0b35b70923273ce7faef25bbf312a1d8ee5b9bc03f455c14de119444f1",
+    "index-DaexJMn4.css": "f58c6496457ed2e4206d838f48d443fec9bab9c8559422c3013975713c322db2",
+    "index-LaDUzJIA.js": "454d08d9b83a3bcdcaa6b32de40a17f45f583a0b150903ea6a41db08dd4d325a"
+  },
+  "consoleSnapshotPinned": true,
+  "webRebuilt": false,
+  "webBuildId": "6c76c5348a13401f",
+  "verification": {
+    "historyRead": true,
+    "roleApi": true,
+    "memoryApi": true,
+    "usageApi": true,
+    "freshConsole": true,
+    "singlePromptAndNoHandleFields": true,
+    "desktopAndMobile": true,
+    "viewports": ["1440x1000", "390x844"],
+    "pageErrors": [],
+    "horizontalOverflow": false,
+    "readOnly": true
+  },
+  "runtimeSelection": {
+    "claudeNativeFinal": true,
+    "opencodeNativeFinal": true,
+    "otherFiveFinalFlags": false
+  },
+  "paidProviderRuns": 0
+}
