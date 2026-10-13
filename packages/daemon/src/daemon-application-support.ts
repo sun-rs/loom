@@ -1,3 +1,4 @@
+import { createDaemonInstanceFork } from "./daemon-instance-fork.ts";
 import { runAgentDeletionReconciler } from "./agent-deletion-reconciler.ts";
 import type { RuntimeGuideSettings } from "./runtime-guide-settings.ts";
 import type { RuntimeSettings } from "./runtime-settings.ts";
@@ -557,6 +558,7 @@ export function createDaemonHumanClientService(input: {
   buildVersion: string;
   config: DaemonConfig;
   configuredLocalRuntimes: readonly ConfiguredLocalRuntimeSnapshot[];
+  runtimeProfileRegistries: ReadonlyMap<string, RuntimeProfileRegistry>;
   refreshRuntimeCatalog?: ((offerId: string) => Promise<void>) | undefined;
   discoveredLocalClis: readonly LocalRuntimeInventoryEntry[];
   healthState: () => ClientHealthResponse["state"];
@@ -576,6 +578,14 @@ export function createDaemonHumanClientService(input: {
       path: join(input.config.stateDirectory, "computer-profiles.json"),
     });
   return new HumanHttpApplicationService({
+    instanceFork: createDaemonInstanceFork({
+      kernel: input.kernel,
+      host: input.host,
+      stateDirectory: input.config.stateDirectory,
+      registries: input.runtimeProfileRegistries,
+      configured: input.configuredLocalRuntimes,
+      memory: input.agentMemoryCoordinator,
+    }),
     computerFiles: new ComputerFileBrowser({
       hostId: input.host.hostId,
       label: hostname(),

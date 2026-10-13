@@ -703,6 +703,7 @@ export class DaemonApplication {
         buildVersion: DAEMON_BUILD_VERSION,
         config: this.#config,
         configuredLocalRuntimes,
+        runtimeProfileRegistries,
         refreshRuntimeCatalog: (offerId) => catalogRefresh.refresh(offerId),
         discoveredLocalClis,
         healthState: () => this.#health.state,

@@ -1777,6 +1777,20 @@ if (args.join(" ") === "debug models --bundled") {
     description: "idle before reset",
     timeoutMs: 20_000,
   });
+  // Fork capability is truthful: this gate's Codex fixture is not an enabled
+  // product Fork adapter. Merely showing the action must not publish a child.
+  const beforeForkPreview = await head(channelId);
+  await click(`${card} .action-fork`);
+  await waitForText(`${card} .confirm-box`, "其他 CLI 暂未接入正式 Fork");
+  assert.equal(
+    await evaluate(
+      browser,
+      `document.querySelector(${JSON.stringify(`${card} .confirm-fork`)})?.disabled`,
+    ),
+    true,
+  );
+  await click(`${card} .confirm-cancel`);
+  assert.equal(await head(channelId), beforeForkPreview);
   const beforeReset = await head(channelId);
   await click(`${card} .action-reset`);
   await waitForText(`${card} .confirm-box`, "新的原生 CLI session");

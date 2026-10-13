@@ -1,0 +1,124 @@
+{
+  "date": "2026-10-13",
+  "scope": "OpenCode Fork first vertical slice, not five-provider Fork or Side completion",
+  "paidCalls": 0,
+  "native": {
+    "root": "/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/loom-product-fork-ofKgG2",
+    "adapter": "production copyOpenCodeSession",
+    "newSession": true,
+    "historyRetained": true,
+    "parentUnchanged": true,
+    "replayNoCopy": true,
+    "modelRequests": 0,
+    "externalNetworkDenied": true
+  },
+  "formalDaemon": {
+    "root": "/Users/sun/.loom/reviews/2026-10-13-fork-vertical/1791888084235-opencode",
+    "resultSha256": "63041958c3792af926a5a4557d5b57994cdbc0247426c93e1f78254031a81a11",
+    "cli": "OpenCode 1.18.35",
+    "syntheticModelRequests": 3,
+    "checks": [
+      "source-established",
+      "fork-native-zero-generation-idempotent",
+      "child-resumed-and-published-as-new-member",
+      "parent-retained-native-session",
+      "daemon-drain",
+      "all-activations-terminal"
+    ],
+    "error": null,
+    "recordedProcessesExited": true,
+    "generatedSettingsRemoved": true,
+    "newIdentityInSystemPrompt": true
+  },
+  "checks": {
+    "focused": 32,
+    "typecheck": "passed",
+    "browser": "passed: desktop 1440x1000 and mobile 390x844; unsupported Codex Fork disabled",
+    "full": "passed, exit 0",
+    "backend": {
+      "passed": 3202,
+      "skipped": 22
+    },
+    "web": 487,
+    "console": 63,
+    "parity": 34,
+    "browserPolicy": 15,
+    "bilateral": 3,
+    "gateUnit": 558,
+    "format": "passed",
+    "diff": "passed",
+    "localDocumentationLinks": "passed"
+  },
+  "deployment": {
+    "state": "not deployed"
+  },
+  "limits": [
+    "OpenCode only",
+    "Local shared Channel home only",
+    "Source session must have run on current runtime revision",
+    "Dynamic credential slots unsupported",
+    "Unknown native copy results require explicit inspection or abandonment",
+    "Native orphan copies can remain after source CAS rejection",
+    "Side not implemented",
+    "No paid model-quality or efficiency acceptance"
+  ],
+  "evidence": {
+    "native.mjs": {
+      "path": "/Users/sun/.loom/reviews/2026-10-13-fork-vertical/native.mjs",
+      "sha256": "84783547ff67b75c9aa60033e4931166ce3b14d2ac11dc60c5bbc5db09f394b4"
+    },
+    "native.log": {
+      "path": "/Users/sun/.loom/reviews/2026-10-13-fork-vertical/native.log",
+      "sha256": "82713f46f724a076d154e077ab7986b29edd2464f76d5847a6a0c2185a08fa57"
+    },
+    "vertical.mjs": {
+      "path": "/Users/sun/.loom/reviews/2026-10-13-fork-vertical/vertical.mjs",
+      "sha256": "cab07325db0d759d0fd98ea697f0dc1390a751d35a540f1e344ea6e224afedcd"
+    },
+    "vertical.log": {
+      "path": "/Users/sun/.loom/reviews/2026-10-13-fork-vertical/vertical.log",
+      "sha256": "1ea3f29cb64eae0f925306463524cb08c00c930543ab05a63c6f64f087d01137"
+    },
+    "focused.log": {
+      "path": "/Users/sun/.loom/reviews/2026-10-13-fork-vertical/focused.log",
+      "sha256": "936b45fd4b3551d3a35fbdf494d5af48dd1d4658e214799a5e67d7016865a586"
+    },
+    "check.log": {
+      "path": "/Users/sun/.loom/reviews/2026-10-13-fork-vertical/check.log",
+      "sha256": "25cc389dfb5b6f3af79d1028023ee1db8683617ff81f05277410e4e561c45579"
+    },
+    "typecheck.log": {
+      "path": "/Users/sun/.loom/reviews/2026-10-13-fork-vertical/typecheck.log",
+      "sha256": "bef9d01c948fead061ff8f64b8496f8847391051512f3460e767e2602ceab0f8"
+    },
+    "browser.log": {
+      "path": "/Users/sun/.loom/reviews/2026-10-13-fork-vertical/browser.log",
+      "sha256": "8fdda734c933159299bab8d1afdcc45598fa0faef96b01672f73f4043d4d3611"
+    },
+    "format.log": {
+      "path": "/Users/sun/.loom/reviews/2026-10-13-fork-vertical/format.log",
+      "sha256": "fb5ffe51bf83c7a6ac683f386a5c903f6ff2c086dbe1bf27cc1f12efddaf7e3f"
+    }
+  },
+  "sourceHashes": {
+    "apps/console/src/instance-fork.ts": "3de093b2396f12293407cfc0769bd735bbc74d8941ea3fefa31626a7433d66d0",
+    "packages/agent-host/src/opencode-session-fork.ts": "2869f26feeda0d4861ddd1bf8e351680391005ef0f558ff07624f89429fde810",
+    "packages/agent-host/test/opencode-session-fork.test.ts": "dd79325f61166ab95ad718abcba0b8e4eb77ff016e4f43d92e58c068a1afb41a",
+    "packages/application-service/test/instance-fork-http.test.ts": "a9bff8d7e89728b921a0e57e05de05e51a8b2e6c0fb47554aa63f54c1b9534ca",
+    "packages/daemon/src/daemon-instance-fork.ts": "cb5c2c50cde521425af8b164a9c7776a1464ea79f279561c4eda218c275be61e",
+    "packages/daemon/test/daemon-instance-fork.test.ts": "43a8974cc23cd19635e7446e137e9d5714ab65dbd203c6eab885b399d9a1f651",
+    "packages/kernel/src/instance-fork-source.ts": "95cea53c38d571c002880d4e0c1e9ead74ce9bc9937af0bfaa2e4a231df79ad6",
+    "packages/kernel/src/instance-fork.ts": "8eb463cbd1e14a0848ea08cf3c7e61b18807e747684740ee277a0f9b2b8502f7",
+    "packages/kernel/test/instance-fork.test.ts": "885cb0d19305adb5d818ecdc35b67522e1533ff5a745e7159fd580eba4e8b000",
+    "apps/console/src/actions.ts": "c9def21e8228ac88f850b240ca76d63d74eaae041f1b7e06e813bd8f9e8745db",
+    "apps/console/src/view-channel.ts": "1d179b6ede27e99ba1d83622aa619d3a8353237a80b35e9f44f5fac59786fa23",
+    "packages/application-service/src/client-application-service.ts": "6451b7c0c85ae1508b201205707172b5b99588c2b56b5ead280e1436c8e89660",
+    "packages/client-sdk/src/index.ts": "0924a5a6c467d4548b559479aea816e95619123633b08f2a11ddfefe504e4a6d",
+    "packages/client-sdk/test/client-sdk.test.ts": "3255ea95422b4f8eccb790b4714794cc14f3da397b5d56640a12a7a3716e894b",
+    "packages/daemon/src/daemon-application-support.ts": "3ca04209b572aa1bc7d4851cfb316e5904ef01e7d783136b64018d45ac074d77",
+    "packages/daemon/src/daemon-application.ts": "b5d68e2ee5ff8dd52176dc235e98982908824a85187ba6bfc050383eea1435e5",
+    "packages/kernel/src/role-catalog.ts": "4964ecf7070f0535f3202360cbf089781ad7aee57df5ca3a2b3463783ee3fce5",
+    "packages/protocol/src/role-catalog.ts": "1f7cec1004b9043f9f9891dc552695513ebcbad90fb7159993ad3e02aa8405de",
+    "scripts/run-console-browser-gate.mjs": "d4f299481a588c1454ef068dc31585b67a8306cc279f657a134eef159f46c68f"
+  }
+}

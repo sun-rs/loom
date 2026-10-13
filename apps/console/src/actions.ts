@@ -67,6 +67,8 @@ function isStaleContext(error: unknown): boolean {
  * replay. Evidence (packages/kernel/src; replay line -> freshness line):
  */
 export const REPLAY_BEFORE_FRESHNESS: Readonly<Record<string, string>> = {
+  "instance-fork":
+    "instance-fork.ts: committed replay before source/freshness checks; unknown native copies never retried",
   "task-policy":
     "room.update: replay before assertFreshContext in collaboration-service",
   "task-create": "task.create/convert: task-intent replay before freshness",

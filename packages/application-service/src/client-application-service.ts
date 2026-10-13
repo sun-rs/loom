@@ -1,4 +1,9 @@
 import {
+  InstanceForkRequestSchema,
+  type InstanceForkRequest,
+  type RoleInstantiateResponse,
+} from "@rah-os/protocol";
+import {
   RoleDeleteRequestSchema,
   RoleDeleteResponseSchema,
   RoleCreateRequestSchema,
@@ -241,6 +246,10 @@ import {
 } from "@rah-os/protocol";
 
 export type ClientApplicationServiceOptions = {
+  instanceFork?: (
+    actor: AuthenticatedActorContext,
+    input: InstanceForkRequest,
+  ) => Promise<RoleInstantiateResponse>;
   computerFiles?: {
     list(input: ComputerFilesListRequest): Promise<ComputerFilesListResponse>;
   };
@@ -426,6 +435,7 @@ const CLIENT_V3_DATA_PATHS = new Set([
   "/roles/revise",
   "/roles/list",
   "/roles/instantiate",
+  "/instances/fork",
   "/instances/session/reset",
   "/instances/activation/abandon",
   "/messages/forward",
@@ -474,6 +484,7 @@ type ClientSession = {
 };
 
 export class ClientApplicationService {
+  readonly #instanceFork: ClientApplicationServiceOptions["instanceFork"];
   readonly #computerFiles: ClientApplicationServiceOptions["computerFiles"];
   readonly #agentExecutionAdministration:
     AgentExecutionAdministrationPort | undefined;
@@ -504,6 +515,7 @@ export class ClientApplicationService {
   #server: Server | undefined;
 
   constructor(options: ClientApplicationServiceOptions) {
+    this.#instanceFork = options.instanceFork;
     this.#computerFiles = options.computerFiles;
     this.#agentExecutionAdministration = options.agentExecutionAdministration;
     this.#agentMemoryAdministration = options.agentMemoryAdministration;
@@ -1324,6 +1336,23 @@ export class ClientApplicationService {
         200,
         RoleInstantiateResponseSchema.parse(
           this.#human.instantiateRole(actor, command),
+        ),
+      );
+      return;
+    }
+    if (path === "/instances/fork") {
+      const command = parseClientRequest(InstanceForkRequestSchema, body);
+      if (!this.#instanceFork)
+        throw new HttpRequestError(
+          "instance_fork_unavailable",
+          "Native Fork is unavailable on this Computer",
+          503,
+        );
+      writeJson(
+        response,
+        200,
+        RoleInstantiateResponseSchema.parse(
+          await this.#instanceFork(actor, command),
         ),
       );
       return;

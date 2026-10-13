@@ -1,8 +1,12 @@
+import { forkInstance, type CopyInstanceSession } from "./instance-fork.ts";
 import { adoptInstanceRoleRevision } from "./instance-restart-config.ts";
 import { assertNoUnresolvedRuntimeCleanup } from "./runtime-process-cleanup.ts";
 import type { DatabaseSync } from "node:sqlite";
 import * as P from "@rah-os/protocol";
-import type { AuthenticatedActorContext } from "./auth.ts";
+import type {
+  AuthenticatedActorContext,
+  AuthenticatedHostContext,
+} from "./auth.ts";
 import type { RoomEventWriter } from "./room-event-writer.ts";
 import {
   requireHumanControlRoomManager,
@@ -43,6 +47,14 @@ export class RoleCatalog {
   private readonly context: Context;
   constructor(context: Context) {
     this.context = context;
+  }
+  forkInstance(
+    auth: AuthenticatedActorContext,
+    host: AuthenticatedHostContext,
+    input: P.InstanceForkRequest,
+    copy: CopyInstanceSession,
+  ) {
+    return forkInstance(this.context, auth, host, input, copy);
   }
   private role(row: Row) {
     return P.RoleTemplateSchema.parse({

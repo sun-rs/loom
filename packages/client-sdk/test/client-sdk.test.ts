@@ -58,6 +58,7 @@ test("RahClient covers every existing Human API v3 operation", () => {
     "inputRequest.list",
     "inputRequest.resolve",
     "instance.activation.abandon",
+    "instance.fork",
     "instance.session.reset",
     "memory.delete",
     "memory.history",

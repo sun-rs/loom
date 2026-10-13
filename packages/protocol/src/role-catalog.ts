@@ -185,3 +185,13 @@ export type InstanceActivationAbandonRequest = z.infer<
 export type InstanceActivationAbandonResponse = z.infer<
   typeof InstanceActivationAbandonResponseSchema
 >;
+
+/** Human-requested independent member with a copy of the source native context. */
+export const InstanceForkRequestSchema = z
+  .object({
+    instanceId: IdentifierSchema,
+    basedOnRoomSeq: z.number().int().nonnegative(),
+    idempotencyKey: IdentifierSchema,
+  })
+  .strict();
+export type InstanceForkRequest = z.infer<typeof InstanceForkRequestSchema>;

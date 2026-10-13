@@ -1,4 +1,8 @@
 import {
+  InstanceForkRequestSchema,
+  type InstanceForkRequest,
+} from "@rah-os/protocol";
+import {
   ClientMemoryDeleteRequestSchema,
   ClientMemoryImportLegacyRequestSchema,
   MemoryImportLegacyResponseSchema,
@@ -462,6 +466,10 @@ export type RahClientOperationMap = ComposerOperationMap &
     "role.list": { input: RoleListRequest; output: RoleListResponse };
     "role.instantiate": {
       input: RoleInstantiateRequest;
+      output: RoleInstantiateResponse;
+    };
+    "instance.fork": {
+      input: InstanceForkRequest;
       output: RoleInstantiateResponse;
     };
     "instance.session.reset": {
@@ -951,6 +959,13 @@ const operationDefinitions: Record<RahClientOperation, OperationDefinition> = {
     output: RoleInstantiateResponseSchema,
     method: "POST",
     path: "/v3/client/roles/instantiate",
+  },
+  "instance.fork": {
+    authenticated: true,
+    input: InstanceForkRequestSchema,
+    output: RoleInstantiateResponseSchema,
+    method: "POST",
+    path: "/v3/client/instances/fork",
   },
   "instance.session.reset": {
     authenticated: true,

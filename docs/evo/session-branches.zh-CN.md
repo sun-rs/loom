@@ -1,7 +1,7 @@
 # Fork / Side：当前实施边界
 
 负责人于 2026-10-13 授权开始，语义见[目标合同 §3](target-contract.zh-CN.md#3-调度与交流)。
-本页区分已完成的原生能力探针、Host 基础实现与尚未接通的业务流程；不是产品完成声明。
+本页区分原生能力探针、OpenCode Fork 纵向实现与尚未接通的其他 CLI／Side；不是 S4/S5 全部完成声明。
 
 ## 产品语义
 
@@ -14,8 +14,8 @@
 
 Kernel 拥有新成员、Side 权限、生命周期和源状态校验；AgentHost 只负责本机原生复制及新 session 绑定。Application Service 组合二者，控制台消费同一认证 API。继续使用现有 Room/Inbox/Activation/RunAttempt，不增加模型等待循环或第二个调度队列。
 
-1. **进行中：原生复制与 Host 绑定。** 复制不调用模型；对不同 CLI 使用各自原生入口。Host 为目标 principal 保留私有复制回执；并发／重试／重启不能重复执行原生复制。已知成功但绑定写入失败可以恢复绑定；原生结果未知必须显式处理，不能自动重试。新绑定不继承源的协议、记忆投递或压缩确认回执。
-2. **下一纵向切片：Fork 成员。** 在调用 Host 前确认 Human 管理权限、源实例仍在频道、空闲且 generation/configuration 不变；原生复制后再校验源状态，并原子创建普通成员。持久化重试身份与已知回执，失败不留下可运行的半成品成员。控制台提供一个 Fork 操作，完成后能在同一频道正常对话。身份说明帮助模型理解，但身份／凭据检查必须由代码执行。
+1. **已实现：原生复制与 Host 绑定。** 复制不调用模型；对不同 CLI 使用各自原生入口。Host 为目标 principal 保留私有复制回执；并发／重试／重启不能重复执行原生复制。已知成功但绑定写入失败可以恢复绑定；原生结果未知必须显式处理，不能自动重试。新绑定不继承源的协议、记忆投递或压缩确认回执。
+2. **已接通首家：OpenCode Fork 成员。** 在调用 Host 前确认 Human 管理权限、源实例仍在频道、空闲且 generation/configuration 不变；原生复制后再校验源状态，并原子创建普通成员。持久化重试身份与已知回执，失败不留下可运行的半成品成员。控制台提供一个 Fork 操作，完成后能在同一频道正常对话。身份说明帮助模型理解，但身份／凭据检查必须由代码执行。
 3. **随后：Side 对话。** 复用复制基础，建立独立执行身份与对话记录，服务端只读访问源 box，不借用源实例的 Worker 凭据。读取不能成为源实例的消费证明。默认不把源的写工具暴露给 Side；直接构造写请求也必须被后端拒绝。丢弃后撤销权限、安全结束自身执行，源频道事件和调度状态不变。
 
 复制时的空闲和配置检查必须覆盖异步 I/O 前后，不能只在点击时检查。
@@ -40,8 +40,18 @@ Kimi 2.1.1 源码显式拒绝活动／排队中的原生 loop，fork 时使用 q
 
 [本批证据](evidence/2026-10-13-session-branches/summary.json)。官方 Claude 说明：[session browser 的离线 fork](https://platform.claude.com/cookbook/claude-agent-sdk-05-building-a-session-browser)。本批未复制或结构移植厂商代码；探针调用安装包原生接口。
 
+## OpenCode Fork 纵向切片（2026-10-13）
+
+认证 Human API `POST /v3/client/instances/fork`／SDK `instance.fork` 接到 Kernel 与本机 Host；控制台成员卡提供 Fork 预览和确认。当前只开放本机 OpenCode、共享 Channel home、已在当前 runtime revision 建立的空闲原生 session；旧私有 cwd、远端 Host、动态 credential slot 以及其他 CLI 明确拒绝，不切换 CLI 或新建空白 session 冒充 Fork。
+
+Kernel 在异步复制前后重新核实 Human 管理权限、Host 凭据与代际、源成员资格、运行／租约／清理状态、session generation、实际配置和历史运行计数。源 Role 的后续修订不进入分叉；复制使用源冻结 Revision 和实际 model/effort。请求确定独立目标 principal，Host 私有回执再绑定源快照指纹；未知结果不自动重试。新 principal／成员只在复制成功且二次校验通过后原子创建，使用普通 `instance.created` 事件附带来源，保留现有订阅起点和 prewarm Outbox；记录真实复制绑定，不伪造 RunAttempt 或源消费 ACK。
+
+复制期间发生源变化或新的 Channel 事件时，本次成员创建被拒绝。已复制但未发布的原生文件可能保留为不可调度的孤立副本；不自动再次复制、不将其变成成员、不承诺抹除厂商历史。控制台未知结果沿用核实／放弃操作。不会复制 Task 负责人、源私聊成员资格和源投递／协议／记忆确认回执。
+
+实际 OpenCode 1.18.35、正式 Daemon/API、隔离 HOME 和仅 loopback 的本地合成模型已经跑通：源会话建立 → API Fork → 相同请求重放 → 新成员继承源历史后以新身份回复 → 源成员续用原 session。共三次本地合成模型请求，复制阶段零生成、零付费；所有 Activation 终态，测试 Daemon 和记录的原生进程退出。独立复制探针还证明子会话追加不改变源原生消息。此证据不代表模型自主遵循、效率门禁或五家正式接入。[本批证据](evidence/2026-10-13-fork-vertical/summary.json)。
+
 ## 验收边界
 
 Host 单测覆盖源绑定保留、独立目标、新身份不继承投递回执、并发、重启重放、未知结果、绑定写入失败恢复及损坏回执。
-尚需 Fork 的 Kernel/API/控制台完整链；Side 的凭据签发、只读 box、独立对话与丢弃完整链；支持 CLI 的正式适配与版本守卫；真实模型的有界接入验收。
-不能把当前基础实现登记为 S4/S5 已完成，也不能据此宣称正式服务已有 Fork/Side 按钮。
+OpenCode Fork 的 Kernel/API/控制台入口已实现；检查与部署以本批证据和状态页为准。其他 CLI 正式适配、Side 凭据／只读 box／独立对话／丢弃完整链、真实付费模型的有界接入验收尚未完成。
+不能将首家 Fork 接入登记为五家 Fork 或 Side 已完成。
