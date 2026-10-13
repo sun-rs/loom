@@ -822,3 +822,5 @@ Loom三次交付3份，总输入2007597／输出69352／80生成，输入均值6
 唯一产品修复在daemon选择入口处：仅当Claude原生回复开关为1且warm未显式配置时，选择其支持的warm路径；显式false继续cold Worker，撤回开关即可恢复原默认。测试先复现失败后通过，Kernel／提示／session权限未改。
 
 共保留10次探针、70次本地合成请求，其中4次失败分别是夹具漏turn、把可变updated_at误作会话身份、旧包装器拒绝免费model catalog探测、回滚夹具从旧历史提取turn。失败不删除或当成功；修正夹具后只接受完整链。20份生成settings已删除、全部记录进程退出。全仓检查首次受磁盘耗尽影响，清理可重下载的npm缓存后，原阻塞文件检查通过，并重新运行全仓检查；未删除业务数据、证据或备份。[完整运行、检查及部署状态](evidence/2026-10-13-backend-finish/operational-mvp.json)。
+
+本批收尾检查：全仓后端3166通过、22跳过，唯一失败为既有进程恢复夹具等待启动文件超过2秒，尚未进入恢复断言；原测试不改复验通过。随后补跑被退出挡住的全部尾段：Web487、console61、parity34、browser policy15、bilateral3、效率单测558均通过；不冒称一次全仓全绿。format、链接、diff通过。代码`266f875`已备份部署，只开Claude/OpenCode native-final；两库302文件、11类业务表哈希不变，fresh真实历史／console／Role／memory／aggregate API验证通过。无新付费。[部署证据](evidence/2026-10-13-backend-finish/deployment.json)。

@@ -14,15 +14,15 @@
       "work": "No further token-ratio tuning or repeat-until-green cohort. Broader families remain outside this result.",
       "doneWhen": "Recorded outcomes and complete bounded cost evidence support a concrete supported scope decision; a prose-only missed recipient does not by itself justify a new scheduler or permanent 100% model obedience requirement.",
       "evidence": "team-v8.json",
-      "status": "bounded two-model cost investigation closed; proceed to operational adoption"
+      "status": "bounded two-model cost investigation closed"
     },
     {
       "priority": 2,
       "area": "Adoption through formal composition and existing sessions",
       "already": "Claude/OpenCode formal daemon/API old Worker session adoption and rollback passed with installed CLI and localhost synthetic responses.",
-      "work": "Final repository checks and backup/restart of local service; only Claude/OpenCode native-final switches selected.",
+      "work": "Completed: operational chain, check stages, backed-up restart and fresh real page.",
       "doneWhen": "Explicit scope and rollout/rollback proof; no surprise global switch-on from an isolated successful experiment.",
-      "status": "runtime acceptance passed; deployment pending",
+      "status": "closed for Claude/OpenCode; formal service deployed and verified",
       "evidence": "operational-mvp.json"
     },
     {
@@ -31,7 +31,7 @@
       "already": "Both adopted runtimes passed peer queue while busy, one serial lane, automatic return, Human freshness hold, explicit abandon, restart and same-session recovery.",
       "work": "No additional scenario framework or paid cohort; preserve limitations for arbitrary crash and other runtimes.",
       "doneWhen": "No lost accepted request, false ACK, cross-instance/private delivery or silent replacement of native session; unavailable measurements stay unknown.",
-      "status": "bounded operational chain passed with synthetic models",
+      "status": "closed for adopted runtimes; real CLI with synthetic model responses",
       "evidence": "operational-mvp.json"
     }
   ],
@@ -203,7 +203,9 @@
       "Small fixed cohorts report uncertainty and task success separately; no release decision from token ratio alone."
     ]
   },
-  "deployment": "Pending current operational adoption; previously deployed 3046a2d with seven switches off.",
+  "deployment": "Code 266f875f0882950dcee214f2765f6816ba77f445 deployed; only Claude/OpenCode native-final flags enabled; fresh real page/API and unchanged business data verified. See deployment.json.",
   "latestCloseout": "operational-mvp.json",
-  "operationalMvp": "operational-mvp.json"
+  "operationalMvp": "operational-mvp.json",
+  "boundedBackendMvpAccepted": true,
+  "fullAcceptanceBoundary": "Full target scope and five-CLI native-final efficiency are not claimed; the local Claude/OpenCode collaboration MVP is accepted within operational-mvp.json limits."
 }

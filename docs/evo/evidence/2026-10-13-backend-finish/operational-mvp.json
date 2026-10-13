@@ -162,7 +162,7 @@
   },
   "runnerSha256": "e7e6d679ce6b0a997ce91af11868772110de9421ab0b5d32ca4f696fcf39fb54",
   "deployment": {
-    "state": "pending",
+    "state": "deployed and fresh real page/API verified",
     "target": "com.loom.evo",
     "enabledAfterVerification": [
       "LOOM_CLAUDE_NATIVE_FINAL_TRIAL",
@@ -171,7 +171,10 @@
     "otherFiveSwitches": "remain off",
     "backupRequired": true,
     "dataHome": "/Users/sun/.loom/evo",
-    "userReviewUrl": "http://127.0.0.1:4176/"
+    "userReviewUrl": "http://127.0.0.1:4176/",
+    "codeRevision": "266f875f0882950dcee214f2765f6816ba77f445",
+    "evidence": "deployment.json",
+    "businessTableHashesUnchanged": 11
   },
   "deferred": [
     "Fork/Side",
@@ -184,5 +187,6 @@
     "Held native reply still needs explicit Human abandon and fresh request; no silent draft resend.",
     "Graceful restart with idle runtimes or a held lane is verified, not arbitrary power-loss recovery at every byte boundary.",
     "Unsupported wake shapes keep Worker tools; native-final does not auto-complete Tasks."
-  ]
+  ],
+  "boundedBackendMvpAccepted": true
 }
