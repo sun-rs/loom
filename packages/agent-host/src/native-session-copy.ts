@@ -1,3 +1,4 @@
+import { copyKimiSession } from "./kimi-session-fork.ts";
 import { copyPiSession } from "./pi-session-fork.ts";
 import { isSea } from "node:sea";
 import { copyClaudeSession } from "./claude-session-fork.ts";
@@ -21,6 +22,7 @@ export type NativeSessionCopyAdapter = Readonly<{
 }>;
 const adapters: Readonly<Record<string, NativeSessionCopyAdapter>> =
   Object.freeze({
+    "kimi-acp/v1": { provider: "kimi-acp/v1", copy: copyKimiSession },
     "pi-print-json/v1": { provider: "pi-print-json/v1", copy: copyPiSession },
     "claude-stream-json/v1": {
       provider: "claude-stream-json/v1",

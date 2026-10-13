@@ -23,6 +23,7 @@ for (const provider of [
   "codex-app-server/v1",
   "claude-stream-json/v1",
   "pi-print-json/v1",
+  "kimi-acp/v1",
 ])
   for (const mode of ["fork", "side"])
     test(`Daemon ${provider} ${mode} binds independent context through the shared pipeline without copying twice`, async () => {

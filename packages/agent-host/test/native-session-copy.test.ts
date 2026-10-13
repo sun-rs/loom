@@ -20,6 +20,10 @@ test("native session copying uses runtime adapters, never CLI display names or a
     nativeSessionCopyAdapter("pi-print-json/v1")?.provider,
     "pi-print-json/v1",
   );
+  assert.equal(
+    nativeSessionCopyAdapter("kimi-acp/v1")?.provider,
+    "kimi-acp/v1",
+  );
   for (const kind of ["codex-exec/v1", "acp/v1", "unknown"])
     assert.equal(nativeSessionCopyAdapter(kind), undefined);
 });

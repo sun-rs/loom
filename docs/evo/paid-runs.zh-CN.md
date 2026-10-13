@@ -866,3 +866,10 @@ Claude CLI 的两条本地合成回复只证明其 fork 续聊携带历史；纯
 无新增付费。实际 Pi1.1.0、隔离 HOME 与 `PI_CODING_AGENT_DIR`、虚构 provider／凭据、外网禁止且仅允许 loopback；正式 daemon/API 完成 Fork（3次合成请求）、Side 桌面／手机创建私聊与丢弃（4次）、默认 Worker Side（7次）。复制均零生成，新 ID 独立续聊，Side 的源消息读取断言检查实际 tool 输出，私聊未进入源会话或频道。
 
 默认 Worker 首次脚本漏 `message-check` 而直接 post，触发新鲜度持留，随后脚本不处理持留导致隔离；4次请求及失败保留。修正测试脚本按原有读取要求执行后通过，没有改变产品围栏。全部四次尝试共18次本地合成请求，非模型随机质量、token 倍率或付费门禁。原生 copy 只调用 `--fork` 和 RPC `get_state`，不启用付费模型；Node 部署可用，Pi SEA／Kimi／忙时丢弃／产品第三栏未完成。[完整证据](evidence/2026-10-13-pi-branches/summary.json)。
+
+## 2026-10-13 Kimi 原生 Fork／Side 接入（免费隔离验收）
+
+- 实际 Kimi 2.1.1，普通 ACP，隔离 HOME／KIMI_CODE_HOME、本地合成 OpenAI 兼容回复、外网禁止，用户 CLI 和账户未修改；不是付费模型批次。
+- 6 次底层探针共8次合成请求：初次退出等待过短、第二次思考档位配置错误均0请求；第三次信号退出导致父回复未落盘（2请求，失败保留）；显式关闭会话、EOF冷续聊通信配置更新、最终源 wire 字节不变各2请求通过。统一适配使用 EOF 和正常退出证明。
+- 6 次正式 daemon/API 尝试共17请求：前两次缺精确 effort，被 native-final 绑定检查在调用 CLI 前拒绝（各0）；补齐隔离合成模型配置后 Fork 3、Side桌面／手机4、默认 Worker Side 7请求通过；补上复制返回后异常请求的拒绝后，正式 Fork 再验3请求通过。复制阶段全部0生成；默认 Worker 不依赖 Kimi native-final 开关。源成员保持 session，Side 真实读取工具输出包含源消息，回复不进入源频道或父 session，空闲丢弃与幂等重放通过。
+- 所有测试 daemon 和记录的 CLI／wrapper 进程已退出；仅删除生成的临时 wrapper 设置，原流、原生存档和失败证据保留。未运行付费效率门禁，不能从25次合成请求推断 token 成本或模型质量。[证据与逐次记录](evidence/2026-10-13-kimi-branches/summary.json)。

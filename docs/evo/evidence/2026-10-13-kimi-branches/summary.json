@@ -1,0 +1,196 @@
+{
+  "date": "2026-10-13",
+  "baseCommit": "5c0aee2b6451bb0ddb32fda8bd0da65e88653850",
+  "scope": "Kimi joins the shared Loom Fork/Side native-copy registry; Node deployment verified separately",
+  "nativeVersion": "2.1.1",
+  "implementedAdapters": [
+    "codex-app-server/v1",
+    "opencode-server/v1",
+    "claude-stream-json/v1",
+    "pi-print-json/v1",
+    "kimi-acp/v1"
+  ],
+  "interfaces": ["instance.fork", "side.create", "side.discard"],
+  "owner": "AgentHost native-copy adapter; existing ProviderSessionStore receipts and Kernel identity/authority/lifecycle remain unchanged",
+  "nativeCopy": "ordinary installed kimi acp: initialize -> session/fork with no MCP servers -> stdin EOF -> clean process exit; never prompt or resume source",
+  "sourceReuse": "Local glue; no vendor implementation copied or ported, no dependency added, user CLI/account unchanged",
+  "nativeFiles": {
+    "package.json": "61fa2d6169c8b6b46ca47f529d5ea52415735faddac5640e960d2c3a7a13d441",
+    "dist/main.mjs": "2563a338c94868a34e1bfd2e5579067d5a472acf4cb0bf350a3bfe1092bbe59d"
+  },
+  "probeFinal": {
+    "pass": true,
+    "sourceWireUnchanged": true,
+    "coldMcpRebound": true,
+    "eofDrained": true,
+    "requests": 2,
+    "zeroCopyRequests": true,
+    "historyInherited": true
+  },
+  "probes": [
+    {
+      "attempt": 1,
+      "pass": false,
+      "requests": 0,
+      "error": "Error: process did not stop\n    at Timeout._onTimeout (file:///Users/sun/.loom/reviews/2026-10-13-kimi-branches/probe.mjs:7:145)\n    at listOnTimeout (node:internal/timers:605:17)\n    at process.processTimers (node:internal/timers:541:7)",
+      "evidenceSha256": "efb004983f4fa6478464da3005346603343af37dc77c194dc9d15f8b427ccb0e"
+    },
+    {
+      "attempt": 2,
+      "pass": false,
+      "requests": 0,
+      "error": "Error: timeout session/prompt\n    at Timeout._onTimeout (file:///Users/sun/.loom/reviews/2026-10-13-kimi-branches/probe.mjs:11:625)\n    at listOnTimeout (node:internal/timers:605:17)\n    at process.processTimers (node:internal/timers:541:7)",
+      "evidenceSha256": "dac4a2faec142cb34216762ac160bd28ec1766999f63eec45ef1bcfc2b2f1c46"
+    },
+    {
+      "attempt": 3,
+      "pass": false,
+      "requests": 2,
+      "error": "AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert(JSON.stringify(requests[1]).includes('SYNTHETIC_PARENT_MARKER_73'))\n\n    at file:///Users/sun/.loom/reviews/2026-10-13-kimi-branches/probe.mjs:16:263\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+      "evidenceSha256": "4194f1a37090dd6775d69a383ddc081259c7e14f9545af8670ac6e2641eb2e84"
+    },
+    {
+      "attempt": 4,
+      "pass": true,
+      "requests": 2,
+      "error": null,
+      "evidenceSha256": "bdc1c97657b3602cb11b5c28a1a6cc54bf9b47af9a2f9271c61c2ba7016c589c"
+    },
+    {
+      "attempt": 5,
+      "pass": true,
+      "requests": 2,
+      "error": null,
+      "evidenceSha256": "506ceb63a04afdc06ed6bdf91346748e76f48846d154d0be86628d2193a83b94"
+    },
+    {
+      "attempt": 6,
+      "pass": true,
+      "requests": 2,
+      "error": null,
+      "evidenceSha256": "c57563ebf007807add3c602b56614f998bb7426ac13171a6b9f45ee73bf86ab1"
+    }
+  ],
+  "runs": [
+    {
+      "run": "1791902904696-kimi",
+      "requests": 0,
+      "error": "Error: unexpected quarantine [{\"state\":\"quarantined\"}]\n    at file:///Users/sun/.loom/reviews/2026-10-13-kimi-branches/fork.mjs:35:160\n    at wait (file:///Users/sun/.loom/reviews/2026-10-13-kimi-branches/fork.mjs:17:73)\n    at async settled (file:///Users/sun/.loom/reviews/2026-10-13-kimi-branches/fork.mjs:35:26)\n    at async file:///Users/sun/.loom/reviews/2026-10-13-kimi-branches/fork.mjs:54:61",
+      "checks": ["daemon-drain"],
+      "resultSha256": "e2402e0f20e01fb32ce5c9ca9a28527287d95bc9490653bf2e16c52c7359b983",
+      "processesExited": true,
+      "temporaryWrapperSettingsRemoved": true
+    },
+    {
+      "run": "1791903105588-kimi",
+      "requests": 0,
+      "error": "Error: unexpected quarantine [{\"state\":\"quarantined\"}]\n    at file:///Users/sun/.loom/reviews/2026-10-13-kimi-branches/fork.mjs:35:160\n    at wait (file:///Users/sun/.loom/reviews/2026-10-13-kimi-branches/fork.mjs:17:73)\n    at async settled (file:///Users/sun/.loom/reviews/2026-10-13-kimi-branches/fork.mjs:35:26)\n    at async file:///Users/sun/.loom/reviews/2026-10-13-kimi-branches/fork.mjs:54:61",
+      "checks": ["daemon-drain"],
+      "resultSha256": "826875bf20df9238f8460447584cd6c0c667b83949ff463992d05345c0dd9c96",
+      "processesExited": true,
+      "temporaryWrapperSettingsRemoved": true
+    },
+    {
+      "run": "1791903160114-kimi",
+      "requests": 3,
+      "error": null,
+      "checks": [
+        "source-established",
+        "fork-native-zero-generation-idempotent",
+        "child-resumed-and-published-as-new-member",
+        "parent-retained-native-session",
+        "daemon-drain",
+        "all-activations-terminal"
+      ],
+      "resultSha256": "23b891d935b3c981b03b1726e749893c7f1deb4a1c44c8ac0db407cbfaaf36e1",
+      "processesExited": true,
+      "temporaryWrapperSettingsRemoved": true
+    },
+    {
+      "run": "1791903199095-kimi",
+      "requests": 4,
+      "error": null,
+      "checks": [
+        "source-established",
+        "side-native-zero-generation-idempotent",
+        "side-resumed-private-only",
+        "parent-retained-native-session",
+        "real-console-side-create-private-page-desktop-mobile",
+        "side-discarded-source-untouched",
+        "daemon-drain",
+        "all-activations-terminal"
+      ],
+      "resultSha256": "9a272c70f8ef6b32538dcce959658bdec9afb9cc99095799059c8d154e62612e",
+      "processesExited": true,
+      "temporaryWrapperSettingsRemoved": true
+    },
+    {
+      "run": "1791903233580-kimi",
+      "requests": 7,
+      "error": null,
+      "checks": [
+        "source-established",
+        "side-native-zero-generation-idempotent",
+        "side-resumed-private-only",
+        "parent-retained-native-session",
+        "side-discarded-source-untouched",
+        "daemon-drain",
+        "default-worker-final-mode",
+        "all-activations-terminal"
+      ],
+      "resultSha256": "537c58438c2c9cc6a1ab26427bb7416784bbe66a3158a10deb0e0df70a006fc6",
+      "processesExited": true,
+      "temporaryWrapperSettingsRemoved": true
+    },
+    {
+      "run": "1791903736010-kimi",
+      "requests": 3,
+      "error": null,
+      "checks": [
+        "source-established",
+        "fork-native-zero-generation-idempotent",
+        "child-resumed-and-published-as-new-member",
+        "parent-retained-native-session",
+        "daemon-drain",
+        "all-activations-terminal"
+      ],
+      "resultSha256": "1a3a3ce0540c3cb254678e62381a15b9183a74934fde3dafc23ae1a3a2973468",
+      "processesExited": true,
+      "temporaryWrapperSettingsRemoved": true,
+      "note": "Final adapter recheck after late-server-request guard"
+    }
+  ],
+  "paidCalls": 0,
+  "syntheticRequestsAllAttempts": 25,
+  "failedAttemptsRetained": true,
+  "verification": {
+    "focused": "29 passed, including late server request red/green and shared receipt/daemon/inventory regressions",
+    "fullCheck": "npm run check passed: backend 3225 passed / 22 skipped; all other suites passed. The late-server-request guard was added after the serial suite visited that file, then the final 29-test focused suite, typecheck, format and actual native Fork were rerun and passed.",
+    "browser": "actual isolated Kimi Side desktop 1440x1000 and mobile 390x844 passed; mobile screenshot inspected",
+    "defaultWorker": "passed; formal Kimi native-final flag remains off",
+    "efficiencyGate": "not run; synthetic requests cannot establish model cost or quality",
+    "typecheck": "passed after final code change",
+    "format": "passed after final code change; edited evidence formatted separately",
+    "diff": "git diff --check passed",
+    "localLinks": "passed",
+    "logs": {
+      "check.log": "903aa70f603abe9a21f1177389cbaabce526a259e0e431f39d6dbfe38b1db373",
+      "focused-final.log": "c8818c4736abc35903cb7b5e7b26d0fe45eea6ee392bc918913a52433de66463",
+      "tdd-red.log": "5e65af188bae8b1454b713c056e645c8c8f38f36b888affc724cb50cf1db093c",
+      "tdd-green.log": "bed0dda301eb1fcbcea3328abd2567f92be8873bee23bdd3cee2cd965d1d8b52",
+      "registry-red.log": "02384683fdf6a6a0f9e00b9e659a90d4dc26f41116d107b5517b7a1df289efa7",
+      "late-request-red.log": "17d30b5ad73d29fc41b5f0266e0bb0ec3ba58688515453a3d72f5af40a0bd7e1",
+      "typecheck-final.log": "bef9d01c948fead061ff8f64b8496f8847391051512f3460e767e2602ceab0f8",
+      "format-final.log": "fb5ffe51bf83c7a6ac683f386a5c903f6ff2c086dbe1bf27cc1f12efddaf7e3f"
+    }
+  },
+  "limitations": [
+    "Side discard requires idle/drained lane; busy cancellation remains deferred",
+    "Product third-column UI remains deferred; console and shared API are usable",
+    "No paid-model branch acceptance or new efficiency ratio",
+    "Native fork capability depends on installed CLI; unsupported capability refuses before copying",
+    "Side API read-only is not same-UID filesystem isolation",
+    "Claude/Pi SEA helpers remain unavailable; remote Computer unchanged"
+  ],
+  "privateEvidenceDirectory": "/Users/sun/.loom/reviews/2026-10-13-kimi-branches"
+}

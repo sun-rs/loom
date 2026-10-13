@@ -1,7 +1,7 @@
 # Fork / Side：当前实施边界
 
 负责人于 2026-10-13 授权开始，语义见[目标合同 §3](target-contract.zh-CN.md#3-调度与交流)。
-本页区分原生能力探针、统一 Loom 分支接口、Claude／Codex／OpenCode／Pi Fork／Side 纵向实现与尚未接通的其他 CLI；不是 S4/S5 全部完成声明。
+本页区分原生能力探针、统一 Loom 分支接口、Claude／Codex／OpenCode／Pi／Kimi Fork／Side 纵向实现；不是 S4/S5 全部完成声明。
 
 ## 产品语义
 
@@ -36,7 +36,7 @@ Kernel 拥有新成员、Side 权限、生命周期和源状态校验；AgentHos
 
 Claude 的 `--fork-session` 在实际合成回复中也通过；但只发送控制初始化、未发用户输入时，本批未产生持久目标文件，不能用控制响应冒充复制完成。官方 SDK 的磁盘函数已经单独通过，是更适合独立复制操作的候选。该 SDK 当前来自本机安装供探查，尚未成为 Loom 的可分发依赖；不能让产品依赖该本机绝对路径。
 
-Kimi 2.1.1 源码显式拒绝活动／排队中的原生 loop，fork 时使用 quiescence hold；ACP fork 对 `mcpServers` 的重绑定有限制，正式接入还必须证明旧 Worker 配置未复用。既有 0.39.1 的运行验收不外推至本版本。
+Kimi 2.1.1 源码显式拒绝活动／排队中的原生 loop，fork 时使用 quiescence hold；ACP fork 对 `mcpServers` 的重绑定有限制，该初始探针尚未证明旧 Worker 配置未复用，后继 ACP 冷续聊证据见下文。既有 0.39.1 的运行验收不外推至本版本。
 
 [本批证据](evidence/2026-10-13-session-branches/summary.json)。官方 Claude 说明：[session browser 的离线 fork](https://platform.claude.com/cookbook/claude-agent-sdk-05-building-a-session-browser)。本批未复制或结构移植厂商代码；探针调用安装包原生接口。
 
@@ -53,7 +53,7 @@ Kernel 在异步复制前后重新核实 Human 管理权限、Host 凭据与代�
 ## 验收边界
 
 Host 单测覆盖源绑定保留、独立目标、新身份不继承投递回执、并发、重启重放、未知结果、绑定写入失败恢复及损坏回执。
-OpenCode Fork 的 Kernel/API/控制台入口已实现；检查与部署以本批证据和状态页为准。该首家 Fork 批次未验证 Side；Side 与 Codex 后继接入见下文。Kimi 正式适配、忙时丢弃与真实付费模型的有界接入验收尚未完成。
+OpenCode Fork 的 Kernel/API/控制台入口已实现；检查与部署以本批证据和状态页为准。该首家 Fork 批次未验证 Side；Side 与 Codex 后继接入见下文。Kimi 后继接入见下文；忙时丢弃与真实付费模型的有界接入验收尚未完成。
 不能将首家 Fork 接入登记为五家 Fork 或 Side 已完成。
 
 ## OpenCode Side 纵向切片（2026-10-13）
@@ -76,7 +76,7 @@ AgentHost 的 `nativeSessionCopyAdapter` 按受信 runtime manifest 的 adapter 
 
 `host.runtime.list` 的可选 `sessionBranches` 返回该配置支持的 `fork`／`side`。旧响应缺该字段时，界面视为不可用；发现可执行文件不等于支持复制。仅配置了复制适配器、且无待解析动态凭据的 manifest 宣告能力。控制台按此能力显示预览，不维护厂商名单。它是运行时能力，不证明某个实例空闲、已有 session 或其当前 placement/configuration 满足条件；真正执行仍以 Kernel／Host 的检查为准。
 
-当前正式实现为 `opencode-server/v1` 与 `codex-app-server/v1`。Codex 使用 CLI 自带 app-server 的 `initialize → thread/fork`，不调用 `turn/start`；沿现有启动策略禁用自动记忆、个人 MCP 和自动触发机制，复制后确认进程退出。相同 provider key 使后续 Fork／Side 进入既有 Codex 启动／续聊链。该批次未开放 Claude、Pi、Kimi；Claude／Pi 的后继接入见下文，Kimi 仍不宣告能力。
+当前正式实现为 `opencode-server/v1` 与 `codex-app-server/v1`。Codex 使用 CLI 自带 app-server 的 `initialize → thread/fork`，不调用 `turn/start`；沿现有启动策略禁用自动记忆、个人 MCP 和自动触发机制，复制后确认进程退出。相同 provider key 使后续 Fork／Side 进入既有 Codex 启动／续聊链。该批次未开放 Claude、Pi、Kimi；Claude／Pi／Kimi 的后继接入见下文。
 
 实际 Codex／隔离 HOME／禁止外网／本地合成模型验证了正式 Fork、Side、父子独立续聊与零生成复制。Side 另外验证正式默认 Worker 回帖路径，不依赖启用生产的实验性 final-output 开关；本批不修改正式服务开关。测试曾漏传 turn、使用不存在的 `message-history` 命令，旧断言误把命令回显当作成功；修正为 `message-read --turn ... --target ...` 并检查工具输出中的源消息。旧证据的历史读取声明据此降级，保留失败与重测记录，不据此声称模型自主用对工具或效率验收。完整检查、浏览器与部署状态见[本批证据](evidence/2026-10-13-unified-branches/summary.json)。
 
@@ -100,4 +100,14 @@ Pi 后续入口复核（同日，仅隔离探针）：RPC 先 resume 再 `clone`
 
 复制调用用户已安装 Pi 的 `--offline --mode rpc --fork <源文件> --session-dir <Host目录>`，只发 `get_state`，不 resume 源、不发送 prompt；扩展、MCP、skills 和 context files 在复制进程关闭。先证明复制进程退出，再核对新 ID、目标目录与文件头、完整原生条目保留以及源字节不变，才交给既有幂等回执发布绑定。目标使用原生文件名，后续普通 print runtime 按绑定 ID 定位，无须再复制一次。没有新增 npm 依赖，也没有安装或修改用户 CLI／账户。代码为本地胶水，未移植 Pi 源码；原生入口与安装版本哈希见证据。
 
-实际 Pi1.1.0 经正式 daemon/API 的 Fork、Side、桌面／手机私聊、默认 Worker 回帖通过，复制均零生成；测试均为隔离配置与仅 loopback 的合成回复，非付费效率或模型自主质量验收。默认 Worker 脚本首次漏读当前消息，被新鲜度围栏拒绝；补上 `message-check` 后通过，失败保留，产品权限未放宽。连续两个 Host runtime 的同 ID 续聊、中文路径在管道中分段的 UTF-8 解码均有自动化回归。SEA 仍不可用，Kimi、忙时丢弃和产品第三栏仍未完成。[本批证据](evidence/2026-10-13-pi-branches/summary.json)。
+实际 Pi1.1.0 经正式 daemon/API 的 Fork、Side、桌面／手机私聊、默认 Worker 回帖通过，复制均零生成；测试均为隔离配置与仅 loopback 的合成回复，非付费效率或模型自主质量验收。默认 Worker 脚本首次漏读当前消息，被新鲜度围栏拒绝；补上 `message-check` 后通过，失败保留，产品权限未放宽。连续两个 Host runtime 的同 ID 续聊、中文路径在管道中分段的 UTF-8 解码均有自动化回归。Pi SEA 仍不可用；该批之后的 Kimi 接入见下文，忙时丢弃和产品第三栏仍未完成。[本批证据](evidence/2026-10-13-pi-branches/summary.json)。
+
+## Kimi ACP 原生分叉（2026-10-13）
+
+`kimi-acp/v1` 接入同一 Host 注册表，上层 API、Kernel、回执、控制台和权限路径不变。调用用户安装的普通 `kimi acp`，沿现有启动策略禁用 Cron，先核实 ACP `sessionCapabilities.fork`，再发送 `session/fork`；不 resume 源，不发 prompt，也不把源 Worker 配置传入复制进程。返回独立 ID 后关闭 stdin，只有确认原生进程正常退出才发布绑定；复制拒绝工具／权限请求，未知结果由既有回执机制保留且不自动重试。无新增依赖、CLI 安装或账户变更，无上游代码移植。
+
+Kimi 2.1.1 隔离探针确认：直接在回复后发送退出信号会丢失尚未落盘的回复；显式 `session/close` 以及 Loom 现有的 EOF 正常退出均保留完整上下文。正式适配采用 EOF，不以收到新 ID 或进程信号退出冒充落盘完成。父会话完整 wire 在分叉及子会话续聊后字节不变。原生 fork 不接受新的临时 MCP 配置，因此必须结束复制进程，再由普通运行链冷续聊并绑定目标 Worker；实际探针中子请求仅含新工具，不含源工具。
+
+实际 CLI＋本地合成模型通过正式 daemon/API Fork、Side、默认 Worker 回帖及桌面／手机 Side 页面。父子独立 ID、冻结 Role、重复提交不重复复制、源历史继承、只读源 box、私有回复和空闲丢弃均通过；复制阶段零模型生成。6 次底层探针和6次正式链路尝试共25次本地合成请求，早期探针设置错误、信号退出丢历史和测试漏设精确 effort 的失败全部保留。没有付费调用，不据此宣布模型自主质量或效率验收；正式服务 Kimi native-final 仍关闭。
+
+五家 CLI 已接入统一接口，但忙时丢弃和正式产品第三栏仍未完成；Claude／Pi 的 SEA 限制不变。[本批证据](evidence/2026-10-13-kimi-branches/summary.json)。
