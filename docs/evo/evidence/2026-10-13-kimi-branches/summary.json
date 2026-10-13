@@ -192,5 +192,8 @@
     "Side API read-only is not same-UID filesystem isolation",
     "Claude/Pi SEA helpers remain unavailable; remote Computer unchanged"
   ],
-  "privateEvidenceDirectory": "/Users/sun/.loom/reviews/2026-10-13-kimi-branches"
+  "privateEvidenceDirectory": "/Users/sun/.loom/reviews/2026-10-13-kimi-branches",
+  "codeCommit": "a2e73ccde5c206bc8e7534b6358690fe63605e0c",
+  "sourceSha256": "0c14d9ab43973d7c9a50dd7da7984c9798529d540adb1bc91c9228c0ab4ecc41",
+  "deployment": "deployment.json"
 }
