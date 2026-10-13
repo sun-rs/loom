@@ -1,3 +1,4 @@
+import { canonicalDigest } from "./canonical-digest.ts";
 import { roleRuntimeOffer } from "./role-runtime-offer.ts";
 import {
   RoleTemplateSchema,
@@ -45,26 +46,19 @@ export function adoptInstanceRoleRevision(
       "Instance has leased or reserved work; wait before adopting configuration",
     );
   const role = RoleTemplateSchema.parse(JSON.parse(text(row, "snapshot_json")));
-  const old = RoleTemplateSchema.parse(
-    JSON.parse(
-      text(
-        db
-          .prepare(
-            "SELECT snapshot_json FROM role_revisions WHERE role_revision_id=?",
-          )
-          .get(row.role_revision_id!)!,
-        "snapshot_json",
-      ),
-    ),
+  const currentName = text(
+    db
+      .prepare("SELECT handle FROM principals WHERE principal_id=?")
+      .get(input.instanceId)!,
+    "handle",
   );
+  const prefix = `${role.configuration.displayName}-`;
+  // Keep an already readable suffix; explicit adoption is also the boundary
+  // that replaces legacy opaque names. Default keep never calls this owner.
   const name =
-    role.configuration.displayName === old.configuration.displayName
-      ? text(
-          db
-            .prepare("SELECT handle FROM principals WHERE principal_id=?")
-            .get(input.instanceId)!,
-          "handle",
-        )
+    currentName.startsWith(prefix) &&
+    /^[1-9]\d*$/.test(currentName.slice(prefix.length))
+      ? currentName
       : allocateInstanceName(db, role.configuration.displayName);
   const { executionWorkspace: _workspace, ...configuration } =
     role.configuration;
@@ -88,7 +82,7 @@ export function adoptInstanceRoleRevision(
             .get(role.controlRoomId)!,
           "next_seq",
         ) - 1,
-      idempotencyKey: `${input.idempotencyKey}:configuration`,
+      idempotencyKey: `instance-restart:${canonicalDigest({ instanceId: input.instanceId, idempotencyKey: input.idempotencyKey })}`,
     },
   );
   db.prepare(

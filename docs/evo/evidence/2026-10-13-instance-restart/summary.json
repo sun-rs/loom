@@ -11,18 +11,36 @@
     "Restored history uses the existing shared 20-event / 64-KiB wake budget, current request first, newest background messages next, with omission counts; includes own earlier replies",
     "Restoration is scoped to current Channel or current private box, without cursor rewind; same-generation native binding plus Host delivery receipt prevents repeated restoration",
     "Console defaults to keep and previews selected name, CLI, model, effort and Prompt; retries freeze selected Role revision, deleted Role offers keep only",
-    "Only newly marked explicit reset events enable recovery; historical reset events are not backfilled, so deployment alone cannot restore old context"
+    "Only newly marked explicit reset events enable recovery; historical reset events are not backfilled, so deployment alone cannot restore old context",
+    "Explicit adoption converts legacy opaque instance names to a readable Role suffix; default keep preserves the original name",
+    "Internal configuration write keys are bounded instance-scoped hashes; public restart keys retain Room scope and exact successful replay semantics"
   ],
   "tdd": {
     "configuration": "New selected-revision request rejected as unknown before implementation",
     "history": "Own prior reply and bounded private history missing before implementation",
     "browser": "Default restart configuration selector absent before implementation",
-    "deployment": "Legacy-reset regression verifies a previously read request is not re-injected after upgrade"
+    "deployment": "Legacy-reset regression verifies a previously read request is not re-injected after upgrade",
+    "legacyName": "Regression first observed legacy opaque name after adoption; corrected adoption produces readable suffix while keep preserves the original name",
+    "idempotency": "Cross-Room reuse of one client key initially collided in the workspace configuration event; now instance-scoped derived hashes retain independent replays and support the public maximum key length"
   },
   "verification": {
-    "focusedKernelTests": "passed: 45 tests covering 7 new restart tests plus lifecycle, catch-up and runtime-offer successor regressions",
+    "focusedKernelTests": "passed: 47 tests, including 9 restart tests, after final idempotency correction",
     "browser": "passed with fake CLI: 1440x1000 and 390x844; default retains old snapshot, explicit selection adopts current revision",
     "fullCheck": {
+      "exitCode": 0,
+      "backend": {
+        "pass": 3180,
+        "skip": 22,
+        "fail": 0
+      },
+      "webUnit": 487,
+      "consoleUnit": 63,
+      "efficiencyGateUnit": 558,
+      "scope": "Completed before final internal configuration idempotency-key namespacing correction; that correction has separate post-review verification"
+    },
+    "formatAndDiff": "passed",
+    "deployment": "awaiting backed-up service restart",
+    "fullCheckBeforeFinalNameReview": {
       "exitCode": 0,
       "backend": {
         "pass": 3179,
@@ -33,8 +51,8 @@
       "consoleUnit": 63,
       "efficiencyGateUnit": 558
     },
-    "formatAndDiff": "passed",
-    "deployment": "awaiting backed-up service restart"
+    "postReviewTypecheck": "passed",
+    "postReviewBrowser": "passed: final source, fake CLI, 1440x1000 and 390x844"
   },
   "limits": [
     "No paid provider calls or new real-CLI quality/efficiency acceptance in this batch",
@@ -61,6 +79,34 @@
     },
     "format.log": {
       "path": "/Users/sun/.loom/reviews/2026-10-13-instance-restart/format.log",
+      "sha256": "fb5ffe51bf83c7a6ac683f386a5c903f6ff2c086dbe1bf27cc1f12efddaf7e3f"
+    },
+    "check-final.log": {
+      "path": "/Users/sun/.loom/reviews/2026-10-13-instance-restart/check-final.log",
+      "sha256": "c67d5d7400df6233116ff9d9b327f3fa7ff9bf4dbcac90f60179d5ed74517419"
+    },
+    "focused-final.log": {
+      "path": "/Users/sun/.loom/reviews/2026-10-13-instance-restart/focused-final.log",
+      "sha256": "09e263cd3c4eca61a520a14439ba59dec67184be6894581602414f5bc3511563"
+    },
+    "typecheck-final.log": {
+      "path": "/Users/sun/.loom/reviews/2026-10-13-instance-restart/typecheck-final.log",
+      "sha256": "bef9d01c948fead061ff8f64b8496f8847391051512f3460e767e2602ceab0f8"
+    },
+    "name-red.log": {
+      "path": "/Users/sun/.loom/reviews/2026-10-13-instance-restart/name-red.log",
+      "sha256": "af9c66df76e1b244172c4bff8eb6b5ea9a52446131a6530c9062e17216cc03bb"
+    },
+    "idempotency-red.log": {
+      "path": "/Users/sun/.loom/reviews/2026-10-13-instance-restart/idempotency-red.log",
+      "sha256": "b9bb6905199bc0c466b41ff6957aacdb9162922e3ce24c1bc383aff49e267db1"
+    },
+    "browser-final.log": {
+      "path": "/Users/sun/.loom/reviews/2026-10-13-instance-restart/browser-final.log",
+      "sha256": "da054304d3ac1baebdb76ba8763acad300829a102b8380d91e1d8318a26756a9"
+    },
+    "format-final.log": {
+      "path": "/Users/sun/.loom/reviews/2026-10-13-instance-restart/format-final.log",
       "sha256": "fb5ffe51bf83c7a6ac683f386a5c903f6ff2c086dbe1bf27cc1f12efddaf7e3f"
     }
   }

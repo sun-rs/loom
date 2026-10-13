@@ -287,3 +287,75 @@ test("keep uses actual native model overrides; failed adoption rolls back config
     f.close();
   }
 });
+
+test("adopting a Role replaces a legacy opaque name while keep leaves it intact", () => {
+  const f = roleInstanceFixture();
+  try {
+    f.kernel.manageWorkspaceAgent(f.actor, {
+      ...f.role.configuration,
+      action: "configure",
+      agentId: f.agentId,
+      handle: "reviewer-old-opaque-instance",
+      displayName: "Reviewer",
+      basedOnRoomSeq: f.head(f.controlRoomId),
+      idempotencyKey: "legacy-name",
+    });
+    const reset = (key: string, adopt = false) =>
+      f.kernel.roles.resetInstanceSession(f.actor, {
+        instanceId: f.instance.instanceId,
+        basedOnRoomSeq: f.head(f.home.roomId),
+        idempotencyKey: key,
+        ...(adopt ? { adoptRoleRevisionId: f.role.roleRevisionId } : {}),
+      });
+    reset("keep");
+    assert.equal(
+      f.kernel.getWorkspaceAgentManagementView(f.actor, f.agentId).agent.handle,
+      "reviewer-old-opaque-instance",
+    );
+    reset("adopt", true);
+    assert.equal(
+      f.kernel.getWorkspaceAgentManagementView(f.actor, f.agentId).agent.handle,
+      "Reviewer-1",
+    );
+    assert.equal(
+      f.kernel.getWorkspaceAgentManagementView(f.actor, f.agentId).agent
+        .definition.participantId,
+      f.instance.instanceId,
+    );
+  } finally {
+    f.close();
+  }
+});
+
+test("restart idempotency keys remain Room-scoped and accept the public maximum length", () => {
+  const f = roleInstanceFixture();
+  try {
+    const other = f.channel("other");
+    const second = f.kernel.roles.instantiate(f.actor, {
+      roleId: f.role.roleId,
+      channelId: other.roomId,
+      basedOnRoomSeq: f.head(other.roomId),
+      idempotencyKey: "second",
+    }).instance;
+    for (const key of ["same-client-key", "r".repeat(200)]) {
+      const events = [];
+      for (const instance of [f.instance, second]) {
+        const input = {
+          instanceId: instance.instanceId,
+          basedOnRoomSeq: f.head(instance.channelId),
+          idempotencyKey: key,
+          adoptRoleRevisionId: f.role.roleRevisionId,
+        };
+        const result = f.kernel.roles.resetInstanceSession(f.actor, input);
+        assert.equal(
+          f.kernel.roles.resetInstanceSession(f.actor, input).event.eventId,
+          result.event.eventId,
+        );
+        events.push(result.event.eventId);
+      }
+      assert.notEqual(events[0], events[1]);
+    }
+  } finally {
+    f.close();
+  }
+});
