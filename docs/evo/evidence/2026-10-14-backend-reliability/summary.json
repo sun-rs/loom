@@ -1,0 +1,288 @@
+{
+  "baseline": "7e7e40a",
+  "productCodeChanged": false,
+  "paidCalls": 0,
+  "faultInjection": {
+    "passed": 30,
+    "scope": "five adapter declarations × Fork/Side × lost successful response/native result unknown/source private turn during copying",
+    "nativeCopy": "fake",
+    "initialFixtureFailure": "10 source-progress cases could not schedule after mocked mount change; fixture uses authenticated direct fake execution to isolate the copy fingerprint race; assertions unchanged",
+    "logsSha256": {
+      "fault-matrix.log": "19d7b9333afdca54014029930b74b6517b823e394a8387d4a9137dae0d534891",
+      "fault-matrix-final.log": "790c997951830bdd66c339b77827ad736bff36d4957f5d65f5be109631369c7e",
+      "recovery.log": "9da1dfe5245563927208add8354514c84449d6d77ef9c01d0b88df325882394a",
+      "fault-matrix.test.ts": "00b93bcb38e8e8e309372b670cf277fe732b9b781b985c2f48f6335caebaba15"
+    }
+  },
+  "existingRecoveryTests": {
+    "passed": 54,
+    "scope": "busy discard, config/history restart, reply return, unconfirmed retry, fork receipts, final-output failure, busy worker restart, Human hold recovery, formal restart guard"
+  },
+  "actualCliSyntheticModelAttempts": [
+    {
+      "attempt": "1791914272237-codex",
+      "cli": "codex",
+      "scenario": "graceful-restart",
+      "passed": true,
+      "requests": 2,
+      "checks": [
+        "first-input-bounded-prejoin",
+        "daemon-drain",
+        "daemon-restarted-between-turns",
+        "second-input-native-history-without-reinjection",
+        "daemon-drain",
+        "all-activations-terminal"
+      ],
+      "failure": null,
+      "rawResultSha256": "c2ad3ffef6cbb9dab63c6e9256f4e5c3c51f8f9f6f648233a1f82dac40de8d66"
+    },
+    {
+      "attempt": "1791914283622-kimi",
+      "cli": "kimi",
+      "scenario": "graceful-restart",
+      "passed": true,
+      "requests": 2,
+      "checks": [
+        "first-input-bounded-prejoin",
+        "daemon-drain",
+        "daemon-restarted-between-turns",
+        "second-input-native-history-without-reinjection",
+        "daemon-drain",
+        "all-activations-terminal"
+      ],
+      "failure": null,
+      "rawResultSha256": "a49354c790a2013847f7b184be3856af2085c7e5b3b99a9e09cc8e89012a367a"
+    },
+    {
+      "attempt": "1791914283624-pi",
+      "cli": "pi",
+      "scenario": "graceful-restart",
+      "passed": true,
+      "requests": 2,
+      "checks": [
+        "first-input-bounded-prejoin",
+        "daemon-drain",
+        "daemon-restarted-between-turns",
+        "second-input-native-history-without-reinjection",
+        "daemon-drain",
+        "all-activations-terminal"
+      ],
+      "failure": null,
+      "rawResultSha256": "55e99ebd6e6842e73e1404db3fbedae5721afc001ad16e5612a11b6e67130798"
+    },
+    {
+      "attempt": "1791914283628-claude",
+      "cli": "claude",
+      "scenario": "graceful-restart",
+      "passed": true,
+      "requests": 2,
+      "checks": [
+        "first-input-bounded-prejoin",
+        "daemon-drain",
+        "daemon-restarted-between-turns",
+        "second-input-native-history-without-reinjection",
+        "daemon-drain",
+        "all-activations-terminal"
+      ],
+      "failure": null,
+      "rawResultSha256": "62d0e60ae46910e2578080e8a84a22e7c58a6ff789b10fc5652e26050abce826"
+    },
+    {
+      "attempt": "1791914283633-opencode",
+      "cli": "opencode",
+      "scenario": "graceful-restart",
+      "passed": true,
+      "requests": 2,
+      "checks": [
+        "first-input-bounded-prejoin",
+        "daemon-drain",
+        "daemon-restarted-between-turns",
+        "second-input-native-history-without-reinjection",
+        "daemon-drain",
+        "all-activations-terminal"
+      ],
+      "failure": null,
+      "rawResultSha256": "8bbfa6c1d9842c4bb3ec26b4c6a50cd925a9924966b088048832a6a3917a1d16"
+    },
+    {
+      "attempt": "1791914342669-codex",
+      "cli": "codex",
+      "scenario": "hard-crash-immediate-only",
+      "passed": false,
+      "requests": 1,
+      "checks": [
+        "first-input-bounded-prejoin",
+        "isolated-daemon-hard-crash",
+        "daemon-drain"
+      ],
+      "failure": "Immediate restart rejected by the existing 60000ms Host fence; initial harness wrongly expected immediate availability. Retained; revised test verifies refusal, waits for expiry, then resumes.",
+      "rawResultSha256": "6ddd4beed66b5f627c73a322385bff0b0997582b638697c6394d0ed3d377e81d"
+    },
+    {
+      "attempt": "1791914352476-kimi",
+      "cli": "kimi",
+      "scenario": "hard-crash-immediate-only",
+      "passed": false,
+      "requests": 1,
+      "checks": [
+        "first-input-bounded-prejoin",
+        "isolated-daemon-hard-crash",
+        "daemon-drain"
+      ],
+      "failure": "Immediate restart rejected by the existing 60000ms Host fence; initial harness wrongly expected immediate availability. Retained; revised test verifies refusal, waits for expiry, then resumes.",
+      "rawResultSha256": "3c279268272ca1e5926cde8ad329cee1806ad2da40c4cee3d390f8e86990b146"
+    },
+    {
+      "attempt": "1791914352477-opencode",
+      "cli": "opencode",
+      "scenario": "hard-crash-immediate-only",
+      "passed": false,
+      "requests": 1,
+      "checks": [
+        "first-input-bounded-prejoin",
+        "isolated-daemon-hard-crash",
+        "daemon-drain"
+      ],
+      "failure": "Immediate restart rejected by the existing 60000ms Host fence; initial harness wrongly expected immediate availability. Retained; revised test verifies refusal, waits for expiry, then resumes.",
+      "rawResultSha256": "87ea77e872268d7c4cdb9149f93eebb06c40043e14d01b8454f31e97672afaaa"
+    },
+    {
+      "attempt": "1791914352480-claude",
+      "cli": "claude",
+      "scenario": "hard-crash-immediate-only",
+      "passed": false,
+      "requests": 1,
+      "checks": [
+        "first-input-bounded-prejoin",
+        "isolated-daemon-hard-crash",
+        "daemon-drain"
+      ],
+      "failure": "Immediate restart rejected by the existing 60000ms Host fence; initial harness wrongly expected immediate availability. Retained; revised test verifies refusal, waits for expiry, then resumes.",
+      "rawResultSha256": "4ff154305d4e3efc67427d9ace7ca828f593db3475b73679b4576b2e1ff5ac4b"
+    },
+    {
+      "attempt": "1791914352487-pi",
+      "cli": "pi",
+      "scenario": "hard-crash-immediate-only",
+      "passed": false,
+      "requests": 1,
+      "checks": [
+        "first-input-bounded-prejoin",
+        "isolated-daemon-hard-crash",
+        "daemon-drain"
+      ],
+      "failure": "Immediate restart rejected by the existing 60000ms Host fence; initial harness wrongly expected immediate availability. Retained; revised test verifies refusal, waits for expiry, then resumes.",
+      "rawResultSha256": "580cf7a4cec9e4c81a87aa6b680b25efc8344fe20f25c8435d566ec3e8f47c73"
+    },
+    {
+      "attempt": "1791914458686-kimi",
+      "cli": "kimi",
+      "scenario": "hard-crash-recovery",
+      "passed": true,
+      "requests": 2,
+      "checks": [
+        "first-input-bounded-prejoin",
+        "isolated-daemon-hard-crash",
+        "daemon-drain",
+        "immediate-restart-refused-by-host-fence",
+        "daemon-recovered-after-hard-crash",
+        "second-input-native-history-without-reinjection",
+        "daemon-drain",
+        "all-activations-terminal"
+      ],
+      "failure": null,
+      "rawResultSha256": "4548ae636b088e2a38f32d756dc941907d6940c6cf9a82c37ddb28e72485129d"
+    },
+    {
+      "attempt": "1791914458709-opencode",
+      "cli": "opencode",
+      "scenario": "hard-crash-recovery",
+      "passed": true,
+      "requests": 2,
+      "checks": [
+        "first-input-bounded-prejoin",
+        "isolated-daemon-hard-crash",
+        "daemon-drain",
+        "immediate-restart-refused-by-host-fence",
+        "daemon-recovered-after-hard-crash",
+        "second-input-native-history-without-reinjection",
+        "daemon-drain",
+        "all-activations-terminal"
+      ],
+      "failure": null,
+      "rawResultSha256": "62e5b99b443e834bad3059fb7b99a5570e8a8b4122c35b481fe9f955186a8845"
+    },
+    {
+      "attempt": "1791914458710-codex",
+      "cli": "codex",
+      "scenario": "hard-crash-recovery",
+      "passed": true,
+      "requests": 2,
+      "checks": [
+        "first-input-bounded-prejoin",
+        "isolated-daemon-hard-crash",
+        "daemon-drain",
+        "immediate-restart-refused-by-host-fence",
+        "daemon-recovered-after-hard-crash",
+        "second-input-native-history-without-reinjection",
+        "daemon-drain",
+        "all-activations-terminal"
+      ],
+      "failure": null,
+      "rawResultSha256": "d795adc8edfd00fb7184b0fc192bdd3c6173630c26d0c5a0855447685ef28d80"
+    },
+    {
+      "attempt": "1791914458711-claude",
+      "cli": "claude",
+      "scenario": "hard-crash-recovery",
+      "passed": true,
+      "requests": 2,
+      "checks": [
+        "first-input-bounded-prejoin",
+        "isolated-daemon-hard-crash",
+        "daemon-drain",
+        "immediate-restart-refused-by-host-fence",
+        "daemon-recovered-after-hard-crash",
+        "second-input-native-history-without-reinjection",
+        "daemon-drain",
+        "all-activations-terminal"
+      ],
+      "failure": null,
+      "rawResultSha256": "c561f17c0755a53b932c3d9bf2f45afcc076584504141d58c7b5af0e39b6ee3d"
+    },
+    {
+      "attempt": "1791914458721-pi",
+      "cli": "pi",
+      "scenario": "hard-crash-recovery",
+      "passed": true,
+      "requests": 2,
+      "checks": [
+        "first-input-bounded-prejoin",
+        "isolated-daemon-hard-crash",
+        "daemon-drain",
+        "immediate-restart-refused-by-host-fence",
+        "daemon-recovered-after-hard-crash",
+        "second-input-native-history-without-reinjection",
+        "daemon-drain",
+        "all-activations-terminal"
+      ],
+      "failure": null,
+      "rawResultSha256": "b62a58ed48cff517072bf67672a545577b440cbe4c1e405430744f0acd0a71a3"
+    }
+  ],
+  "totalSyntheticRequests": 25,
+  "cleanup": {
+    "recordedProcessesExited": 135,
+    "generatedSettingsRemoved": 21,
+    "runtimeStates": {
+      "terminated": 25
+    }
+  },
+  "limitations": [
+    "Crash injection is between completed turns, not during a model/tool mutation or power-loss filesystem write.",
+    "The model is loopback synthetic; no model-quality, native cost ratio or long-duration reliability claim.",
+    "Initial immediate-restart refusals are retained, not discarded from the evidence.",
+    "Production service was not interrupted; launchd KeepAlive/10-second throttle checked in source, not fault-injected on the formal service."
+  ],
+  "hostTakeoverWindowMs": 60000
+}
