@@ -1,3 +1,7 @@
+import {
+  forkProviderSession,
+  type ProviderSessionForkInput,
+} from "./provider-session-fork.ts";
 import { createHash, randomUUID } from "node:crypto";
 import {
   link,
@@ -93,6 +97,34 @@ export class ProviderSessionStore {
     }
     this.#now = input.now ?? (() => new Date());
     this.#rootDirectory = resolve(input.rootDirectory);
+  }
+
+  /** Native context copy into a new principal; never replaces a live binding. */
+  async forkInstance(
+    input: ProviderSessionForkInput,
+    nativeFork: (source: Readonly<ProviderSessionRecord>) => Promise<string>,
+  ): Promise<ProviderSessionRecord> {
+    const source = validateKey(input.source);
+    const target = validateKey(input.target);
+    const operationId = requiredText(
+      input.operationId,
+      "operationId",
+      MAX_IDENTIFIER_LENGTH,
+    );
+    const sourceGeneration = instanceGenerationOf(input.sourceGeneration);
+    if (source.participantId === target.participantId)
+      throw new Error(
+        "Native fork requires distinct source and target principals",
+      );
+    if (source.provider !== target.provider)
+      throw new Error("Native fork cannot change provider");
+    await this.#ensurePrivateRoot();
+    return forkProviderSession(
+      this,
+      this.#rootDirectory,
+      { operationId, source, sourceGeneration, target },
+      nativeFork,
+    );
   }
 
   async load(

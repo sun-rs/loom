@@ -1,0 +1,241 @@
+{
+  "date": "2026-10-13",
+  "scope": "S4/S5 native capability proof and Host binding foundation; not a completed product slice",
+  "baseCommit": "d8edac468329765c308a7311d001b38b7a591999",
+  "ownerDecision": {
+    "fork": "new ordinary channel member; source Role and frozen/current execution configuration; inherited native context",
+    "side": "discardable extra conversation; read-only source box; no channel mutations/delivery or source ACK/cursor changes"
+  },
+  "implemented": {
+    "owner": "AgentHost ProviderSessionStore",
+    "entry": "forkInstance",
+    "guarantees": [
+      "distinct principal and provider session",
+      "source binding unchanged",
+      "new identity does not inherit protocol/memory/compaction delivery receipts",
+      "durable per-target claim prevents concurrent native copies",
+      "known copied session can recover binding write after restart",
+      "unknown native result and corrupted receipt never silently retry"
+    ],
+    "notImplemented": [
+      "Kernel source authorization/configuration/generation CAS and new member transaction",
+      "Human API and console Fork entry",
+      "Side identity/credentials and scoped box reader",
+      "Side conversation and discard lifecycle",
+      "production provider fork adapters and vendor dependency packaging"
+    ]
+  },
+  "nativeProbes": [
+    {
+      "provider": "pi",
+      "version": "1.1.0",
+      "pass": true,
+      "newId": true,
+      "contextEqual": true,
+      "bidirectionalAppendIsolation": true,
+      "sourceHashAtFork": "acabc68b844a11af5beb3db516e56789ad48f7ef2c8dcc9d4fc4695f28b92742"
+    },
+    {
+      "provider": "codex",
+      "version": "0.162.1",
+      "pass": true,
+      "newId": true,
+      "historyRetained": true,
+      "sourceUnchanged": true,
+      "networkDenied": true,
+      "sourceHashAtFork": "3642eed702d49e051f02597b9837e922f6fbdfae50cf275f9b62367844eace45"
+    },
+    {
+      "provider": "claude",
+      "version": "2.1.293",
+      "pass": true,
+      "newId": true,
+      "historyInForkRequest": true,
+      "sourceUnchanged": true,
+      "syntheticRequests": 2,
+      "externalNetworkDenied": true
+    },
+    {
+      "provider": "opencode",
+      "version": "1.18.35",
+      "pass": true,
+      "newId": true,
+      "historyRetained": true,
+      "sourceMessagesUnchanged": true,
+      "externalNetworkDenied": true,
+      "generationRequests": 0
+    },
+    {
+      "provider": "kimi",
+      "version": "2.1.1",
+      "pass": true,
+      "newId": true,
+      "sourceMetadataUnchanged": true,
+      "historyInheritance": "not exercised: empty session",
+      "generationRequests": 0,
+      "externalNetworkDenied": true
+    },
+    {
+      "provider": "claude",
+      "cliVersion": "2.1.293",
+      "sdkVersion": "0.2.114",
+      "pass": true,
+      "sourceUnchanged": true,
+      "newId": true,
+      "freshMessageIds": true,
+      "messageCount": 2,
+      "historyEqual": true,
+      "generationRequests": 0
+    }
+  ],
+  "nativeProbeUseOfHostFoundation": {
+    "providers": ["codex", "claude-sdk", "opencode", "kimi", "pi"],
+    "allCallProviderSessionStoreForkInstance": true,
+    "allReplayWithoutSecondNativeCallback": true,
+    "kimiLimit": "empty session only; nonempty history/ACP MCP rebinding not verified",
+    "claudeCliControlOnlyProbe": "control initialization returned but no persistent fork file; not sufficient as native-copy success",
+    "claudeSdk": "0.2.114 offline fork on installed 2.1.293 transcript passed; external local install is probe-only, not a product dependency"
+  },
+  "paidProviderRequests": 0,
+  "qualityOrEfficiencyGate": false,
+  "probeSafety": {
+    "state": "isolated temporary homes and synthetic history; no real user session forked",
+    "codexClaudeSdk": "sandbox denied all network",
+    "claudeOpenCodeKimi": "sandbox allowed loopback/Unix sockets only; fake Anthropic endpoint used for Claude fixture turns",
+    "pi": "local installed SessionManager filesystem operation, no CLI/model launch"
+  },
+  "verification": {
+    "tddRed": "6 intended missing-method failures",
+    "focused": "18 passed: 8 fork + 10 existing session-store",
+    "typecheck": "passed",
+    "fullCheck": "passed; exit 0",
+    "format": "passed",
+    "diff": "passed",
+    "localDocumentationLinks": "passed; 4 affected documents",
+    "testGroups": [
+      {
+        "tests": 4,
+        "suites": 0,
+        "passed": 4,
+        "failed": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      {
+        "tests": 9,
+        "suites": 0,
+        "passed": 9,
+        "failed": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      {
+        "tests": 19,
+        "suites": 0,
+        "passed": 19,
+        "failed": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      {
+        "tests": 20,
+        "suites": 0,
+        "passed": 20,
+        "failed": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      {
+        "tests": 40,
+        "suites": 0,
+        "passed": 40,
+        "failed": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      {
+        "tests": 34,
+        "suites": 0,
+        "passed": 34,
+        "failed": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      {
+        "tests": 3211,
+        "suites": 0,
+        "passed": 3189,
+        "failed": 0,
+        "cancelled": 0,
+        "skipped": 22
+      },
+      {
+        "tests": 487,
+        "suites": 0,
+        "passed": 487,
+        "failed": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      {
+        "tests": 63,
+        "suites": 0,
+        "passed": 63,
+        "failed": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      {
+        "tests": 34,
+        "suites": 0,
+        "passed": 34,
+        "failed": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      {
+        "tests": 15,
+        "suites": 0,
+        "passed": 15,
+        "failed": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      {
+        "tests": 3,
+        "suites": 0,
+        "passed": 3,
+        "failed": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      {
+        "tests": 558,
+        "suites": 0,
+        "passed": 558,
+        "failed": 0,
+        "cancelled": 0,
+        "skipped": 0
+      }
+    ]
+  },
+  "deployment": "unchanged; no product entry enabled; prior deployed service retained",
+  "privateEvidenceDirectory": "/Users/sun/.loom/reviews/2026-10-13-session-branches",
+  "evidenceSha256": {
+    "probe.mjs": "2afd6dec49ca490d70e75a4400f1dabf54fbda1c66cca19b6078a6ded63171ad",
+    "native-more.mjs": "017ee456d82ca4dd5726843ab2bda13e6ff0ceaed7a5d5aa5d36649fe741ba7c",
+    "kimi-probe.mjs": "02772bb1f821ef0babf8a511070e601d1bc8060e8e0e25e3fa32bf09460e8923",
+    "claude-sdk-probe.mjs": "990c3c44d8c82306e1a9a279875ff691958ff4dbc2c0159055b7946a9a551efa",
+    "claude-control.mjs": "52c3e22d2d411a4908e444c5bb6126d318e7f07bfc1430d83b9fcb7845fc7980",
+    "red.log": "5c70c186650b6ef95e03be14ed7597ce7d8c468e554228265de5e4522f735f94",
+    "focused.log": "24b574b4982ac89910316d866ddfa4d3ac8636dd603632d18e4e25d2a30dc5ac",
+    "typecheck.log": "bef9d01c948fead061ff8f64b8496f8847391051512f3460e767e2602ceab0f8",
+    "check.log": "325e279044312ee6bded8ace9991101c9d38c05942e26db236a1f58f4cfb5278",
+    "format.log": "fb5ffe51bf83c7a6ac683f386a5c903f6ff2c086dbe1bf27cc1f12efddaf7e3f"
+  },
+  "implementationSha256": {
+    "packages/agent-host/src/provider-session-fork.ts": "23ee1edc496f991c906a2bb27d66268227e45abd43110614acda7425e8ed2843",
+    "packages/agent-host/src/provider-session-store.ts": "29b667834e0a511a5666e19218fc00421ee9be52430dd9a3ec45abb504611c93",
+    "packages/agent-host/test/provider-session-fork.test.ts": "5dbf8cf3a7a232ea6045ed68d644815d96bb832bd76a55e82e9688153c8934a4"
+  }
+}

@@ -824,3 +824,11 @@ Loom三次交付3份，总输入2007597／输出69352／80生成，输入均值6
 共保留10次探针、70次本地合成请求，其中4次失败分别是夹具漏turn、把可变updated_at误作会话身份、旧包装器拒绝免费model catalog探测、回滚夹具从旧历史提取turn。失败不删除或当成功；修正夹具后只接受完整链。20份生成settings已删除、全部记录进程退出。全仓检查首次受磁盘耗尽影响，清理可重下载的npm缓存后，原阻塞文件检查通过，并重新运行全仓检查；未删除业务数据、证据或备份。[完整运行、检查及部署状态](evidence/2026-10-13-backend-finish/operational-mvp.json)。
 
 本批收尾检查：全仓后端3166通过、22跳过，唯一失败为既有进程恢复夹具等待启动文件超过2秒，尚未进入恢复断言；原测试不改复验通过。随后补跑被退出挡住的全部尾段：Web487、console61、parity34、browser policy15、bilateral3、效率单测558均通过；不冒称一次全仓全绿。format、链接、diff通过。代码`266f875`已备份部署，只开Claude/OpenCode native-final；两库302文件、11类业务表哈希不变，fresh真实历史／console／Role／memory／aggregate API验证通过。无新付费。[部署证据](evidence/2026-10-13-backend-finish/deployment.json)。
+
+## Fork / Side 原生能力探针：免费、本地合成数据（2026-10-13）
+
+本批没有付费模型请求，也没有复制任何真实用户会话。Codex 0.162.1、Claude Code 2.1.293（另用官方 Agent SDK 0.2.114）、OpenCode 1.18.35、Kimi 2.1.1、Pi 1.1.0 在隔离目录验证原生分叉。四家已验证样本上下文保留及源不变；Kimi 只验证空会话新 ID／源元数据不变，不宣称非空历史或正式 ACP 适配通过。最终五家复制探针均经过新 Host 绑定基础并重放请求，未重复调用原生复制。
+
+Claude CLI 的两条本地合成回复只证明其 fork 续聊携带历史；纯控制初始化虽成功却没有持久目标文件，因此不作为独立复制成功证据。随后官方 SDK 离线复制保留两条样本内容并重建 UUID，通过禁止网络的验证。Kimi 先导两次因测试请求缺 cwd／fork URL 错误失败，原临时目录保留；修正测试请求后空会话通过，未修改产品运行时来迁就夹具。
+
+本批不等于 Fork/Side 的 Kernel/API/控制台验收，不改变既有五家效率判定；未开启产品入口、未部署或重启正式服务。[证据与范围](evidence/2026-10-13-session-branches/summary.json)、[实施边界](session-branches.zh-CN.md)。
