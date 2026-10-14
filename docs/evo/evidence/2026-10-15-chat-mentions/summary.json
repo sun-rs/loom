@@ -28,7 +28,26 @@
       "efficiencyToolTests": 558,
       "officialSourceTests": 25
     },
-    "formalPage": "pending",
+    "formalPage": {
+      "passed": true,
+      "readOnly": true,
+      "viewports": [
+        {
+          "width": 1440,
+          "height": 1000
+        },
+        {
+          "width": 390,
+          "height": 844
+        }
+      ],
+      "dpr": 1,
+      "nativeMentionCandidates": true,
+      "existingAuthorNameInsert": true,
+      "noMessageOrReadMarkMutation": true,
+      "screenshotsInspected": true,
+      "pageErrors": []
+    },
     "sourceTests": 25,
     "workbenchBuild": "passed",
     "format": "passed",
@@ -42,5 +61,18 @@
     "Threads/attachments/forwarding",
     "Viewport-aware automatic read",
     "Full task/memory/settings/Fork/Side UI"
-  ]
+  ],
+  "sourceCommit": "fd27955ce57c4bfb257eb272d42d1fa40482d8d2",
+  "deployment": {
+    "service": "com.loom.evo",
+    "url": "http://127.0.0.1:4176/",
+    "webBuildId": "6d76ea5f82c315118d3e4f19ac6769bfe80b0a546c4479369c5dbcf134da6c1c",
+    "verified": true,
+    "at": "2026-10-14T22:24:35.034Z",
+    "backupDatabases": 2,
+    "backupFiles": 318,
+    "businessTablesUnchanged": 18,
+    "volatileFieldExcluded": "subscription_cursors.updated_at only; identity/read/ACK positions compared exactly",
+    "runtimeFlagsPreserved": true
+  }
 }
