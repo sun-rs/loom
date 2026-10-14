@@ -10,6 +10,29 @@ export async function verifyDiscovery({
   workspace,
   channel,
 }) {
+  const basis = await client.request("room.sync", {
+    roomId: workspace.controlRoomId,
+    consumerId: "discovery-layout-fixture",
+  });
+  const { room: longRoom } = await client.request("room.create", {
+    workspaceId: workspace.workspaceId,
+    basedOnControlRoomSeq: basis.latestRoomSeq,
+    idempotencyKey: "discovery-long-room",
+    kind: "channel",
+    name: "FIXTURE " + "LongChannelName".repeat(9),
+    slug: "discovery-long-room",
+  });
+  const roomBasis = await client.request("room.sync", {
+    roomId: longRoom.roomId,
+    consumerId: "discovery-layout-fixture",
+  });
+  await client.request("message.post", {
+    roomId: longRoom.roomId,
+    body: "DISCOVERY_LAYOUT_ONLY",
+    basedOnRoomSeq: roomBasis.latestRoomSeq,
+    idempotencyKey: "discovery-long-message",
+    recipients: [],
+  });
   const results = [];
   for (const viewport of [
     { width: 1440, height: 1000 },
@@ -133,6 +156,15 @@ export async function verifyDiscovery({
         activity.items.map((i) => i.key),
       );
     }
+    assert.equal(
+      await page
+        .locator("[data-result-id]")
+        .evaluateAll((rows) =>
+          rows.some((row) => row.scrollWidth > row.clientWidth + 1),
+        ),
+      false,
+      "long titles must not create horizontal overflow inside result rows",
+    );
     await page.screenshot({
       path: join(tmpdir(), `loom-discovery-activity-${viewport.width}.png`),
       animations: "disabled",

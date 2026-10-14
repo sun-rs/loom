@@ -13,6 +13,7 @@ import {
   SearchResultsList,
   SearchEntityResult,
   SearchEntityResultContent,
+  SearchEntityResultHeader,
   SearchEntityResultTitle,
   SearchEntityResultDescription,
 } from "raft-ui";
@@ -243,15 +244,18 @@ function Results({
                     onClick={() => setSelected(row)}
                   >
                     <SearchEntityResultContent>
-                      <SearchEntityResultTitle>
-                        {row.roomName}
-                        {row.label !== row.roomName
-                          ? ` · ${row.label}`
-                          : ""} · {row.senderName}
-                        {row.unread !== undefined && row.unread > 0
-                          ? ` · ${row.unread} 条未读`
-                          : ""}
-                      </SearchEntityResultTitle>
+                      <SearchEntityResultHeader>
+                        <SearchEntityResultTitle>
+                          {row.roomName}
+                          {row.label !== row.roomName
+                            ? ` · ${row.label}`
+                            : ""}{" "}
+                          · {row.senderName}
+                          {row.unread !== undefined && row.unread > 0
+                            ? ` · ${row.unread} 条未读`
+                            : ""}
+                        </SearchEntityResultTitle>
+                      </SearchEntityResultHeader>
                       <SearchEntityResultDescription>
                         {row.message.body || "附件消息"}
                       </SearchEntityResultDescription>
