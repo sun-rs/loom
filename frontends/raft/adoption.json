@@ -2371,6 +2371,14 @@
       "structuralPort": "MessageSearchPage search/filter/result composition and ThreadsInbox panel; Loom SDK data and lightweight URL parameters replace Raft stores/account APIs. Local composition is not a byte-exact copy of either full page.",
       "behavior": "20-result pages replace rather than append; search scope all/channel/direct/thread; recent ordering; query/filter survive reload; same-query submit resets to first page; late aborted reads cannot replace current results; errors remove stale content; exact message context from bounded authenticated API, with root/message deduplication; open parent conversation at latest history. Agent Role/instance name filtering is presentation-only.",
       "limits": "Message text search only, no entity search or advanced author/date filters. Activity filters all/unread/mentions are read-only and do not mark read or follow/unfollow. Context has no thread reply, attachment interaction or live message subscription. Opening parent conversation is not an anchored jump to the old result."
+    },
+    "stage": "sidebar-interactions-v8",
+    "sidebarInteractionSlice": {
+      "source": "packages/web/src/components/layout/Sidebar.tsx section header, renderSectionAddButton and row context-menu wiring; SidebarSortMenu.tsx ArrowUpDown trigger",
+      "directReuse": "raft-ui ContextMenu and DropdownMenu primitives; unchanged PublicServerSidebarFrame/Row",
+      "structuralPort": "Section icon button and heading class parameters, ArrowUpDown/Plus/ChevronRight icons; removed redundant title and row ellipsis; channel and group operations use right-click menus.",
+      "localChanges": "Existing Loom sidebar mutation contracts retained. Context menu keyboard shortcut and native touch long-press; sort modes remain existing shared channel/custom-group preference and separate pinned preference. Plus creates a channel in the default list; moving into a custom group remains explicit.",
+      "limits": "No drag/drop, archive/unread/mute integration. Custom groups do not acquire independent sort state. Source files remain byte-exact."
     }
   },
   "rollout": {

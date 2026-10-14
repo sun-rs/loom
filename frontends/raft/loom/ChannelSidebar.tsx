@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { Button, Input, Textarea } from "raft-ui";
+import { Plus, ChevronRight } from "lucide-react";
+import { SidebarContextMenu, SidebarSortMenu } from "./SidebarMenus.tsx";
 import type { RahClient } from "@rah-os/client-sdk";
 import type {
   Room,
@@ -9,11 +11,11 @@ import type {
 import type { IntentOutcome } from "@rah-os/client-core/write-intent";
 import Frame from "../packages/web/src/components/server/PublicServerSidebarFrame.tsx";
 import Row from "../packages/web/src/components/server/PublicServerChannelRow.tsx";
+import Tooltip from "../packages/web/src/components/ui/Tooltip.tsx";
 import FormField from "../packages/web/src/components/ui/FormField.tsx";
 import { ManagementClient } from "./management-client.ts";
 import {
   ActionDialog,
-  ActionMenu,
   OperationStatus,
   useManagement,
 } from "./ManagementUi.tsx";
@@ -128,31 +130,6 @@ export default function ChannelSidebar({
       testIdPrefix="public-server-channel-sidebar"
       scrollTestId="public-server-channel-list"
     >
-      <div className="mb-2 flex items-center justify-between px-1">
-        <span className="text-sm font-bold">频道</span>
-        <ActionMenu
-          label="频道列表操作"
-          disabled={busy || !prefs}
-          items={[
-            { label: "新建频道", run: () => open({ kind: "channel" }) },
-            { label: "新建分组", run: () => open({ kind: "group" }) },
-            {
-              label: "手动排序",
-              run: () =>
-                patch({ channelSortMode: "manual", pinnedSortMode: "manual" }),
-            },
-            {
-              label: "按名称排序",
-              run: () => patch({ channelSortMode: "az", pinnedSortMode: "az" }),
-            },
-            {
-              label: "按最近活动排序",
-              run: () =>
-                patch({ channelSortMode: "recent", pinnedSortMode: "recent" }),
-            },
-          ]}
-        />
-      </div>
       {!edit && <OperationStatus manager={manager} error={error} />}
       {error && (
         <Button variant="ghost" onClick={() => void refresh()}>
@@ -166,26 +143,12 @@ export default function ChannelSidebar({
           data-sidebar-section={group.id}
           className="mb-3"
         >
-          <div className="flex items-center justify-between">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="min-w-0 flex-1 justify-start truncate"
-              aria-expanded={!collapsed.includes(group.id)}
-              onClick={() =>
-                setCollapsed((current) =>
-                  current.includes(group.id)
-                    ? current.filter((id) => id !== group.id)
-                    : [...current, group.id],
-                )
-              }
-            >
-              {group.name}
-            </Button>
-            <ActionMenu
+          <div className="mb-1 mt-3 flex h-6 items-center justify-between px-2">
+            <SidebarContextMenu
               label={`分组操作 ${group.name}`}
               disabled={busy}
               items={[
+                { label: "新建分组", run: () => open({ kind: "group" }) },
                 ...(group.id.startsWith("custom:")
                   ? [
                       {
@@ -217,7 +180,55 @@ export default function ChannelSidebar({
                   run: () => reorder(group.id, 1),
                 },
               ]}
-            />
+            >
+              <button
+                type="button"
+                className="flex h-6 min-w-0 w-full items-center gap-1 [&>svg]:shrink-0 text-xs font-bold uppercase text-foreground-strong tracking-widest transition-colors hover:text-foreground-muted theme-brutal:text-black theme-brutal:hover:text-black/70"
+                aria-expanded={!collapsed.includes(group.id)}
+                onClick={() =>
+                  setCollapsed((current) =>
+                    current.includes(group.id)
+                      ? current.filter((id) => id !== group.id)
+                      : [...current, group.id],
+                  )
+                }
+              >
+                <ChevronRight
+                  size={12}
+                  className={`shrink-0 ${collapsed.includes(group.id) ? "" : "rotate-90"}`}
+                />
+                <span className="truncate">{group.name}</span>
+              </button>
+            </SidebarContextMenu>
+            <div className="flex shrink-0 items-center gap-1">
+              <SidebarSortMenu
+                name={group.name}
+                disabled={busy}
+                value={
+                  group.id === "pinned"
+                    ? prefs!.pinnedSortMode
+                    : prefs!.channelSortMode
+                }
+                onChange={(mode) =>
+                  patch(
+                    group.id === "pinned"
+                      ? { pinnedSortMode: mode }
+                      : { channelSortMode: mode },
+                  )
+                }
+              />
+              <Tooltip content="新建频道">
+                <button
+                  type="button"
+                  className="btn-flat-sm flex size-6 items-center justify-center p-0"
+                  aria-label="新建频道"
+                  disabled={busy}
+                  onClick={() => open({ kind: "channel" })}
+                >
+                  <Plus size={14} />
+                </button>
+              </Tooltip>
+            </div>
           </div>
           {!collapsed.includes(group.id) &&
             group.rooms.map((room, index) => (
@@ -226,15 +237,7 @@ export default function ChannelSidebar({
                 className="flex min-w-0 items-center"
                 data-channel-row={room.roomId}
               >
-                <div className="min-w-0 flex-1">
-                  <Row
-                    channelId={room.roomId}
-                    name={room.name}
-                    selected={selected === room.roomId}
-                    onSelectChannel={onSelect}
-                  />
-                </div>
-                <ActionMenu
+                <SidebarContextMenu
                   label={`频道操作 ${room.name}`}
                   disabled={busy}
                   items={[
@@ -289,7 +292,16 @@ export default function ChannelSidebar({
                         ),
                     },
                   ]}
-                />
+                >
+                  <div className="min-w-0 flex-1">
+                    <Row
+                      channelId={room.roomId}
+                      name={room.name}
+                      selected={selected === room.roomId}
+                      onSelectChannel={onSelect}
+                    />
+                  </div>
+                </SidebarContextMenu>
               </div>
             ))}
           {!collapsed.includes(group.id) && !group.rooms.length && (

@@ -162,3 +162,5 @@ HTML 区域由 `HtmlFilePreview` 和专用静态 `html-preview-bridge.js` 拥有
 本地按 Room sequence 有界翻页、每页再按锚点排序；官网组件对返回集合整体排序。保留此显式差异，不为表面一致改成无界读取。用量观察是独立工程，见[运行器用量接线方案](../product/runtime-account-usage-wiring.zh-CN.md)，不在 Worker 资料读取中隐式发起模型或账户调用。
 
 2026-09-14 Task 弹窗补充：历史状态前后值由 Kernel 的冻结历史投影提供，UI 只展示操作时间线；负责人候选使用频道 activeMemberIds，历史身份解析继续使用已知身份集合。见[验收记录](../audits/2026-09-14-task-detail-operation-history.zh-CN.md)。
+
+2026-10-14 侧栏交互修正：参考同一官方 revision 的 `Sidebar.tsx` 分组标题／新增按钮／行右键入口及 `SidebarSortMenu.tsx`。去掉默认频道分组上方的重复标题；标题右侧用 ArrowUpDown 排序与 Plus 新建频道，频道行取消省略号，频道和分组操作通过右键／键盘菜单／触屏长按进入。复用 raft-ui ContextMenu／DropdownMenu 的弹层、关闭和碰撞定位，标题类名与图标参数结构化移植；本地 SDK 接线保留。现有频道与自定义分组共用排序偏好，置顶独立排序；加号创建到默认频道列表，移入自定义分组仍显式操作。本批未增加后端状态、拖拽、归档或未读控制。

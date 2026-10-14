@@ -1,3 +1,4 @@
+import { verifySidebarInteractions } from "./sidebar-interactions-browser.mjs";
 // FIXTURE ONLY: real Core with fake runtime discovery; no paid execution.
 import assert from "node:assert/strict";
 export async function verifyManagement({
@@ -204,10 +205,15 @@ export async function verifyManagement({
       .getByRole("navigation", { name: "主导航" })
       .getByRole("button", { name: "频道", exact: true })
       .click();
+    await verifySidebarInteractions(page);
+    assert.equal(
+      await page.getByRole("button", { name: /频道操作/ }).count(),
+      0,
+    );
     await page
-      .getByRole("button", { name: "频道列表操作", exact: true })
+      .getByRole("button", { name: "新建频道", exact: true })
+      .first()
       .click();
-    await page.getByRole("menuitem", { name: "新建频道", exact: true }).click();
     const channelName = `BrowserChannel${viewport.width}`;
     await dialog.getByLabel("名称", { exact: true }).fill(channelName);
     await dialog.getByRole("button", { name: "创建频道", exact: true }).click();
@@ -217,22 +223,23 @@ export async function verifyManagement({
     ).rooms.find((r) => r.name === channelName);
     assert.ok(created);
     await page
-      .getByRole("button", { name: "频道列表操作", exact: true })
-      .click();
+      .locator('[data-sidebar-section="channels"]')
+      .getByRole("button", { name: "频道", exact: true })
+      .click({ button: "right" });
     await page.getByRole("menuitem", { name: "新建分组", exact: true }).click();
     const groupName = `BrowserGroup${viewport.width}`;
     await dialog.getByLabel("名称", { exact: true }).fill(groupName);
     await dialog.getByRole("button", { name: "保存分组", exact: true }).click();
     await dialog.waitFor({ state: "hidden" });
     await page
-      .getByRole("button", { name: `频道操作 ${channelName}`, exact: true })
-      .click();
+      .locator(`[data-public-channel-id="${created.roomId}"]`)
+      .click({ button: "right" });
     await page
       .getByRole("menuitem", { name: `移至 ${groupName}`, exact: true })
       .click();
     await page
-      .getByRole("button", { name: `频道操作 ${channelName}`, exact: true })
-      .click();
+      .locator(`[data-public-channel-id="${created.roomId}"]`)
+      .click({ button: "right" });
     const sidebarRequests = [];
     let sidebarLost = false;
     await page.route("**/v3/client/sidebar/patch", async (route) => {
@@ -272,17 +279,15 @@ export async function verifyManagement({
         .items.includes(`room:${created.roomId}`),
     );
     await page
-      .getByRole("button", { name: `频道操作 ${channelName}`, exact: true })
-      .click();
+      .locator(`[data-public-channel-id="${created.roomId}"]`)
+      .click({ button: "right" });
     await page.getByRole("menuitem", { name: "取消置顶", exact: true }).click();
     await page
       .locator(
         `[data-sidebar-section^="custom:"] [data-public-channel-id="${created.roomId}"]`,
       )
       .waitFor();
-    await page
-      .getByRole("button", { name: "频道列表操作", exact: true })
-      .click();
+    await page.getByRole("button", { name: "排序 频道", exact: true }).click();
     await page
       .getByRole("menuitem", { name: "按名称排序", exact: true })
       .click();
@@ -303,9 +308,7 @@ export async function verifyManagement({
     );
 
     // A second client's change must reject the stale patch, never overwrite it.
-    await page
-      .getByRole("button", { name: "频道列表操作", exact: true })
-      .click();
+    await page.getByRole("button", { name: "排序 频道", exact: true }).click();
     const fresh = (
       await client.request("sidebar.get", {
         workspaceId: workspace.workspaceId,
@@ -334,8 +337,8 @@ export async function verifyManagement({
       "recent",
     );
     await page
-      .getByRole("button", { name: `分组操作 ${groupName}`, exact: true })
-      .click();
+      .getByRole("button", { name: groupName, exact: true })
+      .click({ button: "right" });
     await page
       .getByRole("menuitem", { name: "重命名分组", exact: true })
       .click();
@@ -346,10 +349,10 @@ export async function verifyManagement({
     await dialog.waitFor({ state: "hidden" });
     await page
       .getByRole("button", {
-        name: `分组操作 ${groupName}Renamed`,
+        name: `${groupName}Renamed`,
         exact: true,
       })
-      .click();
+      .click({ button: "right" });
     await page.getByRole("menuitem", { name: "删除分组", exact: true }).click();
     await dialog
       .getByRole("button", { name: "确认删除分组", exact: true })
@@ -381,10 +384,7 @@ export async function verifyManagement({
       rows.map((r) => r.getAttribute("data-channel-row")),
     );
     assert.ok(before.length >= 3);
-    await channelRows
-      .nth(2)
-      .getByRole("button", { name: /频道操作/ })
-      .click();
+    await channelRows.nth(2).getByRole("button").click({ button: "right" });
     await page.getByRole("menuitem", { name: "上移", exact: true }).click();
     const expected = [...before];
     [expected[1], expected[2]] = [expected[2], expected[1]];
@@ -424,6 +424,7 @@ export async function verifyManagement({
       sidebarUnknownReplayAndConcurrentConflict: true,
       groupRenameDeleteKeepsChannel: true,
       manualRowAndSectionOrder: true,
+      sidebarIconsContextKeyboardTouchAndDismissal: true,
     });
     await context.close();
   }
