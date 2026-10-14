@@ -6,7 +6,7 @@ import {
   useRef,
   type ReactNode,
 } from "react";
-import { Button, Spinner, AppShellMainSlot } from "raft-ui";
+import { Button, Input, Spinner, AppShellMainSlot } from "raft-ui";
 import { Users } from "lucide-react";
 import type { RahClient } from "@rah-os/client-sdk";
 import type { RoleTemplate } from "@rah-os/protocol";
@@ -60,6 +60,7 @@ export default function AgentPage({
   const { state, error, setError } = useManagement(manager);
   const [catalog, setCatalog] = useState<Catalog>();
   const [tab, setTab] = useState("roles");
+  const [query, setQuery] = useState("");
   const [edit, setEdit] = useState<Edit>();
   const [channel, setChannel] = useState("");
   const [revision, setRevision] = useState("keep");
@@ -115,6 +116,25 @@ export default function AgentPage({
       : undefined;
   const roleName = (role: RoleTemplate) => role.configuration.displayName;
   const busy = state !== "idle" || refreshing;
+  const matches = (text: string) =>
+    text
+      .normalize("NFKC")
+      .toLocaleLowerCase()
+      .includes(query.trim().normalize("NFKC").toLocaleLowerCase());
+  const roles =
+    catalog?.roles.filter((role) => matches(role.configuration.displayName)) ??
+    [];
+  const instances =
+    catalog?.instances.filter((instance) => {
+      const agent = catalog.agents.find(
+        (a) => a.definition.agentId === instance.agentId,
+      );
+      const room = catalog.rooms.find((r) => r.roomId === instance.channelId);
+      return matches(
+        `${agent?.currentRevision.displayName ?? agent?.handle ?? ""} ${room?.name ?? ""}`,
+      );
+    }) ?? [];
+
   return (
     <AppShellMainSlot
       className={active ? "bg-layer-canvas theme-brutal:bg-white" : "hidden"}
@@ -154,6 +174,16 @@ export default function AgentPage({
             刷新
           </Button>
         </div>
+        <Input
+          className="mb-4"
+          aria-label="筛选角色或实例"
+          placeholder="按名称筛选角色或实例"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+        {catalog &&
+          !(tab === "roles" ? roles.length : instances.length) &&
+          query.trim() && <p>没有匹配的角色或实例</p>}
         {!edit && <OperationStatus manager={manager} error={error} />}
         {!catalog ? (
           !error && <Spinner aria-label="读取角色和实例" />
@@ -166,7 +196,7 @@ export default function AgentPage({
               <p>暂无角色</p>
             ) : (
               <ChannelMemberListShell framed={false}>
-                {catalog.roles.map((role) => (
+                {roles.map((role) => (
                   <ChannelMemberRow
                     key={role.roleId}
                     type="agent"
@@ -203,7 +233,7 @@ export default function AgentPage({
               <p>暂无实例</p>
             ) : (
               <ChannelMemberListShell framed={false}>
-                {catalog.instances.map((instance) => {
+                {instances.map((instance) => {
                   const agent = catalog.agents.find(
                     (a) => a.definition.agentId === instance.agentId,
                   );

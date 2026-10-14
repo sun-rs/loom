@@ -48,6 +48,10 @@ export async function verifyGlobalNavigation({ browser, origin, channel }) {
         await page
           .getByRole("button", { name: "新建角色", exact: true })
           .waitFor();
+      else if (id === "search")
+        await page.getByLabel("搜索内容", { exact: true }).waitFor();
+      else if (id === "activity")
+        await page.getByLabel("动态范围", { exact: true }).waitFor();
       else {
         await page
           .getByText("页面骨架已就位，内容尚未接入。", { exact: true })

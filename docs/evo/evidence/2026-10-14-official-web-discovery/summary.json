@@ -1,0 +1,32 @@
+{
+  "stage": "discovery-v7",
+  "ownerDirection": "Continue usable frontend slices: improve Agent/channel experience or connect Search/Activity. This batch connects read-only discovery and Agent name filtering.",
+  "upstreamReceipt": "../../../../frontends/raft/adoption.json",
+  "implementation": {
+    "search": "Authenticated message search, scope all/channel/direct/thread, 20-row replacing pages, previous/next, query/filter URL recovery, repeated search resets to page 1. Existing server keyword matching and recent order retained.",
+    "activity": "Server activity.list, all/unread/mentions filters, bounded pages and explicit refresh. Unread values are canonical API data; viewing never marks read automatically.",
+    "context": "Exact message.context result plus bounded context/root, deduplicated and chronological; existing RoomSession supplies member names; official MessageItem read-only rendering. Open parent conversation at latest messages and return to saved query.",
+    "agent": "Role/instance display-name filter, also matching the instance channel name; no business-state change.",
+    "owners": "Existing SDK / Kernel ACL, cursors, activity and RoomSession. No protocol, backend handler, model prompt, scheduler or memory changes.",
+    "reuse": "Unchanged official PanelHeader/MessageItem and raft-ui SearchShell/Results/EntityResult/ActivityInboxPanel/Dialog. Local page composition references MessageSearchPage/ThreadsInbox, not byte-exact reuse of whole pages."
+  },
+  "verification": {
+    "tdd": "New browser test first failed on missing search input. Same-query pagination reset reproduced before fix. Fault scenarios cover delayed old responses, search failure and denied context; no weakening of content/identity checks.",
+    "isolatedBrowser": "browser.json: desktop 1440x1000 and mobile 390x844 DPR1, real temporary Core/fake discovery only. Exact API search/activity IDs, bounded pagination, exact context, scope, refresh, open/back, late-read suppression, clear/retry, Agent filter, no implicit activity.mark; all existing flows retained.",
+    "fullCheck": "npm run check exited 1: 3208 passed, 22 opt-in skipped; untouched instance-prewarm.test.ts recovery scenario returned skipped instead of started. Failed assertion did not print the skip reason; root cause not established.",
+    "targetedRepeat": "Unmodified entire instance-prewarm.test.ts subsequently passed 22/22. This is not evidence that the original failure is eliminated.",
+    "remainingChecks": "Console 63, browser policy 15, efficiency unit 558 and official source/projection 15 passed separately after the full-check short circuit.",
+    "build": "Typechecked official channel build passed; clean product build and real deployment verification pending this source checkpoint.",
+    "formatAndDiff": "format:check and git diff --check passed.",
+    "paidCli": "not run"
+  },
+  "limits": [
+    "Tasks/Settings remain placeholders; console retained.",
+    "Message search only; no entity search or advanced author/date filters. Existing server multi-keyword matching retained.",
+    "Activity is read-only: mark-read/done, follow/unfollow and mute controls not ported.",
+    "Context has no thread composer, attachment operations or live subscription; opening parent is a latest-message view, not an anchored jump.",
+    "Query/scope survive URL reload; result page number returns to first page after remount.",
+    "The unrelated full-suite prewarm failure remains visible and unexplained."
+  ],
+  "privateEvidenceDirectory": "/Users/sun/.loom/reviews/2026-10-14-official-web-discovery"
+}

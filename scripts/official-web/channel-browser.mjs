@@ -1,3 +1,4 @@
+import { verifyDiscovery } from "./discovery-browser.mjs";
 import { verifyManagement } from "./management-browser.mjs";
 import { verifyGlobalNavigation } from "./navigation-browser.mjs";
 import { verifyInstanceCreation } from "./instance-browser.mjs";
@@ -383,6 +384,13 @@ try {
     channel: channels[2],
     offer,
   });
+  const discoveryResults = await verifyDiscovery({
+    browser,
+    origin,
+    client,
+    workspace,
+    channel: channels[0],
+  });
   console.log(
     JSON.stringify(
       {
@@ -394,6 +402,7 @@ try {
         instanceResults,
         navigationResults,
         managementResults,
+        discoveryResults,
       },
       null,
       2,

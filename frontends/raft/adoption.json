@@ -2309,7 +2309,7 @@
     "Do not deploy this baseline against production or connect it to upstream accounts."
   ],
   "loomChannelSlice": {
-    "status": "staged product: channel text, members, private boxes, Role and instance management, durable channel sidebar management; console retained",
+    "status": "staged product: channel, members, private boxes, Role/instance and sidebar management, message search and read-only activity; console retained",
     "entry": "loom/main.tsx",
     "composition": "loom/ChannelApp.tsx",
     "dataAdapter": "loom/channel-client.ts",
@@ -2356,7 +2356,7 @@
       ],
       "structuralPort": "Official LeftRail desktop grouping and MainLayout in-flow mobile navigation; authenticated Loom URL targets replace upstream server/account stores",
       "localChanges": "Six sections: Search, Channels, Activity, Tasks, Agent, Settings. Desktop Settings footer retained. Mobile exposes the same six destinations instead of upstream four tabs. Agent denotes Role/instance management; unfinished pages explicitly unavailable with console link; no unread/status/account fixtures.",
-      "limits": "Search/Tasks/Activity/Settings remain explicit placeholders; Agent management connected. Console retained for advanced capabilities."
+      "limits": "Tasks/Settings remain placeholders; Search and read-only Activity connected, Agent management connected. Console retained for advanced capabilities."
     },
     "managementSlice": {
       "owner": "Existing role.*, instance.session.reset, room.member.remove, room.create and sidebar.get/patch; client-core RoomSession / WriteIntentSlot and shared Role form validation. No new backend state or handlers.",
@@ -2364,10 +2364,17 @@
       "localComposition": "Agent Role/instance tabs and forms replace upstream single-Agent/server stores. Sidebar grouping and menus follow Sidebar.tsx / SidebarSectionDialog.tsx behavior; local typed SDK projection and native select fields are local glue, not byte-exact reuse of whole pages.",
       "behavior": "Role create/revise/delete; frozen instances instantiate/restart keep-or-adopt/remove; channel creation with optional fixed attached paths; custom groups create/rename/delete/move, pin/unpin, section and row manual ordering, name/recent ordering; durable per-Human preferences with expectedVersion, exact unknown-write replay, rejected concurrent patches reload without overwrite.",
       "limits": "Manual ordering uses menu up/down, not upstream drag/drop. No archived-channel list, unread controls, mute controls, joint/public channels or full official Agent details. Section collapse is transient presentation state. No paid CLI calls."
+    },
+    "discoverySlice": {
+      "owner": "Existing search/activity.list/message.context plus client-core RoomSession; server owns ACL, keyset cursors and activity/unread calculation. No backend changes.",
+      "directReuse": "raft-ui SearchShell/Results/EntityResult, ActivityInboxPanel, Dialog and Input/Button; unchanged official PanelHeader and read-only MessageItem.",
+      "structuralPort": "MessageSearchPage search/filter/result composition and ThreadsInbox panel; Loom SDK data and lightweight URL parameters replace Raft stores/account APIs. Local composition is not a byte-exact copy of either full page.",
+      "behavior": "20-result pages replace rather than append; search scope all/channel/direct/thread; recent ordering; query/filter survive reload; same-query submit resets to first page; late aborted reads cannot replace current results; errors remove stale content; exact message context from bounded authenticated API, with root/message deduplication; open parent conversation at latest history. Agent Role/instance name filtering is presentation-only.",
+      "limits": "Message text search only, no entity search or advanced author/date filters. Activity filters all/unread/mentions are read-only and do not mark read or follow/unfollow. Context has no thread reply, attachment interaction or live message subscription. Opening parent conversation is not an anchored jump to the old result."
     }
   },
   "rollout": {
-    "stage": "management-v6",
+    "stage": "discovery-v7",
     "consoleRetained": true,
     "ownerDecision": "2026-10-14: deploy Web in stages for visual inspection; channel text slice first; incomplete capabilities remain in console."
   }

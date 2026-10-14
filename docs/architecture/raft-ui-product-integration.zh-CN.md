@@ -36,6 +36,10 @@
 
 本阶段原样复用官方 PublicServerSidebarFrame／Row、ChannelMemberListShell／Row、PanelHeader、FormField 与 raft-ui 基础组件；Loom 管理页、菜单与原生 select 表单属于本地组合，参考官方 Sidebar／SidebarSectionDialog，不能称为完整原装页面直接复用。Role 表单纯逻辑从 console 提升至 client-core，console re-export，产品不依赖将被删除的 console。手动排序暂用菜单上下移动，拖拽、归档列表、未读／静音控制及高级实例详情未移植；四个其余大页仍为骨架，console 保留。新增能力与两尺寸隔离验收见[管理切片证据](../evo/evidence/2026-10-14-official-web-management/summary.json)；部署状态以 status 当前部署行为准。
 
+2026-10-14 第七阶段发现切片：搜索大页接入既有 `search`，支持消息关键词、频道／私聊／线程范围、20条替换式分页及查询URL恢复，保留服务端关键词匹配语义。动态大页接入 `activity.list` 的全部／未读／提及我筛选，未读值直接来自服务端，本阶段查看不自动标已读。两页均可打开精确命中的 `message.context` 有界上下文，复用只读 MessageItem 与 RoomSession 成员信息；可进入所属对话的最新消息，尚不是时间线定位跳转。旧请求取消且晚到结果丢弃，读取失败清除旧内容并可重试。Agent 增加角色／实例名称筛选。
+
+本地组合参考官方 MessageSearchPage／ThreadsInbox，直接复用 raft-ui SearchShell／Results／EntityResult／ActivityInboxPanel 及 Dialog，未修改官方文件；并非两份完整页面的原样复用。后端、协议、提示词、调度和记忆均不变。动态标已读／完成／关注、搜索作者／日期高级过滤、实体搜索、线程回复及附件操作未接入；任务／设置仍为骨架。见[发现切片验收与限制](../evo/evidence/2026-10-14-official-web-discovery/summary.json)。
+
 ## 1. 当前决策：内部维护，参考证据只读
 
 2026-09-04 起以 [ADR 0028](../adr/0028-owned-neo-brutalist-ui-library.md) 和

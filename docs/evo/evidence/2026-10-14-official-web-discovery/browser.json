@@ -1,0 +1,203 @@
+{
+  "fixtureOnly": true,
+  "realCore": true,
+  "paidCli": false,
+  "results": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "memberNamesAndIdleState": true,
+      "memberChannelIsolation": true,
+      "memberReadFailureClearsStaleStatusAndRecovers": true,
+      "memberDialogPointerKeyboardFocus": true,
+      "sendAndReload": true,
+      "historyPagination": true,
+      "sparseHistoryTopAlignedAndChronological": true,
+      "unavailableChannelFailsClosed": true,
+      "switchIsolation": true,
+      "ime": true,
+      "unknownResultVerified": true,
+      "unknownSendPreservedAcrossGlobalNavigation": true,
+      "externalRequests": 0
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "memberNamesAndIdleState": true,
+      "memberChannelIsolation": true,
+      "memberReadFailureClearsStaleStatusAndRecovers": true,
+      "memberDialogPointerKeyboardFocus": true,
+      "sendAndReload": true,
+      "historyPagination": true,
+      "sparseHistoryTopAlignedAndChronological": true,
+      "unavailableChannelFailsClosed": true,
+      "switchIsolation": true,
+      "ime": true,
+      "unknownResultVerified": true,
+      "unknownSendPreservedAcrossGlobalNavigation": true,
+      "externalRequests": 0
+    }
+  ],
+  "privateResults": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "privateOpenUnknownReplay": true,
+      "privateSendUnknownReplay": true,
+      "stableBoxAcrossReload": true,
+      "sparseHistoryTopAlignedAndChronological": true,
+      "privateChannelIsolation": true,
+      "inactiveHistoryReadOnly": false
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "privateOpenUnknownReplay": true,
+      "privateSendUnknownReplay": true,
+      "stableBoxAcrossReload": true,
+      "sparseHistoryTopAlignedAndChronological": true,
+      "privateChannelIsolation": true,
+      "inactiveHistoryReadOnly": true
+    }
+  ],
+  "instanceResults": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "existingRoleMayHaveMultipleInstances": true,
+      "unknownResultExactReplay": true,
+      "targetPreservedAcrossNavigation": true,
+      "exactlyOneNewInstance": true,
+      "frozenRoleRevision": true,
+      "reloadMembership": true,
+      "catalogReadFailureDisablesSubmitAndRecovers": true
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "existingRoleMayHaveMultipleInstances": true,
+      "unknownResultExactReplay": true,
+      "targetPreservedAcrossNavigation": true,
+      "exactlyOneNewInstance": true,
+      "frozenRoleRevision": true,
+      "reloadMembership": true,
+      "catalogReadFailureDisablesSubmitAndRecovers": true
+    }
+  ],
+  "navigationResults": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "allSixDestinations": true,
+      "urlReloadAndBackForward": true,
+      "keyboardNavigation": true,
+      "channelDraftPreservedAcrossPages": true,
+      "placeholdersExplicit": true,
+      "visiblePointerTargets": true,
+      "noHorizontalOverflow": true,
+      "externalRequests": 0
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "allSixDestinations": true,
+      "urlReloadAndBackForward": true,
+      "keyboardNavigation": true,
+      "channelDraftPreservedAcrossPages": true,
+      "placeholdersExplicit": true,
+      "visiblePointerTargets": true,
+      "noHorizontalOverflow": true,
+      "externalRequests": 0
+    }
+  ],
+  "managementResults": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "roleCreateUnknownReplay": true,
+      "roleEditAndStableId": true,
+      "instanceCreateRestartRemove": true,
+      "frozenRevisionAndExplicitAdoption": true,
+      "privateOpenRecoveryFromAgentPage": true,
+      "roleDeletePreservesInstance": true,
+      "channelCreateGroupPinSortAndReload": true,
+      "sidebarUnknownReplayAndConcurrentConflict": true,
+      "groupRenameDeleteKeepsChannel": true,
+      "manualRowAndSectionOrder": true
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "roleCreateUnknownReplay": true,
+      "roleEditAndStableId": true,
+      "instanceCreateRestartRemove": true,
+      "frozenRevisionAndExplicitAdoption": true,
+      "privateOpenRecoveryFromAgentPage": true,
+      "roleDeletePreservesInstance": true,
+      "channelCreateGroupPinSortAndReload": true,
+      "sidebarUnknownReplayAndConcurrentConflict": true,
+      "groupRenameDeleteKeepsChannel": true,
+      "manualRowAndSectionOrder": true
+    }
+  ],
+  "discoveryResults": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "searchMatchesApi": true,
+      "boundedPagination": true,
+      "contextByExactMessage": true,
+      "queryReload": true,
+      "scopeFilter": true,
+      "contextToConversationAndBack": true,
+      "emptyResults": true,
+      "activityMatchesApi": true,
+      "agentNameFilter": true,
+      "staleReadCannotReplaceNewQuery": true,
+      "readFailureClearsAndRecovers": true,
+      "contextDenialClearsAndRecovers": true,
+      "noImplicitReadMark": true
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "searchMatchesApi": true,
+      "boundedPagination": true,
+      "contextByExactMessage": true,
+      "queryReload": true,
+      "scopeFilter": true,
+      "contextToConversationAndBack": true,
+      "emptyResults": true,
+      "activityMatchesApi": true,
+      "agentNameFilter": true,
+      "staleReadCannotReplaceNewQuery": true,
+      "readFailureClearsAndRecovers": true,
+      "contextDenialClearsAndRecovers": true,
+      "noImplicitReadMark": true
+    }
+  ]
+}

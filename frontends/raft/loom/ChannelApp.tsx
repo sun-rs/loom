@@ -1,3 +1,4 @@
+import DiscoveryPage from "./DiscoveryPage.tsx";
 import {
   DesktopNavigation,
   MobileNavigation,
@@ -480,9 +481,29 @@ export default function ChannelApp() {
             onOpenPrivate={openPrivate}
           />
         )}
-        {destination !== "channels" && destination !== "agents" && (
-          <DestinationPlaceholder active={destination} />
-        )}
+        {directory &&
+          (destination === "search" || destination === "activity") && (
+            <DiscoveryPage
+              client={client}
+              workspaceId={directory.workspace.workspaceId}
+              mode={destination}
+              onOpenRoom={async (id) => {
+                if (hasUnresolvedIntents()) throw Error("仍有未决操作");
+                const next = await loadChannelDirectory(client);
+                if (
+                  ![...next.channels, ...next.privateBoxes].some(
+                    (room) => room.roomId === id,
+                  )
+                )
+                  throw Error("对话不可用");
+                setDirectory(next);
+                setParams({ room: id });
+              }}
+            />
+          )}
+        {!["channels", "agents", "search", "activity"].includes(
+          destination,
+        ) && <DestinationPlaceholder active={destination} />}
       </div>
       <MobileNavigation active={destination} onSelect={selectDestination} />
     </AppShellRoot>
