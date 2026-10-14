@@ -16,7 +16,7 @@
 
 2026-10-14 第二阶段成员切片：频道页头复用官方按钮与 `raft-ui` Dialog，在只读弹层中原样复用 `ChannelMemberListShell` / `ChannelMemberRow`。成员身份来自现有 `RoomSession`，状态来自认证的 `room.agent.activity.list`；本地仅拼接名称与标签，不维护第二套成员、队列或运行状态。实例 ID 用于关联，界面显示实例名称；不向官方 Agent store 注入 Loom 状态，也不把执行空闲解释为在线。队列只标示本频道是否有排队工作，缺值显示未知，阻塞单列为需处理。仅弹层打开期间轮询，读失败清除旧状态，关闭时取消读取；官方 Dialog 负责焦点、Escape 与外部点击。尚未接入成员管理、私聊跳转或执行详情；继续保留 console。本阶段已部署，真实3实例状态与API、双尺寸页面及数据保留核验通过，见[成员切片证据](../evo/evidence/2026-10-14-official-web-members/summary.json)。
 
-2026-10-14 第三阶段私聊切片：成员行使用官方 trailing action 打开实例私聊，复用同一套 MessageTimeline / MessageItem / compact MessageInput。`room.direct.open` 通过 control RoomSession 与共享 WriteIntentSlot 发送；响应未知时保留 peer、因果位置与幂等键，仅显式核实原请求。私聊使用独立 roomId 的 MessageSession，URL 刷新恢复同一个 box；频道目录不混入私聊消息，Side 暂不接入。历史快照不含私聊 active 标记，当前可用性从认证 room.list 读取，失联时禁止发送，停用时历史只读。界面说明私聊沿用实例会话、忙时排队，以及显式记忆写入仍属频道共享。没有新后端处理器、会话或投递队列；完整私聊侧栏、附件、执行详情与管理操作仍留 console。
+2026-10-14 第三阶段私聊切片：成员行使用官方 trailing action 打开实例私聊，复用同一套 MessageTimeline / MessageItem / compact MessageInput。`room.direct.open` 通过 control RoomSession 与共享 WriteIntentSlot 发送；响应未知时保留 peer、因果位置与幂等键，仅显式核实原请求。私聊使用独立 roomId 的 MessageSession，URL 刷新恢复同一个 box；频道目录不混入私聊消息，Side 暂不接入。历史快照不含私聊 active 标记，当前可用性从认证 room.list 读取，失联时禁止发送，停用时历史只读。界面说明私聊沿用实例会话、忙时排队，以及显式记忆写入仍属频道共享。没有新后端处理器、会话或投递队列；完整私聊侧栏、附件、执行详情与管理操作仍留 console。本阶段已部署，真实私聊历史／刷新及双尺寸页面核验通过，见[私聊切片证据](../evo/evidence/2026-10-14-official-web-private/summary.json)。
 
 2026-09-08：用户明确[退役 RAH 托管 MCP](../product/managed-mcp-retirement.zh-CN.md)。Settings 与 Agent 详情不再提供该模块；历史截图、测试通过记录不构成重新接入理由。
 

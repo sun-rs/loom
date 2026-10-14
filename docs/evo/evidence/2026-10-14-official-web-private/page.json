@@ -1,0 +1,44 @@
+{
+  "at": "2026-10-14T06:15:12.061Z",
+  "origin": "http://127.0.0.1:4176",
+  "readOnlyAcceptance": true,
+  "paidCli": false,
+  "results": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "dpr": 1,
+      "realHistoryMessageVerified": true,
+      "realPrivateHistoryAndReload": true,
+      "privateActive": true,
+      "realMembersVerified": 4,
+      "executionAndQueueLabelsMatchApi": true,
+      "memberDialogEscapeAndFocusReturn": true,
+      "reload": true,
+      "consoleAvailable": true,
+      "horizontalOverflow": false,
+      "pageErrors": [],
+      "webBuildId": "1261777f9d0640648674e74047ce8abe321572ca4bafa3f55ace7b93b4d6aa86"
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "dpr": 1,
+      "realHistoryMessageVerified": true,
+      "realPrivateHistoryAndReload": true,
+      "privateActive": true,
+      "realMembersVerified": 4,
+      "executionAndQueueLabelsMatchApi": true,
+      "memberDialogEscapeAndFocusReturn": true,
+      "reload": true,
+      "consoleAvailable": true,
+      "horizontalOverflow": false,
+      "pageErrors": [],
+      "webBuildId": "1261777f9d0640648674e74047ce8abe321572ca4bafa3f55ace7b93b4d6aa86"
+    }
+  ]
+}

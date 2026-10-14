@@ -1,0 +1,58 @@
+{
+  "stage": "private-box-v3",
+  "sourceCommit": "066860d6f1b53f14d243be8754fc1ed61b2ffdba",
+  "scope": "Member-row entry to instance private box, bounded history, text posting and reload; staged local rollout",
+  "upstreamReceipt": "../../../../frontends/raft/adoption.json",
+  "reuse": {
+    "unchangedOfficialComponents": [
+      "ChannelMemberRow trailing slot",
+      "MessageTimeline",
+      "MessageItem readOnlyProjection",
+      "MessageInput compact/onSendOverride",
+      "PanelHeader"
+    ],
+    "localGlue": [
+      "private-box.ts uses existing WriteIntentSlot and control RoomSession",
+      "ChannelApp routes an existing direct Room with its own MessageSession; same composer and unknown-send flow as channel",
+      "room.list provides current private-box availability; Side excluded"
+    ],
+    "modifiedUpstreamSourceFiles": []
+  },
+  "verification": {
+    "tdd": "New open-intent test failed before implementation; stage and inactive-submit label gates failed before their changes; final source/projection tests 10 passed",
+    "fullCheck": "npm run check exited 0 in one uninterrupted run; backend/shared 3209 passed, 22 opt-in skipped; console 63; formal policy 15; efficiency tools 558; official source/projection 10",
+    "build": "Typechecked channel build and clean-commit product build passed",
+    "formatAndDiff": "passed",
+    "isolatedBrowser": "browser.json: temporary real Core, same-role fixture instances; private target execution disabled before private sends; no provider execution; desktop/mobile open/send lost-response exact replay, stable box/reload, channel isolation, inactive history read-only and disabled submit/Enter; prior channel/member cases retained",
+    "production": "page.json: existing private canonical message and reload verified at 1440x1000/390x844 DPR1; existing channel/member/API labels and console also verified; screenshots visually inspected",
+    "realCli": "not run",
+    "paidModels": "not run"
+  },
+  "deployment": "deployment.json",
+  "dataPreservation": {
+    "tablesCompared": 18,
+    "volatileFieldExcluded": "subscription_cursors.updated_at only; identity/read/ACK positions compared exactly",
+    "databasesBackedUp": 2,
+    "filesBackedUp": 318,
+    "schema": 89,
+    "sameDataHome": true
+  },
+  "foundAndResolved": [
+    "The sync snapshot does not include the private-box active marker; deriving writability there disabled the private composer. Current availability now comes from the existing authenticated room.list API; history retains client-core ownership.",
+    "A browser repetition pressed Enter before history had loaded and submit was enabled. The harness now waits for the actual enabled submit control; no readiness assertion was removed.",
+    "The Node strip-only test runner rejects TypeScript constructor parameter properties; local wrapper uses ordinary fields.",
+    "Initial unit fixture had an invalid snapshot workspace/cursor envelope; corrected to a valid frozen delivery before testing unknown write replay."
+  ],
+  "limits": [
+    "No full DM sidebar, attachments, RunAttempt inspector, management controls or Side UI in this slice; console retained.",
+    "Private-room availability is polled; the Kernel always enforces the final mutation fence. Failed reads disable submission.",
+    "Private content is not published into the channel; same-session influence and channel-shared explicit memory writes retain existing backend semantics.",
+    "Production acceptance was read-only; mutation/failure paths used isolated real Core. No fresh native CLI reply or efficiency claim.",
+    "Existing historic names and test channels are retained; no data migration or cleanup."
+  ],
+  "screenshots": {
+    "private-1440.png": "816ee10f734a9b2bf45349edce156a012e6d5fa47f5e77116b1e3e0912460c31",
+    "private-390.png": "64a0e52a4b12474ae6389ad92509d4e306e96905b38bb0fdf0961d3282babc62"
+  },
+  "privateEvidenceDirectory": "/Users/sun/.loom/reviews/2026-10-14-official-web-private"
+}
