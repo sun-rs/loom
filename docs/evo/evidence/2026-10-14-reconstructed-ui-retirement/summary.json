@@ -913,10 +913,38 @@
     "consoleBrowser": "passed at 1440x1000 and 390x844 with fake provider only",
     "officialBuild": "passed",
     "officialGlueTypecheck": "passed",
-    "repositoryCheck": "pending",
+    "repositoryCheck": {
+      "result": "failed; not claimed green",
+      "revision": "de491ba",
+      "tests": 3230,
+      "passed": 3206,
+      "failed": 2,
+      "skipped": 22,
+      "failures": [
+        {
+          "file": "packages/agent-host/test/claude-warm-driver-close.test.ts",
+          "case": "P2-4 (warm): late interrupt receipt",
+          "error": "read ECONNRESET",
+          "unchangedFileRerun": "19 passed, 0 failed"
+        },
+        {
+          "file": "packages/agent-host/test/node-k-carrier-computer-upgrade-detached-blackbox.test.ts",
+          "case": "detached K composition replaces the live Computer service across a process boundary",
+          "error": "condition timed out waiting for attestation",
+          "unchangedFileRerun": "2 passed, 0 failed"
+        }
+      ],
+      "note": "Neither backend implementation nor assertions changed. Reruns passed but do not erase the full-suite failures."
+    },
     "productBuild": "expected refusal: official frontend not connected",
     "paidCli": "not run",
-    "serviceRestart": "not performed; source retirement does not change deployed immutable assets"
+    "serviceRestart": "not performed; source retirement does not change deployed immutable assets",
+    "remainingCheckGroups": {
+      "consoleUnit": "63 passed",
+      "formalBrowserPolicy": "15 passed",
+      "efficiencyUnit": "558 passed; fake/offline, no paid provider",
+      "officialSource": "4 passed"
+    }
   },
   "remaining": [
     "Official frontend is not yet connected to Loom channels or message writes.",
