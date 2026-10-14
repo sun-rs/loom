@@ -1,5 +1,5 @@
 import { projectChannelMembers } from "./channel-members.ts";
-import { MessageSession, RoomSession } from "@rah-os/client-core";
+import { RoomTimelineSession, RoomSession } from "@rah-os/client-core";
 import {
   WriteIntentSlot,
   type IntentOutcome,
@@ -77,7 +77,7 @@ export async function loadChannelDirectory(client: RahClient) {
 export class LoomChannelClient {
   readonly writes = new WriteIntentSlot();
   readonly room: RoomSession;
-  readonly messages: MessageSession;
+  readonly messages: RoomTimelineSession;
   readonly client: RahClient;
   readonly roomId: string;
   private directRoom: Room | null = null;
@@ -86,7 +86,7 @@ export class LoomChannelClient {
     this.client = client;
     this.roomId = roomId;
     this.room = new RoomSession({ client, roomId, consumerId });
-    this.messages = new MessageSession({ client, roomId });
+    this.messages = new RoomTimelineSession(client, roomId);
   }
   private serial<T>(run: () => Promise<T>): Promise<T> {
     const result = this.tail.then(run, run);
@@ -141,8 +141,22 @@ export class LoomChannelClient {
         this.room.state.snapshot?.room.kind === "direct"
           ? this.directRoom
           : (this.room.state.snapshot?.room ?? null),
-      messages: this.messages.state.messages.map((message) =>
-        toOfficialMessage(message, this.room.state.snapshot?.members ?? []),
+      messages: this.messages.state.items.map((item) =>
+        item.kind === "message"
+          ? toOfficialMessage(
+              item.message,
+              this.room.state.snapshot?.members ?? [],
+            )
+          : {
+              id: `event:${item.notice.eventId}`,
+              channelId: item.notice.roomId,
+              seq: item.notice.roomSeq,
+              senderId: "system",
+              senderType: "user",
+              messageType: "system",
+              content: item.notice.text,
+              createdAt: item.notice.createdAt,
+            },
       ),
       hasOlder: this.messages.state.hasEarlier,
     };

@@ -177,6 +177,7 @@ test("RahCore is a headless lifecycle boundary over canonical Room state and mul
       "listRoomAgentActivity",
       "listRoomFiles",
       "listRoomMemberships",
+      "listRoomTimeline",
       "listRooms",
       "listSavedMessages",
       "listTaskHistory",

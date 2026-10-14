@@ -27,6 +27,7 @@ export type HumanApplicationPort = Pick<
   | "listInputRequests"
   | "leaveRoom"
   | "listAgentCatalog"
+  | "listRoomTimeline"
   | "listMessages"
   | "listMessageReferenceReadStates"
   | "listMessageForwardTargets"
@@ -247,6 +248,7 @@ export function createHumanApplicationPort(
     listInputRequests: (actor, input) => kernel.listInputRequests(actor, input),
     leaveRoom: (actor, input) => kernel.leaveRoom(actor, input),
 
+    listRoomTimeline: (actor, input) => kernel.listRoomTimeline(actor, input),
     listMessages: (actor, input) => kernel.listMessages(actor, input),
     listMessageReferenceReadStates: (actor, input) =>
       kernel.listMessageReferenceReadStates(actor, input),

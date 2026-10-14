@@ -474,6 +474,7 @@ export class RoomKernel {
   readonly followHumanThread;
   readonly getHumanThreadFollowers;
   readonly messageSocial;
+  readonly listRoomTimeline;
   readonly listHumanActivity;
   readonly markHumanActivity;
   readonly removeHumanThreadAgentFollower;
@@ -687,6 +688,7 @@ export class RoomKernel {
     this.humanNotifications = humanCommands.humanNotifications;
     this.followHumanThread = humanCommands.followHumanThread;
     this.getHumanThreadFollowers = humanCommands.getHumanThreadFollowers;
+    this.listRoomTimeline = humanCommands.listRoomTimeline;
     this.listHumanActivity = humanCommands.listHumanActivity;
     this.markHumanActivity = humanCommands.markHumanActivity;
     this.messageSocial = humanCommands.messageSocial;

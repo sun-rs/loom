@@ -114,6 +114,7 @@ test("RahClient covers every existing Human API v3 operation", () => {
     "room.sos.resume",
     "room.sos.stop",
     "room.sync",
+    "room.timeline",
     "room.unarchive",
     "room.update",
     "runtime.guide.read",
@@ -180,6 +181,11 @@ test("HttpRahClient maps the complete Human API surface to v3 routes", async () 
     operation: RahClientOperation;
     path: string;
   }> = [
+    {
+      input: { roomId: "room-main", limit: 50 },
+      operation: "room.timeline",
+      path: "/v3/client/rooms/timeline",
+    },
     {
       input: { path: "" },
       operation: "computer.files.list",

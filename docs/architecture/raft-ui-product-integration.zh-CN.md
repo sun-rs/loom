@@ -174,3 +174,7 @@ activity.mark 没有幂等键，响应不确定时显示未确认并刷新投影
 2026-10-14 第十一阶段 UI 规则修复：成员聊天行按官方 ChannelRow 的 slot 层级接 SidebarItemCount、静音图标和文字状态，去掉行外 AttentionDot。正文补回 ChatPanel 的 px-3 wrapper、DateDivider、稳定同作者分组和相邻消息节奏参数。初次加载用整页临时画面，底层控件在就绪前隐藏并 inert，列表不显示独立加载文字。上游 recipe、字体、边框和 hover 参数保持原样。Owner 明确允许省略未接能力，不允许改变保留界面的 UI 规则；[完整盘点与后续接入顺序](../audits/2026-10-14-ui-rules-and-backend-bindings.zh-CN.md)区分现成接口、缺失合约、未接交互与范围外能力。
 
 2026-10-14 第十二阶段 Role 主从页与点击已读：按 Owner 裁定取消 Agent 全页角色／实例双列表，改为官方 member master/detail 结构；左侧 Role、右侧内联配置／该 Role 实例标签，移动端列表进入详情再返回。直接复用原 profile header、Tabs、SidebarItem、AvatarSlot 和 splitter；保留实例冻结配置与未知写入核实。频道普通点击补接已有 channel-list activity.mark，确认后刷新数字；此前“查看不自动标已读”仅继续适用于 URL／搜索上下文与后台轮询，不再适用于显式点击频道行。详见[来源、根因与边界](../audits/2026-10-14-role-workspace-and-read-state.zh-CN.md)。
+
+## 系统消息读取修复（2026-10-15）
+
+频道／实例私聊的正式消息窗口改由 Human-only `room.timeline` 提供：现有 Message 与符合侧栏未读规则的持久 Room 通知统一有界分页，但协议保持不同类型与身份。Kernel 不新增账本、不写消息；client-core RoomTimelineSession 拥有展示窗口，RoomSession 保留写入屏障。原 `message.list` 与 Worker 读取不变。官方 MessageItem 系统行和连续系统消息折叠组件直接复用；读取不隐式标已读。该变更修复未读有数字但正文空白的既有缺陷，不解冻调度／成本主线。出处、测试及保留缺口见[本批审计](../audits/2026-10-15-system-notice-timeline.zh-CN.md)。

@@ -1,3 +1,5 @@
+import { readRoomTimeline } from "./room-timeline.ts";
+import type { ClientRoomTimelineRequest } from "@rah-os/protocol";
 import { RoleCatalog } from "./role-catalog.ts";
 import { ChannelMemoryService } from "./channel-memory.ts";
 import { TaskDeletionService } from "./task-deletion.ts";
@@ -77,6 +79,10 @@ export function createHumanCommandServices(options: {
       events: options.events,
     }),
     humanSidebar: new HumanSidebar(context),
+    listRoomTimeline: (
+      actor: AuthenticatedActorContext,
+      input: ClientRoomTimelineRequest,
+    ) => readRoomTimeline(options.database, options.requireActor(actor), input),
     listHumanActivity: (
       actor: AuthenticatedActorContext,
       input: Parameters<HumanActivity["list"]>[1],

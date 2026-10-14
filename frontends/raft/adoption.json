@@ -2375,7 +2375,7 @@
       "behavior": "20-result pages replace rather than append; search scope all/channel/direct/thread; recent ordering; query/filter survive reload; same-query submit resets to first page; late aborted reads cannot replace current results; errors remove stale content; exact message context from bounded authenticated API, with root/message deduplication; open parent conversation at latest history. Agent Role/instance name filtering is presentation-only.",
       "limits": "Message text search only, no entity search or advanced author/date filters. Activity filters all/unread/mentions are read-only and do not mark read or follow/unfollow. Context has no thread reply, attachment interaction or live message subscription. Opening parent conversation is not an anchored jump to the old result."
     },
-    "stage": "mobile-chat-master-detail-v14",
+    "stage": "system-notice-timeline-v15",
     "sidebarInteractionSlice": {
       "source": "packages/web/src/components/layout/Sidebar.tsx section header, renderSectionAddButton and row context-menu wiring; SidebarSortMenu.tsx ArrowUpDown trigger",
       "directReuse": "raft-ui ContextMenu/DropdownMenu/SidebarItem/SidebarItemCount/SidebarItemMetaIcon and unchanged PublicServerSidebarFrame; member row source structure ported in ChannelListRow.",
@@ -2438,6 +2438,20 @@
       "localChanges": "Single local Chat title replaces server/account switcher. Query parameter chat=list preserves selected Room and mounted composer; it is presentation state only. Six preexisting tab roots retained; other modules mobile detail rules remain open.",
       "tests": "scripts/official-web/mobile-chat-browser.mjs plus existing dual-viewport channel/private/navigation/sidebar/management/discovery gates; no paid CLI.",
       "audit": "docs/audits/2026-10-15-mobile-chat-layout.zh-CN.md"
+    },
+    "systemNoticeSlice": {
+      "source": [
+        "packages/web/src/components/message/ChatPanel.tsx: renderChannelItem",
+        "packages/web/src/components/message/systemMessageGrouping.ts",
+        "packages/web/src/components/message/MessageItem.tsx: isSystem",
+        "packages/web/src/components/message/ThreadPanelSystemMessageGroupDisclosure.tsx",
+        "packages/web/src/components/message/SystemMessageGroupDisclosure.tsx"
+      ],
+      "directReuse": "Unchanged native system MessageItem, grouping and disclosure, raft-ui recipes, date/group rhythm and timeline anchor.",
+      "structuralPort": "ChatPanel render branches and px-3 wrapper in Loom ChannelTimeline.",
+      "localChanges": "Human-only room.timeline reads existing durable messages and eligible notices in one bounded sequence; RoomTimelineSession owns display paging, RoomSession retains mutation barriers. Canonical messages/events remain distinct. No provider behavior or read-mark change.",
+      "audit": "docs/audits/2026-10-15-system-notice-timeline.zh-CN.md",
+      "tests": "Kernel/client-core regressions; system-notices-browser plus full channel browser suite, both viewports, no paid CLI."
     }
   },
   "rollout": {

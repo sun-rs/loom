@@ -1,3 +1,4 @@
+import { verifySystemNotices } from "./system-notices-browser.mjs";
 import {
   verifyMobileChatNavigation,
   showChatList,
@@ -118,6 +119,13 @@ try {
     instances.push(result.instance);
   }
   browser = await chromium.launch({ headless: true });
+  const systemNoticeResults = await verifySystemNotices({
+    browser,
+    origin,
+    client,
+    workspace,
+    head,
+  });
   for (const viewport of [
     { width: 1440, height: 1000 },
     { width: 390, height: 844 },
@@ -449,6 +457,7 @@ try {
   console.log(
     JSON.stringify(
       {
+        systemNoticeResults,
         fixtureOnly: true,
         realCore: true,
         paidCli: false,

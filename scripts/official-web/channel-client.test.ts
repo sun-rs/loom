@@ -55,9 +55,14 @@ test("channel read uses client-core bounded pages and rejects cross-channel proj
         },
       };
     if (op === "room.acknowledge") return { acknowledgedThrough: 1 };
-    if (op === "message.list")
+    if (op === "room.timeline")
       return {
-        messages: [{ ...message, roomId: bad ? "other" : "room-a" }],
+        items: [
+          {
+            kind: "message",
+            message: { ...message, roomId: bad ? "other" : "room-a" },
+          },
+        ],
         cursorBefore: 1,
         cursorAfter: 1,
         hasMoreBefore: false,
@@ -69,7 +74,7 @@ test("channel read uses client-core bounded pages and rejects cross-channel proj
   const view = await channel.refresh();
   assert.equal(view.messages[0]?.id, "message-a");
   assert.ok(
-    calls.some((c: any) => c.op === "message.list" && c.input.limit === 50),
+    calls.some((c: any) => c.op === "room.timeline" && c.input.limit === 50),
   );
   bad = true;
   await assert.rejects(

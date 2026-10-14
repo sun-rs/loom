@@ -1,4 +1,8 @@
 import {
+  ClientRoomTimelineRequestSchema,
+  ClientRoomTimelineResponseSchema,
+} from "@rah-os/protocol";
+import {
   SideCreateResponseSchema,
   SideDiscardRequestSchema,
   SideDiscardResponseSchema,
@@ -409,6 +413,7 @@ const CLIENT_V2_DATA_PATHS = new Set([
   "/messages/list",
   "/messages/post",
   "/rooms/list",
+  "/rooms/timeline",
   "/rooms/members/add",
   "/rooms/members/list",
   "/rooms/members/remove",
@@ -1651,6 +1656,17 @@ export class ClientApplicationService {
         ClientDirectRoomOpenResponseSchema.parse({
           room: this.#human.openDirectRoom(actor, command),
         }),
+      );
+      return;
+    }
+    if (path === "/rooms/timeline") {
+      const command = parseClientRequest(ClientRoomTimelineRequestSchema, body);
+      writeJson(
+        response,
+        200,
+        ClientRoomTimelineResponseSchema.parse(
+          this.#human.listRoomTimeline(actor, command),
+        ),
       );
       return;
     }

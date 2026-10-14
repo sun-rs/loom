@@ -1,10 +1,4 @@
-import {
-  useStableMessageGrouping,
-  followedByFor,
-  followsSystemFor,
-} from "../packages/web/src/components/message/messageGrouping.ts";
-import { DateDivider } from "../packages/web/src/components/message/DateDivider.tsx";
-import { useTimeFormatter } from "../packages/web/src/hooks/useTimeFormatter.ts";
+import ChannelTimeline from "./ChannelTimeline.tsx";
 import { useResizablePanel } from "../packages/web/src/hooks/useResizablePanel.ts";
 import { SIDEBAR_PANEL_BOUNDS } from "../packages/web/src/lib/panelBounds.ts";
 import PanelResizeHandle from "../packages/web/src/components/ui/PanelResizeHandle.tsx";
@@ -37,8 +31,6 @@ import ChannelSidebar from "./ChannelSidebar.tsx";
 import ChatSidebarFrame from "./ChatSidebarFrame.tsx";
 import AgentPage from "./AgentPage.tsx";
 import PanelHeader from "../packages/web/src/components/ui/PanelHeader.tsx";
-import MessageTimeline from "../packages/web/src/components/message/MessageTimeline.tsx";
-import MessageItem from "../packages/web/src/components/message/MessageItem.tsx";
 import MessageInput from "../packages/web/src/components/message/MessageInput.tsx";
 import { LoomChannelClient, loadChannelDirectory } from "./channel-client.ts";
 import type { Room } from "@rah-os/protocol";
@@ -46,7 +38,6 @@ const client = new HttpRahClient({
   baseUrl: "",
   accessToken: () => "trusted-proxy-auth",
 });
-const noMentions = new Map();
 function consumer() {
   let storage: Storage | undefined;
   try {
@@ -77,11 +68,6 @@ function Channel({
 }) {
   const isPrivate = channel.instancePrivateBox !== undefined;
   const [view, setView] = useState(() => bridge.view());
-  const { options: timeOptions } = useTimeFormatter();
-  const grouping = useStableMessageGrouping(
-    view.messages,
-    timeOptions.timeZone ?? undefined,
-  );
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [writeState, setWriteState] = useState(bridge.writes.state);
@@ -196,49 +182,12 @@ function Channel({
               {isPrivate ? "还没有私聊消息" : "频道还没有消息"}
             </p>
           ) : (
-            <MessageTimeline
-              source={{
-                messages: view.messages,
-                hasOlder: view.hasOlder,
-                hasNewer: false,
-                loading,
-                loadOlder: older,
-                loadNewer: async () => {},
-              }}
-              renderItem={(message, index) => (
-                <>
-                  {grouping.get(message.id)?.showDayDivider && (
-                    <DateDivider createdAt={message.createdAt} />
-                  )}
-                  <div
-                    className="px-3"
-                    style={{
-                      contain: "layout style",
-                      overflow: "clip visible",
-                    }}
-                  >
-                    <MessageItem
-                      message={message}
-                      groupState={grouping.get(message.id)}
-                      followedBy={followedByFor(view.messages, index, grouping)}
-                      followsSystem={followsSystemFor(view.messages, index)}
-                      mentionMap={noMentions}
-                      channels={[]}
-                      readOnlyProjection
-                      readOnlySender={{
-                        displayName: message.senderDisplayName ?? "成员",
-                        avatarUrl: null,
-                        description: null,
-                      }}
-                      hideThreadActions
-                    />
-                  </div>
-                </>
-              )}
-              className="h-full"
-              testId="loom-message-timeline"
-              persistKey={`loom-channel:${channel.roomId}`}
-              sparseAnchor="top"
+            <ChannelTimeline
+              roomId={channel.roomId}
+              messages={view.messages}
+              hasOlder={view.hasOlder}
+              loading={loading}
+              loadOlder={older}
             />
           )}
         </div>

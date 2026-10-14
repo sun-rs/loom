@@ -743,3 +743,5 @@ function isStaleContextFailure(
     failure.status === 409
   );
 }
+
+export { RoomTimelineSession } from "./room-timeline.ts";

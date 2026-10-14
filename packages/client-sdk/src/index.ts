@@ -1,4 +1,10 @@
 import {
+  ClientRoomTimelineRequestSchema,
+  ClientRoomTimelineResponseSchema,
+  type ClientRoomTimelineRequest,
+  type ClientRoomTimelineResponse,
+} from "@rah-os/protocol";
+import {
   SideCreateResponseSchema,
   SideDiscardRequestSchema,
   SideDiscardResponseSchema,
@@ -675,6 +681,10 @@ export type RahClientOperationMap = ComposerOperationMap &
       input: ClientRoomAgentActivityListRequest;
       output: ClientRoomAgentActivityListResponse;
     };
+    "room.timeline": {
+      input: ClientRoomTimelineRequest;
+      output: ClientRoomTimelineResponse;
+    };
     "room.list": {
       input: ClientRoomsListRequest;
       output: ClientRoomsListResponse;
@@ -1313,6 +1323,13 @@ const operationDefinitions: Record<RahClientOperation, OperationDefinition> = {
     method: "POST",
     output: ClientRoomAgentActivityListResponseSchema,
     path: "/v3/client/rooms/agents/activity/list",
+  },
+  "room.timeline": {
+    authenticated: true,
+    input: ClientRoomTimelineRequestSchema,
+    method: "POST",
+    output: ClientRoomTimelineResponseSchema,
+    path: "/v3/client/rooms/timeline",
   },
   "room.list": {
     authenticated: true,
