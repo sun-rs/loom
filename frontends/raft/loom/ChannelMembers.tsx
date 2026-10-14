@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Users } from "lucide-react";
+import { Users, MessageSquare } from "lucide-react";
 import {
   Button,
   Dialog,
@@ -17,7 +17,13 @@ import {
 } from "../packages/web/src/components/channel/ChannelMemberList.tsx";
 import type { LoomChannelClient } from "./channel-client.ts";
 
-function MemberList({ bridge }: { bridge: LoomChannelClient }) {
+function MemberList({
+  bridge,
+  onOpenPrivate,
+}: {
+  bridge: LoomChannelClient;
+  onOpenPrivate: (id: string) => void;
+}) {
   const [members, setMembers] =
     useState<Awaited<ReturnType<LoomChannelClient["members"]>>>();
   const [error, setError] = useState(false);
@@ -57,6 +63,18 @@ function MemberList({ bridge }: { bridge: LoomChannelClient }) {
           key={member.id}
           type={member.kind === "agent" ? "agent" : "human"}
           name={member.name}
+          trailing={
+            member.kind === "agent" ? (
+              <Button
+                size="sm"
+                variant="outline"
+                aria-label={`私聊 ${member.name}`}
+                onClick={() => onOpenPrivate(member.id)}
+              >
+                <MessageSquare size={16} />
+              </Button>
+            ) : undefined
+          }
           secondary={<span className="whitespace-normal">{member.detail}</span>}
         />
       ))}
@@ -67,8 +85,10 @@ function MemberList({ bridge }: { bridge: LoomChannelClient }) {
 /** Official member rows and dialog primitive, without upstream agent stores or online inference. */
 export default function ChannelMembers({
   bridge,
+  onOpenPrivate,
 }: {
   bridge: LoomChannelClient;
+  onOpenPrivate: (id: string) => void;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -85,7 +105,17 @@ export default function ChannelMembers({
           <DialogTitle>频道成员</DialogTitle>
           <DialogClose aria-label="关闭成员列表" />
         </DialogHeader>
-        <DialogBody>{open && <MemberList bridge={bridge} />}</DialogBody>
+        <DialogBody>
+          {open && (
+            <MemberList
+              bridge={bridge}
+              onOpenPrivate={(id) => {
+                setOpen(false);
+                onOpenPrivate(id);
+              }}
+            />
+          )}
+        </DialogBody>
       </DialogContent>
     </Dialog>
   );

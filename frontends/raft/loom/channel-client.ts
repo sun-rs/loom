@@ -56,6 +56,12 @@ export async function loadChannelDirectory(client: RahClient) {
     workspaceId: workspace.workspaceId,
   });
   return {
+    privateBoxes: rooms.filter(
+      (room) =>
+        room.kind === "direct" &&
+        room.instancePrivateBox !== undefined &&
+        room.side === undefined,
+    ),
     principal: identity.principal,
     workspace,
     channels: rooms.filter(
@@ -71,6 +77,7 @@ export class LoomChannelClient {
   readonly messages: MessageSession;
   readonly client: RahClient;
   readonly roomId: string;
+  private directRoom: Room | null = null;
   private tail: Promise<unknown> = Promise.resolve();
   constructor(client: RahClient, roomId: string, consumerId: string) {
     this.client = client;
@@ -87,6 +94,16 @@ export class LoomChannelClient {
     return this.serial(async () => {
       await this.room.syncUntilCurrent({ maxPages: 10 });
       await this.messages.syncUntilCurrent({ limit: 50, maxPages: 2 });
+      const room = this.room.state.snapshot?.room;
+      if (room?.kind === "direct") {
+        // The sync snapshot owns history; room.list owns current private-box availability.
+        const directory = await this.client.request("room.list", {
+          workspaceId: room.workspaceId,
+        });
+        this.directRoom =
+          directory.rooms.find((item) => item.roomId === this.roomId) ?? null;
+        if (!this.directRoom) throw new Error("此私聊已不可访问");
+      }
       return this.view();
     });
   }
@@ -117,7 +134,10 @@ export class LoomChannelClient {
     hasOlder: boolean;
   } {
     return {
-      room: this.room.state.snapshot?.room ?? null,
+      room:
+        this.room.state.snapshot?.room.kind === "direct"
+          ? this.directRoom
+          : (this.room.state.snapshot?.room ?? null),
       messages: this.messages.state.messages.map((message) =>
         toOfficialMessage(message, this.room.state.snapshot?.members ?? []),
       ),

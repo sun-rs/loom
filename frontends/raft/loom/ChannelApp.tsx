@@ -1,3 +1,4 @@
+import { LoomPrivateBoxClient } from "./private-box.ts";
 import ChannelMembers from "./ChannelMembers.tsx";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -10,7 +11,7 @@ import {
   Button,
   Spinner,
 } from "raft-ui";
-import { Hash } from "lucide-react";
+import { Hash, MessageSquare } from "lucide-react";
 import { HttpRahClient } from "@rah-os/client-sdk";
 import { hasUnresolvedIntents } from "@rah-os/client-core/write-intent";
 import { loadOrCreateConsumerId } from "@rah-os/client-core";
@@ -44,10 +45,13 @@ const consumerId = consumer();
 function Channel({
   channel,
   bridge,
+  onOpenPrivate,
 }: {
+  onOpenPrivate: (id: string) => void;
   channel: Room;
   bridge: LoomChannelClient;
 }) {
+  const isPrivate = channel.instancePrivateBox !== undefined;
   const [view, setView] = useState(() => bridge.view());
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -119,12 +123,26 @@ function Channel({
   return (
     <ConversationPanelRoot edge="attached" className="relative border-l-0">
       <PanelHeader
-        title={channel.name}
+        title={isPrivate ? `私聊 · ${channel.name}` : channel.name}
         subtitle={channel.description}
-        icon={<Hash size={18} />}
-        actions={<ChannelMembers bridge={bridge} />}
+        icon={isPrivate ? <MessageSquare size={18} /> : <Hash size={18} />}
+        actions={
+          isPrivate ? undefined : (
+            <ChannelMembers bridge={bridge} onOpenPrivate={onOpenPrivate} />
+          )
+        }
       />
       <ConversationPanelContent>
+        {isPrivate && (
+          <p className="px-3 py-2 text-xs text-foreground-muted">
+            仅你与此实例可见；沿用实例会话，忙时排队。私聊中写入的记忆属于频道共享记忆。
+          </p>
+        )}
+        {isPrivate && view.room?.instancePrivateBox?.active === false && (
+          <p role="status" className="px-3 py-2 text-sm">
+            此私聊已停用，历史只读。
+          </p>
+        )}
         {error && (
           <div role="alert" className="m-3 text-sm">
             {error}
@@ -134,7 +152,9 @@ function Channel({
           {loading ? (
             <Spinner aria-label="正在读取频道" />
           ) : view.messages.length === 0 ? (
-            <p className="p-6 text-sm">频道还没有消息</p>
+            <p className="p-6 text-sm">
+              {isPrivate ? "还没有私聊消息" : "频道还没有消息"}
+            </p>
           ) : (
             <MessageTimeline
               source={{
@@ -186,8 +206,20 @@ function Channel({
         loadMentionMembers={false}
         showTaskButton={false}
         onSendOverride={send}
-        submitDisabled={loading || writeState !== "idle"}
-        placeholder={`发送到 #${channel.name}`}
+        submitDisabled={
+          loading ||
+          Boolean(error) ||
+          writeState !== "idle" ||
+          (isPrivate && view.room?.instancePrivateBox?.active !== true)
+        }
+        submitDisabledReason={
+          isPrivate && view.room?.instancePrivateBox?.active === false
+            ? "此私聊已停用"
+            : undefined
+        }
+        placeholder={
+          isPrivate ? `私聊 ${channel.name}` : `发送到 #${channel.name}`
+        }
       />
     </ConversationPanelRoot>
   );
@@ -228,10 +260,60 @@ export default function ChannelApp() {
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
   }, []);
+  const boxes = useMemo(
+    () =>
+      directory?.workspace.controlRoomId
+        ? new LoomPrivateBoxClient(
+            client,
+            directory.workspace.workspaceId,
+            directory.workspace.controlRoomId,
+            consumerId,
+          )
+        : undefined,
+    [directory?.workspace.workspaceId, directory?.workspace.controlRoomId],
+  );
+  const [boxState, setBoxState] = useState("idle");
+  const [boxError, setBoxError] = useState("");
+  useEffect(() => {
+    if (!boxes) return;
+    const stop = boxes.writes.onChange(setBoxState);
+    return () => {
+      stop();
+      boxes.writes.discard();
+    };
+  }, [boxes]);
+  const openPrivate = (id: string) => {
+    if (!boxes || hasUnresolvedIntents()) return;
+    setBoxError("");
+    void boxes
+      .open(id, (outcome) => {
+        if (outcome.kind === "ok") {
+          const room = outcome.result.room;
+          setDirectory((previous) =>
+            previous
+              ? {
+                  ...previous,
+                  privateBoxes: [
+                    ...previous.privateBoxes.filter(
+                      (item) => item.roomId !== room.roomId,
+                    ),
+                    room,
+                  ],
+                }
+              : previous,
+          );
+          setParams({ room: room.roomId });
+          setBoxError("");
+        } else if (outcome.kind === "rejected")
+          setBoxError("打开私聊被拒绝，请刷新成员列表后重试。");
+      })
+      .catch(() => setBoxError("无法打开私聊"));
+  };
   const requested = params.get("room");
   const selected =
-    directory?.channels.find((room) => room.roomId === requested) ??
-    (!requested ? directory?.channels[0] : undefined);
+    [...(directory?.channels ?? []), ...(directory?.privateBoxes ?? [])].find(
+      (room) => room.roomId === requested,
+    ) ?? (!requested ? directory?.channels[0] : undefined);
   const bridge = useMemo(() => {
     if (!selected) return undefined;
     let current = bridges.get(selected.roomId);
@@ -274,6 +356,30 @@ export default function ChannelApp() {
           />
         </AppShellSidebarSlot>
         <AppShellMainSlot className="bg-layer-canvas theme-brutal:bg-white">
+          {boxState === "pending" && (
+            <p role="status" className="p-3 text-sm">
+              正在打开私聊…
+            </p>
+          )}
+          {boxState === "unknown" && (
+            <div role="alert" className="p-3 text-sm">
+              打开私聊结果未知。
+              <Button
+                onClick={() =>
+                  void boxes?.writes
+                    .retry()
+                    .catch(() => setBoxError("暂时无法核实，请稍后重试。"))
+                }
+              >
+                核实打开私聊
+              </Button>
+            </div>
+          )}
+          {boxError && (
+            <p role="alert" className="p-3 text-sm">
+              {boxError}
+            </p>
+          )}
           {error ? (
             <p role="alert" className="p-6">
               {error}
@@ -285,6 +391,7 @@ export default function ChannelApp() {
               key={selected.roomId}
               channel={selected}
               bridge={bridge!}
+              onOpenPrivate={openPrivate}
             />
           ) : (
             <p className="p-6">

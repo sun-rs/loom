@@ -1,3 +1,4 @@
+import { verifyPrivateBoxes } from "./private-browser.mjs";
 // FIXTURE ONLY: real temporary Loom Core/gateway, no provider execution or user data.
 import assert from "node:assert/strict";
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
@@ -93,6 +94,7 @@ try {
     },
   });
   const instanceNames = [];
+  const instances = [];
   for (let i = 0; i < 2; i++) {
     const result = await client.request("role.instantiate", {
       roleId: role.roleId,
@@ -101,6 +103,7 @@ try {
       idempotencyKey: `fixture-member-${i}`,
     });
     instanceNames.push(result.agent.handle);
+    instances.push(result.instance);
   }
   browser = await chromium.launch({ headless: true });
   for (const viewport of [
@@ -327,9 +330,25 @@ try {
     });
     await context.close();
   }
+  const privateResults = await verifyPrivateBoxes({
+    browser,
+    origin,
+    client,
+    workspace,
+    channel: channels[2],
+    instance: instances[0],
+    name: instanceNames[0],
+    head,
+  });
   console.log(
     JSON.stringify(
-      { fixtureOnly: true, realCore: true, paidCli: false, results },
+      {
+        fixtureOnly: true,
+        realCore: true,
+        paidCli: false,
+        results,
+        privateResults,
+      },
       null,
       2,
     ),
