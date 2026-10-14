@@ -1,0 +1,129 @@
+{
+  "at": "2026-10-14T17:49:36.728Z",
+  "origin": "http://127.0.0.1:4176",
+  "readOnlyAcceptance": true,
+  "noMessageOrReadMarkMutation": true,
+  "paidCli": false,
+  "results": [
+    {
+      "systemNoticesMatchDurableApi": true,
+      "systemNoticeCount": 4,
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "dpr": 1,
+      "realHistoryMessageVerified": true,
+      "realPrivateHistoryAndReload": true,
+      "sparseHistoryTopAligned": true,
+      "sparseHistoryGeometry": {
+        "height": 780,
+        "top": 94,
+        "rows": [
+          {
+            "id": "message_b2855038-9531-4cfc-a06b-be0f5f9b8d46",
+            "top": 95,
+            "bottom": 188
+          },
+          {
+            "id": "message_6015f8c8-701e-47e1-8b39-79861acfa757",
+            "top": 188,
+            "bottom": 250
+          }
+        ]
+      },
+      "privateActive": true,
+      "realMembersVerified": 4,
+      "globalNavigationSixDestinations": true,
+      "agentPageReloadAndPrivateDeepLink": true,
+      "mobileChatMasterDetail": false,
+      "resultRowsNoOverflow": true,
+      "searchMatchesApi": true,
+      "searchContextExactMessage": true,
+      "searchQueryReload": true,
+      "activityMatchesApi": true,
+      "roleManagementMatchesApi": true,
+      "instanceManagementMatchesApi": true,
+      "channelMenuVisible": true,
+      "sidebarActionsReadOnly": true,
+      "instanceCount": 1,
+      "catalogInstanceCount": 68,
+      "instanceScope": "selectedRole",
+      "roleMasterDetail": true,
+      "officialSelectEscapeFocus": true,
+      "mobileListDetailBack": false,
+      "desktopSplitter": true,
+      "rolePickerMatchesApi": true,
+      "roleCount": 42,
+      "duplicateRoleLabels": 1,
+      "roleCreationSubmitted": false,
+      "executionAndQueueLabelsMatchApi": true,
+      "memberDialogEscapeAndFocusReturn": true,
+      "reload": true,
+      "consoleAvailable": true,
+      "horizontalOverflow": false,
+      "pageErrors": [],
+      "webBuildId": "bd3129a4fb8666e6aade600f9671f18992be202d0dfd6acd5effd1893dcb92f9"
+    },
+    {
+      "systemNoticesMatchDurableApi": true,
+      "systemNoticeCount": 4,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "dpr": 1,
+      "realHistoryMessageVerified": true,
+      "realPrivateHistoryAndReload": true,
+      "sparseHistoryTopAligned": true,
+      "sparseHistoryGeometry": {
+        "height": 628,
+        "top": 110,
+        "rows": [
+          {
+            "id": "message_b2855038-9531-4cfc-a06b-be0f5f9b8d46",
+            "top": 111,
+            "bottom": 244
+          },
+          {
+            "id": "message_6015f8c8-701e-47e1-8b39-79861acfa757",
+            "top": 244,
+            "bottom": 346
+          }
+        ]
+      },
+      "privateActive": true,
+      "realMembersVerified": 4,
+      "globalNavigationSixDestinations": true,
+      "agentPageReloadAndPrivateDeepLink": true,
+      "mobileChatMasterDetail": true,
+      "resultRowsNoOverflow": true,
+      "searchMatchesApi": true,
+      "searchContextExactMessage": true,
+      "searchQueryReload": true,
+      "activityMatchesApi": true,
+      "roleManagementMatchesApi": true,
+      "instanceManagementMatchesApi": true,
+      "channelMenuVisible": true,
+      "sidebarActionsReadOnly": true,
+      "instanceCount": 1,
+      "catalogInstanceCount": 68,
+      "instanceScope": "selectedRole",
+      "roleMasterDetail": true,
+      "officialSelectEscapeFocus": true,
+      "mobileListDetailBack": true,
+      "desktopSplitter": false,
+      "rolePickerMatchesApi": true,
+      "roleCount": 42,
+      "duplicateRoleLabels": 1,
+      "roleCreationSubmitted": false,
+      "executionAndQueueLabelsMatchApi": true,
+      "memberDialogEscapeAndFocusReturn": true,
+      "reload": true,
+      "consoleAvailable": true,
+      "horizontalOverflow": false,
+      "pageErrors": [],
+      "webBuildId": "bd3129a4fb8666e6aade600f9671f18992be202d0dfd6acd5effd1893dcb92f9"
+    }
+  ]
+}

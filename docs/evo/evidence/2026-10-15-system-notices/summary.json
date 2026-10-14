@@ -1,0 +1,51 @@
+{
+  "stage": "system-notice-timeline-v15",
+  "sourceCommit": "0434f67152dafb30d0ec4411134e35b15adeab0e",
+  "audit": "../../../audits/2026-10-15-system-notice-timeline.zh-CN.md",
+  "implemented": [
+    "Human-only room.timeline combines existing top-level messages and eligible durable notices in bounded Room-sequence pages. Canonical event/message identities stay distinct; no persistence migration or synthetic messages.",
+    "Official MessageItem system rows and continuous-system disclosure/grouping; native styling unchanged.",
+    "Client-core owns validated display paging; RoomSession retains causal write barriers. No model/delivery/read-mark change."
+  ],
+  "verification": {
+    "tdd": [
+      "Existing unread notices rendered as an empty channel.",
+      "Missing unified Kernel timeline read.",
+      "Missing client-core timeline paging owner."
+    ],
+    "initialFullCheck": {
+      "exitCode": 1,
+      "backendTests": 3233,
+      "passed": 3208,
+      "failed": 3,
+      "optInSkipped": 22,
+      "failures": [
+        "SDK exact operation inventory omitted room.timeline.",
+        "Core exact Human facade inventory omitted listRoomTimeline.",
+        "Kernel source-size ratchet exceeded by new method."
+      ]
+    },
+    "corrections": "Updated exact API inventories, added HTTP route mapping case, moved read binding into existing Human command composition. Original 6925-line Kernel ratchet retained.",
+    "finalAffectedOwnerSuites": {
+      "command": "node --test --test-concurrency=1 packages/kernel/test/*.test.ts packages/client-core/test/*.test.ts packages/client-sdk/test/*.test.ts packages/core/test/*.test.ts packages/application-service/test/*.test.ts",
+      "passed": 1174,
+      "failed": 0,
+      "exitCode": 0
+    },
+    "scopeOfReverification": "Final affected-owner suites, typecheck, console units, browser policy, efficiency-tool units, official source tests, workbench build and all dual-viewport browser gates passed. Whole npm run check was not repeated after the three wiring corrections; its first failure remains explicit. Unchanged runtime-driver suites passed in that first run.",
+    "browser": "Temporary real Core/fake discovery; both 1440x1000 and 390x844 DPR1. Notice-only history, original disclosure, refresh persistence, no implicit activity mark, plus all existing channel/private/sidebar/management/discovery flows.",
+    "formalPage": "Fresh real pages at both viewports: all has four durable member-join notices matching API; screenshots inspected. Existing top-level chat, private history, members, Role/instances, search/activity and reload verified. No message/read-mark/configuration mutations.",
+    "formalProbeCorrection": "Initial legacy probe selected a thread reply via unfiltered message.list; raw durable threadId confirmed it is not a top-level channel message. Probe now filters top-level messages in a bounded 50-item page. First failure preserved in private review directory; product code unchanged.",
+    "deployment": "Verified backup of 2 databases/318 files; exact com.loom.evo graceful restart; 18 business-table projections unchanged, excluding only subscription_cursors.updated_at. Runtime flags preserved.",
+    "formatCheck": "passed",
+    "diffCheck": "passed"
+  },
+  "paidCli": false,
+  "backendChanged": "Read-only compatibility repair for reproduced UI defect; no scheduling, provider, context, memory or usage changes.",
+  "remaining": [
+    "Viewport-aware automatic read state.",
+    "Mark-unread menu still locates ordinary top-level messages rather than notice-only history.",
+    "Full private sidebar, search page composition, instance inspector/Fork/Side, Tasks/Settings.",
+    "System notices do not become search hits or activity message cards; no claim of full upstream backend count parity."
+  ]
+}
