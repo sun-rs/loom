@@ -12,6 +12,13 @@ export type DiscoveryRow = {
   senderName: string;
   label: string;
   unread?: number;
+  activityKind?: "channel" | "direct" | "thread";
+  replyCount?: number;
+  senderType?: "user" | "agent";
+  channelType?: "channel" | "dm";
+  archivedAt?: string;
+  rootMessageId?: string;
+  rootMessagePreview?: string;
 };
 export async function searchPage(
   client: RahClient,
@@ -28,6 +35,20 @@ export async function searchPage(
       roomName: hit.roomName,
       senderName: hit.senderName,
       label: hit.rootMessagePreview ?? hit.roomName,
+      senderType:
+        result.principals.find((p) => p.principalId === hit.message.actorId)
+          ?.kind === "agent"
+          ? ("agent" as const)
+          : ("user" as const),
+      channelType:
+        result.rooms.find((r) => r.roomId === hit.message.roomId)?.kind ===
+        "direct"
+          ? ("dm" as const)
+          : ("channel" as const),
+      archivedAt: result.rooms.find((r) => r.roomId === hit.message.roomId)
+        ?.archivedAt,
+      rootMessageId: hit.rootMessageId,
+      rootMessagePreview: hit.rootMessagePreview,
     })),
   };
 }
@@ -47,6 +68,8 @@ export async function activityPage(
       senderName: item.senderName,
       label: item.title,
       unread: item.unreadCount,
+      activityKind: item.kind,
+      replyCount: item.replyCount,
     })),
   };
 }

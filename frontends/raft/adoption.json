@@ -2364,18 +2364,18 @@
     "managementSlice": {
       "owner": "Existing role.*, instance.session.reset, room.member.remove, room.create and sidebar.get/patch; client-core RoomSession / WriteIntentSlot and shared Role form validation. No new backend state or handlers.",
       "directReuse": "Unmodified PublicServerSidebarFrame/Row, ChannelMemberListShell/Row, PanelHeader, FormField and raft-ui Dialog/DropdownMenu/Input/Textarea/Button.",
-      "localComposition": "Agent Role/instance tabs and forms replace upstream single-Agent/server stores. Sidebar grouping and menus follow Sidebar.tsx / SidebarSectionDialog.tsx behavior; local typed SDK projection and native select fields are local glue, not byte-exact reuse of whole pages.",
+      "localComposition": "Agent Role/instance tabs and forms replace upstream single-Agent/server stores. Sidebar grouping and menus follow Sidebar.tsx / SidebarSectionDialog.tsx behavior; local typed SDK projection and official Select field composition are local glue, not byte-exact reuse of whole pages.",
       "behavior": "Role create/revise/delete; frozen instances instantiate/restart keep-or-adopt/remove; channel creation with optional fixed attached paths; custom groups create/rename/delete/move, pin/unpin, section and row manual ordering, name/recent ordering; durable per-Human preferences with expectedVersion, exact unknown-write replay, rejected concurrent patches reload without overwrite.",
-      "limits": "Manual ordering uses menu up/down, not upstream drag/drop. No joint/public channels or full official Agent details; archive/read/mute controls are connected by sidebarActionsSlice. Section collapse is transient presentation state. No paid CLI calls."
+      "limits": "Manual ordering uses upstream dnd-kit sensors; cross-section live preview remains incomplete. No joint/public channels or full official Agent details; archive/read/mute controls are connected by sidebarActionsSlice. Section collapse is transient presentation state. No paid CLI calls."
     },
     "discoverySlice": {
       "owner": "Existing search/activity.list/message.context plus client-core RoomSession; server owns ACL, keyset cursors and activity/unread calculation. No backend changes.",
-      "directReuse": "raft-ui SearchShell/Results/EntityResult, ActivityInboxPanel, Dialog and Input/Button; unchanged official PanelHeader and read-only MessageItem.",
+      "directReuse": "Official MessageHitRow, InlineMarkdownPreview and raft-ui SearchShell/Results, ActivityInboxPanel, Select and Dialog; activity InboxRow is a structural port, not direct reuse.",
       "structuralPort": "MessageSearchPage search/filter/result composition and ThreadsInbox panel; Loom SDK data and lightweight URL parameters replace Raft stores/account APIs. Local composition is not a byte-exact copy of either full page.",
       "behavior": "20-result pages replace rather than append; search scope all/channel/direct/thread; recent ordering; query/filter survive reload; same-query submit resets to first page; late aborted reads cannot replace current results; errors remove stale content; exact message context from bounded authenticated API, with root/message deduplication; open parent conversation at latest history. Agent Role/instance name filtering is presentation-only.",
       "limits": "Message text search only, no entity search or advanced author/date filters. Activity filters all/unread/mentions are read-only and do not mark read or follow/unfollow. Context has no thread reply, attachment interaction or live message subscription. Opening parent conversation is not an anchored jump to the old result."
     },
-    "stage": "role-master-detail-v12",
+    "stage": "official-component-correction-v13",
     "sidebarInteractionSlice": {
       "source": "packages/web/src/components/layout/Sidebar.tsx section header, renderSectionAddButton and row context-menu wiring; SidebarSortMenu.tsx ArrowUpDown trigger",
       "directReuse": "raft-ui ContextMenu/DropdownMenu/SidebarItem/SidebarItemCount/SidebarItemMetaIcon and unchanged PublicServerSidebarFrame; member row source structure ported in ChannelListRow.",
@@ -2414,6 +2414,18 @@
       "localGlue": "Role configuration replaces upstream agent profile; instances tab is scoped by stable roleId. Deleted definitions retain a read-only instance group. Existing immutable revisions, RoomSession and WriteIntentSlot remain the write owners. Explicit channel click uses canonical channel-list activity.mark; refresh only after confirmation, no unknown-write retry.",
       "limits": "No new backend protocol. Role fields reuse existing local form; upstream account/runtime/activity/skills tabs are omitted. URL auto-selection, search/context viewing and background polling do not mark read. Timeline system-notice rendering remains unbound.",
       "audit": "docs/audits/2026-10-14-role-workspace-and-read-state.zh-CN.md"
+    },
+    "componentCorrectionSlice": {
+      "source": [
+        "packages/web/src/components/agent/CreateAgentDialog.tsx",
+        "packages/web/src/components/agent/StableField.tsx",
+        "packages/web/src/components/search/MessageHitRow.tsx",
+        "packages/web/src/components/thread/ThreadsInbox.tsx"
+      ],
+      "directReuse": "Unchanged MessageHitRow; raft-ui Select field chrome/Content/List/Item/Text/Indicator and official FieldSelectTrigger; InlineMarkdownPreview and relative-time formatter.",
+      "structuralPort": "ThreadsInbox InboxRow Card geometry, active/hover states, title/body/timestamp/badge composition and keyboard open.",
+      "localChanges": "Typed Loom search/activity data replaces upstream stores. Activity completion/task/context-menu controls omitted until bound; bounded context dialog remains a recorded deviation. No upstream file modified.",
+      "verification": "scripts/official-web/management-browser.mjs and discovery-browser.mjs; two viewports, popup escape/focus, exact search/API ordering, bounded context, activity keyboard open, unknown-write replay. See docs/audits/2026-10-15-official-component-correction.zh-CN.md for open module gaps."
     }
   },
   "rollout": {

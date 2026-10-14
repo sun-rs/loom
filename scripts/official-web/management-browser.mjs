@@ -1,3 +1,4 @@
+import { chooseOption } from "./select-browser.mjs";
 import { verifySidebarInteractions } from "./sidebar-interactions-browser.mjs";
 // FIXTURE ONLY: real Core with fake runtime discovery; no paid execution.
 import assert from "node:assert/strict";
@@ -40,12 +41,22 @@ export async function verifyManagement({
     await dialog
       .getByLabel("角色 Prompt", { exact: true })
       .fill("FIXTURE ONLY do not execute");
-    await dialog
-      .getByLabel("CLI", { exact: true })
-      .selectOption(offer.runtimeOfferId);
-    await dialog
-      .getByLabel("模型", { exact: true })
-      .selectOption(offer.modelBindingDescriptors[0].modelBindingId);
+    await chooseOption(page, dialog, "CLI", 0);
+    await chooseOption(page, dialog, "模型", 0);
+    // Official Select is a focusable popup, never a platform-native select.
+    assert.equal(await dialog.locator("select").count(), 0);
+    const cliChoice = dialog.getByRole("combobox", {
+      name: "CLI",
+      exact: true,
+    });
+    await cliChoice.click();
+    await page.getByRole("listbox").waitFor();
+    await page.keyboard.press("Escape");
+    await page.getByRole("listbox").waitFor({ state: "hidden" });
+    assert.equal(
+      await cliChoice.evaluate((el) => el === document.activeElement),
+      true,
+    );
     const requests = [];
     let lost = false;
     await page.route("**/v3/client/roles/create", async (route) => {
@@ -67,6 +78,10 @@ export async function verifyManagement({
       (r) => r.configuration.displayName === name,
     );
     assert.ok(role);
+    assert.equal(role.configuration.runtimeOfferId, offer.runtimeOfferId);
+    assert.deepEqual(role.configuration.modelIntent.exactBindingIds, [
+      offer.modelBindingDescriptors[0].modelBindingId,
+    ]);
     assert.equal(
       catalog.roles.filter((r) => r.configuration.displayName === name).length,
       1,
@@ -74,6 +89,13 @@ export async function verifyManagement({
     await page.locator(`[data-role-id="${role.roleId}"]`).click();
     const detail = page.getByTestId("loom-role-detail");
     await detail.getByLabel("名称", { exact: true }).fill(`${name}Edited`);
+    await page.getByRole("tab", { name: "实例", exact: true }).click();
+    await page.getByRole("tab", { name: "配置", exact: true }).click();
+    assert.equal(
+      await detail.getByLabel("名称", { exact: true }).inputValue(),
+      `${name}Edited`,
+      "switching detail tabs preserves the unsaved configuration",
+    );
     await Promise.all([
       page.waitForResponse(
         (r) => r.url().endsWith("/roles/revise") && r.status() === 200,
@@ -86,9 +108,7 @@ export async function verifyManagement({
     await page
       .getByRole("menuitem", { name: "添加实例到频道", exact: true })
       .click();
-    await dialog
-      .getByLabel("频道", { exact: true })
-      .selectOption(channel.roomId);
+    await chooseOption(page, dialog, "频道", channel.name);
     await dialog.getByRole("button", { name: "确认添加", exact: true }).click();
     await dialog.waitFor({ state: "hidden" });
     catalog = await client.request("role.list", {
@@ -112,8 +132,10 @@ export async function verifyManagement({
       .click();
     await page.getByRole("menuitem", { name: "重启实例", exact: true }).click();
     assert.equal(
-      await dialog.getByLabel("重启配置", { exact: true }).inputValue(),
-      "keep",
+      await dialog
+        .getByRole("combobox", { name: "重启配置", exact: true })
+        .innerText(),
+      "保留现有名称和配置",
     );
     await dialog.getByRole("button", { name: "确认重启", exact: true }).click();
     await dialog.waitFor({ state: "hidden" });
@@ -144,9 +166,12 @@ export async function verifyManagement({
       .getByRole("button", { name: `更多操作 ${instanceName}`, exact: true })
       .click();
     await page.getByRole("menuitem", { name: "重启实例", exact: true }).click();
-    await dialog
-      .getByLabel("重启配置", { exact: true })
-      .selectOption(latest.roleRevisionId);
+    await chooseOption(
+      page,
+      dialog,
+      "重启配置",
+      `采用 ${name}Edited 最新配置（名称、Prompt、CLI、模型）`,
+    );
     await dialog.getByRole("button", { name: "确认重启", exact: true }).click();
     await dialog.waitFor({ state: "hidden" });
     revised = await client.request("role.list", {
@@ -491,6 +516,8 @@ export async function verifyManagement({
     results.push({
       viewport,
       roleCreateUnknownReplay: true,
+      officialSelectEscapeAndFocusReturn: true,
+      roleTabPreservesUnsavedDraft: true,
       roleEditAndStableId: true,
       instanceCreateRestartRemove: true,
       frozenRevisionAndExplicitAdoption: true,

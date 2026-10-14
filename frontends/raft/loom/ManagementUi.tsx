@@ -1,5 +1,13 @@
 import { useEffect, useState, type ReactNode } from "react";
 import {
+  Select,
+  SelectContent,
+  SelectIcon,
+  SelectItem,
+  SelectItemIndicator,
+  SelectItemText,
+  SelectList,
+  SelectValue,
   Button,
   Dialog,
   DialogContent,
@@ -13,6 +21,7 @@ import {
   DropdownMenuItem,
 } from "raft-ui";
 import { MoreHorizontal } from "lucide-react";
+import { FieldSelectTrigger } from "../packages/web/src/components/agent/StableField.tsx";
 import FormField from "../packages/web/src/components/ui/FormField.tsx";
 import type { ManagementClient } from "./management-client.ts";
 export function useManagement(manager: ManagementClient) {
@@ -141,20 +150,28 @@ export function SelectField({
 }) {
   return (
     <FormField label={label} className="mb-3">
-      <select
-        aria-label={label}
-        className="w-full border border-line-muted bg-layer-panel p-2 text-sm theme-brutal:border-2 theme-brutal:border-black"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
+      <Select
+        chrome="field"
+        value={value || null}
+        items={options}
+        onValueChange={(next) => onChange(next ?? "")}
         disabled={disabled}
       >
-        <option value="">请选择</option>
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
+        <FieldSelectTrigger aria-label={label} className="w-full">
+          <SelectValue placeholder="请选择" />
+          <SelectIcon />
+        </FieldSelectTrigger>
+        <SelectContent>
+          <SelectList>
+            {options.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                <SelectItemText>{option.label}</SelectItemText>
+                <SelectItemIndicator />
+              </SelectItem>
+            ))}
+          </SelectList>
+        </SelectContent>
+      </Select>
     </FormField>
   );
 }

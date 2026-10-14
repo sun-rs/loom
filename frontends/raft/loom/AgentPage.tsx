@@ -179,76 +179,79 @@ export default function AgentPage({
         {!edit && <OperationStatus manager={manager} error={error} />}
         {!catalog ? (
           !error && <Spinner aria-label="读取角色和实例" />
-        ) : tab === "roles" ? (
-          role ? (
-            <RoleEditor
-              key={role.roleRevisionId}
-              client={client}
-              role={role}
-              disabled={busy}
-              onSave={(configuration) =>
-                void manager.save(configuration, role, done)
-              }
-            />
-          ) : selected?.retired ? (
-            <p>角色定义已删除。已有实例保留原配置，可在实例标签页管理。</p>
-          ) : (
-            <p>从左侧选择或创建角色。</p>
-          )
         ) : (
           <>
-            {!instances.length ? (
-              <p>此角色暂无实例</p>
-            ) : (
-              <ChannelMemberListShell framed={false}>
-                {instances.map((instance) => {
-                  const agent = catalog.agents.find(
-                    (a) => a.definition.agentId === instance.agentId,
-                  );
-                  const name =
-                    agent?.currentRevision.displayName ??
-                    agent?.handle ??
-                    "实例";
-                  const room = catalog.rooms.find(
-                    (r) => r.roomId === instance.channelId,
-                  );
-                  return (
-                    <ChannelMemberRow
-                      key={instance.instanceId}
-                      type="agent"
-                      name={name}
-                      secondary={`${room?.name ?? "频道不可用"} · ${instance.isCurrent ? "配置为当前修订" : "保留旧配置"}`}
-                      trailing={
-                        <ActionMenu
-                          label={`更多操作 ${name}`}
-                          disabled={busy}
-                          items={[
-                            {
-                              label: "打开频道",
-                              run: () => onOpenChannel(instance.channelId),
-                            },
-                            {
-                              label: "打开私聊",
-                              run: () => onOpenPrivate(instance.instanceId),
-                            },
-                            {
-                              label: "重启实例",
-                              run: () =>
-                                open({ kind: "restart", instance, name }),
-                            },
-                            {
-                              label: "移除实例",
-                              run: () =>
-                                open({ kind: "remove", instance, name }),
-                            },
-                          ]}
-                        />
-                      }
-                    />
-                  );
-                })}
-              </ChannelMemberListShell>
-            )}
+            <div hidden={tab !== "roles"}>
+              {role ? (
+                <RoleEditor
+                  key={role.roleRevisionId}
+                  client={client}
+                  role={role}
+                  disabled={busy}
+                  onSave={(configuration) =>
+                    void manager.save(configuration, role, done)
+                  }
+                />
+              ) : selected?.retired ? (
+                <p>角色定义已删除。已有实例保留原配置，可在实例标签页管理。</p>
+              ) : (
+                <p>从左侧选择或创建角色。</p>
+              )}
+            </div>
+            <div hidden={tab !== "instances"}>
+              {!instances.length ? (
+                <p>此角色暂无实例</p>
+              ) : (
+                <ChannelMemberListShell framed={false}>
+                  {instances.map((instance) => {
+                    const agent = catalog.agents.find(
+                      (a) => a.definition.agentId === instance.agentId,
+                    );
+                    const name =
+                      agent?.currentRevision.displayName ??
+                      agent?.handle ??
+                      "实例";
+                    const room = catalog.rooms.find(
+                      (r) => r.roomId === instance.channelId,
+                    );
+                    return (
+                      <ChannelMemberRow
+                        key={instance.instanceId}
+                        type="agent"
+                        name={name}
+                        secondary={`${room?.name ?? "频道不可用"} · ${instance.isCurrent ? "配置为当前修订" : "保留旧配置"}`}
+                        trailing={
+                          <ActionMenu
+                            label={`更多操作 ${name}`}
+                            disabled={busy}
+                            items={[
+                              {
+                                label: "打开频道",
+                                run: () => onOpenChannel(instance.channelId),
+                              },
+                              {
+                                label: "打开私聊",
+                                run: () => onOpenPrivate(instance.instanceId),
+                              },
+                              {
+                                label: "重启实例",
+                                run: () =>
+                                  open({ kind: "restart", instance, name }),
+                              },
+                              {
+                                label: "移除实例",
+                                run: () =>
+                                  open({ kind: "remove", instance, name }),
+                              },
+                            ]}
+                          />
+                        }
+                      />
+                    );
+                  })}
+                </ChannelMemberListShell>
+              )}
+            </div>
           </>
         )}
       </RoleWorkspace>

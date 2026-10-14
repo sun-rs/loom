@@ -11,11 +11,6 @@ import {
   SearchShellViewport,
   SearchResultsSummary,
   SearchResultsList,
-  SearchEntityResult,
-  SearchEntityResultContent,
-  SearchEntityResultHeader,
-  SearchEntityResultTitle,
-  SearchEntityResultDescription,
 } from "raft-ui";
 import { Search, Activity } from "lucide-react";
 import type { RahClient } from "@rah-os/client-sdk";
@@ -31,6 +26,8 @@ import {
   type DiscoveryPageResult,
   type DiscoveryRow,
 } from "./discovery-client.ts";
+import ActivityMessageRow from "./ActivityMessageRow.tsx";
+import SearchMessageRow from "./SearchMessageRow.tsx";
 import MessageContextDialog from "./MessageContextDialog.tsx";
 export default function DiscoveryPage({
   client,
@@ -237,34 +234,24 @@ function Results({
               {!data.rows.length ? (
                 <p>没有匹配结果</p>
               ) : (
-                data.rows.map((row) => (
-                  <SearchEntityResult
-                    key={row.id}
-                    data-result-id={row.id}
-                    onClick={() => setSelected(row)}
-                  >
-                    <SearchEntityResultContent>
-                      <SearchEntityResultHeader>
-                        <SearchEntityResultTitle>
-                          {row.roomName}
-                          {row.label !== row.roomName
-                            ? ` · ${row.label}`
-                            : ""}{" "}
-                          · {row.senderName}
-                          {row.unread !== undefined && row.unread > 0
-                            ? ` · ${row.unread} 条未读`
-                            : ""}
-                        </SearchEntityResultTitle>
-                      </SearchEntityResultHeader>
-                      <SearchEntityResultDescription>
-                        {row.message.body || "附件消息"}
-                      </SearchEntityResultDescription>
-                      <span className="text-xs text-foreground-muted">
-                        {new Date(row.message.createdAt).toLocaleString()}
-                      </span>
-                    </SearchEntityResultContent>
-                  </SearchEntityResult>
-                ))
+                data.rows.map((row) =>
+                  mode === "search" ? (
+                    <SearchMessageRow
+                      key={row.id}
+                      row={row}
+                      query={query}
+                      selected={selected?.id === row.id}
+                      onOpen={() => setSelected(row)}
+                    />
+                  ) : (
+                    <ActivityMessageRow
+                      key={row.id}
+                      row={row}
+                      active={selected?.id === row.id}
+                      onOpen={() => setSelected(row)}
+                    />
+                  ),
+                )
               )}
             </SearchResultsList>
             <div className="flex gap-2 p-3">
@@ -283,11 +270,6 @@ function Results({
                 下一页
               </Button>
             </div>
-            {mode === "activity" && (
-              <p className="px-3 pb-3 text-xs text-foreground-muted">
-                未读和提及来自服务端；本页查看暂不自动标记已读。
-              </p>
-            )}
           </>
         )
       )}

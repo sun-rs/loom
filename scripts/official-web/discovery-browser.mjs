@@ -1,3 +1,4 @@
+import { chooseOption } from "./select-browser.mjs";
 import { verifyDiscoveryFaults } from "./discovery-faults.mjs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -70,6 +71,11 @@ export async function verifyDiscovery({
       .locator("[data-result-id]")
       .first()
       .waitFor();
+    assert.ok(
+      (await page
+        .locator('[data-result-id] [data-slot="search-message-result-header"]')
+        .count()) > 0,
+    );
     assert.deepEqual(
       await page
         .locator("[data-result-id]")
@@ -113,9 +119,9 @@ export async function verifyDiscovery({
       await page.getByLabel("搜索内容", { exact: true }).inputValue(),
       "history",
     );
-    await page.getByLabel("搜索范围", { exact: true }).selectOption("direct");
+    await chooseOption(page, page, "搜索范围", "私聊");
     await page.getByText("没有匹配结果", { exact: true }).waitFor();
-    await page.getByLabel("搜索范围", { exact: true }).selectOption("all");
+    await chooseOption(page, page, "搜索范围", "全部对话");
     await page
       .locator(`[data-result-id="${expected.hits[0].message.messageId}"]`)
       .waitFor();
@@ -157,6 +163,10 @@ export async function verifyDiscovery({
       );
     }
     assert.equal(
+      await page.getByTestId("conversation-card-primary").count(),
+      activity.items.length,
+    );
+    assert.equal(
       await page
         .locator("[data-result-id]")
         .evaluateAll((rows) =>
@@ -169,7 +179,19 @@ export async function verifyDiscovery({
       path: join(tmpdir(), `loom-discovery-activity-${viewport.width}.png`),
       animations: "disabled",
     });
-    await page.getByLabel("动态范围", { exact: true }).selectOption("mentions");
+    // The official card supports keyboard open; context remains bounded and read-only.
+    const firstActivity = page.getByTestId("inbox-row").first();
+    await firstActivity.focus();
+    await page.keyboard.press("Enter");
+    await page
+      .getByRole("dialog")
+      .locator(
+        `[data-context-message-id="${activity.items[0].latestMessage.messageId}"]`,
+      )
+      .waitFor();
+    await page.keyboard.press("Escape");
+    await page.getByRole("dialog").waitFor({ state: "hidden" });
+    await chooseOption(page, page, "动态范围", "提及我");
     await page.getByRole("button", { name: "刷新动态", exact: true }).click();
     await page
       .getByRole("navigation", { name: "主导航" })
@@ -201,6 +223,8 @@ export async function verifyDiscovery({
       contextToConversationAndBack: true,
       emptyResults: true,
       activityMatchesApi: true,
+      officialActivityCardAndKeyboard: true,
+      officialSearchMessageRow: true,
       agentNameFilter: true,
       staleReadCannotReplaceNewQuery: true,
       readFailureClearsAndRecovers: true,
