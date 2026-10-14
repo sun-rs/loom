@@ -1,0 +1,42 @@
+{
+  "stage": "channel-text-v1",
+  "ownerDecision": "2026-10-14: stage Web deployment to permit actual visual inspection",
+  "sourceCommit": "5b62389d516d67389c771d26a166228572cd204c",
+  "scope": "Official channel text slice deployed to existing local evo service; console retained",
+  "upstreamReceipt": "../../../../frontends/raft/adoption.json",
+  "checks": {
+    "repository": "npm run check exited 0, single uninterrupted run; 3209 backend/shared passed, 22 opt-in skipped; console 63; formal policy 15; efficiency unit 558; official source/channel 7",
+    "productBuild": "npm run build:web:workbench passed at clean source commit",
+    "channelBrowser": "real temporary Core/gateway; 1440x1000 and 390x844 DPR1; passed",
+    "consoleBuild": "passed",
+    "formatAndDiff": "passed",
+    "paidCli": "not run",
+    "productionReadOnly": "real canonical message, reload, composer target, build identity, no overflow or uncaught page errors; console available at both sizes",
+    "visualInspection": "Web and console screenshots manually inspected at 1440x1000 and 390x844; official channel two-column layout remains visible, mobile labels truncate",
+    "initialPageHarnessFailure": "Message ID selector matched the official timeline wrapper and nested message body; refined to unique data-timeline-message-id; product code unchanged; rerun passed"
+  },
+  "deployment": "deployment.json",
+  "page": "page.json",
+  "dataPreservation": {
+    "businessTablesUnchanged": 18,
+    "databasesBackedUp": 2,
+    "filesBackedUp": 318,
+    "schema": 89,
+    "sameDataHome": true,
+    "gracefulLaunchdRestart": true
+  },
+  "limits": [
+    "Narrow official-component composition, not full MainLayout parity.",
+    "Instance state, private box, Role/instance administration, threads and attachment actions remain outside this Web slice; console retained.",
+    "Directory loaded on entry; channel changes require reload; first active workspace only.",
+    "Existing test/acceptance channel records remain visible in this initial Web directory; no data deleted.",
+    "Production acceptance was read-only; mutation/replay behavior verified on isolated real Core, no new paid model run."
+  ],
+  "screenshots": {
+    "web-1440.png": "957163790694d455fdc63aa5960b3492e6705b106232b55f20145a830ba2f606",
+    "web-390.png": "0d1d07fb8c7d4b316ac6d312df7baded7a87fa6cd26238ba5be897e677f5581e",
+    "console-1440.png": "599dbfd515aa262db0b6bd1eb8a465577be37c80d72cf4a875a194f8fe04cf8b",
+    "console-390.png": "4e4146784b07459bf5592a29c99f4241af32900879302c1e7918f0cdbfcd55be"
+  },
+  "privateEvidenceDirectory": "/Users/sun/.loom/reviews/2026-10-14-official-web-rollout"
+}

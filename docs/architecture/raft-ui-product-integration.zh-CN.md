@@ -12,7 +12,7 @@
 
 2026-10-14 首条官方频道切片：`frontends/raft/loom` 作为本地组合与数据适配层，原样导入官方侧栏、PanelHeader、MessageTimeline、MessageItem、MessageInput 与 AppProviders；列组合参考官方 PublicServerPage，区别于完整 MainLayout 接入。输入框采用官方已有 compact / onSendOverride 接口，尚未开放附件与任务按钮。现有 `MessageSession` / `RoomSession` 仍是分页、恢复和因果位置的唯一 owner。console 的 `WriteIntentSlot` 原样提升到 `packages/client-core/src/write-intent.ts`，console 仅 re-export，不另建第二套未知结果重试机制。请求未知时保留同一个提交，显式核实使用相同请求内容、位置和幂等键；历史导航保留未决请求。上游 API 在此构建中明确拒绝，业务只走同源可信 gateway，浏览器不持有 Human PAT。负责人随后批准按阶段上线以进行实际视觉检查：`build:web:workbench` 使用这条已验收的频道切片，`build:official-web:channel` / `test:official-web:channel` 保留隔离验收用途；console 在全部能力有产品替代前继续保留。具体能力与缺口见[频道切片证据](../evo/evidence/2026-10-14-official-channel-slice/summary.json)。
 
-分阶段发布顺序：第一阶段为现有频道文本切片；随后接入频道实例与执行状态、私聊，再迁入 Role／实例管理及其余已验证能力。每阶段先通过对应流程与双尺寸浏览器验证，再部署至本地正式入口进行实际视觉检查；不以第一阶段上线宣称完整 MainLayout 或全部业务对等。后端冻结边界保持。
+分阶段发布顺序：第一阶段为现有频道文本切片；随后接入频道实例与执行状态、私聊，再迁入 Role／实例管理及其余已验证能力。每阶段先通过对应流程与双尺寸浏览器验证，再部署至本地正式入口进行实际视觉检查；不以第一阶段上线宣称完整 MainLayout 或全部业务对等。后端冻结边界保持。第一阶段现已上线，正式服务双尺寸真实页面及数据保留核验通过，见[部署证据](../evo/evidence/2026-10-14-official-web-rollout/summary.json)。
 
 2026-09-08：用户明确[退役 RAH 托管 MCP](../product/managed-mcp-retirement.zh-CN.md)。Settings 与 Agent 详情不再提供该模块；历史截图、测试通过记录不构成重新接入理由。
 
