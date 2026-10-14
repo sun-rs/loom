@@ -1,3 +1,0 @@
-RAH Files browser acceptance — disposable fixture.
-This file contains no user data and no instructions for an Agent.
-Expected UTF-8 download: 中文附件 ✓

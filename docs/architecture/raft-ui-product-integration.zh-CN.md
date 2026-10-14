@@ -2,7 +2,7 @@
 
 2026-10-14 owner 决策：后续正式前端以公开的官方 Raft 前端源码为母版，停止以旧复刻版本为迁移基础。尽量保留官方界面、组件组合和交互，通过替换数据来源及改名表达 Loom 语义，不大幅新增选项或按钮。下方“内部维护”的复刻来源策略是历史记录；Loom SDK/client-core、鉴权、幂等、恢复与后端领域 owner 仍保留。
 
-官方源码已进入 `frontends/raft` 独立迁移目录，来源清单逐文件记录原样复制摘要及 package manifest 改动；该目录不进入正式构建、部署和服务启动。完整上游 Web 构建及桌面／窄屏未登录启动检查通过，尚未接入 Loom 频道。官方账号页不是 Loom 产品入口。迁移期间仅维护这一套官方前端母版；旧页面与控制台在对应替代能力验收后删除，不提前移除可用入口。版本、依赖、改造边界和首条纵向切片见[源码获取与分析记录](../evo/evidence/2026-10-14-official-frontend-intake/summary.json)。
+官方源码已进入 `frontends/raft` 独立迁移目录，来源清单逐文件记录原样复制摘要及 package manifest 改动；该目录不进入正式构建、部署和服务启动。完整上游 Web 构建及桌面／窄屏未登录启动检查通过，尚未接入 Loom 频道。官方账号页不是 Loom 产品入口。迁移期间仅维护这一套官方前端母版；负责人随后明确要求立即清退旧复刻源码，现已移除旧产品 UI、专属组件包与门禁；控制台继续保留。已部署的不可变资源不随源码删除，新的产品构建在官方前端接通之前明确拒绝安装，不把官方账号页冒充 Loom。版本、依赖、改造边界和首条纵向切片见[源码获取与分析记录](../evo/evidence/2026-10-14-official-frontend-intake/summary.json)。
 
 构建基线复核：`npm ci --ignore-scripts --prefix frontends/raft`，然后运行
 `npm run build:official-web`、`npm run test:official-web:source` 和

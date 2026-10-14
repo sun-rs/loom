@@ -1,5 +1,7 @@
 # ADR 0028: Product-owned Neo-Brutalist UI library
 
+2026-10-14：本 ADR 的内部复刻 UI 维护方案在 evo 被 owner 的官方源码替换决定取代；旧源码包已清退，不再恢复。本文保留为 main 基线历史。当前边界见[产品集成说明](../architecture/raft-ui-product-integration.zh-CN.md)。
+
 Status: Accepted for incremental implementation, 2026-09-04.
 
 ## Decision

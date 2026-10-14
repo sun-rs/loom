@@ -20,7 +20,14 @@ const report = await diagnoseLocalCore({
   stateDirectory: join(workbenchHome, "state"),
   staticDirectory:
     optionalAbsolutePath("RAH_WEB_STATIC_DIRECTORY") ??
-    join(repositoryDirectory, "apps", "web", webBuildOutput(true)),
+    join(
+      repositoryDirectory,
+      "frontends",
+      "raft",
+      "packages",
+      "web",
+      webBuildOutput(true),
+    ),
   ...(publicOrigin === undefined
     ? {}
     : {

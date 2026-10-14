@@ -33,44 +33,49 @@ test("the lockfile pins one Playwright version", () => {
   assert.match(lockVersion, /^\d+\.\d+\.\d+/u);
 });
 
-test("engine detection separates bundled engines from a system Chrome", () => {
-  const choice = enginesForScriptSource(
-    read("scripts/test-choice-row-browser.mjs"),
-  );
-  assert.deepEqual([...choice.required].sort(), ["chromium", "firefox"]);
+const syntheticImport = (names) =>
+  ["import", `{ ${names} }`, 'from "playwright";'].join(" ");
 
-  const foundations = enginesForScriptSource(
-    read("scripts/run-ui-foundation-browser-gate.mjs"),
+test("engine detection distinguishes bundled engines and system Chrome", () => {
+  const bundled = enginesForScriptSource(
+    syntheticImport("chromium, firefox") +
+      " chromium.launch({}); firefox.launch({});",
   );
-  assert.deepEqual([...foundations.required].sort(), ["chrome", "firefox"]);
-  assert.equal(foundations.required.has("chromium"), false);
-
-  const comparison = enginesForScriptSource(
-    read("scripts/run-ui-comparison.mjs"),
+  assert.deepEqual([...bundled.required].sort(), ["chromium", "firefox"]);
+  const system = enginesForScriptSource(
+    syntheticImport("chromium") +
+      " const executablePath = findChromeExecutable(); chromium.launch({ executablePath });",
   );
-  assert.deepEqual([...comparison.required].sort(), ["chrome"]);
-
-  // WebKit is reachable only through an explicit environment switch.
-  const touch = enginesForScriptSource(
-    read("scripts/test-sidebar-touch-browser.mjs"),
-  );
-  assert.equal(touch.required.has("chromium"), true);
-  assert.equal(touch.optional.has("webkit"), true);
+  assert.deepEqual([...system.required], ["chrome"]);
 });
 
-test("an environment switch in the npm script promotes the optional engine", () => {
+test("an explicit engine environment switch promotes the optional engine", () => {
+  const source =
+    syntheticImport("chromium, webkit") +
+    ' (process.env.BROWSER === "webkit" ? webkit : chromium).launch({});';
   const engines = resolveCommandEngines(
-    "npm run test:web:sidebar-touch",
-    scripts,
-    loadSource,
+    "npm run sample",
+    { sample: "BROWSER=webkit node scripts/sample.mjs" },
+    () => source,
   );
-  assert.equal(engines.required.has("webkit"), true);
+  assert.ok(engines.required.has("webkit"));
 });
 
-test("npm run check reaches a bundled Chromium and Firefox launch", () => {
-  const engines = resolveCommandEngines("npm run check", scripts, loadSource);
-  assert.equal(engines.required.has("chromium"), true);
-  assert.equal(engines.required.has("firefox"), true);
+test("official baseline and console use their declared browser engines", () => {
+  assert.ok(
+    resolveCommandEngines(
+      "npm run test:official-web:browser",
+      scripts,
+      loadSource,
+    ).required.has("chromium"),
+  );
+  assert.ok(
+    resolveCommandEngines(
+      "npm run test:console:browser",
+      scripts,
+      loadSource,
+    ).required.has("chrome"),
+  );
 });
 
 test("install commands are parsed with their engines and version pin", () => {
@@ -127,25 +132,18 @@ test("Playwright browsers are cached by the lockfile hash", () => {
   );
 });
 
-test("the rc mobile, task, menu and scroll gates run in CI", () => {
-  const steps = parseWorkflowSteps(workflowText, "check");
-  const commands = steps
-    .map((step) => step.run)
-    .filter((run) => typeof run === "string")
+test("CI builds and checks official source and the temporary backend console", () => {
+  const commands = parseWorkflowSteps(workflowText, "check")
+    .map((step) => step.run ?? "")
     .join("\n");
   for (const gate of [
-    "test:web:mobile-navigation",
-    "test:web:message-menu",
-    "test:web:message-selection",
-    "test:web:task-filter-scope",
-    "test:web:scroll-ownership",
-    "test:web:sidebar-touch",
+    "build:official-web",
+    "test:official-web:browser",
+    "test:console:browser",
   ]) {
-    assert.match(
-      commands,
-      new RegExp(`npm run ${gate.replace(/:/gu, ":")}\\b`, "u"),
-    );
+    assert.ok(commands.includes(`npm run ${gate}`), gate);
   }
+  assert.ok(!commands.includes("npm run test:web:"));
 });
 
 test("CI fetches the historical source used by the fixed efficiency baseline", () => {

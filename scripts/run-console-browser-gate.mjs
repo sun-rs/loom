@@ -53,15 +53,6 @@ const fakeWarmAppServer = join(
 if (!existsSync(join(consoleDirectory, "index.html"))) {
   throw new Error("apps/console/dist is missing; run npm run build:console");
 }
-if (
-  !existsSync(
-    join(repositoryDirectory, "apps", "web", "dist-workbench", "index.html"),
-  )
-) {
-  throw new Error(
-    "apps/web/dist-workbench is missing; run npm run build:web:workbench",
-  );
-}
 const temporaryDirectory = realpathSync(
   mkdtempSync(join(tmpdir(), "loom-console-gate-")),
 );
@@ -69,6 +60,17 @@ const screenshotDirectory = join(
   tmpdir(),
   "loom-console-browser-gate",
   new Date().toISOString().replace(/[:.]/gu, "-"),
+);
+// The console gate requires only a static host shell, not either product UI.
+const hostFixture = join(temporaryDirectory, "static-host-fixture");
+mkdirSync(hostFixture);
+writeFileSync(
+  join(hostFixture, "index.html"),
+  '<!doctype html><meta name="rah-web-build-id" content="console-host-fixture"><h1>FIXTURE: console host only</h1>',
+);
+writeFileSync(
+  join(hostFixture, ".rah-web-build.json"),
+  JSON.stringify({ schemaVersion: 1, webBuildId: "console-host-fixture" }),
 );
 const fakeHome = join(temporaryDirectory, "home");
 const dataHome = join(temporaryDirectory, "data-home");
@@ -2559,6 +2561,7 @@ async function startWorkbench() {
         HOME: fakeHome,
         PATH: `${binDirectory}${delimiter}${dirname(process.execPath)}`,
         RAH_CONSOLE_STATIC_DIRECTORY: consoleCopy,
+        RAH_WEB_STATIC_DIRECTORY: hostFixture,
         RAH_DATA_HOME: dataHome,
         RAH_WEB_PORT: String(await availablePort()),
         RAH_WORKSPACE_CWD: workspaceCwd,

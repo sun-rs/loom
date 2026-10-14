@@ -4,7 +4,7 @@
  *
  * The gateway CSP omits `unsafe-eval`; Zod probes `Function("")` while its
  * module evaluates unless the shared global config is already jitless (same
- * reason as apps/web/src/main.tsx). Set it before importing anything that
+ * reason as the product browser client). Set it before importing anything that
  * imports Zod.
  */
 import "./style.css";

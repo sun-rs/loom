@@ -18,10 +18,6 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      # Browsers must exist before `npm run check`: its `test:ui:choice` step
-      # launches Playwright's bundled Chromium and Firefox. scripts/ci-workflow-order.test.mjs
-      # keeps this ordering invariant, and `./node_modules/.bin/playwright`
-      # is by construction the version pinned in package-lock.json.
       - name: Cache Playwright browsers
         uses: actions/cache@v4
         with:
@@ -29,37 +25,14 @@ jobs:
           key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
           restore-keys: ${{ runner.os }}-playwright-
       - name: Install Playwright engines
-        run: ./node_modules/.bin/playwright install --with-deps chromium firefox webkit
-      # The UI foundation, comparison and real-browser gates deliberately drive a
-      # real system Chrome through findChromeExecutable() in
-      # scripts/real-browser-gate-support.mjs. Install Playwright's `chrome`
-      # channel so that policy is satisfied by installation instead of being
-      # masked with RAH_UI_BROWSER=firefox.
+        run: ./node_modules/.bin/playwright install --with-deps chromium
       - name: Install system Chrome channel
         run: ./node_modules/.bin/playwright install --with-deps chrome
       - run: npm run check
-      - run: npm run test:web:foundations
-        timeout-minutes: 8
-      - run: npm run test:web:ui-compare
+      - run: npm ci --ignore-scripts --prefix frontends/raft
+      - run: npm run build:official-web
+      - run: npm run test:official-web:browser
         timeout-minutes: 3
-      - run: npm run test:web:browser
-        timeout-minutes: 5
-      # rc gates for mobile navigation, task presentation, message menu,
-      # selection and scroll ownership. Each script starts its own isolated
-      # multi-agent fixture (scripts/ui-shell-browser-scenarios.mjs), so no
-      # shared fixture server or running daemon is required.
-      - run: npm run test:web:mobile-navigation
+      - run: npm run test:console:browser
         timeout-minutes: 15
-      - run: npm run test:web:error-boundary
-        timeout-minutes: 3
-      - run: npm run test:web:message-menu
-        timeout-minutes: 8
-      - run: npm run test:web:message-selection
-        timeout-minutes: 8
-      - run: npm run test:web:task-filter-scope
-        timeout-minutes: 8
-      - run: npm run test:web:scroll-ownership
-        timeout-minutes: 10
-      - run: npm run test:web:sidebar-touch
-        timeout-minutes: 10
       - run: npm run format:check

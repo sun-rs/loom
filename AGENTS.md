@@ -6,9 +6,10 @@ legacy project's Session-first rules or obsolete roadmap restrictions.
 
 - `main` is the frozen UI milestone (tag `milestone-ui-raft`) and accepts
   emergency fixes only.
-- `evo` is the backend rebuild. Its frontend product code (`apps/web/src`,
-  `packages/ui-web`, `packages/ui-tokens/specs`) stays identical to `main` until
-  phase 4; test files may differ only where `main` is corrected first.
+- `evo` has frozen its backend MVP and entered the official-source frontend
+  replacement. The owner explicitly retired the reconstructed `apps/web`,
+  `packages/ui-web`, `packages/ui-tokens` and `packages/raft-ui-snapshot` source
+  on 2026-10-14; do not restore them. `frontends/raft` is the sole product UI base.
   Acceptance uses the throwaway `apps/console` (served by the local gateway at
   `/_rah/console/`) plus API and tests. The console shows channels, instance
   state and queueing, usage, runtime settings, RunAttempt drill-down, the
@@ -251,11 +252,10 @@ and evidence".
 - `packages/application-service` and `packages/client-sdk` expose authenticated,
   typed facades; `packages/client-core` owns ordered client reconciliation,
   causal command barriers and bounded in-memory projections.
-- `packages/ui-tokens` owns maintained Neo-Brutalist visual sources; `packages/ui-web` and
-  `apps/web` own shared presentation and route composition, not Provider parsing.
-- `packages/raft-ui-snapshot` is frozen reference evidence, not a generator input
-  or production app dependency. Build, runtime and maintenance must not require
-  a sibling `raft-ui` working tree.
+- `frontends/raft` owns official-source presentation and route composition,
+  not Provider parsing. The official `raft-ui` dependency owns shared primitives.
+  The old reconstructed UI packages are retired; history remains in Git.
+  Build, runtime and maintenance must not require a sibling `raft-ui` tree.
 - UI, the console and transports consume these owners; they do not recreate business state.
 - Shared Web UI remains browser-safe. Desktop IPC/native bridges implement the same client contract and never create a second command handler.
 - Room Kernel service and AgentHost daemon remain logically independent from every window or renderer lifecycle, even when packaged together.
@@ -319,12 +319,15 @@ lives in `frontends/raft`, isolated from production deployment until its Loom
 paths pass acceptance. Preserve native layout and interactions; prefer data
 replacement and renaming over new options or buttons. Keep Loom's SDK,
 client-core and domain owners; upstream stores are not a second business truth.
-Retire old pages only after their replacements work. Source provenance and
+The owner subsequently required immediate removal of the old reconstructed
+source; keep only the temporary backend console until replacement acceptance.
+Existing deployed immutable assets are not deleted by source retirement. Source provenance and
 current limits are recorded in `frontends/raft/adoption.json` and
 `docs/evo/evidence/2026-10-14-official-frontend-intake/summary.json`.
 
 This section applies to `main`'s frozen frontend and to phase-4 integration.
-evo does not change `apps/web` before phase 4.
+evo uses the official-source replacement described above; reconstructed UI
+implementation instructions below apply only to historical main.
 
 Visual and functional parity are separate obligations. The behavior guide uses
 `official trigger -> source component/parameters -> content/data source ->
@@ -340,9 +343,8 @@ neither an old reference fixture nor a visible tab proves product completeness.
   not modal versus base-page placement. Follow the [UI color contract](docs/design/neo-brutalist-ui.md#agent-choice-row-colors):
   Raft's opaque soft-signal maps to local --yellow; local --soft-signal already has
   30% alpha. Do not add modal-wide hover overrides or apply opacity twice.
-  New Agent choice surfaces must select the shared member-selection, member-browse,
-  property-option or autocomplete profile; use ui-web ChoiceRow. check:ui-library
-  rejects local row palette overrides and test:ui:choice verifies computed states.
+  On evo, preserve official raft-ui component styling and interaction states;
+  the retired local ChoiceRow and its gates apply only to historical main.
 - Web/PWA share components, intents and protocol. Responsive layout changes must
   not create a second business path. Native shells remain thin clients.
 - Shell borders, splitters, overlay/focus and message measurement each have one

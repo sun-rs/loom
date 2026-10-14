@@ -53,7 +53,7 @@ const CONTENT_SECURITY_POLICY = [
 ].join("; ");
 /**
  * Throwaway evo console (docs/evo/status.zh-CN.md §44): served from its own
- * build directory under this prefix, outside the apps/web service worker
+ * build directory under this prefix, outside the product Web service worker
  * scope. Deleted in phase 4 together with apps/console.
  */
 const CONSOLE_PREFIX = "/_rah/console";

@@ -1,5 +1,5 @@
 // Raft JI/Z6, index-BoAC7nSE.js @1855376. Keys only: exact visual grids/palette
-// remain ui-tokens assets. finch/mug are upstream reserved, not auto-allocated.
+// remain frontend assets. finch/mug are upstream reserved, not auto-allocated.
 export const OFFICIAL_AGENT_AVATAR_KEYS: readonly string[] = [
   "robot",
   "cat",

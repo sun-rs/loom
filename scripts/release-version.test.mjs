@@ -163,7 +163,7 @@ test("release identity resolution never shells out to git at build or run time",
   for (const relativePath of [
     "release-version.mjs",
     "../packages/daemon/src/build-identity.ts",
-    "../apps/web/src/build-identity.ts",
+    "../frontends/raft/loom/build-identity.ts",
   ]) {
     const source = readFileSync(join(scriptsDirectory, relativePath), "utf8");
     for (const forbidden of [
@@ -314,7 +314,7 @@ test("the product build hands the same identity to the Core bundle and the Web b
     "utf8",
   );
   const viteSource = readFileSync(
-    join(scriptsDirectory, "../apps/web/vite.config.ts"),
+    join(scriptsDirectory, "../frontends/raft/loom/release-plugin.ts"),
     "utf8",
   );
 

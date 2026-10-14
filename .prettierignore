@@ -1,14 +1,5 @@
-apps/web/dist/
 apps/console/dist/
-packages/raft-ui-snapshot/reference/
 # Adopted byte-exact resources retain source formatting; maintained owners are checked.
-packages/ui-tokens/src/neo-brutalist/vendor/
-packages/ui-tokens/src/neo-brutalist/extracted/
-packages/ui-tokens/src/neo-brutalist/styles.css
-packages/ui-tokens/src/neo-brutalist/tokens.brutal.css
-packages/ui-tokens/src/neo-brutalist/channel-extras.css
-packages/ui-tokens/src/neo-brutalist/activity.css
-packages/ui-tokens/src/neo-brutalist/search.css
 packages/k-carrier/src/
 packages/agent-host/src/raft-memory/upstream-standing-prompt.ts
 # Raw model-produced evidence: preserve bytes and the recorded SHA-256.

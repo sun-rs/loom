@@ -2,6 +2,8 @@
 
 更新：2026-10-14。**本地单Human后端MVP已验收、部署并按负责人要求冻结。** 里程碑标签 `milestone-evo-backend-mvp-2026-10-14`。最终受检代码与已部署修复 `13d27f0` 一致；在干净的 `bbaeb6d` 上一次完整 `npm run check` 退出0：后端3246通过／22项opt-in跳过，Web487、控制台63、效率工具单测558及其余阶段通过。格式／diff通过，正式服务源码、依赖、数据库与真实页面重新核验。冻结后仅维护可复现缺陷、回归、安全／数据完整性及必要兼容问题；新增能力或架构调整须负责人新指令，不再自动追加横向审计。正式native-final仍仅Claude/OpenCode，五CLI付费质量／成本不因此改判；历史失败保留。目标仍以[目标合同](target-contract.zh-CN.md)为准。[冻结证据](evidence/2026-10-14-backend-freeze/summary.json)、[既有团队成本证据](evidence/2026-10-13-backend-finish/team-v8.json)。
 
+前端替换（2026-10-14 owner 新裁定）：旧复刻产品源码 `apps/web`、`packages/ui-web`、`packages/ui-tokens`、`packages/raft-ui-snapshot` 及专属门禁已清退，Git 历史保留。正式前端唯一源码基础为 `frontends/raft`；官方构建和双尺寸启动验证通过，Loom 频道接线尚未完成，不能视为产品前端验收。SDK/client-core、临时控制台与后端保留；控制台已解除旧 Web 构建依赖。现有部署资源未删除，新的产品安装构建在接通前明确阻断，不误装上游账号页。[清退范围与验证](evidence/2026-10-14-reconstructed-ui-retirement/summary.json)。
+
 P94 同会话重试暴露的旧 claim/start 回执问题已有代码修复：执行认领的默认身份区分 Run，业务创建／交付幂等不变；同 Activation 前次 Run 终止后可重新认领，状态入口不再把过期租约当作有效。确定性回归通过；P95 普通 Task／频道四轮通过，但未真实制造同 Activation 过期故障；[原始证据](evidence/2026-10-02-task-retry-p94.md)、[修复边界](conversation-delivery-design.zh-CN.md#p94-续办修复执行认领与业务幂等分开)。
 
 P95 有界真实验收：两个 Codex gpt-6-luna/low 各两轮，Task 提交／完成后继续讨论、频道续聊、自动差额范围与原生 session 连续性通过；无额外 Run／重试／用量缺口。模型回答有标记混淆和命令语义错误，测试快照缺依赖增加查找，未判效率。未真实制造 P94 过期故障、重启或十天间隔；[结果与边界](evidence/2026-10-02-task-conversation-p95.md)。产品和部署未变。

@@ -11,7 +11,7 @@ import {
   rm,
 } from "node:fs/promises";
 import { dirname, join, posix, resolve } from "node:path";
-import { webBuildOutput } from "../apps/web/build-output.ts";
+import { webBuildOutput } from "./web-build-output.ts";
 import {
   BUILD_IDENTITY_META_NAME,
   buildIdentitiesAgree,
@@ -141,7 +141,11 @@ export async function snapshotWorkbenchAssets(
 ) {
   const source =
     pinnedDirectory ??
-    join(repositoryDirectory, "apps/web", webBuildOutput(true));
+    join(
+      repositoryDirectory,
+      "frontends/raft/packages/web",
+      webBuildOutput(true),
+    );
   const files = [];
   async function collect(relative = "") {
     for (const entry of (
