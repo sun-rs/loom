@@ -168,3 +168,5 @@ HTML 区域由 `HtmlFilePreview` 和专用静态 `html-preview-bridge.js` 拥有
 2026-10-14 第九阶段频道右键能力：沿用同一官方 revision，参考 Sidebar 的空白菜单、移动分区二级菜单、读状态／静音／归档及确认对话框。空白处可新建频道、新建分组和查看已归档频道；移组子菜单支持新建分组并原子移入。未读点取自 activity.list 的频道 summary，静音取自 sidebar 偏好；不根据消息文本估计状态，不因查看自动标已读。静音沿用后端普通动态／通知语义，不停止实例执行。归档／恢复使用既有 RoomSession 和 WriteIntentSlot，保留活动工作和永久 #all 检查，归档后保留历史只读，并提供恢复入口。
 
 activity.mark 没有幂等键，响应不确定时显示未确认并刷新投影，不重发；未读 frontier 仅取顶层消息，最多读取10页、每页100条，超界拒绝修改，线程读状态独立。这属于现有接口限制，不扩展冻结后端。原始官方文件保持哈希一致；ContextMenu／Submenu／Dialog 复用 raft-ui，业务接入与归档列表为本地组合，不宣称整个侧栏原样搬入。
+
+2026-10-14 第十阶段聊天交互修复：复核 Sidebar/MainLayout/ChatPanel 整条链路，移除本地发明的上移／下移菜单，标题改为聊天。使用官方依赖的 dnd-kit 实现频道行、分组标题拖动与跨组投放，落点沿用 sidebar.patch 的版本校验／未知结果核实。直接复用官方 useResizablePanel、SIDEBAR_PANEL_BOUNDS 和 PanelResizeHandle，恢复聊天 composer 外壳的边线、留白和安全区参数；未接通的附件上传仍关闭。详见[源码交互审计](../audits/2026-10-14-official-chat-interactions.zh-CN.md)，其中明确记录自定义排序、置顶归属、跨组预览和移动端布局差异，不将局部接入表述为整页完全一致。

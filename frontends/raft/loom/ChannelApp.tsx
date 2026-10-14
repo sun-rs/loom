@@ -1,3 +1,6 @@
+import { useResizablePanel } from "../packages/web/src/hooks/useResizablePanel.ts";
+import { SIDEBAR_PANEL_BOUNDS } from "../packages/web/src/lib/panelBounds.ts";
+import PanelResizeHandle from "../packages/web/src/components/ui/PanelResizeHandle.tsx";
 import DiscoveryPage from "./DiscoveryPage.tsx";
 import {
   DesktopNavigation,
@@ -219,34 +222,44 @@ function Channel({
           </Button>
         </div>
       )}
-      <MessageInput
-        channelId={channel.roomId}
-        channelName={channel.name}
-        variant="compact"
-        loadMentionMembers={false}
-        showTaskButton={false}
-        onSendOverride={send}
-        submitDisabled={
-          loading ||
-          Boolean(error) ||
-          Boolean(channel.archivedAt) ||
-          writeState !== "idle" ||
-          (isPrivate && view.room?.instancePrivateBox?.active !== true)
-        }
-        submitDisabledReason={
-          isPrivate && view.room?.instancePrivateBox?.active === false
-            ? "此私聊已停用"
-            : undefined
-        }
-        placeholder={
-          isPrivate ? `私聊 ${channel.name}` : `发送到 #${channel.name}`
-        }
-      />
+      {/* Official full-chat shell; compact input suppresses unavailable uploads only. */}
+      <div
+        data-testid="chat-composer-shell"
+        className="relative flex min-w-0 w-full items-center border-t border-line-muted bg-layer-panel px-3 pt-3 safe-bottom theme-brutal:border-t-2 theme-brutal:border-black theme-brutal:bg-white"
+      >
+        <MessageInput
+          channelId={channel.roomId}
+          channelName={channel.name}
+          variant="compact"
+          loadMentionMembers={false}
+          showTaskButton={false}
+          onSendOverride={send}
+          submitDisabled={
+            loading ||
+            Boolean(error) ||
+            Boolean(channel.archivedAt) ||
+            writeState !== "idle" ||
+            (isPrivate && view.room?.instancePrivateBox?.active !== true)
+          }
+          submitDisabledReason={
+            isPrivate && view.room?.instancePrivateBox?.active === false
+              ? "此私聊已停用"
+              : undefined
+          }
+          placeholder={
+            isPrivate ? `私聊 ${channel.name}` : `发送到 #${channel.name}`
+          }
+        />
+      </div>
     </ConversationPanelRoot>
   );
 }
 
 export default function ChannelApp() {
+  const sidebarPanel = useResizablePanel({
+    storageKey: "loom:chatSidebarWidth",
+    ...SIDEBAR_PANEL_BOUNDS,
+  });
   const [directory, setDirectory] =
     useState<Awaited<ReturnType<typeof loadChannelDirectory>>>();
   const [error, setError] = useState("");
@@ -427,7 +440,23 @@ export default function ChannelApp() {
               : "hidden"
           }
         >
-          <AppShellSidebarSlot className="relative flex w-36 shrink-0 flex-col sm:w-[240px]">
+          <AppShellSidebarSlot
+            className="relative flex w-36 shrink-0 flex-col md:w-[var(--chat-sidebar-width)]"
+            style={
+              {
+                "--chat-sidebar-width": `${sidebarPanel.width}px`,
+              } as React.CSSProperties
+            }
+          >
+            <PanelResizeHandle
+              side="right"
+              visibleFrom="md"
+              data-testid="chat-sidebar-resize"
+              onPointerDown={sidebarPanel.handleResizeStart}
+              onPointerMove={sidebarPanel.handleResizeMove}
+              onPointerUp={sidebarPanel.handleResizeEnd}
+              onPointerCancel={sidebarPanel.handleResizeEnd}
+            />
             {directory?.workspace.controlRoomId && (
               <ChannelSidebar
                 client={client}

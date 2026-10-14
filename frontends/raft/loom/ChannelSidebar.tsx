@@ -1,3 +1,4 @@
+import { SidebarDrag, DragSection, DragRow } from "./SidebarDrag.tsx";
 import AttentionDot from "../packages/web/src/components/ui/AttentionDot.tsx";
 import ChannelArchiveDialog from "./ChannelArchiveDialog.tsx";
 import { markChannelActivity } from "./sidebar-activity.ts";
@@ -22,12 +23,7 @@ import {
   OperationStatus,
   useManagement,
 } from "./ManagementUi.tsx";
-import {
-  sidebarGroups,
-  moveChannel,
-  reorderChannel,
-  reorderSection,
-} from "./sidebar-state.ts";
+import { sidebarGroups, moveChannel } from "./sidebar-state.ts";
 type Edit =
   | { kind: "channel" }
   | { kind: "group"; id?: string; moveRoomId?: string }
@@ -178,18 +174,9 @@ export default function ChannelSidebar({
   const visibleGroups = groups.filter(
     (g) => g.id !== "pinned" || g.rooms.length,
   );
-  const reorder = (id: string, direction: number) =>
-    patch(
-      reorderSection(
-        prefs!,
-        visibleGroups.map((g) => g.id),
-        id,
-        direction,
-      ),
-    );
   return (
     <Frame
-      title={name}
+      title="聊天"
       testIdPrefix="public-server-channel-sidebar"
       scrollTestId="public-server-channel-list"
     >
@@ -218,243 +205,245 @@ export default function ChannelSidebar({
           </Button>
         )}
         {!data && <p className="px-2 text-xs">正在读取列表设置…</p>}
-        {visibleGroups.map((group) => (
-          <section
-            key={group.id}
-            data-sidebar-section={group.id}
-            className="mb-3"
-          >
-            <div className="mb-1 mt-3 flex h-6 items-center justify-between px-2">
-              <SidebarContextMenu
-                label={`分组操作 ${group.name}`}
-                disabled={busy}
-                items={[
-                  { label: "新建频道", run: () => open({ kind: "channel" }) },
-                  { label: "新建分组", run: () => open({ kind: "group" }) },
-                  ...(group.id.startsWith("custom:")
-                    ? [
-                        {
-                          label: "重命名分组",
-                          run: () =>
-                            open(
-                              { kind: "group", id: group.id.slice(7) },
-                              group.name,
-                            ),
-                        },
-                        {
-                          label: "删除分组",
-                          run: () =>
-                            open(
-                              { kind: "delete-group", id: group.id.slice(7) },
-                              group.name,
-                            ),
-                        },
-                      ]
-                    : []),
-                  {
-                    label: "分组上移",
-                    disabled: visibleGroups[0]?.id === group.id,
-                    run: () => reorder(group.id, -1),
-                  },
-                  {
-                    label: "分组下移",
-                    disabled: visibleGroups.at(-1)?.id === group.id,
-                    run: () => reorder(group.id, 1),
-                  },
-                ]}
-              >
-                <button
-                  type="button"
-                  className="flex h-6 min-w-0 w-full items-center gap-1 [&>svg]:shrink-0 text-xs font-bold uppercase text-foreground-strong tracking-widest transition-colors hover:text-foreground-muted theme-brutal:text-black theme-brutal:hover:text-black/70"
-                  aria-expanded={!collapsed.includes(group.id)}
-                  onClick={() =>
-                    setCollapsed((current) =>
-                      current.includes(group.id)
-                        ? current.filter((id) => id !== group.id)
-                        : [...current, group.id],
-                    )
-                  }
-                >
-                  <ChevronRight
-                    size={12}
-                    className={`shrink-0 ${collapsed.includes(group.id) ? "" : "rotate-90"}`}
-                  />
-                  <span className="truncate">{group.name}</span>
-                </button>
-              </SidebarContextMenu>
-              <div className="flex shrink-0 items-center gap-1">
-                <SidebarSortMenu
-                  name={group.name}
+        <SidebarDrag
+          groups={visibleGroups}
+          prefs={prefs}
+          disabled={busy}
+          onDrop={(value, version) => {
+            if (!busy) void manager.sidebar(value, version, done);
+          }}
+        >
+          {visibleGroups.map((group) => (
+            <DragSection
+              key={group.id}
+              id={group.id}
+              items={group.rooms.map((r) => r.roomId)}
+              disabled={busy}
+            >
+              <div className="mb-1 mt-3 flex h-6 items-center justify-between px-2">
+                <SidebarContextMenu
+                  label={`分组操作 ${group.name}`}
                   disabled={busy}
-                  value={
-                    group.id === "pinned"
-                      ? prefs!.pinnedSortMode
-                      : prefs!.channelSortMode
-                  }
-                  onChange={(mode) =>
-                    patch(
-                      group.id === "pinned"
-                        ? { pinnedSortMode: mode }
-                        : { channelSortMode: mode },
-                    )
-                  }
-                />
-                <Tooltip content="新建频道">
+                  items={[
+                    { label: "新建频道", run: () => open({ kind: "channel" }) },
+                    ...(
+                      [
+                        ["manual", "手动排序"],
+                        ["az", "按名称排序"],
+                        ["recent", "按最近活动排序"],
+                      ] as const
+                    ).map(([mode, label]) => ({
+                      label,
+                      checked:
+                        (group.id === "pinned"
+                          ? prefs!.pinnedSortMode
+                          : prefs!.channelSortMode) === mode,
+                      run: () =>
+                        patch(
+                          group.id === "pinned"
+                            ? { pinnedSortMode: mode }
+                            : { channelSortMode: mode },
+                        ),
+                    })),
+                    { label: "新建分组", run: () => open({ kind: "group" }) },
+                    ...(group.id.startsWith("custom:")
+                      ? [
+                          {
+                            label: "重命名分组",
+                            run: () =>
+                              open(
+                                { kind: "group", id: group.id.slice(7) },
+                                group.name,
+                              ),
+                          },
+                          {
+                            label: "删除分组",
+                            run: () =>
+                              open(
+                                { kind: "delete-group", id: group.id.slice(7) },
+                                group.name,
+                              ),
+                          },
+                        ]
+                      : []),
+                  ]}
+                >
                   <button
                     type="button"
-                    className="btn-flat-sm flex size-6 items-center justify-center p-0"
-                    aria-label="新建频道"
-                    disabled={busy}
-                    onClick={() => open({ kind: "channel" })}
+                    className="flex h-6 min-w-0 w-full items-center gap-1 [&>svg]:shrink-0 text-xs font-bold uppercase text-foreground-strong tracking-widest transition-colors hover:text-foreground-muted theme-brutal:text-black theme-brutal:hover:text-black/70"
+                    data-section-handle
+                    aria-expanded={!collapsed.includes(group.id)}
+                    onClick={() =>
+                      setCollapsed((current) =>
+                        current.includes(group.id)
+                          ? current.filter((id) => id !== group.id)
+                          : [...current, group.id],
+                      )
+                    }
                   >
-                    <Plus size={14} />
+                    <ChevronRight
+                      size={12}
+                      className={`shrink-0 ${collapsed.includes(group.id) ? "" : "rotate-90"}`}
+                    />
+                    <span className="truncate">{group.name}</span>
                   </button>
-                </Tooltip>
-              </div>
-            </div>
-            {!collapsed.includes(group.id) &&
-              group.rooms.map((room, index) => (
-                <div
-                  key={room.roomId}
-                  className="flex min-w-0 items-center"
-                  data-channel-row={room.roomId}
-                >
-                  <SidebarContextMenu
-                    label={`频道操作 ${room.name}`}
+                </SidebarContextMenu>
+                <div className="flex shrink-0 items-center gap-1">
+                  <SidebarSortMenu
+                    name={group.name}
                     disabled={busy}
-                    items={[
-                      {
-                        label: prefs!.pinned.includes(`room:${room.roomId}`)
-                          ? "取消置顶"
-                          : "置顶",
-                        run: () =>
-                          patch(
-                            prefs!.pinned.includes(`room:${room.roomId}`)
-                              ? {
-                                  pinned: prefs!.pinned.filter(
-                                    (k) => k !== `room:${room.roomId}`,
-                                  ),
-                                }
-                              : moveChannel(prefs!, room.roomId, "pinned"),
-                          ),
-                      },
-                      {
-                        label: "移动到分区",
-                        children: [
-                          ...groups
-                            .filter((g) => g.id !== group.id)
-                            .map((g) => ({
+                    value={
+                      group.id === "pinned"
+                        ? prefs!.pinnedSortMode
+                        : prefs!.channelSortMode
+                    }
+                    onChange={(mode) =>
+                      patch(
+                        group.id === "pinned"
+                          ? { pinnedSortMode: mode }
+                          : { channelSortMode: mode },
+                      )
+                    }
+                  />
+                  <Tooltip content="新建频道">
+                    <button
+                      type="button"
+                      className="btn-flat-sm flex size-6 items-center justify-center p-0"
+                      aria-label="新建频道"
+                      disabled={busy}
+                      onClick={() => open({ kind: "channel" })}
+                    >
+                      <Plus size={14} />
+                    </button>
+                  </Tooltip>
+                </div>
+              </div>
+              {!collapsed.includes(group.id) &&
+                group.rooms.map((room) => (
+                  <DragRow
+                    key={room.roomId}
+                    id={room.roomId}
+                    disabled={
+                      busy ||
+                      (group.id === "pinned"
+                        ? prefs!.pinnedSortMode
+                        : prefs!.channelSortMode) !== "manual"
+                    }
+                  >
+                    <SidebarContextMenu
+                      label={`频道操作 ${room.name}`}
+                      disabled={busy}
+                      items={[
+                        {
+                          label: "移动到分区",
+                          children: [
+                            ...groups.map((g) => ({
                               label: g.name,
+                              checked: g.id === group.id,
+                              disabled: g.id === group.id,
                               run: () =>
                                 patch(moveChannel(prefs!, room.roomId, g.id)),
                             })),
-                          {
-                            label: "新建分组",
-                            run: () =>
-                              open({ kind: "group", moveRoomId: room.roomId }),
-                          },
-                        ],
-                      },
-                      {
-                        label: activity?.[room.roomId]
-                          ? "标记已读"
-                          : "标记未读",
-                        disabled: !activity,
-                        run: () => void mark(room),
-                      },
-                      {
-                        label: prefs!.mutedActivity.includes(
-                          `room:${room.roomId}`,
-                        )
-                          ? "取消静音"
-                          : "静音",
-                        run: () =>
-                          patch({
-                            mutedActivity: prefs!.mutedActivity.includes(
-                              `room:${room.roomId}`,
-                            )
-                              ? prefs!.mutedActivity.filter(
-                                  (k) => k !== `room:${room.roomId}`,
-                                )
-                              : [
-                                  ...prefs!.mutedActivity,
-                                  `room:${room.roomId}`,
-                                ],
-                          }),
-                      },
-                      ...(room.slug === "all"
-                        ? []
-                        : [
                             {
-                              label: "归档",
-                              run: () => {
-                                setError("");
-                                setArchiveTarget(room);
-                              },
+                              label: "新建分组",
+                              run: () =>
+                                open({
+                                  kind: "group",
+                                  moveRoomId: room.roomId,
+                                }),
                             },
-                          ]),
-                      {
-                        label: "上移",
-                        disabled: index === 0,
-                        run: () =>
-                          patch(
-                            reorderChannel(
-                              prefs!,
-                              group.id,
-                              group.rooms.map((r) => r.roomId),
-                              room.roomId,
-                              -1,
+                          ],
+                        },
+                        {
+                          label: activity?.[room.roomId]
+                            ? "标记已读"
+                            : "标记未读",
+                          disabled: !activity,
+                          run: () => void mark(room),
+                        },
+                        {
+                          label: prefs!.pinned.includes(`room:${room.roomId}`)
+                            ? "取消置顶"
+                            : "置顶",
+                          run: () =>
+                            patch(
+                              prefs!.pinned.includes(`room:${room.roomId}`)
+                                ? {
+                                    pinned: prefs!.pinned.filter(
+                                      (k) => k !== `room:${room.roomId}`,
+                                    ),
+                                  }
+                                : moveChannel(prefs!, room.roomId, "pinned"),
                             ),
-                          ),
-                      },
-                      {
-                        label: "下移",
-                        disabled: index === group.rooms.length - 1,
-                        run: () =>
-                          patch(
-                            reorderChannel(
-                              prefs!,
-                              group.id,
-                              group.rooms.map((r) => r.roomId),
-                              room.roomId,
-                              1,
-                            ),
-                          ),
-                      },
-                    ]}
-                  >
-                    <div className="flex min-w-0 items-center">
-                      <div className="min-w-0 flex-1">
-                        <Row
-                          channelId={room.roomId}
-                          name={room.name}
-                          selected={selected === room.roomId}
-                          onSelectChannel={onSelect}
-                        />
+                        },
+                        {
+                          label: prefs!.mutedActivity.includes(
+                            `room:${room.roomId}`,
+                          )
+                            ? "取消静音"
+                            : "静音",
+                          run: () =>
+                            patch({
+                              mutedActivity: prefs!.mutedActivity.includes(
+                                `room:${room.roomId}`,
+                              )
+                                ? prefs!.mutedActivity.filter(
+                                    (k) => k !== `room:${room.roomId}`,
+                                  )
+                                : [
+                                    ...prefs!.mutedActivity,
+                                    `room:${room.roomId}`,
+                                  ],
+                            }),
+                        },
+                        ...(room.slug === "all"
+                          ? []
+                          : [
+                              {
+                                label: "归档",
+                                run: () => {
+                                  setError("");
+                                  setArchiveTarget(room);
+                                },
+                              },
+                            ]),
+                      ]}
+                    >
+                      <div className="flex min-w-0 items-center">
+                        <div className="min-w-0 flex-1">
+                          <Row
+                            channelId={room.roomId}
+                            name={room.name}
+                            selected={selected === room.roomId}
+                            onSelectChannel={onSelect}
+                          />
+                        </div>
+                        {Boolean(activity?.[room.roomId]) && (
+                          <AttentionDot
+                            role="status"
+                            aria-label="有未读消息"
+                            className="mr-1"
+                          />
+                        )}
+                        {prefs!.mutedActivity.includes(
+                          `room:${room.roomId}`,
+                        ) && (
+                          <BellOff
+                            size={12}
+                            aria-label="已静音"
+                            className="mr-1 shrink-0 text-foreground-muted"
+                          />
+                        )}
                       </div>
-                      {Boolean(activity?.[room.roomId]) && (
-                        <AttentionDot
-                          role="status"
-                          aria-label="有未读消息"
-                          className="mr-1"
-                        />
-                      )}
-                      {prefs!.mutedActivity.includes(`room:${room.roomId}`) && (
-                        <BellOff
-                          size={12}
-                          aria-label="已静音"
-                          className="mr-1 shrink-0 text-foreground-muted"
-                        />
-                      )}
-                    </div>
-                  </SidebarContextMenu>
-                </div>
-              ))}
-            {!collapsed.includes(group.id) && !group.rooms.length && (
-              <p className="px-2 text-xs text-foreground-muted">暂无频道</p>
-            )}
-          </section>
-        ))}
+                    </SidebarContextMenu>
+                  </DragRow>
+                ))}
+              {!collapsed.includes(group.id) && !group.rooms.length && (
+                <p className="px-2 text-xs text-foreground-muted">暂无频道</p>
+              )}
+            </DragSection>
+          ))}
+        </SidebarDrag>
       </SidebarContextMenu>
       {archiveTarget && (
         <ChannelArchiveDialog

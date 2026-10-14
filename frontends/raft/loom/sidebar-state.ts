@@ -1,3 +1,4 @@
+import { replaceSidebarSubsetOrder } from "../packages/web/src/components/layout/sidebarDnd.ts";
 import type { SidebarPreferences, SidebarPatchRequest } from "@rah-os/protocol";
 type Channel = { roomId: string; name: string };
 export function sidebarGroups<T extends Channel>(
@@ -87,54 +88,58 @@ export function moveChannel(
     })),
   };
 }
-/** Start from the displayed order (including sorted or never-reordered rows). */
-export function reorderChannel(
+/** Drop coordinates are transient; only this patch changes the durable ordering. */
+export function sidebarDrop(
   prefs: SidebarPreferences,
-  section: string,
-  visibleIds: string[],
-  roomId: string,
-  direction: number,
+  groups: { id: string; rooms: Channel[] }[],
+  active: string,
+  over: string,
+  after: boolean,
 ): SidebarPatchRequest["patch"] {
-  const keys = visibleIds.map((id) => `room:${id}`);
-  const index = visibleIds.indexOf(roomId),
-    next = index + direction;
-  if (index < 0 || next < 0 || next >= keys.length) return {};
-  [keys[index], keys[next]] = [keys[next]!, keys[index]!];
-  const preserve = (existing: string[]) => [
-    ...keys,
-    ...existing.filter((key) => !keys.includes(key)),
-  ];
-  if (section === "pinned")
-    return { pinned: preserve(prefs.pinned), pinnedSortMode: "manual" };
-  if (section === "channels")
+  if (active.startsWith("group:")) {
+    const visible = groups.map((g) => g.id);
+    const from = visible.indexOf(active.slice(6));
+    const to = visible.indexOf(over.slice(6));
+    if (from < 0 || to < 0 || from === to) return {};
+    const next = [...visible];
+    next.splice(to, 0, next.splice(from, 1)[0]!);
+    const order = [
+      ...(prefs.sectionOrder.length
+        ? prefs.sectionOrder
+        : ["pinned", "channels", "dms"]),
+    ];
+    for (const id of visible) if (!order.includes(id)) order.push(id);
     return {
-      channelOrder: preserve(prefs.channelOrder),
-      channelSortMode: "manual",
+      sectionOrder: replaceSidebarSubsetOrder(order, visible, next),
     };
-  return {
-    customSections: prefs.customSections.map((s) =>
-      `custom:${s.id}` === section ? { ...s, items: preserve(s.items) } : s,
-    ),
-    channelSortMode: "manual",
-  };
-}
-export function reorderSection(
-  prefs: SidebarPreferences,
-  visible: string[],
-  id: string,
-  direction: number,
-): SidebarPatchRequest["patch"] {
-  const index = visible.indexOf(id),
-    neighbor = visible[index + direction];
-  if (index < 0 || !neighbor) return {};
-  const order = [
-    ...(prefs.sectionOrder.length
-      ? prefs.sectionOrder
-      : ["pinned", "channels", "dms"]),
+  }
+  const target = groups.find(
+    (g) => `group:${g.id}` === over || g.rooms.some((r) => r.roomId === over),
+  );
+  if (!target || active === over) return {};
+  if (
+    (target.id === "pinned" ? prefs.pinnedSortMode : prefs.channelSortMode) !==
+    "manual"
+  )
+    return {};
+  const ids = target.rooms.map((r) => r.roomId).filter((id) => id !== active);
+  const position = ids.indexOf(over);
+  ids.splice(position < 0 ? ids.length : position + Number(after), 0, active);
+  const moved = moveChannel(prefs, active, target.id);
+  const next = { ...prefs, ...moved };
+  const keys = ids.map((id) => `room:${id}`);
+  const preserve = (saved: string[]) => [
+    ...keys,
+    ...saved.filter((k) => !keys.includes(k)),
   ];
-  for (const key of visible) if (!order.includes(key)) order.push(key);
-  const a = order.indexOf(id),
-    b = order.indexOf(neighbor);
-  [order[a], order[b]] = [order[b]!, order[a]!];
-  return { sectionOrder: order };
+  if (target.id === "pinned")
+    return { ...moved, pinned: preserve(next.pinned) };
+  if (target.id === "channels")
+    return { ...moved, channelOrder: preserve(next.channelOrder) };
+  return {
+    ...moved,
+    customSections: next.customSections.map((s) =>
+      `custom:${s.id}` === target.id ? { ...s, items: preserve(s.items) } : s,
+    ),
+  };
 }

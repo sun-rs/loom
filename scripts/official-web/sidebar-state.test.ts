@@ -4,8 +4,7 @@ import { DEFAULT_SIDEBAR_PREFERENCES } from "@rah-os/protocol";
 import {
   sidebarGroups,
   moveChannel,
-  reorderChannel,
-  reorderSection,
+  sidebarDrop,
 } from "../../frontends/raft/loom/sidebar-state.ts";
 test("sidebar placement is canonical, pinning does not erase group and unknown rooms never render", () => {
   const rooms = [
@@ -69,12 +68,12 @@ test("moving a row changes one adjacent position even when saved manual order is
     name: roomId,
   }));
   const prefs = { ...DEFAULT_SIDEBAR_PREFERENCES };
-  const patch = reorderChannel(
+  const patch = sidebarDrop(
     prefs,
-    "channels",
-    rooms.map((r) => r.roomId),
+    sidebarGroups(rooms, prefs, {}),
     "c",
-    -1,
+    "b",
+    false,
   );
   assert.deepEqual(
     sidebarGroups(rooms, { ...prefs, ...patch }, {})
@@ -89,11 +88,15 @@ test("section reordering preserves unrelated DM placement and ignores hidden emp
     ...DEFAULT_SIDEBAR_PREFERENCES,
     sectionOrder: ["dms", "pinned", "channels", "custom:work"],
   };
-  const patch = reorderSection(
+  const patch = sidebarDrop(
     prefs,
-    ["channels", "custom:work"],
-    "custom:work",
-    -1,
+    [
+      { id: "channels", rooms: [] },
+      { id: "custom:work", rooms: [] },
+    ],
+    "group:custom:work",
+    "group:channels",
+    false,
   );
   assert.deepEqual(patch.sectionOrder, [
     "dms",
@@ -101,4 +104,45 @@ test("section reordering preserves unrelated DM placement and ignores hidden emp
     "custom:work",
     "channels",
   ]);
+});
+test("dragging a row persists its displayed position and moving sections preserves hidden entries", async () => {
+  const { sidebarDrop } =
+    await import("../../frontends/raft/loom/sidebar-state.ts");
+  const prefs = {
+    ...DEFAULT_SIDEBAR_PREFERENCES,
+    customSections: [{ id: "work", name: "Work", items: [] }],
+  };
+  const groups = sidebarGroups(
+    ["a", "b", "c"].map((roomId) => ({ roomId, name: roomId })),
+    prefs,
+    {},
+  );
+  const patch = sidebarDrop(prefs, groups, "c", "b", false);
+  assert.deepEqual(
+    sidebarGroups(
+      ["a", "b", "c"].map((roomId) => ({ roomId, name: roomId })),
+      { ...prefs, ...patch },
+      {},
+    )
+      .find((g) => g.id === "channels")
+      .rooms.map((r) => r.roomId),
+    ["a", "c", "b"],
+  );
+  assert.deepEqual(
+    sidebarDrop(prefs, groups, "c", "group:custom:work", false)
+      .customSections[0].items,
+    ["room:c"],
+  );
+});
+
+test("dragging cannot silently replace alphabetical sorting", async () => {
+  const { sidebarDrop } =
+    await import("../../frontends/raft/loom/sidebar-state.ts");
+  const prefs = { ...DEFAULT_SIDEBAR_PREFERENCES, channelSortMode: "az" };
+  const groups = sidebarGroups(
+    ["a", "b"].map((roomId) => ({ roomId, name: roomId })),
+    prefs,
+    {},
+  );
+  assert.deepEqual(sidebarDrop(prefs, groups, "b", "a", false), {});
 });

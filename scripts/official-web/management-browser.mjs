@@ -348,6 +348,64 @@ export async function verifyManagement({
       .fill(`${groupName}Renamed`);
     await dialog.getByRole("button", { name: "保存分组", exact: true }).click();
     await dialog.waitFor({ state: "hidden" });
+    await page.getByRole("button", { name: "排序 频道", exact: true }).click();
+    await page.getByRole("menuitem", { name: "手动排序", exact: true }).click();
+    // Drag section headings and channel rows using actual pointer sensors.
+    const drag = async (from, to) => {
+      await page
+        .getByText("正在处理…", { exact: true })
+        .waitFor({ state: "hidden" });
+      await page.waitForFunction(
+        (el) =>
+          el.closest("[aria-disabled]")?.getAttribute("aria-disabled") !==
+          "true",
+        await from.elementHandle(),
+      );
+      await to.hover();
+      await from.hover();
+      const a = await from.boundingBox(),
+        b = await to.boundingBox();
+      await page.mouse.move(
+        a.x + Math.min(30, a.width / 2),
+        a.y + a.height / 2,
+      );
+      await page.mouse.down();
+      await page.mouse.move(b.x + Math.min(30, b.width / 2), b.y + 2, {
+        steps: 15,
+      });
+      await page.mouse.up();
+    };
+    const customId = `custom:${(await client.request("sidebar.get", { workspaceId: workspace.workspaceId })).preferences.customSections.find((g) => g.name === `${groupName}Renamed`).id}`;
+    await drag(
+      page.getByRole("button", { name: `${groupName}Renamed`, exact: true }),
+      page.locator('[data-sidebar-section="channels"] [data-section-handle]'),
+    );
+    await page.waitForFunction((id) => {
+      const sections = [
+        ...document.querySelectorAll("[data-sidebar-section]"),
+      ].map((e) => e.dataset.sidebarSection);
+      return sections.indexOf(id) < sections.indexOf("channels");
+    }, customId);
+    await drag(
+      page.locator(`[data-channel-row="${created.roomId}"]`),
+      page.locator('[data-sidebar-section="channels"] [data-section-handle]'),
+    );
+    await page
+      .locator(
+        `[data-sidebar-section="channels"] [data-channel-row="${created.roomId}"]`,
+      )
+      .waitFor();
+    await drag(
+      page.locator(`[data-channel-row="${created.roomId}"]`),
+      page.locator(
+        `[data-sidebar-section="${customId}"] [data-section-handle]`,
+      ),
+    );
+    await page
+      .locator(
+        `[data-sidebar-section="${customId}"] [data-channel-row="${created.roomId}"]`,
+      )
+      .waitFor();
     await page
       .getByRole("button", {
         name: `${groupName}Renamed`,
@@ -385,8 +443,12 @@ export async function verifyManagement({
       rows.map((r) => r.getAttribute("data-channel-row")),
     );
     assert.ok(before.length >= 3);
-    await channelRows.nth(2).getByRole("button").click({ button: "right" });
-    await page.getByRole("menuitem", { name: "上移", exact: true }).click();
+    const source = await channelRows.nth(2).boundingBox();
+    const target = await channelRows.nth(1).boundingBox();
+    await page.mouse.move(source.x + 30, source.y + source.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(target.x + 30, target.y + 2, { steps: 15 });
+    await page.mouse.up();
     const expected = [...before];
     [expected[1], expected[2]] = [expected[2], expected[1]];
     await page.waitForFunction(

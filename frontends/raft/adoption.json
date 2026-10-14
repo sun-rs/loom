@@ -2372,13 +2372,13 @@
       "behavior": "20-result pages replace rather than append; search scope all/channel/direct/thread; recent ordering; query/filter survive reload; same-query submit resets to first page; late aborted reads cannot replace current results; errors remove stale content; exact message context from bounded authenticated API, with root/message deduplication; open parent conversation at latest history. Agent Role/instance name filtering is presentation-only.",
       "limits": "Message text search only, no entity search or advanced author/date filters. Activity filters all/unread/mentions are read-only and do not mark read or follow/unfollow. Context has no thread reply, attachment interaction or live message subscription. Opening parent conversation is not an anchored jump to the old result."
     },
-    "stage": "sidebar-actions-v9",
+    "stage": "sidebar-drag-v10",
     "sidebarInteractionSlice": {
       "source": "packages/web/src/components/layout/Sidebar.tsx section header, renderSectionAddButton and row context-menu wiring; SidebarSortMenu.tsx ArrowUpDown trigger",
       "directReuse": "raft-ui ContextMenu and DropdownMenu primitives; unchanged PublicServerSidebarFrame/Row",
       "structuralPort": "Section icon button and heading class parameters, ArrowUpDown/Plus/ChevronRight icons; removed redundant title and row ellipsis; channel and group operations use right-click menus.",
       "localChanges": "Existing Loom sidebar mutation contracts retained. Context menu keyboard shortcut and native touch long-press; sort modes remain existing shared channel/custom-group preference and separate pinned preference. Plus creates a channel in the default list; moving into a custom group remains explicit.",
-      "limits": "No drag/drop. Custom groups do not acquire independent sort state. Source files remain byte-exact. Archive/read/mute added by sidebarActionsSlice."
+      "limits": "Custom groups still share the channel sort preference. Source files remain byte-exact. Dragging and resizing are described in sidebarDragSlice."
     },
     "sidebarActionsSlice": {
       "source": "packages/web/src/components/layout/Sidebar.tsx surface menu, move-to-section submenu, channel read/pin/mute/archive actions and archive confirmation; SidebarReadToggleMenuItem.tsx",
@@ -2386,7 +2386,15 @@
       "directReuse": "raft-ui ContextMenu/Submenu/Dialog/Button/Input and unchanged official channel rows/timeline/composer; no upstream file modified.",
       "localComposition": "Blank surface create-channel/create-section/archive-list; move submenu plus atomically create-and-move section; unread/mute projections; archive confirmation/list/restore with read-only history. Existing reserved #all and active-work checks remain authoritative.",
       "failureHandling": "Sidebar and lifecycle writes retain exact retry identity after lost response. Activity marks have no idempotency API and are never automatically replayed; error tells user to refresh/reassess state. Late reads are ignored.",
-      "limits": "Only top-level channel read state; thread read state stays independent. Latest top-level unread frontier scan capped at ten 100-message pages; if not found, no mutation. No automatic mark-read just by viewing. Shared channel/custom-group sort preference retained; no drag/drop."
+      "limits": "Only top-level channel read state; thread read state stays independent. Latest top-level unread frontier scan capped at ten 100-message pages; if not found, no mutation. No automatic mark-read just by viewing. Shared channel/custom-group sort preference retained."
+    },
+    "sidebarDragSlice": {
+      "source": "Sidebar.tsx sortable items/sections and pointer/touch/keyboard sensors; sidebarDnd.ts; MainLayout.tsx; useResizablePanel.ts; panelBounds.ts; PanelResizeHandle.tsx; ChatPanel.tsx and MessageInput.tsx full-chat shell",
+      "directReuse": "Unmodified useResizablePanel, SIDEBAR_PANEL_BOUNDS (180/240/320), PanelResizeHandle and replaceSidebarSubsetOrder; installed dnd-kit and existing MessageInput.",
+      "localComposition": "Chat title; remove adjacent-move menu actions; sortable rows and section headings; cross-section drops; manual-sort-only targets; one sidebar.patch at drop with drag-start expectedVersion. Full-chat shell classes around compact composer keep unconnected uploads disabled.",
+      "localDifferences": "Drop preview transforms within the current list; cross-section placement is committed on release, not upstream live cross-container projection. Dropping outside cancels. Existing pin/unpin retains previous group. Custom section sort still shared; hide-empty/joined-only preferences absent. Mobile still uses narrow simultaneous list/detail instead of native list/detail navigation.",
+      "ownership": "Loom sidebar service owns persisted order; drag transform and width are presentation state. No provider/backend protocol changes. Unknown writes retain existing verification flow.",
+      "audit": "docs/audits/2026-10-14-official-chat-interactions.zh-CN.md"
     }
   },
   "rollout": {

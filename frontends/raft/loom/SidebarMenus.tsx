@@ -18,6 +18,7 @@ export type SidebarMenuItem = {
   label: string;
   run?: () => void;
   disabled?: boolean;
+  checked?: boolean;
   children?: SidebarMenuItem[];
 };
 function MenuItems({
@@ -44,6 +45,7 @@ function MenuItems({
         onClick={item.run}
       >
         {item.label}
+        {item.checked && <Check size={14} className="ml-auto" />}
       </ContextMenuItem>
     ),
   );

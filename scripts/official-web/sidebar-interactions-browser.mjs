@@ -6,6 +6,31 @@ export async function verifySidebarInteractions(page) {
     .locator('[data-sidebar-section="channels"]')
     .getByRole("button", { name: "频道", exact: true });
   await heading.waitFor();
+  assert.equal(await sidebar.getByText("聊天", { exact: true }).count(), 1);
+  const composerShell = page
+    .getByTestId("chat-composer-shell")
+    .filter({ visible: true });
+  const composerStyle = await composerShell.evaluate((el) => {
+    const s = getComputedStyle(el);
+    return [s.paddingTop, s.paddingLeft, s.paddingBottom];
+  });
+  assert.deepEqual(composerStyle, ["12px", "12px", "16px"]);
+  const resize = page.getByTestId("chat-sidebar-resize");
+  if (page.viewportSize().width >= 768) {
+    const before = await sidebar.boundingBox();
+    const handle = await resize.boundingBox();
+    await page.mouse.move(handle.x + handle.width / 2, handle.y + 100);
+    await page.mouse.down();
+    await page.mouse.move(handle.x + handle.width / 2 + 40, handle.y + 100, {
+      steps: 10,
+    });
+    await page.mouse.up();
+    assert.equal(
+      Math.round((await sidebar.boundingBox()).width),
+      Math.min(320, Math.round(before.width) + 40),
+    );
+  }
+
   assert.equal(await sidebar.getByText("频道", { exact: true }).count(), 1);
   assert.equal(
     await sidebar.locator(".lucide-ellipsis, .lucide-more-horizontal").count(),
@@ -41,6 +66,12 @@ export async function verifySidebarInteractions(page) {
   await row.click({ button: "right" });
   await page.getByRole("menuitem", { name: /^(置顶|取消置顶)$/ }).waitFor();
   assert.equal(page.url(), url);
+  assert.equal(
+    await page
+      .getByRole("menuitem", { name: /^(上移|下移|分组上移|分组下移)$/ })
+      .count(),
+    0,
+  );
   const box = await page.getByRole("menu").boundingBox();
   assert.ok(
     box.x >= 0 &&
