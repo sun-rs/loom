@@ -148,17 +148,21 @@ export function SelectField({
   options: { value: string; label: string }[];
   disabled?: boolean;
 }) {
+  const unavailable =
+    Boolean(value) && !options.some((option) => option.value === value);
   return (
     <FormField label={label} className="mb-3">
       <Select
         chrome="field"
-        value={value || null}
+        value={unavailable ? null : value || null}
         items={options}
         onValueChange={(next) => onChange(next ?? "")}
         disabled={disabled}
       >
         <FieldSelectTrigger aria-label={label} className="w-full">
-          <SelectValue placeholder="请选择" />
+          <SelectValue
+            placeholder={unavailable ? "当前配置不可用" : "请选择"}
+          />
           <SelectIcon />
         </FieldSelectTrigger>
         <SelectContent>

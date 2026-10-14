@@ -86,8 +86,34 @@ export async function verifyManagement({
       catalog.roles.filter((r) => r.configuration.displayName === name).length,
       1,
     );
+    const runtimeRoute = "**/v1/local/runtimes/list";
+    await page.route(runtimeRoute, async (route) => {
+      const response = await route.fetch();
+      const body = await response.json();
+      body.runtimes = body.runtimes.map((runtime) => ({
+        ...runtime,
+        runtimeOfferId: "fixture-unavailable-offer",
+      }));
+      await route.fulfill({ response, json: body });
+    });
     await page.locator(`[data-role-id="${role.roleId}"]`).click();
     const detail = page.getByTestId("loom-role-detail");
+    await detail.getByRole("combobox", { name: "CLI", exact: true }).waitFor();
+    assert.equal(
+      await detail
+        .getByRole("combobox", { name: "CLI", exact: true })
+        .innerText(),
+      "当前配置不可用",
+    );
+    assert.equal(
+      await detail
+        .getByRole("button", { name: "保存角色", exact: true })
+        .isDisabled(),
+      true,
+    );
+    await page.unroute(runtimeRoute);
+    await page.reload();
+    await page.locator(`[data-role-id="${role.roleId}"]`).click();
     await detail.getByLabel("名称", { exact: true }).fill(`${name}Edited`);
     await page.getByRole("tab", { name: "实例", exact: true }).click();
     await page.getByRole("tab", { name: "配置", exact: true }).click();
@@ -518,6 +544,7 @@ export async function verifyManagement({
       roleCreateUnknownReplay: true,
       officialSelectEscapeAndFocusReturn: true,
       roleTabPreservesUnsavedDraft: true,
+      unavailableCatalogHidesOpaqueIdWithoutSubstitution: true,
       roleEditAndStableId: true,
       instanceCreateRestartRemove: true,
       frozenRevisionAndExplicitAdoption: true,
