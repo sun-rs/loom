@@ -1,0 +1,57 @@
+{
+  "stage": "navigation-shell-v5",
+  "sourceCommit": "844316e72966e180ab5a12cf8a97b5a507f2457a",
+  "ownerDirection": "Restore official global navigation and page skeletons before expanding feature contents.",
+  "scope": "Search, Channels, Activity, Tasks, Agent (Role/instance management), Settings; desktop left rail and mobile in-flow navigation; working channel retained, other sections explicit placeholders.",
+  "upstreamReceipt": "../../../../frontends/raft/adoption.json",
+  "reuse": {
+    "direct": [
+      "Official LeftRail exported RailTabButton including icons/tooltip/selection primitive",
+      "raft-ui AppRail, AppShellRailSlot and MobileNav primitives",
+      "AvatarSlot and PanelHeader"
+    ],
+    "structuralPort": "Official desktop LeftRail grouping/settings footer and MainLayout mobile tab composition, with local URL navigation replacing Raft stores/accounts",
+    "localChanges": [
+      "Six mobile destinations instead of upstream four",
+      "Loom initial in place of server/account switcher",
+      "URL view parameter preserves room and existing channel component/draft/write-intent state",
+      "Five unfinished pages show an explicit unavailable notice and console link"
+    ],
+    "modifiedUpstreamSourceFiles": [],
+    "backendChanged": false
+  },
+  "verification": {
+    "tdd": "Browser navigation test failed on absent main navigation before implementation; final two-size suite passed.",
+    "isolatedBrowser": "browser.json: all six destinations, selected state, reload, back/forward, keyboard, real pointer targets, no overflow/external requests, channel draft preservation and unknown-send preservation across global navigation; existing channel/private/member/instance tests retained.",
+    "production": "page.json: real existing channel/private history, Role catalog, member/API state, six destinations, placeholder reload and return to same private room, console, no page errors/overflow verified at 1440x1000 and 390x844 DPR1; screenshots visually inspected.",
+    "fullCheck": "npm run check exited 1: backend/shared 3208 passed, 22 opt-in skipped; existing Tailnet dual-listener fixture failed EADDRINUSE on 127.0.0.1:54309. Not an uninterrupted green run.",
+    "targetedRepeat": "Unmodified complete local-workbench-gateway.test.ts independently passed 11/11. Same fixture also hit EADDRINUSE in the preceding instance-add batch; recurring full-suite port-allocation instability is left visible, competing owner/root allocation race not conclusively identified.",
+    "remainingChecks": "All commands after the failed npm test separately passed: console unit 63, formal browser policy 15, efficiency unit 558, official source/projection 11.",
+    "build": "Typechecked channel build and clean-commit product build passed.",
+    "formatAndDiff": "npm run format:check and git diff --check passed; changed browser helper formatted.",
+    "realCli": "not run",
+    "paidModels": "not run"
+  },
+  "deployment": "deployment.json",
+  "dataPreservation": {
+    "databasesBackedUp": 2,
+    "filesBackedUp": 318,
+    "businessTablesCompared": 18,
+    "volatileFieldExcluded": "subscription_cursors.updated_at only; cursor identity and last_seq compared exactly",
+    "schema": 89,
+    "sameDataHome": true
+  },
+  "limits": [
+    "Agent, Search, Tasks, Activity and Settings are page skeletons; none claims the underlying functionality is integrated.",
+    "Existing instance-add action remains in channel member dialog pending migration of management into Agent page.",
+    "Mobile navigation exposes six tabs rather than upstream four; existing channel two-column narrow layout remains, not full upstream mobile drill-in parity.",
+    "Existing historical Role display-name collision retained; no data cleanup or migration.",
+    "Full-suite Tailnet ephemeral-port failure repeated; isolated rerun does not establish its elimination."
+  ],
+  "screenshots": {
+    "web-1440.png": "7d1872eafa8c1c1907b3ae3f66fa58cb777710df84fd55d3614daa352cc69c27",
+    "shell-agents-1440.png": "34efa7ddd7d5d632f0ff572d8bb004fdf6825a3fc770bb97a4f78f3ddb5250bf",
+    "shell-agents-390.png": "15540a91c2dc4a3acb6b76c74e47e6821abafeb5b9b00da524a0f6ac7e84ab84"
+  },
+  "privateEvidenceDirectory": "/Users/sun/.loom/reviews/2026-10-14-official-web-shell"
+}

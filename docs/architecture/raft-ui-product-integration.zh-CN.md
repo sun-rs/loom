@@ -22,7 +22,7 @@
 
 2026-10-14 第四阶段最小管理切片：从频道成员弹窗进入“添加实例”，选择已有 Role 后调用现有 `role.instantiate`。官方 `ChannelMemberListShell` / `ChannelMemberRow` 与 `raft-ui` Dialog / Button 原样复用；本地只连接认证 `role.list` 与命令。与 Raft 的去重成员列表不同，同一 Role 可多次实例化，名称、身份和冻结的 Role Revision 由 Kernel 决定。共享该频道原有 RoomSession 及 WriteIntentSlot，不建第二个业务游标或队列；响应未知时保留角色、频道、因果位置和幂等键，关闭／Escape 不丢弃未决请求，显式核实原提交，浏览器导航不改写目标。Role 创建／编辑与实例移除／重启继续留在 console；不改冻结后端，也不接入上游 Agent Store 或托管 MCP。隔离真实 Core 的桌面／手机创建、重复 Role、丢失响应精确核实、刷新恢复及读取失败测试通过；本阶段已部署，正式Role列表／成员／历史及双尺寸页面核验通过；已有一组历史Role重名保留原ID与配置，后续Role管理再处理，见[证据与限制](../evo/evidence/2026-10-14-official-web-instances/summary.json)。
 
-2026-10-14 导航优先新裁定：负责人要求先恢复官方最左侧全局导航，作为功能大页入口，再逐页接入内容。新增本地 Navigation 组合，直接使用官方 LeftRail 导出的 RailTabButton、AppRail 系列和 AppShellRailSlot；保留搜索／频道／动态／任务／Agent分组与底部设置，顶部仅显示Loom标识，不伪造Raft账号切换。Agent对应Role／实例管理。手机用官方MobileNav组件并暂时并列六入口，区别于上游四标签，此差异明示，不宣称完整MainLayout复刻。URL的view参数仅选择页面，保留room参数；频道组件保持挂载以保留草稿与未决提交。五个未接入页面只显示骨架、明确说明和临时控制台链接，无假搜索、假任务或假状态。原频道、私聊及添加实例入口暂保留，未来管理内容迁往Agent页；本批不扩展后端能力。
+2026-10-14 导航优先新裁定：负责人要求先恢复官方最左侧全局导航，作为功能大页入口，再逐页接入内容。新增本地 Navigation 组合，直接使用官方 LeftRail 导出的 RailTabButton、AppRail 系列和 AppShellRailSlot；保留搜索／频道／动态／任务／Agent分组与底部设置，顶部仅显示Loom标识，不伪造Raft账号切换。Agent对应Role／实例管理。手机用官方MobileNav组件并暂时并列六入口，区别于上游四标签，此差异明示，不宣称完整MainLayout复刻。URL的view参数仅选择页面，保留room参数；频道组件保持挂载以保留草稿与未决提交。五个未接入页面只显示骨架、明确说明和临时控制台链接，无假搜索、假任务或假状态。原频道、私聊及添加实例入口暂保留，未来管理内容迁往Agent页；本批不扩展后端能力。骨架已部署，双尺寸导航、草稿／未知提交保留及真实页面核验通过，见[证据与限制](../evo/evidence/2026-10-14-official-web-shell/summary.json)。
 
 2026-09-08：用户明确[退役 RAH 托管 MCP](../product/managed-mcp-retirement.zh-CN.md)。Settings 与 Agent 详情不再提供该模块；历史截图、测试通过记录不构成重新接入理由。
 
