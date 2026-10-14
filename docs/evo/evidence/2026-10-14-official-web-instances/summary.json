@@ -1,0 +1,52 @@
+{
+  "stage": "instance-add-v4",
+  "sourceCommit": "48aadc197eab05318e01d6e1b8c4ba8ebca75e5b",
+  "scope": "Channel member dialog -> existing Role selection -> create a new instance -> canonical member list and reload.",
+  "upstreamReceipt": "../../../../frontends/raft/adoption.json",
+  "reuse": {
+    "unchangedOfficialComponents": [
+      "ChannelMemberListShell",
+      "ChannelMemberRow",
+      "raft-ui Dialog/Button"
+    ],
+    "localGlue": [
+      "AddInstanceDialog renders authenticated role.list",
+      "LoomInstanceClient uses existing role.instantiate with the channel RoomSession and shared WriteIntentSlot",
+      "App-level dialog retains target across browser navigation"
+    ],
+    "modifiedUpstreamSourceFiles": [],
+    "backendChanged": false
+  },
+  "verification": {
+    "tdd": "New mutation test failed before its implementation; browser failed on missing Add Instance entry before UI implementation; final unit and browser assertions pass.",
+    "fullCheck": "npm run check ran and exited 1: backend/shared 3208 passed, 22 opt-in skipped, one existing Tailnet dual-listener test failed with EADDRINUSE at 127.0.0.1:55097. Not an uninterrupted green full check.",
+    "targetedRepeat": "Entire local-workbench-gateway.test.ts rerun without source changes: 11 passed, 0 failed. Original failure retained in check-failure.txt; occupied-port cause observed, competing owner not identified.",
+    "remainingChecks": "All commands skipped after the npm test failure separately passed: console unit 63, formal browser policy 15, CLI efficiency unit 558, official source/projection 11.",
+    "formatAndDiff": "npm run format:check and git diff --check passed; final browser-helper formatting also checked.",
+    "build": "Typechecked channel build and clean-commit build:web:workbench passed.",
+    "isolatedBrowser": "browser.json: temporary real Core, fake discovery/prewarm off; both sizes verify repeated Role use, exact one creation after committed response loss, frozen revision, original target after browser navigation, reload, read failure/recovery. Idle Escape/focus return and existing channel/private/member gates also passed.",
+    "production": "page.json: readonly existing 42-role catalog and name multiplicities match API at both sizes; default submit disabled, close/keyboard, member state, real channel/private history, refresh, console and no horizontal overflow verified; screenshots visually inspected.",
+    "realCli": "not run",
+    "paidModels": "not run"
+  },
+  "deployment": "deployment.json",
+  "dataPreservation": {
+    "databasesBackedUp": 2,
+    "filesBackedUp": 318,
+    "businessTablesCompared": 18,
+    "volatileFieldExcluded": "subscription_cursors.updated_at only; cursor identity and last_seq compared exactly",
+    "schema": 89,
+    "sameDataHome": true
+  },
+  "limits": [
+    "Existing Role creation/editing, instance removal/restart, private sidebar, attachments and execution details remain in console.",
+    "One duplicate historical Role display label exists in the actual catalog; both distinct Role IDs and configurations are retained, no cleanup or renaming performed. Resolving historical label ambiguity remains for Role management integration.",
+    "Production verification did not submit creation; mutation checks ran only on temporary real Core.",
+    "Role list is a snapshot taken on dialog open; the Kernel determines the current immutable revision at creation."
+  ],
+  "screenshots": {
+    "add-instance-1440.png": "c8038f023dc0ba54d13cf20ca310f1cfe700a8116707871452c4ec78b33cbf59",
+    "add-instance-390.png": "8aa6c3962e8f188dbbe092dd5d1a33370313a04fb35c62e05151c1c5da7e9990"
+  },
+  "privateEvidenceDirectory": "/Users/sun/.loom/reviews/2026-10-14-official-web-instances"
+}
