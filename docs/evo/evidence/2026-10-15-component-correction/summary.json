@@ -1,0 +1,38 @@
+{
+  "stage": "official-component-correction-v13",
+  "sourceCommit": "afd7261",
+  "upstreamReceipt": "../../../../frontends/raft/adoption.json",
+  "audit": "../../../audits/2026-10-15-official-component-correction.zh-CN.md",
+  "implemented": [
+    "Official Select composition replaces platform HTML selects; Escape closes and returns focus. Unavailable catalog entries show an unavailable label and never substitute stored CLI/model.",
+    "Search uses the unchanged official MessageHitRow, including header, avatar, relative time, highlighted matches and selected state.",
+    "Activity structurally ports official InboxRow Card styling, title/Markdown body/time/unread badges and keyboard open. Unbound task/done/context-menu controls omitted.",
+    "Role configuration remains mounted across configuration/instances tab switching, preserving unsaved edits."
+  ],
+  "verification": {
+    "tdd": [
+      "HTML selects: expected zero, observed three.",
+      "Search lacked official message header.",
+      "Activity lacked conversation-card-primary rows (0 vs 6).",
+      "Role tab round trip lost unsaved edited name.",
+      "Missing runtime catalog item exposed opaque runtimeOfferId instead of unavailable label."
+    ],
+    "check": "npm run check exit 0 before final unavailable-catalog UI follow-up: backend 3209 passed / 22 opt-in skipped; console 63; browser policy 15; efficiency tools 558; official source/projection 20. Follow-up reverified official typecheck/build, all dual-viewport channel browser gates, source tests, format and diff; full backend suite not repeated for the final UI-only label guard.",
+    "browser": "Temporary real Core/fake discovery, no execution. 1440x1000 and 390x844 DPR1; exact model/CLI choice, unknown-write replay, frozen revisions, catalog absence/recovery, draft retention, search/activity API correspondence, bounded context, cancellation/failure recovery, keyboard open.",
+    "deployment": "Verified 2 databases/318 files backup then graceful com.loom.evo restart. 18 business-table projections unchanged; only subscription_cursors.updated_at excluded. Runtime flags preserved.",
+    "formalPage": "Fresh real pages at both sizes; selected historical Role verified unavailable label and original popup/focus; real search, activity, chat/private history, members, Role/instance data and reload passed. Desktop and mobile screenshots inspected.",
+    "visualFinding": "Initial formal screenshot exposed opaque legacy runtime identifiers despite passing initial flow assertions; added failing catalog-absence regression, fixed, rebuilt and restarted again. Initial private operator evidence retained.",
+    "buildWebWorkbench": "passed",
+    "formatCheck": "passed",
+    "diffCheck": "passed"
+  },
+  "paidCli": false,
+  "backendChanged": false,
+  "remaining": [
+    "Mobile chat list/detail still needs official navigation composition.",
+    "System notices and viewport-aware read state remain incomplete.",
+    "Search filter/context modal are not the complete official search composition.",
+    "Full Activity actions, sidebar menu details, private sidebar, instance inspector/Fork/Side and Tasks/Settings bindings remain open.",
+    "No claim of complete per-module visual or behavioral parity."
+  ]
+}
