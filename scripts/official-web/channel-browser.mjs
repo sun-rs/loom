@@ -1,4 +1,5 @@
 import { verifyPrivateBoxes } from "./private-browser.mjs";
+import { assertSparseHistoryStartsAtTop } from "./history-layout.mjs";
 // FIXTURE ONLY: real temporary Loom Core/gateway, no provider execution or user data.
 import assert from "node:assert/strict";
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
@@ -306,6 +307,12 @@ try {
     );
     assert.deepEqual(errors, []);
     assert.deepEqual(external, []);
+    await assertSparseHistoryStartsAtTop(
+      page,
+      viewport.width === 1440
+        ? ["FIXTURE lost 1440"]
+        : ["FIXTURE lost 1440", "FIXTURE lost 390"],
+    );
     await page.screenshot({
       path: join(tmpdir(), `loom-official-channel-${viewport.width}.png`),
     });
@@ -322,6 +329,7 @@ try {
       memberDialogPointerKeyboardFocus: true,
       sendAndReload: true,
       historyPagination: true,
+      sparseHistoryTopAlignedAndChronological: true,
       unavailableChannelFailsClosed: true,
       switchIsolation: true,
       ime: true,

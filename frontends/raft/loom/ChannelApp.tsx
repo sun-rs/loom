@@ -182,7 +182,7 @@ function Channel({
               className="h-full"
               testId="loom-message-timeline"
               persistKey={`loom-channel:${channel.roomId}`}
-              sparseAnchor="bottom"
+              sparseAnchor="top"
             />
           )}
         </div>

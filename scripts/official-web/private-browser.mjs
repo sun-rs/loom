@@ -2,6 +2,7 @@
 import assert from "node:assert/strict";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
+import { assertSparseHistoryStartsAtTop } from "./history-layout.mjs";
 export async function verifyPrivateBoxes({
   browser,
   origin,
@@ -99,6 +100,12 @@ export async function verifyPrivateBoxes({
     );
     await page.reload();
     await page.getByText(body, { exact: true }).waitFor();
+    await assertSparseHistoryStartsAtTop(
+      page,
+      viewport.width === 1440
+        ? ["FIXTURE private 1440"]
+        : ["FIXTURE private 1440", "FIXTURE private 390"],
+    );
     await page.screenshot({
       path: join(tmpdir(), `loom-official-private-${viewport.width}.png`),
       animations: "disabled",
@@ -142,6 +149,7 @@ export async function verifyPrivateBoxes({
       privateOpenUnknownReplay: true,
       privateSendUnknownReplay: true,
       stableBoxAcrossReload: true,
+      sparseHistoryTopAlignedAndChronological: true,
       privateChannelIsolation: true,
       inactiveHistoryReadOnly: viewport.width === 390,
     });
