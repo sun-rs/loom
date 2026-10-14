@@ -1,7 +1,7 @@
 {
   "upstream": "https://github.com/botiverse/raft-source",
   "revision": "a98ae003246a0360872a77d76dec2fccd0347ef7",
-  "productConnected": false,
+  "productConnected": true,
   "ownerDecision": "Official source is the new frontend base. Preserve native UI; prefer data replacement and renaming over extra options/buttons.",
   "license": "FSL-1.1-ALv2; owner separately authorized reuse; upstream LICENSE retained",
   "files": {
@@ -2309,7 +2309,7 @@
     "Do not deploy this baseline against production or connect it to upstream accounts."
   ],
   "loomChannelSlice": {
-    "status": "isolated real-Core browser acceptance; not deployed or product-complete",
+    "status": "stage 1 authorized for deployment; not full frontend parity",
     "entry": "loom/main.tsx",
     "composition": "loom/ChannelApp.tsx",
     "dataAdapter": "loom/channel-client.ts",
@@ -2327,5 +2327,10 @@
       "behavior": "AppShell column composition; authenticated Loom SDK replaces public Raft data; official compact composer added through its existing onSendOverride",
       "localChanges": "No Raft login, billing, remote API, or unimplemented interaction routes. Display rows remain read-only; Human text posting is active."
     }
+  },
+  "rollout": {
+    "stage": "channel-text-v1",
+    "consoleRetained": true,
+    "ownerDecision": "2026-10-14: deploy Web in stages for visual inspection; channel text slice first; incomplete capabilities remain in console."
   }
 }

@@ -2,7 +2,7 @@
 
 2026-10-14 owner 决策：后续正式前端以公开的官方 Raft 前端源码为母版，停止以旧复刻版本为迁移基础。尽量保留官方界面、组件组合和交互，通过替换数据来源及改名表达 Loom 语义，不大幅新增选项或按钮。下方“内部维护”的复刻来源策略是历史记录；Loom SDK/client-core、鉴权、幂等、恢复与后端领域 owner 仍保留。
 
-官方源码已进入 `frontends/raft` 独立迁移目录，来源清单逐文件记录原样复制摘要及 package manifest 改动；该目录不进入正式构建、部署和服务启动。完整上游 Web 构建及桌面／窄屏未登录启动检查通过，原始构建的官方账号页不是 Loom 产品入口；独立频道切片另行接入和验收，见下文。迁移期间仅维护这一套官方前端母版；负责人随后明确要求立即清退旧复刻源码，现已移除旧产品 UI、专属组件包与门禁；控制台继续保留。已部署的不可变资源不随源码删除，新的产品构建在官方前端接通之前明确拒绝安装，不把官方账号页冒充 Loom。版本、依赖、改造边界和首条纵向切片见[源码获取与分析记录](../evo/evidence/2026-10-14-official-frontend-intake/summary.json)。
+官方源码已进入 `frontends/raft` 独立迁移目录，来源清单逐文件记录原样复制摘要及 package manifest 改动；其中原始上游入口仅作隔离基线验证，产品构建使用本地 `loom` 入口。完整上游 Web 构建及桌面／窄屏未登录启动检查通过，原始构建的官方账号页不是 Loom 产品入口；独立频道切片另行接入和验收，见下文。迁移期间仅维护这一套官方前端母版；负责人随后明确要求立即清退旧复刻源码，现已移除旧产品 UI、专属组件包与门禁；控制台继续保留。已部署的不可变资源不随源码删除，产品构建现已接通首条频道切片，保留上游原始账号页与 Loom 产品入口的隔离。版本、依赖、改造边界和首条纵向切片见[源码获取与分析记录](../evo/evidence/2026-10-14-official-frontend-intake/summary.json)。
 
 构建基线复核：`npm ci --ignore-scripts --prefix frontends/raft`，然后运行
 `npm run build:official-web`、`npm run test:official-web:source` 和
@@ -10,7 +10,9 @@
 不连接 Raft 服务、Loom 正式服务或付费 CLI。导入保留上游字体版权与 LICENSE；
 上游原始空白由逐文件摘要核验，不批量格式化。频道接入后必须另外验收业务流程。
 
-2026-10-14 首条官方频道切片：`frontends/raft/loom` 作为本地组合与数据适配层，原样导入官方侧栏、PanelHeader、MessageTimeline、MessageItem、MessageInput 与 AppProviders；列组合参考官方 PublicServerPage，区别于完整 MainLayout 接入。输入框采用官方已有 compact / onSendOverride 接口，尚未开放附件与任务按钮。现有 `MessageSession` / `RoomSession` 仍是分页、恢复和因果位置的唯一 owner。console 的 `WriteIntentSlot` 原样提升到 `packages/client-core/src/write-intent.ts`，console 仅 re-export，不另建第二套未知结果重试机制。请求未知时保留同一个提交，显式核实使用相同请求内容、位置和幂等键；历史导航保留未决请求。上游 API 在此构建中明确拒绝，业务只走同源可信 gateway，浏览器不持有 Human PAT。产品安装门禁仍关闭；`build:official-web:channel` / `test:official-web:channel` 只用于隔离切片验收，不部署。具体能力与缺口见[频道切片证据](../evo/evidence/2026-10-14-official-channel-slice/summary.json)。
+2026-10-14 首条官方频道切片：`frontends/raft/loom` 作为本地组合与数据适配层，原样导入官方侧栏、PanelHeader、MessageTimeline、MessageItem、MessageInput 与 AppProviders；列组合参考官方 PublicServerPage，区别于完整 MainLayout 接入。输入框采用官方已有 compact / onSendOverride 接口，尚未开放附件与任务按钮。现有 `MessageSession` / `RoomSession` 仍是分页、恢复和因果位置的唯一 owner。console 的 `WriteIntentSlot` 原样提升到 `packages/client-core/src/write-intent.ts`，console 仅 re-export，不另建第二套未知结果重试机制。请求未知时保留同一个提交，显式核实使用相同请求内容、位置和幂等键；历史导航保留未决请求。上游 API 在此构建中明确拒绝，业务只走同源可信 gateway，浏览器不持有 Human PAT。负责人随后批准按阶段上线以进行实际视觉检查：`build:web:workbench` 使用这条已验收的频道切片，`build:official-web:channel` / `test:official-web:channel` 保留隔离验收用途；console 在全部能力有产品替代前继续保留。具体能力与缺口见[频道切片证据](../evo/evidence/2026-10-14-official-channel-slice/summary.json)。
+
+分阶段发布顺序：第一阶段为现有频道文本切片；随后接入频道实例与执行状态、私聊，再迁入 Role／实例管理及其余已验证能力。每阶段先通过对应流程与双尺寸浏览器验证，再部署至本地正式入口进行实际视觉检查；不以第一阶段上线宣称完整 MainLayout 或全部业务对等。后端冻结边界保持。
 
 2026-09-08：用户明确[退役 RAH 托管 MCP](../product/managed-mcp-retirement.zh-CN.md)。Settings 与 Agent 详情不再提供该模块；历史截图、测试通过记录不构成重新接入理由。
 
