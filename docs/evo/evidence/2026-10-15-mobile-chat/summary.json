@@ -1,0 +1,35 @@
+{
+  "stage": "mobile-chat-master-detail-v14",
+  "sourceCommit": "aef24b9e1e5204dd83f5a696647abd189467ad3b",
+  "audit": "../../../audits/2026-10-15-mobile-chat-layout.zh-CN.md",
+  "implemented": [
+    "Official mobile sidebar structure: full-width white list, native header/spacing; original upstream files unchanged.",
+    "Mobile list/detail URL navigation, native header back, bottom navigation hidden in detail.",
+    "Drafts and unknown-result writes survive list/detail and browser history; desktop remains resizable two-column.",
+    "Initial directory errors visible once at both viewports."
+  ],
+  "verification": {
+    "tdd": [
+      "Mobile detail incorrectly retained sidebar.",
+      "Mobile sidebar had cream background and right border.",
+      "Initial mobile directory error hidden.",
+      "Chat navigation from Agent incorrectly opened detail.",
+      "Desktop initial load showed duplicate errors."
+    ],
+    "check": "npm run check exit 0 before final md:hidden UI-only error guard: backend 3209 passed, 22 opt-in skipped; console 63; browser policy 15; efficiency tools 558; official source/projection 20. Final guard independently passed source tests, typecheck/build, all dual-viewport browser gates, workbench build, format and diff. Full backend suite not repeated for that CSS-only follow-up.",
+    "browser": "All channel gates passed at 1440x1000 and 390x844 DPR1, including navigation, viewport switch, preserved drafts, unknown-write replay and error recovery. Temporary Core/fake discovery; no provider execution.",
+    "deployment": "Backed up 2 databases and 318 files; graceful com.loom.evo restart; 18 business-table projections unchanged except excluded subscription_cursors.updated_at.",
+    "formalPage": "Fresh real pages verified both sizes. No message/read-mark/configuration mutations. Mobile chat list and detail screenshots visually inspected.",
+    "buildWebWorkbench": "passed",
+    "formatCheck": "passed",
+    "diffCheck": "passed"
+  },
+  "paidCli": false,
+  "backendChanged": false,
+  "remaining": [
+    "System notices and viewport-aware read semantics remain incomplete.",
+    "Full private sidebar and instance inspector/Fork/Side remain open.",
+    "Search full-page composition, Activity actions, Tasks/Settings remain incomplete.",
+    "This slice does not establish complete per-module parity."
+  ]
+}
