@@ -11,7 +11,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "raft-ui";
-import { ArrowUpDown, Check, ChevronRight } from "lucide-react";
+import { ArrowUpDown, Check } from "lucide-react";
 import Tooltip from "../packages/web/src/components/ui/Tooltip.tsx";
 
 export type SidebarMenuItem = {
@@ -32,7 +32,6 @@ function MenuItems({
       <ContextMenuSubmenu key={item.label}>
         <ContextMenuSubmenuTrigger disabled={disabled || item.disabled}>
           {item.label}
-          <ChevronRight size={14} className="ml-auto" />
         </ContextMenuSubmenuTrigger>
         <ContextMenuContent aria-label={item.label}>
           <MenuItems items={item.children} disabled={disabled} />

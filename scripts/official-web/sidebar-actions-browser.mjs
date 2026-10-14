@@ -46,6 +46,13 @@ export async function verifySidebarActions({
 
     const row = page.locator(`[data-public-channel-id="${room.roomId}"]`);
     await row.click({ button: "right" });
+    assert.equal(
+      await page
+        .getByRole("menuitem", { name: "移动到分区", exact: true })
+        .locator("svg")
+        .count(),
+      1,
+    );
     await page
       .getByRole("menuitem", { name: "移动到分区", exact: true })
       .click();
