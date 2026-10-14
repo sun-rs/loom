@@ -1,3 +1,5 @@
+import { bindMemberRoster } from "./member-roster.ts";
+import { notifyChannelMembersChanged } from "../packages/web/src/store/channelMemberEvents.ts";
 import ChannelTimeline from "./ChannelTimeline.tsx";
 import { useResizablePanel } from "../packages/web/src/hooks/useResizablePanel.ts";
 import { SIDEBAR_PANEL_BOUNDS } from "../packages/web/src/lib/panelBounds.ts";
@@ -12,7 +14,13 @@ import {
 import AddInstanceDialog from "./AddInstanceDialog.tsx";
 import { LoomPrivateBoxClient } from "./private-box.ts";
 import ChannelMembers from "./ChannelMembers.tsx";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   AppShellRoot,
@@ -97,6 +105,16 @@ function Channel({
       clearTimeout(timer);
     };
   }, [bridge]);
+  useLayoutEffect(() => {
+    const release =
+      !loading && !error
+        ? bindMemberRoster(channel.roomId, () => view.members)
+        : undefined;
+    notifyChannelMembersChanged(channel.roomId);
+    return () => {
+      release?.();
+    };
+  }, [channel.roomId, view.members, loading, error]);
   const older = useCallback(async () => {
     try {
       setView(await bridge.older());
@@ -185,6 +203,7 @@ function Channel({
             <ChannelTimeline
               roomId={channel.roomId}
               messages={view.messages}
+              members={error ? [] : view.members}
               hasOlder={view.hasOlder}
               loading={loading}
               loadOlder={older}
@@ -213,7 +232,8 @@ function Channel({
           channelId={channel.roomId}
           channelName={channel.name}
           variant="compact"
-          loadMentionMembers={false}
+          loadMentionMembers={!loading}
+          mentionScopeChannelType="private"
           showTaskButton={false}
           onSendOverride={send}
           submitDisabled={

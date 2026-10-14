@@ -2466,6 +2466,19 @@
       "limits": "No live avatar status or draft badge; no new DM picker. Side sessions excluded. Automatic viewport read, thread/inspector/Fork/Side product UI remain separate gaps.",
       "audit": "docs/audits/2026-10-15-private-sidebar.zh-CN.md",
       "tests": "Sidebar state regressions and dual-viewport private/browser suite; no paid providers."
+    },
+    "chatMentionsSlice": {
+      "source": [
+        "packages/web/src/components/message/MessageInput.tsx",
+        "packages/web/src/components/message/MessageItem.tsx",
+        "packages/web/src/hooks/useChannelMembers.ts",
+        "packages/web/src/hooks/useAutocomplete.ts",
+        "packages/web/src/components/message/senderMentionInsert.ts"
+      ],
+      "directReuse": "Unchanged native mention candidates, row recipes, keyboard/pointer selection, sender button and insertion event.",
+      "localGlue": "A strict in-browser GET roster adapter borrows the mounted RoomSession member projection; all other upstream endpoints remain rejected. No independent roster store, network endpoint or delivery owner. Identity-only readOnly preview props enable native sender-name insertion. Composer-only AvatarSlot wrapper omits the unbound default-offline badge; unchanged original AvatarSlot still owns geometry.",
+      "limits": "No avatar inspector, thread/attachment integration or new broadcast candidate. Native private-scope filter applies to all Loom member-only rooms without changing Room kind.",
+      "audit": "docs/audits/2026-10-15-chat-mentions.zh-CN.md"
     }
   },
   "rollout": {

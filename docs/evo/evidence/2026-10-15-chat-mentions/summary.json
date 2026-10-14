@@ -1,0 +1,46 @@
+{
+  "stage": "native-chat-mentions-v17",
+  "audit": "../../../audits/2026-10-15-chat-mentions.zh-CN.md",
+  "implemented": [
+    "Native scoped mention candidates and keyboard/pointer selection.",
+    "Native sender-name button inserts into current composer.",
+    "Read-only local roster adapter borrows RoomSession projection; unsupported upstream calls remain blocked.",
+    "Error clears roster; recovery and channel isolation verified."
+  ],
+  "verification": {
+    "tdd": "Missing adapter/module and missing browser candidates reproduced.",
+    "browser": "browser.json",
+    "initialIntegrationFailure": "Passive-effect registration lost the first native roster fetch; layout-effect registration fixes ordering.",
+    "fixtureCorrections": [
+      "Disable fixture instances before any mention send; early fake discovery executable refused runtime launch, no paid provider.",
+      "Avoid duplicate disabling in private helper.",
+      "Click native author group header, not every continuation message."
+    ],
+    "fullCheck": {
+      "command": "npm run check",
+      "exitCode": 0,
+      "backendTests": 3233,
+      "backendPassed": 3211,
+      "optInSkipped": 22,
+      "failed": 0,
+      "consoleTests": 63,
+      "browserPolicyTests": 15,
+      "efficiencyToolTests": 558,
+      "officialSourceTests": 25
+    },
+    "formalPage": "pending",
+    "sourceTests": 25,
+    "workbenchBuild": "passed",
+    "format": "passed",
+    "diff": "passed",
+    "unknownPresenceRegression": "Two native default-offline badges reproduced before the composer-only AvatarSlot adapter; final browser verifies no unbound presence badge."
+  },
+  "backendChanged": false,
+  "paidCli": false,
+  "remaining": [
+    "Avatar summary/inspector",
+    "Threads/attachments/forwarding",
+    "Viewport-aware automatic read",
+    "Full task/memory/settings/Fork/Side UI"
+  ]
+}

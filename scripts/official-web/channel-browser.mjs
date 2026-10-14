@@ -1,3 +1,4 @@
+import { verifyMentions } from "./mentions-browser.mjs";
 import { verifySystemNotices } from "./system-notices-browser.mjs";
 import {
   verifyMobileChatNavigation,
@@ -125,6 +126,23 @@ try {
     client,
     workspace,
     head,
+  });
+  for (const instance of instances)
+    await client.request("agent.manage", {
+      action: "set_state",
+      agentId: instance.agentId,
+      state: "disabled",
+      basedOnRoomSeq: await head(workspace.controlRoomId),
+      idempotencyKey: `fixture-mention-disable-${instance.instanceId}`,
+    });
+  const mentionResults = await verifyMentions({
+    browser,
+    origin,
+    client,
+    channel: channels[2],
+    otherChannel: channels[0],
+    instance: instances[0],
+    name: instanceNames[0],
   });
   for (const viewport of [
     { width: 1440, height: 1000 },
@@ -457,6 +475,7 @@ try {
   console.log(
     JSON.stringify(
       {
+        mentionResults,
         systemNoticeResults,
         fixtureOnly: true,
         realCore: true,

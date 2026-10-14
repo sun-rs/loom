@@ -15,13 +15,7 @@ export async function verifyPrivateBoxes({
   name,
   head,
 }) {
-  await client.request("agent.manage", {
-    action: "set_state",
-    agentId: instance.agentId,
-    state: "disabled",
-    basedOnRoomSeq: await head(workspace.controlRoomId),
-    idempotencyKey: "fixture-disable-private",
-  });
+  // The shared fixture disables its instances before any composer send.
   const results = [];
   let boxId;
   for (const viewport of [

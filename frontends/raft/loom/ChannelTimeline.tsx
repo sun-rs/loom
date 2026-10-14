@@ -1,3 +1,7 @@
+import { projectMentionMembers } from "./member-roster.ts";
+import type { Principal } from "@rah-os/protocol";
+import type { Agent } from "../packages/web/src/store/agentStore.ts";
+import type { ServerMember } from "../packages/web/src/store/serverStore.ts";
 import { Fragment, useCallback, useMemo, useRef, useState } from "react";
 import { useIntl } from "react-intl";
 import MessageTimeline, {
@@ -20,16 +24,19 @@ const mentionMap = new Map();
 export default function ChannelTimeline({
   roomId,
   messages,
+  members,
   hasOlder,
   loading,
   loadOlder,
 }: {
   roomId: string;
   messages: Message[];
+  members: readonly Principal[];
   hasOlder: boolean;
   loading: boolean;
   loadOlder: () => Promise<void>;
 }) {
+  const roster = useMemo(() => projectMentionMembers(members), [members]);
   const { options } = useTimeFormatter();
   const { formatMessage } = useIntl();
   const grouping = useStableMessageGrouping(
@@ -60,6 +67,17 @@ export default function ChannelTimeline({
       mentionMap={mentionMap}
       channels={[]}
       readOnlyProjection
+      // Bounded identity-only previews; never publish these into official runtime stores.
+      previewSenderAgent={
+        roster.agents.find((p) => p.id === message.senderId) as
+          Agent | undefined
+      }
+      previewSenderMember={(() => {
+        const p = roster.humans.find((p) => p.id === message.senderId);
+        if (!p) return undefined;
+        const { id, ...profile } = p;
+        return { ...profile, userId: id } as ServerMember;
+      })()}
       readOnlySender={{
         displayName: message.senderDisplayName ?? "成员",
         avatarUrl: null,

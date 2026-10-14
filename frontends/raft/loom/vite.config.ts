@@ -21,6 +21,13 @@ export default defineConfig({
       },
       resolveId(source, importer) {
         if (
+          importer?.endsWith(
+            "/packages/web/src/components/message/MessageInput.tsx",
+          ) &&
+          /(?:^|\/)ui\/AvatarSlot(?:\.tsx)?$/.test(source)
+        )
+          return resolve(import.meta.dirname, "MentionAvatar.tsx");
+        if (
           importer &&
           /(?:^|\/)api\/client(?:\.ts)?$/.test(source) &&
           importer.includes("/packages/web/src/")

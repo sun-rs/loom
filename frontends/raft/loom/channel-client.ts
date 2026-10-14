@@ -133,10 +133,12 @@ export class LoomChannelClient {
   }
   view(): {
     room: Room | null;
+    members: readonly Principal[];
     messages: OfficialMessage[];
     hasOlder: boolean;
   } {
     return {
+      members: this.room.state.snapshot?.members ?? [],
       room:
         this.room.state.snapshot?.room.kind === "direct"
           ? this.directRoom
