@@ -1,0 +1,41 @@
+{
+  "fixtureOnly": true,
+  "realCore": true,
+  "paidCli": false,
+  "results": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "memberNamesAndIdleState": true,
+      "memberChannelIsolation": true,
+      "memberReadFailureClearsStaleStatusAndRecovers": true,
+      "memberDialogPointerKeyboardFocus": true,
+      "sendAndReload": true,
+      "historyPagination": true,
+      "unavailableChannelFailsClosed": true,
+      "switchIsolation": true,
+      "ime": true,
+      "unknownResultVerified": true,
+      "externalRequests": 0
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "memberNamesAndIdleState": true,
+      "memberChannelIsolation": true,
+      "memberReadFailureClearsStaleStatusAndRecovers": true,
+      "memberDialogPointerKeyboardFocus": true,
+      "sendAndReload": true,
+      "historyPagination": true,
+      "unavailableChannelFailsClosed": true,
+      "switchIsolation": true,
+      "ime": true,
+      "unknownResultVerified": true,
+      "externalRequests": 0
+    }
+  ]
+}

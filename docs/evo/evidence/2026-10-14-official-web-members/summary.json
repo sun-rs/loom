@@ -1,0 +1,59 @@
+{
+  "stage": "channel-members-v2",
+  "sourceCommit": "a4c584041ba85094ac81fd35ab91cd20cfe64586",
+  "scope": "Read-only channel members and durable execution state; staged local Web rollout, console retained",
+  "upstream": {
+    "revision": "a98ae003246a0360872a77d76dec2fccd0347ef7",
+    "receipt": "../../../../frontends/raft/adoption.json",
+    "source": "packages/web/src/components/channel/ChannelMemberList.tsx",
+    "directReuse": ["ChannelMemberListShell", "ChannelMemberRow"],
+    "primitives": "raft-ui 0.5.52 Dialog, Button, Spinner; original library behavior/styles",
+    "localGlue": [
+      "frontends/raft/loom/ChannelMembers.tsx",
+      "frontends/raft/loom/channel-members.ts"
+    ],
+    "modifiedUpstreamFiles": []
+  },
+  "owners": {
+    "membership": "Kernel via existing client-core RoomSession",
+    "activity": "Kernel room.agent.activity.list authenticated endpoint",
+    "presentation": "local projection of names and state/queue flags; no upstream agent state store and no online inference"
+  },
+  "verification": {
+    "tdd": "New membership/state projection test failed before implementation; stage gate failed before metadata update; final official source/projection tests 9 passed",
+    "fullCheck": "npm run check, one uninterrupted exit 0; backend/shared 3209 passed, 22 opt-in skipped; console 63; formal policy 15; efficiency unit 558; official source/projection 9",
+    "build": "typechecked official channel build and clean-commit product build passed",
+    "browser": "browser.json; real temporary Core with two same-role instances; both viewports; lost-read clears stale status, recovery, channel isolation, keyboard/Tab focus, Escape, outside click and close button; previous channel posting/replay regression retained",
+    "production": "page.json; existing real Human and three instances, names and execution/queue labels match API; desktop/mobile screenshots manually inspected; history/reload and console remain available",
+    "formatAndDiff": "passed",
+    "realCli": "not run",
+    "paidModels": "not run"
+  },
+  "deployment": "deployment.json",
+  "preservation": {
+    "backupDatabases": 2,
+    "backupFiles": 318,
+    "comparedTables": 18,
+    "exception": "subscription_cursors.updated_at only; identity/read/ACK positions compared exactly",
+    "allCursorIdentitiesAndPositionsCompared": true,
+    "schema": 89,
+    "sameDataHome": true
+  },
+  "observations": [
+    "First browser fixture selected the wrong offer prefix; corrected to the published fake model binding before the browser ran.",
+    "Initial immediate focus assertion observed a Base UI focus sentinel during Tab traversal; now waits for actual focus return and retains the containment assertion. No original dialog change.",
+    "Initial pre-stop backup comparison refused subscription_cursors.updated_at changing from browser polling; service was not stopped. Read-only comparison proved only this timestamp changed; final deployment ignores that volatile field only and keeps identity/last_seq exact. Both backups retained."
+  ],
+  "limits": [
+    "Read-only member list, not instance management or full inspector. Private box remains console-only.",
+    "Queue is this-channel boolean, not queue length or all private-box queues. Missing activity or queue reports unknown.",
+    "Membership and activity use sequential authenticated reads; no transactional cross-endpoint snapshot claim.",
+    "No new model execution or live working-to-idle transition acceptance; live state is checked against real API, other states covered deterministically.",
+    "Initial official layout and pre-existing test channels remain; this batch does not claim complete MainLayout parity."
+  ],
+  "screenshots": {
+    "members-1440.png": "68a7a61fac13a650e49d2a782f9b052c1983fb6be5ecaee25478b12a43a03ef3",
+    "members-390.png": "2d1a742106eea672c7b98a048b9f407e8b4f5f1d53a4f31d90d45d8370bb4eb6"
+  },
+  "privateEvidenceDirectory": "/Users/sun/.loom/reviews/2026-10-14-official-web-members"
+}
