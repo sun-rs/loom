@@ -147,6 +147,20 @@ export class ManagementClient {
       onSettled: done,
     });
   }
+  archive(roomId: string, archived: boolean, done: Done) {
+    return this.writes.submit({
+      action: archived ? "channel-archive" : "channel-unarchive",
+      session: this.session(roomId),
+      payload: { roomId },
+      send: (p, basedOnRoomSeq, idempotencyKey) =>
+        this.client.request(archived ? "room.archive" : "room.unarchive", {
+          ...p,
+          basedOnRoomSeq,
+          idempotencyKey,
+        }),
+      onSettled: done,
+    });
+  }
   createChannel(
     name: string,
     additionalDirectories: string[],

@@ -2363,7 +2363,7 @@
       "directReuse": "Unmodified PublicServerSidebarFrame/Row, ChannelMemberListShell/Row, PanelHeader, FormField and raft-ui Dialog/DropdownMenu/Input/Textarea/Button.",
       "localComposition": "Agent Role/instance tabs and forms replace upstream single-Agent/server stores. Sidebar grouping and menus follow Sidebar.tsx / SidebarSectionDialog.tsx behavior; local typed SDK projection and native select fields are local glue, not byte-exact reuse of whole pages.",
       "behavior": "Role create/revise/delete; frozen instances instantiate/restart keep-or-adopt/remove; channel creation with optional fixed attached paths; custom groups create/rename/delete/move, pin/unpin, section and row manual ordering, name/recent ordering; durable per-Human preferences with expectedVersion, exact unknown-write replay, rejected concurrent patches reload without overwrite.",
-      "limits": "Manual ordering uses menu up/down, not upstream drag/drop. No archived-channel list, unread controls, mute controls, joint/public channels or full official Agent details. Section collapse is transient presentation state. No paid CLI calls."
+      "limits": "Manual ordering uses menu up/down, not upstream drag/drop. No joint/public channels or full official Agent details; archive/read/mute controls are connected by sidebarActionsSlice. Section collapse is transient presentation state. No paid CLI calls."
     },
     "discoverySlice": {
       "owner": "Existing search/activity.list/message.context plus client-core RoomSession; server owns ACL, keyset cursors and activity/unread calculation. No backend changes.",
@@ -2372,13 +2372,21 @@
       "behavior": "20-result pages replace rather than append; search scope all/channel/direct/thread; recent ordering; query/filter survive reload; same-query submit resets to first page; late aborted reads cannot replace current results; errors remove stale content; exact message context from bounded authenticated API, with root/message deduplication; open parent conversation at latest history. Agent Role/instance name filtering is presentation-only.",
       "limits": "Message text search only, no entity search or advanced author/date filters. Activity filters all/unread/mentions are read-only and do not mark read or follow/unfollow. Context has no thread reply, attachment interaction or live message subscription. Opening parent conversation is not an anchored jump to the old result."
     },
-    "stage": "sidebar-interactions-v8",
+    "stage": "sidebar-actions-v9",
     "sidebarInteractionSlice": {
       "source": "packages/web/src/components/layout/Sidebar.tsx section header, renderSectionAddButton and row context-menu wiring; SidebarSortMenu.tsx ArrowUpDown trigger",
       "directReuse": "raft-ui ContextMenu and DropdownMenu primitives; unchanged PublicServerSidebarFrame/Row",
       "structuralPort": "Section icon button and heading class parameters, ArrowUpDown/Plus/ChevronRight icons; removed redundant title and row ellipsis; channel and group operations use right-click menus.",
       "localChanges": "Existing Loom sidebar mutation contracts retained. Context menu keyboard shortcut and native touch long-press; sort modes remain existing shared channel/custom-group preference and separate pinned preference. Plus creates a channel in the default list; moving into a custom group remains explicit.",
-      "limits": "No drag/drop, archive/unread/mute integration. Custom groups do not acquire independent sort state. Source files remain byte-exact."
+      "limits": "No drag/drop. Custom groups do not acquire independent sort state. Source files remain byte-exact. Archive/read/mute added by sidebarActionsSlice."
+    },
+    "sidebarActionsSlice": {
+      "source": "packages/web/src/components/layout/Sidebar.tsx surface menu, move-to-section submenu, channel read/pin/mute/archive actions and archive confirmation; SidebarReadToggleMenuItem.tsx",
+      "owner": "Existing room.create/sidebar.get/patch/activity.list/mark/room.archive/unarchive; RoomSession and WriteIntentSlot for causal/idempotent writes. No backend or protocol changes.",
+      "directReuse": "raft-ui ContextMenu/Submenu/Dialog/Button/Input and unchanged official channel rows/timeline/composer; no upstream file modified.",
+      "localComposition": "Blank surface create-channel/create-section/archive-list; move submenu plus atomically create-and-move section; unread/mute projections; archive confirmation/list/restore with read-only history. Existing reserved #all and active-work checks remain authoritative.",
+      "failureHandling": "Sidebar and lifecycle writes retain exact retry identity after lost response. Activity marks have no idempotency API and are never automatically replayed; error tells user to refresh/reassess state. Late reads are ignored.",
+      "limits": "Only top-level channel read state; thread read state stays independent. Latest top-level unread frontier scan capped at ten 100-message pages; if not found, no mutation. No automatic mark-read just by viewing. Shared channel/custom-group sort preference retained; no drag/drop."
     }
   },
   "rollout": {

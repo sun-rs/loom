@@ -235,8 +235,9 @@ export async function verifyManagement({
       .locator(`[data-public-channel-id="${created.roomId}"]`)
       .click({ button: "right" });
     await page
-      .getByRole("menuitem", { name: `移至 ${groupName}`, exact: true })
+      .getByRole("menuitem", { name: "移动到分区", exact: true })
       .click();
+    await page.getByRole("menuitem", { name: groupName, exact: true }).click();
     await page
       .locator(`[data-public-channel-id="${created.roomId}"]`)
       .click({ button: "right" });

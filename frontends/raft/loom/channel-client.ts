@@ -64,6 +64,9 @@ export async function loadChannelDirectory(client: RahClient) {
     ),
     principal: identity.principal,
     workspace,
+    archivedChannels: rooms.filter(
+      (room) => room.kind === "channel" && Boolean(room.archivedAt),
+    ),
     channels: rooms.filter(
       (room) => room.kind === "channel" && !room.archivedAt,
     ),

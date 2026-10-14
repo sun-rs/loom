@@ -4,15 +4,51 @@ import {
   ContextMenuTrigger,
   ContextMenuContent,
   ContextMenuItem,
+  ContextMenuSubmenu,
+  ContextMenuSubmenuTrigger,
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
 } from "raft-ui";
-import { ArrowUpDown, Check } from "lucide-react";
+import { ArrowUpDown, Check, ChevronRight } from "lucide-react";
 import Tooltip from "../packages/web/src/components/ui/Tooltip.tsx";
 
-type Item = { label: string; run: () => void; disabled?: boolean };
+export type SidebarMenuItem = {
+  label: string;
+  run?: () => void;
+  disabled?: boolean;
+  children?: SidebarMenuItem[];
+};
+function MenuItems({
+  items,
+  disabled,
+}: {
+  items: SidebarMenuItem[];
+  disabled?: boolean;
+}) {
+  return items.map((item) =>
+    item.children ? (
+      <ContextMenuSubmenu key={item.label}>
+        <ContextMenuSubmenuTrigger disabled={disabled || item.disabled}>
+          {item.label}
+          <ChevronRight size={14} className="ml-auto" />
+        </ContextMenuSubmenuTrigger>
+        <ContextMenuContent aria-label={item.label}>
+          <MenuItems items={item.children} disabled={disabled} />
+        </ContextMenuContent>
+      </ContextMenuSubmenu>
+    ) : (
+      <ContextMenuItem
+        key={item.label}
+        disabled={disabled || item.disabled}
+        onClick={item.run}
+      >
+        {item.label}
+      </ContextMenuItem>
+    ),
+  );
+}
 // Same Raft UI primitives as upstream; Base UI owns dismissal, focus,
 // viewport collision avoidance and touch long-press.
 export function SidebarContextMenu({
@@ -20,24 +56,32 @@ export function SidebarContextMenu({
   items,
   disabled,
   label,
+  surface = false,
 }: {
   children: ReactNode;
-  items: Item[];
+  items: SidebarMenuItem[];
   disabled?: boolean;
   label: string;
+  surface?: boolean;
 }) {
   const trigger = useRef<HTMLDivElement>(null);
   return (
     <ContextMenu>
       <ContextMenuTrigger
         ref={trigger}
-        className="min-w-0 flex-1"
+        className={surface ? "min-h-full min-w-0" : "min-w-0 flex-1"}
+        data-testid={surface ? "sidebar-surface" : undefined}
+        onContextMenu={(event) => event.stopPropagation()}
+        onPointerDown={(event) => {
+          if (!surface) event.stopPropagation();
+        }}
         onKeyDown={(event) => {
           if (
             event.key === "ContextMenu" ||
             (event.shiftKey && event.key === "F10")
           ) {
             event.preventDefault();
+            event.stopPropagation();
             const rect = event.currentTarget.getBoundingClientRect();
             event.currentTarget.dispatchEvent(
               new MouseEvent("contextmenu", {
@@ -56,15 +100,7 @@ export function SidebarContextMenu({
         aria-label={label}
         finalFocus={() => trigger.current?.querySelector("button") ?? false}
       >
-        {items.map((item) => (
-          <ContextMenuItem
-            key={item.label}
-            disabled={disabled || item.disabled}
-            onClick={item.run}
-          >
-            {item.label}
-          </ContextMenuItem>
-        ))}
+        <MenuItems items={items} disabled={disabled} />
       </ContextMenuContent>
     </ContextMenu>
   );

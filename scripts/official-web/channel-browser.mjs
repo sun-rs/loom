@@ -1,3 +1,4 @@
+import { verifySidebarActions } from "./sidebar-actions-browser.mjs";
 import { verifyDiscovery } from "./discovery-browser.mjs";
 import { verifyManagement } from "./management-browser.mjs";
 import { verifyGlobalNavigation } from "./navigation-browser.mjs";
@@ -376,6 +377,13 @@ try {
     channel: channels[2],
     role,
   });
+  const sidebarActionResults = await verifySidebarActions({
+    browser,
+    origin,
+    client,
+    workspace,
+    channel: channels[0],
+  });
   const managementResults = await verifyManagement({
     browser,
     origin,
@@ -402,6 +410,7 @@ try {
         instanceResults,
         navigationResults,
         managementResults,
+        sidebarActionResults,
         discoveryResults,
       },
       null,

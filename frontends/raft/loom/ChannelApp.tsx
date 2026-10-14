@@ -142,12 +142,17 @@ function Channel({
             <ChannelMembers
               bridge={bridge}
               onOpenPrivate={onOpenPrivate}
-              onAddInstance={onAddInstance}
+              onAddInstance={channel.archivedAt ? undefined : onAddInstance}
             />
           )
         }
       />
       <ConversationPanelContent>
+        {channel.archivedAt && (
+          <p role="status" className="px-3 py-2 text-sm">
+            频道已归档，历史只读。
+          </p>
+        )}
         {isPrivate && (
           <p className="px-3 py-2 text-xs text-foreground-muted">
             仅你与此实例可见；沿用实例会话，忙时排队。私聊中写入的记忆属于频道共享记忆。
@@ -224,6 +229,7 @@ function Channel({
         submitDisabled={
           loading ||
           Boolean(error) ||
+          Boolean(channel.archivedAt) ||
           writeState !== "idle" ||
           (isPrivate && view.room?.instancePrivateBox?.active !== true)
         }
@@ -339,9 +345,12 @@ export default function ChannelApp() {
   };
   const requested = params.get("room");
   const selected =
-    [...(directory?.channels ?? []), ...(directory?.privateBoxes ?? [])].find(
-      (room) => room.roomId === requested,
-    ) ?? (!requested ? directory?.channels[0] : undefined);
+    [
+      ...(directory?.channels ?? []),
+      ...(directory?.archivedChannels ?? []),
+      ...(directory?.privateBoxes ?? []),
+    ].find((room) => room.roomId === requested) ??
+    (!requested ? directory?.channels[0] : undefined);
   const bridge = useMemo(() => {
     if (!selected) return undefined;
     let current = bridges.get(selected.roomId);
@@ -426,6 +435,10 @@ export default function ChannelApp() {
                 controlRoomId={directory.workspace.controlRoomId}
                 name={directory.workspace.name}
                 rooms={directory.channels}
+                archivedRooms={directory.archivedChannels}
+                onRoomsChanged={async () => {
+                  setDirectory(await loadChannelDirectory(client));
+                }}
                 selected={selected?.roomId ?? null}
                 onSelect={select}
                 onCreated={async (room) => {

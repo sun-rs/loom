@@ -1,6 +1,9 @@
+import AttentionDot from "../packages/web/src/components/ui/AttentionDot.tsx";
+import ChannelArchiveDialog from "./ChannelArchiveDialog.tsx";
+import { markChannelActivity } from "./sidebar-activity.ts";
 import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { Button, Input, Textarea } from "raft-ui";
-import { Plus, ChevronRight } from "lucide-react";
+import { Plus, ChevronRight, BellOff } from "lucide-react";
 import { SidebarContextMenu, SidebarSortMenu } from "./SidebarMenus.tsx";
 import type { RahClient } from "@rah-os/client-sdk";
 import type {
@@ -27,7 +30,7 @@ import {
 } from "./sidebar-state.ts";
 type Edit =
   | { kind: "channel" }
-  | { kind: "group"; id?: string }
+  | { kind: "group"; id?: string; moveRoomId?: string }
   | { kind: "delete-group"; id: string };
 export default function ChannelSidebar({
   client,
@@ -35,6 +38,8 @@ export default function ChannelSidebar({
   controlRoomId,
   name,
   rooms,
+  archivedRooms,
+  onRoomsChanged,
   selected,
   onSelect,
   onCreated,
@@ -44,6 +49,8 @@ export default function ChannelSidebar({
   controlRoomId: string;
   name: string;
   rooms: Room[];
+  archivedRooms: Room[];
+  onRoomsChanged: () => Promise<void>;
   selected: string | null;
   onSelect: (id: string) => void;
   onCreated: (room: Room) => Promise<void>;
@@ -57,6 +64,9 @@ export default function ChannelSidebar({
     preferences: SidebarPreferences;
     recent: Record<string, string>;
   }>();
+  const [activity, setActivity] = useState<Record<string, number>>();
+  const [marking, setMarking] = useState(false);
+  const [archiveTarget, setArchiveTarget] = useState<Room | "list">();
   const [edit, setEdit] = useState<Edit>();
   const [title, setTitle] = useState("");
   const [directories, setDirectories] = useState("");
@@ -73,18 +83,41 @@ export default function ChannelSidebar({
     const ticket = ++request.current;
     setRefreshing(true);
     try {
-      const next = await client.request("sidebar.get", { workspaceId });
-      if (ticket === request.current) setData(next);
+      const [next, activity] = await Promise.all([
+        client.request("sidebar.get", { workspaceId }),
+        client.request("activity.list", {
+          workspaceId,
+          filter: "all",
+          limit: 1,
+        }),
+      ]);
+      if (ticket === request.current) {
+        setData(next);
+        setActivity(
+          Object.fromEntries(
+            (activity.summary?.rooms ?? []).map((r) => [
+              r.roomId,
+              r.unreadCount,
+            ]),
+          ),
+        );
+      }
     } catch {
-      if (ticket === request.current)
+      if (ticket === request.current) {
+        setActivity(undefined);
         setError("频道列表设置读取失败，请重试。");
+      }
     } finally {
       if (ticket === request.current) setRefreshing(false);
     }
   }, [client, workspaceId, setError]);
   useEffect(() => {
     void refresh();
-  }, [refresh]);
+    const timer = setInterval(() => {
+      if (!document.hidden && manager.writes.state === "idle") void refresh();
+    }, 15000);
+    return () => clearInterval(timer);
+  }, [refresh, manager]);
   const done = (outcome: IntentOutcome<unknown>) => {
     if (outcome.kind === "ok") {
       setEdit(undefined);
@@ -111,7 +144,37 @@ export default function ChannelSidebar({
     ? sidebarGroups(rooms, data.preferences, data.recent)
     : [];
   const prefs = data?.preferences;
-  const busy = state !== "idle" || refreshing;
+  const busy = state !== "idle" || refreshing || marking;
+  const mark = async (room: Room) => {
+    if (busy || !activity) return;
+    setMarking(true);
+    setError("");
+    try {
+      await markChannelActivity(
+        client,
+        room.roomId,
+        activity[room.roomId] ? "read" : "unread",
+      );
+    } catch {
+      setError("读状态未确认或已变化，未自动重发。请刷新检查当前状态。");
+    } finally {
+      await refresh();
+      setMarking(false);
+    }
+  };
+  const archive = (room: Room, value: boolean) => {
+    if (busy) return;
+    setError("");
+    void manager.archive(room.roomId, value, (outcome) => {
+      if (outcome.kind === "ok") {
+        setArchiveTarget(undefined);
+        void onRoomsChanged()
+          .then(refresh)
+          .catch(() => setError("频道状态已更新，读取列表失败，请刷新页面。"));
+      } else if (outcome.kind === "rejected")
+        setError(`频道状态更新被拒绝：${String(outcome.error)}`);
+    });
+  };
   const visibleGroups = groups.filter(
     (g) => g.id !== "pinned" || g.rooms.length,
   );
@@ -130,185 +193,281 @@ export default function ChannelSidebar({
       testIdPrefix="public-server-channel-sidebar"
       scrollTestId="public-server-channel-list"
     >
-      {!edit && <OperationStatus manager={manager} error={error} />}
-      {error && (
-        <Button variant="ghost" onClick={() => void refresh()}>
-          刷新列表
-        </Button>
-      )}
-      {!data && <p className="px-2 text-xs">正在读取列表设置…</p>}
-      {visibleGroups.map((group) => (
-        <section
-          key={group.id}
-          data-sidebar-section={group.id}
-          className="mb-3"
-        >
-          <div className="mb-1 mt-3 flex h-6 items-center justify-between px-2">
-            <SidebarContextMenu
-              label={`分组操作 ${group.name}`}
-              disabled={busy}
-              items={[
-                { label: "新建分组", run: () => open({ kind: "group" }) },
-                ...(group.id.startsWith("custom:")
-                  ? [
-                      {
-                        label: "重命名分组",
-                        run: () =>
-                          open(
-                            { kind: "group", id: group.id.slice(7) },
-                            group.name,
-                          ),
-                      },
-                      {
-                        label: "删除分组",
-                        run: () =>
-                          open(
-                            { kind: "delete-group", id: group.id.slice(7) },
-                            group.name,
-                          ),
-                      },
-                    ]
-                  : []),
-                {
-                  label: "分组上移",
-                  disabled: visibleGroups[0]?.id === group.id,
-                  run: () => reorder(group.id, -1),
-                },
-                {
-                  label: "分组下移",
-                  disabled: visibleGroups.at(-1)?.id === group.id,
-                  run: () => reorder(group.id, 1),
-                },
-              ]}
-            >
-              <button
-                type="button"
-                className="flex h-6 min-w-0 w-full items-center gap-1 [&>svg]:shrink-0 text-xs font-bold uppercase text-foreground-strong tracking-widest transition-colors hover:text-foreground-muted theme-brutal:text-black theme-brutal:hover:text-black/70"
-                aria-expanded={!collapsed.includes(group.id)}
-                onClick={() =>
-                  setCollapsed((current) =>
-                    current.includes(group.id)
-                      ? current.filter((id) => id !== group.id)
-                      : [...current, group.id],
-                  )
-                }
-              >
-                <ChevronRight
-                  size={12}
-                  className={`shrink-0 ${collapsed.includes(group.id) ? "" : "rotate-90"}`}
-                />
-                <span className="truncate">{group.name}</span>
-              </button>
-            </SidebarContextMenu>
-            <div className="flex shrink-0 items-center gap-1">
-              <SidebarSortMenu
-                name={group.name}
+      <SidebarContextMenu
+        surface
+        label="频道列表操作"
+        disabled={busy || !prefs}
+        items={[
+          { label: "新建频道", run: () => open({ kind: "channel" }) },
+          { label: "新建分组", run: () => open({ kind: "group" }) },
+          {
+            label: "已归档频道",
+            run: () => {
+              setError("");
+              setArchiveTarget("list");
+            },
+          },
+        ]}
+      >
+        {!edit && !archiveTarget && (
+          <OperationStatus manager={manager} error={error} />
+        )}
+        {error && (
+          <Button variant="ghost" onClick={() => void refresh()}>
+            刷新列表
+          </Button>
+        )}
+        {!data && <p className="px-2 text-xs">正在读取列表设置…</p>}
+        {visibleGroups.map((group) => (
+          <section
+            key={group.id}
+            data-sidebar-section={group.id}
+            className="mb-3"
+          >
+            <div className="mb-1 mt-3 flex h-6 items-center justify-between px-2">
+              <SidebarContextMenu
+                label={`分组操作 ${group.name}`}
                 disabled={busy}
-                value={
-                  group.id === "pinned"
-                    ? prefs!.pinnedSortMode
-                    : prefs!.channelSortMode
-                }
-                onChange={(mode) =>
-                  patch(
-                    group.id === "pinned"
-                      ? { pinnedSortMode: mode }
-                      : { channelSortMode: mode },
-                  )
-                }
-              />
-              <Tooltip content="新建频道">
+                items={[
+                  { label: "新建频道", run: () => open({ kind: "channel" }) },
+                  { label: "新建分组", run: () => open({ kind: "group" }) },
+                  ...(group.id.startsWith("custom:")
+                    ? [
+                        {
+                          label: "重命名分组",
+                          run: () =>
+                            open(
+                              { kind: "group", id: group.id.slice(7) },
+                              group.name,
+                            ),
+                        },
+                        {
+                          label: "删除分组",
+                          run: () =>
+                            open(
+                              { kind: "delete-group", id: group.id.slice(7) },
+                              group.name,
+                            ),
+                        },
+                      ]
+                    : []),
+                  {
+                    label: "分组上移",
+                    disabled: visibleGroups[0]?.id === group.id,
+                    run: () => reorder(group.id, -1),
+                  },
+                  {
+                    label: "分组下移",
+                    disabled: visibleGroups.at(-1)?.id === group.id,
+                    run: () => reorder(group.id, 1),
+                  },
+                ]}
+              >
                 <button
                   type="button"
-                  className="btn-flat-sm flex size-6 items-center justify-center p-0"
-                  aria-label="新建频道"
-                  disabled={busy}
-                  onClick={() => open({ kind: "channel" })}
+                  className="flex h-6 min-w-0 w-full items-center gap-1 [&>svg]:shrink-0 text-xs font-bold uppercase text-foreground-strong tracking-widest transition-colors hover:text-foreground-muted theme-brutal:text-black theme-brutal:hover:text-black/70"
+                  aria-expanded={!collapsed.includes(group.id)}
+                  onClick={() =>
+                    setCollapsed((current) =>
+                      current.includes(group.id)
+                        ? current.filter((id) => id !== group.id)
+                        : [...current, group.id],
+                    )
+                  }
                 >
-                  <Plus size={14} />
+                  <ChevronRight
+                    size={12}
+                    className={`shrink-0 ${collapsed.includes(group.id) ? "" : "rotate-90"}`}
+                  />
+                  <span className="truncate">{group.name}</span>
                 </button>
-              </Tooltip>
-            </div>
-          </div>
-          {!collapsed.includes(group.id) &&
-            group.rooms.map((room, index) => (
-              <div
-                key={room.roomId}
-                className="flex min-w-0 items-center"
-                data-channel-row={room.roomId}
-              >
-                <SidebarContextMenu
-                  label={`频道操作 ${room.name}`}
+              </SidebarContextMenu>
+              <div className="flex shrink-0 items-center gap-1">
+                <SidebarSortMenu
+                  name={group.name}
                   disabled={busy}
-                  items={[
-                    {
-                      label: prefs!.pinned.includes(`room:${room.roomId}`)
-                        ? "取消置顶"
-                        : "置顶",
-                      run: () =>
-                        patch(
-                          prefs!.pinned.includes(`room:${room.roomId}`)
-                            ? {
-                                pinned: prefs!.pinned.filter(
-                                  (k) => k !== `room:${room.roomId}`,
-                                ),
-                              }
-                            : moveChannel(prefs!, room.roomId, "pinned"),
-                        ),
-                    },
-                    ...groups
-                      .filter((g) => g.id !== "pinned" && g.id !== group.id)
-                      .map((g) => ({
-                        label: `移至 ${g.name}`,
-                        run: () =>
-                          patch(moveChannel(prefs!, room.roomId, g.id)),
-                      })),
-                    {
-                      label: "上移",
-                      disabled: index === 0,
-                      run: () =>
-                        patch(
-                          reorderChannel(
-                            prefs!,
-                            group.id,
-                            group.rooms.map((r) => r.roomId),
-                            room.roomId,
-                            -1,
-                          ),
-                        ),
-                    },
-                    {
-                      label: "下移",
-                      disabled: index === group.rooms.length - 1,
-                      run: () =>
-                        patch(
-                          reorderChannel(
-                            prefs!,
-                            group.id,
-                            group.rooms.map((r) => r.roomId),
-                            room.roomId,
-                            1,
-                          ),
-                        ),
-                    },
-                  ]}
-                >
-                  <div className="min-w-0 flex-1">
-                    <Row
-                      channelId={room.roomId}
-                      name={room.name}
-                      selected={selected === room.roomId}
-                      onSelectChannel={onSelect}
-                    />
-                  </div>
-                </SidebarContextMenu>
+                  value={
+                    group.id === "pinned"
+                      ? prefs!.pinnedSortMode
+                      : prefs!.channelSortMode
+                  }
+                  onChange={(mode) =>
+                    patch(
+                      group.id === "pinned"
+                        ? { pinnedSortMode: mode }
+                        : { channelSortMode: mode },
+                    )
+                  }
+                />
+                <Tooltip content="新建频道">
+                  <button
+                    type="button"
+                    className="btn-flat-sm flex size-6 items-center justify-center p-0"
+                    aria-label="新建频道"
+                    disabled={busy}
+                    onClick={() => open({ kind: "channel" })}
+                  >
+                    <Plus size={14} />
+                  </button>
+                </Tooltip>
               </div>
-            ))}
-          {!collapsed.includes(group.id) && !group.rooms.length && (
-            <p className="px-2 text-xs text-foreground-muted">暂无频道</p>
-          )}
-        </section>
-      ))}
+            </div>
+            {!collapsed.includes(group.id) &&
+              group.rooms.map((room, index) => (
+                <div
+                  key={room.roomId}
+                  className="flex min-w-0 items-center"
+                  data-channel-row={room.roomId}
+                >
+                  <SidebarContextMenu
+                    label={`频道操作 ${room.name}`}
+                    disabled={busy}
+                    items={[
+                      {
+                        label: prefs!.pinned.includes(`room:${room.roomId}`)
+                          ? "取消置顶"
+                          : "置顶",
+                        run: () =>
+                          patch(
+                            prefs!.pinned.includes(`room:${room.roomId}`)
+                              ? {
+                                  pinned: prefs!.pinned.filter(
+                                    (k) => k !== `room:${room.roomId}`,
+                                  ),
+                                }
+                              : moveChannel(prefs!, room.roomId, "pinned"),
+                          ),
+                      },
+                      {
+                        label: "移动到分区",
+                        children: [
+                          ...groups
+                            .filter((g) => g.id !== group.id)
+                            .map((g) => ({
+                              label: g.name,
+                              run: () =>
+                                patch(moveChannel(prefs!, room.roomId, g.id)),
+                            })),
+                          {
+                            label: "新建分组",
+                            run: () =>
+                              open({ kind: "group", moveRoomId: room.roomId }),
+                          },
+                        ],
+                      },
+                      {
+                        label: activity?.[room.roomId]
+                          ? "标记已读"
+                          : "标记未读",
+                        disabled: !activity,
+                        run: () => void mark(room),
+                      },
+                      {
+                        label: prefs!.mutedActivity.includes(
+                          `room:${room.roomId}`,
+                        )
+                          ? "取消静音"
+                          : "静音",
+                        run: () =>
+                          patch({
+                            mutedActivity: prefs!.mutedActivity.includes(
+                              `room:${room.roomId}`,
+                            )
+                              ? prefs!.mutedActivity.filter(
+                                  (k) => k !== `room:${room.roomId}`,
+                                )
+                              : [
+                                  ...prefs!.mutedActivity,
+                                  `room:${room.roomId}`,
+                                ],
+                          }),
+                      },
+                      ...(room.slug === "all"
+                        ? []
+                        : [
+                            {
+                              label: "归档",
+                              run: () => {
+                                setError("");
+                                setArchiveTarget(room);
+                              },
+                            },
+                          ]),
+                      {
+                        label: "上移",
+                        disabled: index === 0,
+                        run: () =>
+                          patch(
+                            reorderChannel(
+                              prefs!,
+                              group.id,
+                              group.rooms.map((r) => r.roomId),
+                              room.roomId,
+                              -1,
+                            ),
+                          ),
+                      },
+                      {
+                        label: "下移",
+                        disabled: index === group.rooms.length - 1,
+                        run: () =>
+                          patch(
+                            reorderChannel(
+                              prefs!,
+                              group.id,
+                              group.rooms.map((r) => r.roomId),
+                              room.roomId,
+                              1,
+                            ),
+                          ),
+                      },
+                    ]}
+                  >
+                    <div className="flex min-w-0 items-center">
+                      <div className="min-w-0 flex-1">
+                        <Row
+                          channelId={room.roomId}
+                          name={room.name}
+                          selected={selected === room.roomId}
+                          onSelectChannel={onSelect}
+                        />
+                      </div>
+                      {Boolean(activity?.[room.roomId]) && (
+                        <AttentionDot
+                          role="status"
+                          aria-label="有未读消息"
+                          className="mr-1"
+                        />
+                      )}
+                      {prefs!.mutedActivity.includes(`room:${room.roomId}`) && (
+                        <BellOff
+                          size={12}
+                          aria-label="已静音"
+                          className="mr-1 shrink-0 text-foreground-muted"
+                        />
+                      )}
+                    </div>
+                  </SidebarContextMenu>
+                </div>
+              ))}
+            {!collapsed.includes(group.id) && !group.rooms.length && (
+              <p className="px-2 text-xs text-foreground-muted">暂无频道</p>
+            )}
+          </section>
+        ))}
+      </SidebarContextMenu>
+      {archiveTarget && (
+        <ChannelArchiveDialog
+          target={archiveTarget}
+          archivedRooms={archivedRooms}
+          manager={manager}
+          error={error}
+          busy={busy}
+          onClose={() => setArchiveTarget(undefined)}
+          onChange={archive}
+          onOpen={onSelect}
+        />
+      )}
       {edit && (
         <ActionDialog
           title={
@@ -367,16 +526,34 @@ export default function ChannelSidebar({
                   );
                 else
                   patch({
+                    ...(edit.moveRoomId
+                      ? {
+                          pinned: prefs!.pinned.filter(
+                            (k) => k !== `room:${edit.moveRoomId}`,
+                          ),
+                        }
+                      : {}),
                     customSections: edit.id
                       ? prefs!.customSections.map((s) =>
                           s.id === edit.id ? { ...s, name: title.trim() } : s,
                         )
                       : [
-                          ...prefs!.customSections,
+                          ...prefs!.customSections.map((s) =>
+                            edit.moveRoomId
+                              ? {
+                                  ...s,
+                                  items: s.items.filter(
+                                    (k) => k !== `room:${edit.moveRoomId}`,
+                                  ),
+                                }
+                              : s,
+                          ),
                           {
                             id: crypto.randomUUID(),
                             name: title.trim(),
-                            items: [],
+                            items: edit.moveRoomId
+                              ? [`room:${edit.moveRoomId}`]
+                              : [],
                           },
                         ],
                   });
