@@ -16,9 +16,11 @@
     "fullCheck": "npm run check exited 1: 3208 passed, 22 opt-in skipped; untouched instance-prewarm.test.ts recovery scenario returned skipped instead of started. Failed assertion did not print the skip reason; root cause not established.",
     "targetedRepeat": "Unmodified entire instance-prewarm.test.ts subsequently passed 22/22. This is not evidence that the original failure is eliminated.",
     "remainingChecks": "Console 63, browser policy 15, efficiency unit 558 and official source/projection 15 passed separately after the full-check short circuit.",
-    "build": "Typechecked official channel build passed; clean product build and real deployment verification pending this source checkpoint.",
+    "build": "Typechecked channel build and final clean-commit build:web:workbench passed; two-size isolated browser gate passed after the title fix. Initial product build also passed the full isolated gate; final actual product checked by page.json.",
     "formatAndDiff": "format:check and git diff --check passed.",
-    "paidCli": "not run"
+    "paidCli": "not run",
+    "production": "page.json: real search IDs and exact context, activity IDs, query reload, result-row width, existing 42 Roles / 68 instances, members, channel/private history and console verified at 1440x1000 and 390x844 DPR1. No formal business writes or paid calls.",
+    "layoutRegression": "Real mobile data exposed 13 overflowing title rows. Long-name fixture regression failed before reusing official SearchEntityResultHeader, then the full browser gate and real-page row-width assertions passed. No source CSS override."
   },
   "limits": [
     "Tasks/Settings remain placeholders; console retained.",
@@ -28,5 +30,20 @@
     "Query/scope survive URL reload; result page number returns to first page after remount.",
     "The unrelated full-suite prewarm failure remains visible and unexplained."
   ],
-  "privateEvidenceDirectory": "/Users/sun/.loom/reviews/2026-10-14-official-web-discovery"
+  "privateEvidenceDirectory": "/Users/sun/.loom/reviews/2026-10-14-official-web-discovery",
+  "sourceCommit": "b9ffca60bad6c21822302247f3218d30c29b1b42",
+  "deployment": "deployment.json",
+  "dataPreservation": {
+    "databasesBackedUp": 2,
+    "filesBackedUp": 318,
+    "businessTablesCompared": 18,
+    "volatileFieldExcluded": "subscription_cursors.updated_at only; identities and last_seq compared exactly",
+    "sameDataHome": true,
+    "schema": 89
+  },
+  "screenshots": {
+    "search-390.png": "53900add01fbbbc92086036e673f5069d562e5d96ea1a6fd8b28522c74b1d7fe",
+    "context-390.png": "eb318f7f8a21d3fd92f41185a1b65be1e284dbb706a020440e56c7092236eabf",
+    "activity-1440.png": "b4a7524db1c9b281a2436b7d150853556d786f66368ff0b09a851d11bc75d717"
+  }
 }
