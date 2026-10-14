@@ -1,0 +1,35 @@
+{
+  "stage": "sidebar-drag-v10",
+  "sourceCommit": "12a4b804204651f2ac27538048d803f5cd4bcf8f",
+  "upstreamReceipt": "../../../../frontends/raft/adoption.json",
+  "audit": "../../../audits/2026-10-14-official-chat-interactions.zh-CN.md",
+  "implemented": [
+    "Chat title replaces workspace/hostname.",
+    "Invented adjacent-move menus removed; row/section drag and cross-section drop use versioned sidebar writes.",
+    "Official resize hook/component and 180/240/320px bounds.",
+    "Official full-chat composer shell while unsupported attachments remain disabled.",
+    "Group context sorting and current-section checks."
+  ],
+  "verification": {
+    "tdd": "Old browser failed actual drag and Chat title. Unit tests failed missing drop implementation and automatic-sort overwrite before fixes.",
+    "check": "exit 0; backend 3209 pass / 22 opt-in skipped; console 63; browser policy 15; efficiency tooling 558; official source/projection 20",
+    "formatCheck": "passed",
+    "diffCheck": "passed",
+    "officialTypecheckAndBuild": "passed",
+    "buildWebWorkbench": "passed",
+    "browser": "1440x1000 and 390x844 DPR1; actual pointer row/section/cross-group drags, resize and composer computed padding; existing unknown replay/stale write and archive/read/mute checks passed.",
+    "realPage": "Same viewports, fresh formal page, readonly history/private/members/roles/instances/search/activity; menus and splitter/composer checked; screenshots inspected.",
+    "deployment": "com.loom.evo graceful restart after verified 2-database/318-file backup; 18 business table projections unchanged. Subscription updated_at excluded, identity/sequence compared exactly."
+  },
+  "paidCli": false,
+  "backendChanged": false,
+  "limits": [
+    "Not full upstream page parity.",
+    "Custom sections share channel sort mode; hide-empty and joined-only filters not ported.",
+    "Existing pin/unpin preserves previous group.",
+    "Cross-section placement commits on release; no upstream live cross-container projection.",
+    "Mobile simultaneous list/detail retained.",
+    "Some native menu icons/dividers not yet ported.",
+    "Attachments remain unavailable; this is composer geometry parity."
+  ]
+}
