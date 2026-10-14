@@ -1,3 +1,4 @@
+import { verifyInstanceCreation } from "./instance-browser.mjs";
 import { verifyPrivateBoxes } from "./private-browser.mjs";
 import { assertSparseHistoryStartsAtTop } from "./history-layout.mjs";
 // FIXTURE ONLY: real temporary Loom Core/gateway, no provider execution or user data.
@@ -348,6 +349,14 @@ try {
     name: instanceNames[0],
     head,
   });
+  const instanceResults = await verifyInstanceCreation({
+    browser,
+    origin,
+    client,
+    workspace,
+    channel: channels[2],
+    role,
+  });
   console.log(
     JSON.stringify(
       {
@@ -356,6 +365,7 @@ try {
         paidCli: false,
         results,
         privateResults,
+        instanceResults,
       },
       null,
       2,

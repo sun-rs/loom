@@ -20,6 +20,8 @@
 
 2026-10-14 历史布局修正：负责人反馈短历史贴在输入框上方；本地组合层将官方 MessageTimeline 的现有 `sparseAnchor` 参数从 `bottom` 改为 `top`，频道与私聊共用，消息仍按旧到新向下排列。官方源码不变，长历史仍定位最新内容并支持向上分页；不改后端顺序、分页或会话。双尺寸几何回归先复现779px顶部空白，再验证贴顶；真实私聊页面检查通过，见[修复证据](../evo/evidence/2026-10-14-official-web-history-alignment/summary.json)。
 
+2026-10-14 第四阶段最小管理切片：从频道成员弹窗进入“添加实例”，选择已有 Role 后调用现有 `role.instantiate`。官方 `ChannelMemberListShell` / `ChannelMemberRow` 与 `raft-ui` Dialog / Button 原样复用；本地只连接认证 `role.list` 与命令。与 Raft 的去重成员列表不同，同一 Role 可多次实例化，名称、身份和冻结的 Role Revision 由 Kernel 决定。共享该频道原有 RoomSession 及 WriteIntentSlot，不建第二个业务游标或队列；响应未知时保留角色、频道、因果位置和幂等键，关闭／Escape 不丢弃未决请求，显式核实原提交，浏览器导航不改写目标。Role 创建／编辑与实例移除／重启继续留在 console；不改冻结后端，也不接入上游 Agent Store 或托管 MCP。隔离真实 Core 的桌面／手机创建、重复 Role、丢失响应精确核实、刷新恢复及读取失败测试通过；正式上线证据在状态页记录。
+
 2026-09-08：用户明确[退役 RAH 托管 MCP](../product/managed-mcp-retirement.zh-CN.md)。Settings 与 Agent 详情不再提供该模块；历史截图、测试通过记录不构成重新接入理由。
 
 状态：**Phase 4B implemented / anchored Task tutorial slice**（2026-08-27）。下方早期能力清单不作为当前完成率；最新证据按 docs/README 的日期索引读取。

@@ -86,7 +86,9 @@ function MemberList({
 export default function ChannelMembers({
   bridge,
   onOpenPrivate,
+  onAddInstance,
 }: {
+  onAddInstance: (() => void) | undefined;
   bridge: LoomChannelClient;
   onOpenPrivate: (id: string) => void;
 }) {
@@ -106,6 +108,16 @@ export default function ChannelMembers({
           <DialogClose aria-label="关闭成员列表" />
         </DialogHeader>
         <DialogBody>
+          <Button
+            className="mb-3"
+            disabled={!onAddInstance}
+            onClick={() => {
+              setOpen(false);
+              onAddInstance?.();
+            }}
+          >
+            添加实例
+          </Button>
           {open && (
             <MemberList
               bridge={bridge}

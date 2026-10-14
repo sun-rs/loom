@@ -1,3 +1,4 @@
+import AddInstanceDialog from "./AddInstanceDialog.tsx";
 import { LoomPrivateBoxClient } from "./private-box.ts";
 import ChannelMembers from "./ChannelMembers.tsx";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -46,8 +47,10 @@ function Channel({
   channel,
   bridge,
   onOpenPrivate,
+  onAddInstance,
 }: {
   onOpenPrivate: (id: string) => void;
+  onAddInstance: (() => void) | undefined;
   channel: Room;
   bridge: LoomChannelClient;
 }) {
@@ -128,7 +131,11 @@ function Channel({
         icon={isPrivate ? <MessageSquare size={18} /> : <Hash size={18} />}
         actions={
           isPrivate ? undefined : (
-            <ChannelMembers bridge={bridge} onOpenPrivate={onOpenPrivate} />
+            <ChannelMembers
+              bridge={bridge}
+              onOpenPrivate={onOpenPrivate}
+              onAddInstance={onAddInstance}
+            />
           )
         }
       />
@@ -272,6 +279,10 @@ export default function ChannelApp() {
         : undefined,
     [directory?.workspace.workspaceId, directory?.workspace.controlRoomId],
   );
+  const [instanceTarget, setInstanceTarget] = useState<{
+    bridge: LoomChannelClient;
+    name: string;
+  }>();
   const [boxState, setBoxState] = useState("idle");
   const [boxError, setBoxError] = useState("");
   useEffect(() => {
@@ -323,12 +334,16 @@ export default function ChannelApp() {
     }
     // Keep unresolved writes across history navigation; release inactive idle projections.
     for (const [id, previous] of bridges)
-      if (id !== selected.roomId && previous.writes.state === "idle") {
+      if (
+        id !== selected.roomId &&
+        id !== instanceTarget?.bridge.roomId &&
+        previous.writes.state === "idle"
+      ) {
         previous.writes.discard();
         bridges.delete(id);
       }
     return current;
-  }, [selected, bridges]);
+  }, [selected, bridges, instanceTarget]);
   const select = useCallback(
     (id: string) => {
       if (hasUnresolvedIntents() && bridges.get(id)?.writes.state !== "unknown")
@@ -342,6 +357,13 @@ export default function ChannelApp() {
       className="h-dvh min-h-screen overflow-hidden font-display"
       data-testid="loom-channel-app"
     >
+      {instanceTarget && directory?.workspace.controlRoomId && (
+        <AddInstanceDialog
+          target={instanceTarget}
+          controlRoomId={directory.workspace.controlRoomId}
+          onClose={() => setInstanceTarget(undefined)}
+        />
+      )}
       <div className="relative flex min-h-0 min-w-0 flex-1">
         <AppShellSidebarSlot className="relative flex w-36 shrink-0 flex-col sm:w-[240px]">
           <PublicServerChannelSidebar
@@ -392,6 +414,17 @@ export default function ChannelApp() {
               channel={selected}
               bridge={bridge!}
               onOpenPrivate={openPrivate}
+              onAddInstance={
+                directory.workspace.controlRoomId
+                  ? () => {
+                      if (!hasUnresolvedIntents())
+                        setInstanceTarget({
+                          bridge: bridge!,
+                          name: selected.name,
+                        });
+                    }
+                  : undefined
+              }
             />
           ) : (
             <p className="p-6">

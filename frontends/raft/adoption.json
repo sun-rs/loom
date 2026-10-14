@@ -2309,7 +2309,7 @@
     "Do not deploy this baseline against production or connect it to upstream accounts."
   ],
   "loomChannelSlice": {
-    "status": "staged product: channel text, member state and instance private box; console retained",
+    "status": "staged product: channel text, member state, instance private box and adding instances from existing Roles; console retained",
     "entry": "loom/main.tsx",
     "composition": "loom/ChannelApp.tsx",
     "dataAdapter": "loom/channel-client.ts",
@@ -2338,10 +2338,16 @@
       "presentation": "Same unmodified official MessageTimeline/MessageItem/compact MessageInput and member row trailing action",
       "localChanges": "Names and direct-room routing; explicit unknown open/send verification; room.list provides private-box availability; inactive boxes read-only; Side excluded",
       "limits": "No full DM sidebar, attachments, Side controls, or private RunAttempt inspector; console retained"
+    },
+    "instanceAddSlice": {
+      "owner": "Existing role.list / role.instantiate; shared channel RoomSession and WriteIntentSlot",
+      "presentation": "Unchanged official ChannelMemberListShell/ChannelMemberRow and raft-ui Dialog/Button; local Role picker",
+      "localChanges": "Create a new Role instance, allowing repeated Role use in a channel; Kernel assigns name and freezes revision. Unknown result retains target and exact request until explicit verification.",
+      "limits": "Role creation/editing and instance remove/restart remain console-only. No provider configuration or backend changes."
     }
   },
   "rollout": {
-    "stage": "private-box-v3",
+    "stage": "instance-add-v4",
     "consoleRetained": true,
     "ownerDecision": "2026-10-14: deploy Web in stages for visual inspection; channel text slice first; incomplete capabilities remain in console."
   }
