@@ -128,8 +128,12 @@
     "repositoryCheck": {
       "initialResult": "Failed in final efficiency unit group only; 551/558 passed there. Earlier check groups passed.",
       "cause": "Seven free-plan tests capture git diff HEAD through execFileSync default buffer; staged upstream source exceeded that buffer (ENOBUFS).",
-      "followup": "Commit intake snapshot, then rerun failed group without changing test assertions or backend."
-    }
+      "followup": "After source intake commit b945a5e, reran entire efficiency unit group: 558 passed, 0 failed. Official-source/build-path tests: 2 passed. No backend or assertion changes.",
+      "finalVerdict": "All check groups have passing results; the original uninterrupted npm run check exited 1 on staged-diff ENOBUFS. This is not represented as a single uninterrupted green check run."
+    },
+    "formatCheck": true,
+    "diffCheck": true,
+    "sourceIntakeCommit": "b945a5e"
   },
   "limitations": [
     "静态审查、完整构建和未登录启动检查通过；尚未接入 Loom，不能当作频道或产品验收。",
