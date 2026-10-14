@@ -1,3 +1,4 @@
+import ChannelMembers from "./ChannelMembers.tsx";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
@@ -121,6 +122,7 @@ function Channel({
         title={channel.name}
         subtitle={channel.description}
         icon={<Hash size={18} />}
+        actions={<ChannelMembers bridge={bridge} />}
       />
       <ConversationPanelContent>
         {error && (

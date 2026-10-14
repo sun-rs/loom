@@ -14,6 +14,8 @@
 
 分阶段发布顺序：第一阶段为现有频道文本切片；随后接入频道实例与执行状态、私聊，再迁入 Role／实例管理及其余已验证能力。每阶段先通过对应流程与双尺寸浏览器验证，再部署至本地正式入口进行实际视觉检查；不以第一阶段上线宣称完整 MainLayout 或全部业务对等。后端冻结边界保持。第一阶段现已上线，正式服务双尺寸真实页面及数据保留核验通过，见[部署证据](../evo/evidence/2026-10-14-official-web-rollout/summary.json)。
 
+2026-10-14 第二阶段成员切片：频道页头复用官方按钮与 `raft-ui` Dialog，在只读弹层中原样复用 `ChannelMemberListShell` / `ChannelMemberRow`。成员身份来自现有 `RoomSession`，状态来自认证的 `room.agent.activity.list`；本地仅拼接名称与标签，不维护第二套成员、队列或运行状态。实例 ID 用于关联，界面显示实例名称；不向官方 Agent store 注入 Loom 状态，也不把执行空闲解释为在线。队列只标示本频道是否有排队工作，缺值显示未知，阻塞单列为需处理。仅弹层打开期间轮询，读失败清除旧状态，关闭时取消读取；官方 Dialog 负责焦点、Escape 与外部点击。尚未接入成员管理、私聊跳转或执行详情；继续保留 console。
+
 2026-09-08：用户明确[退役 RAH 托管 MCP](../product/managed-mcp-retirement.zh-CN.md)。Settings 与 Agent 详情不再提供该模块；历史截图、测试通过记录不构成重新接入理由。
 
 状态：**Phase 4B implemented / anchored Task tutorial slice**（2026-08-27）。下方早期能力清单不作为当前完成率；最新证据按 docs/README 的日期索引读取。

@@ -2309,7 +2309,7 @@
     "Do not deploy this baseline against production or connect it to upstream accounts."
   ],
   "loomChannelSlice": {
-    "status": "stage 1 authorized for deployment; not full frontend parity",
+    "status": "staged product: channel text and read-only members/execution state; console retained",
     "entry": "loom/main.tsx",
     "composition": "loom/ChannelApp.tsx",
     "dataAdapter": "loom/channel-client.ts",
@@ -2320,16 +2320,22 @@
       "packages/web/src/components/message/MessageTimeline.tsx",
       "packages/web/src/components/message/MessageItem.tsx",
       "packages/web/src/components/message/MessageInput.tsx",
-      "packages/web/src/AppProviders.tsx"
+      "packages/web/src/AppProviders.tsx",
+      "packages/web/src/components/channel/ChannelMemberList.tsx"
     ],
     "structuralPort": {
       "source": "packages/web/src/pages/PublicServerPage.tsx",
       "behavior": "AppShell column composition; authenticated Loom SDK replaces public Raft data; official compact composer added through its existing onSendOverride",
       "localChanges": "No Raft login, billing, remote API, or unimplemented interaction routes. Display rows remain read-only; Human text posting is active."
+    },
+    "memberSlice": {
+      "owner": "Loom Kernel membership and room.agent.activity.list; client-core RoomSession owns reconciliation",
+      "presentation": "Unmodified ChannelMemberRow/ChannelMemberListShell; raft-ui 0.5.52 Dialog primitives; local ChannelMembers composition",
+      "localChanges": "No upstream agentId/status store; execution text is not online presence. Only poll while open; failed reads clear stale labels. No member-management mutation."
     }
   },
   "rollout": {
-    "stage": "channel-text-v1",
+    "stage": "channel-members-v2",
     "consoleRetained": true,
     "ownerDecision": "2026-10-14: deploy Web in stages for visual inspection; channel text slice first; incomplete capabilities remain in console."
   }

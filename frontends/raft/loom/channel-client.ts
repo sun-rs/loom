@@ -1,3 +1,4 @@
+import { projectChannelMembers } from "./channel-members.ts";
 import { MessageSession, RoomSession } from "@rah-os/client-core";
 import {
   WriteIntentSlot,
@@ -87,6 +88,21 @@ export class LoomChannelClient {
       await this.room.syncUntilCurrent({ maxPages: 10 });
       await this.messages.syncUntilCurrent({ limit: 50, maxPages: 2 });
       return this.view();
+    });
+  }
+  members(signal?: AbortSignal) {
+    return this.serial(async () => {
+      await this.room.syncUntilCurrent({ maxPages: 10, signal });
+      const activity = await this.client.request(
+        "room.agent.activity.list",
+        { roomId: this.roomId },
+        { signal },
+      );
+      return projectChannelMembers(
+        this.roomId,
+        this.room.state.snapshot?.members ?? [],
+        activity.agents,
+      );
     });
   }
   older() {

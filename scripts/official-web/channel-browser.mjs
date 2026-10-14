@@ -13,7 +13,7 @@ mkdirSync(bin);
 mkdirSync(cwd);
 writeFileSync(
   join(bin, "codex"),
-  `#!${process.execPath}\nconst args=process.argv.slice(2).join(' ');if(args==='--version') console.log('FAKE discovery only');else if(args==='debug models --bundled') console.log(JSON.stringify({models:[]}));else process.exitCode=2;\n`,
+  `#!${process.execPath}\nconst args=process.argv.slice(2).join(' ');if(args==='--version') console.log('FAKE discovery only');else if(args==='debug models --bundled') console.log(JSON.stringify({models:[{slug:"gpt-members-fixture",visibility:"list",supported_in_api:true,supported_reasoning_levels:[{effort:"low"}],service_tiers:[]}]}));else process.exitCode=2;\n`,
   { mode: 0o700 },
 );
 let running;
@@ -45,7 +45,7 @@ try {
       })
     ).latestRoomSeq;
   const channels = [];
-  for (const name of ["FIXTURE Alpha", "FIXTURE Beta"]) {
+  for (const name of ["FIXTURE Alpha", "FIXTURE Beta", "FIXTURE Members"]) {
     const result = await client.request("room.create", {
       workspaceId: workspace.workspaceId,
       basedOnControlRoomSeq: await head(workspace.controlRoomId),
@@ -64,6 +64,44 @@ try {
       idempotencyKey: `history-${i}`,
       recipients: [],
     });
+  const inventory = await client.request("host.runtime.list", {});
+  const offer = inventory.runtimes.find(
+    (item) =>
+      item.available &&
+      item.modelBindingDescriptors.some(
+        (binding) => binding.modelId === "gpt-members-fixture",
+      ),
+  );
+  assert.ok(
+    offer?.modelBindingDescriptors[0],
+    "fixture discovery publishes a model",
+  );
+  const { role } = await client.request("role.create", {
+    controlRoomId: workspace.controlRoomId,
+    basedOnRoomSeq: await head(workspace.controlRoomId),
+    idempotencyKey: "fixture-member-role",
+    configuration: {
+      displayName: "FixtureTom",
+      handle: "FixtureTom",
+      instructions: "FIXTURE ONLY",
+      role: "FIXTURE ONLY",
+      runtimeOfferId: offer.runtimeOfferId,
+      modelIntent: {
+        fallback: "disabled",
+        exactBindingIds: [offer.modelBindingDescriptors[0].modelBindingId],
+      },
+    },
+  });
+  const instanceNames = [];
+  for (let i = 0; i < 2; i++) {
+    const result = await client.request("role.instantiate", {
+      roleId: role.roleId,
+      channelId: channels[2].roomId,
+      basedOnRoomSeq: await head(channels[2].roomId),
+      idempotencyKey: `fixture-member-${i}`,
+    });
+    instanceNames.push(result.agent.handle);
+  }
   browser = await chromium.launch({ headless: true });
   for (const viewport of [
     { width: 1440, height: 1000 },
@@ -86,6 +124,75 @@ try {
       return route.continue();
     });
     await page.goto(`${origin}/?room=${channels[0].roomId}`);
+    await page
+      .locator(`[data-public-channel-id="${channels[2].roomId}"]`)
+      .click();
+    const memberButton = page.getByRole("button", { name: "频道成员与状态" });
+    await memberButton.click();
+    const memberDialog = page.getByRole("dialog");
+    await memberDialog.getByText(instanceNames[0], { exact: true }).waitFor();
+    await memberDialog.getByText(instanceNames[1], { exact: true }).waitFor();
+    assert.equal(
+      await memberDialog
+        .getByText("空闲 · 本频道无排队工作", { exact: true })
+        .count(),
+      2,
+    );
+    await page.screenshot({
+      path: join(tmpdir(), `loom-official-members-${viewport.width}.png`),
+      animations: "disabled",
+    });
+    for (let i = 0; i < 3; i++) {
+      await page.keyboard.press("Tab");
+      await page.waitForFunction(() =>
+        document
+          .querySelector('[role="dialog"]')
+          ?.contains(document.activeElement),
+      );
+      assert.equal(
+        await memberDialog.evaluate((node) =>
+          node.contains(document.activeElement),
+        ),
+        true,
+      );
+    }
+    await page.route("**/v3/client/rooms/agents/activity/list", (route) =>
+      route.abort(),
+    );
+    await memberDialog.getByRole("alert").waitFor();
+    assert.equal(
+      await memberDialog
+        .getByText("空闲 · 本频道无排队工作", { exact: true })
+        .count(),
+      0,
+      "failed read must not retain a stale idle label",
+    );
+    await page.unroute("**/v3/client/rooms/agents/activity/list");
+    await memberDialog.getByText(instanceNames[0], { exact: true }).waitFor();
+    await page.keyboard.press("Escape");
+    await memberDialog.waitFor({ state: "hidden" });
+    assert.equal(
+      await memberButton.evaluate((node) => node === document.activeElement),
+      true,
+    );
+    await memberButton.press("Enter");
+    await memberDialog.waitFor();
+    await page.getByRole("button", { name: "关闭成员列表" }).click();
+    await memberDialog.waitFor({ state: "hidden" });
+    await memberButton.click();
+    await memberDialog.waitFor();
+    await page.mouse.click(4, 4);
+    await memberDialog.waitFor({ state: "hidden" });
+    await page
+      .locator(`[data-public-channel-id="${channels[0].roomId}"]`)
+      .click();
+    await memberButton.click();
+    await memberDialog.getByText("Human", { exact: true }).waitFor();
+    assert.equal(
+      await memberDialog.getByText(instanceNames[0], { exact: true }).count(),
+      0,
+    );
+    await page.keyboard.press("Escape");
     const composer = page.locator("textarea");
     await composer.waitFor({ timeout: 20000 });
     const columns = await page.evaluate(() => {
@@ -206,6 +313,10 @@ try {
     assert.equal(await page.locator("textarea").count(), 0);
     results.push({
       viewport,
+      memberNamesAndIdleState: true,
+      memberChannelIsolation: true,
+      memberReadFailureClearsStaleStatusAndRecovers: true,
+      memberDialogPointerKeyboardFocus: true,
       sendAndReload: true,
       historyPagination: true,
       unavailableChannelFailsClosed: true,
