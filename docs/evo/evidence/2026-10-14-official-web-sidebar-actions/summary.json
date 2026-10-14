@@ -1,0 +1,46 @@
+{
+  "stage": "sidebar-actions-v9",
+  "sourceCommit": "916aeae9cb9cd703632d52921ef4a806e2fac47c",
+  "upstreamReceipt": "../../../../frontends/raft/adoption.json",
+  "implemented": [
+    "Blank surface menu: create channel, create group, archived channels.",
+    "Move-to-section submenu, atomic group-create-and-move, existing pin/unpin and manual ordering.",
+    "Canonical top-level channel unread dot and explicit read/unread; mute/unmute persisted with version check. Viewing is not an implicit read.",
+    "Archive confirmation, active-work and permanent #all fences, read-only history with disabled submission, archive list and restore. Restoring after a reload returns to writable state without another reload."
+  ],
+  "owners": "Existing room/sidebar/activity APIs, client-core causal sessions and WriteIntentSlot; no backend/protocol/runtime/prompt changes.",
+  "verification": {
+    "tdd": "Browser failed on absent blank-surface trigger before implementation. Lifecycle tests reproduced missing archive UI update and stale archived snapshot after restore; fixed using latest directory metadata.",
+    "browser": "browser.json: real temporary Core with fake discovery, no paid execution; 1440x1000 and 390x844 DPR1. Exact lost archive replay, mark response loss never replayed by refresh, durable unread from real unarchive notice and read/unread reload, mute persistence, active Task blocks archive, preserved history and blocked Enter/button submission, restored writable composer. Existing management/navigation/search/activity and keyboard/touch tests retained.",
+    "unit": "18 source/projection tests passed, including bounded top-level mark lookup, thread frontier exclusion and no mark retry on network failure.",
+    "paidCli": "not run",
+    "fullCheck": "npm run check exited 0: backend 3209 passed / 22 opt-in skipped; console 63, browser policy 15, efficiency tools 558, official source/projections 18 passed.",
+    "build": "Typechecked official channel build and clean-commit build:web:workbench passed. Product build browser gate passed; final one-line duplicate-chevron correction reran typechecked build and full browser gate, then product build and real page.",
+    "formatAndDiff": "format:check and git diff --check passed.",
+    "production": "page.json: desktop/mobile real service, existing Role/instance, history/private box, members, navigation, search/activity, blank surface menu and archived list verified. No formal business mutations or paid calls. Screenshots visually inspected.",
+    "visualRegression": "Real page revealed duplicate submenu chevron; readonly browser assertion reproduced 2 vs 1. Removed local chevron already supplied by raft-ui; fixture and formal assertions pass."
+  },
+  "limits": [
+    "No drag/drop; group sorting uses existing shared preference.",
+    "Channel read marks do not mark threads read. Viewing does not implicitly mark read.",
+    "Unread frontier lookup capped at ten 100-message pages; no mutation if latest top-level message remains unlocated.",
+    "Non-idempotent activity.mark failures show unconfirmed status and reread; they are never replayed.",
+    "Archive/mute semantics remain Kernel-owned; muting does not stop agents.",
+    "Directory changes made in another window may require reload; backend fences remain authoritative."
+  ],
+  "privateEvidenceDirectory": "/Users/sun/.loom/reviews/2026-10-14-official-web-sidebar-actions",
+  "deployment": "deployment.json",
+  "dataPreservation": {
+    "databasesBackedUp": 2,
+    "filesBackedUp": 318,
+    "businessTablesCompared": 18,
+    "volatileFieldExcluded": "subscription_cursors.updated_at only; identities and last_seq exact",
+    "sameDataHome": true,
+    "schema": 89
+  },
+  "screenshots": {
+    "channel-context-390.png": "a07c4204930c8dd9322c803e0798f3b9c904991ddd75ea244b05849a4e9915a1",
+    "surface-menu-1440.png": "cf5e6d707474d5da40bd992460c68c66c29fbd79469641d08b7c39a4027f978d",
+    "archive-list-390.png": "36a26b9977b330746c9d7a68f40f78578d2c81907fd5c78098e9119bc1b0a8dd"
+  }
+}
