@@ -146,3 +146,76 @@ test("dragging cannot silently replace alphabetical sorting", async () => {
   );
   assert.deepEqual(sidebarDrop(prefs, groups, "b", "a", false), {});
 });
+
+test("private boxes use peer identity, independent DM sorting, durable hiding and compatible drag targets", () => {
+  const boxes = [
+    {
+      roomId: "dm-a",
+      name: "Zulu-1",
+      instancePrivateBox: { instanceId: "a", active: true },
+    },
+    {
+      roomId: "dm-b",
+      name: "Alpha-1",
+      instancePrivateBox: { instanceId: "b", active: false },
+    },
+  ];
+  const rooms = [{ roomId: "channel", name: "Channel" }, ...boxes];
+  const prefs = { ...DEFAULT_SIDEBAR_PREFERENCES, dmSortMode: "az" as const };
+  const groups = sidebarGroups(rooms, prefs, {});
+  assert.deepEqual(
+    groups.find((g) => g.id === "channels")!.rooms.map((r) => r.roomId),
+    ["channel"],
+  );
+  assert.deepEqual(
+    groups.find((g) => g.id === "dms")!.rooms.map((r) => r.roomId),
+    ["dm-b", "dm-a"],
+  );
+  const pinned = sidebarDrop(
+    { ...prefs, dmSortMode: "manual" },
+    groups,
+    "dm-a",
+    "group:pinned",
+    false,
+  );
+  assert.deepEqual(pinned.pinned, ["peer:a"]);
+  const hidden = sidebarGroups(
+    rooms,
+    { ...prefs, pinned: ["peer:a"], hiddenDms: ["peer:a"] },
+    {},
+  );
+  assert.equal(
+    hidden.some((g) => g.rooms.some((r) => r.roomId === "dm-a")),
+    false,
+  );
+  assert.deepEqual(
+    sidebarDrop(prefs, groups, "dm-a", "group:channels", false),
+    {},
+  );
+  assert.deepEqual(
+    sidebarDrop(prefs, groups, "channel", "group:dms", false),
+    {},
+  );
+  const manual = { ...prefs, dmSortMode: "manual" as const };
+  const moved = sidebarDrop(
+    manual,
+    sidebarGroups(rooms, manual, {}),
+    "dm-b",
+    "dm-a",
+    false,
+  );
+  assert.deepEqual(moved.dmOrder, ["peer:b", "peer:a"]);
+  assert.equal(moved.channelSortMode, undefined);
+});
+
+test("closed private conversation reappears on canonical unread without rewriting preferences", () => {
+  const room = {
+    roomId: "dm",
+    name: "Tom",
+    instancePrivateBox: { instanceId: "tom" },
+  };
+  const prefs = { ...DEFAULT_SIDEBAR_PREFERENCES, hiddenDms: ["peer:tom"] };
+  const groups = sidebarGroups([room], prefs, {}, { dm: 2 });
+  assert.equal(groups.find((g) => g.id === "dms")?.rooms[0]?.roomId, "dm");
+  assert.deepEqual(prefs.hiddenDms, ["peer:tom"]);
+});

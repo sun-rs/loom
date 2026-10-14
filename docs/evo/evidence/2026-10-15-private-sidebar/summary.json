@@ -1,0 +1,56 @@
+{
+  "stage": "instance-private-sidebar-v16",
+  "audit": "../../../audits/2026-10-15-private-sidebar.zh-CN.md",
+  "implemented": [
+    "Official DmRow structure and unchanged AvatarSlot/SidebarItem/Count parameters.",
+    "Independent DM sorting, peer-key pin/custom grouping, compatible drag targets.",
+    "Close only hides, preserves history; exact unknown close replay, canonical reopen reveals same box.",
+    "Hidden private conversation reappears on canonical unread without rewriting saved hidden preferences."
+  ],
+  "verification": {
+    "tdd": [
+      "Private row absent in browser.",
+      "Private boxes incorrectly enter channel group.",
+      "Hidden box fails to reappear on canonical unread."
+    ],
+    "sourceTests": 22,
+    "browser": "browser.json",
+    "browserInitialFailure": "Mobile management fixture grew beyond the visible drag viewport; two attempts failed the same section-reorder assertion. Captured DOM/screenshot proved source at fixed bottom navigation. Test now collapses DM through the normal toggle and asserts pointer hit before unchanged reorder assertions. Product geometry unchanged.",
+    "backendSuite": {
+      "command": "npm run check",
+      "exitCode": 1,
+      "tests": 3233,
+      "passed": 3210,
+      "failed": 1,
+      "optInSkipped": 22,
+      "failure": "claude-warm-runtime.test.ts:429 immediately asserted asynchronous autonomous_turn diagnostic after independent fixture file completion; actual interrupted assertion passed.",
+      "correction": "Test waits boundedly for the separate diagnostic stream, retaining the original assertion. No runtime implementation changed.",
+      "reverification": "Affected 16-test Claude suite and typecheck rerun after test-only correction; full npm run check not repeated. Remaining chained console/policy/efficiency-tool/source checks run independently."
+    },
+    "claudeSuiteReverification": {
+      "tests": 16,
+      "passed": 16,
+      "failed": 0,
+      "beforeTestCorrection": true
+    },
+    "format": "passed",
+    "diff": "passed",
+    "workbenchBuild": "passed",
+    "consoleUnit": "passed",
+    "formalBrowserPolicy": "passed",
+    "efficiencyToolUnit": "passed; fake providers only",
+    "claudeDiagnosticTestCorrection": {
+      "passed": 16,
+      "failed": 0,
+      "exitCode": 0
+    }
+  },
+  "paidCli": false,
+  "backendChanged": false,
+  "remaining": [
+    "Native live-avatar and draft badges not wired.",
+    "Cross-window newly opened private boxes require directory refresh.",
+    "Viewport-aware automatic read; notice-only mark-unread positioning.",
+    "Instance inspector/Fork/Side, Threads/attachments, complete Search/Tasks/Settings."
+  ]
+}

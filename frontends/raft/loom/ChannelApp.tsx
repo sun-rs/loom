@@ -359,7 +359,9 @@ export default function ChannelApp() {
       ...(directory?.archivedChannels ?? []),
       ...(directory?.privateBoxes ?? []),
     ].find((room) => room.roomId === requested) ??
-    (!requested ? directory?.channels[0] : undefined);
+    (!requested && params.get("chat") !== "list"
+      ? directory?.channels[0]
+      : undefined);
   const bridge = useMemo(() => {
     if (!selected) return undefined;
     let current = bridges.get(selected.roomId);
@@ -493,6 +495,14 @@ export default function ChannelApp() {
                   onReady={onSidebarReady}
                   name={directory.workspace.name}
                   rooms={directory.channels}
+                  privateBoxes={directory.privateBoxes}
+                  onPrivateClosed={(id) =>
+                    setParams((previous) =>
+                      previous.get("room") === id
+                        ? new URLSearchParams({ chat: "list" })
+                        : previous,
+                    )
+                  }
                   archivedRooms={directory.archivedChannels}
                   onRoomsChanged={async () => {
                     setDirectory(await loadChannelDirectory(client));

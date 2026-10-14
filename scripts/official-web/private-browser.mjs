@@ -1,3 +1,4 @@
+import { verifyPrivateSidebar } from "./private-sidebar-browser.mjs";
 import { showChatList, openChatRow } from "./mobile-chat-browser.mjs";
 // FIXTURE ONLY: real Core, disabled fixture instance, no provider execution.
 import assert from "node:assert/strict";
@@ -116,6 +117,15 @@ export async function verifyPrivateBoxes({
         ? ["FIXTURE private 1440"]
         : ["FIXTURE private 1440", "FIXTURE private 390"],
     );
+    await verifyPrivateSidebar({
+      page,
+      client,
+      workspace,
+      channel,
+      boxId,
+      instance,
+      name,
+    });
     await page.screenshot({
       path: join(tmpdir(), `loom-official-private-${viewport.width}.png`),
       animations: "disabled",
@@ -162,6 +172,7 @@ export async function verifyPrivateBoxes({
       stableBoxAcrossReload: true,
       sparseHistoryTopAlignedAndChronological: true,
       privateChannelIsolation: true,
+      sidebarPinCloseReopenAndUnknownReplay: true,
       inactiveHistoryReadOnly: viewport.width === 390,
     });
     await context.close();

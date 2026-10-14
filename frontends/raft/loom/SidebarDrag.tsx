@@ -19,8 +19,8 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { SidebarPreferences, SidebarPatchRequest } from "@rah-os/protocol";
-import { sidebarDrop } from "./sidebar-state.ts";
-type Group = { id: string; rooms: { roomId: string; name: string }[] };
+import { sidebarDrop, type SidebarRoom } from "./sidebar-state.ts";
+type Group = { id: string; rooms: SidebarRoom[] };
 export function SidebarDrag({
   children,
   groups,

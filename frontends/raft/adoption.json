@@ -2452,6 +2452,20 @@
       "localChanges": "Human-only room.timeline reads existing durable messages and eligible notices in one bounded sequence; RoomTimelineSession owns display paging, RoomSession retains mutation barriers. Canonical messages/events remain distinct. No provider behavior or read-mark change.",
       "audit": "docs/audits/2026-10-15-system-notice-timeline.zh-CN.md",
       "tests": "Kernel/client-core regressions; system-notices-browser plus full channel browser suite, both viewports, no paid CLI."
+    },
+    "privateSidebarSlice": {
+      "source": [
+        "packages/web/src/components/layout/Sidebar.tsx: DmRow, sidebarItemClass, DM section, closeDm/reopenDm, hiddenDmIds unread reveal, context menus",
+        "packages/web/src/components/layout/sidebarDnd.ts",
+        "packages/web/src/components/ui/AvatarSlot.tsx",
+        "packages/web/src/components/ui/AttentionDot.tsx"
+      ],
+      "directReuse": "Unchanged AvatarSlot, AttentionDot, raft-ui SidebarItem/Count, shared context/sort menu and dnd-kit sensors.",
+      "structuralPort": "DmRow composition, pinned wrapping, private section count/collapse and independent DM sorting.",
+      "localGlue": "Instance private boxes use peer:instanceId preference keys; existing sidebar.patch owns pin/order/hidden state. Closing hides only after confirmed write; exact unknown replay retained. Existing member/Agent private-open reveals the same durable box. Private and channel default drag targets remain distinct; custom/pinned groups may mix.",
+      "limits": "No live avatar status or draft badge; no new DM picker. Side sessions excluded. Automatic viewport read, thread/inspector/Fork/Side product UI remain separate gaps.",
+      "audit": "docs/audits/2026-10-15-private-sidebar.zh-CN.md",
+      "tests": "Sidebar state regressions and dual-viewport private/browser suite; no paid providers."
     }
   },
   "rollout": {

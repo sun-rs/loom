@@ -426,6 +426,12 @@ test("warm Claude: an unprompted native turn while idle is interrupted and never
       "autonomous turn ended",
     );
     assert.equal(ended.interrupted, true);
+    // The fixture file and the driver's diagnostic stream are independent;
+    // observing process completion does not imply its diagnostic was delivered.
+    await waitFor(
+      () => state.diagnostics.some((line) => /autonomous_turn/u.test(line)),
+      "autonomous turn diagnostic",
+    );
     assert.ok(
       state.diagnostics.some((line) => /autonomous_turn/u.test(line)),
       state.diagnostics.join("\n"),

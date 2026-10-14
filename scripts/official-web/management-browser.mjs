@@ -417,6 +417,16 @@ export async function verifyManagement({
     await dialog.waitFor({ state: "hidden" });
     await page.getByRole("button", { name: "排序 频道", exact: true }).click();
     await page.getByRole("menuitem", { name: "手动排序", exact: true }).click();
+    // Keep both drag endpoints in the mobile scroll viewport as private rows grow.
+    const dmHeading = page.locator(
+      '[data-sidebar-section="dms"] [data-section-handle]',
+    );
+    if (
+      viewport.width < 768 &&
+      (await dmHeading.count()) &&
+      (await dmHeading.getAttribute("aria-expanded")) === "true"
+    )
+      await dmHeading.click();
     // Drag section headings and channel rows using actual pointer sensors.
     const drag = async (from, to) => {
       await page
@@ -435,6 +445,15 @@ export async function verifyManagement({
       await page.mouse.move(
         a.x + Math.min(30, a.width / 2),
         a.y + a.height / 2,
+      );
+      assert.equal(
+        await from.evaluate(
+          (el, point) =>
+            el.contains(document.elementFromPoint(point.x, point.y)),
+          { x: a.x + Math.min(30, a.width / 2), y: a.y + a.height / 2 },
+        ),
+        true,
+        "drag starts on the visible source",
       );
       await page.mouse.down();
       await page.mouse.move(b.x + Math.min(30, b.width / 2), b.y + 2, {

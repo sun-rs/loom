@@ -1,12 +1,43 @@
 import { replaceSidebarSubsetOrder } from "../packages/web/src/components/layout/sidebarDnd.ts";
 import type { SidebarPreferences, SidebarPatchRequest } from "@rah-os/protocol";
-type Channel = { roomId: string; name: string };
+export type SidebarRoom = {
+  roomId: string;
+  name: string;
+  instancePrivateBox?: { instanceId: string };
+};
+type Channel = SidebarRoom;
+export const sidebarKey = (room: SidebarRoom) =>
+  room.instancePrivateBox
+    ? `peer:${room.instancePrivateBox.instanceId}`
+    : `room:${room.roomId}`;
+export const groupSortMode = (prefs: SidebarPreferences, id: string) =>
+  id === "pinned"
+    ? prefs.pinnedSortMode
+    : id === "dms"
+      ? prefs.dmSortMode
+      : prefs.channelSortMode;
+export const groupSortPatch = (
+  id: string,
+  mode: SidebarPreferences["channelSortMode"],
+): SidebarPatchRequest["patch"] =>
+  id === "pinned"
+    ? { pinnedSortMode: mode }
+    : id === "dms"
+      ? { dmSortMode: mode }
+      : { channelSortMode: mode };
 export function sidebarGroups<T extends Channel>(
   rooms: readonly T[],
   prefs: SidebarPreferences,
   recent: Record<string, string>,
+  unread: Record<string, number> = {},
 ) {
-  const key = (room: T) => `room:${room.roomId}`;
+  const key = sidebarKey;
+  rooms = rooms.filter(
+    (r) =>
+      !r.instancePrivateBox ||
+      !prefs.hiddenDms.includes(key(r)) ||
+      (unread[r.roomId] ?? 0) > 0,
+  );
   const pinned = new Set(prefs.pinned);
   const placed = new Set(prefs.customSections.flatMap((s) => s.items));
   const sort = (items: T[], order: string[], mode: string) =>
@@ -38,11 +69,32 @@ export function sidebarGroups<T extends Channel>(
       id: "channels",
       name: "频道",
       rooms: sort(
-        rooms.filter((r) => !pinned.has(key(r)) && !placed.has(key(r))),
+        rooms.filter(
+          (r) =>
+            !r.instancePrivateBox && !pinned.has(key(r)) && !placed.has(key(r)),
+        ),
         prefs.channelOrder,
         prefs.channelSortMode,
       ),
     },
+    ...(rooms.some((r) => r.instancePrivateBox)
+      ? [
+          {
+            id: "dms",
+            name: "私聊",
+            rooms: sort(
+              rooms.filter(
+                (r) =>
+                  r.instancePrivateBox &&
+                  !pinned.has(key(r)) &&
+                  !placed.has(key(r)),
+              ),
+              prefs.dmOrder,
+              prefs.dmSortMode,
+            ),
+          },
+        ]
+      : []),
     ...prefs.customSections.map((s) => ({
       id: `custom:${s.id}`,
       name: s.name,
@@ -65,10 +117,28 @@ export function moveChannel(
   target: string,
   beforeRoomId?: string,
 ): SidebarPatchRequest["patch"] {
-  const key = `room:${roomId}`;
+  return moveSidebarItem(
+    prefs,
+    { roomId, name: "" },
+    target,
+    beforeRoomId ? `room:${beforeRoomId}` : undefined,
+  );
+}
+export function moveSidebarItem(
+  prefs: SidebarPreferences,
+  room: SidebarRoom,
+  target: string,
+  beforeKey?: string,
+): SidebarPatchRequest["patch"] {
+  if (
+    (target === "channels" && room.instancePrivateBox) ||
+    (target === "dms" && !room.instancePrivateBox)
+  )
+    return {};
+  const key = sidebarKey(room);
   const insert = (items: string[]) => {
     const next = items.filter((x) => x !== key);
-    const index = beforeRoomId ? next.indexOf(`room:${beforeRoomId}`) : -1;
+    const index = beforeKey ? next.indexOf(beforeKey) : -1;
     next.splice(index < 0 ? next.length : index, 0, key);
     return next;
   };
@@ -76,15 +146,21 @@ export function moveChannel(
     return { pinned: insert(prefs.pinned), pinnedSortMode: "manual" };
   return {
     pinned: prefs.pinned.filter((x) => x !== key),
-    channelSortMode: "manual",
-    channelOrder:
-      target === "channels" ? insert(prefs.channelOrder) : prefs.channelOrder,
-    customSections: prefs.customSections.map((s) => ({
-      ...s,
+    ...groupSortPatch(target, "manual"),
+    ...(target === "dms"
+      ? { dmOrder: insert(prefs.dmOrder) }
+      : {
+          channelOrder:
+            target === "channels"
+              ? insert(prefs.channelOrder)
+              : prefs.channelOrder,
+        }),
+    customSections: prefs.customSections.map((section) => ({
+      ...section,
       items:
-        `custom:${s.id}` === target
-          ? insert(s.items)
-          : s.items.filter((x) => x !== key),
+        `custom:${section.id}` === target
+          ? insert(section.items)
+          : section.items.filter((x) => x !== key),
     })),
   };
 }
@@ -116,24 +192,32 @@ export function sidebarDrop(
   const target = groups.find(
     (g) => `group:${g.id}` === over || g.rooms.some((r) => r.roomId === over),
   );
-  if (!target || active === over) return {};
+  const item = groups.flatMap((g) => g.rooms).find((r) => r.roomId === active);
   if (
-    (target.id === "pinned" ? prefs.pinnedSortMode : prefs.channelSortMode) !==
-    "manual"
+    !target ||
+    !item ||
+    active === over ||
+    (target.id === "channels" && item.instancePrivateBox) ||
+    (target.id === "dms" && !item.instancePrivateBox)
   )
     return {};
+  if (groupSortMode(prefs, target.id) !== "manual") return {};
   const ids = target.rooms.map((r) => r.roomId).filter((id) => id !== active);
   const position = ids.indexOf(over);
   ids.splice(position < 0 ? ids.length : position + Number(after), 0, active);
-  const moved = moveChannel(prefs, active, target.id);
+  const moved = moveSidebarItem(prefs, item, target.id);
   const next = { ...prefs, ...moved };
-  const keys = ids.map((id) => `room:${id}`);
+  const byId = new Map(
+    groups.flatMap((g) => g.rooms).map((r) => [r.roomId, r]),
+  );
+  const keys = ids.map((id) => sidebarKey(byId.get(id)!));
   const preserve = (saved: string[]) => [
     ...keys,
     ...saved.filter((k) => !keys.includes(k)),
   ];
   if (target.id === "pinned")
     return { ...moved, pinned: preserve(next.pinned) };
+  if (target.id === "dms") return { ...moved, dmOrder: preserve(next.dmOrder) };
   if (target.id === "channels")
     return { ...moved, channelOrder: preserve(next.channelOrder) };
   return {
