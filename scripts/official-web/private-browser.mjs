@@ -1,3 +1,4 @@
+import { showChatList, openChatRow } from "./mobile-chat-browser.mjs";
 // FIXTURE ONLY: real Core, disabled fixture instance, no provider execution.
 import assert from "node:assert/strict";
 import { join } from "node:path";
@@ -79,6 +80,15 @@ export async function verifyPrivateBoxes({
     await composer.fill(body);
     await page.locator('button[type="submit"]:enabled').waitFor();
     await composer.press("Enter");
+    await page.getByRole("button", { name: "核实发送" }).waitFor();
+    if (viewport.width < 768) {
+      assert.equal(
+        await page.getByRole("navigation", { name: "主导航" }).isVisible(),
+        false,
+      );
+      await showChatList(page);
+      await page.goBack();
+    }
     await page.getByRole("button", { name: "核实发送" }).click();
     await page.getByText(body, { exact: true }).waitFor();
     assert.deepEqual(sends[0], sends[1]);
@@ -138,7 +148,7 @@ export async function verifyPrivateBoxes({
         false,
       );
     }
-    await page.locator(`[data-public-channel-id="${channel.roomId}"]`).click();
+    await openChatRow(page, channel.roomId);
     await page
       .getByRole("heading", { name: channel.name, exact: true })
       .waitFor();
@@ -148,6 +158,7 @@ export async function verifyPrivateBoxes({
       viewport,
       privateOpenUnknownReplay: true,
       privateSendUnknownReplay: true,
+      mobileBackPreservesUnknownWrite: viewport.width < 768,
       stableBoxAcrossReload: true,
       sparseHistoryTopAlignedAndChronological: true,
       privateChannelIsolation: true,

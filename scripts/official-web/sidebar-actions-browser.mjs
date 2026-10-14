@@ -1,3 +1,4 @@
+import { showChatList } from "./mobile-chat-browser.mjs";
 import assert from "node:assert/strict";
 // Real temporary Core only; no provider execution.
 export async function verifySidebarActions({
@@ -19,6 +20,7 @@ export async function verifySidebarActions({
     const page = await context.newPage();
     await page.goto(`${origin}/?room=${channel.roomId}`);
     const surface = page.getByTestId("sidebar-surface");
+    await showChatList(page);
     await surface.click({ button: "right", position: { x: 3, y: 3 } });
     await page.getByRole("menuitem", { name: "新建频道", exact: true }).click();
     let dialog = page.getByRole("dialog");
@@ -45,6 +47,7 @@ export async function verifySidebarActions({
     });
 
     const row = page.locator(`[data-public-channel-id="${room.roomId}"]`);
+    await showChatList(page);
     await row.click({ button: "right" });
     assert.equal(
       await page
@@ -73,6 +76,7 @@ export async function verifySidebarActions({
         .find((s) => s.name === `ContextGroup${viewport.width}`)
         .items.includes(`room:${room.roomId}`),
     );
+    await showChatList(page);
     await row.click({ button: "right" });
     await page.getByRole("menuitem", { name: "静音", exact: true }).click();
     await page.waitForFunction(
@@ -84,6 +88,7 @@ export async function verifySidebarActions({
     );
     assert.ok((await prefs()).mutedActivity.includes(`room:${room.roomId}`));
     await page.reload();
+    await showChatList(page);
     await row.click({ button: "right" });
     await page.getByRole("menuitem", { name: "取消静音", exact: true }).click();
     await page.waitForFunction(
@@ -99,6 +104,7 @@ export async function verifySidebarActions({
     page.on("request", (r) => {
       if (r.url().endsWith("/activity/mark")) marks.push(r.postDataJSON());
     });
+    await showChatList(page);
     await row.click({ button: "right" });
     await Promise.all([
       page.waitForResponse(
@@ -112,6 +118,7 @@ export async function verifySidebarActions({
       await route.fetch();
       await route.abort();
     });
+    await showChatList(page);
     await row.click({ button: "right" });
     await page.getByRole("menuitem", { name: "标记未读", exact: true }).click();
     await page
@@ -134,6 +141,7 @@ export async function verifySidebarActions({
         await route.abort();
       } else await route.continue();
     });
+    await showChatList(page);
     await row.click({ button: "right" });
     await page.getByRole("menuitem", { name: "归档", exact: true }).click();
     await dialog.getByRole("button", { name: "确认归档", exact: true }).click();
@@ -141,6 +149,13 @@ export async function verifySidebarActions({
     await dialog.waitFor({ state: "hidden" });
     assert.equal(archives.length, 2);
     assert.deepEqual(archives[0], archives[1]);
+    if (viewport.width < 768) {
+      await surface.click({ button: "right", position: { x: 3, y: 3 } });
+      await page
+        .getByRole("menuitem", { name: "已归档频道", exact: true })
+        .click();
+      await dialog.getByRole("button", { name, exact: true }).click();
+    }
     await page.getByText("频道已归档，历史只读。", { exact: true }).waitFor();
     assert.equal(await row.count(), 0);
     await page.getByText(historyBody, { exact: true }).waitFor();
@@ -159,6 +174,7 @@ export async function verifySidebarActions({
     await page.reload();
     await page.getByText("频道已归档，历史只读。", { exact: true }).waitFor();
     await page.getByText(historyBody, { exact: true }).waitFor();
+    await showChatList(page);
     await surface.click({ button: "right", position: { x: 3, y: 3 } });
     await page
       .getByRole("menuitem", { name: "已归档频道", exact: true })
@@ -178,6 +194,7 @@ export async function verifySidebarActions({
     await page
       .getByText("频道已归档，历史只读。", { exact: true })
       .waitFor({ state: "hidden" });
+    if (viewport.width < 768) await page.goBack();
     await page.locator("textarea").fill("restored writable draft");
     await page.locator('button[type="submit"]:enabled').waitFor();
     await page.locator("textarea").fill("");
@@ -185,6 +202,7 @@ export async function verifySidebarActions({
     const marker = page.locator(
       `[data-channel-row="${room.roomId}"] [aria-label="有未读消息"]`,
     );
+    await showChatList(page);
     await marker.waitFor();
     assert.equal(await marker.getAttribute("data-slot"), "sidebar-item-count");
     assert.match(await marker.innerText(), /^\d+\+?$/);
@@ -192,13 +210,23 @@ export async function verifySidebarActions({
       await marker.evaluate((el) => !!el.closest("[data-public-channel-id]")),
       true,
     );
+    await showChatList(page);
     await row.click({ button: "right" });
     await page.keyboard.press("Escape");
-    await row.click();
+    await Promise.all([
+      page.waitForResponse(
+        (response) =>
+          response.url().endsWith("/activity/mark") &&
+          response.status() === 200,
+      ),
+      row.click(),
+    ]);
     await marker.waitFor({ state: "hidden" });
     await page.reload();
+    await showChatList(page);
     await row.waitFor();
     assert.equal(await marker.count(), 0);
+    await showChatList(page);
     await row.click({ button: "right" });
     await page.getByRole("menuitem", { name: "标记未读", exact: true }).click();
     await marker.waitFor();
@@ -216,6 +244,7 @@ export async function verifySidebarActions({
       basedOnRoomSeq: head,
       idempotencyKey: `archive-busy-${viewport.width}`,
     });
+    await showChatList(page);
     await row.click({ button: "right" });
     await page.getByRole("menuitem", { name: "归档", exact: true }).click();
     await dialog.getByRole("button", { name: "确认归档", exact: true }).click();

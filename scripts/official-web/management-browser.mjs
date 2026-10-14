@@ -1,3 +1,4 @@
+import { showChatList } from "./mobile-chat-browser.mjs";
 import { chooseOption } from "./select-browser.mjs";
 import { verifySidebarInteractions } from "./sidebar-interactions-browser.mjs";
 // FIXTURE ONLY: real Core with fake runtime discovery; no paid execution.
@@ -227,6 +228,7 @@ export async function verifyManagement({
     await page
       .getByRole("heading", { name: `私聊 · ${instanceName}`, exact: true })
       .waitFor();
+    await showChatList(page);
     await page
       .getByRole("navigation", { name: "主导航" })
       .getByRole("button", { name: "Agent", exact: true })
@@ -286,6 +288,7 @@ export async function verifyManagement({
       await client.request("room.list", { workspaceId: workspace.workspaceId })
     ).rooms.find((r) => r.name === channelName);
     assert.ok(created);
+    await showChatList(page);
     await page
       .locator('[data-sidebar-section="channels"]')
       .getByRole("button", { name: "频道", exact: true })

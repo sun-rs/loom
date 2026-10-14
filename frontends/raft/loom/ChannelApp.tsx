@@ -34,6 +34,7 @@ import { HttpRahClient } from "@rah-os/client-sdk";
 import { hasUnresolvedIntents } from "@rah-os/client-core/write-intent";
 import { loadOrCreateConsumerId } from "@rah-os/client-core";
 import ChannelSidebar from "./ChannelSidebar.tsx";
+import ChatSidebarFrame from "./ChatSidebarFrame.tsx";
 import AgentPage from "./AgentPage.tsx";
 import PanelHeader from "../packages/web/src/components/ui/PanelHeader.tsx";
 import MessageTimeline from "../packages/web/src/components/message/MessageTimeline.tsx";
@@ -66,7 +67,9 @@ function Channel({
   bridge,
   onOpenPrivate,
   onAddInstance,
+  onBack,
 }: {
+  onBack: () => void;
   onOpenPrivate: (id: string) => void;
   onAddInstance: (() => void) | undefined;
   channel: Room;
@@ -151,6 +154,8 @@ function Channel({
       <PanelHeader
         title={isPrivate ? `私聊 · ${channel.name}` : channel.name}
         subtitle={channel.description}
+        onMobileBack={onBack}
+        mobileBackProps={{ "aria-label": "聊天列表" }}
         icon={isPrivate ? <MessageSquare size={18} /> : <Hash size={18} />}
         actions={
           isPrivate ? undefined : (
@@ -298,8 +303,11 @@ export default function ChannelApp() {
   const selectDestination = (id: Destination) => {
     setParams((previous) => {
       const next = new URLSearchParams(previous);
-      if (id === "channels") next.delete("view");
-      else next.set("view", id);
+      if (id === "channels") {
+        next.delete("view");
+        if (window.matchMedia("(max-width: 767.98px)").matches)
+          next.set("chat", "list");
+      } else next.set("view", id);
       return next;
     });
   };
@@ -387,6 +395,15 @@ export default function ChannelApp() {
       .catch(() => setBoxError("无法打开私聊"));
   };
   const requested = params.get("room");
+  // Presentation route only: retain the selected room and its mounted composer
+  // when popping to the mobile list. No delivery/read/write state lives here.
+  const mobileList = !requested || params.get("chat") === "list";
+  const showChatList = () =>
+    setParams((previous) => {
+      const next = new URLSearchParams(previous);
+      next.set("chat", "list");
+      return next;
+    });
   const selected =
     [
       ...(directory?.channels ?? []),
@@ -490,7 +507,7 @@ export default function ChannelApp() {
             }
           >
             <AppShellSidebarSlot
-              className="relative flex w-36 shrink-0 flex-col md:w-[var(--chat-sidebar-width)]"
+              className={`relative min-w-0 shrink-0 flex-col md:flex md:w-[var(--chat-sidebar-width)] ${mobileList ? "flex w-full" : "hidden"}`}
               style={
                 {
                   "--chat-sidebar-width": `${sidebarPanel.width}px`,
@@ -506,6 +523,19 @@ export default function ChannelApp() {
                 onPointerUp={sidebarPanel.handleResizeEnd}
                 onPointerCancel={sidebarPanel.handleResizeEnd}
               />
+              {!directory && error && (
+                <div className="h-full md:hidden">
+                  <ChatSidebarFrame
+                    title="聊天"
+                    testIdPrefix="public-server-channel-sidebar"
+                    scrollTestId="public-server-channel-list"
+                  >
+                    <p role="alert" className="p-6">
+                      {error}
+                    </p>
+                  </ChatSidebarFrame>
+                </div>
+              )}
               {directory?.workspace.controlRoomId && (
                 <ChannelSidebar
                   client={client}
@@ -527,7 +557,16 @@ export default function ChannelApp() {
                 />
               )}
             </AppShellSidebarSlot>
-            <AppShellMainSlot className="bg-layer-canvas theme-brutal:bg-white">
+            <AppShellMainSlot
+              className={`min-w-0 bg-layer-canvas theme-brutal:bg-white md:flex ${mobileList ? "hidden" : "flex"}`}
+            >
+              {!selected && (
+                <PanelHeader
+                  title="聊天"
+                  onMobileBack={showChatList}
+                  mobileBackProps={{ "aria-label": "聊天列表" }}
+                />
+              )}
               {privateNotice}
               {error ? (
                 <p role="alert" className="p-6">
@@ -539,6 +578,7 @@ export default function ChannelApp() {
                 <Channel
                   key={selected.roomId}
                   channel={selected}
+                  onBack={showChatList}
                   bridge={bridge!}
                   onOpenPrivate={openPrivate}
                   onAddInstance={
@@ -597,7 +637,9 @@ export default function ChannelApp() {
             destination,
           ) && <DestinationPlaceholder active={destination} />}
         </div>
-        <MobileNavigation active={destination} onSelect={selectDestination} />
+        {(destination !== "channels" || mobileList) && (
+          <MobileNavigation active={destination} onSelect={selectDestination} />
+        )}
       </AppShellRoot>
     </>
   );

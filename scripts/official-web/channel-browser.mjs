@@ -1,3 +1,8 @@
+import {
+  verifyMobileChatNavigation,
+  showChatList,
+  openChatRow,
+} from "./mobile-chat-browser.mjs";
 import { verifyChatBootstrap } from "./chat-rules-browser.mjs";
 import { verifySidebarActions } from "./sidebar-actions-browser.mjs";
 import { verifyDiscovery } from "./discovery-browser.mjs";
@@ -134,9 +139,8 @@ try {
       return route.continue();
     });
     await verifyChatBootstrap(page, origin, channels[0].roomId);
-    await page
-      .locator(`[data-public-channel-id="${channels[2].roomId}"]`)
-      .click();
+    await verifyMobileChatNavigation(page, channels[0].roomId);
+    await openChatRow(page, channels[2].roomId);
     const memberButton = page.getByRole("button", { name: "频道成员与状态" });
     await memberButton.click();
     const memberDialog = page.getByRole("dialog");
@@ -193,9 +197,7 @@ try {
     await memberDialog.waitFor();
     await page.mouse.click(4, 4);
     await memberDialog.waitFor({ state: "hidden" });
-    await page
-      .locator(`[data-public-channel-id="${channels[0].roomId}"]`)
-      .click();
+    await openChatRow(page, channels[0].roomId);
     await memberButton.click();
     await memberDialog.getByText("Human", { exact: true }).waitFor();
     assert.equal(
@@ -203,21 +205,33 @@ try {
       0,
     );
     await page.keyboard.press("Escape");
-    const composer = page.locator("textarea");
+    const composer = page.getByTestId("composer-textarea");
     await composer.waitFor({ timeout: 20000 });
     const columns = await page.evaluate(() => {
       const sidebar = document
         .querySelector('[data-testid="public-server-channel-sidebar-root"]')
         .getBoundingClientRect();
       const timeline = document
-        .querySelector("textarea")
+        .querySelector('[data-testid="composer-textarea"]')
         .getBoundingClientRect();
-      return { sidebarRight: sidebar.right, composerLeft: timeline.left };
+      return {
+        sidebarRight: sidebar.right,
+        sidebarWidth: sidebar.width,
+        composerLeft: timeline.left,
+      };
     });
-    assert.ok(
-      columns.composerLeft >= columns.sidebarRight,
-      "native shell columns must stay side by side",
-    );
+    if (viewport.width >= 768) {
+      assert.ok(
+        columns.composerLeft >= columns.sidebarRight,
+        "desktop shell columns stay side by side",
+      );
+    } else {
+      assert.equal(
+        columns.sidebarWidth,
+        0,
+        "mobile detail hides the list column",
+      );
+    }
     await page.getByText("FIXTURE history 55", { exact: true }).waitFor();
     const timeline = page.getByTestId("loom-message-timeline");
     await timeline.evaluate((node) => {
@@ -242,9 +256,7 @@ try {
     );
     await page.reload();
     await page.getByText(body, { exact: true }).waitFor();
-    await page
-      .locator(`[data-public-channel-id="${channels[1].roomId}"]`)
-      .click();
+    await openChatRow(page, channels[1].roomId);
     await page
       .locator('textarea[placeholder="发送到 #FIXTURE Beta"]')
       .waitFor();
@@ -279,6 +291,7 @@ try {
     const unreadTarget = page.locator(
       `[data-public-channel-id="${channels[2].roomId}"]`,
     );
+    await showChatList(page);
     await unreadTarget.click({ button: "right" });
     await page.getByRole("menuitem", { name: "标记未读", exact: true }).click();
     await unreadTarget.locator('[aria-label="有未读消息"]').waitFor();
@@ -311,6 +324,7 @@ try {
     await mainNav.getByRole("button", { name: "搜索", exact: true }).click();
     await page.getByRole("heading", { name: "搜索", exact: true }).waitFor();
     await mainNav.getByRole("button", { name: "频道", exact: true }).click();
+    if (viewport.width < 768) await openChatRow(page, channels[1].roomId);
     await page.getByRole("button", { name: "核实发送" }).waitFor();
     assert.equal(
       sendRequests.length,
@@ -367,7 +381,7 @@ try {
     await page
       .getByText("此频道不存在或没有访问权限", { exact: true })
       .waitFor();
-    assert.equal(await page.locator("textarea").count(), 0);
+    assert.equal(await page.getByTestId("composer-textarea").count(), 0);
     results.push({
       viewport,
       memberNamesAndIdleState: true,
@@ -378,6 +392,7 @@ try {
       historyPagination: true,
       sparseHistoryTopAlignedAndChronological: true,
       unavailableChannelFailsClosed: true,
+      mobileMasterDetailDraftAndHistory: viewport.width < 768,
       switchIsolation: true,
       ime: true,
       unknownResultVerified: true,

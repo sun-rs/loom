@@ -12,7 +12,7 @@ import type {
   SidebarPatchRequest,
 } from "@rah-os/protocol";
 import type { IntentOutcome } from "@rah-os/client-core/write-intent";
-import Frame from "../packages/web/src/components/server/PublicServerSidebarFrame.tsx";
+import Frame from "./ChatSidebarFrame.tsx";
 import Row from "./ChannelListRow.tsx";
 import Tooltip from "../packages/web/src/components/ui/Tooltip.tsx";
 import FormField from "../packages/web/src/components/ui/FormField.tsx";

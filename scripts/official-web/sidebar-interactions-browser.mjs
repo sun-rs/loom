@@ -1,3 +1,4 @@
+import { showChatList } from "./mobile-chat-browser.mjs";
 import assert from "node:assert/strict";
 // FIXTURE ONLY. Exercise real pointer/keyboard entry points, never a hidden menu button.
 export async function verifySidebarInteractions(page) {
@@ -5,8 +6,13 @@ export async function verifySidebarInteractions(page) {
   const heading = page
     .locator('[data-sidebar-section="channels"]')
     .getByRole("button", { name: "频道", exact: true });
-  await heading.waitFor();
-  assert.equal(await sidebar.getByText("聊天", { exact: true }).count(), 1);
+  // Composer geometry is measured in detail, then sidebar controls in the root.
+  if (
+    page.viewportSize().width < 768 &&
+    !(await page.getByTestId("composer-textarea").isVisible())
+  ) {
+    await sidebar.locator("[data-public-channel-id]").first().click();
+  }
   const composerShell = page
     .getByTestId("chat-composer-shell")
     .filter({ visible: true });
@@ -15,6 +21,9 @@ export async function verifySidebarInteractions(page) {
     return [s.paddingTop, s.paddingLeft, s.paddingBottom];
   });
   assert.deepEqual(composerStyle, ["12px", "12px", "16px"]);
+  await showChatList(page);
+  await heading.waitFor();
+  assert.equal(await sidebar.getByText("聊天", { exact: true }).count(), 1);
   const resize = page.getByTestId("chat-sidebar-resize");
   if (page.viewportSize().width >= 768) {
     const before = await sidebar.boundingBox();

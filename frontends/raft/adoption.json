@@ -2375,7 +2375,7 @@
       "behavior": "20-result pages replace rather than append; search scope all/channel/direct/thread; recent ordering; query/filter survive reload; same-query submit resets to first page; late aborted reads cannot replace current results; errors remove stale content; exact message context from bounded authenticated API, with root/message deduplication; open parent conversation at latest history. Agent Role/instance name filtering is presentation-only.",
       "limits": "Message text search only, no entity search or advanced author/date filters. Activity filters all/unread/mentions are read-only and do not mark read or follow/unfollow. Context has no thread reply, attachment interaction or live message subscription. Opening parent conversation is not an anchored jump to the old result."
     },
-    "stage": "official-component-correction-v13",
+    "stage": "mobile-chat-master-detail-v14",
     "sidebarInteractionSlice": {
       "source": "packages/web/src/components/layout/Sidebar.tsx section header, renderSectionAddButton and row context-menu wiring; SidebarSortMenu.tsx ArrowUpDown trigger",
       "directReuse": "raft-ui ContextMenu/DropdownMenu/SidebarItem/SidebarItemCount/SidebarItemMetaIcon and unchanged PublicServerSidebarFrame; member row source structure ported in ChannelListRow.",
@@ -2426,6 +2426,18 @@
       "structuralPort": "ThreadsInbox InboxRow Card geometry, active/hover states, title/body/timestamp/badge composition and keyboard open.",
       "localChanges": "Typed Loom search/activity data replaces upstream stores. Activity completion/task/context-menu controls omitted until bound; bounded context dialog remains a recorded deviation. No upstream file modified.",
       "verification": "scripts/official-web/management-browser.mjs and discovery-browser.mjs; two viewports, popup escape/focus, exact search/API ordering, bounded context, activity keyboard open, unknown-write replay. See docs/audits/2026-10-15-official-component-correction.zh-CN.md for open module gaps."
+    },
+    "mobileChatSlice": {
+      "source": [
+        "packages/web/src/components/layout/MainLayout.tsx: useMobileTabBarVisible, mobileShowSidebarInline and AppShell slots",
+        "packages/web/src/components/layout/Sidebar.tsx: mobileInline root/header/scroll surface",
+        "packages/web/src/components/ui/PanelHeader.tsx: mobile back control"
+      ],
+      "directReuse": "Unchanged PanelHeader mobile back, AppShell slots, SidebarRoot, existing rows/menus/composer and desktop splitter.",
+      "structuralPort": "Mobile full-width list/detail composition, hidden detail tab bar, responsive Sidebar root/header in local ChatSidebarFrame.",
+      "localChanges": "Single local Chat title replaces server/account switcher. Query parameter chat=list preserves selected Room and mounted composer; it is presentation state only. Six preexisting tab roots retained; other modules mobile detail rules remain open.",
+      "tests": "scripts/official-web/mobile-chat-browser.mjs plus existing dual-viewport channel/private/navigation/sidebar/management/discovery gates; no paid CLI.",
+      "audit": "docs/audits/2026-10-15-mobile-chat-layout.zh-CN.md"
     }
   },
   "rollout": {

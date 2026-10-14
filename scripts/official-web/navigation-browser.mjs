@@ -1,3 +1,4 @@
+import { showChatList, openChatRow } from "./mobile-chat-browser.mjs";
 // FIXTURE ONLY: real temporary Core; navigation performs no provider execution.
 import assert from "node:assert/strict";
 import { join } from "node:path";
@@ -26,10 +27,13 @@ export async function verifyGlobalNavigation({ browser, origin, channel }) {
     });
     await page.goto(`${origin}/?room=${channel.roomId}`);
     const nav = page.getByRole("navigation", { name: "主导航" });
+    await showChatList(page);
     await nav.waitFor();
+    if (viewport.width < 768) await openChatRow(page, channel.roomId);
     await page
       .getByTestId("composer-textarea")
       .fill("FIXTURE unsent navigation draft");
+    await showChatList(page);
     for (const [id, label] of [
       ["search", "搜索"],
       ["agents", "Agent"],
@@ -71,6 +75,7 @@ export async function verifyGlobalNavigation({ browser, origin, channel }) {
       }
     }
     await nav.getByRole("button", { name: "频道", exact: true }).click();
+    if (viewport.width < 768) await openChatRow(page, channel.roomId);
     await page.getByTestId("composer-textarea").waitFor({ state: "visible" });
     assert.equal(
       await page.getByTestId("composer-textarea").inputValue(),
@@ -82,6 +87,7 @@ export async function verifyGlobalNavigation({ browser, origin, channel }) {
       path: join(tmpdir(), `loom-official-shell-channel-${viewport.width}.png`),
       animations: "disabled",
     });
+    await showChatList(page);
     await nav.getByRole("button", { name: "Agent", exact: true }).focus();
     await page.keyboard.press("Enter");
     await page.getByRole("heading", { name: "Agent", exact: true }).waitFor();

@@ -44,4 +44,15 @@ export async function verifyChatBootstrap(page, origin, roomId) {
     Math.round((await row.boundingBox()).width),
     Math.round(inner.width),
   );
+  await page.route("**/v3/client/workspaces/list", (route) => route.abort());
+  await page.reload();
+  await page.getByTestId("loom-bootstrap-loading").waitFor({ state: "hidden" });
+  assert.equal(
+    await page.getByRole("alert").count(),
+    1,
+    "connection failure appears once in the visible column",
+  );
+  await page.unroute("**/v3/client/workspaces/list");
+  await page.reload();
+  await rows.nth(1).waitFor();
 }
