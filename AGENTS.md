@@ -313,6 +313,16 @@ notices. Legacy `rah` code is not a default dependency.
 
 ## UI and interaction contract
 
+Owner decision (2026-10-14): replace the reconstructed product frontend with
+the official Raft source as the phase-4 base. The initial source/build intake
+lives in `frontends/raft`, isolated from production deployment until its Loom
+paths pass acceptance. Preserve native layout and interactions; prefer data
+replacement and renaming over new options or buttons. Keep Loom's SDK,
+client-core and domain owners; upstream stores are not a second business truth.
+Retire old pages only after their replacements work. Source provenance and
+current limits are recorded in `frontends/raft/adoption.json` and
+`docs/evo/evidence/2026-10-14-official-frontend-intake/summary.json`.
+
 This section applies to `main`'s frozen frontend and to phase-4 integration.
 evo does not change `apps/web` before phase 4.
 

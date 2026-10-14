@@ -4,3 +4,5 @@ docs/evidence/raft-web-20260831-current/** -whitespace
 packages/k-carrier/src/** -whitespace
 
 docs/evidence/raft-web-20260908-current/** -whitespace
+# Official source intake preserves upstream whitespace; adoption hashes enforce identity.
+frontends/raft/packages/** -whitespace

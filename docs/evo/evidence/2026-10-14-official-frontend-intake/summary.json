@@ -1,0 +1,148 @@
+{
+  "date": "2026-10-14",
+  "ownerDecision": "以官方 Raft 前端源码作为新前端母版，停止以旧复刻版本为迁移基础；本批仅获取和代码分析。旧界面待对应替代路径验收后移除。",
+  "source": {
+    "upstream": "https://github.com/botiverse/raft-source",
+    "revision": "a98ae003246a0360872a77d76dec2fccd0347ef7",
+    "remoteHeadVerified": "a98ae003246a0360872a77d76dec2fccd0347ef7",
+    "webVersion": "1.21.12",
+    "sourceArchive": "raft-source-a98ae003246a.tar.gz",
+    "sourceArchiveSha256": "ad0246e92e0869f7e5ce2febc0a59a4bde3e54a7ea386968919ccaf4f5b4a7d2",
+    "sourceWorktreeClean": true,
+    "uiPackage": {
+      "name": "raft-ui",
+      "version": "0.5.52",
+      "tarball": "https://registry.npmjs.org/raft-ui/-/raft-ui-0.5.52.tgz",
+      "integrity": "sha512-6HenzZkWE5e3mDA6VpC3HRzN0/s3XZxldYiSudtGAUcUk4vzYJowdoIyqhIlhOeLaGzD5KMlQ1KUJqTFJHOjfw==",
+      "integrityVerified": true,
+      "registryLicense": "MIT"
+    },
+    "limits": [
+      "Import inventory is lexical, not a bundler reachability analysis.",
+      "No dependencies installed or upstream build/browser acceptance run.",
+      "Source acquired for analysis, not imported into Loom production."
+    ]
+  },
+  "analysis": [
+    {
+      "area": "启动与构建",
+      "source": [
+        "packages/web/src/main.tsx",
+        "packages/web/src/App.tsx",
+        "packages/web/vite.config.ts"
+      ],
+      "finding": "入口含 desktop handshake、账号恢复、推送和更新恢复；Vite 代理 /api、/internal、/socket.io、/daemon。不能只改一个 baseURL。",
+      "action": "以官方页面为起点，替换启动与连接组合；沿用 Loom 本地网关鉴权，不引入中央账号、计费与云服务。"
+    },
+    {
+      "area": "应用布局",
+      "source": ["packages/web/src/components/layout/MainLayout.tsx"],
+      "finding": "官方 AppShell、导航、可调整面板、ChannelById 与 ChatPanel 可构成首条路径；MainLayout 直接依赖多个业务 store 和 realtime bridge。",
+      "action": "保留布局与组件组合，数据读取绑定 Loom 客户端投影；纯 UI 状态可保留，业务恢复只由 client-core 负责。"
+    },
+    {
+      "area": "消息写入",
+      "source": [
+        "packages/web/src/components/message/MessageInput.tsx",
+        "packages/web/src/store/messageStore.ts"
+      ],
+      "finding": "输入框创建 optimistic draft；sendMessage POST /v2/messages 使用 randomId；失败分支移除乐观消息并恢复草稿。不能假设这等同 Loom 未知结果核实协议。",
+      "action": "保留编辑交互；命令提交、pending/unknown/confirmed 结果接入 Loom 幂等与核实路径，测试提交响应丢失后不重复发消息。"
+    },
+    {
+      "area": "同步与身份",
+      "source": [
+        "packages/web/src/api/client.ts",
+        "packages/web/src/api/socket.ts",
+        "packages/web/src/store/socketBridge.ts",
+        "packages/web/src/store/agentStore.ts"
+      ],
+      "finding": "HTTP 与 Socket 使用 Raft token/server scope；Agent 同时包含 runtime、model、status、sessionId。",
+      "action": "以 Instance 映射运行成员，以 Role 映射配置；替换 Raft 网络与业务同步链路，避免另建 Kernel 状态和第二个持久游标。"
+    },
+    {
+      "area": "长列表",
+      "source": ["packages/web/src/components/message/MessageTimeline.tsx"],
+      "finding": "官方时间线具有分页和锚点逻辑，并对传入 messages 做 map 渲染；仅此不能判定全历史无界，也不能宣称满足 Loom 有界 DOM 要求。",
+      "action": "保留官方结构与交互，检验加载页与 DOM 上限；必要时移植现有时间线的有界渲染机制，而非完整旧复刻界面。"
+    },
+    {
+      "area": "依赖与来源",
+      "source": [
+        "packages/web/package.json",
+        "packages/runtime-form/package.json",
+        "packages/shared/package.json"
+      ],
+      "finding": "Web 依赖 shared、runtime-form、sync-core、desktop-contract 及独立 raft-ui 包；shared 又依赖 sync-core。",
+      "action": "已取得完整官方源码归档及 raft-ui 0.5.52 包并核验 registry integrity；后续移植逐项记录原样复制、改造和本地 glue，不将整个 shared/sync-core 作为第二业务协议引入。"
+    }
+  ],
+  "firstVerticalSlice": {
+    "flow": [
+      "本地鉴权",
+      "频道列表",
+      "频道打开",
+      "同 Role 两实例成员显示",
+      "发送与接收消息",
+      "刷新及断线后恢复"
+    ],
+    "acceptance": [
+      "正式消息保持稳定 ID",
+      "同 Role 实例名称和状态独立",
+      "响应丢失不重复创建消息",
+      "频道切换无串消息",
+      "IME、键盘与窄屏可用"
+    ],
+    "deferred": [
+      "计费、市场和中央账号",
+      "产品 Fork/Side 面板",
+      "完整设置页",
+      "共享记忆面板"
+    ]
+  },
+  "verification": {
+    "remoteHeadMatched": true,
+    "sourceArchiveCreated": true,
+    "uiTarballIntegrityVerified": true,
+    "upstreamDependencyInstall": true,
+    "upstreamBuild": true,
+    "browserAcceptance": false,
+    "productionImport": false,
+    "paidCliRun": false,
+    "serviceRestart": false,
+    "upstreamBuildChecks": [
+      "TypeScript",
+      "Vite main and feedback",
+      "devtools-prod-bundle",
+      "feedback-workspace-split",
+      "immutable-assets",
+      "activity-chunk-split"
+    ],
+    "browserStartup": {
+      "viewports": ["1440x1000", "390x844"],
+      "dpr": 1,
+      "uncaughtErrors": 0,
+      "horizontalOverflow": false,
+      "scope": "Official sign-in shell only, external requests blocked, no server/provider execution"
+    },
+    "repositoryCheck": {
+      "initialResult": "Failed in final efficiency unit group only; 551/558 passed there. Earlier check groups passed.",
+      "cause": "Seven free-plan tests capture git diff HEAD through execFileSync default buffer; staged upstream source exceeded that buffer (ENOBUFS).",
+      "followup": "Commit intake snapshot, then rerun failed group without changing test assertions or backend."
+    }
+  },
+  "limitations": [
+    "静态审查、完整构建和未登录启动检查通过；尚未接入 Loom，不能当作频道或产品验收。",
+    "未给出从文件数量推导的完成率或迁移工期。",
+    "官方源码位于独立迁移目录，生产 apps/web 与本机服务仍未切换。"
+  ],
+  "implementation": {
+    "directory": "frontends/raft",
+    "approach": "Official frontend source copied byte-for-byte; only package manifests adapted for isolated npm workspace. No visual changes or new controls.",
+    "sourceReceipt": "../../../../frontends/raft/adoption.json",
+    "sourceTest": "scripts/official-web/intake.test.mjs",
+    "dependencyLock": "frontends/raft/package-lock.json",
+    "currentScope": "Build baseline, not Loom channel integration. Official login is upstream evidence only, not a product entry.",
+    "buildCompatibility": "npm hoists raft-ui; a tested prebuild link restores the upstream Tailwind source path without changing CSS. Canonical parent paths avoid macOS /var vs /private/var symlink ambiguity."
+  }
+}

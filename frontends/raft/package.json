@@ -1,0 +1,12 @@
+{
+  "name": "loom-official-web-intake",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace=@botiverse/raft-web",
+    "typecheck": "npm run typecheck --workspace=@botiverse/raft-web"
+  }
+}

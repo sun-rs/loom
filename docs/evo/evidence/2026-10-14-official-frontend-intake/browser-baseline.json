@@ -1,0 +1,23 @@
+{
+  "kind": "upstream-startup-only-not-Loom-acceptance",
+  "results": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "errors": [],
+      "text": "Sign In\nEmail\nPassword\nForgot password?\nSign In\n\nNo account? Create one\n\nBy continuing, you agree to the Terms of Service and Privacy Policy.",
+      "horizontalOverflow": false
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "errors": [],
+      "text": "Sign In\nEmail\nPassword\nForgot password?\nSign In\n\nNo account? Create one\n\nBy continuing, you agree to the Terms of Service and Privacy Policy.",
+      "horizontalOverflow": false
+    }
+  ]
+}

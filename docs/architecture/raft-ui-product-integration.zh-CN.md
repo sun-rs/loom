@@ -1,5 +1,15 @@
 # Raft UI 产品集成边界
 
+2026-10-14 owner 决策：后续正式前端以公开的官方 Raft 前端源码为母版，停止以旧复刻版本为迁移基础。尽量保留官方界面、组件组合和交互，通过替换数据来源及改名表达 Loom 语义，不大幅新增选项或按钮。下方“内部维护”的复刻来源策略是历史记录；Loom SDK/client-core、鉴权、幂等、恢复与后端领域 owner 仍保留。
+
+官方源码已进入 `frontends/raft` 独立迁移目录，来源清单逐文件记录原样复制摘要及 package manifest 改动；该目录不进入正式构建、部署和服务启动。完整上游 Web 构建及桌面／窄屏未登录启动检查通过，尚未接入 Loom 频道。官方账号页不是 Loom 产品入口。迁移期间仅维护这一套官方前端母版；旧页面与控制台在对应替代能力验收后删除，不提前移除可用入口。版本、依赖、改造边界和首条纵向切片见[源码获取与分析记录](../evo/evidence/2026-10-14-official-frontend-intake/summary.json)。
+
+构建基线复核：`npm ci --ignore-scripts --prefix frontends/raft`，然后运行
+`npm run build:official-web`、`npm run test:official-web:source` 和
+`npm run test:official-web:browser`。浏览器检查只启动临时静态服务器，阻断外部请求，
+不连接 Raft 服务、Loom 正式服务或付费 CLI。导入保留上游字体版权与 LICENSE；
+上游原始空白由逐文件摘要核验，不批量格式化。频道接入后必须另外验收业务流程。
+
 2026-09-08：用户明确[退役 RAH 托管 MCP](../product/managed-mcp-retirement.zh-CN.md)。Settings 与 Agent 详情不再提供该模块；历史截图、测试通过记录不构成重新接入理由。
 
 状态：**Phase 4B implemented / anchored Task tutorial slice**（2026-08-27）。下方早期能力清单不作为当前完成率；最新证据按 docs/README 的日期索引读取。

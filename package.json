@@ -107,7 +107,7 @@
     "test:real:opencode:deepseek-v4-flash": "RAH_REAL_CLI_GATE=opencode RAH_REAL_CLI_MODEL=deepseek/deepseek-v4-flash RAH_REAL_CLI_REASONING=max node --test packages/daemon/test/real-cli-gate.test.ts",
     "test:real:multi-cli": "RAH_REAL_MULTI_CLI_GATE=1 node --test packages/daemon/test/real-multi-cli-gate.test.ts",
     "typecheck": "tsc --noEmit && npm run typecheck --workspace=@rah-os/web && npm run typecheck --workspace=@rah-os/console",
-    "check": "npm run test:repository-identity && npm run test:ci-workflow && npm run test:release-identity && npm run test:workbench-launch && npm run check:ui-library && npm run test:ui:choice && npm run test:ui:component-spec && npm run check:ui-catalog && npm run check:ui-contract && npm run check:raft-parity && npm run typecheck && npm test && npm run test:web:unit && npm run test:console:unit && npm run test:parity:regression && npm run test:formal-browser-policy && npm run test:ui:bilateral-captures && npm run test:cli:efficiency:unit",
+    "check": "npm run test:repository-identity && npm run test:ci-workflow && npm run test:release-identity && npm run test:workbench-launch && npm run check:ui-library && npm run test:ui:choice && npm run test:ui:component-spec && npm run check:ui-catalog && npm run check:ui-contract && npm run check:raft-parity && npm run typecheck && npm test && npm run test:web:unit && npm run test:console:unit && npm run test:parity:regression && npm run test:formal-browser-policy && npm run test:ui:bilateral-captures && npm run test:cli:efficiency:unit && npm run test:official-web:source",
     "format:check": "prettier --check .",
     "format": "prettier --write .",
     "test:web:human-membership": "node scripts/run-human-membership-browser-gate.mjs",
@@ -140,7 +140,10 @@
     "measure:s6-memory": "LOOM_S6_OVERHEAD_REPORT=1 node --test packages/daemon/test/channel-memory-overhead.test.ts",
     "test:cli:drift": "node scripts/test-long-session-drift.mjs",
     "test:cli:drift:unit": "node --test scripts/cli-efficiency/drift-*.test.mjs scripts/cli-efficiency/model-guard.test.mjs scripts/cli-efficiency/claude-*.test.mjs scripts/cli-efficiency/guarded-shim.test.mjs scripts/cli-efficiency/approved-models.test.mjs scripts/cli-efficiency/gate-evidence.test.mjs scripts/cli-efficiency/tool-calls.test.mjs scripts/cli-efficiency/gate-daemon.test.mjs",
-    "test:web:phase4-slice2": "node scripts/test-phase4-slice2-browser.mjs"
+    "test:web:phase4-slice2": "node scripts/test-phase4-slice2-browser.mjs",
+    "test:official-web:source": "node --test scripts/official-web/*.test.mjs",
+    "build:official-web": "npm run build --prefix frontends/raft",
+    "test:official-web:browser": "node scripts/official-web/browser-baseline.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",
