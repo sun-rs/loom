@@ -193,7 +193,8 @@ export async function verifySidebarActions({
       true,
     );
     await row.click({ button: "right" });
-    await page.getByRole("menuitem", { name: "标记已读", exact: true }).click();
+    await page.keyboard.press("Escape");
+    await row.click();
     await marker.waitFor({ state: "hidden" });
     await page.reload();
     await row.waitFor();

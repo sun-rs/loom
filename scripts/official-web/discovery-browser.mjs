@@ -176,12 +176,12 @@ export async function verifyDiscovery({
       .getByRole("button", { name: "Agent", exact: true })
       .click();
     await page
-      .getByLabel("筛选角色或实例", { exact: true })
+      .getByLabel("筛选角色", { exact: true })
       .fill("no-such-FIXTURE-role");
-    await page.getByText("没有匹配的角色或实例", { exact: true }).waitFor();
-    await page.getByLabel("筛选角色或实例", { exact: true }).fill("FixtureTom");
+    await page.getByText("没有匹配的角色", { exact: true }).waitFor();
+    await page.getByLabel("筛选角色", { exact: true }).fill("FixtureTom");
     await page
-      .getByRole("button", { name: "更多操作 FixtureTom", exact: true })
+      .getByRole("button", { name: "FixtureTom", exact: true })
       .waitFor();
     assert.equal(
       await page.evaluate(

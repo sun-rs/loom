@@ -2375,7 +2375,7 @@
       "behavior": "20-result pages replace rather than append; search scope all/channel/direct/thread; recent ordering; query/filter survive reload; same-query submit resets to first page; late aborted reads cannot replace current results; errors remove stale content; exact message context from bounded authenticated API, with root/message deduplication; open parent conversation at latest history. Agent Role/instance name filtering is presentation-only.",
       "limits": "Message text search only, no entity search or advanced author/date filters. Activity filters all/unread/mentions are read-only and do not mark read or follow/unfollow. Context has no thread reply, attachment interaction or live message subscription. Opening parent conversation is not an anchored jump to the old result."
     },
-    "stage": "ui-rules-v11",
+    "stage": "role-master-detail-v12",
     "sidebarInteractionSlice": {
       "source": "packages/web/src/components/layout/Sidebar.tsx section header, renderSectionAddButton and row context-menu wiring; SidebarSortMenu.tsx ArrowUpDown trigger",
       "directReuse": "raft-ui ContextMenu/DropdownMenu/SidebarItem/SidebarItemCount/SidebarItemMetaIcon and unchanged PublicServerSidebarFrame; member row source structure ported in ChannelListRow.",
@@ -2403,9 +2403,17 @@
       "source": "Sidebar.tsx ChannelRow; channelUnreadIndicator.ts; ChatPanel.tsx renderChannelItem; messageGrouping.ts; DateDivider.tsx; App.tsx loading branch; raft-ui message-item and sidebar recipes",
       "directReuse": "SidebarItem/SidebarItemCount/SidebarItemMetaIcon; unread indicator rules; stable message grouping and neighbor rhythm helpers; DateDivider and useTimeFormatter. MessageItem and all font/border/hover recipes unchanged.",
       "structuralPort": "ChannelRow nested icon/title/mute/count slots and selected/menu-open classes. ChatPanel px-3 wrapper/containment and grouping props. Initial page-loading surface, with hidden/inert mounted data loaders until ready.",
-      "owners": "Canonical unread remains activity.list; stable messages and paging remain LoomChannelClient/RoomSession. No backend change or automatic read ACK.",
+      "owners": "Canonical unread remains activity.list; stable messages and paging remain LoomChannelClient/RoomSession. Stage 12 adds explicit channel-list click read marking; no viewport/polling ACK.",
       "audit": "docs/audits/2026-10-14-ui-rules-and-backend-bindings.zh-CN.md",
       "limits": "Backend binding audit separates ready endpoints from unavailable edit/delete, missing preferences and excluded multi-Human/account features. Retained UI rules must not be changed to compensate for missing bindings."
+    },
+    "roleWorkspaceSlice": {
+      "source": "MainLayout.tsx member master/detail; MemberAgentRow.tsx; AgentDetailPanel.tsx profile header and underline tabs; Sidebar.tsx markUnreadSidebarItemRead",
+      "directReuse": "PublicServerSidebarFrame, PanelHeader profile surface, AvatarSlot, useResizablePanel/SIDEBAR_PANEL_BOUNDS/PanelResizeHandle, raft-ui SidebarItem and Tabs recipes",
+      "structuralPort": "Role master list and detail shell; native row selection, avatar/name geometry, profile header, tab strip, desktop splitter and mobile list/detail back navigation",
+      "localGlue": "Role configuration replaces upstream agent profile; instances tab is scoped by stable roleId. Deleted definitions retain a read-only instance group. Existing immutable revisions, RoomSession and WriteIntentSlot remain the write owners. Explicit channel click uses canonical channel-list activity.mark; refresh only after confirmation, no unknown-write retry.",
+      "limits": "No new backend protocol. Role fields reuse existing local form; upstream account/runtime/activity/skills tabs are omitted. URL auto-selection, search/context viewing and background polling do not mark read. Timeline system-notice rendering remains unbound.",
+      "audit": "docs/audits/2026-10-14-role-workspace-and-read-state.zh-CN.md"
     }
   },
   "rollout": {

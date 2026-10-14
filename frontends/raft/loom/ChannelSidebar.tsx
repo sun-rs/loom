@@ -49,7 +49,7 @@ export default function ChannelSidebar({
   onRoomsChanged: () => Promise<void>;
   onReady: () => void;
   selected: string | null;
-  onSelect: (id: string) => void;
+  onSelect: (id: string) => boolean;
   onCreated: (room: Room) => Promise<void>;
 }) {
   const manager = useMemo(
@@ -146,7 +146,7 @@ export default function ChannelSidebar({
     : [];
   const prefs = data?.preferences;
   const busy = state !== "idle" || refreshing || marking;
-  const mark = async (room: Room) => {
+  const mark = async (room: Room, action?: "read" | "unread") => {
     if (busy || !activity) return;
     setMarking(true);
     setError("");
@@ -154,7 +154,7 @@ export default function ChannelSidebar({
       await markChannelActivity(
         client,
         room.roomId,
-        activity[room.roomId] ? "read" : "unread",
+        action ?? (activity[room.roomId] ? "read" : "unread"),
       );
     } catch {
       setError("读状态未确认或已变化，未自动重发。请刷新检查当前状态。");
@@ -431,7 +431,10 @@ export default function ChannelSidebar({
                         muted={prefs!.mutedActivity.includes(
                           `room:${room.roomId}`,
                         )}
-                        onSelectChannel={onSelect}
+                        onSelectChannel={(id) => {
+                          if (onSelect(id) && activity?.[id])
+                            void mark(room, "read");
+                        }}
                       />
                     </SidebarContextMenu>
                   </DragRow>

@@ -27,7 +27,9 @@ export async function verifyGlobalNavigation({ browser, origin, channel }) {
     await page.goto(`${origin}/?room=${channel.roomId}`);
     const nav = page.getByRole("navigation", { name: "主导航" });
     await nav.waitFor();
-    await page.locator("textarea").fill("FIXTURE unsent navigation draft");
+    await page
+      .getByTestId("composer-textarea")
+      .fill("FIXTURE unsent navigation draft");
     for (const [id, label] of [
       ["search", "搜索"],
       ["agents", "Agent"],
@@ -56,7 +58,10 @@ export async function verifyGlobalNavigation({ browser, origin, channel }) {
         await page
           .getByText("页面骨架已就位，内容尚未接入。", { exact: true })
           .waitFor();
-        assert.equal(await page.locator("textarea").isVisible(), false);
+        assert.equal(
+          await page.getByTestId("composer-textarea").isVisible(),
+          false,
+        );
         assert.equal(
           await page
             .getByRole("link", { name: "打开临时控制台", exact: true })
@@ -66,9 +71,9 @@ export async function verifyGlobalNavigation({ browser, origin, channel }) {
       }
     }
     await nav.getByRole("button", { name: "频道", exact: true }).click();
-    await page.locator("textarea").waitFor({ state: "visible" });
+    await page.getByTestId("composer-textarea").waitFor({ state: "visible" });
     assert.equal(
-      await page.locator("textarea").inputValue(),
+      await page.getByTestId("composer-textarea").inputValue(),
       "FIXTURE unsent navigation draft",
     );
     assert.equal(new URL(page.url()).searchParams.get("room"), channel.roomId);

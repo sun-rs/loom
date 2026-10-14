@@ -416,8 +416,9 @@ export default function ChannelApp() {
   const select = useCallback(
     (id: string) => {
       if (hasUnresolvedIntents() && bridges.get(id)?.writes.state !== "unknown")
-        return;
+        return false;
       setParams({ room: id });
+      return true;
     },
     [setParams, bridges],
   );

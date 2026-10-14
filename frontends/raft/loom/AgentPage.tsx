@@ -6,12 +6,11 @@ import {
   useRef,
   type ReactNode,
 } from "react";
-import { Button, Input, Spinner, AppShellMainSlot } from "raft-ui";
-import { Users } from "lucide-react";
+import { Button, Spinner, AppShellMainSlot } from "raft-ui";
+import RoleWorkspace, { type RoleEntry } from "./RoleWorkspace.tsx";
 import type { RahClient } from "@rah-os/client-sdk";
 import type { RoleTemplate } from "@rah-os/protocol";
 import type { IntentOutcome } from "@rah-os/client-core/write-intent";
-import PanelHeader from "../packages/web/src/components/ui/PanelHeader.tsx";
 import {
   ChannelMemberListShell,
   ChannelMemberRow,
@@ -60,7 +59,7 @@ export default function AgentPage({
   const { state, error, setError } = useManagement(manager);
   const [catalog, setCatalog] = useState<Catalog>();
   const [tab, setTab] = useState("roles");
-  const [query, setQuery] = useState("");
+  const [selectedId, setSelectedId] = useState<string>();
   const [edit, setEdit] = useState<Edit>();
   const [channel, setChannel] = useState("");
   const [revision, setRevision] = useState("keep");
@@ -116,121 +115,90 @@ export default function AgentPage({
       : undefined;
   const roleName = (role: RoleTemplate) => role.configuration.displayName;
   const busy = state !== "idle" || refreshing;
-  const matches = (text: string) =>
-    text
-      .normalize("NFKC")
-      .toLocaleLowerCase()
-      .includes(query.trim().normalize("NFKC").toLocaleLowerCase());
-  const roles =
-    catalog?.roles.filter((role) => matches(role.configuration.displayName)) ??
-    [];
+  const entries: RoleEntry[] = (catalog?.roles ?? []).map((role) => ({
+    id: role.roleId,
+    name: roleName(role),
+  }));
+  // Deleting a Role never deletes its frozen instances. Keep a read-only group
+  // for these instances; do not reconstruct a current Role from their snapshots.
+  for (const instance of catalog?.instances ?? []) {
+    if (entries.some((entry) => entry.id === instance.roleId)) continue;
+    const agent = catalog?.agents.find(
+      (a) => a.definition.agentId === instance.agentId,
+    );
+    entries.push({
+      id: instance.roleId,
+      name: `已删除角色（${agent?.currentRevision.displayName ?? "保留实例"}）`,
+      retired: true,
+    });
+  }
+  const selected =
+    entries.find((entry) => entry.id === selectedId) ?? entries[0];
+  const role = catalog?.roles.find((role) => role.roleId === selected?.id);
   const instances =
-    catalog?.instances.filter((instance) => {
-      const agent = catalog.agents.find(
-        (a) => a.definition.agentId === instance.agentId,
-      );
-      const room = catalog.rooms.find((r) => r.roomId === instance.channelId);
-      return matches(
-        `${agent?.currentRevision.displayName ?? agent?.handle ?? ""} ${room?.name ?? ""}`,
-      );
-    }) ?? [];
+    catalog?.instances.filter((instance) => instance.roleId === selected?.id) ??
+    [];
 
   return (
     <AppShellMainSlot
       className={active ? "bg-layer-canvas theme-brutal:bg-white" : "hidden"}
       data-testid="loom-agent-page"
     >
-      <PanelHeader
-        title="Agent"
-        icon={<Users size={18} />}
-        actions={
-          <Button disabled={busy} onClick={() => open({ kind: "create" })}>
-            新建角色
-          </Button>
-        }
-      />
       {notice}
-      <div className="min-h-0 overflow-y-auto p-4">
-        <div className="mb-4 flex gap-2">
-          <Button
-            variant={tab === "roles" ? "default" : "outline"}
-            aria-pressed={tab === "roles"}
-            onClick={() => setTab("roles")}
-          >
-            角色
-          </Button>
-          <Button
-            variant={tab === "instances" ? "default" : "outline"}
-            aria-pressed={tab === "instances"}
-            onClick={() => setTab("instances")}
-          >
-            实例
-          </Button>
-          <Button
-            variant="ghost"
-            disabled={busy}
-            onClick={() => void refresh()}
-          >
-            刷新
-          </Button>
-        </div>
-        <Input
-          className="mb-4"
-          aria-label="筛选角色或实例"
-          placeholder="按名称筛选角色或实例"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-        {catalog &&
-          !(tab === "roles" ? roles.length : instances.length) &&
-          query.trim() && <p>没有匹配的角色或实例</p>}
+      <RoleWorkspace
+        entries={entries}
+        selected={selected}
+        onSelect={(id) => {
+          setSelectedId(id);
+          setTab("roles");
+        }}
+        tab={tab}
+        onTab={setTab}
+        busy={busy}
+        onCreate={() => open({ kind: "create" })}
+        onRefresh={() => void refresh()}
+        actions={
+          role && (
+            <ActionMenu
+              label={`更多操作 ${roleName(role)}`}
+              disabled={busy}
+              items={[
+                {
+                  label: "添加实例到频道",
+                  run: () => open({ kind: "add", role }),
+                },
+                {
+                  label: "删除角色",
+                  run: () => open({ kind: "delete", role }),
+                },
+              ]}
+            />
+          )
+        }
+      >
         {!edit && <OperationStatus manager={manager} error={error} />}
         {!catalog ? (
           !error && <Spinner aria-label="读取角色和实例" />
         ) : tab === "roles" ? (
-          <>
-            <p className="mb-3 text-sm">
-              角色定义名称、Prompt、CLI 和模型；实例使用创建时的配置快照。
-            </p>
-            {!catalog.roles.length ? (
-              <p>暂无角色</p>
-            ) : (
-              <ChannelMemberListShell framed={false}>
-                {roles.map((role) => (
-                  <ChannelMemberRow
-                    key={role.roleId}
-                    type="agent"
-                    name={roleName(role)}
-                    secondary={`${catalog.instances.filter((i) => i.roleId === role.roleId).length} 个实例`}
-                    trailing={
-                      <ActionMenu
-                        label={`更多操作 ${roleName(role)}`}
-                        disabled={busy}
-                        items={[
-                          {
-                            label: "编辑角色",
-                            run: () => open({ kind: "edit", role }),
-                          },
-                          {
-                            label: "添加实例到频道",
-                            run: () => open({ kind: "add", role }),
-                          },
-                          {
-                            label: "删除角色",
-                            run: () => open({ kind: "delete", role }),
-                          },
-                        ]}
-                      />
-                    }
-                  />
-                ))}
-              </ChannelMemberListShell>
-            )}
-          </>
+          role ? (
+            <RoleEditor
+              key={role.roleRevisionId}
+              client={client}
+              role={role}
+              disabled={busy}
+              onSave={(configuration) =>
+                void manager.save(configuration, role, done)
+              }
+            />
+          ) : selected?.retired ? (
+            <p>角色定义已删除。已有实例保留原配置，可在实例标签页管理。</p>
+          ) : (
+            <p>从左侧选择或创建角色。</p>
+          )
         ) : (
           <>
-            {!catalog.instances.length ? (
-              <p>暂无实例</p>
+            {!instances.length ? (
+              <p>此角色暂无实例</p>
             ) : (
               <ChannelMemberListShell framed={false}>
                 {instances.map((instance) => {
@@ -283,7 +251,7 @@ export default function AgentPage({
             )}
           </>
         )}
-      </div>
+      </RoleWorkspace>
       {edit && (
         <ActionDialog
           title={

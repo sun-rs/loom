@@ -28,6 +28,11 @@ export async function verifyManagement({
         : route.abort(),
     );
     await page.goto(`${origin}/?view=agents&room=${channel.roomId}`);
+    await page.getByTestId("loom-role-list").waitFor();
+    assert.equal(
+      await page.getByRole("button", { name: "角色", exact: true }).count(),
+      0,
+    );
     await page.getByRole("button", { name: "新建角色", exact: true }).click();
     let dialog = page.getByRole("dialog");
     const name = `BrowserRole${viewport.width}`;
@@ -66,13 +71,15 @@ export async function verifyManagement({
       catalog.roles.filter((r) => r.configuration.displayName === name).length,
       1,
     );
-    await page
-      .getByRole("button", { name: `更多操作 ${name}`, exact: true })
-      .click();
-    await page.getByRole("menuitem", { name: "编辑角色", exact: true }).click();
-    await dialog.getByLabel("名称", { exact: true }).fill(`${name}Edited`);
-    await dialog.getByRole("button", { name: "保存角色", exact: true }).click();
-    await dialog.waitFor({ state: "hidden" });
+    await page.locator(`[data-role-id="${role.roleId}"]`).click();
+    const detail = page.getByTestId("loom-role-detail");
+    await detail.getByLabel("名称", { exact: true }).fill(`${name}Edited`);
+    await Promise.all([
+      page.waitForResponse(
+        (r) => r.url().endsWith("/roles/revise") && r.status() === 200,
+      ),
+      detail.getByRole("button", { name: "保存角色", exact: true }).click(),
+    ]);
     await page
       .getByRole("button", { name: `更多操作 ${name}Edited`, exact: true })
       .click();
@@ -93,7 +100,13 @@ export async function verifyManagement({
       await client.request("agent.get", { agentId: instance.agentId })
     ).agent;
     const instanceName = agent.currentRevision.displayName ?? agent.handle;
-    await page.getByRole("button", { name: "实例", exact: true }).click();
+    await page.getByRole("tab", { name: "实例", exact: true }).click();
+    // Only this role's single instance is offered, although the fixture has other roles.
+    assert.equal(
+      await detail.getByRole("button", { name: /^更多操作 / }).count(),
+      2,
+    );
+
     await page
       .getByRole("button", { name: `更多操作 ${instanceName}`, exact: true })
       .click();
@@ -106,16 +119,16 @@ export async function verifyManagement({
     await dialog.waitFor({ state: "hidden" });
     // Editing a Role must leave the instance snapshot frozen until explicit adoption.
     const frozenRevision = instance.roleRevisionId;
-    await page.getByRole("button", { name: "角色", exact: true }).click();
-    await page
-      .getByRole("button", { name: `更多操作 ${name}Edited`, exact: true })
-      .click();
-    await page.getByRole("menuitem", { name: "编辑角色", exact: true }).click();
-    await dialog
+    await page.getByRole("tab", { name: "配置", exact: true }).click();
+    await detail
       .getByLabel("角色 Prompt", { exact: true })
       .fill("FIXTURE revised prompt; never execute");
-    await dialog.getByRole("button", { name: "保存角色", exact: true }).click();
-    await dialog.waitFor({ state: "hidden" });
+    await Promise.all([
+      page.waitForResponse(
+        (r) => r.url().endsWith("/roles/revise") && r.status() === 200,
+      ),
+      detail.getByRole("button", { name: "保存角色", exact: true }).click(),
+    ]);
     let revised = await client.request("role.list", {
       controlRoomId: workspace.controlRoomId,
     });
@@ -126,7 +139,7 @@ export async function verifyManagement({
         .roleRevisionId,
       frozenRevision,
     );
-    await page.getByRole("button", { name: "实例", exact: true }).click();
+    await page.getByRole("tab", { name: "实例", exact: true }).click();
     await page
       .getByRole("button", { name: `更多操作 ${instanceName}`, exact: true })
       .click();
@@ -167,7 +180,7 @@ export async function verifyManagement({
       .getByRole("navigation", { name: "主导航" })
       .getByRole("button", { name: "Agent", exact: true })
       .click();
-    await page.getByRole("button", { name: "角色", exact: true }).click();
+    await page.getByRole("tab", { name: "配置", exact: true }).click();
     await page
       .getByRole("button", { name: `更多操作 ${name}Edited`, exact: true })
       .click();
@@ -186,7 +199,7 @@ export async function verifyManagement({
     assert.ok(
       catalog.instances.some((i) => i.instanceId === instance.instanceId),
     );
-    await page.getByRole("button", { name: "实例", exact: true }).click();
+    await page.getByRole("tab", { name: "实例", exact: true }).click();
     await page
       .getByRole("button", { name: `更多操作 ${instanceName}`, exact: true })
       .click();

@@ -276,6 +276,37 @@ try {
     await composer.press("Enter");
     await page.getByRole("button", { name: "核实发送" }).waitFor();
     assert.equal(sendRequests.length, 1);
+    const unreadTarget = page.locator(
+      `[data-public-channel-id="${channels[2].roomId}"]`,
+    );
+    await unreadTarget.click({ button: "right" });
+    await page.getByRole("menuitem", { name: "标记未读", exact: true }).click();
+    await unreadTarget.locator('[aria-label="有未读消息"]').waitFor();
+    const blockedReadMarks = [];
+    const observeMark = (request) => {
+      if (request.url().endsWith("/activity/mark"))
+        blockedReadMarks.push(request.postDataJSON());
+    };
+    page.on("request", observeMark);
+    const blockedUrl = page.url();
+    await unreadTarget.click();
+    await page.evaluate(
+      () =>
+        new Promise((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(resolve)),
+        ),
+    );
+    assert.equal(
+      page.url(),
+      blockedUrl,
+      "unknown send blocks leaving the current channel",
+    );
+    assert.deepEqual(
+      blockedReadMarks,
+      [],
+      "a refused navigation must not acknowledge the unseen channel",
+    );
+    page.off("request", observeMark);
     const mainNav = page.getByRole("navigation", { name: "主导航" });
     await mainNav.getByRole("button", { name: "搜索", exact: true }).click();
     await page.getByRole("heading", { name: "搜索", exact: true }).waitFor();

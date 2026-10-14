@@ -1,0 +1,29 @@
+{
+  "stage": "role-master-detail-v12",
+  "sourceCommit": null,
+  "upstreamReceipt": "../../../../frontends/raft/adoption.json",
+  "audit": "../../../audits/2026-10-14-role-workspace-and-read-state.zh-CN.md",
+  "implemented": [
+    "Explicit channel click marks canonical unread read, including system notices; refused navigation does not mark.",
+    "Agent uses Role master list, inline configuration and selected-Role instances tab; native header/row/tabs/splitter recipes reused.",
+    "Existing Role revision, instance frozen snapshot, restart adoption and unknown-result verification paths retained."
+  ],
+  "verification": {
+    "tdd": "Browser failures reproduced unread remaining after click, missing Role sidebar and incorrectly marking a channel when navigation was refused.",
+    "browser": "Passed: temporary real Core, fake discovery only; 1440x1000 and 390x844 DPR1; no provider execution.",
+    "check": "exit 0; full npm run check passed. Backend 3209 passed / 22 opt-in skipped; console 63, browser policy 15, efficiency tooling 558, official source/projection 20.",
+    "formatCheck": "passed",
+    "diffCheck": "passed",
+    "typecheckAndOfficialBuild": "passed",
+    "buildWebWorkbench": "passed",
+    "deployment": "pending",
+    "formalPage": "pending"
+  },
+  "paidCli": false,
+  "backendChanged": false,
+  "remaining": [
+    "System notices are counted but not yet rendered in the message timeline; explicit channel click acknowledges them.",
+    "URL selection, search/activity contexts and background polling do not perform viewport read ACK.",
+    "Full upstream Agent tabs and remaining backend UI bindings are not part of this repair."
+  ]
+}
