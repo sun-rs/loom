@@ -3,7 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "exports": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./write-intent": "./src/write-intent.ts"
+  },
   "dependencies": {
     "@rah-os/client-sdk": "*",
     "@rah-os/protocol": "*"

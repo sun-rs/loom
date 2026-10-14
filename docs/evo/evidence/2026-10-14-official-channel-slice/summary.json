@@ -1,0 +1,69 @@
+{
+  "upstream": {
+    "url": "https://github.com/botiverse/raft-source",
+    "revision": "a98ae003246a0360872a77d76dec2fccd0347ef7",
+    "license": "FSL-1.1-ALv2; owner reuse authorization; upstream LICENSE retained",
+    "receipt": "../../../../frontends/raft/adoption.json",
+    "modifiedUpstreamSourceFiles": []
+  },
+  "scope": "First authenticated channel text conversation slice, isolated acceptance only",
+  "owners": {
+    "presentation": "Unmodified official components and local ChannelApp composition",
+    "durableBusiness": "Existing Kernel/application-service/client-sdk",
+    "paginationAndCausality": "Existing client-core MessageSession and RoomSession",
+    "writeIntents": "Existing console WriteIntentSlot promoted to client-core; console re-exports it"
+  },
+  "verification": {
+    "channelBrowser": "passed with real temporary Core/gateway at 1440x1000 and 390x844, DPR 1",
+    "checks": [
+      "50-message history pagination to older messages",
+      "text send persisted exactly once",
+      "reload restores selected channel and message",
+      "channel switching isolates messages",
+      "IME Enter does not submit; Shift+Enter inserts newline",
+      "lost successful HTTP response keeps same key, body and causal basis on explicit verification",
+      "unresolved write survives history navigation",
+      "verified send does not restore old draft",
+      "unavailable channel never falls back to another channel or a sendable composer",
+      "side-by-side column geometry; no document horizontal overflow",
+      "no external requests or uncaught browser errors"
+    ],
+    "repositoryCheck": {
+      "command": "npm run check",
+      "exitCode": 0,
+      "result": "single uninterrupted pass",
+      "backendAndShared": {
+        "passed": 3209,
+        "failed": 0,
+        "optInSkipped": 22
+      },
+      "consoleUnit": 63,
+      "formalBrowserPolicy": 15,
+      "efficiencyUnit": 558,
+      "officialSourceAndChannelUnit": 7
+    },
+    "paidProviders": "not run",
+    "realCli": "not run",
+    "productionBuild": "still refused by productConnected=false",
+    "deployment": "unchanged; no service restart",
+    "browserEvidence": "browser.json",
+    "officialBaselineBuild": "passed, including upstream build checks",
+    "officialBaselineBrowser": "passed at 1440x1000 and 390x844",
+    "consoleBrowser": "passed at 1440x1000 and 390x844 with fake provider",
+    "formatAndDiff": "passed"
+  },
+  "limits": [
+    "This is a locally composed narrow slice of official components, not complete MainLayout parity.",
+    "No instance presence/status panel, private box, thread/reaction/profile actions, attachments, Task management or Role/instance management yet. Console retains these capabilities.",
+    "Message rows use the official read-only projection; text posting uses the official compact composer.",
+    "Directory is loaded on entry; new/renamed channels need page reload.",
+    "No end-to-end multi-agent browser acceptance is claimed.",
+    "Attachment/forward content has an explicit unavailable-preview notice; it is not silently rendered as an empty message.",
+    "This slice selects the first active workspace; workspace switching is not yet connected."
+  ],
+  "regressionsFoundAndFixed": [
+    "Missing column container on narrow screens: now uses official flex-column composition and explicit geometry assertion.",
+    "Unmount discarded an unknown write: unresolved slots retained across history navigation.",
+    "Verification left previously sent content in the draft: the same original composer submission remains unresolved until verification succeeds."
+  ]
+}

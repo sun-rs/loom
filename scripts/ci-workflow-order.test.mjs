@@ -139,6 +139,8 @@ test("CI builds and checks official source and the temporary backend console", (
   for (const gate of [
     "build:official-web",
     "test:official-web:browser",
+    "build:official-web:channel",
+    "test:official-web:channel",
     "test:console:browser",
   ]) {
     assert.ok(commands.includes(`npm run ${gate}`), gate);

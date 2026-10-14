@@ -1,0 +1,33 @@
+{
+  "fixtureOnly": true,
+  "realCore": true,
+  "paidCli": false,
+  "results": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "sendAndReload": true,
+      "historyPagination": true,
+      "unavailableChannelFailsClosed": true,
+      "switchIsolation": true,
+      "ime": true,
+      "unknownResultVerified": true,
+      "externalRequests": 0
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "sendAndReload": true,
+      "historyPagination": true,
+      "unavailableChannelFailsClosed": true,
+      "switchIsolation": true,
+      "ime": true,
+      "unknownResultVerified": true,
+      "externalRequests": 0
+    }
+  ]
+}
