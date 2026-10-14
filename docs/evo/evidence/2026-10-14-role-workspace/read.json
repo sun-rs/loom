@@ -1,0 +1,28 @@
+{
+  "at": "2026-10-14T15:42:08.867Z",
+  "channel": "all",
+  "beforeUnread": 4,
+  "afterUnread": 0,
+  "messageCount": 0,
+  "otherRoomsUnchanged": true,
+  "roomEventHeadUnchanged": true,
+  "mutation": "Only Human explicit channel-list read frontier; no message, Role, instance or provider execution mutation",
+  "results": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "explicitReadRequests": 1,
+      "readSurvivesReload": true
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "explicitReadRequests": 0,
+      "readSurvivesReload": true
+    }
+  ]
+}

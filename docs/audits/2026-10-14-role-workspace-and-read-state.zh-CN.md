@@ -19,7 +19,7 @@ Owner 指定的结构是左侧 Role 列表、右侧 Role 配置，实例是选�
 | AgentDetailPanel → profile PanelHeader → underline Tabs                   | 原组件、profile header surface、tab 高度与样式复用；配置／实例替换内容            | RoleEditor 继续调用 role.revise，实例严格按 roleId 过滤；未接的官方标签不显示。             |
 | Role 删除与存活实例                                                       | 角色定义删除后显示只读的“已删除角色（实例名）”归属项                              | 来自现有 catalog.instances，保留原 Role ID 归属，不能编辑或复活定义；重启仍可保留冻结配置。 |
 
-新建 Role、不可变修订、实例冻结配置、重启时显式采用新修订、私聊未知结果核实及删除 Role 后保留实例继续走现有 SDK／RoomSession／WriteIntentSlot。没有新增后端端点、队列或工作流。
+新建 Role、不可变修订、实例冻结配置、重启时显式采用新修订、私聊未知结果核实及删除 Role 后保留实例继续走现有 SDK／RoomSession／WriteIntentSlot。没有新增后端端点、队列或工作流。历史 Role 的 runtime/model 绑定若已不在 Host 当前目录中，沿用既有编辑器要求显式重新选择的边界，不自动替换 CLI／模型；本批没有迁移这些历史配置。
 
 ## 验证
 

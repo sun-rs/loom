@@ -1,6 +1,6 @@
 {
   "stage": "role-master-detail-v12",
-  "sourceCommit": null,
+  "sourceCommit": "202f102e0ee0a1056567dacb39ec3caa1fddb54e",
   "upstreamReceipt": "../../../../frontends/raft/adoption.json",
   "audit": "../../../audits/2026-10-14-role-workspace-and-read-state.zh-CN.md",
   "implemented": [
@@ -16,14 +16,17 @@
     "diffCheck": "passed",
     "typecheckAndOfficialBuild": "passed",
     "buildWebWorkbench": "passed",
-    "deployment": "pending",
-    "formalPage": "pending"
+    "deployment": "Verified 2-database/318-file backup and graceful com.loom.evo restart; 18 business table projections unchanged, excluding subscription updated_at only. Verified immutable Web snapshot and retained runtime flags.",
+    "formalPage": "Fresh real service at both viewports/DPR1: Role list identities, selected Role name/combined prompt and scoped instances, desktop splitter, mobile back, existing chat/private/search/activity paths; screenshots inspected.",
+    "formalRead": "Real all channel: unread 4 -> 0 via one explicit click; reload persists; other room counts and Room event head unchanged. Only Human read frontier changed.",
+    "operatorAssertionCorrections": "Private page probe initially compared only instructions instead of the existing legacy role+instructions prompt, and included a same-named header action in instance row counts. Corrected to the documented form conversion and content scope; product code unchanged."
   },
   "paidCli": false,
   "backendChanged": false,
   "remaining": [
     "System notices are counted but not yet rendered in the message timeline; explicit channel click acknowledges them.",
     "URL selection, search/activity contexts and background polling do not perform viewport read ACK.",
-    "Full upstream Agent tabs and remaining backend UI bindings are not part of this repair."
+    "Full upstream Agent tabs and remaining backend UI bindings are not part of this repair.",
+    "Legacy Roles referencing runtime/model bindings absent from the current catalog still require explicit reselection in the existing editor; this slice does not substitute a CLI/model."
   ]
 }
