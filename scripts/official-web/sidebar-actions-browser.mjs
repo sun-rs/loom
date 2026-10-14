@@ -186,6 +186,12 @@ export async function verifySidebarActions({
       `[data-channel-row="${room.roomId}"] [aria-label="有未读消息"]`,
     );
     await marker.waitFor();
+    assert.equal(await marker.getAttribute("data-slot"), "sidebar-item-count");
+    assert.match(await marker.innerText(), /^\d+\+?$/);
+    assert.equal(
+      await marker.evaluate((el) => !!el.closest("[data-public-channel-id]")),
+      true,
+    );
     await row.click({ button: "right" });
     await page.getByRole("menuitem", { name: "标记已读", exact: true }).click();
     await marker.waitFor({ state: "hidden" });

@@ -170,3 +170,5 @@ HTML 区域由 `HtmlFilePreview` 和专用静态 `html-preview-bridge.js` 拥有
 activity.mark 没有幂等键，响应不确定时显示未确认并刷新投影，不重发；未读 frontier 仅取顶层消息，最多读取10页、每页100条，超界拒绝修改，线程读状态独立。这属于现有接口限制，不扩展冻结后端。原始官方文件保持哈希一致；ContextMenu／Submenu／Dialog 复用 raft-ui，业务接入与归档列表为本地组合，不宣称整个侧栏原样搬入。
 
 2026-10-14 第十阶段聊天交互修复：复核 Sidebar/MainLayout/ChatPanel 整条链路，移除本地发明的上移／下移菜单，标题改为聊天。使用官方依赖的 dnd-kit 实现频道行、分组标题拖动与跨组投放，落点沿用 sidebar.patch 的版本校验／未知结果核实。直接复用官方 useResizablePanel、SIDEBAR_PANEL_BOUNDS 和 PanelResizeHandle，恢复聊天 composer 外壳的边线、留白和安全区参数；未接通的附件上传仍关闭。详见[源码交互审计](../audits/2026-10-14-official-chat-interactions.zh-CN.md)，其中明确记录自定义排序、置顶归属、跨组预览和移动端布局差异，不将局部接入表述为整页完全一致。
+
+2026-10-14 第十一阶段 UI 规则修复：成员聊天行按官方 ChannelRow 的 slot 层级接 SidebarItemCount、静音图标和文字状态，去掉行外 AttentionDot。正文补回 ChatPanel 的 px-3 wrapper、DateDivider、稳定同作者分组和相邻消息节奏参数。初次加载用整页临时画面，底层控件在就绪前隐藏并 inert，列表不显示独立加载文字。上游 recipe、字体、边框和 hover 参数保持原样。Owner 明确允许省略未接能力，不允许改变保留界面的 UI 规则；[完整盘点与后续接入顺序](../audits/2026-10-14-ui-rules-and-backend-bindings.zh-CN.md)区分现成接口、缺失合约、未接交互与范围外能力。

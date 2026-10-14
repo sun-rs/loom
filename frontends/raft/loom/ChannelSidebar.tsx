@@ -1,10 +1,9 @@
 import { SidebarDrag, DragSection, DragRow } from "./SidebarDrag.tsx";
-import AttentionDot from "../packages/web/src/components/ui/AttentionDot.tsx";
 import ChannelArchiveDialog from "./ChannelArchiveDialog.tsx";
 import { markChannelActivity } from "./sidebar-activity.ts";
 import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { Button, Input, Textarea } from "raft-ui";
-import { Plus, ChevronRight, BellOff } from "lucide-react";
+import { Plus, ChevronRight } from "lucide-react";
 import { SidebarContextMenu, SidebarSortMenu } from "./SidebarMenus.tsx";
 import type { RahClient } from "@rah-os/client-sdk";
 import type {
@@ -14,7 +13,7 @@ import type {
 } from "@rah-os/protocol";
 import type { IntentOutcome } from "@rah-os/client-core/write-intent";
 import Frame from "../packages/web/src/components/server/PublicServerSidebarFrame.tsx";
-import Row from "../packages/web/src/components/server/PublicServerChannelRow.tsx";
+import Row from "./ChannelListRow.tsx";
 import Tooltip from "../packages/web/src/components/ui/Tooltip.tsx";
 import FormField from "../packages/web/src/components/ui/FormField.tsx";
 import { ManagementClient } from "./management-client.ts";
@@ -36,6 +35,7 @@ export default function ChannelSidebar({
   rooms,
   archivedRooms,
   onRoomsChanged,
+  onReady,
   selected,
   onSelect,
   onCreated,
@@ -47,6 +47,7 @@ export default function ChannelSidebar({
   rooms: Room[];
   archivedRooms: Room[];
   onRoomsChanged: () => Promise<void>;
+  onReady: () => void;
   selected: string | null;
   onSelect: (id: string) => void;
   onCreated: (room: Room) => Promise<void>;
@@ -61,6 +62,7 @@ export default function ChannelSidebar({
     recent: Record<string, string>;
   }>();
   const [activity, setActivity] = useState<Record<string, number>>();
+  const [menuRoom, setMenuRoom] = useState<string>();
   const [marking, setMarking] = useState(false);
   const [archiveTarget, setArchiveTarget] = useState<Room | "list">();
   const [edit, setEdit] = useState<Edit>();
@@ -69,6 +71,9 @@ export default function ChannelSidebar({
   const [collapsed, setCollapsed] = useState<string[]>([]);
   const request = useRef(0);
   const [refreshing, setRefreshing] = useState(false);
+  useEffect(() => {
+    if (data || error) onReady();
+  }, [data, error, onReady]);
   useEffect(
     () => () => {
       request.current++;
@@ -204,7 +209,6 @@ export default function ChannelSidebar({
             刷新列表
           </Button>
         )}
-        {!data && <p className="px-2 text-xs">正在读取列表设置…</p>}
         <SidebarDrag
           groups={visibleGroups}
           prefs={prefs}
@@ -332,6 +336,15 @@ export default function ChannelSidebar({
                   >
                     <SidebarContextMenu
                       label={`频道操作 ${room.name}`}
+                      onOpenChange={(open) =>
+                        setMenuRoom((current) =>
+                          open
+                            ? room.roomId
+                            : current === room.roomId
+                              ? undefined
+                              : current,
+                        )
+                      }
                       disabled={busy}
                       items={[
                         {
@@ -409,32 +422,17 @@ export default function ChannelSidebar({
                             ]),
                       ]}
                     >
-                      <div className="flex min-w-0 items-center">
-                        <div className="min-w-0 flex-1">
-                          <Row
-                            channelId={room.roomId}
-                            name={room.name}
-                            selected={selected === room.roomId}
-                            onSelectChannel={onSelect}
-                          />
-                        </div>
-                        {Boolean(activity?.[room.roomId]) && (
-                          <AttentionDot
-                            role="status"
-                            aria-label="有未读消息"
-                            className="mr-1"
-                          />
-                        )}
-                        {prefs!.mutedActivity.includes(
+                      <Row
+                        channelId={room.roomId}
+                        name={room.name}
+                        selected={selected === room.roomId}
+                        menuOpen={menuRoom === room.roomId}
+                        unread={activity?.[room.roomId] ?? 0}
+                        muted={prefs!.mutedActivity.includes(
                           `room:${room.roomId}`,
-                        ) && (
-                          <BellOff
-                            size={12}
-                            aria-label="已静音"
-                            className="mr-1 shrink-0 text-foreground-muted"
-                          />
                         )}
-                      </div>
+                        onSelectChannel={onSelect}
+                      />
                     </SidebarContextMenu>
                   </DragRow>
                 ))}

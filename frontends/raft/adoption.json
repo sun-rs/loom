@@ -2322,8 +2322,11 @@
       "packages/web/src/AppProviders.tsx",
       "packages/web/src/components/channel/ChannelMemberList.tsx",
       "packages/web/src/components/server/PublicServerSidebarFrame.tsx",
-      "packages/web/src/components/server/PublicServerChannelRow.tsx",
-      "packages/web/src/components/ui/FormField.tsx"
+      "packages/web/src/components/ui/FormField.tsx",
+      "packages/web/src/components/message/messageGrouping.ts",
+      "packages/web/src/components/message/DateDivider.tsx",
+      "packages/web/src/hooks/useTimeFormatter.ts",
+      "packages/web/src/utils/channelUnreadIndicator.ts"
     ],
     "structuralPort": {
       "source": "packages/web/src/pages/PublicServerPage.tsx",
@@ -2372,10 +2375,10 @@
       "behavior": "20-result pages replace rather than append; search scope all/channel/direct/thread; recent ordering; query/filter survive reload; same-query submit resets to first page; late aborted reads cannot replace current results; errors remove stale content; exact message context from bounded authenticated API, with root/message deduplication; open parent conversation at latest history. Agent Role/instance name filtering is presentation-only.",
       "limits": "Message text search only, no entity search or advanced author/date filters. Activity filters all/unread/mentions are read-only and do not mark read or follow/unfollow. Context has no thread reply, attachment interaction or live message subscription. Opening parent conversation is not an anchored jump to the old result."
     },
-    "stage": "sidebar-drag-v10",
+    "stage": "ui-rules-v11",
     "sidebarInteractionSlice": {
       "source": "packages/web/src/components/layout/Sidebar.tsx section header, renderSectionAddButton and row context-menu wiring; SidebarSortMenu.tsx ArrowUpDown trigger",
-      "directReuse": "raft-ui ContextMenu and DropdownMenu primitives; unchanged PublicServerSidebarFrame/Row",
+      "directReuse": "raft-ui ContextMenu/DropdownMenu/SidebarItem/SidebarItemCount/SidebarItemMetaIcon and unchanged PublicServerSidebarFrame; member row source structure ported in ChannelListRow.",
       "structuralPort": "Section icon button and heading class parameters, ArrowUpDown/Plus/ChevronRight icons; removed redundant title and row ellipsis; channel and group operations use right-click menus.",
       "localChanges": "Existing Loom sidebar mutation contracts retained. Context menu keyboard shortcut and native touch long-press; sort modes remain existing shared channel/custom-group preference and separate pinned preference. Plus creates a channel in the default list; moving into a custom group remains explicit.",
       "limits": "Custom groups still share the channel sort preference. Source files remain byte-exact. Dragging and resizing are described in sidebarDragSlice."
@@ -2383,7 +2386,7 @@
     "sidebarActionsSlice": {
       "source": "packages/web/src/components/layout/Sidebar.tsx surface menu, move-to-section submenu, channel read/pin/mute/archive actions and archive confirmation; SidebarReadToggleMenuItem.tsx",
       "owner": "Existing room.create/sidebar.get/patch/activity.list/mark/room.archive/unarchive; RoomSession and WriteIntentSlot for causal/idempotent writes. No backend or protocol changes.",
-      "directReuse": "raft-ui ContextMenu/Submenu/Dialog/Button/Input and unchanged official channel rows/timeline/composer; no upstream file modified.",
+      "directReuse": "raft-ui ContextMenu/Submenu/Dialog/Button/Input, unchanged official timeline/composer; ChannelListRow ports official member row slot nesting. No upstream file modified.",
       "localComposition": "Blank surface create-channel/create-section/archive-list; move submenu plus atomically create-and-move section; unread/mute projections; archive confirmation/list/restore with read-only history. Existing reserved #all and active-work checks remain authoritative.",
       "failureHandling": "Sidebar and lifecycle writes retain exact retry identity after lost response. Activity marks have no idempotency API and are never automatically replayed; error tells user to refresh/reassess state. Late reads are ignored.",
       "limits": "Only top-level channel read state; thread read state stays independent. Latest top-level unread frontier scan capped at ten 100-message pages; if not found, no mutation. No automatic mark-read just by viewing. Shared channel/custom-group sort preference retained."
@@ -2395,6 +2398,14 @@
       "localDifferences": "Drop preview transforms within the current list; cross-section placement is committed on release, not upstream live cross-container projection. Dropping outside cancels. Existing pin/unpin retains previous group. Custom section sort still shared; hide-empty/joined-only preferences absent. Mobile still uses narrow simultaneous list/detail instead of native list/detail navigation.",
       "ownership": "Loom sidebar service owns persisted order; drag transform and width are presentation state. No provider/backend protocol changes. Unknown writes retain existing verification flow.",
       "audit": "docs/audits/2026-10-14-official-chat-interactions.zh-CN.md"
+    },
+    "uiRulesSlice": {
+      "source": "Sidebar.tsx ChannelRow; channelUnreadIndicator.ts; ChatPanel.tsx renderChannelItem; messageGrouping.ts; DateDivider.tsx; App.tsx loading branch; raft-ui message-item and sidebar recipes",
+      "directReuse": "SidebarItem/SidebarItemCount/SidebarItemMetaIcon; unread indicator rules; stable message grouping and neighbor rhythm helpers; DateDivider and useTimeFormatter. MessageItem and all font/border/hover recipes unchanged.",
+      "structuralPort": "ChannelRow nested icon/title/mute/count slots and selected/menu-open classes. ChatPanel px-3 wrapper/containment and grouping props. Initial page-loading surface, with hidden/inert mounted data loaders until ready.",
+      "owners": "Canonical unread remains activity.list; stable messages and paging remain LoomChannelClient/RoomSession. No backend change or automatic read ACK.",
+      "audit": "docs/audits/2026-10-14-ui-rules-and-backend-bindings.zh-CN.md",
+      "limits": "Backend binding audit separates ready endpoints from unavailable edit/delete, missing preferences and excluded multi-Human/account features. Retained UI rules must not be changed to compensate for missing bindings."
     }
   },
   "rollout": {

@@ -58,16 +58,18 @@ export function SidebarContextMenu({
   disabled,
   label,
   surface = false,
+  onOpenChange,
 }: {
   children: ReactNode;
   items: SidebarMenuItem[];
   disabled?: boolean;
   label: string;
   surface?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
   const trigger = useRef<HTMLDivElement>(null);
   return (
-    <ContextMenu>
+    <ContextMenu onOpenChange={onOpenChange}>
       <ContextMenuTrigger
         ref={trigger}
         className={surface ? "min-h-full min-w-0" : "min-w-0 flex-1"}

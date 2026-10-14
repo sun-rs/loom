@@ -1,3 +1,10 @@
+import {
+  useStableMessageGrouping,
+  followedByFor,
+  followsSystemFor,
+} from "../packages/web/src/components/message/messageGrouping.ts";
+import { DateDivider } from "../packages/web/src/components/message/DateDivider.tsx";
+import { useTimeFormatter } from "../packages/web/src/hooks/useTimeFormatter.ts";
 import { useResizablePanel } from "../packages/web/src/hooks/useResizablePanel.ts";
 import { SIDEBAR_PANEL_BOUNDS } from "../packages/web/src/lib/panelBounds.ts";
 import PanelResizeHandle from "../packages/web/src/components/ui/PanelResizeHandle.tsx";
@@ -67,6 +74,11 @@ function Channel({
 }) {
   const isPrivate = channel.instancePrivateBox !== undefined;
   const [view, setView] = useState(() => bridge.view());
+  const { options: timeOptions } = useTimeFormatter();
+  const grouping = useStableMessageGrouping(
+    view.messages,
+    timeOptions.timeZone ?? undefined,
+  );
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [writeState, setWriteState] = useState(bridge.writes.state);
@@ -188,19 +200,35 @@ function Channel({
                 loadOlder: older,
                 loadNewer: async () => {},
               }}
-              renderItem={(message) => (
-                <MessageItem
-                  message={message}
-                  mentionMap={noMentions}
-                  channels={[]}
-                  readOnlyProjection
-                  readOnlySender={{
-                    displayName: message.senderDisplayName ?? "成员",
-                    avatarUrl: null,
-                    description: null,
-                  }}
-                  hideThreadActions
-                />
+              renderItem={(message, index) => (
+                <>
+                  {grouping.get(message.id)?.showDayDivider && (
+                    <DateDivider createdAt={message.createdAt} />
+                  )}
+                  <div
+                    className="px-3"
+                    style={{
+                      contain: "layout style",
+                      overflow: "clip visible",
+                    }}
+                  >
+                    <MessageItem
+                      message={message}
+                      groupState={grouping.get(message.id)}
+                      followedBy={followedByFor(view.messages, index, grouping)}
+                      followsSystem={followsSystemFor(view.messages, index)}
+                      mentionMap={noMentions}
+                      channels={[]}
+                      readOnlyProjection
+                      readOnlySender={{
+                        displayName: message.senderDisplayName ?? "成员",
+                        avatarUrl: null,
+                        description: null,
+                      }}
+                      hideThreadActions
+                    />
+                  </div>
+                </>
               )}
               className="h-full"
               testId="loom-message-timeline"
@@ -256,6 +284,8 @@ function Channel({
 }
 
 export default function ChannelApp() {
+  const [sidebarReady, setSidebarReady] = useState(false);
+  const onSidebarReady = useCallback(() => setSidebarReady(true), []);
   const sidebarPanel = useResizablePanel({
     storageKey: "loom:chatSidebarWidth",
     ...SIDEBAR_PANEL_BOUNDS,
@@ -419,135 +449,155 @@ export default function ChannelApp() {
       )}
     </>
   );
+  const bootstrapping =
+    !error &&
+    (!directory ||
+      (Boolean(directory.workspace.controlRoomId) && !sidebarReady));
   return (
-    <AppShellRoot
-      className="h-dvh min-h-screen overflow-hidden font-display"
-      data-testid="loom-channel-app"
-    >
-      {instanceTarget && directory?.workspace.controlRoomId && (
-        <AddInstanceDialog
-          target={instanceTarget}
-          controlRoomId={directory.workspace.controlRoomId}
-          onClose={() => setInstanceTarget(undefined)}
-        />
-      )}
-      <div className="relative flex min-h-0 min-w-0 flex-1">
-        <DesktopNavigation active={destination} onSelect={selectDestination} />
+    <>
+      {bootstrapping && (
         <div
-          className={
-            destination === "channels"
-              ? "flex min-h-0 min-w-0 flex-1"
-              : "hidden"
-          }
+          role="status"
+          data-testid="loom-bootstrap-loading"
+          className="fixed inset-0 z-[100] flex min-h-0 flex-1 items-center justify-center bg-brutal-cream font-display safe-top"
         >
-          <AppShellSidebarSlot
-            className="relative flex w-36 shrink-0 flex-col md:w-[var(--chat-sidebar-width)]"
-            style={
-              {
-                "--chat-sidebar-width": `${sidebarPanel.width}px`,
-              } as React.CSSProperties
-            }
-          >
-            <PanelResizeHandle
-              side="right"
-              visibleFrom="md"
-              data-testid="chat-sidebar-resize"
-              onPointerDown={sidebarPanel.handleResizeStart}
-              onPointerMove={sidebarPanel.handleResizeMove}
-              onPointerUp={sidebarPanel.handleResizeEnd}
-              onPointerCancel={sidebarPanel.handleResizeEnd}
-            />
-            {directory?.workspace.controlRoomId && (
-              <ChannelSidebar
-                client={client}
-                workspaceId={directory.workspace.workspaceId}
-                controlRoomId={directory.workspace.controlRoomId}
-                name={directory.workspace.name}
-                rooms={directory.channels}
-                archivedRooms={directory.archivedChannels}
-                onRoomsChanged={async () => {
-                  setDirectory(await loadChannelDirectory(client));
-                }}
-                selected={selected?.roomId ?? null}
-                onSelect={select}
-                onCreated={async (room) => {
-                  setDirectory(await loadChannelDirectory(client));
-                  setParams({ room: room.roomId });
-                }}
-              />
-            )}
-          </AppShellSidebarSlot>
-          <AppShellMainSlot className="bg-layer-canvas theme-brutal:bg-white">
-            {privateNotice}
-            {error ? (
-              <p role="alert" className="p-6">
-                {error}
-              </p>
-            ) : !directory ? (
-              <Spinner aria-label="正在连接 Loom" />
-            ) : selected ? (
-              <Channel
-                key={selected.roomId}
-                channel={selected}
-                bridge={bridge!}
-                onOpenPrivate={openPrivate}
-                onAddInstance={
-                  directory.workspace.controlRoomId
-                    ? () => {
-                        if (!hasUnresolvedIntents())
-                          setInstanceTarget({
-                            bridge: bridge!,
-                            name: selected.name,
-                          });
-                      }
-                    : undefined
-                }
-              />
-            ) : (
-              <p className="p-6">
-                {requested
-                  ? "此频道不存在或没有访问权限"
-                  : "暂无频道，请从频道列表菜单创建"}
-              </p>
-            )}
-          </AppShellMainSlot>
+          <div className="text-xl font-bold">正在加载…</div>
         </div>
-        {directory?.workspace.controlRoomId && (
-          <AgentPage
-            client={client}
-            workspaceId={directory.workspace.workspaceId}
+      )}
+      <AppShellRoot
+        inert={bootstrapping ? true : undefined}
+        className={`h-dvh min-h-screen overflow-hidden font-display ${bootstrapping ? "invisible" : ""}`}
+        data-testid="loom-channel-app"
+      >
+        {instanceTarget && directory?.workspace.controlRoomId && (
+          <AddInstanceDialog
+            target={instanceTarget}
             controlRoomId={directory.workspace.controlRoomId}
-            active={destination === "agents"}
-            notice={privateNotice}
-            onOpenChannel={select}
-            onOpenPrivate={openPrivate}
+            onClose={() => setInstanceTarget(undefined)}
           />
         )}
-        {directory &&
-          (destination === "search" || destination === "activity") && (
-            <DiscoveryPage
+        <div className="relative flex min-h-0 min-w-0 flex-1">
+          <DesktopNavigation
+            active={destination}
+            onSelect={selectDestination}
+          />
+          <div
+            className={
+              destination === "channels"
+                ? "flex min-h-0 min-w-0 flex-1"
+                : "hidden"
+            }
+          >
+            <AppShellSidebarSlot
+              className="relative flex w-36 shrink-0 flex-col md:w-[var(--chat-sidebar-width)]"
+              style={
+                {
+                  "--chat-sidebar-width": `${sidebarPanel.width}px`,
+                } as React.CSSProperties
+              }
+            >
+              <PanelResizeHandle
+                side="right"
+                visibleFrom="md"
+                data-testid="chat-sidebar-resize"
+                onPointerDown={sidebarPanel.handleResizeStart}
+                onPointerMove={sidebarPanel.handleResizeMove}
+                onPointerUp={sidebarPanel.handleResizeEnd}
+                onPointerCancel={sidebarPanel.handleResizeEnd}
+              />
+              {directory?.workspace.controlRoomId && (
+                <ChannelSidebar
+                  client={client}
+                  workspaceId={directory.workspace.workspaceId}
+                  controlRoomId={directory.workspace.controlRoomId}
+                  onReady={onSidebarReady}
+                  name={directory.workspace.name}
+                  rooms={directory.channels}
+                  archivedRooms={directory.archivedChannels}
+                  onRoomsChanged={async () => {
+                    setDirectory(await loadChannelDirectory(client));
+                  }}
+                  selected={selected?.roomId ?? null}
+                  onSelect={select}
+                  onCreated={async (room) => {
+                    setDirectory(await loadChannelDirectory(client));
+                    setParams({ room: room.roomId });
+                  }}
+                />
+              )}
+            </AppShellSidebarSlot>
+            <AppShellMainSlot className="bg-layer-canvas theme-brutal:bg-white">
+              {privateNotice}
+              {error ? (
+                <p role="alert" className="p-6">
+                  {error}
+                </p>
+              ) : !directory ? (
+                <Spinner aria-label="正在连接 Loom" />
+              ) : selected ? (
+                <Channel
+                  key={selected.roomId}
+                  channel={selected}
+                  bridge={bridge!}
+                  onOpenPrivate={openPrivate}
+                  onAddInstance={
+                    directory.workspace.controlRoomId
+                      ? () => {
+                          if (!hasUnresolvedIntents())
+                            setInstanceTarget({
+                              bridge: bridge!,
+                              name: selected.name,
+                            });
+                        }
+                      : undefined
+                  }
+                />
+              ) : (
+                <p className="p-6">
+                  {requested
+                    ? "此频道不存在或没有访问权限"
+                    : "暂无频道，请从频道列表菜单创建"}
+                </p>
+              )}
+            </AppShellMainSlot>
+          </div>
+          {directory?.workspace.controlRoomId && (
+            <AgentPage
               client={client}
               workspaceId={directory.workspace.workspaceId}
-              mode={destination}
-              onOpenRoom={async (id) => {
-                if (hasUnresolvedIntents()) throw Error("仍有未决操作");
-                const next = await loadChannelDirectory(client);
-                if (
-                  ![...next.channels, ...next.privateBoxes].some(
-                    (room) => room.roomId === id,
-                  )
-                )
-                  throw Error("对话不可用");
-                setDirectory(next);
-                setParams({ room: id });
-              }}
+              controlRoomId={directory.workspace.controlRoomId}
+              active={destination === "agents"}
+              notice={privateNotice}
+              onOpenChannel={select}
+              onOpenPrivate={openPrivate}
             />
           )}
-        {!["channels", "agents", "search", "activity"].includes(
-          destination,
-        ) && <DestinationPlaceholder active={destination} />}
-      </div>
-      <MobileNavigation active={destination} onSelect={selectDestination} />
-    </AppShellRoot>
+          {directory &&
+            (destination === "search" || destination === "activity") && (
+              <DiscoveryPage
+                client={client}
+                workspaceId={directory.workspace.workspaceId}
+                mode={destination}
+                onOpenRoom={async (id) => {
+                  if (hasUnresolvedIntents()) throw Error("仍有未决操作");
+                  const next = await loadChannelDirectory(client);
+                  if (
+                    ![...next.channels, ...next.privateBoxes].some(
+                      (room) => room.roomId === id,
+                    )
+                  )
+                    throw Error("对话不可用");
+                  setDirectory(next);
+                  setParams({ room: id });
+                }}
+              />
+            )}
+          {!["channels", "agents", "search", "activity"].includes(
+            destination,
+          ) && <DestinationPlaceholder active={destination} />}
+        </div>
+        <MobileNavigation active={destination} onSelect={selectDestination} />
+      </AppShellRoot>
+    </>
   );
 }

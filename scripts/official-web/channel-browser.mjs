@@ -1,3 +1,4 @@
+import { verifyChatBootstrap } from "./chat-rules-browser.mjs";
 import { verifySidebarActions } from "./sidebar-actions-browser.mjs";
 import { verifyDiscovery } from "./discovery-browser.mjs";
 import { verifyManagement } from "./management-browser.mjs";
@@ -132,7 +133,7 @@ try {
       }
       return route.continue();
     });
-    await page.goto(`${origin}/?room=${channels[0].roomId}`);
+    await verifyChatBootstrap(page, origin, channels[0].roomId);
     await page
       .locator(`[data-public-channel-id="${channels[2].roomId}"]`)
       .click();

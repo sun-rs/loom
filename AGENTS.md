@@ -313,6 +313,15 @@ notices. Legacy `rah` code is not a default dependency.
 
 ## UI and interaction contract
 
+Owner ruling (2026-10-14): selective official-UI adoption may omit unsupported
+features and their controls, but must preserve the retained surfaces' UI rules:
+source dimensions/proportions, fonts/colors, hover/selected states, menu and
+notification semantics, layering, and click/disclosure behavior. Read the
+complete upstream composition chain (page, wrapper, component, recipe and
+state parameters) before wiring data. Component reuse alone does not prove
+parity. Record unsupported behavior explicitly; do not replace native gestures
+or reshape retained components as a shortcut for missing backend bindings.
+
 Owner decision (2026-10-14): replace the reconstructed product frontend with
 the official Raft source as the phase-4 base. The initial source/build intake
 lives in `frontends/raft`, isolated from production deployment until its Loom
