@@ -43,6 +43,26 @@
       "passed": 16,
       "failed": 0,
       "exitCode": 0
+    },
+    "formalPage": {
+      "passed": true,
+      "viewports": [
+        {
+          "width": 1440,
+          "height": 1000
+        },
+        {
+          "width": 390,
+          "height": 844
+        }
+      ],
+      "dpr": 1,
+      "readOnly": true,
+      "privateRowsMatchCanonicalDirectory": true,
+      "privateRowsExcludedFromChannelGroup": true,
+      "realPrivateHistoryAndReload": true,
+      "screenshotsInspected": true,
+      "operatorCorrections": "Two initial local probe syntax failures made no requests; corrected probe passed. Repeated only to scroll the existing private group into the screenshot viewport."
     }
   },
   "paidCli": false,
@@ -52,5 +72,18 @@
     "Cross-window newly opened private boxes require directory refresh.",
     "Viewport-aware automatic read; notice-only mark-unread positioning.",
     "Instance inspector/Fork/Side, Threads/attachments, complete Search/Tasks/Settings."
-  ]
+  ],
+  "sourceCommit": "b7c79ad070360a378021a1c34682102068fdf91e",
+  "deployment": {
+    "service": "com.loom.evo",
+    "url": "http://127.0.0.1:4176/",
+    "webBuildId": "2a75cb43de1ac8e005c27399d662eb5e568043bc184884b03f6f2dd796f10d8b",
+    "backupDatabases": 2,
+    "backupFiles": 318,
+    "businessTablesUnchanged": 18,
+    "volatileFieldExcluded": "subscription_cursors.updated_at only; identity/read/ACK positions compared exactly",
+    "runtimeFlagsPreserved": true,
+    "verified": true,
+    "at": "2026-10-14T18:23:22.642Z"
+  }
 }
