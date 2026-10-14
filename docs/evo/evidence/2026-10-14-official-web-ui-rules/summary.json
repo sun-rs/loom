@@ -1,0 +1,32 @@
+{
+  "stage": "ui-rules-v11",
+  "sourceCommit": "4631a3b09393eea2c4cbbc0820902953c159460e",
+  "upstreamReceipt": "../../../../frontends/raft/adoption.json",
+  "audit": "../../../audits/2026-10-14-ui-rules-and-backend-bindings.zh-CN.md",
+  "implemented": [
+    "Official in-row pink/white unread counts replace the external attention dot; muted/selected/menu-open states use original recipes.",
+    "ChatPanel horizontal inset, date dividers, same-sender continuation and neighbor rhythm props restored; original MessageItem recipes unchanged.",
+    "Whole-page initial loading replaces the sidebar-only loading hint; underlying controls hidden/inert until bootstrap settles.",
+    "Owner UI-rules constraint and backend-binding inventory recorded."
+  ],
+  "verification": {
+    "tdd": "Delayed sidebar read fails old full-page loading assertion. Browser regression caught premature background search interaction during bootstrap; visibility corrected without weakening search assertions.",
+    "check": "exit 0: backend 3209 pass / 22 opt-in skipped, console 63, browser policy 15, efficiency tooling 558, official-source/projection 20.",
+    "formatCheck": "passed",
+    "diffCheck": "passed",
+    "typecheckAndOfficialBuild": "passed",
+    "buildWebWorkbench": "passed",
+    "browser": "1440x1000 and 390x844 DPR1, all existing flows plus bootstrap/inset/compact/count assertions.",
+    "formalPage": "Fresh real service, same viewports, all existing readonly page checks and additional rules.json measurements; screenshots inspected.",
+    "deployment": "Verified backup of 2 databases/318 files, graceful com.loom.evo restart; 18 business projections unchanged. Subscription updated_at excluded; identities/read sequences compared exactly.",
+    "operatorAssertionCorrection": "First private style probe incorrectly expected literal RGB pure-black/white strings. Final probe resolves official --color-line-strong and --color-white tokens and compares their actual computed colors, including OKLCH serialization; no product color changes."
+  },
+  "paidCli": false,
+  "backendChanged": false,
+  "remaining": [
+    "Mobile list/detail and search navigation still need native composition restoration.",
+    "Thread/task/message actions, attachments, instance inspector/usage/fork/side, memory and settings remain partially unbound; see inventory.",
+    "Message edit/delete have no public client operation and cannot be advertised as simple ready bindings.",
+    "No claim of complete upstream UI parity."
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "readOnly": true,
+  "paidCli": false,
+  "results": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "dpr": 1,
+      "fullPageLoading": true,
+      "noSidebarLoadingText": true,
+      "continuationGrouping": true,
+      "messageInset": 12,
+      "hoverGeometryUnchanged": true,
+      "border": {
+        "width": "2px",
+        "color": "oklch(0.18 0.006 25)"
+      },
+      "unreadBadge": {
+        "color": "oklch(1 0 0)",
+        "background": "rgb(254, 125, 168)",
+        "text": "12"
+      },
+      "pageErrors": []
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "dpr": 1,
+      "fullPageLoading": true,
+      "noSidebarLoadingText": true,
+      "continuationGrouping": true,
+      "messageInset": 12,
+      "hoverGeometryUnchanged": true,
+      "border": {
+        "width": "2px",
+        "color": "oklch(0.18 0.006 25)"
+      },
+      "unreadBadge": {
+        "color": "oklch(1 0 0)",
+        "background": "rgb(254, 125, 168)",
+        "text": "12"
+      },
+      "pageErrors": []
+    }
+  ]
+}

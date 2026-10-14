@@ -1,0 +1,110 @@
+{
+  "at": "2026-10-14T14:53:03.866Z",
+  "origin": "http://127.0.0.1:4176",
+  "readOnlyAcceptance": true,
+  "paidCli": false,
+  "results": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "dpr": 1,
+      "realHistoryMessageVerified": true,
+      "realPrivateHistoryAndReload": true,
+      "sparseHistoryTopAligned": true,
+      "sparseHistoryGeometry": {
+        "height": 780,
+        "top": 94,
+        "rows": [
+          {
+            "id": "message_b2855038-9531-4cfc-a06b-be0f5f9b8d46",
+            "top": 95,
+            "bottom": 188
+          },
+          {
+            "id": "message_6015f8c8-701e-47e1-8b39-79861acfa757",
+            "top": 188,
+            "bottom": 250
+          }
+        ]
+      },
+      "privateActive": true,
+      "realMembersVerified": 4,
+      "globalNavigationSixDestinations": true,
+      "agentPageReloadAndReturnToPrivate": true,
+      "resultRowsNoOverflow": true,
+      "searchMatchesApi": true,
+      "searchContextExactMessage": true,
+      "searchQueryReload": true,
+      "activityMatchesApi": true,
+      "roleManagementMatchesApi": true,
+      "instanceManagementMatchesApi": true,
+      "channelMenuVisible": true,
+      "sidebarActionsReadOnly": true,
+      "instanceCount": 68,
+      "rolePickerMatchesApi": true,
+      "roleCount": 42,
+      "duplicateRoleLabels": 1,
+      "roleCreationSubmitted": false,
+      "executionAndQueueLabelsMatchApi": true,
+      "memberDialogEscapeAndFocusReturn": true,
+      "reload": true,
+      "consoleAvailable": true,
+      "horizontalOverflow": false,
+      "pageErrors": [],
+      "webBuildId": "5ce21d543438b3dc4a2fea9a3d1b4dd12adc7d544f7766feda876dea8247c387"
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "dpr": 1,
+      "realHistoryMessageVerified": true,
+      "realPrivateHistoryAndReload": true,
+      "sparseHistoryTopAligned": true,
+      "sparseHistoryGeometry": {
+        "height": 559,
+        "top": 126,
+        "rows": [
+          {
+            "id": "message_b2855038-9531-4cfc-a06b-be0f5f9b8d46",
+            "top": 127,
+            "bottom": 300
+          },
+          {
+            "id": "message_6015f8c8-701e-47e1-8b39-79861acfa757",
+            "top": 300,
+            "bottom": 462
+          }
+        ]
+      },
+      "privateActive": true,
+      "realMembersVerified": 4,
+      "globalNavigationSixDestinations": true,
+      "agentPageReloadAndReturnToPrivate": true,
+      "resultRowsNoOverflow": true,
+      "searchMatchesApi": true,
+      "searchContextExactMessage": true,
+      "searchQueryReload": true,
+      "activityMatchesApi": true,
+      "roleManagementMatchesApi": true,
+      "instanceManagementMatchesApi": true,
+      "channelMenuVisible": true,
+      "sidebarActionsReadOnly": true,
+      "instanceCount": 68,
+      "rolePickerMatchesApi": true,
+      "roleCount": 42,
+      "duplicateRoleLabels": 1,
+      "roleCreationSubmitted": false,
+      "executionAndQueueLabelsMatchApi": true,
+      "memberDialogEscapeAndFocusReturn": true,
+      "reload": true,
+      "consoleAvailable": true,
+      "horizontalOverflow": false,
+      "pageErrors": [],
+      "webBuildId": "5ce21d543438b3dc4a2fea9a3d1b4dd12adc7d544f7766feda876dea8247c387"
+    }
+  ]
+}
