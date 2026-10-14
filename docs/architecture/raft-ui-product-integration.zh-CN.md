@@ -18,6 +18,8 @@
 
 2026-10-14 第三阶段私聊切片：成员行使用官方 trailing action 打开实例私聊，复用同一套 MessageTimeline / MessageItem / compact MessageInput。`room.direct.open` 通过 control RoomSession 与共享 WriteIntentSlot 发送；响应未知时保留 peer、因果位置与幂等键，仅显式核实原请求。私聊使用独立 roomId 的 MessageSession，URL 刷新恢复同一个 box；频道目录不混入私聊消息，Side 暂不接入。历史快照不含私聊 active 标记，当前可用性从认证 room.list 读取，失联时禁止发送，停用时历史只读。界面说明私聊沿用实例会话、忙时排队，以及显式记忆写入仍属频道共享。没有新后端处理器、会话或投递队列；完整私聊侧栏、附件、执行详情与管理操作仍留 console。本阶段已部署，真实私聊历史／刷新及双尺寸页面核验通过，见[私聊切片证据](../evo/evidence/2026-10-14-official-web-private/summary.json)。
 
+2026-10-14 历史布局修正：负责人反馈短历史贴在输入框上方；本地组合层将官方 MessageTimeline 的现有 `sparseAnchor` 参数从 `bottom` 改为 `top`，频道与私聊共用，消息仍按旧到新向下排列。官方源码不变，长历史仍定位最新内容并支持向上分页；不改后端顺序、分页或会话。双尺寸几何回归先复现779px顶部空白，再验证贴顶；真实私聊页面检查通过，见[修复证据](../evo/evidence/2026-10-14-official-web-history-alignment/summary.json)。
+
 2026-09-08：用户明确[退役 RAH 托管 MCP](../product/managed-mcp-retirement.zh-CN.md)。Settings 与 Agent 详情不再提供该模块；历史截图、测试通过记录不构成重新接入理由。
 
 状态：**Phase 4B implemented / anchored Task tutorial slice**（2026-08-27）。下方早期能力清单不作为当前完成率；最新证据按 docs/README 的日期索引读取。

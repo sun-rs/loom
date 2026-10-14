@@ -1,0 +1,33 @@
+{
+  "sourceCommit": "b1c8eba1d2321ade2e81159f63e276e44dcee68e",
+  "scope": "Sparse channel and instance private-box histories start at top and grow downward; existing long-history pagination and tail behavior retained.",
+  "rootCause": "Local ChannelApp explicitly selected MessageTimeline sparseAnchor=bottom; chronological order was already correct.",
+  "implementation": "Use the unchanged official MessageTimeline supported sparseAnchor=top prop; no backend changes or upstream source edits.",
+  "verification": {
+    "tdd": "Browser regression failed before the change with first-row offset 779px; passed after the prop change.",
+    "isolatedBrowser": "browser.json: temporary real Core; channel and private histories checked geometrically at 1440x1000 and 390x844 DPR1; one/two rows in chronological order; existing pagination, refresh, unknown-write replay, membership and inactive-private checks passed.",
+    "fullCheck": "npm run check exited 0 in one uninterrupted run.",
+    "formatAndDiff": "npm run format:check and git diff --check passed.",
+    "build": "Typechecked channel build and clean-commit build:web:workbench passed.",
+    "production": "page.json: real existing private histories start 1px below timeline top at both sizes; channel history, members/API labels, refresh and console verified; private screenshots visually inspected.",
+    "realCli": "not run",
+    "paidModels": "not run"
+  },
+  "deployment": "deployment.json",
+  "dataPreservation": {
+    "databasesBackedUp": 2,
+    "filesBackedUp": 318,
+    "businessTablesCompared": 18,
+    "volatileFieldExcluded": "subscription_cursors.updated_at only; cursor identity and last_seq compared exactly",
+    "sameDataHome": true
+  },
+  "limits": [
+    "Private sidebar, management, attachments, execution details and full MainLayout remain outside this repair; console retained.",
+    "Production acceptance was read-only; mutation checks used isolated temporary Core."
+  ],
+  "screenshots": {
+    "private-1440.png": "83bc3b33b9d292084b92410720f9ec3fcd52b336a296141a8439a4429d725e71",
+    "private-390.png": "3b9bec7b6e30e5daa9792a40f22149495127c5672d67b374c0874ed739742311"
+  },
+  "privateEvidenceDirectory": "/Users/sun/.loom/reviews/2026-10-14-official-web-history-alignment"
+}
