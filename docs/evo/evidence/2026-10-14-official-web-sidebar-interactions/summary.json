@@ -1,0 +1,40 @@
+{
+  "stage": "sidebar-interactions-v8",
+  "sourceCommit": "2a597edcfa7471ccfa86b868eeea41671e3742c9",
+  "upstreamReceipt": "../../../../frontends/raft/adoption.json",
+  "implementation": {
+    "header": "Removed duplicate heading; section toggle, ArrowUpDown sort, Plus create channel. Existing group actions in context menu.",
+    "rows": "No ellipsis action button; right-click, Shift+F10/ContextMenu and touch long-press use raft-ui ContextMenu primitives, viewport collision handling and return focus to original row.",
+    "owners": "Existing sidebar.get/patch, room.create, WriteIntentSlot and expectedVersion; no backend, protocol, scheduler or prompt changes."
+  },
+  "verification": {
+    "tdd": "New browser test failed on missing dedicated create button before implementation. Keyboard context-menu focus return regression covered before finalFocus binding; focus assertions wait for actual focus restoration.",
+    "browser": "browser.json: final product build, real temporary Core with fake discovery, no paid provider. 1440x1000 and 390x844 DPR1: single heading, exact icons, absence of ellipsis, right-click without navigation, viewport bounds, Escape, outside press, focus return, keyboard and touch long-press; existing management, unknown replay, CAS conflict, search/activity retained.",
+    "source": "15 source/projection tests passed; upstream hashes unchanged.",
+    "build": "Typechecked official channel build and clean-commit build:web:workbench passed.",
+    "paidCli": "not run",
+    "fullCheck": "npm run check exited 0: backend 3209 passed, 22 opt-in skipped; console 63, browser policy 15, efficiency tooling 558, official source/projection 15 passed. Prior prewarm recovery case passed; prior evidence retained, no backend fix claimed.",
+    "formatAndDiff": "format:check and git diff --check passed.",
+    "production": "page.json: both sizes passed on real service, same sidebar interaction helper, real history, members, Role/instance and search/activity data verified. Screenshots visually inspected; no formal business mutations or paid CLI calls."
+  },
+  "limits": [
+    "Manual move remains context-menu up/down, not drag/drop.",
+    "Channel/custom groups use existing shared channel sort preference; pinned sorting is separate.",
+    "Plus creates a channel in the default list; moving to a custom group remains explicit.",
+    "No archive/unread/mute controls added."
+  ],
+  "privateEvidenceDirectory": "/Users/sun/.loom/reviews/2026-10-14-official-web-sidebar-interactions",
+  "deployment": "deployment.json",
+  "dataPreservation": {
+    "databasesBackedUp": 2,
+    "filesBackedUp": 318,
+    "businessTablesCompared": 18,
+    "volatileFieldExcluded": "subscription_cursors.updated_at only; identities and last_seq exact",
+    "schema": 89,
+    "sameDataHome": true
+  },
+  "screenshots": {
+    "channel-context-390.png": "b2bbdf5a242b0f12eac9d01186959921dc9e363a2b8ea4d63bbaf651903b1133",
+    "channel-menu-1440.png": "9544003e0096a941bd6df5286efc90f0140c68cf5957a64b785be1763b87a228"
+  }
+}
