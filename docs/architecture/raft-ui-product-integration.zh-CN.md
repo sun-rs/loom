@@ -32,6 +32,10 @@
 
 2026-09-01 导航补充：Search/Activity/Tasks/Saved/Notifications 不再各自拼接页面状态，而是共享 protocol `NavigationTarget`。Web URL 只是 reload-safe projection；每次打开目标必须先经 Kernel Human ACL/存在性解析。Raft NotificationCenter 的 open/view/dismiss 交互被结构化移植，但中央套餐/账号条件不进入本机架构。详见[Notifications 与 typed navigation 合同](../product/2026-09-01-notifications-typed-navigation-contract.zh-CN.md)。
 
+2026-10-14 第六阶段管理切片：Agent 大页接入 Role 创建／修订／删除、实例添加到频道／重启／移除，以及频道／私聊跳转。重启默认保留冻结配置，仅显式选择才采用当前 Role 修订；删除 Role 不删除现有实例。频道二级侧栏接入新建频道、自定义分组创建／改名／删除、频道移组、置顶／取消置顶、行与分组手动上下移动，以及按名称／最近活动排序。分组与排序持久化使用既有 Human workspace sidebar API 的版本比较；响应丢失保留原请求核实，另一窗口已修改时拒绝旧版本覆盖。
+
+本阶段原样复用官方 PublicServerSidebarFrame／Row、ChannelMemberListShell／Row、PanelHeader、FormField 与 raft-ui 基础组件；Loom 管理页、菜单与原生 select 表单属于本地组合，参考官方 Sidebar／SidebarSectionDialog，不能称为完整原装页面直接复用。Role 表单纯逻辑从 console 提升至 client-core，console re-export，产品不依赖将被删除的 console。手动排序暂用菜单上下移动，拖拽、归档列表、未读／静音控制及高级实例详情未移植；四个其余大页仍为骨架，console 保留。新增能力与两尺寸隔离验收见[管理切片证据](../evo/evidence/2026-10-14-official-web-management/summary.json)；部署状态以 status 当前部署行为准。
+
 ## 1. 当前决策：内部维护，参考证据只读
 
 2026-09-04 起以 [ADR 0028](../adr/0028-owned-neo-brutalist-ui-library.md) 和

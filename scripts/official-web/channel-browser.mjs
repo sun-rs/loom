@@ -1,3 +1,4 @@
+import { verifyManagement } from "./management-browser.mjs";
 import { verifyGlobalNavigation } from "./navigation-browser.mjs";
 import { verifyInstanceCreation } from "./instance-browser.mjs";
 import { verifyPrivateBoxes } from "./private-browser.mjs";
@@ -374,6 +375,14 @@ try {
     channel: channels[2],
     role,
   });
+  const managementResults = await verifyManagement({
+    browser,
+    origin,
+    client,
+    workspace,
+    channel: channels[2],
+    offer,
+  });
   console.log(
     JSON.stringify(
       {
@@ -384,6 +393,7 @@ try {
         privateResults,
         instanceResults,
         navigationResults,
+        managementResults,
       },
       null,
       2,

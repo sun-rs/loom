@@ -5,7 +5,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./write-intent": "./src/write-intent.ts"
+    "./write-intent": "./src/write-intent.ts",
+    "./role-form": "./src/role-form.ts"
   },
   "dependencies": {
     "@rah-os/client-sdk": "*",

@@ -2309,19 +2309,21 @@
     "Do not deploy this baseline against production or connect it to upstream accounts."
   ],
   "loomChannelSlice": {
-    "status": "staged product: channel text, member state, instance private box and adding instances from existing Roles; console retained",
+    "status": "staged product: channel text, members, private boxes, Role and instance management, durable channel sidebar management; console retained",
     "entry": "loom/main.tsx",
     "composition": "loom/ChannelApp.tsx",
     "dataAdapter": "loom/channel-client.ts",
     "upstreamChanges": [],
     "directReuse": [
-      "packages/web/src/components/server/PublicServerChannelSidebar.tsx",
       "packages/web/src/components/ui/PanelHeader.tsx",
       "packages/web/src/components/message/MessageTimeline.tsx",
       "packages/web/src/components/message/MessageItem.tsx",
       "packages/web/src/components/message/MessageInput.tsx",
       "packages/web/src/AppProviders.tsx",
-      "packages/web/src/components/channel/ChannelMemberList.tsx"
+      "packages/web/src/components/channel/ChannelMemberList.tsx",
+      "packages/web/src/components/server/PublicServerSidebarFrame.tsx",
+      "packages/web/src/components/server/PublicServerChannelRow.tsx",
+      "packages/web/src/components/ui/FormField.tsx"
     ],
     "structuralPort": {
       "source": "packages/web/src/pages/PublicServerPage.tsx",
@@ -2343,7 +2345,7 @@
       "owner": "Existing role.list / role.instantiate; shared channel RoomSession and WriteIntentSlot",
       "presentation": "Unchanged official ChannelMemberListShell/ChannelMemberRow and raft-ui Dialog/Button; local Role picker",
       "localChanges": "Create a new Role instance, allowing repeated Role use in a channel; Kernel assigns name and freezes revision. Unknown result retains target and exact request until explicit verification.",
-      "limits": "Role creation/editing and instance remove/restart remain console-only. No provider configuration or backend changes."
+      "limits": "Role creation/edit/delete and instance restart/remove now also available on Agent page; advanced lifecycle/inspection remains console-only."
     },
     "navigationShell": {
       "owner": "Local URL view selects presentation only; existing channel client-core owners remain mounted across page changes",
@@ -2354,11 +2356,18 @@
       ],
       "structuralPort": "Official LeftRail desktop grouping and MainLayout in-flow mobile navigation; authenticated Loom URL targets replace upstream server/account stores",
       "localChanges": "Six sections: Search, Channels, Activity, Tasks, Agent, Settings. Desktop Settings footer retained. Mobile exposes the same six destinations instead of upstream four tabs. Agent denotes Role/instance management; unfinished pages explicitly unavailable with console link; no unread/status/account fixtures.",
-      "limits": "This is navigation skeleton, not full MainLayout or implemented Search/Tasks/Activity/Settings/Agent pages; existing member popup remains available until management page replaces it."
+      "limits": "Search/Tasks/Activity/Settings remain explicit placeholders; Agent management connected. Console retained for advanced capabilities."
+    },
+    "managementSlice": {
+      "owner": "Existing role.*, instance.session.reset, room.member.remove, room.create and sidebar.get/patch; client-core RoomSession / WriteIntentSlot and shared Role form validation. No new backend state or handlers.",
+      "directReuse": "Unmodified PublicServerSidebarFrame/Row, ChannelMemberListShell/Row, PanelHeader, FormField and raft-ui Dialog/DropdownMenu/Input/Textarea/Button.",
+      "localComposition": "Agent Role/instance tabs and forms replace upstream single-Agent/server stores. Sidebar grouping and menus follow Sidebar.tsx / SidebarSectionDialog.tsx behavior; local typed SDK projection and native select fields are local glue, not byte-exact reuse of whole pages.",
+      "behavior": "Role create/revise/delete; frozen instances instantiate/restart keep-or-adopt/remove; channel creation with optional fixed attached paths; custom groups create/rename/delete/move, pin/unpin, section and row manual ordering, name/recent ordering; durable per-Human preferences with expectedVersion, exact unknown-write replay, rejected concurrent patches reload without overwrite.",
+      "limits": "Manual ordering uses menu up/down, not upstream drag/drop. No archived-channel list, unread controls, mute controls, joint/public channels or full official Agent details. Section collapse is transient presentation state. No paid CLI calls."
     }
   },
   "rollout": {
-    "stage": "navigation-shell-v5",
+    "stage": "management-v6",
     "consoleRetained": true,
     "ownerDecision": "2026-10-14: deploy Web in stages for visual inspection; channel text slice first; incomplete capabilities remain in console."
   }

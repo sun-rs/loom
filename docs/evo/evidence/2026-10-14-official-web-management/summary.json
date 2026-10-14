@@ -1,0 +1,36 @@
+{
+  "stage": "management-v6",
+  "ownerDirection": "Move Role and instance management into Agent; add channel list grouping, ordering, pinning and creation using the official presentation.",
+  "upstreamReceipt": "../../../../frontends/raft/adoption.json",
+  "scope": [
+    "Agent: Role create/revise/delete, instantiate into channel, instance restart with keep/default or explicit adoption, remove, channel/private navigation",
+    "Channel sidebar: create channel with optional fixed attached directories; create/rename/delete groups without deleting channels; move channels between groups; pin/unpin retaining original group; manual adjacent row/section ordering; alphabetical/recent ordering"
+  ],
+  "owners": {
+    "backend": "Existing Role, membership, lifecycle, room.create and per-Human sidebar APIs only. No backend handler, protocol or database changes.",
+    "client": "Existing client-core RoomSession and WriteIntentSlot; role form helpers moved unchanged from console into client-core and re-exported by console. Sidebar pure projection has no independent durable state.",
+    "presentation": "Unchanged official Frame/Row, MemberList/Row, PanelHeader/FormField and raft-ui primitives. Local composition, native select fields and menus; not a copy of full official Sidebar/Agent pages."
+  },
+  "verification": {
+    "tdd": [
+      "Management browser red on missing create Role button before implementation",
+      "Sidebar projection/order unit red before implementation",
+      "Private open from Agent regression red on missing unknown-result recovery notice",
+      "Intake stage assertion red before receipt update"
+    ],
+    "isolatedBrowser": "browser.json: desktop 1440x1000 and mobile 390x844 DPR1; all preceding channel/private/member/navigation gates retained; Role create lost response exact replay; frozen revision and explicit adoption; delete Role keeps instance; private open recovery; group/pin/order persistence; sidebar response loss replay and concurrent version refusal; no page errors. Real temporary Core with fake discovery, prewarm off; no provider execution.",
+    "consoleUnit": "63 passed after pure form-helper extraction",
+    "source": "15 source/projection checks passed; official recorded source hashes unchanged",
+    "fullCheck": "running; result recorded before deployment",
+    "deployment": "not yet deployed at this source checkpoint",
+    "paidCli": "not run"
+  },
+  "limits": [
+    "Manual reordering uses menu up/down; drag/drop not ported.",
+    "Archived-channel list, unread/mute controls, full private-box sidebar, attachments, RunAttempt details and complete MainLayout remain unported; console retained.",
+    "Search/Tasks/Activity/Settings remain explicit placeholders.",
+    "Group collapse is transient view state.",
+    "Historical duplicate Role labels are preserved; no data migration or cleanup."
+  ],
+  "privateEvidenceDirectory": "/Users/sun/.loom/reviews/2026-10-14-official-web-management"
+}

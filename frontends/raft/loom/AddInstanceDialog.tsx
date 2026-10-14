@@ -94,7 +94,7 @@ export default function AddInstanceDialog({
               <Spinner aria-label="正在读取角色" />
             )
           ) : !catalog.roles.length ? (
-            <p>暂无角色，请先在控制台创建。</p>
+            <p>暂无角色，请先在 Agent 页创建。</p>
           ) : (
             <ChannelMemberListShell>
               {catalog.roles.map((role) => (

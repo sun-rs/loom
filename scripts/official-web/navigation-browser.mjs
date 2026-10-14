@@ -44,16 +44,22 @@ export async function verifyGlobalNavigation({ browser, origin, channel }) {
           .getAttribute("aria-current"),
         "page",
       );
-      await page
-        .getByText("页面骨架已就位，内容尚未接入。", { exact: true })
-        .waitFor();
-      assert.equal(await page.locator("textarea").isVisible(), false);
-      assert.equal(
+      if (id === "agents")
         await page
-          .getByRole("link", { name: "打开临时控制台", exact: true })
-          .getAttribute("href"),
-        "/_rah/console/",
-      );
+          .getByRole("button", { name: "新建角色", exact: true })
+          .waitFor();
+      else {
+        await page
+          .getByText("页面骨架已就位，内容尚未接入。", { exact: true })
+          .waitFor();
+        assert.equal(await page.locator("textarea").isVisible(), false);
+        assert.equal(
+          await page
+            .getByRole("link", { name: "打开临时控制台", exact: true })
+            .getAttribute("href"),
+          "/_rah/console/",
+        );
+      }
     }
     await nav.getByRole("button", { name: "频道", exact: true }).click();
     await page.locator("textarea").waitFor({ state: "visible" });

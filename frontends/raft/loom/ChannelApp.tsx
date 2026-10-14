@@ -22,7 +22,8 @@ import { Hash, MessageSquare } from "lucide-react";
 import { HttpRahClient } from "@rah-os/client-sdk";
 import { hasUnresolvedIntents } from "@rah-os/client-core/write-intent";
 import { loadOrCreateConsumerId } from "@rah-os/client-core";
-import PublicServerChannelSidebar from "../packages/web/src/components/server/PublicServerChannelSidebar.tsx";
+import ChannelSidebar from "./ChannelSidebar.tsx";
+import AgentPage from "./AgentPage.tsx";
 import PanelHeader from "../packages/web/src/components/ui/PanelHeader.tsx";
 import MessageTimeline from "../packages/web/src/components/message/MessageTimeline.tsx";
 import MessageItem from "../packages/web/src/components/message/MessageItem.tsx";
@@ -367,6 +368,34 @@ export default function ChannelApp() {
     },
     [setParams, bridges],
   );
+  const privateNotice = (
+    <>
+      {boxState === "pending" && (
+        <p role="status" className="p-3 text-sm">
+          正在打开私聊…
+        </p>
+      )}
+      {boxState === "unknown" && (
+        <div role="alert" className="p-3 text-sm">
+          打开私聊结果未知。
+          <Button
+            onClick={() =>
+              void boxes?.writes
+                .retry()
+                .catch(() => setBoxError("暂时无法核实，请稍后重试。"))
+            }
+          >
+            核实打开私聊
+          </Button>
+        </div>
+      )}
+      {boxError && (
+        <p role="alert" className="p-3 text-sm">
+          {boxError}
+        </p>
+      )}
+    </>
+  );
   return (
     <AppShellRoot
       className="h-dvh min-h-screen overflow-hidden font-display"
@@ -389,42 +418,24 @@ export default function ChannelApp() {
           }
         >
           <AppShellSidebarSlot className="relative flex w-36 shrink-0 flex-col sm:w-[240px]">
-            <PublicServerChannelSidebar
-              serverName={directory?.workspace.name ?? "Loom"}
-              channelsLabel="频道"
-              channels={(directory?.channels ?? []).map((room) => ({
-                id: room.roomId,
-                name: room.name,
-              }))}
-              selectedChannelId={selected?.roomId ?? null}
-              onSelectChannel={select}
-            />
+            {directory?.workspace.controlRoomId && (
+              <ChannelSidebar
+                client={client}
+                workspaceId={directory.workspace.workspaceId}
+                controlRoomId={directory.workspace.controlRoomId}
+                name={directory.workspace.name}
+                rooms={directory.channels}
+                selected={selected?.roomId ?? null}
+                onSelect={select}
+                onCreated={async (room) => {
+                  setDirectory(await loadChannelDirectory(client));
+                  setParams({ room: room.roomId });
+                }}
+              />
+            )}
           </AppShellSidebarSlot>
           <AppShellMainSlot className="bg-layer-canvas theme-brutal:bg-white">
-            {boxState === "pending" && (
-              <p role="status" className="p-3 text-sm">
-                正在打开私聊…
-              </p>
-            )}
-            {boxState === "unknown" && (
-              <div role="alert" className="p-3 text-sm">
-                打开私聊结果未知。
-                <Button
-                  onClick={() =>
-                    void boxes?.writes
-                      .retry()
-                      .catch(() => setBoxError("暂时无法核实，请稍后重试。"))
-                  }
-                >
-                  核实打开私聊
-                </Button>
-              </div>
-            )}
-            {boxError && (
-              <p role="alert" className="p-3 text-sm">
-                {boxError}
-              </p>
-            )}
+            {privateNotice}
             {error ? (
               <p role="alert" className="p-6">
                 {error}
@@ -453,12 +464,23 @@ export default function ChannelApp() {
               <p className="p-6">
                 {requested
                   ? "此频道不存在或没有访问权限"
-                  : "暂无频道，请先通过控制台创建"}
+                  : "暂无频道，请从频道列表菜单创建"}
               </p>
             )}
           </AppShellMainSlot>
         </div>
-        {destination !== "channels" && (
+        {directory?.workspace.controlRoomId && (
+          <AgentPage
+            client={client}
+            workspaceId={directory.workspace.workspaceId}
+            controlRoomId={directory.workspace.controlRoomId}
+            active={destination === "agents"}
+            notice={privateNotice}
+            onOpenChannel={select}
+            onOpenPrivate={openPrivate}
+          />
+        )}
+        {destination !== "channels" && destination !== "agents" && (
           <DestinationPlaceholder active={destination} />
         )}
       </div>

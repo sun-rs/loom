@@ -107,9 +107,6 @@ export function DestinationPlaceholder({ active }: { active: string }) {
             ? "页面骨架已就位，内容尚未接入。"
             : "这个页面地址无效，请从主导航选择。"}
         </p>
-        {active === "agents" && (
-          <p className="mt-3 text-sm">角色（Role）与实例管理将集中在这里。</p>
-        )}
         {destination && (
           <a
             className="mt-4 inline-block underline"
