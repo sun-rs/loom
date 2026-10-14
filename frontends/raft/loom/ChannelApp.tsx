@@ -1,3 +1,9 @@
+import {
+  DesktopNavigation,
+  MobileNavigation,
+  DestinationPlaceholder,
+  type Destination,
+} from "./Navigation.tsx";
 import AddInstanceDialog from "./AddInstanceDialog.tsx";
 import { LoomPrivateBoxClient } from "./private-box.ts";
 import ChannelMembers from "./ChannelMembers.tsx";
@@ -237,6 +243,15 @@ export default function ChannelApp() {
     useState<Awaited<ReturnType<typeof loadChannelDirectory>>>();
   const [error, setError] = useState("");
   const [params, setParams] = useSearchParams();
+  const destination = params.get("view") ?? "channels";
+  const selectDestination = (id: Destination) => {
+    setParams((previous) => {
+      const next = new URLSearchParams(previous);
+      if (id === "channels") next.delete("view");
+      else next.set("view", id);
+      return next;
+    });
+  };
   const [bridges] = useState(() => new Map<string, LoomChannelClient>());
   useEffect(
     () => () => {
@@ -365,76 +380,89 @@ export default function ChannelApp() {
         />
       )}
       <div className="relative flex min-h-0 min-w-0 flex-1">
-        <AppShellSidebarSlot className="relative flex w-36 shrink-0 flex-col sm:w-[240px]">
-          <PublicServerChannelSidebar
-            serverName={directory?.workspace.name ?? "Loom"}
-            channelsLabel="频道"
-            channels={(directory?.channels ?? []).map((room) => ({
-              id: room.roomId,
-              name: room.name,
-            }))}
-            selectedChannelId={selected?.roomId ?? null}
-            onSelectChannel={select}
-          />
-        </AppShellSidebarSlot>
-        <AppShellMainSlot className="bg-layer-canvas theme-brutal:bg-white">
-          {boxState === "pending" && (
-            <p role="status" className="p-3 text-sm">
-              正在打开私聊…
-            </p>
-          )}
-          {boxState === "unknown" && (
-            <div role="alert" className="p-3 text-sm">
-              打开私聊结果未知。
-              <Button
-                onClick={() =>
-                  void boxes?.writes
-                    .retry()
-                    .catch(() => setBoxError("暂时无法核实，请稍后重试。"))
-                }
-              >
-                核实打开私聊
-              </Button>
-            </div>
-          )}
-          {boxError && (
-            <p role="alert" className="p-3 text-sm">
-              {boxError}
-            </p>
-          )}
-          {error ? (
-            <p role="alert" className="p-6">
-              {error}
-            </p>
-          ) : !directory ? (
-            <Spinner aria-label="正在连接 Loom" />
-          ) : selected ? (
-            <Channel
-              key={selected.roomId}
-              channel={selected}
-              bridge={bridge!}
-              onOpenPrivate={openPrivate}
-              onAddInstance={
-                directory.workspace.controlRoomId
-                  ? () => {
-                      if (!hasUnresolvedIntents())
-                        setInstanceTarget({
-                          bridge: bridge!,
-                          name: selected.name,
-                        });
-                    }
-                  : undefined
-              }
+        <DesktopNavigation active={destination} onSelect={selectDestination} />
+        <div
+          className={
+            destination === "channels"
+              ? "flex min-h-0 min-w-0 flex-1"
+              : "hidden"
+          }
+        >
+          <AppShellSidebarSlot className="relative flex w-36 shrink-0 flex-col sm:w-[240px]">
+            <PublicServerChannelSidebar
+              serverName={directory?.workspace.name ?? "Loom"}
+              channelsLabel="频道"
+              channels={(directory?.channels ?? []).map((room) => ({
+                id: room.roomId,
+                name: room.name,
+              }))}
+              selectedChannelId={selected?.roomId ?? null}
+              onSelectChannel={select}
             />
-          ) : (
-            <p className="p-6">
-              {requested
-                ? "此频道不存在或没有访问权限"
-                : "暂无频道，请先通过控制台创建"}
-            </p>
-          )}
-        </AppShellMainSlot>
+          </AppShellSidebarSlot>
+          <AppShellMainSlot className="bg-layer-canvas theme-brutal:bg-white">
+            {boxState === "pending" && (
+              <p role="status" className="p-3 text-sm">
+                正在打开私聊…
+              </p>
+            )}
+            {boxState === "unknown" && (
+              <div role="alert" className="p-3 text-sm">
+                打开私聊结果未知。
+                <Button
+                  onClick={() =>
+                    void boxes?.writes
+                      .retry()
+                      .catch(() => setBoxError("暂时无法核实，请稍后重试。"))
+                  }
+                >
+                  核实打开私聊
+                </Button>
+              </div>
+            )}
+            {boxError && (
+              <p role="alert" className="p-3 text-sm">
+                {boxError}
+              </p>
+            )}
+            {error ? (
+              <p role="alert" className="p-6">
+                {error}
+              </p>
+            ) : !directory ? (
+              <Spinner aria-label="正在连接 Loom" />
+            ) : selected ? (
+              <Channel
+                key={selected.roomId}
+                channel={selected}
+                bridge={bridge!}
+                onOpenPrivate={openPrivate}
+                onAddInstance={
+                  directory.workspace.controlRoomId
+                    ? () => {
+                        if (!hasUnresolvedIntents())
+                          setInstanceTarget({
+                            bridge: bridge!,
+                            name: selected.name,
+                          });
+                      }
+                    : undefined
+                }
+              />
+            ) : (
+              <p className="p-6">
+                {requested
+                  ? "此频道不存在或没有访问权限"
+                  : "暂无频道，请先通过控制台创建"}
+              </p>
+            )}
+          </AppShellMainSlot>
+        </div>
+        {destination !== "channels" && (
+          <DestinationPlaceholder active={destination} />
+        )}
       </div>
+      <MobileNavigation active={destination} onSelect={selectDestination} />
     </AppShellRoot>
   );
 }

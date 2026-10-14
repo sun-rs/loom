@@ -1,3 +1,4 @@
+import { verifyGlobalNavigation } from "./navigation-browser.mjs";
 import { verifyInstanceCreation } from "./instance-browser.mjs";
 import { verifyPrivateBoxes } from "./private-browser.mjs";
 import { assertSparseHistoryStartsAtTop } from "./history-layout.mjs";
@@ -271,6 +272,16 @@ try {
     await composer.press("Enter");
     await page.getByRole("button", { name: "核实发送" }).waitFor();
     assert.equal(sendRequests.length, 1);
+    const mainNav = page.getByRole("navigation", { name: "主导航" });
+    await mainNav.getByRole("button", { name: "搜索", exact: true }).click();
+    await page.getByRole("heading", { name: "搜索", exact: true }).waitFor();
+    await mainNav.getByRole("button", { name: "频道", exact: true }).click();
+    await page.getByRole("button", { name: "核实发送" }).waitFor();
+    assert.equal(
+      sendRequests.length,
+      1,
+      "global navigation must not resend an unknown write",
+    );
     await page.evaluate((room) => {
       history.pushState({}, "", `?room=${room}`);
       window.dispatchEvent(new PopStateEvent("popstate"));
@@ -335,6 +346,7 @@ try {
       switchIsolation: true,
       ime: true,
       unknownResultVerified: true,
+      unknownSendPreservedAcrossGlobalNavigation: true,
       externalRequests: 0,
     });
     await context.close();
@@ -348,6 +360,11 @@ try {
     instance: instances[0],
     name: instanceNames[0],
     head,
+  });
+  const navigationResults = await verifyGlobalNavigation({
+    browser,
+    origin,
+    channel: channels[0],
   });
   const instanceResults = await verifyInstanceCreation({
     browser,
@@ -366,6 +383,7 @@ try {
         results,
         privateResults,
         instanceResults,
+        navigationResults,
       },
       null,
       2,

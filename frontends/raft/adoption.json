@@ -2344,10 +2344,21 @@
       "presentation": "Unchanged official ChannelMemberListShell/ChannelMemberRow and raft-ui Dialog/Button; local Role picker",
       "localChanges": "Create a new Role instance, allowing repeated Role use in a channel; Kernel assigns name and freezes revision. Unknown result retains target and exact request until explicit verification.",
       "limits": "Role creation/editing and instance remove/restart remain console-only. No provider configuration or backend changes."
+    },
+    "navigationShell": {
+      "owner": "Local URL view selects presentation only; existing channel client-core owners remain mounted across page changes",
+      "directReuse": [
+        "packages/web/src/components/layout/LeftRail.tsx exported RailTabButton",
+        "raft-ui AppRail / AppShellRailSlot / MobileNav primitives",
+        "packages/web/src/components/ui/AvatarSlot.tsx"
+      ],
+      "structuralPort": "Official LeftRail desktop grouping and MainLayout in-flow mobile navigation; authenticated Loom URL targets replace upstream server/account stores",
+      "localChanges": "Six sections: Search, Channels, Activity, Tasks, Agent, Settings. Desktop Settings footer retained. Mobile exposes the same six destinations instead of upstream four tabs. Agent denotes Role/instance management; unfinished pages explicitly unavailable with console link; no unread/status/account fixtures.",
+      "limits": "This is navigation skeleton, not full MainLayout or implemented Search/Tasks/Activity/Settings/Agent pages; existing member popup remains available until management page replaces it."
     }
   },
   "rollout": {
-    "stage": "instance-add-v4",
+    "stage": "navigation-shell-v5",
     "consoleRetained": true,
     "ownerDecision": "2026-10-14: deploy Web in stages for visual inspection; channel text slice first; incomplete capabilities remain in console."
   }
