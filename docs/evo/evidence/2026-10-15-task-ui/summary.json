@@ -1,5 +1,5 @@
 {
-  "status": "implemented-and-verified-awaiting-deployment",
+  "status": "deployed-and-verified",
   "scope": "Native global task board/list, existing task detail, Human workflow update and discussion",
   "paidCli": false,
   "realCliExecution": false,
@@ -58,7 +58,9 @@
     }
   ],
   "additionalBrowserCoverage": [
-    "task read denial hides title and discussion while retaining draft; read recovery restores content"
+    "task read denial hides title and discussion while retaining draft; read recovery restores content",
+    "native card status is readonly",
+    "channel filter and empty state"
   ],
   "retainedFailures": [
     "TDD missing task facade and native presentation export modules",
@@ -66,7 +68,8 @@
     "Fake Room delivery corrected to include snapshot sequence and ACK receipt",
     "Initial type/build check caught CloseButton native import and multiline TypeScript export directives",
     "Browser corrected status option lookup to native portal; second viewport task reset isolated the previous completed state",
-    "Formal screenshot exposed unconnected native card status editor; explicit readonly adapter and browser assertion now guard it"
+    "Formal screenshot exposed unconnected native card status editor; explicit readonly adapter and browser assertion now guard it",
+    "Second restart launcher initially used unavailable tsx; failed before script execution; rerun with native Node TypeScript support succeeded"
   ],
   "limits": [
     "Message-to-task conversion and channel task creation remain next slice",
@@ -75,5 +78,51 @@
     "Global cursor pages are 50, maximum 500 in memory; channel filter narrows results",
     "List reloads on entry/filter/local write; no cross-client real-time claim",
     "No paid model or efficiency acceptance"
-  ]
+  ],
+  "deployment": {
+    "codeCommit": "7a9e4a3a61eb6f4e56cd0503ccfeade3ba179033",
+    "webBuildId": "7d495c9f8e6e06fad52a2e932d177aa2cac69e672dbdb89d144fcc10a3364e12",
+    "backupDatabases": 2,
+    "backupFiles": 318,
+    "unchangedBusinessProjections": 18,
+    "volatileFieldExcluded": "subscription_cursors.updated_at only; identity/read/ACK positions compared exactly",
+    "gracefulRestartVerified": true,
+    "realPage": {
+      "at": "2026-10-15T08:08:00.480Z",
+      "webBuildId": "7d495c9f8e6e06fad52a2e932d177aa2cac69e672dbdb89d144fcc10a3364e12",
+      "results": [
+        {
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "existingRealTask": true,
+          "listCountMatchesApi": true,
+          "titleMatchesApi": true,
+          "noDuplicateRoot": true,
+          "reload": true,
+          "nativeCloseOrMobileBack": true,
+          "noBusinessMutations": true,
+          "buildMatches": true,
+          "pageErrors": []
+        },
+        {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "existingRealTask": true,
+          "listCountMatchesApi": true,
+          "titleMatchesApi": true,
+          "noDuplicateRoot": true,
+          "reload": true,
+          "nativeCloseOrMobileBack": true,
+          "noBusinessMutations": true,
+          "buildMatches": true,
+          "pageErrors": []
+        }
+      ]
+    },
+    "privateEvidenceDirectory": "/Users/sun/.loom/reviews/2026-10-15-task-ui"
+  }
 }
