@@ -88,6 +88,18 @@ export async function verifyMentions({
         true,
       );
       await composer.fill("");
+      const avatar = page.locator('[data-avatar-kind="human"]').first();
+      await avatar.hover();
+      const profile = page.getByTestId("loom-message-profile");
+      await profile.waitFor();
+      const me = (await client.request("principal.me", {})).principal;
+      assert.ok((await profile.innerText()).includes(`@${me.handle}`));
+      assert.equal(
+        await profile.locator('[data-slot="avatar-badge"]').count(),
+        0,
+      );
+      await page.mouse.move(viewport.width - 2, 2);
+      await profile.waitFor({ state: "hidden" });
       await composer.fill("@Fixture");
       const candidate = page
         .getByText(name, { exact: true })
@@ -101,6 +113,16 @@ export async function verifyMentions({
       );
       await page.getByRole("alert").waitFor();
       await candidate.waitFor({ state: "hidden" });
+      await avatar.hover();
+      await profile.waitFor();
+      assert.ok((await profile.innerText()).includes("成员资料暂不可用"));
+      assert.equal(
+        (await profile.innerText()).includes(`@${me.handle}`),
+        false,
+        "failed member refresh must not retain stale hover identity",
+      );
+      await page.mouse.move(viewport.width - 2, 2);
+      await profile.waitFor({ state: "hidden" });
       await page.unroute("**/v3/client/rooms/sync");
       await page.getByRole("alert").waitFor({ state: "hidden" });
       await candidate.waitFor();
@@ -120,7 +142,41 @@ export async function verifyMentions({
         "other channel has no candidate leak",
       );
       await composer.fill("");
+      // Presentation-only agent-author fixture: no Worker impersonation,
+      // provider execution or durable message mutation. Keep this separate
+      // from the real gateway human-author path above.
+      await page.route("**/v3/client/rooms/timeline", async (route) => {
+        const response = await route.fetch();
+        const data = await response.json();
+        for (const item of data.items ?? [])
+          if (item.kind === "message")
+            item.message.actorId = instance.instanceId;
+        await route.fulfill({ response, json: data });
+      });
+      await page.goto(`${origin}/?room=${channel.roomId}`);
+      await composer.waitFor();
+      const agentAvatar = page.locator('[data-avatar-kind="agent"]').first();
+      await agentAvatar.waitFor();
+      assert.equal(
+        await agentAvatar.locator('[data-slot="avatar-badge"]').count(),
+        0,
+        "no unbound offline badge on message avatars",
+      );
+      await agentAvatar.hover();
+      await profile.waitFor();
+      assert.ok((await profile.innerText()).includes(`@${name}`));
+      assert.equal((await profile.innerText()).includes("离线"), false);
+      await page.screenshot({
+        path: `/tmp/loom-message-profile-${viewport.width}.png`,
+        animations: "disabled",
+      });
+      await page.mouse.move(viewport.width - 2, 2);
+      await profile.waitFor({ state: "hidden" });
       results.push({
+        humanProfileFromGateway: true,
+        agentProfilePresentationFixture: true,
+        nativeHoverDismissal: true,
+        unknownPresenceOmitted: true,
         viewport,
         canonicalMention: true,
         senderClickFocus: true,

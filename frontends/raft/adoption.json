@@ -2479,6 +2479,18 @@
       "localGlue": "A strict in-browser GET roster adapter borrows the mounted RoomSession member projection; all other upstream endpoints remain rejected. No independent roster store, network endpoint or delivery owner. Identity-only readOnly preview props enable native sender-name insertion. Composer-only AvatarSlot wrapper omits the unbound default-offline badge; unchanged original AvatarSlot still owns geometry.",
       "limits": "No avatar inspector, thread/attachment integration or new broadcast candidate. Native private-scope filter applies to all Loom member-only rooms without changing Room kind.",
       "audit": "docs/audits/2026-10-15-chat-mentions.zh-CN.md"
+    },
+    "messageProfileSlice": {
+      "source": [
+        "packages/web/src/components/message/MessageItem.tsx: SenderAvatar",
+        "packages/web/src/components/message/ProfilePreviewCardContent.tsx: identity/description blocks",
+        "packages/web/src/components/ui/AvatarSlot.tsx"
+      ],
+      "directReuse": "Unchanged native SenderAvatar PreviewCard triggers, 200/120 ms timing, 280px content, offset/collision 6px, native avatar geometry and Tooltip.",
+      "structuralPort": "MessageProfile ports native identity and description blocks, preserving typography, padding and description separator. Unbound runtime/presence/activity blocks omitted.",
+      "localGlue": "React context borrows the mounted timeline RoomSession members, also through portals. Scoped Vite import substitution does not write native stores or call upstream services. MessageItem AvatarSlot omits unbound offline badge.",
+      "limits": "Avatar click inspector and activity are not connected; no fake online/offline status. Missing/revoked roster displays unavailable. No backend changes.",
+      "verification": "scripts/official-web/mentions-browser.mjs: real temporary gateway Human identity plus explicitly intercepted Agent presentation fixture, both viewports; no provider execution."
     }
   },
   "rollout": {

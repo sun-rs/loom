@@ -21,8 +21,13 @@ export default defineConfig({
       },
       resolveId(source, importer) {
         if (
-          importer?.endsWith(
-            "/packages/web/src/components/message/MessageInput.tsx",
+          importer?.includes("/packages/web/src/components/message/") &&
+          /(?:^|\/)ProfilePreviewCardContent(?:\.tsx)?$/.test(source)
+        )
+          return resolve(import.meta.dirname, "MessageProfile.tsx");
+        if (
+          /\/packages\/web\/src\/components\/message\/(MessageInput|MessageItem)\.tsx$/.test(
+            importer ?? "",
           ) &&
           /(?:^|\/)ui\/AvatarSlot(?:\.tsx)?$/.test(source)
         )

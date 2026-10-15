@@ -1,0 +1,34 @@
+{
+  "slice": "message-avatar-profile",
+  "implementation": "complete",
+  "verification": {
+    "npmCheckExitCode": 0,
+    "backendPassed": 3211,
+    "backendOptInSkipped": 22,
+    "failed": 0,
+    "consoleTests": 63,
+    "browserPolicyTests": 15,
+    "efficiencyToolTests": 558,
+    "sourceTests": 25,
+    "workbenchBuild": "passed",
+    "format": "passed",
+    "diff": "passed",
+    "browser": "browser.json",
+    "viewports": ["1440x1000", "390x844"],
+    "dpr": 1,
+    "screenshotsInspected": true,
+    "red": "Old build timed out waiting for member hover profile; retained in private review log.",
+    "agentFixture": "Explicit presentation-only timeline response override; not a Worker or model run.",
+    "humanFixture": "Real authenticated temporary gateway message and roster.",
+    "formalPage": "pending restart"
+  },
+  "backendChanged": false,
+  "paidProviderCalls": 0,
+  "inspectorConnected": false,
+  "remaining": [
+    "Avatar click / right inspector",
+    "Threads, attachments, forwarding",
+    "Viewport-aware automatic read",
+    "Full tasks/memory/settings/Fork/Side UI"
+  ]
+}

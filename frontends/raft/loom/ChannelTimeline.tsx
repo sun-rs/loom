@@ -1,3 +1,4 @@
+import { MessageProfileMembers } from "./MessageProfile.tsx";
 import { projectMentionMembers } from "./member-roster.ts";
 import type { Principal } from "@rah-os/protocol";
 import type { Agent } from "../packages/web/src/store/agentStore.ts";
@@ -87,57 +88,59 @@ export default function ChannelTimeline({
     />
   );
   return (
-    <MessageTimeline
-      ref={timeline}
-      source={{
-        messages,
-        hasOlder,
-        hasNewer: false,
-        loading,
-        loadOlder,
-        loadNewer: async () => {},
-      }}
-      renderItem={(message, index) => {
-        const system = systems[index];
-        if (system?.kind === "hide") return null;
-        if (system?.kind === "summary")
-          return (
-            <div
-              className="px-3"
-              style={{ contain: "layout style", overflow: "clip visible" }}
-            >
-              <ThreadPanelSystemMessageGroupDisclosure
-                summary={system.content}
-                expanded={expanded.has(system.groupId)}
-                groupId={system.groupId}
-                onToggleGroup={toggle}
+    <MessageProfileMembers.Provider value={members}>
+      <MessageTimeline
+        ref={timeline}
+        source={{
+          messages,
+          hasOlder,
+          hasNewer: false,
+          loading,
+          loadOlder,
+          loadNewer: async () => {},
+        }}
+        renderItem={(message, index) => {
+          const system = systems[index];
+          if (system?.kind === "hide") return null;
+          if (system?.kind === "summary")
+            return (
+              <div
+                className="px-3"
+                style={{ contain: "layout style", overflow: "clip visible" }}
               >
-                {system.messageIndexes.map((i) => (
-                  <Fragment key={messages[i]!.id}>
-                    {item(messages[i]!, i)}
-                  </Fragment>
-                ))}
-              </ThreadPanelSystemMessageGroupDisclosure>
-            </div>
+                <ThreadPanelSystemMessageGroupDisclosure
+                  summary={system.content}
+                  expanded={expanded.has(system.groupId)}
+                  groupId={system.groupId}
+                  onToggleGroup={toggle}
+                >
+                  {system.messageIndexes.map((i) => (
+                    <Fragment key={messages[i]!.id}>
+                      {item(messages[i]!, i)}
+                    </Fragment>
+                  ))}
+                </ThreadPanelSystemMessageGroupDisclosure>
+              </div>
+            );
+          return (
+            <>
+              {grouping.get(message.id)?.showDayDivider && (
+                <DateDivider createdAt={message.createdAt} />
+              )}
+              <div
+                className="px-3"
+                style={{ contain: "layout style", overflow: "clip visible" }}
+              >
+                {item(message, index)}
+              </div>
+            </>
           );
-        return (
-          <>
-            {grouping.get(message.id)?.showDayDivider && (
-              <DateDivider createdAt={message.createdAt} />
-            )}
-            <div
-              className="px-3"
-              style={{ contain: "layout style", overflow: "clip visible" }}
-            >
-              {item(message, index)}
-            </div>
-          </>
-        );
-      }}
-      className="h-full"
-      testId="loom-message-timeline"
-      persistKey={`loom-channel:${roomId}`}
-      sparseAnchor="top"
-    />
+        }}
+        className="h-full"
+        testId="loom-message-timeline"
+        persistKey={`loom-channel:${roomId}`}
+        sparseAnchor="top"
+      />
+    </MessageProfileMembers.Provider>
   );
 }
