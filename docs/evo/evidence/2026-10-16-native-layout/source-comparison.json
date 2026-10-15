@@ -1,0 +1,51 @@
+{
+  "anchor": "v1.21.16 / 5239f1af1868fa551d7f9284b927341807b770aa",
+  "cssUrl": "https://app.raft.build/assets/app-shell-CAea1GWL.css",
+  "cssSha256": "6adff5e9557d28271882313cf54e82c249b3bf5c94922a6bb7275abeee97d086",
+  "threadLayoutExcerpt": ".thread-layout-container{min-width:0;overflow:hidden;container:thread-layout/inline-size}.thread-side-column-resizer{display:none}.thread-layout-container:has(>.thread-side-column)>.thread-main-column{display:none}.thread-profile-side-column{display:contents}.thread-side-column{z-index:30;position:absolute;inset:0}.thread-side-column [data-testid=thread-mobile-back]{display:flex}.thread-side-column [data-testid=thread-close]{display:none}@container thread-layout (width<=679.98px){.thread-side-column>[data-slot=thread-panel-root]{border-left-width:0}}@media (orientation:portrait) and (width<=1279.98px){.thread-side-column>[data-slot=thread-panel-root]{border-left-width:0}}@media (orientation:landscape),(width>=1280px){@container thread-layout (width>=680px){.thread-layout-container:has(>.thread-side-column)>.thread-main-column{display:flex}.thread-side-column{z-index:auto;width:var(--thread-panel-width);flex-shrink:0;max-width:calc(100% - 320px);position:relative;inset:auto}.thread-side-column-resizer{display:block}.thread-side-column [data-testid=thread-mobile-back]{display:none}.thread-side-column [data-testid=thread-close]{display:flex}}}@media (width>=1024px){@container thread-layout (width>=680px){.thread-layout-container:has(>.thread-profile-side-column[data-collapse-channel=true])>.thread-main-column{display:none}.thread-layout-container:has(>.thread-profile-side-column[data-collapse-channel=true])>.thread-side-column{flex:auto;width:auto;min-width:0;max-width:none}.thread-layout-container:has(>.thread-profile-side-column[data-collapse-channel=true])>.thread-side-column>[data-slot=thread-panel-root]{border-left-width:0}.thread-layout-container:has(>.thread-profile-side-column[data-collapse-channel=true])>.thread-profile-side-column>[data-testid=profile-panel]{z-index:auto;border-left:1px solid var(--line-muted);flex:none;min-width:0;max-width:calc(100% - 320px);position:relative;inset:auto;overflow:hidden}[data-theme=brutal] .thread-layout-container:has(>.thread-profile-side-column[data-collapse-channel=true])>.thread-profile-side-column>[data-testid=profile",
+  "npm": {
+    "from": "0.5.52",
+    "to": "0.5.64",
+    "tarball": "https://registry.npmjs.org/raft-ui/-/raft-ui-0.5.64.tgz",
+    "license": "MIT",
+    "sections": [
+      {
+        "source": "app-shell/app-shell.tsx",
+        "unchanged": true,
+        "oldSha256": "cd0a09e149d567caddcdc98b3d3ae7f60f8544d3a9de64c51a607b250c9e387b",
+        "newSha256": "cd0a09e149d567caddcdc98b3d3ae7f60f8544d3a9de64c51a607b250c9e387b"
+      },
+      {
+        "source": "panel/panel-header.recipe.ts",
+        "unchanged": true,
+        "oldSha256": "ba8bd8a6e32b4c95ed14297f9da07b328151cf250f493b259a83e463cf858d4c",
+        "newSha256": "ba8bd8a6e32b4c95ed14297f9da07b328151cf250f493b259a83e463cf858d4c"
+      },
+      {
+        "source": "thread-panel/thread-panel.recipe.ts",
+        "unchanged": true,
+        "oldSha256": "67ffb512d71455cf104c746976de1fbf7c37138e651d11bdcdd954d3f56016c3",
+        "newSha256": "67ffb512d71455cf104c746976de1fbf7c37138e651d11bdcdd954d3f56016c3"
+      },
+      {
+        "source": "conversation-panel/conversation-panel.tsx",
+        "unchanged": true,
+        "oldSha256": "7238ddd2178ba84051e9ced1d9c612b1f886a231cf1c54186ca1ebfddaa31657",
+        "newSha256": "7238ddd2178ba84051e9ced1d9c612b1f886a231cf1c54186ca1ebfddaa31657"
+      },
+      {
+        "source": "sidebar/sidebar.tsx",
+        "unchanged": true,
+        "oldSha256": "971c856e30cfc06eff385f9b3b050a9fcbedd1cae3af63d731a5e1b670b5e0d7",
+        "newSha256": "971c856e30cfc06eff385f9b3b050a9fcbedd1cae3af63d731a5e1b670b5e0d7"
+      },
+      {
+        "source": "message-list/message-list.tsx",
+        "unchanged": false,
+        "oldSha256": "6a4dbc4cf1e869e2a63998448d66e67aea99b99b89a8618f4d8a1dcc55510c06",
+        "newSha256": "01a3ba0be9c334a0e1a9076084ae8eca27964dab5d7353abdadd63c11e13c6a2"
+      }
+    ]
+  },
+  "limits": "Recipe comparison is between npm versions; released JS/sidebar and CSS were also read. No authenticated official page visual comparison."
+}

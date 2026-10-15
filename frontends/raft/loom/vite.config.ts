@@ -1,3 +1,4 @@
+import { officialUiAliases } from "./ui-resolution.ts";
 import {
   exposeAppearance,
   adaptMessageModelLabel,
@@ -26,6 +27,7 @@ import { webBuildDefines, webBuildMetadataPlugin } from "./release-plugin.ts";
 export default defineConfig({
   ...officialConfig,
   define: { ...officialConfig.define, ...webBuildDefines },
+  resolve: { ...officialConfig.resolve, alias: officialUiAliases() },
   plugins: [
     {
       name: "loom-entry",

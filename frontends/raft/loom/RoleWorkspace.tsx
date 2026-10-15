@@ -14,7 +14,7 @@ import {
   TabsIndicator,
 } from "raft-ui";
 import { Plus, RefreshCw, Settings2, Users } from "lucide-react";
-import Frame from "../packages/web/src/components/server/PublicServerSidebarFrame.tsx";
+import Frame from "./ChatSidebarFrame.tsx";
 import AvatarSlot from "../packages/web/src/components/ui/AvatarSlot.tsx";
 import PanelHeader, {
   PROFILE_HEADER_SURFACE_CLASS,

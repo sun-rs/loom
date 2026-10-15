@@ -1,3 +1,4 @@
+import { verifyLayout } from "./layout-browser.mjs";
 import { verifyTopbar, openFullSearch } from "./topbar-browser.mjs";
 import { verifyAppearance } from "./appearance-browser.mjs";
 import { verifyActivityNavigation } from "./activity-navigation-browser.mjs";
@@ -131,7 +132,11 @@ try {
     instances.push(result.instance);
   }
   browser = await chromium.launch({ headless: true });
-  if (process.env.LOOM_BROWSER_SLICE === "topbar") {
+  if (process.env.LOOM_BROWSER_SLICE === "layout") {
+    console.log(
+      JSON.stringify(await verifyLayout({ browser, origin, channels, client })),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "topbar") {
     console.log(
       JSON.stringify(await verifyTopbar({ browser, origin, channels })),
     );

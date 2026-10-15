@@ -2,6 +2,11 @@
   "extends": "../packages/web/tsconfig.json",
   "include": ["./*.ts", "./*.tsx", "../packages/web/src/vite-env.d.ts"],
   "compilerOptions": {
-    "rootDir": "../../.."
+    "rootDir": "../../..",
+    "paths": {
+      "raft-ui": ["../node_modules/raft-ui/dist/index.d.mts"],
+      "raft-ui/cn": ["../node_modules/raft-ui/dist/cn.d.mts"],
+      "raft-ui/wip": ["../node_modules/raft-ui/dist/wip.d.mts"]
+    }
   }
 }
