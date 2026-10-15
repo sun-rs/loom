@@ -101,14 +101,14 @@ export async function verifyDiscovery({
       second.hits.length,
     );
     await page.locator("[data-result-id]").first().click();
-    const dialog = page.getByRole("dialog");
-    await dialog
+    await page
       .locator(
-        `[data-context-message-id="${second.hits[0].message.messageId}"]`,
+        `[data-timeline-message-id="${second.hits[0].message.messageId}"] [data-highlighted="true"]`,
       )
       .waitFor();
-    await page.keyboard.press("Escape");
-    await dialog.waitFor({ state: "hidden" });
+    assert.equal(await page.getByRole("dialog").count(), 0);
+    await page.goBack();
+    await page.getByLabel("搜索内容", { exact: true }).waitFor();
     await page.getByRole("button", { name: "搜索消息", exact: true }).click();
     await page
       .locator(`[data-result-id="${expected.hits[0].message.messageId}"]`)

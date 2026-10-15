@@ -33,23 +33,23 @@ import {
 import ActivityFilters from "./ActivityFilters.tsx";
 import ActivityMessageRow from "./ActivityMessageRow.tsx";
 import SearchMessageRow from "./SearchMessageRow.tsx";
-import MessageContextDialog from "./MessageContextDialog.tsx";
 export default function DiscoveryPage({
   client,
   workspaceId,
   mode,
-  onOpenRoom,
-  onOpenActivity,
+  onOpenResult,
   detail,
+  profileOpen = false,
 }: {
-  onOpenActivity: (row: DiscoveryRow, full: boolean) => Promise<void>;
+  onOpenResult: (row: DiscoveryRow, full: boolean) => Promise<void>;
   detail?: ReactNode;
+  profileOpen?: boolean;
   client: RahClient;
   workspaceId: string;
   mode: "search" | "activity";
-  onOpenRoom: (id: string) => Promise<void>;
 }) {
   const [params, setParams] = useSearchParams();
+  const desktop = useMediaQuery("(min-width: 768px)");
   const wide = useMediaQuery("(min-width: 1024px)");
   const fullPanel = useResizablePanel({
     storageKey: "loom:activityPanelWidth",
@@ -62,21 +62,11 @@ export default function DiscoveryPage({
     ...MASTER_DETAIL_COMPACT_PANEL_BOUNDS,
   });
   const panel =
-    params.has("thread") && params.get("detail") !== "thread"
+    !wide ||
+    profileOpen ||
+    (params.has("thread") && params.get("detail") !== "thread")
       ? compactPanel
       : fullPanel;
-  useEffect(() => {
-    if (detail && !wide)
-      setParams(
-        (previous) => {
-          const next = new URLSearchParams(previous);
-          next.delete("view");
-          next.delete("detail");
-          return next;
-        },
-        { replace: true },
-      );
-  }, [!!detail, wide, setParams]);
   const query = params.get("q") ?? "";
   const scope: WorkspaceSearchRequest["scope"] = [
     "channel",
@@ -105,14 +95,16 @@ export default function DiscoveryPage({
   return (
     <>
       <AppShellMainSlot
-        className={`relative bg-layer-canvas theme-brutal:bg-white ${detail ? "border-r border-line-muted theme-brutal:border-black" : ""}`}
+        className={`relative bg-layer-canvas theme-brutal:bg-white ${detail && desktop ? `border-r border-line-muted theme-brutal:border-black ${mode === "search" ? "theme-brutal:border-r-2" : ""}` : ""}`}
         style={
           detail
-            ? { flex: `0 0 ${panel.width}px`, width: panel.width }
+            ? desktop
+              ? { flex: `0 0 ${panel.width}px`, width: panel.width }
+              : { display: "none" }
             : undefined
         }
       >
-        {detail && (
+        {detail && desktop && (
           <PanelResizeHandle
             side="right"
             visibleFrom="md"
@@ -186,8 +178,7 @@ export default function DiscoveryPage({
             scope={scope}
             filter={filter}
             tick={tick}
-            onOpenRoom={onOpenRoom}
-            onOpenActivity={onOpenActivity}
+            onOpenResult={onOpenResult}
           />
         </Shell>
       </AppShellMainSlot>
@@ -203,10 +194,9 @@ function Results({
   scope,
   filter,
   tick,
-  onOpenRoom,
-  onOpenActivity,
+  onOpenResult,
 }: {
-  onOpenActivity: (row: DiscoveryRow, full: boolean) => Promise<void>;
+  onOpenResult: (row: DiscoveryRow, full: boolean) => Promise<void>;
   client: RahClient;
   workspaceId: string;
   mode: "search" | "activity";
@@ -214,7 +204,6 @@ function Results({
   scope: WorkspaceSearchRequest["scope"];
   filter: HumanActivityRequest["filter"];
   tick: number;
-  onOpenRoom: (id: string) => Promise<void>;
 }) {
   const [route] = useSearchParams();
   const [cursors, setCursors] = useState<(string | undefined)[]>([undefined]);
@@ -223,7 +212,6 @@ function Results({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [retry, setRetry] = useState(0);
-  const [selected, setSelected] = useState<DiscoveryRow>();
   useEffect(() => {
     const controller = new AbortController();
     setData(undefined);
@@ -295,8 +283,12 @@ function Results({
                       key={row.id}
                       row={row}
                       query={query}
-                      selected={selected?.id === row.id}
-                      onOpen={() => setSelected(row)}
+                      selected={route.get("message") === row.message.messageId}
+                      onOpen={(full) => {
+                        void onOpenResult(row, full).catch(() =>
+                          setError("无法打开消息，请刷新重试。"),
+                        );
+                      }}
                     />
                   ) : (
                     <ActivityMessageRow
@@ -304,7 +296,7 @@ function Results({
                       row={row}
                       active={route.get("message") === row.message.messageId}
                       onOpen={(full) => {
-                        void onOpenActivity(row, full).catch(() =>
+                        void onOpenResult(row, full).catch(() =>
                           setError("无法打开消息，请刷新重试。"),
                         );
                       }}
@@ -331,14 +323,6 @@ function Results({
             </div>
           </>
         )
-      )}
-      {selected && (
-        <MessageContextDialog
-          client={client}
-          row={selected}
-          onClose={() => setSelected(undefined)}
-          onOpenRoom={onOpenRoom}
-        />
       )}
     </SearchShellViewport>
   );

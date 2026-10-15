@@ -56,19 +56,13 @@ export async function verifyDiscoveryFaults(page, channel) {
     }),
   );
   await page.locator("[data-result-id]").first().click();
-  const dialog = page.getByRole("dialog");
-  await dialog
-    .getByRole("button", { name: "重新读取上下文", exact: true })
-    .waitFor();
-  assert.equal(await dialog.locator("[data-context-message-id]").count(), 0);
+  await page.getByText("无法打开消息，请刷新重试。", { exact: true }).waitFor();
+  assert.equal(await page.getByRole("dialog").count(), 0);
+  assert.equal(new URL(page.url()).searchParams.has("message"), false);
   await page.unroute("**/v3/client/messages/context");
-  await dialog
-    .getByRole("button", { name: "重新读取上下文", exact: true })
-    .click();
-  await dialog.locator("[data-context-message-id]").first().waitFor();
-  await dialog
-    .getByRole("button", { name: "打开所属对话", exact: true })
-    .click();
+  await page.getByRole("button", { name: "重新读取", exact: true }).click();
+  const row = page.locator("[data-result-id]").first();
+  await row.dblclick();
   await page
     .getByRole("heading", { name: channel.name, exact: true })
     .waitFor();

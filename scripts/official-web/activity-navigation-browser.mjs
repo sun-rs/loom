@@ -6,6 +6,7 @@ export async function verifyActivityNavigation({
   workspace,
   head,
   instances,
+  role,
 }) {
   const { room } = await client.request("room.create", {
     workspaceId: workspace.workspaceId,
@@ -14,6 +15,19 @@ export async function verifyActivityNavigation({
     name: "FIXTURE activity navigation",
     slug: "fixture-activity-navigation",
     idempotencyKey: "activity-navigation-room",
+  });
+  const member = await client.request("role.instantiate", {
+    roleId: role.roleId,
+    channelId: room.roomId,
+    basedOnRoomSeq: await head(room.roomId),
+    idempotencyKey: "navigation-member",
+  });
+  await client.request("agent.manage", {
+    action: "set_state",
+    agentId: member.instance.agentId,
+    state: "disabled",
+    basedOnRoomSeq: await head(workspace.controlRoomId),
+    idempotencyKey: "navigation-member-disable",
   });
   const post = async (n) =>
     client.request("message.post", {
@@ -244,6 +258,91 @@ export async function verifyActivityNavigation({
       await page.goBack();
       await page.getByTestId("inbox-row").first().waitFor();
       assert.equal(new URL(page.url()).searchParams.get("view"), "activity");
+      if (width === 1440) {
+        await page.goto(
+          origin +
+            `/?room=${room.roomId}&thread=${card.latestMessage.messageId}`,
+        );
+        const threadPane = page.getByTestId("thread-side-column");
+        const draft = threadPane.getByTestId("composer-textarea");
+        await draft.fill("FIXTURE retained thread draft");
+        await page.getByRole("button", { name: "频道成员与状态" }).click();
+        await page
+          .getByTestId("loom-channel-members")
+          .getByText(member.agent.displayName ?? member.agent.handle, {
+            exact: true,
+          })
+          .click();
+        await page.getByTestId("profile-panel").waitFor({ timeout: 5000 });
+        assert.equal(
+          await threadPane.count(),
+          1,
+          "Opening profile retains thread state",
+        );
+        assert.equal(
+          await threadPane.isVisible(),
+          false,
+          "Channel-sourced profile folds thread",
+        );
+        await page
+          .getByTestId("loom-members-dialog")
+          .waitFor({ state: "detached" });
+        await page.keyboard.press("Escape");
+        await page.getByTestId("profile-panel").waitFor({ state: "detached" });
+        await draft.waitFor();
+        assert.equal(await draft.inputValue(), "FIXTURE retained thread draft");
+        assert.equal(
+          new URL(page.url()).searchParams.get("thread"),
+          card.latestMessage.messageId,
+        );
+      }
+      // Search uses the same primary slot, including direct thread hits.
+      for (const [query, target, isThread] of [
+        ["target", card.latestMessage.messageId, false],
+        ["target", threadCard.latestMessage.messageId, true],
+      ]) {
+        await page.goto(
+          origin + `/?view=search&q=${encodeURIComponent(query)}`,
+        );
+        await page.locator(`[data-result-id="${target}"]`).click();
+        const focused = page.locator(
+          `[data-timeline-message-id="${target}"] [data-highlighted="true"]`,
+        );
+        await focused.waitFor({ timeout: 5000 });
+        assert.equal(await page.getByRole("dialog").count(), 0);
+        assert.equal(new URL(page.url()).searchParams.get("view"), "search");
+        if (isThread)
+          assert.equal(
+            await page.getByTestId("activity-thread-content").count(),
+            1,
+          );
+        if (width === 1440) {
+          const url = page.url();
+          for (const size of [900, 390, 1440]) {
+            await page.setViewportSize({
+              width: size,
+              height: size === 390 ? 844 : 1000,
+            });
+            await focused.waitFor();
+            assert.equal(
+              page.url(),
+              url,
+              "Resizing preserves route and selected detail",
+            );
+            assert.equal(
+              await page.evaluate(
+                () => document.documentElement.scrollWidth > innerWidth,
+              ),
+              false,
+            );
+          }
+          await page.locator(`[data-result-id="${target}"]`).dblclick();
+          await page.waitForURL((u) => !u.searchParams.has("view"));
+          await focused.waitFor();
+          await page.goBack();
+          await focused.waitFor();
+        }
+      }
       assert.deepEqual(errors, []);
       await page.screenshot({
         path: `/tmp/loom-activity-navigation-${width}.png`,
@@ -258,6 +357,8 @@ export async function verifyActivityNavigation({
         backRestoresActivity: true,
         threadCloseClearsReplyTarget: true,
         desktopDividerDraggable: width === 1440,
+        searchPrimarySlotsAndResize: true,
+        channelThreadProfileDraftPreserved: width === 1440,
         nativeHighlight: true,
         noContextDialog: true,
         refreshRestores: true,

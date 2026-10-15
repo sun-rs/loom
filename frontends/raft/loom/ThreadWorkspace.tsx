@@ -42,11 +42,13 @@ export default function ThreadWorkspace({
   onChanged,
   embedded = false,
   contentSlot = false,
+  covered = false,
   taskHead,
   readError,
 }: {
   embedded?: boolean;
   contentSlot?: boolean;
+  covered?: boolean;
   taskHead?: ReactNode;
   readError?: string;
   client: RahClient;
@@ -89,6 +91,7 @@ export default function ThreadWorkspace({
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
       if (
+        !covered &&
         e.key === "Escape" &&
         !e.defaultPrevented &&
         !document.querySelector(
@@ -101,7 +104,7 @@ export default function ThreadWorkspace({
     };
     document.addEventListener("keydown", key);
     return () => document.removeEventListener("keydown", key);
-  }, [bridge, onClose]);
+  }, [bridge, onClose, covered]);
   useEffect(() => {
     const abort = new AbortController();
     let timer: ReturnType<typeof setTimeout>;

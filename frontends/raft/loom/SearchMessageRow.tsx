@@ -1,4 +1,5 @@
 // Data adapter only: render the unchanged official MessageHitRow.
+import { useEffect, useRef } from "react";
 import { MessageHitRow } from "../packages/web/src/components/search/MessageHitRow.tsx";
 import type { DiscoveryRow } from "./discovery-client.ts";
 export default function SearchMessageRow({
@@ -10,8 +11,10 @@ export default function SearchMessageRow({
   row: DiscoveryRow;
   query: string;
   selected: boolean;
-  onOpen: () => void;
+  onOpen: (full: boolean) => void;
 }) {
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(timer.current), []);
   return (
     <div data-result-id={row.id}>
       <MessageHitRow
@@ -45,7 +48,11 @@ export default function SearchMessageRow({
         senderMember={null}
         historyCutoffMs={null}
         query={query}
-        onResultClick={onOpen}
+        onResultClick={(event) => {
+          clearTimeout(timer.current);
+          if (event.detail >= 2) onOpen(true);
+          else timer.current = setTimeout(() => onOpen(false), 220);
+        }}
       />
     </div>
   );

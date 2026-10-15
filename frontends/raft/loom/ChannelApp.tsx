@@ -78,7 +78,9 @@ function Channel({
   threadRootId,
   focusId,
   onThread,
+  onProfileVisibilityChange,
 }: {
+  onProfileVisibilityChange?: (open: boolean) => void;
   threadRootId?: string;
   focusId?: string;
   onThread: (id?: string) => void;
@@ -157,6 +159,10 @@ function Channel({
   useEffect(() => {
     if (profileId && !profileMember) closeProfile();
   }, [profileId, profileMember, closeProfile]);
+  useEffect(() => {
+    onProfileVisibilityChange?.(!!profileMember);
+    return () => onProfileVisibilityChange?.(false);
+  }, [!!profileMember, onProfileVisibilityChange]);
   const older = useCallback(async () => {
     try {
       setView(await bridge.older());
@@ -427,6 +433,7 @@ function Channel({
             client={bridge.client}
             room={channel}
             rootMessageId={threadRootId}
+            covered={!!profileMember}
             focusId={focusId}
             onClose={() => onThread(undefined)}
             onChanged={() => {
@@ -437,11 +444,11 @@ function Channel({
             }}
           />
         )}
-        {profileMember && !threadRootId && controlRoomId && (
+        {profileMember && controlRoomId && (
           <div
             className="thread-profile-side-column contents"
             data-collapse-channel="false"
-            data-collapse-thread="false"
+            data-collapse-thread={threadRootId ? "true" : "false"}
           >
             <InstanceInspector
               key={`${channel.roomId}:${profileMember.principalId}`}
@@ -472,6 +479,7 @@ export default function ChannelApp() {
   const [params, setParams] = useIntentRoute();
   const destination = params.get("view") ?? "channels";
   const activityNavigation = useRef(0);
+  const [discoveryProfileOpen, setDiscoveryProfileOpen] = useState(false);
   const selectDestination = (id: Destination) => {
     if (hasRouteBoundIntent()) return;
     setParams((previous) => {
@@ -823,7 +831,8 @@ export default function ChannelApp() {
                 client={client}
                 workspaceId={directory.workspace.workspaceId}
                 mode={destination}
-                onOpenActivity={async (row, full) => {
+                profileOpen={discoveryProfileOpen}
+                onOpenResult={async (row, full) => {
                   if (hasUnresolvedIntents()) throw Error("仍有未决操作");
                   const request = ++activityNavigation.current;
                   const expected = params.toString();
@@ -861,9 +870,11 @@ export default function ChannelApp() {
                       message: row.message.messageId,
                     });
                     if (!full) {
-                      target.set("view", "activity");
-                      if (previous.has("af"))
-                        target.set("af", previous.get("af")!);
+                      target.set("view", destination);
+                      for (const key of ["af", "q", "scope"]) {
+                        if (previous.has(key))
+                          target.set(key, previous.get(key)!);
+                      }
                     }
                     if (context.message.threadId) {
                       target.set("thread", context.rootMessageId!);
@@ -873,10 +884,7 @@ export default function ChannelApp() {
                   });
                 }}
                 detail={
-                  destination === "activity" &&
-                  requested &&
-                  selected &&
-                  bridge ? (
+                  requested && selected && bridge ? (
                     params.get("detail") === "thread" &&
                     params.get("thread") ? (
                       <ThreadWorkspace
@@ -905,6 +913,7 @@ export default function ChannelApp() {
                       <Channel
                         key={`${selected.roomId}:${params.get("message")}`}
                         channel={selected}
+                        onProfileVisibilityChange={setDiscoveryProfileOpen}
                         bridge={bridge}
                         controlRoomId={directory.workspace.controlRoomId}
                         focusId={params.get("message") ?? undefined}
@@ -918,25 +927,25 @@ export default function ChannelApp() {
                             return next;
                           })
                         }
-                        onBack={() => setParams({ view: "activity" })}
+                        onBack={() =>
+                          setParams((previous) => {
+                            const next = new URLSearchParams(previous);
+                            for (const key of [
+                              "room",
+                              "message",
+                              "thread",
+                              "detail",
+                            ])
+                              next.delete(key);
+                            return next;
+                          })
+                        }
                         onOpenPrivate={openPrivate}
                         onAddInstance={undefined}
                       />
                     )
                   ) : undefined
                 }
-                onOpenRoom={async (id) => {
-                  if (hasUnresolvedIntents()) throw Error("仍有未决操作");
-                  const next = await loadChannelDirectory(client);
-                  if (
-                    ![...next.channels, ...next.privateBoxes].some(
-                      (room) => room.roomId === id,
-                    )
-                  )
-                    throw Error("对话不可用");
-                  setDirectory(next);
-                  setParams({ room: id });
-                }}
               />
             )}
           {destination === "settings" && directory?.workspace.controlRoomId && (
