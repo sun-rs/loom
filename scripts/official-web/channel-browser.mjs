@@ -1,3 +1,5 @@
+import { verifyAttachmentDetails } from "./attachment-details-browser.mjs";
+import { verifyAttachments } from "./attachments-browser.mjs";
 import { verifyTaskManagement } from "./task-management-browser.mjs";
 import { verifyChannelTasks } from "./channel-task-browser.mjs";
 import { verifyTasks } from "./task-browser.mjs";
@@ -510,6 +512,21 @@ try {
     workspace,
     head,
   });
+  const attachmentDetails = await verifyAttachmentDetails({
+    browser,
+    origin,
+    client,
+    workspace,
+    head,
+    role,
+  });
+  const attachmentResults = await verifyAttachments({
+    browser,
+    origin,
+    client,
+    workspace,
+    head,
+  });
   const taskManagementResults = await verifyTaskManagement({
     browser,
     origin,
@@ -521,6 +538,8 @@ try {
   console.log(
     JSON.stringify(
       {
+        attachmentDetails,
+        attachmentResults,
         taskManagementResults,
         channelTaskResults,
         taskResults,

@@ -1,4 +1,8 @@
 import {
+  adaptAttachmentComposer,
+  adaptAttachmentMessage,
+} from "./attachment-adaptation.ts";
+import {
   adaptTaskComposer,
   adaptTaskMessage,
 } from "./channel-task-adaptation.ts";
@@ -39,20 +43,28 @@ export default defineConfig({
           id.endsWith("/packages/web/src/components/message/MessageInput.tsx")
         )
           return {
-            code: adaptTaskComposer(adaptComposerSubmit(code)),
+            code: adaptAttachmentComposer(
+              adaptTaskComposer(adaptComposerSubmit(code)),
+            ),
             map: null,
           };
         if (id.endsWith("/packages/web/src/components/message/ThreadPanel.tsx"))
           return { code: adaptThreadFooter(code), map: null };
         if (id.endsWith("/packages/web/src/components/message/MessageItem.tsx"))
           return {
-            code: adaptTaskMessage(
-              adaptThreadItem(adaptMessageProfileNavigation(code)),
+            code: adaptAttachmentMessage(
+              adaptTaskMessage(
+                adaptThreadItem(adaptMessageProfileNavigation(code)),
+              ),
             ),
             map: null,
           };
       },
       resolveId(source, importer) {
+        if (source === "loom-composer-files")
+          return resolve(import.meta.dirname, "ComposerFiles.tsx");
+        if (source === "loom-attachments")
+          return resolve(import.meta.dirname, "Attachments.tsx");
         if (source === "loom-channel-tasks")
           return resolve(import.meta.dirname, "ChannelTasks.tsx");
         if (

@@ -13,7 +13,7 @@ import { Button, ThreadPanelRoot, ThreadPanelFooter } from "raft-ui";
 import ThreadPanel, {
   type ThreadPanelProps,
 } from "../packages/web/src/components/message/ThreadPanel.tsx";
-import MessageInput from "../packages/web/src/components/message/MessageInput.tsx";
+import MessageInput from "./ComposerFiles.tsx";
 import PanelHeader from "../packages/web/src/components/ui/PanelHeader.tsx";
 import { composerHostClassName } from "../packages/web/src/components/message/composerHost.ts";
 import { useResizablePanel } from "../packages/web/src/hooks/useResizablePanel.ts";
@@ -135,6 +135,8 @@ export default function ThreadWorkspace({
       )}
       <div className="relative z-20 shrink-0 min-w-0 w-full flex-1 border-t border-line-muted bg-layer-panel px-3 pt-3 safe-bottom theme-brutal:border-t-2 theme-brutal:border-black theme-brutal:bg-white">
         <MessageInput
+          client={client}
+          roomId={room.roomId}
           channelId={`loom-thread:${room.roomId}:${rootMessageId}`}
           channelName={room.name}
           mentionChannelId={room.roomId}
@@ -149,8 +151,8 @@ export default function ThreadWorkspace({
             !!(data?.room?.archivedAt || room.archivedAt) ||
             state !== "idle"
           }
-          onSendOverride={async (body) => {
-            await bridge.send(body);
+          onSendOverride={async (body, _mentions, _asTask, attachmentIds) => {
+            await bridge.send(body, attachmentIds);
             setTick((v) => v + 1);
             onChanged();
           }}

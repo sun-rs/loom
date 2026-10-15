@@ -46,7 +46,7 @@ import ChannelSidebar from "./ChannelSidebar.tsx";
 import ChatSidebarFrame from "./ChatSidebarFrame.tsx";
 import AgentPage from "./AgentPage.tsx";
 import PanelHeader from "../packages/web/src/components/ui/PanelHeader.tsx";
-import MessageInput from "../packages/web/src/components/message/MessageInput.tsx";
+import MessageInput from "./ComposerFiles.tsx";
 import { LoomChannelClient, loadChannelDirectory } from "./channel-client.ts";
 import type { Principal, Room } from "@rah-os/protocol";
 const client = new HttpRahClient({
@@ -179,18 +179,35 @@ function Channel({
     },
   );
   const send = useCallback(
-    async (body: string, _mentions?: unknown, asTask?: boolean) => {
+    async (
+      body: string,
+      _mentions?: unknown,
+      asTask?: boolean,
+      attachmentIds: string[] = [],
+    ) => {
       await new Promise<void>((resolve, reject) => {
         // Keep the official composer's submission unresolved while the outcome is
         // unknown. Explicit verification settles this same submission, so it never
         // restores an already committed draft as a new sendable message.
         const deliver = asTask
-          ? tasks.facade.create.bind(tasks.facade)
+          ? (
+              body: string,
+              settled: Parameters<typeof bridge.send>[1],
+              _ids: string[],
+            ) =>
+              tasks.facade.create(
+                body,
+                settled as Parameters<typeof tasks.facade.create>[1],
+              )
           : bridge.send.bind(bridge);
-        void deliver(body, (outcome) => {
-          if (outcome.kind === "ok") resolve();
-          else if (outcome.kind === "rejected") reject(outcome.error);
-        })
+        void deliver(
+          body,
+          (outcome) => {
+            if (outcome.kind === "ok") resolve();
+            else if (outcome.kind === "rejected") reject(outcome.error);
+          },
+          attachmentIds,
+        )
           .then((outcome) => {
             if (outcome.kind === "busy")
               reject(new Error("正在处理上一条消息"));
@@ -369,6 +386,8 @@ function Channel({
             className="relative flex min-w-0 w-full items-center border-t border-line-muted bg-layer-panel px-3 pt-3 safe-bottom theme-brutal:border-t-2 theme-brutal:border-black theme-brutal:bg-white"
           >
             <MessageInput
+              client={client}
+              roomId={channel.roomId}
               channelId={channel.roomId}
               channelName={channel.name}
               variant="compact"

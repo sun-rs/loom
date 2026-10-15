@@ -1,0 +1,33 @@
+{
+  "engine": "webkit",
+  "physicalIOS": false,
+  "results": [
+    {
+      "width": 1440,
+      "referencePath": true,
+      "nativePicker": false,
+      "desktopDrop": true,
+      "attachmentOnlySend": true,
+      "exactUnknownReplay": true,
+      "reloadDownloadExact": true
+    },
+    {
+      "width": 390,
+      "referencePath": true,
+      "nativePicker": true,
+      "desktopDrop": false,
+      "attachmentOnlySend": true,
+      "exactUnknownReplay": true,
+      "reloadDownloadExact": true
+    },
+    {
+      "width": 820,
+      "referencePath": true,
+      "nativePicker": true,
+      "desktopDrop": false,
+      "attachmentOnlySend": true,
+      "exactUnknownReplay": true,
+      "reloadDownloadExact": true
+    }
+  ]
+}

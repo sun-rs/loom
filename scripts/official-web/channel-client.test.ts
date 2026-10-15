@@ -84,7 +84,7 @@ test("channel read uses client-core bounded pages and rejects cross-channel proj
   );
 });
 
-test("unsupported attachment content remains explicit instead of becoming an empty message", () => {
+test("canonical attachments project stable IDs, names and sizes without placeholder text", () => {
   const projected = toOfficialMessage(
     {
       ...message,
@@ -101,6 +101,13 @@ test("unsupported attachment content remains explicit instead of becoming an emp
     },
     [],
   );
-  assert.match(projected.content, /附件/);
-  assert.match(projected.content, /尚未接入/);
+  assert.equal(projected.content, "");
+  assert.deepEqual(projected.attachments, [
+    {
+      id: "file-a",
+      filename: "report.pdf",
+      mimeType: "application/pdf",
+      sizeBytes: 1,
+    },
+  ]);
 });

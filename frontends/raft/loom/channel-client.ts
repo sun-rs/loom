@@ -33,13 +33,16 @@ export function toOfficialMessage(
     senderDisplayName: name,
     content: [
       message.body,
-      message.attachments?.length
-        ? `（此消息含 ${message.attachments.length} 个附件；附件预览尚未接入。）`
-        : "",
       message.forwardedBundle ? "（此消息含转发内容；转发预览尚未接入。）" : "",
     ]
       .filter(Boolean)
       .join("\n\n"),
+    attachments: message.attachments?.map((a) => ({
+      id: a.attachmentId,
+      filename: a.filename,
+      mimeType: a.mimeType,
+      sizeBytes: a.size,
+    })),
     createdAt: message.createdAt,
   };
 }
@@ -173,16 +176,20 @@ export class LoomChannelClient {
   send(
     body: string,
     onSettled?: (result: IntentOutcome<ClientMessageMutationResponse>) => void,
+    attachmentIds: string[] = [],
   ) {
     return this.writes.submit({
       action: "message",
-      payload: { body },
+      payload: { body, attachmentIds: [...attachmentIds] },
       session: this.room,
       ...(onSettled ? { onSettled } : {}),
       send: (payload, basedOnRoomSeq, idempotencyKey) =>
         this.client.request("message.post", {
           roomId: this.roomId,
           body: payload.body,
+          ...(payload.attachmentIds.length
+            ? { attachmentIds: payload.attachmentIds }
+            : {}),
           basedOnRoomSeq,
           idempotencyKey,
           recipients: [],

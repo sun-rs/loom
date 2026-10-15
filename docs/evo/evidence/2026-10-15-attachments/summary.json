@@ -1,0 +1,32 @@
+{
+  "status": "automated-verification",
+  "paidCli": false,
+  "realCliExecution": false,
+  "backendChanges": false,
+  "checks": {
+    "fullCheckExitCode": 0,
+    "sourceTestsPassed": 63,
+    "loomTypecheck": true,
+    "formalBuild": true,
+    "browser": "browser.json",
+    "webkit": "webkit.json",
+    "backendPassed": 3211,
+    "optInSkipped": 22,
+    "consolePassed": 63,
+    "efficiencyToolTestsPassed": 558
+  },
+  "limits": [
+    "Only the local Computer currently supports reference browsing",
+    "Complex document/media previews, attachment comments, forwarding and file management not included",
+    "Native iOS system chooser not tested on physical hardware",
+    "Formal page verification will not send attachments"
+  ],
+  "retainedFailures": [
+    "TDD missing upload module and old build missing file-reference button",
+    "Native Dialog children initially mounted without Dialog root; restored complete native composition",
+    "Native button content layer intercepted file input tap; isolated input stacking fixed and real tap passes",
+    "Fixture setInputFiles before initial read completed; now waits for control actionability",
+    "Fixture read just-sent message before it appeared; now awaits canonical message",
+    "One final formatting check failed; reformatted and checked again"
+  ]
+}

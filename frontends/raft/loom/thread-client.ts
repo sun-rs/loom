@@ -100,7 +100,7 @@ export class LoomThreadClient {
       hasOlder: this.messages?.state.hasEarlier ?? false,
     };
   }
-  async send(body: string) {
+  async send(body: string, attachmentIds: string[] = []) {
     if (this.sending || this.writes.state !== "idle")
       throw Error("仍有未决回复");
     if (!this.parent) throw Error("请先读取消息列");
@@ -133,7 +133,13 @@ export class LoomThreadClient {
         this.writes.submit({
           action: "thread-reply",
           session: this.room,
-          payload: { threadId, body },
+          payload: {
+            threadId,
+            body,
+            ...(attachmentIds.length
+              ? { attachmentIds: [...attachmentIds] }
+              : {}),
+          },
           send: (p, basedOnRoomSeq, idempotencyKey) =>
             this.client.request("thread.reply", {
               ...p,
