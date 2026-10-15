@@ -2491,6 +2491,21 @@
       "localGlue": "React context borrows the mounted timeline RoomSession members, also through portals. Scoped Vite import substitution does not write native stores or call upstream services. MessageItem AvatarSlot omits unbound offline badge.",
       "limits": "Avatar click inspector and activity are not connected; no fake online/offline status. Missing/revoked roster displays unavailable. No backend changes.",
       "verification": "scripts/official-web/mentions-browser.mjs: real temporary gateway Human identity plus explicitly intercepted Agent presentation fixture, both viewports; no provider execution."
+    },
+    "instanceInspectorSlice": {
+      "source": [
+        "packages/web/src/components/profile/ProfilePanel.tsx: wrapper, resize, Escape",
+        "packages/web/src/components/agent/AgentDetailPanel.tsx: AgentDetailHeader, tab strip, activity body",
+        "packages/web/src/components/agent/AgentActivityLog.tsx: activity rows",
+        "packages/web/src/components/layout/MainLayout.tsx: thread-layout-container / thread-profile-side-column",
+        "packages/web/src/index.css: native container-aware profile split"
+      ],
+      "directReuse": "raft-ui ProfilePanel/Body, Tabs, Button; native PanelHeader/CloseButton/AvatarSlot/SectionEyebrow/useResizablePanel/useTimeFormatter and container-aware layout CSS.",
+      "structuralPort": "ProfilePanel overlay/split composition (380px default, 300–600px resize, lg breakpoint), AgentDetailPanel header and Activity tab/rows; Loom read source substitutes upstream stores.",
+      "buildTimeAdaptation": "message-profile-navigation.ts changes only SenderAvatar onNavigateAgent to honor controlled onOpenProfile while readOnlyProjection remains enabled. Exact unique source boundary required; other navigation and mutation guards remain unchanged. Frozen on-disk upstream files unchanged; executed MessageItem is NOT byte-exact reuse.",
+      "localGlue": "Instance ID resolves through authenticated role.list to Agent ID. Activity list is bounded to 20 per page and filtered to the current Room and participant. Native state remains diagnostic; run.finished is not Task completion. Cursor is transient presentation state. Polls abort on unmount and clear data on failure. Native panel has no upstream API/store writes.",
+      "limits": "Only Activity tab connected. Bounded older/latest paging is local glue. No transcript/tool stream, per-run usage drilldown or runtime controls; no profile deep-link persistence yet.",
+      "verification": "instance-activity.test.ts, message-profile-navigation.test.ts, inspector-browser.mjs; no paid provider calls."
     }
   },
   "rollout": {

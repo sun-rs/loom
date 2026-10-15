@@ -1,3 +1,4 @@
+import { verifyInspector } from "./inspector-browser.mjs";
 import assert from "node:assert/strict";
 export async function verifyMentions({
   browser,
@@ -172,6 +173,15 @@ export async function verifyMentions({
       });
       await page.mouse.move(viewport.width - 2, 2);
       await profile.waitFor({ state: "hidden" });
+      await verifyInspector({
+        page,
+        agentAvatar,
+        composer,
+        viewport,
+        name,
+        instanceId: instance.instanceId,
+        roomId: channel.roomId,
+      });
       results.push({
         humanProfileFromGateway: true,
         agentProfilePresentationFixture: true,

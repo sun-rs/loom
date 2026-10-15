@@ -1,3 +1,4 @@
+import { adaptMessageProfileNavigation } from "./message-profile-navigation.ts";
 import { defineConfig } from "vite";
 import { resolve } from "node:path";
 import officialConfig from "../packages/web/vite.config.ts";
@@ -18,6 +19,10 @@ export default defineConfig({
             "/src/main.tsx",
             "/@fs" + resolve(import.meta.dirname, "main.tsx"),
           ),
+      },
+      transform(code, id) {
+        if (id.endsWith("/packages/web/src/components/message/MessageItem.tsx"))
+          return { code: adaptMessageProfileNavigation(code), map: null };
       },
       resolveId(source, importer) {
         if (

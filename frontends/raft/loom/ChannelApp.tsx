@@ -1,3 +1,4 @@
+import InstanceInspector from "./InstanceInspector.tsx";
 import { bindMemberRoster } from "./member-roster.ts";
 import { notifyChannelMembersChanged } from "../packages/web/src/store/channelMemberEvents.ts";
 import ChannelTimeline from "./ChannelTimeline.tsx";
@@ -20,6 +21,7 @@ import {
   useLayoutEffect,
   useMemo,
   useState,
+  useRef,
 } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
@@ -63,6 +65,7 @@ const consumerId = consumer();
 
 function Channel({
   channel,
+  controlRoomId,
   bridge,
   onOpenPrivate,
   onAddInstance,
@@ -72,9 +75,20 @@ function Channel({
   onOpenPrivate: (id: string) => void;
   onAddInstance: (() => void) | undefined;
   channel: Room;
+  controlRoomId: string | undefined;
   bridge: LoomChannelClient;
 }) {
   const isPrivate = channel.instancePrivateBox !== undefined;
+  const [profileId, setProfileId] = useState<string>();
+  const opener = useRef<HTMLElement | null>(null);
+  const closeProfile = useCallback(() => {
+    setProfileId(undefined);
+    requestAnimationFrame(() => {
+      if (opener.current?.isConnected)
+        opener.current.focus({ preventScroll: true });
+    });
+  }, []);
+
   const [view, setView] = useState(() => bridge.view());
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -115,6 +129,15 @@ function Channel({
       release?.();
     };
   }, [channel.roomId, view.members, loading, error]);
+  const profileMember =
+    !error && !loading
+      ? view.members.find(
+          (m) => m.kind === "agent" && m.principalId === profileId,
+        )
+      : undefined;
+  useEffect(() => {
+    if (profileId && !profileMember) closeProfile();
+  }, [profileId, profileMember, closeProfile]);
   const older = useCallback(async () => {
     try {
       setView(await bridge.older());
@@ -154,106 +177,143 @@ function Channel({
     } else setError("尚未核实发送结果，请稍后再核实。");
   };
   return (
-    <ConversationPanelRoot edge="attached" className="relative border-l-0">
-      <PanelHeader
-        title={isPrivate ? `私聊 · ${channel.name}` : channel.name}
-        subtitle={channel.description}
-        onMobileBack={onBack}
-        mobileBackProps={{ "aria-label": "聊天列表" }}
-        icon={isPrivate ? <MessageSquare size={18} /> : <Hash size={18} />}
-        actions={
-          isPrivate ? undefined : (
-            <ChannelMembers
-              bridge={bridge}
-              onOpenPrivate={onOpenPrivate}
-              onAddInstance={channel.archivedAt ? undefined : onAddInstance}
-            />
-          )
-        }
-      />
-      <ConversationPanelContent>
-        {channel.archivedAt && (
-          <p role="status" className="px-3 py-2 text-sm">
-            频道已归档，历史只读。
-          </p>
-        )}
-        {isPrivate && (
-          <p className="px-3 py-2 text-xs text-foreground-muted">
-            仅你与此实例可见；沿用实例会话，忙时排队。私聊中写入的记忆属于频道共享记忆。
-          </p>
-        )}
-        {isPrivate && view.room?.instancePrivateBox?.active === false && (
-          <p role="status" className="px-3 py-2 text-sm">
-            此私聊已停用，历史只读。
-          </p>
-        )}
-        {error && (
-          <div role="alert" className="m-3 text-sm">
-            {error}
-          </div>
-        )}
-        <div className="relative min-h-0 flex-1 overflow-hidden">
-          {loading ? (
-            <Spinner aria-label="正在读取频道" />
-          ) : view.messages.length === 0 ? (
-            <p className="p-6 text-sm">
-              {isPrivate ? "还没有私聊消息" : "频道还没有消息"}
-            </p>
-          ) : (
-            <ChannelTimeline
-              roomId={channel.roomId}
-              messages={view.messages}
-              members={error ? [] : view.members}
-              hasOlder={view.hasOlder}
-              loading={loading}
-              loadOlder={older}
-            />
-          )}
-        </div>
-      </ConversationPanelContent>
-      {writeState === "unknown" && (
-        <div role="alert" className="p-3 text-sm">
-          发送结果未知，核实前已暂停发送。
-          <Button
-            onClick={() =>
-              void verify().catch((failure) => setError(String(failure)))
-            }
-          >
-            核实发送
-          </Button>
-        </div>
-      )}
-      {/* Official full-chat shell; compact input suppresses unavailable uploads only. */}
-      <div
-        data-testid="chat-composer-shell"
-        className="relative flex min-w-0 w-full items-center border-t border-line-muted bg-layer-panel px-3 pt-3 safe-bottom theme-brutal:border-t-2 theme-brutal:border-black theme-brutal:bg-white"
+    <div className="thread-layout-container relative flex min-h-0 min-w-0 flex-1">
+      <ConversationPanelRoot
+        edge="attached"
+        className="thread-main-column relative border-l-0"
       >
-        <MessageInput
-          channelId={channel.roomId}
-          channelName={channel.name}
-          variant="compact"
-          loadMentionMembers={!loading}
-          mentionScopeChannelType="private"
-          showTaskButton={false}
-          onSendOverride={send}
-          submitDisabled={
-            loading ||
-            Boolean(error) ||
-            Boolean(channel.archivedAt) ||
-            writeState !== "idle" ||
-            (isPrivate && view.room?.instancePrivateBox?.active !== true)
-          }
-          submitDisabledReason={
-            isPrivate && view.room?.instancePrivateBox?.active === false
-              ? "此私聊已停用"
-              : undefined
-          }
-          placeholder={
-            isPrivate ? `私聊 ${channel.name}` : `发送到 #${channel.name}`
+        <PanelHeader
+          title={isPrivate ? `私聊 · ${channel.name}` : channel.name}
+          subtitle={channel.description}
+          onMobileBack={onBack}
+          mobileBackProps={{ "aria-label": "聊天列表" }}
+          icon={isPrivate ? <MessageSquare size={18} /> : <Hash size={18} />}
+          actions={
+            isPrivate ? undefined : (
+              <ChannelMembers
+                bridge={bridge}
+                onOpenPrivate={onOpenPrivate}
+                onAddInstance={channel.archivedAt ? undefined : onAddInstance}
+              />
+            )
           }
         />
-      </div>
-    </ConversationPanelRoot>
+        <ConversationPanelContent>
+          {channel.archivedAt && (
+            <p role="status" className="px-3 py-2 text-sm">
+              频道已归档，历史只读。
+            </p>
+          )}
+          {isPrivate && (
+            <p className="px-3 py-2 text-xs text-foreground-muted">
+              仅你与此实例可见；沿用实例会话，忙时排队。私聊中写入的记忆属于频道共享记忆。
+            </p>
+          )}
+          {isPrivate && view.room?.instancePrivateBox?.active === false && (
+            <p role="status" className="px-3 py-2 text-sm">
+              此私聊已停用，历史只读。
+            </p>
+          )}
+          {error && (
+            <div role="alert" className="m-3 text-sm">
+              {error}
+            </div>
+          )}
+          <div className="relative min-h-0 flex-1 overflow-hidden">
+            {loading ? (
+              <Spinner aria-label="正在读取频道" />
+            ) : view.messages.length === 0 ? (
+              <p className="p-6 text-sm">
+                {isPrivate ? "还没有私聊消息" : "频道还没有消息"}
+              </p>
+            ) : (
+              <ChannelTimeline
+                roomId={channel.roomId}
+                messages={view.messages}
+                members={error ? [] : view.members}
+                hasOlder={view.hasOlder}
+                loading={loading}
+                loadOlder={older}
+                onOpenProfile={(type, id) => {
+                  if (
+                    type === "agent" &&
+                    controlRoomId &&
+                    !error &&
+                    view.members.some(
+                      (m) => m.kind === "agent" && m.principalId === id,
+                    )
+                  ) {
+                    opener.current =
+                      document.activeElement instanceof HTMLElement
+                        ? document.activeElement
+                        : null;
+                    setProfileId(id);
+                  }
+                }}
+              />
+            )}
+          </div>
+        </ConversationPanelContent>
+        {writeState === "unknown" && (
+          <div role="alert" className="p-3 text-sm">
+            发送结果未知，核实前已暂停发送。
+            <Button
+              onClick={() =>
+                void verify().catch((failure) => setError(String(failure)))
+              }
+            >
+              核实发送
+            </Button>
+          </div>
+        )}
+        {/* Official full-chat shell; compact input suppresses unavailable uploads only. */}
+        <div
+          data-testid="chat-composer-shell"
+          className="relative flex min-w-0 w-full items-center border-t border-line-muted bg-layer-panel px-3 pt-3 safe-bottom theme-brutal:border-t-2 theme-brutal:border-black theme-brutal:bg-white"
+        >
+          <MessageInput
+            channelId={channel.roomId}
+            channelName={channel.name}
+            variant="compact"
+            loadMentionMembers={!loading}
+            mentionScopeChannelType="private"
+            showTaskButton={false}
+            onSendOverride={send}
+            submitDisabled={
+              loading ||
+              Boolean(error) ||
+              Boolean(channel.archivedAt) ||
+              writeState !== "idle" ||
+              (isPrivate && view.room?.instancePrivateBox?.active !== true)
+            }
+            submitDisabledReason={
+              isPrivate && view.room?.instancePrivateBox?.active === false
+                ? "此私聊已停用"
+                : undefined
+            }
+            placeholder={
+              isPrivate ? `私聊 ${channel.name}` : `发送到 #${channel.name}`
+            }
+          />
+        </div>
+      </ConversationPanelRoot>
+      {profileMember && controlRoomId && (
+        <div
+          className="thread-profile-side-column contents"
+          data-collapse-channel="false"
+          data-collapse-thread="false"
+        >
+          <InstanceInspector
+            key={`${channel.roomId}:${profileMember.principalId}`}
+            client={bridge.client}
+            controlRoomId={controlRoomId}
+            room={channel}
+            member={profileMember}
+            onClose={closeProfile}
+          />
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -557,6 +617,7 @@ export default function ChannelApp() {
                 <Channel
                   key={selected.roomId}
                   channel={selected}
+                  controlRoomId={directory.workspace.controlRoomId}
                   onBack={showChatList}
                   bridge={bridge!}
                   onOpenPrivate={openPrivate}

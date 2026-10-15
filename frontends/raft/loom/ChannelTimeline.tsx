@@ -29,6 +29,7 @@ export default function ChannelTimeline({
   hasOlder,
   loading,
   loadOlder,
+  onOpenProfile,
 }: {
   roomId: string;
   messages: Message[];
@@ -36,6 +37,7 @@ export default function ChannelTimeline({
   hasOlder: boolean;
   loading: boolean;
   loadOlder: () => Promise<void>;
+  onOpenProfile?: (type: "agent" | "human", id: string) => void;
 }) {
   const roster = useMemo(() => projectMentionMembers(members), [members]);
   const { options } = useTimeFormatter();
@@ -68,6 +70,7 @@ export default function ChannelTimeline({
       mentionMap={mentionMap}
       channels={[]}
       readOnlyProjection
+      onOpenProfile={onOpenProfile}
       // Bounded identity-only previews; never publish these into official runtime stores.
       previewSenderAgent={
         roster.agents.find((p) => p.id === message.senderId) as

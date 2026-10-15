@@ -1,0 +1,42 @@
+{
+  "slice": "avatar-instance-activity-inspector",
+  "implementation": "complete",
+  "verification": {
+    "npmCheckExitCode": 0,
+    "backendPassed": 3211,
+    "backendOptInSkipped": 22,
+    "failed": 0,
+    "consoleTests": 63,
+    "browserPolicyTests": 15,
+    "efficiencyToolTests": 558,
+    "sourceTests": 29,
+    "workbenchBuild": "passed",
+    "format": "passed",
+    "diff": "passed",
+    "browser": "browser.json",
+    "viewports": ["1440x1000", "390x844"],
+    "dpr": 1,
+    "screenshotsInspected": true,
+    "defaultActivity": true,
+    "pointerAndKeyboardOpen": true,
+    "closeRestoresDraftAndFocus": true,
+    "nativeResizeHitAndDrag": true,
+    "failureClearsAndRecovers": true,
+    "scopedBoundedPagination": true,
+    "lateResponseDoesNotReopen": true,
+    "inspectorWrites": 0,
+    "chronologicalPageUnit": "red then green; native ascending presentation with Room sequence",
+    "controlledNativeCallbackGuard": "all other source and readonly branches unchanged",
+    "formalPage": "pending restart"
+  },
+  "backendChanged": false,
+  "paidProviderCalls": 0,
+  "scope": "Read-only activity, current Room state, bounded run-event pages. No usage drilldown or runtime controls.",
+  "retainedFailure": "A browser batch timed out on the existing private entry while a simultaneous build replaced its served static directory. Not counted as pass; fixed-artifact full suite and final ordered build full suite both passed. No private flow assertions weakened.",
+  "remaining": [
+    "Per-run usage drilldown",
+    "Native tool/thinking trajectory",
+    "Other instance detail tabs and runtime controls",
+    "Profile URL deep links"
+  ]
+}
