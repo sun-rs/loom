@@ -707,6 +707,16 @@ export default function ChannelApp() {
             )}
           {destination === "settings" && directory?.workspace.controlRoomId && (
             <SettingsPage
+              tab={params.get("settings")}
+              onTab={(id) => {
+                if (hasRouteBoundIntent()) return;
+                setParams((previous) => {
+                  const next = new URLSearchParams(previous);
+                  if (id) next.set("settings", id);
+                  else next.delete("settings");
+                  return next;
+                });
+              }}
               client={client}
               workspaceId={directory.workspace.workspaceId}
               controlRoomId={directory.workspace.controlRoomId}
@@ -716,9 +726,13 @@ export default function ChannelApp() {
             destination,
           ) && <DestinationPlaceholder active={destination} />}
         </div>
-        {(destination !== "channels" || mobileList) && (
-          <MobileNavigation active={destination} onSelect={selectDestination} />
-        )}
+        {(destination !== "channels" || mobileList) &&
+          !(destination === "settings" && params.has("settings")) && (
+            <MobileNavigation
+              active={destination}
+              onSelect={selectDestination}
+            />
+          )}
       </AppShellRoot>
     </>
   );

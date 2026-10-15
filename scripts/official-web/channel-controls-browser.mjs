@@ -72,6 +72,10 @@ export async function verifyChannelControls({
       .getByRole("navigation", { name: "主导航" })
       .getByRole("button", { name: "设置", exact: true })
       .click();
+    await page
+      .getByTestId("settings-sidebar-list")
+      .getByRole("button", { name: "运行设置", exact: true })
+      .click();
     const input = page.getByLabel("本机同时运行上限", { exact: true });
     await input.waitFor();
     const initial = await client.request("runtime.settings.read", {});

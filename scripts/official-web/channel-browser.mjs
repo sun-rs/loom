@@ -1,3 +1,4 @@
+import { verifySettingsNavigation } from "./settings-navigation-browser.mjs";
 import { verifyChannelControls } from "./channel-controls-browser.mjs";
 import { verifyMentions } from "./mentions-browser.mjs";
 import { verifySystemNotices } from "./system-notices-browser.mjs";
@@ -121,6 +122,10 @@ try {
     instances.push(result.instance);
   }
   browser = await chromium.launch({ headless: true });
+  const settingsNavigationResults = await verifySettingsNavigation({
+    browser,
+    origin,
+  });
   const controlResults = await verifyChannelControls({
     browser,
     origin,
@@ -482,6 +487,7 @@ try {
   console.log(
     JSON.stringify(
       {
+        settingsNavigationResults,
         controlResults,
         mentionResults,
         systemNoticeResults,

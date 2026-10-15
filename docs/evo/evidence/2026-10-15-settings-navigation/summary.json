@@ -1,0 +1,34 @@
+{
+  "status": "automated-verified-awaiting-deployment",
+  "scope": "Settings grouped navigation and native responsive shell; existing runtime form retained",
+  "paidCli": false,
+  "realCliExecution": false,
+  "audit": "../../../audits/2026-10-15-settings-navigation.zh-CN.md",
+  "checks": {
+    "npmRunCheck": {
+      "exitCode": 0,
+      "backendPassed": 3211,
+      "backendOptInSkipped": 22,
+      "consolePassed": 63,
+      "browserPolicyPassed": 15,
+      "efficiencyToolsPassed": 558,
+      "officialSourcePassed": 37
+    },
+    "formalBuild": true,
+    "formatCheck": true,
+    "diffCheck": true,
+    "temporaryCoreBrowser": "browser.json"
+  },
+  "coverage": [
+    "native SettingsSidebarList with original row states",
+    "desktop default account and mobile unselected root",
+    "240px default sidebar and pointer resize to 280px",
+    "placeholder categories, URL reload and browser back",
+    "mobile detail hides bottom navigation and returns to list",
+    "runtime draft retained across categories",
+    "existing concurrency save/revision conflict/unknown-result regression"
+  ],
+  "deployment": {
+    "verified": false
+  }
+}

@@ -1,267 +1,160 @@
-import { useRouteIntentOwner } from "./useIntentRoute.ts";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { AppShellMainSlot, Panel, Card, Button, Input } from "raft-ui";
-import { Settings, SlidersHorizontal } from "lucide-react";
+import { useEffect, useState, type CSSProperties } from "react";
+import { AppShellMainSlot, AppShellSidebarSlot, Panel } from "raft-ui";
+import {
+  User,
+  Languages,
+  Type,
+  Bell,
+  Building2,
+  Shield,
+  BadgeInfo,
+  FileText,
+} from "lucide-react";
 import type { RahClient } from "@rah-os/client-sdk";
-import type { RuntimeSettings } from "@rah-os/protocol";
+import SettingsSidebarList from "../packages/web/src/components/settings/SettingsSidebarList.tsx";
 import PanelHeader from "../packages/web/src/components/ui/PanelHeader.tsx";
-import SectionHeader from "../packages/web/src/components/ui/SectionHeader.tsx";
-import FormField from "../packages/web/src/components/ui/FormField.tsx";
-import { ManagementClient } from "./management-client.ts";
-import { OperationStatus, useManagement } from "./ManagementUi.tsx";
-import { saveConcurrency } from "./control-actions.ts";
-/** SettingsPanel content shell + native settings card/form; no upstream account state. */
+import PanelResizeHandle from "../packages/web/src/components/ui/PanelResizeHandle.tsx";
+import { useResizablePanel } from "../packages/web/src/hooks/useResizablePanel.ts";
+import { SIDEBAR_PANEL_BOUNDS } from "../packages/web/src/lib/panelBounds.ts";
+import ChatSidebarFrame from "./ChatSidebarFrame.tsx";
+import RuntimeSettings from "./RuntimeSettings.tsx";
+const categories = [
+  {
+    label: "个人",
+    items: [
+      { id: "account", label: "账户", icon: User },
+      { id: "language-region", label: "语言与区域", icon: Languages },
+      { id: "appearance", label: "外观", icon: Type },
+      { id: "notifications", label: "通知", icon: Bell },
+    ],
+  },
+  {
+    label: "工作空间",
+    items: [
+      { id: "server", label: "运行设置", icon: Building2 },
+      { id: "administration", label: "管理", icon: Shield },
+    ],
+  },
+  {
+    label: "资源",
+    items: [
+      { id: "about", label: "关于", icon: BadgeInfo },
+      { id: "release-notes", label: "更新日志", icon: FileText },
+    ],
+  },
+];
+/** Sidebar.tsx settings rail + SettingsPanel; no upstream account or server stores. */
 export default function SettingsPage({
   client,
   workspaceId,
   controlRoomId,
+  tab,
+  onTab,
 }: {
   client: RahClient;
   workspaceId: string;
   controlRoomId: string;
+  tab: string | null;
+  onTab: (id: string | null) => void;
 }) {
-  const manager = useMemo(
-    () => new ManagementClient(client, workspaceId, controlRoomId),
-    [client, workspaceId, controlRoomId],
+  const panel = useResizablePanel({
+    storageKey: "loom:settingsSidebarWidth",
+    ...SIDEBAR_PANEL_BOUNDS,
+  });
+  const [desktop, setDesktop] = useState(
+    () => window.matchMedia("(min-width: 768px)").matches,
   );
-  useRouteIntentOwner(manager.writes);
-  const { state, error, setError } = useManagement(manager);
-  const [base, setBase] = useState<RuntimeSettings>(),
-    [latest, setLatest] = useState<RuntimeSettings>();
-  const [value, setValue] = useState(""),
-    [notice, setNotice] = useState(""),
-    [readError, setReadError] = useState("");
-  const [needsRead, setNeedsRead] = useState(false),
-    [reload, setReload] = useState(0);
-  const baseRef = useRef<RuntimeSettings>(undefined);
   useEffect(() => {
-    const abort = new AbortController();
-    let timer: ReturnType<typeof setTimeout>;
-    const read = async () => {
-      try {
-        const data = await client.request(
-          "runtime.settings.read",
-          {},
-          { signal: abort.signal },
-        );
-        if (
-          abort.signal.aborted ||
-          (baseRef.current && data.revision < baseRef.current.revision)
-        )
-          return;
-        setLatest(data);
-        setReadError("");
-        if (!baseRef.current) {
-          baseRef.current = data;
-          setBase(data);
-          setValue(String(data.maxConcurrentRuns));
-          setNeedsRead(false);
-        }
-      } catch {
-        if (!abort.signal.aborted) {
-          setLatest(undefined);
-          setReadError("无法读取当前设置，请重新读取。");
-        }
-      } finally {
-        if (!abort.signal.aborted) timer = setTimeout(read, 15000);
-      }
-    };
-    void read();
-    return () => {
-      abort.abort();
-      clearTimeout(timer);
-    };
-  }, [client, reload]);
-  const cap = Number(value),
-    valid =
-      /^\d+$/.test(value) && Number.isInteger(cap) && cap >= 1 && cap <= 64;
-  const stale = base && latest && base.revision !== latest.revision;
-  const busy = state !== "idle";
+    const media = window.matchMedia("(min-width: 768px)");
+    const update = () => setDesktop(media.matches);
+    media.addEventListener("change", update);
+    update();
+    return () => media.removeEventListener("change", update);
+  }, []);
+  const selectedId = tab ?? "account";
+  const selected = categories
+    .flatMap((group) => group.items)
+    .find((item) => item.id === selectedId);
+  const Icon = selected?.icon ?? Building2;
+  const groups = categories.map((group) => ({
+    label: group.label,
+    items: group.items.map((item) => ({
+      id: item.id,
+      label: item.label,
+      icon: <item.icon size={14} className="shrink-0" />,
+      onClick: () => onTab(item.id),
+    })),
+  }));
   return (
-    <AppShellMainSlot data-testid="loom-settings-page">
-      <Panel
-        edge="attached"
-        className="flex min-h-0 flex-1 flex-col bg-layer-canvas-muted text-foreground-strong"
+    <div
+      className="flex min-h-0 min-w-0 flex-1"
+      data-testid="loom-settings-page"
+    >
+      <AppShellSidebarSlot
+        data-testid="loom-settings-sidebar"
+        className={`relative min-w-0 shrink-0 flex-col md:flex md:w-[var(--settings-sidebar-width)] ${tab ? "hidden" : "flex w-full"}`}
+        style={
+          { "--settings-sidebar-width": `${panel.width}px` } as CSSProperties
+        }
       >
-        <PanelHeader
+        <ChatSidebarFrame
           title="设置"
-          icon={<Settings size={18} />}
-          iconBg="bg-primary-soft text-foreground-strong theme-brutal:bg-soft-signal theme-brutal:text-black"
+          testIdPrefix="settings-sidebar"
+          scrollTestId="settings-sidebar-scroll"
+        >
+          <SettingsSidebarList
+            groups={groups}
+            activeId={desktop ? selectedId : tab}
+          />
+        </ChatSidebarFrame>
+        <PanelResizeHandle
+          side="right"
+          visibleFrom="md"
+          data-testid="settings-sidebar-resize"
+          onPointerDown={panel.handleResizeStart}
+          onPointerMove={panel.handleResizeMove}
+          onPointerUp={panel.handleResizeEnd}
+          onPointerCancel={panel.handleResizeEnd}
         />
-        <div className="flex-1 overflow-y-auto bg-layer-panel px-5 py-4 text-foreground-strong mobile-nav-clearance theme-brutal:bg-white theme-brutal:text-black">
-          <div className="mb-6">
-            <SectionHeader
-              className="mb-3"
-              icon={<SlidersHorizontal size={16} />}
-              label="运行设置"
+      </AppShellSidebarSlot>
+      <AppShellMainSlot
+        data-testid="loom-settings-detail"
+        className={`min-w-0 md:flex ${tab ? "flex" : "hidden"}`}
+      >
+        <Panel
+          edge="attached"
+          className="flex min-h-0 flex-1 flex-col bg-layer-canvas-muted text-foreground-strong"
+        >
+          <PanelHeader
+            title={selected?.label ?? "设置不存在"}
+            icon={<Icon size={18} />}
+            iconBg="bg-primary-soft text-foreground-strong theme-brutal:bg-soft-signal theme-brutal:text-black"
+            onMobileBack={() => onTab(null)}
+            mobileBackProps={{ "aria-label": "设置列表" }}
+          />
+          <div
+            className={
+              selectedId === "server"
+                ? "flex min-h-0 flex-1 flex-col"
+                : "hidden"
+            }
+          >
+            <RuntimeSettings
+              client={client}
+              workspaceId={workspaceId}
+              controlRoomId={controlRoomId}
+              active={selectedId === "server" && (desktop || tab !== null)}
             />
-            <Card className="border-line-muted bg-layer-panel p-4 shadow-raft-sm theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal-sm">
-              <p className="mb-3 text-xs leading-5 text-foreground-muted">
-                通常保持默认即可。并发调整只影响之后开始的工作，不中断正在运行的实例。
-              </p>
-              {!base && !readError && <p role="status">加载中…</p>}
-              <form
-                className="space-y-3"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  if (!base || busy || !valid || stale || needsRead || !latest)
-                    return;
-                  setNotice("");
-                  setError("");
-                  void saveConcurrency(
-                    manager,
-                    base.revision,
-                    cap,
-                    (result) => {
-                      if (result.kind === "ok") {
-                        baseRef.current = result.result;
-                        setBase(result.result);
-                        setLatest(result.result);
-                        setValue(String(result.result.maxConcurrentRuns));
-                        setNotice("已保存；只影响之后的调度。");
-                      } else if (result.kind === "rejected") {
-                        setNeedsRead(true);
-                        setError(
-                          "未确认本次保存。请重新读取当前生效值，确认后再修改。",
-                        );
-                      }
-                    },
-                  );
-                }}
-              >
-                <FormField
-                  label="本机同时运行上限"
-                  labelStyle="plain"
-                  size="compact"
-                >
-                  <Input
-                    aria-label="本机同时运行上限"
-                    type="number"
-                    min={1}
-                    max={64}
-                    step={1}
-                    value={value}
-                    onChange={(e) => {
-                      setValue(e.target.value);
-                      setNotice("");
-                    }}
-                    disabled={!base || busy}
-                    className="w-full text-sm"
-                  />
-                </FormField>
-                {base && !valid && <p role="alert">请输入 1–64 的整数。</p>}
-                {stale && (
-                  <p role="alert">设置已在别处更新；请重新读取后再修改。</p>
-                )}
-                {readError && <p role="alert">{readError}</p>}
-                <div className="flex gap-3">
-                  <Button
-                    variant="accent"
-                    size="sm"
-                    type="submit"
-                    disabled={
-                      busy ||
-                      !base ||
-                      !latest ||
-                      !valid ||
-                      Boolean(stale) ||
-                      needsRead ||
-                      cap === base.maxConcurrentRuns
-                    }
-                  >
-                    保存
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    type="button"
-                    disabled={busy}
-                    onClick={() => {
-                      baseRef.current = undefined;
-                      setBase(undefined);
-                      setLatest(undefined);
-                      setNotice("");
-                      setError("");
-                      setReload((v) => v + 1);
-                    }}
-                  >
-                    重新读取
-                  </Button>
-                </div>
-                {notice && (
-                  <p role="status" className="text-sm">
-                    {notice}
-                  </p>
-                )}
-                {state === "unknown" ? (
-                  <div role="alert" className="text-sm">
-                    未收到保存结果。重新读取会放弃核实这次保存，以当前生效配置为准；不会再次提交。
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        manager.writes.abandon();
-                        baseRef.current = undefined;
-                        setBase(undefined);
-                        setLatest(undefined);
-                        setNeedsRead(true);
-                        setReload((v) => v + 1);
-                      }}
-                    >
-                      放弃核实并重新读取
-                    </Button>
-                  </div>
-                ) : (
-                  <OperationStatus manager={manager} error={error} />
-                )}
-              </form>
-            </Card>
           </div>
-          {latest && (
-            <details className="text-sm">
-              <summary className="cursor-pointer font-bold">
-                当前生效配置
-              </summary>
-              <dl className="mt-3 space-y-2 font-mono text-xs">
-                {[
-                  ["配置修订", latest.revision],
-                  ["同时运行上限", latest.maxConcurrentRuns],
-                  ["同时启动上限", latest.maxConcurrentStarts],
-                  ["启动最小间隔（毫秒）", latest.minStartIntervalMs],
-                  ["实例互相唤醒上限", latest.wakeGuard.instanceChainLimit],
-                  [
-                    "无进展告警（分钟）",
-                    latest.watchdog.noProgressWarnMs / 60000,
-                  ],
-                  [
-                    "排队无进展终止（分钟）",
-                    latest.watchdog.queuedStallTerminateMs / 60000,
-                  ],
-                  ["单次运行上限（分钟）", latest.watchdog.maxRunMs / 60000],
-                  ["创建实例时预热", latest.prewarm.enabled ? "开启" : "关闭"],
-                  [
-                    "服务启动时预热近期实例（小时）",
-                    latest.prewarm.recentActiveHours,
-                  ],
-                  ...latest.runtimes.map((r) => [
-                    `${r.runtimeProfileId} 并发上限`,
-                    `${r.maxConcurrentRuns}（供给上限 ${r.offerMaxConcurrent}）`,
-                  ]),
-                ].map(([label, v]) => (
-                  <div
-                    key={label}
-                    className="flex flex-wrap justify-between gap-2"
-                  >
-                    <dt>{label}</dt>
-                    <dd>{v}</dd>
-                  </div>
-                ))}
-              </dl>
-            </details>
+          {selectedId !== "server" && (
+            <div className="flex-1 overflow-y-auto bg-layer-panel px-5 py-4 text-foreground-strong mobile-nav-clearance theme-brutal:bg-white theme-brutal:text-black">
+              <p className="text-sm text-foreground-muted">
+                {selected ? "此设置尚未接入。" : "请从设置列表选择一个项目。"}
+              </p>
+            </div>
           )}
-        </div>
-      </Panel>
-    </AppShellMainSlot>
+        </Panel>
+      </AppShellMainSlot>
+    </div>
   );
 }

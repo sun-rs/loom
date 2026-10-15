@@ -2534,6 +2534,20 @@
       "structuralPort": "SOS dialog composition and minimal single-section settings panel/card; unsupported settings navigation omitted.",
       "localGlue": "Existing room.execution.read, room.sos.stop/resume and runtime.settings.read/update. Exact causal idempotent SOS intents; revision-only settings updates; explicit abandon/read for unknown settings outcomes. In-app route guard preserves unresolved write owners.",
       "audit": "docs/audits/2026-10-15-channel-controls.zh-CN.md"
+    },
+    "settingsNavigationSlice": {
+      "source": [
+        "packages/web/src/components/layout/Sidebar.tsx: settingsSidebarGroups / settings rail",
+        "packages/web/src/components/settings/SettingsSidebarList.tsx",
+        "packages/web/src/components/settings/SettingsPanel.tsx",
+        "packages/web/src/components/layout/MainLayout.tsx: mobile settings master/detail",
+        "packages/web/src/lib/panelBounds.ts"
+      ],
+      "directReuse": "SettingsSidebarList and native SidebarItem states; PanelHeader, PanelResizeHandle, useResizablePanel and SIDEBAR_PANEL_BOUNDS. Frozen upstream files unchanged.",
+      "structuralPort": "Existing Sidebar.tsx frame with settings groups; desktop master/detail and mobile list/subpage navigation.",
+      "localGlue": "URL settings category; server renamed runtime settings; desktop defaults to account, mobile root has no selected category. Inactive categories are empty. Existing form stays mounted across categories; reads paused when hidden. No backend or account/MCP management added.",
+      "supersedes": "channelControlSettingsSlice omitted category navigation; owner required restoration.",
+      "audit": "docs/audits/2026-10-15-settings-navigation.zh-CN.md"
     }
   },
   "rollout": {
