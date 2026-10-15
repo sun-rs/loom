@@ -20,7 +20,26 @@
     "red": "Old build timed out waiting for member hover profile; retained in private review log.",
     "agentFixture": "Explicit presentation-only timeline response override; not a Worker or model run.",
     "humanFixture": "Real authenticated temporary gateway message and roster.",
-    "formalPage": "pending restart"
+    "formalPage": {
+      "passed": true,
+      "readOnly": true,
+      "realAgentAvatarProfile": true,
+      "unknownPresenceOmitted": true,
+      "screenshotsInspected": true,
+      "viewports": [
+        {
+          "width": 1440,
+          "height": 1000
+        },
+        {
+          "width": 390,
+          "height": 844
+        }
+      ],
+      "dpr": 1,
+      "noMessageOrReadMarkMutation": true,
+      "pageErrors": []
+    }
   },
   "backendChanged": false,
   "paidProviderCalls": 0,
@@ -30,5 +49,18 @@
     "Threads, attachments, forwarding",
     "Viewport-aware automatic read",
     "Full tasks/memory/settings/Fork/Side UI"
-  ]
+  ],
+  "sourceCommit": "81e9b5d6ca25d5b97a232d5135d31eb11bd49f12",
+  "deployment": {
+    "service": "com.loom.evo",
+    "url": "http://127.0.0.1:4176",
+    "webBuildId": "d52f64418154e921d3adcc8b0d826c4c36e8a40f2eb24a7081d4e93107140dcc",
+    "verified": true,
+    "at": "2026-10-15T01:58:45.833Z",
+    "backupDatabases": 2,
+    "backupFiles": 318,
+    "businessTablesUnchanged": 18,
+    "volatileFieldExcluded": "subscription_cursors.updated_at only; identity/read/ACK positions compared exactly",
+    "runtimeFlagsPreserved": true
+  }
 }
