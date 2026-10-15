@@ -1,3 +1,4 @@
+import BlockedWorkControl from "./BlockedWorkControl.tsx";
 import { useEffect, useRef, useState } from "react";
 import type { Principal, Room } from "@rah-os/protocol";
 import type { RahClient } from "@rah-os/client-sdk";
@@ -54,6 +55,7 @@ export default function InstanceInspector({
     () => matchMedia("(min-width: 1024px)").matches,
   );
   const [identity, setIdentity] = useState<{ agentId: string }>();
+  const [tick, setTick] = useState(0);
   const [usage, setUsage] = useState<string>();
   const [cursor, setCursor] = useState<string>();
   const [result, setResult] =
@@ -61,7 +63,7 @@ export default function InstanceInspector({
   const [error, setError] = useState("");
   const bottom = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    bottom.current?.scrollIntoView();
+    if (!result?.blocked) bottom.current?.scrollIntoView();
   }, [result?.records.length, cursor]);
 
   const { formatClockWithSeconds } = useTimeFormatter();
@@ -123,7 +125,7 @@ export default function InstanceInspector({
       abort.abort();
       clearTimeout(timer);
     };
-  }, [client, controlRoomId, room.roomId, member.principalId, cursor]);
+  }, [client, controlRoomId, room.roomId, member.principalId, cursor, tick]);
   return (
     <ProfilePanel
       data-testid="profile-panel"
@@ -197,6 +199,14 @@ export default function InstanceInspector({
             <SectionEyebrow as="div">本对话运行记录</SectionEyebrow>
           </div>
           <div className="flex-1 overflow-y-auto py-2">
+            <BlockedWorkControl
+              client={client}
+              workspaceId={room.workspaceId}
+              controlRoomId={controlRoomId}
+              instance={result?.instance}
+              blocked={result?.blocked}
+              onChanged={() => setTick((v) => v + 1)}
+            />
             {error ? (
               <p role="alert" className="px-3 text-sm">
                 {error}

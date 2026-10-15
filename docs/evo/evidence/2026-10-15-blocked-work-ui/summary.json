@@ -1,0 +1,51 @@
+{
+  "status": "automated-verified-awaiting-deployment",
+  "paidCli": false,
+  "realCliExecution": false,
+  "scope": "Single blocked Activation explicit Human abandonment in native instance Activity panel",
+  "audit": "../../../audits/2026-10-15-blocked-work-ui.zh-CN.md",
+  "checks": {
+    "formalBuild": true,
+    "formatCheck": true,
+    "diffCheck": true,
+    "temporaryCoreBrowser": "browser.json",
+    "sourceTestsPassed": 40,
+    "consoleTestsPassed": 63,
+    "blockedAndHeldKernelTestsPassed": 8,
+    "apiRoundtrip": "blocked-work.test.ts: committed response loss, exact idempotent verification, unchanged session/finished Run",
+    "fullCheck": {
+      "exitCode": 1,
+      "backendPassed": 3210,
+      "backendSkipped": 22,
+      "backendFailed": 1,
+      "failure": "unchanged codex-warm-runtime.test.ts cancellation: failed instead of cancelled",
+      "exactUnchangedTestRerunPassed": true,
+      "failureNotErased": true,
+      "otherInitialStages": "repository identity, CI workflow, release identity, workbench launch and typecheck passed"
+    },
+    "tailStagesRunSeparately": {
+      "console": 63,
+      "browserPolicy": 15,
+      "efficiencyTools": 558,
+      "officialSource": 40
+    },
+    "kernelBlockedAndHeld": 8
+  },
+  "coverage": [
+    "native member row opens Activity before any instance reply",
+    "authoritative block reason and home-channel/private-box source",
+    "explicit abandon confirmation and cancellation",
+    "unknown result retains original target and key",
+    "in-app history cannot discard unresolved owner",
+    "no automatic resend/session reset/Task completion"
+  ],
+  "retainedFailures": [
+    "TDD missing abandonment facade and blocked projection",
+    "Native confirm chrome followed English browser locale; local Chinese chrome set explicitly",
+    "Browser test initially used cross-document history and an incorrect navigation label; corrected to actual in-app controls",
+    "TDD member list lacked profile action; first integration also exposed loading readiness; action withheld until conversation membership is ready"
+  ],
+  "deployment": {
+    "verified": false
+  }
+}

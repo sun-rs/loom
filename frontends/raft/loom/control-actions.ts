@@ -42,3 +42,24 @@ export function saveConcurrency(
     onSettled: done,
   });
 }
+
+export function abandonInstanceWork(
+  manager: ManagementClient,
+  instance: { channelId: string; instanceId: string },
+  activationId: string,
+  done: (result: IntentOutcome<unknown>) => void,
+) {
+  return manager.writes.submit({
+    action: "activation-abandon",
+    // Lifecycle mutations are recorded in the home Channel, even for private work.
+    session: manager.session(instance.channelId),
+    payload: { instanceId: instance.instanceId, activationId },
+    send: (payload, basedOnRoomSeq, idempotencyKey) =>
+      manager.client.request("instance.activation.abandon", {
+        ...payload,
+        basedOnRoomSeq,
+        idempotencyKey,
+      }),
+    onSettled: done,
+  });
+}

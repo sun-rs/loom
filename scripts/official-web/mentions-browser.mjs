@@ -187,6 +187,7 @@ export async function verifyMentions({
       results.push({
         humanProfileFromGateway: true,
         agentProfilePresentationFixture: true,
+        blockedWorkResponseFixture: true,
         nativeHoverDismissal: true,
         unknownPresenceOmitted: true,
         viewport,

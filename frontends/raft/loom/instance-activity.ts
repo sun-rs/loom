@@ -54,6 +54,11 @@ export async function loadInstanceActivity(
   ]);
   return {
     instance,
+    blocked: state.agents.find(
+      (entry) =>
+        entry.roomId === room.roomId &&
+        entry.participantId === member.principalId,
+    )?.blocked,
     stateLabel: projectChannelMembers(room.roomId, [member], state.agents)[0]!
       .detail,
     records: page.activities

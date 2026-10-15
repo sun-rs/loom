@@ -1,3 +1,4 @@
+import { verifyBlockedWork } from "./blocked-work-browser.mjs";
 import {
   verifyRunDetails,
   verifyRuntimeControl,
@@ -184,6 +185,12 @@ export async function verifyInspector({
   await agentAvatar.click();
   await panel.getByTestId("loom-instance-activity").waitFor();
   await verifyRuntimeControl(page, panel, { client, agentId, name, roomId });
+  await verifyBlockedWork(page, panel, {
+    instanceId,
+    roomId,
+    viewport,
+    name,
+  });
   // Native focus-return Tooltip may own the first Escape; close the actual
   // control surface explicitly here. Standalone inspector Escape is tested above.
   await panel

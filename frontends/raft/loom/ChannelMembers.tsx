@@ -20,9 +20,11 @@ import type { LoomChannelClient } from "./channel-client.ts";
 function MemberList({
   bridge,
   onOpenPrivate,
+  onOpenProfile,
 }: {
   bridge: LoomChannelClient;
   onOpenPrivate: (id: string) => void;
+  onOpenProfile?: (id: string) => void;
 }) {
   const [members, setMembers] =
     useState<Awaited<ReturnType<LoomChannelClient["members"]>>>();
@@ -63,6 +65,11 @@ function MemberList({
           key={member.id}
           type={member.kind === "agent" ? "agent" : "human"}
           name={member.name}
+          onRowClick={
+            member.kind === "agent" && onOpenProfile
+              ? () => onOpenProfile(member.id)
+              : undefined
+          }
           trailing={
             member.kind === "agent" ? (
               <Button
@@ -86,11 +93,13 @@ function MemberList({
 export default function ChannelMembers({
   bridge,
   onOpenPrivate,
+  onOpenProfile,
   onAddInstance,
 }: {
   onAddInstance: (() => void) | undefined;
   bridge: LoomChannelClient;
   onOpenPrivate: (id: string) => void;
+  onOpenProfile?: (id: string) => void;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -121,6 +130,14 @@ export default function ChannelMembers({
           {open && (
             <MemberList
               bridge={bridge}
+              onOpenProfile={
+                onOpenProfile
+                  ? (id) => {
+                      setOpen(false);
+                      onOpenProfile(id);
+                    }
+                  : undefined
+              }
               onOpenPrivate={(id) => {
                 setOpen(false);
                 onOpenPrivate(id);

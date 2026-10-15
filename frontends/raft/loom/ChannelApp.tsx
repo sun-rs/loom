@@ -204,6 +204,23 @@ function Channel({
                 <ChannelMembers
                   bridge={bridge}
                   onOpenPrivate={onOpenPrivate}
+                  onOpenProfile={
+                    loading || error || !controlRoomId
+                      ? undefined
+                      : (id) => {
+                          if (hasUnresolvedIntents() || error || !controlRoomId)
+                            return;
+                          const member = view.members.find(
+                            (m) => m.kind === "agent" && m.principalId === id,
+                          );
+                          if (!member) return;
+                          opener.current = document.querySelector<HTMLElement>(
+                            '[aria-label="频道成员与状态"]',
+                          );
+                          profileSnapshot.current = member;
+                          setProfileId(id);
+                        }
+                  }
                   onAddInstance={channel.archivedAt ? undefined : onAddInstance}
                 />
                 {controlRoomId && !channel.archivedAt && (

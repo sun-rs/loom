@@ -150,3 +150,33 @@ test("native activity chronology displays oldest first inside a bounded page", a
     ["older", "run"],
   );
 });
+
+test("inspector exposes only the selected member's authoritative block, including private-box origin", async () => {
+  const base = fixture();
+  const blocked = {
+    activationId: "held",
+    roomId: "private",
+    holdsLane: true,
+    reason: "FIXTURE newer Human fact",
+  };
+  const client = {
+    request: async (op: any, input: any, options: any) => {
+      const value: any = await base.client.request(op, input, options);
+      if (op === "room.agent.activity.list") {
+        value.agents.unshift({
+          ...value.agents[0],
+          participantId: "other",
+          blocked: { ...blocked, activationId: "wrong" },
+        });
+        value.agents[1].blocked = blocked;
+      }
+      return value;
+    },
+  } as RahClient;
+  const result = await loadInstanceActivity(client, {
+    controlRoomId: "control",
+    room,
+    member,
+  } as any);
+  assert.deepEqual(result.blocked, blocked);
+});

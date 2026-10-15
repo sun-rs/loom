@@ -2548,6 +2548,16 @@
       "localGlue": "URL settings category; server renamed runtime settings; desktop defaults to account, mobile root has no selected category. Inactive categories are empty. Existing form stays mounted across categories; reads paused when hidden. No backend or account/MCP management added.",
       "supersedes": "channelControlSettingsSlice omitted category navigation; owner required restoration.",
       "audit": "docs/audits/2026-10-15-settings-navigation.zh-CN.md"
+    },
+    "blockedWorkSlice": {
+      "source": [
+        "packages/web/src/components/ui/Banner.tsx",
+        "packages/web/src/components/ConfirmDialog.tsx",
+        "packages/web/src/components/channel/ChannelMemberList.tsx: onRowClick"
+      ],
+      "directReuse": "Native Banner, ConfirmDialog, raft-ui Button inside existing instance Activity panel. Frozen upstream files unchanged. Native member row profile trigger also opens this panel before the instance has authored a message.",
+      "localGlue": "Loom-specific Kernel blocked projection and instance.activation.abandon; home Channel causal basis, frozen unknown-result intent, explicit Human withdrawal without replaying held output or resetting session.",
+      "audit": "docs/audits/2026-10-15-blocked-work-ui.zh-CN.md"
     }
   },
   "rollout": {

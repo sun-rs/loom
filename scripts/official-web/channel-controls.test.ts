@@ -59,3 +59,51 @@ test("settings writes only requested cap; unknown retry retains original revisio
   ]);
   manager.writes.discard();
 });
+
+test("blocked work abandonment uses the instance home channel and freezes the exact target across unknown verification", async () => {
+  const { abandonInstanceWork } =
+    await import("../../frontends/raft/loom/control-actions.ts");
+  const calls: any[] = [],
+    rooms: string[] = [];
+  const manager = new ManagementClient(
+    {
+      request: async (op: string, input: any) => {
+        calls.push([op, input]);
+        throw Error("lost");
+      },
+    } as any,
+    "w",
+    "control",
+  );
+  (manager as any).session = (room: string) => {
+    rooms.push(room);
+    return {
+      syncUntilCurrent: async () => ({
+        caughtUp: true,
+        state: { latestRoomSeq: 17 },
+      }),
+    };
+  };
+  await abandonInstanceWork(
+    manager,
+    { channelId: "home", instanceId: "member" },
+    "blocked-private-work",
+    () => {},
+  );
+  assert.equal(manager.writes.state, "unknown");
+  await abandonInstanceWork(
+    manager,
+    { channelId: "home", instanceId: "other" },
+    "new-block",
+    () => {},
+  );
+  assert.equal(calls.length, 1);
+  await manager.writes.retry();
+  assert.deepEqual(calls[0], calls[1]);
+  assert.equal(rooms[0], "home");
+  assert.equal(calls[0][0], "instance.activation.abandon");
+  assert.equal(calls[0][1].instanceId, "member");
+  assert.equal(calls[0][1].activationId, "blocked-private-work");
+  assert.equal(calls[0][1].basedOnRoomSeq, 17);
+  manager.writes.discard();
+});
