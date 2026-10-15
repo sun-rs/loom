@@ -43,5 +43,52 @@
     "fullBrowser": "passed",
     "chromiumAndWebkitThreeWidths": "passed",
     "formatAndDiff": "passed"
+  },
+  "deployment": {
+    "at": "2026-10-15T12:06:56.636Z",
+    "codeCommit": "7d5ea01fa63284169ab0f797738b6c645bbc4f40",
+    "webBuildId": "48f2893b0fce87798d8e79275cda23de02f14937c1b3bb59e7500aeb7418e815",
+    "backupDatabases": 2,
+    "backupFiles": 318,
+    "businessTablesUnchanged": 18,
+    "formalPage": [
+      {
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "actualTreeMatchesApi": true,
+        "cancelPreservesEmptyDraft": true,
+        "systemPickerCancel": true,
+        "noBusinessMutations": true,
+        "buildMatches": true,
+        "pageErrors": []
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "actualTreeMatchesApi": true,
+        "cancelPreservesEmptyDraft": true,
+        "systemPickerCancel": true,
+        "noBusinessMutations": true,
+        "buildMatches": true,
+        "pageErrors": []
+      },
+      {
+        "viewport": {
+          "width": 820,
+          "height": 1000
+        },
+        "actualTreeMatchesApi": true,
+        "cancelPreservesEmptyDraft": true,
+        "systemPickerCancel": true,
+        "noBusinessMutations": true,
+        "buildMatches": true,
+        "pageErrors": []
+      }
+    ],
+    "screenshotsReviewed": true
   }
 }
