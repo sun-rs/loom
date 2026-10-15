@@ -2,7 +2,7 @@ import { useResizablePanel } from "../packages/web/src/hooks/useResizablePanel.t
 import { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives.ts";
 import { MASTER_DETAIL_COMPACT_PANEL_BOUNDS } from "../packages/web/src/components/layout/masterDetailPanelSizing.ts";
 import PanelResizeHandle from "../packages/web/src/components/ui/PanelResizeHandle.tsx";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   AppShellMainSlot,
@@ -216,6 +216,30 @@ function Results({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [retry, setRetry] = useState(0);
+  const pendingDone = useRef(new Set<string>());
+  const [pendingRows, setPendingRows] = useState(new Set<string>());
+  const [mutationError, setMutationError] = useState("");
+  const markDone = async (row: DiscoveryRow) => {
+    if (!row.activityFrontier || pendingDone.current.has(row.id)) return;
+    pendingDone.current.add(row.id);
+    setPendingRows(new Set(pendingDone.current));
+    setMutationError("");
+    try {
+      await client.request("activity.mark", {
+        roomId: row.message.roomId,
+        ...row.activityFrontier,
+        action: "done",
+      });
+    } catch {
+      setMutationError(
+        "未确认动态已完成，正在重新读取状态；不会自动重发操作。",
+      );
+    } finally {
+      pendingDone.current.delete(row.id);
+      setPendingRows(new Set(pendingDone.current));
+      setRetry((value) => value + 1);
+    }
+  };
   useEffect(() => {
     const controller = new AbortController();
     setData(undefined);
@@ -291,6 +315,11 @@ function Results({
       data-testid="discovery-results"
       className="min-h-0 overflow-y-auto"
     >
+      {mutationError && (
+        <p role="alert" className="px-3 py-2">
+          {mutationError}
+        </p>
+      )}
       {mode === "search" &&
       !query.trim() &&
       !searchFilters.senderKind &&
@@ -330,6 +359,10 @@ function Results({
                     />
                   ) : (
                     <ActivityMessageRow
+                      pending={pendingRows.has(row.id)}
+                      onDone={() => {
+                        void markDone(row);
+                      }}
                       key={row.id}
                       row={row}
                       active={route.get("message") === row.message.messageId}

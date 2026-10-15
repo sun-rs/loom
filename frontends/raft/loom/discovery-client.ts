@@ -12,6 +12,7 @@ export type DiscoveryRow = {
   senderName: string;
   label: string;
   unread?: number;
+  activityFrontier?: { throughSeq: number; threadId?: string };
   activityKind?: "channel" | "direct" | "thread";
   replyCount?: number;
   senderType?: "user" | "agent";
@@ -68,6 +69,10 @@ export async function activityPage(
       senderName: item.senderName,
       label: item.title,
       unread: item.unreadCount,
+      activityFrontier: {
+        throughSeq: item.latestSeq,
+        ...(item.threadId ? { threadId: item.threadId } : {}),
+      },
       activityKind: item.kind,
       replyCount: item.replyCount,
     })),

@@ -198,6 +198,57 @@ export async function verifyActivityNavigation({
           .click();
         await page.waitForURL((u) => u.searchParams.get("chat") === "list");
       }
+      // Real temporary Core: Done consumes only this activity frontier; new messages reopen it.
+      await post(`done-before-${width}`);
+      await page.goto(origin + "/?view=activity");
+      const doneRow = page.locator(`[data-result-id="${card.key}"]`);
+      await doneRow.waitFor();
+      await doneRow.hover();
+      const marks = [];
+      const captureMark = (request) => {
+        if (request.url().endsWith("/v3/client/activity/mark"))
+          marks.push(request.postDataJSON());
+      };
+      page.on("request", captureMark);
+      const beforeDone = await client.request("activity.list", {
+        workspaceId: workspace.workspaceId,
+        limit: 20,
+      });
+      const frontier = beforeDone.items.find(
+        (item) => item.key === card.key,
+      ).latestSeq;
+      const done = doneRow.getByTestId("inbox-row-done");
+      if (width === 1440) {
+        await done.focus();
+        await done.press("Enter");
+      } else await done.click();
+      await doneRow.waitFor({ state: "detached" });
+      assert.equal(new URL(page.url()).searchParams.has("message"), false);
+      assert.deepEqual(marks, [
+        { roomId: room.roomId, throughSeq: frontier, action: "done" },
+      ]);
+      await post(`done-after-${width}`);
+      await page.reload();
+      await doneRow.waitFor();
+      if (width === 1440) {
+        await page.route("**/v3/client/activity/mark", (route) =>
+          route.abort("failed"),
+        );
+        await doneRow.hover();
+        await doneRow.getByTestId("inbox-row-done").click();
+        await page
+          .getByRole("alert")
+          .filter({ hasText: "不会自动重发操作" })
+          .waitFor();
+        await doneRow.waitFor();
+        assert.equal(
+          marks.length,
+          2,
+          "unknown result must never resend the mutation",
+        );
+        await page.unroute("**/v3/client/activity/mark");
+      }
+      page.off("request", captureMark);
       let visibleSnapshot = snapshot;
       await page.route("**/v3/client/activity/list", (route) =>
         route.fulfill({ json: visibleSnapshot }),
@@ -464,6 +515,7 @@ export async function verifyActivityNavigation({
       });
       results.push({
         width,
+        activityDoneExactFrontierAndReopen: true,
         oldMessageLocated: true,
         oldThreadReplyLocated: true,
         directThreadUsesPrimarySlot: width === 1440,

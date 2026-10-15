@@ -1,10 +1,11 @@
+import Tooltip from "../packages/web/src/components/ui/Tooltip.tsx";
 import { useRef, useEffect } from "react";
 // Structural port of ThreadsInbox.tsx InboxRow (upstream revision in adoption.json).
 // Keep the original Card geometry/state classes; Loom supplies canonical row data.
-// Done/context-menu/task controls are omitted until their complete UI flow is bound.
+// Done uses the existing activity frontier; context-menu/task controls remain unbound.
 import { useIntl } from "react-intl";
-import { Badge, Card, DirectMessageIcon, ThreadIcon } from "raft-ui";
-import { Hash } from "lucide-react";
+import { Badge, Button, Card, DirectMessageIcon, ThreadIcon } from "raft-ui";
+import { Hash, Check } from "lucide-react";
 import { formatRelativeTime } from "../packages/web/src/utils/relativeTime.ts";
 import InlineMarkdownPreview from "../packages/web/src/components/markdown/InlineMarkdownPreview.tsx";
 import type { DiscoveryRow } from "./discovery-client.ts";
@@ -12,8 +13,12 @@ export default function ActivityMessageRow({
   row,
   active,
   onOpen,
+  onDone,
+  pending,
 }: {
   row: DiscoveryRow;
+  onDone: () => void;
+  pending: boolean;
   active: boolean;
   onOpen: (full: boolean) => void;
 }) {
@@ -37,6 +42,22 @@ export default function ActivityMessageRow({
   ) : (
     <Hash size={13} className={iconClass} />
   );
+  const hasRowAction = Boolean(row.activityFrontier);
+  const rowActionVisibilityClassName = active
+    ? "pointer-events-auto opacity-100"
+    : "pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-visible:pointer-events-auto group-focus-visible:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100 [@media(hover:none)]:pointer-events-auto [@media(hover:none)]:opacity-100";
+  const timestampVisibilityClassName = !hasRowAction
+    ? ""
+    : active
+      ? "opacity-0"
+      : "transition-opacity group-hover:opacity-0 group-focus-within:opacity-0 [@media(hover:none)]:opacity-0";
+  const rowActionBackgroundClassName = active
+    ? "bg-layer-panel theme-brutal:bg-white"
+    : "bg-transparent group-hover:bg-layer-panel group-focus-visible:bg-layer-panel group-focus-within:bg-layer-panel [@media(hover:none)]:bg-layer-panel theme-brutal:group-hover:bg-white theme-brutal:group-focus-visible:bg-white theme-brutal:group-focus-within:bg-white theme-brutal:[@media(hover:none)]:bg-white";
+  const done = () => {
+    clearTimeout(timer.current);
+    if (!pending) onDone();
+  };
   return (
     <Card
       role="button"
@@ -72,7 +93,7 @@ export default function ActivityMessageRow({
             {row.label}
           </div>
           <span
-            className="shrink-0 font-mono text-xs leading-5 text-foreground-placeholder theme-brutal:text-black/40"
+            className={`shrink-0 font-mono text-xs leading-5 text-foreground-placeholder theme-brutal:text-black/40 ${timestampVisibilityClassName}`}
             data-testid="conversation-card-timestamp"
           >
             {formatRelativeTime(row.message.createdAt, locale)}
@@ -113,6 +134,36 @@ export default function ActivityMessageRow({
           )}
         </div>
       </div>
+      {hasRowAction && (
+        <div
+          className={`pointer-events-none absolute right-3 top-3 z-10 flex items-center rounded-md theme-brutal:rounded-none ${rowActionBackgroundClassName}`}
+          data-testid="conversation-card-actions"
+        >
+          <Tooltip content={formatMessage({ id: "thread.row.markAsDone" })}>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              type="button"
+              disabled={pending}
+              onClick={(event) => {
+                event.stopPropagation();
+                done();
+              }}
+              onKeyDown={(event) => {
+                event.stopPropagation();
+                if (event.key !== "Enter" && event.key !== " ") return;
+                event.preventDefault();
+                done();
+              }}
+              className={`relative z-10 shrink-0 transition-opacity theme-brutal:bg-white ${rowActionVisibilityClassName}`}
+              aria-label={formatMessage({ id: "thread.row.markAsDone" })}
+              data-testid="inbox-row-done"
+            >
+              <Check size={14} />
+            </Button>
+          </Tooltip>
+        </div>
+      )}
     </Card>
   );
 }
