@@ -64,12 +64,13 @@ export class LoomTaskClient {
   }
   async refresh(signal?: AbortSignal) {
     this.loaded = false;
-    const [result] = await Promise.all([
+    const [result, identity] = await Promise.all([
       this.client.request(
         "task.get",
         { roomId: this.roomId, taskId: this.taskId },
         { signal },
       ),
+      this.client.request("principal.me", {}, { signal }),
       this.room.syncUntilCurrent({ signal, maxPages: 10 }),
     ]);
     if (
@@ -80,6 +81,7 @@ export class LoomTaskClient {
     this.loaded = true;
     return {
       task: result.task,
+      principal: identity.principal,
       room: this.room.state.snapshot?.room,
       members: this.room.state.snapshot?.members ?? [],
     };
@@ -100,6 +102,31 @@ export class LoomTaskClient {
           idempotencyKey,
         }),
       onSettled,
+    });
+  }
+  async assign(
+    assigneeId: string | null,
+    onSettled?: (o: IntentOutcome<ClientTaskAttentionMutationResponse>) => void,
+  ) {
+    if (!this.loaded) throw Error("请先读取任务");
+    return this.writes.submit({
+      action: "task-assignment",
+      session: this.room,
+      payload: { taskId: this.taskId, assigneeId },
+      onSettled,
+      send: (p, basedOnRoomSeq, idempotencyKey) =>
+        p.assigneeId === null
+          ? this.client.request("task.unassign", {
+              taskId: p.taskId,
+              basedOnRoomSeq,
+              idempotencyKey,
+            })
+          : this.client.request("task.assign", {
+              ...p,
+              assigneeId: p.assigneeId,
+              basedOnRoomSeq,
+              idempotencyKey,
+            }),
     });
   }
 }

@@ -2600,6 +2600,17 @@
       "buildAdaptation": "Exact checked seams pass submitAsTask through the existing override and reset only after success; enable menu handlers on controlled channel top-level messages; inject canonical task projection and chip target.",
       "localGlue": "Existing task.create/convert use the channel RoomSession and same WriteIntentSlot as messages. Bounded global task read; stable modal URL; unknown exact replay. No backend or scheduling changes.",
       "audit": "docs/audits/2026-10-15-channel-task-entry.zh-CN.md"
+    },
+    "taskManagementSlice": {
+      "source": [
+        "packages/web/src/components/task/TaskProperties.tsx: assignee editor and history disclosure",
+        "packages/web/src/components/task/HistoryTimeline.tsx",
+        "packages/web/src/components/InlineBadgeEditor.tsx"
+      ],
+      "directReuse": "Native searchable InlineBadgeEditor/SelectionPopover, AvatarSlot, HistoryTimeline, TimelineDetail and TimelineText. Frozen source unchanged.",
+      "structuralPort": "Native assignee property parameters and history disclosure composition; names/authority/history come from Loom.",
+      "localGlue": "Existing task.assign/unassign through the task RoomSession and shared WriteIntentSlot; task.history bounded frozen cursor window. Current principal and Room members drive the UI; Kernel remains authority. No backend or provider changes.",
+      "audit": "docs/audits/2026-10-15-task-management.zh-CN.md"
     }
   },
   "rollout": {

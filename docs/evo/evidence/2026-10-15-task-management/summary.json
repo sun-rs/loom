@@ -1,0 +1,26 @@
+{
+  "status": "automated-verified-awaiting-deployment",
+  "audit": "../../../audits/2026-10-15-task-management.zh-CN.md",
+  "paidCli": false,
+  "realCliExecution": false,
+  "backendChanges": false,
+  "checks": {
+    "sourceTestsPassed": 60,
+    "loomTypecheck": true,
+    "formalBuild": true,
+    "fullBrowser": "browser.json",
+    "format": true,
+    "diff": true,
+    "fullCheckExitCode": 0
+  },
+  "retainedFailures": [
+    "Missing implementation TDD failure",
+    "Old build lacked native assignee editor",
+    "Fixture confused AgentDefinition ID and Instance/Principal ID; corrected exact identity assertions"
+  ],
+  "limits": [
+    "History reads 50/page with a 500-entry in-memory bound",
+    "Separate review detail/actions, description editing, batch creation and board drag remain deferred",
+    "Formal verification is read-only; mutations run only against temporary Core with disabled fake instances"
+  ]
+}

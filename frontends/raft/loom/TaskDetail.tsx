@@ -1,3 +1,4 @@
+import TaskHistory from "./TaskHistory.tsx";
 import { useEffect, useMemo, useState, useRef } from "react";
 import { Button } from "raft-ui";
 import CloseButton from "../packages/web/src/components/ui/CloseButton.tsx";
@@ -96,6 +97,19 @@ export default function TaskDetail({
       })
       .catch(() => setWriteError("无法修改任务状态，请重新读取。"));
   };
+  const assign = (id: string | null) => {
+    if (state !== "idle" || error) return;
+    setWriteError("");
+    void bridge
+      .assign(id, (outcome) => {
+        if (outcome.kind === "ok") {
+          setTick((v) => v + 1);
+          onChanged();
+        } else if (outcome.kind === "rejected")
+          setWriteError("负责人修改被拒绝，请刷新任务后重试。");
+      })
+      .catch(() => setWriteError("无法修改负责人，请重新读取。"));
+  };
   const task = data
     ? toOfficialTask(data.task, data.room?.name ?? "", data.members)
     : undefined;
@@ -145,9 +159,13 @@ export default function TaskDetail({
       </div>
       {state === "unknown" && (
         <div role="alert" className="p-3 text-sm">
-          状态修改结果未知。
+          {bridge.writes.current?.action === "task-assignment"
+            ? "负责人修改结果未知。"
+            : "状态修改结果未知。"}
           <Button onClick={() => void bridge.writes.retry()}>
-            核实状态修改
+            {bridge.writes.current?.action === "task-assignment"
+              ? "核实负责人修改"
+              : "核实状态修改"}
           </Button>
         </div>
       )}
@@ -162,6 +180,20 @@ export default function TaskDetail({
             canManage,
             disabled: state !== "idle" || !!error || !!data.room.archivedAt,
             update,
+            assign,
+            canAssign:
+              canManage || data.task.creatorId === data.principal?.principalId,
+            members: data.members,
+            history: (
+              <TaskHistory
+                client={client}
+                roomId={roomId}
+                taskId={taskId}
+                taskNumber={data.task.taskNumber}
+                members={data.members}
+                revision={data.task.updatedAt}
+              />
+            ),
           }}
         >
           <ThreadWorkspace

@@ -1,3 +1,4 @@
+import { verifyTaskManagement } from "./task-management-browser.mjs";
 import { verifyChannelTasks } from "./channel-task-browser.mjs";
 import { verifyTasks } from "./task-browser.mjs";
 import { verifyThreads } from "./thread-browser.mjs";
@@ -509,9 +510,18 @@ try {
     workspace,
     head,
   });
+  const taskManagementResults = await verifyTaskManagement({
+    browser,
+    origin,
+    client,
+    workspace,
+    head,
+    role,
+  });
   console.log(
     JSON.stringify(
       {
+        taskManagementResults,
         channelTaskResults,
         taskResults,
         threadResults,

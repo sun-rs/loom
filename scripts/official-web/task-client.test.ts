@@ -40,6 +40,7 @@ test("task update freezes task, room causal basis and workflow across lost respo
   const client = {
     request: async (op: string, p: any) => {
       calls.push([op, p]);
+      if (op === "principal.me") return { principal: { principalId: "h" } };
       if (op === "task.get") return { task };
       if (op === "room.sync")
         return {
@@ -76,6 +77,7 @@ test("task update freezes task, room causal basis and workflow across lost respo
 test("task detail rejects a foreign task before a write", async () => {
   const client = {
     request: async (op: string) => {
+      if (op === "principal.me") return { principal: { principalId: "h" } };
       if (op === "task.get")
         return { task: { taskId: "other", roomId: "elsewhere" } };
       if (op === "room.sync")
