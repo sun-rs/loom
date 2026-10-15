@@ -1,3 +1,4 @@
+import { verifyAppearance } from "./appearance-browser.mjs";
 import { verifyActivityNavigation } from "./activity-navigation-browser.mjs";
 import { verifyAttachmentDetails } from "./attachment-details-browser.mjs";
 import { verifyAttachments } from "./attachments-browser.mjs";
@@ -129,7 +130,20 @@ try {
     instances.push(result.instance);
   }
   browser = await chromium.launch({ headless: true });
-  if (process.env.LOOM_BROWSER_SLICE === "activity-navigation") {
+  if (process.env.LOOM_BROWSER_SLICE === "appearance") {
+    console.log(
+      JSON.stringify(
+        await verifyAppearance({
+          browser,
+          origin,
+          client,
+          workspace,
+          channels,
+          instances,
+        }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "activity-navigation") {
     console.log(
       JSON.stringify(
         await verifyActivityNavigation({

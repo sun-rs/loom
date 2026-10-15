@@ -68,7 +68,7 @@ export async function verifySettingsNavigation({ browser, origin }) {
       .getByTestId("loom-settings-detail")
       .getByRole("heading", { name: "外观", exact: true })
       .waitFor();
-    await page.getByText("此设置尚未接入。", { exact: true }).waitFor();
+    await page.getByTestId("appearance-theme-picker").waitFor();
     assert.equal(
       new URL(page.url()).searchParams.get("settings"),
       "appearance",

@@ -1,4 +1,8 @@
 import {
+  exposeAppearance,
+  adaptMessageModelLabel,
+} from "./appearance-adaptation.ts";
+import {
   adaptAttachmentComposer,
   adaptAttachmentMessage,
 } from "./attachment-adaptation.ts";
@@ -35,6 +39,10 @@ export default defineConfig({
           ),
       },
       transform(code, id) {
+        if (
+          id.endsWith("/packages/web/src/components/settings/SettingsPanel.tsx")
+        )
+          return { code: exposeAppearance(code), map: null };
         if (id.endsWith("/packages/web/src/components/task/TaskCard.tsx"))
           return { code: adaptTaskCard(code), map: null };
         if (id.endsWith("/packages/web/src/components/task/TasksPanel.tsx"))
@@ -54,13 +62,22 @@ export default defineConfig({
           return {
             code: adaptAttachmentMessage(
               adaptTaskMessage(
-                adaptThreadItem(adaptMessageProfileNavigation(code)),
+                adaptThreadItem(
+                  adaptMessageModelLabel(adaptMessageProfileNavigation(code)),
+                ),
               ),
             ),
             map: null,
           };
       },
       resolveId(source, importer) {
+        if (source === "loom-native-appearance")
+          return resolve(
+            import.meta.dirname,
+            "../packages/web/src/components/settings/SettingsPanel.tsx",
+          );
+        if (source === "loom-appearance")
+          return resolve(import.meta.dirname, "AppearanceRuntime.tsx");
         if (source === "loom-composer-files")
           return resolve(import.meta.dirname, "ComposerFiles.tsx");
         if (source === "loom-attachments")

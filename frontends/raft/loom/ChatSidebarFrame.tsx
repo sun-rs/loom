@@ -5,11 +5,13 @@ import { useEffect, useState, type ReactNode } from "react";
 import { SidebarRoot } from "raft-ui";
 export default function ChatSidebarFrame({
   title,
+  bottomSlot,
   testIdPrefix,
   scrollTestId,
   children,
 }: {
   title: string;
+  bottomSlot?: ReactNode;
   testIdPrefix: string;
   scrollTestId: string;
   children: ReactNode;
@@ -53,6 +55,9 @@ export default function ChatSidebarFrame({
       >
         {children}
       </div>
+      {desktop && bottomSlot ? (
+        <div className="pointer-events-none shrink-0">{bottomSlot}</div>
+      ) : null}
     </SidebarRoot>
   );
 }

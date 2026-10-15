@@ -1,3 +1,4 @@
+import { AppearanceSection } from "loom-native-appearance";
 import { useEffect, useState, type CSSProperties } from "react";
 import { AppShellMainSlot, AppShellSidebarSlot, Panel } from "raft-ui";
 import {
@@ -148,9 +149,13 @@ export default function SettingsPage({
           </div>
           {selectedId !== "server" && (
             <div className="flex-1 overflow-y-auto bg-layer-panel px-5 py-4 text-foreground-strong mobile-nav-clearance theme-brutal:bg-white theme-brutal:text-black">
-              <p className="text-sm text-foreground-muted">
-                {selected ? "此设置尚未接入。" : "请从设置列表选择一个项目。"}
-              </p>
+              {selectedId === "appearance" ? (
+                <AppearanceSection />
+              ) : (
+                <p className="text-sm text-foreground-muted">
+                  {selected ? "此设置尚未接入。" : "请从设置列表选择一个项目。"}
+                </p>
+              )}
             </div>
           )}
         </Panel>

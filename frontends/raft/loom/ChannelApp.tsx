@@ -1,3 +1,7 @@
+import {
+  AppearanceRuntimeProvider,
+  LoomLiveActivity,
+} from "./AppearanceRuntime.tsx";
 import { ChannelTasksContext, useChannelTasks } from "./ChannelTasks.tsx";
 import TasksPage from "./TasksPage.tsx";
 import ThreadContentSlot from "./ThreadContentSlot.tsx";
@@ -675,16 +679,21 @@ export default function ChannelApp() {
     (!directory ||
       (Boolean(directory.workspace.controlRoomId) && !sidebarReady));
   return (
-    <>
+    <AppearanceRuntimeProvider
+      client={client}
+      controlRoomId={directory?.workspace.controlRoomId}
+      roomId={selected?.roomId}
+    >
       {bootstrapping && (
         <div
           role="status"
           data-testid="loom-bootstrap-loading"
-          className="fixed inset-0 z-[100] flex min-h-0 flex-1 items-center justify-center bg-brutal-cream font-display safe-top"
+          className="fixed inset-0 z-[100] flex min-h-0 flex-1 items-center justify-center bg-layer-canvas text-foreground-strong theme-brutal:bg-brutal-cream font-display safe-top"
         >
           <div className="text-xl font-bold">正在加载…</div>
         </div>
       )}
+
       <AppShellRoot
         inert={bootstrapping ? true : undefined}
         className={`h-dvh min-h-screen overflow-hidden font-display ${bootstrapping ? "invisible" : ""}`}
@@ -1014,12 +1023,17 @@ export default function ChannelApp() {
           !params.has("thread") &&
           !(destination === "settings" && params.has("settings")) &&
           !(destination === "tasks" && params.has("task")) && (
-            <MobileNavigation
-              active={destination}
-              onSelect={selectDestination}
-            />
+            <>
+              <div className="pointer-events-auto md:hidden shrink-0">
+                <LoomLiveActivity />
+              </div>
+              <MobileNavigation
+                active={destination}
+                onSelect={selectDestination}
+              />
+            </>
           )}
       </AppShellRoot>
-    </>
+    </AppearanceRuntimeProvider>
   );
 }

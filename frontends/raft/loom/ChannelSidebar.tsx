@@ -1,3 +1,6 @@
+import { useAppearanceStore } from "../packages/web/src/store/appearanceStore.ts";
+import { shouldHideEmptySidebarSection } from "../packages/web/src/components/layout/sidebarEmptySectionVisibility.ts";
+import { LoomLiveActivity } from "./AppearanceRuntime.tsx";
 import PrivateBoxRow from "./PrivateBoxRow.tsx";
 import AttentionDot from "../packages/web/src/components/ui/AttentionDot.tsx";
 import { hasUnresolvedIntents } from "@rah-os/client-core/write-intent";
@@ -206,11 +209,18 @@ export default function ChannelSidebar({
         setError(`频道状态更新被拒绝：${String(outcome.error)}`);
     });
   };
+  const hideEmpty = useAppearanceStore((s) => s.hideEmptySidebarSections);
   const visibleGroups = groups.filter(
-    (g) => g.id !== "pinned" || g.rooms.length,
+    (g) =>
+      !shouldHideEmptySidebarSection({
+        hideEmptySections: hideEmpty,
+        loading: !data,
+        itemCount: g.rooms.length,
+      }),
   );
   return (
     <Frame
+      bottomSlot={<LoomLiveActivity />}
       title="聊天"
       testIdPrefix="public-server-channel-sidebar"
       scrollTestId="public-server-channel-list"
