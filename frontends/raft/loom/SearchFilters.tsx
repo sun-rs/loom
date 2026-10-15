@@ -1,4 +1,5 @@
-import { useSearchParams } from "react-router-dom";
+import { isSearchKeyboardComposing } from "../packages/web/src/components/search/searchComposition.ts";
+import { useSearchPresentation as useSearchParams } from "./useSearchPresentation.ts";
 import type { RahClient } from "@rah-os/client-sdk";
 import type { Principal, Room } from "@rah-os/protocol";
 import { changeNativeSearchFilter } from "./native-search.ts";
@@ -79,7 +80,9 @@ export default function SearchFilters({
   query,
   client,
   workspaceId,
+  overlay = false,
 }: {
+  overlay?: boolean;
   params: URLSearchParams;
   query: string;
   client: RahClient;
@@ -174,7 +177,22 @@ export default function SearchFilters({
     activeFilterClass,
   };
   return (
-    <SearchShellFilters ref={filtersPortalRef}>
+    <SearchShellFilters
+      className={overlay ? "px-3 py-2" : undefined}
+      ref={filtersPortalRef}
+      onKeyDown={(event) => {
+        // Native SearchOverlay respects defaultPrevented: dismiss the inner filter only.
+        if (
+          event.key === "Escape" &&
+          openFilterMenu &&
+          !isSearchKeyboardComposing(event)
+        ) {
+          event.preventDefault();
+          event.stopPropagation();
+          setOpenFilterMenu(null);
+        }
+      }}
+    >
       <div className="flex flex-wrap items-center gap-2">
         <SearchIdentityFilter
           kind="from"

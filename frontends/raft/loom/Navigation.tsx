@@ -9,7 +9,6 @@ import {
 import {
   AppShellRailSlot,
   AppRailRoot,
-  AppRailHeader,
   AppRailNav,
   AppRailFooter,
   AppShellMainSlot,
@@ -18,7 +17,6 @@ import {
   MobileNavLabel,
 } from "raft-ui";
 import { RailTabButton } from "../packages/web/src/components/layout/LeftRail.tsx";
-import AvatarSlot from "../packages/web/src/components/ui/AvatarSlot.tsx";
 import PanelHeader from "../packages/web/src/components/ui/PanelHeader.tsx";
 
 export const destinations = [
@@ -47,17 +45,10 @@ export function DesktopNavigation({ active, onSelect }: NavigationProps) {
   return (
     <AppShellRailSlot className="hidden md:flex">
       <AppRailRoot className="pb-2" role="navigation" aria-label="主导航">
-        <AppRailHeader>
-          <span aria-label="Loom">
-            <AvatarSlot
-              context="panel-header"
-              type="server"
-              serverInitial="L"
-            />
-          </span>
-        </AppRailHeader>
         <AppRailNav className="relative w-full">
-          {destinations.filter((entry) => entry.id !== "settings").map(item)}
+          {destinations
+            .filter((entry) => entry.id !== "settings" && entry.id !== "search")
+            .map(item)}
         </AppRailNav>
         <AppRailFooter>{item(destinations[5])}</AppRailFooter>
       </AppRailRoot>

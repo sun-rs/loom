@@ -1,3 +1,4 @@
+import { openFullSearch } from "./topbar-browser.mjs";
 import { showChatList, openChatRow } from "./mobile-chat-browser.mjs";
 // FIXTURE ONLY: real temporary Core; navigation performs no provider execution.
 import assert from "node:assert/strict";
@@ -41,15 +42,19 @@ export async function verifyGlobalNavigation({ browser, origin, channel }) {
       ["activity", "动态"],
       ["settings", "设置"],
     ]) {
-      await nav.getByRole("button", { name: label, exact: true }).click();
-      await page.getByRole("heading", { name: label, exact: true }).waitFor();
+      if (id === "search") await openFullSearch(page);
+      else {
+        await nav.getByRole("button", { name: label, exact: true }).click();
+        await page.getByRole("heading", { name: label, exact: true }).waitFor();
+      }
       assert.equal(new URL(page.url()).searchParams.get("view"), id);
-      assert.equal(
-        await nav
-          .getByRole("button", { name: label, exact: true })
-          .getAttribute("aria-current"),
-        "page",
-      );
+      if (id !== "search" || viewport.width < 768)
+        assert.equal(
+          await nav
+            .getByRole("button", { name: label, exact: true })
+            .getAttribute("aria-current"),
+          "page",
+        );
       if (id === "agents")
         await page
           .getByRole("button", { name: "新建角色", exact: true })

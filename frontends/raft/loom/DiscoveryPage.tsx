@@ -1,9 +1,12 @@
+import { useSearchRail, type SearchRailHandler } from "./useSearchRail.ts";
+import type { RefObject } from "react";
+import OverlayAllResults from "./OverlayAllResults.tsx";
 import { useResizablePanel } from "../packages/web/src/hooks/useResizablePanel.ts";
 import { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives.ts";
 import { MASTER_DETAIL_COMPACT_PANEL_BOUNDS } from "../packages/web/src/components/layout/masterDetailPanelSizing.ts";
 import PanelResizeHandle from "../packages/web/src/components/ui/PanelResizeHandle.tsx";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchPresentation as useSearchParams } from "./useSearchPresentation.ts";
 import {
   AppShellMainSlot,
   Button,
@@ -41,8 +44,10 @@ export default function DiscoveryPage({
   detail,
   profileOpen = false,
   onBack,
+  overlay = false,
 }: {
   onOpenResult: (row: DiscoveryRow, full: boolean) => Promise<void>;
+  overlay?: boolean;
   detail?: ReactNode;
   profileOpen?: boolean;
   onBack: () => void;
@@ -51,6 +56,16 @@ export default function DiscoveryPage({
   mode: "search" | "activity";
 }) {
   const [params, setParams] = useSearchParams();
+  const railHandler = useRef<SearchRailHandler>(null);
+  const allResults = () =>
+    setParams(
+      (previous) => {
+        const next = new URLSearchParams(previous);
+        next.set("presentation", "page");
+        return next;
+      },
+      { state: null },
+    );
   const desktop = useMediaQuery("(min-width: 768px)");
   const wide = useMediaQuery("(min-width: 1024px)");
   const fullPanel = useResizablePanel({
@@ -106,6 +121,9 @@ export default function DiscoveryPage({
   return (
     <>
       <AppShellMainSlot
+        onKeyDown={
+          overlay ? (event) => railHandler.current?.(event) : undefined
+        }
         className={`relative bg-layer-canvas theme-brutal:bg-white ${detail && desktop ? `border-r border-line-muted theme-brutal:border-black ${mode === "search" ? "theme-brutal:border-r-2" : ""}` : ""}`}
         style={
           detail
@@ -128,6 +146,7 @@ export default function DiscoveryPage({
         )}
         {mode === "search" ? (
           <SearchHeader
+            overlay={overlay}
             query={query}
             onBack={onBack}
             onQuery={(value) =>
@@ -165,6 +184,7 @@ export default function DiscoveryPage({
         <Shell edge="attached" className="min-h-0 flex-1 border-l-0">
           {mode === "search" ? (
             <SearchFilters
+              overlay={overlay}
               params={params}
               query={query}
               client={client}
@@ -178,6 +198,8 @@ export default function DiscoveryPage({
             />
           )}
           <Results
+            railHandler={railHandler}
+            overlayHome={overlay ? allResults : undefined}
             key={`${mode}:${query}:${scope}:${filter}:${tick}:${filterKey}`}
             client={client}
             workspaceId={workspaceId}
@@ -196,6 +218,8 @@ export default function DiscoveryPage({
   );
 }
 function Results({
+  railHandler,
+  overlayHome,
   client,
   workspaceId,
   mode,
@@ -206,6 +230,8 @@ function Results({
   tick,
   onOpenResult,
 }: {
+  railHandler: RefObject<SearchRailHandler>;
+  overlayHome?: () => void;
   onOpenResult: (row: DiscoveryRow, full: boolean) => Promise<void>;
   client: RahClient;
   workspaceId: string;
@@ -319,11 +345,30 @@ function Results({
     cursor,
     retry,
   ]);
+  const rail = useSearchRail(
+    data?.rows ?? [],
+    Boolean(overlayHome),
+    railHandler,
+    (row, full) => {
+      void onOpenResult(row, full).catch(() =>
+        setError("无法打开消息，请刷新重试。"),
+      );
+    },
+    route.get("message"),
+    overlayHome,
+  );
   return (
     <SearchShellViewport
       data-testid="discovery-results"
       className="min-h-0 overflow-y-auto"
     >
+      {overlayHome && (
+        <OverlayAllResults
+          query={query}
+          onOpen={overlayHome}
+          selected={rail.selectedId === null}
+        />
+      )}
       {mutationError && (
         <p role="alert" className="px-3 py-2">
           {mutationError}
@@ -358,7 +403,9 @@ function Results({
                 <SearchMessageGroups
                   rows={data.rows}
                   query={query}
-                  selectedId={route.get("message")}
+                  selectedId={
+                    overlayHome ? rail.selectedId : route.get("message")
+                  }
                   onOpen={(row, full) => {
                     void onOpenResult(row, full).catch(() =>
                       setError("无法打开消息，请刷新重试。"),

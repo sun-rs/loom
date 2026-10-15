@@ -21,7 +21,9 @@ export default function SearchHeader({
   onQuery,
   onBack,
   onEscape,
+  overlay = false,
 }: {
+  overlay?: boolean;
   query: string;
   onQuery: (query: string) => void;
   onBack: () => void;
@@ -36,6 +38,65 @@ export default function SearchHeader({
     const committed = getCommittedSearchQuery(value, composing.current);
     if (committed !== null) onQuery(committed);
   };
+  const field = (
+    <InputGroup className="min-w-0 flex-1">
+      <InputGroupInput
+        autoFocus={overlay}
+        value={input}
+        onChange={(e) => change(e.target.value)}
+        onCompositionStart={() => {
+          composing.current = true;
+        }}
+        onCompositionEnd={(e) => {
+          composing.current = false;
+          change(e.currentTarget.value);
+        }}
+        onKeyDown={(e) => {
+          if (isSearchKeyboardComposing(e)) return;
+          if (e.key === "Escape") {
+            e.preventDefault();
+            onEscape();
+          }
+        }}
+        placeholder={
+          overlay
+            ? formatMessage({ id: "search.overlay.placeholder" })
+            : formatMessage({ id: "search.placeholder" }, { shortcutHint: "" })
+        }
+        aria-label="搜索内容"
+        maxLength={300}
+      />
+      <InputGroupAddon align="inline-end">
+        {input ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            onClick={() => change("")}
+            aria-label={formatMessage({ id: "search.clearSearch" })}
+          >
+            <X aria-hidden size={12} />
+          </Button>
+        ) : null}
+        <Kbd className="hidden sm:inline text-[10px] font-bold uppercase text-foreground-muted">
+          Esc
+        </Kbd>
+      </InputGroupAddon>
+    </InputGroup>
+  );
+  if (overlay)
+    return (
+      <div className="shrink-0 border-b border-line-muted px-3 py-2.5 theme-brutal:border-b-2 theme-brutal:border-black">
+        <div className="flex min-w-0 items-center gap-2">
+          <Search
+            size={16}
+            className="shrink-0 text-foreground-muted theme-brutal:text-black/50"
+            aria-hidden="true"
+          />
+          {field}
+        </div>
+      </div>
+    );
   return (
     <PanelHeader
       onMobileBack={onBack}
@@ -45,48 +106,7 @@ export default function SearchHeader({
           <div className="flex size-icon-header shrink-0 items-center justify-center border border-line-muted bg-primary-soft text-foreground-strong theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-soft-signal theme-brutal:text-black">
             <Search size={18} />
           </div>
-          <InputGroup className="min-w-0 flex-1">
-            <InputGroupInput
-              value={input}
-              onChange={(e) => change(e.target.value)}
-              onCompositionStart={() => {
-                composing.current = true;
-              }}
-              onCompositionEnd={(e) => {
-                composing.current = false;
-                change(e.currentTarget.value);
-              }}
-              onKeyDown={(e) => {
-                if (isSearchKeyboardComposing(e)) return;
-                if (e.key === "Escape") {
-                  e.preventDefault();
-                  onEscape();
-                }
-              }}
-              placeholder={formatMessage(
-                { id: "search.placeholder" },
-                { shortcutHint: "" },
-              )}
-              aria-label="搜索内容"
-              maxLength={300}
-            />
-            <InputGroupAddon align="inline-end">
-              {input ? (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-xs"
-                  onClick={() => change("")}
-                  aria-label={formatMessage({ id: "search.clearSearch" })}
-                >
-                  <X aria-hidden size={12} />
-                </Button>
-              ) : null}
-              <Kbd className="hidden sm:inline text-[10px] font-bold uppercase text-foreground-muted">
-                Esc
-              </Kbd>
-            </InputGroupAddon>
-          </InputGroup>
+          {field}
         </div>
       }
     />

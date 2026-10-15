@@ -71,6 +71,11 @@ export default defineConfig({
           };
       },
       resolveId(source, importer) {
+        if (
+          importer?.endsWith("/components/search/SearchOverlay.tsx") &&
+          source === "./MessageSearchPage"
+        )
+          return resolve(import.meta.dirname, "SearchOverlayContent.tsx");
         if (source === "loom-native-appearance")
           return resolve(
             import.meta.dirname,

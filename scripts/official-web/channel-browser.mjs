@@ -1,3 +1,4 @@
+import { verifyTopbar, openFullSearch } from "./topbar-browser.mjs";
 import { verifyAppearance } from "./appearance-browser.mjs";
 import { verifyActivityNavigation } from "./activity-navigation-browser.mjs";
 import { verifyAttachmentDetails } from "./attachment-details-browser.mjs";
@@ -130,7 +131,11 @@ try {
     instances.push(result.instance);
   }
   browser = await chromium.launch({ headless: true });
-  if (process.env.LOOM_BROWSER_SLICE === "appearance") {
+  if (process.env.LOOM_BROWSER_SLICE === "topbar") {
+    console.log(
+      JSON.stringify(await verifyTopbar({ browser, origin, channels })),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "appearance") {
     console.log(
       JSON.stringify(
         await verifyAppearance({
@@ -397,8 +402,7 @@ try {
       );
       page.off("request", observeMark);
       const mainNav = page.getByRole("navigation", { name: "主导航" });
-      await mainNav.getByRole("button", { name: "搜索", exact: true }).click();
-      await page.getByRole("heading", { name: "搜索", exact: true }).waitFor();
+      await openFullSearch(page);
       await mainNav.getByRole("button", { name: "频道", exact: true }).click();
       if (viewport.width < 768) await openChatRow(page, channels[1].roomId);
       await page.getByRole("button", { name: "核实发送" }).waitFor();

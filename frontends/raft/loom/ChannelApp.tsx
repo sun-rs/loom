@@ -1,3 +1,6 @@
+import TopBarSearch from "./TopBarSearch.tsx";
+import { searchBackground } from "./useSearchPresentation.ts";
+import { useLocation, Routes, Route } from "react-router-dom";
 import {
   AppearanceRuntimeProvider,
   LoomLiveActivity,
@@ -500,7 +503,13 @@ export default function ChannelApp() {
   const [directory, setDirectory] =
     useState<Awaited<ReturnType<typeof loadChannelDirectory>>>();
   const [error, setError] = useState("");
-  const [params, setParams] = useIntentRoute();
+  const [routeParams, setParams] = useIntentRoute();
+  const location = useLocation();
+  const background = searchBackground(location.search, location.state);
+  const params = useMemo(
+    () => (background !== null ? new URLSearchParams(background) : routeParams),
+    [background, routeParams],
+  );
   const destination = params.get("view") ?? "channels";
   const activityNavigation = useRef(0);
   const [discoveryProfileOpen, setDiscoveryProfileOpen] = useState(false);
@@ -696,9 +705,16 @@ export default function ChannelApp() {
 
       <AppShellRoot
         inert={bootstrapping ? true : undefined}
-        className={`h-dvh min-h-screen overflow-hidden font-display ${bootstrapping ? "invisible" : ""}`}
+        className={`flex-col h-dvh min-h-screen overflow-hidden font-display ${bootstrapping ? "invisible" : ""}`}
         data-testid="loom-channel-app"
       >
+        {directory && (
+          <TopBarSearch
+            client={client}
+            directory={directory}
+            onDirectory={setDirectory}
+          />
+        )}
         {instanceTarget && directory?.workspace.controlRoomId && (
           <AddInstanceDialog
             target={instanceTarget}
@@ -706,317 +722,338 @@ export default function ChannelApp() {
             onClose={() => setInstanceTarget(undefined)}
           />
         )}
-        <div className="relative flex min-h-0 min-w-0 flex-1">
-          <DesktopNavigation
-            active={destination}
-            onSelect={selectDestination}
-          />
-          <div
-            className={
-              destination === "channels"
-                ? "flex min-h-0 min-w-0 flex-1"
-                : "hidden"
-            }
-          >
-            <AppShellSidebarSlot
-              className={`relative min-w-0 shrink-0 flex-col md:flex md:w-[var(--chat-sidebar-width)] ${mobileList ? "flex w-full" : "hidden"}`}
-              style={
-                {
-                  "--chat-sidebar-width": `${sidebarPanel.width}px`,
-                } as React.CSSProperties
-              }
-            >
-              <PanelResizeHandle
-                side="right"
-                visibleFrom="md"
-                data-testid="chat-sidebar-resize"
-                onPointerDown={sidebarPanel.handleResizeStart}
-                onPointerMove={sidebarPanel.handleResizeMove}
-                onPointerUp={sidebarPanel.handleResizeEnd}
-                onPointerCancel={sidebarPanel.handleResizeEnd}
-              />
-              {!directory && error && (
-                <div className="h-full md:hidden">
-                  <ChatSidebarFrame
-                    title="聊天"
-                    testIdPrefix="public-server-channel-sidebar"
-                    scrollTestId="public-server-channel-list"
+        <Routes
+          location={
+            background !== null
+              ? { ...location, search: background, state: null }
+              : location
+          }
+        >
+          <Route
+            path="*"
+            element={
+              <div className="relative flex min-h-0 min-w-0 flex-1">
+                <DesktopNavigation
+                  active={destination}
+                  onSelect={selectDestination}
+                />
+                <div
+                  className={
+                    destination === "channels"
+                      ? "flex min-h-0 min-w-0 flex-1"
+                      : "hidden"
+                  }
+                >
+                  <AppShellSidebarSlot
+                    className={`relative min-w-0 shrink-0 flex-col md:flex md:w-[var(--chat-sidebar-width)] ${mobileList ? "flex w-full" : "hidden"}`}
+                    style={
+                      {
+                        "--chat-sidebar-width": `${sidebarPanel.width}px`,
+                      } as React.CSSProperties
+                    }
                   >
-                    <p role="alert" className="p-6">
-                      {error}
-                    </p>
-                  </ChatSidebarFrame>
-                </div>
-              )}
-              {directory?.workspace.controlRoomId && (
-                <ChannelSidebar
-                  client={client}
-                  workspaceId={directory.workspace.workspaceId}
-                  controlRoomId={directory.workspace.controlRoomId}
-                  onReady={onSidebarReady}
-                  name={directory.workspace.name}
-                  rooms={directory.channels}
-                  privateBoxes={directory.privateBoxes}
-                  onPrivateClosed={(id) =>
-                    setParams((previous) =>
-                      previous.get("room") === id
-                        ? new URLSearchParams({ chat: "list" })
-                        : previous,
-                    )
-                  }
-                  archivedRooms={directory.archivedChannels}
-                  onRoomsChanged={async () => {
-                    setDirectory(await loadChannelDirectory(client));
-                  }}
-                  selected={selected?.roomId ?? null}
-                  onSelect={select}
-                  onCreated={async (room) => {
-                    setDirectory(await loadChannelDirectory(client));
-                    setParams({ room: room.roomId });
-                  }}
-                />
-              )}
-            </AppShellSidebarSlot>
-            <AppShellMainSlot
-              className={`min-w-0 bg-layer-canvas theme-brutal:bg-white md:flex ${mobileList ? "hidden" : "flex"}`}
-            >
-              {!selected && (
-                <PanelHeader
-                  title="聊天"
-                  onMobileBack={showChatList}
-                  mobileBackProps={{ "aria-label": "聊天列表" }}
-                />
-              )}
-              {privateNotice}
-              {error ? (
-                <p role="alert" className="p-6">
-                  {error}
-                </p>
-              ) : !directory ? (
-                <Spinner aria-label="正在连接 Loom" />
-              ) : selected && destination === "channels" ? (
-                <Channel
-                  key={`${selected.roomId}:${params.get("message") ?? "latest"}`}
-                  focusId={params.get("message") ?? undefined}
-                  threadRootId={params.get("thread") ?? undefined}
-                  onThread={(id) => {
-                    if (hasRouteBoundIntent()) return;
-                    setParams((previous) => {
-                      const next = new URLSearchParams(previous);
-                      next.set("room", selected.roomId);
-                      next.delete("message");
-                      if (id) next.set("thread", id);
-                      else next.delete("thread");
-                      return next;
-                    });
-                  }}
-                  channel={selected}
-                  controlRoomId={directory.workspace.controlRoomId}
-                  onBack={showChatList}
-                  bridge={bridge!}
-                  onOpenPrivate={openPrivate}
-                  onAddInstance={
-                    directory.workspace.controlRoomId
-                      ? () => {
-                          if (!hasUnresolvedIntents())
-                            setInstanceTarget({
-                              bridge: bridge!,
-                              name: selected.name,
-                            });
-                        }
-                      : undefined
-                  }
-                />
-              ) : (
-                <p className="p-6">
-                  {requested
-                    ? "此频道不存在或没有访问权限"
-                    : "暂无频道，请从频道列表菜单创建"}
-                </p>
-              )}
-            </AppShellMainSlot>
-          </div>
-          {directory?.workspace.controlRoomId && (
-            <AgentPage
-              client={client}
-              workspaceId={directory.workspace.workspaceId}
-              controlRoomId={directory.workspace.controlRoomId}
-              active={destination === "agents"}
-              notice={privateNotice}
-              onOpenChannel={select}
-              onOpenPrivate={openPrivate}
-            />
-          )}
-          {directory && destination === "tasks" && (
-            <TasksPage
-              client={client}
-              workspaceId={directory.workspace.workspaceId}
-              rooms={directory.channels}
-            />
-          )}
-          {directory &&
-            (destination === "search" || destination === "activity") && (
-              <DiscoveryPage
-                client={client}
-                workspaceId={directory.workspace.workspaceId}
-                mode={destination}
-                onBack={() => setParams({ chat: "list" })}
-                profileOpen={discoveryProfileOpen}
-                onOpenResult={async (row, full) => {
-                  if (hasUnresolvedIntents()) throw Error("仍有未决操作");
-                  const request = ++activityNavigation.current;
-                  const expected = params.toString();
-                  const context = await client.request("message.context", {
-                    roomId: row.message.roomId,
-                    messageId: row.message.messageId,
-                  });
-                  if (
-                    context.message.roomId !== row.message.roomId ||
-                    context.message.messageId !== row.message.messageId
-                  )
-                    throw Error("消息身份不一致");
-                  const next = await loadChannelDirectory(client);
-                  if (
-                    ![
-                      ...next.channels,
-                      ...next.archivedChannels,
-                      ...next.privateBoxes,
-                    ].some((r) => r.roomId === row.message.roomId)
-                  )
-                    throw Error("对话不可用");
-                  if (request !== activityNavigation.current) return;
-                  if (context.message.threadId && !context.rootMessageId)
-                    throw Error("消息列根消息缺失");
-                  setDirectory(next);
-                  setParams((previous) => {
-                    if (
-                      request !== activityNavigation.current ||
-                      previous.toString() !== expected ||
-                      hasUnresolvedIntents()
-                    )
-                      return previous;
-                    const target = new URLSearchParams({
-                      room: row.message.roomId,
-                      message: row.message.messageId,
-                    });
-                    if (!full) {
-                      target.set("view", destination);
-                      for (const key of [
-                        "af",
-                        "q",
-                        "scope",
-                        "senderId",
-                        "channelId",
-                        "scopes",
-                        "range",
-                        "sort",
-                      ]) {
-                        if (previous.has(key))
-                          target.set(key, previous.get(key)!);
-                      }
-                    }
-                    if (context.message.threadId) {
-                      target.set("thread", context.rootMessageId!);
-                      if (!full) target.set("detail", "thread");
-                    }
-                    return target;
-                  });
-                }}
-                detail={
-                  requested && selected && bridge ? (
-                    params.get("detail") === "thread" &&
-                    params.get("thread") ? (
-                      <ThreadContentSlot
-                        controlRoomId={directory.workspace.controlRoomId!}
-                        onProfileVisibilityChange={setDiscoveryProfileOpen}
-                        key={`${selected.roomId}:${params.get("thread")}:${params.get("message")}`}
-                        contentSlot
+                    <PanelResizeHandle
+                      side="right"
+                      visibleFrom="md"
+                      data-testid="chat-sidebar-resize"
+                      onPointerDown={sidebarPanel.handleResizeStart}
+                      onPointerMove={sidebarPanel.handleResizeMove}
+                      onPointerUp={sidebarPanel.handleResizeEnd}
+                      onPointerCancel={sidebarPanel.handleResizeEnd}
+                    />
+                    {!directory && error && (
+                      <div className="h-full md:hidden">
+                        <ChatSidebarFrame
+                          title="聊天"
+                          testIdPrefix="public-server-channel-sidebar"
+                          scrollTestId="public-server-channel-list"
+                        >
+                          <p role="alert" className="p-6">
+                            {error}
+                          </p>
+                        </ChatSidebarFrame>
+                      </div>
+                    )}
+                    {directory?.workspace.controlRoomId && (
+                      <ChannelSidebar
                         client={client}
-                        room={selected}
-                        rootMessageId={params.get("thread")!}
-                        focusId={params.get("message") ?? undefined}
-                        onClose={() =>
-                          setParams((previous) => {
-                            const next = new URLSearchParams(previous);
-                            for (const key of [
-                              "room",
-                              "message",
-                              "thread",
-                              "detail",
-                            ])
-                              next.delete(key);
-                            return next;
-                          })
-                        }
-                        onChanged={() => {}}
-                      />
-                    ) : (
-                      <Channel
-                        key={`${selected.roomId}:${params.get("message")}`}
-                        channel={selected}
-                        onProfileVisibilityChange={setDiscoveryProfileOpen}
-                        bridge={bridge}
+                        workspaceId={directory.workspace.workspaceId}
                         controlRoomId={directory.workspace.controlRoomId}
+                        onReady={onSidebarReady}
+                        name={directory.workspace.name}
+                        rooms={directory.channels}
+                        privateBoxes={directory.privateBoxes}
+                        onPrivateClosed={(id) =>
+                          setParams((previous) =>
+                            previous.get("room") === id
+                              ? new URLSearchParams({ chat: "list" })
+                              : previous,
+                          )
+                        }
+                        archivedRooms={directory.archivedChannels}
+                        onRoomsChanged={async () => {
+                          setDirectory(await loadChannelDirectory(client));
+                        }}
+                        selected={selected?.roomId ?? null}
+                        onSelect={select}
+                        onCreated={async (room) => {
+                          setDirectory(await loadChannelDirectory(client));
+                          setParams({ room: room.roomId });
+                        }}
+                      />
+                    )}
+                  </AppShellSidebarSlot>
+                  <AppShellMainSlot
+                    className={`min-w-0 bg-layer-canvas theme-brutal:bg-white md:flex ${mobileList ? "hidden" : "flex"}`}
+                  >
+                    {!selected && (
+                      <PanelHeader
+                        title="聊天"
+                        onMobileBack={showChatList}
+                        mobileBackProps={{ "aria-label": "聊天列表" }}
+                      />
+                    )}
+                    {privateNotice}
+                    {error ? (
+                      <p role="alert" className="p-6">
+                        {error}
+                      </p>
+                    ) : !directory ? (
+                      <Spinner aria-label="正在连接 Loom" />
+                    ) : selected && destination === "channels" ? (
+                      <Channel
+                        key={`${selected.roomId}:${params.get("message") ?? "latest"}`}
                         focusId={params.get("message") ?? undefined}
                         threadRootId={params.get("thread") ?? undefined}
-                        onThread={(id) =>
+                        onThread={(id) => {
+                          if (hasRouteBoundIntent()) return;
                           setParams((previous) => {
                             const next = new URLSearchParams(previous);
+                            next.set("room", selected.roomId);
                             next.delete("message");
                             if (id) next.set("thread", id);
                             else next.delete("thread");
                             return next;
-                          })
-                        }
-                        onBack={() =>
-                          setParams((previous) => {
-                            const next = new URLSearchParams(previous);
-                            for (const key of [
-                              "room",
-                              "message",
-                              "thread",
-                              "detail",
-                            ])
-                              next.delete(key);
-                            return next;
-                          })
-                        }
+                          });
+                        }}
+                        channel={selected}
+                        controlRoomId={directory.workspace.controlRoomId}
+                        onBack={showChatList}
+                        bridge={bridge!}
                         onOpenPrivate={openPrivate}
-                        onAddInstance={undefined}
+                        onAddInstance={
+                          directory.workspace.controlRoomId
+                            ? () => {
+                                if (!hasUnresolvedIntents())
+                                  setInstanceTarget({
+                                    bridge: bridge!,
+                                    name: selected.name,
+                                  });
+                              }
+                            : undefined
+                        }
                       />
-                    )
-                  ) : undefined
-                }
-              />
-            )}
-          {destination === "settings" && directory?.workspace.controlRoomId && (
-            <SettingsPage
-              tab={params.get("settings")}
-              onTab={(id) => {
-                if (hasRouteBoundIntent()) return;
-                setParams((previous) => {
-                  const next = new URLSearchParams(previous);
-                  if (id) next.set("settings", id);
-                  else next.delete("settings");
-                  return next;
-                });
-              }}
-              client={client}
-              workspaceId={directory.workspace.workspaceId}
-              controlRoomId={directory.workspace.controlRoomId}
-            />
-          )}
-          {![
-            "channels",
-            "agents",
-            "search",
-            "activity",
-            "settings",
-            "tasks",
-          ].includes(destination) && (
-            <DestinationPlaceholder active={destination} />
-          )}
-        </div>
+                    ) : (
+                      <p className="p-6">
+                        {requested
+                          ? "此频道不存在或没有访问权限"
+                          : "暂无频道，请从频道列表菜单创建"}
+                      </p>
+                    )}
+                  </AppShellMainSlot>
+                </div>
+                {directory?.workspace.controlRoomId && (
+                  <AgentPage
+                    client={client}
+                    workspaceId={directory.workspace.workspaceId}
+                    controlRoomId={directory.workspace.controlRoomId}
+                    active={destination === "agents"}
+                    notice={privateNotice}
+                    onOpenChannel={select}
+                    onOpenPrivate={openPrivate}
+                  />
+                )}
+                {directory && destination === "tasks" && (
+                  <TasksPage
+                    client={client}
+                    workspaceId={directory.workspace.workspaceId}
+                    rooms={directory.channels}
+                  />
+                )}
+                {directory &&
+                  (destination === "search" || destination === "activity") && (
+                    <DiscoveryPage
+                      client={client}
+                      workspaceId={directory.workspace.workspaceId}
+                      mode={destination}
+                      onBack={() => setParams({ chat: "list" })}
+                      profileOpen={discoveryProfileOpen}
+                      onOpenResult={async (row, full) => {
+                        if (hasUnresolvedIntents()) throw Error("仍有未决操作");
+                        const request = ++activityNavigation.current;
+                        const expected = params.toString();
+                        const context = await client.request(
+                          "message.context",
+                          {
+                            roomId: row.message.roomId,
+                            messageId: row.message.messageId,
+                          },
+                        );
+                        if (
+                          context.message.roomId !== row.message.roomId ||
+                          context.message.messageId !== row.message.messageId
+                        )
+                          throw Error("消息身份不一致");
+                        const next = await loadChannelDirectory(client);
+                        if (
+                          ![
+                            ...next.channels,
+                            ...next.archivedChannels,
+                            ...next.privateBoxes,
+                          ].some((r) => r.roomId === row.message.roomId)
+                        )
+                          throw Error("对话不可用");
+                        if (request !== activityNavigation.current) return;
+                        if (context.message.threadId && !context.rootMessageId)
+                          throw Error("消息列根消息缺失");
+                        setDirectory(next);
+                        setParams((previous) => {
+                          if (
+                            request !== activityNavigation.current ||
+                            previous.toString() !== expected ||
+                            hasUnresolvedIntents()
+                          )
+                            return previous;
+                          const target = new URLSearchParams({
+                            room: row.message.roomId,
+                            message: row.message.messageId,
+                          });
+                          if (!full) {
+                            target.set("view", destination);
+                            for (const key of [
+                              "af",
+                              "q",
+                              "scope",
+                              "senderId",
+                              "channelId",
+                              "scopes",
+                              "range",
+                              "sort",
+                            ]) {
+                              if (previous.has(key))
+                                target.set(key, previous.get(key)!);
+                            }
+                          }
+                          if (context.message.threadId) {
+                            target.set("thread", context.rootMessageId!);
+                            if (!full) target.set("detail", "thread");
+                          }
+                          return target;
+                        });
+                      }}
+                      detail={
+                        requested && selected && bridge ? (
+                          params.get("detail") === "thread" &&
+                          params.get("thread") ? (
+                            <ThreadContentSlot
+                              controlRoomId={directory.workspace.controlRoomId!}
+                              onProfileVisibilityChange={
+                                setDiscoveryProfileOpen
+                              }
+                              key={`${selected.roomId}:${params.get("thread")}:${params.get("message")}`}
+                              contentSlot
+                              client={client}
+                              room={selected}
+                              rootMessageId={params.get("thread")!}
+                              focusId={params.get("message") ?? undefined}
+                              onClose={() =>
+                                setParams((previous) => {
+                                  const next = new URLSearchParams(previous);
+                                  for (const key of [
+                                    "room",
+                                    "message",
+                                    "thread",
+                                    "detail",
+                                  ])
+                                    next.delete(key);
+                                  return next;
+                                })
+                              }
+                              onChanged={() => {}}
+                            />
+                          ) : (
+                            <Channel
+                              key={`${selected.roomId}:${params.get("message")}`}
+                              channel={selected}
+                              onProfileVisibilityChange={
+                                setDiscoveryProfileOpen
+                              }
+                              bridge={bridge}
+                              controlRoomId={directory.workspace.controlRoomId}
+                              focusId={params.get("message") ?? undefined}
+                              threadRootId={params.get("thread") ?? undefined}
+                              onThread={(id) =>
+                                setParams((previous) => {
+                                  const next = new URLSearchParams(previous);
+                                  next.delete("message");
+                                  if (id) next.set("thread", id);
+                                  else next.delete("thread");
+                                  return next;
+                                })
+                              }
+                              onBack={() =>
+                                setParams((previous) => {
+                                  const next = new URLSearchParams(previous);
+                                  for (const key of [
+                                    "room",
+                                    "message",
+                                    "thread",
+                                    "detail",
+                                  ])
+                                    next.delete(key);
+                                  return next;
+                                })
+                              }
+                              onOpenPrivate={openPrivate}
+                              onAddInstance={undefined}
+                            />
+                          )
+                        ) : undefined
+                      }
+                    />
+                  )}
+                {destination === "settings" &&
+                  directory?.workspace.controlRoomId && (
+                    <SettingsPage
+                      tab={params.get("settings")}
+                      onTab={(id) => {
+                        if (hasRouteBoundIntent()) return;
+                        setParams((previous) => {
+                          const next = new URLSearchParams(previous);
+                          if (id) next.set("settings", id);
+                          else next.delete("settings");
+                          return next;
+                        });
+                      }}
+                      client={client}
+                      workspaceId={directory.workspace.workspaceId}
+                      controlRoomId={directory.workspace.controlRoomId}
+                    />
+                  )}
+                {![
+                  "channels",
+                  "agents",
+                  "search",
+                  "activity",
+                  "settings",
+                  "tasks",
+                ].includes(destination) && (
+                  <DestinationPlaceholder active={destination} />
+                )}
+              </div>
+            }
+          />
+        </Routes>
         {(destination !== "channels" || mobileList) &&
           destination !== "search" &&
           destination !== "activity" &&
