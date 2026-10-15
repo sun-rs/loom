@@ -21,12 +21,12 @@ export function adaptThreadFooter(source: string) {
   let code = replaceOnce(
     source,
     "  readOnlyData?: ReadOnlyThreadData;",
-    "  readOnlyData?: ReadOnlyThreadData;\n  loomFooter?: ReactNode;\n  loomFocusId?: string;\n  loomHasNewer?: boolean;\n  loomLoadNewer?: () => Promise<void>;",
+    '  readOnlyData?: ReadOnlyThreadData;\n  loomFooter?: ReactNode;\n  loomOnOpenProfile?: (kind: "agent" | "human", id: string) => void;\n  loomFocusId?: string;\n  loomHasNewer?: boolean;\n  loomLoadNewer?: () => Promise<void>;',
   );
   code = replaceOnce(
     code,
     "  readOnlyData,\n}: ThreadPanelProps &",
-    "  readOnlyData,\n  loomFooter,\n  loomFocusId,\n  loomHasNewer,\n  loomLoadNewer,\n  hideParentMessage,\n  parentSlot,\n}: ThreadPanelProps &",
+    "  readOnlyData,\n  loomFooter,\n  loomOnOpenProfile,\n  loomFocusId,\n  loomHasNewer,\n  loomLoadNewer,\n  hideParentMessage,\n  parentSlot,\n}: ThreadPanelProps &",
   );
   code = replaceOnce(
     code,
@@ -61,12 +61,17 @@ export function adaptThreadFooter(source: string) {
   code = replaceOnce(
     code,
     "        readOnlySender={readOnlyData.senderByMessageId.get(message.id)}",
-    "        threadSearchActive={message.id === loomFocusId}\n        readOnlySender={readOnlyData.senderByMessageId.get(message.id)}",
+    "        onOpenProfile={loomOnOpenProfile}\n        threadSearchActive={message.id === loomFocusId}\n        readOnlySender={readOnlyData.senderByMessageId.get(message.id)}",
   );
   code = replaceOnce(
     code,
     "  ), [readOnlyData.channels,",
-    "  ), [loomFocusId, readOnlyData.channels,",
+    "  ), [loomFocusId, loomOnOpenProfile, readOnlyData.channels,",
+  );
+  code = replaceOnce(
+    code,
+    "        readOnlySender={readOnlyData.senderByMessageId.get(readOnlyData.parentMessage.id)}",
+    "        onOpenProfile={loomOnOpenProfile}\n        readOnlySender={readOnlyData.senderByMessageId.get(readOnlyData.parentMessage.id)}",
   );
   return replaceOnce(
     code,

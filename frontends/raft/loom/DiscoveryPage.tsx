@@ -2,28 +2,27 @@ import { useResizablePanel } from "../packages/web/src/hooks/useResizablePanel.t
 import { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives.ts";
 import { MASTER_DETAIL_COMPACT_PANEL_BOUNDS } from "../packages/web/src/components/layout/masterDetailPanelSizing.ts";
 import PanelResizeHandle from "../packages/web/src/components/ui/PanelResizeHandle.tsx";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   AppShellMainSlot,
   Button,
-  Input,
   Spinner,
   SearchShellRoot,
   ActivityInboxPanel,
-  SearchShellFilters,
   SearchShellViewport,
   SearchResultsSummary,
   SearchResultsList,
 } from "raft-ui";
-import { Search, Activity } from "lucide-react";
+import { Activity } from "lucide-react";
 import type { RahClient } from "@rah-os/client-sdk";
 import type {
   WorkspaceSearchRequest,
   HumanActivityRequest,
 } from "@rah-os/protocol";
 import PanelHeader from "../packages/web/src/components/ui/PanelHeader.tsx";
-import { SelectField } from "./ManagementUi.tsx";
+import SearchFilters from "./SearchFilters.tsx";
+import { nativeSearchFilters } from "./native-search.ts";
 import {
   searchPage,
   activityPage,
@@ -32,6 +31,7 @@ import {
 } from "./discovery-client.ts";
 import ActivityFilters from "./ActivityFilters.tsx";
 import ActivityMessageRow from "./ActivityMessageRow.tsx";
+import SearchHeader from "./SearchHeader.tsx";
 import SearchMessageRow from "./SearchMessageRow.tsx";
 export default function DiscoveryPage({
   client,
@@ -40,10 +40,12 @@ export default function DiscoveryPage({
   onOpenResult,
   detail,
   profileOpen = false,
+  onBack,
 }: {
   onOpenResult: (row: DiscoveryRow, full: boolean) => Promise<void>;
   detail?: ReactNode;
   profileOpen?: boolean;
+  onBack: () => void;
   client: RahClient;
   workspaceId: string;
   mode: "search" | "activity";
@@ -81,8 +83,15 @@ export default function DiscoveryPage({
   ].includes(params.get("af") ?? "")
     ? (params.get("af") as HumanActivityRequest["filter"])
     : "all";
-  const [input, setInput] = useState(query);
-  useEffect(() => setInput(query), [query]);
+  const filterKey = [
+    params.get("scopes"),
+    params.get("range"),
+    params.get("sort"),
+  ].join("|");
+  const searchFilters = useMemo(
+    () => nativeSearchFilters(params, query),
+    [filterKey, query],
+  );
   const [tick, setTick] = useState(0);
   const update = (key: string, value: string) =>
     setParams((previous) => {
@@ -115,53 +124,45 @@ export default function DiscoveryPage({
             onPointerCancel={panel.handleResizeEnd}
           />
         )}
-        <PanelHeader
-          title={mode === "search" ? "搜索" : "动态"}
-          icon={
-            mode === "search" ? <Search size={18} /> : <Activity size={18} />
-          }
-        />
+        {mode === "search" ? (
+          <SearchHeader
+            query={query}
+            onBack={onBack}
+            onQuery={(value) =>
+              setParams(
+                (previous) => {
+                  const next = new URLSearchParams(previous);
+                  if (value) next.set("q", value);
+                  else next.delete("q");
+                  return next;
+                },
+                { replace: true },
+              )
+            }
+            onEscape={() => {
+              if (!detail) {
+                onBack();
+                return;
+              }
+              setParams((previous) => {
+                const next = new URLSearchParams(previous);
+                for (const key of ["room", "message", "thread", "detail"])
+                  next.delete(key);
+                return next;
+              });
+            }}
+          />
+        ) : (
+          <PanelHeader
+            title="动态"
+            icon={<Activity size={18} />}
+            onMobileBack={onBack}
+            mobileBackProps={{ "aria-label": "返回聊天列表" }}
+          />
+        )}
         <Shell edge="attached" className="min-h-0 flex-1 border-l-0">
           {mode === "search" ? (
-            <SearchShellFilters className="flex flex-wrap items-end gap-2">
-              <>
-                <form
-                  className="flex min-w-0 flex-1 gap-2"
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    if (input.trim() !== query) update("q", input.trim());
-                    else setTick((v) => v + 1);
-                  }}
-                >
-                  <Input
-                    aria-label="搜索内容"
-                    placeholder="搜索消息"
-                    maxLength={300}
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(event) => {
-                      if (
-                        event.key === "Enter" &&
-                        (event.nativeEvent.isComposing || event.keyCode === 229)
-                      )
-                        event.preventDefault();
-                    }}
-                  />
-                  <Button type="submit">搜索消息</Button>
-                </form>
-                <SelectField
-                  label="搜索范围"
-                  value={scope!}
-                  onChange={(value) => update("scope", value)}
-                  options={[
-                    { value: "all", label: "全部对话" },
-                    { value: "channel", label: "频道" },
-                    { value: "direct", label: "私聊" },
-                    { value: "thread", label: "线程" },
-                  ]}
-                />
-              </>
-            </SearchShellFilters>
+            <SearchFilters params={params} query={query} update={update} />
           ) : (
             <ActivityFilters
               value={filter!}
@@ -170,11 +171,12 @@ export default function DiscoveryPage({
             />
           )}
           <Results
-            key={`${mode}:${query}:${scope}:${filter}:${tick}`}
+            key={`${mode}:${query}:${scope}:${filter}:${tick}:${filterKey}`}
             client={client}
             workspaceId={workspaceId}
             mode={mode}
             query={query}
+            searchFilters={searchFilters}
             scope={scope}
             filter={filter}
             tick={tick}
@@ -191,6 +193,7 @@ function Results({
   workspaceId,
   mode,
   query,
+  searchFilters,
   scope,
   filter,
   tick,
@@ -201,6 +204,7 @@ function Results({
   workspaceId: string;
   mode: "search" | "activity";
   query: string;
+  searchFilters: ReturnType<typeof nativeSearchFilters>;
   scope: WorkspaceSearchRequest["scope"];
   filter: HumanActivityRequest["filter"];
   tick: number;
@@ -216,48 +220,82 @@ function Results({
     const controller = new AbortController();
     setData(undefined);
     setError("");
-    if (mode === "search" && !query.trim()) {
+    if (
+      mode === "search" &&
+      !query.trim() &&
+      !searchFilters.senderKind &&
+      !searchFilters.mentionSelf &&
+      !searchFilters.after
+    ) {
       setLoading(false);
       return;
     }
     setLoading(true);
-    const read =
-      mode === "search"
-        ? searchPage(
-            client,
-            {
-              workspaceId,
-              query,
-              scope,
-              sort: "recent",
-              limit: 20,
-              ...(cursor ? { cursor } : {}),
-            },
-            controller.signal,
-          )
-        : activityPage(
-            client,
-            { workspaceId, filter, limit: 20, ...(cursor ? { cursor } : {}) },
-            controller.signal,
-          );
-    void read
-      .then((value) => {
-        if (!controller.signal.aborted) setData(value);
-      })
-      .catch(() => {
-        if (!controller.signal.aborted) setError("读取失败，请重试。");
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
-      });
-    return () => controller.abort();
-  }, [client, workspaceId, mode, query, scope, filter, tick, cursor, retry]);
+    const timer = setTimeout(
+      () => {
+        const read =
+          mode === "search"
+            ? searchPage(
+                client,
+                {
+                  workspaceId,
+                  query,
+                  scope,
+                  ...searchFilters,
+                  limit: 20,
+                  ...(cursor ? { cursor } : {}),
+                },
+                controller.signal,
+              )
+            : activityPage(
+                client,
+                {
+                  workspaceId,
+                  filter,
+                  limit: 20,
+                  ...(cursor ? { cursor } : {}),
+                },
+                controller.signal,
+              );
+        void read
+          .then((value) => {
+            if (!controller.signal.aborted) setData(value);
+          })
+          .catch(() => {
+            if (!controller.signal.aborted) setError("读取失败，请重试。");
+          })
+          .finally(() => {
+            if (!controller.signal.aborted) setLoading(false);
+          });
+      },
+      mode === "search" ? 200 : 0,
+    );
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [
+    client,
+    workspaceId,
+    mode,
+    query,
+    scope,
+    searchFilters,
+    filter,
+    tick,
+    cursor,
+    retry,
+  ]);
   return (
     <SearchShellViewport
       data-testid="discovery-results"
       className="min-h-0 overflow-y-auto"
     >
-      {mode === "search" && !query.trim() ? (
+      {mode === "search" &&
+      !query.trim() &&
+      !searchFilters.senderKind &&
+      !searchFilters.mentionSelf &&
+      !searchFilters.after ? (
         <p className="p-4">输入关键词搜索可访问的消息。</p>
       ) : loading ? (
         <Spinner aria-label="正在读取结果" />

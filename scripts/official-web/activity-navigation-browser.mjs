@@ -107,6 +107,7 @@ export async function verifyActivityNavigation({
   const results = [];
   for (const width of [1440, 390]) {
     const context = await browser.newContext({
+      locale: "zh-CN",
       viewport: { width, height: width === 390 ? 844 : 1000 },
       deviceScaleFactor: 1,
       hasTouch: width === 390,
@@ -116,6 +117,87 @@ export async function verifyActivityNavigation({
       const page = await context.newPage();
       const errors = [];
       page.on("pageerror", (e) => errors.push(e.message));
+      // UI-only agent author projection over temporary Core reads; never impersonate a Worker or mutate authored history.
+      for (const endpoint of ["context", "list"])
+        await page.route(`**/v3/client/messages/${endpoint}`, async (route) => {
+          const response = await route.fetch();
+          const data = await response.json();
+          for (const message of [
+            data.message,
+            data.rootMessage,
+            ...(data.messages ?? []),
+          ]) {
+            if (message?.roomId === room.roomId)
+              message.actorId = member.instance.instanceId;
+          }
+          await route.fulfill({ response, json: data });
+        });
+
+      await page.goto(origin + "/?view=search");
+      await page.getByLabel("搜索内容", { exact: true }).waitFor();
+      assert.equal(
+        await page
+          .getByRole("button", { name: "搜索消息", exact: true })
+          .count(),
+        0,
+        "Native search has a header input, not a separate submit form",
+      );
+      const searchInput = page.getByLabel("搜索内容", { exact: true });
+      await searchInput.fill("target");
+      await page.waitForURL((u) => u.searchParams.get("q") === "target");
+      await page
+        .locator(`[data-result-id="${card.latestMessage.messageId}"]`)
+        .waitFor();
+      await page.getByLabel("范围", { exact: true }).click();
+      const agentFilterRequest = page.waitForRequest(
+        (r) =>
+          r.url().endsWith("/v3/client/search") &&
+          r.postDataJSON().senderKind === "agent",
+      );
+      await page.getByRole("option", { name: "Agent", exact: true }).click();
+      await agentFilterRequest;
+      await page.keyboard.press("Escape");
+      await page.getByLabel("时间", { exact: true }).click();
+      const timeRequest = page.waitForRequest(
+        (r) =>
+          r.url().endsWith("/v3/client/search") && !!r.postDataJSON().after,
+      );
+      await page
+        .getByRole("option", { name: "最近 7 天", exact: true })
+        .click();
+      await timeRequest;
+      await page.goto(origin + "/?view=search&q=target");
+      await searchInput.waitFor();
+      await searchInput.dispatchEvent("compositionstart");
+      await searchInput.fill("未完成输入");
+      assert.equal(new URL(page.url()).searchParams.get("q"), "target");
+      await searchInput.dispatchEvent("compositionend", { data: "未完成输入" });
+      await page.waitForURL((u) => u.searchParams.get("q") === "未完成输入");
+      await page.getByRole("button", { name: "清除搜索", exact: true }).click();
+      await page.waitForURL((u) => !u.searchParams.has("q"));
+      if (width === 390) {
+        assert.equal(
+          await page
+            .locator('[role="navigation"][aria-label="主导航"]:visible')
+            .count(),
+          0,
+        );
+        await page
+          .getByRole("button", { name: "返回聊天列表", exact: true })
+          .click();
+        await page.waitForURL((u) => u.searchParams.get("chat") === "list");
+        await page.goto(origin + "/?view=activity");
+        assert.equal(
+          await page
+            .locator('[role="navigation"][aria-label="主导航"]:visible')
+            .count(),
+          0,
+        );
+        await page
+          .getByRole("button", { name: "返回聊天列表", exact: true })
+          .click();
+        await page.waitForURL((u) => u.searchParams.get("chat") === "list");
+      }
       let visibleSnapshot = snapshot;
       await page.route("**/v3/client/activity/list", (route) =>
         route.fulfill({ json: visibleSnapshot }),
@@ -295,6 +377,22 @@ export async function verifyActivityNavigation({
           new URL(page.url()).searchParams.get("thread"),
           card.latestMessage.messageId,
         );
+        await threadPane.getByTestId("thread-parent-avatar").click();
+        await page.getByTestId("profile-panel").waitFor();
+        assert.equal(
+          await threadPane.isVisible(),
+          true,
+          "Thread-sourced profile retains the thread",
+        );
+        assert.equal(
+          await page.locator(".thread-main-column").isVisible(),
+          false,
+          "Thread-sourced profile folds the channel",
+        );
+        await page.keyboard.press("Escape");
+        await page.getByTestId("profile-panel").waitFor({ state: "detached" });
+        await draft.waitFor();
+        assert.equal(await draft.inputValue(), "FIXTURE retained thread draft");
       }
       // Search uses the same primary slot, including direct thread hits.
       for (const [query, target, isThread] of [
@@ -311,11 +409,28 @@ export async function verifyActivityNavigation({
         await focused.waitFor({ timeout: 5000 });
         assert.equal(await page.getByRole("dialog").count(), 0);
         assert.equal(new URL(page.url()).searchParams.get("view"), "search");
-        if (isThread)
+        if (isThread) {
+          const threadPane = page.getByTestId("activity-thread-content");
+          assert.equal(await threadPane.count(), 1);
+          const draft = threadPane.getByTestId("composer-textarea");
+          await draft.fill("FIXTURE primary thread draft");
+          await threadPane.getByTestId("thread-parent-avatar").click();
+          await page.getByTestId("profile-panel").waitFor({ timeout: 5000 });
+          await page
+            .getByRole("button", {
+              name: width === 1440 ? "关闭实例详情" : "返回聊天",
+              exact: true,
+            })
+            .click();
+          await page
+            .getByTestId("profile-panel")
+            .waitFor({ state: "detached" });
+          await draft.waitFor();
           assert.equal(
-            await page.getByTestId("activity-thread-content").count(),
-            1,
+            await draft.inputValue(),
+            "FIXTURE primary thread draft",
           );
+        }
         if (width === 1440) {
           const url = page.url();
           for (const size of [900, 390, 1440]) {
@@ -358,6 +473,9 @@ export async function verifyActivityNavigation({
         threadCloseClearsReplyTarget: true,
         desktopDividerDraggable: width === 1440,
         searchPrimarySlotsAndResize: true,
+        nativeSearchHeaderCompositionAndFilters: true,
+        mobileNavigationAndReturn: width === 390,
+        threadParentOpensProfilePreservingDraft: true,
         channelThreadProfileDraftPreserved: width === 1440,
         nativeHighlight: true,
         noContextDialog: true,

@@ -1,5 +1,6 @@
 import { ChannelTasksContext, useChannelTasks } from "./ChannelTasks.tsx";
 import TasksPage from "./TasksPage.tsx";
+import ThreadContentSlot from "./ThreadContentSlot.tsx";
 import ThreadWorkspace from "./ThreadWorkspace.tsx";
 import SettingsPage from "./SettingsPage.tsx";
 import ChannelControl from "./ChannelControl.tsx";
@@ -94,6 +95,9 @@ function Channel({
   const isPrivate = channel.instancePrivateBox !== undefined;
   const profileSnapshot = useRef<Principal | undefined>(undefined);
   const [profileId, setProfileId] = useState<string>();
+  const [profileSource, setProfileSource] = useState<"channel" | "thread">(
+    "channel",
+  );
   const opener = useRef<HTMLElement | null>(null);
   const closeProfile = useCallback(() => {
     if (hasUnresolvedIntents()) return;
@@ -275,6 +279,7 @@ function Channel({
                                 '[aria-label="频道成员与状态"]',
                               );
                             profileSnapshot.current = member;
+                            setProfileSource("channel");
                             setProfileId(id);
                           }
                     }
@@ -370,6 +375,7 @@ function Channel({
                       profileSnapshot.current = view.members.find(
                         (m) => m.principalId === id,
                       );
+                      setProfileSource("channel");
                       setProfileId(id);
                     }
                   }}
@@ -434,6 +440,16 @@ function Channel({
             room={channel}
             rootMessageId={threadRootId}
             covered={!!profileMember}
+            onOpenProfile={(member) => {
+              if (hasUnresolvedIntents()) return;
+              opener.current =
+                document.activeElement instanceof HTMLElement
+                  ? document.activeElement
+                  : null;
+              profileSnapshot.current = member;
+              setProfileSource("thread");
+              setProfileId(member.principalId);
+            }}
             focusId={focusId}
             onClose={() => onThread(undefined)}
             onChanged={() => {
@@ -447,8 +463,12 @@ function Channel({
         {profileMember && controlRoomId && (
           <div
             className="thread-profile-side-column contents"
-            data-collapse-channel="false"
-            data-collapse-thread={threadRootId ? "true" : "false"}
+            data-collapse-channel={
+              profileSource === "thread" ? "true" : "false"
+            }
+            data-collapse-thread={
+              threadRootId && profileSource === "channel" ? "true" : "false"
+            }
           >
             <InstanceInspector
               key={`${channel.roomId}:${profileMember.principalId}`}
@@ -831,6 +851,7 @@ export default function ChannelApp() {
                 client={client}
                 workspaceId={directory.workspace.workspaceId}
                 mode={destination}
+                onBack={() => setParams({ chat: "list" })}
                 profileOpen={discoveryProfileOpen}
                 onOpenResult={async (row, full) => {
                   if (hasUnresolvedIntents()) throw Error("仍有未决操作");
@@ -871,7 +892,14 @@ export default function ChannelApp() {
                     });
                     if (!full) {
                       target.set("view", destination);
-                      for (const key of ["af", "q", "scope"]) {
+                      for (const key of [
+                        "af",
+                        "q",
+                        "scope",
+                        "scopes",
+                        "range",
+                        "sort",
+                      ]) {
                         if (previous.has(key))
                           target.set(key, previous.get(key)!);
                       }
@@ -887,7 +915,9 @@ export default function ChannelApp() {
                   requested && selected && bridge ? (
                     params.get("detail") === "thread" &&
                     params.get("thread") ? (
-                      <ThreadWorkspace
+                      <ThreadContentSlot
+                        controlRoomId={directory.workspace.controlRoomId!}
+                        onProfileVisibilityChange={setDiscoveryProfileOpen}
                         key={`${selected.roomId}:${params.get("thread")}:${params.get("message")}`}
                         contentSlot
                         client={client}
@@ -977,6 +1007,9 @@ export default function ChannelApp() {
           )}
         </div>
         {(destination !== "channels" || mobileList) &&
+          destination !== "search" &&
+          destination !== "activity" &&
+          !params.has("thread") &&
           !(destination === "settings" && params.has("settings")) &&
           !(destination === "tasks" && params.has("task")) && (
             <MobileNavigation

@@ -57,3 +57,12 @@ test("controlled task thread uses the native parent slot without repeating its r
     ),
   );
 });
+
+test("controlled thread forwards native parent and reply profile actions to its host", () => {
+  const source = readFileSync(
+    "frontends/raft/packages/web/src/components/message/ThreadPanel.tsx",
+    "utf8",
+  );
+  const result = adaptThreadFooter(source);
+  assert.equal(result.split("onOpenProfile={loomOnOpenProfile}").length, 3);
+});

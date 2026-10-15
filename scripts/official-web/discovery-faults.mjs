@@ -27,12 +27,12 @@ export async function verifyDiscoveryFaults(page, channel) {
     }
   });
   await page.getByLabel("搜索内容", { exact: true }).fill("FIXTURE");
-  await page.getByRole("button", { name: "搜索消息", exact: true }).click();
+  await page.getByLabel("搜索内容", { exact: true }).press("Enter");
   await began;
   await page
     .getByLabel("搜索内容", { exact: true })
     .fill("no-such-FIXTURE-later");
-  await page.getByRole("button", { name: "搜索消息", exact: true }).click();
+  await page.getByLabel("搜索内容", { exact: true }).press("Enter");
   await page.getByText("没有匹配结果", { exact: true }).waitFor();
   release();
   await ended;
@@ -40,7 +40,7 @@ export async function verifyDiscoveryFaults(page, channel) {
   await page.unroute("**/v3/client/search");
   await page.route("**/v3/client/search", (route) => route.abort());
   await page.getByLabel("搜索内容", { exact: true }).fill("history");
-  await page.getByRole("button", { name: "搜索消息", exact: true }).click();
+  await page.getByLabel("搜索内容", { exact: true }).press("Enter");
   await page.getByRole("button", { name: "重新读取", exact: true }).waitFor();
   assert.equal(await page.locator("[data-result-id]").count(), 0);
   await page.unroute("**/v3/client/search");

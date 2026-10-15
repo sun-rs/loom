@@ -1,4 +1,3 @@
-import { chooseOption } from "./select-browser.mjs";
 import { verifyDiscoveryFaults } from "./discovery-faults.mjs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -40,6 +39,7 @@ export async function verifyDiscovery({
     { width: 390, height: 844 },
   ]) {
     const context = await browser.newContext({
+      locale: "zh-CN",
       viewport,
       deviceScaleFactor: 1,
       serviceWorkers: "block",
@@ -58,12 +58,12 @@ export async function verifyDiscovery({
     );
     await page.goto(`${origin}/?view=search&room=${channel.roomId}`);
     await page.getByLabel("搜索内容", { exact: true }).fill("history");
-    await page.getByRole("button", { name: "搜索消息", exact: true }).click();
+    await page.getByLabel("搜索内容", { exact: true }).press("Enter");
     const expected = await client.request("search", {
       workspaceId: workspace.workspaceId,
       query: "history",
       scope: "all",
-      sort: "recent",
+      sort: "relevance",
       limit: 20,
     });
     await page
@@ -89,7 +89,7 @@ export async function verifyDiscovery({
       workspaceId: workspace.workspaceId,
       query: "history",
       scope: "all",
-      sort: "recent",
+      sort: "relevance",
       limit: 20,
       cursor: expected.nextCursor,
     });
@@ -109,7 +109,7 @@ export async function verifyDiscovery({
     assert.equal(await page.getByRole("dialog").count(), 0);
     await page.goBack();
     await page.getByLabel("搜索内容", { exact: true }).waitFor();
-    await page.getByRole("button", { name: "搜索消息", exact: true }).click();
+    await page.reload();
     await page
       .locator(`[data-result-id="${expected.hits[0].message.messageId}"]`)
       .waitFor();
@@ -119,26 +119,27 @@ export async function verifyDiscovery({
       await page.getByLabel("搜索内容", { exact: true }).inputValue(),
       "history",
     );
-    await chooseOption(page, page, "搜索范围", "私聊");
+    await page.getByLabel("范围", { exact: true }).click();
+    await page.getByRole("option", { name: "Agent", exact: true }).click();
+    await page.keyboard.press("Escape");
     await page.getByText("没有匹配结果", { exact: true }).waitFor();
-    await chooseOption(page, page, "搜索范围", "全部对话");
+    await page.getByLabel("范围", { exact: true }).click();
+    await page.getByRole("option", { name: "Agent", exact: true }).click();
+    await page.keyboard.press("Escape");
     await page
       .locator(`[data-result-id="${expected.hits[0].message.messageId}"]`)
       .waitFor();
     await page
       .getByLabel("搜索内容", { exact: true })
       .fill("no-such-FIXTURE-needle");
-    await page.getByRole("button", { name: "搜索消息", exact: true }).click();
+    await page.getByLabel("搜索内容", { exact: true }).press("Enter");
     await page.getByText("没有匹配结果", { exact: true }).waitFor();
     await verifyDiscoveryFaults(page, channel);
     await page.screenshot({
       path: join(tmpdir(), `loom-discovery-search-${viewport.width}.png`),
       animations: "disabled",
     });
-    await page
-      .getByRole("navigation", { name: "主导航" })
-      .getByRole("button", { name: "动态", exact: true })
-      .click();
+    await page.goto(`${origin}/?view=activity`);
     await page.getByRole("heading", { name: "动态", exact: true }).waitFor();
     const activity = await client.request("activity.list", {
       workspaceId: workspace.workspaceId,
@@ -201,10 +202,7 @@ export async function verifyDiscovery({
       false,
     );
     await page.getByRole("button", { name: "刷新动态", exact: true }).click();
-    await page
-      .getByRole("navigation", { name: "主导航" })
-      .getByRole("button", { name: "Agent", exact: true })
-      .click();
+    await page.goto(`${origin}/?view=agents`);
     await page
       .getByLabel("筛选角色", { exact: true })
       .fill("no-such-FIXTURE-role");
