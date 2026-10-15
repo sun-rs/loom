@@ -1,5 +1,5 @@
 {
-  "status": "automated-verified-awaiting-deployment",
+  "status": "deployed-and-verified",
   "scope": "Settings grouped navigation and native responsive shell; existing runtime form retained",
   "paidCli": false,
   "realCliExecution": false,
@@ -29,6 +29,52 @@
     "existing concurrency save/revision conflict/unknown-result regression"
   ],
   "deployment": {
-    "verified": false
-  }
+    "verified": true,
+    "implementationCommit": "4e26d802678ee0c35d4a84a45d7f0263169c7db3",
+    "restartedAt": "2026-10-15T04:23:57.289Z",
+    "service": "com.loom.evo",
+    "url": "http://127.0.0.1:4176/",
+    "webBuildId": "4d11e2045d6a6baddaf5e2101e03643b90fb8d3ece7895ffe85552f65becc249",
+    "sourceSha256": "55e97f44ace4648754b28985ad6f8257ef849b3c889d3dacda9d1bec34c4270f",
+    "backupDatabases": 2,
+    "backupFiles": 318,
+    "preservedBusinessProjections": 18,
+    "volatileFieldExcluded": "subscription_cursors.updated_at only; identity/read/ACK positions compared exactly",
+    "realPage": {
+      "at": "2026-10-15T04:24:12.652Z",
+      "webBuildId": "4d11e2045d6a6baddaf5e2101e03643b90fb8d3ece7895ffe85552f65becc249",
+      "results": [
+        {
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "settingsMatchesApi": true,
+          "channelStateMatchesApi": true,
+          "buildMatches": true,
+          "noBusinessMutations": true,
+          "readStateRequests": 2,
+          "pageErrors": []
+        },
+        {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "settingsMatchesApi": true,
+          "channelStateMatchesApi": true,
+          "buildMatches": true,
+          "noBusinessMutations": true,
+          "readStateRequests": 2,
+          "pageErrors": []
+        }
+      ]
+    },
+    "screenshotsVisuallyInspected": true,
+    "nativeFinalProvidersUnchanged": ["claude", "opencode"]
+  },
+  "retainedFailures": [
+    "Initial browser test reproduced missing settings-sidebar-list",
+    "Native desktop default account assertion failed before correction"
+  ]
 }
