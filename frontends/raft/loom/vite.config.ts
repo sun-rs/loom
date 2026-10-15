@@ -1,3 +1,7 @@
+import {
+  adaptTaskComposer,
+  adaptTaskMessage,
+} from "./channel-task-adaptation.ts";
 import { exposeTaskPresentation, adaptTaskCard } from "./task-adaptation.ts";
 import {
   adaptThreadItem,
@@ -34,16 +38,23 @@ export default defineConfig({
         if (
           id.endsWith("/packages/web/src/components/message/MessageInput.tsx")
         )
-          return { code: adaptComposerSubmit(code), map: null };
+          return {
+            code: adaptTaskComposer(adaptComposerSubmit(code)),
+            map: null,
+          };
         if (id.endsWith("/packages/web/src/components/message/ThreadPanel.tsx"))
           return { code: adaptThreadFooter(code), map: null };
         if (id.endsWith("/packages/web/src/components/message/MessageItem.tsx"))
           return {
-            code: adaptThreadItem(adaptMessageProfileNavigation(code)),
+            code: adaptTaskMessage(
+              adaptThreadItem(adaptMessageProfileNavigation(code)),
+            ),
             map: null,
           };
       },
       resolveId(source, importer) {
+        if (source === "loom-channel-tasks")
+          return resolve(import.meta.dirname, "ChannelTasks.tsx");
         if (
           importer?.endsWith("/components/task/TaskModalHead.tsx") &&
           source === "./TaskProperties"

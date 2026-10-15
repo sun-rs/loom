@@ -2588,6 +2588,18 @@
       "buildAdaptation": "Checked presentation exports; TaskModalHead imports local TaskProperties; readonly thread supports native parentSlot/hideParentMessage. TaskCard status is explicitly readonly so upstream permission defaults cannot enable an unconnected writer.",
       "localGlue": "Existing global task cursor API, task.get, protocol workflow projection/options, task.workflow.update through RoomSession and WriteIntentSlot. Discussion reuses thread facade. No scenario workflow or backend changes.",
       "audit": "docs/audits/2026-10-15-task-ui.zh-CN.md"
+    },
+    "channelTaskEntrySlice": {
+      "source": [
+        "packages/web/src/components/message/MessageInput.tsx: showTaskButton / alsoCreateTask / onSendOverride",
+        "packages/web/src/components/message/MessageItem.tsx: context menu / touch handlers / TaskChip",
+        "packages/web/src/components/ui/MenuItem.tsx"
+      ],
+      "directReuse": "Native task checkbox, composer, context popup positioning/backdrop/touch shielding and task chip recipes. Frozen disk source unchanged.",
+      "structuralPort": "Connected-only native message menu items; local Escape dismissal.",
+      "buildAdaptation": "Exact checked seams pass submitAsTask through the existing override and reset only after success; enable menu handlers on controlled channel top-level messages; inject canonical task projection and chip target.",
+      "localGlue": "Existing task.create/convert use the channel RoomSession and same WriteIntentSlot as messages. Bounded global task read; stable modal URL; unknown exact replay. No backend or scheduling changes.",
+      "audit": "docs/audits/2026-10-15-channel-task-entry.zh-CN.md"
     }
   },
   "rollout": {

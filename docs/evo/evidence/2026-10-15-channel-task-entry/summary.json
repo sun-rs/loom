@@ -1,0 +1,52 @@
+{
+  "status": "verified-awaiting-deployment",
+  "paidCli": false,
+  "realCliExecution": false,
+  "audit": "../../../audits/2026-10-15-channel-task-entry.zh-CN.md",
+  "backendChanges": false,
+  "checks": {
+    "loomTypecheck": true,
+    "formalBuild": true,
+    "sourceTestsPassed": 56,
+    "temporaryCoreBrowser": "browser.json",
+    "dualViewport": [
+      {
+        "width": 1440,
+        "height": 1000,
+        "dpr": 1
+      },
+      {
+        "width": 390,
+        "height": 844,
+        "dpr": 1,
+        "touch": true
+      }
+    ],
+    "fixtureScreenshotsInspected": true,
+    "fullCheck": {
+      "exitCode": 0,
+      "backendPassed": 3211,
+      "backendSkipped": 22,
+      "backendFailed": 0,
+      "consolePassed": 63,
+      "browserPolicyPassed": 15,
+      "efficiencyToolsPassed": 558,
+      "officialSourcePassed": 56
+    },
+    "formatCheck": true,
+    "diffCheck": true
+  },
+  "limits": [
+    "Channel badge projection limited to 100 tasks; unknown historical anchors cannot be converted until inspected through task page",
+    "Assignment, history/review, batch creation and drag remain deferred"
+  ],
+  "retainedFailures": [
+    "Missing implementation TDD failure",
+    "Old build lacked composer task toggle",
+    "Unit fixture repeated initial sync metadata on resume",
+    "Native default English menu required exact bilingual selector",
+    "Native menu lacked Escape dismissal",
+    "Hidden channel mounted a second modal on global Tasks route",
+    "Full browser regression caught task route guard affecting ordinary chat navigation; filtered the shared slot guard to task-create and reran original regression"
+  ]
+}
