@@ -1,0 +1,101 @@
+{
+  "codeCommit": "7226196",
+  "precedingThreadSlotCommit": "7e215f9",
+  "webBuildId": "94cf5acc5e5248cfbc365f524b438351243a21bb8eee0c0690f747db0df9b6b0",
+  "sourceTests": 65,
+  "threadAdaptationTests": 4,
+  "buildAndFrontendTypes": "passed",
+  "browser": [
+    {
+      "width": 1440,
+      "oldMessageLocated": true,
+      "oldThreadReplyLocated": true,
+      "directThreadUsesPrimarySlot": true,
+      "nestedThreadKeepsSidePane": true,
+      "privateMessageLocated": true,
+      "backRestoresActivity": true,
+      "threadCloseClearsReplyTarget": true,
+      "desktopDividerDraggable": true,
+      "searchPrimarySlotsAndResize": true,
+      "channelThreadProfileDraftPreserved": true,
+      "nativeHighlight": true,
+      "noContextDialog": true,
+      "refreshRestores": true,
+      "desktopDetailAndDoubleClick": true
+    },
+    {
+      "width": 390,
+      "oldMessageLocated": true,
+      "oldThreadReplyLocated": true,
+      "directThreadUsesPrimarySlot": false,
+      "nestedThreadKeepsSidePane": false,
+      "privateMessageLocated": true,
+      "backRestoresActivity": true,
+      "threadCloseClearsReplyTarget": true,
+      "desktopDividerDraggable": false,
+      "searchPrimarySlotsAndResize": true,
+      "channelThreadProfileDraftPreserved": false,
+      "nativeHighlight": true,
+      "noContextDialog": true,
+      "refreshRestores": true,
+      "desktopDetailAndDoubleClick": false
+    }
+  ],
+  "realPage": {
+    "at": "2026-10-15T15:25:14.247Z",
+    "webBuildId": "94cf5acc5e5248cfbc365f524b438351243a21bb8eee0c0690f747db0df9b6b0",
+    "results": [
+      {
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "realMessageLocated": true,
+        "realSearchLocated": true,
+        "resizePreservesRoute": true,
+        "nativeHighlight": true,
+        "refreshRestores": true,
+        "noContextDialog": true,
+        "noBusinessWrites": true,
+        "buildMatches": true,
+        "pageErrors": []
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "realMessageLocated": true,
+        "realSearchLocated": true,
+        "resizePreservesRoute": true,
+        "nativeHighlight": true,
+        "refreshRestores": true,
+        "noContextDialog": true,
+        "noBusinessWrites": true,
+        "buildMatches": true,
+        "pageErrors": []
+      }
+    ]
+  },
+  "restart": {
+    "at": "2026-10-15T15:24:46.723Z",
+    "verified": true,
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-native-content-layout-478f0981-e0d7-4767-9aa1-4c1874e679a2",
+    "databases": 2,
+    "files": 318,
+    "businessTablesUnchanged": 18
+  },
+  "reviewDirectory": "/Users/sun/.loom/reviews/2026-10-15-native-content-layout",
+  "fullSuiteRun": false,
+  "paidProvidersRun": false,
+  "limits": [
+    "Not a full native page port: search header/filters/entities/overlay, Activity Done, thread-sourced profiles and mobile root navigation still require integration.",
+    "Real page verified channel/direct message search and resize; thread/profile-stack fixtures use isolated Core and no paid providers.",
+    "Updated older discovery browser expectations were not rerun as a full suite."
+  ],
+  "failures": [
+    "Activity direct thread had extra side column (red reproduced).",
+    "Profile suppressed while thread open (red reproduced).",
+    "Test setup corrections: native textarea selector, render commit wait, OR-query target pagination, exit-animation wait before Escape."
+  ]
+}
