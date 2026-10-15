@@ -1,3 +1,5 @@
+import SettingsPage from "./SettingsPage.tsx";
+import ChannelControl from "./ChannelControl.tsx";
 import InstanceInspector from "./InstanceInspector.tsx";
 import { bindMemberRoster } from "./member-roster.ts";
 import { notifyChannelMembersChanged } from "../packages/web/src/store/channelMemberEvents.ts";
@@ -23,7 +25,7 @@ import {
   useState,
   useRef,
 } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useIntentRoute, hasRouteBoundIntent } from "./useIntentRoute.ts";
 import {
   AppShellRoot,
   AppShellSidebarSlot,
@@ -198,11 +200,21 @@ function Channel({
           icon={isPrivate ? <MessageSquare size={18} /> : <Hash size={18} />}
           actions={
             isPrivate ? undefined : (
-              <ChannelMembers
-                bridge={bridge}
-                onOpenPrivate={onOpenPrivate}
-                onAddInstance={channel.archivedAt ? undefined : onAddInstance}
-              />
+              <>
+                <ChannelMembers
+                  bridge={bridge}
+                  onOpenPrivate={onOpenPrivate}
+                  onAddInstance={channel.archivedAt ? undefined : onAddInstance}
+                />
+                {controlRoomId && !channel.archivedAt && (
+                  <ChannelControl
+                    bridge={bridge}
+                    name={channel.name}
+                    workspaceId={channel.workspaceId}
+                    controlRoomId={controlRoomId}
+                  />
+                )}
+              </>
             )
           }
         />
@@ -346,9 +358,10 @@ export default function ChannelApp() {
   const [directory, setDirectory] =
     useState<Awaited<ReturnType<typeof loadChannelDirectory>>>();
   const [error, setError] = useState("");
-  const [params, setParams] = useSearchParams();
+  const [params, setParams] = useIntentRoute();
   const destination = params.get("view") ?? "channels";
   const selectDestination = (id: Destination) => {
+    if (hasRouteBoundIntent()) return;
     setParams((previous) => {
       const next = new URLSearchParams(previous);
       if (id === "channels") {
@@ -692,7 +705,14 @@ export default function ChannelApp() {
                 }}
               />
             )}
-          {!["channels", "agents", "search", "activity"].includes(
+          {destination === "settings" && directory?.workspace.controlRoomId && (
+            <SettingsPage
+              client={client}
+              workspaceId={directory.workspace.workspaceId}
+              controlRoomId={directory.workspace.controlRoomId}
+            />
+          )}
+          {!["channels", "agents", "search", "activity", "settings"].includes(
             destination,
           ) && <DestinationPlaceholder active={destination} />}
         </div>

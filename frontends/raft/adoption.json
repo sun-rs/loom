@@ -2521,6 +2521,19 @@
       "localGlue": "Existing typed agent.run.usage.get, agent.trajectory.list, agent.manage. Exact room/instance filtering, bounded pages, explicit partial/unknown usage. Control-room WriteIntentSlot preserves exact unknown writes. Enabled/disabled configuration never masquerades as terminal process proof.",
       "tests": "Source regressions and both viewport temporary Core browser tests; formal read-only API/page check, no paid CLI.",
       "audit": "docs/audits/2026-10-15-runtime-inspector.zh-CN.md"
+    },
+    "channelControlSettingsSlice": {
+      "source": [
+        "packages/web/src/components/channel/ChannelOverflowMenu.tsx",
+        "packages/web/src/components/ui/OverflowSheet.tsx",
+        "packages/web/src/components/message/SOSDialog.tsx",
+        "packages/web/src/components/settings/SettingsPanel.tsx",
+        "packages/web/src/components/settings/UsageDataSettings.tsx"
+      ],
+      "directReuse": "OverflowMenuTrigger/Sheet/ActionRow, DialogCard/Modal, Banner, PanelHeader, SectionHeader, FormField and raft-ui primitives. Frozen upstream files untouched.",
+      "structuralPort": "SOS dialog composition and minimal single-section settings panel/card; unsupported settings navigation omitted.",
+      "localGlue": "Existing room.execution.read, room.sos.stop/resume and runtime.settings.read/update. Exact causal idempotent SOS intents; revision-only settings updates; explicit abandon/read for unknown settings outcomes. In-app route guard preserves unresolved write owners.",
+      "audit": "docs/audits/2026-10-15-channel-controls.zh-CN.md"
     }
   },
   "rollout": {

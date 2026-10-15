@@ -1,0 +1,42 @@
+{
+  "scope": "Official frontend channel SOS and minimal runtime settings; existing backend only",
+  "status": "automated-verified-awaiting-deployment",
+  "paidCli": false,
+  "realCliExecution": false,
+  "audit": "../../../audits/2026-10-15-channel-controls.zh-CN.md",
+  "checks": {
+    "npmRunCheck": {
+      "exitCode": 0,
+      "backendPassed": 3211,
+      "backendOptInSkipped": 22,
+      "consolePassed": 63,
+      "browserPolicyPassed": 15,
+      "efficiencyToolsPassed": 558,
+      "officialSourcePassed": 37
+    },
+    "formatCheck": true,
+    "diffCheck": true,
+    "formalBuild": true,
+    "temporaryCoreBrowser": "browser.json"
+  },
+  "coverage": [
+    "cancel without mutation",
+    "stop exact replay after committed response loss",
+    "stopped state survives reload",
+    "guidance required for resume",
+    "concurrency save with revision CAS",
+    "revision conflict retains draft",
+    "settings unknown response explicitly abandoned and reread without resend",
+    "in-app back cannot discard route-local unresolved write",
+    "existing chat unknown-send navigation remains supported"
+  ],
+  "deployment": {
+    "verified": false
+  },
+  "limits": [
+    "No real CLI execution or paid model calls",
+    "No new efficiency claim",
+    "Single Activation held/blocked recovery remains in console",
+    "Memory, tasks, Fork/Side and advanced settings migration are not included"
+  ]
+}

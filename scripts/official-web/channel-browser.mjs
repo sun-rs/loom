@@ -1,3 +1,4 @@
+import { verifyChannelControls } from "./channel-controls-browser.mjs";
 import { verifyMentions } from "./mentions-browser.mjs";
 import { verifySystemNotices } from "./system-notices-browser.mjs";
 import {
@@ -120,6 +121,12 @@ try {
     instances.push(result.instance);
   }
   browser = await chromium.launch({ headless: true });
+  const controlResults = await verifyChannelControls({
+    browser,
+    origin,
+    client,
+    channel: channels[0],
+  });
   const systemNoticeResults = await verifySystemNotices({
     browser,
     origin,
@@ -475,6 +482,7 @@ try {
   console.log(
     JSON.stringify(
       {
+        controlResults,
         mentionResults,
         systemNoticeResults,
         fixtureOnly: true,
