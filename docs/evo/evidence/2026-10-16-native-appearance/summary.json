@@ -1,0 +1,55 @@
+{
+  "sourceCommit": "3aa6e658ee301d88082bf8af5c77ce4f3a055732",
+  "webBuildId": "8e2c7e63104d47f257e58b159af3a5f401ca5d3e6a9115ae29487553a22eeb3b",
+  "upstreamFilesUnchanged": true,
+  "checks": {
+    "sourceTests": 73,
+    "typecheck": true,
+    "webBuild": true,
+    "changedFileFormat": true,
+    "diff": true,
+    "focusedFixtureWidths": [1440, 390],
+    "fullRepositorySuiteRun": false,
+    "paidCliRun": false
+  },
+  "deployment": {
+    "verified": true,
+    "backedUpDatabases": 2,
+    "backedUpFiles": 318,
+    "businessTablesUnchanged": 18,
+    "sourceSha256": "3a0ffe5343084f4a684c3013aad2414c7c3a884010c40b1a2c2e2b3710fe822e"
+  },
+  "realPage": [
+    {
+      "width": 1440,
+      "realPage": true,
+      "themeAndFontPersistence": true,
+      "buildMatches": true,
+      "noBusinessWrites": true,
+      "pageErrors": [],
+      "noOverflow": true
+    },
+    {
+      "width": 390,
+      "realPage": true,
+      "themeAndFontPersistence": true,
+      "buildMatches": true,
+      "noBusinessWrites": true,
+      "pageErrors": [],
+      "noOverflow": true
+    }
+  ],
+  "limits": [
+    "Live activity covers selected conversation only",
+    "Model label is current configured model, not historical per-message usage",
+    "New topbar not implemented",
+    "Preferences are browser-local"
+  ],
+  "retainedFailures": [
+    "Missing native section/export before implementation",
+    "Test initially clicked hidden radio rather than visual card",
+    "Fixture route cleanup on navigation corrected",
+    "Real-page read allowlist initially omitted activity.list; added existing read endpoint"
+  ],
+  "localEvidence": "/Users/sun/.loom/reviews/2026-10-16-native-appearance"
+}
