@@ -105,6 +105,16 @@ export async function verifyTaskManagement({
       await assignee.click();
       const picker = page.getByTestId("task-assignee-dropdown");
       await picker.waitFor();
+      await picker.getByRole("textbox").fill("escape check");
+      await page.keyboard.press("Escape");
+      await picker.waitFor({ state: "detached", timeout: 3000 });
+      assert.equal(await modal.count(), 1);
+      assert.equal(
+        await assignee.evaluate((el) => document.activeElement === el),
+        true,
+      );
+      await assignee.click();
+      await picker.waitFor();
       await picker.getByRole("textbox").fill(member.agent.handle);
       await picker
         .getByRole("button", {
@@ -217,6 +227,7 @@ export async function verifyTaskManagement({
         unknownCloseGuard: true,
         completedReadonly: true,
         nativeSearchablePicker: true,
+        pickerEscapeAndFocusReturn: true,
         collapsedHistoryNoRead: true,
         frozenHistoryPagination: true,
         historyDenialRecovery: true,

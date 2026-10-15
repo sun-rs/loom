@@ -47,6 +47,16 @@ export default function TaskProperties({ task }: { task: Task }) {
       <DescriptionList
         className="flex flex-wrap items-center gap-x-6 gap-y-2"
         data-testid="task-properties"
+        onKeyDownCapture={(event) => {
+          if (event.key !== "Escape" || !open) return;
+          event.preventDefault();
+          event.stopPropagation();
+          const trigger = event.currentTarget.querySelector<HTMLButtonElement>(
+            '[data-testid="task-properties-' + open + '"]',
+          );
+          setOpen(null);
+          trigger?.focus();
+        }}
       >
         <Property label={formatMessage({ id: "task.properties.status" })}>
           <InlineBadgeEditor

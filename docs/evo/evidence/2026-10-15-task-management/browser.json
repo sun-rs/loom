@@ -8,6 +8,7 @@
       "unknownCloseGuard": true,
       "completedReadonly": true,
       "nativeSearchablePicker": true,
+      "pickerEscapeAndFocusReturn": true,
       "collapsedHistoryNoRead": true,
       "frozenHistoryPagination": true,
       "historyDenialRecovery": true
@@ -20,6 +21,7 @@
       "unknownCloseGuard": true,
       "completedReadonly": true,
       "nativeSearchablePicker": true,
+      "pickerEscapeAndFocusReturn": true,
       "collapsedHistoryNoRead": true,
       "frozenHistoryPagination": true,
       "historyDenialRecovery": true

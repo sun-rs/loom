@@ -11,12 +11,15 @@
     "fullBrowser": "browser.json",
     "format": true,
     "diff": true,
-    "fullCheckExitCode": 0
+    "fullCheckExitCode": 0,
+    "fullCheckScope": "Full npm run check passed before the final UI Escape fix; final source tests, typecheck, build and browser gate rerun after that fix"
   },
   "retainedFailures": [
     "Missing implementation TDD failure",
     "Old build lacked native assignee editor",
-    "Fixture confused AgentDefinition ID and Instance/Principal ID; corrected exact identity assertions"
+    "Fixture confused AgentDefinition ID and Instance/Principal ID; corrected exact identity assertions",
+    "Formal readonly check exposed Escape swallowed by native search input; reproducing browser test failed, local composition capture/focus return fixed it",
+    "Concurrent browser run against replaced build assets hit navigation timeout; final browser rerun uses completed unchanged build"
   ],
   "limits": [
     "History reads 50/page with a 500-entry in-memory bound",
