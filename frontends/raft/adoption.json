@@ -2506,6 +2506,21 @@
       "localGlue": "Instance ID resolves through authenticated role.list to Agent ID. Activity list is bounded to 20 per page and filtered to the current Room and participant. Native state remains diagnostic; run.finished is not Task completion. Cursor is transient presentation state. Polls abort on unmount and clear data on failure. Native panel has no upstream API/store writes.",
       "limits": "Only Activity tab connected. Bounded older/latest paging is local glue. No transcript/tool stream, per-run usage drilldown or runtime controls; no profile deep-link persistence yet.",
       "verification": "instance-activity.test.ts, message-profile-navigation.test.ts, inspector-browser.mjs; no paid provider calls."
+    },
+    "runtimeInspectorSlice": {
+      "source": [
+        "packages/web/src/components/thread/ThreadsInbox.tsx: non-sidebar segmented toolbar",
+        "packages/web/src/components/message/ChatPanel.tsx: initial loading",
+        "packages/web/src/components/agent/AgentProfileOverflowMenu.tsx",
+        "packages/web/src/components/ConfirmDialog.tsx",
+        "packages/web/src/components/agent/AgentHostedRuntimeUsage.tsx: UsageRow",
+        "packages/web/src/components/agent/AgentActivityLog.tsx"
+      ],
+      "directReuse": "Native SegmentedControl, Dialog family, ConfirmDialog, existing ProfilePanel primitives. Frozen upstream files untouched.",
+      "structuralPort": "54px activity toolbar, initial chat loading, compact instance menu, usage row grid and trajectory row/text disclosure.",
+      "localGlue": "Existing typed agent.run.usage.get, agent.trajectory.list, agent.manage. Exact room/instance filtering, bounded pages, explicit partial/unknown usage. Control-room WriteIntentSlot preserves exact unknown writes. Enabled/disabled configuration never masquerades as terminal process proof.",
+      "tests": "Source regressions and both viewport temporary Core browser tests; formal read-only API/page check, no paid CLI.",
+      "audit": "docs/audits/2026-10-15-runtime-inspector.zh-CN.md"
     }
   },
   "rollout": {

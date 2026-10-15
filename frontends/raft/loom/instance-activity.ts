@@ -53,6 +53,7 @@ export async function loadInstanceActivity(
     ),
   ]);
   return {
+    instance,
     stateLabel: projectChannelMembers(room.roomId, [member], state.agents)[0]!
       .detail,
     records: page.activities

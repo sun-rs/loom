@@ -191,7 +191,15 @@ export async function verifyDiscovery({
       .waitFor();
     await page.keyboard.press("Escape");
     await page.getByRole("dialog").waitFor({ state: "hidden" });
-    await chooseOption(page, page, "动态范围", "提及我");
+    const toolbar = page.getByTestId("inbox-toolbar");
+    assert.equal(Math.round((await toolbar.boundingBox()).height), 54);
+    assert.equal(await toolbar.getByRole("combobox").count(), 0);
+    await page.getByTestId("inbox-filter-mentions").click();
+    await page.waitForURL((url) => url.searchParams.get("af") === "mentions");
+    assert.equal(
+      await toolbar.evaluate((el) => el.scrollWidth > el.clientWidth),
+      false,
+    );
     await page.getByRole("button", { name: "刷新动态", exact: true }).click();
     await page
       .getByRole("navigation", { name: "主导航" })
@@ -223,6 +231,7 @@ export async function verifyDiscovery({
       contextToConversationAndBack: true,
       emptyResults: true,
       activityMatchesApi: true,
+      nativeSegmentedToolbar54px: true,
       officialActivityCardAndKeyboard: true,
       officialSearchMessageRow: true,
       agentNameFilter: true,

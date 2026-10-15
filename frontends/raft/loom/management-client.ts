@@ -134,6 +134,24 @@ export class ManagementClient {
       onSettled: done,
     });
   }
+  setEnabled(agentId: string, enabled: boolean, done: Done) {
+    return this.writes.submit({
+      action: "agent-state",
+      session: this.control,
+      payload: {
+        agentId,
+        action: "set_state" as const,
+        state: enabled ? ("enabled" as const) : ("disabled" as const),
+      },
+      send: (payload, basedOnRoomSeq, idempotencyKey) =>
+        this.client.request("agent.manage", {
+          ...payload,
+          basedOnRoomSeq,
+          idempotencyKey,
+        }),
+      onSettled: done,
+    });
+  }
   sidebar(
     patch: SidebarPatchRequest["patch"],
     expectedVersion: number,

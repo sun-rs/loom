@@ -27,6 +27,7 @@ import {
   useManagement,
   OperationStatus,
 } from "./ManagementUi.tsx";
+import RuntimeControl from "./RuntimeControl.tsx";
 import RoleEditor from "./RoleEditor.tsx";
 type Edit =
   | { kind: "create" }
@@ -221,8 +222,13 @@ export default function AgentPage({
                         name={name}
                         secondary={`${room?.name ?? "频道不可用"} · ${instance.isCurrent ? "配置为当前修订" : "保留旧配置"}`}
                         trailing={
-                          <ActionMenu
-                            label={`更多操作 ${name}`}
+                          <RuntimeControl
+                            client={client}
+                            controlRoomId={controlRoomId}
+                            workspaceId={workspaceId}
+                            agentId={instance.agentId}
+                            name={name}
+                            active={active && tab === "instances"}
                             disabled={busy}
                             items={[
                               {

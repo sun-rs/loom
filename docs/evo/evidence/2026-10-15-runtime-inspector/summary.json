@@ -1,0 +1,42 @@
+{
+  "slice": "runtime-inspector-and-native-loading-filters",
+  "implementation": "complete",
+  "backendChanged": false,
+  "paidProviderCalls": 0,
+  "verification": {
+    "sourceTests": 34,
+    "sourceFailed": 0,
+    "workbenchBuild": "passed",
+    "browser": "browser.json",
+    "viewports": ["1440x1000", "390x844"],
+    "dpr": 1,
+    "format": "passed before deployment documentation",
+    "diff": "passed",
+    "formalPage": "pending restart",
+    "screenshotsInspected": true,
+    "unknownWriteSurvivesConversationFailure": true,
+    "runtimeEnableStopAgainstTemporaryCore": true,
+    "npmCheckExitCode": 0,
+    "backendPassed": 3211,
+    "backendOptInSkipped": 22,
+    "consoleTests": 63,
+    "browserPolicyTests": 15,
+    "efficiencyToolTests": 558,
+    "failed": 0
+  },
+  "scope": [
+    "Native compact activity toolbar and centered top chat loading",
+    "Exact RunAttempt usage, partial and unknown values, independent native aggregates",
+    "Current Room/instance bounded native tool/thinking/output trajectory",
+    "Instance enable/stop in profile and Agent instance menus",
+    "Exact unknown-write verification retained through conversation sync failure"
+  ],
+  "retainedFailure": "Fault regression reproduced profile unmount losing an unresolved control intent after conversation sync failure; fixed by retaining selected identity while unresolved writes exist, with diagnostic failures still clearing. A subsequent post-control single-Escape assertion timed out with the native focus-return tooltip visible. Final test uses the explicit native close/back control there and retains separate standalone Escape checks. Final artifact browser batch passed; no product Escape shortcut weakened.",
+  "limits": [
+    "No paid or new real CLI execution; runtime control tested with temporary real Core and fake CLI discovery",
+    "No change to backend stop/terminal-proof semantics; enabled/disabled is not runtime exit proof",
+    "No whole-product UI completion, global usage page or estimated costs",
+    "Only recorded native trajectory available; absent does not mean no tool call",
+    "Some native diagnostic labels remain canonical strings"
+  ]
+}

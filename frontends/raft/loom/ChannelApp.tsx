@@ -43,7 +43,7 @@ import AgentPage from "./AgentPage.tsx";
 import PanelHeader from "../packages/web/src/components/ui/PanelHeader.tsx";
 import MessageInput from "../packages/web/src/components/message/MessageInput.tsx";
 import { LoomChannelClient, loadChannelDirectory } from "./channel-client.ts";
-import type { Room } from "@rah-os/protocol";
+import type { Principal, Room } from "@rah-os/protocol";
 const client = new HttpRahClient({
   baseUrl: "",
   accessToken: () => "trusted-proxy-auth",
@@ -79,10 +79,13 @@ function Channel({
   bridge: LoomChannelClient;
 }) {
   const isPrivate = channel.instancePrivateBox !== undefined;
+  const profileSnapshot = useRef<Principal | undefined>(undefined);
   const [profileId, setProfileId] = useState<string>();
   const opener = useRef<HTMLElement | null>(null);
   const closeProfile = useCallback(() => {
+    if (hasUnresolvedIntents()) return;
     setProfileId(undefined);
+    profileSnapshot.current = undefined;
     requestAnimationFrame(() => {
       if (opener.current?.isConnected)
         opener.current.focus({ preventScroll: true });
@@ -129,12 +132,17 @@ function Channel({
       release?.();
     };
   }, [channel.roomId, view.members, loading, error]);
-  const profileMember =
+  const currentProfileMember =
     !error && !loading
       ? view.members.find(
           (m) => m.kind === "agent" && m.principalId === profileId,
         )
       : undefined;
+  // Keep the write-intent owner mounted through transient conversation failure.
+  // This is only the selected identity; diagnostic reads still clear on denial.
+  const profileMember =
+    currentProfileMember ??
+    (hasUnresolvedIntents() ? profileSnapshot.current : undefined);
   useEffect(() => {
     if (profileId && !profileMember) closeProfile();
   }, [profileId, profileMember, closeProfile]);
@@ -221,7 +229,15 @@ function Channel({
           )}
           <div className="relative min-h-0 flex-1 overflow-hidden">
             {loading ? (
-              <Spinner aria-label="正在读取频道" />
+              <div
+                className="flex-1 flex items-center justify-center py-4"
+                role="status"
+                aria-label="正在读取频道"
+              >
+                <div className="text-center text-foreground-muted font-mono text-sm">
+                  加载中…
+                </div>
+              </div>
             ) : view.messages.length === 0 ? (
               <p className="p-6 text-sm">
                 {isPrivate ? "还没有私聊消息" : "频道还没有消息"}
@@ -247,6 +263,9 @@ function Channel({
                       document.activeElement instanceof HTMLElement
                         ? document.activeElement
                         : null;
+                    profileSnapshot.current = view.members.find(
+                      (m) => m.principalId === id,
+                    );
                     setProfileId(id);
                   }
                 }}

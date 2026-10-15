@@ -26,6 +26,7 @@ import {
   type DiscoveryPageResult,
   type DiscoveryRow,
 } from "./discovery-client.ts";
+import ActivityFilters from "./ActivityFilters.tsx";
 import ActivityMessageRow from "./ActivityMessageRow.tsx";
 import SearchMessageRow from "./SearchMessageRow.tsx";
 import MessageContextDialog from "./MessageContextDialog.tsx";
@@ -73,8 +74,8 @@ export default function DiscoveryPage({
         icon={mode === "search" ? <Search size={18} /> : <Activity size={18} />}
       />
       <Shell edge="attached" className="min-h-0 flex-1 border-l-0">
-        <SearchShellFilters className="flex flex-wrap items-end gap-2">
-          {mode === "search" ? (
+        {mode === "search" ? (
+          <SearchShellFilters className="flex flex-wrap items-end gap-2">
             <>
               <form
                 className="flex min-w-0 flex-1 gap-2"
@@ -112,22 +113,14 @@ export default function DiscoveryPage({
                 ]}
               />
             </>
-          ) : (
-            <>
-              <SelectField
-                label="动态范围"
-                value={filter!}
-                onChange={(value) => update("af", value)}
-                options={[
-                  { value: "all", label: "全部" },
-                  { value: "unread", label: "未读" },
-                  { value: "mentions", label: "提及我" },
-                ]}
-              />
-              <Button onClick={() => setTick((v) => v + 1)}>刷新动态</Button>
-            </>
-          )}
-        </SearchShellFilters>
+          </SearchShellFilters>
+        ) : (
+          <ActivityFilters
+            value={filter!}
+            onChange={(value) => update("af", value)}
+            onRefresh={() => setTick((v) => v + 1)}
+          />
+        )}
         <Results
           key={`${mode}:${query}:${scope}:${filter}:${tick}`}
           client={client}

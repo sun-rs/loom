@@ -1,6 +1,12 @@
+import {
+  verifyRunDetails,
+  verifyRuntimeControl,
+} from "./run-details-browser.mjs";
 import assert from "node:assert/strict";
 export async function verifyInspector({
   page,
+  client,
+  agentId,
   agentAvatar,
   composer,
   viewport,
@@ -128,6 +134,7 @@ export async function verifyInspector({
   await agentAvatar.click();
   await panel.getByText("运行开始", { exact: true }).waitFor();
   assert.equal(await panel.getByTestId("loom-run-record").count(), 1);
+  await verifyRunDetails(page, panel, { roomId, instanceId, agentId });
   await panel.getByRole("button", { name: "更早记录" }).click();
   await panel.getByText("运行结束", { exact: true }).waitFor();
   assert.equal(await panel.getByText("运行开始", { exact: true }).count(), 0);
@@ -174,5 +181,17 @@ export async function verifyInspector({
   assert.equal(await composer.inputValue(), "FIXTURE unsent draft");
   assert.deepEqual(mutations, [], "inspector is read-only");
   page.off("request", observe);
+  await agentAvatar.click();
+  await panel.getByTestId("loom-instance-activity").waitFor();
+  await verifyRuntimeControl(page, panel, { client, agentId, name, roomId });
+  // Native focus-return Tooltip may own the first Escape; close the actual
+  // control surface explicitly here. Standalone inspector Escape is tested above.
+  await panel
+    .getByRole("button", {
+      name: viewport.width < 768 ? "返回聊天" : "关闭实例详情",
+      exact: true,
+    })
+    .click();
+  await panel.waitFor({ state: "hidden" });
   await composer.fill("");
 }

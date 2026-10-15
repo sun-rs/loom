@@ -174,6 +174,8 @@ export async function verifyMentions({
       await page.mouse.move(viewport.width - 2, 2);
       await profile.waitFor({ state: "hidden" });
       await verifyInspector({
+        client,
+        agentId: instance.agentId,
         page,
         agentAvatar,
         composer,
@@ -193,6 +195,13 @@ export async function verifyMentions({
         keyboardOrPointerSelection: true,
         membershipFailureClearsAndRecovers: true,
         channelIsolation: true,
+        runUsagePartialAndUnknown: true,
+        usageDialogEscapeKeepsInspector: true,
+        trajectoryScopedPagedAndExpandable: true,
+        runtimeEnableStopAgainstCore: true,
+        runtimeLostResponseExactVerification: true,
+        runtimeCancelNoMutation: true,
+        runtimeIdentityAndConfigurationPreserved: true,
       });
     } finally {
       await context.close();

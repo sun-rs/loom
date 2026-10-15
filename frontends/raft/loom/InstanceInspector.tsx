@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Principal, Room } from "@rah-os/protocol";
 import type { RahClient } from "@rah-os/client-sdk";
-import { Activity, X } from "lucide-react";
+import { Activity, ChevronRight, X } from "lucide-react";
 import {
   ProfilePanel,
   ProfilePanelBody,
@@ -22,10 +22,13 @@ import AvatarSlot from "../packages/web/src/components/ui/AvatarSlot.tsx";
 import SectionEyebrow from "../packages/web/src/components/ui/SectionEyebrow.tsx";
 import { useResizablePanel } from "../packages/web/src/hooks/useResizablePanel.ts";
 import { useTimeFormatter } from "../packages/web/src/hooks/useTimeFormatter.ts";
+import RuntimeControl from "./RuntimeControl.tsx";
+import RunUsageDialog from "./RunUsageDialog.tsx";
+import InstanceTrajectory from "./InstanceTrajectory.tsx";
 import { loadInstanceActivity } from "./instance-activity.ts";
 
 /** Native ProfilePanel + AgentDetailPanel header/activity composition, with
- * Loom reads instead of upstream stores. No runtime control or inferred presence.
+ * Loom reads instead of upstream stores. Kernel runtime controls and bounded diagnostic reads; no inferred presence.
  */
 export default function InstanceInspector({
   client,
@@ -50,6 +53,8 @@ export default function InstanceInspector({
   const [desktop, setDesktop] = useState(
     () => matchMedia("(min-width: 1024px)").matches,
   );
+  const [identity, setIdentity] = useState<{ agentId: string }>();
+  const [usage, setUsage] = useState<string>();
   const [cursor, setCursor] = useState<string>();
   const [result, setResult] =
     useState<Awaited<ReturnType<typeof loadInstanceActivity>>>();
@@ -68,7 +73,12 @@ export default function InstanceInspector({
   }, []);
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !e.defaultPrevented) {
+      if (
+        e.key === "Escape" &&
+        !e.defaultPrevented &&
+        !document.querySelector('[role="dialog"]') &&
+        !document.querySelector('[role="menu"]')
+      ) {
         e.preventDefault();
         onClose();
       }
@@ -95,6 +105,7 @@ export default function InstanceInspector({
         );
         if (!abort.signal.aborted) {
           setResult(value);
+          setIdentity(value.instance);
           setError("");
         }
       } catch {
@@ -142,14 +153,26 @@ export default function InstanceInspector({
             className: `agent-profile-header-container ${PROFILE_HEADER_SURFACE_CLASS}`,
           }}
           actions={
-            <CloseButton
-              onClick={onClose}
-              className="size-7 items-center justify-center hidden md:flex"
-              aria-label="关闭实例详情"
-              title="关闭实例详情"
-            >
-              <X size={14} />
-            </CloseButton>
+            <>
+              {identity && (
+                <RuntimeControl
+                  disabled={!result}
+                  client={client}
+                  workspaceId={room.workspaceId}
+                  controlRoomId={controlRoomId}
+                  agentId={identity.agentId}
+                  name={member.displayName ?? member.handle}
+                />
+              )}
+              <CloseButton
+                onClick={onClose}
+                className="size-7 items-center justify-center hidden md:flex"
+                aria-label="关闭实例详情"
+                title="关闭实例详情"
+              >
+                <X size={14} />
+              </CloseButton>
+            </>
           }
         />
         <div className="min-w-0 max-w-full overflow-x-auto overflow-y-hidden scrollbar-none">
@@ -193,10 +216,14 @@ export default function InstanceInspector({
                   </p>
                 ) : (
                   result.records.map((record) => (
-                    <div
+                    <button
+                      type="button"
+                      onClick={() => setUsage(record.aggregateId)}
+                      title="查看本次运行用量"
+                      aria-label={`${record.eventType} · 查看用量`}
                       key={record.activityId}
                       data-testid="loom-run-record"
-                      className="flex items-start gap-2 py-1.5 px-3 hover:bg-fill-muted theme-brutal:hover:bg-black/5 transition-colors"
+                      className="flex w-full text-left items-start gap-2 py-1.5 px-3 hover:bg-fill-muted theme-brutal:hover:bg-black/5 transition-colors"
                     >
                       <span className="shrink-0 font-mono text-xs text-foreground-placeholder theme-brutal:text-black/40 mt-0.5 whitespace-nowrap">
                         {formatClockWithSeconds(record.createdAt)}
@@ -209,7 +236,11 @@ export default function InstanceInspector({
                           "run.cancelled": "运行取消",
                         }[record.eventType] ?? record.eventType}
                       </span>
-                    </div>
+                      <ChevronRight
+                        size={12}
+                        className="mt-1 shrink-0 text-foreground-muted"
+                      />
+                    </button>
                   ))
                 )}
                 <div className="flex gap-2 px-3 py-2">
@@ -235,12 +266,26 @@ export default function InstanceInspector({
                     </Button>
                   )}
                 </div>
+                <InstanceTrajectory
+                  client={client}
+                  agentId={result.instance.agentId}
+                  instanceId={member.principalId}
+                  roomId={room.roomId}
+                />
                 <div ref={bottom} />
               </div>
             )}
           </div>
         </div>
       </ProfilePanelBody>
+      {usage && result && (
+        <RunUsageDialog
+          client={client}
+          agentId={result.instance.agentId}
+          runAttemptId={usage}
+          onClose={() => setUsage(undefined)}
+        />
+      )}
     </ProfilePanel>
   );
 }

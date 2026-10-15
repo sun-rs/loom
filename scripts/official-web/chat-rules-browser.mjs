@@ -44,6 +44,29 @@ export async function verifyChatBootstrap(page, origin, roomId) {
     Math.round((await row.boundingBox()).width),
     Math.round(inner.width),
   );
+  let releaseTimeline;
+  const timelineGate = new Promise((resolve) => {
+    releaseTimeline = resolve;
+  });
+  await page.route("**/v3/client/rooms/timeline", async (route) => {
+    await timelineGate;
+    await route.continue();
+  });
+  await page.reload();
+  const loading = page.getByRole("status", { name: "正在读取频道" });
+  await loading.waitFor();
+  assert.equal(await loading.innerText(), "加载中…");
+  assert.equal(await loading.locator("svg").count(), 0);
+  const placement = await loading.evaluate((el) => {
+    const r = el.getBoundingClientRect(),
+      p = el.parentElement.getBoundingClientRect();
+    return { top: r.top - p.top, width: r.width, parentWidth: p.width };
+  });
+  assert.equal(placement.top, 0);
+  assert.equal(placement.width, placement.parentWidth);
+  releaseTimeline();
+  await loading.waitFor({ state: "hidden" });
+  await page.unroute("**/v3/client/rooms/timeline");
   await page.route("**/v3/client/workspaces/list", (route) => route.abort());
   await page.reload();
   await page.getByTestId("loom-bootstrap-loading").waitFor({ state: "hidden" });
