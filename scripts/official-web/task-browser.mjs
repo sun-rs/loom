@@ -28,6 +28,16 @@ export async function verifyTasks({
   const selected = (
     await client.request("task.list", { roomId: room.roomId, limit: 100 })
   ).tasks.find((t) => t.title === "FIXTURE task 52");
+  const emptyRoom = (
+    await client.request("room.create", {
+      workspaceId: workspace.workspaceId,
+      kind: "channel",
+      name: "FIXTURE no tasks",
+      slug: "fixture-no-tasks",
+      basedOnControlRoomSeq: await head(workspace.controlRoomId),
+      idempotencyKey: "task-ui-empty-room",
+    })
+  ).room;
   const results = [];
   for (const width of [1440, 390]) {
     if (width === 390)
@@ -61,6 +71,10 @@ export async function verifyTasks({
       await page.goto(url);
       await page.getByRole("heading", { name: "任务", exact: true }).waitFor();
       await page.getByText("FIXTURE task 52", { exact: true }).waitFor();
+      assert.ok(
+        (await page.getByTestId("task-status-readonly").count()) > 0,
+        "unconnected card editor is withheld",
+      );
       assert.equal(
         await page
           .getByTestId(
@@ -209,6 +223,26 @@ export async function verifyTasks({
         ),
         false,
       );
+      await modal
+        .getByTestId(
+          width === 390 ? "task-modal-mobile-back" : "task-modal-close",
+        )
+        .click();
+      await modal.waitFor({ state: "detached" });
+      await page.getByRole("button", { name: "筛选频道", exact: true }).click();
+      await page
+        .getByRole("button", { name: `#${emptyRoom.name}`, exact: true })
+        .click();
+      await page.getByText("暂无任务", { exact: true }).waitFor();
+      assert.equal(
+        new URL(page.url()).searchParams.get("taskRoom"),
+        emptyRoom.roomId,
+      );
+      await page.getByRole("button", { name: "筛选频道", exact: true }).click();
+      await page
+        .getByRole("button", { name: `#${room.name}`, exact: true })
+        .click();
+      await page.getByText("FIXTURE task 51", { exact: true }).waitFor();
       assert.deepEqual(errors, []);
       assert.deepEqual(external, []);
       results.push({

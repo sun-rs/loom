@@ -8,7 +8,7 @@
     "formalBuild": true,
     "loomTypecheck": true,
     "temporaryCoreBrowser": "browser.json",
-    "sourceTestsPassed": 50,
+    "sourceTestsPassed": 51,
     "formatCheck": true,
     "diffCheck": true,
     "screenshotsVisuallyInspected": true,
@@ -20,8 +20,16 @@
       "consolePassed": 63,
       "browserPolicyPassed": 15,
       "efficiencyToolsPassed": 558,
-      "officialSourcePassed": 50
-    }
+      "officialSourcePassed": 50,
+      "revision": "6ba86bc (before frontend-only readonly TaskCard follow-up)"
+    },
+    "frontendFollowup": [
+      "typecheck",
+      "formal build",
+      "51 source tests",
+      "complete dual-viewport temporary Core browser",
+      "format"
+    ]
   },
   "coverage": [
     {
@@ -57,7 +65,8 @@
     "Task thread initially lacked native parentSlot/hideParentMessage support",
     "Fake Room delivery corrected to include snapshot sequence and ACK receipt",
     "Initial type/build check caught CloseButton native import and multiline TypeScript export directives",
-    "Browser corrected status option lookup to native portal; second viewport task reset isolated the previous completed state"
+    "Browser corrected status option lookup to native portal; second viewport task reset isolated the previous completed state",
+    "Formal screenshot exposed unconnected native card status editor; explicit readonly adapter and browser assertion now guard it"
   ],
   "limits": [
     "Message-to-task conversion and channel task creation remain next slice",

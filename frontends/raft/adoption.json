@@ -2585,7 +2585,7 @@
       ],
       "directReuse": "Native task groups/cards/virtual layout, TaskModalHead, InlineBadgeEditor, SelectionPopover, Modal and thread presentation. Frozen disk source unchanged.",
       "structuralPort": "Native page header/toolbar, task modal shell/bar and properties composition with only status editable.",
-      "buildAdaptation": "Checked presentation exports; TaskModalHead imports local TaskProperties; readonly thread supports native parentSlot/hideParentMessage.",
+      "buildAdaptation": "Checked presentation exports; TaskModalHead imports local TaskProperties; readonly thread supports native parentSlot/hideParentMessage. TaskCard status is explicitly readonly so upstream permission defaults cannot enable an unconnected writer.",
       "localGlue": "Existing global task cursor API, task.get, protocol workflow projection/options, task.workflow.update through RoomSession and WriteIntentSlot. Discussion reuses thread facade. No scenario workflow or backend changes.",
       "audit": "docs/audits/2026-10-15-task-ui.zh-CN.md"
     }

@@ -1,4 +1,4 @@
-import { exposeTaskPresentation } from "./task-adaptation.ts";
+import { exposeTaskPresentation, adaptTaskCard } from "./task-adaptation.ts";
 import {
   adaptThreadItem,
   adaptThreadFooter,
@@ -27,6 +27,8 @@ export default defineConfig({
           ),
       },
       transform(code, id) {
+        if (id.endsWith("/packages/web/src/components/task/TaskCard.tsx"))
+          return { code: adaptTaskCard(code), map: null };
         if (id.endsWith("/packages/web/src/components/task/TasksPanel.tsx"))
           return { code: exposeTaskPresentation(code), map: null };
         if (
