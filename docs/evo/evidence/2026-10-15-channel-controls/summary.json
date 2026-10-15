@@ -1,6 +1,6 @@
 {
   "scope": "Official frontend channel SOS and minimal runtime settings; existing backend only",
-  "status": "automated-verified-awaiting-deployment",
+  "status": "deployed-and-verified",
   "paidCli": false,
   "realCliExecution": false,
   "audit": "../../../audits/2026-10-15-channel-controls.zh-CN.md",
@@ -31,12 +31,56 @@
     "existing chat unknown-send navigation remains supported"
   ],
   "deployment": {
-    "verified": false
+    "verified": true,
+    "service": "com.loom.evo",
+    "origin": "http://127.0.0.1:4176/",
+    "at": "2026-10-15T03:55:20.681Z",
+    "webBuildId": "046c24b0fd202840e30e507cbbe10ba9b285df1edfad5853c29466092d436067",
+    "sourceSha256": "de133647f9404fcbcd1ed1178e58566891954e33e0d0b1b3ee854bb6efeac2cf",
+    "backupDatabases": 2,
+    "backupFiles": 318,
+    "businessProjectionsUnchanged": 18,
+    "volatileFieldExcluded": "subscription_cursors.updated_at only; identity/read/ACK positions compared exactly",
+    "formalPages": [
+      {
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "settingsMatchesApi": true,
+        "channelStateMatchesApi": true,
+        "buildMatches": true,
+        "noBusinessMutations": true,
+        "readStateRequests": 2,
+        "pageErrors": []
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "settingsMatchesApi": true,
+        "channelStateMatchesApi": true,
+        "buildMatches": true,
+        "noBusinessMutations": true,
+        "readStateRequests": 2,
+        "pageErrors": []
+      }
+    ],
+    "visualInspection": ["settings desktop/mobile", "SOS mobile"],
+    "nativeFinalProviderFlags": "unchanged: Claude/OpenCode only"
   },
   "limits": [
     "No real CLI execution or paid model calls",
     "No new efficiency claim",
     "Single Activation held/blocked recovery remains in console",
     "Memory, tasks, Fork/Side and advanced settings migration are not included"
+  ],
+  "implementationCommit": "0d3205e3fa8fc20d537b09d3576ca065b3cd990d",
+  "retainedFailures": [
+    "Missing control surface before implementation",
+    "In-app back dropped unknown settings intent before route-owner guard",
+    "Broad route guard initially blocked supported chat navigation; narrowed to route-local control owners and full regression passed",
+    "First formal harness blocked Room delivery acknowledge; aligned with existing read-state policy, no business mutation permitted"
   ]
 }
