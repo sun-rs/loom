@@ -1,5 +1,5 @@
 {
-  "status": "automated-verification",
+  "status": "deployed-verified",
   "paidCli": false,
   "realCliExecution": false,
   "backendChanges": false,
@@ -13,7 +13,9 @@
     "backendPassed": 3211,
     "optInSkipped": 22,
     "consolePassed": 63,
-    "efficiencyToolTestsPassed": 558
+    "efficiencyToolTestsPassed": 558,
+    "format": true,
+    "diff": true
   },
   "limits": [
     "Only the local Computer currently supports reference browsing",
@@ -28,5 +30,64 @@
     "Fixture setInputFiles before initial read completed; now waits for control actionability",
     "Fixture read just-sent message before it appeared; now awaits canonical message",
     "One final formatting check failed; reformatted and checked again"
-  ]
+  ],
+  "deployment": {
+    "head": "0bc1ad972da1011f24c0d8c80f36c7435d263b8e",
+    "webBuildId": "518ac14957dddfc4215b4911b21c34cd4fd8cd77bc2958e4577ae6235fb55c95",
+    "verified": true,
+    "backupDatabases": 2,
+    "backupFiles": 318,
+    "unchangedBusinessProjections": 18,
+    "excludedVolatileField": "subscription_cursors.updated_at only; identity/read/ACK positions compared exactly",
+    "formalPage": {
+      "at": "2026-10-15T11:12:08.717Z",
+      "webBuildId": "518ac14957dddfc4215b4911b21c34cd4fd8cd77bc2958e4577ae6235fb55c95",
+      "results": [
+        {
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "actualTreeMatchesApi": true,
+          "cancelPreservesEmptyDraft": true,
+          "systemPickerCancel": false,
+          "noBusinessMutations": true,
+          "buildMatches": true,
+          "pageErrors": []
+        },
+        {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "actualTreeMatchesApi": true,
+          "cancelPreservesEmptyDraft": true,
+          "systemPickerCancel": true,
+          "noBusinessMutations": true,
+          "buildMatches": true,
+          "pageErrors": []
+        },
+        {
+          "viewport": {
+            "width": 820,
+            "height": 1000
+          },
+          "actualTreeMatchesApi": true,
+          "cancelPreservesEmptyDraft": true,
+          "systemPickerCancel": true,
+          "noBusinessMutations": true,
+          "buildMatches": true,
+          "pageErrors": []
+        }
+      ]
+    },
+    "screenshotsInspected": [
+      "tree-1440",
+      "tree-390",
+      "tree-820",
+      "composer-390",
+      "temporary attachment cards and native image lightbox"
+    ],
+    "nativeFinalSelectionUnchanged": true
+  }
 }
