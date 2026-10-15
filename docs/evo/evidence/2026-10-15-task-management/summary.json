@@ -1,5 +1,5 @@
 {
-  "status": "automated-verified-awaiting-deployment",
+  "status": "deployed-verified",
   "audit": "../../../audits/2026-10-15-task-management.zh-CN.md",
   "paidCli": false,
   "realCliExecution": false,
@@ -25,5 +25,61 @@
     "History reads 50/page with a 500-entry in-memory bound",
     "Separate review detail/actions, description editing, batch creation and board drag remain deferred",
     "Formal verification is read-only; mutations run only against temporary Core with disabled fake instances"
-  ]
+  ],
+  "deployment": {
+    "head": "ec1ddac60c69a8e9bb2a7af5a53b267a7fb6a17f",
+    "webBuildId": "02f0261a68c26bac780ce92f6b954dfaf02fb93649e8bcbe36580f3b8fbc9c77",
+    "verified": true,
+    "backupDatabases": 2,
+    "backupFiles": 318,
+    "unchangedBusinessProjections": 18,
+    "excludedVolatileField": "subscription_cursors.updated_at only; identity/read/ACK positions compared exactly",
+    "formalPage": {
+      "at": "2026-10-15T10:01:43.313Z",
+      "webBuildId": "02f0261a68c26bac780ce92f6b954dfaf02fb93649e8bcbe36580f3b8fbc9c77",
+      "results": [
+        {
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "existingRealTask": true,
+          "assigneePickerReadOnlyCheck": true,
+          "historyReadMatchesApi": true,
+          "listCountMatchesApi": true,
+          "titleMatchesApi": true,
+          "noDuplicateRoot": true,
+          "reload": true,
+          "nativeCloseOrMobileBack": true,
+          "noBusinessMutations": true,
+          "buildMatches": true,
+          "pageErrors": []
+        },
+        {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "existingRealTask": true,
+          "assigneePickerReadOnlyCheck": true,
+          "historyReadMatchesApi": true,
+          "listCountMatchesApi": true,
+          "titleMatchesApi": true,
+          "noDuplicateRoot": true,
+          "reload": true,
+          "nativeCloseOrMobileBack": true,
+          "noBusinessMutations": true,
+          "buildMatches": true,
+          "pageErrors": []
+        }
+      ]
+    },
+    "screenshotsInspected": [
+      "assignee-1440",
+      "history-1440",
+      "assignee-390",
+      "history-390"
+    ],
+    "nativeFinalSelectionUnchanged": true
+  }
 }
