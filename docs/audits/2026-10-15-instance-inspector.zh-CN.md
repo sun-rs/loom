@@ -31,4 +31,4 @@ Kernel 仍拥有业务身份、执行状态和记录；UI 不新建队列、消�
 
 ## 边界
 
-这一刀完成只读“动态”入口。运行 usage 下钻、原生工具／思考轨迹、其他详情标签、运行控制和 profile URL 深链未接入；不显示未绑定按钮，不宣称完整 AgentDetailPanel 已迁入。无后端、模型上下文、调度或付费测试变更。完整结果见[证据](../evo/evidence/2026-10-15-instance-inspector/summary.json)。
+这一刀完成只读“动态”入口。部分生命周期诊断事件暂保留 canonical 名称，未伪造业务状态。运行 usage 下钻、原生工具／思考轨迹、其他详情标签、运行控制和 profile URL 深链未接入；不显示未绑定按钮，不宣称完整 AgentDetailPanel 已迁入。无后端、模型上下文、调度或付费测试变更。完整结果见[证据](../evo/evidence/2026-10-15-instance-inspector/summary.json)。

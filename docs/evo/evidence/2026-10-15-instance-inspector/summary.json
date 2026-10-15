@@ -27,7 +27,28 @@
     "inspectorWrites": 0,
     "chronologicalPageUnit": "red then green; native ascending presentation with Room sequence",
     "controlledNativeCallbackGuard": "all other source and readonly branches unchanged",
-    "formalPage": "pending restart"
+    "formalPage": {
+      "passed": true,
+      "readOnly": true,
+      "realInstanceInspector": true,
+      "runRowsPerViewport": [12, 12],
+      "runRowsMatchAuthenticatedApi": true,
+      "closeRestoresDraftAndFocus": true,
+      "screenshotsInspected": true,
+      "viewports": [
+        {
+          "width": 1440,
+          "height": 1000
+        },
+        {
+          "width": 390,
+          "height": 844
+        }
+      ],
+      "dpr": 1,
+      "noMessageOrReadMarkMutation": true,
+      "pageErrors": []
+    }
   },
   "backendChanged": false,
   "paidProviderCalls": 0,
@@ -37,6 +58,20 @@
     "Per-run usage drilldown",
     "Native tool/thinking trajectory",
     "Other instance detail tabs and runtime controls",
-    "Profile URL deep links"
-  ]
+    "Profile URL deep links",
+    "Some diagnostic lifecycle event types retain their canonical names"
+  ],
+  "sourceCommit": "fb013300739090fbc1d5a1b7e6ccc8b53be16d3d",
+  "deployment": {
+    "service": "com.loom.evo",
+    "url": "http://127.0.0.1:4176",
+    "webBuildId": "fb175aaec1a177813133ae2bfe283cb410099efecc677627cfc2999c835a03c0",
+    "verified": true,
+    "at": "2026-10-15T02:35:54.036Z",
+    "backupDatabases": 2,
+    "backupFiles": 318,
+    "businessTablesUnchanged": 18,
+    "volatileFieldExcluded": "subscription_cursors.updated_at only; identity/read/ACK positions compared exactly",
+    "runtimeFlagsPreserved": true
+  }
 }
