@@ -114,9 +114,36 @@ export async function verifyAttachments({
         .getByRole("button", { name: "引用计算机文件或文件夹", exact: true })
         .click();
       const dialog = page.getByRole("dialog", {
-        name: "引用计算机文件或文件夹",
+        name: "引用文件或文件夹",
       });
       await dialog.waitFor();
+      assert.equal(
+        await composer.getByTestId("loom-native-file-input").count(),
+        0,
+        "composer only exposes Plus",
+      );
+      assert.equal(
+        await dialog.getByTestId("loom-native-file-input").isDisabled(),
+        true,
+        "loopback defaults to same device",
+      );
+      assert.equal(
+        await dialog
+          .getByText("当前浏览 Loom 主机的授权目录", { exact: true })
+          .count(),
+        0,
+      );
+      await dialog.getByRole("button", { name: "取消", exact: true }).click();
+      await page.goto(origin + "/?fileDevice=remote&room=" + room.roomId);
+      await composer
+        .getByRole("button", { name: "引用计算机文件或文件夹", exact: true })
+        .click();
+      await dialog.getByTestId("loom-native-file-input").waitFor();
+      assert.equal(
+        await dialog.getByTestId("loom-native-file-input").isDisabled(),
+        false,
+      );
+
       await dialog
         .getByRole("button", { name: "small", exact: true })
         .waitFor();
@@ -139,6 +166,9 @@ export async function verifyAttachments({
                 tree.getBoundingClientRect().bottom,
           };
         });
+      const parentNode = await dialog
+        .getByRole("button", { name: "上一级目录", exact: true })
+        .elementHandle();
       holdListing = true;
       const listingPending = new Promise((resolve) => {
         listingStarted = resolve;
@@ -154,9 +184,9 @@ export async function verifyAttachments({
         assert.equal(
           await dialog
             .getByRole("button", { name: "notes space.txt", exact: true })
-            .isVisible(),
-          true,
-          "pending navigation keeps the list mounted",
+            .count(),
+          0,
+          "pending navigation clears only file entries",
         );
         assert.equal(
           await dialog
@@ -164,6 +194,11 @@ export async function verifyAttachments({
             .isDisabled(),
           true,
           "stale directory cannot be referenced while loading",
+        );
+        assert.equal(
+          await parentNode.evaluate((node) => node.isConnected),
+          true,
+          "parent row is never unmounted",
         );
       } finally {
         releaseListing();
@@ -184,8 +219,8 @@ export async function verifyAttachments({
       assert.equal(
         await dialog
           .getByRole("button", { name: "notes space.txt", exact: true })
-          .isVisible(),
-        true,
+          .count(),
+        0,
       );
       assert.equal(
         await dialog
@@ -226,8 +261,8 @@ export async function verifyAttachments({
           assert.equal(
             await dialog
               .getByRole("button", { name: "one.txt", exact: true })
-              .isVisible(),
-            true,
+              .count(),
+            0,
           );
           await dialog
             .getByText("目录读取超时，请重试。", { exact: false })
@@ -251,15 +286,31 @@ export async function verifyAttachments({
           .querySelector("input[type=checkbox]")
           .closest("label")
           .getBoundingClientRect();
-        const cancel = [...el.querySelectorAll("button")]
-          .find((b) => b.textContent.trim() === "取消")
+        const footer = el
+          .querySelector('[data-slot="dialog-footer"]')
           .getBoundingClientRect();
-        return cancel.top - toggle.bottom;
+        return footer.top - toggle.bottom;
       });
       assert.ok(
         footerGap <= 28,
         "footer follows controls without excessive blank space: " + footerGap,
       );
+      const parentBefore = await dialog
+        .getByRole("button", { name: "上一级目录", exact: true })
+        .boundingBox();
+      await dialog.getByTestId("computer-file-entries").evaluate((el) => {
+        el.scrollTop = 80;
+      });
+      assert.deepEqual(
+        await dialog
+          .getByRole("button", { name: "上一级目录", exact: true })
+          .boundingBox(),
+        parentBefore,
+        "file scroll never scrolls parent row",
+      );
+      await dialog.getByTestId("computer-file-entries").evaluate((el) => {
+        el.scrollTop = 0;
+      });
       const initial = await geometry();
       assert.equal(
         initial.upFirst,
@@ -325,12 +376,15 @@ export async function verifyAttachments({
         mimeType: "text/plain",
         buffer: Buffer.from("exact attachment bytes " + width),
       };
+      await composer
+        .getByRole("button", { name: "引用计算机文件或文件夹", exact: true })
+        .click();
       {
         const chooserPromise = page.waitForEvent("filechooser");
         void chooserPromise.catch(() => {});
         if (width === 1440)
-          await composer.getByTestId("loom-native-file-input").click();
-        else await composer.getByTestId("loom-native-file-input").tap();
+          await dialog.getByTestId("loom-native-file-input").click();
+        else await dialog.getByTestId("loom-native-file-input").tap();
         const chooser = await chooserPromise;
         assert.equal(chooser.isMultiple(), true);
         await chooser.setFiles([]);
@@ -340,14 +394,13 @@ export async function verifyAttachments({
         );
       }
       if (width !== 1440) {
-        await composer
-          .getByTestId("loom-native-file-input")
-          .setInputFiles(file);
+        await dialog.getByTestId("loom-native-file-input").setInputFiles(file);
       } else {
         assert.equal(
-          await composer.getByTestId("loom-native-file-input").count(),
+          await dialog.getByTestId("loom-native-file-input").count(),
           1,
         );
+        await dialog.getByRole("button", { name: "取消", exact: true }).click();
         await composer.evaluate(
           (el, file) => {
             const dt = new DataTransfer();
@@ -402,8 +455,8 @@ export async function verifyAttachments({
         referencePath: true,
         nativePicker: true,
         stableTreeLayout: true,
-        pendingNavigationKeepsContents: true,
-        failedNavigationRetainsViewAndRetries: true,
+        pendingNavigationKeepsParentOnly: true,
+        failedNavigationRetainsNavigationAndRetries: true,
         compactFooter: true,
         desktopDrop: width === 1440,
         attachmentOnlySend: true,

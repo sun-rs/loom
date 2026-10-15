@@ -1,11 +1,13 @@
 # Composer attachment pickers
 
-Scope: B019, shared by Chat/DM and Thread. As of 2026-09-18 Plus always opens the
-Computer tree; mobile adds one native-upload paperclip. FileUploadStore remains
-the upload/draft owner; RoomFiles and message transactions remain the authority.
-The new authenticated Computer path-listing endpoint is distinct from uploads.
-There is no new execution queue or memory rule. See
-[Composer controls](composer-controls.md) for current behavior and validation.
+Scope: Chat/DM and Thread. The owner-approved 2026-10-15 phase-4 design
+uses one Plus and one unified Computer file dialog, with the native upload
+action in its footer (disabled for same-device presentation). Parent navigation
+stays mounted while only file entries reload. See
+[Composer controls](composer-controls.md) for current behavior and device
+preference limits. FileUploadStore remains the draft owner; RoomFiles and
+message transactions remain authoritative. Historical bundle details below
+describe provenance, not the current placement of the upload control.
 
 Source: authorized Raft Web https://app.raft.build/assets/index-BoAC7nSE.js,
 local `docs/evidence/raft-web-20260831-current/index-BoAC7nSE.js`, SHA-256

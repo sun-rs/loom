@@ -1,0 +1,46 @@
+{
+  "scope": "Owner-approved unified Plus file window; same-device upload disabled, remote-device upload enabled; explanation removed; persistent parent navigation separate from reloaded entries",
+  "nativeSourceUnchanged": true,
+  "backendChanged": false,
+  "tdd": {
+    "red": "Previous build still exposes composer upload control (1 vs required 0)",
+    "green": ["browser.json", "webkit.json"],
+    "cases": [
+      "loopback upload disabled",
+      "remote preference upload enabled",
+      "no standalone composer input",
+      "persistent parent node during navigation",
+      "file rows cleared during pending and failed reads",
+      "parent does not scroll with file rows",
+      "system picker cancellation retains dialog",
+      "image, thread and private-box uploads",
+      "same file reselection",
+      "unknown write result verified",
+      "exact downloaded bytes"
+    ]
+  },
+  "devicePreference": {
+    "defaultLocal": ["localhost", "127.0.0.1", "[::1]"],
+    "override": "fileDevice=local or fileDevice=remote; retained in origin-scoped tab sessionStorage",
+    "limitation": "Presentation preference, not physical machine identity or permission. Tunnels and same-machine LAN access require explicit override."
+  },
+  "mobile": "Native-size upload button wraps to full-width row; cancel/reference remain right aligned",
+  "paidCli": false,
+  "limits": [
+    "Only local daemon file browsing; remote AgentHost tree deferred",
+    "No physical iOS system-menu inspection"
+  ],
+  "verification": {
+    "npmCheck": "passed",
+    "backendPassed": 3211,
+    "optInSkipped": 22,
+    "consolePassed": 63,
+    "browserPolicyPassed": 15,
+    "efficiencyToolsPassed": 558,
+    "officialSourcePassed": 65,
+    "productBuild": "passed",
+    "fullBrowser": "passed",
+    "webkit": "passed",
+    "formatAndDiff": "passed"
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "fixtureOnly": true,
+  "paidCli": false,
+  "command": "npm run test:official-web:channel",
+  "exitCode": 0,
+  "fullLogSha256": "20e2d80b33e6b831872af10b9a8a07ad494d405bd4fc60af483236145e243d17",
+  "attachmentDetails": {
+    "imageNativeLightbox": true,
+    "sameFileReselection": true,
+    "failedUploadBlocksSend": true,
+    "threadAttachmentOnly": true,
+    "threadExactUnknownReplay": true,
+    "threadReloadDownload": true,
+    "privateBoxIsolation": true
+  },
+  "attachmentResults": [
+    {
+      "width": 1440,
+      "referencePath": true,
+      "nativePicker": true,
+      "stableTreeLayout": true,
+      "pendingNavigationKeepsParentOnly": true,
+      "failedNavigationRetainsNavigationAndRetries": true,
+      "compactFooter": true,
+      "desktopDrop": true,
+      "attachmentOnlySend": true,
+      "exactUnknownReplay": true,
+      "reloadDownloadExact": true
+    },
+    {
+      "width": 390,
+      "referencePath": true,
+      "nativePicker": true,
+      "stableTreeLayout": true,
+      "pendingNavigationKeepsParentOnly": true,
+      "failedNavigationRetainsNavigationAndRetries": true,
+      "compactFooter": true,
+      "desktopDrop": false,
+      "attachmentOnlySend": true,
+      "exactUnknownReplay": true,
+      "reloadDownloadExact": true
+    },
+    {
+      "width": 820,
+      "referencePath": true,
+      "nativePicker": true,
+      "stableTreeLayout": true,
+      "pendingNavigationKeepsParentOnly": true,
+      "failedNavigationRetainsNavigationAndRetries": true,
+      "compactFooter": true,
+      "desktopDrop": false,
+      "attachmentOnlySend": true,
+      "exactUnknownReplay": true,
+      "reloadDownloadExact": true
+    }
+  ]
+}

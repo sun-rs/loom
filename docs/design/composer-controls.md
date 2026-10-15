@@ -1,26 +1,36 @@
 # Composer file references and execution control
 
-Current contract: 2026-09-18. This user-requested design preserves the upload
-pipeline and shared button geometry, with separate path and mobile upload actions.
+Current phase-4 contract: 2026-10-15 owner-approved unified file window.
+The upload pipeline and official button geometry remain shared.
 
 ## Plus entry
 
 - Chat, Direct Room and Thread use one 26px Plus, with the shared 14px icon,
   2px border and button motion documented in
   [attachment provenance](composer-attachment-pickers.md).
-- Plus always opens the Computer tree directly, on every origin and device.
-  There is no Plus menu, machine inference or default-action preference. Old
-  browser-local default-action values are no longer read.
-- Mobile layout (the shared 767px breakpoint) adds a paperclip immediately after
-  Plus. It invokes one unrestricted, multiple-file native input, without `accept`
-  or `capture`. iOS owns the photo library/camera/files chooser. This is a layout
-  decision, not evidence that a desktop browser shares the daemon's filesystem.
-- The Computer file tree dialog strictly handles filesystem path references and
-  does not retain photo/upload buttons. Device file and media uploads are accessible
-  via the mobile paperclip or existing desktop drag-and-drop pipeline.
-  Camera availability belongs to the browser/OS media picker; the app does not
-  promise camera hardware access.
-- The Computer label currently shows only the connected daemon host, without a dropdown.
+- Plus opens one Computer file dialog on every device. There is no intermediate
+  menu or separate composer paperclip.
+- The dialog footer always shows “上传此设备文件”. Same-device presentation
+  disables it; other-device presentation enables the same unrestricted,
+  multiple-file native input. Task-mode/pending checks remain enforced.
+  The picker always belongs to the browser device, including macOS and iOS.
+- Presentation defaults to same-device for exact localhost / 127.0.0.1 / [::1]
+  origins, and other-device for other origins. This is not proof of machine
+  identity or filesystem authority. fileDevice=local / fileDevice=remote is an
+  explicit URL preference retained in origin-scoped sessionStorage for the tab;
+  it handles same-machine LAN access and tunnels without new settings controls.
+  Unavailable storage falls back to the current URL/default.
+- Parent navigation is a permanently mounted first row outside the file-list
+  scroll area. Navigation clears only file entries, preserving the host/path/
+  parent/footer. Pending and failed requests cannot reference old files; timeout
+  remains 10 seconds with explicit retry. “文件来自所选计算机” is omitted.
+- Upload cancellation stays in the dialog. A nonempty selection queues files in
+  the existing composer draft, closes the dialog and returns focus to Plus.
+  Mobile footer wraps the upload action onto a full-width row, retaining native
+  control sizes; desktop keeps all actions in one row.
+- Existing drag/drop and paste remain available. Disabling the dialog button is
+  a presentation policy, not a new backend upload restriction.
+- The Computer selector currently contains only the connected daemon host.
   Future remote Computers must implement the same authenticated listing contract;
   no remote connection or SSH upload is implied by a path reference.
 - Click a directory row to open it; click files to toggle multiple selections in

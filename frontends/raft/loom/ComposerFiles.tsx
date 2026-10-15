@@ -13,12 +13,13 @@ import {
   ComposerIconButton,
   ComposerAttachments,
 } from "raft-ui";
-import { Plus, Paperclip } from "lucide-react";
+import { Plus } from "lucide-react";
 import type { RahClient } from "@rah-os/client-sdk";
 import NativeInput from "../packages/web/src/components/message/MessageInput.tsx";
 import Tooltip from "../packages/web/src/components/ui/Tooltip.tsx";
 import { FileUploadStore } from "./file-uploads.ts";
 import ComputerFiles from "./ComputerFiles.tsx";
+import { browserUsesDaemonDevice } from "./file-device.ts";
 const stores = new WeakMap<RahClient, FileUploadStore>();
 function storeFor(client: RahClient) {
   let store = stores.get(client);
@@ -147,8 +148,7 @@ export function ComposerFilesTools({
 }) {
   const context = useContext(Context),
     [open, setOpen] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null),
-    triggerRef = useRef<HTMLButtonElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   if (!context) return null;
   const { disabled, client } = context;
   return (
@@ -164,31 +164,17 @@ export function ComposerFilesTools({
           <Plus size={14} />
         </ComposerIconButton>
       </Tooltip>
-      <span className="relative isolate inline-flex">
-        <ComposerIconButton
-          disabled={disabled || taskMode}
-          aria-label="上传文件或图片"
-          onClick={() => inputRef.current?.click()}
-        >
-          <Paperclip size={14} />
-        </ComposerIconButton>
-        <input
-          ref={inputRef}
-          type="file"
-          multiple
-          aria-label="上传文件或图片"
-          data-testid="loom-native-file-input"
-          disabled={disabled || taskMode}
-          className="absolute inset-0 z-20 size-full cursor-pointer opacity-0"
-          onChange={(e) => {
-            if (!taskMode) context.add(e.currentTarget.files);
-            e.currentTarget.value = "";
-          }}
-        />
-      </span>
       {open && (
         <ComputerFiles
           client={client}
+          uploadDisabled={disabled || taskMode || browserUsesDaemonDevice()}
+          onUpload={(files) => {
+            if (!disabled && !taskMode && !browserUsesDaemonDevice()) {
+              context.add(files);
+              setOpen(false);
+              requestAnimationFrame(() => triggerRef.current?.focus());
+            }
+          }}
           onClose={() => {
             setOpen(false);
             requestAnimationFrame(() => triggerRef.current?.focus());

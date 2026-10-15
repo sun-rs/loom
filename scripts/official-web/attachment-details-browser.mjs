@@ -58,6 +58,18 @@ export async function verifyAttachmentDetails({
       }
       return route.continue();
     });
+    const selectFile = async (surface, file) => {
+      await surface
+        .getByRole("button", { name: "引用计算机文件或文件夹", exact: true })
+        .click();
+      const picker = page.getByRole("dialog", {
+        name: "引用文件或文件夹",
+      });
+      const upload = picker.getByTestId("loom-native-file-input");
+      await upload.click({ trial: true });
+      await upload.setInputFiles(file);
+      await picker.waitFor({ state: "detached" });
+    };
     const png = {
       name: "fixture-image.png",
       mimeType: "image/png",
@@ -66,16 +78,14 @@ export async function verifyAttachmentDetails({
         "base64",
       ),
     };
-    await page.goto(origin + "/?room=" + room.roomId);
+    await page.goto(origin + "/?fileDevice=remote&room=" + room.roomId);
     const composer = page.getByTestId("chat-composer-shell");
-    await composer.getByTestId("loom-native-file-input").click({ trial: true });
-    await composer.getByTestId("loom-native-file-input").setInputFiles(png);
+    await selectFile(composer, png);
     await composer.locator('[data-upload-status="ready"]').waitFor();
     await composer
       .getByRole("button", { name: "移除 " + png.name, exact: true })
       .click();
-    await composer.getByTestId("loom-native-file-input").click({ trial: true });
-    await composer.getByTestId("loom-native-file-input").setInputFiles(png);
+    await selectFile(composer, png);
     await composer.locator('[data-upload-status="ready"]').waitFor();
     await composer.locator('button[type="submit"]').click();
     const image = page
@@ -103,7 +113,11 @@ export async function verifyAttachmentDetails({
     ).messages.find((m) => m.attachments?.some((a) => a.filename === png.name));
     assert.ok(root);
     await page.goto(
-      origin + "/?room=" + room.roomId + "&thread=" + root.messageId,
+      origin +
+        "/?fileDevice=remote&room=" +
+        room.roomId +
+        "&thread=" +
+        root.messageId,
     );
     const panel = page.getByTestId("thread-side-column");
     const text = {
@@ -111,7 +125,6 @@ export async function verifyAttachmentDetails({
       mimeType: "text/plain",
       buffer: Buffer.from("thread exact bytes"),
     };
-    const upload = panel.getByTestId("loom-native-file-input");
     await page.route("**/v3/client/files/content/*", (route) =>
       route.request().method() === "PUT"
         ? route.fulfill({
@@ -123,8 +136,7 @@ export async function verifyAttachmentDetails({
           })
         : route.continue(),
     );
-    await upload.click({ trial: true });
-    await upload.setInputFiles(text);
+    await selectFile(panel, text);
     await panel.getByText("FIXTURE upload failure", { exact: true }).waitFor();
     assert.equal(
       await panel.locator('button[type="submit"]').isDisabled(),
@@ -134,8 +146,7 @@ export async function verifyAttachmentDetails({
       .getByRole("button", { name: "移除 " + text.name, exact: true })
       .click();
     await page.unroute("**/v3/client/files/content/*");
-    await upload.click({ trial: true });
-    await upload.setInputFiles(text);
+    await selectFile(panel, text);
     await panel.locator('[data-upload-status="ready"]').waitFor();
     const replies = [];
     await page.route("**/v3/client/threads/reply", async (route) => {
@@ -162,11 +173,8 @@ export async function verifyAttachmentDetails({
     const dl = page.waitForEvent("download");
     await threadCard.getByText(text.name, { exact: true }).click();
     assert.deepEqual(await readFile(await (await dl).path()), text.buffer);
-    await page.goto(origin + "/?room=" + box.roomId);
-    await composer.getByTestId("loom-native-file-input").click({ trial: true });
-    await composer
-      .getByTestId("loom-native-file-input")
-      .setInputFiles({ ...text, name: "private.txt" });
+    await page.goto(origin + "/?fileDevice=remote&room=" + box.roomId);
+    await selectFile(composer, { ...text, name: "private.txt" });
     await composer.locator('[data-upload-status="ready"]').waitFor();
     await composer.locator('button[type="submit"]').click();
     await page
