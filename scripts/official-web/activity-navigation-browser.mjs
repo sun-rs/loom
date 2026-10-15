@@ -168,6 +168,79 @@ export async function verifyActivityNavigation({
       await timeRequest;
       await page.goto(origin + "/?view=search&q=target");
       await searchInput.waitFor();
+      await page.getByLabel("发送者", { exact: true }).click();
+      const senderRequest = page.waitForRequest(
+        (r) =>
+          r.url().endsWith("/v3/client/search") &&
+          r.postDataJSON().senderIds?.length === 1,
+      );
+      await page.getByRole("option", { name: "我", exact: true }).click();
+      const senderBody = (await senderRequest).postDataJSON();
+      assert.equal(
+        senderBody.senderIds[0],
+        (await client.request("principal.me", {})).principal.principalId,
+      );
+      await page.keyboard.press("Escape");
+      await page.getByLabel("打开频道筛选", { exact: true }).click();
+      const channelRequest = page.waitForRequest(
+        (r) =>
+          r.url().endsWith("/v3/client/search") &&
+          r.postDataJSON().roomIds?.[0] === room.roomId,
+      );
+      await page
+        .getByRole("option", {
+          name: "#FIXTURE activity navigation",
+          exact: true,
+        })
+        .click();
+      await channelRequest;
+      await page.keyboard.press("Escape");
+      await page
+        .locator(`[data-result-id="${card.latestMessage.messageId}"]`)
+        .click();
+      await page.waitForURL((u) => u.searchParams.has("message"));
+      assert.equal(
+        new URL(page.url()).searchParams.get("channelId"),
+        room.roomId,
+      );
+      assert.equal(
+        new URL(page.url()).searchParams.get("senderId"),
+        senderBody.senderIds[0],
+      );
+      await page.goto(
+        origin + "/?view=search&q=reply%20navigation&sort=recent",
+      );
+      const group = page.getByTestId("search-thread-group");
+      await group.waitFor();
+      assert.equal(await group.count(), 1);
+      const groupedPage = await client.request("search", {
+        workspaceId: workspace.workspaceId,
+        query: "reply navigation",
+        sort: "recent",
+        scope: "all",
+        limit: 20,
+      });
+      const expectedReplies = groupedPage.hits
+        .filter(
+          (hit) =>
+            hit.message.threadId === thread.threadId && hit.rootMessageId,
+        )
+        .map((hit) => hit.message.messageId);
+      assert.ok(expectedReplies.length > 1);
+      assert.deepEqual(
+        await group
+          .locator("[data-result-id]")
+          .evaluateAll((nodes) =>
+            nodes.map((node) => node.getAttribute("data-result-id")),
+          ),
+        expectedReplies,
+      );
+      assert.equal(
+        await page.locator("[data-result-id]").count(),
+        groupedPage.hits.length,
+      );
+      await page.goto(origin + "/?view=search&q=target");
+      await searchInput.waitFor();
       await searchInput.dispatchEvent("compositionstart");
       await searchInput.fill("未完成输入");
       assert.equal(new URL(page.url()).searchParams.get("q"), "target");
@@ -526,6 +599,7 @@ export async function verifyActivityNavigation({
         desktopDividerDraggable: width === 1440,
         searchPrimarySlotsAndResize: true,
         nativeSearchHeaderCompositionAndFilters: true,
+        nativeSenderChannelAndThreadGroups: true,
         mobileNavigationAndReturn: width === 390,
         threadParentOpensProfilePreservingDraft: true,
         channelThreadProfileDraftPreserved: width === 1440,

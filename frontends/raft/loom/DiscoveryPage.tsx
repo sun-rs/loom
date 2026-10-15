@@ -32,7 +32,7 @@ import {
 import ActivityFilters from "./ActivityFilters.tsx";
 import ActivityMessageRow from "./ActivityMessageRow.tsx";
 import SearchHeader from "./SearchHeader.tsx";
-import SearchMessageRow from "./SearchMessageRow.tsx";
+import SearchMessageGroups from "./SearchMessageGroups.tsx";
 export default function DiscoveryPage({
   client,
   workspaceId,
@@ -84,6 +84,8 @@ export default function DiscoveryPage({
     ? (params.get("af") as HumanActivityRequest["filter"])
     : "all";
   const filterKey = [
+    params.get("senderId"),
+    params.get("channelId"),
     params.get("scopes"),
     params.get("range"),
     params.get("sort"),
@@ -162,7 +164,12 @@ export default function DiscoveryPage({
         )}
         <Shell edge="attached" className="min-h-0 flex-1 border-l-0">
           {mode === "search" ? (
-            <SearchFilters params={params} query={query} update={update} />
+            <SearchFilters
+              params={params}
+              query={query}
+              client={client}
+              workspaceId={workspaceId}
+            />
           ) : (
             <ActivityFilters
               value={filter!}
@@ -247,6 +254,8 @@ function Results({
     if (
       mode === "search" &&
       !query.trim() &&
+      !searchFilters.senderIds?.length &&
+      !searchFilters.roomIds?.length &&
       !searchFilters.senderKind &&
       !searchFilters.mentionSelf &&
       !searchFilters.after
@@ -322,6 +331,8 @@ function Results({
       )}
       {mode === "search" &&
       !query.trim() &&
+      !searchFilters.senderIds?.length &&
+      !searchFilters.roomIds?.length &&
       !searchFilters.senderKind &&
       !searchFilters.mentionSelf &&
       !searchFilters.after ? (
@@ -343,37 +354,34 @@ function Results({
             <SearchResultsList className="p-3">
               {!data.rows.length ? (
                 <p>没有匹配结果</p>
+              ) : mode === "search" ? (
+                <SearchMessageGroups
+                  rows={data.rows}
+                  query={query}
+                  selectedId={route.get("message")}
+                  onOpen={(row, full) => {
+                    void onOpenResult(row, full).catch(() =>
+                      setError("无法打开消息，请刷新重试。"),
+                    );
+                  }}
+                />
               ) : (
-                data.rows.map((row) =>
-                  mode === "search" ? (
-                    <SearchMessageRow
-                      key={row.id}
-                      row={row}
-                      query={query}
-                      selected={route.get("message") === row.message.messageId}
-                      onOpen={(full) => {
-                        void onOpenResult(row, full).catch(() =>
-                          setError("无法打开消息，请刷新重试。"),
-                        );
-                      }}
-                    />
-                  ) : (
-                    <ActivityMessageRow
-                      pending={pendingRows.has(row.id)}
-                      onDone={() => {
-                        void markDone(row);
-                      }}
-                      key={row.id}
-                      row={row}
-                      active={route.get("message") === row.message.messageId}
-                      onOpen={(full) => {
-                        void onOpenResult(row, full).catch(() =>
-                          setError("无法打开消息，请刷新重试。"),
-                        );
-                      }}
-                    />
-                  ),
-                )
+                data.rows.map((row) => (
+                  <ActivityMessageRow
+                    pending={pendingRows.has(row.id)}
+                    onDone={() => {
+                      void markDone(row);
+                    }}
+                    key={row.id}
+                    row={row}
+                    active={route.get("message") === row.message.messageId}
+                    onOpen={(full) => {
+                      void onOpenResult(row, full).catch(() =>
+                        setError("无法打开消息，请刷新重试。"),
+                      );
+                    }}
+                  />
+                ))
               )}
             </SearchResultsList>
             <div className="flex gap-2 p-3">

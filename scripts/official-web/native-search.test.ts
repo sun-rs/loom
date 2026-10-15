@@ -24,3 +24,58 @@ test("time window uses native range boundaries and is supplied once per result w
   assert.equal(result.before, now.toISOString());
   assert.equal(result.after, "2026-10-08T12:00:00.000Z");
 });
+test("selected sender and channel map to authorized Kernel ID filters, including empty query", () => {
+  assert.deepEqual(
+    nativeSearchFilters(
+      new URLSearchParams("senderId=person&channelId=room"),
+      "",
+    ),
+    {
+      sort: "recent",
+      senderIds: ["person"],
+      roomIds: ["room"],
+    },
+  );
+});
+test("native sender and scope conflict resolution preserves mentions, clear keeps sort/query", async () => {
+  const { changeNativeSearchFilter } =
+    await import("../../frontends/raft/loom/native-search.ts");
+  const kinds = new Map([
+    ["a", "agent"],
+    ["h", "human"],
+  ]);
+  const sender = changeNativeSearchFilter(
+    new URLSearchParams("q=x&sort=recent&scopes=humans,mentioned"),
+    "senderId",
+    "a",
+    kinds,
+  );
+  assert.equal(sender.get("scopes"), "mentioned");
+  assert.equal(sender.get("senderId"), "a");
+  const scope = changeNativeSearchFilter(sender, "scopes", "humans", kinds);
+  assert.equal(scope.has("senderId"), false);
+  const clear = changeNativeSearchFilter(sender, "clear", "", kinds);
+  assert.equal(clear.toString(), "q=x&sort=recent");
+});
+test("native grouping keeps ordinary hits separate and collects replies under their root", async () => {
+  const { groupSearchRows } =
+    await import("../../frontends/raft/loom/native-search.ts");
+  const row = (id, threadId) => ({
+    id,
+    message: { messageId: id, threadId, createdAt: "2026-10-15T12:00:00Z" },
+    rootMessageId: threadId ? "root" : undefined,
+    rootMessagePreview: "Thread title",
+  });
+  const groups = groupSearchRows([
+    row("a", "thread"),
+    row("b"),
+    row("c", "thread"),
+  ]);
+  assert.equal(groups.length, 2);
+  assert.equal(groups[0].kind, "thread");
+  assert.deepEqual(
+    groups[0].results.map((r) => r.row.id),
+    ["a", "c"],
+  );
+  assert.equal(groups[1].kind, "message");
+});

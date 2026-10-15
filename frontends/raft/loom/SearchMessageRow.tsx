@@ -6,11 +6,13 @@ export default function SearchMessageRow({
   row,
   query,
   selected,
+  nested = false,
   onOpen,
 }: {
   row: DiscoveryRow;
   query: string;
   selected: boolean;
+  nested?: boolean;
   onOpen: (full: boolean) => void;
 }) {
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -41,7 +43,7 @@ export default function SearchMessageRow({
           snippet: row.message.body || "附件消息",
           createdAt: row.message.createdAt,
         }}
-        nested={false}
+        nested={nested}
         selected={selected}
         sourceLabel={row.roomName}
         agentAvatarUrl={null}

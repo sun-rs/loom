@@ -896,6 +896,8 @@ export default function ChannelApp() {
                         "af",
                         "q",
                         "scope",
+                        "senderId",
+                        "channelId",
                         "scopes",
                         "range",
                         "sort",

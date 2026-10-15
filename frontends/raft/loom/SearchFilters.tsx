@@ -1,7 +1,13 @@
-import { useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import type { RahClient } from "@rah-os/client-sdk";
+import type { Principal, Room } from "@rah-os/protocol";
+import { changeNativeSearchFilter } from "./native-search.ts";
+import SearchIdentityFilter from "./SearchIdentityFilter.tsx";
+import { useEffect, useRef, useState } from "react";
 import { useIntl, type IntlShape } from "react-intl";
 import { ArrowDownUp, AtSign, CalendarRange, ChevronDown } from "lucide-react";
 import {
+  Button,
   SearchShellFilters,
   PickerTriggerButton,
   Select,
@@ -67,18 +73,60 @@ function getTimeRangeLabelId(
       return "search.timeAny";
   }
 }
-/** Structural port of MessageSearchPage's Scope, Time and Sort controls. Source JSX retained;
- * Sender/channel pickers remain unbound rather than replaced with unrelated form fields. */
+/** Native MessageSearchPage filter controls with authenticated Loom directory data. */
 export default function SearchFilters({
   params,
   query,
-  update,
+  client,
+  workspaceId,
 }: {
   params: URLSearchParams;
   query: string;
-  update: (key: string, value: string) => void;
+  client: RahClient;
+  workspaceId: string;
 }) {
   const { formatMessage } = useIntl();
+  const [, setParams] = useSearchParams();
+  const [directory, setDirectory] = useState<{
+    principals: Principal[];
+    rooms: Room[];
+    selfId?: string;
+  }>({ principals: [], rooms: [] });
+  const [directoryState, setDirectoryState] = useState("loading");
+  const [retry, setRetry] = useState(0);
+  useEffect(() => {
+    const controller = new AbortController();
+    setDirectory({ principals: [], rooms: [] });
+    setDirectoryState("loading");
+    void Promise.all([
+      client.request(
+        "search",
+        { workspaceId, query: "", limit: 1 },
+        { signal: controller.signal },
+      ),
+      client.request("principal.me", {}, { signal: controller.signal }),
+    ])
+      .then(([data, identity]) => {
+        if (!controller.signal.aborted) {
+          setDirectory({ ...data, selfId: identity.principal.principalId });
+          setDirectoryState("ready");
+        }
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setDirectoryState("error");
+      });
+    return () => controller.abort();
+  }, [client, workspaceId, retry]);
+  const update = (key: string, value: string) =>
+    setParams((previous) =>
+      changeNativeSearchFilter(
+        previous,
+        key,
+        value,
+        new Map(directory.principals.map((p) => [p.principalId, p.kind])),
+      ),
+    );
+
   const filtersPortalRef = useRef<HTMLDivElement>(null);
   const filtersPortalProps = { container: filtersPortalRef };
   const [openFilterMenu, setOpenFilterMenu] = useState<string | null>(null);
@@ -116,9 +164,23 @@ export default function SearchFilters({
   };
   const activeFilterClass =
     "border-line-strong bg-primary-soft text-foreground-strong shadow-raft-sm theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-soft-signal theme-brutal:text-black theme-brutal:shadow-brutal-sm";
+  const identityProps = {
+    ...directory,
+    params,
+    update,
+    openFilterMenu,
+    setOpenFilterMenu,
+    filtersPortalRef,
+    activeFilterClass,
+  };
   return (
     <SearchShellFilters ref={filtersPortalRef}>
       <div className="flex flex-wrap items-center gap-2">
+        <SearchIdentityFilter
+          kind="from"
+          {...identityProps}
+          disabled={directoryState !== "ready"}
+        />
         <Select<SearchScope, true>
           multiple
           open={openFilterMenu === "scope"}
@@ -160,6 +222,11 @@ export default function SearchFilters({
             </SelectList>
           </SelectContent>
         </Select>
+        <SearchIdentityFilter
+          kind="channel"
+          {...identityProps}
+          disabled={directoryState !== "ready"}
+        />
         <Select<SearchTimeRange>
           open={openFilterMenu === "time"}
           onOpenChange={handleTimeMenuOpenChange}
@@ -248,7 +315,32 @@ export default function SearchFilters({
             </SelectList>
           </SelectContent>
         </Select>
+        {(params.has("senderId") ||
+          params.has("channelId") ||
+          scopes.length > 0 ||
+          timeRange !== "any") && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="xs"
+            onClick={() => update("clear", "")}
+          >
+            {formatMessage({ id: "search.clearAll" })}
+          </Button>
+        )}
       </div>
+      {directoryState === "error" && (
+        <div role="alert">
+          筛选项读取失败。
+          <Button
+            variant="ghost"
+            size="xs"
+            onClick={() => setRetry((v) => v + 1)}
+          >
+            重试
+          </Button>
+        </div>
+      )}
     </SearchShellFilters>
   );
 }
