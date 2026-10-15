@@ -42,5 +42,64 @@
     "fullBrowser": "passed",
     "webkit": "passed",
     "formatAndDiff": "passed"
+  },
+  "deployment": {
+    "at": "2026-10-15T13:30:46.538Z",
+    "codeCommit": "4fa1060b4502d5872deae92034444d0858a9abe1",
+    "webBuildId": "2f2731ea9d4c4baee4efb768c959e197170a344a3345b1869f477574ec642f72",
+    "backupDatabases": 2,
+    "backupFiles": 318,
+    "businessTablesUnchanged": 18,
+    "formalPage": [
+      {
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "actualTreeMatchesApi": true,
+        "localUploadDisabled": true,
+        "remoteUploadEnabled": true,
+        "onlyPlusInComposer": true,
+        "parentNavigationMs": 67,
+        "cancelPreservesEmptyDraft": true,
+        "systemPickerCancel": true,
+        "noBusinessMutations": true,
+        "buildMatches": true,
+        "pageErrors": []
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "actualTreeMatchesApi": true,
+        "localUploadDisabled": true,
+        "remoteUploadEnabled": true,
+        "onlyPlusInComposer": true,
+        "parentNavigationMs": 56,
+        "cancelPreservesEmptyDraft": true,
+        "systemPickerCancel": true,
+        "noBusinessMutations": true,
+        "buildMatches": true,
+        "pageErrors": []
+      },
+      {
+        "viewport": {
+          "width": 820,
+          "height": 1000
+        },
+        "actualTreeMatchesApi": true,
+        "localUploadDisabled": true,
+        "remoteUploadEnabled": true,
+        "onlyPlusInComposer": true,
+        "parentNavigationMs": 190,
+        "cancelPreservesEmptyDraft": true,
+        "systemPickerCancel": true,
+        "noBusinessMutations": true,
+        "buildMatches": true,
+        "pageErrors": []
+      }
+    ],
+    "screenshotsReviewed": true
   }
 }
