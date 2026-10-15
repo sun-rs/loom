@@ -1,0 +1,81 @@
+{
+  "codeCommit": "2a4a458d09bf8c937426094110a413c2ff8dad6f",
+  "webBuildDirectory": "/Users/sun/Code/repos/rah_os/.workbench-web/8e8ea0a5dec5958ff633c3f1e897316a897635a1df4d3e80bcbacf61dd0842a2",
+  "checks": {
+    "sourceAndAdapterTests": 71,
+    "frontendTypecheck": "passed",
+    "webBuild": "passed",
+    "changedFileFormatAndDiff": "passed",
+    "fullRepositorySuite": false,
+    "paidCLI": false
+  },
+  "browser": [
+    {
+      "width": 1440,
+      "activityDoneExactFrontierAndReopen": true,
+      "oldMessageLocated": true,
+      "oldThreadReplyLocated": true,
+      "directThreadUsesPrimarySlot": true,
+      "nestedThreadKeepsSidePane": true,
+      "privateMessageLocated": true,
+      "backRestoresActivity": true,
+      "threadCloseClearsReplyTarget": true,
+      "desktopDividerDraggable": true,
+      "searchPrimarySlotsAndResize": true,
+      "nativeSearchHeaderCompositionAndFilters": true,
+      "nativeSenderChannelAndThreadGroups": true,
+      "mobileNavigationAndReturn": false,
+      "threadParentOpensProfilePreservingDraft": true,
+      "channelThreadProfileDraftPreserved": true,
+      "nativeHighlight": true,
+      "noContextDialog": true,
+      "refreshRestores": true,
+      "desktopDetailAndDoubleClick": true
+    },
+    {
+      "width": 390,
+      "activityDoneExactFrontierAndReopen": true,
+      "oldMessageLocated": true,
+      "oldThreadReplyLocated": true,
+      "directThreadUsesPrimarySlot": false,
+      "nestedThreadKeepsSidePane": false,
+      "privateMessageLocated": true,
+      "backRestoresActivity": true,
+      "threadCloseClearsReplyTarget": true,
+      "desktopDividerDraggable": false,
+      "searchPrimarySlotsAndResize": true,
+      "nativeSearchHeaderCompositionAndFilters": true,
+      "nativeSenderChannelAndThreadGroups": true,
+      "mobileNavigationAndReturn": true,
+      "threadParentOpensProfilePreservingDraft": true,
+      "channelThreadProfileDraftPreserved": false,
+      "nativeHighlight": true,
+      "noContextDialog": true,
+      "refreshRestores": true,
+      "desktopDetailAndDoubleClick": false
+    }
+  ],
+  "realPage": {
+    "viewports": ["1440x1000", "390x844"],
+    "verified": true,
+    "senderAndChannelPopovers": "opened and screenshots inspected",
+    "businessWrites": false,
+    "pageErrors": []
+  },
+  "restart": {
+    "verified": true,
+    "databases": 2,
+    "files": 318,
+    "businessTablesUnchanged": 18
+  },
+  "failuresRetained": [
+    "parameter mapping and grouping missing before implementation",
+    "browser initially assumed all 20 hits belonged to one thread; corrected to compare each authoritative result ID"
+  ],
+  "limits": [
+    "directory options capped at 100 per kind by existing API",
+    "grouping within bounded current page only",
+    "entity results, shortcut overlay, full keyboard result selection and load-more not integrated"
+  ],
+  "audit": "../../../audits/2026-10-16-native-search-filters.zh-CN.md"
+}
