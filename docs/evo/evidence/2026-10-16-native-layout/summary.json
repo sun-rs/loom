@@ -1,0 +1,67 @@
+{
+  "sourceCommit": "55b96626a0b513c69676e4ec1055185fc2c8059a",
+  "webBuildId": "40f6f3cce6d21c8cd1fe6be5ec5b9d75373394769e8ca148bf60d7a5fd2725ed",
+  "upstreamFilesUnchanged": true,
+  "productUiVersion": "0.5.64",
+  "checks": {
+    "sourceTests": 74,
+    "typecheck": true,
+    "build": true,
+    "format": true,
+    "diff": true,
+    "layoutWidths": [390, 900, 1440],
+    "layoutThemes": ["brutal", "elegant"],
+    "pages": ["channels", "agents", "settings", "activity", "search"],
+    "wideCodeMessage": true,
+    "appearanceSlice": true,
+    "topbarSlice": true,
+    "fullRepositorySuite": false,
+    "paidCli": false
+  },
+  "deployment": {
+    "verified": true,
+    "backedUpDatabases": 2,
+    "backedUpFiles": 318,
+    "businessTablesUnchanged": 18,
+    "sourceSha256": "40731a240862f7f92531c30fe5fbbd114bc3c1047612b4920dc3de37366656b0"
+  },
+  "realPage": [
+    {
+      "width": 1440,
+      "realPage": true,
+      "agentSettingsHeaderParity": true,
+      "searchPresentation": true,
+      "buildMatches": true,
+      "noBusinessWrites": true,
+      "pageErrors": [],
+      "noOverflow": true
+    },
+    {
+      "width": 900,
+      "realPage": true,
+      "agentSettingsHeaderParity": true,
+      "searchPresentation": true,
+      "buildMatches": true,
+      "noBusinessWrites": true,
+      "pageErrors": [],
+      "noOverflow": true
+    },
+    {
+      "width": 390,
+      "realPage": true,
+      "agentSettingsHeaderParity": true,
+      "searchPresentation": true,
+      "buildMatches": true,
+      "noBusinessWrites": true,
+      "pageErrors": [],
+      "noOverflow": true
+    }
+  ],
+  "limits": [
+    "No authenticated upstream visual comparison",
+    "Existing multi-pane CSS compared to release; no new exhaustive three-pane browser gate",
+    "Frozen source retains 0.5.52 package declaration; product aliases pin all runtime imports to 0.5.64",
+    "MessageList upstream fix adopted, not reported as reproduced Loom MessageTimeline bug"
+  ],
+  "localEvidence": "/Users/sun/.loom/reviews/2026-10-16-native-layout"
+}
