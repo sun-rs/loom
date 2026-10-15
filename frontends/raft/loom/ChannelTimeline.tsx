@@ -24,6 +24,9 @@ const mentionMap = new Map();
 /** ChatPanel's native system-row/disclosure composition; Loom owns only the read source. */
 export default function ChannelTimeline({
   roomId,
+  focusId,
+  hasNewer = false,
+  loadNewer = async () => {},
   messages,
   members,
   hasOlder,
@@ -34,6 +37,9 @@ export default function ChannelTimeline({
   threads = [],
 }: {
   roomId: string;
+  focusId?: string;
+  hasNewer?: boolean;
+  loadNewer?: () => Promise<void>;
   messages: Message[];
   members: readonly Principal[];
   hasOlder: boolean;
@@ -69,6 +75,7 @@ export default function ChannelTimeline({
   const item = (message: Message, index: number) => (
     <MessageItem
       message={message}
+      threadSearchActive={message.id === focusId}
       groupState={grouping.get(message.id)}
       followedBy={followedByFor(messages, index, grouping)}
       followsSystem={followsSystemFor(messages, index)}
@@ -120,10 +127,12 @@ export default function ChannelTimeline({
         source={{
           messages,
           hasOlder,
-          hasNewer: false,
+          hasNewer,
+          initialFocusMessageId: focusId,
+          sentinelAutoLoadBlockKey: focusId,
           loading,
           loadOlder,
-          loadNewer: async () => {},
+          loadNewer,
         }}
         renderItem={(message, index) => {
           const system = systems[index];

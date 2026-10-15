@@ -179,18 +179,18 @@ export async function verifyDiscovery({
       path: join(tmpdir(), `loom-discovery-activity-${viewport.width}.png`),
       animations: "disabled",
     });
-    // The official card supports keyboard open; context remains bounded and read-only.
+    // Keyboard activation opens the canonical conversation and highlights its message.
     const firstActivity = page.getByTestId("inbox-row").first();
     await firstActivity.focus();
     await page.keyboard.press("Enter");
     await page
-      .getByRole("dialog")
       .locator(
-        `[data-context-message-id="${activity.items[0].latestMessage.messageId}"]`,
+        `[data-timeline-message-id="${activity.items[0].latestMessage.messageId}"] [data-highlighted="true"]`,
       )
       .waitFor();
-    await page.keyboard.press("Escape");
-    await page.getByRole("dialog").waitFor({ state: "hidden" });
+    assert.equal(await page.getByRole("dialog").count(), 0);
+    await page.goBack();
+    await page.getByTestId("inbox-row").first().waitFor();
     const toolbar = page.getByTestId("inbox-toolbar");
     assert.equal(Math.round((await toolbar.boundingBox()).height), 54);
     assert.equal(await toolbar.getByRole("combobox").count(), 0);

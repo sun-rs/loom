@@ -1,4 +1,8 @@
-import { useEffect, useState } from "react";
+import { useResizablePanel } from "../packages/web/src/hooks/useResizablePanel.ts";
+import { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives.ts";
+import { MASTER_DETAIL_COMPACT_PANEL_BOUNDS } from "../packages/web/src/components/layout/masterDetailPanelSizing.ts";
+import PanelResizeHandle from "../packages/web/src/components/ui/PanelResizeHandle.tsx";
+import { useEffect, useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   AppShellMainSlot,
@@ -35,13 +39,40 @@ export default function DiscoveryPage({
   workspaceId,
   mode,
   onOpenRoom,
+  onOpenActivity,
+  detail,
 }: {
+  onOpenActivity: (row: DiscoveryRow, full: boolean) => Promise<void>;
+  detail?: ReactNode;
   client: RahClient;
   workspaceId: string;
   mode: "search" | "activity";
   onOpenRoom: (id: string) => Promise<void>;
 }) {
   const [params, setParams] = useSearchParams();
+  const wide = useMediaQuery("(min-width: 1024px)");
+  const fullPanel = useResizablePanel({
+    storageKey: "loom:activityPanelWidth",
+    min: 400,
+    max: 720,
+    defaultWidth: 560,
+  });
+  const compactPanel = useResizablePanel({
+    storageKey: "loom:activityCompactWidth",
+    ...MASTER_DETAIL_COMPACT_PANEL_BOUNDS,
+  });
+  const panel = params.has("thread") ? compactPanel : fullPanel;
+  useEffect(() => {
+    if (detail && !wide)
+      setParams(
+        (previous) => {
+          const next = new URLSearchParams(previous);
+          next.delete("view");
+          return next;
+        },
+        { replace: true },
+      );
+  }, [!!detail, wide, setParams]);
   const query = params.get("q") ?? "";
   const scope: WorkspaceSearchRequest["scope"] = [
     "channel",
@@ -68,72 +99,96 @@ export default function DiscoveryPage({
     });
   const Shell = mode === "search" ? SearchShellRoot : ActivityInboxPanel;
   return (
-    <AppShellMainSlot className="bg-layer-canvas theme-brutal:bg-white">
-      <PanelHeader
-        title={mode === "search" ? "搜索" : "动态"}
-        icon={mode === "search" ? <Search size={18} /> : <Activity size={18} />}
-      />
-      <Shell edge="attached" className="min-h-0 flex-1 border-l-0">
-        {mode === "search" ? (
-          <SearchShellFilters className="flex flex-wrap items-end gap-2">
-            <>
-              <form
-                className="flex min-w-0 flex-1 gap-2"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  if (input.trim() !== query) update("q", input.trim());
-                  else setTick((v) => v + 1);
-                }}
-              >
-                <Input
-                  aria-label="搜索内容"
-                  placeholder="搜索消息"
-                  maxLength={300}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(event) => {
-                    if (
-                      event.key === "Enter" &&
-                      (event.nativeEvent.isComposing || event.keyCode === 229)
-                    )
-                      event.preventDefault();
-                  }}
-                />
-                <Button type="submit">搜索消息</Button>
-              </form>
-              <SelectField
-                label="搜索范围"
-                value={scope!}
-                onChange={(value) => update("scope", value)}
-                options={[
-                  { value: "all", label: "全部对话" },
-                  { value: "channel", label: "频道" },
-                  { value: "direct", label: "私聊" },
-                  { value: "thread", label: "线程" },
-                ]}
-              />
-            </>
-          </SearchShellFilters>
-        ) : (
-          <ActivityFilters
-            value={filter!}
-            onChange={(value) => update("af", value)}
-            onRefresh={() => setTick((v) => v + 1)}
+    <>
+      <AppShellMainSlot
+        className={`relative bg-layer-canvas theme-brutal:bg-white ${detail ? "border-r border-line-muted theme-brutal:border-black" : ""}`}
+        style={
+          detail
+            ? { flex: `0 0 ${panel.width}px`, width: panel.width }
+            : undefined
+        }
+      >
+        {detail && (
+          <PanelResizeHandle
+            side="right"
+            visibleFrom="md"
+            data-testid="activity-detail-resize"
+            onPointerDown={panel.handleResizeStart}
+            onPointerMove={panel.handleResizeMove}
+            onPointerUp={panel.handleResizeEnd}
+            onPointerCancel={panel.handleResizeEnd}
           />
         )}
-        <Results
-          key={`${mode}:${query}:${scope}:${filter}:${tick}`}
-          client={client}
-          workspaceId={workspaceId}
-          mode={mode}
-          query={query}
-          scope={scope}
-          filter={filter}
-          tick={tick}
-          onOpenRoom={onOpenRoom}
+        <PanelHeader
+          title={mode === "search" ? "搜索" : "动态"}
+          icon={
+            mode === "search" ? <Search size={18} /> : <Activity size={18} />
+          }
         />
-      </Shell>
-    </AppShellMainSlot>
+        <Shell edge="attached" className="min-h-0 flex-1 border-l-0">
+          {mode === "search" ? (
+            <SearchShellFilters className="flex flex-wrap items-end gap-2">
+              <>
+                <form
+                  className="flex min-w-0 flex-1 gap-2"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    if (input.trim() !== query) update("q", input.trim());
+                    else setTick((v) => v + 1);
+                  }}
+                >
+                  <Input
+                    aria-label="搜索内容"
+                    placeholder="搜索消息"
+                    maxLength={300}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(event) => {
+                      if (
+                        event.key === "Enter" &&
+                        (event.nativeEvent.isComposing || event.keyCode === 229)
+                      )
+                        event.preventDefault();
+                    }}
+                  />
+                  <Button type="submit">搜索消息</Button>
+                </form>
+                <SelectField
+                  label="搜索范围"
+                  value={scope!}
+                  onChange={(value) => update("scope", value)}
+                  options={[
+                    { value: "all", label: "全部对话" },
+                    { value: "channel", label: "频道" },
+                    { value: "direct", label: "私聊" },
+                    { value: "thread", label: "线程" },
+                  ]}
+                />
+              </>
+            </SearchShellFilters>
+          ) : (
+            <ActivityFilters
+              value={filter!}
+              onChange={(value) => update("af", value)}
+              onRefresh={() => setTick((v) => v + 1)}
+            />
+          )}
+          <Results
+            key={`${mode}:${query}:${scope}:${filter}:${tick}`}
+            client={client}
+            workspaceId={workspaceId}
+            mode={mode}
+            query={query}
+            scope={scope}
+            filter={filter}
+            tick={tick}
+            onOpenRoom={onOpenRoom}
+            onOpenActivity={onOpenActivity}
+          />
+        </Shell>
+      </AppShellMainSlot>
+      {detail}
+    </>
   );
 }
 function Results({
@@ -145,7 +200,9 @@ function Results({
   filter,
   tick,
   onOpenRoom,
+  onOpenActivity,
 }: {
+  onOpenActivity: (row: DiscoveryRow, full: boolean) => Promise<void>;
   client: RahClient;
   workspaceId: string;
   mode: "search" | "activity";
@@ -155,6 +212,7 @@ function Results({
   tick: number;
   onOpenRoom: (id: string) => Promise<void>;
 }) {
+  const [route] = useSearchParams();
   const [cursors, setCursors] = useState<(string | undefined)[]>([undefined]);
   const cursor = cursors.at(-1);
   const [data, setData] = useState<DiscoveryPageResult>();
@@ -240,8 +298,12 @@ function Results({
                     <ActivityMessageRow
                       key={row.id}
                       row={row}
-                      active={selected?.id === row.id}
-                      onOpen={() => setSelected(row)}
+                      active={route.get("message") === row.message.messageId}
+                      onOpen={(full) => {
+                        void onOpenActivity(row, full).catch(() =>
+                          setError("无法打开消息，请刷新重试。"),
+                        );
+                      }}
                     />
                   ),
                 )

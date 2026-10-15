@@ -52,7 +52,8 @@ export class LoomThreadClient {
     this.reading = result.catch(() => undefined);
     return result;
   }
-  refresh(signal?: AbortSignal) {
+  private focusId?: string;
+  refresh(signal?: AbortSignal, focusId?: string) {
     return this.serial(async () => {
       const [context, catalog] = await Promise.all([
         this.client.request(
@@ -75,12 +76,27 @@ export class LoomThreadClient {
       );
       if (thread) this.bind(thread);
       else if (this.thread) throw Error("消息列已不可用，请重新打开");
-      if (this.messages)
+      if (!focusId && this.focusId && this.thread)
+        this.messages = new MessageSession({
+          client: this.client,
+          roomId: this.roomId,
+          threadId: this.thread.threadId,
+        });
+      if (this.messages && focusId && focusId !== this.focusId)
+        await this.messages.focus(focusId, signal);
+      else if (this.messages && (!focusId || this.messages.state.complete))
         await this.messages.syncUntilCurrent({
           limit: 50,
           maxPages: 2,
           signal,
         });
+      this.focusId = focusId;
+      return this.view();
+    });
+  }
+  newer() {
+    return this.serial(async () => {
+      await this.messages?.syncUntilCurrent({ limit: 50, maxPages: 1 });
       return this.view();
     });
   }
@@ -98,6 +114,7 @@ export class LoomThreadClient {
       room: this.room.state.snapshot?.room,
       messages: this.messages?.state.messages ?? [],
       hasOlder: this.messages?.state.hasEarlier ?? false,
+      hasNewer: this.messages ? !this.messages.state.complete : false,
     };
   }
   async send(body: string, attachmentIds: string[] = []) {

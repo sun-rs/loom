@@ -26,12 +26,18 @@ import { LoomThreadClient } from "./thread-client.ts";
 import { toOfficialMessage } from "./channel-client.ts";
 import { useRouteIntentOwner } from "./useIntentRoute.ts";
 const ControlledThreadPanel = ThreadPanel as ComponentType<
-  ThreadPanelProps & { loomFooter: ReactNode }
+  ThreadPanelProps & {
+    loomFooter: ReactNode;
+    loomFocusId?: string;
+    loomHasNewer?: boolean;
+    loomLoadNewer?: () => Promise<void>;
+  }
 >;
 export default function ThreadWorkspace({
   client,
   room,
   rootMessageId,
+  focusId,
   onClose,
   onChanged,
   embedded = false,
@@ -44,6 +50,7 @@ export default function ThreadWorkspace({
   client: RahClient;
   room: Room;
   rootMessageId: string;
+  focusId?: string;
   onClose: () => void;
   onChanged: () => void;
 }) {
@@ -98,7 +105,7 @@ export default function ThreadWorkspace({
     let timer: ReturnType<typeof setTimeout>;
     const read = async () => {
       try {
-        const value = await bridge.refresh(abort.signal);
+        const value = await bridge.refresh(abort.signal, focusId);
         if (!abort.signal.aborted) {
           setData(value);
           setError("");
@@ -117,7 +124,7 @@ export default function ThreadWorkspace({
       abort.abort();
       clearTimeout(timer);
     };
-  }, [bridge, tick]);
+  }, [bridge, tick, focusId]);
   const parent = data?.parent
     ? toOfficialMessage(data.parent, data.members)
     : undefined;
@@ -225,6 +232,16 @@ export default function ThreadWorkspace({
                 setError("更早回复读取失败，请重试。");
               }
             },
+          }}
+          key={focusId ?? "latest"}
+          loomFocusId={focusId}
+          loomHasNewer={data.hasNewer}
+          loomLoadNewer={async () => {
+            try {
+              setData(await bridge.newer());
+            } catch {
+              setError("更新回复读取失败，请重试。");
+            }
           }}
           loomFooter={footer}
         />

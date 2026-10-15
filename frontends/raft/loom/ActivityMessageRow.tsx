@@ -1,3 +1,4 @@
+import { useRef, useEffect } from "react";
 // Structural port of ThreadsInbox.tsx InboxRow (upstream revision in adoption.json).
 // Keep the original Card geometry/state classes; Loom supplies canonical row data.
 // Done/context-menu/task controls are omitted until their complete UI flow is bound.
@@ -14,9 +15,17 @@ export default function ActivityMessageRow({
 }: {
   row: DiscoveryRow;
   active: boolean;
-  onOpen: () => void;
+  onOpen: (full: boolean) => void;
 }) {
   const { formatMessage, locale } = useIntl();
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(timer.current), []);
+  const activate = (detail: number) => {
+    clearTimeout(timer.current);
+    if (!window.matchMedia("(min-width: 1024px)").matches || detail >= 2)
+      onOpen(true);
+    else timer.current = setTimeout(() => onOpen(false), 220);
+  };
   const unreadCount = row.unread ?? 0;
   const thread = row.activityKind === "thread";
   const iconClass =
@@ -36,11 +45,11 @@ export default function ActivityMessageRow({
       data-testid="inbox-row"
       data-active={active ? "true" : undefined}
       aria-current={active ? "true" : undefined}
-      onClick={onOpen}
+      onClick={(event) => activate(event.detail)}
       onKeyDown={(event) => {
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
-          onOpen();
+          activate(1);
         }
       }}
       className={`group relative flex w-full items-start gap-3 rounded-md border p-3 theme-brutal:rounded-none text-left transition-colors hover:border-line-muted hover:bg-fill-muted hover:shadow-raft-sm active:border-line-muted active:shadow-raft-sm theme-brutal:border-2 theme-brutal:hover:border-black theme-brutal:hover:shadow-brutal-sm theme-brutal:active:border-black theme-brutal:active:shadow-brutal-sm ${active ? "border-line-muted bg-fill-muted shadow-raft-sm theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal-sm" : "border-line-muted bg-layer-card theme-brutal:border-black/30 theme-brutal:bg-white"}`}

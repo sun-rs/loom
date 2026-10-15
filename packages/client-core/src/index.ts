@@ -231,6 +231,63 @@ export class MessageSession {
     });
   }
 
+  async focus(messageId: string, signal?: AbortSignal) {
+    const { message } = await this.#client.request(
+      "message.context",
+      { roomId: this.#roomId, messageId },
+      signal ? { signal } : undefined,
+    );
+    if (
+      message.roomId !== this.#roomId ||
+      message.messageId !== messageId ||
+      message.threadId !== this.#threadId
+    )
+      throw Error("Message focus scope mismatch");
+    const boundary = {
+      roomId: this.#roomId,
+      ...(this.#threadId ? { threadId: this.#threadId } : {}),
+      beforeSeq: message.roomSeq + 1,
+    };
+    const page = await this.#client.request(
+      "message.list",
+      { ...boundary, limit: 50 },
+      signal ? { signal } : undefined,
+    );
+    validateMessagePage(page.messages, boundary);
+    if (
+      !page.messages.some((m) => m.messageId === messageId) ||
+      page.cursorBefore !== page.messages[0]?.roomSeq ||
+      page.cursorAfter !== page.messages.at(-1)?.roomSeq
+    )
+      throw Error("Focused message window mismatch");
+    const afterBoundary = {
+      roomId: this.#roomId,
+      ...(this.#threadId ? { threadId: this.#threadId } : {}),
+      afterSeq: message.roomSeq,
+    };
+    const following = await this.#client.request(
+      "message.list",
+      { ...afterBoundary, limit: 25 },
+      signal ? { signal } : undefined,
+    );
+    validateMessagePage(following.messages, afterBoundary);
+    if (
+      following.cursorBefore !==
+        (following.messages[0]?.roomSeq ?? message.roomSeq) ||
+      following.cursorAfter !==
+        (following.messages.at(-1)?.roomSeq ?? message.roomSeq) ||
+      (!following.messages.length && following.hasMoreAfter)
+    )
+      throw Error("Focused following window mismatch");
+    this.#messages = Object.freeze([...page.messages, ...following.messages]);
+    this.#cursorBefore = page.cursorBefore;
+    this.#cursorAfter = following.cursorAfter;
+    this.#hasEarlier = page.hasMoreBefore;
+    this.#complete = !following.hasMoreAfter;
+    this.#initialized = true;
+    return this.state;
+  }
+
   async syncUntilCurrent(
     options: {
       limit?: number;

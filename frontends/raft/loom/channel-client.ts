@@ -81,7 +81,7 @@ export async function loadChannelDirectory(client: RahClient) {
 export class LoomChannelClient {
   readonly writes = new WriteIntentSlot();
   readonly room: RoomSession;
-  readonly messages: RoomTimelineSession;
+  messages: RoomTimelineSession;
   readonly client: RahClient;
   readonly roomId: string;
   private threads: Thread[] = [];
@@ -98,10 +98,17 @@ export class LoomChannelClient {
     this.tail = result.catch(() => undefined);
     return result;
   }
-  refresh() {
+  private focusId?: string;
+  refresh(focusId?: string) {
     return this.serial(async () => {
       await this.room.syncUntilCurrent({ maxPages: 10 });
-      await this.messages.syncUntilCurrent({ limit: 50, maxPages: 2 });
+      if (!focusId && this.focusId)
+        this.messages = new RoomTimelineSession(this.client, this.roomId);
+      if (focusId && focusId !== this.focusId)
+        await this.messages.focus(focusId);
+      else if (!focusId || this.messages.state.complete)
+        await this.messages.syncUntilCurrent({ limit: 50, maxPages: 2 });
+      this.focusId = focusId;
       this.threads = (
         await this.client.request("thread.list", { roomId: this.roomId })
       ).threads;
@@ -133,6 +140,12 @@ export class LoomChannelClient {
       );
     });
   }
+  newer() {
+    return this.serial(async () => {
+      await this.messages.syncUntilCurrent({ limit: 50, maxPages: 1 });
+      return this.view();
+    });
+  }
   older() {
     return this.serial(async () => {
       await this.messages.loadEarlier({ limit: 50 });
@@ -144,9 +157,11 @@ export class LoomChannelClient {
     members: readonly Principal[];
     messages: OfficialMessage[];
     hasOlder: boolean;
+    hasNewer: boolean;
     threads: readonly Thread[];
   } {
     return {
+      hasNewer: !this.messages.state.complete,
       threads: this.threads,
       members: this.room.state.snapshot?.members ?? [],
       room:

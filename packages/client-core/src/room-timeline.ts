@@ -82,6 +82,46 @@ export class RoomTimelineSession {
       ),
     );
   }
+  /** Replace the window around a validated message, without reading intervening history. */
+  async focus(messageId: string, signal?: AbortSignal) {
+    const { message } = await this.client.request(
+      "message.context",
+      { roomId: this.roomId, messageId },
+      signal ? { signal } : undefined,
+    );
+    if (
+      message.roomId !== this.roomId ||
+      message.messageId !== messageId ||
+      message.threadId
+    )
+      throw Error("Message focus scope mismatch");
+    const boundary = { beforeSeq: message.roomSeq + 1 };
+    const page = await this.client.request(
+      "room.timeline",
+      { roomId: this.roomId, limit: 50, ...boundary },
+      signal ? { signal } : undefined,
+    );
+    this.validate(page, boundary);
+    if (
+      !page.items.some(
+        (i) => i.kind === "message" && i.message.messageId === messageId,
+      )
+    )
+      throw Error("Focused message unavailable");
+    const following = await this.client.request(
+      "room.timeline",
+      { roomId: this.roomId, afterSeq: message.roomSeq, limit: 25 },
+      signal ? { signal } : undefined,
+    );
+    this.validate(following, { afterSeq: message.roomSeq });
+    this.items = Object.freeze([...page.items, ...following.items]);
+    this.before = page.cursorBefore;
+    this.after = following.cursorAfter;
+    this.earlier = page.hasMoreBefore;
+    this.complete = !following.hasMoreAfter;
+    this.initialized = true;
+    return this.state;
+  }
   async syncUntilCurrent(
     options: { limit?: number; maxPages?: number; signal?: AbortSignal } = {},
   ) {

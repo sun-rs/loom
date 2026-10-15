@@ -1,0 +1,216 @@
+import assert from "node:assert/strict";
+export async function verifyActivityNavigation({
+  browser,
+  origin,
+  client,
+  workspace,
+  head,
+  instances,
+}) {
+  const { room } = await client.request("room.create", {
+    workspaceId: workspace.workspaceId,
+    basedOnControlRoomSeq: await head(workspace.controlRoomId),
+    kind: "channel",
+    name: "FIXTURE activity navigation",
+    slug: "fixture-activity-navigation",
+    idempotencyKey: "activity-navigation-room",
+  });
+  const post = async (n) =>
+    client.request("message.post", {
+      roomId: room.roomId,
+      body: `FIXTURE navigation ${n}`,
+      recipients: [],
+      basedOnRoomSeq: await head(room.roomId),
+      idempotencyKey: `activity-navigation-${n}`,
+    });
+  await post("target");
+  const snapshot = await client.request("activity.list", {
+    workspaceId: workspace.workspaceId,
+    limit: 20,
+  });
+  const card = snapshot.items.find((i) => i.roomId === room.roomId);
+  assert.ok(card);
+  for (let n = 0; n < 65; n++) await post(n);
+  const { thread } = await client.request("thread.create", {
+    roomId: room.roomId,
+    rootMessageId: card.latestMessage.messageId,
+    recipientIds: [],
+    basedOnRoomSeq: await head(room.roomId),
+    idempotencyKey: "activity-thread",
+  });
+  const reply = async (n) =>
+    client.request("thread.reply", {
+      roomId: room.roomId,
+      threadId: thread.threadId,
+      body: `FIXTURE reply navigation ${n}`,
+      recipientIds: [],
+      basedOnRoomSeq: await head(room.roomId),
+      idempotencyKey: `activity-reply-${n}`,
+    });
+  await reply("target");
+  await client.request("activity.follow", {
+    roomId: room.roomId,
+    threadId: thread.threadId,
+    following: true,
+  });
+  const threadSnapshot = await client.request("activity.list", {
+    workspaceId: workspace.workspaceId,
+    limit: 20,
+  });
+  const threadCard = threadSnapshot.items.find(
+    (i) => i.threadId === thread.threadId,
+  );
+  assert.ok(threadCard);
+  for (let n = 0; n < 60; n++) await reply(n);
+  await client.request("agent.manage", {
+    action: "set_state",
+    agentId: instances[0].agentId,
+    state: "disabled",
+    basedOnRoomSeq: await head(workspace.controlRoomId),
+    idempotencyKey: "activity-direct-disable",
+  });
+  const { room: direct } = await client.request("room.direct.open", {
+    workspaceId: workspace.workspaceId,
+    peerPrincipalId: instances[0].instanceId,
+    basedOnControlRoomSeq: await head(workspace.controlRoomId),
+    idempotencyKey: "activity-direct",
+  });
+  await client.request("message.post", {
+    roomId: direct.roomId,
+    body: "FIXTURE private navigation target",
+    recipients: [],
+    basedOnRoomSeq: await head(direct.roomId),
+    idempotencyKey: "activity-direct-target",
+  });
+  const directSnapshot = await client.request("activity.list", {
+    workspaceId: workspace.workspaceId,
+    limit: 20,
+  });
+  const directCard = directSnapshot.items.find(
+    (i) => i.roomId === direct.roomId,
+  );
+  assert.ok(directCard);
+  const results = [];
+  for (const width of [1440, 390]) {
+    const context = await browser.newContext({
+      viewport: { width, height: width === 390 ? 844 : 1000 },
+      deviceScaleFactor: 1,
+      hasTouch: width === 390,
+      isMobile: width === 390,
+    });
+    try {
+      const page = await context.newPage();
+      const errors = [];
+      page.on("pageerror", (e) => errors.push(e.message));
+      let visibleSnapshot = snapshot;
+      await page.route("**/v3/client/activity/list", (route) =>
+        route.fulfill({ json: visibleSnapshot }),
+      );
+      await page.goto(origin + "/?view=activity");
+      await page.locator(`[data-result-id="${card.key}"]`).click();
+      const highlighted = page.locator(
+        `[data-timeline-message-id="${card.latestMessage.messageId}"] [data-highlighted="true"]`,
+      );
+      await highlighted.waitFor({ timeout: 8000 });
+      assert.equal(await page.getByRole("dialog").count(), 0);
+      assert.equal(
+        new URL(page.url()).searchParams.get("message"),
+        card.latestMessage.messageId,
+      );
+      assert.equal(
+        new URL(page.url()).searchParams.get("view"),
+        width === 1440 ? "activity" : null,
+      );
+      const box = await highlighted.boundingBox();
+      assert.ok(
+        box.y >= 0 && box.y + box.height <= (width === 390 ? 844 : 1000),
+      );
+      assert.ok(
+        await highlighted.evaluate((el) =>
+          el.className.includes("bg-brutal-cyan/25"),
+        ),
+      );
+      await page.reload();
+      await highlighted.waitFor();
+      await page.screenshot({
+        path: `/tmp/loom-activity-channel-${width}.png`,
+      });
+      if (width === 1440) {
+        const handle = page.getByTestId("activity-detail-resize");
+        const before = await handle.boundingBox();
+        await page.mouse.move(before.x + before.width / 2, before.y + 80);
+        await page.mouse.down();
+        await page.mouse.move(before.x + before.width / 2 + 40, before.y + 80, {
+          steps: 5,
+        });
+        await page.mouse.up();
+        const after = await handle.boundingBox();
+        assert.ok(after.x > before.x + 25);
+
+        await page.locator(`[data-result-id="${card.key}"]`).dblclick();
+        await page.waitForURL((u) => !u.searchParams.has("view"));
+        await highlighted.waitFor();
+      }
+      visibleSnapshot = threadSnapshot;
+      await page.goto(origin + "/?view=activity");
+      await page.locator(`[data-result-id="${threadCard.key}"]`).click();
+      const replyTarget = page.locator(
+        `[data-timeline-message-id="${threadCard.latestMessage.messageId}"] [data-highlighted="true"]`,
+      );
+      await replyTarget.waitFor();
+      assert.equal(
+        new URL(page.url()).searchParams.get("thread"),
+        card.latestMessage.messageId,
+      );
+      assert.equal(await page.getByRole("dialog").count(), 0);
+      await page.reload();
+      await replyTarget.waitFor();
+      const replyBox = await replyTarget.boundingBox();
+      assert.ok(replyBox.y >= 0 && replyBox.y < (width === 390 ? 844 : 1000));
+      await page.screenshot({ path: `/tmp/loom-activity-thread-${width}.png` });
+      await page
+        .getByTestId(width === 1440 ? "thread-close" : "thread-mobile-back")
+        .click();
+      await page.waitForURL(
+        (u) => !u.searchParams.has("thread") && !u.searchParams.has("message"),
+      );
+      assert.equal(
+        await page.getByText("Message focus scope mismatch").count(),
+        0,
+      );
+      visibleSnapshot = directSnapshot;
+      await page.goto(origin + "/?view=activity");
+      await page.locator(`[data-result-id="${directCard.key}"]`).click();
+      await page
+        .locator(
+          `[data-timeline-message-id="${directCard.latestMessage.messageId}"] [data-highlighted="true"]`,
+        )
+        .waitFor();
+      assert.equal(new URL(page.url()).searchParams.get("room"), direct.roomId);
+      assert.equal(new URL(page.url()).searchParams.has("thread"), false);
+      await page.goBack();
+      await page.getByTestId("inbox-row").first().waitFor();
+      assert.equal(new URL(page.url()).searchParams.get("view"), "activity");
+      assert.deepEqual(errors, []);
+      await page.screenshot({
+        path: `/tmp/loom-activity-navigation-${width}.png`,
+      });
+      results.push({
+        width,
+        oldMessageLocated: true,
+        oldThreadReplyLocated: true,
+        privateMessageLocated: true,
+        backRestoresActivity: true,
+        threadCloseClearsReplyTarget: true,
+        desktopDividerDraggable: width === 1440,
+        nativeHighlight: true,
+        noContextDialog: true,
+        refreshRestores: true,
+        desktopDetailAndDoubleClick: width === 1440,
+      });
+    } finally {
+      await context.close();
+    }
+  }
+  return results;
+}

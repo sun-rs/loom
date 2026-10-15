@@ -21,12 +21,12 @@ export function adaptThreadFooter(source: string) {
   let code = replaceOnce(
     source,
     "  readOnlyData?: ReadOnlyThreadData;",
-    "  readOnlyData?: ReadOnlyThreadData;\n  loomFooter?: ReactNode;",
+    "  readOnlyData?: ReadOnlyThreadData;\n  loomFooter?: ReactNode;\n  loomFocusId?: string;\n  loomHasNewer?: boolean;\n  loomLoadNewer?: () => Promise<void>;",
   );
   code = replaceOnce(
     code,
     "  readOnlyData,\n}: ThreadPanelProps &",
-    "  readOnlyData,\n  loomFooter,\n  hideParentMessage,\n  parentSlot,\n}: ThreadPanelProps &",
+    "  readOnlyData,\n  loomFooter,\n  loomFocusId,\n  loomHasNewer,\n  loomLoadNewer,\n  hideParentMessage,\n  parentSlot,\n}: ThreadPanelProps &",
   );
   code = replaceOnce(
     code,
@@ -42,6 +42,31 @@ export function adaptThreadFooter(source: string) {
     code,
     'readOnlyData.error ? (\n          <div className="flex h-full flex-col overflow-auto">\n            {parent}',
     'readOnlyData.error ? (\n          <div className="flex h-full flex-col overflow-auto">',
+  );
+  code = replaceOnce(
+    code,
+    "    hasNewer: false,",
+    "    hasNewer: loomHasNewer ?? false,\n    initialFocusMessageId: loomFocusId,\n    sentinelAutoLoadBlockKey: loomFocusId,",
+  );
+  code = replaceOnce(
+    code,
+    "    loadNewer: () => undefined,",
+    "    loadNewer: loomLoadNewer ?? (() => undefined),",
+  );
+  code = replaceOnce(
+    code,
+    "  }), [readOnlyData.hasOlder,",
+    "  }), [loomFocusId, loomHasNewer, loomLoadNewer, readOnlyData.hasOlder,",
+  );
+  code = replaceOnce(
+    code,
+    "        readOnlySender={readOnlyData.senderByMessageId.get(message.id)}",
+    "        threadSearchActive={message.id === loomFocusId}\n        readOnlySender={readOnlyData.senderByMessageId.get(message.id)}",
+  );
+  code = replaceOnce(
+    code,
+    "  ), [readOnlyData.channels,",
+    "  ), [loomFocusId, readOnlyData.channels,",
   );
   return replaceOnce(
     code,

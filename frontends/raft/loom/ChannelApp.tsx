@@ -76,9 +76,11 @@ function Channel({
   onAddInstance,
   onBack,
   threadRootId,
+  focusId,
   onThread,
 }: {
   threadRootId?: string;
+  focusId?: string;
   onThread: (id?: string) => void;
   onBack: () => void;
   onOpenPrivate: (id: string) => void;
@@ -111,7 +113,7 @@ function Channel({
     let timer: ReturnType<typeof setTimeout>;
     async function poll() {
       try {
-        const next = await bridge.refresh();
+        const next = await bridge.refresh(threadRootId ? undefined : focusId);
         if (!disposed) {
           setView(next);
           setError("");
@@ -130,7 +132,7 @@ function Channel({
       disposed = true;
       clearTimeout(timer);
     };
-  }, [bridge]);
+  }, [bridge, focusId, threadRootId]);
   useLayoutEffect(() => {
     const release =
       !loading && !error
@@ -324,6 +326,12 @@ function Channel({
                 </p>
               ) : (
                 <ChannelTimeline
+                  key={focusId ?? "latest"}
+                  focusId={threadRootId ? undefined : focusId}
+                  hasNewer={view.hasNewer}
+                  loadNewer={async () => {
+                    setView(await bridge.newer());
+                  }}
                   roomId={channel.roomId}
                   messages={view.messages}
                   members={error ? [] : view.members}
@@ -415,10 +423,11 @@ function Channel({
         </ConversationPanelRoot>
         {!isPrivate && threadRootId && (
           <ThreadWorkspace
-            key={threadRootId}
+            key={`${threadRootId}:${focusId ?? "latest"}`}
             client={bridge.client}
             room={channel}
             rootMessageId={threadRootId}
+            focusId={focusId}
             onClose={() => onThread(undefined)}
             onChanged={() => {
               void bridge
@@ -462,6 +471,7 @@ export default function ChannelApp() {
   const [error, setError] = useState("");
   const [params, setParams] = useIntentRoute();
   const destination = params.get("view") ?? "channels";
+  const activityNavigation = useRef(0);
   const selectDestination = (id: Destination) => {
     if (hasRouteBoundIntent()) return;
     setParams((previous) => {
@@ -747,15 +757,17 @@ export default function ChannelApp() {
                 </p>
               ) : !directory ? (
                 <Spinner aria-label="正在连接 Loom" />
-              ) : selected ? (
+              ) : selected && destination === "channels" ? (
                 <Channel
-                  key={selected.roomId}
+                  key={`${selected.roomId}:${params.get("message") ?? "latest"}`}
+                  focusId={params.get("message") ?? undefined}
                   threadRootId={params.get("thread") ?? undefined}
                   onThread={(id) => {
                     if (hasRouteBoundIntent()) return;
                     setParams((previous) => {
                       const next = new URLSearchParams(previous);
                       next.set("room", selected.roomId);
+                      next.delete("message");
                       if (id) next.set("thread", id);
                       else next.delete("thread");
                       return next;
@@ -811,6 +823,81 @@ export default function ChannelApp() {
                 client={client}
                 workspaceId={directory.workspace.workspaceId}
                 mode={destination}
+                onOpenActivity={async (row, full) => {
+                  if (hasUnresolvedIntents()) throw Error("仍有未决操作");
+                  const request = ++activityNavigation.current;
+                  const expected = params.toString();
+                  const context = await client.request("message.context", {
+                    roomId: row.message.roomId,
+                    messageId: row.message.messageId,
+                  });
+                  if (
+                    context.message.roomId !== row.message.roomId ||
+                    context.message.messageId !== row.message.messageId
+                  )
+                    throw Error("消息身份不一致");
+                  const next = await loadChannelDirectory(client);
+                  if (
+                    ![
+                      ...next.channels,
+                      ...next.archivedChannels,
+                      ...next.privateBoxes,
+                    ].some((r) => r.roomId === row.message.roomId)
+                  )
+                    throw Error("对话不可用");
+                  if (request !== activityNavigation.current) return;
+                  if (context.message.threadId && !context.rootMessageId)
+                    throw Error("消息列根消息缺失");
+                  setDirectory(next);
+                  setParams((previous) => {
+                    if (
+                      request !== activityNavigation.current ||
+                      previous.toString() !== expected ||
+                      hasUnresolvedIntents()
+                    )
+                      return previous;
+                    const target = new URLSearchParams({
+                      room: row.message.roomId,
+                      message: row.message.messageId,
+                    });
+                    if (!full) {
+                      target.set("view", "activity");
+                      if (previous.has("af"))
+                        target.set("af", previous.get("af")!);
+                    }
+                    if (context.message.threadId) {
+                      target.set("thread", context.rootMessageId!);
+                    }
+                    return target;
+                  });
+                }}
+                detail={
+                  destination === "activity" &&
+                  requested &&
+                  selected &&
+                  bridge ? (
+                    <Channel
+                      key={`${selected.roomId}:${params.get("message")}`}
+                      channel={selected}
+                      bridge={bridge}
+                      controlRoomId={directory.workspace.controlRoomId}
+                      focusId={params.get("message") ?? undefined}
+                      threadRootId={params.get("thread") ?? undefined}
+                      onThread={(id) =>
+                        setParams((previous) => {
+                          const next = new URLSearchParams(previous);
+                          next.delete("message");
+                          if (id) next.set("thread", id);
+                          else next.delete("thread");
+                          return next;
+                        })
+                      }
+                      onBack={() => setParams({ view: "activity" })}
+                      onOpenPrivate={openPrivate}
+                      onAddInstance={undefined}
+                    />
+                  ) : undefined
+                }
                 onOpenRoom={async (id) => {
                   if (hasUnresolvedIntents()) throw Error("仍有未决操作");
                   const next = await loadChannelDirectory(client);

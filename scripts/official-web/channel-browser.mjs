@@ -1,3 +1,4 @@
+import { verifyActivityNavigation } from "./activity-navigation-browser.mjs";
 import { verifyAttachmentDetails } from "./attachment-details-browser.mjs";
 import { verifyAttachments } from "./attachments-browser.mjs";
 import { verifyTaskManagement } from "./task-management-browser.mjs";
@@ -128,441 +129,458 @@ try {
     instances.push(result.instance);
   }
   browser = await chromium.launch({ headless: true });
-  const settingsNavigationResults = await verifySettingsNavigation({
-    browser,
-    origin,
-  });
-  const controlResults = await verifyChannelControls({
-    browser,
-    origin,
-    client,
-    channel: channels[0],
-  });
-  const systemNoticeResults = await verifySystemNotices({
-    browser,
-    origin,
-    client,
-    workspace,
-    head,
-  });
-  for (const instance of instances)
-    await client.request("agent.manage", {
-      action: "set_state",
-      agentId: instance.agentId,
-      state: "disabled",
-      basedOnRoomSeq: await head(workspace.controlRoomId),
-      idempotencyKey: `fixture-mention-disable-${instance.instanceId}`,
-    });
-  const mentionResults = await verifyMentions({
-    browser,
-    origin,
-    client,
-    channel: channels[2],
-    otherChannel: channels[0],
-    instance: instances[0],
-    name: instanceNames[0],
-  });
-  for (const viewport of [
-    { width: 1440, height: 1000 },
-    { width: 390, height: 844 },
-  ]) {
-    const context = await browser.newContext({
-      viewport,
-      deviceScaleFactor: 1,
-      serviceWorkers: "block",
-    });
-    const page = await context.newPage();
-    const errors = [];
-    const external = [];
-    page.on("pageerror", (e) => errors.push(e.message));
-    await page.route("**/*", (route) => {
-      if (new URL(route.request().url()).origin !== origin) {
-        external.push(route.request().url());
-        return route.abort();
-      }
-      return route.continue();
-    });
-    await verifyChatBootstrap(page, origin, channels[0].roomId);
-    await verifyMobileChatNavigation(page, channels[0].roomId);
-    await openChatRow(page, channels[2].roomId);
-    const memberButton = page.getByRole("button", { name: "频道成员与状态" });
-    await memberButton.click();
-    const memberDialog = page.getByRole("dialog");
-    await memberDialog.getByText(instanceNames[0], { exact: true }).waitFor();
-    await memberDialog.getByText(instanceNames[1], { exact: true }).waitFor();
-    assert.equal(
-      await memberDialog
-        .getByText("空闲 · 本频道无排队工作", { exact: true })
-        .count(),
-      2,
+  if (process.env.LOOM_BROWSER_SLICE === "activity-navigation") {
+    console.log(
+      JSON.stringify(
+        await verifyActivityNavigation({
+          browser,
+          origin,
+          client,
+          workspace,
+          head,
+          instances,
+        }),
+      ),
     );
-    await page.screenshot({
-      path: join(tmpdir(), `loom-official-members-${viewport.width}.png`),
-      animations: "disabled",
+  } else {
+    const settingsNavigationResults = await verifySettingsNavigation({
+      browser,
+      origin,
     });
-    for (let i = 0; i < 3; i++) {
-      await page.keyboard.press("Tab");
-      await page.waitForFunction(() =>
-        document
-          .querySelector('[role="dialog"]')
-          ?.contains(document.activeElement),
-      );
+    const controlResults = await verifyChannelControls({
+      browser,
+      origin,
+      client,
+      channel: channels[0],
+    });
+    const systemNoticeResults = await verifySystemNotices({
+      browser,
+      origin,
+      client,
+      workspace,
+      head,
+    });
+    for (const instance of instances)
+      await client.request("agent.manage", {
+        action: "set_state",
+        agentId: instance.agentId,
+        state: "disabled",
+        basedOnRoomSeq: await head(workspace.controlRoomId),
+        idempotencyKey: `fixture-mention-disable-${instance.instanceId}`,
+      });
+    const mentionResults = await verifyMentions({
+      browser,
+      origin,
+      client,
+      channel: channels[2],
+      otherChannel: channels[0],
+      instance: instances[0],
+      name: instanceNames[0],
+    });
+    for (const viewport of [
+      { width: 1440, height: 1000 },
+      { width: 390, height: 844 },
+    ]) {
+      const context = await browser.newContext({
+        viewport,
+        deviceScaleFactor: 1,
+        serviceWorkers: "block",
+      });
+      const page = await context.newPage();
+      const errors = [];
+      const external = [];
+      page.on("pageerror", (e) => errors.push(e.message));
+      await page.route("**/*", (route) => {
+        if (new URL(route.request().url()).origin !== origin) {
+          external.push(route.request().url());
+          return route.abort();
+        }
+        return route.continue();
+      });
+      await verifyChatBootstrap(page, origin, channels[0].roomId);
+      await verifyMobileChatNavigation(page, channels[0].roomId);
+      await openChatRow(page, channels[2].roomId);
+      const memberButton = page.getByRole("button", { name: "频道成员与状态" });
+      await memberButton.click();
+      const memberDialog = page.getByRole("dialog");
+      await memberDialog.getByText(instanceNames[0], { exact: true }).waitFor();
+      await memberDialog.getByText(instanceNames[1], { exact: true }).waitFor();
       assert.equal(
-        await memberDialog.evaluate((node) =>
-          node.contains(document.activeElement),
-        ),
+        await memberDialog
+          .getByText("空闲 · 本频道无排队工作", { exact: true })
+          .count(),
+        2,
+      );
+      await page.screenshot({
+        path: join(tmpdir(), `loom-official-members-${viewport.width}.png`),
+        animations: "disabled",
+      });
+      for (let i = 0; i < 3; i++) {
+        await page.keyboard.press("Tab");
+        await page.waitForFunction(() =>
+          document
+            .querySelector('[role="dialog"]')
+            ?.contains(document.activeElement),
+        );
+        assert.equal(
+          await memberDialog.evaluate((node) =>
+            node.contains(document.activeElement),
+          ),
+          true,
+        );
+      }
+      await page.route("**/v3/client/rooms/agents/activity/list", (route) =>
+        route.abort(),
+      );
+      await memberDialog.getByRole("alert").waitFor();
+      assert.equal(
+        await memberDialog
+          .getByText("空闲 · 本频道无排队工作", { exact: true })
+          .count(),
+        0,
+        "failed read must not retain a stale idle label",
+      );
+      await page.unroute("**/v3/client/rooms/agents/activity/list");
+      await memberDialog.getByText(instanceNames[0], { exact: true }).waitFor();
+      await page.keyboard.press("Escape");
+      await memberDialog.waitFor({ state: "hidden" });
+      assert.equal(
+        await memberButton.evaluate((node) => node === document.activeElement),
         true,
       );
-    }
-    await page.route("**/v3/client/rooms/agents/activity/list", (route) =>
-      route.abort(),
-    );
-    await memberDialog.getByRole("alert").waitFor();
-    assert.equal(
-      await memberDialog
-        .getByText("空闲 · 本频道无排队工作", { exact: true })
-        .count(),
-      0,
-      "failed read must not retain a stale idle label",
-    );
-    await page.unroute("**/v3/client/rooms/agents/activity/list");
-    await memberDialog.getByText(instanceNames[0], { exact: true }).waitFor();
-    await page.keyboard.press("Escape");
-    await memberDialog.waitFor({ state: "hidden" });
-    assert.equal(
-      await memberButton.evaluate((node) => node === document.activeElement),
-      true,
-    );
-    await memberButton.press("Enter");
-    await memberDialog.waitFor();
-    await page.getByRole("button", { name: "关闭成员列表" }).click();
-    await memberDialog.waitFor({ state: "hidden" });
-    await memberButton.click();
-    await memberDialog.waitFor();
-    await page.mouse.click(4, 4);
-    await memberDialog.waitFor({ state: "hidden" });
-    await openChatRow(page, channels[0].roomId);
-    await memberButton.click();
-    await memberDialog.getByText("Human", { exact: true }).waitFor();
-    assert.equal(
-      await memberDialog.getByText(instanceNames[0], { exact: true }).count(),
-      0,
-    );
-    await page.keyboard.press("Escape");
-    const composer = page.getByTestId("composer-textarea");
-    await composer.waitFor({ timeout: 20000 });
-    const columns = await page.evaluate(() => {
-      const sidebar = document
-        .querySelector('[data-testid="public-server-channel-sidebar-root"]')
-        .getBoundingClientRect();
-      const timeline = document
-        .querySelector('[data-testid="composer-textarea"]')
-        .getBoundingClientRect();
-      return {
-        sidebarRight: sidebar.right,
-        sidebarWidth: sidebar.width,
-        composerLeft: timeline.left,
-      };
-    });
-    if (viewport.width >= 768) {
-      assert.ok(
-        columns.composerLeft >= columns.sidebarRight,
-        "desktop shell columns stay side by side",
-      );
-    } else {
+      await memberButton.press("Enter");
+      await memberDialog.waitFor();
+      await page.getByRole("button", { name: "关闭成员列表" }).click();
+      await memberDialog.waitFor({ state: "hidden" });
+      await memberButton.click();
+      await memberDialog.waitFor();
+      await page.mouse.click(4, 4);
+      await memberDialog.waitFor({ state: "hidden" });
+      await openChatRow(page, channels[0].roomId);
+      await memberButton.click();
+      await memberDialog.getByText("Human", { exact: true }).waitFor();
       assert.equal(
-        columns.sidebarWidth,
+        await memberDialog.getByText(instanceNames[0], { exact: true }).count(),
         0,
-        "mobile detail hides the list column",
       );
-    }
-    await page.getByText("FIXTURE history 55", { exact: true }).waitFor();
-    const timeline = page.getByTestId("loom-message-timeline");
-    await timeline.evaluate((node) => {
-      node.scrollTop = 0;
-    });
-    await page.getByText("FIXTURE history 1", { exact: true }).waitFor();
-    await timeline.evaluate((node) => {
-      node.scrollTop = node.scrollHeight;
-    });
-    const body = `FIXTURE send ${viewport.width}`;
-    await composer.fill(body);
-    await composer.press("Enter");
-    await page.getByText(body, { exact: true }).waitFor();
-    assert.equal(
-      (
-        await client.request("message.list", {
-          roomId: channels[0].roomId,
-          limit: 100,
-        })
-      ).messages.filter((m) => m.body === body).length,
-      1,
-    );
-    await page.reload();
-    await page.getByText(body, { exact: true }).waitFor();
-    await openChatRow(page, channels[1].roomId);
-    await page
-      .locator('textarea[placeholder="发送到 #FIXTURE Beta"]')
-      .waitFor();
-    if (viewport.width === 1440)
-      await page.getByText("频道还没有消息", { exact: true }).waitFor();
-    else await page.getByText("FIXTURE lost 1440", { exact: true }).waitFor();
-    assert.equal(await page.getByText(body, { exact: true }).count(), 0);
-    await composer.fill("FIXTURE IME");
-    await composer.dispatchEvent("keydown", {
-      key: "Enter",
-      code: "Enter",
-      isComposing: true,
-      keyCode: 229,
-    });
-    assert.equal(await composer.inputValue(), "FIXTURE IME");
-    await composer.press("Shift+Enter");
-    assert.ok((await composer.inputValue()).includes("\n"));
-    let dropped = false;
-    const sendRequests = [];
-    await page.route("**/v3/client/messages/post", async (route) => {
-      sendRequests.push(route.request().postDataJSON());
-      if (!dropped) {
-        dropped = true;
-        await route.fetch();
-        await route.abort();
-      } else await route.continue();
-    });
-    await composer.fill(`FIXTURE lost ${viewport.width}`);
-    await composer.press("Enter");
-    await page.getByRole("button", { name: "核实发送" }).waitFor();
-    assert.equal(sendRequests.length, 1);
-    const unreadTarget = page.locator(
-      `[data-public-channel-id="${channels[2].roomId}"]`,
-    );
-    await showChatList(page);
-    await unreadTarget.click({ button: "right" });
-    await page.getByRole("menuitem", { name: "标记未读", exact: true }).click();
-    await unreadTarget.locator('[aria-label="有未读消息"]').waitFor();
-    const blockedReadMarks = [];
-    const observeMark = (request) => {
-      if (request.url().endsWith("/activity/mark"))
-        blockedReadMarks.push(request.postDataJSON());
-    };
-    page.on("request", observeMark);
-    const blockedUrl = page.url();
-    await unreadTarget.click();
-    await page.evaluate(
-      () =>
-        new Promise((resolve) =>
-          requestAnimationFrame(() => requestAnimationFrame(resolve)),
-        ),
-    );
-    assert.equal(
-      page.url(),
-      blockedUrl,
-      "unknown send blocks leaving the current channel",
-    );
-    assert.deepEqual(
-      blockedReadMarks,
-      [],
-      "a refused navigation must not acknowledge the unseen channel",
-    );
-    page.off("request", observeMark);
-    const mainNav = page.getByRole("navigation", { name: "主导航" });
-    await mainNav.getByRole("button", { name: "搜索", exact: true }).click();
-    await page.getByRole("heading", { name: "搜索", exact: true }).waitFor();
-    await mainNav.getByRole("button", { name: "频道", exact: true }).click();
-    if (viewport.width < 768) await openChatRow(page, channels[1].roomId);
-    await page.getByRole("button", { name: "核实发送" }).waitFor();
-    assert.equal(
-      sendRequests.length,
-      1,
-      "global navigation must not resend an unknown write",
-    );
-    await page.evaluate((room) => {
-      history.pushState({}, "", `?room=${room}`);
-      window.dispatchEvent(new PopStateEvent("popstate"));
-    }, channels[0].roomId);
-    await page.getByText(body, { exact: true }).waitFor();
-    await page.evaluate((room) => {
-      history.back();
-    }, channels[1].roomId);
-    await page.getByRole("button", { name: "核实发送" }).waitFor();
-    await page.getByRole("button", { name: "核实发送" }).click();
-    await page
-      .getByText(`FIXTURE lost ${viewport.width}`, { exact: true })
-      .waitFor();
-    assert.deepEqual(sendRequests[0], sendRequests[1]);
-    assert.equal(
-      await composer.inputValue(),
-      "",
-      "confirmed delivery must not leave the sent draft ready to send again",
-    );
-    assert.equal(
-      (
-        await client.request("message.list", {
-          roomId: channels[1].roomId,
-          limit: 100,
-        })
-      ).messages.filter((m) => m.body === `FIXTURE lost ${viewport.width}`)
-        .length,
-      1,
-    );
-    assert.equal(
+      await page.keyboard.press("Escape");
+      const composer = page.getByTestId("composer-textarea");
+      await composer.waitFor({ timeout: 20000 });
+      const columns = await page.evaluate(() => {
+        const sidebar = document
+          .querySelector('[data-testid="public-server-channel-sidebar-root"]')
+          .getBoundingClientRect();
+        const timeline = document
+          .querySelector('[data-testid="composer-textarea"]')
+          .getBoundingClientRect();
+        return {
+          sidebarRight: sidebar.right,
+          sidebarWidth: sidebar.width,
+          composerLeft: timeline.left,
+        };
+      });
+      if (viewport.width >= 768) {
+        assert.ok(
+          columns.composerLeft >= columns.sidebarRight,
+          "desktop shell columns stay side by side",
+        );
+      } else {
+        assert.equal(
+          columns.sidebarWidth,
+          0,
+          "mobile detail hides the list column",
+        );
+      }
+      await page.getByText("FIXTURE history 55", { exact: true }).waitFor();
+      const timeline = page.getByTestId("loom-message-timeline");
+      await timeline.evaluate((node) => {
+        node.scrollTop = 0;
+      });
+      await page.getByText("FIXTURE history 1", { exact: true }).waitFor();
+      await timeline.evaluate((node) => {
+        node.scrollTop = node.scrollHeight;
+      });
+      const body = `FIXTURE send ${viewport.width}`;
+      await composer.fill(body);
+      await composer.press("Enter");
+      await page.getByText(body, { exact: true }).waitFor();
+      assert.equal(
+        (
+          await client.request("message.list", {
+            roomId: channels[0].roomId,
+            limit: 100,
+          })
+        ).messages.filter((m) => m.body === body).length,
+        1,
+      );
+      await page.reload();
+      await page.getByText(body, { exact: true }).waitFor();
+      await openChatRow(page, channels[1].roomId);
+      await page
+        .locator('textarea[placeholder="发送到 #FIXTURE Beta"]')
+        .waitFor();
+      if (viewport.width === 1440)
+        await page.getByText("频道还没有消息", { exact: true }).waitFor();
+      else await page.getByText("FIXTURE lost 1440", { exact: true }).waitFor();
+      assert.equal(await page.getByText(body, { exact: true }).count(), 0);
+      await composer.fill("FIXTURE IME");
+      await composer.dispatchEvent("keydown", {
+        key: "Enter",
+        code: "Enter",
+        isComposing: true,
+        keyCode: 229,
+      });
+      assert.equal(await composer.inputValue(), "FIXTURE IME");
+      await composer.press("Shift+Enter");
+      assert.ok((await composer.inputValue()).includes("\n"));
+      let dropped = false;
+      const sendRequests = [];
+      await page.route("**/v3/client/messages/post", async (route) => {
+        sendRequests.push(route.request().postDataJSON());
+        if (!dropped) {
+          dropped = true;
+          await route.fetch();
+          await route.abort();
+        } else await route.continue();
+      });
+      await composer.fill(`FIXTURE lost ${viewport.width}`);
+      await composer.press("Enter");
+      await page.getByRole("button", { name: "核实发送" }).waitFor();
+      assert.equal(sendRequests.length, 1);
+      const unreadTarget = page.locator(
+        `[data-public-channel-id="${channels[2].roomId}"]`,
+      );
+      await showChatList(page);
+      await unreadTarget.click({ button: "right" });
+      await page
+        .getByRole("menuitem", { name: "标记未读", exact: true })
+        .click();
+      await unreadTarget.locator('[aria-label="有未读消息"]').waitFor();
+      const blockedReadMarks = [];
+      const observeMark = (request) => {
+        if (request.url().endsWith("/activity/mark"))
+          blockedReadMarks.push(request.postDataJSON());
+      };
+      page.on("request", observeMark);
+      const blockedUrl = page.url();
+      await unreadTarget.click();
       await page.evaluate(
-        () => document.documentElement.scrollWidth > innerWidth,
+        () =>
+          new Promise((resolve) =>
+            requestAnimationFrame(() => requestAnimationFrame(resolve)),
+          ),
+      );
+      assert.equal(
+        page.url(),
+        blockedUrl,
+        "unknown send blocks leaving the current channel",
+      );
+      assert.deepEqual(
+        blockedReadMarks,
+        [],
+        "a refused navigation must not acknowledge the unseen channel",
+      );
+      page.off("request", observeMark);
+      const mainNav = page.getByRole("navigation", { name: "主导航" });
+      await mainNav.getByRole("button", { name: "搜索", exact: true }).click();
+      await page.getByRole("heading", { name: "搜索", exact: true }).waitFor();
+      await mainNav.getByRole("button", { name: "频道", exact: true }).click();
+      if (viewport.width < 768) await openChatRow(page, channels[1].roomId);
+      await page.getByRole("button", { name: "核实发送" }).waitFor();
+      assert.equal(
+        sendRequests.length,
+        1,
+        "global navigation must not resend an unknown write",
+      );
+      await page.evaluate((room) => {
+        history.pushState({}, "", `?room=${room}`);
+        window.dispatchEvent(new PopStateEvent("popstate"));
+      }, channels[0].roomId);
+      await page.getByText(body, { exact: true }).waitFor();
+      await page.evaluate((room) => {
+        history.back();
+      }, channels[1].roomId);
+      await page.getByRole("button", { name: "核实发送" }).waitFor();
+      await page.getByRole("button", { name: "核实发送" }).click();
+      await page
+        .getByText(`FIXTURE lost ${viewport.width}`, { exact: true })
+        .waitFor();
+      assert.deepEqual(sendRequests[0], sendRequests[1]);
+      assert.equal(
+        await composer.inputValue(),
+        "",
+        "confirmed delivery must not leave the sent draft ready to send again",
+      );
+      assert.equal(
+        (
+          await client.request("message.list", {
+            roomId: channels[1].roomId,
+            limit: 100,
+          })
+        ).messages.filter((m) => m.body === `FIXTURE lost ${viewport.width}`)
+          .length,
+        1,
+      );
+      assert.equal(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth > innerWidth,
+        ),
+        false,
+      );
+      assert.deepEqual(errors, []);
+      assert.deepEqual(external, []);
+      await assertSparseHistoryStartsAtTop(
+        page,
+        viewport.width === 1440
+          ? ["FIXTURE lost 1440"]
+          : ["FIXTURE lost 1440", "FIXTURE lost 390"],
+      );
+      await page.screenshot({
+        path: join(tmpdir(), `loom-official-channel-${viewport.width}.png`),
+      });
+      await page.goto(`${origin}/?room=unavailable-channel`);
+      await page
+        .getByText("此频道不存在或没有访问权限", { exact: true })
+        .waitFor();
+      assert.equal(await page.getByTestId("composer-textarea").count(), 0);
+      results.push({
+        viewport,
+        memberNamesAndIdleState: true,
+        memberChannelIsolation: true,
+        memberReadFailureClearsStaleStatusAndRecovers: true,
+        memberDialogPointerKeyboardFocus: true,
+        sendAndReload: true,
+        historyPagination: true,
+        sparseHistoryTopAlignedAndChronological: true,
+        unavailableChannelFailsClosed: true,
+        mobileMasterDetailDraftAndHistory: viewport.width < 768,
+        switchIsolation: true,
+        ime: true,
+        unknownResultVerified: true,
+        unknownSendPreservedAcrossGlobalNavigation: true,
+        externalRequests: 0,
+      });
+      await context.close();
+    }
+    const privateResults = await verifyPrivateBoxes({
+      browser,
+      origin,
+      client,
+      workspace,
+      channel: channels[2],
+      instance: instances[0],
+      name: instanceNames[0],
+      head,
+    });
+    const navigationResults = await verifyGlobalNavigation({
+      browser,
+      origin,
+      channel: channels[0],
+    });
+    const instanceResults = await verifyInstanceCreation({
+      browser,
+      origin,
+      client,
+      workspace,
+      channel: channels[2],
+      role,
+    });
+    const sidebarActionResults = await verifySidebarActions({
+      browser,
+      origin,
+      client,
+      workspace,
+      channel: channels[0],
+    });
+    const managementResults = await verifyManagement({
+      browser,
+      origin,
+      client,
+      workspace,
+      channel: channels[2],
+      offer,
+    });
+    const discoveryResults = await verifyDiscovery({
+      browser,
+      origin,
+      client,
+      workspace,
+      channel: channels[0],
+    });
+    const threadResults = await verifyThreads({
+      browser,
+      origin,
+      client,
+      workspace,
+      otherChannel: channels[1],
+      head,
+    });
+    const taskResults = await verifyTasks({
+      browser,
+      origin,
+      client,
+      workspace,
+      head,
+    });
+    const channelTaskResults = await verifyChannelTasks({
+      browser,
+      origin,
+      client,
+      workspace,
+      head,
+    });
+    const attachmentDetails = await verifyAttachmentDetails({
+      browser,
+      origin,
+      client,
+      workspace,
+      head,
+      role,
+    });
+    const attachmentResults = await verifyAttachments({
+      browser,
+      origin,
+      client,
+      workspace,
+      head,
+    });
+    const taskManagementResults = await verifyTaskManagement({
+      browser,
+      origin,
+      client,
+      workspace,
+      head,
+      role,
+    });
+    console.log(
+      JSON.stringify(
+        {
+          attachmentDetails,
+          attachmentResults,
+          taskManagementResults,
+          channelTaskResults,
+          taskResults,
+          threadResults,
+          settingsNavigationResults,
+          controlResults,
+          mentionResults,
+          systemNoticeResults,
+          fixtureOnly: true,
+          realCore: true,
+          paidCli: false,
+          results,
+          privateResults,
+          instanceResults,
+          navigationResults,
+          managementResults,
+          sidebarActionResults,
+          discoveryResults,
+        },
+        null,
+        2,
       ),
-      false,
     );
-    assert.deepEqual(errors, []);
-    assert.deepEqual(external, []);
-    await assertSparseHistoryStartsAtTop(
-      page,
-      viewport.width === 1440
-        ? ["FIXTURE lost 1440"]
-        : ["FIXTURE lost 1440", "FIXTURE lost 390"],
-    );
-    await page.screenshot({
-      path: join(tmpdir(), `loom-official-channel-${viewport.width}.png`),
-    });
-    await page.goto(`${origin}/?room=unavailable-channel`);
-    await page
-      .getByText("此频道不存在或没有访问权限", { exact: true })
-      .waitFor();
-    assert.equal(await page.getByTestId("composer-textarea").count(), 0);
-    results.push({
-      viewport,
-      memberNamesAndIdleState: true,
-      memberChannelIsolation: true,
-      memberReadFailureClearsStaleStatusAndRecovers: true,
-      memberDialogPointerKeyboardFocus: true,
-      sendAndReload: true,
-      historyPagination: true,
-      sparseHistoryTopAlignedAndChronological: true,
-      unavailableChannelFailsClosed: true,
-      mobileMasterDetailDraftAndHistory: viewport.width < 768,
-      switchIsolation: true,
-      ime: true,
-      unknownResultVerified: true,
-      unknownSendPreservedAcrossGlobalNavigation: true,
-      externalRequests: 0,
-    });
-    await context.close();
   }
-  const privateResults = await verifyPrivateBoxes({
-    browser,
-    origin,
-    client,
-    workspace,
-    channel: channels[2],
-    instance: instances[0],
-    name: instanceNames[0],
-    head,
-  });
-  const navigationResults = await verifyGlobalNavigation({
-    browser,
-    origin,
-    channel: channels[0],
-  });
-  const instanceResults = await verifyInstanceCreation({
-    browser,
-    origin,
-    client,
-    workspace,
-    channel: channels[2],
-    role,
-  });
-  const sidebarActionResults = await verifySidebarActions({
-    browser,
-    origin,
-    client,
-    workspace,
-    channel: channels[0],
-  });
-  const managementResults = await verifyManagement({
-    browser,
-    origin,
-    client,
-    workspace,
-    channel: channels[2],
-    offer,
-  });
-  const discoveryResults = await verifyDiscovery({
-    browser,
-    origin,
-    client,
-    workspace,
-    channel: channels[0],
-  });
-  const threadResults = await verifyThreads({
-    browser,
-    origin,
-    client,
-    workspace,
-    otherChannel: channels[1],
-    head,
-  });
-  const taskResults = await verifyTasks({
-    browser,
-    origin,
-    client,
-    workspace,
-    head,
-  });
-  const channelTaskResults = await verifyChannelTasks({
-    browser,
-    origin,
-    client,
-    workspace,
-    head,
-  });
-  const attachmentDetails = await verifyAttachmentDetails({
-    browser,
-    origin,
-    client,
-    workspace,
-    head,
-    role,
-  });
-  const attachmentResults = await verifyAttachments({
-    browser,
-    origin,
-    client,
-    workspace,
-    head,
-  });
-  const taskManagementResults = await verifyTaskManagement({
-    browser,
-    origin,
-    client,
-    workspace,
-    head,
-    role,
-  });
-  console.log(
-    JSON.stringify(
-      {
-        attachmentDetails,
-        attachmentResults,
-        taskManagementResults,
-        channelTaskResults,
-        taskResults,
-        threadResults,
-        settingsNavigationResults,
-        controlResults,
-        mentionResults,
-        systemNoticeResults,
-        fixtureOnly: true,
-        realCore: true,
-        paidCli: false,
-        results,
-        privateResults,
-        instanceResults,
-        navigationResults,
-        managementResults,
-        sidebarActionResults,
-        discoveryResults,
-      },
-      null,
-      2,
-    ),
-  );
 } finally {
   await browser?.close();
   await running?.stop();

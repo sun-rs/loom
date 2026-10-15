@@ -2424,7 +2424,7 @@
       ],
       "directReuse": "Unchanged MessageHitRow; raft-ui Select field chrome/Content/List/Item/Text/Indicator and official FieldSelectTrigger; InlineMarkdownPreview and relative-time formatter.",
       "structuralPort": "ThreadsInbox InboxRow Card geometry, active/hover states, title/body/timestamp/badge composition and keyboard open.",
-      "localChanges": "Typed Loom search/activity data replaces upstream stores. Activity completion/task/context-menu controls omitted until bound; bounded context dialog remains a recorded deviation. No upstream file modified.",
+      "localChanges": "Typed Loom search/activity data replaces upstream stores. Activity completion/task/context-menu controls omitted until bound; Activity now opens native conversation detail with bounded message focus; search still uses the context dialog. See docs/audits/2026-10-15-activity-navigation.zh-CN.md. No upstream file modified.",
       "verification": "scripts/official-web/management-browser.mjs and discovery-browser.mjs; two viewports, popup escape/focus, exact search/API ordering, bounded context, activity keyboard open, unknown-write replay. See docs/audits/2026-10-15-official-component-correction.zh-CN.md for open module gaps."
     },
     "mobileChatSlice": {
