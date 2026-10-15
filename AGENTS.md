@@ -434,18 +434,24 @@ memory-transport or provider-session batches before accepting performance.
 Failures and excess costs stay visible; successful replies alone are not
 efficiency acceptance.
 
-Before a code handoff run:
+Owner ruling (2026-10-15): verification must match the change's scope. Small
+features and UI repairs must not trigger long, unrelated acceptance suites.
 
-```bash
-npm run check
-npm run format:check
-git diff --check
-```
+- For presentation-only changes and narrow frontend wiring, run the relevant
+  regression tests, affected type checks/build, and focused browser checks
+  (desktop and 390x844 with real pointer hit targets). Do not run the full
+  backend suite or complete frontend browser suite by default.
+- For backend changes, run tests for the changed owner and affected boundaries;
+  reserve `npm run check` for milestones, broad cross-layer changes, or evidence
+  of a regression that warrants it. Paid gates retain their separate approval.
+- Check formatting of changed files and run `git diff --check`. Documentation-only
+  edits need affected link, format and diff checks only.
+- Report exactly what ran. Broaden verification only for a concrete unresolved
+  risk or failure; do not repeat passing suites without a new reason.
 
-If `main`'s frontend is touched (emergency fix or phase 4), also run
-`npm run build:web:workbench` and the relevant browser gates (same measured
-viewport/DPR/zoom plus 390x844; real pointer hit targets). Never claim an unrun
-gate passed. Documentation-only edits need link, format and diff checks only.
+Frontend changes still require `npm run build:web:workbench` and relevant browser
+gates at the same measured viewport/DPR/zoom. Required safe deployment and real
+page verification remain in force; none implies paid-CLI or efficiency acceptance.
 
 Do not commit, push, publish, or run paid-provider tests unless the user
 explicitly requests it. Exception: the owner has authorized the lead agent to
