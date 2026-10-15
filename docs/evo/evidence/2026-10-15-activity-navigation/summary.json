@@ -1,0 +1,85 @@
+{
+  "codeCommit": "c95a98eb3560f67c44bcae712ed514c2fd6de400",
+  "webBuildId": "1f3ed21101a82cc133267765edc56b9de242df0d7fefca8aad016901f2bed4a4",
+  "verification": {
+    "scopedCoreAndThreadTests": 20,
+    "officialSourceTests": 65,
+    "affectedTypes": "passed",
+    "webBuild": "passed",
+    "changedFileFormatAndDiff": "passed",
+    "browser": [
+      {
+        "width": 1440,
+        "oldMessageLocated": true,
+        "oldThreadReplyLocated": true,
+        "privateMessageLocated": true,
+        "backRestoresActivity": true,
+        "threadCloseClearsReplyTarget": true,
+        "desktopDividerDraggable": true,
+        "nativeHighlight": true,
+        "noContextDialog": true,
+        "refreshRestores": true,
+        "desktopDetailAndDoubleClick": true
+      },
+      {
+        "width": 390,
+        "oldMessageLocated": true,
+        "oldThreadReplyLocated": true,
+        "privateMessageLocated": true,
+        "backRestoresActivity": true,
+        "threadCloseClearsReplyTarget": true,
+        "desktopDividerDraggable": false,
+        "nativeHighlight": true,
+        "noContextDialog": true,
+        "refreshRestores": true,
+        "desktopDetailAndDoubleClick": false
+      }
+    ],
+    "fullRepositoryCheck": "not run: owner requested scope-matched verification",
+    "paidCli": false
+  },
+  "regressionRed": "Previous build opened a context modal and could not locate the highlighted message",
+  "retainedTestFailures": [
+    "Private fixture initially used agent configuration ID instead of instance principal; server rejected it",
+    "Native resize handle supports sm/md, not lg; scoped pointer test caught the invisible handle"
+  ],
+  "deployment": {
+    "backupDatabases": 2,
+    "backupFiles": 318,
+    "businessProjectionsUnchanged": 18,
+    "formalPage": [
+      {
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "realMessageLocated": true,
+        "nativeHighlight": true,
+        "refreshRestores": true,
+        "noContextDialog": true,
+        "noBusinessWrites": true,
+        "buildMatches": true,
+        "pageErrors": []
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "realMessageLocated": true,
+        "nativeHighlight": true,
+        "refreshRestores": true,
+        "noContextDialog": true,
+        "noBusinessWrites": true,
+        "buildMatches": true,
+        "pageErrors": []
+      }
+    ],
+    "reviewDirectory": "/Users/sun/.loom/reviews/2026-10-15-activity-navigation"
+  },
+  "limits": [
+    "Targets the message displayed by the activity card; first-unread / first-mention anchor selection remains pending",
+    "Search still uses its bounded context dialog",
+    "No new provider or efficiency acceptance"
+  ]
+}
