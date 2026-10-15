@@ -1,0 +1,47 @@
+[
+  {
+    "width": 1440,
+    "referencePath": true,
+    "raftCheckboxAfterRefresh": true,
+    "hiddenFilesLabelAndKeyboard": true,
+    "nativePicker": true,
+    "stableTreeLayout": true,
+    "pendingNavigationKeepsParentOnly": true,
+    "failedNavigationRetainsNavigationAndRetries": true,
+    "compactFooter": true,
+    "desktopDrop": true,
+    "attachmentOnlySend": true,
+    "exactUnknownReplay": true,
+    "reloadDownloadExact": true
+  },
+  {
+    "width": 390,
+    "referencePath": true,
+    "raftCheckboxAfterRefresh": true,
+    "hiddenFilesLabelAndKeyboard": true,
+    "nativePicker": true,
+    "stableTreeLayout": true,
+    "pendingNavigationKeepsParentOnly": true,
+    "failedNavigationRetainsNavigationAndRetries": true,
+    "compactFooter": true,
+    "desktopDrop": false,
+    "attachmentOnlySend": true,
+    "exactUnknownReplay": true,
+    "reloadDownloadExact": true
+  },
+  {
+    "width": 820,
+    "referencePath": true,
+    "raftCheckboxAfterRefresh": true,
+    "hiddenFilesLabelAndKeyboard": true,
+    "nativePicker": true,
+    "stableTreeLayout": true,
+    "pendingNavigationKeepsParentOnly": true,
+    "failedNavigationRetainsNavigationAndRetries": true,
+    "compactFooter": true,
+    "desktopDrop": false,
+    "attachmentOnlySend": true,
+    "exactUnknownReplay": true,
+    "reloadDownloadExact": true
+  }
+]

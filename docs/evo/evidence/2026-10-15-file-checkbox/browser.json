@@ -1,0 +1,61 @@
+{
+  "attachmentDetails": {
+    "imageNativeLightbox": true,
+    "sameFileReselection": true,
+    "failedUploadBlocksSend": true,
+    "threadAttachmentOnly": true,
+    "threadExactUnknownReplay": true,
+    "threadReloadDownload": true,
+    "privateBoxIsolation": true
+  },
+  "attachmentResults": [
+    {
+      "width": 1440,
+      "referencePath": true,
+      "raftCheckboxAfterRefresh": true,
+      "hiddenFilesLabelAndKeyboard": true,
+      "nativePicker": true,
+      "stableTreeLayout": true,
+      "pendingNavigationKeepsParentOnly": true,
+      "failedNavigationRetainsNavigationAndRetries": true,
+      "compactFooter": true,
+      "desktopDrop": true,
+      "attachmentOnlySend": true,
+      "exactUnknownReplay": true,
+      "reloadDownloadExact": true
+    },
+    {
+      "width": 390,
+      "referencePath": true,
+      "raftCheckboxAfterRefresh": true,
+      "hiddenFilesLabelAndKeyboard": true,
+      "nativePicker": true,
+      "stableTreeLayout": true,
+      "pendingNavigationKeepsParentOnly": true,
+      "failedNavigationRetainsNavigationAndRetries": true,
+      "compactFooter": true,
+      "desktopDrop": false,
+      "attachmentOnlySend": true,
+      "exactUnknownReplay": true,
+      "reloadDownloadExact": true
+    },
+    {
+      "width": 820,
+      "referencePath": true,
+      "raftCheckboxAfterRefresh": true,
+      "hiddenFilesLabelAndKeyboard": true,
+      "nativePicker": true,
+      "stableTreeLayout": true,
+      "pendingNavigationKeepsParentOnly": true,
+      "failedNavigationRetainsNavigationAndRetries": true,
+      "compactFooter": true,
+      "desktopDrop": false,
+      "attachmentOnlySend": true,
+      "exactUnknownReplay": true,
+      "reloadDownloadExact": true
+    }
+  ],
+  "command": "npm run test:official-web:channel",
+  "exitCode": 0,
+  "fullLogSha256": "f417761cc50e14ad849611caae16a8685d6906aa3eba64db6916074cfef5876a"
+}

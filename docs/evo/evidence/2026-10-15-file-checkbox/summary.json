@@ -1,0 +1,84 @@
+{
+  "change": "Reuse official raft-ui Checkbox size=sm for the hidden-files toggle; no custom border/focus styles",
+  "red": {
+    "command": "focused attachment browser gate on previous build",
+    "exitCode": 1,
+    "failure": "null !== checkbox: old input did not use the official component"
+  },
+  "verification": {
+    "build": "passed",
+    "chromium": "browser.json",
+    "webkit": "webkit.json",
+    "viewports": [1440, 390, 820],
+    "refreshFirstOpen": true,
+    "labelClickAndKeyboardSpace": true,
+    "includeHiddenTrueAndFalseRequests": true,
+    "fullCheck": "exit 0: backend 3211 pass / 22 opt-in skip; console 63; browser policy 15; efficiency tools 558; official source 65",
+    "formalDeployment": "verified after backup and graceful restart"
+  },
+  "paidCli": false,
+  "backendChanges": false,
+  "codeCommit": "2b84b7ca987ba9a1d863ab0b91b15274a9c9ecd4",
+  "webBuildId": "36ae3f7c0f6a63a27f72b57f2a2d5c4eb131c6b26e8b377f0217648985af24b5",
+  "backup": {
+    "databases": 2,
+    "files": 318
+  },
+  "formalPage": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "raftCheckboxAfterRefresh": true,
+      "checkboxLabelAndKeyboard": true,
+      "actualTreeMatchesApi": true,
+      "localUploadDisabled": true,
+      "remoteUploadEnabled": true,
+      "onlyPlusInComposer": true,
+      "parentNavigationMs": 61,
+      "cancelPreservesEmptyDraft": true,
+      "systemPickerCancel": true,
+      "noBusinessMutations": true,
+      "buildMatches": true,
+      "pageErrors": []
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "raftCheckboxAfterRefresh": true,
+      "checkboxLabelAndKeyboard": true,
+      "actualTreeMatchesApi": true,
+      "localUploadDisabled": true,
+      "remoteUploadEnabled": true,
+      "onlyPlusInComposer": true,
+      "parentNavigationMs": 45,
+      "cancelPreservesEmptyDraft": true,
+      "systemPickerCancel": true,
+      "noBusinessMutations": true,
+      "buildMatches": true,
+      "pageErrors": []
+    },
+    {
+      "viewport": {
+        "width": 820,
+        "height": 1000
+      },
+      "raftCheckboxAfterRefresh": true,
+      "checkboxLabelAndKeyboard": true,
+      "actualTreeMatchesApi": true,
+      "localUploadDisabled": true,
+      "remoteUploadEnabled": true,
+      "onlyPlusInComposer": true,
+      "parentNavigationMs": 30,
+      "cancelPreservesEmptyDraft": true,
+      "systemPickerCancel": true,
+      "noBusinessMutations": true,
+      "buildMatches": true,
+      "pageErrors": []
+    }
+  ],
+  "reviewDirectory": "/Users/sun/.loom/reviews/2026-10-15-file-checkbox"
+}
