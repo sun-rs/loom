@@ -1,0 +1,113 @@
+{
+  "codeCommit": "625c8ee0c8515b61b6fb0ed33caf4eb0f5f5a288",
+  "webBuildId": "cda4674ff339a7d021751b1136ad7eec86e1a32f14dcc08a457cc05bd6f808d2",
+  "checks": {
+    "sourceAndAdapterAndFilterTests": 68,
+    "frontendTypecheck": "passed, run separately from build",
+    "webBuild": "passed",
+    "changedFileFormatAndDiff": "passed",
+    "fullRepositorySuite": false,
+    "paidCLI": false
+  },
+  "browser": [
+    {
+      "width": 1440,
+      "oldMessageLocated": true,
+      "oldThreadReplyLocated": true,
+      "directThreadUsesPrimarySlot": true,
+      "nestedThreadKeepsSidePane": true,
+      "privateMessageLocated": true,
+      "backRestoresActivity": true,
+      "threadCloseClearsReplyTarget": true,
+      "desktopDividerDraggable": true,
+      "searchPrimarySlotsAndResize": true,
+      "nativeSearchHeaderCompositionAndFilters": true,
+      "mobileNavigationAndReturn": false,
+      "threadParentOpensProfilePreservingDraft": true,
+      "channelThreadProfileDraftPreserved": true,
+      "nativeHighlight": true,
+      "noContextDialog": true,
+      "refreshRestores": true,
+      "desktopDetailAndDoubleClick": true
+    },
+    {
+      "width": 390,
+      "oldMessageLocated": true,
+      "oldThreadReplyLocated": true,
+      "directThreadUsesPrimarySlot": false,
+      "nestedThreadKeepsSidePane": false,
+      "privateMessageLocated": true,
+      "backRestoresActivity": true,
+      "threadCloseClearsReplyTarget": true,
+      "desktopDividerDraggable": false,
+      "searchPrimarySlotsAndResize": true,
+      "nativeSearchHeaderCompositionAndFilters": true,
+      "mobileNavigationAndReturn": true,
+      "threadParentOpensProfilePreservingDraft": true,
+      "channelThreadProfileDraftPreserved": false,
+      "nativeHighlight": true,
+      "noContextDialog": true,
+      "refreshRestores": true,
+      "desktopDetailAndDoubleClick": false
+    }
+  ],
+  "realPage": {
+    "at": "2026-10-15T15:44:51.268Z",
+    "webBuildId": "cda4674ff339a7d021751b1136ad7eec86e1a32f14dcc08a457cc05bd6f808d2",
+    "results": [
+      {
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "realMessageLocated": true,
+        "realSearchLocated": true,
+        "resizePreservesRoute": true,
+        "nativeHighlight": true,
+        "refreshRestores": true,
+        "noContextDialog": true,
+        "noBusinessWrites": true,
+        "buildMatches": true,
+        "pageErrors": []
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "realMessageLocated": true,
+        "realSearchLocated": true,
+        "resizePreservesRoute": true,
+        "nativeHighlight": true,
+        "refreshRestores": true,
+        "noContextDialog": true,
+        "noBusinessWrites": true,
+        "buildMatches": true,
+        "pageErrors": []
+      }
+    ]
+  },
+  "restart": {
+    "at": "2026-10-15T15:44:44.366Z",
+    "verified": true,
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-native-ui-rules-79d46f58-c138-487d-8b8b-c16433da8a9d",
+    "databases": 2,
+    "files": 318,
+    "businessTablesUnchanged": 18
+  },
+  "reviewDirectory": "/Users/sun/.loom/reviews/2026-10-15-native-ui-rules",
+  "visualReview": ["search-1440.png", "search-390.png"],
+  "failureEvidence": [
+    "native-chrome-red.log: input did not commit automatically",
+    "thread-profile-red.log and thread-profile-browser-red.log: no parent/reply host profile callback",
+    "native-filters-red.log: new mapping before implementation",
+    "Chinese native-control selectors initially failed with Chromium default English locale; fixture now explicitly uses zh-CN, product locale logic unchanged"
+  ],
+  "limits": [
+    "Thread agent-author UI projection in isolated Core only; real-provider execution not exercised.",
+    "Actual page verification covers search/direct messages, responsive navigation, highlight and refresh.",
+    "Sender/channel pickers, result grouping/entity search/shortcut overlay, full keyboard result selection, Activity Done and menus still pending.",
+    "Mobile root back uses chat-list fallback; exact source-route return remains pending.",
+    "Updated broad discovery expectations were not rerun as a complete suite."
+  ]
+}
