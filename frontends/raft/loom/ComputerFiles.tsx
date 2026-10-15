@@ -65,7 +65,7 @@ export default function ComputerFiles({
     >
       <DialogContent
         aria-label="引用计算机文件或文件夹"
-        className="flex max-h-[80dvh] flex-col overflow-hidden"
+        className="flex h-[min(560px,80dvh)] max-h-[80dvh] flex-col overflow-hidden"
       >
         <DialogHeader>
           <DialogTitle>引用计算机文件或文件夹</DialogTitle>
@@ -98,21 +98,6 @@ export default function ComputerFiles({
                 />
               )}
               <div className="flex items-center gap-2 py-2">
-                <Button
-                  size="icon-sm"
-                  variant="outline"
-                  aria-label="上一级目录"
-                  disabled={!data.path}
-                  onClick={() =>
-                    setLocation({
-                      hostId: data.hostId,
-                      rootId: data.rootId,
-                      path: data.path.split("/").slice(0, -1).join("/"),
-                    })
-                  }
-                >
-                  <ArrowLeft size={14} />
-                </Button>
                 <code
                   className="min-w-0 truncate text-xs"
                   title={data.absolutePath}
@@ -122,7 +107,71 @@ export default function ComputerFiles({
               </div>
             </>
           )}
-          <label className="text-xs">
+          <div
+            data-testid="computer-file-tree"
+            className="relative h-64 min-h-64"
+          >
+            {loading ? (
+              <p role="status">加载中…</p>
+            ) : error ? (
+              <p role="alert">
+                {error}
+                <Button onClick={() => setRevision((v) => v + 1)}>重试</Button>
+              </p>
+            ) : (
+              data && (
+                <SelectionPopover
+                  title="文件"
+                  showHeader={false}
+                  className="h-full w-full [&>div]:max-h-full"
+                  emptyLabel="此目录为空"
+                  options={[
+                    {
+                      key: "parent-directory",
+                      label: "上一级目录",
+                      checked: false,
+                      disabled: !data.path,
+                      leading: <ArrowLeft size={16} />,
+                      onClick: () =>
+                        setLocation({
+                          hostId: data.hostId,
+                          rootId: data.rootId,
+                          path: data.path.split("/").slice(0, -1).join("/"),
+                        }),
+                    },
+                    ...data.entries.map((e) => ({
+                      key: "entry:" + e.path,
+                      label: e.name,
+                      checked: selected.includes(e.absolutePath),
+                      leading: e.isDirectory ? (
+                        <Folder size={16} />
+                      ) : (
+                        <File size={16} />
+                      ),
+                      onClick: () =>
+                        e.isDirectory
+                          ? setLocation({
+                              hostId: data.hostId,
+                              rootId: data.rootId,
+                              path: e.path,
+                            })
+                          : setSelected((s) =>
+                              s.includes(e.absolutePath)
+                                ? s.filter((p) => p !== e.absolutePath)
+                                : [...s, e.absolutePath],
+                            ),
+                    })),
+                  ]}
+                />
+              )
+            )}
+            {!loading && !error && data?.entries.length === 0 && (
+              <p className="absolute inset-x-0 top-9 px-3 py-3 text-center text-[11px] font-mono text-foreground-muted">
+                此目录为空
+              </p>
+            )}
+          </div>
+          <label className="mt-3 flex items-center gap-2 text-xs">
             <input
               type="checkbox"
               checked={hidden}
@@ -130,45 +179,6 @@ export default function ComputerFiles({
             />{" "}
             显示隐藏文件
           </label>
-          {loading ? (
-            <p role="status">加载中…</p>
-          ) : error ? (
-            <p role="alert">
-              {error}
-              <Button onClick={() => setRevision((v) => v + 1)}>重试</Button>
-            </p>
-          ) : (
-            data && (
-              <SelectionPopover
-                title="文件"
-                showHeader={false}
-                className="w-full"
-                emptyLabel="此目录为空"
-                options={data.entries.map((e) => ({
-                  key: e.path,
-                  label: e.name,
-                  checked: selected.includes(e.absolutePath),
-                  leading: e.isDirectory ? (
-                    <Folder size={16} />
-                  ) : (
-                    <File size={16} />
-                  ),
-                  onClick: () =>
-                    e.isDirectory
-                      ? setLocation({
-                          hostId: data.hostId,
-                          rootId: data.rootId,
-                          path: e.path,
-                        })
-                      : setSelected((s) =>
-                          s.includes(e.absolutePath)
-                            ? s.filter((p) => p !== e.absolutePath)
-                            : [...s, e.absolutePath],
-                        ),
-                }))}
-              />
-            )
-          )}
           {data?.truncated && <p role="status">目录过大，仅显示前1000项。</p>}
         </DialogBody>
         <DialogFooter>

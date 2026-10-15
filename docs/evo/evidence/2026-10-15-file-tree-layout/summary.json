@@ -1,0 +1,47 @@
+{
+  "scope": "File-reference picker stable viewport, parent navigation first row, hidden toggle below list, browser-device upload on desktop and touch clients",
+  "upstream": {
+    "revision": "a98ae003246a0360872a77d76dec2fccd0347ef7",
+    "reviewed": "packages/web/src/components/agent/AgentWorkspace.tsx",
+    "reuse": "Existing official Dialog, Select and SelectionPopover; Workspace recursive tree reviewed, not copied; official source unchanged"
+  },
+  "tdd": {
+    "red": "Old build fails parent navigation inside file-tree assertion",
+    "green": ["chromium.json", "webkit.json"],
+    "scenarios": [
+      "many entries",
+      "two entries",
+      "empty directory",
+      "parent disabled at authorized root",
+      "parent return",
+      "hidden toggle below tree",
+      "stable dialog and tree height",
+      "desktop system filechooser",
+      "touch system filechooser",
+      "attachment send and unknown-result verification",
+      "reload exact download bytes"
+    ]
+  },
+  "fullBrowser": "browser.json",
+  "paidCli": false,
+  "backendChanged": false,
+  "limits": [
+    "Only local Loom host filesystem browsing",
+    "No remote AgentHost tree or browser-device arbitrary filesystem access",
+    "Uploads transfer user-selected browser-device files to Loom attachment storage, not another AgentHost workdir",
+    "Real iOS system menu not physically tested"
+  ],
+  "verification": {
+    "npmCheck": "passed",
+    "backendPassed": 3211,
+    "optInSkipped": 22,
+    "consolePassed": 63,
+    "browserPolicyPassed": 15,
+    "efficiencyToolsPassed": 558,
+    "officialSourcePassed": 63,
+    "productBuild": "passed",
+    "fullBrowser": "passed",
+    "chromiumAndWebkitThreeWidths": "passed",
+    "formatAndDiff": "passed"
+  }
+}

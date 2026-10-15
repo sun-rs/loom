@@ -40,8 +40,9 @@ export async function verifyAttachments({
         }
         return route.continue();
       });
-      await page.route("**/v3/client/computers/files/list", (route) =>
-        route.fulfill({
+      await page.route("**/v3/client/computers/files/list", (route) => {
+        const path = route.request().postDataJSON().path || "";
+        return route.fulfill({
           status: 200,
           contentType: "application/json",
           body: JSON.stringify({
@@ -55,20 +56,31 @@ export async function verifyAttachments({
                 absolutePath: "/FIXTURE",
               },
             ],
-            path: "",
-            absolutePath: "/FIXTURE",
+            path,
+            absolutePath: "/FIXTURE" + (path ? "/" + path : ""),
             truncated: false,
-            entries: [
-              {
-                name: "notes space.txt",
-                path: "notes space.txt",
-                absolutePath: "/FIXTURE/notes space.txt",
-                isDirectory: false,
-              },
-            ],
+            entries: (path === "empty"
+              ? []
+              : path === "small"
+                ? ["one.txt", "two.txt"]
+                : [
+                    "small",
+                    "empty",
+                    "notes space.txt",
+                    ...Array.from(
+                      { length: 30 },
+                      (_, i) => "file-" + i + ".txt",
+                    ),
+                  ]
+            ).map((name) => ({
+              name,
+              path: (path ? path + "/" : "") + name,
+              absolutePath: "/FIXTURE/" + (path ? path + "/" : "") + name,
+              isDirectory: name === "small" || name === "empty",
+            })),
           }),
-        }),
-      );
+        });
+      });
       await page.route("**/v3/client/messages/post", async (route) => {
         posts.push(route.request().postDataJSON());
         if (posts.length === 1) {
@@ -88,6 +100,74 @@ export async function verifyAttachments({
       });
       await dialog.waitFor();
       await dialog
+        .getByRole("button", { name: "small", exact: true })
+        .waitFor();
+      const geometry = () =>
+        dialog.evaluate((el) => {
+          const up = [...el.querySelectorAll("button")].find(
+            (b) =>
+              b.textContent.trim() === "上一级目录" ||
+              b.getAttribute("aria-label") === "上一级目录",
+          );
+          const tree = up.closest("[data-testid='computer-file-tree']");
+          const hidden = el.querySelector("input[type=checkbox]");
+          return {
+            height: el.getBoundingClientRect().height,
+            treeHeight: tree?.getBoundingClientRect().height,
+            upFirst: tree?.querySelector("button") === up,
+            hiddenBelow:
+              !!tree &&
+              hidden.getBoundingClientRect().top >=
+                tree.getBoundingClientRect().bottom,
+          };
+        });
+      const initial = await geometry();
+      assert.equal(
+        initial.upFirst,
+        true,
+        "parent navigation is the first file-tree row",
+      );
+      assert.equal(
+        initial.hiddenBelow,
+        true,
+        "hidden toggle is below the file-tree module",
+      );
+      assert.ok(initial.treeHeight >= 256, "file tree reserves browsing space");
+      assert.equal(
+        await dialog
+          .getByRole("button", { name: "上一级目录", exact: true })
+          .isDisabled(),
+        true,
+      );
+      for (const name of ["small", "empty"]) {
+        await dialog.getByRole("button", { name, exact: true }).click();
+        await dialog
+          .locator("code")
+          .filter({ hasText: "/FIXTURE/" + name })
+          .waitFor();
+        if (name === "empty")
+          await dialog.getByText("此目录为空", { exact: true }).waitFor();
+        const current = await geometry();
+        assert.equal(
+          current.height,
+          initial.height,
+          "dialog height remains stable in " + name,
+        );
+        assert.equal(
+          current.treeHeight,
+          initial.treeHeight,
+          "tree height remains stable in " + name,
+        );
+        await dialog
+          .getByRole("button", { name: "上一级目录", exact: true })
+          .click();
+        await dialog
+          .getByRole("button", { name: "small", exact: true })
+          .waitFor();
+      }
+      await page.screenshot({ path: "/tmp/loom-file-tree-" + width + ".png" });
+
+      await dialog
         .getByRole("button", { name: "notes space.txt", exact: true })
         .click();
       await dialog
@@ -106,10 +186,12 @@ export async function verifyAttachments({
         mimeType: "text/plain",
         buffer: Buffer.from("exact attachment bytes " + width),
       };
-      if (width !== 1440) {
+      {
         const chooserPromise = page.waitForEvent("filechooser");
         void chooserPromise.catch(() => {});
-        await composer.getByTestId("loom-native-file-input").tap();
+        if (width === 1440)
+          await composer.getByTestId("loom-native-file-input").click();
+        else await composer.getByTestId("loom-native-file-input").tap();
         const chooser = await chooserPromise;
         assert.equal(chooser.isMultiple(), true);
         await chooser.setFiles([]);
@@ -117,13 +199,15 @@ export async function verifyAttachments({
           await composer.getByTestId("loom-attachment-drafts").count(),
           0,
         );
+      }
+      if (width !== 1440) {
         await composer
           .getByTestId("loom-native-file-input")
           .setInputFiles(file);
       } else {
         assert.equal(
           await composer.getByTestId("loom-native-file-input").count(),
-          0,
+          1,
         );
         await composer.evaluate(
           (el, file) => {
@@ -177,7 +261,8 @@ export async function verifyAttachments({
       results.push({
         width,
         referencePath: true,
-        nativePicker: width !== 1440,
+        nativePicker: true,
+        stableTreeLayout: true,
         desktopDrop: width === 1440,
         attachmentOnlySend: true,
         exactUnknownReplay: true,

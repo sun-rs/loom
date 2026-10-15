@@ -2621,8 +2621,9 @@
       ],
       "directReuse": "Native composer controls, draft recipes, Dialog/Select/SelectionPopover, file cards, image gallery layout and Lightbox; original files unchanged.",
       "structuralPort": "main f1bc8c9 file-uploads.ts and tests with Web Crypto ID; file reference semantics and direct mobile input hit area. Native components compose the tree.",
-      "localGlue": "Existing file.prepare/files.upload, computer.files.list and message/thread attachment IDs through existing write slots. No backend changes.",
-      "audit": "docs/audits/2026-10-15-attachments.zh-CN.md"
+      "localGlue": "Existing file.prepare/files.upload, computer.files.list and message/thread attachment IDs through existing write slots. No backend changes. Stable file-list viewport and parent first-row navigation; device file upload entry available on desktop and touch clients.",
+      "audit": "docs/audits/2026-10-15-attachments.zh-CN.md",
+      "referenceOnly": "AgentWorkspace.tsx TreeNode reviewed: recursive workspace browsing/preview, not copied into the composer path picker."
     }
   },
   "rollout": {

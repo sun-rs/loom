@@ -17,7 +17,6 @@ import { Plus, Paperclip } from "lucide-react";
 import type { RahClient } from "@rah-os/client-sdk";
 import NativeInput from "../packages/web/src/components/message/MessageInput.tsx";
 import Tooltip from "../packages/web/src/components/ui/Tooltip.tsx";
-import { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives.ts";
 import { FileUploadStore } from "./file-uploads.ts";
 import ComputerFiles from "./ComputerFiles.tsx";
 const stores = new WeakMap<RahClient, FileUploadStore>();
@@ -150,7 +149,6 @@ export function ComposerFilesTools({
     [open, setOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null),
     triggerRef = useRef<HTMLButtonElement>(null);
-  const touch = useMediaQuery("(any-pointer: coarse)");
   if (!context) return null;
   const { disabled, client } = context;
   return (
@@ -166,30 +164,28 @@ export function ComposerFilesTools({
           <Plus size={14} />
         </ComposerIconButton>
       </Tooltip>
-      {touch && (
-        <span className="relative isolate inline-flex">
-          <ComposerIconButton
-            disabled={disabled || taskMode}
-            aria-label="上传文件或图片"
-            onClick={() => inputRef.current?.click()}
-          >
-            <Paperclip size={14} />
-          </ComposerIconButton>
-          <input
-            ref={inputRef}
-            type="file"
-            multiple
-            aria-label="上传文件或图片"
-            data-testid="loom-native-file-input"
-            disabled={disabled || taskMode}
-            className="absolute inset-0 z-20 size-full cursor-pointer opacity-0"
-            onChange={(e) => {
-              if (!taskMode) context.add(e.currentTarget.files);
-              e.currentTarget.value = "";
-            }}
-          />
-        </span>
-      )}
+      <span className="relative isolate inline-flex">
+        <ComposerIconButton
+          disabled={disabled || taskMode}
+          aria-label="上传文件或图片"
+          onClick={() => inputRef.current?.click()}
+        >
+          <Paperclip size={14} />
+        </ComposerIconButton>
+        <input
+          ref={inputRef}
+          type="file"
+          multiple
+          aria-label="上传文件或图片"
+          data-testid="loom-native-file-input"
+          disabled={disabled || taskMode}
+          className="absolute inset-0 z-20 size-full cursor-pointer opacity-0"
+          onChange={(e) => {
+            if (!taskMode) context.add(e.currentTarget.files);
+            e.currentTarget.value = "";
+          }}
+        />
+      </span>
       {open && (
         <ComputerFiles
           client={client}

@@ -1,0 +1,524 @@
+{
+  "attachmentDetails": {
+    "imageNativeLightbox": true,
+    "sameFileReselection": true,
+    "failedUploadBlocksSend": true,
+    "threadAttachmentOnly": true,
+    "threadExactUnknownReplay": true,
+    "threadReloadDownload": true,
+    "privateBoxIsolation": true
+  },
+  "attachmentResults": [
+    {
+      "width": 1440,
+      "referencePath": true,
+      "nativePicker": true,
+      "stableTreeLayout": true,
+      "desktopDrop": true,
+      "attachmentOnlySend": true,
+      "exactUnknownReplay": true,
+      "reloadDownloadExact": true
+    },
+    {
+      "width": 390,
+      "referencePath": true,
+      "nativePicker": true,
+      "stableTreeLayout": true,
+      "desktopDrop": false,
+      "attachmentOnlySend": true,
+      "exactUnknownReplay": true,
+      "reloadDownloadExact": true
+    },
+    {
+      "width": 820,
+      "referencePath": true,
+      "nativePicker": true,
+      "stableTreeLayout": true,
+      "desktopDrop": false,
+      "attachmentOnlySend": true,
+      "exactUnknownReplay": true,
+      "reloadDownloadExact": true
+    }
+  ],
+  "taskManagementResults": [
+    {
+      "width": 1440,
+      "agentAndHumanAssignment": true,
+      "unassignment": true,
+      "exactLostResponseReplay": true,
+      "unknownCloseGuard": true,
+      "completedReadonly": true,
+      "nativeSearchablePicker": true,
+      "pickerEscapeAndFocusReturn": true,
+      "collapsedHistoryNoRead": true,
+      "frozenHistoryPagination": true,
+      "historyDenialRecovery": true
+    },
+    {
+      "width": 390,
+      "agentAndHumanAssignment": true,
+      "unassignment": true,
+      "exactLostResponseReplay": true,
+      "unknownCloseGuard": true,
+      "completedReadonly": true,
+      "nativeSearchablePicker": true,
+      "pickerEscapeAndFocusReturn": true,
+      "collapsedHistoryNoRead": true,
+      "frozenHistoryPagination": true,
+      "historyDenialRecovery": true
+    }
+  ],
+  "channelTaskResults": [
+    {
+      "width": 1440,
+      "nativeComposerTask": true,
+      "atomicCreate": true,
+      "exactUnknownReplay": true,
+      "routeGuard": true,
+      "nativeContextMenu": true,
+      "touchLongPress": false,
+      "convertPreservesMessageIdentity": true,
+      "taskBadgeAndReload": true,
+      "escapeDismiss": true,
+      "ordinarySendUnchanged": true,
+      "taskReadDenialAndRecovery": true,
+      "singleModalAcrossDestinations": true
+    },
+    {
+      "width": 390,
+      "nativeComposerTask": true,
+      "atomicCreate": true,
+      "exactUnknownReplay": true,
+      "routeGuard": true,
+      "nativeContextMenu": true,
+      "touchLongPress": true,
+      "convertPreservesMessageIdentity": true,
+      "taskBadgeAndReload": true,
+      "escapeDismiss": true,
+      "ordinarySendUnchanged": true,
+      "taskReadDenialAndRecovery": true,
+      "singleModalAcrossDestinations": true
+    }
+  ],
+  "taskResults": [
+    {
+      "width": 1440,
+      "nativeBoardAndList": true,
+      "boundedPagination": true,
+      "taskDetailAndDiscussion": true,
+      "canonicalStatusUpdate": true,
+      "unknownExactReplay": true,
+      "unknownHistoryGuard": true,
+      "reload": true,
+      "mobileReturnOrClose": true,
+      "foreignTaskRejected": true
+    },
+    {
+      "width": 390,
+      "nativeBoardAndList": true,
+      "boundedPagination": true,
+      "taskDetailAndDiscussion": true,
+      "canonicalStatusUpdate": true,
+      "unknownExactReplay": true,
+      "unknownHistoryGuard": true,
+      "reload": true,
+      "mobileReturnOrClose": true,
+      "foreignTaskRejected": true
+    }
+  ],
+  "threadResults": [
+    {
+      "width": 1440,
+      "readOnlyOpen": true,
+      "createAndReplyExactReplay": true,
+      "oneReply": true,
+      "reload": true,
+      "nativeResizeOrMobileReturn": true,
+      "readFailureClearsContentAndRetainsDraft": true,
+      "foreignRootRejected": true
+    },
+    {
+      "width": 390,
+      "readOnlyOpen": true,
+      "createAndReplyExactReplay": true,
+      "oneReply": true,
+      "reload": true,
+      "nativeResizeOrMobileReturn": true,
+      "readFailureClearsContentAndRetainsDraft": true,
+      "foreignRootRejected": true
+    }
+  ],
+  "settingsNavigationResults": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "nativeGroupedSidebar": true,
+      "resize": true,
+      "mobileMasterDetail": false,
+      "placeholder": true,
+      "draftAcrossTabs": true,
+      "urlReloadAndBack": true,
+      "keyboardSelection": true
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "nativeGroupedSidebar": true,
+      "resize": false,
+      "mobileMasterDetail": true,
+      "placeholder": true,
+      "draftAcrossTabs": true,
+      "urlReloadAndBack": true,
+      "keyboardSelection": true
+    }
+  ],
+  "controlResults": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "stopResume": true,
+      "unknownExactReplay": true,
+      "reloadStopped": true,
+      "settingsSave": true,
+      "revisionConflictPreservesDraft": true
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "stopResume": true,
+      "unknownExactReplay": true,
+      "reloadStopped": true,
+      "settingsSave": true,
+      "revisionConflictPreservesDraft": true
+    }
+  ],
+  "mentionResults": [
+    {
+      "humanProfileFromGateway": true,
+      "agentProfilePresentationFixture": true,
+      "blockedWorkResponseFixture": true,
+      "nativeHoverDismissal": true,
+      "unknownPresenceOmitted": true,
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "canonicalMention": true,
+      "senderClickFocus": true,
+      "keyboardOrPointerSelection": true,
+      "membershipFailureClearsAndRecovers": true,
+      "channelIsolation": true,
+      "runUsagePartialAndUnknown": true,
+      "usageDialogEscapeKeepsInspector": true,
+      "trajectoryScopedPagedAndExpandable": true,
+      "runtimeEnableStopAgainstCore": true,
+      "runtimeLostResponseExactVerification": true,
+      "runtimeCancelNoMutation": true,
+      "runtimeIdentityAndConfigurationPreserved": true
+    },
+    {
+      "humanProfileFromGateway": true,
+      "agentProfilePresentationFixture": true,
+      "blockedWorkResponseFixture": true,
+      "nativeHoverDismissal": true,
+      "unknownPresenceOmitted": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "canonicalMention": true,
+      "senderClickFocus": true,
+      "keyboardOrPointerSelection": true,
+      "membershipFailureClearsAndRecovers": true,
+      "channelIsolation": true,
+      "runUsagePartialAndUnknown": true,
+      "usageDialogEscapeKeepsInspector": true,
+      "trajectoryScopedPagedAndExpandable": true,
+      "runtimeEnableStopAgainstCore": true,
+      "runtimeLostResponseExactVerification": true,
+      "runtimeCancelNoMutation": true,
+      "runtimeIdentityAndConfigurationPreserved": true
+    }
+  ],
+  "systemNoticeResults": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "persistentNotices": true,
+      "officialDisclosure": true,
+      "noReadMutation": true
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "persistentNotices": true,
+      "officialDisclosure": true,
+      "noReadMutation": true
+    }
+  ],
+  "fixtureOnly": true,
+  "realCore": true,
+  "paidCli": false,
+  "results": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "memberNamesAndIdleState": true,
+      "memberChannelIsolation": true,
+      "memberReadFailureClearsStaleStatusAndRecovers": true,
+      "memberDialogPointerKeyboardFocus": true,
+      "sendAndReload": true,
+      "historyPagination": true,
+      "sparseHistoryTopAlignedAndChronological": true,
+      "unavailableChannelFailsClosed": true,
+      "mobileMasterDetailDraftAndHistory": false,
+      "switchIsolation": true,
+      "ime": true,
+      "unknownResultVerified": true,
+      "unknownSendPreservedAcrossGlobalNavigation": true,
+      "externalRequests": 0
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "memberNamesAndIdleState": true,
+      "memberChannelIsolation": true,
+      "memberReadFailureClearsStaleStatusAndRecovers": true,
+      "memberDialogPointerKeyboardFocus": true,
+      "sendAndReload": true,
+      "historyPagination": true,
+      "sparseHistoryTopAlignedAndChronological": true,
+      "unavailableChannelFailsClosed": true,
+      "mobileMasterDetailDraftAndHistory": true,
+      "switchIsolation": true,
+      "ime": true,
+      "unknownResultVerified": true,
+      "unknownSendPreservedAcrossGlobalNavigation": true,
+      "externalRequests": 0
+    }
+  ],
+  "privateResults": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "privateOpenUnknownReplay": true,
+      "privateSendUnknownReplay": true,
+      "mobileBackPreservesUnknownWrite": false,
+      "stableBoxAcrossReload": true,
+      "sparseHistoryTopAlignedAndChronological": true,
+      "privateChannelIsolation": true,
+      "sidebarPinCloseReopenAndUnknownReplay": true,
+      "inactiveHistoryReadOnly": false
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "privateOpenUnknownReplay": true,
+      "privateSendUnknownReplay": true,
+      "mobileBackPreservesUnknownWrite": true,
+      "stableBoxAcrossReload": true,
+      "sparseHistoryTopAlignedAndChronological": true,
+      "privateChannelIsolation": true,
+      "sidebarPinCloseReopenAndUnknownReplay": true,
+      "inactiveHistoryReadOnly": true
+    }
+  ],
+  "instanceResults": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "existingRoleMayHaveMultipleInstances": true,
+      "unknownResultExactReplay": true,
+      "targetPreservedAcrossNavigation": true,
+      "exactlyOneNewInstance": true,
+      "frozenRoleRevision": true,
+      "reloadMembership": true,
+      "catalogReadFailureDisablesSubmitAndRecovers": true
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "existingRoleMayHaveMultipleInstances": true,
+      "unknownResultExactReplay": true,
+      "targetPreservedAcrossNavigation": true,
+      "exactlyOneNewInstance": true,
+      "frozenRoleRevision": true,
+      "reloadMembership": true,
+      "catalogReadFailureDisablesSubmitAndRecovers": true
+    }
+  ],
+  "navigationResults": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "allSixDestinations": true,
+      "urlReloadAndBackForward": true,
+      "keyboardNavigation": true,
+      "channelDraftPreservedAcrossPages": true,
+      "placeholdersExplicit": true,
+      "visiblePointerTargets": true,
+      "noHorizontalOverflow": true,
+      "externalRequests": 0
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "allSixDestinations": true,
+      "urlReloadAndBackForward": true,
+      "keyboardNavigation": true,
+      "channelDraftPreservedAcrossPages": true,
+      "placeholdersExplicit": true,
+      "visiblePointerTargets": true,
+      "noHorizontalOverflow": true,
+      "externalRequests": 0
+    }
+  ],
+  "managementResults": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "roleCreateUnknownReplay": true,
+      "officialSelectEscapeAndFocusReturn": true,
+      "roleTabPreservesUnsavedDraft": true,
+      "unavailableCatalogHidesOpaqueIdWithoutSubstitution": true,
+      "roleEditAndStableId": true,
+      "instanceCreateRestartRemove": true,
+      "frozenRevisionAndExplicitAdoption": true,
+      "privateOpenRecoveryFromAgentPage": true,
+      "roleDeletePreservesInstance": true,
+      "channelCreateGroupPinSortAndReload": true,
+      "sidebarUnknownReplayAndConcurrentConflict": true,
+      "groupRenameDeleteKeepsChannel": true,
+      "manualRowAndSectionOrder": true,
+      "sidebarIconsContextKeyboardTouchAndDismissal": true
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "roleCreateUnknownReplay": true,
+      "officialSelectEscapeAndFocusReturn": true,
+      "roleTabPreservesUnsavedDraft": true,
+      "unavailableCatalogHidesOpaqueIdWithoutSubstitution": true,
+      "roleEditAndStableId": true,
+      "instanceCreateRestartRemove": true,
+      "frozenRevisionAndExplicitAdoption": true,
+      "privateOpenRecoveryFromAgentPage": true,
+      "roleDeletePreservesInstance": true,
+      "channelCreateGroupPinSortAndReload": true,
+      "sidebarUnknownReplayAndConcurrentConflict": true,
+      "groupRenameDeleteKeepsChannel": true,
+      "manualRowAndSectionOrder": true,
+      "sidebarIconsContextKeyboardTouchAndDismissal": true
+    }
+  ],
+  "sidebarActionResults": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "blankMenu": true,
+      "moveSubmenuAndCreate": true,
+      "mutePersists": true,
+      "markUsesApi": true,
+      "unreadReadPersists": true,
+      "lostMarkNeverReplays": true,
+      "activeWorkRefusesArchive": true,
+      "archiveUnknownReplay": true,
+      "archiveReadOnlyReloadAndRestore": true
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "blankMenu": true,
+      "moveSubmenuAndCreate": true,
+      "mutePersists": true,
+      "markUsesApi": true,
+      "unreadReadPersists": true,
+      "lostMarkNeverReplays": true,
+      "activeWorkRefusesArchive": true,
+      "archiveUnknownReplay": true,
+      "archiveReadOnlyReloadAndRestore": true
+    }
+  ],
+  "discoveryResults": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "searchMatchesApi": true,
+      "boundedPagination": true,
+      "contextByExactMessage": true,
+      "queryReload": true,
+      "scopeFilter": true,
+      "contextToConversationAndBack": true,
+      "emptyResults": true,
+      "activityMatchesApi": true,
+      "nativeSegmentedToolbar54px": true,
+      "officialActivityCardAndKeyboard": true,
+      "officialSearchMessageRow": true,
+      "agentNameFilter": true,
+      "staleReadCannotReplaceNewQuery": true,
+      "readFailureClearsAndRecovers": true,
+      "contextDenialClearsAndRecovers": true,
+      "noImplicitReadMark": true
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "searchMatchesApi": true,
+      "boundedPagination": true,
+      "contextByExactMessage": true,
+      "queryReload": true,
+      "scopeFilter": true,
+      "contextToConversationAndBack": true,
+      "emptyResults": true,
+      "activityMatchesApi": true,
+      "nativeSegmentedToolbar54px": true,
+      "officialActivityCardAndKeyboard": true,
+      "officialSearchMessageRow": true,
+      "agentNameFilter": true,
+      "staleReadCannotReplaceNewQuery": true,
+      "readFailureClearsAndRecovers": true,
+      "contextDenialClearsAndRecovers": true,
+      "noImplicitReadMark": true
+    }
+  ]
+}
