@@ -29,5 +29,55 @@
     "fullBrowser": "passed",
     "chromiumAndWebkit": "passed",
     "formatAndDiff": "passed"
+  },
+  "deployment": {
+    "at": "2026-10-15T12:41:38.524Z",
+    "codeCommit": "05f54adfb416272a70a2bccfe5c912ead67c39b0",
+    "webBuildId": "9a1289ba366329ff72e41a2494f23a60b5e20c2b9daf338ccff7dc287f35167e",
+    "backupDatabases": 2,
+    "backupFiles": 318,
+    "businessTablesUnchanged": 18,
+    "formalPage": [
+      {
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "actualTreeMatchesApi": true,
+        "parentNavigationMs": 47,
+        "cancelPreservesEmptyDraft": true,
+        "systemPickerCancel": true,
+        "noBusinessMutations": true,
+        "buildMatches": true,
+        "pageErrors": []
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "actualTreeMatchesApi": true,
+        "parentNavigationMs": 44,
+        "cancelPreservesEmptyDraft": true,
+        "systemPickerCancel": true,
+        "noBusinessMutations": true,
+        "buildMatches": true,
+        "pageErrors": []
+      },
+      {
+        "viewport": {
+          "width": 820,
+          "height": 1000
+        },
+        "actualTreeMatchesApi": true,
+        "parentNavigationMs": 40,
+        "cancelPreservesEmptyDraft": true,
+        "systemPickerCancel": true,
+        "noBusinessMutations": true,
+        "buildMatches": true,
+        "pageErrors": []
+      }
+    ],
+    "screenshotsReviewed": true
   }
 }
