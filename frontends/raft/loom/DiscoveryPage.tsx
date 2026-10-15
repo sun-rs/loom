@@ -61,13 +61,17 @@ export default function DiscoveryPage({
     storageKey: "loom:activityCompactWidth",
     ...MASTER_DETAIL_COMPACT_PANEL_BOUNDS,
   });
-  const panel = params.has("thread") ? compactPanel : fullPanel;
+  const panel =
+    params.has("thread") && params.get("detail") !== "thread"
+      ? compactPanel
+      : fullPanel;
   useEffect(() => {
     if (detail && !wide)
       setParams(
         (previous) => {
           const next = new URLSearchParams(previous);
           next.delete("view");
+          next.delete("detail");
           return next;
         },
         { replace: true },

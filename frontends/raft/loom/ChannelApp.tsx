@@ -867,6 +867,7 @@ export default function ChannelApp() {
                     }
                     if (context.message.threadId) {
                       target.set("thread", context.rootMessageId!);
+                      if (!full) target.set("detail", "thread");
                     }
                     return target;
                   });
@@ -876,26 +877,52 @@ export default function ChannelApp() {
                   requested &&
                   selected &&
                   bridge ? (
-                    <Channel
-                      key={`${selected.roomId}:${params.get("message")}`}
-                      channel={selected}
-                      bridge={bridge}
-                      controlRoomId={directory.workspace.controlRoomId}
-                      focusId={params.get("message") ?? undefined}
-                      threadRootId={params.get("thread") ?? undefined}
-                      onThread={(id) =>
-                        setParams((previous) => {
-                          const next = new URLSearchParams(previous);
-                          next.delete("message");
-                          if (id) next.set("thread", id);
-                          else next.delete("thread");
-                          return next;
-                        })
-                      }
-                      onBack={() => setParams({ view: "activity" })}
-                      onOpenPrivate={openPrivate}
-                      onAddInstance={undefined}
-                    />
+                    params.get("detail") === "thread" &&
+                    params.get("thread") ? (
+                      <ThreadWorkspace
+                        key={`${selected.roomId}:${params.get("thread")}:${params.get("message")}`}
+                        contentSlot
+                        client={client}
+                        room={selected}
+                        rootMessageId={params.get("thread")!}
+                        focusId={params.get("message") ?? undefined}
+                        onClose={() =>
+                          setParams((previous) => {
+                            const next = new URLSearchParams(previous);
+                            for (const key of [
+                              "room",
+                              "message",
+                              "thread",
+                              "detail",
+                            ])
+                              next.delete(key);
+                            return next;
+                          })
+                        }
+                        onChanged={() => {}}
+                      />
+                    ) : (
+                      <Channel
+                        key={`${selected.roomId}:${params.get("message")}`}
+                        channel={selected}
+                        bridge={bridge}
+                        controlRoomId={directory.workspace.controlRoomId}
+                        focusId={params.get("message") ?? undefined}
+                        threadRootId={params.get("thread") ?? undefined}
+                        onThread={(id) =>
+                          setParams((previous) => {
+                            const next = new URLSearchParams(previous);
+                            next.delete("message");
+                            if (id) next.set("thread", id);
+                            else next.delete("thread");
+                            return next;
+                          })
+                        }
+                        onBack={() => setParams({ view: "activity" })}
+                        onOpenPrivate={openPrivate}
+                        onAddInstance={undefined}
+                      />
+                    )
                   ) : undefined
                 }
                 onOpenRoom={async (id) => {

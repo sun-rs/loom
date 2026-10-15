@@ -158,6 +158,13 @@ export async function verifyActivityNavigation({
         `[data-timeline-message-id="${threadCard.latestMessage.messageId}"] [data-highlighted="true"]`,
       );
       await replyTarget.waitFor();
+      if (width === 1440) {
+        assert.equal(
+          await page.getByTestId("loom-thread-resizer").count(),
+          0,
+          "Direct activity thread occupies the primary detail slot, not a third pane",
+        );
+      }
       assert.equal(
         new URL(page.url()).searchParams.get("thread"),
         card.latestMessage.messageId,
@@ -165,6 +172,21 @@ export async function verifyActivityNavigation({
       assert.equal(await page.getByRole("dialog").count(), 0);
       await page.reload();
       await replyTarget.waitFor();
+      if (width === 1440) {
+        assert.equal(
+          await page.getByTestId("activity-thread-content").count(),
+          1,
+        );
+        assert.equal(await page.getByTestId("thread-side-column").count(), 0);
+        assert.equal(await page.getByTestId("composer-textarea").count(), 1);
+        const detailBox = await page
+          .getByTestId("activity-thread-content")
+          .boundingBox();
+        assert.ok(
+          detailBox.width > 500,
+          "Primary thread uses remaining detail width",
+        );
+      }
       const replyBox = await replyTarget.boundingBox();
       assert.ok(replyBox.y >= 0 && replyBox.y < (width === 390 ? 844 : 1000));
       await page.screenshot({ path: `/tmp/loom-activity-thread-${width}.png` });
@@ -178,6 +200,37 @@ export async function verifyActivityNavigation({
         await page.getByText("Message focus scope mismatch").count(),
         0,
       );
+      if (width === 1440) {
+        assert.equal(new URL(page.url()).searchParams.has("room"), false);
+        await page
+          .getByTestId("activity-thread-content")
+          .waitFor({ state: "detached" });
+        assert.equal(
+          await page.getByTestId("activity-thread-content").count(),
+          0,
+        );
+        // A channel detail with a nested thread still has the official third pane.
+        await page.goto(
+          origin +
+            `/?view=activity&room=${room.roomId}&thread=${card.latestMessage.messageId}`,
+        );
+        await page.getByTestId("loom-thread-resizer").waitFor();
+        assert.equal(
+          await page.getByTestId("activity-thread-content").count(),
+          0,
+        );
+        await page.locator(`[data-result-id="${card.key}"]`).click();
+        await page.waitForURL((u) => !u.searchParams.has("thread"));
+        const channelTarget = threadSnapshot.items.find(
+          (i) => i.key === card.key,
+        ).latestMessage.messageId;
+        await page
+          .locator(
+            `[data-timeline-message-id="${channelTarget}"] [data-highlighted="true"]`,
+          )
+          .waitFor();
+        assert.equal(await page.getByTestId("thread-side-column").count(), 0);
+      }
       visibleSnapshot = directSnapshot;
       await page.goto(origin + "/?view=activity");
       await page.locator(`[data-result-id="${directCard.key}"]`).click();
@@ -199,6 +252,8 @@ export async function verifyActivityNavigation({
         width,
         oldMessageLocated: true,
         oldThreadReplyLocated: true,
+        directThreadUsesPrimarySlot: width === 1440,
+        nestedThreadKeepsSidePane: width === 1440,
         privateMessageLocated: true,
         backRestoresActivity: true,
         threadCloseClearsReplyTarget: true,

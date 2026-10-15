@@ -41,10 +41,12 @@ export default function ThreadWorkspace({
   onClose,
   onChanged,
   embedded = false,
+  contentSlot = false,
   taskHead,
   readError,
 }: {
   embedded?: boolean;
+  contentSlot?: boolean;
   taskHead?: ReactNode;
   readError?: string;
   client: RahClient;
@@ -171,14 +173,16 @@ export default function ThreadWorkspace({
     <div
       ref={host}
       className={
-        embedded
+        embedded || contentSlot
           ? "relative flex min-h-0 flex-1 flex-col"
           : "thread-side-column flex flex-col bg-layer-card theme-brutal:bg-white"
       }
-      data-testid="thread-side-column"
+      data-testid={
+        contentSlot ? "activity-thread-content" : "thread-side-column"
+      }
       style={{ "--thread-panel-width": `${size.width}px` } as CSSProperties}
     >
-      {!embedded && (
+      {!embedded && !contentSlot && (
         <div
           className="thread-side-column-resizer absolute left-0 top-0 bottom-0 w-2 -ml-1 z-10 cursor-col-resize touch-none select-none"
           data-testid="loom-thread-resizer"

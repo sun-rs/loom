@@ -2629,6 +2629,7 @@
   "rollout": {
     "stage": "discovery-v7",
     "consoleRetained": true,
-    "ownerDecision": "2026-10-14: deploy Web in stages for visual inspection; channel text slice first; incomplete capabilities remain in console."
+    "ownerDecision": "2026-10-14: deploy Web in stages for visual inspection; channel text slice first; incomplete capabilities remain in console.",
+    "activityThreadSlotCorrection": "MainLayout.tsx renderContentSlot/ActivityThreadContentRoute: direct thread Activity uses primary content slot, no Channel or side resize chrome; nested channel thread retains third pane. Local route glue, frozen upstream unchanged. See docs/audits/2026-10-15-activity-navigation.zh-CN.md."
   }
 }
