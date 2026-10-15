@@ -1,0 +1,33 @@
+{
+  "scope": "Keep last successful directory rendered during navigation, disable stale reference, local error/retry and 10s timeout, content-sized footer; clarify Loom host label",
+  "rootCause": "setData(undefined) unmounted host selector/path/list on every navigation; previous acceptance only measured settled geometry",
+  "tdd": {
+    "red": "Old build loses path element during controlled pending request",
+    "green": ["chromium.json", "webkit.json"],
+    "timeoutCase": "Held parent listing reaches local 10s timeout; previous child listing remains visible, stale reference disabled; retry succeeds",
+    "footerGapMaxPx": 28
+  },
+  "apiTimingSampleMs": {
+    "initial": 17,
+    "parent": 3,
+    "root": 6
+  },
+  "latencyLimit": "Specific long server delay not reproduced in this sample; no claim that all directories are fast",
+  "fullBrowser": "browser.json",
+  "backendChanged": false,
+  "paidCli": false,
+  "entryDesign": "Proposal only: one Plus menu, computer reference versus upload from browser device; no hostname heuristic or remote API added",
+  "verification": {
+    "npmCheck": "passed",
+    "backendPassed": 3211,
+    "optInSkipped": 22,
+    "consolePassed": 63,
+    "browserPolicyPassed": 15,
+    "efficiencyToolsPassed": 558,
+    "officialSourcePassed": 63,
+    "build": "passed",
+    "fullBrowser": "passed",
+    "chromiumAndWebkit": "passed",
+    "formatAndDiff": "passed"
+  }
+}

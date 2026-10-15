@@ -40,8 +40,26 @@ export async function verifyAttachments({
         }
         return route.continue();
       });
-      await page.route("**/v3/client/computers/files/list", (route) => {
+      let releaseListing,
+        listingStarted,
+        holdListing = false,
+        rejectListing = false;
+      await page.route("**/v3/client/computers/files/list", async (route) => {
         const path = route.request().postDataJSON().path || "";
+        if (holdListing) {
+          await new Promise((resolve) => {
+            releaseListing = resolve;
+            listingStarted?.();
+          });
+          holdListing = false;
+        }
+        if (rejectListing) {
+          rejectListing = false;
+          return route.fulfill({
+            status: 503,
+            body: "FIXTURE listing failure",
+          });
+        }
         return route.fulfill({
           status: 200,
           contentType: "application/json",
@@ -121,6 +139,127 @@ export async function verifyAttachments({
                 tree.getBoundingClientRect().bottom,
           };
         });
+      holdListing = true;
+      const listingPending = new Promise((resolve) => {
+        listingStarted = resolve;
+      });
+      await dialog.getByRole("button", { name: "small", exact: true }).click();
+      await listingPending;
+      try {
+        assert.equal(
+          await dialog.locator("code").textContent(),
+          "/FIXTURE",
+          "pending navigation keeps the displayed path",
+        );
+        assert.equal(
+          await dialog
+            .getByRole("button", { name: "notes space.txt", exact: true })
+            .isVisible(),
+          true,
+          "pending navigation keeps the list mounted",
+        );
+        assert.equal(
+          await dialog
+            .getByRole("button", { name: "引用所选", exact: true })
+            .isDisabled(),
+          true,
+          "stale directory cannot be referenced while loading",
+        );
+      } finally {
+        releaseListing();
+      }
+      await dialog
+        .getByRole("button", { name: "one.txt", exact: true })
+        .waitFor();
+      await dialog
+        .getByRole("button", { name: "上一级目录", exact: true })
+        .click();
+      await dialog
+        .getByRole("button", { name: "small", exact: true })
+        .waitFor();
+      rejectListing = true;
+      await dialog.getByRole("button", { name: "small", exact: true }).click();
+      await dialog.getByRole("alert").waitFor();
+      assert.equal(await dialog.locator("code").textContent(), "/FIXTURE");
+      assert.equal(
+        await dialog
+          .getByRole("button", { name: "notes space.txt", exact: true })
+          .isVisible(),
+        true,
+      );
+      assert.equal(
+        await dialog
+          .getByRole("button", { name: "引用所选", exact: true })
+          .isDisabled(),
+        true,
+      );
+      await dialog.getByRole("button", { name: "重试", exact: true }).click();
+      await dialog
+        .getByRole("button", { name: "one.txt", exact: true })
+        .waitFor();
+      await dialog
+        .getByRole("button", { name: "上一级目录", exact: true })
+        .click();
+      await dialog
+        .getByRole("button", { name: "small", exact: true })
+        .waitFor();
+      if (width === 1440) {
+        await dialog
+          .getByRole("button", { name: "small", exact: true })
+          .click();
+        await dialog
+          .getByRole("button", { name: "one.txt", exact: true })
+          .waitFor();
+        holdListing = true;
+        const parentPending = new Promise((resolve) => {
+          listingStarted = resolve;
+        });
+        await dialog
+          .getByRole("button", { name: "上一级目录", exact: true })
+          .click();
+        await parentPending;
+        try {
+          assert.equal(
+            await dialog.locator("code").textContent(),
+            "/FIXTURE/small",
+          );
+          assert.equal(
+            await dialog
+              .getByRole("button", { name: "one.txt", exact: true })
+              .isVisible(),
+            true,
+          );
+          await dialog
+            .getByText("目录读取超时，请重试。", { exact: false })
+            .waitFor({ timeout: 15000 });
+          assert.equal(
+            await dialog
+              .getByRole("button", { name: "引用所选", exact: true })
+              .isDisabled(),
+            true,
+          );
+        } finally {
+          releaseListing();
+        }
+        await dialog.getByRole("button", { name: "重试", exact: true }).click();
+        await dialog
+          .getByRole("button", { name: "small", exact: true })
+          .waitFor();
+      }
+      const footerGap = await dialog.evaluate((el) => {
+        const toggle = el
+          .querySelector("input[type=checkbox]")
+          .closest("label")
+          .getBoundingClientRect();
+        const cancel = [...el.querySelectorAll("button")]
+          .find((b) => b.textContent.trim() === "取消")
+          .getBoundingClientRect();
+        return cancel.top - toggle.bottom;
+      });
+      assert.ok(
+        footerGap <= 28,
+        "footer follows controls without excessive blank space: " + footerGap,
+      );
       const initial = await geometry();
       assert.equal(
         initial.upFirst,
@@ -263,6 +402,9 @@ export async function verifyAttachments({
         referencePath: true,
         nativePicker: true,
         stableTreeLayout: true,
+        pendingNavigationKeepsContents: true,
+        failedNavigationRetainsViewAndRetries: true,
+        compactFooter: true,
         desktopDrop: width === 1440,
         attachmentOnlySend: true,
         exactUnknownReplay: true,

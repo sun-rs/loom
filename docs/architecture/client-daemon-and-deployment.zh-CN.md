@@ -24,8 +24,10 @@ Agent 工作区的列表和正文读取仍拒绝它。子路径不接受绝对�
 符号链接逃逸，并沿用敏感目录过滤。
 必须经过 Human 身份认证；Agent 与未认证请求不能列目录。
 当前只支持本 daemon 的 Computer；其他 hostId 明确拒绝。浏览器设备图片与文件
-继续通过已有附件上传契约进入 daemon，与路径引用分开。UI 的 loopback 自动识别
-只是可覆盖的交互偏好，不是文件权限或跨机器访问证明。详见
+继续通过已有附件上传契约进入 daemon，与路径引用分开。旧 main 的 loopback 自动识别
+只是可覆盖的交互偏好，不是文件权限或跨机器访问证明。当前 evo 官方前端没有
+用它判断浏览器与 daemon 同机；计算机文件选择明确标注 Loom 主机。多机引用
+与上传入口建议见[附件接线审计](../audits/2026-10-15-attachments.zh-CN.md)，尚非已接通的远端文件树。详见
 [Composer 合同及验证](../design/composer-controls.md)。
 
 状态：本机 daemon core 已有独立 composition/CLI entrypoint、严格配置、Host generation fencing、deadline、Outbox wake、Worker delivery/Task/InputRequest command，以及 collaboration P2/P3 versioned loopback Human API；Workspace Agent 创建、版本化配置、暂停/恢复/删除已经打通 Kernel→Human API→Web→冻结运行上下文→真实子进程，运行中暂停由 AgentHost 受控 cancel 并保存 terminal proof，并通过 daemon restart 与 desktop/mobile browser gate。Agent execution `restart/session` 已复用同一 terminal proof、全局per-Agent fence、Provider continuity store与canonical manage闭环；`full` workspace删除仍禁用。ADR-0017 提供持久化 production Web build、server-side Human session 与重启恢复入口；durable root 已稳定为 `~/.rah`，旧 Application Support 数据以无覆盖、可恢复 staging 迁移，operator uninstall 只卸载服务且不提供数据删除。ADR-0019 又新增 daemon 继续 loopback 的正式 HTTPS LAN edge、一次性设备 pairing、可撤销持久 session、Raft 形态设备管理、PWA shell 和真实 Chrome 重启门禁。Remote Computer v1 已有独立 protocol、窄 Kernel application port、loopback HTTP transport、独立进程双 Host/generation handoff fixture、持久 resident runner supervisor、owner-private control socket、签名 terminal result、parent-SIGKILL reconnect E2、owner-private 多 attachment catalog、短 session/heartbeat/RuntimeOffer reconcile、远程 Placement/RunAttempt/terminal-proof 控制闭环、activation-scoped Worker credential、持久 ComputerOperation、两阶段 Server-delivery receipt、固定 Ed25519 release source、离线 Ed25519 release publisher、K two-slot/WAL、detached replacement、successor-owned ready、service-start recovery、handoff `SIGKILL` rollback、launchd-owned constant supervisor/FD lease、typed provisioning、shell-free launchctl lifecycle API、Runtime Provider Keychain loader、strict operator install/stage/activate CLI，以及 darwin-arm64 自包含 SEA 构建和 staging gate。系统/iOS CA trust 安装与 CA 轮换/告警、跨机器 HTTPS Computer/Worker endpoint、operation hint、真实 login/reboot/power-loss gate、`full` execution reset、skill/memory、Artifact/Review、Developer ID/notarization、生产私钥托管/HTTPS publication 与 attachment/supervisor Keychain credential 管理尚未实现。
