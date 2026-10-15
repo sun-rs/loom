@@ -7,6 +7,7 @@ import {
 import type { RahClient } from "@rah-os/client-sdk";
 import type {
   Message,
+  Thread,
   Principal,
   Room,
   ClientMessageMutationResponse,
@@ -80,6 +81,7 @@ export class LoomChannelClient {
   readonly messages: RoomTimelineSession;
   readonly client: RahClient;
   readonly roomId: string;
+  private threads: Thread[] = [];
   private directRoom: Room | null = null;
   private tail: Promise<unknown> = Promise.resolve();
   constructor(client: RahClient, roomId: string, consumerId: string) {
@@ -97,6 +99,9 @@ export class LoomChannelClient {
     return this.serial(async () => {
       await this.room.syncUntilCurrent({ maxPages: 10 });
       await this.messages.syncUntilCurrent({ limit: 50, maxPages: 2 });
+      this.threads = (
+        await this.client.request("thread.list", { roomId: this.roomId })
+      ).threads;
       const room = this.room.state.snapshot?.room;
       if (room?.kind === "direct") {
         // The sync snapshot owns history; room.list owns current private-box availability.
@@ -136,8 +141,10 @@ export class LoomChannelClient {
     members: readonly Principal[];
     messages: OfficialMessage[];
     hasOlder: boolean;
+    threads: readonly Thread[];
   } {
     return {
+      threads: this.threads,
       members: this.room.state.snapshot?.members ?? [],
       room:
         this.room.state.snapshot?.room.kind === "direct"

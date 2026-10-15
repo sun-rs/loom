@@ -55,6 +55,7 @@ test("channel read uses client-core bounded pages and rejects cross-channel proj
         },
       };
     if (op === "room.acknowledge") return { acknowledgedThrough: 1 };
+    if (op === "thread.list") return { threads: [] };
     if (op === "room.timeline")
       return {
         items: [

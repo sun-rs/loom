@@ -1,3 +1,4 @@
+import ThreadWorkspace from "./ThreadWorkspace.tsx";
 import SettingsPage from "./SettingsPage.tsx";
 import ChannelControl from "./ChannelControl.tsx";
 import InstanceInspector from "./InstanceInspector.tsx";
@@ -72,7 +73,11 @@ function Channel({
   onOpenPrivate,
   onAddInstance,
   onBack,
+  threadRootId,
+  onThread,
 }: {
+  threadRootId?: string;
+  onThread: (id?: string) => void;
   onBack: () => void;
   onOpenPrivate: (id: string) => void;
   onAddInstance: (() => void) | undefined;
@@ -276,6 +281,16 @@ function Channel({
                 roomId={channel.roomId}
                 messages={view.messages}
                 members={error ? [] : view.members}
+                threads={view.threads}
+                onOpenThread={
+                  isPrivate || error
+                    ? undefined
+                    : (id) => {
+                        if (hasUnresolvedIntents()) return;
+                        closeProfile();
+                        onThread(id);
+                      }
+                }
                 hasOlder={view.hasOlder}
                 loading={loading}
                 loadOlder={older}
@@ -345,7 +360,22 @@ function Channel({
           />
         </div>
       </ConversationPanelRoot>
-      {profileMember && controlRoomId && (
+      {!isPrivate && threadRootId && (
+        <ThreadWorkspace
+          key={threadRootId}
+          client={bridge.client}
+          room={channel}
+          rootMessageId={threadRootId}
+          onClose={() => onThread(undefined)}
+          onChanged={() => {
+            void bridge
+              .refresh()
+              .then(setView)
+              .catch((failure) => setError(String(failure)));
+          }}
+        />
+      )}
+      {profileMember && !threadRootId && controlRoomId && (
         <div
           className="thread-profile-side-column contents"
           data-collapse-channel="false"
@@ -665,6 +695,17 @@ export default function ChannelApp() {
               ) : selected ? (
                 <Channel
                   key={selected.roomId}
+                  threadRootId={params.get("thread") ?? undefined}
+                  onThread={(id) => {
+                    if (hasRouteBoundIntent()) return;
+                    setParams((previous) => {
+                      const next = new URLSearchParams(previous);
+                      next.set("room", selected.roomId);
+                      if (id) next.set("thread", id);
+                      else next.delete("thread");
+                      return next;
+                    });
+                  }}
                   channel={selected}
                   controlRoomId={directory.workspace.controlRoomId}
                   onBack={showChatList}

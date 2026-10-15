@@ -2558,6 +2558,22 @@
       "directReuse": "Native Banner, ConfirmDialog, raft-ui Button inside existing instance Activity panel. Frozen upstream files unchanged. Native member row profile trigger also opens this panel before the instance has authored a message.",
       "localGlue": "Loom-specific Kernel blocked projection and instance.activation.abandon; home Channel causal basis, frozen unknown-result intent, explicit Human withdrawal without replaying held output or resetting session.",
       "audit": "docs/audits/2026-10-15-blocked-work-ui.zh-CN.md"
+    },
+    "threadSlice": {
+      "source": [
+        "packages/web/src/components/message/ThreadPanel.tsx: ReadOnlyThreadPanel",
+        "packages/web/src/components/message/MessageItem.tsx: onOpenThread / handleMobileTap",
+        "packages/web/src/components/message/MessageHoverToolbar.tsx",
+        "packages/web/src/components/message/MessageInput.tsx",
+        "packages/web/src/components/layout/MainLayout.tsx: ThreadPanelWrapper",
+        "packages/web/src/index.css: thread-layout-container",
+        "packages/web/src/lib/panelBounds.ts"
+      ],
+      "directReuse": "Native ThreadPanel, MessageTimeline, ThreadRepliesBadge, MessageInput, useResizablePanel and native layout CSS. Frozen source files unchanged.",
+      "structuralPort": "ThreadPanelWrapper composition and connected reply-only subset of MessageHoverToolbar.",
+      "buildAdaptation": "Checked exact source boundaries enable controlled thread entry on read-only message projections, inject caller-owned footer into ReadOnlyThreadPanel and hide stale parent on read error. No upstream store or API enabled. Local onSendOverride applies Loom Enter-send contract to touch; upstream non-Loom path unchanged.",
+      "localGlue": "Kernel thread metadata and create/reply API; MessageSession bounded pages; RoomSession causal basis; WriteIntentSlot exact unknown-request verification. Stable root URL and composer identity.",
+      "audit": "docs/audits/2026-10-15-thread-ui.zh-CN.md"
     }
   },
   "rollout": {

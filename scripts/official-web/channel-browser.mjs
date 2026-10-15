@@ -1,3 +1,4 @@
+import { verifyThreads } from "./thread-browser.mjs";
 import { verifySettingsNavigation } from "./settings-navigation-browser.mjs";
 import { verifyChannelControls } from "./channel-controls-browser.mjs";
 import { verifyMentions } from "./mentions-browser.mjs";
@@ -484,9 +485,18 @@ try {
     workspace,
     channel: channels[0],
   });
+  const threadResults = await verifyThreads({
+    browser,
+    origin,
+    client,
+    workspace,
+    otherChannel: channels[1],
+    head,
+  });
   console.log(
     JSON.stringify(
       {
+        threadResults,
         settingsNavigationResults,
         controlResults,
         mentionResults,

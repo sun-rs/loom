@@ -1,6 +1,6 @@
 import { MessageProfileMembers } from "./MessageProfile.tsx";
 import { projectMentionMembers } from "./member-roster.ts";
-import type { Principal } from "@rah-os/protocol";
+import type { Principal, Thread } from "@rah-os/protocol";
 import type { Agent } from "../packages/web/src/store/agentStore.ts";
 import type { ServerMember } from "../packages/web/src/store/serverStore.ts";
 import { Fragment, useCallback, useMemo, useRef, useState } from "react";
@@ -30,6 +30,8 @@ export default function ChannelTimeline({
   loading,
   loadOlder,
   onOpenProfile,
+  onOpenThread,
+  threads = [],
 }: {
   roomId: string;
   messages: Message[];
@@ -37,6 +39,8 @@ export default function ChannelTimeline({
   hasOlder: boolean;
   loading: boolean;
   loadOlder: () => Promise<void>;
+  threads?: readonly Thread[];
+  onOpenThread?: (rootMessageId: string) => void;
   onOpenProfile?: (type: "agent" | "human", id: string) => void;
 }) {
   const roster = useMemo(() => projectMentionMembers(members), [members]);
@@ -45,6 +49,7 @@ export default function ChannelTimeline({
   const grouping = useStableMessageGrouping(
     messages,
     options.timeZone ?? undefined,
+    useMemo(() => new Set(threads.map((t) => t.rootMessageId)), [threads]),
   );
   const systems = useMemo(
     () => buildSystemMessageRenderStates(messages, formatMessage),
@@ -87,7 +92,25 @@ export default function ChannelTimeline({
         avatarUrl: null,
         description: null,
       }}
-      hideThreadActions
+      onOpenThread={
+        onOpenThread
+          ? (request) => onOpenThread(request.parentMessageId)
+          : undefined
+      }
+      threadSummary={(() => {
+        const t = threads.find((t) => t.rootMessageId === message.id);
+        return t
+          ? {
+              threadChannelId: t.threadId,
+              replyCount: t.replyCount,
+              lastReplyAt: t.lastReplyAt ?? null,
+              participantIds: [],
+              unreadCount: 0,
+              firstUnreadMessageId: null,
+            }
+          : undefined;
+      })()}
+      hideThreadActions={!onOpenThread}
     />
   );
   return (

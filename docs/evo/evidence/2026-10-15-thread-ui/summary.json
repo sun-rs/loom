@@ -1,0 +1,63 @@
+{
+  "status": "implemented-and-verified-awaiting-deployment",
+  "scope": "Channel message thread opening, bounded history and reply using native Raft presentation",
+  "paidCli": false,
+  "realCliExecution": false,
+  "audit": "../../../audits/2026-10-15-thread-ui.zh-CN.md",
+  "checks": {
+    "formalBuild": true,
+    "loomTypecheck": true,
+    "temporaryCoreBrowser": "browser.json",
+    "sourceTestsPassed": 45,
+    "formatCheck": true,
+    "diffCheck": true,
+    "fullCheck": {
+      "exitCode": 0,
+      "backendPassed": 3211,
+      "backendSkipped": 22,
+      "backendFailed": 0,
+      "consolePassed": 63,
+      "browserPolicyPassed": 15,
+      "efficiencyToolsPassed": 558,
+      "officialSourcePassed": 45
+    },
+    "screenshotsVisuallyInspected": true
+  },
+  "coverage": [
+    {
+      "width": 1440,
+      "readOnlyOpen": true,
+      "createAndReplyExactReplay": true,
+      "oneReply": true,
+      "reload": true,
+      "nativeResizeOrMobileReturn": true,
+      "readFailureClearsContentAndRetainsDraft": true,
+      "foreignRootRejected": true
+    },
+    {
+      "width": 390,
+      "readOnlyOpen": true,
+      "createAndReplyExactReplay": true,
+      "oneReply": true,
+      "reload": true,
+      "nativeResizeOrMobileReturn": true,
+      "readFailureClearsContentAndRetainsDraft": true,
+      "foreignRootRejected": true
+    }
+  ],
+  "retainedFailures": [
+    "TDD missing thread client and source adaptation modules",
+    "Node strip-only constructor parameter properties corrected; fake Room sync incremental snapshot corrected",
+    "Touch Enter initially followed upstream newline; local override now follows Loom Enter/Shift/IME contract",
+    "Read denial initially retained an empty parent frame; hidden while footer and unknown write owner stay mounted",
+    "Browser fixture initially assumed message.post returned a Message and matched duplicate message-id attributes; corrected against API/timeline contracts",
+    "Thread fixture affected existing search ordering; independent channel test moved after existing discovery tests"
+  ],
+  "limits": [
+    "Channel roots only; private-box thread entry excluded",
+    "Follower management and independent thread unread/read state not integrated",
+    "Existing thread metadata list is unpaginated; body history remains bounded",
+    "No paid model or new efficiency acceptance",
+    "Task page remains next; console retained"
+  ]
+}

@@ -1,3 +1,8 @@
+import {
+  adaptThreadItem,
+  adaptThreadFooter,
+  adaptComposerSubmit,
+} from "./thread-adaptation.ts";
 import { adaptMessageProfileNavigation } from "./message-profile-navigation.ts";
 import { defineConfig } from "vite";
 import { resolve } from "node:path";
@@ -21,10 +26,21 @@ export default defineConfig({
           ),
       },
       transform(code, id) {
+        if (
+          id.endsWith("/packages/web/src/components/message/MessageInput.tsx")
+        )
+          return { code: adaptComposerSubmit(code), map: null };
+        if (id.endsWith("/packages/web/src/components/message/ThreadPanel.tsx"))
+          return { code: adaptThreadFooter(code), map: null };
         if (id.endsWith("/packages/web/src/components/message/MessageItem.tsx"))
-          return { code: adaptMessageProfileNavigation(code), map: null };
+          return {
+            code: adaptThreadItem(adaptMessageProfileNavigation(code)),
+            map: null,
+          };
       },
       resolveId(source, importer) {
+        if (source === "loom-thread-toolbar")
+          return resolve(import.meta.dirname, "ThreadToolbar.tsx");
         if (
           importer?.includes("/packages/web/src/components/message/") &&
           /(?:^|\/)ProfilePreviewCardContent(?:\.tsx)?$/.test(source)
