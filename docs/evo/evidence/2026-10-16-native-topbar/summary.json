@@ -1,0 +1,61 @@
+{
+  "sourceCommit": "c748883b215aa28774b894b15ea455fe926a5227",
+  "webBuildId": "6a1ad4689273cacebc8ed4a2e324e4ffb587cd53d98121eb9642044882485b57",
+  "upstreamFilesUnchanged": true,
+  "reuse": "v1.21.16 production topbar structural port plus direct frozen-source SearchOverlay reuse; not v1.21.16 original TSX",
+  "checks": {
+    "sourceTests": 73,
+    "typecheck": true,
+    "webBuild": true,
+    "changedFileFormat": true,
+    "diff": true,
+    "fixtureWidths": [1440, 390],
+    "fixtureAssertions": [
+      "topbar height and rail search removal",
+      "background page and unsent draft preserved",
+      "Escape/outside dismissal and shortcut",
+      "full-result route and reload",
+      "keyboard result opens/highlights canonical message",
+      "nested filter Escape does not dismiss search",
+      "IME Escape ignored",
+      "narrow viewport switches to full search and retains query"
+    ],
+    "fullSuite": false,
+    "paidCli": false
+  },
+  "deployment": {
+    "verified": true,
+    "backedUpDatabases": 2,
+    "backedUpFiles": 318,
+    "businessTablesUnchanged": 18,
+    "sourceSha256": "e22c3e7b9bf57123975a63319904cc2ba7ca24962e50f96283cc23729d283efb"
+  },
+  "realPage": [
+    {
+      "width": 1440,
+      "realPage": true,
+      "searchPresentation": true,
+      "buildMatches": true,
+      "noBusinessWrites": true,
+      "pageErrors": [],
+      "noOverflow": true
+    },
+    {
+      "width": 390,
+      "realPage": true,
+      "searchPresentation": true,
+      "buildMatches": true,
+      "noBusinessWrites": true,
+      "pageErrors": [],
+      "noOverflow": true
+    }
+  ],
+  "realPageThemes": ["light", "dark"],
+  "limits": [
+    "Single local workspace selector disabled",
+    "No entity/recent search results or draggable palette",
+    "Search load-more work remains parked",
+    "No newest original TSX obtained; production-code provenance retained"
+  ],
+  "localEvidence": "/Users/sun/.loom/reviews/2026-10-16-native-topbar"
+}
