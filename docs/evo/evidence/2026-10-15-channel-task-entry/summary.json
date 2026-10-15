@@ -1,5 +1,5 @@
 {
-  "status": "verified-awaiting-deployment",
+  "status": "deployed-and-verified",
   "paidCli": false,
   "realCliExecution": false,
   "audit": "../../../audits/2026-10-15-channel-task-entry.zh-CN.md",
@@ -48,5 +48,58 @@
     "Native menu lacked Escape dismissal",
     "Hidden channel mounted a second modal on global Tasks route",
     "Full browser regression caught task route guard affecting ordinary chat navigation; filtered the shared slot guard to task-create and reran original regression"
-  ]
+  ],
+  "deployment": {
+    "codeCommit": "186c82bfb9b2df0ee5c0525f6ad18393150269d7",
+    "webBuildId": "c6e2f42dd8489fd58b1221a81ade7243179bf38e14c971ae0b00ff9c83858cbd",
+    "backupDatabases": 2,
+    "backupFiles": 318,
+    "unchangedBusinessProjections": 18,
+    "volatileFieldExcluded": "subscription_cursors.updated_at only; identity/read/ACK positions compared exactly",
+    "gracefulRestartVerified": true,
+    "realPage": {
+      "at": "2026-10-15T09:10:03.985Z",
+      "webBuildId": "c6e2f42dd8489fd58b1221a81ade7243179bf38e14c971ae0b00ff9c83858cbd",
+      "results": [
+        {
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "existingRealTask": true,
+          "nativeTaskToggle": true,
+          "nativeMenu": true,
+          "touchLongPress": false,
+          "taskBadge": true,
+          "titleMatchesApi": true,
+          "noDuplicateRoot": true,
+          "reload": true,
+          "nativeCloseOrMobileBack": true,
+          "noBusinessMutations": true,
+          "buildMatches": true,
+          "pageErrors": []
+        },
+        {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "existingRealTask": true,
+          "nativeTaskToggle": true,
+          "nativeMenu": true,
+          "touchLongPress": true,
+          "taskBadge": true,
+          "titleMatchesApi": true,
+          "noDuplicateRoot": true,
+          "reload": true,
+          "nativeCloseOrMobileBack": true,
+          "noBusinessMutations": true,
+          "buildMatches": true,
+          "pageErrors": []
+        }
+      ]
+    },
+    "screenshotsVisuallyInspected": true,
+    "privateEvidenceDirectory": "/Users/sun/.loom/reviews/2026-10-15-channel-task-entry"
+  }
 }
