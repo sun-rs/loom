@@ -1,3 +1,4 @@
+import { exposeTaskPresentation } from "./task-adaptation.ts";
 import {
   adaptThreadItem,
   adaptThreadFooter,
@@ -26,6 +27,8 @@ export default defineConfig({
           ),
       },
       transform(code, id) {
+        if (id.endsWith("/packages/web/src/components/task/TasksPanel.tsx"))
+          return { code: exposeTaskPresentation(code), map: null };
         if (
           id.endsWith("/packages/web/src/components/message/MessageInput.tsx")
         )
@@ -39,6 +42,11 @@ export default defineConfig({
           };
       },
       resolveId(source, importer) {
+        if (
+          importer?.endsWith("/components/task/TaskModalHead.tsx") &&
+          source === "./TaskProperties"
+        )
+          return resolve(import.meta.dirname, "TaskProperties.tsx");
         if (source === "loom-thread-toolbar")
           return resolve(import.meta.dirname, "ThreadToolbar.tsx");
         if (

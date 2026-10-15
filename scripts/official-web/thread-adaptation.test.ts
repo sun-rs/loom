@@ -45,3 +45,15 @@ test("Loom composer preserves IME and Shift guards while applying Enter send to 
   assert.ok(result.includes("e.nativeEvent.isComposing"));
   assert.throws(() => adaptComposerSubmit("changed upstream"));
 });
+test("controlled task thread uses the native parent slot without repeating its root message", () => {
+  const source = readFileSync(
+    "frontends/raft/packages/web/src/components/message/ThreadPanel.tsx",
+    "utf8",
+  );
+  const result = adaptThreadFooter(source);
+  assert.ok(
+    result.includes(
+      "const parent = parentSlot ?? (hideParentMessage ? null : (",
+    ),
+  );
+});

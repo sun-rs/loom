@@ -60,19 +60,12 @@ export async function verifyGlobalNavigation({ browser, origin, channel }) {
         await page.getByLabel("动态范围", { exact: true }).waitFor();
       else if (id === "settings")
         await page.getByTestId("settings-sidebar-list").waitFor();
-      else {
-        await page
-          .getByText("页面骨架已就位，内容尚未接入。", { exact: true })
-          .waitFor();
+      else if (id === "tasks") {
+        await page.getByTestId("loom-tasks-page").waitFor();
+        await page.getByTestId("channel-task-view-board").waitFor();
         assert.equal(
           await page.getByTestId("composer-textarea").isVisible(),
           false,
-        );
-        assert.equal(
-          await page
-            .getByRole("link", { name: "打开临时控制台", exact: true })
-            .getAttribute("href"),
-          "/_rah/console/",
         );
       }
     }

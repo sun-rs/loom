@@ -1,3 +1,4 @@
+import { verifyTasks } from "./task-browser.mjs";
 import { verifyThreads } from "./thread-browser.mjs";
 import { verifySettingsNavigation } from "./settings-navigation-browser.mjs";
 import { verifyChannelControls } from "./channel-controls-browser.mjs";
@@ -493,9 +494,17 @@ try {
     otherChannel: channels[1],
     head,
   });
+  const taskResults = await verifyTasks({
+    browser,
+    origin,
+    client,
+    workspace,
+    head,
+  });
   console.log(
     JSON.stringify(
       {
+        taskResults,
         threadResults,
         settingsNavigationResults,
         controlResults,

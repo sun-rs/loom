@@ -1,0 +1,70 @@
+{
+  "status": "implemented-and-verified-awaiting-deployment",
+  "scope": "Native global task board/list, existing task detail, Human workflow update and discussion",
+  "paidCli": false,
+  "realCliExecution": false,
+  "audit": "../../../audits/2026-10-15-task-ui.zh-CN.md",
+  "checks": {
+    "formalBuild": true,
+    "loomTypecheck": true,
+    "temporaryCoreBrowser": "browser.json",
+    "sourceTestsPassed": 50,
+    "formatCheck": true,
+    "diffCheck": true,
+    "screenshotsVisuallyInspected": true,
+    "fullCheck": {
+      "exitCode": 0,
+      "backendPassed": 3211,
+      "backendSkipped": 22,
+      "backendFailed": 0,
+      "consolePassed": 63,
+      "browserPolicyPassed": 15,
+      "efficiencyToolsPassed": 558,
+      "officialSourcePassed": 50
+    }
+  },
+  "coverage": [
+    {
+      "width": 1440,
+      "nativeBoardAndList": true,
+      "boundedPagination": true,
+      "taskDetailAndDiscussion": true,
+      "canonicalStatusUpdate": true,
+      "unknownExactReplay": true,
+      "unknownHistoryGuard": true,
+      "reload": true,
+      "mobileReturnOrClose": true,
+      "foreignTaskRejected": true
+    },
+    {
+      "width": 390,
+      "nativeBoardAndList": true,
+      "boundedPagination": true,
+      "taskDetailAndDiscussion": true,
+      "canonicalStatusUpdate": true,
+      "unknownExactReplay": true,
+      "unknownHistoryGuard": true,
+      "reload": true,
+      "mobileReturnOrClose": true,
+      "foreignTaskRejected": true
+    }
+  ],
+  "additionalBrowserCoverage": [
+    "task read denial hides title and discussion while retaining draft; read recovery restores content"
+  ],
+  "retainedFailures": [
+    "TDD missing task facade and native presentation export modules",
+    "Task thread initially lacked native parentSlot/hideParentMessage support",
+    "Fake Room delivery corrected to include snapshot sequence and ACK receipt",
+    "Initial type/build check caught CloseButton native import and multiline TypeScript export directives",
+    "Browser corrected status option lookup to native portal; second viewport task reset isolated the previous completed state"
+  ],
+  "limits": [
+    "Message-to-task conversion and channel task creation remain next slice",
+    "Assignee is read-only; creator/assignee filters, history and review record not integrated",
+    "Board drag and card-inline editing withheld; status writes use task properties",
+    "Global cursor pages are 50, maximum 500 in memory; channel filter narrows results",
+    "List reloads on entry/filter/local write; no cross-client real-time claim",
+    "No paid model or efficiency acceptance"
+  ]
+}

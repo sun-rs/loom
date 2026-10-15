@@ -2574,6 +2574,20 @@
       "buildAdaptation": "Checked exact source boundaries enable controlled thread entry on read-only message projections, inject caller-owned footer into ReadOnlyThreadPanel and hide stale parent on read error. No upstream store or API enabled. Local onSendOverride applies Loom Enter-send contract to touch; upstream non-Loom path unchanged.",
       "localGlue": "Kernel thread metadata and create/reply API; MessageSession bounded pages; RoomSession causal basis; WriteIntentSlot exact unknown-request verification. Stable root URL and composer identity.",
       "audit": "docs/audits/2026-10-15-thread-ui.zh-CN.md"
+    },
+    "taskSlice": {
+      "source": [
+        "packages/web/src/components/task/TasksPanel.tsx: TaskSection / DroppableColumn / toolbar",
+        "packages/web/src/components/task/TaskCard.tsx",
+        "packages/web/src/components/task/TaskModalHead.tsx",
+        "packages/web/src/components/task/TaskProperties.tsx",
+        "packages/web/src/components/layout/MainLayout.tsx: TaskModalBar / ThreadPanelWrapper"
+      ],
+      "directReuse": "Native task groups/cards/virtual layout, TaskModalHead, InlineBadgeEditor, SelectionPopover, Modal and thread presentation. Frozen disk source unchanged.",
+      "structuralPort": "Native page header/toolbar, task modal shell/bar and properties composition with only status editable.",
+      "buildAdaptation": "Checked presentation exports; TaskModalHead imports local TaskProperties; readonly thread supports native parentSlot/hideParentMessage.",
+      "localGlue": "Existing global task cursor API, task.get, protocol workflow projection/options, task.workflow.update through RoomSession and WriteIntentSlot. Discussion reuses thread facade. No scenario workflow or backend changes.",
+      "audit": "docs/audits/2026-10-15-task-ui.zh-CN.md"
     }
   },
   "rollout": {

@@ -1,3 +1,4 @@
+import TasksPage from "./TasksPage.tsx";
 import ThreadWorkspace from "./ThreadWorkspace.tsx";
 import SettingsPage from "./SettingsPage.tsx";
 import ChannelControl from "./ChannelControl.tsx";
@@ -743,6 +744,13 @@ export default function ChannelApp() {
               onOpenPrivate={openPrivate}
             />
           )}
+          {directory && destination === "tasks" && (
+            <TasksPage
+              client={client}
+              workspaceId={directory.workspace.workspaceId}
+              rooms={directory.channels}
+            />
+          )}
           {directory &&
             (destination === "search" || destination === "activity") && (
               <DiscoveryPage
@@ -780,12 +788,20 @@ export default function ChannelApp() {
               controlRoomId={directory.workspace.controlRoomId}
             />
           )}
-          {!["channels", "agents", "search", "activity", "settings"].includes(
-            destination,
-          ) && <DestinationPlaceholder active={destination} />}
+          {![
+            "channels",
+            "agents",
+            "search",
+            "activity",
+            "settings",
+            "tasks",
+          ].includes(destination) && (
+            <DestinationPlaceholder active={destination} />
+          )}
         </div>
         {(destination !== "channels" || mobileList) &&
-          !(destination === "settings" && params.has("settings")) && (
+          !(destination === "settings" && params.has("settings")) &&
+          !(destination === "tasks" && params.has("task")) && (
             <MobileNavigation
               active={destination}
               onSelect={selectDestination}

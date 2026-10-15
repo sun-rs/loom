@@ -26,7 +26,17 @@ export function adaptThreadFooter(source: string) {
   code = replaceOnce(
     code,
     "  readOnlyData,\n}: ThreadPanelProps &",
-    "  readOnlyData,\n  loomFooter,\n}: ThreadPanelProps &",
+    "  readOnlyData,\n  loomFooter,\n  hideParentMessage,\n  parentSlot,\n}: ThreadPanelProps &",
+  );
+  code = replaceOnce(
+    code,
+    '  const parent = (\n    <div data-testid="thread-panel-parent"',
+    '  const parent = parentSlot ?? (hideParentMessage ? null : (\n    <div data-testid="thread-panel-parent"',
+  );
+  code = replaceOnce(
+    code,
+    "  );\n\n  return (\n    <ThreadPanelRoot className={READ_ONLY_THREAD_PANEL_CLASS_NAME}",
+    "  ));\n\n  return (\n    <ThreadPanelRoot className={READ_ONLY_THREAD_PANEL_CLASS_NAME}",
   );
   code = replaceOnce(
     code,
