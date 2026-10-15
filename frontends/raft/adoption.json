@@ -2619,7 +2619,7 @@
         "packages/web/src/components/message/GalleryImageItem.tsx",
         "packages/web/src/components/ImageLightbox.tsx"
       ],
-      "directReuse": "Native composer controls, draft recipes, Dialog/Select/SelectionPopover, file cards, image gallery layout and Lightbox; original files unchanged.",
+      "directReuse": "Native composer controls, draft recipes, Dialog/Select/SelectionPopover/Checkbox, file cards, image gallery layout and Lightbox; original files unchanged.",
       "structuralPort": "main f1bc8c9 file-uploads.ts and tests with Web Crypto ID; file reference semantics and direct mobile input hit area. Native components compose the tree.",
       "localGlue": "Existing file.prepare/files.upload, computer.files.list and message/thread attachment IDs through existing write slots. Unified Plus dialog with native device upload, presentation-only device preference, fixed parent navigation and separately reloaded file entries. No backend changes.",
       "audit": "docs/audits/2026-10-15-attachments.zh-CN.md",

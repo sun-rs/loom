@@ -6,6 +6,7 @@ import type { ComputerFilesListResponse } from "@rah-os/protocol";
 import {
   Button,
   Card,
+  Checkbox,
   Dialog,
   DialogContent,
   DialogBody,
@@ -202,11 +203,7 @@ export default function ComputerFiles({
             </div>
           </Card>
           <label className="mt-3 flex items-center gap-2 text-xs">
-            <input
-              type="checkbox"
-              checked={hidden}
-              onChange={(e) => setHidden(e.target.checked)}
-            />{" "}
+            <Checkbox size="sm" checked={hidden} onCheckedChange={setHidden} />
             显示隐藏文件
           </label>
           {data?.truncated && <p role="status">目录过大，仅显示前1000项。</p>}

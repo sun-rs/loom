@@ -110,6 +110,8 @@ export async function verifyAttachments({
       const composer = page.getByTestId("chat-composer-shell"),
         input = composer.locator("textarea");
       await input.waitFor();
+      await page.reload();
+      await input.waitFor();
       await composer
         .getByRole("button", { name: "引用计算机文件或文件夹", exact: true })
         .click();
@@ -117,6 +119,40 @@ export async function verifyAttachments({
         name: "引用文件或文件夹",
       });
       await dialog.waitFor();
+      const hiddenToggle = dialog.getByRole("checkbox", {
+        name: "显示隐藏文件",
+      });
+      assert.equal(
+        await hiddenToggle.getAttribute("data-slot"),
+        "checkbox",
+        "file picker reuses the official Raft checkbox, including its focus styling",
+      );
+      assert.equal(await hiddenToggle.isChecked(), false);
+      await page.screenshot({
+        path: `/tmp/loom-checkbox-first-${width}.png`,
+        animations: "disabled",
+      });
+      const hiddenRequest = page.waitForRequest(
+        (request) =>
+          request.url().endsWith("/computers/files/list") &&
+          request.postDataJSON().includeHidden === true,
+      );
+      await dialog.getByText("显示隐藏文件", { exact: true }).click();
+      await hiddenRequest;
+      assert.equal(await hiddenToggle.isChecked(), true);
+      await hiddenToggle.focus();
+      await page.screenshot({
+        path: `/tmp/loom-checkbox-checked-${width}.png`,
+        animations: "disabled",
+      });
+      const visibleRequest = page.waitForRequest(
+        (request) =>
+          request.url().endsWith("/computers/files/list") &&
+          request.postDataJSON().includeHidden === false,
+      );
+      await hiddenToggle.press("Space");
+      await visibleRequest;
+      assert.equal(await hiddenToggle.isChecked(), false);
       assert.equal(
         await composer.getByTestId("loom-native-file-input").count(),
         0,
@@ -155,7 +191,7 @@ export async function verifyAttachments({
               b.getAttribute("aria-label") === "上一级目录",
           );
           const tree = up.closest("[data-testid='computer-file-tree']");
-          const hidden = el.querySelector("input[type=checkbox]");
+          const hidden = el.querySelector("[role=checkbox]");
           return {
             height: el.getBoundingClientRect().height,
             treeHeight: tree?.getBoundingClientRect().height,
@@ -283,7 +319,7 @@ export async function verifyAttachments({
       }
       const footerGap = await dialog.evaluate((el) => {
         const toggle = el
-          .querySelector("input[type=checkbox]")
+          .querySelector("[role=checkbox]")
           .closest("label")
           .getBoundingClientRect();
         const footer = el
@@ -453,6 +489,8 @@ export async function verifyAttachments({
       results.push({
         width,
         referencePath: true,
+        raftCheckboxAfterRefresh: true,
+        hiddenFilesLabelAndKeyboard: true,
         nativePicker: true,
         stableTreeLayout: true,
         pendingNavigationKeepsParentOnly: true,
