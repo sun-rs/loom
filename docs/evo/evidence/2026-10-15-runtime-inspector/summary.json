@@ -10,9 +10,22 @@
     "browser": "browser.json",
     "viewports": ["1440x1000", "390x844"],
     "dpr": 1,
-    "format": "passed before deployment documentation",
+    "format": "passed",
     "diff": "passed",
-    "formalPage": "pending restart",
+    "formalPage": {
+      "passed": true,
+      "readOnly": true,
+      "runRowsPerViewport": [12, 12],
+      "trajectoryRowsPerViewport": [44, 44],
+      "toolRowsPerViewport": [8, 8],
+      "usageMatchesAuthenticatedApi": true,
+      "trajectoryMatchesAuthenticatedApi": true,
+      "controlMenuMatchesDefinition": true,
+      "activityToolbar54px": true,
+      "screenshotsInspected": true,
+      "pageErrors": [],
+      "noExecutionOrMessageOrReadMarkMutation": true
+    },
     "screenshotsInspected": true,
     "unknownWriteSurvivesConversationFailure": true,
     "runtimeEnableStopAgainstTemporaryCore": true,
@@ -31,12 +44,23 @@
     "Instance enable/stop in profile and Agent instance menus",
     "Exact unknown-write verification retained through conversation sync failure"
   ],
-  "retainedFailure": "Fault regression reproduced profile unmount losing an unresolved control intent after conversation sync failure; fixed by retaining selected identity while unresolved writes exist, with diagnostic failures still clearing. A subsequent post-control single-Escape assertion timed out with the native focus-return tooltip visible. Final test uses the explicit native close/back control there and retains separate standalone Escape checks. Final artifact browser batch passed; no product Escape shortcut weakened.",
+  "retainedFailure": "Fault regression reproduced profile unmount losing an unresolved control intent after conversation sync failure; fixed by retaining selected identity while unresolved writes exist, with diagnostic failures still clearing. A subsequent post-control single-Escape assertion timed out with the native focus-return tooltip visible. Final test uses the explicit native close/back control there and retains separate standalone Escape checks. Final artifact browser batch passed; no product Escape shortcut weakened. The first formal page script had the same post-menu Escape assumption; its failure remains in the private page-first.log. Both formal viewports passed after using the native close/back control.",
   "limits": [
     "No paid or new real CLI execution; runtime control tested with temporary real Core and fake CLI discovery",
     "No change to backend stop/terminal-proof semantics; enabled/disabled is not runtime exit proof",
     "No whole-product UI completion, global usage page or estimated costs",
     "Only recorded native trajectory available; absent does not mean no tool call",
     "Some native diagnostic labels remain canonical strings"
-  ]
+  ],
+  "deployment": {
+    "sourceCommit": "11b5a1f09ffc601c48e8901476ecbcfc30e0259e",
+    "webBuildId": "7ba8122b8575498d5e345f367bb26427ca2babbd2b82f888b0e63af8592fe44d",
+    "url": "http://127.0.0.1:4176",
+    "restarted": true,
+    "backupDatabases": 2,
+    "backupFiles": 318,
+    "businessTablesUnchanged": 18,
+    "comparisonException": "subscription_cursors.updated_at only; identity/read/ACK positions compared exactly",
+    "nativeFinalProvidersUnchanged": ["claude", "opencode"]
+  }
 }
