@@ -1,5 +1,5 @@
 {
-  "status": "automated-verified-awaiting-deployment",
+  "status": "deployed-and-verified-with-retained-suite-failure",
   "paidCli": false,
   "realCliExecution": false,
   "scope": "Single blocked Activation explicit Human abandonment in native instance Activity panel",
@@ -46,6 +46,48 @@
     "TDD member list lacked profile action; first integration also exposed loading readiness; action withheld until conversation membership is ready"
   ],
   "deployment": {
-    "verified": false
+    "verified": true,
+    "implementationCommit": "8875271367bb336d930db82aa8c18a620e2dde60",
+    "restartedAt": "2026-10-15T05:40:00.465Z",
+    "service": "com.loom.evo",
+    "url": "http://127.0.0.1:4176/",
+    "webBuildId": "ee8a46f5875da6e1ed40c3ee2bfd454210957f58efd34a126906a072f9de65ba",
+    "sourceSha256": "d2c685a29b1def98ba32bfb9b12b30b1488a623795f14e696d560cd9a2ee6fed",
+    "backupDatabases": 2,
+    "backupFiles": 318,
+    "preservedBusinessProjections": 18,
+    "volatileFieldExcluded": "subscription_cursors.updated_at only; identity/read/ACK positions compared exactly",
+    "realPage": {
+      "at": "2026-10-15T05:40:11.237Z",
+      "webBuildId": "ee8a46f5875da6e1ed40c3ee2bfd454210957f58efd34a126906a072f9de65ba",
+      "results": [
+        {
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "memberListEntryWithoutPriorReply": true,
+          "blockedReasonMatchesApi": true,
+          "confirmAndCancel": true,
+          "noBusinessMutations": true,
+          "buildMatches": true,
+          "pageErrors": []
+        },
+        {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "memberListEntryWithoutPriorReply": true,
+          "blockedReasonMatchesApi": true,
+          "confirmAndCancel": true,
+          "noBusinessMutations": true,
+          "buildMatches": true,
+          "pageErrors": []
+        }
+      ]
+    },
+    "screenshotsVisuallyInspected": true,
+    "nativeFinalProvidersUnchanged": ["claude", "opencode"]
   }
 }
