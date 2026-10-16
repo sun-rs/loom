@@ -72,3 +72,13 @@ test("reaction adapter preserves native quick row and toolbar rules without expo
   assert.ok(adaptReactionToolbar(toolbar).includes("{!loomHideSave &&"));
   assert.throws(() => adaptReactions("drift"));
 });
+test("archived and inactive private conversations do not offer reaction writes", async () => {
+  const { reactionRoomWritable } =
+    await import("../../frontends/raft/loom/reaction-client.ts");
+  assert.equal(reactionRoomWritable({ archivedAt: "now" } as any), false);
+  assert.equal(
+    reactionRoomWritable({ instancePrivateBox: { active: false } } as any),
+    false,
+  );
+  assert.equal(reactionRoomWritable({} as any), true);
+});

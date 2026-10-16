@@ -11,6 +11,7 @@ import type { Message } from "../packages/web/src/store/messageStore.ts";
 import { showToast } from "../packages/web/src/components/toastBridge.ts";
 import {
   ReactionClient,
+  reactionRoomWritable,
   type ReactionBridge,
   type SocialItem,
 } from "./reaction-client.ts";
@@ -73,9 +74,10 @@ export function MessageReactionsProvider({
       clearTimeout(timer);
     };
   }, [owner, ids]);
+  const writable = reactionRoomWritable(bridge.room.state.snapshot?.room);
   const toggle = (id: string, emoji: string) => {
     const row = latest.current.get(id);
-    if (!row?.canReact || bridge.writes.state !== "idle") return;
+    if (!writable || !row?.canReact || bridge.writes.state !== "idle") return;
     void owner
       .set(
         id,
@@ -107,7 +109,7 @@ export function MessageReactionsProvider({
       value={{
         roomId: bridge.roomId,
         items,
-        disabled: state !== "idle",
+        disabled: !writable || state !== "idle",
         toggle,
       }}
     >

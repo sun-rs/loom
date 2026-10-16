@@ -43,3 +43,13 @@ export class ReactionClient {
     });
   }
 }
+/** Match the existing conversation composer read-only boundary. */
+export function reactionRoomWritable(
+  room: import("@rah-os/protocol").Room | null | undefined,
+) {
+  return (
+    !!room &&
+    !room.archivedAt &&
+    (!room.instancePrivateBox || room.instancePrivateBox.active === true)
+  );
+}
