@@ -1,8 +1,9 @@
+import TaskPermissionDialog from "./TaskPermissionDialog.tsx";
 import MemoryPolicyDialog from "./MemoryPolicyDialog.tsx";
 import { useRouteIntentOwner } from "./useIntentRoute.ts";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button, Textarea } from "raft-ui";
-import { Brain, CircleStop, Settings } from "lucide-react";
+import { Brain, CheckSquare, CircleStop, Settings } from "lucide-react";
 import type { RoomExecutionReadResponse } from "@rah-os/protocol";
 import {
   OverflowMenuTrigger,
@@ -35,6 +36,7 @@ export default function ChannelControl({
   const { state, error, setError } = useManagement(manager);
   const [sheet, setSheet] = useState(false),
     [open, setOpen] = useState(false);
+  const [taskPolicyOpen, setTaskPolicyOpen] = useState(false);
   const [memoryOpen, setMemoryOpen] = useState(false);
   const [execution, setExecution] = useState<RoomExecutionReadResponse>();
   const [readError, setReadError] = useState(""),
@@ -120,6 +122,15 @@ export default function ChannelControl({
         testId="loom-channel-control-sheet"
       >
         <OverflowActionRow
+          icon={<CheckSquare size={14} />}
+          label="实例任务权限"
+          ariaLabel="实例任务权限"
+          onClick={() => {
+            setSheet(false);
+            setTaskPolicyOpen(true);
+          }}
+        />
+        <OverflowActionRow
           icon={<Brain size={14} />}
           label="记忆权限"
           ariaLabel="频道记忆权限"
@@ -147,6 +158,17 @@ export default function ChannelControl({
           }}
         />
       </OverflowSheet>
+      {taskPolicyOpen && (
+        <TaskPermissionDialog
+          bridge={bridge}
+          onClose={() => {
+            setTaskPolicyOpen(false);
+            requestAnimationFrame(() =>
+              trigger.current?.querySelector("button")?.focus(),
+            );
+          }}
+        />
+      )}
       {memoryOpen && (
         <MemoryPolicyDialog
           bridge={bridge}

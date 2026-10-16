@@ -222,6 +222,10 @@ export default function InstanceInspector({
               <div data-testid="loom-instance-activity">
                 <p className="px-3 py-1 text-sm text-foreground-muted">
                   {result.stateLabel}
+                  <span className="block text-xs mt-1">
+                    当前会话累计压缩：
+                    {result.instance.sessionCompactionCount ?? "未知"}
+                  </span>
                 </p>
                 {result.records.length === 0 ? (
                   <p className="px-3 py-2 text-sm text-foreground-muted">

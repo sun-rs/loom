@@ -1,10 +1,12 @@
 import { WEB_BUILD_IDENTITY } from "./build-identity.ts";
+import UsageSummary from "./UsageSummary.tsx";
 import AccountSettings from "./AccountSettings.tsx";
 import SystemSettings from "./SystemSettings.tsx";
 import { AppearanceSection, LoomAboutSection } from "loom-native-appearance";
 import { useEffect, useState, type CSSProperties } from "react";
 import { AppShellMainSlot, AppShellSidebarSlot, Panel } from "raft-ui";
 import {
+  ChartNoAxesCombined,
   User,
   Languages,
   Type,
@@ -37,6 +39,7 @@ const categories = [
     items: [
       { id: "server", label: "运行设置", icon: Building2 },
       { id: "administration", label: "管理", icon: Shield },
+      { id: "usage", label: "用量", icon: ChartNoAxesCombined },
     ],
   },
   {
@@ -152,7 +155,13 @@ export default function SettingsPage({
           </div>
           {selectedId !== "server" && (
             <div className="flex-1 overflow-y-auto bg-layer-panel px-5 py-4 text-foreground-strong mobile-nav-clearance theme-brutal:bg-white theme-brutal:text-black">
-              {selectedId === "appearance" ? (
+              {selectedId === "usage" ? (
+                <UsageSummary
+                  client={client}
+                  workspaceId={workspaceId}
+                  controlRoomId={controlRoomId}
+                />
+              ) : selectedId === "appearance" ? (
                 <AppearanceSection />
               ) : selectedId === "about" ? (
                 <LoomAboutSection appVersion={WEB_BUILD_IDENTITY.version} />

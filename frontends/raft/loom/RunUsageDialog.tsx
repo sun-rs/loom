@@ -11,6 +11,7 @@ import {
   Button,
   Spinner,
 } from "raft-ui";
+import { diagnosticRows } from "./console-closeout.ts";
 import { usageRows } from "./run-details.ts";
 export default function RunUsageDialog({
   client,
@@ -69,7 +70,7 @@ export default function RunUsageDialog({
           ) : (
             <div data-testid="loom-run-usage">
               <dl className="space-y-2 text-sm">
-                {usageRows(data).map((row) => (
+                {[...usageRows(data), ...diagnosticRows(data)].map((row) => (
                   <div
                     key={row.label}
                     className="grid grid-cols-[6.5rem_minmax(0,1fr)] items-start gap-x-4"
