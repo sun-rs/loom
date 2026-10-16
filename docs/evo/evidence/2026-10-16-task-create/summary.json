@@ -60,6 +60,41 @@
     "No backend changes or paid calls"
   ],
   "deployment": {
-    "status": "pending"
+    "status": "verified",
+    "sourceCommit": "790bf65691c987aec909d19e8ae5ecfd905833cd",
+    "webBuildId": "9736358d2ff3400d14bd5fb4b5c611d93703c44fd12be576c45ace053d1401f1",
+    "backupDatabases": 2,
+    "backupFiles": 318,
+    "unchangedBusinessProjections": 18,
+    "sameDataHome": true,
+    "gracefulRestart": true,
+    "realPage": [
+      {
+        "width": 1440,
+        "realChannel": true,
+        "nativeDialog": true,
+        "twoUnsubmittedRows": true,
+        "cancel": true,
+        "chatReturn": true,
+        "buildMatches": true,
+        "noTaskOrMessageWrites": true,
+        "noOverflow": true,
+        "pageErrors": []
+      },
+      {
+        "width": 390,
+        "realChannel": true,
+        "nativeDialog": true,
+        "twoUnsubmittedRows": true,
+        "cancel": true,
+        "chatReturn": true,
+        "buildMatches": true,
+        "noTaskOrMessageWrites": true,
+        "noOverflow": true,
+        "pageErrors": []
+      }
+    ],
+    "reviewArtifacts": "/Users/sun/.loom/reviews/2026-10-16-task-create",
+    "scope": "Existing real channel and native two-row form, cancel and return; task.list unchanged. Creation/rejection/lost-response writes verified only in isolated Core. One page probe ran before restart readiness and returned ECONNREFUSED; rerun after verified readiness passed."
   }
 }
