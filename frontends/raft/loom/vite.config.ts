@@ -1,3 +1,7 @@
+import {
+  adaptThreadFollowers,
+  adaptThreadFollowerRow,
+} from "./thread-followers-adaptation.ts";
 import { exposeAboutVersion } from "./about-adaptation.ts";
 import { exposeAccountProfile } from "./account-settings-adaptation.ts";
 import { adaptSystemSettings } from "./system-settings-adaptation.ts";
@@ -47,6 +51,18 @@ export default defineConfig({
           ),
       },
       transform(code, id) {
+        if (
+          id.endsWith(
+            "/packages/web/src/components/thread/ThreadAgentFollowers.tsx",
+          )
+        )
+          return { code: adaptThreadFollowers(code), map: null };
+        if (
+          id.endsWith(
+            "/packages/web/src/components/thread/ThreadAgentFollowerRow.tsx",
+          )
+        )
+          return { code: adaptThreadFollowerRow(code), map: null };
         if (
           id.endsWith(
             "/packages/web/src/components/settings/ArchivedChannelsSection.tsx",
@@ -145,6 +161,8 @@ export default defineConfig({
           source === "./TaskProperties"
         )
           return resolve(import.meta.dirname, "TaskProperties.tsx");
+        if (source === "loom-thread-followers")
+          return resolve(import.meta.dirname, "ThreadFollowers.tsx");
         if (source === "loom-thread-toolbar")
           return resolve(import.meta.dirname, "ThreadToolbar.tsx");
         if (

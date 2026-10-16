@@ -1,3 +1,4 @@
+import { verifyThreadFollowers } from "./thread-followers-browser.mjs";
 import { verifyAbout } from "./about-browser.mjs";
 import { verifyTaskBoard } from "./task-board-browser.mjs";
 import { verifyAccountSettings } from "./account-settings-browser.mjs";
@@ -146,7 +147,20 @@ try {
     instances.push(result.instance);
   }
   browser = await chromium.launch({ headless: true });
-  if (process.env.LOOM_BROWSER_SLICE === "threads") {
+  if (process.env.LOOM_BROWSER_SLICE === "thread-followers") {
+    console.log(
+      JSON.stringify(
+        await verifyThreadFollowers({
+          browser,
+          origin,
+          client,
+          channel: channels[2],
+          instances,
+          head,
+        }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "threads") {
     console.log(
       JSON.stringify(
         await verifyThreads({

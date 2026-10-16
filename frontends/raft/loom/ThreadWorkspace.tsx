@@ -1,3 +1,4 @@
+import ThreadFollowers from "./ThreadFollowers.tsx";
 import ThreadFollowMenu from "./ThreadFollowMenu.tsx";
 import { useThreadActivity } from "./useThreadActivity.ts";
 import {
@@ -284,16 +285,25 @@ export default function ThreadWorkspace({
             }}
             loomHeaderActions={
               data.thread && !error ? (
-                <ThreadFollowMenu
-                  followed={activity.following ?? false}
-                  followBusy={
-                    activity.busy ||
-                    activity.following === undefined ||
-                    state !== "idle" ||
-                    !!data.room?.archivedAt
-                  }
-                  onFollow={() => void activity.follow()}
-                />
+                <>
+                  <ThreadFollowers
+                    client={client}
+                    roomId={room.roomId}
+                    threadId={data.thread.threadId}
+                    members={data.members}
+                    onOpenProfile={onOpenProfile}
+                  />
+                  <ThreadFollowMenu
+                    followed={activity.following ?? false}
+                    followBusy={
+                      activity.busy ||
+                      activity.following === undefined ||
+                      state !== "idle" ||
+                      !!data.room?.archivedAt
+                    }
+                    onFollow={() => void activity.follow()}
+                  />
+                </>
               ) : undefined
             }
             loomFooter={footer}
