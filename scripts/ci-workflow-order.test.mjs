@@ -61,20 +61,13 @@ test("an explicit engine environment switch promotes the optional engine", () =>
   assert.ok(engines.required.has("webkit"));
 });
 
-test("official baseline and console use their declared browser engines", () => {
+test("official baseline uses its declared browser engine", () => {
   assert.ok(
     resolveCommandEngines(
       "npm run test:official-web:browser",
       scripts,
       loadSource,
     ).required.has("chromium"),
-  );
-  assert.ok(
-    resolveCommandEngines(
-      "npm run test:console:browser",
-      scripts,
-      loadSource,
-    ).required.has("chrome"),
   );
 });
 
@@ -132,7 +125,7 @@ test("Playwright browsers are cached by the lockfile hash", () => {
   );
 });
 
-test("CI builds and checks official source and the temporary backend console", () => {
+test("CI builds and checks official source without the retired console", () => {
   const commands = parseWorkflowSteps(workflowText, "check")
     .map((step) => step.run ?? "")
     .join("\n");
@@ -141,11 +134,11 @@ test("CI builds and checks official source and the temporary backend console", (
     "test:official-web:browser",
     "build:official-web:channel",
     "test:official-web:channel",
-    "test:console:browser",
   ]) {
     assert.ok(commands.includes(`npm run ${gate}`), gate);
   }
   assert.ok(!commands.includes("npm run test:web:"));
+  assert.ok(!commands.includes("npm run test:console:"));
 });
 
 test("CI fetches the historical source used by the fixed efficiency baseline", () => {

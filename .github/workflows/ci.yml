@@ -36,6 +36,4 @@ jobs:
       - run: npm run build:official-web:channel
       - run: npm run test:official-web:channel
         timeout-minutes: 5
-      - run: npm run test:console:browser
-        timeout-minutes: 15
       - run: npm run format:check

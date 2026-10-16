@@ -3,7 +3,7 @@ import { readFile, access } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
 import test from "node:test";
 
-test("official source is the only tracked product UI; console and client owners survive", async () => {
+test("official source is the only tracked product UI; client owners survive console retirement", async () => {
   const old = execFileSync(
     "git",
     [
@@ -23,12 +23,13 @@ test("official source is the only tracked product UI; console and client owners 
   );
   for (const path of [
     "frontends/raft/packages/web/src/App.tsx",
-    "apps/console/src/app.ts",
     "packages/client-sdk/src/index.ts",
     "packages/client-core/src/index.ts",
   ])
     await access(path);
   for (const path of [
+    "apps/console",
+    "scripts/run-console-browser-gate.mjs",
     "apps/web",
     "packages/ui-web",
     "packages/ui-tokens",
@@ -40,6 +41,9 @@ test("official source is the only tracked product UI; console and client owners 
   assert.ok(
     !Object.values(scripts).some((s) =>
       [
+        "@rah-os/console",
+        "apps/console",
+        "test:console",
         "@rah-os/web",
         "apps/web",
         "packages/ui-web",
@@ -49,4 +53,7 @@ test("official source is the only tracked product UI; console and client owners 
     ),
   );
   assert.match(scripts["build:web:workbench"], /build-product-web/);
+  const lock = JSON.parse(await readFile("package-lock.json", "utf8"));
+  assert.ok(!lock.packages["apps/console"]);
+  assert.ok(!lock.packages["node_modules/@rah-os/console"]);
 });

@@ -1,11 +1,5 @@
 import assert from "node:assert/strict";
-import {
-  mkdirSync,
-  mkdtempSync,
-  rmSync,
-  symlinkSync,
-  writeFileSync,
-} from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { createServer, get as httpGet, type IncomingMessage } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -576,292 +570,34 @@ async function rawGet(
   });
 }
 
-test("the throwaway console is served same-origin from its own directory with the workbench security headers", async () => {
-  const directory = mkdtempSync(join(tmpdir(), "rah-console-gateway-"));
-  const staticDirectory = join(directory, "web");
-  const consoleDirectory = join(directory, "console");
-  mkdirSync(staticDirectory);
-  mkdirSync(join(consoleDirectory, "assets"), { recursive: true });
-  writeFileSync(join(staticDirectory, "index.html"), "WEB SHELL");
-  writeFileSync(join(consoleDirectory, "index.html"), "CONSOLE SHELL");
-  writeFileSync(join(consoleDirectory, "assets", "main-abc.js"), "ok()");
-  writeFileSync(join(directory, "secret.txt"), "outside the console");
-  const observed: string[] = [];
-  const upstream = createServer((request, response) => {
-    observed.push(`${request.method ?? ""} ${request.url ?? ""}`);
-    response.setHeader("content-type", "application/json");
-    response.end(JSON.stringify({ ok: true }));
-  });
+test("retired console paths never expose a shell or build instructions", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "loom-retired-console-"));
+  writeFileSync(join(directory, "index.html"), "PRODUCT");
+  const upstream = createServer((_request, response) => response.end("API"));
   const gateway = new LocalWorkbenchGateway({
-    accessToken: "server-only-human-token",
-    consoleDirectory,
+    accessToken: "fixture",
+    staticDirectory: directory,
     daemonOrigin: await listen(upstream),
     port: 0,
-    sessionToken: "d".repeat(43),
-    staticDirectory,
-  });
-  try {
-    await gateway.start();
-    const origin = gateway.origin;
-
-    const bare = await fetch(`${origin}/_rah/console`, { redirect: "manual" });
-    assert.equal(bare.status, 301);
-    assert.equal(bare.headers.get("location"), "/_rah/console/");
-
-    const index = await fetch(`${origin}/_rah/console/`);
-    assert.equal(index.status, 200);
-    assert.equal(await index.text(), "CONSOLE SHELL");
-    assert.match(index.headers.get("content-type") ?? "", /text\/html/u);
-    const csp = index.headers.get("content-security-policy") ?? "";
-    assert.match(csp, /script-src 'self'/u);
-    assert.match(csp, /default-src 'self'/u);
-    assert.match(csp, /frame-ancestors 'none'/u);
-    assert.equal(index.headers.get("x-content-type-options"), "nosniff");
-    assert.equal(index.headers.get("referrer-policy"), "no-referrer");
-    assert.equal(index.headers.get("cache-control"), "no-store");
-    const setCookie = index.headers.get("set-cookie") ?? "";
-    assert.match(setCookie, /^rah_workbench_session=d{43}; HttpOnly/u);
-    assert.match(setCookie, /SameSite=Strict/u);
-
-    const asset = await fetch(`${origin}/_rah/console/assets/main-abc.js`);
-    assert.equal(asset.status, 200);
-    assert.equal(await asset.text(), "ok()");
-    assert.match(asset.headers.get("content-type") ?? "", /javascript/u);
-    assert.equal(asset.headers.get("x-content-type-options"), "nosniff");
-    assert.equal(
-      (await fetch(`${origin}/_rah/console/assets/missing.js`)).status,
-      404,
-    );
-
-    // Hash routes never reach the server; deep paths fall back to the console index only.
-    const deep = await fetch(`${origin}/_rah/console/channels/room-1`);
-    assert.equal(deep.status, 200);
-    assert.equal(await deep.text(), "CONSOLE SHELL");
-
-    for (const path of [
-      "/_rah/console/..%2f..%2fsecret.txt",
-      "/_rah/console/%2e%2e%2fsecret.txt",
-      "/_rah/console/..%5csecret.txt",
-      "/_rah/console/../secret.txt",
-      "/_rah/console/%2e%2e/secret.txt",
-    ]) {
-      const response = await rawGet(origin, path);
-      assert.equal(response.status, 404, path);
-      assert.doesNotMatch(response.body, /outside the console/u, path);
-      assert.doesNotMatch(response.body, /WEB SHELL/u, path);
-    }
-    assert.equal(
-      (await fetch(`${origin}/_rah/console/`, { method: "POST", body: "x" }))
-        .status,
-      405,
-    );
-    // A sibling prefix is not the console.
-    assert.equal((await fetch(`${origin}/_rah/consoleevil`)).status, 404);
-    // The Web shell is untouched.
-    assert.equal(await (await fetch(`${origin}/rooms/a`)).text(), "WEB SHELL");
-
-    // The console's API calls use the same session and Origin rules.
-    const cookie = setCookie.split(";", 1)[0]!;
-    assert.equal(
-      (
-        await fetch(`${origin}/v3/client/runtime-settings/update`, {
-          body: "{}",
-          headers: { "content-type": "application/json", cookie },
-          method: "POST",
-        })
-      ).status,
-      403,
-    );
-    assert.equal(
-      (
-        await fetch(`${origin}/v3/client/runtime-settings/read`, {
-          body: "{}",
-          headers: { "content-type": "application/json", cookie, origin },
-          method: "POST",
-        })
-      ).status,
-      200,
-    );
-    assert.deepEqual(observed, ["POST /v3/client/runtime-settings/read"]);
-  } finally {
-    await gateway.stop();
-    await close(upstream);
-    rmSync(directory, { force: true, recursive: true });
-  }
-});
-
-test("an unbuilt or unconfigured console answers 404 with the build hint", async () => {
-  const directory = mkdtempSync(join(tmpdir(), "rah-console-missing-"));
-  writeFileSync(join(directory, "index.html"), "WEB SHELL");
-  const emptyConsole = join(directory, "empty-console");
-  mkdirSync(emptyConsole);
-  const upstream = createServer((_request, response) => response.end("{}"));
-  const daemonOrigin = await listen(upstream);
-  try {
-    for (const consoleDirectory of [
-      undefined,
-      join(directory, "never-built"),
-      emptyConsole,
-    ]) {
-      const gateway = new LocalWorkbenchGateway({
-        accessToken: "server-only-human-token",
-        ...(consoleDirectory === undefined ? {} : { consoleDirectory }),
-        daemonOrigin,
-        port: 0,
-        sessionToken: "e".repeat(43),
-        staticDirectory: directory,
-      });
-      try {
-        await gateway.start();
-        for (const path of ["/_rah/console/", "/_rah/console/assets/a.js"]) {
-          const response = await fetch(`${gateway.origin}${path}`);
-          assert.equal(
-            response.status,
-            404,
-            `${String(consoleDirectory)} ${path}`,
-          );
-          assert.match(await response.text(), /npm run build:console/u);
-        }
-      } finally {
-        await gateway.stop();
-      }
-    }
-  } finally {
-    await close(upstream);
-    rmSync(directory, { force: true, recursive: true });
-  }
-});
-
-test("trusted-network access serves the console without a session cookie", async () => {
-  const directory = mkdtempSync(join(tmpdir(), "rah-console-trusted-"));
-  const consoleDirectory = join(directory, "console");
-  mkdirSync(consoleDirectory);
-  writeFileSync(join(directory, "index.html"), "WEB SHELL");
-  writeFileSync(join(consoleDirectory, "index.html"), "CONSOLE SHELL");
-  const upstream = createServer((_request, response) => response.end("{}"));
-  const gateway = new LocalWorkbenchGateway({
-    accessToken: "server-only-human-token",
     browserAccess: "trusted-network",
-    consoleDirectory,
-    daemonOrigin: await listen(upstream),
-    port: 0,
-    staticDirectory: directory,
-  });
-  try {
-    await gateway.start();
-    const page = await fetch(`${gateway.origin}/_rah/console/`);
-    assert.equal(page.status, 200);
-    assert.equal(await page.text(), "CONSOLE SHELL");
-    assert.equal(page.headers.get("set-cookie"), null);
-    assert.match(
-      page.headers.get("content-security-policy") ?? "",
-      /script-src 'self'/u,
-    );
-  } finally {
-    await gateway.stop();
-    await close(upstream);
-    rmSync(directory, { force: true, recursive: true });
-  }
-});
-
-test("the console static root refuses symlinks and symlinked ancestors with 404 and no SPA fallback", async () => {
-  const directory = mkdtempSync(join(tmpdir(), "rah-console-symlink-"));
-  const consoleDirectory = join(directory, "console");
-  const outsideDirectory = join(directory, "outside");
-  mkdirSync(join(consoleDirectory, "assets"), { recursive: true });
-  mkdirSync(outsideDirectory);
-  writeFileSync(join(directory, "index.html"), "WEB SHELL");
-  writeFileSync(join(consoleDirectory, "index.html"), "CONSOLE SHELL");
-  writeFileSync(join(consoleDirectory, "assets", "real.js"), "real()");
-  writeFileSync(join(directory, "outside.txt"), "FIXTURE outside the console");
-  writeFileSync(join(outsideDirectory, "leak.js"), "FIXTURE outside asset");
-  // A symlinked file, a symlinked directory (ancestor) and a symlink to an
-  // in-root file: all are refused, whatever they point at.
-  symlinkSync(
-    join(directory, "outside.txt"),
-    join(consoleDirectory, "linked.txt"),
-  );
-  symlinkSync(outsideDirectory, join(consoleDirectory, "linked-dir"));
-  symlinkSync(
-    outsideDirectory,
-    join(consoleDirectory, "assets", "linked-assets"),
-  );
-  symlinkSync(
-    join(consoleDirectory, "assets", "real.js"),
-    join(consoleDirectory, "assets", "alias.js"),
-  );
-  const upstream = createServer((_request, response) => response.end("{}"));
-  const gateway = new LocalWorkbenchGateway({
-    accessToken: "server-only-human-token",
-    consoleDirectory,
-    daemonOrigin: await listen(upstream),
-    port: 0,
-    sessionToken: "f".repeat(43),
-    staticDirectory: directory,
   });
   try {
     await gateway.start();
     for (const path of [
-      "/_rah/console/linked.txt",
-      "/_rah/console/linked-dir/leak.js",
-      "/_rah/console/linked-dir/missing-route",
-      "/_rah/console/assets/linked-assets/leak.js",
-      "/_rah/console/assets/alias.js",
+      "/_rah/console",
+      "/_rah/console/",
+      "/_rah/console/assets/old.js",
     ]) {
-      const response = await rawGet(gateway.origin, path);
-      assert.equal(response.status, 404, path);
-      assert.doesNotMatch(response.body, /FIXTURE outside/u, path);
-      assert.doesNotMatch(
-        response.body,
-        /CONSOLE SHELL/u,
-        `${path} no SPA fallback`,
-      );
+      const response = await fetch(gateway.origin + path, {
+        redirect: "manual",
+      });
+      assert.equal(response.status, 404);
+      assert.doesNotMatch(await response.text(), /PRODUCT|build:console/);
     }
-    // Regular files and SPA fallback still work.
-    assert.equal(
-      await (
-        await fetch(`${gateway.origin}/_rah/console/assets/real.js`)
-      ).text(),
-      "real()",
-    );
-    assert.equal(
-      await (await fetch(`${gateway.origin}/_rah/console/some/route`)).text(),
-      "CONSOLE SHELL",
-    );
+    assert.equal(await (await fetch(gateway.origin + "/")).text(), "PRODUCT");
   } finally {
     await gateway.stop();
-    await close(upstream);
-    rmSync(directory, { force: true, recursive: true });
-  }
-});
-
-test("a console root whose index.html is a symlink is treated as unbuilt", async () => {
-  const directory = mkdtempSync(join(tmpdir(), "rah-console-index-link-"));
-  const consoleDirectory = join(directory, "console");
-  mkdirSync(consoleDirectory);
-  writeFileSync(join(directory, "index.html"), "WEB SHELL");
-  writeFileSync(join(directory, "elsewhere.html"), "FIXTURE outside index");
-  symlinkSync(
-    join(directory, "elsewhere.html"),
-    join(consoleDirectory, "index.html"),
-  );
-  const upstream = createServer((_request, response) => response.end("{}"));
-  const gateway = new LocalWorkbenchGateway({
-    accessToken: "server-only-human-token",
-    consoleDirectory,
-    daemonOrigin: await listen(upstream),
-    port: 0,
-    sessionToken: "g".repeat(43),
-    staticDirectory: directory,
-  });
-  try {
-    await gateway.start();
-    const response = await rawGet(gateway.origin, "/_rah/console/");
-    assert.equal(response.status, 404);
-    assert.doesNotMatch(response.body, /FIXTURE outside/u);
-  } finally {
-    await gateway.stop();
-    await close(upstream);
-    rmSync(directory, { force: true, recursive: true });
+    await new Promise<void>((resolve) => upstream.close(() => resolve()));
+    rmSync(directory, { recursive: true, force: true });
   }
 });

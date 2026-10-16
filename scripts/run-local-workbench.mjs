@@ -44,17 +44,9 @@ const releaseLease = await acquireWorkbenchAssetLease(
 );
 
 const launchMode = workbenchLaunchMode(process.env, workbenchHome);
-// Throwaway evo console (removed in phase 4): an explicit directory wins,
-// otherwise the repository build is served only when it exists.
-const consoleDirectory = process.env.RAH_CONSOLE_STATIC_DIRECTORY
-  ? resolve(process.env.RAH_CONSOLE_STATIC_DIRECTORY)
-  : existsSync(join(repositoryDirectory, "apps/console/dist"))
-    ? resolve(repositoryDirectory, "apps/console/dist")
-    : undefined;
 let running;
 try {
   running = await startRestartableLocalCoreWorkbench({
-    ...(consoleDirectory === undefined ? {} : { consoleDirectory }),
     environment: process.env,
     mode: launchMode,
     staticDirectory,

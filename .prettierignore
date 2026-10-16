@@ -1,4 +1,3 @@
-apps/console/dist/
 # Adopted byte-exact resources retain source formatting; maintained owners are checked.
 packages/k-carrier/src/
 packages/agent-host/src/raft-memory/upstream-standing-prompt.ts

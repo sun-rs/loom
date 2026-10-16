@@ -10,15 +10,10 @@ legacy project's Session-first rules or obsolete roadmap restrictions.
   replacement. The owner explicitly retired the reconstructed `apps/web`,
   `packages/ui-web`, `packages/ui-tokens` and `packages/raft-ui-snapshot` source
   on 2026-10-14; do not restore them. `frontends/raft` is the sole product UI base.
-  Acceptance uses the throwaway `apps/console` (served by the local gateway at
-  `/_rah/console/`) plus API and tests. The console shows channels, instance
-  state and queueing, usage, runtime settings, RunAttempt drill-down, the
-  private box and the channel-memory panel, and performs Human interventions
-  through the same client contract (unknown-result writes are verified or
-  abandoned, never silently resent). It is deleted in phase 4 together with
-  `scripts/run-console-browser-gate.mjs`, the gateway `consoleDirectory` branch
-  and the `build:console`/`test:console:*` scripts; the full list is the
-  "phase 4 删除清单" in `docs/evo/status.zh-CN.md`.
+  The temporary `apps/console` was retired on 2026-10-17 after its supported
+  capabilities received product UI replacements. Acceptance uses
+  `frontends/raft`, API and focused tests. Do not restore the console workspace,
+  gateway route, deployment environment or dedicated build/test scripts.
 - `docs/evo/target-contract.zh-CN.md` is the single target contract and takes
   precedence; `docs/evo/status.zh-CN.md` records the evo-vs-main delta; code
   proves current behavior but never overrides owner goals or safety
@@ -170,9 +165,8 @@ lifecycle plus usage/context/compaction visibility -> S3 private box gaps -> S4
 fork -> S5 side -> S6 platform memory. The owner approved implementing S6
 before S4/S5; the owner has now authorized a narrow phase-4 UI slice after close-out
 acceptance (2026-10-02), and authorized S4/S5 implementation on 2026-10-13.
-The first OpenCode Fork/Side slices use the console; provider coverage and
-remaining lifecycle limits are recorded in status. Keep the console until its
-working capabilities have product UI replacements (contract §8). Each slice: tests first, implementation, visible in the console,
+The first OpenCode Fork/Side slices used the console; provider coverage and
+remaining lifecycle limits are recorded in status. The console was retired after product UI replacements (contract §8). Each slice: tests first, implementation, visible in the product UI,
 commit and push to `evo`. After S1, measure against contract §6; if far from
 target, stop and re-evaluate the architecture.
 
@@ -256,7 +250,7 @@ and evidence".
   not Provider parsing. The official `raft-ui` dependency owns shared primitives.
   The old reconstructed UI packages are retired; history remains in Git.
   Build, runtime and maintenance must not require a sibling `raft-ui` tree.
-- UI, the console and transports consume these owners; they do not recreate business state.
+- UI and transports consume these owners; they do not recreate business state.
 - Shared Web UI remains browser-safe. Desktop IPC/native bridges implement the same client contract and never create a second command handler.
 - Room Kernel service and AgentHost daemon remain logically independent from every window or renderer lifecycle, even when packaged together.
 
@@ -329,7 +323,7 @@ paths pass acceptance. Preserve native layout and interactions; prefer data
 replacement and renaming over new options or buttons. Keep Loom's SDK,
 client-core and domain owners; upstream stores are not a second business truth.
 The owner subsequently required immediate removal of the old reconstructed
-source; keep only the temporary backend console until replacement acceptance.
+source; the temporary backend console was subsequently retired after replacement acceptance.
 Existing deployed immutable assets are not deleted by source retirement. Source provenance and
 current limits are recorded in `frontends/raft/adoption.json` and
 `docs/evo/evidence/2026-10-14-official-frontend-intake/summary.json`.

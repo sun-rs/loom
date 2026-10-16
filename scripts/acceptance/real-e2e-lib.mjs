@@ -137,11 +137,11 @@ export const STEPS = Object.freeze([
   {
     n: 10,
     key: "console",
-    title: "g. 控制台",
-    plan: "curl /_rah/console/；用控制台自身的 model.ts（loadInstanceStatuses、runUsageDetail、loadUsage）经同一 Human API 读实例卡片、RunAttempt 用量与频道用量。",
+    title: "g. 正式前端与状态 API",
+    plan: "检查正式前端 HTML，经 Human API 读取实例、频道成员、RunAttempt 用量与频道用量；此步骤不代表浏览器交互验收。",
     rules: [
-      "控制台 200 text/html。",
-      "两实例卡片存在且为成员；压缩次数为数字或“未知”；用量汇总含两实例。",
+      "正式前端 200 text/html。",
+      "两实例存在且为频道成员；保留原始压缩观测和用量数据，不以未知补零；用量汇总含两实例。",
     ],
     paid: false,
   },

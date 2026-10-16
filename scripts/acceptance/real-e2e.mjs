@@ -140,7 +140,7 @@ function intentKey(name) {
 }
 
 // ---------------------------------------------------------------------------
-// Transport: the typed SDK through the gateway, as the console does.
+// Transport: the typed SDK through the gateway, as the product frontend does.
 
 let sdk;
 let client;
@@ -1459,43 +1459,44 @@ async function stepRestart(step) {
   });
 }
 
+// Keep the historical step key for saved acceptance-run compatibility.
 async function stepConsole(step) {
   const since = new Date().toISOString();
   const problems = [];
-  const probe = execFileSync(
-    "curl",
-    [
-      "-s",
-      "-o",
-      "/dev/null",
-      "-w",
-      "%{http_code} %{content_type}",
-      `${ORIGIN}/_rah/console/`,
-    ],
-    { encoding: "utf8" },
-  ).trim();
-  const [status, contentType = ""] = probe.split(" ");
-  if (status !== "200" || !contentType.startsWith("text/html"))
-    problems.push(`控制台返回 ${probe}`);
-  const model = await import("../../apps/console/src/model.ts");
-  const rooms = (await client.request("room.list", {})).rooms;
-  const statuses = await model.loadInstanceStatuses(client, {
+  const page = await fetch(ORIGIN);
+  if (!page.ok || !page.headers.get("content-type")?.startsWith("text/html"))
+    problems.push("正式前端不可用");
+  const catalog = await client.request("role.list", {
     controlRoomId: state.identity.controlRoomId,
+  });
+  const snapshot = await client.request("room.sync", {
     roomId: state.channel.roomId,
-    rooms,
+    consumerId: "acceptance-product-status",
+  });
+  const activity = await client.request("room.agent.activity.list", {
+    roomId: state.channel.roomId,
+  });
+  const to = new Date();
+  const usage = await client.request("usage.summary", {
+    channelId: state.channel.roomId,
+    groupBy: "instance",
+    from: new Date(to.getTime() - 86400000).toISOString(),
+    to: to.toISOString(),
   });
   const cards = [];
   for (const [provider, instance] of Object.entries(state.instances)) {
-    const card = statuses.find(
-      ({ instanceId }) => instanceId === instance.instanceId,
+    const row = catalog.instances.find(
+      (i) => i.instanceId === instance.instanceId,
     );
-    if (card === undefined) {
-      problems.push(`${provider}: 控制台无实例卡片`);
-      continue;
-    }
-    if (!card.member) problems.push(`${provider}: 卡片显示已移出频道`);
-    if (typeof card.compactionLabel !== "string")
-      problems.push(`${provider}: 无压缩次数标签`);
+    if (
+      !row ||
+      !snapshot.snapshot?.members.some(
+        (m) => m.principalId === instance.instanceId,
+      )
+    )
+      problems.push(provider + ": 实例或频道成员缺失");
+    if (!usage.groups.some((group) => group.instanceId === instance.instanceId))
+      problems.push(provider + ": 用量汇总缺失");
     const latest = runsSince(state.startedAt)
       .filter(
         (run) =>
@@ -1503,47 +1504,21 @@ async function stepConsole(step) {
           run.roomId === state.channel.roomId,
       )
       .at(-1);
-    let usage = null;
-    if (latest !== undefined) {
-      try {
-        usage = model.runUsageDetail(
-          await client.request("agent.run.usage.get", {
-            agentId: instance.agentId,
-            runAttemptId: latest.runAttemptId,
-          }),
-        );
-      } catch (error) {
-        problems.push(`${provider}: RunAttempt 用量读取失败 ${error.message}`);
-      }
-    }
+    const detail = latest
+      ? await client.request("agent.run.usage.get", {
+          agentId: instance.agentId,
+          runAttemptId: latest.runAttemptId,
+        })
+      : null;
     cards.push({
       provider,
-      handle: card.handle,
-      stateLabel: card.stateLabel,
-      queuedLabel: card.queuedLabel,
-      compactionLabel: card.compactionLabel,
-      privateBoxLabel: card.privateBoxLabel,
-      lastError: card.lastError,
-      recentRuns: card.runs,
-      latestRunAttemptId: latest?.runAttemptId ?? null,
-      latestRunUsage: usage,
+      instance: row,
+      activity: activity.agents.filter(
+        (a) => a.participantId === instance.instanceId,
+      ),
+      latestRunUsage: detail,
     });
   }
-  const labels = new Map(
-    Object.entries(state.instances).map(([provider, { instanceId }]) => [
-      instanceId,
-      provider,
-    ]),
-  );
-  const usage = await model.loadUsage(client, {
-    channelId: state.channel.roomId,
-    labels,
-    now: new Date(),
-    window: "24h",
-  });
-  for (const provider of Object.keys(state.instances))
-    if (!usage.rows.some((row) => row.label === provider))
-      problems.push(`${provider}: 频道用量汇总无该实例`);
   const judgment = {
     verdict: problems.length === 0 ? "pass" : "fail",
     problems,
@@ -1557,10 +1532,15 @@ async function stepConsole(step) {
     durationMs: Date.now() - Date.parse(since),
     runs: [],
     generations: 0,
-    judgments: { 控制台: judgment },
+    judgments: { "正式前端与Human API": judgment },
     verdict: judgment.verdict,
     problems,
-    extra: { consoleHttp: probe, cards, usage },
+    extra: {
+      productHttp: page.status,
+      cards,
+      usage,
+      uiInteractionVerified: false,
+    },
   };
   saveState();
   log(`步骤 ${step.n} 判定`, judgment.verdict, problems.join("；"));

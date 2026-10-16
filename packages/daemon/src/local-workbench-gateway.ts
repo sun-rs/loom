@@ -6,7 +6,7 @@ import {
   handleWorkbenchServiceControl,
   type WorkbenchServiceControl,
 } from "./workbench-service-control.ts";
-import { existsSync, lstatSync, realpathSync, statSync } from "node:fs";
+import { existsSync, statSync } from "node:fs";
 import {
   createServer,
   request as createHttpRequest,
@@ -51,15 +51,6 @@ const CONTENT_SECURITY_POLICY = [
   "script-src 'self'",
   "style-src 'self' 'unsafe-inline'",
 ].join("; ");
-/**
- * Throwaway evo console (docs/evo/status.zh-CN.md §44): served from its own
- * build directory under this prefix, outside the product Web service worker
- * scope. Deleted in phase 4 together with apps/console.
- */
-const CONSOLE_PREFIX = "/_rah/console";
-const CONSOLE_UNAVAILABLE =
-  "Loom console is not built; run npm run build:console";
-
 export class LocalWorkbenchGateway {
   readonly #serviceControl: WorkbenchServiceControl | undefined;
   readonly #accessToken: string;
@@ -69,7 +60,6 @@ export class LocalWorkbenchGateway {
   readonly #sessionToken: string | undefined;
   readonly #browserAccess: "session" | "trusted-network";
   readonly #staticDirectory: string;
-  readonly #consoleDirectory: string | undefined;
   readonly #webBuildId: string | undefined;
   #origin: string | undefined;
   #server: Server | undefined;
@@ -87,8 +77,6 @@ export class LocalWorkbenchGateway {
     browserAccess?: "session" | "trusted-network";
     sessionToken?: string;
     staticDirectory: string;
-    /** Absolute apps/console build directory; absent means the console is unavailable. */
-    consoleDirectory?: string;
   }) {
     if (input.accessToken.trim().length === 0) {
       throw new Error("local workbench Human access token is required");
@@ -102,12 +90,6 @@ export class LocalWorkbenchGateway {
     }
     if (!isAbsolute(input.staticDirectory)) {
       throw new Error("local workbench static directory must be absolute");
-    }
-    if (
-      input.consoleDirectory !== undefined &&
-      !isAbsolute(input.consoleDirectory)
-    ) {
-      throw new Error("local workbench console directory must be absolute");
     }
     const browserAccess = input.browserAccess ?? "session";
     if (
@@ -170,10 +152,6 @@ export class LocalWorkbenchGateway {
     this.#sessionToken = input.sessionToken;
     this.#browserAccess = browserAccess;
     this.#staticDirectory = resolve(input.staticDirectory);
-    this.#consoleDirectory =
-      input.consoleDirectory === undefined
-        ? undefined
-        : resolve(input.consoleDirectory);
     this.#webBuildId = readWebBuildId(this.#staticDirectory);
   }
 
@@ -322,40 +300,6 @@ export class LocalWorkbenchGateway {
       );
       return;
     }
-    if (requestUrl.pathname === CONSOLE_PREFIX) {
-      response.statusCode = 301;
-      response.setHeader("cache-control", "no-store");
-      response.setHeader("location", `${CONSOLE_PREFIX}/`);
-      response.end();
-      return;
-    }
-    if (requestUrl.pathname.startsWith(`${CONSOLE_PREFIX}/`)) {
-      const consoleDirectory = this.#consoleDirectory;
-      if (
-        consoleDirectory === undefined ||
-        typeof consoleStaticTarget(consoleDirectory, "/index.html") === "string"
-      ) {
-        sendText(response, 404, CONSOLE_UNAVAILABLE);
-        return;
-      }
-      const consolePath = requestUrl.pathname.slice(CONSOLE_PREFIX.length);
-      if (
-        hasEncodedTraversal(consolePath) ||
-        consoleStaticTarget(consoleDirectory, consolePath) === "refused"
-      ) {
-        sendText(response, 404, "Not found");
-        return;
-      }
-      await this.#serveStatic(
-        request,
-        response,
-        consolePath,
-        undefined,
-        false,
-        consoleDirectory,
-      );
-      return;
-    }
     if (requestUrl.pathname.startsWith("/_rah/")) {
       sendText(response, 404, "LAN gateway route unavailable");
       return;
@@ -435,7 +379,6 @@ export class LocalWorkbenchGateway {
     encodedPathname: string,
     recoveryNonce?: string | null,
     recoveringAsset = false,
-    root = this.#staticDirectory,
   ): Promise<void> {
     if (request.method !== "GET" && request.method !== "HEAD") {
       sendText(response, 405, "Method not allowed");
@@ -452,6 +395,7 @@ export class LocalWorkbenchGateway {
       sendText(response, 400, "Invalid path");
       return;
     }
+    const root = this.#staticDirectory;
     const candidate = resolve(root, pathname.replace(/^\/+/, ""));
     const relativePath = relative(root, candidate);
     if (
@@ -514,63 +458,6 @@ export class LocalWorkbenchGateway {
       response.setHeader(WEB_BUILD_HEADER, this.#webBuildId);
     }
   }
-}
-
-/**
- * Resolves a console path against the canonical build root without following
- * links: any symlink on the way (the file itself or an ancestor directory) is
- * `refused` (404, no SPA fallback), and a regular file must canonicalize inside
- * the canonical root. `missing` lets the caller fall back as before. The build
- * tree is trusted not to change between this check and the read (no directory
- * handle strategy against a hostile concurrent writer).
- */
-function consoleStaticTarget(
-  root: string,
-  encodedPathname: string,
-): "missing" | "refused" | { file: string } {
-  let segments: string[];
-  let canonicalRoot: string;
-  try {
-    segments = decodeURIComponent(encodedPathname)
-      .split("/")
-      .filter((segment) => segment.length > 0);
-    canonicalRoot = realpathSync(root);
-  } catch {
-    return "missing";
-  }
-  let current = canonicalRoot;
-  for (const [index, segment] of segments.entries()) {
-    current = join(current, segment);
-    let entry: ReturnType<typeof lstatSync>;
-    try {
-      entry = lstatSync(current);
-    } catch {
-      return "missing";
-    }
-    if (entry.isSymbolicLink()) return "refused";
-    const last = index === segments.length - 1;
-    if (!last && !entry.isDirectory()) return "missing";
-    if (last && !entry.isFile()) return "missing";
-  }
-  if (segments.length === 0) return "missing";
-  const canonical = realpathSync(current);
-  return canonical.startsWith(`${canonicalRoot}${sep}`)
-    ? { file: canonical }
-    : "refused";
-}
-
-/** Console paths never carry a dot segment or a backslash, encoded or not. */
-function hasEncodedTraversal(encodedPathname: string): boolean {
-  let pathname: string;
-  try {
-    pathname = decodeURIComponent(encodedPathname);
-  } catch {
-    return true;
-  }
-  return (
-    pathname.includes("\\") ||
-    pathname.split("/").some((segment) => segment === "..")
-  );
 }
 
 function revalidatedShellFile(path: string): boolean {
