@@ -1,3 +1,5 @@
+import { verifyAbout } from "./about-browser.mjs";
+import { verifyTaskBoard } from "./task-board-browser.mjs";
 import { verifyAccountSettings } from "./account-settings-browser.mjs";
 import { verifySystemSettings } from "./system-settings-browser.mjs";
 import { verifySettingsArchive } from "./settings-archive-browser.mjs";
@@ -59,7 +61,10 @@ try {
   running = await startRestartableLocalCoreWorkbench({
     environment: { ...process.env, PATH: bin },
     mode: { kind: "loopback", port: 0 },
-    staticDirectory: resolve("frontends/raft/packages/web/dist-workbench"),
+    staticDirectory: resolve(
+      process.env.LOOM_BROWSER_STATIC_DIRECTORY ??
+        "frontends/raft/packages/web/dist-workbench",
+    ),
     workbenchHome: join(directory, "home"),
     workspaceCwd: cwd,
   });
@@ -178,6 +183,14 @@ try {
           workspace,
           head,
         }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "about") {
+    console.log(JSON.stringify(await verifyAbout({ browser, origin })));
+  } else if (process.env.LOOM_BROWSER_SLICE === "task-board") {
+    console.log(
+      JSON.stringify(
+        await verifyTaskBoard({ browser, origin, client, workspace, head }),
       ),
     );
   } else if (process.env.LOOM_BROWSER_SLICE === "account-settings") {

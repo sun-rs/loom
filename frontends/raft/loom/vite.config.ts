@@ -1,3 +1,4 @@
+import { exposeAboutVersion } from "./about-adaptation.ts";
 import { exposeAccountProfile } from "./account-settings-adaptation.ts";
 import { adaptSystemSettings } from "./system-settings-adaptation.ts";
 import { adaptArchivedChannels } from "./settings-archive-adaptation.ts";
@@ -66,8 +67,8 @@ export default defineConfig({
           id.endsWith("/packages/web/src/components/settings/SettingsPanel.tsx")
         )
           return {
-            code: exposeAccountProfile(
-              exposeAppearance(adaptSystemSettings(code)),
+            code: exposeAboutVersion(
+              exposeAccountProfile(exposeAppearance(adaptSystemSettings(code))),
             ),
             map: null,
           };
@@ -99,6 +100,8 @@ export default defineConfig({
           };
       },
       resolveId(source, importer) {
+        if (source === "loom-task-board-actions")
+          return resolve(import.meta.dirname, "TaskBoardActions.tsx");
         if (
           importer?.endsWith("/components/member/GravatarAvatar.tsx") &&
           source === "../../utils/humanAvatar"

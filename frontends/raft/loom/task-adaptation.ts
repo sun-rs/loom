@@ -3,13 +3,44 @@ export function exposeTaskPresentation(source: string) {
   for (const name of ["TaskSection", "DroppableColumn"])
     if (source.split(`function ${name}(`).length !== 2)
       throw Error("Official task presentation boundary changed");
-  return source + "\nexport { TaskSection, DroppableColumn };\n";
+  const marker =
+    "  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: task.id, disabled });";
+  if (source.split(marker).length !== 2)
+    throw Error("Official draggable wrapper changed");
+  const code = source
+    .replace("  disabled = false,", "  disabled: requestedDisabled = false,")
+    .replace(
+      marker,
+      "  const actions = useTaskCardActions(task);\n  const disabled = requestedDisabled || !actions.canEditStatus || actions.busy;\n" +
+        marker,
+    );
+  return (
+    'import { useTaskCardActions } from "loom-task-board-actions";\n' +
+    code +
+    "\nexport { TaskSection, DroppableColumn };\n"
+  );
 }
-/** Upstream membership defaults must not enable an unconnected status writer. */
+/** Keep the native status editor; replace only its disconnected store controller. */
 export function adaptTaskCard(source: string) {
-  const boundary =
-    "const canEditStatus = canEditTaskStatus(task, currentUser?.id, canManageServer, role);";
-  if (source.split(boundary).length !== 2)
+  const start = source.indexOf("  const updateTaskStatus = useTaskStore(");
+  const end = source.indexOf("\n  return (", start);
+  if (
+    start < 0 ||
+    end < 0 ||
+    !source
+      .slice(start, end)
+      .includes("await updateTaskStatus(task.channelId, task.id, nextStatus);")
+  )
     throw Error("Official task card boundary changed");
-  return source.replace(boundary, "const canEditStatus = false;");
+  return (
+    'import { useTaskCardActions } from "loom-task-board-actions";\n' +
+    source.slice(0, start) +
+    "  const { formatMessage, editingStatus, busy, canEditStatus, statusOptions, style, handleStatusSelect, toggleStatusEditor, closeStatusEditor } = useTaskCardActions(task);\n" +
+    source
+      .slice(end)
+      .replace(
+        "              open={editingStatus}",
+        "              disabled={busy}\n              open={editingStatus}",
+      )
+  );
 }

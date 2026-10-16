@@ -1,3 +1,9 @@
+import {
+  TaskBoardProvider,
+  TaskBoardRouteOwner,
+  TaskBoardNotice,
+  useTaskBoard,
+} from "./TaskBoardActions.tsx";
 import TaskCreate from "./TaskCreate.tsx";
 import type { ChannelTaskClient } from "./channel-task-client.ts";
 import { useIntl } from "react-intl";
@@ -19,7 +25,13 @@ import {
   ChevronDown,
   Plus,
 } from "lucide-react";
-import { DndContext } from "@dnd-kit/core";
+import {
+  DndContext,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
 import type { RahClient } from "@rah-os/client-sdk";
 import type {
   GlobalTasksResponse,
@@ -177,6 +189,22 @@ export default function TasksPage({
     () => rows.map((r) => toOfficialTask(r.task, r.roomName, [])),
     [rows],
   );
+  const board = useTaskBoard(client, channelTasks, rows, (task) => {
+    setRows((old) =>
+      old.map((row) =>
+        row.task.taskId === task.taskId && row.task.roomId === task.roomId
+          ? { ...row, task }
+          : row,
+      ),
+    );
+  });
+  const [dragged, setDragged] = useState<string>();
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 200, tolerance: 5 },
+    }),
+  );
   const open = useCallback(
     (task: Task) => {
       if (hasRouteBoundIntent()) return;
@@ -199,228 +227,255 @@ export default function TasksPage({
     });
   };
   return (
-    <TasksPanelRoot
-      className="relative flex min-h-0 flex-1 flex-col"
-      data-testid="loom-tasks-page"
-    >
-      {!channelTasks && (
-        <div
-          data-slot="panel-header"
-          className="flex h-panel-header items-center gap-3 border-b border-line-muted bg-layer-panel px-5 theme-brutal:border-b-2 theme-brutal:border-black theme-brutal:bg-soft-signal theme-brutal:md:bg-white"
-        >
-          <div className="hidden md:flex size-icon-header items-center justify-center border border-line-muted bg-primary-soft text-primary-strong theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-soft-signal theme-brutal:text-black">
-            <CheckSquare size={18} />
+    <TaskBoardProvider value={board}>
+      {!channelTasks && <TaskBoardRouteOwner board={board} />}
+      <TasksPanelRoot
+        className="relative flex min-h-0 flex-1 flex-col"
+        data-testid="loom-tasks-page"
+      >
+        {!channelTasks && (
+          <div
+            data-slot="panel-header"
+            className="flex h-panel-header items-center gap-3 border-b border-line-muted bg-layer-panel px-5 theme-brutal:border-b-2 theme-brutal:border-black theme-brutal:bg-soft-signal theme-brutal:md:bg-white"
+          >
+            <div className="hidden md:flex size-icon-header items-center justify-center border border-line-muted bg-primary-soft text-primary-strong theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-soft-signal theme-brutal:text-black">
+              <CheckSquare size={18} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h2 className="font-bold text-base leading-tight">任务</h2>
+              <p className="text-xs text-foreground-muted font-mono">
+                {loading ? "加载中…" : `${rows.length} / ${total} 项频道任务`}
+              </p>
+            </div>
           </div>
-          <div className="min-w-0 flex-1">
-            <h2 className="font-bold text-base leading-tight">任务</h2>
-            <p className="text-xs text-foreground-muted font-mono">
-              {loading ? "加载中…" : `${rows.length} / ${total} 项频道任务`}
-            </p>
-          </div>
-        </div>
-      )}
-      <TasksPanelToolbar>
-        <div className="flex flex-wrap items-center gap-2">
-          {!channelTasks && (
-            <div ref={filterHost} className="relative">
-              <Button
-                size="sm"
-                variant={roomId ? "primary" : "outline"}
-                type="button"
-                onClick={() => setFilter((v) => !v)}
-                className="box-border h-8 min-h-8 gap-2 py-0"
-                aria-label="筛选频道"
-              >
-                <Hash size={12} />
-                {rooms.find((r) => r.roomId === roomId)?.name ?? "频道"}
-                <ChevronDown size={12} />
-              </Button>
-              {filter && (
-                <SelectionPopover
-                  title="频道"
-                  searchable
-                  search={search}
-                  onSearchChange={setSearch}
-                  searchPlaceholder="搜索频道"
-                  showClear={!!roomId}
-                  onClear={() => {
-                    update("taskRoom", "");
-                    setFilter(false);
+        )}
+        <TasksPanelToolbar>
+          <div className="flex flex-wrap items-center gap-2">
+            {!channelTasks && (
+              <div ref={filterHost} className="relative">
+                <Button
+                  size="sm"
+                  variant={roomId ? "primary" : "outline"}
+                  type="button"
+                  onClick={() => setFilter((v) => !v)}
+                  className="box-border h-8 min-h-8 gap-2 py-0"
+                  aria-label="筛选频道"
+                >
+                  <Hash size={12} />
+                  {rooms.find((r) => r.roomId === roomId)?.name ?? "频道"}
+                  <ChevronDown size={12} />
+                </Button>
+                {filter && (
+                  <SelectionPopover
+                    title="频道"
+                    searchable
+                    search={search}
+                    onSearchChange={setSearch}
+                    searchPlaceholder="搜索频道"
+                    showClear={!!roomId}
+                    onClear={() => {
+                      update("taskRoom", "");
+                      setFilter(false);
+                    }}
+                    options={rooms
+                      .filter((r) =>
+                        r.name.toLowerCase().includes(search.toLowerCase()),
+                      )
+                      .map((r) => ({
+                        key: r.roomId,
+                        label: `#${r.name}`,
+                        checked: roomId === r.roomId,
+                        onClick: () => {
+                          update("taskRoom", r.roomId);
+                          setFilter(false);
+                        },
+                      }))}
+                  />
+                )}
+              </div>
+            )}
+            {channelTasks &&
+              !channelTasks.channel.room.state.snapshot?.room.archivedAt && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    if (!hasRouteBoundIntent()) setCreating(true);
                   }}
-                  options={rooms
-                    .filter((r) =>
-                      r.name.toLowerCase().includes(search.toLowerCase()),
-                    )
-                    .map((r) => ({
-                      key: r.roomId,
-                      label: `#${r.name}`,
-                      checked: roomId === r.roomId,
-                      onClick: () => {
-                        update("taskRoom", r.roomId);
-                        setFilter(false);
-                      },
-                    }))}
-                />
+                  className="box-border inline-flex h-8 min-h-8 items-center gap-1 py-0 text-xs font-bold"
+                >
+                  <Plus size={12} />
+                  {formatMessage({ id: "task.board.newTask" })}
+                </Button>
               )}
+            <SegmentedControl
+              value={mode}
+              onValueChange={(value) => update("taskView", value)}
+              aria-label="任务视图"
+              className="sm:ml-auto"
+            >
+              {(["board", "list"] as const).map((value) => (
+                <SegmentedControlItem
+                  key={value}
+                  value={value}
+                  data-testid={`channel-task-view-${value}`}
+                  render={(props) => (
+                    <Button
+                      {...props}
+                      size="sm"
+                      variant={mode === value ? "primary" : "outline"}
+                      className="box-border h-8 min-h-8 gap-1.5 py-0"
+                    />
+                  )}
+                >
+                  {value === "board" ? (
+                    <Columns3 size={12} />
+                  ) : (
+                    <LayoutList size={12} />
+                  )}
+                  <SegmentedControlLabel>
+                    {value === "board" ? "看板" : "列表"}
+                  </SegmentedControlLabel>
+                </SegmentedControlItem>
+              ))}
+            </SegmentedControl>
+          </div>
+        </TasksPanelToolbar>
+        <TaskBoardNotice board={board} reload={() => setTick((v) => v + 1)} />
+        <TasksPanelViewport
+          ref={scroll}
+          data-task-virtual-scroll
+          className="flex-1 overflow-auto bg-layer-canvas-muted p-4 safe-bottom theme-brutal:bg-white mobile-nav-clearance"
+        >
+          {error && (
+            <div role="alert" className="mb-4 text-sm">
+              {error}
+              <Button onClick={() => setTick((v) => v + 1)}>重新读取</Button>
             </div>
           )}
-          {channelTasks &&
-            !channelTasks.channel.room.state.snapshot?.room.archivedAt && (
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  if (!hasRouteBoundIntent()) setCreating(true);
-                }}
-                className="box-border inline-flex h-8 min-h-8 items-center gap-1 py-0 text-xs font-bold"
-              >
-                <Plus size={12} />
-                {formatMessage({ id: "task.board.newTask" })}
-              </Button>
-            )}
-          <SegmentedControl
-            value={mode}
-            onValueChange={(value) => update("taskView", value)}
-            aria-label="任务视图"
-            className="sm:ml-auto"
-          >
-            {(["board", "list"] as const).map((value) => (
-              <SegmentedControlItem
-                key={value}
-                value={value}
-                data-testid={`channel-task-view-${value}`}
-                render={(props) => (
-                  <Button
-                    {...props}
-                    size="sm"
-                    variant={mode === value ? "primary" : "outline"}
-                    className="box-border h-8 min-h-8 gap-1.5 py-0"
-                  />
-                )}
-              >
-                {value === "board" ? (
-                  <Columns3 size={12} />
-                ) : (
-                  <LayoutList size={12} />
-                )}
-                <SegmentedControlLabel>
-                  {value === "board" ? "看板" : "列表"}
-                </SegmentedControlLabel>
-              </SegmentedControlItem>
-            ))}
-          </SegmentedControl>
-        </div>
-      </TasksPanelToolbar>
-      <TasksPanelViewport
-        ref={scroll}
-        data-task-virtual-scroll
-        className="flex-1 overflow-auto bg-layer-canvas-muted p-4 safe-bottom theme-brutal:bg-white mobile-nav-clearance"
-      >
-        {error && (
-          <div role="alert" className="mb-4 text-sm">
-            {error}
-            <Button onClick={() => setTick((v) => v + 1)}>重新读取</Button>
-          </div>
-        )}
-        {loading ? (
-          <div role="status" aria-label="正在读取任务">
-            {[0, 1, 2, 3, 4].map((i) => (
-              <SkeletonRow
-                key={i}
-                className="gap-2 rounded border border-line-muted bg-layer-card p-3 theme-brutal:border-2 theme-brutal:border-black/30 theme-brutal:bg-white"
-                lineWidths={["w-1/2", "w-3/4"]}
-              />
-            ))}
-          </div>
-        ) : !error && !tasks.length ? (
-          <EmptyState
-            className="flex h-full flex-col items-center justify-center"
-            icon={<CheckSquare size={36} />}
-            title="暂无任务"
-          />
-        ) : (
-          <DndContext>
-            <TaskVirtualLayout
-              scrollElementRef={scroll}
-              className={
-                mode === "board"
-                  ? "flex min-w-max items-start gap-4 pr-4"
-                  : "space-y-6"
-              }
-              data-testid={
-                mode === "board"
-                  ? "channel-task-board-view"
-                  : "channel-task-list-view"
-              }
+          {loading ? (
+            <div role="status" aria-label="正在读取任务">
+              {[0, 1, 2, 3, 4].map((i) => (
+                <SkeletonRow
+                  key={i}
+                  className="gap-2 rounded border border-line-muted bg-layer-card p-3 theme-brutal:border-2 theme-brutal:border-black/30 theme-brutal:bg-white"
+                  lineWidths={["w-1/2", "w-3/4"]}
+                />
+              ))}
+            </div>
+          ) : !error && !tasks.length ? (
+            <EmptyState
+              className="flex h-full flex-col items-center justify-center"
+              icon={<CheckSquare size={36} />}
+              title="暂无任务"
+            />
+          ) : (
+            <DndContext
+              sensors={sensors}
+              onDragStart={({ active }) => setDragged(String(active.id))}
+              onDragCancel={() => setDragged(undefined)}
+              onDragEnd={({ active, over }) => {
+                setDragged(undefined);
+                const task = tasks.find((t) => t.id === active.id);
+                if (
+                  task &&
+                  over &&
+                  statuses.includes(over.id as TaskWorkflowStatus)
+                )
+                  void board.update(task, over.id as TaskWorkflowStatus);
+              }}
             >
-              {statuses.map((status) => {
-                const common = {
-                  status,
-                  collapsed: !!collapsed[status],
-                  onToggleCollapsed: () =>
-                    setCollapsed((v) => ({ ...v, [status]: !v[status] })),
-                  scrollElementRef: scroll,
-                };
-                const group = tasks.filter((t) => t.status === status);
-                return mode === "board" ? (
-                  <DroppableColumn
-                    key={status}
-                    {...common}
-                    statusTasks={group}
-                    openTask={open}
-                    isChannelMode={Boolean(channelTasks)}
-                    canModifyTasks={false}
-                  />
-                ) : (
-                  <TaskSection
-                    key={status}
-                    {...common}
-                    tasks={group}
-                    showChannelName={!channelTasks}
-                    onOpenTask={open}
-                  />
-                );
-              })}
-            </TaskVirtualLayout>
-          </DndContext>
+              <TaskVirtualLayout
+                scrollElementRef={scroll}
+                className={
+                  mode === "board"
+                    ? "flex min-w-max items-start gap-4 pr-4"
+                    : "space-y-6"
+                }
+                data-testid={
+                  mode === "board"
+                    ? "channel-task-board-view"
+                    : "channel-task-list-view"
+                }
+              >
+                {statuses.map((status) => {
+                  const common = {
+                    status,
+                    collapsed: !!collapsed[status],
+                    onToggleCollapsed: () =>
+                      setCollapsed((v) => ({ ...v, [status]: !v[status] })),
+                    scrollElementRef: scroll,
+                  };
+                  const group = tasks.filter((t) => t.status === status);
+                  return mode === "board" ? (
+                    <DroppableColumn
+                      key={status}
+                      {...common}
+                      statusTasks={group}
+                      openTask={open}
+                      isChannelMode={Boolean(channelTasks)}
+                      canModifyTasks={
+                        board.state === "idle" &&
+                        tasks.some(
+                          (task) =>
+                            board.canEdit(task) &&
+                            (!dragged ||
+                              (task.id === dragged &&
+                                board.options(task).includes(status))),
+                        )
+                      }
+                    />
+                  ) : (
+                    <TaskSection
+                      key={status}
+                      {...common}
+                      tasks={group}
+                      showChannelName={!channelTasks}
+                      onOpenTask={open}
+                    />
+                  );
+                })}
+              </TaskVirtualLayout>
+            </DndContext>
+          )}
+          {next && (
+            <Button
+              className="mt-4 box-border h-8 min-h-8 w-full gap-1 py-0 text-xs"
+              variant="outline"
+              disabled={loadingMore || rows.length >= 500}
+              onClick={() => void more()}
+            >
+              {rows.length >= 500
+                ? "已显示500项，请筛选频道"
+                : loadingMore
+                  ? "加载中…"
+                  : "加载更多任务"}
+            </Button>
+          )}
+        </TasksPanelViewport>
+        {creating && channelTasks && (
+          <TaskCreate
+            facade={channelTasks}
+            changed={() => setTick((v) => v + 1)}
+            onClose={() => setCreating(false)}
+          />
         )}
-        {next && (
-          <Button
-            className="mt-4 box-border h-8 min-h-8 w-full gap-1 py-0 text-xs"
-            variant="outline"
-            disabled={loadingMore || rows.length >= 500}
-            onClick={() => void more()}
-          >
-            {rows.length >= 500
-              ? "已显示500项，请筛选频道"
-              : loadingMore
-                ? "加载中…"
-                : "加载更多任务"}
-          </Button>
+        {!channelTasks && params.get("task") && params.get("taskChannel") && (
+          <TaskDetail
+            key={`${params.get("taskChannel")}:${params.get("task")}`}
+            client={client}
+            roomId={params.get("taskChannel")!}
+            taskId={params.get("task")!}
+            canManage={
+              rows.find((r) => r.task.taskId === params.get("task"))
+                ?.canManageAnyTask ?? false
+            }
+            onClose={close}
+            onChanged={() => setTick((v) => v + 1)}
+          />
         )}
-      </TasksPanelViewport>
-      {creating && channelTasks && (
-        <TaskCreate
-          facade={channelTasks}
-          changed={() => setTick((v) => v + 1)}
-          onClose={() => setCreating(false)}
-        />
-      )}
-      {!channelTasks && params.get("task") && params.get("taskChannel") && (
-        <TaskDetail
-          key={`${params.get("taskChannel")}:${params.get("task")}`}
-          client={client}
-          roomId={params.get("taskChannel")!}
-          taskId={params.get("task")!}
-          canManage={
-            rows.find((r) => r.task.taskId === params.get("task"))
-              ?.canManageAnyTask ?? false
-          }
-          onClose={close}
-          onChanged={() => setTick((v) => v + 1)}
-        />
-      )}
-    </TasksPanelRoot>
+      </TasksPanelRoot>
+    </TaskBoardProvider>
   );
 }

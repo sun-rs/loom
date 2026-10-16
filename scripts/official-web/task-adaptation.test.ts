@@ -8,11 +8,23 @@ test("native task sections are exposed without rewriting their recipes or state"
     "utf8",
   );
   const result = exposeTaskPresentation(source);
-  assert.ok(result.startsWith(source));
+  assert.ok(
+    result.includes(
+      source.slice(
+        source.indexOf("function DroppableColumn("),
+        source.indexOf("export default"),
+      ),
+    ),
+  );
+  assert.ok(
+    result.includes(
+      "requestedDisabled || !actions.canEditStatus || actions.busy",
+    ),
+  );
   assert.ok(result.endsWith("export { TaskSection, DroppableColumn };\n"));
   assert.throws(() => exposeTaskPresentation("changed upstream"));
 });
-test("unconnected native card status mutation stays readonly", async () => {
+test("native card keeps its editor markup while writes use the scoped Loom owner", async () => {
   const { adaptTaskCard } =
     await import("../../frontends/raft/loom/task-adaptation.ts");
   const source = readFileSync(
@@ -20,6 +32,15 @@ test("unconnected native card status mutation stays readonly", async () => {
     "utf8",
   );
   const result = adaptTaskCard(source);
-  assert.ok(result.includes("const canEditStatus = false;"));
+  const render = source.slice(source.indexOf("\n  return ("));
+  assert.ok(
+    result.includes(
+      render.replace(
+        "              open={editingStatus}",
+        "              disabled={busy}\n              open={editingStatus}",
+      ),
+    ),
+  );
+  assert.ok(result.includes("useTaskCardActions(task)"));
   assert.throws(() => adaptTaskCard("changed upstream"));
 });
