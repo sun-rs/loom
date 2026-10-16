@@ -1,3 +1,4 @@
+import { verifyAttachmentPreview } from "./attachment-preview-browser.mjs";
 import { verifySearchHistory } from "./search-history-browser.mjs";
 import { verifyActivityReturn } from "./activity-return-browser.mjs";
 import { verifySearchRecent } from "./search-recent-browser.mjs";
@@ -154,6 +155,24 @@ try {
           workspace,
           channels,
           instances,
+        }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "attachments") {
+    console.log(
+      JSON.stringify(
+        await verifyAttachments({ browser, origin, client, workspace, head }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "attachment-preview") {
+    console.log(
+      JSON.stringify(
+        await verifyAttachmentPreview({
+          browser,
+          origin,
+          client,
+          workspace,
+          head,
         }),
       ),
     );

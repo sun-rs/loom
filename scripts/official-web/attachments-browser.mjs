@@ -20,6 +20,7 @@ export async function verifyAttachments({
   const results = [];
   for (const width of [1440, 390, 820]) {
     const context = await browser.newContext({
+      locale: "zh-CN",
       viewport: { width, height: width === 390 ? 844 : 1000 },
       deviceScaleFactor: 1,
       hasTouch: width !== 1440,
@@ -475,11 +476,21 @@ export async function verifyAttachments({
         .getByTestId("loom-message-attachments")
         .filter({ hasText: file.name });
       await card.waitFor();
-      const downloadPromise = page.waitForEvent("download");
       await card.getByText(file.name, { exact: true }).click();
+      const preview = page.getByTestId(
+        "attachment-preview-browser-find-scroll",
+      );
+      await preview.waitFor();
+      await preview
+        .locator("[data-anchor-line]")
+        .filter({ hasText: "exact attachment bytes " + width })
+        .waitFor();
+      const downloadPromise = page.waitForEvent("download");
+      await preview.getByRole("button", { name: "下载", exact: true }).click();
       const download = await downloadPromise;
       assert.equal(download.suggestedFilename(), file.name);
       assert.deepEqual(await readFile(await download.path()), file.buffer);
+      await preview.getByRole("button", { name: "关闭", exact: true }).click();
       await page.screenshot({
         path: "/tmp/loom-attachments-" + width + ".png",
         animations: "disabled",

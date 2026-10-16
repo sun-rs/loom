@@ -32,7 +32,7 @@ export function adaptAttachmentMessage(source: string) {
   let code = replace(
     source,
     "{/* Attached files */}",
-    "{/* Attached files */}\n        {readOnlyProjection && <LoomAttachments attachments={message.attachments} />}",
+    "{/* Attached files */}\n        {readOnlyProjection && <LoomAttachments attachments={message.attachments} parentMessage={message} />}",
   );
   code = replace(
     code,
@@ -40,4 +40,34 @@ export function adaptAttachmentMessage(source: string) {
     "{!readOnlyProjection && !forwardedBundleMetadata && message.attachments &&",
   );
   return 'import LoomAttachments from "loom-attachments";\n' + code;
+}
+/** Retain the complete native panel renderer; replace only its Raft data owner. */
+export function adaptAttachmentComments(source: string) {
+  const start = source.indexOf(
+    "  const currentUser = useAuthStore((s) => s.user);",
+  );
+  const end = source.indexOf("  // Fixed order (cindyz 6/11, task #28):");
+  if (start < 0 || end <= start)
+    throw Error("Official attachment comments boundary changed");
+  let code =
+    source.slice(0, start) +
+    `  const { formatMessage } = useIntl();
+  const { formatMessageTime } = useTimeFormatter();
+  const { comments, pendingComments, error, listRef, activeAnchor, clearActiveAnchor, sendComment, controls, canComment, submitDisabled, writeBlockedCopy } = useLoomAttachmentComments({ attachmentId, parentMessage, pendingAnchor, getPendingAnchor, onAnchorCleared });
+` +
+    source.slice(end);
+  code = replace(
+    code,
+    "<MessageInput\n              channelId=",
+    "<MessageInput\n              submitDisabled={submitDisabled}\n              showTaskButton={false}\n              channelId=",
+  );
+  code = replace(
+    code,
+    "      <div ref={listRef}",
+    "      {controls}\n      <div ref={listRef}",
+  );
+  return (
+    'import { useAttachmentComments as useLoomAttachmentComments } from "loom-attachment-comments";\n' +
+    code
+  );
 }

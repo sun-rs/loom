@@ -1,3 +1,11 @@
+import {
+  classifyAttachmentPreview,
+  MAX_ATTACHMENT_TEXT_PREVIEW_BYTES,
+} from "@rah-os/protocol";
+import { hasUnresolvedIntents } from "@rah-os/client-core/write-intent";
+import { useDocumentPreviewStore } from "../packages/web/src/store/documentPreviewStore.ts";
+import { downloadLoomAttachment } from "./DocumentPreview.tsx";
+import type { Message } from "../packages/web/src/store/messageStore.ts";
 import { useState, useRef, useEffect } from "react";
 import {
   MessageAttachmentGroup,
@@ -15,8 +23,10 @@ const client = new HttpRahClient({
 });
 export default function Attachments({
   attachments,
+  parentMessage,
 }: {
   attachments?: MessageAttachment[];
+  parentMessage?: Pick<Message, "id" | "channelId" | "senderId" | "senderType">;
 }) {
   const [error, setError] = useState(""),
     [busy, setBusy] = useState<string>();
@@ -30,21 +40,39 @@ export default function Attachments({
     directUrl: "/v3/client/files/content/" + encodeURIComponent(a.id),
   }));
   const imageRows = buildMessageImageGalleryRows(images);
-  async function open(a: MessageAttachment) {
+  const previewKind = (a: MessageAttachment) => {
+    const kind = classifyAttachmentPreview(a.mimeType, a.filename);
+    return a.sizeBytes <= MAX_ATTACHMENT_TEXT_PREVIEW_BYTES &&
+      (kind === "text" || kind === "markdown")
+      ? kind
+      : null;
+  };
+  async function open(a: MessageAttachment, preview = false) {
+    if (hasUnresolvedIntents()) {
+      setError("请先核实未决操作");
+      return;
+    }
     pending.current?.abort();
     const controller = new AbortController();
     pending.current = controller;
     setError("");
     setBusy(a.id);
     try {
-      const blob = await client.files.download(a.id, controller.signal);
-      if (controller.signal.aborted) return;
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = a.filename;
-      link.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      const kind = preview && previewKind(a);
+      if (kind) {
+        const text = await client.files.previewText(a.id, controller.signal);
+        if (controller.signal.aborted) return;
+        useDocumentPreviewStore.getState().open({
+          attachment: a,
+          preview:
+            kind === "markdown"
+              ? { kind, markdown: text }
+              : { kind: "text", text },
+          truncated: false,
+          url: null,
+          ...(parentMessage ? { commentContext: { parentMessage } } : {}),
+        });
+      } else await downloadLoomAttachment(a, controller.signal);
     } catch (e) {
       if (!controller.signal.aborted)
         setError(e instanceof Error ? e.message : String(e));
@@ -72,7 +100,7 @@ export default function Attachments({
                     imageIndex={item.index}
                     lightboxImages={images}
                     layout={item}
-                    onDownload={open}
+                    onDownload={(a) => open(a)}
                   />
                 );
               })}
@@ -91,8 +119,8 @@ export default function Attachments({
               isOptimistic={false}
               loading={busy === a.id}
               loadingLabel="读取附件…"
-              onClick={() => void open(a)}
-              affordance="download"
+              onClick={() => void open(a, true)}
+              affordance={previewKind(a) ? "preview" : "download"}
               meta={<span>{a.sizeBytes} B</span>}
             />
           ))}

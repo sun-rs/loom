@@ -1,0 +1,106 @@
+{
+  "upstream": {
+    "snapshotRevision": "a98ae003246a0360872a77d76dec2fccd0347ef7",
+    "uiPackage": "raft-ui@0.5.64",
+    "directReuse": [
+      "DocumentAttachmentPreviewModal",
+      "AttachmentPreviewShell",
+      "TextPreviewPane",
+      "MarkdownPreviewPane",
+      "attachmentCommentAnchors",
+      "AttachmentCommentsPanel renderer"
+    ],
+    "localGlue": "Loom SDK text preview and comment transport; checked data-owner seam; one shared RoomSession/WriteIntentSlot for native responsive panels; bounded 50-item pages"
+  },
+  "checks": {
+    "red": "Markdown attachment downloaded instead of opening native preview; expected preview locator timeout after fixture authentication was corrected",
+    "browser": [
+      {
+        "width": 1440,
+        "nativeMarkdownPreview": true,
+        "nativeComments": true,
+        "unknownExactReplay": true,
+        "oneDurableComment": true,
+        "nativeSelectionAnchor": true,
+        "anchorJump": true
+      },
+      {
+        "width": 390,
+        "nativeMarkdownPreview": true,
+        "nativeComments": true,
+        "unknownExactReplay": true,
+        "oneDurableComment": true,
+        "nativeSelectionAnchor": true,
+        "anchorJump": true
+      }
+    ],
+    "fileRegression": [
+      {
+        "width": 1440,
+        "referencePath": true,
+        "raftCheckboxAfterRefresh": true,
+        "hiddenFilesLabelAndKeyboard": true,
+        "nativePicker": true,
+        "stableTreeLayout": true,
+        "pendingNavigationKeepsParentOnly": true,
+        "failedNavigationRetainsNavigationAndRetries": true,
+        "compactFooter": true,
+        "desktopDrop": true,
+        "attachmentOnlySend": true,
+        "exactUnknownReplay": true,
+        "reloadDownloadExact": true
+      },
+      {
+        "width": 390,
+        "referencePath": true,
+        "raftCheckboxAfterRefresh": true,
+        "hiddenFilesLabelAndKeyboard": true,
+        "nativePicker": true,
+        "stableTreeLayout": true,
+        "pendingNavigationKeepsParentOnly": true,
+        "failedNavigationRetainsNavigationAndRetries": true,
+        "compactFooter": true,
+        "desktopDrop": false,
+        "attachmentOnlySend": true,
+        "exactUnknownReplay": true,
+        "reloadDownloadExact": true
+      },
+      {
+        "width": 820,
+        "referencePath": true,
+        "raftCheckboxAfterRefresh": true,
+        "hiddenFilesLabelAndKeyboard": true,
+        "nativePicker": true,
+        "stableTreeLayout": true,
+        "pendingNavigationKeepsParentOnly": true,
+        "failedNavigationRetainsNavigationAndRetries": true,
+        "compactFooter": true,
+        "desktopDrop": false,
+        "attachmentOnlySend": true,
+        "exactUnknownReplay": true,
+        "reloadDownloadExact": true
+      }
+    ],
+    "typecheck": "passed",
+    "buildWebWorkbench": "passed",
+    "sourceTests": 79,
+    "formatAndDiff": "passed",
+    "retainedFailures": [
+      "Fixture upload initially omitted gateway session cookie",
+      "Native hidden responsive panel selectors corrected to visible controls",
+      "Quote is optional in native anchor contract; test corrected to exact heading identity and jump",
+      "Unregistered attachments slice initially ran unrelated combined gate and failed at old send verification; dedicated branch added",
+      "Attachment gate locale made explicit for native translated download label"
+    ]
+  },
+  "limits": [
+    "No backend changes, paid CLI calls or all-suite acceptance claim",
+    "Text/Markdown up to existing 2MiB preview cap; unsupported formats download",
+    "PDF origin fence preserved; CSV/XLSX/HTML/media-specific previews not connected",
+    "No real user messages currently contain attachments; actual-page deployment check cannot prove real-data preview",
+    "Cross-message concurrent preview ordering not specifically verified"
+  ],
+  "deployment": {
+    "status": "pending"
+  }
+}

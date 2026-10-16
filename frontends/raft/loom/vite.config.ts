@@ -6,6 +6,7 @@ import {
 import {
   adaptAttachmentComposer,
   adaptAttachmentMessage,
+  adaptAttachmentComments,
 } from "./attachment-adaptation.ts";
 import {
   adaptTaskComposer,
@@ -42,6 +43,12 @@ export default defineConfig({
       },
       transform(code, id) {
         if (
+          id.endsWith(
+            "/packages/web/src/components/message/AttachmentCommentsPanel.tsx",
+          )
+        )
+          return { code: adaptAttachmentComments(code), map: null };
+        if (
           id.endsWith("/packages/web/src/components/settings/SettingsPanel.tsx")
         )
           return { code: exposeAppearance(code), map: null };
@@ -73,6 +80,8 @@ export default defineConfig({
           };
       },
       resolveId(source, importer) {
+        if (source === "loom-attachment-comments")
+          return resolve(import.meta.dirname, "useAttachmentComments.tsx");
         if (
           importer?.endsWith("/components/search/SearchOverlay.tsx") &&
           source === "./MessageSearchPage"
