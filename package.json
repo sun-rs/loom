@@ -7,7 +7,6 @@
     "node": ">=24.0.0"
   },
   "workspaces": [
-    "apps/*",
     "packages/*"
   ],
   "scripts": {
@@ -32,7 +31,6 @@
     "fetch:core:sea-carrier": "node scripts/fetch-computer-sea-carrier.mjs",
     "install:computer:macos": "node scripts/install-macos-computer.mjs",
     "publish:computer-release": "node scripts/publish-computer-release.mjs",
-    "test:formal-browser-policy": "node --test scripts/formal-browser-request-policy.test.mjs scripts/foundation-browser-request-policy.test.mjs",
     "test": "node --test --test-concurrency=1 packages/*/test/*.test.ts packages/*/test/*.test.mjs",
     "test:real:claude": "RAH_REAL_CLI_GATE=claude node --test packages/daemon/test/real-cli-gate.test.ts",
     "test:real:codex": "RAH_REAL_CLI_GATE=codex node --test packages/daemon/test/real-cli-gate.test.ts",
@@ -43,7 +41,7 @@
     "test:real:opencode:deepseek-v4-flash": "RAH_REAL_CLI_GATE=opencode RAH_REAL_CLI_MODEL=deepseek/deepseek-v4-flash RAH_REAL_CLI_REASONING=max node --test packages/daemon/test/real-cli-gate.test.ts",
     "test:real:multi-cli": "RAH_REAL_MULTI_CLI_GATE=1 node --test packages/daemon/test/real-multi-cli-gate.test.ts",
     "typecheck": "tsc --noEmit",
-    "check": "npm run test:repository-identity && npm run test:ci-workflow && npm run test:release-identity && npm run test:workbench-launch && npm run typecheck && npm test && npm run test:formal-browser-policy && npm run test:cli:efficiency:unit && npm run test:official-web:source",
+    "check": "npm run test:repository-identity && npm run test:ci-workflow && npm run test:release-identity && npm run test:workbench-launch && npm run typecheck && npm test && npm run test:cli:efficiency:unit && npm run test:official-web:source",
     "format:check": "prettier --check .",
     "format": "prettier --write .",
     "test:real:review": "RAH_REAL_REVIEW_GATE=1 node --test packages/daemon/test/real-review-cli-gate.test.ts",

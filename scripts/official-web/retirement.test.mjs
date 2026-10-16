@@ -30,6 +30,11 @@ test("official source is the only tracked product UI; client owners survive cons
   for (const path of [
     "apps/console",
     "scripts/run-console-browser-gate.mjs",
+    "scripts/real-browser-gate-support.mjs",
+    "scripts/formal-browser-request-policy.mjs",
+    "scripts/formal-browser-request-policy.test.mjs",
+    "scripts/foundation-browser-request-policy.mjs",
+    "scripts/foundation-browser-request-policy.test.mjs",
     "apps/web",
     "packages/ui-web",
     "packages/ui-tokens",
@@ -37,7 +42,9 @@ test("official source is the only tracked product UI; client owners survive cons
   ]) {
     await assert.rejects(access(path), { code: "ENOENT" });
   }
-  const { scripts } = JSON.parse(await readFile("package.json", "utf8"));
+  const { scripts, workspaces } = JSON.parse(
+    await readFile("package.json", "utf8"),
+  );
   assert.ok(
     !Object.values(scripts).some((s) =>
       [
@@ -52,6 +59,7 @@ test("official source is the only tracked product UI; client owners survive cons
       ].some((path) => s.includes(path)),
     ),
   );
+  assert.ok(!workspaces.includes("apps/*"));
   assert.match(scripts["build:web:workbench"], /build-product-web/);
   const lock = JSON.parse(await readFile("package-lock.json", "utf8"));
   assert.ok(!lock.packages["apps/console"]);

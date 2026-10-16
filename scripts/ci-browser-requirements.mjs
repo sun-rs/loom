@@ -6,7 +6,7 @@
 //   chromium | firefox | webkit -> Playwright's own bundled builds
 //   chrome                      -> a real system Chrome/Chromium, resolved by
 //                                  findChromeExecutable() in
-//                                  scripts/real-browser-gate-support.mjs and
+//                                  browser helper modules and
 //                                  installed through Playwright's `chrome`
 //                                  channel on CI.
 
