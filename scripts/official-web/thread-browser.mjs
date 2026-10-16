@@ -45,6 +45,13 @@ export async function verifyThreads({
       const external = [];
       const creates = [];
       const sends = [];
+      const readMarks = [];
+      page.on("request", (request) => {
+        if (request.url().endsWith("/v3/client/activity/mark")) {
+          const body = request.postDataJSON();
+          if (body.threadId) readMarks.push(body);
+        }
+      });
       let replyAborted;
       const replyFailure = new Promise((resolve) => {
         replyAborted = resolve;
@@ -181,6 +188,65 @@ export async function verifyThreads({
       ).threads.find((t) => t.rootMessageId === root.messageId);
       assert.ok(thread);
       assert.equal(thread.replyCount, 1);
+      // Native menu uses authenticated Human following state. A lost write is
+      // resolved by reading, not repeating the preference mutation.
+      const initial = await client.request("thread.followers", {
+        roomId: channel.roomId,
+        threadId: thread.threadId,
+      });
+      const follows = [];
+      await page.route("**/v3/client/activity/follow", async (route) => {
+        follows.push(route.request().postDataJSON());
+        await route.fetch();
+        await route.abort();
+      });
+      await panel.getByTestId("thread-overflow-trigger").click();
+      const verifiedFollow = page.waitForResponse(
+        (response) =>
+          response.url().endsWith("/v3/client/activity/thread-followers") &&
+          response.ok(),
+      );
+      await page.getByTestId("thread-overflow-follow-action").click();
+      await verifiedFollow;
+      assert.equal(follows.length, 1, "lost follow is not resent");
+      const after = await client.request("thread.followers", {
+        roomId: channel.roomId,
+        threadId: thread.threadId,
+      });
+      assert.equal(after.following, !initial.following);
+      await panel.getByTestId("thread-overflow-trigger").click();
+      await page.getByTestId("thread-overflow-menu").waitFor();
+      assert.match(
+        await page.getByTestId("thread-overflow-follow-action").textContent(),
+        after.following ? /^Unfollow Thread$/ : /^Follow Thread$/,
+      );
+      await page.keyboard.press("Escape");
+      await page
+        .getByTestId("thread-overflow-menu")
+        .waitFor({ state: "detached" });
+      await page.unroute("**/v3/client/activity/follow");
+      const replies = await client.request("message.list", {
+        roomId: channel.roomId,
+        threadId: thread.threadId,
+        limit: 50,
+      });
+      for (let i = 0; !readMarks.length && i < 20; i++)
+        await page.waitForTimeout(100);
+      assert.ok(
+        readMarks.length,
+        "visible thread replies advance their own read scope",
+      );
+      assert.ok(
+        readMarks.every(
+          (mark) =>
+            mark.roomId === channel.roomId &&
+            mark.threadId === thread.threadId &&
+            mark.action === "read" &&
+            mark.source === "viewport" &&
+            replies.messages.some((m) => m.roomSeq === mark.throughSeq),
+        ),
+      );
+
       await page.reload();
       await panel
         .getByText(`FIXTURE reply ${width}`, { exact: true })
@@ -275,6 +341,9 @@ export async function verifyThreads({
       results.push({
         width,
         readOnlyOpen: true,
+        followLostResponseReadback: true,
+        scopedVisibleRead: true,
+        nativeMenuEscape: true,
         createAndReplyExactReplay: true,
         oneReply: true,
         reload: true,

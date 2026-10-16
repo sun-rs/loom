@@ -1,3 +1,5 @@
+import ThreadFollowMenu from "./ThreadFollowMenu.tsx";
+import { useThreadActivity } from "./useThreadActivity.ts";
 import {
   useEffect,
   useMemo,
@@ -29,6 +31,7 @@ import { useRouteIntentOwner } from "./useIntentRoute.ts";
 const ControlledThreadPanel = ThreadPanel as ComponentType<
   ThreadPanelProps & {
     loomFooter: ReactNode;
+    loomHeaderActions?: ReactNode;
     loomOnOpenProfile?: (kind: "agent" | "human", id: string) => void;
     loomFocusId?: string;
     loomHasNewer?: boolean;
@@ -74,6 +77,14 @@ export default function ThreadWorkspace({
   const [tick, setTick] = useState(0);
   const [max, setMax] = useState(getThreadPanelDynamicMax);
   const host = useRef<HTMLDivElement>(null);
+  const activity = useThreadActivity(
+    client,
+    room.roomId,
+    data?.thread?.threadId,
+    data?.messages ?? [],
+    host,
+    !!data && !error && !covered,
+  );
   const size = useResizablePanel({
     storageKey: "loom:threadPanelWidth",
     min: THREAD_PANEL_MIN_WIDTH,
@@ -90,7 +101,7 @@ export default function ThreadWorkspace({
     };
   }, [bridge]);
   const close = () => {
-    if (bridge.writes.state === "idle") onClose();
+    if (bridge.writes.state === "idle" && !activity.busy) onClose();
   };
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
@@ -141,6 +152,14 @@ export default function ThreadWorkspace({
     data?.messages.map((m) => toOfficialMessage(m, data.members)) ?? [];
   const footer = (
     <ThreadPanelFooter className={composerHostClassName(false)}>
+      {activity.error && (
+        <div role="alert" className="p-3 text-sm">
+          {activity.error}
+          {activity.following === undefined && (
+            <Button onClick={activity.reload}>重新读取关注状态</Button>
+          )}
+        </div>
+      )}
       {state === "unknown" && (
         <div role="alert" className="p-3 text-sm">
           回复结果未知，请核实原请求。
@@ -263,6 +282,20 @@ export default function ThreadWorkspace({
               );
               if (member) onOpenProfile?.(member);
             }}
+            loomHeaderActions={
+              data.thread && !error ? (
+                <ThreadFollowMenu
+                  followed={activity.following ?? false}
+                  followBusy={
+                    activity.busy ||
+                    activity.following === undefined ||
+                    state !== "idle" ||
+                    !!data.room?.archivedAt
+                  }
+                  onFollow={() => void activity.follow()}
+                />
+              ) : undefined
+            }
             loomFooter={footer}
           />
         ) : (

@@ -66,3 +66,14 @@ test("controlled thread forwards native parent and reply profile actions to its 
   const result = adaptThreadFooter(source);
   assert.equal(result.split("onOpenProfile={loomOnOpenProfile}").length, 3);
 });
+
+test("thread host exposes native header actions without changing header geometry", () => {
+  const result = adaptThreadFooter(
+    readFileSync(
+      "frontends/raft/packages/web/src/components/message/ThreadPanel.tsx",
+      "utf8",
+    ),
+  );
+  assert.ok(result.includes("{loomHeaderActions}"));
+  assert.ok(result.includes("READ_ONLY_THREAD_HEADER_CONTAINER_PROPS"));
+});

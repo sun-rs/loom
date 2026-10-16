@@ -146,7 +146,20 @@ try {
     instances.push(result.instance);
   }
   browser = await chromium.launch({ headless: true });
-  if (process.env.LOOM_BROWSER_SLICE === "layout") {
+  if (process.env.LOOM_BROWSER_SLICE === "threads") {
+    console.log(
+      JSON.stringify(
+        await verifyThreads({
+          browser,
+          origin,
+          client,
+          workspace,
+          otherChannel: channels[1],
+          head,
+        }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "layout") {
     console.log(
       JSON.stringify(await verifyLayout({ browser, origin, channels, client })),
     );
