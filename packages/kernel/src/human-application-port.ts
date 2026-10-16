@@ -78,6 +78,7 @@ export type HumanApplicationPort = Pick<
   invalidateChannelMemory: RoomKernel["memory"]["humanInvalidate"];
   restoreChannelMemory: RoomKernel["memory"]["humanRestore"];
   deleteChannelMemory: RoomKernel["memory"]["humanDelete"];
+  updateChannelMemory: RoomKernel["memory"]["humanUpdate"];
   pinChannelMemory: RoomKernel["memory"]["humanPin"];
   importLegacyChannelMemory: RoomKernel["memory"]["humanImportLegacy"];
   authorizeLegacyChannelMemoryImport: RoomKernel["memory"]["humanAuthorizeImportLegacy"];
@@ -149,6 +150,8 @@ export function createHumanApplicationPort(
       kernel.memory.humanRestore(actor, input),
     deleteChannelMemory: (actor, input) =>
       kernel.memory.humanDelete(actor, input),
+    updateChannelMemory: (actor, input) =>
+      kernel.memory.humanUpdate(actor, input),
     pinChannelMemory: (actor, input) => kernel.memory.humanPin(actor, input),
     importLegacyChannelMemory: (actor, input, files) =>
       kernel.memory.humanImportLegacy(actor, input, files),

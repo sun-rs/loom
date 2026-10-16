@@ -26,6 +26,7 @@ import {
   ClientMemoryInvalidateRequestSchema,
   ClientMemoryListRequestSchema,
   ClientMemoryPinRequestSchema,
+  ClientMemoryUpdateRequestSchema,
   ClientMemoryPolicyReadRequestSchema,
   ClientMemoryPolicyUpdateRequestSchema,
   ClientMemoryRestoreRequestSchema,
@@ -42,6 +43,7 @@ import {
   type ClientMemoryInvalidateRequest,
   type ClientMemoryListRequest,
   type ClientMemoryPinRequest,
+  type ClientMemoryUpdateRequest,
   type ClientMemoryPolicyReadRequest,
   type ClientMemoryPolicyUpdateRequest,
   type ClientMemoryRestoreRequest,
@@ -522,6 +524,10 @@ export type RahClientOperationMap = ComposerOperationMap &
     };
     "memory.delete": {
       input: ClientMemoryDeleteRequest;
+      output: MemoryMutationResponse;
+    };
+    "memory.update": {
+      input: ClientMemoryUpdateRequest;
       output: MemoryMutationResponse;
     };
     "memory.pin": {
@@ -1063,6 +1069,13 @@ const operationDefinitions: Record<RahClientOperation, OperationDefinition> = {
     output: MemoryMutationResponseSchema,
     method: "POST",
     path: "/v3/client/memory/delete",
+  },
+  "memory.update": {
+    authenticated: true,
+    input: ClientMemoryUpdateRequestSchema,
+    output: MemoryMutationResponseSchema,
+    method: "POST",
+    path: "/v3/client/memory/update",
   },
   "memory.pin": {
     authenticated: true,

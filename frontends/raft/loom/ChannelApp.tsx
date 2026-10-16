@@ -61,6 +61,7 @@ import { hasUnresolvedIntents } from "@rah-os/client-core/write-intent";
 import { loadOrCreateConsumerId } from "@rah-os/client-core";
 import ChannelSidebar from "./ChannelSidebar.tsx";
 import ChatSidebarFrame from "./ChatSidebarFrame.tsx";
+import MemoryPage from "./MemoryPage.tsx";
 import AgentPage from "./AgentPage.tsx";
 import PanelHeader from "../packages/web/src/components/ui/PanelHeader.tsx";
 import MessageInput from "./ComposerFiles.tsx";
@@ -1071,6 +1072,9 @@ export default function ChannelApp() {
                       onOpenPrivate={openPrivate}
                     />
                   )}
+                  {directory && destination === "memory" && (
+                    <MemoryPage client={client} rooms={directory.channels} />
+                  )}
                   {directory && destination === "tasks" && (
                     <TasksPage
                       client={client}
@@ -1257,6 +1261,7 @@ export default function ChannelApp() {
                     "search",
                     "activity",
                     "settings",
+                    "memory",
                     "tasks",
                   ].includes(destination) && (
                     <DestinationPlaceholder active={destination} />

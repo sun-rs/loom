@@ -388,7 +388,9 @@ metadata. Provenance proves authorship, not correctness.
 Current S6 state (status table, history §48–§54 and §63): Role instances use
 Kernel channel memory. Scope is the Channel; entries written from an instance's
 private box also belong to the Channel's shared memory, not private memory.
-Writes happen only through explicit Worker tools (`memory write/update`); the
+Writes happen only through explicit Worker tools (`memory write/update`) or
+owner-approved Human edits of existing entries (2026-10-16, description/body
+only, channel-manager permission, expectedRevision and Human provenance); the
 platform never extracts memory from conversations or transcripts and never
 materializes it as files. Mutations return receipts only; bodies,
 descriptions and provenance come only through reads gated by the read switch.

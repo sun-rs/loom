@@ -71,6 +71,7 @@ test("RahClient covers every existing Human API v3 operation", () => {
     "memory.read",
     "memory.restore",
     "memory.search",
+    "memory.update",
     "message.context",
     "message.forward",
     "message.forward.targets",

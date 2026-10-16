@@ -356,6 +356,20 @@ export type ClientMemorySearchRequest = z.infer<
   typeof ClientMemorySearchRequestSchema
 >;
 
+/** Explicit Human editing; Kernel supplies authorship and checks the shown revision. */
+export const ClientMemoryUpdateRequestSchema = z
+  .object({
+    entryId: IdentifierSchema,
+    expectedRevision: ExpectedRevisionSchema,
+    description: MemoryDescriptionSchema,
+    body: MemoryBodySchema,
+    idempotencyKey: IdentifierSchema,
+  })
+  .strict();
+export type ClientMemoryUpdateRequest = z.infer<
+  typeof ClientMemoryUpdateRequestSchema
+>;
+
 export const ClientMemoryInvalidateRequestSchema = z
   .object({
     entryId: IdentifierSchema,

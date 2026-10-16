@@ -15,6 +15,7 @@ export const MEMORY_DATA_PATHS = [
   "/memory/restore",
   "/memory/delete",
   "/memory/pin",
+  "/memory/update",
   "/memory/policy/read",
   "/memory/policy/update",
 ];
@@ -75,6 +76,13 @@ export function routeMemory(
         human.deleteChannelMemory(
           actor,
           parse(P.ClientMemoryDeleteRequestSchema, body),
+        ),
+      );
+    case "/memory/update":
+      return P.MemoryMutationResponseSchema.parse(
+        human.updateChannelMemory(
+          actor,
+          parse(P.ClientMemoryUpdateRequestSchema, body),
         ),
       );
     case "/memory/pin":

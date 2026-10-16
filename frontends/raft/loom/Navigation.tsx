@@ -1,6 +1,7 @@
 import SystemNotifications from "./SystemNotifications.tsx";
 import {
   Activity,
+  Brain,
   CheckSquare,
   MessageSquare,
   Search,
@@ -26,6 +27,7 @@ export const destinations = [
   { id: "activity", label: "动态", icon: Activity },
   { id: "tasks", label: "任务", icon: CheckSquare },
   { id: "agents", label: "Agent", icon: Users },
+  { id: "memory", label: "记忆", icon: Brain },
   { id: "settings", label: "设置", icon: Settings },
 ] as const;
 export type Destination = (typeof destinations)[number]["id"];
@@ -53,7 +55,7 @@ export function DesktopNavigation({ active, onSelect }: NavigationProps) {
         </AppRailNav>
         <AppRailFooter>
           <SystemNotifications flavor="rail-bottom" />
-          {item(destinations[5])}
+          {item(destinations.find((entry) => entry.id === "settings")!)}
         </AppRailFooter>
       </AppRailRoot>
     </AppShellRailSlot>

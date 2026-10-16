@@ -269,6 +269,26 @@ export class ChannelMemoryService {
     return this.#history(this.#humanEntry(actor, input.entryId).row);
   }
 
+  humanUpdate(
+    actor: AuthenticatedActorContext,
+    raw: P.ClientMemoryUpdateRequest,
+  ): P.MemoryMutationResponse {
+    const input = P.ClientMemoryUpdateRequestSchema.parse(raw);
+    return this.#humanChange(actor, input, "update", (current) => {
+      if (current.state !== "active")
+        throw new ConflictError("restore memory before updating");
+      if (
+        current.body === input.body &&
+        current.description === input.description
+      )
+        throw new ConflictError("memory update changes nothing");
+      return {
+        next: { ...current, description: input.description, body: input.body },
+        reason: null,
+      };
+    });
+  }
+
   humanInvalidate(
     actor: AuthenticatedActorContext,
     raw: P.ClientMemoryInvalidateRequest,
