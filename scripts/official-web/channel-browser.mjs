@@ -1,3 +1,4 @@
+import { verifySearchHistory } from "./search-history-browser.mjs";
 import { verifyActivityReturn } from "./activity-return-browser.mjs";
 import { verifySearchRecent } from "./search-recent-browser.mjs";
 import { verifySearchEntities } from "./search-entities-browser.mjs";
@@ -155,6 +156,10 @@ try {
           instances,
         }),
       ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "search-history") {
+    console.log(
+      JSON.stringify(await verifySearchHistory({ browser, origin, channels })),
     );
   } else if (process.env.LOOM_BROWSER_SLICE === "activity-return") {
     console.log(

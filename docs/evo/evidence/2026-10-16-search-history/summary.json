@@ -1,0 +1,67 @@
+{
+  "upstream": {
+    "release": "1.21.16",
+    "releaseEvidence": "../2026-10-16-native-topbar/upstream.json",
+    "snapshotRevision": "a98ae003246a0360872a77d76dec2fccd0347ef7",
+    "source": [
+      "packages/web/src/components/search/MessageSearchPage.tsx",
+      "packages/web/src/components/search/searchHome.ts"
+    ],
+    "directReuse": "searchHome history helpers, native Badge/SectionEyebrow and translations",
+    "structuralPort": "Full-page history section and commit triggers",
+    "localGlue": "Loom workspace/principal scope and same-page history updates for simultaneously mounted overlay/background"
+  },
+  "checks": {
+    "red": "Missing search-history-tag before implementation; overlay-to-background history update failed before synchronization fix",
+    "browser": [
+      {
+        "width": 1440,
+        "committedOnly": true,
+        "persistsAcrossReload": true,
+        "chooseRunsSearch": true,
+        "nativeRemove": true,
+        "clearAllPersists": true,
+        "overlayCommitAndSeparation": true,
+        "noErrors": true
+      },
+      {
+        "width": 390,
+        "committedOnly": true,
+        "persistsAcrossReload": true,
+        "chooseRunsSearch": true,
+        "nativeRemove": true,
+        "clearAllPersists": true,
+        "overlayCommitAndSeparation": false,
+        "noErrors": true
+      }
+    ],
+    "recentRegression": [
+      {
+        "width": 1440,
+        "nativeSingleOpenMenu": true,
+        "recentVisitPersistence": true,
+        "currentConversationExcluded": true,
+        "menuEscapeRetainsOverlay": true
+      },
+      {
+        "width": 390,
+        "nativeSingleOpenMenu": true,
+        "recentVisitPersistence": false,
+        "currentConversationExcluded": false,
+        "menuEscapeRetainsOverlay": false
+      }
+    ],
+    "sourceTests": 79,
+    "typecheck": "passed",
+    "buildWebWorkbench": "passed",
+    "formatAndDiff": "passed"
+  },
+  "limits": [
+    "No backend changes or paid CLI calls",
+    "No frequent-object ranking or independent topbar navigation history",
+    "No cross-device history; storage denial is fail-open"
+  ],
+  "deployment": {
+    "status": "pending"
+  }
+}

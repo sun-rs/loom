@@ -898,6 +898,7 @@ export default function ChannelApp() {
                 {directory &&
                   (destination === "search" || destination === "activity") && (
                     <DiscoveryPage
+                      principalId={directory.principal.principalId}
                       controlRoomId={directory.workspace.controlRoomId}
                       onOpenEntity={openSearchEntity}
                       notice={privateNotice}

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type Ref } from "react";
 import { useIntl } from "react-intl";
 import {
   Button,
@@ -17,12 +17,14 @@ import {
 /** Structural port: MessageSearchPage searchFieldInner + full-page PanelHeader.
  * Original component classes/parameters; only URL and query callbacks belong to Loom. */
 export default function SearchHeader({
+  inputRef,
   query,
   onQuery,
   onBack,
   onEscape,
   overlay = false,
 }: {
+  inputRef?: Ref<HTMLInputElement>;
   overlay?: boolean;
   query: string;
   onQuery: (query: string) => void;
@@ -41,6 +43,7 @@ export default function SearchHeader({
   const field = (
     <InputGroup className="min-w-0 flex-1">
       <InputGroupInput
+        ref={inputRef}
         autoFocus={overlay}
         value={input}
         onChange={(e) => change(e.target.value)}

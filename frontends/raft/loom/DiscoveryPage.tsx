@@ -1,3 +1,4 @@
+import SearchHistory, { useSearchHistory } from "./SearchHistory.tsx";
 import { useActivityScroll } from "./useActivityScroll.ts";
 import SearchRecent, { useSearchRecent } from "./SearchRecent.tsx";
 import SearchEntityRows, { SearchEntityRow } from "./SearchEntityRows.tsx";
@@ -74,7 +75,10 @@ export default function DiscoveryPage({
 }) {
   const [params, setParams] = useSearchParams();
   const railHandler = useRef<SearchRailHandler>(null);
-  const allResults = () =>
+  const searchInput = useRef<HTMLInputElement>(null);
+  const history = useSearchHistory(workspaceId, principalId);
+  const allResults = () => {
+    history.remember(params.get("q") ?? "");
     setParams(
       (previous) => {
         const next = new URLSearchParams(previous);
@@ -83,6 +87,7 @@ export default function DiscoveryPage({
       },
       { state: null },
     );
+  };
   const desktop = useMediaQuery("(min-width: 768px)");
   const wide = useMediaQuery("(min-width: 1024px)");
   const fullPanel = useResizablePanel({
@@ -178,6 +183,7 @@ export default function DiscoveryPage({
         )}
         {mode === "search" ? (
           <SearchHeader
+            inputRef={searchInput}
             overlay={overlay}
             query={query}
             onBack={onBack}
@@ -231,13 +237,27 @@ export default function DiscoveryPage({
             />
           )}
           <Results
+            history={history}
+            onChooseHistory={(query) => {
+              update("q", query);
+              requestAnimationFrame(() => {
+                searchInput.current?.focus({ preventScroll: true });
+                searchInput.current?.setSelectionRange(
+                  query.length,
+                  query.length,
+                );
+              });
+            }}
             railHandler={railHandler}
             overlayHome={overlay ? allResults : undefined}
             key={`${mode}:${query}:${scope}:${filter}:${tick}:${filterKey}`}
             client={client}
             entities={entities}
             recent={recent}
-            onOpenEntity={onOpenEntity}
+            onOpenEntity={(entity, full) => {
+              history.remember(query);
+              return onOpenEntity(entity, full);
+            }}
             workspaceId={workspaceId}
             mode={mode}
             query={query}
@@ -245,7 +265,10 @@ export default function DiscoveryPage({
             scope={scope}
             filter={filter}
             tick={tick}
-            onOpenResult={onOpenResult}
+            onOpenResult={(row, full) => {
+              if (mode === "search") history.remember(query);
+              return onOpenResult(row, full);
+            }}
           />
         </Shell>
       </AppShellMainSlot>
@@ -254,6 +277,8 @@ export default function DiscoveryPage({
   );
 }
 function Results({
+  history,
+  onChooseHistory,
   railHandler,
   overlayHome,
   client,
@@ -271,6 +296,8 @@ function Results({
 }: {
   railHandler: RefObject<SearchRailHandler>;
   overlayHome?: () => void;
+  history: ReturnType<typeof useSearchHistory>;
+  onChooseHistory: (query: string) => void;
   onOpenResult: (row: DiscoveryRow, full: boolean) => Promise<void>;
   client: RahClient;
   workspaceId: string;
@@ -551,7 +578,11 @@ function Results({
         !searchFilters.senderKind &&
         !searchFilters.mentionSelf &&
         !searchFilters.after ? (
-        <p className="p-4">输入关键词搜索可访问的消息。</p>
+        !overlayHome && history.entries.length ? (
+          <SearchHistory history={history} onChoose={onChooseHistory} />
+        ) : (
+          <p className="p-4">输入关键词搜索可访问的消息。</p>
+        )
       ) : loading ? (
         <Spinner aria-label="正在读取结果" />
       ) : error ? (
