@@ -1,3 +1,4 @@
+import { verifyTaskCreate } from "./task-create-browser.mjs";
 import { verifyAttachmentPreview } from "./attachment-preview-browser.mjs";
 import { verifySearchHistory } from "./search-history-browser.mjs";
 import { verifyActivityReturn } from "./activity-return-browser.mjs";
@@ -174,6 +175,12 @@ try {
           workspace,
           head,
         }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "task-create") {
+    console.log(
+      JSON.stringify(
+        await verifyTaskCreate({ browser, origin, client, workspace, head }),
       ),
     );
   } else if (process.env.LOOM_BROWSER_SLICE === "search-history") {

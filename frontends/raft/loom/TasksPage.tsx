@@ -1,3 +1,6 @@
+import TaskCreate from "./TaskCreate.tsx";
+import type { ChannelTaskClient } from "./channel-task-client.ts";
+import { useIntl } from "react-intl";
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import {
   TasksPanelRoot,
@@ -14,6 +17,7 @@ import {
   LayoutList,
   Hash,
   ChevronDown,
+  Plus,
 } from "lucide-react";
 import { DndContext } from "@dnd-kit/core";
 import type { RahClient } from "@rah-os/client-sdk";
@@ -48,11 +52,15 @@ export default function TasksPage({
   client,
   workspaceId,
   rooms,
+  channelTasks,
 }: {
+  channelTasks?: ChannelTaskClient;
   client: RahClient;
   workspaceId: string;
   rooms: Room[];
 }) {
+  const { formatMessage } = useIntl();
+  const [creating, setCreating] = useState(false);
   const [params, setParams] = useIntentRoute();
   const mobile = useMediaQuery("(max-width: 767.98px)");
   const mode =
@@ -63,7 +71,7 @@ export default function TasksPage({
         : mobile
           ? "list"
           : "board";
-  const roomId = params.get("taskRoom") ?? "";
+  const roomId = channelTasks?.channel.roomId ?? params.get("taskRoom") ?? "";
   const [rows, setRows] = useState<GlobalTasksResponse["tasks"]>([]),
     [next, setNext] = useState<string>(),
     [total, setTotal] = useState(0),
@@ -195,63 +203,82 @@ export default function TasksPage({
       className="relative flex min-h-0 flex-1 flex-col"
       data-testid="loom-tasks-page"
     >
-      <div
-        data-slot="panel-header"
-        className="flex h-panel-header items-center gap-3 border-b border-line-muted bg-layer-panel px-5 theme-brutal:border-b-2 theme-brutal:border-black theme-brutal:bg-soft-signal theme-brutal:md:bg-white"
-      >
-        <div className="hidden md:flex size-icon-header items-center justify-center border border-line-muted bg-primary-soft text-primary-strong theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-soft-signal theme-brutal:text-black">
-          <CheckSquare size={18} />
+      {!channelTasks && (
+        <div
+          data-slot="panel-header"
+          className="flex h-panel-header items-center gap-3 border-b border-line-muted bg-layer-panel px-5 theme-brutal:border-b-2 theme-brutal:border-black theme-brutal:bg-soft-signal theme-brutal:md:bg-white"
+        >
+          <div className="hidden md:flex size-icon-header items-center justify-center border border-line-muted bg-primary-soft text-primary-strong theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-soft-signal theme-brutal:text-black">
+            <CheckSquare size={18} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h2 className="font-bold text-base leading-tight">任务</h2>
+            <p className="text-xs text-foreground-muted font-mono">
+              {loading ? "加载中…" : `${rows.length} / ${total} 项频道任务`}
+            </p>
+          </div>
         </div>
-        <div className="min-w-0 flex-1">
-          <h2 className="font-bold text-base leading-tight">任务</h2>
-          <p className="text-xs text-foreground-muted font-mono">
-            {loading ? "加载中…" : `${rows.length} / ${total} 项频道任务`}
-          </p>
-        </div>
-      </div>
+      )}
       <TasksPanelToolbar>
         <div className="flex flex-wrap items-center gap-2">
-          <div ref={filterHost} className="relative">
-            <Button
-              size="sm"
-              variant={roomId ? "primary" : "outline"}
-              type="button"
-              onClick={() => setFilter((v) => !v)}
-              className="box-border h-8 min-h-8 gap-2 py-0"
-              aria-label="筛选频道"
-            >
-              <Hash size={12} />
-              {rooms.find((r) => r.roomId === roomId)?.name ?? "频道"}
-              <ChevronDown size={12} />
-            </Button>
-            {filter && (
-              <SelectionPopover
-                title="频道"
-                searchable
-                search={search}
-                onSearchChange={setSearch}
-                searchPlaceholder="搜索频道"
-                showClear={!!roomId}
-                onClear={() => {
-                  update("taskRoom", "");
-                  setFilter(false);
+          {!channelTasks && (
+            <div ref={filterHost} className="relative">
+              <Button
+                size="sm"
+                variant={roomId ? "primary" : "outline"}
+                type="button"
+                onClick={() => setFilter((v) => !v)}
+                className="box-border h-8 min-h-8 gap-2 py-0"
+                aria-label="筛选频道"
+              >
+                <Hash size={12} />
+                {rooms.find((r) => r.roomId === roomId)?.name ?? "频道"}
+                <ChevronDown size={12} />
+              </Button>
+              {filter && (
+                <SelectionPopover
+                  title="频道"
+                  searchable
+                  search={search}
+                  onSearchChange={setSearch}
+                  searchPlaceholder="搜索频道"
+                  showClear={!!roomId}
+                  onClear={() => {
+                    update("taskRoom", "");
+                    setFilter(false);
+                  }}
+                  options={rooms
+                    .filter((r) =>
+                      r.name.toLowerCase().includes(search.toLowerCase()),
+                    )
+                    .map((r) => ({
+                      key: r.roomId,
+                      label: `#${r.name}`,
+                      checked: roomId === r.roomId,
+                      onClick: () => {
+                        update("taskRoom", r.roomId);
+                        setFilter(false);
+                      },
+                    }))}
+                />
+              )}
+            </div>
+          )}
+          {channelTasks &&
+            !channelTasks.channel.room.state.snapshot?.room.archivedAt && (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  if (!hasRouteBoundIntent()) setCreating(true);
                 }}
-                options={rooms
-                  .filter((r) =>
-                    r.name.toLowerCase().includes(search.toLowerCase()),
-                  )
-                  .map((r) => ({
-                    key: r.roomId,
-                    label: `#${r.name}`,
-                    checked: roomId === r.roomId,
-                    onClick: () => {
-                      update("taskRoom", r.roomId);
-                      setFilter(false);
-                    },
-                  }))}
-              />
+                className="box-border inline-flex h-8 min-h-8 items-center gap-1 py-0 text-xs font-bold"
+              >
+                <Plus size={12} />
+                {formatMessage({ id: "task.board.newTask" })}
+              </Button>
             )}
-          </div>
           <SegmentedControl
             value={mode}
             onValueChange={(value) => update("taskView", value)}
@@ -342,7 +369,7 @@ export default function TasksPage({
                     {...common}
                     statusTasks={group}
                     openTask={open}
-                    isChannelMode={false}
+                    isChannelMode={Boolean(channelTasks)}
                     canModifyTasks={false}
                   />
                 ) : (
@@ -350,6 +377,7 @@ export default function TasksPage({
                     key={status}
                     {...common}
                     tasks={group}
+                    showChannelName={!channelTasks}
                     onOpenTask={open}
                   />
                 );
@@ -372,7 +400,14 @@ export default function TasksPage({
           </Button>
         )}
       </TasksPanelViewport>
-      {params.get("task") && params.get("taskChannel") && (
+      {creating && channelTasks && (
+        <TaskCreate
+          facade={channelTasks}
+          changed={() => setTick((v) => v + 1)}
+          onClose={() => setCreating(false)}
+        />
+      )}
+      {!channelTasks && params.get("task") && params.get("taskChannel") && (
         <TaskDetail
           key={`${params.get("taskChannel")}:${params.get("task")}`}
           client={client}

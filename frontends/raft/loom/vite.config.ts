@@ -1,3 +1,4 @@
+import { adaptTaskCreation } from "./task-create-adaptation.ts";
 import { officialUiAliases } from "./ui-resolution.ts";
 import {
   exposeAppearance,
@@ -43,6 +44,10 @@ export default defineConfig({
       },
       transform(code, id) {
         if (
+          id.endsWith("/packages/web/src/components/task/CreateTaskDialog.tsx")
+        )
+          return { code: adaptTaskCreation(code), map: null };
+        if (
           id.endsWith(
             "/packages/web/src/components/message/AttachmentCommentsPanel.tsx",
           )
@@ -80,6 +85,8 @@ export default defineConfig({
           };
       },
       resolveId(source, importer) {
+        if (source === "loom-task-create")
+          return resolve(import.meta.dirname, "TaskCreate.tsx");
         if (source === "loom-attachment-comments")
           return resolve(import.meta.dirname, "useAttachmentComments.tsx");
         if (

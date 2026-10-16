@@ -1,0 +1,65 @@
+{
+  "upstream": {
+    "release": "1.21.16",
+    "sourceRevision": "a98ae003246a0360872a77d76dec2fccd0347ef7",
+    "releaseEvidence": "../2026-10-16-native-topbar/upstream.json",
+    "directReuse": [
+      "CreateTaskDialog renderer",
+      "TaskTitleRow",
+      "DialogCard/Modal",
+      "translations"
+    ],
+    "structuralPort": "ChatPanel tabs and TasksPanel channel-only entry",
+    "localGlue": "Existing channel WriteIntentSlot serializes form rows; no new backend API"
+  },
+  "checks": {
+    "red": [
+      "missing panel-tab-tasks",
+      "missing batch submission helper",
+      "channel card duplicates channel label"
+    ],
+    "sourceTests": 85,
+    "batchUnitTests": 2,
+    "browser": [
+      {
+        "width": 1440,
+        "nativeChannelEntry": true,
+        "threeTitles": true,
+        "unknownPausesBatch": true,
+        "exactReplay": true,
+        "oneTaskPerTitle": true,
+        "globalEntryAbsent": true,
+        "partialRejectionKeepsOnlyUnfinishedTitles": true,
+        "unknownBlocksNavigation": true
+      },
+      {
+        "width": 390,
+        "nativeChannelEntry": true,
+        "threeTitles": true,
+        "unknownPausesBatch": true,
+        "exactReplay": true,
+        "oneTaskPerTitle": true,
+        "globalEntryAbsent": true,
+        "partialRejectionKeepsOnlyUnfinishedTitles": true,
+        "unknownBlocksNavigation": true
+      }
+    ],
+    "additionalBrowserAssertions": [
+      "unsent chat draft preserved",
+      "native channel cards omit redundant channel labels"
+    ],
+    "typecheck": "passed",
+    "buildWebWorkbench": "passed",
+    "formatAndDiff": "passed"
+  },
+  "limits": [
+    "Partial success is retained; not an atomic multi-task transaction",
+    "Tab reorder is mount-local only",
+    "No global creation button, no task drag/status batch wiring",
+    "Hard reload drops in-memory submission handle; no automatic replay",
+    "No backend changes or paid calls"
+  ],
+  "deployment": {
+    "status": "pending"
+  }
+}
