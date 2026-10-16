@@ -1,0 +1,82 @@
+{
+  "codeCommit": "cc6375a",
+  "upstream": {
+    "revision": "a98ae003246a0360872a77d76dec2fccd0347ef7",
+    "license": "FSL-1.1-ALv2",
+    "source": "frontends/raft/packages/web/src/components/message/ThreadOverflowMenu.tsx",
+    "adoption": "Selected native menu markup; local controller and visibility binding, frozen sources unchanged"
+  },
+  "implemented": [
+    "Existing thread follow/unfollow",
+    "Visible reply scoped read frontier",
+    "Lost follow response readback without resend"
+  ],
+  "checks": {
+    "sourceTests": 97,
+    "buildAndTypecheck": true,
+    "formatAndDiff": true,
+    "threadBrowserViewports": [
+      {
+        "width": 1440,
+        "height": 1000,
+        "dpr": 1
+      },
+      {
+        "width": 390,
+        "height": 844,
+        "dpr": 1
+      }
+    ],
+    "threadCases": [
+      "Unknown create/reply exact verification",
+      "Lost follow readback",
+      "Scoped read payload",
+      "Menu Escape",
+      "Reload and native resizing/mobile return",
+      "Read failure clears content and preserves draft",
+      "Foreign root denied"
+    ],
+    "red": "Previous deployed UI has no thread overflow trigger",
+    "intermediateFailure": "Fixture assumed Chinese follow label while default fixture locale was English; assertion corrected"
+  },
+  "deployment": {
+    "verified": true,
+    "webBuildId": "a491a5148840b6349e515bb88c603d793d4f0837c9112c0bc0b1aa31d8040172",
+    "backupDatabases": 2,
+    "backupFiles": 318,
+    "businessProjectionsUnchanged": 18,
+    "realPage": [
+      {
+        "width": 1440,
+        "taskRows": 9,
+        "menuChecked": true,
+        "existingThreadAvailable": true,
+        "blockedPassiveReads": 0,
+        "buildMatches": true,
+        "noRoomWrites": true,
+        "noOverflow": true,
+        "pageErrors": []
+      },
+      {
+        "width": 390,
+        "taskRows": 9,
+        "menuChecked": true,
+        "existingThreadAvailable": true,
+        "blockedPassiveReads": 0,
+        "buildMatches": true,
+        "noRoomWrites": true,
+        "noOverflow": true,
+        "pageErrors": []
+      }
+    ]
+  },
+  "limits": [
+    "Only existing thread header, not uncreated draft or hidden embedded Task header",
+    "No native follower roster management yet",
+    "Passive read failure is not resent for same frontier in current mount",
+    "No global usage or Human held-draft edit interface added",
+    "No paid CLI/full backend/full browser gates",
+    "Real page inspection does not mutate following or Task/Room business data"
+  ],
+  "artifacts": "/Users/sun/.loom/reviews/2026-10-16-thread-activity"
+}
