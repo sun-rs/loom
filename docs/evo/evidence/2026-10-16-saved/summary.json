@@ -1,0 +1,102 @@
+{
+  "code": "7dad33a",
+  "upstream": {
+    "url": "https://github.com/botiverse/raft-source",
+    "revision": "a98ae003246a0360872a77d76dec2fccd0347ef7",
+    "raftUi": "0.5.64",
+    "sourceFilesUnchanged": true,
+    "structuralPort": "SavedPanel.tsx",
+    "directReuse": [
+      "Sidebar.sidebarItemClass",
+      "Sidebar.SavedNavCount",
+      "MessageHoverToolbar"
+    ]
+  },
+  "implemented": [
+    "personal message save/unsave through existing SDK and WriteIntentSlot",
+    "native hover bookmark, context and touch menu, saved indicator",
+    "chat sidebar saved total, saved route and paged list",
+    "canonical context navigation to channel or thread message"
+  ],
+  "verification": {
+    "sourceTests": 109,
+    "typecheck": "passed",
+    "build": "passed",
+    "diff": "passed",
+    "fixtureChannel": [
+      {
+        "width": 1440,
+        "save": true,
+        "exactReplay": true,
+        "refresh": true,
+        "jump": true,
+        "remove": true
+      },
+      {
+        "width": 390,
+        "save": true,
+        "exactReplay": true,
+        "refresh": true,
+        "jump": true,
+        "remove": true
+      }
+    ],
+    "fixtureThread": [
+      {
+        "width": 1440,
+        "thread": true,
+        "save": true,
+        "exactReplay": true,
+        "refresh": true,
+        "jump": true,
+        "remove": true
+      },
+      {
+        "width": 390,
+        "thread": true,
+        "save": true,
+        "exactReplay": true,
+        "refresh": true,
+        "jump": true,
+        "remove": true
+      }
+    ],
+    "realPage": [
+      {
+        "width": 1440,
+        "dpr": 1,
+        "savedRoute": true,
+        "refresh": true,
+        "noMutation": true
+      },
+      {
+        "width": 390,
+        "dpr": 1,
+        "savedRoute": true,
+        "refresh": true,
+        "noMutation": true
+      }
+    ],
+    "paidCli": false,
+    "fullBackendSuite": false
+  },
+  "retainedFailedChecks": [
+    "First mobile test used incorrect Chinese label 保存消息; official label is 收藏消息. Corrected test and reran.",
+    "First thread test tried chat-list back while thread panel was open; corrected to official thread back then chat-list back and reran."
+  ],
+  "deployment": {
+    "build": "3d6e014b8a58c64a6cbde10fd2aca32db6fd4db12af5a47ad21ad9ccb8b78790",
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-saved-1fce04fb-8192-4c88-b868-dc2091ac1f0d",
+    "databases": 2,
+    "files": 319,
+    "businessTablesUnchanged": 18,
+    "realUrl": "http://192.168.1.86:4176/",
+    "restartVerified": true
+  },
+  "limits": [
+    "System notices have no save entry",
+    "No external sharing or copied link/Markdown actions",
+    "Physical mobile device, independent private-box save and multipage stress not specifically gated",
+    "Cross-tab live synchronization not implemented; refresh/focus re-reads server state"
+  ]
+}
