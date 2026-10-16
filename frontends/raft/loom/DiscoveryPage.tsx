@@ -1,3 +1,5 @@
+import SearchLoadMore from "./SearchLoadMore.tsx";
+import { appendSearchPage, MAX_SEARCH_RESULT_ROWS } from "./search-pages.ts";
 import { useSearchRail, type SearchRailHandler } from "./useSearchRail.ts";
 import type { RefObject } from "react";
 import OverlayAllResults from "./OverlayAllResults.tsx";
@@ -122,7 +124,9 @@ export default function DiscoveryPage({
     <>
       <AppShellMainSlot
         onKeyDown={
-          overlay ? (event) => railHandler.current?.(event) : undefined
+          mode === "search"
+            ? (event) => railHandler.current?.(event)
+            : undefined
         }
         className={`relative bg-layer-canvas theme-brutal:bg-white ${detail && desktop ? `border-r border-line-muted theme-brutal:border-black ${mode === "search" ? "theme-brutal:border-r-2" : ""}` : ""}`}
         style={
@@ -249,6 +253,47 @@ function Results({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [retry, setRetry] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [loadMoreError, setLoadMoreError] = useState(false);
+  const moreRequest = useRef<AbortController | null>(null);
+  const loadMoreResults = async () => {
+    if (
+      !data?.nextCursor ||
+      moreRequest.current ||
+      data.rows.length >= MAX_SEARCH_RESULT_ROWS
+    )
+      return;
+    const controller = new AbortController();
+    moreRequest.current = controller;
+    setLoadingMore(true);
+    setLoadMoreError(false);
+    try {
+      const next = await searchPage(
+        client,
+        {
+          workspaceId,
+          query,
+          scope,
+          ...searchFilters,
+          limit: Math.min(20, MAX_SEARCH_RESULT_ROWS - data.rows.length),
+          cursor: data.nextCursor,
+        },
+        controller.signal,
+      );
+      if (!controller.signal.aborted)
+        setData((previous) =>
+          previous ? appendSearchPage(previous, next) : previous,
+        );
+    } catch {
+      if (!controller.signal.aborted) setLoadMoreError(true);
+    } finally {
+      if (moreRequest.current === controller) {
+        moreRequest.current = null;
+        setLoadingMore(false);
+      }
+    }
+  };
+
   const pendingDone = useRef(new Set<string>());
   const [pendingRows, setPendingRows] = useState(new Set<string>());
   const [mutationError, setMutationError] = useState("");
@@ -274,6 +319,10 @@ function Results({
     }
   };
   useEffect(() => {
+    moreRequest.current?.abort();
+    moreRequest.current = null;
+    setLoadingMore(false);
+    setLoadMoreError(false);
     const controller = new AbortController();
     setData(undefined);
     setError("");
@@ -332,6 +381,8 @@ function Results({
     return () => {
       clearTimeout(timer);
       controller.abort();
+      moreRequest.current?.abort();
+      moreRequest.current = null;
     };
   }, [
     client,
@@ -345,9 +396,13 @@ function Results({
     cursor,
     retry,
   ]);
+  // Native overlay previews five hits; full-page search owns pagination.
+  const visibleRows = overlayHome
+    ? (data?.rows ?? []).slice(0, 5)
+    : (data?.rows ?? []);
   const rail = useSearchRail(
-    data?.rows ?? [],
-    Boolean(overlayHome),
+    visibleRows,
+    mode === "search",
     railHandler,
     (row, full) => {
       void onOpenResult(row, full).catch(() =>
@@ -393,20 +448,19 @@ function Results({
         data && (
           <>
             <SearchResultsSummary>
-              {data.total} 条{mode === "search" ? "匹配消息" : "动态"} · 第{" "}
-              {cursors.length} 页
+              {data.total} 条{mode === "search" ? "匹配消息" : "动态"}
+              {mode === "activity" && ` · 第 ${cursors.length} 页`}
             </SearchResultsSummary>
             <SearchResultsList className="p-3">
               {!data.rows.length ? (
                 <p>没有匹配结果</p>
               ) : mode === "search" ? (
                 <SearchMessageGroups
-                  rows={data.rows}
+                  rows={visibleRows}
                   query={query}
-                  selectedId={
-                    overlayHome ? rail.selectedId : route.get("message")
-                  }
+                  selectedId={rail.selectedId}
                   onOpen={(row, full) => {
+                    rail.select(row);
                     void onOpenResult(row, full).catch(() =>
                       setError("无法打开消息，请刷新重试。"),
                     );
@@ -431,22 +485,41 @@ function Results({
                 ))
               )}
             </SearchResultsList>
-            <div className="flex gap-2 p-3">
-              <Button
-                disabled={cursors.length === 1}
-                onClick={() => setCursors((value) => value.slice(0, -1))}
-              >
-                上一页
-              </Button>
-              <Button
-                disabled={!data.nextCursor}
-                onClick={() =>
-                  setCursors((value) => [...value, data.nextCursor])
-                }
-              >
-                下一页
-              </Button>
-            </div>
+            {mode === "search" ? (
+              !overlayHome &&
+              data.nextCursor &&
+              (data.rows.length >= MAX_SEARCH_RESULT_ROWS ? (
+                <SearchResultsSummary>
+                  已显示 {MAX_SEARCH_RESULT_ROWS}{" "}
+                  条结果，请缩小搜索范围查看其余消息。
+                </SearchResultsSummary>
+              ) : (
+                <SearchLoadMore
+                  loadingMore={loadingMore}
+                  loadMoreError={loadMoreError}
+                  loadMoreResults={() => {
+                    void loadMoreResults();
+                  }}
+                />
+              ))
+            ) : (
+              <div className="flex gap-2 p-3">
+                <Button
+                  disabled={cursors.length === 1}
+                  onClick={() => setCursors((value) => value.slice(0, -1))}
+                >
+                  上一页
+                </Button>
+                <Button
+                  disabled={!data.nextCursor}
+                  onClick={() =>
+                    setCursors((value) => [...value, data.nextCursor])
+                  }
+                >
+                  下一页
+                </Button>
+              </div>
+            )}
           </>
         )
       )}

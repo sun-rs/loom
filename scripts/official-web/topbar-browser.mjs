@@ -71,6 +71,25 @@ export async function verifyTopbar({ browser, origin, channels }) {
       const input = overlay.getByRole("textbox", { name: "搜索内容" });
       await input.fill("FIXTURE history");
       await overlay.locator("[data-result-id]").first().waitFor();
+      assert.equal(
+        await overlay.locator("[data-result-id]").count(),
+        5,
+        "Native overlay previews five messages; pagination belongs to the full page",
+      );
+      assert.equal(
+        await overlay
+          .getByRole("button", { name: "加载更多", exact: true })
+          .count(),
+        0,
+      );
+      await input.press("ArrowUp");
+      assert.equal(
+        await overlay
+          .getByTestId("search-view-all-results")
+          .getAttribute("data-selected"),
+        "true",
+        "Up at the first native rail row must stay there",
+      );
       const expected = await overlay
         .locator("[data-result-id]")
         .first()

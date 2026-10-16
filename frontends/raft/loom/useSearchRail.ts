@@ -53,6 +53,7 @@ export function useSearchRail(
       if (!rows.length) return;
       if (event.key === "ArrowDown" || event.key === "ArrowUp") {
         event.preventDefault();
+        if (atHome && event.key === "ArrowUp") return;
         const next = Math.max(
           0,
           Math.min(
@@ -86,6 +87,9 @@ export function useSearchRail(
   }, [enabled, rows, index, handlerRef, onOpen, atHome, home]);
   return {
     selectedId: atHome ? null : selectedId,
-    select: (row: DiscoveryRow) => setIdentity(row.id),
+    select: (row: DiscoveryRow) => {
+      setAtHome(false);
+      setIdentity(row.id);
+    },
   };
 }

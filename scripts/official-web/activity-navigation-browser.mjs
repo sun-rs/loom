@@ -239,6 +239,59 @@ export async function verifyActivityNavigation({
         await page.locator("[data-result-id]").count(),
         groupedPage.hits.length,
       );
+      const firstIds = groupedPage.hits.map((hit) => hit.message.messageId);
+      if (width === 1440) {
+        const failMore = async (route) => {
+          if (route.request().postDataJSON().cursor)
+            return route.abort("failed");
+          return route.continue();
+        };
+        await page.route("**/v3/client/search", failMore);
+        await page
+          .getByRole("button", { name: "加载更多", exact: true })
+          .click({ timeout: 3000 });
+        await page
+          .getByRole("alert")
+          .filter({ hasText: "无法加载更多结果。" })
+          .waitFor();
+        assert.equal(await page.locator("[data-result-id]").count(), 20);
+        await page.unroute("**/v3/client/search", failMore);
+        await page.getByRole("button", { name: "重试", exact: true }).click();
+      } else {
+        await page
+          .getByRole("button", { name: "加载更多", exact: true })
+          .click({ timeout: 3000 });
+      }
+      await page.waitForFunction(
+        () => document.querySelectorAll("[data-result-id]").length === 40,
+      );
+      const secondPage = await client.request("search", {
+        workspaceId: workspace.workspaceId,
+        query: "reply navigation",
+        sort: "recent",
+        scope: "all",
+        limit: 20,
+        cursor: groupedPage.nextCursor,
+      });
+      assert.deepEqual(
+        new Set(
+          await page
+            .locator("[data-result-id]")
+            .evaluateAll((nodes) =>
+              nodes.map((n) => n.getAttribute("data-result-id")),
+            ),
+        ),
+        new Set([
+          ...firstIds,
+          ...secondPage.hits.map((hit) => hit.message.messageId),
+        ]),
+      );
+      await searchInput.focus();
+      await searchInput.press("ArrowDown");
+      await searchInput.press("Enter");
+      await page.waitForURL(
+        (u) => u.searchParams.get("message") === firstIds[1],
+      );
       await page.goto(origin + "/?view=search&q=target");
       await searchInput.waitFor();
       await searchInput.dispatchEvent("compositionstart");
@@ -600,6 +653,7 @@ export async function verifyActivityNavigation({
         searchPrimarySlotsAndResize: true,
         nativeSearchHeaderCompositionAndFilters: true,
         nativeSenderChannelAndThreadGroups: true,
+        nativeLoadMoreAndKeyboard: true,
         mobileNavigationAndReturn: width === 390,
         threadParentOpensProfilePreservingDraft: true,
         channelThreadProfileDraftPreserved: width === 1440,
