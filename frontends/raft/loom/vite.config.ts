@@ -1,3 +1,4 @@
+import { adaptArchivedChannels } from "./settings-archive-adaptation.ts";
 import { adaptTaskCreation } from "./task-create-adaptation.ts";
 import { officialUiAliases } from "./ui-resolution.ts";
 import {
@@ -44,6 +45,12 @@ export default defineConfig({
       },
       transform(code, id) {
         if (
+          id.endsWith(
+            "/packages/web/src/components/settings/ArchivedChannelsSection.tsx",
+          )
+        )
+          return { code: adaptArchivedChannels(code), map: null };
+        if (
           id.endsWith("/packages/web/src/components/task/CreateTaskDialog.tsx")
         )
           return { code: adaptTaskCreation(code), map: null };
@@ -85,6 +92,13 @@ export default defineConfig({
           };
       },
       resolveId(source, importer) {
+        if (source === "loom-archived-settings")
+          return resolve(import.meta.dirname, "ArchivedSettings.tsx");
+        if (source === "loom-native-archived-channels")
+          return resolve(
+            import.meta.dirname,
+            "../packages/web/src/components/settings/ArchivedChannelsSection.tsx",
+          );
         if (source === "loom-task-create")
           return resolve(import.meta.dirname, "TaskCreate.tsx");
         if (source === "loom-attachment-comments")

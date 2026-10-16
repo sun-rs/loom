@@ -1,3 +1,4 @@
+import ArchivedSettings from "./ArchivedSettings.tsx";
 import { useRouteIntentOwner } from "./useIntentRoute.ts";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Card, Button, Input } from "raft-ui";
@@ -205,6 +206,12 @@ export default function RuntimeSettings({
           </form>
         </Card>
       </div>
+      <ArchivedSettings
+        client={client}
+        workspaceId={workspaceId}
+        controlRoomId={controlRoomId}
+        active={active}
+      />
       {latest && (
         <details className="text-sm">
           <summary className="cursor-pointer font-bold">当前生效配置</summary>

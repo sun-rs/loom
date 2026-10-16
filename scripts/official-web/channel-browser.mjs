@@ -1,3 +1,4 @@
+import { verifySettingsArchive } from "./settings-archive-browser.mjs";
 import { verifyTaskCreate } from "./task-create-browser.mjs";
 import { verifyAttachmentPreview } from "./attachment-preview-browser.mjs";
 import { verifySearchHistory } from "./search-history-browser.mjs";
@@ -169,6 +170,18 @@ try {
     console.log(
       JSON.stringify(
         await verifyAttachmentPreview({
+          browser,
+          origin,
+          client,
+          workspace,
+          head,
+        }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "settings-archive") {
+    console.log(
+      JSON.stringify(
+        await verifySettingsArchive({
           browser,
           origin,
           client,
