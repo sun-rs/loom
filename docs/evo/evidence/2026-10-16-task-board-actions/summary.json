@@ -1,0 +1,114 @@
+{
+  "codeCommit": "23c3b39",
+  "upstream": {
+    "release": "1.21.16",
+    "sourceRevision": "a98ae003246a0360872a77d76dec2fccd0347ef7",
+    "releaseEvidence": "../2026-10-16-native-topbar/upstream.json",
+    "directReuse": [
+      "TaskCard / InlineBadgeEditor markup",
+      "TaskSection / DroppableColumn recipes",
+      "About version section"
+    ],
+    "structuralPort": "DndContext sensor settings and drag-end trigger",
+    "localGlue": "Protocol permission/transition checks, existing WriteIntentSlot/RoomSession and canonical Task row replacement"
+  },
+  "checks": {
+    "sourceTests": 92,
+    "typecheck": true,
+    "build": true,
+    "format": true,
+    "diff": true,
+    "taskBoard": [
+      {
+        "width": 1440,
+        "height": 1000,
+        "dpr": 1,
+        "input": "mouse",
+        "drag": true,
+        "unknownExactRetry": true,
+        "channelList": true,
+        "globalList": true
+      },
+      {
+        "width": 390,
+        "height": 844,
+        "dpr": 1,
+        "input": "touch",
+        "drag": true,
+        "unknownExactRetry": true,
+        "channelList": true,
+        "globalList": true
+      }
+    ],
+    "about": [
+      {
+        "width": 1440,
+        "versionMatches": true
+      },
+      {
+        "width": 390,
+        "versionMatches": true
+      }
+    ],
+    "taskCreateRegression": {
+      "viewports": [1440, 390],
+      "passed": true
+    },
+    "red": [
+      "Old deployed build cannot drag/verify a task",
+      "Missing about section",
+      "Card menu remained open on Escape during real-page review; isolated reproduction added"
+    ],
+    "intermediateFailures": [
+      "Incorrect fixture translation",
+      "Click capture lasts 50ms after native drag",
+      "Completion assertion before HTTP response",
+      "Node strip-only parameter property",
+      "About transform not initially bound"
+    ],
+    "keyboardEscapeFocusReturn": {
+      "viewports": [1440, 390],
+      "passed": true
+    }
+  },
+  "deployment": {
+    "verified": true,
+    "webBuildId": "d4cf9e7a134cf0d04486e0b56091e33b389114e58a8cb5cbd9c05438c08e7a63",
+    "backupDatabases": 2,
+    "backupFiles": 318,
+    "businessProjectionsUnchanged": 18,
+    "realPage": [
+      {
+        "width": 1440,
+        "taskRows": 9,
+        "menuChecked": true,
+        "aboutVersionMatches": true,
+        "buildMatches": true,
+        "noRoomWrites": true,
+        "noOverflow": true,
+        "pageErrors": []
+      },
+      {
+        "width": 390,
+        "taskRows": 9,
+        "menuChecked": true,
+        "aboutVersionMatches": true,
+        "buildMatches": true,
+        "noRoomWrites": true,
+        "noOverflow": true,
+        "pageErrors": []
+      }
+    ],
+    "realTasksAndRoomsUnchanged": true,
+    "restartAfterEscapeFix": true
+  },
+  "limits": [
+    "No task or other user-data mutation in real-page verification",
+    "No within-column custom ordering or batch status edit",
+    "CDP touch is not physical Safari",
+    "No persisted unknown handle or new realtime task subscription",
+    "No paid/full backend/full browser gate"
+  ],
+  "artifacts": "/Users/sun/.loom/reviews/2026-10-16-task-board-actions",
+  "initialSliceCommit": "f8d6823"
+}
