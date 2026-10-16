@@ -1,3 +1,4 @@
+import { verifyActivityReturn } from "./activity-return-browser.mjs";
 import { verifySearchRecent } from "./search-recent-browser.mjs";
 import { verifySearchEntities } from "./search-entities-browser.mjs";
 import { verifyLayout } from "./layout-browser.mjs";
@@ -153,6 +154,12 @@ try {
           channels,
           instances,
         }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "activity-return") {
+    console.log(
+      JSON.stringify(
+        await verifyActivityReturn({ browser, origin, client, workspace }),
       ),
     );
   } else if (process.env.LOOM_BROWSER_SLICE === "search-recent") {

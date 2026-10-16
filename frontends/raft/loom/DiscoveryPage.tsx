@@ -1,3 +1,4 @@
+import { useActivityScroll } from "./useActivityScroll.ts";
 import SearchRecent, { useSearchRecent } from "./SearchRecent.tsx";
 import SearchEntityRows, { SearchEntityRow } from "./SearchEntityRows.tsx";
 import { useSearchEntities } from "./useSearchEntities.ts";
@@ -292,6 +293,12 @@ function Results({
   const [retry, setRetry] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadMoreError, setLoadMoreError] = useState(false);
+  const activityScroll = useActivityScroll(
+    client,
+    JSON.stringify([workspaceId, filter, cursor ?? null]),
+    mode === "activity",
+    !loading && !error && Boolean(data?.rows.length),
+  );
   const moreRequest = useRef<AbortController | null>(null);
   const loadMoreResults = async () => {
     if (
@@ -494,6 +501,8 @@ function Results({
   };
   return (
     <SearchShellViewport
+      ref={activityScroll.ref}
+      onScroll={activityScroll.onScroll}
       data-testid="discovery-results"
       className="min-h-0 overflow-y-auto"
     >

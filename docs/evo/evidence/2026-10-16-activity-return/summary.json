@@ -1,0 +1,97 @@
+{
+  "upstream": {
+    "release": "1.21.16",
+    "url": "https://app.raft.build/assets/ThreadsInbox-B_gHqypO.js",
+    "sha256": "c5879f53f639d7f13e04a5c442de3dce44566a388576c8bb44c668f62da77e07",
+    "snapshotRevision": "a98ae003246a0360872a77d76dec2fccd0347ef7",
+    "source": [
+      "packages/web/src/components/thread/ThreadsInbox.tsx",
+      "packages/web/src/hooks/useAppNavigate.ts"
+    ],
+    "reuse": "Structural port of presentation scroll restoration; no upstream business store copied."
+  },
+  "implemented": [
+    "Activity list position retained across full-chat navigation",
+    "Native filter/page reset and one-history-entry navigation preserved"
+  ],
+  "checks": {
+    "red": "activity-return timed out restoring position before implementation",
+    "browser": [
+      {
+        "width": 1440,
+        "sourceFilterRetained": true,
+        "filterChangeResetsPosition": true,
+        "singleHistoryEntry": true,
+        "scrollRestoredAfterAsyncLoad": true
+      },
+      {
+        "width": 390,
+        "sourceFilterRetained": true,
+        "filterChangeResetsPosition": true,
+        "singleHistoryEntry": true,
+        "scrollRestoredAfterAsyncLoad": true
+      }
+    ],
+    "sourceTests": 79,
+    "typecheck": "passed",
+    "buildWebWorkbench": "passed",
+    "formatAndDiff": "passed",
+    "activityNavigation": [
+      {
+        "width": 1440,
+        "activityDoneExactFrontierAndReopen": true,
+        "oldMessageLocated": true,
+        "oldThreadReplyLocated": true,
+        "directThreadUsesPrimarySlot": true,
+        "nestedThreadKeepsSidePane": true,
+        "privateMessageLocated": true,
+        "backRestoresActivity": true,
+        "threadCloseClearsReplyTarget": true,
+        "desktopDividerDraggable": true,
+        "searchPrimarySlotsAndResize": true,
+        "nativeSearchHeaderCompositionAndFilters": true,
+        "nativeSenderChannelAndThreadGroups": true,
+        "nativeLoadMoreAndKeyboard": true,
+        "mobileNavigationAndReturn": false,
+        "threadParentOpensProfilePreservingDraft": true,
+        "channelThreadProfileDraftPreserved": true,
+        "nativeHighlight": true,
+        "noContextDialog": true,
+        "refreshRestores": true,
+        "desktopDetailAndDoubleClick": true
+      },
+      {
+        "width": 390,
+        "activityDoneExactFrontierAndReopen": true,
+        "oldMessageLocated": true,
+        "oldThreadReplyLocated": true,
+        "directThreadUsesPrimarySlot": false,
+        "nestedThreadKeepsSidePane": false,
+        "privateMessageLocated": true,
+        "backRestoresActivity": true,
+        "threadCloseClearsReplyTarget": true,
+        "desktopDividerDraggable": false,
+        "searchPrimarySlotsAndResize": true,
+        "nativeSearchHeaderCompositionAndFilters": true,
+        "nativeSenderChannelAndThreadGroups": true,
+        "nativeLoadMoreAndKeyboard": true,
+        "mobileNavigationAndReturn": true,
+        "threadParentOpensProfilePreservingDraft": true,
+        "channelThreadProfileDraftPreserved": false,
+        "nativeHighlight": true,
+        "noContextDialog": true,
+        "refreshRestores": true,
+        "desktopDetailAndDoubleClick": false
+      }
+    ]
+  },
+  "limits": [
+    "No backend changes or paid CLI tests",
+    "Existing pagination returns to first page on remount",
+    "No persistent scroll across reload",
+    "Long-list test uses presentation fixture and real temporary-Core message destinations"
+  ],
+  "deployment": {
+    "status": "pending"
+  }
+}
