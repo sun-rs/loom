@@ -54,7 +54,11 @@ export default function InstanceInspector({
   const [desktop, setDesktop] = useState(
     () => matchMedia("(min-width: 1024px)").matches,
   );
-  const [identity, setIdentity] = useState<{ agentId: string }>();
+  const [identity, setIdentity] = useState<{
+    agentId: string;
+    instanceId: string;
+    channelId: string;
+  }>();
   const [tick, setTick] = useState(0);
   const [usage, setUsage] = useState<string>();
   const [cursor, setCursor] = useState<string>();
@@ -163,6 +167,7 @@ export default function InstanceInspector({
                   workspaceId={room.workspaceId}
                   controlRoomId={controlRoomId}
                   agentId={identity.agentId}
+                  branchSource={identity}
                   name={member.displayName ?? member.handle}
                 />
               )}

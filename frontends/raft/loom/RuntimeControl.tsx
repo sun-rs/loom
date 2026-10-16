@@ -1,3 +1,7 @@
+import {
+  useInstanceBranches,
+  type BranchSource,
+} from "./useInstanceBranches.tsx";
 import { useEffect, useMemo, useState } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
 import type { ClientAgentGetResponse } from "@rah-os/protocol";
@@ -21,6 +25,8 @@ export default function RuntimeControl({
   agentId,
   name,
   items = [],
+  branchSource,
+  onBranched,
   active = true,
   disabled = false,
 }: {
@@ -29,10 +35,20 @@ export default function RuntimeControl({
   workspaceId: string;
   agentId: string;
   name: string;
+  branchSource?: BranchSource;
+  onBranched?: () => void;
   items?: { label: string; run: () => void; disabled?: boolean }[];
   active?: boolean;
   disabled?: boolean;
 }) {
+  const branches = useInstanceBranches(
+    client,
+    workspaceId,
+    agentId,
+    branchSource,
+    active,
+    onBranched,
+  );
   const manager = useMemo(
     () => new ManagementClient(client, workspaceId, controlRoomId),
     [client, workspaceId, controlRoomId, agentId],
@@ -74,7 +90,11 @@ export default function RuntimeControl({
   };
   return (
     <>
-      <DropdownMenu>
+      <DropdownMenu
+        onOpenChange={(open) => {
+          if (open) void branches.refreshSides();
+        }}
+      >
         <Tooltip content="更多操作" contentProps={{ side: "bottom" }}>
           <DropdownMenuTrigger
             render={
@@ -82,7 +102,7 @@ export default function RuntimeControl({
                 size="icon-sm"
                 variant="outline"
                 aria-label={`更多操作 ${name}`}
-                disabled={disabled || state !== "idle"}
+                disabled={disabled || state !== "idle" || branches.busy}
               />
             }
           >
@@ -100,10 +120,10 @@ export default function RuntimeControl({
             {enabled ? <Square /> : <Play />}
             {label}
           </DropdownMenuItem>
-          {items.map((item) => (
+          {[...items, ...branches.items].map((item) => (
             <DropdownMenuItem
               key={item.label}
-              disabled={item.disabled}
+              disabled={"disabled" in item ? !!item.disabled : false}
               onClick={item.run}
             >
               {item.label}
@@ -111,6 +131,7 @@ export default function RuntimeControl({
           ))}
         </DropdownMenuContent>
       </DropdownMenu>
+      {branches.dialog}
       {confirm !== undefined && (
         <ConfirmDialog
           title={confirm ? "启用实例" : "停止实例"}

@@ -1,3 +1,5 @@
+import SideWorkspace from "./SideWorkspace.tsx";
+import type { ReactNode } from "react";
 import { showToast } from "../packages/web/src/components/toastBridge.ts";
 import SavedPanel from "./SavedPanel.tsx";
 import { MessageReactionsProvider } from "./MessageReactions.tsx";
@@ -94,7 +96,11 @@ function Channel({
   focusId,
   onThread,
   onProfileVisibilityChange,
+  headerActions,
+  unavailable = false,
 }: {
+  headerActions?: ReactNode;
+  unavailable?: boolean;
   onProfileVisibilityChange?: (open: boolean) => void;
   threadRootId?: string;
   focusId?: string;
@@ -108,6 +114,15 @@ function Channel({
 }) {
   const isPrivate = channel.instancePrivateBox !== undefined;
   const [panelParams, setPanelParams] = useIntentRoute();
+  const sideId = !channel.side ? panelParams.get("side") : null;
+  const closeSide = () => {
+    if (!hasUnresolvedIntents())
+      setPanelParams((previous) => {
+        const next = new URLSearchParams(previous);
+        next.delete("side");
+        return next;
+      });
+  };
   const taskTab = !isPrivate && panelParams.get("chatTab") === "tasks";
   const profileSnapshot = useRef<Principal | undefined>(undefined);
   const [profileId, setProfileId] = useState<string>();
@@ -180,9 +195,9 @@ function Channel({
     if (profileId && !profileMember) closeProfile();
   }, [profileId, profileMember, closeProfile]);
   useEffect(() => {
-    onProfileVisibilityChange?.(!!profileMember);
+    onProfileVisibilityChange?.(!!profileMember || !!sideId);
     return () => onProfileVisibilityChange?.(false);
-  }, [!!profileMember, onProfileVisibilityChange]);
+  }, [!!profileMember, !!sideId, onProfileVisibilityChange]);
   const older = useCallback(async () => {
     try {
       setView(await bridge.older());
@@ -260,21 +275,38 @@ function Channel({
   return (
     <MessageReactionsProvider bridge={bridge} messages={view.messages}>
       <ChannelTasksContext.Provider value={tasks.context}>
-        <div className="thread-layout-container relative flex min-h-0 min-w-0 flex-1">
+        <div
+          className={`${channel.side ? "" : "thread-layout-container "}relative flex min-h-0 min-w-0 flex-1`}
+        >
           <ConversationPanelRoot
             edge="attached"
             className="thread-main-column relative border-l-0"
           >
             <PanelHeader
-              title={isPrivate ? `私聊 · ${channel.name}` : channel.name}
+              title={
+                channel.side
+                  ? `Side · ${channel.name}`
+                  : isPrivate
+                    ? `私聊 · ${channel.name}`
+                    : channel.name
+              }
               subtitle={channel.description}
               onMobileBack={onBack}
-              mobileBackProps={{ "aria-label": "聊天列表" }}
+              mobileBackProps={
+                channel.side
+                  ? {
+                      "aria-label": "返回频道",
+                      "data-testid": "thread-mobile-back",
+                    }
+                  : { "aria-label": "聊天列表" }
+              }
               icon={
                 isPrivate ? <MessageSquare size={18} /> : <Hash size={18} />
               }
               actions={
-                isPrivate ? undefined : (
+                isPrivate ? (
+                  headerActions
+                ) : (
                   <>
                     <ChannelMembers
                       bridge={bridge}
@@ -356,10 +388,17 @@ function Channel({
                 )}
                 {isPrivate && (
                   <p className="px-3 py-2 text-xs text-foreground-muted">
-                    仅你与此实例可见；沿用实例会话，忙时排队。私聊中写入的记忆属于频道共享记忆。
+                    {channel.side
+                      ? view.room?.side?.discarding
+                        ? "正在丢弃，等待执行退出。"
+                        : view.room?.side?.discarded
+                          ? "Side 已丢弃，历史只读。"
+                          : "独立 Side：可按权限读取源频道，只回复这里，不影响频道或主实例。"
+                      : "仅你与此实例可见；沿用实例会话，忙时排队。私聊中写入的记忆属于频道共享记忆。"}
                   </p>
                 )}
                 {isPrivate &&
+                  !channel.side &&
                   view.room?.instancePrivateBox?.active === false && (
                     <p role="status" className="px-3 py-2 text-sm">
                       此私聊已停用，历史只读。
@@ -438,26 +477,27 @@ function Channel({
                   {tasks.error}
                 </div>
               )}
-              {writeState === "unknown" && (
-                <div role="alert" className="p-3 text-sm">
-                  {bridge.writes.current?.action === "message-reaction"
-                    ? "表情结果未知，核实前暂停操作。"
-                    : "发送结果未知，核实前已暂停发送。"}
-                  <Button
-                    onClick={() =>
-                      void verify().catch((failure) =>
-                        setError(String(failure)),
-                      )
-                    }
-                  >
+              {writeState === "unknown" &&
+                bridge.writes.current?.action !== "side-discard" && (
+                  <div role="alert" className="p-3 text-sm">
                     {bridge.writes.current?.action === "message-reaction"
-                      ? "核实表情结果"
-                      : bridge.writes.current?.action === "message-save"
-                        ? "核实收藏结果"
-                        : "核实发送"}
-                  </Button>
-                </div>
-              )}
+                      ? "表情结果未知，核实前暂停操作。"
+                      : "发送结果未知，核实前已暂停发送。"}
+                    <Button
+                      onClick={() =>
+                        void verify().catch((failure) =>
+                          setError(String(failure)),
+                        )
+                      }
+                    >
+                      {bridge.writes.current?.action === "message-reaction"
+                        ? "核实表情结果"
+                        : bridge.writes.current?.action === "message-save"
+                          ? "核实收藏结果"
+                          : "核实发送"}
+                    </Button>
+                  </div>
+                )}
               {/* Official full-chat shell; compact input suppresses unavailable uploads only. */}
               <div
                 data-testid="chat-composer-shell"
@@ -474,6 +514,7 @@ function Channel({
                   showTaskButton={!isPrivate && !channel.archivedAt}
                   onSendOverride={send}
                   submitDisabled={
+                    unavailable ||
                     loading ||
                     Boolean(error) ||
                     Boolean(channel.archivedAt) ||
@@ -483,19 +524,23 @@ function Channel({
                   }
                   submitDisabledReason={
                     isPrivate && view.room?.instancePrivateBox?.active === false
-                      ? "此私聊已停用"
+                      ? channel.side
+                        ? "Side 已停止接收消息"
+                        : "此私聊已停用"
                       : undefined
                   }
                   placeholder={
-                    isPrivate
-                      ? `私聊 ${channel.name}`
-                      : `发送到 #${channel.name}`
+                    channel.side
+                      ? `回复 ${channel.name}`
+                      : isPrivate
+                        ? `私聊 ${channel.name}`
+                        : `发送到 #${channel.name}`
                   }
                 />
               </div>
             </div>
           </ConversationPanelRoot>
-          {!isPrivate && threadRootId && (
+          {!isPrivate && threadRootId && !sideId && (
             <ThreadWorkspace
               key={`${threadRootId}:${focusId ?? "latest"}`}
               client={bridge.client}
@@ -522,7 +567,7 @@ function Channel({
               }}
             />
           )}
-          {profileMember && controlRoomId && (
+          {profileMember && controlRoomId && !sideId && (
             <div
               className="thread-profile-side-column contents"
               data-collapse-channel={
@@ -541,6 +586,33 @@ function Channel({
                 onClose={closeProfile}
               />
             </div>
+          )}
+          {sideId && (
+            <SideWorkspace
+              key={sideId}
+              client={bridge.client}
+              source={channel}
+              sideRoomId={sideId}
+              onClose={closeSide}
+              renderConversation={(
+                sideRoom,
+                sideBridge,
+                actions,
+                unavailable,
+              ) => (
+                <Channel
+                  unavailable={unavailable}
+                  channel={sideRoom}
+                  bridge={sideBridge}
+                  controlRoomId={undefined}
+                  onOpenPrivate={() => {}}
+                  onAddInstance={undefined}
+                  onBack={closeSide}
+                  onThread={() => {}}
+                  headerActions={actions}
+                />
+              )}
+            />
           )}
           {tasks.detail}
         </div>

@@ -227,6 +227,8 @@ export default function AgentPage({
                             controlRoomId={controlRoomId}
                             workspaceId={workspaceId}
                             agentId={instance.agentId}
+                            branchSource={instance}
+                            onBranched={() => void refresh()}
                             name={name}
                             active={active && tab === "instances"}
                             disabled={busy}
