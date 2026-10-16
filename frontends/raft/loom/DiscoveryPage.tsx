@@ -1,3 +1,8 @@
+import { useActivityPages } from "./useActivityPages.ts";
+import SearchFrequent, {
+  useSearchFrequent,
+  rememberSearchDestination,
+} from "./SearchFrequent.tsx";
 import SearchHistory, { useSearchHistory } from "./SearchHistory.tsx";
 import { useActivityScroll } from "./useActivityScroll.ts";
 import SearchRecent, { useSearchRecent } from "./SearchRecent.tsx";
@@ -114,6 +119,7 @@ export default function DiscoveryPage({
     query,
     mode === "search",
   );
+  const frequent = useSearchFrequent(entities, workspaceId, principalId);
   const recent = useSearchRecent(
     entities,
     workspaceId,
@@ -254,6 +260,7 @@ export default function DiscoveryPage({
             client={client}
             entities={entities}
             recent={recent}
+            frequent={frequent}
             onOpenEntity={(entity, full) => {
               history.remember(query);
               return onOpenEntity(entity, full);
@@ -265,9 +272,20 @@ export default function DiscoveryPage({
             scope={scope}
             filter={filter}
             tick={tick}
-            onOpenResult={(row, full) => {
+            onOpenResult={async (row, full) => {
               if (mode === "search") history.remember(query);
-              return onOpenResult(row, full);
+              await onOpenResult(row, full);
+              if (mode === "search" && !row.rootMessageId) {
+                const entity = entities.catalog.find(
+                  (e) => e.suggestion.channelId === row.message.roomId,
+                )?.suggestion;
+                if (entity)
+                  rememberSearchDestination(
+                    workspaceId,
+                    principalId,
+                    entity.key,
+                  );
+              }
             }}
           />
         </Shell>
@@ -285,6 +303,7 @@ function Results({
   workspaceId,
   entities,
   recent,
+  frequent,
   onOpenEntity,
   mode,
   query,
@@ -303,6 +322,7 @@ function Results({
   workspaceId: string;
   entities: ReturnType<typeof useSearchEntities>;
   recent: SearchEntity[];
+  frequent: SearchEntity[];
   onOpenEntity: (entity: SearchEntity, full: boolean) => Promise<void>;
   mode: "search" | "activity";
   query: string;
@@ -312,7 +332,11 @@ function Results({
   tick: number;
 }) {
   const [route] = useSearchParams();
-  const [cursors, setCursors] = useState<(string | undefined)[]>([undefined]);
+  const [cursors, setCursors] = useActivityPages(
+    client,
+    JSON.stringify([workspaceId, filter]),
+    mode === "activity",
+  );
   const cursor = cursors.at(-1);
   const [data, setData] = useState<DiscoveryPageResult>();
   const [loading, setLoading] = useState(false);
@@ -578,8 +602,13 @@ function Results({
         !searchFilters.senderKind &&
         !searchFilters.mentionSelf &&
         !searchFilters.after ? (
-        !overlayHome && history.entries.length ? (
-          <SearchHistory history={history} onChoose={onChooseHistory} />
+        !overlayHome && (history.entries.length || frequent.length) ? (
+          <div className="p-4" data-testid="search-home">
+            {history.entries.length > 0 && (
+              <SearchHistory history={history} onChoose={onChooseHistory} />
+            )}
+            <SearchFrequent entities={frequent} onOpen={openEntity} />
+          </div>
         ) : (
           <p className="p-4">输入关键词搜索可访问的消息。</p>
         )

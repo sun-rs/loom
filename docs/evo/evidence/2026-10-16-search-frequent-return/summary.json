@@ -1,0 +1,82 @@
+{
+  "upstream": {
+    "release": "1.21.16",
+    "sourceRevision": "a98ae003246a0360872a77d76dec2fccd0347ef7",
+    "releaseEvidence": "../2026-10-16-native-topbar/upstream.json",
+    "directReuse": [
+      "SearchHomeEntityRow",
+      "selectFrequentSearchEntities",
+      "searchEntityUsageStore"
+    ],
+    "structuralPort": "MessageSearchPage frequent section; ThreadsInbox return intent",
+    "localGlue": "Authenticated catalog/identity and sidebar hidden peers; cursor-only Activity return window"
+  },
+  "checks": {
+    "red": [
+      "missing search-common card",
+      "returned to first page instead of second page"
+    ],
+    "search": [
+      {
+        "width": 1440,
+        "committedOnly": true,
+        "persistsAcrossReload": true,
+        "chooseRunsSearch": true,
+        "nativeRemove": true,
+        "clearAllPersists": true,
+        "overlayCommitAndSeparation": true,
+        "noErrors": true
+      },
+      {
+        "width": 390,
+        "committedOnly": true,
+        "persistsAcrossReload": true,
+        "chooseRunsSearch": true,
+        "nativeRemove": true,
+        "clearAllPersists": true,
+        "overlayCommitAndSeparation": false,
+        "noErrors": true
+      }
+    ],
+    "activity": [
+      {
+        "width": 1440,
+        "sourceFilterRetained": true,
+        "filterChangeResetsPosition": true,
+        "singleHistoryEntry": true,
+        "scrollRestoredAfterAsyncLoad": true,
+        "pageWindowRestoredByFreshRead": true,
+        "filterChangeResetsPage": true
+      },
+      {
+        "width": 390,
+        "sourceFilterRetained": true,
+        "filterChangeResetsPosition": true,
+        "singleHistoryEntry": true,
+        "scrollRestoredAfterAsyncLoad": true,
+        "pageWindowRestoredByFreshRead": true,
+        "filterChangeResetsPage": true
+      }
+    ],
+    "frequentAssertions": [
+      "frequency outranks one newer open",
+      "real card activation",
+      "reload preserves usage",
+      "clearing query history preserves frequent",
+      "overlay excludes frequent grid"
+    ],
+    "sourceTests": 79,
+    "typecheck": "passed via build:web:workbench",
+    "buildWebWorkbench": "passed",
+    "formatAndDiff": "passed"
+  },
+  "limits": [
+    "No backend changes or paid calls",
+    "Activity remains explicit 20-row paging, not official infinite-scroll pagination",
+    "Activity browser refresh position is not persisted, matching upstream in-memory store lifetime",
+    "Topbar independent history and advanced task/settings wiring remain pending"
+  ],
+  "deployment": {
+    "status": "pending"
+  }
+}

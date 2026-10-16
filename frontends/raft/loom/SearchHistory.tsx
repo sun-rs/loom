@@ -85,7 +85,7 @@ export default function SearchHistory({
   };
   const chooseSearchHistoryEntry = onChoose;
   return (
-    <div className="p-4" data-testid="search-home">
+    <>
       <section className="mb-6" aria-labelledby="search-history-heading">
         <div className="mb-2 flex items-center justify-between gap-3 px-1">
           <SectionEyebrow as="div" className="flex items-center gap-1.5">
@@ -161,6 +161,6 @@ export default function SearchHistory({
           ))}
         </div>
       </section>
-    </div>
+    </>
   );
 }

@@ -28,6 +28,9 @@ export async function verifySearchHistory({ browser, origin, channels }) {
       const tag = page.getByTestId("search-history-tag");
       await tag.waitFor({ timeout: 3000 });
       assert.equal(await tag.count(), 1);
+      await page
+        .getByTestId("search-common-channel:" + channels[0].roomId)
+        .waitFor({ timeout: 3000 });
       await tag.getByRole("button", { name: query, exact: true }).click();
       await page.waitForURL((u) => u.searchParams.get("q") === query);
       await page.waitForFunction(
@@ -65,11 +68,30 @@ export async function verifySearchHistory({ browser, origin, channels }) {
         await tag.first().waitFor();
       }
       assert.equal(await tag.count(), 2);
+      const frequent = page.locator('[data-testid^="search-common-"]');
+      assert.equal(await frequent.count(), 2);
+      assert.equal(
+        await frequent.first().getAttribute("data-testid"),
+        "search-common-channel:" + channels[0].roomId,
+        "Two Search opens rank above a single more recent open",
+      );
+      await frequent.first().click();
+      await page.waitForURL(
+        (u) => u.searchParams.get("room") === channels[0].roomId,
+      );
+      await page.goto(origin + "/?view=search");
+      await tag.first().waitFor();
       await page.getByRole("button", { name: "清除", exact: true }).click();
       await tag.waitFor({ state: "detached" });
       await page.reload();
       await input.waitFor();
       assert.equal(await tag.count(), 0);
+      await frequent.first().waitFor();
+      assert.equal(
+        await frequent.count(),
+        2,
+        "Clearing query history does not clear frequent destinations",
+      );
       if (width === 1440) {
         await page.getByTestId("app-top-bar-search").click();
         const overlay = page.getByTestId("desktop-search-overlay");
@@ -91,6 +113,14 @@ export async function verifySearchHistory({ browser, origin, channels }) {
           "Overlay keeps recent conversations, not full-page search history",
         );
       }
+      if (width === 1440)
+        assert.equal(
+          await page
+            .getByTestId("desktop-search-overlay")
+            .locator('[data-testid^="search-common-"]')
+            .count(),
+          0,
+        );
       assert.deepEqual(errors, []);
       results.push({
         width,

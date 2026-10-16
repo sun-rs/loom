@@ -1,3 +1,4 @@
+import { rememberSearchDestination } from "./SearchFrequent.tsx";
 import { useRef } from "react";
 import { useLocation } from "react-router-dom";
 import type { Dispatch, SetStateAction } from "react";
@@ -34,6 +35,11 @@ export function useSearchDestination(
         next.delete(key);
       next.set("room", roomId);
       setParams(next, { state: null });
+      rememberSearchDestination(
+        directory.workspace.workspaceId,
+        directory.principal.principalId,
+        entity.key,
+      );
     };
     const directory = await loadChannelDirectory(client);
     if (!fresh() || hasUnresolvedIntents()) return;

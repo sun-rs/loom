@@ -27,15 +27,26 @@ export async function verifyActivityReturn({
       const page = await context.newPage();
       const errors = [];
       page.on("pageerror", (e) => errors.push(e.message));
+      const requests = [];
       await page.route("**/v3/client/activity/list", async (route) => {
+        const cursor = route.request().postDataJSON()?.cursor;
+        requests.push(cursor ?? null);
         await new Promise((resolve) => setTimeout(resolve, 100));
         await route.fulfill({
-          json: { ...snapshot, items, nextCursor: undefined },
+          json: {
+            ...snapshot,
+            items: items.map((item) => ({
+              ...item,
+              key: (cursor ? "page2-" : "") + item.key,
+            })),
+            nextCursor: cursor ? undefined : "fixture-page2",
+          },
         });
       });
       const sourceUrl = origin + "/?view=activity&af=mentions";
       await page.goto(sourceUrl);
-      const row = page.locator('[data-result-id="fixture-return-10"]');
+      await page.getByRole("button", { name: "下一页", exact: true }).click();
+      const row = page.locator('[data-result-id="page2-fixture-return-10"]');
       await row.scrollIntoViewIfNeeded();
       const list = page.getByTestId("discovery-results");
       const before = await list.evaluate((el) => el.scrollTop);
@@ -54,7 +65,12 @@ export async function verifyActivityReturn({
         sourceUrl,
         "One gesture writes one history entry and retains the source filter",
       );
-      await row.waitFor();
+      await row.waitFor({ timeout: 3000 });
+      assert.equal(
+        requests.at(-1),
+        "fixture-page2",
+        "Return refetches the previously visited page",
+      );
       await page.waitForFunction(
         (expected) =>
           Math.abs(
@@ -66,7 +82,8 @@ export async function verifyActivityReturn({
       );
       await page.getByTestId("inbox-filter-all").click();
       await page.waitForURL((u) => u.searchParams.get("af") === "all");
-      await row.waitFor();
+      await page.locator('[data-result-id="fixture-return-10"]').waitFor();
+      assert.equal(requests.at(-1), null, "Filter change resets the page");
       await page.waitForFunction(
         () =>
           document.querySelector('[data-testid="discovery-results"]')
@@ -81,6 +98,8 @@ export async function verifyActivityReturn({
         filterChangeResetsPosition: true,
         singleHistoryEntry: true,
         scrollRestoredAfterAsyncLoad: true,
+        pageWindowRestoredByFreshRead: true,
+        filterChangeResetsPage: true,
       });
     } finally {
       await context.close();
