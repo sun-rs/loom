@@ -1,0 +1,44 @@
+{
+  "date": "2026-10-17",
+  "codeCommit": "4bd163471676a4c9398c2887aa6afed03e6cf032",
+  "scope": "Remove unreferenced legacy browser tooling, empty apps workspace, obsolete README; source-backed frontend gap inventory",
+  "productUiCodeChanged": false,
+  "backendCodeChanged": false,
+  "checks": {
+    "officialFrontendSourceTests": 124,
+    "finalRetirementAndCiTests": 10,
+    "requiredProductBuild": true,
+    "formatAndDiff": true,
+    "realPage": [
+      {
+        "width": 1440,
+        "dpr": 1,
+        "collapsedByDefault": true,
+        "advancedFields": true,
+        "noMutation": true
+      },
+      {
+        "width": 390,
+        "dpr": 1,
+        "collapsedByDefault": true,
+        "advancedFields": true,
+        "noMutation": true
+      }
+    ],
+    "retiredRoutes404": ["loopback", "LAN", "Tailscale"],
+    "paidCliRun": false
+  },
+  "deployment": {
+    "verified": true,
+    "webBuild": "bc50dfadd0bd608e234bffa53d8478c00ceabbe2949312619cd632453d6a5ae4",
+    "backupDatabases": 2,
+    "backupFiles": 319,
+    "unchangedBusinessTables": 18,
+    "receipt": "/Users/sun/.loom/reviews/2026-10-17-frontend-cleanup/restart.json"
+  },
+  "limits": [
+    "Inventory checked pinned local official sources, not latest online release",
+    "Remaining feature inventory is source audit, not full browser reacceptance",
+    "Historical Git, audit evidence and rollback assets preserved"
+  ]
+}
