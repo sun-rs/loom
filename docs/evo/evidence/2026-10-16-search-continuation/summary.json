@@ -1,0 +1,75 @@
+{
+  "sourceCommit": "ee143242463a301f7ac45758e9f211edeaed6bf4",
+  "webBuildId": "5e314e1e9e716c455a3ae2dd24d51ed8e7e296f90894c1b07a93492186fc6bf1",
+  "upstreamFilesUnchanged": true,
+  "checks": {
+    "sourceTests": 76,
+    "typecheck": true,
+    "build": true,
+    "format": true,
+    "diff": true,
+    "browserWidths": [1440, 390],
+    "activityNavigationAndSearchContinuation": true,
+    "topbarAndFiveHitPreview": true,
+    "fullRepositorySuite": false,
+    "paidCli": false
+  },
+  "redEvidence": [
+    "missing search-pages module",
+    "missing load-more button",
+    "overlay renders 20 instead of 5",
+    "ArrowUp leaves overlay first row"
+  ],
+  "deployment": {
+    "verified": true,
+    "backedUpDatabases": 2,
+    "backedUpFiles": 318,
+    "businessTablesUnchanged": 18,
+    "sourceSha256": "cc94080e6386e60eadfd98a97ec975f69173eab3fc848f0a2e57b8b6974770ce"
+  },
+  "realPage": [
+    {
+      "width": 1440,
+      "realPage": true,
+      "agentSettingsHeaderParity": true,
+      "searchPresentation": true,
+      "initialRows": 19,
+      "appendedRows": null,
+      "buildMatches": true,
+      "noBusinessWrites": true,
+      "pageErrors": [],
+      "noOverflow": true
+    },
+    {
+      "width": 900,
+      "realPage": true,
+      "agentSettingsHeaderParity": true,
+      "searchPresentation": true,
+      "initialRows": 19,
+      "appendedRows": null,
+      "buildMatches": true,
+      "noBusinessWrites": true,
+      "pageErrors": [],
+      "noOverflow": true
+    },
+    {
+      "width": 390,
+      "realPage": true,
+      "agentSettingsHeaderParity": true,
+      "searchPresentation": true,
+      "initialRows": 19,
+      "appendedRows": null,
+      "buildMatches": true,
+      "noBusinessWrites": true,
+      "pageErrors": [],
+      "noOverflow": true
+    }
+  ],
+  "limits": [
+    "Real data query matched 19 messages, so real-page load-more was not exercised; 40-row append and failure/retry verified against isolated Core on both widths",
+    "Search entities/recent conversations/draggable overlay remain unbound",
+    "Activity completed collection lacks backend query; not simulated in client",
+    "No authenticated upstream visual comparison"
+  ],
+  "localEvidence": "/Users/sun/.loom/reviews/2026-10-16-search-continuation"
+}
