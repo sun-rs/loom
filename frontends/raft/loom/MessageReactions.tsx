@@ -20,6 +20,8 @@ const Context = createContext<{
   roomId: string;
   items: Map<string, SocialItem>;
   disabled: boolean;
+  saveDisabled: boolean;
+  save: (id: string) => void;
   toggle: (id: string, emoji: string) => void;
 } | null>(null);
 export function MessageReactionsProvider({
@@ -104,6 +106,26 @@ export function MessageReactionsProvider({
       )
       .catch(() => showToast({ title: "无法提交表情操作", type: "error" }));
   };
+  const save = (id: string) => {
+    const row = latest.current.get(id);
+    if (!row || bridge.writes.state !== "idle") return;
+    void owner
+      .save(id, !row.saved, (outcome) => {
+        if (outcome.kind === "ok") {
+          window.dispatchEvent(new Event("loom:saved-changed"));
+          if (current.current === owner)
+            setItems((old) => new Map(old).set(id, outcome.result));
+        } else
+          showToast({
+            title:
+              outcome.kind === "unknown"
+                ? "收藏结果未知，请核实原请求。"
+                : "收藏操作未成功。",
+            type: "error",
+          });
+      })
+      .catch(() => showToast({ title: "无法提交收藏操作", type: "error" }));
+  };
   return (
     <Context.Provider
       value={{
@@ -111,6 +133,8 @@ export function MessageReactionsProvider({
         items,
         disabled: !writable || state !== "idle",
         toggle,
+        save,
+        saveDisabled: state !== "idle",
       }}
     >
       {children}
@@ -122,6 +146,9 @@ export function useLoomReactions(message: Message) {
   if (!owner || owner.roomId !== message.channelId) return undefined;
   const row = owner.items.get(message.id);
   return {
+    saved: !!row?.saved,
+    canSave: !!row && !owner.saveDisabled,
+    toggleSave: () => owner.save(message.id),
     canReact: !!row?.canReact && !owner.disabled,
     reactions: (row?.reactions ?? []).map((r) => ({
       emoji: r.emoji,

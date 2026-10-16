@@ -1,3 +1,4 @@
+import SavedNav from "./SavedNav.tsx";
 import { useAppearanceStore } from "../packages/web/src/store/appearanceStore.ts";
 import { shouldHideEmptySidebarSection } from "../packages/web/src/components/layout/sidebarEmptySectionVisibility.ts";
 import { LoomLiveActivity } from "./AppearanceRuntime.tsx";
@@ -52,6 +53,8 @@ export default function ChannelSidebar({
   onReady,
   selected,
   onSelect,
+  savedSelected,
+  onOpenSaved,
   onCreated,
 }: {
   client: RahClient;
@@ -64,6 +67,8 @@ export default function ChannelSidebar({
   onPrivateClosed: (id: string) => void;
   onRoomsChanged: () => Promise<void>;
   onReady: () => void;
+  savedSelected: boolean;
+  onOpenSaved: () => void;
   selected: string | null;
   onSelect: (id: string) => boolean;
   onCreated: (room: Room) => Promise<void>;
@@ -249,6 +254,12 @@ export default function ChannelSidebar({
             刷新列表
           </Button>
         )}
+        <SavedNav
+          client={client}
+          workspaceId={workspaceId}
+          active={savedSelected}
+          onOpen={onOpenSaved}
+        />
         <SidebarDrag
           groups={visibleGroups}
           prefs={prefs}

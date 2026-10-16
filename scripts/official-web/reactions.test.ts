@@ -52,7 +52,7 @@ import {
 } from "../../frontends/raft/loom/reaction-adaptation.ts";
 import { adaptTaskMessage } from "../../frontends/raft/loom/channel-task-adaptation.ts";
 import { adaptThreadItem } from "../../frontends/raft/loom/thread-adaptation.ts";
-test("reaction adapter preserves native quick row and toolbar rules without exposing sharing or bookmarks", () => {
+test("reaction adapter preserves native quick row and toolbar rules without exposing sharing; bookmarks bind to Loom", () => {
   const original = readFileSync(
     "frontends/raft/packages/web/src/components/message/MessageItem.tsx",
     "utf8",
@@ -70,6 +70,8 @@ test("reaction adapter preserves native quick row and toolbar rules without expo
     "utf8",
   );
   assert.ok(adaptReactionToolbar(toolbar).includes("{!loomHideSave &&"));
+  assert.ok(adapted.includes("loomReactions?.toggleSave()"));
+  assert.ok(adapted.includes("isSaved={!!loomReactions?.saved}"));
   assert.throws(() => adaptReactions("drift"));
 });
 test("archived and inactive private conversations do not offer reaction writes", async () => {

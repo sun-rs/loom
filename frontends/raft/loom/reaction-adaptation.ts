@@ -37,12 +37,22 @@ export function adaptReactions(source: string) {
   );
   code = code.replaceAll(
     "readOnlyProjection && !loomTaskActions ? undefined",
-    "readOnlyProjection && !loomTaskActions && !loomReactions?.canReact ? undefined",
+    "readOnlyProjection && !loomTaskActions && !loomReactions?.canReact && !loomReactions?.canSave ? undefined",
   );
   code = replace(
     code,
     "onOpenThread && !hideThreadActions ? <LoomThreadToolbar onReplyInThread={handleReplyInThread} /> : null",
-    "(onOpenThread && !hideThreadActions) || canReact ? <MessageHoverToolbar isSaved={false} loomHideSave reactionActive={!!reactionPicker} hideThreadActions={!onOpenThread || hideThreadActions} isSystem={isSystem} canReact={canReact} onReplyInThread={handleReplyInThread} onReactionClick={handleReactionClick} onToggleSave={() => {}} /> : null",
+    "(onOpenThread && !hideThreadActions) || canReact || loomReactions?.canSave ? <MessageHoverToolbar isSaved={!!loomReactions?.saved} loomHideSave={!loomReactions?.canSave} reactionActive={!!reactionPicker} hideThreadActions={!onOpenThread || hideThreadActions} isSystem={isSystem} canReact={canReact} onReplyInThread={handleReplyInThread} onReactionClick={handleReactionClick} onToggleSave={(event) => {event.stopPropagation(); loomReactions?.toggleSave();}} /> : null",
+  );
+  code = replace(
+    code,
+    "const handleToggleSave = useCallback(() => {",
+    "const handleToggleSave = useCallback(() => {\n    if(readOnlyProjection) {loomReactions?.toggleSave(); return;}",
+  );
+  code = replace(
+    code,
+    "}, [isSaved, message.id]);",
+    "}, [isSaved, message.id, readOnlyProjection, loomReactions]);",
   );
   const start = code.indexOf("          {/* Reaction quick row");
   const end = code.indexOf(
@@ -55,7 +65,12 @@ export function adaptReactions(source: string) {
   code = replace(
     code,
     "<LoomTaskMenu actions={loomTaskActions} close={handleCloseCtx} />",
-    `<>${quick}<LoomTaskMenu actions={loomTaskActions} close={handleCloseCtx} /></>`,
+    `<>${quick}{loomReactions?.canSave && <MenuItem icon={loomReactions.saved ? <BookmarkMinus size={14} /> : <Bookmark size={14} />} onClick={() => {loomReactions.toggleSave(); handleCloseCtx();}}>{loomReactions.saved ? formatMessage({id:"message.messageItem.removeFromSaved"}) : formatMessage({id:"message.messageItem.saveMessage"})}</MenuItem>}<LoomTaskMenu actions={loomTaskActions} close={handleCloseCtx} /></>`,
+  );
+  code = replace(
+    code,
+    "const isSaved = useSavedStore((s) => s.savedIds.has(message.id));",
+    "const legacySaved = useSavedStore((s) => s.savedIds.has(message.id)); const isSaved = readOnlyProjection ? !!loomReactions?.saved : legacySaved;",
   );
   return 'import {useLoomReactions} from "loom-reactions";\n' + code;
 }

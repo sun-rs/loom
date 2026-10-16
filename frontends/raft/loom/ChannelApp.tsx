@@ -1,3 +1,5 @@
+import { showToast } from "../packages/web/src/components/toastBridge.ts";
+import SavedPanel from "./SavedPanel.tsx";
 import { MessageReactionsProvider } from "./MessageReactions.tsx";
 import { SystemNotificationsProvider } from "./SystemNotifications.tsx";
 import ChannelTabs from "./ChannelTabs.tsx";
@@ -450,7 +452,9 @@ function Channel({
                   >
                     {bridge.writes.current?.action === "message-reaction"
                       ? "核实表情结果"
-                      : "核实发送"}
+                      : bridge.writes.current?.action === "message-save"
+                        ? "核实收藏结果"
+                        : "核实发送"}
                   </Button>
                 </div>
               )}
@@ -669,11 +673,14 @@ export default function ChannelApp() {
   const requested = params.get("room");
   // Presentation route only: retain the selected room and its mounted composer
   // when popping to the mobile list. No delivery/read/write state lives here.
-  const mobileList = !requested || params.get("chat") === "list";
+  const savedOpen = params.get("saved") === "1";
+  const mobileList =
+    !savedOpen && (!requested || params.get("chat") === "list");
   const showChatList = () =>
     setParams((previous) => {
       const next = new URLSearchParams(previous);
       next.set("chat", "list");
+      next.delete("saved");
       return next;
     });
   const selected =
@@ -863,7 +870,14 @@ export default function ChannelApp() {
                           onRoomsChanged={async () => {
                             setDirectory(await loadChannelDirectory(client));
                           }}
-                          selected={selected?.roomId ?? null}
+                          savedSelected={savedOpen}
+                          onOpenSaved={() => {
+                            if (!hasUnresolvedIntents())
+                              setParams({ saved: "1" });
+                          }}
+                          selected={
+                            savedOpen ? null : (selected?.roomId ?? null)
+                          }
                           onSelect={select}
                           onCreated={async (room) => {
                             setDirectory(await loadChannelDirectory(client));
@@ -875,7 +889,7 @@ export default function ChannelApp() {
                     <AppShellMainSlot
                       className={`min-w-0 bg-layer-canvas theme-brutal:bg-white md:flex ${mobileList ? "hidden" : "flex"}`}
                     >
-                      {!selected && (
+                      {!savedOpen && !selected && (
                         <PanelHeader
                           title="聊天"
                           onMobileBack={showChatList}
@@ -889,6 +903,49 @@ export default function ChannelApp() {
                         </p>
                       ) : !directory ? (
                         <Spinner aria-label="正在连接 Loom" />
+                      ) : savedOpen ? (
+                        <SavedPanel
+                          client={client}
+                          workspaceId={directory.workspace.workspaceId}
+                          onMobileBack={showChatList}
+                          onOpenEntry={(entry) => {
+                            if (hasUnresolvedIntents()) return;
+                            const expected = params.toString(),
+                              ticket = ++activityNavigation.current;
+                            void client
+                              .request("message.context", {
+                                roomId: entry.channelId,
+                                messageId: entry.messageId,
+                              })
+                              .then(async (context) => {
+                                const fresh =
+                                  await loadChannelDirectory(client);
+                                if (ticket !== activityNavigation.current)
+                                  return;
+                                setDirectory(fresh);
+                                setParams((previous) => {
+                                  if (
+                                    previous.toString() !== expected ||
+                                    hasUnresolvedIntents()
+                                  )
+                                    return previous;
+                                  const next = new URLSearchParams({
+                                    room: context.message.roomId,
+                                    message: context.message.messageId,
+                                  });
+                                  if (context.rootMessageId)
+                                    next.set("thread", context.rootMessageId);
+                                  return next;
+                                });
+                              })
+                              .catch(() =>
+                                showToast({
+                                  title: "无法打开原消息",
+                                  type: "error",
+                                }),
+                              );
+                          }}
+                        />
                       ) : selected && destination === "channels" ? (
                         <Channel
                           key={`${selected.roomId}:${params.get("message") ?? "latest"}`}

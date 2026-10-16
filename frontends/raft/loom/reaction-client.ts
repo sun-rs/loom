@@ -23,6 +23,22 @@ export class ReactionClient {
     }
     return items;
   }
+  save(
+    messageId: string,
+    saved: boolean,
+    onSettled: (outcome: IntentOutcome<SocialItem>) => void,
+  ) {
+    return this.bridge.writes.submitRevisioned({
+      action: "message-save",
+      payload: { roomId: this.bridge.roomId, messageId, saved },
+      send: (payload, idempotencyKey) =>
+        this.bridge.client.request("message.save", {
+          ...payload,
+          idempotencyKey,
+        }),
+      onSettled,
+    });
+  }
   set(
     messageId: string,
     emoji: string,

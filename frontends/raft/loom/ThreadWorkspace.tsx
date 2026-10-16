@@ -170,7 +170,9 @@ export default function ThreadWorkspace({
           <Button onClick={() => void bridge.writes.retry()}>
             {bridge.writes.current?.action === "message-reaction"
               ? "核实表情结果"
-              : "核实回复结果"}
+              : bridge.writes.current?.action === "message-save"
+                ? "核实收藏结果"
+                : "核实回复结果"}
           </Button>
         </div>
       )}

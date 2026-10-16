@@ -1,3 +1,4 @@
+import { verifySaved } from "./saved-browser.mjs";
 import { verifyReactions } from "./reactions-browser.mjs";
 import { verifyLocalFonts } from "./local-fonts-browser.mjs";
 import { verifyNotifications } from "./notifications-browser.mjs";
@@ -157,7 +158,20 @@ try {
     instances.push(result.instance);
   }
   browser = await chromium.launch({ headless: true });
-  if (process.env.LOOM_BROWSER_SLICE === "reactions") {
+  if (process.env.LOOM_BROWSER_SLICE === "saved") {
+    console.log(
+      JSON.stringify(
+        await verifySaved({
+          browser,
+          origin,
+          channels,
+          client,
+          workspace,
+          head,
+        }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "reactions") {
     console.log(
       JSON.stringify(
         await verifyReactions({ browser, origin, channels, client, head }),
