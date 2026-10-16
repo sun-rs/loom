@@ -1,0 +1,63 @@
+{
+  "upstream": {
+    "release": "1.21.16",
+    "sourceRevision": "a98ae003246a0360872a77d76dec2fccd0347ef7",
+    "activityBundleEvidence": "../2026-10-16-activity-return/summary.json",
+    "directReuse": [
+      "ConversationCardSkeleton",
+      "EmptyState",
+      "translations"
+    ],
+    "structuralPort": "ThreadsInbox scroll threshold, viewport/list recipes, loading-more and empty-state conditions",
+    "localGlue": "Bounded fresh-read window through existing activity.list"
+  },
+  "checks": {
+    "red": [
+      "legacy next-page button exists",
+      "native skeleton absent"
+    ],
+    "windowUnitTests": 4,
+    "sourceTests": 83,
+    "browser": [
+      {
+        "width": 1440,
+        "sourceFilterRetained": true,
+        "filterChangeResetsPosition": true,
+        "singleHistoryEntry": true,
+        "scrollRestoredAfterAsyncLoad": true,
+        "loadedWindowRestoredByFreshReads": true,
+        "nativeScrollContinuation": true,
+        "firstPageRetained": true,
+        "nativeSkeletonAndEmptyState": true,
+        "nativeViewportPadding": true,
+        "filterChangeResetsPage": true
+      },
+      {
+        "width": 390,
+        "sourceFilterRetained": true,
+        "filterChangeResetsPosition": true,
+        "singleHistoryEntry": true,
+        "scrollRestoredAfterAsyncLoad": true,
+        "loadedWindowRestoredByFreshReads": true,
+        "nativeScrollContinuation": true,
+        "firstPageRetained": true,
+        "nativeSkeletonAndEmptyState": true,
+        "nativeViewportPadding": true,
+        "filterChangeResetsPage": true
+      }
+    ],
+    "typecheck": "passed via build:web:workbench",
+    "buildWebWorkbench": "passed",
+    "formatAndDiff": "passed"
+  },
+  "limits": [
+    "200-row / 10-page window limit, not unbounded upstream pagination",
+    "Activity browser reload resets memory-only window",
+    "Fresh-read return retains pixel position, not guaranteed identical card after concurrent reorder",
+    "Only all/unread/mentions supported; no Done/Saved collection",
+    "Task multi-title creation still pending; no new backend or paid CLI work"
+  ],
+  "deployment": {
+    "status": "pending"
+  }
+}

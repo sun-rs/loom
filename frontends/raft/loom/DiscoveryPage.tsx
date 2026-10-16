@@ -1,4 +1,7 @@
-import { useActivityPages } from "./useActivityPages.ts";
+import ActivityEmpty from "./ActivityEmpty.tsx";
+import { ConversationCardSkeleton } from "../packages/web/src/components/ui/Skeleton.tsx";
+import { useActivityFeed } from "./useActivityFeed.ts";
+import { useIntl } from "react-intl";
 import SearchFrequent, {
   useSearchFrequent,
   rememberSearchDestination,
@@ -41,7 +44,6 @@ import SearchFilters from "./SearchFilters.tsx";
 import { nativeSearchFilters } from "./native-search.ts";
 import {
   searchPage,
-  activityPage,
   type DiscoveryPageResult,
   type DiscoveryRow,
 } from "./discovery-client.ts";
@@ -332,21 +334,27 @@ function Results({
   tick: number;
 }) {
   const [route] = useSearchParams();
-  const [cursors, setCursors] = useActivityPages(
-    client,
-    JSON.stringify([workspaceId, filter]),
-    mode === "activity",
-  );
-  const cursor = cursors.at(-1);
-  const [data, setData] = useState<DiscoveryPageResult>();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const { formatMessage } = useIntl();
+  const [searchData, setData] = useState<DiscoveryPageResult>();
+  const [searchLoading, setLoading] = useState(false);
+  const [searchError, setError] = useState("");
   const [retry, setRetry] = useState(0);
+  const activity = useActivityFeed(
+    client,
+    workspaceId,
+    filter,
+    mode === "activity",
+    retry,
+  );
+  const data = mode === "activity" ? activity.data : searchData;
+  const loading = mode === "activity" ? activity.loading : searchLoading;
+  const error =
+    mode === "activity" ? activity.error || searchError : searchError;
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadMoreError, setLoadMoreError] = useState(false);
   const activityScroll = useActivityScroll(
     client,
-    JSON.stringify([workspaceId, filter, cursor ?? null]),
+    JSON.stringify([workspaceId, filter]),
     mode === "activity",
     !loading && !error && Boolean(data?.rows.length),
   );
@@ -414,6 +422,7 @@ function Results({
     }
   };
   useEffect(() => {
+    if (mode !== "search") return;
     moreRequest.current?.abort();
     moreRequest.current = null;
     setLoadingMore(false);
@@ -436,30 +445,11 @@ function Results({
     setLoading(true);
     const timer = setTimeout(
       () => {
-        const read =
-          mode === "search"
-            ? searchPage(
-                client,
-                {
-                  workspaceId,
-                  query,
-                  scope,
-                  ...searchFilters,
-                  limit: 20,
-                  ...(cursor ? { cursor } : {}),
-                },
-                controller.signal,
-              )
-            : activityPage(
-                client,
-                {
-                  workspaceId,
-                  filter,
-                  limit: 20,
-                  ...(cursor ? { cursor } : {}),
-                },
-                controller.signal,
-              );
+        const read = searchPage(
+          client,
+          { workspaceId, query, scope, ...searchFilters, limit: 20 },
+          controller.signal,
+        );
         void read
           .then((value) => {
             if (!controller.signal.aborted) setData(value);
@@ -488,7 +478,6 @@ function Results({
     searchFilters,
     filter,
     tick,
-    cursor,
     retry,
   ]);
   // Native overlay previews five hits; full-page search owns pagination.
@@ -550,12 +539,27 @@ function Results({
     rail.select({ id: entity.key, entity });
     openEntity(entity, full);
   };
+  const Viewport = mode === "activity" ? "div" : SearchShellViewport;
+  const ResultList = mode === "activity" ? "div" : SearchResultsList;
   return (
-    <SearchShellViewport
+    <Viewport
       ref={activityScroll.ref}
-      onScroll={activityScroll.onScroll}
+      onScroll={(event) => {
+        activityScroll.onScroll();
+        const target = event.currentTarget;
+        // Native ThreadsInbox handleScroll threshold and loading guard.
+        if (
+          mode === "activity" &&
+          target.scrollHeight - target.scrollTop - target.clientHeight < 240
+        )
+          void activity.loadMore();
+      }}
       data-testid="discovery-results"
-      className="min-h-0 overflow-y-auto"
+      className={
+        mode === "activity"
+          ? "scrollbar-quiet relative flex-1 overflow-y-overlay bg-layer-canvas-muted p-4 safe-bottom theme-brutal:bg-white"
+          : "min-h-0 overflow-y-auto"
+      }
     >
       {showRecent && (
         <SearchRecent
@@ -613,7 +617,11 @@ function Results({
           <p className="p-4">输入关键词搜索可访问的消息。</p>
         )
       ) : loading ? (
-        <Spinner aria-label="正在读取结果" />
+        mode === "activity" ? (
+          <ConversationCardSkeleton />
+        ) : (
+          <Spinner aria-label="正在读取结果" />
+        )
       ) : error ? (
         <div role="alert" className="p-4">
           {error}
@@ -622,13 +630,26 @@ function Results({
       ) : (
         data && (
           <>
-            <SearchResultsSummary>
-              {data.total} 条{mode === "search" ? "匹配消息" : "动态"}
-              {mode === "activity" && ` · 第 ${cursors.length} 页`}
-            </SearchResultsSummary>
-            <SearchResultsList className="p-3">
+            {mode === "search" && (
+              <SearchResultsSummary>
+                {data.total} 条匹配消息
+              </SearchResultsSummary>
+            )}
+            <ResultList
+              className={
+                mode === "activity"
+                  ? data.rows.length
+                    ? "flex flex-col gap-2"
+                    : "h-full"
+                  : "p-3"
+              }
+            >
               {!data.rows.length ? (
-                <p>没有匹配结果</p>
+                mode === "activity" ? (
+                  <ActivityEmpty filter={filter} />
+                ) : (
+                  <p>没有匹配结果</p>
+                )
               ) : mode === "search" ? (
                 <SearchMessageGroups
                   rows={visibleRows}
@@ -659,7 +680,7 @@ function Results({
                   />
                 ))
               )}
-            </SearchResultsList>
+            </ResultList>
             {mode === "search" ? (
               !overlayHome &&
               data.nextCursor &&
@@ -678,26 +699,30 @@ function Results({
                 />
               ))
             ) : (
-              <div className="flex gap-2 p-3">
-                <Button
-                  disabled={cursors.length === 1}
-                  onClick={() => setCursors((value) => value.slice(0, -1))}
-                >
-                  上一页
-                </Button>
-                <Button
-                  disabled={!data.nextCursor}
-                  onClick={() =>
-                    setCursors((value) => [...value, data.nextCursor])
-                  }
-                >
-                  下一页
-                </Button>
-              </div>
+              <>
+                {activity.loadingMore && (
+                  <div className="py-3 text-center text-xs font-bold text-foreground-muted">
+                    {formatMessage({ id: "thread.loadingMore" })}
+                  </div>
+                )}
+                {activity.moreError && (
+                  <p
+                    role="alert"
+                    className="px-4 py-3 text-xs text-foreground-muted"
+                  >
+                    读取更多动态失败，已保留当前列表；请使用“刷新动态”重试。
+                  </p>
+                )}
+                {activity.atLimit && data.nextCursor && (
+                  <p className="px-4 py-3 text-xs text-foreground-muted">
+                    已达到当前列表窗口上限，请缩小动态筛选范围。
+                  </p>
+                )}
+              </>
             )}
           </>
         )
       )}
-    </SearchShellViewport>
+    </Viewport>
   );
 }

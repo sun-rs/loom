@@ -28,27 +28,56 @@ export async function verifyActivityReturn({
       const errors = [];
       page.on("pageerror", (e) => errors.push(e.message));
       const requests = [];
+      let releaseInitial;
+      const initialRead = new Promise((resolve) => {
+        releaseInitial = resolve;
+      });
       await page.route("**/v3/client/activity/list", async (route) => {
-        const cursor = route.request().postDataJSON()?.cursor;
+        const request = route.request().postDataJSON();
+        const cursor = request?.cursor;
         requests.push(cursor ?? null);
+        if (request?.filter === "mentions" && !cursor) await initialRead;
         await new Promise((resolve) => setTimeout(resolve, 100));
         await route.fulfill({
           json: {
             ...snapshot,
-            items: items.map((item) => ({
-              ...item,
-              key: (cursor ? "page2-" : "") + item.key,
-            })),
-            nextCursor: cursor ? undefined : "fixture-page2",
+            items:
+              request?.filter === "unread"
+                ? []
+                : items.map((item) => ({
+                    ...item,
+                    key: (cursor ? "page2-" : "") + item.key,
+                  })),
+            nextCursor:
+              cursor || request?.filter === "unread"
+                ? undefined
+                : "fixture-page2",
           },
         });
       });
       const sourceUrl = origin + "/?view=activity&af=mentions";
       await page.goto(sourceUrl);
-      await page.getByRole("button", { name: "下一页", exact: true }).click();
+      const list = page.getByTestId("discovery-results");
+      try {
+        await list.locator('[aria-busy="true"]').waitFor({ timeout: 3000 });
+      } finally {
+        releaseInitial();
+      }
+      await page.locator('[data-result-id="fixture-return-19"]').waitFor();
+      assert.equal(
+        await page.getByRole("button", { name: "下一页", exact: true }).count(),
+        0,
+        "Native activity has no page buttons",
+      );
+      await list.hover();
+      await page.mouse.wheel(0, 4000);
       const row = page.locator('[data-result-id="page2-fixture-return-10"]');
       await row.scrollIntoViewIfNeeded();
-      const list = page.getByTestId("discovery-results");
+      assert.equal(
+        await page.locator('[data-result-id="fixture-return-0"]').count(),
+        1,
+        "Loading more retains the first page",
+      );
       const before = await list.evaluate((el) => el.scrollTop);
       assert.ok(before > 300);
       if (width === 1440) await row.dblclick();
@@ -80,7 +109,13 @@ export async function verifyActivityReturn({
         before,
         { timeout: 3000 },
       );
+      const filterLoaded = page.waitForResponse(
+        (r) =>
+          r.url().endsWith("/v3/client/activity/list") &&
+          r.request().postDataJSON()?.filter === "all",
+      );
       await page.getByTestId("inbox-filter-all").click();
+      await filterLoaded;
       await page.waitForURL((u) => u.searchParams.get("af") === "all");
       await page.locator('[data-result-id="fixture-return-10"]').waitFor();
       assert.equal(requests.at(-1), null, "Filter change resets the page");
@@ -91,6 +126,17 @@ export async function verifyActivityReturn({
         undefined,
         { timeout: 3000 },
       );
+      await page.getByTestId("inbox-filter-unread").click();
+      await list
+        .locator('[data-slot="empty-state"]')
+        .waitFor({ timeout: 3000 });
+      assert.equal(await list.locator("[data-result-id]").count(), 0);
+      const geometry = await list.evaluate((el) => ({
+        padding: getComputedStyle(el).padding,
+        childCount: el.querySelectorAll('[data-slot="empty-state"]').length,
+      }));
+      assert.equal(geometry.padding, "16px");
+      assert.equal(geometry.childCount, 1);
       assert.deepEqual(errors, []);
       results.push({
         width,
@@ -98,7 +144,11 @@ export async function verifyActivityReturn({
         filterChangeResetsPosition: true,
         singleHistoryEntry: true,
         scrollRestoredAfterAsyncLoad: true,
-        pageWindowRestoredByFreshRead: true,
+        loadedWindowRestoredByFreshReads: true,
+        nativeScrollContinuation: true,
+        firstPageRetained: true,
+        nativeSkeletonAndEmptyState: true,
+        nativeViewportPadding: true,
         filterChangeResetsPage: true,
       });
     } finally {
