@@ -1,0 +1,62 @@
+{
+  "sourceCommit": "dd5e9233153f6e635653672c7f565553063263f1",
+  "webBuildId": "b01d3cb81da36f6e57dafa6993e1ce4549ed0563c691c04e876845a9ea748a68",
+  "upstreamFilesUnchanged": true,
+  "checks": {
+    "sourceTests": 77,
+    "typecheck": true,
+    "build": true,
+    "format": true,
+    "diff": true,
+    "entityWidths": [1440, 390],
+    "exactAndPartialOverlay": true,
+    "nativeHeadGapPx": 8,
+    "nonFirstDeepLinkSelection": true,
+    "unknownPrivateOpenExplicitVerificationIdenticalRequest": true,
+    "topbarRegression": true,
+    "searchAndActivityNavigationRegression": true,
+    "fullRepositorySuite": false,
+    "paidCli": false
+  },
+  "redEvidence": [
+    "missing entity adapter",
+    "missing channel candidate",
+    "head gap 16 instead of 8",
+    "deep-link non-first candidate not selected",
+    "null roomId incorrectly matched a not-yet-created private box; fixed by explicit room guard"
+  ],
+  "deployment": {
+    "verified": true,
+    "backedUpDatabases": 2,
+    "backedUpFiles": 318,
+    "businessTablesUnchanged": 18,
+    "sourceSha256": "307745bd0f5b5a951717da6eed94b7880f9ce3071ebd2cb5219765b4970f94e1"
+  },
+  "realPage": [
+    {
+      "width": 1440,
+      "realChannelCandidate": true,
+      "overlayExactAndGap": true,
+      "buildMatches": true,
+      "noBusinessWrites": true,
+      "pageErrors": [],
+      "noOverflow": true
+    },
+    {
+      "width": 390,
+      "realChannelCandidate": true,
+      "overlayExactAndGap": false,
+      "buildMatches": true,
+      "noBusinessWrites": true,
+      "pageErrors": [],
+      "noOverflow": true
+    }
+  ],
+  "limits": [
+    "Private-box creation and unknown-response verification tested only against isolated Core, not user data",
+    "Candidate context menus, recents, frequency history, computers, multi-human and draggable overlay remain unbound",
+    "Native worker ranking adopted but no dedicated large-catalog browser case",
+    "No authenticated upstream visual comparison"
+  ],
+  "localEvidence": "/Users/sun/.loom/reviews/2026-10-16-search-entities"
+}
