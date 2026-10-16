@@ -1,0 +1,100 @@
+{
+  "implemented": [
+    "Official NotificationTrigger and NotificationCenter; desktop footer/mobile chat header",
+    "Existing notification.list and notification.dismiss, computer_offline only",
+    "Secure-random UUID compatibility before vendor module initialization on HTTP",
+    "Owner-requested existing trusted-network deployment"
+  ],
+  "upstream": {
+    "url": "https://github.com/botiverse/raft-source",
+    "revision": "a98ae003246a0360872a77d76dec2fccd0347ef7",
+    "license": "FSL-1.1-ALv2; owner authorized reuse",
+    "sources": [
+      "packages/web/src/components/layout/NotificationTrigger.tsx",
+      "packages/web/src/components/layout/NotificationCenter.tsx",
+      "packages/web/src/components/layout/LeftRail.tsx",
+      "packages/web/src/components/layout/Sidebar.tsx"
+    ]
+  },
+  "checks": {
+    "sourceTests": 103,
+    "networkTests": 21,
+    "frontendTypecheck": "passed after fixing existing readonly message input mismatch",
+    "productBuild": "passed",
+    "fixtureBrowser": [
+      {
+        "viewport": "1440x1000",
+        "dpr": 1
+      },
+      {
+        "viewport": "390x844",
+        "dpr": 1
+      }
+    ],
+    "lostDismiss": "one write, readback, no replay; route-aborted response fixture",
+    "realPages": [
+      {
+        "origin": "http://127.0.0.1:4176",
+        "width": 1440,
+        "unauthenticatedApi": 200,
+        "foreignOrigin": 403,
+        "secureContext": true,
+        "uuid": "2fa51c30-dbd5-4144-bd9f-a1fda1092768",
+        "margin": "0px",
+        "pageErrors": 0
+      },
+      {
+        "origin": "http://192.168.1.86:4176",
+        "width": 1440,
+        "unauthenticatedApi": 200,
+        "foreignOrigin": 403,
+        "secureContext": false,
+        "uuid": "a3efbc68-1ffd-4c83-8242-4ca218b34ec0",
+        "margin": "0px",
+        "pageErrors": 0
+      },
+      {
+        "origin": "http://192.168.1.86:4176",
+        "width": 390,
+        "unauthenticatedApi": 200,
+        "foreignOrigin": 403,
+        "secureContext": false,
+        "uuid": "a95f6229-b437-44fc-a73e-efb7333efcb1",
+        "margin": "0px",
+        "pageErrors": 0
+      },
+      {
+        "origin": "http://100.101.107.87:4176",
+        "width": 1440,
+        "unauthenticatedApi": 200,
+        "foreignOrigin": 403,
+        "secureContext": false,
+        "uuid": "2fc112ee-fef6-44e9-8622-fd8fbe12d6e9",
+        "margin": "0px",
+        "pageErrors": 0
+      }
+    ]
+  },
+  "deployment": {
+    "code": "8d35e52",
+    "webBuild": "11139ccdaa4f3101a79d75d090c33f6eca40194ab7d4e7f3f249d4c5b5ae7164",
+    "backupDatabases": 2,
+    "backupFiles": 319,
+    "businessProjectionsUnchanged": 18,
+    "gracefulRestart": true,
+    "binds": ["127.0.0.1", "192.168.1.86", "100.101.107.87"],
+    "port": 4176
+  },
+  "limits": [
+    "No physical second-device check",
+    "No real offline-host transition or real notification dismissal; fixture covers these UI bindings",
+    "No full backend/browser suite or paid CLI",
+    "HTTPS-only browser features not enabled by UUID compatibility",
+    "Browser console retains upstream external font CSP blocks; page boot and local styles verified"
+  ],
+  "failuresRetained": [
+    "Initial browser failure: crypto.randomUUID unavailable before vendor module evaluation",
+    "Dynamic entry CSS preload rejected when external font imports blocked; keep stylesheet static at entry",
+    "Initial frontend typecheck caught existing mutable-versus-readonly thread message signature"
+  ]
+}
