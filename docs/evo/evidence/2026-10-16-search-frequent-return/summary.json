@@ -77,6 +77,37 @@
     "Topbar independent history and advanced task/settings wiring remain pending"
   ],
   "deployment": {
-    "status": "pending"
+    "status": "verified",
+    "sourceCommit": "a7735f98d1c1614833fd73bf0e880a679aab1275",
+    "webBuildId": "339e4485d2e0ff7530f1a45f891ac13e07df4fdfab73c9910c6be071967dad41",
+    "backupDatabases": 2,
+    "backupFiles": 318,
+    "unchangedBusinessProjections": 18,
+    "sameDataHome": true,
+    "gracefulRestart": true,
+    "realPage": [
+      {
+        "width": 1440,
+        "realSearchHistory": true,
+        "realFrequentEmptyState": true,
+        "nativeEdit": false,
+        "buildMatches": true,
+        "noBusinessWrites": true,
+        "pageErrors": [],
+        "noOverflow": true
+      },
+      {
+        "width": 390,
+        "realSearchHistory": true,
+        "realFrequentEmptyState": true,
+        "nativeEdit": true,
+        "buildMatches": true,
+        "noBusinessWrites": true,
+        "pageErrors": [],
+        "noOverflow": true
+      }
+    ],
+    "reviewArtifacts": "/Users/sun/.loom/reviews/2026-10-16-search-frequent-return",
+    "scope": "Fresh read-only actual page; frequent empty state and layout verified at both sizes. Frequency activation and page-two return verified against isolated Core fixtures, not seeded into user data."
   }
 }
