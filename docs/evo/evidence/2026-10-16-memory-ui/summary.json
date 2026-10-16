@@ -1,0 +1,74 @@
+{
+  "date": "2026-10-16",
+  "codeCommit": "950772a957aa0fab515f48a77700053809f7bd81",
+  "sourceSha256": "787cd753bc4a4898cd1afb73f9c15c2069f5cf891428db78724ac5a8ca89db4b",
+  "upstream": {
+    "url": "https://github.com/botiverse/raft-source",
+    "revision": "a98ae003246a0360872a77d76dec2fccd0347ef7",
+    "license": "FSL-1.1-ALv2",
+    "reuse": "official primitives and structural master-detail composition; local memory binding, no upstream edits"
+  },
+  "checks": {
+    "boundaryTests": 52,
+    "officialSourceTests": 115,
+    "rootAndConsoleTypecheck": true,
+    "frontendTypecheckAndRequiredBuild": true,
+    "formatAndDiff": true,
+    "browser": [
+      {
+        "width": 1440,
+        "list": true,
+        "detail": true,
+        "bodySearch": true,
+        "edit": true,
+        "invalidateRestore": true,
+        "pin": true,
+        "delete": true,
+        "unknownExactReplay": true
+      },
+      {
+        "width": 390,
+        "list": true,
+        "detail": true,
+        "bodySearch": true,
+        "edit": true,
+        "invalidateRestore": true,
+        "pin": true,
+        "delete": true,
+        "unknownExactReplay": true
+      }
+    ],
+    "realPage": [
+      {
+        "width": 1440,
+        "dpr": 1,
+        "page": true,
+        "detail": true,
+        "noMemoryMutation": true
+      },
+      {
+        "width": 390,
+        "dpr": 1,
+        "page": true,
+        "detail": true,
+        "noMemoryMutation": true
+      }
+    ]
+  },
+  "deployment": {
+    "verified": true,
+    "webBuild": "df2834b6db67e34505513b0f6fb22d625ac6d3f7aceceaa8d98c3e7b05d4328a",
+    "backupDatabases": 2,
+    "backupFiles": 319,
+    "unchangedBusinessTables": 18,
+    "receipt": "/Users/sun/.loom/reviews/2026-10-16-memory-ui/restart.json"
+  },
+  "limits": [
+    "No paid CLI or physical-device run",
+    "Full-text search includes active memory only",
+    "List 200/search 50 per channel; no cursor, truncation shown",
+    "Revision history and memory access policy remain console-only",
+    "No Human create or cross-channel move",
+    "No change to model context or Channel isolation"
+  ]
+}
