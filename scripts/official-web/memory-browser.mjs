@@ -57,6 +57,13 @@ for (const width of [1440, 390]) {
     await page
       .getByText("FIXTURE body searchable unicorn", { exact: true })
       .waitFor();
+    await page.getByRole("button", { name: "修订历史", exact: true }).click();
+    await page.getByRole("button", { name: "查看修订 1", exact: true }).click();
+    await page
+      .getByTestId("memory-history")
+      .getByText("FIXTURE body searchable unicorn", { exact: true })
+      .waitFor();
+    await page.getByRole("button", { name: "修订历史", exact: true }).click();
     await page.getByRole("button", { name: "记忆操作", exact: true }).click();
     await page.getByRole("menuitem", { name: "编辑", exact: true }).click();
     const edit = page.getByRole("dialog");
@@ -136,11 +143,140 @@ for (const width of [1440, 390]) {
       null,
     );
     await page.getByText("没有匹配的记忆", { exact: true }).waitFor();
+    await page.getByRole("textbox", { name: "搜索记忆" }).fill("");
+    await page.getByRole("combobox", { name: "状态", exact: true }).click();
+    await page.getByRole("option", { name: "已删除", exact: true }).click();
+    await page
+      .getByRole("button", { name: "fixture-memory", exact: true })
+      .click();
+    await page.getByRole("button", { name: "修订历史", exact: true }).click();
+    await page.getByRole("button", { name: "查看修订 1", exact: true }).click();
+    await page
+      .getByTestId("memory-history")
+      .getByText("正文已删除", { exact: true })
+      .waitFor();
+    assert.equal(
+      await page
+        .getByText("FIXTURE body searchable unicorn", { exact: true })
+        .count(),
+      0,
+    );
+    await page.goto(gateway.origin + "/?room=" + f.home.roomId);
+    const openPolicy = async () => {
+      await page.getByTestId("loom-channel-control-trigger").click();
+      await page
+        .getByRole("button", { name: "频道记忆权限", exact: true })
+        .click();
+      await page
+        .getByRole("switch", { name: "默认读取", exact: true })
+        .waitFor();
+    };
+    await openPolicy();
+    const policyDialog = page.getByRole("dialog", {
+      name: "频道记忆权限",
+      exact: true,
+    });
+    await policyDialog
+      .getByRole("switch", { name: "默认读取", exact: true })
+      .click();
+    await policyDialog
+      .getByRole("switch", { name: "默认写入", exact: true })
+      .click();
+    await policyDialog
+      .getByRole("combobox", { name: "Reviewer-1 读取", exact: true })
+      .click();
+    await page.getByRole("option", { name: "允许", exact: true }).click();
+    await page.screenshot({ path: `/tmp/loom-memory-policy-${width}.png` });
+    let policyInput;
+    await page.route("**/v3/client/memory/policy/update", async (route) => {
+      policyInput = route.request().postDataJSON();
+      const response = await route.fetch();
+      assert.equal(response.status(), 200, await response.text());
+      await route.abort();
+    });
+    await policyDialog
+      .getByRole("button", { name: "保存权限", exact: true })
+      .click();
+    await policyDialog.getByText(/保存结果未知/).waitFor();
+    await page.unroute("**/v3/client/memory/policy/update");
+    const policyReplay = page.waitForRequest((r) =>
+      r.url().endsWith("/memory/policy/update"),
+    );
+    await policyDialog.getByRole("button", { name: "核实原操作" }).click();
+    assert.deepEqual((await policyReplay).postDataJSON(), policyInput);
+    await policyDialog.waitFor({ state: "detached" });
+    let policy = f.kernel.memory.readPolicy(f.actor, {
+      channelId: f.home.roomId,
+    });
+    assert.equal(policy.readDefault, false);
+    assert.equal(policy.writeDefault, false);
+    assert.equal(policy.members[0].read, true);
+    assert.equal(policy.members[0].write, false);
+    await openPolicy();
+    assert.equal(
+      await policyDialog
+        .getByRole("switch", { name: "默认读取", exact: true })
+        .getAttribute("aria-checked"),
+      "false",
+    );
+    await policyDialog
+      .getByRole("combobox", { name: "Reviewer-1 读取", exact: true })
+      .click();
+    await page.getByRole("option", { name: "跟随频道", exact: true }).click();
+    await policyDialog
+      .getByRole("button", { name: "保存权限", exact: true })
+      .click();
+    await policyDialog.waitFor({ state: "detached" });
+    policy = f.kernel.memory.readPolicy(f.actor, { channelId: f.home.roomId });
+    assert.equal(policy.members[0].read, false);
+    assert.equal(policy.overrides.length, 0);
+    await openPolicy();
+    await policyDialog
+      .getByRole("switch", { name: "默认读取", exact: true })
+      .click();
+    f.kernel.memory.updatePolicy(f.actor, {
+      channelId: f.home.roomId,
+      expectedRevision: policy.revision,
+      writeDefault: true,
+      idempotencyKey: "external-policy-change",
+    });
+    await policyDialog
+      .getByRole("button", { name: "保存权限", exact: true })
+      .click();
+    await policyDialog.getByText(/保存未完成/).waitFor();
+    assert.equal(
+      f.kernel.memory.readPolicy(f.actor, { channelId: f.home.roomId })
+        .revision,
+      policy.revision + 1,
+    );
+    await policyDialog
+      .getByRole("button", { name: "重新读取权限", exact: true })
+      .click();
+    await policyDialog
+      .locator('[role="switch"][aria-label="默认读取"][aria-checked="false"]')
+      .waitFor();
+    await policyDialog
+      .getByRole("switch", { name: "默认读取", exact: true })
+      .waitFor();
+    assert.equal(
+      await policyDialog
+        .getByRole("switch", { name: "默认读取", exact: true })
+        .getAttribute("aria-checked"),
+      "false",
+    );
+    await policyDialog
+      .getByRole("button", { name: "关闭记忆权限", exact: true })
+      .click();
     assert.deepEqual(errors, []);
     await page.screenshot({ path: `/tmp/loom-memory-${width}.png` });
     results.push({
       width,
       list: true,
+      history: true,
+      deletedHistoryRedacted: true,
+      policyDefaultsOverrideInherit: true,
+      policyUnknownReplay: true,
+      policyConflictReread: true,
       detail: true,
       bodySearch: true,
       edit: true,

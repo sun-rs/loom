@@ -72,3 +72,14 @@ test("Human editor freezes content and revision on unknown-result replay", async
   assert.equal(calls[0][1].expectedRevision, 3);
   owner.writes.discard();
 });
+test("Human deleted-memory filter requests tombstones explicitly", async () => {
+  let input: any;
+  const owner = new MemoryClient({
+    request: async (_op: any, p: any) => {
+      input = p;
+      return { entries: [], truncated: false };
+    },
+  } as any);
+  await owner.list(["room"], "", "deleted");
+  assert.equal(input.includeDeleted, true);
+});

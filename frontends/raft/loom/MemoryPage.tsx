@@ -22,6 +22,7 @@ import PanelResizeHandle from "../packages/web/src/components/ui/PanelResizeHand
 import FormField from "../packages/web/src/components/ui/FormField.tsx";
 import { useResizablePanel } from "../packages/web/src/hooks/useResizablePanel.ts";
 import { SIDEBAR_PANEL_BOUNDS } from "../packages/web/src/lib/panelBounds.ts";
+import MemoryHistory from "./MemoryHistory.tsx";
 import MemoryEditor from "./MemoryEditor.tsx";
 import Frame from "./ChatSidebarFrame.tsx";
 import { SelectField, ActionMenu } from "./ManagementUi.tsx";
@@ -195,6 +196,7 @@ export default function MemoryPage({
             options={[
               { value: "active", label: "有效" },
               { value: "invalidated", label: "已失效" },
+              { value: "deleted", label: "已删除" },
               { value: "all", label: "全部状态" },
             ]}
           />
@@ -250,7 +252,11 @@ export default function MemoryPage({
                 </p>
                 <p className="truncate text-xs text-foreground-muted">
                   {channels.find((r) => r.roomId === entry.channelId)?.name} ·{" "}
-                  {entry.state === "active" ? "有效" : "已失效"}
+                  {entry.state === "active"
+                    ? "有效"
+                    : entry.state === "deleted"
+                      ? "已删除"
+                      : "已失效"}
                 </p>
               </div>
             </SidebarItem>
@@ -335,13 +341,16 @@ export default function MemoryPage({
               </FormField>
               <p className="mt-5 text-xs text-foreground-muted">
                 来源：
-                {detail.provenance.actorKind === "human"
-                  ? "Human"
-                  : (detail.provenance.instanceId ?? "实例")}
+                {detail.provenance.actorKind === "human" ? "Human" : "实例"}
                 {detail.provenance.modelBindingId
                   ? ` · ${detail.provenance.modelBindingId}`
                   : ""}
               </p>
+              <MemoryHistory
+                key={`${detail.entryId}:${detail.revision}`}
+                client={client}
+                entryId={detail.entryId}
+              />
             </>
           )}
           {error && (

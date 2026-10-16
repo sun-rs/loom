@@ -1,7 +1,8 @@
+import MemoryPolicyDialog from "./MemoryPolicyDialog.tsx";
 import { useRouteIntentOwner } from "./useIntentRoute.ts";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button, Textarea } from "raft-ui";
-import { CircleStop, Settings } from "lucide-react";
+import { Brain, CircleStop, Settings } from "lucide-react";
 import type { RoomExecutionReadResponse } from "@rah-os/protocol";
 import {
   OverflowMenuTrigger,
@@ -34,6 +35,7 @@ export default function ChannelControl({
   const { state, error, setError } = useManagement(manager);
   const [sheet, setSheet] = useState(false),
     [open, setOpen] = useState(false);
+  const [memoryOpen, setMemoryOpen] = useState(false);
   const [execution, setExecution] = useState<RoomExecutionReadResponse>();
   const [readError, setReadError] = useState(""),
     [guidance, setGuidance] = useState(""),
@@ -117,6 +119,15 @@ export default function ChannelControl({
         hideDesktopClose
         testId="loom-channel-control-sheet"
       >
+        <OverflowActionRow
+          icon={<Brain size={14} />}
+          label="记忆权限"
+          ariaLabel="频道记忆权限"
+          onClick={() => {
+            setSheet(false);
+            setMemoryOpen(true);
+          }}
+        />
         {readError && <p role="alert">{readError}</p>}
         <OverflowActionRow
           icon={<CircleStop size={14} />}
@@ -136,6 +147,17 @@ export default function ChannelControl({
           }}
         />
       </OverflowSheet>
+      {memoryOpen && (
+        <MemoryPolicyDialog
+          bridge={bridge}
+          onClose={() => {
+            setMemoryOpen(false);
+            requestAnimationFrame(() =>
+              trigger.current?.querySelector("button")?.focus(),
+            );
+          }}
+        />
+      )}
       {open && (
         <DialogCard
           title={

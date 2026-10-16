@@ -23,21 +23,24 @@ export class MemoryClient {
     // Bounded concurrency, no eager bodies or historical revisions.
     for (let i = 0; i < channelIds.length; i += 4) {
       const results = await Promise.allSettled(
-        channelIds
-          .slice(i, i + 4)
-          .map(async (channelId) =>
-            query.trim()
-              ? this.client.request(
-                  "memory.search",
-                  { channelId, query: query.trim(), limit: 50 },
-                  { signal },
-                )
-              : this.client.request(
-                  "memory.list",
-                  { channelId, includeInvalidated: true, limit: 200 },
-                  { signal },
-                ),
-          ),
+        channelIds.slice(i, i + 4).map(async (channelId) =>
+          query.trim()
+            ? this.client.request(
+                "memory.search",
+                { channelId, query: query.trim(), limit: 50 },
+                { signal },
+              )
+            : this.client.request(
+                "memory.list",
+                {
+                  channelId,
+                  includeInvalidated: true,
+                  includeDeleted: state === "deleted" || state === "all",
+                  limit: 200,
+                },
+                { signal },
+              ),
+        ),
       );
       results.forEach((result, index) => {
         if (result.status === "rejected") failed.push(channelIds[i + index]!);
