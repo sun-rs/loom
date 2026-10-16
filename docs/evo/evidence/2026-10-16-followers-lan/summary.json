@@ -1,0 +1,75 @@
+{
+  "codeCommit": "c534fef",
+  "upstream": {
+    "revision": "a98ae003246a0360872a77d76dec2fccd0347ef7",
+    "license": "FSL-1.1-ALv2",
+    "nativeComponents": [
+      "ThreadAgentFollowers",
+      "ThreadAgentFollowerRow",
+      "ChannelMemberRow",
+      "Popover",
+      "toast"
+    ],
+    "adoption": "Original roster JSX retained; controller/profile binding replaced; unsupported presence omitted"
+  },
+  "checks": {
+    "sourceTests": 100,
+    "lanTests": 12,
+    "typecheckAndBuild": true,
+    "formatAndDiff": true,
+    "browserViewports": [1440, 390],
+    "browserCases": [
+      "Native roster",
+      "Remove then server-token undo",
+      "Lost remove readback without replay",
+      "Escape close"
+    ],
+    "red": "Missing adapter/controller module after correcting fixture parse typo",
+    "intermediateFailures": [
+      "Source parity fixture matched effect cleanup return rather than JSX; selector corrected",
+      "LAN health probe omitted Accept:text/html and mistook public static shell 200 for not-ready",
+      "Device revocation assertion expected 200 rather than documented 204",
+      "Playwright ignoreHTTPSErrors with intercepted requests intermittently failed CSS with ERR_TOO_MANY_RETRIES; actual certificate SPKI pin and computed-style assertion used instead"
+    ]
+  },
+  "deployment": {
+    "origin": "https://192.168.1.86:4176",
+    "webBuildId": "ddf0d156a57377d22cc3311fe81c09e9af3df1a67b6e49bc603dd99031dfee68",
+    "restartVerified": true,
+    "backupDatabases": 2,
+    "backupFiles": 318,
+    "businessProjectionsUnchanged": 18,
+    "tlsCaVerified": true,
+    "unauthenticatedDenied": true,
+    "crossOriginDenied": true,
+    "verificationDeviceRevoked": true,
+    "realPage": [
+      {
+        "width": 1440,
+        "pairedPage": true,
+        "existingFollowerRoster": true,
+        "buildMatches": true,
+        "noBusinessWrites": true,
+        "pageErrors": []
+      },
+      {
+        "width": 390,
+        "pairedPage": true,
+        "existingFollowerRoster": true,
+        "buildMatches": true,
+        "noBusinessWrites": true,
+        "pageErrors": []
+      }
+    ]
+  },
+  "limits": [
+    "No physical second-device acceptance or OS CA trust installation",
+    "Browser verification explicitly trusts the exact leaf SPKI; Node independently verifies the CA chain",
+    "Existing CSP blocks external font requests; existing member-projection console diagnostic retained, not claimed console-clean",
+    "Roster refresh every 10 seconds, no new socket truth",
+    "Lost remove cannot recover missing undo token",
+    "Topbar history Web composition unconfirmed; v1.21.16 search overlay has no drag handler",
+    "No full backend/browser suite or paid CLI gates"
+  ],
+  "artifacts": "/Users/sun/.loom/reviews/2026-10-16-followers-lan"
+}

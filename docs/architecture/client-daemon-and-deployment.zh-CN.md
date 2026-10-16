@@ -386,3 +386,9 @@ Tailnet HTTP 启动器发现本机 RFC1918 IPv4 后，显式加入同端口的�
 局域网地址改变需要重新启动以重新发现；任一入口失败回收本次所有监听，避免半启动。
 
 2026-09-13 日志生命周期：显式启动/替换入口在旧进程退出后、打开新日志句柄之前应用统一的 UTC 跨日 / 64MiB / 14 天轮转策略；不对活动写入者执行 rename。Owner 为 agent-host 的 service-log-rotation，Core 启动层复用。详见[日志轮转](../audits/2026-09-13-service-log-rotation.zh-CN.md)。
+
+### evo 局域网部署采用（2026-10-16）
+
+Owner 要求正式前端允许局域网接入。evo 选择既有 `RAH_LAN_ORIGIN` HTTPS／设备配对路径，并以 `RAH_LAN_BIND_HOST` 精确绑定所选 RFC1918 地址；没有启用 trusted-network、Tailnet 旁路或第二份 Core。持久 data home、Human 身份和Provider账户保持原位；当前地址与验证见 [evo状态](../evo/status.zh-CN.md)。该模式替换原端口的loopback HTTP入口，浏览器与手机均使用同一 HTTPS 地址。客户端需要安装并信任该部署的本机CA，再使用一次性配对码；授权会话可撤销。网卡地址变化需要更新显式地址并签发匹配证书，不自动扩大监听范围。
+
+本轮已核对TLS证书链、未配对API拒绝、Origin拒绝及已配对双尺寸真实页面。没有代替用户执行其他物理设备的CA安装，也没有宣称跨设备验收；本次没有修改网关协议或认证实现。
