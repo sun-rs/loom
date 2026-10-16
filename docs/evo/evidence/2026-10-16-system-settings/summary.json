@@ -1,0 +1,71 @@
+{
+  "codeCommit": "a5009a1",
+  "upstream": {
+    "release": "1.21.16",
+    "sourceRevision": "a98ae003246a0360872a77d76dec2fccd0347ef7",
+    "releaseEvidence": "../2026-10-16-native-topbar/upstream.json",
+    "directReuse": "SystemChannelsSection complete form JSX and primitives",
+    "localGlue": "Controller replacement using existing workspace.system-channel API and WriteIntentSlot"
+  },
+  "checks": {
+    "red": "Missing checkbox before wiring",
+    "sourceTests": 87,
+    "typecheck": true,
+    "build": true,
+    "format": true,
+    "diff": true,
+    "browser": [
+      {
+        "width": 1440,
+        "height": 1000,
+        "dpr": 1,
+        "unknownExactRetry": true,
+        "hiddenPersists": true,
+        "restoreSameRoom": true
+      },
+      {
+        "width": 390,
+        "height": 844,
+        "dpr": 1,
+        "unknownExactRetry": true,
+        "hiddenPersists": true,
+        "restoreSameRoom": true
+      }
+    ]
+  },
+  "deployment": {
+    "verified": true,
+    "webBuildId": "84cfc81a8e89eb71a4b1c72b8bcbf72845e8bfffec2d9807139cf4d98b54ecfb",
+    "backupDatabases": 2,
+    "backupFiles": 318,
+    "businessProjectionsUnchanged": 18,
+    "realPage": [
+      {
+        "width": 1440,
+        "checkboxDraftOnly": true,
+        "settingsVisible": true,
+        "buildMatches": true,
+        "noRoomWrites": true,
+        "noOverflow": true,
+        "pageErrors": []
+      },
+      {
+        "width": 390,
+        "checkboxDraftOnly": true,
+        "settingsVisible": true,
+        "buildMatches": true,
+        "noRoomWrites": true,
+        "noOverflow": true,
+        "pageErrors": []
+      }
+    ]
+  },
+  "limits": [
+    "Real user settings not mutated; write acceptance in isolated Core",
+    "No new backend capability; active-work guard and permissions not re-tested in this UI batch",
+    "No cross-device live sync or persisted unknown handle",
+    "Profile settings remain pending",
+    "No paid CLI/full backend/full browser gate"
+  ],
+  "artifacts": "/Users/sun/.loom/reviews/2026-10-16-system-settings"
+}
