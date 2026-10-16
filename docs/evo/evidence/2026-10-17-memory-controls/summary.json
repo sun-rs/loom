@@ -1,0 +1,81 @@
+{
+  "date": "2026-10-17",
+  "codeCommit": "3dc1a9d638a54beb6eb97c17f5795280fc6aed7f",
+  "sourceSha256": "0d544dff917505f37f74a6ee04869af1293872456b60fd1bc40162e85536a8c6",
+  "scope": "Memory history, Human tombstones, channel memory policy UI; console replacement inventory",
+  "backendChanged": false,
+  "checks": {
+    "targetedMemoryTests": 6,
+    "officialSourceTests": 118,
+    "frontendTypecheckAndBuild": true,
+    "formatAndDiff": true,
+    "browser": [
+      {
+        "width": 1440,
+        "list": true,
+        "history": true,
+        "deletedHistoryRedacted": true,
+        "policyDefaultsOverrideInherit": true,
+        "policyUnknownReplay": true,
+        "policyConflictReread": true,
+        "detail": true,
+        "bodySearch": true,
+        "edit": true,
+        "invalidateRestore": true,
+        "pin": true,
+        "delete": true,
+        "unknownExactReplay": true
+      },
+      {
+        "width": 390,
+        "list": true,
+        "history": true,
+        "deletedHistoryRedacted": true,
+        "policyDefaultsOverrideInherit": true,
+        "policyUnknownReplay": true,
+        "policyConflictReread": true,
+        "detail": true,
+        "bodySearch": true,
+        "edit": true,
+        "invalidateRestore": true,
+        "pin": true,
+        "delete": true,
+        "unknownExactReplay": true
+      }
+    ],
+    "realPage": [
+      {
+        "width": 1440,
+        "dpr": 1,
+        "history": true,
+        "policyReadAndCancel": true,
+        "noMemoryMutation": true
+      },
+      {
+        "width": 390,
+        "dpr": 1,
+        "history": true,
+        "policyReadAndCancel": true,
+        "noMemoryMutation": true
+      }
+    ]
+  },
+  "deployment": {
+    "verified": true,
+    "webBuild": "ff57b96131fef30f7f078e4c682f86e18b36a4aee2b925656db346a3d50faa1d",
+    "backupDatabases": 2,
+    "backupFiles": 319,
+    "businessTablesUnchanged": 18,
+    "receipt": "/Users/sun/.loom/reviews/2026-10-17-memory-controls/restart.json"
+  },
+  "retainedLimits": [
+    "No paid CLI, full backend suite or physical-device acceptance",
+    "History limited to 20 revisions; explicit truncation label",
+    "Full-text search active memories only",
+    "Console retained pending task creation permission, aggregate usage and runtime/session diagnostics parity"
+  ],
+  "testNotes": [
+    "History browser regression failed before implementation as expected",
+    "Conflict reread probe initially observed the pre-fetch draft; fixed probe to wait for the reread state without weakening expected value"
+  ]
+}
