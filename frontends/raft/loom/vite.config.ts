@@ -1,3 +1,4 @@
+import { adaptNotificationTrigger } from "./notification-adaptation.ts";
 import {
   adaptThreadFollowers,
   adaptThreadFollowerRow,
@@ -51,6 +52,12 @@ export default defineConfig({
           ),
       },
       transform(code, id) {
+        if (
+          id.endsWith(
+            "/packages/web/src/components/layout/NotificationTrigger.tsx",
+          )
+        )
+          return { code: adaptNotificationTrigger(code), map: null };
         if (
           id.endsWith(
             "/packages/web/src/components/thread/ThreadAgentFollowers.tsx",

@@ -1,3 +1,4 @@
+import SystemNotifications from "./SystemNotifications.tsx";
 import {
   Activity,
   CheckSquare,
@@ -50,7 +51,10 @@ export function DesktopNavigation({ active, onSelect }: NavigationProps) {
             .filter((entry) => entry.id !== "settings" && entry.id !== "search")
             .map(item)}
         </AppRailNav>
-        <AppRailFooter>{item(destinations[5])}</AppRailFooter>
+        <AppRailFooter>
+          <SystemNotifications flavor="rail-bottom" />
+          {item(destinations[5])}
+        </AppRailFooter>
       </AppRailRoot>
     </AppShellRailSlot>
   );

@@ -1,3 +1,4 @@
+import SystemNotifications from "./SystemNotifications.tsx";
 // Structural port of Sidebar.tsx mobileInline / desktop root and header.
 // Upstream revision/license: ../adoption.json. Loom replaces the server switcher
 // with its single local Chat title; no unavailable account action is presented.
@@ -48,6 +49,12 @@ export default function ChatSidebarFrame({
         >
           {title}
         </h1>
+        {!desktop && title === "聊天" && (
+          <>
+            <div className="min-w-0 flex-1" />
+            <SystemNotifications flavor="mobile-navbar" />
+          </>
+        )}
       </div>
       <div
         className="scrollbar-quiet min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-2 py-3 mobile-nav-clearance"

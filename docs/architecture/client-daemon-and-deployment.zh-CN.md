@@ -387,8 +387,15 @@ Tailnet HTTP 启动器发现本机 RFC1918 IPv4 后，显式加入同端口的�
 
 2026-09-13 日志生命周期：显式启动/替换入口在旧进程退出后、打开新日志句柄之前应用统一的 UTC 跨日 / 64MiB / 14 天轮转策略；不对活动写入者执行 rename。Owner 为 agent-host 的 service-log-rotation，Core 启动层复用。详见[日志轮转](../audits/2026-09-13-service-log-rotation.zh-CN.md)。
 
-### evo 局域网部署采用（2026-10-16）
+### evo 家庭局域网／Tailscale 部署采用（2026-10-16）
 
-Owner 要求正式前端允许局域网接入。evo 选择既有 `RAH_LAN_ORIGIN` HTTPS／设备配对路径，并以 `RAH_LAN_BIND_HOST` 精确绑定所选 RFC1918 地址；没有启用 trusted-network、Tailnet 旁路或第二份 Core。持久 data home、Human 身份和Provider账户保持原位；当前地址与验证见 [evo状态](../evo/status.zh-CN.md)。该模式替换原端口的loopback HTTP入口，浏览器与手机均使用同一 HTTPS 地址。客户端需要安装并信任该部署的本机CA，再使用一次性配对码；授权会话可撤销。网卡地址变化需要更新显式地址并签发匹配证书，不自动扩大监听范围。
+Owner 随后明确选择免配对的受信网络模式，替代同日早先的 HTTPS／设备配对部署。
+沿用现有 `RAH_TAILNET_HOST` 加 `RAH_TRUSTED_LAN_HOSTS` 显式地址配置；同一
+LocalWorkbenchGateway 仅监听所选 Tailscale、家庭局域网和 loopback 地址，不绑定 wildcard，
+不自动信任新网卡。浏览器无需登录、安装 CA 或配对；能访问这些入口的设备均被视为该 Human。
+这不是“网络绝对安全”的保证，也没有删除 Core 的身份、成员权限、执行隔离或 Host/Origin 检查。
+已有证书保留但不再用于当前入口。地址变化需显式更新配置并重启。
 
-本轮已核对TLS证书链、未配对API拒绝、Origin拒绝及已配对双尺寸真实页面。没有代替用户执行其他物理设备的CA安装，也没有宣称跨设备验收；本次没有修改网关协议或认证实现。
+Web 入口在加载官方模块之前补齐 HTTP 浏览器的 UUID 能力，使用 `crypto.getRandomValues`，
+保留安全上下文的原生实现。HTTP 不会因此获得 HTTPS 专属的浏览器权限。
+当前部署与验证边界见 [evo状态](../evo/status.zh-CN.md)。

@@ -1,3 +1,4 @@
+import { verifyNotifications } from "./notifications-browser.mjs";
 import { verifyThreadFollowers } from "./thread-followers-browser.mjs";
 import { verifyAbout } from "./about-browser.mjs";
 import { verifyTaskBoard } from "./task-board-browser.mjs";
@@ -61,7 +62,14 @@ const results = [];
 try {
   running = await startRestartableLocalCoreWorkbench({
     environment: { ...process.env, PATH: bin },
-    mode: { kind: "loopback", port: 0 },
+    mode: process.env.LOOM_BROWSER_TRUSTED_HOST
+      ? {
+          kind: "tailnet",
+          bindHost: process.env.LOOM_BROWSER_TRUSTED_HOST,
+          additionalBindHosts: ["127.0.0.1"],
+          port: 0,
+        }
+      : { kind: "loopback", port: 0 },
     staticDirectory: resolve(
       process.env.LOOM_BROWSER_STATIC_DIRECTORY ??
         "frontends/raft/packages/web/dist-workbench",
@@ -71,7 +79,7 @@ try {
   });
   const origin = running.descriptor.webOrigin;
   const response = await fetch(origin);
-  const cookie = response.headers.get("set-cookie").split(";")[0];
+  const cookie = response.headers.get("set-cookie")?.split(";")[0] ?? "";
   const client = new HttpRahClient({
     baseUrl: origin,
     accessToken: () => "trusted-proxy-auth",
@@ -147,7 +155,11 @@ try {
     instances.push(result.instance);
   }
   browser = await chromium.launch({ headless: true });
-  if (process.env.LOOM_BROWSER_SLICE === "thread-followers") {
+  if (process.env.LOOM_BROWSER_SLICE === "notifications") {
+    console.log(
+      JSON.stringify(await verifyNotifications({ browser, origin, channels })),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "thread-followers") {
     console.log(
       JSON.stringify(
         await verifyThreadFollowers({

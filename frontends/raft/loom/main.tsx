@@ -1,14 +1,4 @@
-import DocumentPreview from "./DocumentPreview.tsx";
-import ImageLightbox from "../packages/web/src/components/ImageLightbox.tsx";
-import ReactDOM from "react-dom/client";
-import { AppProviders } from "../packages/web/src/AppProviders.tsx";
-import ChannelApp from "./ChannelApp.tsx";
+import "./browser-crypto.ts";
 import "./style.css";
-document.title = "Loom";
-ReactDOM.createRoot(document.getElementById("root")!).render(
-  <AppProviders>
-    <ChannelApp />
-    <ImageLightbox />
-    <DocumentPreview />
-  </AppProviders>,
-);
+// Load vendor modules only after HTTP browser compatibility is installed.
+void import("./app-entry.tsx");

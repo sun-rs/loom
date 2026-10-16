@@ -11,7 +11,7 @@ export function useThreadActivity(
   client: RahClient,
   roomId: string,
   threadId: string | undefined,
-  messages: Message[],
+  messages: readonly Message[],
   host: RefObject<HTMLDivElement | null>,
   enabled: boolean,
 ) {

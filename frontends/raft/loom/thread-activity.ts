@@ -2,7 +2,7 @@ import type { RahClient } from "@rah-os/client-sdk";
 import type { Message } from "@rah-os/protocol";
 
 export function visibleThreadFrontier(
-  messages: Message[],
+  messages: readonly Message[],
   visibleIds: string[],
   roomId: string,
   threadId: string,
