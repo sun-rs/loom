@@ -101,6 +101,35 @@
     "Cross-message concurrent preview ordering not specifically verified"
   ],
   "deployment": {
-    "status": "pending"
+    "status": "verified",
+    "sourceCommit": "c6f057b181fbc538594d988f2806e5e1dfccd860",
+    "webBuildId": "ab18ff6da3d5af7a2435e9b4d98143d5f8608c563859f7cdc5e11732b59da33b",
+    "backupDatabases": 2,
+    "backupFiles": 318,
+    "unchangedBusinessProjections": 18,
+    "sameDataHome": true,
+    "gracefulRestart": true,
+    "realPage": [
+      {
+        "width": 1440,
+        "realSearchHistory": true,
+        "nativeEdit": false,
+        "buildMatches": true,
+        "noBusinessWrites": true,
+        "pageErrors": [],
+        "noOverflow": true
+      },
+      {
+        "width": 390,
+        "realSearchHistory": true,
+        "nativeEdit": true,
+        "buildMatches": true,
+        "noBusinessWrites": true,
+        "pageErrors": [],
+        "noOverflow": true
+      }
+    ],
+    "reviewArtifacts": "/Users/sun/.loom/reviews/2026-10-16-attachment-preview",
+    "scope": "Actual deployed build and existing search surface checked read-only. Real messages currently have no attachments; native preview/comment workflow verified on isolated real Core only."
   }
 }
