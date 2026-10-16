@@ -83,6 +83,9 @@ export default function TopBarSearch({
             workspaceId: directory.workspace.workspaceId,
             mode: "search",
             controlRoomId: directory.workspace.controlRoomId,
+            principalId: directory.principal.principalId,
+            backgroundRoomId:
+              new URLSearchParams(background).get("room") ?? undefined,
             onOpenEntity,
             notice,
             onBack: close,

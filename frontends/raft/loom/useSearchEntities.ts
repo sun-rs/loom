@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
 import {
-  buildSearchEntityEntriesWhenQueryPresent,
+  buildSearchEntityEntries,
   filterSearchEntityEntriesForQuery,
   findExactDestination,
 } from "../packages/web/src/components/search/searchEntities.ts";
@@ -15,6 +15,7 @@ export function useSearchEntities(
   enabled: boolean,
 ) {
   const [source, setSource] = useState<ReturnType<typeof entitySources>>();
+  const [hiddenDms, setHiddenDms] = useState<string[]>([]);
   const [error, setError] = useState(false);
   const [retry, setRetry] = useState(0);
   useEffect(() => {
@@ -27,32 +28,33 @@ export function useSearchEntities(
       client.request("room.list", { workspaceId }, options),
       client.request("role.list", { controlRoomId }, options),
       client.request("agent.list", { controlRoomId }, options),
+      client.request("sidebar.get", { workspaceId }, options),
     ])
-      .then(([rooms, roles, agents]) => {
-        if (!controller.signal.aborted)
+      .then(([rooms, roles, agents, sidebar]) => {
+        if (!controller.signal.aborted) {
           setSource(entitySources({ ...rooms, ...roles, ...agents }));
+          setHiddenDms(sidebar.preferences.hiddenDms);
+        }
       })
       .catch(() => {
         if (!controller.signal.aborted) setError(true);
       });
     return () => controller.abort();
   }, [client, workspaceId, controlRoomId, enabled, retry]);
+  const catalog = useMemo(
+    () => (source && enabled ? buildSearchEntityEntries(source) : []),
+    [source, enabled],
+  );
   const entries = useMemo(
     () =>
-      source && enabled
-        ? filterSearchEntityEntriesForQuery(
-            query,
-            buildSearchEntityEntriesWhenQueryPresent(
-              Boolean(query.trim()),
-              source,
-            ),
-          )
-        : [],
-    [query, source, enabled],
+      query.trim() ? filterSearchEntityEntriesForQuery(query, catalog) : [],
+    [query, catalog],
   );
   const ranked = useRankedComposerSuggestions(query, entries);
   return {
     results: ranked.slice(0, 50),
+    catalog,
+    hiddenDms,
     exact: findExactDestination(query, ranked),
     error: enabled && error,
     retry: () => setRetry((v) => v + 1),

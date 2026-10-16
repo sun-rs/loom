@@ -1,3 +1,4 @@
+import { verifySearchRecent } from "./search-recent-browser.mjs";
 import { verifySearchEntities } from "./search-entities-browser.mjs";
 import { verifyLayout } from "./layout-browser.mjs";
 import { verifyTopbar, openFullSearch } from "./topbar-browser.mjs";
@@ -153,6 +154,10 @@ try {
           instances,
         }),
       ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "search-recent") {
+    console.log(
+      JSON.stringify(await verifySearchRecent({ browser, origin, channels })),
     );
   } else if (process.env.LOOM_BROWSER_SLICE === "search-entities") {
     console.log(

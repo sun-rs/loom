@@ -1,6 +1,12 @@
-import { useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
+import { FolderOpen } from "lucide-react";
+import DismissBackdrop from "../packages/web/src/components/ui/DismissBackdrop.tsx";
+import MenuItem from "../packages/web/src/components/ui/MenuItem.tsx";
+import { placeContextMenu } from "../packages/web/src/components/ui/contextMenuPosition.ts";
+import { useEffect, useRef, useState } from "react";
 import { useIntl } from "react-intl";
 import {
+  ContextMenuPopup,
   SearchResultsSection,
   SearchResultsSectionHeading,
   SearchResultsList,
@@ -11,30 +17,88 @@ export function SearchEntityRow({
   entity,
   selected,
   onOpen,
+  returnHint = false,
 }: {
   entity: SearchEntity;
+  returnHint?: boolean;
   selected: boolean;
   onOpen: (entity: SearchEntity, full: boolean) => void;
 }) {
+  const { formatMessage } = useIntl();
+  const row = useRef<HTMLDivElement>(null);
+  const [menu, setMenu] = useState<{ x: number; y: number }>();
+  const close = () => {
+    setMenu(undefined);
+    row.current?.querySelector("button")?.focus({ preventScroll: true });
+  };
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);
   return (
-    <div data-entity-id={entity.key}>
+    <div ref={row} data-entity-id={entity.key}>
       <EntityResultRow
         result={
           entity.type === "agentDm" ? { ...entity, agentId: null } : entity
         }
-        selected={selected}
-        returnHint={false}
+        selected={selected || Boolean(menu)}
+        returnHint={returnHint}
         agentAvatarUrl={null}
         humanMember={undefined}
-        onResultContextMenu={() => {}}
+        onResultContextMenu={(event) => {
+          clearTimeout(timer.current);
+          event.preventDefault();
+          event.stopPropagation();
+          setMenu(
+            placeContextMenu({
+              x: event.clientX,
+              y: event.clientY,
+              width: 192,
+              height: 40,
+            }),
+          );
+        }}
         onResultClick={(event) => {
           clearTimeout(timer.current);
           if (event.detail >= 2) onOpen(entity, true);
           else timer.current = setTimeout(() => onOpen(entity, false), 220);
         }}
       />
+      {menu &&
+        createPortal(
+          <>
+            <DismissBackdrop onDismiss={close} trapContextMenu />
+            <ContextMenuPopup
+              role="menu"
+              aria-label={formatMessage(
+                { id: "search.channelMenuAria" },
+                { title: entity.title },
+              )}
+              ref={(node) => {
+                node?.querySelector<HTMLButtonElement>("button")?.focus();
+              }}
+              className="fixed z-50 w-48 select-none"
+              style={{ left: menu.x, top: menu.y }}
+              onMouseDown={(event) => event.stopPropagation()}
+              onKeyDown={(event) => {
+                if (event.key === "Escape") {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  close();
+                }
+              }}
+            >
+              <MenuItem
+                icon={<FolderOpen size={14} />}
+                onClick={() => {
+                  setMenu(undefined);
+                  onOpen(entity, true);
+                }}
+              >
+                {formatMessage({ id: "search.open" })}
+              </MenuItem>
+            </ContextMenuPopup>
+          </>,
+          document.body,
+        )}
     </div>
   );
 }

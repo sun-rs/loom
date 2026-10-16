@@ -1,3 +1,4 @@
+import { useRecordSearchVisit } from "./SearchRecent.tsx";
 import { useSearchDestination } from "./useSearchDestination.ts";
 import TopBarSearch from "./TopBarSearch.tsx";
 import { searchBackground } from "./useSearchPresentation.ts";
@@ -634,6 +635,11 @@ export default function ChannelApp() {
     (!requested && params.get("chat") !== "list"
       ? directory?.channels[0]
       : undefined);
+  useRecordSearchVisit(
+    directory?.workspace.workspaceId,
+    directory?.principal.principalId,
+    requested && selected ? selected.roomId : undefined,
+  );
   const bridge = useMemo(() => {
     if (!selected) return undefined;
     let current = bridges.get(selected.roomId);

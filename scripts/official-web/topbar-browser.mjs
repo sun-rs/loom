@@ -166,6 +166,10 @@ export async function verifyTopbar({ browser, origin, channels }) {
 export async function openFullSearch(page) {
   if (page.viewportSize().width >= 768) {
     await page.getByTestId("app-top-bar-search").click();
+    await page
+      .getByTestId("desktop-search-overlay")
+      .getByRole("textbox", { name: "搜索内容" })
+      .fill("fixture");
     await page.getByTestId("search-view-all-results").click();
     await page
       .getByTestId("desktop-search-overlay")
@@ -176,4 +180,5 @@ export async function openFullSearch(page) {
       .getByRole("button", { name: "搜索", exact: true })
       .click();
   await page.getByLabel("搜索内容", { exact: true }).waitFor();
+  await page.getByLabel("搜索内容", { exact: true }).fill("");
 }

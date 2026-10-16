@@ -1,3 +1,4 @@
+import SearchRecent, { useSearchRecent } from "./SearchRecent.tsx";
 import SearchEntityRows, { SearchEntityRow } from "./SearchEntityRows.tsx";
 import { useSearchEntities } from "./useSearchEntities.ts";
 import type { SearchEntity } from "./search-entities.ts";
@@ -45,6 +46,8 @@ export default function DiscoveryPage({
   client,
   workspaceId,
   controlRoomId,
+  principalId,
+  backgroundRoomId,
   onOpenEntity,
   mode,
   onOpenResult,
@@ -63,6 +66,8 @@ export default function DiscoveryPage({
   client: RahClient;
   workspaceId: string;
   controlRoomId?: string;
+  principalId?: string;
+  backgroundRoomId?: string;
   onOpenEntity: (entity: SearchEntity, full: boolean) => Promise<void>;
   mode: "search" | "activity";
 }) {
@@ -102,6 +107,12 @@ export default function DiscoveryPage({
     controlRoomId,
     query,
     mode === "search",
+  );
+  const recent = useSearchRecent(
+    entities,
+    workspaceId,
+    principalId,
+    backgroundRoomId,
   );
   const scope: WorkspaceSearchRequest["scope"] = [
     "channel",
@@ -224,6 +235,7 @@ export default function DiscoveryPage({
             key={`${mode}:${query}:${scope}:${filter}:${tick}:${filterKey}`}
             client={client}
             entities={entities}
+            recent={recent}
             onOpenEntity={onOpenEntity}
             workspaceId={workspaceId}
             mode={mode}
@@ -246,6 +258,7 @@ function Results({
   client,
   workspaceId,
   entities,
+  recent,
   onOpenEntity,
   mode,
   query,
@@ -261,6 +274,7 @@ function Results({
   client: RahClient;
   workspaceId: string;
   entities: ReturnType<typeof useSearchEntities>;
+  recent: SearchEntity[];
   onOpenEntity: (entity: SearchEntity, full: boolean) => Promise<void>;
   mode: "search" | "activity";
   query: string;
@@ -423,19 +437,30 @@ function Results({
   const visibleRows = overlayHome
     ? (data?.rows ?? []).slice(0, 5)
     : (data?.rows ?? []);
+  const showRecent =
+    Boolean(overlayHome) &&
+    !query.trim() &&
+    !searchFilters.senderIds?.length &&
+    !searchFilters.roomIds?.length &&
+    !searchFilters.senderKind &&
+    !searchFilters.mentionSelf &&
+    !searchFilters.after &&
+    recent.length > 0;
   const exact = overlayHome ? entities.exact : null;
   type RailRow =
     | { id: string; entity: SearchEntity }
     | { id: string; message: DiscoveryRow }
     | { id: string; home: true };
-  const railRows: RailRow[] = [
-    ...(exact ? [{ id: exact.key, entity: exact }] : []),
-    ...(overlayHome ? [{ id: "$all", home: true as const }] : []),
-    ...entities.results
-      .filter((e) => e.key !== exact?.key)
-      .map((entity) => ({ id: entity.key, entity })),
-    ...visibleRows.map((message) => ({ id: message.id, message })),
-  ];
+  const railRows: RailRow[] = showRecent
+    ? recent.map((entity) => ({ id: entity.key, entity }))
+    : [
+        ...(exact ? [{ id: exact.key, entity: exact }] : []),
+        ...(overlayHome ? [{ id: "$all", home: true as const }] : []),
+        ...entities.results
+          .filter((e) => e.key !== exact?.key)
+          .map((entity) => ({ id: entity.key, entity })),
+        ...visibleRows.map((message) => ({ id: message.id, message })),
+      ];
   const openEntity = (entity: SearchEntity, full: boolean) => {
     void onOpenEntity(
       entity,
@@ -472,7 +497,14 @@ function Results({
       data-testid="discovery-results"
       className="min-h-0 overflow-y-auto"
     >
-      {overlayHome && (
+      {showRecent && (
+        <SearchRecent
+          entities={recent}
+          selectedId={rail.selectedId}
+          onOpen={selectEntity}
+        />
+      )}
+      {overlayHome && !showRecent && (
         <OverlayAllResults
           query={query}
           onOpen={overlayHome}
@@ -503,13 +535,13 @@ function Results({
           {mutationError}
         </p>
       )}
-      {mode === "search" &&
-      !query.trim() &&
-      !searchFilters.senderIds?.length &&
-      !searchFilters.roomIds?.length &&
-      !searchFilters.senderKind &&
-      !searchFilters.mentionSelf &&
-      !searchFilters.after ? (
+      {showRecent ? null : mode === "search" &&
+        !query.trim() &&
+        !searchFilters.senderIds?.length &&
+        !searchFilters.roomIds?.length &&
+        !searchFilters.senderKind &&
+        !searchFilters.mentionSelf &&
+        !searchFilters.after ? (
         <p className="p-4">输入关键词搜索可访问的消息。</p>
       ) : loading ? (
         <Spinner aria-label="正在读取结果" />
