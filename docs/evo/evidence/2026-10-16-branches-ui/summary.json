@@ -1,0 +1,108 @@
+{
+  "code": "7552bf4",
+  "upstream": {
+    "url": "https://github.com/botiverse/raft-source",
+    "revision": "a98ae003246a0360872a77d76dec2fccd0347ef7",
+    "raftUi": "0.5.64",
+    "sourceFilesUnchanged": true,
+    "reused": [
+      "ConfirmDialog",
+      "AgentProfileOverflowMenu primitives",
+      "ThreadPanelRoot + thread-side-column/index.css container queries",
+      "panelBounds + useResizablePanel",
+      "existing Loom channel conversation/composer"
+    ]
+  },
+  "implemented": [
+    "Fork/Side actions in Agent instances and channel inspector menus",
+    "runtime capability preview with exact pinned offer; no CLI whitelist or empty-session fallback",
+    "Fork refreshes instance catalog; channel membership uses normal refresh",
+    "Side private conversation, URL restore, close/reopen and read-only discarded history",
+    "Side source-room check, shared write slot for sends/discard, waiting for actual termination proof",
+    "unknown create/discard explicit exact-key verification or abandon"
+  ],
+  "verification": {
+    "sourceTests": 112,
+    "finalBranchTests": 3,
+    "frontendTypecheck": "passed",
+    "productBuild": "passed",
+    "formatAndDiff": "passed",
+    "fixture": [
+      {
+        "width": 1440,
+        "copies": 2,
+        "fork": true,
+        "sideRoundTrip": true,
+        "refresh": true,
+        "reopen": true,
+        "sourceUnchanged": true,
+        "workerSourceWriteDenied": true,
+        "unknownCreateReplay": true,
+        "unknownDiscardReplay": true,
+        "busyDiscard": false,
+        "nativeResponsive": true,
+        "resize": true
+      },
+      {
+        "width": 390,
+        "copies": 2,
+        "fork": true,
+        "sideRoundTrip": true,
+        "refresh": true,
+        "reopen": true,
+        "sourceUnchanged": true,
+        "workerSourceWriteDenied": true,
+        "unknownCreateReplay": true,
+        "unknownDiscardReplay": true,
+        "busyDiscard": true,
+        "nativeResponsive": true,
+        "resize": false
+      }
+    ],
+    "fixtureBoundary": "real Kernel/Application Service/SDK/gateway; fake native copy and fake Host run, no CLI or model generation",
+    "realPage": [
+      {
+        "width": 1440,
+        "dpr": 1,
+        "menus": true,
+        "capabilityPreview": true,
+        "cancel": true,
+        "noMutation": true
+      },
+      {
+        "width": 390,
+        "dpr": 1,
+        "menus": true,
+        "capabilityPreview": true,
+        "cancel": true,
+        "noMutation": true
+      }
+    ],
+    "realPageBoundary": "menus, capability preview and cancellation only; branch endpoints intercepted to prohibit writes; normal read-cursor effects permitted",
+    "paidCli": false,
+    "fullBackendSuite": false
+  },
+  "retainedFailedChecks": [
+    "Legacy kernel fixture lacked channel-home binding and private-workspace capability; configured through existing Kernel revision/publication APIs, preserving production checks.",
+    "Initial browser selectors used contenteditable instead of the native composer textarea; corrected test.",
+    "Nested thread-layout container incorrectly applied narrow-screen close controls on desktop; removed the inner layout container and verified native resize/desktop/mobile behavior.",
+    "Busy-discard test initially required disabled textarea; native composer preserves editable drafts. Verified disabled submit and Enter emits zero sends instead.",
+    "First real-page probe used agent revision displayName instead of current member displayName; selected authenticated Room member identity and reran."
+  ],
+  "deployment": {
+    "build": "52750c16d3616f0fc050d604e23c6db3b0da7097b19f1d6c646bcad5c86fc1cf",
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-branches-ui-56ac07aa-7a71-4d33-af8e-36d275a3962c",
+    "databases": 2,
+    "files": 319,
+    "businessTablesUnchanged": 18,
+    "realUrl": "http://192.168.1.86:4176/",
+    "restartVerified": true
+  },
+  "limits": [
+    "Existing native provider copy/identity acceptance is inherited, not rerun with paid models",
+    "Physical mobile devices not tested",
+    "Removed source instances have no separate global Side history index; saved Side URL remains available subject to backend permissions",
+    "Claude/Pi SEA helper and real paid-model branch acceptance remain backend evidence limits",
+    "Channel memory UI and other console replacements remain; console is retained"
+  ]
+}

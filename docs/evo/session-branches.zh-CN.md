@@ -3,6 +3,8 @@
 负责人于 2026-10-13 授权开始，语义见[目标合同 §3](target-contract.zh-CN.md#3-调度与交流)。
 本页区分原生能力探针、统一 Loom 分支接口、Claude／Codex／OpenCode／Pi／Kimi Fork／Side 纵向实现；不是 S4/S5 全部完成声明。
 
+2026-10-16 产品前端更新：实例菜单已接 Fork／Side，Side 使用官方第三栏布局，支持独立对话、刷新／重开、忙时丢弃与未知结果核实。隔离 Kernel/API 双尺寸验收通过，未新增真实 CLI／付费模型结论；历史段落中的“产品第三栏尚未接入”是当时状态。见[接线记录](../audits/2026-10-16-branches-ui.zh-CN.md)和[证据](evidence/2026-10-16-branches-ui/summary.json)。
+
 ## 产品语义
 
 - Fork 是同频道的正式新成员：同 Role ID、源实例冻结 Revision 与当前执行配置（含原生 model/effort 调整），新 Instance ID、名称后缀、原生 session 和权限。已有上下文不等于继承 Task 负责人、收件义务、旧凭据或私聊访问权。Role 后来修改不自动进入分叉。
