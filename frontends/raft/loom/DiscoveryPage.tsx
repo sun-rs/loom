@@ -1,3 +1,6 @@
+import SearchEntityRows, { SearchEntityRow } from "./SearchEntityRows.tsx";
+import { useSearchEntities } from "./useSearchEntities.ts";
+import type { SearchEntity } from "./search-entities.ts";
 import SearchLoadMore from "./SearchLoadMore.tsx";
 import { appendSearchPage, MAX_SEARCH_RESULT_ROWS } from "./search-pages.ts";
 import { useSearchRail, type SearchRailHandler } from "./useSearchRail.ts";
@@ -41,20 +44,26 @@ import SearchMessageGroups from "./SearchMessageGroups.tsx";
 export default function DiscoveryPage({
   client,
   workspaceId,
+  controlRoomId,
+  onOpenEntity,
   mode,
   onOpenResult,
   detail,
   profileOpen = false,
+  notice,
   onBack,
   overlay = false,
 }: {
   onOpenResult: (row: DiscoveryRow, full: boolean) => Promise<void>;
   overlay?: boolean;
+  notice?: ReactNode;
   detail?: ReactNode;
   profileOpen?: boolean;
   onBack: () => void;
   client: RahClient;
   workspaceId: string;
+  controlRoomId?: string;
+  onOpenEntity: (entity: SearchEntity, full: boolean) => Promise<void>;
   mode: "search" | "activity";
 }) {
   const [params, setParams] = useSearchParams();
@@ -87,6 +96,13 @@ export default function DiscoveryPage({
       ? compactPanel
       : fullPanel;
   const query = params.get("q") ?? "";
+  const entities = useSearchEntities(
+    client,
+    workspaceId,
+    controlRoomId,
+    query,
+    mode === "search",
+  );
   const scope: WorkspaceSearchRequest["scope"] = [
     "channel",
     "direct",
@@ -185,6 +201,7 @@ export default function DiscoveryPage({
             mobileBackProps={{ "aria-label": "返回聊天列表" }}
           />
         )}
+        {notice}
         <Shell edge="attached" className="min-h-0 flex-1 border-l-0">
           {mode === "search" ? (
             <SearchFilters
@@ -206,6 +223,8 @@ export default function DiscoveryPage({
             overlayHome={overlay ? allResults : undefined}
             key={`${mode}:${query}:${scope}:${filter}:${tick}:${filterKey}`}
             client={client}
+            entities={entities}
+            onOpenEntity={onOpenEntity}
             workspaceId={workspaceId}
             mode={mode}
             query={query}
@@ -226,6 +245,8 @@ function Results({
   overlayHome,
   client,
   workspaceId,
+  entities,
+  onOpenEntity,
   mode,
   query,
   searchFilters,
@@ -239,6 +260,8 @@ function Results({
   onOpenResult: (row: DiscoveryRow, full: boolean) => Promise<void>;
   client: RahClient;
   workspaceId: string;
+  entities: ReturnType<typeof useSearchEntities>;
+  onOpenEntity: (entity: SearchEntity, full: boolean) => Promise<void>;
   mode: "search" | "activity";
   query: string;
   searchFilters: ReturnType<typeof nativeSearchFilters>;
@@ -400,18 +423,50 @@ function Results({
   const visibleRows = overlayHome
     ? (data?.rows ?? []).slice(0, 5)
     : (data?.rows ?? []);
+  const exact = overlayHome ? entities.exact : null;
+  type RailRow =
+    | { id: string; entity: SearchEntity }
+    | { id: string; message: DiscoveryRow }
+    | { id: string; home: true };
+  const railRows: RailRow[] = [
+    ...(exact ? [{ id: exact.key, entity: exact }] : []),
+    ...(overlayHome ? [{ id: "$all", home: true as const }] : []),
+    ...entities.results
+      .filter((e) => e.key !== exact?.key)
+      .map((entity) => ({ id: entity.key, entity })),
+    ...visibleRows.map((message) => ({ id: message.id, message })),
+  ];
+  const openEntity = (entity: SearchEntity, full: boolean) => {
+    void onOpenEntity(
+      entity,
+      Boolean(overlayHome) ||
+        full ||
+        !window.matchMedia("(min-width: 1024px)").matches,
+    ).catch(() => setMutationError("无法打开此对话，请刷新后重试。"));
+  };
   const rail = useSearchRail(
-    visibleRows,
+    railRows,
     mode === "search",
     railHandler,
-    (row, full) => {
-      void onOpenResult(row, full).catch(() =>
-        setError("无法打开消息，请刷新重试。"),
-      );
+    (row) => {
+      if ("home" in row) overlayHome?.();
+      else if ("entity" in row) openEntity(row.entity, false);
+      else
+        void onOpenResult(row.message, false).catch(() =>
+          setError("无法打开消息，请刷新重试。"),
+        );
     },
-    route.get("message"),
-    overlayHome,
+    route.get("message") ??
+      (!overlayHome && route.has("room")
+        ? entities.results.find((e) => e.channelId === route.get("room"))?.key
+        : null) ??
+      null,
+    overlayHome ? query + "\0" + (exact?.key ?? "") : "page",
   );
+  const selectEntity = (entity: SearchEntity, full: boolean) => {
+    rail.select({ id: entity.key, entity });
+    openEntity(entity, full);
+  };
   return (
     <SearchShellViewport
       data-testid="discovery-results"
@@ -421,8 +476,27 @@ function Results({
         <OverlayAllResults
           query={query}
           onOpen={overlayHome}
-          selected={rail.selectedId === null}
-        />
+          selected={rail.selectedId === "$all"}
+        >
+          {exact && (
+            <SearchEntityRow
+              entity={exact}
+              selected={rail.selectedId === exact.key}
+              onOpen={selectEntity}
+            />
+          )}
+        </OverlayAllResults>
+      )}
+      <SearchEntityRows
+        entities={entities.results.filter((e) => e.key !== exact?.key)}
+        selectedId={rail.selectedId}
+        onOpen={selectEntity}
+      />
+      {entities.error && (
+        <div role="alert" className="p-3">
+          对话目录读取失败。
+          <Button onClick={entities.retry}>重新读取目录</Button>
+        </div>
       )}
       {mutationError && (
         <p role="alert" className="px-3 py-2">
@@ -460,7 +534,7 @@ function Results({
                   query={query}
                   selectedId={rail.selectedId}
                   onOpen={(row, full) => {
-                    rail.select(row);
+                    rail.select({ id: row.id, message: row });
                     void onOpenResult(row, full).catch(() =>
                       setError("无法打开消息，请刷新重试。"),
                     );

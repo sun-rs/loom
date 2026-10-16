@@ -1,3 +1,4 @@
+import { verifySearchEntities } from "./search-entities-browser.mjs";
 import { verifyLayout } from "./layout-browser.mjs";
 import { verifyTopbar, openFullSearch } from "./topbar-browser.mjs";
 import { verifyAppearance } from "./appearance-browser.mjs";
@@ -150,6 +151,20 @@ try {
           workspace,
           channels,
           instances,
+        }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "search-entities") {
+    console.log(
+      JSON.stringify(
+        await verifySearchEntities({
+          browser,
+          origin,
+          client,
+          workspace,
+          channels,
+          instances,
+          head,
         }),
       ),
     );

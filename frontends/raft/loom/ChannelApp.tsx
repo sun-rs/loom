@@ -1,3 +1,4 @@
+import { useSearchDestination } from "./useSearchDestination.ts";
 import TopBarSearch from "./TopBarSearch.tsx";
 import { searchBackground } from "./useSearchPresentation.ts";
 import { useLocation, Routes, Route } from "react-router-dom";
@@ -567,6 +568,12 @@ export default function ChannelApp() {
         : undefined,
     [directory?.workspace.workspaceId, directory?.workspace.controlRoomId],
   );
+  const openSearchEntity = useSearchDestination(
+    client,
+    boxes,
+    setDirectory,
+    setParams,
+  );
   const [instanceTarget, setInstanceTarget] = useState<{
     bridge: LoomChannelClient;
     name: string;
@@ -713,6 +720,8 @@ export default function ChannelApp() {
             client={client}
             directory={directory}
             onDirectory={setDirectory}
+            onOpenEntity={openSearchEntity}
+            notice={privateNotice}
           />
         )}
         {instanceTarget && directory?.workspace.controlRoomId && (
@@ -883,6 +892,9 @@ export default function ChannelApp() {
                 {directory &&
                   (destination === "search" || destination === "activity") && (
                     <DiscoveryPage
+                      controlRoomId={directory.workspace.controlRoomId}
+                      onOpenEntity={openSearchEntity}
+                      notice={privateNotice}
                       client={client}
                       workspaceId={directory.workspace.workspaceId}
                       mode={destination}

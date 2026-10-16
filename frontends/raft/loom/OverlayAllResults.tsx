@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { useIntl } from "react-intl";
 import { Search } from "lucide-react";
 import {
@@ -14,8 +15,10 @@ export default function OverlayAllResults({
   query,
   onOpen,
   selected,
+  children,
 }: {
   selected: boolean;
+  children?: ReactNode;
   query: string;
   onOpen: () => void;
 }) {
@@ -26,9 +29,11 @@ export default function OverlayAllResults({
         className="mb-3 flex flex-col gap-2"
         data-testid="search-overlay-head"
       >
+        {children}
         <SearchEntityResult
           type="button"
           data-testid="search-view-all-results"
+          data-search-rail-id="$all"
           selected={selected}
           onClick={onOpen}
         >

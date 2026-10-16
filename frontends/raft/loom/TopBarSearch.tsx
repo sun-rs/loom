@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+import type { SearchEntity } from "./search-entities.ts";
 import { useCallback, useEffect, useRef } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
 import type { RahClient } from "@rah-os/client-sdk";
@@ -13,8 +15,12 @@ export default function TopBarSearch({
   client,
   directory,
   onDirectory,
+  onOpenEntity,
+  notice,
 }: {
   client: RahClient;
+  onOpenEntity: (entity: SearchEntity, full: boolean) => Promise<void>;
+  notice?: ReactNode;
   directory: Awaited<ReturnType<typeof loadChannelDirectory>>;
   onDirectory: (
     value: Awaited<ReturnType<typeof loadChannelDirectory>>,
@@ -76,6 +82,9 @@ export default function TopBarSearch({
             client,
             workspaceId: directory.workspace.workspaceId,
             mode: "search",
+            controlRoomId: directory.workspace.controlRoomId,
+            onOpenEntity,
+            notice,
             onBack: close,
             onOpenResult: async (row) => {
               if (hasUnresolvedIntents()) throw Error("仍有未决操作");
