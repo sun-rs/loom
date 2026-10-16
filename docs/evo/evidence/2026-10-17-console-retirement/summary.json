@@ -1,0 +1,67 @@
+{
+  "date": "2026-10-17",
+  "codeCommit": "c7365143f04530ee4f81816deffea9c2bbbcb430",
+  "scope": "Temporary console source, gateway routing, launch environment, build/test/CI retirement",
+  "domainBackendChanged": false,
+  "gatewayChanged": true,
+  "checks": {
+    "targetedDaemonCiLaunchAcceptanceTests": 67,
+    "officialFrontendSourceTests": 124,
+    "finalLockfileRetirementTest": true,
+    "rootTypecheck": true,
+    "requiredProductBuild": true,
+    "focusedRuntimeSettingsBrowser": [
+      {
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "save": true,
+        "conflict": true,
+        "unknownNotResent": true
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "save": true,
+        "conflict": true,
+        "unknownNotResent": true
+      }
+    ],
+    "realPage": [
+      {
+        "width": 1440,
+        "dpr": 1,
+        "collapsedByDefault": true,
+        "advancedFields": true,
+        "noMutation": true
+      },
+      {
+        "width": 390,
+        "dpr": 1,
+        "collapsedByDefault": true,
+        "advancedFields": true,
+        "noMutation": true
+      }
+    ],
+    "retiredRoutes404": ["loopback", "LAN", "Tailscale"],
+    "historicalPaidRunnerDryOnly": true,
+    "paidCliRun": false
+  },
+  "deployment": {
+    "verified": true,
+    "webBuild": "23e5aac82ec40bdc2aba2b2b434f7370c80a193ad4e069ab48a69cfc8562ad0c",
+    "backupDatabases": 2,
+    "backupFiles": 319,
+    "unchangedBusinessTables": 18,
+    "consoleEnvironmentRemoved": true,
+    "receipt": "/Users/sun/.loom/reviews/2026-10-17-console-retirement/restart.json"
+  },
+  "limits": [
+    "Historical acceptance step key console retained for saved runs; step now checks product HTML and raw Human API data, not browser interaction",
+    "Historical immutable assets/backups not purged; console no longer routable",
+    "No full backend suite or paid efficiency revalidation in this maintenance batch"
+  ]
+}
