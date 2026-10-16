@@ -1,0 +1,63 @@
+{
+  "sourceCommit": "01e1edda504271d99eeb97d5af567d21a36f9c9e",
+  "webBuildId": "7a91b3012f6f44b44e1807c4c3d83a9a0e670a7f8ecf8902561a529c5c9b1685",
+  "upstreamFilesUnchanged": true,
+  "checks": {
+    "sourceTests": 79,
+    "typecheck": true,
+    "build": true,
+    "format": true,
+    "diff": true,
+    "menuWidths": [1440, 390],
+    "desktopVisitPersistenceAndExclusion": true,
+    "menuEscapeRetainsOverlay": true,
+    "recentEnterNavigation": true,
+    "hiddenArchivedMissingCandidateFilter": true,
+    "topbarRegression": true,
+    "entitySearchRegression": true,
+    "fullRepositorySuite": false,
+    "paidCli": false
+  },
+  "retainedFailures": [
+    "missing right-click menu",
+    "missing recent selector adapter",
+    "wrong SectionEyebrow import corrected to original component path",
+    "browser expected button instead of native menuitem; test corrected without changing component role"
+  ],
+  "deployment": {
+    "verified": true,
+    "backedUpDatabases": 2,
+    "backedUpFiles": 318,
+    "businessTablesUnchanged": 18,
+    "sourceSha256": "cd4fdf471fad695d14a1aec483ba471ef061d0de0b2fd7fc7970976b7a08f2b7"
+  },
+  "realPage": [
+    {
+      "width": 1440,
+      "realChannelCandidate": true,
+      "nativeMenu": true,
+      "overlayExactAndGap": true,
+      "buildMatches": true,
+      "noBusinessWrites": true,
+      "pageErrors": [],
+      "noOverflow": true
+    },
+    {
+      "width": 390,
+      "realChannelCandidate": true,
+      "nativeMenu": true,
+      "overlayExactAndGap": false,
+      "buildMatches": true,
+      "noBusinessWrites": true,
+      "pageErrors": [],
+      "noOverflow": true
+    }
+  ],
+  "limits": [
+    "Actual persisted visits verified against isolated Core; real-page probe stayed read-only and did not navigate user conversations",
+    "Visits-only native selection; no activity-tail fallback",
+    "No frequency/search-term history, topbar history menu or draggable overlay",
+    "No authenticated upstream visual comparison"
+  ],
+  "localEvidence": "/Users/sun/.loom/reviews/2026-10-16-search-recents"
+}
