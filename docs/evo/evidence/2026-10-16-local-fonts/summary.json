@@ -1,0 +1,94 @@
+{
+  "code": "ce75a42",
+  "implemented": "Official font families delivered from same-origin hashed assets; existing UI gap inventory audited",
+  "upstream": {
+    "raftSource": "a98ae003246a0360872a77d76dec2fccd0347ef7",
+    "raftUi": "0.5.64",
+    "fontManifest": "../../../../frontends/raft/loom/fonts/provenance.json",
+    "fontFiles": 23,
+    "fontBytes": 465260
+  },
+  "checks": {
+    "sourceTests": 104,
+    "frontendTypecheck": "passed",
+    "productBuild": "passed",
+    "formatAndDiff": "passed",
+    "temporaryCoreBrowser": "1440x1000 and390x844 DPR1; two themes, all five font faces loaded, no external font requests",
+    "realLanPages": [
+      {
+        "width": 1440,
+        "dpr": 1,
+        "loaded": [
+          {
+            "family": "Geist",
+            "loaded": 1
+          },
+          {
+            "family": "Geist Mono",
+            "loaded": 1
+          },
+          {
+            "family": "Hanken Grotesk",
+            "loaded": 1
+          },
+          {
+            "family": "Inter",
+            "loaded": 1
+          },
+          {
+            "family": "Raft Quote Glyphs",
+            "loaded": 1
+          }
+        ],
+        "externalFontRequests": 0,
+        "pageErrors": 0
+      },
+      {
+        "width": 390,
+        "dpr": 1,
+        "loaded": [
+          {
+            "family": "Geist",
+            "loaded": 1
+          },
+          {
+            "family": "Geist Mono",
+            "loaded": 1
+          },
+          {
+            "family": "Hanken Grotesk",
+            "loaded": 1
+          },
+          {
+            "family": "Inter",
+            "loaded": 1
+          },
+          {
+            "family": "Raft Quote Glyphs",
+            "loaded": 1
+          }
+        ],
+        "externalFontRequests": 0,
+        "pageErrors": 0
+      }
+    ]
+  },
+  "deployment": {
+    "webBuild": "31b6d902633eec1c938472d636d4d1ffcad1ce7d024d3512a34a8deaa3402fc8",
+    "gracefulRestart": true,
+    "backupDatabases": 2,
+    "backupFiles": 319,
+    "businessTablesUnchanged": 18,
+    "trustedNetworkUnchanged": true
+  },
+  "limits": [
+    "No backend change, full backend suite or paid CLI",
+    "Chinese glyphs retain official system fallback",
+    "Message reactions, forwarding and Fork/Side still unconnected; see inventory",
+    "No physical second-device verification"
+  ],
+  "failedAttempts": [
+    "Missing implementation test red",
+    "Production PostCSS normalized external import syntax; fixed and added regression; final required build passed"
+  ]
+}
