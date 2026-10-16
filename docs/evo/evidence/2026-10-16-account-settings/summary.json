@@ -1,0 +1,87 @@
+{
+  "codeCommit": "c3c27a3",
+  "upstream": {
+    "release": "1.21.16",
+    "sourceRevision": "a98ae003246a0360872a77d76dec2fccd0347ef7",
+    "releaseEvidence": "../2026-10-16-native-topbar/upstream.json",
+    "directReuse": [
+      "AccountSection selected profile JSX",
+      "SettingsProfileCard",
+      "AvatarSlot / GravatarAvatar",
+      "FormField / Input / PrefixedInput / Button"
+    ],
+    "localGlue": [
+      "Profile CAS and explicit abandon/read recovery",
+      "SDK upload then profile binding",
+      "Same-origin uploaded avatar URL guard"
+    ]
+  },
+  "checks": {
+    "red": [
+      "Missing account field",
+      "Native uploaded-avatar guard rejects Loom URL",
+      "Missing local avatar guard module"
+    ],
+    "sourceTests": 89,
+    "typecheck": true,
+    "build": true,
+    "format": true,
+    "diff": true,
+    "browser": [
+      {
+        "width": 1440,
+        "height": 1000,
+        "dpr": 1,
+        "unknownReadOnlyRecovery": true,
+        "staleRejected": true,
+        "avatarUploadAndRefresh": true,
+        "unsavedNamePreserved": true
+      },
+      {
+        "width": 390,
+        "height": 844,
+        "dpr": 1,
+        "unknownReadOnlyRecovery": true,
+        "staleRejected": true,
+        "avatarUploadAndRefresh": true,
+        "unsavedNamePreserved": true
+      }
+    ]
+  },
+  "deployment": {
+    "verified": true,
+    "webBuildId": "b0c0e830b961b6cabfec2801b41fb707725b95ec371c7082488f8eb9e7619d97",
+    "backupDatabases": 2,
+    "backupFiles": 318,
+    "businessProjectionsUnchanged": 18,
+    "realPage": [
+      {
+        "width": 1440,
+        "nameDraftOnly": true,
+        "settingsVisible": true,
+        "buildMatches": true,
+        "noRoomWrites": true,
+        "noOverflow": true,
+        "pageErrors": []
+      },
+      {
+        "width": 390,
+        "nameDraftOnly": true,
+        "settingsVisible": true,
+        "buildMatches": true,
+        "noRoomWrites": true,
+        "noOverflow": true,
+        "pageErrors": []
+      }
+    ],
+    "realProfileAndRoomsUnchanged": true
+  },
+  "limits": [
+    "Real profile not mutated; update/upload acceptance in isolated Core",
+    "No cloud account/email/password/social auth",
+    "Profile readback does not prove original request attribution",
+    "No app-wide immediate avatar propagation claim",
+    "No full backend/browser/paid gate"
+  ],
+  "artifacts": "/Users/sun/.loom/reviews/2026-10-16-account-settings"
+}
