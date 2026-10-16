@@ -150,6 +150,23 @@ export function useTaskCardActions(task: Task) {
   const [editingStatus, setEditing] = useState(false);
   const busy = board?.state !== "idle";
   const canEditStatus = Boolean(board?.canEdit(task));
+  useEffect(() => {
+    if (!editingStatus || busy) return;
+    const opener =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    const key = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopPropagation();
+      setEditing(false);
+      opener?.focus({ preventScroll: true });
+    };
+    document.addEventListener("keydown", key, true);
+    return () => document.removeEventListener("keydown", key, true);
+  }, [editingStatus, busy]);
+
   return {
     formatMessage,
     editingStatus: editingStatus && !busy,

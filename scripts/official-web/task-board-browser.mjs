@@ -129,6 +129,15 @@ export async function verifyTaskBoard({
         .locator('[data-slot="task-card"]')
         .filter({ hasText: title });
       await card.getByRole("button", { name: "进行中", exact: true }).click();
+      await page.keyboard.press("Escape");
+      await page.getByTestId("task-status-menu").waitFor({ state: "detached" });
+      assert.equal(
+        await card
+          .getByRole("button", { name: "进行中", exact: true })
+          .evaluate((el) => el === document.activeElement),
+        true,
+      );
+      await card.getByRole("button", { name: "进行中", exact: true }).click();
       const reviewed = page.waitForResponse(
         (r) =>
           r.url().endsWith("/v3/client/tasks/workflow") && r.status() === 200,
