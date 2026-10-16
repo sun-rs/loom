@@ -62,6 +62,35 @@
     "No cross-device history; storage denial is fail-open"
   ],
   "deployment": {
-    "status": "pending"
+    "status": "verified",
+    "sourceCommit": "d527019bbfd6d3777bf900c38177bb669d06836f",
+    "webBuildId": "83c515c27c1543758f59aaa02a5ed3bed158aa0e2fdb067aeecd006011a0f4a2",
+    "backupDatabases": 2,
+    "backupFiles": 318,
+    "unchangedBusinessProjections": 18,
+    "sameDataHome": true,
+    "gracefulRestart": true,
+    "realPage": [
+      {
+        "width": 1440,
+        "realSearchHistory": true,
+        "nativeEdit": false,
+        "buildMatches": true,
+        "noBusinessWrites": true,
+        "pageErrors": [],
+        "noOverflow": true
+      },
+      {
+        "width": 390,
+        "realSearchHistory": true,
+        "nativeEdit": true,
+        "buildMatches": true,
+        "noBusinessWrites": true,
+        "pageErrors": [],
+        "noOverflow": true
+      }
+    ],
+    "reviewArtifacts": "/Users/sun/.loom/reviews/2026-10-16-search-history",
+    "scope": "Fresh ephemeral browser profile, actual accessible channel query through all-results; desktop history then same profile state on mobile. No conversation opened, no read/ACK positions changed."
   }
 }
