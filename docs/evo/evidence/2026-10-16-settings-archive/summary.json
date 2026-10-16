@@ -1,0 +1,82 @@
+{
+  "codeCommit": "5e15c35",
+  "upstream": {
+    "release": "1.21.16",
+    "sourceRevision": "a98ae003246a0360872a77d76dec2fccd0347ef7",
+    "releaseEvidence": "../2026-10-16-native-topbar/upstream.json",
+    "directReuse": [
+      "ArchivedChannelsSection JSX",
+      "UnarchiveChannelButton",
+      "SurfaceListItem",
+      "SectionHeader",
+      "Tooltip",
+      "time formatter"
+    ],
+    "localGlue": "Checked controller replacement, existing ManagementClient/WriteIntentSlot; channel type label renamed"
+  },
+  "checks": {
+    "sourceTests": 86,
+    "typecheck": true,
+    "build": true,
+    "format": true,
+    "diff": true,
+    "browser": [
+      {
+        "width": 1440,
+        "height": 1000,
+        "dpr": 1,
+        "openAndReturn": true,
+        "rejectionRetained": true,
+        "unknownExactRetry": true,
+        "durableRestore": true
+      },
+      {
+        "width": 390,
+        "height": 844,
+        "dpr": 1,
+        "openAndReturn": true,
+        "rejectionRetained": true,
+        "unknownExactRetry": true,
+        "durableRestore": true
+      }
+    ],
+    "red": [
+      "missing archived row before implementation",
+      "rejection cleared by background read"
+    ]
+  },
+  "deployment": {
+    "verified": true,
+    "webBuildId": "6b3ef86ae9bcd01867127bc88bd2ad188e25ca82f6f0f56abc5f6da9f9443c7f",
+    "backupDatabases": 2,
+    "backupFiles": 318,
+    "businessProjectionsUnchanged": 18,
+    "realPage": [
+      {
+        "width": 1440,
+        "archivedRows": 0,
+        "settingsVisible": true,
+        "buildMatches": true,
+        "noRoomWrites": true,
+        "noOverflow": true,
+        "pageErrors": []
+      },
+      {
+        "width": 390,
+        "archivedRows": 0,
+        "settingsVisible": true,
+        "buildMatches": true,
+        "noRoomWrites": true,
+        "noOverflow": true,
+        "pageErrors": []
+      }
+    ]
+  },
+  "limits": [
+    "No archived rooms in real user data; mutations verified only in isolated Core",
+    "15-second list refresh",
+    "No new settings/backend capabilities",
+    "No paid CLI, full backend or full browser suite"
+  ],
+  "artifacts": "/Users/sun/.loom/reviews/2026-10-16-settings-archive"
+}
