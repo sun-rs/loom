@@ -1,0 +1,393 @@
+{
+  "code": "2d5b564",
+  "implemented": [
+    "Native reaction toolbar, picker, count chips, context quick row and touch long press",
+    "Existing message.social/message.react with shared RoomSession and write intent",
+    "No external sharing product scope",
+    "Official bilingual font stack and message sizes verified"
+  ],
+  "upstream": {
+    "url": "https://github.com/botiverse/raft-source",
+    "revision": "a98ae003246a0360872a77d76dec2fccd0347ef7",
+    "raftUi": "0.5.64",
+    "sources": [
+      "MessageItem.tsx",
+      "MessageHoverToolbar.tsx",
+      "reactionConstants.ts"
+    ],
+    "sourceFilesUnchanged": true
+  },
+  "verification": {
+    "sourceTests": 107,
+    "frontendTypecheck": "passed",
+    "productBuild": "passed",
+    "formatAndDiff": "passed",
+    "fixtureChannel": [
+      {
+        "width": 1440,
+        "addRemove": true,
+        "exactReplay": true
+      },
+      {
+        "width": 390,
+        "addRemove": true,
+        "exactReplay": true
+      }
+    ],
+    "fixtureThread": [
+      {
+        "width": 1440,
+        "addRemove": true,
+        "exactReplay": true
+      },
+      {
+        "width": 390,
+        "addRemove": true,
+        "exactReplay": true
+      }
+    ],
+    "realPage": {
+      "fonts": [
+        {
+          "width": 1440,
+          "dpr": 1,
+          "loaded": [
+            {
+              "family": "Geist",
+              "loaded": 1
+            },
+            {
+              "family": "Geist Mono",
+              "loaded": 1
+            },
+            {
+              "family": "Hanken Grotesk",
+              "loaded": 1
+            },
+            {
+              "family": "Inter",
+              "loaded": 1
+            },
+            {
+              "family": "Raft Quote Glyphs",
+              "loaded": 1
+            }
+          ],
+          "typography": [
+            {
+              "theme": "elegant",
+              "size": "sm",
+              "fontSize": "12px",
+              "fontFamily": "Inter, system-ui, sans-serif",
+              "fonts": [
+                {
+                  "familyName": "PingFang SC",
+                  "postScriptName": "PingFangSC-Regular",
+                  "isCustomFont": false,
+                  "glyphCount": 6
+                },
+                {
+                  "familyName": "Inter",
+                  "postScriptName": "Inter-Regular",
+                  "isCustomFont": true,
+                  "glyphCount": 16
+                }
+              ]
+            },
+            {
+              "theme": "elegant",
+              "size": "md",
+              "fontSize": "14px",
+              "fontFamily": "Inter, system-ui, sans-serif",
+              "fonts": [
+                {
+                  "familyName": "PingFang SC",
+                  "postScriptName": "PingFangSC-Regular",
+                  "isCustomFont": false,
+                  "glyphCount": 6
+                },
+                {
+                  "familyName": "Inter",
+                  "postScriptName": "Inter-Regular",
+                  "isCustomFont": true,
+                  "glyphCount": 16
+                }
+              ]
+            },
+            {
+              "theme": "elegant",
+              "size": "lg",
+              "fontSize": "16px",
+              "fontFamily": "Inter, system-ui, sans-serif",
+              "fonts": [
+                {
+                  "familyName": "PingFang SC",
+                  "postScriptName": "PingFangSC-Regular",
+                  "isCustomFont": false,
+                  "glyphCount": 6
+                },
+                {
+                  "familyName": "Inter",
+                  "postScriptName": "Inter-Regular",
+                  "isCustomFont": true,
+                  "glyphCount": 16
+                }
+              ]
+            },
+            {
+              "theme": "brutal",
+              "size": "sm",
+              "fontSize": "12px",
+              "fontFamily": "\"Hanken Grotesk\", system-ui, sans-serif",
+              "fonts": [
+                {
+                  "familyName": "PingFang SC",
+                  "postScriptName": "PingFangSC-Regular",
+                  "isCustomFont": false,
+                  "glyphCount": 6
+                },
+                {
+                  "familyName": "Hanken Grotesk",
+                  "postScriptName": "HankenGrotesk-Regular",
+                  "isCustomFont": true,
+                  "glyphCount": 16
+                }
+              ]
+            },
+            {
+              "theme": "brutal",
+              "size": "md",
+              "fontSize": "14px",
+              "fontFamily": "\"Hanken Grotesk\", system-ui, sans-serif",
+              "fonts": [
+                {
+                  "familyName": "PingFang SC",
+                  "postScriptName": "PingFangSC-Regular",
+                  "isCustomFont": false,
+                  "glyphCount": 6
+                },
+                {
+                  "familyName": "Hanken Grotesk",
+                  "postScriptName": "HankenGrotesk-Regular",
+                  "isCustomFont": true,
+                  "glyphCount": 16
+                }
+              ]
+            },
+            {
+              "theme": "brutal",
+              "size": "lg",
+              "fontSize": "16px",
+              "fontFamily": "\"Hanken Grotesk\", system-ui, sans-serif",
+              "fonts": [
+                {
+                  "familyName": "PingFang SC",
+                  "postScriptName": "PingFangSC-Regular",
+                  "isCustomFont": false,
+                  "glyphCount": 6
+                },
+                {
+                  "familyName": "Hanken Grotesk",
+                  "postScriptName": "HankenGrotesk-Regular",
+                  "isCustomFont": true,
+                  "glyphCount": 16
+                }
+              ]
+            }
+          ],
+          "externalFontRequests": 0,
+          "pageErrors": 0
+        },
+        {
+          "width": 390,
+          "dpr": 1,
+          "loaded": [
+            {
+              "family": "Geist",
+              "loaded": 1
+            },
+            {
+              "family": "Geist Mono",
+              "loaded": 1
+            },
+            {
+              "family": "Hanken Grotesk",
+              "loaded": 1
+            },
+            {
+              "family": "Inter",
+              "loaded": 1
+            },
+            {
+              "family": "Raft Quote Glyphs",
+              "loaded": 1
+            }
+          ],
+          "typography": [
+            {
+              "theme": "elegant",
+              "size": "sm",
+              "fontSize": "12px",
+              "fontFamily": "Inter, system-ui, sans-serif",
+              "fonts": [
+                {
+                  "familyName": "PingFang SC",
+                  "postScriptName": "PingFangSC-Regular",
+                  "isCustomFont": false,
+                  "glyphCount": 6
+                },
+                {
+                  "familyName": "Inter",
+                  "postScriptName": "Inter-Regular",
+                  "isCustomFont": true,
+                  "glyphCount": 16
+                }
+              ]
+            },
+            {
+              "theme": "elegant",
+              "size": "md",
+              "fontSize": "14px",
+              "fontFamily": "Inter, system-ui, sans-serif",
+              "fonts": [
+                {
+                  "familyName": "PingFang SC",
+                  "postScriptName": "PingFangSC-Regular",
+                  "isCustomFont": false,
+                  "glyphCount": 6
+                },
+                {
+                  "familyName": "Inter",
+                  "postScriptName": "Inter-Regular",
+                  "isCustomFont": true,
+                  "glyphCount": 16
+                }
+              ]
+            },
+            {
+              "theme": "elegant",
+              "size": "lg",
+              "fontSize": "16px",
+              "fontFamily": "Inter, system-ui, sans-serif",
+              "fonts": [
+                {
+                  "familyName": "PingFang SC",
+                  "postScriptName": "PingFangSC-Regular",
+                  "isCustomFont": false,
+                  "glyphCount": 6
+                },
+                {
+                  "familyName": "Inter",
+                  "postScriptName": "Inter-Regular",
+                  "isCustomFont": true,
+                  "glyphCount": 16
+                }
+              ]
+            },
+            {
+              "theme": "brutal",
+              "size": "sm",
+              "fontSize": "12px",
+              "fontFamily": "\"Hanken Grotesk\", system-ui, sans-serif",
+              "fonts": [
+                {
+                  "familyName": "PingFang SC",
+                  "postScriptName": "PingFangSC-Regular",
+                  "isCustomFont": false,
+                  "glyphCount": 6
+                },
+                {
+                  "familyName": "Hanken Grotesk",
+                  "postScriptName": "HankenGrotesk-Regular",
+                  "isCustomFont": true,
+                  "glyphCount": 16
+                }
+              ]
+            },
+            {
+              "theme": "brutal",
+              "size": "md",
+              "fontSize": "14px",
+              "fontFamily": "\"Hanken Grotesk\", system-ui, sans-serif",
+              "fonts": [
+                {
+                  "familyName": "PingFang SC",
+                  "postScriptName": "PingFangSC-Regular",
+                  "isCustomFont": false,
+                  "glyphCount": 6
+                },
+                {
+                  "familyName": "Hanken Grotesk",
+                  "postScriptName": "HankenGrotesk-Regular",
+                  "isCustomFont": true,
+                  "glyphCount": 16
+                }
+              ]
+            },
+            {
+              "theme": "brutal",
+              "size": "lg",
+              "fontSize": "16px",
+              "fontFamily": "\"Hanken Grotesk\", system-ui, sans-serif",
+              "fonts": [
+                {
+                  "familyName": "PingFang SC",
+                  "postScriptName": "PingFangSC-Regular",
+                  "isCustomFont": false,
+                  "glyphCount": 6
+                },
+                {
+                  "familyName": "Hanken Grotesk",
+                  "postScriptName": "HankenGrotesk-Regular",
+                  "isCustomFont": true,
+                  "glyphCount": 16
+                }
+              ]
+            }
+          ],
+          "externalFontRequests": 0,
+          "pageErrors": 0
+        }
+      ],
+      "menus": [
+        {
+          "width": 1440,
+          "nativeMenu": true,
+          "noSharing": true,
+          "escape": true,
+          "noMutation": true
+        },
+        {
+          "width": 390,
+          "nativeMenu": true,
+          "noSharing": true,
+          "escape": true,
+          "noMutation": true
+        }
+      ]
+    }
+  },
+  "deployment": {
+    "webBuild": "88ab8dbb43af68f127f3a6ae3f105d84b287e36d90b8f830958bee0b2846c7a8",
+    "gracefulRestart": true,
+    "backupDatabases": 2,
+    "backupFiles": 319,
+    "businessTablesUnchanged": 18,
+    "trustedNetworkUnchanged": true
+  },
+  "limits": [
+    "No paid CLI or full backend/browser suite",
+    "Private boxes share implementation but not separately mutated in this batch",
+    "Search remains read-only",
+    "Peer reaction updates poll every15 seconds",
+    "Mac Chromium at mobile viewport, not physical iOS",
+    "Chinese system font fallback follows OS; no globally fixed CJK font"
+  ],
+  "retainedFailures": [
+    "Old product lacked reaction button",
+    "Fixture initially looked for wrong verification button label",
+    "Mobile thread touch hit outside native padded card; corrected pointer target",
+    "Fixture reused existing thread root and got409; used separate roots",
+    "Real page first selected collapsed system message then hidden mobile conversation; corrected read-only page navigation"
+  ]
+}
