@@ -92,6 +92,33 @@
     "Long-list test uses presentation fixture and real temporary-Core message destinations"
   ],
   "deployment": {
-    "status": "pending"
+    "status": "verified",
+    "sourceCommit": "55fe268624b9912fce2a351057f77346a626e07a",
+    "webBuildId": "093aa8c377ace83730247abbbd19ded55f2b8340a9b6c0cf71866b9155348da8",
+    "backupDatabases": 2,
+    "backupFiles": 318,
+    "unchangedBusinessProjections": 18,
+    "sameDataHome": true,
+    "gracefulRestart": true,
+    "realPage": [
+      {
+        "width": 1440,
+        "realActivityFilters": true,
+        "buildMatches": true,
+        "noBusinessWrites": true,
+        "pageErrors": [],
+        "noOverflow": true
+      },
+      {
+        "width": 390,
+        "realActivityFilters": true,
+        "buildMatches": true,
+        "noBusinessWrites": true,
+        "pageErrors": [],
+        "noOverflow": true
+      }
+    ],
+    "reviewArtifacts": "/Users/sun/.loom/reviews/2026-10-16-activity-return",
+    "scope": "Read-only real activity/filter checks; no real conversation opened or read positions changed."
   }
 }
