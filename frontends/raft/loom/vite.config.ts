@@ -1,3 +1,6 @@
+import tailwindcss from "@tailwindcss/postcss";
+import postcss from "postcss";
+import { localizeFontCss } from "./local-fonts.ts";
 import { adaptNotificationTrigger } from "./notification-adaptation.ts";
 import {
   adaptThreadFollowers,
@@ -38,6 +41,25 @@ import { webBuildDefines, webBuildMetadataPlugin } from "./release-plugin.ts";
 export default defineConfig({
   ...officialConfig,
   define: { ...officialConfig.define, ...webBuildDefines },
+  css: {
+    ...officialConfig.css,
+    postcss: {
+      plugins: [
+        tailwindcss(),
+        {
+          postcssPlugin: "loom-local-font-delivery",
+          OnceExit(root) {
+            const localized = localizeFontCss(root.toString());
+            root
+              .removeAll()
+              .append(
+                postcss.parse(localized, { from: root.source?.input.file }),
+              );
+          },
+        },
+      ],
+    },
+  },
   resolve: { ...officialConfig.resolve, alias: officialUiAliases() },
   plugins: [
     {

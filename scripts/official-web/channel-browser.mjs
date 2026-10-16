@@ -1,3 +1,4 @@
+import { verifyLocalFonts } from "./local-fonts-browser.mjs";
 import { verifyNotifications } from "./notifications-browser.mjs";
 import { verifyThreadFollowers } from "./thread-followers-browser.mjs";
 import { verifyAbout } from "./about-browser.mjs";
@@ -155,7 +156,9 @@ try {
     instances.push(result.instance);
   }
   browser = await chromium.launch({ headless: true });
-  if (process.env.LOOM_BROWSER_SLICE === "notifications") {
+  if (process.env.LOOM_BROWSER_SLICE === "fonts") {
+    console.log(JSON.stringify(await verifyLocalFonts({ browser, origin })));
+  } else if (process.env.LOOM_BROWSER_SLICE === "notifications") {
     console.log(
       JSON.stringify(await verifyNotifications({ browser, origin, channels })),
     );
