@@ -1,0 +1,72 @@
+{
+  "date": "2026-10-17",
+  "codeCommit": "8968b476a1da0a6548cd1b54add287189629d5c0",
+  "sourceSha256": "bbc700a7582823caedd51881d6447c9a60332d348292676db2f65b5255d284e2",
+  "backendChanged": false,
+  "scope": [
+    "Channel task-creation permission",
+    "Instance usage summary 24h/7d",
+    "Run diagnostics and session compaction visibility"
+  ],
+  "checks": {
+    "officialSourceTestsAtRun": 121,
+    "finalTargetedTests": 7,
+    "frontendTypecheckAndRequiredBuild": true,
+    "formatAndDiff": true,
+    "browser": [
+      {
+        "width": 1440,
+        "taskUnknownReplay": true,
+        "staleMetadataPreserved": true,
+        "summaryWindow": true,
+        "unknownNotZero": true,
+        "sessionCompactions": true,
+        "runDiagnostics": true
+      },
+      {
+        "width": 390,
+        "taskUnknownReplay": true,
+        "staleMetadataPreserved": true,
+        "summaryWindow": true,
+        "unknownNotZero": true,
+        "sessionCompactions": true,
+        "runDiagnostics": true
+      }
+    ],
+    "realPage": [
+      {
+        "width": 1440,
+        "dpr": 1,
+        "usage": true,
+        "taskPermissionReadCancel": true,
+        "sessionCompactions": true,
+        "diagnostics": true,
+        "noSettingsMutation": true
+      },
+      {
+        "width": 390,
+        "dpr": 1,
+        "usage": true,
+        "taskPermissionReadCancel": true,
+        "sessionCompactions": true,
+        "diagnostics": true,
+        "noSettingsMutation": true
+      }
+    ]
+  },
+  "deployment": {
+    "verified": true,
+    "webBuild": "f1be6b0661bd24bb27fdae617737c10f9252efc2c329a16d0e5b69b50ad8d328",
+    "backupDatabases": 2,
+    "backupFiles": 319,
+    "unchangedBusinessTables": 18,
+    "receipt": "/Users/sun/.loom/reviews/2026-10-17-console-closeout/restart.json"
+  },
+  "retainedLimits": [
+    "Console retained: advanced runtime configuration is still read-only in product UI",
+    "No paid CLI or full backend suite",
+    "No physical mobile device acceptance",
+    "Usage preserves provider capture gaps and cannot establish full billing"
+  ],
+  "failureAndRepair": "First browser replay/reopen test exposed stale chat snapshot reuse; settings now read a fresh RoomSession snapshot and bind metadata to its exact basis. Concurrent rename rejection/re-read verifies no metadata overwrite."
+}
