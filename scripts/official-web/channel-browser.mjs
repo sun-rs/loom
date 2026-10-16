@@ -1,3 +1,4 @@
+import { verifyAccountSettings } from "./account-settings-browser.mjs";
 import { verifySystemSettings } from "./system-settings-browser.mjs";
 import { verifySettingsArchive } from "./settings-archive-browser.mjs";
 import { verifyTaskCreate } from "./task-create-browser.mjs";
@@ -178,6 +179,10 @@ try {
           head,
         }),
       ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "account-settings") {
+    console.log(
+      JSON.stringify(await verifyAccountSettings({ browser, origin, client })),
     );
   } else if (process.env.LOOM_BROWSER_SLICE === "system-settings") {
     console.log(

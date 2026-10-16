@@ -1,3 +1,4 @@
+import { exposeAccountProfile } from "./account-settings-adaptation.ts";
 import { adaptSystemSettings } from "./system-settings-adaptation.ts";
 import { adaptArchivedChannels } from "./settings-archive-adaptation.ts";
 import { adaptTaskCreation } from "./task-create-adaptation.ts";
@@ -65,7 +66,9 @@ export default defineConfig({
           id.endsWith("/packages/web/src/components/settings/SettingsPanel.tsx")
         )
           return {
-            code: exposeAppearance(adaptSystemSettings(code)),
+            code: exposeAccountProfile(
+              exposeAppearance(adaptSystemSettings(code)),
+            ),
             map: null,
           };
         if (id.endsWith("/packages/web/src/components/task/TaskCard.tsx"))
@@ -96,6 +99,13 @@ export default defineConfig({
           };
       },
       resolveId(source, importer) {
+        if (
+          importer?.endsWith("/components/member/GravatarAvatar.tsx") &&
+          source === "../../utils/humanAvatar"
+        )
+          return resolve(import.meta.dirname, "profile-avatar.ts");
+        if (source === "loom-account-settings")
+          return resolve(import.meta.dirname, "AccountSettings.tsx");
         if (source === "loom-system-settings")
           return resolve(import.meta.dirname, "SystemSettings.tsx");
         if (source === "loom-archived-settings")

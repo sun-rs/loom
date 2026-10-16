@@ -1,3 +1,4 @@
+import AccountSettings from "./AccountSettings.tsx";
 import SystemSettings from "./SystemSettings.tsx";
 import { AppearanceSection } from "loom-native-appearance";
 import { useEffect, useState, type CSSProperties } from "react";
@@ -152,6 +153,12 @@ export default function SettingsPage({
             <div className="flex-1 overflow-y-auto bg-layer-panel px-5 py-4 text-foreground-strong mobile-nav-clearance theme-brutal:bg-white theme-brutal:text-black">
               {selectedId === "appearance" ? (
                 <AppearanceSection />
+              ) : selectedId === "account" ? (
+                <AccountSettings
+                  client={client}
+                  workspaceId={workspaceId}
+                  controlRoomId={controlRoomId}
+                />
               ) : selectedId === "administration" ? (
                 <SystemSettings
                   client={client}

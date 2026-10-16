@@ -2,5 +2,6 @@
 // unrelated upstream SettingsPanel implementation types into Loom's TS project.
 declare module "loom-native-appearance" {
   export const SystemChannelsSection: import("react").ComponentType;
+  export const LoomAccountSection: import("react").ComponentType;
   export const AppearanceSection: import("react").ComponentType;
 }
