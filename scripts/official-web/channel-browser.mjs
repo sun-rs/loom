@@ -1,3 +1,4 @@
+import { verifySystemSettings } from "./system-settings-browser.mjs";
 import { verifySettingsArchive } from "./settings-archive-browser.mjs";
 import { verifyTaskCreate } from "./task-create-browser.mjs";
 import { verifyAttachmentPreview } from "./attachment-preview-browser.mjs";
@@ -176,6 +177,12 @@ try {
           workspace,
           head,
         }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "system-settings") {
+    console.log(
+      JSON.stringify(
+        await verifySystemSettings({ browser, origin, client, workspace }),
       ),
     );
   } else if (process.env.LOOM_BROWSER_SLICE === "settings-archive") {

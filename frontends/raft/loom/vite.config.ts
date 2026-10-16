@@ -1,3 +1,4 @@
+import { adaptSystemSettings } from "./system-settings-adaptation.ts";
 import { adaptArchivedChannels } from "./settings-archive-adaptation.ts";
 import { adaptTaskCreation } from "./task-create-adaptation.ts";
 import { officialUiAliases } from "./ui-resolution.ts";
@@ -63,7 +64,10 @@ export default defineConfig({
         if (
           id.endsWith("/packages/web/src/components/settings/SettingsPanel.tsx")
         )
-          return { code: exposeAppearance(code), map: null };
+          return {
+            code: exposeAppearance(adaptSystemSettings(code)),
+            map: null,
+          };
         if (id.endsWith("/packages/web/src/components/task/TaskCard.tsx"))
           return { code: adaptTaskCard(code), map: null };
         if (id.endsWith("/packages/web/src/components/task/TasksPanel.tsx"))
@@ -92,6 +96,8 @@ export default defineConfig({
           };
       },
       resolveId(source, importer) {
+        if (source === "loom-system-settings")
+          return resolve(import.meta.dirname, "SystemSettings.tsx");
         if (source === "loom-archived-settings")
           return resolve(import.meta.dirname, "ArchivedSettings.tsx");
         if (source === "loom-native-archived-channels")
