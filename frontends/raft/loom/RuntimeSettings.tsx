@@ -9,7 +9,12 @@ import SectionHeader from "../packages/web/src/components/ui/SectionHeader.tsx";
 import FormField from "../packages/web/src/components/ui/FormField.tsx";
 import { ManagementClient } from "./management-client.ts";
 import { OperationStatus, useManagement } from "./ManagementUi.tsx";
-import { saveConcurrency } from "./control-actions.ts";
+import {
+  settingsFormFrom,
+  buildSettingsUpdate,
+  type SettingsForm,
+} from "./runtime-settings-form.ts";
+import AdvancedRuntimeSettings from "./AdvancedRuntimeSettings.tsx";
 /** Existing runtime form; category navigation preserves the draft and write owner. */
 export default function RuntimeSettings({
   client,
@@ -30,11 +35,12 @@ export default function RuntimeSettings({
   const { state, error, setError } = useManagement(manager);
   const [base, setBase] = useState<RuntimeSettings>(),
     [latest, setLatest] = useState<RuntimeSettings>();
-  const [value, setValue] = useState(""),
+  const [form, setForm] = useState<SettingsForm>(),
     [notice, setNotice] = useState(""),
     [readError, setReadError] = useState("");
   const [needsRead, setNeedsRead] = useState(false),
     [reload, setReload] = useState(0);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const baseRef = useRef<RuntimeSettings>(undefined);
   useEffect(() => {
     if (!active) return;
@@ -57,7 +63,7 @@ export default function RuntimeSettings({
         if (!baseRef.current) {
           baseRef.current = data;
           setBase(data);
-          setValue(String(data.maxConcurrentRuns));
+          setForm(settingsFormFrom(data));
           setNeedsRead(false);
         }
       } catch {
@@ -75,9 +81,8 @@ export default function RuntimeSettings({
       clearTimeout(timer);
     };
   }, [client, reload, active]);
-  const cap = Number(value),
-    valid =
-      /^\d+$/.test(value) && Number.isInteger(cap) && cap >= 1 && cap <= 64;
+  const patch = base && form ? buildSettingsUpdate(base, form) : undefined;
+  const valid = patch?.ok === true;
   const stale = base && latest && base.revision !== latest.revision;
   const busy = state !== "idle";
   return (
@@ -97,23 +102,33 @@ export default function RuntimeSettings({
             className="space-y-3"
             onSubmit={(e) => {
               e.preventDefault();
-              if (!base || busy || !valid || stale || needsRead || !latest)
+              if (!base || busy || !patch?.ok || stale || needsRead || !latest)
                 return;
               setNotice("");
               setError("");
-              void saveConcurrency(manager, base.revision, cap, (result) => {
-                if (result.kind === "ok") {
-                  baseRef.current = result.result;
-                  setBase(result.result);
-                  setLatest(result.result);
-                  setValue(String(result.result.maxConcurrentRuns));
-                  setNotice("已保存；只影响之后的调度。");
-                } else if (result.kind === "rejected") {
-                  setNeedsRead(true);
-                  setError(
-                    "未确认本次保存。请重新读取当前生效值，确认后再修改。",
-                  );
-                }
+              void manager.writes.submitRevisioned({
+                action: "runtime-settings",
+                payload: patch.value,
+                send: (p) =>
+                  manager.client.request("runtime.settings.update", p),
+                onSettled: (result) => {
+                  if (result.kind === "ok") {
+                    baseRef.current = result.result;
+                    setBase(result.result);
+                    setLatest(result.result);
+                    setForm(settingsFormFrom(result.result));
+                    setNotice(
+                      patch.value.watchdog
+                        ? "已保存；看门狗阈值立即适用于正在运行的工作。"
+                        : "已保存；只影响之后的调度。",
+                    );
+                  } else if (result.kind === "rejected") {
+                    setNeedsRead(true);
+                    setError(
+                      "未确认本次保存。请重新读取当前生效值，确认后再修改。",
+                    );
+                  }
+                },
               });
             }}
           >
@@ -128,16 +143,32 @@ export default function RuntimeSettings({
                 min={1}
                 max={64}
                 step={1}
-                value={value}
+                value={form?.maxConcurrentRuns ?? ""}
                 onChange={(e) => {
-                  setValue(e.target.value);
+                  if (form)
+                    setForm({ ...form, maxConcurrentRuns: e.target.value });
                   setNotice("");
                 }}
                 disabled={!base || busy}
                 className="w-full text-sm"
               />
             </FormField>
-            {base && !valid && <p role="alert">请输入 1–64 的整数。</p>}
+            {base && form && (
+              <AdvancedRuntimeSettings
+                open={advancedOpen}
+                onOpenChange={setAdvancedOpen}
+                base={base}
+                form={form}
+                disabled={busy}
+                onChange={(next) => {
+                  setForm(next);
+                  setNotice("");
+                }}
+              />
+            )}
+            {patch && !patch.ok && patch.error !== "没有修改" && (
+              <p role="alert">{patch.error}</p>
+            )}
             {stale && (
               <p role="alert">设置已在别处更新；请重新读取后再修改。</p>
             )}
@@ -153,8 +184,7 @@ export default function RuntimeSettings({
                   !latest ||
                   !valid ||
                   Boolean(stale) ||
-                  needsRead ||
-                  cap === base.maxConcurrentRuns
+                  needsRead
                 }
               >
                 保存
