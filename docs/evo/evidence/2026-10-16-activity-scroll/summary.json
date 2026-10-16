@@ -3,19 +3,12 @@
     "release": "1.21.16",
     "sourceRevision": "a98ae003246a0360872a77d76dec2fccd0347ef7",
     "activityBundleEvidence": "../2026-10-16-activity-return/summary.json",
-    "directReuse": [
-      "ConversationCardSkeleton",
-      "EmptyState",
-      "translations"
-    ],
+    "directReuse": ["ConversationCardSkeleton", "EmptyState", "translations"],
     "structuralPort": "ThreadsInbox scroll threshold, viewport/list recipes, loading-more and empty-state conditions",
     "localGlue": "Bounded fresh-read window through existing activity.list"
   },
   "checks": {
-    "red": [
-      "legacy next-page button exists",
-      "native skeleton absent"
-    ],
+    "red": ["legacy next-page button exists", "native skeleton absent"],
     "windowUnitTests": 4,
     "sourceTests": 83,
     "browser": [
@@ -58,6 +51,43 @@
     "Task multi-title creation still pending; no new backend or paid CLI work"
   ],
   "deployment": {
-    "status": "pending"
+    "status": "verified",
+    "sourceCommit": "979b77aaa7ba586acb551e242b40a760b8fa732d",
+    "webBuildId": "b96f83f6ababdfae7f68f39e9691052dad106090ccddd08c065aa337152fc2e4",
+    "backupDatabases": 2,
+    "backupFiles": 318,
+    "unchangedBusinessProjections": 18,
+    "sameDataHome": true,
+    "gracefulRestart": true,
+    "realPage": [
+      {
+        "width": 1440,
+        "realActivity": true,
+        "rows": 20,
+        "continuedRows": 40,
+        "realContinuation": true,
+        "nativeViewportPadding": true,
+        "noPageButtons": true,
+        "buildMatches": true,
+        "noBusinessWrites": true,
+        "noOverflow": true,
+        "pageErrors": []
+      },
+      {
+        "width": 390,
+        "realActivity": true,
+        "rows": 20,
+        "continuedRows": 40,
+        "realContinuation": true,
+        "nativeViewportPadding": true,
+        "noPageButtons": true,
+        "buildMatches": true,
+        "noBusinessWrites": true,
+        "noOverflow": true,
+        "pageErrors": []
+      }
+    ],
+    "reviewArtifacts": "/Users/sun/.loom/reviews/2026-10-16-activity-scroll",
+    "scope": "Fresh real desktop/mobile pages: scroll appends 20 to 40 actual items; no business mutations, no fixture data."
   }
 }
