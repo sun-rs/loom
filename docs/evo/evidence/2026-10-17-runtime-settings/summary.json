@@ -1,0 +1,64 @@
+{
+  "date": "2026-10-17",
+  "codeCommit": "eaa3a8e82ed1b3be8ea046ee6aa61701e021895f",
+  "backendChanged": false,
+  "scope": [
+    "Advanced runtime settings editing using existing revision CAS API",
+    "Preserve expanded advanced section on explicit reread"
+  ],
+  "checks": {
+    "targetedTests": 7,
+    "frontendTypecheck": true,
+    "requiredProductBuild": true,
+    "formatAndDiff": true,
+    "browser": [
+      {
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "save": true,
+        "conflict": true,
+        "unknownNotResent": true
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "save": true,
+        "conflict": true,
+        "unknownNotResent": true
+      }
+    ],
+    "realPage": [
+      {
+        "width": 1440,
+        "dpr": 1,
+        "collapsedByDefault": true,
+        "advancedFields": true,
+        "noMutation": true
+      },
+      {
+        "width": 390,
+        "dpr": 1,
+        "collapsedByDefault": true,
+        "advancedFields": true,
+        "noMutation": true
+      }
+    ]
+  },
+  "deployment": {
+    "verified": true,
+    "webBuild": "b4ccbe9bee7d598f31398292afb15a9e15c755a6256e6513392e966a0d8e24e5",
+    "backupDatabases": 2,
+    "backupFiles": 319,
+    "unchangedBusinessTables": 18,
+    "receipt": "/Users/sun/.loom/reviews/2026-10-17-runtime-settings/restart.json"
+  },
+  "limits": [
+    "No backend or paid-CLI changes; no efficiency claim",
+    "Console source and deployment removal deferred to cleanup batch",
+    "Real page verification read-only; mutation acceptance used isolated real daemon fixture"
+  ]
+}
