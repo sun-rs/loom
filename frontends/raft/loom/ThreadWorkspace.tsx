@@ -1,3 +1,4 @@
+import { MessageReactionsProvider } from "./MessageReactions.tsx";
 import ThreadFollowers from "./ThreadFollowers.tsx";
 import ThreadFollowMenu from "./ThreadFollowMenu.tsx";
 import { useThreadActivity } from "./useThreadActivity.ts";
@@ -163,9 +164,13 @@ export default function ThreadWorkspace({
       )}
       {state === "unknown" && (
         <div role="alert" className="p-3 text-sm">
-          回复结果未知，请核实原请求。
+          {bridge.writes.current?.action === "message-reaction"
+            ? "表情结果未知，请核实原请求。"
+            : "回复结果未知，请核实原请求。"}
           <Button onClick={() => void bridge.writes.retry()}>
-            核实回复结果
+            {bridge.writes.current?.action === "message-reaction"
+              ? "核实表情结果"
+              : "核实回复结果"}
           </Button>
         </div>
       )}
@@ -197,148 +202,155 @@ export default function ThreadWorkspace({
     </ThreadPanelFooter>
   );
   return (
-    <MessageProfileMembers.Provider value={data?.members ?? []}>
-      <div
-        ref={host}
-        className={
-          embedded || contentSlot
-            ? "relative flex min-h-0 flex-1 flex-col"
-            : "thread-side-column flex flex-col bg-layer-card theme-brutal:bg-white"
-        }
-        data-testid={
-          contentSlot ? "activity-thread-content" : "thread-side-column"
-        }
-        style={{ "--thread-panel-width": `${size.width}px` } as CSSProperties}
-      >
-        {!embedded && !contentSlot && (
-          <div
-            className="thread-side-column-resizer absolute left-0 top-0 bottom-0 w-2 -ml-1 z-10 cursor-col-resize touch-none select-none"
-            data-testid="loom-thread-resizer"
-            onPointerDown={(e) => {
-              setMax(getThreadPanelDynamicMax());
-              size.handleResizeStart(e);
-            }}
-            onPointerMove={size.handleResizeMove}
-            onPointerUp={size.handleResizeEnd}
-            onPointerCancel={size.handleResizeEnd}
-          />
-        )}
-        {parent && data ? (
-          <ControlledThreadPanel
-            presentation={embedded ? "modal" : "side"}
-            hideHeader={embedded}
-            hideParentMessage={embedded}
-            parentSlot={taskHead}
-            onClose={close}
-            readOnlyData={{
-              threadChannelId:
-                data.thread?.threadId ?? `draft:${rootMessageId}`,
-              parentChannelId: room.roomId,
-              parentMessage: parent,
-              replies: error ? [] : replies,
-              senderByMessageId: new Map(
-                [parent, ...replies].map((m) => [
-                  m.id,
-                  {
-                    displayName: m.senderDisplayName ?? "成员",
-                    avatarUrl: null,
-                    description: null,
-                  },
-                ]),
-              ),
-              channels: [
-                {
-                  id: room.roomId,
-                  name: room.name,
-                  description: room.description ?? null,
-                  type: "channel",
-                  createdAt: room.createdAt,
-                },
-              ],
-              loading: false,
-              error,
-              hasOlder: !error && data.hasOlder,
-              loadOlder: async () => {
-                try {
-                  setData(await bridge.older());
-                } catch {
-                  setError("更早回复读取失败，请重试。");
-                }
-              },
-            }}
-            key={focusId ?? "latest"}
-            loomFocusId={focusId}
-            loomHasNewer={data.hasNewer}
-            loomLoadNewer={async () => {
-              try {
-                setData(await bridge.newer());
-              } catch {
-                setError("更新回复读取失败，请重试。");
-              }
-            }}
-            loomOnOpenProfile={(kind, id) => {
-              if (kind !== "agent" || error) return;
-              const member = data.members.find(
-                (m) => m.kind === "agent" && m.principalId === id,
-              );
-              if (member) onOpenProfile?.(member);
-            }}
-            loomHeaderActions={
-              data.thread && !error ? (
-                <>
-                  <ThreadFollowers
-                    client={client}
-                    roomId={room.roomId}
-                    threadId={data.thread.threadId}
-                    members={data.members}
-                    onOpenProfile={onOpenProfile}
-                  />
-                  <ThreadFollowMenu
-                    followed={activity.following ?? false}
-                    followBusy={
-                      activity.busy ||
-                      activity.following === undefined ||
-                      state !== "idle" ||
-                      !!data.room?.archivedAt
-                    }
-                    onFollow={() => void activity.follow()}
-                  />
-                </>
-              ) : undefined
-            }
-            loomFooter={footer}
-          />
-        ) : (
-          <ThreadPanelRoot className="isolate flex h-full min-h-0 w-full flex-col bg-layer-panel dark:bg-layer-card theme-brutal:bg-white">
-            <PanelHeader
-              title="消息列"
-              onMobileBack={close}
-              mobileBackProps={{ "data-testid": "thread-mobile-back" }}
-              actions={
-                <Button
-                  data-testid="thread-close"
-                  size="icon-sm"
-                  variant="ghost"
-                  aria-label="关闭消息列"
-                  onClick={close}
-                >
-                  ×
-                </Button>
-              }
-            />
+    <MessageReactionsProvider
+      bridge={bridge}
+      messages={parent ? [parent, ...replies] : replies}
+    >
+      <MessageProfileMembers.Provider value={data?.members ?? []}>
+        <div
+          ref={host}
+          className={
+            embedded || contentSlot
+              ? "relative flex min-h-0 flex-1 flex-col"
+              : "thread-side-column flex flex-col bg-layer-card theme-brutal:bg-white"
+          }
+          data-testid={
+            contentSlot ? "activity-thread-content" : "thread-side-column"
+          }
+          style={{ "--thread-panel-width": `${size.width}px` } as CSSProperties}
+        >
+          {!embedded && !contentSlot && (
             <div
-              role={error ? "alert" : "status"}
-              className="flex-1 p-3 text-center text-sm text-foreground-muted"
-            >
-              <span>{error || "加载中…"}</span>
-              {error && (
-                <Button onClick={() => setTick((v) => v + 1)}>重新读取</Button>
-              )}
-            </div>
-            {footer}
-          </ThreadPanelRoot>
-        )}
-      </div>
-    </MessageProfileMembers.Provider>
+              className="thread-side-column-resizer absolute left-0 top-0 bottom-0 w-2 -ml-1 z-10 cursor-col-resize touch-none select-none"
+              data-testid="loom-thread-resizer"
+              onPointerDown={(e) => {
+                setMax(getThreadPanelDynamicMax());
+                size.handleResizeStart(e);
+              }}
+              onPointerMove={size.handleResizeMove}
+              onPointerUp={size.handleResizeEnd}
+              onPointerCancel={size.handleResizeEnd}
+            />
+          )}
+          {parent && data ? (
+            <ControlledThreadPanel
+              presentation={embedded ? "modal" : "side"}
+              hideHeader={embedded}
+              hideParentMessage={embedded}
+              parentSlot={taskHead}
+              onClose={close}
+              readOnlyData={{
+                threadChannelId:
+                  data.thread?.threadId ?? `draft:${rootMessageId}`,
+                parentChannelId: room.roomId,
+                parentMessage: parent,
+                replies: error ? [] : replies,
+                senderByMessageId: new Map(
+                  [parent, ...replies].map((m) => [
+                    m.id,
+                    {
+                      displayName: m.senderDisplayName ?? "成员",
+                      avatarUrl: null,
+                      description: null,
+                    },
+                  ]),
+                ),
+                channels: [
+                  {
+                    id: room.roomId,
+                    name: room.name,
+                    description: room.description ?? null,
+                    type: "channel",
+                    createdAt: room.createdAt,
+                  },
+                ],
+                loading: false,
+                error,
+                hasOlder: !error && data.hasOlder,
+                loadOlder: async () => {
+                  try {
+                    setData(await bridge.older());
+                  } catch {
+                    setError("更早回复读取失败，请重试。");
+                  }
+                },
+              }}
+              key={focusId ?? "latest"}
+              loomFocusId={focusId}
+              loomHasNewer={data.hasNewer}
+              loomLoadNewer={async () => {
+                try {
+                  setData(await bridge.newer());
+                } catch {
+                  setError("更新回复读取失败，请重试。");
+                }
+              }}
+              loomOnOpenProfile={(kind, id) => {
+                if (kind !== "agent" || error) return;
+                const member = data.members.find(
+                  (m) => m.kind === "agent" && m.principalId === id,
+                );
+                if (member) onOpenProfile?.(member);
+              }}
+              loomHeaderActions={
+                data.thread && !error ? (
+                  <>
+                    <ThreadFollowers
+                      client={client}
+                      roomId={room.roomId}
+                      threadId={data.thread.threadId}
+                      members={data.members}
+                      onOpenProfile={onOpenProfile}
+                    />
+                    <ThreadFollowMenu
+                      followed={activity.following ?? false}
+                      followBusy={
+                        activity.busy ||
+                        activity.following === undefined ||
+                        state !== "idle" ||
+                        !!data.room?.archivedAt
+                      }
+                      onFollow={() => void activity.follow()}
+                    />
+                  </>
+                ) : undefined
+              }
+              loomFooter={footer}
+            />
+          ) : (
+            <ThreadPanelRoot className="isolate flex h-full min-h-0 w-full flex-col bg-layer-panel dark:bg-layer-card theme-brutal:bg-white">
+              <PanelHeader
+                title="消息列"
+                onMobileBack={close}
+                mobileBackProps={{ "data-testid": "thread-mobile-back" }}
+                actions={
+                  <Button
+                    data-testid="thread-close"
+                    size="icon-sm"
+                    variant="ghost"
+                    aria-label="关闭消息列"
+                    onClick={close}
+                  >
+                    ×
+                  </Button>
+                }
+              />
+              <div
+                role={error ? "alert" : "status"}
+                className="flex-1 p-3 text-center text-sm text-foreground-muted"
+              >
+                <span>{error || "加载中…"}</span>
+                {error && (
+                  <Button onClick={() => setTick((v) => v + 1)}>
+                    重新读取
+                  </Button>
+                )}
+              </div>
+              {footer}
+            </ThreadPanelRoot>
+          )}
+        </div>
+      </MessageProfileMembers.Provider>
+    </MessageReactionsProvider>
   );
 }

@@ -37,6 +37,7 @@ export async function verifyLocalFonts({ browser, origin }) {
         }
         return results;
       });
+      const typography = [];
       for (const theme of ["elegant", "brutal"]) {
         await page
           .getByTestId("appearance-light-theme-" + theme)
@@ -55,6 +56,50 @@ export async function verifyLocalFonts({ browser, origin }) {
           ),
           false,
         );
+        const cdp = await context.newCDPSession(page);
+        await cdp.send("DOM.enable");
+        await cdp.send("CSS.enable");
+        for (const [size, px] of [
+          ["sm", 12],
+          ["md", 14],
+          ["lg", 16],
+        ]) {
+          await page.getByTestId("message-font-size-" + size).click();
+          const preview = page
+            .locator(
+              '[aria-label="消息字号预览"] [data-slot="message-item-body"]',
+            )
+            .first();
+          await preview.evaluate((el) => {
+            const old = document.querySelector("#loom-font-probe");
+            old?.remove();
+            const span = document.createElement("span");
+            span.id = "loom-font-probe";
+            span.textContent = "中文字体测试 English ABC 123";
+            el.append(span);
+          });
+          await page.evaluate(() => document.fonts.ready);
+          const metrics = await page
+            .locator("#loom-font-probe")
+            .evaluate((el) => ({
+              fontSize: getComputedStyle(el).fontSize,
+              fontFamily: getComputedStyle(el).fontFamily,
+            }));
+          assert.equal(metrics.fontSize, px + "px");
+          const { root } = await cdp.send("DOM.getDocument");
+          const { nodeId } = await cdp.send("DOM.querySelector", {
+            nodeId: root.nodeId,
+            selector: "#loom-font-probe",
+          });
+          const { fonts } = await cdp.send("CSS.getPlatformFontsForNode", {
+            nodeId,
+          });
+          assert.ok(fonts.some((f) => f.isCustomFont && f.glyphCount > 0));
+          assert.ok(fonts.some((f) => !f.isCustomFont && f.glyphCount > 0));
+          typography.push({ theme, size, ...metrics, fonts });
+          await page.locator("#loom-font-probe").evaluate((el) => el.remove());
+        }
+        await cdp.detach();
         await page.screenshot({
           path: `/tmp/loom-local-fonts-${theme}-${width}.png`,
         });
@@ -65,6 +110,7 @@ export async function verifyLocalFonts({ browser, origin }) {
         width,
         dpr: 1,
         loaded,
+        typography,
         externalFontRequests: requests.length,
         pageErrors: errors.length,
       });

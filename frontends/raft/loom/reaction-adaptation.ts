@@ -1,0 +1,79 @@
+function replace(source: string, from: string, to: string) {
+  if (source.split(from).length !== 2)
+    throw Error("Official reaction boundary changed");
+  return source.replace(from, to);
+}
+/** Apply after existing task/thread adapters. Keep native picker, chips and gestures. */
+export function adaptReactions(source: string) {
+  let code = replace(
+    source,
+    "  const loomTaskActions =",
+    "  const loomReactions = useLoomReactions(message);\n  if (readOnlyProjection) canReact = !!loomReactions?.canReact;\n  const loomTaskActions =",
+  );
+  code = replace(
+    code,
+    "const reactions = useMemo(() => message.reactions ?? [], [message.reactions]);",
+    "const reactions = useMemo(() => loomReactions?.reactions ?? message.reactions ?? [], [loomReactions, message.reactions]);",
+  );
+  code = replace(
+    code,
+    "const hasCurrentUserReaction = useCallback((emoji: string) => {",
+    "const hasCurrentUserReaction = useCallback((emoji: string) => {\n    if (loomReactions) return loomReactions.mine(emoji);",
+  );
+  code = replace(
+    code,
+    "  }, [\n    reactions,\n    viewerUserId,",
+    "  }, [\n    loomReactions,\n    reactions,\n    viewerUserId,",
+  );
+  code = replace(
+    code,
+    "const handleToggleReaction = useCallback(async (emoji: string) => {",
+    "const handleToggleReaction = useCallback(async (emoji: string) => {\n    if (readOnlyProjection) { loomReactions?.toggle(emoji); return; }",
+  );
+  code = replace(
+    code,
+    "    hasCurrentUserReaction,\n    isSystem,",
+    "    hasCurrentUserReaction,\n    loomReactions,\n    readOnlyProjection,\n    isSystem,",
+  );
+  code = code.replaceAll(
+    "readOnlyProjection && !loomTaskActions ? undefined",
+    "readOnlyProjection && !loomTaskActions && !loomReactions?.canReact ? undefined",
+  );
+  code = replace(
+    code,
+    "onOpenThread && !hideThreadActions ? <LoomThreadToolbar onReplyInThread={handleReplyInThread} /> : null",
+    "(onOpenThread && !hideThreadActions) || canReact ? <MessageHoverToolbar isSaved={false} loomHideSave reactionActive={!!reactionPicker} hideThreadActions={!onOpenThread || hideThreadActions} isSystem={isSystem} canReact={canReact} onReplyInThread={handleReplyInThread} onReactionClick={handleReactionClick} onToggleSave={() => {}} /> : null",
+  );
+  const start = code.indexOf("          {/* Reaction quick row");
+  const end = code.indexOf(
+    "          <MenuItem\n            icon={<Link",
+    start,
+  );
+  if (start < 0 || end < start)
+    throw Error("Official reaction quick row changed");
+  const quick = code.slice(start, end);
+  code = replace(
+    code,
+    "<LoomTaskMenu actions={loomTaskActions} close={handleCloseCtx} />",
+    `<>${quick}<LoomTaskMenu actions={loomTaskActions} close={handleCloseCtx} /></>`,
+  );
+  return 'import {useLoomReactions} from "loom-reactions";\n' + code;
+}
+export function adaptReactionToolbar(source: string) {
+  let code = replace(
+    source,
+    "  isSaved: boolean;",
+    "  isSaved: boolean;\n  loomHideSave?: boolean;",
+  );
+  code = replace(code, "  isSaved,\n", "  isSaved,\n  loomHideSave,\n");
+  code = replace(
+    code,
+    "      <MessageItemToolbarButton\n        active={isSaved}",
+    "      {!loomHideSave && <MessageItemToolbarButton\n        active={isSaved}",
+  );
+  return replace(
+    code,
+    '        <Bookmark size={13} fill={isSaved ? "currentColor" : "none"} />\n      </MessageItemToolbarButton>',
+    '        <Bookmark size={13} fill={isSaved ? "currentColor" : "none"} />\n      </MessageItemToolbarButton>}',
+  );
+}

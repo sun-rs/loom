@@ -1,3 +1,4 @@
+import { adaptReactions, adaptReactionToolbar } from "./reaction-adaptation.ts";
 import tailwindcss from "@tailwindcss/postcss";
 import postcss from "postcss";
 import { localizeFontCss } from "./local-fonts.ts";
@@ -74,6 +75,8 @@ export default defineConfig({
           ),
       },
       transform(code, id) {
+        if (id.endsWith("/components/message/MessageHoverToolbar.tsx"))
+          return { code: adaptReactionToolbar(code), map: null };
         if (
           id.endsWith(
             "/packages/web/src/components/layout/NotificationTrigger.tsx",
@@ -134,10 +137,12 @@ export default defineConfig({
           return { code: adaptThreadFooter(code), map: null };
         if (id.endsWith("/packages/web/src/components/message/MessageItem.tsx"))
           return {
-            code: adaptAttachmentMessage(
-              adaptTaskMessage(
-                adaptThreadItem(
-                  adaptMessageModelLabel(adaptMessageProfileNavigation(code)),
+            code: adaptReactions(
+              adaptAttachmentMessage(
+                adaptTaskMessage(
+                  adaptThreadItem(
+                    adaptMessageModelLabel(adaptMessageProfileNavigation(code)),
+                  ),
                 ),
               ),
             ),
@@ -145,6 +150,8 @@ export default defineConfig({
           };
       },
       resolveId(source, importer) {
+        if (source === "loom-reactions")
+          return resolve(import.meta.dirname, "MessageReactions.tsx");
         if (source === "loom-task-board-actions")
           return resolve(import.meta.dirname, "TaskBoardActions.tsx");
         if (

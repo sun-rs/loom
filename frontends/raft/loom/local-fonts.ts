@@ -4,10 +4,11 @@ import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 const fontRoot = resolve(import.meta.dirname, "fonts");
 const source = readFileSync(require.resolve("raft-ui/fonts.css"), "utf8");
-const importRule = source.match(
+const matchedImport = source.match(
   /@import url\("https:\/\/fonts.googleapis.com\/[^\n]+;/,
 )?.[0];
-if (!importRule) throw Error("Official font import changed");
+if (!matchedImport) throw Error("Official font import changed");
+const importRule: string = matchedImport;
 const faces = readFileSync(resolve(fontRoot, "faces.css"), "utf8");
 const manifest = JSON.parse(
   readFileSync(resolve(fontRoot, "provenance.json"), "utf8"),
