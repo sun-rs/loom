@@ -13,9 +13,9 @@
 test at packages/application-service/test/client-files.test.ts:10:1
 ✖ Files HTTP + SDK roundtrip verifies bytes, Room provenance, authorization and safe download headers (141.953625ms)
   AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
-  
+
   404 !== 401
-  
+
       at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/packages/application-service/test/client-files.test.ts:148:12)
       at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
       at async Test.run (node:internal/test_runner/test:1208:7)
