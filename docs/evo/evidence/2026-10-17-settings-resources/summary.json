@@ -1,0 +1,24 @@
+{
+  "implemented": [
+    "Official notification card reads daemon capability and browser limitations; read-only",
+    "Official release note cards backed by curated deployed Loom commit history",
+    "Activity refresh restores bounded page depth and scroll offset, scoped by Human/workspace/filter"
+  ],
+  "checks": {
+    "unitTests": 8,
+    "typecheck": "typecheck:loom passed",
+    "build": "build:web:workbench passed",
+    "browser": "1440x1000 and 390x844 DPR1: settings, push configuration error, activity return/refresh/filter reset",
+    "officialSourceHashes": "2264 unchanged",
+    "realCli": "not run",
+    "paid": "not run"
+  },
+  "deployment": "pending",
+  "limits": [
+    "Web Push subscription, delivery and notification click navigation are not connected or accepted",
+    "HTTP LAN/Tailscale browser origins are not secure Web Push contexts",
+    "Activity stores last presentation scope only, maximum 10 pages/200 rows; data changes can move the same pixel position; no transcript cache",
+    "Release notes are curated deployed Loom changes, not a comprehensive Git history or upstream Raft releases",
+    "No physical iOS/PWA acceptance"
+  ]
+}

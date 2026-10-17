@@ -268,6 +268,7 @@ export default function DiscoveryPage({
               return onOpenEntity(entity, full);
             }}
             workspaceId={workspaceId}
+            principalId={principalId}
             mode={mode}
             query={query}
             searchFilters={searchFilters}
@@ -303,6 +304,7 @@ function Results({
   overlayHome,
   client,
   workspaceId,
+  principalId,
   entities,
   recent,
   frequent,
@@ -322,6 +324,7 @@ function Results({
   onOpenResult: (row: DiscoveryRow, full: boolean) => Promise<void>;
   client: RahClient;
   workspaceId: string;
+  principalId?: string;
   entities: ReturnType<typeof useSearchEntities>;
   recent: SearchEntity[];
   frequent: SearchEntity[];
@@ -345,6 +348,7 @@ function Results({
     filter,
     mode === "activity",
     retry,
+    principalId,
   );
   const data = mode === "activity" ? activity.data : searchData;
   const loading = mode === "activity" ? activity.loading : searchLoading;
@@ -354,9 +358,10 @@ function Results({
   const [loadMoreError, setLoadMoreError] = useState(false);
   const activityScroll = useActivityScroll(
     client,
-    JSON.stringify([workspaceId, filter]),
+    JSON.stringify([principalId, workspaceId, filter]),
     mode === "activity",
     !loading && !error && Boolean(data?.rows.length),
+    Boolean(principalId),
   );
   const moreRequest = useRef<AbortController | null>(null);
   const loadMoreResults = async () => {

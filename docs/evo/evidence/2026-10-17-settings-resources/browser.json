@@ -1,0 +1,44 @@
+{
+  "activity": [
+    {
+      "width": 1440,
+      "sourceFilterRetained": true,
+      "refreshPositionRestored": true,
+      "filterChangeResetsPosition": true,
+      "singleHistoryEntry": true,
+      "scrollRestoredAfterAsyncLoad": true,
+      "loadedWindowRestoredByFreshReads": true,
+      "nativeScrollContinuation": true,
+      "firstPageRetained": true,
+      "nativeSkeletonAndEmptyState": true,
+      "nativeViewportPadding": true,
+      "filterChangeResetsPage": true
+    },
+    {
+      "width": 390,
+      "sourceFilterRetained": true,
+      "refreshPositionRestored": true,
+      "filterChangeResetsPosition": true,
+      "singleHistoryEntry": true,
+      "scrollRestoredAfterAsyncLoad": true,
+      "loadedWindowRestoredByFreshReads": true,
+      "nativeScrollContinuation": true,
+      "firstPageRetained": true,
+      "nativeSkeletonAndEmptyState": true,
+      "nativeViewportPadding": true,
+      "filterChangeResetsPage": true
+    }
+  ],
+  "settings": [
+    {
+      "width": 1440,
+      "releaseNotes": true,
+      "notificationReadOnly": true
+    },
+    {
+      "width": 390,
+      "releaseNotes": true,
+      "notificationReadOnly": true
+    }
+  ]
+}

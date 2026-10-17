@@ -109,6 +109,22 @@ export async function verifyActivityReturn({
         before,
         { timeout: 3000 },
       );
+      await page.reload();
+      await row.waitFor({ timeout: 5000 });
+      await page.waitForFunction(
+        (expected) =>
+          Math.abs(
+            document.querySelector('[data-testid="discovery-results"]')
+              .scrollTop - expected,
+          ) < 2,
+        before,
+        { timeout: 5000 },
+      );
+      const stored = await page.evaluate(() =>
+        JSON.parse(sessionStorage.getItem("loom:activity-position:v1")),
+      );
+      assert.equal(stored.depth, 2);
+      assert.deepEqual(Object.keys(stored).sort(), ["depth", "scope", "top"]);
       const filterLoaded = page.waitForResponse(
         (r) =>
           r.url().endsWith("/v3/client/activity/list") &&
@@ -141,6 +157,7 @@ export async function verifyActivityReturn({
       results.push({
         width,
         sourceFilterRetained: true,
+        refreshPositionRestored: true,
         filterChangeResetsPosition: true,
         singleHistoryEntry: true,
         scrollRestoredAfterAsyncLoad: true,

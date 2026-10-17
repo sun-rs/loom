@@ -1,3 +1,8 @@
+import {
+  activityPositionStorage,
+  readActivityPosition,
+  writeActivityPosition,
+} from "./activity-position.ts";
 import { useEffect, useRef, useState } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
 import type { HumanActivityRequest } from "@rah-os/protocol";
@@ -17,8 +22,9 @@ export function useActivityFeed(
   filter: HumanActivityRequest["filter"],
   enabled: boolean,
   revision: number,
+  principalId?: string,
 ) {
-  const scope = JSON.stringify([workspaceId, filter]);
+  const scope = JSON.stringify([principalId, workspaceId, filter]);
   const [data, setData] = useState<DiscoveryPageResult>();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -37,7 +43,12 @@ export function useActivityFeed(
     if (!enabled) return;
     const controller = new AbortController();
     const saved = windows.get(client);
-    const wanted = saved?.scope === scope ? saved.depth : 1;
+    const wanted =
+      saved?.scope === scope
+        ? saved.depth
+        : principalId
+          ? readActivityPosition(activityPositionStorage(), scope).depth
+          : 1;
     windows.set(client, { scope, depth: wanted });
     setLoading(true);
     setData(undefined);
@@ -50,6 +61,11 @@ export function useActivityFeed(
         if (controller.signal.aborted) return;
         depth.current = result.pages;
         windows.set(client, { scope, depth: result.pages });
+        if (principalId)
+          writeActivityPosition(activityPositionStorage(), scope, {
+            ...readActivityPosition(activityPositionStorage(), scope),
+            depth: result.pages,
+          });
         setData(result.data);
         setMoreError(result.incomplete);
       })
@@ -89,6 +105,11 @@ export function useActivityFeed(
       seen.current.add(cursor);
       depth.current++;
       windows.set(client, { scope, depth: depth.current });
+      if (principalId)
+        writeActivityPosition(activityPositionStorage(), scope, {
+          ...readActivityPosition(activityPositionStorage(), scope),
+          depth: depth.current,
+        });
       setData(
         appendActivityPage(data, {
           ...next,

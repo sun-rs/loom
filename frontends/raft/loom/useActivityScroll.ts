@@ -1,3 +1,8 @@
+import {
+  activityPositionStorage,
+  readActivityPosition,
+  writeActivityPosition,
+} from "./activity-position.ts";
 import { useEffect, useRef } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
 
@@ -10,14 +15,20 @@ export function useActivityScroll(
   scope: string,
   enabled: boolean,
   ready: boolean,
+  persist = false,
 ) {
   const ref = useRef<HTMLDivElement>(null);
   const restored = useRef(false);
   useEffect(() => {
     restored.current = false;
     if (enabled && positions.get(client)?.scope !== scope)
-      positions.set(client, { scope, top: 0 });
-  }, [client, scope, enabled]);
+      positions.set(client, {
+        scope,
+        top: persist
+          ? readActivityPosition(activityPositionStorage(), scope).top
+          : 0,
+      });
+  }, [client, scope, enabled, persist]);
   useEffect(() => {
     if (!enabled || !ready || restored.current || !ref.current) return;
     const frame = requestAnimationFrame(() => {
@@ -30,8 +41,14 @@ export function useActivityScroll(
   return {
     ref,
     onScroll: () => {
-      if (enabled && ready && restored.current && ref.current)
+      if (enabled && ready && restored.current && ref.current) {
         positions.set(client, { scope, top: ref.current.scrollTop });
+        if (persist)
+          writeActivityPosition(activityPositionStorage(), scope, {
+            ...readActivityPosition(activityPositionStorage(), scope),
+            top: ref.current.scrollTop,
+          });
+      }
     },
   };
 }

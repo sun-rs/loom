@@ -1,3 +1,6 @@
+import NotificationSettings from "./NotificationSettings.tsx";
+import { LoomReleaseNotes } from "loom-native-release-notes";
+import { loomReleaseNotes } from "./release-notes.ts";
 import { WEB_BUILD_IDENTITY } from "./build-identity.ts";
 import UsageSummary from "./UsageSummary.tsx";
 import AccountSettings from "./AccountSettings.tsx";
@@ -153,7 +156,11 @@ export default function SettingsPage({
           </div>
           {selectedId !== "server" && (
             <div className="flex-1 overflow-y-auto bg-layer-panel px-5 py-4 text-foreground-strong mobile-nav-clearance theme-brutal:bg-white theme-brutal:text-black">
-              {selectedId === "usage" ? (
+              {selectedId === "notifications" ? (
+                <NotificationSettings client={client} />
+              ) : selectedId === "release-notes" ? (
+                <LoomReleaseNotes releases={loomReleaseNotes} />
+              ) : selectedId === "usage" ? (
                 <UsageSummary
                   client={client}
                   workspaceId={workspaceId}

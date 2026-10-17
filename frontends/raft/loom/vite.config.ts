@@ -1,3 +1,7 @@
+import {
+  exposeNotificationStatus,
+  exposeReleaseNotes,
+} from "./settings-resource-adaptation.ts";
 import { adaptChineseLocale } from "./locale-adaptation.ts";
 import { adaptReactions, adaptReactionToolbar } from "./reaction-adaptation.ts";
 import tailwindcss from "@tailwindcss/postcss";
@@ -76,6 +80,8 @@ export default defineConfig({
           ),
       },
       transform(code, id) {
+        if (id.endsWith("/components/settings/ReleaseNotesPanel.tsx"))
+          return { code: exposeReleaseNotes(code), map: null };
         if (id.endsWith("/packages/web/src/i18n/LocaleProvider.tsx"))
           return { code: adaptChineseLocale(code), map: null };
         if (id.endsWith("/components/message/MessageHoverToolbar.tsx"))
@@ -118,8 +124,12 @@ export default defineConfig({
           id.endsWith("/packages/web/src/components/settings/SettingsPanel.tsx")
         )
           return {
-            code: exposeAboutVersion(
-              exposeAccountProfile(exposeAppearance(adaptSystemSettings(code))),
+            code: exposeNotificationStatus(
+              exposeAboutVersion(
+                exposeAccountProfile(
+                  exposeAppearance(adaptSystemSettings(code)),
+                ),
+              ),
             ),
             map: null,
           };
@@ -182,6 +192,11 @@ export default defineConfig({
           source === "./MessageSearchPage"
         )
           return resolve(import.meta.dirname, "SearchOverlayContent.tsx");
+        if (source === "loom-native-release-notes")
+          return resolve(
+            import.meta.dirname,
+            "../packages/web/src/components/settings/ReleaseNotesPanel.tsx",
+          );
         if (source === "loom-native-appearance")
           return resolve(
             import.meta.dirname,
