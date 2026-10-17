@@ -402,3 +402,7 @@ presence 的 initializing 原因，底栏显示“等待初始化”；真实工
 ## Evo 消息列摘要
 
 `thread.list` 的可选 `viewerSummary` 是 Kernel 基于既有消息、Human 关注覆盖和独立消息列读位置生成的查看者只读投影，包含回复作者去重 ID、未读数、首条未读 ID；不写入 Thread 事件或新增计数表。前端直接传给官方 MessageItem/ThreadRepliesBadge，并把原生首条未读定位参数传给现有 MessageSession。频道已读不代替消息列已读，只有可见消息列回复按原接口推进位置；不以拉全历史或本地存储正文来补摘要。详见 [摘要接线](../audits/2026-10-17-thread-summary.zh-CN.md)。
+
+### evo 动态展示位置持久化（2026-10-17）
+
+`activity-position.ts` 仅保存浏览器标签页的最后一个 Human/工作区/筛选范围、加载页数及像素位置；不保存游标、消息正文或业务状态。已有 `useActivityFeed` 使用新游标重读有界窗口，`useActivityScroll` 在数据准备好后恢复位置；存储不可用退回内存行为。此为 Loom 展示扩展，不能声称是官方原样行为或永久消息锚点。见[实现与证据](../audits/2026-10-17-settings-resources.zh-CN.md)。

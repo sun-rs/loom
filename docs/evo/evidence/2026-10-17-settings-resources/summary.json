@@ -13,7 +13,33 @@
     "realCli": "not run",
     "paid": "not run"
   },
-  "deployment": "pending",
+  "deployment": {
+    "verified": true,
+    "sourceCommit": "5b827a71893068f0787226faacce820f28cc53d5",
+    "webBuildId": "984a5a9e4f6929395cc515906c8c0210cd31e5f1f23e40128afd5a67d5f740bf",
+    "backupDatabases": 2,
+    "backupFiles": 319,
+    "businessTablesUnchanged": 18,
+    "realPages": [
+      {
+        "width": 1440,
+        "dpr": 1,
+        "realLan": true,
+        "notificationReadOnly": true,
+        "releaseNotes": true,
+        "noPushWrites": true
+      },
+      {
+        "width": 390,
+        "dpr": 1,
+        "realLan": true,
+        "notificationReadOnly": true,
+        "releaseNotes": true,
+        "noPushWrites": true
+      }
+    ],
+    "receiptDirectory": "/Users/sun/.loom/reviews/2026-10-17-settings-resources"
+  },
   "limits": [
     "Web Push subscription, delivery and notification click navigation are not connected or accepted",
     "HTTP LAN/Tailscale browser origins are not secure Web Push contexts",
