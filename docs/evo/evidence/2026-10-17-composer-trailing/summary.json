@@ -1,0 +1,37 @@
+{
+  "source": "26801fd",
+  "upstream": {
+    "component": "frontends/raft/packages/web/src/components/message/MessageInput.tsx:3042-3115",
+    "recipe": "raft-ui@0.5.64 composer recipe",
+    "reuse": "Official source unchanged; local TasksPage/ComposerFiles glue and CSS only",
+    "finding": "Official toolbar has leading attachment group; local collapsed grid put it beside textarea, while focus restored full-width toolbar. Keep file group at trailing edge in both states. Default height reduction removes nested padding, not input font or touch area."
+  },
+  "changes": [
+    "Task count inline at title right",
+    "File control at trailing edge across idle/focus/draft; task toggle remains unobstructed",
+    "Mobile idle shell58px brutal/53px elegant; desktop dimensions retained"
+  ],
+  "verification": {
+    "red": ["task count not on title row", "idle composer66 exceeded60"],
+    "green": [
+      "Chromium/WebKit density8cases each including360x640,390x560,390x844,1440x1000 dualthemes",
+      "file dialog close/focus return, stable right position, task pointer target, draft preservation",
+      "Chromium mobile navigation/task title row",
+      "typecheck:loom",
+      "official intake/fonts2tests",
+      "build:web:workbench",
+      "format/diff",
+      "real LAN390dualthemes and1440desktop; actual channel composer focus/blur and task count"
+    ]
+  },
+  "deployment": {
+    "backupDatabases": 2,
+    "backupFiles": 319,
+    "businessTablesUnchanged": 18,
+    "receipts": "/Users/sun/.loom/reviews/2026-10-17-composer-trailing"
+  },
+  "limits": [
+    "No physical iOS/Android or paid CLI testing",
+    "Mobile safe area adds device-specific height; reported heights at DPR1 zero safe-area simulation"
+  ]
+}
