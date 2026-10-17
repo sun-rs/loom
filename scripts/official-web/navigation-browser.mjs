@@ -42,13 +42,23 @@ export async function verifyGlobalNavigation({ browser, origin, channel }) {
       ["activity", "动态"],
       ["settings", "设置"],
     ]) {
-      if (id === "search") await openFullSearch(page);
-      else {
+      if (viewport.width < 768 && !(await nav.isVisible()))
+        await page
+          .getByRole("button", { name: "返回聊天列表", exact: true })
+          .click();
+      if (id === "search") {
+        if (viewport.width < 768)
+          await nav.getByRole("button", { name: "首页", exact: true }).click();
+        await openFullSearch(page);
+      } else if (id === "activity" && viewport.width < 768) {
+        await nav.getByRole("button", { name: "首页", exact: true }).click();
+        await page.getByTestId("mobile-home-activity-entry").click();
+      } else {
         await nav.getByRole("button", { name: label, exact: true }).click();
         await page.getByRole("heading", { name: label, exact: true }).waitFor();
       }
       assert.equal(new URL(page.url()).searchParams.get("view"), id);
-      if (id !== "search" || viewport.width < 768)
+      if (id !== "search" && !(id === "activity" && viewport.width < 768))
         assert.equal(
           await nav
             .getByRole("button", { name: label, exact: true })
@@ -74,7 +84,12 @@ export async function verifyGlobalNavigation({ browser, origin, channel }) {
         );
       }
     }
-    await nav.getByRole("button", { name: "频道", exact: true }).click();
+    await nav
+      .getByRole("button", {
+        name: viewport.width < 768 ? "首页" : "频道",
+        exact: true,
+      })
+      .click();
     if (viewport.width < 768) await openChatRow(page, channel.roomId);
     await page.getByTestId("composer-textarea").waitFor({ state: "visible" });
     assert.equal(

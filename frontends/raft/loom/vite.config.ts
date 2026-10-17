@@ -1,3 +1,4 @@
+import { adaptChineseLocale } from "./locale-adaptation.ts";
 import { adaptReactions, adaptReactionToolbar } from "./reaction-adaptation.ts";
 import tailwindcss from "@tailwindcss/postcss";
 import postcss from "postcss";
@@ -75,6 +76,8 @@ export default defineConfig({
           ),
       },
       transform(code, id) {
+        if (id.endsWith("/packages/web/src/i18n/LocaleProvider.tsx"))
+          return { code: adaptChineseLocale(code), map: null };
         if (id.endsWith("/components/message/MessageHoverToolbar.tsx"))
           return { code: adaptReactionToolbar(code), map: null };
         if (

@@ -174,11 +174,7 @@ export async function openFullSearch(page) {
     await page
       .getByTestId("desktop-search-overlay")
       .waitFor({ state: "hidden" });
-  } else
-    await page
-      .getByRole("navigation", { name: "主导航" })
-      .getByRole("button", { name: "搜索", exact: true })
-      .click();
+  } else await page.getByTestId("mobile-home-search-entry").click();
   await page.getByLabel("搜索内容", { exact: true }).waitFor();
   await page.getByLabel("搜索内容", { exact: true }).fill("");
 }

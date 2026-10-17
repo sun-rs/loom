@@ -1,0 +1,162 @@
+// Real Kernel/API/gateway with deterministic fixture messages; no paid CLI.
+import assert from "node:assert/strict";
+import { resolve } from "node:path";
+import { chromium } from "playwright";
+import { createHumanApplicationPort } from "@rah-os/kernel";
+import { ClientApplicationService } from "../../packages/application-service/src/index.ts";
+import { LocalWorkbenchGateway } from "../../packages/daemon/src/local-workbench-gateway.ts";
+import { roleInstanceFixture } from "../../packages/kernel/test/role-instance-fixture.ts";
+const results = [];
+for (const [width, preset] of [
+  [390, "brutal"],
+  [390, "elegant-light"],
+  [1440, "brutal"],
+]) {
+  const f = roleInstanceFixture();
+  let service, gateway, browser;
+  try {
+    service = new ClientApplicationService({
+      human: createHumanApplicationPort(f.kernel),
+      health: () => {
+        throw Error("unused");
+      },
+    });
+    await service.start();
+    gateway = new LocalWorkbenchGateway({
+      accessToken: f.owner.accessToken,
+      daemonOrigin: service.origin,
+      port: 0,
+      sessionToken: "x".repeat(43),
+      staticDirectory: resolve("frontends/raft/packages/web/dist-workbench"),
+    });
+    await gateway.start();
+    browser = await chromium.launch({ headless: true });
+    const context = await browser.newContext({
+      viewport: { width, height: width === 390 ? 844 : 1000 },
+      deviceScaleFactor: 1,
+      locale: "en-US",
+      isMobile: width === 390,
+      hasTouch: width === 390,
+    });
+    await context.addInitScript(
+      (preset) => localStorage.setItem("slock-theme-preset", preset),
+      preset,
+    );
+    const page = await context.newPage();
+    page.setDefaultTimeout(10000);
+    const errors = [];
+    page.on("pageerror", (e) => errors.push(e.message));
+    await page.goto(gateway.origin + "/?view=settings&lang=en");
+    await page.getByTestId("settings-sidebar-list").waitFor();
+    assert.equal(await page.locator("html").getAttribute("lang"), "zh-CN");
+    if (width === 390) {
+      const nav = page.locator('[data-slot="mobile-nav-root"]');
+      await nav.waitFor();
+      // Model the root height used by the official keyboard/visual viewport contract.
+      if (preset === "brutal")
+        await page.evaluate(() =>
+          document.documentElement.style.setProperty("--vv-height", "560px"),
+        );
+      const rect = await nav.boundingBox();
+      assert.ok(
+        rect && rect.y + rect.height <= (preset === "brutal" ? 561 : 844),
+        "bottom navigation must stay inside visual viewport",
+      );
+      await page.evaluate(() =>
+        document.documentElement.style.removeProperty("--vv-height"),
+      );
+      assert.equal(await nav.getByRole("button").count(), 5);
+      assert.equal(
+        await page.getByTestId("mobile-bottom-bar-overlay").count(),
+        preset === "brutal" ? 0 : 1,
+      );
+      for (const button of await nav.getByRole("button").all()) {
+        const box = await button.boundingBox();
+        assert.ok(
+          box && box.width >= 44 && box.x >= 0 && box.x + box.width <= 390,
+        );
+        assert.ok(
+          await button.evaluate((el) => {
+            const r = el.getBoundingClientRect();
+            return el.contains(
+              document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2),
+            );
+          }),
+        );
+      }
+      for (const label of ["任务", "Agent", "记忆", "设置", "首页"]) {
+        await nav.getByRole("button", { name: label, exact: true }).tap();
+        await nav.waitFor();
+      }
+      for (const id of ["search", "activity"]) {
+        await page.getByTestId("mobile-home-" + id + "-entry").tap();
+        await nav.waitFor({ state: "hidden" });
+        await page
+          .getByRole("button", { name: "返回聊天列表", exact: true })
+          .first()
+          .tap();
+        await nav.waitFor();
+      }
+      await page.locator(`[data-public-channel-id="${f.home.roomId}"]`).tap();
+      await nav.waitFor({ state: "hidden" });
+      await page.getByTestId("composer-textarea").waitFor();
+      await page.getByRole("button", { name: "聊天列表", exact: true }).tap();
+      await nav.waitFor();
+      await nav.getByRole("button", { name: "Agent", exact: true }).tap();
+      await page.getByPlaceholder("筛选角色").waitFor({ state: "visible" });
+      await page.getByPlaceholder("筛选角色").focus();
+      await page.evaluate(() => {
+        Object.defineProperty(window.visualViewport, "height", {
+          configurable: true,
+          value: 560,
+        });
+        window.visualViewport.dispatchEvent(new Event("resize"));
+      });
+      assert.equal(
+        await page.evaluate(() =>
+          document.documentElement.style.getPropertyValue("--vv-height"),
+        ),
+        "560px",
+      );
+      await page.getByPlaceholder("筛选角色").blur();
+      await page.evaluate(() => {
+        delete window.visualViewport.height;
+        window.visualViewport.dispatchEvent(new Event("resize"));
+      });
+      assert.equal(
+        await page.evaluate(() =>
+          document.documentElement.style.getPropertyValue("--vv-height"),
+        ),
+        "",
+      );
+      await nav.getByRole("button", { name: "设置", exact: true }).tap();
+      await page
+        .getByTestId("settings-sidebar-list")
+        .getByText("外观", { exact: true })
+        .tap();
+      await nav.waitFor({ state: "hidden" });
+      await page.getByRole("button", { name: "设置列表", exact: true }).tap();
+      await nav.waitFor();
+      await page.screenshot({ path: "/tmp/loom-mobile-navigation-after.png" });
+    }
+    if (width === 1440) {
+      const nav = page.getByRole("navigation", { name: "主导航" });
+      for (const label of ["任务", "Agent", "记忆", "设置"]) {
+        await nav.getByRole("button", { name: label, exact: true }).click();
+        await page.getByRole("heading", { name: label, exact: true }).waitFor();
+      }
+    }
+    assert.equal(
+      await page.getByText("语言与区域", { exact: true }).count(),
+      0,
+    );
+    assert.deepEqual(errors, []);
+    results.push({ width, preset, navigation: true, chineseOnly: true });
+  } finally {
+    await browser?.close();
+    await gateway?.stop();
+    await service?.close();
+    f.close();
+  }
+}
+console.log(JSON.stringify(results, null, 2));

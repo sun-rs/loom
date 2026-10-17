@@ -108,7 +108,7 @@ export async function verifyMobileChatNavigation(page, roomId) {
   await page.goto(new URL(`/?view=agents&room=${roomId}`, page.url()).href);
   await page
     .getByRole("navigation", { name: "主导航" })
-    .getByRole("button", { name: "频道", exact: true })
+    .getByRole("button", { name: "首页", exact: true })
     .click();
   await sidebar.waitFor();
   assert.equal(

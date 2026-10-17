@@ -1,0 +1,20 @@
+[
+  {
+    "width": 390,
+    "preset": "brutal",
+    "navigation": true,
+    "chineseOnly": true
+  },
+  {
+    "width": 390,
+    "preset": "elegant-light",
+    "navigation": true,
+    "chineseOnly": true
+  },
+  {
+    "width": 1440,
+    "preset": "brutal",
+    "navigation": true,
+    "chineseOnly": true
+  }
+]

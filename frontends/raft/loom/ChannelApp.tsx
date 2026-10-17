@@ -1,3 +1,5 @@
+import MobileBottomBarStack from "../packages/web/src/components/layout/MobileBottomBarStack.tsx";
+import { useAppTheme } from "../packages/web/src/hooks/useAppTheme.ts";
 import SideWorkspace from "./SideWorkspace.tsx";
 import type { ReactNode } from "react";
 import { showToast } from "../packages/web/src/components/toastBridge.ts";
@@ -640,12 +642,22 @@ export default function ChannelApp() {
     [background, routeParams],
   );
   const destination = params.get("view") ?? "channels";
+  const floatingMobileBars = useAppTheme().preset !== "brutal";
   const activityNavigation = useRef(0);
   const [discoveryProfileOpen, setDiscoveryProfileOpen] = useState(false);
   const selectDestination = (id: Destination) => {
     if (hasRouteBoundIntent()) return;
     setParams((previous) => {
       const next = new URLSearchParams(previous);
+      for (const key of [
+        "settings",
+        "task",
+        "thread",
+        "saved",
+        "role",
+        "message",
+      ])
+        next.delete(key);
       if (id === "channels") {
         next.delete("view");
         if (window.matchMedia("(max-width: 767.98px)").matches)
@@ -852,7 +864,7 @@ export default function ChannelApp() {
       >
         <AppShellRoot
           inert={bootstrapping ? true : undefined}
-          className={`flex-col h-dvh min-h-screen overflow-hidden font-display ${bootstrapping ? "invisible" : ""}`}
+          className={`min-h-0 flex-1 flex-col overflow-hidden font-display ${bootstrapping ? "invisible" : ""}`}
           data-testid="loom-channel-app"
         >
           {directory && (
@@ -925,6 +937,7 @@ export default function ChannelApp() {
                       )}
                       {directory?.workspace.controlRoomId && (
                         <ChannelSidebar
+                          onOpenMobileDestination={selectDestination}
                           client={client}
                           workspaceId={directory.workspace.workspaceId}
                           controlRoomId={directory.workspace.controlRoomId}
@@ -1280,15 +1293,17 @@ export default function ChannelApp() {
             !params.has("thread") &&
             !(destination === "settings" && params.has("settings")) &&
             !(destination === "tasks" && params.has("task")) && (
-              <>
-                <div className="pointer-events-auto md:hidden shrink-0">
-                  <LoomLiveActivity />
-                </div>
-                <MobileNavigation
-                  active={destination}
-                  onSelect={selectDestination}
-                />
-              </>
+              <MobileBottomBarStack
+                floating={floatingMobileBars}
+                showLiveActivity
+                liveActivity={<LoomLiveActivity />}
+                tabBar={
+                  <MobileNavigation
+                    active={destination}
+                    onSelect={selectDestination}
+                  />
+                }
+              />
             )}
         </AppShellRoot>
       </SystemNotificationsProvider>

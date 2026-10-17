@@ -8,7 +8,6 @@ import { AppShellMainSlot, AppShellSidebarSlot, Panel } from "raft-ui";
 import {
   ChartNoAxesCombined,
   User,
-  Languages,
   Type,
   Bell,
   Building2,
@@ -29,7 +28,6 @@ const categories = [
     label: "个人",
     items: [
       { id: "account", label: "账户", icon: User },
-      { id: "language-region", label: "语言与区域", icon: Languages },
       { id: "appearance", label: "外观", icon: Type },
       { id: "notifications", label: "通知", icon: Bell },
     ],

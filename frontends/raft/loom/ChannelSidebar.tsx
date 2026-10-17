@@ -1,3 +1,4 @@
+import MobileHomeEntries from "./MobileHomeEntries.tsx";
 import SavedNav from "./SavedNav.tsx";
 import { useAppearanceStore } from "../packages/web/src/store/appearanceStore.ts";
 import { shouldHideEmptySidebarSection } from "../packages/web/src/components/layout/sidebarEmptySectionVisibility.ts";
@@ -55,6 +56,7 @@ export default function ChannelSidebar({
   onSelect,
   savedSelected,
   onOpenSaved,
+  onOpenMobileDestination,
   onCreated,
 }: {
   client: RahClient;
@@ -69,6 +71,7 @@ export default function ChannelSidebar({
   onReady: () => void;
   savedSelected: boolean;
   onOpenSaved: () => void;
+  onOpenMobileDestination: (id: "search" | "activity") => void;
   selected: string | null;
   onSelect: (id: string) => boolean;
   onCreated: (room: Room) => Promise<void>;
@@ -254,6 +257,7 @@ export default function ChannelSidebar({
             刷新列表
           </Button>
         )}
+        <MobileHomeEntries onSelect={onOpenMobileDestination} />
         <SavedNav
           client={client}
           workspaceId={workspaceId}

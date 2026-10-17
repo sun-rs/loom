@@ -1,5 +1,7 @@
+import { useAppTheme } from "../packages/web/src/hooks/useAppTheme.ts";
 import SystemNotifications from "./SystemNotifications.tsx";
 import {
+  Home,
   Activity,
   Brain,
   CheckSquare,
@@ -64,14 +66,26 @@ export function DesktopNavigation({ active, onSelect }: NavigationProps) {
 
 /** Same destinations on small screens using the official in-flow mobile navigation primitive. */
 export function MobileNavigation({ active, onSelect }: NavigationProps) {
+  const floating = useAppTheme().preset !== "brutal";
+  const tabs = destinations
+    .filter((entry) => entry.id !== "search" && entry.id !== "activity")
+    .map((entry) =>
+      entry.id === "channels" ? { ...entry, label: "首页", icon: Home } : entry,
+    );
   return (
     <MobileNavRoot
-      className="md:hidden shrink-0"
+      className={
+        floating ? "pointer-events-auto md:hidden" : "md:hidden shrink-0"
+      }
       aria-label="主导航"
       role="navigation"
-      style={{ paddingBottom: "min(env(safe-area-inset-bottom, 0px), 34px)" }}
+      style={
+        floating
+          ? undefined
+          : { paddingBottom: "min(env(safe-area-inset-bottom, 0px), 34px)" }
+      }
     >
-      {destinations.map((entry) => (
+      {tabs.map((entry) => (
         <MobileNavItem
           key={entry.id}
           selected={active === entry.id}
@@ -79,7 +93,7 @@ export function MobileNavigation({ active, onSelect }: NavigationProps) {
           aria-current={active === entry.id ? "page" : undefined}
           onClick={() => onSelect(entry.id)}
         >
-          <entry.icon />
+          <entry.icon className="theme-brutal:[@media(max-height:600px)]:hidden" />
           <MobileNavLabel>{entry.label}</MobileNavLabel>
         </MobileNavItem>
       ))}

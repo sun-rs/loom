@@ -1,0 +1,21 @@
+{
+  "implemented": [
+    "Official visual viewport tracking and root flex sizing",
+    "Official MobileBottomBarStack and theme-dependent mobile nav composition",
+    "Mobile Home search/activity entries; tabs open root routes",
+    "Chinese-only initial locale and removal of language switch category"
+  ],
+  "checks": {
+    "browser": "390x844 brutal/elegant-light and 1440x1000 brutal; touch routes, detail back, actual pointer hit targets, synthetic visual-viewport/keyboard, English browser and lang=en remain Chinese",
+    "typecheck": "passed: typecheck:loom",
+    "build": "passed: build:web:workbench",
+    "officialSourceHashes": "2264 unchanged",
+    "paid": "not run"
+  },
+  "deployment": "pending",
+  "limits": [
+    "No physical iOS Safari or installed PWA test",
+    "Official four tabs plus Loom-specific Memory entry; no claim of all detail routes parity",
+    "Notifications/release notes remain pending"
+  ]
+}
