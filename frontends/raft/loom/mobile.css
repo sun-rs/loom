@@ -44,27 +44,27 @@
 
   /* No overlay: the same textarea and controls reflow when editing starts.
    * Attachments, errors, accessory content and drafts keep the expanded form. */
-  .loom-composer[data-has-accessories="false"]:not(:focus-within):has(
-      textarea:placeholder-shown
-    )
+  .loom-composer[data-has-accessories="false"]:not(:focus-within):not(
+      :has([data-testid="composer-as-task-toggle"][aria-checked="true"])
+    ):has(textarea:placeholder-shown)
     [data-slot="composer"] {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
   }
 
-  .loom-composer[data-has-accessories="false"]:not(:focus-within):has(
-      textarea:placeholder-shown
-    )
+  .loom-composer[data-has-accessories="false"]:not(:focus-within):not(
+      :has([data-testid="composer-as-task-toggle"][aria-checked="true"])
+    ):has(textarea:placeholder-shown)
     [data-testid="composer-as-task-toggle"] {
     display: none;
   }
 
   /* Native autosizing can retain its inline height after a multiline draft.
    * Bound only the empty, unfocused preview; editing retains native sizing. */
-  .loom-composer[data-has-accessories="false"]:not(:focus-within):has(
-      textarea:placeholder-shown
-    )
+  .loom-composer[data-has-accessories="false"]:not(:focus-within):not(
+      :has([data-testid="composer-as-task-toggle"][aria-checked="true"])
+    ):has(textarea:placeholder-shown)
     [data-slot="composer-input"] {
     height: 40px !important;
     max-height: 40px;

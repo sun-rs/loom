@@ -117,6 +117,22 @@ export async function verifyMobileDensity({ browser, origin, channels }) {
           ),
           false,
         );
+        if (mobile) {
+          await input.focus();
+          const task = page.getByTestId("composer-as-task-toggle");
+          await task.click();
+          await input.blur();
+          await task.blur();
+          assert.equal(
+            await task.isVisible(),
+            true,
+            "selected task mode remains visible even with an empty draft",
+          );
+          assert.ok((await shell.boundingBox()).height > readHeight);
+          await task.click();
+          await task.blur();
+          await input.blur();
+        }
         const bodyHeight = (
           await page.getByTestId("loom-message-timeline").boundingBox()
         ).height;

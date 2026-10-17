@@ -4,7 +4,7 @@
   "design": {
     "owner": "Loom presentation glue and mobile-only CSS; upstream draft, keyboard viewport, timeline and domain owners retained",
     "reading": "Same native composer reflows into one row only when empty, unfocused and without accessories; file/send remain available; task toggle shown on expansion",
-    "editing": "Focus, text, attachment, error or accessory content keeps the native expanded composer; no remount or duplicate draft state",
+    "editing": "Focus, text, attachment, error or accessory content keeps the native expanded composer; no remount or duplicate draft state; selected task mode also stays expanded",
     "chrome": "Mobile panel headers 48 CSS px; chat description hidden on mobile; navigation icons retain aria-label; fonts/colors/hover/selected states unchanged",
     "message": "Mobile channel outer padding 8 CSS px, item gutter gap 6 CSS px; avatar/author preserved",
     "safeArea": "Channel and thread footer remain sole bottom-safe-area owners; existing official visualViewport tracking untouched",
@@ -174,7 +174,8 @@
         "bodyHeight": 729
       }
     ],
-    "focusReturn": "File dialog focus return explicitly awaited before text entry; initial WebKit run had a transient empty-draft failure, follow-up passed with focus sequencing and visualViewport checks"
+    "focusReturn": "File dialog focus return explicitly awaited before text entry; initial WebKit run had a transient empty-draft failure, follow-up passed with focus sequencing and visualViewport checks",
+    "taskMode": "Reproduced hidden checked task toggle on empty blur; collapsed layout now excludes active task mode; new regression passed"
   },
   "limits": [
     "Emulated mobile browsers, no physical iOS/Android IME, browser chrome or hardware safe-area acceptance",
