@@ -1,5 +1,5 @@
 {
-  "status": "implemented-deployment-pending",
+  "status": "verified-and-deployed",
   "scope": "Unify mobile root-page chrome after owner requested Raft iOS/main reference and consistent Raft styling",
   "references": {
     "native": {
@@ -47,6 +47,42 @@
     "No backend or paid-provider changes"
   ],
   "deployment": {
-    "verified": false
+    "verified": true,
+    "sourceCommit": "b6156630c1d9425847d433c54178a7398de1c2db",
+    "webBuildId": "2575ea0d995510fe23388371d72db694ed025fd305b76d5e597316782b4a8bae",
+    "backupDatabases": 2,
+    "backupFiles": 319,
+    "businessTablesUnchanged": 18,
+    "realPageChecks": [
+      {
+        "width": 390,
+        "preset": "brutal",
+        "dpr": 1,
+        "realLan": true,
+        "navigation": true,
+        "chineseOnly": true,
+        "mobileDiscoveryList": true
+      },
+      {
+        "width": 390,
+        "preset": "elegant-light",
+        "dpr": 1,
+        "realLan": true,
+        "navigation": true,
+        "chineseOnly": true,
+        "mobileDiscoveryList": true
+      },
+      {
+        "width": 1440,
+        "preset": "brutal",
+        "dpr": 1,
+        "realLan": true,
+        "navigation": true,
+        "chineseOnly": true,
+        "mobileDiscoveryList": false
+      }
+    ],
+    "receiptDirectory": "/Users/sun/.loom/reviews/2026-10-17-mobile-native-chrome",
+    "visualInspection": "Real 390px brutal Tasks and elegant Settings captures inspected; five root title tracks asserted at62px in deterministic gates, four non-chat roots also asserted on real pages"
   }
 }
