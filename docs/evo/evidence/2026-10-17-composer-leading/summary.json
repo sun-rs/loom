@@ -1,0 +1,50 @@
+{
+  "source": "034ec4b",
+  "owner": "Restore plus to left, reduce visible plus/send size; investigate iOS standard",
+  "research": {
+    "apple": "https://developer.apple.com/design/human-interface-guidelines/buttons",
+    "appleFinding": "Generally44x44pt hit region, distinct from painted button; Apple does not mandate this composer order or28px web size.",
+    "raftRevision": "3cb28f1e7eecab4a66412089f156e81054760e43",
+    "raftRepository": "https://github.com/botiverse/mobile",
+    "raftLicense": "FSL-1.1-ALv2, read only; no native code copied",
+    "nativeChain": [
+      "compose/shared/src/commonMain/kotlin/build/raft/app/ThreadComposerPage.kt:ThreadComposerIconButtonSize/ComposerIconButton/ComposerSendButton",
+      "compose/shared/src/commonMain/kotlin/build/raft/app/components/SlockBrutalComponents.kt:SlockBrutalIconButton"
+    ],
+    "nativeFacts": "26dp face,14dp glyph,2dp shadow; attachment group left/send right;16sp input. Native paint sizes do not prove44dp hit coverage.",
+    "webChain": "MessageInput -> raft-ui@0.5.64 Composer/ComposerToolbar/Button; official source unchanged"
+  },
+  "implementation": [
+    "Local mobile28px painted face,14px icon, reserved8px margin each side and44px transparent hit region",
+    "Leading files/central textarea/trailing send in idle grid; same leading/trailing positions in editing toolbar",
+    "Preserve theme border/color/shadow and disabled state; desktop native button dimensions",
+    "Remove mobile elegant toolbar4px translate by resetting Tailwind translate variable; compiled CSS lowers translate:none into transform and otherwise leaves utility translate active",
+    "Override button overflow clipping only for bounded transparent hit extension"
+  ],
+  "verification": {
+    "red": "old40px face fails28px invariant",
+    "green": [
+      "Chromium and WebKit each8viewport/theme cases",
+      "Pointer corner hits outside both painted buttons; file window opens via outer target",
+      "Stable left position/focus return; task target unblocked; draft/keyboard viewport/desktop regression",
+      "typecheck:loom; intake/fonts2tests; build:web:workbench; formatting/diff"
+    ],
+    "mobileIdleHeight": {
+      "brutal": 58,
+      "elegant": 53
+    }
+  },
+  "deployment": {
+    "verified": true,
+    "receipts": "/Users/sun/.loom/reviews/2026-10-17-composer-leading",
+    "backupDatabases": 2,
+    "backupFiles": 319,
+    "businessTablesUnchanged": 18,
+    "realPage": "LAN390both themes/1440desktop; actual channel28px leading plus and stablefocus; screenshots reviewed"
+  },
+  "limitations": [
+    "No physical iOS/Android acceptance",
+    "CSSpx/dp/pt are platform-specific; this is explicit web adaptation, not pixel-identical native reuse",
+    "No paid providers invoked"
+  ]
+}
