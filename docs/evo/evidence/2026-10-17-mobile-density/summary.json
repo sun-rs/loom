@@ -1,5 +1,5 @@
 {
-  "status": "implemented-checks-passed-deployment-pending",
+  "status": "implemented-verified-deployed",
   "scope": "Owner-approved mobile reading-area optimization, frontend only; not a claim of byte-exact Raft mobile layout parity",
   "design": {
     "owner": "Loom presentation glue and mobile-only CSS; upstream draft, keyboard viewport, timeline and domain owners retained",
@@ -175,7 +175,8 @@
       }
     ],
     "focusReturn": "File dialog focus return explicitly awaited before text entry; initial WebKit run had a transient empty-draft failure, follow-up passed with focus sequencing and visualViewport checks",
-    "taskMode": "Reproduced hidden checked task toggle on empty blur; collapsed layout now excludes active task mode; new regression passed"
+    "taskMode": "Reproduced hidden checked task toggle on empty blur; collapsed layout now excludes active task mode; new regression passed",
+    "testHarnessNote": "One WebKit attempt overlapped replacement of the mutable dist directory and timed out on navigation. Final eight-case run used the verified immutable deployment snapshot and passed."
   },
   "limits": [
     "Emulated mobile browsers, no physical iOS/Android IME, browser chrome or hardware safe-area acceptance",
@@ -183,6 +184,92 @@
     "No backend changes, paid CLI or cost evidence"
   ],
   "deployment": {
-    "verified": false
-  }
+    "verified": true,
+    "sourceCommit": "6bcfcb69a1506dfd129c4f24af41adc749a881a2",
+    "webBuildId": "3375087907d4f294f7f3911d477a926330b9a4a1b51505714c2adf322dcf5a85",
+    "backupDatabases": 2,
+    "backupFiles": 319,
+    "businessTablesUnchanged": 18,
+    "realPages": [
+      {
+        "width": 390,
+        "preset": "brutal",
+        "dpr": 1,
+        "realLan": true,
+        "navigation": true,
+        "chineseOnly": true,
+        "mobileDiscoveryList": true
+      },
+      {
+        "width": 390,
+        "preset": "elegant-light",
+        "dpr": 1,
+        "realLan": true,
+        "navigation": true,
+        "chineseOnly": true,
+        "mobileDiscoveryList": true
+      },
+      {
+        "width": 1440,
+        "preset": "brutal",
+        "dpr": 1,
+        "realLan": true,
+        "navigation": true,
+        "chineseOnly": true,
+        "mobileDiscoveryList": false
+      }
+    ],
+    "receiptDirectory": "/Users/sun/.loom/reviews/2026-10-17-mobile-density",
+    "network": "Existing LAN/Tailnet bindings preserved; service com.loom.evo gracefully restarted"
+  },
+  "realPageMeasurements": [
+    {
+      "theme": "brutal",
+      "width": 390,
+      "height": 844,
+      "composerHeight": 66,
+      "messageHeight": 700,
+      "messageViewportFraction": 0.8294
+    },
+    {
+      "theme": "brutal",
+      "width": 360,
+      "height": 640,
+      "composerHeight": 66,
+      "messageHeight": 496,
+      "messageViewportFraction": 0.775
+    },
+    {
+      "theme": "brutal",
+      "width": 390,
+      "height": 560,
+      "composerHeight": 66,
+      "messageHeight": 416,
+      "messageViewportFraction": 0.7429
+    },
+    {
+      "theme": "elegant-light",
+      "width": 390,
+      "height": 844,
+      "composerHeight": 61,
+      "messageHeight": 694,
+      "messageViewportFraction": 0.8223
+    },
+    {
+      "theme": "elegant-light",
+      "width": 360,
+      "height": 640,
+      "composerHeight": 61,
+      "messageHeight": 490,
+      "messageViewportFraction": 0.7656
+    },
+    {
+      "theme": "elegant-light",
+      "width": 390,
+      "height": 560,
+      "composerHeight": 61,
+      "messageHeight": 410,
+      "messageViewportFraction": 0.7321
+    }
+  ]
 }
