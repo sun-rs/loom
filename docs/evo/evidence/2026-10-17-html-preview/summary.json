@@ -14,7 +14,33 @@
     "browser": "HTML and Markdown fake-Worker collaboration, 1440x1000 and 390x844, DPR 1",
     "realCli": "not run",
     "paidModels": "not run",
-    "deployment": "pending"
+    "deployment": {
+      "sourceCommit": "6bff0ac6846a82adaaf1c6b798ac33fef6179709",
+      "verified": true,
+      "backupDatabases": 2,
+      "backupFiles": 319,
+      "businessProjectionCount": 18,
+      "businessProjectionsUnchanged": true,
+      "realPage": [
+        {
+          "width": 1440,
+          "dpr": 1,
+          "collapsedByDefault": true,
+          "advancedFields": true,
+          "noMutation": true
+        },
+        {
+          "width": 390,
+          "dpr": 1,
+          "collapsedByDefault": true,
+          "advancedFields": true,
+          "noMutation": true
+        }
+      ],
+      "webBuildId": "7a21bb39b2ed47362e722c8c1d55daf12103c831bcf3eab48da83a057f17eeb2",
+      "scope": "Read-only real settings pages; HTML collaboration uses isolated fixture only"
+    },
+    "tdd": "HTML endpoint initially returned 404 instead of authenticated route response; red log retained"
   },
   "limits": [
     "HTML capped at 2 MiB; raw download unchanged",

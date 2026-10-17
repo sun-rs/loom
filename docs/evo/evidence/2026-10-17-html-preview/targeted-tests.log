@@ -1,0 +1,18 @@
+✔ Files HTTP + SDK roundtrip verifies bytes, Room provenance, authorization and safe download headers (174.998042ms)
+✔ official HTML reporter retains pinned source provenance (1.097875ms)
+✔ official bridge survives split UTF-8 and precedes document CSP without changing original markup (3.015292ms)
+✔ the local workbench gateway keeps Human authority server-side (41.213125ms)
+✔ shutdown closes a stalled browser request and its upstream before draining Core (4.610917ms)
+✔ a local workbench browser session survives a gateway restart and stale sessions renew without HTML parsing (3.619125ms)
+✔ unpaired gateway refuses wildcard, LAN and noncanonical Tailnet bindings (0.564709ms)
+✔ trusted-network access needs neither a browser token nor a session cookie (4.160334ms)
+✔ Tailnet gateway also serves loopback and closes both listeners (4.639459ms)
+✔ retired console paths never expose a shell or build instructions (2.028667ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 493.043667
