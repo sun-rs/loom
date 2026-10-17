@@ -65,10 +65,28 @@ export async function verifyMobileDensity({ browser, origin, channels }) {
           });
           const hit = await plus.boundingBox();
           assert.ok(
-            hit.width >= 40 && hit.height >= 40,
-            "file control keeps a touch target",
+            hit.x - (await shell.boundingBox()).x < 32,
+            "idle plus is on left",
           );
-          await plus.click();
+          assert.ok(
+            hit.width === 28 && hit.height === 28,
+            "file control paints a compact28px square",
+          );
+          assert.ok(
+            await plus.evaluate((el) => {
+              const r = el.getBoundingClientRect();
+              return [
+                [-7, -7],
+                [r.width + 7, -7],
+                [-7, r.height + 7],
+                [r.width + 7, r.height + 7],
+              ].every(([x, y]) =>
+                el.contains(document.elementFromPoint(r.x + x, r.y + y)),
+              );
+            }),
+            "44px file hit area includes corners beyond painted border",
+          );
+          await page.mouse.click(hit.x - 6, hit.y + hit.height / 2);
           await page.getByRole("dialog").waitFor();
           await page.keyboard.press("Escape");
           await page.getByRole("dialog").waitFor({ state: "hidden" });
@@ -85,22 +103,14 @@ export async function verifyMobileDensity({ browser, origin, channels }) {
             name: "引用计算机文件或文件夹",
           });
           const box = await plus.boundingBox();
-          const toolbar = shell.locator('[data-slot="composer-toolbar"]');
-          const bounds = await toolbar.boundingBox();
-          const rightPadding = await toolbar.evaluate((el) =>
-            parseFloat(getComputedStyle(el).paddingRight),
-          );
-          assert.ok(
-            Math.abs(
-              box.x + box.width - bounds.x - bounds.width + rightPadding,
-            ) <= 2,
-            "plus stays at toolbar content right edge",
-          );
+          const composer = shell.locator('[data-slot="composer"]');
+          const bounds = await composer.boundingBox();
+          assert.ok(box.x - bounds.x < 26, "plus stays at composer left edge");
           const task = page.getByTestId("composer-as-task-toggle");
           if (await task.isVisible()) {
             const t = await task.boundingBox();
             assert.ok(
-              t.x + t.width <= box.x,
+              box.x + box.width + (mobile ? 8 : 0) <= t.x,
               "task control does not overlap plus",
             );
             assert.ok(
@@ -127,6 +137,28 @@ export async function verifyMobileDensity({ browser, origin, channels }) {
         await input.fill("FIXTURE 草稿\n第二行");
         await input.blur();
         await checkFilePosition();
+        if (mobile) {
+          const send = shell
+            .locator('[data-slot="composer-toolbar"] button')
+            .filter({ has: page.locator("svg.lucide-send") });
+          const b = await send.boundingBox();
+          assert.equal(b.width, 28);
+          assert.equal(b.height, 28);
+          assert.ok(
+            await send.evaluate((el) => {
+              const r = el.getBoundingClientRect();
+              return [
+                [-7, -7],
+                [r.width + 7, -7],
+                [-7, r.height + 7],
+                [r.width + 7, r.height + 7],
+              ].every(([x, y]) =>
+                el.contains(document.elementFromPoint(r.x + x, r.y + y)),
+              );
+            }),
+            "send has unobstructed44px hit area",
+          );
+        }
         const draftHeight = (await shell.boundingBox()).height;
         if (output && width === 390 && height === 844)
           await page.screenshot({ path: `${output}/${preset}-draft.png` });

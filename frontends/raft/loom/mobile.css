@@ -2,13 +2,12 @@
  * Raft retains typography, colors, disclosure, focus and message measurement.
  * CSS reads the native textarea/draft; no second draft or keyboard state owner.
  */
-/* File tools remain at the trailing edge in both reading and editing layouts.
+/* File tools remain at the leading edge in both reading and editing layouts.
  * Keep the task checkbox and submit group in normal flow, never overlaid. */
 .loom-composer [data-slot="composer-toolbar"] {
   min-width: 0;
 }
 .loom-composer-file-tools {
-  order: 2;
   flex-shrink: 0;
 }
 .loom-composer
@@ -91,7 +90,7 @@
 
   .loom-composer [data-slot="composer"] {
     gap: 4px;
-    padding: 2px 6px;
+    padding: 0 6px;
   }
 
   .loom-composer [data-slot="composer-input"] {
@@ -103,11 +102,43 @@
     padding: 0;
     gap: 8px;
     transform: none;
+    translate: none;
+    --tw-translate-y: 0px;
   }
 
-  .loom-composer [data-slot="composer-toolbar"] button {
-    min-width: 40px;
-    min-height: 40px;
+  /* Compact visible surface; the reserved margin and transparent extension
+   * provide a nonoverlapping44px target. Never inflate the painted border. */
+  .loom-composer [data-slot="composer-toolbar"] button:not([role="checkbox"]) {
+    position: relative;
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    min-height: 28px;
+    padding: 4px;
+    margin: 8px;
+    overflow: visible;
+    flex-shrink: 0;
+  }
+  .loom-composer
+    [data-slot="composer-toolbar"]
+    button:not([role="checkbox"])::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 44px;
+    height: 44px;
+    transform: translate(-50%, -50%);
+  }
+  .loom-composer
+    [data-slot="composer-toolbar"]
+    button:not([role="checkbox"])
+    svg {
+    width: 14px;
+    height: 14px;
+  }
+  .loom-composer [data-testid="composer-as-task-toggle"] {
+    min-height: 44px;
   }
 
   /* No overlay: the same textarea and controls reflow when editing starts.
@@ -117,7 +148,8 @@
     ):has(textarea:placeholder-shown)
     [data-slot="composer"] {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    grid-template-areas: "files input submit";
     align-items: center;
   }
 
@@ -126,6 +158,33 @@
     ):has(textarea:placeholder-shown)
     [data-testid="composer-as-task-toggle"] {
     display: none;
+  }
+
+  .loom-composer[data-has-accessories="false"]:not(:focus-within):not(
+      :has([data-testid="composer-as-task-toggle"][aria-checked="true"])
+    ):has(textarea:placeholder-shown)
+    [data-slot="composer-toolbar"] {
+    display: contents;
+  }
+  .loom-composer[data-has-accessories="false"]:not(:focus-within):not(
+      :has([data-testid="composer-as-task-toggle"][aria-checked="true"])
+    ):has(textarea:placeholder-shown)
+    .loom-composer-file-tools {
+    grid-area: files;
+  }
+  .loom-composer[data-has-accessories="false"]:not(:focus-within):not(
+      :has([data-testid="composer-as-task-toggle"][aria-checked="true"])
+    ):has(textarea:placeholder-shown)
+    [data-slot="composer-toolbar"]
+    > div:not(.loom-composer-file-tools) {
+    grid-area: submit;
+  }
+  .loom-composer[data-has-accessories="false"]:not(:focus-within):not(
+      :has([data-testid="composer-as-task-toggle"][aria-checked="true"])
+    ):has(textarea:placeholder-shown)
+    [data-slot="composer-input"] {
+    grid-area: input;
+    min-width: 0;
   }
 
   /* Native autosizing can retain its inline height after a multiline draft.
