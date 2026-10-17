@@ -74,6 +74,19 @@ export async function verifyPrivateSidebar({
   );
   await page.unroute("**/v3/client/sidebar/patch");
   await row.waitFor({ state: "hidden" });
+  assert.equal(new URL(page.url()).searchParams.has("room"), false);
+  assert.equal(
+    await page
+      .getByRole("heading", { name: `私聊 · ${name}`, exact: true })
+      .count(),
+    0,
+    "closing the selected private conversation removes its content, not only its list row",
+  );
+  assert.equal(
+    await page.getByTestId("composer-textarea").count(),
+    0,
+    "closed conversation cannot retain a composer",
+  );
   assert.ok(
     (
       await client.request("sidebar.get", {

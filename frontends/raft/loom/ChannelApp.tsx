@@ -763,8 +763,8 @@ export default function ChannelApp() {
       .catch(() => setBoxError("无法打开私聊"));
   };
   const requested = params.get("room");
-  // Presentation route only: retain the selected room and its mounted composer
-  // when popping to the mobile list. No delivery/read/write state lives here.
+  // Presentation route only: mobile list visibility does not clear room selection.
+  // No delivery/read/write state lives here.
   const savedOpen = params.get("saved") === "1";
   const mobileList =
     !savedOpen && (!requested || params.get("chat") === "list");
@@ -784,7 +784,8 @@ export default function ChannelApp() {
     (!requested && params.get("chat") !== "list"
       ? directory?.channels[0]
       : undefined);
-  // Keep the mounted conversation/draft while top-level routes omit room.
+  // Retain the selected room/bridge while top-level routes omit room.
+  // Channel may unmount; the native draft store restores text on return.
   // An explicit room still wins, including inaccessible/invalid destinations.
   useEffect(() => {
     if (selected) lastChatRoom.current = selected.roomId;
@@ -957,13 +958,15 @@ export default function ChannelApp() {
                           name={directory.workspace.name}
                           rooms={directory.channels}
                           privateBoxes={directory.privateBoxes}
-                          onPrivateClosed={(id) =>
+                          onPrivateClosed={(id) => {
+                            if (lastChatRoom.current === id)
+                              lastChatRoom.current = undefined;
                             setParams((previous) =>
                               previous.get("room") === id
                                 ? new URLSearchParams({ chat: "list" })
                                 : previous,
-                            )
-                          }
+                            );
+                          }}
                           archivedRooms={directory.archivedChannels}
                           onRoomsChanged={async () => {
                             setDirectory(await loadChannelDirectory(client));

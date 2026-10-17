@@ -1,0 +1,30 @@
+[
+  {
+    "viewport": {
+      "width": 1440,
+      "height": 1000
+    },
+    "privateOpenUnknownReplay": true,
+    "privateSendUnknownReplay": true,
+    "mobileBackPreservesUnknownWrite": false,
+    "stableBoxAcrossReload": true,
+    "sparseHistoryTopAlignedAndChronological": true,
+    "privateChannelIsolation": true,
+    "sidebarPinCloseReopenAndUnknownReplay": true,
+    "inactiveHistoryReadOnly": false
+  },
+  {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "privateOpenUnknownReplay": true,
+    "privateSendUnknownReplay": true,
+    "mobileBackPreservesUnknownWrite": true,
+    "stableBoxAcrossReload": true,
+    "sparseHistoryTopAlignedAndChronological": true,
+    "privateChannelIsolation": true,
+    "sidebarPinCloseReopenAndUnknownReplay": true,
+    "inactiveHistoryReadOnly": true
+  }
+]

@@ -158,7 +158,30 @@ try {
     instances.push(result.instance);
   }
   browser = await chromium.launch({ headless: true });
-  if (process.env.LOOM_BROWSER_SLICE === "saved") {
+  if (process.env.LOOM_BROWSER_SLICE === "private") {
+    for (const instance of instances)
+      await client.request("agent.manage", {
+        action: "set_state",
+        agentId: instance.agentId,
+        state: "disabled",
+        basedOnRoomSeq: await head(workspace.controlRoomId),
+        idempotencyKey: `fixture-private-disable-${instance.instanceId}`,
+      });
+    console.log(
+      JSON.stringify(
+        await verifyPrivateBoxes({
+          browser,
+          origin,
+          client,
+          workspace,
+          channel: channels[2],
+          instance: instances[0],
+          name: instanceNames[0],
+          head,
+        }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "saved") {
     console.log(
       JSON.stringify(
         await verifySaved({

@@ -1,0 +1,19 @@
+{
+  "status": "checks-passed-deployment-pending",
+  "scope": "Review follow-up: closing a private conversation clears its retained selection; no backend changes",
+  "red": {
+    "assertion": "closing the selected private conversation removes its content, not only its list row",
+    "actual": 1,
+    "expected": 0
+  },
+  "checks": {
+    "privateCloseContentAndComposer": "passed at 1440x1000 and 390x844; existing exact unknown replay, history retention and reopen assertions retained",
+    "navigationDraftRestore": "passed at both sizes",
+    "typecheck": "passed: typecheck:loom",
+    "build": "passed: build:web:workbench",
+    "paidCli": "not run",
+    "officialSourceHashesUnchanged": 2264
+  },
+  "documentationCorrection": "Channel may unmount across top-level navigation; retained room/bridge plus native text draft restoration is not complete component-state keepalive",
+  "deployment": "pending"
+}

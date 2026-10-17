@@ -4,8 +4,8 @@
   "scope": "Official-source frontend / API integration; controlled adapters, no new paid or real-model acceptance",
   "repairs": [
     "Shared channel write-slot observers must only guard their own actions; independent registrations cannot remove another guard",
-    "Top-level navigation without a room parameter preserves the mounted conversation and unsent draft",
-    "Opening Search/Activity from Home must clear prior room/detail parameters so mobile lists are visible, while the mounted chat remains preserved"
+    "Top-level navigation without a room parameter preserves the selected room/bridge and restores unsent text from the native draft store; Channel may unmount",
+    "Opening Search/Activity from Home must clear prior room/detail parameters so mobile lists are visible, while the selected chat/bridge remains preserved"
   ],
   "checks": {
     "peerKernelAndHostTests": 15,
