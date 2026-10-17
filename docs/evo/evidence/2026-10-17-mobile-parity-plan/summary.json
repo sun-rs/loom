@@ -90,7 +90,8 @@
   "limitations": [
     "No same-device native iOS screenshot baseline is available in the public source tree; do not claim bilateral visual1:1 acceptance",
     "Native dp/sp and CSSpx are platform-specific; measurements compare baseline dimensions, not physical pixel equivalence.",
-    "No physical iOS/Android device acceptance; official borders/shadows and16px input font intentionally retained."
+    "No physical iOS/Android device acceptance; official borders/shadows and16px input font intentionally retained.",
+    "Initial real-page memory screenshot captured loading; repeated verification explicitly waits for loading to disappear."
   ],
   "verification": {
     "red": [
@@ -106,7 +107,14 @@
       "build:web:workbench",
       "intake/local-fonts/channel-controls-chrome3tests"
     ],
-    "deployment": "pending safe restart"
+    "deployment": {
+      "source": "e4e098e025d0d6b3e341eeef84b4e39d5436ed8c",
+      "businessTablesUnchanged": 18,
+      "backupDatabases": 2,
+      "backupFiles": 319,
+      "realPage": "LAN390x844 both themes and1440desktop; five root pages/details/navigation; no business writes",
+      "receiptDirectory": "/Users/sun/.loom/reviews/2026-10-17-mobile-compact"
+    }
   },
   "webSource": {
     "dependency": "raft-ui@0.5.64",
