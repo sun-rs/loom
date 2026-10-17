@@ -8,6 +8,7 @@ import {
 } from "@rah-os/protocol";
 import { hasUnresolvedIntents } from "@rah-os/client-core/write-intent";
 import { useDocumentPreviewStore } from "../packages/web/src/store/documentPreviewStore.ts";
+import { useMediaPreviewStore } from "../packages/web/src/store/mediaPreviewStore.ts";
 import { downloadLoomAttachment } from "./DocumentPreview.tsx";
 import type { Message } from "../packages/web/src/store/messageStore.ts";
 import { useState, useRef, useEffect } from "react";
@@ -47,7 +48,7 @@ export default function Attachments({
   const previewKind = (a: MessageAttachment) => {
     const kind = classifyAttachmentPreview(a.mimeType, a.filename);
     return a.sizeBytes <= MAX_ATTACHMENT_TEXT_PREVIEW_BYTES &&
-      (kind === "text" || kind === "markdown")
+      (kind === "text" || kind === "markdown" || kind === "html")
       ? kind
       : null;
   };
@@ -65,9 +66,21 @@ export default function Attachments({
     setBusy(a.id);
     try {
       const kind = preview && previewKind(a);
-      if (kind) {
+      if (kind === "html") {
+        useDocumentPreviewStore.getState().close();
+        useMediaPreviewStore.getState().open({
+          kind,
+          attachment: a,
+          url: new URL(
+            "/v3/client/files/html-preview/" + encodeURIComponent(a.id),
+            window.location.origin,
+          ).href,
+          ...(parentMessage ? { commentContext: { parentMessage } } : {}),
+        });
+      } else if (kind) {
         const text = await client.files.previewText(a.id, controller.signal);
         if (controller.signal.aborted) return;
+        useMediaPreviewStore.getState().close();
         useDocumentPreviewStore.getState().open({
           attachment: a,
           preview:

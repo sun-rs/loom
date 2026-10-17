@@ -144,6 +144,35 @@ test("Files HTTP + SDK roundtrip verifies bytes, Room provenance, authorization 
     assert.equal(download.headers.get("x-content-type-options"), "nosniff");
     assert.match(download.headers.get("content-disposition")!, /^attachment;/);
     const fullBytes = Buffer.from(await download.arrayBuffer());
+    const htmlUrl = `${service.origin}/v3/client/files/html-preview/${prepared.attachmentId}?acBridgeNonce=fixture&acBridgeParentOrigin=https%3A%2F%2Floom.test`;
+    assert.equal((await fetch(htmlUrl)).status, 401);
+    const html = await fetch(htmlUrl, {
+      headers: { authorization: `Bearer ${human.accessToken}` },
+    });
+    assert.equal(html.status, 200);
+    assert.equal(html.headers.get("content-type"), "text/html; charset=utf-8");
+    assert.match(
+      html.headers.get("content-security-policy")!,
+      /sandbox allow-scripts/,
+    );
+    assert.match(
+      html.headers.get("content-security-policy")!,
+      /connect-src 'none'/,
+    );
+    const htmlBody = await html.text();
+    assert.ok(htmlBody.includes(await blob.text()));
+    assert.match(htmlBody, /acBridgeNonce/);
+    assert.equal(
+      (
+        await fetch(htmlUrl, {
+          method: "PUT",
+          headers: { authorization: `Bearer ${human.accessToken}` },
+          body: "overwrite",
+        })
+      ).status,
+      405,
+    );
+
     const previewUrl = `${service.origin}/v3/client/files/preview/${prepared.attachmentId}`;
     const preview = await fetch(previewUrl, {
       headers: { authorization: `Bearer ${human.accessToken}` },
@@ -170,6 +199,14 @@ test("Files HTTP + SDK roundtrip verifies bytes, Room provenance, authorization 
       handle: "outsider",
       kind: "human",
     });
+    assert.equal(
+      (
+        await fetch(htmlUrl, {
+          headers: { authorization: `Bearer ${outsider.accessToken}` },
+        })
+      ).status,
+      403,
+    );
     assert.equal(
       (
         await fetch(previewUrl, {
@@ -284,12 +321,17 @@ test("Files HTTP + SDK roundtrip verifies bytes, Room provenance, authorization 
       { headers: { authorization: `Bearer ${human.accessToken}` } },
     );
     assert.equal(unsupportedPreview.status, 415);
+    const htmlUnsupported = await fetch(
+      `${service.origin}/v3/client/files/html-preview/${unsupported.attachmentId}`,
+      { headers: { authorization: `Bearer ${human.accessToken}` } },
+    );
+    assert.equal(htmlUnsupported.status, 415);
 
     const largeBlob = new Blob([new Uint8Array(2 * 1024 * 1024 + 1)]);
     const large = await client.request("file.prepare", {
       roomId,
-      filename: "large.log",
-      mimeType: "text/plain",
+      filename: "large.html",
+      mimeType: "text/html",
       size: largeBlob.size,
       idempotencyKey: "large-preview",
     });
@@ -308,6 +350,11 @@ test("Files HTTP + SDK roundtrip verifies bytes, Room provenance, authorization 
       { headers: { authorization: `Bearer ${human.accessToken}` } },
     );
     assert.equal(largePreview.status, 413);
+    const htmlLarge = await fetch(
+      `${service.origin}/v3/client/files/html-preview/${large.attachmentId}`,
+      { headers: { authorization: `Bearer ${human.accessToken}` } },
+    );
+    assert.equal(htmlLarge.status, 413);
     const malformed = await fetch(`${service.origin}/v3/client/files/prepare`, {
       method: "POST",
       headers: {

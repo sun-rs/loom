@@ -1,3 +1,4 @@
+import { serveHtmlAttachment } from "./html-attachment-preview.ts";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { pipeline } from "node:stream/promises";
 import type {
@@ -46,7 +47,7 @@ export async function transferFile(
   request: IncomingMessage,
   response: ServerResponse,
   writeJson: (response: ServerResponse, status: number, body: unknown) => void,
-  purpose: "download" | "preview" = "download",
+  purpose: "download" | "preview" | "html" = "download",
 ) {
   if (request.method === "PUT") {
     request.setTimeout(120_000, () => request.destroy());
@@ -54,6 +55,10 @@ export async function transferFile(
     writeJson(response, 200, P.FileUploadSchema.parse(result));
   } else if (request.method === "GET") {
     let download = await human.downloadFile(actor, id);
+    if (purpose === "html") {
+      await serveHtmlAttachment(download, response);
+      return;
+    }
     if (purpose === "preview") {
       const kind = P.classifyAttachmentPreview(
         download.attachment.mimeType,

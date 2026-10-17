@@ -1,0 +1,20 @@
+[
+  {
+    "width": 1440,
+    "workerPublished": true,
+    "humanCommentWakesAuthor": true,
+    "explicitWorkerReply": true,
+    "ordinaryReplyExcluded": true,
+    "reload": true,
+    "sandboxAndNativeBridge": true
+  },
+  {
+    "width": 390,
+    "workerPublished": true,
+    "humanCommentWakesAuthor": true,
+    "explicitWorkerReply": true,
+    "ordinaryReplyExcluded": true,
+    "reload": true,
+    "sandboxAndNativeBridge": true
+  }
+]

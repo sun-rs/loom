@@ -17,3 +17,6 @@ docs/design/ui-catalog.html
 
 # Official frontend intake: byte-exact upstream source, verified by adoption hashes.
 frontends/raft/packages/
+
+# Upstream HTML reporter: original formatting plus documented type-only compatibility edits.
+packages/application-service/vendor/raft/attachmentPreviewBridge.ts

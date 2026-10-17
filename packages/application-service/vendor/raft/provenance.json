@@ -1,0 +1,12 @@
+{
+  "upstream": "https://github.com/botiverse/raft-source",
+  "revision": "a98ae003246a0360872a77d76dec2fccd0347ef7",
+  "source": "packages/server/src/services/attachmentPreviewBridge.ts",
+  "reuse": "upstream source with type-only compatibility edits",
+  "license": "FSL-1.1-ALv2; owner separately authorized noncommercial reuse",
+  "localChanges": [
+    "Two non-null assertions after explicit string-length bounds for noUncheckedIndexedAccess; emitted JavaScript unchanged."
+  ],
+  "upstreamSha256": "fe35aa1eb85d9edf19b2d722a9b5f77cec57a30db3109177471f05f6e82bf849",
+  "sha256": "00b094e854760c62d03f4d49ada4ba645d662862d65b879062dfca1e4cabe25c"
+}

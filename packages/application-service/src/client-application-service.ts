@@ -650,11 +650,14 @@ export class ClientApplicationService {
       return;
     }
     const fileMatch =
-      /^\/v3\/client\/files\/(content|preview)\/([a-f0-9-]{36})$/.exec(
+      /^\/v3\/client\/files\/(content|preview|html-preview)\/([a-f0-9-]{36})(?:\?[^#]*)?$/.exec(
         request.url ?? "",
       );
     if (fileMatch) {
-      if (request.method !== "PUT" && request.method !== "GET")
+      if (
+        (request.method !== "PUT" && request.method !== "GET") ||
+        (fileMatch[1] === "html-preview" && request.method !== "GET")
+      )
         throw new HttpRequestError(
           "method_not_allowed",
           "file content supports PUT / GET",
@@ -667,7 +670,11 @@ export class ClientApplicationService {
         request,
         response,
         writeJson,
-        fileMatch[1] === "preview" ? "preview" : "download",
+        fileMatch[1] === "html-preview"
+          ? "html"
+          : fileMatch[1] === "preview"
+            ? "preview"
+            : "download",
       );
       return;
     }

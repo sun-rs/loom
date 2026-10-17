@@ -497,6 +497,9 @@ function copyResponseHeaders(
     "content-length",
     "content-range",
     "content-type",
+    "content-security-policy",
+    "content-disposition",
+    "referrer-policy",
   ]) {
     const value = source[name];
     if (value !== undefined) response.setHeader(name, value);

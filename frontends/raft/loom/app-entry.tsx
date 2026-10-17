@@ -1,3 +1,4 @@
+import HtmlPreview from "./HtmlPreview.tsx";
 import DocumentPreview from "./DocumentPreview.tsx";
 import ImageLightbox from "../packages/web/src/components/ImageLightbox.tsx";
 import ReactDOM from "react-dom/client";
@@ -9,5 +10,6 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <ChannelApp />
     <ImageLightbox />
     <DocumentPreview />
+    <HtmlPreview />
   </AppProviders>,
 );

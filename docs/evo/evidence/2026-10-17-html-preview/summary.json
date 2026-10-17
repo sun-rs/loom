@@ -1,0 +1,27 @@
+{
+  "upstream": "a98ae003246a0360872a77d76dec2fccd0347ef7",
+  "implemented": [
+    "Official HTML surface/store + Loom authenticated transport",
+    "Official streaming reporter with two type-only assertions",
+    "Native desktop region comments and coarse-pointer ordinary comments",
+    "Gateway preserves official sandbox CSP"
+  ],
+  "verification": {
+    "targetedTests": 10,
+    "rootTypecheck": "passed",
+    "frontendTypecheckAndBuild": "passed",
+    "officialSourceDigestsUnchanged": 2264,
+    "browser": "HTML and Markdown fake-Worker collaboration, 1440x1000 and 390x844, DPR 1",
+    "realCli": "not run",
+    "paidModels": "not run",
+    "deployment": "pending"
+  },
+  "limits": [
+    "HTML capped at 2 MiB; raw download unchanged",
+    "HTTPS subresources allowed as upstream; not a no-network renderer",
+    "CSV/XLSX/PDF/media not yet wired; Diff summary absent",
+    "No PDF comments upstream",
+    "Browser test locator corrected from document-only selector to HTML native shell; async anchor waits for visible chip before submit"
+  ],
+  "inventory": "../../../audits/2026-10-17-official-file-preview.zh-CN.md"
+}
