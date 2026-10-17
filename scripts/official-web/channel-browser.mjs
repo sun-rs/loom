@@ -824,7 +824,10 @@ try {
       if (viewport.width < 768) {
         await page.goBack(); // Mobile search is a detail page, not a bottom-nav root.
         await openChatRow(page, channels[1].roomId);
-      } else await mainNav.getByRole("button", { name: "频道", exact: true }).click();
+      } else
+        await mainNav
+          .getByRole("button", { name: "频道", exact: true })
+          .click();
       await page.getByRole("button", { name: "核实发送" }).waitFor();
       assert.equal(
         sendRequests.length,
