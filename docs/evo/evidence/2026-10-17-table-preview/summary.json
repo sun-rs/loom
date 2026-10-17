@@ -21,9 +21,34 @@
       "npm run build:web:workbench",
       "node scripts/official-web/table-attachment-browser.mjs",
       "node scripts/official-web/html-attachment-browser.mjs"
-    ]
+    ],
+    "officialSourceHashesUnchanged": 2264
   },
-  "deployment": "pending",
+  "deployment": {
+    "source": "b6d493af907f1fd99059432f08ba494d6eb13178",
+    "webBuildId": "7ec553952839c54af968b28dd9a22b212b5d7fee986de19dad17fe0701d18882",
+    "verified": true,
+    "backupDatabases": 2,
+    "backupFiles": 319,
+    "businessProjectionsUnchanged": 18,
+    "realPage": [
+      {
+        "width": 1440,
+        "dpr": 1,
+        "collapsedByDefault": true,
+        "advancedFields": true,
+        "noMutation": true
+      },
+      {
+        "width": 390,
+        "dpr": 1,
+        "collapsedByDefault": true,
+        "advancedFields": true,
+        "noMutation": true
+      }
+    ],
+    "realAttachmentWrites": false
+  },
   "source": "a98ae003246a0360872a77d76dec2fccd0347ef7",
   "audit": "../../../audits/2026-10-17-table-preview.zh-CN.md"
 }
