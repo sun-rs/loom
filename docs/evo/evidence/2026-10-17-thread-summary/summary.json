@@ -12,6 +12,36 @@
     "realCli": "not run",
     "paid": "not run"
   },
-  "deployment": "pending",
+  "deployment": {
+    "verified": true,
+    "sourceCommit": "afa7aac65431562a432d2e2fde1286be46e6fe49",
+    "webBuildId": "e2a136d39ee219804d52f3b2a4a46d6720ccf853daaeb392395b4852df30133e",
+    "backupDatabases": 2,
+    "backupFiles": 319,
+    "businessTablesUnchanged": 18,
+    "schemaVersion": 89,
+    "realPage": {
+      "checks": [
+        {
+          "width": 1440,
+          "dpr": 1,
+          "collapsedByDefault": true,
+          "advancedFields": true,
+          "noMutation": true
+        },
+        {
+          "width": 390,
+          "dpr": 1,
+          "collapsedByDefault": true,
+          "advancedFields": true,
+          "noMutation": true
+        }
+      ],
+      "scope": "Read-only LAN settings smoke; thread behavior verified separately with isolated real Kernel/Gateway browser fixture"
+    },
+    "localReceiptDirectory": "/Users/sun/.loom/reviews/2026-10-17-thread-summary",
+    "realCli": false,
+    "paid": false
+  },
   "audit": "../../../audits/2026-10-17-thread-summary.zh-CN.md"
 }
