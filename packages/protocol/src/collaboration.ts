@@ -231,6 +231,15 @@ export type Message = z.infer<typeof MessageSchema>;
 
 export const ThreadSchema = z
   .object({
+    // Actor-specific read projection, only returned by thread.list; never persisted in Room events.
+    viewerSummary: z
+      .object({
+        participantIds: z.array(IdentifierSchema),
+        unreadCount: z.number().int().nonnegative(),
+        firstUnreadMessageId: IdentifierSchema.nullable(),
+      })
+      .strict()
+      .optional(),
     createdAt: TimestampSchema,
     createdBy: IdentifierSchema,
     lastReplyAt: TimestampSchema.optional(),

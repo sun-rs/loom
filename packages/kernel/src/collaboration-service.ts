@@ -1,3 +1,4 @@
+import { threadViewerSummaries } from "./thread-viewer-summary.ts";
 import { peerReplyReturn } from "./peer-reply-return.ts";
 import { latestBlockingReplyMessageSeq } from "./reply-message-freshness.ts";
 import { assertNoUnresolvedRuntimeCleanup } from "./runtime-process-cleanup.ts";
@@ -1487,12 +1488,23 @@ export class CollaborationService {
 
   listThreads(actorId: string, roomId: string): Thread[] {
     requireRoomMember(this.#database, roomId, actorId);
+    const summaries = threadViewerSummaries(this.#database, roomId, actorId);
     return this.#database
       .prepare(
         "SELECT * FROM threads WHERE room_id = ? ORDER BY created_at, thread_id",
       )
       .all(roomId)
-      .map((row) => threadProjectionFromRow(row));
+      .map((row) => {
+        const thread = threadProjectionFromRow(row);
+        return {
+          ...thread,
+          viewerSummary: summaries.get(thread.threadId) ?? {
+            participantIds: [],
+            unreadCount: 0,
+            firstUnreadMessageId: null,
+          },
+        };
+      });
   }
 
   listMessages(

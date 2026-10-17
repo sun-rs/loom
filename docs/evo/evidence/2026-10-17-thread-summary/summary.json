@@ -1,0 +1,17 @@
+{
+  "implemented": [
+    "Kernel viewer-specific thread summary from existing durable state",
+    "Native unread badge and first-unread focus through both routes"
+  ],
+  "checks": {
+    "kernelTests": 30,
+    "frontendTests": "passed; thread-client, thread-activity, thread-adaptation",
+    "typecheck": "passed",
+    "build": "passed",
+    "browser": "1440x1000,390x844 DPR1; 60 replies/55 unread/first-unread focus/partial viewport read/persisted read",
+    "realCli": "not run",
+    "paid": "not run"
+  },
+  "deployment": "pending",
+  "audit": "../../../audits/2026-10-17-thread-summary.zh-CN.md"
+}

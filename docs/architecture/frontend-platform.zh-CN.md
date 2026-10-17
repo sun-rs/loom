@@ -398,3 +398,7 @@ presence 的 initializing 原因，底栏显示“等待初始化”；真实工
 ## Evo PDF 阅读器传输
 
 官方 CrossOriginPdfFrame 使用浏览器原生 PDF 阅读器，必须是独立 HTTP(S) origin，不使用 sandbox 或同源 blob 代替。当前 HTTP LocalWorkbenchGateway 管理同一受信任 IP、应用端口相邻的 PDF-only listener（不提供应用 API、静态页面或写操作）；主页面 CSP 精确允许这个来源。认证同源请求生成短期单附件签名，读取仍通过 ApplicationService/Kernel 附件访问检查；无新的业务状态或公开分享入口。ApplicationService 固定 PDF 类型及 inline/nosniff，原始下载保持不变。服务重启更换签名密钥，端口保持稳定，重新打开生成新地址。PDF 评论沿用官方禁用规则；TLS gateway 和 iOS 真机尚未验收。来源、测试和部署限制见 [PDF 接线](../audits/2026-10-17-pdf-preview.zh-CN.md)。
+
+## Evo 消息列摘要
+
+`thread.list` 的可选 `viewerSummary` 是 Kernel 基于既有消息、Human 关注覆盖和独立消息列读位置生成的查看者只读投影，包含回复作者去重 ID、未读数、首条未读 ID；不写入 Thread 事件或新增计数表。前端直接传给官方 MessageItem/ThreadRepliesBadge，并把原生首条未读定位参数传给现有 MessageSession。频道已读不代替消息列已读，只有可见消息列回复按原接口推进位置；不以拉全历史或本地存储正文来补摘要。详见 [摘要接线](../audits/2026-10-17-thread-summary.zh-CN.md)。

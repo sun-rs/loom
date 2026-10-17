@@ -46,7 +46,7 @@ export default function ChannelTimeline({
   loading: boolean;
   loadOlder: () => Promise<void>;
   threads?: readonly Thread[];
-  onOpenThread?: (rootMessageId: string) => void;
+  onOpenThread?: (rootMessageId: string, focusedMessageId?: string) => void;
   onOpenProfile?: (type: "agent" | "human", id: string) => void;
 }) {
   const roster = useMemo(() => projectMentionMembers(members), [members]);
@@ -101,7 +101,11 @@ export default function ChannelTimeline({
       }}
       onOpenThread={
         onOpenThread
-          ? (request) => onOpenThread(request.parentMessageId)
+          ? (request) =>
+              onOpenThread(
+                request.parentMessageId,
+                request.focusedMessageId ?? undefined,
+              )
           : undefined
       }
       threadSummary={(() => {
@@ -111,9 +115,10 @@ export default function ChannelTimeline({
               threadChannelId: t.threadId,
               replyCount: t.replyCount,
               lastReplyAt: t.lastReplyAt ?? null,
-              participantIds: [],
-              unreadCount: 0,
-              firstUnreadMessageId: null,
+              participantIds: t.viewerSummary?.participantIds ?? [],
+              unreadCount: t.viewerSummary?.unreadCount ?? 0,
+              firstUnreadMessageId:
+                t.viewerSummary?.firstUnreadMessageId ?? null,
             }
           : undefined;
       })()}

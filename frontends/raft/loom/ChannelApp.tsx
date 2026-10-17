@@ -105,7 +105,7 @@ function Channel({
   onProfileVisibilityChange?: (open: boolean) => void;
   threadRootId?: string;
   focusId?: string;
-  onThread: (id?: string) => void;
+  onThread: (id?: string, focusedMessageId?: string) => void;
   onBack: () => void;
   onOpenPrivate: (id: string) => void;
   onAddInstance: (() => void) | undefined;
@@ -440,10 +440,10 @@ function Channel({
                       onOpenThread={
                         isPrivate || error
                           ? undefined
-                          : (id) => {
+                          : (id, focusedMessageId) => {
                               if (hasUnresolvedIntents()) return;
                               closeProfile();
-                              onThread(id);
+                              onThread(id, focusedMessageId);
                             }
                       }
                       hasOlder={view.hasOlder}
@@ -1024,12 +1024,14 @@ export default function ChannelApp() {
                           key={`${selected.roomId}:${params.get("message") ?? "latest"}`}
                           focusId={params.get("message") ?? undefined}
                           threadRootId={params.get("thread") ?? undefined}
-                          onThread={(id) => {
+                          onThread={(id, focusedMessageId) => {
                             if (hasRouteBoundIntent()) return;
                             setParams((previous) => {
                               const next = new URLSearchParams(previous);
                               next.set("room", selected.roomId);
                               next.delete("message");
+                              if (id && focusedMessageId)
+                                next.set("message", focusedMessageId);
                               if (id) next.set("thread", id);
                               else next.delete("thread");
                               return next;
@@ -1207,10 +1209,12 @@ export default function ChannelApp() {
                                 }
                                 focusId={params.get("message") ?? undefined}
                                 threadRootId={params.get("thread") ?? undefined}
-                                onThread={(id) =>
+                                onThread={(id, focusedMessageId) =>
                                   setParams((previous) => {
                                     const next = new URLSearchParams(previous);
                                     next.delete("message");
+                                    if (id && focusedMessageId)
+                                      next.set("message", focusedMessageId);
                                     if (id) next.set("thread", id);
                                     else next.delete("thread");
                                     return next;
