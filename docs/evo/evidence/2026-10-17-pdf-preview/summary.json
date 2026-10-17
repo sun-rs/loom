@@ -30,6 +30,51 @@
     "Reopen after expiry or daemon restart; no automatic token renewal",
     "Native browser decides corrupt/encrypted PDF behavior"
   ],
-  "deployment": "pending",
+  "deployment": {
+    "source": "ed72c00ca10f9f8041fea5c42f4ef874f638cd2c",
+    "webBuildId": "bdf59e17233e90b24b024a5e87b7bfa6c2608128f014b8809d7f9464ec214e79",
+    "verified": true,
+    "backupDatabases": 2,
+    "backupFiles": 319,
+    "businessProjectionsUnchanged": 18,
+    "realPage": [
+      {
+        "width": 1440,
+        "dpr": 1,
+        "collapsedByDefault": true,
+        "advancedFields": true,
+        "noMutation": true
+      },
+      {
+        "width": 390,
+        "dpr": 1,
+        "collapsedByDefault": true,
+        "advancedFields": true,
+        "noMutation": true
+      }
+    ],
+    "pdfListener": [
+      {
+        "host": "127.0.0.1",
+        "appCsp": true,
+        "pdfApiUnavailable": true,
+        "unsignedPdfRejected": true
+      },
+      {
+        "host": "192.168.1.86",
+        "appCsp": true,
+        "pdfApiUnavailable": true,
+        "unsignedPdfRejected": true
+      },
+      {
+        "host": "100.101.107.87",
+        "appCsp": true,
+        "pdfApiUnavailable": true,
+        "unsignedPdfRejected": true
+      }
+    ],
+    "sameDaemonOwnsPdfListener": true,
+    "realAttachmentWrites": false
+  },
   "audit": "../../../audits/2026-10-17-pdf-preview.zh-CN.md"
 }
