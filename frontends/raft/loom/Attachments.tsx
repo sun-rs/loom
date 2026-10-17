@@ -1,4 +1,8 @@
 import {
+  beginAttachmentPreview,
+  cancelAttachmentPreview,
+} from "./attachment-preview-request.ts";
+import {
   classifyAttachmentPreview,
   MAX_ATTACHMENT_TEXT_PREVIEW_BYTES,
 } from "@rah-os/protocol";
@@ -31,7 +35,7 @@ export default function Attachments({
   const [error, setError] = useState(""),
     [busy, setBusy] = useState<string>();
   const pending = useRef<AbortController | undefined>(undefined);
-  useEffect(() => () => pending.current?.abort(), []);
+  useEffect(() => () => cancelAttachmentPreview(pending.current), []);
   if (!attachments?.length) return null;
   const isImage = (a: MessageAttachment) =>
     /^image\/(png|jpeg|gif|webp|avif)$/.test(a.mimeType);
@@ -52,8 +56,10 @@ export default function Attachments({
       setError("请先核实未决操作");
       return;
     }
-    pending.current?.abort();
-    const controller = new AbortController();
+    cancelAttachmentPreview(pending.current);
+    const controller = preview
+      ? beginAttachmentPreview()
+      : new AbortController();
     pending.current = controller;
     setError("");
     setBusy(a.id);
@@ -77,7 +83,7 @@ export default function Attachments({
       if (!controller.signal.aborted)
         setError(e instanceof Error ? e.message : String(e));
     } finally {
-      if (!controller.signal.aborted) setBusy(undefined);
+      if (pending.current === controller) setBusy(undefined);
     }
   }
   return (
