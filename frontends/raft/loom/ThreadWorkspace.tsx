@@ -176,7 +176,10 @@ export default function ThreadWorkspace({
           </Button>
         </div>
       )}
-      <div className="relative z-20 shrink-0 min-w-0 w-full flex-1 border-t border-line-muted bg-layer-panel px-3 pt-3 safe-bottom theme-brutal:border-t-2 theme-brutal:border-black theme-brutal:bg-white">
+      <div
+        data-loom-composer-shell
+        className="relative z-20 shrink-0 min-w-0 w-full flex-1 border-t border-line-muted bg-layer-panel px-3 pt-3 safe-bottom theme-brutal:border-t-2 theme-brutal:border-black theme-brutal:bg-white"
+      >
         <MessageInput
           client={client}
           roomId={room.roomId}

@@ -456,6 +456,20 @@ export async function verifyAttachments({
         );
       }
       await composer.locator('[data-upload-status="ready"]').waitFor();
+      if (width === 390) {
+        await composer.locator("textarea").blur();
+        assert.equal(
+          await composer.getByTestId("loom-attachment-drafts").isVisible(),
+          true,
+        );
+        assert.equal(
+          await composer
+            .locator('[data-slot="composer"]')
+            .evaluate((el) => getComputedStyle(el).display),
+          "flex",
+          "attachment-only draft stays expanded without focus",
+        );
+      }
       const send = composer.getByTestId("composer-send");
       // Native component keeps its existing accessible send control.
       const submit = (await send.count())

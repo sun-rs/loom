@@ -1,0 +1,88 @@
+/* Owner-approved mobile density adaptation (2026-10-17), not upstream parity.
+ * Raft retains typography, colors, disclosure, focus and message measurement.
+ * CSS reads the native textarea/draft; no second draft or keyboard state owner.
+ */
+@media (max-width: 767px) {
+  [data-slot="panel-header"] {
+    min-height: 48px;
+    height: 48px;
+    padding-block: 4px;
+  }
+
+  .loom-chat-header [data-slot="panel-meta"] {
+    display: none;
+  }
+
+  [data-slot="panel-header"] button {
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  [data-loom-composer-shell] {
+    padding: 6px 8px calc(env(safe-area-inset-bottom, 0px) + 6px);
+  }
+
+  .loom-composer [data-slot="composer"] {
+    gap: 4px;
+    padding: 4px 6px;
+  }
+
+  .loom-composer [data-slot="composer-input"] {
+    padding: 4px;
+    min-height: 28px;
+  }
+
+  .loom-composer [data-slot="composer-toolbar"] {
+    padding: 0;
+    transform: none;
+  }
+
+  .loom-composer [data-slot="composer-toolbar"] button {
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  /* No overlay: the same textarea and controls reflow when editing starts.
+   * Attachments, errors, accessory content and drafts keep the expanded form. */
+  .loom-composer[data-has-accessories="false"]:not(:focus-within):has(
+      textarea:placeholder-shown
+    )
+    [data-slot="composer"] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .loom-composer[data-has-accessories="false"]:not(:focus-within):has(
+      textarea:placeholder-shown
+    )
+    [data-testid="composer-as-task-toggle"] {
+    display: none;
+  }
+
+  /* Native autosizing can retain its inline height after a multiline draft.
+   * Bound only the empty, unfocused preview; editing retains native sizing. */
+  .loom-composer[data-has-accessories="false"]:not(:focus-within):has(
+      textarea:placeholder-shown
+    )
+    [data-slot="composer-input"] {
+    height: 40px !important;
+    max-height: 40px;
+    overflow: hidden;
+  }
+
+  [data-testid="loom-message-timeline"] [data-slot="message-item"] {
+    column-gap: 6px;
+    padding-inline: 2px;
+  }
+
+  [data-slot="mobile-nav-item"] {
+    height: 44px;
+    min-height: 44px;
+    padding-block: 0;
+  }
+
+  [data-slot="mobile-nav-root"] {
+    padding-top: 0;
+  }
+}

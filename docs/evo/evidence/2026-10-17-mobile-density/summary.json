@@ -1,0 +1,187 @@
+{
+  "status": "implemented-checks-passed-deployment-pending",
+  "scope": "Owner-approved mobile reading-area optimization, frontend only; not a claim of byte-exact Raft mobile layout parity",
+  "design": {
+    "owner": "Loom presentation glue and mobile-only CSS; upstream draft, keyboard viewport, timeline and domain owners retained",
+    "reading": "Same native composer reflows into one row only when empty, unfocused and without accessories; file/send remain available; task toggle shown on expansion",
+    "editing": "Focus, text, attachment, error or accessory content keeps the native expanded composer; no remount or duplicate draft state",
+    "chrome": "Mobile panel headers 48 CSS px; chat description hidden on mobile; navigation icons retain aria-label; fonts/colors/hover/selected states unchanged",
+    "message": "Mobile channel outer padding 8 CSS px, item gutter gap 6 CSS px; avatar/author preserved",
+    "safeArea": "Channel and thread footer remain sole bottom-safe-area owners; existing official visualViewport tracking untouched",
+    "desktop": "No mobile CSS at width >=768; empty accessory fragment removed across all widths",
+    "source": "Official raft-source a98ae003246a0360872a77d76dec2fccd0347ef7 and raft-ui 0.5.64 composition inspected; upstream source files unchanged. Other app patterns informed original local CSS, no code copied.",
+    "references": [
+      "https://github.com/multica-ai/multica/blob/18fa9f728a9e25f2465df2789631edb2a75442ad/apps/mobile/components/composer/message-composer.tsx",
+      "https://github.com/tiann/hapi/blob/main/web/src/components/SessionHeader.tsx",
+      "https://github.com/Emanuele-web04/remodex/blob/f67b1499dbd8ace7a23902fad3242cc88f7e9a9e/CodexMobile/CodexMobile/Views/Turn/Composer/TurnComposerSecondaryBar.swift",
+      "https://github.com/slopus/happy/blob/5ce2cd03ef39c2ae193ee40654002aab3a54f482/packages/happy-ios/Sources/HappyLayout/Composer/MobileComposerGeometry.swift"
+    ]
+  },
+  "red": "New density gate failed on existing build: idle composer 114px >80px at 390x844/brutal",
+  "checks": {
+    "chromiumDensity": [
+      {
+        "preset": "brutal",
+        "width": 390,
+        "height": 844,
+        "readHeight": 66,
+        "draftHeight": 118,
+        "headerHeight": 48,
+        "bodyHeight": 700
+      },
+      {
+        "preset": "brutal",
+        "width": 360,
+        "height": 640,
+        "readHeight": 66,
+        "draftHeight": 118,
+        "headerHeight": 48,
+        "bodyHeight": 496
+      },
+      {
+        "preset": "brutal",
+        "width": 390,
+        "height": 560,
+        "readHeight": 66,
+        "draftHeight": 118,
+        "headerHeight": 48,
+        "bodyHeight": 416
+      },
+      {
+        "preset": "brutal",
+        "width": 1440,
+        "height": 1000,
+        "readHeight": 126,
+        "draftHeight": 126,
+        "headerHeight": 62,
+        "bodyHeight": 734
+      },
+      {
+        "preset": "elegant-light",
+        "width": 390,
+        "height": 844,
+        "readHeight": 61,
+        "draftHeight": 113,
+        "headerHeight": 48,
+        "bodyHeight": 694
+      },
+      {
+        "preset": "elegant-light",
+        "width": 360,
+        "height": 640,
+        "readHeight": 61,
+        "draftHeight": 113,
+        "headerHeight": 48,
+        "bodyHeight": 490
+      },
+      {
+        "preset": "elegant-light",
+        "width": 390,
+        "height": 560,
+        "readHeight": 61,
+        "draftHeight": 113,
+        "headerHeight": 48,
+        "bodyHeight": 410
+      },
+      {
+        "preset": "elegant-light",
+        "width": 1440,
+        "height": 1000,
+        "readHeight": 119,
+        "draftHeight": 131,
+        "headerHeight": 56,
+        "bodyHeight": 729
+      }
+    ],
+    "layout": "passed: 390/900/1440, brutal/elegant, chat/agents/settings/activity/search",
+    "attachments": "passed: 1440/390/820 including attachment-only draft stays expanded and upload/send verification",
+    "threads": "passed: 1440/390 native reply, lost-response readback, draft retention and mobile return",
+    "mobileNavigation": "passed: 390 both themes and 1440 brutal, pointer targets and keyboard viewport contract",
+    "source": "3 focused tests passed, including all 2264 upstream file hashes and font delivery contract",
+    "typecheck": "typecheck:loom passed",
+    "build": "build:web:workbench passed",
+    "webkitDensity": [
+      {
+        "preset": "brutal",
+        "width": 390,
+        "height": 844,
+        "readHeight": 66,
+        "draftHeight": 118,
+        "headerHeight": 48,
+        "bodyHeight": 699.984375
+      },
+      {
+        "preset": "brutal",
+        "width": 360,
+        "height": 640,
+        "readHeight": 66,
+        "draftHeight": 118,
+        "headerHeight": 48,
+        "bodyHeight": 496
+      },
+      {
+        "preset": "brutal",
+        "width": 390,
+        "height": 560,
+        "readHeight": 66,
+        "draftHeight": 118,
+        "headerHeight": 48,
+        "bodyHeight": 416
+      },
+      {
+        "preset": "brutal",
+        "width": 1440,
+        "height": 1000,
+        "readHeight": 126,
+        "draftHeight": 126,
+        "headerHeight": 62,
+        "bodyHeight": 734
+      },
+      {
+        "preset": "elegant-light",
+        "width": 390,
+        "height": 844,
+        "readHeight": 61,
+        "draftHeight": 113,
+        "headerHeight": 48,
+        "bodyHeight": 693.984375
+      },
+      {
+        "preset": "elegant-light",
+        "width": 360,
+        "height": 640,
+        "readHeight": 61,
+        "draftHeight": 113,
+        "headerHeight": 48,
+        "bodyHeight": 490
+      },
+      {
+        "preset": "elegant-light",
+        "width": 390,
+        "height": 560,
+        "readHeight": 61,
+        "draftHeight": 113,
+        "headerHeight": 48,
+        "bodyHeight": 410
+      },
+      {
+        "preset": "elegant-light",
+        "width": 1440,
+        "height": 1000,
+        "readHeight": 119,
+        "draftHeight": 131,
+        "headerHeight": 56,
+        "bodyHeight": 729
+      }
+    ],
+    "focusReturn": "File dialog focus return explicitly awaited before text entry; initial WebKit run had a transient empty-draft failure, follow-up passed with focus sequencing and visualViewport checks"
+  },
+  "limits": [
+    "Emulated mobile browsers, no physical iOS/Android IME, browser chrome or hardware safe-area acceptance",
+    "560px viewport and --vv-height simulation are not actual OS keyboard tests",
+    "No backend changes, paid CLI or cost evidence"
+  ],
+  "deployment": {
+    "verified": false
+  }
+}

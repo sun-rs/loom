@@ -83,10 +83,21 @@ export async function verifyLayout({ browser, origin, channels, client }) {
             : page.locator('[data-slot="panel-header"]:visible').first();
         await header.waitFor();
         const h = (await header.boundingBox()).height;
-        assert.ok(
-          h >= (theme === "brutal" ? 62 : 56) && h < 100,
-          `${theme} ${route} header ${h}`,
-        );
+        if (
+          width < 768 &&
+          (await header.getAttribute("data-slot")) === "panel-header"
+        ) {
+          assert.equal(
+            h,
+            48,
+            "owner-approved mobile header density; desktop recipe stays native",
+          );
+        } else {
+          assert.ok(
+            h >= (theme === "brutal" ? 62 : 56) && h < 100,
+            `${theme} ${route} header ${h}`,
+          );
+        }
         if (route.startsWith("?room=") && width >= 768) {
           await page.getByTestId("composer-textarea").waitFor();
           const dimensions = await page

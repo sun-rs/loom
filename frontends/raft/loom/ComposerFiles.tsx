@@ -69,7 +69,10 @@ export default function ComposerFiles({
   return (
     <Context.Provider value={{ client, disabled, add }}>
       <div
-        className="contents"
+        className="loom-composer contents"
+        data-has-accessories={
+          !!props.accessoryRow || !!error || rows.length > 0
+        }
         onDragOver={(e) => {
           if (e.dataTransfer.types.includes("Files")) {
             e.preventDefault();
@@ -96,22 +99,24 @@ export default function ComposerFiles({
           allowEmptySubmit={rows.length > 0 && !blocked}
           submitDisabled={disabled || blocked}
           accessoryRow={
-            <>
-              {props.accessoryRow}
-              {error && <p role="alert">{error}</p>}
-              {!!rows.length && (
-                <ComposerAttachments data-testid="loom-attachment-drafts">
-                  {rows.map((row) => (
-                    <DraftAttachment
-                      key={row.id}
-                      row={row}
-                      disabled={disabled}
-                      remove={() => store.remove(props.channelId, row.id)}
-                    />
-                  ))}
-                </ComposerAttachments>
-              )}
-            </>
+            props.accessoryRow || error || rows.length ? (
+              <>
+                {props.accessoryRow}
+                {error && <p role="alert">{error}</p>}
+                {!!rows.length && (
+                  <ComposerAttachments data-testid="loom-attachment-drafts">
+                    {rows.map((row) => (
+                      <DraftAttachment
+                        key={row.id}
+                        row={row}
+                        disabled={disabled}
+                        remove={() => store.remove(props.channelId, row.id)}
+                      />
+                    ))}
+                  </ComposerAttachments>
+                )}
+              </>
+            ) : undefined
           }
           onSendOverride={async (body, mentions, asTask?: boolean) => {
             if (disabled || blocked) throw Error("附件尚未就绪");

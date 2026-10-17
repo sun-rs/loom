@@ -286,6 +286,7 @@ function Channel({
             className="thread-main-column relative border-l-0"
           >
             <PanelHeader
+              containerProps={{ className: "loom-chat-header" }}
               title={
                 channel.side
                   ? `Side · ${channel.name}`
@@ -504,6 +505,7 @@ function Channel({
               {/* Official full-chat shell; compact input suppresses unavailable uploads only. */}
               <div
                 data-testid="chat-composer-shell"
+                data-loom-composer-shell
                 className="relative flex min-w-0 w-full items-center border-t border-line-muted bg-layer-panel px-3 pt-3 safe-bottom theme-brutal:border-t-2 theme-brutal:border-black theme-brutal:bg-white"
               >
                 <MessageInput

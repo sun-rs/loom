@@ -145,7 +145,7 @@ export default function ChannelTimeline({
           if (system?.kind === "summary")
             return (
               <div
-                className="px-3"
+                className="px-2 md:px-3"
                 style={{ contain: "layout style", overflow: "clip visible" }}
               >
                 <ThreadPanelSystemMessageGroupDisclosure
@@ -168,7 +168,7 @@ export default function ChannelTimeline({
                 <DateDivider createdAt={message.createdAt} />
               )}
               <div
-                className="px-3"
+                className="px-2 md:px-3"
                 style={{ contain: "layout style", overflow: "clip visible" }}
               >
                 {item(message, index)}

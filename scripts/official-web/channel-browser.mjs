@@ -1,3 +1,4 @@
+import { verifyMobileDensity } from "./mobile-density-browser.mjs";
 import { verifySaved } from "./saved-browser.mjs";
 import { verifyReactions } from "./reactions-browser.mjs";
 import { verifyLocalFonts } from "./local-fonts-browser.mjs";
@@ -46,7 +47,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { chromium } from "playwright";
+import { chromium, webkit } from "playwright";
 import { HttpRahClient } from "@rah-os/client-sdk";
 import { startRestartableLocalCoreWorkbench } from "../../packages/daemon/src/restartable-local-workbench.ts";
 const directory = mkdtempSync(join(tmpdir(), "loom-official-channel-"));
@@ -157,8 +158,18 @@ try {
     instanceNames.push(result.agent.handle);
     instances.push(result.instance);
   }
-  browser = await chromium.launch({ headless: true });
-  if (process.env.LOOM_BROWSER_SLICE === "private") {
+  browser = await (
+    process.env.LOOM_BROWSER_ENGINE === "webkit" ? webkit : chromium
+  ).launch({ headless: true });
+  if (process.env.LOOM_BROWSER_SLICE === "mobile-density") {
+    console.log(
+      JSON.stringify(
+        await verifyMobileDensity({ browser, origin, channels }),
+        null,
+        2,
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "private") {
     for (const instance of instances)
       await client.request("agent.manage", {
         action: "set_state",

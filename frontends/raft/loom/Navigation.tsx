@@ -93,8 +93,8 @@ export function MobileNavigation({ active, onSelect }: NavigationProps) {
           aria-current={active === entry.id ? "page" : undefined}
           onClick={() => onSelect(entry.id)}
         >
-          <entry.icon className="theme-brutal:[@media(max-height:600px)]:hidden" />
-          <MobileNavLabel>{entry.label}</MobileNavLabel>
+          <entry.icon />
+          <MobileNavLabel className="sr-only">{entry.label}</MobileNavLabel>
         </MobileNavItem>
       ))}
     </MobileNavRoot>
