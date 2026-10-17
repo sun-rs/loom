@@ -1,0 +1,300 @@
+{
+  "auditRevision": "4ea854168ed7ca34e06e3ef237bebd4b7a3b33da",
+  "deployedProductRevision": "a00b550",
+  "status": "audit-complete-findings-open-not-product-acceptance",
+  "scope": "主要页面及共享交互模块横向源码核对，风险驱动浏览器实测；不是所有路径穷举验收，也不是最新官方站点逐像素验收。",
+  "reference": {
+    "officialSource": "a98ae003246a0360872a77d76dec2fccd0347ef7",
+    "uiPackage": "raft-ui@0.5.64",
+    "topbar": "项目既有1.21.16授权产物结构移植；见TopBar.tsx及原来源记录"
+  },
+  "findings": [
+    {
+      "id": "UI-01",
+      "priority": "P1",
+      "kind": "confirmed defect",
+      "title": "未保存编辑在切换/关闭时无确认丢失",
+      "local": [
+        "frontends/raft/loom/AgentPage.tsx:188",
+        "frontends/raft/loom/RoleEditor.tsx:24",
+        "frontends/raft/loom/MemoryEditor.tsx:37"
+      ],
+      "official": [
+        "frontends/raft/packages/web/src/components/agent/AgentProfileEditDialog.tsx:108"
+      ],
+      "reproduce": "Role A 修改名称，不保存，选 B 再回 A，修改消失；记忆编辑改简介后Escape直接关闭，没有放弃确认。真实表单只改本地草稿，未保存。",
+      "evidence": "state-probe.json",
+      "impact": "已输入内容丢失；不是服务端事务/版本校验失效。",
+      "repair": "复用官方dirty/requestClose/确认放弃语义；Role选择与编辑对话关闭均经过同一草稿边界，不改变已有WriteIntentSlot。"
+    },
+    {
+      "id": "UI-02",
+      "priority": "P1",
+      "kind": "confirmed defect",
+      "title": "Agent/记忆详情没有参与手机底栏隐藏规则",
+      "local": [
+        "frontends/raft/loom/ChannelApp.tsx:1305",
+        "frontends/raft/loom/RoleWorkspace.tsx:50",
+        "frontends/raft/loom/MemoryPage.tsx:48"
+      ],
+      "official": [
+        "frontends/raft/packages/web/src/components/layout/MainLayout.tsx:147"
+      ],
+      "reproduce": "390x560打开Agent Role详情并滚动到底；只在本地选择有效CLI/model使保存按钮启用，不提交。保存按钮y508–540，底栏y502–552，中心命中导航而非保存按钮。记忆详情也仍显示底栏。",
+      "evidence": "recovery-probe.json",
+      "impact": "启用的保存操作被底栏覆盖，非单纯多占空间。",
+      "repair": "按官方level-1显示/详情隐藏规则接入当前详情状态；不能仅继续叠padding。"
+    },
+    {
+      "id": "UI-03",
+      "priority": "P2",
+      "kind": "confirmed navigation mismatch",
+      "title": "Role/记忆详情状态未接路由，返回语义分裂",
+      "local": [
+        "frontends/raft/loom/RoleWorkspace.tsx:50",
+        "frontends/raft/loom/RoleWorkspace.tsx:147",
+        "frontends/raft/loom/MemoryPage.tsx:48",
+        "frontends/raft/loom/ChannelApp.tsx:649"
+      ],
+      "official": [
+        "frontends/raft/packages/web/src/hooks/useMobileNav.ts:91",
+        "frontends/raft/packages/web/src/components/layout/MainLayout.tsx:147"
+      ],
+      "reproduce": "新页直接打开?view=agents，点击Role后URL未变；浏览器Back离开页面（本探针为about:blank），页内返回却只setDetail(false)。Memory选条目URL也未变。",
+      "evidence": "probe.json/state-probe.json",
+      "impact": "浏览器返回/刷新恢复与页内返回不同；selectDestination删除role参数无法清理组件内detail。",
+      "repair": "将选中实体/详情层级交给已有路由所有者，统一与UI-02一起修，避免新增独立导航栈。"
+    },
+    {
+      "id": "UI-04",
+      "priority": "P2",
+      "kind": "confirmed defect",
+      "title": "标题栏返回按钮44px触摸承诺未在粗野主题成立",
+      "local": ["frontends/raft/loom/mobile.css:66"],
+      "official": [
+        "frontends/raft/packages/web/src/components/ui/PanelHeader.tsx"
+      ],
+      "reproduce": "390x844设置→外观：返回按钮绘制32px，粗野主题::after计算40px，距中心21px四角均不命中；简洁主题44px四角命中。",
+      "evidence": "probe.json",
+      "impact": "双主题触摸范围不一致；此前只测x-4处无法发现border-box计算差异。",
+      "repair": "沿用composer已验证的定尺寸触摸框方法，检查父容器裁切和邻项覆盖，保留可见32px。"
+    },
+    {
+      "id": "UI-05",
+      "priority": "P2",
+      "kind": "confirmed defect",
+      "title": "频道列表读取恢复后仍显示失败提示",
+      "local": [
+        "frontends/raft/loom/ChannelSidebar.tsx:119",
+        "frontends/raft/loom/ChannelSidebar.tsx:130",
+        "frontends/raft/loom/ChannelSidebar.tsx:255"
+      ],
+      "official": [],
+      "reproduce": "仅在浏览器拦截首次sidebar/get读请求令其失败，点击刷新列表，后续成功读取并展示40个频道，错误提示仍保留。",
+      "evidence": "recovery-probe.json",
+      "impact": "UI同时显示成功数据与过期错误，容易诱发反复刷新。",
+      "repair": "分离读取错误与写入错误；只在对应成功读取后清除读取错误，不能误清未知写结果。"
+    },
+    {
+      "id": "UI-06",
+      "priority": "P3",
+      "kind": "source-confirmed adoption gap",
+      "title": "聊天/任务标签可拖动但排序仅组件内有效",
+      "local": ["frontends/raft/loom/ChannelTabs.tsx:21"],
+      "official": [
+        "frontends/raft/packages/web/src/components/message/ChatPanel.tsx:404"
+      ],
+      "reproduce": "本地onReorder=setOrder，卸载/刷新初始化为chat,tasks；官方调用updateSidebarOrder保存channelPanelTabOrder。此项本轮未在正式数据上执行拖动。",
+      "evidence": "source chain",
+      "impact": "外观与手势已复用，排序保存语义未接；不能算完整对齐。",
+      "repair": "先确认接现有偏好契约还是明确保留限制，不能为此擅自扩冻住的后端。"
+    },
+    {
+      "id": "UI-07",
+      "priority": "P3",
+      "kind": "confirmed evidence inconsistency",
+      "title": "来源验收仍把旧阶段/保留console当作成功条件",
+      "local": [
+        "frontends/raft/adoption.json:2630",
+        "scripts/official-web/intake.test.mjs:13",
+        "scripts/official-web/retirement.test.mjs:29"
+      ],
+      "official": [],
+      "reproduce": "intake断言discovery-v7/consoleRetained=true，同时retirement断言apps/console不存在；两组本轮都通过。",
+      "evidence": "contract checks3passed",
+      "impact": "来源完整性证据与当前产品状态混在一起，易被误读为交互已完成。",
+      "repair": "保留来源hash检查，将历史阶段说明与当前功能/行为验收分开。"
+    }
+  ],
+  "surfaces": [
+    {
+      "surface": "壳层/导航/手机返回",
+      "local": "ChannelApp.tsx,Navigation.tsx",
+      "official": "MainLayout.tsx,useMobileNav.ts",
+      "method": "源码+正式浏览器",
+      "verdict": "UI-02/UI-03"
+    },
+    {
+      "surface": "标题栏/触摸/字体",
+      "local": "mobile.css,ChatSidebarFrame.tsx",
+      "official": "PanelHeader.tsx,raft-ui recipes",
+      "method": "正式双主题几何与四角命中",
+      "verdict": "UI-04；手机紧凑尺寸为已批准差异"
+    },
+    {
+      "surface": "composer/草稿/输入法",
+      "local": "ComposerFiles.tsx,attachment-adaptation.ts",
+      "official": "MessageInput.tsx,useComposerAutosize.ts",
+      "method": "源码+上一修复批双引擎证据",
+      "verdict": "本轮无新缺陷；系统键盘真机未验"
+    },
+    {
+      "surface": "频道列表/未读/菜单/拖动",
+      "local": "ChannelSidebar.tsx,SidebarMenus.tsx,SidebarDrag.tsx",
+      "official": "Sidebar.tsx,ContextMenu,dnd-kit",
+      "method": "源码+正式读错误注入",
+      "verdict": "UI-05；长按与拖动竞争本轮未重测"
+    },
+    {
+      "surface": "正文/有界历史/定位",
+      "local": "ChannelTimeline.tsx,channel-client.ts",
+      "official": "MessageTimeline,MessageItem",
+      "method": "源码+activity-navigation隔离Core",
+      "verdict": "老消息定位/高亮通过；非完整长历史压力验证"
+    },
+    {
+      "surface": "消息列/实例侧栏",
+      "local": "ThreadWorkspace.tsx,ThreadContentSlot.tsx",
+      "official": "ThreadPanel,ProfilePanel composition",
+      "method": "源码+activity-navigation隔离Core",
+      "verdict": "两三列/嵌套消息列/草稿保留通过"
+    },
+    {
+      "surface": "搜索浮层/顶栏/键盘",
+      "local": "TopBarSearch.tsx,SearchOverlayContent.tsx,DiscoveryPage.tsx",
+      "official": "SearchOverlay,MessageSearchPage",
+      "method": "源码+topbar/activity-navigation",
+      "verdict": "当前定向检查通过"
+    },
+    {
+      "surface": "动态/跳转/已读",
+      "local": "ActivityMessageRow.tsx,useActivityFeed.ts,useActivityScroll.ts",
+      "official": "ThreadsInbox.tsx",
+      "method": "源码+activity-navigation",
+      "verdict": "前沿已读/返回/正文定位通过；未等同所有异常状态"
+    },
+    {
+      "surface": "任务列表/看板/详情",
+      "local": "TasksPage.tsx,TaskProperties.tsx,TaskBoardActions.tsx",
+      "official": "TasksPanel,TaskModal,InlineBadgeEditor",
+      "method": "源码+task-board",
+      "verdict": "鼠标/触屏拖动与未知结果精确核实通过"
+    },
+    {
+      "surface": "频道聊天/任务标签",
+      "local": "ChannelTabs.tsx",
+      "official": "ChatPanel.tsx",
+      "method": "源码",
+      "verdict": "UI-06"
+    },
+    {
+      "surface": "收藏/表情",
+      "local": "SavedPanel.tsx,MessageReactions.tsx",
+      "official": "SavedPanel,MessageHoverToolbar",
+      "method": "接线来源检查",
+      "verdict": "本轮未重跑收藏/表情浏览器门禁"
+    },
+    {
+      "surface": "附件/文件树/预览/批注",
+      "local": "ComputerFiles.tsx,Attachments.tsx,useAttachmentComments.tsx",
+      "official": "DocumentPreview,AttachmentCommentsPanel",
+      "method": "源码+attachment-preview",
+      "verdict": "MD预览/选区/批注/未知写通过；PDF/HTML/表格本轮未重新实测"
+    },
+    {
+      "surface": "Role/实例管理",
+      "local": "AgentPage.tsx,RoleWorkspace.tsx,RoleEditor.tsx",
+      "official": "AgentProfileEditDialog,AgentDetailPanel",
+      "method": "源码+正式只改未提交草稿",
+      "verdict": "UI-01/UI-02/UI-03；未启停真实实例"
+    },
+    {
+      "surface": "平台记忆",
+      "local": "MemoryPage.tsx,MemoryEditor.tsx",
+      "official": "Field/Dialog/Panel primitives；平台记忆为本地产品差异",
+      "method": "源码+正式只改未提交草稿",
+      "verdict": "UI-01/UI-02/UI-03；不是照搬Agent私有记忆"
+    },
+    {
+      "surface": "设置/外观/运行配置",
+      "local": "SettingsPage.tsx,appearance-adaptation.ts,RuntimeSettings.tsx",
+      "official": "SettingsSidebarList,SettingsPanel.AppearanceSection",
+      "method": "源码+正式导航与header探针",
+      "verdict": "外观章节直接暴露原版；运行配置全部表单本轮未改写验证"
+    },
+    {
+      "surface": "fork/side/执行详情",
+      "local": "SideWorkspace.tsx,useInstanceBranches.tsx",
+      "official": "Thread-side-column/ConfirmDialog作为展示基础",
+      "method": "接线与隔离边界源码检查",
+      "verdict": "Loom独有能力，不要求Raft功能同构；本轮无付费CLI运行"
+    },
+    {
+      "surface": "来源/适配/测试可信度",
+      "local": "vite.config.ts,adoption.json,intake.test.mjs",
+      "official": "来源revision与实际构建转换链",
+      "method": "来源hash/退休/route-owner3检查",
+      "verdict": "UI-07；字节未变不证明转换后交互等价"
+    }
+  ],
+  "checks": {
+    "focused": "focused-checks.json",
+    "real": ["probe.json", "state-probe.json", "recovery-probe.json"],
+    "contract": "intake/retirement/intent-route-owners3passed",
+    "notes": [
+      "早期探针的保存按钮disabled=true不能证明遮挡；后续仅本地选择有效模型启用按钮后，确认中心命中底栏。",
+      "记忆输入框使用官方Field提供的可访问名称简介；修正探针选择器后复现Escape丢草稿。",
+      "真实页面未提交Role/记忆修改，未启停实例；隔离Core门禁使用Fake CLI，不产生付费调用。"
+    ]
+  },
+  "rootCauses": [
+    "官方源码/primitive不变，却由本地页面持有不同的路由/草稿/关闭状态，组合行为不同。",
+    "CSS只按外观调整，未覆盖border-box、portal、焦点回送和短视口。",
+    "验收偏重单次完成路径与精确写入，对取消/返回/恢复/跨页草稿检查不充分。",
+    "来源完整性、批准差异与当前交互完成度缺乏清楚分层。"
+  ],
+  "approvedDifferences": [
+    "Role/Instance和全局频道记忆、fork/side",
+    "不做对外分享/多Human/Raft云账户计费",
+    "中文界面、保留本地鉴权与执行/版本/幂等屏障",
+    "负责人批准的手机紧凑尺寸，不是Raft原生像素复刻"
+  ],
+  "repairOrder": [
+    {
+      "batch": 1,
+      "findings": ["UI-01"],
+      "goal": "防止丢草稿，统一dirty-close/select行为，保留未知结果防护"
+    },
+    {
+      "batch": 2,
+      "findings": ["UI-02", "UI-03"],
+      "goal": "统一已有路由的详情层级/底栏/返回，避免用留白掩盖状态错位"
+    },
+    {
+      "batch": 3,
+      "findings": ["UI-04", "UI-05"],
+      "goal": "触摸真实命中及读取错误恢复，定向回归后部署"
+    },
+    {
+      "batch": 4,
+      "findings": ["UI-06", "UI-07"],
+      "goal": "明确排序持久化边界，修正来源证据的阶段语义"
+    }
+  ],
+  "limits": [
+    "真机键盘、浏览器侧滑返回、VoiceOver/TalkBack、系统文字缩放尚无实机证据。",
+    "本轮未修改产品代码，无构建/部署/重启，不宣称问题已修复。",
+    "不启动后端横向重构或成本试验。"
+  ],
+  "receipts": "/Users/sun/.loom/reviews/2026-10-17-ui-audit"
+}

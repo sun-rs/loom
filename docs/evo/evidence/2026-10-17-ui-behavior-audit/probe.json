@@ -1,0 +1,124 @@
+[
+  {
+    "theme": "brutal",
+    "view": "agents",
+    "kind": "role-save",
+    "url": "http://127.0.0.1:4176/?view=agents",
+    "rect": {
+      "x": 20,
+      "y": 666,
+      "width": 84,
+      "height": 32,
+      "top": 666,
+      "right": 104,
+      "bottom": 698,
+      "left": 20
+    },
+    "disabled": true,
+    "hit": "<fieldset><div data-slot=\"field\" class=\"group/field flex flex-col gap-1 mb-3\" data-filled=\"\"><label id=\"base-ui-_r_7m_\" data-slot=\"field-label\" class=\"group-data-disabled/field:text-foreground-disabled font-bold text-foreground mb-1 block text-sm uppercase tracking-wide\" data-filled=\"\">名称</label><input id=\"base-ui-_r_7l_\" data-slot=\"input\" aria-lab",
+    "clickable": false,
+    "nav": {
+      "x": 16,
+      "y": 786,
+      "width": 358,
+      "height": 50,
+      "top": 786,
+      "right": 374,
+      "bottom": 836,
+      "left": 16
+    }
+  },
+  {
+    "theme": "brutal",
+    "view": "agents",
+    "kind": "browser-back",
+    "before": "http://127.0.0.1:4176/?view=agents",
+    "after": "about:blank"
+  },
+  {
+    "theme": "brutal",
+    "view": "memory",
+    "kind": "header-hit",
+    "buttons": []
+  },
+  {
+    "theme": "brutal",
+    "view": "settings",
+    "kind": "header-hit",
+    "buttons": [
+      {
+        "label": "设置列表",
+        "size": [32, 32],
+        "pseudo": ["\"\"", "40px", "40px"],
+        "hit44": [false, false, false, false]
+      }
+    ]
+  },
+  {
+    "theme": "brutal",
+    "view": "tasks",
+    "kind": "header-hit",
+    "buttons": []
+  },
+  {
+    "theme": "elegant-light",
+    "view": "agents",
+    "kind": "role-save",
+    "url": "http://127.0.0.1:4176/?view=agents",
+    "rect": {
+      "x": 20,
+      "y": 666,
+      "width": 80,
+      "height": 32,
+      "top": 666,
+      "right": 100,
+      "bottom": 698,
+      "left": 20
+    },
+    "disabled": true,
+    "hit": "<fieldset><div data-slot=\"field\" class=\"group/field flex flex-col gap-1.5 mb-3\" data-filled=\"\"><label id=\"base-ui-_r_7m_\" data-slot=\"field-label\" class=\"group-data-disabled/field:text-foreground-disabled font-medium text-foreground-strong dark:text-foreground-hint mb-1 block text-sm uppercase tracking-wide\" data-filled=\"\">名称</label><input id=\"base-",
+    "clickable": false,
+    "nav": {
+      "x": 16,
+      "y": 786,
+      "width": 358,
+      "height": 50,
+      "top": 786,
+      "right": 374,
+      "bottom": 836,
+      "left": 16
+    }
+  },
+  {
+    "theme": "elegant-light",
+    "view": "agents",
+    "kind": "browser-back",
+    "before": "http://127.0.0.1:4176/?view=agents",
+    "after": "about:blank"
+  },
+  {
+    "theme": "elegant-light",
+    "view": "memory",
+    "kind": "header-hit",
+    "buttons": []
+  },
+  {
+    "theme": "elegant-light",
+    "view": "settings",
+    "kind": "header-hit",
+    "buttons": [
+      {
+        "label": "设置列表",
+        "size": [32, 32],
+        "pseudo": ["\"\"", "44px", "44px"],
+        "hit44": [true, true, true, true]
+      }
+    ]
+  },
+  {
+    "theme": "elegant-light",
+    "view": "tasks",
+    "kind": "header-hit",
+    "buttons": []
+  }
+]

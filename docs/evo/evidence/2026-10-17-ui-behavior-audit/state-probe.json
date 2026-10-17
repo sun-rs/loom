@@ -1,0 +1,43 @@
+[
+  {
+    "kind": "agent-short-viewport",
+    "save": {
+      "x": 20,
+      "y": 508,
+      "width": 84,
+      "height": 32,
+      "top": 508,
+      "right": 104,
+      "bottom": 540,
+      "left": 20
+    },
+    "disabled": true,
+    "nav": {
+      "x": 16,
+      "y": 502,
+      "width": 358,
+      "height": 50,
+      "top": 502,
+      "right": 374,
+      "bottom": 552,
+      "left": 16
+    },
+    "occludedByNav": true
+  },
+  {
+    "kind": "role-draft-switch",
+    "original": "Smoke Codex",
+    "value": "Smoke Codex",
+    "discardConfirmation": 0
+  },
+  {
+    "kind": "memory-detail",
+    "url": "http://127.0.0.1:4176/?view=memory",
+    "navVisible": true
+  },
+  {
+    "kind": "memory-dirty-escape",
+    "dialogVisible": 0,
+    "discardConfirmation": 0
+  }
+]

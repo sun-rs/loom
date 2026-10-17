@@ -1,0 +1,24 @@
+[
+  {
+    "kind": "enabled-save-occluded",
+    "disabled": false,
+    "rect": {
+      "x": 20,
+      "y": 508,
+      "width": 84,
+      "height": 32,
+      "top": 508,
+      "right": 104,
+      "bottom": 540,
+      "left": 20
+    },
+    "hitNav": true,
+    "clickable": false
+  },
+  {
+    "kind": "sidebar-recovery",
+    "successfulReadRequests": 1,
+    "errorStillVisible": true,
+    "channelsLoaded": 40
+  }
+]
