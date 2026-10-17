@@ -1,6 +1,6 @@
 {
   "milestone": "milestone-evo-official-ui-integration-2026-10-17",
-  "status": "checks-passed-deployment-pending",
+  "status": "accepted-frontend-api-milestone",
   "scope": "Official-source frontend / API integration; controlled adapters, no new paid or real-model acceptance",
   "repairs": [
     "Shared channel write-slot observers must only guard their own actions; independent registrations cannot remove another guard",
@@ -76,7 +76,45 @@
       "finding": "Private-box gate intentionally removes instances[0] from the channel to prove read-only history. Combined mentions gate reused that removed member; absence from autocomplete is correct. Earlier candidate-query diagnosis was incomplete. Use surviving instances[1], keep official scoped picker and keyboard row selection. No product membership/autocomplete changes."
     }
   ],
-  "deployment": "pending",
+  "deployment": {
+    "verified": true,
+    "sourceCommit": "9c592c77ad7c1583fb87700954c73f907ad434cb",
+    "webBuildId": "e57ba0c484b1f947c96520a144b14c38f12a2bac8cf92d43c0e32e94d1130c6c",
+    "backupDatabases": 2,
+    "backupFiles": 319,
+    "businessTablesUnchanged": 18,
+    "realPages": [
+      {
+        "width": 390,
+        "preset": "brutal",
+        "dpr": 1,
+        "realLan": true,
+        "navigation": true,
+        "chineseOnly": true,
+        "mobileDiscoveryList": true
+      },
+      {
+        "width": 390,
+        "preset": "elegant-light",
+        "dpr": 1,
+        "realLan": true,
+        "navigation": true,
+        "chineseOnly": true,
+        "mobileDiscoveryList": true
+      },
+      {
+        "width": 1440,
+        "preset": "brutal",
+        "dpr": 1,
+        "realLan": true,
+        "navigation": true,
+        "chineseOnly": true,
+        "mobileDiscoveryList": false
+      }
+    ],
+    "receiptDirectory": "/Users/sun/.loom/reviews/2026-10-17-ui-integration-milestone",
+    "screenshotsReviewed": true
+  },
   "retainedLimits": [
     "No new real CLI/model collaboration or efficiency gate; existing backend-freeze evidence retains its exact provider and quality limits",
     "Fork/Side browser runs simulate native session copy and execution, not real provider fork acceptance",

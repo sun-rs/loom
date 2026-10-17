@@ -2,7 +2,7 @@
 
 ## 范围
 
-本次只收口官方前端与既有本机后端之间的纵向路径，不新增后端能力，不恢复旧复刻UI，不改模型提示词/上下文/调度策略。里程碑标签计划为 `milestone-evo-official-ui-integration-2026-10-17`；最终部署和推送以[证据](../evo/evidence/2026-10-17-ui-integration-milestone/summary.json)为准。
+本次只收口官方前端与既有本机后端之间的纵向路径，不新增后端能力，不恢复旧复刻UI，不改模型提示词/上下文/调度策略。里程碑标签为 `milestone-evo-official-ui-integration-2026-10-17`；最终部署和推送以[证据](../evo/evidence/2026-10-17-ui-integration-milestone/summary.json)为准。
 
 ## 发现并修复
 
