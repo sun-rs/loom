@@ -12,7 +12,41 @@
     "officialSourceHashes": "2264 unchanged",
     "paid": "not run"
   },
-  "deployment": "pending",
+  "deployment": {
+    "verified": true,
+    "sourceCommit": "7dd4aa770f043b4c05aa1731fee3990d5d0d13d2",
+    "webBuildId": "f65510d6d1ea9679ecabb66ec45aa932c7f742d272723fa5da9a0bb4779f9d62",
+    "backupDatabases": 2,
+    "backupFiles": 319,
+    "businessTablesUnchanged": 18,
+    "realPages": [
+      {
+        "width": 390,
+        "preset": "brutal",
+        "dpr": 1,
+        "realLan": true,
+        "navigation": true,
+        "chineseOnly": true
+      },
+      {
+        "width": 390,
+        "preset": "elegant-light",
+        "dpr": 1,
+        "realLan": true,
+        "navigation": true,
+        "chineseOnly": true
+      },
+      {
+        "width": 1440,
+        "preset": "brutal",
+        "dpr": 1,
+        "realLan": true,
+        "navigation": true,
+        "chineseOnly": true
+      }
+    ],
+    "receiptDirectory": "/Users/sun/.loom/reviews/2026-10-17-mobile-navigation"
+  },
   "limits": [
     "No physical iOS Safari or installed PWA test",
     "Official four tabs plus Loom-specific Memory entry; no claim of all detail routes parity",
