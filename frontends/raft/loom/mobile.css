@@ -141,9 +141,9 @@
     min-height: 44px;
   }
 
-  /* No overlay: the same textarea and controls reflow when editing starts.
-   * Attachments, errors, accessory content and drafts keep the expanded form. */
-  .loom-composer[data-has-accessories="false"]:not(:focus-within):not(
+  /* Only textarea focus means editing. Toolbar focus restored by file dialogs
+   * must not latch the empty editor open. Keep drafts/task mode/accessories. */
+  .loom-composer[data-has-accessories="false"]:not(:has(textarea:focus)):not(
       :has([data-testid="composer-as-task-toggle"][aria-checked="true"])
     ):has(textarea:placeholder-shown)
     [data-slot="composer"] {
@@ -153,33 +153,33 @@
     align-items: center;
   }
 
-  .loom-composer[data-has-accessories="false"]:not(:focus-within):not(
+  .loom-composer[data-has-accessories="false"]:not(:has(textarea:focus)):not(
       :has([data-testid="composer-as-task-toggle"][aria-checked="true"])
     ):has(textarea:placeholder-shown)
     [data-testid="composer-as-task-toggle"] {
     display: none;
   }
 
-  .loom-composer[data-has-accessories="false"]:not(:focus-within):not(
+  .loom-composer[data-has-accessories="false"]:not(:has(textarea:focus)):not(
       :has([data-testid="composer-as-task-toggle"][aria-checked="true"])
     ):has(textarea:placeholder-shown)
     [data-slot="composer-toolbar"] {
     display: contents;
   }
-  .loom-composer[data-has-accessories="false"]:not(:focus-within):not(
+  .loom-composer[data-has-accessories="false"]:not(:has(textarea:focus)):not(
       :has([data-testid="composer-as-task-toggle"][aria-checked="true"])
     ):has(textarea:placeholder-shown)
     .loom-composer-file-tools {
     grid-area: files;
   }
-  .loom-composer[data-has-accessories="false"]:not(:focus-within):not(
+  .loom-composer[data-has-accessories="false"]:not(:has(textarea:focus)):not(
       :has([data-testid="composer-as-task-toggle"][aria-checked="true"])
     ):has(textarea:placeholder-shown)
     [data-slot="composer-toolbar"]
     > div:not(.loom-composer-file-tools) {
     grid-area: submit;
   }
-  .loom-composer[data-has-accessories="false"]:not(:focus-within):not(
+  .loom-composer[data-has-accessories="false"]:not(:has(textarea:focus)):not(
       :has([data-testid="composer-as-task-toggle"][aria-checked="true"])
     ):has(textarea:placeholder-shown)
     [data-slot="composer-input"] {
@@ -187,12 +187,13 @@
     min-width: 0;
   }
 
-  /* Native autosizing can retain its inline height after a multiline draft.
-   * Bound only the empty, unfocused preview; editing retains native sizing. */
-  .loom-composer[data-has-accessories="false"]:not(:focus-within):not(
+  /* Center the20px line inside the40px empty preview. Native autosizing can
+   * retain inline height after a draft; editing keeps its own size/padding. */
+  .loom-composer[data-has-accessories="false"]:not(:has(textarea:focus)):not(
       :has([data-testid="composer-as-task-toggle"][aria-checked="true"])
     ):has(textarea:placeholder-shown)
     [data-slot="composer-input"] {
+    padding-block: 10px;
     height: 40px !important;
     max-height: 40px;
     overflow: hidden;

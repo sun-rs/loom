@@ -53,6 +53,28 @@ export async function verifyMobileDensity({ browser, origin, channels }) {
           });
         if (mobile) {
           assert.ok(
+            await input.evaluate((el) => {
+              const s = getComputedStyle(el),
+                r = el.getBoundingClientRect();
+              const lineCenter =
+                parseFloat(s.borderTopWidth) +
+                parseFloat(s.paddingTop) +
+                parseFloat(s.lineHeight) / 2;
+              return Math.abs(lineCenter - r.height / 2) <= 1;
+            }),
+            "idle placeholder line is vertically centered",
+          );
+          await input.tap();
+          assert.ok((await shell.boundingBox()).height > readHeight);
+          await page
+            .getByTestId("loom-message-timeline")
+            .tap({ position: { x: 15, y: 30 } });
+          assert.equal(
+            Math.round((await shell.boundingBox()).height),
+            Math.round(readHeight),
+            "tap conversation dismisses empty editor",
+          );
+          assert.ok(
             readHeight <= 60,
             `reading composer ${preset}/${width}: ${readHeight} exceeds 60`,
           );
@@ -96,6 +118,11 @@ export async function verifyMobileDensity({ browser, origin, channels }) {
             () =>
               document.activeElement?.getAttribute("aria-label") ===
               "引用计算机文件或文件夹",
+          );
+          assert.equal(
+            Math.round((await shell.boundingBox()).height),
+            Math.round(readHeight),
+            "returned file-button focus does not keep empty editor expanded",
           );
         }
         async function checkFilePosition() {
