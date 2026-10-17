@@ -1,4 +1,3 @@
-import { useAppTheme } from "../packages/web/src/hooks/useAppTheme.ts";
 import SystemNotifications from "./SystemNotifications.tsx";
 import {
   Home,
@@ -64,9 +63,8 @@ export function DesktopNavigation({ active, onSelect }: NavigationProps) {
   );
 }
 
-/** Same destinations on small screens using the official in-flow mobile navigation primitive. */
+/** Same destinations on small screens using the official mobile navigation primitive in the shared floating host. */
 export function MobileNavigation({ active, onSelect }: NavigationProps) {
-  const floating = useAppTheme().preset !== "brutal";
   const tabs = destinations
     .filter((entry) => entry.id !== "search" && entry.id !== "activity")
     .map((entry) =>
@@ -74,16 +72,9 @@ export function MobileNavigation({ active, onSelect }: NavigationProps) {
     );
   return (
     <MobileNavRoot
-      className={
-        floating ? "pointer-events-auto md:hidden" : "md:hidden shrink-0"
-      }
+      className="loom-mobile-nav pointer-events-auto md:hidden"
       aria-label="主导航"
       role="navigation"
-      style={
-        floating
-          ? undefined
-          : { paddingBottom: "min(env(safe-area-inset-bottom, 0px), 34px)" }
-      }
     >
       {tabs.map((entry) => (
         <MobileNavItem

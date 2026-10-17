@@ -1,0 +1,52 @@
+{
+  "status": "implemented-deployment-pending",
+  "scope": "Unify mobile root-page chrome after owner requested Raft iOS/main reference and consistent Raft styling",
+  "references": {
+    "native": {
+      "url": "https://github.com/botiverse/mobile",
+      "revision": "3cb28f1e7eecab4a66412089f156e81054760e43",
+      "license": "FSL-1.1-ALv2, Copyright 2026 Botiverse, Inc.; source inspected, no native code copied",
+      "files": [
+        "compose/shared/src/commonMain/kotlin/build/raft/app/SlockDesignTokens.kt",
+        "compose/shared/src/commonMain/kotlin/build/raft/app/SlockSectionHeader.kt",
+        "compose/shared/src/commonMain/kotlin/build/raft/app/SlockTabBar.kt",
+        "compose/shared/src/commonTest/kotlin/build/raft/app/SlockTopPageHeaderContractTest.kt",
+        "compose/iosApp/iosApp/KuiklyExpand/Components/SlockNativeFloatingTabBarView.m"
+      ],
+      "facts": "62dp normal header / 48dp compact token; 16sp main title; 30dp painted section action +2dp shadow; native iOS uses UIKit UITabBar sizeThatFits and system material, not a hard-coded CSS dock"
+    },
+    "main": {
+      "revision": "f1bc8c9d2f70b44aa5e1cacc2362e8905ed4c612",
+      "files": [
+        "apps/web/src/mobile-navigation.css",
+        "docs/audits/2026-09-14-mobile-ios-tab-navigation.zh-CN.md",
+        "docs/audits/2026-09-14-mobile-header-density.zh-CN.md"
+      ],
+      "adoption": "Structural reuse of the approved translucent icon-only capsule pattern; old frontend source remains retired. Main used owner screenshots, not native source dimensions."
+    }
+  },
+  "implementation": {
+    "owner": "Loom mobile.css and presentation glue only; route, keyboard visual viewport, business data and official primitive owners unchanged",
+    "rootHeaders": "Explicit data-loom-root-header on shared ChatSidebarFrame and Tasks header; all five main pages use 62 CSS px. Detail headers remain 48px. Title 16px/20px using existing Raft fonts. No global zoom.",
+    "actions": "Header icon-only actions paint at 32px with 44px transparent pointer surface; native colors/borders/icons retained; composer touch controls unchanged",
+    "navigation": "Single shared floating host across themes; 50px capsule, 44px buttons, five existing accessible destinations. Web material is local/main-derived, not UIKit Liquid Glass. Dark/light palette uses Raft tokens.",
+    "clearance": "Root scroll views reserve 66px + safe area; live activity reserves116px; overlay positioned inside existing app visual viewport, not a second keyboard owner"
+  },
+  "tests": {
+    "red": "Previous build: mobile-bottom-bar-overlay absent in brutal (0 !=1)",
+    "navigation": "Chromium all five root pages equal62px; capsule50px; transparent hit target; root/detail navigation; resized visual viewport and desktop",
+    "layout": "390/900/1440, both themes, five routes: passed",
+    "source": "3 targeted tests passed including 2264 upstream source hashes and native font delivery contract",
+    "typecheck": "typecheck:loom passed",
+    "build": "build:web:workbench passed",
+    "webkit": "Same root/header/action-hit/keyboard-viewport/desktop navigation regression passed"
+  },
+  "limits": [
+    "Web approximation of native UITabBar material, not copied UIKit implementation",
+    "Physical iPhone/iPad/Android OS keyboard/safe area remain unverified",
+    "No backend or paid-provider changes"
+  ],
+  "deployment": {
+    "verified": false
+  }
+}

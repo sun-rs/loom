@@ -39,6 +39,7 @@ export default function ChatSidebarFrame({
             : "relative flex h-panel-header shrink-0 items-center gap-3 border-b border-line-muted bg-layer-panel theme-brutal:border-b-2 theme-brutal:border-black theme-brutal:bg-soft-signal px-4"
         }
         data-testid={`${testIdPrefix}-header`}
+        data-loom-root-header
       >
         <h1
           className={

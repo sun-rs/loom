@@ -1,5 +1,4 @@
 import MobileBottomBarStack from "../packages/web/src/components/layout/MobileBottomBarStack.tsx";
-import { useAppTheme } from "../packages/web/src/hooks/useAppTheme.ts";
 import SideWorkspace from "./SideWorkspace.tsx";
 import type { ReactNode } from "react";
 import { showToast } from "../packages/web/src/components/toastBridge.ts";
@@ -644,7 +643,6 @@ export default function ChannelApp() {
     [background, routeParams],
   );
   const destination = params.get("view") ?? "channels";
-  const floatingMobileBars = useAppTheme().preset !== "brutal";
   const activityNavigation = useRef(0);
   const [discoveryProfileOpen, setDiscoveryProfileOpen] = useState(false);
   const lastChatRoom = useRef<string | undefined>(undefined);
@@ -1311,7 +1309,7 @@ export default function ChannelApp() {
             !(destination === "settings" && params.has("settings")) &&
             !(destination === "tasks" && params.has("task")) && (
               <MobileBottomBarStack
-                floating={floatingMobileBars}
+                floating
                 showLiveActivity
                 liveActivity={<LoomLiveActivity />}
                 tabBar={

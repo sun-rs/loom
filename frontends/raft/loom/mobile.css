@@ -13,9 +13,37 @@
     display: none;
   }
 
-  [data-slot="panel-header"] button {
-    min-width: 40px;
-    min-height: 40px;
+  /* Same root track for Sidebar and Tasks; detail panels retain compact 48px. */
+  [data-loom-root-header] {
+    height: 62px;
+    min-height: 62px;
+    padding-block: 4px;
+  }
+
+  :is([data-loom-root-header], [data-slot="panel-header"]) :is(h1, h2) {
+    font-size: 16px;
+    line-height: 20px;
+  }
+
+  /* Native section actions paint at 30dp (+2dp shadow). The surrounding
+   * transparent hit surface is 44px; do not inflate the painted square. */
+  :is([data-loom-root-header], [data-slot="panel-header"])
+    button:has(> svg):not(:has(span)) {
+    position: relative;
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+    padding: 6px;
+  }
+  :is([data-loom-root-header], [data-slot="panel-header"])
+    button:has(> svg):not(:has(span))::after {
+    content: "";
+    position: absolute;
+    inset: -6px;
+  }
+  [data-slot="panel-actions"] {
+    gap: 12px;
   }
 
   [data-loom-composer-shell] {
@@ -76,13 +104,47 @@
     padding-inline: 2px;
   }
 
-  [data-slot="mobile-nav-item"] {
-    height: 44px;
-    min-height: 44px;
-    padding-block: 0;
+  /* Main's owner-approved iOS screenshot adaptation; UIKit owns native
+   * Liquid Glass, so these web material values are not claimed as UIKit reuse. */
+  [data-testid="mobile-bottom-bar-overlay"] {
+    position: absolute;
   }
 
-  [data-slot="mobile-nav-root"] {
-    padding-top: 0;
+  .loom-mobile-nav {
+    display: flex;
+    align-self: center;
+    width: calc(100% - 32px);
+    max-width: 430px;
+    height: 50px;
+    padding: 2px;
+    gap: 2px;
+    margin: 8px 16px max(8px, env(safe-area-inset-bottom, 0px));
+    border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+    border-radius: 40px;
+    background: color-mix(in srgb, var(--layer-panel) 72%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 4px 24px rgb(0 0 0 / 8%);
+  }
+  .loom-mobile-nav [data-slot="mobile-nav-item"] {
+    flex: 1;
+    height: 44px;
+    min-height: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: 32px;
+    background: transparent;
+    box-shadow: none;
+  }
+  .loom-mobile-nav [data-slot="mobile-nav-item"][data-selected="true"] {
+    background: color-mix(in srgb, var(--ink) 8%, transparent);
+    box-shadow: none;
+  }
+  .mobile-nav-clearance {
+    padding-bottom: calc(66px + env(safe-area-inset-bottom, 0px));
+  }
+  html:has([data-testid="mobile-live-activity-slot"] > *)
+    .mobile-nav-clearance {
+    padding-bottom: calc(116px + env(safe-area-inset-bottom, 0px));
   }
 }

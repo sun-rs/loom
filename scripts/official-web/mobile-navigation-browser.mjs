@@ -1,7 +1,7 @@
 // Real Kernel/API/gateway with deterministic fixture messages; no paid CLI.
 import assert from "node:assert/strict";
 import { resolve } from "node:path";
-import { chromium } from "playwright";
+import { chromium, webkit } from "playwright";
 import { createHumanApplicationPort } from "@rah-os/kernel";
 import { ClientApplicationService } from "../../packages/application-service/src/index.ts";
 import { LocalWorkbenchGateway } from "../../packages/daemon/src/local-workbench-gateway.ts";
@@ -30,7 +30,9 @@ for (const [width, preset] of [
       staticDirectory: resolve("frontends/raft/packages/web/dist-workbench"),
     });
     await gateway.start();
-    browser = await chromium.launch({ headless: true });
+    browser = await (
+      process.env.LOOM_BROWSER_ENGINE === "webkit" ? webkit : chromium
+    ).launch({ headless: true });
     const context = await browser.newContext({
       viewport: { width, height: width === 390 ? 844 : 1000 },
       deviceScaleFactor: 1,
@@ -68,7 +70,7 @@ for (const [width, preset] of [
       assert.equal(await nav.getByRole("button").count(), 5);
       assert.equal(
         await page.getByTestId("mobile-bottom-bar-overlay").count(),
-        preset === "brutal" ? 0 : 1,
+        1,
       );
       for (const button of await nav.getByRole("button").all()) {
         const box = await button.boundingBox();
@@ -87,6 +89,26 @@ for (const [width, preset] of [
       for (const label of ["任务", "Agent", "记忆", "设置", "首页"]) {
         await nav.getByRole("button", { name: label, exact: true }).tap();
         await nav.waitFor();
+        await page
+          .getByRole("heading", {
+            name: label === "首页" ? "聊天" : label,
+            exact: true,
+          })
+          .waitFor();
+        const header = page
+          .locator("[data-loom-root-header]")
+          .filter({ visible: true });
+        await header.waitFor();
+        assert.equal(
+          (await header.boundingBox()).height,
+          62,
+          label + " uses the shared native-reference root header",
+        );
+        assert.equal(
+          Math.round((await nav.boundingBox()).height),
+          50,
+          "shared capsule height",
+        );
       }
       for (const id of ["search", "activity"]) {
         await page.getByTestId("mobile-home-" + id + "-entry").tap();
@@ -102,7 +124,23 @@ for (const [width, preset] of [
       await page.locator(`[data-public-channel-id="${f.home.roomId}"]`).tap();
       await nav.waitFor({ state: "hidden" });
       await page.getByTestId("composer-textarea").waitFor();
-      await page.getByRole("button", { name: "聊天列表", exact: true }).tap();
+      const back = page.getByRole("button", { name: "聊天列表", exact: true });
+      assert.equal(
+        (await back.boundingBox()).height,
+        32,
+        "compact painted header action",
+      );
+      assert.equal(
+        await back.evaluate((el) => {
+          const r = el.getBoundingClientRect();
+          return el.contains(
+            document.elementFromPoint(r.x - 4, r.y + r.height / 2),
+          );
+        }),
+        true,
+        "transparent 44px touch surface remains clickable",
+      );
+      await back.tap();
       await nav.waitFor();
       await nav.getByRole("button", { name: "Agent", exact: true }).tap();
       await page.getByPlaceholder("筛选角色").waitFor({ state: "visible" });
