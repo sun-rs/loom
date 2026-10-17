@@ -1,0 +1,120 @@
+{
+  "status": "implemented-compact-mobile-owner-approved",
+  "nativeSource": {
+    "repository": "https://github.com/botiverse/mobile",
+    "revision": "3cb28f1e7eecab4a66412089f156e81054760e43",
+    "license": "FSL-1.1-ALv2; source read only, no native code copied"
+  },
+  "composition": {
+    "header": [
+      "SlockDesignTokens.kt:SlockSize",
+      "SlockSectionHeader.kt:SlockTopPageHeaderFrame",
+      "SlockSectionHeader.kt:SlockMainTabPageHeader",
+      "SettingsHomePage.kt:SettingsHomeContent"
+    ],
+    "typography": [
+      "SlockDesignTokens.kt:SlockType",
+      "SlockSectionHeader.kt:titleStyle/subtitle",
+      "SlockEmptyState.kt"
+    ],
+    "navigation": [
+      "SlockTabBar.kt:SlockAppBottomTabBarHost",
+      "SlockNativeFloatingTabBarView.m:UITabBar/sizeThatFits",
+      "SlockStackedItemTabBar.m:compact iPad traits"
+    ]
+  },
+  "inventory": [
+    {
+      "surface": "root header",
+      "native": "62dp including 2dp divider, system safe area added separately",
+      "currentWeb": "48 CSS px mobile root and detail; desktop unchanged",
+      "decision": "Owner chose official-style compact mobile after source audit; 48 is an explicit adaptation, not correction of upstream62"
+    },
+    {
+      "surface": "main page title",
+      "native": "16sp/20sp via SlockMainTabHeaderTitleStyle",
+      "currentWeb": "16px/20px",
+      "decision": "Already dimensionally aligned at baseline text scaling; family/fallback is platform-specific"
+    },
+    {
+      "surface": "body",
+      "native": "14sp/20sp",
+      "currentWeb": "Most explicit text-sm paths14px; unstyled elements inherit16px/24px",
+      "decision": "Assign explicit body role to local explanatory text; do not globally override message font preferences"
+    },
+    {
+      "surface": "caption/help",
+      "native": "12sp/16sp",
+      "currentWeb": "Most text-xs already12px; several local help paths use14px or20px line height",
+      "decision": "Empty-state supporting copy uses12/16; other text retains semantic component recipes"
+    },
+    {
+      "surface": "ordinary button",
+      "native": "14sp/18sp SlockType.Button",
+      "currentWeb": "14px/18px mobile, minimum44px hit target; desktop unchanged",
+      "decision": "Use bounded mobile form treatment for local selects, preserving native menu/disabled/focus behavior"
+    },
+    {
+      "surface": "input",
+      "native": "14sp/20sp token; native OS field does not use Safari zoom behavior",
+      "currentWeb": "16px on touch inputs",
+      "decision": "Keep web inputs at16px to avoid iOS focus zoom; explicit cross-platform exception"
+    },
+    {
+      "surface": "empty state",
+      "native": "36dp icon,18sp/22sp title,12sp/16sp detail, max280dp content",
+      "currentWeb": "Official Web composition, mobile24px verticalpadding/max280px content/12px16px supporting copy; theme-specific title unchanged",
+      "decision": "Inspect recipe/callsite and adapt mobile slots only where measured mismatch; no home-made replacement"
+    },
+    {
+      "surface": "main border",
+      "native": "2dp default,3dp strong",
+      "currentWeb": "brutal main borders2px plus shadows; elegant uses its own theme recipe",
+      "decision": "Do not equate shadow with border or globally erase Raft style; thin border requires explicit compact departure"
+    },
+    {
+      "surface": "bottom navigation",
+      "native": "UIKit UITabBar intrinsic size and system material, labels/icons supplied via shared host",
+      "currentWeb": "Main-authorized icon-only50px translucent CSS capsule with5destinations",
+      "decision": "Cannot be described as native code reuse or pixel parity; retain named exception unless owner chooses exact native shell"
+    }
+  ],
+  "implementationOrder": [
+    "Owner chose compact mobile, retaining official style",
+    "Centralize chosen mobile metrics and semantic slot mapping; remove superseded local overrides",
+    "Apply to all five main pages and detail/settings forms without duplicating state",
+    "Run targeted red/green geometry, text-role, pointer, overflow and navigation tests at390x844 plus desktop; inspect screenshot captures",
+    "Build, guarded backup/restart, verify real pages, then record implemented/tested/remaining differences separately"
+  ],
+  "measurement": "Read-only real browser inventory at390x844 DPR1, brutal and elegant-light, root pages and settings details; /tmp/loom-mobile-type-audit.json. Initial audit can include loading placeholders; no paid work or business mutations.",
+  "limitations": [
+    "No same-device native iOS screenshot baseline is available in the public source tree; do not claim bilateral visual1:1 acceptance",
+    "Native dp/sp and CSSpx are platform-specific; measurements compare baseline dimensions, not physical pixel equivalence.",
+    "No physical iOS/Android device acceptance; official borders/shadows and16px input font intentionally retained."
+  ],
+  "verification": {
+    "red": [
+      "root header62 versus48",
+      "empty-state padding48 versus24",
+      "select16/24 versus14/18"
+    ],
+    "green": [
+      "Chromium and WebKit mobile navigation:390x844 dual themes; desktop1440",
+      "layout390/900/1440 dualthemes",
+      "mobile-density8cases",
+      "typecheck:loom",
+      "build:web:workbench",
+      "intake/local-fonts/channel-controls-chrome3tests"
+    ],
+    "deployment": "pending safe restart"
+  },
+  "webSource": {
+    "dependency": "raft-ui@0.5.64",
+    "license": "MIT",
+    "chain": [
+      "EmptyState.tsx -> raft-ui EmptyState recipe",
+      "ManagementUi.SelectField -> StableField.FieldSelectTrigger -> SelectTrigger -> Button md, field chrome"
+    ],
+    "reuse": "Existing official primitives unchanged; all new CSS is local mobile adaptation, not native source copying."
+  }
+}

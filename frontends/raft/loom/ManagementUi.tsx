@@ -159,7 +159,10 @@ export function SelectField({
         onValueChange={(next) => onChange(next ?? "")}
         disabled={disabled}
       >
-        <FieldSelectTrigger aria-label={label} className="w-full">
+        <FieldSelectTrigger
+          aria-label={label}
+          className="loom-field-select w-full"
+        >
           <SelectValue
             placeholder={unavailable ? "当前配置不可用" : "请选择"}
           />

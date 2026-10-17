@@ -9,14 +9,37 @@
     padding-block: 4px;
   }
 
+  /* Retain the official empty-state composition and theme-specific title.
+   * Native content caps at 280dp; supporting copy is Caption 12sp/16sp. */
+  [data-slot="empty-state"] {
+    padding-block: 24px;
+  }
+  [data-slot="empty-state-content"] {
+    max-width: 280px;
+  }
+  [data-slot="empty-state-description"] {
+    font-size: 12px;
+    line-height: 16px;
+  }
+
+  /* Local form glue: SelectTrigger uses the Web Button md recipe (16/24).
+   * Native button type is 14/18. Keep a 44px target and native popup/focus. */
+  .loom-field-select[role="combobox"] {
+    font-size: 14px;
+    line-height: 18px;
+    min-height: 44px;
+    padding-block: 6px;
+  }
+
   .loom-chat-header [data-slot="panel-meta"] {
     display: none;
   }
 
-  /* Same root track for Sidebar and Tasks; detail panels retain compact 48px. */
+  /* Compact adaptation: upstream main headers intentionally use 62dp.
+   * Use its compact 48dp metric across Loom root and detail headers. */
   [data-loom-root-header] {
-    height: 62px;
-    min-height: 62px;
+    height: 48px;
+    min-height: 48px;
     padding-block: 4px;
   }
 

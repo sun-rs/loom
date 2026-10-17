@@ -83,13 +83,7 @@ export async function verifyLayout({ browser, origin, channels, client }) {
             : page.locator('[data-slot="panel-header"]:visible').first();
         await header.waitFor();
         const h = (await header.boundingBox()).height;
-        if (
-          width < 768 &&
-          (await header.getAttribute("data-slot")) === "panel-header" &&
-          !(await header.evaluate((el) =>
-            el.hasAttribute("data-loom-root-header"),
-          ))
-        ) {
+        if (width < 768) {
           assert.equal(
             h,
             48,

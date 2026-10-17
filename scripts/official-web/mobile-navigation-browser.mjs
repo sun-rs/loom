@@ -101,9 +101,50 @@ for (const [width, preset] of [
         await header.waitFor();
         assert.equal(
           (await header.boundingBox()).height,
-          62,
-          label + " uses the shared native-reference root header",
+          48,
+          label + " uses the owner-approved compact root header",
         );
+        if (label === "任务") {
+          const empty = page.locator('[data-slot="empty-state"]');
+          await empty.waitFor();
+          assert.equal(
+            await empty.evaluate((el) => getComputedStyle(el).paddingTop),
+            "24px",
+          );
+          assert.ok(
+            (
+              await empty
+                .locator('[data-slot="empty-state-content"]')
+                .boundingBox()
+            ).width <= 280,
+          );
+        }
+        if (label === "记忆") {
+          const select = page.getByRole("combobox", {
+            name: "频道",
+            exact: true,
+          });
+          await select.waitFor();
+          assert.deepEqual(
+            await select.evaluate((el) => {
+              const css = getComputedStyle(el);
+              return [
+                css.fontSize,
+                css.lineHeight,
+                el.getBoundingClientRect().height >= 44,
+              ];
+            }),
+            ["14px", "18px", true],
+          );
+          await select.tap();
+          await page.getByRole("listbox").waitFor();
+          await page.keyboard.press("Escape");
+          await page.getByRole("listbox").waitFor({ state: "hidden" });
+          assert.equal(
+            await select.evaluate((el) => el === document.activeElement),
+            true,
+          );
+        }
         assert.equal(
           Math.round((await nav.boundingBox()).height),
           50,
