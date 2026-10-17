@@ -1,0 +1,38 @@
+{
+  "source": "a00b550",
+  "cause": [
+    "Local idle40px textarea retained4px top padding for20px line, placing placeholder6px above center",
+    "Local collapse predicate used focus-within of entire composer; native file-dialog return focus to plus kept empty editor expanded"
+  ],
+  "upstream": {
+    "chain": "MessageInput.tsx -> useComposerAutosize.ts -> raft-ui ComposerInput; official source unchanged",
+    "finding": "Native field-sizing content or rAF fallback autosize remains complete. Idle single-row collapse is a local mobile feature, not missing upstream source."
+  },
+  "repair": [
+    "Idle textarea padding-block10px centers20px line in40px height",
+    "Only textarea focus keeps editing layout open; toolbar focus alone does not",
+    "Draft/accessories/errors/selected task mode still preserve expanded layout; no new focus owner or blur handler"
+  ],
+  "verification": {
+    "red": "Vertical-centering invariant reproduced old padding defect",
+    "green": [
+      "Chromium and WebKit eight density cases each",
+      "Actual tap input then timeline collapses empty editor",
+      "Native file dialog close/focus return collapses without programmaticblur",
+      "Draft persistence, task-mode visibility,28px buttons/44px hit targets, keyboard-reduced viewport and desktop regression",
+      "typecheck:loom; official intake/fonts2tests; build:web:workbench; formatting/diff"
+    ]
+  },
+  "deployment": {
+    "verified": true,
+    "receipts": "/Users/sun/.loom/reviews/2026-10-17-composer-collapse",
+    "backupDatabases": 2,
+    "backupFiles": 319,
+    "businessTablesUnchanged": 18,
+    "realPage": "LAN390dualtheme and1440desktop; actual channel tap outside, file dialog focus return, line centering and screenshot verified"
+  },
+  "limitations": [
+    "No physical iOS/Android keyboard-dismiss acceptance; browser emulation is not physical-device evidence",
+    "Existing content intentionally prevents collapse"
+  ]
+}
