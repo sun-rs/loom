@@ -1,5 +1,5 @@
 {
-  "status": "checks-passed-deployment-pending",
+  "status": "fixed-and-deployed",
   "scope": "Review follow-up: closing a private conversation clears its retained selection; no backend changes",
   "red": {
     "assertion": "closing the selected private conversation removes its content, not only its list row",
@@ -15,5 +15,43 @@
     "officialSourceHashesUnchanged": 2264
   },
   "documentationCorrection": "Channel may unmount across top-level navigation; retained room/bridge plus native text draft restoration is not complete component-state keepalive",
-  "deployment": "pending"
+  "deployment": {
+    "verified": true,
+    "sourceCommit": "38fe526a2e8385b4f8045239a8bdc0f2d55c3a26",
+    "webBuildId": "8d0d4ddf62c07d45ff8a650ed1a800a4ed3ab9acbc6a51ab307784499e6002d0",
+    "backupDatabases": 2,
+    "backupFiles": 319,
+    "businessTablesUnchanged": 18,
+    "realPages": [
+      {
+        "width": 390,
+        "preset": "brutal",
+        "dpr": 1,
+        "realLan": true,
+        "navigation": true,
+        "chineseOnly": true,
+        "mobileDiscoveryList": true
+      },
+      {
+        "width": 390,
+        "preset": "elegant-light",
+        "dpr": 1,
+        "realLan": true,
+        "navigation": true,
+        "chineseOnly": true,
+        "mobileDiscoveryList": true
+      },
+      {
+        "width": 1440,
+        "preset": "brutal",
+        "dpr": 1,
+        "realLan": true,
+        "navigation": true,
+        "chineseOnly": true,
+        "mobileDiscoveryList": false
+      }
+    ],
+    "receiptDirectory": "/Users/sun/.loom/reviews/2026-10-17-private-close-review-fix",
+    "note": "Real service page smoke is read-only; close/reopen mutations verified against isolated Core, not user conversations"
+  }
 }
