@@ -1,0 +1,45 @@
+{
+  "status": "focused-checks-passed-deployment-pending",
+  "ownerAuthorization": "2026-10-17: owner requested filling backend gaps from official source and connecting official UI; current slice closes audited UI-06 panel tab persistence.",
+  "upstream": {
+    "url": "https://github.com/botiverse/raft-source",
+    "revision": "a98ae003246a0360872a77d76dec2fccd0347ef7",
+    "license": "FSL-1.1-ALv2; existing upstream LICENSE retained; owner-authorized reuse",
+    "sha256": {
+      "packages/server/src/routes/servers.ts": "1fa434376ffa81c9e986e23b4fbe6ae116b402a94ea8e0f41a3703d221b5f639",
+      "packages/server/src/services/serverService.ts": "80e8851bd17cfe2dd2ab44d9c8bd304558003e1dc592a6bc71a379700a6c22fc",
+      "packages/server/src/db/schema.ts": "9206b94231ebf72afbbc3a0a918e9e6bd25e8d7324becaddf54113ee3aefbb24",
+      "packages/web/src/components/message/ChatPanel.tsx": "0105682e82e87747319de3d8d51582b5d1ca1e6b3a4c14be2ff83252c300414f",
+      "packages/web/src/store/serverStore.ts": "5b2f0ce68c0b9e97bf0661502ec2d5d217b43ce3a58b62d75e6f9c3fcf6f1ee1"
+    }
+  },
+  "reuse": {
+    "direct": "raft-ui useOrderedTabs, SortableTabsList/Tab and conversation tabs directly reused from installed 0.5.64.",
+    "structural": "ChatPanel channelPanelTabOrder -> reorderTabs -> serverStore.updateSidebarOrder sparse personal preference.",
+    "backend": "Official servers.ts whitelist and serverService.updateMemberSidebarOrder personal server/member persistence semantics adapted to existing Loom HumanSidebar JSON owner. No literal PostgreSQL/Drizzle or upstream account store copied.",
+    "localDifferences": [
+      "Human x workspace scope, existing authenticated facade, expectedVersion and exact idempotency retained.",
+      "Only chat/tasks supported; invalid/duplicate IDs rejected instead of upstream filtering.",
+      "No optimistic second store: render confirmed preferences, keep unresolved writes mounted and verify exact original operation.",
+      "Legacy JSON reads default to []; omitted sparse patch does not reset order. No schema migration, new table, new endpoint, or provider/prompt/scheduling changes."
+    ]
+  },
+  "checks": {
+    "red": [
+      "Kernel default channelPanelTabOrder was undefined.",
+      "Browser persisted tasks-first did not render before frontend binding."
+    ],
+    "passed": [
+      "12 protocol/kernel/source/intent tests",
+      "Root and Loom type checks",
+      "Chromium and WebKit 1440x844 / 390x844: native pointer drag, persisted order after reload, committed-but-lost response exact replay",
+      "build:web:workbench"
+    ]
+  },
+  "limits": [
+    "Only channel chat/tasks order is newly persisted; no unsupported Files tab.",
+    "Unrelated cross-page unsaved draft guard remains outside this backend slice.",
+    "No paid CLI or efficiency gate; no scheduling/context/provider behavior changed."
+  ],
+  "localEvidence": "/Users/sun/.loom/reviews/2026-10-17-tab-order"
+}

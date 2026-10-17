@@ -133,11 +133,16 @@ const CustomSections = z
         sections.flatMap((s) => s.items).length,
     "duplicate section or placement",
   );
+const ChannelPanelTabOrder = z
+  .array(z.enum(["chat", "tasks"]))
+  .max(2)
+  .refine((v) => new Set(v).size === v.length);
 export const SidebarPreferencesSchema = z
   .object({
     version: z.number().int().nonnegative(),
     pinned: Keys,
     channelOrder: Keys,
+    channelPanelTabOrder: ChannelPanelTabOrder.default([]),
     dmOrder: Keys,
     hiddenDms: Keys.default([]),
     customSections: CustomSections.default([]),
@@ -179,6 +184,7 @@ export const SidebarPatchRequestSchema = SidebarGetRequestSchema.extend({
     .object({
       pinned: Keys,
       channelOrder: Keys,
+      channelPanelTabOrder: ChannelPanelTabOrder,
       dmOrder: Keys,
       hiddenDms: Keys,
       customSections: CustomSections,
@@ -213,6 +219,7 @@ export const DEFAULT_SIDEBAR_PREFERENCES: SidebarPreferences = {
   version: 0,
   pinned: [],
   channelOrder: [],
+  channelPanelTabOrder: [],
   dmOrder: [],
   hiddenDms: [],
   customSections: [],

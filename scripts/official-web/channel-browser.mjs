@@ -37,6 +37,7 @@ import {
 import { verifyChatBootstrap } from "./chat-rules-browser.mjs";
 import { verifySidebarActions } from "./sidebar-actions-browser.mjs";
 import { verifyDiscovery } from "./discovery-browser.mjs";
+import { verifyTabOrder } from "./tab-order-browser.mjs";
 import { verifyUiBehavior } from "./ui-behavior-browser.mjs";
 import { verifyManagement } from "./management-browser.mjs";
 import { verifyGlobalNavigation } from "./navigation-browser.mjs";
@@ -387,6 +388,18 @@ try {
     console.log(
       JSON.stringify(
         await verifyGlobalNavigation({ browser, origin, channel: channels[0] }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "tab-order") {
+    console.log(
+      JSON.stringify(
+        await verifyTabOrder({
+          browser,
+          origin,
+          client,
+          workspace,
+          channel: channels[0],
+        }),
       ),
     );
   } else if (process.env.LOOM_BROWSER_SLICE === "ui-behavior") {

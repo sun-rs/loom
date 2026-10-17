@@ -356,6 +356,9 @@ function Channel({
             />
             {!isPrivate && (
               <ChannelTabs
+                client={bridge.client}
+                workspaceId={channel.workspaceId}
+                controlRoomId={controlRoomId ?? ""}
                 value={taskTab ? "tasks" : "chat"}
                 onChange={(tab) => {
                   if (hasUnresolvedIntents()) return;

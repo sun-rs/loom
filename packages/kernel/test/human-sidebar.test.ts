@@ -100,6 +100,7 @@ test("sidebar order is private, version fenced, idempotent and ACL validated", (
       version: 0,
       pinned: [],
       channelOrder: [],
+      channelPanelTabOrder: [],
       dmOrder: [],
       hiddenDms: [],
       customSections: [],
@@ -265,5 +266,77 @@ test("custom sections and hidden conversations are private, persistent and targe
     );
   } finally {
     k.close();
+  }
+});
+
+test("panel tab order persists across reopen with sparse updates, replay and personal isolation", () => {
+  const directory = mkdtempSync(join(tmpdir(), "loom-tab-order-"));
+  const databasePath = join(directory, "room.db");
+  let k = new RoomKernel({ databasePath });
+  k.initialize();
+  try {
+    const owner = k.provisionPrincipal({ handle: "owner", kind: "human" });
+    const other = k.provisionPrincipal({ handle: "other", kind: "human" });
+    let actor = k.authenticateAccessToken(owner.accessToken);
+    const w = k.createWorkspace(actor, {
+      name: "w",
+      slug: "w",
+      idempotencyKey: "w",
+    });
+    k.addMember(actor, {
+      roomId: w.controlRoom.roomId,
+      principalId: other.principal.principalId,
+    });
+    const scope = { workspaceId: w.workspace.workspaceId };
+    assert.deepEqual(
+      k.humanSidebar.get(actor, scope).preferences.channelPanelTabOrder,
+      [],
+    );
+    const input = {
+      ...scope,
+      expectedVersion: 0,
+      idempotencyKey: "order",
+      patch: {
+        channelPanelTabOrder: ["tasks", "chat"] as ("tasks" | "chat")[],
+      },
+    };
+    const saved = k.humanSidebar.patch(actor, input);
+    assert.deepEqual(saved.preferences.channelPanelTabOrder, ["tasks", "chat"]);
+    assert.deepEqual(k.humanSidebar.patch(actor, input), saved);
+    k.humanSidebar.patch(actor, {
+      ...scope,
+      expectedVersion: 1,
+      idempotencyKey: "mute",
+      patch: { mutedWorkspace: true },
+    });
+    assert.throws(
+      () => k.humanSidebar.patch(actor, { ...input, idempotencyKey: "stale" }),
+      /version conflict/,
+    );
+    assert.deepEqual(
+      k.humanSidebar.get(k.authenticateAccessToken(other.accessToken), scope)
+        .preferences.channelPanelTabOrder,
+      [],
+    );
+    k.close();
+    k = new RoomKernel({ databasePath });
+    k.initialize();
+    actor = k.authenticateAccessToken(owner.accessToken);
+    assert.deepEqual(
+      k.humanSidebar.get(actor, scope).preferences.channelPanelTabOrder,
+      ["tasks", "chat"],
+    );
+    for (const order of [["chat", "chat"], ["unknown"]])
+      assert.throws(() =>
+        k.humanSidebar.patch(actor, {
+          ...scope,
+          expectedVersion: 2,
+          idempotencyKey: "invalid",
+          patch: { channelPanelTabOrder: order as ("tasks" | "chat")[] },
+        }),
+      );
+  } finally {
+    k.close();
+    rmSync(directory, { recursive: true, force: true });
   }
 });

@@ -139,6 +139,10 @@ test("sidebar group order migrates old preferences and rejects duplicate groups"
     pinnedSortMode: "manual",
   };
   assert.deepEqual(SidebarPreferencesSchema.parse(old).sectionOrder, []);
+  assert.deepEqual(
+    SidebarPreferencesSchema.parse(old).channelPanelTabOrder,
+    [],
+  );
   const input = {
     workspaceId: "workspace-a",
     expectedVersion: 0,
