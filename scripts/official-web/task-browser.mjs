@@ -71,10 +71,8 @@ export async function verifyTasks({
       await page.goto(url);
       await page.getByRole("heading", { name: "任务", exact: true }).waitFor();
       await page.getByText("FIXTURE task 52", { exact: true }).waitFor();
-      assert.ok(
-        (await page.getByTestId("task-status-readonly").count()) > 0,
-        "unconnected card editor is withheld",
-      );
+      // Card editing is connected now; mutations are covered by task-board-browser.
+      // This slice owns pagination, detail navigation and unknown-result recovery.
       assert.equal(
         await page
           .getByTestId(
@@ -124,10 +122,7 @@ export async function verifyTasks({
       await page.keyboard.press("Escape");
       assert.equal(await modal.count(), 1);
       const frozenUrl = page.url();
-      await page.evaluate(() => {
-        history.pushState({}, "", "?view=channels");
-        window.dispatchEvent(new PopStateEvent("popstate"));
-      });
+      await page.goBack();
       await page.waitForURL(frozenUrl);
       await verify.click();
       await verify.waitFor({ state: "hidden" });

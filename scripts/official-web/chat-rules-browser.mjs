@@ -36,8 +36,9 @@ export async function verifyChatBootstrap(page, origin, roomId) {
   const row = rows.nth(1).locator("[data-message-item]");
   const outer = await rows.nth(1).boundingBox(),
     inner = await row.boundingBox();
-  assert.equal(Math.round(inner.x - outer.x), 12);
-  assert.equal(Math.round(outer.width - inner.width), 24);
+  const inset = page.viewportSize().width < 768 ? 8 : 12;
+  assert.equal(Math.round(inner.x - outer.x), inset);
+  assert.equal(Math.round(outer.width - inner.width), inset * 2);
   assert.equal(await row.getAttribute("data-compact"), "true");
   await row.hover();
   assert.equal(
@@ -70,6 +71,7 @@ export async function verifyChatBootstrap(page, origin, roomId) {
   await page.route("**/v3/client/workspaces/list", (route) => route.abort());
   await page.reload();
   await page.getByTestId("loom-bootstrap-loading").waitFor({ state: "hidden" });
+  await page.getByRole("alert").waitFor();
   assert.equal(
     await page.getByRole("alert").count(),
     1,

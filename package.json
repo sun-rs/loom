@@ -34,11 +34,9 @@
     "test": "node --test --test-concurrency=1 packages/*/test/*.test.ts packages/*/test/*.test.mjs",
     "test:real:claude": "RAH_REAL_CLI_GATE=claude node --test packages/daemon/test/real-cli-gate.test.ts",
     "test:real:codex": "RAH_REAL_CLI_GATE=codex node --test packages/daemon/test/real-cli-gate.test.ts",
-    "test:real:codex:sol-low": "RAH_REAL_CLI_GATE=codex RAH_REAL_CLI_MODEL=gpt-5.6-sol RAH_REAL_CLI_REASONING=low node --test packages/daemon/test/real-cli-gate.test.ts",
     "test:real:kimi": "RAH_REAL_CLI_GATE=kimi node --test packages/daemon/test/real-cli-gate.test.ts",
     "test:real:kimi:k3": "RAH_REAL_CLI_GATE=kimi RAH_REAL_CLI_MODEL=kimi-code/k3 node --test packages/daemon/test/real-cli-gate.test.ts",
     "test:real:opencode": "RAH_REAL_CLI_GATE=opencode node --test packages/daemon/test/real-cli-gate.test.ts",
-    "test:real:opencode:deepseek-v4-flash": "RAH_REAL_CLI_GATE=opencode RAH_REAL_CLI_MODEL=deepseek/deepseek-v4-flash RAH_REAL_CLI_REASONING=max node --test packages/daemon/test/real-cli-gate.test.ts",
     "test:real:multi-cli": "RAH_REAL_MULTI_CLI_GATE=1 node --test packages/daemon/test/real-multi-cli-gate.test.ts",
     "typecheck": "tsc --noEmit",
     "check": "npm run test:repository-identity && npm run test:ci-workflow && npm run test:release-identity && npm run test:workbench-launch && npm run typecheck && npm test && npm run test:cli:efficiency:unit && npm run test:official-web:source",
@@ -58,7 +56,7 @@
     "test:official-web:source": "node --test scripts/official-web/*.test.mjs scripts/official-web/*.test.ts",
     "build:official-web": "npm run typecheck:loom --prefix frontends/raft && npm run build --prefix frontends/raft",
     "test:official-web:browser": "node scripts/official-web/browser-baseline.mjs",
-    "build:official-web:channel": "npm run typecheck:loom --prefix frontends/raft && node scripts/official-web/build-channel.mjs",
+    "build:official-web:channel": "npm run typecheck:loom --prefix frontends/raft && npm run build:web:workbench",
     "test:official-web:channel": "node scripts/official-web/channel-browser.mjs"
   },
   "devDependencies": {

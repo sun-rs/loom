@@ -97,6 +97,7 @@ export async function verifyMobileChatNavigation(page, roomId) {
   await page.route("**/v3/client/workspaces/list", (route) => route.abort());
   await page.goto(new URL("/", page.url()).href);
   await page.getByTestId("loom-bootstrap-loading").waitFor({ state: "hidden" });
+  await page.getByRole("alert").waitFor();
   assert.equal(
     await page.getByRole("alert").isVisible(),
     true,
@@ -117,4 +118,19 @@ export async function verifyMobileChatNavigation(page, roomId) {
     "the mobile Chat tab opens its list root even from a direct Agent URL",
   );
   await openChatRow(page, roomId);
+}
+
+// Seed a real same-document history entry for unresolved-write Back checks.
+export async function openChannelWithHistory(page, origin, roomId) {
+  await page.goto(`${origin}/?view=agents&room=${roomId}`);
+  await page
+    .getByRole("navigation", { name: "主导航" })
+    .getByRole("button", {
+      name: page.viewportSize().width < 768 ? "首页" : "频道",
+      exact: true,
+    })
+    .click();
+  if (page.viewportSize().width < 768)
+    await page.locator(`[data-public-channel-id="${roomId}"]`).click();
+  await page.getByTestId("composer-textarea").waitFor();
 }

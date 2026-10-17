@@ -1,3 +1,4 @@
+import { openChannelWithHistory } from "./mobile-chat-browser.mjs";
 import assert from "node:assert/strict";
 export async function verifyChannelTasks({
   browser,
@@ -60,10 +61,11 @@ export async function verifyChannelTasks({
             await route.abort();
           } else await route.continue();
         });
-      await page.goto(`${origin}/?room=${room.roomId}`);
+      await openChannelWithHistory(page, origin, room.roomId);
       const composer = page.getByTestId("chat-composer-shell"),
         toggle = composer.getByTestId("composer-as-task-toggle"),
         textarea = composer.locator("textarea");
+      await textarea.focus();
       await toggle.waitFor();
       await toggle.click();
       await textarea.fill(`FIXTURE created ${width}`);
@@ -75,10 +77,7 @@ export async function verifyChannelTasks({
       await verify.waitFor();
       assert.equal(creates.length, 1);
       const original = page.url();
-      await page.evaluate(() => {
-        history.pushState({}, "", "?view=tasks");
-        window.dispatchEvent(new PopStateEvent("popstate"));
-      });
+      await page.goBack();
       await page.waitForURL(original);
       await verify.click();
       await verify.waitFor({ state: "detached" });

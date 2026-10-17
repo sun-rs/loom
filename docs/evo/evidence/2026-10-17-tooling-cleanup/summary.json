@@ -1,0 +1,46 @@
+{
+  "scope": "Active source/test entry cleanup; no product UI, backend or persisted state behavior change.",
+  "removed": [
+    "scripts/official-web/build-channel.mjs: duplicate Vite build path, package alias now invokes guarded product builder",
+    "package.json test:real:codex:sol-low: obsolete gpt-5.6-sol binding shortcut",
+    "package.json test:real:opencode:deepseek-v4-flash: obsolete model with forbidden max effort shortcut",
+    "build-product-web console-availability wording after console retirement",
+    "task-browser assertion that card editor must remain unavailable, superseded by connected task-board workflow"
+  ],
+  "renamed": {
+    "from": "scripts/official-web/console-closeout-browser.mjs",
+    "to": "scripts/official-web/product-capabilities-browser.mjs",
+    "reason": "This verifies product UI usage/context/run diagnostics and task metadata, not the retired console; test content retained unchanged."
+  },
+  "testRepairs": [
+    "Use real router history Back/Forward, not raw empty-state pushState and synthetic POP",
+    "Channel entry helper seeds valid in-app history before pending-write tests",
+    "Focus mobile composer before its expandable task control",
+    "Wait for failed-bootstrap alert instead of assuming hidden loading means rendered error",
+    "Responsive message inset and mobile home navigation follow current UI",
+    "Expose focused chat-core/instance-create/channel-tasks/tasks slices so cleanup does not require unrelated full browser suite"
+  ],
+  "retained": [
+    "Frozen official source and provenance/license: not dead local code",
+    "Upstream startup smoke test: used by CI to verify source intake",
+    "Kernel/provider/session/efficiency tests and evidence: still prove invariants",
+    "Ambient d.ts files: consumed by TypeScript, not unused imports",
+    "Historical evidence and all user data"
+  ],
+  "verification": {
+    "paidCalls": 0,
+    "productRestart": "Not needed: no deployed product source changed; existing verified deployment retained.",
+    "passed": [
+      "14 product-build/CI-order/retirement/intake tests",
+      "npm run build:official-web:channel (Loom typecheck + shared guarded workbench build)",
+      "Chromium instance-create/channel-tasks/tasks/chat-core at1440x1000 and390x844",
+      "Changed-file formatting and git diff --check"
+    ],
+    "notRun": [
+      "Full backend suite",
+      "Unrelated full browser suite",
+      "Paid CLI gates"
+    ]
+  },
+  "localEvidence": "/Users/sun/.loom/reviews/2026-10-17-tooling-cleanup"
+}

@@ -6,7 +6,7 @@ import { pathToFileURL } from "node:url";
 export function assertOfficialFrontendReady(adoption) {
   if (adoption.productConnected !== true) {
     throw new Error(
-      "Official frontend is not connected to Loom yet; product installation is unavailable. Existing installed assets and the backend console remain available.",
+      "Official frontend is not connected to Loom yet; product installation is unavailable. Existing installed assets remain available.",
     );
   }
 }

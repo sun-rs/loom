@@ -419,6 +419,31 @@ try {
         }),
       ),
     );
+  } else if (process.env.LOOM_BROWSER_SLICE === "instance-create") {
+    console.log(
+      JSON.stringify(
+        await verifyInstanceCreation({
+          browser,
+          origin,
+          client,
+          workspace,
+          channel: channels[2],
+          role,
+        }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "channel-tasks") {
+    console.log(
+      JSON.stringify(
+        await verifyChannelTasks({ browser, origin, client, workspace, head }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "tasks") {
+    console.log(
+      JSON.stringify(
+        await verifyTasks({ browser, origin, client, workspace, head }),
+      ),
+    );
   } else if (process.env.LOOM_BROWSER_SLICE === "management") {
     console.log(
       JSON.stringify(
@@ -545,23 +570,30 @@ try {
       }),
     );
   } else {
-    const settingsNavigationResults = await verifySettingsNavigation({
-      browser,
-      origin,
-    });
-    const controlResults = await verifyChannelControls({
-      browser,
-      origin,
-      client,
-      channel: channels[0],
-    });
-    const systemNoticeResults = await verifySystemNotices({
-      browser,
-      origin,
-      client,
-      workspace,
-      head,
-    });
+    const coreOnly = process.env.LOOM_BROWSER_SLICE === "chat-core";
+    const settingsNavigationResults = coreOnly
+      ? []
+      : await verifySettingsNavigation({
+          browser,
+          origin,
+        });
+    const controlResults = coreOnly
+      ? []
+      : await verifyChannelControls({
+          browser,
+          origin,
+          client,
+          channel: channels[0],
+        });
+    const systemNoticeResults = coreOnly
+      ? []
+      : await verifySystemNotices({
+          browser,
+          origin,
+          client,
+          workspace,
+          head,
+        });
     for (const instance of instances)
       await client.request("agent.manage", {
         action: "set_state",
@@ -570,15 +602,17 @@ try {
         basedOnRoomSeq: await head(workspace.controlRoomId),
         idempotencyKey: `fixture-mention-disable-${instance.instanceId}`,
       });
-    const mentionResults = await verifyMentions({
-      browser,
-      origin,
-      client,
-      channel: channels[2],
-      otherChannel: channels[0],
-      instance: instances[0],
-      name: instanceNames[0],
-    });
+    const mentionResults = coreOnly
+      ? []
+      : await verifyMentions({
+          browser,
+          origin,
+          client,
+          channel: channels[2],
+          otherChannel: channels[0],
+          instance: instances[0],
+          name: instanceNames[0],
+        });
     for (const viewport of [
       { width: 1440, height: 1000 },
       { width: 390, height: 844 },
@@ -602,7 +636,9 @@ try {
       await verifyChatBootstrap(page, origin, channels[0].roomId);
       await verifyMobileChatNavigation(page, channels[0].roomId);
       await openChatRow(page, channels[2].roomId);
-      const memberButton = page.getByRole("button", { name: "频道成员与状态" });
+      const memberButton = page.getByRole("button", {
+        name: "频道成员与状态",
+      });
       await memberButton.click();
       const memberDialog = page.getByRole("dialog");
       await memberDialog.getByText(instanceNames[0], { exact: true }).waitFor();
@@ -785,22 +821,19 @@ try {
       page.off("request", observeMark);
       const mainNav = page.getByRole("navigation", { name: "主导航" });
       await openFullSearch(page);
-      await mainNav.getByRole("button", { name: "频道", exact: true }).click();
-      if (viewport.width < 768) await openChatRow(page, channels[1].roomId);
+      if (viewport.width < 768) {
+        await page.goBack(); // Mobile search is a detail page, not a bottom-nav root.
+        await openChatRow(page, channels[1].roomId);
+      } else await mainNav.getByRole("button", { name: "频道", exact: true }).click();
       await page.getByRole("button", { name: "核实发送" }).waitFor();
       assert.equal(
         sendRequests.length,
         1,
         "global navigation must not resend an unknown write",
       );
-      await page.evaluate((room) => {
-        history.pushState({}, "", `?room=${room}`);
-        window.dispatchEvent(new PopStateEvent("popstate"));
-      }, channels[0].roomId);
-      await page.getByText(body, { exact: true }).waitFor();
-      await page.evaluate((room) => {
-        history.back();
-      }, channels[1].roomId);
+      // Real Back/Forward preserves the router index and the channel-owned intent.
+      await page.goBack();
+      await page.goForward();
       await page.getByRole("button", { name: "核实发送" }).waitFor();
       await page.getByRole("button", { name: "核实发送" }).click();
       await page
@@ -863,124 +896,128 @@ try {
       });
       await context.close();
     }
-    const privateResults = await verifyPrivateBoxes({
-      browser,
-      origin,
-      client,
-      workspace,
-      channel: channels[2],
-      instance: instances[0],
-      name: instanceNames[0],
-      head,
-    });
-    const navigationResults = await verifyGlobalNavigation({
-      browser,
-      origin,
-      channel: channels[0],
-    });
-    const instanceResults = await verifyInstanceCreation({
-      browser,
-      origin,
-      client,
-      workspace,
-      channel: channels[2],
-      role,
-    });
-    const sidebarActionResults = await verifySidebarActions({
-      browser,
-      origin,
-      client,
-      workspace,
-      channel: channels[0],
-    });
-    const managementResults = await verifyManagement({
-      browser,
-      origin,
-      client,
-      workspace,
-      channel: channels[2],
-      offer,
-    });
-    const discoveryResults = await verifyDiscovery({
-      browser,
-      origin,
-      client,
-      workspace,
-      channel: channels[0],
-    });
-    const threadResults = await verifyThreads({
-      browser,
-      origin,
-      client,
-      workspace,
-      otherChannel: channels[1],
-      head,
-    });
-    const taskResults = await verifyTasks({
-      browser,
-      origin,
-      client,
-      workspace,
-      head,
-    });
-    const channelTaskResults = await verifyChannelTasks({
-      browser,
-      origin,
-      client,
-      workspace,
-      head,
-    });
-    const attachmentDetails = await verifyAttachmentDetails({
-      browser,
-      origin,
-      client,
-      workspace,
-      head,
-      role,
-    });
-    const attachmentResults = await verifyAttachments({
-      browser,
-      origin,
-      client,
-      workspace,
-      head,
-    });
-    const taskManagementResults = await verifyTaskManagement({
-      browser,
-      origin,
-      client,
-      workspace,
-      head,
-      role,
-    });
-    console.log(
-      JSON.stringify(
-        {
-          attachmentDetails,
-          attachmentResults,
-          taskManagementResults,
-          channelTaskResults,
-          taskResults,
-          threadResults,
-          settingsNavigationResults,
-          controlResults,
-          mentionResults,
-          systemNoticeResults,
-          fixtureOnly: true,
-          realCore: true,
-          paidCli: false,
-          results,
-          privateResults,
-          instanceResults,
-          navigationResults,
-          managementResults,
-          sidebarActionResults,
-          discoveryResults,
-        },
-        null,
-        2,
-      ),
-    );
+    if (coreOnly) {
+      console.log(JSON.stringify(results));
+    } else {
+      const privateResults = await verifyPrivateBoxes({
+        browser,
+        origin,
+        client,
+        workspace,
+        channel: channels[2],
+        instance: instances[0],
+        name: instanceNames[0],
+        head,
+      });
+      const navigationResults = await verifyGlobalNavigation({
+        browser,
+        origin,
+        channel: channels[0],
+      });
+      const instanceResults = await verifyInstanceCreation({
+        browser,
+        origin,
+        client,
+        workspace,
+        channel: channels[2],
+        role,
+      });
+      const sidebarActionResults = await verifySidebarActions({
+        browser,
+        origin,
+        client,
+        workspace,
+        channel: channels[0],
+      });
+      const managementResults = await verifyManagement({
+        browser,
+        origin,
+        client,
+        workspace,
+        channel: channels[2],
+        offer,
+      });
+      const discoveryResults = await verifyDiscovery({
+        browser,
+        origin,
+        client,
+        workspace,
+        channel: channels[0],
+      });
+      const threadResults = await verifyThreads({
+        browser,
+        origin,
+        client,
+        workspace,
+        otherChannel: channels[1],
+        head,
+      });
+      const taskResults = await verifyTasks({
+        browser,
+        origin,
+        client,
+        workspace,
+        head,
+      });
+      const channelTaskResults = await verifyChannelTasks({
+        browser,
+        origin,
+        client,
+        workspace,
+        head,
+      });
+      const attachmentDetails = await verifyAttachmentDetails({
+        browser,
+        origin,
+        client,
+        workspace,
+        head,
+        role,
+      });
+      const attachmentResults = await verifyAttachments({
+        browser,
+        origin,
+        client,
+        workspace,
+        head,
+      });
+      const taskManagementResults = await verifyTaskManagement({
+        browser,
+        origin,
+        client,
+        workspace,
+        head,
+        role,
+      });
+      console.log(
+        JSON.stringify(
+          {
+            attachmentDetails,
+            attachmentResults,
+            taskManagementResults,
+            channelTaskResults,
+            taskResults,
+            threadResults,
+            settingsNavigationResults,
+            controlResults,
+            mentionResults,
+            systemNoticeResults,
+            fixtureOnly: true,
+            realCore: true,
+            paidCli: false,
+            results,
+            privateResults,
+            instanceResults,
+            navigationResults,
+            managementResults,
+            sidebarActionResults,
+            discoveryResults,
+          },
+          null,
+          2,
+        ),
+      );
+    }
   }
 } finally {
   await browser?.close();

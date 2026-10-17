@@ -1,3 +1,4 @@
+import { openChannelWithHistory } from "./mobile-chat-browser.mjs";
 // FIXTURE ONLY: temporary real Core, fake discovery, prewarm disabled; no provider execution.
 import assert from "node:assert/strict";
 import { join } from "node:path";
@@ -33,7 +34,7 @@ export async function verifyInstanceCreation({
         controlRoomId: workspace.controlRoomId,
       })
     ).instances.filter((i) => i.channelId === channel.roomId);
-    await page.goto(`${origin}/?room=${channel.roomId}`);
+    await openChannelWithHistory(page, origin, channel.roomId);
     await page.getByRole("button", { name: "频道成员与状态" }).click();
     await page.route("**/v3/client/roles/list", (route) => route.abort());
     await page.getByRole("button", { name: "添加实例", exact: true }).click();
@@ -92,10 +93,7 @@ export async function verifyInstanceCreation({
       true,
       "unknown creation cannot be silently abandoned by Escape",
     );
-    await page.evaluate(() => {
-      history.pushState({}, "", "?room=unavailable-during-add");
-      window.dispatchEvent(new PopStateEvent("popstate"));
-    });
+    await page.goBack();
     await dialog.getByRole("button", { name: "核实添加结果" }).click();
     await dialog.waitFor({ state: "hidden" });
     assert.deepEqual(calls[0], calls[1]);
