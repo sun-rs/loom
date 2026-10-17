@@ -24,6 +24,23 @@ export async function verifySidebarActions({
     await surface.click({ button: "right", position: { x: 3, y: 3 } });
     await page.getByRole("menuitem", { name: "新建频道", exact: true }).click();
     let dialog = page.getByRole("dialog");
+    // Official CreateChannelDialog -> DialogCard -> Modal: backdrop stays,
+    // Escape closes immediately (no dirty confirmation for this short form).
+    await dialog.getByLabel("名称", { exact: true }).fill("FIXTURE discard");
+    await page.mouse.click(2, 2);
+    assert.equal(
+      await dialog.isVisible(),
+      true,
+      "channel backdrop must not discard input",
+    );
+    await page.keyboard.press("Escape");
+    await dialog.waitFor({ state: "hidden" });
+    await surface.click({ button: "right", position: { x: 3, y: 3 } });
+    await page.getByRole("menuitem", { name: "新建频道", exact: true }).click();
+    assert.equal(
+      await dialog.getByLabel("名称", { exact: true }).inputValue(),
+      "",
+    );
     const name = `ContextFlow${viewport.width}`;
     await dialog.getByLabel("名称", { exact: true }).fill(name);
     await dialog.getByRole("button", { name: "创建频道", exact: true }).click();
@@ -126,8 +143,8 @@ export async function verifySidebarActions({
         exact: true,
       })
       .waitFor();
-    await page.getByRole("button", { name: "刷新列表", exact: true }).click();
-    await page.waitForResponse((r) => r.url().endsWith("/sidebar/get"));
+    await page.reload();
+    await showChatList(page);
     assert.equal(marks.length, 2, "lost mark is never retried by refresh");
     await page.unroute("**/v3/client/activity/mark");
     // Lost archive reply must replay the exact mutation; active selection becomes read-only.

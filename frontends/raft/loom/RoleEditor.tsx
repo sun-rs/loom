@@ -18,11 +18,13 @@ export default function RoleEditor({
   disabled,
   onSave,
   onDirtyChange,
+  onNavigationDiscard,
 }: {
   client: RahClient;
   role?: RoleTemplate;
   disabled: boolean;
   onDirtyChange?: (dirty: boolean) => void;
+  onNavigationDiscard?: () => void;
   onSave: (config: RoleCreateRequest["configuration"]) => void;
 }) {
   const [form, setForm] = useState<RoleForm>(() =>
@@ -43,7 +45,10 @@ export default function RoleEditor({
   useEffect(() => {
     onDirtyChange?.(dirty);
   }, [dirty, onDirtyChange]);
-  useDraftNavigation(dirty, () => setForm(initial));
+  useDraftNavigation(dirty, () => {
+    setForm(initial);
+    onNavigationDiscard?.();
+  });
   const [choices, setChoices] = useState<RuntimeChoice[]>();
   const [error, setError] = useState("");
   useEffect(() => {

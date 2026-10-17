@@ -20,7 +20,12 @@ export async function verifySidebarInteractions(page) {
     const s = getComputedStyle(el);
     return [s.paddingTop, s.paddingLeft, s.paddingBottom];
   });
-  assert.deepEqual(composerStyle, ["12px", "12px", "16px"]);
+  assert.deepEqual(
+    composerStyle,
+    page.viewportSize().width < 768
+      ? ["4px", "8px", "4px"] // Owner-approved compact mobile.css, safe-area=0 in this viewport.
+      : ["12px", "12px", "16px"],
+  );
   await showChatList(page);
   await heading.waitFor();
   assert.equal(await sidebar.getByText("聊天", { exact: true }).count(), 1);
@@ -118,6 +123,28 @@ export async function verifySidebarInteractions(page) {
     touchPoints: [],
   });
   await page.keyboard.press("Escape");
+  await page.getByRole("menu").waitFor({ state: "hidden" });
+  const moved = await row.boundingBox();
+  const point = { x: moved.x + moved.width / 2, y: moved.y + moved.height / 2 };
+  await cdp.send("Input.dispatchTouchEvent", {
+    type: "touchStart",
+    touchPoints: [point],
+  });
+  await cdp.send("Input.dispatchTouchEvent", {
+    type: "touchMove",
+    touchPoints: [{ ...point, y: point.y + 30 }],
+  });
+  // Longer than both native long-press and dnd-kit activation delays.
+  await page.waitForTimeout(650);
+  assert.equal(
+    await page.getByRole("menu").isVisible(),
+    false,
+    "moving touch cancels long press",
+  );
+  await cdp.send("Input.dispatchTouchEvent", {
+    type: "touchEnd",
+    touchPoints: [],
+  });
   await cdp.detach();
   assert.equal(await row.getAttribute("data-public-channel-id"), id);
 }

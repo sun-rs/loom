@@ -1,0 +1,62 @@
+{
+  "scope": "前两层：官方表单关闭语义与附件/列表/故障恢复的有界验收。不是所有官方功能或全部状态组合的完备证明。",
+  "upstream": {
+    "url": "https://github.com/botiverse/raft-source",
+    "revision": "a98ae003246a0360872a77d76dec2fccd0347ef7",
+    "license": "FSL-1.1-ALv2; existing notices retained; owner authorized",
+    "source": [
+      "packages/web/src/components/channel/CreateChannelDialog.tsx",
+      "packages/web/src/components/ui/DialogCard.tsx",
+      "packages/web/src/components/Modal.tsx",
+      "packages/web/src/components/task/CreateTaskDialog.tsx",
+      "packages/web/src/components/channel/EditChannelDialog.tsx"
+    ],
+    "reuse": "Frozen official components unchanged. Local ActionDialog uses raft-ui disablePointerDismissal to preserve default Modal backdrop semantics. Role navigation discard callback is local lifetime glue, not copied upstream code."
+  },
+  "reproducedRepairs": [
+    {
+      "id": "channel-form-backdrop",
+      "red": "sidebar-actions: click backdrop discarded filled channel form",
+      "fix": "ActionDialog disables pointer dismissal; idle Escape still closes; unresolved slot still blocks close"
+    },
+    {
+      "id": "role-create-route-discard",
+      "red": "ui-behavior: confirmed history discard cleared fields but left creation dialog visible",
+      "fix": "RoleEditor notifies owning AgentPage to close its dialog on navigation discard"
+    }
+  ],
+  "layer1": {
+    "shortForms": "Channel/task creation retain on backdrop and close on idle Escape without invented dirty confirmation. Role edits retain confirmation. Instance add/restart/remove/delete uses existing owner and pending fences. Official channel settings sheet has different dirty outside/swipe policy; not treated as identical to short creation form.",
+    "writeSafety": "Lost replies replay original payload/idempotency key; task batches pause later rows; stop/resume and revision conflict checks use temporary Kernel."
+  },
+  "layer2": {
+    "attachments": "PDF (native isolated frame/range/download; comments intentionally unavailable), MD/TXT, HTML sandbox, CSV/XLSX native table/sheets, image lightbox; upload failure/send block, lost comment/reply exact replay, rapid preview switch latest wins, reload and private-box isolation.",
+    "lists": "Sidebar right-click/keyboard/long-press, movement cancellation, pointer group/row reorder and reload; activity pagination window/scroll restore after async reads; thread denied reads remove stale content while preserving draft and bounded earlier-history fetch."
+  },
+  "testMaintenance": [
+    "Replace raw history.pushState/popstate with real browser Back on application-created entries.",
+    "Wait for unavailable runtime response before asserting catalog; mobile reload/return follows route-driven list/detail navigation.",
+    "Chinese preview label; text attachments now open preview then explicit Download.",
+    "Mobile compact padding assertion follows owner-approved mobile.css, desktop original retained.",
+    "Unread-result refresh uses actual reload; the inline retry button exists only for read failures."
+  ],
+  "checks": {
+    "passed": [
+      "Chromium: management/sidebar-actions/task-create/channel-controls/attachment-preview/activity-return/threads at1440 and390x844",
+      "Chromium/WebKit: ui-behavior at1440x1000 and390x560 (short-screen regression)",
+      "WebKit: task-create/sidebar-actions at1440 and390x844",
+      "Chromium: image/TXT upload/lightbox/download/private-box attachment-details at390x844 touch",
+      "Chromium: PDF/HTML/CSV/XLSX and attachment-collaboration standalone at1440/390",
+      "Loom typecheck, required workbench build, 3 intake/retirement/route-owner tests, formatting and git diff --check"
+    ],
+    "redLogs": ["layers-sidebar-red.log", "layers-role-red.log"],
+    "testRepairHistory": "Intermediate legacy-test failures retained in this batch description; final logs establish current green runs. No backend assertion weakened."
+  },
+  "localEvidence": "/Users/sun/.loom/reviews/2026-10-17-ui-layers12",
+  "limits": [
+    "No physical iOS/Android keyboard, native swipe, VoiceOver/TalkBack or system-font scaling acceptance.",
+    "No paid-provider, efficiency or full backend suite.",
+    "No claim that every attachment format/error/gesture combination has been enumerated.",
+    "No new backend feature; existing single-owner, revision and idempotency contracts retained."
+  ]
+}

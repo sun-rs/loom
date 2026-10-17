@@ -155,10 +155,7 @@ export async function verifyThreads({
       await verify.waitFor();
       assert.equal(sends.length, 1);
       const originalUrl = page.url();
-      await page.evaluate((room) => {
-        history.pushState({}, "", `?room=${room}`);
-        window.dispatchEvent(new PopStateEvent("popstate"));
-      }, otherChannel.roomId);
+      await page.goBack();
       await page.waitForURL(originalUrl);
       await page.route("**/v3/client/messages/context", (route) =>
         route.fulfill({

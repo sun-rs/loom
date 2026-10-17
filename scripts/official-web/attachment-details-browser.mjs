@@ -93,7 +93,10 @@ export async function verifyAttachmentDetails({
       .filter({ has: page.getByRole("img", { name: png.name, exact: true }) });
     await image.waitFor();
     await image
-      .getByRole("button", { name: "Preview " + png.name, exact: true })
+      .getByRole("button", {
+        name: new RegExp("预览.*" + png.name.replaceAll(".", "\\.")),
+        exact: true,
+      })
       .click();
     const preview = page.getByTestId("image-lightbox-image");
     await preview.waitFor();
@@ -170,8 +173,10 @@ export async function verifyAttachmentDetails({
       .getByTestId("loom-message-attachments")
       .filter({ hasText: text.name });
     await threadCard.waitFor();
-    const dl = page.waitForEvent("download");
     await threadCard.getByText(text.name, { exact: true }).click();
+    await page.getByTestId("attachment-preview-browser-find-scroll").waitFor();
+    const dl = page.waitForEvent("download");
+    await page.getByRole("button", { name: "下载", exact: true }).click();
     assert.deepEqual(await readFile(await (await dl).path()), text.buffer);
     await page.goto(origin + "/?fileDevice=remote&room=" + box.roomId);
     await selectFile(composer, { ...text, name: "private.txt" });

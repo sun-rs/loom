@@ -132,6 +132,21 @@ export async function verifyUiBehavior({
         .click();
       await page.getByTestId("settings-sidebar-list").waitFor();
     }
+    await page.goto(`${origin}/?view=agents`);
+    await rows.first().click();
+    if (width === 390)
+      await page.getByRole("button", { name: "角色列表", exact: true }).click();
+    await page.getByRole("button", { name: "新建角色", exact: true }).click();
+    const create = page.getByRole("dialog");
+    await create
+      .getByLabel("名称", { exact: true })
+      .fill("FIXTURE abandoned new role");
+    await page.goBack();
+    await page
+      .getByRole("alertdialog")
+      .getByRole("button", { name: "放弃修改", exact: true })
+      .click();
+    await create.waitFor({ state: "hidden" });
     await page.goto(`${origin}/?view=channels`);
     await page.route("**/v3/client/sidebar/get", (r) => r.abort());
     await page.reload();

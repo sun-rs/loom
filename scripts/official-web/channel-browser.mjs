@@ -408,6 +408,55 @@ try {
         await verifyUiBehavior({ browser, origin, client, workspace, role }),
       ),
     );
+  } else if (process.env.LOOM_BROWSER_SLICE === "channel-controls") {
+    console.log(
+      JSON.stringify(
+        await verifyChannelControls({
+          browser,
+          origin,
+          client,
+          channel: channels[0],
+        }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "management") {
+    console.log(
+      JSON.stringify(
+        await verifyManagement({
+          browser,
+          origin,
+          client,
+          workspace,
+          channel: channels[2],
+          offer,
+        }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "sidebar-actions") {
+    console.log(
+      JSON.stringify(
+        await verifySidebarActions({
+          browser,
+          origin,
+          client,
+          workspace,
+          channel: channels[0],
+        }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "attachment-details") {
+    console.log(
+      JSON.stringify(
+        await verifyAttachmentDetails({
+          browser,
+          origin,
+          client,
+          workspace,
+          head,
+          role,
+        }),
+      ),
+    );
   } else if (process.env.LOOM_BROWSER_SLICE === "mvp-closeout") {
     console.log("MVP stage: role/instance lifecycle");
     const management = await verifyManagement({

@@ -99,7 +99,10 @@ export async function verifyManagement({
     });
     await page.locator(`[data-role-id="${role.roleId}"]`).click();
     const detail = page.getByTestId("loom-role-detail");
-    await detail.getByRole("combobox", { name: "CLI", exact: true }).waitFor();
+    await detail
+      .getByRole("combobox", { name: "CLI", exact: true })
+      .filter({ hasText: "当前配置不可用" })
+      .waitFor();
     assert.equal(
       await detail
         .getByRole("combobox", { name: "CLI", exact: true })
@@ -114,7 +117,7 @@ export async function verifyManagement({
     );
     await page.unroute(runtimeRoute);
     await page.reload();
-    await page.locator(`[data-role-id="${role.roleId}"]`).click();
+
     await detail.getByLabel("名称", { exact: true }).fill(`${name}Edited`);
     await page.getByRole("tab", { name: "实例", exact: true }).click();
     await page.getByRole("tab", { name: "配置", exact: true }).click();
@@ -123,12 +126,11 @@ export async function verifyManagement({
       `${name}Edited`,
       "switching detail tabs preserves the unsaved configuration",
     );
-    await Promise.all([
-      page.waitForResponse(
-        (r) => r.url().endsWith("/roles/revise") && r.status() === 200,
-      ),
+    const [revisionResponse] = await Promise.all([
+      page.waitForResponse((r) => r.url().endsWith("/roles/revise")),
       detail.getByRole("button", { name: "保存角色", exact: true }).click(),
     ]);
+    assert.equal(revisionResponse.status(), 200, await revisionResponse.text());
     await page
       .getByRole("button", { name: `更多操作 ${name}Edited`, exact: true })
       .click();
@@ -172,12 +174,11 @@ export async function verifyManagement({
     await detail
       .getByLabel("角色 Prompt", { exact: true })
       .fill("FIXTURE revised prompt; never execute");
-    await Promise.all([
-      page.waitForResponse(
-        (r) => r.url().endsWith("/roles/revise") && r.status() === 200,
-      ),
+    const [adoptionResponse] = await Promise.all([
+      page.waitForResponse((r) => r.url().endsWith("/roles/revise")),
       detail.getByRole("button", { name: "保存角色", exact: true }).click(),
     ]);
+    assert.equal(adoptionResponse.status(), 200, await adoptionResponse.text());
     let revised = await client.request("role.list", {
       controlRoomId: workspace.controlRoomId,
     });
@@ -233,6 +234,7 @@ export async function verifyManagement({
       .getByRole("navigation", { name: "主导航" })
       .getByRole("button", { name: "Agent", exact: true })
       .click();
+    await page.locator(`[data-role-id="${role.roleId}"]`).click();
     await page.getByRole("tab", { name: "配置", exact: true }).click();
     await page
       .getByRole("button", { name: `更多操作 ${name}Edited`, exact: true })
@@ -267,6 +269,8 @@ export async function verifyManagement({
       ).instances.some((i) => i.instanceId === instance.instanceId),
       false,
     );
+    if (viewport.width < 768)
+      await page.getByRole("button", { name: "角色列表", exact: true }).click();
     await page
       .getByRole("navigation", { name: "主导航" })
       .getByRole("button", {

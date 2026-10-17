@@ -89,6 +89,7 @@ export function ActionDialog({
   return (
     <Dialog
       open
+      disablePointerDismissal
       onOpenChange={(open) => {
         if (!open && manager.writes.state === "idle") onClose();
       }}

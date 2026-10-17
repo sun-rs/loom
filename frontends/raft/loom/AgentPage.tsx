@@ -313,6 +313,7 @@ export default function AgentPage({
             <RoleEditor
               client={client}
               onDirtyChange={setDialogDirty}
+              onNavigationDiscard={() => setEdit(undefined)}
               {...(edit.kind === "edit" ? { role: edit.role } : {})}
               disabled={busy}
               onSave={(configuration) =>

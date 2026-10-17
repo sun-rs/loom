@@ -43,7 +43,16 @@ export async function verifyTaskCreate({
           await route.abort("failed");
         } else await route.continue();
       });
-      await page.goto(origin + "/?room=" + room.roomId);
+      await page.goto(origin + "/?view=agents&room=" + room.roomId);
+      await page
+        .getByRole("navigation", { name: "主导航" })
+        .getByRole("button", {
+          name: width === 390 ? "首页" : "频道",
+          exact: true,
+        })
+        .click();
+      if (width === 390)
+        await page.locator(`[data-public-channel-id="${room.roomId}"]`).click();
       await page
         .getByTestId("chat-composer-shell")
         .locator("textarea")
@@ -51,6 +60,13 @@ export async function verifyTaskCreate({
       await page.getByTestId("panel-tab-tasks").click({ timeout: 3000 });
       await page.getByRole("button", { name: "新建任务", exact: true }).click();
       const dialog = page.getByTestId("loom-create-tasks");
+      await dialog.locator("input").nth(0).fill("FIXTURE discard");
+      await page.mouse.click(2, 2);
+      assert.equal(await dialog.isVisible(), true);
+      await page.keyboard.press("Escape");
+      await dialog.waitFor({ state: "hidden" });
+      await page.getByRole("button", { name: "新建任务", exact: true }).click();
+      assert.equal(await dialog.locator("input").nth(0).inputValue(), "");
       await dialog.locator("input").nth(0).fill(`FIXTURE first ${width}`);
       await dialog
         .getByRole("button", { name: "再加一条", exact: true })
@@ -70,10 +86,8 @@ export async function verifyTaskCreate({
         "Unknown second result pauses the third write",
       );
       const pendingUrl = page.url();
-      await page.evaluate(() => {
-        history.pushState({}, "", "?view=tasks");
-        window.dispatchEvent(new PopStateEvent("popstate"));
-      });
+      // Real router history entry: synthetic pushState loses React Router's index.
+      await page.goBack();
       await page.waitForURL(pendingUrl);
       await page.keyboard.press("Escape");
       await dialog.waitFor();
