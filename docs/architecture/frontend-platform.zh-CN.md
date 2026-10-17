@@ -394,3 +394,7 @@ presence 的 initializing 原因，底栏显示“等待初始化”；真实工
 [初始化和动态栏证据](../audits/2026-09-20-agent-first-run-greeting.zh-CN.md)。
 
 初始加载与轮询遵循[统一加载状态和等待修复](../audits/2026-09-21-pwa-loading-performance.zh-CN.md)：同一读取不被定时刷新取消，后台读取保留现有内容，Room 诊断不阻塞正文。
+
+## Evo PDF 阅读器传输
+
+官方 CrossOriginPdfFrame 使用浏览器原生 PDF 阅读器，必须是独立 HTTP(S) origin，不使用 sandbox 或同源 blob 代替。当前 HTTP LocalWorkbenchGateway 管理同一受信任 IP、应用端口相邻的 PDF-only listener（不提供应用 API、静态页面或写操作）；主页面 CSP 精确允许这个来源。认证同源请求生成短期单附件签名，读取仍通过 ApplicationService/Kernel 附件访问检查；无新的业务状态或公开分享入口。ApplicationService 固定 PDF 类型及 inline/nosniff，原始下载保持不变。服务重启更换签名密钥，端口保持稳定，重新打开生成新地址。PDF 评论沿用官方禁用规则；TLS gateway 和 iOS 真机尚未验收。来源、测试和部署限制见 [PDF 接线](../audits/2026-10-17-pdf-preview.zh-CN.md)。

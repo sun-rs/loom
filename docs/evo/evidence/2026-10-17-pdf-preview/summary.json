@@ -1,0 +1,35 @@
+{
+  "source": "a98ae003246a0360872a77d76dec2fccd0347ef7",
+  "implemented": [
+    "Official PDF modal and CrossOriginPdfFrame unchanged",
+    "Authenticated single-file expiring URL and isolated PDF-only gateway",
+    "Original bytes, range and membership gates retained"
+  ],
+  "checks": {
+    "targetedTests": 9,
+    "rootTypecheck": "passed",
+    "webBuild": "passed",
+    "browser": "Full Chromium at 1440x1000 and 390x844 DPR1; actual rendered page screenshots",
+    "HTMLRegression": "passed",
+    "realCli": "not run",
+    "paidModels": "not run",
+    "officialSourceHashesUnchanged": 2264,
+    "restartTokenTest": "passed; fixture uses fresh connections across close/rebind to avoid Node fetch stale keepalive ECONNRESET",
+    "commands": [
+      "node --test packages/daemon/test/pdf-preview-gateway.test.ts packages/daemon/test/local-workbench-gateway.test.ts packages/application-service/test/client-files.test.ts",
+      "npm run typecheck",
+      "npm run build:web:workbench",
+      "node scripts/official-web/pdf-attachment-browser.mjs",
+      "node scripts/official-web/html-attachment-browser.mjs"
+    ]
+  },
+  "limits": [
+    "PDF comments disabled by upstream",
+    "Mobile emulation is not iOS real-device acceptance",
+    "HTTP local/LAN/Tailscale gateway only; TLS gateway not wired",
+    "Reopen after expiry or daemon restart; no automatic token renewal",
+    "Native browser decides corrupt/encrypted PDF behavior"
+  ],
+  "deployment": "pending",
+  "audit": "../../../audits/2026-10-17-pdf-preview.zh-CN.md"
+}

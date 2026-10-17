@@ -1,3 +1,4 @@
+import { PdfPreviewGateway } from "./pdf-preview-gateway.ts";
 import { sendStaticFile } from "./static-file-response.ts";
 import { recoveryAssetPath, recoveryShell } from "./web-recovery-assets.ts";
 import { readFile } from "node:fs/promises";
@@ -61,6 +62,7 @@ export class LocalWorkbenchGateway {
   readonly #browserAccess: "session" | "trusted-network";
   readonly #staticDirectory: string;
   readonly #webBuildId: string | undefined;
+  #pdf: PdfPreviewGateway | undefined;
   #origin: string | undefined;
   #server: Server | undefined;
   #additional: LocalWorkbenchGateway[] = [];
@@ -198,6 +200,21 @@ export class LocalWorkbenchGateway {
     }
     this.#origin = `http://${this.#bindHost}:${String(address.port)}`;
     try {
+      this.#pdf = new PdfPreviewGateway({
+        host: this.#bindHost,
+        // Stable origin across daemon restarts: existing pages retain their CSP.
+        // Ephemeral test gateways keep an ephemeral PDF listener.
+        port:
+          this.#port === 0
+            ? 0
+            : address.port === 65535
+              ? 65534
+              : address.port + 1,
+        appOrigin: this.origin,
+        daemonOrigin: this.#daemonOrigin.origin,
+        accessToken: this.#accessToken,
+      });
+      await this.#pdf.start();
       this.#additional = this.#createAdditional(address.port);
       for (const gateway of this.#additional) await gateway.start();
     } catch (error) {
@@ -207,6 +224,8 @@ export class LocalWorkbenchGateway {
   }
 
   async stop(): Promise<void> {
+    await this.#pdf?.stop();
+    this.#pdf = undefined;
     const additional = this.#additional;
     this.#additional = [];
     await Promise.all(additional.map((gateway) => gateway.stop()));
@@ -234,6 +253,29 @@ export class LocalWorkbenchGateway {
     }
     this.#setWebBuildHeader(response);
     const requestUrl = new URL(request.url ?? "/", this.origin);
+    const pdfMatch = /^\/_rah\/pdf-preview\/([a-f0-9-]{36})$/.exec(
+      requestUrl.pathname,
+    );
+    if (pdfMatch) {
+      if (request.method !== "POST") {
+        sendText(response, 405, "Method not allowed");
+        return;
+      }
+      if (
+        !this.#hasSession(request.headers.cookie) ||
+        request.headers.origin !== this.origin
+      ) {
+        sendText(response, 403, "Forbidden");
+        return;
+      }
+      try {
+        const url = await this.#pdf!.issue(pdfMatch[1]!);
+        sendJson(response, 200, { url });
+      } catch {
+        sendText(response, 415, "PDF preview unavailable");
+      }
+      return;
+    }
     if (
       requestUrl.pathname === "/_rah/service" ||
       requestUrl.pathname === "/_rah/service/restart"
@@ -425,7 +467,13 @@ export class LocalWorkbenchGateway {
     response.setHeader("x-content-type-options", "nosniff");
     response.setHeader("x-frame-options", "DENY");
     response.setHeader("referrer-policy", "no-referrer");
-    response.setHeader("content-security-policy", CONTENT_SECURITY_POLICY);
+    response.setHeader(
+      "content-security-policy",
+      CONTENT_SECURITY_POLICY.replace(
+        "frame-src 'self'",
+        `frame-src 'self' ${this.#pdf!.origin}`,
+      ),
+    );
     this.#setWebBuildHeader(response);
     if (isIndex) {
       response.setHeader("cache-control", "no-store");

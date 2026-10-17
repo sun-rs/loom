@@ -57,6 +57,7 @@ export default function Attachments({
     if (isXlsxAttachment(a)) return "xlsx";
     if (isDiffPatchAttachment(a)) return null;
     const kind = classifyAttachmentPreview(a.mimeType, a.filename);
+    if (kind === "pdf") return kind;
     return a.sizeBytes <= MAX_ATTACHMENT_TEXT_PREVIEW_BYTES &&
       (kind === "text" || kind === "markdown" || kind === "html")
       ? kind
@@ -86,6 +87,24 @@ export default function Attachments({
             window.location.origin,
           ).href,
           ...(parentMessage ? { commentContext: { parentMessage } } : {}),
+        });
+      } else if (kind === "pdf") {
+        const response = await fetch(
+          "/_rah/pdf-preview/" + encodeURIComponent(a.id),
+          { method: "POST", signal: controller.signal },
+        );
+        if (!response.ok) {
+          await downloadLoomAttachment(a, controller.signal);
+          return;
+        }
+        const { url } = await response.json();
+        if (controller.signal.aborted) return;
+        useMediaPreviewStore.getState().close();
+        useDocumentPreviewStore.getState().open({
+          attachment: a,
+          preview: { kind: "pdf" },
+          truncated: false,
+          url,
         });
       } else if (kind === "csv" || kind === "xlsx") {
         const result = await readStructuredPreview(a.id, controller.signal);

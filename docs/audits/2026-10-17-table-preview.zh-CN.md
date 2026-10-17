@@ -23,3 +23,5 @@ CSV 上限 5 MiB，解析前缀 128 KiB，最多 200 行、12 列，返回数据
 TDD 首先因缺少 structured preview 实现失败，再接入官方解析。定向测试覆盖 CSV 引号/二进制伪装/200 行截断、真实 XLSX 双工作表/无效 ZIP、Diff 统计、源码摘要以及 API 未认证/非成员/只读方法限制。浏览器在 1440×1000、390×844、DPR 1 下使用真实 Kernel/ApplicationService/Gateway、fake Worker 发布 CSV/XLSX：表格展示、工作表切换、评论唤醒作者、显式回复、刷新保留；Diff 显示 +1/-1 并下载。HTML 双尺寸回归保留。
 
 不运行全仓套件，不调用真实或付费模型。正式页面采用只读 smoke，附件交互证据来自隔离夹具，不向用户频道写入测试数据。[证据](../evo/evidence/2026-10-17-table-preview/summary.json)。
+
+后续状态：PDF 独立来源与原生阅读器已在 [PDF 接线批次](2026-10-17-pdf-preview.zh-CN.md)实现，评论仍禁用。

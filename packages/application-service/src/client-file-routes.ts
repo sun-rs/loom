@@ -48,7 +48,7 @@ export async function transferFile(
   request: IncomingMessage,
   response: ServerResponse,
   writeJson: (response: ServerResponse, status: number, body: unknown) => void,
-  purpose: "download" | "preview" | "html" | "data" = "download",
+  purpose: "download" | "preview" | "html" | "data" | "pdf" = "download",
 ) {
   if (request.method === "PUT") {
     request.setTimeout(120_000, () => request.destroy());
@@ -115,6 +115,34 @@ export async function transferFile(
       await pipeline(download.stream, response);
       return;
     }
+    if (purpose === "pdf") {
+      const metadataPdf =
+        P.classifyAttachmentPreview(
+          download.attachment.mimeType,
+          download.attachment.filename,
+        ) === "pdf";
+      let valid = false;
+      if (metadataPdf && download.attachment.size >= 5) {
+        const prefix = await human.downloadFile(actor, id, {
+          start: 0,
+          end: 4,
+        });
+        const chunks: Buffer[] = [];
+        for await (const chunk of prefix.stream)
+          chunks.push(Buffer.from(chunk));
+        valid = Buffer.concat(chunks).equals(Buffer.from("%PDF-"));
+      }
+      if (!valid) {
+        destroyReadable(download.stream);
+        writeJson(response, 415, {
+          error: {
+            code: "pdf_preview_unavailable",
+            message: "A PDF attachment is required",
+          },
+        });
+        return;
+      }
+    }
     const requestedRange = resolveByteRange(
       request.headers.range,
       download.attachment.size,
@@ -141,7 +169,10 @@ export async function transferFile(
     const { attachment, stream } = download;
     // Always download. Preview is an isolated client rendering, never serve user HTML as app-origin code.
     response.statusCode = requestedRange.kind === "partial" ? 206 : 200;
-    response.setHeader("Content-Type", "application/octet-stream");
+    response.setHeader(
+      "Content-Type",
+      purpose === "pdf" ? "application/pdf" : "application/octet-stream",
+    );
     response.setHeader("Accept-Ranges", "bytes");
     if (requestedRange.kind === "partial") {
       response.setHeader(
@@ -157,7 +188,7 @@ export async function transferFile(
     }
     response.setHeader(
       "Content-Disposition",
-      `attachment; filename*=UTF-8''${encodeURIComponent(attachment.filename).replace(/['()*]/g, (c) => `%${c.charCodeAt(0).toString(16)}`)}`,
+      `${purpose === "pdf" ? "inline" : "attachment"}; filename*=UTF-8''${encodeURIComponent(attachment.filename).replace(/['()*]/g, (c) => `%${c.charCodeAt(0).toString(16)}`)}`,
     );
     response.setHeader("X-Content-Type-Options", "nosniff");
     response.setHeader("Cache-Control", "private, no-store");

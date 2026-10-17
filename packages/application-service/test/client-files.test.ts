@@ -349,12 +349,67 @@ test("Files HTTP + SDK roundtrip verifies bytes, Room provenance, authorization 
       { headers: { authorization: `Bearer ${human.accessToken}` } },
     );
     assert.equal(unsupportedPreview.status, 415);
+    const pdfUrl = `${service.origin}/v3/client/files/pdf-preview/${unsupported.attachmentId}`;
+    assert.equal((await fetch(pdfUrl)).status, 401);
+    assert.equal(
+      (
+        await fetch(pdfUrl, {
+          headers: { authorization: `Bearer ${outsider.accessToken}` },
+        })
+      ).status,
+      403,
+    );
+    const pdf = await fetch(pdfUrl, {
+      headers: {
+        authorization: `Bearer ${human.accessToken}`,
+        range: "bytes=0-4",
+      },
+    });
+    assert.equal(pdf.status, 206);
+    assert.equal(pdf.headers.get("content-type"), "application/pdf");
+    assert.match(pdf.headers.get("content-disposition")!, /^inline;/);
+    assert.equal(await pdf.text(), "%PDF-");
+    const htmlAsPdf = await fetch(
+      `${service.origin}/v3/client/files/pdf-preview/${prepared.attachmentId}`,
+      { headers: { authorization: `Bearer ${human.accessToken}` } },
+    );
+    assert.equal(htmlAsPdf.status, 415);
+
     const htmlUnsupported = await fetch(
       `${service.origin}/v3/client/files/html-preview/${unsupported.attachmentId}`,
       { headers: { authorization: `Bearer ${human.accessToken}` } },
     );
     assert.equal(htmlUnsupported.status, 415);
 
+    const disguisedBlob = new Blob(["<html><script>alert(1)</script></html>"]);
+    const disguised = await client.request("file.prepare", {
+      roomId,
+      filename: "disguised.pdf",
+      mimeType: "application/pdf",
+      size: disguisedBlob.size,
+      idempotencyKey: "disguised-pdf",
+    });
+    await client.files.upload(disguised.attachmentId, disguisedBlob);
+    await client.request("message.post", {
+      roomId,
+      body: "disguised fixture",
+      attachmentIds: [disguised.attachmentId],
+      basedOnRoomSeq: kernel.sync(actor, {
+        roomId,
+        consumerId: "head-disguised",
+      }).latestRoomSeq,
+      recipients: [],
+      idempotencyKey: "message-disguised",
+    });
+    assert.equal(
+      (
+        await fetch(
+          `${service.origin}/v3/client/files/pdf-preview/${disguised.attachmentId}`,
+          { headers: { authorization: `Bearer ${human.accessToken}` } },
+        )
+      ).status,
+      415,
+    );
     const largeBlob = new Blob([new Uint8Array(2 * 1024 * 1024 + 1)]);
     const large = await client.request("file.prepare", {
       roomId,

@@ -98,6 +98,24 @@ test("the local workbench gateway keeps Human authority server-side", async () =
     );
     assert.equal(observed.length, 0);
 
+    const pdfPath = `${origin}/_rah/pdf-preview/11111111-1111-4111-8111-111111111111`;
+    assert.equal((await fetch(pdfPath)).status, 405);
+    assert.equal(
+      (await fetch(pdfPath, { method: "POST", headers: { origin } })).status,
+      403,
+    );
+    assert.equal(
+      (
+        await fetch(pdfPath, {
+          method: "POST",
+          headers: {
+            origin: "https://outsider.invalid",
+            cookie: "rah_workbench_session=" + "a".repeat(43),
+          },
+        })
+      ).status,
+      403,
+    );
     const root = await fetch(`${origin}/`);
     assert.equal(root.status, 200);
     assert.match(
@@ -106,7 +124,7 @@ test("the local workbench gateway keeps Human authority server-side", async () =
     );
     assert.match(
       root.headers.get("content-security-policy") ?? "",
-      /frame-src 'self';/u,
+      /frame-src 'self' http:\/\/127\.0\.0\.1:\d+;/u,
     );
     assert.match(await root.text(), /RAH OS/u);
     assert.match(
