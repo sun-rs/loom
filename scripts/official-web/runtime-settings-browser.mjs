@@ -83,6 +83,18 @@ try {
     const before = await client.request("runtime.settings.read", {});
     const next = before.maxConcurrentStarts === 3 ? 4 : 3;
     await page.getByLabel("同时启动上限", { exact: true }).fill(String(next));
+    await page.evaluate(() => history.go(-2));
+    const confirm = page.getByRole("alertdialog");
+    await confirm.waitFor();
+    await confirm
+      .getByRole("button", { name: "继续编辑", exact: true })
+      .click();
+    await confirm.waitFor({ state: "hidden" });
+    assert.equal(
+      await page.getByLabel("同时启动上限", { exact: true }).inputValue(),
+      String(next),
+    );
+
     await page
       .getByLabel("无进展告警（分钟）", { exact: true })
       .fill(before.watchdog.noProgressWarnMs === 90000 ? "2" : "1.5");

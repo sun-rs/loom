@@ -1,3 +1,4 @@
+import { useDraftNavigation } from "./DraftNavigation.tsx";
 import { useEffect, useState } from "react";
 import { Button, Input, Textarea, Spinner } from "raft-ui";
 import {
@@ -42,15 +43,7 @@ export default function RoleEditor({
   useEffect(() => {
     onDirtyChange?.(dirty);
   }, [dirty, onDirtyChange]);
-  useEffect(() => {
-    if (!dirty) return;
-    const warn = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
-      event.returnValue = "";
-    };
-    window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
-  }, [dirty]);
+  useDraftNavigation(dirty, () => setForm(initial));
   const [choices, setChoices] = useState<RuntimeChoice[]>();
   const [error, setError] = useState("");
   useEffect(() => {

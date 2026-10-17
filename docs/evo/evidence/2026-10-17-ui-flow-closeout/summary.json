@@ -1,0 +1,40 @@
+{
+  "status": "focused-checks-passed-deployment-pending",
+  "source": "https://github.com/botiverse/raft-source/tree/a98ae003246a0360872a77d76dec2fccd0347ef7",
+  "license": "Existing FSL-1.1-ALv2 notices retained; owner-authorized use",
+  "reuse": {
+    "direct": "Official AppProviders provider chain and router prop; raft-ui discard dialog primitives and useOrderedTabs retained.",
+    "structural": "AgentProfileEditDialog dirty/requestClose confirmation, ChatPanel defaultTab/activeTab/setActiveTab logic.",
+    "local": "DraftNavigation uses installed React Router data router/useBlocker through official AppProviders.router. One presentation-only Set of dirty owners. No second backend queue or write state.",
+    "upstreamUnchanged": true
+  },
+  "repaired": [
+    "Role/Memory browser POP and cross-page navigation draft loss",
+    "Account dirty name and leaving runtime settings draft loss; category switch retains runtime draft",
+    "Sorted first tab becomes default; explicit query selection retained"
+  ],
+  "checks": {
+    "red": [
+      "Role and memory browser Back had no confirmation",
+      "Account category navigation and runtime history.go(-2) had no confirmation",
+      "Tasks-first persisted order still selected chat"
+    ],
+    "passed": [
+      "ui-behavior Chromium/WebKit at1440 and390",
+      "memory-browser including unknown-write blocked navigation and exact replay",
+      "account-settings/browser and runtime-settings/browser including original recovery tests",
+      "navigation/topbar/activity-navigation",
+      "Loom typecheck, build, source/retirement/intent focused tests",
+      "Normal final tab-order run: default first tab, explicit chat selection after reload, pointer drag, unknown exact replay at1440/390"
+    ],
+    "retainedFailure": "First parallel tab-order run timed out waiting for unknown recovery to close; instrumented isolated run captured identical replay payload and HTTP200. Normal final run with explicit HTTP200 replay assertion passed at both sizes; failure log retained, root cause not proven."
+  },
+  "inventory": "inventory.json",
+  "notClaimed": [
+    "all official UI/features complete",
+    "all forms guarded",
+    "physical mobile acceptance",
+    "paid CLI/efficiency acceptance"
+  ],
+  "localEvidence": "/Users/sun/.loom/reviews/2026-10-17-ui-flow-closeout"
+}

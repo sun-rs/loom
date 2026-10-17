@@ -1,3 +1,4 @@
+import { useDraftNavigation } from "./DraftNavigation.tsx";
 import ArchivedSettings from "./ArchivedSettings.tsx";
 import { useRouteIntentOwner } from "./useIntentRoute.ts";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -41,6 +42,17 @@ export default function RuntimeSettings({
   const [needsRead, setNeedsRead] = useState(false),
     [reload, setReload] = useState(0);
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  useDraftNavigation(
+    Boolean(
+      base &&
+      form &&
+      JSON.stringify(form) !== JSON.stringify(settingsFormFrom(base)),
+    ),
+    () => {
+      if (base) setForm(settingsFormFrom(base));
+    },
+    (next) => next.get("view") !== "settings",
+  );
   const baseRef = useRef<RuntimeSettings>(undefined);
   useEffect(() => {
     if (!active) return;

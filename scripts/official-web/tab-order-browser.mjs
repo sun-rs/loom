@@ -46,6 +46,21 @@ export async function verifyTabOrder({
           .querySelector('[data-testid^="panel-tab-"]')
           ?.getAttribute("data-testid") === "panel-tab-tasks",
     );
+    await page.waitForFunction(
+      () =>
+        document
+          .querySelector('[data-testid="panel-tab-tasks"]')
+          ?.getAttribute("aria-selected") === "true",
+    );
+    await page.getByTestId("panel-tab-chat").click();
+    await page.waitForURL((url) => url.searchParams.get("chatTab") === "chat");
+    await page.reload();
+    await page.waitForFunction(
+      () =>
+        document
+          .querySelector('[data-testid="panel-tab-chat"]')
+          ?.getAttribute("aria-selected") === "true",
+    );
     const writes = [];
     let lost = false;
     await page.route("**/v3/client/sidebar/patch", async (route) => {
@@ -64,9 +79,15 @@ export async function verifyTabOrder({
     await page.mouse.down();
     await page.mouse.move(b.x + 3, b.y + b.height / 2, { steps: 15 });
     await page.mouse.up();
+    const replay = page.waitForResponse(
+      (r) =>
+        r.url().endsWith("/sidebar/patch") &&
+        r.request().postDataJSON().idempotencyKey === writes[0].idempotencyKey,
+    );
     await page
       .getByRole("button", { name: "核实操作结果", exact: true })
       .click();
+    assert.equal((await replay).status(), 200);
     await page
       .getByRole("button", { name: "核实操作结果", exact: true })
       .waitFor({ state: "hidden" });

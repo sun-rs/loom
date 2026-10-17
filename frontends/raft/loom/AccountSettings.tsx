@@ -1,3 +1,4 @@
+import { useDraftNavigation } from "./DraftNavigation.tsx";
 import {
   createContext,
   useContext,
@@ -45,6 +46,12 @@ function useController(
   const [reading, setReading] = useState(false),
     [needsRead, setNeedsRead] = useState(false);
   const [avatarError, setAvatarError] = useState("");
+  useDraftNavigation(
+    Boolean(base && displayName !== (base.displayName ?? base.handle)),
+    () => {
+      if (base) setName(base.displayName ?? base.handle);
+    },
+  );
   const readingRef = useRef(false),
     timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => {

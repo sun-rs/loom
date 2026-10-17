@@ -125,7 +125,11 @@ function Channel({
         return next;
       });
   };
-  const taskTab = !isPrivate && panelParams.get("chatTab") === "tasks";
+  const [defaultTab, setDefaultTab] = useState("chat");
+  const queryTab = panelParams.get("chatTab");
+  const selectedTab =
+    queryTab === "chat" || queryTab === "tasks" ? queryTab : defaultTab;
+  const taskTab = !isPrivate && selectedTab === "tasks";
   const profileSnapshot = useRef<Principal | undefined>(undefined);
   const [profileId, setProfileId] = useState<string>();
   const [profileSource, setProfileSource] = useState<"channel" | "thread">(
@@ -359,14 +363,15 @@ function Channel({
                 client={bridge.client}
                 workspaceId={channel.workspaceId}
                 controlRoomId={controlRoomId ?? ""}
+                onDefaultTab={setDefaultTab}
                 value={taskTab ? "tasks" : "chat"}
                 onChange={(tab) => {
                   if (hasUnresolvedIntents()) return;
                   setPanelParams(
                     (previous) => {
                       const next = new URLSearchParams(previous);
-                      if (tab === "tasks") next.set("chatTab", tab);
-                      else next.delete("chatTab");
+                      if (tab === defaultTab) next.delete("chatTab");
+                      else next.set("chatTab", tab);
                       return next;
                     },
                     { replace: true },

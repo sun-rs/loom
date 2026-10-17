@@ -21,6 +21,7 @@ const tabs = [{ id: "chat" }, { id: "tasks" }] as const;
 export default function ChannelTabs({
   value,
   onChange,
+  onDefaultTab,
   client,
   workspaceId,
   controlRoomId,
@@ -30,6 +31,7 @@ export default function ChannelTabs({
   controlRoomId: string;
   value: string;
   onChange: (value: string) => void;
+  onDefaultTab: (value: string) => void;
 }) {
   const { formatMessage } = useIntl();
   const manager = useMemo(
@@ -60,6 +62,10 @@ export default function ChannelTabs({
     tabs,
     preferences?.channelPanelTabOrder ?? [],
   ).map((tab) => tab.id);
+  const defaultTab = order[0] ?? "chat";
+  useEffect(() => {
+    if (preferences) onDefaultTab(defaultTab);
+  }, [preferences, defaultTab, onDefaultTab]);
   const reorder = (nextOrder: ("chat" | "tasks")[]) => {
     if (!preferences || state !== "idle" || readError) return;
     setError("");

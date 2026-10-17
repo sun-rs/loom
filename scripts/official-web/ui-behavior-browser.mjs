@@ -51,6 +51,16 @@ export async function verifyUiBehavior({
     await name.waitFor();
     const original = await name.inputValue();
     await name.fill(original + " draft");
+    await page.goBack();
+    const historyConfirm = page.getByRole("alertdialog");
+    await historyConfirm.waitFor();
+    await historyConfirm
+      .getByRole("button", { name: "继续编辑", exact: true })
+      .click();
+    await historyConfirm.waitFor({ state: "hidden" });
+    assert.equal(new URL(page.url()).searchParams.get("role"), id);
+    assert.equal(await name.inputValue(), original + " draft");
+
     const save = page
       .getByTestId("loom-role-detail")
       .getByRole("button", { name: "保存角色", exact: true });
@@ -87,6 +97,40 @@ export async function verifyUiBehavior({
       await rows.first().waitFor();
     } else {
       assert.notEqual(await name.inputValue(), original + " draft");
+    }
+    await page.goto(`${origin}/?view=agents`);
+    await rows.first().click();
+    await name.fill("history discard draft");
+    await page.goBack();
+    await page
+      .getByRole("alertdialog")
+      .getByRole("button", { name: "放弃修改", exact: true })
+      .click();
+    await page.waitForURL((url) => !url.searchParams.has("role"));
+    await page.goForward();
+    await name.waitFor();
+    assert.notEqual(await name.inputValue(), "history discard draft");
+    if (width === 1440) {
+      await name.fill("cross-page draft");
+      await page
+        .getByRole("navigation", { name: "主导航" })
+        .getByRole("button", { name: "设置", exact: true })
+        .click();
+      await page
+        .getByRole("alertdialog")
+        .getByRole("button", { name: "继续编辑", exact: true })
+        .click();
+      await page.getByRole("alertdialog").waitFor({ state: "hidden" });
+      assert.equal(await name.inputValue(), "cross-page draft");
+      await page
+        .getByRole("navigation", { name: "主导航" })
+        .getByRole("button", { name: "设置", exact: true })
+        .click();
+      await page
+        .getByRole("alertdialog")
+        .getByRole("button", { name: "放弃修改", exact: true })
+        .click();
+      await page.getByTestId("settings-sidebar-list").waitFor();
     }
     await page.goto(`${origin}/?view=channels`);
     await page.route("**/v3/client/sidebar/get", (r) => r.abort());

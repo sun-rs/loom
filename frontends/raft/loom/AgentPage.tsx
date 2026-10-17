@@ -1,3 +1,4 @@
+import { flushSync } from "react-dom";
 import {
   useCallback,
   useEffect,
@@ -420,10 +421,12 @@ export default function AgentPage({
           onCancel={() => setDiscard(undefined)}
           onDiscard={() => {
             const action = discard;
-            setDiscard(undefined);
-            setDirty(false);
-            setDialogDirty(false);
-            setEditorEpoch((v) => v + 1);
+            flushSync(() => {
+              setDiscard(undefined);
+              setDirty(false);
+              setDialogDirty(false);
+              setEditorEpoch((v) => v + 1);
+            });
             action();
           }}
         />

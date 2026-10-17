@@ -89,6 +89,17 @@ for (const width of [1440, 390]) {
     await edit
       .getByRole("textbox", { name: "简介", exact: true })
       .fill("FIXTURE edited description");
+    await page.goBack();
+    const historyConfirm = page.getByRole("alertdialog");
+    await historyConfirm.waitFor();
+    await historyConfirm
+      .getByRole("button", { name: "继续编辑", exact: true })
+      .click();
+    await historyConfirm.waitFor({ state: "hidden" });
+    assert.equal(
+      new URL(page.url()).searchParams.get("memory"),
+      written.entryId,
+    );
     await page.keyboard.press("Escape");
     const discard = page.getByRole("alertdialog");
     await discard.waitFor();
@@ -119,6 +130,17 @@ for (const width of [1440, 390]) {
     });
     await edit.getByRole("button", { name: "保存记忆", exact: true }).click();
     await edit.getByText(/保存结果未知/).waitFor();
+    await page.goBack();
+    await edit.getByText(/保存结果未知/).waitFor();
+    assert.equal(
+      new URL(page.url()).searchParams.get("memory"),
+      written.entryId,
+    );
+    assert.equal(
+      await page.getByRole("alertdialog").count(),
+      0,
+      "unknown write cannot offer draft discard",
+    );
     await page.unroute("**/v3/client/memory/update");
     const editReplay = page.waitForRequest((r) =>
       r.url().endsWith("/memory/update"),

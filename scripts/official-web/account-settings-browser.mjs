@@ -30,6 +30,23 @@ export async function verifyAccountSettings({ browser, origin, client }) {
         } else await route.continue();
       });
       await name.fill(`FIXTURE name ${width}`);
+      if (width === 390)
+        await page
+          .getByRole("button", { name: "设置列表", exact: true })
+          .click();
+      else
+        await page
+          .getByTestId("settings-sidebar-list")
+          .getByRole("button", { name: "外观", exact: true })
+          .click();
+      const confirm = page.getByRole("alertdialog");
+      await confirm.waitFor();
+      await confirm
+        .getByRole("button", { name: "继续编辑", exact: true })
+        .click();
+      await confirm.waitFor({ state: "hidden" });
+      assert.equal(await name.inputValue(), `FIXTURE name ${width}`);
+
       await page.getByRole("button", { name: "保存资料", exact: true }).click();
       await page
         .getByRole("button", { name: "读取当前资料", exact: true })

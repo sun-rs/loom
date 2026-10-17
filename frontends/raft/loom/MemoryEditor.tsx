@@ -1,3 +1,4 @@
+import { useDraftNavigation } from "./DraftNavigation.tsx";
 import DiscardChangesDialog from "./DiscardChangesDialog.tsx";
 import { useState } from "react";
 import {
@@ -32,6 +33,10 @@ export default function MemoryEditor({
     [body, setBody] = useState(entry.body ?? ""),
     [error, setError] = useState("");
   const busy = owner.writes.state !== "idle";
+  useDraftNavigation(
+    description !== entry.description || body !== (entry.body ?? ""),
+    onClose,
+  );
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const requestClose = () => {
     if (busy) return;
