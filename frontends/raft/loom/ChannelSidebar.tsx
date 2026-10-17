@@ -81,6 +81,7 @@ export default function ChannelSidebar({
     [client, workspaceId, controlRoomId],
   );
   const { state, error, setError } = useManagement(manager);
+  const [readError, setReadError] = useState("");
   const [data, setData] = useState<{
     preferences: SidebarPreferences;
     recent: Record<string, string>;
@@ -96,8 +97,8 @@ export default function ChannelSidebar({
   const request = useRef(0);
   const [refreshing, setRefreshing] = useState(false);
   useEffect(() => {
-    if (data || error) onReady();
-  }, [data, error, onReady]);
+    if (data || error || readError) onReady();
+  }, [data, error, readError, onReady]);
   useEffect(
     () => () => {
       request.current++;
@@ -118,6 +119,7 @@ export default function ChannelSidebar({
       ]);
       if (ticket === request.current) {
         setData(next);
+        setReadError("");
         setActivity(
           Object.fromEntries(
             (activity.summary?.rooms ?? []).map((r) => [
@@ -130,12 +132,12 @@ export default function ChannelSidebar({
     } catch {
       if (ticket === request.current) {
         setActivity(undefined);
-        setError("频道列表设置读取失败，请重试。");
+        setReadError("频道列表设置读取失败，请重试。");
       }
     } finally {
       if (ticket === request.current) setRefreshing(false);
     }
-  }, [client, workspaceId, setError]);
+  }, [client, workspaceId]);
   useEffect(() => {
     void refresh();
     const timer = setInterval(() => {
@@ -250,9 +252,9 @@ export default function ChannelSidebar({
         ]}
       >
         {!edit && !archiveTarget && (
-          <OperationStatus manager={manager} error={error} />
+          <OperationStatus manager={manager} error={error || readError} />
         )}
-        {error && (
+        {readError && (
           <Button variant="ghost" onClick={() => void refresh()}>
             刷新列表
           </Button>

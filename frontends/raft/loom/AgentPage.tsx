@@ -28,6 +28,8 @@ import {
   OperationStatus,
 } from "./ManagementUi.tsx";
 import RuntimeControl from "./RuntimeControl.tsx";
+import DiscardChangesDialog from "./DiscardChangesDialog.tsx";
+import { useIntentRoute } from "./useIntentRoute.ts";
 import RoleEditor from "./RoleEditor.tsx";
 type Edit =
   | { kind: "create" }
@@ -60,7 +62,26 @@ export default function AgentPage({
   const { state, error, setError } = useManagement(manager);
   const [catalog, setCatalog] = useState<Catalog>();
   const [tab, setTab] = useState("roles");
-  const [selectedId, setSelectedId] = useState<string>();
+  const [params, setParams] = useIntentRoute();
+  const selectedId = params.get("role") ?? undefined;
+  // Returning to a root tab hides detail without destroying its draft.
+  const lastSelectedId = useRef(selectedId);
+  if (selectedId) lastSelectedId.current = selectedId;
+  const [dirty, setDirty] = useState(false);
+  const [dialogDirty, setDialogDirty] = useState(false);
+  const [discard, setDiscard] = useState<() => void>();
+  const [editorEpoch, setEditorEpoch] = useState(0);
+  const guard = (action: () => void, changed = dirty) => {
+    if (changed) setDiscard(() => action);
+    else action();
+  };
+  const selectRole = (id?: string) => {
+    const next = new URLSearchParams(params);
+    if (id) next.set("role", id);
+    else next.delete("role");
+    setParams(next);
+    setTab("roles");
+  };
   const [edit, setEdit] = useState<Edit>();
   const [channel, setChannel] = useState("");
   const [revision, setRevision] = useState("keep");
@@ -94,6 +115,7 @@ export default function AgentPage({
   const open = (value: Edit) => {
     if (state !== "idle") return;
     setError("");
+    setDialogDirty(false);
     setEdit(value);
     setChannel("");
     setRevision("keep");
@@ -134,7 +156,9 @@ export default function AgentPage({
     });
   }
   const selected =
-    entries.find((entry) => entry.id === selectedId) ?? entries[0];
+    entries.find(
+      (entry) => entry.id === (selectedId ?? lastSelectedId.current),
+    ) ?? entries[0];
   const role = catalog?.roles.find((role) => role.roleId === selected?.id);
   const instances =
     catalog?.instances.filter((instance) => instance.roleId === selected?.id) ??
@@ -149,14 +173,15 @@ export default function AgentPage({
       <RoleWorkspace
         entries={entries}
         selected={selected}
-        onSelect={(id) => {
-          setSelectedId(id);
-          setTab("roles");
-        }}
+        detail={Boolean(selectedId)}
+        onBack={() => guard(() => selectRole())}
+        onSelect={(id) =>
+          guard(() => selectRole(id), dirty && id !== selected?.id)
+        }
         tab={tab}
         onTab={setTab}
         busy={busy}
-        onCreate={() => open({ kind: "create" })}
+        onCreate={() => guard(() => open({ kind: "create" }))}
         onRefresh={() => void refresh()}
         actions={
           role && (
@@ -185,9 +210,10 @@ export default function AgentPage({
             <div hidden={tab !== "roles"}>
               {role ? (
                 <RoleEditor
-                  key={role.roleRevisionId}
+                  key={`${role.roleRevisionId}:${editorEpoch}`}
                   client={client}
                   role={role}
+                  onDirtyChange={setDirty}
                   disabled={busy}
                   onSave={(configuration) =>
                     void manager.save(configuration, role, done)
@@ -280,11 +306,12 @@ export default function AgentPage({
           }
           manager={manager}
           error={error}
-          onClose={() => setEdit(undefined)}
+          onClose={() => guard(() => setEdit(undefined), dialogDirty)}
         >
           {edit.kind === "create" || edit.kind === "edit" ? (
             <RoleEditor
               client={client}
+              onDirtyChange={setDialogDirty}
               {...(edit.kind === "edit" ? { role: edit.role } : {})}
               disabled={busy}
               onSave={(configuration) =>
@@ -387,6 +414,19 @@ export default function AgentPage({
             </>
           )}
         </ActionDialog>
+      )}
+      {discard && (
+        <DiscardChangesDialog
+          onCancel={() => setDiscard(undefined)}
+          onDiscard={() => {
+            const action = discard;
+            setDiscard(undefined);
+            setDirty(false);
+            setDialogDirty(false);
+            setEditorEpoch((v) => v + 1);
+            action();
+          }}
+        />
       )}
     </AppShellMainSlot>
   );

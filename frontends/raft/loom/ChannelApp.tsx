@@ -656,6 +656,7 @@ export default function ChannelApp() {
         "thread",
         "saved",
         "role",
+        "memory",
         "message",
         "detail",
       ])
@@ -1307,7 +1308,9 @@ export default function ChannelApp() {
             destination !== "activity" &&
             !params.has("thread") &&
             !(destination === "settings" && params.has("settings")) &&
-            !(destination === "tasks" && params.has("task")) && (
+            !(destination === "tasks" && params.has("task")) &&
+            !(destination === "agents" && params.has("role")) &&
+            !(destination === "memory" && params.has("memory")) && (
               <MobileBottomBarStack
                 floating
                 showLiveActivity

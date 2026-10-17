@@ -27,7 +27,7 @@ import MemoryEditor from "./MemoryEditor.tsx";
 import Frame from "./ChatSidebarFrame.tsx";
 import { SelectField, ActionMenu } from "./ManagementUi.tsx";
 import { MemoryClient } from "./memory-client.ts";
-import { useRouteIntentOwner } from "./useIntentRoute.ts";
+import { useRouteIntentOwner, useIntentRoute } from "./useIntentRoute.ts";
 export default function MemoryPage({
   client,
   rooms,
@@ -45,9 +45,16 @@ export default function MemoryPage({
       useState<Awaited<ReturnType<MemoryClient["list"]>>>(),
     [loading, setLoading] = useState(true),
     [error, setError] = useState(""),
-    [selected, setSelected] = useState(""),
     [detail, setDetail] = useState<MemoryEntryDetail>(),
     [detailError, setDetailError] = useState("");
+  const [params, setParams] = useIntentRoute();
+  const selected = params.get("memory") ?? "";
+  const setSelected = (id: string) => {
+    const next = new URLSearchParams(params);
+    if (id) next.set("memory", id);
+    else next.delete("memory");
+    setParams(next);
+  };
   const [action, setAction] = useState<"delete" | "invalidate">(),
     [reason, setReason] = useState("");
   const [editing, setEditing] = useState(false);

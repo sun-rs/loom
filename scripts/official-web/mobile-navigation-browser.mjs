@@ -223,6 +223,26 @@ for (const [width, preset] of [
         .getByText("外观", { exact: true })
         .tap();
       await nav.waitFor({ state: "hidden" });
+      const settingsBack = page.getByRole("button", {
+        name: "设置列表",
+        exact: true,
+      });
+      assert.ok(
+        await settingsBack.evaluate((el) => {
+          const r = el.getBoundingClientRect();
+          return [-21, 21].every((x) =>
+            [-21, 21].every((y) =>
+              el.contains(
+                document.elementFromPoint(
+                  r.x + r.width / 2 + x,
+                  r.y + r.height / 2 + y,
+                ),
+              ),
+            ),
+          );
+        }),
+        "header action has a full centered 44px touch surface in both themes",
+      );
       await page.getByRole("button", { name: "设置列表", exact: true }).tap();
       await nav.waitFor();
       await page.screenshot({ path: "/tmp/loom-mobile-navigation-after.png" });

@@ -16,10 +16,12 @@ export default function RoleEditor({
   role,
   disabled,
   onSave,
+  onDirtyChange,
 }: {
   client: RahClient;
   role?: RoleTemplate;
   disabled: boolean;
+  onDirtyChange?: (dirty: boolean) => void;
   onSave: (config: RoleCreateRequest["configuration"]) => void;
 }) {
   const [form, setForm] = useState<RoleForm>(() =>
@@ -35,6 +37,20 @@ export default function RoleEditor({
           runtimeOfferId: "",
         },
   );
+  const [initial] = useState(form);
+  const dirty = JSON.stringify(form) !== JSON.stringify(initial);
+  useEffect(() => {
+    onDirtyChange?.(dirty);
+  }, [dirty, onDirtyChange]);
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
   const [choices, setChoices] = useState<RuntimeChoice[]>();
   const [error, setError] = useState("");
   useEffect(() => {

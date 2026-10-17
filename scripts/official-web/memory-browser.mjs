@@ -57,6 +57,22 @@ for (const width of [1440, 390]) {
     await page
       .getByText("FIXTURE body searchable unicorn", { exact: true })
       .waitFor();
+    assert.equal(
+      new URL(page.url()).searchParams.get("memory"),
+      written.entryId,
+    );
+    await page.reload();
+    await page
+      .getByText("FIXTURE body searchable unicorn", { exact: true })
+      .waitFor();
+    await page.goBack();
+    assert.equal(new URL(page.url()).searchParams.get("memory"), null);
+    await page
+      .getByRole("button", { name: "fixture-memory", exact: true })
+      .click();
+    await page
+      .getByText("FIXTURE body searchable unicorn", { exact: true })
+      .waitFor();
     await page.getByRole("button", { name: "修订历史", exact: true }).click();
     await page.getByRole("button", { name: "查看修订 1", exact: true }).click();
     await page
@@ -73,6 +89,27 @@ for (const width of [1440, 390]) {
     await edit
       .getByRole("textbox", { name: "简介", exact: true })
       .fill("FIXTURE edited description");
+    await page.keyboard.press("Escape");
+    const discard = page.getByRole("alertdialog");
+    await discard.waitFor();
+    await discard
+      .getByRole("button", { name: "继续编辑", exact: true })
+      .click();
+    assert.equal(
+      await edit
+        .getByRole("textbox", { name: "简介", exact: true })
+        .inputValue(),
+      "FIXTURE edited description",
+    );
+    assert.equal(
+      new URL(page.url()).searchParams.get("memory"),
+      written.entryId,
+    );
+    if (width === 390)
+      assert.equal(
+        await page.locator('[data-slot="mobile-nav-root"]').count(),
+        0,
+      );
     let editInput;
     await page.route("**/v3/client/memory/update", async (route) => {
       editInput = route.request().postDataJSON();

@@ -10,8 +10,8 @@ test("official source intake preserves recorded upstream source bytes and licens
   );
   assert.equal(adoption.revision, "a98ae003246a0360872a77d76dec2fccd0347ef7");
   assert.equal(adoption.productConnected, true);
-  assert.equal(adoption.rollout.stage, "discovery-v7");
-  assert.equal(adoption.rollout.consoleRetained, true);
+  assert.equal(adoption.rollout.stage, "official-product-ui");
+  assert.equal(adoption.rollout.consoleRetained, false);
   assert.ok(
     adoption.files["packages/web/src/components/layout/MainLayout.tsx"],
   );

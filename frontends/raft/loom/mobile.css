@@ -78,7 +78,11 @@
     button:has(> svg):not(:has(span))::after {
     content: "";
     position: absolute;
-    inset: -6px;
+    width: 44px;
+    height: 44px;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
   }
   [data-slot="panel-actions"] {
     gap: 12px;

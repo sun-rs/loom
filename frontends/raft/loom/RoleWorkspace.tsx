@@ -24,6 +24,8 @@ import { useResizablePanel } from "../packages/web/src/hooks/useResizablePanel.t
 import { SIDEBAR_PANEL_BOUNDS } from "../packages/web/src/lib/panelBounds.ts";
 export type RoleEntry = { id: string; name: string; retired?: boolean };
 export default function RoleWorkspace({
+  detail,
+  onBack,
   entries,
   selected,
   onSelect,
@@ -35,6 +37,8 @@ export default function RoleWorkspace({
   actions,
   children,
 }: {
+  detail: boolean;
+  onBack: () => void;
   entries: RoleEntry[];
   selected?: RoleEntry;
   onSelect: (id: string) => void;
@@ -47,7 +51,6 @@ export default function RoleWorkspace({
   children: ReactNode;
 }) {
   const [query, setQuery] = useState("");
-  const [detail, setDetail] = useState(false);
   const panel = useResizablePanel({
     storageKey: "loom:agentSidebarWidth",
     ...SIDEBAR_PANEL_BOUNDS,
@@ -114,7 +117,6 @@ export default function RoleWorkspace({
               aria-label={entry.name}
               onClick={() => {
                 onSelect(entry.id);
-                setDetail(true);
               }}
               className={`mx-0 w-full items-center ${selected?.id === entry.id ? "data-active:bg-fill-muted dark:data-active:bg-fill-muted data-active:shadow-none data-active:ring-0 theme-brutal:data-active:bg-brutal-pink theme-brutal:data-active:shadow-brutal-sm" : ""}`}
             >
@@ -144,7 +146,7 @@ export default function RoleWorkspace({
           iconSlot={<AvatarSlot context="panel-header" type="agent" />}
           iconKind="avatar"
           iconAlwaysVisible
-          onMobileBack={() => setDetail(false)}
+          onMobileBack={onBack}
           mobileBackProps={{ "aria-label": "角色列表" }}
           containerProps={{
             className: `agent-profile-header-container ${PROFILE_HEADER_SURFACE_CLASS}`,

@@ -1,0 +1,33 @@
+{
+  "status": "implemented-focused-checks-passed-deployment-pending",
+  "audit": "../2026-10-17-ui-behavior-audit/summary.json",
+  "source": {
+    "revision": "a98ae003246a0360872a77d76dec2fccd0347ef7",
+    "url": "https://github.com/botiverse/raft-source",
+    "manifest": "../../../../frontends/raft/adoption.json",
+    "license": "../../../../frontends/raft/LICENSE",
+    "reuse": "Official raft-ui AlertDialog primitives directly reused; AgentProfileEditDialog discard composition structurally ported with Chinese labels and Loom callbacks. Upstream bytes unchanged. MainLayout root/detail tab visibility implemented as local router glue."
+  },
+  "findings": {
+    "UI-01": "Reproduced role-switch and memory Escape loss repaired with official discard confirmation; role create dialog and mobile explicit Back covered. Role refresh/close-tab beforeunload warning added. Root tab return retains selected editor. Not a global route draft guard.",
+    "UI-02": "Role/memory detail hide mobile bottom navigation; enabled save pointer center verified at 390x560.",
+    "UI-03": "Role/memory detail use URL selection; refresh and clean browser Back verified. Root tab navigation clears both selection keys.",
+    "UI-04": "Centered explicit 44px pseudo hit surface; four corners verified in brutal/elegant themes on Chromium/WebKit.",
+    "UI-05": "Sidebar read error separated from management write error; successful read clears only read error, exact unknown-write handling unchanged.",
+    "UI-06": "Deferred: protocol SidebarPreferences lacks channelPanelTabOrder. No backend expansion or unscoped localStorage substitute. Current order remains mount-local.",
+    "UI-07": "Current rollout metadata records product UI and retired console; byte-exact intake test no longer asserts stale discovery stage."
+  },
+  "checks": [
+    "Red: ui-behavior role URL assertion; memory Escape alertdialog timeout; mobile header corner assertion; intake stale rollout assertion.",
+    "Green: ui-behavior Chromium and WebKit at 1440x1000 / 390x560, two roles, keep/discard, route refresh/Back, enabled save hit target, injected sidebar GET failure recovery.",
+    "Green: memory-browser Chromium at 1440x1000 / 390x844 including existing update/delete unknown exact replay and memory policy checks, new dirty Escape and refresh/Back.",
+    "Green: mobile-navigation Chromium/WebKit, brutal/elegant-light 390x844 and desktop1440x1000.",
+    "Green: typecheck:loom; build:web:workbench; intake/retirement/intent-route-owners (3 tests)."
+  ],
+  "limits": [
+    "UI-06 remains deferred.",
+    "No whole-app unsaved draft routing guard: browser history switching between different Roles or leaving memory editing across pages remains outside this repair acceptance.",
+    "No physical iOS/Android keyboard acceptance; no paid CLI or efficiency claim; no backend changes."
+  ],
+  "localEvidence": "/Users/sun/.loom/reviews/2026-10-17-ui-behavior-repair"
+}
