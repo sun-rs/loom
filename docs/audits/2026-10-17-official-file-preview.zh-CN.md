@@ -37,3 +37,5 @@ Room/附件评论仍只有 Kernel 一个所有者；显式附件回复与普通�
 夹具使用真实 Kernel/ApplicationService/Gateway 和 fake Worker 执行，不调用付费模型，不证明模型自己会发布附件。正式部署只做只读页面检查，不往用户频道写入测试附件。证据见 [本批记录](../evo/evidence/2026-10-17-html-preview/summary.json)。
 
 后续按纵向切片：视频/音频已有原生播放器与 Range 传输可直接接线；再接 CSV/XLSX 的解析数据；PDF 单独处理跨源阅读器约束，保持官方关闭评论；最后补 Diff 摘要和图片栅格化。不能把这些未接线项算作已完成。
+
+后续状态：CSV/XLSX/Diff 已在[表格接线批次](2026-10-17-table-preview.zh-CN.md)实现；owner 取消音视频预览需求，前述顺序不再适用，PDF 保持待接入。

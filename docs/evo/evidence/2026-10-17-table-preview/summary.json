@@ -1,0 +1,29 @@
+{
+  "implemented": [
+    "CSV native table and comments",
+    "XLSX native sheets and comments",
+    "Diff native statistics and download"
+  ],
+  "excludedByOwner": ["audio preview", "video preview"],
+  "pending": [
+    "PDF independent-origin transport and native viewer; comments unavailable upstream"
+  ],
+  "tests": {
+    "targeted": 6,
+    "rootTypecheck": "passed",
+    "frontendTypecheckBuild": "passed",
+    "browser": "CSV/XLSX/Diff at 1440x1000 and 390x844 DPR1; fake Worker",
+    "realCli": "not run",
+    "paid": "not run",
+    "commands": [
+      "node --test packages/application-service/test/structured-attachment-preview.test.ts packages/application-service/test/client-files.test.ts",
+      "npm run typecheck",
+      "npm run build:web:workbench",
+      "node scripts/official-web/table-attachment-browser.mjs",
+      "node scripts/official-web/html-attachment-browser.mjs"
+    ]
+  },
+  "deployment": "pending",
+  "source": "a98ae003246a0360872a77d76dec2fccd0347ef7",
+  "audit": "../../../audits/2026-10-17-table-preview.zh-CN.md"
+}

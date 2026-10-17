@@ -1,0 +1,42 @@
+[
+  {
+    "width": 1440,
+    "workerPublished": true,
+    "humanCommentWakesAuthor": true,
+    "explicitWorkerReply": true,
+    "ordinaryReplyExcluded": true,
+    "reload": true,
+    "format": "csv",
+    "nativeTableAndSheets": true
+  },
+  {
+    "width": 390,
+    "workerPublished": true,
+    "humanCommentWakesAuthor": true,
+    "explicitWorkerReply": true,
+    "ordinaryReplyExcluded": true,
+    "reload": true,
+    "format": "csv",
+    "nativeTableAndSheets": true
+  },
+  {
+    "width": 1440,
+    "workerPublished": true,
+    "humanCommentWakesAuthor": true,
+    "explicitWorkerReply": true,
+    "ordinaryReplyExcluded": true,
+    "reload": true,
+    "format": "xlsx",
+    "nativeTableAndSheets": true
+  },
+  {
+    "width": 390,
+    "workerPublished": true,
+    "humanCommentWakesAuthor": true,
+    "explicitWorkerReply": true,
+    "ordinaryReplyExcluded": true,
+    "reload": true,
+    "format": "xlsx",
+    "nativeTableAndSheets": true
+  }
+]

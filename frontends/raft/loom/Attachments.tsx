@@ -1,4 +1,11 @@
 import {
+  isCsvAttachment,
+  isXlsxAttachment,
+  isDiffPatchAttachment,
+} from "../packages/web/src/components/message/attachmentPreview.ts";
+import { readStructuredPreview } from "./structured-preview.ts";
+import DiffSummary from "./DiffSummary.tsx";
+import {
   beginAttachmentPreview,
   cancelAttachmentPreview,
 } from "./attachment-preview-request.ts";
@@ -46,6 +53,9 @@ export default function Attachments({
   }));
   const imageRows = buildMessageImageGalleryRows(images);
   const previewKind = (a: MessageAttachment) => {
+    if (isCsvAttachment(a)) return "csv";
+    if (isXlsxAttachment(a)) return "xlsx";
+    if (isDiffPatchAttachment(a)) return null;
     const kind = classifyAttachmentPreview(a.mimeType, a.filename);
     return a.sizeBytes <= MAX_ATTACHMENT_TEXT_PREVIEW_BYTES &&
       (kind === "text" || kind === "markdown" || kind === "html")
@@ -75,6 +85,24 @@ export default function Attachments({
             "/v3/client/files/html-preview/" + encodeURIComponent(a.id),
             window.location.origin,
           ).href,
+          ...(parentMessage ? { commentContext: { parentMessage } } : {}),
+        });
+      } else if (kind === "csv" || kind === "xlsx") {
+        const result = await readStructuredPreview(a.id, controller.signal);
+        if (controller.signal.aborted) return;
+        if (
+          result.status !== "ok" ||
+          (result.data.kind !== "csv" && result.data.kind !== "xlsx")
+        ) {
+          await downloadLoomAttachment(a, controller.signal);
+          return;
+        }
+        useMediaPreviewStore.getState().close();
+        useDocumentPreviewStore.getState().open({
+          attachment: a,
+          preview: result.data,
+          truncated: result.truncated ?? false,
+          url: null,
           ...(parentMessage ? { commentContext: { parentMessage } } : {}),
         });
       } else if (kind) {
@@ -141,6 +169,9 @@ export default function Attachments({
               onClick={() => void open(a, true)}
               affordance={previewKind(a) ? "preview" : "download"}
               meta={<span>{a.sizeBytes} B</span>}
+              summary={
+                isDiffPatchAttachment(a) ? <DiffSummary id={a.id} /> : undefined
+              }
             />
           ))}
       </MessageAttachmentGroup>

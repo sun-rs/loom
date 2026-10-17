@@ -173,6 +173,26 @@ test("Files HTTP + SDK roundtrip verifies bytes, Room provenance, authorization 
       405,
     );
 
+    const dataUrl = `${service.origin}/v3/client/files/data-preview/${prepared.attachmentId}`;
+    assert.equal((await fetch(dataUrl)).status, 401);
+    assert.equal(
+      (
+        await fetch(dataUrl, {
+          method: "PUT",
+          headers: { authorization: `Bearer ${human.accessToken}` },
+          body: "overwrite",
+        })
+      ).status,
+      405,
+    );
+    assert.deepEqual(
+      await (
+        await fetch(dataUrl, {
+          headers: { authorization: `Bearer ${human.accessToken}` },
+        })
+      ).json(),
+      { status: "unsupported", reason: "unsupported" },
+    );
     const previewUrl = `${service.origin}/v3/client/files/preview/${prepared.attachmentId}`;
     const preview = await fetch(previewUrl, {
       headers: { authorization: `Bearer ${human.accessToken}` },
@@ -210,6 +230,14 @@ test("Files HTTP + SDK roundtrip verifies bytes, Room provenance, authorization 
     assert.equal(
       (
         await fetch(previewUrl, {
+          headers: { authorization: `Bearer ${outsider.accessToken}` },
+        })
+      ).status,
+      403,
+    );
+    assert.equal(
+      (
+        await fetch(dataUrl, {
           headers: { authorization: `Bearer ${outsider.accessToken}` },
         })
       ).status,

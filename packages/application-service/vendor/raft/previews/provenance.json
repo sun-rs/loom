@@ -1,0 +1,38 @@
+{
+  "upstream": "https://github.com/botiverse/raft-source",
+  "revision": "a98ae003246a0360872a77d76dec2fccd0347ef7",
+  "license": "../LICENSE",
+  "reuse": "Official parser logic unchanged; local imports and three type-only non-null assertions",
+  "files": {
+    "csv.ts": {
+      "source": "packages/server/src/services/attachmentPreviews/providers/csv.ts",
+      "upstreamSha256": "d2184e9453b833f29c070aedca795734fd74302bb4a1c7d29ba3f80f0ab37def",
+      "sha256": "fd1b7d557589f0d403e0f550b8adabd6fbff19f4fd1e0032aeead3a4ceec40f5"
+    },
+    "xlsx.ts": {
+      "source": "packages/server/src/services/attachmentPreviews/providers/xlsx.ts",
+      "upstreamSha256": "0a39edde72c342bacf926b8b4f04c427b891f565e9ea1efcbd71f55fb1f179e8",
+      "sha256": "3cacd74a63b5b95ee0573e91870520a21f540855b1603107cbde9d408daab878"
+    },
+    "text.ts": {
+      "source": "packages/server/src/services/attachmentPreviews/providers/text.ts",
+      "upstreamSha256": "a1bfa0e051dcba45d723d82a7e4495180a09a7751a5bb208ac2c4c3f4636096e",
+      "sha256": "e2e32c86b32eaad54159b980163db2e1eaa862ea693a0e95032cf4cba8c16dba"
+    },
+    "diffPatch.ts": {
+      "source": "packages/server/src/services/attachmentPreviews/providers/diffPatch.ts",
+      "upstreamSha256": "c6100ef303730c41d9a6ed94d0ce2f1dc445098814179cdc32eccdb83eb69b42",
+      "sha256": "744d01b049e04f2f49a1cee92b396b89b33289aade327cc75bfc26deb03d34cc"
+    },
+    "shared.ts": {
+      "source": "packages/shared/src/attachmentPreview.ts",
+      "upstreamSha256": "9466fab3e5fb63961a0e822d057cb5bdd4f57014fdae3ed91d0d48032f378cfb",
+      "sha256": "9466fab3e5fb63961a0e822d057cb5bdd4f57014fdae3ed91d0d48032f378cfb"
+    }
+  },
+  "localChanges": [
+    "Imports bind to copied official shared types and local metadata-only provider interface",
+    "csv parsed[0] non-null after length check",
+    "xlsx prior ZIP entry non-null after index check; SheetNames-indexed worksheet non-null (original parse catch retained)"
+  ]
+}

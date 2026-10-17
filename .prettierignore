@@ -20,3 +20,6 @@ frontends/raft/packages/
 
 # Upstream HTML reporter: original formatting plus documented type-only compatibility edits.
 packages/application-service/vendor/raft/attachmentPreviewBridge.ts
+
+# Adopted official table/diff parsers; provenance pins source and type-only edits.
+packages/application-service/vendor/raft/previews/{csv,xlsx,text,diffPatch,shared}.ts
