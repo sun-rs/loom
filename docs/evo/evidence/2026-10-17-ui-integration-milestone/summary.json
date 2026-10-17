@@ -1,0 +1,89 @@
+{
+  "milestone": "milestone-evo-official-ui-integration-2026-10-17",
+  "status": "checks-passed-deployment-pending",
+  "scope": "Official-source frontend / API integration; controlled adapters, no new paid or real-model acceptance",
+  "repairs": [
+    "Shared channel write-slot observers must only guard their own actions; independent registrations cannot remove another guard",
+    "Top-level navigation without a room parameter preserves the mounted conversation and unsent draft",
+    "Opening Search/Activity from Home must clear prior room/detail parameters so mobile lists are visible, while the mounted chat remains preserved"
+  ],
+  "checks": {
+    "peerKernelAndHostTests": 15,
+    "routeOwnerAndReactionTests": 4,
+    "branchAndTaskTests": 8,
+    "typecheck": "passed: typecheck:loom",
+    "build": "passed: build:web:workbench",
+    "browserMainFlow": "passed: combined v11, desktop 1440x1000/mobile 390x844, attachments also 820; prior failures retained",
+    "branches": "passed after repair; native copy/run adapter fakes",
+    "memory": "passed; Worker fixture",
+    "reactions": "passed after repair",
+    "paid": "not run",
+    "realModels": "not run",
+    "inspector": "passed at 1440/390, diagnostic fixtures",
+    "officialSourceHashes": {
+      "unchanged": 2264
+    },
+    "formatAndDiff": "passed",
+    "localDocumentationLinks": "passed"
+  },
+  "failedAttempts": [
+    {
+      "attempt": "initial",
+      "finding": "Old management test looked for mobile 频道 after official home entry became 首页; corrected test locator"
+    },
+    {
+      "attempt": "v2",
+      "finding": "Shared channel write-slot registered by reaction/task observers blocked private chat list navigation on unknown sends; reproduced product bug, repaired"
+    },
+    {
+      "attempt": "v3",
+      "finding": "Search/activity navigation without room switched the selected conversation and lost unsent draft; reproduced product bug, repaired"
+    },
+    {
+      "attempt": "navigation-only",
+      "finding": "Draft assertions passed; stale geometry check still expected Search inside nav rail; corrected test to actual native entrances"
+    },
+    {
+      "attempt": "v4",
+      "finding": "Mobile Home search inherited room as a search-result detail and hid the search list; cleared discovery detail parameters while preserving chat selection separately"
+    },
+    {
+      "attempt": "v5",
+      "finding": "Thread assertions expected English Follow Thread after owner fixed product language to Chinese; changed to official Chinese labels"
+    },
+    {
+      "attempt": "inspector-only",
+      "finding": "Blocked-work test still clicked old mobile 频道 label; corrected to 首页"
+    },
+    {
+      "attempt": "v6",
+      "finding": "Combined fixture disabled the same instances twice; backend correctly rejected already-disabled. Removed redundant setup write; no backend change."
+    },
+    {
+      "attempt": "v7",
+      "finding": "Mention locator was not scoped to the official autocomplete. Added peers/private-box rows made the intended name already visible outside the picker; narrowing the query alone did not resolve it."
+    },
+    {
+      "attempt": "v8",
+      "finding": "Unscoped name locator returned before autocomplete existed. Scoped wait/click to official mention-autocomplete-popover; no-send and recipient assertions retained; scoped run exposed that full-name query did not present a candidate."
+    },
+    {
+      "attempt": "v9",
+      "finding": "Scoped locator correctly rejected absent candidates for full-name fill. Restored existing prefix-query interaction and selected intended row by official data-ac-index (keyboard) or exact scoped text (pointer); standalone inspector passed both sizes. No product autocomplete changes."
+    },
+    {
+      "attempt": "v10/root-cause",
+      "finding": "Private-box gate intentionally removes instances[0] from the channel to prove read-only history. Combined mentions gate reused that removed member; absence from autocomplete is correct. Earlier candidate-query diagnosis was incomplete. Use surviving instances[1], keep official scoped picker and keyboard row selection. No product membership/autocomplete changes."
+    }
+  ],
+  "deployment": "pending",
+  "retainedLimits": [
+    "No new real CLI/model collaboration or efficiency gate; existing backend-freeze evidence retains its exact provider and quality limits",
+    "Fork/Side browser runs simulate native session copy and execution, not real provider fork acceptance",
+    "Usage/control diagnostic fixtures prove rendering/actions, not newly measured model usage",
+    "No physical iPhone/iPad acceptance",
+    "Web Push subscription/delivery/click path remains unavailable; HTTP LAN is not a secure push context",
+    "Unsupported cloud/account/sharing/audio/video features remain omitted"
+  ],
+  "browserEvidenceNote": "Boolean false on desktop-only/mobile-only receipt fields means that viewport did not exercise that conditional path, not a failed assertion."
+}

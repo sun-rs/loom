@@ -1,0 +1,28 @@
+[
+  {
+    "width": 1440,
+    "readOnlyOpen": true,
+    "followLostResponseReadback": true,
+    "scopedVisibleRead": true,
+    "nativeMenuEscape": true,
+    "createAndReplyExactReplay": true,
+    "oneReply": true,
+    "reload": true,
+    "nativeResizeOrMobileReturn": true,
+    "readFailureClearsContentAndRetainsDraft": true,
+    "foreignRootRejected": true
+  },
+  {
+    "width": 390,
+    "readOnlyOpen": true,
+    "followLostResponseReadback": true,
+    "scopedVisibleRead": true,
+    "nativeMenuEscape": true,
+    "createAndReplyExactReplay": true,
+    "oneReply": true,
+    "reload": true,
+    "nativeResizeOrMobileReturn": true,
+    "readFailureClearsContentAndRetainsDraft": true,
+    "foreignRootRejected": true
+  }
+]

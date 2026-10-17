@@ -1,0 +1,48 @@
+[
+  {
+    "humanProfileFromGateway": true,
+    "agentProfilePresentationFixture": true,
+    "blockedWorkResponseFixture": true,
+    "nativeHoverDismissal": true,
+    "unknownPresenceOmitted": true,
+    "viewport": {
+      "width": 1440,
+      "height": 1000
+    },
+    "canonicalMention": true,
+    "senderClickFocus": true,
+    "keyboardOrPointerSelection": true,
+    "membershipFailureClearsAndRecovers": true,
+    "channelIsolation": true,
+    "runUsagePartialAndUnknown": true,
+    "usageDialogEscapeKeepsInspector": true,
+    "trajectoryScopedPagedAndExpandable": true,
+    "runtimeEnableStopAgainstCore": true,
+    "runtimeLostResponseExactVerification": true,
+    "runtimeCancelNoMutation": true,
+    "runtimeIdentityAndConfigurationPreserved": true
+  },
+  {
+    "humanProfileFromGateway": true,
+    "agentProfilePresentationFixture": true,
+    "blockedWorkResponseFixture": true,
+    "nativeHoverDismissal": true,
+    "unknownPresenceOmitted": true,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "canonicalMention": true,
+    "senderClickFocus": true,
+    "keyboardOrPointerSelection": true,
+    "membershipFailureClearsAndRecovers": true,
+    "channelIsolation": true,
+    "runUsagePartialAndUnknown": true,
+    "usageDialogEscapeKeepsInspector": true,
+    "trajectoryScopedPagedAndExpandable": true,
+    "runtimeEnableStopAgainstCore": true,
+    "runtimeLostResponseExactVerification": true,
+    "runtimeCancelNoMutation": true,
+    "runtimeIdentityAndConfigurationPreserved": true
+  }
+]

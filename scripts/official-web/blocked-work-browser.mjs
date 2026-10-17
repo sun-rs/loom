@@ -17,7 +17,12 @@ export async function verifyBlockedWork(
   await showChatList(page);
   const nav = page.getByRole("navigation", { name: "主导航" });
   await nav.getByRole("button", { name: "设置", exact: true }).click();
-  await nav.getByRole("button", { name: "频道", exact: true }).click();
+  await nav
+    .getByRole("button", {
+      name: viewport.width < 768 ? "首页" : "频道",
+      exact: true,
+    })
+    .click();
   await openChatRow(page, roomId);
   await page
     .getByRole("button", { name: "频道成员与状态", exact: true })

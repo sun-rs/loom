@@ -33,8 +33,10 @@ export async function verifyMentions({
       page.on("request", (r) => {
         if (new URL(r.url()).pathname === "/v3/client/messages/post") sends++;
       });
+      // Scope the keyboard candidate to the intended member; other slices may add peers.
       await composer.fill("@Fixture");
       await page
+        .getByTestId("mention-autocomplete-popover")
         .getByText(name, { exact: true })
         .filter({ visible: true })
         .last()
@@ -53,9 +55,17 @@ export async function verifyMentions({
         path: `/tmp/loom-mention-picker-${viewport.width}.png`,
         animations: "disabled",
       });
-      if (viewport.width >= 768) await composer.press("Enter");
-      else
+      if (viewport.width >= 768) {
+        const row = page
+          .getByTestId("mention-autocomplete-popover")
+          .locator("[data-ac-index]")
+          .filter({ has: page.getByText(name, { exact: true }) });
+        const index = Number(await row.getAttribute("data-ac-index"));
+        for (let i = 0; i < index; i++) await composer.press("ArrowDown");
+        await composer.press("Enter");
+      } else
         await page
+          .getByTestId("mention-autocomplete-popover")
           .getByText(name, { exact: true })
           .filter({ visible: true })
           .last()
@@ -103,6 +113,7 @@ export async function verifyMentions({
       await profile.waitFor({ state: "hidden" });
       await composer.fill("@Fixture");
       const candidate = page
+        .getByTestId("mention-autocomplete-popover")
         .getByText(name, { exact: true })
         .filter({ visible: true })
         .last();
@@ -136,6 +147,7 @@ export async function verifyMentions({
       await composer.fill("@Fixture");
       assert.equal(
         await page
+          .getByTestId("mention-autocomplete-popover")
           .getByText(name, { exact: true })
           .filter({ visible: true })
           .count(),

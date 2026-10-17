@@ -1,0 +1,16 @@
+[
+  {
+    "width": 1440,
+    "thread": false,
+    "addRemove": true,
+    "lostResponseExactReplay": true,
+    "noDuplicate": true
+  },
+  {
+    "width": 390,
+    "thread": false,
+    "addRemove": true,
+    "lostResponseExactReplay": true,
+    "noDuplicate": true
+  }
+]

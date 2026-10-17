@@ -1,0 +1,28 @@
+[
+  {
+    "viewport": {
+      "width": 1440,
+      "height": 1000
+    },
+    "destinationsViaNativeEntries": true,
+    "urlReloadAndBackForward": true,
+    "keyboardNavigation": true,
+    "channelDraftPreservedAcrossPages": true,
+    "visiblePointerTargets": true,
+    "noHorizontalOverflow": true,
+    "externalRequests": 0
+  },
+  {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "destinationsViaNativeEntries": true,
+    "urlReloadAndBackForward": true,
+    "keyboardNavigation": true,
+    "channelDraftPreservedAcrossPages": true,
+    "visiblePointerTargets": true,
+    "noHorizontalOverflow": true,
+    "externalRequests": 0
+  }
+]

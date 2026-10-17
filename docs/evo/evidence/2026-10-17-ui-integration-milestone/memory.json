@@ -1,0 +1,34 @@
+[
+  {
+    "width": 1440,
+    "list": true,
+    "history": true,
+    "deletedHistoryRedacted": true,
+    "policyDefaultsOverrideInherit": true,
+    "policyUnknownReplay": true,
+    "policyConflictReread": true,
+    "detail": true,
+    "bodySearch": true,
+    "edit": true,
+    "invalidateRestore": true,
+    "pin": true,
+    "delete": true,
+    "unknownExactReplay": true
+  },
+  {
+    "width": 390,
+    "list": true,
+    "history": true,
+    "deletedHistoryRedacted": true,
+    "policyDefaultsOverrideInherit": true,
+    "policyUnknownReplay": true,
+    "policyConflictReread": true,
+    "detail": true,
+    "bodySearch": true,
+    "edit": true,
+    "invalidateRestore": true,
+    "pin": true,
+    "delete": true,
+    "unknownExactReplay": true
+  }
+]

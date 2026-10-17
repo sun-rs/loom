@@ -124,7 +124,9 @@ export async function verifyGlobalNavigation({ browser, origin, channel }) {
       ),
       false,
     );
-    for (const label of ["搜索", "频道", "动态", "任务", "Agent", "设置"]) {
+    for (const label of viewport.width < 768
+      ? ["首页", "任务", "Agent", "记忆", "设置"]
+      : ["频道", "动态", "任务", "Agent", "记忆", "设置"]) {
       const b = await nav
         .getByRole("button", { name: label, exact: true })
         .boundingBox();
@@ -140,11 +142,10 @@ export async function verifyGlobalNavigation({ browser, origin, channel }) {
     assert.deepEqual(external, []);
     results.push({
       viewport,
-      allSixDestinations: true,
+      destinationsViaNativeEntries: true,
       urlReloadAndBackForward: true,
       keyboardNavigation: true,
       channelDraftPreservedAcrossPages: true,
-      placeholdersExplicit: true,
       visiblePointerTargets: true,
       noHorizontalOverflow: true,
       externalRequests: 0,

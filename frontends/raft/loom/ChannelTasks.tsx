@@ -100,7 +100,7 @@ export function useChannelTasks(
   onThread: (id: string) => void,
 ) {
   const facade = useMemo(() => new ChannelTaskClient(bridge), [bridge]);
-  useRouteIntentOwner(bridge.writes);
+  useRouteIntentOwner(bridge.writes, "task-create");
   const [params, setParams] = useIntentRoute();
   const [rows, setRows] = useState<GlobalTasksResponse["tasks"]>([]),
     [complete, setComplete] = useState(false),

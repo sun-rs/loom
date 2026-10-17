@@ -1,0 +1,32 @@
+[
+  {
+    "width": 1440,
+    "copies": 2,
+    "fork": true,
+    "sideRoundTrip": true,
+    "refresh": true,
+    "reopen": true,
+    "sourceUnchanged": true,
+    "workerSourceWriteDenied": true,
+    "unknownCreateReplay": true,
+    "unknownDiscardReplay": true,
+    "busyDiscard": false,
+    "nativeResponsive": true,
+    "resize": true
+  },
+  {
+    "width": 390,
+    "copies": 2,
+    "fork": true,
+    "sideRoundTrip": true,
+    "refresh": true,
+    "reopen": true,
+    "sourceUnchanged": true,
+    "workerSourceWriteDenied": true,
+    "unknownCreateReplay": true,
+    "unknownDiscardReplay": true,
+    "busyDiscard": true,
+    "nativeResponsive": true,
+    "resize": false
+  }
+]

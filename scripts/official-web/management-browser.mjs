@@ -269,7 +269,10 @@ export async function verifyManagement({
     );
     await page
       .getByRole("navigation", { name: "主导航" })
-      .getByRole("button", { name: "频道", exact: true })
+      .getByRole("button", {
+        name: viewport.width < 768 ? "首页" : "频道",
+        exact: true,
+      })
       .click();
     await verifySidebarInteractions(page);
     assert.equal(

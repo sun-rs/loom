@@ -16,6 +16,7 @@ import {
   type SocialItem,
 } from "./reaction-client.ts";
 import { useRouteIntentOwner } from "./useIntentRoute.ts";
+const REACTION_ACTIONS = ["message-save", "message-reaction"] as const;
 const Context = createContext<{
   roomId: string;
   items: Map<string, SocialItem>;
@@ -43,7 +44,7 @@ export function MessageReactionsProvider({
   current.current = owner;
   const latest = useRef(items);
   latest.current = items;
-  useRouteIntentOwner(bridge.writes);
+  useRouteIntentOwner(bridge.writes, REACTION_ACTIONS);
   useEffect(() => bridge.writes.onChange(setState), [bridge]);
   useEffect(() => {
     const abort = new AbortController();

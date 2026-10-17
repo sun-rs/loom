@@ -91,6 +91,8 @@ for (const [width, preset] of [
       for (const id of ["search", "activity"]) {
         await page.getByTestId("mobile-home-" + id + "-entry").tap();
         await nav.waitFor({ state: "hidden" });
+        if (id === "search")
+          await page.getByLabel("搜索内容", { exact: true }).waitFor();
         await page
           .getByRole("button", { name: "返回聊天列表", exact: true })
           .first()

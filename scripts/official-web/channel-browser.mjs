@@ -326,6 +326,121 @@ try {
         }),
       ),
     );
+  } else if (process.env.LOOM_BROWSER_SLICE === "inspector") {
+    for (const instance of instances)
+      await client.request("agent.manage", {
+        action: "set_state",
+        agentId: instance.agentId,
+        state: "disabled",
+        basedOnRoomSeq: await head(workspace.controlRoomId),
+        idempotencyKey: `fixture-inspector-disable-${instance.instanceId}`,
+      });
+    console.log(
+      JSON.stringify(
+        await verifyMentions({
+          browser,
+          origin,
+          client,
+          channel: channels[2],
+          otherChannel: channels[0],
+          instance: instances[0],
+          name: instanceNames[0],
+        }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "navigation") {
+    console.log(
+      JSON.stringify(
+        await verifyGlobalNavigation({ browser, origin, channel: channels[0] }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "mvp-closeout") {
+    console.log("MVP stage: role/instance lifecycle");
+    const management = await verifyManagement({
+      browser,
+      origin,
+      client,
+      workspace,
+      channel: channels[2],
+      offer,
+    });
+    console.log("MVP stage: channel instance creation");
+    const instancesAdded = await verifyInstanceCreation({
+      browser,
+      origin,
+      client,
+      workspace,
+      channel: channels[2],
+      role,
+    });
+    for (const instance of (
+      await client.request("role.list", {
+        controlRoomId: workspace.controlRoomId,
+      })
+    ).instances)
+      await client.request("agent.manage", {
+        action: "set_state",
+        agentId: instance.agentId,
+        state: "disabled",
+        basedOnRoomSeq: await head(workspace.controlRoomId),
+        idempotencyKey: `fixture-closeout-pre-send-${instance.instanceId}`,
+      });
+    console.log("MVP stage: private box");
+    const privateBoxes = await verifyPrivateBoxes({
+      browser,
+      origin,
+      client,
+      workspace,
+      channel: channels[2],
+      instance: instances[0],
+      name: instanceNames[0],
+      head,
+    });
+    console.log("MVP stage: navigation");
+    const navigation = await verifyGlobalNavigation({
+      browser,
+      origin,
+      channel: channels[0],
+    });
+    console.log("MVP stage: threads");
+    const threads = await verifyThreads({
+      browser,
+      origin,
+      client,
+      workspace,
+      otherChannel: channels[1],
+      head,
+    });
+    console.log("MVP stage: attachments");
+    const attachments = await verifyAttachments({
+      browser,
+      origin,
+      client,
+      workspace,
+      head,
+    });
+    // Private-box acceptance deliberately removes instances[0]; use the surviving peer.
+    console.log("MVP stage: mentions, usage and runtime controls");
+    const inspector = await verifyMentions({
+      browser,
+      origin,
+      client,
+      channel: channels[2],
+      otherChannel: channels[0],
+      instance: instances[1],
+      name: instanceNames[1],
+    });
+    console.log(
+      JSON.stringify({
+        inspector,
+        management,
+        instancesAdded,
+        privateBoxes,
+        navigation,
+        threads,
+        attachments,
+      }),
+    );
   } else {
     const settingsNavigationResults = await verifySettingsNavigation({
       browser,

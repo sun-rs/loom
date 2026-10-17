@@ -645,6 +645,7 @@ export default function ChannelApp() {
   const floatingMobileBars = useAppTheme().preset !== "brutal";
   const activityNavigation = useRef(0);
   const [discoveryProfileOpen, setDiscoveryProfileOpen] = useState(false);
+  const lastChatRoom = useRef<string | undefined>(undefined);
   const selectDestination = (id: Destination) => {
     if (hasRouteBoundIntent()) return;
     setParams((previous) => {
@@ -656,13 +657,19 @@ export default function ChannelApp() {
         "saved",
         "role",
         "message",
+        "detail",
       ])
         next.delete(key);
       if (id === "channels") {
         next.delete("view");
+        if (!next.has("room") && lastChatRoom.current)
+          next.set("room", lastChatRoom.current);
         if (window.matchMedia("(max-width: 767.98px)").matches)
           next.set("chat", "list");
-      } else next.set("view", id);
+      } else {
+        next.set("view", id);
+        if (id === "search" || id === "activity") next.delete("room");
+      }
       return next;
     });
   };
@@ -773,10 +780,15 @@ export default function ChannelApp() {
       ...(directory?.channels ?? []),
       ...(directory?.archivedChannels ?? []),
       ...(directory?.privateBoxes ?? []),
-    ].find((room) => room.roomId === requested) ??
+    ].find((room) => room.roomId === (requested ?? lastChatRoom.current)) ??
     (!requested && params.get("chat") !== "list"
       ? directory?.channels[0]
       : undefined);
+  // Keep the mounted conversation/draft while top-level routes omit room.
+  // An explicit room still wins, including inaccessible/invalid destinations.
+  useEffect(() => {
+    if (selected) lastChatRoom.current = selected.roomId;
+  }, [selected?.roomId]);
   useRecordSearchVisit(
     directory?.workspace.workspaceId,
     directory?.principal.principalId,

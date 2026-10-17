@@ -218,7 +218,7 @@ export async function verifyThreads({
       await page.getByTestId("thread-overflow-menu").waitFor();
       assert.match(
         await page.getByTestId("thread-overflow-follow-action").textContent(),
-        after.following ? /^Unfollow Thread$/ : /^Follow Thread$/,
+        after.following ? /^取消关注消息列$/ : /^关注消息列$/,
       );
       await page.keyboard.press("Escape");
       await page
