@@ -242,9 +242,9 @@ export default function TasksPage({
             <div className="hidden md:flex size-icon-header items-center justify-center border border-line-muted bg-primary-soft text-primary-strong theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-soft-signal theme-brutal:text-black">
               <CheckSquare size={18} />
             </div>
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 flex items-center justify-between gap-3">
               <h2 className="font-bold text-base leading-tight">任务</h2>
-              <p className="text-xs text-foreground-muted font-mono">
+              <p className="text-xs text-foreground-muted font-mono truncate">
                 {loading ? "加载中…" : `${rows.length} / ${total} 项频道任务`}
               </p>
             </div>

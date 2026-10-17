@@ -105,6 +105,13 @@ for (const [width, preset] of [
           label + " uses the owner-approved compact root header",
         );
         if (label === "任务") {
+          const title = await header.getByRole("heading").boundingBox();
+          const count = await header.locator("p").boundingBox();
+          assert.ok(
+            Math.abs(title.y + title.height / 2 - count.y - count.height / 2) <
+              2,
+            "task count shares title row",
+          );
           const empty = page.locator('[data-slot="empty-state"]');
           await empty.waitFor();
           assert.equal(

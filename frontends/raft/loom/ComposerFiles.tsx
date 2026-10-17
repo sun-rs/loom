@@ -157,7 +157,7 @@ export function ComposerFilesTools({
   if (!context) return null;
   const { disabled, client } = context;
   return (
-    <ComposerActions>
+    <ComposerActions className="loom-composer-file-tools">
       <Tooltip content="引用计算机文件或文件夹">
         <ComposerIconButton
           ref={triggerRef}

@@ -53,8 +53,8 @@ export async function verifyMobileDensity({ browser, origin, channels }) {
           });
         if (mobile) {
           assert.ok(
-            readHeight <= 80,
-            `reading composer ${preset}/${width}: ${readHeight} exceeds 80`,
+            readHeight <= 60,
+            `reading composer ${preset}/${width}: ${readHeight} exceeds 60`,
           );
           assert.ok(
             headerHeight <= 48,
@@ -80,8 +80,53 @@ export async function verifyMobileDensity({ browser, origin, channels }) {
               "引用计算机文件或文件夹",
           );
         }
+        async function checkFilePosition() {
+          const plus = shell.getByRole("button", {
+            name: "引用计算机文件或文件夹",
+          });
+          const box = await plus.boundingBox();
+          const toolbar = shell.locator('[data-slot="composer-toolbar"]');
+          const bounds = await toolbar.boundingBox();
+          const rightPadding = await toolbar.evaluate((el) =>
+            parseFloat(getComputedStyle(el).paddingRight),
+          );
+          assert.ok(
+            Math.abs(
+              box.x + box.width - bounds.x - bounds.width + rightPadding,
+            ) <= 2,
+            "plus stays at toolbar content right edge",
+          );
+          const task = page.getByTestId("composer-as-task-toggle");
+          if (await task.isVisible()) {
+            const t = await task.boundingBox();
+            assert.ok(
+              t.x + t.width <= box.x,
+              "task control does not overlap plus",
+            );
+            assert.ok(
+              await task.evaluate((el) => {
+                const r = el.getBoundingClientRect();
+                return el.contains(
+                  document.elementFromPoint(
+                    r.x + r.width / 2,
+                    r.y + r.height / 2,
+                  ),
+                );
+              }),
+              "task control remains clickable",
+            );
+          }
+          return box.x;
+        }
+        const idlePlusX = await checkFilePosition();
+        await input.focus();
+        assert.ok(
+          Math.abs((await checkFilePosition()) - idlePlusX) <= 2,
+          "focus does not move plus sideways",
+        );
         await input.fill("FIXTURE 草稿\n第二行");
         await input.blur();
+        await checkFilePosition();
         const draftHeight = (await shell.boundingBox()).height;
         if (output && width === 390 && height === 844)
           await page.screenshot({ path: `${output}/${preset}-draft.png` });

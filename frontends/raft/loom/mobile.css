@@ -2,6 +2,22 @@
  * Raft retains typography, colors, disclosure, focus and message measurement.
  * CSS reads the native textarea/draft; no second draft or keyboard state owner.
  */
+/* File tools remain at the trailing edge in both reading and editing layouts.
+ * Keep the task checkbox and submit group in normal flow, never overlaid. */
+.loom-composer [data-slot="composer-toolbar"] {
+  min-width: 0;
+}
+.loom-composer-file-tools {
+  order: 2;
+  flex-shrink: 0;
+}
+.loom-composer
+  [data-slot="composer-toolbar"]
+  > div:not(.loom-composer-file-tools) {
+  flex: 1;
+  justify-content: flex-end;
+  white-space: nowrap;
+}
 @media (max-width: 767px) {
   [data-slot="panel-header"] {
     min-height: 48px;
@@ -70,12 +86,12 @@
   }
 
   [data-loom-composer-shell] {
-    padding: 6px 8px calc(env(safe-area-inset-bottom, 0px) + 6px);
+    padding: 4px 8px calc(env(safe-area-inset-bottom, 0px) + 4px);
   }
 
   .loom-composer [data-slot="composer"] {
     gap: 4px;
-    padding: 4px 6px;
+    padding: 2px 6px;
   }
 
   .loom-composer [data-slot="composer-input"] {
@@ -85,6 +101,7 @@
 
   .loom-composer [data-slot="composer-toolbar"] {
     padding: 0;
+    gap: 8px;
     transform: none;
   }
 
