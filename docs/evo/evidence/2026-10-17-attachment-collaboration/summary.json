@@ -1,0 +1,66 @@
+{
+  "date": "2026-10-17",
+  "codeCommit": "e7e33d2d96b4004a11fd18aec26ca9e9c23e48f2",
+  "backendChanged": false,
+  "officialSourceChanged": false,
+  "scope": "Markdown Worker publication and Human/Worker attachment conversation; cancel stale cross-message preview reads",
+  "checks": {
+    "targetedAttachmentTests": 16,
+    "sourceAndProjectionTests": 5,
+    "countsOverlap": true,
+    "frontendTypecheckAndBuild": true,
+    "formatAndDiff": true,
+    "collaborationBrowser": [
+      {
+        "width": 1440,
+        "workerPublished": true,
+        "humanCommentWakesAuthor": true,
+        "explicitWorkerReply": true,
+        "ordinaryReplyExcluded": true,
+        "reload": true,
+        "latestPreviewWins": true
+      },
+      {
+        "width": 390,
+        "workerPublished": true,
+        "humanCommentWakesAuthor": true,
+        "explicitWorkerReply": true,
+        "ordinaryReplyExcluded": true,
+        "reload": true,
+        "latestPreviewWins": true
+      }
+    ],
+    "existingMarkdownAnchorUnknownResponseBrowser": "passed at 1440x1000 and 390x844, DPR1",
+    "realPageSmoke": [
+      {
+        "width": 1440,
+        "dpr": 1,
+        "collapsedByDefault": true,
+        "advancedFields": true,
+        "noMutation": true
+      },
+      {
+        "width": 390,
+        "dpr": 1,
+        "collapsedByDefault": true,
+        "advancedFields": true,
+        "noMutation": true
+      }
+    ]
+  },
+  "deployment": {
+    "verified": true,
+    "webBuild": "311e0cd367b019fed121d349b4f0af7fa96f67ba84c4c5c2ed8951f959b2242d",
+    "backupDatabases": 2,
+    "backupFiles": 319,
+    "unchangedBusinessTables": 18,
+    "receipt": "/Users/sun/.loom/reviews/2026-10-17-attachment-collaboration/restart.json"
+  },
+  "limits": [
+    "No paid CLI or real model invocation",
+    "Attachment interaction verified only on isolated real Kernel/API fixture",
+    "HTML preview/reporting bridge not integrated",
+    "PDF preview/comments not integrated; native source disables PDF comments",
+    "Explicit attachment association required for Worker replies"
+  ]
+}
