@@ -1,0 +1,32 @@
+{
+  "codeCommit": "c1c1de78",
+  "scope": "Official v1.21.22 activity separator rows, task footer/status composition, desktop navigation unread projections and message-location highlight; structural port, not whole-site parity",
+  "checks": {
+    "sourceTests": 11,
+    "typecheck": "passed",
+    "build": "passed; existing large-chunk warning",
+    "fixtureBrowser": [
+      "navigation-unread: independent canonical summaries, active suppression, single icon and read-error clearing",
+      "tasks:1440/390, paging/status/detail/replay/return",
+      "activity-navigation:1440/390, read frontier, channel/thread/private message location, highlight, responsive navigation, keyboard and return"
+    ],
+    "liveBrowser": "Fresh actual-service Chromium 1440/390 activity and tasks, no page errors; activity screenshots inspected. No paid calls or configuration changes.",
+    "diffCheck": "passed"
+  },
+  "deployment": {
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-feed-composition-36eec930-45fe-40eb-ad77-d3b0e2ae5a62",
+    "databases": 2,
+    "files": 325,
+    "businessTablesUnchanged": 18,
+    "verified": true
+  },
+  "remaining": [
+    "Remaining shared headers and action compositions",
+    "Settings subpages",
+    "Computers page",
+    "Composer surrounding menus and suggestions not audited against full latest release",
+    "Global task creator/assignee/unassigned filters (backend supports them; frontend not yet wired)",
+    "Remaining channel settings content",
+    "Activity context menu, alternate list layout/grouping and mobile home unread bindings"
+  ]
+}
