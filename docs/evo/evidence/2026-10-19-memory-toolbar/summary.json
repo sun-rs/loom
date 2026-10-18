@@ -1,0 +1,30 @@
+{
+  "scope": "Memory toolbar/cards/detail chrome only; no backend or memory authority changes.",
+  "provenance": {
+    "upstream": "https://github.com/botiverse/raft-source",
+    "revision": "a98ae003246a0360872a77d76dec2fccd0347ef7",
+    "license": "FSL-1.1-ALv2, owner reuse authorization; notices retained",
+    "sources": [
+      "Loom TasksPage.tsx channel filter binding: Button sm/outline, h-8 min-h-8 gap-2 py-0",
+      "packages/web/src/components/ui/PanelResizeHandle.tsx",
+      "Loom DiscoveryPage.tsx master/detail border composition",
+      "raft-ui Button, Badge, Select"
+    ],
+    "adoption": "Direct native primitives, structural reuse of existing task filter metrics and activity parent border; local memory data/options and badge semantic mapping."
+  },
+  "implemented": [
+    "Search, channel/state filters and refresh on one 32px row; auto content-width filters with a cap for long names.",
+    "Native colored badges for channel, name, state and pinned marker.",
+    "Native outline detail action buttons; responsive overflow retained.",
+    "Native activity outer black divider in brutal theme, with unchanged drag handle.",
+    "Card click/view-full opens memory detail; no invented exact-message provenance navigation."
+  ],
+  "verification": {
+    "red": "Missing compact toolbar assertion failed before changes.",
+    "frontendTypes": "passed",
+    "workbenchBuild": "passed",
+    "browser": "Chromium 1440 and 390x844: toolbar alignment/height, badges, card/detail, border, outline actions and existing memory editing/revision/unknown-result cases.",
+    "paidCalls": 0
+  },
+  "localEvidence": "~/.loom/reviews/2026-10-19-memory-toolbar/"
+}

@@ -1,7 +1,7 @@
 // Structural port: ThreadsInbox InboxRow geometry/states (adoption.json).
 // Local glue: memory content, six-line preview, lazy read and management menus.
 import { useEffect, useRef, useState } from "react";
-import { Card, Button } from "raft-ui";
+import { Card, Button, Badge } from "raft-ui";
 import { Pin } from "lucide-react";
 import type { MemoryEntry } from "@rah-os/protocol";
 import type { RahClient } from "@rah-os/client-sdk";
@@ -149,13 +149,48 @@ export default function MemoryCard({
             {clipped && (
               <span className="text-xs text-foreground-muted">查看全文</span>
             )}
-            <div className="mt-1 text-xs leading-5 text-foreground-placeholder">
-              {channelName} · {entry.name} ·{" "}
-              {entry.state === "active"
-                ? "有效"
-                : entry.state === "deleted"
-                  ? "已删除"
-                  : "已失效"}
+            <div
+              data-testid="memory-card-metadata"
+              className="mt-2 flex min-w-0 flex-wrap items-center gap-1.5"
+            >
+              <Badge
+                appearance="soft"
+                variant="information"
+                uppercase={false}
+                className="max-w-full truncate"
+              >
+                {channelName}
+              </Badge>
+              <Badge
+                appearance="soft"
+                variant="muted"
+                uppercase={false}
+                className="max-w-full truncate"
+              >
+                {entry.name}
+              </Badge>
+              <Badge
+                appearance="soft"
+                variant={
+                  entry.state === "active"
+                    ? "success"
+                    : entry.state === "deleted"
+                      ? "muted"
+                      : "warning"
+                }
+                uppercase={false}
+              >
+                {entry.state === "active"
+                  ? "有效"
+                  : entry.state === "deleted"
+                    ? "已删除"
+                    : "已失效"}
+              </Badge>
+              {entry.pinned && (
+                <Badge appearance="soft" variant="accent" uppercase={false}>
+                  已置顶
+                </Badge>
+              )}
             </div>
           </div>
         </Card>

@@ -4,7 +4,6 @@ import {
   AppShellMainSlot,
   ActivityInboxPanel,
   Button,
-  Input,
   Textarea,
   Dialog,
   DialogContent,
@@ -13,7 +12,7 @@ import {
   DialogBody,
   DialogClose,
 } from "raft-ui";
-import { Brain, X, RefreshCw } from "lucide-react";
+import { Brain, X } from "lucide-react";
 import type { RahClient } from "@rah-os/client-sdk";
 import type { MemoryEntry, MemoryEntryDetail, Room } from "@rah-os/protocol";
 import PanelHeader from "../packages/web/src/components/ui/PanelHeader.tsx";
@@ -25,7 +24,8 @@ import { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives.ts";
 import MemoryCard, { type MemoryAction } from "./MemoryCard.tsx";
 import MemoryHistory from "./MemoryHistory.tsx";
 import MemoryEditor from "./MemoryEditor.tsx";
-import { SelectField, ActionMenu } from "./ManagementUi.tsx";
+import MemoryFilters from "./MemoryFilters.tsx";
+import { ActionMenu } from "./ManagementUi.tsx";
 import { MemoryClient } from "./memory-client.ts";
 import { useRouteIntentOwner, useIntentRoute } from "./useIntentRoute.ts";
 export default function MemoryPage({
@@ -204,7 +204,8 @@ export default function MemoryPage({
   return (
     <div className="flex min-h-0 min-w-0 flex-1" data-testid="loom-memory-page">
       <AppShellMainSlot
-        className="relative min-w-0 bg-layer-canvas theme-brutal:bg-white"
+        data-testid="memory-master"
+        className={`relative min-w-0 bg-layer-canvas theme-brutal:bg-white ${selected && desktop ? "border-r border-line-muted theme-brutal:border-black" : ""}`}
         style={
           selected
             ? desktop
@@ -215,61 +216,27 @@ export default function MemoryPage({
       >
         <ActivityInboxPanel edge="attached">
           <PanelHeader title="记忆" icon={<Brain size={18} />} />
-          <div className="shrink-0 p-4 pb-0">
-            <div className="mb-2 flex items-center gap-2">
-              <Input
-                aria-label="搜索记忆"
-                placeholder="搜索记忆"
-                value={query}
-                maxLength={200}
-                disabled={busy}
-                onChange={(e) => {
-                  setQuery(e.target.value);
-                  if (e.target.value.trim()) setFilter("active");
-                  reset();
-                }}
-              />
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                aria-label="刷新记忆"
-                disabled={busy}
-                onClick={() => setVersion((v) => v + 1)}
-              >
-                <RefreshCw size={14} />
-              </Button>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <SelectField
-                label="频道"
-                value={channel}
-                disabled={busy}
-                onChange={(v) => {
-                  setChannel(v);
-                  reset();
-                }}
-                options={[
-                  { value: "all", label: "全部频道" },
-                  ...channels.map((r) => ({ value: r.roomId, label: r.name })),
-                ]}
-              />
-              <SelectField
-                label="状态"
-                value={filter}
-                disabled={busy || !!query.trim()}
-                onChange={(v) => {
-                  setFilter(v);
-                  reset();
-                }}
-                options={[
-                  { value: "active", label: "有效" },
-                  { value: "invalidated", label: "已失效" },
-                  { value: "deleted", label: "已删除" },
-                  { value: "all", label: "全部状态" },
-                ]}
-              />
-            </div>
-          </div>
+          <MemoryFilters
+            query={query}
+            onQuery={(v) => {
+              setQuery(v);
+              if (v.trim()) setFilter("active");
+              reset();
+            }}
+            channel={channel}
+            onChannel={(v) => {
+              setChannel(v);
+              reset();
+            }}
+            channels={channels.map((r) => ({ value: r.roomId, label: r.name }))}
+            filter={filter}
+            onFilter={(v) => {
+              setFilter(v);
+              reset();
+            }}
+            busy={busy}
+            onRefresh={() => setVersion((v) => v + 1)}
+          />
           <div
             data-testid="loom-memory-list"
             className="scrollbar-quiet relative min-h-0 flex-1 overflow-y-auto bg-layer-canvas-muted p-4 mobile-nav-clearance theme-brutal:bg-white"
@@ -371,7 +338,7 @@ export default function MemoryPage({
                         <Button
                           key={item.label}
                           size="sm"
-                          variant="ghost"
+                          variant="outline"
                           disabled={busy || item.disabled}
                           onClick={item.run}
                         >

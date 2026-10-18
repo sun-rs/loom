@@ -76,11 +76,32 @@ for (const width of [1440, 390]) {
     const errors = [];
     page.on("pageerror", (e) => errors.push(e.message));
     await page.goto(gateway.origin + "/?view=memory");
+    const toolbar = page.getByTestId("memory-toolbar");
+    await toolbar.waitFor();
+    const geometry = await Promise.all(
+      [
+        page.getByRole("textbox", { name: "搜索记忆" }),
+        page.getByRole("combobox", { name: "频道", exact: true }),
+        page.getByRole("combobox", { name: "状态", exact: true }),
+      ].map(async (locator) => locator.boundingBox()),
+    );
+    assert.ok(
+      geometry.every(
+        (r) => Math.abs(r.y - geometry[0].y) < 2 && r.height === 32,
+      ),
+      "single compact toolbar row",
+    );
+
     const card = page.getByRole("button", {
       name: "fixture-memory",
       exact: true,
     });
     await card.waitFor();
+    await card
+      .getByTestId("memory-card-metadata")
+      .locator("[data-slot=badge]")
+      .first()
+      .waitFor();
     await card
       .getByText("FIXTURE body searchable unicorn", { exact: true })
       .waitFor();
@@ -109,12 +130,30 @@ for (const width of [1440, 390]) {
       .getByTestId("memory-detail")
       .getByText(longBody, { exact: true })
       .waitFor();
-    if (width === 1440)
+    if (width === 1440) {
       assert.ok(
         (await page.getByTestId("loom-memory-list").boundingBox()).width <
           listWidth,
       );
-    else
+      const border = await page.getByTestId("memory-master").evaluate((el) => ({
+        width: getComputedStyle(el).borderRightWidth,
+        color: getComputedStyle(el).borderRightColor,
+      }));
+      assert.equal(border.width, "1px");
+      assert.match(
+        border.color,
+        /^(rgb\(0, 0, 0\)|oklch\(0 0 0\))$/,
+        "native brutal activity divider",
+      );
+      const actionBorder = await page
+        .getByTestId("memory-detail")
+        .getByRole("button", { name: "编辑", exact: true })
+        .evaluate((el) => getComputedStyle(el).borderTopWidth);
+      assert.ok(
+        parseFloat(actionBorder) > 0,
+        "native outline actions have visible borders",
+      );
+    } else
       assert.equal(
         await page.getByTestId("loom-memory-list").isVisible(),
         false,
