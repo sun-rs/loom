@@ -261,7 +261,32 @@
       "long Diff had no display-more control before expansion change",
       "HTML source not retained before corrective rendering"
     ],
-    "deployment": "pending safe restart",
+    "deployment": {
+      "source": "ecac3b54823ee17753d084b9e42f73187440d21a",
+      "service": "com.loom.evo",
+      "databasesBackedUp": 2,
+      "filesBackedUp": 319,
+      "businessTablesUnchanged": 18,
+      "freshPages": [
+        {
+          "width": 1440,
+          "listStatus": 200,
+          "preview": false,
+          "entries": 0,
+          "errors": []
+        },
+        {
+          "width": 390,
+          "listStatus": 200,
+          "preview": false,
+          "entries": 0,
+          "errors": []
+        }
+      ],
+      "url": "http://192.168.1.86:4176",
+      "limit": "Existing live workspace inspected was empty; HTML/PDF/Git operation acceptance used temporary real Core fixtures, not user data.",
+      "localEvidence": "~/.loom/reviews/2026-10-19-workspace-completion/"
+    },
     "paidCalls": 0
   }
 }
