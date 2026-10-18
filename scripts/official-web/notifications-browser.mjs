@@ -4,6 +4,7 @@ export async function verifyNotifications({ browser, origin, channels }) {
   const results = [];
   for (const width of [1440, 390]) {
     const context = await browser.newContext({
+      locale: "zh-CN",
       viewport: { width, height: width === 390 ? 844 : 1000 },
       deviceScaleFactor: 1,
       hasTouch: width === 390,
@@ -40,7 +41,7 @@ export async function verifyNotifications({ browser, origin, channels }) {
       const trigger = page.getByTestId(
         width === 390
           ? "notification-trigger-mobile"
-          : "notification-trigger-rail",
+          : "notification-trigger-top-bar",
       );
       await trigger.waitFor({ timeout: 10000 }).catch(async (error) => {
         throw new Error(
@@ -51,10 +52,27 @@ export async function verifyNotifications({ browser, origin, channels }) {
           { cause: error },
         );
       });
+      if (width !== 390) {
+        assert.equal(
+          await page
+            .getByTestId("app-top-bar")
+            .getByTestId("notification-trigger-top-bar")
+            .count(),
+          1,
+        );
+        assert.equal(
+          await page.getByTestId("notification-trigger-rail").count(),
+          0,
+        );
+        assert.equal((await trigger.boundingBox()).height, 36);
+      }
       await trigger.click();
       await page.getByTestId("notification-center").waitFor();
       await page.getByText(/FIXTURE offline computer/).waitFor();
-      await page.getByRole("button", { name: "Dismiss", exact: true }).click();
+      await page
+        .getByTestId("notification-center")
+        .getByRole("button", { name: "关闭", exact: true })
+        .click();
       await page
         .getByText("关闭结果未确认，已重新读取；不会自动重发。")
         .waitFor();

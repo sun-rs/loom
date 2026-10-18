@@ -7,6 +7,7 @@ import {
   Button,
   Input,
   SidebarItem,
+  ConversationPanelTabs,
   Tabs,
   TabsList,
   TabsTab,
@@ -152,23 +153,17 @@ export default function RoleWorkspace({
           actions={actions}
         />
         {selected && (
-          <div className="min-w-0 max-w-full overflow-x-auto overflow-y-hidden scrollbar-none">
-            <Tabs
-              value={tab}
-              onValueChange={onTab}
-              className="bg-layer-panel   "
+          <div className="min-w-0 max-w-full">
+            <ConversationPanelTabs
+              render={<Tabs value={tab} onValueChange={onTab} />}
             >
-              <TabsList
-                variant="underline"
-                className="max-w-full  "
-                aria-label="角色详情"
-              >
+              <TabsList className="max-w-full  " aria-label="角色详情">
                 <TabsTab
                   disabled={busy}
                   value="roles"
                   className="!cursor-default"
                 >
-                  <Settings2 size={12} />
+                  <Settings2 />
                   <TabsLabel>配置</TabsLabel>
                 </TabsTab>
                 <TabsTab
@@ -176,11 +171,11 @@ export default function RoleWorkspace({
                   value="instances"
                   className="!cursor-default"
                 >
-                  <Users size={12} />
+                  <Users />
                   <TabsLabel>实例</TabsLabel>
                 </TabsTab>
               </TabsList>
-            </Tabs>
+            </ConversationPanelTabs>
           </div>
         )}
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">

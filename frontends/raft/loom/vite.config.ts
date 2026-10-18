@@ -8,7 +8,6 @@ import { adaptReactions, adaptReactionToolbar } from "./reaction-adaptation.ts";
 import tailwindcss from "@tailwindcss/postcss";
 import postcss from "postcss";
 import { localizeFontCss } from "./local-fonts.ts";
-import { adaptNotificationTrigger } from "./notification-adaptation.ts";
 import {
   adaptThreadFollowers,
   adaptThreadFollowerRow,
@@ -89,12 +88,7 @@ export default defineConfig({
           return { code: adaptChineseLocale(code), map: null };
         if (id.endsWith("/components/message/MessageHoverToolbar.tsx"))
           return { code: adaptReactionToolbar(code), map: null };
-        if (
-          id.endsWith(
-            "/packages/web/src/components/layout/NotificationTrigger.tsx",
-          )
-        )
-          return { code: adaptNotificationTrigger(code), map: null };
+
         if (
           id.endsWith(
             "/packages/web/src/components/thread/ThreadAgentFollowers.tsx",

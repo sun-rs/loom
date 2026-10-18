@@ -1,4 +1,3 @@
-import SystemNotifications from "./SystemNotifications.tsx";
 import {
   Home,
   Activity,
@@ -55,7 +54,6 @@ export function DesktopNavigation({ active, onSelect }: NavigationProps) {
             .map(item)}
         </AppRailNav>
         <AppRailFooter>
-          <SystemNotifications flavor="rail-bottom" />
           {item(destinations.find((entry) => entry.id === "settings")!)}
         </AppRailFooter>
       </AppRailRoot>

@@ -1,0 +1,39 @@
+{
+  "release": "v1.21.22",
+  "revision": "af3d6ef4a22f0f05f5f9db9424285755d67e9726",
+  "evidence": "../../docs/evo/evidence/2026-10-19-official-page-audit/release-lock.json",
+  "kind": "Structural ports from official production JavaScript; not original TSX or full-site parity",
+  "slices": {
+    "shell-and-tabs": {
+      "source": "app-shell-D1-nY-va.js Gbt/Kbt/R6/Yst/Pst; AgentDetailPanel-B3FrpUPj.js; ChatPanel default sortable tabs",
+      "local": [
+        "loom/TopBar.tsx",
+        "loom/Navigation.tsx",
+        "loom/ChannelTabs.tsx",
+        "loom/RoleWorkspace.tsx",
+        "packages/web/src/components/layout/NotificationTrigger.tsx",
+        "packages/web/src/components/layout/NotificationCenter.tsx"
+      ],
+      "adaptation": "Single workspace renders a static native-typography label without an unsupported organization selector. Loom supplies notification entries and revisioned tab ordering; no official cloud collector. Role-specific tab content is retained.",
+      "preserved": "Search anchor, draft navigation, notification popup/focus, unknown writes, tab drag/order and instance lifecycle",
+      "checks": [
+        "scripts/official-web/page-release.test.mjs",
+        "scripts/official-web/notifications.test.ts",
+        "scripts/official-web/notifications-browser.mjs",
+        "scripts/official-web/tab-order-browser.mjs",
+        "scripts/official-web/topbar-browser.mjs",
+        "scripts/official-web/management-browser.mjs"
+      ]
+    }
+  },
+  "pending": [
+    "Navigation unread projections",
+    "Remaining shared headers and action compositions",
+    "Composer",
+    "Channel task and settings compositions",
+    "Activity list",
+    "Global tasks filters and rows",
+    "Settings subpages",
+    "Computers page"
+  ]
+}

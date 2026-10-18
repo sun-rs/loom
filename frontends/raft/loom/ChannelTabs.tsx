@@ -88,7 +88,7 @@ export default function ChannelTabs({
       <ConversationPanelTabs
         render={<Tabs value={value} onValueChange={onChange} />}
       >
-        <SortableTabsList value={order} onReorder={reorder} variant="underline">
+        <SortableTabsList value={order} onReorder={reorder}>
           {order.map((id) => {
             const Icon =
               id === "chat"
@@ -104,7 +104,7 @@ export default function ChannelTabs({
                 data-testid={`panel-tab-${id}`}
                 className="!cursor-default"
               >
-                <Icon size={12} />
+                <Icon />
                 <TabsLabel>
                   {id === "workspace"
                     ? "工作区"

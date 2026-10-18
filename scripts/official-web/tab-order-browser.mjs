@@ -61,6 +61,19 @@ export async function verifyTabOrder({
           .querySelector('[data-testid="panel-tab-chat"]')
           ?.getAttribute("aria-selected") === "true",
     );
+    const colors = await page.getByTestId("panel-tab-chat").evaluate((el) => {
+      const reference = document.createElement("span");
+      reference.className = "bg-primary";
+      el.append(reference);
+      const expected = getComputedStyle(reference).backgroundColor;
+      reference.remove();
+      return { actual: getComputedStyle(el).backgroundColor, expected };
+    });
+    assert.equal(
+      colors.actual,
+      colors.expected,
+      "selected conversation tab uses native primary fill",
+    );
     const writes = [];
     let lost = false;
     await page.route("**/v3/client/sidebar/patch", async (route) => {

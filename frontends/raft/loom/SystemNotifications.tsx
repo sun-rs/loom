@@ -125,7 +125,7 @@ export function SystemNotificationsProvider({
 export default function SystemNotifications({
   flavor,
 }: {
-  flavor: "rail-bottom" | "mobile-navbar";
+  flavor: "rail-bottom" | "mobile-navbar" | "top-bar";
 }) {
   const entries = useContext(Context);
   return entries ? (

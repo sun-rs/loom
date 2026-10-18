@@ -369,11 +369,13 @@
     },
     "packages/web/src/components/layout/NotificationTrigger.tsx": {
       "upstreamSha256": "a213994608dc9e9c89a239b52ed43fabcd78170846def41b763692926d3c0389",
-      "portedSha256": "a6d5287a299a8b469a5a9ce38e0d89473ffd7abcd677c7a1313bc78c9dd342cf"
+      "portedSha256": "de2df1750d5111e675686b91d08dff269d5368d1860bcaa53d5696b636c469df",
+      "pageRelease": "v1.21.22 / af3d6ef4a22f0f05f5f9db9424285755d67e9726; R6/Yst/Pst structural port, original source hash retained"
     },
     "packages/web/src/components/layout/NotificationCenter.tsx": {
       "upstreamSha256": "d08e2b08742b15d375aacf55f0c88ea88715a4382485cdae754619e13c551e40",
-      "portedSha256": "ab7bcd06c771845605792eaae1b663896fc6dfc4caa07433e719d13a9a22480c"
+      "portedSha256": "b873db1a750e8b2313198f71dc45b05f64d6662f4b51fcabf11e22996d469f80",
+      "pageRelease": "v1.21.22 / af3d6ef4a22f0f05f5f9db9424285755d67e9726; R6/Yst/Pst structural port, original source hash retained"
     },
     "packages/web/src/components/layout/SidebarConversationFinder.tsx": {
       "upstreamSha256": "b30e19754134e6a84ca4fba37f748c830e847d2f0ade1c5c17491b25a2c195d3",
