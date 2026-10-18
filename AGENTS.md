@@ -372,6 +372,54 @@ neither an old reference fixture nor a visible tab proves product completeness.
 - Missing backend capabilities stay explicitly unavailable with accurate labels;
   never connect an enabled production button to fixture success.
 
+### Mandatory Raft UI layering (owner approved 2026-10-19)
+
+For evo, adopt the official Raft UI rules as the implementation contract, not
+merely a visual reference. This applies to all retained and new Loom surfaces,
+including Loom-only features, loading/error states and mobile presentations.
+
+- **Foundation owner: `raft-ui`.** Reuse its recipes/tokens for typography,
+  size, color, border, shadow, focus, hover, selected, disabled and loading
+  states. Do not invent per-page button/component specifications, duplicate
+  the token system or introduce a parallel universal `LoomButton` framework.
+- **Scenario owner: the official specialized component.** Before choosing a
+  generic `Button`, inspect the corresponding official composition and use its
+  scenario component and parameters: e.g. `CloseButton` for detail dismissal,
+  `DialogClose`/`DrawerClose` for their containers, picker triggers for filters,
+  field triggers for forms, and dedicated message/composer controls. Importing
+  `raft-ui` alone does not establish conformity. An X used to clear a filter,
+  a mobile back arrow and a detail close action are different semantics.
+- **Page owner: composition and Loom data binding.** Pages wire data, authority,
+  state and events while preserving the official spacing, borders, responsive
+  layout and interaction rules. Match the complete page/wrapper/component/
+  recipe chain, including state parameters; do not style each callsite in
+  isolation or replace native controls with ad hoc HTML/CSS.
+- **Loom-only features and exceptions.** First map the feature to an existing
+  official scenario. If none fits, use a thin composition of official
+  primitives and document its semantic scope, source references and local
+  differences. Record intentional overrides (including approved compact mobile
+  adaptations) with their reason, owner and focused evidence. Do not silently
+  extend an exception to unrelated controls. New deviations from retained
+  official UI rules require owner approval; routine compliant reuse does not.
+- **Enforcement.** For a changed control, identify its functional role, source
+  component/revision and parameters, local binding, applicable exception and
+  focused regression evidence. Guard established mappings against drift and
+  review unexplained size/style overrides. Verify actual rendered DOM, focus,
+  disabled behavior and pointer hit areas at the affected viewports; CSS text
+  or screenshots alone do not prove an enlarged touch target works. Avoid
+  selectors that infer control semantics from incidental SVG/span nesting.
+  Keep verification proportional to the change under the existing scope rules.
+- **Do not flatten legitimate differences.** Official defaults are defined
+  behavior, not automatically defects. Native disclosure/tree buttons and
+  quiet actions can be intentional. Do not bulk-convert all buttons to one
+  size, all `ghost` variants to `outline`, or all close affordances to the same
+  component without checking their scenario contract.
+
+The [2026-10-19 button audit](docs/evo/evidence/2026-10-19-button-audit/review.zh-CN.md)
+records source evidence and known gaps at that revision; it is not proof that
+every current control conforms. Consult the current adopted source/package
+versions, not an independently copied table of dimensions.
+
 ## Memory boundary
 
 Target and decided semantics: contract §4 (owner-approved 2026-09-26/27).
