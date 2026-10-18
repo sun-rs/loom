@@ -1,3 +1,4 @@
+import { uiActionProps } from "./ui-action-props.ts";
 import { Button } from "raft-ui";
 import type { Room } from "@rah-os/protocol";
 import type { ManagementClient } from "./management-client.ts";
@@ -45,6 +46,7 @@ export default function ChannelArchiveDialog({
                 {room.name}
               </Button>
               <Button
+                {...uiActionProps.secondary}
                 disabled={busy}
                 aria-label={`恢复 ${room.name}`}
                 onClick={() => onChange(room, false)}
@@ -60,7 +62,11 @@ export default function ChannelArchiveDialog({
             归档“{target.name}
             ”？保留频道历史，停止新的频道写入。仍有活动工作时不能归档，可在已归档频道列表恢复。
           </p>
-          <Button disabled={busy} onClick={() => onChange(target, true)}>
+          <Button
+            {...uiActionProps.confirmChange}
+            disabled={busy}
+            onClick={() => onChange(target, true)}
+          >
             确认归档
           </Button>
         </>

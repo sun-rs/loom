@@ -1,3 +1,4 @@
+import { uiActionProps } from "./ui-action-props.ts";
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import {
@@ -77,7 +78,12 @@ export default function WorkspaceFileContent({
         </pre>
       )}
       {lines.length > lineLimit && (!markdown || mode === "raw") && (
-        <Button onClick={() => setLineLimit((n) => n + 4000)}>显示更多</Button>
+        <Button
+          {...uiActionProps.secondary}
+          onClick={() => setLineLimit((n) => n + 4000)}
+        >
+          显示更多
+        </Button>
       )}
     </>
   );

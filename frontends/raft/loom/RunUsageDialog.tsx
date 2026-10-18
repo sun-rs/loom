@@ -1,3 +1,4 @@
+import { uiActionProps } from "./ui-action-props.ts";
 import { useEffect, useState } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
 import type { ClientRunAttemptUsageGetResponse } from "@rah-os/protocol";
@@ -61,7 +62,10 @@ export default function RunUsageDialog({
           {error ? (
             <div role="alert">
               {error}
-              <Button onClick={() => setRetry((v) => v + 1)}>
+              <Button
+                {...uiActionProps.recovery}
+                onClick={() => setRetry((v) => v + 1)}
+              >
                 重新读取用量
               </Button>
             </div>

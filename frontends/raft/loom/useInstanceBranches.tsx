@@ -1,3 +1,4 @@
+import { uiActionProps } from "./ui-action-props.ts";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
 import type { Room } from "@rah-os/protocol";
@@ -131,10 +132,14 @@ export function useInstanceBranches(
               {state === "unknown" && (
                 <div role="alert">
                   结果未知，不能重新创建。
-                  <Button onClick={() => void owner.writes.retry()}>
+                  <Button
+                    {...uiActionProps.recovery}
+                    onClick={() => void owner.writes.retry()}
+                  >
                     核实分支结果
                   </Button>
                   <Button
+                    {...uiActionProps.recovery}
                     onClick={() => {
                       owner.writes.abandon();
                       setMode(undefined);

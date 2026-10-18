@@ -78,7 +78,7 @@ export default function RoleWorkspace({
             </span>
             <Button
               variant="ghost"
-              size="icon-sm"
+              size="icon-xs"
               aria-label="刷新角色"
               disabled={busy}
               onClick={onRefresh}
@@ -87,7 +87,7 @@ export default function RoleWorkspace({
             </Button>
             <Button
               variant="ghost"
-              size="icon-sm"
+              size="icon-xs"
               aria-label="新建角色"
               disabled={busy}
               onClick={onCreate}

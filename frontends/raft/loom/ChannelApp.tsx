@@ -1,3 +1,4 @@
+import { uiActionProps } from "./ui-action-props.ts";
 import MobileBottomBarStack from "../packages/web/src/components/layout/MobileBottomBarStack.tsx";
 import SideWorkspace from "./SideWorkspace.tsx";
 import type { ReactNode } from "react";
@@ -512,6 +513,7 @@ function Channel({
                       ? "表情结果未知，核实前暂停操作。"
                       : "发送结果未知，核实前已暂停发送。"}
                     <Button
+                      {...uiActionProps.recovery}
                       onClick={() =>
                         void verify().catch((failure) =>
                           setError(String(failure)),
@@ -863,6 +865,7 @@ export default function ChannelApp() {
         <div role="alert" className="p-3 text-sm">
           打开私聊结果未知。
           <Button
+            {...uiActionProps.recovery}
             onClick={() =>
               void boxes?.writes
                 .retry()

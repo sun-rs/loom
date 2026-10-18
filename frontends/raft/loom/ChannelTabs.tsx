@@ -1,3 +1,4 @@
+import { uiActionProps } from "./ui-action-props.ts";
 import { useEffect, useMemo, useState } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
 import type { SidebarPreferences } from "@rah-os/protocol";
@@ -123,7 +124,10 @@ export default function ChannelTabs({
       </ConversationPanelTabs>
       <OperationStatus manager={manager} error={error || readError} />
       {readError && (
-        <Button variant="ghost" onClick={() => setVersion((v) => v + 1)}>
+        <Button
+          {...uiActionProps.recovery}
+          onClick={() => setVersion((v) => v + 1)}
+        >
           重试读取标签顺序
         </Button>
       )}

@@ -1,3 +1,4 @@
+import { uiActionProps } from "./ui-action-props.ts";
 import { useRef } from "react";
 import { Button } from "raft-ui";
 import { Upload } from "lucide-react";
@@ -12,7 +13,7 @@ export default function DeviceFileUpload({
   return (
     <span className="relative isolate mr-auto inline-flex max-sm:mr-0 max-sm:w-full">
       <Button
-        variant="outline"
+        {...uiActionProps.secondary}
         className="max-sm:w-full"
         disabled={disabled}
         onClick={() => input.current?.click()}

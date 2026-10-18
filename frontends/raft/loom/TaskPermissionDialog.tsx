@@ -1,3 +1,4 @@
+import { uiActionProps } from "./ui-action-props.ts";
 import { RoomSession } from "@rah-os/client-core";
 import { useEffect, useState } from "react";
 import {
@@ -88,6 +89,7 @@ export default function TaskPermissionDialog({
                 />
               </label>
               <Button
+                {...uiActionProps.formSave}
                 disabled={
                   busy ||
                   enabled === (view.room.allowInstanceTaskCreation === true)
@@ -123,16 +125,23 @@ export default function TaskPermissionDialog({
             </p>
           )}
           {error && state === "idle" && (
-            <Button variant="ghost" onClick={() => setTick((v) => v + 1)}>
+            <Button
+              {...uiActionProps.recovery}
+              onClick={() => setTick((v) => v + 1)}
+            >
               重新读取设置
             </Button>
           )}
           {state === "unknown" && (
             <div className="mt-3 flex gap-2">
-              <Button onClick={() => void bridge.writes.retry()}>
+              <Button
+                {...uiActionProps.recovery}
+                onClick={() => void bridge.writes.retry()}
+              >
                 核实原操作
               </Button>
               <Button
+                {...uiActionProps.recovery}
                 onClick={() => {
                   bridge.writes.discard();
                   onClose();

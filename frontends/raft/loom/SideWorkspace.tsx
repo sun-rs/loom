@@ -1,3 +1,4 @@
+import { uiActionProps } from "./ui-action-props.ts";
 import CloseButton from "../packages/web/src/components/ui/CloseButton.tsx";
 import {
   useEffect,
@@ -157,7 +158,9 @@ export default function SideWorkspace({
         {error && (
           <div role="alert" className="p-3">
             {error}
-            <Button onClick={close}>关闭 Side</Button>
+            <Button {...uiActionProps.secondary} onClick={close}>
+              关闭 Side
+            </Button>
           </div>
         )}
         {room ? (
@@ -205,10 +208,14 @@ export default function SideWorkspace({
               {state === "unknown" && (
                 <div role="alert">
                   丢弃结果未知。
-                  <Button onClick={() => void owner.writes.retry()}>
+                  <Button
+                    {...uiActionProps.recovery}
+                    onClick={() => void owner.writes.retry()}
+                  >
                     核实丢弃结果
                   </Button>
                   <Button
+                    {...uiActionProps.recovery}
                     onClick={() => {
                       owner.writes.abandon();
                       setConfirm(false);

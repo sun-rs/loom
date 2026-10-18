@@ -1,3 +1,4 @@
+import { uiActionProps } from "./ui-action-props.ts";
 import { flushSync } from "react-dom";
 import {
   useCallback,
@@ -331,6 +332,7 @@ export default function AgentPage({
                 ”的角色定义？已有实例、配置快照与历史保留。以后重建同名角色属于新身份。
               </p>
               <Button
+                {...uiActionProps.confirmDelete}
                 disabled={busy}
                 onClick={() => void manager.deleteRole(edit.role, done)}
               >
@@ -349,6 +351,7 @@ export default function AgentPage({
                   .map((r) => ({ value: r.roomId, label: r.name }))}
               />
               <Button
+                {...uiActionProps.dialogSave}
                 disabled={busy || !channel}
                 onClick={() =>
                   void manager.instance("add", channel, edit.role.roleId, done)
@@ -364,6 +367,7 @@ export default function AgentPage({
                 ”？停止后续投递，保留历史；若有未结束工作，服务端会拒绝。重新添加会创建新实例。
               </p>
               <Button
+                {...uiActionProps.confirmDelete}
                 disabled={busy}
                 onClick={() =>
                   void manager.instance(
@@ -400,6 +404,7 @@ export default function AgentPage({
                 ]}
               />
               <Button
+                {...uiActionProps.confirmChange}
                 disabled={busy || !revision}
                 onClick={() =>
                   void manager.instance(

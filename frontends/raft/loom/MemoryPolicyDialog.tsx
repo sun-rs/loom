@@ -1,3 +1,4 @@
+import { uiActionProps } from "./ui-action-props.ts";
 // Native Dialog/FormField/Select/Switch composition; Kernel owns effective access.
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -191,6 +192,7 @@ export default function MemoryPolicyDialog({
                 );
               })}
               <Button
+                {...uiActionProps.formSave}
                 type="submit"
                 disabled={busy || !base || !policyPatch(base, draft)}
               >
@@ -204,17 +206,23 @@ export default function MemoryPolicyDialog({
             </p>
           )}
           {error && state === "idle" && (
-            <Button variant="ghost" onClick={() => setTick((v) => v + 1)}>
+            <Button
+              {...uiActionProps.recovery}
+              onClick={() => setTick((v) => v + 1)}
+            >
               重新读取权限
             </Button>
           )}
           {state === "unknown" && (
             <div className="mt-3 flex gap-2">
-              <Button onClick={() => void owner.writes.retry()}>
+              <Button
+                {...uiActionProps.recovery}
+                onClick={() => void owner.writes.retry()}
+              >
                 核实原操作
               </Button>
               <Button
-                variant="ghost"
+                {...uiActionProps.recovery}
                 onClick={() => {
                   owner.writes.discard();
                   onClose();

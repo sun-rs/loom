@@ -1,3 +1,4 @@
+import { uiActionProps } from "./ui-action-props.ts";
 import TaskHistory from "./TaskHistory.tsx";
 import { useEffect, useMemo, useState, useRef } from "react";
 import { Button } from "raft-ui";
@@ -164,7 +165,10 @@ export default function TaskDetail({
           {bridge.writes.current?.action === "task-assignment"
             ? "负责人修改结果未知。"
             : "状态修改结果未知。"}
-          <Button onClick={() => void bridge.writes.retry()}>
+          <Button
+            {...uiActionProps.recovery}
+            onClick={() => void bridge.writes.retry()}
+          >
             {bridge.writes.current?.action === "task-assignment"
               ? "核实负责人修改"
               : "核实状态修改"}

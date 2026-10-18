@@ -1,3 +1,4 @@
+import { uiActionProps } from "./ui-action-props.ts";
 import { useEffect, useState, type ReactNode } from "react";
 import {
   Select,
@@ -50,8 +51,7 @@ export function ActionMenu({
       <DropdownMenuTrigger
         render={
           <Button
-            size="sm"
-            variant="ghost"
+            {...uiActionProps.menuIcon}
             aria-label={label}
             disabled={disabled}
           />
@@ -128,7 +128,10 @@ export function OperationStatus({
       {manager.writes.state === "unknown" && (
         <div role="alert" className="mt-3">
           结果未知，核实前暂停其他操作。
-          <Button onClick={() => void manager.writes.retry()}>
+          <Button
+            {...uiActionProps.recovery}
+            onClick={() => void manager.writes.retry()}
+          >
             核实操作结果
           </Button>
         </div>

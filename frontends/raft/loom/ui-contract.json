@@ -125,7 +125,63 @@
   ],
   "limits": [
     "Bindings identify ownership and review scope; listing a file is not visual acceptance.",
-    "The automated guard currently enforces local detail closures, registered provenance and mobile selector semantics; it does not prove every control in every theme conforms.",
+    "Guards enforce local detail closures, registered action provenance, absence of per-action size/variant overrides and mobile selector semantics; they do not prove every control in every theme conforms.",
     "Frozen upstream components retain their own contracts. Changing their DOM adaptation requires a scoped integration check."
-  ]
+  ],
+  "actionBindings": {
+    "formSave": {
+      "source": "frontends/raft/packages/web/src/components/agent/AgentDetailPanel.tsx",
+      "rule": "Full configuration form submit, md accent.",
+      "implementation": "frontends/raft/loom/ui-action-props.ts",
+      "adoption": "local parameter binding; native recipe, not byte-exact copied page"
+    },
+    "formCancel": {
+      "source": "frontends/raft/packages/web/src/components/agent/AgentDetailPanel.tsx",
+      "rule": "Full configuration form cancel, md outline.",
+      "implementation": "frontends/raft/loom/ui-action-props.ts",
+      "adoption": "local parameter binding; native recipe, not byte-exact copied page"
+    },
+    "dialogSave": {
+      "source": "frontends/raft/packages/web/src/components/channel/CreateChannelDialog.tsx",
+      "rule": "Compact creation or selection footer, sm accent.",
+      "implementation": "frontends/raft/loom/ui-action-props.ts",
+      "adoption": "local parameter binding; native recipe, not byte-exact copied page"
+    },
+    "confirmDelete": {
+      "source": "frontends/raft/packages/web/src/components/ConfirmDialog.tsx",
+      "rule": "Destructive confirmation, native default sm danger.",
+      "implementation": "frontends/raft/loom/ui-action-props.ts",
+      "adoption": "local parameter binding; native recipe, not byte-exact copied page"
+    },
+    "confirmChange": {
+      "source": "frontends/raft/packages/web/src/components/ConfirmDialog.tsx",
+      "rule": "Explicit disruptive change confirmation, sm warning variant.",
+      "implementation": "frontends/raft/loom/ui-action-props.ts",
+      "adoption": "local parameter binding; native recipe, not byte-exact copied page"
+    },
+    "recovery": {
+      "source": "frontends/raft/packages/web/src/components/search/MessageSearchPage.tsx",
+      "rule": "SearchResultsBoundaryFallback retry, sm outline; same role for Loom receipt verification.",
+      "implementation": "frontends/raft/loom/ui-action-props.ts",
+      "adoption": "local parameter binding; native recipe, not byte-exact copied page"
+    },
+    "secondary": {
+      "source": "frontends/raft/packages/web/src/components/ConfirmDialog.tsx",
+      "rule": "Secondary compact dialog/content action, native sm outline.",
+      "implementation": "frontends/raft/loom/ui-action-props.ts",
+      "adoption": "local parameter binding; native recipe, not byte-exact copied page"
+    },
+    "menuIcon": {
+      "source": "frontends/raft/packages/web/src/components/agent/AgentDetailPanel.tsx",
+      "rule": "Icon-only menu uses native icon-sm recipe; preserve existing ghost interaction.",
+      "implementation": "frontends/raft/loom/ui-action-props.ts",
+      "adoption": "local parameter binding; native recipe, not byte-exact copied page"
+    },
+    "panelIcon": {
+      "source": "frontends/raft/packages/web/src/components/ui/CloseButton.tsx",
+      "rule": "Compact panel icon uses native icon-sm outline; does not replace CloseButton.",
+      "implementation": "frontends/raft/loom/ui-action-props.ts",
+      "adoption": "local parameter binding; native recipe, not byte-exact copied page"
+    }
+  }
 }

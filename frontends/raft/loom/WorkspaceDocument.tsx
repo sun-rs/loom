@@ -1,3 +1,4 @@
+import { uiActionProps } from "./ui-action-props.ts";
 import WorkspaceFileContent from "./WorkspaceFileContent.tsx";
 import { useState } from "react";
 import { Button } from "raft-ui";
@@ -64,7 +65,11 @@ export default function WorkspaceDocument({
   };
   return (
     <>
-      <Button onClick={() => void open()} disabled={busy}>
+      <Button
+        {...uiActionProps.secondary}
+        onClick={() => void open()}
+        disabled={busy}
+      >
         打开预览
       </Button>
       {error && <p role="alert">{error}</p>}

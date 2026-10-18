@@ -1,3 +1,4 @@
+import { uiActionProps } from "./ui-action-props.ts";
 // Local channel-memory binding; native Sidebar / PanelHeader / form primitives.
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -254,11 +255,14 @@ export default function MemoryPage({
             )}
             {state === "unknown" && !selected && (
               <div className="mb-3 flex gap-2">
-                <Button onClick={() => void owner.writes.retry()}>
+                <Button
+                  {...uiActionProps.recovery}
+                  onClick={() => void owner.writes.retry()}
+                >
                   核实原操作
                 </Button>
                 <Button
-                  variant="ghost"
+                  {...uiActionProps.recovery}
                   onClick={() => {
                     owner.writes.discard();
                     setVersion((v) => v + 1);
@@ -415,11 +419,14 @@ export default function MemoryPage({
             )}
             {state === "unknown" && (
               <div className="mt-3 flex gap-2">
-                <Button onClick={() => void owner.writes.retry()}>
+                <Button
+                  {...uiActionProps.recovery}
+                  onClick={() => void owner.writes.retry()}
+                >
                   核实原操作
                 </Button>
                 <Button
-                  variant="ghost"
+                  {...uiActionProps.recovery}
                   onClick={() => {
                     owner.writes.discard();
                     setAction(undefined);
@@ -473,6 +480,9 @@ export default function MemoryPage({
               />
             </FormField>
             <Button
+              {...(action === "delete"
+                ? uiActionProps.confirmDelete
+                : uiActionProps.confirmChange)}
               className="mt-3"
               disabled={busy || !reason.trim()}
               onClick={() => action && change(action, actionTarget)}
@@ -482,10 +492,14 @@ export default function MemoryPage({
             {error && <p role="alert">{error}</p>}
             {state === "unknown" && (
               <div className="mt-3 flex gap-2">
-                <Button onClick={() => void owner.writes.retry()}>
+                <Button
+                  {...uiActionProps.recovery}
+                  onClick={() => void owner.writes.retry()}
+                >
                   核实原操作
                 </Button>
                 <Button
+                  {...uiActionProps.recovery}
                   onClick={() => {
                     owner.writes.discard();
                     setAction(undefined);

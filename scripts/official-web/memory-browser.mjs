@@ -322,7 +322,17 @@ for (const width of [1440, 390]) {
       assert.equal(response.status(), 200, await response.text());
       await route.abort();
     });
-    await edit.getByRole("button", { name: "保存记忆", exact: true }).click();
+    const saveAction = edit.getByRole("button", {
+      name: "保存记忆",
+      exact: true,
+    });
+    assert.equal(await saveAction.getAttribute("data-loom-action"), "formSave");
+    assert.equal((await saveAction.boundingBox()).height, 32);
+    assert.equal(
+      await saveAction.evaluate((el) => getComputedStyle(el).fontSize),
+      "14px",
+    );
+    await saveAction.click();
     await edit.getByText(/保存结果未知/).waitFor();
     await page.goBack();
     await edit.getByText(/保存结果未知/).waitFor();

@@ -1,3 +1,4 @@
+import { uiActionProps } from "./ui-action-props.ts";
 import MobileHomeEntries from "./MobileHomeEntries.tsx";
 import SavedNav from "./SavedNav.tsx";
 import { useAppearanceStore } from "../packages/web/src/store/appearanceStore.ts";
@@ -255,7 +256,7 @@ export default function ChannelSidebar({
           <OperationStatus manager={manager} error={error || readError} />
         )}
         {readError && (
-          <Button variant="ghost" onClick={() => void refresh()}>
+          <Button {...uiActionProps.recovery} onClick={() => void refresh()}>
             刷新列表
           </Button>
         )}
@@ -574,6 +575,7 @@ export default function ChannelSidebar({
                 删除“{title}”分组？会话和历史保留，移回各自默认列表。
               </p>
               <Button
+                {...uiActionProps.confirmDelete}
                 disabled={busy}
                 onClick={() =>
                   patch({
@@ -672,6 +674,7 @@ export default function ChannelSidebar({
                 </>
               )}
               <Button
+                {...uiActionProps.dialogSave}
                 className="mt-3"
                 type="submit"
                 disabled={busy || !title.trim()}

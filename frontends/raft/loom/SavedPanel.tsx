@@ -1,3 +1,4 @@
+import { uiActionProps } from "./ui-action-props.ts";
 import type { RahClient } from "@rah-os/client-sdk";
 import { useSavedMessages } from "./useSavedMessages.ts";
 import { savedEntry } from "./saved-entry.ts";
@@ -234,8 +235,14 @@ export default function SavedPanel({
           {error || "收藏操作结果未知。"}
           {state === "unknown" ? (
             <>
-              <Button onClick={() => void writes.retry()}>核实收藏结果</Button>
               <Button
+                {...uiActionProps.recovery}
+                onClick={() => void writes.retry()}
+              >
+                核实收藏结果
+              </Button>
+              <Button
+                {...uiActionProps.recovery}
                 onClick={() => {
                   writes.abandon();
                   void read();
@@ -245,7 +252,9 @@ export default function SavedPanel({
               </Button>
             </>
           ) : (
-            <Button onClick={() => void read()}>重试</Button>
+            <Button {...uiActionProps.recovery} onClick={() => void read()}>
+              重试
+            </Button>
           )}
         </div>
       )}

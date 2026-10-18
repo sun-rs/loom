@@ -1,3 +1,4 @@
+import { uiActionProps } from "./ui-action-props.ts";
 import { useDraftNavigation } from "./DraftNavigation.tsx";
 import DiscardChangesDialog from "./DiscardChangesDialog.tsx";
 import { useState } from "react";
@@ -110,6 +111,7 @@ export default function MemoryEditor({
               )}
               <div className="mt-4 flex gap-2">
                 <Button
+                  {...uiActionProps.formSave}
                   type="submit"
                   disabled={
                     busy ||
@@ -119,8 +121,8 @@ export default function MemoryEditor({
                   保存记忆
                 </Button>
                 <Button
+                  {...uiActionProps.formCancel}
                   type="button"
-                  variant="ghost"
                   disabled={busy}
                   onClick={requestClose}
                 >
@@ -130,12 +132,14 @@ export default function MemoryEditor({
               {owner.writes.state === "unknown" && (
                 <div className="mt-3 flex gap-2">
                   <Button
+                    {...uiActionProps.recovery}
                     type="button"
                     onClick={() => void owner.writes.retry()}
                   >
                     核实原操作
                   </Button>
                   <Button
+                    {...uiActionProps.recovery}
                     type="button"
                     onClick={() => {
                       owner.writes.discard();

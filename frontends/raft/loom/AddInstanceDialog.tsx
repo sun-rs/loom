@@ -1,3 +1,4 @@
+import { uiActionProps } from "./ui-action-props.ts";
 import { useEffect, useMemo, useState } from "react";
 import {
   Button,
@@ -87,7 +88,10 @@ export default function AddInstanceDialog({
           {error && <p role="alert">{error}</p>}
           {!catalog ? (
             error ? (
-              <Button onClick={() => setAttempt((n) => n + 1)}>
+              <Button
+                {...uiActionProps.recovery}
+                onClick={() => setAttempt((n) => n + 1)}
+              >
                 重新读取角色
               </Button>
             ) : (
@@ -131,6 +135,7 @@ export default function AddInstanceDialog({
             <div role="alert" className="mt-3">
               添加结果未知，请核实原请求。
               <Button
+                {...uiActionProps.recovery}
                 onClick={() =>
                   void manager.writes
                     .retry()
@@ -142,6 +147,7 @@ export default function AddInstanceDialog({
             </div>
           )}
           <Button
+            {...uiActionProps.dialogSave}
             className="mt-3"
             disabled={!catalog || !roleId || state !== "idle"}
             onClick={submit}

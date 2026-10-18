@@ -1,3 +1,4 @@
+import { uiActionProps } from "./ui-action-props.ts";
 import DeviceFileUpload from "./DeviceFileUpload.tsx";
 import { SelectField } from "./ManagementUi.tsx";
 import { useEffect, useState } from "react";
@@ -210,10 +211,11 @@ export default function ComputerFiles({
         </DialogBody>
         <DialogFooter className="flex-wrap gap-2">
           <DeviceFileUpload disabled={uploadDisabled} onFiles={onUpload} />
-          <Button variant="outline" onClick={onClose}>
+          <Button {...uiActionProps.secondary} onClick={onClose}>
             取消
           </Button>
           <Button
+            {...uiActionProps.dialogSave}
             disabled={loading || !!error || !data}
             onClick={() =>
               data && onSelect(selected.length ? selected : [data.absolutePath])

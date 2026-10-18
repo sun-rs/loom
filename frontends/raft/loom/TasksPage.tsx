@@ -1,3 +1,4 @@
+import { uiActionProps } from "./ui-action-props.ts";
 import {
   TaskBoardProvider,
   TaskBoardRouteOwner,
@@ -352,7 +353,12 @@ export default function TasksPage({
           {error && (
             <div role="alert" className="mb-4 text-sm">
               {error}
-              <Button onClick={() => setTick((v) => v + 1)}>重新读取</Button>
+              <Button
+                {...uiActionProps.recovery}
+                onClick={() => setTick((v) => v + 1)}
+              >
+                重新读取
+              </Button>
             </div>
           )}
           {loading ? (

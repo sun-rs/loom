@@ -1,3 +1,4 @@
+import { uiActionProps } from "./ui-action-props.ts";
 import CloseButton from "../packages/web/src/components/ui/CloseButton.tsx";
 import { MessageReactionsProvider } from "./MessageReactions.tsx";
 import ThreadFollowers from "./ThreadFollowers.tsx";
@@ -159,7 +160,9 @@ export default function ThreadWorkspace({
         <div role="alert" className="p-3 text-sm">
           {activity.error}
           {activity.following === undefined && (
-            <Button onClick={activity.reload}>重新读取关注状态</Button>
+            <Button {...uiActionProps.recovery} onClick={activity.reload}>
+              重新读取关注状态
+            </Button>
           )}
         </div>
       )}
@@ -168,7 +171,10 @@ export default function ThreadWorkspace({
           {bridge.writes.current?.action === "message-reaction"
             ? "表情结果未知，请核实原请求。"
             : "回复结果未知，请核实原请求。"}
-          <Button onClick={() => void bridge.writes.retry()}>
+          <Button
+            {...uiActionProps.recovery}
+            onClick={() => void bridge.writes.retry()}
+          >
             {bridge.writes.current?.action === "message-reaction"
               ? "核实表情结果"
               : bridge.writes.current?.action === "message-save"
@@ -345,7 +351,10 @@ export default function ThreadWorkspace({
               >
                 <span>{error || "加载中…"}</span>
                 {error && (
-                  <Button onClick={() => setTick((v) => v + 1)}>
+                  <Button
+                    {...uiActionProps.recovery}
+                    onClick={() => setTick((v) => v + 1)}
+                  >
                     重新读取
                   </Button>
                 )}

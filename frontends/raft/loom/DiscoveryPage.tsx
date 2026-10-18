@@ -1,3 +1,4 @@
+import { uiActionProps } from "./ui-action-props.ts";
 import ActivityEmpty from "./ActivityEmpty.tsx";
 import { ConversationCardSkeleton } from "../packages/web/src/components/ui/Skeleton.tsx";
 import { useActivityFeed } from "./useActivityFeed.ts";
@@ -596,7 +597,9 @@ function Results({
       {entities.error && (
         <div role="alert" className="p-3">
           对话目录读取失败。
-          <Button onClick={entities.retry}>重新读取目录</Button>
+          <Button {...uiActionProps.recovery} onClick={entities.retry}>
+            重新读取目录
+          </Button>
         </div>
       )}
       {mutationError && (
@@ -630,7 +633,12 @@ function Results({
       ) : error ? (
         <div role="alert" className="p-4">
           {error}
-          <Button onClick={() => setRetry((v) => v + 1)}>重新读取</Button>
+          <Button
+            {...uiActionProps.recovery}
+            onClick={() => setRetry((v) => v + 1)}
+          >
+            重新读取
+          </Button>
         </div>
       ) : (
         data && (

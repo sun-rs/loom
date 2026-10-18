@@ -1,3 +1,4 @@
+import { uiActionProps } from "./ui-action-props.ts";
 import { useDraftNavigation } from "./DraftNavigation.tsx";
 import { useEffect, useState } from "react";
 import { Button, Input, Textarea, Spinner } from "raft-ui";
@@ -159,7 +160,11 @@ export default function RoleEditor({
           </p>
         )}
         {error && <p role="alert">{error}</p>}
-        <Button type="submit" disabled={disabled || !choices || !binding}>
+        <Button
+          {...uiActionProps.formSave}
+          type="submit"
+          disabled={disabled || !choices || !binding}
+        >
           保存角色
         </Button>
       </fieldset>

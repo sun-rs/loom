@@ -1,3 +1,4 @@
+import { uiActionProps } from "./ui-action-props.ts";
 import { useEffect, useState } from "react";
 import { Users, MessageSquare } from "lucide-react";
 import {
@@ -106,7 +107,7 @@ export default function ChannelMembers({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         render={
-          <Button size="sm" variant="outline" aria-label="频道成员与状态" />
+          <Button {...uiActionProps.panelIcon} aria-label="频道成员与状态" />
         }
       >
         <Users size={16} />
@@ -118,6 +119,7 @@ export default function ChannelMembers({
         </DialogHeader>
         <DialogBody>
           <Button
+            {...uiActionProps.dialogSave}
             className="mb-3"
             disabled={!onAddInstance}
             onClick={() => {
