@@ -61,7 +61,32 @@
       "diff src/demo.md"
     ],
     "lazy": "zero workspace API/chunk requests before opening tab; preview/raw switch does not reread; single selected diff only",
-    "deployment": "pending final safe restart and real-page check",
+    "deployment": {
+      "codeCommit": "648c503",
+      "service": "com.loom.evo",
+      "backupDatabases": 2,
+      "backupFiles": 319,
+      "businessTablesUnchanged": 18,
+      "sourceSha256": "1de43bc166d54c9562f33672e8b325491ba6ec93241188ae84cb8540473c7b49",
+      "newProcessVerified": true,
+      "freshLanPage": [
+        {
+          "width": 1440,
+          "listStatus": 200,
+          "preview": false,
+          "entries": 0,
+          "errors": []
+        },
+        {
+          "width": 390,
+          "listStatus": 200,
+          "preview": false,
+          "entries": 0,
+          "errors": []
+        }
+      ],
+      "limit": "Live selected channel has empty primary directory; file/Markdown/diff success covered with real filesystem/Git in isolated Core, not a live user-file preview."
+    },
     "chromium": [
       {
         "width": 1440,
