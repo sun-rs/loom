@@ -1,0 +1,32 @@
+{
+  "scope": "Memory presentation only; existing Human APIs, revision checks and memory policy unchanged.",
+  "upstream": {
+    "url": "https://github.com/botiverse/raft-source",
+    "revision": "a98ae003246a0360872a77d76dec2fccd0347ef7",
+    "license": "FSL-1.1-ALv2; owner authorized reuse; upstream notices retained",
+    "sources": [
+      "packages/web/src/components/thread/ThreadsInbox.tsx: InboxRow",
+      "packages/web/src/components/ui/PanelHeader.tsx",
+      "packages/web/src/components/layout/masterDetailPanelSizing.ts",
+      "raft-ui ActivityInboxPanel/Card/ContextMenu"
+    ],
+    "reuse": "Structural port of activity card geometry and selected/hover states; direct reuse of official primitives and panel sizing. Not byte-exact reuse of the entire activity page.",
+    "localGlue": "Description heading, six-line plain-text body preview, viewport-triggered reads, current memory metadata/actions; same master/detail layout as Loom activity binding."
+  },
+  "behavior": [
+    "Wide card list until selection; desktop split and mobile full detail; close restores mounted list.",
+    "Body reads only after card enters viewport, abort on unmount/revision change; deleted bodies not requested.",
+    "Right click does not select/open detail. Card menu also available to touch and keyboard.",
+    "Detail shows explicit actions at 600px panel width, otherwise overflow menu.",
+    "Existing expectedRevision, unknown-write exact replay, draft navigation guard and provenance preserved."
+  ],
+  "verification": {
+    "red": "New memory-card browser assertion timed out before implementation.",
+    "unit": "4 memory-client tests passed; upstream intake integrity passed.",
+    "types": "frontend typecheck passed",
+    "build": "build:web:workbench passed",
+    "browser": "Real temporary Kernel, fake Worker, Chromium 1440 and 390x844 DPR1: preview clamp/full body/close width/right-click; editor/history/search/pin/invalidate/restore/delete and unknown replay. Card pin response loss recovered without selecting detail.",
+    "limitations": "No paid CLI, no backend behavior change. Existing list/search result limits retained; this batch does not add list pagination or server-side excerpts."
+  },
+  "localEvidence": "~/.loom/reviews/2026-10-19-memory-cards/"
+}

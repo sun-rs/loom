@@ -22,6 +22,17 @@ for (const width of [1440, 390]) {
       body: "FIXTURE body searchable unicorn",
       idempotencyKey: "fixture-memory",
     });
+    const longBody = Array.from(
+      { length: 30 },
+      (_, i) => `FIXTURE long memory line ${i + 1}`,
+    ).join("\n");
+    f.kernel.memory.write(work.execution, {
+      name: "fixture-long-memory",
+      type: "project",
+      description: "FIXTURE 长记忆简介",
+      body: longBody,
+      idempotencyKey: "fixture-long-memory",
+    });
     work.finish(0);
     service = new ClientApplicationService({
       human: createHumanApplicationPort(f.kernel),
@@ -48,13 +59,116 @@ for (const width of [1440, 390]) {
     });
     const page = await context.newPage();
     page.setDefaultTimeout(10000);
+    const memoryAction = async (name) => {
+      if (width === 1440)
+        await page
+          .getByTestId("memory-detail")
+          .getByRole("button", { name, exact: true })
+          .click();
+      else {
+        await page
+          .getByTestId("memory-detail")
+          .getByRole("button", { name: "记忆操作", exact: true })
+          .click();
+        await page.getByRole("menuitem", { name, exact: true }).click();
+      }
+    };
     const errors = [];
     page.on("pageerror", (e) => errors.push(e.message));
     await page.goto(gateway.origin + "/?view=memory");
+    const card = page.getByRole("button", {
+      name: "fixture-memory",
+      exact: true,
+    });
+    await card.waitFor();
+    await card
+      .getByText("FIXTURE body searchable unicorn", { exact: true })
+      .waitFor();
+    const listWidth = (await page.getByTestId("loom-memory-list").boundingBox())
+      .width;
+    assert.ok(listWidth > width * 0.7, "closed detail uses wide card list");
+    const longCard = page.getByRole("button", {
+      name: "fixture-long-memory",
+      exact: true,
+    });
+    await longCard.getByText("查看全文", { exact: true }).waitFor();
+    const preview = await longCard
+      .getByTestId("memory-card-body")
+      .evaluate((el) => ({
+        height: el.clientHeight,
+        full: el.scrollHeight,
+        line: parseFloat(getComputedStyle(el).lineHeight),
+      }));
+    assert.ok(
+      preview.full > preview.height && preview.height <= preview.line * 6 + 1,
+      "long body is capped at six lines",
+    );
+    await page.screenshot({ path: `/tmp/loom-memory-cards-${width}.png` });
+    await longCard.click();
+    await page
+      .getByTestId("memory-detail")
+      .getByText(longBody, { exact: true })
+      .waitFor();
+    if (width === 1440)
+      assert.ok(
+        (await page.getByTestId("loom-memory-list").boundingBox()).width <
+          listWidth,
+      );
+    else
+      assert.equal(
+        await page.getByTestId("loom-memory-list").isVisible(),
+        false,
+      );
+    await page
+      .getByRole("button", { name: "关闭记忆正文", exact: true })
+      .click();
+    await page.getByTestId("memory-detail").waitFor({ state: "detached" });
+    await longCard.waitFor();
+    assert.equal(
+      (await page.getByTestId("loom-memory-list").boundingBox()).width,
+      listWidth,
+    );
+    if (width === 1440) {
+      await card.click({ button: "right" });
+      await page.getByRole("menuitem", { name: "编辑", exact: true }).waitFor();
+      assert.equal(
+        new URL(page.url()).searchParams.get("memory"),
+        null,
+        "right click does not navigate",
+      );
+      await page.keyboard.press("Escape");
+      // A card mutation must retain unknown-result recovery without opening detail.
+      let pinInput;
+      await page.route("**/v3/client/memory/pin", async (route) => {
+        pinInput = route.request().postDataJSON();
+        await route.fetch();
+        await route.abort("failed");
+      });
+      await longCard.click({ button: "right" });
+      await page.getByRole("menuitem", { name: "置顶", exact: true }).click();
+      await page
+        .getByRole("button", { name: "核实原操作", exact: true })
+        .waitFor();
+      assert.equal(new URL(page.url()).searchParams.get("memory"), null);
+      await page.unroute("**/v3/client/memory/pin");
+      const replay = page.waitForRequest((r) =>
+        r.url().endsWith("/memory/pin"),
+      );
+      await page
+        .getByRole("button", { name: "核实原操作", exact: true })
+        .click();
+      assert.deepEqual((await replay).postDataJSON(), pinInput);
+      await page
+        .getByRole("button", { name: "核实原操作", exact: true })
+        .waitFor({ state: "hidden" });
+      await card.waitFor();
+    }
+
     await page
       .getByRole("button", { name: "fixture-memory", exact: true })
       .click();
     await page
+      .getByTestId("memory-detail")
       .getByText("FIXTURE body searchable unicorn", { exact: true })
       .waitFor();
     assert.equal(
@@ -63,6 +177,7 @@ for (const width of [1440, 390]) {
     );
     await page.reload();
     await page
+      .getByTestId("memory-detail")
       .getByText("FIXTURE body searchable unicorn", { exact: true })
       .waitFor();
     await page.goBack();
@@ -71,6 +186,7 @@ for (const width of [1440, 390]) {
       .getByRole("button", { name: "fixture-memory", exact: true })
       .click();
     await page
+      .getByTestId("memory-detail")
       .getByText("FIXTURE body searchable unicorn", { exact: true })
       .waitFor();
     await page.getByRole("button", { name: "修订历史", exact: true }).click();
@@ -80,8 +196,7 @@ for (const width of [1440, 390]) {
       .getByText("FIXTURE body searchable unicorn", { exact: true })
       .waitFor();
     await page.getByRole("button", { name: "修订历史", exact: true }).click();
-    await page.getByRole("button", { name: "记忆操作", exact: true }).click();
-    await page.getByRole("menuitem", { name: "编辑", exact: true }).click();
+    await memoryAction("编辑");
     const edit = page.getByRole("dialog");
     await edit
       .getByRole("textbox", { name: "记忆正文" })
@@ -149,14 +264,17 @@ for (const width of [1440, 390]) {
     assert.deepEqual((await editReplay).postDataJSON(), editInput);
     await edit.waitFor({ state: "detached" });
     await page
+      .getByTestId("memory-detail")
       .getByText("FIXTURE edited searchable unicorn", { exact: true })
       .waitFor();
-    await page.getByRole("button", { name: "记忆操作", exact: true }).click();
-    await page.getByRole("menuitem", { name: "置顶", exact: true }).click();
+    await memoryAction("置顶");
     await page.getByText(/修订 3/).waitFor();
+    if (width === 1440)
+      await card
+        .getByText("FIXTURE edited searchable unicorn", { exact: true })
+        .waitFor();
     await page.screenshot({ path: `/tmp/loom-memory-detail-${width}.png` });
-    await page.getByRole("button", { name: "记忆操作", exact: true }).click();
-    await page.getByRole("menuitem", { name: "标为失效", exact: true }).click();
+    await memoryAction("标为失效");
     await page
       .getByRole("dialog")
       .getByRole("textbox", { name: "原因" })
@@ -164,8 +282,7 @@ for (const width of [1440, 390]) {
     await page.getByRole("button", { name: "确认失效", exact: true }).click();
     await page.getByText(/修订 4/).waitFor();
     await page.getByRole("dialog").waitFor({ state: "detached" });
-    await page.getByRole("button", { name: "记忆操作", exact: true }).click();
-    await page.getByRole("menuitem", { name: "恢复", exact: true }).click();
+    await memoryAction("恢复");
     await page.getByText(/修订 5/).waitFor();
     if (width === 390)
       await page.getByRole("button", { name: "记忆列表", exact: true }).click();
@@ -174,10 +291,10 @@ for (const width of [1440, 390]) {
       .getByRole("button", { name: "fixture-memory", exact: true })
       .click();
     await page
+      .getByTestId("memory-detail")
       .getByText("FIXTURE edited searchable unicorn", { exact: true })
       .waitFor();
-    await page.getByRole("button", { name: "记忆操作", exact: true }).click();
-    await page.getByRole("menuitem", { name: "删除", exact: true }).click();
+    await memoryAction("删除");
     const dialog = page.getByRole("dialog");
     await dialog.getByRole("textbox", { name: "原因" }).fill("FIXTURE cleanup");
     let original;
