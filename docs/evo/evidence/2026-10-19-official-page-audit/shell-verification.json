@@ -1,0 +1,34 @@
+{
+  "status": "shell-and-tabs deployed; full page migration pending",
+  "codeCommit": "5cd28356",
+  "officialRelease": "v1.21.22",
+  "checks": {
+    "targetedSourceTests": 6,
+    "typecheck": "passed",
+    "build": "passed; existing chunk-size warning",
+    "browserFixtures": [
+      "notifications 1440/390, unknown dismiss no resend, Escape focus",
+      "topbar 1440/390, search navigation and draft retention",
+      "tab-order 1440/390, native primary selected fill, drag, unknown exact replay",
+      "management 1440/390, role/instance revisions and draft preservation"
+    ],
+    "liveBrowser": "Fresh headless Chromium against actual deployed service at 1440/390; no fixtures, notification open/close, no page errors. Firefox native UI tool unavailable (cgWindowNotFound). No model launches or settings mutations."
+  },
+  "deployment": {
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-page-shell-800cfdaa-73b0-471f-872d-85c1bd270076",
+    "databases": 2,
+    "files": 325,
+    "businessTablesUnchanged": 18,
+    "verified": true
+  },
+  "pending": [
+    "Navigation unread projections",
+    "Remaining shared headers and action compositions",
+    "Composer",
+    "Channel task and settings compositions",
+    "Activity list",
+    "Global tasks filters and rows",
+    "Settings subpages",
+    "Computers page"
+  ]
+}
