@@ -142,7 +142,32 @@
       "Oversized prepend dropped reading overlap before boundary pin correction.",
       "WebKit forward anchor test exposed 2857px displacement before viewport-compensation fix; same assertions passed after."
     ],
-    "deployment": "pending safe restart",
+    "deployment": {
+      "source": "ebb7039063efdd7b06948065a1e5ed4ca3d0c413",
+      "service": "com.loom.evo",
+      "backupDatabases": 2,
+      "backupFiles": 319,
+      "businessTablesUnchanged": 18,
+      "freshLivePages": [
+        {
+          "width": 1440,
+          "liveChat": true,
+          "unopenedPagesAbsent": true,
+          "settingsLazyLoaded": true,
+          "errors": []
+        },
+        {
+          "width": 390,
+          "liveChat": true,
+          "unopenedPagesAbsent": true,
+          "settingsLazyLoaded": true,
+          "errors": []
+        }
+      ],
+      "url": "http://192.168.1.86:4176",
+      "localEvidence": "~/.loom/reviews/2026-10-19-loading-window/",
+      "stateHomeUnchanged": true
+    },
     "paidCalls": 0
   }
 }
