@@ -24,6 +24,17 @@ export type BindingChoice = {
   reasoning: string[];
 };
 
+/** Preserve native compact labels; expose the actual model only for ambiguous names. */
+export function roleModelLabel(
+  binding: BindingChoice,
+  choices: readonly BindingChoice[],
+) {
+  const display = binding.label.split("（")[0]!;
+  return choices.filter((b) => b.label.split("（")[0] === display).length > 1
+    ? `${display} · ${binding.modelBindingId.replace(/^local:[^:]+:/, "")}`
+    : display;
+}
+
 export type RuntimeChoice = {
   bindings: BindingChoice[];
   label: string;

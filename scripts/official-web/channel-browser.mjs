@@ -1,3 +1,4 @@
+import { verifyRoleModelLabels } from "./role-model-label-browser.mjs";
 import { verifyHistoryWindow } from "./history-window-browser.mjs";
 import { verifyLoading } from "./loading-browser.mjs";
 import { verifyWorkspace } from "./workspace-browser.mjs";
@@ -172,7 +173,11 @@ try {
   browser = await (
     process.env.LOOM_BROWSER_ENGINE === "webkit" ? webkit : chromium
   ).launch({ headless: true });
-  if (process.env.LOOM_BROWSER_SLICE === "history-window") {
+  if (process.env.LOOM_BROWSER_SLICE === "role-model-label") {
+    console.log(
+      JSON.stringify(await verifyRoleModelLabels({ browser, origin })),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "history-window") {
     console.log(
       JSON.stringify(
         await verifyHistoryWindow({

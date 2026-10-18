@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Button, Input, Textarea, Spinner } from "raft-ui";
 import {
   roleFormFrom,
+  roleModelLabel,
   buildRoleConfiguration,
   runtimeChoices,
   type RoleForm,
@@ -128,7 +129,7 @@ export default function RoleEditor({
               value={form.modelBindingId}
               options={(runtime?.bindings ?? []).map((b) => ({
                 value: b.modelBindingId,
-                label: b.label.split("（")[0]!,
+                label: roleModelLabel(b, runtime?.bindings ?? []),
               }))}
               onChange={(value) =>
                 setForm({
