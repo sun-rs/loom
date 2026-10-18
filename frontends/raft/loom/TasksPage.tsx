@@ -10,6 +10,11 @@ import type { ChannelTaskClient } from "./channel-task-client.ts";
 import { useIntl } from "react-intl";
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import {
+  PanelSectionHeader,
+  PanelHeaderContent,
+  PanelTitle,
+  PanelMeta,
+  PickerTriggerButton,
   TasksPanelRoot,
   TasksPanelToolbar,
   TasksPanelViewport,
@@ -235,38 +240,40 @@ export default function TasksPage({
         data-testid="loom-tasks-page"
       >
         {!channelTasks && (
-          <div
-            data-slot="panel-header"
-            data-loom-root-header
-            className="flex h-panel-header items-center gap-3 border-b border-line-muted bg-layer-panel px-5    "
-          >
-            <div className="hidden md:flex size-icon-header items-center justify-center border border-line-muted bg-primary-soft text-primary-strong    ">
-              <CheckSquare size={18} />
-            </div>
-            <div className="min-w-0 flex-1 flex items-center justify-between gap-3">
-              <h2 className="font-bold text-base leading-tight">任务</h2>
-              <p className="text-xs text-foreground-muted font-mono truncate">
-                {loading ? "加载中…" : `${rows.length} / ${total} 项频道任务`}
-              </p>
-            </div>
-          </div>
+          <PanelSectionHeader data-loom-root-header>
+            <PanelHeaderContent>
+              <PanelTitle render={<h2>任务</h2>} />
+              <PanelMeta render={<p />}>
+                {loading ? (
+                  "加载中…"
+                ) : (
+                  <>
+                    <span className="font-mono">
+                      {rows.length} / {total}
+                    </span>{" "}
+                    项频道任务
+                  </>
+                )}
+              </PanelMeta>
+            </PanelHeaderContent>
+          </PanelSectionHeader>
         )}
         <TasksPanelToolbar>
           <div className="flex flex-wrap items-center gap-2">
             {!channelTasks && (
               <div ref={filterHost} className="relative">
-                <Button
-                  size="sm"
-                  variant={roomId ? "primary" : "outline"}
+                <PickerTriggerButton
+                  data-has-value={roomId ? "" : undefined}
                   type="button"
                   onClick={() => setFilter((v) => !v)}
-                  className="box-border h-8 min-h-8 gap-2 py-0"
                   aria-label="筛选频道"
                 >
-                  <Hash size={12} />
+                  <Hash size={14} />
                   {rooms.find((r) => r.roomId === roomId)?.name ?? "频道"}
-                  <ChevronDown size={12} />
-                </Button>
+                  <span data-picker-trigger-indicator="" aria-hidden="true">
+                    <ChevronDown />
+                  </span>
+                </PickerTriggerButton>
                 {filter && (
                   <SelectionPopover
                     title="频道"
@@ -305,9 +312,8 @@ export default function TasksPage({
                   onClick={() => {
                     if (!hasRouteBoundIntent()) setCreating(true);
                   }}
-                  className="box-border inline-flex h-8 min-h-8 items-center gap-1 py-0 text-xs font-bold"
                 >
-                  <Plus size={12} />
+                  <Plus size={16} />
                   {formatMessage({ id: "task.board.newTask" })}
                 </Button>
               )}
@@ -322,21 +328,13 @@ export default function TasksPage({
                   key={value}
                   value={value}
                   data-testid={`channel-task-view-${value}`}
-                  render={(props) => (
-                    <Button
-                      {...props}
-                      size="sm"
-                      variant={mode === value ? "primary" : "outline"}
-                      className="box-border h-8 min-h-8 gap-1.5 py-0"
-                    />
-                  )}
                 >
                   {value === "board" ? (
-                    <Columns3 size={12} />
+                    <Columns3 size={16} aria-hidden="true" />
                   ) : (
-                    <LayoutList size={12} />
+                    <LayoutList size={16} aria-hidden="true" />
                   )}
-                  <SegmentedControlLabel>
+                  <SegmentedControlLabel className="max-sm:sr-only">
                     {value === "board" ? "看板" : "列表"}
                   </SegmentedControlLabel>
                 </SegmentedControlItem>

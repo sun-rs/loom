@@ -166,7 +166,7 @@ export function ComposerFilesTools({
           onPointerDown={(e) => e.preventDefault()}
           onClick={() => setOpen(true)}
         >
-          <Plus size={14} />
+          <Plus size={18} />
         </ComposerIconButton>
       </Tooltip>
       {open && (

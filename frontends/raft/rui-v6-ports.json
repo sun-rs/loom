@@ -141,7 +141,8 @@
     },
     "packages/web/src/components/ui/OverflowSheet.tsx": {
       "upstreamSha256": "2419949f6c03d1adac9dd52c096f65065e1b48540c2ca4a59579819ba8e0d27c",
-      "portedSha256": "80f517b527f02cb150419cf0fb802866dc0012d3cc733d72a1e3fc0732bab2a2"
+      "portedSha256": "0ab4838dd3b4027e2632915666c73f717aec6ad79ef08554553d8acc64f31556",
+      "pageRelease": "v1.21.22 official production composition, local data/submit/close guard retained"
     },
     "packages/web/src/components/ui/SelectionPopover.tsx": {
       "upstreamSha256": "4d5bfe8979f5869f3bfd2434038da2a38c31582e973b58d9d45b6d7658c785ca",
@@ -435,7 +436,8 @@
     },
     "packages/web/src/components/message/MessageInput.tsx": {
       "upstreamSha256": "0b3727c8e8cd4b202bd08f08ac3f67bf80c7c94c6f7e9c76c9cfb7da05c59786",
-      "portedSha256": "25b2c7503eda09bb8d6b513a7fec47170c1badadabffa3bc79b86b9389177b0e"
+      "portedSha256": "514da6ab08e7aba69c18581c53d41f58c4d16876ebf91e872bafd57e236da568",
+      "pageRelease": "v1.21.22 official production composition, local data/submit/close guard retained"
     },
     "packages/web/src/components/message/CollapsibleMessageContent.tsx": {
       "upstreamSha256": "ad2a22be2cfc24dee4c72bc4d72df80eca716e6acc2e4e7f921648920f479b8b",

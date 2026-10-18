@@ -1,8 +1,8 @@
+// v1.21.22 yxt/bxt structural port; Loom keeps close guards and action ownership.
 import { useCallback } from "react";
 import type { ComponentProps, ReactNode } from "react";
 import { useIntl } from "react-intl";
 import { ArrowLeft, MoreHorizontal, X } from "lucide-react";
-import type { ButtonProps } from "raft-ui";
 import {
   Button,
   Drawer,
@@ -10,6 +10,10 @@ import {
   DrawerContent,
   DrawerDescription,
   DrawerTitle,
+  DrawerHeader,
+  DrawerBody,
+  PanelAction,
+  PanelActions,
   Switch,
 } from "raft-ui";
 import Tooltip from "./Tooltip";
@@ -18,7 +22,7 @@ import type { MessageId } from "../../i18n/messages";
 /**
  * Topbar overflow primitives. Shared shell for the channel and thread
  * overflow menus: one compact trigger + a right-side Drawer.
- * On phones `max-w-[min(100vw,34rem)]` resolves to full width, so the
+ * Native DrawerContent owns dimensions; on phones the
  * sheet IS the mobile page; the mobile chevron in the header doubles as
  * the back affordance, the X is desktop-only — mirroring the design's
  * "desktop dialog / mobile page with back" split without a new route.
@@ -29,27 +33,23 @@ export function OverflowMenuTrigger({
   onClick,
   icon,
   testId,
-  variant = "outline",
 }: {
   labelId: MessageId;
   onClick: () => void;
   /** Defaults to the generic overflow glyph; semantic surfaces may provide a more precise icon. */
   icon?: ReactNode;
   testId?: string;
-  variant?: ButtonProps["variant"];
 }) {
   const { formatMessage } = useIntl();
   return (
     <Tooltip content={formatMessage({ id: labelId })}>
-      <Button
-        size="icon-sm"
-        variant={variant}
+      <PanelAction
         onClick={onClick}
         aria-label={formatMessage({ id: labelId })}
         data-testid={testId}
       >
-        {icon ?? <MoreHorizontal size={14} />}
-      </Button>
+        {icon ?? <MoreHorizontal size={22} />}
+      </PanelAction>
     </Tooltip>
   );
 }
@@ -105,7 +105,9 @@ export function OverflowSheet({
   children: ReactNode;
 }) {
   const { formatMessage } = useIntl();
-  const handleOpenChange = useCallback<NonNullable<ComponentProps<typeof Drawer>["onOpenChange"]>>(
+  const handleOpenChange = useCallback<
+    NonNullable<ComponentProps<typeof Drawer>["onOpenChange"]>
+  >(
     (nextOpen, eventDetails) => {
       if (!nextOpen && closeGuardRef?.current) {
         eventDetails.cancel();
@@ -116,7 +118,6 @@ export function OverflowSheet({
     },
     [closeGuardRef, onCloseGuarded, onOpenChange],
   );
-  const headerClassName = "flex h-panel-header shrink-0 items-center border-b border-line-muted bg-layer-panel px-4 text-foreground-strong    ";
   return (
     <Drawer
       open={open}
@@ -126,71 +127,57 @@ export function OverflowSheet({
     >
       <DrawerContent
         data-testid={testId}
-        className="inset-y-0 right-0 h-dvh w-full max-w-[min(100vw,34rem)] [--drawer-content-height:100dvh] [--drawer-inset:0px] flex-col rounded-none border-0   bg-layer-panel text-foreground-strong "
+        className="inset-y-0 right-0 h-dvh w-full [--drawer-content-height:100dvh] [--drawer-inset:0px] flex-col"
       >
-        {/* Bare mode HIDES the header instead of unmounting it and keeps
-            the body wrapper as the same element at the same position —
-            only its className changes — so children keep their React
-            identity and a dirty settings draft survives root → page →
-            back navigation. Title/description swap to sr-only copies so
-            exactly one of each is mounted at a time. */}
-        <div
-          className={bare ? "hidden" : headerClassName}
+        <DrawerHeader
+          className={bare ? "hidden" : undefined}
           data-testid={bare ? undefined : "overflow-sheet-header"}
         >
-
-          {/* Mobile has Back / identity / actions columns; desktop removes
-              Back from layout and resolves to identity / actions. The
-              subtitle starts in the SAME identity column as the title, so a
-              channel description aligns with the #channel label at both
-              breakpoints instead of falling back to the sheet's left edge. */}
-          <div className="grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-2 md:grid-cols-[minmax(0,1fr)_auto]">
-            <DrawerClose
-              render={(
-                <Button
-                  size="icon-sm"
-                  className="md:hidden"
-                  aria-label={formatMessage({ id: closeLabelId })}
-                />
-              )}
+          <DrawerClose
+            render={
+              <PanelAction
+                className="md:hidden"
+                aria-label={formatMessage({ id: closeLabelId })}
+              />
+            }
+          >
+            <ArrowLeft size={22} />
+          </DrawerClose>
+          <div className="min-w-0 flex-1" data-testid="overflow-sheet-identity">
+            <DrawerTitle
+              className="truncate"
+              data-testid="overflow-sheet-title"
             >
-              <ArrowLeft size={16} />
-            </DrawerClose>
-            <div className="min-w-0">
-              <DrawerTitle
-                className="truncate text-base font-bold leading-tight text-inherit "
-                data-testid="overflow-sheet-title"
+              {title}
+            </DrawerTitle>
+            <DrawerDescription className="sr-only">
+              {formatMessage({ id: descriptionId })}
+            </DrawerDescription>
+            {subtitle && (
+              <div
+                className="min-w-0"
+                data-testid="overflow-sheet-subtitle-row"
               >
-
-                {title}
-              </DrawerTitle>
-              <DrawerDescription className="sr-only">
-                {formatMessage({ id: descriptionId })}
-              </DrawerDescription>
-              {subtitle && (
-                <div className="min-w-0" data-testid="overflow-sheet-subtitle-row">
-                  {subtitle}
-                </div>
-              )}
-            </div>
-            <div className="flex shrink-0 items-center gap-1">
-              {headerExtras}
-              {!hideDesktopClose && (
-                <DrawerClose
-                  render={(
-                    <Button
-                      size="icon-sm"
-                      className="max-md:hidden"
-                      aria-label={formatMessage({ id: closeLabelId })}
-                    />
-                  )}
-                >
-                  <X size={16} />
-                </DrawerClose>
-              )}
-            </div>
+                {subtitle}
+              </div>
+            )}
           </div>
-        </div>
+          <PanelActions>
+            {headerExtras}
+            {!hideDesktopClose && (
+              <DrawerClose
+                render={
+                  <PanelAction
+                    className="max-md:hidden"
+                    aria-label={formatMessage({ id: closeLabelId })}
+                  />
+                }
+              >
+                <X size={22} />
+              </DrawerClose>
+            )}
+          </PanelActions>
+        </DrawerHeader>
         {bare && (
           <>
             <DrawerTitle className="sr-only">{title}</DrawerTitle>
@@ -199,10 +186,15 @@ export function OverflowSheet({
             </DrawerDescription>
           </>
         )}
-
-        <div className={bare ? "flex min-h-0 flex-1 flex-col" : "min-h-0 flex-1 overflow-y-auto py-2"}>
+        <DrawerBody
+          className={
+            bare
+              ? "flex min-h-0 flex-1 flex-col overflow-visible p-0"
+              : "min-h-0 flex-1 overflow-y-auto px-0 py-2"
+          }
+        >
           {children}
-        </div>
+        </DrawerBody>
       </DrawerContent>
     </Drawer>
   );
@@ -245,10 +237,12 @@ export function OverflowActionRow({
       data-testid={testId}
       aria-label={ariaLabel}
     >
-      <span data-icon="inline-start" className="shrink-0">{icon}</span>
+      <span data-icon="inline-start" className="shrink-0">
+        {icon}
+      </span>
       <span className="truncate">{label}</span>
       {trailing && (
-        <span className="ml-auto shrink-0 font-mono text-xs font-normal text-foreground-muted">
+        <span className="ml-auto shrink-0 font-mono text-mono-meta font-normal text-foreground-hint">
           {trailing}
         </span>
       )}
@@ -283,7 +277,9 @@ export function OverflowCommandRow({
       disabled={disabled}
       data-testid={testId}
     >
-      <span data-icon="inline-start" className="shrink-0">{icon}</span>
+      <span data-icon="inline-start" className="shrink-0">
+        {icon}
+      </span>
       <span className="truncate">{label}</span>
     </Button>
   );
@@ -309,7 +305,10 @@ export function OverflowSwitchRow({
 }) {
   return (
     <div className="flex w-full items-center justify-between gap-3 px-4 py-3">
-      <span id={labelId} className="flex min-w-0 items-center gap-3 text-sm font-bold text-foreground-strong">
+      <span
+        id={labelId}
+        className="flex min-w-0 items-center gap-3 text-sm font-bold text-foreground-strong"
+      >
         <span className="shrink-0">{icon}</span>
         <span className="truncate">{label}</span>
       </span>

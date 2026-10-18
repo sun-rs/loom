@@ -91,24 +91,24 @@ export async function verifyMobileDensity({ browser, origin, channels }) {
             "idle plus is on left",
           );
           assert.ok(
-            hit.width === 28 && hit.height === 28,
-            "file control paints a compact28px square",
+            hit.width === 32 && hit.height === 32,
+            "file control paints a native32px square",
           );
           assert.ok(
             await plus.evaluate((el) => {
               const r = el.getBoundingClientRect();
               return [
-                [-7, -7],
-                [r.width + 7, -7],
-                [-7, r.height + 7],
-                [r.width + 7, r.height + 7],
+                [-4, -4],
+                [r.width + 4, -4],
+                [-4, r.height + 4],
+                [r.width + 4, r.height + 4],
               ].every(([x, y]) =>
                 el.contains(document.elementFromPoint(r.x + x, r.y + y)),
               );
             }),
-            "44px file hit area includes corners beyond painted border",
+            "native file hit area includes corners beyond painted border",
           );
-          await page.mouse.click(hit.x - 6, hit.y + hit.height / 2);
+          await page.mouse.click(hit.x - 4, hit.y + hit.height / 2);
           await page.getByRole("dialog").waitFor();
           await page.keyboard.press("Escape");
           await page.getByRole("dialog").waitFor({ state: "hidden" });
@@ -169,21 +169,21 @@ export async function verifyMobileDensity({ browser, origin, channels }) {
             .locator('[data-slot="composer-toolbar"] button')
             .filter({ has: page.locator("svg.lucide-send") });
           const b = await send.boundingBox();
-          assert.equal(b.width, 28);
-          assert.equal(b.height, 28);
+          assert.equal(b.width, 32);
+          assert.equal(b.height, 32);
           assert.ok(
             await send.evaluate((el) => {
               const r = el.getBoundingClientRect();
               return [
-                [-7, -7],
-                [r.width + 7, -7],
-                [-7, r.height + 7],
-                [r.width + 7, r.height + 7],
+                [-4, -4],
+                [r.width + 4, -4],
+                [-4, r.height + 4],
+                [r.width + 4, r.height + 4],
               ].every(([x, y]) =>
                 el.contains(document.elementFromPoint(r.x + x, r.y + y)),
               );
             }),
-            "send has unobstructed44px hit area",
+            "send has unobstructed native hit area",
           );
         }
         const draftHeight = (await shell.boundingBox()).height;

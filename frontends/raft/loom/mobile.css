@@ -50,7 +50,7 @@
     display: none;
   }
 
-  /* Compact adaptation: upstream main headers intentionally use 62dp.
+  /* Compact adaptation: upstream main headers use the native 56px metric.
    * Use its compact 48dp metric across Loom root and detail headers. */
   [data-loom-root-header] {
     height: 48px;
@@ -63,7 +63,7 @@
     line-height: 20px;
   }
 
-  /* rUI 0.6 owns 32px controls and their 44px pointer targets. */
+  /* rUI 0.6 owns 32px controls and their expanded pointer targets. */
   [data-slot="panel-actions"] {
     gap: 12px;
   }
@@ -90,36 +90,11 @@
     --tw-translate-y: 0px;
   }
 
-  /* Compact visible surface; the reserved margin and transparent extension
-   * provide a nonoverlapping44px target. Never inflate the painted border. */
+  /* Native rUI owns painted size, glyphs and pseudo hit targets.
+   * Reserve a 44px layout cell for its 32px button plus 6px each side. */
   .loom-composer [data-slot="composer-toolbar"] button:not([role="checkbox"]) {
-    position: relative;
-    width: 28px;
-    height: 28px;
-    min-width: 28px;
-    min-height: 28px;
-    padding: 4px;
-    margin: 8px;
-    overflow: visible;
+    margin: 6px;
     flex-shrink: 0;
-  }
-  .loom-composer
-    [data-slot="composer-toolbar"]
-    button:not([role="checkbox"])::after {
-    content: "";
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    width: 44px;
-    height: 44px;
-    transform: translate(-50%, -50%);
-  }
-  .loom-composer
-    [data-slot="composer-toolbar"]
-    button:not([role="checkbox"])
-    svg {
-    width: 14px;
-    height: 14px;
   }
   .loom-composer [data-testid="composer-as-task-toggle"] {
     min-height: 44px;
@@ -171,13 +146,13 @@
     min-width: 0;
   }
 
-  /* Center the20px line inside the40px empty preview. Native autosizing can
+  /* Center the native line height inside the40px empty preview. Autosizing can
    * retain inline height after a draft; editing keeps its own size/padding. */
   .loom-composer[data-has-accessories="false"]:not(:has(textarea:focus)):not(
       :has([data-testid="composer-as-task-toggle"][aria-checked="true"])
     ):has(textarea:placeholder-shown)
     [data-slot="composer-input"] {
-    padding-block: 10px;
+    padding-block: calc((40px - 1lh) / 2);
     height: 40px !important;
     max-height: 40px;
     overflow: hidden;

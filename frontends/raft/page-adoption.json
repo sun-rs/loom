@@ -24,16 +24,37 @@
         "scripts/official-web/topbar-browser.mjs",
         "scripts/official-web/management-browser.mjs"
       ]
+    },
+    "chat-composer-drawer-task-chrome": {
+      "source": "app-shell-D1-nY-va.js MessageInput toolbar/ComposerToolbarLabel, yxt/bxt drawer composition, TasksPanel header/picker/view controls",
+      "local": [
+        "packages/web/src/components/message/MessageInput.tsx",
+        "packages/web/src/components/ui/OverflowSheet.tsx",
+        "loom/ComposerFiles.tsx",
+        "loom/ChannelControl.tsx",
+        "loom/TasksPage.tsx",
+        "loom/mobile.css"
+      ],
+      "adaptation": "Existing Loom submit/task/file interfaces retained. Single + file tool and compact mobile reading layout remain owner-approved local features. Native controls own geometry and typography; native line height is used to center compact placeholder. Only existing channel filter is exposed; creator/assignee filters and task row refresh are still pending. All close guards retained.",
+      "checks": [
+        "scripts/official-web/chat-composition-release.test.mjs",
+        "scripts/official-web/channel-task.test.ts",
+        "scripts/official-web/channel-controls.test.ts",
+        "scripts/official-web/channel-controls-browser.mjs",
+        "scripts/official-web/channel-task-browser.mjs",
+        "scripts/official-web/mobile-density-browser.mjs",
+        "scripts/official-web/task-browser.mjs"
+      ]
     }
   },
   "pending": [
     "Navigation unread projections",
     "Remaining shared headers and action compositions",
-    "Composer",
-    "Channel task and settings compositions",
     "Activity list",
     "Global tasks filters and rows",
     "Settings subpages",
-    "Computers page"
+    "Computers page",
+    "Remaining channel settings content and task row compositions; shared drawer migrated",
+    "Composer surrounding menus and suggestions not audited against full latest release"
   ]
 }

@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } fr
 import { useIntl } from "react-intl";
 import type { IntlShape } from "react-intl";
 import { Send, UserX, Hash, Paperclip, X, FileText, ImagePlus, Monitor, Blocks, ArrowLeftRight } from "lucide-react";
-import { Badge, Button, Composer, ComposerActions, ComposerAttachment, ComposerAttachmentBody, ComposerAttachmentFailedOverlay, ComposerAttachmentFile, ComposerAttachmentImage, ComposerAttachmentMeta, ComposerAttachmentRemove, ComposerAttachments, ComposerAttachmentTitle, ComposerAttachmentUploadingOverlay, ComposerAttachmentUploadProgressBar, ComposerIconButton, ComposerInput, ComposerRoot, ComposerSubmit, ComposerSuggestionAside, ComposerSuggestionContent, ComposerSuggestionGroup, ComposerSuggestionGroupLabel, ComposerSuggestionIcon, ComposerSuggestionList, ComposerSuggestionMeta, ComposerSuggestionTitle, ComposerToolbar, Spinner } from "raft-ui";
+import { Badge, Button, Composer, ComposerActions, ComposerAttachment, ComposerAttachmentBody, ComposerAttachmentFailedOverlay, ComposerAttachmentFile, ComposerAttachmentImage, ComposerAttachmentMeta, ComposerAttachmentRemove, ComposerAttachments, ComposerAttachmentTitle, ComposerAttachmentUploadingOverlay, ComposerAttachmentUploadProgressBar, ComposerIconButton, ComposerInput, ComposerRoot, ComposerSubmit, ComposerSuggestionAside, ComposerSuggestionContent, ComposerSuggestionGroup, ComposerSuggestionGroupLabel, ComposerSuggestionIcon, ComposerSuggestionList, ComposerSuggestionMeta, ComposerSuggestionTitle, ComposerToolbar, ComposerToolbarLabel, Spinner } from "raft-ui";
 import {
   DndContext,
   closestCenter,
@@ -42,7 +42,7 @@ import {
 import { useAutocomplete } from "../../hooks/useAutocomplete";
 import { useAppNavigate } from "../../hooks/useAppNavigate";
 import { useRankedComposerSuggestions } from "../../hooks/useRankedComposerSuggestions";
-import { SUPPORTS_FIELD_SIZING, useComposerAutosize } from "./useComposerAutosize";
+import { useComposerAutosize } from "./useComposerAutosize";
 import { AutocompleteOptionRow } from "./AutocompleteOptionRow";
 import { extractClipboardFiles } from "../../utils/clipboardFiles";
 import AvatarSlot from "../ui/AvatarSlot";
@@ -623,7 +623,7 @@ const preventToolbarButtonPointerDownBlur = (e: React.PointerEvent<HTMLButtonEle
   e.preventDefault();
 };
 
-const preventTaskTogglePointerDownBlur = (e: React.PointerEvent<HTMLButtonElement>) => {
+const preventTaskTogglePointerDownBlur = (e: React.PointerEvent<HTMLElement>) => {
   // Keep the composer focused while toggling task mode; the following click
   // still toggles the checkbox without sending.
   e.preventDefault();
@@ -2536,7 +2536,7 @@ export default function MessageInput({
   }, [handleMentionKeyDown, handleChannelKeyDown, filteredMentions, filteredChannels, mention.index, channel.index, doInsertMention, doInsertChannel, handleSubmit]);
 
 
-  const toggleTaskModeWithoutBlur = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const toggleTaskModeWithoutBlur = (e: React.MouseEvent<HTMLElement>) => {
     e.preventDefault();
     setAlsoCreateTask((prev) => !prev);
   };
@@ -2585,7 +2585,7 @@ export default function MessageInput({
             ? formatMessage({ id: "message.composer.retryFailedTitle" })
             : submitLabelOverride ?? formatMessage({ id: "message.composer.send" });
   // Stryker disable next-line ConditionalExpression: icon branch is covered by MessageInput DOM tests; generated JSX mutants hang tsx.
-  const submitIcon = showSubmitSpinner ? <Spinner size="sm" aria-label={formatMessage({ id: "common.loadingLabel" })} /> : <Send size={14} />;
+  const submitIcon = showSubmitSpinner ? <Spinner size="sm" aria-label={formatMessage({ id: "common.loadingLabel" })} /> : <Send size={18} />;
 
   return (
     <ComposerRoot
@@ -3048,7 +3048,6 @@ export default function MessageInput({
             onPaste={handlePaste}
             placeholder={placeholder ?? formatMessage({ id: "message.composer.messagePlaceholder" }, { channel: channelName })}
             maxLength={maxLength}
-            className={`max-h-32 w-full resize-none text-base md:text-sm font-display focus:outline-none leading-5 min-h-5 md:min-h-10 ${SUPPORTS_FIELD_SIZING ? "[field-sizing:content] overflow-y-auto" : ""}`}
             rows={1}
           />
           <ComposerToolbar>
@@ -3063,7 +3062,7 @@ export default function MessageInput({
                   data-slot="button"
                   aria-label={formatMessage({ id: "message.composer.attachImage" })}
                 >
-                  <ImagePlus size={14} />
+                  <ImagePlus size={18} />
                 </ComposerIconButton>
                 </Tooltip>
                 <Tooltip content={formatMessage({ id: "message.composer.attachFile" })}>
@@ -3073,34 +3072,33 @@ export default function MessageInput({
                   data-slot="button"
                   aria-label={formatMessage({ id: "message.composer.attachFile" })}
                 >
-                  <Paperclip size={14} />
+                  <Paperclip size={18} />
                 </ComposerIconButton>
                 </Tooltip>
               </ComposerActions>
             )}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               {showTaskButton && (
                 <Tooltip content={formatMessage({ id: "message.composer.sendAsTaskTooltip" })}>
-                <button
-                  type="button"
+                <ComposerToolbarLabel
+                  render={<button type="button" />}
                   role="checkbox"
                   data-testid="composer-as-task-toggle"
                   aria-checked={alsoCreateTask}
-                  className="inline-flex items-center gap-1.5 select-none"
+                  className="rounded-control outline-none focus-visible:shadow-raft-focus"
                   onPointerDown={preventTaskTogglePointerDownBlur}
                   onClick={toggleTaskModeWithoutBlur}
                 >
                   <CheckMarker
                     checked={alsoCreateTask}
                   />
-                  <span className="text-xs font-bold text-foreground-strong ">{formatMessage({ id: "message.composer.asTask" })}</span>
-                </button>
+                  {formatMessage({ id: "message.composer.asTask" })}
+                </ComposerToolbarLabel>
                 </Tooltip>
               )}
               <Tooltip content={submitTitle}>
               <ComposerSubmit
                 size="icon-sm"
-                data-tone="pink"
                 data-slot="button"
                 onPointerDown={preventSendButtonPointerDownBlur}
                 disabled={submitBlocked}
