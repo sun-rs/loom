@@ -15,6 +15,7 @@ import {
 import { Brain, X } from "lucide-react";
 import type { RahClient } from "@rah-os/client-sdk";
 import type { MemoryEntry, MemoryEntryDetail, Room } from "@rah-os/protocol";
+import CloseButton from "../packages/web/src/components/ui/CloseButton.tsx";
 import PanelHeader from "../packages/web/src/components/ui/PanelHeader.tsx";
 import PanelResizeHandle from "../packages/web/src/components/ui/PanelResizeHandle.tsx";
 import FormField from "../packages/web/src/components/ui/FormField.tsx";
@@ -355,15 +356,14 @@ export default function MemoryPage({
                     </div>
                   </>
                 )}
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
+                <CloseButton
+                  className="flex size-7 shrink-0 items-center justify-center"
                   aria-label="关闭记忆正文"
                   disabled={busy}
                   onClick={reset}
                 >
-                  <X size={16} />
-                </Button>
+                  <X size={14} />
+                </CloseButton>
               </>
             }
           />

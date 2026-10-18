@@ -158,6 +158,22 @@ for (const width of [1440, 390]) {
         await page.getByTestId("loom-memory-list").isVisible(),
         false,
       );
+    const closeStyle = await page
+      .getByRole("button", { name: "关闭记忆正文", exact: true })
+      .evaluate((el) => ({
+        color: getComputedStyle(el).borderTopColor,
+        width: el.getBoundingClientRect().width,
+      }));
+    assert.match(
+      closeStyle.color,
+      /^(rgb\(0, 0, 0\)|oklch\(0 0 0\))$/,
+      "official CloseButton visible border",
+    );
+    assert.equal(
+      closeStyle.width,
+      28,
+      "same compact close control as instance/task detail",
+    );
     await page
       .getByRole("button", { name: "关闭记忆正文", exact: true })
       .click();
