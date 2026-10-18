@@ -1,0 +1,39 @@
+{
+  "codeCommit": "2d83aaa078fb7d420216cf3a27052bdb161d22d0",
+  "package": "raft-ui@0.6.0",
+  "resourceLock": "frontends/raft/rui-resources.lock.json",
+  "pagePorts": "frontends/raft/rui-v6-ports.json",
+  "checks": {
+    "sourceTests": {
+      "passed": 145,
+      "failed": 0
+    },
+    "typecheck": "npm run typecheck:loom --prefix frontends/raft passed",
+    "build": "npm run build:web:workbench passed; existing chunk size warning retained",
+    "browser": {
+      "appearance": [1440, 390],
+      "management": [1440, 390],
+      "memory": [1440, 390],
+      "layoutLightAndDark": [390, 900, 1440],
+      "files": [1440, 390, 820],
+      "chatCore": [1440, 390],
+      "threads": [1440, 390],
+      "localFonts": [1440, 390]
+    },
+    "fontResult": "Space Grotesk + Space Mono local assets; PingFang SC fallback observed for CJK; no external font requests",
+    "format": "maintained local files checked; newly rewritten upstream files formatted; original upstream formatting otherwise preserved; git diff --check passed"
+  },
+  "deployment": {
+    "verified": true,
+    "backupDatabases": 2,
+    "backupFiles": 325,
+    "businessTablesUnchanged": 18,
+    "realBrowser": "Firefox through native UI: LAN appearance rendered with only light/dark/system, memory list with four existing entries loaded, detail opened and closed successfully; no business writes",
+    "privateRestartReceipt": "/Users/sun/.loom/reviews/2026-10-19-raft-v6/restart.json"
+  },
+  "limits": [
+    "No paid providers or backend suite; backend unchanged.",
+    "Original public page source plus explicit compatibility ports, not unavailable latest website page source.",
+    "Owner-approved compact mobile layout retained; all-state/all-theme pixel parity is not claimed."
+  ]
+}
