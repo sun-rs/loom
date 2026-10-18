@@ -441,7 +441,7 @@ export function ActionCard({ messageId, metadata, channelId }: Props) {
         <div className="flex flex-wrap items-center gap-2 text-sm font-bold leading-snug">
           <ActionTitleLine action={action} />
           {isExecuted ? (
-            <Badge variant="success" uppercase className="ml-auto">
+            <Badge variant="success" className="ml-auto">
               <Check size={10} className="shrink-0" />
               <span className="shrink-0">{formatMessage({ id: "actionCard.done" })}</span>
             </Badge>

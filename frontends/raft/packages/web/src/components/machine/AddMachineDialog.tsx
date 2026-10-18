@@ -231,7 +231,7 @@ export default function AddMachineDialog({ onClose }: { onClose: () => void }) {
                 onClose();
                 nav.toSettings("billing");
               }}
-              className="font-bold text-foreground-strong theme-brutal:text-black underline"
+              className="font-bold text-foreground-strong  underline"
             >
               {formatMessage({ id: "machine.add.upgradeForMore" })}
             </button>
@@ -249,7 +249,7 @@ export default function AddMachineDialog({ onClose }: { onClose: () => void }) {
                     onClose();
                     nav.toSettings("billing");
                   }}
-                  className="font-bold text-foreground-strong theme-brutal:text-black underline"
+                  className="font-bold text-foreground-strong  underline"
                 >
                   {formatMessage({ id: "machine.add.viewPlans" })}
                 </button>
@@ -266,29 +266,29 @@ export default function AddMachineDialog({ onClose }: { onClose: () => void }) {
                 type="button"
                 aria-pressed={machineType === "local"}
                 onClick={() => setMachineType("local")}
-                className={`flex-1 flex items-center gap-2 border p-3 text-left transition-colors rounded-md theme-brutal:rounded-none theme-brutal:border-2 ${
+                className={`flex-1 flex items-center gap-2 border p-3 text-left transition-colors rounded-md   ${
                   machineType === "local"
-                    ? "border-line-muted theme-brutal:border-black bg-primary-soft text-primary-strong font-bold shadow-[0_0_0_1px_var(--primary-edge)] theme-brutal:bg-soft-signal theme-brutal:text-black theme-brutal:shadow-brutal-sm"
-                    : "border-line-muted theme-brutal:border-black/30 bg-layer-panel theme-brutal:bg-white hover:border-line-strong theme-brutal:hover:border-black"
+                    ? "border-line-muted  bg-primary-soft text-primary-strong font-bold shadow-[0_0_0_1px_var(--primary-edge)]   "
+                    : "border-line-muted  bg-layer-panel  hover:border-line-strong "
                 }`}
               >
-                <Monitor size={18} className={`shrink-0 ${machineType === "local" ? "text-primary-strong theme-brutal:text-black" : "text-foreground-strong theme-brutal:text-black"}`} />
+                <Monitor size={18} className={`shrink-0 ${machineType === "local" ? "text-primary-strong " : "text-foreground-strong "}`} />
                 <div>
                   <div className="text-sm font-bold uppercase">
                     {formatMessage({ id: "machine.add.yourComputer" })}
                   </div>
-                  <div className={`text-xs font-normal normal-case ${machineType === "local" ? "text-primary-strong/70 theme-brutal:text-black/50" : "text-foreground-muted theme-brutal:text-black/50"}`}>
+                  <div className={`text-xs font-normal normal-case ${machineType === "local" ? "text-primary-strong/70 " : "text-foreground-muted "}`}>
                     {formatMessage({ id: "machine.add.yourComputerDescription" })}
                   </div>
                 </div>
               </button>
               <div
-                className="flex-1 flex items-center gap-2 border border-dashed border-line-muted theme-brutal:border-2 theme-brutal:border-black/30 bg-layer-panel theme-brutal:bg-white p-3 text-left cursor-not-allowed rounded-md theme-brutal:rounded-none"
+                className="flex-1 flex items-center gap-2 border border-dashed border-line-muted   bg-layer-panel  p-3 text-left cursor-not-allowed rounded-md "
               >
-                <Cloud size={18} className="text-foreground-muted theme-brutal:text-black/25 shrink-0" />
+                <Cloud size={18} className="text-foreground-muted  shrink-0" />
                 <div>
-                  <div className="text-sm font-bold uppercase text-foreground-muted theme-brutal:text-black/30">{formatMessage({ id: "machine.add.cloudComputer" })}</div>
-                  <div className="text-xs text-foreground-muted theme-brutal:text-black/25 font-normal normal-case">{formatMessage({ id: "machine.add.comingSoon" })}</div>
+                  <div className="text-sm font-bold uppercase text-foreground-muted ">{formatMessage({ id: "machine.add.cloudComputer" })}</div>
+                  <div className="text-xs text-foreground-muted  font-normal normal-case">{formatMessage({ id: "machine.add.comingSoon" })}</div>
                 </div>
               </div>
             </div>
@@ -338,9 +338,9 @@ export default function AddMachineDialog({ onClose }: { onClose: () => void }) {
               // `data-slot="status"` element (its own Status). The old custom
               // StatusDot was a plain <span>, so the grid put the text in row 1 and
               // the dot underneath it (task #665).
-              icon={<Status variant="warning" pulse />}
+              icon={<Status variant="warning" />}
             >
-              <span className="font-bold text-foreground-strong theme-brutal:text-black">
+              <span className="font-bold text-foreground-strong ">
                 {formatMessage({ id: "machine.add.waitingForConnect" })}
               </span>
             </Banner>
@@ -370,14 +370,14 @@ export default function AddMachineDialog({ onClose }: { onClose: () => void }) {
         {/* Step 3: Connected — name the machine */}
         {step === "connected" && (
           <div>
-            <div className="mb-4 flex items-center gap-3 rounded-md border border-line-muted bg-success-soft p-4 theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black">
-              <CheckCircle size={24} className="text-foreground-strong theme-brutal:text-black shrink-0" />
+            <div className="mb-4 flex items-center gap-3 rounded-md border border-line-muted bg-success-soft p-4   ">
+              <CheckCircle size={24} className="text-foreground-strong  shrink-0" />
               <div>
-                <div className="font-bold text-sm text-foreground-strong theme-brutal:text-black">
+                <div className="font-bold text-sm text-foreground-strong ">
                   {formatMessage({ id: "machine.add.connectedSuccessfully" })}
                 </div>
                 {pendingMachine?.hostname && (
-                  <div className="text-xs text-foreground-muted theme-brutal:text-black/60 font-mono mt-0.5">
+                  <div className="text-xs text-foreground-muted  font-mono mt-0.5">
                     {pendingMachine.hostname} — {pendingMachine.os || formatMessage({ id: "machine.add.unknownOs" })}
                   </div>
                 )}
@@ -400,7 +400,7 @@ export default function AddMachineDialog({ onClose }: { onClose: () => void }) {
             </FormField>
 
             {needsComputerMatchConfirmation && (
-              <label className="mb-4 flex items-start gap-2 border-2 border-line-muted theme-brutal:border-black bg-layer-panel theme-brutal:bg-white p-3 text-sm font-bold">
+              <label className="mb-4 flex items-start gap-2 border-2 border-line-muted  bg-layer-panel  p-3 text-sm font-bold">
                 <Checkbox
                   checked={confirmedComputerMatch}
                   onCheckedChange={setConfirmedComputerMatch}

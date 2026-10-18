@@ -138,17 +138,17 @@ export default function IntegrationInvitePage() {
 
   return (
     <div
-      className="h-full min-h-0 overflow-y-auto bg-layer-canvas-muted font-display text-foreground-strong safe-top safe-bottom theme-brutal:bg-brutal-cream theme-brutal:text-black"
+      className="h-full min-h-0 overflow-y-auto bg-layer-canvas-muted font-display text-foreground-strong safe-top safe-bottom  "
       data-testid="integration-invite-page"
     >
       <div className="mx-auto flex min-h-full w-full max-w-3xl flex-col justify-center px-4 py-8">
-        <div className="rounded-lg border border-line-muted bg-layer-panel p-5 shadow-raft-md theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal">
-          <div className="flex items-start justify-between gap-4 border-b border-line-hairline pb-4 theme-brutal:border-b-2 theme-brutal:border-black">
+        <div className="rounded-lg border border-line-muted bg-layer-panel p-5 shadow-raft-md     ">
+          <div className="flex items-start justify-between gap-4 border-b border-line-hairline pb-4  ">
             <div>
               <SectionEyebrow as="div">{formatMessage({ id: "pages.integrationInvite.eyebrow" })}</SectionEyebrow>
               <h1 className="mt-2 text-2xl font-black">{formatMessage({ id: "pages.integrationInvite.title" })}</h1>
             </div>
-            <div className="flex size-12 items-center justify-center rounded-md border border-line-muted bg-info text-info-foreground shadow-raft-sm theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-brutal-cyan theme-brutal:text-black theme-brutal:shadow-brutal-sm">
+            <div className="flex size-12 items-center justify-center rounded-md border border-line-muted bg-info text-info-foreground shadow-raft-sm      ">
               <Link2 size={22} />
             </div>
           </div>
@@ -166,7 +166,7 @@ export default function IntegrationInvitePage() {
                 </Banner>
               )}
 
-              <div className="rounded-md border border-line-muted bg-layer-inset p-4 theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-brutal-cream">
+              <div className="rounded-md border border-line-muted bg-layer-inset p-4    ">
                 <div className="text-xl font-black">{invite.client.name}</div>
                 <div className="mt-1 text-xs font-bold text-foreground-muted">
                   {formatMessage({ id: "pages.integrationInvite.sharedByPrefix" })} {invite.client.publisherName ?? formatMessage({ id: "pages.integrationInvite.sharedByPublisherFallback" })} {formatMessage({ id: "pages.integrationInvite.sharedByServerMid" })} {invite.client.sourceServerName ?? formatMessage({ id: "pages.integrationInvite.sharedByServerFallback" })}
@@ -196,7 +196,7 @@ export default function IntegrationInvitePage() {
 
               <RequestedScopeConsent
                 scopes={invite.client.allowedScopes?.length ? invite.client.allowedScopes : DEFAULT_DECLARED_OAUTH_SCOPES}
-                className="rounded-md border border-line-muted bg-layer-inset p-4 theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-brutal-cream"
+                className="rounded-md border border-line-muted bg-layer-inset p-4    "
               />
 
               {invite.manageableServers.length === 0 ? (
@@ -204,7 +204,7 @@ export default function IntegrationInvitePage() {
                   {formatMessage({ id: "pages.integrationInvite.needAdmin" })}
                 </Banner>
               ) : (
-                <div className="rounded-md border border-line-muted bg-layer-panel p-4 shadow-raft-sm theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal-sm">
+                <div className="rounded-md border border-line-muted bg-layer-panel p-4 shadow-raft-sm     ">
                   <SectionEyebrow as="div">{formatMessage({ id: "pages.integrationInvite.installTargetLabel" })}</SectionEyebrow>
                   <div className="mt-3 grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
                     <div className="min-w-0">

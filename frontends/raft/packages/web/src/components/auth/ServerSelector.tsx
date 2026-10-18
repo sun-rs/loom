@@ -135,13 +135,13 @@ export default function ServerSelector({ onSelect }: ServerSelectorProps) {
         >
           <>
             <div>
-              <div className="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-foreground-muted theme-brutal:text-black/50">
+              <div className="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-foreground-muted ">
                 {title}
               </div>
-              <h1 className="mt-2 text-2xl font-bold leading-tight text-foreground-strong theme-brutal:text-black">
+              <h1 className="mt-2 text-2xl font-bold leading-tight text-foreground-strong ">
                 {formatMessage({ id: "pages.serverSelector.nameTheServer" })}
               </h1>
-              <p className="mt-2 text-sm leading-5 text-foreground-muted theme-brutal:text-black/65">
+              <p className="mt-2 text-sm leading-5 text-foreground-muted ">
                 {formatMessage({ id: "pages.serverSelector.serverIsWorkspace" })}
               </p>
             </div>

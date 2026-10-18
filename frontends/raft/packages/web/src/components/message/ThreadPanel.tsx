@@ -87,9 +87,9 @@ export const THREAD_LIVE_REPLY_READ_DEBOUNCE_MS = 500;
 // The read-only panel is framed with the same rui parts and the same surface,
 // chrome-layer and content-layer classes as AuthenticatedThreadPanel below
 // (panelClassName, threadChromeLayerClassName, threadContentLayerClassName).
-const READ_ONLY_THREAD_PANEL_CLASS_NAME = "isolate flex h-full min-h-0 w-full flex-col bg-layer-panel dark:bg-layer-card theme-brutal:bg-white";
+const READ_ONLY_THREAD_PANEL_CLASS_NAME = "isolate flex h-full min-h-0 w-full flex-col bg-layer-panel dark:bg-layer-card ";
 const READ_ONLY_THREAD_BODY_CLASS_NAME = "relative z-0 min-h-0 flex-1 overflow-hidden";
-const THREAD_PANEL_PARENT_CLASS_NAME = "border-b border-line-muted bg-layer-panel px-3 py-3 [--mi-hdr-pr:2.5rem] theme-brutal:border-b-2 theme-brutal:border-black theme-brutal:bg-white";
+const THREAD_PANEL_PARENT_CLASS_NAME = "border-b border-line-muted bg-layer-panel px-3 py-3 [--mi-hdr-pr:2.5rem]   ";
 /** Discriminator for HistoryTopState catalog keys — keep out of JSX string attrs. */
 const THREAD_HISTORY_NOUN = "replies" as const;
 export const THREAD_LATEST_WINDOW_LIMIT = 50;
@@ -211,7 +211,7 @@ function ReadOnlyThreadPanel({
               {/* The gap before the dash is `ml-1`, not a leading space: the span
                   is a flex item (blockified), and a leading space inside it
                   collapses. Do not re-add it as text. */}
-              <span className="ml-1 font-normal in-data-[theme=elegant]:text-[15px] text-foreground-placeholder theme-brutal:text-black/50">
+              <span className="ml-1 font-normal in-data-[theme=elegant]:text-[15px] text-foreground-placeholder ">
                 {formatMessage(
                   { id: "message.threadPanel.channelContext" },
                   { name: readOnlyData.channels.find((channel) => channel.id === readOnlyData.parentChannelId)?.name },
@@ -2302,16 +2302,16 @@ function AuthenticatedThreadPanel({
   // above adjacent flex siblings after history scroll; keep thread chrome in
   // explicit stack layers so back/input remain reachable.
   const panelClassName = mobilePage
-    ? "isolate flex h-full min-h-0 w-full flex-col bg-layer-panel dark:bg-layer-card theme-brutal:bg-white"
-    : "isolate flex h-full min-h-0 w-full flex-col bg-layer-panel dark:bg-layer-card theme-brutal:bg-white";
+    ? "isolate flex h-full min-h-0 w-full flex-col bg-layer-panel dark:bg-layer-card "
+    : "isolate flex h-full min-h-0 w-full flex-col bg-layer-panel dark:bg-layer-card ";
   // X close button visibility, per stdrc 2026-05-21 #proj-task:287f18ce
   // msg=804c045d: "它作为弹窗就需要叉；如果它是直接覆盖整个页面，就是返回."
   //   modal        — X (centered card with backdrop, X is the dialog close)
   //   mobile-modal — NO X (full-screen overlay, back chevron handles close)
   //   side         — X on desktop (lg+) only; mobile uses back chevron
   const closeButtonClassName = presentation === "modal"
-    ? "flex size-7 items-center justify-center"
-    : "hidden size-7 items-center justify-center lg:flex";
+    ? "flex size-8 items-center justify-center"
+    : "hidden size-8 items-center justify-center lg:flex";
 
   // Show a loading shell while threadChannelId is being fetched (first-open
   // case). If resolution actually failed for *this* parent (e.g. the permalink
@@ -2463,7 +2463,7 @@ function AuthenticatedThreadPanel({
               // Stryker restore all
               // The gap before the dash is `ml-1` on the span below; a leading
               // space inside a flex-item span collapses (blockified).
-              return <span className="ml-1 font-normal in-data-[theme=elegant]:text-[15px] text-foreground-placeholder theme-brutal:text-black/50">— {label}</span>;
+              return <span className="ml-1 font-normal in-data-[theme=elegant]:text-[15px] text-foreground-placeholder ">— {label}</span>;
             })()}
           </PanelTitle>
           </Tooltip>
@@ -2498,10 +2498,10 @@ function AuthenticatedThreadPanel({
       {/* Stryker restore all */}
       {threadSearchOpen && (
         <div
-          className={`${threadChromeLayerClassName} flex items-center gap-1.5 border-b border-line-muted bg-layer-panel dark:bg-layer-card px-2 py-2 theme-brutal:border-b-2 theme-brutal:border-black theme-brutal:bg-white`}
+          className={`${threadChromeLayerClassName} flex items-center gap-1.5 border-b border-line-muted bg-layer-panel dark:bg-layer-card px-2 py-2   `}
           data-testid="thread-search-bar"
         >
-          <Search size={14} className="shrink-0 text-foreground-muted theme-brutal:text-black/50" />
+          <Search size={14} className="shrink-0 text-foreground-muted " />
           <input
             ref={threadSearchInputRef}
             value={threadSearchQuery}
@@ -2526,12 +2526,12 @@ function AuthenticatedThreadPanel({
                 goToThreadSearchMatch(event.shiftKey ? -1 : 1);
               }
             }}
-            className="min-w-0 flex-1 border border-line-muted bg-layer-panel px-2 py-1 text-sm font-medium outline-none focus:border-line-strong focus:shadow-raft-sm theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:focus:shadow-brutal-sm"
+            className="min-w-0 flex-1 border border-line-muted bg-layer-panel px-2 py-1 text-sm font-medium outline-none focus:border-line-strong focus:shadow-raft-sm    "
             placeholder={formatMessage({ id: "message.threadPanel.searchThisThread" })}
             aria-label={formatMessage({ id: "message.threadPanel.searchThisThread" })}
             data-testid="thread-search-input"
           />
-          <div className="w-20 shrink-0 text-center font-mono text-xs text-foreground-muted theme-brutal:text-black/50" data-testid="thread-search-count">
+          <div className="w-20 shrink-0 text-center font-mono text-xs text-foreground-muted " data-testid="thread-search-count">
             {normalizeThreadSearchQuery(threadSearchQuery) && threadSearchLoading
               ? formatMessage({ id: "message.threadPanel.searchLoading" })
               : normalizeThreadSearchQuery(threadSearchQuery)
@@ -2567,7 +2567,7 @@ function AuthenticatedThreadPanel({
           <Tooltip content={formatMessage({ id: "message.threadPanel.closeThreadSearch" })}>
           <CloseButton
             onClick={closeThreadSearch}
-            className=" flex size-7 items-center justify-center "
+            className=" flex size-8 items-center justify-center "
             aria-label={formatMessage({ id: "message.threadPanel.closeThreadSearch" })}
           >
             <X size={14} />
@@ -2605,7 +2605,7 @@ function AuthenticatedThreadPanel({
               </div>
             )}
             <div className="flex flex-1 items-center justify-center">
-              <div className="font-mono text-sm text-foreground-placeholder theme-brutal:text-black/40">{formatMessage({ id: "message.chatPanel.loading" })}</div>
+              <div className="font-mono text-sm text-foreground-placeholder ">{formatMessage({ id: "message.chatPanel.loading" })}</div>
             </div>
           </div>
         ) : messages.length === 0 ? (
@@ -2687,7 +2687,7 @@ function AuthenticatedThreadPanel({
       >
       <div className={`${threadChromeLayerClassName} min-w-0 w-full flex-1`}>
         {showGuestReadOnly ? (
-          <div className="border-t border-line-muted bg-layer-panel p-3 theme-brutal:border-t-2 theme-brutal:border-black theme-brutal:bg-white" data-testid="guest-readonly-thread-banner">
+          <div className="border-t border-line-muted bg-layer-panel p-3   " data-testid="guest-readonly-thread-banner">
             <Banner intent="warning" className="justify-center text-center font-bold">
               {formatMessage({ id: "message.threadPanel.guestReadOnlyThread" })}
             </Banner>
@@ -2705,12 +2705,12 @@ function AuthenticatedThreadPanel({
             onSelectAll={handleSelectAllInThread}
           />
         ) : parentJointFeatureLocked ? (
-          <div className="border-t border-line-muted bg-layer-panel p-3 theme-brutal:border-t-2 theme-brutal:border-black theme-brutal:bg-white">
+          <div className="border-t border-line-muted bg-layer-panel p-3   ">
             <Banner intent="warning" className="justify-center text-center font-bold">
               {formatMessage({ id: "message.chatPanel.jointLocked" })}
               <button
                 onClick={() => nav.toSettings("billing")}
-                className="font-bold text-foreground-strong underline theme-brutal:text-black"
+                className="font-bold text-foreground-strong underline "
               >
                 {formatMessage({ id: "message.chatPanel.viewBilling" })}
               </button>
@@ -2732,7 +2732,7 @@ function AuthenticatedThreadPanel({
             autoFocus={composerAutoFocus}
           />
         ) : showJoinParentChannel ? (
-          <div className="flex flex-col items-center gap-2 border-t border-line-muted bg-layer-panel p-3 theme-brutal:border-t-2 theme-brutal:border-black theme-brutal:bg-white">
+          <div className="flex flex-col items-center gap-2 border-t border-line-muted bg-layer-panel p-3   ">
             <Button
               variant="accent"
               onClick={handleJoinParentChannel}
@@ -2744,7 +2744,7 @@ function AuthenticatedThreadPanel({
                 : "message.threadPanel.joinChannelToReply" })}
             </Button>
             {isGuest ? (
-              <p className="text-center text-xs font-medium text-foreground-muted theme-brutal:text-black/60" data-testid="guest-thread-join-explanation">
+              <p className="text-center text-xs font-medium text-foreground-muted " data-testid="guest-thread-join-explanation">
                 {formatMessage({ id: "message.threadPanel.guestJoinExplanation" })}
               </p>
             ) : null}
@@ -2772,7 +2772,7 @@ function AuthenticatedThreadPanel({
       {picError && (
         <div
           role="alert"
-          className="fixed bottom-20 left-1/2 z-[110] -translate-x-1/2 border border-warning bg-warning-soft px-3 py-2 text-xs font-bold text-warning-strong shadow-raft-sm theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-brutal-orange theme-brutal:text-black theme-brutal:shadow-brutal-sm"
+          className="fixed bottom-20 left-1/2 z-[110] -translate-x-1/2 border border-warning bg-warning-soft px-3 py-2 text-xs font-bold text-warning-strong shadow-raft-sm     "
           onClick={() => setPicError(null)}
           data-testid="thread-select-share-error"
         >

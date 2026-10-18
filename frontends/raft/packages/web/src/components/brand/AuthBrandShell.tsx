@@ -9,7 +9,7 @@ export const AUTH_BRAND_STACK_CLASS =
   "flex min-h-full w-full flex-col";
 
 export const AUTH_BRAND_TOP_BAR_CLASS =
-  "flex h-panel-header shrink-0 items-center border-b border-line-hairline bg-layer-panel px-4 sm:px-6 md:px-8 theme-brutal:border-b-2 theme-brutal:border-black theme-brutal:bg-soft-signal";
+  "flex h-panel-header shrink-0 items-center border-b border-line-hairline bg-layer-panel px-4 sm:px-6 md:px-8   ";
 
 const AUTH_BRAND_CONTENT_CLASS =
   "flex min-h-0 flex-1 items-center justify-center px-5 pb-10 pt-10 sm:px-8 sm:pb-14 sm:pt-14";

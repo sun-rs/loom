@@ -285,7 +285,7 @@ const SIDEBAR_SECTION_ROW_CLASS = "mb-1 mt-3 flex h-6 items-center justify-betwe
 // without removing the test pin.
 const SIDEBAR_SECTION_ROW_FIRST_CLASS = "mb-1 flex h-6 items-center justify-between px-2";
 void SIDEBAR_SECTION_ROW_FIRST_CLASS;
-const SIDEBAR_SECTION_TOGGLE_CLASS = "flex h-6 min-w-0 flex-1 items-center gap-1 [&>svg]:shrink-0 text-xs font-bold uppercase text-foreground-strong tracking-widest transition-colors hover:text-foreground-muted theme-brutal:text-black theme-brutal:hover:text-black/70";
+const SIDEBAR_SECTION_TOGGLE_CLASS = "flex h-6 min-w-0 flex-1 items-center gap-1 [&>svg]:shrink-0 text-xs font-bold uppercase text-foreground-strong tracking-widest transition-colors hover:text-foreground-muted  ";
 export const SIDEBAR_SECTION_ICON_BUTTON_CLASS = "btn-flat-sm flex size-6 items-center justify-center p-0";
 type SidebarSectionDescriptionProps = HTMLAttributes<HTMLDivElement> & {
   tone?: "muted" | "subtle" | "strong";
@@ -308,7 +308,7 @@ function SidebarSectionDescription({
     <div
       {...props}
       data-sidebar-section-description=""
-      className={`px-2 text-xs font-mono leading-snug ${tone === "strong" ? "text-foreground-strong theme-brutal:text-black" : tone === "subtle" ? "text-foreground-placeholder theme-brutal:text-black/45" : "text-foreground-muted theme-brutal:text-black/50"} ${className}`}
+      className={`px-2 text-xs font-mono leading-snug ${tone === "strong" ? "text-foreground-strong " : tone === "subtle" ? "text-foreground-placeholder " : "text-foreground-muted "} ${className}`}
     >
       {children}
     </div>
@@ -447,7 +447,7 @@ function SidebarDndContainer({
       <div
         ref={setContainerRef}
         data-sidebar-dnd-container={id}
-        className={`relative ${empty ? "min-h-7" : ""} ${isOver ? "bg-fill-muted theme-brutal:bg-white/60" : ""}`}
+        className={`relative ${empty ? "min-h-7" : ""} ${isOver ? "bg-fill-muted " : ""}`}
       >
         {children}
       </div>
@@ -595,7 +595,7 @@ export function SavedNavCount({ total }: { total: number }) {
   const { formatMessage } = useIntl();
   if (total <= 0) return null;
   return (
-    <span className="ml-auto text-[10px] font-mono text-foreground-placeholder theme-brutal:text-black/40">
+    <span className="ml-auto text-[10px] font-mono text-foreground-placeholder ">
       {formatMessage({ id: "layout.sidebar.savedCount" }, { count: total })}
     </span>
   );
@@ -654,15 +654,15 @@ function ComputerRowBody({
     availableVersion,
   );
   return (
-    <SidebarItem variant="accent"
+    <SidebarItem
       onClick={handleClick}
       data-slot="sidebar-item"
       active={selected}
       data-testid={`computer-list-item-${machine.id}`}
-      className={`mb-1.5 flex w-full items-center gap-2.5 px-2.5 py-2 [@media(max-height:600px)]:py-1 text-left border transition-colors theme-brutal:border-2 ${
+      className={`mb-1.5 flex w-full items-center gap-2.5 px-2.5 py-2 [@media(max-height:600px)]:py-1 text-left border transition-colors  ${
  selected
- ? "border-line-strong bg-fill-muted shadow-raft-sm theme-brutal:border-black theme-brutal:bg-brutal-pink theme-brutal:shadow-brutal-sm"
- : "border-transparent hover:border-line-strong hover:bg-fill-muted hover:shadow-raft-sm theme-brutal:hover:border-black theme-brutal:hover:bg-white theme-brutal:hover:shadow-brutal-sm"
+ ? "border-line-strong bg-fill-muted shadow-raft-sm   "
+ : "border-transparent hover:border-line-strong hover:bg-fill-muted hover:shadow-raft-sm   "
  }`}
     >
       <Card className="relative flex size-9 shrink-0 items-center justify-center overflow-visible p-0"><Monitor size={18} />
@@ -677,14 +677,14 @@ function ComputerRowBody({
       </Card>
       <div className="min-w-0 flex-1">
         <div className="flex items-center">
-          <span className="min-w-0 truncate text-sm font-bold text-foreground-strong theme-brutal:text-black">{machine.name}</span>
+          <span className="min-w-0 truncate text-sm font-bold text-foreground-strong ">{machine.name}</span>
         </div>
         {machine.description && (
-          <div className="mt-0.5 truncate text-[11px] leading-tight text-foreground-muted theme-brutal:text-black/60">
+          <div className="mt-0.5 truncate text-[11px] leading-tight text-foreground-muted ">
             {machine.description}
           </div>
         )}
-        <div className="mt-0.5 flex items-center gap-1.5 text-[11px] font-mono text-foreground-muted theme-brutal:text-black/50">
+        <div className="mt-0.5 flex items-center gap-1.5 text-[11px] font-mono text-foreground-muted ">
           {upgradeReconnecting ? (
             <span className="truncate" data-testid={`computer-upgrade-reconnecting-${machine.id}`}>
               {formatMessage({ id: "machine.detail.upgradeV2.inProgress" })}
@@ -692,7 +692,7 @@ function ComputerRowBody({
           ) : (() => {
             const label = getMachineRunLabelDescriptor(machine);
             return (
-              <span className={`truncate${label.isOffline ? " text-foreground-placeholder italic theme-brutal:text-black/30" : ""}`}>
+              <span className={`truncate${label.isOffline ? " text-foreground-placeholder italic " : ""}`}>
                 <MachineRunLabel machine={machine} />
               </span>
             );
@@ -755,7 +755,7 @@ export type SidebarLongPress = {
 export function sidebarItemClass(selected: boolean, menuOpen = false, allowWrap = false) {
   return `mx-0 w-full ${allowWrap ? "items-start whitespace-normal" : "items-center"} ${
     selected
-      ? "data-active:bg-fill-muted dark:data-active:bg-fill-muted data-active:shadow-none data-active:ring-0 theme-brutal:data-active:bg-brutal-pink theme-brutal:data-active:shadow-brutal-sm"
+      ? "  "
       : menuOpen ? "bg-fill-muted" : ""
   }`;
 }
@@ -829,7 +829,7 @@ const ChannelRow = memo(function ChannelRow({
     [channel.id, onContextMenu],
   );
   return (
-    <SidebarItem variant="accent"
+    <SidebarItem
       data-sidebar-channel-id={channel.id}
       data-slot="sidebar-item"
       active={selected}
@@ -839,12 +839,12 @@ const ChannelRow = memo(function ChannelRow({
       className={sidebarItemClass(selected, menuOpen, allowWrap)}
     >
       <div className="flex size-[18px] shrink-0 items-center justify-center">
-        <ChannelKindIcon type={channel.type} className={dimmed ? "text-foreground-placeholder theme-brutal:text-black/40" : ""} />
+        <ChannelKindIcon type={channel.type} className={dimmed ? "text-foreground-placeholder " : ""} />
       </div>
       <span className={`min-w-0 flex flex-1 ${allowWrap ? "items-start" : "items-center"} text-left`}>
-        <span className={`min-w-0 text-sm ${allowWrap ? "whitespace-normal break-words leading-tight" : "truncate"} ${dimmed ? "text-foreground-placeholder theme-brutal:text-black/40" : activityMuted ? "text-foreground-muted theme-brutal:text-black/70" : ""} ${showLoudUnreadBadge ? "font-bold" : ""}`}>{channel.name}</span>
+        <span className={`min-w-0 text-sm ${allowWrap ? "whitespace-normal break-words leading-tight" : "truncate"} ${dimmed ? "text-foreground-placeholder " : activityMuted ? "text-foreground-muted " : ""} ${showLoudUnreadBadge ? "font-bold" : ""}`}>{channel.name}</span>
         {channel.bridge?.provider === "slack" && (
-          <Badge appearance="soft" variant="accent" uppercase className="ml-1">
+          <Badge appearance="soft" variant="accent" className="ml-1">
             {formatMessage({ id: "settings.slackBridge.providerBadge" })}
           </Badge>
         )}
@@ -864,7 +864,7 @@ const ChannelRow = memo(function ChannelRow({
       {showMentionMarker && (
         <Tooltip content={formatMessage({ id: "layout.sidebar.mentionedYouTitle" })}>
         <span
-          className="ml-1 inline-flex size-4 shrink-0 items-center justify-center rounded border border-line-strong bg-primary-soft text-primary-strong theme-brutal:border-black theme-brutal:bg-soft-signal theme-brutal:text-black"
+          className="ml-1 inline-flex size-4 shrink-0 items-center justify-center rounded border border-line-strong bg-primary-soft text-primary-strong   "
           data-testid="sidebar-mention-marker"
           aria-label={formatMessage({ id: "layout.sidebar.mentionedYouAria" })}
         >
@@ -873,21 +873,21 @@ const ChannelRow = memo(function ChannelRow({
         </Tooltip>
       )}
       {showLoudUnreadBadge ? (
-        <SidebarItemCount variant="accent" className="ml-auto">
+        <SidebarItemCount className="ml-auto">
           {unread > 99 ? "99+" : unread}
         </SidebarItemCount>
       ) : showQuietUnreadCount ? (
-        <span className={`${showMutedIcon || showMentionMarker ? "ml-1" : "ml-auto"} shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium leading-none text-foreground-muted font-mono theme-brutal:text-black/50`}>
+        <span className={`${showMutedIcon || showMentionMarker ? "ml-1" : "ml-auto"} shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium leading-none text-foreground-muted font-mono `}>
           {unread > 99 ? "99+" : unread}
         </span>
       ) : showQuietNewDot ? (
         <span
-          className="ml-auto size-1.5 shrink-0 rounded-full bg-foreground-muted theme-brutal:bg-black/50"
+          className="ml-auto size-1.5 shrink-0 rounded-full bg-foreground-muted "
           data-testid="sidebar-quiet-new-dot"
           aria-label={formatMessage({ id: "layout.sidebar.newMessagesAria" })}
         />
       ) : hasDraft && (
-        <Pencil size={12} className={`${showMutedIcon ? "ml-1" : "ml-auto"} shrink-0 text-foreground-placeholder theme-brutal:text-black/40`} />
+        <Pencil size={12} className={`${showMutedIcon ? "ml-1" : "ml-auto"} shrink-0 text-foreground-placeholder `} />
       )}
     </SidebarItem>
   );
@@ -942,7 +942,7 @@ const DmRow = memo(function DmRow({
     [ctxId, ctxType, onContextMenu],
   );
   return (
-    <SidebarItem variant="accent"
+    <SidebarItem
       data-sidebar-channel-id={dm.id}
       data-slot="sidebar-item"
       active={selected}
@@ -972,16 +972,16 @@ const DmRow = memo(function DmRow({
           {displayName}
         </span>
         {description && (
-          <span className={`min-w-0 ${allowWrap ? "max-w-full whitespace-normal break-words leading-tight" : "flex-1 truncate"} text-xs text-foreground-muted theme-brutal:text-black/40`}>{description}</span>
+          <span className={`min-w-0 ${allowWrap ? "max-w-full whitespace-normal break-words leading-tight" : "flex-1 truncate"} text-xs text-foreground-muted `}>{description}</span>
         )}
       </div>
       <span className="flex shrink-0 self-center items-center gap-1.5">
         {unread > 0 ? (
-          <SidebarItemCount variant="accent" className="">
+          <SidebarItemCount className="">
             {unread > 99 ? "99+" : unread}
           </SidebarItemCount>
         ) : hasDraft && (
-          <Pencil size={12} className="text-foreground-placeholder theme-brutal:text-black/40" />
+          <Pencil size={12} className="text-foreground-placeholder " />
         )}
       </span>
     </SidebarItem>
@@ -1027,7 +1027,7 @@ export const AgentDmRow = memo(function AgentDmRow({
     [agent.id, onContextMenu],
   );
   return (
-    <SidebarItem variant="accent"
+    <SidebarItem
       // The ordinary DM row publishes this too. Without it, the same pinned
       // conversation would gain or lose its channel identity purely from whether
       // the agent is still in the client's agent list — `pinnedItems` picks this
@@ -1050,18 +1050,18 @@ export const AgentDmRow = memo(function AgentDmRow({
       <div className={`flex min-w-0 flex-1 ${allowWrap ? "flex-col items-start gap-0.5" : "items-baseline gap-1"} text-left`}>
         <span className={`${allowWrap ? "min-w-0 max-w-full whitespace-normal break-words leading-tight" : "min-w-0 truncate"} text-sm ${unread > 0 ? "font-bold" : ""}`}>{displayName}</span>
         {!hideDescription && description && (
-          <span className={`min-w-0 ${allowWrap ? "max-w-full whitespace-normal break-words leading-tight" : "flex-1 truncate"} text-xs text-foreground-muted theme-brutal:text-black/40`}>{description}</span>
+          <span className={`min-w-0 ${allowWrap ? "max-w-full whitespace-normal break-words leading-tight" : "flex-1 truncate"} text-xs text-foreground-muted `}>{description}</span>
         )}
       </div>
       <span className="flex shrink-0 self-center items-center gap-1.5">
         {unread > 0 ? (
-          <SidebarItemCount variant="accent" className="">
+          <SidebarItemCount className="">
             {/* Stryker disable all: pre-existing unread cap is outside the workspace mutation corpus. */}
             {unread > 99 ? "99+" : unread}
             {/* Stryker restore all */}
           </SidebarItemCount>
         ) : hasDraft && (
-          <Pencil size={12} className="text-foreground-placeholder theme-brutal:text-black/40" />
+          <Pencil size={12} className="text-foreground-placeholder " />
         )}
       </span>
     </SidebarItem>
@@ -2283,7 +2283,7 @@ export default function Sidebar({ mobileInline, bottomSlot }: SidebarProps) {
           <div
             {...dismissLayerProps}
             role="menu"
-            className="absolute right-0 top-8 z-50 min-w-[190px] overflow-hidden border border-line-muted bg-layer-panel shadow-raft-sm theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal"
+            className="absolute right-0 top-8 z-50 min-w-[190px] overflow-hidden border border-line-muted bg-layer-panel shadow-raft-sm    "
           >
             <MenuItem
               icon={<Bot size={14} className="shrink-0" />}
@@ -3667,7 +3667,7 @@ export default function Sidebar({ mobileInline, bottomSlot }: SidebarProps) {
             Sidebar full-screens as one tab → `bg-white`. */}
       <SidebarRoot
         // Stryker disable next-line StringLiteral: Tailwind composition is presentation-only and browser-smoke verified.
-        className={`relative flex h-full w-full flex-col ${mobileInline ? "" : "border-r border-line-muted theme-brutal:border-r-2 theme-brutal:border-black"} ${mobileInline ? "theme-brutal:bg-white" : "bg-layer-canvas-muted theme-brutal:bg-brutal-cream"} text-foreground-strong theme-brutal:text-black font-display select-none`}
+        className={`relative flex h-full w-full flex-col ${mobileInline ? "" : "border-r border-line-muted  "} ${mobileInline ? "" : "bg-layer-canvas-muted "} text-foreground-strong  font-display select-none`}
         data-testid="sidebar-root"
       >
         {/* Mobile tab-root NavBar — yellow h-panel-header matching the level-2+
@@ -3683,7 +3683,7 @@ export default function Sidebar({ mobileInline, bottomSlot }: SidebarProps) {
             access. On desktop the switcher lives in the LeftRail, so we
             only need this header on mobile. */}
         {mobileInline && (
-          <div className="relative flex h-panel-header shrink-0 items-center gap-3 border-b border-line-muted bg-layer-panel theme-brutal:border-b-2 theme-brutal:border-black theme-brutal:bg-soft-signal px-4">
+          <div className="relative flex h-panel-header shrink-0 items-center gap-3 border-b border-line-muted bg-layer-panel    px-4">
             {railMode === "chat" ? (
               /* Home tab: ServerName pill on the LEFT — it IS the header.
                  No other tab renders the pill: stdrc msg 7b1cf65a
@@ -3698,7 +3698,7 @@ export default function Sidebar({ mobileInline, bottomSlot }: SidebarProps) {
                      在窄+矮屏（移动 + max-h:600）顶部 server-name 不要卡片，
                      直接文字 + chevron，UI 跟 Members / Settings 一致。
                      Tailwind 修饰符链 strip 掉 tilt / border / bg / shadow / pad。 */
-                  className="mobile-server-selector-vector relative inline-flex shrink-0 items-center border-2 [@media(max-height:600px)]:border-0 border-transparent bg-transparent px-3 [@media(max-height:600px)]:px-0 py-1 [@media(max-height:600px)]:py-0 font-display font-bold text-base text-primary-strong theme-brutal:text-soft-signal"
+                  className="mobile-server-selector-vector relative inline-flex shrink-0 items-center border-2 [@media(max-height:600px)]:border-0 border-transparent bg-transparent px-3 [@media(max-height:600px)]:px-0 py-1 [@media(max-height:600px)]:py-0 font-display font-bold text-base text-primary-strong "
                 >
                   <MobileServerSelectorVectorSurface />
                   {hasOtherServerUnread && (
@@ -3726,7 +3726,7 @@ export default function Sidebar({ mobileInline, bottomSlot }: SidebarProps) {
               </>
             ) : (
               <div className="min-w-0 flex-1">
-                <div className="font-heading text-base font-bold text-foreground-strong theme-brutal:text-black truncate">
+                <div className="font-heading text-base font-bold text-foreground-strong  truncate">
                   {railLabel}
                 </div>
               </div>
@@ -3757,8 +3757,8 @@ export default function Sidebar({ mobileInline, bottomSlot }: SidebarProps) {
           // stdrc 2026-05-02 #proj-uiux:95e25b5b: sidebar header matches
           // sidebar body at `bg-brutal-cream`. Whole sidebar column
           // reads as one cream surface; main panel is white.
-          <div className="flex shrink-0 items-center bg-layer-canvas-muted theme-brutal:bg-brutal-cream h-panel-header border-b border-line-muted theme-brutal:border-b-2 theme-brutal:border-black px-5">
-            <div className="font-heading text-lg in-data-[theme=elegant]:text-[17px] font-bold text-foreground-strong theme-brutal:text-black">
+          <div className="flex shrink-0 items-center bg-layer-canvas-muted  h-panel-header border-b border-line-muted   px-5">
+            <div className="font-heading text-lg in-data-[theme=elegant]:text-[17px] font-bold text-foreground-strong ">
               {railLabel}
             </div>
           </div>
@@ -3815,7 +3815,7 @@ export default function Sidebar({ mobileInline, bottomSlot }: SidebarProps) {
                   type="button"
                   onClick={() => navigate(`${pathBase}/settings`)}
                   data-testid="computers-mobile-back"
-                  className="mb-2 flex w-full items-center gap-1 px-2 py-1.5 text-left text-sm font-medium text-foreground-muted hover:text-foreground-strong transition-colors theme-brutal:text-black/60 theme-brutal:hover:text-black"
+                  className="mb-2 flex w-full items-center gap-1 px-2 py-1.5 text-left text-sm font-medium text-foreground-muted hover:text-foreground-strong transition-colors  "
                   aria-label={formatMessage({ id: "layout.sidebar.backToSettings" })}
                 >
                   <ChevronLeft size={16} className="shrink-0" />
@@ -3826,8 +3826,8 @@ export default function Sidebar({ mobileInline, bottomSlot }: SidebarProps) {
                   (items below use mb-1.5), not the 1-unit rhythm used in
                   Chat/Members sections where items sit closer together. */}
               <div className="mb-1.5 flex items-center justify-between px-2">
-                <div className="text-xs font-bold uppercase text-foreground-strong tracking-widest theme-brutal:text-black">
-                  {formatMessage({ id: "layout.sidebar.computersSectionLabel" })} <span className="text-foreground-placeholder font-mono normal-case tracking-normal theme-brutal:text-black/40">{sidebarMachineIds.length}</span>
+                <div className="text-xs font-bold uppercase text-foreground-strong tracking-widest ">
+                  {formatMessage({ id: "layout.sidebar.computersSectionLabel" })} <span className="text-foreground-placeholder font-mono normal-case tracking-normal ">{sidebarMachineIds.length}</span>
                 </div>
                 {canRegisterMachines && (
                   <Tooltip content={formatMessage({ id: "layout.sidebar.addComputer" })}>
@@ -3862,7 +3862,7 @@ export default function Sidebar({ mobileInline, bottomSlot }: SidebarProps) {
                   data-testid="mobile-home-search-entry"
                   // Stryker disable next-line all: pre-existing mobile Search routing is outside the workspace mutation corpus.
                   onClick={() => nav.toSearch(undefined, { flushSync: true })}
-                  className="mb-1 flex w-full items-center gap-1.5 px-2 py-2 [@media(max-height:600px)]:py-1 md:py-1 text-left text-sm font-medium border border-transparent transition-colors hover:border-line-strong hover:bg-fill-muted hover:shadow-raft-sm active:border-line-strong active:bg-fill-muted active:shadow-raft-sm theme-brutal:border-2 theme-brutal:hover:border-black theme-brutal:hover:bg-white theme-brutal:hover:shadow-brutal-sm theme-brutal:active:border-black theme-brutal:active:bg-white theme-brutal:active:shadow-brutal-sm"
+                  className="mb-1 flex w-full items-center gap-1.5 px-2 py-2 [@media(max-height:600px)]:py-1 md:py-1 text-left text-sm font-medium border border-transparent transition-colors hover:border-line-strong hover:bg-fill-muted hover:shadow-raft-sm active:border-line-strong active:bg-fill-muted active:shadow-raft-sm       "
                 >
                   <Search size={14} className="shrink-0" />
                   {formatMessage({ id: "layout.sidebar.search" })}
@@ -3889,17 +3889,17 @@ export default function Sidebar({ mobileInline, bottomSlot }: SidebarProps) {
                     nav.toThreadsInbox();
                     focusFirstUnreadInboxItem();
                   }}
-                  className={`mb-1 flex w-full items-center gap-1.5 px-2 py-2 [@media(max-height:600px)]:py-1 md:py-1 text-left text-sm font-medium border transition-colors theme-brutal:border-2 ${
+                  className={`mb-1 flex w-full items-center gap-1.5 px-2 py-2 [@media(max-height:600px)]:py-1 md:py-1 text-left text-sm font-medium border transition-colors  ${
  location.pathname.endsWith("/activity") || location.pathname.endsWith("/inbox") || location.pathname.endsWith("/threads")
- ? "border-line-strong bg-fill-muted shadow-raft-sm font-bold theme-brutal:border-black theme-brutal:bg-brutal-pink theme-brutal:shadow-brutal-sm"
- : "border-transparent hover:border-line-strong hover:bg-fill-muted hover:shadow-raft-sm active:border-line-strong active:bg-fill-muted active:shadow-raft-sm theme-brutal:hover:border-black theme-brutal:hover:bg-white theme-brutal:hover:shadow-brutal-sm theme-brutal:active:border-black theme-brutal:active:bg-white theme-brutal:active:shadow-brutal-sm"
+ ? "border-line-strong bg-fill-muted shadow-raft-sm font-bold   "
+ : "border-transparent hover:border-line-strong hover:bg-fill-muted hover:shadow-raft-sm active:border-line-strong active:bg-fill-muted active:shadow-raft-sm      "
  }`}
                 >
                   <Activity size={14} className="shrink-0" />
                   {formatMessage({ id: "layout.sidebar.activity" })}
                   {(() => {
                     return activityUnreadCount !== undefined && activityUnreadCount > 0 ? (
-                      <SidebarItemCount variant="accent" className="ml-auto">
+                      <SidebarItemCount className="ml-auto">
                         {activityUnreadCount > 99 ? "99+" : activityUnreadCount}
                       </SidebarItemCount>
                     ) : null;
@@ -3911,7 +3911,6 @@ export default function Sidebar({ mobileInline, bottomSlot }: SidebarProps) {
 
               {/* Saved */}
               <SidebarItem
-                variant="accent"
                 active={location.pathname.endsWith("/saved")}
                 onClick={openSaved}
                 className={`${sidebarItemClass(location.pathname.endsWith("/saved"))} mb-1`}
@@ -3957,7 +3956,7 @@ export default function Sidebar({ mobileInline, bottomSlot }: SidebarProps) {
                         className={`transition-transform ${collapsed.pinned ? "" : "rotate-90"}`}
                       />
                       {formatMessage({ id: "layout.sidebar.pinned" })}
-                      <span className="text-foreground-placeholder font-mono normal-case tracking-normal theme-brutal:text-black/40">
+                      <span className="text-foreground-placeholder font-mono normal-case tracking-normal ">
                         {sidebarDndCurrentProjection[SIDEBAR_PINNED_CONTAINER_ID].length}
                       </span>
                       {collapsed.pinned && unreadFlags.pinned && (
@@ -4018,7 +4017,7 @@ export default function Sidebar({ mobileInline, bottomSlot }: SidebarProps) {
                           <ChevronRight size={12} className={`transition-transform ${collapsedCustom ? "" : "rotate-90"}`} />
                           {section.emoji && <span aria-hidden>{section.emoji}</span>}
                           <span className="truncate">{section.name}</span>
-                          <span className="font-mono text-foreground-placeholder normal-case tracking-normal theme-brutal:text-black/40">{projectedItemIds.length}</span>
+                          <span className="font-mono text-foreground-placeholder normal-case tracking-normal ">{projectedItemIds.length}</span>
                           {collapsedCustom && customUnreadSectionIdSet.has(section.id) && <AttentionDot size="lg" className="ml-1" />}
                         </SidebarSectionToggle>
                       </SidebarSectionHeader>
@@ -4060,7 +4059,7 @@ export default function Sidebar({ mobileInline, bottomSlot }: SidebarProps) {
                         className={`transition-transform ${collapsed.jointChannels ? "" : "rotate-90"}`}
                       />
                       <span className="truncate">{formatMessage({ id: "layout.sidebar.jointChannels" })}</span>
-                      <span className="text-foreground-placeholder font-mono normal-case tracking-normal theme-brutal:text-black/40">
+                      <span className="text-foreground-placeholder font-mono normal-case tracking-normal ">
                         {sidebarDndCurrentProjection[SIDEBAR_JOINT_CHANNELS_CONTAINER_ID].length}
                       </span>
                       {collapsed.jointChannels && unreadFlags.joint && (
@@ -4114,7 +4113,7 @@ export default function Sidebar({ mobileInline, bottomSlot }: SidebarProps) {
                     className={`transition-transform ${collapsed.channels ? "" : "rotate-90"}`}
                   />
                   <span className="truncate">{formatMessage({ id: "layout.sidebar.channels" })}</span>
-                  <span className="text-foreground-placeholder font-mono normal-case tracking-normal theme-brutal:text-black/40">
+                  <span className="text-foreground-placeholder font-mono normal-case tracking-normal ">
                     {sidebarDndCurrentProjection[SIDEBAR_CHANNELS_CONTAINER_ID].length}
                   </span>
                   {collapsed.channels && unreadFlags.channels && (
@@ -4174,7 +4173,7 @@ export default function Sidebar({ mobileInline, bottomSlot }: SidebarProps) {
                         className={`transition-transform ${collapsed.agents ? "" : "rotate-90"}`}
                       />
                       <span className="truncate">{formatMessage({ id: "layout.sidebar.directMessages" })}</span>
-                  <span className="text-foreground-placeholder font-mono normal-case tracking-normal theme-brutal:text-black/40">
+                  <span className="text-foreground-placeholder font-mono normal-case tracking-normal ">
                         {sidebarDndCurrentProjection[SIDEBAR_DMS_CONTAINER_ID].length}
                       </span>
                       {collapsed.agents && unreadFlags.dms && (
@@ -4213,7 +4212,7 @@ export default function Sidebar({ mobileInline, bottomSlot }: SidebarProps) {
                 {sidebarDndActiveId && sidebarDndDisplayItems.get(sidebarDndActiveId) ? (
                   <div
                     data-testid="sidebar-drag-overlay"
-                    className="max-w-72 border border-line-muted bg-layer-panel px-2 py-1.5 text-sm font-medium shadow-raft-sm theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal-sm"
+                    className="max-w-72 border border-line-muted bg-layer-panel px-2 py-1.5 text-sm font-medium shadow-raft-sm    "
                   >
                     {sidebarDndDisplayItems.get(sidebarDndActiveId)!.label}
                   </div>
@@ -4229,7 +4228,6 @@ export default function Sidebar({ mobileInline, bottomSlot }: SidebarProps) {
             <>
               {/* People tab: Agents, Humans, Computers */}
               <SidebarItem
-                variant="accent"
                 active={location.pathname === `${pathBase}/members/graph`}
                 onClick={openMembersGraph}
                 className={`${sidebarItemClass(location.pathname === `${pathBase}/members/graph`)} text-left`}
@@ -4250,7 +4248,7 @@ export default function Sidebar({ mobileInline, bottomSlot }: SidebarProps) {
                     className={`transition-transform ${collapsed.agents ? "" : "rotate-90"}`}
                   />
                   {formatMessage({ id: "layout.sidebar.agents" })}
-                  <span className="text-foreground-placeholder font-mono normal-case tracking-normal theme-brutal:text-black/40">{agents.length}</span>
+                  <span className="text-foreground-placeholder font-mono normal-case tracking-normal ">{agents.length}</span>
                 </button>
                 {renderAgentActionMenu()}
               </div>
@@ -4294,7 +4292,7 @@ export default function Sidebar({ mobileInline, bottomSlot }: SidebarProps) {
                               onClick={() => toggleAgentMachineGroup(group.key)}
                               aria-expanded={!groupCollapsed}
                               data-testid={`sidebar-agent-machine-group-toggle-${group.key}`}
-                              className="flex w-full items-center gap-1 px-2 mt-1.5 mb-0.5 text-[10px] font-mono lowercase text-foreground-placeholder select-none text-left hover:text-foreground-muted theme-brutal:text-black/40 theme-brutal:hover:text-black/60"
+                              className="flex w-full items-center gap-1 px-2 mt-1.5 mb-0.5 text-[10px] font-mono lowercase text-foreground-placeholder select-none text-left hover:text-foreground-muted  "
                             >
                               <ChevronRight
                                 size={9}
@@ -4330,7 +4328,7 @@ export default function Sidebar({ mobileInline, bottomSlot }: SidebarProps) {
                         className={`transition-transform ${collapsed.humans ? "" : "rotate-90"}`}
                       />
                       {formatMessage({ id: "layout.sidebar.humans" })}
-                      <span className="text-foreground-placeholder font-mono normal-case tracking-normal theme-brutal:text-black/40">{members.length}</span>
+                      <span className="text-foreground-placeholder font-mono normal-case tracking-normal ">{members.length}</span>
                     </button>
                     {canInviteMembers && (
                       <div className="relative">
@@ -4557,7 +4555,7 @@ export default function Sidebar({ mobileInline, bottomSlot }: SidebarProps) {
                 <ContextMenuDivider />
               </>
             )}
-            <div className="px-3 pb-1 pt-2 text-[10px] font-bold uppercase tracking-widest text-foreground-muted theme-brutal:text-black/50">
+            <div className="px-3 pb-1 pt-2 text-[10px] font-bold uppercase tracking-widest text-foreground-muted ">
               {formatMessage({ id: "layout.sidebar.sortMenuTitle" })}
             </div>
             {SIDEBAR_SORT_MODES.map((mode) => {
@@ -4575,7 +4573,7 @@ export default function Sidebar({ mobileInline, bottomSlot }: SidebarProps) {
               );
             })}
             <ContextMenuDivider />
-            <div className="px-3 pb-1 pt-2 text-[10px] font-bold uppercase tracking-widest text-foreground-muted theme-brutal:text-black/50">
+            <div className="px-3 pb-1 pt-2 text-[10px] font-bold uppercase tracking-widest text-foreground-muted ">
               {formatMessage({ id: "layout.sidebar.displaySection" })}
             </div>
             {sectionCtxMenu.section === "channels" && (

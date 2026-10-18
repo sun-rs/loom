@@ -18,8 +18,11 @@ test("official font contract retains families, weights and ranges while removing
     result.slice(result.indexOf(":where")),
     native.slice(native.indexOf(":where")),
   );
-  for (const family of ["Geist", "Geist Mono", "Hanken Grotesk", "Inter"])
-    assert.ok(result.includes(`font-family: '${family}'`));
+  for (const family of ["Space Grotesk", "Space Mono"])
+    assert.ok(
+      result.includes(`font-family: '${family}'`) ||
+        result.includes(`font-family: "${family}"`),
+    );
   assert.match(result, /unicode-range:/);
   assert.match(result, /font-display: swap/);
   const manifest = JSON.parse(
@@ -32,10 +35,6 @@ test("official font contract retains families, weights and ranges while removing
         .digest("hex"),
       file.sha256,
     );
-  const quote =
-    "src: url('https://fonts.gstatic.com/s/hankengrotesk/v12/ieVn2YZDLWuGJpnzaiwFXS9tYtpd59CxCis4.woff2'); unicode-range: U+0022;";
-  assert.ok(!localizeFontCss(quote).includes("https://"));
-  assert.match(localizeFontCss(quote), /U\+0022/);
   assert.throws(
     () =>
       localizeFontCss('@import url("https://fonts.googleapis.com/changed");'),

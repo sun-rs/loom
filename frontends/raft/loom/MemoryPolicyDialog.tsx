@@ -162,7 +162,7 @@ export default function MemoryPolicyDialog({
                 return (
                   <div
                     key={member.instanceId}
-                    className="mb-4 border-t border-line-muted theme-brutal:border-black/10 pt-3"
+                    className="mb-4 border-t border-line-muted  pt-3"
                   >
                     <p className="mb-2 text-sm font-bold">{name}</p>
                     <div className="grid grid-cols-2 gap-3">

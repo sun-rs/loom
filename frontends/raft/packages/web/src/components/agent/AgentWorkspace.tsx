@@ -56,7 +56,7 @@ function TruncationHint({ truncation, indent }: { truncation: DirTruncation; ind
   const { formatMessage } = useIntl();
   return (
     <div
-      className="py-1 pr-2 text-xs text-foreground-placeholder theme-brutal:text-black/40 font-mono"
+      className="py-1 pr-2 text-xs text-foreground-placeholder  font-mono"
       style={{ paddingLeft: `${indent}px` }}
       data-testid="agent-workspace-truncated"
     >
@@ -76,7 +76,7 @@ function workspaceViewPreferenceKey(agentId: string) {
 const WORKSPACE_MARKDOWN_REMARK_PLUGINS: NonNullable<Options["remarkPlugins"]> = [remarkGfm];
 const WORKSPACE_MARKDOWN_COMPONENTS: Components = {
   pre: ({ children }) => (
-    <CodeBlock className="overflow-x-auto border theme-brutal:border-2 border-line-muted theme-brutal:border-black bg-code-surface rounded-md theme-brutal:rounded-none p-3 pr-12 text-sm text-code-foreground font-mono [&>code]:border-0 [&>code]:bg-transparent [&>code]:p-0">
+    <CodeBlock className="overflow-x-auto border  border-line-muted  bg-code-surface rounded-md  p-3 pr-12 text-sm text-code-foreground font-mono [&>code]:border-0 [&>code]:bg-transparent [&>code]:p-0">
       {children}
     </CodeBlock>
   ),
@@ -95,7 +95,7 @@ const WORKSPACE_MARKDOWN_COMPONENTS: Components = {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="text-blue-700 dark:text-blue-300 underline decoration-2 underline-offset-2 hover:text-accent-strong theme-brutal:hover:text-brutal-pink"
+      className="text-blue-700 dark:text-blue-300 underline decoration-2 underline-offset-2 hover:text-accent-strong "
     >
       {children}
     </a>
@@ -132,28 +132,28 @@ const WORKSPACE_MARKDOWN_COMPONENTS: Components = {
   ),
   table: ({ children }) => (
     <div className="my-2 overflow-x-auto">
-      <table className="border-collapse border theme-brutal:border-2 border-line-muted theme-brutal:border-black text-sm">
+      <table className="border-collapse border  border-line-muted  text-sm">
         {children}
       </table>
     </div>
   ),
   th: ({ children }) => (
-    <th className="border theme-brutal:border-2 border-line-muted theme-brutal:border-black bg-info-soft theme-brutal:bg-brutal-cyan px-2 py-1 text-left font-bold whitespace-nowrap">
+    <th className="border  border-line-muted  bg-info-soft  px-2 py-1 text-left font-bold whitespace-nowrap">
       {children}
     </th>
   ),
   td: ({ children }) => (
-    <td className="border border-line-muted theme-brutal:border-black px-2 py-1">{children}</td>
+    <td className="border border-line-muted  px-2 py-1">{children}</td>
   ),
   h1: ({ children }) => <h1 className="text-xl font-bold mt-4 mb-2">{children}</h1>,
   h2: ({ children }) => <h2 className="text-lg font-bold mt-3 mb-1.5">{children}</h2>,
   h3: ({ children }) => <h3 className="text-base font-bold mt-2 mb-1">{children}</h3>,
   h4: ({ children }) => <h4 className="text-sm font-bold mt-2 mb-1">{children}</h4>,
   h5: ({ children }) => <h5 className="text-sm font-bold mt-1.5 mb-0.5">{children}</h5>,
-  h6: ({ children }) => <h6 className="text-sm font-bold mt-1.5 mb-0.5 text-foreground-muted theme-brutal:text-black/70">{children}</h6>,
-  hr: () => <hr className="my-3 border-t theme-brutal:border-t-2 border-line-muted theme-brutal:border-black" />,
+  h6: ({ children }) => <h6 className="text-sm font-bold mt-1.5 mb-0.5 text-foreground-muted ">{children}</h6>,
+  hr: () => <hr className="my-3 border-t  border-line-muted " />,
   img: ({ src, alt }) => (
-    <img src={src} alt={alt || ""} className={`my-2 max-w-full border theme-brutal:border-2 border-line-muted theme-brutal:border-black ${transparentImageBackgroundClass}`} />
+    <img src={src} alt={alt || ""} className={`my-2 max-w-full border  border-line-muted  ${transparentImageBackgroundClass}`} />
   ),
 };
 
@@ -186,7 +186,7 @@ function TreeNode({
   const isSelected = selectedPath === node.path;
   const isMemory = node.name === "memory.md";
   const isLoading = loadingDirs.has(node.path);
-  const hiddenTextClass = node.isHidden ? "text-foreground-muted theme-brutal:text-black/55" : "";
+  const hiddenTextClass = node.isHidden ? "text-foreground-muted " : "";
 
   if (node.isDirectory) {
     const children = isExpanded ? getChildren(node.path) : undefined;
@@ -196,8 +196,8 @@ function TreeNode({
         <button
           type="button"
           onClick={() => onToggleDir(node.path)}
-          className={`flex w-full items-center gap-1 py-1 pr-2 text-sm text-left hover:bg-fill-muted theme-brutal:hover:bg-black/5 transition-colors ${
-            isSelected ? "bg-accent-soft theme-brutal:bg-brutal-pink/20" : ""
+          className={`flex w-full items-center gap-1 py-1 pr-2 text-sm text-left hover:bg-fill-muted  transition-colors ${
+            isSelected ? "bg-accent-soft " : ""
           }`}
           style={{ paddingLeft: `${depth * 16 + 8}px` }}
         >
@@ -206,9 +206,9 @@ function TreeNode({
             className={`shrink-0 transition-transform ${isExpanded ? "rotate-90" : ""}`}
           />
           {isExpanded ? (
-            <FolderOpen size={14} className="shrink-0 text-warning-strong theme-brutal:text-brutal-orange" />
+            <FolderOpen size={14} className="shrink-0 text-warning-strong " />
           ) : (
-            <FolderClosed size={14} className="shrink-0 text-warning-strong theme-brutal:text-brutal-orange" />
+            <FolderClosed size={14} className="shrink-0 text-warning-strong " />
           )}
           <span className={`truncate font-medium ${hiddenTextClass}`}>{node.name}</span>
         </button>
@@ -216,7 +216,7 @@ function TreeNode({
           <div>
             {isLoading ? (
               <div
-                className="flex items-center gap-1.5 py-1 text-xs text-foreground-placeholder theme-brutal:text-black/40 font-mono"
+                className="flex items-center gap-1.5 py-1 text-xs text-foreground-placeholder  font-mono"
                 style={{ paddingLeft: `${(depth + 1) * 16 + 22}px` }}
               >
                 <Spinner size="xs" aria-label={loadingLabel} />
@@ -254,12 +254,12 @@ function TreeNode({
       onClick={() => onSelectFile(node.path)}
       className={`flex w-full items-center gap-1 py-1 pr-2 text-sm text-left transition-colors ${
         isSelected
-          ? "bg-accent-soft theme-brutal:bg-brutal-pink/20 border-r theme-brutal:border-r-2 border-line-strong theme-brutal:border-brutal-pink"
-          : "hover:bg-fill-muted theme-brutal:hover:bg-black/5"
+          ? "bg-accent-soft  border-r  border-line-strong "
+          : "hover:bg-fill-muted "
       }`}
       style={{ paddingLeft: `${depth * 16 + 22}px` }}
     >
-      <FileText size={14} className="shrink-0 text-foreground-muted theme-brutal:text-black/50" />
+      <FileText size={14} className="shrink-0 text-foreground-muted " />
       <span className={`truncate ${isMemory ? "font-bold" : ""} ${hiddenTextClass}`}>
         {node.name}
       </span>
@@ -524,10 +524,10 @@ export default function AgentWorkspace({ agentId, compact, hosted }: { agentId: 
   }, [workspacePath]);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-layer-canvas-muted theme-brutal:bg-brutal-cream">
+    <div className="flex min-h-0 flex-1 flex-col bg-layer-canvas-muted ">
       {/* Workspace path bar; a hosted agent has no local path to copy */}
-      {!hosted && <div className="flex items-center gap-2 border-b border-line-muted theme-brutal:border-black/10 bg-layer-panel theme-brutal:bg-white px-3 py-1.5">
-        <span className="min-w-0 truncate text-xs font-mono text-foreground-muted theme-brutal:text-black/50">
+      {!hosted && <div className="flex items-center gap-2 border-b border-line-muted  bg-layer-panel  px-3 py-1.5">
+        <span className="min-w-0 truncate text-xs font-mono text-foreground-muted ">
           {workspacePath}
         </span>
         <CopyIconButton
@@ -544,7 +544,7 @@ export default function AgentWorkspace({ agentId, compact, hosted }: { agentId: 
       <div className="flex min-h-0 flex-1">
       {/* Left pane: file tree — full width when compact/mobile and no file selected, resizable on desktop */}
       <div
-        className={`${selectedPath ? (compact ? "hidden" : "hidden md:flex") : "flex"} relative ${compact ? "min-w-full" : "min-w-full md:min-w-0"} shrink-0 flex-col ${compact ? "" : "border-r theme-brutal:border-r-2 border-line-muted theme-brutal:border-black"} bg-layer-panel theme-brutal:bg-white`}
+        className={`${selectedPath ? (compact ? "hidden" : "hidden md:flex") : "flex"} relative ${compact ? "min-w-full" : "min-w-full md:min-w-0"} shrink-0 flex-col ${compact ? "" : "border-r  border-line-muted "} bg-layer-panel `}
         style={compact ? undefined : { width: treeWidth }}
       >
         {/* Resize handle (desktop only, not in compact mode) */}
@@ -558,7 +558,7 @@ export default function AgentWorkspace({ agentId, compact, hosted }: { agentId: 
         />
         )}
         {/* Tree header */}
-        <div className="flex items-center justify-between border-b border-line-muted theme-brutal:border-black/10 px-3 py-2">
+        <div className="flex items-center justify-between border-b border-line-muted  px-3 py-2">
           <SectionEyebrow>
             {formatMessage({ id: "agent.workspace.title" })}
           </SectionEyebrow>
@@ -569,8 +569,8 @@ export default function AgentWorkspace({ agentId, compact, hosted }: { agentId: 
               <button
                 type="button"
                 onClick={() => handleToggleHiddenFiles(!showHiddenFiles)}
-                className={`flex size-7 shrink-0 items-center justify-center transition-colors hover:text-foreground-strong theme-brutal:hover:text-black ${
-                  showHiddenFiles ? "text-foreground-strong theme-brutal:text-black" : "text-foreground-placeholder theme-brutal:text-black/40"
+                className={`flex size-7 shrink-0 items-center justify-center transition-colors hover:text-foreground-strong  ${
+                  showHiddenFiles ? "text-foreground-strong " : "text-foreground-placeholder "
                 }`}
                 aria-label={showHiddenFiles
                   ? formatMessage({ id: "agent.workspace.hiddenFilesShown" })
@@ -584,7 +584,7 @@ export default function AgentWorkspace({ agentId, compact, hosted }: { agentId: 
               <button
                 type="button"
                 onClick={handleRefresh}
-                className="text-foreground-placeholder theme-brutal:text-black/40 hover:text-foreground-strong theme-brutal:hover:text-black transition-colors"
+                className="text-foreground-placeholder  hover:text-foreground-strong  transition-colors"
                 aria-label={formatMessage({ id: "agent.workspace.refresh" })}
               >
                 <RefreshCw size={12} />
@@ -596,13 +596,13 @@ export default function AgentWorkspace({ agentId, compact, hosted }: { agentId: 
         {/* Tree content */}
         <div className="flex-1 overflow-y-auto py-1">
           {loading ? (
-            <div className="px-3 py-4 text-center text-sm text-foreground-placeholder theme-brutal:text-black/40 font-mono">
+            <div className="px-3 py-4 text-center text-sm text-foreground-placeholder  font-mono">
               {formatMessage({ id: "agent.workspace.loading" })}
             </div>
           ) : loadError ? (
             <div className="px-3 py-4 text-center">
-              <AlertTriangle size={20} className="mx-auto mb-1.5 text-warning-strong theme-brutal:text-brutal-orange" />
-              <div className="text-sm text-foreground-muted theme-brutal:text-black/60 font-mono mb-2">
+              <AlertTriangle size={20} className="mx-auto mb-1.5 text-warning-strong " />
+              <div className="text-sm text-foreground-muted  font-mono mb-2">
                 {formatMessage({ id: "agent.workspace.filesLoadFailed" })}
               </div>
               <Button variant="outline" size="sm"
@@ -614,7 +614,7 @@ export default function AgentWorkspace({ agentId, compact, hosted }: { agentId: 
               </Button>
             </div>
           ) : rootFiles.length === 0 ? (
-            <div className="px-3 py-4 text-center text-sm text-foreground-placeholder theme-brutal:text-black/40 font-mono">
+            <div className="px-3 py-4 text-center text-sm text-foreground-placeholder  font-mono">
               {formatMessage({ id: "agent.workspace.noFiles" })}
             </div>
           ) : (
@@ -645,28 +645,28 @@ export default function AgentWorkspace({ agentId, compact, hosted }: { agentId: 
       {/* Right pane: file content viewer — hidden on mobile/compact when no file selected */}
       <div className={`${!selectedPath ? (compact ? "hidden" : "hidden md:flex") : "flex"} min-w-0 flex-1 flex-col`}>
         {!selectedPath ? (
-          <div className="flex flex-1 items-center justify-center text-foreground-placeholder theme-brutal:text-black/30 font-mono text-sm">
+          <div className="flex flex-1 items-center justify-center text-foreground-placeholder  font-mono text-sm">
             <div className="text-center">
               <File size={32} className="mx-auto mb-2 opacity-30" />
               {formatMessage({ id: "agent.workspace.selectFile" })}
             </div>
           </div>
         ) : loadingFile ? (
-          <div className="flex flex-1 items-center justify-center text-foreground-placeholder theme-brutal:text-black/40 font-mono text-sm">
+          <div className="flex flex-1 items-center justify-center text-foreground-placeholder  font-mono text-sm">
             {formatMessage({ id: "agent.workspace.loading" })}
           </div>
         ) : !fileContent ? (
-          <div className="flex flex-1 items-center justify-center text-foreground-placeholder theme-brutal:text-black/40 font-mono text-sm">
+          <div className="flex flex-1 items-center justify-center text-foreground-placeholder  font-mono text-sm">
             {fileError || formatMessage({ id: "agent.workspace.fileLoadFailed" })}
           </div>
         ) : (
           <>
             {/* File header — name + back + view mode toggle */}
-            <div className="flex items-center gap-2 border-b border-line-muted theme-brutal:border-black/10 bg-layer-panel theme-brutal:bg-white px-4 py-2">
+            <div className="flex items-center gap-2 border-b border-line-muted  bg-layer-panel  px-4 py-2">
               <button
                 type="button"
                 onClick={() => { setSelectedPath(null); setFileContent(null); setFileError(null); }}
-                className={`${compact ? "" : "md:hidden"} shrink-0 text-foreground-muted theme-brutal:text-black/60 hover:text-foreground-strong theme-brutal:hover:text-black transition-colors`}
+                className={`${compact ? "" : "md:hidden"} shrink-0 text-foreground-muted  hover:text-foreground-strong  transition-colors`}
               >
                 <ArrowLeft size={16} />
               </button>
@@ -674,7 +674,7 @@ export default function AgentWorkspace({ agentId, compact, hosted }: { agentId: 
                   it, a long unbreakable path keeps its intrinsic width and
                   pushes the right-side toggle/buttons past the panel edge.
                   #proj-uiux task #133. */}
-              <span className="min-w-0 flex-1 font-mono text-sm font-medium text-foreground-strong theme-brutal:text-black truncate">
+              <span className="min-w-0 flex-1 font-mono text-sm font-medium text-foreground-strong  truncate">
                 {fileContent.path}
               </span>
               {fileContent.path.endsWith(".md") && (
@@ -701,15 +701,15 @@ export default function AgentWorkspace({ agentId, compact, hosted }: { agentId: 
                   <img
                     src={`data:${fileContent.mimeType};base64,${fileContent.content}`}
                     alt={fileContent.path}
-                    className={`max-h-full max-w-full border theme-brutal:border-2 border-line-muted theme-brutal:border-black object-contain ${transparentImageBackgroundClass}`}
+                    className={`max-h-full max-w-full border  border-line-muted  object-contain ${transparentImageBackgroundClass}`}
                   />
                 </div>
               ) : fileContent.binary ? (
-                <div className="flex h-full items-center justify-center text-foreground-placeholder theme-brutal:text-black/40 font-mono text-sm">
+                <div className="flex h-full items-center justify-center text-foreground-placeholder  font-mono text-sm">
                   {formatMessage({ id: "agent.workspace.binaryCannotDisplay" })}
                 </div>
               ) : fileContent.path.endsWith(".md") && viewMode === "preview" ? (
-                <div className="text-sm text-foreground-strong theme-brutal:text-black break-words">
+                <div className="text-sm text-foreground-strong  break-words">
                   <ReactMarkdown
                     remarkPlugins={WORKSPACE_MARKDOWN_REMARK_PLUGINS}
                     components={WORKSPACE_MARKDOWN_COMPONENTS}
@@ -718,14 +718,14 @@ export default function AgentWorkspace({ agentId, compact, hosted }: { agentId: 
                   </ReactMarkdown>
                 </div>
               ) : (
-                <pre className="whitespace-pre-wrap break-words text-sm font-mono text-foreground-strong theme-brutal:text-black">
+                <pre className="whitespace-pre-wrap break-words text-sm font-mono text-foreground-strong ">
                   {fileContent.content || ""}
                 </pre>
               )}
             </div>
 
             {/* Bottom bar — file size + modified date */}
-            <div className="flex items-center gap-3 border-t border-line-muted theme-brutal:border-black/10 bg-layer-panel theme-brutal:bg-white px-4 py-1.5 text-xs text-foreground-placeholder theme-brutal:text-black/40 font-mono">
+            <div className="flex items-center gap-3 border-t border-line-muted  bg-layer-panel  px-4 py-1.5 text-xs text-foreground-placeholder  font-mono">
               <span>{formatSize(fileContent.size)}</span>
               <span>{formatShortDateTime(fileContent.modifiedAt)}</span>
             </div>

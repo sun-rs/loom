@@ -20,13 +20,7 @@ export async function verifyLocalFonts({ browser, origin }) {
       await page.getByTestId("appearance-theme-picker").waitFor();
       const loaded = await page.evaluate(async () => {
         const results = [];
-        for (const family of [
-          "Geist",
-          "Geist Mono",
-          "Hanken Grotesk",
-          "Inter",
-          "Raft Quote Glyphs",
-        ]) {
+        for (const family of ["Space Grotesk", "Space Mono"]) {
           const faces = await document.fonts.load(
             `400 16px "${family}"`,
             'Abc123"',
@@ -38,15 +32,10 @@ export async function verifyLocalFonts({ browser, origin }) {
         return results;
       });
       const typography = [];
-      for (const theme of ["elegant", "brutal"]) {
-        await page
-          .getByTestId("appearance-light-theme-" + theme)
-          .locator("..")
-          .locator("[data-theme]")
-          .first()
-          .click();
+      for (const theme of ["light", "dark"]) {
+        await page.getByTestId("appearance-mode-" + theme).click();
         await page.waitForFunction(
-          (theme) => document.documentElement.dataset.theme === theme,
+          (mode) => document.documentElement.classList.contains(mode),
           theme,
         );
         await page.evaluate(() => document.fonts.ready);

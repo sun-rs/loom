@@ -56,7 +56,7 @@ export default function MenuItem({
   // RUI's ghost Button turns on `hover:border-line-strong`; inside a menu that reads as
   // a box appearing under the pointer (Artea, task #640). Menu rows highlight by
   // background only, so cancel the variant's hover border here.
-  const tone = "font-medium text-foreground-strong hover:bg-fill-muted hover:!border-transparent disabled:cursor-not-allowed disabled:text-foreground-muted theme-brutal:text-black theme-brutal:hover:bg-soft-signal/30 theme-brutal:disabled:text-black/30";
+  const tone = "font-medium text-foreground-strong hover:bg-fill-muted hover:!border-transparent disabled:cursor-not-allowed disabled:text-foreground-muted   ";
 
   return (
     <Button

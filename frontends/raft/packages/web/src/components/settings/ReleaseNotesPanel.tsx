@@ -196,18 +196,18 @@ export default function ReleaseNotesPanel() {
       <PanelHeader
         title={formatMessage({ id: "settings.releaseNotes.title" })}
         icon={<FileText size={18} />}
-        iconBg="bg-primary-soft text-foreground-strong theme-brutal:bg-soft-signal theme-brutal:text-black"
+        iconBg="bg-primary-soft text-foreground-strong  "
         onMobileBack={onMobileBack}
       />
 
-      <div className="flex-1 overflow-y-auto bg-layer-panel px-5 py-4 text-foreground-strong theme-brutal:bg-white theme-brutal:text-black">
+      <div className="flex-1 overflow-y-auto bg-layer-panel px-5 py-4 text-foreground-strong  ">
         <div className="mb-4 flex items-center gap-2">
-          <FileText size={16} className="text-foreground-muted theme-brutal:text-black/60" />
+          <FileText size={16} className="text-foreground-muted " />
           <SectionEyebrow>{formatMessage({ id: "settings.releaseNotes.whatsNew" })}</SectionEyebrow>
         </div>
 
         {state.status === "loading" ? (
-          <p className="text-sm text-foreground-muted theme-brutal:text-black/60" role="status">
+          <p className="text-sm text-foreground-muted " role="status">
             {formatMessage({ id: "settings.releaseNotes.loading" })}
           </p>
         ) : null}
@@ -239,19 +239,19 @@ export default function ReleaseNotesPanel() {
                 <Card
                   key={release.releaseId}
                   data-testid="release-entry"
-                  className={`p-4 ${isCurrentRelease ? "bg-primary-soft theme-brutal:bg-soft-signal/35" : ""}`}
+                  className={`p-4 ${isCurrentRelease ? "bg-primary-soft " : ""}`}
                 >
                   <div className="mb-4 flex flex-wrap items-center gap-2">
-                    <Badge appearance="solid" variant="primary" uppercase={false}>
+                    <Badge appearance="solid" variant="primary">
                       {release.version ? `${release.version} (${release.date})` : release.date}
                     </Badge>
                     {isCurrentRelease ? (
-                      <Badge appearance="solid" variant="success" uppercase={false}>
+                      <Badge appearance="solid" variant="success">
                         {formatMessage({ id: "settings.releaseNotes.current" })}
                       </Badge>
                     ) : null}
                     {release.state === "retracted" ? (
-                      <Badge appearance="solid" variant="default" uppercase={false}>
+                      <Badge appearance="solid" variant="default">
                         {formatMessage({ id: "settings.releaseNotes.retracted" })}
                       </Badge>
                     ) : null}
@@ -264,12 +264,12 @@ export default function ReleaseNotesPanel() {
                       const config = RELEASE_TYPE_CONFIG[type];
                       return (
                         <div key={type}>
-                          <Badge appearance="soft" variant={config.badgeVariant} uppercase>
+                          <Badge appearance="soft" variant={config.badgeVariant}>
                             {formatMessage({ id: config.labelId })}
                           </Badge>
-                          <ul className="mt-1.5 list-disc space-y-1.5 pl-5 marker:text-foreground-muted theme-brutal:marker:text-black/70">
+                          <ul className="mt-1.5 list-disc space-y-1.5 pl-5 marker:text-foreground-muted ">
                             {entries.map((entry) => (
-                              <li key={entry.entryId} className={`text-sm ${entry.emphasis ? "font-bold text-foreground-strong theme-brutal:text-black" : "text-foreground-muted theme-brutal:text-black/80"}`}>
+                              <li key={entry.entryId} className={`text-sm ${entry.emphasis ? "font-bold text-foreground-strong " : "text-foreground-muted "}`}>
                                 {entry.text}
                               </li>
                             ))}

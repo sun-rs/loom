@@ -74,8 +74,8 @@ test("local official CloseButton calls carry an explicit semantic mobile target 
 });
 test("header touch adaptation uses semantic controls rather than SVG/span nesting", () => {
   const css = readFileSync(base + "mobile.css", "utf8");
-  assert.ok(css.includes('[data-loom-control="detail-close"]'));
-  assert.ok(css.includes('[data-slot="panel-action"]'));
+  assert.ok(!css.includes('[data-loom-control="detail-close"]'));
+  assert.ok(css.includes("rUI 0.6 owns"));
   assert.ok(!css.includes("button:has(> svg):not(:has(span))"));
 });
 

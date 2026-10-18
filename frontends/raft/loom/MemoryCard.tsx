@@ -106,7 +106,7 @@ export default function MemoryCard({
               if (!busy) onOpen();
             }
           }}
-          className={`group relative flex w-full items-start gap-3 rounded-md border p-3 theme-brutal:rounded-none text-left transition-colors hover:border-line-muted hover:bg-fill-muted hover:shadow-raft-sm active:border-line-muted active:shadow-raft-sm theme-brutal:border-2 theme-brutal:hover:border-black theme-brutal:hover:shadow-brutal-sm theme-brutal:active:border-black theme-brutal:active:shadow-brutal-sm ${active ? "border-line-muted bg-fill-muted shadow-raft-sm theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal-sm" : "border-line-muted bg-layer-card theme-brutal:border-black/30 theme-brutal:bg-white"}`}
+          className={`group relative flex w-full items-start gap-3 rounded-md border p-3  text-left transition-colors hover:border-line-muted hover:bg-fill-muted hover:shadow-raft-sm active:border-line-muted active:shadow-raft-sm      ${active ? "border-line-muted bg-fill-muted shadow-raft-sm   " : "border-line-muted bg-layer-card  "}`}
         >
           <div className="min-w-0 w-full">
             <div className="mb-0.5 flex min-w-0 items-start gap-2">
@@ -130,7 +130,7 @@ export default function MemoryCard({
             <p
               ref={preview}
               data-testid="memory-card-body"
-              className="line-clamp-6 whitespace-pre-wrap break-words text-xs leading-4 text-foreground-muted theme-brutal:text-black/55"
+              className="line-clamp-6 whitespace-pre-wrap break-words text-xs leading-4 text-foreground-muted "
             >
               {error ? "正文读取失败" : (body ?? "正在读取正文…")}
             </p>
@@ -156,7 +156,6 @@ export default function MemoryCard({
               <Badge
                 appearance="soft"
                 variant="information"
-                uppercase={false}
                 className="max-w-full truncate"
               >
                 {channelName}
@@ -164,7 +163,6 @@ export default function MemoryCard({
               <Badge
                 appearance="soft"
                 variant="muted"
-                uppercase={false}
                 className="max-w-full truncate"
               >
                 {entry.name}
@@ -178,7 +176,6 @@ export default function MemoryCard({
                       ? "muted"
                       : "warning"
                 }
-                uppercase={false}
               >
                 {entry.state === "active"
                   ? "有效"
@@ -187,7 +184,7 @@ export default function MemoryCard({
                     : "已失效"}
               </Badge>
               {entry.pinned && (
-                <Badge appearance="soft" variant="accent" uppercase={false}>
+                <Badge appearance="soft" variant="accent">
                   已置顶
                 </Badge>
               )}

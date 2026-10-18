@@ -151,11 +151,11 @@ function MembersStrip({
           role="heading"
           aria-level={3}
           data-testid="channel-overflow-members-heading"
-          className="text-base font-bold text-foreground-strong theme-brutal:text-black"
+          className="text-base font-bold text-foreground-strong "
         >
           {formatMessage({ id: "message.chatPanel.overflow.members" })}
         </span>
-        <span className="inline-flex min-w-0 items-center gap-1 text-xs font-bold text-foreground-muted theme-brutal:text-black">
+        <span className="inline-flex min-w-0 items-center gap-1 text-xs font-bold text-foreground-muted ">
           {loading
             ? formatMessage({ id: "message.chatPanel.overflow.membersLoading" })
             : channelExternalMembers.length > 0

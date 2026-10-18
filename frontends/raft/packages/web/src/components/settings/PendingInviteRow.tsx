@@ -16,11 +16,11 @@ export function PendingInviteRow({
   const handleRequestRevoke = useCallback(() => onRequestRevoke(invite), [invite, onRequestRevoke]);
 
   return (
-    <div className="flex items-center gap-2 border border-line-muted theme-brutal:border-2 theme-brutal:border-black/30 px-3 py-2">
-      <span className="flex-1 font-mono text-xs text-foreground-strong theme-brutal:text-black truncate">
+    <div className="flex items-center gap-2 border border-line-muted   px-3 py-2">
+      <span className="flex-1 font-mono text-xs text-foreground-strong  truncate">
         {invite.invitedEmail}
       </span>
-      <span className="text-[10px] text-foreground-muted theme-brutal:text-black/40 font-mono shrink-0">
+      <span className="text-[10px] text-foreground-muted  font-mono shrink-0">
         {formatDate(invite.createdAt, {
           month: "short",
           day: "numeric",

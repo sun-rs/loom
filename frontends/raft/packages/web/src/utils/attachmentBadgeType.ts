@@ -1,4 +1,4 @@
-import type { FilePreviewBadgeType } from "raft-ui";
+type FilePreviewBadgeType = string;
 
 /**
  * Maps an attachment filename onto the semantic file kind RUI's

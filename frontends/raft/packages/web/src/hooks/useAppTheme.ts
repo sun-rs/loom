@@ -1,33 +1,16 @@
 import { createContext, useContext } from "react";
-import type {
-  AppAppearanceMode,
-  AppResolvedMode,
-  AppThemeId,
-  AppThemePreferences,
-  AppThemePreset,
-} from "../theme/appTheme";
-
+import type { AppearanceMode } from "../../../../loom/theme-mode";
 export interface AppThemeContextValue {
-  preset: AppThemePreset;
-  preferences: AppThemePreferences;
-  resolvedMode: AppResolvedMode;
-  setPreferences: (preferences: AppThemePreferences) => void;
-  setMode: (mode: AppAppearanceMode) => void;
-  setThemeForMode: (mode: AppResolvedMode, themeId: AppThemeId) => void;
-  /** Compatibility setter for callers that have not migrated off presets. */
-  setPreset: (preset: AppThemePreset) => void;
+  preferences: { mode: AppearanceMode };
+  resolvedMode: "light" | "dark";
+  setMode: (mode: AppearanceMode) => void;
 }
-
 export const AppThemeContext = createContext<AppThemeContextValue | null>(null);
-
-export function useAppTheme(): AppThemeContextValue {
+export function useAppTheme() {
   const value = useContext(AppThemeContext);
-  if (value === null) {
-    throw new Error("useAppTheme must be used within AppThemeProvider");
-  }
+  if (!value) throw Error("AppThemeProvider required");
   return value;
 }
-
-export function useOptionalAppTheme(): AppThemeContextValue | null {
+export function useOptionalAppTheme() {
   return useContext(AppThemeContext);
 }

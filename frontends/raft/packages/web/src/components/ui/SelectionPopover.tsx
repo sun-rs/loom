@@ -71,7 +71,7 @@ function SelectionPopoverOptionRow({
 }: SelectionPopoverOption) {
   const leadingContent = leading ?? avatar;
   const labelClassName = italic
-    ? "-mx-1 px-1 whitespace-nowrap leading-6 italic text-foreground-muted theme-brutal:text-black/70"
+    ? "-mx-1 px-1 whitespace-nowrap leading-6 italic text-foreground-muted "
     : "truncate leading-6";
   // Selection family contract (stdrc #proj-theme:ac79cf20 msg=32e323aa
   // + msg=832c2c02 + msg=b0b92c1c 2026-05-25): hover = bg-soft-signal/30
@@ -82,15 +82,15 @@ function SelectionPopoverOptionRow({
   // sidebar action menus + right-click context menus all share one
   // hover token.
   const rowTone = disabled
-    ? "cursor-not-allowed bg-layer-panel text-foreground-muted theme-brutal:bg-white theme-brutal:text-black/30"
-    : "bg-layer-panel text-foreground-strong hover:bg-fill-muted theme-brutal:bg-white theme-brutal:text-black theme-brutal:hover:bg-soft-signal/30";
+    ? "cursor-not-allowed bg-layer-panel text-foreground-muted  "
+    : "bg-layer-panel text-foreground-strong hover:bg-fill-muted   ";
 
   return (
     <button
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className={`flex h-9 w-full items-center justify-between gap-2 overflow-hidden border-b border-line-muted px-3 text-left text-xs font-bold last:border-b-0 theme-brutal:border-black/10 ${rowTone}`}
+      className={`flex h-9 w-full items-center justify-between gap-2 overflow-hidden border-b border-line-muted px-3 text-left text-xs font-bold last:border-b-0  ${rowTone}`}
     >
       <span className="flex min-w-0 items-center gap-2">
         {(reserveLeadingSlot || leadingContent) && (
@@ -117,7 +117,7 @@ export default function SelectionPopover(props: SelectionPopoverProps) {
     showHeader = true,
     emptyLabel,
     width = "content",
-    className = `absolute left-0 top-[calc(100%+8px)] z-20 ${width === "trigger" ? "w-full" : "min-w-[220px]"} border border-line-muted bg-layer-panel shadow-raft-sm theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal`,
+    className = `absolute left-0 top-[calc(100%+8px)] z-20 ${width === "trigger" ? "w-full" : "min-w-[220px]"} border border-line-muted bg-layer-panel shadow-raft-sm    `,
   } = props;
   const emptyLabelText = emptyLabel ?? formatMessage({ id: "ui.selectionPopover.emptyLabel" });
   const { onSearchChange, onInputKeyDown } = props;
@@ -132,7 +132,7 @@ export default function SelectionPopover(props: SelectionPopoverProps) {
   return (
     <Card className={className} {...dismissLayerProps}>
       {showHeader && (
-        <div className="flex items-center justify-between border-b border-line-muted px-3 py-2 theme-brutal:border-black">
+        <div className="flex items-center justify-between border-b border-line-muted px-3 py-2 ">
           <span className="text-[10px] font-bold uppercase tracking-wide text-foreground-muted">
             {title}
           </span>
@@ -148,7 +148,7 @@ export default function SelectionPopover(props: SelectionPopoverProps) {
         </div>
       )}
       {props.searchable && (
-        <div className="border-b border-line-muted px-2 py-2 theme-brutal:border-black">
+        <div className="border-b border-line-muted px-2 py-2 ">
           <Input
             type="text"
             autoFocus

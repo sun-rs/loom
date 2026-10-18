@@ -23,13 +23,12 @@ export default function PrivateBoxRow({
 }) {
   return (
     <SidebarItem
-      variant="accent"
       data-private-box-id={roomId}
       data-sidebar-channel-id={roomId}
       data-slot="sidebar-item"
       active={selected}
       onClick={onSelect}
-      className={`mx-0 w-full ${allowWrap ? "items-start whitespace-normal" : "items-center"} ${selected ? "data-active:bg-fill-muted dark:data-active:bg-fill-muted data-active:shadow-none data-active:ring-0 theme-brutal:data-active:bg-brutal-pink theme-brutal:data-active:shadow-brutal-sm" : menuOpen ? "bg-fill-muted" : ""}`}
+      className={`mx-0 w-full ${allowWrap ? "items-start whitespace-normal" : "items-center"} ${selected ? "  " : menuOpen ? "bg-fill-muted" : ""}`}
     >
       <AvatarSlot context="sidebar-list" type="agent" agentAvatarUrl={null} />
       <div
@@ -42,7 +41,7 @@ export default function PrivateBoxRow({
         </span>
         {description && (
           <span
-            className={`min-w-0 ${allowWrap ? "max-w-full whitespace-normal break-words leading-tight" : "flex-1 truncate"} text-xs text-foreground-muted theme-brutal:text-black/40`}
+            className={`min-w-0 ${allowWrap ? "max-w-full whitespace-normal break-words leading-tight" : "flex-1 truncate"} text-xs text-foreground-muted `}
           >
             {description}
           </span>
@@ -50,11 +49,7 @@ export default function PrivateBoxRow({
       </div>
       <span className="flex shrink-0 self-center items-center gap-1.5">
         {unread > 0 && (
-          <SidebarItemCount
-            variant="accent"
-            className=""
-            aria-label="有未读消息"
-          >
+          <SidebarItemCount className="" aria-label="有未读消息">
             {unread > 99 ? "99+" : unread}
           </SidebarItemCount>
         )}

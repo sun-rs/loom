@@ -16,7 +16,7 @@ export function DiffPatchStatsLine({
   const { formatMessage } = useIntl();
   if (!preview) {
     return (
-      <span className="text-foreground-muted theme-brutal:text-black/70">
+      <span className="text-foreground-muted ">
         {formatMessage({ id: "message.messageItem.diffPreview" })}
       </span>
     );
@@ -26,7 +26,7 @@ export function DiffPatchStatsLine({
 
   return (
     <MessageAttachmentDiffSummary className="inline-flex min-w-0 items-center">
-      <span className="text-foreground-muted theme-brutal:text-black/70">
+      <span className="text-foreground-muted ">
         {formatMessage(
           { id: "message.messageItem.diffStats" },
           { fileCount: files, hunkCount: hunks },

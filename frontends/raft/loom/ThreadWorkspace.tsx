@@ -185,7 +185,7 @@ export default function ThreadWorkspace({
       )}
       <div
         data-loom-composer-shell
-        className="relative z-20 shrink-0 min-w-0 w-full flex-1 border-t border-line-muted bg-layer-panel px-3 pt-3 safe-bottom theme-brutal:border-t-2 theme-brutal:border-black theme-brutal:bg-white"
+        className="relative z-20 shrink-0 min-w-0 w-full flex-1 border-t border-line-muted bg-layer-panel px-3 pt-3 safe-bottom   "
       >
         <MessageInput
           client={client}
@@ -224,7 +224,7 @@ export default function ThreadWorkspace({
           className={
             embedded || contentSlot
               ? "relative flex min-h-0 flex-1 flex-col"
-              : "thread-side-column flex flex-col bg-layer-card theme-brutal:bg-white"
+              : "thread-side-column flex flex-col bg-layer-card "
           }
           data-testid={
             contentSlot ? "activity-thread-content" : "thread-side-column"
@@ -330,7 +330,7 @@ export default function ThreadWorkspace({
               loomFooter={footer}
             />
           ) : (
-            <ThreadPanelRoot className="isolate flex h-full min-h-0 w-full flex-col bg-layer-panel dark:bg-layer-card theme-brutal:bg-white">
+            <ThreadPanelRoot className="isolate flex h-full min-h-0 w-full flex-col bg-layer-panel dark:bg-layer-card ">
               <PanelHeader
                 title="消息列"
                 onMobileBack={close}
@@ -339,7 +339,7 @@ export default function ThreadWorkspace({
                   <CloseButton
                     data-loom-control="detail-close"
                     data-testid="thread-close"
-                    className="flex size-7 shrink-0 items-center justify-center"
+                    className="flex size-8 shrink-0 items-center justify-center"
                     aria-label="关闭消息列"
                     onClick={close}
                   />

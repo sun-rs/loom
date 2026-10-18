@@ -84,8 +84,8 @@ export default function ForwardComposerTargetList({
           event.preventDefault();
           toggle();
         }}
-        className={`flex w-full min-w-0 items-center gap-2 rounded-md border border-line-muted px-2 py-2 text-left text-sm font-bold transition-colors theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black ${
-          unavailable ? "cursor-not-allowed bg-fill-muted/40 opacity-50" : selected ? "bg-primary-soft theme-brutal:bg-soft-signal" : "bg-layer-panel hover:bg-fill-muted theme-brutal:bg-white theme-brutal:hover:bg-brutal-cyan/15"
+        className={`flex w-full min-w-0 items-center gap-2 rounded-md border border-line-muted px-2 py-2 text-left text-sm font-bold transition-colors    ${
+          unavailable ? "cursor-not-allowed bg-fill-muted/40 opacity-50" : selected ? "bg-primary-soft " : "bg-layer-panel hover:bg-fill-muted  "
         }`}
         data-testid={`forward-search-target-${target.type}-${target.id}`}
       >
@@ -142,7 +142,7 @@ export default function ForwardComposerTargetList({
           event.preventDefault();
           toggle();
         }}
-        className={`flex w-full min-w-0 items-center gap-2 rounded-md border border-line-muted px-2 py-2 text-left text-sm font-bold transition-colors theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black ${selected ? "bg-primary-soft theme-brutal:bg-soft-signal" : "bg-layer-panel hover:bg-fill-muted theme-brutal:bg-white theme-brutal:hover:bg-brutal-cyan/15"}`}
+        className={`flex w-full min-w-0 items-center gap-2 rounded-md border border-line-muted px-2 py-2 text-left text-sm font-bold transition-colors    ${selected ? "bg-primary-soft " : "bg-layer-panel hover:bg-fill-muted  "}`}
         data-testid={`forward-target-${target.id}`}
       >
         {showCheckbox && <Checkbox checked={selected} disabled={disabled} tabIndex={-1} aria-hidden className="pointer-events-none" />}

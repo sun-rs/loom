@@ -21,13 +21,13 @@ export default function AgentUnavailablePanel({ onClose }: { onClose?: () => voi
   );
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-layer-panel theme-brutal:bg-white">
+    <div className="flex min-h-0 flex-1 flex-col bg-layer-panel ">
       <PanelHeader
         title={formatMessage({ id: "agent.detail.unavailableTitle" })}
         onMobileBack={onMobileBack}
         mobileBackProps={mobileBackProps}
         icon={<Bot size={18} />}
-        iconBg="bg-fill-muted text-foreground-strong theme-brutal:bg-gray-200 theme-brutal:text-black"
+        iconBg="bg-fill-muted text-foreground-strong  "
         actions={onClose ? (
           <Tooltip content={formatMessage({ id: "common.close" })}>
             <CloseButton

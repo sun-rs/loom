@@ -25,7 +25,7 @@ export function MigrationReference({ notice }: { notice: AgentMigrationNotice })
     void copy();
   }, [copy]);
   return (
-    <div className="flex min-w-0 flex-wrap items-center gap-1.5 text-[11px] text-foreground-muted theme-brutal:text-black/55">
+    <div className="flex min-w-0 flex-wrap items-center gap-1.5 text-[11px] text-foreground-muted ">
       <span className="font-bold">{formatMessage({ id: "agent.migration.referenceLabel" })}</span>
       <span className="flex min-w-0 items-center gap-1.5">
         {/* Plain muted mono text: a support reference, not a highlighted chip. */}

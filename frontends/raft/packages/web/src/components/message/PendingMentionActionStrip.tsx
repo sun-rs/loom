@@ -49,7 +49,7 @@ export function PendingMentionActionStrip({
 
   return (
     <div
-      className="mb-2 w-full rounded-lg border border-line-muted bg-layer-panel px-3 py-2 shadow-raft-xs theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-brutal-cream theme-brutal:shadow-brutal-sm"
+      className="mb-2 w-full rounded-lg border border-line-muted bg-layer-panel px-3 py-2 shadow-raft-xs     "
       data-testid="pending-mention-action-strip"
     >
       <div className="flex flex-col gap-2" data-testid="pending-mention-action-rows">

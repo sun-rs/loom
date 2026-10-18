@@ -21,7 +21,6 @@ export default function LegalAcceptanceCheckbox({
   return (
     <label className="flex items-start gap-2.5 text-sm">
       <Checkbox
-        size="md"
         checked={checked}
         disabled={disabled}
         onCheckedChange={handleCheckedChange}
@@ -37,7 +36,7 @@ export default function LegalAcceptanceCheckbox({
                 href={CURRENT_LEGAL_ACCEPTANCE.termsUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="font-bold text-foreground-strong underline hover:text-accent-strong theme-brutal:hover:text-brutal-pink"
+                className="font-bold text-foreground-strong underline hover:text-accent-strong "
               >
                 {c}
               </a>
@@ -48,7 +47,7 @@ export default function LegalAcceptanceCheckbox({
                 href={CURRENT_LEGAL_ACCEPTANCE.privacyUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="font-bold text-foreground-strong underline hover:text-accent-strong theme-brutal:hover:text-brutal-pink"
+                className="font-bold text-foreground-strong underline hover:text-accent-strong "
               >
                 {c}
               </a>

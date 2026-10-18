@@ -140,7 +140,7 @@ export function AttachmentChip({
   const loadingBar = (
     <div
       data-message-affordance="attachment-preview-loading"
-      className="absolute inset-x-0 bottom-0 flex h-6 items-center gap-1.5 border-t border-line-muted bg-primary-soft px-2 text-[10px] font-bold uppercase tracking-wide text-primary-strong theme-brutal:border-t-2 theme-brutal:border-black theme-brutal:bg-soft-signal theme-brutal:text-black"
+      className="absolute inset-x-0 bottom-0 flex h-6 items-center gap-1.5 border-t border-line-muted bg-primary-soft px-2 text-[10px] font-bold uppercase tracking-wide text-primary-strong    "
     >
       <Spinner size="xs" aria-label={formatMessage({ id: "common.loadingLabel" })} />
       <span className="truncate">{resolvedLoadingLabel}</span>
@@ -195,7 +195,7 @@ export function AttachmentChip({
           <TruncatedAttachmentTooltip
             content={attachment.filename}
             affordance="attachment-filename"
-            className="block min-w-0 max-w-full flex-1 truncate text-xs font-bold text-foreground-strong theme-brutal:text-black"
+            className="block min-w-0 max-w-full flex-1 truncate text-xs font-bold text-foreground-strong "
           >
             {attachment.filename}
           </TruncatedAttachmentTooltip>
@@ -225,7 +225,7 @@ export function AttachmentChip({
           && !attachment.mimeType?.startsWith("image/")
           && attachment.mimeType?.split(";")[0]?.trim().toLowerCase() !== "application/pdf" ? (
           <span data-message-affordance="attachment-comment-count" className="inline-flex items-center gap-1 pl-1">
-            {meta ? <span className="text-foreground-muted theme-brutal:text-black/35">·</span> : null}
+            {meta ? <span className="text-foreground-muted ">·</span> : null}
             <MessageSquare size={9} className="shrink-0" />
             {attachment.commentCount}
           </span>

@@ -510,29 +510,29 @@ export default function ReportIssueDialog({
     return (
       <DialogCard title={formatMessage({ id: "agent.reportIssue.submittedTitle" })} onClose={onClose} maxWidthClass="max-w-sm">
           <div className="flex flex-col items-center gap-4 py-4">
-            <div className="flex size-12 items-center justify-center border-2 border-line-muted theme-brutal:border-black bg-brutal-lime">
+            <div className="flex size-12 items-center justify-center border-2 border-line-muted  bg-brutal-lime">
               <CheckCircle size={24} />
             </div>
             <div className="text-center">
-              <p className="font-bold text-foreground-strong theme-brutal:text-black">{formatMessage({ id: "agent.reportIssue.uploaded" })}</p>
-              <p className="mt-1 text-sm text-foreground-muted theme-brutal:text-black/60">
+              <p className="font-bold text-foreground-strong ">{formatMessage({ id: "agent.reportIssue.uploaded" })}</p>
+              <p className="mt-1 text-sm text-foreground-muted ">
                 {formatMessage({ id: submittedReport?.ticketId ? "agent.reportIssue.ticketFiled" : "agent.reportIssue.uploadedDescription" })}
               </p>
             </div>
             {submittedReport && !submittedReport.ticketId && (
-              <div className="w-full border-2 border-line-muted theme-brutal:border-black bg-layer-panel theme-brutal:bg-white p-3 text-left">
+              <div className="w-full border-2 border-line-muted  bg-layer-panel  p-3 text-left">
                 <Banner intent="warning" density="sm" className="mb-3" role="alert">
                   {formatMessage({ id: "agent.reportIssue.ticketFailed" })}
                 </Banner>
                 <SectionEyebrow as="div" className="mb-1">{formatMessage({ id: "agent.reportIssue.reportReference" })}</SectionEyebrow>
                 <dl className="space-y-1 text-xs">
                   <div>
-                    <dt className="font-bold uppercase text-foreground-muted theme-brutal:text-black/60">{formatMessage({ id: "agent.reportIssue.reportId" })}</dt>
-                    <dd className="break-all font-mono text-foreground-strong theme-brutal:text-black">{submittedReport.reportId}</dd>
+                    <dt className="font-bold uppercase text-foreground-muted ">{formatMessage({ id: "agent.reportIssue.reportId" })}</dt>
+                    <dd className="break-all font-mono text-foreground-strong ">{submittedReport.reportId}</dd>
                   </div>
                   <div>
-                    <dt className="font-bold uppercase text-foreground-muted theme-brutal:text-black/60">{formatMessage({ id: "agent.reportIssue.serverId" })}</dt>
-                    <dd className="break-all font-mono text-foreground-strong theme-brutal:text-black">{submittedReport.serverId}</dd>
+                    <dt className="font-bold uppercase text-foreground-muted ">{formatMessage({ id: "agent.reportIssue.serverId" })}</dt>
+                    <dd className="break-all font-mono text-foreground-strong ">{submittedReport.serverId}</dd>
                   </div>
                 </dl>
                 <Button size="sm"
@@ -555,7 +555,7 @@ export default function ReportIssueDialog({
               </div>
             )}
             {submittedReport?.transcriptAttachmentRequested && transcriptRequestState && (
-              <p className="text-xs text-foreground-muted theme-brutal:text-black/60" role="status">
+              <p className="text-xs text-foreground-muted " role="status">
                 {formatMessage({ id: TRANSCRIPT_REQUEST_STATE_COPY[transcriptRequestState] })}
               </p>
             )}
@@ -591,9 +591,9 @@ export default function ReportIssueDialog({
       maxWidthClass="max-w-sm"
     >
 
-        <div className="mb-4 border-2 border-line-muted theme-brutal:border-black bg-layer-panel theme-brutal:bg-white px-3 py-2">
+        <div className="mb-4 border-2 border-line-muted  bg-layer-panel  px-3 py-2">
           <SectionEyebrow>{formatMessage({ id: "agent.reportIssue.agentLabel" })}</SectionEyebrow>
-          <p className="mt-0.5 font-bold text-foreground-strong theme-brutal:text-black">{agent.displayName || agent.name}</p>
+          <p className="mt-0.5 font-bold text-foreground-strong ">{agent.displayName || agent.name}</p>
         </div>
 
         <FormField label={formatMessage({ id: "agent.reportIssue.describeLabel" })} optional className="mb-4">
@@ -609,10 +609,10 @@ export default function ReportIssueDialog({
 
         <div className="mb-4">
           <SectionEyebrow as="div" className="mb-1">{formatMessage({ id: "agent.reportIssue.includeLabel" })}</SectionEyebrow>
-          <p className="mb-2 text-xs text-foreground-muted theme-brutal:text-black/60">
+          <p className="mb-2 text-xs text-foreground-muted ">
             {formatMessage({ id: "agent.reportIssue.defaultIncludedDisclosure" })}
           </p>
-          <p className="mb-2 text-xs text-foreground-muted theme-brutal:text-black/60">
+          <p className="mb-2 text-xs text-foreground-muted ">
             {formatMessage({ id: "agent.reportIssue.structuredSummaryDisclosure" })}
           </p>
           <div className="flex flex-col gap-1.5">
@@ -649,7 +649,7 @@ export default function ReportIssueDialog({
               <span className="text-sm">{formatMessage({ id: "agent.reportIssue.includeRuntimeTranscript" })}</span>
             </label>
             {includeSessionTranscript && agent.machineId && (
-              <p className="ml-6 text-xs text-foreground-muted theme-brutal:text-black/60">
+              <p className="ml-6 text-xs text-foreground-muted ">
                 {formatMessage({ id: "agent.reportIssue.runtimeTranscriptHint" })}
               </p>
             )}
@@ -662,7 +662,7 @@ export default function ReportIssueDialog({
                 />
                 <span className="text-sm">
                   {formatMessage({ id: "agent.reportIssue.includeMachineLogTail" })}
-                  <span className="block text-xs text-foreground-muted theme-brutal:text-black/60">
+                  <span className="block text-xs text-foreground-muted ">
                     {formatMessage({ id: "agent.reportIssue.machineLogTailDisclosure" })}
                   </span>
                 </span>
@@ -670,14 +670,14 @@ export default function ReportIssueDialog({
             )}
           </div>
           {!agent.machineId && (
-            <p className="mt-1 text-xs text-foreground-muted theme-brutal:text-black/60">
+            <p className="mt-1 text-xs text-foreground-muted ">
               {formatMessage({ id: "agent.reportIssue.runtimeTranscriptUnavailable" })}
             </p>
           )}
         </div>
 
         <Banner intent="warning" withIcon density="sm" className="mb-5">
-          <p className="mb-2 text-foreground-muted theme-brutal:text-black/80">
+          <p className="mb-2 text-foreground-muted ">
             {formatMessage(
               { id: "agent.reportIssue.sensitiveDataWarning" },
               { strong: (chunks) => <strong key="strong">{chunks}</strong> },

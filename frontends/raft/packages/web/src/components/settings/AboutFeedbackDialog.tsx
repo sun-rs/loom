@@ -18,7 +18,7 @@ import {
   LightboxStage,
   LightboxTitle,
   LightboxToolbar,
-  useThemeFamily,
+
 } from "raft-ui";
 import { useIntl } from "react-intl";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -109,7 +109,7 @@ function attachmentFilename(headers: unknown, fallback: string): string {
 export default function AboutFeedbackPanel() {
   const { locale } = useLocale();
   const { formatMessage } = useIntl();
-  const themeFamily = useThemeFamily();
+
   const location = useLocation();
   const navigate = useNavigate();
   const isMobile = useMediaQuery("(max-width: 767px)");
@@ -236,7 +236,7 @@ export default function AboutFeedbackPanel() {
       <PanelHeader
         title={formatMessage({ id: "settings.about.feedbackTitle" })}
         icon={<MessageSquare size={18} />}
-        iconBg="bg-primary-soft text-foreground-strong theme-brutal:bg-soft-signal theme-brutal:text-black"
+        iconBg="bg-primary-soft text-foreground-strong  "
         containerProps={PANEL_HEADER_CONTAINER_PROPS}
         onMobileBack={isInbox ? onSettingsBack : undefined}
         mobileBackProps={mobileBackProps}
@@ -249,7 +249,7 @@ export default function AboutFeedbackPanel() {
       <div className="min-h-0 flex-1">
         <FeedbackProvider
           transport={handsFeedbackTransport}
-          theme={themeFamily === "brutal" ? "brutal" : "elegant"}
+          
           locale={locale === "zh-cn" ? "zh-CN" : "en"}
         >
           <FeedbackWorkspace

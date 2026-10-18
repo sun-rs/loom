@@ -210,11 +210,11 @@ export default function ImageLightbox() {
     >
       {/* Title bar — in normal flow so image stage naturally starts below it */}
       <div
-        className="safe-top safe-left safe-right pointer-events-auto shrink-0 border-b-2 border-line-muted theme-brutal:border-black bg-layer-panel theme-brutal:bg-white"
+        className="safe-top safe-left safe-right pointer-events-auto shrink-0 border-b-2 border-line-muted  bg-layer-panel "
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex h-14 items-center gap-3 px-4">
-          <div className="min-w-0 flex-1 truncate text-sm font-bold font-display text-foreground-strong theme-brutal:text-black">
+          <div className="min-w-0 flex-1 truncate text-sm font-bold font-display text-foreground-strong ">
             {current.filename}
           </div>
           {hasMultiple && (
@@ -374,7 +374,7 @@ export default function ImageLightbox() {
         <aside
           // inert while collapsed: controls leave tab order + a11y tree.
           inert={!commentsOpen}
-          className={`pointer-events-auto hidden h-full shrink-0 overflow-hidden border-line-muted theme-brutal:border-black bg-layer-panel theme-brutal:bg-white transition-[width] duration-300 ease-in-out sm:block ${
+          className={`pointer-events-auto hidden h-full shrink-0 overflow-hidden border-line-muted  bg-layer-panel  transition-[width] duration-300 ease-in-out sm:block ${
             commentsOpen ? "w-80 border-l-2" : "w-0 border-l-0"
           }`}
         >
@@ -399,7 +399,7 @@ export default function ImageLightbox() {
         <div
           inert={!commentsOpen}
           onClick={(e) => e.stopPropagation()}
-          className={`pointer-events-auto fixed bottom-0 right-0 z-20 w-full border-l-2 border-t-2 border-line-muted theme-brutal:border-black bg-layer-panel theme-brutal:bg-white transition-transform duration-300 ease-in-out sm:hidden ${
+          className={`pointer-events-auto fixed bottom-0 right-0 z-20 w-full border-l-2 border-t-2 border-line-muted  bg-layer-panel  transition-transform duration-300 ease-in-out sm:hidden ${
             commentsOpen ? "translate-x-0" : "translate-x-full"
           }`}
           style={{ top: "calc(56px + env(safe-area-inset-top, 0px))" }}
@@ -430,7 +430,7 @@ export default function ImageLightbox() {
                 onClick={() => goTo(idx)}
                 className={`pointer-events-auto size-12 border-2 transition-all duration-100 overflow-hidden ${
                   isActive
-                    ? "border-accent-strong shadow-raft-sm theme-brutal:border-soft-signal theme-brutal:shadow-brutal-sm"
+                    ? "border-accent-strong shadow-raft-sm  "
                     : "border-white/30 opacity-60 hover:opacity-100 hover:border-white/60"
                 }`}
               >

@@ -18,7 +18,8 @@ test("notification read-only surface keeps native card and omits unavailable act
     "export function LoomNotificationStatus",
   )[1];
   assert.ok(result.includes("settings.notifications.mainTitle"));
-  assert.ok(result.includes("theme-brutal:shadow-brutal-sm"));
+  assert.ok(result.includes("bg-layer-panel"));
+  assert.ok(!result.includes("theme-brutal:"));
   assert.ok(!result.includes("handleEnable"));
   assert.throws(() => exposeNotificationStatus("changed"), /boundary/);
 });

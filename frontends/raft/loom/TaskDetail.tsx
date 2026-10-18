@@ -118,12 +118,12 @@ export default function TaskDetail({
     <div
       className={
         mobile
-          ? "absolute inset-0 z-30 flex flex-col bg-layer-panel theme-brutal:bg-white"
-          : "flex h-[min(86vh,900px)] max-h-[calc(100dvh-2rem)] w-[min(960px,calc(100vw-2rem))] flex-col overflow-hidden rounded-lg border border-line-muted bg-layer-popover shadow-raft-xl theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal"
+          ? "absolute inset-0 z-30 flex flex-col bg-layer-panel "
+          : "flex h-[min(86vh,900px)] max-h-[calc(100dvh-2rem)] w-[min(960px,calc(100vw-2rem))] flex-col overflow-hidden rounded-lg border border-line-muted bg-layer-popover shadow-raft-xl     "
       }
       data-testid="task-thread-modal"
     >
-      <div className="flex shrink-0 items-center gap-3 border-b border-line-muted bg-layer-panel px-4 py-2 theme-brutal:border-b-2 theme-brutal:border-black theme-brutal:bg-white">
+      <div className="flex shrink-0 items-center gap-3 border-b border-line-muted bg-layer-panel px-4 py-2   ">
         {mobile && (
           <Button
             onClick={close}
@@ -132,7 +132,7 @@ export default function TaskDetail({
             data-loom-control="panel-back"
             size="icon-sm"
             variant="outline"
-            className="size-7 shrink-0"
+            className="size-8 shrink-0"
           >
             <ArrowLeft size={14} />
           </Button>
@@ -154,7 +154,7 @@ export default function TaskDetail({
             onClick={close}
             aria-label="关闭任务"
             data-testid="task-modal-close"
-            className="flex size-7 shrink-0 items-center justify-center"
+            className="flex size-8 shrink-0 items-center justify-center"
           >
             <X size={14} />
           </CloseButton>

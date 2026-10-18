@@ -33,7 +33,7 @@ export function EnvVarEntryRow({
         type="text"
         value={entry.key}
         onChange={handleKeyChange}
-        className="border border-line-muted bg-layer-card px-2 py-1 text-xs font-mono shadow-raft-sm focus:outline-none w-1/3 theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal-sm"
+        className="border border-line-muted bg-layer-card px-2 py-1 text-xs font-mono shadow-raft-sm focus:outline-none w-1/3    "
         placeholder={formatMessage({ id: "agent.runtimeConfig.envVarName" })}
       />
       <span className="text-foreground-muted">=</span>
@@ -41,7 +41,7 @@ export function EnvVarEntryRow({
         type="text"
         value={entry.value}
         onChange={handleValueChange}
-        className="border border-line-muted bg-layer-card px-2 py-1 text-xs font-mono shadow-raft-sm focus:outline-none flex-1 theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal-sm"
+        className="border border-line-muted bg-layer-card px-2 py-1 text-xs font-mono shadow-raft-sm focus:outline-none flex-1    "
         placeholder={formatMessage({ id: "agent.runtimeConfig.envVarFallback" })}
       />
       <Button variant="danger" size="icon-sm"

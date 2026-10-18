@@ -275,7 +275,7 @@ export default function CreateChannelDialog({
                   onClose();
                   nav.toSettings("billing");
                 }}
-                className="font-bold text-foreground-strong theme-brutal:text-black underline"
+                className="font-bold text-foreground-strong  underline"
               >
                 {formatMessage({ id: "channel.create.upgradeForMore" })}
               </button>
@@ -302,7 +302,7 @@ export default function CreateChannelDialog({
                   },
                 )}
               </p>
-              <p className="text-xs text-foreground-muted theme-brutal:text-black/70">
+              <p className="text-xs text-foreground-muted ">
                 {formatMessage({
                   id: archivedCollision.canUnarchiveArchivedChannel
                     ? "channel.create.archivedCanManage"
@@ -372,7 +372,7 @@ export default function CreateChannelDialog({
             {hasMembers ? (
               <div className="space-y-2">
                 <div className="relative">
-                  <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-foreground-muted theme-brutal:text-black/40" />
+                  <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-foreground-muted " />
                   <Input
                     type="text"
                     value={memberSearch}
@@ -386,7 +386,7 @@ export default function CreateChannelDialog({
                   {/* Agents section */}
                   {filteredAgents.length > 0 && (
                     <>
-                      <SectionEyebrow as="div" className="px-3 py-1.5 bg-fill-muted theme-brutal:bg-white/50">
+                      <SectionEyebrow as="div" className="px-3 py-1.5 bg-fill-muted ">
                         {formatMessage({ id: "channel.create.agents" })}
                       </SectionEyebrow>
                       {filteredAgents.map((agent) => {
@@ -396,8 +396,8 @@ export default function CreateChannelDialog({
                             key={agent.id}
                             type="button"
                             onClick={() => toggleAgent(agent.id)}
-                            className={`flex w-full items-center gap-2 px-3 py-1.5 text-sm font-medium text-foreground-strong theme-brutal:text-black transition-colors ${
- selected ? "bg-accent-soft theme-brutal:bg-brutal-pink/20" : "hover:bg-primary-soft theme-brutal:hover:bg-soft-signal"
+                            className={`flex w-full items-center gap-2 px-3 py-1.5 text-sm font-medium text-foreground-strong  transition-colors ${
+ selected ? "bg-accent-soft " : "hover:bg-primary-soft "
  }`}
                           >
                             <AvatarSlot context="sidebar-list" type="agent" agentAvatarUrl={agent.avatarUrl} />
@@ -412,7 +412,7 @@ export default function CreateChannelDialog({
                   {/* Humans section */}
                   {filteredHumans.length > 0 && (
                     <>
-                      <SectionEyebrow as="div" className="px-3 py-1.5 bg-fill-muted theme-brutal:bg-white/50">
+                      <SectionEyebrow as="div" className="px-3 py-1.5 bg-fill-muted ">
                         {formatMessage({ id: "channel.create.humans" })}
                       </SectionEyebrow>
                       {filteredHumans.map((human) => {
@@ -422,8 +422,8 @@ export default function CreateChannelDialog({
                             key={human.userId}
                             type="button"
                             onClick={() => toggleHuman(human.userId)}
-                            className={`flex w-full items-center gap-2 px-3 py-1.5 text-sm font-medium text-foreground-strong theme-brutal:text-black transition-colors ${
- selected ? "bg-accent-soft theme-brutal:bg-brutal-pink/20" : "hover:bg-primary-soft theme-brutal:hover:bg-soft-signal"
+                            className={`flex w-full items-center gap-2 px-3 py-1.5 text-sm font-medium text-foreground-strong  transition-colors ${
+ selected ? "bg-accent-soft " : "hover:bg-primary-soft "
  }`}
                           >
                             <AvatarSlot context="sidebar-list" type="human" humanPlaceholder />
@@ -436,14 +436,14 @@ export default function CreateChannelDialog({
                   )}
 
                   {!hasFilteredMembers && (
-                    <div className="px-3 py-4 text-sm text-foreground-muted theme-brutal:text-black/50 font-mono text-center">
+                    <div className="px-3 py-4 text-sm text-foreground-muted  font-mono text-center">
                       {formatMessage({ id: "channel.create.noMatchesFor" }, { query: memberSearch.trim() })}
                     </div>
                   )}
                 </Card>
               </div>
             ) : (
-              <div className="text-sm text-foreground-muted theme-brutal:text-black/50 font-mono">{formatMessage({ id: "channel.create.noMembersAvailable" })}</div>
+              <div className="text-sm text-foreground-muted  font-mono">{formatMessage({ id: "channel.create.noMembersAvailable" })}</div>
             )}
           </FormField>
           <ChannelSlackBridgeField editor={bridgeEditor} visibility={visibility} disabled={submitting || !!createdChannelForBridge} />

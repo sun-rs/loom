@@ -209,8 +209,8 @@ export default function TaskProperties({ task }: { task: Task }) {
   // @artin asked for one horizontal facts row in #proj-task:142b9b9a. Keep
   // each label/value pair together, but let the row wrap on narrow panels.
   return (<>
-    <div className="mb-4 border-b border-line-muted theme-brutal:border-black/10 pb-3"><button type="button" className="mb-1 flex w-full items-center gap-1 text-left text-xs font-bold" aria-expanded={historyOpen} onClick={() => setHistoryOpen((v) => !v)}><span>{formatMessage({ id: "task.properties.history" })}</span>{historyOpen ? <ChevronDown size={14} aria-hidden="true" /> : <ChevronRight size={14} aria-hidden="true" />}</button>
-      {historyOpen && <div className="mt-3 w-full">{historyError ? <p className="text-xs text-warning-strong">{formatMessage({ id: "task.history.error" })}</p> : visibleHistory.length === 0 ? <p className="text-xs text-foreground-muted theme-brutal:text-black/50">{formatMessage({ id: "task.history.empty" })}</p> : <HistoryTimeline history={visibleHistory} resolveName={displayNameFor} />}</div>}
+    <div className="mb-4 border-b border-line-muted  pb-3"><button type="button" className="mb-1 flex w-full items-center gap-1 text-left text-xs font-bold" aria-expanded={historyOpen} onClick={() => setHistoryOpen((v) => !v)}><span>{formatMessage({ id: "task.properties.history" })}</span>{historyOpen ? <ChevronDown size={14} aria-hidden="true" /> : <ChevronRight size={14} aria-hidden="true" />}</button>
+      {historyOpen && <div className="mt-3 w-full">{historyError ? <p className="text-xs text-warning-strong">{formatMessage({ id: "task.history.error" })}</p> : visibleHistory.length === 0 ? <p className="text-xs text-foreground-muted ">{formatMessage({ id: "task.history.empty" })}</p> : <HistoryTimeline history={visibleHistory} resolveName={displayNameFor} />}</div>}
     </div>
     <DescriptionList
       className="flex flex-wrap items-center gap-x-6 gap-y-2"
@@ -250,7 +250,7 @@ export default function TaskProperties({ task }: { task: Task }) {
           open={canEditAssignee && openEditor === "assignee"}
           onToggle={toggleAssigneeEditor}
           onRequestClose={closeEditor}
-          badgeClassName="bg-layer-panel text-foreground-strong theme-brutal:bg-white theme-brutal:text-black"
+          badgeClassName="bg-layer-panel text-foreground-strong  "
           uppercase={false}
           disabled={busy || !canEditAssignee}
           buttonTitle={assigneeReadOnlyTitle}
@@ -282,8 +282,8 @@ export function TimelineText({ text, bold = false, className = "" }: { text: str
 
 export function TimelineDetail({ event, resolveName, formatMessage }: { event: TaskHistoryEvent; resolveName: (type: "agent" | "user", id: string) => string | null; formatMessage: ReturnType<typeof useIntl>["formatMessage"] }) {
   const p = event.payload;
-  if (["status_changed", "closed", "reopened"].includes(event.eventType) && p.from && p.to) { const from = String(p.from) as TaskStatus; const to = String(p.to) as TaskStatus; return <div className="mt-0.5 flex items-center gap-1 text-foreground-muted theme-brutal:text-black/60"><StatusBadge status={from}>{formatMessage({ id: STATUS_STYLES[from]?.labelId ?? "task.status.todo" })}</StatusBadge> → <StatusBadge status={to}>{formatMessage({ id: STATUS_STYLES[to]?.labelId ?? "task.status.todo" })}</StatusBadge></div>; }
-  return <TimelineText text={historyDetail(event, resolveName, formatMessage)} className="mt-0.5 text-foreground-muted theme-brutal:text-black/60" />;
+  if (["status_changed", "closed", "reopened"].includes(event.eventType) && p.from && p.to) { const from = String(p.from) as TaskStatus; const to = String(p.to) as TaskStatus; return <div className="mt-0.5 flex items-center gap-1 text-foreground-muted "><StatusBadge status={from}>{formatMessage({ id: STATUS_STYLES[from]?.labelId ?? "task.status.todo" })}</StatusBadge> → <StatusBadge status={to}>{formatMessage({ id: STATUS_STYLES[to]?.labelId ?? "task.status.todo" })}</StatusBadge></div>; }
+  return <TimelineText text={historyDetail(event, resolveName, formatMessage)} className="mt-0.5 text-foreground-muted " />;
 }
 
 

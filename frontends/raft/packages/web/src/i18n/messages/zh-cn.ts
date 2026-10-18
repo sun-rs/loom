@@ -2938,7 +2938,7 @@ export const zhCn: Record<MessageId, string> = {
   // --- settings: appearance (inherited from #3874 b41c72b4f, AngLee-reviewed) ---
   "settings.appearance.sectionLabel": "外观",
   "settings.appearance.themeTitle": "主题",
-  "settings.appearance.themeDescription": "选择此浏览器使用的视觉风格。选择会保存在此设备上。",
+  "settings.appearance.themeDescription": "选择浅色、深色或跟随设备。选择会保存在此设备上。",
   "settings.appearance.themeAria": "主题预设",
   "settings.appearance.themeBrutal": "Brutal",
   "settings.appearance.themeElegant": "Elegant",

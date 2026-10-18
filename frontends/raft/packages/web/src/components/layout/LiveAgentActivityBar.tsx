@@ -42,9 +42,9 @@ const ACTIVITY_STATUS_VARIANT: Record<AgentActivity, NonNullable<StatusProps["va
 };
 
 const ACTIVITY_STATUS_BRUTAL_COLOR: Partial<Record<AgentActivity, string>> = {
-  thinking: "theme-brutal:[--status-color:var(--color-status-busy)]",
-  working: "theme-brutal:[--status-color:var(--color-status-busy)]",
-  error: "theme-brutal:[--status-color:var(--color-brutal-orange)]",
+  thinking: "",
+  working: "",
+  error: "",
 };
 
 export default function ConnectedLiveAgentActivityBar() {
@@ -82,7 +82,7 @@ export function LiveAgentActivityBarPresentation({
   return (
     // RUI's brutal recipe pads px-4; production's bar is px-3 — keep brutal
     // pixel-identical while the recipe owns everything else.
-    <LiveAgentActivityBar beam={false} className="theme-brutal:px-3!">
+    <LiveAgentActivityBar className="">
       <LiveAgentActivityBarRow>
         <LiveAgentActivityBarAvatar className="[&>[data-slot=avatar-fallback]]:hidden">
           {latest.agentAvatarUrl && isCustomAvatar(latest.agentAvatarUrl) ? (
@@ -96,7 +96,7 @@ export function LiveAgentActivityBarPresentation({
             aria-hidden
             size="md"
             variant={ACTIVITY_STATUS_VARIANT[activity]}
-            className={["theme-brutal:border-black", ACTIVITY_STATUS_BRUTAL_COLOR[activity]].filter(Boolean).join(" ")}
+            className={["", ACTIVITY_STATUS_BRUTAL_COLOR[activity]].filter(Boolean).join(" ")}
             data-activity={activity}
           />
           <Tooltip content={text}>

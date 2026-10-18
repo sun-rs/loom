@@ -52,7 +52,7 @@ export function ChannelFileVisual({
   }, [canPreview, file.id, file.thumbnailUrl]);
 
   return (
-    <span className="relative flex size-14 shrink-0 items-center justify-center overflow-hidden border border-line-muted bg-layer-card theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white">
+    <span className="relative flex size-14 shrink-0 items-center justify-center overflow-hidden border border-line-muted bg-layer-card   ">
       {canPreview && src ? (
         <img
           src={src}

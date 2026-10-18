@@ -16,7 +16,7 @@ export function exposeNotificationStatus(source: string) {
     );
   return (
     source +
-    `\nexport function LoomNotificationStatus({loading,statusLabel,permission,serverConfigured,error,detail,channel}: {loading:boolean;statusLabel:string;permission:NotificationPermission|"unsupported";serverConfigured:boolean;error:string;detail:string;channel:any}) {\n const {formatMessage}=useIntl(); const message=""; return (${jsx}<div className="text-xs text-foreground-muted theme-brutal:text-black/60">{detail}</div></div></div>); }\n`
+    `\nexport function LoomNotificationStatus({loading,statusLabel,permission,serverConfigured,error,detail,channel}: {loading:boolean;statusLabel:string;permission:NotificationPermission|"unsupported";serverConfigured:boolean;error:string;detail:string;channel:any}) {\n const {formatMessage}=useIntl(); const message=""; return (${jsx}<div className="text-xs text-foreground-muted ">{detail}</div></div></div>); }\n`
   );
 }
 export function exposeReleaseNotes(source: string) {

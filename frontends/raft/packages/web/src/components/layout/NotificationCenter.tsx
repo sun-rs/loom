@@ -64,7 +64,7 @@ const NotificationCenter = forwardRef<HTMLDivElement, NotificationCenterProps>(
               <div className="flex flex-col items-center gap-2 px-4 py-8 text-center">
                 <CheckCircle2 size={36} />
                 <div className="font-bold">{formatMessage({ id: "ui.notificationCenter.emptyTitle" })}</div>
-                <div className="text-sm text-foreground-muted theme-brutal:text-black/60">{formatMessage({ id: "ui.notificationCenter.emptyBody" })}</div>
+                <div className="text-sm text-foreground-muted ">{formatMessage({ id: "ui.notificationCenter.emptyBody" })}</div>
               </div>
             </NotificationCenterEmptyState>
           ) : (
@@ -116,7 +116,6 @@ function NotificationActions({
         <NotificationCenterActionButton
           key={action.label}
           type="button"
-          variant={variant}
           onClick={action.onClick}
           disabled={action.disabled}
         >
@@ -126,7 +125,6 @@ function NotificationActions({
       {dismissalKey ? (
         <NotificationCenterActionButton
           type="button"
-          variant="secondary"
           onClick={handleDismiss}
         >
           {formatMessage({ id: "common.announcement.dismiss" })}

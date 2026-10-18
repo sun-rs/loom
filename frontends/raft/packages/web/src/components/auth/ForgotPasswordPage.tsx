@@ -44,7 +44,7 @@ export default function ForgotPasswordPage({ onBack }: ForgotPasswordPageProps) 
       <AuthPageFrame>
         <div className="w-full">
           <AuthPageIntro title={formatMessage({ id: "pages.forgotPassword.checkEmailTitle" })}>
-            <p className="mt-2 text-sm text-foreground-muted theme-brutal:text-black/60">
+            <p className="mt-2 text-sm text-foreground-muted ">
               {formatMessage(
                 { id: "pages.forgotPassword.sentTo" },
                 {
@@ -110,7 +110,7 @@ export default function ForgotPasswordPage({ onBack }: ForgotPasswordPageProps) 
           </Button>
         </form>
 
-        <TextSans size="small" className="mt-4 text-center theme-brutal:text-black/60">
+        <TextSans size="small" className="mt-4 text-center ">
           <TextLink variant="primary" onClick={onBack}>
             {formatMessage({ id: "auth.backToSignIn.link" })}
           </TextLink>

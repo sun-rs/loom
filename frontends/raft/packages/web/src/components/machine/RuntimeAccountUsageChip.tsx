@@ -74,7 +74,7 @@ function RuntimeUsageContents({
 }) {
   const { formatMessage, locale } = useIntl();
   if (loading && !result) {
-    return <div className="px-4 py-5 text-sm text-foreground-muted theme-brutal:text-black/50">{formatMessage({ id: "machine.runtimeUsage.reading" })}</div>;
+    return <div className="px-4 py-5 text-sm text-foreground-muted ">{formatMessage({ id: "machine.runtimeUsage.reading" })}</div>;
   }
   if (loadError && !result) {
     return (
@@ -88,7 +88,7 @@ function RuntimeUsageContents({
     return (
       <div className="px-4 py-5">
         <div className="text-sm font-bold">{formatMessage({ id: "machine.runtimeUsage.noSnapshot" })}</div>
-        <p className="mt-1 text-xs leading-5 text-foreground-muted theme-brutal:text-black/55">
+        <p className="mt-1 text-xs leading-5 text-foreground-muted ">
           {formatMessage({ id: "machine.runtimeUsage.noSnapshotDescription" })}
         </p>
       </div>
@@ -97,24 +97,24 @@ function RuntimeUsageContents({
 
   const stale = result.state === "stale";
   return (
-    <div className={stale ? "bg-layer-inset theme-brutal:bg-gray-50" : "bg-layer-panel theme-brutal:bg-white"}>
+    <div className={stale ? "bg-layer-inset " : "bg-layer-panel "}>
       {stale && (
-        <div className="border-b-2 border-line-muted theme-brutal:border-black bg-warning-soft text-warning-strong theme-brutal:bg-brutal-orange/20 theme-brutal:text-black px-4 py-2 text-xs font-bold">
+        <div className="border-b-2 border-line-muted  bg-warning-soft text-warning-strong   px-4 py-2 text-xs font-bold">
           {formatMessage({ id: "machine.runtimeUsage.stale" })}
         </div>
       )}
-      <div className="divide-y divide-line-muted theme-brutal:divide-y-2 theme-brutal:divide-black/15">
+      <div className="divide-y divide-line-muted  ">
         {result.snapshot.accounts.map((account) => {
           const reauth = account.health === "reauth_required";
           return (
             <div key={account.accountKey} className={`px-4 py-3 ${stale ? "opacity-65" : ""}`}>
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="truncate text-sm font-bold text-foreground-strong theme-brutal:text-black">
+                  <div className="truncate text-sm font-bold text-foreground-strong ">
                     {account.planLabel ?? formatMessage({ id: "machine.runtimeUsage.accountFallback" })}
                   </div>
                   {(account.maskedLabel ?? account.displayName) && (
-                    <div className="mt-0.5 truncate text-xs text-foreground-muted theme-brutal:text-black/50" data-testid="runtime-account-masked-label">
+                    <div className="mt-0.5 truncate text-xs text-foreground-muted " data-testid="runtime-account-masked-label">
                       {account.maskedLabel ?? account.displayName}
                     </div>
                   )}
@@ -122,19 +122,18 @@ function RuntimeUsageContents({
                 <Badge
                   appearance="solid"
                   variant={account.health === "ok" ? "success" : "warning"}
-                  uppercase
                 >
                   {formatMessage({ id: `machine.runtimeUsage.health.${account.health}` })}
                 </Badge>
               </div>
               {account.health === "unsupported" || account.health === "error" ? (
-                <p className="mt-3 text-xs leading-5 text-foreground-muted theme-brutal:text-black/60">
+                <p className="mt-3 text-xs leading-5 text-foreground-muted ">
                   {formatMessage({ id: account.health === "unsupported"
                     ? "machine.runtimeUsage.unsupportedDescription"
                     : "machine.runtimeUsage.readFailed" })}
                 </p>
               ) : reauth ? (
-                <p className="mt-3 text-xs leading-5 text-foreground-muted theme-brutal:text-black/60">
+                <p className="mt-3 text-xs leading-5 text-foreground-muted ">
                   {formatMessage({ id: "machine.runtimeUsage.reauthDescription" })}
                 </p>
               ) : (
@@ -146,7 +145,7 @@ function RuntimeUsageContents({
                         {window.status === "parse_unavailable" ? (
                           <span className="text-brutal-orange">{formatMessage({ id: "machine.runtimeUsage.parseUnavailable" })}</span>
                         ) : (
-                          <span className="text-foreground-muted theme-brutal:text-black/55 sm:text-right">
+                          <span className="text-foreground-muted  sm:text-right">
                             {window.resetsAt
                               ? formatMessage(
                                   { id: "machine.runtimeUsage.windowSummary" },
@@ -183,7 +182,7 @@ function RuntimeUsageContents({
           );
         })}
       </div>
-      <div className="border-t-2 border-line-muted theme-brutal:border-black/15 px-4 py-2 text-[11px] text-foreground-muted theme-brutal:text-black/50">
+      <div className="border-t-2 border-line-muted  px-4 py-2 text-[11px] text-foreground-muted ">
         {formatMessage(
           { id: "machine.runtimeUsage.metadata" },
           {
@@ -221,23 +220,23 @@ function Surface({
   const { formatMessage } = useIntl();
   return (
     <div data-testid={`runtime-usage-surface-${provider}`}>
-      <div className="flex items-center justify-between gap-3 border-b-2 border-line-muted theme-brutal:border-black px-4 py-3">
+      <div className="flex items-center justify-between gap-3 border-b-2 border-line-muted  px-4 py-3">
         <div>
           <div className="text-sm font-black">{formatMessage({ id: "machine.runtimeUsage.title" }, { provider: providerName(provider) })}</div>
-          <div data-testid={`runtime-version-${provider}`} className="text-[10px] font-bold uppercase tracking-wide text-foreground-muted theme-brutal:text-black/55">
+          <div data-testid={`runtime-version-${provider}`} className="text-[10px] font-bold uppercase tracking-wide text-foreground-muted ">
             {runtimeVersion?.trim()
               ? formatMessage({ id: "machine.runtimeUsage.version" }, { version: runtimeVersion.trim() })
               : formatMessage({ id: "machine.runtimeUsage.versionUnavailable" })}
           </div>
-          <div className="text-[10px] font-bold uppercase tracking-wide text-foreground-muted theme-brutal:text-black/45">{formatMessage({ id: "machine.runtimeUsage.private" })}</div>
+          <div className="text-[10px] font-bold uppercase tracking-wide text-foreground-muted ">{formatMessage({ id: "machine.runtimeUsage.private" })}</div>
         </div>
         <CloseButton type="button" className="" onClick={onClose} aria-label={formatMessage({ id: "machine.runtimeUsage.close" })}>
           <X size={16} />
         </CloseButton>
       </div>
       <RuntimeUsageContents result={result} loading={loading} loadError={loadError} />
-      <div className="flex items-center justify-between gap-3 border-t-2 border-line-muted theme-brutal:border-black px-4 py-2.5">
-        <span className="text-[11px] text-foreground-muted theme-brutal:text-black/50">
+      <div className="flex items-center justify-between gap-3 border-t-2 border-line-muted  px-4 py-2.5">
+        <span className="text-[11px] text-foreground-muted ">
           {refreshState === "requested"
             ? formatMessage({ id: "machine.runtimeUsage.refreshRequested" })
             : refreshState === "unconfirmed"
@@ -542,7 +541,7 @@ export default function RuntimeAccountUsageChip({
   }, [closeSurface, mobile, open]);
 
   if (!provider) {
-    return <Badge appearance={appearance} variant={variant} uppercase={false} className={runtimeBadgeClassName(className)}>{children}</Badge>;
+    return <Badge appearance={appearance} variant={variant} className={runtimeBadgeClassName(className)}>{children}</Badge>;
   }
 
   const surface = (
@@ -568,7 +567,6 @@ export default function RuntimeAccountUsageChip({
         render={<button type="button" />}
         appearance={appearance}
         variant={variant}
-        uppercase={false}
         className={`${runtimeBadgeClassName(className)} relative cursor-help focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-1`}
         aria-haspopup="dialog"
         aria-expanded={open}
@@ -637,7 +635,7 @@ export function RuntimeAccountUsageGateChip({
 } & RuntimeBadgeAppearance) {
   if (!enabled || !serverId) {
     return (
-      <Badge appearance={appearance} variant={variant} uppercase={false} className={runtimeBadgeClassName(className)}>
+      <Badge appearance={appearance} variant={variant} className={runtimeBadgeClassName(className)}>
         {children}
       </Badge>
     );

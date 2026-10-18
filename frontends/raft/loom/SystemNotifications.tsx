@@ -94,12 +94,7 @@ export function SystemNotificationsProvider({
   const entries: NotificationEntry[] = rows.map((row) => ({
     id: row.notificationId,
     kind: "warning",
-    icon: (
-      <WifiOff
-        size={16}
-        className="text-foreground-strong theme-brutal:text-black"
-      />
-    ),
+    icon: <WifiOff size={16} className="text-foreground-strong " />,
     title: formatMessage(
       { id: "layout.systemNotifications.machineOfflineTitle" },
       { names: row.computerName, count: 1 },

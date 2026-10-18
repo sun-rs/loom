@@ -1519,8 +1519,8 @@ export default function CreateAgentDialog({
   if (onboarding) {
     const formId = "create-cindy-onboarding-form";
     const content = (
-      <section ref={cindyRuntimeSelectPortalRef} className="flex w-full max-w-[calc(100vw-1rem)] flex-col border border-line-muted bg-layer-panel text-foreground-strong shadow-raft-md theme-brutal:border-2 theme-brutal:border-line-strong theme-brutal:rounded-none theme-brutal:shadow-brutal md:max-w-[960px] md:h-[min(720px,calc(100dvh-2rem))] md:min-h-0 md:overflow-hidden" data-testid="create-cindy-screen-c">
-        <header className="flex shrink-0 items-start justify-between gap-3 border-b-2 border-line-muted theme-brutal:border-black px-6 pb-4 pt-6 sm:px-9">
+      <section ref={cindyRuntimeSelectPortalRef} className="flex w-full max-w-[calc(100vw-1rem)] flex-col border border-line-muted bg-layer-panel text-foreground-strong shadow-raft-md     md:max-w-[960px] md:h-[min(720px,calc(100dvh-2rem))] md:min-h-0 md:overflow-hidden" data-testid="create-cindy-screen-c">
+        <header className="flex shrink-0 items-start justify-between gap-3 border-b-2 border-line-muted  px-6 pb-4 pt-6 sm:px-9">
           <div className="min-w-0">
             <div className="font-mono text-[10px] font-bold uppercase tracking-wide text-foreground-muted">
               {formatMessage({ id: "agent.create.setupServer" })}
@@ -1558,14 +1558,14 @@ export default function CreateAgentDialog({
 
         <form id={formId} noValidate onSubmit={handleSubmit} className="flex flex-col md:min-h-0 md:flex-1 md:overflow-hidden">
           <div className="flex flex-col gap-0 md:grid md:grid-cols-[0.95fr_1.05fr] md:min-h-0 md:flex-1 md:overflow-hidden">
-            <div className="flex flex-col border-b-2 border-line-muted theme-brutal:border-black bg-soft-pink px-8 py-5 md:min-h-0 md:justify-center md:border-b-0 md:border-r-2 md:py-8">
+            <div className="flex flex-col border-b-2 border-line-muted  bg-soft-pink px-8 py-5 md:min-h-0 md:justify-center md:border-b-0 md:border-r-2 md:py-8">
               <div className="mx-auto flex max-w-[360px] flex-col items-center text-center">
                 <div className="relative mb-3 md:mb-5" data-testid="cindy-avatar-entrance">
-                  <span className="onboarding-cindy-pop-mark absolute -right-5 top-1 size-3 rotate-12 border-2 border-line-muted theme-brutal:border-black bg-brutal-lime" aria-hidden="true" />
-                  <span className="onboarding-cindy-pop-mark absolute -left-5 top-8 size-2.5 -rotate-12 border-2 border-line-muted theme-brutal:border-black bg-primary-soft theme-brutal:bg-soft-signal [animation-delay:70ms]" aria-hidden="true" />
+                  <span className="onboarding-cindy-pop-mark absolute -right-5 top-1 size-3 rotate-12 border-2 border-line-muted  bg-brutal-lime" aria-hidden="true" />
+                  <span className="onboarding-cindy-pop-mark absolute -left-5 top-8 size-2.5 -rotate-12 border-2 border-line-muted  bg-primary-soft  [animation-delay:70ms]" aria-hidden="true" />
                   {/* Every avatar frame in the app carries the black border (see
                       AvatarSlot); this hero was the one that did not. */}
-                  <AvatarSlot context="profile-tile" type="agent" agentAvatarUrl="pixel:mug" className="onboarding-cindy-entrance relative z-10 !size-[88px] theme-brutal:shadow-brutal-lg md:!size-[132px]" />
+                  <AvatarSlot context="profile-tile" type="agent" agentAvatarUrl="pixel:mug" className="onboarding-cindy-entrance relative z-10 !size-[88px]  md:!size-[132px]" />
                 </div>
                 <h2 className="text-2xl font-black tracking-normal md:text-4xl">
                   {formatMessage({ id: "agent.create.cindyName" })}
@@ -1727,7 +1727,7 @@ export default function CreateAgentDialog({
               ) : null}
             </div>
           </div>
-          <footer className="flex shrink-0 flex-col-reverse gap-3 border-t-2 border-line-muted theme-brutal:border-black px-5 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-9">
+          <footer className="flex shrink-0 flex-col-reverse gap-3 border-t-2 border-line-muted  px-5 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-9">
             {onboarding ? (
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
                 <SetupSessionFooter disabled={submitting} />
@@ -1830,7 +1830,7 @@ export default function CreateAgentDialog({
               not a warning, and it stays until submit. */}
           {autoJoinChannelName && (
             <p
-              className="border-2 border-line-muted theme-brutal:border-black bg-info-soft theme-brutal:bg-brutal-cyan/60 px-3 py-2 text-xs font-bold text-foreground-strong theme-brutal:text-black"
+              className="border-2 border-line-muted  bg-info-soft  px-3 py-2 text-xs font-bold text-foreground-strong "
               data-testid="create-agent-channel-context"
             >
               {formatMessage(
@@ -1984,7 +1984,7 @@ export default function CreateAgentDialog({
               say so. The caller composes the note because only it saw the
               original search text. */}
           {prefilledNameNote && (
-            <p className="text-xs text-foreground-muted theme-brutal:text-black/60" data-testid="create-agent-prefill-note">
+            <p className="text-xs text-foreground-muted " data-testid="create-agent-prefill-note">
               {prefilledNameNote}
             </p>
           )}
@@ -2016,7 +2016,7 @@ export default function CreateAgentDialog({
             ) : null}
           </StableField>
           {isExternalMode && hostedRuntimeProvider.available && (
-            <label className="flex items-start gap-3 border border-line-muted px-3 py-2 theme-brutal:border-2 theme-brutal:border-black" data-testid="create-agent-hosted-runtime">
+            <label className="flex items-start gap-3 border border-line-muted px-3 py-2  " data-testid="create-agent-hosted-runtime">
               <Checkbox
                 checked={runOnHostedRuntime}
                 onCheckedChange={handleHostedRuntimeChange}

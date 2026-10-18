@@ -59,21 +59,21 @@ export function HostedRuntimeStatus({
   return (
     <div className="space-y-2" data-testid="agent-hosted-runtime-status" data-state={summary.state}>
       <div className="flex flex-wrap items-center gap-2">
-        <span className="inline-flex border theme-brutal:border-2 border-line-muted theme-brutal:border-black bg-layer-panel theme-brutal:bg-white px-2 py-0.5 text-xs font-bold uppercase text-foreground-strong theme-brutal:text-black">
+        <span className="inline-flex border  border-line-muted  bg-layer-panel  px-2 py-0.5 text-xs font-bold uppercase text-foreground-strong ">
           {formatMessage({ id: view.labelId })}
         </span>
-        <span className="text-xs text-foreground-muted theme-brutal:text-black/60">
+        <span className="text-xs text-foreground-muted ">
           {formatMessage({ id: "agent.detail.hostedRuntime.provider" }, { provider: "antiproton" })}
         </span>
       </div>
       {summary.state === "active" && summary.push && !summary.push.registered && (
-        <p className="text-xs font-bold text-warning-strong theme-brutal:text-brutal-orange">
+        <p className="text-xs font-bold text-warning-strong ">
           {formatMessage({ id: "agent.detail.hostedRuntime.pushNotRegistered" })}
           {summary.push.error ? <span className="ml-1">{summary.push.error}</span> : null}
         </p>
       )}
       {summary.lastError && (
-        <p className="break-words text-xs font-bold text-warning-strong theme-brutal:text-brutal-orange" data-testid="agent-hosted-runtime-error">
+        <p className="break-words text-xs font-bold text-warning-strong " data-testid="agent-hosted-runtime-error">
           {formatMessage(
             { id: "agent.detail.hostedRuntime.lastError" },
             { code: summary.lastError.code, message: summary.lastError.message || summary.lastError.code },
@@ -86,7 +86,7 @@ export function HostedRuntimeStatus({
             {formatMessage({ id: "agent.detail.hostedRuntime.retry" })}
           </Button>
           {retryError && (
-            <span className="text-xs font-bold text-warning-strong theme-brutal:text-brutal-orange">
+            <span className="text-xs font-bold text-warning-strong ">
               {formatMessage({ id: "agent.detail.hostedRuntime.retryFailed" })}
             </span>
           )}

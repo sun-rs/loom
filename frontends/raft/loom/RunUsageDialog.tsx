@@ -79,11 +79,11 @@ export default function RunUsageDialog({
                     key={row.label}
                     className="grid grid-cols-[6.5rem_minmax(0,1fr)] items-start gap-x-4"
                   >
-                    <dt className="truncate text-xs text-foreground-muted theme-brutal:text-black/50">
+                    <dt className="truncate text-xs text-foreground-muted ">
                       {row.label}
                     </dt>
                     <dd
-                      className="m-0 min-w-0 text-sm tabular-nums text-foreground-strong theme-brutal:text-black break-words"
+                      className="m-0 min-w-0 text-sm tabular-nums text-foreground-strong  break-words"
                       data-usage-field={row.label}
                     >
                       {row.value}

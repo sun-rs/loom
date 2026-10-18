@@ -263,7 +263,7 @@ export function useSystemNotifications(surface: SystemNotificationSurface = "des
       out.push({
         id: `usage-limit:${notification.id}`,
         kind: "warning",
-        icon: <AlertTriangle size={16} className="text-foreground-strong theme-brutal:text-black" />,
+        icon: <AlertTriangle size={16} className="text-foreground-strong " />,
         unread: notification.seenAt === null,
         onSeen: () => { void usageLimitAttention.markSeen(notification.id); },
         title: formatMessage(
@@ -271,7 +271,7 @@ export function useSystemNotifications(surface: SystemNotificationSurface = "des
           { provider },
         ),
         body: (
-          <span className="text-foreground-muted theme-brutal:text-black/60">
+          <span className="text-foreground-muted ">
             {formatMessage(
               { id: reset
                 ? "layout.systemNotifications.usageLimitBodyWithReset"
@@ -317,7 +317,7 @@ export function useSystemNotifications(surface: SystemNotificationSurface = "des
       out.push({
         id: "plan-downgrade",
         kind: graceExpired ? "error" : "warning",
-        icon: <AlertTriangle size={16} className="text-foreground-strong theme-brutal:text-black" />,
+        icon: <AlertTriangle size={16} className="text-foreground-strong " />,
         // Dismissal fingerprint: anchor on which phase + how much of an excess
         // remains so the notification re-surfaces if the user adds more resources
         // or grace expires.
@@ -378,7 +378,7 @@ export function useSystemNotifications(surface: SystemNotificationSurface = "des
         out.push({
           id: `joint-over-limit:${joint.id}`,
           kind: locked ? "error" : "warning",
-          icon: <AlertTriangle size={16} className="text-foreground-strong theme-brutal:text-black" />,
+          icon: <AlertTriangle size={16} className="text-foreground-strong " />,
           dismissalKey: `joint-over-limit:${joint.id}:${joint.jointOverLimitGraceEndsAt}:${locked ? "locked" : "grace"}`,
           title: formatMessage(
             { id: locked ? "layout.systemNotifications.jointOverLimitLockedTitle" : "layout.systemNotifications.jointOverLimitTitle" },
@@ -421,10 +421,10 @@ export function useSystemNotifications(surface: SystemNotificationSurface = "des
         out.push({
           id: "computer-attention",
           kind: "warning",
-          icon: <Monitor size={16} className="text-foreground-strong theme-brutal:text-black" />,
+          icon: <Monitor size={16} className="text-foreground-strong " />,
           dismissalKey: `computer-attention:${versionFingerprint}:${problemIds}:${computerAttention.upgradeCount}:${computerAttention.offlineCount}`,
           title: formatMessage({ id: "layout.systemNotifications.computersNeedAttention" }),
-          body: <span className="text-foreground-muted theme-brutal:text-black/60">{counts}</span>,
+          body: <span className="text-foreground-muted ">{counts}</span>,
           action: {
             label: formatMessage({ id: "layout.systemNotifications.view" }),
             onClick: () => {
@@ -462,7 +462,7 @@ export function useSystemNotifications(surface: SystemNotificationSurface = "des
         out.push({
           id: "machine-offline",
           kind: offlineKind,
-          icon: <WifiOff size={16} className="text-foreground-strong theme-brutal:text-black" />,
+          icon: <WifiOff size={16} className="text-foreground-strong " />,
           // Fingerprint = which machines are offline. If a different set goes
           // offline (different machine id, or the count changes), the
           // dismissal no longer matches and the notification shows again.
@@ -473,14 +473,14 @@ export function useSystemNotifications(surface: SystemNotificationSurface = "des
           ),
           body:
             activeAgentsOnOffline.length > 0 ? (
-              <span className="text-foreground-muted theme-brutal:text-black/60">
+              <span className="text-foreground-muted ">
                 {formatMessage(
                   { id: "layout.systemNotifications.machineOfflineActiveAgentsBody" },
                   { count: activeAgentsOnOffline.length },
                 )}
               </span>
             ) : (
-              <span className="text-foreground-muted theme-brutal:text-black/60">
+              <span className="text-foreground-muted ">
                 {formatMessage({ id: "layout.systemNotifications.machineOfflineNoActiveAgentsBody" })}
               </span>
             ),
@@ -505,7 +505,7 @@ export function useSystemNotifications(surface: SystemNotificationSurface = "des
         out.push({
           id: "machine-disk-low",
           kind: "warning",
-          icon: <HardDrive size={16} className="text-foreground-strong theme-brutal:text-black" />,
+          icon: <HardDrive size={16} className="text-foreground-strong " />,
           dismissalKey: `machine-disk-low:${diskLowMachines
             .map(({ machine, diskLow }) => `${machine.id}=${diskLow.band}`)
             .sort()
@@ -515,7 +515,7 @@ export function useSystemNotifications(surface: SystemNotificationSurface = "des
             { count: diskLowMachines.length },
           ),
           body: (
-            <span className="text-foreground-muted theme-brutal:text-black/60">
+            <span className="text-foreground-muted ">
               {formatMessage(
                 { id: "layout.systemNotifications.machineDiskLowBody" },
                 { free: first.diskLow.free, percent: first.diskLow.freePercent },
@@ -542,9 +542,9 @@ export function useSystemNotifications(surface: SystemNotificationSurface = "des
       out.push({
         id: "pwa-install",
         kind: "info",
-        icon: <Download size={16} className="text-foreground-strong theme-brutal:text-black" />,
+        icon: <Download size={16} className="text-foreground-strong " />,
         title: formatMessage({ id: "layout.systemNotifications.installRaftTitle" }),
-        body: <span className="text-foreground-muted theme-brutal:text-black/60">{formatMessage({ id: "layout.systemNotifications.installRaftBody" })}</span>,
+        body: <span className="text-foreground-muted ">{formatMessage({ id: "layout.systemNotifications.installRaftBody" })}</span>,
         action: {
           label: formatMessage({ id: pwaInstallBusy ? "layout.systemNotifications.opening" : "layout.systemNotifications.install" }),
           onClick: () => {

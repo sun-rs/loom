@@ -53,7 +53,7 @@ export function AssignedAgentRow({
           name={<span className="text-foreground-hint line-through">{label}</span>}
           subtitle={subtitle}
           rightContent={(
-            <span className="shrink-0 rounded-sm border border-line-muted px-1 text-[10px] font-black uppercase text-foreground-hint theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black/30">
+            <span className="shrink-0 rounded-sm border border-line-muted px-1 text-[10px] font-black uppercase text-foreground-hint   ">
               {formatMessage({ id: "settings.providers.assignedAgentDeleted" })}
             </span>
           )}
@@ -91,7 +91,7 @@ export function AssignedAgentRow({
           )}
           onClick={handleOpen}
           buttonProps={openButtonProps}
-          className="bg-fill-muted/50 hover:bg-fill-muted theme-brutal:bg-gray-100 theme-brutal:hover:bg-white"
+          className="bg-fill-muted/50 hover:bg-fill-muted  "
         />
       )}
     </div>

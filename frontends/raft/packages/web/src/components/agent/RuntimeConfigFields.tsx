@@ -1111,7 +1111,6 @@ export default function RuntimeConfigFields({
         <CardHeader>
           <CardLeading>
             <Checkbox
-              size="md"
               checked={fastMode}
               onCheckedChange={handleFastModeChange}
               aria-labelledby="runtime-fast-mode-title"
@@ -1190,7 +1189,7 @@ export default function RuntimeConfigFields({
             savedConnections={savedConnectionsForV2}
           />
         ) : (
-          <p className="border border-line-muted bg-warning-soft p-3 text-sm font-bold text-warning-strong theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-soft-signal theme-brutal:text-black" data-testid="schema-runtime-unavailable">
+          <p className="border border-line-muted bg-warning-soft p-3 text-sm font-bold text-warning-strong    " data-testid="schema-runtime-unavailable">
             {formatMessage({
               id: runtimeFormUnavailableMessageId(
                 runtimeFormV2.state.status === "loading" || runtimeFormV2.state.status === "idle",
@@ -1233,7 +1232,7 @@ export default function RuntimeConfigFields({
             showValidationErrors={showValidationErrors}
           />
         ) : (
-          <p className="border border-line-muted bg-warning-soft p-3 text-sm font-bold text-warning-strong theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-soft-signal theme-brutal:text-black" data-testid="schema-runtime-unavailable">
+          <p className="border border-line-muted bg-warning-soft p-3 text-sm font-bold text-warning-strong    " data-testid="schema-runtime-unavailable">
             {formatMessage({
               id: runtimeFormUnavailableMessageId(
                 formDefinitionLoading,
@@ -1346,7 +1345,6 @@ export default function RuntimeConfigFields({
                   <CardHeader>
                     <CardLeading>
                       <Checkbox
-                        size="md"
                         checked={managedConnectionActive
                           ? selectedProviderConnection?.supportsImageInput === true
                           : builtInProviderSupportsImageInput}
@@ -1649,7 +1647,7 @@ export function RuntimeFormV2Fields({
             {formatMessage({ id: "agent.runtimeConfig.advanced" })}
           </button>
           {advancedOpen && (
-            <div className="mt-3 border-l border-line-muted theme-brutal:border-l-2 theme-brutal:border-black/10 pl-3">
+            <div className="mt-3 border-l border-line-muted   pl-3">
               {advanced.map(renderField)}
             </div>
           )}

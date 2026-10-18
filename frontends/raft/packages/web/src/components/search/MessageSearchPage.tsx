@@ -406,7 +406,7 @@ function SearchSkeleton() {
   return (
     <div className="flex flex-col gap-2">
       {Array.from({ length: 5 }, (_, index) => (
-        <div key={index} className="border border-line-muted bg-layer-card p-3 theme-brutal:border-2 theme-brutal:border-black/30 theme-brutal:bg-white">
+        <div key={index} className="border border-line-muted bg-layer-card p-3   ">
           <div className="mb-2 flex gap-2">
             <Skeleton variant="line" className="w-24" />
             <Skeleton variant="line" className="w-20" />
@@ -438,9 +438,9 @@ interface SearchResultsBoundaryState {
 function SearchResultsBoundaryFallback({ onRetry }: { onRetry: () => void }) {
   const { formatMessage } = useIntl();
   return (
-    <div className="border border-line-muted bg-layer-card p-4 text-left shadow-raft-sm theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal-sm">
-      <div className="mb-2 text-sm font-bold text-foreground-strong theme-brutal:text-black">{formatMessage({ id: "search.boundaryTitle" })}</div>
-      <div className="mb-3 text-xs text-foreground-muted theme-brutal:text-black/70">
+    <div className="border border-line-muted bg-layer-card p-4 text-left shadow-raft-sm    ">
+      <div className="mb-2 text-sm font-bold text-foreground-strong ">{formatMessage({ id: "search.boundaryTitle" })}</div>
+      <div className="mb-3 text-xs text-foreground-muted ">
         {formatMessage({ id: "search.boundaryBody" })}
       </div>
       <Button
@@ -1997,13 +1997,13 @@ export default function MessageSearchPage({ activateResultsInChat = false, overl
   }, [channelContextMenu, openEntityResultInChat]);
 
   const activeFilterClass =
-    "border-line-strong bg-primary-soft text-foreground-strong shadow-raft-sm theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-soft-signal theme-brutal:text-black theme-brutal:shadow-brutal-sm";
+    "border-line-strong bg-primary-soft text-foreground-strong shadow-raft-sm     ";
 
   const centeredEmptyState = (
     <div className="flex h-full flex-col items-center justify-center text-center" data-testid="search-home">
-      <Search size={overlayChrome ? 32 : 48} className="mb-3 text-foreground-muted/30 theme-brutal:text-black/20" />
-      <p className="text-sm font-bold text-foreground-muted theme-brutal:text-black/50">{formatMessage({ id: "search.emptyTitle" })}</p>
-      <p className="mt-1 text-xs text-foreground-muted/70 theme-brutal:text-black/40">
+      <Search size={overlayChrome ? 32 : 48} className="mb-3 text-foreground-muted/30 " />
+      <p className="text-sm font-bold text-foreground-muted ">{formatMessage({ id: "search.emptyTitle" })}</p>
+      <p className="mt-1 text-xs text-foreground-muted/70 ">
         {formatMessage({ id: "search.emptyBody" })}
       </p>
     </div>
@@ -2015,9 +2015,9 @@ export default function MessageSearchPage({ activateResultsInChat = false, overl
         /* Slim command-palette header (desktop ⌘K overlay): the input IS the top
            bar with the search icon inline — no PanelHeader, mobile-back, or icon
            badge. */
-        <div className="shrink-0 border-b border-line-muted px-3 py-2.5 theme-brutal:border-b-2 theme-brutal:border-black">
+        <div className="shrink-0 border-b border-line-muted px-3 py-2.5  ">
           <div className="flex min-w-0 items-center gap-2">
-            <Search size={16} className="shrink-0 text-foreground-muted theme-brutal:text-black/50" aria-hidden="true" />
+            <Search size={16} className="shrink-0 text-foreground-muted " aria-hidden="true" />
             {searchFieldInner}
           </div>
         </div>
@@ -2030,7 +2030,7 @@ export default function MessageSearchPage({ activateResultsInChat = false, overl
               {/* Search icon — always visible on this surface (unlike other
                   panel headers where icon is desktop-only) since search
                   identity matters at every viewport. */}
-              <div className="flex size-icon-header shrink-0 items-center justify-center border border-line-muted bg-primary-soft text-foreground-strong theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-soft-signal theme-brutal:text-black">
+              <div className="flex size-icon-header shrink-0 items-center justify-center border border-line-muted bg-primary-soft text-foreground-strong    ">
                 <Search size={18} />
               </div>
               {searchFieldInner}
@@ -2341,7 +2341,7 @@ export default function MessageSearchPage({ activateResultsInChat = false, overl
                       <button
                         type="button"
                         onClick={() => setSearchHistoryEditRequested((editing) => !editing)}
-                        className="text-[11px] font-bold text-foreground-muted hover:text-foreground-strong theme-brutal:text-black/45 theme-brutal:hover:text-black"
+                        className="text-[11px] font-bold text-foreground-muted hover:text-foreground-strong  "
                         data-testid="search-history-edit-toggle"
                       >
                         {formatMessage({
@@ -2352,7 +2352,7 @@ export default function MessageSearchPage({ activateResultsInChat = false, overl
                     <button
                       type="button"
                       onClick={clearSearchHistory}
-                      className="text-[11px] font-bold text-foreground-muted hover:text-foreground-strong theme-brutal:text-black/45 theme-brutal:hover:text-black"
+                      className="text-[11px] font-bold text-foreground-muted hover:text-foreground-strong  "
                     >
                       {formatMessage({ id: "search.clearHistory" })}
                     </button>
@@ -2406,7 +2406,7 @@ export default function MessageSearchPage({ activateResultsInChat = false, overl
                   {frequentSearchEntities.map(renderSearchHomeEntity)}
                 </div>
               ) : (
-                <div className="border border-dashed border-line-muted px-3 py-4 text-xs text-foreground-muted theme-brutal:border-2 theme-brutal:border-black/20 theme-brutal:text-black/40">
+                <div className="border border-dashed border-line-muted px-3 py-4 text-xs text-foreground-muted   ">
                   {formatMessage({ id: "search.frequentEmpty" })}
                 </div>
               )}
@@ -2458,11 +2458,11 @@ export default function MessageSearchPage({ activateResultsInChat = false, overl
 
             {!loading && totalResults === 0 && !searchError ? (
               <div className="flex flex-col items-center justify-center py-20 text-center">
-                <Search size={overlayChrome ? 32 : 48} className="mb-3 text-foreground-muted/30 theme-brutal:text-black/20" />
-                <p className="text-sm font-bold text-foreground-muted theme-brutal:text-black/50">
+                <Search size={overlayChrome ? 32 : 48} className="mb-3 text-foreground-muted/30 " />
+                <p className="text-sm font-bold text-foreground-muted ">
                   {query.trim() ? formatMessage({ id: "search.noResultsForQuery" }, { query: query.trim() }) : formatMessage({ id: "search.noMatchingMessages" })}
                 </p>
-                <p className="mt-1 text-xs text-foreground-muted/70 theme-brutal:text-black/40">
+                <p className="mt-1 text-xs text-foreground-muted/70 ">
                   {query.trim() ? formatMessage({ id: "search.tryDifferentKeywords" }) : formatMessage({ id: "search.tryDifferentFilters" })}
                 </p>
               </div>
@@ -2492,8 +2492,8 @@ export default function MessageSearchPage({ activateResultsInChat = false, overl
                   {showInitialSkeleton ? (
                     <SearchSkeleton />
                   ) : searchError && totalResults === 0 ? (
-                    <div className="border border-line-muted bg-layer-card p-4 shadow-raft-sm theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal-sm">
-                      <div className="mb-2 text-sm font-bold text-foreground-strong theme-brutal:text-black">
+                    <div className="border border-line-muted bg-layer-card p-4 shadow-raft-sm    ">
+                      <div className="mb-2 text-sm font-bold text-foreground-strong ">
                         {formatMessage({
                           id: searchError === "query_too_broad"
                             ? "search.queryTooBroad"
@@ -2502,7 +2502,7 @@ export default function MessageSearchPage({ activateResultsInChat = false, overl
                               : "search.searchFailed",
                         })}
                       </div>
-                      <div className="mb-3 text-xs text-foreground-muted theme-brutal:text-black/60">
+                      <div className="mb-3 text-xs text-foreground-muted ">
                         {formatMessage({
                           id: searchError === "query_too_broad"
                             ? "search.queryTooBroadBody"
@@ -2553,7 +2553,7 @@ export default function MessageSearchPage({ activateResultsInChat = false, overl
                               selected={groupHasSelected}
                             >
                               <SearchThreadResultHeader>
-                                <div className="mb-1 flex flex-wrap items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-foreground-muted theme-brutal:text-black/70">
+                                <div className="mb-1 flex flex-wrap items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-foreground-muted ">
                                   <Badge appearance="outline">
                                     <ThreadIcon width={11} height={11} />
                                     {formatMessage({ id: "search.threadBadge" })}
@@ -2581,8 +2581,8 @@ export default function MessageSearchPage({ activateResultsInChat = false, overl
                 {hasMore && !activateResultsInChat && (
                   <div className="flex justify-center py-4">
                     {loadMoreError ? (
-                      <div role="alert" className="flex items-center gap-3 border border-line-muted bg-layer-card px-3 py-2 shadow-raft-sm theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal-sm">
-                        <span className="text-xs font-bold text-foreground-strong theme-brutal:text-black">
+                      <div role="alert" className="flex items-center gap-3 border border-line-muted bg-layer-card px-3 py-2 shadow-raft-sm    ">
+                        <span className="text-xs font-bold text-foreground-strong ">
                           {formatMessage({ id: "search.loadMoreFailed" })}
                         </span>
                         <Button

@@ -70,7 +70,7 @@ function IosInstructionSheet({
       </div>
 
       {isSafari ? (
-        <div className="rounded-md border border-line-muted bg-layer-inset p-2 theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-brutal-cream">
+        <div className="rounded-md border border-line-muted bg-layer-inset p-2    ">
           <img
             src="/pwa/ios-add-to-home-screen-3step.svg"
             alt={formatMessage({ id: "pwa.install.threeStepsAlt" })}
@@ -78,7 +78,7 @@ function IosInstructionSheet({
           />
         </div>
       ) : (
-        <div className="rounded-md border border-line-muted bg-layer-inset p-3 text-sm text-foreground-strong theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-brutal-cream theme-brutal:text-black">
+        <div className="rounded-md border border-line-muted bg-layer-inset p-3 text-sm text-foreground-strong     ">
           {formatMessage({ id: "pwa.install.iosSafariOnly" })}
         </div>
       )}
@@ -159,7 +159,7 @@ export function PwaInstallSettingsCard() {
 
   return (
     <div data-pwa-install-settings-card className="mb-6 md:hidden">
-      <div className="rounded-lg border border-line-muted bg-layer-panel p-4 shadow-raft-sm theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal-sm">
+      <div className="rounded-lg border border-line-muted bg-layer-panel p-4 shadow-raft-sm     ">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-sm font-bold text-foreground-strong">

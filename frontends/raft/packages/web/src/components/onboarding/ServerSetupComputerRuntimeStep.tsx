@@ -285,8 +285,8 @@ export default function ServerSetupComputerRuntimeStep({
   }, [computerOnline]);
 
   return (
-    <section className="flex w-full max-w-[960px] flex-col rounded-lg border border-line-muted bg-layer-panel shadow-raft-md theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal md:h-[min(720px,calc(100dvh-3rem))] md:min-h-[520px] md:overflow-hidden">
-      <header className="shrink-0 border-b border-line-hairline px-6 pb-4 pt-6 sm:px-9 theme-brutal:border-b-2 theme-brutal:border-black">
+    <section className="flex w-full max-w-[960px] flex-col rounded-lg border border-line-muted bg-layer-panel shadow-raft-md      md:h-[min(720px,calc(100dvh-3rem))] md:min-h-[520px] md:overflow-hidden">
+      <header className="shrink-0 border-b border-line-hairline px-6 pb-4 pt-6 sm:px-9  ">
         <p className="font-mono text-[10px] font-bold uppercase tracking-wide text-foreground-muted">
           {formatMessage({ id: "onboarding.computerRuntime.eyebrow" })}
         </p>
@@ -387,7 +387,7 @@ export default function ServerSetupComputerRuntimeStep({
             "Detecting runtime…" spinner is the honest thing to show while we wait. */}
         {runtimeVisible && !ready && runtimeAnswered ? (
         <div
-          className={`rounded-md border border-line-muted theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black ${connectionMotionPhase === "handoff" ? "onboarding-runtime-reveal" : ""}`}
+          className={`rounded-md border border-line-muted    ${connectionMotionPhase === "handoff" ? "onboarding-runtime-reveal" : ""}`}
           data-motion-state={connectionMotionPhase}
         >
           <div className="px-4 py-3">
@@ -436,7 +436,7 @@ export default function ServerSetupComputerRuntimeStep({
         ) : null}
       </div>
 
-      <footer className="flex shrink-0 flex-col-reverse gap-3 border-t border-line-hairline px-5 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-9 theme-brutal:border-t-2 theme-brutal:border-black">
+      <footer className="flex shrink-0 flex-col-reverse gap-3 border-t border-line-hairline px-5 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-9  ">
         <div className="flex min-w-0 items-center gap-3">
           <SetupSessionFooter disabled={loading} />
         </div>
@@ -494,7 +494,7 @@ function RecoveryCommandRow({
   return (
     <div className="flex items-center gap-2">
       <code
-        className="min-w-0 flex-1 rounded-md border border-line-strong bg-black px-3 py-2 font-mono text-xs text-brutal-lime shadow-raft-sm break-all theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:shadow-brutal-sm"
+        className="min-w-0 flex-1 rounded-md border border-line-strong bg-black px-3 py-2 font-mono text-xs text-brutal-lime shadow-raft-sm break-all    "
         data-testid={testId}
       >
         {command}
@@ -572,7 +572,7 @@ function OfflineComputerRecovery({
           {computers.map((c) => {
             const lastSeen = formatRelativeTime(c.lastHeartbeat, locale);
             return (
-              <li key={c.id} className="flex items-center gap-3 rounded-md border border-line-muted bg-layer-panel px-3 py-2 theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white">
+              <li key={c.id} className="flex items-center gap-3 rounded-md border border-line-muted bg-layer-panel px-3 py-2    ">
                 <Monitor size={16} className="shrink-0 text-foreground-muted" />
                 <div className="min-w-0">
                   <p className="truncate text-xs font-bold">{c.name}</p>
@@ -808,7 +808,7 @@ function ConnectComputerInstructions({ platform }: { platform: "mac-linux" | "wi
         <li key={label} className="flex gap-2">
           <span
             aria-hidden="true"
-            className="mt-px flex size-4 shrink-0 items-center justify-center rounded-sm border border-line-muted font-mono text-[9px] font-bold text-foreground-muted theme-brutal:rounded-none theme-brutal:border-black/30"
+            className="mt-px flex size-4 shrink-0 items-center justify-center rounded-sm border border-line-muted font-mono text-[9px] font-bold text-foreground-muted  "
           >
             {index + 1}
           </span>
@@ -851,20 +851,20 @@ function RuntimeRow({
   // Says so where the click happened, instead of throwing a toast across the screen.
   const [copied, setCopied] = useState(false);
   return (
-    <div className={`border-t border-line-hairline ${expanded ? "bg-fill-muted/40 theme-brutal:bg-soft-signal/20" : ""}`}>
+    <div className={`border-t border-line-hairline ${expanded ? "bg-fill-muted/40 " : ""}`}>
       <button
         type="button"
         className={`flex w-full items-center gap-2.5 px-3.5 py-2 text-left ${quiet ? "text-foreground-hint" : ""}`}
         aria-expanded={expanded}
         onClick={handleToggle}
       >
-        <span className={`flex shrink-0 items-center justify-center rounded-md border border-line-muted bg-layer-panel font-mono text-[9px] font-bold text-foreground-strong theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white ${runtime.recommended ? "size-7" : "size-6"}`}>
+        <span className={`flex shrink-0 items-center justify-center rounded-md border border-line-muted bg-layer-panel font-mono text-[9px] font-bold text-foreground-strong     ${runtime.recommended ? "size-7" : "size-6"}`}>
           {runtime.abbreviation}
         </span>
         <span className={`min-w-0 flex-1 font-bold ${runtime.recommended ? "text-[13px]" : "text-xs"}`}>
           {runtime.displayName}
         </span>
-        <span className={`shrink-0 rounded-sm border px-2 py-0.5 font-mono text-[9px] font-bold uppercase theme-brutal:rounded-none theme-brutal:border-2 ${runtime.detected ? "border-line-muted bg-success-soft text-success-strong theme-brutal:border-black theme-brutal:bg-brutal-lime theme-brutal:text-black" : "border-line-muted bg-layer-inset text-foreground-hint theme-brutal:border-black/20 theme-brutal:bg-white theme-brutal:text-black/40"}`}>
+        <span className={`shrink-0 rounded-sm border px-2 py-0.5 font-mono text-[9px] font-bold uppercase   ${runtime.detected ? "border-line-muted bg-success-soft text-success-strong   " : "border-line-muted bg-layer-inset text-foreground-hint   "}`}>
           {formatMessage({
             id: runtime.detected
               ? "onboarding.computerRuntime.detected"
@@ -940,15 +940,15 @@ function OwnApiKeyRow({
 }) {
   const { formatMessage } = useIntl();
   return (
-    <div className={`border-t border-line-hairline ${expanded ? "bg-fill-muted/40 theme-brutal:bg-soft-signal/20" : ""}`}>
+    <div className={`border-t border-line-hairline ${expanded ? "bg-fill-muted/40 " : ""}`}>
       <button type="button" className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left" aria-expanded={expanded} onClick={onToggle}>
-        <span className="flex size-6 shrink-0 items-center justify-center rounded-md border border-line-muted bg-layer-panel text-foreground-strong theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white">
+        <span className="flex size-6 shrink-0 items-center justify-center rounded-md border border-line-muted bg-layer-panel text-foreground-strong    ">
           <KeyRound size={13} />
         </span>
         <span className="min-w-0 flex-1 text-xs font-bold">
           {formatMessage({ id: "onboarding.computerRuntime.ownApiKey" })}
         </span>
-        <span className="shrink-0 rounded-sm border border-line-muted bg-layer-inset px-2 py-0.5 font-mono text-[9px] font-bold uppercase text-foreground-hint theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black/20 theme-brutal:bg-white theme-brutal:text-black/40">
+        <span className="shrink-0 rounded-sm border border-line-muted bg-layer-inset px-2 py-0.5 font-mono text-[9px] font-bold uppercase text-foreground-hint     ">
           {formatMessage({ id: "onboarding.computerRuntime.notSet" })}
         </span>
         <ChevronRight size={15} className={`shrink-0 transition-transform ${expanded ? "rotate-90" : ""}`} />

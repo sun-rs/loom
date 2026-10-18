@@ -140,10 +140,9 @@ for (const width of [1440, 390]) {
         color: getComputedStyle(el).borderRightColor,
       }));
       assert.equal(border.width, "1px");
-      assert.match(
-        border.color,
-        /^(rgb\(0, 0, 0\)|oklch\(0 0 0\))$/,
-        "native brutal activity divider",
+      assert.ok(
+        border.color.includes("0.149"),
+        "rUI muted seam, not the retired black theme border",
       );
       const actionBorder = await page
         .getByTestId("memory-detail")
@@ -164,16 +163,7 @@ for (const width of [1440, 390]) {
         color: getComputedStyle(el).borderTopColor,
         width: el.getBoundingClientRect().width,
       }));
-    assert.match(
-      closeStyle.color,
-      /^(rgb\(0, 0, 0\)|oklch\(0 0 0\))$/,
-      "official CloseButton visible border",
-    );
-    assert.equal(
-      closeStyle.width,
-      width === 390 ? 32 : 28,
-      "official compact close with approved mobile adaptation",
-    );
+    assert.equal(closeStyle.width, 32, "rUI 0.6 native icon size");
     if (width === 390) {
       const close = page.getByRole("button", {
         name: "关闭记忆正文",
@@ -186,6 +176,8 @@ for (const width of [1440, 390]) {
           x: r.left - 4,
           y: r.top + r.height / 2,
           width: style.width,
+          nativeWidth: el.clientWidth + 12,
+          nativeHeight: el.clientHeight + 12,
           height: style.height,
           owns:
             document
@@ -193,8 +185,8 @@ for (const width of [1440, 390]) {
               ?.closest("button") === el,
         };
       });
-      assert.equal(hit.width, "44px");
-      assert.equal(hit.height, "44px");
+      assert.equal(hit.width, hit.nativeWidth + "px");
+      assert.equal(hit.height, hit.nativeHeight + "px");
       assert.ok(hit.owns, "outer touch area targets the close button");
       await page.mouse.click(hit.x, hit.y);
     } else
@@ -330,7 +322,7 @@ for (const width of [1440, 390]) {
     assert.equal((await saveAction.boundingBox()).height, 32);
     assert.equal(
       await saveAction.evaluate((el) => getComputedStyle(el).fontSize),
-      "14px",
+      "13px",
     );
     await saveAction.click();
     await edit.getByText(/保存结果未知/).waitFor();

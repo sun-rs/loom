@@ -162,7 +162,7 @@ export default function RegisterPage({ onSwitchToLogin, previewProviders }: Regi
               error next to the validation text. */}
           {!acceptedLegal && !loading ? (
             <p
-              className="text-center text-xs text-foreground-muted theme-brutal:text-black/50"
+              className="text-center text-xs text-foreground-muted "
               data-testid="register-legal-hint"
             >
               {formatMessage({ id: "auth.legalAcceptance.requiredHint" })}
@@ -173,11 +173,11 @@ export default function RegisterPage({ onSwitchToLogin, previewProviders }: Regi
         {enabledProviders.length > 0 ? (
           <>
             <div className="my-4 flex items-center gap-3">
-              <div className="h-0.5 flex-1 bg-line-strong theme-brutal:bg-black" />
-              <span className="text-xs font-bold uppercase tracking-widest text-foreground-muted theme-brutal:text-black/45">
+              <div className="h-0.5 flex-1 bg-line-strong " />
+              <span className="text-xs font-bold uppercase tracking-widest text-foreground-muted ">
                 {formatMessage({ id: "pages.register.or" })}
               </span>
-              <div className="h-0.5 flex-1 bg-line-strong theme-brutal:bg-black" />
+              <div className="h-0.5 flex-1 bg-line-strong " />
             </div>
             <div className="space-y-2">
               {enabledProviders.map((provider) => (
@@ -192,7 +192,7 @@ export default function RegisterPage({ onSwitchToLogin, previewProviders }: Regi
           </>
         ) : null}
 
-        <TextSans size="small" className="mt-4 text-center theme-brutal:text-black/60">
+        <TextSans size="small" className="mt-4 text-center ">
           {formatMessage(
             { id: "pages.register.haveAccountPrompt" },
             {

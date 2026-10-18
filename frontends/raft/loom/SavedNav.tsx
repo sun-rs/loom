@@ -47,7 +47,6 @@ export default function SavedNav({
   }, [client, workspaceId]);
   return (
     <SidebarItem
-      variant="accent"
       active={active}
       onClick={onOpen}
       className={`${sidebarItemClass(active)} mb-1`}

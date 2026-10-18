@@ -98,7 +98,7 @@ export function AgentMigrationSection({ agent }: { agent: Agent }) {
   return (
     <section
       aria-labelledby="agent-migration-section-title"
-      className="px-5 py-4 border-t border-line-muted theme-brutal:border-black/10"
+      className="px-5 py-4 border-t border-line-muted "
       data-testid="agent-migration-section"
     >
       <div className="flex items-center gap-2">

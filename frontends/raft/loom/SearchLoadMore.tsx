@@ -16,9 +16,9 @@ export default function SearchLoadMore({
       {loadMoreError ? (
         <div
           role="alert"
-          className="flex items-center gap-3 border border-line-muted bg-layer-card px-3 py-2 shadow-raft-sm theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal-sm"
+          className="flex items-center gap-3 border border-line-muted bg-layer-card px-3 py-2 shadow-raft-sm    "
         >
-          <span className="text-xs font-bold text-foreground-strong theme-brutal:text-black">
+          <span className="text-xs font-bold text-foreground-strong ">
             {formatMessage({ id: "search.loadMoreFailed" })}
           </span>
           <Button

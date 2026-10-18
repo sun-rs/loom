@@ -44,18 +44,18 @@ export default function CheckMarker({
   ...props
 }: CheckMarkerProps) {
   const checkedClasses = tone === "yellow-fill"
-    ? "bg-primary-soft text-primary-strong theme-brutal:bg-soft-signal theme-brutal:text-black"
-    : "bg-foreground-strong text-foreground-inverse theme-brutal:bg-black theme-brutal:text-white";
+    ? "bg-primary-soft text-primary-strong  "
+    : "bg-foreground-strong text-foreground-inverse  ";
   const uncheckedClasses = previewOnHover
-    ? "bg-layer-panel text-transparent group-hover:text-foreground-muted theme-brutal:bg-white theme-brutal:group-hover:text-black/20"
-    : "bg-layer-panel text-transparent theme-brutal:bg-white";
+    ? "bg-layer-panel text-transparent group-hover:text-foreground-muted  "
+    : "bg-layer-panel text-transparent ";
 
   return (
     <span
       {...props}
       aria-hidden
       className={[
-        "check-marker-brutal inline-flex shrink-0 items-center justify-center border border-line-strong transition-colors theme-brutal:border-2 theme-brutal:border-black",
+        "check-marker-brutal inline-flex shrink-0 items-center justify-center border border-line-strong transition-colors  ",
         SIZE_CLASS[size],
         shape === "circle" ? "rounded-full" : "",
         checked ? checkedClasses : uncheckedClasses,

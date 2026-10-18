@@ -64,7 +64,7 @@ export default function WorkspaceFileContent({
         </p>
       )}
       {markdown && mode === "preview" ? (
-        <div className="text-sm text-foreground-strong theme-brutal:text-black break-words">
+        <div className="text-sm text-foreground-strong  break-words">
           <ReactMarkdown
             remarkPlugins={WORKSPACE_MARKDOWN_REMARK_PLUGINS}
             components={components}
@@ -73,7 +73,7 @@ export default function WorkspaceFileContent({
           </ReactMarkdown>
         </div>
       ) : (
-        <pre className="whitespace-pre-wrap break-words text-sm font-mono text-foreground-strong theme-brutal:text-black">
+        <pre className="whitespace-pre-wrap break-words text-sm font-mono text-foreground-strong ">
           {body}
         </pre>
       )}

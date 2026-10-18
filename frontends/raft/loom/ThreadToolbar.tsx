@@ -17,7 +17,7 @@ export default function ThreadToolbar({
   return (
     <MessageItemToolbar
       data-message-affordance="toolbar"
-      className="right-2 max-md:right-0.5 max-md:[[data-theme=brutal]_&]:-right-1.5 pointer-events-auto"
+      className="right-2 max-md:right-0.5 pointer-events-auto"
     >
       <MessageItemToolbarButton
         onClick={onReplyInThread}

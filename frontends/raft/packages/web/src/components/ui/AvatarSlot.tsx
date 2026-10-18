@@ -255,7 +255,7 @@ export default function AvatarSlot({
   }
 
   const identityClass = type === "server" || type === "app"
-    ? `${spec.serverInitialText} font-display ${type === "app" ? "font-black" : "font-bold"} theme-brutal:bg-soft-signal theme-brutal:text-black`
+    ? `${spec.serverInitialText} font-display ${type === "app" ? "font-black" : "font-bold"}  `
     : "";
   return (
     <Avatar

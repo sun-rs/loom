@@ -41,7 +41,7 @@ export const MemberAgentRow = memo(function MemberAgentRow({
     [agent.id, onContextMenu],
   );
   return (
-    <SidebarItem variant="accent"
+    <SidebarItem
       data-agent-id={agent.id}
       onClick={handleClick}
       onDoubleClick={handleDoubleClick}
@@ -60,7 +60,7 @@ export const MemberAgentRow = memo(function MemberAgentRow({
       <div className="flex min-w-0 flex-1 items-baseline gap-1 text-left">
         <span className="min-w-0 truncate text-sm">{agent.displayName || agent.name}</span>
         {agent.description && (
-          <span className="min-w-0 flex-1 truncate text-xs text-foreground-muted theme-brutal:text-black/40">{agent.description}</span>
+          <span className="min-w-0 flex-1 truncate text-xs text-foreground-muted ">{agent.description}</span>
         )}
       </div>
     </SidebarItem>

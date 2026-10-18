@@ -225,7 +225,6 @@ export function SchemaBuiltInRuntimeFields({
             <CardHeader>
               <CardLeading>
                 <Checkbox
-                  size="md"
                   checked={managedConnectionActive
                     ? selectedProviderConnection?.supportsImageInput === true
                     : supportsImageInput}
@@ -278,7 +277,7 @@ export function SchemaBuiltInRuntimeFields({
             {formatMessage({ id: "agent.runtimeConfig.advanced" })}
           </button>
           {advancedOpen && (
-            <div className="mt-3 border-l border-line-muted theme-brutal:border-l-2 theme-brutal:border-black/10 pl-3">
+            <div className="mt-3 border-l border-line-muted   pl-3">
               {"loadLocalPlugins" in definition.dataSchema.properties && (
                 <LocalPiPluginsField checked={loadLocalPlugins} onChange={onLoadLocalPluginsChange} />
               )}

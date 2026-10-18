@@ -26,7 +26,7 @@ export function ChannelMemberListShell({
     <div
       className={
         framed
-          ? `max-h-72 overflow-y-auto border border-line-muted bg-layer-panel shadow-raft-sm theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal-sm ${className}`
+          ? `max-h-72 overflow-y-auto border border-line-muted bg-layer-panel shadow-raft-sm     ${className}`
           : className
       }
       data-testid={dataTestId}
@@ -38,7 +38,7 @@ export function ChannelMemberListShell({
 
 export function ChannelMemberSectionHeader({ children }: { children: ReactNode }) {
   return (
-    <SectionEyebrow as="div" uppercase={false} className="bg-fill-muted px-3 py-1.5 text-foreground-muted theme-brutal:bg-white/50 theme-brutal:text-black">
+    <SectionEyebrow as="div" uppercase={false} className="bg-fill-muted px-3 py-1.5 text-foreground-muted  ">
       {children}
     </SectionEyebrow>
   );
@@ -73,7 +73,6 @@ export function MemberRoleTag({ role }: { role: ServerRole }) {
       data-testid={isGuest ? "member-page-role-channel-guest" : "member-page-role-channel-admin"}
       appearance="soft"
       variant={isGuest ? "information" : "muted"}
-      uppercase={false}
       className="shrink-0 font-mono"
     >
       {formatMessage({ id: isGuest
@@ -237,7 +236,7 @@ export function ChannelMemberRemoveButton({
       <button
         type="button"
         onClick={onClick}
-        className={`${revealOnRowHover ? "flex md:invisible md:group-hover:visible md:group-focus-within:visible" : "flex"} ${visibleLabel ? "h-7 px-2 text-xs" : icon ? "h-7 w-7" : "size-6 mt-1"} shrink-0 items-center justify-center rounded-sm border border-line-muted bg-danger-soft text-danger-strong transition-colors hover:bg-danger/30 theme-brutal:rounded-none theme-brutal:border-black theme-brutal:bg-brutal-red/20 theme-brutal:text-black theme-brutal:hover:bg-brutal-red/60`}
+        className={`${revealOnRowHover ? "flex md:invisible md:group-hover:visible md:group-focus-within:visible" : "flex"} ${visibleLabel ? "h-7 px-2 text-xs" : icon ? "h-7 w-7" : "size-6 mt-1"} shrink-0 items-center justify-center rounded-sm border border-line-muted bg-danger-soft text-danger-strong transition-colors hover:bg-danger/30     `}
         aria-label={label}
       >
         {visibleLabel ?? icon ?? <X size={12} />}

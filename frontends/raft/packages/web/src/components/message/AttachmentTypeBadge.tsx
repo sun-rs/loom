@@ -28,7 +28,6 @@ export function AttachmentTypeBadge({
 
   return (
     <FilePreviewBadge
-      type={type}
       data-testid={testId}
       data-message-affordance={affordance}
       className={`!static inline-flex shrink-0 items-center justify-center !h-3.5 !min-h-3.5 !w-7 !min-w-7 !px-0 !text-[9px] ${className}`}

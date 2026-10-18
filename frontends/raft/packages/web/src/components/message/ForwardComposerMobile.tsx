@@ -142,7 +142,7 @@ export default function ForwardComposerMobile({
     >
       {mobileStep === "detail" ? (
         <>
-          <header className="flex min-h-14 shrink-0 items-center gap-3 border-b border-line-hairline px-3 py-2 theme-brutal:border-b-2 theme-brutal:border-black">
+          <header className="flex min-h-14 shrink-0 items-center gap-3 border-b border-line-hairline px-3 py-2  ">
             <Button type="button" size="icon-sm" variant="outline" onClick={backToPreview} aria-label={formatMessage({ id: "message.forwardComposer.backToPreview" })}>
               <ArrowLeft size={18} />
             </Button>
@@ -157,7 +157,7 @@ export default function ForwardComposerMobile({
         </>
       ) : mobileStep === "preview" ? (
         <>
-          <header className="flex min-h-14 shrink-0 items-center gap-3 border-b border-line-hairline px-3 py-2 theme-brutal:border-b-2 theme-brutal:border-black">
+          <header className="flex min-h-14 shrink-0 items-center gap-3 border-b border-line-hairline px-3 py-2  ">
             <Button type="button" size="icon-sm" variant="outline" onClick={backToTargets} disabled={sending || joinInFlight} aria-label={formatMessage({ id: "message.forwardComposer.backToDestinations" })}>
               <ArrowLeft size={18} />
             </Button>
@@ -178,7 +178,7 @@ export default function ForwardComposerMobile({
               </div>
             </div>
             <div
-              className="shrink-0 border-t border-line-hairline bg-layer-panel p-3 pb-[max(12px,env(safe-area-inset-bottom))] theme-brutal:border-t-2 theme-brutal:border-black theme-brutal:bg-white"
+              className="shrink-0 border-t border-line-hairline bg-layer-panel p-3 pb-[max(12px,env(safe-area-inset-bottom))]   "
               data-testid="forward-mobile-preview-actions"
             >
               <Field>
@@ -209,7 +209,7 @@ export default function ForwardComposerMobile({
         </>
       ) : (
         <>
-          <header className="flex min-h-14 shrink-0 items-center gap-3 border-b border-line-hairline px-3 py-2 theme-brutal:border-b-2 theme-brutal:border-black">
+          <header className="flex min-h-14 shrink-0 items-center gap-3 border-b border-line-hairline px-3 py-2  ">
             {mobileMultiSelect ? (
               <Button type="button" size="icon-sm" variant="outline" onClick={cancelMultiSelect} disabled={sending || joinInFlight} aria-label={formatMessage({ id: "common.confirm.cancel" })}>
                 <Undo2 size={14} />

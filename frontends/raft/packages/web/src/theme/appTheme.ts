@@ -1,4 +1,6 @@
-import type { Theme, ThemeMode } from "raft-ui";
+import type { ThemeMode } from "raft-ui";
+/** Historical preference decoding only. Not a runtime theme. */
+type Theme = "brutal" | "elegant";
 
 /**
  * The old product model persisted one value that mixed color mode and visual

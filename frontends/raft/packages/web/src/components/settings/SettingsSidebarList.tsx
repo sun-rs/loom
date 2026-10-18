@@ -31,7 +31,7 @@ export default function SettingsSidebarList({
     <div className="space-y-3" data-testid="settings-sidebar-list">
       {groups.filter((group) => group.items.length > 0).map((group) => (
         <div key={group.label}>
-          <div className="mb-1 px-2 text-[10px] font-bold uppercase tracking-widest text-foreground-muted theme-brutal:text-black/40">
+          <div className="mb-1 px-2 text-[10px] font-bold uppercase tracking-widest text-foreground-muted ">
             {group.label}
           </div>
           {group.items.map((item) => {
@@ -39,7 +39,6 @@ export default function SettingsSidebarList({
             return (
               <SidebarItem
                 key={item.id}
-                variant="accent"
                 active={selected}
                 render={item.href ? (
                   // The render literal is empty by design: SidebarItem merges

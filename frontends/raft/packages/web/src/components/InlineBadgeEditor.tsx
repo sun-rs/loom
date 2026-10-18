@@ -233,7 +233,7 @@ export default function InlineBadgeEditor({
         onSearchChange={onSearchChange ?? noop}
         searchPlaceholder={searchPlaceholder}
         emptyLabel={emptyLabel}
-        className="w-[240px] border border-line-muted bg-layer-popover text-foreground-strong shadow-raft-md theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:text-black theme-brutal:shadow-brutal"
+        className="w-[240px] border border-line-muted bg-layer-popover text-foreground-strong shadow-raft-md     "
         options={selectionOptions}
       />
     </div>
@@ -269,7 +269,7 @@ export default function InlineBadgeEditor({
   // state below uses `disabled:opacity-60`. stdrc msg=3d60f9dd #proj-theme
   // — the older `hover:opacity-70 transition-colors` was a mismatch
   // (transition target didn't cover opacity, so the state snapped).
-  const defaultButtonClassName = `mt-0.5 inline-flex items-center gap-1 theme-brutal:border-2 theme-brutal:border-black ${badgeClassName} px-2 py-0.5 text-xs font-bold ${uppercase ? "uppercase tracking-wide " : ""}theme-brutal:text-black transition-[filter,opacity] duration-100 hover:brightness-90 disabled:cursor-not-allowed disabled:opacity-60${capitalize ? " capitalize" : ""}`;
+  const defaultButtonClassName = `mt-0.5 inline-flex items-center gap-1   ${badgeClassName} px-2 py-0.5 text-xs font-bold ${uppercase ? "uppercase tracking-wide " : ""} transition-[filter,opacity] duration-100 hover:brightness-90 disabled:cursor-not-allowed disabled:opacity-60${capitalize ? " capitalize" : ""}`;
 
   const badge = badgeStatus ? (
     <TaskStatusBadge
@@ -289,7 +289,6 @@ export default function InlineBadgeEditor({
       render={<button ref={triggerRef} type="button" disabled={disabled} />}
       appearance="soft"
       variant={badgeVariant}
-      uppercase={uppercase}
       onClick={onToggle}
       data-testid={buttonTestId}
       data-task-status={buttonDataTaskStatus}

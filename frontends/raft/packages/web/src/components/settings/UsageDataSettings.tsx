@@ -19,7 +19,7 @@ import Banner from "../ui/Banner";
 import SectionHeader from "../ui/SectionHeader";
 
 const CARD_CLASS =
-  "border-line-muted bg-layer-panel p-4 shadow-raft-sm theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal-sm";
+  "border-line-muted bg-layer-panel p-4 shadow-raft-sm    ";
 
 function SwitchRow({
   idPrefix,
@@ -48,7 +48,6 @@ function SwitchRow({
           </span>
         </span>
         <Switch
-          size="md"
           checked={checked}
           disabled={disabled}
           onCheckedChange={onCheckedChange}

@@ -127,7 +127,7 @@ export default function SideWorkspace({
     <>
       <CloseButton
         data-loom-control="detail-close"
-        className="flex size-7 shrink-0 items-center justify-center"
+        className="flex size-8 shrink-0 items-center justify-center"
         aria-label="关闭 Side"
         data-testid="thread-close"
         onClick={close}
@@ -139,7 +139,7 @@ export default function SideWorkspace({
   return (
     <div
       ref={host}
-      className="thread-side-column flex flex-col bg-layer-card theme-brutal:bg-white"
+      className="thread-side-column flex flex-col bg-layer-card "
       data-testid="side-panel"
       style={{ "--thread-panel-width": `${size.width}px` } as CSSProperties}
     >
@@ -154,7 +154,7 @@ export default function SideWorkspace({
         onPointerUp={size.handleResizeEnd}
         onPointerCancel={size.handleResizeEnd}
       />
-      <ThreadPanelRoot className="isolate flex h-full min-h-0 w-full flex-col bg-layer-panel dark:bg-layer-card theme-brutal:bg-white">
+      <ThreadPanelRoot className="isolate flex h-full min-h-0 w-full flex-col bg-layer-panel dark:bg-layer-card ">
         {error && (
           <div role="alert" className="p-3">
             {error}

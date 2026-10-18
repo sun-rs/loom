@@ -236,11 +236,11 @@ export default function StableField({
       <div className={layout === "row" ? "flex items-center justify-between gap-3" : "contents"}>
       {labelAccessory ? (
         <div className="flex items-center gap-2">
-          <FieldLabel {...(optional ? { optional } : {})} className={LABEL_CLS} htmlFor={htmlFor}>{label}{required ? <LabelAsterisk className="ml-1 text-danger-strong theme-brutal:text-black" /> : null}</FieldLabel>
+          <FieldLabel {...(optional ? { optional } : {})} className={LABEL_CLS} htmlFor={htmlFor}>{label}{required ? <LabelAsterisk className="ml-1 text-danger-strong " /> : null}</FieldLabel>
           {labelAccessory}
         </div>
       ) : (
-        <FieldLabel {...(optional ? { optional } : {})} className={LABEL_CLS} htmlFor={htmlFor}>{label}{required ? <LabelAsterisk className="ml-1 text-danger-strong theme-brutal:text-black" /> : null}</FieldLabel>
+        <FieldLabel {...(optional ? { optional } : {})} className={LABEL_CLS} htmlFor={htmlFor}>{label}{required ? <LabelAsterisk className="ml-1 text-danger-strong " /> : null}</FieldLabel>
       )}
 
       {control ? (
@@ -299,7 +299,7 @@ export default function StableField({
             lines of empty space on every field to keep the height pinned. */}
         <span className="flex min-h-4 items-start gap-2">
           <span
-            className={`flex-1 ${message ? "" : "invisible"} ${error ? "font-bold text-danger-strong theme-brutal:text-brutal-red" : "text-foreground-muted theme-brutal:text-black/50"}`}
+            className={`flex-1 ${message ? "" : "invisible"} ${error ? "font-bold text-danger-strong " : "text-foreground-muted "}`}
             role={error ? "alert" : undefined}
           >
             {/* Holds the line box open when empty, so the row keeps its height
@@ -307,7 +307,7 @@ export default function StableField({
             {message ?? " "}
           </span>
           {counter ? (
-            <span className="shrink-0 font-mono tabular-nums text-foreground-muted theme-brutal:text-black/50">{counter}</span>
+            <span className="shrink-0 font-mono tabular-nums text-foreground-muted ">{counter}</span>
           ) : null}
         </span>
       </div>

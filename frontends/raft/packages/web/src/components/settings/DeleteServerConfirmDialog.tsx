@@ -35,8 +35,8 @@ export default function DeleteServerConfirmDialog({ onClose, layer }: { onClose:
             {formatMessage({ id: "settings.dangerZone.deleteWarningPrefix" })}<span className="font-bold">{server.name}</span>{formatMessage({ id: "settings.dangerZone.deleteWarningSuffix" })}
           </p>
           <div>
-            <p className="text-sm text-foreground-muted theme-brutal:text-black/60 mb-2">
-              {formatMessage({ id: "settings.dangerZone.typeToConfirmPrefix" })}<span className="font-mono font-bold text-foreground-strong theme-brutal:text-black">{server.slug}</span>{formatMessage({ id: "settings.dangerZone.typeToConfirmSuffix" })}
+            <p className="text-sm text-foreground-muted  mb-2">
+              {formatMessage({ id: "settings.dangerZone.typeToConfirmPrefix" })}<span className="font-mono font-bold text-foreground-strong ">{server.slug}</span>{formatMessage({ id: "settings.dangerZone.typeToConfirmSuffix" })}
             </p>
             <SlugInput
               data-testid="server-delete-slug-input"

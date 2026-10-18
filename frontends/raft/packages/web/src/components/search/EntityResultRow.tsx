@@ -73,7 +73,7 @@ export function EntityResultRow({
         type="button"
         onClick={handleClick}
         selected={selected}
-        className="theme-brutal:hover:shadow-brutal-sm theme-brutal:active:shadow-brutal-sm theme-brutal:data-[selected=true]:shadow-brutal-sm"
+        className="  "
       >
         <SearchEntityResultLeading>
           {result.type === "channel" ? (
@@ -113,11 +113,11 @@ export function EntityResultRow({
             <span className={`truncate text-sm font-bold ${isArchivedChannelResult ? ARCHIVED_CHANNEL_TEXT_CLASS : "text-foreground-strong"}`}>
               {result.title}
             </span>
-            <Badge appearance="soft" variant="muted" uppercase>
+            <Badge appearance="soft" variant="muted">
               {result.type === "channel" ? formatMessage({ id: "search.channel" }) : result.type === "computer" ? formatMessage({ id: "search.badgeComputer" }) : result.type === "agentDm" ? formatMessage({ id: "search.badgeAgent" }) : formatMessage({ id: "search.badgeHuman" })}
             </Badge>
             {result.archivedAt && (
-              <Badge appearance="soft" variant={isArchivedChannelResult ? "muted" : "warning"} uppercase>
+              <Badge appearance="soft" variant={isArchivedChannelResult ? "muted" : "warning"}>
                 {formatMessage({ id: "search.archived" })}
               </Badge>
             )}

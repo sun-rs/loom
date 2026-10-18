@@ -331,7 +331,7 @@ export default function ChannelSidebar({
                 >
                   <button
                     type="button"
-                    className="flex h-6 min-w-0 w-full items-center gap-1 [&>svg]:shrink-0 text-xs font-bold uppercase text-foreground-strong tracking-widest transition-colors hover:text-foreground-muted theme-brutal:text-black theme-brutal:hover:text-black/70"
+                    className="flex h-6 min-w-0 w-full items-center gap-1 [&>svg]:shrink-0 text-xs font-bold uppercase text-foreground-strong tracking-widest transition-colors hover:text-foreground-muted  "
                     data-section-handle
                     aria-expanded={!collapsed.includes(group.id)}
                     onClick={() =>
@@ -348,7 +348,7 @@ export default function ChannelSidebar({
                     />
                     <span className="truncate">{group.name}</span>
                     {group.id === "dms" && (
-                      <span className="text-foreground-placeholder font-mono normal-case tracking-normal theme-brutal:text-black/40">
+                      <span className="text-foreground-placeholder font-mono normal-case tracking-normal ">
                         {group.rooms.length}
                       </span>
                     )}

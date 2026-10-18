@@ -81,7 +81,7 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
             in one quiet line; Esc already sits in the field. */}
         <div
           data-testid="desktop-search-overlay-footer"
-          className="flex shrink-0 items-center gap-4 border-t border-line-muted px-3 py-1.5 text-[11px] text-foreground-muted theme-brutal:border-t-2 theme-brutal:border-black theme-brutal:text-black/60"
+          className="flex shrink-0 items-center gap-4 border-t border-line-muted px-3 py-1.5 text-[11px] text-foreground-muted   "
         >
           <span className="flex items-center gap-1">
             <Kbd aria-hidden="true">{ARROW_UP_GLYPH}</Kbd>

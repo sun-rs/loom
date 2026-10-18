@@ -307,6 +307,16 @@ notices. Legacy `rah` code is not a default dependency.
 
 ## UI and interaction contract
 
+Owner upgrade (2026-10-19): the product adopts the single Raft 0.6 design system,
+not the retired Brutal/Elegant families. `frontends/raft/rui-resources.lock.json`
+pins package, guides, styles and font provenance. `adoption.json` retains original
+upstream hashes; `rui-v6-ports.json` separately records owner-authorized page
+compatibility ports. Do not call these ports untouched/latest upstream pages.
+Mode selection is light/dark/system; migrate existing device mode without
+restoring a family switch. The pinned native recipes own typography, radius,
+borders, states and pointer targets. Earlier family-specific dimensions and
+hard-shadow assertions are historical, superseded by this upgrade.
+
 Owner ruling (2026-10-14): selective official-UI adoption may omit unsupported
 features and their controls, but must preserve the retained surfaces' UI rules:
 source dimensions/proportions, fonts/colors, hover/selected states, menu and

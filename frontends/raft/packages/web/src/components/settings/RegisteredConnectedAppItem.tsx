@@ -32,8 +32,8 @@ export function RegisteredConnectedAppItem({
       <div className="flex min-w-0 flex-1 items-start gap-3">
         <ConnectedAppLogo name={app.name} logoUrl={app.logoUrl} seed={app.defaultLogoSeed} size="sm" />
         <div className="min-w-0 flex-1">
-          <div className="min-w-0 break-words font-bold text-foreground-strong theme-brutal:text-black">{app.name}</div>
-          <div className="mt-0.5 text-xs text-foreground-muted theme-brutal:text-black/50">{formatMessage({ id: CONNECTED_APP_CATEGORY_LABEL_ID[app.category] ?? "settings.connectedApps.categoryOther" })}</div>
+          <div className="min-w-0 break-words font-bold text-foreground-strong ">{app.name}</div>
+          <div className="mt-0.5 text-xs text-foreground-muted ">{formatMessage({ id: CONNECTED_APP_CATEGORY_LABEL_ID[app.category] ?? "settings.connectedApps.categoryOther" })}</div>
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
             <ConnectedAppDistributionBadge status={app.status} />
           </div>
@@ -44,7 +44,7 @@ export function RegisteredConnectedAppItem({
             <>
               {statusHintId && (
                 <Tooltip content={formatMessage({ id: statusHintId })}>
-                <div className="mt-1 line-clamp-2 text-xs leading-relaxed text-foreground-muted theme-brutal:text-black/55">
+                <div className="mt-1 line-clamp-2 text-xs leading-relaxed text-foreground-muted ">
                   {formatMessage({ id: statusHintId })}
                 </div>
                 </Tooltip>

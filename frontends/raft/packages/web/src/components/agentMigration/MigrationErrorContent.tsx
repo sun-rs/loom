@@ -14,7 +14,7 @@ export function MigrationErrorContent({ presentation }: { presentation: Migratio
         </ul>
       ) : null}
       {presentation.technicalCode || presentation.diagnosticRef ? (
-        <details className="text-xs text-foreground-muted theme-brutal:text-black/60">
+        <details className="text-xs text-foreground-muted ">
           <summary className="font-bold">{formatMessage({ id: "agent.detail.technicalDetails" })}</summary>
           <div className="space-y-0.5">
             {presentation.technicalCode ? (

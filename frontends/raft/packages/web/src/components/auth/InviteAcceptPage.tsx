@@ -284,7 +284,7 @@ export default function InviteAcceptPage({
                     )}
                   </div>
                 </div>
-                <div className="max-h-56 overflow-y-auto rounded-md border border-line-muted bg-layer-canvas-muted p-3 text-sm theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black/30 theme-brutal:bg-brutal-cream">
+                <div className="max-h-56 overflow-y-auto rounded-md border border-line-muted bg-layer-canvas-muted p-3 text-sm    ">
                   <AgreementBody source={inviteInfo.agreement.bodyMarkdown} />
                 </div>
               </div>

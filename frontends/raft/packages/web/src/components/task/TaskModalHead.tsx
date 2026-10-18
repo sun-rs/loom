@@ -109,7 +109,7 @@ export default function TaskModalHead({ task }: { task: Task }) {
 
   return (
     <>
-      <PanelSection className="border-t-0 bg-layer-panel theme-brutal:bg-white">
+      <PanelSection className="border-t-0 bg-layer-panel ">
         {/* Number sits inline with the title, GitHub/Linear style: it is part of
             how the task is named, not separate metadata. Kept non-bold and muted
             so it reads as an identifier rather than competing with the title. */}

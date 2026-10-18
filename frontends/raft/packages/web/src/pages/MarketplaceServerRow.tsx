@@ -64,7 +64,7 @@ export function MarketplaceServerRow({
           data-testid="marketplace-install-pending-row-spinner"
         />
       ) : !installed ? (
-        <Badge appearance="outline" uppercase>
+        <Badge appearance="outline">
           {formatMessage({ id: !entry
             ? "pages.humanLogin.serverUnavailableCompact"
             : canInstall

@@ -56,7 +56,7 @@ export default function SearchMessageGroups({
             selected={groupHasSelected}
           >
             <SearchThreadResultHeader>
-              <div className="mb-1 flex flex-wrap items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-foreground-muted theme-brutal:text-black/70">
+              <div className="mb-1 flex flex-wrap items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-foreground-muted ">
                 <Badge appearance="outline">
                   <ThreadIcon width={11} height={11} />
                   {formatMessage({ id: "search.threadBadge" })}

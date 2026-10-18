@@ -17,15 +17,9 @@ export async function verifyAppearance({ browser, origin, channels }) {
         .getByTestId("appearance-theme-picker")
         .waitFor({ timeout: 3000 });
       await page.getByTestId("appearance-mode-light").click();
-      await page
-        .getByTestId("appearance-light-theme-elegant")
-        .locator("..")
-        .locator("[data-theme]")
-        .first()
-        .click();
       await page.waitForFunction(
         () =>
-          document.documentElement.dataset.theme === "elegant" &&
+          !document.documentElement.hasAttribute("data-theme") &&
           !document.documentElement.classList.contains("dark"),
       );
       await page.getByTestId("appearance-mode-dark").click();
@@ -35,7 +29,7 @@ export async function verifyAppearance({ browser, origin, channels }) {
       await page.reload();
       await page.waitForFunction(
         () =>
-          document.documentElement.dataset.theme === "elegant" &&
+          !document.documentElement.hasAttribute("data-theme") &&
           document.documentElement.classList.contains("dark"),
       );
       await page.getByTestId("appearance-mode-system").click();
@@ -48,15 +42,17 @@ export async function verifyAppearance({ browser, origin, channels }) {
         document.documentElement.classList.contains("dark"),
       );
       await page.getByTestId("appearance-mode-light").click();
-      await page
-        .getByTestId("appearance-light-theme-brutal")
-        .locator("..")
-        .locator("[data-theme]")
-        .first()
-        .click();
       await page.waitForFunction(
-        () => document.documentElement.dataset.theme === "brutal",
+        () => !document.documentElement.hasAttribute("data-theme"),
       );
+      if (process.env.LOOM_UI_SCREENSHOT_DIR)
+        await page.screenshot({
+          path:
+            process.env.LOOM_UI_SCREENSHOT_DIR +
+            "/appearance-" +
+            width +
+            ".png",
+        });
       await page.getByTestId("message-font-size-lg").click();
       const preview = page.locator(
         '[aria-label="消息字号预览"] [data-slot="message-item-body"]',

@@ -157,7 +157,7 @@ export default function ComputerCommandGuide({
     <div className={className}>
       <div className="mb-2 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
         <div className="flex items-center gap-2">
-          <Terminal size={16} className="text-foreground-strong theme-brutal:text-black" />
+          <Terminal size={16} className="text-foreground-strong " />
           <SectionEyebrow as="div">{formatMessage({ id: "machine.commandGuide.connectCommand" })}</SectionEyebrow>
         </div>
         <SegmentedControl<ComputerCommandPlatform>
@@ -179,7 +179,7 @@ export default function ComputerCommandGuide({
         </SegmentedControl>
       </div>
 
-      <p className="mb-2 text-xs leading-5 text-foreground-muted theme-brutal:text-black/60">
+      <p className="mb-2 text-xs leading-5 text-foreground-muted ">
         {isComputerGuide && platform === "windows"
           ? formatMessage({ id: "machine.commandGuide.windowsComputerDescription" })
           : isComputerGuide && computerCommand
@@ -190,7 +190,7 @@ export default function ComputerCommandGuide({
       {isComputerGuide && platform === "windows" ? (
         <div className="space-y-3" data-testid="windows-computer-command-block">
             <div className="flex flex-wrap items-center gap-2">
-              <div className="text-xs font-bold uppercase tracking-wide text-foreground-muted theme-brutal:text-black/70">
+              <div className="text-xs font-bold uppercase tracking-wide text-foreground-muted ">
                 {formatMessage({ id: "machine.commandGuide.raftComputerWindowsX64" })}
               </div>
               <Badge.Experimental />
@@ -202,7 +202,7 @@ export default function ComputerCommandGuide({
               onCopy={handleCopy}
             />
           ) : (
-            <div className="border-2 border-line-muted theme-brutal:border-black/30 bg-layer-panel theme-brutal:bg-white px-3 py-2 text-xs font-bold text-foreground-muted theme-brutal:text-black/50">
+            <div className="border-2 border-line-muted  bg-layer-panel  px-3 py-2 text-xs font-bold text-foreground-muted ">
               {formatMessage({ id: "machine.commandGuide.generateFreshComputerConnect" })}
             </div>
           )}
@@ -214,7 +214,7 @@ export default function ComputerCommandGuide({
           onCopy={handleCopy}
         />
       ) : (
-        <div className="border-2 border-line-muted theme-brutal:border-black/30 bg-layer-panel theme-brutal:bg-white px-3 py-2 text-xs font-bold text-foreground-muted theme-brutal:text-black/50">
+        <div className="border-2 border-line-muted  bg-layer-panel  px-3 py-2 text-xs font-bold text-foreground-muted ">
           {formatMessage({ id: "machine.commandGuide.generateFreshConnect" })}
         </div>
       )}

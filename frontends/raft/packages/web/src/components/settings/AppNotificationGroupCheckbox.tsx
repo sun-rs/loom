@@ -21,5 +21,5 @@ export function AppNotificationGroupCheckbox({
     (nextChecked: boolean) => onChange(toggleAppNotificationGroup(value, group, nextChecked)),
     [group, onChange, value],
   );
-  return <Checkbox size="sm" checked={checked} disabled={disabled} onCheckedChange={handleCheckedChange} />;
+  return <Checkbox checked={checked} disabled={disabled} onCheckedChange={handleCheckedChange} />;
 }

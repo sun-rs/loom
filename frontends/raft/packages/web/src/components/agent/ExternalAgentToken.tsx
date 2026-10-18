@@ -109,7 +109,7 @@ export function ExternalAgentToken({ agentId }: { agentId: string }) {
           <label className="block text-xs font-bold">
             {formatMessage({ id: "agent.detail.externalTokenLabel" })}
             <input type="text" readOnly value={`${token.slice(0, 14)}***${token.slice(-7)}`} autoComplete="off" spellCheck={false}
-              className="mt-1 block w-full min-w-0 rounded-md border border-line-muted bg-layer-panel p-2 font-mono text-xs text-foreground-strong theme-brutal:rounded-none theme-brutal:border-black/20 theme-brutal:bg-white"
+              className="mt-1 block w-full min-w-0 rounded-md border border-line-muted bg-layer-panel p-2 font-mono text-xs text-foreground-strong   "
               data-private="true" data-ph-mask="true" />
           </label>
           <p className="text-xs text-foreground-muted">{formatMessage({ id: "agent.detail.externalTokenOnce" })}</p>

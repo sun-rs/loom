@@ -17,7 +17,7 @@ export default function ActivityFilters({
   return (
     <div
       data-testid="inbox-toolbar"
-      className="shrink-0 border-b border-line-muted bg-layer-panel px-4 theme-brutal:border-b-2 theme-brutal:border-black theme-brutal:bg-white flex h-[54px] items-center justify-between gap-3"
+      className="shrink-0 border-b border-line-muted bg-layer-panel px-4    flex h-[54px] items-center justify-between gap-3"
     >
       <div className="min-w-0">
         <SegmentedControl

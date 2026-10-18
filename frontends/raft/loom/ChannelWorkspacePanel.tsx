@@ -77,10 +77,10 @@ export default function ChannelWorkspacePanel({
   const source = { client, roomId, rootId, hidden };
   return (
     <div
-      className="flex min-h-0 min-w-0 flex-1 flex-col bg-layer-canvas-muted theme-brutal:bg-brutal-cream"
+      className="flex min-h-0 min-w-0 flex-1 flex-col bg-layer-canvas-muted "
       data-testid="channel-workspace"
     >
-      <div className="flex items-center gap-2 border-b border-line-muted theme-brutal:border-black/10 bg-layer-panel theme-brutal:bg-white px-3 py-1.5">
+      <div className="flex items-center gap-2 border-b border-line-muted  bg-layer-panel  px-3 py-1.5">
         <div className="min-w-0 flex-1">
           {roots.length > 1 ? (
             <SelectField
@@ -93,14 +93,14 @@ export default function ChannelWorkspacePanel({
               }}
             />
           ) : (
-            <span className="block truncate text-xs font-mono text-foreground-muted theme-brutal:text-black/50">
+            <span className="block truncate text-xs font-mono text-foreground-muted ">
               {roots[0]?.rootPath ?? "频道工作区"}
             </span>
           )}
         </div>
         <button
           type="button"
-          className="text-foreground-placeholder theme-brutal:text-black/40 hover:text-foreground-strong theme-brutal:hover:text-black transition-colors"
+          className="text-foreground-placeholder  hover:text-foreground-strong  transition-colors"
           aria-label="刷新工作区"
           onClick={() => {
             setSelection(undefined);
@@ -121,7 +121,7 @@ export default function ChannelWorkspacePanel({
       ) : (
         <div className="flex min-h-0 min-w-0 flex-1">
           <div
-            className={`${selection ? "hidden md:flex" : "flex"} relative min-w-full md:min-w-0 shrink-0 flex-col border-r theme-brutal:border-r-2 border-line-muted theme-brutal:border-black bg-layer-panel theme-brutal:bg-white`}
+            className={`${selection ? "hidden md:flex" : "flex"} relative min-w-full md:min-w-0 shrink-0 flex-col border-r  border-line-muted  bg-layer-panel `}
             style={{ width: resize.width }}
           >
             <div
@@ -132,7 +132,7 @@ export default function ChannelWorkspacePanel({
               onPointerUp={resize.handleResizeEnd}
               onPointerCancel={resize.handleResizeEnd}
             />
-            <div className="flex items-center justify-between border-b border-line-muted theme-brutal:border-black/10 px-3 py-2">
+            <div className="flex items-center justify-between border-b border-line-muted  px-3 py-2">
               <SegmentedControl
                 value={mode}
                 onValueChange={(v) => {
@@ -152,7 +152,7 @@ export default function ChannelWorkspacePanel({
                 type="button"
                 aria-label="显示隐藏文件"
                 aria-pressed={hidden}
-                className="flex size-7 shrink-0 items-center justify-center text-foreground-placeholder theme-brutal:text-black/40 hover:text-foreground-strong theme-brutal:hover:text-black"
+                className="flex size-8 shrink-0 items-center justify-center text-foreground-placeholder  hover:text-foreground-strong "
                 onClick={() => {
                   setHidden((v) => !v);
                   setSelection(undefined);
@@ -185,16 +185,16 @@ export default function ChannelWorkspacePanel({
           >
             {selection ? (
               <>
-                <div className="flex items-center gap-2 border-b border-line-muted theme-brutal:border-black/10 bg-layer-panel theme-brutal:bg-white px-4 py-2">
+                <div className="flex items-center gap-2 border-b border-line-muted  bg-layer-panel  px-4 py-2">
                   <button
                     type="button"
-                    className="md:hidden shrink-0 text-foreground-muted theme-brutal:text-black/60 hover:text-foreground-strong theme-brutal:hover:text-black transition-colors"
+                    className="md:hidden shrink-0 text-foreground-muted  hover:text-foreground-strong  transition-colors"
                     aria-label="返回文件列表"
                     onClick={() => setSelection(undefined)}
                   >
                     <ArrowLeft size={16} />
                   </button>
-                  <span className="min-w-0 flex-1 font-mono text-sm font-medium text-foreground-strong theme-brutal:text-black truncate">
+                  <span className="min-w-0 flex-1 font-mono text-sm font-medium text-foreground-strong  truncate">
                     {selection.path}
                   </span>
                 </div>
@@ -205,7 +205,7 @@ export default function ChannelWorkspacePanel({
                 />
               </>
             ) : (
-              <div className="flex flex-1 items-center justify-center text-foreground-placeholder theme-brutal:text-black/30 font-mono text-sm">
+              <div className="flex flex-1 items-center justify-center text-foreground-placeholder  font-mono text-sm">
                 选择文件或 Git 变更
               </div>
             )}
@@ -276,7 +276,7 @@ function WorkspaceChanges({
         <button
           key={e.path}
           type="button"
-          className={`flex w-full items-center gap-1 py-1 px-2 text-sm text-left transition-colors ${selectedPath === e.path ? "bg-accent-soft theme-brutal:bg-brutal-pink/20 border-r theme-brutal:border-r-2 border-line-strong theme-brutal:border-brutal-pink" : "hover:bg-fill-muted theme-brutal:hover:bg-black/5"}`}
+          className={`flex w-full items-center gap-1 py-1 px-2 text-sm text-left transition-colors ${selectedPath === e.path ? "bg-accent-soft  border-r  border-line-strong " : "hover:bg-fill-muted "}`}
           aria-label={`查看差异 ${e.path}`}
           onClick={() => onSelect({ path: e.path, diff: true })}
         >
@@ -333,7 +333,7 @@ function WorkspacePreview({
           />
         ) : value.value.encoding === "base64" ? (
           <img
-            className="max-h-full max-w-full border theme-brutal:border-2 border-line-muted theme-brutal:border-black object-contain"
+            className="max-h-full max-w-full border  border-line-muted  object-contain"
             alt={selection.path}
             src={`data:${value.value.mimeType};base64,${value.value.content}`}
           />

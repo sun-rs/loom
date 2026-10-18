@@ -58,7 +58,7 @@ export default function MemoryHistory({
   }, [client, entryId, open, tick]);
   return (
     <div
-      className="mt-5 mb-4 border-t border-line-muted theme-brutal:border-black/10 pt-3"
+      className="mt-5 mb-4 border-t border-line-muted  pt-3"
       data-testid="memory-history"
     >
       <button
@@ -96,7 +96,7 @@ export default function MemoryHistory({
                     <TimelineTitle>
                       {labels[row.op]} · 修订 {row.revision}
                     </TimelineTitle>
-                    <TimelineTime className="text-foreground-muted theme-brutal:text-black/50">
+                    <TimelineTime className="text-foreground-muted ">
                       {row.provenance.actorKind === "human" ? "Human" : "实例"}{" "}
                       · {formatShortDateTime(row.provenance.recordedAt)}
                       {row.provenance.modelBindingId

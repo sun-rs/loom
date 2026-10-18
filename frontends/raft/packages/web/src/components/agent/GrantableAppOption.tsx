@@ -16,7 +16,7 @@ export function GrantableAppOption({
       type="button"
       onClick={handleClick}
       aria-pressed={selected}
-      className={`border-2 p-2.5 text-left ${selected ? "border-accent bg-accent-soft theme-brutal:border-black theme-brutal:bg-brutal-lime/20" : "border-line-muted bg-layer-panel theme-brutal:border-black/15 theme-brutal:bg-white"}`}
+      className={`border-2 p-2.5 text-left ${selected ? "border-accent bg-accent-soft  " : "border-line-muted bg-layer-panel  "}`}
     >
       <span className="block text-xs font-black text-foreground-strong">{app.name}</span>
       {app.description && <span className="mt-0.5 block text-[11px] text-foreground-muted">{app.description}</span>}

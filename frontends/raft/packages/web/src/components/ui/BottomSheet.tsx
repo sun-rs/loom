@@ -86,7 +86,7 @@ export default function BottomSheet({
       }
     >
       <Card
-        className={`mx-auto shadow-raft-xl ${widthClass} ${sheetClassName} theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal-lg`}
+        className={`mx-auto shadow-raft-xl ${widthClass} ${sheetClassName}    `}
         onClick={stopClickPropagation}
       >
         {children}

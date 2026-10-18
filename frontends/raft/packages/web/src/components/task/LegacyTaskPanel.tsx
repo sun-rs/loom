@@ -72,11 +72,11 @@ export default function LegacyTaskPanel({
   //                   per stdrc 2026-05-20 #proj-task:287f18ce.
   const panelClassName = presentation === "modal"
     ? mobilePage
-      ? "flex h-full min-h-0 w-full flex-col overflow-hidden border-0 bg-layer-canvas shadow-none sm:h-[min(78vh,720px)] sm:max-h-[calc(100dvh-2rem)] sm:w-[min(760px,calc(100vw-2rem))] sm:border sm:shadow-raft-md theme-brutal:sm:border-2 theme-brutal:sm:bg-white theme-brutal:sm:shadow-brutal"
-      : "flex h-full min-h-full max-h-none w-full flex-col overflow-hidden border-0 bg-layer-canvas shadow-none sm:h-[min(78vh,720px)] sm:max-h-[calc(100dvh-2rem)] sm:w-[min(760px,calc(100vw-2rem))] sm:border sm:shadow-raft-md theme-brutal:sm:border-2 theme-brutal:sm:bg-white theme-brutal:sm:shadow-brutal"
+      ? "flex h-full min-h-0 w-full flex-col overflow-hidden border-0 bg-layer-canvas shadow-none sm:h-[min(78vh,720px)] sm:max-h-[calc(100dvh-2rem)] sm:w-[min(760px,calc(100vw-2rem))] sm:border sm:shadow-raft-md   "
+      : "flex h-full min-h-full max-h-none w-full flex-col overflow-hidden border-0 bg-layer-canvas shadow-none sm:h-[min(78vh,720px)] sm:max-h-[calc(100dvh-2rem)] sm:w-[min(760px,calc(100vw-2rem))] sm:border sm:shadow-raft-md   "
     : presentation === "mobile-modal"
     ? "absolute inset-0 z-30 flex flex-col bg-layer-canvas"
-    : "absolute inset-0 z-30 flex flex-col bg-layer-canvas lg:relative lg:inset-auto lg:z-auto lg:border-l lg:border-line-hairline theme-brutal:lg:border-l-2 theme-brutal:lg:border-black";
+    : "absolute inset-0 z-30 flex flex-col bg-layer-canvas lg:relative lg:inset-auto lg:z-auto lg:border-l lg:border-line-hairline  ";
   const panelStyle = presentation === "side" && isDesktop ? { width } : undefined;
   const showResizeHandle = presentation === "side";
   // X close button visibility (mirrors ThreadPanel) per stdrc 2026-05-21
@@ -104,7 +104,7 @@ export default function LegacyTaskPanel({
         />
       )}
 
-      <div data-testid="legacy-task-panel-header" className="flex h-panel-header items-center gap-3 border-b border-line-hairline bg-layer-panel px-5 theme-brutal:border-b-2 theme-brutal:border-black theme-brutal:bg-white">
+      <div data-testid="legacy-task-panel-header" className="flex h-panel-header items-center gap-3 border-b border-line-hairline bg-layer-panel px-5   ">
         <Button
           type="button"
           onClick={handleClose}
@@ -117,7 +117,7 @@ export default function LegacyTaskPanel({
         >
           <ArrowLeft size={14} />
         </Button>
-        <div className="flex size-icon-header shrink-0 items-center justify-center rounded-md border border-line-muted bg-primary-soft text-foreground-strong theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-soft-signal theme-brutal:text-black">
+        <div className="flex size-icon-header shrink-0 items-center justify-center rounded-md border border-line-muted bg-primary-soft text-foreground-strong     ">
           <FileText size={18} />
         </div>
         <div className="min-w-0 flex-1">
@@ -180,7 +180,7 @@ export default function LegacyTaskPanel({
           </StatusBadge>
         </div>
 
-        <section className="card-brutal bg-layer-panel p-4 space-y-3 theme-brutal:bg-white">
+        <section className="card-brutal bg-layer-panel p-4 space-y-3 ">
           <div>
             <p className="text-xs font-mono text-foreground-hint mb-1">{formatMessage({ id: "task.legacyPanel.title" })}</p>
             <h3 className="text-lg font-bold break-words">{task.title}</h3>
@@ -193,7 +193,7 @@ export default function LegacyTaskPanel({
           </div>
         </section>
 
-        <section className="card-brutal bg-layer-panel p-4 space-y-2 text-sm theme-brutal:bg-white">
+        <section className="card-brutal bg-layer-panel p-4 space-y-2 text-sm ">
           <div className="flex items-start justify-between gap-3">
             <span className="text-foreground-hint font-mono">{formatMessage({ id: "task.legacyPanel.createdBy" })}</span>
             <span className="text-right">@{task.createdByName || formatMessage({ id: "task.legacyPanel.unknown" })}</span>
@@ -212,7 +212,7 @@ export default function LegacyTaskPanel({
           </div>
         </section>
 
-        <section className="rounded-md border border-line-muted bg-primary-soft/50 p-4 shadow-raft-sm theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-soft-signal/30 theme-brutal:shadow-brutal-sm">
+        <section className="rounded-md border border-line-muted bg-primary-soft/50 p-4 shadow-raft-sm     ">
           <p className="text-sm font-bold">{formatMessage({ id: "task.legacyPanel.readOnly" })}</p>
           <p className="mt-1 text-sm text-foreground-muted">
             {formatMessage({ id: "task.legacyPanel.metadataOnlyHint" })}

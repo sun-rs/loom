@@ -381,7 +381,7 @@ export function LeftRail({ hidden, thinDivider = false, publicProjection }: Left
   // assertion can catch.
   if (isHostShell()) return null;
 
-  const brutalRailDividerClassName = thinDivider ? "theme-brutal:!border-r" : "";
+  const brutalRailDividerClassName = thinDivider ? "" : "";
 
   return (
     <>
@@ -422,11 +422,11 @@ export function LeftRail({ hidden, thinDivider = false, publicProjection }: Left
                 className="md:[@media(max-height:600px)]:!size-8"
               />
               {hasOtherServerUnread ? (
-                <AppRailItemAttention title={formatMessage({ id: "layout.leftRail.serverFallbackName" })}>
+                <>
                   <span aria-hidden="true" className="hidden">
                     <AttentionDot size="lg" aria-hidden="true" />
                   </span>
-                </AppRailItemAttention>
+                <AppRailItemAttention title={formatMessage({ id: "layout.leftRail.serverFallbackName" })} /></>
               ) : null}
             </AppRailItemIcon>
           </AppRailItem>
@@ -616,7 +616,7 @@ function HelpMenu({
         data-testid="left-rail-help-menu"
         className="w-80 overflow-hidden p-0"
       >
-          <div className="flex items-center border-b border-line-muted bg-layer-panel px-3 py-2 text-foreground-strong theme-brutal:border-b-2 theme-brutal:border-black theme-brutal:bg-brutal-cream theme-brutal:text-black">
+          <div className="flex items-center border-b border-line-muted bg-layer-panel px-3 py-2 text-foreground-strong    ">
             <SectionEyebrow>
               {formatMessage({ id: "layout.leftRail.helpMenuTitle" })}
             </SectionEyebrow>
@@ -753,12 +753,12 @@ export const RailTabButton = forwardRef<HTMLButtonElement, RailTabButtonProps>(f
       <AppRailItemIcon className="relative">
         {icon}
         {dotVisible ? (
-          <AppRailItemAttention title={dotTooltip ?? label}>
+          <>
             {icon}
             <span className="hidden">
               <AttentionDot size="lg" tone={dotTone} aria-hidden="true" />
             </span>
-          </AppRailItemAttention>
+          <AppRailItemAttention title={dotTooltip ?? label} /></>
         ) : null}
       </AppRailItemIcon>
       <AppRailItemLabel>{label}</AppRailItemLabel>

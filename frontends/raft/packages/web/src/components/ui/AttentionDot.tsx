@@ -73,7 +73,7 @@ export default function AttentionDot({
   const dot = (
     <span
       {...rest}
-      className={`inline-block shrink-0 rounded-full ${SIZE_CLASS[size]} ${elegantTone} theme-brutal:border theme-brutal:border-black theme-brutal:${tone} ${className ?? ""}`}
+      className={`inline-block shrink-0 rounded-full ${SIZE_CLASS[size]} ${elegantTone}    ${className ?? ""}`}
     />
   );
   // Native title= on a span is only a hover tooltip; route it through the RUI

@@ -79,8 +79,8 @@ export function AgentMigrationDialog({
   // dialog (and the chosen target) stays put for the retry.
   // A real anchor (new tab) dressed as raft-ui's link button, so it reads as
   // a quiet text link in every theme instead of a primary-colored hyperlink.
-  const { theme } = useTheme();
-  const recoveryLinkClassName = buttonVariants({ theme, variant: "link", size: "inline" })
+
+  const recoveryLinkClassName = buttonVariants({ variant: "link", size: "inline" })
     .root({ className: "w-fit gap-1 text-sm" });
   const recoveryComputersHref = serverSlug
     ? `/s/${serverSlug}/${recoveryComputerId ? `computer/${recoveryComputerId}` : "computers"}`

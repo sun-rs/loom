@@ -37,17 +37,17 @@ export default function MessageProfile({
           className="mt-0.5 self-start"
         />
         <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-bold text-foreground-strong theme-brutal:text-black">
+          <div className="truncate text-sm font-bold text-foreground-strong ">
             {name}
           </div>
-          <div className="truncate font-mono text-xs text-foreground-muted theme-brutal:text-black/60">
+          <div className="truncate font-mono text-xs text-foreground-muted ">
             {member ? `@${member.handle}` : "成员资料暂不可用"}
           </div>
         </div>
       </div>
       {member?.description ? (
         <Tooltip content={member.description}>
-          <div className="truncate border-t-2 border-line-muted theme-brutal:border-black px-3 py-2 text-xs text-foreground-muted theme-brutal:text-black/70">
+          <div className="truncate border-t-2 border-line-muted  px-3 py-2 text-xs text-foreground-muted ">
             {member.description}
           </div>
         </Tooltip>

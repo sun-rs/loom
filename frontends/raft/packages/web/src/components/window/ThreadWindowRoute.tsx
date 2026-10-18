@@ -203,7 +203,7 @@ export default function ThreadWindowRoute() {
   }, [legacyChannelId, legacyChannelType, legacyMessageId, viewInChannel]);
   const taskPageSlot = task ? (
     <>
-      <div className="flex shrink-0 items-center justify-between gap-3 border-b border-line-hairline bg-layer-panel px-4 py-2 theme-brutal:border-b-2 theme-brutal:border-black theme-brutal:bg-white">
+      <div className="flex shrink-0 items-center justify-between gap-3 border-b border-line-hairline bg-layer-panel px-4 py-2   ">
         <Tooltip
           content={task.title}
           disableHoverablePopup
@@ -253,10 +253,10 @@ export default function ThreadWindowRoute() {
   ) : undefined;
 
   return (
-    <main className="flex h-dvh max-h-dvh min-h-0 w-full flex-col overflow-hidden bg-layer-canvas-muted font-display theme-brutal:bg-brutal-cream" data-testid="thread-window-route">
+    <main className="flex h-dvh max-h-dvh min-h-0 w-full flex-col overflow-hidden bg-layer-canvas-muted font-display " data-testid="thread-window-route">
       <div className="flex min-h-0 flex-1 justify-center bg-layer-canvas p-0 sm:bg-transparent sm:p-3">
         {invalidTarget || asyncError ? (
-          <div className="flex w-full max-w-2xl flex-col items-center justify-center gap-4 rounded-lg border border-line-muted bg-layer-panel p-8 text-center shadow-raft-md theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal">
+          <div className="flex w-full max-w-2xl flex-col items-center justify-center gap-4 rounded-lg border border-line-muted bg-layer-panel p-8 text-center shadow-raft-md     ">
             <p className="font-bold text-foreground-strong">{asyncError ?? formatMessage({ id: "message.threadPanel.loadFailedTitle" })}</p>
             <Button type="button" onClick={closeWindow} size="sm" variant="outline" className="font-bold">
               {formatMessage({ id: "message.threadPanel.closeThread" })}
@@ -270,7 +270,7 @@ export default function ThreadWindowRoute() {
             onViewInChannel={viewLegacyTaskInChannel}
           />
         ) : surfaceParentMessageId ? (
-          <div data-testid="thread-window-surface" className={`flex w-full max-w-none flex-col bg-layer-canvas sm:max-w-3xl sm:border sm:border-line-muted sm:shadow-raft-md theme-brutal:sm:border-2 theme-brutal:sm:border-black theme-brutal:sm:bg-white theme-brutal:sm:shadow-brutal ${
+          <div data-testid="thread-window-surface" className={`flex w-full max-w-none flex-col bg-layer-canvas sm:max-w-3xl sm:border sm:border-line-muted sm:shadow-raft-md     ${
             task
               ? "min-h-full overflow-hidden sm:min-h-0 sm:h-[calc(100dvh-1.5rem)] sm:max-h-full"
               : "min-h-full overflow-hidden sm:h-[calc(100dvh-1.5rem)] sm:max-h-full"
@@ -281,7 +281,7 @@ export default function ThreadWindowRoute() {
             </div>
           </div>
         ) : (
-          <div className="flex h-[calc(100dvh-1.5rem)] max-h-full w-full max-w-3xl items-center justify-center rounded-lg border border-line-muted bg-layer-panel shadow-raft-md theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal">
+          <div className="flex h-[calc(100dvh-1.5rem)] max-h-full w-full max-w-3xl items-center justify-center rounded-lg border border-line-muted bg-layer-panel shadow-raft-md     ">
             <span className="text-foreground-hint">{formatMessage({ id: "common.loading" })}</span>
           </div>
         )}

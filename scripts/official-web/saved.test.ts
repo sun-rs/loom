@@ -37,8 +37,8 @@ test("saved panel retains official card proportions, scroll threshold and sideba
   );
   const local = readFileSync("frontends/raft/loom/SavedPanel.tsx", "utf8");
   for (const token of [
-    "relative flex flex-row items-center gap-3 transition-colors p-3 text-left w-full shadow-none border-line-muted theme-brutal:border-2 theme-brutal:border-black bg-layer-panel theme-brutal:bg-white hover:bg-fill-muted data-[popup-open]:bg-fill-muted",
-    "flex-1 overflow-y-auto bg-layer-canvas-muted p-4 safe-bottom theme-brutal:bg-white",
+    "relative flex flex-row items-center gap-3 transition-colors p-3 text-left w-full shadow-none border-line-muted   bg-layer-panel  hover:bg-fill-muted data-[popup-open]:bg-fill-muted",
+    "flex-1 overflow-y-auto bg-layer-canvas-muted p-4 safe-bottom ",
     "240px 0px",
     "saved-list-scroller",
   ]) {

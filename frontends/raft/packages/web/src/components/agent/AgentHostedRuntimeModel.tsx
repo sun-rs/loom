@@ -100,20 +100,20 @@ export function AgentHostedRuntimeModel({ agentId }: { agentId: string }) {
 
   if (state.kind === "hidden") return null;
   return (
-    <div className="border-t border-line-muted theme-brutal:border-black/10 px-5 py-4" data-testid="agent-hosted-runtime-model">
+    <div className="border-t border-line-muted  px-5 py-4" data-testid="agent-hosted-runtime-model">
       <SectionEyebrow as="div" className="mb-2">
         {formatMessage({ id: "agent.detail.hostedModel.title" })}
       </SectionEyebrow>
       {state.kind === "loading" ? (
         <Spinner size="xs" aria-label={formatMessage({ id: "agent.workspace.loading" })} />
       ) : state.kind === "error" ? (
-        <p className="text-xs font-bold text-warning-strong theme-brutal:text-brutal-orange">
+        <p className="text-xs font-bold text-warning-strong ">
           {formatMessage({ id: "agent.detail.hostedModel.loadFailed" })}
         </p>
       ) : view!.locked ? (
         <div className="space-y-1" data-testid="agent-hosted-runtime-model-locked">
-          <p className="text-sm text-foreground-strong theme-brutal:text-black">{view!.label ?? view!.model}</p>
-          <p className="text-xs text-foreground-muted theme-brutal:text-black/60">
+          <p className="text-sm text-foreground-strong ">{view!.label ?? view!.model}</p>
+          <p className="text-xs text-foreground-muted ">
             {formatMessage({ id: "agent.detail.hostedModel.locked" })}
           </p>
         </div>
@@ -129,11 +129,11 @@ export function AgentHostedRuntimeModel({ agentId }: { agentId: string }) {
             testId="agent-hosted-runtime-model-select"
           />
           {view!.source === "admin" && (
-            <p className="text-xs text-foreground-muted theme-brutal:text-black/60">
+            <p className="text-xs text-foreground-muted ">
               {formatMessage({ id: "agent.detail.hostedModel.adminDefault" })}
             </p>
           )}
-          <p className="text-xs text-foreground-muted theme-brutal:text-black/60" aria-live="polite" data-testid="agent-hosted-runtime-model-notice">
+          <p className="text-xs text-foreground-muted " aria-live="polite" data-testid="agent-hosted-runtime-model-notice">
             {saving
               ? formatMessage({ id: "agent.detail.hostedModel.saving" })
               : notice === "saved"

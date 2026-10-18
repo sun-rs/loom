@@ -84,14 +84,14 @@ const ConversationPreviewCard = forwardRef<HTMLButtonElement, ConversationPrevie
   onDragStart,
 }, ref) {
   const interactive = Boolean(onClick || onContextMenu);
-  const className = `relative flex w-full items-start gap-3 rounded-md border p-3 text-left transition-colors hover:border-line-strong hover:shadow-raft-sm theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:hover:border-black theme-brutal:hover:shadow-brutal-sm ${
-    interactive ? `active:border-line-strong active:shadow-raft-xs theme-brutal:active:border-black theme-brutal:active:shadow-brutal-sm` : "cursor-default"
+  const className = `relative flex w-full items-start gap-3 rounded-md border p-3 text-left transition-colors hover:border-line-strong hover:shadow-raft-sm     ${
+    interactive ? `active:border-line-strong active:shadow-raft-xs  ` : "cursor-default"
   } ${
     focused
-      ? "border-line-strong bg-info-soft shadow-raft-sm theme-brutal:border-black theme-brutal:bg-brutal-cyan/25 theme-brutal:shadow-brutal"
+      ? "border-line-strong bg-info-soft shadow-raft-sm   "
       : active
-      ? "border-line-strong bg-layer-panel shadow-raft-sm theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal-sm"
-      : "border-line-muted bg-layer-panel theme-brutal:border-black/30 theme-brutal:bg-white"
+      ? "border-line-strong bg-layer-panel shadow-raft-sm   "
+      : "border-line-muted bg-layer-panel  "
   }`;
   const content = (
     <>

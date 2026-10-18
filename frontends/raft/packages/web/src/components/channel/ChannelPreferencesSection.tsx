@@ -80,7 +80,6 @@ export function ChannelPreferencesSection({
             </p>
           </div>
           <Switch
-            size="md"
             checked={isPinned}
             onCheckedChange={handleTogglePin}
             aria-labelledby="channel-settings-pin-label"
@@ -99,7 +98,6 @@ export function ChannelPreferencesSection({
               </p>
             </div>
             <Switch
-              size="md"
               checked={activityMute.muted}
               disabled={activityMute.busy}
               onCheckedChange={handleToggleMute}
@@ -120,7 +118,6 @@ export function ChannelPreferencesSection({
               </p>
             </div>
             <Switch
-              size="md"
               checked={collapseLongMessages.enabled}
               disabled={collapseLongMessages.busy}
               onCheckedChange={handleToggleCollapse}

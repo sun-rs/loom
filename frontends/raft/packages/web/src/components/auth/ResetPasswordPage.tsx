@@ -129,7 +129,7 @@ export default function ResetPasswordPage({ token, onBack }: ResetPasswordPagePr
           </Button>
         </form>
 
-        <TextSans size="small" className="mt-4 text-center theme-brutal:text-black/60">
+        <TextSans size="small" className="mt-4 text-center ">
           <TextLink variant="primary" onClick={onBack}>
             {formatMessage({ id: "auth.backToSignIn.link" })}
           </TextLink>

@@ -526,7 +526,6 @@ function MentionCandidateBody({  candidate,
           data-testid={`mention-actor-type-${candidate.type}`}
           appearance="soft"
           variant="muted"
-          uppercase
           className="shrink-0 px-1 py-px text-[10px] leading-none"
         >
           {actorTypeLabel}
@@ -562,7 +561,7 @@ function MentionCandidateAvatar({
 }) {
   if (candidate.type === "computer") {
     return (
-      <span data-mention-candidate-avatar="computer" className="flex size-5 shrink-0 items-center justify-center border border-line-muted bg-info-soft theme-brutal:border-black theme-brutal:bg-brutal-cyan/30">
+      <span data-mention-candidate-avatar="computer" className="flex size-5 shrink-0 items-center justify-center border border-line-muted bg-info-soft  ">
         <Monitor size={12} aria-hidden />
       </span>
     );
@@ -570,7 +569,7 @@ function MentionCandidateAvatar({
 
   if (candidate.type === "app") {
     return (
-      <span data-mention-candidate-avatar="app" className="flex size-5 shrink-0 items-center justify-center border border-line-muted bg-primary-soft text-foreground-strong theme-brutal:border-black theme-brutal:bg-soft-signal/40 theme-brutal:text-black">
+      <span data-mention-candidate-avatar="app" className="flex size-5 shrink-0 items-center justify-center border border-line-muted bg-primary-soft text-foreground-strong   ">
         <Blocks size={12} aria-hidden />
       </span>
     );
@@ -2595,7 +2594,7 @@ export default function MessageInput({
       onDragLeave={handleDragLeave}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
-      className={variant === "compact" ? "relative flex min-w-0 w-full items-center bg-layer-panel theme-brutal:bg-white" : "relative flex min-w-0 w-full items-center border-t border-line-muted bg-layer-panel px-3 pt-3 safe-bottom theme-brutal:border-t-2 theme-brutal:border-black theme-brutal:bg-white"}
+      className={variant === "compact" ? "relative flex min-w-0 w-full items-center bg-layer-panel " : "relative flex min-w-0 w-full items-center border-t border-line-muted bg-layer-panel px-3 pt-3 safe-bottom   "}
     >
       {/* Drop overlay — only visible while a file drag is in progress over
           the composer area. Pointer-events are kept on so the overlay
@@ -2605,9 +2604,9 @@ export default function MessageInput({
         <div
           aria-hidden
           data-testid="composer-drop-overlay"
-          className="absolute inset-0 z-30 flex items-center justify-center border-2 border-dashed border-accent-strong bg-accent-soft/50 theme-brutal:border-brutal-pink theme-brutal:bg-brutal-pink/15"
+          className="absolute inset-0 z-30 flex items-center justify-center border-2 border-dashed border-accent-strong bg-accent-soft/50  "
         >
-          <span className="rounded-md border border-line-strong bg-layer-panel px-3 py-1.5 text-sm font-bold text-foreground-strong shadow-raft-sm theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:text-black theme-brutal:shadow-brutal-sm">
+          <span className="rounded-md border border-line-strong bg-layer-panel px-3 py-1.5 text-sm font-bold text-foreground-strong shadow-raft-sm      ">
             {formatMessage({ id: "message.composer.dropToAttach" })}
           </span>
         </div>
@@ -2651,7 +2650,7 @@ export default function MessageInput({
         )}
 
         {mentionActionNotice && (
-          <div className="rounded-md border border-line-muted bg-fill-muted/50 px-2 py-1 text-[11px] font-bold leading-4 text-foreground-muted theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black/35 theme-brutal:bg-black/[0.04] theme-brutal:text-black/70">
+          <div className="rounded-md border border-line-muted bg-fill-muted/50 px-2 py-1 text-[11px] font-bold leading-4 text-foreground-muted     ">
             {mentionActionNotice}
           </div>
         )}
@@ -2749,7 +2748,7 @@ export default function MessageInput({
                     </Tooltip>
                     <button
                       type="button"
-                      className="shrink-0 rounded-md border border-line-muted bg-layer-panel px-2 py-1 text-xs font-bold text-foreground-strong underline theme-brutal:rounded-none theme-brutal:border-black theme-brutal:bg-white"
+                      className="shrink-0 rounded-md border border-line-muted bg-layer-panel px-2 py-1 text-xs font-bold text-foreground-strong underline   "
                       onClick={() => { void cancelRecoverableUpload(upload.uploadId); }}
                       aria-label={formatMessage({ id: "message.composer.cancelRecoveredUploadLabel" }, { file: upload.filename })}
                     >
@@ -2798,7 +2797,7 @@ export default function MessageInput({
           <div
             key={`upload-error-${pf.id}`}
             role="alert"
-            className="flex w-full flex-wrap items-center gap-2 rounded-md border border-line-strong bg-warning px-2 py-1.5 text-xs text-warning-foreground theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-brutal-orange theme-brutal:text-black"
+            className="flex w-full flex-wrap items-center gap-2 rounded-md border border-line-strong bg-warning px-2 py-1.5 text-xs text-warning-foreground     "
           >
             <div className="min-w-0 flex-[1_1_14rem]">
               <div className="break-all font-bold">{pf.file.name}</div>
@@ -2817,7 +2816,7 @@ export default function MessageInput({
                   type="button"
                   onClick={() => retryFile(pf.id)}
                   aria-label={formatMessage({ id: "message.composer.retryUploadAttachment" }, { file: pf.file.name })}
-                  className="rounded-md border border-line-muted bg-layer-panel px-2 py-1 font-bold text-foreground-strong underline shadow-raft-xs hover:bg-fill-muted theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal-xs theme-brutal:hover:bg-soft-signal"
+                  className="rounded-md border border-line-muted bg-layer-panel px-2 py-1 font-bold text-foreground-strong underline shadow-raft-xs hover:bg-fill-muted      "
                 >
                   {formatMessage({ id: "message.composer.tapToRetry" })}
                 </button>
@@ -2826,7 +2825,7 @@ export default function MessageInput({
                 type="button"
                 onClick={() => removeFile(pendingFiles.findIndex((candidate) => candidate.id === pf.id))}
                 aria-label={formatMessage({ id: "message.composer.removeAttachment" }, { file: pf.file.name })}
-                className="flex size-7 items-center justify-center rounded-md border border-line-strong bg-inactive text-inactive-foreground theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-black theme-brutal:text-white"
+                className="flex size-7 items-center justify-center rounded-md border border-line-strong bg-inactive text-inactive-foreground     "
               >
                 <X size={12} />
               </button>
@@ -2906,7 +2905,7 @@ export default function MessageInput({
               </ComposerSuggestionGroup>
             )}
             {filteredMentions.notInChannel.length > 0 && (
-              <ComposerSuggestionGroup separated className="theme-brutal:border-t-2 theme-brutal:border-black">
+              <ComposerSuggestionGroup separated className=" ">
                 <ComposerSuggestionGroupLabel>
                   {formatMessage({ id: "message.composer.notInThisChannel" })}
                 </ComposerSuggestionGroupLabel>
@@ -2938,7 +2937,7 @@ export default function MessageInput({
               </ComposerSuggestionGroup>
             )}
             {filteredMentions.computers.length > 0 && (
-              <ComposerSuggestionGroup separated className="theme-brutal:border-t-2 theme-brutal:border-black">
+              <ComposerSuggestionGroup separated className=" ">
                 <ComposerSuggestionGroupLabel>
                   {formatMessage({ id: "message.composer.computers" })}
                 </ComposerSuggestionGroupLabel>
@@ -2966,7 +2965,7 @@ export default function MessageInput({
               </ComposerSuggestionGroup>
             )}
             {filteredMentions.apps.length > 0 && (
-              <ComposerSuggestionGroup separated className="theme-brutal:border-t-2 theme-brutal:border-black">
+              <ComposerSuggestionGroup separated className=" ">
                 <ComposerSuggestionGroupLabel>
                   {formatMessage({ id: "message.composer.apps" })}
                 </ComposerSuggestionGroupLabel>
@@ -3026,7 +3025,7 @@ export default function MessageInput({
                       )}
                       {isArchived && (
                         <ComposerSuggestionAside>
-                          <Badge appearance="soft" variant="muted" uppercase>
+                          <Badge appearance="soft" variant="muted">
                             {formatMessage({ id: "message.composer.archivedBadge" })}
                           </Badge>
                         </ComposerSuggestionAside>
@@ -3094,7 +3093,7 @@ export default function MessageInput({
                   <CheckMarker
                     checked={alsoCreateTask}
                   />
-                  <span className="text-xs font-bold text-foreground-strong theme-brutal:text-black/60">{formatMessage({ id: "message.composer.asTask" })}</span>
+                  <span className="text-xs font-bold text-foreground-strong ">{formatMessage({ id: "message.composer.asTask" })}</span>
                 </button>
                 </Tooltip>
               )}

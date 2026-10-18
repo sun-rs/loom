@@ -89,7 +89,7 @@ export default function MobileComputersPanel() {
               {Array.from({ length: 4 }, (_, index) => (
                 <SkeletonRow
                   key={index}
-                  className="min-h-[68px] gap-3 rounded-md border border-line-muted bg-layer-panel p-3 shadow-raft-sm theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal-sm"
+                  className="min-h-[68px] gap-3 rounded-md border border-line-muted bg-layer-panel p-3 shadow-raft-sm     "
                   avatar
                   avatarClassName="size-10 rounded-none"
                   lineWidths={SKELETON_LINE_WIDTHS}
@@ -99,7 +99,7 @@ export default function MobileComputersPanel() {
           )}
           {!machinesLoading && machineLoadError && machines.length > 0 && (
             <div
-              className="flex items-center justify-between gap-3 rounded-md border border-line-muted bg-primary-soft p-3 text-sm text-foreground-strong theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-soft-signal theme-brutal:text-black"
+              className="flex items-center justify-between gap-3 rounded-md border border-line-muted bg-primary-soft p-3 text-sm text-foreground-strong     "
               data-testid="computers-refresh-error"
             >
               <span className="font-semibold">{formatMessage({ id: "machine.mobile.refreshErrorSaved" })}</span>
@@ -154,9 +154,9 @@ export default function MobileComputersPanel() {
                   key={machine.id}
                   onClick={() => nav.toComputer(machine.id)}
                   data-testid={`computer-list-item-${machine.id}`}
-                  className="flex w-full items-center gap-3 rounded-md border border-line-muted bg-layer-panel p-3 text-left shadow-raft-sm transition-all duration-100 hover:-translate-y-[1px] hover:shadow-raft-md active:translate-x-[1px] active:translate-y-[1px] theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal-sm theme-brutal:hover:shadow-brutal theme-brutal:active:shadow-brutal-active"
+                  className="flex w-full items-center gap-3 rounded-md border border-line-muted bg-layer-panel p-3 text-left shadow-raft-sm transition-all duration-100 hover:-translate-y-[1px] hover:shadow-raft-md active:translate-x-[1px] active:translate-y-[1px]       "
                 >
-                  <div className="relative flex size-10 shrink-0 items-center justify-center border border-line-muted bg-layer-inset p-0 theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white"><Monitor size={20} />
+                  <div className="relative flex size-10 shrink-0 items-center justify-center border border-line-muted bg-layer-inset p-0   "><Monitor size={20} />
                     <StatusDot
                       className="absolute -right-1 -top-1"
                       title={formatMessage({ id: rowDotTitle.id }, rowDotTitle.values)}
@@ -210,7 +210,7 @@ export default function MobileComputersPanel() {
             <button
               onClick={() => setShowAddMachine(true)}
               data-testid="computers-add-row"
-              className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-line-muted bg-layer-panel p-3 text-sm font-bold text-foreground-muted transition-all duration-100 hover:border-line-strong hover:text-foreground-strong hover:shadow-raft-sm active:translate-x-[1px] active:translate-y-[1px] theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black/40 theme-brutal:bg-white theme-brutal:text-black/70 theme-brutal:hover:border-black theme-brutal:hover:text-black theme-brutal:hover:shadow-brutal-sm"
+              className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-line-muted bg-layer-panel p-3 text-sm font-bold text-foreground-muted transition-all duration-100 hover:border-line-strong hover:text-foreground-strong hover:shadow-raft-sm active:translate-x-[1px] active:translate-y-[1px]        "
             >
               <Plus size={16} />
               {formatMessage({ id: "machine.mobile.addComputer" })}

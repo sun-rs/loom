@@ -49,11 +49,11 @@ function OptionGrid<T extends string>({
             role="radio"
             aria-checked={selected}
             onClick={() => onChange(option.id)}
-            className={`rounded-md border border-line-muted px-3 py-1.5 text-sm font-bold text-foreground-strong transition-shadow theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black ${
+            className={`rounded-md border border-line-muted px-3 py-1.5 text-sm font-bold text-foreground-strong transition-shadow    ${
               // Brand yellow, not the pink accent: pink is the CTA/primary-action colour
               // (the Continue button right below), and a grid of pink chips read like a
               // row of buttons competing with it.
-              selected ? "bg-primary-soft shadow-raft-xs theme-brutal:bg-soft-signal theme-brutal:text-black theme-brutal:shadow-brutal-sm" : "bg-layer-panel hover:shadow-raft-xs theme-brutal:bg-white theme-brutal:text-black theme-brutal:hover:shadow-brutal-sm"
+              selected ? "bg-primary-soft shadow-raft-xs   " : "bg-layer-panel hover:shadow-raft-xs   "
             }`}
             data-testid={`signup-${name}-${option.id}`}
           >
@@ -103,10 +103,10 @@ export default function ServerSetupSurveyStep({
 
   return (
     <section
-      className="flex w-full max-w-[620px] flex-col overflow-hidden rounded-lg border border-line-muted bg-layer-panel shadow-raft-md theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal"
+      className="flex w-full max-w-[620px] flex-col overflow-hidden rounded-lg border border-line-muted bg-layer-panel shadow-raft-md     "
       data-testid="server-setup-survey"
     >
-      <header className="shrink-0 border-b border-line-hairline px-8 pb-5 pt-7 theme-brutal:border-b-2 theme-brutal:border-black">
+      <header className="shrink-0 border-b border-line-hairline px-8 pb-5 pt-7  ">
         <p className="font-mono text-[10px] font-bold uppercase tracking-wide text-foreground-muted">
           {formatMessage({ id: "layout.onboarding.setupServerEyebrow" })}
         </p>

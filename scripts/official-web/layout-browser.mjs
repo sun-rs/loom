@@ -46,17 +46,11 @@ export async function verifyLayout({ browser, origin, channels, client }) {
         "Agent mobile header must use the same signed-in native sidebar as Settings",
       );
     }
-    for (const theme of ["brutal", "elegant"]) {
+    for (const theme of ["light", "dark"]) {
       await page.goto(origin + "/?view=settings&settings=appearance");
-      await page.getByTestId("appearance-mode-light").click();
-      await page
-        .getByTestId("appearance-light-theme-" + theme)
-        .locator("..")
-        .locator("[data-theme]")
-        .first()
-        .click();
+      await page.getByTestId("appearance-mode-" + theme).click();
       await page.waitForFunction(
-        (t) => document.documentElement.dataset.theme === t,
+        (mode) => document.documentElement.classList.contains(mode),
         theme,
       );
       for (const route of [
@@ -90,10 +84,7 @@ export async function verifyLayout({ browser, origin, channels, client }) {
             "owner-approved mobile header density; desktop recipe stays native",
           );
         } else {
-          assert.ok(
-            h >= (theme === "brutal" ? 62 : 56) && h < 100,
-            `${theme} ${route} header ${h}`,
-          );
+          assert.ok(h === 56, `${theme} ${route} header ${h}`);
         }
         if (route.startsWith("?room=") && width >= 768) {
           await page.getByTestId("composer-textarea").waitFor();

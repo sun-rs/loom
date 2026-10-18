@@ -50,7 +50,7 @@ export default function ServerSetupHandoffStep({
   }, [handleDone]);
   return (
     <section
-      className="flex w-full max-w-[560px] flex-col overflow-hidden border border-line-muted bg-layer-panel shadow-raft-md theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal"
+      className="flex w-full max-w-[560px] flex-col overflow-hidden border border-line-muted bg-layer-panel shadow-raft-md    "
       data-testid="server-setup-handoff"
     >
       <div className="flex flex-col items-center px-8 pb-7 pt-9 text-center">
@@ -67,11 +67,11 @@ export default function ServerSetupHandoffStep({
             context="profile-tile"
             type="agent"
             agentAvatarUrl="pixel:mug"
-            className="onboarding-cindy-entrance relative z-10 !size-[104px] theme-brutal:shadow-brutal-lg"
+            className="onboarding-cindy-entrance relative z-10 !size-[104px] "
           />
         </div>
 
-        <h1 className="text-2xl font-black tracking-normal text-foreground-strong theme-brutal:text-black">
+        <h1 className="text-2xl font-black tracking-normal text-foreground-strong ">
           {formatMessage({ id: "layout.onboarding.handoffTitle" }, { agentName })}
         </h1>
         {/* text-balance so the last line can never be left holding a single orphan word
@@ -79,13 +79,13 @@ export default function ServerSetupHandoffStep({
             filling greedily and dumping the remainder. Fixed here and not in the copy: the
             sentence was never wrong, and a container that only fits THIS wording would strand
             the next one (@Cat owns the copy contract; @Josh called the same fix). */}
-        <p className="mt-3 max-w-[42ch] text-balance text-base leading-relaxed text-foreground-muted theme-brutal:text-black/70">
+        <p className="mt-3 max-w-[42ch] text-balance text-base leading-relaxed text-foreground-muted ">
           {formatMessage({ id: "layout.onboarding.handoffBody" }, { agentName })}
         </p>
 
       </div>
 
-      <div className="flex flex-col-reverse gap-3 border-t border-line-muted px-8 py-4 sm:flex-row sm:items-center sm:justify-between theme-brutal:border-t-2 theme-brutal:border-black">
+      <div className="flex flex-col-reverse gap-3 border-t border-line-muted px-8 py-4 sm:flex-row sm:items-center sm:justify-between  ">
         <SetupSessionFooter disabled={handingOff} />
         <Button
           type="button"

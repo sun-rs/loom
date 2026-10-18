@@ -22,7 +22,6 @@ export function DeclaredScopeToggle({
     <Tooltip content={formatMessage({ id: OAUTH_SCOPE_PRESENTATION[scope].copyId })}>
     <label className={className}>
       <Checkbox
-        size="sm"
         checked={checked}
         onCheckedChange={handleCheckedChange}
       />

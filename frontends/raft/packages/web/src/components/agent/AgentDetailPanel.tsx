@@ -1,20 +1,4 @@
-import {
-  Badge,
-  Button,
-  CopyableCode,
-  CopyableCodeAction,
-  CopyableCodeRoot,
-  PanelTitle,
-  SortableTabsList,
-  SortableTabsTab,
-  Tabs,
-  TabsIndicator,
-  TabsLabel,
-  ProfilePanelBody,
-  useOrderedTabs,
-  ChatIcon,
-  DirectMessageIcon,
-} from "raft-ui";
+import {Badge, Button, CopyableCode, CopyableCodeAction, CopyableCodeRoot, PanelTitle, SortableTabsList, SortableTabsTab, Tabs, TabsLabel, ProfilePanelBody, useOrderedTabs, ChatIcon, DirectMessageIcon} from "raft-ui";
 import CloseButton from "../ui/CloseButton";
 import Tooltip from "../ui/Tooltip";
 import EditProviderConnectionModal from "../settings/EditProviderConnectionModal";
@@ -288,11 +272,11 @@ function visibleAgentChatChannels(items: AgentChannelMembership[]): AgentChannel
 function AgentChatInlineEmpty({ icon, title, description }: { icon: ReactNode; title: string; description: string }) {
   return (
     <div className="px-4 pb-4">
-      <div className="flex items-center gap-3 border border-line-muted theme-brutal:border-black/15 bg-fill-muted theme-brutal:bg-black/[0.015] px-3 py-2">
-        <div className="shrink-0 text-foreground-placeholder theme-brutal:text-black/35">{icon}</div>
+      <div className="flex items-center gap-3 border border-line-muted  bg-fill-muted  px-3 py-2">
+        <div className="shrink-0 text-foreground-placeholder ">{icon}</div>
         <div className="min-w-0">
-          <div className="text-sm font-bold text-foreground-muted theme-brutal:text-black/65">{title}</div>
-          <div className="mt-0.5 text-xs text-foreground-placeholder theme-brutal:text-black/45">{description}</div>
+          <div className="text-sm font-bold text-foreground-muted ">{title}</div>
+          <div className="mt-0.5 text-xs text-foreground-placeholder ">{description}</div>
         </div>
       </div>
     </div>
@@ -359,8 +343,8 @@ function AgentChatTab({ agentId }: { agentId: string }) {
   const toggleChannelsExpanded = useCallback(() => setChannelsExpanded((expanded) => !expanded), []);
 
   return (
-    <div className="flex-1 overflow-y-auto bg-layer-panel theme-brutal:bg-white">
-      <div className="border-b theme-brutal:border-b-2 border-line-muted theme-brutal:border-black bg-layer-panel theme-brutal:bg-white px-5 py-3">
+    <div className="flex-1 overflow-y-auto bg-layer-panel ">
+      <div className="border-b  border-line-muted  bg-layer-panel  px-5 py-3">
         <SectionEyebrow as="div">{formatMessage({ id: "agent.detail.channelsAndDms" })}</SectionEyebrow>
       </div>
 
@@ -378,15 +362,15 @@ function AgentChatTab({ agentId }: { agentId: string }) {
         />
       ) : (
         <>
-          <section className="border-b border-line-muted theme-brutal:border-black/10">
+          <section className="border-b border-line-muted ">
             <div className="px-5 py-3">
               <SectionHeader label={formatMessage({ id: "agent.detail.channels" })} />
-              <div className="mt-1 text-xs text-foreground-muted theme-brutal:text-black/60">
+              <div className="mt-1 text-xs text-foreground-muted ">
                 {formatMessage({ id: "agent.detail.channelsDescription" })}
               </div>
             </div>
             {channels.loading ? (
-              <div className="px-5 pb-4 font-mono text-xs text-foreground-placeholder theme-brutal:text-black/40">
+              <div className="px-5 pb-4 font-mono text-xs text-foreground-placeholder ">
                 {formatMessage({ id: "agent.detail.loadingAgentChannels" })}
               </div>
             ) : channels.error ? (
@@ -413,17 +397,17 @@ function AgentChatTab({ agentId }: { agentId: string }) {
                         <div className="min-w-0">
                           <div className="flex min-w-0 items-center gap-2">
                             {item.type === "private" ? (
-                              <Lock size={14} className="shrink-0 text-foreground-placeholder theme-brutal:text-black/45" aria-label={formatMessage({ id: "agent.detail.privateChannel" })} />
+                              <Lock size={14} className="shrink-0 text-foreground-placeholder " aria-label={formatMessage({ id: "agent.detail.privateChannel" })} />
                             ) : (
-                              <Hash size={14} className="shrink-0 text-foreground-placeholder theme-brutal:text-black/45" aria-label={formatMessage({ id: "agent.detail.channel" })} />
+                              <Hash size={14} className="shrink-0 text-foreground-placeholder " aria-label={formatMessage({ id: "agent.detail.channel" })} />
                             )}
-                            <span className="truncate text-sm font-bold text-foreground-strong theme-brutal:text-black">{item.name}</span>
+                            <span className="truncate text-sm font-bold text-foreground-strong ">{item.name}</span>
                             {item.activityMuted && (
                               <Tooltip content={item.muteFromSeq != null
                                   ? formatMessage({ id: "agent.detail.activityMutedFromSeq" }, { seq: item.muteFromSeq })
                                   : formatMessage({ id: "agent.detail.activityMuted" })}>
                               <span
-                                className="inline-flex shrink-0 items-center text-foreground-placeholder theme-brutal:text-black/45"
+                                className="inline-flex shrink-0 items-center text-foreground-placeholder "
                                 aria-label={item.muteFromSeq != null
                                   ? formatMessage({ id: "agent.detail.activityMutedFromSeq" }, { seq: item.muteFromSeq })
                                   : formatMessage({ id: "agent.detail.activityMuted" })}
@@ -434,11 +418,11 @@ function AgentChatTab({ agentId }: { agentId: string }) {
                             )}
                           </div>
                           {item.description && (
-                            <div className="mt-1 line-clamp-2 text-xs text-foreground-muted theme-brutal:text-black/60">{item.description}</div>
+                            <div className="mt-1 line-clamp-2 text-xs text-foreground-muted ">{item.description}</div>
                           )}
                         </div>
                         {item.type !== "channel" && (
-                          <div className="shrink-0 border border-line-muted theme-brutal:border-black/20 px-2 py-0.5 text-[11px] font-mono text-foreground-muted theme-brutal:text-black/55">
+                          <div className="shrink-0 border border-line-muted  px-2 py-0.5 text-[11px] font-mono text-foreground-muted ">
                             {item.type === "private"
                               ? formatMessage({ id: "agent.detail.private" })
                               : formatMessage({ id: "agent.detail.joint" })}
@@ -465,12 +449,12 @@ function AgentChatTab({ agentId }: { agentId: string }) {
           <section>
             <div className="px-5 py-3">
               <SectionHeader label={formatMessage({ id: "agent.detail.agentDms" })} />
-              <div className="mt-1 text-xs text-foreground-muted theme-brutal:text-black/60">
+              <div className="mt-1 text-xs text-foreground-muted ">
                 {formatMessage({ id: "agent.detail.agentDmsDescription" })}
               </div>
             </div>
             {dms.loading ? (
-              <div className="px-5 pb-4 font-mono text-xs text-foreground-placeholder theme-brutal:text-black/40">
+              <div className="px-5 pb-4 font-mono text-xs text-foreground-placeholder ">
                 {formatMessage({ id: "agent.detail.loadingAgentDms" })}
               </div>
             ) : dms.error ? (
@@ -561,7 +545,7 @@ function EnvVarsSection({ agent, canManageAgent }: { agent: Agent; canManageAgen
             <button
               type="button"
               onClick={() => setEntries([...entries, { key: "", value: "" }])}
-              className="flex items-center gap-1 text-xs font-bold text-foreground-muted theme-brutal:text-black/60 hover:text-foreground-strong theme-brutal:hover:text-black"
+              className="flex items-center gap-1 text-xs font-bold text-foreground-muted  hover:text-foreground-strong "
             >
               <Plus size={12} />
               {formatMessage({ id: "agent.runtimeConfig.addVariable" })}
@@ -587,7 +571,7 @@ function EnvVarsSection({ agent, canManageAgent }: { agent: Agent; canManageAgen
           {Object.entries(envVars!).map(([key, value]) => (
             <Tooltip key={key} content={`${key}=${value}`}>
             <span
-              className="inline-block border border-line-muted bg-layer-card px-2 py-0.5 text-xs font-mono text-foreground-strong theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:text-black"
+              className="inline-block border border-line-muted bg-layer-card px-2 py-0.5 text-xs font-mono text-foreground-strong    "
             >
               {key}=<span className="text-foreground-muted">{"•".repeat(Math.min(value.length, 8))}</span>
             </span>
@@ -613,16 +597,16 @@ function EnvVarsSection({ agent, canManageAgent }: { agent: Agent; canManageAgen
 function InfoRow({ label, actions, children, testId }: { label: ReactNode; actions?: ReactNode; children: ReactNode; testId?: string }) {
   return (
     <div className="grid grid-cols-[7.75rem_minmax(0,1fr)] items-start gap-x-4" data-testid={testId}>
-      <dt className="flex min-h-5 items-center gap-1.5 text-[13px] text-foreground-hint theme-brutal:text-black/50">
+      <dt className="flex min-h-5 items-center gap-1.5 text-[13px] text-foreground-hint ">
         <span className="truncate">{label}</span>
         {actions}
       </dt>
-      <dd className="m-0 min-w-0 text-sm text-foreground-muted theme-brutal:text-black">{children}</dd>
+      <dd className="m-0 min-w-0 text-sm text-foreground-muted ">{children}</dd>
     </div>
   );
 }
 
-const INFO_ICON_BUTTON_CLASS = "shrink-0 text-foreground-placeholder transition-colors hover:text-foreground-strong theme-brutal:text-black/40 theme-brutal:hover:text-black";
+const INFO_ICON_BUTTON_CLASS = "shrink-0 text-foreground-placeholder transition-colors hover:text-foreground-strong  ";
 
 /** Roles the viewer may assign to this agent (empty when the role is not editable). */
 function useEditableAgentRoleOptions(agent: Agent): { id: Extract<ServerRole, "admin" | "member">; label: string }[] {
@@ -651,7 +635,7 @@ function AgentHeaderName({ agent, onEdit }: { agent: Agent; onEdit?: () => void 
         {/* PanelTitle source (cindyz 2026-10-10): the detail-block name follows the
             panel-title spec (17 / selected weight / heading family) so the same
             name reads identically in the header and the body. */}
-        <PanelTitle className="min-w-0 text-foreground-muted theme-brutal:text-black theme-brutal:text-lg">{agent.displayName || agent.name}</PanelTitle>
+        <PanelTitle className="min-w-0 text-foreground-muted  ">{agent.displayName || agent.name}</PanelTitle>
       </Tooltip>
       {onEdit && (
         <Tooltip content={formatMessage({ id: "agent.detail.editDisplayName" })}>
@@ -659,7 +643,7 @@ function AgentHeaderName({ agent, onEdit }: { agent: Agent; onEdit?: () => void 
             type="button"
             aria-label={formatMessage({ id: "agent.detail.editDisplayName" })}
             onClick={onEdit}
-            className="shrink-0 text-foreground-placeholder transition-colors hover:text-foreground-strong theme-brutal:text-black/40 theme-brutal:hover:text-black"
+            className="shrink-0 text-foreground-placeholder transition-colors hover:text-foreground-strong  "
           >
             <Pencil size={14} />
           </button>
@@ -1120,7 +1104,7 @@ function AgentProfileInfo({ agent, canManageAgent, canChangeAgentRole, onOpenPro
         : formatMessage({ id: "agent.detail.updateOfficialIdentity" }),
       message: (
         <div className="space-y-4">
-          <p className="text-sm text-foreground-muted theme-brutal:text-black/60">
+          <p className="text-sm text-foreground-muted ">
             {formatMessage({ id: "agent.detail.reviewOfficialIdentityChanges" })}
           </p>
           <dl className="divide-y divide-black/10">
@@ -1130,11 +1114,11 @@ function AgentProfileInfo({ agent, canManageAgent, canChangeAgentRole, onOpenPro
                 data-onboarding-identity-change={change.field}
                 className="grid grid-cols-[96px_minmax(0,1fr)] items-baseline gap-3 py-3 first:pt-0 last:pb-0"
               >
-                <dt className="text-xs font-bold uppercase tracking-wide text-foreground-muted theme-brutal:text-black/50">{change.label}</dt>
+                <dt className="text-xs font-bold uppercase tracking-wide text-foreground-muted ">{change.label}</dt>
                 <dd className="flex min-w-0 items-center gap-2 font-mono text-sm">
-                  <span className="min-w-0 break-words text-foreground-muted theme-brutal:text-black/50">{formatIdentityValue(change.before)}</span>
-                  <MoveRight aria-hidden="true" size={16} className="shrink-0 text-foreground-placeholder theme-brutal:text-black/30" />
-                  <span className="min-w-0 break-words font-bold text-foreground-strong theme-brutal:text-black">{formatIdentityValue(change.after)}</span>
+                  <span className="min-w-0 break-words text-foreground-muted ">{formatIdentityValue(change.before)}</span>
+                  <MoveRight aria-hidden="true" size={16} className="shrink-0 text-foreground-placeholder " />
+                  <span className="min-w-0 break-words font-bold text-foreground-strong ">{formatIdentityValue(change.after)}</span>
                 </dd>
               </div>
             ))}
@@ -1144,7 +1128,7 @@ function AgentProfileInfo({ agent, canManageAgent, canChangeAgentRole, onOpenPro
               {formatMessage({ id: "agent.detail.grantsAdminWarning" })}
             </Banner>
           )}
-          <p className="text-xs text-foreground-muted theme-brutal:text-black/50">{formatMessage({ id: "agent.detail.customizeAfterIdentityUpdate" })}</p>
+          <p className="text-xs text-foreground-muted ">{formatMessage({ id: "agent.detail.customizeAfterIdentityUpdate" })}</p>
         </div>
       ),
       confirmLabel: grantsServerAdmin
@@ -1757,7 +1741,7 @@ function AgentProfileInfo({ agent, canManageAgent, canChangeAgentRole, onOpenPro
             </Button>
           )}
           {currentOnboardingIdentityError && (
-            <div className="mt-2 text-xs font-bold text-warning-strong theme-brutal:text-brutal-orange">{currentOnboardingIdentityError}</div>
+            <div className="mt-2 text-xs font-bold text-warning-strong ">{currentOnboardingIdentityError}</div>
           )}
         </div>
       )}
@@ -1774,28 +1758,28 @@ function AgentProfileInfo({ agent, canManageAgent, canChangeAgentRole, onOpenPro
                 type="button"
                 aria-label={formatMessage({ id: "agent.detail.editDescription" })}
                 onClick={() => onEdit("description")}
-                className="text-foreground-placeholder theme-brutal:text-black/40 hover:text-foreground-strong theme-brutal:hover:text-black transition-colors"
+                className="text-foreground-placeholder  hover:text-foreground-strong  transition-colors"
               >
                 <Pencil size={12} />
               </button>
             </Tooltip>
           )}
         </div>
-        <p className="text-sm text-foreground-muted theme-brutal:text-black">
+        <p className="text-sm text-foreground-muted ">
           {agent.description || (
-            <span className="italic text-foreground-placeholder theme-brutal:text-black/40">{formatMessage({ id: "machine.detail.noDescription" })}</span>
+            <span className="italic text-foreground-placeholder ">{formatMessage({ id: "machine.detail.noDescription" })}</span>
           )}
         </p>
       </div>
 
       {showOperationalInfo && isExternalAgent && canManageAgent && (
-        <div className="border-t border-line-muted theme-brutal:border-black/10 px-5 py-4">
+        <div className="border-t border-line-muted  px-5 py-4">
           <SectionEyebrow as="div" className="mb-2">
             {formatMessage({ id: "agent.detail.externalSetup" })}
           </SectionEyebrow>
-          <div className="space-y-3 border theme-brutal:border-2 border-line-muted theme-brutal:border-black bg-info-soft theme-brutal:bg-brutal-cyan/15 p-3 shadow-raft-sm theme-brutal:shadow-brutal-sm">
+          <div className="space-y-3 border  border-line-muted  bg-info-soft  p-3 shadow-raft-sm ">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex border theme-brutal:border-2 border-line-muted theme-brutal:border-black bg-layer-panel theme-brutal:bg-white px-2 py-0.5 text-xs font-bold uppercase text-foreground-strong theme-brutal:text-black">
+              <span className="inline-flex border  border-line-muted  bg-layer-panel  px-2 py-0.5 text-xs font-bold uppercase text-foreground-strong ">
                 {externalStatus?.setupState === "connected"
                   ? formatMessage({ id: "machine.detail.connected" })
                   : externalStatus?.setupState === "credential_minted"
@@ -1803,7 +1787,7 @@ function AgentProfileInfo({ agent, canManageAgent, canChangeAgentRole, onOpenPro
                     : formatMessage({ id: "agent.detail.waitingForLogin" })}
               </span>
               {externalStatus?.credentialLastUsedAt && (
-                <span className="text-xs font-mono text-foreground-muted theme-brutal:text-black/50">
+                <span className="text-xs font-mono text-foreground-muted ">
                   {formatMessage(
                     { id: "agent.detail.lastUsed" },
                     { time: formatShortDateTime(externalStatus.credentialLastUsedAt) },
@@ -1823,7 +1807,7 @@ function AgentProfileInfo({ agent, canManageAgent, canChangeAgentRole, onOpenPro
             />
             {externalStepSetupSteps ? (
               <div className="space-y-3">
-                <p className="text-xs font-bold text-foreground-muted theme-brutal:text-black/70">
+                <p className="text-xs font-bold text-foreground-muted ">
                     {formatMessage({ id: "agent.detail.runStepsInTerminal" })}
                 </p>
                 <ol className="space-y-4">
@@ -1832,7 +1816,7 @@ function AgentProfileInfo({ agent, canManageAgent, canChangeAgentRole, onOpenPro
                     return (
                       <li key={step.title} className="space-y-1.5">
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                          <span className="text-xs font-bold uppercase text-foreground-muted theme-brutal:text-black/60">
+                          <span className="text-xs font-bold uppercase text-foreground-muted ">
                             {formatMessage({ id: "agent.detail.stepNumber" }, { step: idx + 1 })}
                           </span>
                           <ExternalSetupCopyButton text={step.command} target={copyTarget} onCopy={handleCopyExternalCommand}>
@@ -1841,36 +1825,36 @@ function AgentProfileInfo({ agent, canManageAgent, canChangeAgentRole, onOpenPro
                               : formatMessage({ id: "agent.detail.copyStep" })}
                           </ExternalSetupCopyButton>
                         </div>
-                        <p className="text-sm font-bold text-foreground-strong theme-brutal:text-black">{step.title}</p>
-                        <div className="break-all border border-line-muted theme-brutal:border-black/20 bg-layer-panel theme-brutal:bg-white/80 p-2 font-mono text-xs text-foreground-strong theme-brutal:text-black whitespace-pre-wrap">
+                        <p className="text-sm font-bold text-foreground-strong ">{step.title}</p>
+                        <div className="break-all border border-line-muted  bg-layer-panel  p-2 font-mono text-xs text-foreground-strong  whitespace-pre-wrap">
                           {step.command}
                         </div>
                         {step.description && (
-                          <p className="text-xs text-foreground-muted theme-brutal:text-black/60">{step.description}</p>
+                          <p className="text-xs text-foreground-muted ">{step.description}</p>
                         )}
                       </li>
                     );
                   })}
                 </ol>
-                <p className="text-xs text-foreground-muted theme-brutal:text-black/60">
+                <p className="text-xs text-foreground-muted ">
                     {formatMessage({ id: "agent.detail.raftProfileRequired" })}
                 </p>
                 {effectiveExternalSetupTab === "claude-code" ? (
-                  <p className="text-xs text-foreground-muted theme-brutal:text-black/60">
+                  <p className="text-xs text-foreground-muted ">
                     {formatMessage({ id: "agent.detail.claudeCodeKeepRunning" })}
                   </p>
                 ) : effectiveExternalSetupTab === "hermes" ? (
-                  <p className="text-xs text-foreground-muted theme-brutal:text-black/60">
+                  <p className="text-xs text-foreground-muted ">
                     {formatMessage({ id: "agent.detail.hermesGatewayDescription" })}
                   </p>
                 ) : null}
               </div>
             ) : (
               <div className="space-y-2">
-                <div className="break-all border theme-brutal:border-2 border-line-muted theme-brutal:border-black bg-layer-panel theme-brutal:bg-white p-2 font-mono text-xs text-foreground-strong theme-brutal:text-black whitespace-pre-wrap">
+                <div className="break-all border  border-line-muted  bg-layer-panel  p-2 font-mono text-xs text-foreground-strong  whitespace-pre-wrap">
                   {externalOtherSetupInstruction}
                 </div>
-                <p className="text-xs text-foreground-muted theme-brutal:text-black/60">
+                <p className="text-xs text-foreground-muted ">
                       {formatMessage({ id: "agent.detail.otherAgentRuntimeDescription" })}
                 </p>
               </div>
@@ -1885,7 +1869,7 @@ function AgentProfileInfo({ agent, canManageAgent, canChangeAgentRole, onOpenPro
                 </ExternalSetupCopyButton>
               )}
               {externalStatusError && (
-                <span className="text-xs font-bold text-warning-strong theme-brutal:text-brutal-orange">{externalStatusError}</span>
+                <span className="text-xs font-bold text-warning-strong ">{externalStatusError}</span>
               )}
             </div>
           </div>
@@ -1903,7 +1887,7 @@ function AgentProfileInfo({ agent, canManageAgent, canChangeAgentRole, onOpenPro
       {showOperationalInfo && (
         <>
           {/* Info */}
-          <div className="px-5 py-4 border-t border-line-muted theme-brutal:border-black/10">
+          <div className="px-5 py-4 border-t border-line-muted ">
             <SectionEyebrow as="div" className="mb-3">
               {formatMessage({ id: "machine.detail.info" })}
             </SectionEyebrow>
@@ -1934,13 +1918,13 @@ function AgentProfileInfo({ agent, canManageAgent, canChangeAgentRole, onOpenPro
                 }
               >
                 {currentAgentServerRoleInfo ? (
-                  <Badge appearance="soft" variant={currentAgentServerRoleInfo.variant} uppercase={false}>
+                  <Badge appearance="soft" variant={currentAgentServerRoleInfo.variant}>
                     {formatMessage({ id: currentAgentServerRoleInfo.labelId })}
                   </Badge>
                 ) : serverRoleDisplay.kind === "unrecognized" ? (
                   <Tooltip content={agent.serverRole ?? ""}>
-                    <Badge appearance="soft" variant="muted" uppercase={false}
-                      className="theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-gray-100 text-xs theme-brutal:text-black"
+                    <Badge appearance="soft" variant="muted"
+                      className="   text-xs "
                     >
                       {serverRoleDisplay.label}
                     </Badge>
@@ -1951,19 +1935,19 @@ function AgentProfileInfo({ agent, canManageAgent, canChangeAgentRole, onOpenPro
                   (wrapping) computer name never has the status wedged into it. */}
               <InfoRow label={formatMessage({ id: "machine.detail.computer" })}>
                 {isExternalAgent ? (
-                  <span className="text-foreground-muted theme-brutal:text-black/50">{formatMessage({ id: "agent.detail.externalRuntime" })}</span>
+                  <span className="text-foreground-muted ">{formatMessage({ id: "agent.detail.externalRuntime" })}</span>
                 ) : agentMachineRow.kind === "pending" ? null : agentMachine ? (
                   // Long names truncate; the full name shows on hover.
                   <Tooltip content={agentMachine.name}>
                     <button
                       onClick={() => { useProfileStore.getState().closeProfile(); useThreadStore.getState().closeThread(); nav.toMachine(agentMachine.id); }}
-                      className="block max-w-full truncate text-left text-foreground-muted theme-brutal:text-black hover:underline"
+                      className="block max-w-full truncate text-left text-foreground-muted  hover:underline"
                     >
                       {agentMachine.name}
                     </button>
                   </Tooltip>
                 ) : (
-                  <span className="text-foreground-muted theme-brutal:text-black/50">
+                  <span className="text-foreground-muted ">
                     {formatMessage({ id: "agent.detail.noComputerAssigned" })}
                   </span>
                 )}
@@ -1990,7 +1974,7 @@ function AgentProfileInfo({ agent, canManageAgent, canChangeAgentRole, onOpenPro
               )}
               {/* Created */}
               <InfoRow label={formatMessage({ id: "machine.detail.created" })}>
-                <span className="tabular-nums theme-brutal:font-mono">{createdDate}</span>
+                <span className="tabular-nums ">{createdDate}</span>
               </InfoRow>
               {/* Creator */}
               <InfoRow label={formatMessage({ id: "agent.detail.creator" })}>
@@ -2019,11 +2003,11 @@ function AgentProfileInfo({ agent, canManageAgent, canChangeAgentRole, onOpenPro
                       />
                     )}
                     <span className="min-w-0 truncate">{agent.creator.displayName || agent.creator.name}</span>
-                    <span className="min-w-0 flex-1 max-w-fit truncate font-mono text-xs text-foreground-hint theme-brutal:text-black/50">@{agent.creator.name}</span>
+                    <span className="min-w-0 flex-1 max-w-fit truncate font-mono text-xs text-foreground-hint ">@{agent.creator.name}</span>
                   </button>
                   </Tooltip>
                 ) : (
-                  <span className="text-foreground-muted theme-brutal:text-black/50">
+                  <span className="text-foreground-muted ">
                     {formatMessage({ id: "agent.detail.noCreatorAssigned" })}
                   </span>
                 )}
@@ -2032,7 +2016,7 @@ function AgentProfileInfo({ agent, canManageAgent, canChangeAgentRole, onOpenPro
           </div>
 
           {!isExternalAgent && (
-            <div ref={configRef} className="px-5 py-4 border-t border-line-muted theme-brutal:border-black/10">
+            <div ref={configRef} className="px-5 py-4 border-t border-line-muted ">
               <div className="w-full">
                 <div className="flex items-center gap-2 mb-3">
                   <SectionEyebrow as="div">
@@ -2044,7 +2028,7 @@ function AgentProfileInfo({ agent, canManageAgent, canChangeAgentRole, onOpenPro
                       type="button"
                       aria-label={formatMessage({ id: "agent.detail.editRuntimeConfig" })}
                       onClick={startRuntimeConfigEditing}
-                      className="text-foreground-placeholder theme-brutal:text-black/40 hover:text-foreground-strong theme-brutal:hover:text-black transition-colors"
+                      className="text-foreground-placeholder  hover:text-foreground-strong  transition-colors"
                     >
                       <Pencil size={12} />
                     </button>
@@ -2072,13 +2056,13 @@ function AgentProfileInfo({ agent, canManageAgent, canChangeAgentRole, onOpenPro
                     </Banner>
                   )}
                   <InfoRow label={formatMessage({ id: "agent.runtimeConfig.model" })}>
-                    <Badge appearance="soft" variant="accent" uppercase={false}>
+                    <Badge appearance="soft" variant="accent">
                         {currentRuntimeModelLabel}
                       </Badge>
                   </InfoRow>
                   {REASONING_EFFORT_RUNTIMES.has(currentRuntimeConfig.runtime) && (
                     <InfoRow label={formatMessage({ id: "agent.runtimeConfig.reasoning" })}>
-                      <Badge appearance="soft" variant="primary" uppercase={false}>
+                      <Badge appearance="soft" variant="primary">
                           {currentRuntimeConfig.reasoningEffort
                             ? formatMessage({ id: reasoningEffortLabelId(currentRuntimeConfig.reasoningEffort) ?? "agent.runtimeConfig.default" })
                             : formatMessage({ id: "agent.runtimeConfig.default" })}
@@ -2087,7 +2071,7 @@ function AgentProfileInfo({ agent, canManageAgent, canChangeAgentRole, onOpenPro
                   )}
                   {supportsRuntimeFastMode(currentRuntimeConfig.runtime) && (
                     <InfoRow label={formatMessage({ id: "agent.runtimeConfig.mode" })}>
-                      <Badge appearance="soft" variant="warning" uppercase={false}>
+                      <Badge appearance="soft" variant="warning">
                           {runtimeConfigFastMode(currentRuntimeConfig)
                             ? formatMessage({ id: "agent.runtimeConfig.fastMode" })
                             : formatMessage({ id: "agent.runtimeConfig.default" })}
@@ -2098,13 +2082,13 @@ function AgentProfileInfo({ agent, canManageAgent, canChangeAgentRole, onOpenPro
                     <>
                       <InfoRow label={formatMessage({ id: "agent.runtimeConfig.provider" })}>
                         {currentProviderApiUrl
-                            ? <span className="break-all font-mono text-sm text-foreground-muted theme-brutal:text-black">{currentProviderApiUrl}</span>
-                            : <span className="text-sm italic text-foreground-placeholder theme-brutal:text-black/40">{formatMessage({ id: "agent.runtimeConfig.default" })}</span>}
+                            ? <span className="break-all font-mono text-sm text-foreground-muted ">{currentProviderApiUrl}</span>
+                            : <span className="text-sm italic text-foreground-placeholder ">{formatMessage({ id: "agent.runtimeConfig.default" })}</span>}
                       </InfoRow>
                       <InfoRow label={formatMessage({ id: "agent.runtimeConfig.command" })}>
                         {currentCommand
-                            ? <span className="break-all font-mono text-sm text-foreground-muted theme-brutal:text-black">{currentCommand}</span>
-                            : <span className="text-sm italic text-foreground-placeholder theme-brutal:text-black/40">{formatMessage({ id: "agent.runtimeConfig.default" })}</span>}
+                            ? <span className="break-all font-mono text-sm text-foreground-muted ">{currentCommand}</span>
+                            : <span className="text-sm italic text-foreground-placeholder ">{formatMessage({ id: "agent.runtimeConfig.default" })}</span>}
                       </InfoRow>
                     </>
                   )}
@@ -2284,7 +2268,7 @@ function AgentCreatedAgentsSection({ createdAgents, onOpenProfile }: { createdAg
   const { formatMessage } = useIntl();
   const openProfile = useProfileStore((s) => s.openProfile);
   return (
-    <div className="px-5 py-4 border-t border-line-muted theme-brutal:border-black/10">
+    <div className="px-5 py-4 border-t border-line-muted ">
       {/* Empty: the header's count (0) is the whole section, no extra "none" line. */}
       <SectionHeader
         className={createdAgents.length > 0 ? "mb-3" : undefined}
@@ -2370,7 +2354,7 @@ function AgentStatusBadge({ agentId, showDetail, fallbackStatus, externalStatus 
     return (
       <div className="flex min-w-0 items-center gap-1.5">
         <StatusDot tone={activityTone} className="shrink-0" />
-        <Tooltip content={externalText}><span className="min-w-0 truncate text-sm text-foreground-muted theme-brutal:text-black/60 font-mono">
+        <Tooltip content={externalText}><span className="min-w-0 truncate text-sm text-foreground-muted  font-mono">
           {externalText}
         </span></Tooltip>
       </div>
@@ -2417,7 +2401,7 @@ function AgentStatusBadge({ agentId, showDetail, fallbackStatus, externalStatus 
   return (
     <div className="flex min-w-0 items-center gap-1.5">
       <StatusDot activity={displayState.activity} className="shrink-0" />
-      <Tooltip content={activityText}><span className="min-w-0 truncate text-sm text-foreground-muted theme-brutal:text-black/60 font-mono">
+      <Tooltip content={activityText}><span className="min-w-0 truncate text-sm text-foreground-muted  font-mono">
         {activityText}
       </span></Tooltip>
       {deliveryConsumptionText && (
@@ -2533,7 +2517,7 @@ function AgentDetailHeader({ agent, canControlAgentRuntime, canMessageAgent, onM
       titleSuffix={
         isDeleted ? (
           <div className="flex min-w-0 items-center gap-1.5">
-            <Badge appearance="soft" variant="muted" uppercase className="shrink-0 text-[10px]">
+            <Badge appearance="soft" variant="muted" className="shrink-0 text-[10px]">
               {formatMessage({ id: "agent.detail.deleted" })}
             </Badge>
           </div>
@@ -3013,7 +2997,7 @@ export default function AgentDetailPanel({ agent, onClose, onBack, onOpenProfile
   }, [agentAvatarUrl, agentTitle]);
 
   return (
-    <ProfilePanelBody className="flex min-h-0 flex-1 flex-col bg-layer-panel font-sans theme-brutal:bg-white">
+    <ProfilePanelBody className="flex min-h-0 flex-1 flex-col bg-layer-panel font-sans ">
       {/* Header — isolated component to prevent activity changes from re-rendering ChatPanel */}
       <AgentDetailHeader
         agent={agent}
@@ -3028,11 +3012,11 @@ export default function AgentDetailPanel({ agent, onClose, onBack, onOpenProfile
 
       {/* Start error */}
       {startError && (
-        <div className="border-b theme-brutal:border-b-2 border-line-muted theme-brutal:border-black bg-warning-soft theme-brutal:bg-brutal-orange/20 px-5 py-2 flex items-center gap-2">
-          <Tooltip content={startError}><span className="min-w-0 flex-1 truncate text-sm font-bold text-foreground-strong theme-brutal:text-black">{startError}</span></Tooltip>
+        <div className="border-b  border-line-muted  bg-warning-soft  px-5 py-2 flex items-center gap-2">
+          <Tooltip content={startError}><span className="min-w-0 flex-1 truncate text-sm font-bold text-foreground-strong ">{startError}</span></Tooltip>
           <button
             onClick={() => setStartError("")}
-            className="shrink-0 text-foreground-placeholder theme-brutal:text-black/40 hover:text-foreground-strong theme-brutal:hover:text-black transition-colors"
+            className="shrink-0 text-foreground-placeholder  hover:text-foreground-strong  transition-colors"
           >
             <X size={14} />
           </button>
@@ -3043,9 +3027,9 @@ export default function AgentDetailPanel({ agent, onClose, onBack, onOpenProfile
           `agent:activity` to all server members, so for non-creators we
           fall back to a generic message and hide the "View logs" link. */}
       {hasRuntimeError && (
-        <div className="flex items-start gap-2 border-b theme-brutal:border-b-2 border-line-muted theme-brutal:border-black bg-warning-soft theme-brutal:bg-brutal-orange/20 px-5 py-2">
+        <div className="flex items-start gap-2 border-b  border-line-muted  bg-warning-soft  px-5 py-2">
           <StatusDot tone="bg-brutal-orange" className="mt-[0.1875rem] shrink-0" />
-          <Tooltip content={canViewPrivateAgentSurfaces ? activityErrorText : activityFallbackErrorText}><span className="min-w-0 flex-1 line-clamp-2 break-words text-sm font-bold leading-snug text-foreground-strong theme-brutal:text-black">
+          <Tooltip content={canViewPrivateAgentSurfaces ? activityErrorText : activityFallbackErrorText}><span className="min-w-0 flex-1 line-clamp-2 break-words text-sm font-bold leading-snug text-foreground-strong ">
             {canViewPrivateAgentSurfaces
               ? activityErrorText
               : activityFallbackErrorText}
@@ -3072,7 +3056,7 @@ export default function AgentDetailPanel({ agent, onClose, onBack, onOpenProfile
                 <button
                   type="button"
                   onClick={() => setActiveTab("activity")}
-                  className="text-xs font-bold text-foreground-muted theme-brutal:text-black/60 hover:text-foreground-strong theme-brutal:hover:text-black underline whitespace-nowrap"
+                  className="text-xs font-bold text-foreground-muted  hover:text-foreground-strong  underline whitespace-nowrap"
                 >
                   {formatMessage({ id: "agent.detail.viewLogs" })}
                 </button>
@@ -3087,12 +3071,12 @@ export default function AgentDetailPanel({ agent, onClose, onBack, onOpenProfile
         ref={agentTabsRef}
         className="min-w-0 max-w-full overflow-x-auto overflow-y-hidden scrollbar-none"
       >
-        <Tabs<AgentTab> value={activeTab} onValueChange={setActiveTab} className="bg-layer-panel theme-brutal:border-b-2 theme-brutal:border-black theme-brutal:bg-white">
+        <Tabs<AgentTab> value={activeTab} onValueChange={setActiveTab} className="bg-layer-panel   ">
           <SortableTabsList<AgentTab>
             value={orderedAgentTabIds}
             onReorder={reorderAgentTabs}
             variant="underline"
-            className="max-w-full theme-brutal:border-0 theme-brutal:bg-layer-panel"
+            className="max-w-full  "
           >
             {orderedAgentTabs.map((tab) => {
               const Icon = tab.icon;
@@ -3108,7 +3092,7 @@ export default function AgentDetailPanel({ agent, onClose, onBack, onOpenProfile
                 </SortableTabsTab>
               );
             })}
-            <TabsIndicator />
+            
           </SortableTabsList>
         </Tabs>
       </div>
@@ -3125,8 +3109,8 @@ export default function AgentDetailPanel({ agent, onClose, onBack, onOpenProfile
             </div>
           )}
           {/* Profile header — avatar + name + status */}
-          {/* min-h-[66px] theme-brutal:min-h-[72px] keeps the header stable across themes. */}
-          <div className="min-h-[66px] flex items-start gap-4 px-5 py-5 theme-brutal:min-h-[72px]">
+          {/* min-h-[66px]  keeps the header stable across themes. */}
+          <div className="min-h-[66px] flex items-start gap-4 px-5 py-5 ">
             {canManageAgent ? (
               <Tooltip content={formatMessage({ id: "agent.detail.changeAvatar" })}>
               <Button
@@ -3174,7 +3158,7 @@ export default function AgentDetailPanel({ agent, onClose, onBack, onOpenProfile
                   for the i18n literal gate: scripts/i18n-literal-baseline.json audits
                   this exact template literal (protocol class), so removing the
                   attribute would force a three-baseline ratchet. Kept deliberately. */}
-              <div className={`truncate text-sm ${PROFILE_HANDLE_SIZE_CLASS} text-foreground-placeholder theme-brutal:text-foreground-muted font-mono`} title={`@${agent.name}`}>@{agent.name}</div>
+              <div className={`truncate text-sm ${PROFILE_HANDLE_SIZE_CLASS} text-foreground-placeholder  font-mono`} title={`@${agent.name}`}>@{agent.name}</div>
               {/* Live activity has its own line under the handle, so it never squeezes the name. */}
               {!agent.deletedAt && (
                 <div className="mt-1 min-w-0">
@@ -3207,7 +3191,7 @@ export default function AgentDetailPanel({ agent, onClose, onBack, onOpenProfile
 
           {/* Skills */}
           {canViewPrivateAgentSurfaces && (
-            <div className="border-t border-line-muted theme-brutal:border-black/10">
+            <div className="border-t border-line-muted ">
               <AgentSkills agentId={agent.id} embedded />
             </div>
           )}
@@ -3218,7 +3202,7 @@ export default function AgentDetailPanel({ agent, onClose, onBack, onOpenProfile
 
           {/* Actions */}
           {canManageAgent && !agent.deletedAt && (
-            <div className="px-5 py-4 border-t border-line-muted theme-brutal:border-black/10">
+            <div className="px-5 py-4 border-t border-line-muted ">
               <SectionEyebrow as="div" className="mb-3">
                 {formatMessage({ id: "agent.detail.actions" })}
               </SectionEyebrow>
@@ -3288,8 +3272,8 @@ export default function AgentDetailPanel({ agent, onClose, onBack, onOpenProfile
       ) : activeTab === "workspace" ? (
         <AgentWorkspace agentId={agent.id} compact={!!onClose} hosted={isExternalAgent} />
       ) : activeTab === "activity" ? (
-        <div className="flex min-h-0 flex-1 flex-col bg-layer-panel theme-brutal:bg-white">
-          <div className="flex items-center justify-between border-b theme-brutal:border-b-2 border-line-muted theme-brutal:border-black bg-layer-panel theme-brutal:bg-white px-5 py-2">
+        <div className="flex min-h-0 flex-1 flex-col bg-layer-panel ">
+          <div className="flex items-center justify-between border-b  border-line-muted  bg-layer-panel  px-5 py-2">
             <SectionEyebrow as="div">{formatMessage({ id: "agent.detail.activityDiagnostics" })}</SectionEyebrow>
             <Tooltip content={diagnosticIconCopied ? formatMessage({ id: "agent.detail.copied" }) : formatMessage({ id: "agent.detail.copyDiagnosticInfo" })}>
               <CopyableCodeRoot

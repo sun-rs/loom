@@ -351,7 +351,7 @@ export default function HandoffCreateFlow({ onClose, onStateChange }: {
 
   if (!bridge) {
     return (
-      <div className="flex items-center justify-center p-8 text-sm text-foreground-muted theme-brutal:text-black/50" data-testid="handoff-desktop-only">
+      <div className="flex items-center justify-center p-8 text-sm text-foreground-muted " data-testid="handoff-desktop-only">
         {formatMessage({ id: "handoff.desktopOnly" })}
       </div>
     );
@@ -371,13 +371,13 @@ export default function HandoffCreateFlow({ onClose, onStateChange }: {
   if (selected) {
     return (
       <div data-testid="handoff-create-form" className="flex flex-col">
-        <div className="mb-3 flex items-start justify-between gap-3 border border-line-muted bg-primary-soft/50 px-3 py-2 theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-soft-signal/30">
+        <div className="mb-3 flex items-start justify-between gap-3 border border-line-muted bg-primary-soft/50 px-3 py-2   ">
           <div className="min-w-0">
             <SectionEyebrow as="div" className="mb-0.5">{formatMessage({ id: "handoff.selectedSession" })}</SectionEyebrow>
-            <div className="truncate text-sm font-bold text-foreground-strong theme-brutal:text-black">
+            <div className="truncate text-sm font-bold text-foreground-strong ">
               {selected.title ?? formatMessage({ id: "handoff.untitledSession" })}
             </div>
-            <div className="truncate text-xs text-foreground-muted theme-brutal:text-black/60">
+            <div className="truncate text-xs text-foreground-muted ">
               {TOOL_LABEL[selected.tool]} · {selected.cwd ?? "-"}
             </div>
           </div>
@@ -402,7 +402,7 @@ export default function HandoffCreateFlow({ onClose, onStateChange }: {
           </Banner>
         )}
 
-        <label className="mb-1 block text-xs font-bold text-foreground-muted theme-brutal:text-black/60" htmlFor="handoff-agent-name">
+        <label className="mb-1 block text-xs font-bold text-foreground-muted " htmlFor="handoff-agent-name">
           {formatMessage({ id: "handoff.wizard.agentName" })}
         </label>
         <Input
@@ -413,7 +413,7 @@ export default function HandoffCreateFlow({ onClose, onStateChange }: {
           className="mb-3 w-full"
         />
 
-        <div className="mb-3 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-foreground-muted theme-brutal:text-black/60">
+        <div className="mb-3 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-foreground-muted ">
           <span className="font-bold">{formatMessage({ id: "handoff.wizard.model" })}</span>
           <span className="truncate">{selected.model ?? formatMessage({ id: "handoff.wizard.modelUnknown" })}</span>
           <span className="font-bold">{formatMessage({ id: "handoff.wizard.directory" })}</span>
@@ -429,10 +429,10 @@ export default function HandoffCreateFlow({ onClose, onStateChange }: {
             </BannerDescription>
           </Banner>
         )}
-        <label className="mb-1 block text-xs font-bold text-foreground-muted theme-brutal:text-black/60">
+        <label className="mb-1 block text-xs font-bold text-foreground-muted ">
           {formatMessage({ id: "handoff.wizard.briefingPreview" })}
         </label>
-        <pre className="mb-3 max-h-48 overflow-y-auto whitespace-pre-wrap border border-line-muted theme-brutal:border-2 theme-brutal:border-black/20 bg-layer-canvas-muted p-2.5 text-xs leading-5 text-foreground-strong theme-brutal:text-black/80">
+        <pre className="mb-3 max-h-48 overflow-y-auto whitespace-pre-wrap border border-line-muted   bg-layer-canvas-muted p-2.5 text-xs leading-5 text-foreground-strong ">
           {excerpt === null ? formatMessage({ id: "handoff.loading" }) : briefing}
         </pre>
 
@@ -495,16 +495,16 @@ export default function HandoffCreateFlow({ onClose, onStateChange }: {
       )}
 
       {sessions === null && !loadError && (
-        <div className="flex items-center gap-2 py-6 text-sm text-foreground-muted theme-brutal:text-black/50">
+        <div className="flex items-center gap-2 py-6 text-sm text-foreground-muted ">
           <Spinner size="sm" aria-label={formatMessage({ id: "handoff.loading" })} />
           {formatMessage({ id: "handoff.loading" })}
         </div>
       )}
       {loadError && (
-        <div className="py-6 text-sm text-foreground-muted theme-brutal:text-black/50">{formatMessage({ id: "handoff.loadError" })}</div>
+        <div className="py-6 text-sm text-foreground-muted ">{formatMessage({ id: "handoff.loadError" })}</div>
       )}
       {sessions !== null && filtered.length === 0 && !loadError && (
-        <div className="py-6 text-sm text-foreground-muted theme-brutal:text-black/50">{formatMessage({ id: "handoff.empty" })}</div>
+        <div className="py-6 text-sm text-foreground-muted ">{formatMessage({ id: "handoff.empty" })}</div>
       )}
 
       {sessions !== null && !loadError && (
@@ -528,35 +528,35 @@ export default function HandoffCreateFlow({ onClose, onStateChange }: {
       {sessions !== null && !loadError && filtered.length > 0 && (
         <div className="max-h-[50vh] overflow-y-auto" data-testid={`handoff-tool-list-${activeTool}`}>
           {grouped[activeTool].length === 0 ? (
-            <div className="border border-dashed border-line-muted px-3 py-4 text-xs text-foreground-muted theme-brutal:border-2 theme-brutal:border-black/20 theme-brutal:text-black/40">
+            <div className="border border-dashed border-line-muted px-3 py-4 text-xs text-foreground-muted   ">
               {formatMessage({ id: "handoff.toolEmpty" }, { tool: TOOL_LABEL[activeTool] })}
             </div>
           ) : (
-            <div className="card-brutal divide-y divide-line-muted theme-brutal:divide-y-2 theme-brutal:divide-black/10">
+            <div className="card-brutal divide-y divide-line-muted  ">
               {grouped[activeTool].map((session) => (
                 <button
                   key={session.transcriptPath}
                   type="button"
                   data-testid="handoff-session-row"
                   onClick={() => selectSession(session)}
-                  className="flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-primary-soft theme-brutal:hover:bg-soft-signal/40"
+                  className="flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-primary-soft "
                 >
-                  <FolderOpen size={16} className="shrink-0 text-foreground-muted theme-brutal:text-black/50" />
+                  <FolderOpen size={16} className="shrink-0 text-foreground-muted " />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-medium text-foreground-strong theme-brutal:text-black">
+                    <span className="block truncate text-sm font-medium text-foreground-strong ">
                       {session.title ?? formatMessage({ id: "handoff.untitledSession" })}
                     </span>
-                    <span className="block truncate text-xs text-foreground-muted theme-brutal:text-black/45">
+                    <span className="block truncate text-xs text-foreground-muted ">
                       {session.cwd ?? "-"}{session.model ? ` · ${session.model}` : ""}
                     </span>
                   </span>
                   {session.activeRecently && (
-                    <span className="flex shrink-0 items-center gap-1 border border-line-muted bg-warning-soft px-1.5 py-0.5 text-[10px] font-bold text-foreground-strong theme-brutal:border-black theme-brutal:bg-soft-signal theme-brutal:text-black">
+                    <span className="flex shrink-0 items-center gap-1 border border-line-muted bg-warning-soft px-1.5 py-0.5 text-[10px] font-bold text-foreground-strong   ">
                       <TriangleAlert size={11} />
                       {formatMessage({ id: "handoff.activeRecently" })}
                     </span>
                   )}
-                  <span className="shrink-0 text-xs text-foreground-muted theme-brutal:text-black/40">
+                  <span className="shrink-0 text-xs text-foreground-muted ">
                     {formatSessionAge(session.lastActiveAt)}
                   </span>
                 </button>

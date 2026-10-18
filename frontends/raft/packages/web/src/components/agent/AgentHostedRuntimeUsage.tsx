@@ -20,8 +20,8 @@ type LoadState =
 function UsageRow({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="grid grid-cols-[6.5rem_minmax(0,1fr)] items-start gap-x-4">
-      <dt className="truncate text-xs text-foreground-muted theme-brutal:text-black/50">{label}</dt>
-      <dd className="m-0 min-w-0 text-sm tabular-nums text-foreground-strong theme-brutal:text-black">{children}</dd>
+      <dt className="truncate text-xs text-foreground-muted ">{label}</dt>
+      <dd className="m-0 min-w-0 text-sm tabular-nums text-foreground-strong ">{children}</dd>
     </div>
   );
 }
@@ -61,18 +61,18 @@ export function AgentHostedRuntimeUsage({ agentId }: { agentId: string }) {
 
   if (state.kind === "hidden") return null;
   return (
-    <div className="border-t border-line-muted theme-brutal:border-black/10 px-5 py-4" data-testid="agent-hosted-runtime-usage">
+    <div className="border-t border-line-muted  px-5 py-4" data-testid="agent-hosted-runtime-usage">
       <SectionEyebrow as="div" className="mb-2">
         {formatMessage({ id: "agent.detail.usage.title" })}
       </SectionEyebrow>
       {state.kind === "loading" ? (
         <Spinner size="xs" aria-label={formatMessage({ id: "agent.workspace.loading" })} />
       ) : state.kind === "error" ? (
-        <p className="text-xs font-bold text-warning-strong theme-brutal:text-brutal-orange">
+        <p className="text-xs font-bold text-warning-strong ">
           {formatMessage({ id: "agent.detail.usage.loadFailed" })}
         </p>
       ) : summary && !summary.hasUsage ? (
-        <p className="text-xs text-foreground-muted theme-brutal:text-black/60">
+        <p className="text-xs text-foreground-muted ">
           {formatMessage({ id: "agent.detail.usage.empty" })}
         </p>
       ) : summary ? (
@@ -88,7 +88,7 @@ export function AgentHostedRuntimeUsage({ agentId }: { agentId: string }) {
                 ["agent.detail.usage.tokens.total", summary.tokens.total],
               ] as const).map(([labelId, value]) => (
                 <div key={labelId} className="contents">
-                  <span className="text-foreground-muted theme-brutal:text-black/60">{formatMessage({ id: labelId })}</span>
+                  <span className="text-foreground-muted ">{formatMessage({ id: labelId })}</span>
                   <span className="font-mono">{formatNumber(value)}</span>
                 </div>
               ))}
@@ -110,7 +110,7 @@ export function AgentHostedRuntimeUsage({ agentId }: { agentId: string }) {
                 {summary.topModels.map((entry) => (
                   <li key={entry.model} className="flex min-w-0 gap-2">
                     <span className="truncate font-mono">{entry.model}</span>
-                    <span className="shrink-0 font-mono text-foreground-muted theme-brutal:text-black/60">{formatNumber(entry.tokens)}</span>
+                    <span className="shrink-0 font-mono text-foreground-muted ">{formatNumber(entry.tokens)}</span>
                   </li>
                 ))}
               </ul>
@@ -119,7 +119,7 @@ export function AgentHostedRuntimeUsage({ agentId }: { agentId: string }) {
         </dl>
       ) : null}
       {state.kind === "ready" && state.usage.partial && (
-        <p className="mt-2 text-xs text-foreground-muted theme-brutal:text-black/60">
+        <p className="mt-2 text-xs text-foreground-muted ">
           {formatMessage(
             { id: "agent.detail.usage.partial" },
             { time: formatRelativeTime(state.usage.asOf, intl.locale) ?? formatShortDateTime(state.usage.asOf) },

@@ -13,7 +13,7 @@ export function GrantScopeCheckbox({
   const handleCheckedChange = useCallback((next: boolean) => onToggle(scope, next), [onToggle, scope]);
   return (
     <label className="flex items-center gap-2 font-mono text-xs text-foreground-strong">
-      <Checkbox size="sm" checked={checked} onCheckedChange={handleCheckedChange} />
+      <Checkbox checked={checked} onCheckedChange={handleCheckedChange} />
       {scope}
     </label>
   );

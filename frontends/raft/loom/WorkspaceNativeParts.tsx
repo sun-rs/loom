@@ -26,7 +26,7 @@ function TruncationHint({
   const { formatMessage } = useIntl();
   return (
     <div
-      className="py-1 pr-2 text-xs text-foreground-placeholder theme-brutal:text-black/40 font-mono"
+      className="py-1 pr-2 text-xs text-foreground-placeholder  font-mono"
       style={{ paddingLeft: `${indent}px` }}
       data-testid="agent-workspace-truncated"
     >
@@ -50,7 +50,7 @@ export const WORKSPACE_MARKDOWN_REMARK_PLUGINS: NonNullable<
 > = [remarkGfm];
 export const WORKSPACE_MARKDOWN_COMPONENTS: Components = {
   pre: ({ children }) => (
-    <CodeBlock className="overflow-x-auto border theme-brutal:border-2 border-line-muted theme-brutal:border-black bg-code-surface rounded-md theme-brutal:rounded-none p-3 pr-12 text-sm text-code-foreground font-mono [&>code]:border-0 [&>code]:bg-transparent [&>code]:p-0">
+    <CodeBlock className="overflow-x-auto border  border-line-muted  bg-code-surface rounded-md  p-3 pr-12 text-sm text-code-foreground font-mono [&>code]:border-0 [&>code]:bg-transparent [&>code]:p-0">
       {children}
     </CodeBlock>
   ),
@@ -69,7 +69,7 @@ export const WORKSPACE_MARKDOWN_COMPONENTS: Components = {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="text-blue-700 dark:text-blue-300 underline decoration-2 underline-offset-2 hover:text-accent-strong theme-brutal:hover:text-brutal-pink"
+      className="text-blue-700 dark:text-blue-300 underline decoration-2 underline-offset-2 hover:text-accent-strong "
     >
       {children}
     </a>
@@ -105,20 +105,18 @@ export const WORKSPACE_MARKDOWN_COMPONENTS: Components = {
   ),
   table: ({ children }) => (
     <div className="my-2 overflow-x-auto">
-      <table className="border-collapse border theme-brutal:border-2 border-line-muted theme-brutal:border-black text-sm">
+      <table className="border-collapse border  border-line-muted  text-sm">
         {children}
       </table>
     </div>
   ),
   th: ({ children }) => (
-    <th className="border theme-brutal:border-2 border-line-muted theme-brutal:border-black bg-info-soft theme-brutal:bg-brutal-cyan px-2 py-1 text-left font-bold whitespace-nowrap">
+    <th className="border  border-line-muted  bg-info-soft  px-2 py-1 text-left font-bold whitespace-nowrap">
       {children}
     </th>
   ),
   td: ({ children }) => (
-    <td className="border border-line-muted theme-brutal:border-black px-2 py-1">
-      {children}
-    </td>
+    <td className="border border-line-muted  px-2 py-1">{children}</td>
   ),
   h1: ({ children }) => (
     <h1 className="text-xl font-bold mt-4 mb-2">{children}</h1>
@@ -136,18 +134,16 @@ export const WORKSPACE_MARKDOWN_COMPONENTS: Components = {
     <h5 className="text-sm font-bold mt-1.5 mb-0.5">{children}</h5>
   ),
   h6: ({ children }) => (
-    <h6 className="text-sm font-bold mt-1.5 mb-0.5 text-foreground-muted theme-brutal:text-black/70">
+    <h6 className="text-sm font-bold mt-1.5 mb-0.5 text-foreground-muted ">
       {children}
     </h6>
   ),
-  hr: () => (
-    <hr className="my-3 border-t theme-brutal:border-t-2 border-line-muted theme-brutal:border-black" />
-  ),
+  hr: () => <hr className="my-3 border-t  border-line-muted " />,
   img: ({ src, alt }) => (
     <img
       src={src}
       alt={alt || ""}
-      className={`my-2 max-w-full border theme-brutal:border-2 border-line-muted theme-brutal:border-black ${transparentImageBackgroundClass}`}
+      className={`my-2 max-w-full border  border-line-muted  ${transparentImageBackgroundClass}`}
     />
   ),
 };
@@ -181,9 +177,7 @@ export function TreeNode({
   const isSelected = selectedPath === node.path;
   const isMemory = node.name === "memory.md";
   const isLoading = loadingDirs.has(node.path);
-  const hiddenTextClass = node.isHidden
-    ? "text-foreground-muted theme-brutal:text-black/55"
-    : "";
+  const hiddenTextClass = node.isHidden ? "text-foreground-muted " : "";
 
   if (node.isDirectory) {
     const children = isExpanded ? getChildren(node.path) : undefined;
@@ -195,8 +189,8 @@ export function TreeNode({
           aria-label={`${isExpanded ? "收起" : "展开"} ${node.name}`}
           aria-expanded={isExpanded}
           onClick={() => onToggleDir(node.path)}
-          className={`flex w-full items-center gap-1 py-1 pr-2 text-sm text-left hover:bg-fill-muted theme-brutal:hover:bg-black/5 transition-colors ${
-            isSelected ? "bg-accent-soft theme-brutal:bg-brutal-pink/20" : ""
+          className={`flex w-full items-center gap-1 py-1 pr-2 text-sm text-left hover:bg-fill-muted  transition-colors ${
+            isSelected ? "bg-accent-soft " : ""
           }`}
           style={{ paddingLeft: `${depth * 16 + 8}px` }}
         >
@@ -205,15 +199,9 @@ export function TreeNode({
             className={`shrink-0 transition-transform ${isExpanded ? "rotate-90" : ""}`}
           />
           {isExpanded ? (
-            <FolderOpen
-              size={14}
-              className="shrink-0 text-warning-strong theme-brutal:text-brutal-orange"
-            />
+            <FolderOpen size={14} className="shrink-0 text-warning-strong " />
           ) : (
-            <FolderClosed
-              size={14}
-              className="shrink-0 text-warning-strong theme-brutal:text-brutal-orange"
-            />
+            <FolderClosed size={14} className="shrink-0 text-warning-strong " />
           )}
           <span className={`truncate font-medium ${hiddenTextClass}`}>
             {node.name}
@@ -223,7 +211,7 @@ export function TreeNode({
           <div>
             {isLoading ? (
               <div
-                className="flex items-center gap-1.5 py-1 text-xs text-foreground-placeholder theme-brutal:text-black/40 font-mono"
+                className="flex items-center gap-1.5 py-1 text-xs text-foreground-placeholder  font-mono"
                 style={{ paddingLeft: `${(depth + 1) * 16 + 22}px` }}
               >
                 <Spinner size="xs" aria-label={loadingLabel} />
@@ -267,15 +255,12 @@ export function TreeNode({
       onClick={() => onSelectFile(node.path)}
       className={`flex w-full items-center gap-1 py-1 pr-2 text-sm text-left transition-colors ${
         isSelected
-          ? "bg-accent-soft theme-brutal:bg-brutal-pink/20 border-r theme-brutal:border-r-2 border-line-strong theme-brutal:border-brutal-pink"
-          : "hover:bg-fill-muted theme-brutal:hover:bg-black/5"
+          ? "bg-accent-soft  border-r  border-line-strong "
+          : "hover:bg-fill-muted "
       }`}
       style={{ paddingLeft: `${depth * 16 + 22}px` }}
     >
-      <FileText
-        size={14}
-        className="shrink-0 text-foreground-muted theme-brutal:text-black/50"
-      />
+      <FileText size={14} className="shrink-0 text-foreground-muted " />
       <span
         className={`truncate ${isMemory ? "font-bold" : ""} ${hiddenTextClass}`}
       >

@@ -11,7 +11,6 @@ import {
   TabsList,
   TabsTab,
   TabsLabel,
-  TabsIndicator,
 } from "raft-ui";
 import { Plus, RefreshCw, Settings2, Users } from "lucide-react";
 import Frame from "./ChatSidebarFrame.tsx";
@@ -110,7 +109,6 @@ export default function RoleWorkspace({
           {visible.map((entry) => (
             <SidebarItem
               key={entry.id}
-              variant="accent"
               active={selected?.id === entry.id}
               disabled={busy}
               data-role-id={entry.id}
@@ -118,7 +116,7 @@ export default function RoleWorkspace({
               onClick={() => {
                 onSelect(entry.id);
               }}
-              className={`mx-0 w-full items-center ${selected?.id === entry.id ? "data-active:bg-fill-muted dark:data-active:bg-fill-muted data-active:shadow-none data-active:ring-0 theme-brutal:data-active:bg-brutal-pink theme-brutal:data-active:shadow-brutal-sm" : ""}`}
+              className={`mx-0 w-full items-center ${selected?.id === entry.id ? "  " : ""}`}
             >
               <AvatarSlot context="sidebar-list" type="agent" />
               <div className="flex min-w-0 flex-1 items-baseline gap-1 text-left">
@@ -158,17 +156,17 @@ export default function RoleWorkspace({
             <Tabs
               value={tab}
               onValueChange={onTab}
-              className="bg-layer-panel theme-brutal:border-b-2 theme-brutal:border-black theme-brutal:bg-white"
+              className="bg-layer-panel   "
             >
               <TabsList
                 variant="underline"
-                className="max-w-full theme-brutal:border-0 theme-brutal:bg-layer-panel"
+                className="max-w-full  "
                 aria-label="角色详情"
               >
                 <TabsTab
                   disabled={busy}
                   value="roles"
-                  className="!cursor-default h-7"
+                  className="!cursor-default"
                 >
                   <Settings2 size={12} />
                   <TabsLabel>配置</TabsLabel>
@@ -176,12 +174,11 @@ export default function RoleWorkspace({
                 <TabsTab
                   disabled={busy}
                   value="instances"
-                  className="!cursor-default h-7"
+                  className="!cursor-default"
                 >
                   <Users size={12} />
                   <TabsLabel>实例</TabsLabel>
                 </TabsTab>
-                <TabsIndicator />
               </TabsList>
             </Tabs>
           </div>

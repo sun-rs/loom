@@ -70,16 +70,16 @@ export default function ExternalIdentityDetailPanel({
         }
       />
 
-      <ProfilePanelBody className="flex-1 overflow-y-auto bg-layer-panel font-sans theme-brutal:bg-white">
+      <ProfilePanelBody className="flex-1 overflow-y-auto bg-layer-panel font-sans ">
         {profile.workspaceName ? (
           <div
             data-testid="external-identity-source"
-            className="border-b border-line-muted px-5 py-3 theme-brutal:border-black/10"
+            className="border-b border-line-muted px-5 py-3 "
           >
             <SectionEyebrow as="div" className="mb-1">
               {formatMessage({ id: "member.detail.from" })}
             </SectionEyebrow>
-            <div className="text-sm font-bold text-foreground-strong theme-brutal:text-black">
+            <div className="text-sm font-bold text-foreground-strong ">
               {profile.workspaceName}
             </div>
           </div>
@@ -93,13 +93,13 @@ export default function ExternalIdentityDetailPanel({
             appInitials={profile.displayName}
           />
           <div className="min-w-0 flex-1 pt-0.5">
-            <div className="truncate text-lg font-bold text-foreground-strong theme-brutal:text-black">
+            <div className="truncate text-lg font-bold text-foreground-strong ">
               {profile.displayName}
             </div>
-            <div className="truncate font-mono text-xs text-foreground-muted theme-brutal:text-black/60">
+            <div className="truncate font-mono text-xs text-foreground-muted ">
               {subtitle}
             </div>
-            <div className="mt-2 text-sm text-foreground-muted theme-brutal:text-black/60">
+            <div className="mt-2 text-sm text-foreground-muted ">
               {formatMessage({ id: "message.externalIdentity.externalProjection" })}
             </div>
           </div>

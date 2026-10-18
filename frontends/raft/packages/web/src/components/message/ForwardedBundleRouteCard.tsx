@@ -60,15 +60,15 @@ export default function ForwardedBundleRouteCard({
       />
       {detailOpen && createPortal(
         <section
-          className="fixed bottom-0 left-0 right-0 top-0 z-[70] flex flex-col bg-layer-panel theme-brutal:bg-white md:hidden"
+          className="fixed bottom-0 left-0 right-0 top-0 z-[70] flex flex-col bg-layer-panel  md:hidden"
           data-testid="forwarded-bundle-detail-page"
           aria-label={formatMessage({ id: "message.forwardedBundle.detailTitle" })}
         >
-          <header className="flex h-12 shrink-0 items-center gap-2 border-b border-line-muted px-3 theme-brutal:border-b-2 theme-brutal:border-black">
+          <header className="flex h-12 shrink-0 items-center gap-2 border-b border-line-muted px-3  ">
             <Button type="button" size="icon-sm" variant="outline" onClick={onBack} aria-label={formatMessage({ id: "message.forwardedBundle.backToConversation" })}>
               <ArrowLeft size={16} />
             </Button>
-            <h1 className="text-sm font-bold text-foreground-strong theme-brutal:text-black">{formatMessage({ id: "message.forwardedBundle.detailTitle" })}</h1>
+            <h1 className="text-sm font-bold text-foreground-strong ">{formatMessage({ id: "message.forwardedBundle.detailTitle" })}</h1>
           </header>
           <main className="min-h-0 flex-1 overflow-y-auto p-3">
             <ForwardedBundleCard

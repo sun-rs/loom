@@ -291,7 +291,7 @@ export default function CreateJointChannelDialog({ onClose }: { onClose: () => v
                       onClose();
                       nav.toSettings("billing");
                     }}
-                    className="font-bold text-foreground-strong theme-brutal:text-black underline"
+                    className="font-bold text-foreground-strong  underline"
                   >
                     {formatMessage({ id: "channel.createJoint.viewBilling" })}
                   </button>
@@ -358,7 +358,7 @@ export default function CreateJointChannelDialog({ onClose }: { onClose: () => v
 
           <Card className="space-y-3 p-3">
             <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-foreground-muted theme-brutal:text-black/60">
+              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-foreground-muted ">
                 <GitBranch size={14} />
                 {formatMessage({ id: "channel.createJoint.inviteServersSection" })}
               </div>
@@ -375,7 +375,7 @@ export default function CreateJointChannelDialog({ onClose }: { onClose: () => v
             </div>
             {/* Only at the cap, as in EditChannelDialog: it explains why "Add server" is disabled. */}
             {!canAddJointInviteDraft && (
-              <p className="text-xs font-bold text-foreground-muted theme-brutal:text-black/60" data-testid="create-joint-max-servers-hint">
+              <p className="text-xs font-bold text-foreground-muted " data-testid="create-joint-max-servers-hint">
                 {formatMessage(
                   { id: "channel.createJoint.maxServers" },
                   { max: MAX_JOINT_CHANNEL_SERVERS },
@@ -399,7 +399,7 @@ export default function CreateJointChannelDialog({ onClose }: { onClose: () => v
             {hasMembers ? (
               <div className="space-y-2">
                 <div className="relative">
-                  <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-foreground-muted theme-brutal:text-black/40" />
+                  <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-foreground-muted " />
                   <Input
                     type="text"
                     value={memberSearch}
@@ -412,7 +412,7 @@ export default function CreateJointChannelDialog({ onClose }: { onClose: () => v
                 <Card className="max-h-48 overflow-y-auto">
                   {filteredAgents.length > 0 && (
                     <>
-                      <SectionEyebrow as="div" className="bg-fill-muted theme-brutal:bg-white/50 px-3 py-1.5">
+                      <SectionEyebrow as="div" className="bg-fill-muted  px-3 py-1.5">
                         {formatMessage({ id: "channel.create.agents" })}
                       </SectionEyebrow>
                       {filteredAgents.map((agent) => {
@@ -422,8 +422,8 @@ export default function CreateJointChannelDialog({ onClose }: { onClose: () => v
                             key={agent.id}
                             type="button"
                             onClick={() => toggleAgent(agent.id)}
-                            className={`flex w-full items-center gap-2 px-3 py-1.5 text-sm font-medium text-foreground-strong theme-brutal:text-black transition-colors ${
- selected ? "bg-accent-soft theme-brutal:bg-brutal-pink/20" : "hover:bg-primary-soft theme-brutal:hover:bg-soft-signal"
+                            className={`flex w-full items-center gap-2 px-3 py-1.5 text-sm font-medium text-foreground-strong  transition-colors ${
+ selected ? "bg-accent-soft " : "hover:bg-primary-soft "
  }`}
                           >
                             <AvatarSlot context="sidebar-list" type="agent" agentAvatarUrl={agent.avatarUrl} />
@@ -437,7 +437,7 @@ export default function CreateJointChannelDialog({ onClose }: { onClose: () => v
 
                   {filteredHumans.length > 0 && (
                     <>
-                      <SectionEyebrow as="div" className="bg-fill-muted theme-brutal:bg-white/50 px-3 py-1.5">
+                      <SectionEyebrow as="div" className="bg-fill-muted  px-3 py-1.5">
                         {formatMessage({ id: "channel.create.humans" })}
                       </SectionEyebrow>
                       {filteredHumans.map((human) => {
@@ -447,8 +447,8 @@ export default function CreateJointChannelDialog({ onClose }: { onClose: () => v
                             key={human.userId}
                             type="button"
                             onClick={() => toggleHuman(human.userId)}
-                            className={`flex w-full items-center gap-2 px-3 py-1.5 text-sm font-medium text-foreground-strong theme-brutal:text-black transition-colors ${
- selected ? "bg-accent-soft theme-brutal:bg-brutal-pink/20" : "hover:bg-primary-soft theme-brutal:hover:bg-soft-signal"
+                            className={`flex w-full items-center gap-2 px-3 py-1.5 text-sm font-medium text-foreground-strong  transition-colors ${
+ selected ? "bg-accent-soft " : "hover:bg-primary-soft "
  }`}
                           >
                             <AvatarSlot context="sidebar-list" type="human" humanPlaceholder />
@@ -461,7 +461,7 @@ export default function CreateJointChannelDialog({ onClose }: { onClose: () => v
                   )}
 
                   {!hasFilteredMembers && (
-                    <div className="px-3 py-4 text-center font-mono text-sm text-foreground-muted theme-brutal:text-black/50">
+                    <div className="px-3 py-4 text-center font-mono text-sm text-foreground-muted ">
                       {formatMessage(
                         { id: "channel.create.noMatchesFor" },
                         { query: memberSearch.trim() },
@@ -471,7 +471,7 @@ export default function CreateJointChannelDialog({ onClose }: { onClose: () => v
                 </Card>
               </div>
             ) : (
-              <div className="font-mono text-sm text-foreground-muted theme-brutal:text-black/50">
+              <div className="font-mono text-sm text-foreground-muted ">
                 {formatMessage({ id: "channel.create.noMembersAvailable" })}
               </div>
             )}

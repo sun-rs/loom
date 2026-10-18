@@ -21,7 +21,7 @@ import type { ButtonHTMLAttributes } from "react";
 export type TextLinkVariant = "primary" | "muted";
 
 const VARIANT_CLASS: Record<TextLinkVariant, string> = {
-  primary: "font-medium text-accent-strong hover:underline focus-visible:underline theme-brutal:text-brutal-pink",
+  primary: "font-medium text-accent-strong hover:underline focus-visible:underline ",
   muted: "text-foreground-muted hover:text-foreground-strong hover:underline focus-visible:underline",
 };
 

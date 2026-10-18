@@ -32,7 +32,7 @@ export function ThemePresetCard({
       />
       <Card
         onClick={handleClick}
-        className="h-full transition-[opacity,box-shadow,transform] group-hover:-translate-y-px group-hover:opacity-100 peer-focus-visible:ring-2 peer-focus-visible:ring-line-strong peer-data-checked:ring-2 peer-data-checked:ring-accent-strong theme-brutal:peer-data-checked:ring-soft-signal"
+        className="h-full transition-[opacity,box-shadow,transform] group-hover:-translate-y-px group-hover:opacity-100 peer-focus-visible:ring-2 peer-focus-visible:ring-line-strong peer-data-checked:ring-2 peer-data-checked:ring-accent-strong "
       >
         <CardContent className="space-y-2 p-3">
           <div
@@ -62,7 +62,7 @@ export function ThemePresetCard({
             {selected ? (
               <Check
                 size={14}
-                className="shrink-0 text-accent-strong theme-brutal:text-primary-500"
+                className="shrink-0 text-accent-strong "
                 aria-hidden="true"
               />
             ) : null}

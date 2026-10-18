@@ -36,7 +36,7 @@ export function HistoryTimeline({ history, resolveName }: {
         return (
           <TimelineItem key={event.id} taskStatus={historyStatus(event)}>
             <TimelineTitle><TimelineText text={historyTitle(event, formatMessage)} bold /></TimelineTitle>
-            <TimelineTime className="text-foreground-muted theme-brutal:text-black/50">{meta}</TimelineTime>
+            <TimelineTime className="text-foreground-muted ">{meta}</TimelineTime>
             <TimelineContent><TimelineDetail event={event} resolveName={resolveName} formatMessage={formatMessage} /></TimelineContent>
           </TimelineItem>
         );

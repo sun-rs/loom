@@ -131,7 +131,7 @@ export default function TaskProperties({ task }: { task: Task }) {
               setOpen((v) => (v === "assignee" ? null : "assignee"));
             }}
             onRequestClose={() => setOpen(null)}
-            badgeClassName="bg-layer-panel text-foreground-strong theme-brutal:bg-white theme-brutal:text-black"
+            badgeClassName="bg-layer-panel text-foreground-strong  "
             uppercase={false}
             disabled={
               actions.disabled || !actions.canAssign || task.status === "done"

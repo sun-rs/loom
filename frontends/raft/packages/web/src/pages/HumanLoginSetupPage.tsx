@@ -73,13 +73,13 @@ function renderSelectItems(options: readonly SelectOption[]) {
 }
 
 function readyChipClassName() {
-  return "rounded-sm border border-line-muted bg-success-soft px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-success-strong theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-brutal-lime/70 theme-brutal:text-black";
+  return "rounded-sm border border-line-muted bg-success-soft px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-success-strong     ";
 }
 
 function appDetailsCardClassName(clickable: boolean) {
-  const base = "mt-1 rounded-md border border-line-muted bg-layer-panel px-3 py-2 text-sm text-foreground-strong theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white";
+  const base = "mt-1 rounded-md border border-line-muted bg-layer-panel px-3 py-2 text-sm text-foreground-strong    ";
   return clickable
-    ? `${base} block no-underline shadow-raft-sm transition-all duration-100 hover:-translate-y-[1px] hover:shadow-raft-md active:translate-x-[1px] active:translate-y-[1px] theme-brutal:shadow-brutal-sm theme-brutal:text-black theme-brutal:hover:shadow-brutal theme-brutal:active:shadow-brutal-active`
+    ? `${base} block no-underline shadow-raft-sm transition-all duration-100 hover:-translate-y-[1px] hover:shadow-raft-md active:translate-x-[1px] active:translate-y-[1px]    `
     : base;
 }
 
@@ -92,7 +92,7 @@ function LoginAppDetailsCard({ client }: { client: LoginClientSummary }) {
         type="app"
         appAvatarUrl={client.logoUrl}
         appInitials={initialsForApp(client.name)}
-        className="shadow-raft-sm theme-brutal:shadow-brutal-sm"
+        className="shadow-raft-sm "
       />
       <div className="min-w-0 flex-1 space-y-1">
         <div className="flex flex-wrap items-center gap-2">
@@ -410,8 +410,8 @@ export default function HumanLoginSetupPage() {
   }, []);
 
   return (
-    <div className="h-full min-h-0 overflow-y-auto bg-layer-canvas-muted font-display text-foreground-strong theme-brutal:bg-brutal-cream theme-brutal:text-black">
-      <header className="border-b border-line-hairline bg-layer-panel theme-brutal:border-b-2 theme-brutal:border-black theme-brutal:bg-white">
+    <div className="h-full min-h-0 overflow-y-auto bg-layer-canvas-muted font-display text-foreground-strong  ">
+      <header className="border-b border-line-hairline bg-layer-panel   ">
         <div className="flex items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4">
           <div className="flex min-w-0 flex-wrap items-center gap-1.5 font-black sm:gap-2">
             <span className="shrink-0 text-xs font-bold uppercase tracking-widest text-foreground-muted sm:text-sm">{formatMessage({ id: "pages.humanLogin.loginWith" })}</span>
@@ -433,14 +433,14 @@ export default function HumanLoginSetupPage() {
 
       {unavailableAfterLookup ? (
         <main className="mx-auto max-w-2xl px-4 py-6 pb-10 sm:px-5 sm:py-8 sm:pb-12 md:py-10 md:pb-14">
-          <section className="rounded-lg border border-line-muted bg-layer-panel p-4 shadow-raft-md theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal sm:p-6">
+          <section className="rounded-lg border border-line-muted bg-layer-panel p-4 shadow-raft-md      sm:p-6">
             <h1 className="text-3xl font-black leading-none sm:text-4xl">
               {formatMessage({ id: "pages.humanLogin.notAccessibleTitle" })}
             </h1>
             <p className="mt-4 text-sm leading-6 text-foreground-muted">
               {formatMessage({ id: "pages.humanLogin.notAccessibleBody" })}
             </p>
-            <div className="mt-5 rounded-md border border-line-muted bg-info-soft p-4 text-sm leading-6 theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-brutal-blue/20">
+            <div className="mt-5 rounded-md border border-line-muted bg-info-soft p-4 text-sm leading-6    ">
               <h2 className="font-black">{formatMessage({ id: "pages.humanLogin.howToGetAccessTitle" })}</h2>
               <p className="mt-1 text-foreground-muted">
                 {formatMessage({ id: "pages.humanLogin.howToGetAccessBody" })}
@@ -453,7 +453,7 @@ export default function HumanLoginSetupPage() {
         </main>
       ) : (
         <main className="mx-auto grid max-w-5xl gap-5 px-4 py-6 pb-10 sm:gap-6 sm:px-5 sm:py-8 sm:pb-12 md:grid-cols-[1fr_360px] md:py-10 md:pb-14">
-        <section className="rounded-lg border border-line-muted bg-layer-panel p-4 shadow-raft-md theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal sm:p-6">
+        <section className="rounded-lg border border-line-muted bg-layer-panel p-4 shadow-raft-md      sm:p-6">
           <h1 className="mb-3 leading-none">
             <span className="block text-lg font-bold sm:text-2xl">{formatMessage({ id: "pages.humanLogin.connectTitle" }, { serviceName, serverName: selectedServerName })}</span>
             <span className="mt-1 block break-words text-3xl font-black sm:text-5xl">{serviceName}</span>
@@ -489,14 +489,14 @@ export default function HumanLoginSetupPage() {
             </div>
             <div id="slock-login-server" className="mt-1">
               {clientLoading ? (
-                <div className="rounded-md border border-line-muted bg-layer-panel px-3 py-2 text-sm font-bold text-foreground-strong shadow-raft-sm theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal-sm">
+                <div className="rounded-md border border-line-muted bg-layer-panel px-3 py-2 text-sm font-bold text-foreground-strong shadow-raft-sm     ">
                   {formatMessage({ id: "pages.humanLogin.loadingServers" })}
                 </div>
               ) : isMarketplaceApp ? (
                 <div role="group" aria-labelledby="slock-login-server-label">
-                  <div className="overflow-hidden rounded-md border border-line-muted bg-layer-panel shadow-raft-sm theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal-sm">
+                  <div className="overflow-hidden rounded-md border border-line-muted bg-layer-panel shadow-raft-sm     ">
                     {marketplaceServerRows.length > 5 && (
-                      <div className="border-b border-line-hairline bg-layer-inset p-2 theme-brutal:border-b-2 theme-brutal:border-black theme-brutal:bg-brutal-cream">
+                      <div className="border-b border-line-hairline bg-layer-inset p-2   ">
                         <input
                           type="search"
                           value={serverQuery}
@@ -543,7 +543,7 @@ export default function HumanLoginSetupPage() {
                   </SelectContent>
                 </Select>
               ) : (
-                <div className="rounded-md border border-line-muted bg-layer-panel px-3 py-2 text-sm font-bold text-foreground-strong shadow-raft-sm theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal-sm">
+                <div className="rounded-md border border-line-muted bg-layer-panel px-3 py-2 text-sm font-bold text-foreground-strong shadow-raft-sm     ">
                   {formatMessage({ id: "pages.humanLogin.noAvailableServers" })}
                 </div>
               )}
@@ -561,7 +561,7 @@ export default function HumanLoginSetupPage() {
             <div
               role="alert"
               data-testid="oauth-scope-configuration-error"
-              className="mt-4 rounded-md border border-line-muted bg-accent-soft p-4 shadow-raft-sm theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-brutal-pink/20 theme-brutal:shadow-brutal-sm"
+              className="mt-4 rounded-md border border-line-muted bg-accent-soft p-4 shadow-raft-sm     "
             >
               <div className="text-sm font-black">
                 {formatMessage({ id: scopeValidationReason === "unsupported"
@@ -585,7 +585,7 @@ export default function HumanLoginSetupPage() {
 
           {isMarketplaceApp ? (
             <div
-              className="mt-6 rounded-md border border-line-muted bg-layer-inset p-4 theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-brutal-cream"
+              className="mt-6 rounded-md border border-line-muted bg-layer-inset p-4    "
               data-testid="marketplace-login-commit-zone"
               aria-busy={!!installingServerId}
             >
@@ -658,7 +658,7 @@ export default function HumanLoginSetupPage() {
               {selectedMarketplaceNeedsAdmin && selectedMarketplaceRow ? (
                 <a
                   href={`/s/${encodeURIComponent(selectedMarketplaceRow.server.slug)}/members`}
-                  className="btn-brutal-sm mt-3 flex w-full items-center justify-center bg-layer-panel px-4 py-2 text-center no-underline text-foreground-strong shadow-raft-sm theme-brutal:bg-white theme-brutal:shadow-brutal-sm"
+                  className="btn-brutal-sm mt-3 flex w-full items-center justify-center bg-layer-panel px-4 py-2 text-center no-underline text-foreground-strong shadow-raft-sm  "
                 >
                   {formatMessage({ id: "pages.humanLogin.findServerAdmin" })}
                 </a>
@@ -681,7 +681,7 @@ export default function HumanLoginSetupPage() {
           {status && <pre className="mt-4 min-h-16 overflow-auto bg-black p-3 text-xs text-white">{status}</pre>}
         </section>
 
-        <aside className="rounded-lg border border-line-muted bg-layer-panel p-5 shadow-raft-sm theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal-sm">
+        <aside className="rounded-lg border border-line-muted bg-layer-panel p-5 shadow-raft-sm     ">
           <h2 className="mb-4 text-xl font-black">{formatMessage({ id: "pages.humanLogin.faqTitle" })}</h2>
           <div className="space-y-5 text-sm leading-6 text-foreground-muted">
             <section>

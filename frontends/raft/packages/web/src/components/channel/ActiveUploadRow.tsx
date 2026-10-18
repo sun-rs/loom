@@ -22,7 +22,7 @@ export function ActiveUploadRow({
 
   return (
     <li
-      className="flex min-w-0 flex-wrap items-center justify-between gap-2 border-t border-line-muted pt-2 first:border-t-0 first:pt-0 theme-brutal:border-black/20"
+      className="flex min-w-0 flex-wrap items-center justify-between gap-2 border-t border-line-muted pt-2 first:border-t-0 first:pt-0 "
       data-testid={`channel-settings-joint-upload-${uploadId}`}
     >
       <Tooltip content={upload.filename}>

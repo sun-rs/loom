@@ -1,8 +1,10 @@
 {
-  "scope": "evo official-source UI adoption; registry of ownership and scenario bindings, not a second theme or size system",
+  "scope": "Raft 0.6 single design system; modes light/dark/system. Semantic recipes are owned by the pinned official package.",
   "sourceVersions": {
     "pageSource": "frontends/raft/adoption.json",
-    "primitiveSource": "frontends/raft/node_modules/raft-ui/package.json"
+    "primitiveSource": "frontends/raft/node_modules/raft-ui/package.json",
+    "uiResources": "frontends/raft/rui-resources.lock.json",
+    "pagePorts": "frontends/raft/rui-v6-ports.json"
   },
   "families": [
     {
@@ -99,7 +101,7 @@
       "id": "mobile-compact",
       "owner": "owner-approved compact mobile adaptation, preserved by AGENTS.md",
       "implementation": "frontends/raft/loom/mobile.css",
-      "rule": "Paint and hit area are separate. Use explicit data-loom-control detail-close/panel-back or official panel-action slot. Validate actual pointer targets, neighboring actions and disabled state; do not infer semantics from SVG/span nesting.",
+      "rule": "Retain owner-approved compact headers and composer layout; rUI 0.6 owns icon geometry and hit area. Do not reintroduce the old custom close pseudo-element.",
       "guard": "scripts/official-web/ui-contract.test.mjs",
       "browser": "scripts/official-web/memory-browser.mjs"
     },
@@ -143,43 +145,43 @@
     },
     "dialogSave": {
       "source": "frontends/raft/packages/web/src/components/channel/CreateChannelDialog.tsx",
-      "rule": "Compact creation or selection footer, sm accent.",
+      "rule": "Compact creation or selection footer, md accent.",
       "implementation": "frontends/raft/loom/ui-action-props.ts",
       "adoption": "local parameter binding; native recipe, not byte-exact copied page"
     },
     "confirmDelete": {
       "source": "frontends/raft/packages/web/src/components/ConfirmDialog.tsx",
-      "rule": "Destructive confirmation, native default sm danger.",
+      "rule": "Destructive confirmation, native default md danger.",
       "implementation": "frontends/raft/loom/ui-action-props.ts",
       "adoption": "local parameter binding; native recipe, not byte-exact copied page"
     },
     "confirmChange": {
       "source": "frontends/raft/packages/web/src/components/ConfirmDialog.tsx",
-      "rule": "Explicit disruptive change confirmation, sm warning variant.",
+      "rule": "Explicit disruptive change confirmation, md warning variant.",
       "implementation": "frontends/raft/loom/ui-action-props.ts",
       "adoption": "local parameter binding; native recipe, not byte-exact copied page"
     },
     "recovery": {
       "source": "frontends/raft/packages/web/src/components/search/MessageSearchPage.tsx",
-      "rule": "SearchResultsBoundaryFallback retry, sm outline; same role for Loom receipt verification.",
+      "rule": "SearchResultsBoundaryFallback retry, md outline; same role for Loom receipt verification.",
       "implementation": "frontends/raft/loom/ui-action-props.ts",
       "adoption": "local parameter binding; native recipe, not byte-exact copied page"
     },
     "secondary": {
       "source": "frontends/raft/packages/web/src/components/ConfirmDialog.tsx",
-      "rule": "Secondary compact dialog/content action, native sm outline.",
+      "rule": "Secondary compact dialog/content action, native md outline.",
       "implementation": "frontends/raft/loom/ui-action-props.ts",
       "adoption": "local parameter binding; native recipe, not byte-exact copied page"
     },
     "menuIcon": {
       "source": "frontends/raft/packages/web/src/components/agent/AgentDetailPanel.tsx",
-      "rule": "Icon-only menu uses native icon-sm recipe; preserve existing ghost interaction.",
+      "rule": "Icon-only menu uses native icon-md recipe; preserve existing ghost interaction.",
       "implementation": "frontends/raft/loom/ui-action-props.ts",
       "adoption": "local parameter binding; native recipe, not byte-exact copied page"
     },
     "panelIcon": {
       "source": "frontends/raft/packages/web/src/components/ui/CloseButton.tsx",
-      "rule": "Compact panel icon uses native icon-sm outline; does not replace CloseButton.",
+      "rule": "Compact panel icon uses native icon-md outline; does not replace CloseButton.",
       "implementation": "frontends/raft/loom/ui-action-props.ts",
       "adoption": "local parameter binding; native recipe, not byte-exact copied page"
     }

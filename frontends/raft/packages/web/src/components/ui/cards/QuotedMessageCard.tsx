@@ -50,7 +50,7 @@ export function Tag({
   variant?: BadgeProps["variant"];
 }) {
   return (
-    <Badge appearance="soft" variant={variant} uppercase={false} className={className}>
+    <Badge appearance="soft" variant={variant} className={className}>
       {children}
     </Badge>
   );
@@ -59,7 +59,7 @@ export function Tag({
 export function ThreadMarker() {
   const intl = useIntl();
   return (
-    <span className="inline-flex items-center gap-1 font-bold text-accent-strong theme-brutal:text-brutal-pink">
+    <span className="inline-flex items-center gap-1 font-bold text-accent-strong ">
       <MessageSquare size={10} className="shrink-0" />
       {intl.formatMessage({ id: "ui.quotedMessage.thread" })}
     </span>

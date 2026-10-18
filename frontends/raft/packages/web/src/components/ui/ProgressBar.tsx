@@ -42,7 +42,7 @@ export default function ProgressBar({
   return (
     <div className={className} {...rest}>
       {(label || (showPercent && !indeterminate)) && (
-        <div className="mb-1 flex items-center justify-between text-xs font-mono text-foreground-muted theme-brutal:text-black/60">
+        <div className="mb-1 flex items-center justify-between text-xs font-mono text-foreground-muted ">
           {label ? <span className="truncate">{label}</span> : <span />}
           {showPercent && !indeterminate && <span className="shrink-0">{Math.round(pct)}%</span>}
         </div>

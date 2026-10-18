@@ -599,7 +599,7 @@ export default function PublicServerPage({
 
   if (!readback && !error) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-layer-canvas-muted theme-brutal:bg-brutal-cream" data-testid="public-server-loading">
+      <div className="flex min-h-screen items-center justify-center bg-layer-canvas-muted " data-testid="public-server-loading">
         <Spinner size="lg" aria-label={formatMessage({ id: "common.loadingLabel" })} />
       </div>
     );
@@ -645,7 +645,7 @@ export default function PublicServerPage({
           />
         </AppShellSidebarSlot> : null}
 
-        {surfaceMode === "chat" ? <AppShellMainSlot className="bg-layer-canvas theme-brutal:bg-white" data-testid="public-server-channel-panel">
+        {surfaceMode === "chat" ? <AppShellMainSlot className="bg-layer-canvas " data-testid="public-server-channel-panel">
           {selected ? (
             <ConversationPanelRoot edge="attached" className="relative border-l-0">
               <PanelHeader
@@ -714,7 +714,7 @@ export default function PublicServerPage({
                 </nav>
               </PublicServerSidebarFrame>
             </AppShellSidebarSlot>
-            <AppShellMainSlot className="bg-layer-canvas theme-brutal:bg-white" data-testid="public-server-settings-surface">
+            <AppShellMainSlot className="bg-layer-canvas " data-testid="public-server-settings-surface">
               <div className="min-h-0 min-w-0 flex-1 overflow-y-auto">
                 {settingsTab === "release-notes" ? (
                   <Suspense fallback={settingsLoadingFallback}>
@@ -731,7 +731,7 @@ export default function PublicServerPage({
             needs, but a future floating element on the main column's right edge would collide here
             (@Bugen, review of PR #7983). */}
         {readOnlyThreadData ? (
-          <AppShellPanelSlot ref={threadPanelRef} className="absolute inset-0 z-20 flex bg-layer-canvas sm:relative sm:w-[380px] sm:border-l sm:border-line-hairline theme-brutal:bg-white theme-brutal:sm:border-l-2 theme-brutal:sm:border-black" style={threadPanelStyle} data-testid="public-server-thread-panel">            <PanelResizeHandle
+          <AppShellPanelSlot ref={threadPanelRef} className="absolute inset-0 z-20 flex bg-layer-canvas sm:relative sm:w-[380px] sm:border-l sm:border-line-hairline   " style={threadPanelStyle} data-testid="public-server-thread-panel">            <PanelResizeHandle
               side="left"
               visibleFrom="sm"
               onPointerDown={handleThreadPanelResizeStart}

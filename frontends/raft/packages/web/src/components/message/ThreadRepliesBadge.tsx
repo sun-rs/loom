@@ -27,7 +27,6 @@ export function ThreadRepliesBadge({
       render={<button type="button" />}
       data-testid="message-thread-replies-badge"
       onClick={onClick}
-      uppercase={false}
       appearance={hasUnreadReplies ? "soft" : "solid"}
       variant={hasUnreadReplies ? "information" : "default"}
       className="transition-colors"

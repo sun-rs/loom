@@ -19,10 +19,9 @@ export default function PublicServerChannelRow({
   const handleClick = useCallback(() => onSelectChannel(channelId), [channelId, onSelectChannel]);
   return (
     <SidebarItem
-      variant="accent"
       active={selected}
       onClick={handleClick}
-      className={`mx-0 w-full items-center ${selected ? "data-active:bg-fill-muted dark:data-active:bg-fill-muted data-active:shadow-none data-active:ring-0 theme-brutal:data-active:bg-brutal-pink theme-brutal:data-active:shadow-brutal-sm" : ""}`}
+      className={`mx-0 w-full items-center ${selected ? "  " : ""}`}
       data-public-channel-id={channelId}
     >
       <div className="flex size-[18px] shrink-0 items-center justify-center">

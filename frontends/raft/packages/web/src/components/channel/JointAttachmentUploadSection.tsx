@@ -133,14 +133,14 @@ export default function JointAttachmentUploadSection({
 
   return (
     <section
-      className="space-y-3 border-b border-line-muted pb-5 theme-brutal:border-black/10"
+      className="space-y-3 border-b border-line-muted pb-5 "
       data-testid="channel-settings-joint-uploads-section"
     >
       <div>
-        <h3 className="text-base font-bold text-foreground-strong theme-brutal:text-black" data-testid="channel-settings-joint-uploads-title">
+        <h3 className="text-base font-bold text-foreground-strong " data-testid="channel-settings-joint-uploads-title">
           {formatMessage({ id: "channel.edit.activeUploadsTitle" })}
         </h3>
-        <p className="mt-1 text-xs font-normal text-foreground-muted theme-brutal:text-black/55">
+        <p className="mt-1 text-xs font-normal text-foreground-muted ">
           {formatMessage({ id: "channel.edit.activeUploadsDescription" })}
         </p>
       </div>

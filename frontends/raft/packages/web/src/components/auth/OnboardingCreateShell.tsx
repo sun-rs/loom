@@ -15,7 +15,7 @@ export const ONBOARDING_CREATE_GRID_CLASS =
   "grid w-full flex-1 lg:grid-cols-[minmax(320px,2fr)_minmax(0,3fr)]";
 
 export const ONBOARDING_CREATE_FORM_PANEL_CLASS =
-  "relative flex w-full flex-col justify-center overflow-y-auto bg-layer-canvas px-6 py-10 sm:px-10 lg:border-r lg:border-line-hairline theme-brutal:lg:border-r-2 theme-brutal:lg:border-black";
+  "relative flex w-full flex-col justify-center overflow-y-auto bg-layer-canvas px-6 py-10 sm:px-10 lg:border-r lg:border-line-hairline  ";
 
 export const ONBOARDING_CREATE_DOT_GRID_CLASS =
   "absolute inset-0 opacity-60 [background-image:radial-gradient(var(--line-strong)_1px,transparent_1px)] [background-size:16px_16px]";
@@ -77,7 +77,7 @@ export function OnboardingCreateDotPane({
 }) {
   return (
     <aside
-      className="relative hidden overflow-hidden bg-layer-canvas-muted lg:flex theme-brutal:bg-brutal-cream"
+      className="relative hidden overflow-hidden bg-layer-canvas-muted lg:flex "
       data-testid={testId}
     >
       <div className={ONBOARDING_CREATE_DOT_GRID_CLASS} aria-hidden="true" />

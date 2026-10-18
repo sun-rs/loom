@@ -208,7 +208,7 @@ function TaskSection({
         {tasks.length === 0 ? (
           loadingPage ? (
             <SkeletonRow
-              className="gap-2 rounded border border-line-muted bg-layer-card p-3 theme-brutal:border-2 theme-brutal:border-black/30 theme-brutal:bg-white"
+              className="gap-2 rounded border border-line-muted bg-layer-card p-3   "
               lineWidths={SKELETON_LINE_WIDTHS}
             />
           ) : (
@@ -338,8 +338,8 @@ function DroppableColumn({
       ref={setNodeRef}
       open={!collapsed}
       onOpenChange={handleOpenChange}
-      className={`flex w-[320px] shrink-0 self-start flex-col border theme-brutal:border-2 ${
-        isOver ? "border-line-strong bg-primary-soft shadow-raft-sm theme-brutal:border-black theme-brutal:bg-soft-signal/20 theme-brutal:shadow-brutal-sm" : "border-line-muted bg-fill-muted/30 theme-brutal:border-black/20 theme-brutal:bg-white/30"
+      className={`flex w-[320px] shrink-0 self-start flex-col border  ${
+        isOver ? "border-line-strong bg-primary-soft shadow-raft-sm   " : "border-line-muted bg-fill-muted/30  "
       } p-3 transition-colors`}
     >
       <TaskBoardColumnTrigger
@@ -362,12 +362,12 @@ function DroppableColumn({
           {statusTasks.length === 0 ? (
             loadingPage ? (
               <SkeletonRow
-                className="gap-2 rounded border border-line-muted bg-layer-card p-3 theme-brutal:border-2 theme-brutal:border-black/30 theme-brutal:bg-white"
+                className="gap-2 rounded border border-line-muted bg-layer-card p-3   "
                 lineWidths={SKELETON_LINE_WIDTHS}
               />
             ) : (
-              <TaskBoardColumnEmpty className={`border border-dashed px-3 py-5 text-sm theme-brutal:border-2 ${
-                isOver ? "border-line-strong text-foreground-strong theme-brutal:border-black" : "border-line-muted text-foreground-muted theme-brutal:border-black/20"
+              <TaskBoardColumnEmpty className={`border border-dashed px-3 py-5 text-sm  ${
+                isOver ? "border-line-strong text-foreground-strong " : "border-line-muted text-foreground-muted "
               }`}>
                 {formatMessage(
                   { id: isOver ? "task.status.dropToSet" : "task.status.emptyGroup" },
@@ -566,7 +566,7 @@ function IdentityFilterChip({
         {icon}
         {label}
         {selected.length > 0 && (
-          <span className="border border-line-muted px-1 py-0.5 font-mono text-[10px] leading-none theme-brutal:border-black">
+          <span className="border border-line-muted px-1 py-0.5 font-mono text-[10px] leading-none ">
             {selected.length}
           </span>
         )}
@@ -1048,8 +1048,8 @@ export default function TasksPanel({ channelId }: TasksPanelProps = {}) {
           which already shows the channel header, so a second "Tasks" title
           would be redundant — drop straight into the toolbar. */}
       {!isChannelMode && (
-        <div data-slot="panel-header" className="flex h-panel-header items-center gap-3 border-b border-line-muted bg-layer-panel px-5 theme-brutal:border-b-2 theme-brutal:border-black theme-brutal:bg-soft-signal theme-brutal:md:bg-white">
-          <div className="hidden md:flex size-icon-header items-center justify-center border border-line-muted bg-primary-soft text-primary-strong theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-soft-signal theme-brutal:text-black">
+        <div data-slot="panel-header" className="flex h-panel-header items-center gap-3 border-b border-line-muted bg-layer-panel px-5    ">
+          <div className="hidden md:flex size-icon-header items-center justify-center border border-line-muted bg-primary-soft text-primary-strong    ">
             <CheckSquare size={18} />
           </div>
           <div className="min-w-0 flex-1">
@@ -1081,7 +1081,7 @@ export default function TasksPanel({ channelId }: TasksPanelProps = {}) {
                 <Hash size={14} />
                 {formatMessage({ id: "task.panel.channelColumn" })}
                 {selectedChannelIds.length > 0 && (
-                  <span className="border border-line-muted px-1 py-0.5 font-mono text-[10px] leading-none theme-brutal:border-black">
+                  <span className="border border-line-muted px-1 py-0.5 font-mono text-[10px] leading-none ">
                     {selectedChannelIds.length}
                   </span>
                 )}
@@ -1190,14 +1190,14 @@ export default function TasksPanel({ channelId }: TasksPanelProps = {}) {
         data-task-virtual-scroll
         // The floating-tab-bar clearance belongs to the Tasks tab root only —
         // channel-detail panes have no capsule above them (task #678).
-        className={`flex-1 overflow-auto bg-layer-canvas-muted p-4 safe-bottom theme-brutal:bg-white${isChannelMode ? "" : " mobile-nav-clearance"}`}
+        className={`flex-1 overflow-auto bg-layer-canvas-muted p-4 safe-bottom  ? "" : " mobile-nav-clearance"}`}
       >
         {loading ? (
           <div className="flex flex-col gap-2" aria-hidden="true">
             {Array.from({ length: 5 }, (_, i) => (
               <SkeletonRow
                 key={i}
-                className="gap-2 rounded border border-line-muted bg-layer-card p-3 theme-brutal:border-2 theme-brutal:border-black/30 theme-brutal:bg-white"
+                className="gap-2 rounded border border-line-muted bg-layer-card p-3   "
                 lineWidths={SKELETON_LINE_WIDTHS}
               />
             ))}

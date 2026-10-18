@@ -87,7 +87,7 @@ export default function Modal({
   const zClass = layer >= 2 ? "z-[70]" : layer >= 1 ? "z-[60]" : "z-50";
   const backdropClass = backdrop === "transparent"
     ? "bg-transparent"
-    : "bg-layer-backdrop backdrop-blur-[2px] theme-brutal:bg-black/60";
+    : "bg-layer-backdrop backdrop-blur-[2px] ";
 
   return createPortal(
     <div

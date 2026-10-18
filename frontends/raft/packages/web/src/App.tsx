@@ -199,7 +199,7 @@ function EnvironmentDevOverlay() {
           size="icon-sm"
           aria-hidden="true"
           data-dev-overlay-handle
-          className="flex size-6 touch-none select-none items-center justify-center border border-line-strong text-sm leading-none shadow-raft-sm theme-brutal:border-black theme-brutal:bg-soft-signal theme-brutal:text-black theme-brutal:shadow-brutal-sm cursor-grab active:cursor-grabbing"
+          className="flex size-6 touch-none select-none items-center justify-center border border-line-strong text-sm leading-none shadow-raft-sm     cursor-grab active:cursor-grabbing"
         >
           <Settings2 size={12} strokeWidth={2.5} />
         </Button>
@@ -215,7 +215,7 @@ function EnvironmentDevOverlay() {
         data-dev-overlay-handle
         onClick={isSlockdev ? togglePanel : undefined}
         aria-label={triggerTitle}
-        className={`size-7 touch-none select-none border border-line-strong shadow-raft-sm theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-soft-signal theme-brutal:text-black theme-brutal:shadow-brutal-sm cursor-grab active:cursor-grabbing`}
+        className={`size-7 touch-none select-none border border-line-strong shadow-raft-sm      cursor-grab active:cursor-grabbing`}
         data-testid="raftdev-debug-trigger"
       >
         <Settings2 size={14} strokeWidth={2.5} aria-hidden="true" />
@@ -273,7 +273,7 @@ function SlockdevDebugPanel(props: SlockdevDebugPanelProps) {
   if (import.meta.env?.VITE_SLOCKDEV_HIDE_PANEL === "1") return null;
 
   return (
-    <div className="w-72 max-w-[calc(100vw-1rem)] overflow-y-auto bg-layer-panel p-3 text-xs text-foreground-strong shadow-raft-sm theme-brutal:bg-white theme-brutal:shadow-brutal">
+    <div className="w-72 max-w-[calc(100vw-1rem)] overflow-y-auto bg-layer-panel p-3 text-xs text-foreground-strong shadow-raft-sm  ">
           <div className="mb-2 flex items-start justify-between gap-2">
             <div className="min-w-0">
               <div className="font-bold uppercase tracking-widest text-foreground-strong">
@@ -301,7 +301,7 @@ function SlockdevDebugPanel(props: SlockdevDebugPanelProps) {
 
           {previewDescription ? (
             <Tooltip content={previewDescription}>
-              <details className="mb-2 rounded-md border border-line-muted bg-primary-soft p-2 theme-brutal:rounded-none theme-brutal:bg-soft-signal/20">
+              <details className="mb-2 rounded-md border border-line-muted bg-primary-soft p-2  ">
                 <summary className="cursor-pointer select-none text-[10px] font-bold uppercase tracking-widest text-foreground-muted">
                   Preview description
                 </summary>
@@ -419,10 +419,10 @@ export function ServerAccessDeniedPage() {
   }, [goToFallback]);
 
   return (
-    <div className="flex min-h-0 flex-1 items-center justify-center bg-layer-canvas px-4 font-display safe-top safe-bottom theme-brutal:bg-brutal-cream">
-      <Card className="w-full max-w-md border border-line-muted bg-layer-panel p-6 shadow-raft-md theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal">
-        <h1 className="text-2xl font-black text-foreground-strong theme-brutal:text-black">{formatMessage({ id: "pages.serverNotFound.title" })}</h1>
-        <p className="mt-3 text-sm leading-6 text-foreground-muted theme-brutal:text-black/70">
+    <div className="flex min-h-0 flex-1 items-center justify-center bg-layer-canvas px-4 font-display safe-top safe-bottom ">
+      <Card className="w-full max-w-md border border-line-muted bg-layer-panel p-6 shadow-raft-md    ">
+        <h1 className="text-2xl font-black text-foreground-strong ">{formatMessage({ id: "pages.serverNotFound.title" })}</h1>
+        <p className="mt-3 text-sm leading-6 text-foreground-muted ">
           {fallbackServer
             ? formatMessage(
                 { id: "pages.serverNotFound.redirectingToServer" },

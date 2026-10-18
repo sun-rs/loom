@@ -121,12 +121,12 @@ export default function SelectModeToolbar({
   // forward, common copy-link, and a More menu for lower-frequency actions.
   return (
     <div
-      className="relative z-30 border-t border-primary-edge bg-primary-soft safe-bottom-action-bar text-primary-strong theme-brutal:border-t-2 theme-brutal:border-black theme-brutal:bg-soft-signal theme-brutal:text-black"
+      className="relative z-30 border-t border-primary-edge bg-primary-soft safe-bottom-action-bar text-primary-strong    "
       data-testid="select-mode-toolbar"
     >
       <div className="flex items-center gap-1 px-2 py-2 sm:gap-1.5 sm:px-2">
         <span
-          className="font-mono text-xs font-bold text-primary-strong/70 theme-brutal:text-black/70 whitespace-nowrap"
+          className="font-mono text-xs font-bold text-primary-strong/70  whitespace-nowrap"
           data-testid="select-mode-count"
         >
           {formatMessage({ id: "message.selectModeToolbar.selectedCount" }, { count })}

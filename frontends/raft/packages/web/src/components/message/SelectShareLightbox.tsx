@@ -193,8 +193,8 @@ export default function SelectShareLightbox({
         className=" flex max-h-[90vh] w-full max-w-3xl flex-col"
         onClick={stopClickPropagation}
       >
-        <div className="flex h-panel-header shrink-0 items-center justify-between border-b-2 border-line-muted theme-brutal:border-black bg-layer-panel theme-brutal:bg-white px-5">
-          <h2 className="text-base font-bold text-foreground-strong theme-brutal:text-black">{formatMessage({ id: "message.selectShare.title" })}</h2>
+        <div className="flex h-panel-header shrink-0 items-center justify-between border-b-2 border-line-muted  bg-layer-panel  px-5">
+          <h2 className="text-base font-bold text-foreground-strong ">{formatMessage({ id: "message.selectShare.title" })}</h2>
           <CloseButton
             type="button"
             onClick={onClose}
@@ -206,16 +206,16 @@ export default function SelectShareLightbox({
             <X size={14} />
           </CloseButton>
         </div>
-        <div className="flex-1 overflow-auto bg-layer-panel theme-brutal:bg-white p-4">
+        <div className="flex-1 overflow-auto bg-layer-panel  p-4">
           <img
             src={dataUrl}
             alt={formatMessage({ id: "message.selectShare.alt" })}
-            className="mx-auto block max-w-full border-2 border-line-muted theme-brutal:border-black shadow-raft-md theme-brutal:shadow-brutal"
+            className="mx-auto block max-w-full border-2 border-line-muted  shadow-raft-md "
             onLoad={handlePreviewImageLoad}
             style={previewSourceWidth ? { width: `${previewSourceWidth}px` } : undefined}
           />
         </div>
-        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 border-t-2 border-line-muted theme-brutal:border-black bg-layer-panel theme-brutal:bg-white px-4 py-3 sm:px-5">
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 border-t-2 border-line-muted  bg-layer-panel  px-4 py-3 sm:px-5">
           {copyError && (
             <p
               role="alert"

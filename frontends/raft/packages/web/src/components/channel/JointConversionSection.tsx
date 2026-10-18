@@ -75,7 +75,7 @@ export default function JointConversionSection({
   onCancel,
   onOpenChannel,
   cancelBusy = false,
-  headingClassName = "text-base font-bold text-foreground-strong theme-brutal:text-black",
+  headingClassName = "text-base font-bold text-foreground-strong ",
 }: JointConversionSectionProps) {
   const { formatMessage } = useIntl();
   const descriptionId = "channel-settings-joint-conversion-description";
@@ -98,7 +98,7 @@ export default function JointConversionSection({
 
   return (
     <section
-      className="mb-5 space-y-4 border-b border-line-muted pb-5 theme-brutal:border-black/10"
+      className="mb-5 space-y-4 border-b border-line-muted pb-5 "
       data-testid="channel-settings-joint-conversion-section"
     >
       <div className="space-y-2">
@@ -106,7 +106,7 @@ export default function JointConversionSection({
           <h3 className={headingClassName} data-testid="channel-settings-joint-conversion-title">
             {formatMessage({ id: "channel.edit.convertSectionTitle" })}
           </h3>
-          <p id={descriptionId} className="mt-1 text-xs font-normal text-foreground-muted theme-brutal:text-black/55">
+          <p id={descriptionId} className="mt-1 text-xs font-normal text-foreground-muted ">
             {formatMessage({ id: "channel.edit.convertSectionDescription" })}
           </p>
         </div>
@@ -195,7 +195,7 @@ export default function JointConversionSection({
                   </Badge>
                   <span>{formatMessage({ id: stage.messageId })}</span>
                   {current && (
-                    <span className="text-xs font-normal text-foreground-muted theme-brutal:text-black/55">
+                    <span className="text-xs font-normal text-foreground-muted ">
                       {formatMessage({ id: "channel.edit.convertInProgress" })}
                     </span>
                   )}

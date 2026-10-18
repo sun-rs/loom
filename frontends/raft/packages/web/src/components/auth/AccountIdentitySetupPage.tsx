@@ -460,8 +460,8 @@ export default function AccountIdentitySetupPage({
 
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
               <FormField label={formatMessage({ id: "pages.identitySetup.usernameLabel" })} labelStyle="plain" error={fieldErrors.handle} htmlFor="identity-handle">
-                <div className="flex items-stretch overflow-hidden rounded-md border border-line-field bg-layer-panel transition-shadow duration-100 focus-within:border-line-field-hover theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal-sm theme-brutal:focus-within:shadow-brutal">
-                  <span className="flex items-center border-r border-line-hairline bg-soft-signal px-3 font-mono text-base font-bold text-foreground-muted theme-brutal:border-r-2 theme-brutal:border-black theme-brutal:text-black/60">@</span>
+                <div className="flex items-stretch overflow-hidden rounded-md border border-line-field bg-layer-panel transition-shadow duration-100 focus-within:border-line-field-hover      ">
+                  <span className="flex items-center border-r border-line-hairline bg-soft-signal px-3 font-mono text-base font-bold text-foreground-muted   ">@</span>
                   <Input
                     id="identity-handle"
                     name="username"
@@ -504,7 +504,7 @@ export default function AccountIdentitySetupPage({
                 </div>
                 <div>
                   <div className="flex items-center gap-3">
-                    <div className="size-14 shrink-0 theme-brutal:shadow-brutal-sm">
+                    <div className="size-14 shrink-0 ">
                       <PreviewAvatar
                         avatarPreviewUrl={avatarPreviewUrl}
                         persistedAvatarUrl={user.avatarUrl}

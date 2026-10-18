@@ -34,9 +34,9 @@ export function JointInviteDraftCard({
   );
 
   return (
-    <Card className="space-y-3 bg-layer-inset theme-brutal:bg-brutal-gray/20 p-3">
+    <Card className="space-y-3 bg-layer-inset  p-3">
       <div className="flex items-center justify-between gap-3">
-        <div className="text-xs font-bold uppercase text-foreground-muted theme-brutal:text-black/60">
+        <div className="text-xs font-bold uppercase text-foreground-muted ">
           {formatMessage({ id: "channel.createJoint.serverInviteIndex" }, { n: index + 1 })}
         </div>
         {canRemove && (

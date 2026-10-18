@@ -96,7 +96,7 @@ export function DestinationPlaceholder({ active }: { active: string }) {
   const destination = destinations.find((entry) => entry.id === active);
   return (
     <AppShellMainSlot
-      className="bg-layer-canvas theme-brutal:bg-white"
+      className="bg-layer-canvas "
       data-testid="loom-destination-page"
     >
       <PanelHeader

@@ -63,7 +63,7 @@ function ScopeChips({ scopes }: { scopes: string[] }) {
   return (
     <div className="flex flex-wrap gap-1">
       {scopes.map((scope) => (
-        <span key={scope} className="inline-flex border border-line-muted bg-layer-card px-1.5 py-0.5 text-[10px] font-bold uppercase theme-brutal:border-black theme-brutal:bg-white">
+        <span key={scope} className="inline-flex border border-line-muted bg-layer-card px-1.5 py-0.5 text-[10px] font-bold uppercase  ">
           {scope}
         </span>
       ))}
@@ -171,7 +171,7 @@ function AppEventRow({ agentId, event }: { agentId: string; event: AgentAppEvent
       <button type="button" onClick={() => void toggle()} aria-expanded={open} className="block w-full text-left">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0 text-sm font-bold text-foreground-strong break-words">{event.summary}</div>
-          <Badge appearance="soft" variant={EVENT_STATUS_VARIANT[event.status]} uppercase className="shrink-0 text-[10px]">
+          <Badge appearance="soft" variant={EVENT_STATUS_VARIANT[event.status]} className="shrink-0 text-[10px]">
             {formatMessage({ id: `agent.apps.eventStatus.${event.status}` as MessageId })}
           </Badge>
         </div>
@@ -186,7 +186,7 @@ function AppEventRow({ agentId, event }: { agentId: string; event: AgentAppEvent
           <Banner intent="warning" density="sm" className="font-bold">{error}</Banner>
         ) : detail ? (
           // App-supplied data: shown as inert JSON text, never rendered as links or markup.
-          <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-all border border-line-muted bg-layer-card p-2 font-mono text-[11px] text-foreground-strong theme-brutal:border-black/15">
+          <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-all border border-line-muted bg-layer-card p-2 font-mono text-[11px] text-foreground-strong ">
             {JSON.stringify(detail.payload, null, 2)}
           </pre>
         ) : (
@@ -270,7 +270,7 @@ function AgentAppEventsSection({ agentId }: { agentId: string }) {
       )}
       {error && <Banner intent="warning" density="sm" className="font-bold">{error}</Banner>}
       {events.length === 0 && !loading && !error ? (
-        <div className="text-sm text-foreground-muted theme-brutal:text-black/50">{formatMessage({ id: "agent.apps.noEvents" })}</div>
+        <div className="text-sm text-foreground-muted ">{formatMessage({ id: "agent.apps.noEvents" })}</div>
       ) : (
         <div className="space-y-2">
           {events.map((event) => <AppEventRow key={event.id} agentId={agentId} event={event} />)}
@@ -340,7 +340,7 @@ export default function AgentAppAccessTab({ agentId, canManageAgentAccess }: { a
   const active = items.filter((item) => item.type === "active");
 
   return (
-    <div className="flex-1 overflow-y-auto bg-layer-panel px-5 py-4 space-y-6 theme-brutal:bg-white">
+    <div className="flex-1 overflow-y-auto bg-layer-panel px-5 py-4 space-y-6 ">
       {error && <Banner intent="warning" density="sm" className="font-bold">{error}</Banner>}
 
       {pending.length > 0 && (
@@ -353,7 +353,7 @@ export default function AgentAppAccessTab({ agentId, canManageAgentAccess }: { a
                   <div className="font-bold text-foreground-strong">{item.clientName}</div>
                   <div className="text-xs text-foreground-muted">{formatShortDateTime(item.createdAt)}</div>
                 </div>
-                <Badge appearance="soft" variant="warning" uppercase className="text-[10px]">
+                <Badge appearance="soft" variant="warning" className="text-[10px]">
                   {formatMessage({ id: "agent.apps.pending" })}
                 </Badge>
               </div>
@@ -395,7 +395,7 @@ export default function AgentAppAccessTab({ agentId, canManageAgentAccess }: { a
           />
         )}
         {active.length === 0 ? (
-          <div className="text-sm text-foreground-muted theme-brutal:text-black/50">{formatMessage({ id: "agent.detail.noConnectedApps" })}</div>
+          <div className="text-sm text-foreground-muted ">{formatMessage({ id: "agent.detail.noConnectedApps" })}</div>
         ) : (
           <div className="space-y-3">
             {active.map((item) => (
@@ -408,7 +408,7 @@ export default function AgentAppAccessTab({ agentId, canManageAgentAccess }: { a
                       <div className="text-xs text-foreground-muted">{formatMessage({ id: GRANT_SOURCE_LABEL[item.grantSource] })}</div>
                     )}
                   </div>
-                  <Badge appearance="soft" variant="success" uppercase className="text-[10px]">
+                  <Badge appearance="soft" variant="success" className="text-[10px]">
                     {formatMessage({ id: "agent.detail.active" })}
                   </Badge>
                 </div>

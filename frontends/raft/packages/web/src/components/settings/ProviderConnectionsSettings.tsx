@@ -135,10 +135,10 @@ export default function ProviderConnectionsSettings() {
           </Button>
         )}
       </div>
-      <p className="text-sm text-foreground-muted theme-brutal:text-black/60">{formatMessage({ id: "settings.providers.description" })}</p>
+      <p className="text-sm text-foreground-muted ">{formatMessage({ id: "settings.providers.description" })}</p>
 
       {(error || actionError) && (
-        <div className="border-2 border-line-muted theme-brutal:border-black bg-red-50 px-3 py-2 text-sm font-medium text-red-800">
+        <div className="border-2 border-line-muted  bg-red-50 px-3 py-2 text-sm font-medium text-red-800">
           {actionError || formatMessage({ id: "settings.providers.loadError" })}
         </div>
       )}
@@ -146,11 +146,11 @@ export default function ProviderConnectionsSettings() {
       {loading ? (
         <div className="flex min-h-32 items-center justify-center"><Spinner size="md"  aria-label={formatMessage({ id: "common.loadingLabel" })} /></div>
       ) : connections.length === 0 ? (
-        <div className="border-2 border-dashed border-line-muted theme-brutal:border-black/25 px-5 py-10 text-center text-sm text-foreground-muted theme-brutal:text-black/55">
+        <div className="border-2 border-dashed border-line-muted  px-5 py-10 text-center text-sm text-foreground-muted ">
           {formatMessage({ id: "settings.providers.empty" })}
         </div>
       ) : (
-        <div className="divide-y-2 divide-line-muted theme-brutal:divide-black border-2 border-line-muted theme-brutal:border-black bg-layer-panel theme-brutal:bg-white shadow-raft-sm theme-brutal:shadow-brutal-sm">
+        <div className="divide-y-2 divide-line-muted  border-2 border-line-muted  bg-layer-panel  shadow-raft-sm ">
           {connections.map((connection) => (
             <ManagedConnectionRow
               key={connection.id}
@@ -283,12 +283,12 @@ export function ConnectionRow({
     <div data-testid={`provider-connection-${connection.id}`}>
       <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
         <div className="flex min-w-0 flex-1 items-start gap-3">
-          <span className={`mt-0.5 flex size-8 shrink-0 items-center justify-center border-2 border-line-muted theme-brutal:border-black ${ready ? "bg-green-100" : "bg-black/5"}`}>
+          <span className={`mt-0.5 flex size-8 shrink-0 items-center justify-center border-2 border-line-muted  ${ready ? "bg-green-100" : "bg-black/5"}`}>
             {ready ? <CheckCircle2 size={17} /> : <XCircle size={17} />}
           </span>
           <div className="min-w-0">
             <div className="truncate text-sm font-bold">{connection.name}</div>
-            <div className="mt-0.5 text-xs text-foreground-muted theme-brutal:text-black/55">
+            <div className="mt-0.5 text-xs text-foreground-muted ">
               {labelForProviderId(connection.providerId, providerOptions)}
               {" · "}
               {formatMessage({ id: `settings.providers.status.${connection.status}` })}
@@ -404,7 +404,7 @@ function AssignedAgentsPanel({
   return (
     <div
       id={panelId}
-      className="border-t border-line-hairline bg-fill-muted/30 px-4 py-3 theme-brutal:border-t-2 theme-brutal:border-black theme-brutal:bg-black/[0.03]"
+      className="border-t border-line-hairline bg-fill-muted/30 px-4 py-3   "
       data-testid="provider-connection-assigned-agents"
     >
       <div className="text-xs font-black uppercase tracking-wide text-foreground-muted">
@@ -591,7 +591,7 @@ function ProviderConnectionTestModal({
           )}
         </FormField>
         <div className="flex items-center justify-between gap-3">
-          <p className={`text-xs ${modelError ? "text-red-700" : "text-foreground-muted theme-brutal:text-black/55"}`}>
+          <p className={`text-xs ${modelError ? "text-red-700" : "text-foreground-muted "}`}>
             {modelError || formatMessage({ id: "settings.providers.testModelHint" })}
           </p>
           <Button type="button" size="sm" disabled={loadingModels || submitting} onClick={loadModels}>
@@ -745,7 +745,7 @@ function VerifiedOnChip({ latestVerified }: { latestVerified: ProviderConnection
     <div className="flex flex-wrap gap-2 px-4 pb-3" data-testid="provider-connection-verified-on">
       <Tooltip content={`${latestVerified.runtime} · ${latestVerified.model} · ${latestVerified.verifiedAt}`}>
       <span
-        className="rounded-md border border-line-muted bg-success-soft px-2 py-0.5 text-xs font-bold text-success-strong theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black/30 theme-brutal:bg-green-50 theme-brutal:text-black/70"
+        className="rounded-md border border-line-muted bg-success-soft px-2 py-0.5 text-xs font-bold text-success-strong     "
       >
         {formatMessage({ id: "settings.providers.verifiedOn" })}
         {" "}

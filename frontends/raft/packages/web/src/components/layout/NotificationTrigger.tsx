@@ -7,7 +7,7 @@ import {
   NotificationCenter,
   PopoverTrigger,
   Status,
-  useThemeFamily,
+
 } from "raft-ui";
 import ConnectedNotificationCenter from "./NotificationCenter";
 import Tooltip from "../ui/Tooltip";
@@ -62,10 +62,10 @@ export default function NotificationTrigger({
       icon={flavor === "rail-bottom" ? (
         <Bell
           size={18}
-          className="size-4 text-[var(--foreground-icon)] group-hover:text-[var(--foreground-strong)] theme-brutal:size-[18px] theme-brutal:text-[var(--foreground-strong)]"
+          className="size-4 text-[var(--foreground-icon)] group-hover:text-[var(--foreground-strong)]  "
         />
       ) : (
-        <Bell size={16} className="text-foreground-muted theme-brutal:text-black" />
+        <Bell size={16} className="text-foreground-muted " />
       )}
     />
   );
@@ -115,7 +115,7 @@ const NotificationTriggerButton = forwardRef<HTMLButtonElement, NotificationTrig
   className = "",
   ...buttonProps
 }, ref) {
-  const theme = useThemeFamily();
+
   return (
     <button
       {...buttonProps}
@@ -125,10 +125,10 @@ const NotificationTriggerButton = forwardRef<HTMLButtonElement, NotificationTrig
       data-state={open ? "open" : "closed"}
       data-has-unread={hasUnread ? "true" : "false"}
       data-testid={testId}
-      className={`group relative inline-flex ${sizeClass} items-center justify-center rounded-md border border-transparent transition-colors theme-brutal:rounded-none theme-brutal:border-2 ${
+      className={`group relative inline-flex ${sizeClass} items-center justify-center rounded-md border border-transparent transition-colors   ${
         open
-          ? "bg-fill-muted shadow-raft-sm theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal-sm"
-          : "bg-transparent hover:bg-fill-muted theme-brutal:hover:border-black theme-brutal:hover:bg-white"
+          ? "bg-fill-muted shadow-raft-sm   "
+          : "bg-transparent hover:bg-fill-muted  "
       } ${className}`}
     >
       <span className="relative inline-flex items-center justify-center">
@@ -141,13 +141,12 @@ const NotificationTriggerButton = forwardRef<HTMLButtonElement, NotificationTrig
             // dot with a hand-set offset — same size, same position, same
             // theme mapping, same AT announcement, and it tracks future rail
             // recipe changes automatically.
-            <AppRailItemAttention title={ariaLabel}>{icon}</AppRailItemAttention>
+            <>{icon}<AppRailItemAttention title={ariaLabel} /></>
           ) : (
             <Status
               aria-hidden
-              attention
               size="md"
-              variant={theme === "elegant" ? "primary" : "accent"}
+              variant={"accent"}
               className="pointer-events-none absolute -top-1 -end-1"
               data-testid={`${testId}-unread-dot`}
             />

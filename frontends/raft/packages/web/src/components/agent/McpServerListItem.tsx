@@ -86,23 +86,23 @@ export function McpServerListItem({
     <div className="flex min-w-0 flex-1 items-start gap-3">
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <h4 className="break-words text-sm font-bold text-foreground-strong theme-brutal:text-black">{server.name}</h4>
-          {!server.enabled && <span className="border border-line-muted bg-fill-muted px-1.5 py-0.5 text-[10px] font-bold uppercase theme-brutal:border-black theme-brutal:bg-gray-200">{formatMessage({ id: "agent.mcp.disabledBadge" })}</span>}
-          <span className="border border-line-muted bg-layer-panel px-1.5 py-0.5 text-[10px] font-bold uppercase theme-brutal:border-black theme-brutal:bg-white">{server.provider}</span>
+          <h4 className="break-words text-sm font-bold text-foreground-strong ">{server.name}</h4>
+          {!server.enabled && <span className="border border-line-muted bg-fill-muted px-1.5 py-0.5 text-[10px] font-bold uppercase  ">{formatMessage({ id: "agent.mcp.disabledBadge" })}</span>}
+          <span className="border border-line-muted bg-layer-panel px-1.5 py-0.5 text-[10px] font-bold uppercase  ">{server.provider}</span>
           {server.authMode === "oauth" ? (
-            <span className={`border border-line-muted px-1.5 py-0.5 text-[10px] font-bold uppercase theme-brutal:border-black ${server.oauthStatus === "connected" ? "bg-success-soft text-success-strong theme-brutal:bg-brutal-lime theme-brutal:text-black" : server.oauthStatus === "error" ? "bg-danger-soft text-danger-strong theme-brutal:bg-brutal-red/30 theme-brutal:text-black" : "bg-accent-soft text-accent-strong theme-brutal:bg-brutal-lavender/40 theme-brutal:text-black"}`}>
+            <span className={`border border-line-muted px-1.5 py-0.5 text-[10px] font-bold uppercase  ${server.oauthStatus === "connected" ? "bg-success-soft text-success-strong  " : server.oauthStatus === "error" ? "bg-danger-soft text-danger-strong  " : "bg-accent-soft text-accent-strong  "}`}>
               {formatMessage({ id: "agent.mcp.oauthStatus" }, { status: server.oauthStatus })}
             </span>
           ) : server.hasCredentials ? (
-            <span className="border border-line-muted bg-accent-soft px-1.5 py-0.5 text-[10px] font-bold uppercase text-accent-strong theme-brutal:border-black theme-brutal:bg-brutal-lavender/40 theme-brutal:text-black">{formatMessage({ id: "agent.mcp.credentialsStoredBadge" })}</span>
+            <span className="border border-line-muted bg-accent-soft px-1.5 py-0.5 text-[10px] font-bold uppercase text-accent-strong   ">{formatMessage({ id: "agent.mcp.credentialsStoredBadge" })}</span>
           ) : null}
         </div>
-        {server.description && <p className="mt-1 text-sm text-foreground-muted theme-brutal:text-black/70">{server.description}</p>}
-        <p className="mt-1 break-all font-mono text-xs text-foreground-placeholder theme-brutal:text-black/50">{server.endpointUrl}</p>
+        {server.description && <p className="mt-1 text-sm text-foreground-muted ">{server.description}</p>}
+        <p className="mt-1 break-all font-mono text-xs text-foreground-placeholder ">{server.endpointUrl}</p>
         {scope === "agent" && server.usage && (
-          <dl className="mt-3 grid gap-2 text-xs text-foreground-muted sm:grid-cols-3 theme-brutal:text-black/65">
+          <dl className="mt-3 grid gap-2 text-xs text-foreground-muted sm:grid-cols-3 ">
             <div>
-              <dt className="font-bold text-foreground-strong theme-brutal:text-black">
+              <dt className="font-bold text-foreground-strong ">
                 {formatMessage({ id: "agent.mcpUsage.callsLabel" })}
               </dt>
               <dd>
@@ -113,7 +113,7 @@ export function McpServerListItem({
               </dd>
             </div>
             <div>
-              <dt className="font-bold text-foreground-strong theme-brutal:text-black">
+              <dt className="font-bold text-foreground-strong ">
                 {formatMessage({ id: "agent.mcpUsage.lastUsedLabel" })}
               </dt>
               <dd>
@@ -129,7 +129,7 @@ export function McpServerListItem({
               </dd>
             </div>
             <div>
-              <dt className="font-bold text-foreground-strong theme-brutal:text-black">
+              <dt className="font-bold text-foreground-strong ">
                 {formatMessage({ id: "agent.mcpUsage.lastToolLabel" })}
               </dt>
               <dd className="break-all font-mono">{server.usage.lastToolName}</dd>
@@ -194,7 +194,7 @@ export function McpServerListItem({
 
   <button
     type="button"
-    className="mt-3 flex items-center gap-1 text-xs font-bold text-foreground-muted underline hover:text-foreground-strong theme-brutal:text-black/70 theme-brutal:hover:text-black"
+    className="mt-3 flex items-center gap-1 text-xs font-bold text-foreground-muted underline hover:text-foreground-strong  "
     aria-expanded={toolsOpen}
     onClick={handleToolsToggle}
   >
@@ -211,26 +211,26 @@ export function McpServerListItem({
             <div key={tool.name} className="flex min-h-16 items-start gap-2 border-b border-line-muted px-2.5 py-2 sm:even:border-l sm:even:border-line-muted">
               <span className="min-w-0 flex-1 break-words">
                 <span className="flex items-start gap-1">
-                  <strong className="min-w-0 flex-1 text-sm leading-5 text-foreground-strong theme-brutal:text-black">{label}</strong>
+                  <strong className="min-w-0 flex-1 text-sm leading-5 text-foreground-strong ">{label}</strong>
                   {description && (
                     <Tooltip
                       content={<span className="block text-left">{description}</span>}
                       contentProps={TOOL_TOOLTIP_CONTENT_PROPS}
                     >
-                      <button type="button" className="mt-0.5 shrink-0 text-foreground-placeholder hover:text-foreground-strong theme-brutal:text-black/45 theme-brutal:hover:text-black" aria-label={formatMessage({ id: "agent.mcp.aboutTool" }, { name: label })}>
+                      <button type="button" className="mt-0.5 shrink-0 text-foreground-placeholder hover:text-foreground-strong  " aria-label={formatMessage({ id: "agent.mcp.aboutTool" }, { name: label })}>
                         <Info size={13} />
                       </button>
                     </Tooltip>
                   )}
                 </span>
-                {description && <span className="mt-0.5 line-clamp-2 text-xs leading-4 text-foreground-muted theme-brutal:text-black/55">{description}</span>}
+                {description && <span className="mt-0.5 line-clamp-2 text-xs leading-4 text-foreground-muted ">{description}</span>}
               </span>
             </div>
           );
         })}
       </div>
       {server.toolCatalog.length === 0 && (
-        <p className="px-2.5 py-3 text-xs text-foreground-muted theme-brutal:text-black/50">{formatMessage({ id: "agent.mcp.testToDiscoverTools" })}</p>
+        <p className="px-2.5 py-3 text-xs text-foreground-muted ">{formatMessage({ id: "agent.mcp.testToDiscoverTools" })}</p>
       )}
     </div>
   )}

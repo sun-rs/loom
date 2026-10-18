@@ -63,33 +63,7 @@
     line-height: 20px;
   }
 
-  /* Native section actions paint at 30dp (+2dp shadow). The surrounding
-   * transparent hit surface is 44px; do not inflate the painted square. */
-  :is(
-    [data-loom-control="detail-close"],
-    [data-loom-control="panel-back"],
-    [data-slot="panel-action"]
-  ) {
-    position: relative;
-    width: 32px;
-    height: 32px;
-    min-width: 32px;
-    min-height: 32px;
-    padding: 6px;
-  }
-  :is(
-    [data-loom-control="detail-close"],
-    [data-loom-control="panel-back"],
-    [data-slot="panel-action"]
-  )::after {
-    content: "";
-    position: absolute;
-    width: 44px;
-    height: 44px;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-  }
+  /* rUI 0.6 owns 32px controls and their 44px pointer targets. */
   [data-slot="panel-actions"] {
     gap: 12px;
   }

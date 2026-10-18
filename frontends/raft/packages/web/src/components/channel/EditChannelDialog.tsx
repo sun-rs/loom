@@ -90,7 +90,7 @@ function ChannelSettingsSheet({
     >
       <DrawerContent
         data-testid="channel-settings-sheet"
-        className="theme-aware-channel-settings inset-y-0 right-0 h-dvh w-full max-w-[min(100vw,34rem)] [--drawer-content-height:100dvh] [--drawer-inset:0px] flex-col border-0 theme-brutal:rounded-none theme-brutal:border-l-2 theme-brutal:border-line-strong bg-layer-canvas-muted theme-brutal:bg-brutal-cream text-foreground-strong"
+        className="theme-aware-channel-settings inset-y-0 right-0 h-dvh w-full max-w-[min(100vw,34rem)] [--drawer-content-height:100dvh] [--drawer-inset:0px] flex-col border-0    bg-layer-canvas-muted  text-foreground-strong"
       >
         {children}
       </DrawerContent>
@@ -1279,7 +1279,6 @@ export default function EditChannelDialog({
             </p>
           </div>
           <Switch
-            size="md"
             checked={channel?.guestVisible === true}
             disabled={guestPolicyBusy}
             onCheckedChange={handleGuestVisibleChange}
@@ -1297,7 +1296,6 @@ export default function EditChannelDialog({
             </p>
           </div>
           <Switch
-            size="md"
             checked={channel?.guestJoinable === true}
             disabled={guestPolicyBusy}
             onCheckedChange={handleGuestJoinableChange}
@@ -1340,7 +1338,7 @@ export default function EditChannelDialog({
       onCancel={conversionCancelObservationId ? undefined : cancelConversion}
       onOpenChannel={onClose}
       cancelBusy={conversionCancelBusy}
-      headingClassName="text-base font-bold text-foreground-strong theme-brutal:text-black"
+      headingClassName="text-base font-bold text-foreground-strong "
       onStart={startConversion}
     />
   );
@@ -1358,7 +1356,7 @@ export default function EditChannelDialog({
     <>
       {isJointChannel && showCompletedJointSettings && ((!conversionReceipt && !convertSucceeded) || conversionProgressDismissed) && (
         <section
-          className="space-y-4 border-b border-line-muted pb-5 theme-brutal:border-black/10"
+          className="space-y-4 border-b border-line-muted pb-5 "
           data-testid="channel-settings-joint-section"
         >
           <div>
@@ -1424,7 +1422,7 @@ export default function EditChannelDialog({
             </div>
           )}
           {capabilities.federateChannels && !isArchived && (
-            <div className="space-y-3 border-t border-line-muted pt-4 theme-brutal:border-black/10" data-testid="channel-settings-joint-invite">
+            <div className="space-y-3 border-t border-line-muted pt-4 " data-testid="channel-settings-joint-invite">
               <h4 className="text-sm font-medium text-foreground-strong">{formatMessage({ id: "channel.edit.inviteServerSection" })}</h4>
               {jointServerLimitReached ? (
                 <p className="text-sm font-normal text-foreground-muted">{formatMessage({ id: "channel.edit.maxServers" }, { max: MAX_JOINT_CHANNEL_SERVERS })}</p>
@@ -1481,7 +1479,7 @@ export default function EditChannelDialog({
           </Banner>
         )}
         {canEditChannel && showChannelInfoSettings && (
-          <section className="space-y-3 border-b border-line-muted pb-5 theme-brutal:border-black/10">
+          <section className="space-y-3 border-b border-line-muted pb-5 ">
             <div className="space-y-3">
                   <FormField
                     label={formatMessage({ id: "channel.edit.nameLabel" })}
@@ -1655,20 +1653,20 @@ export default function EditChannelDialog({
            v2: identity lives in the yellow header, so the panel drops
            its own title and keeps only a hairline from the members
            strip above. */
-        <div className="safe-bottom border-t border-line-muted px-4 pt-3 theme-brutal:border-black/10" data-testid="channel-settings-panel">
+        <div className="safe-bottom border-t border-line-muted px-4 pt-3 " data-testid="channel-settings-panel">
           {settingsBody}
         </div>
       ) : (
         <ChannelSettingsSheet isDirty={isDirty} onClose={onClose}>
-          <div className="flex shrink-0 items-center justify-between gap-4 border-b border-line-muted bg-primary-soft px-4 py-3 text-foreground-strong theme-brutal:border-b-2 theme-brutal:border-black theme-brutal:bg-soft-signal theme-brutal:text-black">
+          <div className="flex shrink-0 items-center justify-between gap-4 border-b border-line-muted bg-primary-soft px-4 py-3 text-foreground-strong    ">
             <div className="min-w-0">
-              <p className="text-[10px] font-bold tracking-wide text-foreground-muted theme-brutal:text-black/55">
+              <p className="text-[10px] font-bold tracking-wide text-foreground-muted ">
                 {formatMessage({ id: "message.channelSettings.eyebrow" })}
               </p>
-              <DrawerTitle id="channel-settings-title" className="truncate font-display text-xl font-bold text-foreground-strong theme-brutal:text-black">
+              <DrawerTitle id="channel-settings-title" className="truncate font-display text-xl font-bold text-foreground-strong ">
                 {formatMessage({ id: "message.channelSettings.title" })}
               </DrawerTitle>
-              <DrawerDescription className="truncate font-mono text-xs text-foreground-muted theme-brutal:text-black/60">
+              <DrawerDescription className="truncate font-mono text-xs text-foreground-muted ">
                 #{initialName}
               </DrawerDescription>
             </div>
@@ -1690,7 +1688,7 @@ export default function EditChannelDialog({
             {settingsBody}
           </div>
 
-          <div className="safe-bottom flex shrink-0 justify-end gap-3 border-t border-line-muted theme-brutal:border-t-2 theme-brutal:border-black bg-layer-canvas-muted theme-brutal:bg-brutal-cream px-4 py-3">
+          <div className="safe-bottom flex shrink-0 justify-end gap-3 border-t border-line-muted   bg-layer-canvas-muted  px-4 py-3">
             <DrawerClose
               render={(
                 <Button size="sm"

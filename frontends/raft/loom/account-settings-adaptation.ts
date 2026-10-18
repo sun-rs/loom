@@ -24,7 +24,7 @@ export function exposeAccountProfile(source: string) {
   return (
     'import { useAccountSettings } from "loom-account-settings";\n' +
     source +
-    "\nexport function LoomAccountSection() {\n  const { formatMessage } = useIntl();\n  const themeFamily = useThemeFamily();\n  const { user, displayName, saving, editingDisabled, saved, error, avatarSaving, avatarError, profileDirty, handleSaveProfile, handleUploadAvatar, handleDisplayNameChange } = useAccountSettings();\n  if (!user) return null;\n" +
+    "\nexport function LoomAccountSection() {\n  const { formatMessage } = useIntl();\n  const { user, displayName, saving, editingDisabled, saved, error, avatarSaving, avatarError, profileDirty, handleSaveProfile, handleUploadAvatar, handleDisplayNameChange } = useAccountSettings();\n  if (!user) return null;\n" +
     jsx +
     "\n        </SettingsProfileCard>\n      </div>\n    </>\n  );\n}\n"
   );

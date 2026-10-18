@@ -56,7 +56,7 @@ export default function TaskHistory({
   };
   return (
     <div
-      className="mb-4 border-b border-line-muted theme-brutal:border-black/10 pb-3"
+      className="mb-4 border-b border-line-muted  pb-3"
       data-testid="task-history"
     >
       <button
@@ -84,7 +84,7 @@ export default function TaskHistory({
               加载中…
             </p>
           ) : reader.events.length === 0 ? (
-            <p className="text-xs text-foreground-muted theme-brutal:text-black/50">
+            <p className="text-xs text-foreground-muted ">
               {formatMessage({ id: "task.history.empty" })}
             </p>
           ) : (

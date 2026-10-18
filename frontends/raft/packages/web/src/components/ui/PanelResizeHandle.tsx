@@ -29,7 +29,7 @@ export default function PanelResizeHandle({ side, visibleFrom, className = "", .
       {...props}
       className={`group absolute ${SIDE_CLASS[side]} top-0 bottom-0 z-20 hidden w-2 cursor-col-resize touch-none select-none ${VISIBLE_FROM_CLASS[visibleFrom]} ${className}`.trim()}
     >
-      <span className="pointer-events-none absolute bottom-0 left-1/2 top-0 w-px -translate-x-1/2 bg-foreground/25 group-hover:bg-foreground theme-brutal:bg-black/25 theme-brutal:group-hover:bg-black" />
+      <span className="pointer-events-none absolute bottom-0 left-1/2 top-0 w-px -translate-x-1/2 bg-foreground/25 group-hover:bg-foreground  " />
     </div>
   );
 }

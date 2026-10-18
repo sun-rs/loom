@@ -13,7 +13,7 @@ export default function CloseButton({ children, className = "", ...props }: Butt
       size="icon-sm"
       aria-label={formatMessage({ id: "common.close" })}
       {...props}
-      className={`text-foreground-muted hover:bg-fill-muted hover:text-foreground-strong theme-brutal:border-2 theme-brutal:border-black theme-brutal:shadow-brutal-sm theme-brutal:bg-white theme-brutal:text-black ${className}`}
+      className={`text-foreground-muted hover:bg-fill-muted hover:text-foreground-strong      ${className}`}
     >
       {children ?? <X size={16} />}
     </Button>

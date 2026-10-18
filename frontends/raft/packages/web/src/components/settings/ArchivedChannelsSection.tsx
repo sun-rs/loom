@@ -117,7 +117,7 @@ function ArchivedChannelsSectionContent() {
               <div className="flex min-w-0 flex-1 items-center gap-3">
                 <Tooltip content={typeLabel}>
                 <span
-                  className="flex size-8 shrink-0 items-center justify-center border border-line-muted bg-fill-muted text-foreground-muted theme-brutal:border-2 theme-brutal:border-black/30 theme-brutal:bg-brutal-stone theme-brutal:text-black/65"
+                  className="flex size-8 shrink-0 items-center justify-center border border-line-muted bg-fill-muted text-foreground-muted    "
                   aria-label={typeLabel}
                 >
                   {channelTypeIcon(channel.type)}
@@ -126,7 +126,7 @@ function ArchivedChannelsSectionContent() {
                 <div className="min-w-0 flex-1">
                   <button
                     type="button"
-                    className="block max-w-full truncate text-left text-sm font-bold text-foreground-strong underline decoration-2 underline-offset-2 hover:text-foreground-muted theme-brutal:text-black theme-brutal:hover:text-black/65"
+                    className="block max-w-full truncate text-left text-sm font-bold text-foreground-strong underline decoration-2 underline-offset-2 hover:text-foreground-muted  "
                     aria-label={formatMessage(
                       { id: "settings.archivedChannels.openAriaLabel" },
                       { name: channel.name },
@@ -135,7 +135,7 @@ function ArchivedChannelsSectionContent() {
                   >
                     {channelName}
                   </button>
-                  <div className="mt-0.5 truncate text-xs text-foreground-muted theme-brutal:text-black/55">
+                  <div className="mt-0.5 truncate text-xs text-foreground-muted ">
                     {formatMessage(
                       { id: "settings.archivedChannels.metadata" },
                       {

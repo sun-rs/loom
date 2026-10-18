@@ -129,12 +129,12 @@ function Stepper({ step }: { step: Step }) {
   const { formatMessage } = useIntl();
   const reviewing = step !== "choose";
   return (
-    <div className="mb-4 flex items-center gap-2 text-xs font-medium text-foreground-placeholder theme-brutal:font-bold theme-brutal:uppercase theme-brutal:tracking-wide">
-      <span className={`flex items-center gap-1 ${reviewing ? "text-success-strong theme-brutal:text-black" : "text-foreground-strong"}`}>
+    <div className="mb-4 flex items-center gap-2 text-xs font-medium text-foreground-placeholder   ">
+      <span className={`flex items-center gap-1 ${reviewing ? "text-success-strong " : "text-foreground-strong"}`}>
         {reviewing ? <Check size={12} aria-hidden /> : <span aria-hidden>{1}</span>}
         {formatMessage({ id: "machine.detail.bulkModel.stepChoose" })}
       </span>
-      <span className="h-px flex-1 bg-line-muted theme-brutal:h-0.5 theme-brutal:bg-black" aria-hidden />
+      <span className="h-px flex-1 bg-line-muted  " aria-hidden />
       <span className={`flex items-center gap-1 ${reviewing ? "text-foreground-strong" : ""}`}>
         <span aria-hidden>{2}</span>
         {formatMessage({ id: "machine.detail.bulkModel.stepReview" })}
@@ -431,7 +431,7 @@ export default function BulkChangeModelDialog({
 
         {step === "review" && (
           <div>
-            <ul className="divide-y divide-line-muted border-y border-line-muted theme-brutal:divide-black/15 theme-brutal:border-black/15" data-testid="bulk-model-review-list">
+            <ul className="divide-y divide-line-muted border-y border-line-muted  " data-testid="bulk-model-review-list">
               {plan.rows.map((row) => {
                 const agent = agentById.get(row.agentId)!;
                 const sameRuntime = agent.runtime === runtime;
@@ -463,7 +463,7 @@ export default function BulkChangeModelDialog({
                       )}
                     </span>
                     {skipped && (
-                      <span className="flex shrink-0 items-center gap-1 text-xs text-warning-strong theme-brutal:text-black">
+                      <span className="flex shrink-0 items-center gap-1 text-xs text-warning-strong ">
                         {formatMessage({ id: SKIP_REASON_MESSAGE[row.reason] })}
                         {row.reason !== "noChange" && (
                           <EditAgentLink agentId={row.agentId} onOpenAgent={onOpenAgent} />
@@ -503,7 +503,7 @@ export default function BulkChangeModelDialog({
         )}
 
         {step === "applying" && (
-          <ul className="divide-y divide-line-muted theme-brutal:divide-black/15" data-testid="bulk-model-applying-list">
+          <ul className="divide-y divide-line-muted " data-testid="bulk-model-applying-list">
             {plan.rows.filter((row) => row.kind !== "skip").map((row) => {
               const agent = agentById.get(row.agentId)!;
               const state = applyStates[row.agentId] ?? "saving";
@@ -513,8 +513,8 @@ export default function BulkChangeModelDialog({
                   <span className="flex-1 truncate font-bold text-foreground-strong">{agent.displayName ?? agent.name}</span>
                   <span className="flex items-center gap-1 text-xs text-foreground-muted" data-testid={`bulk-model-apply-${row.agentId}`} data-apply-state={state}>
                     {state === "saving" && <Spinner size="xs" aria-label={formatMessage({ id: "common.loadingLabel" })} />}
-                    {state === "saved" && <Check size={14} className="text-success-strong theme-brutal:text-black" aria-hidden />}
-                    {state === "failed" && <X size={14} className="text-warning-strong theme-brutal:text-black" aria-hidden />}
+                    {state === "saved" && <Check size={14} className="text-success-strong " aria-hidden />}
+                    {state === "failed" && <X size={14} className="text-warning-strong " aria-hidden />}
                     {formatMessage({ id: APPLY_STATE_MESSAGE[state] })}
                   </span>
                 </li>

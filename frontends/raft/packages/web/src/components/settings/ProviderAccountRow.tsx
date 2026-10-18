@@ -25,14 +25,14 @@ export function ProviderAccountRow({
     <div
       role="group"
       aria-label={formatMessage({ id: "settings.account.providerAccountAria" }, { label: provider.label })}
-      className="relative flex items-start justify-between gap-3 border border-line-muted theme-brutal:border-2 theme-brutal:border-black/30 bg-layer-panel theme-brutal:bg-white p-3 text-left transition-colors hover:border-line-strong hover:shadow-raft-sm theme-brutal:hover:border-black theme-brutal:hover:shadow-brutal-sm"
+      className="relative flex items-start justify-between gap-3 border border-line-muted   bg-layer-panel  p-3 text-left transition-colors hover:border-line-strong hover:shadow-raft-sm  "
     >
       <div className="min-w-0 flex-1">
         <div className="mb-1 flex items-center gap-2 text-xs">
           <SocialProviderIcon providerId={provider.id} />
-          <span className="font-bold text-foreground-strong theme-brutal:text-black">{provider.label}</span>
+          <span className="font-bold text-foreground-strong ">{provider.label}</span>
         </div>
-        <div className="truncate text-xs text-foreground-muted theme-brutal:text-black/50">
+        <div className="truncate text-xs text-foreground-muted ">
           {identity?.providerEmail
             ? formatMessage({ id: "settings.account.connectedAs" }, { email: identity.providerEmail })
             : formatMessage({ id: "settings.account.notConnected" })}

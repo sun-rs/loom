@@ -76,7 +76,7 @@ export function MigrationProgressPanel({
 
       <Steps
         ref={stepsRef}
-        size="sm"
+        
         vertical={narrow}
         current={completed ? MIGRATION_PROGRESS_STEPS.length : currentStep + 1}
         status={stepStatus}
@@ -109,7 +109,7 @@ export function MigrationProgressPanel({
       {failed || notice.cancelNeedsAttention ? <MigrationReference notice={notice} /> : null}
       {active && canCancelMigration(notice) ? (
         <div className="flex justify-end">
-          <Button variant="outline" size="sm" type="button" onClick={onShowCancel}>
+          <Button variant="outline"  type="button" onClick={onShowCancel}>
             {formatMessage({ id: "agent.detail.cancel" })}
           </Button>
         </div>

@@ -44,7 +44,7 @@ export const MemberHumanRow = memo(function MemberHumanRow({
   );
   return (
     <Tooltip content={isSelf ? formatMessage({ id: "layout.sidebar.youTitle" }) : `${human.displayName || human.name}`}>
-    <SidebarItem variant="accent"
+    <SidebarItem
       type="button"
       onClick={handleClick}
       onDoubleClick={handleDoubleClick}
@@ -58,16 +58,16 @@ export const MemberHumanRow = memo(function MemberHumanRow({
       <div className="flex min-w-0 flex-1 items-baseline gap-1 text-left">
         <span className="min-w-0 truncate text-sm">
           {human.displayName || human.name}
-          {isSelf && <span className="text-foreground-placeholder ml-1 theme-brutal:text-black/40">{formatMessage({ id: "layout.sidebar.youSuffix" })}</span>}
+          {isSelf && <span className="text-foreground-placeholder ml-1 ">{formatMessage({ id: "layout.sidebar.youSuffix" })}</span>}
         </span>
         {/* Only Guest is labeled: it is the rare role whose access differs. Same chip as ChannelMemberList. */}
         {human.role === "guest" && (
-          <span className="shrink-0 self-center rounded-sm border border-line-muted bg-info-soft px-1.5 py-0.5 font-mono text-[10px] leading-3 text-foreground-strong theme-brutal:rounded-none theme-brutal:border-[1.5px] theme-brutal:border-black theme-brutal:bg-brutal-cyan theme-brutal:text-black">
+          <span className="shrink-0 self-center rounded-sm border border-line-muted bg-info-soft px-1.5 py-0.5 font-mono text-[10px] leading-3 text-foreground-strong     ">
             {formatMessage({ id: "layout.sidebar.guestLabel" })}
           </span>
         )}
         {human.description && (
-          <span className="min-w-0 flex-1 truncate text-xs text-foreground-muted theme-brutal:text-black/40">{human.description}</span>
+          <span className="min-w-0 flex-1 truncate text-xs text-foreground-muted ">{human.description}</span>
         )}
       </div>
     </SidebarItem>

@@ -363,11 +363,11 @@ export default function ServerSetupProjectionGate({
       : "onboarding.native.unavailable";
     return (
       <div className="flex min-h-full w-full items-center justify-center p-6" data-testid="native-onboarding-unavailable">
-        <div className="w-full max-w-md rounded-lg border border-line-muted bg-layer-panel p-5 text-center shadow-raft-md theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal">
+        <div className="w-full max-w-md rounded-lg border border-line-muted bg-layer-panel p-5 text-center shadow-raft-md     ">
           <p className="text-sm font-bold text-foreground-strong">{formatMessage({ id: messageId })}</p>
           <button
             type="button"
-            className="mt-4 rounded-md border border-line-muted bg-primary-soft px-4 py-2 text-sm font-bold text-foreground-strong shadow-raft-sm active:translate-x-0.5 active:translate-y-0.5 active:shadow-none theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-soft-signal theme-brutal:text-black theme-brutal:shadow-brutal-sm"
+            className="mt-4 rounded-md border border-line-muted bg-primary-soft px-4 py-2 text-sm font-bold text-foreground-strong shadow-raft-sm active:translate-x-0.5 active:translate-y-0.5 active:shadow-none      "
             onClick={retryProjection}
           >
             {formatMessage({ id: "onboarding.native.retry" })}
@@ -425,7 +425,7 @@ export default function ServerSetupProjectionGate({
         className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-4"
         data-testid="server-setup-resume-bar"
       >
-        <div className="pointer-events-auto flex w-full max-w-[560px] flex-wrap items-center justify-between gap-3 rounded-lg border border-line-muted bg-primary-soft text-foreground-strong px-4 py-3 shadow-raft-md theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-soft-signal theme-brutal:text-black theme-brutal:shadow-brutal">
+        <div className="pointer-events-auto flex w-full max-w-[560px] flex-wrap items-center justify-between gap-3 rounded-lg border border-line-muted bg-primary-soft text-foreground-strong px-4 py-3 shadow-raft-md      ">
           <p className="min-w-0 text-sm font-bold">
             {formatMessage({ id: "layout.onboarding.notSetUpYet" })}
           </p>

@@ -168,7 +168,7 @@ export default function AgentPage({
 
   return (
     <AppShellMainSlot
-      className={active ? "bg-layer-canvas theme-brutal:bg-white" : "hidden"}
+      className={active ? "bg-layer-canvas " : "hidden"}
       data-testid="loom-agent-page"
     >
       {notice}

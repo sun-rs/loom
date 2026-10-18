@@ -117,7 +117,7 @@ export default function DeviceLoginPage() {
               placeholder={formatMessage({ id: "pages.deviceLogin.codePlaceholder" })}
               autoCapitalize="characters"
               autoComplete="one-time-code"
-              className="w-full rounded-md border border-line-field bg-layer-panel p-2 text-center font-mono text-lg font-black tracking-widest text-foreground-strong shadow-raft-xs focus:border-line-field-hover theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:shadow-brutal-sm theme-brutal:focus:shadow-brutal"
+              className="w-full rounded-md border border-line-field bg-layer-panel p-2 text-center font-mono text-lg font-black tracking-widest text-foreground-strong shadow-raft-xs focus:border-line-field-hover     "
             />
           </FormField>
 

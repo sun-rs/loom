@@ -243,7 +243,7 @@ export default function ChannelControl({
             </>
           ) : (
             <>
-              <p className="mb-5 text-sm leading-relaxed text-foreground-muted theme-brutal:text-black/75">
+              <p className="mb-5 text-sm leading-relaxed text-foreground-muted ">
                 停止 #{name}{" "}
                 的当前执行并暂停后续调度。保留实例、会话和聊天记录；恢复时需要填写指引。
               </p>

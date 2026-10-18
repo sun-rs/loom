@@ -166,7 +166,7 @@ export default function SearchFilters({
     if (value) update("sort", value === "relevance" ? "" : value);
   };
   const activeFilterClass =
-    "border-line-strong bg-primary-soft text-foreground-strong shadow-raft-sm theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-soft-signal theme-brutal:text-black theme-brutal:shadow-brutal-sm";
+    "border-line-strong bg-primary-soft text-foreground-strong shadow-raft-sm     ";
   const identityProps = {
     ...directory,
     params,

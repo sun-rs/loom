@@ -85,7 +85,7 @@ export default function SearchFrequent({
           ))}
         </div>
       ) : (
-        <div className="border border-dashed border-line-muted px-3 py-4 text-xs text-foreground-muted theme-brutal:border-2 theme-brutal:border-black/20 theme-brutal:text-black/40">
+        <div className="border border-dashed border-line-muted px-3 py-4 text-xs text-foreground-muted   ">
           {formatMessage({ id: "search.frequentEmpty" })}
         </div>
       )}

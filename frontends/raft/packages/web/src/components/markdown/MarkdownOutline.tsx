@@ -86,9 +86,9 @@ export function MarkdownOutlineNav({ outline }: { outline: MarkdownOutlineItem[]
   return (
     <nav
       aria-label={formatMessage({ id: "markdown.outline.ariaLabel" })}
-      className="border-l-2 border-line-muted theme-brutal:border-black/20 pl-4 text-sm"
+      className="border-l-2 border-line-muted  pl-4 text-sm"
     >
-      <div className="mb-2 font-mono text-[11px] font-bold uppercase tracking-widest text-foreground-muted theme-brutal:text-black/50">
+      <div className="mb-2 font-mono text-[11px] font-bold uppercase tracking-widest text-foreground-muted ">
         {formatMessage({ id: "markdown.outline.title" })}
       </div>
       <ol className="space-y-1.5">
@@ -97,7 +97,7 @@ export function MarkdownOutlineNav({ outline }: { outline: MarkdownOutlineItem[]
             <Tooltip content={item.title}>
               <a
                 href={`#${item.id}`}
-                className="block truncate text-[13px] font-medium text-foreground-muted theme-brutal:text-black/55 hover:text-foreground-strong theme-brutal:hover:text-black"
+                className="block truncate text-[13px] font-medium text-foreground-muted  hover:text-foreground-strong "
               >
                 {item.title}
               </a>

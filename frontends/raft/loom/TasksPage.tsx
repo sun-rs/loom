@@ -238,9 +238,9 @@ export default function TasksPage({
           <div
             data-slot="panel-header"
             data-loom-root-header
-            className="flex h-panel-header items-center gap-3 border-b border-line-muted bg-layer-panel px-5 theme-brutal:border-b-2 theme-brutal:border-black theme-brutal:bg-soft-signal theme-brutal:md:bg-white"
+            className="flex h-panel-header items-center gap-3 border-b border-line-muted bg-layer-panel px-5    "
           >
-            <div className="hidden md:flex size-icon-header items-center justify-center border border-line-muted bg-primary-soft text-primary-strong theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-soft-signal theme-brutal:text-black">
+            <div className="hidden md:flex size-icon-header items-center justify-center border border-line-muted bg-primary-soft text-primary-strong    ">
               <CheckSquare size={18} />
             </div>
             <div className="min-w-0 flex-1 flex items-center justify-between gap-3">
@@ -348,7 +348,7 @@ export default function TasksPage({
         <TasksPanelViewport
           ref={scroll}
           data-task-virtual-scroll
-          className="flex-1 overflow-auto bg-layer-canvas-muted p-4 safe-bottom theme-brutal:bg-white mobile-nav-clearance"
+          className="flex-1 overflow-auto bg-layer-canvas-muted p-4 safe-bottom  mobile-nav-clearance"
         >
           {error && (
             <div role="alert" className="mb-4 text-sm">
@@ -366,7 +366,7 @@ export default function TasksPage({
               {[0, 1, 2, 3, 4].map((i) => (
                 <SkeletonRow
                   key={i}
-                  className="gap-2 rounded border border-line-muted bg-layer-card p-3 theme-brutal:border-2 theme-brutal:border-black/30 theme-brutal:bg-white"
+                  className="gap-2 rounded border border-line-muted bg-layer-card p-3   "
                   lineWidths={["w-1/2", "w-3/4"]}
                 />
               ))}

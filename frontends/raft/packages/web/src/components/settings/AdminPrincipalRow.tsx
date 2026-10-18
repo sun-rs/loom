@@ -61,7 +61,7 @@ export function AdminPrincipalRow({
             {savingPrincipalKey === key ? formatMessage({ id: "settings.common.saving" }) : admin.role === "owner" ? formatMessage({ id: "settings.admins.removeOwner" }) : formatMessage({ id: "settings.admins.removeAdmin" })}
           </Button>
         ) : (
-          <span className="shrink-0 text-[10px] font-mono text-foreground-muted theme-brutal:text-black/40">
+          <span className="shrink-0 text-[10px] font-mono text-foreground-muted ">
             {admin.role === "owner" && ownerCount <= 1 ? formatMessage({ id: "settings.admins.lastOwner" }) : formatMessage({ id: "settings.admins.ownerOnly" })}
           </span>
         )

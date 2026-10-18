@@ -89,7 +89,7 @@ export default function ChannelDescription({ description }: { description: strin
             href={segment.value}
             target="_blank"
             rel="noopener noreferrer"
-            className="underline decoration-1 decoration-black/30 underline-offset-[3px] transition-colors hover:text-black/80 hover:decoration-current focus-visible:bg-primary-soft focus-visible:text-foreground-strong focus-visible:no-underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-line-strong focus-visible:outline-offset-2 theme-brutal:focus-visible:bg-soft-signal theme-brutal:focus-visible:text-black theme-brutal:focus-visible:outline-black"
+            className="underline decoration-1 decoration-black/30 underline-offset-[3px] transition-colors hover:text-black/80 hover:decoration-current focus-visible:bg-primary-soft focus-visible:text-foreground-strong focus-visible:no-underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-line-strong focus-visible:outline-offset-2   "
           >
             {segment.value}
           </a>

@@ -71,7 +71,7 @@ export function SidebarSortMenu({
         <SelectionPopover
           title={formatMessage({ id: "layout.sidebar.sortMenuTitle" })}
           showHeader={false}
-          className="absolute right-0 top-8 z-50 min-w-[136px] overflow-hidden border border-line-muted bg-layer-panel shadow-raft-sm theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal"
+          className="absolute right-0 top-8 z-50 min-w-[136px] overflow-hidden border border-line-muted bg-layer-panel shadow-raft-sm    "
           options={options}
         />
       )}

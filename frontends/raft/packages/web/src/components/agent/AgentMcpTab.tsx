@@ -404,7 +404,7 @@ export function AgentMcpTab({
     : catalog?.servers ?? [];
 
   return (
-    <div className={scope === "server" ? "" : "flex-1 overflow-y-auto bg-layer-panel px-5 py-4 text-foreground-strong theme-brutal:bg-white theme-brutal:text-black"}>
+    <div className={scope === "server" ? "" : "flex-1 overflow-y-auto bg-layer-panel px-5 py-4 text-foreground-strong  "}>
       <div className="space-y-6">
         {error && <Banner intent="warning" density="sm" className="font-bold">{error}</Banner>}
 
@@ -421,11 +421,11 @@ export function AgentMcpTab({
                     <Plus size={13} /> {formatMessage({ id: "agent.mcp.addServer" })}
                   </Button>
                 ) : loading ? (
-                  <span className="text-xs font-bold text-foreground-muted theme-brutal:text-black/50">{formatMessage({ id: "common.loading" })}</span>
+                  <span className="text-xs font-bold text-foreground-muted ">{formatMessage({ id: "common.loading" })}</span>
                 ) : null
               }
             />
-            <p className="mt-1 text-xs text-foreground-muted theme-brutal:text-black/60">
+            <p className="mt-1 text-xs text-foreground-muted ">
               {scope === "server"
                 ? formatMessage({ id: "agent.mcp.serverDescription" })
                 : formatMessage({ id: "agent.mcpUsage.description" })}
@@ -433,7 +433,7 @@ export function AgentMcpTab({
           </div>
 
           {loading ? (
-            <div className="font-mono text-xs text-foreground-placeholder theme-brutal:text-black/40">{formatMessage({ id: "agent.mcp.loadingServers" })}</div>
+            <div className="font-mono text-xs text-foreground-placeholder ">{formatMessage({ id: "agent.mcp.loadingServers" })}</div>
           ) : visibleServers.length > 0 ? (
             <div className="space-y-3">
               {visibleServers.map((server) => (
@@ -480,7 +480,7 @@ export function AgentMcpTab({
           <section className="space-y-3">
             <div>
               <SectionHeader label={formatMessage({ id: "agent.mcp.recommendedTitle" })} count={catalog.recommendations.length} />
-              <p className="mt-1 text-xs text-foreground-muted theme-brutal:text-black/60">{formatMessage({ id: "agent.mcp.recommendedDescription" })}</p>
+              <p className="mt-1 text-xs text-foreground-muted ">{formatMessage({ id: "agent.mcp.recommendedDescription" })}</p>
             </div>
             <div className="space-y-3">
               {catalog.recommendations.map((recommendation) => (
@@ -509,7 +509,7 @@ export function AgentMcpTab({
             className="space-y-4"
             aria-labelledby="mcp-server-form-title"
           >
-            <p className="text-xs text-foreground-muted theme-brutal:text-black/60">{formatMessage({ id: "agent.mcp.formDescription" })}</p>
+            <p className="text-xs text-foreground-muted ">{formatMessage({ id: "agent.mcp.formDescription" })}</p>
 
             {editorError && (
               <Banner intent="warning" density="sm" className="font-bold">
@@ -554,7 +554,7 @@ export function AgentMcpTab({
                 <Input required maxLength={120} className="w-full text-sm" value={draft.name} onChange={handleDraftNameChange} />
               </FormField>
               <FormField label={formatMessage({ id: "agent.mcp.serverUrlLabel" })} labelStyle="plain" size="compact" required>
-                <Input required type="url" disabled={draft.provider !== "custom"} className="w-full text-sm disabled:bg-fill-muted theme-brutal:disabled:bg-gray-100" value={draft.endpointUrl} onChange={handleDraftEndpointChange} />
+                <Input required type="url" disabled={draft.provider !== "custom"} className="w-full text-sm disabled:bg-fill-muted " value={draft.endpointUrl} onChange={handleDraftEndpointChange} />
               </FormField>
             </div>
 
@@ -576,7 +576,7 @@ export function AgentMcpTab({
                   ))}
                   <KeyValueAddButton label={formatMessage({ id: "agent.mcp.addHeader" })} onClick={handleAddHeader} />
                   {draft.headers.length === 0 && (
-                    <p className="text-xs text-foreground-muted theme-brutal:text-black/50">{formatMessage({ id: "agent.mcp.noCredentialHeaders" })}</p>
+                    <p className="text-xs text-foreground-muted ">{formatMessage({ id: "agent.mcp.noCredentialHeaders" })}</p>
                   )}
                 </div>
               </FormField>
@@ -601,7 +601,7 @@ export function AgentMcpTab({
               <Banner intent="warning" density="sm" withIcon>{connectionTest.message}</Banner>
             )}
 
-            <div className="flex items-center justify-end gap-2 border-t border-line-muted pt-4 theme-brutal:border-t-2 theme-brutal:border-black">
+            <div className="flex items-center justify-end gap-2 border-t border-line-muted pt-4  ">
               <Button variant="outline" size="md" onClick={closeEditor}>{formatMessage({ id: "common.confirm.cancel" })}</Button>
               <Button type="submit" variant="success" size="md" disabled={busyId !== null}>
                 <Check size={14} /> {formatMessage({ id: busyId === (draft.id ?? "new") ? "agent.mcp.saving" : "agent.mcp.save" })}

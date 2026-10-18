@@ -94,16 +94,16 @@ export function AgentConnections({ agentId }: { agentId: string }) {
 
   if (state.kind === "hidden" || state.kind === "loading") return null;
   return (
-    <div className="border-t border-line-muted theme-brutal:border-black/10 px-5 py-4" data-testid="agent-connections">
+    <div className="border-t border-line-muted  px-5 py-4" data-testid="agent-connections">
       <SectionEyebrow as="div" className="mb-2">
         {formatMessage({ id: "agent.detail.connections.title" })}
       </SectionEyebrow>
       {state.kind === "error" ? (
-        <p className="text-xs font-bold text-warning-strong theme-brutal:text-brutal-orange">
+        <p className="text-xs font-bold text-warning-strong ">
           {formatMessage({ id: "agent.detail.connections.loadFailed" })}
         </p>
       ) : state.kind === "agent_missing" ? (
-        <p className="text-xs font-bold text-warning-strong theme-brutal:text-brutal-orange" data-testid="agent-connections-agent-missing">
+        <p className="text-xs font-bold text-warning-strong " data-testid="agent-connections-agent-missing">
           {formatMessage({ id: "agent.detail.connections.agentMissingAtProvider" })}
         </p>
       ) : (
@@ -270,11 +270,11 @@ function GithubConnectionRow({
   }, [disconnectConnector, current]);
 
   return (
-    <div className="space-y-2 border theme-brutal:border-2 border-line-muted theme-brutal:border-black bg-layer-panel theme-brutal:bg-white p-3" data-testid="agent-connection-github" data-connected={status.connected ? "true" : "false"}>
+    <div className="space-y-2 border  border-line-muted  bg-layer-panel  p-3" data-testid="agent-connection-github" data-connected={status.connected ? "true" : "false"}>
       <div className="min-w-0">
-        <p className="text-sm font-bold text-foreground-strong theme-brutal:text-black">{formatMessage({ id: "agent.detail.connections.github" })}</p>
+        <p className="text-sm font-bold text-foreground-strong ">{formatMessage({ id: "agent.detail.connections.github" })}</p>
         {status.connected ? (
-          <p className="flex flex-wrap gap-x-2 text-xs text-foreground-muted theme-brutal:text-black/60" data-testid="agent-connection-github-status">
+          <p className="flex flex-wrap gap-x-2 text-xs text-foreground-muted " data-testid="agent-connection-github-status">
             {currentCreator ? (
               <span>{formatMessage({ id: "agent.detail.connections.usesConnector" }, { creator: currentCreator, account: status.account ?? current?.account ?? "?" })}</span>
             ) : (
@@ -288,19 +288,19 @@ function GithubConnectionRow({
             {status.connectedAt ? <span className="font-mono">{formatShortDateTime(status.connectedAt)}</span> : null}
           </p>
         ) : (
-          <p className="text-xs text-foreground-muted theme-brutal:text-black/60">
+          <p className="text-xs text-foreground-muted ">
             {formatMessage({ id: "agent.detail.connections.notConnected" })}
           </p>
         )}
         {status.connected && status.scopes.length > 0 && (
-          <p className="text-xs font-mono text-foreground-muted theme-brutal:text-black/50">
+          <p className="text-xs font-mono text-foreground-muted ">
             {formatMessage({ id: "agent.detail.connections.scopes" }, { scopes: status.scopes.join(", ") })}
           </p>
         )}
       </div>
       {connectors.length > 0 && (
         <div className="space-y-1" data-testid="agent-connection-github-connectors">
-          <p className="text-xs font-bold text-foreground-muted theme-brutal:text-black/70">
+          <p className="text-xs font-bold text-foreground-muted ">
             {formatMessage({ id: "agent.detail.connections.useConnection" })}
           </p>
           <Select
@@ -359,7 +359,7 @@ function GithubConnectionRow({
         </div>
       )}
       {!pending && (
-        <label className="flex items-center gap-2 text-xs text-foreground-muted theme-brutal:text-black/70">
+        <label className="flex items-center gap-2 text-xs text-foreground-muted ">
           <Checkbox
             checked={includePrivate}
             onCheckedChange={handleIncludePrivateChange}
@@ -370,7 +370,7 @@ function GithubConnectionRow({
       )}
       {pending && (
         <div className="space-y-2" data-testid="agent-connection-github-pending">
-          <p className="text-xs text-foreground-muted theme-brutal:text-black/70">
+          <p className="text-xs text-foreground-muted ">
             {formatMessage({ id: "agent.detail.connections.reviewScopes" }, { scopes: pending.scopes.join(", ") || requestedScope })}
           </p>
           <div className="flex flex-wrap items-center gap-2">
@@ -384,7 +384,7 @@ function GithubConnectionRow({
         </div>
       )}
       {error && (
-        <p className="text-xs font-bold text-warning-strong theme-brutal:text-brutal-orange" data-testid="agent-connection-github-error">
+        <p className="text-xs font-bold text-warning-strong " data-testid="agent-connection-github-error">
           {error.reason
             ? formatMessage({ id: "agent.detail.connections.providerRefused" }, { reason: error.reason })
             : formatMessage({
@@ -398,7 +398,7 @@ function GithubConnectionRow({
       )}
       {partialDisconnect && (
         <div className="flex flex-wrap items-center gap-2" data-testid="agent-connection-disconnect-partial">
-          <p className="text-xs font-bold text-warning-strong theme-brutal:text-brutal-orange">
+          <p className="text-xs font-bold text-warning-strong ">
             {formatMessage({ id: "agent.detail.connections.disconnectPartial" })}
           </p>
           <Button variant="outline" size="sm" type="button" disabled={retrying} onClick={handleRetryPartial}>

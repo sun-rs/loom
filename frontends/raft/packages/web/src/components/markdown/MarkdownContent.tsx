@@ -100,7 +100,7 @@ function BaseCodePre({ children }: { children?: ReactNode }) {
   const language = extractCodeBlockLanguage(children);
   return (
     <CodeBlock
-      className="overflow-x-auto border border-line rounded-md theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black bg-code-surface p-3 pr-12 text-code-foreground [font-size:inherit] font-mono [&>code]:border-0 [&>code]:bg-transparent [&>code]:p-0"
+      className="overflow-x-auto border border-line rounded-md    bg-code-surface p-3 pr-12 text-code-foreground [font-size:inherit] font-mono [&>code]:border-0 [&>code]:bg-transparent [&>code]:p-0"
       code={codeText}
       language={language}
     >
@@ -161,7 +161,7 @@ export function extractCodeBlockLanguage(node: ReactNode): string | null {
  *  Centralizing this keeps tuning like #proj-uiux task #299 single-source
  *  — stdrc 2026-05-24 audit follow-up. */
 export const MARKDOWN_BLOCKQUOTE_BASE_CLASS =
-  "border-l-2 border-line-muted pl-3 italic text-foreground-muted theme-brutal:border-black/40 theme-brutal:text-black/70";
+  "border-l-2 border-line-muted pl-3 italic text-foreground-muted  ";
 
 type ExternalTranslationGuardProps = {
   translate: typeof EXTERNAL_TRANSLATION_GUARD_TRANSLATE;
@@ -265,13 +265,13 @@ export const BASE_MARKDOWN_COMPONENTS: Components = {
   ),
   table: ({ children }) => (
     <div {...externalTranslationGuardProps("my-2 overflow-x-auto")}>
-    <table className="border-collapse border border-line-muted [font-size:inherit] theme-brutal:border-2 theme-brutal:border-black">{children}</table>
+    <table className="border-collapse border border-line-muted [font-size:inherit]  ">{children}</table>
     </div>
   ),
   th: ({ children }) => (
     <th
       {...externalTranslationGuardProps(
-        "border border-line-muted bg-info-soft px-2 py-1 text-left font-bold whitespace-nowrap text-foreground-strong theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-brutal-cyan theme-brutal:text-black",
+        "border border-line-muted bg-info-soft px-2 py-1 text-left font-bold whitespace-nowrap text-foreground-strong    ",
       )}
     >
       {children}
@@ -312,9 +312,9 @@ export const BASE_MARKDOWN_COMPONENTS: Components = {
       {children}
     </h6>
   ),
-  hr: () => <hr className="my-2 border-t border-line-muted theme-brutal:border-t-2 theme-brutal:border-black" />,
+  hr: () => <hr className="my-2 border-t border-line-muted  " />,
   img: ({ src, alt }) => (
-    <img src={src} alt={alt || ""} className={`my-2 max-w-full border border-line-muted theme-brutal:border-2 theme-brutal:border-black ${transparentImageBackgroundClass}`} />
+    <img src={src} alt={alt || ""} className={`my-2 max-w-full border border-line-muted   ${transparentImageBackgroundClass}`} />
   ),
   // Default link renderer — opens ordinary links in a new tab, custom
   // protocols (obsidian://) through the confirm dialog (task #734). Chat

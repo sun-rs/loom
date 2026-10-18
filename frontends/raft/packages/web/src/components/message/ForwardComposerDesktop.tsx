@@ -72,16 +72,16 @@ export default function ForwardComposerDesktop({
   }, [setQuery, search, resetSearch]);
   return (
     <Modal onClose={sending || joinInFlight ? noopClose : onClose} closeOnBackdrop>
-      <Card className="flex h-[min(42rem,calc(100dvh-1rem))] w-[min(48rem,calc(100vw-1rem))] max-h-[calc(100dvh-1rem)] flex-col bg-layer-panel theme-brutal:bg-white md:h-[min(clamp(30rem,72dvh,46rem),calc(100dvh-2rem))] md:w-[min(clamp(48rem,60vw,60rem),calc(100vw-2rem))]" data-testid="forward-composer-dialog">
-        <div className="flex items-center justify-between border-b-2 border-line-muted theme-brutal:border-black px-4 py-3">
+      <Card className="flex h-[min(42rem,calc(100dvh-1rem))] w-[min(48rem,calc(100vw-1rem))] max-h-[calc(100dvh-1rem)] flex-col bg-layer-panel  md:h-[min(clamp(30rem,72dvh,46rem),calc(100dvh-2rem))] md:w-[min(clamp(48rem,60vw,60rem),calc(100vw-2rem))]" data-testid="forward-composer-dialog">
+        <div className="flex items-center justify-between border-b-2 border-line-muted  px-4 py-3">
           <div>
             <h2 className="text-base font-bold">{formatMessage({ id: "message.forwardComposer.title" })}</h2>
-            <p className="text-xs font-mono text-foreground-muted theme-brutal:text-black/55">{formatMessage({ id: "message.forwardComposer.selectedFrom" }, { count: sourceMessageCount, source: sourceLabelText })}</p>
+            <p className="text-xs font-mono text-foreground-muted ">{formatMessage({ id: "message.forwardComposer.selectedFrom" }, { count: sourceMessageCount, source: sourceLabelText })}</p>
           </div>
           <CloseButton type="button"   onClick={onClose} disabled={sending || joinInFlight} aria-label={formatMessage({ id: "message.forwardComposer.close" })}><X size={16} /></CloseButton>
         </div>
         <div className="flex min-h-0 flex-1 flex-col gap-0 md:grid md:grid-cols-[clamp(19rem,24vw,22rem)_minmax(0,1fr)]">
-          <div className="flex max-h-[min(34dvh,13rem)] shrink-0 flex-col border-b-2 border-line-muted theme-brutal:border-black p-3 md:h-full md:max-h-none md:min-h-0 md:border-b-0 md:border-r-2">
+          <div className="flex max-h-[min(34dvh,13rem)] shrink-0 flex-col border-b-2 border-line-muted  p-3 md:h-full md:max-h-none md:min-h-0 md:border-b-0 md:border-r-2">
             <InputGroup className="mb-2">
               <InputGroupAddon>
                 <Search size={14} aria-hidden="true" />
@@ -106,7 +106,7 @@ export default function ForwardComposerDesktop({
               {warnings}
               <div className="mb-2"><ForwardedBundleCard metadata={previewMetadata} onOpenAttachment={onOpenAttachment} fullWidth /></div>
             </div>
-            <div className="border-t-2 border-line-muted theme-brutal:border-black bg-layer-panel theme-brutal:bg-white p-3" data-testid="forward-desktop-note-actions">
+            <div className="border-t-2 border-line-muted  bg-layer-panel  p-3" data-testid="forward-desktop-note-actions">
               <Field>
                 <FieldLabel size="sm" htmlFor="forward-desktop-note">{formatMessage({ id: "message.forwardComposer.optionalNote" })}</FieldLabel>
                 <MessageInput

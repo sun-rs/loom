@@ -229,7 +229,7 @@ export const InlineThreadReplies = memo(function InlineThreadReplies({
             <MessageRepliesItemTime
               dateTime={reply.createdAt}
               data-inline-thread-reply-time
-              className={`ml-auto shrink-0 tabular-nums text-[oklch(0.52_0_0)] dark:text-foreground-placeholder theme-brutal:text-black/40 ${previewTimeSizeClass}`}
+              className={`ml-auto shrink-0 tabular-nums text-[oklch(0.52_0_0)] dark:text-foreground-placeholder  ${previewTimeSizeClass}`}
             >
               {formatMessageTime(reply.createdAt)}
             </MessageRepliesItemTime>

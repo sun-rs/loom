@@ -170,7 +170,7 @@ export default function DiscoveryPage({
             ? (event) => railHandler.current?.(event)
             : undefined
         }
-        className={`relative bg-layer-canvas theme-brutal:bg-white ${detail && desktop ? `border-r border-line-muted theme-brutal:border-black ${mode === "search" ? "theme-brutal:border-r-2" : ""}` : ""}`}
+        className={`relative bg-layer-canvas  ${detail && desktop ? `border-r border-line-muted  ${mode === "search" ? "" : ""}` : ""}`}
         style={
           detail
             ? desktop
@@ -563,7 +563,7 @@ function Results({
       data-testid="discovery-results"
       className={
         mode === "activity"
-          ? "scrollbar-quiet relative flex-1 overflow-y-overlay bg-layer-canvas-muted p-4 safe-bottom theme-brutal:bg-white"
+          ? "scrollbar-quiet relative flex-1 overflow-y-overlay bg-layer-canvas-muted p-4 safe-bottom "
           : "min-h-0 overflow-y-auto"
       }
     >

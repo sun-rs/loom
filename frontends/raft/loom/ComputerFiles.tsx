@@ -124,11 +124,11 @@ export default function ComputerFiles({
             data-testid="computer-file-tree"
             className="flex h-64 min-h-64 flex-col overflow-hidden"
           >
-            <div className="shrink-0 border-b border-line-muted theme-brutal:border-black/10">
+            <div className="shrink-0 border-b border-line-muted ">
               <SelectionPopover
                 title="导航"
                 showHeader={false}
-                className="border-0 shadow-none theme-brutal:border-0 theme-brutal:shadow-none"
+                className="border-0 shadow-none  "
                 options={[
                   {
                     key: "parent",
@@ -174,7 +174,7 @@ export default function ComputerFiles({
                   <SelectionPopover
                     title="文件"
                     showHeader={false}
-                    className="border-0 shadow-none theme-brutal:border-0 theme-brutal:shadow-none [&>div]:max-h-none [&>div]:overflow-visible"
+                    className="border-0 shadow-none   [&>div]:max-h-none [&>div]:overflow-visible"
                     emptyLabel="此目录为空"
                     options={data.entries.map((e) => ({
                       key: e.path,
@@ -204,7 +204,7 @@ export default function ComputerFiles({
             </div>
           </Card>
           <label className="mt-3 flex items-center gap-2 text-xs">
-            <Checkbox size="sm" checked={hidden} onCheckedChange={setHidden} />
+            <Checkbox checked={hidden} onCheckedChange={setHidden} />
             显示隐藏文件
           </label>
           {data?.truncated && <p role="status">目录过大，仅显示前1000项。</p>}

@@ -532,7 +532,7 @@ function Channel({
               <div
                 data-testid="chat-composer-shell"
                 data-loom-composer-shell
-                className="relative flex min-w-0 w-full items-center border-t border-line-muted bg-layer-panel px-3 pt-3 safe-bottom theme-brutal:border-t-2 theme-brutal:border-black theme-brutal:bg-white"
+                className="relative flex min-w-0 w-full items-center border-t border-line-muted bg-layer-panel px-3 pt-3 safe-bottom   "
               >
                 <MessageInput
                   client={client}
@@ -897,7 +897,7 @@ export default function ChannelApp() {
         <div
           role="status"
           data-testid="loom-bootstrap-loading"
-          className="fixed inset-0 z-[100] flex min-h-0 flex-1 items-center justify-center bg-layer-canvas text-foreground-strong theme-brutal:bg-brutal-cream font-display safe-top"
+          className="fixed inset-0 z-[100] flex min-h-0 flex-1 items-center justify-center bg-layer-canvas text-foreground-strong  font-display safe-top"
         >
           <div className="text-xl font-bold">正在加载…</div>
         </div>
@@ -1020,7 +1020,7 @@ export default function ChannelApp() {
                       )}
                     </AppShellSidebarSlot>
                     <AppShellMainSlot
-                      className={`min-w-0 bg-layer-canvas theme-brutal:bg-white md:flex ${mobileList ? "hidden" : "flex"}`}
+                      className={`min-w-0 bg-layer-canvas  md:flex ${mobileList ? "hidden" : "flex"}`}
                     >
                       {!savedOpen && !selected && (
                         <PanelHeader

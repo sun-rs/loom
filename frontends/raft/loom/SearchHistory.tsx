@@ -101,7 +101,7 @@ export default function SearchHistory({
                 onClick={() =>
                   setSearchHistoryEditRequested((editing) => !editing)
                 }
-                className="text-[11px] font-bold text-foreground-muted hover:text-foreground-strong theme-brutal:text-black/45 theme-brutal:hover:text-black"
+                className="text-[11px] font-bold text-foreground-muted hover:text-foreground-strong  "
                 data-testid="search-history-edit-toggle"
               >
                 {formatMessage({
@@ -114,7 +114,7 @@ export default function SearchHistory({
             <button
               type="button"
               onClick={clearSearchHistory}
-              className="text-[11px] font-bold text-foreground-muted hover:text-foreground-strong theme-brutal:text-black/45 theme-brutal:hover:text-black"
+              className="text-[11px] font-bold text-foreground-muted hover:text-foreground-strong  "
             >
               {formatMessage({ id: "search.clearHistory" })}
             </button>

@@ -55,7 +55,7 @@ export function MachineAgentRow({
     <>
       <StatusDot activity={displayState.activity} title={activityText} />
       <Tooltip content={activityText}><span
-        className="hidden max-w-[min(32rem,42vw)] truncate align-middle text-xs font-mono text-foreground-muted theme-brutal:text-black/50 sm:inline-block"
+        className="hidden max-w-[min(32rem,42vw)] truncate align-middle text-xs font-mono text-foreground-muted  sm:inline-block"
       >
         {activityText}
       </span></Tooltip>
@@ -70,7 +70,7 @@ export function MachineAgentRow({
     return (
       <SurfaceListItem
         selected={canManageMachines && selected}
-        className={`group px-3 py-2 ${selected ? "" : "bg-layer-canvas-muted hover:bg-layer-panel theme-brutal:bg-gray-100 theme-brutal:hover:bg-white"}`}
+        className={`group px-3 py-2 ${selected ? "" : "bg-layer-canvas-muted hover:bg-layer-panel  "}`}
       >
         <Tooltip content={
             selected
@@ -97,10 +97,10 @@ export function MachineAgentRow({
           {avatar}
           <div className="min-w-0 flex-1">
             <div className="flex min-w-0 flex-wrap items-baseline gap-x-2">
-              <span className="truncate text-sm font-bold text-foreground-strong theme-brutal:text-black">
+              <span className="truncate text-sm font-bold text-foreground-strong ">
                 {agent.displayName || agent.name}
               </span>
-              <span className="text-xs font-mono text-foreground-muted theme-brutal:text-black/50">
+              <span className="text-xs font-mono text-foreground-muted ">
                 {agentIdentityLabel}
               </span>
             </div>
@@ -121,8 +121,8 @@ export function MachineAgentRow({
       selected={false}
       buttonProps={highlighted ? BULK_HIGHLIGHT_BUTTON_PROPS : undefined}
       className={highlighted
-        ? "bg-success-soft ring-2 ring-success/40 transition-[background-color,box-shadow] duration-300 theme-brutal:bg-brutal-lime/30 theme-brutal:ring-0 theme-brutal:shadow-brutal-sm motion-reduce:transition-none"
-        : "bg-layer-canvas-muted transition-[background-color,box-shadow] duration-300 hover:bg-layer-panel theme-brutal:bg-gray-100 theme-brutal:hover:bg-white motion-reduce:transition-none"}
+        ? "bg-success-soft ring-2 ring-success/40 transition-[background-color,box-shadow] duration-300    motion-reduce:transition-none"
+        : "bg-layer-canvas-muted transition-[background-color,box-shadow] duration-300 hover:bg-layer-panel   motion-reduce:transition-none"}
     />
   );
 }

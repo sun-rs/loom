@@ -4,22 +4,7 @@ import { createContext, lazy, Suspense, useContext, useEffect, useLayoutEffect, 
 import type { ComponentType, ReactNode } from "react";
 import { useIntl } from "react-intl";
 import { LogIn, ArrowLeft, MessageSquare, ListTodo, ArrowDown, Paperclip, BellOff, X } from "lucide-react";
-import {
-  ConversationPanelBody,
-  ConversationPanelContent,
-  ConversationPanelFooter,
-  ConversationPanelRoot,
-  ConversationPanelTabs,
-  PanelTitle,
-  SortableTabsList,
-  SortableTabsTab,
-  Tabs,
-  TabsIndicator,
-  TabsLabel,
-  toast,
-  useOrderedTabs,
-  Button,
-} from "raft-ui";
+import {ConversationPanelBody, ConversationPanelContent, ConversationPanelFooter, ConversationPanelRoot, ConversationPanelTabs, PanelTitle, SortableTabsList, SortableTabsTab, Tabs, TabsLabel, toast, useOrderedTabs, Button} from "raft-ui";
 import SOSDialog from "./SOSDialog";
 import { useChannelStore } from "../../store/channelStore";
 import type { Channel } from "../../store/channelStore";
@@ -151,7 +136,7 @@ export function ActivityMutedBadge() {
   return (
     <Tooltip content={formatMessage({ id: "message.chatPanel.activityMuted" })}>
     <span
-      className="inline-flex shrink-0 items-center leading-none text-foreground-muted theme-brutal:text-black/70"
+      className="inline-flex shrink-0 items-center leading-none text-foreground-muted "
       data-testid="activity-muted-badge"
     >
       <BellOff size={12} />
@@ -1354,7 +1339,7 @@ export default function ChatPanel({
   const regularTitleSuffix = isRegularChannel && (isArchived || activityMuted) ? (
     <div className="flex items-center gap-1.5">
       {isArchived && (
-        <span className="inline-flex shrink-0 items-center rounded-sm border border-line-muted bg-warning/30 px-1.5 py-1 text-[11px] font-bold uppercase tracking-wide leading-none text-foreground-strong theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-brutal-orange/30">
+        <span className="inline-flex shrink-0 items-center rounded-sm border border-line-muted bg-warning/30 px-1.5 py-1 text-[11px] font-bold uppercase tracking-wide leading-none text-foreground-strong    ">
           {formatMessage({ id: "message.chatPanel.archived" })}
         </span>
       )}
@@ -1455,7 +1440,7 @@ export default function ChatPanel({
 
       {!hideHeader && activityMuteError && (
         <div
-          className="flex items-center justify-between gap-3 border-b border-line-muted bg-warning-soft px-5 py-2 text-xs font-bold text-warning-strong theme-brutal:border-b-2 theme-brutal:border-black theme-brutal:bg-brutal-orange/20 theme-brutal:text-black"
+          className="flex items-center justify-between gap-3 border-b border-line-muted bg-warning-soft px-5 py-2 text-xs font-bold text-warning-strong    "
           role="alert"
           data-testid="activity-mute-error"
         >
@@ -1473,7 +1458,7 @@ export default function ChatPanel({
 
       {!hideHeader && messageDisplayPrefsError && (
         <div
-          className="flex items-center justify-between gap-3 border-b border-line-muted bg-warning-soft px-5 py-2 text-xs font-bold text-warning-strong theme-brutal:border-b-2 theme-brutal:border-black theme-brutal:bg-brutal-orange/20 theme-brutal:text-black"
+          className="flex items-center justify-between gap-3 border-b border-line-muted bg-warning-soft px-5 py-2 text-xs font-bold text-warning-strong    "
           role="alert"
           data-testid="message-display-prefs-error"
         >
@@ -1499,7 +1484,7 @@ export default function ChatPanel({
             variant="underline"
           >
             {visibleTabButtons}
-            <TabsIndicator />
+            
           </SortableTabsList>
         </ConversationPanelTabs>
       )}
@@ -1516,7 +1501,7 @@ export default function ChatPanel({
               整个 white 底，messages scroller 也跟上。bg-white 让整个
               主聊天列从 header 到 composer 全白。 */}
           <div
-            className="relative flex-1 overflow-hidden bg-layer-panel theme-brutal:bg-white"
+            className="relative flex-1 overflow-hidden bg-layer-panel "
             data-testid="message-content-surface"
           >
             {loading && !shouldShowMessageTimeline ? (
@@ -1564,7 +1549,7 @@ export default function ChatPanel({
           {showComposer ? (
             <ConversationPanelFooter className={composerHostClassName(overlayComposer)}>
           {jointOverLimitGraceEndsAt && !readOnly && !isArchived && (
-            <div className="border-t border-line-muted bg-layer-panel px-3 pt-3 theme-brutal:border-t-2 theme-brutal:border-black theme-brutal:bg-white">
+            <div className="border-t border-line-muted bg-layer-panel px-3 pt-3   ">
               <Banner intent="warning" className="justify-center text-center font-bold" data-testid="joint-over-limit-grace-banner">
                 {formatMessage(
                   { id: "message.chatPanel.jointOverLimitGrace" },
@@ -1574,19 +1559,19 @@ export default function ChatPanel({
             </div>
           )}
           {readOnly ? (
-            <div className="border-t border-line-muted bg-layer-panel px-4 py-3 theme-brutal:border-t-2 theme-brutal:border-black theme-brutal:bg-white">
-              <div className="flex items-center px-3 py-2 opacity-50 cursor-not-allowed border border-line-muted theme-brutal:input-brutal">
+            <div className="border-t border-line-muted bg-layer-panel px-4 py-3   ">
+              <div className="flex items-center px-3 py-2 opacity-50 cursor-not-allowed border border-line-muted ">
                 <span className="text-sm text-foreground-muted">{formatMessage({ id: "message.chatPanel.unavailable" })}</span>
               </div>
             </div>
           ) : isArchived ? (
-            <div className="flex items-center border-t border-line-muted bg-warning-soft p-3 theme-brutal:border-t-2 theme-brutal:border-black theme-brutal:bg-brutal-orange/20">
-              <div className="flex w-full items-center justify-center gap-2 text-sm font-bold text-warning-strong theme-brutal:text-black">
+            <div className="flex items-center border-t border-line-muted bg-warning-soft p-3   ">
+              <div className="flex w-full items-center justify-center gap-2 text-sm font-bold text-warning-strong ">
                 {formatMessage({ id: "message.chatPanel.archivedNotice" })}
                 {effectiveChannelCapabilities.archiveChannels && (
                   <button
                     onClick={() => setOverflowOpen(true)}
-                    className="font-bold text-foreground-strong underline theme-brutal:text-black"
+                    className="font-bold text-foreground-strong underline "
                   >
                     {formatMessage({ id: "message.chatPanel.unarchive" })}
                   </button>
@@ -1594,31 +1579,31 @@ export default function ChatPanel({
               </div>
             </div>
           ) : isJointChannelFeatureLocked ? (
-            <div className="border-t border-line-muted bg-layer-panel p-3 theme-brutal:border-t-2 theme-brutal:border-black theme-brutal:bg-white">
+            <div className="border-t border-line-muted bg-layer-panel p-3   ">
               <Banner intent="warning" className="justify-center text-center font-bold">
                 {formatMessage({ id: "message.chatPanel.jointLocked" })}{" "}
                 <button
                   onClick={() => nav.toSettings("billing")}
-                  className="font-bold text-foreground-strong underline theme-brutal:text-black"
+                  className="font-bold text-foreground-strong underline "
                 >
                   {formatMessage({ id: "message.chatPanel.viewBilling" })}
                 </button>
               </Banner>
             </div>
           ) : isReadOnlyByQuota ? (
-            <div className="border-t border-line-muted bg-layer-panel p-3 theme-brutal:border-t-2 theme-brutal:border-black theme-brutal:bg-white">
+            <div className="border-t border-line-muted bg-layer-panel p-3   ">
               <Banner intent="warning" className="justify-center text-center font-bold">
                 {formatMessage({ id: "message.chatPanel.readOnlyQuota" }, { plan: PLAN_CONFIG[plan].displayName })}{" "}
                 <button
                   onClick={() => nav.toSettings("billing")}
-                  className="font-bold text-foreground-strong underline theme-brutal:text-black"
+                  className="font-bold text-foreground-strong underline "
                 >
                   {formatMessage({ id: "message.chatPanel.upgradeForMoreChannels" })}
                 </button>
               </Banner>
             </div>
           ) : isGuestReadOnlyChannel ? (
-            <div className="border-t border-line-muted bg-layer-panel p-3 theme-brutal:border-t-2 theme-brutal:border-black theme-brutal:bg-white" data-testid="guest-readonly-channel-banner">
+            <div className="border-t border-line-muted bg-layer-panel p-3   " data-testid="guest-readonly-channel-banner">
               <Banner intent="warning" className="justify-center text-center font-bold">
                 {formatMessage({ id: "message.chatPanel.guestReadOnlyChannel" })}
               </Banner>
@@ -1655,7 +1640,7 @@ export default function ChatPanel({
             )
           ) : joined === false
             && (currentServer?.role !== "guest" || channel.guestJoinable === true) ? (
-            <div className="flex flex-col items-center gap-2 border-t border-line-muted bg-layer-panel p-3 theme-brutal:border-t-2 theme-brutal:border-black theme-brutal:bg-white">
+            <div className="flex flex-col items-center gap-2 border-t border-line-muted bg-layer-panel p-3   ">
               <Button
                 onClick={handleJoinChannel}
                 size="md"
@@ -1666,7 +1651,7 @@ export default function ChatPanel({
                 {formatMessage({ id: "message.chatPanel.joinChannel" }, { channel: channel.name })}
               </Button>
               {isGuest ? (
-                <p className="text-center text-xs font-medium text-foreground-muted theme-brutal:text-black/60" data-testid="guest-join-explanation">
+                <p className="text-center text-xs font-medium text-foreground-muted " data-testid="guest-join-explanation">
                   {formatMessage({ id: "message.chatPanel.guestJoinExplanation" })}
                 </p>
               ) : null}
@@ -1714,7 +1699,7 @@ export default function ChatPanel({
       {picError && (
         <div
           role="alert"
-          className="fixed bottom-20 left-1/2 z-[110] -translate-x-1/2 border border-warning bg-warning-soft px-3 py-2 text-xs font-bold text-warning-strong shadow-raft-sm theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-brutal-orange theme-brutal:text-black theme-brutal:shadow-brutal-sm"
+          className="fixed bottom-20 left-1/2 z-[110] -translate-x-1/2 border border-warning bg-warning-soft px-3 py-2 text-xs font-bold text-warning-strong shadow-raft-sm     "
           onClick={() => setPicError(null)}
           data-testid="select-share-error"
         >

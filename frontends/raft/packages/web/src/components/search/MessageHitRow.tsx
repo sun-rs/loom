@@ -68,7 +68,7 @@ export function MessageHitRow({
       {(result.channelType === "thread"
         ? result.parentChannelArchivedAt
         : result.channelArchivedAt) && (
-        <Badge appearance="soft" variant="warning" uppercase>
+        <Badge appearance="soft" variant="warning">
           {formatMessage({ id: "search.archived" })}
         </Badge>
       )}

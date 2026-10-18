@@ -48,9 +48,9 @@ function ReminderCard({
   return (
     <SurfaceListItem>
       <div className="min-w-0">
-        <div className="text-sm font-bold text-foreground-strong theme-brutal:text-black break-words">{reminder.title}</div>
-        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-foreground-muted theme-brutal:text-black/50">
-          <span className="inline-flex items-center gap-1 font-medium text-foreground-muted theme-brutal:text-black/60">
+        <div className="text-sm font-bold text-foreground-strong  break-words">{reminder.title}</div>
+        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-foreground-muted ">
+          <span className="inline-flex items-center gap-1 font-medium text-foreground-muted ">
             <Clock3 size={12} />
             {(() => {
               const parts = getRelativeTimeParts(reminder.fireAt);
@@ -60,7 +60,7 @@ function ReminderCard({
           <span className="font-mono">{formatShortDateTime(reminder.fireAt)}</span>
           {reminder.recurrence && (
             <span
-              className="inline-flex items-center gap-1 border border-line-muted theme-brutal:border-black bg-accent-soft theme-brutal:bg-brutal-lavender/30 px-1.5 py-0.5 font-mono text-[11px] text-foreground-strong theme-brutal:text-black"
+              className="inline-flex items-center gap-1 border border-line-muted  bg-accent-soft  px-1.5 py-0.5 font-mono text-[11px] text-foreground-strong "
             >
               <Repeat size={11} />
               {reminder.recurrence.description}
@@ -73,13 +73,13 @@ function ReminderCard({
               <a
                 href={reminder.msgPermalink}
                 onClick={handleMsgRefClick}
-                className="inline-flex max-w-full cursor-default items-center gap-1 truncate border border-line-muted theme-brutal:border-black bg-layer-panel theme-brutal:bg-white px-1.5 py-0.5 font-mono text-[11px] text-foreground-strong theme-brutal:text-black hover:bg-fill-muted theme-brutal:hover:bg-soft-signal/30"
+                className="inline-flex max-w-full cursor-default items-center gap-1 truncate border border-line-muted  bg-layer-panel  px-1.5 py-0.5 font-mono text-[11px] text-foreground-strong  hover:bg-fill-muted "
               >
                 <Link2 size={11} className="shrink-0" />
                 <span className="truncate">{reminder.msgRef}</span>
               </a>
             ) : (
-              <span className="inline-flex max-w-full items-center gap-1 truncate border border-line-muted theme-brutal:border-black bg-layer-panel theme-brutal:bg-white px-1.5 py-0.5 font-mono text-[11px] text-foreground-muted theme-brutal:text-black/70">
+              <span className="inline-flex max-w-full items-center gap-1 truncate border border-line-muted  bg-layer-panel  px-1.5 py-0.5 font-mono text-[11px] text-foreground-muted ">
                 <Link2 size={11} className="shrink-0" />
                 <span className="truncate">{reminder.msgRef}</span>
               </span>
@@ -115,21 +115,21 @@ export default function AgentRemindersSection({
     <div
       className={
         isTab
-          ? "flex-1 overflow-y-auto bg-layer-panel theme-brutal:bg-white px-5 py-5"
-          : "px-5 py-4 border-t border-line-muted theme-brutal:border-black/10"
+          ? "flex-1 overflow-y-auto bg-layer-panel  px-5 py-5"
+          : "px-5 py-4 border-t border-line-muted "
       }
     >
       {isTab ? (
-        loading ? <div className="mb-3 text-xs font-bold text-foreground-muted theme-brutal:text-black/50">{formatMessage({ id: "common.loading" })}</div> : null
+        loading ? <div className="mb-3 text-xs font-bold text-foreground-muted ">{formatMessage({ id: "common.loading" })}</div> : null
       ) : (
         <SectionHeader
           className="mb-3"
-          icon={<BellRing size={14} className="text-foreground-muted theme-brutal:text-black/50" />}
+          icon={<BellRing size={14} className="text-foreground-muted " />}
           label={formatMessage({ id: "agent.reminders.pendingLabel" })}
           count={reminders.length}
           action={
             loading ? (
-              <span className="text-xs font-bold text-foreground-muted theme-brutal:text-black/50">{formatMessage({ id: "common.loading" })}</span>
+              <span className="text-xs font-bold text-foreground-muted ">{formatMessage({ id: "common.loading" })}</span>
             ) : null
           }
         />
@@ -154,13 +154,13 @@ export default function AgentRemindersSection({
       ) : reminders.length === 0 ? (
         isTab ? (
           <EmptyState
-            className="flex h-full flex-col items-center justify-center bg-layer-panel theme-brutal:bg-white"
+            className="flex h-full flex-col items-center justify-center bg-layer-panel "
             icon={<BellRing size={28} />}
             title={formatMessage({ id: "emptyState.noRemindersTitle" })}
             description={formatMessage({ id: "emptyState.noRemindersDesc" })}
           />
         ) : (
-          <div className="text-sm text-foreground-muted theme-brutal:text-black/50">{formatMessage({ id: "agent.reminders.noPending" })}</div>
+          <div className="text-sm text-foreground-muted ">{formatMessage({ id: "agent.reminders.noPending" })}</div>
         )
       ) : (
         <div className="space-y-3">

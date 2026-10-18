@@ -88,23 +88,23 @@ const SavedItem = memo(function SavedItem({
             render={<div role="button" tabIndex={0} />}
             onClick={handleOpen}
             onKeyDown={handleKeyDown}
-            className="relative flex flex-row items-center gap-3 transition-colors p-3 text-left w-full shadow-none border-line-muted theme-brutal:border-2 theme-brutal:border-black bg-layer-panel theme-brutal:bg-white hover:bg-fill-muted data-[popup-open]:bg-fill-muted"
+            className="relative flex flex-row items-center gap-3 transition-colors p-3 text-left w-full shadow-none border-line-muted   bg-layer-panel  hover:bg-fill-muted data-[popup-open]:bg-fill-muted"
           />
         }
       >
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 mb-1 text-xs">
-            <span className="font-bold text-foreground-muted theme-brutal:text-black/50">
+            <span className="font-bold text-foreground-muted ">
               {channelLabel}
             </span>
             {isThread && (
-              <span className="inline-flex items-center gap-1 font-bold text-foreground-muted theme-brutal:text-black/40">
+              <span className="inline-flex items-center gap-1 font-bold text-foreground-muted ">
                 <MessageSquare size={10} />
                 {formatMessage({ id: "saved.threadLabel" })}
               </span>
             )}
             {senderName && (
-              <span className="inline-flex items-center gap-1 font-bold text-foreground-strong theme-brutal:text-black">
+              <span className="inline-flex items-center gap-1 font-bold text-foreground-strong ">
                 {senderAgent ? (
                   <AvatarSlot
                     context="preview-mini"
@@ -128,7 +128,7 @@ const SavedItem = memo(function SavedItem({
                 <span>{senderName}</span>
               </span>
             )}
-            <span className="text-xs text-foreground-muted font-mono theme-brutal:text-black/40">
+            <span className="text-xs text-foreground-muted font-mono ">
               {formatRelativeTime(entry.createdAt, locale) ?? ""}
             </span>
           </div>
@@ -140,12 +140,12 @@ const SavedItem = memo(function SavedItem({
             onKeyDown={stopKeyPropagation}
             onClick={handleRemoveButtonClick}
             aria-label={formatMessage({ id: "saved.remove" })}
-            className="data-pressed:text-accent-strong theme-brutal:data-pressed:text-brutal-orange data-pressed:bg-accent-soft/30"
+            className="data-pressed:text-accent-strong  data-pressed:bg-accent-soft/30"
           >
             <Bookmark
               size={14}
               fill="currentColor"
-              className="text-accent-strong theme-brutal:text-brutal-orange"
+              className="text-accent-strong "
               aria-hidden
             />
           </PanelToggleAction>
@@ -216,7 +216,7 @@ export default function SavedPanel({
   }, [hasMore, loadMore, loading, saved.length]);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-layer-canvas-muted theme-brutal:bg-white">
+    <div className="flex min-h-0 flex-1 flex-col bg-layer-canvas-muted ">
       {!embedded ? (
         <PanelHeader
           title={formatMessage({ id: "saved.header.title" })}
@@ -262,7 +262,7 @@ export default function SavedPanel({
       <div
         ref={scrollerRef}
         data-testid="saved-list-scroller"
-        className="flex-1 overflow-y-auto bg-layer-canvas-muted p-4 safe-bottom theme-brutal:bg-white"
+        className="flex-1 overflow-y-auto bg-layer-canvas-muted p-4 safe-bottom "
       >
         {loading && saved.length === 0 ? (
           <ConversationCardSkeleton />

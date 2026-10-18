@@ -162,9 +162,9 @@ function statusBadge(
   state: AppNotificationsDeveloperState | null,
   formatMessage: IntlShape["formatMessage"],
 ) {
-  if (state?.pending_revision) return <Badge variant="warning" uppercase>{formatMessage({ id: "settings.connectedApps.appNotifications.pendingAppReview" })}</Badge>;
-  if (state?.current_events?.length) return <Badge variant="success" uppercase>{formatMessage({ id: "settings.connectedApps.appNotifications.requestApproved" })}</Badge>;
-  return <Badge appearance="outline" uppercase>{formatMessage({ id: "settings.connectedApps.appNotifications.disabled" })}</Badge>;
+  if (state?.pending_revision) return <Badge variant="warning">{formatMessage({ id: "settings.connectedApps.appNotifications.pendingAppReview" })}</Badge>;
+  if (state?.current_events?.length) return <Badge variant="success">{formatMessage({ id: "settings.connectedApps.appNotifications.requestApproved" })}</Badge>;
+  return <Badge appearance="outline">{formatMessage({ id: "settings.connectedApps.appNotifications.disabled" })}</Badge>;
 }
 
 function AppNotificationsEyebrow() {
@@ -206,7 +206,7 @@ export function AppNotificationPermissionPicker({
           return (
             <label
               key={group}
-              className={`flex min-h-[68px] items-start gap-2 border-2 p-2.5 ${selectedGroups.has(group) ? "border-accent bg-accent-soft theme-brutal:border-black theme-brutal:bg-brutal-lime/20" : "border-line-muted bg-layer-panel theme-brutal:border-black/15 theme-brutal:bg-white"} ${allowed ? "" : "opacity-45"}`}
+              className={`flex min-h-[68px] items-start gap-2 border-2 p-2.5 ${selectedGroups.has(group) ? "border-accent bg-accent-soft  " : "border-line-muted bg-layer-panel  "} ${allowed ? "" : "opacity-45"}`}
             >
               <AppNotificationGroupCheckbox
                 group={group}
@@ -216,8 +216,8 @@ export function AppNotificationPermissionPicker({
                 onChange={onChange}
               />
               <span className="min-w-0">
-                <span className="block text-xs font-black text-foreground-strong theme-brutal:text-black">{permissionGroupLabel(group, formatMessage)}</span>
-                <span className="mt-0.5 block text-[11px] leading-snug text-foreground-muted theme-brutal:text-black/55">{formatMessage({ id: GROUP_META[group].summaryId })}</span>
+                <span className="block text-xs font-black text-foreground-strong ">{permissionGroupLabel(group, formatMessage)}</span>
+                <span className="mt-0.5 block text-[11px] leading-snug text-foreground-muted ">{formatMessage({ id: GROUP_META[group].summaryId })}</span>
               </span>
             </label>
           );
@@ -228,15 +228,15 @@ export function AppNotificationPermissionPicker({
         // Write grants (agent_reminder_write) carry no events.
         if (events.length === 0) return null;
         return (
-          <details key={group} open className="border-t-2 border-line-muted theme-brutal:border-black/15 pt-2">
-            <summary className="text-xs font-black text-foreground-strong theme-brutal:text-black">{formatMessage({ id: "settings.connectedApps.appNotifications.groupEventsSummary" }, { group: formatMessage({ id: GROUP_META[group].labelId }) })}</summary>
+          <details key={group} open className="border-t-2 border-line-muted  pt-2">
+            <summary className="text-xs font-black text-foreground-strong ">{formatMessage({ id: "settings.connectedApps.appNotifications.groupEventsSummary" }, { group: formatMessage({ id: GROUP_META[group].labelId }) })}</summary>
             <div className="mt-2 grid gap-2 sm:grid-cols-2">
               {events.map((event) => {
                 const requiredGroups = APP_NOTIFICATION_EVENT_GROUPS[event];
                 const available = requiredGroups.every((required) => selectedGroups.has(required))
                   && (!allowedEventSet || allowedEventSet.has(event));
                 return (
-                  <label key={event} className={`flex min-h-[38px] items-start gap-2 border border-line-muted bg-layer-panel theme-brutal:border-black/15 theme-brutal:bg-white px-2 py-1.5 text-xs font-bold text-foreground-muted theme-brutal:text-black/70 ${available ? "" : "opacity-45"}`}>
+                  <label key={event} className={`flex min-h-[38px] items-start gap-2 border border-line-muted bg-layer-panel   px-2 py-1.5 text-xs font-bold text-foreground-muted  ${available ? "" : "opacity-45"}`}>
                     <AppNotificationEventCheckbox
                       event={event}
                       value={value}
@@ -246,7 +246,7 @@ export function AppNotificationPermissionPicker({
                     />
                     <span className="min-w-0 break-words">
                       {formatMessage({ id: EVENT_LABEL_ID[event] })}
-                      {requiredGroups.length > 1 ? <span className="block text-[10px] font-normal text-foreground-muted theme-brutal:text-black/45">{formatMessage({ id: "settings.connectedApps.appNotifications.requiresAgentAndComputer" })}</span> : null}
+                      {requiredGroups.length > 1 ? <span className="block text-[10px] font-normal text-foreground-muted ">{formatMessage({ id: "settings.connectedApps.appNotifications.requiresAgentAndComputer" })}</span> : null}
                     </span>
                   </label>
                 );
@@ -256,7 +256,7 @@ export function AppNotificationPermissionPicker({
         );
       }) : null}
       {value.groups.length === 0 ? (
-        <div className="border-l-4 border-line-strong bg-layer-canvas-muted theme-brutal:border-black/25 theme-brutal:bg-black/[0.03] px-3 py-2 text-xs font-bold text-foreground-muted theme-brutal:text-black/55">
+        <div className="border-l-4 border-line-strong bg-layer-canvas-muted   px-3 py-2 text-xs font-bold text-foreground-muted ">
           {formatMessage({ id: "settings.connectedApps.appPermissions.noSelection" })}
         </div>
       ) : null}
@@ -302,7 +302,7 @@ export function DeveloperAppPermissions({ clientId, value, onChange, state, load
         <p className="text-xs text-warning-strong">{formatMessage({ id: "settings.connectedApps.appNotifications.revisionPendingReview" }, { revision: state.pending_revision.revision })}</p>
       ) : null}
       {state?.source_installation ? (
-        <div className="space-y-2 border-2 border-line-muted bg-layer-panel theme-brutal:border-black/20 theme-brutal:bg-white p-3" data-testid="app-notifications-source-installation">
+        <div className="space-y-2 border-2 border-line-muted bg-layer-panel   p-3" data-testid="app-notifications-source-installation">
           <div className="text-sm font-bold">{formatMessage({ id: "settings.connectedApps.appNotifications.sourceInstallation" })}</div>
           <div className="text-xs">{formatMessage({ id: !state.source_installation.enabled
             ? "settings.connectedApps.appNotifications.sourceDisabled"
@@ -314,7 +314,7 @@ export function DeveloperAppPermissions({ clientId, value, onChange, state, load
             <Input readOnly value={state.source_installation.installation_id} onFocus={selectInputOnFocus}
               className="mt-1 w-full font-mono text-xs" />
           </label>
-          <div className="text-xs text-foreground-muted theme-brutal:text-black/60">{formatMessage({ id: "settings.connectedApps.appNotifications.sourceUse" })}</div>
+          <div className="text-xs text-foreground-muted ">{formatMessage({ id: "settings.connectedApps.appNotifications.sourceUse" })}</div>
         </div>
       ) : null}
     </section>
@@ -450,41 +450,40 @@ export function DeveloperAppNotifications({
   }, [clientId, formatMessage, onError, signingSecret]);
 
   return (
-    <section className={embedded ? "space-y-3" : "space-y-3 border-t-2 border-line-strong theme-brutal:border-black pt-4"} data-testid="developer-app-notifications">
+    <section className={embedded ? "space-y-3" : "space-y-3 border-t-2 border-line-strong  pt-4"} data-testid="developer-app-notifications">
       {!embedded ? (
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="flex min-w-0 items-start gap-2">
             <Bell size={18} className="mt-0.5 shrink-0" />
             <div className="min-w-0">
               <AppNotificationsEyebrow />
-              <div className="mt-1 text-xs leading-relaxed text-foreground-muted theme-brutal:text-black/60">{formatMessage({ id: "settings.connectedApps.appNotifications.eventsMayReceive" })}</div>
+              <div className="mt-1 text-xs leading-relaxed text-foreground-muted ">{formatMessage({ id: "settings.connectedApps.appNotifications.eventsMayReceive" })}</div>
             </div>
           </div>
-          {loading ? <Badge appearance="outline" uppercase>{formatMessage({ id: "common.loadingLabel" })}</Badge> : statusBadge(state, formatMessage)}
+          {loading ? <Badge appearance="outline">{formatMessage({ id: "common.loadingLabel" })}</Badge> : statusBadge(state, formatMessage)}
         </div>
       ) : null}
-      <div className="space-y-3 border-2 border-line-muted bg-layer-panel theme-brutal:border-black/20 theme-brutal:bg-white p-3" data-testid="app-notifications-delivery">
-        <div className="flex flex-wrap items-start justify-between gap-2 border-b-2 border-line-muted theme-brutal:border-black/10 pb-2">
+      <div className="space-y-3 border-2 border-line-muted bg-layer-panel   p-3" data-testid="app-notifications-delivery">
+        <div className="flex flex-wrap items-start justify-between gap-2 border-b-2 border-line-muted  pb-2">
           <div>
-            <div className="text-sm font-black text-foreground-strong theme-brutal:text-black">{formatMessage({ id: "settings.connectedApps.appNotifications.deliveryTitle" })}</div>
-            <div className="mt-0.5 text-xs leading-relaxed text-foreground-muted theme-brutal:text-black/55">{formatMessage({ id: "settings.connectedApps.appNotifications.deliveryDescription" })}</div>
+            <div className="text-sm font-black text-foreground-strong ">{formatMessage({ id: "settings.connectedApps.appNotifications.deliveryTitle" })}</div>
+            <div className="mt-0.5 text-xs leading-relaxed text-foreground-muted ">{formatMessage({ id: "settings.connectedApps.appNotifications.deliveryDescription" })}</div>
           </div>
-          {embedded ? (loading ? <Badge appearance="outline" uppercase>{formatMessage({ id: "common.loadingLabel" })}</Badge> : statusBadge(state, formatMessage)) : null}
+          {embedded ? (loading ? <Badge appearance="outline">{formatMessage({ id: "common.loadingLabel" })}</Badge> : statusBadge(state, formatMessage)) : null}
         </div>
         <div className="flex items-start justify-between gap-4">
           <span className="min-w-0">
-            <span id="app-notifications-enabled-label" className="block text-sm font-bold text-foreground-strong theme-brutal:text-black">
+            <span id="app-notifications-enabled-label" className="block text-sm font-bold text-foreground-strong ">
               {formatMessage({ id: "settings.connectedApps.appNotifications.enableTitle" })}
             </span>
-            <span id="app-notifications-enabled-description" className="mt-0.5 block text-xs leading-5 text-foreground-muted theme-brutal:text-black/60">
+            <span id="app-notifications-enabled-description" className="mt-0.5 block text-xs leading-5 text-foreground-muted ">
               {formatMessage({ id: "settings.connectedApps.appNotifications.enableDescription" })}
             </span>
             {!clientId ? (
-              <span className="mt-1 block text-[11px] font-bold text-foreground-muted theme-brutal:text-black/45">{formatMessage({ id: "settings.connectedApps.appNotifications.saveBeforeWebhook" })}</span>
+              <span className="mt-1 block text-[11px] font-bold text-foreground-muted ">{formatMessage({ id: "settings.connectedApps.appNotifications.saveBeforeWebhook" })}</span>
             ) : null}
           </span>
           <Switch
-            size="md"
             checked={configurationOpen}
             onCheckedChange={toggleConfiguration}
             disabled={!clientId || loading || !state || !!busy}
@@ -494,10 +493,10 @@ export function DeveloperAppNotifications({
           />
         </div>
         {configurationOpen && clientId ? (
-          <div className="space-y-3 border-t-2 border-line-muted theme-brutal:border-black/15 pt-3" data-testid="app-notifications-configuration">
+          <div className="space-y-3 border-t-2 border-line-muted  pt-3" data-testid="app-notifications-configuration">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
               <label className="min-w-0 flex-1">
-                <span className="mb-1 block text-xs font-bold text-foreground-muted theme-brutal:text-black/70">{formatMessage({ id: "settings.connectedApps.appNotifications.httpsEndpoint" })}</span>
+                <span className="mb-1 block text-xs font-bold text-foreground-muted ">{formatMessage({ id: "settings.connectedApps.appNotifications.httpsEndpoint" })}</span>
                 <input
                   type="url"
                   value={endpoint}
@@ -506,7 +505,7 @@ export function DeveloperAppNotifications({
                     sourceEndpoint,
                     value: event.target.value,
                   })}
-                  className="w-full border border-line-strong bg-layer-canvas px-2 py-1.5 font-mono text-xs text-foreground-strong placeholder:text-foreground-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent theme-brutal:border-black theme-brutal:bg-white theme-brutal:text-black"
+                  className="w-full border border-line-strong bg-layer-canvas px-2 py-1.5 font-mono text-xs text-foreground-strong placeholder:text-foreground-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent   "
                   placeholder="https://example.com/raft/events"
                 />
               </label>
@@ -514,7 +513,7 @@ export function DeveloperAppNotifications({
                 {busy === "endpoint" ? formatMessage({ id: "settings.connectedApps.appNotifications.saving" }) : formatMessage({ id: "settings.connectedApps.appNotifications.saveEndpoint" })}
               </Button>
             </div>
-            <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-foreground-muted theme-brutal:text-black/55">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-foreground-muted ">
               <span>{state?.webhook?.enabled
             ? formatMessage({ id: "settings.connectedApps.appNotifications.enabledRevision" }, { revision: state.webhook.config_revision })
             : formatMessage({ id: "settings.connectedApps.appNotifications.enterEndpointToEnable" })}</span>
@@ -526,9 +525,9 @@ export function DeveloperAppNotifications({
             </div>
             {signingSecret ? (
               <div className="space-y-2 border-l-4 border-brutal-lime bg-brutal-lime/15 px-3 py-2" data-testid="app-notifications-secret-reveal">
-                <div className="flex items-center gap-2 text-xs font-black text-foreground-strong theme-brutal:text-black"><KeyRound size={14} /> {formatMessage({ id: "settings.connectedApps.appNotifications.signingSecretShownOnce" })}</div>
+                <div className="flex items-center gap-2 text-xs font-black text-foreground-strong "><KeyRound size={14} /> {formatMessage({ id: "settings.connectedApps.appNotifications.signingSecretShownOnce" })}</div>
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                  <code className="min-w-0 flex-1 break-all border border-line-strong bg-layer-panel theme-brutal:border-black/20 theme-brutal:bg-white p-2 text-[11px]">{signingSecret}</code>
+                  <code className="min-w-0 flex-1 break-all border border-line-strong bg-layer-panel   p-2 text-[11px]">{signingSecret}</code>
                   <Button type="button" size="sm" onClick={copySecret}>
                     {secretState?.copied ? <Check size={13} /> : <Copy size={13} />} {secretState?.copied ? formatMessage({ id: "settings.connectedApps.appNotifications.copied" }) : formatMessage({ id: "settings.connectedApps.appNotifications.copy" })}
                   </Button>
@@ -539,14 +538,14 @@ export function DeveloperAppNotifications({
         ) : null}
       </div>
       {configurationOpen && clientId ? (
-        <div className="space-y-3 border-2 border-line-muted bg-layer-panel theme-brutal:border-black/20 theme-brutal:bg-white p-3" data-testid="app-notifications-permissions">
-          <div className="border-b-2 border-line-muted theme-brutal:border-black/10 pb-2">
-            <div className="text-sm font-black text-foreground-strong theme-brutal:text-black">{formatMessage({ id: "settings.connectedApps.appNotifications.permissionsTitle" })}</div>
-            <div className="mt-0.5 text-xs leading-relaxed text-foreground-muted theme-brutal:text-black/55">{formatMessage({ id: "settings.connectedApps.appNotifications.permissionsDescription" })}</div>
+        <div className="space-y-3 border-2 border-line-muted bg-layer-panel   p-3" data-testid="app-notifications-permissions">
+          <div className="border-b-2 border-line-muted  pb-2">
+            <div className="text-sm font-black text-foreground-strong ">{formatMessage({ id: "settings.connectedApps.appNotifications.permissionsTitle" })}</div>
+            <div className="mt-0.5 text-xs leading-relaxed text-foreground-muted ">{formatMessage({ id: "settings.connectedApps.appNotifications.permissionsDescription" })}</div>
           </div>
           <AppNotificationPermissionPicker value={value} onChange={onChange} section="events" disabled={loading || !state} />
           {state?.pending_revision ? (
-            <div className="border-l-4 border-warning bg-warning-soft px-3 py-2 text-xs leading-relaxed text-foreground-muted theme-brutal:border-soft-signal theme-brutal:bg-soft-signal/20 theme-brutal:text-black/70">
+            <div className="border-l-4 border-warning bg-warning-soft px-3 py-2 text-xs leading-relaxed text-foreground-muted   ">
               {formatMessage(
                 { id: "settings.connectedApps.appNotifications.revisionPendingReview" },
                 { revision: state.pending_revision.revision },
@@ -560,10 +559,10 @@ export function DeveloperAppNotifications({
 }
 
 function ScopeChips({ values, empty }: { values: readonly string[]; empty: string }) {
-  if (values.length === 0) return <span className="text-xs font-bold text-foreground-muted theme-brutal:text-black/45">{empty}</span>;
+  if (values.length === 0) return <span className="text-xs font-bold text-foreground-muted ">{empty}</span>;
   return (
     <div className="flex flex-wrap gap-1.5">
-      {values.map((value) => <span key={value} className="border border-line-strong bg-layer-panel theme-brutal:border-black/20 theme-brutal:bg-white px-2 py-1 text-[11px] font-bold text-foreground-muted theme-brutal:text-black/70">{value}</span>)}
+      {values.map((value) => <span key={value} className="border border-line-strong bg-layer-panel   px-2 py-1 text-[11px] font-bold text-foreground-muted ">{value}</span>)}
     </div>
   );
 }
@@ -601,13 +600,13 @@ export function AppNotificationRequestSummary({
     [formatMessage, shownEvents],
   );
   return (
-    <section className="space-y-3 border-t-2 border-line-strong theme-brutal:border-black pt-4" data-testid="app-notifications-request-summary">
+    <section className="space-y-3 border-t-2 border-line-strong  pt-4" data-testid="app-notifications-request-summary">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="flex items-start gap-2">
           <Bell size={18} className="mt-0.5 shrink-0" />
           <div>
             <AppPermissionsEyebrow />
-            <div className="mt-1 text-xs text-foreground-muted theme-brutal:text-black/55">
+            <div className="mt-1 text-xs text-foreground-muted ">
               {formatMessage({
                 id: reviewPending
                   ? "settings.connectedApps.appNotifications.requestPendingDescription"
@@ -616,21 +615,21 @@ export function AppNotificationRequestSummary({
             </div>
           </div>
         </div>
-        {reviewPending ? <Badge variant="warning" uppercase>{formatMessage({ id: "settings.connectedApps.appNotifications.permissionUpdatePending" })}</Badge> : null}
+        {reviewPending ? <Badge variant="warning">{formatMessage({ id: "settings.connectedApps.appNotifications.permissionUpdatePending" })}</Badge> : null}
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
-        <div className="min-w-0 space-y-2 border-t-2 border-line-muted theme-brutal:border-black/15 pt-2">
-          <div className="text-[10px] font-black uppercase tracking-widest text-foreground-muted theme-brutal:text-black/50">{formatMessage({ id: reviewPending ? "settings.connectedApps.appNotifications.requestedDataGroups" : "settings.connectedApps.appNotifications.dataGroups" })}</div>
+        <div className="min-w-0 space-y-2 border-t-2 border-line-muted  pt-2">
+          <div className="text-[10px] font-black uppercase tracking-widest text-foreground-muted ">{formatMessage({ id: reviewPending ? "settings.connectedApps.appNotifications.requestedDataGroups" : "settings.connectedApps.appNotifications.dataGroups" })}</div>
           <ScopeChips values={groupLabels} empty={formatMessage({ id: "settings.connectedApps.appNotifications.noDataAccess" })} />
         </div>
-        <div className="min-w-0 space-y-2 border-t-2 border-line-muted theme-brutal:border-black/15 pt-2">
-          <div className="text-[10px] font-black uppercase tracking-widest text-foreground-muted theme-brutal:text-black/50">{formatMessage({ id: reviewPending ? "settings.connectedApps.appNotifications.requestedNotificationEvents" : "settings.connectedApps.appNotifications.notificationEvents" })}</div>
+        <div className="min-w-0 space-y-2 border-t-2 border-line-muted  pt-2">
+          <div className="text-[10px] font-black uppercase tracking-widest text-foreground-muted ">{formatMessage({ id: reviewPending ? "settings.connectedApps.appNotifications.requestedNotificationEvents" : "settings.connectedApps.appNotifications.notificationEvents" })}</div>
           <ScopeChips values={eventLabels} empty={formatMessage({ id: "settings.connectedApps.appNotifications.noEvents" })} />
         </div>
       </div>
       {reviewPending && canReview && onApprove ? (
-        <div className="flex flex-col gap-3 border-l-4 border-warning bg-warning-soft px-3 py-2 theme-brutal:border-soft-signal theme-brutal:bg-soft-signal/20 sm:flex-row sm:items-center sm:justify-between" data-testid="app-notifications-review-action">
-          <div className="text-xs font-bold text-foreground-muted theme-brutal:text-black/70">
+        <div className="flex flex-col gap-3 border-l-4 border-warning bg-warning-soft px-3 py-2   sm:flex-row sm:items-center sm:justify-between" data-testid="app-notifications-review-action">
+          <div className="text-xs font-bold text-foreground-muted ">
             {formatMessage({ id: "settings.connectedApps.appNotifications.reviewActionHint" })}
           </div>
           {/* No displayed revision id means we cannot bind the approval to
@@ -712,43 +711,43 @@ export function InstalledAppNotifications({
     [formatMessage, state?.approved_groups, state?.requested_groups],
   );
 
-  if (loading) return <div className="border-t-2 border-line-strong theme-brutal:border-black pt-3 text-xs font-bold text-foreground-muted theme-brutal:text-black/50">{formatMessage({ id: "settings.connectedApps.appNotifications.loading" })}</div>;
+  if (loading) return <div className="border-t-2 border-line-strong  pt-3 text-xs font-bold text-foreground-muted ">{formatMessage({ id: "settings.connectedApps.appNotifications.loading" })}</div>;
   if (!state) return null;
 
   return (
-    <section className="space-y-3 border-t-2 border-line-strong theme-brutal:border-black pt-4" data-testid="installed-app-notifications">
+    <section className="space-y-3 border-t-2 border-line-strong  pt-4" data-testid="installed-app-notifications">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="flex items-start gap-2">
           <Bell size={18} className="mt-0.5 shrink-0" />
           <div>
             <AppPermissionsEyebrow />
-            <div className="mt-1 text-xs text-foreground-muted theme-brutal:text-black/55">{formatMessage({ id: "settings.connectedApps.appNotifications.installedSummary" })}</div>
+            <div className="mt-1 text-xs text-foreground-muted ">{formatMessage({ id: "settings.connectedApps.appNotifications.installedSummary" })}</div>
           </div>
         </div>
-        {state.effective_groups.length > 0 ? <Badge variant="success" uppercase>{formatMessage({ id: "settings.connectedApps.appNotifications.enabled" })}</Badge> : <Badge appearance="outline" uppercase>{formatMessage({ id: "settings.connectedApps.appNotifications.disabled" })}</Badge>}
+        {state.effective_groups.length > 0 ? <Badge variant="success">{formatMessage({ id: "settings.connectedApps.appNotifications.enabled" })}</Badge> : <Badge appearance="outline">{formatMessage({ id: "settings.connectedApps.appNotifications.disabled" })}</Badge>}
       </div>
-      {state.app_review_pending ? <Badge variant="warning" uppercase>{formatMessage({ id: "settings.connectedApps.appNotifications.appReviewPending" })}</Badge> : null}
+      {state.app_review_pending ? <Badge variant="warning">{formatMessage({ id: "settings.connectedApps.appNotifications.appReviewPending" })}</Badge> : null}
       <div className="grid gap-3 sm:grid-cols-3">
-        <div className="min-w-0 space-y-2 border-t-2 border-line-muted theme-brutal:border-black/15 pt-2">
-          <div className="text-[10px] font-black uppercase tracking-widest text-foreground-muted theme-brutal:text-black/50">{formatMessage({ id: "settings.connectedApps.appNotifications.approvedData" })}</div>
+        <div className="min-w-0 space-y-2 border-t-2 border-line-muted  pt-2">
+          <div className="text-[10px] font-black uppercase tracking-widest text-foreground-muted ">{formatMessage({ id: "settings.connectedApps.appNotifications.approvedData" })}</div>
           <ScopeChips values={approvedGroupLabels} empty={formatMessage({ id: "settings.connectedApps.appNotifications.noDataAccessEmpty" })} />
         </div>
-        <div className="min-w-0 space-y-2 border-t-2 border-line-muted theme-brutal:border-black/15 pt-2">
-          <div className="text-[10px] font-black uppercase tracking-widest text-foreground-muted theme-brutal:text-black/50">{formatMessage({ id: "settings.connectedApps.appNotifications.developerSubscriptions" })}</div>
+        <div className="min-w-0 space-y-2 border-t-2 border-line-muted  pt-2">
+          <div className="text-[10px] font-black uppercase tracking-widest text-foreground-muted ">{formatMessage({ id: "settings.connectedApps.appNotifications.developerSubscriptions" })}</div>
           <ScopeChips values={subscribedEventLabels} empty={formatMessage({ id: "settings.connectedApps.appNotifications.noSubscriptions" })} />
         </div>
-        <div className="min-w-0 space-y-2 border-t-2 border-line-muted theme-brutal:border-black/15 pt-2">
-          <div className="text-[10px] font-black uppercase tracking-widest text-foreground-muted theme-brutal:text-black/50">{formatMessage({ id: "settings.connectedApps.appNotifications.activeEvents" })}</div>
+        <div className="min-w-0 space-y-2 border-t-2 border-line-muted  pt-2">
+          <div className="text-[10px] font-black uppercase tracking-widest text-foreground-muted ">{formatMessage({ id: "settings.connectedApps.appNotifications.activeEvents" })}</div>
           <ScopeChips values={effectiveEventLabels} empty={formatMessage({ id: "settings.connectedApps.appNotifications.noActiveEvents" })} />
         </div>
       </div>
       {state.approval_required ? (
         <div
-          className="flex flex-col gap-3 border-l-4 border-warning bg-warning-soft px-3 py-2 text-warning-strong theme-brutal:border-soft-signal theme-brutal:bg-soft-signal/20 theme-brutal:text-inherit sm:flex-row sm:items-center sm:justify-between"
+          className="flex flex-col gap-3 border-l-4 border-warning bg-warning-soft px-3 py-2 text-warning-strong    sm:flex-row sm:items-center sm:justify-between"
           data-testid="app-notifications-approval-required"
         >
           <div className="min-w-0 space-y-2">
-            <div className="text-xs font-bold text-foreground-muted theme-brutal:text-black/70">{formatMessage({ id: "settings.connectedApps.appNotifications.newDataAccessNotice" })}</div>
+            <div className="text-xs font-bold text-foreground-muted ">{formatMessage({ id: "settings.connectedApps.appNotifications.newDataAccessNotice" })}</div>
             <ScopeChips
               values={newlyRequestedGroupLabels}
               empty={formatMessage({ id: "settings.connectedApps.appNotifications.noNewDataGroups" })}

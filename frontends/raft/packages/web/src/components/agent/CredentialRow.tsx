@@ -24,7 +24,7 @@ export function CredentialRow({
   const handleConfirmClick = useCallback(() => onConfirmRevoke(credential.id), [onConfirmRevoke, credential.id]);
   const handleStartClick = useCallback(() => onStartRevoke(credential.id), [onStartRevoke, credential.id]);
   return (
-    <div className="min-w-0 space-y-1 rounded-md border border-line-muted p-2 text-xs theme-brutal:rounded-none theme-brutal:border-black/20">
+    <div className="min-w-0 space-y-1 rounded-md border border-line-muted p-2 text-xs  ">
       <p className="break-words font-bold">{credential.name || formatMessage({ id: "agent.detail.externalTokenLabel" })} <span className="break-all font-mono font-normal">{credential.maskedToken || credential.id.slice(0, 8)}</span></p>
       <p>{formatMessage({ id: "agent.detail.externalTokenCreated" }, { date: formatDate(credential.createdAt, { dateStyle: "medium", timeStyle: "short" }) })}</p>
       <p>{formatMessage({ id: credential.revokedAt ? "agent.detail.externalTokenRevoked" : "agent.detail.externalTokenActive" })}</p>

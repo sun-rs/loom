@@ -133,8 +133,8 @@ function StepRail({ stage }: { stage: SlackBridgeSetupStage }) {
       {DISPLAY_STAGES.map((item, index) => (
         <li
           key={item}
-          className={`rounded-md border border-line-muted px-2 py-1 text-center text-[10px] font-bold uppercase tracking-wide theme-brutal:rounded-none theme-brutal:border-black ${
-            index < activeIndex ? "bg-success-soft theme-brutal:bg-brutal-lime/40" : index === activeIndex ? "bg-accent-soft text-accent-strong theme-brutal:bg-brutal-pink theme-brutal:text-black" : "bg-layer-panel text-foreground-hint theme-brutal:bg-white theme-brutal:text-black/45"
+          className={`rounded-md border border-line-muted px-2 py-1 text-center text-[10px] font-bold uppercase tracking-wide   ${
+            index < activeIndex ? "bg-success-soft " : index === activeIndex ? "bg-accent-soft text-accent-strong  " : "bg-layer-panel text-foreground-hint  "
           }`}
           aria-current={item === current ? "step" : undefined}
         >
@@ -169,7 +169,7 @@ function PreflightResults({
         {SLACK_BRIDGE_PREFLIGHT_CHECK_IDS.map((checkId) => {
           const state = checks.get(checkId) ?? "unverified";
           return (
-            <li key={checkId} className="flex items-center justify-between rounded-md border border-line-muted bg-layer-inset px-3 py-2 text-xs theme-brutal:rounded-none theme-brutal:border-black theme-brutal:bg-brutal-cream">
+            <li key={checkId} className="flex items-center justify-between rounded-md border border-line-muted bg-layer-inset px-3 py-2 text-xs   ">
               <span className="font-bold">{formatMessage({ id: PREFLIGHT_LABEL_ID[checkId] })}</span>
               <span className="uppercase">{formatMessage({ id: PREFLIGHT_STATE_ID[state] })}</span>
             </li>
@@ -209,15 +209,15 @@ function HealthPanel({
   const showMembershipRecovery = health.reason === "audience_mismatch"
     && mappedChannelsWithAccessIssues.length > 0;
   const tone = health.state === "connected"
-    ? "bg-success-soft theme-brutal:bg-brutal-lime/30"
+    ? "bg-success-soft "
     : health.state === "degraded"
-      ? "bg-warning-soft theme-brutal:bg-brutal-orange/25"
+      ? "bg-warning-soft "
       : health.state === "unverified"
-        ? "bg-fill-muted/50 theme-brutal:bg-soft-signal/30"
-        : "bg-danger-soft theme-brutal:bg-brutal-red/20";
+        ? "bg-fill-muted/50 "
+        : "bg-danger-soft ";
 
   return (
-    <div className={`rounded-lg border border-line-muted p-4 shadow-raft-sm theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:shadow-brutal-sm ${tone}`} data-testid="slack-bridge-health">
+    <div className={`rounded-lg border border-line-muted p-4 shadow-raft-sm     ${tone}`} data-testid="slack-bridge-health">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <SectionEyebrow as="div">{formatMessage({ id: "settings.slackBridge.healthLabel" })}</SectionEyebrow>
@@ -227,7 +227,7 @@ function HealthPanel({
           </div>
         </div>
         {snapshot.workspaceName && (
-          <div className="rounded-md border border-line-muted bg-layer-panel px-2 py-1 text-xs font-bold text-foreground-strong theme-brutal:rounded-none theme-brutal:border-black theme-brutal:bg-white">{snapshot.workspaceName}</div>
+          <div className="rounded-md border border-line-muted bg-layer-panel px-2 py-1 text-xs font-bold text-foreground-strong   ">{snapshot.workspaceName}</div>
         )}
       </div>
       {showMembershipRecovery && (
@@ -314,7 +314,7 @@ function HealthPanel({
         </div>
         <ul className="mt-2 space-y-1.5">
           {snapshot.channelPairs.map((pair) => (
-            <li key={`${pair.raftChannelId}:${pair.slackChannelId}`} className="rounded-md border border-line-muted bg-layer-panel px-3 py-2 text-xs font-bold text-foreground-strong theme-brutal:rounded-none theme-brutal:border-black theme-brutal:bg-white">
+            <li key={`${pair.raftChannelId}:${pair.slackChannelId}`} className="rounded-md border border-line-muted bg-layer-panel px-3 py-2 text-xs font-bold text-foreground-strong   ">
               {formatMessage(
                 { id: "settings.slackBridge.channelPair" },
                 {
@@ -645,7 +645,7 @@ export default function SlackBridgeSetupWizard({
   }, [onOAuthRedirect, provider]);
 
   if (busy && !view) {
-    return <div className="rounded-lg border border-line-muted bg-layer-panel p-4 text-xs font-bold text-foreground-strong theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white">{formatMessage({ id: "settings.slackBridge.loading" })}</div>;
+    return <div className="rounded-lg border border-line-muted bg-layer-panel p-4 text-xs font-bold text-foreground-strong    ">{formatMessage({ id: "settings.slackBridge.loading" })}</div>;
   }
 
   if (!view && error) {
@@ -659,7 +659,7 @@ export default function SlackBridgeSetupWizard({
   if (!snapshot) return null;
 
   return (
-    <section className="space-y-3 rounded-lg border border-line-muted bg-layer-canvas-muted p-4 shadow-raft-sm theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-brutal-cream theme-brutal:shadow-brutal-sm" data-testid="slack-bridge-setup-wizard">
+    <section className="space-y-3 rounded-lg border border-line-muted bg-layer-canvas-muted p-4 shadow-raft-sm     " data-testid="slack-bridge-setup-wizard">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <SectionEyebrow as="div">{formatMessage({ id: "settings.slackBridge.eyebrow" })}</SectionEyebrow>
@@ -669,7 +669,7 @@ export default function SlackBridgeSetupWizard({
           </p>
         </div>
         {!canManage && (
-          <div className="rounded-md border border-line-muted bg-layer-panel px-2 py-1 text-xs font-bold text-foreground-strong theme-brutal:rounded-none theme-brutal:border-black theme-brutal:bg-white">
+          <div className="rounded-md border border-line-muted bg-layer-panel px-2 py-1 text-xs font-bold text-foreground-strong   ">
             {formatMessage({ id: "settings.slackBridge.readOnly" })}
           </div>
         )}
@@ -686,7 +686,7 @@ export default function SlackBridgeSetupWizard({
       )}
 
       {snapshot.stage === "connect" && (
-        <div className="rounded-md border border-line-muted bg-layer-panel p-4 theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white">
+        <div className="rounded-md border border-line-muted bg-layer-panel p-4    ">
           <div className="text-sm font-bold">{formatMessage({ id: "settings.slackBridge.connectTitle" })}</div>
           <p className="mt-1 text-xs text-foreground-muted">{formatMessage({ id: "settings.slackBridge.connectDescription" })}</p>
           {canManage && (
@@ -698,7 +698,7 @@ export default function SlackBridgeSetupWizard({
       )}
 
       {snapshot.stage === "oauth" && (
-        <div className="rounded-md border border-line-muted bg-layer-panel p-4 theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white">
+        <div className="rounded-md border border-line-muted bg-layer-panel p-4    ">
           <div className="text-sm font-bold">{formatMessage({ id: "settings.slackBridge.oauthTitle" })}</div>
           <p className="mt-1 text-xs text-foreground-muted">{formatMessage({ id: "settings.slackBridge.oauthDescription" })}</p>
           {canManage && (
@@ -716,7 +716,7 @@ export default function SlackBridgeSetupWizard({
       )}
 
       {(snapshot.stage === "channels" || (snapshot.stage === "health" && editingMappings)) && (
-        <div className="space-y-3 rounded-md border border-line-muted bg-layer-panel p-4 theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white">
+        <div className="space-y-3 rounded-md border border-line-muted bg-layer-panel p-4    ">
           <div>
             <div className="text-sm font-bold">{formatMessage({ id: "settings.slackBridge.channelsTitle" })}</div>
             <p className="mt-1 text-xs text-foreground-muted">{formatMessage({ id: "settings.slackBridge.channelsDescription" })}</p>
@@ -806,7 +806,7 @@ export default function SlackBridgeSetupWizard({
           )}
           <ul className="space-y-2" aria-label={formatMessage({ id: "settings.slackBridge.selectedPairs" })}>
             {pairs.map((pair) => (
-              <li key={`${pair.raftChannelId}:${pair.slackChannelId}`} className="flex items-center justify-between gap-3 rounded-md border border-line-muted bg-layer-inset px-3 py-2 text-xs font-bold theme-brutal:rounded-none theme-brutal:border-black theme-brutal:bg-brutal-cream">
+              <li key={`${pair.raftChannelId}:${pair.slackChannelId}`} className="flex items-center justify-between gap-3 rounded-md border border-line-muted bg-layer-inset px-3 py-2 text-xs font-bold   ">
                 <span>
                   {formatMessage(
                     { id: "settings.slackBridge.channelPair" },
@@ -845,7 +845,7 @@ export default function SlackBridgeSetupWizard({
       )}
 
       {snapshot.stage === "preflight" && (
-        <div className="rounded-md border border-line-muted bg-layer-panel p-4 theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white">
+        <div className="rounded-md border border-line-muted bg-layer-panel p-4    ">
           <div className="text-sm font-bold">{formatMessage({ id: "settings.slackBridge.preflightTitle" })}</div>
           <p className="mt-1 text-xs text-foreground-muted">{formatMessage({ id: "settings.slackBridge.preflightDescription" })}</p>
           {snapshot.preflight && (
@@ -860,7 +860,7 @@ export default function SlackBridgeSetupWizard({
       )}
 
       {snapshot.stage === "enable" && (
-        <div className="space-y-3 rounded-md border border-line-muted bg-layer-panel p-4 theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white">
+        <div className="space-y-3 rounded-md border border-line-muted bg-layer-panel p-4    ">
           {snapshot.preflight ? (
             <PreflightResults preflight={snapshot.preflight} passed={preflightPassed} />
           ) : (
@@ -907,7 +907,7 @@ export default function SlackBridgeSetupWizard({
         </div>
       )}
       {canDisconnect && disconnectConfirmed && (
-        <div className="space-y-3 rounded-md border border-line-muted bg-danger-soft p-3 theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-brutal-red/20" data-testid="slack-bridge-disconnect-confirmation">
+        <div className="space-y-3 rounded-md border border-line-muted bg-danger-soft p-3    " data-testid="slack-bridge-disconnect-confirmation">
           <p className="text-xs font-semibold">{formatMessage({ id: "settings.slackBridge.disconnectDescription" })}</p>
           <div className="flex flex-wrap justify-end gap-2">
             <Button size="sm" disabled={busy} onClick={cancelDisconnect}>

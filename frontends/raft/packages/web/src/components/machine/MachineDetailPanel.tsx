@@ -136,7 +136,7 @@ function WorkspacesSection({ machineId, canManageMachines }: { machineId: string
     <div>
       <SectionHeader
         className="mb-2"
-        icon={<FolderOpen size={14} className="text-foreground-strong theme-brutal:text-black" />}
+        icon={<FolderOpen size={14} className="text-foreground-strong " />}
         label={formatMessage({ id: "machine.detail.agentWorkspaces" })}
         action={
           <Button size="sm"
@@ -156,13 +156,13 @@ function WorkspacesSection({ machineId, canManageMachines }: { machineId: string
       />
 
       {!scanned && !loading && (
-        <div className="text-xs text-foreground-muted theme-brutal:text-black/40 italic">
+        <div className="text-xs text-foreground-muted  italic">
           {formatMessage({ id: "machine.detail.workspacesPrompt" })}
         </div>
       )}
 
       {scanned && workspaces.length === 0 && (
-        <div className="text-xs text-foreground-muted theme-brutal:text-black/40 italic">
+        <div className="text-xs text-foreground-muted  italic">
           {formatMessage({ id: "machine.detail.noWorkspaceDirectories" })}
         </div>
       )}
@@ -177,7 +177,7 @@ function WorkspacesSection({ machineId, canManageMachines }: { machineId: string
       )}
 
       {scanned && deletedCount > 0 && (
-        <div className="mb-2 border-2 border-line-muted theme-brutal:border-black bg-fill-muted theme-brutal:bg-gray-200 px-3 py-2 text-xs text-foreground-strong theme-brutal:text-black">
+        <div className="mb-2 border-2 border-line-muted  bg-fill-muted  px-3 py-2 text-xs text-foreground-strong ">
           {formatMessage(
             { id: "machine.detail.deletedWorkspaceBanner" },
             { count: deletedCount, strong: (chunks) => <strong key="strong">{chunks}</strong> },
@@ -192,36 +192,36 @@ function WorkspacesSection({ machineId, canManageMachines }: { machineId: string
               key={ws.directoryName}
               className={`flex items-center gap-2 border-2 px-3 py-2 ${
  ws.status === "orphan"
- ? "border-warning bg-warning-soft theme-brutal:border-brutal-orange theme-brutal:bg-brutal-orange/10"
+ ? "border-warning bg-warning-soft  "
  : ws.status === "deleted"
- ? "border-line-muted bg-fill-muted theme-brutal:border-black theme-brutal:bg-gray-100"
- : "border-line-muted theme-brutal:border-black/30"
+ ? "border-line-muted bg-fill-muted  "
+ : "border-line-muted "
  }`}
             >
-              <FolderOpen size={14} className="shrink-0 text-foreground-muted theme-brutal:text-black/40" />
+              <FolderOpen size={14} className="shrink-0 text-foreground-muted " />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-xs text-foreground-strong theme-brutal:text-black truncate">
+                  <span className="font-bold text-xs text-foreground-strong  truncate">
                     {ws.agentName || ws.directoryName}
                   </span>
-                  <Badge uppercase variant={ws.status === "active" ? "success" : ws.status === "orphan" ? "warning" : "muted"}>
+                  <Badge variant={ws.status === "active" ? "success" : ws.status === "orphan" ? "warning" : "muted"}>
                     {formatWorkspaceStatus(ws.status)}
                   </Badge>
                 </div>
-                <div className="mt-0.5 text-[10px] text-foreground-muted theme-brutal:text-black/40 font-mono break-all">
+                <div className="mt-0.5 text-[10px] text-foreground-muted  font-mono break-all">
                   {workspaceLocation(ws)}
                 </div>
                 {ws.status === "deleted" && (
-                  <div className="mt-0.5 text-[10px] font-bold uppercase tracking-wide text-foreground-muted theme-brutal:text-black/60">
+                  <div className="mt-0.5 text-[10px] font-bold uppercase tracking-wide text-foreground-muted ">
                     {formatMessage({ id: "machine.detail.agentDeletedWorkspaceRetained" })}
                   </div>
                 )}
                 {ws.status === "orphan" && (
-                  <div className="mt-0.5 text-[10px] font-bold uppercase tracking-wide text-warning-strong theme-brutal:text-brutal-orange">
+                  <div className="mt-0.5 text-[10px] font-bold uppercase tracking-wide text-warning-strong ">
                     {formatMessage({ id: "machine.detail.noMatchingAgentRecord" })}
                   </div>
                 )}
-                <div className="flex items-center gap-3 mt-0.5 text-[10px] text-foreground-muted theme-brutal:text-black/50 font-mono">
+                <div className="flex items-center gap-3 mt-0.5 text-[10px] text-foreground-muted  font-mono">
                   <span>{formatFileSizeBytes(ws.totalSizeBytes, formatMessage)}</span>
                   <span>{formatMessage({ id: "machine.detail.fileCount" }, { count: ws.fileCount })}</span>
                   <span>
@@ -345,19 +345,19 @@ function MachineAgentList({ machine, canManageMachines, canViewRuntimeAccountUsa
       mode: "restart",
       label: formatMessage({ id: "machine.detail.bulkRestart" }),
       desc: formatMessage({ id: "machine.detail.bulkRestartDescription" }),
-      selectedClass: "border-line-muted theme-brutal:border-black bg-info-soft theme-brutal:bg-brutal-cyan/20 theme-brutal:shadow-brutal-sm",
+      selectedClass: "border-line-muted  bg-info-soft  ",
     },
     {
       mode: "session",
       label: formatMessage({ id: "machine.detail.bulkResetSession" }),
       desc: formatMessage({ id: "machine.detail.bulkResetSessionDescription" }),
-      selectedClass: "border-line-muted theme-brutal:border-black bg-warning-soft theme-brutal:bg-brutal-orange/20 theme-brutal:shadow-brutal-sm",
+      selectedClass: "border-line-muted  bg-warning-soft  ",
     },
     {
       mode: "full",
       label: formatMessage({ id: "machine.detail.bulkFullReset" }),
       desc: formatMessage({ id: "machine.detail.bulkFullResetDescription" }),
-      selectedClass: "border-line-muted theme-brutal:border-black bg-danger-soft theme-brutal:bg-brutal-red/20 theme-brutal:shadow-brutal-sm",
+      selectedClass: "border-line-muted  bg-danger-soft  ",
     },
   ], [formatMessage]);
 
@@ -552,7 +552,7 @@ function MachineAgentList({ machine, canManageMachines, canViewRuntimeAccountUsa
           }
         />
         {machineAgents.length === 0 ? (
-          <div className="text-sm text-foreground-muted theme-brutal:text-black/40 italic">
+          <div className="text-sm text-foreground-muted  italic">
             {formatMessage({ id: "machine.detail.noAgentsAssigned" })}
           </div>
         ) : (
@@ -602,9 +602,9 @@ function MachineAgentList({ machine, canManageMachines, canViewRuntimeAccountUsa
               </Banner>
             )}
             {canManageMachines && selectedCount > 0 && (
-              <SurfaceListItem selected interactive={false} className="bg-layer-canvas-muted px-3 py-2 theme-brutal:bg-gray-100">
+              <SurfaceListItem selected interactive={false} className="bg-layer-canvas-muted px-3 py-2 ">
                 <div className="flex flex-wrap items-center gap-2">
-                  <SectionEyebrow className="mr-auto !text-foreground-strong theme-brutal:text-black">
+                  <SectionEyebrow className="mr-auto !text-foreground-strong ">
                     {formatMessage({ id: "machine.detail.selectedCount" }, { count: selectedCount })}
                   </SectionEyebrow>
                   <Tooltip content={
@@ -617,7 +617,7 @@ function MachineAgentList({ machine, canManageMachines, canViewRuntimeAccountUsa
                     type="button"
                     onClick={startSelectedAgents}
                     disabled={bulkAction !== null || selectedOfflineAgents.length === 0 || !canStartLike}
-                    className="flex items-center gap-1 px-2 py-1 text-xs disabled:cursor-not-allowed theme-brutal:disabled:bg-gray-200"
+                    className="flex items-center gap-1 px-2 py-1 text-xs disabled:cursor-not-allowed "
                   >
                     <Play size={12} />
                     {bulkAction === "start"
@@ -631,7 +631,7 @@ function MachineAgentList({ machine, canManageMachines, canViewRuntimeAccountUsa
                     type="button"
                     onClick={openStopConfirm}
                     disabled={bulkAction !== null || selectedOnlineAgents.length === 0}
-                    className="flex items-center gap-1 px-2 py-1 text-xs disabled:cursor-not-allowed theme-brutal:disabled:bg-gray-200"
+                    className="flex items-center gap-1 px-2 py-1 text-xs disabled:cursor-not-allowed "
                   >
                     <Square size={12} />
                     {formatMessage({ id: "machine.detail.stop" })}
@@ -647,7 +647,7 @@ function MachineAgentList({ machine, canManageMachines, canViewRuntimeAccountUsa
                     type="button"
                     onClick={openResetOptions}
                     disabled={bulkAction !== null || !canStartLike}
-                    className="flex items-center gap-1 px-2 py-1 text-xs disabled:cursor-not-allowed theme-brutal:disabled:bg-gray-200"
+                    className="flex items-center gap-1 px-2 py-1 text-xs disabled:cursor-not-allowed "
                   >
                     <RotateCcw size={12} />
                     {formatMessage({ id: "machine.detail.restartReset" })}
@@ -660,7 +660,7 @@ function MachineAgentList({ machine, canManageMachines, canViewRuntimeAccountUsa
                       type="button"
                       onClick={openBulkModel}
                       disabled={bulkAction !== null || selectedCount === 0}
-                      className="flex items-center gap-1 px-2 py-1 text-xs disabled:cursor-not-allowed theme-brutal:disabled:bg-gray-200"
+                      className="flex items-center gap-1 px-2 py-1 text-xs disabled:cursor-not-allowed "
                       data-testid="bulk-change-model-button"
                     >
                       <ArrowLeftRight size={12} />
@@ -1214,26 +1214,26 @@ export default function MachineDetailPanel({
         <PanelHeader
           title={machine.name}
           icon={<Monitor size={18} />}
-          iconBg="bg-primary-soft theme-brutal:bg-soft-signal text-foreground-strong theme-brutal:text-black"
+          iconBg="bg-primary-soft  text-foreground-strong "
           iconAlwaysVisible
           onMobileBack={onMobileBack}
           mobileBackProps={mobileBackProps}
         />
       )}
 
-      <div className="flex-1 overflow-y-auto bg-layer-panel theme-brutal:bg-white">
+      <div className="flex-1 overflow-y-auto bg-layer-panel ">
         {/* Profile info — machine icon + name + status */}
-        <div className="flex items-start gap-4 px-5 py-5 border-b border-line-muted theme-brutal:border-black/10">
+        <div className="flex items-start gap-4 px-5 py-5 border-b border-line-muted ">
           <Card className="flex size-16 shrink-0 items-center justify-center p-0"><Monitor size={28} />
           </Card>
           <div className="min-w-0 flex-1">
-            <PanelTitle className="min-w-0 text-foreground-muted theme-brutal:text-black theme-brutal:text-lg">{machine.name}</PanelTitle>
+            <PanelTitle className="min-w-0 text-foreground-muted  ">{machine.name}</PanelTitle>
             <div className="flex min-w-0 items-center gap-2">
               <StatusDot
                 tone={machine.status === "online" ? "bg-brutal-lime" : upgradeReconnecting ? "bg-brutal-cyan" : "bg-gray-400"}
                 className="shrink-0"
               />
-              <span className="shrink-0 text-sm text-foreground-muted theme-brutal:text-black/60 font-mono" data-testid="machine-connection-status">
+              <span className="shrink-0 text-sm text-foreground-muted  font-mono" data-testid="machine-connection-status">
                 {machine.status === "online"
                   ? formatMessage({ id: "machine.detail.connected" })
                   : upgradeReconnecting
@@ -1242,7 +1242,7 @@ export default function MachineDetailPanel({
               </span>
             </div>
             {machine.hostname && (
-              <div className="truncate text-sm text-foreground-muted theme-brutal:text-black/50 font-mono">{machine.hostname}</div>
+              <div className="truncate text-sm text-foreground-muted  font-mono">{machine.hostname}</div>
             )}
           </div>
         </div>
@@ -1268,7 +1268,7 @@ export default function MachineDetailPanel({
         )}
 
         {/* Name */}
-        <div className="px-5 py-4 border-b border-line-muted theme-brutal:border-black/10">
+        <div className="px-5 py-4 border-b border-line-muted ">
           <div className="flex items-center gap-2 mb-1">
             <SectionEyebrow as="div">
               {formatMessage({ id: "machine.detail.name" })}
@@ -1278,7 +1278,7 @@ export default function MachineDetailPanel({
               <button
                 type="button"
                 onClick={handleStartRename}
-                className="text-foreground-muted theme-brutal:text-black/40 hover:text-black transition-colors"
+                className="text-foreground-muted  hover:text-black transition-colors"
                 aria-label={formatMessage({ id: "machine.detail.editComputerName" })}
               >
                 <Pencil size={12} />
@@ -1317,18 +1317,18 @@ export default function MachineDetailPanel({
               </Button>
             </div>
             {nameError && (
-              <div className="text-xs font-bold text-danger-strong theme-brutal:text-brutal-red">
+              <div className="text-xs font-bold text-danger-strong ">
                 {nameError}
               </div>
             )}
             </div>
           ) : (
-            <p className="text-sm text-foreground-muted theme-brutal:text-black">{machine.name}</p>
+            <p className="text-sm text-foreground-muted ">{machine.name}</p>
           )}
         </div>
 
         {/* Description */}
-        <div className="px-5 py-4 border-b border-line-muted theme-brutal:border-black/10">
+        <div className="px-5 py-4 border-b border-line-muted ">
           <div className="flex items-center gap-2 mb-1">
             <SectionEyebrow as="div">
               {formatMessage({ id: "machine.detail.description" })}
@@ -1338,7 +1338,7 @@ export default function MachineDetailPanel({
               <button
                 type="button"
                 onClick={handleStartEditDescription}
-                className="text-foreground-muted theme-brutal:text-black/40 hover:text-black transition-colors"
+                className="text-foreground-muted  hover:text-black transition-colors"
                 aria-label={formatMessage({ id: "machine.detail.editComputerDescription" })}
               >
                 <Pencil size={12} />
@@ -1378,25 +1378,25 @@ export default function MachineDetailPanel({
                     {formatMessage({ id: "common.confirm.cancel" })}
                   </Button>
                 </div>
-                <span className="text-[11px] text-foreground-muted theme-brutal:text-black/40 font-mono">
+                <span className="text-[11px] text-foreground-muted  font-mono">
                   {draftDescription.length}/500
                 </span>
               </div>
               {descriptionError && (
-                <div className="text-xs font-bold text-danger-strong theme-brutal:text-brutal-red">
+                <div className="text-xs font-bold text-danger-strong ">
                   {descriptionError}
                 </div>
               )}
             </div>
           ) : (
-            <p className={`whitespace-pre-wrap text-sm leading-relaxed ${machine.description ? "text-foreground-muted theme-brutal:text-black" : "text-foreground-placeholder theme-brutal:text-black/40 italic"}`}>
+            <p className={`whitespace-pre-wrap text-sm leading-relaxed ${machine.description ? "text-foreground-muted " : "text-foreground-placeholder  italic"}`}>
               {machine.description || formatMessage({ id: "machine.detail.noDescription" })}
             </p>
           )}
         </div>
 
         {/* Info */}
-        <div className="px-5 py-4 border-b border-line-muted theme-brutal:border-black/10">
+        <div className="px-5 py-4 border-b border-line-muted ">
           <SectionEyebrow as="div" className="mb-3">
             {formatMessage({ id: "machine.detail.info" })}
           </SectionEyebrow>
@@ -1414,13 +1414,13 @@ export default function MachineDetailPanel({
                 value={
                   machine.computerVersion ? (
                     <div>
-                      <span className={`text-sm font-mono ${computerVersionFact.kind === "outdated" ? "text-warning-strong theme-brutal:text-brutal-orange font-bold" : "text-foreground-strong theme-brutal:text-black"}`}>
+                      <span className={`text-sm font-mono ${computerVersionFact.kind === "outdated" ? "text-warning-strong  font-bold" : "text-foreground-strong "}`}>
                         v{machine.computerVersion}
                       </span>
                       {computerVersionFact.kind === "current" && (
                         <>
                           {" "}
-                          <span className="text-xs text-foreground-muted theme-brutal:text-black/60">
+                          <span className="text-xs text-foreground-muted ">
                             · {formatMessage({ id: "machine.detail.upToDate" })}
                           </span>
                         </>
@@ -1428,7 +1428,7 @@ export default function MachineDetailPanel({
                       {computerVersionFact.kind === "outdated" && (
                         <>
                           {" "}
-                          <span className="text-xs text-warning-strong theme-brutal:text-brutal-orange font-bold">
+                          <span className="text-xs text-warning-strong  font-bold">
                             · {formatMessage(
                               { id: "machine.detail.versionAvailable" },
                               { version: computerVersionFact.availableVersion },
@@ -1444,11 +1444,11 @@ export default function MachineDetailPanel({
                       )}
                     </div>
                   ) : machine.status === "online" ? (
-                    <span className="text-sm text-foreground-muted theme-brutal:text-black/40 italic">
+                    <span className="text-sm text-foreground-muted  italic">
                       {formatMessage({ id: "machine.detail.readingVersion" })}
                     </span>
                   ) : (
-                    <span className="text-sm text-foreground-muted theme-brutal:text-black/40 italic">—</span>
+                    <span className="text-sm text-foreground-muted  italic">—</span>
                   )
                 }
               />
@@ -1456,7 +1456,7 @@ export default function MachineDetailPanel({
             {/* Online, not a manager, newer version exists: say who can act
                 (the offline card has its own admin-only line). */}
             {machine.isComputer && !canManageMachines && machine.status === "online" && computerVersionFact.kind === "outdated" && (
-              <p className="text-xs text-foreground-muted theme-brutal:text-black/60" data-testid="computer-upgrade-ask-admin">
+              <p className="text-xs text-foreground-muted " data-testid="computer-upgrade-ask-admin">
                 {formatMessage(
                   { id: "machine.detail.upgradeStatus.askAdmin" },
                   { version: computerVersionFact.availableVersion },
@@ -1471,7 +1471,7 @@ export default function MachineDetailPanel({
                   {getMachineRuntimeDisplayOptions().map((r) => {
                     const detected = machine.runtimes.includes(r.id);
                     const chipClassName = detected
-                      ? "bg-info-soft text-info-strong theme-brutal:bg-brutal-cyan theme-brutal:text-black"
+                      ? "bg-info-soft text-info-strong  "
                       : "bg-fill-muted text-foreground-muted";
                     return (
                       <RuntimeAccountUsageGateChip
@@ -1495,7 +1495,7 @@ export default function MachineDetailPanel({
               <KeyValueRow
                 label={formatMessage({ id: "machine.detail.created" })}
                 value={createdDate}
-                valueClassName="tabular-nums theme-brutal:font-mono"
+                valueClassName="tabular-nums "
               />
               {/* Creator — managed Computers only; raw daemon rows preserve
                   their existing Created-only presentation. */}
@@ -1508,7 +1508,7 @@ export default function MachineDetailPanel({
                       <button
                         type="button"
                         onClick={() => openProfile("human", machine.creator!.id)}
-                        className="flex items-center gap-2 text-sm text-foreground-strong theme-brutal:text-black hover:underline"
+                        className="flex items-center gap-2 text-sm text-foreground-strong  hover:underline"
                       >
                         <AvatarSlot
                           context="creator-link"
@@ -1517,12 +1517,12 @@ export default function MachineDetailPanel({
                           gravatarHash={machine.creator.gravatarHash}
                         />
                         <span className="font-bold">{machine.creator.displayName || machine.creator.name}</span>
-                        <span className="font-mono text-xs text-foreground-muted theme-brutal:text-black/50">
+                        <span className="font-mono text-xs text-foreground-muted ">
                           {formatMessage({ id: "common.handle" }, { name: machine.creator.name })}
                         </span>
                       </button>
                     ) : (
-                      <span className="text-sm italic text-foreground-muted theme-brutal:text-black/40">
+                      <span className="text-sm italic text-foreground-muted ">
                         {formatMessage({ id: "agent.detail.noCreatorAssigned" })}
                       </span>
                     )
@@ -1553,7 +1553,7 @@ export default function MachineDetailPanel({
                     </SectionEyebrow>
                     {windowsMachine ? <Badge.Experimental /> : null}
                   </div>
-                  <p className="mb-2 text-xs leading-5 text-foreground-muted theme-brutal:text-black/60">
+                  <p className="mb-2 text-xs leading-5 text-foreground-muted ">
                     {formatMessage(
                       { id: "machine.detail.migrateDescription" },
                       {
@@ -1569,7 +1569,7 @@ export default function MachineDetailPanel({
                       ["computer-setup", formatMessage({ id: "machine.detail.setupStep" }), computerSetupCommand],
                     ] as const).map(([target, label, command]) => (
                       <div key={target}>
-                        <div className="mb-1 text-xs font-bold text-foreground-muted theme-brutal:text-black/60">{label}</div>
+                        <div className="mb-1 text-xs font-bold text-foreground-muted ">{label}</div>
                         <CommandCopyRoot target={target} copied={copiedCommand === target} onCopy={handleCopy}>
                           <CopyableCode className="min-w-0 flex-1 px-3 py-2 font-mono text-xs break-all">
                             {command}
@@ -1593,7 +1593,7 @@ export default function MachineDetailPanel({
               <SectionEyebrow as="div" className="mb-2">
                 {formatMessage({ id: "machine.detail.connection" })}
               </SectionEyebrow>
-              <div className="text-xs text-foreground-muted theme-brutal:text-black/40 font-mono">
+              <div className="text-xs text-foreground-muted  font-mono">
                 {formatMessage({ id: "machine.detail.connectCommandsAdminOnly" })}
               </div>
             </div>
@@ -1604,14 +1604,14 @@ export default function MachineDetailPanel({
               <div className="flex items-start gap-2">
                 <Spinner size="xs" aria-hidden="true" className="mt-1 shrink-0" />
                 <div className="min-w-0 space-y-1">
-                  <p className="text-sm font-bold text-foreground-strong theme-brutal:text-black">
+                  <p className="text-sm font-bold text-foreground-strong ">
                     {formatMessage(
                       { id: "machine.detail.upgradeStatus.reconnecting" },
                       { version: upgradeInFlight?.targetVersion ?? "" },
                     )}
                   </p>
                   {canManageMachines && (
-                    <p className="text-xs leading-5 text-foreground-muted theme-brutal:text-black/60">
+                    <p className="text-xs leading-5 text-foreground-muted ">
                       {formatMessage(
                         { id: "machine.detail.upgradeStatus.reconnectingHint" },
                         { command: statusCommand },
@@ -1626,12 +1626,12 @@ export default function MachineDetailPanel({
           {machine.isComputer && machine.status !== "online" && !upgradeReconnecting && (
             <div data-testid="computer-recovery-card">
               <div className="mb-2 flex items-center gap-2">
-                <Terminal size={16} className="text-foreground-strong theme-brutal:text-black" />
+                <Terminal size={16} className="text-foreground-strong " />
                 <SectionEyebrow as="div">{formatMessage({ id: "machine.detail.bringComputerOnline" })}</SectionEyebrow>
               </div>
 
               {upgradeReconnectOverdue && (
-                <p className="mb-2 text-xs leading-5 text-warning-strong theme-brutal:text-brutal-orange" data-testid="computer-upgrade-reconnect-overdue">
+                <p className="mb-2 text-xs leading-5 text-warning-strong " data-testid="computer-upgrade-reconnect-overdue">
                   {formatMessage(
                     { id: "machine.detail.upgradeStatus.reconnectOverdue" },
                     { version: upgradeInFlight?.targetVersion ?? "" },
@@ -1645,7 +1645,7 @@ export default function MachineDetailPanel({
                       failed / no response: say so here too, not only on the
                       online card. */}
                   {requestOutcomeStillTrue && (
-                    <p className="text-xs leading-5 text-warning-strong theme-brutal:text-brutal-orange" data-testid="computer-upgrade-request-outcome">
+                    <p className="text-xs leading-5 text-warning-strong " data-testid="computer-upgrade-request-outcome">
                       {upgradeRequest?.state === "failed"
                         ? formatMessage(
                             { id: "machine.detail.upgradeStatus.failed" },
@@ -1662,7 +1662,7 @@ export default function MachineDetailPanel({
                       WS relay), so an offline Computer cannot get a web button. */}
                   {computerRecoveryRestartCommand && (
                     <div>
-                      <p className="mb-2 text-xs leading-5 text-foreground-muted theme-brutal:text-black/60">
+                      <p className="mb-2 text-xs leading-5 text-foreground-muted ">
                         {formatMessage({ id: "machine.detail.recoveryRestartDescription" }, { serverSlug })}
                       </p>
                       <CommandCopyRoot target="terminal-restart" copied={copiedCommand === "terminal-restart"} onCopy={handleCopy}>
@@ -1684,7 +1684,7 @@ export default function MachineDetailPanel({
 
                   {/* Diagnostics — reuse the existing status/doctor commands. */}
                   <div>
-                    <p className="mb-2 text-xs leading-5 text-foreground-muted theme-brutal:text-black/60">
+                    <p className="mb-2 text-xs leading-5 text-foreground-muted ">
                       {formatMessage({ id: "machine.detail.offlineDiagnosticsPrompt" })}
                     </p>
                     <div className="space-y-2">
@@ -1710,7 +1710,7 @@ export default function MachineDetailPanel({
                   {/* last-seen — let the user judge if the machine is just
                       off; no offline-reason guessing (frontend can't tell). */}
                   {machine.lastHeartbeat && (
-                    <p className="text-xs leading-5 text-foreground-muted theme-brutal:text-black/50">
+                    <p className="text-xs leading-5 text-foreground-muted ">
                       {formatMessage(
                         { id: "machine.detail.lastSeen" },
                         { time: lastHeartbeatText },
@@ -1720,11 +1720,11 @@ export default function MachineDetailPanel({
 
                   {/* Secondary: an explicit command-not-found path exposes
                       install + setup without displacing the normal start path. */}
-                  <div className="border-t border-line-muted theme-brutal:border-black/10 pt-3">
+                  <div className="border-t border-line-muted  pt-3">
                     <button
                       type="button"
                       onClick={() => setShowRecoverySetup((v) => !v)}
-                      className="text-xs font-bold text-foreground-muted theme-brutal:text-black/60 underline underline-offset-2"
+                      className="text-xs font-bold text-foreground-muted  underline underline-offset-2"
                       aria-expanded={showRecoverySetup}
                       data-testid="computer-recovery-setup-toggle"
                     >
@@ -1734,7 +1734,7 @@ export default function MachineDetailPanel({
                     </button>
                     {showRecoverySetup && computerInstall && computerSetupCommand && (
                       <div className="mt-2 space-y-3">
-                        <p className="text-xs leading-5 text-foreground-muted theme-brutal:text-black/60">
+                        <p className="text-xs leading-5 text-foreground-muted ">
                           {formatMessage({ id: "machine.detail.installSetupDescription" })}
                           {windowsMachine ? ` ${formatMessage({ id: "machine.detail.windowsInstallerX64Only" })}` : ""}
                         </p>
@@ -1743,7 +1743,7 @@ export default function MachineDetailPanel({
                           ["computer-setup", formatMessage({ id: "machine.detail.setupStep" }), computerSetupCommand],
                         ] as const).map(([target, label, command]) => (
                           <div key={target}>
-                            <div className="mb-1 text-xs font-bold text-foreground-muted theme-brutal:text-black/60">{label}</div>
+                            <div className="mb-1 text-xs font-bold text-foreground-muted ">{label}</div>
                             <CommandCopyRoot target={target} copied={copiedCommand === target} onCopy={handleCopy}>
                               <CopyableCode
                                 className="min-w-0 flex-1 px-3 py-2 font-mono text-xs break-all"
@@ -1773,7 +1773,7 @@ export default function MachineDetailPanel({
                   </div>
                 </div>
               ) : (
-                <p className="text-xs leading-5 text-foreground-muted theme-brutal:text-black/50">
+                <p className="text-xs leading-5 text-foreground-muted ">
                   {formatMessage(
                     { id: "machine.detail.offlineAdminOnly" },
                     { time: lastHeartbeatParenthetical },
@@ -1788,14 +1788,14 @@ export default function MachineDetailPanel({
 
           {/* Agent Workspaces — only when machine is online */}
           {machine.status === "online" && (
-            <div className="mt-2 border-t border-line-muted theme-brutal:border-black/10 pt-4">
+            <div className="mt-2 border-t border-line-muted  pt-4">
               <WorkspacesSection machineId={machine.id} canManageMachines={canManageMachines} />
             </div>
           )}
 
           {/* Actions */}
           {canManageMachines && (
-            <div className="mt-2 border-t border-line-muted theme-brutal:border-black/10 pt-4">
+            <div className="mt-2 border-t border-line-muted  pt-4">
               <SectionEyebrow as="div" className="mb-3">
                 {formatMessage({ id: "machine.detail.actions" })}
               </SectionEyebrow>
@@ -1804,14 +1804,14 @@ export default function MachineDetailPanel({
                   offline recovery is the recovery card's job (task #247). */}
               {machine.isComputer && machine.status === "online" && (
                 <Card className="p-4 mb-3" data-testid="computer-service-actions">
-                  <div className="text-sm font-bold text-foreground-strong theme-brutal:text-black mb-1">
+                  <div className="text-sm font-bold text-foreground-strong  mb-1">
                     {formatMessage({ id: "machine.detail.computer" })}
                   </div>
                   {computerOperationProgress ? (
                     /* Progress mode — show bar instead of buttons */
                     <div className="space-y-2">
                       {computerOperationProgress.done ? (
-                        <div className={`flex items-center gap-2 text-xs font-mono ${computerOperationProgress.error ? "text-brutal-red" : "text-foreground-muted theme-brutal:text-black/70"}`}>
+                        <div className={`flex items-center gap-2 text-xs font-mono ${computerOperationProgress.error ? "text-brutal-red" : "text-foreground-muted "}`}>
                           {computerOperationProgress.error ? (
                             <AlertCircle size={14} className="shrink-0" />
                           ) : (
@@ -1913,7 +1913,7 @@ export default function MachineDetailPanel({
                           : null;
                       return (
                         <>
-                          <p className="text-xs leading-5 text-foreground-muted theme-brutal:text-black/60 mb-3" data-testid="computer-upgrade-status">
+                          <p className="text-xs leading-5 text-foreground-muted  mb-3" data-testid="computer-upgrade-status">
                             {statusSentence}
                           </p>
                           <div className="flex flex-wrap items-center gap-2" data-testid="computer-upgrade-actions">
@@ -1966,14 +1966,14 @@ export default function MachineDetailPanel({
                             {releaseNotesForUpdate && <ComputerReleaseNotesAffordance notes={releaseNotesForUpdate} />}
                           </div>
                           {outcomeLine && (
-                            <p className="mt-2 text-xs leading-5 text-warning-strong theme-brutal:text-brutal-orange" data-testid="computer-upgrade-request-outcome">
+                            <p className="mt-2 text-xs leading-5 text-warning-strong " data-testid="computer-upgrade-request-outcome">
                               {outcomeLine}
                             </p>
                           )}
                           {cardState.kind === "commands" && upgradeInstallCommand && upgradeRestartCommand && (
                             <ol className="mt-3 space-y-3" data-testid="computer-upgrade-commands">
                               <li>
-                                <div className="mb-1 text-xs font-bold text-foreground-muted theme-brutal:text-black/60">
+                                <div className="mb-1 text-xs font-bold text-foreground-muted ">
                                   {formatMessage({ id: "machine.detail.upgradeCommands.installStep" })}
                                 </div>
                                 <CommandCopyRoot target="computer-install" copied={copiedCommand === "computer-install"} onCopy={handleCopy}>
@@ -1992,7 +1992,7 @@ export default function MachineDetailPanel({
                                 </CommandCopyRoot>
                               </li>
                               <li>
-                                <div className="mb-1 text-xs font-bold text-foreground-muted theme-brutal:text-black/60">
+                                <div className="mb-1 text-xs font-bold text-foreground-muted ">
                                   {formatMessage({ id: "machine.detail.upgradeCommands.restartStep" })}
                                 </div>
                                 <CommandCopyRoot target="computer-install-restart" copied={copiedCommand === "computer-install-restart"} onCopy={handleCopy}>
@@ -2016,14 +2016,14 @@ export default function MachineDetailPanel({
                       );
                     })()
                   )}
-                  <div className="mt-4 border-t border-line-muted theme-brutal:border-black/10 pt-4" data-testid="computer-terminal-verification">
+                  <div className="mt-4 border-t border-line-muted  pt-4" data-testid="computer-terminal-verification">
                     <div className="mb-2 flex items-center gap-2">
-                      <Terminal size={16} className="text-foreground-strong theme-brutal:text-black" />
+                      <Terminal size={16} className="text-foreground-strong " />
                       <SectionEyebrow as="div">
                         {formatMessage({ id: "machine.detail.verifyFromTerminal" })}
                       </SectionEyebrow>
                     </div>
-                    <p className="mb-2 text-xs leading-5 text-foreground-muted theme-brutal:text-black/60">
+                    <p className="mb-2 text-xs leading-5 text-foreground-muted ">
                       {formatMessage({ id: "machine.detail.verifyFromTerminalDescription" })}
                     </p>
                     <div className="space-y-2">
@@ -2043,7 +2043,7 @@ export default function MachineDetailPanel({
                     </div>
                     {terminalRestartCommand && (
                       <>
-                        <p className="mb-2 mt-3 text-xs leading-5 text-foreground-muted theme-brutal:text-black/60">
+                        <p className="mb-2 mt-3 text-xs leading-5 text-foreground-muted ">
                           {formatMessage({ id: "machine.detail.webButtonsNotResponding" })}
                         </p>
                         <CommandCopyRoot target="terminal-restart" copied={copiedCommand === "terminal-restart"} onCopy={handleCopy}>
@@ -2079,32 +2079,32 @@ export default function MachineDetailPanel({
                     onClick={() => setRecoveryGuideDisclosure(!showRecoveryGuide)}
                   >
                     <span className="flex items-center gap-2">
-                      <Terminal size={16} className="text-foreground-strong theme-brutal:text-black" />
+                      <Terminal size={16} className="text-foreground-strong " />
                       <SectionEyebrow>{formatMessage({ id: "machine.detail.recoveryGuide" })}</SectionEyebrow>
                     </span>
                     <ChevronRight
                       size={16}
                       aria-hidden="true"
-                      className={`shrink-0 text-foreground-muted theme-brutal:text-black/60 transition-transform ${showRecoveryGuide ? "rotate-90" : ""}`}
+                      className={`shrink-0 text-foreground-muted  transition-transform ${showRecoveryGuide ? "rotate-90" : ""}`}
                       data-testid="computer-recovery-guide-chevron"
                     />
                   </button>
                   {showRecoveryGuide && (
                     <div
                       id={recoveryGuideContentId}
-                      className="mt-3 border-t border-line-muted theme-brutal:border-black/10 pt-3"
+                      className="mt-3 border-t border-line-muted  pt-3"
                       data-testid="computer-recovery-guide-content"
                     >
-                      <p className="mb-4 text-xs leading-5 text-foreground-muted theme-brutal:text-black/60">
+                      <p className="mb-4 text-xs leading-5 text-foreground-muted ">
                         {formatMessage({ id: "machine.detail.recoveryGuideDescription" })}
                       </p>
                       <ol className="space-y-4">
                         <li>
                           <div className="mb-2">
-                            <div className="text-xs font-bold text-foreground-strong theme-brutal:text-black">
+                            <div className="text-xs font-bold text-foreground-strong ">
                               {formatMessage({ id: "machine.detail.restartStep" })}
                             </div>
-                            <p className="text-xs leading-5 text-foreground-muted theme-brutal:text-black/60">
+                            <p className="text-xs leading-5 text-foreground-muted ">
                               {formatMessage({ id: "machine.detail.restartStepDescription" })}
                             </p>
                           </div>
@@ -2125,13 +2125,13 @@ export default function MachineDetailPanel({
                         </li>
                         <li>
                           <div className="mb-2">
-                            <div className="text-xs font-bold text-foreground-strong theme-brutal:text-black">
+                            <div className="text-xs font-bold text-foreground-strong ">
                               {formatMessage(
                                 { id: "machine.detail.freshInstallStep" },
                                 { platform: windowsMachine ? formatMessage({ id: "machine.detail.windowsX64Suffix" }) : "" },
                               )}
                             </div>
-                            <p className="text-xs leading-5 text-foreground-muted theme-brutal:text-black/60">
+                            <p className="text-xs leading-5 text-foreground-muted ">
                               {formatMessage({ id: "machine.computer.recovery.freshInstallDescription" })}
                             </p>
                           </div>
@@ -2152,10 +2152,10 @@ export default function MachineDetailPanel({
                         </li>
                         <li>
                           <div className="mb-2">
-                            <div className="text-xs font-bold text-foreground-strong theme-brutal:text-black">
+                            <div className="text-xs font-bold text-foreground-strong ">
                               {formatMessage({ id: "machine.computer.recovery.restartAfterInstallStep" })}
                             </div>
-                            <p className="text-xs leading-5 text-foreground-muted theme-brutal:text-black/60">
+                            <p className="text-xs leading-5 text-foreground-muted ">
                               {formatMessage({ id: "machine.computer.recovery.restartAfterInstallDescription" })}
                             </p>
                           </div>
@@ -2182,10 +2182,10 @@ export default function MachineDetailPanel({
               <Card className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-sm font-bold text-foreground-strong theme-brutal:text-black">
+                    <div className="text-sm font-bold text-foreground-strong ">
                       {formatMessage({ id: "machine.detail.deleteComputer" })}
                     </div>
-                    <p className="text-xs text-foreground-muted theme-brutal:text-black/60 mt-0.5">
+                    <p className="text-xs text-foreground-muted  mt-0.5">
                       {formatMessage({ id: "machine.detail.deleteComputerDescription" })}
                     </p>
                   </div>

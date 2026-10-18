@@ -103,7 +103,7 @@ export function ConversationCardSkeleton({ count = 6 }: { count?: number }) {
   return (
     <div className="flex flex-col gap-2" aria-busy="true">
       {Array.from({ length: count }, (_, i) => (
-        <div key={i} className="flex w-full items-start gap-3 border border-line-muted bg-layer-panel p-3 theme-brutal:border-2">
+        <div key={i} className="flex w-full items-start gap-3 border border-line-muted bg-layer-panel p-3 ">
           <div className="flex min-w-0 flex-1 flex-col gap-2">
             <div className="flex items-center gap-2.5">
               <RuiSkeleton variant="line" className="w-20" />

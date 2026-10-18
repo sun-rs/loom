@@ -11,6 +11,6 @@
     "typecheck:loom": "tsc --noEmit --project loom/tsconfig.json"
   },
   "dependencies": {
-    "raft-ui": "0.5.64"
+    "raft-ui": "0.6.0"
   }
 }

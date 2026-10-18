@@ -15,7 +15,6 @@ import {
   SortableTabsList,
   SortableTabsTab,
   TabsLabel,
-  TabsIndicator,
 } from "raft-ui";
 const tabs = [{ id: "chat" }, { id: "tasks" }, { id: "workspace" }] as const;
 /** Official ChatPanel/useOrderedTabs composition, with Loom's revisioned personal preference facade. */
@@ -103,7 +102,7 @@ export default function ChannelTabs({
                 key={id}
                 value={id}
                 data-testid={`panel-tab-${id}`}
-                className="!cursor-default h-7"
+                className="!cursor-default"
               >
                 <Icon size={12} />
                 <TabsLabel>
@@ -119,7 +118,6 @@ export default function ChannelTabs({
               </SortableTabsTab>
             );
           })}
-          <TabsIndicator />
         </SortableTabsList>
       </ConversationPanelTabs>
       <OperationStatus manager={manager} error={error || readError} />

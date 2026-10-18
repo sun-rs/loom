@@ -338,12 +338,17 @@ export async function verifyThreads({
         "detail-close",
       );
       if (width === 1440) {
-        assert.match(
-          await fallbackClose.evaluate(
-            (el) => getComputedStyle(el).borderTopColor,
-          ),
-          /^(rgb\(0, 0, 0\)|oklch\(0 0 0\))$/,
+        const shadow = await fallbackClose.evaluate(
+          (el) => getComputedStyle(el).boxShadow,
         );
+        assert.ok(
+          shadow === "none" ||
+            shadow
+              .replaceAll("rgba(0, 0, 0, 0)", "")
+              .replace(/[0px,\s]/g, "") === "",
+          "no visible shadow",
+        );
+        assert.equal((await fallbackClose.boundingBox()).width, 32);
         await fallbackClose.click();
       } else await panel.getByTestId("thread-mobile-back").click();
       await panel.waitFor({ state: "detached" });

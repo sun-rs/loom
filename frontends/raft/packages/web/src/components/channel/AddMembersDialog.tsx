@@ -245,18 +245,18 @@ export default function AddMembersDialog({
 
   return (
     <DialogCard title={formatMessage({ id: "channel.addMembers.title" })} onClose={onClose}>
-        <div className="mb-3 flex items-center gap-2 border border-line-muted bg-layer-inset p-2 text-sm text-foreground-strong theme-brutal:border-2 theme-brutal:border-black/15 theme-brutal:bg-brutal-cream theme-brutal:text-black">
+        <div className="mb-3 flex items-center gap-2 border border-line-muted bg-layer-inset p-2 text-sm text-foreground-strong    ">
           {channel?.type === "private" ? (
             <Lock size={14} className="shrink-0" />
           ) : (
             <Hash size={14} className="shrink-0" />
           )}
           <span className="font-bold">{channel?.name ?? formatMessage({ id: "channel.addMembers.unknownChannel" })}</span>
-          <span className="text-foreground-muted theme-brutal:text-black/55">{formatMessage({ id: "channel.addMembers.targetChannelSuffix" })}</span>
+          <span className="text-foreground-muted ">{formatMessage({ id: "channel.addMembers.targetChannelSuffix" })}</span>
         </div>
 
         {draftHint ? (
-          <div className="mb-3 border-l-2 border-line-muted pl-2 text-xs italic text-foreground-muted theme-brutal:border-black/20 theme-brutal:text-black/55">
+          <div className="mb-3 border-l-2 border-line-muted pl-2 text-xs italic text-foreground-muted  ">
             {draftHint}
           </div>
         ) : null}
@@ -268,7 +268,7 @@ export default function AddMembersDialog({
         ) : null}
 
         {nothingToAdd ? (
-            <div className="mb-4 border border-line-muted bg-layer-panel p-3 text-sm text-foreground-muted theme-brutal:border-2 theme-brutal:border-black/15 theme-brutal:bg-white theme-brutal:text-black/55">
+            <div className="mb-4 border border-line-muted bg-layer-panel p-3 text-sm text-foreground-muted    ">
             {formatMessage({ id: "channel.addMembers.nothingToAdd" })}
           </div>
         ) : (

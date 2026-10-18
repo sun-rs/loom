@@ -205,10 +205,10 @@ export default function AgentProfileEditDialog({ agent, open, field, onClose, ro
   }, [save]);
 
   const presetButtonClass = (selected: boolean) =>
-    `flex size-10 items-center justify-center overflow-hidden rounded-md border transition-colors theme-brutal:rounded-none theme-brutal:border-2 ${
+    `flex size-10 items-center justify-center overflow-hidden rounded-md border transition-colors   ${
       selected
-        ? "border-accent bg-accent-soft theme-brutal:border-brutal-pink theme-brutal:bg-brutal-pink/20"
-        : "border-line-muted hover:border-line-strong theme-brutal:border-black"
+        ? "border-accent bg-accent-soft  "
+        : "border-line-muted hover:border-line-strong "
     }`;
 
   return (
@@ -293,7 +293,7 @@ export default function AgentProfileEditDialog({ agent, open, field, onClose, ro
                       onClick={() => fileInputRef.current?.click()}
                       className={presetButtonClass(avatar.kind === "upload" || (avatar.kind === "unchanged" && isCustomAvatar(agent.avatarUrl)))}
                     >
-                      <Upload size={16} className="text-foreground-muted theme-brutal:text-black/60" />
+                      <Upload size={16} className="text-foreground-muted " />
                     </button>
                   </Tooltip>
                   <input

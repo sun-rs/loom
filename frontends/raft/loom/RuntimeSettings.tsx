@@ -98,14 +98,14 @@ export default function RuntimeSettings({
   const stale = base && latest && base.revision !== latest.revision;
   const busy = state !== "idle";
   return (
-    <div className="flex-1 overflow-y-auto bg-layer-panel px-5 py-4 text-foreground-strong mobile-nav-clearance theme-brutal:bg-white theme-brutal:text-black">
+    <div className="flex-1 overflow-y-auto bg-layer-panel px-5 py-4 text-foreground-strong mobile-nav-clearance  ">
       <div className="mb-6">
         <SectionHeader
           className="mb-3"
           icon={<SlidersHorizontal size={16} />}
           label="运行设置"
         />
-        <Card className="border-line-muted bg-layer-panel p-4 shadow-raft-sm theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal-sm">
+        <Card className="border-line-muted bg-layer-panel p-4 shadow-raft-sm    ">
           <p className="mb-3 text-xs leading-5 text-foreground-muted">
             通常保持默认即可。并发调整只影响之后开始的工作，不中断正在运行的实例。
           </p>

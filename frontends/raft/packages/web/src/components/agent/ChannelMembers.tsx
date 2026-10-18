@@ -7,7 +7,7 @@ import { Input, Card,
   SidebarSectionCount,
   SidebarSectionDisclosure,
   SidebarSectionHeader,
-  SidebarSectionTitle, Spinner, useThemeFamily } from "raft-ui";
+  SidebarSectionTitle, Spinner } from "raft-ui";
 import CloseButton from "../ui/CloseButton";
 import { lazy, Suspense, useCallback, useMemo, useState } from "react";
 import type { ReactNode } from "react";
@@ -82,7 +82,6 @@ export function JointPeerBadge({ label }: { label: string }) {
     <Badge
       appearance="soft"
       variant="information"
-      uppercase={false}
       className="inline-flex max-w-full items-center justify-center truncate text-center font-mono leading-none"
     >
       {label}
@@ -230,8 +229,8 @@ export default function ChannelMembers({
   const { formatMessage } = useIntl();
   // The confirm-add button is pink in Brutal and the primary yellow in
   // Elegant; the colour comes from the Button variant, not a className.
-  const themeFamily = useThemeFamily();
-  const confirmAddVariant = themeFamily === "brutal" ? "accent" : "primary";
+
+  const confirmAddVariant = "accent";
   const agents = useAgentStore((s) => s.agents);
   const channels = useChannelStore((s) => s.channels);
   const currentChannel = channels.find((c) => c.id === channelId) ?? null;
@@ -591,7 +590,7 @@ export default function ChannelMembers({
       name={(
         <span className="flex min-w-0 items-center gap-1.5">
           <span className="truncate">{member.displayName}</span>
-          <span className="border border-line-muted theme-brutal:border-black bg-accent-soft theme-brutal:bg-brutal-lavender px-1 font-mono text-[10px] font-bold uppercase leading-4 text-foreground-strong theme-brutal:text-black">
+          <span className="border border-line-muted  bg-accent-soft  px-1 font-mono text-[10px] font-bold uppercase leading-4 text-foreground-strong ">
             {formatMessage({ id: "settings.slackBridge.providerBadge" })}
           </span>
         </span>
@@ -681,14 +680,14 @@ export default function ChannelMembers({
       // Column: the candidates scroll in the inner region; the create-agent
       // entry is a pinned footer OUTSIDE that region (task #99) so it is always
       // in view instead of only after scrolling to the end of a long list.
-      className={`flex flex-col border border-line-muted bg-layer-panel shadow-raft-sm theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal-sm overflow-y-auto ${fillAvailableHeight ? "min-h-0 flex-1" : "max-h-72"}`}
+      className={`flex flex-col border border-line-muted bg-layer-panel shadow-raft-sm     overflow-y-auto ${fillAvailableHeight ? "min-h-0 flex-1" : "max-h-72"}`}
       data-testid={multiSelect ? "add-member-candidate-list" : undefined}
     >
     <div className="min-h-0 flex-1 overflow-y-auto" data-testid={multiSelect ? "add-member-candidate-scroll" : undefined}>
       {/* Available agents */}
       {filteredAgents.length > 0 && (
         <>
-          <SectionEyebrow as="div" uppercase={false} className="bg-fill-muted px-3 py-1.5 text-foreground-muted theme-brutal:bg-white/50 theme-brutal:text-black">
+          <SectionEyebrow as="div" uppercase={false} className="bg-fill-muted px-3 py-1.5 text-foreground-muted  ">
             {formatMessage({ id: "agent.channelMembers.agents" })}
           </SectionEyebrow>
           {filteredAgents.map((agent) => {
@@ -698,7 +697,7 @@ export default function ChannelMembers({
                 <button
                   key={agent.id}
                   onClick={() => { void addAgent(agent.id).catch(() => {}); }}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-foreground-strong transition-colors hover:bg-fill-muted [@media(max-height:600px)]:py-1 theme-brutal:text-black theme-brutal:hover:bg-soft-signal"
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-foreground-strong transition-colors hover:bg-fill-muted [@media(max-height:600px)]:py-1  "
                 >
                   <AvatarSlot
                     context="compact-list"
@@ -722,7 +721,7 @@ export default function ChannelMembers({
                 disabled={adding}
                 aria-pressed={selectedKeys.has(key)}
                 aria-describedby={failedKeys.has(key) ? `add-member-failed-${key}` : undefined}
-                className={`flex w-full items-center gap-2 px-3 py-2 text-left text-foreground-strong transition-colors hover:bg-fill-muted disabled:cursor-not-allowed disabled:opacity-60 [@media(max-height:600px)]:py-1 theme-brutal:text-black theme-brutal:hover:bg-soft-signal ${failedKeys.has(key) ? "bg-warning-soft text-warning-strong dark:bg-warning-soft dark:text-warning-strong theme-brutal:bg-brutal-orange/15 theme-brutal:text-black" : ""}`}
+                className={`flex w-full items-center gap-2 px-3 py-2 text-left text-foreground-strong transition-colors hover:bg-fill-muted disabled:cursor-not-allowed disabled:opacity-60 [@media(max-height:600px)]:py-1   ${failedKeys.has(key) ? "bg-warning-soft text-warning-strong dark:bg-warning-soft dark:text-warning-strong  " : ""}`}
                 data-testid={`add-candidate-agent-${agent.id}`}
               >
                 <CheckMarker checked={selectedKeys.has(key)} disabled={adding} />
@@ -751,7 +750,7 @@ export default function ChannelMembers({
       {/* Available humans */}
       {filteredHumans.length > 0 && (
         <>
-          <SectionEyebrow as="div" uppercase={false} className="bg-fill-muted px-3 py-1.5 text-foreground-muted theme-brutal:bg-white/50 theme-brutal:text-black">
+          <SectionEyebrow as="div" uppercase={false} className="bg-fill-muted px-3 py-1.5 text-foreground-muted  ">
             {formatMessage({ id: "agent.channelMembers.humans" })}
           </SectionEyebrow>
           {filteredHumans.map((human) => {
@@ -761,7 +760,7 @@ export default function ChannelMembers({
                 <button
                   key={human.userId}
                   onClick={() => { void addHuman(human.userId).catch(() => {}); }}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-foreground-strong transition-colors hover:bg-fill-muted [@media(max-height:600px)]:py-1 theme-brutal:text-black theme-brutal:hover:bg-soft-signal"
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-foreground-strong transition-colors hover:bg-fill-muted [@media(max-height:600px)]:py-1  "
                 >
                   <AvatarSlot
                     context="compact-list"
@@ -785,7 +784,7 @@ export default function ChannelMembers({
                 disabled={adding}
                 aria-pressed={selectedKeys.has(key)}
                 aria-describedby={failedKeys.has(key) ? `add-member-failed-${key}` : undefined}
-                className={`flex w-full items-center gap-2 px-3 py-2 text-left text-foreground-strong transition-colors hover:bg-fill-muted disabled:cursor-not-allowed disabled:opacity-60 [@media(max-height:600px)]:py-1 theme-brutal:text-black theme-brutal:hover:bg-soft-signal ${failedKeys.has(key) ? "bg-warning-soft text-warning-strong dark:bg-warning-soft dark:text-warning-strong theme-brutal:bg-brutal-orange/15 theme-brutal:text-black" : ""}`}
+                className={`flex w-full items-center gap-2 px-3 py-2 text-left text-foreground-strong transition-colors hover:bg-fill-muted disabled:cursor-not-allowed disabled:opacity-60 [@media(max-height:600px)]:py-1   ${failedKeys.has(key) ? "bg-warning-soft text-warning-strong dark:bg-warning-soft dark:text-warning-strong  " : ""}`}
                 data-testid={`add-candidate-human-${human.userId}`}
               >
                 <CheckMarker checked={selectedKeys.has(key)} disabled={adding} />
@@ -841,11 +840,11 @@ export default function ChannelMembers({
             }}
             disabled={adding}
             data-testid="add-member-create-agent-entry"
-            className={`flex w-full shrink-0 items-center gap-2.5 border-t border-line-strong px-3 py-2.5 text-left theme-brutal:border-t-2 theme-brutal:border-black ${
-              createEntryPromoted ? "bg-primary-soft text-foreground-strong theme-brutal:bg-soft-signal theme-brutal:text-black" : "bg-layer-panel text-foreground-strong hover:bg-fill-muted theme-brutal:bg-white theme-brutal:text-black theme-brutal:hover:bg-black/5"
+            className={`flex w-full shrink-0 items-center gap-2.5 border-t border-line-strong px-3 py-2.5 text-left   ${
+              createEntryPromoted ? "bg-primary-soft text-foreground-strong  " : "bg-layer-panel text-foreground-strong hover:bg-fill-muted   "
             }`}
           >
-            <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-dashed border-line-strong bg-layer-inset theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white">
+            <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-dashed border-line-strong bg-layer-inset    ">
               <Plus size={14} />
             </span>
             <span className="flex min-w-0 flex-col">
@@ -854,20 +853,20 @@ export default function ChannelMembers({
                   ? formatMessage({ id: "channel.addMembers.createAgentNamed" }, { name: createAgentPrefillName })
                   : formatMessage({ id: "channel.addMembers.createAgent" })}
               </span>
-              <span className="truncate text-xs text-foreground-muted theme-brutal:text-black/50">
+              <span className="truncate text-xs text-foreground-muted ">
                 {formatMessage({ id: "channel.addMembers.createAgentAutoJoin" }, { channel: `#${currentChannel?.name ?? ""}` })}
               </span>
             </span>
           </button>
         ) : (
-          <div className="shrink-0 border-t-2 border-line-strong theme-brutal:border-black px-3 py-2.5" data-testid="add-member-create-agent-entry-disabled">
+          <div className="shrink-0 border-t-2 border-line-strong  px-3 py-2.5" data-testid="add-member-create-agent-entry-disabled">
             <div className="flex items-center gap-2.5 opacity-50">
-              <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-dashed border-line-strong bg-layer-inset theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white">
+              <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-dashed border-line-strong bg-layer-inset    ">
                 <Plus size={14} />
               </span>
               <span className="text-sm font-bold">{formatMessage({ id: "channel.addMembers.createAgent" })}</span>
             </div>
-            <p className="mt-1.5 text-xs text-foreground-muted theme-brutal:text-black/50">
+            <p className="mt-1.5 text-xs text-foreground-muted ">
               {formatMessage({ id: "channel.addMembers.createAgentNoPermission" })}
             </p>
           </div>
@@ -987,7 +986,7 @@ export default function ChannelMembers({
                 key={key}
                 appearance={failedNow ? "soft" : "solid"}
                 variant={failedNow ? "warning" : kind === "agent" ? "information" : "accent"}
-                className={`inline-flex items-center gap-1 text-xs font-bold ${failedNow ? "theme-brutal:bg-brutal-orange/25 theme-brutal:text-black" : kind === "agent" ? "theme-brutal:bg-brutal-cyan theme-brutal:text-black" : "theme-brutal:bg-brutal-lavender theme-brutal:text-black"}`}
+                className={`inline-flex items-center gap-1 text-xs font-bold ${failedNow ? " " : kind === "agent" ? " " : " "}`}
                 data-member-kind={kind}
                 data-member-status={failedNow ? "failed" : "selected"}
                 data-testid={`add-member-selected-chip-${key}`}
@@ -1084,7 +1083,7 @@ export default function ChannelMembers({
                 : formatMessage({ id: "agent.channelMembers.membersCount" }, { count: totalParticipants })}
         </h2>
         {isPanel && !showInModalAddView && (
-          <span className="shrink-0 font-mono text-xs font-normal text-foreground-muted theme-brutal:text-black/55">
+          <span className="shrink-0 font-mono text-xs font-normal text-foreground-muted ">
             {membersLoading
               ? formatMessage({ id: "message.chatPanel.overflow.membersLoading" })
               : formatMessage(
@@ -1128,7 +1127,7 @@ export default function ChannelMembers({
     : isPanel
       ? (
         <div
-          className="max-h-[280px] overflow-y-auto border-y border-line-muted theme-brutal:border-black/10"
+          className="max-h-[280px] overflow-y-auto border-y border-line-muted "
           data-testid="channel-members-scroll"
         >
           {memberListView}
@@ -1151,7 +1150,7 @@ export default function ChannelMembers({
     memberMatches(normalizedRosterQuery, member.handles.join(" "), member.displayName));
 
   const pageHeader = (
-    <div className="flex h-panel-header shrink-0 items-center gap-2 border-b border-line-muted bg-layer-inset px-4 theme-brutal:border-b-2 theme-brutal:border-black theme-brutal:bg-soft-signal">
+    <div className="flex h-panel-header shrink-0 items-center gap-2 border-b border-line-muted bg-layer-inset px-4   ">
       {/* In the add view the back button is the add flow's own ‹ back
           (resetAddFlow), keeping the add-member-back contract the modal
           and panel headers use; otherwise it returns to the drawer root. */}
@@ -1176,7 +1175,6 @@ export default function ChannelMembers({
         <Badge
           appearance="soft"
           variant="muted"
-          uppercase={false}
           className="shrink-0 font-mono"
           data-testid="member-page-count"
         >
@@ -1207,7 +1205,7 @@ export default function ChannelMembers({
       )}
 
       {/* Persistent search — filters both sections live. */}
-      <div className="shrink-0 border-b border-line-muted theme-brutal:border-black/10 px-4 py-3">
+      <div className="shrink-0 border-b border-line-muted  px-4 py-3">
         <div className="relative">
           <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-foreground-muted" />
           <Input
@@ -1289,7 +1287,7 @@ export default function ChannelMembers({
         )}
 
         {!membersLoading && totalParticipants === 0 && (
-          <div className="px-3 py-4 text-center font-mono text-sm text-foreground-muted theme-brutal:text-black/50">
+          <div className="px-3 py-4 text-center font-mono text-sm text-foreground-muted ">
             {formatMessage({ id: "agent.channelMembers.noMembers" })}
           </div>
         )}
@@ -1298,7 +1296,7 @@ export default function ChannelMembers({
           && visibleHumans.length === 0
           && visibleAgents.length === 0
           && visibleExternalMembers.length === 0 && (
-          <div className="px-3 py-4 text-center font-mono text-sm text-foreground-muted theme-brutal:text-black/50">
+          <div className="px-3 py-4 text-center font-mono text-sm text-foreground-muted ">
             {formatMessage({ id: "agent.channelMembers.noMatches" }, { query: rosterQuery.trim() })}
           </div>
         )}
@@ -1308,7 +1306,7 @@ export default function ChannelMembers({
           add flow (drawer-internal third level, no Modal). Hidden while a
           remove confirm is staged so the bottom bar never stacks. */}
       {!removeTarget && showAddEntry && (
-        <div className="shrink-0 border-t-2 border-line-muted theme-brutal:border-black p-3">
+        <div className="shrink-0 border-t-2 border-line-muted  p-3">
           <Button
             size="md"
             variant="outline"
@@ -1381,7 +1379,7 @@ export default function ChannelMembers({
               search query, disclosures and scroll position are the actual
               "previous page" the Back control must restore. */}
           <div
-            className={`${selectedProfile ? "hidden" : "flex"} min-h-0 flex-1 flex-col bg-layer-panel text-foreground-strong theme-brutal:bg-white theme-brutal:text-black`}
+            className={`${selectedProfile ? "hidden" : "flex"} min-h-0 flex-1 flex-col bg-layer-panel text-foreground-strong  `}
             data-testid="member-page"
           >
             {pageHeader}
@@ -1394,7 +1392,7 @@ export default function ChannelMembers({
           {selectedProfile && (
             <Suspense
               fallback={(
-                <div className="flex min-h-0 flex-1 items-center justify-center bg-layer-panel text-sm font-display text-foreground-muted theme-brutal:bg-white theme-brutal:text-black/40">
+                <div className="flex min-h-0 flex-1 items-center justify-center bg-layer-panel text-sm font-display text-foreground-muted  ">
                   {formatMessage({ id: "common.loading" })}
                 </div>
               )}

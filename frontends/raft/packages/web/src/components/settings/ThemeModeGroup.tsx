@@ -68,7 +68,7 @@ export function ThemeModeGroup({
               }`
             : `rounded-lg border-[0.5px] bg-layer-panel shadow-none ${
                 selected
-                  ? "border-accent-strong theme-brutal:border-soft-signal"
+                  ? "border-accent-strong "
                   : "border-line-muted"
               }`;
           return (
@@ -85,7 +85,7 @@ export function ThemeModeGroup({
               />
               <div
                 data-theme={option.family}
-                className={`${themeMode} text-left transition-[box-shadow,transform] group-hover:-translate-y-px peer-focus-visible:ring-2 peer-focus-visible:ring-accent-strong theme-brutal:peer-focus-visible:ring-soft-signal ${cardClass}`}
+                className={`${themeMode} text-left transition-[box-shadow,transform] group-hover:-translate-y-px peer-focus-visible:ring-2 peer-focus-visible:ring-accent-strong  ${cardClass}`}
                 onClick={() => onThemeForModeChange(themeMode, option.id)}
               >
                 <div className="p-3">

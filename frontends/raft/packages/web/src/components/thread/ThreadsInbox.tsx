@@ -233,7 +233,7 @@ function highlightActivitySearchText(value: string, query: string): ReactNode {
     if (index > cursor) parts.push(value.slice(cursor, index));
     const match = value.slice(index, index + needle.length);
     parts.push(
-      <mark key={`${index}-${match}`} className="bg-primary-soft px-0.5 text-primary-strong theme-brutal:bg-soft-signal theme-brutal:text-black">
+      <mark key={`${index}-${match}`} className="bg-primary-soft px-0.5 text-primary-strong  ">
         {match}
       </mark>,
     );
@@ -275,7 +275,7 @@ function ActivityGroupIcon({ group, dmChannel }: { group: InboxGroupCount; dmCha
   const isDm = group.channelType === "dm";
   return (
     <span
-      className={`flex size-5 shrink-0 items-center justify-center border border-line-muted theme-brutal:border-2 theme-brutal:border-black/20 ${isDm ? "bg-primary-soft text-primary-strong theme-brutal:bg-soft-signal theme-brutal:text-black" : "bg-fill-muted"}`}
+      className={`flex size-5 shrink-0 items-center justify-center border border-line-muted   ${isDm ? "bg-primary-soft text-primary-strong  " : "bg-fill-muted"}`}
       data-testid={isDm ? `activity-group-dm-fallback-${group.channelId}` : `activity-group-channel-icon-${group.channelId}`}
     >
       {isDm ? <DirectMessageIcon width={12} height={12} /> : <Hash size={12} />}
@@ -379,7 +379,7 @@ function InboxRow({ item, filter, searchQuery, onOpen, onDone, onContextMenu, fo
       ? "dm"
       : "channel";
   const titleIcon = (() => {
-    const className = "mr-1.5 inline-block align-[-2px] text-foreground-placeholder theme-brutal:text-black/45";
+    const className = "mr-1.5 inline-block align-[-2px] text-foreground-placeholder ";
     if (titleIconKind === "thread") return <ThreadIcon width={13} height={13} className={className} />;
     if (titleIconKind === "dm") return <DirectMessageIcon width={13} height={13} className={className} />;
     return <Hash size={13} className={className} />;
@@ -387,21 +387,21 @@ function InboxRow({ item, filter, searchQuery, onOpen, onDone, onContextMenu, fo
   const subtitleContent = item.kind === "thread" ? channelLabel : null;
   const bodyContent = (
     <>
-      {activitySenderLabel ? <span className="font-bold text-foreground-muted theme-brutal:text-black/70">{activitySenderLabel}: </span> : null}
+      {activitySenderLabel ? <span className="font-bold text-foreground-muted ">{activitySenderLabel}: </span> : null}
       {renderActivityPreview(activityPreview, searchQuery)}
     </>
   );
-  const rowClassName = `group relative flex w-full items-start gap-3 rounded-md border p-3 theme-brutal:rounded-none text-left transition-colors hover:border-line-muted hover:bg-fill-muted hover:shadow-raft-sm active:border-line-muted active:shadow-raft-sm theme-brutal:border-2 theme-brutal:hover:border-black theme-brutal:hover:shadow-brutal-sm theme-brutal:active:border-black theme-brutal:active:shadow-brutal-sm ${
+  const rowClassName = `group relative flex w-full items-start gap-3 rounded-md border p-3  text-left transition-colors hover:border-line-muted hover:bg-fill-muted hover:shadow-raft-sm active:border-line-muted active:shadow-raft-sm      ${
     focused
-      ? "border-info bg-info-muted shadow-raft-md theme-brutal:border-black theme-brutal:bg-brutal-cyan/25 theme-brutal:shadow-brutal"
+      ? "border-info bg-info-muted shadow-raft-md   "
       : active
-      ? "border-line-muted bg-fill-muted shadow-raft-sm theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal-sm"
-      : "border-line-muted bg-layer-card theme-brutal:border-black/30 theme-brutal:bg-white"
+      ? "border-line-muted bg-fill-muted shadow-raft-sm   "
+      : "border-line-muted bg-layer-card  "
   }`;
   const rowActionVisibilityClassName = active
     ? "pointer-events-auto opacity-100"
     : "pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-visible:pointer-events-auto group-focus-visible:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100 [@media(hover:none)]:pointer-events-auto [@media(hover:none)]:opacity-100";
-  const doneActionClassName = `relative z-10 shrink-0 transition-opacity theme-brutal:bg-white ${
+  const doneActionClassName = `relative z-10 shrink-0 transition-opacity  ${
     rowActionVisibilityClassName
   }`;
   const hasRowAction = doneAction !== "none";
@@ -427,8 +427,8 @@ function InboxRow({ item, filter, searchQuery, onOpen, onDone, onContextMenu, fo
       ? "opacity-0"
       : "transition-opacity group-hover:opacity-0 group-focus-within:opacity-0 [@media(hover:none)]:opacity-0";
   const rowActionBackgroundClassName = active
-    ? "bg-layer-panel theme-brutal:bg-white"
-    : "bg-transparent group-hover:bg-layer-panel group-focus-visible:bg-layer-panel group-focus-within:bg-layer-panel [@media(hover:none)]:bg-layer-panel theme-brutal:group-hover:bg-white theme-brutal:group-focus-visible:bg-white theme-brutal:group-focus-within:bg-white theme-brutal:[@media(hover:none)]:bg-white";
+    ? "bg-layer-panel "
+    : "bg-transparent group-hover:bg-layer-panel group-focus-visible:bg-layer-panel group-focus-within:bg-layer-panel [@media(hover:none)]:bg-layer-panel    ";
 
   return (
     <Card
@@ -447,7 +447,7 @@ function InboxRow({ item, filter, searchQuery, onOpen, onDone, onContextMenu, fo
       <div className="min-w-0 w-full" data-testid="conversation-card-content">
         {subtitleContent ? (
           <div
-            className="mb-0.5 min-w-0 text-[11px] font-bold leading-3 text-foreground-placeholder theme-brutal:text-black/45"
+            className="mb-0.5 min-w-0 text-[11px] font-bold leading-3 text-foreground-placeholder "
             data-testid="conversation-card-subtitle"
           >
             {subtitleContent}
@@ -455,7 +455,7 @@ function InboxRow({ item, filter, searchQuery, onOpen, onDone, onContextMenu, fo
         ) : null}
         <div className="mb-0.5 flex min-w-0 items-start gap-2">
           <div
-            className={`line-clamp-2 min-w-0 flex-1 text-sm leading-5 ${unreadCount > 0 ? "font-bold text-foreground-strong theme-brutal:text-black" : "font-semibold text-foreground-muted theme-brutal:text-black/55"}`}
+            className={`line-clamp-2 min-w-0 flex-1 text-sm leading-5 ${unreadCount > 0 ? "font-bold text-foreground-strong " : "font-semibold text-foreground-muted "}`}
             data-testid="conversation-card-primary"
           >
             <span aria-hidden="true" data-testid="conversation-card-title-icon" data-kind={titleIconKind}>
@@ -465,7 +465,7 @@ function InboxRow({ item, filter, searchQuery, onOpen, onDone, onContextMenu, fo
           </div>
           {timestamp ? (
             <span
-              className={`shrink-0 font-mono text-xs leading-5 text-foreground-placeholder theme-brutal:text-black/40 ${timestampVisibilityClassName}`}
+              className={`shrink-0 font-mono text-xs leading-5 text-foreground-placeholder  ${timestampVisibilityClassName}`}
               data-testid="conversation-card-timestamp"
             >
               {timestamp}
@@ -473,7 +473,7 @@ function InboxRow({ item, filter, searchQuery, onOpen, onDone, onContextMenu, fo
           ) : null}
         </div>
         <p
-          className={`line-clamp-2 text-xs leading-4 ${unreadCount > 0 ? "text-foreground-strong theme-brutal:text-black" : "text-foreground-muted theme-brutal:text-black/55"}`}
+          className={`line-clamp-2 text-xs leading-4 ${unreadCount > 0 ? "text-foreground-strong " : "text-foreground-muted "}`}
           data-testid="conversation-card-body"
         >
           {bodyContent}
@@ -495,7 +495,6 @@ function InboxRow({ item, filter, searchQuery, onOpen, onDone, onContextMenu, fo
             <Badge
               appearance="outline"
               variant="muted"
-              uppercase={false}
               data-testid="conversation-card-reply-count"
             >
               {formatMessage({ id: "thread.row.replies" }, { count: threadItem.replyCount })}
@@ -505,7 +504,6 @@ function InboxRow({ item, filter, searchQuery, onOpen, onDone, onContextMenu, fo
             <Badge
               appearance="outline"
               variant="muted"
-              uppercase={false}
               data-testid="conversation-card-unfollowed-badge"
             >
               <BellOff size={10} />
@@ -516,7 +514,6 @@ function InboxRow({ item, filter, searchQuery, onOpen, onDone, onContextMenu, fo
             <Tooltip content={formatMessage({ id: "thread.row.mentionBadgeTitle" })}>
             <Badge
               variant="primary"
-              uppercase={false}
               data-slot="badge"
               data-testid="inbox-mention-badge"
             >
@@ -528,7 +525,6 @@ function InboxRow({ item, filter, searchQuery, onOpen, onDone, onContextMenu, fo
           {unreadCount > 0 && (
             <Badge
               variant="accent"
-              uppercase={false}
               data-testid="conversation-card-new-badge"
             >
               {formatMessage({ id: "thread.row.unreadCount" }, { count: unreadCount })}
@@ -539,7 +535,6 @@ function InboxRow({ item, filter, searchQuery, onOpen, onDone, onContextMenu, fo
             <Badge
               appearance="outline"
               variant="muted"
-              uppercase={false}
               data-slot="badge"
               data-testid="inbox-thread-draft-badge"
               aria-label={formatMessage({ id: "thread.row.draftTitle" })}
@@ -552,7 +547,7 @@ function InboxRow({ item, filter, searchQuery, onOpen, onDone, onContextMenu, fo
       </div>
       {hasRowAction ? (
         <div
-          className={`pointer-events-none absolute right-3 top-3 z-10 flex items-center rounded-md theme-brutal:rounded-none ${rowActionBackgroundClassName}`}
+          className={`pointer-events-none absolute right-3 top-3 z-10 flex items-center rounded-md  ${rowActionBackgroundClassName}`}
           data-testid="conversation-card-actions"
         >
           <Tooltip content={formatMessage({ id: doneAction === "restore" ? "activity.current.restore" : "thread.row.markAsDone" })}>
@@ -1319,8 +1314,8 @@ export default function ThreadsInbox({ compactActivitySidebar = false }: {
 
   const sidebarResponsiveSuffix = " lg:justify-start lg:gap-2 lg:px-2.5";
   const sidebarLabelClassName = "sr-only lg:not-sr-only lg:min-w-0 lg:flex-1 lg:truncate";
-  const sidebarCountClassName = "hidden font-mono text-[11px] tabular-nums text-foreground-placeholder theme-brutal:text-black/40 lg:inline";
-  const sidebarSectionLabelClassName = "hidden flex-1 text-[10px] font-black uppercase text-foreground-placeholder theme-brutal:text-black/40 lg:block";
+  const sidebarCountClassName = "hidden font-mono text-[11px] tabular-nums text-foreground-placeholder  lg:inline";
+  const sidebarSectionLabelClassName = "hidden flex-1 text-[10px] font-black uppercase text-foreground-placeholder  lg:block";
   const activityViewOptions = [
     { value: "all" as const, label: formatMessage({ id: "thread.filter.all" }), icon: <Inbox size={14} />, count: allCount },
     { value: "unread" as const, label: formatMessage({ id: "thread.filter.unread" }), icon: <Mail size={14} />, count: totalUnreadCount },
@@ -1345,13 +1340,13 @@ export default function ThreadsInbox({ compactActivitySidebar = false }: {
     const testIdPrefix = isDialog ? "activity-switcher" : "activity";
     const navButtonClass = (active: boolean) => isDialog
       ? `flex w-full items-center gap-3 px-3 py-3 text-left text-sm font-bold transition-colors ${active ? "bg-fill-muted" : "hover:bg-fill-muted/60"}`
-      : `flex w-full items-center justify-center gap-0 border px-2 py-2 text-left text-xs font-bold transition-colors${sidebarResponsiveSuffix} ${active ? "border-line-strong bg-primary-soft text-foreground-strong shadow-raft-sm theme-brutal:border-black theme-brutal:bg-soft-signal theme-brutal:text-black theme-brutal:shadow-brutal-sm" : "border-transparent hover:border-line-muted hover:bg-fill-muted theme-brutal:border-transparent theme-brutal:hover:border-black/30 theme-brutal:hover:bg-black/5"} theme-brutal:border-2`;
+      : `flex w-full items-center justify-center gap-0 border px-2 py-2 text-left text-xs font-bold transition-colors${sidebarResponsiveSuffix} ${active ? "border-line-strong bg-primary-soft text-foreground-strong shadow-raft-sm    " : "border-transparent hover:border-line-muted hover:bg-fill-muted   "} `;
     const labelClass = isDialog ? "min-w-0 flex-1 truncate" : sidebarLabelClassName;
-    const countClass = isDialog ? "font-mono text-foreground-muted theme-brutal:text-black/50" : sidebarCountClassName;
-    const sectionClass = isDialog ? "flex-1 text-xs font-black uppercase text-foreground-placeholder theme-brutal:text-black/45" : sidebarSectionLabelClassName;
+    const countClass = isDialog ? "font-mono text-foreground-muted " : sidebarCountClassName;
+    const sectionClass = isDialog ? "flex-1 text-xs font-black uppercase text-foreground-placeholder " : sidebarSectionLabelClassName;
     const groupRowClass = (active: boolean) => isDialog
-      ? `flex w-full border transition-colors theme-brutal:border-2 ${active ? "border-line-strong bg-fill-muted theme-brutal:border-black theme-brutal:bg-black/[0.08]" : "border-transparent hover:border-line-muted hover:bg-fill-muted/60 theme-brutal:hover:border-black/30 theme-brutal:hover:bg-black/[0.04]"}`
-      : `flex w-full border transition-colors theme-brutal:border-2 ${active ? "border-line-strong bg-fill-muted theme-brutal:border-black theme-brutal:bg-black/[0.08]" : "border-transparent hover:border-line-muted hover:bg-fill-muted/60 theme-brutal:hover:border-black/30 theme-brutal:hover:bg-black/5"}`;
+      ? `flex w-full border transition-colors  ${active ? "border-line-strong bg-fill-muted  " : "border-transparent hover:border-line-muted hover:bg-fill-muted/60  "}`
+      : `flex w-full border transition-colors  ${active ? "border-line-strong bg-fill-muted  " : "border-transparent hover:border-line-muted hover:bg-fill-muted/60  "}`;
     const groupButtonClass = isDialog
       ? "flex min-w-0 flex-1 items-center gap-3 px-3 py-2.5 text-left text-sm font-bold"
       : `flex min-w-0 flex-1 items-center justify-center gap-0 px-2 py-2 text-left text-xs font-bold${sidebarResponsiveSuffix}`;
@@ -1463,12 +1458,12 @@ export default function ThreadsInbox({ compactActivitySidebar = false }: {
       onPointerDownCapture={() => { activitySearchScopeActiveRef.current = true; }}
       onFocusCapture={() => { activitySearchScopeActiveRef.current = true; }}
     >
-    <ActivityInboxPanel edge="attached" className="theme-brutal:!border-l">
+    <ActivityInboxPanel edge="attached" className="">
       <PanelHeader
         title={formatMessage({ id: "thread.header.title" })}
         subtitle={formatMessage({ id: "thread.header.subtitle" }, { activeCount: totalCount, unreadCount: totalUnreadCount })}
         icon={<Activity size={18} />}
-        iconBg="bg-primary-soft text-foreground-strong theme-brutal:bg-soft-signal theme-brutal:text-black"
+        iconBg="bg-primary-soft text-foreground-strong  "
         onMobileBack={onMobileBack}
         containerProps={headerContainerProps}
         titleClickProps={headerTitleClickProps}
@@ -1477,7 +1472,7 @@ export default function ThreadsInbox({ compactActivitySidebar = false }: {
       <div className="flex min-h-0 flex-1">
         {activitySidebarInboxEnabled && !compactActivitySidebar ? (
           <aside
-            className="scrollbar-quiet hidden w-16 shrink-0 flex-col overflow-y-auto border-r border-line-muted bg-layer-panel px-2 py-3 md:flex lg:w-56 lg:p-3 theme-brutal:border-black theme-brutal:bg-white"
+            className="scrollbar-quiet hidden w-16 shrink-0 flex-col overflow-y-auto border-r border-line-muted bg-layer-panel px-2 py-3 md:flex lg:w-56 lg:p-3  "
             data-testid="activity-current-sidebar"
             aria-label={formatMessage({ id: "thread.filter.ariaLabel" })}
           >
@@ -1488,7 +1483,7 @@ export default function ThreadsInbox({ compactActivitySidebar = false }: {
         <section className="flex min-w-0 flex-1 flex-col">
           <div
             data-testid="inbox-toolbar"
-            className={`shrink-0 border-b border-line-muted bg-layer-panel px-4 theme-brutal:border-b-2 theme-brutal:border-black theme-brutal:bg-white ${activitySidebarInboxEnabled && compactActivitySidebar
+            className={`shrink-0 border-b border-line-muted bg-layer-panel px-4    ${activitySidebarInboxEnabled && compactActivitySidebar
               ? "flex min-h-[88px] flex-col items-stretch justify-center gap-2 py-2"
               : "flex h-[54px] items-center justify-between gap-3"}`}
           >
@@ -1497,7 +1492,7 @@ export default function ThreadsInbox({ compactActivitySidebar = false }: {
                 <div className="flex min-w-0 items-center" data-testid="activity-master-primary-controls">
                   <button
                     type="button"
-                    className="flex h-8 w-full min-w-0 items-center gap-2 border border-line-muted bg-layer-panel px-2 text-xs font-bold shadow-raft-sm theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal-sm"
+                    className="flex h-8 w-full min-w-0 items-center gap-2 border border-line-muted bg-layer-panel px-2 text-xs font-bold shadow-raft-sm    "
                     aria-expanded={activitySwitcherOpen}
                     onClick={() => setActivitySwitcherOpen(true)}
                     data-testid="activity-scope-switcher"
@@ -1510,13 +1505,13 @@ export default function ThreadsInbox({ compactActivitySidebar = false }: {
                         <span className="min-w-0 flex-1 truncate text-left">{compactScopeLabel}</span>
                       </>
                     ) : null}
-                    <ChevronDown size={14} className="shrink-0 text-foreground-muted theme-brutal:text-black/55" />
+                    <ChevronDown size={14} className="shrink-0 text-foreground-muted " />
                   </button>
                 </div>
                 <div className="flex min-w-0 items-center justify-end gap-2" data-testid="activity-master-scope-controls">
                   {(activitySearchVisible || inboxSearchQuery.trim()) ? (
-                    <label className="hidden h-8 min-w-[150px] flex-[1.2] items-center gap-2 border border-line-muted bg-layer-panel px-2 shadow-raft-sm theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal-sm md:flex">
-                      <Search size={14} className="shrink-0 text-foreground-muted theme-brutal:text-black/55" />
+                    <label className="hidden h-8 min-w-[150px] flex-[1.2] items-center gap-2 border border-line-muted bg-layer-panel px-2 shadow-raft-sm     md:flex">
+                      <Search size={14} className="shrink-0 text-foreground-muted " />
                       <input
                         ref={activitySearchInputRef}
                         value={inboxSearchQuery}
@@ -1525,7 +1520,7 @@ export default function ThreadsInbox({ compactActivitySidebar = false }: {
                           if (event.key !== "Escape" || inboxSearchQuery) return;
                           setActivitySearchVisible(false);
                         }}
-                        className="min-w-0 flex-1 bg-transparent text-xs font-bold outline-none placeholder:text-foreground-placeholder theme-brutal:placeholder:text-black/35"
+                        className="min-w-0 flex-1 bg-transparent text-xs font-bold outline-none placeholder:text-foreground-placeholder "
                         placeholder={formatMessage({ id: "activity.current.searchPlaceholder" })}
                         aria-label={formatMessage({ id: "activity.current.searchAria" })}
                         data-testid="activity-search-input"
@@ -1539,11 +1534,11 @@ export default function ThreadsInbox({ compactActivitySidebar = false }: {
                       items={activitySortOptions}
                     >
                       <SelectTrigger
-                        className="h-8 w-full border border-line-muted bg-layer-panel px-2 text-xs font-bold shadow-raft-sm theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal-sm"
+                        className="h-8 w-full border border-line-muted bg-layer-panel px-2 text-xs font-bold shadow-raft-sm    "
                         aria-label={formatMessage({ id: "activity.current.sortAria" })}
                         data-testid="activity-sort-select"
                       >
-                        <ArrowDownUp size={14} className="mr-1.5 shrink-0 text-foreground-muted theme-brutal:text-black/55" />
+                        <ArrowDownUp size={14} className="mr-1.5 shrink-0 text-foreground-muted " />
                         <SelectValue />
                         <SelectIcon />
                       </SelectTrigger>
@@ -1590,7 +1585,7 @@ export default function ThreadsInbox({ compactActivitySidebar = false }: {
                     <button
                       key={entry.value}
                       type="button"
-                      className={`h-8 shrink-0 border px-2 text-xs font-bold theme-brutal:border-2 ${activityView === entry.value ? "border-line-strong bg-primary-soft shadow-raft-sm text-primary-strong theme-brutal:border-black theme-brutal:bg-soft-signal theme-brutal:text-black theme-brutal:shadow-brutal-sm" : "border-line-muted bg-layer-panel theme-brutal:border-black/20 theme-brutal:bg-white"}`}
+                      className={`h-8 shrink-0 border px-2 text-xs font-bold  ${activityView === entry.value ? "border-line-strong bg-primary-soft shadow-raft-sm text-primary-strong    " : "border-line-muted bg-layer-panel  "}`}
                       onClick={() => setSidebarView(entry.value)}
                       data-testid={`inbox-filter-${entry.value}`}
                     >
@@ -1621,7 +1616,7 @@ export default function ThreadsInbox({ compactActivitySidebar = false }: {
                 <Tooltip content={formatMessage({ id: "activity.channelFilter.clearTitle" }, { channel: stripActivityTitlePrefix(selectedActivityGroup.channelName) })}>
                 <button
                   type="button"
-                  className="hidden min-w-0 items-center gap-1.5 text-xs font-bold text-foreground-muted hover:text-foreground-strong theme-brutal:text-black/60 theme-brutal:hover:text-black md:flex"
+                  className="hidden min-w-0 items-center gap-1.5 text-xs font-bold text-foreground-muted hover:text-foreground-strong   md:flex"
                   onClick={() => setChannelFilterId(null)}
                   data-testid="activity-selected-channel-filter"
                 >
@@ -1635,8 +1630,8 @@ export default function ThreadsInbox({ compactActivitySidebar = false }: {
               {activitySidebarInboxEnabled ? (
                 <>
                   {(activitySearchVisible || inboxSearchQuery.trim()) ? (
-                    <label className="hidden h-8 w-[min(260px,24vw)] min-w-[180px] items-center gap-2 border border-line-muted bg-layer-panel px-2 shadow-raft-sm theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal-sm md:flex">
-                      <Search size={14} className="shrink-0 text-foreground-muted theme-brutal:text-black/55" />
+                    <label className="hidden h-8 w-[min(260px,24vw)] min-w-[180px] items-center gap-2 border border-line-muted bg-layer-panel px-2 shadow-raft-sm     md:flex">
+                      <Search size={14} className="shrink-0 text-foreground-muted " />
                       <input
                         ref={activitySearchInputRef}
                         value={inboxSearchQuery}
@@ -1645,7 +1640,7 @@ export default function ThreadsInbox({ compactActivitySidebar = false }: {
                           if (event.key !== "Escape" || inboxSearchQuery) return;
                           setActivitySearchVisible(false);
                         }}
-                        className="min-w-0 flex-1 bg-transparent text-xs font-bold outline-none placeholder:text-foreground-placeholder theme-brutal:placeholder:text-black/35"
+                        className="min-w-0 flex-1 bg-transparent text-xs font-bold outline-none placeholder:text-foreground-placeholder "
                         placeholder={formatMessage({ id: "activity.current.searchPlaceholder" })}
                         aria-label={formatMessage({ id: "activity.current.searchAria" })}
                         data-testid="activity-search-input"
@@ -1659,11 +1654,11 @@ export default function ThreadsInbox({ compactActivitySidebar = false }: {
                       items={activitySortOptions}
                     >
                       <SelectTrigger
-                        className="h-8 min-w-[116px] border border-line-muted bg-layer-panel px-2 text-xs font-bold shadow-raft-sm theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal-sm"
+                        className="h-8 min-w-[116px] border border-line-muted bg-layer-panel px-2 text-xs font-bold shadow-raft-sm    "
                         aria-label={formatMessage({ id: "activity.current.sortAria" })}
                         data-testid="activity-sort-select"
                       >
-                        <ArrowDownUp size={14} className="mr-1.5 shrink-0 text-foreground-muted theme-brutal:text-black/55" />
+                        <ArrowDownUp size={14} className="mr-1.5 shrink-0 text-foreground-muted " />
                         <SelectValue />
                         <SelectIcon />
                       </SelectTrigger>
@@ -1702,7 +1697,7 @@ export default function ThreadsInbox({ compactActivitySidebar = false }: {
           <div
             ref={scrollRef}
             data-testid="inbox-scroll"
-            className="scrollbar-quiet relative flex-1 overflow-y-overlay bg-layer-canvas-muted p-4 safe-bottom theme-brutal:bg-white"
+            className="scrollbar-quiet relative flex-1 overflow-y-overlay bg-layer-canvas-muted p-4 safe-bottom "
             onScroll={(e) => handleScroll(e.currentTarget)}
           >
             {newUpdateCount > 0 && (

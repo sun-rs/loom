@@ -94,7 +94,7 @@ export function PendingMentionActionStripRow({
         data-testid="pending-mention-action-buttons"
       >
         {localState === "added" ? (
-          <span className="inline-flex items-center gap-1 rounded-md border border-line-hairline bg-fill-muted px-2 py-0.5 text-[12px] font-bold text-foreground-hint cursor-default theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black/20 theme-brutal:bg-black/[0.04] theme-brutal:text-black/40">
+          <span className="inline-flex items-center gap-1 rounded-md border border-line-hairline bg-fill-muted px-2 py-0.5 text-[12px] font-bold text-foreground-hint cursor-default     ">
             <Check size={12} strokeWidth={3} />
             {formatMessage({ id: "message.pendingMention.added" })}
           </span>
@@ -111,7 +111,7 @@ export function PendingMentionActionStripRow({
           </Button>
         ) : null}
         {localState === "notified" ? (
-          <span className="inline-flex items-center gap-1 rounded-md border border-line-hairline bg-fill-muted px-2 py-0.5 text-[12px] font-bold text-foreground-hint cursor-default theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black/20 theme-brutal:bg-black/[0.04] theme-brutal:text-black/40">
+          <span className="inline-flex items-center gap-1 rounded-md border border-line-hairline bg-fill-muted px-2 py-0.5 text-[12px] font-bold text-foreground-hint cursor-default     ">
             <Check size={12} strokeWidth={3} />
             {formatMessage({ id: "message.pendingMention.queued" })}
           </span>

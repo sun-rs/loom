@@ -5,7 +5,6 @@
 @import "./components/mermaid/mermaid.css";
 
 /* Tailwind utilities scoped to the app's Brutal theme root. */
-@custom-variant theme-brutal (&:where([data-theme="brutal"], [data-theme="brutal"] *));
 
 /* Typography follows raft-ui/fonts.css contract */
 
@@ -22,14 +21,6 @@
  * contract requires this woff2 to be requested, and `Raft Quote Glyphs` is
  * probed by name. Restored verbatim from 7a1558117:packages/web/src/index.css.
  */
-@font-face {
-  font-family: 'Raft Quote Glyphs';
-  font-style: normal;
-  font-weight: 400 700;
-  font-display: swap;
-  src: url('https://fonts.gstatic.com/s/hankengrotesk/v12/ieVn2YZDLWuGJpnzaiwFXS9tYtpd59CxCis4.woff2') format('woff2');
-  unicode-range: U+0022;
-}
 
 /*
  * Tailwind v4 source scanning. These directives travel WITH this CSS
@@ -51,25 +42,15 @@
 
 @theme {
   /* Soft pastel palette (stdrc 2026-04-28 #wg-theme) — base 5 from him +
-     3 derived by lowering saturation of the existing brutal-cyan/orange/lime. */
-  --color-brutal-yellow: #FFD440;   /* Soft Signal */
-  --color-soft-signal: var(--color-brutal-yellow); /* Semantic alias for source callsites; do not use bg-brutal-yellow directly in TS/TSX. */
-  --color-status-busy: #FFD440; /* FIXED busy/thinking status-light yellow. Status lights are semantic (red/green/yellow) and must NOT follow the skin — desktop skins re-hue --color-soft-signal and the brutal-yellow scale, so status callsites use this token instead (@WAWQAQ 2026-09-10 #kabi-desktop 5c2901df). */
-  --color-brutal-pink: #FE7DA8;     /* Bubble Pink */
-  --color-brutal-lavender: #BBAFE6; /* Soft Haze */
-  --color-brutal-cream: #FFFAEF;    /* Cotton Core — sidebar bg per stdrc 2026-05-02 #proj-uiux:95e25b5b inversion: sidebar warm cream, main panel white. */
-  --color-brutal-black: #141111;    /* Slock Ink */
+     3 derived by lowering saturation of the existing brutal-cyan/orange/lime. */   /* Soft Signal */ /* Semantic alias for source callsites; do not use bg-brutal-yellow directly in TS/TSX. */
+  --color-status-busy: #FFD440; /* FIXED busy/thinking status-light yellow. Status lights are semantic (red/green/yellow) and must NOT follow the skin — desktop skins re-hue --color-soft-signal and the brutal-yellow scale, so status callsites use this token instead (@WAWQAQ 2026-09-10 #kabi-desktop 5c2901df). */     /* Bubble Pink */ /* Soft Haze */    /* Cotton Core — sidebar bg per stdrc 2026-05-02 #proj-uiux:95e25b5b inversion: sidebar warm cream, main panel white. */    /* Slock Ink */
   /* The 3 derived colors are aligned to the OKLCH average of Plan A's
      3 figma-anchored colors (yellow / pink / lavender): L=80.5, C=0.134.
      Only hue varies — gives perceptual equal-brightness + equal-saturation
-     across the derived trio (#proj-uiux:0e6befb8 stdrc 2026-05-03). */
-  --color-brutal-cyan: #27CCF3;     /* OKLCH(78.3%, 0.135, 219°) — locked to soft-haze (lavender)'s L per stdrc 17:50 "设到 lavender 同样值". Helmholtz–Kohlrausch consideration absorbed into the choice of anchor — lavender is the closest cool figma color, matches blue/cyan perceptually better than yellow does. */
-  --color-brutal-orange: #F8A16F;   /* OKLCH(78.5%, 0.123, 50°) — figma-avg L pulled down 2% per stdrc 17:01 "orange 要能再深一点点点" */
-  --color-brutal-lime: #A9D877;     /* OKLCH(82.6%, 0.135, 130°) — figma-avg L pulled up 2% per stdrc 17:01 "lime 在淡一点点点" */
+     across the derived trio (#proj-uiux:0e6befb8 stdrc 2026-05-03). */     /* OKLCH(78.3%, 0.135, 219°) — locked to soft-haze (lavender)'s L per stdrc 17:50 "设到 lavender 同样值". Helmholtz–Kohlrausch consideration absorbed into the choice of anchor — lavender is the closest cool figma color, matches blue/cyan perceptually better than yellow does. */   /* OKLCH(78.5%, 0.123, 50°) — figma-avg L pulled down 2% per stdrc 17:01 "orange 要能再深一点点点" */     /* OKLCH(82.6%, 0.135, 130°) — figma-avg L pulled up 2% per stdrc 17:01 "lime 在淡一点点点" */
   /* Red sits OUTSIDE the figma-avg perceptual ring on purpose: a danger
      color at L=80 reads coral/pink, not danger. Kept at L≈69 so it stays
-     distinct from brutal-pink and communicates "destructive". */
-  --color-brutal-red: #F97264;      /* OKLCH(71%, 0.168, 28°) — coral-red, distinct from brutal-pink. Sits OUTSIDE the figma L envelope on purpose: a danger color at L≥75 reads coral/pink. Tweaked from #F26C5E → #F97264 per stdrc 17:25 "red 其实可以再淡一点点" — same hue/chroma, L 69 → 71. */
+     distinct from brutal-pink and communicates "destructive". */      /* OKLCH(71%, 0.168, 28°) — coral-red, distinct from brutal-pink. Sits OUTSIDE the figma L envelope on purpose: a danger color at L≥75 reads coral/pink. Tweaked from #F26C5E → #F97264 per stdrc 17:25 "red 其实可以再淡一点点" — same hue/chroma, L 69 → 71. */
   /* Stone is the warm-neutral terminal-state color. Used for task statuses
      that mean "stopped / archived / won't-do" (currently `closed`). Sits
      between the saturated active-state ring (L≈80, C≈0.13) and `gray-400`
@@ -77,8 +58,7 @@
      hue=55° so it stays inside the brand palette instead of reading "tech
      grey". Reserved for non-active / exited semantic states — NOT for
      destructive actions (those stay `brutal-red`). Joy/Bugen 2026-05-08
-     #proj-uiux task #145 (daily UI audit Finding 1). */
-  --color-brutal-stone: #C0B9B1;    /* OKLCH(76%, 0.010, 55°) — warm stone gray */
+     #proj-uiux task #145 (daily UI audit Finding 1). */    /* OKLCH(76%, 0.010, 55°) — warm stone gray */
 
   /* Match the two Shiki themes, including plaintext/loading fallbacks. */
   --color-code-surface: #ffffff;
@@ -86,12 +66,6 @@
 
   --font-display: var(--font-heading, var(--heading-font, "Hanken Grotesk", system-ui, sans-serif));
   --font-mono: var(--mono-font, "Geist Mono", ui-monospace, monospace);
-
-  --shadow-brutal: 4px 4px 0px #141111;
-  --shadow-brutal-sm: 2px 2px 0px #141111;
-  --shadow-brutal-lg: 6px 6px 0px #141111;
-  --shadow-brutal-hover: 2px 2px 0px #141111;
-  --shadow-brutal-active: 1px 1px 0px #141111;
   /* Directional occlusion cues for horizontally clipped content. Unlike the
      brutal elevation shadows, these cast inward so the edge reads as another
      item continuing underneath the viewport. */
@@ -107,7 +81,7 @@
 /* Legacy header consumers share the theme's RUI shell height, so Sidebar
    and panel columns keep the same top edge (56px Elegant / 62px Brutal). */
 @utility h-panel-header {
-  height: var(--shell-header-height, 62px);
+  height: var(--shell-header-height, 56px);
 }
 @media (max-height: 600px) {
   [data-slot="app-shell-root"] {
@@ -695,38 +669,6 @@
   /* Legacy-named composition utilities are theme-aware primitives. Their
      semantic default follows Raft UI; only the Brutal root opts back into the
      established hard-border, hard-shadow and pressed-translation recipe. */
-  [data-theme="brutal"] .btn-brutal {
-    @apply border-2 border-black shadow-brutal-sm active:translate-x-[2px] active:translate-y-[2px] active:shadow-brutal-active;
-  }
-  [data-theme="brutal"] .btn-brutal:hover {
-    @apply -translate-y-[1px] shadow-brutal;
-  }
-  [data-theme="brutal"] .btn-brutal-sm {
-    @apply border-2 border-black shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] active:shadow-brutal-active;
-  }
-  [data-theme="brutal"] .btn-brutal-sm:hover {
-    @apply -translate-y-[1px] shadow-brutal;
-  }
-  [data-theme="brutal"] .btn-brutal-sm:disabled,
-  [data-theme="brutal"] .btn-brutal:disabled {
-    @apply shadow-brutal-sm;
-  }
-  [data-theme="brutal"] .btn-flat-sm {
-    @apply text-black/70;
-  }
-  [data-theme="brutal"] .btn-flat-sm:hover,
-  [data-theme="brutal"] .btn-flat-sm:focus-visible {
-    @apply bg-black/5 text-black;
-  }
-  [data-theme="brutal"] .btn-flat-sm:active {
-    @apply bg-black/10;
-  }
-  [data-theme="brutal"] .card-brutal {
-    @apply border-2 border-black bg-white shadow-brutal;
-  }
-  [data-theme="brutal"] .input-brutal {
-    @apply border-2 border-black bg-white text-black shadow-brutal-sm focus:border-black focus:shadow-brutal;
-  }
 
   /* iOS Safari zooms the viewport when a focused form control renders below
      16px. Member search stays visually compact on mouse/trackpad desktops,
@@ -745,17 +687,6 @@
 
   .input-member-search::placeholder {
     color: var(--foreground-muted);
-  }
-
-  [data-theme="brutal"] .input-member-search {
-    border: 2px solid var(--line-strong);
-    background: white;
-    color: black;
-    box-shadow: var(--theme-shadow-sm);
-  }
-
-  [data-theme="brutal"] .input-member-search::placeholder {
-    color: rgb(0 0 0 / 50%);
   }
 
   @media (pointer: coarse) {
@@ -780,17 +711,11 @@
      (mt-2 + capsule + mb ≈ 68px) plus the device inset. Brutal keeps its
      in-flow edge bar and does not need the clearance. */
   @media (max-width: 767.98px) {
-    html[data-theme="elegant"] .mobile-nav-clearance {
-      padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px));
-    }
     /* The live-activity strip stacks above the capsule (~48px incl. its
        padding) and is part of the same overlay, so the clearance grows with
        it while the strip is actually rendering. The slot element itself is
        always present on mobile tab roots; only its rendered child marks the
        strip. */
-    html[data-theme="elegant"]:has([data-testid="mobile-live-activity-slot"] > *) .mobile-nav-clearance {
-      padding-bottom: calc(116px + env(safe-area-inset-bottom, 0px));
-    }
   }
 }
 
@@ -998,10 +923,6 @@
       border-left: 1px solid var(--line-muted);
     }
 
-    [data-theme="brutal"] .thread-layout-container:has(> .thread-profile-side-column[data-collapse-channel="true"]) > .thread-profile-side-column > [data-testid="profile-panel"] {
-      border-left: 2px solid #000;
-    }
-
     /* A Channel avatar opens Profile without leaving the Channel. In the
        existing Channel + Thread row, fold only the retained Thread pane; the
        same Profile pane geometry is reused for both entry sources. */
@@ -1024,10 +945,6 @@
       border-left: 1px solid var(--line-muted);
     }
 
-    [data-theme="brutal"] .thread-layout-container:has(> .thread-profile-side-column[data-collapse-thread="true"]) > .thread-profile-side-column > [data-testid="profile-panel"] {
-      border-left: 2px solid #000;
-    }
-
     /* Chat | Profile with no thread in the row. The profile pane owns the one
        divider on its own box, so nothing inside the chat column (the composer
        bar stacks above the resize handle) can cover it, and the chat keeps a
@@ -1035,10 +952,6 @@
     .thread-layout-container:has(> .thread-profile-side-column[data-collapse-channel="false"][data-collapse-thread="false"]) > .thread-profile-side-column > [data-testid="profile-panel"] {
       max-width: calc(100% - 320px);
       border-left: 1px solid var(--line-muted);
-    }
-
-    [data-theme="brutal"] .thread-layout-container:has(> .thread-profile-side-column[data-collapse-channel="false"][data-collapse-thread="false"]) > .thread-profile-side-column > [data-testid="profile-panel"] {
-      border-left: 2px solid #000;
     }
   }
 

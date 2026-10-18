@@ -141,11 +141,11 @@ export default function LoginPage({ onSwitchToRegister, onForgotPassword }: Logi
         {enabledProviders.length > 0 && (
           <>
             <div className="my-4 flex items-center gap-3">
-              <div className="h-0.5 flex-1 bg-line-strong theme-brutal:bg-black" />
-              <span className="text-xs font-bold uppercase tracking-widest text-foreground-muted theme-brutal:text-black/45">
+              <div className="h-0.5 flex-1 bg-line-strong " />
+              <span className="text-xs font-bold uppercase tracking-widest text-foreground-muted ">
                 {formatMessage({ id: "pages.login.or" })}
               </span>
-              <div className="h-0.5 flex-1 bg-line-strong theme-brutal:bg-black" />
+              <div className="h-0.5 flex-1 bg-line-strong " />
             </div>
             <div className="space-y-2">
               {enabledProviders.map((provider) => (
@@ -161,7 +161,7 @@ export default function LoginPage({ onSwitchToRegister, onForgotPassword }: Logi
         )}
 
         {onSwitchToRegister && (
-          <TextSans size="small" className="mt-4 text-center theme-brutal:text-black/60">
+          <TextSans size="small" className="mt-4 text-center ">
             {formatMessage(
               { id: "pages.login.noAccountPrompt" },
               {
@@ -175,7 +175,7 @@ export default function LoginPage({ onSwitchToRegister, onForgotPassword }: Logi
           </TextSans>
         )}
 
-        <TextSans size="caption" className="mt-6 text-center leading-5 theme-brutal:text-black/60">
+        <TextSans size="caption" className="mt-6 text-center leading-5 ">
           {formatMessage(
             { id: "pages.login.legalAgreement" },
             {
@@ -185,7 +185,7 @@ export default function LoginPage({ onSwitchToRegister, onForgotPassword }: Logi
                   href={CURRENT_LEGAL_ACCEPTANCE.termsUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="underline hover:text-foreground-strong theme-brutal:hover:text-black"
+                  className="underline hover:text-foreground-strong "
                 >
                   {c}
                 </a>
@@ -196,7 +196,7 @@ export default function LoginPage({ onSwitchToRegister, onForgotPassword }: Logi
                   href={CURRENT_LEGAL_ACCEPTANCE.privacyUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="underline hover:text-foreground-strong theme-brutal:hover:text-black"
+                  className="underline hover:text-foreground-strong "
                 >
                   {c}
                 </a>

@@ -40,9 +40,9 @@ function Entry({ record }: { record: RuntimeTrajectoryRecord }) {
   return (
     <div
       data-testid="loom-trajectory-row"
-      className="flex items-start gap-2 py-1.5 px-3 hover:bg-fill-muted theme-brutal:hover:bg-black/5 transition-colors"
+      className="flex items-start gap-2 py-1.5 px-3 hover:bg-fill-muted  transition-colors"
     >
-      <span className="shrink-0 font-mono text-xs text-foreground-placeholder theme-brutal:text-black/40 mt-0.5 whitespace-nowrap">
+      <span className="shrink-0 font-mono text-xs text-foreground-placeholder  mt-0.5 whitespace-nowrap">
         {formatClockWithSeconds(record.observedAt)}
       </span>
       <StatusDot
@@ -58,15 +58,13 @@ function Entry({ record }: { record: RuntimeTrajectoryRecord }) {
       />
       <div className="text-sm min-w-0 flex-1">
         {e.kind === "tool_start" ? (
-          <span className="font-medium text-foreground-strong theme-brutal:text-black">
-            {title}
-          </span>
+          <span className="font-medium text-foreground-strong ">{title}</span>
         ) : (
           <button
             type="button"
             aria-expanded={long ? expanded : undefined}
             onClick={() => long && setExpanded((v) => !v)}
-            className={`flex items-center gap-1 font-medium text-foreground-strong theme-brutal:text-black ${long ? "hover:text-foreground-muted theme-brutal:hover:text-black/70" : "cursor-default"}`}
+            className={`flex items-center gap-1 font-medium text-foreground-strong  ${long ? "hover:text-foreground-muted " : "cursor-default"}`}
           >
             {title}
             {long && (
@@ -89,13 +87,13 @@ function Entry({ record }: { record: RuntimeTrajectoryRecord }) {
         )}
         {e.kind === "tool_start"
           ? text && (
-              <span className="text-foreground-muted theme-brutal:text-black/50 ml-1.5 font-mono text-xs break-all">
+              <span className="text-foreground-muted  ml-1.5 font-mono text-xs break-all">
                 {text}
               </span>
             )
           : text && (
               <p
-                className={`text-foreground-muted theme-brutal:text-black/50 text-xs font-mono mt-0.5 whitespace-pre-wrap break-words ${long && !expanded ? "line-clamp-2" : ""}`}
+                className={`text-foreground-muted  text-xs font-mono mt-0.5 whitespace-pre-wrap break-words ${long && !expanded ? "line-clamp-2" : ""}`}
               >
                 {text}
               </p>

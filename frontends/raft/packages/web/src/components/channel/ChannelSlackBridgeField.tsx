@@ -181,15 +181,15 @@ export function ChannelSlackBridgeField({
   if (!editor.available) return null;
 
   return (
-    <section className="space-y-3 border-t border-line-muted pt-4 theme-brutal:border-t-2 theme-brutal:border-black" data-testid="channel-slack-bridge-field">
+    <section className="space-y-3 border-t border-line-muted pt-4  " data-testid="channel-slack-bridge-field">
       <div>
-        <div className="flex items-center gap-2 text-xs font-bold text-foreground-muted theme-brutal:uppercase theme-brutal:tracking-wide theme-brutal:text-black/65">
+        <div className="flex items-center gap-2 text-xs font-bold text-foreground-muted   ">
           <Badge appearance="soft" variant="muted" data-testid="channel-slack-bridge-provider-badge">
             {formatMessage({ id: "settings.slackBridge.providerBadge" })}
           </Badge>
           {formatMessage({ id: "channel.bridge.fieldTitle" })}
         </div>
-        <p className="mt-1 text-xs text-foreground-muted theme-brutal:text-black/60">{formatMessage({ id: "channel.bridge.fieldDescription" })}</p>
+        <p className="mt-1 text-xs text-foreground-muted ">{formatMessage({ id: "channel.bridge.fieldDescription" })}</p>
       </div>
       <FormField label={formatMessage({ id: "channel.bridge.slackChannel" })}>
         <Select

@@ -144,7 +144,7 @@ export function SidebarConversationFinder({
 
   return (
     <div ref={rootRef} className="relative shrink-0 px-2 pt-2.5 pb-2">
-      <div className="flex min-w-0 items-center gap-2 rounded-md border border-line-field bg-layer-panel px-2.5 py-1.5 shadow-raft-xs focus-within:border-line-field-hover theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal-sm theme-brutal:focus-within:shadow-brutal">
+      <div className="flex min-w-0 items-center gap-2 rounded-md border border-line-field bg-layer-panel px-2.5 py-1.5 shadow-raft-xs focus-within:border-line-field-hover      ">
         <Search size={15} className="shrink-0 text-foreground-hint" />
         <input
           ref={inputRef}
@@ -187,7 +187,7 @@ export function SidebarConversationFinder({
                 }}
                 onMouseEnter={() => setActiveIndex(index)}
                 className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-medium transition-colors ${
-                  index === activeRow ? "bg-primary-soft text-foreground-strong font-bold theme-brutal:bg-soft-signal theme-brutal:text-black" : "hover:bg-fill-muted theme-brutal:hover:bg-soft-signal/50"
+                  index === activeRow ? "bg-primary-soft text-foreground-strong font-bold  " : "hover:bg-fill-muted "
                 }`}
               >
                 <FinderResultIcon result={result} />
@@ -202,7 +202,7 @@ export function SidebarConversationFinder({
                     {result.label}
                   </span>
                   {result.sublabel && (
-                    <span className="min-w-0 truncate text-[11px] text-foreground-hint theme-brutal:text-black/40">
+                    <span className="min-w-0 truncate text-[11px] text-foreground-hint ">
                       {result.sublabel}
                     </span>
                   )}

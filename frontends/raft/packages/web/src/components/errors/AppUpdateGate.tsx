@@ -12,24 +12,24 @@ export function AppRefreshRequiredScreen({
   const { formatMessage } = useIntl();
 
   return (
-    <RootFallbackScroller className="flex min-h-full items-center justify-center bg-layer-canvas p-6 font-display safe-top safe-bottom theme-brutal:bg-brutal-cream">
+    <RootFallbackScroller className="flex min-h-full items-center justify-center bg-layer-canvas p-6 font-display safe-top safe-bottom ">
       <Card
         role="alert"
         aria-live="assertive"
-        className="w-full max-w-md border border-line-muted bg-layer-panel p-6 shadow-raft-lg theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal"
+        className="w-full max-w-md border border-line-muted bg-layer-panel p-6 shadow-raft-lg    "
       >
-        <PanelHeader className="mb-4 -mx-6 -mt-6 border-b border-line-muted px-6 py-4 theme-brutal:border-b-2 theme-brutal:border-black theme-brutal:bg-soft-signal">
+        <PanelHeader className="mb-4 -mx-6 -mt-6 border-b border-line-muted px-6 py-4   ">
           <PanelHeading>
             <PanelTitle
               render={
-                <h1 className="text-xl font-black text-foreground-strong theme-brutal:text-black">
+                <h1 className="text-xl font-black text-foreground-strong ">
                   {formatMessage({ id: "app.update.refreshToContinue" })}
                 </h1>
               }
             />
           </PanelHeading>
         </PanelHeader>
-        <p className="m-0 text-sm leading-relaxed text-foreground-muted theme-brutal:text-black/80">
+        <p className="m-0 text-sm leading-relaxed text-foreground-muted ">
           {formatMessage({ id: "app.update.staleBuildBody" })}
         </p>
         <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
@@ -70,7 +70,7 @@ export function AppRefreshWarningBanner({ onRefresh }: { onRefresh: () => void }
       <Banner
         status="warning"
         size="md"
-        className="shadow-raft-md theme-brutal:shadow-brutal-sm"
+        className="shadow-raft-md "
       >
         <BannerDescription>
           {formatMessage({ id: "app.update.newerVersionAvailable" })}

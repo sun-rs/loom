@@ -42,7 +42,7 @@ export default function TopBar({
   return (
     <div
       data-testid="app-top-bar"
-      className="relative flex h-12 w-full shrink-0 items-center border-b border-line-muted bg-layer-panel text-foreground-strong theme-brutal:border-b-2 theme-brutal:border-black theme-brutal:bg-soft-signal theme-brutal:text-black"
+      className="relative flex h-12 w-full shrink-0 items-center border-b border-line-seam bg-layer-frame text-foreground-on-frame    "
     >
       <div
         className="flex min-w-0 flex-1 items-center px-3"
@@ -90,7 +90,7 @@ export default function TopBar({
         <Search
           size={15}
           aria-hidden
-          className="shrink-0 text-foreground-strong theme-brutal:text-black"
+          className="shrink-0 text-foreground-strong "
         />
         <span className="truncate">搜索</span>
         <Kbd className="ml-auto shrink-0">

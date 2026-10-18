@@ -56,10 +56,10 @@ import { memberServerBadgeLabels } from "../../utils/channelLocalMembership";
 import type { ChannelMemberServer } from "../../utils/channelLocalMembership";
 
 const ROLE_CONFIG: Record<ServerRole, { labelId: MessageId; color: string }> = {
-  owner: { labelId: "member.detail.roleOwner", color: "bg-warning-soft text-warning-strong theme-brutal:bg-brutal-orange theme-brutal:text-black" },
-  admin: { labelId: "member.detail.roleAdmin", color: "bg-accent-soft text-accent-strong theme-brutal:bg-brutal-pink theme-brutal:text-black" },
-  member: { labelId: "member.detail.roleMember", color: "bg-fill-muted text-foreground-strong theme-brutal:bg-brutal-lavender theme-brutal:text-black" },
-  guest: { labelId: "member.detail.roleGuest", color: "bg-info-soft text-info-strong theme-brutal:bg-brutal-cyan theme-brutal:text-black" },
+  owner: { labelId: "member.detail.roleOwner", color: "bg-warning-soft text-warning-strong  " },
+  admin: { labelId: "member.detail.roleAdmin", color: "bg-accent-soft text-accent-strong  " },
+  member: { labelId: "member.detail.roleMember", color: "bg-fill-muted text-foreground-strong  " },
+  guest: { labelId: "member.detail.roleGuest", color: "bg-info-soft text-info-strong  " },
 };
 const EDITABLE_ROLE_OPTIONS: { id: ServerRole; labelId: MessageId }[] = [
   { id: "owner", labelId: "member.detail.roleOwner" },
@@ -396,7 +396,7 @@ export default function HumanDetailPanel({
   const closeRoleHelp = useCallback(() => setShowRoleHelp(false), []);
 
   return (
-    <ProfilePanelBody className="flex min-h-0 flex-1 flex-col bg-layer-panel font-sans theme-brutal:bg-white">
+    <ProfilePanelBody className="flex min-h-0 flex-1 flex-col bg-layer-panel font-sans ">
       {isSelf && human.membershipStatus === "active" && (
         <input
           ref={avatarInputRef}
@@ -456,13 +456,13 @@ export default function HumanDetailPanel({
       />
 
       {/* Profile content — unified cream background, light separators */}
-      <div className="flex-1 overflow-y-auto bg-layer-panel theme-brutal:bg-white">
+      <div className="flex-1 overflow-y-auto bg-layer-panel ">
         {sourceServerLabel && (
-          <div className="border-b border-line-muted theme-brutal:border-black/10 px-5 py-3">
+          <div className="border-b border-line-muted  px-5 py-3">
             <SectionEyebrow as="div" className="mb-1">
               {formatMessage({ id: "member.detail.from" })}
             </SectionEyebrow>
-            <div className="text-sm font-bold text-foreground-strong theme-brutal:text-black">
+            <div className="text-sm font-bold text-foreground-strong ">
               {sourceServerLabel}
             </div>
           </div>
@@ -529,20 +529,20 @@ export default function HumanDetailPanel({
             {/* PanelTitle source (cindyz 2026-10-10): the detail-block name follows
                 the panel-title spec so the same name reads identically in the
                 header and the body. */}
-            <PanelTitle className="min-w-0 text-foreground-muted theme-brutal:text-black theme-brutal:text-lg">{human.displayName || human.name}</PanelTitle>
+            <PanelTitle className="min-w-0 text-foreground-muted  ">{human.displayName || human.name}</PanelTitle>
             <div className="flex min-w-0 items-center gap-2">
               <span
-                className={`min-w-0 truncate text-sm ${PROFILE_HANDLE_SIZE_CLASS} font-mono text-foreground-placeholder theme-brutal:text-black/50`}
+                className={`min-w-0 truncate text-sm ${PROFILE_HANDLE_SIZE_CLASS} font-mono text-foreground-placeholder `}
               >
                 @{human.name}
               </span>
               {departureLabel && (
-                <span className="inline-flex shrink-0 items-center px-1.5 py-0.5 text-[10px] font-bold uppercase border border-line-muted theme-brutal:border-black bg-gray-300 text-foreground-muted theme-brutal:text-black/60">
+                <span className="inline-flex shrink-0 items-center px-1.5 py-0.5 text-[10px] font-bold uppercase border border-line-muted  bg-gray-300 text-foreground-muted ">
                   {departureLabelText}
                 </span>
               )}
               {isSelf && (
-                <span className={`shrink-0 text-sm ${PROFILE_HANDLE_SIZE_CLASS} text-foreground-placeholder theme-brutal:text-black/60 font-mono`}>
+                <span className={`shrink-0 text-sm ${PROFILE_HANDLE_SIZE_CLASS} text-foreground-placeholder  font-mono`}>
                   {formatMessage({ id: "member.detail.you" })}
                 </span>
               )}
@@ -558,7 +558,7 @@ export default function HumanDetailPanel({
           </div>
         )}
 
-        <div className="px-5 py-4 border-t border-line-muted theme-brutal:border-black/10">
+        <div className="px-5 py-4 border-t border-line-muted ">
           <div className="flex items-center gap-2 mb-1">
             <SectionEyebrow as="div">
               {formatMessage({ id: "member.detail.description" })}
@@ -574,7 +574,7 @@ export default function HumanDetailPanel({
                     setDescriptionError("");
                     setEditingDescription(true);
                   }}
-                  className="text-foreground-muted theme-brutal:text-black/40 hover:text-foreground-strong theme-brutal:hover:text-black transition-colors"
+                  className="text-foreground-muted  hover:text-foreground-strong  transition-colors"
                   aria-label={formatMessage({
                     id: "member.detail.editDescription",
                   })}
@@ -599,7 +599,7 @@ export default function HumanDetailPanel({
                   placeholder={formatMessage({
                     id: "member.detail.descriptionPlaceholder",
                   })}
-                  className="m-0 min-h-10 w-full border-2 border-line-muted theme-brutal:border-black px-2 py-1 text-sm leading-4 shadow-raft-sm theme-brutal:shadow-brutal-sm focus:outline-none focus:shadow-raft-sm theme-brutal:focus:shadow-brutal-sm resize-none overflow-hidden"
+                  className="m-0 min-h-10 w-full border-2 border-line-muted  px-2 py-1 text-sm leading-4 shadow-raft-sm  focus:outline-none focus:shadow-raft-sm  resize-none overflow-hidden"
                 />
                 <div className="flex items-center gap-1.5">
                   <Button size="sm" variant="accent"
@@ -629,25 +629,25 @@ export default function HumanDetailPanel({
                   ) : (
                     <span />
                   )}
-                  <span className="font-mono text-foreground-muted theme-brutal:text-black/50">
+                  <span className="font-mono text-foreground-muted ">
                     {descriptionValue.trim().length}/
                     {MAX_HUMAN_DESCRIPTION_LENGTH}
                   </span>
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-foreground-muted theme-brutal:text-black">
+              <p className="text-sm text-foreground-muted ">
                 {human.description || (
-                  <span className="italic text-foreground-placeholder theme-brutal:text-black/40">
+                  <span className="italic text-foreground-placeholder ">
                     {formatMessage({ id: "member.detail.noDescription" })}
                   </span>
                 )}
               </p>
             )
           ) : (
-            <div className="text-sm text-foreground-muted theme-brutal:text-black">
+            <div className="text-sm text-foreground-muted ">
               {human.description || (
-                <span className="italic text-foreground-placeholder theme-brutal:text-black/40">
+                <span className="italic text-foreground-placeholder ">
                   {formatMessage({ id: "member.detail.noDescription" })}
                 </span>
               )}
@@ -657,7 +657,7 @@ export default function HumanDetailPanel({
 
         {/* Info */}
         {!isRemoteJointHuman && !isChannelSummaryHuman && (
-          <div className="px-5 py-4 border-t border-line-muted theme-brutal:border-black/10">
+          <div className="px-5 py-4 border-t border-line-muted ">
             <SectionEyebrow as="div" className="mb-3">
               {formatMessage({ id: "member.detail.info" })}
             </SectionEyebrow>
@@ -665,7 +665,7 @@ export default function HumanDetailPanel({
               {/* Role */}
               <div>
                 <div className="mb-1 flex items-center gap-2">
-                  <div className="text-[13px] text-foreground-hint theme-brutal:text-black/50">
+                  <div className="text-[13px] text-foreground-hint ">
                     {departureLabel
                       ? formatMessage({ id: "member.detail.status" })
                       : formatMessage({ id: "member.detail.role" })}
@@ -677,7 +677,7 @@ export default function HumanDetailPanel({
                     <button
                       type="button"
                       onClick={() => setShowRoleHelp(true)}
-                      className="text-foreground-muted theme-brutal:text-black/35 transition-colors hover:text-foreground-strong theme-brutal:hover:text-black"
+                      className="text-foreground-muted  transition-colors hover:text-foreground-strong "
                       aria-label={formatMessage({
                         id: "member.detail.rolePermissions",
                       })}
@@ -696,7 +696,7 @@ export default function HumanDetailPanel({
                         setRoleError("");
                         setEditingRole(true);
                       }}
-                      className="text-foreground-muted theme-brutal:text-black/40 hover:text-foreground-strong theme-brutal:hover:text-black transition-colors"
+                      className="text-foreground-muted  hover:text-foreground-strong  transition-colors"
                       aria-label={formatMessage({
                         id: "member.detail.editRole",
                       })}
@@ -707,7 +707,7 @@ export default function HumanDetailPanel({
                   )}
                 </div>
                 {departureLabel ? (
-                  <span className="inline-block border-2 border-line-muted theme-brutal:border-black px-2 py-0.5 text-xs font-bold text-foreground-strong theme-brutal:text-black bg-gray-300">
+                  <span className="inline-block border-2 border-line-muted  px-2 py-0.5 text-xs font-bold text-foreground-strong  bg-gray-300">
                     {departureLabelText}
                   </span>
                 ) : canEditRole && roleInfo ? (
@@ -760,7 +760,7 @@ export default function HumanDetailPanel({
                 ) : roleInfo ? (
                   <Badge className={roleInfo.color}>{formatMessage({ id: roleInfo.labelId })}</Badge>
                 ) : (
-                  <span className="inline-block border-2 border-line-muted theme-brutal:border-black px-2 py-0.5 text-xs font-bold text-foreground-strong theme-brutal:text-black bg-gray-100">
+                  <span className="inline-block border-2 border-line-muted  px-2 py-0.5 text-xs font-bold text-foreground-strong  bg-gray-100">
                     {formatMessage({ id: "member.detail.unknown" })}
                   </span>
                 )}
@@ -776,7 +776,7 @@ export default function HumanDetailPanel({
                   label={formatMessage({ id: "member.detail.email" })}
                   value={human.email}
                   breakAll
-                  valueClassName="theme-brutal:font-mono"
+                  valueClassName=""
                 />
               )}
               {/* Joined */}
@@ -784,14 +784,14 @@ export default function HumanDetailPanel({
                 <KeyValueRow
                   label={formatMessage({ id: "member.detail.joined" })}
                   value={joinedDate}
-                  valueClassName="tabular-nums theme-brutal:font-mono"
+                  valueClassName="tabular-nums "
                 />
               )}
             </div>
           </div>
         )}
         {!isRemoteJointHuman && !isChannelSummaryHuman && (
-          <div className="px-5 py-4 border-t border-line-muted theme-brutal:border-black/10">
+          <div className="px-5 py-4 border-t border-line-muted ">
             <SectionHeader
               className="mb-3"
               label={formatMessage({ id: "member.detail.createdAgents" })}
@@ -819,14 +819,14 @@ export default function HumanDetailPanel({
                 })}
               </div>
             ) : (
-              <span className="text-sm italic text-foreground-placeholder theme-brutal:text-black/40">
+              <span className="text-sm italic text-foreground-placeholder ">
                 {formatMessage({ id: "member.detail.noCreatedAgents" })}
               </span>
             )}
           </div>
         )}
         {canRemove && (
-          <div className="px-5 py-4 border-t border-line-muted theme-brutal:border-black/10">
+          <div className="px-5 py-4 border-t border-line-muted ">
             <SectionEyebrow as="div" className="mb-3">
               {formatMessage({ id: "member.detail.actions" })}
             </SectionEyebrow>

@@ -30,19 +30,18 @@ export default function ChannelListRow({
     });
   return (
     <SidebarItem
-      variant="accent"
       active={selected}
       onClick={() => onSelectChannel(channelId)}
       data-public-channel-id={channelId}
       data-slot="sidebar-item"
-      className={`mx-0 w-full items-center ${selected ? "data-active:bg-fill-muted dark:data-active:bg-fill-muted data-active:shadow-none data-active:ring-0 theme-brutal:data-active:bg-brutal-pink theme-brutal:data-active:shadow-brutal-sm" : menuOpen ? "bg-fill-muted" : ""}`}
+      className={`mx-0 w-full items-center ${selected ? "  " : menuOpen ? "bg-fill-muted" : ""}`}
     >
       <div className="flex size-[18px] shrink-0 items-center justify-center">
         <ChannelKindIcon type="channel" />
       </div>
       <span className="min-w-0 flex flex-1 items-center text-left">
         <span
-          className={`min-w-0 text-sm truncate ${muted ? "text-foreground-muted theme-brutal:text-black/70" : ""} ${showLoudUnreadBadge ? "font-bold" : ""}`}
+          className={`min-w-0 text-sm truncate ${muted ? "text-foreground-muted " : ""} ${showLoudUnreadBadge ? "font-bold" : ""}`}
         >
           {name}
         </span>
@@ -59,17 +58,13 @@ export default function ChannelListRow({
         )}
       </span>
       {showLoudUnreadBadge ? (
-        <SidebarItemCount
-          variant="accent"
-          className="ml-auto"
-          aria-label="有未读消息"
-        >
+        <SidebarItemCount className="ml-auto" aria-label="有未读消息">
           {unread > 99 ? "99+" : unread}
         </SidebarItemCount>
       ) : showQuietUnreadCount ? (
         <span
           aria-label="有未读消息"
-          className="ml-1 shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium leading-none text-foreground-muted font-mono theme-brutal:text-black/50"
+          className="ml-1 shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium leading-none text-foreground-muted font-mono "
         >
           {unread > 99 ? "99+" : unread}
         </span>

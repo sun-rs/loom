@@ -71,7 +71,7 @@ export default function StatusDot({
   const dot = (
     <span
       {...rest}
-      className={`inline-block shrink-0 rounded-full border border-line-strong theme-brutal:border-black ${SIZE_CLASS[size]} ${colorClass} ${className ?? ""}`}
+      className={`inline-block shrink-0 rounded-full border border-line-strong  ${SIZE_CLASS[size]} ${colorClass} ${className ?? ""}`}
     />
   );
   // Native title= on a span is only a hover tooltip; route it through the RUI

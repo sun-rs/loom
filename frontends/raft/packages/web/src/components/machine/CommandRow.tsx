@@ -16,7 +16,7 @@ export function CommandRow({
   const handleCopy = useCallback(() => onCopy(target), [onCopy, target]);
   return (
     <div>
-      {label ? <div className="mb-1 text-xs font-bold text-foreground-muted theme-brutal:text-black/60">{label}</div> : null}
+      {label ? <div className="mb-1 text-xs font-bold text-foreground-muted ">{label}</div> : null}
       <CopyableCodeRoot
         copied={copied}
         onCopy={handleCopy}

@@ -19,11 +19,17 @@ test("official source intake preserves recorded upstream source bytes and licens
     adoption.files["packages/web/src/components/message/ChatPanel.tsx"],
   );
   await access(resolve(root, "LICENSE"));
+  const migration = JSON.parse(
+    await readFile(resolve(root, "rui-v6-ports.json"), "utf8"),
+  );
+  assert.equal(migration.upstreamRevision, adoption.revision);
+  for (const [name, entry] of Object.entries(migration.files))
+    assert.equal(entry.upstreamSha256, adoption.files[name], name);
   for (const [name, digest] of Object.entries(adoption.files)) {
     const bytes = await readFile(resolve(root, name));
     assert.equal(
       createHash("sha256").update(bytes).digest("hex"),
-      digest,
+      migration.files[name]?.portedSha256 ?? digest,
       name,
     );
   }

@@ -51,7 +51,7 @@ export default function CommunityAgreementDialog({
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
             <h2 className="text-lg font-bold">{agreement.title}</h2>
-            <div className="mt-0.5 text-xs text-foreground-muted theme-brutal:text-black/50">
+            <div className="mt-0.5 text-xs text-foreground-muted ">
               {formatMessage({ id: "server.communityAgreement.version" }, { version: agreement.version })}
             </div>
           </div>
@@ -67,7 +67,7 @@ export default function CommunityAgreementDialog({
           </Tooltip>
         </div>
 
-        <div className="max-h-[50vh] overflow-y-auto border-2 border-line-muted theme-brutal:border-black bg-layer-panel theme-brutal:bg-white p-4 text-sm">
+        <div className="max-h-[50vh] overflow-y-auto border-2 border-line-muted  bg-layer-panel  p-4 text-sm">
           <AgreementBody source={agreement.bodyMarkdown} />
         </div>
 

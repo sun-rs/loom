@@ -49,7 +49,7 @@ export default function RequestedScopeConsent({
     // Stryker disable next-line ConditionalExpression,EqualityOperator: covered by DOM tests; generated mutants hang tsx.
     if (visibleScopes.length !== 0) return null;
     return (
-      <div className="rounded-md border border-line-hairline bg-layer-panel p-2 text-xs font-bold text-foreground-muted theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black/15 theme-brutal:bg-white theme-brutal:text-black/55">
+      <div className="rounded-md border border-line-hairline bg-layer-panel p-2 text-xs font-bold text-foreground-muted     ">
         {formatMessage({ id: "oauth.consent.noRecognizedScopes" })}
       </div>
     );
@@ -60,7 +60,7 @@ export default function RequestedScopeConsent({
     // Stryker disable next-line ConditionalExpression: covered by DOM tests; generated mutants hang tsx.
     if (tierScopes.length === 0) return null;
     return (
-      <details key={tier} open={tier !== "identity"} className="rounded-md border border-line-hairline bg-layer-inset p-2 theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black/15 theme-brutal:bg-brutal-cream">
+      <details key={tier} open={tier !== "identity"} className="rounded-md border border-line-hairline bg-layer-inset p-2    ">
         <summary className="text-xs font-black text-foreground-strong">
           <span>{formatMessage({ id: scopeGroupLabelId(tier) })}</span>
           {tier === "identity" ? (
@@ -107,7 +107,7 @@ export default function RequestedScopeConsent({
         <span>{formatMessage({ id: "oauth.consent.unrecognizedScopes" })} </span>
         <span className="inline-flex flex-wrap gap-1.5">
           {unpresentedScopes.map((scope) => (
-            <code key={scope} className="break-all rounded-sm border border-line-muted bg-layer-panel px-1.5 py-0.5 text-[11px] text-foreground-muted theme-brutal:rounded-none theme-brutal:border-black/20 theme-brutal:bg-white">
+            <code key={scope} className="break-all rounded-sm border border-line-muted bg-layer-panel px-1.5 py-0.5 text-[11px] text-foreground-muted   ">
               {scope}
             </code>
           ))}
@@ -124,7 +124,7 @@ export default function RequestedScopeConsent({
       <div className="mt-1 text-xs leading-5 text-foreground-muted">
         {requestedAccessCopy}
       </div>
-      <div className="mt-3 space-y-3 rounded-md border border-line-muted bg-layer-panel p-3 shadow-raft-sm theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal-sm">
+      <div className="mt-3 space-y-3 rounded-md border border-line-muted bg-layer-panel p-3 shadow-raft-sm     ">
         {renderEmptyRecognizedScopes()}
         {(["identity", "agent_directory", "agent_messaging"] as OAuthScopeTier[]).map(renderTierScopes)}
         {renderAgentInboundNotice()}

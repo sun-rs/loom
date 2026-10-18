@@ -475,11 +475,11 @@ export function PlanSectionContent({
 
       {/* Free trial notice */}
       {plan === "free" && finalTrialActive && (
-        <div className="mb-4 border border-line-muted theme-brutal:border-2 theme-brutal:border-black bg-primary-soft theme-brutal:bg-soft-signal/30 shadow-raft-sm theme-brutal:shadow-brutal-sm p-4">
+        <div className="mb-4 border border-line-muted   bg-primary-soft  shadow-raft-sm  p-4">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-sm font-bold">{formatMessage({ id: "billing.finalTrialPeriod" })}</span>
           </div>
-          <p className="text-xs text-foreground-muted theme-brutal:text-black/60 font-mono">
+          <p className="text-xs text-foreground-muted  font-mono">
                   {formatMessage(
                     { id: "billing.trialActiveThrough" },
                     {
@@ -491,14 +491,14 @@ export function PlanSectionContent({
       )}
 
       <div
-        className="mb-6 border border-line-muted bg-layer-panel shadow-raft-sm theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal-sm"
+        className="mb-6 border border-line-muted bg-layer-panel shadow-raft-sm    "
         data-testid="billing-current-plan-card"
       >
-        <div className="border-b-2 border-line-muted theme-brutal:border-black bg-layer-canvas-muted theme-brutal:bg-brutal-cream px-4 py-4">
+        <div className="border-b-2 border-line-muted  bg-layer-canvas-muted  px-4 py-4">
           <div className="flex flex-wrap items-center gap-3">
             <div className="min-w-0">
-              <div className="text-lg font-bold text-foreground-strong theme-brutal:text-black">{currentPlanDisplayName}</div>
-              <div className="text-sm text-foreground-muted theme-brutal:text-black/60">
+              <div className="text-lg font-bold text-foreground-strong ">{currentPlanDisplayName}</div>
+              <div className="text-sm text-foreground-muted ">
                 {currentPlanDescription}
               </div>
             </div>
@@ -507,10 +507,10 @@ export function PlanSectionContent({
 
         <div className={`grid gap-4 p-4 ${hasNotIncludedFeatures ? "lg:grid-cols-2" : ""}`}>
           <div>
-            <div className="mb-3 text-sm font-bold text-foreground-strong theme-brutal:text-black">{formatMessage({ id: "billing.included" })}</div>
+            <div className="mb-3 text-sm font-bold text-foreground-strong ">{formatMessage({ id: "billing.included" })}</div>
             <div className="space-y-3">
               {currentIncludedFeatures.map((feature) => (
-                <div key={feature} className="flex items-start gap-3 text-sm text-foreground-strong theme-brutal:text-black">
+                <div key={feature} className="flex items-start gap-3 text-sm text-foreground-strong ">
                   <Check size={16} className="mt-0.5 shrink-0 text-green-700" />
                   <span>{feature}</span>
                 </div>
@@ -520,10 +520,10 @@ export function PlanSectionContent({
 
           {hasNotIncludedFeatures && (
             <div>
-              <div className="mb-3 text-sm font-bold text-foreground-muted theme-brutal:text-black/60">{formatMessage({ id: "billing.notIncluded" })}</div>
+              <div className="mb-3 text-sm font-bold text-foreground-muted ">{formatMessage({ id: "billing.notIncluded" })}</div>
               <div className="space-y-3">
                 {currentNotIncludedFeatures.map((feature) => (
-                  <div key={feature} className="flex items-start gap-3 text-sm text-foreground-strong theme-brutal:text-black">
+                  <div key={feature} className="flex items-start gap-3 text-sm text-foreground-strong ">
                     <X size={16} className="mt-0.5 shrink-0 text-brutal-red" />
                     <span>{feature}</span>
                   </div>
@@ -533,12 +533,12 @@ export function PlanSectionContent({
           )}
         </div>
 
-        <div className="border-t-2 border-line-muted theme-brutal:border-black/10 px-4 py-4">
+        <div className="border-t-2 border-line-muted  px-4 py-4">
           {showSeatUsage && usesUniversalSeats && (
             <div className="space-y-3">
               <div className="flex items-center justify-between gap-3">
-                <span className="text-xs font-bold text-foreground-strong theme-brutal:text-black">{formatMessage({ id: "billing.seat" })}</span>
-                <span className="text-xs font-mono text-foreground-muted theme-brutal:text-black/60">
+                <span className="text-xs font-bold text-foreground-strong ">{formatMessage({ id: "billing.seat" })}</span>
+                <span className="text-xs font-mono text-foreground-muted ">
                   {formatSeatUsageNumber(usedUniversalSeats)} / {formatLimit(universalSeatLimit)} {formatMessage({ id: "billing.used" })}
                 </span>
               </div>
@@ -554,7 +554,7 @@ export function PlanSectionContent({
                     },
                   )}>
                   <ProgressIndicator
-                    className="rounded-none h-full bg-primary-strong theme-brutal:bg-soft-signal"
+                    className="rounded-none h-full bg-primary-strong "
                     style={humanSeatIndicatorStyle}
                     data-slot="progress-indicator"
                   />
@@ -570,7 +570,7 @@ export function PlanSectionContent({
                     },
                   )}>
                   <ProgressIndicator
-                    className="rounded-none h-full bg-accent-strong theme-brutal:bg-brutal-pink"
+                    className="rounded-none h-full bg-accent-strong "
                     style={agentSeatIndicatorStyle}
                     data-slot="progress-indicator"
                   />
@@ -598,15 +598,15 @@ export function PlanSectionContent({
             <div className="grid gap-3 sm:grid-cols-2">
               {humanCount != null && (
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs font-bold text-foreground-strong theme-brutal:text-black">{formatMessage({ id: "billing.humans" })}</span>
-                  <span className="text-xs font-mono text-foreground-muted theme-brutal:text-black/60">
+                  <span className="text-xs font-bold text-foreground-strong ">{formatMessage({ id: "billing.humans" })}</span>
+                  <span className="text-xs font-mono text-foreground-muted ">
                     {humanCount} / {formatLimit(capacity?.maxHumans)}
                   </span>
                 </div>
               )}
               <div className="flex items-center justify-between gap-3">
-                <span className="text-xs font-bold text-foreground-strong theme-brutal:text-black">{formatMessage({ id: "billing.agents" })}</span>
-                <span className="text-xs font-mono text-foreground-muted theme-brutal:text-black/60">
+                <span className="text-xs font-bold text-foreground-strong ">{formatMessage({ id: "billing.agents" })}</span>
+                <span className="text-xs font-mono text-foreground-muted ">
                   {agentCount} / {formatLimit(capacity?.maxAgents ?? limits.maxAgents)}
                 </span>
               </div>
@@ -615,16 +615,16 @@ export function PlanSectionContent({
           <div className="grid gap-3 sm:grid-cols-2">
             {plan === "free" && (
               <div className="flex items-center justify-between gap-3">
-                <span className="text-xs font-bold text-foreground-strong theme-brutal:text-black">{formatMessage({ id: "billing.messageHistory" })}</span>
-                <span className="text-xs font-mono text-foreground-muted theme-brutal:text-black/60">
+                <span className="text-xs font-bold text-foreground-strong ">{formatMessage({ id: "billing.messageHistory" })}</span>
+                <span className="text-xs font-mono text-foreground-muted ">
                   {pricedLimits.messageHistoryDays === -1 ? formatMessage({ id: "billing.unlimited" }) : `${pricedLimits.messageHistoryDays} ${formatMessage({ id: "billing.days" })}`}
                 </span>
               </div>
             )}
             {plan === "free" && billing?.fileUploadQuota && (
               <div className="flex items-center justify-between gap-3">
-                <span className="text-xs font-bold text-foreground-strong theme-brutal:text-black">{formatMessage({ id: "billing.fileUploads" })}</span>
-                <span className="text-xs font-mono text-foreground-muted theme-brutal:text-black/60">
+                <span className="text-xs font-bold text-foreground-strong ">{formatMessage({ id: "billing.fileUploads" })}</span>
+                <span className="text-xs font-mono text-foreground-muted ">
                   {billing.fileUploadQuota.limited
                     ? `${formatBytes(billing.fileUploadQuota.usedBytes)} / ${formatBytes(billing.fileUploadQuota.limitBytes)} ${formatMessage({ id: "billing.thisMonth" })}`
                     : pricedFileUploadLimitLabel}
@@ -633,7 +633,7 @@ export function PlanSectionContent({
             )}
           </div>
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t-2 border-line-muted theme-brutal:border-black/10 px-4 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t-2 border-line-muted  px-4 py-4">
           {billingControlsState.canOpenPortal ? (
             <div className="flex min-w-0 flex-wrap gap-2">
               <div className="flex flex-wrap gap-2">
@@ -685,11 +685,11 @@ export function PlanSectionContent({
             label={managePlanTitle}
           />
 
-          <div className="mb-6 grid gap-4 border border-line-muted bg-layer-panel theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white p-4 shadow-raft-sm theme-brutal:shadow-brutal-sm lg:grid-cols-[minmax(0,1fr)_280px]">
+          <div className="mb-6 grid gap-4 border border-line-muted bg-layer-panel    p-4 shadow-raft-sm  lg:grid-cols-[minmax(0,1fr)_280px]">
             <div>
               {isCheckoutMode && (
                 <div className="mb-4">
-                  <div className="mb-2 text-sm font-bold text-foreground-strong theme-brutal:text-black">{formatMessage({ id: "billing.howOftenDoYouWantToBeBilled" })}</div>
+                  <div className="mb-2 text-sm font-bold text-foreground-strong ">{formatMessage({ id: "billing.howOftenDoYouWantToBeBilled" })}</div>
                   <BillingIntervalSegmentedControl
                     value={billingInterval}
                     onValueChange={setBillingInterval}
@@ -699,7 +699,7 @@ export function PlanSectionContent({
               )}
 
               {billing?.subscription && (
-                <div className="mb-4 text-xs font-mono text-foreground-muted theme-brutal:text-black/60">
+                <div className="mb-4 text-xs font-mono text-foreground-muted ">
                   {formatMessage({ id: "billing.billingInterval" })}: {isCancelScheduled
                     ? formatMessage(
                         { id: "billing.intervalWithCancellationScheduled" },
@@ -710,12 +710,12 @@ export function PlanSectionContent({
               )}
 
               <div className="flex min-w-0 flex-col gap-3">
-                <span className="text-sm font-bold text-foreground-strong theme-brutal:text-black">
+                <span className="text-sm font-bold text-foreground-strong ">
                   {managePlanInputPrompt}
                 </span>
                 <div className="flex flex-wrap items-end gap-3">
                   <label className="flex flex-col gap-1">
-                    <span className="text-xs font-bold text-foreground-muted theme-brutal:text-black/60">{localizedBillingSeatCopyLabels.seatQuantityLabel}</span>
+                    <span className="text-xs font-bold text-foreground-muted ">{localizedBillingSeatCopyLabels.seatQuantityLabel}</span>
                     <Input
                       className="w-28 text-sm font-mono"
                       type="text"
@@ -732,7 +732,7 @@ export function PlanSectionContent({
                   </label>
                   {isManageSeatMode && seatDelta > 0 && (
                     <label className="flex w-64 max-w-full flex-col gap-1">
-                      <span className="text-xs font-bold text-foreground-muted theme-brutal:text-black/60">{formatMessage({ id: "billing.promotionCodeOptional" })}</span>
+                      <span className="text-xs font-bold text-foreground-muted ">{formatMessage({ id: "billing.promotionCodeOptional" })}</span>
                       <Input
                         className="w-full text-sm font-mono uppercase"
                         type="text"
@@ -746,11 +746,11 @@ export function PlanSectionContent({
                   )}
                 </div>
                 {isManageSeatMode && seatDelta > 0 && (
-                  <span className="text-[11px] font-mono text-foreground-muted theme-brutal:text-black/50">
+                  <span className="text-[11px] font-mono text-foreground-muted ">
                     {formatMessage({ id: "billing.enterACodeApprovedForExistingSeatUpdate" })}
                   </span>
                 )}
-                <span className="text-xs font-mono text-foreground-muted theme-brutal:text-black/60">
+                <span className="text-xs font-mono text-foreground-muted ">
                     {localizedBillingSeatCopyLabels.quantityHelpLabel} {formatMessage(
                       { id: "billing.seatCoverageHelp" },
                       { min: minimumUsageSeatQuantity, price: PRO_SEAT_MONTHLY_USD },
@@ -800,10 +800,10 @@ export function PlanSectionContent({
                 )}
               </div>
               {billingControlsDisabledReason && (
-                <p className="mt-2 text-xs font-mono text-foreground-muted theme-brutal:text-black/60">{billingControlsDisabledReason}</p>
+                <p className="mt-2 text-xs font-mono text-foreground-muted ">{billingControlsDisabledReason}</p>
               )}
               {billingNotice && (
-                <p className="mt-2 text-xs font-mono text-foreground-muted theme-brutal:text-black/60">{billingNotice}</p>
+                <p className="mt-2 text-xs font-mono text-foreground-muted ">{billingNotice}</p>
               )}
               {billingError && (
                 <p className="mt-2 text-xs font-mono text-brutal-red">{billingError}</p>
@@ -813,23 +813,23 @@ export function PlanSectionContent({
             <Card
               variant="option"
               data-testid="billing-summary-card"
-              className="bg-layer-canvas-muted p-4 theme-brutal:border-black theme-brutal:bg-brutal-cream"
+              className="bg-layer-canvas-muted p-4  "
             >
-              <div className="mb-3 text-xs font-bold uppercase tracking-widest text-foreground-muted theme-brutal:text-black/50">
+              <div className="mb-3 text-xs font-bold uppercase tracking-widest text-foreground-muted ">
                 {isCheckoutMode ? formatMessage({ id: "billing.checkoutSummary" }) : isManageSeatMode ? (formatMessage({ id: "billing.manageSeatsSummary" })) : formatMessage({ id: "billing.subscriptionSummary" })}
               </div>
               <div className="space-y-3">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm font-bold text-foreground-strong theme-brutal:text-black">{localizedBillingSeatCopyLabels.seatSummaryLabel}</span>
-                  <span className="text-sm font-mono text-foreground-muted theme-brutal:text-black/60">{seatSummaryValue}</span>
+                  <span className="text-sm font-bold text-foreground-strong ">{localizedBillingSeatCopyLabels.seatSummaryLabel}</span>
+                  <span className="text-sm font-mono text-foreground-muted ">{seatSummaryValue}</span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm font-bold text-foreground-strong theme-brutal:text-black">{localizedBillingSeatCopyLabels.billableSeatsSummaryLabel}</span>
-                  <span className="text-sm font-mono text-foreground-muted theme-brutal:text-black/60">{draftSeatQuantity}</span>
+                  <span className="text-sm font-bold text-foreground-strong ">{localizedBillingSeatCopyLabels.billableSeatsSummaryLabel}</span>
+                  <span className="text-sm font-mono text-foreground-muted ">{draftSeatQuantity}</span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm font-bold text-foreground-strong theme-brutal:text-black">{localizedBillingSeatCopyLabels.capacitySummaryLabel}</span>
-                  <span className="inline-flex flex-col items-end text-sm font-mono leading-5 text-foreground-muted theme-brutal:text-black/60">
+                  <span className="text-sm font-bold text-foreground-strong ">{localizedBillingSeatCopyLabels.capacitySummaryLabel}</span>
+                  <span className="inline-flex flex-col items-end text-sm font-mono leading-5 text-foreground-muted ">
                     <span>{formatHumanCapacityLabel(draftSeatQuantity)}</span>
                     <span>{formatAgentCapacityLabel(draftProvisionedAgentSeats)}</span>
                   </span>
@@ -837,10 +837,10 @@ export function PlanSectionContent({
                 {isCheckoutMode ? (
                   <>
                     <div className="flex items-center justify-between gap-3">
-                      <span className="text-sm font-bold text-foreground-strong theme-brutal:text-black">{localizedBillingTotalSummaryLabels.totalLabel}</span>
-                      <span className="inline-flex flex-col items-end text-sm font-mono leading-5 text-foreground-muted theme-brutal:text-black/60">
+                      <span className="text-sm font-bold text-foreground-strong ">{localizedBillingTotalSummaryLabels.totalLabel}</span>
+                      <span className="inline-flex flex-col items-end text-sm font-mono leading-5 text-foreground-muted ">
                         {localizedSelectedTotalLabels.originalLabel && (
-                          <span className="text-foreground-muted theme-brutal:text-black/40 line-through">{localizedSelectedTotalLabels.originalLabel}</span>
+                          <span className="text-foreground-muted  line-through">{localizedSelectedTotalLabels.originalLabel}</span>
                         )}
                         <span>{localizedSelectedTotalLabels.totalLabel}</span>
                       </span>
@@ -850,14 +850,14 @@ export function PlanSectionContent({
                   <>
                     {isManageSeatMode && (
                       <div className="flex items-center justify-between gap-3">
-                        <span className="text-sm font-bold text-foreground-strong theme-brutal:text-black">{formatMessage({ id: "billing.currentSeats" })}</span>
-                        <span className="text-sm font-mono text-foreground-muted theme-brutal:text-black/60">{currentSeatQuantity}</span>
+                        <span className="text-sm font-bold text-foreground-strong ">{formatMessage({ id: "billing.currentSeats" })}</span>
+                        <span className="text-sm font-mono text-foreground-muted ">{currentSeatQuantity}</span>
                       </div>
                     )}
                     {isManageSeatMode && seatDelta !== 0 && (
                       <div className="flex items-center justify-between gap-3">
-                        <span className="text-sm font-bold text-foreground-strong theme-brutal:text-black">{seatDelta > 0 ? formatMessage({ id: "billing.addedCapacity" }) : formatMessage({ id: "billing.removedCapacity" })}</span>
-                        <span className="inline-flex flex-col items-end text-sm font-mono leading-5 text-foreground-muted theme-brutal:text-black/60">
+                        <span className="text-sm font-bold text-foreground-strong ">{seatDelta > 0 ? formatMessage({ id: "billing.addedCapacity" }) : formatMessage({ id: "billing.removedCapacity" })}</span>
+                        <span className="inline-flex flex-col items-end text-sm font-mono leading-5 text-foreground-muted ">
                           <span>{formatHumanCapacityLabel(Math.abs(seatDelta))}</span>
                           <span>{formatAgentCapacityLabel(Math.abs(seatDelta) * PRO_AGENT_SEAT_BLOCK_SIZE)}</span>
                         </span>
@@ -865,22 +865,22 @@ export function PlanSectionContent({
                     )}
                     {isManageSeatMode && localizedCurrentTotalLabel && localizedBillingTotalSummaryLabels.currentTotalLabel && (
                       <div className="flex items-center justify-between gap-3">
-                        <span className="text-sm font-bold text-foreground-strong theme-brutal:text-black">{localizedBillingTotalSummaryLabels.currentTotalLabel}</span>
-                        <span className="text-sm font-mono text-foreground-muted theme-brutal:text-black/60">{localizedCurrentTotalLabel}</span>
+                        <span className="text-sm font-bold text-foreground-strong ">{localizedBillingTotalSummaryLabels.currentTotalLabel}</span>
+                        <span className="text-sm font-mono text-foreground-muted ">{localizedCurrentTotalLabel}</span>
                       </div>
                     )}
                     {isManageSeatMode && (
                       <div className="flex items-center justify-between gap-3">
-                        <span className="text-sm font-bold text-foreground-strong theme-brutal:text-black">{localizedBillingTotalSummaryLabels.totalLabel}</span>
-                        <span className="inline-flex flex-col items-end text-sm font-mono leading-5 text-foreground-muted theme-brutal:text-black/60">
+                        <span className="text-sm font-bold text-foreground-strong ">{localizedBillingTotalSummaryLabels.totalLabel}</span>
+                        <span className="inline-flex flex-col items-end text-sm font-mono leading-5 text-foreground-muted ">
                           {localizedSelectedTotalLabels.originalLabel && (
-                            <span className="text-foreground-muted theme-brutal:text-black/40 line-through">{localizedSelectedTotalLabels.originalLabel}</span>
+                            <span className="text-foreground-muted  line-through">{localizedSelectedTotalLabels.originalLabel}</span>
                           )}
                           <span>{localizedSelectedTotalLabels.totalLabel}</span>
                         </span>
                       </div>
                     )}
-                    <div className="border-t-2 border-line-muted theme-brutal:border-black pt-3 text-xs font-mono text-foreground-muted theme-brutal:text-black/60">
+                    <div className="border-t-2 border-line-muted  pt-3 text-xs font-mono text-foreground-muted ">
                       {formatMessage({ id: "billing.seatIncreasesMayBillImmediatelyAfterStripeConf" })}
                     </div>
                   </>

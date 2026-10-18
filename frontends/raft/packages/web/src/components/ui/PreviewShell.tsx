@@ -26,20 +26,20 @@ import type { ReactNode } from "react";
 
 /** Static border recipe only — exported for any future surface that wants
  *  the border tokens without the full bg + hover-bg skin. */
-export const PREVIEW_SHELL_BORDER = "border border-line-muted hover:border-line-strong theme-brutal:border-black/15 theme-brutal:hover:border-black/30";
+export const PREVIEW_SHELL_BORDER = "border border-line-muted hover:border-line-strong  ";
 
 /** Full default skin: border + white bg + faint hover bg + explicitly NO
  *  shadow. `shadow-none` is load-bearing: RUI Card's brutal default carries
  *  `shadow-raft-md`, which would leak the hard offset shadow onto every
  *  PreviewShell surface (message-link cards included) without this neutralizer.
  *  No `active:` token — press inherits hover. */
-export const PREVIEW_SHELL_SKIN = `${PREVIEW_SHELL_BORDER} bg-layer-panel hover:bg-fill-muted theme-brutal:bg-white theme-brutal:hover:bg-black/5 shadow-none`;
+export const PREVIEW_SHELL_SKIN = `${PREVIEW_SHELL_BORDER} bg-layer-panel hover:bg-fill-muted   shadow-none`;
 
 /** Muted / unavailable variant — visually unchanged from the prior
  *  QuotedMessageCard `unavailable` skin (kept distinct per stdrc: error
  *  semantic is separate from the route-B default). */
 export const PREVIEW_SHELL_SKIN_MUTED =
-  "border border-line-muted bg-fill-muted italic text-foreground-placeholder hover:shadow-raft-sm theme-brutal:border-2 theme-brutal:border-black/30 theme-brutal:bg-black/5 theme-brutal:text-black/40 theme-brutal:hover:shadow-brutal-sm";
+  "border border-line-muted bg-fill-muted italic text-foreground-placeholder hover:shadow-raft-sm     ";
 
 export type PreviewShellVariant = "default" | "muted";
 

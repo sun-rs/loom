@@ -35,7 +35,7 @@ export function DateDivider({
   if (sticky) {
     return (
       <div className="pointer-events-none flex justify-center pt-1" data-testid={testId}>
-        <span className="rounded-sm bg-layer-panel px-2 py-0.5 text-[10px] font-medium text-foreground-muted shadow-raft-xs theme-brutal:rounded-none theme-brutal:bg-white theme-brutal:font-bold theme-brutal:uppercase theme-brutal:tracking-widest theme-brutal:text-black/50">
+        <span className="rounded-sm bg-layer-panel px-2 py-0.5 text-[10px] font-medium text-foreground-muted shadow-raft-xs      ">
           {label}
         </span>
       </div>

@@ -39,7 +39,7 @@ export default function ComputerReleaseNotesAffordance({ notes }: { notes: Compu
           testId="computer-release-notes-dialog"
           closeOnBackdrop
         >
-          <div className="max-h-[60vh] overflow-y-auto text-sm text-foreground-strong theme-brutal:text-black">
+          <div className="max-h-[60vh] overflow-y-auto text-sm text-foreground-strong ">
             <MarkdownContent source={text} />
           </div>
         </DialogCard>

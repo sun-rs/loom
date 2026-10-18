@@ -9,12 +9,12 @@ test("scenario bindings use native parameters without a parallel geometry or com
     "data-loom-action": "formSave",
   });
   assert.deepEqual(uiActionProps.confirmDelete, {
-    size: "sm",
+    size: "md",
     variant: "danger",
     "data-loom-action": "confirmDelete",
   });
   assert.deepEqual(uiActionProps.menuIcon, {
-    size: "icon-sm",
+    size: "icon-md",
     variant: "ghost",
     "data-loom-action": "menuIcon",
   });

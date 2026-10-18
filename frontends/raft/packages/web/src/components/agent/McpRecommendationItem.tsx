@@ -25,8 +25,8 @@ export function McpRecommendationItem({
     <SurfaceListItem interactive={false}>
   <div className="flex items-center justify-between gap-3">
     <div className="min-w-0">
-      <p className="text-sm font-bold text-foreground-strong theme-brutal:text-black">{recommendation.name}</p>
-      <p className="mt-1 text-sm text-foreground-muted theme-brutal:text-black/60">{recommendation.description}</p>
+      <p className="text-sm font-bold text-foreground-strong ">{recommendation.name}</p>
+      <p className="mt-1 text-sm text-foreground-muted ">{recommendation.description}</p>
     </div>
     <Button
       variant="outline"

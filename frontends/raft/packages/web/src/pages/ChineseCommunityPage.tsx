@@ -82,7 +82,7 @@ export default function ChineseCommunityPage() {
   const unavailableMessageId = qrUnavailableMessageId(state, expired, imageLoadFailed);
 
   return (
-    <main className="h-dvh overflow-hidden bg-layer-canvas-muted px-4 font-display text-foreground-strong safe-top safe-bottom theme-brutal:bg-brutal-cream theme-brutal:text-black">
+    <main className="h-dvh overflow-hidden bg-layer-canvas-muted px-4 font-display text-foreground-strong safe-top safe-bottom  ">
       <div className="mx-auto flex h-full w-full max-w-sm flex-col items-center justify-center gap-5 text-center">
         <h1 className="text-2xl font-black leading-tight sm:text-3xl">
           {formatMessage({ id: "pages.chineseCommunity.title" })}
@@ -90,13 +90,13 @@ export default function ChineseCommunityPage() {
 
         <section
           aria-label={formatMessage({ id: "pages.chineseCommunity.qrLabel" })}
-          className="w-full max-w-[20rem] rounded-lg border border-line-muted bg-layer-panel p-3 shadow-raft-md theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal sm:p-4"
+          className="w-full max-w-[20rem] rounded-lg border border-line-muted bg-layer-panel p-3 shadow-raft-md      sm:p-4"
         >
-          <div className="mx-auto grid aspect-square w-full place-items-center rounded-md border border-line-muted bg-layer-inset theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-brutal-cream">
+          <div className="mx-auto grid aspect-square w-full place-items-center rounded-md border border-line-muted bg-layer-inset    ">
             {state.status === "loading" ? (
               <div
                 data-testid="chinese-community-qr-loading"
-                className="size-40 animate-pulse rounded-md border border-line-muted bg-layer-panel theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white"
+                className="size-40 animate-pulse rounded-md border border-line-muted bg-layer-panel    "
               />
             ) : showQrImage && config ? (
               <img

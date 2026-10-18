@@ -1,0 +1,37 @@
+{
+  "package": "raft-ui",
+  "version": "0.6.0",
+  "resolved": "https://registry.npmjs.org/raft-ui/-/raft-ui-0.6.0.tgz",
+  "integrity": "sha512-yc9KxJRvrKUdjLA7093rckn0IJIuLcQCKfvj9aIlOxh9QuoXpzz0afKrkJ1px489pACkLFCSxgGGGmEKSsjsTQ==",
+  "license": "MIT",
+  "repository": "https://github.com/botiverse/rui",
+  "retrieved": "2026-10-19",
+  "files": {
+    "package.json": "b368deccd894c25bceea562cf16494a9e31167fcd3239e57829103649b383258",
+    "CHANGELOG.md": "c6166af057de5d2881e893f3d7159a8a0ccfbceec857836e6768ab36cdc24832",
+    "dist/index.d.mts": "1127aa9b3160c6e6a17e360f146845b5ba3b452730a96bb98146b803e6866a53",
+    "dist/index.mjs": "248a5d77829341a53f62c2c62d85b80840237cc2ef1060f3b1bcbf90b997c592",
+    "dist/styles.css": "312c129b631943a0f60ffcc684df33c4b4a064851627dccfbe4a8bd51d82a2a7",
+    "dist/foundation.css": "8f073924a10c953a552ebd023a1b8eaad83bd0dfccce36160894b9098d0f0a52",
+    "dist/fonts.css": "f2821f88e699ba7bac1b4cd355d1efb45a7930d6df123bde232e6bddfec80a9a"
+  },
+  "guides": {
+    "skills/raft-ui-guide/SKILL.md": "85c5008e527f589f4fedda5f44f990348c6b2c1d59473cb634fed2df305d8a7c",
+    "skills/raft-ui-critique/SKILL.md": "536c813b6b21b7128e1f5557568376af192297b35ac5d4aec1d24d2f2f2ef099",
+    "skills/raft-ui-critique/references/theme-lenses.md": "9588af957c0c44df4af7e73131d27e8c24463aa77b6d9453abee716eacbe4830",
+    "skills/raft-ui-guide/rules/overview.md": "7cb5a6fb6f43c521d68a36df107a32fa08848aaa824b70b0bc975db6dbfdeaed",
+    "skills/raft-ui-guide/rules/forms.md": "6050c27942734d0ca262487a596d35282c62a7f261d5d10a2a08d014b2ebeba7",
+    "skills/raft-ui-guide/rules/adoption.md": "43541ac8aeda5254c4cc8c2849bb4f548ca05b10b79014fddc0b4f53cbd903e4",
+    "skills/raft-ui-guide/rules/overlays.md": "759a630c8a8d45245656ea787f2e92da5b5a08be90be2208f5e255c498e2106d",
+    "skills/raft-ui-guide/rules/composition.md": "6bb03b4ccc9b15e8c552c4a1e583526b335754a2e24ff7c273d6e96c5456c83b",
+    "skills/raft-ui-guide/rules/technical-overview.md": "453293365267a6db9901f9e31af09bbace00490cadd630ff3a60c4a6fbe61d0b",
+    "skills/raft-ui-guide/rules/styling.md": "f49f6e5e6666e8215cd07e67a86c62f8197569fb3bef36c6f026de1ea536e51f",
+    "skills/raft-ui-guide/rules/display.md": "bf8583c6082710dbc7d1dbbe6b13de1f3ae0c8c6fe2d2e9c9eb86e23758fdfd5",
+    "skills/raft-ui-guide/rules/layout.md": "27a76555d633c9306a2c0046c234f00bea68bd5d9efa007bcecf97177585a367",
+    "skills/raft-ui-guide/rules/feedback.md": "dfedc1ce1dbef668af0aabad7e919d6e9b36c8edd6beec009388a2065826ede5",
+    "skills/raft-ui-guide/rules/conversation.md": "7a9f8f1e403cfcf04f906033510f7260e56371281fb0704f99d9161f0b869d0c",
+    "skills/raft-ui-guide/rules/lookup.md": "24596ae4a8760f6bcf03d0d7c03d48e84fbf137129389a46515af6dd3793a28a"
+  },
+  "pageSource": "a98ae003246a0360872a77d76dec2fccd0347ef7 with explicit local 0.6 ports; latest deployed page source unavailable",
+  "fontSource": "loom/fonts/provenance.json"
+}

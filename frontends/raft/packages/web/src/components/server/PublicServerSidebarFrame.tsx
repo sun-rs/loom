@@ -21,14 +21,14 @@ export default function PublicServerSidebarFrame({
 }) {
   return (
     <SidebarRoot
-      className="relative flex h-full w-full flex-col border-r border-line-muted bg-layer-canvas-muted font-display text-foreground-strong select-none theme-brutal:border-r-2 theme-brutal:border-black theme-brutal:bg-brutal-cream theme-brutal:text-black"
+      className="relative flex h-full w-full flex-col border-r border-line-muted bg-layer-canvas-muted font-display text-foreground-strong select-none    "
       data-testid={`${testIdPrefix}-root`}
     >
       <div
-        className="flex h-panel-header shrink-0 items-center border-b border-line-muted bg-layer-canvas-muted px-5 theme-brutal:border-b-2 theme-brutal:border-black theme-brutal:bg-brutal-cream"
+        className="flex h-panel-header shrink-0 items-center border-b border-line-muted bg-layer-canvas-muted px-5   "
         data-testid={`${testIdPrefix}-header`}
       >
-        <h1 className="font-heading truncate text-lg in-data-[theme=elegant]:text-[17px] font-bold text-foreground-strong theme-brutal:text-black">{title}</h1>
+        <h1 className="font-heading truncate text-lg in-data-[theme=elegant]:text-[17px] font-bold text-foreground-strong ">{title}</h1>
       </div>
       <div className="scrollbar-quiet min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-2 py-3" data-testid={scrollTestId}>
         {children}

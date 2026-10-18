@@ -10,7 +10,6 @@ import {
   TabsList,
   TabsTab,
   TabsLabel,
-  TabsIndicator,
   Button,
   Spinner,
 } from "raft-ui";
@@ -145,7 +144,7 @@ export default function InstanceInspector({
         onPointerUp={panel.handleResizeEnd}
         onPointerCancel={panel.handleResizeEnd}
       />
-      <ProfilePanelBody className="flex min-h-0 flex-1 flex-col bg-layer-panel font-sans theme-brutal:bg-white">
+      <ProfilePanelBody className="flex min-h-0 flex-1 flex-col bg-layer-panel font-sans ">
         <PanelHeader
           title={member.displayName ?? member.handle}
           subtitle={`@${member.handle}`}
@@ -174,7 +173,7 @@ export default function InstanceInspector({
               <CloseButton
                 data-loom-control="detail-close"
                 onClick={onClose}
-                className="size-7 items-center justify-center hidden md:flex"
+                className="size-8 items-center justify-center hidden md:flex"
                 aria-label="关闭实例详情"
                 title="关闭实例详情"
               >
@@ -184,24 +183,17 @@ export default function InstanceInspector({
           }
         />
         <div className="min-w-0 max-w-full overflow-x-auto overflow-y-hidden scrollbar-none">
-          <Tabs
-            value="activity"
-            className="bg-layer-panel theme-brutal:border-b-2 theme-brutal:border-black theme-brutal:bg-white"
-          >
-            <TabsList
-              variant="underline"
-              className="max-w-full theme-brutal:border-0 theme-brutal:bg-layer-panel"
-            >
-              <TabsTab value="activity" className="!cursor-default h-7">
+          <Tabs value="activity" className="bg-layer-panel   ">
+            <TabsList variant="underline" className="max-w-full  ">
+              <TabsTab value="activity" className="!cursor-default">
                 <Activity size={12} />
                 <TabsLabel>动态</TabsLabel>
               </TabsTab>
-              <TabsIndicator />
             </TabsList>
           </Tabs>
         </div>
-        <div className="flex min-h-0 flex-1 flex-col bg-layer-panel theme-brutal:bg-white">
-          <div className="flex items-center justify-between border-b theme-brutal:border-b-2 border-line-muted theme-brutal:border-black bg-layer-panel theme-brutal:bg-white px-5 py-2">
+        <div className="flex min-h-0 flex-1 flex-col bg-layer-panel ">
+          <div className="flex items-center justify-between border-b  border-line-muted  bg-layer-panel  px-5 py-2">
             <SectionEyebrow as="div">本对话运行记录</SectionEyebrow>
           </div>
           <div className="flex-1 overflow-y-auto py-2">
@@ -243,12 +235,12 @@ export default function InstanceInspector({
                       aria-label={`${record.eventType} · 查看用量`}
                       key={record.activityId}
                       data-testid="loom-run-record"
-                      className="flex w-full text-left items-start gap-2 py-1.5 px-3 hover:bg-fill-muted theme-brutal:hover:bg-black/5 transition-colors"
+                      className="flex w-full text-left items-start gap-2 py-1.5 px-3 hover:bg-fill-muted  transition-colors"
                     >
-                      <span className="shrink-0 font-mono text-xs text-foreground-placeholder theme-brutal:text-black/40 mt-0.5 whitespace-nowrap">
+                      <span className="shrink-0 font-mono text-xs text-foreground-placeholder  mt-0.5 whitespace-nowrap">
                         {formatClockWithSeconds(record.createdAt)}
                       </span>
-                      <span className="min-w-0 flex-1 text-sm text-foreground-strong theme-brutal:text-black">
+                      <span className="min-w-0 flex-1 text-sm text-foreground-strong ">
                         {{
                           "run.started": "运行开始",
                           "run.finished": "运行结束",

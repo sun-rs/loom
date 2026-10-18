@@ -29,14 +29,14 @@ export default function ChatSidebarFrame({
   }, []);
   return (
     <SidebarRoot
-      className={`relative flex h-full w-full flex-col ${desktop ? "border-r border-line-muted theme-brutal:border-r-2 theme-brutal:border-black bg-layer-canvas-muted theme-brutal:bg-brutal-cream" : "theme-brutal:bg-white"} text-foreground-strong theme-brutal:text-black font-display select-none`}
+      className={`relative flex h-full w-full flex-col ${desktop ? "border-r border-line-muted   bg-layer-canvas-muted " : ""} text-foreground-strong  font-display select-none`}
       data-testid={`${testIdPrefix}-root`}
     >
       <div
         className={
           desktop
-            ? "flex shrink-0 items-center bg-layer-canvas-muted theme-brutal:bg-brutal-cream h-panel-header border-b border-line-muted theme-brutal:border-b-2 theme-brutal:border-black px-5"
-            : "relative flex h-panel-header shrink-0 items-center gap-3 border-b border-line-muted bg-layer-panel theme-brutal:border-b-2 theme-brutal:border-black theme-brutal:bg-soft-signal px-4"
+            ? "flex shrink-0 items-center bg-layer-canvas-muted  h-panel-header border-b border-line-muted   px-5"
+            : "relative flex h-panel-header shrink-0 items-center gap-3 border-b border-line-muted bg-layer-panel    px-4"
         }
         data-testid={`${testIdPrefix}-header`}
         data-loom-root-header
@@ -44,8 +44,8 @@ export default function ChatSidebarFrame({
         <h1
           className={
             desktop
-              ? "font-heading truncate text-lg in-data-[theme=elegant]:text-[17px] font-bold text-foreground-strong theme-brutal:text-black"
-              : "font-heading text-base font-bold text-foreground-strong theme-brutal:text-black truncate"
+              ? "font-heading truncate text-lg in-data-[theme=elegant]:text-[17px] font-bold text-foreground-strong "
+              : "font-heading text-base font-bold text-foreground-strong  truncate"
           }
         >
           {title}

@@ -282,7 +282,7 @@ export function MobileTabBar() {
               adaptation: brutal items keep their text label, while elegant
               items are icon-only (the label is sr-only) — hiding the icon
               there blanks the whole tab bar (task #707). */}
-          <tab.icon className="theme-brutal:[@media(max-height:600px)]:hidden" />
+          <tab.icon className="" />
           <MobileNavLabel>{tab.label}</MobileNavLabel>
           {tab.id === "settings" && <FeedbackUnreadDot className="absolute top-1 right-2" />}
         </MobileNavItem>
@@ -443,7 +443,7 @@ function OverlayPanelFallback({ testId }: { testId?: string } = {}) {
   const { formatMessage } = useIntl();
   return (
     <div
-      className="absolute inset-0 z-30 flex items-center justify-center bg-layer-panel text-foreground-muted font-display text-lg font-bold md:relative md:inset-auto md:z-auto md:flex-1 md:border-l md:border-line-muted theme-brutal:bg-white theme-brutal:md:border-l-2 theme-brutal:md:border-black"
+      className="absolute inset-0 z-30 flex items-center justify-center bg-layer-panel text-foreground-muted font-display text-lg font-bold md:relative md:inset-auto md:z-auto md:flex-1 md:border-l md:border-line-muted   "
       data-testid={testId}
     >
       {formatMessage({ id: "layout.main.loading" })}
@@ -623,11 +623,11 @@ function MemberGraphRoute() {
         title={formatMessage({ id: "layout.memberGraph.title" })}
         titleSuffix={<Badge.Experimental className="-translate-y-px" />}
         icon={<GitBranch size={18} />}
-        iconBg="bg-primary-soft text-foreground-strong theme-brutal:bg-soft-signal theme-brutal:text-black"
+        iconBg="bg-primary-soft text-foreground-strong  "
         onMobileBack={onMobileBack}
         mobileBackProps={mobileBackProps}
       />
-      <div className="flex-1 overflow-y-auto bg-layer-panel px-5 py-4 theme-brutal:bg-white">
+      <div className="flex-1 overflow-y-auto bg-layer-panel px-5 py-4 ">
         <Suspense fallback={<PanelFallback />}>
           <MemberGraphSection sectionLabel={formatMessage({ id: "layout.memberGraph.connectionsSectionLabel" })} />
         </Suspense>
@@ -733,7 +733,7 @@ function InboxContentRoute() {
   }
   if (newInbox && returnThread && slot.id === returnThread.channelId && (slot.kind === "channel" || slot.kind === "dm")) {
     return <div className="flex h-full min-h-0 flex-col">
-      <button type="button" className="shrink-0 border-b border-line-muted bg-layer-panel px-4 py-2 text-left text-sm text-foreground theme-brutal:border-black/20 theme-brutal:bg-white theme-brutal:text-black" data-testid="activity-return-thread" onClick={() => {
+      <button type="button" className="shrink-0 border-b border-line-muted bg-layer-panel px-4 py-2 text-left text-sm text-foreground   " data-testid="activity-return-thread" onClick={() => {
         void useThreadStore.getState().openThread({ parentChannelId: returnThread.channelId, parentMessageId: returnThread.messageId, initialThreadChannelId: returnThread.slot.id });
         useSearchContentStore.getState().open(returnThread.slot);
         setReturnThread(null);
@@ -815,7 +815,7 @@ export function ActivityThreadContentRoute({ slot, closeSlot, onOpenParentChanne
 
   if (!panelThreadIdentity) {
     return (
-      <div className="flex h-full min-h-0 w-full flex-col bg-layer-panel theme-brutal:bg-white">
+      <div className="flex h-full min-h-0 w-full flex-col bg-layer-panel ">
         <PanelHeader title={formatMessage({ id: "message.threadPanel.thread" })} containerProps={SHRINK_PANEL_HEADER_CONTAINER_PROPS} />
         <div className="flex flex-1 items-center justify-center p-6">
           <div className="text-foreground-muted font-mono text-sm">
@@ -1027,7 +1027,7 @@ function TaskModalBar({
     // whole two-line block, so it centres on that block. I had left items-start
     // from when the bar was a single line, which parked the X against the first
     // line's top edge.
-    <div className="flex shrink-0 items-center gap-3 border-b border-line-muted bg-layer-panel px-4 py-2 theme-brutal:border-b-2 theme-brutal:border-black theme-brutal:bg-white">
+    <div className="flex shrink-0 items-center gap-3 border-b border-line-muted bg-layer-panel px-4 py-2   ">
       {mobile && (
         <Button
           type="button"
@@ -1104,26 +1104,26 @@ function ThreadPanelWrapper({ presentation = "side", allowMaximize = true }: { p
   if (presentation === "modal") {
     return (
       <div
-        className="flex h-[min(86vh,900px)] max-h-[calc(100dvh-2rem)] w-[min(960px,calc(100vw-2rem))] flex-col overflow-hidden rounded-lg border border-line-muted bg-layer-popover shadow-raft-xl theme-brutal:rounded-none theme-brutal:border-2 theme-brutal:border-black theme-brutal:bg-white theme-brutal:shadow-brutal"
+        className="flex h-[min(86vh,900px)] max-h-[calc(100dvh-2rem)] w-[min(960px,calc(100vw-2rem))] flex-col overflow-hidden rounded-lg border border-line-muted bg-layer-popover shadow-raft-xl     "
         data-testid="task-thread-modal"
       >
         {hostTask && <TaskModalBar task={hostTask} onClose={closeSurface} />}
         <div className="flex min-h-0 flex-1 flex-col">
           <ThreadPanel key={parentMessageId} presentation="modal" threadIdentity={surfaceThreadIdentity} hideHeader={!!hostTask} hideParentMessage={!!hostTask}
-            parentSlot={hostTask ? <Suspense fallback={<div className="space-y-3 border-b border-line-muted bg-layer-panel p-4 theme-brutal:border-b-2 theme-brutal:border-black theme-brutal:bg-white"><Skeleton className="h-6 w-2/3" /><Skeleton className="h-4 w-full" /><Skeleton className="h-4 w-4/5" /></div>}><TaskModalHead task={hostTask} /></Suspense> : undefined} />
+            parentSlot={hostTask ? <Suspense fallback={<div className="space-y-3 border-b border-line-muted bg-layer-panel p-4   "><Skeleton className="h-6 w-2/3" /><Skeleton className="h-4 w-full" /><Skeleton className="h-4 w-4/5" /></div>}><TaskModalHead task={hostTask} /></Suspense> : undefined} />
         </div>
       </div>
     );
   }
   if (presentation === "mobile-modal") {
     return (
-      <div className="absolute inset-0 z-30 flex flex-col bg-layer-panel theme-brutal:bg-white" data-testid="task-thread-modal">
+      <div className="absolute inset-0 z-30 flex flex-col bg-layer-panel " data-testid="task-thread-modal">
         {hostTask && (
           <TaskModalBar task={hostTask} onClose={mobileTaskBack} mobile />
         )}
         <div className="flex min-h-0 flex-1 flex-col">
           <ThreadPanel key={parentMessageId} presentation="mobile-modal" threadIdentity={surfaceThreadIdentity} hideHeader={!!hostTask} hideParentMessage={!!hostTask}
-            parentSlot={hostTask ? <Suspense fallback={<div className="space-y-3 border-b border-line-muted bg-layer-panel p-4 theme-brutal:border-b-2 theme-brutal:border-black theme-brutal:bg-white"><Skeleton className="h-6 w-2/3" /><Skeleton className="h-4 w-full" /><Skeleton className="h-4 w-4/5" /></div>}><TaskModalHead task={hostTask} /></Suspense> : undefined} />
+            parentSlot={hostTask ? <Suspense fallback={<div className="space-y-3 border-b border-line-muted bg-layer-panel p-4   "><Skeleton className="h-6 w-2/3" /><Skeleton className="h-4 w-full" /><Skeleton className="h-4 w-4/5" /></div>}><TaskModalHead task={hostTask} /></Suspense> : undefined} />
         </div>
       </div>
     );
@@ -1169,7 +1169,7 @@ function SideThreadColumn({ allowMaximize }: { allowMaximize: boolean }) {
   return (
     <div
       ref={panelRef}
-      className="thread-side-column flex flex-col bg-layer-card theme-brutal:bg-white"
+      className="thread-side-column flex flex-col bg-layer-card "
       data-testid="thread-side-column"
       style={{ "--thread-panel-width": `${width}px` } as React.CSSProperties}
     >
@@ -1570,7 +1570,7 @@ export default function MainLayout() {
   // every surface switches to the reported names together.
   useEffect(() => watchModelLabelCatalog(), []);
   const { formatMessage } = useIntl();
-  const { preset: appThemePreset } = useAppTheme();
+  const { resolvedMode: appThemePreset } = useAppTheme();
   useEmbedParamsKeeper();
   useRightPanelUrlSync();
   useSearchContentUrlSync();
@@ -1855,7 +1855,7 @@ export default function MainLayout() {
   // is tracked as 311c follow-up).
   const searchMasterDetail = isContentRoute && searchSlotOpen && isDesktop;
   const masterDetailShellClassName = searchMasterDetail
-    ? `flex flex-col border-r border-line-muted ${isInboxRoute ? "theme-brutal:border-black" : "theme-brutal:border-r-2 theme-brutal:border-black"}`
+    ? `flex flex-col border-r border-line-muted ${isInboxRoute ? "" : " "}`
     : "";
   // When a content route has three visible work panes, col 2 swaps from
   // searchPanelWidth (wide master) to searchPanelCompactWidth (independent
@@ -1875,7 +1875,7 @@ export default function MainLayout() {
   // transparent instead: the tab bar floats over the page as a capsule and the
   // remaining safe areas show the page itself (task #678).
   const browserChromeColor = !isDesktop && !isMobileTabRoot ? THEME_CHROME_WHITE : THEME_CHROME_YELLOW;
-  const shellBackgroundColor = appThemePreset === "brutal" && !isDesktop ? browserChromeColor : undefined;
+  const shellBackgroundColor = false && !isDesktop ? browserChromeColor : undefined;
   const shellStyle = useMemo(
     () => ({ paddingTop: "env(safe-area-inset-top, 0px)", backgroundColor: shellBackgroundColor }),
     [shellBackgroundColor],
@@ -1888,7 +1888,7 @@ export default function MainLayout() {
   const mobileTabBarVisible = useMobileTabBarVisible();
 
   useLayoutEffect(() => {
-    if (appThemePreset !== "brutal") return;
+    if (true) return;
     const themeColor = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
     if (!themeColor) return;
     themeColor.content = browserChromeColor;
@@ -1967,7 +1967,7 @@ export default function MainLayout() {
             // uses h-full on its own root so adding flex flex-col to the
             // wrapper doesn't change its layout — but we still scope it to
             // master-detail to keep the non-search wrapper byte-identical.
-            className={`relative h-full min-w-0 bg-layer-canvas-muted theme-brutal:bg-brutal-cream ${mobileShowSidebarInline ? "flex-1" : "shrink-0"} ${masterDetailShellClassName}`}
+            className={`relative h-full min-w-0 bg-layer-canvas-muted  ${mobileShowSidebarInline ? "flex-1" : "shrink-0"} ${masterDetailShellClassName}`}
             style={
               mobileShowSidebarInline
                 ? undefined
@@ -2101,7 +2101,7 @@ export default function MainLayout() {
         showLiveActivity={!isDesktop && mobileTabBarVisible}
         liveActivity={<LiveAgentActivityBar />}
         tabBar={<MobileTabBar />}
-        floating={!isDesktop && appThemePreset !== "brutal"}
+        floating={!isDesktop && true}
       />
       {currentServerId && serverSlug ? (
         <ServerSetupProjectionGate

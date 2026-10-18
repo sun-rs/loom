@@ -136,7 +136,7 @@ export default function SettingsPage({
           <PanelHeader
             title={selected?.label ?? "设置不存在"}
             icon={<Icon size={18} />}
-            iconBg="bg-primary-soft text-foreground-strong theme-brutal:bg-soft-signal theme-brutal:text-black"
+            iconBg="bg-primary-soft text-foreground-strong  "
             onMobileBack={() => onTab(null)}
             mobileBackProps={{ "aria-label": "设置列表" }}
           />
@@ -155,7 +155,7 @@ export default function SettingsPage({
             />
           </div>
           {selectedId !== "server" && (
-            <div className="flex-1 overflow-y-auto bg-layer-panel px-5 py-4 text-foreground-strong mobile-nav-clearance theme-brutal:bg-white theme-brutal:text-black">
+            <div className="flex-1 overflow-y-auto bg-layer-panel px-5 py-4 text-foreground-strong mobile-nav-clearance  ">
               {selectedId === "notifications" ? (
                 <NotificationSettings client={client} />
               ) : selectedId === "release-notes" ? (

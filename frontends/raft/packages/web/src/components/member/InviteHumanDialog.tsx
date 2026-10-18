@@ -382,7 +382,7 @@ export default function InviteHumanDialog({
                       onClose();
                       nav.toSettings("billing");
                     }}
-                    className="font-bold text-foreground-strong theme-brutal:text-black underline"
+                    className="font-bold text-foreground-strong  underline"
                   >
                     {formatMessage({ id: "member.invite.viewBilling" })}
                   </button>
@@ -400,7 +400,7 @@ export default function InviteHumanDialog({
                   onClose();
                   nav.toSettings("billing");
                 }}
-                className="font-bold text-foreground-strong theme-brutal:text-black underline"
+                className="font-bold text-foreground-strong  underline"
               >
                 {formatMessage({ id: "member.invite.viewBilling" })}
               </button>
@@ -578,7 +578,7 @@ export default function InviteHumanDialog({
                   onClick={() => void revokeLink()}
                   disabled={regenerating}
                   data-testid="invite-link-revoke"
-                  className="text-xs font-bold text-accent-strong theme-brutal:text-brutal-pink hover:underline disabled:opacity-50"
+                  className="text-xs font-bold text-accent-strong  hover:underline disabled:opacity-50"
                 >
                   {formatMessage({ id: "member.invite.revokeLink" })}
                 </button>

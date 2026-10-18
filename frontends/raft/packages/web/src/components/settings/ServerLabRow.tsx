@@ -39,17 +39,16 @@ export function ServerLabRow({
     >
       <div className="min-w-0">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <span className="min-w-0 truncate text-sm font-bold text-foreground-strong theme-brutal:text-black">{lab.name}</span>
+          <span className="min-w-0 truncate text-sm font-bold text-foreground-strong ">{lab.name}</span>
         </div>
-        <div className="mt-1 text-xs leading-5 text-foreground-muted theme-brutal:text-black/60">{description}</div>
+        <div className="mt-1 text-xs leading-5 text-foreground-muted ">{description}</div>
         {disabledReason && (
-          <div className="mt-1 text-xs font-mono text-foreground-muted theme-brutal:text-black/45">{disabledReason}</div>
+          <div className="mt-1 text-xs font-mono text-foreground-muted ">{disabledReason}</div>
         )}
       </div>
       {disabledReason ? (
         <Tooltip content={disabledReason}>
           <Switch
-            size="md"
             checked={checked}
             disabled={!editable || mutationPending}
             onCheckedChange={handleCheckedChange}
@@ -60,7 +59,6 @@ export function ServerLabRow({
         </Tooltip>
       ) : (
         <Switch
-          size="md"
           checked={checked}
           disabled={!editable || mutationPending}
           onCheckedChange={handleCheckedChange}
