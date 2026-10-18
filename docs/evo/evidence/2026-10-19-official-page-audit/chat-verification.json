@@ -1,0 +1,35 @@
+{
+  "codeCommit": "d7067c8e",
+  "scope": "Official v1.21.22 composer toolbar/input, drawer shell and task header/channel-filter/view controls; not complete page parity",
+  "checks": {
+    "sourceTests": 13,
+    "typecheck": "passed",
+    "build": "passed; existing large-chunk warning",
+    "fixtureBrowser": [
+      "channel-controls:1440/390, stop/resume unknown exact replay and revision-conflict draft retention",
+      "channel-tasks:1440/390, task toggle atomic send and conversion, unknown outcome, native menu",
+      "chat-core:1440/390, send, IME, draft/history, unknown outcome",
+      "tasks:1440/390, bounded paging, status update, detail and return",
+      "attachments:1440/390/820, file selection, unknown outcome, reload",
+      "mobile-density:390x844/360x640/390x560/1440x1000; native control hit targets, collapse/expand, keyboard viewport, placeholder centering. Legacy preference presets retained in this gate, not a claim of two theme families."
+    ],
+    "liveBrowser": "Fresh Chromium on actual service 1440/390, chat, drawer open/Escape, tasks. Screenshots inspected; no provider or configuration mutations."
+  },
+  "deployment": {
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-chat-composition-beed56f9-4a9f-457f-9daa-86a2ff3bc7a2",
+    "databases": 2,
+    "files": 325,
+    "businessTablesUnchanged": 18,
+    "verified": true
+  },
+  "remaining": [
+    "Navigation unread projections",
+    "Remaining shared headers and action compositions",
+    "Activity list",
+    "Global tasks filters and rows",
+    "Settings subpages",
+    "Computers page",
+    "Remaining channel settings content and task row compositions; shared drawer migrated",
+    "Composer surrounding menus and suggestions not audited against full latest release"
+  ]
+}
