@@ -4456,7 +4456,7 @@ const ConnectedMessageItem = memo(function ConnectedMessageItem({ message, menti
       data-followed-by={followedBy}
       data-follows-system={followsSystem ? "true" : undefined}
       className={`${isHighlighted
- ? "bg-info/10 ring-1 ring-inset ring-info/50  "
+ ? "bg-info-soft hover:bg-info-soft  "
  : ctxMenu || reactionPicker
  // Brutal keeps its framed "menu open" card. Elegant has no frame here: rui's
  // data-popup-open state tints the row the same way hover does (task #694 —

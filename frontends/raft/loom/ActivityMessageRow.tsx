@@ -1,10 +1,10 @@
 import Tooltip from "../packages/web/src/components/ui/Tooltip.tsx";
 import { useRef, useEffect } from "react";
-// Structural port of ThreadsInbox.tsx InboxRow (upstream revision in adoption.json).
-// Keep the original Card geometry/state classes; Loom supplies canonical row data.
+// Structural port of v1.21.22 ThreadsInbox-CbSKTW4g.js Ie/Le/Re and InboxRow.
+// Loom supplies canonical rows; touch Done stays reachable until native context menus are bound.
 // Done uses the existing activity frontier; context-menu/task controls remain unbound.
 import { useIntl } from "react-intl";
-import { Badge, Button, Card, DirectMessageIcon, ThreadIcon } from "raft-ui";
+import { Badge, Button, DirectMessageIcon, ThreadIcon } from "raft-ui";
 import { Hash, Check } from "lucide-react";
 import { formatRelativeTime } from "../packages/web/src/utils/relativeTime.ts";
 import InlineMarkdownPreview from "../packages/web/src/components/markdown/InlineMarkdownPreview.tsx";
@@ -51,15 +51,12 @@ export default function ActivityMessageRow({
     : active
       ? "opacity-0"
       : "transition-opacity group-hover:opacity-0 group-focus-within:opacity-0 [@media(hover:none)]:opacity-0";
-  const rowActionBackgroundClassName = active
-    ? "bg-layer-panel "
-    : "bg-transparent group-hover:bg-layer-panel group-focus-visible:bg-layer-panel group-focus-within:bg-layer-panel [@media(hover:none)]:bg-layer-panel    ";
   const done = () => {
     clearTimeout(timer.current);
     if (!pending) onDone();
   };
   return (
-    <Card
+    <div
       role="button"
       tabIndex={0}
       data-result-id={row.id}
@@ -73,12 +70,12 @@ export default function ActivityMessageRow({
           activate(1);
         }
       }}
-      className={`group relative flex w-full items-start gap-3 rounded-md border p-3  text-left transition-colors hover:border-line-muted hover:bg-fill-muted hover:shadow-raft-sm active:border-line-muted active:shadow-raft-sm      ${active ? "border-line-muted bg-fill-muted shadow-raft-sm   " : "border-line-muted bg-layer-card  "}`}
+      className={`group relative flex w-full items-start gap-3 px-4 py-3 text-left outline-none transition-colors focus-visible:shadow-[inset_0_0_0_2px_var(--foreground)] before:pointer-events-none before:absolute before:top-0 before:right-0 before:left-4 before:hidden before:border-t before:border-line-muted [[data-testid=inbox-row]+&]:before:block ${active ? "bg-info-soft" : "hover:bg-fill-pressed"}`}
     >
       <div className="min-w-0 w-full" data-testid="conversation-card-content">
         {thread && (
           <div
-            className="mb-0.5 min-w-0 text-[11px] font-bold leading-3 text-foreground-placeholder "
+            className="mb-0.5 min-w-0 truncate text-caption text-foreground-hint"
             data-testid="conversation-card-subtitle"
           >
             {row.roomName}
@@ -86,21 +83,21 @@ export default function ActivityMessageRow({
         )}
         <div className="mb-0.5 flex min-w-0 items-start gap-2">
           <div
-            className={`line-clamp-2 min-w-0 flex-1 text-sm leading-5 ${unreadCount > 0 ? "font-bold text-foreground-strong " : "font-semibold text-foreground-muted "}`}
+            className={`line-clamp-2 min-w-0 flex-1 text-subhead ${unreadCount > 0 ? "font-bold text-foreground-strong " : "font-semibold text-foreground-muted "}`}
             data-testid="conversation-card-primary"
           >
             <span aria-hidden="true">{icon}</span>
             {row.label}
           </div>
           <span
-            className={`shrink-0 font-mono text-xs leading-5 text-foreground-placeholder  ${timestampVisibilityClassName}`}
+            className={`shrink-0 font-mono text-mono-meta leading-5 text-foreground-hint  ${timestampVisibilityClassName}`}
             data-testid="conversation-card-timestamp"
           >
             {formatRelativeTime(row.message.createdAt, locale)}
           </span>
         </div>
         <p
-          className={`line-clamp-2 text-xs leading-4 ${unreadCount > 0 ? "text-foreground-strong " : "text-foreground-muted "}`}
+          className={`line-clamp-2 text-callout ${unreadCount > 0 ? "text-foreground-strong " : "text-foreground-muted "}`}
           data-testid="conversation-card-body"
         >
           <span className="font-bold text-foreground-muted ">
@@ -109,7 +106,7 @@ export default function ActivityMessageRow({
           <InlineMarkdownPreview markdown={row.message.body || "附件消息"} />
         </p>
         <div
-          className="mt-1 flex min-h-5 flex-wrap items-center gap-1.5"
+          className="mt-2 flex min-h-5 flex-wrap items-center gap-1.5"
           data-testid="conversation-card-metadata"
         >
           {thread && (
@@ -132,13 +129,13 @@ export default function ActivityMessageRow({
       </div>
       {hasRowAction && (
         <div
-          className={`pointer-events-none absolute right-3 top-3 z-10 flex items-center rounded-md  ${rowActionBackgroundClassName}`}
+          className="pointer-events-none absolute right-3 top-3 z-10 flex items-center"
           data-testid="conversation-card-actions"
         >
           <Tooltip content={formatMessage({ id: "thread.row.markAsDone" })}>
             <Button
-              variant="ghost"
-              size="icon-sm"
+              variant="outline"
+              size="icon-md"
               type="button"
               disabled={pending}
               onClick={(event) => {
@@ -155,11 +152,11 @@ export default function ActivityMessageRow({
               aria-label={formatMessage({ id: "thread.row.markAsDone" })}
               data-testid="inbox-row-done"
             >
-              <Check size={14} />
+              <Check />
             </Button>
           </Tooltip>
         </div>
       )}
-    </Card>
+    </div>
   );
 }

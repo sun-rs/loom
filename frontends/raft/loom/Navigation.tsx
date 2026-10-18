@@ -1,3 +1,4 @@
+import type { NavigationUnread } from "./navigation-unread.ts";
 import {
   Home,
   Activity,
@@ -31,15 +32,32 @@ export const destinations = [
   { id: "settings", label: "设置", icon: Settings },
 ] as const;
 export type Destination = (typeof destinations)[number]["id"];
-type NavigationProps = { active: string; onSelect: (id: Destination) => void };
+type NavigationProps = {
+  active: string;
+  onSelect: (id: Destination) => void;
+  unread?: NavigationUnread;
+};
 
 /** Official LeftRail composition, without Raft account/server stores or fabricated unread state. */
-export function DesktopNavigation({ active, onSelect }: NavigationProps) {
+export function DesktopNavigation({
+  active,
+  onSelect,
+  unread,
+}: NavigationProps) {
   const item = (entry: (typeof destinations)[number]) => (
     <RailTabButton
       key={entry.id}
       icon={<entry.icon size={18} />}
       label={entry.label}
+      testId={`left-rail-tab-${entry.id}`}
+      showDot={
+        entry.id === "channels"
+          ? unread?.channels
+          : entry.id === "activity"
+            ? unread?.activity
+            : false
+      }
+      dotInactiveOnly
       active={active === entry.id}
       aria-current={active === entry.id ? "page" : undefined}
       onClick={() => onSelect(entry.id)}

@@ -1,3 +1,4 @@
+import { verifyNavigationUnread } from "./navigation-unread-browser.mjs";
 import { verifyRoleModelLabels } from "./role-model-label-browser.mjs";
 import { verifyHistoryWindow } from "./history-window-browser.mjs";
 import { verifyLoading } from "./loading-browser.mjs";
@@ -173,7 +174,9 @@ try {
   browser = await (
     process.env.LOOM_BROWSER_ENGINE === "webkit" ? webkit : chromium
   ).launch({ headless: true });
-  if (process.env.LOOM_BROWSER_SLICE === "role-model-label") {
+  if (process.env.LOOM_BROWSER_SLICE === "navigation-unread") {
+    await verifyNavigationUnread({ browser, origin });
+  } else if (process.env.LOOM_BROWSER_SLICE === "role-model-label") {
     console.log(
       JSON.stringify(await verifyRoleModelLabels({ browser, origin })),
     );

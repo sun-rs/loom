@@ -30,11 +30,11 @@ import {
   Spinner,
   SearchShellRoot,
   ActivityInboxPanel,
+  ActivityInboxViewport,
   SearchShellViewport,
   SearchResultsSummary,
   SearchResultsList,
 } from "raft-ui";
-import { Activity } from "lucide-react";
 import type { RahClient } from "@rah-os/client-sdk";
 import type {
   WorkspaceSearchRequest,
@@ -223,7 +223,6 @@ export default function DiscoveryPage({
         ) : (
           <PanelHeader
             title="动态"
-            icon={<Activity size={18} />}
             onMobileBack={onBack}
             mobileBackProps={{ "aria-label": "返回聊天列表" }}
           />
@@ -545,7 +544,8 @@ function Results({
     rail.select({ id: entity.key, entity });
     openEntity(entity, full);
   };
-  const Viewport = mode === "activity" ? "div" : SearchShellViewport;
+  const Viewport =
+    mode === "activity" ? ActivityInboxViewport : SearchShellViewport;
   const ResultList = mode === "activity" ? "div" : SearchResultsList;
   return (
     <Viewport
@@ -563,7 +563,7 @@ function Results({
       data-testid="discovery-results"
       className={
         mode === "activity"
-          ? "scrollbar-quiet relative flex-1 overflow-y-overlay bg-layer-canvas-muted p-4 safe-bottom "
+          ? "scrollbar-quiet safe-bottom"
           : "min-h-0 overflow-y-auto"
       }
     >
@@ -652,7 +652,7 @@ function Results({
               className={
                 mode === "activity"
                   ? data.rows.length
-                    ? "flex flex-col gap-2"
+                    ? "flex flex-col"
                     : "h-full"
                   : "p-3"
               }

@@ -329,6 +329,21 @@ export async function verifyActivityNavigation({
       await page.goto(origin + "/?view=activity");
       const doneRow = page.locator(`[data-result-id="${card.key}"]`);
       await doneRow.waitFor();
+      const rowChrome = await doneRow.evaluate((el) => {
+        const s = getComputedStyle(el);
+        return {
+          border: s.borderTopWidth,
+          radius: s.borderRadius,
+          body: getComputedStyle(
+            el.querySelector('[data-testid="conversation-card-body"]'),
+          ).fontSize,
+        };
+      });
+      assert.equal(rowChrome.border, "0px");
+      assert.equal(rowChrome.radius, "0px");
+      // raft-ui@0.6.0 styles.css --text-callout = 14px.
+      assert.equal(rowChrome.body, "14px");
+
       await doneRow.hover();
       const marks = [];
       const captureMark = (request) => {
@@ -399,8 +414,10 @@ export async function verifyActivityNavigation({
         box.y >= 0 && box.y + box.height <= (width === 390 ? 844 : 1000),
       );
       assert.ok(
-        await highlighted.evaluate((el) =>
-          el.className.includes("bg-brutal-cyan/25"),
+        await highlighted.evaluate(
+          (el) =>
+            el.className.includes("bg-info-soft") &&
+            el.className.includes("hover:bg-info-soft"),
         ),
       );
       await page.reload();

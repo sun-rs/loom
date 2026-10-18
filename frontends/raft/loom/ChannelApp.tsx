@@ -1,3 +1,4 @@
+import type { NavigationUnread } from "./navigation-unread.ts";
 import { uiActionProps } from "./ui-action-props.ts";
 import MobileBottomBarStack from "../packages/web/src/components/layout/MobileBottomBarStack.tsx";
 import SideWorkspace from "./SideWorkspace.tsx";
@@ -673,6 +674,7 @@ export default function ChannelApp() {
   const destination = params.get("view") ?? "channels";
   const agentsVisited = useRef(false);
   if (destination === "agents") agentsVisited.current = true;
+  const [navigationUnread, setNavigationUnread] = useState<NavigationUnread>();
   const activityNavigation = useRef(0);
   const [discoveryProfileOpen, setDiscoveryProfileOpen] = useState(false);
   const lastChatRoom = useRef<string | undefined>(undefined);
@@ -940,6 +942,12 @@ export default function ChannelApp() {
               element={
                 <div className="relative flex min-h-0 min-w-0 flex-1">
                   <DesktopNavigation
+                    unread={
+                      navigationUnread?.workspaceId ===
+                      directory?.workspace.workspaceId
+                        ? navigationUnread
+                        : undefined
+                    }
                     active={destination}
                     onSelect={selectDestination}
                   />
@@ -987,6 +995,7 @@ export default function ChannelApp() {
                           workspaceId={directory.workspace.workspaceId}
                           controlRoomId={directory.workspace.controlRoomId}
                           onReady={onSidebarReady}
+                          onUnreadChanged={setNavigationUnread}
                           name={directory.workspace.name}
                           rooms={directory.channels}
                           privateBoxes={directory.privateBoxes}

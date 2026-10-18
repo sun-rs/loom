@@ -45,16 +45,36 @@
         "scripts/official-web/mobile-density-browser.mjs",
         "scripts/official-web/task-browser.mjs"
       ]
+    },
+    "feed-and-unread": {
+      "source": "v1.21.22 ThreadsInbox-CbSKTW4g.js Ie/Le/Re and InboxRow; app-shell-D1-nY-va.js TaskCard, RailTabButton and MessageItem highlight",
+      "local": [
+        "loom/ActivityMessageRow.tsx",
+        "loom/DiscoveryPage.tsx",
+        "loom/Navigation.tsx",
+        "loom/ChannelSidebar.tsx",
+        "loom/navigation-unread.ts",
+        "packages/web/src/components/task/TaskCard.tsx",
+        "packages/web/src/components/layout/LeftRail.tsx",
+        "packages/web/src/components/message/MessageItem.tsx"
+      ],
+      "adaptation": "Loom activity rows and durable mark actions retained. Existing sidebar activity summary request also feeds desktop navigation, without extra polling or independent counts. Touch Done action remains visible because native activity context menus are not yet connected. Official list-layout/grouping options are pending.",
+      "checks": [
+        "scripts/official-web/feed-release.test.mjs",
+        "scripts/official-web/navigation-unread.test.ts",
+        "scripts/official-web/navigation-unread-browser.mjs",
+        "scripts/official-web/activity-navigation-browser.mjs",
+        "scripts/official-web/task-browser.mjs"
+      ]
     }
   },
   "pending": [
-    "Navigation unread projections",
     "Remaining shared headers and action compositions",
-    "Activity list",
-    "Global tasks filters and rows",
     "Settings subpages",
     "Computers page",
-    "Remaining channel settings content and task row compositions; shared drawer migrated",
-    "Composer surrounding menus and suggestions not audited against full latest release"
+    "Composer surrounding menus and suggestions not audited against full latest release",
+    "Global task creator/assignee/unassigned filters (backend supports them; frontend not yet wired)",
+    "Remaining channel settings content",
+    "Activity context menu, alternate list layout/grouping and mobile home unread bindings"
   ]
 }

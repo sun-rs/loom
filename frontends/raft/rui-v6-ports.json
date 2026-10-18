@@ -408,7 +408,8 @@
     },
     "packages/web/src/components/layout/LeftRail.tsx": {
       "upstreamSha256": "e350dc29e108773c7d4466f8341dd98dda1bce9fa7874978a7e83077f52ceebb",
-      "portedSha256": "d36a911b29232bc43bafa8481844b94e915d1f5e279d61c6ce4d49b1c569bb08"
+      "portedSha256": "c9aada815102e40dd244bb0092f9530b1bedb2935affb8f50e7d16aaf19b80fc",
+      "pageRelease": "v1.21.22 production TaskCard footer/focus, RailTabButton single-icon Attention composition; Loom domain binding retained"
     },
     "packages/web/src/components/brand/AuthBrandShell.tsx": {
       "upstreamSha256": "b36bdcc9a2af430f5c9d42d4e93b6fce52cca7ddcc3eee771a04d8dc1777debf",
@@ -457,7 +458,8 @@
     },
     "packages/web/src/components/message/MessageItem.tsx": {
       "upstreamSha256": "aa71f3dbf177a0537bfee84b0e24b9363719450a2f1777200418cedca6dfbac3",
-      "portedSha256": "46912c1961e534384e1d94d2ab045429a0b0b1b746fa4a1e3feaa936de445b9e"
+      "portedSha256": "ad071099aee5cbf1435b68eee7978cc61b0bb425494750e0202f1c0d93fb9e2a",
+      "pageRelease": "v1.21.22 MessageItem highlighted bg-info-soft and hover:bg-info-soft; existing Loom adapter unchanged"
     },
     "packages/web/src/components/message/InlineThreadReplies.tsx": {
       "upstreamSha256": "9b948322d29e6a10f0bb7554d89eab1dd6b918b5f0c27248a50655950e93cf64",
@@ -862,6 +864,11 @@
     "packages/web/src/components/ui/cards/ConversationPreviewCard.tsx": {
       "upstreamSha256": "82487ed12b4e1a567c117b99e7fe9742c0e0b6f513ef2a2d8eaff98532cd90b9",
       "portedSha256": "e5c1cd0a00a8d4c1f3ddd301d971b1bf3539a03a74309eb9fd779b9adadae092"
+    },
+    "packages/web/src/components/task/TaskCard.tsx": {
+      "upstreamSha256": "5f3aac22151688d533c52e1030aeee2dec967c6ddee8c17d46fb05c7094d3708",
+      "portedSha256": "b5b7aff6f0a6e4e3d040ccb5f290b18617c896c23c60cc1266f9c164c2464f8c",
+      "pageRelease": "v1.21.22 production TaskCard footer/focus, RailTabButton single-icon Attention composition; Loom domain binding retained"
     }
   }
 }

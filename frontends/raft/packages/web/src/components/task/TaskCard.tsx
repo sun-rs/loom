@@ -68,7 +68,7 @@ function TaskCard({ task, onOpen, showChannelName = true }: {
 
   return (
     <RuiTaskCard className="w-full">
-      <button type="button" onClick={() => onOpen(task)} className="w-full text-left">
+      <button type="button" onClick={() => onOpen(task)} className="w-full rounded-control text-left outline-none focus-visible:shadow-raft-focus">
         <TaskCardRow>
           <TaskCardBody>
             <TaskCardMeta>
@@ -93,9 +93,9 @@ function TaskCard({ task, onOpen, showChannelName = true }: {
           </TaskCardBody>
         </TaskCardRow>
       </button>
-      <div className="mt-2 flex justify-end">
+      <div className="mt-2 flex min-w-0 items-center gap-2">
         {canEditStatus ? (
-          <div className={`relative shrink-0 ${busy ? "pointer-events-none opacity-60" : ""}`}>
+          <div className={`relative shrink-0 ${busy ? "pointer-events-none" : ""}`}>
             <InlineBadgeEditor
               badgeStatus={toRuiTaskStatus(task.status)}
               displayValue={formatMessage({ id: style.labelId })}
@@ -108,7 +108,7 @@ function TaskCard({ task, onOpen, showChannelName = true }: {
               badgeClassName=""
               uppercase={false}
               dropdownMinWidth="min-w-[140px]"
-              dropdownAlign="right"
+              dropdownAlign="left"
               dropdownTestId="task-status-menu"
               optionTestIdPrefix="task-status-option"
             />

@@ -1,3 +1,7 @@
+import {
+  navigationUnread,
+  type NavigationUnread,
+} from "./navigation-unread.ts";
 import { uiActionProps } from "./ui-action-props.ts";
 import MobileHomeEntries from "./MobileHomeEntries.tsx";
 import SavedNav from "./SavedNav.tsx";
@@ -53,6 +57,7 @@ export default function ChannelSidebar({
   onPrivateClosed,
   onRoomsChanged,
   onReady,
+  onUnreadChanged,
   selected,
   onSelect,
   savedSelected,
@@ -70,6 +75,7 @@ export default function ChannelSidebar({
   onPrivateClosed: (id: string) => void;
   onRoomsChanged: () => Promise<void>;
   onReady: () => void;
+  onUnreadChanged?: (value: NavigationUnread | undefined) => void;
   savedSelected: boolean;
   onOpenSaved: () => void;
   onOpenMobileDestination: (id: "search" | "activity") => void;
@@ -119,6 +125,7 @@ export default function ChannelSidebar({
         }),
       ]);
       if (ticket === request.current) {
+        onUnreadChanged?.(navigationUnread(workspaceId, activity.summary));
         setData(next);
         setReadError("");
         setActivity(
@@ -133,12 +140,13 @@ export default function ChannelSidebar({
     } catch {
       if (ticket === request.current) {
         setActivity(undefined);
+        onUnreadChanged?.(undefined);
         setReadError("频道列表设置读取失败，请重试。");
       }
     } finally {
       if (ticket === request.current) setRefreshing(false);
     }
-  }, [client, workspaceId]);
+  }, [client, workspaceId, onUnreadChanged]);
   useEffect(() => {
     void refresh();
     const timer = setInterval(() => {

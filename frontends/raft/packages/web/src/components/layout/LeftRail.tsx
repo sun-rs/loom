@@ -754,7 +754,6 @@ export const RailTabButton = forwardRef<HTMLButtonElement, RailTabButtonProps>(f
         {icon}
         {dotVisible ? (
           <>
-            {icon}
             <span className="hidden">
               <AttentionDot size="lg" tone={dotTone} aria-hidden="true" />
             </span>
