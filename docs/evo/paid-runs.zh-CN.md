@@ -902,3 +902,11 @@ Codex、Claude、OpenCode、Kimi、Pi 各验证平滑重启和两轮间SIGKILL�
 - 三次真实Kernel／Worker HTTP／Fake Runtime协作链分别在A请求B、B普通final自动返回A、A最终回复处丢弃成功HTTP响应；仍各一次写入，凭持久marker收尾、不再调用模型。修复后同样通过。
 - 另以实际Kernel复现final提交后、Host收尾前崩溃导致重排队，新增认证scope证据与恢复收尾（schema89）；此修复以确定性测试验证，不算新增真实CLI或成本验收。
 - 72个记录的OS进程确认退出，19份生成settings删除。两份早停夹具的数据库仍保留orphaned行（进程已退出），不伪造终止回执；其余完成样本全部终止。原流、失败和数据库留存。[证据与边界](evidence/2026-10-14-active-crash/summary.json)。
+
+## 2026-10-19 日常纵向真实验收（非效率实验）
+
+Owner同意Role→实例→真实协作→文件／Diff→继续任务的单批验收。正式服务，新增独立频道／工作区；Claude `sonnet/low`与OpenCode `deepseek/deepseek-flash/low`，安装目录精确绑定及批准表先校验。限20分钟／8次RunAttempt，不替换模型、不重跑已完成协作。
+
+实际5次RunAttempt、17次已记录生成，累计381677输入（其中311646缓存输入）／6036输出；5轮CLI用量均complete。首条Human提示同时@两人导致审查者提前醒来等待，成本完整计入。Claude实现后明确请求OpenCode，后者运行9项测试并普通回复，无再次@；Kernel持久replyReturn及reply Activation证明自动交回Claude。独立功能检查通过，追加README请求沿用同一generation及原生runtime完成；非原生对照，不计算倍率、不外推随机任务成功率。
+
+UI真实流程发现并修复重名模型选项歧义、工作区HTML相对URL导致官方初始化遮罩不消失。另保留验收脚本Diff读取过早、usage请求缺agentId及加载中截图记录；这些通过只读核实纠正，未重跑付费协作。两实例已停用，无活跃Run；频道和产物保留可查。最终修复部署后再次用真实产物验证桌面／手机HTML完成加载。详见[分层证据](evidence/2026-10-19-vertical-use/summary.json)。

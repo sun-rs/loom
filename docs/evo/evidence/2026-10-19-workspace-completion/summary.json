@@ -288,5 +288,9 @@
       "localEvidence": "~/.loom/reviews/2026-10-19-workspace-completion/"
     },
     "paidCalls": 0
+  },
+  "laterCorrection": {
+    "evidence": "../2026-10-19-vertical-use/summary.json",
+    "issue": "Original HTML browser check verified frame body and sandbox but did not wait for native bridge readiness. Relative URL left the loading overlay visible; d7f810b fixes this and strengthens both-engine regressions."
   }
 }

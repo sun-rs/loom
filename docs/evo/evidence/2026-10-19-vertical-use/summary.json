@@ -1,0 +1,164 @@
+{
+  "scope": "One real paid daily-use vertical acceptance plus targeted UI repairs; not an efficiency benchmark.",
+  "authorization": "Owner agreed to Role -> instances -> real peer collaboration -> files/diff -> follow-up. One20minute/8RunAttempt batch; no model substitution or paid collaboration rerun.",
+  "repairCommits": ["23cbcd7", "d7f810b"],
+  "models": [
+    {
+      "cli": "claude",
+      "binding": "sonnet",
+      "effort": "low",
+      "exactBindingIds": ["local:claude-cli/v1:sonnet"]
+    },
+    {
+      "cli": "opencode",
+      "binding": "deepseek/deepseek-flash",
+      "effort": "low",
+      "exactBindingIds": ["local:opencode-cli/v1:deepseek/deepseek-flash"]
+    }
+  ],
+  "flow": {
+    "roleCreation": "Both roles through official UI; exact binding/effort checked against installed catalog and approved-model table before instances.",
+    "channelAndInstances": "Through UI, new channel directory only; seeded stub Git baseline.",
+    "collaboration": "Claude implemented sum/tests/HTML, explicitly requested OpenCode review; reviewer ran tests and replied without @; Kernel returned reply to Claude.",
+    "replyProof": {
+      "peerMessageSeq": 27,
+      "replyReturn": {
+        "sourceEventId": "event_5492e162-26c1-49ae-aae8-3298b3970dc9",
+        "participantId": "principal_3cc4e979-e0f2-427d-8af4-ab10454a3734"
+      },
+      "returnActivationReason": "reply",
+      "fromSeq": 27,
+      "toSeq": 27,
+      "state": "completed"
+    },
+    "outputs": ["sum.mjs", "sum.test.mjs", "summary.html", "README.md"],
+    "functional": "Generated9tests passed after follow-up; independent finite-number/type/empty-array checks passed.",
+    "followUp": "One planned README request through composer, same generation/native runtime; completed."
+  },
+  "paidAccounting": {
+    "runAttempts": 5,
+    "usageCompleteness": [
+      "complete",
+      "complete",
+      "complete",
+      "complete",
+      "complete"
+    ],
+    "totals": {
+      "generations": 17,
+      "inputTokens": 381677,
+      "cachedInputTokens": 311646,
+      "outputTokens": 6036
+    },
+    "claim": "Recorded provider generations/token totals including early reviewer wake; no native control, price ratio or statistical reliability claim."
+  },
+  "findings": [
+    {
+      "kind": "product",
+      "problem": "Two providers shared model display name after UI stripped binding suffix.",
+      "fix": "Duplicate names alone receive provider/model suffix; native Select retained.",
+      "checks": "Red/green unit and1440/390pointer selection; live Role creation passed."
+    },
+    {
+      "kind": "product",
+      "problem": "Relative workspace HTML URL omitted native bridge initialization parameters; readiness overlay persisted.",
+      "fix": "Supply absolute URL as existing attachment integration does; frozen official code unchanged.",
+      "checks": "Real generated HTML reproduced it. Browser regression requires nonce and overlay removal on Chromium/WebKit at both widths; deployed real output verified."
+    },
+    {
+      "kind": "acceptance prompt",
+      "problem": "Opening Human request @mentioned both instances; reviewer woke early by documented routing.",
+      "handling": "Extra wait reply/run fully counted; later actual peer review/return completed. No collaboration rerun."
+    },
+    {
+      "kind": "instrumentation",
+      "problem": "Diff assertion read loading placeholder; initial usage request lacked agentId; first screenshot captured loading.",
+      "handling": "Corrected read waits/read-only usage query; only unsent planned follow-up ran. Old failures retained locally."
+    }
+  ],
+  "recovery": {
+    "results": [
+      {
+        "width": 1440,
+        "refreshDraft": true,
+        "offlinePreservesMessages": true,
+        "reconnect": true,
+        "workspaceReturnPreservesDraft": true
+      },
+      {
+        "width": 390,
+        "refreshDraft": true,
+        "offlinePreservesMessages": true,
+        "reconnect": true,
+        "workspaceReturnPreservesDraft": true
+      }
+    ],
+    "paidCalls": 0
+  },
+  "cleanupBeforeFinalRestart": [
+    {
+      "instanceId": "principal_3cc4e979-e0f2-427d-8af4-ab10454a3734",
+      "definition": {
+        "state": "disabled"
+      },
+      "runtime": [
+        {
+          "instance_runtime_id": "instrt_364de32c-b4f7-4f6c-bd1e-324510310c0d",
+          "native_session_id": "171a421a-30d4-4661-a782-74abaed6c063",
+          "state": "idle",
+          "current_run_attempt_id": null,
+          "turn_count": 3
+        }
+      ],
+      "activeRuns": 0
+    },
+    {
+      "instanceId": "principal_44c70bd5-932d-4bbe-9b6e-5e805f0af0fb",
+      "definition": {
+        "state": "disabled"
+      },
+      "runtime": [
+        {
+          "instance_runtime_id": "instrt_44fa12eb-bcd9-4572-80d2-334cc1bd808a",
+          "native_session_id": "ses_eaff89390ffepTTfFEJ68svMp7",
+          "state": "idle",
+          "current_run_attempt_id": null,
+          "turn_count": 2
+        }
+      ],
+      "activeRuns": 0
+    }
+  ],
+  "verification": {
+    "roleLabelUnit": 1,
+    "rootTypecheck": "passed",
+    "frontendTypecheck": "passed",
+    "build": "passed",
+    "browser": "Labels and workspace regression at1440/390; workspace Chromium/WebKit. Live recovery Chromium.",
+    "deployment": {
+      "source": "d7f810b98b438446d4e3f747e8b433e13e2e1b50",
+      "service": "com.loom.evo",
+      "backupDatabases": 2,
+      "backupFiles": 329,
+      "businessTablesUnchanged": 18,
+      "realHtmlPages": [
+        {
+          "width": 1440,
+          "htmlLoaded": true,
+          "reporterReady": true
+        },
+        {
+          "width": 390,
+          "htmlLoaded": true,
+          "reporterReady": true
+        }
+      ]
+    }
+  },
+  "limits": [
+    "One small task/two approved combinations; not five-CLI acceptance or proof of arbitrary task reliability/cost equivalence.",
+    "No in-flight daemon crash/file-write interruption/unknown-mutation-response fault injection in this batch.",
+    "Acceptance channel, outputs and roles retained for inspection; both instances disabled, no active runs."
+  ],
+  "localEvidence": "~/.loom/reviews/2026-10-19-vertical-use/"
+}
