@@ -1,6 +1,7 @@
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import {
+  Button,
   SegmentedControl,
   SegmentedControlItem,
   SegmentedControlLabel,
@@ -26,10 +27,11 @@ export default function WorkspaceFileContent({
   markdown: boolean;
 }) {
   const [mode, setMode] = useState("preview");
+  const [lineLimit, setLineLimit] = useState(4000);
   const lines = text.split(/\r?\n/);
-  let body = lines.slice(0, 4000).join("\n");
+  let body = lines.slice(0, lineLimit).join("\n");
   const truncated =
-    lines.length > 4000 ||
+    lines.length > lineLimit ||
     (markdown && mode === "preview" && body.length > 65536);
   if (markdown && mode === "preview") body = body.slice(0, 65536);
   return (
@@ -73,6 +75,9 @@ export default function WorkspaceFileContent({
         <pre className="whitespace-pre-wrap break-words text-sm font-mono text-foreground-strong theme-brutal:text-black">
           {body}
         </pre>
+      )}
+      {lines.length > lineLimit && (!markdown || mode === "raw") && (
+        <Button onClick={() => setLineLimit((n) => n + 4000)}>显示更多</Button>
       )}
     </>
   );

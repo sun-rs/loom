@@ -1,3 +1,4 @@
+import WorkspaceDocument from "./WorkspaceDocument.tsx";
 import { useEffect, useState } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
 import type {
@@ -312,7 +313,20 @@ function WorkspacePreview({
           markdown={false}
         />
       ) : value.kind === "read" ? (
-        value.value.encoding === "utf-8" ? (
+        (value.value.mimeType === "application/pdf" ||
+          /\.html?$/i.test(selection.path)) &&
+        value.value.content !== null ? (
+          <WorkspaceDocument
+            file={value.value}
+            request={{
+              roomId: source.roomId,
+              rootId: source.rootId,
+              path: selection.path,
+              operation: "read",
+              includeHidden: source.hidden,
+            }}
+          />
+        ) : value.value.encoding === "utf-8" ? (
           <WorkspaceFileContent
             text={value.value.content ?? ""}
             markdown={selection.path.endsWith(".md")}

@@ -220,6 +220,7 @@ export async function readWorkspaceRoot(input: {
   rootKind: AgentWorkspaceRoot["rootKind"];
   rootLabel: string;
   path: string;
+  allowPdf?: boolean;
 }): Promise<AgentWorkspaceFile> {
   if (input.rootId !== input.rootKind)
     throw new Error("Workspace root id and kind must agree");
@@ -236,8 +237,11 @@ export async function readWorkspaceRoot(input: {
     if (!stat.isFile() || stat.nlink !== 1)
       throw new Error("Workspace preview requires a regular private file");
     const ext = extname(path).toLowerCase();
+    const pdf = input.allowPdf && ext === ".pdf";
     const text = TEXT.has(ext),
-      mimeType = IMAGE[ext] ?? "application/octet-stream";
+      mimeType = pdf
+        ? "application/pdf"
+        : (IMAGE[ext] ?? "application/octet-stream");
     const base: AgentWorkspaceFile = {
       rootId: input.rootId,
       rootKind: input.rootKind,
@@ -248,7 +252,7 @@ export async function readWorkspaceRoot(input: {
       encoding: "binary",
       mimeType,
     };
-    if (!text && !IMAGE[ext]) return base;
+    if (!text && !IMAGE[ext] && !pdf) return base;
     const limit = text ? 1048576 : 5 * 1024 * 1024;
     if (stat.size > limit) {
       if (!text) return base;
@@ -267,6 +271,8 @@ export async function readWorkspaceRoot(input: {
       size += bytesRead;
     }
     if (size > limit) throw new Error("File grew beyond preview limit");
+    if (pdf && buffer.subarray(0, 5).toString() !== "%PDF-")
+      throw new Error("Invalid PDF file");
     await safePath(input.rootDirectory, path);
     const current = await lstat(target);
     if (

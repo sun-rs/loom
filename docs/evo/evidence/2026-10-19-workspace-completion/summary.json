@@ -1,0 +1,267 @@
+{
+  "scope": "Read-only workspace follow-up: Git scope compatibility, long diff expansion, native HTML/PDF preview.",
+  "sources": [
+    {
+      "name": "rah local reference",
+      "revision": "871ace825954750a546a027a832d76332cbd467e",
+      "files": [
+        "packages/runtime-daemon/src/workspace-path-utils.ts:tryResolveGitRootAsync",
+        "packages/runtime-daemon/src/workspace-git-utils.ts:getWorkspaceGitStatusDataAsync/toGitPathAsync",
+        "packages/client-web/src/inspector/FileInspectionDiffSurface.tsx"
+      ],
+      "adoption": "Reference only; no rah runtime dependency or source copied. Reuse repository discovery vs authorized scope separation. Do not copy large Git output allowance, writes or different UI styling.",
+      "authorization": "Owner authorized local reference; no standalone LICENSE found in sibling checkout."
+    },
+    {
+      "name": "Raft existing official intake",
+      "url": "https://github.com/botiverse/raft-source",
+      "revision": "a98ae003246a0360872a77d76dec2fccd0347ef7",
+      "license": "FSL-1.1-ALv2; existing authorization; notices retained",
+      "files": [
+        "packages/web/src/components/message/attachmentPreviewSurfaces.tsx:HtmlAttachmentPreviewModal/DocumentAttachmentPreviewModal",
+        "packages/web/src/components/ui/CrossOriginPdfFrame.tsx",
+        "packages/application-service/vendor/raft/attachmentPreviewBridge.ts"
+      ],
+      "adoption": "Directly reuse frozen native modals, sandbox frame and PDF origin check; reuse existing local HTML serving/reporter and isolated PDF gateway. WorkspaceDocument is local data/transport glue, not a copied official workspace document feature."
+    }
+  ],
+  "owners": {
+    "host": "AgentHost root-scoped read; regular private files, symlink/sensitive-path fences unchanged; opt-in channel PDF bounded at5MiB, text1MiB.",
+    "git": "Read-only Git discovery; repository metadata may be a worktree pointer; status paths converted back to fixed authorized root and filtered. No writes or external diff helpers.",
+    "preview": "Local gateway session authorization then existing typed Human channel.workspace.read on every read. HTML existing sandbox+reporter; PDF signed exact request,30min expiry, separate listener, authority rechecked on fetch. No artifact publication/comments/index state."
+  },
+  "limits": [
+    "Git diff remains HEAD-to-working-tree combined patch, not per-run provenance;512KiB result ceiling remains. Long text expands4000lines per click after a bounded per-file fetch, not network streaming.",
+    "Nested repositories are supported when they are the selected fixed root; no recursive aggregation or repository-discovery picker.",
+    "PDF uses bounded full reads, not range streaming; bytes may be read for selection/issuance/view. Browser-native PDF controls/rendering vary; tests prove frame/isolation/valid PDF bytes, not every viewer control.",
+    "No Git write, HTML relative-resource serving, workspace comments or new attachment identity. Existing published attachment comment paths unchanged.",
+    "No paid provider or cost benchmark."
+  ],
+  "verification": {
+    "targetedTests": 9,
+    "checks": [
+      "AgentHost workspace/Git/PDF boundaries",
+      "Human route membership before/after host read",
+      "PDF attachment and workspace grants",
+      "HTML sandbox/reporter and unauthorized refusal",
+      "Frozen official source hashes",
+      "root and frontend typechecks",
+      "npm run build:web:workbench",
+      "changed-file formatting and git diff --check"
+    ],
+    "chromium": [
+      {
+        "width": 1440,
+        "initialResourceCount": 80,
+        "initialEncodedBytes": 1381846,
+        "workspaceChunkAbsentBeforeOpen": true,
+        "operations": [
+          {
+            "operation": "roots",
+            "path": ""
+          },
+          {
+            "operation": "list",
+            "path": ""
+          },
+          {
+            "operation": "list",
+            "path": "src"
+          },
+          {
+            "operation": "read",
+            "path": "src/demo.md"
+          },
+          {
+            "operation": "changes",
+            "path": ""
+          },
+          {
+            "operation": "diff",
+            "path": "src/demo.md"
+          },
+          {
+            "operation": "diff",
+            "path": "long.txt"
+          },
+          {
+            "operation": "list",
+            "path": ""
+          },
+          {
+            "operation": "read",
+            "path": "report.html"
+          },
+          {
+            "operation": "read",
+            "path": "report.pdf"
+          }
+        ]
+      },
+      {
+        "width": 390,
+        "initialResourceCount": 76,
+        "initialEncodedBytes": 1361019,
+        "workspaceChunkAbsentBeforeOpen": true,
+        "operations": [
+          {
+            "operation": "roots",
+            "path": ""
+          },
+          {
+            "operation": "list",
+            "path": ""
+          },
+          {
+            "operation": "list",
+            "path": "src"
+          },
+          {
+            "operation": "read",
+            "path": "src/demo.md"
+          },
+          {
+            "operation": "changes",
+            "path": ""
+          },
+          {
+            "operation": "diff",
+            "path": "src/demo.md"
+          },
+          {
+            "operation": "diff",
+            "path": "long.txt"
+          },
+          {
+            "operation": "list",
+            "path": ""
+          },
+          {
+            "operation": "read",
+            "path": "report.html"
+          },
+          {
+            "operation": "read",
+            "path": "report.pdf"
+          }
+        ]
+      }
+    ],
+    "webkit": [
+      {
+        "width": 1440,
+        "initialResourceCount": 74,
+        "initialEncodedBytes": 1363011,
+        "workspaceChunkAbsentBeforeOpen": true,
+        "operations": [
+          {
+            "operation": "roots",
+            "path": ""
+          },
+          {
+            "operation": "list",
+            "path": ""
+          },
+          {
+            "operation": "list",
+            "path": "src"
+          },
+          {
+            "operation": "read",
+            "path": "src/demo.md"
+          },
+          {
+            "operation": "changes",
+            "path": ""
+          },
+          {
+            "operation": "diff",
+            "path": "src/demo.md"
+          },
+          {
+            "operation": "diff",
+            "path": "long.txt"
+          },
+          {
+            "operation": "list",
+            "path": ""
+          },
+          {
+            "operation": "read",
+            "path": "report.html"
+          },
+          {
+            "operation": "read",
+            "path": "report.pdf"
+          }
+        ]
+      },
+      {
+        "width": 390,
+        "initialResourceCount": 73,
+        "initialEncodedBytes": 1362985,
+        "workspaceChunkAbsentBeforeOpen": true,
+        "operations": [
+          {
+            "operation": "roots",
+            "path": ""
+          },
+          {
+            "operation": "list",
+            "path": ""
+          },
+          {
+            "operation": "list",
+            "path": "src"
+          },
+          {
+            "operation": "read",
+            "path": "src/demo.md"
+          },
+          {
+            "operation": "changes",
+            "path": ""
+          },
+          {
+            "operation": "diff",
+            "path": "src/demo.md"
+          },
+          {
+            "operation": "diff",
+            "path": "long.txt"
+          },
+          {
+            "operation": "list",
+            "path": ""
+          },
+          {
+            "operation": "read",
+            "path": "report.html"
+          },
+          {
+            "operation": "read",
+            "path": "report.pdf"
+          }
+        ]
+      }
+    ],
+    "browserAssertions": [
+      "real pointer navigation at1440x844 and390x844",
+      "workspace chunk absent before opening",
+      "file-specific reads only",
+      "long patch tail unavailable before explicit expansion and present after",
+      "HTML source retained; official modal displays fixture; parent DOM access blocked",
+      "PDF official frame uses different origin and valid PDF bytes; Escape closes; mobile returns to list"
+    ],
+    "redEvidence": [
+      "repository subdirectory rejected before scope compatibility",
+      "PDF returned binary/octet-stream before channel opt-in",
+      "workspace PDF grant missing before implementation",
+      "preview button absent before UI wiring",
+      "long Diff had no display-more control before expansion change",
+      "HTML source not retained before corrective rendering"
+    ],
+    "deployment": "pending safe restart",
+    "paidCalls": 0
+  }
+}

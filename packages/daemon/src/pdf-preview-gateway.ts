@@ -1,3 +1,11 @@
+import {
+  ChannelWorkspaceReadRequestSchema,
+  type ChannelWorkspaceReadRequest,
+} from "@rah-os/protocol";
+import {
+  readWorkspacePreview,
+  workspacePdfBytes,
+} from "./workspace-preview-read.ts";
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import {
   createServer,
@@ -90,6 +98,13 @@ export class PdfPreviewGateway {
     const expires = String(this.#now() + 30 * 60 * 1000);
     return `${this.origin}/pdf/${id}?expires=${expires}&signature=${this.#signature(id, expires)}`;
   }
+  async issueWorkspace(input: ChannelWorkspaceReadRequest): Promise<string> {
+    const request = ChannelWorkspaceReadRequestSchema.parse(input);
+    workspacePdfBytes(await readWorkspacePreview(this.#options, request));
+    const id = Buffer.from(JSON.stringify(request)).toString("base64url");
+    const expires = String(this.#now() + 30 * 60 * 1000);
+    return `${this.origin}/workspace-pdf/${id}?expires=${expires}&signature=${this.#signature(id, expires)}`;
+  }
   #fail(response: ServerResponse, status: number) {
     response.statusCode = status;
     response.setHeader("Cache-Control", "no-store");
@@ -103,7 +118,10 @@ export class PdfPreviewGateway {
       return;
     }
     const url = new URL(request.url ?? "/", this.origin),
-      match = /^\/pdf\/([a-f0-9-]{36})$/.exec(url.pathname);
+      workspaceMatch = /^\/workspace-pdf\/([A-Za-z0-9_-]{1,16000})$/.exec(
+        url.pathname,
+      ),
+      match = workspaceMatch ?? /^\/pdf\/([a-f0-9-]{36})$/.exec(url.pathname);
     if (!match) {
       this.#fail(response, 404);
       return;
@@ -129,6 +147,30 @@ export class PdfPreviewGateway {
       )
     ) {
       this.#fail(response, 403);
+      return;
+    }
+    if (workspaceMatch) {
+      try {
+        const input = ChannelWorkspaceReadRequestSchema.parse(
+          JSON.parse(Buffer.from(id, "base64url").toString()),
+        );
+        const bytes = workspacePdfBytes(
+          await readWorkspacePreview(this.#options, input),
+        );
+        response.setHeader("Content-Type", "application/pdf");
+        response.setHeader("Content-Disposition", "inline");
+        response.setHeader("Cache-Control", "private, no-store");
+        response.setHeader("X-Content-Type-Options", "nosniff");
+        response.setHeader("Referrer-Policy", "no-referrer");
+        response.setHeader(
+          "Content-Security-Policy",
+          `frame-ancestors ${this.#options.appOrigin}; object-src 'none'; base-uri 'none'; form-action 'none'`,
+        );
+        response.setHeader("Content-Length", bytes.length);
+        response.end(bytes);
+      } catch {
+        this.#fail(response, 403);
+      }
       return;
     }
     await new Promise<void>((resolve, reject) => {

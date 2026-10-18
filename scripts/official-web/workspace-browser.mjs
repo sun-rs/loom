@@ -1,3 +1,4 @@
+import { createPdfFixture } from "./pdf-fixture.mjs";
 import assert from "node:assert/strict";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -19,6 +20,15 @@ export async function verifyWorkspace({ browser, origin, client, channel }) {
     "base",
   );
   writeFileSync(join(root, "src/demo.md"), "# After\n");
+  writeFileSync(
+    join(root, "report.html"),
+    "<h1>Workspace HTML</h1><script>parent.document.body.dataset.escaped='yes'</script>",
+  );
+  writeFileSync(join(root, "report.pdf"), createPdfFixture());
+  writeFileSync(
+    join(root, "long.txt"),
+    Array.from({ length: 4100 }, (_, i) => "line-" + i).join("\n"),
+  );
   const result = [];
   for (const width of [1440, 390]) {
     const page = await browser.newPage({ viewport: { width, height: 844 } });
@@ -83,6 +93,71 @@ export async function verifyWorkspace({ browser, origin, client, channel }) {
       await page.screenshot({
         path: `${process.env.LOOM_WORKSPACE_SCREENSHOTS}/workspace-${width}.png`,
       });
+    if (width === 390)
+      await page
+        .getByRole("button", { name: "返回文件列表", exact: true })
+        .click();
+    await page
+      .getByRole("button", { name: "查看差异 long.txt", exact: true })
+      .click();
+    await page.getByRole("button", { name: "显示更多", exact: true }).waitFor();
+    assert.equal(
+      await page
+        .getByTestId("workspace-preview")
+        .getByText("+line-4099", { exact: false })
+        .count(),
+      0,
+    );
+    await page.getByRole("button", { name: "显示更多", exact: true }).click();
+    await page
+      .getByTestId("workspace-preview")
+      .getByText("+line-4099", { exact: false })
+      .waitFor();
+    if (width === 390)
+      await page
+        .getByRole("button", { name: "返回文件列表", exact: true })
+        .click();
+    await page.getByText("文件", { exact: true }).click();
+    for (const filename of ["report.html", "report.pdf"]) {
+      await page
+        .getByRole("button", { name: `打开 ${filename}`, exact: true })
+        .click();
+      await page
+        .getByRole("button", { name: "打开预览", exact: true })
+        .waitFor();
+      if (filename.endsWith("html"))
+        assert.match(
+          await page.getByTestId("workspace-preview").innerText(),
+          /<h1>Workspace HTML/,
+        );
+      await page.getByRole("button", { name: "打开预览", exact: true }).click();
+      const frame = page.locator("iframe").last();
+      await frame.waitFor();
+      if (filename.endsWith("html")) {
+        assert.equal(await frame.getAttribute("sandbox"), "allow-scripts");
+        await page
+          .frameLocator("iframe")
+          .last()
+          .getByRole("heading", { name: "Workspace HTML" })
+          .waitFor();
+        assert.equal(
+          await page.evaluate(() => document.body.dataset.escaped),
+          undefined,
+        );
+      } else {
+        const url = await frame.getAttribute("src");
+        assert.notEqual(new URL(url).origin, origin);
+        const response = await page.request.get(url);
+        assert.equal(response.status(), 200);
+        assert.equal(response.headers()["content-type"], "application/pdf");
+      }
+      await page.keyboard.press("Escape");
+      await frame.waitFor({ state: "detached" });
+      if (width === 390)
+        await page
+          .getByRole("button", { name: "返回文件列表", exact: true })
+          .click();
+    }
     result.push({
       width,
       initialResourceCount: initialResources.length,

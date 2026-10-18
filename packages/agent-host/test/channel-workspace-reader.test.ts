@@ -78,13 +78,79 @@ test("channel workspace reads are lazy, bounded and scoped; Git never executes d
     await writeFile(join(root, "large.md"), "x".repeat(600000));
     await assert.rejects(read("diff", "large.md"), /512 KiB/);
     await mkdir(join(root, "nested/sub"));
-    await assert.rejects(
-      readChannelWorkspace(
-        { ...workspace, primaryDirectory: join(root, "nested") },
-        { ...base, operation: "changes" },
-      ),
-      /repository root/,
+    const scoped = await readChannelWorkspace(
+      { ...workspace, primaryDirectory: join(root, "nested") },
+      { ...base, operation: "changes" },
     );
+    assert.equal(scoped.kind, "changes");
+    if (scoped.kind === "changes")
+      assert.deepEqual(
+        scoped.entries.map((e) => e.path),
+        ["a.md"],
+      );
+    const nested = join(root, "nested-repo");
+    await mkdir(nested);
+    execFileSync("git", ["init", "-q"], { cwd: nested });
+    await writeFile(join(nested, "own.txt"), "nested content");
+    const nestedResult = await readChannelWorkspace(
+      { ...workspace, primaryDirectory: nested },
+      { ...base, operation: "changes" },
+    );
+    if (nestedResult.kind === "changes")
+      assert.deepEqual(
+        nestedResult.entries.map((e) => e.path),
+        ["own.txt"],
+      );
+    else assert.fail("Expected nested repository changes");
+    const linked = join(root, "linked");
+    git("worktree", "add", "-qb", "linked", linked);
+    await writeFile(join(linked, "nested/a.md"), "linked edit\n");
+    const linkedWorkspace = { ...workspace, primaryDirectory: linked };
+    const changes = await readChannelWorkspace(linkedWorkspace, {
+      ...base,
+      operation: "changes",
+    });
+    assert.equal(changes.kind, "changes");
+    if (changes.kind === "changes")
+      assert.deepEqual(
+        changes.entries.map((e) => e.path),
+        ["nested/a.md"],
+      );
+    const patch = await readChannelWorkspace(linkedWorkspace, {
+      ...base,
+      operation: "diff",
+      path: "nested/a.md",
+    });
+    if (patch.kind === "diff") assert.match(patch.text, /\+linked edit/);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("channel PDF reads reuse bounded private-file checks and reject mislabeled bytes", async () => {
+  const root = await mkdtemp(join(tmpdir(), "loom-workspace-pdf-"));
+  const workspace = {
+    kind: "channel_home" as const,
+    primaryDirectory: root,
+    additionalDirectories: [],
+  };
+  const input = {
+    roomId: "r",
+    rootId: "runtime-project" as const,
+    path: "a.pdf",
+    operation: "read" as const,
+    includeHidden: false,
+  };
+  try {
+    await writeFile(join(root, "a.pdf"), "%PDF-1.7\n");
+    const result = await readChannelWorkspace(workspace, input);
+    assert.equal(result.kind, "read");
+    if (result.kind === "read") {
+      assert.equal(result.value.mimeType, "application/pdf");
+      assert.equal(result.value.encoding, "base64");
+    }
+    await writeFile(join(root, "a.pdf"), "<script>bad</script>");
+    await assert.rejects(readChannelWorkspace(workspace, input), /PDF/);
   } finally {
     await rm(root, { recursive: true, force: true });
   }

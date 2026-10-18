@@ -1,3 +1,4 @@
+import { serveWorkspacePreview } from "./workspace-preview-gateway.ts";
 import { PdfPreviewGateway } from "./pdf-preview-gateway.ts";
 import { sendStaticFile } from "./static-file-response.ts";
 import { recoveryAssetPath, recoveryShell } from "./web-recovery-assets.ts";
@@ -253,6 +254,20 @@ export class LocalWorkbenchGateway {
     }
     this.#setWebBuildHeader(response);
     const requestUrl = new URL(request.url ?? "/", this.origin);
+    if (
+      ["/_rah/workspace-preview/html", "/_rah/workspace-preview/pdf"].includes(
+        requestUrl.pathname,
+      )
+    ) {
+      await serveWorkspacePreview(request, response, {
+        daemonOrigin: this.#daemonOrigin.origin,
+        accessToken: this.#accessToken,
+        pdf: this.#pdf!,
+        authorized: this.#hasSession(request.headers.cookie),
+        origin: this.origin,
+      });
+      return;
+    }
     const pdfMatch = /^\/_rah\/pdf-preview\/([a-f0-9-]{36})$/.exec(
       requestUrl.pathname,
     );

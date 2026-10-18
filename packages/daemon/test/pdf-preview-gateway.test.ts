@@ -79,3 +79,65 @@ test("PDF origin grants only one attachment, expires, and forwards no browser au
     await new Promise<void>((r) => upstream.close(() => r()));
   }
 });
+
+test("workspace PDF grant rechecks room authority and binds exact root/path", async () => {
+  let denied = false;
+  const upstream = createServer(async (req, res) => {
+    assert.equal(req.url, "/v3/client/channels/workspace/read");
+    assert.equal(req.headers.authorization, "Bearer owner");
+    const chunks = [];
+    for await (const chunk of req) chunks.push(chunk);
+    const input = JSON.parse(Buffer.concat(chunks).toString());
+    assert.equal(input.path, "report.pdf");
+    assert.equal(input.operation, "read");
+    if (denied) {
+      res.writeHead(403).end();
+      return;
+    }
+    res.setHeader("content-type", "application/json");
+    res.end(
+      JSON.stringify({
+        kind: "read",
+        value: {
+          rootId: "runtime-project",
+          rootKind: "runtime-project",
+          rootLabel: "工作区",
+          path: "report.pdf",
+          size: 8,
+          encoding: "base64",
+          mimeType: "application/pdf",
+          content: Buffer.from("%PDF-1.7").toString("base64"),
+        },
+      }),
+    );
+  });
+  await new Promise<void>((r) => upstream.listen(0, "127.0.0.1", r));
+  const address = upstream.address();
+  assert.ok(address && typeof address !== "string");
+  const gateway = new PdfPreviewGateway({
+    host: "127.0.0.1",
+    appOrigin: "http://127.0.0.1:4176",
+    daemonOrigin: `http://127.0.0.1:${address.port}`,
+    accessToken: "owner",
+  });
+  try {
+    await gateway.start();
+    const url = await gateway.issueWorkspace({
+      roomId: "r",
+      rootId: "runtime-project",
+      path: "report.pdf",
+      operation: "read",
+      includeHidden: false,
+    });
+    assert.equal(await (await read(url)).text(), "%PDF-1.7");
+    assert.equal(
+      (await read(url.replace("signature=", "signature=0"))).status,
+      403,
+    );
+    denied = true;
+    assert.equal((await read(url)).status, 403);
+  } finally {
+    await gateway.stop();
+    await new Promise<void>((r) => upstream.close(() => r()));
+  }
+});

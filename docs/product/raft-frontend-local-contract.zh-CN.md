@@ -4,11 +4,13 @@
 多 Human 加入、协作及差异化浏览/加入限制延期，不作为首版 Raft 对齐的阻塞项；
 保留本地认证、Agent 参与/执行权限和私有记忆隔离。下方历史计划不改变此范围。
 
-## evo 频道工作区（2026-10-18）
+## evo 频道工作区（2026-10-19）
 
 负责人授权新增频道工作区浏览。使用官方 `AgentDetailPanel → AgentWorkspace → TreeNode / useResizablePanel` 的展示结构与原生 Markdown 切换；本地为结构移植，不称完整组件原样复用。入口在频道标签，不通过伪造 Agent 或发布 Artifact 来浏览文件。`channel.workspace.read` 由应用层按频道成员身份解析固定主目录／附加目录，读取前后复核权限；AgentHost 复用已有有界文件浏览器并提供只读 Git 查询。UI 只保留可取消的读取状态，不写文件、Git、消息或实例状态。
 
-当前 Git 视图为 HEAD 到工作区的合并差异，不是某次模型运行的改动记录；只在选择后读取单个 diff。Markdown、文本、图片支持工作区预览，HTML 只显示源码；PDF 等已发布附件预览保持原有独立链路。根目录必须是普通 Git 仓库，linked worktree、嵌套仓库发现及 Git 写操作不在本批。来源、限制与验证见[证据](../evo/evidence/2026-10-18-channel-workspace/summary.json)。下方旧 Agent 工作区合同为 main 历史，不代表 evo 的新入口。
+当前 Git 视图为 HEAD 到工作区的合并差异，不是某次模型运行的改动记录；只在选择后读取单个 diff，维持512KiB上限，长文本每次展开4000行（非网络流式分页）。Git自行发现普通仓库／linked worktree；授权根是仓库子目录时仅返回其内部路径。独立嵌套仓库作为固定根可用，不递归汇总子仓库，也不提供Git写操作。
+
+Markdown、文本、图片沿用工作区预览。HTML复用官方全屏沙箱和既有reporter；PDF复用官方跨域阅读器和独立listener，工作区PDF限5MiB。两者仍经Human频道权限及AgentHost路径检查；PDF签名绑定准确的Room/root/path，30分钟有效，每次读取重新验证权限，不是文件发布或Artifact。工作区预览不提供附件评论。来源、保留限制及验证见[初始证据](../evo/evidence/2026-10-18-channel-workspace/summary.json)与[本批证据](../evo/evidence/2026-10-19-workspace-completion/summary.json)。下方旧Agent工作区合同为main历史，不代表evo新入口。
 
 ## 决策
 

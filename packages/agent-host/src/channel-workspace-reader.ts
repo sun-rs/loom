@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import { lstat, realpath } from "node:fs/promises";
-import { basename, join } from "node:path";
+import { basename, join, relative, isAbsolute } from "node:path";
 import type {
   ChannelWorkspace,
   ChannelWorkspaceReadRequest,
@@ -62,15 +62,28 @@ export async function readChannelWorkspace(
   if (input.operation === "list")
     return { kind: "list", value: await listWorkspaceRoot(options) };
   if (input.operation === "read")
-    return { kind: "read", value: await readWorkspaceRoot(options) };
+    return {
+      kind: "read",
+      value: await readWorkspaceRoot({ ...options, allowPdf: true }),
+    };
   const home = await realpath(root.rootPath);
-  const metadata = await lstat(join(home, ".git")).catch(() => null);
-  if (!metadata?.isDirectory() || metadata.isSymbolicLink())
+  // Git owns repository discovery (including linked worktrees); the fixed
+  // channel directory remains the filesystem authorization boundary.
+  const repository = await realpath(
+    (await git(home, ["rev-parse", "--show-toplevel"])).trim(),
+  );
+  const scope = relative(repository, home);
+  if (scope.startsWith("..") || isAbsolute(scope))
+    throw new Error("Git repository scope mismatch");
+  const metadata = await lstat(join(repository, ".git")).catch(() => null);
+  if (
+    !metadata ||
+    metadata.isSymbolicLink() ||
+    (!metadata.isDirectory() && !metadata.isFile())
+  )
     throw new Error(
-      "Git inspection requires a repository root; linked worktrees are not supported yet",
+      "Git metadata must be a regular directory or worktree pointer",
     );
-  if ((await git(home, ["rev-parse", "--show-toplevel"])).trim() !== home)
-    throw new Error("Git inspection requires the repository root");
   if (input.operation === "changes") {
     const raw = await git(home, [
       "status",
@@ -78,12 +91,15 @@ export async function readChannelWorkspace(
       "-z",
       "--no-renames",
       "--untracked-files=all",
+      "--",
+      ".",
     ]);
     const entries: { path: string; status: string }[] = [];
     let truncated = false;
     for (const row of raw.split("\0")) {
       if (!row) continue;
-      const path = row.slice(3);
+      const path = relative(home, join(repository, row.slice(3)));
+      if (!path || path.startsWith("..") || isAbsolute(path)) continue;
       try {
         await assertWorkspacePreviewPath(home, path);
       } catch {
