@@ -1,0 +1,56 @@
+{
+  "repair": {
+    "source": "b32e955ad267ff8d8c26f43373332984a39c92b6",
+    "component": "official CloseButton; same size-7 and X14 parameters as instance/task detail",
+    "red": "Live old ghost border color rgba(0, 0, 0, 0) failed black-border assertion. Border width alone was insufficient.",
+    "checks": [
+      "frontend typecheck",
+      "build:web:workbench",
+      "focused memory browser at 1440/390",
+      "format/diff"
+    ],
+    "deployment": {
+      "service": "com.loom.evo",
+      "backupDatabases": 2,
+      "backupFiles": 325,
+      "businessTablesUnchanged": 18,
+      "realPages": [
+        {
+          "width": 1440,
+          "cards": 4,
+          "wideList": true,
+          "detailChecked": true,
+          "errors": []
+        },
+        {
+          "width": 390,
+          "cards": 4,
+          "wideList": true,
+          "detailChecked": true,
+          "errors": []
+        }
+      ]
+    }
+  },
+  "audit": {
+    "files": 97,
+    "syntacticCallsites": 195,
+    "notCoveragePercentage": true,
+    "remainingConfirmed": [
+      "SideWorkspace generic close",
+      "ThreadWorkspace loading/error generic close",
+      "mobile icon hit-area selector does not match current native DOM"
+    ],
+    "mobileObservation": {
+      "viewport": "390x844",
+      "target": "Memory detail CloseButton",
+      "matchesMobileRule": false,
+      "width": 28,
+      "afterContent": "none",
+      "childSlots": [["SPAN", "button-content"]]
+    },
+    "report": "review.zh-CN.md",
+    "inventory": "inventory.json"
+  },
+  "paidCalls": 0
+}
