@@ -28,5 +28,28 @@
     "browser": "Real temporary Kernel, fake Worker, Chromium 1440 and 390x844 DPR1: preview clamp/full body/close width/right-click; editor/history/search/pin/invalidate/restore/delete and unknown replay. Card pin response loss recovered without selecting detail.",
     "limitations": "No paid CLI, no backend behavior change. Existing list/search result limits retained; this batch does not add list pagination or server-side excerpts."
   },
-  "localEvidence": "~/.loom/reviews/2026-10-19-memory-cards/"
+  "localEvidence": "~/.loom/reviews/2026-10-19-memory-cards/",
+  "deployment": {
+    "source": "820943c23a1139710b27545bb2a43f7086141ccb",
+    "service": "com.loom.evo",
+    "backupDatabases": 2,
+    "backupFiles": 325,
+    "businessTablesUnchanged": 18,
+    "realPages": [
+      {
+        "width": 1440,
+        "cards": 4,
+        "wideList": true,
+        "detailChecked": true,
+        "errors": []
+      },
+      {
+        "width": 390,
+        "cards": 4,
+        "wideList": true,
+        "detailChecked": true,
+        "errors": []
+      }
+    ]
+  }
 }
