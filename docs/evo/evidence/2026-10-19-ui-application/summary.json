@@ -1,0 +1,47 @@
+{
+  "scope": "Local action parameter adoption; no frozen upstream or backend changes",
+  "codeCommit": "cf454681",
+  "upstream": "See frontends/raft/adoption.json and loom/ui-contract.json actionBindings",
+  "verification": {
+    "typecheck": "npm run typecheck:loom --prefix frontends/raft: passed",
+    "build": "npm run build:web:workbench: passed; existing >500kB chunk warning retained",
+    "rules": "8 tests passed",
+    "source": "intake, channel-controls-chrome, activity-chrome: 4 passed",
+    "browser": {
+      "memory": [1440, 390],
+      "management": [1440, 390],
+      "attachments": [1440, 390, 820]
+    },
+    "format": "changed files prettier check and git diff --check passed"
+  },
+  "deployment": {
+    "commit": "cf454681f12995812e335e2eb0d7987e80087b4b",
+    "databasesBackedUp": 2,
+    "filesBackedUp": 325,
+    "businessTablesUnchanged": 18,
+    "restartVerified": true,
+    "realPage": [
+      {
+        "width": 1440,
+        "cards": 4,
+        "wideList": true,
+        "detailChecked": true,
+        "errors": []
+      },
+      {
+        "width": 390,
+        "cards": 4,
+        "wideList": true,
+        "detailChecked": true,
+        "errors": []
+      }
+    ],
+    "realEditor": "Opened existing memory; native 32px save; cancel without write on both viewports",
+    "privateEvidenceDirectory": "/Users/sun/.loom/reviews/2026-10-19-ui-application"
+  },
+  "limits": [
+    "No paid CLI calls or backend/full frontend suite.",
+    "No claim of all-theme or all-state pixel parity.",
+    "Binding parameters are local glue, not copied official page code."
+  ]
+}
