@@ -26,5 +26,27 @@
     "browser": "Chromium 1440 and 390x844: toolbar alignment/height, badges, card/detail, border, outline actions and existing memory editing/revision/unknown-result cases.",
     "paidCalls": 0
   },
-  "localEvidence": "~/.loom/reviews/2026-10-19-memory-toolbar/"
+  "localEvidence": "~/.loom/reviews/2026-10-19-memory-toolbar/",
+  "deployment": {
+    "source": "eb5e623d2602cdc4226c6eaaa9bcf7652ad8a639",
+    "backupDatabases": 2,
+    "backupFiles": 325,
+    "businessTablesUnchanged": 18,
+    "realPages": [
+      {
+        "width": 1440,
+        "cards": 4,
+        "wideList": true,
+        "detailChecked": true,
+        "errors": []
+      },
+      {
+        "width": 390,
+        "cards": 4,
+        "wideList": true,
+        "detailChecked": true,
+        "errors": []
+      }
+    ]
+  }
 }
