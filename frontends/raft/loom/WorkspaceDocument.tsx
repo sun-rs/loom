@@ -30,7 +30,7 @@ export default function WorkspaceDocument({
       "?input=" +
       encodeURIComponent(JSON.stringify(request));
     try {
-      if (html) setUrl(endpoint);
+      if (html) setUrl(new URL(endpoint, window.location.origin).href);
       else {
         const response = await fetch(endpoint, { method: "POST" });
         if (!response.ok) throw Error("PDF 预览不可用");

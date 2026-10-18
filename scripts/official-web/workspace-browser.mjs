@@ -134,6 +134,17 @@ export async function verifyWorkspace({ browser, origin, client, channel }) {
       const frame = page.locator("iframe").last();
       await frame.waitFor();
       if (filename.endsWith("html")) {
+        assert.ok(
+          new URL(await frame.getAttribute("src"), origin).searchParams.get(
+            "acBridgeNonce",
+          ),
+          "Native HTML bridge must receive absolute URL and nonce",
+        );
+        await page
+          .locator(
+            '[data-message-affordance="attachment-preview-external-links-loading"]',
+          )
+          .waitFor({ state: "hidden" });
         assert.equal(await frame.getAttribute("sandbox"), "allow-scripts");
         await page
           .frameLocator("iframe")
