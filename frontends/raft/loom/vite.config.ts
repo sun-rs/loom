@@ -1,3 +1,4 @@
+import { adaptTimelineWindow } from "./timeline-window-adaptation.ts";
 import {
   exposeNotificationStatus,
   exposeReleaseNotes,
@@ -80,6 +81,8 @@ export default defineConfig({
           ),
       },
       transform(code, id) {
+        if (id.endsWith("/components/message/MessageTimeline.tsx"))
+          return { code: adaptTimelineWindow(code), map: null };
         if (id.endsWith("/components/settings/ReleaseNotesPanel.tsx"))
           return { code: exposeReleaseNotes(code), map: null };
         if (id.endsWith("/packages/web/src/i18n/LocaleProvider.tsx"))

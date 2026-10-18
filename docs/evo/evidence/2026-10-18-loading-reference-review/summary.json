@@ -1,0 +1,85 @@
+{
+  "scope": "Reference-code review before history-window and initial-resource optimization; no product code or runtime changes.",
+  "sources": [
+    {
+      "name": "Raft",
+      "revision": "a98ae003246a0360872a77d76dec2fccd0347ef7",
+      "url": "https://github.com/botiverse/raft-source",
+      "license": "FSL-1.1-ALv2; existing owner authorization",
+      "files": [
+        "frontends/raft/packages/web/src/components/layout/MainLayout.tsx",
+        "frontends/raft/packages/web/src/components/message/MessageTimeline.tsx"
+      ],
+      "adoption": "Directly reuse native lazy/Suspense page and overlay loading composition. Keep existing message renderers, grouping and anchor owner. No bounded data-window solution found in this native timeline."
+    },
+    {
+      "name": "Matrix JS SDK",
+      "revision": "d0e8162a6b2c10fe44f1a8a9a03354c28aad1488",
+      "url": "https://github.com/matrix-org/matrix-js-sdk/blob/d0e8162a6b2c10fe44f1a8a9a03354c28aad1488/src/timeline-window.ts",
+      "license": "Apache-2.0, source copyright Matrix.org Foundation",
+      "files": ["src/timeline-window.ts", "spec/unit/timeline-window.spec.ts"],
+      "adoption": "Structurally port direction-aware window trim and its boundary test cases into the existing RoomTimelineSession owner; do not add Matrix Room/EventTimeline/client stores. unpaginate advances indices and does not by itself free the underlying EventTimeline arrays.",
+      "fileSha256": {
+        "src/timeline-window.ts": "05301487a143cdb69e6bca783ad71a7b9a7e99386e652f879dad54fcb71d9430",
+        "spec/unit/timeline-window.spec.ts": "543a12404044cd5a7fa5af9663b04e5e37f215e1fffa8b53c64dd7248878770e"
+      }
+    },
+    {
+      "name": "Chatbox",
+      "revision": "0ac6385ae1ff5bf778777826da3c5edcd55b61b8",
+      "url": "https://github.com/chatboxai/chatbox",
+      "license": "GPL-3.0 as present in reviewed LICENSE",
+      "files": ["src/renderer/components/chat/MessageList.tsx"],
+      "adoption": "Reference only, no code copied. Virtuoso receives renderItems built from getAllMessageList(currentSession); virtualization and the bounded scroll-position cache do not establish bounded message storage or transport. Avoid replacing native Raft anchor/rendering logic as first step."
+    },
+    {
+      "name": "Open WebUI",
+      "revision": "91ea4e3421d1d8069f13d4a463fcb5986d94ea60",
+      "url": "https://github.com/open-webui/open-webui",
+      "files": ["src/lib/components/chat/Messages.svelte"],
+      "adoption": "Reference only, no code copied. Incremental display count starts at8 and grows by8; this is not a data-eviction guarantee."
+    }
+  ],
+  "localFindings": [
+    {
+      "file": "packages/client-core/src/room-timeline.ts",
+      "finding": "merge accumulates fetched messages/notices without eviction; before/after/hasEarlier/complete currently describe the entire fetched range."
+    },
+    {
+      "file": "packages/client-core/src/index.ts",
+      "finding": "RoomSession cold sync already uses latest bootstrap and retains a bounded event window; do not rewrite its causal or ACK semantics to solve presentation history growth."
+    },
+    {
+      "file": "frontends/raft/loom/channel-client.ts",
+      "finding": "Non-focus refresh automatically syncs newer history. After tail eviction, blindly reusing this path would refill the evicted tail and displace the historical reading position."
+    },
+    {
+      "file": "frontends/raft/packages/web/src/components/message/MessageTimeline.tsx",
+      "finding": "Simultaneous first/last ID changes are handled as full-window swaps, unlike prepend anchor restoration. Opposite-edge eviction must preserve the live visible anchor; a persistent focus ID must not recenter on every window shift."
+    },
+    {
+      "file": "frontends/raft/loom/ChannelApp.tsx",
+      "finding": "SettingsPage, AgentPage, TasksPage, SavedPanel, MemoryPage and DiscoveryPage still have static imports; official MainLayout already lazy-loads corresponding native panels."
+    },
+    {
+      "file": "frontends/raft/loom/SearchOverlayContent.tsx",
+      "finding": "DiscoveryPage is also a value import here; converting only ChannelApp import to lazy would not remove the static import path through TopBarSearch/context."
+    }
+  ],
+  "implementationOrder": [
+    "Reuse native page/overlay Suspense fallbacks and dynamic imports; remove parallel static import edges; assert non-chat panels absent before navigation, then load successfully with desktop/mobile layout preserved.",
+    "Add bounded bidirectional RoomTimelineSession storage with explicit head/tail availability, distinguish historical reading from latest-following, maintain original stable identities and single cursor owner. Adapt native anchor preservation for trimming without replacing the entire timeline.",
+    "Measure fixed 50/5000/50000-message fixtures: first-page bytes and request count, retained items, DOM nodes, old/new round trips, memory plateau and resource requests. No paid models needed.",
+    "Consider generic virtualization only if bounded data and measured DOM cost still warrant it; do not import a second anchor manager preemptively."
+  ],
+  "requiredRegressionCases": [
+    "Backward load evicts newest side and preserves the visible message/pixel offset",
+    "Forward load evicts oldest side with no duplicate IDs or skipped boundaries",
+    "New messages while reading old history do not yank the window to latest or refill discarded pages",
+    "Search/activity deep-link focuses exact message, subsequent scrolling does not repeatedly recenter",
+    "Image expansion, thread/inspector width changes and mobile keyboard preserve native anchoring",
+    "Window replacement invalidates stale async responses without acknowledging read/Inbox/Task",
+    "Long single messages require a byte/render budget as well as an item-count limit"
+  ],
+  "verification": "Read-only source review. No implementation, test acceptance, deployment, performance improvement or paid-run claim."
+}

@@ -1,3 +1,5 @@
+import { verifyHistoryWindow } from "./history-window-browser.mjs";
+import { verifyLoading } from "./loading-browser.mjs";
 import { verifyWorkspace } from "./workspace-browser.mjs";
 import { verifyMobileDensity } from "./mobile-density-browser.mjs";
 import { verifySaved } from "./saved-browser.mjs";
@@ -170,7 +172,25 @@ try {
   browser = await (
     process.env.LOOM_BROWSER_ENGINE === "webkit" ? webkit : chromium
   ).launch({ headless: true });
-  if (process.env.LOOM_BROWSER_SLICE === "workspace") {
+  if (process.env.LOOM_BROWSER_SLICE === "history-window") {
+    console.log(
+      JSON.stringify(
+        await verifyHistoryWindow({
+          browser,
+          origin,
+          client,
+          channel: channels[0],
+          head,
+        }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "loading") {
+    console.log(
+      JSON.stringify(
+        await verifyLoading({ browser, origin, channel: channels[0] }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "workspace") {
     console.log(
       JSON.stringify(
         await verifyWorkspace({

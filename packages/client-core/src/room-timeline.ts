@@ -1,3 +1,9 @@
+/*
+ * Window-trimming design adapted from matrix-js-sdk TimelineWindow.
+ * Copyright 2016 - 2021 The Matrix.org Foundation C.I.C.
+ * Licensed under Apache-2.0; see licenses/matrix-Apache-2.0.txt.
+ * Local changes: owned bounded arrays, byte budget, pinned overlap, Loom cursors.
+ */
 import type { RahClient } from "@rah-os/client-sdk";
 import type {
   ClientRoomTimelineResponse,
@@ -16,6 +22,10 @@ function identity(item: RoomTimelineItem) {
 /** The sole timeline cursor/window owner. Read-only; never advances human read or delivery ACK. */
 export class RoomTimelineSession {
   private initialized = false;
+  private followingLatest = true;
+  private knownHead = 0;
+  private observedHead = 0;
+  private generation = 0;
   private before = 0;
   private after = 0;
   private earlier = false;
@@ -33,8 +43,62 @@ export class RoomTimelineSession {
       cursorBefore: this.before,
       cursorAfter: this.after,
       hasEarlier: this.earlier,
-      complete: this.complete,
+      complete: this.complete && this.observedHead >= this.knownHead,
     });
+  }
+  setFollowingLatest(value: boolean) {
+    this.followingLatest = value;
+  }
+  /** Poll durable state without refilling a historical window behind the reader. */
+  async refresh(
+    options: { latestRoomSeq?: number; signal?: AbortSignal } = {},
+  ) {
+    this.knownHead = Math.max(this.knownHead, options.latestRoomSeq ?? 0);
+    if (this.initialized && (!this.complete || !this.followingLatest))
+      return this.state;
+    return this.syncUntilCurrent({
+      limit: 50,
+      maxPages: 2,
+      ...(options.signal ? { signal: options.signal } : {}),
+    });
+  }
+  private assertCurrent(generation: number, signal?: AbortSignal) {
+    signal?.throwIfAborted();
+    if (generation !== this.generation)
+      throw new Error("Timeline read superseded");
+  }
+  /** Matrix TimelineWindow's opposite-edge trim, applied to owned data rather than indices.
+   * Apache-2.0 reference: d0e8162, src/timeline-window.ts extend/unpaginate.
+   * Keep one oversized item intact rather than silently truncating message bodies. */
+  private trim(
+    direction: "older" | "newer",
+    focusId?: string,
+    retainSeq?: number,
+  ) {
+    const sizes = this.items.map(
+      (item) => new TextEncoder().encode(JSON.stringify(item)).length,
+    );
+    let bytes = sizes.reduce((a, b) => a + b, 0),
+      start = 0,
+      end = this.items.length;
+    const focus = this.items.findIndex((i) =>
+      focusId
+        ? i.kind === "message" && i.message.messageId === focusId
+        : timelinePosition(i).roomSeq === retainSeq,
+    );
+    while (end - start > 1 && (end - start > 300 || bytes > 2 * 1024 * 1024)) {
+      const dropStart =
+        focus >= 0 ? focus - start >= end - 1 - focus : direction === "newer";
+      if (dropStart) bytes -= sizes[start++]!;
+      else bytes -= sizes[--end]!;
+    }
+    if (start > 0) this.earlier = true;
+    if (end < this.items.length) this.complete = false;
+    this.items = Object.freeze(this.items.slice(start, end));
+    if (this.items.length) {
+      this.before = timelinePosition(this.items[0]!).roomSeq;
+      this.after = timelinePosition(this.items.at(-1)!).roomSeq;
+    }
   }
   private validate(
     page: ClientRoomTimelineResponse,
@@ -84,6 +148,8 @@ export class RoomTimelineSession {
   }
   /** Replace the window around a validated message, without reading intervening history. */
   async focus(messageId: string, signal?: AbortSignal) {
+    const generation = ++this.generation,
+      head = this.knownHead;
     const { message } = await this.client.request(
       "message.context",
       { roomId: this.roomId, messageId },
@@ -113,6 +179,7 @@ export class RoomTimelineSession {
       { roomId: this.roomId, afterSeq: message.roomSeq, limit: 25 },
       signal ? { signal } : undefined,
     );
+    this.assertCurrent(generation, signal);
     this.validate(following, { afterSeq: message.roomSeq });
     this.items = Object.freeze([...page.items, ...following.items]);
     this.before = page.cursorBefore;
@@ -120,11 +187,16 @@ export class RoomTimelineSession {
     this.earlier = page.hasMoreBefore;
     this.complete = !following.hasMoreAfter;
     this.initialized = true;
+    this.followingLatest = false;
+    this.observedHead = head;
+    this.trim("newer", messageId);
     return this.state;
   }
   async syncUntilCurrent(
     options: { limit?: number; maxPages?: number; signal?: AbortSignal } = {},
   ) {
+    const generation = ++this.generation,
+      head = this.knownHead;
     const maxPages = options.maxPages ?? 2;
     if (!Number.isInteger(maxPages) || maxPages < 1 || maxPages > 100)
       throw new Error("Invalid timeline page budget");
@@ -135,6 +207,7 @@ export class RoomTimelineSession {
         { roomId: this.roomId, limit: options.limit ?? 50, ...boundary },
         options.signal ? { signal: options.signal } : undefined,
       );
+      this.assertCurrent(generation, options.signal);
       this.validate(page, boundary);
       if (!this.initialized || (!this.items.length && page.items.length)) {
         this.before = page.cursorBefore;
@@ -143,6 +216,8 @@ export class RoomTimelineSession {
       this.after = page.cursorAfter;
       this.complete = !page.hasMoreAfter;
       this.merge(page);
+      this.observedHead = head;
+      this.trim("newer", undefined, boundary.afterSeq);
       this.initialized = true;
       if (this.complete) break;
     }
@@ -151,6 +226,7 @@ export class RoomTimelineSession {
   async loadEarlier(options: { limit?: number; signal?: AbortSignal } = {}) {
     if (!this.initialized) return this.syncUntilCurrent(options);
     if (!this.earlier) return this.state;
+    const generation = ++this.generation;
     const boundary = { beforeSeq: this.before };
     const page = await this.client.request(
       "room.timeline",
@@ -158,9 +234,11 @@ export class RoomTimelineSession {
       options.signal ? { signal: options.signal } : undefined,
     );
     this.validate(page, boundary);
+    this.assertCurrent(generation, options.signal);
     this.before = page.cursorBefore;
     this.earlier = page.hasMoreBefore;
     this.merge(page);
+    this.trim("older", undefined, boundary.beforeSeq);
     return this.state;
   }
 }

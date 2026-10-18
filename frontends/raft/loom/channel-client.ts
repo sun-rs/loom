@@ -106,8 +106,10 @@ export class LoomChannelClient {
         this.messages = new RoomTimelineSession(this.client, this.roomId);
       if (focusId && focusId !== this.focusId)
         await this.messages.focus(focusId);
-      else if (!focusId || this.messages.state.complete)
-        await this.messages.syncUntilCurrent({ limit: 50, maxPages: 2 });
+      else
+        await this.messages.refresh({
+          latestRoomSeq: this.room.state.latestRoomSeq,
+        });
       this.focusId = focusId;
       this.threads = (
         await this.client.request("thread.list", { roomId: this.roomId })

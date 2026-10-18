@@ -24,6 +24,7 @@ const mentionMap = new Map();
 /** ChatPanel's native system-row/disclosure composition; Loom owns only the read source. */
 export default function ChannelTimeline({
   roomId,
+  onAtBottomChange,
   focusId,
   hasNewer = false,
   loadNewer = async () => {},
@@ -37,6 +38,7 @@ export default function ChannelTimeline({
   threads = [],
 }: {
   roomId: string;
+  onAtBottomChange?: (atBottom: boolean) => void;
   focusId?: string;
   hasNewer?: boolean;
   loadNewer?: () => Promise<void>;
@@ -129,6 +131,7 @@ export default function ChannelTimeline({
     <MessageProfileMembers.Provider value={members}>
       <MessageTimeline
         ref={timeline}
+        onAtBottomChange={onAtBottomChange}
         source={{
           messages,
           hasOlder,

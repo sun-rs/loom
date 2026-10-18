@@ -2,7 +2,7 @@ import MobileBottomBarStack from "../packages/web/src/components/layout/MobileBo
 import SideWorkspace from "./SideWorkspace.tsx";
 import type { ReactNode } from "react";
 import { showToast } from "../packages/web/src/components/toastBridge.ts";
-import SavedPanel from "./SavedPanel.tsx";
+import { LazySavedPanel as SavedPanel } from "./LazyPages.tsx";
 import { MessageReactionsProvider } from "./MessageReactions.tsx";
 import { SystemNotificationsProvider } from "./SystemNotifications.tsx";
 import ChannelTabs from "./ChannelTabs.tsx";
@@ -16,10 +16,10 @@ import {
   LoomLiveActivity,
 } from "./AppearanceRuntime.tsx";
 import { ChannelTasksContext, useChannelTasks } from "./ChannelTasks.tsx";
-import TasksPage from "./TasksPage.tsx";
+import { LazyTasksPage as TasksPage } from "./LazyPages.tsx";
 import ThreadContentSlot from "./ThreadContentSlot.tsx";
 import ThreadWorkspace from "./ThreadWorkspace.tsx";
-import SettingsPage from "./SettingsPage.tsx";
+import { LazySettingsPage as SettingsPage } from "./LazyPages.tsx";
 import ChannelControl from "./ChannelControl.tsx";
 import InstanceInspector from "./InstanceInspector.tsx";
 import { bindMemberRoster } from "./member-roster.ts";
@@ -28,7 +28,7 @@ import ChannelTimeline from "./ChannelTimeline.tsx";
 import { useResizablePanel } from "../packages/web/src/hooks/useResizablePanel.ts";
 import { SIDEBAR_PANEL_BOUNDS } from "../packages/web/src/lib/panelBounds.ts";
 import PanelResizeHandle from "../packages/web/src/components/ui/PanelResizeHandle.tsx";
-import DiscoveryPage from "./DiscoveryPage.tsx";
+import { LazyDiscoveryPage as DiscoveryPage } from "./LazyPages.tsx";
 import {
   DesktopNavigation,
   MobileNavigation,
@@ -64,8 +64,8 @@ import { hasUnresolvedIntents } from "@rah-os/client-core/write-intent";
 import { loadOrCreateConsumerId } from "@rah-os/client-core";
 import ChannelSidebar from "./ChannelSidebar.tsx";
 import ChatSidebarFrame from "./ChatSidebarFrame.tsx";
-import MemoryPage from "./MemoryPage.tsx";
-import AgentPage from "./AgentPage.tsx";
+import { LazyMemoryPage as MemoryPage } from "./LazyPages.tsx";
+import { LazyAgentPage as AgentPage } from "./LazyPages.tsx";
 import PanelHeader from "../packages/web/src/components/ui/PanelHeader.tsx";
 import MessageInput from "./ComposerFiles.tsx";
 import { LoomChannelClient, loadChannelDirectory } from "./channel-client.ts";
@@ -453,6 +453,9 @@ function Channel({
                     <ChannelTimeline
                       key={focusId ?? "latest"}
                       focusId={threadRootId ? undefined : focusId}
+                      onAtBottomChange={(atBottom) =>
+                        bridge.messages.setFollowingLatest(atBottom)
+                      }
                       hasNewer={view.hasNewer}
                       loadNewer={async () => {
                         setView(await bridge.newer());
@@ -666,6 +669,8 @@ export default function ChannelApp() {
     [background, routeParams],
   );
   const destination = params.get("view") ?? "channels";
+  const agentsVisited = useRef(false);
+  if (destination === "agents") agentsVisited.current = true;
   const activityNavigation = useRef(0);
   const [discoveryProfileOpen, setDiscoveryProfileOpen] = useState(false);
   const lastChatRoom = useRef<string | undefined>(undefined);
@@ -1115,17 +1120,18 @@ export default function ChannelApp() {
                       )}
                     </AppShellMainSlot>
                   </div>
-                  {directory?.workspace.controlRoomId && (
-                    <AgentPage
-                      client={client}
-                      workspaceId={directory.workspace.workspaceId}
-                      controlRoomId={directory.workspace.controlRoomId}
-                      active={destination === "agents"}
-                      notice={privateNotice}
-                      onOpenChannel={select}
-                      onOpenPrivate={openPrivate}
-                    />
-                  )}
+                  {agentsVisited.current &&
+                    directory?.workspace.controlRoomId && (
+                      <AgentPage
+                        client={client}
+                        workspaceId={directory.workspace.workspaceId}
+                        controlRoomId={directory.workspace.controlRoomId}
+                        active={destination === "agents"}
+                        notice={privateNotice}
+                        onOpenChannel={select}
+                        onOpenPrivate={openPrivate}
+                      />
+                    )}
                   {directory && destination === "memory" && (
                     <MemoryPage client={client} rooms={directory.channels} />
                   )}
