@@ -33,5 +33,29 @@
     "Static close-label guard covers literal local Chinese aria-labels and explicit marker bindings; dynamic labels and frozen upstream descendants require scenario checks.",
     "Existing upstream and authorized mobile differences remain; no blanket ghost/size replacement."
   ],
-  "localEvidence": "~/.loom/reviews/2026-10-19-ui-contract/"
+  "localEvidence": "~/.loom/reviews/2026-10-19-ui-contract/",
+  "deployment": {
+    "source": "5b499e15bcd6b34ffc321aee522f7b9658c0fd44",
+    "service": "com.loom.evo",
+    "backupDatabases": 2,
+    "backupFiles": 325,
+    "businessTablesUnchanged": 18,
+    "realPages": [
+      {
+        "width": 1440,
+        "cards": 4,
+        "wideList": true,
+        "detailChecked": true,
+        "errors": []
+      },
+      {
+        "width": 390,
+        "cards": 4,
+        "wideList": true,
+        "detailChecked": true,
+        "errors": []
+      }
+    ],
+    "realMobileOuterHit": "44px pseudo-element and elementFromPoint owner verified; click outside painted square closed detail"
+  }
 }
