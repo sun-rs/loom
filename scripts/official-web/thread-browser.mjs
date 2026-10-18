@@ -332,6 +332,21 @@ export async function verifyThreads({
         await panel.getByText(root.body, { exact: true }).count(),
         0,
       );
+      const fallbackClose = panel.getByTestId("thread-close");
+      assert.equal(
+        await fallbackClose.getAttribute("data-loom-control"),
+        "detail-close",
+      );
+      if (width === 1440) {
+        assert.match(
+          await fallbackClose.evaluate(
+            (el) => getComputedStyle(el).borderTopColor,
+          ),
+          /^(rgb\(0, 0, 0\)|oklch\(0 0 0\))$/,
+        );
+        await fallbackClose.click();
+      } else await panel.getByTestId("thread-mobile-back").click();
+      await panel.waitFor({ state: "detached" });
       assert.equal(sends.length, 2);
       assert.deepEqual(errors, []);
       assert.deepEqual(external, []);

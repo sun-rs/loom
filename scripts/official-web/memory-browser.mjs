@@ -171,12 +171,36 @@ for (const width of [1440, 390]) {
     );
     assert.equal(
       closeStyle.width,
-      28,
-      "same compact close control as instance/task detail",
+      width === 390 ? 32 : 28,
+      "official compact close with approved mobile adaptation",
     );
-    await page
-      .getByRole("button", { name: "关闭记忆正文", exact: true })
-      .click();
+    if (width === 390) {
+      const close = page.getByRole("button", {
+        name: "关闭记忆正文",
+        exact: true,
+      });
+      const hit = await close.evaluate((el) => {
+        const r = el.getBoundingClientRect(),
+          style = getComputedStyle(el, "::after");
+        return {
+          x: r.left - 4,
+          y: r.top + r.height / 2,
+          width: style.width,
+          height: style.height,
+          owns:
+            document
+              .elementFromPoint(r.left - 4, r.top + r.height / 2)
+              ?.closest("button") === el,
+        };
+      });
+      assert.equal(hit.width, "44px");
+      assert.equal(hit.height, "44px");
+      assert.ok(hit.owns, "outer touch area targets the close button");
+      await page.mouse.click(hit.x, hit.y);
+    } else
+      await page
+        .getByRole("button", { name: "关闭记忆正文", exact: true })
+        .click();
     await page.getByTestId("memory-detail").waitFor({ state: "detached" });
     await longCard.waitFor();
     assert.equal(

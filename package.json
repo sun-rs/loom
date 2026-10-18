@@ -53,6 +53,7 @@
     "measure:s6-memory": "LOOM_S6_OVERHEAD_REPORT=1 node --test packages/daemon/test/channel-memory-overhead.test.ts",
     "test:cli:drift": "node scripts/test-long-session-drift.mjs",
     "test:cli:drift:unit": "node --test scripts/cli-efficiency/drift-*.test.mjs scripts/cli-efficiency/model-guard.test.mjs scripts/cli-efficiency/claude-*.test.mjs scripts/cli-efficiency/guarded-shim.test.mjs scripts/cli-efficiency/approved-models.test.mjs scripts/cli-efficiency/gate-evidence.test.mjs scripts/cli-efficiency/tool-calls.test.mjs scripts/cli-efficiency/gate-daemon.test.mjs",
+    "test:official-web:ui-contract": "node --test scripts/official-web/ui-contract.test.mjs",
     "test:official-web:source": "node --test scripts/official-web/*.test.mjs scripts/official-web/*.test.ts",
     "build:official-web": "npm run typecheck:loom --prefix frontends/raft && npm run build --prefix frontends/raft",
     "test:official-web:browser": "node scripts/official-web/browser-baseline.mjs",

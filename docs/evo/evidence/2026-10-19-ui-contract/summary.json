@@ -1,0 +1,37 @@
+{
+  "scope": "Adopt official UI scenario rules and enforce first concrete closure/mobile slice. No second design system or backend changes.",
+  "maintainedOwners": {
+    "instructions": "AGENTS.md Mandatory Raft UI layering",
+    "guide": "docs/design/raft-ui-adoption-contract.zh-CN.md",
+    "registry": "frontends/raft/loom/ui-contract.json",
+    "guard": "scripts/official-web/ui-contract.test.mjs",
+    "command": "npm run test:official-web:ui-contract",
+    "existingGate": "included by test:official-web:source wildcard"
+  },
+  "implemented": [
+    "Eight scenario families reference official owners rather than copied tokens. Explicit exceptions for compact mobile adaptation, memory task-toolbar mapping and task mobile back.",
+    "Local detail-close callsites carry semantic marker; Side and unloaded/error thread fallback reuse official CloseButton.",
+    "Mobile CSS targets explicit detail-close/panel-back markers or native panel-action slot, not incidental SVG/span nesting.",
+    "Existing native mobile Side/thread X visibility retained; mobile uses back."
+  ],
+  "verification": {
+    "red": "Three initial guard assertions failed on old Side/Thread close binding, absent semantic marker and DOM-inference CSS.",
+    "guards": 5,
+    "sourceChecks": 4,
+    "types": "frontend typecheck passed",
+    "build": "build:web:workbench passed",
+    "browser": [
+      "Memory 1440/390: actual outer 44px hit area closes detail, plus revision/editor/unknown result regressions.",
+      "Side/Fork temporary real Kernel with fake runtimes at 1440/390: close/native back, reload/reopen, unknown replay and source isolation.",
+      "Threads temporary Core/fake runtime at 1440/390: fallback close/back, foreign root, normal/native/error paths and unknown replay."
+    ],
+    "testCorrections": "Initial new assertions incorrectly expected a visible Side X on mobile and a local marker on the already-loaded upstream ThreadPanel. Corrected to source-defined visibility and tested the actual unloaded/error fallback.",
+    "paidCalls": 0
+  },
+  "limits": [
+    "Not every control in every theme has a visual certification. Registry membership is ownership, not acceptance.",
+    "Static close-label guard covers literal local Chinese aria-labels and explicit marker bindings; dynamic labels and frozen upstream descendants require scenario checks.",
+    "Existing upstream and authorized mobile differences remain; no blanket ghost/size replacement."
+  ],
+  "localEvidence": "~/.loom/reviews/2026-10-19-ui-contract/"
+}

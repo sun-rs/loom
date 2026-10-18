@@ -1,0 +1,131 @@
+{
+  "scope": "evo official-source UI adoption; registry of ownership and scenario bindings, not a second theme or size system",
+  "sourceVersions": {
+    "pageSource": "frontends/raft/adoption.json",
+    "primitiveSource": "frontends/raft/node_modules/raft-ui/package.json"
+  },
+  "families": [
+    {
+      "id": "foundation",
+      "owner": "raft-ui Button and recipes",
+      "rule": "Use native size/variant/state recipes. Defined defaults are allowed; unexplained page overrides are not.",
+      "sources": [
+        "frontends/raft/packages/web/tests/channelHeaderActionButtons.test.ts"
+      ]
+    },
+    {
+      "id": "detail-close",
+      "owner": "official CloseButton",
+      "rule": "Local detail dismissal uses the official component, preserving navigation and unresolved-write guards. Loading/error branches follow the same rule.",
+      "sources": [
+        "frontends/raft/packages/web/src/components/ui/CloseButton.tsx",
+        "frontends/raft/packages/web/tests/panelHeaderButtonHeights.test.ts"
+      ],
+      "bindings": [
+        "MemoryPage.tsx",
+        "InstanceInspector.tsx",
+        "TaskDetail.tsx",
+        "SideWorkspace.tsx",
+        "ThreadWorkspace.tsx"
+      ],
+      "localMarker": "detail-close",
+      "guard": "scripts/official-web/ui-contract.test.mjs"
+    },
+    {
+      "id": "dialog-close",
+      "owner": "raft-ui DialogClose / DrawerClose",
+      "rule": "Keep container focus return, Escape and dismissal fences. Do not replace with generic detail close.",
+      "sources": [
+        "frontends/raft/packages/web/src/components/channel/EditChannelDialog.tsx"
+      ]
+    },
+    {
+      "id": "filter",
+      "owner": "official PickerTriggerButton or the source toolbar's Button parameters",
+      "rule": "Reuse the owning toolbar recipe, not a form-field selector. Task and memory filter adaptation does not redefine all filter sizes.",
+      "sources": [
+        "frontends/raft/packages/web/src/components/search/MessageSearchPage.tsx"
+      ],
+      "bindings": [
+        "SearchFilters.tsx",
+        "SearchIdentityFilter.tsx",
+        "TasksPage.tsx",
+        "MemoryFilters.tsx"
+      ]
+    },
+    {
+      "id": "form",
+      "owner": "official FieldSelectTrigger and raft-ui form primitives",
+      "rule": "Use the field family with its labels, validation and disabled state; no toolbar-sized substitutions.",
+      "sources": [
+        "frontends/raft/packages/web/src/components/agent/StableField.tsx"
+      ],
+      "bindings": ["ManagementUi.tsx"]
+    },
+    {
+      "id": "message-composer",
+      "owner": "official message toolbar / composer components",
+      "rule": "Preserve hover/touch disclosure, disabled/pending semantics and composer event rules. Do not bulk-convert ghost to outline.",
+      "sources": [
+        "frontends/raft/packages/web/src/components/message/MessageInput.tsx"
+      ],
+      "bindings": ["ComposerFiles.tsx", "MessageReactions.tsx"]
+    },
+    {
+      "id": "navigation-disclosure",
+      "owner": "official sidebar / segmented / tree / disclosure components",
+      "rule": "Native HTML buttons are allowed when structurally ported from the matching source. A row or back arrow is not a submit or X-close action.",
+      "sources": [
+        "frontends/raft/packages/web/src/components/agent/AgentWorkspace.tsx"
+      ],
+      "bindings": [
+        "ChannelSidebar.tsx",
+        "WorkspaceNativeParts.tsx",
+        "TaskDetail.tsx"
+      ]
+    },
+    {
+      "id": "confirmation",
+      "owner": "official dialog/action primitives and feature authorization",
+      "rule": "Variant conveys priority; preserve existing confirmation, revision and unknown-result handling. Do not infer business rules from a button label.",
+      "sources": [
+        "frontends/raft/packages/web/src/components/ConfirmDialog.tsx"
+      ],
+      "bindings": ["DiscardChangesDialog.tsx", "MemoryEditor.tsx"]
+    }
+  ],
+  "exceptions": [
+    {
+      "id": "mobile-compact",
+      "owner": "owner-approved compact mobile adaptation, preserved by AGENTS.md",
+      "implementation": "frontends/raft/loom/mobile.css",
+      "rule": "Paint and hit area are separate. Use explicit data-loom-control detail-close/panel-back or official panel-action slot. Validate actual pointer targets, neighboring actions and disabled state; do not infer semantics from SVG/span nesting.",
+      "guard": "scripts/official-web/ui-contract.test.mjs",
+      "browser": "scripts/official-web/memory-browser.mjs"
+    },
+    {
+      "id": "memory-task-toolbar",
+      "owner": "owner instruction 2026-10-19",
+      "implementation": "frontends/raft/loom/MemoryFilters.tsx",
+      "rule": "Memory filter buttons adopt current task-toolbar parameters; this is not a global replacement of PickerTriggerButton or form fields.",
+      "browser": "scripts/official-web/memory-browser.mjs"
+    },
+    {
+      "id": "task-mobile-back",
+      "owner": "official task mobile full-screen navigation; retained Loom task presentation",
+      "implementation": "frontends/raft/loom/TaskDetail.tsx",
+      "rule": "The mobile control labelled close is a back arrow; preserve its Button outline and navigation semantics rather than replacing with an X.",
+      "selector": {
+        "file": "TaskDetail.tsx",
+        "testId": "task-modal-mobile-back"
+      },
+      "guard": "scripts/official-web/ui-contract.test.mjs",
+      "browser": "scripts/official-web/thread-browser.mjs"
+    }
+  ],
+  "limits": [
+    "Bindings identify ownership and review scope; listing a file is not visual acceptance.",
+    "The automated guard currently enforces local detail closures, registered provenance and mobile selector semantics; it does not prove every control in every theme conforms.",
+    "Frozen upstream components retain their own contracts. Changing their DOM adaptation requires a scoped integration check."
+  ]
+}

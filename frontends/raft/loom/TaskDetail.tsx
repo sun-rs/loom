@@ -128,6 +128,7 @@ export default function TaskDetail({
             onClick={close}
             aria-label="关闭任务"
             data-testid="task-modal-mobile-back"
+            data-loom-control="panel-back"
             size="icon-sm"
             variant="outline"
             className="size-7 shrink-0"
@@ -148,6 +149,7 @@ export default function TaskDetail({
         </div>
         {!mobile && (
           <CloseButton
+            data-loom-control="detail-close"
             onClick={close}
             aria-label="关闭任务"
             data-testid="task-modal-close"

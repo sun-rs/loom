@@ -65,8 +65,11 @@
 
   /* Native section actions paint at 30dp (+2dp shadow). The surrounding
    * transparent hit surface is 44px; do not inflate the painted square. */
-  :is([data-loom-root-header], [data-slot="panel-header"])
-    button:has(> svg):not(:has(span)) {
+  :is(
+    [data-loom-control="detail-close"],
+    [data-loom-control="panel-back"],
+    [data-slot="panel-action"]
+  ) {
     position: relative;
     width: 32px;
     height: 32px;
@@ -74,8 +77,11 @@
     min-height: 32px;
     padding: 6px;
   }
-  :is([data-loom-root-header], [data-slot="panel-header"])
-    button:has(> svg):not(:has(span))::after {
+  :is(
+    [data-loom-control="detail-close"],
+    [data-loom-control="panel-back"],
+    [data-slot="panel-action"]
+  )::after {
     content: "";
     position: absolute;
     width: 44px;

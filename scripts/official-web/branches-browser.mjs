@@ -169,6 +169,27 @@ for (const width of [1440, 390]) {
     assert.deepEqual((await replay).postDataJSON(), first);
     const panel = page.getByTestId("side-panel");
     await panel.waitFor();
+    if (width === 1440) {
+      const closeStyle = await panel
+        .getByRole("button", { name: "关闭 Side" })
+        .evaluate((el) => ({
+          border: getComputedStyle(el).borderTopColor,
+          marker: el.getAttribute("data-loom-control"),
+        }));
+      assert.match(closeStyle.border, /^(rgb\(0, 0, 0\)|oklch\(0 0 0\))$/);
+      assert.equal(closeStyle.marker, "detail-close");
+    } else {
+      assert.equal(
+        await panel.getByTestId("thread-close").isVisible(),
+        false,
+        "native mobile uses back instead of X",
+      );
+      const back = panel.getByTestId("thread-mobile-back");
+      assert.equal(
+        await back.evaluate((el) => getComputedStyle(el, "::after").width),
+        "44px",
+      );
+    }
     assert.equal(copies, 2);
     assert.equal(
       f.kernel.roles.list(f.actor, { controlRoomId: f.controlRoomId }).instances

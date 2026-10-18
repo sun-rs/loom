@@ -1,3 +1,4 @@
+import CloseButton from "../packages/web/src/components/ui/CloseButton.tsx";
 import { MessageReactionsProvider } from "./MessageReactions.tsx";
 import ThreadFollowers from "./ThreadFollowers.tsx";
 import ThreadFollowMenu from "./ThreadFollowMenu.tsx";
@@ -329,15 +330,13 @@ export default function ThreadWorkspace({
                 onMobileBack={close}
                 mobileBackProps={{ "data-testid": "thread-mobile-back" }}
                 actions={
-                  <Button
+                  <CloseButton
+                    data-loom-control="detail-close"
                     data-testid="thread-close"
-                    size="icon-sm"
-                    variant="ghost"
+                    className="flex size-7 shrink-0 items-center justify-center"
                     aria-label="关闭消息列"
                     onClick={close}
-                  >
-                    ×
-                  </Button>
+                  />
                 }
               />
               <div

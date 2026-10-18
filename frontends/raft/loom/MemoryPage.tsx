@@ -357,6 +357,7 @@ export default function MemoryPage({
                   </>
                 )}
                 <CloseButton
+                  data-loom-control="detail-close"
                   className="flex size-7 shrink-0 items-center justify-center"
                   aria-label="关闭记忆正文"
                   disabled={busy}

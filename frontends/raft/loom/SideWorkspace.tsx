@@ -1,3 +1,4 @@
+import CloseButton from "../packages/web/src/components/ui/CloseButton.tsx";
 import {
   useEffect,
   useMemo,
@@ -123,15 +124,15 @@ export default function SideWorkspace({
   });
   const actions = (
     <>
-      <Button
-        size="icon-sm"
-        variant="ghost"
+      <CloseButton
+        data-loom-control="detail-close"
+        className="flex size-7 shrink-0 items-center justify-center"
         aria-label="关闭 Side"
         data-testid="thread-close"
         onClick={close}
       >
         <X size={14} />
-      </Button>
+      </CloseButton>
     </>
   );
   return (

@@ -172,6 +172,7 @@ export default function InstanceInspector({
                 />
               )}
               <CloseButton
+                data-loom-control="detail-close"
                 onClick={onClose}
                 className="size-7 items-center justify-center hidden md:flex"
                 aria-label="关闭实例详情"

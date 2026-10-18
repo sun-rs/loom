@@ -415,6 +415,11 @@ including Loom-only features, loading/error states and mobile presentations.
   size, all `ghost` variants to `outline`, or all close affordances to the same
   component without checking their scenario contract.
 
+Maintain the [adoption rules](docs/design/raft-ui-adoption-contract.zh-CN.md)
+and [scenario registry](frontends/raft/loom/ui-contract.json) when bindings or
+intentional exceptions change. Run `npm run test:official-web:ui-contract` for
+affected controls; this guard is also included in the existing source checks.
+
 The [2026-10-19 button audit](docs/evo/evidence/2026-10-19-button-audit/review.zh-CN.md)
 records source evidence and known gaps at that revision; it is not proof that
 every current control conforms. Consult the current adopted source/package
