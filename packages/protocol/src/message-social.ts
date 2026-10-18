@@ -134,8 +134,8 @@ const CustomSections = z
     "duplicate section or placement",
   );
 const ChannelPanelTabOrder = z
-  .array(z.enum(["chat", "tasks"]))
-  .max(2)
+  .array(z.enum(["chat", "tasks", "workspace"]))
+  .max(3)
   .refine((v) => new Set(v).size === v.length);
 export const SidebarPreferencesSchema = z
   .object({

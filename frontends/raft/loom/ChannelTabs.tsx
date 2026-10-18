@@ -5,7 +5,7 @@ import { ManagementClient } from "./management-client.ts";
 import { OperationStatus, useManagement } from "./ManagementUi.tsx";
 import { useRouteIntentOwner } from "./useIntentRoute.ts";
 import { useIntl } from "react-intl";
-import { MessageSquare, ListTodo } from "lucide-react";
+import { MessageSquare, ListTodo, Folder } from "lucide-react";
 import {
   Button,
   useOrderedTabs,
@@ -16,7 +16,7 @@ import {
   TabsLabel,
   TabsIndicator,
 } from "raft-ui";
-const tabs = [{ id: "chat" }, { id: "tasks" }] as const;
+const tabs = [{ id: "chat" }, { id: "tasks" }, { id: "workspace" }] as const;
 /** Official ChatPanel/useOrderedTabs composition, with Loom's revisioned personal preference facade. */
 export default function ChannelTabs({
   value,
@@ -66,7 +66,7 @@ export default function ChannelTabs({
   useEffect(() => {
     if (preferences) onDefaultTab(defaultTab);
   }, [preferences, defaultTab, onDefaultTab]);
-  const reorder = (nextOrder: ("chat" | "tasks")[]) => {
+  const reorder = (nextOrder: ("chat" | "tasks" | "workspace")[]) => {
     if (!preferences || state !== "idle" || readError) return;
     setError("");
     void manager.sidebar(
@@ -90,7 +90,12 @@ export default function ChannelTabs({
       >
         <SortableTabsList value={order} onReorder={reorder} variant="underline">
           {order.map((id) => {
-            const Icon = id === "chat" ? MessageSquare : ListTodo;
+            const Icon =
+              id === "chat"
+                ? MessageSquare
+                : id === "tasks"
+                  ? ListTodo
+                  : Folder;
             return (
               <SortableTabsTab
                 disabled={!preferences || state !== "idle"}
@@ -101,12 +106,14 @@ export default function ChannelTabs({
               >
                 <Icon size={12} />
                 <TabsLabel>
-                  {formatMessage({
-                    id:
-                      id === "chat"
-                        ? "message.chatPanel.tabChat"
-                        : "message.chatPanel.tabTasks",
-                  })}
+                  {id === "workspace"
+                    ? "工作区"
+                    : formatMessage({
+                        id:
+                          id === "chat"
+                            ? "message.chatPanel.tabChat"
+                            : "message.chatPanel.tabTasks",
+                      })}
                 </TabsLabel>
               </SortableTabsTab>
             );

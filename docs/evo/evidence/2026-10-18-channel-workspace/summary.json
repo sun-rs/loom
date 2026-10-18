@@ -1,0 +1,213 @@
+{
+  "scope": "Owner-approved channel workspace read-only vertical MVP; no provider calls, no Git mutation or session scheduling change.",
+  "owners": {
+    "protocol": "channel-workspace-browser.ts: strict request/result and persisted workspace tab enum",
+    "application": "membership/root projection checked before and after Host I/O; no client absolute paths",
+    "host": "readChannelWorkspace and shared bounded file browser own filesystem/Git reads",
+    "frontend": "official AgentWorkspace presentation with channel-scoped SDK and abortable UI read state"
+  },
+  "provenance": [
+    {
+      "upstream": "https://github.com/botiverse/raft-source",
+      "revision": "a98ae003246a0360872a77d76dec2fccd0347ef7",
+      "license": "FSL-1.1-ALv2; frontends/raft/LICENSE retained",
+      "composition": [
+        "AgentDetailPanel.tsx workspace branch -> AgentWorkspace.tsx compact/full layout",
+        "AgentWorkspace.tsx TreeNode, Markdown renderer and min160/default256/max600 splitter",
+        "hooks/useResizablePanel.ts; raft-ui 0.5.64 SegmentedControl and existing theme tokens"
+      ],
+      "reuse": "WorkspaceNativeParts structurally extracts native TreeNode/Markdown parts, preserves native classes and adds accessible action names; splitter hook is imported unchanged. Local channel API/cache/loading state replaces upstream Agent store/transport. This is not a byte-exact copy of the full upstream workspace.",
+      "localChanges": [
+        "Channel ownership; optional fixed attached-directory selector",
+        "Git list/diff as read-only view using native row/selection styles",
+        "Abort on unmount/root/file switch; explicit read errors",
+        "4000 preview lines, 64 KiB rendered Markdown; no automatic remote Markdown images",
+        "Root refresh resets expansion/selection, hidden preference is view-local; no copied-path or modified-date footer in this slice"
+      ]
+    },
+    {
+      "reference": "../rah",
+      "revision": "871ace8",
+      "files": [
+        "packages/client-web/src/inspector/InspectorFilesPane.tsx",
+        "packages/client-web/src/inspector/InspectorPreviewDisplays.tsx",
+        "packages/runtime-daemon/src/workspace-git-utils.ts"
+      ],
+      "reuse": "Design reference only; no copied legacy business state or dependency. Current Git HEAD diff is not a model-turn diff."
+    }
+  ],
+  "limits": {
+    "directory": "one level, max1000 returned /2000 inspected, sensitive/link/special entries excluded",
+    "file": "text1MiB; images5MiB; unsupported binary explicit",
+    "git": "root must itself be a repository with real .git directory; linked worktrees and nested repository discovery deferred; read-only HEAD-to-worktree combined diff, untracked files versus empty; no stage/unstage/commit/revert; 500 visible changes and512KiB command output,10s timeout; helpers/textconv/fsmonitor disabled",
+    "preview": "Markdown/raw text and raster images; HTML as source only; workspace PDF/media/structured documents deferred (published-attachment previews unchanged)",
+    "history": "existing bounded first-page transport retained; accumulating old timeline windows and whole-app initial asset optimization not claimed complete"
+  },
+  "verification": {
+    "checks": "12 focused host/ACL/schema/sidebar/source-boundary/intake tests; root and Loom typechecks; workbench build; Chromium+WebKit workspace1440/390 and Chromium persisted tab-order/drag/unknown-write-replay; changed-file formatting/diff",
+    "paidCalls": 0,
+    "browserFixture": "temporary authenticated Core, real filesystem and Git, fake CLI discovery, no model execution",
+    "initialChromiumObservation": {
+      "resourceCount": 39,
+      "encodedBytes": 1417303,
+      "caveat": "completed PerformanceResourceTiming entries at chat-tab-ready in this fixture; not full wire accounting or timing benchmark"
+    },
+    "workspaceOperations": [
+      "roots",
+      "list root",
+      "list src",
+      "read src/demo.md",
+      "changes",
+      "diff src/demo.md"
+    ],
+    "lazy": "zero workspace API/chunk requests before opening tab; preview/raw switch does not reread; single selected diff only",
+    "deployment": "pending final safe restart and real-page check",
+    "chromium": [
+      {
+        "width": 1440,
+        "initialResourceCount": 39,
+        "initialEncodedBytes": 1417303,
+        "workspaceChunkAbsentBeforeOpen": true,
+        "operations": [
+          {
+            "operation": "roots",
+            "path": ""
+          },
+          {
+            "operation": "list",
+            "path": ""
+          },
+          {
+            "operation": "list",
+            "path": "src"
+          },
+          {
+            "operation": "read",
+            "path": "src/demo.md"
+          },
+          {
+            "operation": "changes",
+            "path": ""
+          },
+          {
+            "operation": "diff",
+            "path": "src/demo.md"
+          }
+        ]
+      },
+      {
+        "width": 390,
+        "initialResourceCount": 39,
+        "initialEncodedBytes": 1417303,
+        "workspaceChunkAbsentBeforeOpen": true,
+        "operations": [
+          {
+            "operation": "roots",
+            "path": ""
+          },
+          {
+            "operation": "list",
+            "path": ""
+          },
+          {
+            "operation": "list",
+            "path": "src"
+          },
+          {
+            "operation": "read",
+            "path": "src/demo.md"
+          },
+          {
+            "operation": "changes",
+            "path": ""
+          },
+          {
+            "operation": "diff",
+            "path": "src/demo.md"
+          }
+        ]
+      }
+    ],
+    "webkit": [
+      {
+        "width": 1440,
+        "initialResourceCount": 36,
+        "initialEncodedBytes": 1412973,
+        "workspaceChunkAbsentBeforeOpen": true,
+        "operations": [
+          {
+            "operation": "roots",
+            "path": ""
+          },
+          {
+            "operation": "list",
+            "path": ""
+          },
+          {
+            "operation": "list",
+            "path": "src"
+          },
+          {
+            "operation": "read",
+            "path": "src/demo.md"
+          },
+          {
+            "operation": "changes",
+            "path": ""
+          },
+          {
+            "operation": "diff",
+            "path": "src/demo.md"
+          }
+        ]
+      },
+      {
+        "width": 390,
+        "initialResourceCount": 36,
+        "initialEncodedBytes": 1412973,
+        "workspaceChunkAbsentBeforeOpen": true,
+        "operations": [
+          {
+            "operation": "roots",
+            "path": ""
+          },
+          {
+            "operation": "list",
+            "path": ""
+          },
+          {
+            "operation": "list",
+            "path": "src"
+          },
+          {
+            "operation": "read",
+            "path": "src/demo.md"
+          },
+          {
+            "operation": "changes",
+            "path": ""
+          },
+          {
+            "operation": "diff",
+            "path": "src/demo.md"
+          }
+        ]
+      }
+    ],
+    "tabOrder": [
+      {
+        "width": 1440,
+        "persisted": true,
+        "drag": true,
+        "unknownExactReplay": true
+      },
+      {
+        "width": 390,
+        "persisted": true,
+        "drag": true,
+        "unknownExactReplay": true
+      }
+    ]
+  },
+  "evidenceDirectory": "/Users/sun/.loom/reviews/2026-10-18-channel-workspace"
+}

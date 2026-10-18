@@ -1,3 +1,8 @@
+import { ChannelWorkspaceReadRequestSchema } from "@rah-os/protocol";
+import {
+  routeChannelWorkspace,
+  type ChannelWorkspaceReadPort,
+} from "./client-channel-workspace-routes.ts";
 import {
   ClientRoomTimelineRequestSchema,
   ClientRoomTimelineResponseSchema,
@@ -258,6 +263,7 @@ import {
 } from "@rah-os/protocol";
 
 export type ClientApplicationServiceOptions = {
+  channelWorkspace?: ChannelWorkspaceReadPort;
   sideCreate?: (
     actor: AuthenticatedActorContext,
     input: InstanceForkRequest,
@@ -429,6 +435,7 @@ const CLIENT_V3_DATA_PATHS = new Set([
   "/runtime-settings/read",
   "/runtime-settings/update",
   ...AGENT_WORKSPACE_PATHS,
+  "/channels/workspace/read",
   ...COMPUTER_PROFILE_PATHS,
   ...FILE_DATA_PATHS,
   ...DISCOVERY_DATA_PATHS,
@@ -510,6 +517,7 @@ export class ClientApplicationService {
   readonly #sideCreate: ClientApplicationServiceOptions["sideCreate"];
   readonly #sideDiscard: ClientApplicationServiceOptions["sideDiscard"];
   readonly #instanceFork: ClientApplicationServiceOptions["instanceFork"];
+  readonly #channelWorkspace: ChannelWorkspaceReadPort | undefined;
   readonly #computerFiles: ClientApplicationServiceOptions["computerFiles"];
   readonly #agentExecutionAdministration:
     AgentExecutionAdministrationPort | undefined;
@@ -544,6 +552,7 @@ export class ClientApplicationService {
     this.#sideCreate = options.sideCreate;
     this.#sideDiscard = options.sideDiscard;
     this.#computerFiles = options.computerFiles;
+    this.#channelWorkspace = options.channelWorkspace;
     this.#agentExecutionAdministration = options.agentExecutionAdministration;
     this.#agentMemoryAdministration = options.agentMemoryAdministration;
     this.#bindHost = options.bindHost ?? "127.0.0.1";
@@ -794,6 +803,19 @@ export class ClientApplicationService {
     const body = canonicalAgentIdField(await readJsonObject(request));
     if (body.target) body.target = canonicalAgentIdField(body.target);
     const path = route.path;
+    if (path === "/channels/workspace/read") {
+      writeJson(
+        response,
+        200,
+        await routeChannelWorkspace(
+          this.#human,
+          actor,
+          parseClientRequest(ChannelWorkspaceReadRequestSchema, body),
+          this.#channelWorkspace,
+        ),
+      );
+      return;
+    }
     if (AGENT_WORKSPACE_PATHS.includes(path)) {
       writeJson(
         response,

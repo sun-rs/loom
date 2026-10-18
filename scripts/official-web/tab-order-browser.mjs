@@ -98,7 +98,7 @@ export async function verifyTabOrder({
           workspaceId: workspace.workspaceId,
         })
       ).preferences.channelPanelTabOrder,
-      ["chat", "tasks"],
+      ["chat", "tasks", "workspace"],
     );
     await page.reload();
     await page.waitForFunction(

@@ -286,3 +286,16 @@ export async function readWorkspaceRoot(input: {
     await file.close();
   }
 }
+
+/** Shared path policy for read-only Git inspection, including deleted leaves. */
+export async function assertWorkspacePreviewPath(root: string, path: string) {
+  if (!path || secret(path))
+    throw new Error("Preview is disabled for sensitive workspace files");
+  const parts = pathParts(path);
+  try {
+    await safePath(root, path);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+    await safePath(root, parts.slice(0, -1).join("/"));
+  }
+}

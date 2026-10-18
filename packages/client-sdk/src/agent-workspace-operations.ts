@@ -1,6 +1,13 @@
 import * as P from "@rah-os/protocol";
 import type { z } from "zod";
 export const agentWorkspaceOperations = {
+  "channel.workspace.read": {
+    input: P.ChannelWorkspaceReadRequestSchema,
+    output: P.ChannelWorkspaceReadResponseSchema,
+    path: "/v3/client/channels/workspace/read",
+    method: "POST",
+    authenticated: true,
+  },
   "agent.skills.list": {
     input: P.AgentSkillsListRequestSchema,
     output: P.AgentSkillsListSchema,

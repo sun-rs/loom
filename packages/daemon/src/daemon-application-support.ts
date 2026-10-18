@@ -1,3 +1,4 @@
+import { readChannelWorkspace } from "@rah-os/agent-host";
 import {
   createDaemonInstanceFork,
   createDaemonSide,
@@ -581,6 +582,7 @@ export function createDaemonHumanClientService(input: {
       path: join(input.config.stateDirectory, "computer-profiles.json"),
     });
   return new HumanHttpApplicationService({
+    channelWorkspace: readChannelWorkspace,
     sideCreate: createDaemonSide({
       kernel: input.kernel,
       host: input.host,

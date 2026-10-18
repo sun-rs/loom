@@ -777,3 +777,5 @@ export type {
   RunWatchdogTerminationReason,
   RunWatchdogVerdict,
 } from "./run-watchdog.ts";
+
+export { readChannelWorkspace } from "./channel-workspace-reader.ts";

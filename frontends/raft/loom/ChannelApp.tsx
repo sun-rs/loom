@@ -39,6 +39,8 @@ import AddInstanceDialog from "./AddInstanceDialog.tsx";
 import { LoomPrivateBoxClient } from "./private-box.ts";
 import ChannelMembers from "./ChannelMembers.tsx";
 import {
+  lazy,
+  Suspense,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -128,8 +130,11 @@ function Channel({
   const [defaultTab, setDefaultTab] = useState("chat");
   const queryTab = panelParams.get("chatTab");
   const selectedTab =
-    queryTab === "chat" || queryTab === "tasks" ? queryTab : defaultTab;
+    queryTab === "chat" || queryTab === "tasks" || queryTab === "workspace"
+      ? queryTab
+      : defaultTab;
   const taskTab = !isPrivate && selectedTab === "tasks";
+  const workspaceTab = !isPrivate && selectedTab === "workspace";
   const profileSnapshot = useRef<Principal | undefined>(undefined);
   const [profileId, setProfileId] = useState<string>();
   const [profileSource, setProfileSource] = useState<"channel" | "thread">(
@@ -364,7 +369,7 @@ function Channel({
                 workspaceId={channel.workspaceId}
                 controlRoomId={controlRoomId ?? ""}
                 onDefaultTab={setDefaultTab}
-                value={taskTab ? "tasks" : "chat"}
+                value={selectedTab}
                 onChange={(tab) => {
                   if (hasUnresolvedIntents()) return;
                   setPanelParams(
@@ -379,6 +384,15 @@ function Channel({
                 }}
               />
             )}
+            {workspaceTab && (
+              <Suspense fallback={<p role="status">加载中…</p>}>
+                <ChannelWorkspacePanel
+                  key={channel.roomId}
+                  client={bridge.client}
+                  roomId={channel.roomId}
+                />
+              </Suspense>
+            )}
             {taskTab && (
               <TasksPage
                 client={bridge.client}
@@ -389,7 +403,7 @@ function Channel({
             )}
             <div
               className="flex min-h-0 flex-1 flex-col"
-              style={taskTab ? { display: "none" } : undefined}
+              style={taskTab || workspaceTab ? { display: "none" } : undefined}
             >
               <ConversationPanelContent>
                 {channel.archivedAt && (
@@ -633,6 +647,7 @@ function Channel({
   );
 }
 
+const ChannelWorkspacePanel = lazy(() => import("./ChannelWorkspacePanel.tsx"));
 export default function ChannelApp() {
   const [sidebarReady, setSidebarReady] = useState(false);
   const onSidebarReady = useCallback(() => setSidebarReady(true), []);

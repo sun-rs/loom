@@ -1700,3 +1700,4 @@ export * from "./worker-mcp-receipt.ts";
 export * from "./runtime-usage-aggregate.ts";
 
 export * from "./client-room-timeline.ts";
+export * from "./channel-workspace-browser.ts";

@@ -1,3 +1,4 @@
+import { verifyWorkspace } from "./workspace-browser.mjs";
 import { verifyMobileDensity } from "./mobile-density-browser.mjs";
 import { verifySaved } from "./saved-browser.mjs";
 import { verifyReactions } from "./reactions-browser.mjs";
@@ -65,6 +66,7 @@ writeFileSync(
 let running;
 let browser;
 const results = [];
+const workspaceFixtureRoots = [];
 try {
   running = await startRestartableLocalCoreWorkbench({
     environment: { ...process.env, PATH: bin },
@@ -111,6 +113,11 @@ try {
       slug: name.toLowerCase().replaceAll(" ", "-"),
     });
     channels.push(result.room);
+    if (
+      process.env.LOOM_BROWSER_SLICE === "workspace" &&
+      result.room.channelWorkspace?.primaryDirectory
+    )
+      workspaceFixtureRoots.push(result.room.channelWorkspace.primaryDirectory);
   }
   for (let i = 1; i <= 55; i++)
     await client.request("message.post", {
@@ -163,7 +170,18 @@ try {
   browser = await (
     process.env.LOOM_BROWSER_ENGINE === "webkit" ? webkit : chromium
   ).launch({ headless: true });
-  if (process.env.LOOM_BROWSER_SLICE === "mobile-density") {
+  if (process.env.LOOM_BROWSER_SLICE === "workspace") {
+    console.log(
+      JSON.stringify(
+        await verifyWorkspace({
+          browser,
+          origin,
+          client,
+          channel: channels[0],
+        }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "mobile-density") {
     console.log(
       JSON.stringify(
         await verifyMobileDensity({ browser, origin, channels }),
@@ -1025,5 +1043,7 @@ try {
 } finally {
   await browser?.close();
   await running?.stop();
+  for (const root of workspaceFixtureRoots)
+    rmSync(root, { recursive: true, force: true });
   rmSync(directory, { recursive: true, force: true });
 }
