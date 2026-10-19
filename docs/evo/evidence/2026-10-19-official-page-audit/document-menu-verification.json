@@ -1,0 +1,61 @@
+{
+  "sourceCommit": "85ec9243fa2827838c80834f9d78d4186da7e40f",
+  "upstream": "Raft v1.21.22 production af3d6ef4a22f0f05f5f9db9424285755d67e9726; source/provenance in page-adoption.json document-and-menu-recipes",
+  "changes": [
+    "Markdown/text/CSV/XLSX wrappers adopt native Card, semantic type tokens, row tint and tabs without old overrides.",
+    "Shared MenuItem structurally ports official R4e/t$ native button composition, including hover/focus/disabled rules.",
+    "Channel file overflow trigger uses official ghost variant."
+  ],
+  "checks": {
+    "regression": "9 source checks passed; two new tests red before implementation",
+    "typecheck": "npm run typecheck:loom --prefix frontends/raft passed",
+    "build": "npm run build:web:workbench passed, existing chunk/dynamic-import warnings retained",
+    "browsers": [
+      "node scripts/official-web/table-attachment-browser.mjs: CSV/XLSX at 1440x1000 and 390x844 DPR1, sheet switching, comment exchange/filtering and diff download",
+      "LOOM_BROWSER_SLICE=attachment-preview: Markdown selection/comments/unknown-result replay/unique write/anchor jump, both viewports",
+      "LOOM_BROWSER_SLICE=reactions: add/remove and exact lost-response replay, both viewports",
+      "LOOM_BROWSER_SLICE=saved: save, exact replay, refresh, jump, removal, both viewports",
+      "LOOM_BROWSER_SLICE=attachment-details: image lightbox, failed upload, thread attachment unknown-result handling and private-box isolation, mobile"
+    ],
+    "visualReview": "Mobile XLSX screenshot inspected; /tmp captures copied into private evidence directory",
+    "format": "Changed local menu/scripts/registry formatted; retained upstream TSX patch format; git diff --check passed"
+  },
+  "deployment": {
+    "verified": true,
+    "backupDatabases": 2,
+    "backupFiles": 325,
+    "businessTablesUnchanged": 18,
+    "realPages": [
+      {
+        "width": 1440,
+        "composerBorder": "0px",
+        "menu": {
+          "width": 32,
+          "height": 32,
+          "bg": "oklab(0.1813 0.00476543 0.00151351 / 0.0135545)"
+        },
+        "escapeClosesOnlyMenu": true,
+        "errors": []
+      },
+      {
+        "width": 390,
+        "composerBorder": "0px",
+        "menu": {
+          "width": 44,
+          "height": 44,
+          "bg": "oklab(0.1813 0.00476543 0.00151351 / 0.00664829)"
+        },
+        "escapeClosesOnlyMenu": true,
+        "errors": []
+      }
+    ]
+  },
+  "privateEvidence": "/Users/sun/.loom/reviews/2026-10-19-document-panes",
+  "limits": [
+    "Real data has no published attachments; preview tests use temporary Core with fake execution. Real deployed page verification uses existing thread/menu.",
+    "Plain text styling has source/type/build coverage only; no new dedicated plain text visual gate.",
+    "Shared menu action order audited but not every menu/caller individually exercised.",
+    "HTML loading/selection overlays and other retained compositions still pending; no full-site or true iOS/Android acceptance.",
+    "No backend behavior changes, paid CLI calls, audio/video/share features."
+  ]
+}
