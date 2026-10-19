@@ -85,5 +85,80 @@
     },
     "visualInspection": "Desktop and mobile real-page screenshots inspected; native denied-permission state, no overflow. No production enable/test calls.",
     "privateEvidenceDirectory": "/Users/sun/.loom/reviews/2026-10-19-push-adoption"
+  },
+  "rootCauseFollowup": {
+    "date": "2026-10-19",
+    "cause": "Playwright Firefox disables vendor push service by default, separately from notifications permission.",
+    "installedConfiguration": "/Users/sun/Library/Caches/ms-playwright/firefox-1522/firefox/Nightly.app/Contents/Resources/playwright.cfg",
+    "upstream": "https://github.com/microsoft/playwright/blob/main/browser_patches/firefox/preferences/playwright.cfg",
+    "defaultPreferences": {
+      "dom.push.serverURL": "",
+      "dom.push.connection.enabled": false
+    },
+    "isolatedOverrides": {
+      "dom.push.serverURL": "wss://push.services.mozilla.com/",
+      "dom.push.connection.enabled": true
+    },
+    "result": {
+      "api": [
+        {
+          "operation": "/v3/client/push/configuration",
+          "status": 200
+        },
+        {
+          "operation": "/v3/client/push/configuration",
+          "status": 200
+        },
+        {
+          "operation": "/v3/client/push/subscribe",
+          "status": 200
+        },
+        {
+          "operation": "/v3/client/push/configuration",
+          "status": 200
+        },
+        {
+          "operation": "/v3/client/push/configuration",
+          "status": 200
+        },
+        {
+          "operation": "/v3/client/push/test",
+          "status": 200
+        },
+        {
+          "operation": "/v3/client/push/configuration",
+          "status": 200
+        },
+        {
+          "operation": "/v3/client/push/unsubscribe",
+          "status": 200
+        },
+        {
+          "operation": "/v3/client/push/configuration",
+          "status": 200
+        },
+        {
+          "operation": "/v3/client/push/configuration",
+          "status": 200
+        }
+      ],
+      "capabilities": {
+        "secure": true,
+        "notification": "function",
+        "permission": "granted",
+        "push": true
+      },
+      "nativeSubscribed": true,
+      "transportAccepted": true,
+      "workerNotificationObserved": true
+    },
+    "scriptSha256": "6970f2f5ce38dfca8793f11b137edc78af183a59fdd0493d1b1878597557a667",
+    "productChanges": false,
+    "testBoundary": "Real vendor subscription, real daemon transport and browser getNotifications observed. Headless browser permission pre-granted; no physical OS banner/lockscreen or click evidence. Test payload only, temporary daemon and profile; unsubscribed and deleted afterwards. No paid CLI calls.",
+    "productionLanProbe": {
+      "secureContext": false,
+      "serviceWorkerAvailable": false
+    },
+    "next": "Trusted HTTPS for remote browsers, physical iOS/Android PWA background/click acceptance. Existing LAN TLS implementation can be reused."
   }
 }

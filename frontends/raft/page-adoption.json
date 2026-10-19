@@ -626,7 +626,7 @@
     }
   },
   "pending": [
-    "G3: Native browser vendor subscription / physical OS delivery remains unverified; frontend registration, controls and typed navigation implemented."
+    "G3: Real Firefox vendor subscription/transport/worker notification verified after correcting disabled Playwright push preferences; remote trusted HTTPS and physical OS display/click remain unverified."
   ],
   "currentCloseout": "../../docs/evo/frontend-closeout.zh-CN.md",
   "statusInterpretation": "Slice limits describe the recorded adoption batch; later evidence can supersede its pending audit items. Current page/gap status is maintained in currentCloseout, not inferred from historical remaining lists.",
