@@ -31,16 +31,43 @@
         "noImplicitFocus": true
       }
     ],
-    "noPaidCalls": true
+    "noPaidCalls": true,
+    "visual": "Inspected real desktop/mobile screenshots; desktop native blue focus and scroll offset verified after transition settled.",
+    "format": "Changed files Prettier check and git diff --check passed."
   },
   "deployment": {
-    "verified": false,
-    "status": "Pending safe restart and real page check"
+    "verified": true,
+    "backupDatabases": 2,
+    "backupFiles": 325,
+    "businessTablesUnchanged": 18,
+    "realPages": [
+      {
+        "width": 1440,
+        "refresh": true,
+        "realUnreadFocus": true,
+        "focusVisual": {
+          "background": "oklch(0.9452 0.0326 226.3)",
+          "top": 166
+        },
+        "highlightExpires": true,
+        "noDetailNavigation": true,
+        "errors": [],
+        "noReadOrFollowWrites": true
+      },
+      {
+        "width": 390,
+        "mobileSingleClick": true,
+        "noImplicitFocus": true,
+        "errors": [],
+        "noReadOrFollowWrites": true
+      }
+    ]
   },
   "privateEvidence": "/Users/sun/.loom/reviews/2026-10-19-activity-focus",
   "limits": [
     "Isolated browser tests override unread projection; real deployment checked separately.",
     "Bounded loaded window only, desktop double-click; no new mobile gesture.",
     "Not full-site parity, G1 standalone chat/G2 follow-group/G3 browser push unchanged."
-  ]
+  ],
+  "sourceCommit": "34e42fe7103d5c98270153573699394a5a50f1a5"
 }
