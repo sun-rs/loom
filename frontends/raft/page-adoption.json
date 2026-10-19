@@ -383,14 +383,16 @@
         "loom/SearchRecent.tsx",
         "loom/search-recent.ts",
         "loom/TopBarSearch.tsx",
-        "loom/ChannelApp.tsx"
+        "loom/ChannelApp.tsx",
+        "loom/search-entities.ts"
       ],
-      "adoption": "Restore native visit-first/activity-tail list. One bounded authorized activity page (50 items), only top-level conversation timestamps retained in memory; no transcript persistence. Actual visits remain source store, ten rendered results, hidden/current/archived/inaccessible filtered. Default visible desktop conversation now recorded and excluded behind overlay.",
+      "adoption": "Restore native visit-first/activity-tail list. One bounded authorized activity page (50 items), only top-level conversation timestamps retained in memory; no transcript persistence. Actual visits remain source store, ten rendered results, hidden/current/archived/inaccessible filtered. Default visible desktop conversation now recorded and excluded behind overlay. Private conversation candidates display the actual instance handle, not Role revision labels.",
       "limits": "Keyboard failure not reproduced on current real service; strengthened three-visit global-keyboard regression. Per-origin browser storage still intentionally separates localhost/LAN/Tailscale visit history. Private box semantics unchanged.",
       "checks": [
         "scripts/official-web/search-recent.test.ts",
         "scripts/official-web/search-recent-browser.mjs",
-        "scripts/official-web/topbar-browser.mjs"
+        "scripts/official-web/topbar-browser.mjs",
+        "scripts/official-web/search-entities.test.ts"
       ]
     }
   },

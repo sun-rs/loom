@@ -1,0 +1,61 @@
+{
+  "date": "2026-10-19",
+  "codeCommit": "3360588a9517cb66e915273ea9c0662952f39008",
+  "previousCodeCommit": "6e493588",
+  "source": {
+    "release": "v1.21.22",
+    "revision": "af3d6ef4a22f0f05f5f9db9424285755d67e9726",
+    "locations": [
+      "app-shell-D1-nY-va.js.pretty.txt:181296–181325 recent selector uTt",
+      "app-shell-D1-nY-va.js.pretty.txt:177984 chat tabs",
+      "packages/web/src/components/message/ChatPanel.tsx:283–293"
+    ],
+    "reuse": "Retained native selector and keyboard interactions; Loom activity and instance identity adapters"
+  },
+  "implemented": [
+    "Visit-first recent conversations with bounded authorized activity fallback (one page, limit50); native maximum10 results and visibility exclusions",
+    "Record actually visible default desktop channel; exclude it behind search overlay",
+    "Search private conversation labels use instance handle instead of frozen Role revision display name"
+  ],
+  "verification": {
+    "tdd": "Activity fallback, default visit recording and instance identity regressions failed before implementation and passed after",
+    "distinctFocusedChecks": 7,
+    "testFiles": [
+      "scripts/official-web/search-recent.test.ts",
+      "scripts/official-web/search-header-release.test.mjs",
+      "scripts/official-web/search-entities.test.ts"
+    ],
+    "typecheck": "exit0",
+    "build": "npm run build:web:workbench exit0 at deployed code commit",
+    "fixtureBrowser": "search-recent, topbar and search-entities slices passed at1440x1000 and390x844; mobile full-page search, not desktop overlay; fake providers",
+    "realService": {
+      "freshBrowserBeforeRows": 0,
+      "freshBrowserAfterRows": 10,
+      "initialInputFocus": true,
+      "globalArrowDownArrowUpEnter": true,
+      "pageErrors": []
+    },
+    "originalKeyboardReport": "Not reproduced before changes. Existing keyboard implementation unchanged; three-conversation regression strengthened to use global page keyboard instead of focusing locator implicitly.",
+    "artifacts": "/Users/sun/.loom/reviews/2026-10-19-search-private",
+    "visuallyInspected": ["before-fresh-recent.png", "after-fresh-recent.png"]
+  },
+  "privateConversationAudit": {
+    "official": "DM retains Chat/Tasks/Files; thread is the source exception",
+    "loom": "ChannelApp explicitly hides tabs for instancePrivateBox. Existing task/workspace product entry is channel-only; this does not prove all Kernel task APIs reject direct rooms.",
+    "contract": "Private box belongs to one Channel instance and shares its continuous session and serial lane; private turns affect later channel context. Not a fresh isolated session.",
+    "recommendationNotImplemented": "Separate standalone one-instance Channel (own instance/session/home/history/memory and normal tabs) from existing channel-instance private box; retain existing boxes and avoid cross-channel reuse of one instance. Dedicated standalone entry and private-box tab mapping not implemented."
+  },
+  "deployment": {
+    "verified": true,
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-search-private-6c223056-122e-40cb-a267-90d545f1ed71",
+    "databases": 2,
+    "files": 325,
+    "businessTablesUnchanged": 18,
+    "receipt": "/Users/sun/.loom/reviews/2026-10-19-search-private/restart-final.json"
+  },
+  "limits": [
+    "Per-origin browser visit storage separates localhost/LAN/Tailscale; activity fallback is bounded, not exhaustive history",
+    "No authenticated official live-site pixel comparison or physical mobile device verification",
+    "No backend changes, paid CLI calls, new private chat contract or full-site completion claim"
+  ]
+}
