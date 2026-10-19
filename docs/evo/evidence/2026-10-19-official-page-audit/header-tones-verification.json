@@ -1,0 +1,70 @@
+{
+  "date": "2026-10-19",
+  "codeCommit": "31cec01f5e4f165e3f5df28523b5cd553260efa4",
+  "earlierCommit": "502f1fde",
+  "source": {
+    "version": "Raft v1.21.22",
+    "revision": "af3d6ef4a22f0f05f5f9db9424285755d67e9726",
+    "locations": [
+      "app-shell NW/sZe/cZe at 88865–88960",
+      "ChatPanel at 178850–178870",
+      "MachineDetailPanel header",
+      "SavedPanel-hEhyusEt.js j/M row and complete root/header/scroller composition"
+    ],
+    "reuse": "Structural ports; inherited inactive iconBg callers changed for type compatibility only, not individually accepted"
+  },
+  "implemented": [
+    "Semantic location/neutral header tones; obsolete elegant rules removed",
+    "Profile handle font-mono retained, empty surface export preserves inherited imports",
+    "Saved native no-icon header and complete flat list: row dividers/typography/remove control/scroll area and panel background"
+  ],
+  "verification": {
+    "tdd": "Header tones and saved complete-row regressions failed before implementation and passed afterward",
+    "focusedChecks": 10,
+    "typecheck": "exit 0",
+    "build": "exit 0 at final code commit",
+    "browser": {
+      "chromeRepair": "1440x1000 and 390x844 passed: chat settings/search, computer neutral icon/edit/runtime inventory/exact replay",
+      "saved": "1440x1000 and 390x844 passed: native row, no header icon, scroller padding, desktop context menu, mobile long press, save/unknown exact replay/refresh/jump/remove"
+    },
+    "testCorrections": [
+      "Fixed-corner and selectable-body long-press probes failed to open menu; native code reserves selectable text for selection. Final gate measures a visible non-selectable message surface and uses actual CDP touch events; passed without changing product touch code."
+    ],
+    "realService": [
+      {
+        "width": 1440,
+        "errors": [],
+        "phase": "after"
+      },
+      {
+        "width": 390,
+        "errors": [],
+        "phase": "after"
+      }
+    ],
+    "screenshots": "/Users/sun/.loom/reviews/2026-10-19-header-tones",
+    "visualReview": [
+      "after-saved-1440.png",
+      "after-computer-390.png",
+      "after-role-390.png",
+      "fixture-saved-390.png (temporary fake-provider fixture, not product)"
+    ],
+    "visualFinding": "First real screenshot exposed inner saved scroller old background and card composition despite outer root fix; complete retained native composition ported and reverified before final handoff"
+  },
+  "deployment": {
+    "verified": true,
+    "head": "31cec01f5e4f165e3f5df28523b5cd553260efa4",
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-saved-flat-902e1ebb-ad5f-44bc-a544-7378f51e9866",
+    "databases": 2,
+    "files": 325,
+    "businessTablesUnchanged": 18,
+    "receipt": "/Users/sun/.loom/reviews/2026-10-19-header-tones/restart-final.json",
+    "earlierSafeRestart": "/Users/sun/.loom/reviews/2026-10-19-header-tones/restart.json"
+  },
+  "limits": [
+    "Owner-approved compact mobile grid retained, not claimed byte-exact native page",
+    "No official authenticated live-site pixel comparison or physical iOS/Android acceptance",
+    "Remaining page action compositions and unsupported activity grouping/follow/push capabilities recorded in page-adoption.json",
+    "No backend changes, full backend suite or paid CLI runs"
+  ]
+}
