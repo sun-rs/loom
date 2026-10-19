@@ -1,0 +1,64 @@
+{
+  "sourceCommit": "ddb10a27dc440d5bff327ebd7f0d9ad462a18370",
+  "upstream": "Raft v1.21.22 production af3d6ef4a22f0f05f5f9db9424285755d67e9726; page-adoption.json html-preview-overlay-recipes records locations and provenance",
+  "changes": [
+    "HTML loading/external-link fallback use official floating surfaces and semantic typography.",
+    "Native link focus, region HUD/selection/flash styling; shared attachment quote caption/seam.",
+    "No sandbox, external-link policy, comment ownership or transport changes."
+  ],
+  "checks": {
+    "regression": "11 source tests passed, both new regressions red before implementation",
+    "typecheck": "npm run typecheck:loom --prefix frontends/raft passed",
+    "build": "npm run build:web:workbench passed; retained existing chunk and dynamic-import warnings",
+    "browser": "node scripts/official-web/html-attachment-browser.mjs passed at 1440x1000 and 390x844 DPR1",
+    "coverage": [
+      "Interactive HTML content and sandbox allow-scripts/CSP/bridge",
+      "Desktop region capture and durable html-region anchor",
+      "Mobile ordinary comments without region capture",
+      "Human comment, explicit fake-runtime Worker response, ordinary thread replies excluded",
+      "Refresh/reopen retains comments; close; no page errors"
+    ],
+    "visualReview": [
+      "Desktop HUD screenshot",
+      "Mobile HTML comment panel screenshot"
+    ],
+    "format": "Changed scripts/registry formatted, upstream patch format retained; git diff --check passed"
+  },
+  "deployment": {
+    "verified": true,
+    "backupDatabases": 2,
+    "backupFiles": 325,
+    "businessTablesUnchanged": 18,
+    "realPages": [
+      {
+        "width": 1440,
+        "composerBorder": "0px",
+        "menu": {
+          "width": 32,
+          "height": 32,
+          "bg": "oklab(0.1813 0.00476543 0.00151351 / 0.0247884)"
+        },
+        "escapeClosesOnlyMenu": true,
+        "errors": []
+      },
+      {
+        "width": 390,
+        "composerBorder": "0px",
+        "menu": {
+          "width": 44,
+          "height": 44,
+          "bg": "oklab(0.1813 0.00476543 0.00151351 / 0.00659874)"
+        },
+        "escapeClosesOnlyMenu": true,
+        "errors": []
+      }
+    ]
+  },
+  "privateEvidence": "/Users/sun/.loom/reviews/2026-10-19-html-overlays",
+  "limits": [
+    "Real data has no published attachment: isolated temporary Core fixture validation, not real-provider acceptance.",
+    "Popup-blocked external-link fallback/loading transient and shared quote styling have source regression/type/build coverage; not separately browser-exercised.",
+    "Real deployed page check uses existing thread/menu, not an invented attachment.",
+    "No full-site, authenticated upstream pixel diff or true iOS/Android claim. No paid calls."
+  ]
+}
