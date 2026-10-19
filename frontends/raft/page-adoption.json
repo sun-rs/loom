@@ -626,8 +626,7 @@
     }
   },
   "pending": [
-    "G3: Browser push subscription/permission/test and notification navigation; existing capability-only view remains explicit.",
-    "V1: Targeted unverified combinations and physical mobile/authenticated upstream comparison; see currentCloseout."
+    "G3: Browser push frontend subscription/permission/test and notification navigation are not implemented; retained capability-only view is explicit."
   ],
   "currentCloseout": "../../docs/evo/frontend-closeout.zh-CN.md",
   "statusInterpretation": "Slice limits describe the recorded adoption batch; later evidence can supersede its pending audit items. Current page/gap status is maintained in currentCloseout, not inferred from historical remaining lists.",
@@ -693,5 +692,16 @@
       "scripts/official-web/html-attachment-browser.mjs (LOOM_HTML_EXTERNAL_GATE=1)"
     ],
     "limits": "Controlled external destination; no physical-device or bilateral authenticated pixel acceptance; no production source changes"
+  },
+  "verificationLimits": [
+    "Physical iOS/Android and authenticated upstream image comparison not completed.",
+    "Two WebKit navigation timeouts under overlapping browser runs retained; serialized unmodified gate and real-page checks passed, root cause not proven.",
+    "Accepted subsets and Loom-specific semantics are not all-upstream feature parity; see currentCloseout."
+  ],
+  "finalCloseout20261019": {
+    "evidence": "../../docs/evo/evidence/2026-10-19-official-page-audit/final-closeout-verification.json",
+    "adoptedMainPaths": "closed with explicit limits",
+    "fullOfficialFeatureParity": false,
+    "newProductCode": false
   }
 }

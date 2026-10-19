@@ -1,0 +1,347 @@
+{
+  "date": "2026-10-19",
+  "scope": "Final bounded closeout of the adopted Raft Web surfaces, not all upstream capabilities",
+  "productSource": "3e8d621f",
+  "priorEvidenceHead": "4a1b43e5",
+  "verdict": {
+    "adoptedMainPaths": "Closed with listed compatibility and verification limits; no newly reproduced blocking product defect established",
+    "fullOfficialFeatureParity": false,
+    "browserPush": "Not implemented in product; remains a separate functional gap, not counted as accepted",
+    "physicalMobile": "Not tested",
+    "authenticatedOfficialPixelComparison": "Not available"
+  },
+  "upstream": {
+    "lockedRelease": "v1.21.22",
+    "revision": "af3d6ef4a22f0f05f5f9db9424285755d67e9726",
+    "provenance": "release-lock.json and page-adoption.json",
+    "currentNetworkAttempt": "web fetch inaccessible; direct HTTPS retrieval returned403. Prior successful same-day release lock remains the anchor; this attempt does not prove no upstream update."
+  },
+  "checks": {
+    "readRecovery": [
+      {
+        "width": 1440,
+        "failedReadClearsResults": true,
+        "explicitRetry": true,
+        "staleQueryCannotReplaceNewer": true,
+        "directoryRecovery": true
+      },
+      {
+        "width": 390,
+        "failedReadClearsResults": true,
+        "explicitRetry": true,
+        "staleQueryCannotReplaceNewer": true,
+        "directoryRecovery": true
+      }
+    ],
+    "webkitLayout": [
+      {
+        "width": 390,
+        "theme": "light",
+        "headersAndOverflow": true
+      },
+      {
+        "width": 390,
+        "theme": "dark",
+        "headersAndOverflow": true
+      },
+      {
+        "width": 900,
+        "theme": "light",
+        "headersAndOverflow": true
+      },
+      {
+        "width": 900,
+        "theme": "dark",
+        "headersAndOverflow": true
+      },
+      {
+        "width": 1440,
+        "theme": "light",
+        "headersAndOverflow": true
+      },
+      {
+        "width": 1440,
+        "theme": "dark",
+        "headersAndOverflow": true
+      }
+    ],
+    "webkitNavigationSerial": [
+      {
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "destinationsViaNativeEntries": true,
+        "urlReloadAndBackForward": true,
+        "keyboardNavigation": true,
+        "channelDraftPreservedAcrossPages": true,
+        "visiblePointerTargets": true,
+        "noHorizontalOverflow": true,
+        "externalRequests": 0
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "destinationsViaNativeEntries": true,
+        "urlReloadAndBackForward": true,
+        "keyboardNavigation": true,
+        "channelDraftPreservedAcrossPages": true,
+        "visiblePointerTargets": true,
+        "noHorizontalOverflow": true,
+        "externalRequests": 0
+      }
+    ],
+    "realPages": [
+      {
+        "engine": "chromium",
+        "width": 1440,
+        "pages": [
+          {
+            "id": "agents",
+            "horizontalOverflow": false
+          },
+          {
+            "id": "tasks",
+            "horizontalOverflow": false
+          },
+          {
+            "id": "activity",
+            "horizontalOverflow": false
+          },
+          {
+            "id": "search",
+            "horizontalOverflow": false
+          },
+          {
+            "id": "computers",
+            "horizontalOverflow": false
+          },
+          {
+            "id": "memory",
+            "horizontalOverflow": false
+          },
+          {
+            "id": "appearance",
+            "horizontalOverflow": false
+          },
+          {
+            "id": "notifications",
+            "horizontalOverflow": false
+          }
+        ],
+        "noMutations": true,
+        "pageErrors": []
+      },
+      {
+        "engine": "chromium",
+        "width": 390,
+        "pages": [
+          {
+            "id": "agents",
+            "horizontalOverflow": false
+          },
+          {
+            "id": "tasks",
+            "horizontalOverflow": false
+          },
+          {
+            "id": "activity",
+            "horizontalOverflow": false
+          },
+          {
+            "id": "search",
+            "horizontalOverflow": false
+          },
+          {
+            "id": "computers",
+            "horizontalOverflow": false
+          },
+          {
+            "id": "memory",
+            "horizontalOverflow": false
+          },
+          {
+            "id": "appearance",
+            "horizontalOverflow": false
+          },
+          {
+            "id": "notifications",
+            "horizontalOverflow": false
+          }
+        ],
+        "noMutations": true,
+        "pageErrors": []
+      },
+      {
+        "engine": "webkit",
+        "width": 1440,
+        "pages": [
+          {
+            "id": "agents",
+            "horizontalOverflow": false
+          },
+          {
+            "id": "tasks",
+            "horizontalOverflow": false
+          },
+          {
+            "id": "activity",
+            "horizontalOverflow": false
+          },
+          {
+            "id": "search",
+            "horizontalOverflow": false
+          },
+          {
+            "id": "computers",
+            "horizontalOverflow": false
+          },
+          {
+            "id": "memory",
+            "horizontalOverflow": false
+          },
+          {
+            "id": "appearance",
+            "horizontalOverflow": false
+          },
+          {
+            "id": "notifications",
+            "horizontalOverflow": false
+          }
+        ],
+        "noMutations": true,
+        "pageErrors": []
+      },
+      {
+        "engine": "webkit",
+        "width": 390,
+        "pages": [
+          {
+            "id": "agents",
+            "horizontalOverflow": false
+          },
+          {
+            "id": "tasks",
+            "horizontalOverflow": false
+          },
+          {
+            "id": "activity",
+            "horizontalOverflow": false
+          },
+          {
+            "id": "search",
+            "horizontalOverflow": false
+          },
+          {
+            "id": "computers",
+            "horizontalOverflow": false
+          },
+          {
+            "id": "memory",
+            "horizontalOverflow": false
+          },
+          {
+            "id": "appearance",
+            "horizontalOverflow": false
+          },
+          {
+            "id": "notifications",
+            "horizontalOverflow": false
+          }
+        ],
+        "noMutations": true,
+        "pageErrors": []
+      }
+    ],
+    "inventory": "18 stable UI entries;36 existing evidence/contract links resolved before adding this report",
+    "formatAndDiff": "passed",
+    "fullSuite": false,
+    "paidProviders": false,
+    "memoryBodiesReady": [
+      {
+        "engine": "chromium",
+        "width": 1440,
+        "pages": [
+          {
+            "id": "memory",
+            "horizontalOverflow": false
+          }
+        ],
+        "noMutations": true,
+        "pageErrors": []
+      },
+      {
+        "engine": "chromium",
+        "width": 390,
+        "pages": [
+          {
+            "id": "memory",
+            "horizontalOverflow": false
+          }
+        ],
+        "noMutations": true,
+        "pageErrors": []
+      },
+      {
+        "engine": "webkit",
+        "width": 1440,
+        "pages": [
+          {
+            "id": "memory",
+            "horizontalOverflow": false
+          }
+        ],
+        "noMutations": true,
+        "pageErrors": []
+      },
+      {
+        "engine": "webkit",
+        "width": 390,
+        "pages": [
+          {
+            "id": "memory",
+            "horizontalOverflow": false
+          }
+        ],
+        "noMutations": true,
+        "pageErrors": []
+      }
+    ],
+    "visualReview": "Inspected settled desktop/mobile text and memory surfaces plus WebKit mobile tasks, appearance, computers and notifications. Not an authenticated official-site pixel comparison."
+  },
+  "failuresAndLimits": [
+    {
+      "check": "Initial read-recovery test",
+      "result": "Fixture queries shared token words and returned both messages; changed to unique query terms before evaluating stale-response isolation. No product code change."
+    },
+    {
+      "check": "WebKit navigation",
+      "result": "Two runs timed out exiting desktop search overlay while other browser gates were active. Diagnostic runs and final unmodified serialized gate passed. Real deployed isolated transition passed. Concurrency/timing is a hypothesis, not proven root cause; failure logs retained and no all-WebKit reliability claim."
+    },
+    {
+      "check": "Initial real-page capture",
+      "result": "Hidden desktop header selected on mobile; corrected locator to visible header. Final captures additionally wait for displayed memory/settings loading state to settle."
+    }
+  ],
+  "pushGapAudit": {
+    "frontend": "NotificationSettings.tsx is capability-only; no subscribe/disable/test controls",
+    "backend": "Existing push.configuration/subscribe/unsubscribe/test contracts and daemon dispatcher retained",
+    "integrationStillNeeded": [
+      "Native settings action binding with reliable unknown-result handling",
+      "Worker must translate Loom structured target rather than upstream data.url and preserve authenticated navigation owner",
+      "Secure-context/PWA permission/subscription and real browser-provider delivery verification"
+    ],
+    "claim": "Existing backend interfaces or OS permission do not prove the browser is subscribed. Current page states limitation honestly; no placeholder success."
+  },
+  "deployment": {
+    "unchanged": true,
+    "reason": "Only tests and evidence modified; no repair or product runtime change, no rebuild/restart required",
+    "service": "com.loom.evo",
+    "source": "3e8d621f",
+    "realProductOrigin": "http://127.0.0.1:4176/",
+    "noUserMutations": true
+  },
+  "privateEvidence": "/Users/sun/.loom/reviews/2026-10-19-final-closeout"
+}

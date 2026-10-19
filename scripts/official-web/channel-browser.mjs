@@ -1,3 +1,4 @@
+import { verifyReadRecovery } from "./read-recovery-browser.mjs";
 import { verifyMessageReferences } from "./message-reference-browser.mjs";
 import { verifyActivityList } from "./activity-list-browser.mjs";
 import { verifyPagePolish } from "./page-polish-browser.mjs";
@@ -406,6 +407,12 @@ try {
     console.log(
       JSON.stringify(
         await verifyAttachments({ browser, origin, client, workspace, head }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "read-recovery") {
+    console.log(
+      JSON.stringify(
+        await verifyReadRecovery({ browser, origin, client, channels, head }),
       ),
     );
   } else if (process.env.LOOM_BROWSER_SLICE === "text-preview") {
