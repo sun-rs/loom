@@ -5098,7 +5098,7 @@ const ConnectedMessageItem = memo(function ConnectedMessageItem({ message, menti
           <button
             type="button"
             onClick={() => handleQuickReactionClick(emoji)}
-            className="flex size-7 items-center justify-center rounded bg-transparent transition-colors hover:bg-accent-soft "
+            className="flex size-7 items-center justify-center rounded-control bg-transparent outline-none hover:bg-primary-soft active:bg-primary-soft focus-visible:shadow-raft-focus"
           >
             <ReactionGlyph emoji={emoji} size={QUICK_REACTION_GLYPH_SIZE} className="block" />
           </button>
@@ -5176,7 +5176,7 @@ const ConnectedMessageItem = memo(function ConnectedMessageItem({ message, menti
                       event.stopPropagation();
                       handleQuickReactionClick(emoji);
                     }}
-                    className="flex size-7 items-center justify-center rounded bg-transparent transition-colors hover:bg-accent-soft active:bg-accent-soft  "
+                    className="flex size-7 items-center justify-center rounded-control bg-transparent outline-none hover:bg-primary-soft active:bg-primary-soft focus-visible:shadow-raft-focus"
                     aria-label={formatMessage({ id: "message.messageItem.reactWith" }, { emoji })}
                   >
                     <ReactionGlyph emoji={emoji} size={QUICK_REACTION_GLYPH_SIZE} className="block" />

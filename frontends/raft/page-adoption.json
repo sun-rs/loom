@@ -470,6 +470,32 @@
         "Computer runtime badge composition already matches the native soft information/muted mapping; no changes to runtime discovery or unsupported upstream rescan/install/account actions.",
         "No full-site parity claim; attachment/thread action compositions beyond the retained toolbar remain follow-up audit work."
       ]
+    },
+    "preview-thread-menu-compositions": {
+      "source": "v1.21.22 app-shell-D1-nY-va.js: l2 AttachmentTypeBadge 114810–114828; d2 AttachmentPreviewShell 114950–115060; Kq CloseButton93497–93510; reaction picker122217–122253 and quick row122330–122365; ThreadOverflowMenu122675–122735; thread footer130220 and ThreadPanel composition. Hashes in release-lock.json.",
+      "kind": "Structural production-source port, native raft-ui recipe reuse; not a complete original-TSX replacement.",
+      "local": [
+        "loom/ThreadFollowMenu.tsx",
+        "loom/ThreadWorkspace.tsx",
+        "packages/web/src/components/ui/CloseButton.tsx",
+        "packages/web/src/components/message/MessageItem.tsx",
+        "packages/web/src/components/message/AttachmentTypeBadge.tsx",
+        "packages/web/src/components/message/attachmentPreviewSurfaces.tsx"
+      ],
+      "adaptation": "Loom retains only connected thread follow action and own footer/data owner; no unsupported thread search/maximize command added. Preview/comment transport, anchor tracking, pending-write close guard, sandbox and file authorization unchanged. Unknown extensions omitted as before. No audio/video adoption.",
+      "preserved": "Native PanelAction trigger and menu positioning; no invented thread-composer top separator; preview headline/seam and44px ghost/outline actions; native inline file badge; CloseButton delegates colors; reaction keyboard focus/hover/active recipes.",
+      "checks": [
+        "scripts/official-web/preview-thread-release.test.mjs",
+        "scripts/official-web/reactions.test.ts",
+        "scripts/official-web/thread-browser.mjs",
+        "scripts/official-web/attachment-preview-browser.mjs",
+        "scripts/official-web/reactions-browser.mjs"
+      ],
+      "limits": [
+        "Browser fixture covers markdown preview, selection/comments/jump and close; not every file format or real iOS/Android.",
+        "No published attachments found in the current real data home, so preview acceptance is temporary-Core fixture only; real service verification uses an existing thread and menus.",
+        "Remaining media/document renderer, attachment comments body and other message menu compositions are not declared fully aligned."
+      ]
     }
   },
   "pending": [

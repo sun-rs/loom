@@ -1,4 +1,4 @@
-/** Selected native ThreadOverflowMenu markup, a98ae003, FSL-1.1-ALv2.
+/** Current native ThreadOverflowMenu composition, v1.21.22; see page-adoption.json.
  * Unsupported search/split/location commands omitted; controller belongs to Loom. */
 import { useIntl } from "react-intl";
 import {
@@ -11,7 +11,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  Button,
+  PanelAction,
 } from "raft-ui";
 import Tooltip from "../packages/web/src/components/ui/Tooltip.tsx";
 export default function ThreadFollowMenu({
@@ -32,16 +32,14 @@ export default function ThreadFollowMenu({
       >
         <DropdownMenuTrigger
           render={
-            <Button
-              size="icon-sm"
-              variant="outline"
+            <PanelAction
               aria-label={formatMessage({
                 id: "message.threadPanel.overflow.open",
               })}
               data-testid="thread-overflow-trigger"
             >
-              <EllipsisVertical size={14} />
-            </Button>
+              <EllipsisVertical />
+            </PanelAction>
           }
         />
       </Tooltip>

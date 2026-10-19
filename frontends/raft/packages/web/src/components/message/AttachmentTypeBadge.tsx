@@ -1,16 +1,8 @@
 import { FilePreviewBadge } from "raft-ui";
 import { attachmentBadgeType } from "../../utils/attachmentBadgeType";
 
-/**
- * The file-type chip, in one place.
- *
- * RUI's badge colours itself from `type` but renders no label of its own, and
- * its recipe sizes for the Files grid rather than a compact row, so this
- * wrapper supplies the uppercase extension text and pins the small size. It
- * stays inline (`static`) so each surface decides where it sits — the Files row
- * passes its absolute corner, the card and preview header leave it inline.
- * Renders nothing for unknown extensions.
- */
+/** v1.21.22 l2: native inline FilePreviewBadge, caller supplies dimensions.
+ * Source and provenance: page-adoption.json. Unknown extensions stay omitted. */
 export function AttachmentTypeBadge({
   filename,
   className = "",
@@ -30,7 +22,8 @@ export function AttachmentTypeBadge({
     <FilePreviewBadge
       data-testid={testId}
       data-message-affordance={affordance}
-      className={`!static inline-flex shrink-0 items-center justify-center !h-3.5 !min-h-3.5 !w-7 !min-w-7 !px-0 !text-[9px] ${className}`}
+      placement="inline"
+      className={className}
     >
       {label}
     </FilePreviewBadge>

@@ -277,8 +277,8 @@ export function AttachmentPreviewShell({
           browserFindLayout
             ? // fixed, not sticky: WebKit (iPadOS Safari) ignores sticky
               // when <html> has overflow-y set by the browser-find layout.
-              "safe-top safe-left pointer-events-auto fixed left-0 right-0 top-0 z-10 max-w-[100dvw] overflow-x-clip border-b  border-line-muted  bg-layer-panel "
-            : "safe-top safe-left pointer-events-auto absolute left-0 right-0 top-0 z-10 border-b  border-line-muted  bg-layer-panel "
+              "safe-top safe-left pointer-events-auto fixed left-0 right-0 top-0 z-10 max-w-[100dvw] overflow-x-clip border-b border-line-seam bg-layer-panel"
+            : "safe-top safe-left pointer-events-auto absolute left-0 right-0 top-0 z-10 border-b border-line-seam bg-layer-panel"
         }
         onClick={(e) => e.stopPropagation()}
       >
@@ -288,9 +288,9 @@ export function AttachmentPreviewShell({
             <AttachmentTypeBadge
               filename={filename}
               data-testid="attachment-preview-type-badge"
-              className="!h-4 !min-h-4 !w-8 !min-w-8"
+              className="h-4 w-8"
             />
-            <span className="min-w-0 flex-1 truncate text-sm font-display text-foreground-strong ">
+            <span className="min-w-0 flex-1 truncate text-headline text-foreground">
               {filename}
             </span>
           </div>
@@ -299,8 +299,8 @@ export function AttachmentPreviewShell({
             {comments ? (
               <Button
                 type="button"
-                size="icon-sm"
-                variant={commentsOpen ? "primary" : "outline"}
+                size="icon-lg"
+                variant={commentsOpen ? "outline" : "ghost"}
                 data-message-affordance="attachment-preview-mode"
                 onClick={mode === "comment" ? exitCommentMode : enterCommentMode}
                 aria-label={formatMessage({ id: "message.messageItem.previewComment" })}
@@ -319,19 +319,19 @@ export function AttachmentPreviewShell({
               >
                 <CopyableCode className="sr-only" aria-hidden="true">{copyText}</CopyableCode>
                 <CopyableCodeAction
-                  size="icon-sm"
-                  variant="outline"
+                  size="icon-lg"
+                  variant="ghost"
                   aria-label={formatMessage({ id: "common.lightbox.copy" })}
                 />
               </CopyableCodeRoot>
             ) : null}
             <AttachmentTooltip content={formatMessage({ id: "common.lightbox.download" })} contentProps={TOOLTIP_SIDE_BOTTOM_PROPS}>
-              <Button type="button" size="icon-sm" variant="outline" onClick={onDownload} aria-label={formatMessage({ id: "common.lightbox.download" })}>
+              <Button type="button" size="icon-lg" variant="ghost" onClick={onDownload} aria-label={formatMessage({ id: "common.lightbox.download" })}>
                 <Download size={14} />
               </Button>
             </AttachmentTooltip>
             <AttachmentTooltip content={formatMessage({ id: "common.lightbox.close" })} contentProps={TOOLTIP_SIDE_BOTTOM_PROPS}>
-              <CloseButton type="button"   onClick={onClose} aria-label={formatMessage({ id: "common.lightbox.close" })}>
+              <CloseButton type="button" size="icon-lg" onClick={onClose} aria-label={formatMessage({ id: "common.lightbox.close" })}>
                 <X size={14} />
               </CloseButton>
             </AttachmentTooltip>

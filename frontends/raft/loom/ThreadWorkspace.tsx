@@ -185,7 +185,7 @@ export default function ThreadWorkspace({
       )}
       <div
         data-loom-composer-shell
-        className="relative z-20 shrink-0 min-w-0 w-full flex-1 border-t border-line-muted bg-layer-panel px-3 pt-3 safe-bottom   "
+        className="relative z-20 shrink-0 min-w-0 w-full flex-1 bg-layer-panel px-3 pt-3 safe-bottom   "
       >
         <MessageInput
           client={client}

@@ -68,6 +68,19 @@ export async function verifyAttachmentPreview({
         "attachment-preview-browser-find-scroll",
       );
       await preview.waitFor({ timeout: 3000 });
+      for (const label of ["下载", "关闭"]) {
+        const box = await preview
+          .getByRole("button", { name: label, exact: true })
+          .boundingBox();
+        assert.equal(box.width, 44);
+        assert.equal(box.height, 44);
+      }
+      assert.equal(
+        await preview
+          .locator('[data-testid="attachment-preview-type-badge"]')
+          .evaluate((el) => Math.round(el.getBoundingClientRect().height)),
+        16,
+      );
       await page.screenshot({ path: `/tmp/loom-preview-open-${width}.png` });
       await preview
         .getByRole("heading", { name: "FIXTURE document", exact: true })

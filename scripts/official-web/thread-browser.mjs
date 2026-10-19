@@ -111,6 +111,12 @@ export async function verifyThreads({
         assert.ok((await panel.boundingBox()).width > before.width + 50);
       } else assert.ok(Math.abs((await panel.boundingBox()).width - width) < 2);
       const input = panel.getByTestId("composer-textarea");
+      assert.equal(
+        await panel
+          .locator("[data-loom-composer-shell]")
+          .evaluate((el) => getComputedStyle(el).borderTopWidth),
+        "0px",
+      );
       await input.fill(`FIXTURE reply ${width}`);
       await input.dispatchEvent("keydown", {
         key: "Enter",
