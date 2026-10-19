@@ -997,7 +997,7 @@ function HtmlPreviewBody({
         src={buildSrc(url)}
         sandbox="allow-scripts"
         referrerPolicy="no-referrer"
-        className={`h-full w-full border-0 bg-white${externalLinksReady ? "" : " pointer-events-none"}`}
+        className={`h-full w-full border-0 bg-sticker-paper${externalLinksReady ? "" : " pointer-events-none"}`}
         frameRef={iframeRef}
         onLoad={handlePreviewDocumentLoad}
       />
@@ -1007,7 +1007,7 @@ function HtmlPreviewBody({
           data-message-affordance="attachment-preview-external-links-loading"
           className="absolute inset-0 z-10 flex items-center justify-center bg-layer-panel/75 "
         >
-          <div className="flex items-center gap-2 border  border-line-muted  bg-layer-panel  px-3 py-2 text-xs font-bold shadow-raft-sm ">
+          <div className="flex items-center gap-2 rounded-container bg-layer-popover px-3 py-2 text-callout font-semibold text-foreground shadow-raft-float ring-1 ring-line-seam">
             <Spinner size="sm"  aria-label={formatMessage({ id: "common.loadingLabel" })} /> {formatMessage({ id: "message.messageItem.preparingPreview" })}
           </div>
         </div>
@@ -1023,7 +1023,7 @@ function HtmlPreviewBody({
                 type="button"
                 data-external-href={link.href}
                 aria-label={formatMessage({ id: "message.messageItem.openExternalLink" }, { target: text || link.hostname })}
-                className="pointer-events-auto absolute bg-transparent outline-none focus-visible:border-2 focus-visible:border-black focus-visible:bg-white/20"
+                className="pointer-events-auto absolute rounded-[2px] bg-transparent outline-none focus-visible:shadow-raft-focus"
                 style={{ left: rect.x, top: rect.y, width: rect.w, height: rect.h }}
                 onClick={() => handleExternalLinkHotspot(link)}
               />
@@ -1036,17 +1036,17 @@ function HtmlPreviewBody({
           role="status"
           aria-live="polite"
           data-message-affordance="attachment-preview-external-link-fallback"
-          className="absolute inset-x-3 bottom-3 z-40 flex items-center gap-2 border  border-line-muted  bg-layer-panel  p-2 shadow-raft-sm "
+          className="absolute inset-x-3 bottom-3 z-40 flex items-center gap-2 rounded-container bg-layer-popover p-2 pl-3 shadow-raft-float ring-1 ring-line-seam"
         >
           <div className="min-w-0 flex-1">
-            <div className="text-xs font-black">{formatMessage({ id: "message.messageItem.browserBlockedTab" })}</div>
+            <div className="text-footnote font-bold text-foreground">{formatMessage({ id: "message.messageItem.browserBlockedTab" })}</div>
             <AttachmentTooltip content={pendingExternalLink.hostname}>
-            <div className="truncate text-xs font-bold">
+            <div className="truncate font-mono text-mono-meta font-bold text-foreground">
               {pendingExternalLink.hostname}
             </div>
             </AttachmentTooltip>
             <AttachmentTooltip content={pendingExternalLink.href}>
-            <div className="truncate text-xs text-foreground-muted ">
+            <div className="truncate font-mono text-mono-meta text-foreground-hint">
               {pendingExternalLink.href}
             </div>
             </AttachmentTooltip>
@@ -1066,13 +1066,13 @@ function HtmlPreviewBody({
             onClick={dismissPendingExternalLink}
             aria-label={formatMessage({ id: "message.messageItem.dismissExternalLink" })}
           >
-            <X size={14} />
+            <X size={16} />
           </CloseButton>
         </div>
       ) : null}
       {flashRegion && state ? (
         <div
-          className="anchor-flash pointer-events-none absolute z-10 border  border-line-muted "
+          className="anchor-flash pointer-events-none absolute z-10 rounded-[2px] border border-line-seam"
           style={{
             left: flashRegion.x - state.scrollX,
             top: flashRegion.y - state.scrollY,
@@ -1138,14 +1138,14 @@ function HtmlPreviewBody({
             });
           }}
         >
-          <div className="pointer-events-none absolute left-1/2 top-3 z-30 -translate-x-1/2 border  border-line-muted  bg-layer-panel  px-2 py-1 text-[11px] font-bold text-foreground-strong  shadow-raft-sm ">
+          <div className="pointer-events-none absolute left-1/2 top-3 z-30 -translate-x-1/2 rounded-chip bg-layer-hud px-2 py-1 text-caption text-layer-hud-foreground shadow-raft-float">
             {state
               ? formatMessage({ id: "message.messageItem.clickToComment" })
               : formatMessage({ id: "message.messageItem.cantLocateInPage" })}
           </div>
           {drag ? (
             <div
-              className="pointer-events-none absolute border  border-dashed border-line-muted  bg-primary-soft/30 "
+              className="pointer-events-none absolute border border-dashed border-line-seam bg-primary-soft/50"
               style={{
                 left: Math.min(drag.x0, drag.x1),
                 top: Math.min(drag.y0, drag.y1),

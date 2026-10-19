@@ -106,6 +106,13 @@ for (const width of [1440, 390]) {
       const overlay = page.locator(
         '[data-message-affordance="attachment-html-comment-overlay"]',
       );
+      const hint = overlay.locator(".bg-layer-hud");
+      await hint.waitFor();
+      assert.equal(
+        await hint.evaluate((el) => getComputedStyle(el).pointerEvents),
+        "none",
+      );
+      await page.screenshot({ path: `/tmp/loom-html-hud-${width}.png` });
       const box = await overlay.boundingBox();
       assert.ok(box);
       await page.mouse.move(box.x + 20, box.y + 20);

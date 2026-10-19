@@ -535,6 +535,25 @@
         "Not full-site parity: HTML/loading/region overlays and other retained compositions remain to audit.",
         "Current real data has no published attachment; file preview checks use temporary Core. No real CLI or paid tests."
       ]
+    },
+    "html-preview-overlay-recipes": {
+      "source": "Raft v1.21.22 production af3d6ef4a22f0f05f5f9db9424285755d67e9726 app-shell-D1-nY-va.js G5e HTML body 115720–115915; e7e comment quote 116099–116166. Exact asset URL/hash in release-lock.json.",
+      "kind": "Structural port of authorized official production composition, retains existing upstream source notices; not byte-exact latest TSX.",
+      "local": [
+        "packages/web/src/components/message/attachmentPreviewSurfaces.tsx",
+        "packages/web/src/components/message/AttachmentCommentRefChip.tsx"
+      ],
+      "adaptation": "Only presentation changed. Loom file authorization, HTML sandbox/bridge identity checks, external-link flow, comments, coarse-pointer fallback and reference navigation remain owned by their existing implementations. No media/share features enabled.",
+      "preserved": "Native floating loading/fallback surfaces, semantic typography, link focus shadow, HUD selection hint, region tint/seam and comment quote caption.",
+      "checks": [
+        "scripts/official-web/preview-thread-release.test.mjs",
+        "scripts/official-web/html-attachment-browser.mjs"
+      ],
+      "limits": [
+        "No real published attachments in current deployment; HTML tests use temporary Core.",
+        "Browser test covers document interaction, desktop region capture, mobile unanchored comments, worker reply/filter/reload and sandbox. Popup-blocker fallback and loading transient appearance have source regression/type/build coverage only.",
+        "Does not declare full-site parity or native iOS/Android acceptance."
+      ]
     }
   },
   "pending": [

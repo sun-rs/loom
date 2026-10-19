@@ -104,3 +104,33 @@ test("action menu rows use official native button recipe without Button override
   );
   assert.match(file, /size="icon-sm"\s+variant="ghost"/);
 });
+test("HTML preview overlays follow official popover, HUD and focus recipes", () => {
+  const all = read(
+    "packages/web/src/components/message/attachmentPreviewSurfaces.tsx",
+  );
+  const s = all.slice(
+    all.indexOf("function HtmlPreviewBody"),
+    all.indexOf("function VideoPreviewBody"),
+  );
+  assert.match(s, /bg-layer-popover px-3 py-2 text-callout/);
+  assert.match(
+    s,
+    /rounded-chip bg-layer-hud px-2 py-1 text-caption text-layer-hud-foreground/,
+  );
+  assert.match(
+    s,
+    /rounded-\[2px\] bg-transparent outline-none focus-visible:shadow-raft-focus/,
+  );
+  assert.match(s, /sandbox="allow-scripts"/);
+  assert.doesNotMatch(
+    s,
+    /text-xs|text-\[11px\]|font-black|shadow-raft-sm|focus-visible:border-black/,
+  );
+});
+test("attachment reference quotes use the same official caption and seam as comments", () => {
+  const s = read(
+    "packages/web/src/components/message/AttachmentCommentRefChip.tsx",
+  );
+  assert.match(s, /border-line-seam pl-2.5 text-caption font-normal/);
+  assert.doesNotMatch(s, /text-xs italic/);
+});
