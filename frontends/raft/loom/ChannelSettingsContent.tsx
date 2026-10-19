@@ -230,7 +230,6 @@ export default function ChannelSettingsContent({
                     <LabelAsterisk className="ml-1" />
                   </FieldLabel>
                   <Input
-                    autoFocus
                     id="channel-settings-name"
                     value={name}
                     onChange={(event) => setName(event.target.value)}

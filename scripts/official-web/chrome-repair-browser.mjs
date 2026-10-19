@@ -36,9 +36,7 @@ export async function verifyChromeRepair({
         ?.getBoundingClientRect();
       return rect && Math.abs(rect.right - innerWidth) < 2;
     });
-    await sheet
-      .getByRole("button", { name: "关闭频道设置", exact: true })
-      .click();
+    await sheet.getByRole("button", { name: "取消", exact: true }).click();
     await sheet.waitFor({ state: "hidden" });
     await page.getByRole("button", { name: "搜索聊天", exact: true }).click();
     await page.waitForURL((u) => u.searchParams.get("view") === "search");

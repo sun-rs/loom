@@ -24,9 +24,7 @@ export async function verifyChannelSettings({
     const name = sheet.getByRole("textbox", { name: "名称", exact: false });
     await name.waitFor();
     await name.fill("FIXTURE unsaved");
-    await sheet
-      .getByRole("button", { name: "关闭频道设置", exact: true })
-      .click();
+    await sheet.getByRole("button", { name: "取消", exact: true }).click();
     const discard = page.getByRole("alertdialog");
     await discard.waitFor();
     await discard.getByRole("button", { name: "继续编辑" }).click();

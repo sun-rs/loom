@@ -12,9 +12,8 @@ import {
   DrawerHeader,
   DrawerTitle,
   DrawerDescription,
-  DrawerClose,
 } from "raft-ui";
-import { Brain, CheckSquare, CircleStop, Settings, X } from "lucide-react";
+import { Brain, CheckSquare, CircleStop, Settings } from "lucide-react";
 import type { RoomExecutionReadResponse } from "@rah-os/protocol";
 import {
   OverflowMenuTrigger,
@@ -170,18 +169,6 @@ export default function ChannelControl({
                 #{name}
               </DrawerDescription>
             </div>
-            <DrawerClose
-              render={
-                <Button
-                  size="icon-sm"
-                  variant="ghost"
-                  disabled={state !== "idle"}
-                  aria-label="关闭频道设置"
-                />
-              }
-            >
-              <X size={16} />
-            </DrawerClose>
           </DrawerHeader>
           <ChannelSettingsContent
             bridge={bridge}

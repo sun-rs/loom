@@ -234,10 +234,7 @@ export default function TasksPage({
                   "加载中…"
                 ) : (
                   <>
-                    <span className="font-mono">
-                      {rows.length} / {total}
-                    </span>{" "}
-                    项频道任务
+                    <span className="font-mono">{total}</span> 个频道任务
                   </>
                 )}
               </PanelMeta>

@@ -1,3 +1,4 @@
+import AvatarSlot from "../packages/web/src/components/ui/AvatarSlot.tsx";
 import ActivityContextMenu, {
   type ActivityMenuTarget,
 } from "./ActivityContextMenu.tsx";
@@ -101,15 +102,37 @@ export default function ActivityMessageRow({
         }}
         className={`group relative flex w-full items-start gap-3 px-4 py-3 text-left outline-none transition-colors focus-visible:shadow-[inset_0_0_0_2px_var(--foreground)] before:pointer-events-none before:absolute before:top-0 before:right-0 before:left-4 before:hidden before:border-t before:border-line-muted [[data-testid=inbox-row]+&]:before:block ${active ? "bg-info-soft" : "hover:bg-fill-pressed"}`}
       >
-        <div className="min-w-0 w-full" data-testid="conversation-card-content">
+        <span
+          className="relative flex size-9 shrink-0"
+          data-testid="conversation-card-avatar"
+          data-kind={row.activityKind}
+        >
+          {row.activityKind === "direct" ? (
+            <AvatarSlot
+              context="panel-header"
+              type={row.senderType === "agent" ? "agent" : "human"}
+            />
+          ) : (
+            <span className="flex size-9 items-center justify-center rounded-sticker bg-fill-muted text-foreground-muted">
+              <Hash size={18} />
+            </span>
+          )}
           {thread && (
+            <span className="absolute -bottom-1 -right-1 flex size-[18px] items-center justify-center rounded-sticker border border-line-seam bg-layer-card text-foreground-muted">
+              <ThreadIcon width={11} height={11} />
+            </span>
+          )}
+        </span>
+        <div className="min-w-0 w-full" data-testid="conversation-card-content">
+          {
             <div
               className="mb-0.5 min-w-0 truncate text-caption text-foreground-hint"
               data-testid="conversation-card-subtitle"
             >
+              <Hash size={12} className="mr-1 inline-block" />
               {row.roomName}
             </div>
-          )}
+          }
           <div className="mb-0.5 flex min-w-0 items-start gap-2">
             <div
               className={`line-clamp-2 min-w-0 flex-1 text-subhead ${unreadCount > 0 ? "font-bold text-foreground-strong " : "font-semibold text-foreground-muted "}`}
@@ -134,27 +157,32 @@ export default function ActivityMessageRow({
             </span>
             <InlineMarkdownPreview markdown={row.message.body || "附件消息"} />
           </p>
-          <div
-            className="mt-2 flex min-h-5 flex-wrap items-center gap-1.5"
-            data-testid="conversation-card-metadata"
-          >
-            {thread && (
-              <Badge appearance="outline" variant="muted">
-                {formatMessage(
-                  { id: "thread.row.replies" },
-                  { count: row.replyCount ?? 0 },
-                )}
-              </Badge>
-            )}
-            {unreadCount > 0 && (
-              <Badge variant="accent" data-testid="conversation-card-new-badge">
-                {formatMessage(
-                  { id: "thread.row.unreadCount" },
-                  { count: unreadCount },
-                )}
-              </Badge>
-            )}
-          </div>
+          {(thread || unreadCount > 0) && (
+            <div
+              className="mt-2 flex min-h-5 flex-wrap items-center gap-1.5"
+              data-testid="conversation-card-metadata"
+            >
+              {thread && (
+                <Badge appearance="outline" variant="muted">
+                  {formatMessage(
+                    { id: "thread.row.replies" },
+                    { count: row.replyCount ?? 0 },
+                  )}
+                </Badge>
+              )}
+              {unreadCount > 0 && (
+                <Badge
+                  variant="accent"
+                  data-testid="conversation-card-new-badge"
+                >
+                  {formatMessage(
+                    { id: "thread.row.unreadCount" },
+                    { count: unreadCount },
+                  )}
+                </Badge>
+              )}
+            </div>
+          )}
         </div>
         {hasRowAction && (
           <div

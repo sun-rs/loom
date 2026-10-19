@@ -1,3 +1,4 @@
+import { verifyPagePolish } from "./page-polish-browser.mjs";
 import { verifyComposerSuggestions } from "./composer-suggestions-browser.mjs";
 import { verifyChannelSettings } from "./channel-settings-browser.mjs";
 import { verifyChromeRepair } from "./chrome-repair-browser.mjs";
@@ -179,7 +180,19 @@ try {
   browser = await (
     process.env.LOOM_BROWSER_ENGINE === "webkit" ? webkit : chromium
   ).launch({ headless: true });
-  if (process.env.LOOM_BROWSER_SLICE === "composer-suggestions") {
+  if (process.env.LOOM_BROWSER_SLICE === "page-polish") {
+    console.log(
+      JSON.stringify(
+        await verifyPagePolish({
+          browser,
+          origin,
+          channels,
+          client,
+          workspace,
+        }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "composer-suggestions") {
     console.log(
       JSON.stringify(
         await verifyComposerSuggestions({
@@ -772,7 +785,7 @@ try {
       );
       await memberButton.press("Enter");
       await memberDialog.waitFor();
-      await page.getByRole("button", { name: "关闭频道设置" }).click();
+      await page.getByRole("button", { name: "取消", exact: true }).click();
       await memberDialog.waitFor({ state: "hidden" });
       await memberButton.click();
       await memberDialog.waitFor();

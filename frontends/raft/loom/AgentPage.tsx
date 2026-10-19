@@ -1,3 +1,5 @@
+import { useRolePresence } from "./RolePresence.tsx";
+import { rolePresence } from "./role-presence.ts";
 import { uiActionProps } from "./ui-action-props.ts";
 import { flushSync } from "react-dom";
 import {
@@ -140,9 +142,16 @@ export default function AgentPage({
       : undefined;
   const roleName = (role: RoleTemplate) => role.configuration.displayName;
   const busy = state !== "idle" || refreshing;
+  const presence = useRolePresence(client, catalog?.instances ?? [], active);
   const entries: RoleEntry[] = (catalog?.roles ?? []).map((role) => ({
     id: role.roleId,
     name: roleName(role),
+    presence: rolePresence(
+      (catalog?.instances ?? [])
+        .filter((i) => i.roleId === role.roleId)
+        .map((i) => i.instanceId),
+      presence,
+    ),
   }));
   // Deleting a Role never deletes its frozen instances. Keep a read-only group
   // for these instances; do not reconstruct a current Role from their snapshots.

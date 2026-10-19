@@ -1,3 +1,5 @@
+import RolePresence from "./RolePresence.tsx";
+import type { rolePresence } from "./role-presence.ts";
 // Structural port: MainLayout member master/detail, MemberAgentRow and
 // AgentDetailPanel tab strip. Store-bound upstream components stay untouched.
 import { useState, type ReactNode, type CSSProperties } from "react";
@@ -22,7 +24,12 @@ import PanelHeader, {
 import PanelResizeHandle from "../packages/web/src/components/ui/PanelResizeHandle.tsx";
 import { useResizablePanel } from "../packages/web/src/hooks/useResizablePanel.ts";
 import { SIDEBAR_PANEL_BOUNDS } from "../packages/web/src/lib/panelBounds.ts";
-export type RoleEntry = { id: string; name: string; retired?: boolean };
+export type RoleEntry = {
+  id: string;
+  name: string;
+  retired?: boolean;
+  presence?: ReturnType<typeof rolePresence>;
+};
 export default function RoleWorkspace({
   detail,
   onBack,
@@ -119,7 +126,11 @@ export default function RoleWorkspace({
               }}
               className={`mx-0 w-full items-center ${selected?.id === entry.id ? "  " : ""}`}
             >
-              <AvatarSlot context="sidebar-list" type="agent" />
+              <AvatarSlot
+                context="sidebar-list"
+                type="agent"
+                badge={<RolePresence state={entry.presence ?? "unknown"} />}
+              />
               <div className="flex min-w-0 flex-1 items-baseline gap-1 text-left">
                 <span className="min-w-0 truncate text-sm">{entry.name}</span>
               </div>
@@ -153,11 +164,11 @@ export default function RoleWorkspace({
           actions={actions}
         />
         {selected && (
-          <div className="min-w-0 max-w-full">
+          <div className="min-w-0 max-w-full shrink-0">
             <ConversationPanelTabs
               render={<Tabs value={tab} onValueChange={onTab} />}
             >
-              <TabsList className="max-w-full  " aria-label="角色详情">
+              <TabsList aria-label="角色详情">
                 <TabsTab
                   disabled={busy}
                   value="roles"

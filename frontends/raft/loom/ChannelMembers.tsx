@@ -49,7 +49,7 @@ function MemberList({
   if (!members) return <Spinner aria-label="正在读取成员" />;
   if (!members.length) return <p>暂无成员</p>;
   return (
-    <ChannelMemberListShell data-testid="loom-channel-members">
+    <ChannelMemberListShell framed={false} data-testid="loom-channel-members">
       {members.map((member) => (
         <ChannelMemberRow
           key={member.id}
@@ -63,8 +63,8 @@ function MemberList({
           trailing={
             member.kind === "agent" ? (
               <Button
-                size="sm"
-                variant="outline"
+                size="icon-sm"
+                variant="ghost"
                 aria-label={`私聊 ${member.name}`}
                 onClick={() => onOpenPrivate(member.id)}
               >

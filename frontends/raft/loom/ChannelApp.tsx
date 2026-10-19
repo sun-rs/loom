@@ -1352,6 +1352,15 @@ export default function ChannelApp() {
                   {destination === "computers" && (
                     <ComputersPage
                       client={client}
+                      controlRoomId={directory?.workspace.controlRoomId}
+                      onOpenRole={(id) =>
+                        setParams((previous) => {
+                          const next = new URLSearchParams(previous);
+                          next.set("view", "agents");
+                          next.set("role", id);
+                          return next;
+                        })
+                      }
                       selectedId={params.get("computer")}
                       onSettings={() => selectDestination("settings")}
                       onSelect={(id) => {

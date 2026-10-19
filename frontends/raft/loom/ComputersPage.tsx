@@ -1,3 +1,6 @@
+import { computerInstances } from "./role-presence.ts";
+import AvatarSlot from "../packages/web/src/components/ui/AvatarSlot.tsx";
+import type { RoleListResponse } from "@rah-os/protocol";
 import ComputerProfile from "./ComputerProfile.tsx";
 // Structural port: locked Raft v1.21.22 $yt / zCt / MachineDetailPanel.
 // Loom owns only the authenticated local inventory read; no upstream machine store.
@@ -48,15 +51,33 @@ function Fact({ label, value }: { label: string; value?: string }) {
 }
 export default function ComputersPage({
   client,
+  controlRoomId,
+  onOpenRole,
   selectedId,
   onSelect,
   onSettings,
 }: {
   client: RahClient;
+  controlRoomId?: string;
+  onOpenRole: (id: string) => void;
   selectedId: string | null;
   onSelect: (id: string | null) => void;
   onSettings: () => void;
 }) {
+  const [instances, setInstances] = useState<RoleListResponse["instances"]>();
+  useEffect(() => {
+    if (!controlRoomId) return;
+    const abort = new AbortController();
+    void client
+      .request("role.list", { controlRoomId }, { signal: abort.signal })
+      .then((r) => {
+        if (!abort.signal.aborted) setInstances(r.instances);
+      })
+      .catch(() => {
+        if (!abort.signal.aborted) setInstances(undefined);
+      });
+    return () => abort.abort();
+  }, [client, controlRoomId]);
   const [inventory, setInventory] = useState<LocalRuntimeInventoryResponse>();
   const [error, setError] = useState(false);
   const [reload, setReload] = useState(0);
@@ -302,6 +323,10 @@ export default function ComputersPage({
                             runtime.failureCode
                           }
                         >
+                          <span
+                            aria-hidden
+                            className={`size-2 shrink-0 rounded-[2px] ${runtime.available ? "bg-info" : "bg-fill-muted"}`}
+                          />
                           {runtime.displayName}
                           {runtime.version ? ` ${runtime.version}` : ""} ·{" "}
                           {runtime.available ? "可用" : "不可用"}
@@ -319,6 +344,41 @@ export default function ComputersPage({
                   </div>
                 </div>
               </div>
+              <Separator />
+              <section className="px-5 py-4" data-testid="computer-instances">
+                <SectionEyebrow className="mb-3">
+                  在这台计算机上的实例{" "}
+                  {instances
+                    ? computerInstances(inventory.runtimes, instances).length
+                    : "—"}
+                </SectionEyebrow>
+                {!instances ? (
+                  <p className="text-callout text-foreground-hint">
+                    实例资料尚未读取
+                  </p>
+                ) : (
+                  computerInstances(inventory.runtimes, instances).map(
+                    (instance) => (
+                      <button
+                        key={instance.instanceId}
+                        className="flex w-full items-center gap-3 rounded-control px-3 py-2 text-left hover:bg-fill-pressed focus-visible:shadow-raft-focus"
+                        onClick={() => onOpenRole(instance.roleId)}
+                      >
+                        <AvatarSlot context="surface-list" type="agent" />
+                        <span className="truncate text-callout">
+                          {instance.name}
+                        </span>
+                      </button>
+                    ),
+                  )
+                )}
+                {instances &&
+                  !computerInstances(inventory.runtimes, instances).length && (
+                    <p className="text-callout text-foreground-hint">
+                      暂无绑定到这台计算机的实例
+                    </p>
+                  )}
+              </section>
             </div>
           ) : (
             <div className="p-5 text-callout text-foreground-muted">

@@ -1,5 +1,4 @@
 import {
-  Button,
   SegmentedControl,
   SegmentedControlItem,
   SegmentedControlLabel,
@@ -8,11 +7,9 @@ import {
 export default function ActivityFilters({
   value,
   onChange,
-  onRefresh,
 }: {
   value: string;
   onChange: (value: string) => void;
-  onRefresh: () => void;
 }) {
   return (
     <div
@@ -40,9 +37,6 @@ export default function ActivityFilters({
           ))}
         </SegmentedControl>
       </div>
-      <Button size="sm" variant="ghost" onClick={onRefresh}>
-        刷新动态
-      </Button>
     </div>
   );
 }

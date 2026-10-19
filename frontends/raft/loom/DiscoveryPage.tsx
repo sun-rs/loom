@@ -1,3 +1,4 @@
+import ActivityHeader from "./ActivityHeader.tsx";
 import {
   activityMarkRequest,
   type ActivityAction,
@@ -124,7 +125,7 @@ export default function DiscoveryPage({
     workspaceId,
     controlRoomId,
     query,
-    mode === "search",
+    true,
   );
   const frequent = useSearchFrequent(entities, workspaceId, principalId);
   const recent = useSearchRecent(
@@ -225,10 +226,12 @@ export default function DiscoveryPage({
             }}
           />
         ) : (
-          <PanelHeader
-            title="动态"
-            onMobileBack={onBack}
-            mobileBackProps={{ "aria-label": "返回聊天列表" }}
+          <ActivityHeader
+            client={client}
+            workspaceId={workspaceId}
+            revision={tick}
+            onBack={onBack}
+            onRefresh={() => setTick((v) => v + 1)}
           />
         )}
         {notice}
@@ -245,7 +248,6 @@ export default function DiscoveryPage({
             <ActivityFilters
               value={filter!}
               onChange={(value) => update("af", value)}
-              onRefresh={() => setTick((v) => v + 1)}
             />
           )}
           <Results
@@ -684,7 +686,18 @@ function Results({
                       void markActivity(target, action);
                     }}
                     key={row.id}
-                    row={row}
+                    row={{
+                      ...row,
+                      senderType: entities.catalog.some(
+                        (e) =>
+                          e.agentId === row.message.actorId ||
+                          (row.activityKind === "direct" &&
+                            e.channelId === row.message.roomId &&
+                            !!e.agentId),
+                      )
+                        ? "agent"
+                        : "user",
+                    }}
                     active={route.get("message") === row.message.messageId}
                     onOpen={(full) => {
                       void onOpenResult(row, full).catch(() =>

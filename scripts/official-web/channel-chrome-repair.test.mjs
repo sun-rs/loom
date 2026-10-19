@@ -23,3 +23,14 @@ test("computer details retain native edit/runtime affordances and automatic desk
   assert.match(page, /min-width: 768px/);
   assert.match(page, /iconBg="border-transparent bg-fill-muted/);
 });
+
+test("settings opens without forced input focus or a redundant corner close; drawer members are flat", () => {
+  assert.doesNotMatch(read("ChannelSettingsContent.tsx"), /autoFocus/);
+  assert.doesNotMatch(read("ChannelControl.tsx"), /DrawerClose/);
+  assert.match(read("ChannelMembers.tsx"), /framed=\{false\}/);
+});
+test("role tabs retain the current official conversation wrapper without a conflicting width override", () => {
+  const page = read("RoleWorkspace.tsx");
+  assert.match(page, /ConversationPanelTabs/);
+  assert.doesNotMatch(page, /<TabsList[^>]*className=/s);
+});
