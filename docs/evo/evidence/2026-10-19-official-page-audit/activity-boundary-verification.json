@@ -1,0 +1,33 @@
+{
+  "productRevision": "d74f92bf",
+  "scope": "Read-only audit of remaining Activity follow/read and first-unread focus integration; no product changes.",
+  "source": {
+    "official": "Locked v1.21.22 ThreadsInbox-CbSKTW4g.js.pretty.txt first-unread effect around856; original TSX ThreadsInbox.tsx 997–1061 and LeftRail.tsx focusFirstUnreadActivity.",
+    "local": [
+      "frontends/raft/loom/ActivityContextMenu.tsx",
+      "frontends/raft/loom/thread-activity.ts",
+      "frontends/raft/loom/useActivityScroll.ts",
+      "frontends/raft/loom/discovery-client.ts",
+      "packages/kernel/src/human-activity.ts"
+    ]
+  },
+  "findings": [
+    "thread.followers already returns authoritative following state; activity.list/DiscoveryRow do not carry it. Avoid wording that the whole backend lacks follow state.",
+    "Existing ThreadActivityClient verifies an unknown follow result via read, does not blindly resend.",
+    "Kernel thread_access eligibility removes ordinary explicitly unfollowed threads; new unread exact mentions override exclusion. This is proven behavior, not a UI defect to silently remove.",
+    "Official first-unread gesture holds presentation intent until loaded visible items contain unread, scrolls/highlights without opening detail or marking read, clears highlight after3s. Loom has scroll restoration but not this focus intent.",
+    "No new backend endpoint or independent frontend business state is needed merely to read follow state. Exact upstream retention semantics would require a separately scoped contract compatibility decision."
+  ],
+  "checks": {
+    "kernel": "node --test --test-name-pattern=\"explicit unfollow|Activity copies|explicit mark unread\" packages/kernel/test/global-discovery.test.ts:3 passed",
+    "client": "node --test scripts/official-web/thread-activity.test.ts:4 passed",
+    "format": "documentation/registry formatting and git diff --check"
+  },
+  "remaining": [
+    "Pure frontend first-unread focus gesture remains unimplemented.",
+    "Activity menu follow/read controls need lazy authoritative state and explicit retention semantics; not accepted by this audit.",
+    "No new all-page visual acceptance, real CLI or paid calls."
+  ],
+  "privateEvidence": "/Users/sun/.loom/reviews/2026-10-19-activity-boundary",
+  "deployment": "Unchanged; no repair or runtime change requiring restart."
+}

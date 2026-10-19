@@ -579,7 +579,7 @@
   },
   "pending": [
     "G1: Standalone one-instance chat entry and channel-internal private-box navigation; preserve all old history, no silent session conversion.",
-    "G2: Activity follow/unfollow/conditional read state, complete grouping projections.",
+    "G2: Activity list lacks embedded follow state (thread.followers API already exists); menu state binding, upstream row-retention compatibility, grouping and first-unread focus remain. Mobile Home summary badge is completed.",
     "G3: Browser push subscription/permission/test and notification navigation; existing capability-only view remains explicit.",
     "V1: Targeted unverified combinations, plain-text browser styling, successful external navigation and physical mobile/authenticated upstream comparison; see currentCloseout."
   ],
