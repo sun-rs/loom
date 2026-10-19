@@ -24,6 +24,7 @@ export async function verifySystemSettings({
       await page.goto(origin + "/?view=settings&settings=administration");
       const box = page.getByRole("checkbox");
       await box.waitFor({ timeout: 5000 });
+      assert.equal(await page.locator('form[data-slot="card"]').count(), 1);
       assert.equal(await box.isChecked(), false);
       await page.route(
         "**/v3/client/workspaces/system-channel/update",

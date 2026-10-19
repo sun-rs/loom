@@ -16,6 +16,28 @@ export async function verifyAccountSettings({ browser, origin, client }) {
       await page.goto(origin + "/?view=settings&settings=account");
       const name = page.getByTestId("account-profile-display-name-input");
       await name.waitFor({ timeout: 5000 });
+      const profile = page.getByTestId("account-profile-card");
+      assert.equal(await profile.getAttribute("data-slot"), "card");
+      const uploadInput = profile.locator('input[type="file"]');
+      await name.focus();
+      await page.keyboard.press("Shift+Tab");
+      assert.equal(
+        await uploadInput.evaluate((el) => document.activeElement === el),
+        true,
+      );
+      const veil = profile.locator("[data-avatar-edit-veil]");
+      await page.waitForFunction(
+        () =>
+          getComputedStyle(document.querySelector("[data-avatar-edit-veil]"))
+            .opacity === "1",
+      );
+      const avatar = profile.locator('[data-avatar-context="profile-tile"]');
+      assert.equal(Math.round((await avatar.boundingBox()).width), 51);
+      assert.equal(Math.round((await veil.boundingBox()).width), 51);
+      const chooser = page.waitForEvent("filechooser");
+      await veil.click();
+      await chooser;
+
       assert.equal(
         await page
           .getByTestId("account-profile-username-input")

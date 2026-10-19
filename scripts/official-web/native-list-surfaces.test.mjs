@@ -24,3 +24,32 @@ test("avatar frame sizes and badge corners come from the current official recipe
   assert.match(s, /"list-row": "md"/);
   assert.match(s, /rounded-\[2px\]/);
 });
+test("account profile uses current native card, typography and keyboard-accessible avatar edit", () => {
+  const card = read(
+    "packages/web/src/components/settings/SettingsProfileCard.tsx",
+  );
+  assert.match(card, /<Card/);
+  assert.match(card, /<Separator className="mb-4"/);
+  assert.match(card, /text-headline text-foreground/);
+  assert.doesNotMatch(card, /shadow-raft-sm|border-t|text-lg/);
+  const panel = read("packages/web/src/components/settings/SettingsPanel.tsx");
+  const profile = panel.slice(
+    panel.indexOf('testId="account-profile-card"'),
+    panel.indexOf("{/* Profile form */}"),
+  );
+  assert.match(profile, /peer\/avatar-edit sr-only/);
+  assert.match(profile, /has-\[:focus-visible\]:shadow-raft-focus/);
+  assert.match(profile, /<AvatarEditVeil busy={avatarSaving}/);
+  assert.doesNotMatch(profile, /size-16|className="hidden"|bg-black\/40/);
+});
+test("system channel settings retain native form Card and disabled typography", () => {
+  const s = read("packages/web/src/components/settings/SettingsPanel.tsx");
+  const section = s.slice(
+    s.indexOf("function SystemChannelsSection()"),
+    s.indexOf("function ServerTranslationSection()"),
+  );
+  assert.match(section, /<Card render={<form onSubmit={handleSave} \/>}/);
+  assert.match(section, /text-subhead font-semibold/);
+  assert.match(section, /text-footnote text-foreground-muted/);
+  assert.doesNotMatch(section, /shadow-raft-sm|opacity-60/);
+});

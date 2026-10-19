@@ -58,7 +58,7 @@
         "packages/web/src/components/layout/LeftRail.tsx",
         "packages/web/src/components/message/MessageItem.tsx"
       ],
-      "adaptation": "Loom activity rows and durable mark actions retained. Existing sidebar activity summary request also feeds desktop navigation, without extra polling or independent counts. Touch Done action remains visible because native activity context menus are not yet connected. Official list-layout/grouping options are pending.",
+      "adaptation": "Loom durable activity/read actions retained. Native list branch and context menu now connected (see native-list-and-avatar-rules); touch hover-only Done hidden, available in context menu. Grouping options remain pending.",
       "checks": [
         "scripts/official-web/feed-release.test.mjs",
         "scripts/official-web/navigation-unread.test.ts",
@@ -243,12 +243,38 @@
         "No physical iOS/Android long-press acceptance",
         "No full-site screenshot parity claim; this slice covers listed shared recipes and activity/computer composition"
       ]
+    },
+    "account-profile-current": {
+      "source": "Raft v1.21.22 af3d6ef4a22f0f05f5f9db9424285755d67e9726 app-shell-D1-nY-va.js kut, t8 and account-profile-card composition",
+      "provenance": "Structural port from owner-authorized archived production bundle; original upstream notices retained. Not byte-exact TSX.",
+      "local": [
+        "packages/web/src/components/settings/SettingsProfileCard.tsx",
+        "packages/web/src/components/settings/SettingsPanel.tsx",
+        "packages/web/src/components/ui/AvatarEditVeil.tsx"
+      ],
+      "adaptation": "Native Card/Separator, identity typography, avatar veil and keyboard focus; Loom profile validation, draft and unknown-result handling unchanged; cloud email/account controls excluded.",
+      "checks": [
+        "scripts/official-web/native-list-surfaces.test.mjs",
+        "scripts/official-web/account-settings.test.ts",
+        "scripts/official-web/account-settings-browser.mjs"
+      ]
+    },
+    "system-channel-current": {
+      "source": "Raft v1.21.22 app-shell-D1-nY-va.js systemChannels composition at archived lines 149005–149080",
+      "provenance": "Structural port from owner-authorized production bundle; Card form renderer, disabled label, subhead/footnote; existing upstream notices retained.",
+      "local": ["packages/web/src/components/settings/SettingsPanel.tsx"],
+      "adaptation": "Existing Loom controller and guarded mutation retained; no backend changes.",
+      "checks": [
+        "scripts/official-web/native-list-surfaces.test.mjs",
+        "scripts/official-web/system-settings.test.ts",
+        "scripts/official-web/system-settings-browser.mjs"
+      ]
     }
   },
   "pending": [
     "Remaining shared headers and action compositions",
-    "Settings account/notification/about/administration content not yet audited against the entire latest composition; shell/sidebar/appearance migrated",
+    "Settings account profile composition audited and migrated; administration system-channel form migrated; notification/about full latest-source audit remains open; shell/sidebar/appearance migrated",
     "Channel settings upstream-only joint/guest/share/delete and expanded notification controls remain excluded; supported metadata/mute/archive paths migrated",
-    "Activity thread follow/unfollow and conditional read controls (projection lacks follow state; unfollow currently removes canonical eligibility), alternate list layout/grouping (no complete server facet/group query) and mobile home unread bindings"
+    "Activity thread follow/unfollow and conditional read controls (projection lacks follow state; unfollow currently removes canonical eligibility), grouping options (no complete server facet/group query) and mobile home unread bindings"
   ]
 }

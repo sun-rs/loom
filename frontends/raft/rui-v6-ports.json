@@ -230,7 +230,7 @@
     },
     "packages/web/src/components/settings/SettingsPanel.tsx": {
       "upstreamSha256": "9506c7bbdf9854694621637dab2dcd44249f48d22b933bb3dc6f55ad0f114a23",
-      "portedSha256": "1cdc08d52ca9d589e8fdf43448950569cf88d0a612f59418ca46a60b8b96fab7"
+      "portedSha256": "1c97e4d6f44dfea2ad655a9dad459a0e0acc687bfd144f0dac29d9eb1d39d1bc"
     },
     "packages/web/src/components/settings/DeleteServerConfirmDialog.tsx": {
       "upstreamSha256": "0937746bce6efe23af7ea98c7ddf63da357d26703e08f4eef6bd377d1caaa97e",
@@ -242,7 +242,7 @@
     },
     "packages/web/src/components/settings/SettingsProfileCard.tsx": {
       "upstreamSha256": "35e1ce3d4fd3301a4a4f72c17759e737208868f705044c1373680438bbf1f22d",
-      "portedSha256": "b69bbc78e4da67c697884171bab71d322466d0bd9b1c49c9026cf7fc149575a8"
+      "portedSha256": "06779a9553110fdcbc9f36eec11a755d7e97da0330f71d7bbec30579b760ce96"
     },
     "packages/web/src/components/settings/IMBridgesSettingsSection.tsx": {
       "upstreamSha256": "c8b1f0c546fdeb24a1f89c72aaf09d395f8c3feae621bf472df0d29ff464f121",

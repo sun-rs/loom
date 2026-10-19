@@ -1,3 +1,4 @@
+import AvatarEditVeil from "../ui/AvatarEditVeil";
 import { AppWhenToUseField } from "./AppWhenToUseField";
 import { AgentJwtSettings } from "./AgentJwtSettings";
 import { ToggleGroup, ToggleGroupItem, Checkbox, Textarea, TextareaCounter, Skeleton,
@@ -621,19 +622,13 @@ export function AccountSection({
           avatar={
             <Tooltip content={avatarSaving ? formatMessage({ id: "settings.common.uploadingAvatar" }) : formatMessage({ id: "settings.common.uploadImage" })}>
             <label
-              className={`group relative flex size-16 shrink-0 items-center justify-center ${
- avatarSaving ? "cursor-not-allowed opacity-70" : ""
- }`}
-              aria-label={avatarSaving ? formatMessage({ id: "settings.common.uploadingAvatar" }) : formatMessage({ id: "settings.common.uploadImage" })}
+              className={`group/avatar-edit relative flex shrink-0 rounded-sticker has-[:focus-visible]:shadow-raft-focus ${avatarSaving ? "cursor-not-allowed opacity-70" : ""}`}
             >
-              <AvatarSlot context="profile-tile" type="human" humanAvatarUrl={user?.avatarUrl} email={user?.email} />
-              <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
-                <Upload size={18} className="text-white" />
-              </div>
               <input
                 type="file"
                 accept={PROFILE_AVATAR_ACCEPT}
-                className="hidden"
+                className="peer/avatar-edit sr-only"
+                aria-label={avatarSaving ? formatMessage({ id: "settings.common.uploadingAvatar" }) : formatMessage({ id: "settings.common.uploadImage" })}
                 disabled={avatarSaving}
                 onChange={(e) => {
                   const file = e.target.files?.[0];
@@ -641,6 +636,8 @@ export function AccountSection({
                   if (file) void handleUploadAvatar(file);
                 }}
               />
+              <AvatarSlot context="profile-tile" type="human" humanAvatarUrl={user?.avatarUrl} email={user?.email} />
+              <AvatarEditVeil busy={avatarSaving} />
             </label>
             </Tooltip>
           }
@@ -3497,8 +3494,8 @@ function SystemChannelsSection() {
         label={formatMessage({ id: "settings.systemChannels.sectionLabel" })}
       />
 
-      <form onSubmit={handleSave} className="border border-line-muted bg-layer-panel shadow-raft-sm     p-4 space-y-3">
-        <label className={`flex items-start gap-3 ${saving ? "opacity-60" : ""}`}>
+      <Card render={<form onSubmit={handleSave} />} className="block space-y-3 p-4">
+        <label className={`flex items-start gap-3 ${saving ? "cursor-not-allowed" : ""}`}>
           <Checkbox
             checked={allChannelHidden}
             disabled={saving}
@@ -3506,15 +3503,15 @@ function SystemChannelsSection() {
             className="mt-0.5"
           />
           <span className="min-w-0">
-            <span className="block text-sm font-bold text-foreground-strong ">{formatMessage({ id: "settings.systemChannels.hideAllTitle" })}</span>
-            <span className="block text-xs text-foreground-muted  mt-0.5">
+            <span className={`block text-subhead font-semibold ${saving ? "text-foreground-disabled" : "text-foreground"}`}>{formatMessage({ id: "settings.systemChannels.hideAllTitle" })}</span>
+            <span className="block text-footnote text-foreground-muted mt-0.5">
               {formatMessage({ id: "settings.systemChannels.hideAllDescription" })}
             </span>
           </span>
         </label>
 
         {error && (
-          <Banner intent="warning" density="sm" className="font-bold">{error}</Banner>
+          <Banner intent="warning" density="sm">{error}</Banner>
         )}
 
         <Button
@@ -3528,7 +3525,7 @@ function SystemChannelsSection() {
             <><Check size={14} /> {formatMessage({ id: "settings.common.saved" })}</>
           ) : formatMessage({ id: "settings.common.save" })}
         </Button>
-      </form>
+      </Card>
     </div>
   );
 }
