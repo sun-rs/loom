@@ -14,11 +14,13 @@ import { loadChannelDirectory } from "./channel-client.ts";
 export default function TopBarSearch({
   client,
   directory,
+  selectedRoomId,
   onDirectory,
   onOpenEntity,
   notice,
 }: {
   client: RahClient;
+  selectedRoomId?: string;
   onOpenEntity: (entity: SearchEntity, full: boolean) => Promise<void>;
   notice?: ReactNode;
   directory: Awaited<ReturnType<typeof loadChannelDirectory>>;
@@ -89,7 +91,12 @@ export default function TopBarSearch({
             controlRoomId: directory.workspace.controlRoomId,
             principalId: directory.principal.principalId,
             backgroundRoomId:
-              new URLSearchParams(background).get("room") ?? undefined,
+              new URLSearchParams(background).get("room") ??
+              (!new URLSearchParams(background).has("view") &&
+              new URLSearchParams(background).get("chat") !== "list" &&
+              new URLSearchParams(background).get("saved") !== "1"
+                ? selectedRoomId
+                : undefined),
             onOpenEntity,
             notice,
             onBack: close,

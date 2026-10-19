@@ -49,3 +49,27 @@ test("recent UI does not invent visits from an unvisited directory", () => {
     [],
   );
 });
+test("native recent list keeps visits first and fills only from authorized activity timestamps", () => {
+  const entities = ["a", "b", "c"].map((id) => ({
+    key: id,
+    channelId: id,
+    type: "channel",
+    title: id,
+    archivedAt: null,
+  })) as never;
+  assert.deepEqual(
+    recentSearchEntities(["a"], entities, [], undefined, {
+      b: "2026-10-19T10:00:00Z",
+      c: "2026-10-18T10:00:00Z",
+      missing: "2026-10-20T10:00:00Z",
+    }).map((e) => e.key),
+    ["a", "b", "c"],
+  );
+});
+
+test("recorded visits include the visible default desktop channel, never a hidden non-chat selection", async () => {
+  const { readFileSync } = await import("node:fs");
+  const s = readFileSync("frontends/raft/loom/ChannelApp.tsx", "utf8");
+  assert.match(s, /destination === "channels" && !savedOpen/);
+  assert.match(s, /!mobileList \|\| desktopChat/);
+});

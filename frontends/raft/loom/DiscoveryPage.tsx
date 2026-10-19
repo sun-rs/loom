@@ -134,6 +134,8 @@ export default function DiscoveryPage({
     workspaceId,
     principalId,
     backgroundRoomId,
+    client,
+    overlay && !query.trim(),
   );
   const scope: WorkspaceSearchRequest["scope"] = [
     "channel",

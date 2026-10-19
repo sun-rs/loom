@@ -1,3 +1,4 @@
+import { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives.ts";
 import { OverflowMenuTrigger } from "../packages/web/src/components/ui/OverflowSheet.tsx";
 import ComposerDirectory from "./ComposerDirectory.tsx";
 import type { NavigationUnread } from "./navigation-unread.ts";
@@ -824,6 +825,7 @@ export default function ChannelApp() {
       })
       .catch(() => setBoxError("无法打开私聊"));
   };
+  const desktopChat = useMediaQuery("(min-width: 768px)");
   const requested = params.get("room");
   // Presentation route only: mobile list visibility does not clear room selection.
   // No delivery/read/write state lives here.
@@ -855,7 +857,9 @@ export default function ChannelApp() {
   useRecordSearchVisit(
     directory?.workspace.workspaceId,
     directory?.principal.principalId,
-    requested && selected ? selected.roomId : undefined,
+    destination === "channels" && !savedOpen && (!mobileList || desktopChat)
+      ? selected?.roomId
+      : undefined,
   );
   const bridge = useMemo(() => {
     if (!selected) return undefined;
@@ -948,6 +952,7 @@ export default function ChannelApp() {
           {directory && (
             <TopBarSearch
               client={client}
+              selectedRoomId={selected?.roomId}
               directory={directory}
               onDirectory={setDirectory}
               onOpenEntity={openSearchEntity}

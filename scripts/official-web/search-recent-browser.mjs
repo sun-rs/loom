@@ -32,6 +32,8 @@ export async function verifySearchRecent({ browser, origin, channels }) {
       );
       await page.getByTestId("composer-textarea").waitFor();
       if (width === 1440) {
+        await page.goto(origin + "/?room=" + channels[2].roomId);
+        await page.getByTestId("composer-textarea").waitFor();
         await page.goto(origin + "/?room=" + channels[1].roomId);
         await page.getByTestId("composer-textarea").waitFor();
         await page.reload();
@@ -50,6 +52,30 @@ export async function verifySearchRecent({ browser, origin, channels }) {
           "search-channel-result-" + channels[0].roomId,
         );
         await prior.waitFor();
+        const secondPrior = recent.getByTestId(
+          "search-channel-result-" + channels[2].roomId,
+        );
+        await secondPrior.waitFor();
+        const input = overlay.getByRole("textbox", { name: "搜索内容" });
+        assert.equal(
+          await input.evaluate((el) => el === document.activeElement),
+          true,
+        );
+        await page.keyboard.press("ArrowDown");
+        await page.keyboard.press("ArrowUp");
+        await page.keyboard.press("ArrowDown");
+        await page.keyboard.press("Enter");
+        await page.waitForURL(
+          (u) =>
+            u.searchParams.get("room") === channels[0].roomId &&
+            !u.searchParams.has("view"),
+        );
+        await page.getByTestId("composer-textarea").waitFor();
+        await page.goto(origin + "/?room=" + channels[1].roomId);
+        await page.getByTestId("composer-textarea").waitFor();
+        await page.getByTestId("app-top-bar-search").click();
+        await prior.waitFor();
+
         assert.equal(
           await overlay.getByTestId("search-view-all-results").count(),
           0,

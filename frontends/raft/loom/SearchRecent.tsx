@@ -1,5 +1,6 @@
+import type { RahClient } from "@rah-os/client-sdk";
 // Native recent-conversation store contains bounded visit IDs only, not messages or business state.
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useIntl } from "react-intl";
 import { Clock3 } from "lucide-react";
 import { SearchResultsList } from "raft-ui";
@@ -29,7 +30,40 @@ export function useSearchRecent(
   workspaceId: string,
   principalId: string | undefined,
   excludeRoomId: string | undefined,
+  client: RahClient,
+  enabled: boolean,
 ) {
+  const [activity, setActivity] = useState<Record<string, string>>({});
+  useEffect(() => {
+    setActivity({});
+    if (!enabled) return;
+    const abort = new AbortController();
+    void client
+      .request(
+        "activity.list",
+        { workspaceId, filter: "all", limit: 50 },
+        { signal: abort.signal },
+      )
+      .then((result) => {
+        if (abort.signal.aborted) return;
+        const dates: Record<string, string> = {};
+        for (const item of result.items) {
+          // A thread is not a visit to its parent conversation.
+          if (item.kind === "thread") continue;
+          const date = item.latestMessage.createdAt;
+          if (
+            !dates[item.roomId] ||
+            Date.parse(date) > Date.parse(dates[item.roomId]!)
+          )
+            dates[item.roomId] = date;
+        }
+        setActivity(dates);
+      })
+      .catch(() => {
+        /* A failed fallback never hides recorded visits. */
+      });
+    return () => abort.abort();
+  }, [client, workspaceId, principalId, enabled]);
   const scope = getRecentConversationScopeKey(workspaceId, principalId);
   const visits = useRecentConversationStore((s) =>
     scope
@@ -43,8 +77,9 @@ export function useSearchRecent(
         entities.catalog.map((e) => e.suggestion),
         entities.hiddenDms,
         excludeRoomId,
+        activity,
       ),
-    [visits, entities.catalog, entities.hiddenDms, excludeRoomId],
+    [visits, entities.catalog, entities.hiddenDms, excludeRoomId, activity],
   );
 }
 export default function SearchRecent({
