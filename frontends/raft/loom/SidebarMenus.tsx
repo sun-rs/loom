@@ -6,6 +6,7 @@ import {
   ContextMenuItem,
   ContextMenuSubmenu,
   ContextMenuSubmenuTrigger,
+  SidebarSectionControl,
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
@@ -124,15 +125,14 @@ export function SidebarSortMenu({
       <Tooltip content={`排序 ${name}`}>
         <DropdownMenuTrigger
           render={
-            <button
+            <SidebarSectionControl
               type="button"
-              className="btn-flat-sm flex size-6 items-center justify-center p-0"
               aria-label={`排序 ${name}`}
               disabled={disabled}
             />
           }
         >
-          <ArrowUpDown size={14} />
+          <ArrowUpDown size={16} />
         </DropdownMenuTrigger>
       </Tooltip>
       <DropdownMenuContent>

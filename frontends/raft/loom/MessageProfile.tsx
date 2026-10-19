@@ -1,4 +1,5 @@
 import { createContext, useContext } from "react";
+import { Separator } from "raft-ui";
 import type { Principal } from "@rah-os/protocol";
 import AvatarSlot from "../packages/web/src/components/ui/AvatarSlot.tsx";
 import Tooltip from "../packages/web/src/components/ui/Tooltip.tsx";
@@ -29,7 +30,7 @@ export default function MessageProfile({
   const name = member?.displayName ?? member?.handle ?? fallbackLabel ?? "成员";
   return (
     <div data-testid="loom-message-profile">
-      <div className="flex items-start gap-3 px-3 py-3">
+      <div className="flex items-start gap-3 px-4 pt-4 pb-3 last:pb-4">
         <AvatarSlot
           context="mention-card"
           type={mentionType === "agent" ? "agent" : "human"}
@@ -37,20 +38,21 @@ export default function MessageProfile({
           className="mt-0.5 self-start"
         />
         <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-bold text-foreground-strong ">
-            {name}
-          </div>
-          <div className="truncate font-mono text-xs text-foreground-muted ">
+          <div className="truncate text-headline text-foreground">{name}</div>
+          <div className="truncate font-mono text-mono-meta text-foreground-muted">
             {member ? `@${member.handle}` : "成员资料暂不可用"}
           </div>
         </div>
       </div>
       {member?.description ? (
-        <Tooltip content={member.description}>
-          <div className="truncate border-t-2 border-line-muted  px-3 py-2 text-xs text-foreground-muted ">
-            {member.description}
-          </div>
-        </Tooltip>
+        <>
+          <Separator />
+          <Tooltip content={member.description}>
+            <div className="truncate px-4 py-3 last:pb-4 text-callout text-foreground-muted">
+              {member.description}
+            </div>
+          </Tooltip>
+        </>
       ) : null}
     </div>
   );

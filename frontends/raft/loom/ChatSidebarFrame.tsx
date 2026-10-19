@@ -1,9 +1,17 @@
 import SystemNotifications from "./SystemNotifications.tsx";
-// Structural port of Sidebar.tsx mobileInline / desktop root and header.
+// Current v1.21.22 Sidebar (sbt) composition; see page-adoption.json.
+// Native recipes own desktop/mobile header, typography and shell seams.
 // Upstream revision/license: ../adoption.json. Loom replaces the server switcher
 // with its single local Chat title; no unavailable account action is presented.
 import { useEffect, useState, type ReactNode } from "react";
-import { SidebarRoot } from "raft-ui";
+import {
+  SidebarRoot,
+  SidebarHeader,
+  SidebarHeaderTitle,
+  PanelSectionHeader,
+  PanelHeaderContent,
+  PanelTitle,
+} from "raft-ui";
 export default function ChatSidebarFrame({
   title,
   hideDesktopHeader = false,
@@ -31,38 +39,33 @@ export default function ChatSidebarFrame({
   }, []);
   return (
     <SidebarRoot
-      className={`relative flex h-full w-full flex-col ${desktop ? "border-r border-line-muted   bg-layer-canvas-muted " : ""} text-foreground-strong  font-display select-none`}
+      className="relative flex h-full w-full flex-col font-sans text-foreground select-none"
       data-testid={`${testIdPrefix}-root`}
     >
-      {(!desktop || !hideDesktopHeader) && (
-        <div
-          className={
-            desktop
-              ? "flex shrink-0 items-center bg-layer-canvas-muted  h-panel-header border-b border-line-muted   px-5"
-              : "relative flex h-panel-header shrink-0 items-center gap-3 border-b border-line-muted bg-layer-panel    px-4"
-          }
+      {desktop ? (
+        !hideDesktopHeader && (
+          <SidebarHeader
+            data-testid={`${testIdPrefix}-header`}
+            data-loom-root-header
+          >
+            <SidebarHeaderTitle render={<h1 />} className="min-w-0 flex-1">
+              {title}
+            </SidebarHeaderTitle>
+          </SidebarHeader>
+        )
+      ) : (
+        <PanelSectionHeader
           data-testid={`${testIdPrefix}-header`}
           data-loom-root-header
         >
-          <h1
-            className={
-              desktop
-                ? "font-heading truncate text-lg in-data-[theme=elegant]:text-[17px] font-bold text-foreground-strong "
-                : "font-heading text-base font-bold text-foreground-strong  truncate"
-            }
-          >
-            {title}
-          </h1>
-          {!desktop && title === "聊天" && (
-            <>
-              <div className="min-w-0 flex-1" />
-              <SystemNotifications flavor="mobile-navbar" />
-            </>
-          )}
-        </div>
+          <PanelHeaderContent>
+            <PanelTitle render={<h1 />}>{title}</PanelTitle>
+          </PanelHeaderContent>
+          {title === "聊天" && <SystemNotifications flavor="mobile-navbar" />}
+        </PanelSectionHeader>
       )}
       <div
-        className="scrollbar-quiet min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-2 py-3 mobile-nav-clearance"
+        className={`scrollbar-quiet min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-2 pb-2 mobile-nav-clearance ${hideDesktopHeader ? "pt-2" : "pt-1"}`}
         data-testid={scrollTestId}
       >
         {children}

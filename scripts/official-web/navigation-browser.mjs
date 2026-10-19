@@ -55,7 +55,18 @@ export async function verifyGlobalNavigation({ browser, origin, channel }) {
         await page.getByTestId("mobile-home-activity-entry").click();
       } else {
         await nav.getByRole("button", { name: label, exact: true }).click();
-        await page.getByRole("heading", { name: label, exact: true }).waitFor();
+        if (id === "settings" && viewport.width >= 768) {
+          await page.getByTestId("settings-sidebar-list").waitFor();
+          assert.equal(
+            await page.getByTestId("settings-sidebar-header").count(),
+            0,
+          );
+          await page.getByTestId("loom-settings-detail").waitFor();
+        } else {
+          await page
+            .getByRole("heading", { name: label, exact: true })
+            .waitFor();
+        }
       }
       assert.equal(new URL(page.url()).searchParams.get("view"), id);
       if (id !== "search" && !(id === "activity" && viewport.width < 768))

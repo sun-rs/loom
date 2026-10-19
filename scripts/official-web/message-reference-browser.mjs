@@ -44,6 +44,14 @@ export async function verifyMessageReferences({
     await mention.waitFor();
 
     assert.equal(await mention.evaluate((el) => el.tagName), "A");
+    await mention.hover();
+    const preview = page.getByTestId("loom-message-profile");
+    await preview.waitFor();
+    assert.equal(await preview.locator(".text-headline").count(), 1);
+    assert.equal(await preview.locator(".text-mono-meta").count(), 1);
+    assert.equal(await preview.locator(".border-t-2").count(), 0);
+    await page.mouse.move(width - 2, 2);
+    await preview.waitFor({ state: "hidden" });
     await mention.click();
     await page.getByTestId("profile-panel").waitFor();
     if (width === 390) {

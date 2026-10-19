@@ -415,6 +415,34 @@
         "Usage is Loom-owned CLI reporting, default last24h; two real instance rows reflect actual data, not a render limit",
         "Independent single-instance chat entrance and internal-only private-box navigation are owner-approved follow-up, not implemented in this slice"
       ]
+    },
+    "shared-sidebar-search-history-preview": {
+      "source": "v1.21.22 app-shell-D1-nY-va.js: sbt sidebar 167950–168060; T7/E7/D7 165400–165430; Qvt 164761–164810; channel section 168410–168460; search history 183465–183575; pagination 183850–183900; profile 105545–105595; TextLink IX 98737–98755. Revision and asset SHA-256: release-lock.json.",
+      "kind": "Structural port of current production composition; direct reuse of raft-ui@0.6.0 recipes. Not byte-exact TSX.",
+      "local": [
+        "loom/ChatSidebarFrame.tsx",
+        "loom/ChannelSidebar.tsx",
+        "loom/SidebarMenus.tsx",
+        "loom/SearchHistory.tsx",
+        "loom/SearchLoadMore.tsx",
+        "loom/MessageProfile.tsx",
+        "packages/web/src/components/ui/TextLink.tsx"
+      ],
+      "adaptation": "Loom keeps authorized directory/member reads, revisioned sidebar ordering and context menu writes, scoped local search history. Mobile workspace selector remains a local Chat title; no cloud/account functions. Profile omits unbound runtime/presence/activity. Search pagination keeps Loom cursor semantics. Existing notices/license retained via adoption.json.",
+      "preserved": "Native sidebar/header/section/button recipes, semantic typography, shared TextLink, soft search chips, member card separator, warning banner. Existing pointer/keyboard/focus/dismiss and data authority paths retained.",
+      "checks": [
+        "scripts/official-web/search-settings-composition.test.mjs",
+        "scripts/official-web/search-history-browser.mjs",
+        "scripts/official-web/message-reference-browser.mjs",
+        "scripts/official-web/sidebar-actions-browser.mjs",
+        "scripts/official-web/channel-controls-browser.mjs",
+        "scripts/official-web/navigation-browser.mjs"
+      ],
+      "limits": [
+        "No claim of complete current-site parity. Independent single chat, browser push and Activity follow remain pending as previously recorded.",
+        "Pagination error composition is source/type/build verified, not a new end-to-end failure-injection acceptance.",
+        "Hover preview shows authorized identity/description only; live runtime/activity is not fabricated."
+      ]
     }
   },
   "pending": [

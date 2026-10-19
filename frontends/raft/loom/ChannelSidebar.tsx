@@ -15,7 +15,15 @@ import { SidebarDrag, DragSection, DragRow } from "./SidebarDrag.tsx";
 import ChannelArchiveDialog from "./ChannelArchiveDialog.tsx";
 import { markChannelActivity } from "./sidebar-activity.ts";
 import { useCallback, useEffect, useMemo, useState, useRef } from "react";
-import { Button, Input, Textarea } from "raft-ui";
+import {
+  Button,
+  Input,
+  Textarea,
+  SidebarSectionHeader,
+  SidebarSectionDisclosure,
+  SidebarSectionControl,
+  SidebarSectionCount,
+} from "raft-ui";
 import { Plus, ChevronRight } from "lucide-react";
 import { SidebarContextMenu, SidebarSortMenu } from "./SidebarMenus.tsx";
 import type { RahClient } from "@rah-os/client-sdk";
@@ -298,7 +306,7 @@ export default function ChannelSidebar({
               items={group.rooms.map((r) => r.roomId)}
               disabled={busy}
             >
-              <div className="mb-1 mt-3 flex h-6 items-center justify-between px-2">
+              <SidebarSectionHeader>
                 <SidebarContextMenu
                   label={`分组操作 ${group.name}`}
                   disabled={busy}
@@ -345,9 +353,9 @@ export default function ChannelSidebar({
                       : []),
                   ]}
                 >
-                  <button
-                    type="button"
-                    className="flex h-6 min-w-0 w-full items-center gap-1 [&>svg]:shrink-0 text-xs font-bold uppercase text-foreground-strong tracking-widest transition-colors hover:text-foreground-muted  "
+                  <SidebarSectionDisclosure
+                    render={<button type="button" />}
+                    className="cursor-default"
                     data-section-handle
                     aria-expanded={!collapsed.includes(group.id)}
                     onClick={() =>
@@ -359,21 +367,19 @@ export default function ChannelSidebar({
                     }
                   >
                     <ChevronRight
-                      size={12}
-                      className={`shrink-0 ${collapsed.includes(group.id) ? "" : "rotate-90"}`}
+                      size={14}
+                      className={`shrink-0 transition-transform ${collapsed.includes(group.id) ? "" : "rotate-90"}`}
                     />
                     <span className="truncate">{group.name}</span>
-                    {group.id === "dms" && (
-                      <span className="text-foreground-placeholder font-mono normal-case tracking-normal ">
-                        {group.rooms.length}
-                      </span>
-                    )}
+                    <SidebarSectionCount>
+                      {group.rooms.length}
+                    </SidebarSectionCount>
                     {group.id === "dms" &&
                       collapsed.includes(group.id) &&
                       group.rooms.some(
                         (r) => (activity?.[r.roomId] ?? 0) > 0,
                       ) && <AttentionDot size="lg" className="ml-1" />}
-                  </button>
+                  </SidebarSectionDisclosure>
                 </SidebarContextMenu>
                 <div className="flex shrink-0 items-center gap-1">
                   <SidebarSortMenu
@@ -384,19 +390,18 @@ export default function ChannelSidebar({
                   />
                   {group.id !== "dms" && (
                     <Tooltip content="新建频道">
-                      <button
+                      <SidebarSectionControl
                         type="button"
-                        className="btn-flat-sm flex size-6 items-center justify-center p-0"
                         aria-label="新建频道"
                         disabled={busy}
                         onClick={() => open({ kind: "channel" })}
                       >
-                        <Plus size={14} />
-                      </button>
+                        <Plus size={16} />
+                      </SidebarSectionControl>
                     </Tooltip>
                   )}
                 </div>
-              </div>
+              </SidebarSectionHeader>
               {!collapsed.includes(group.id) &&
                 group.rooms.map((room) => (
                   <DragRow

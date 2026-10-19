@@ -66,3 +66,40 @@ test("all search destination surfaces use current list composition and headings"
   );
   assert.doesNotMatch(read("loom/SearchEntityRows.tsx"), /mb-3 px-3|-m-1.5/);
 });
+test("search history uses current native heading, soft chips and shared text actions", () => {
+  const s = read("loom/SearchHistory.tsx");
+  assert.match(s, /SearchResultsSectionHeading/);
+  assert.match(s, /appearance="soft"/);
+  assert.match(s, /<TextLink/);
+  assert.match(s, /flex flex-wrap gap-1.5 px-4/);
+  assert.doesNotMatch(s, /SectionEyebrow|text-\[11px\]|size=\{11\}/);
+});
+test("member preview adopts current typography and native separator", () => {
+  const s = read("loom/MessageProfile.tsx");
+  assert.match(s, /text-headline text-foreground/);
+  assert.match(s, /<Separator/);
+  assert.match(s, /px-4 pt-4 pb-3 last:pb-4/);
+  assert.doesNotMatch(s, /border-t-2|text-xs|font-bold/);
+});
+test("shared sidebars and channel sections use native recipes instead of local sizes", () => {
+  const s = read("loom/ChatSidebarFrame.tsx");
+  assert.match(s, /<SidebarHeaderTitle/);
+  assert.match(s, /<PanelSectionHeader/);
+  assert.doesNotMatch(s, /theme=elegant|font-display|text-lg/);
+  const c = read("loom/ChannelSidebar.tsx");
+  for (const name of [
+    "SidebarSectionHeader",
+    "SidebarSectionDisclosure",
+    "SidebarSectionCount",
+    "SidebarSectionControl",
+  ])
+    assert.ok(c.includes("<" + name));
+  assert.doesNotMatch(c, /tracking-widest|btn-flat-sm/);
+  assert.match(read("loom/SidebarMenus.tsx"), /<SidebarSectionControl/);
+});
+test("search pagination error uses the native warning banner", () => {
+  const s = read("loom/SearchLoadMore.tsx");
+  assert.match(s, /intent="warning"/);
+  assert.match(s, /withIcon/);
+  assert.doesNotMatch(s, /shadow-raft-sm|font-bold/);
+});
