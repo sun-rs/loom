@@ -1,3 +1,4 @@
+import { verifyChannelSettings } from "./channel-settings-browser.mjs";
 import { verifyChromeRepair } from "./chrome-repair-browser.mjs";
 import { verifyComputers } from "./computers-browser.mjs";
 import { verifyActivityMenu } from "./activity-menu-browser.mjs";
@@ -177,7 +178,13 @@ try {
   browser = await (
     process.env.LOOM_BROWSER_ENGINE === "webkit" ? webkit : chromium
   ).launch({ headless: true });
-  if (process.env.LOOM_BROWSER_SLICE === "chrome-repair") {
+  if (process.env.LOOM_BROWSER_SLICE === "channel-settings") {
+    console.log(
+      JSON.stringify(
+        await verifyChannelSettings({ browser, origin, client, channels }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "chrome-repair") {
     console.log(
       JSON.stringify(
         await verifyChromeRepair({ browser, origin, channels, client }),

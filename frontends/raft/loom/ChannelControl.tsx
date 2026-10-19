@@ -1,3 +1,5 @@
+import ChannelSettingsContent from "./ChannelSettingsContent.tsx";
+import DiscardChangesDialog from "./DiscardChangesDialog.tsx";
 import TaskPermissionDialog from "./TaskPermissionDialog.tsx";
 import MemoryPolicyDialog from "./MemoryPolicyDialog.tsx";
 import { useRouteIntentOwner } from "./useIntentRoute.ts";
@@ -11,7 +13,6 @@ import {
   DrawerTitle,
   DrawerDescription,
   DrawerClose,
-  DrawerBody,
 } from "raft-ui";
 import { Brain, CheckSquare, CircleStop, Settings, X } from "lucide-react";
 import type { RoomExecutionReadResponse } from "@rah-os/protocol";
@@ -33,7 +34,9 @@ export default function ChannelControl({
   controlRoomId,
   members,
   readOnly = false,
+  onChanged,
 }: {
+  onChanged: () => Promise<void>;
   readOnly?: boolean;
   members: (close: () => void) => ReactNode;
   bridge: LoomChannelClient;
@@ -49,6 +52,13 @@ export default function ChannelControl({
   const { state, error, setError } = useManagement(manager);
   const [sheet, setSheet] = useState(false),
     [open, setOpen] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const [discard, setDiscard] = useState(false);
+  const closeSettings = () => {
+    if (manager.writes.state !== "idle") return;
+    if (dirty) setDiscard(true);
+    else setSheet(false);
+  };
   const [taskPolicyOpen, setTaskPolicyOpen] = useState(false);
   const [memoryOpen, setMemoryOpen] = useState(false);
   const [execution, setExecution] = useState<RoomExecutionReadResponse>();
@@ -125,7 +135,25 @@ export default function ChannelControl({
           onClick={() => setSheet(true)}
         />
       </div>
-      <Drawer open={sheet} modal swipeDirection="right" onOpenChange={setSheet}>
+      <Drawer
+        open={sheet}
+        modal
+        swipeDirection="right"
+        disablePointerDismissal={dirty || state !== "idle"}
+        onOpenChange={(next, event) => {
+          if (next) setSheet(true);
+          else {
+            if (
+              dirty &&
+              (event.reason === "outside-press" || event.reason === "swipe")
+            ) {
+              event.cancel();
+              return;
+            }
+            closeSettings();
+          }
+        }}
+      >
         <DrawerContent
           data-testid="loom-channel-control-sheet"
           className="inset-y-0 right-0 h-dvh w-full [--drawer-content-height:100dvh] [--drawer-inset:0px] flex-col"
@@ -147,6 +175,7 @@ export default function ChannelControl({
                 <Button
                   size="icon-sm"
                   variant="ghost"
+                  disabled={state !== "idle"}
                   aria-label="关闭频道设置"
                 />
               }
@@ -154,11 +183,23 @@ export default function ChannelControl({
               <X size={16} />
             </DrawerClose>
           </DrawerHeader>
-          <DrawerBody className="min-h-0 flex-1 overflow-y-auto">
-            {sheet && members(() => setSheet(false))}
+          <ChannelSettingsContent
+            bridge={bridge}
+            manager={manager}
+            busy={state !== "idle"}
+            onDirty={setDirty}
+            onClose={closeSettings}
+            onSaved={() => {
+              setDirty(false);
+              setSheet(false);
+            }}
+            onChanged={onChanged}
+            members={members(() => setSheet(false))}
+          >
             {!readOnly && (
               <>
                 <OverflowActionRow
+                  disabled={dirty || state !== "idle"}
                   icon={<CheckSquare size={14} />}
                   label="实例任务权限"
                   ariaLabel="实例任务权限"
@@ -168,6 +209,7 @@ export default function ChannelControl({
                   }}
                 />
                 <OverflowActionRow
+                  disabled={dirty || state !== "idle"}
                   icon={<Brain size={14} />}
                   label="记忆权限"
                   ariaLabel="频道记忆权限"
@@ -178,6 +220,7 @@ export default function ChannelControl({
                 />
                 {readError && <p role="alert">{readError}</p>}
                 <OverflowActionRow
+                  disabled={dirty || state !== "idle"}
                   icon={<CircleStop size={14} />}
                   label={
                     stopped
@@ -196,9 +239,19 @@ export default function ChannelControl({
                 />
               </>
             )}
-          </DrawerBody>
+          </ChannelSettingsContent>
         </DrawerContent>
       </Drawer>
+      {discard && (
+        <DiscardChangesDialog
+          onCancel={() => setDiscard(false)}
+          onDiscard={() => {
+            setDiscard(false);
+            setDirty(false);
+            setSheet(false);
+          }}
+        />
+      )}
       {taskPolicyOpen && (
         <TaskPermissionDialog
           bridge={bridge}

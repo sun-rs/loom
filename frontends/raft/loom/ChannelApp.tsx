@@ -105,7 +105,9 @@ function Channel({
   onProfileVisibilityChange,
   headerActions,
   unavailable = false,
+  onRoomChanged = async () => {},
 }: {
+  onRoomChanged?: () => Promise<void>;
   headerActions?: ReactNode;
   unavailable?: boolean;
   onProfileVisibilityChange?: (open: boolean) => void;
@@ -334,6 +336,7 @@ function Channel({
                     </Button>
                     {controlRoomId && (
                       <ChannelControl
+                        onChanged={onRoomChanged}
                         readOnly={!!channel.archivedAt}
                         members={(closeMembers) => (
                           <ChannelMembers
@@ -1114,6 +1117,9 @@ export default function ChannelApp() {
                         />
                       ) : selected && destination === "channels" ? (
                         <Channel
+                          onRoomChanged={async () =>
+                            setDirectory(await loadChannelDirectory(client))
+                          }
                           key={`${selected.roomId}:${params.get("message") ?? "latest"}`}
                           focusId={params.get("message") ?? undefined}
                           threadRootId={params.get("thread") ?? undefined}
@@ -1292,6 +1298,11 @@ export default function ChannelApp() {
                               />
                             ) : (
                               <Channel
+                                onRoomChanged={async () =>
+                                  setDirectory(
+                                    await loadChannelDirectory(client),
+                                  )
+                                }
                                 key={`${selected.roomId}:${params.get("message")}`}
                                 channel={selected}
                                 onProfileVisibilityChange={

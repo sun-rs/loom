@@ -228,7 +228,7 @@ export function OverflowActionRow({
   return (
     <Button
       variant={danger ? "danger" : "outline"}
-      size="md"
+      size="sm"
       nativeButton
       type="button"
       className={`w-full justify-start text-left [&_[data-slot=button-content]]:w-full [&_[data-slot=button-content]]:justify-start ${className ?? ""}`}

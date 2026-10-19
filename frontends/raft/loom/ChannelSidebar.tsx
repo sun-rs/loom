@@ -154,6 +154,14 @@ export default function ChannelSidebar({
     }, 15000);
     return () => clearInterval(timer);
   }, [refresh, manager, privateBoxes]);
+  useEffect(() => {
+    const read = () => {
+      if (manager.writes.state === "idle") void refresh();
+    };
+    window.addEventListener("loom:sidebar-preferences-changed", read);
+    return () =>
+      window.removeEventListener("loom:sidebar-preferences-changed", read);
+  }, [refresh, manager]);
   const done = (outcome: IntentOutcome<unknown>) => {
     if (outcome.kind === "ok") {
       setEdit(undefined);

@@ -139,12 +139,29 @@
         "loom/ChannelMembers.tsx",
         "loom/TopBarSearch.tsx"
       ],
-      "adaptation": "Native right DrawerContent dimensions/header/title/description/scroll body replaces old action sheet; member rows move inside it, member/add/private/profile callbacks close drawer first. Existing Loom task/memory/execution policies retained as local content; archived channels remain member-readable with control actions omitted. This is not all official settings content: channel metadata/notification/archive form still incomplete. Header search reuses TopBarSearch event handler, composer outer separator removed. No backend changes.",
+      "adaptation": "Native right DrawerContent dimensions/header/title/description/scroll body replaces old action sheet; member rows move inside it, member/add/private/profile callbacks close drawer first. Existing Loom task/memory/execution policies retained as local content; archived channels remain member-readable with control actions omitted. Metadata, activity mute and archive/restore now integrated in channel-settings-form; upstream-only visibility/guest/joint/share/delete policies remain excluded. Header search reuses TopBarSearch event handler, composer outer separator removed. No backend changes.",
       "checks": [
         "scripts/official-web/channel-chrome-repair.test.mjs",
         "scripts/official-web/chrome-repair-browser.mjs",
         "scripts/official-web/channel-controls-browser.mjs",
         "scripts/official-web/instance-browser.mjs"
+      ]
+    },
+    "channel-settings-form": {
+      "source": "v1.21.22 app-shell-D1-nY-va.js Rxt metadata form/footer, fU field semantics, dk FormSection, B7 action rows",
+      "local": [
+        "loom/ChannelSettingsContent.tsx",
+        "loom/channel-settings.ts",
+        "loom/ChannelControl.tsx",
+        "loom/ChannelApp.tsx",
+        "loom/ChannelSidebar.tsx",
+        "packages/web/src/components/ui/OverflowSheet.tsx (action size only)"
+      ],
+      "adaptation": "Native name/description form, required/optional field labels, rows=2 description, divided groups, large footer controls and small outline actions. Existing room.update uses captured sync basis and preserves visibility without sending task/steer policy. Unknown writes use exact WriteIntentSlot replay; conflicts retain draft and require reread. Drawer dirty/route protection and close confirmation. Notification is precisely Loom mutedActivity, not an invented push setting; same sidebar.get/patch versioned contract and refresh hint. Archive/restore reuses ManagementClient and confirmation; #all rename/archive unavailable. No backend changes or new stores.",
+      "checks": [
+        "scripts/official-web/channel-settings.test.ts",
+        "scripts/official-web/channel-settings-browser.mjs",
+        "scripts/official-web/channel-controls-browser.mjs"
       ]
     }
   },
@@ -152,7 +169,7 @@
     "Remaining shared headers and action compositions",
     "Settings account/notification/about/administration content not yet audited against the entire latest composition; shell/sidebar/appearance migrated",
     "Composer surrounding menus and suggestions not audited against full latest release",
-    "Remaining channel settings content",
+    "Channel settings upstream-only joint/guest/share/delete and expanded notification controls remain excluded; supported metadata/mute/archive paths migrated",
     "Activity thread follow/unfollow and conditional read controls (projection lacks follow state; unfollow currently removes canonical eligibility), alternate list layout/grouping (no complete server facet/group query) and mobile home unread bindings"
   ]
 }
