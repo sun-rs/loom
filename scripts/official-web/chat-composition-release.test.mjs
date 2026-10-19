@@ -25,7 +25,17 @@ test("overflow uses native header body and panel actions instead of manually siz
 });
 test("task toolbar lets native segmented items own the state and avoids old page icon", () => {
   const s = read("loom/TasksPage.tsx");
-  assert.match(s, /<PickerTriggerButton/);
+  assert.match(s, /<TaskFilters/);
+  assert.match(
+    readFileSync(
+      new URL(
+        "../../frontends/raft/loom/TaskFilterPicker.tsx",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+    /<PickerTriggerButton/,
+  );
   assert.match(s, /<PanelTitle/);
   assert.doesNotMatch(s, /variant=\{mode === value/);
 });

@@ -224,26 +224,75 @@ export async function verifyTasks({
         )
         .click();
       await modal.waitFor({ state: "detached" });
+      // Native multi-select keeps the popover open; clear only this facet.
       await page.getByRole("button", { name: "筛选频道", exact: true }).click();
+      await page
+        .getByTestId("task-filter-频道")
+        .getByRole("button", { name: "清除", exact: true })
+        .click();
       await page
         .getByRole("button", { name: `#${emptyRoom.name}`, exact: true })
         .click();
+      await page.keyboard.press("Escape");
       await page.getByText("暂无任务", { exact: true }).waitFor();
-      assert.equal(
-        new URL(page.url()).searchParams.get("taskRoom"),
+      assert.deepEqual(new URL(page.url()).searchParams.getAll("taskRoom"), [
         emptyRoom.roomId,
-      );
+      ]);
       await page.getByRole("button", { name: "筛选频道", exact: true }).click();
       await page
         .getByRole("button", { name: `#${room.name}`, exact: true })
         .click();
+      assert.deepEqual(new URL(page.url()).searchParams.getAll("taskRoom"), [
+        emptyRoom.roomId,
+        room.roomId,
+      ]);
+      await page.keyboard.press("Escape");
       await page.getByText("FIXTURE task 51", { exact: true }).waitFor();
+      await page
+        .getByRole("button", { name: "筛选创建者", exact: true })
+        .click();
+      await page.getByRole("button", { name: "我创建的", exact: true }).click();
+      await page.keyboard.press("Escape");
+      await page
+        .getByRole("button", { name: "筛选负责人", exact: true })
+        .click();
+      await page.screenshot({
+        animations: "disabled",
+        path: `/tmp/loom-task-filter-${width}.png`,
+      });
+      await page.getByRole("button", { name: "未分配", exact: true }).click();
+      await page.keyboard.press("Escape");
+      await page.getByTestId("task-filter-负责人").waitFor({ state: "hidden" });
+      await page.waitForFunction(
+        () =>
+          document.activeElement?.getAttribute("aria-label") === "筛选负责人",
+      );
+      await page
+        .getByRole("button", { name: "加载更多任务", exact: true })
+        .click();
+      const filteredUrl = page.url();
+      await page.reload();
+      await page.getByText("FIXTURE task 51", { exact: true }).waitFor();
+      assert.equal(page.url(), filteredUrl);
+      await page
+        .getByRole("button", { name: "筛选负责人", exact: true })
+        .click();
+      await page
+        .getByRole("button", { name: "分配给我的", exact: true })
+        .click();
+      await page.getByRole("button", { name: "未分配", exact: true }).click();
+      await page.keyboard.press("Escape");
+      await page.getByText("暂无任务", { exact: true }).waitFor();
+      await page.getByRole("button", { name: "清除筛选", exact: true }).click();
+      await page.getByText("FIXTURE task 51", { exact: true }).waitFor();
+      assert.equal(new URL(page.url()).searchParams.has("taskAssignee"), false);
       assert.deepEqual(errors, []);
       assert.deepEqual(external, []);
       results.push({
         width,
         nativeBoardAndList: true,
         boundedPagination: true,
+        nativeMultiFiltersReloadAndClear: true,
         taskDetailAndDiscussion: true,
         canonicalStatusUpdate: true,
         unknownExactReplay: true,

@@ -1,3 +1,9 @@
+import TaskFilters from "./TaskFilters.tsx";
+import {
+  taskFilterRequest,
+  changeTaskFilter,
+  type TaskFilterKey,
+} from "./task-filters.ts";
 import { uiActionProps } from "./ui-action-props.ts";
 import {
   TaskBoardProvider,
@@ -14,7 +20,6 @@ import {
   PanelHeaderContent,
   PanelTitle,
   PanelMeta,
-  PickerTriggerButton,
   TasksPanelRoot,
   TasksPanelToolbar,
   TasksPanelViewport,
@@ -23,14 +28,7 @@ import {
   SegmentedControlItem,
   SegmentedControlLabel,
 } from "raft-ui";
-import {
-  CheckSquare,
-  Columns3,
-  LayoutList,
-  Hash,
-  ChevronDown,
-  Plus,
-} from "lucide-react";
+import { CheckSquare, Columns3, LayoutList, Plus } from "lucide-react";
 import {
   DndContext,
   PointerSensor,
@@ -53,7 +51,6 @@ import {
 import { TaskVirtualLayout } from "../packages/web/src/components/task/VirtualizedTaskStack.tsx";
 import { SkeletonRow } from "../packages/web/src/components/ui/Skeleton.tsx";
 import EmptyState from "../packages/web/src/components/ui/EmptyState.tsx";
-import SelectionPopover from "../packages/web/src/components/ui/SelectionPopover.tsx";
 import { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives.ts";
 import type { Task } from "../packages/web/src/store/taskStore.ts";
 import { toOfficialTask } from "./task-client.ts";
@@ -89,7 +86,13 @@ export default function TasksPage({
         : mobile
           ? "list"
           : "board";
-  const roomId = channelTasks?.channel.roomId ?? params.get("taskRoom") ?? "";
+  const filterKey = JSON.stringify(
+    taskFilterRequest(params, channelTasks?.channel.roomId),
+  );
+  const filters = useMemo(
+    () => JSON.parse(filterKey) as ReturnType<typeof taskFilterRequest>,
+    [filterKey],
+  );
   const [rows, setRows] = useState<GlobalTasksResponse["tasks"]>([]),
     [next, setNext] = useState<string>(),
     [total, setTotal] = useState(0),
@@ -101,10 +104,7 @@ export default function TasksPage({
     done: true,
     closed: true,
   });
-  const [filter, setFilter] = useState(false),
-    [search, setSearch] = useState("");
-  const filterHost = useRef<HTMLDivElement>(null),
-    scroll = useRef<HTMLDivElement>(null);
+  const scroll = useRef<HTMLDivElement>(null);
   const generation = useRef(0);
   const update = (name: string, value: string) => {
     if (hasRouteBoundIntent()) return;
@@ -115,24 +115,10 @@ export default function TasksPage({
       return p;
     });
   };
-  useEffect(() => {
-    if (!filter) return;
-    const click = (e: PointerEvent) => {
-      if (!filterHost.current?.contains(e.target as Node)) setFilter(false);
-    };
-    const key = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setFilter(false);
-        filterHost.current?.querySelector("button")?.focus();
-      }
-    };
-    document.addEventListener("pointerdown", click);
-    document.addEventListener("keydown", key);
-    return () => {
-      document.removeEventListener("pointerdown", click);
-      document.removeEventListener("keydown", key);
-    };
-  }, [filter]);
+  const changeFilter = (key: TaskFilterKey, values: string[]) => {
+    if (hasRouteBoundIntent()) return;
+    setParams((previous) => changeTaskFilter(previous, key, values));
+  };
   useEffect(() => {
     const id = ++generation.current,
       abort = new AbortController();
@@ -144,7 +130,7 @@ export default function TasksPage({
     void client
       .request(
         "task.global.list",
-        { workspaceId, limit: 50, ...(roomId ? { roomIds: [roomId] } : {}) },
+        { workspaceId, limit: 50, ...filters },
         { signal: abort.signal },
       )
       .then((result) => {
@@ -163,7 +149,7 @@ export default function TasksPage({
       abort.abort();
       generation.current++;
     };
-  }, [client, workspaceId, roomId, tick]);
+  }, [client, workspaceId, filters, tick]);
   const more = async () => {
     if (!next || loadingMore || rows.length >= 500) return;
     const id = generation.current;
@@ -173,7 +159,7 @@ export default function TasksPage({
         workspaceId,
         cursor: next,
         limit: 50,
-        ...(roomId ? { roomIds: [roomId] } : {}),
+        ...filters,
       });
       if (id !== generation.current) return;
       setRows((old) => [
@@ -260,49 +246,24 @@ export default function TasksPage({
         )}
         <TasksPanelToolbar>
           <div className="flex flex-wrap items-center gap-2">
-            {!channelTasks && (
-              <div ref={filterHost} className="relative">
-                <PickerTriggerButton
-                  data-has-value={roomId ? "" : undefined}
-                  type="button"
-                  onClick={() => setFilter((v) => !v)}
-                  aria-label="筛选频道"
-                >
-                  <Hash size={14} />
-                  {rooms.find((r) => r.roomId === roomId)?.name ?? "频道"}
-                  <span data-picker-trigger-indicator="" aria-hidden="true">
-                    <ChevronDown />
-                  </span>
-                </PickerTriggerButton>
-                {filter && (
-                  <SelectionPopover
-                    title="频道"
-                    searchable
-                    search={search}
-                    onSearchChange={setSearch}
-                    searchPlaceholder="搜索频道"
-                    showClear={!!roomId}
-                    onClear={() => {
-                      update("taskRoom", "");
-                      setFilter(false);
-                    }}
-                    options={rooms
-                      .filter((r) =>
-                        r.name.toLowerCase().includes(search.toLowerCase()),
-                      )
-                      .map((r) => ({
-                        key: r.roomId,
-                        label: `#${r.name}`,
-                        checked: roomId === r.roomId,
-                        onClick: () => {
-                          update("taskRoom", r.roomId);
-                          setFilter(false);
-                        },
-                      }))}
-                  />
-                )}
-              </div>
-            )}
+            <TaskFilters
+              client={client}
+              workspaceId={workspaceId}
+              rooms={rooms}
+              params={params}
+              onChange={changeFilter}
+              channelMode={!!channelTasks}
+              onClear={() => {
+                if (hasRouteBoundIntent()) return;
+                setParams((previous) => {
+                  const next = new URLSearchParams(previous);
+                  next.delete("taskCreator");
+                  next.delete("taskAssignee");
+                  if (!channelTasks) next.delete("taskRoom");
+                  return next;
+                });
+              }}
+            />
             {channelTasks &&
               !channelTasks.channel.room.state.snapshot?.room.archivedAt && (
                 <Button

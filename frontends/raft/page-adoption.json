@@ -66,6 +66,21 @@
         "scripts/official-web/activity-navigation-browser.mjs",
         "scripts/official-web/task-browser.mjs"
       ]
+    },
+    "task-filters": {
+      "source": "v1.21.22 app-shell-D1-nY-va.js ZSt task toolbar, XSt identity picker and n8/rlt/tlt SelectionPopover composition",
+      "local": [
+        "loom/TasksPage.tsx",
+        "loom/TaskFilters.tsx",
+        "loom/TaskFilterPicker.tsx",
+        "loom/task-filters.ts"
+      ],
+      "adaptation": "Official multi-select triggers, selected counts, sentinel order, search, native Popover focus/dismissal and clear-all. Loom principal IDs and authenticated search directory replace upstream users/agents stores; URL uses taskRoom/taskCreator/taskAssignee for existing routing compatibility. Kernel task.global.list owns filtering/pagination (including assignee OR unassigned), not filtering the currently loaded page. Directory failure disables identity choices and offers retry. No backend changes.",
+      "checks": [
+        "scripts/official-web/task-filters.test.ts",
+        "scripts/official-web/task-browser.mjs",
+        "scripts/official-web/chat-composition-release.test.mjs"
+      ]
     }
   },
   "pending": [
@@ -73,7 +88,6 @@
     "Settings subpages",
     "Computers page",
     "Composer surrounding menus and suggestions not audited against full latest release",
-    "Global task creator/assignee/unassigned filters (backend supports them; frontend not yet wired)",
     "Remaining channel settings content",
     "Activity context menu, alternate list layout/grouping and mobile home unread bindings"
   ]
