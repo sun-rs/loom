@@ -71,3 +71,12 @@ export function adaptAttachmentComments(source: string) {
     code
   );
 }
+
+/** Loom opts into whole-document PDF discussion, without claiming PDF anchors. */
+export function adaptPdfComments(source: string) {
+  return replace(
+    source,
+    'comments={preview.kind === "pdf" ? undefined : comments}',
+    "comments={comments}",
+  );
+}

@@ -2,13 +2,14 @@ import { createPdfFixture } from "./pdf-fixture.mjs";
 // Real Kernel/Worker API semantics, fake execution; no provider or paid model.
 import assert from "node:assert/strict";
 import { resolve } from "node:path";
-import { chromium } from "playwright";
+import { chromium, webkit } from "playwright";
 import { createHumanApplicationPort } from "@rah-os/kernel";
 import { ClientApplicationService } from "../../packages/application-service/src/index.ts";
 import { LocalWorkbenchGateway } from "../../packages/daemon/src/local-workbench-gateway.ts";
 import {
   roleInstanceFixture,
   startInstanceRun,
+  startInstanceRunFromQueue,
 } from "../../packages/kernel/test/role-instance-fixture.ts";
 const results = [];
 for (const width of [1440, 390]) {
@@ -55,7 +56,10 @@ for (const width of [1440, 390]) {
       staticDirectory: resolve("frontends/raft/packages/web/dist-workbench"),
     });
     await gateway.start();
-    browser = await chromium.launch({ headless: true, channel: "chromium" });
+    browser =
+      process.env.LOOM_BROWSER_ENGINE === "webkit"
+        ? await webkit.launch({ headless: true })
+        : await chromium.launch({ headless: true, channel: "chromium" });
     const context = await browser.newContext({
       viewport: { width, height: width === 390 ? 844 : 1000 },
       deviceScaleFactor: 1,
@@ -83,7 +87,7 @@ for (const width of [1440, 390]) {
       await page
         .locator('[data-message-affordance="attachment-preview-mode"]')
         .count(),
-      0,
+      1,
     );
     const response = await context.request.get(url, {
       headers: { range: "bytes=0-4" },
@@ -94,6 +98,63 @@ for (const width of [1440, 390]) {
     assert.match(
       response.headers()["content-security-policy"],
       /frame-ancestors/,
+    );
+    await page
+      .locator('[data-message-affordance="attachment-preview-mode"]')
+      .click();
+    await page
+      .getByText("评论针对整份 PDF，不定位页码或选区。", { exact: true })
+      .filter({ visible: true })
+      .waitFor();
+    const input = page
+      .locator(
+        '[data-message-affordance="attachment-comment-composer"]:visible',
+      )
+      .getByTestId("composer-textarea");
+    await input.fill("FIXTURE PDF clarification");
+    await input.press("Enter");
+    await page
+      .locator("p:visible")
+      .filter({ hasText: /^FIXTURE PDF clarification$/ })
+      .waitFor();
+    const comments = f.kernel.attachmentComments.list(f.actor, {
+      attachmentId: file.attachmentId,
+    });
+    assert.equal(comments.comments.length, 1);
+    assert.equal(comments.comments[0].anchor, null);
+    const reply = startInstanceRunFromQueue(f);
+    f.kernel.syncWorker(reply.execution, {});
+    const result = f.kernel.postWorkerMessage(reply.execution, {
+      body: "FIXTURE PDF explanation",
+      commentAttachmentId: file.attachmentId,
+      threadId: comments.threadId,
+      basedOnRoomSeq: reply.activation.toSeq,
+      idempotencyKey: "pdf-comment-reply",
+    });
+    assert.ok("event" in result);
+    reply.finish(0);
+    await page
+      .locator("p:visible")
+      .filter({ hasText: /^FIXTURE PDF explanation$/ })
+      .waitFor();
+    await page.getByRole("button", { name: "关闭", exact: true }).click();
+    await page
+      .getByTestId("loom-message-attachments")
+      .getByRole("button")
+      .filter({ hasText: "model-result.pdf" })
+      .click();
+    await page
+      .locator('[data-message-affordance="attachment-preview-mode"]')
+      .click();
+    await page
+      .locator("p:visible")
+      .filter({ hasText: /^FIXTURE PDF explanation$/ })
+      .waitFor();
+    assert.equal(
+      f.kernel.attachmentComments.list(f.actor, {
+        attachmentId: file.attachmentId,
+      }).comments.length,
+      2,
     );
     await page.waitForTimeout(2200); // Browser's native PDF plugin loads outside React.
     await page.screenshot({ path: "/tmp/loom-pdf-" + width + ".png" });
@@ -108,7 +169,8 @@ for (const width of [1440, 390]) {
       isolatedOrigin: true,
       nativePdfFrame: true,
       range: true,
-      commentsDisabled: true,
+      wholeFileComments: true,
+      workerReplyAndReopen: true,
       download: true,
       close: true,
     });

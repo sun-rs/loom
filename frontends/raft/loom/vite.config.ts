@@ -30,6 +30,7 @@ import {
   adaptAttachmentComposer,
   adaptAttachmentMessage,
   adaptAttachmentComments,
+  adaptPdfComments,
 } from "./attachment-adaptation.ts";
 import {
   adaptTaskComposer,
@@ -138,6 +139,12 @@ export default defineConfig({
           )
         )
           return { code: adaptAttachmentComments(code), map: null };
+        if (
+          id.endsWith(
+            "/packages/web/src/components/message/attachmentPreviewSurfaces.tsx",
+          )
+        )
+          return { code: adaptPdfComments(code), map: null };
         if (
           id.endsWith("/packages/web/src/components/settings/SettingsPanel.tsx")
         )

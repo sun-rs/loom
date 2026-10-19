@@ -21,10 +21,15 @@ const client = new HttpRahClient({
   accessToken: () => "trusted-proxy-auth",
 });
 type Scope = {
+  wholeFileOnly?: boolean;
   attachmentId: string;
   parentMessage: { id: string; channelId: string };
 };
-function useCommentsOwner({ attachmentId, parentMessage }: Scope) {
+function useCommentsOwner({
+  attachmentId,
+  parentMessage,
+  wholeFileOnly = false,
+}: Scope) {
   const bridge = useMemo(
     () =>
       new AttachmentCommentsClient(
@@ -75,7 +80,7 @@ function useCommentsOwner({ attachmentId, parentMessage }: Scope) {
       throw Error("当前不可发送批注");
     await bridge.send(
       body,
-      anchor,
+      wholeFileOnly ? null : anchor,
       mentions.map((m) => m.id),
     );
     setPage([undefined]);
@@ -92,6 +97,11 @@ function useCommentsOwner({ attachmentId, parentMessage }: Scope) {
     })) ?? null;
   const controls = (
     <>
+      {wholeFileOnly && (
+        <p className="px-3 py-2 text-footnote text-foreground-secondary">
+          评论针对整份 PDF，不定位页码或选区。
+        </p>
+      )}
       {state === "unknown" && (
         <div role="alert" className="p-2 text-xs">
           批注结果未知，请核实原请求。
@@ -134,6 +144,7 @@ function useCommentsOwner({ attachmentId, parentMessage }: Scope) {
   );
   return {
     comments,
+    wholeFileOnly,
     pendingComments: [],
     error,
     sendComment,
@@ -168,7 +179,7 @@ export function useAttachmentComments({
   return {
     ...owner,
     listRef,
-    activeAnchor: pendingAnchor ?? null,
+    activeAnchor: owner.wholeFileOnly ? null : (pendingAnchor ?? null),
     clearActiveAnchor: () => onAnchorCleared?.(),
     sendComment: async (body: string, mentions: { id: string }[]) => {
       await owner.sendComment(

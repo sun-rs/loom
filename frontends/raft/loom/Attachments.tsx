@@ -105,6 +105,7 @@ export default function Attachments({
         useDocumentPreviewStore.getState().open({
           attachment: a,
           preview: { kind: "pdf" },
+          ...(parentMessage ? { commentContext: { parentMessage } } : {}),
           truncated: false,
           url,
         });

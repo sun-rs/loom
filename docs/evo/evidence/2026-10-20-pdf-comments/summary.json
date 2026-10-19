@@ -1,0 +1,27 @@
+{
+  "scope": "Published PDF whole-document comments; no page/selection anchors, no backend changes",
+  "upstream": {
+    "revision": "a98ae003246a0360872a77d76dec2fccd0347ef7",
+    "version": "Authorized source intake; product Web release lock remains v1.21.22 / af3d6ef4a22f0f05f5f9db9424285755d67e9726",
+    "license": "FSL-1.1-ALv2; authorized reuse",
+    "url": "https://github.com/botiverse/raft-source",
+    "source": "packages/web/src/components/message/attachmentPreviewSurfaces.tsx: DocumentAttachmentPreviewModal / AttachmentPreviewShell; AttachmentCommentsPanel.tsx",
+    "adoption": "Official shell, desktop sidebar and mobile sheet retained. Checked build adaptation overrides upstream PDF comment exclusion. Original upstream files remain unchanged. Local context enforces null anchors and states whole-document scope.",
+    "sourceSha256": "b6aaff67e8fe13e9c4219f2885d7976daa1bf8a1d363264eabd4a8c0f3b9b8f2"
+  },
+  "owner": "Existing AttachmentCommentsClient / Kernel attachment comments; same message thread, write-intent and permission fences",
+  "checks": {
+    "red": "PDF comment button missing, expected1 actual0",
+    "chromium": "1440/390: comment, Worker reply, close/reopen persistence, null anchor, cross-origin PDF, range206, download and close",
+    "markdownRegression": "1440/390 existing Worker publish/Human comment/Worker reply/reload/latest-preview tests passed",
+    "build": "passed",
+    "types": "passed",
+    "webkit": "1440/390 same PDF comment/reply/reopen/isolation/download gate passed; native PDF content rendering not equivalent to physical iOS"
+  },
+  "limits": [
+    "No physical mobile acceptance",
+    "No PDF page/selection anchors or PDF renderer replacement",
+    "Worker reply uses isolated real Kernel and fixture execution, no paid model",
+    "Workspace paths alone do not become published attachments; this feature applies to published message PDFs"
+  ]
+}

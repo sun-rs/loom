@@ -62,6 +62,7 @@ export default function DocumentPreview() {
     <AttachmentCommentsOwner
       key={entry.attachment.id}
       attachmentId={entry.attachment.id}
+      wholeFileOnly={entry.preview.kind === "pdf"}
       parentMessage={entry.commentContext.parentMessage}
     >
       {content}
