@@ -163,12 +163,30 @@
         "scripts/official-web/channel-settings-browser.mjs",
         "scripts/official-web/channel-controls-browser.mjs"
       ]
+    },
+    "composer-suggestions": {
+      "source": "v1.21.22 app-shell-D1-nY-va.js g0 autocomplete hook, v0 option row, X0/Z0 candidate body/avatar, Q0 suggestion groups and task/send toolbar",
+      "local": [
+        "packages/web/src/components/message/MessageInput.tsx",
+        "loom/ComposerDirectory.tsx",
+        "loom/composer-directory.ts",
+        "loom/composer-directory-adaptation.ts",
+        "loom/vite.config.ts",
+        "loom/ChannelApp.tsx"
+      ],
+      "adaptation": "Structural style port: native Badge sizing, neutral 19px computer/app icons, opacity-only muted avatars, explicit Separator/group padding, accessory gap. Audited retained autocomplete/IME/keyboard/task/send composition; no new input state machine. # candidate read bound to authorized existing Loom directory via context; deduplicated active/archived channels only, excludes private boxes/Side/direct rooms. Native ranked search and insertion retained; no upstream store hydration. Unified + file/reference dialog and touch Enter rule remain explicit owner-approved Loom adaptations. No provider/backend/prompt changes.",
+      "checks": [
+        "scripts/official-web/composer-suggestions-release.test.mjs",
+        "scripts/official-web/composer-directory.test.ts",
+        "scripts/official-web/composer-suggestions-browser.mjs",
+        "scripts/official-web/chat-composition-release.test.mjs",
+        "scripts/official-web/thread-adaptation.test.ts"
+      ]
     }
   },
   "pending": [
     "Remaining shared headers and action compositions",
     "Settings account/notification/about/administration content not yet audited against the entire latest composition; shell/sidebar/appearance migrated",
-    "Composer surrounding menus and suggestions not audited against full latest release",
     "Channel settings upstream-only joint/guest/share/delete and expanded notification controls remain excluded; supported metadata/mute/archive paths migrated",
     "Activity thread follow/unfollow and conditional read controls (projection lacks follow state; unfollow currently removes canonical eligibility), alternate list layout/grouping (no complete server facet/group query) and mobile home unread bindings"
   ]

@@ -1,3 +1,4 @@
+import { verifyComposerSuggestions } from "./composer-suggestions-browser.mjs";
 import { verifyChannelSettings } from "./channel-settings-browser.mjs";
 import { verifyChromeRepair } from "./chrome-repair-browser.mjs";
 import { verifyComputers } from "./computers-browser.mjs";
@@ -178,7 +179,18 @@ try {
   browser = await (
     process.env.LOOM_BROWSER_ENGINE === "webkit" ? webkit : chromium
   ).launch({ headless: true });
-  if (process.env.LOOM_BROWSER_SLICE === "channel-settings") {
+  if (process.env.LOOM_BROWSER_SLICE === "composer-suggestions") {
+    console.log(
+      JSON.stringify(
+        await verifyComposerSuggestions({
+          browser,
+          origin,
+          channels,
+          instanceNames,
+        }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "channel-settings") {
     console.log(
       JSON.stringify(
         await verifyChannelSettings({ browser, origin, client, channels }),

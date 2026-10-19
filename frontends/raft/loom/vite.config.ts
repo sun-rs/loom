@@ -1,3 +1,4 @@
+import { adaptComposerDirectory } from "./composer-directory-adaptation.ts";
 import { adaptTimelineWindow } from "./timeline-window-adaptation.ts";
 import {
   exposeNotificationStatus,
@@ -139,7 +140,9 @@ export default defineConfig({
         )
           return {
             code: adaptAttachmentComposer(
-              adaptTaskComposer(adaptComposerSubmit(code)),
+              adaptComposerDirectory(
+                adaptTaskComposer(adaptComposerSubmit(code)),
+              ),
             ),
             map: null,
           };
@@ -160,6 +163,8 @@ export default defineConfig({
           };
       },
       resolveId(source, importer) {
+        if (source === "loom-composer-directory")
+          return resolve(import.meta.dirname, "ComposerDirectory.tsx");
         if (source === "loom-reactions")
           return resolve(import.meta.dirname, "MessageReactions.tsx");
         if (source === "loom-task-board-actions")

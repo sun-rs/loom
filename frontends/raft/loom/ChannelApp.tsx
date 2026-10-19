@@ -1,8 +1,9 @@
+import ComposerDirectory from "./ComposerDirectory.tsx";
 import type { NavigationUnread } from "./navigation-unread.ts";
 import { uiActionProps } from "./ui-action-props.ts";
 import MobileBottomBarStack from "../packages/web/src/components/layout/MobileBottomBarStack.tsx";
 import SideWorkspace from "./SideWorkspace.tsx";
-import type { ReactNode } from "react";
+import { createElement, type ReactNode } from "react";
 import { showToast } from "../packages/web/src/components/toastBridge.ts";
 import { LazySavedPanel as SavedPanel } from "./LazyPages.tsx";
 import { MessageReactionsProvider } from "./MessageReactions.tsx";
@@ -916,7 +917,9 @@ export default function ChannelApp() {
     !error &&
     (!directory ||
       (Boolean(directory.workspace.controlRoomId) && !sidebarReady));
-  return (
+  return createElement(
+    ComposerDirectory,
+    { directory },
     <AppearanceRuntimeProvider
       client={client}
       controlRoomId={directory?.workspace.controlRoomId}
@@ -1420,6 +1423,6 @@ export default function ChannelApp() {
             )}
         </AppShellRoot>
       </SystemNotificationsProvider>
-    </AppearanceRuntimeProvider>
+    </AppearanceRuntimeProvider>,
   );
 }

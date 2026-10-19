@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } fr
 import { useIntl } from "react-intl";
 import type { IntlShape } from "react-intl";
 import { Send, UserX, Hash, Paperclip, X, FileText, ImagePlus, Monitor, Blocks, ArrowLeftRight } from "lucide-react";
-import { Badge, Button, Composer, ComposerActions, ComposerAttachment, ComposerAttachmentBody, ComposerAttachmentFailedOverlay, ComposerAttachmentFile, ComposerAttachmentImage, ComposerAttachmentMeta, ComposerAttachmentRemove, ComposerAttachments, ComposerAttachmentTitle, ComposerAttachmentUploadingOverlay, ComposerAttachmentUploadProgressBar, ComposerIconButton, ComposerInput, ComposerRoot, ComposerSubmit, ComposerSuggestionAside, ComposerSuggestionContent, ComposerSuggestionGroup, ComposerSuggestionGroupLabel, ComposerSuggestionIcon, ComposerSuggestionList, ComposerSuggestionMeta, ComposerSuggestionTitle, ComposerToolbar, ComposerToolbarLabel, Spinner } from "raft-ui";
+import { Separator, Badge, Button, Composer, ComposerActions, ComposerAttachment, ComposerAttachmentBody, ComposerAttachmentFailedOverlay, ComposerAttachmentFile, ComposerAttachmentImage, ComposerAttachmentMeta, ComposerAttachmentRemove, ComposerAttachments, ComposerAttachmentTitle, ComposerAttachmentUploadingOverlay, ComposerAttachmentUploadProgressBar, ComposerIconButton, ComposerInput, ComposerRoot, ComposerSubmit, ComposerSuggestionAside, ComposerSuggestionContent, ComposerSuggestionGroup, ComposerSuggestionGroupLabel, ComposerSuggestionIcon, ComposerSuggestionList, ComposerSuggestionMeta, ComposerSuggestionTitle, ComposerToolbar, ComposerToolbarLabel, Spinner } from "raft-ui";
 import {
   DndContext,
   closestCenter,
@@ -526,7 +526,7 @@ function MentionCandidateBody({  candidate,
           data-testid={`mention-actor-type-${candidate.type}`}
           appearance="soft"
           variant="muted"
-          className="shrink-0 px-1 py-px text-[10px] leading-none"
+          className="shrink-0"
         >
           {actorTypeLabel}
         </Badge>
@@ -561,7 +561,7 @@ function MentionCandidateAvatar({
 }) {
   if (candidate.type === "computer") {
     return (
-      <span data-mention-candidate-avatar="computer" className="flex size-5 shrink-0 items-center justify-center border border-line-muted bg-info-soft  ">
+      <span data-mention-candidate-avatar="computer" className="flex size-[19px] shrink-0 items-center justify-center rounded-sticker border border-transparent bg-fill-muted text-foreground-muted">
         <Monitor size={12} aria-hidden />
       </span>
     );
@@ -569,7 +569,7 @@ function MentionCandidateAvatar({
 
   if (candidate.type === "app") {
     return (
-      <span data-mention-candidate-avatar="app" className="flex size-5 shrink-0 items-center justify-center border border-line-muted bg-primary-soft text-foreground-strong   ">
+      <span data-mention-candidate-avatar="app" className="flex size-[19px] shrink-0 items-center justify-center rounded-sticker border border-transparent bg-fill-muted text-foreground-muted">
         <Blocks size={12} aria-hidden />
       </span>
     );
@@ -582,7 +582,7 @@ function MentionCandidateAvatar({
         type="agent"
         agentAvatarUrl={candidate.avatarUrl}
         badge={muted ? undefined : <MentionCandidateActivityBadge agentId={candidate.id} />}
-        className={muted ? "!border-black/40 opacity-60" : undefined}
+        className={muted ? "opacity-60" : undefined}
       />
     );
   }
@@ -595,7 +595,7 @@ function MentionCandidateAvatar({
       gravatarHash={candidate.gravatarHash}
       email={candidate.email}
       humanPlaceholder={!candidate.avatarUrl && !candidate.gravatarHash && !candidate.email}
-      className={muted ? "!border-black/40 opacity-60 [&_svg]:opacity-50" : undefined}
+      className={muted ? "opacity-60 [&_svg]:opacity-50" : undefined}
     />
   );
 }
@@ -2838,7 +2838,7 @@ export default function MessageInput({
         {/* Accessory chips ride ABOVE the composer card — the same slot as
             pending attachments — so the input itself stays clean. */}
         {accessoryRow ? (
-          <div className="flex flex-wrap items-center gap-1">{accessoryRow}</div>
+          <div className="flex flex-wrap items-center gap-1.5">{accessoryRow}</div>
         ) : null}
 
         {/* @mention dropdown — direct child of ComposerRoot, placed before <Composer>
@@ -2905,7 +2905,9 @@ export default function MessageInput({
               </ComposerSuggestionGroup>
             )}
             {filteredMentions.notInChannel.length > 0 && (
-              <ComposerSuggestionGroup separated className=" ">
+              <>
+              <Separator className="mt-1" />
+              <ComposerSuggestionGroup className="pt-1">
                 <ComposerSuggestionGroupLabel>
                   {formatMessage({ id: "message.composer.notInThisChannel" })}
                 </ComposerSuggestionGroupLabel>
@@ -2935,9 +2937,12 @@ export default function MessageInput({
                   );
                 })}
               </ComposerSuggestionGroup>
+              </>
             )}
             {filteredMentions.computers.length > 0 && (
-              <ComposerSuggestionGroup separated className=" ">
+              <>
+              <Separator className="mt-1" />
+              <ComposerSuggestionGroup className="pt-1">
                 <ComposerSuggestionGroupLabel>
                   {formatMessage({ id: "message.composer.computers" })}
                 </ComposerSuggestionGroupLabel>
@@ -2963,9 +2968,12 @@ export default function MessageInput({
                   );
                 })}
               </ComposerSuggestionGroup>
+              </>
             )}
             {filteredMentions.apps.length > 0 && (
-              <ComposerSuggestionGroup separated className=" ">
+              <>
+              <Separator className="mt-1" />
+              <ComposerSuggestionGroup className="pt-1">
                 <ComposerSuggestionGroupLabel>
                   {formatMessage({ id: "message.composer.apps" })}
                 </ComposerSuggestionGroupLabel>
@@ -2991,6 +2999,7 @@ export default function MessageInput({
                   );
                 })}
               </ComposerSuggestionGroup>
+              </>
             )}
           </ComposerSuggestionList>
         )}

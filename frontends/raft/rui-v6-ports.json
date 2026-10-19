@@ -437,7 +437,7 @@
     },
     "packages/web/src/components/message/MessageInput.tsx": {
       "upstreamSha256": "0b3727c8e8cd4b202bd08f08ac3f67bf80c7c94c6f7e9c76c9cfb7da05c59786",
-      "portedSha256": "514da6ab08e7aba69c18581c53d41f58c4d16876ebf91e872bafd57e236da568",
+      "portedSha256": "98aee8a9d6c5674490987eab61e296194394d48e9d6a5b24f5659ff57984a8eb",
       "pageRelease": "v1.21.22 official production composition, local data/submit/close guard retained"
     },
     "packages/web/src/components/message/CollapsibleMessageContent.tsx": {
