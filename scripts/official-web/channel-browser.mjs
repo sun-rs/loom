@@ -23,6 +23,7 @@ import { verifyAccountSettings } from "./account-settings-browser.mjs";
 import { verifySystemSettings } from "./system-settings-browser.mjs";
 import { verifySettingsArchive } from "./settings-archive-browser.mjs";
 import { verifyTaskCreate } from "./task-create-browser.mjs";
+import { verifyTextPreview } from "./text-preview-browser.mjs";
 import { verifyAttachmentPreview } from "./attachment-preview-browser.mjs";
 import { verifySearchHistory } from "./search-history-browser.mjs";
 import { verifyActivityReturn } from "./activity-return-browser.mjs";
@@ -405,6 +406,12 @@ try {
     console.log(
       JSON.stringify(
         await verifyAttachments({ browser, origin, client, workspace, head }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "text-preview") {
+    console.log(
+      JSON.stringify(
+        await verifyTextPreview({ browser, origin, client, workspace, head }),
       ),
     );
   } else if (process.env.LOOM_BROWSER_SLICE === "attachment-preview") {

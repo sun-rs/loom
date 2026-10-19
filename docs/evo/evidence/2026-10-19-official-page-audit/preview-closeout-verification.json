@@ -1,0 +1,77 @@
+{
+  "date": "2026-10-19",
+  "productSource": "3e8d621f",
+  "scope": "Verification-only closeout: native text preview and successful HTML external-link opening",
+  "source": {
+    "release": "Raft v1.21.22 af3d6ef4a22f0f05f5f9db9424285755d67e9726",
+    "text": "app-shell-D1-nY-va.js z5e lines115442–115477; exact wrapper/pre/line composition compared with attachmentPreviewSurfaces.tsx",
+    "external": "Existing official attachmentPreviewExternalLink.ts controlled opener and HTML parent-owned hotspot; no implementation changes"
+  },
+  "text": [
+    {
+      "width": 1440,
+      "styles": {
+        "whiteSpace": "pre-wrap",
+        "font": "\"Space Mono\", ui-monospace, \"SF Mono\", Menlo, monospace",
+        "size": "13px",
+        "overflow": false
+      },
+      "literalText": true,
+      "linesPreserved": true,
+      "exactDownload": true,
+      "escapeAndClose": true,
+      "reopen": true
+    },
+    {
+      "width": 390,
+      "styles": {
+        "whiteSpace": "pre-wrap",
+        "font": "\"Space Mono\", ui-monospace, \"SF Mono\", Menlo, monospace",
+        "size": "13px",
+        "overflow": false
+      },
+      "literalText": true,
+      "linesPreserved": true,
+      "exactDownload": true,
+      "escapeAndClose": true,
+      "reopen": true
+    }
+  ],
+  "external": [
+    {
+      "width": 1440,
+      "realPopupNavigation": true,
+      "controlledDestination": true,
+      "openerSevered": true,
+      "noReferrerOrCredentials": true,
+      "parentPreviewPreserved": true
+    },
+    {
+      "width": 390,
+      "realPopupNavigation": true,
+      "controlledDestination": true,
+      "openerSevered": true,
+      "noReferrerOrCredentials": true,
+      "parentPreviewPreserved": true
+    }
+  ],
+  "checks": {
+    "commands": [
+      "LOOM_BROWSER_SLICE=text-preview node scripts/official-web/channel-browser.mjs",
+      "LOOM_HTML_EXTERNAL_GATE=1 node scripts/official-web/html-attachment-browser.mjs"
+    ],
+    "viewports": ["1440x1000 DPR1", "390x844 DPR1"],
+    "visualReview": "Both text-preview screenshots inspected; recipe matches locked production source, not bilateral live screenshots",
+    "formatAndDiff": "passed",
+    "productChanges": false,
+    "buildAndRestart": "Not repeated: only test scripts and evidence changed; existing verified build and deployed service unchanged",
+    "paidCLI": false
+  },
+  "limits": [
+    "Temporary real Kernel and fixture attachments; no user production writes.",
+    "External popup is real browser navigation to an intercepted controlled destination; proves browser opener/referrer behavior, not third-party site availability.",
+    "No physical iOS/Android acceptance or authenticated upstream pixel comparison.",
+    "Text comments/truncation and other rare combinations are not newly claimed by these tests."
+  ],
+  "privateEvidence": "/Users/sun/.loom/reviews/2026-10-19-preview-closeout"
+}

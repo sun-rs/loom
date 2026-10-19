@@ -11,6 +11,7 @@ import {
   startInstanceRunFromQueue,
 } from "../../packages/kernel/test/role-instance-fixture.ts";
 const results = [];
+const externalOnly = process.env.LOOM_HTML_EXTERNAL_GATE === "1";
 const overlayOnly = process.env.LOOM_HTML_OVERLAY_GATE === "1";
 for (const width of [1440, 390]) {
   const f = roleInstanceFixture();
@@ -96,6 +97,55 @@ for (const width of [1440, 390]) {
     const frame = preview.locator("iframe");
     await frame.waitFor();
     assert.equal(await frame.getAttribute("sandbox"), "allow-scripts");
+    if (externalOnly) {
+      const outgoing = [];
+      await context.route("https://example.com/loom-fixture", async (route) => {
+        outgoing.push(route.request().headers());
+        await route.fulfill({
+          contentType: "text/html",
+          body: "<h1>FIXTURE external destination</h1>",
+        });
+      });
+      const hotspot = page.locator(
+        '[data-external-href="https://example.com/loom-fixture"]',
+      );
+      await hotspot.waitFor();
+      const popupPromise = context.waitForEvent("page");
+      await hotspot.click();
+      const popup = await popupPromise;
+      await popup
+        .getByRole("heading", { name: "FIXTURE external destination" })
+        .waitFor();
+      assert.equal(popup.url(), "https://example.com/loom-fixture");
+      assert.equal(await popup.evaluate(() => window.opener), null);
+      assert.equal(await popup.evaluate(() => document.referrer), "");
+      assert.equal(outgoing.length, 1);
+      assert.equal(outgoing[0].referer, undefined);
+      assert.equal(outgoing[0].authorization, undefined);
+      assert.equal(outgoing[0].cookie, undefined);
+      assert.equal(await frame.isVisible(), true);
+      assert.equal(
+        await page
+          .locator(
+            '[data-message-affordance="attachment-preview-external-link-fallback"]',
+          )
+          .count(),
+        0,
+      );
+      await popup.close();
+      await page.getByRole("button", { name: "关闭", exact: true }).click();
+      await frame.waitFor({ state: "detached" });
+      assert.deepEqual(errors, []);
+      results.push({
+        width,
+        realPopupNavigation: true,
+        controlledDestination: true,
+        openerSevered: true,
+        noReferrerOrCredentials: true,
+        parentPreviewPreserved: true,
+      });
+      continue;
+    }
     if (overlayOnly) {
       const loading = page.locator(
         '[data-message-affordance="attachment-preview-external-links-loading"]',

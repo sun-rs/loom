@@ -627,7 +627,7 @@
   },
   "pending": [
     "G3: Browser push subscription/permission/test and notification navigation; existing capability-only view remains explicit.",
-    "V1: Targeted unverified combinations, plain-text browser styling, successful external navigation and physical mobile/authenticated upstream comparison; see currentCloseout."
+    "V1: Targeted unverified combinations and physical mobile/authenticated upstream comparison; see currentCloseout."
   ],
   "currentCloseout": "../../docs/evo/frontend-closeout.zh-CN.md",
   "statusInterpretation": "Slice limits describe the recorded adoption batch; later evidence can supersede its pending audit items. Current page/gap status is maintained in currentCloseout, not inferred from historical remaining lists.",
@@ -684,5 +684,14 @@
       "scripts/official-web/thread-activity.test.ts"
     ],
     "evidence": "../../docs/evo/evidence/2026-10-19-official-page-audit/thread-unfollow-verification.json"
+  },
+  "previewCloseout20261019": {
+    "scope": "Verification only; historical slice evidence remains unchanged",
+    "evidence": "../../docs/evo/evidence/2026-10-19-official-page-audit/preview-closeout-verification.json",
+    "checks": [
+      "scripts/official-web/text-preview-browser.mjs",
+      "scripts/official-web/html-attachment-browser.mjs (LOOM_HTML_EXTERNAL_GATE=1)"
+    ],
+    "limits": "Controlled external destination; no physical-device or bilateral authenticated pixel acceptance; no production source changes"
   }
 }
