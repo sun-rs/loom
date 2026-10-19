@@ -6,7 +6,7 @@
 
 2026-10-19 重新请求官方 `https://app.raft.build/s/hakasemac/`，仍为 **v1.21.22**，revision `af3d6ef4a22f0f05f5f9db9424285755d67e9726`。重新下载的主 JS 和 CSS SHA-256 与已锁定资源逐一相同。没有以旧版本冒充官网当前版本。本次未获得登录后的官方页面截图，不能称双站逐像素验收。
 
-初次页面盘点部署为 `ddb10a27`，当时只审查与复验。后继手机首页修复已部署 `d74f92bf`；桌面动态首条未读定位已部署 `34e42fe7`，见[定位证据](evidence/2026-10-19-official-page-audit/activity-focus-verification.json)。手机入口详见[接线证据](evidence/2026-10-19-official-page-audit/mobile-home-verification.json)。三个隔离 Core 浏览器切片全部通过：navigation、page-polish、layout；前两者为 1440×1000 / 390×844，后者为 390 / 900 / 1440 宽的明暗主题，DPR1。没有付费 CLI 调用。
+初次页面盘点部署为 `ddb10a27`，当时只审查与复验。后继手机首页修复已部署 `d74f92bf`；桌面动态首条未读定位已部署 `34e42fe7`，见[定位证据](evidence/2026-10-19-official-page-audit/activity-focus-verification.json)。独立单聊与频道私密入口已部署 `86bd9de2`，见[接线证据](evidence/2026-10-19-official-page-audit/standalone-chat-verification.json)。手机入口详见[接线证据](evidence/2026-10-19-official-page-audit/mobile-home-verification.json)。三个隔离 Core 浏览器切片全部通过：navigation、page-polish、layout；前两者为 1440×1000 / 390×844，后者为 390 / 900 / 1440 宽的明暗主题，DPR1。没有付费 CLI 调用。
 
 结论：**已采用页面的主要流程有定向验收，但不满足“官方所有 UI 和全部逻辑完整对等”声明。** 本次没有复现需要紧急修复的新产品缺陷。下面的功能缺口、验证缺口与主动排除不能混成一种“未完成”。
 

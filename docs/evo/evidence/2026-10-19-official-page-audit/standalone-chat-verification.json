@@ -58,11 +58,31 @@
     ],
     "closeReopen": "Existing unread reopens hidden rows by policy. Explicit mark-read, close, route reopen and durable sidebar reveal passed at both viewports.",
     "visual": "Inspected fixture desktop standalone tabs and mobile inactive private history screenshots.",
-    "paidCalls": false
+    "paidCalls": false,
+    "format": "Changed files Prettier and git diff --check passed"
   },
   "deployment": {
-    "verified": false,
-    "status": "Pending safe restart and real page verification"
+    "verified": true,
+    "backupDatabases": 2,
+    "backupFiles": 325,
+    "businessTablesUnchanged": 18,
+    "realPages": [
+      {
+        "width": 1440,
+        "roleEntryAndDialog": true,
+        "noInstanceCreated": true,
+        "privateHistory": "existing-box-opened-from-source-channel",
+        "errors": []
+      },
+      {
+        "width": 390,
+        "roleEntryAndDialog": true,
+        "noInstanceCreated": true,
+        "privateHistory": "existing-box-opened-from-source-channel",
+        "errors": []
+      }
+    ],
+    "visual": "Inspected live mobile Role dialog and loaded desktop private history screenshots."
   },
   "privateEvidence": "/Users/sun/.loom/reviews/2026-10-19-standalone-chat",
   "limits": [
@@ -72,5 +92,6 @@
     "Live UI verification will not create new user instances or incur provider calls.",
     "Not all official features or physical mobile verification.",
     "Fixture newly added instance produced a sidebar unread badge while only a join notice was visible; system-notice/count parity remains part of G2, not claimed fixed by this entry change."
-  ]
+  ],
+  "sourceCommit": "86bd9de2e137031ccf0158b8e7cadd46c4f4047e"
 }
