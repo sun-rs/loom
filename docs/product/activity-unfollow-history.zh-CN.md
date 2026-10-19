@@ -17,10 +17,10 @@
 
 `HumanThreadFollowRequest.retainThroughSeq` 是可选正整数，仅取消关注可携带。动态响应为线程增加可选 `isFollowing`。无捕获位置的旧调用仍保持原语义；不将当前数据库最大序号当成用户曾看到的位置。
 
-schema 90 为 `human_thread_follows` 增加可空 `retained_seq`。既有关注数据及 Room 事件不改写；旧取消关注记录没有可靠历史位置，保留 NULL，不回填、不复活。当前产品接线范围是动态行菜单，消息列其他入口未提供捕获位置时仍走兼容语义。
+schema 90 为 `human_thread_follows` 增加可空 `retained_seq`。既有关注数据及 Room 事件不改写；旧取消关注记录没有可靠历史位置，保留 NULL，不回填、不复活。当前产品两个取消关注入口均已接线：动态行菜单捕获行位置；消息列菜单捕获点击时视口内实际可见回复的最大序号，与现有已读观察共用判断。已加载但屏幕外的回复、虚拟列表预渲染、父消息和之前曾看到的更晚回复都不代替当前视口。空消息列、隐藏页面或没有可见回复时不编造位置，保留无捕获的兼容语义。
 
 ## 来源与验收
 
 官方 v1.21.22 `ThreadsInbox-CbSKTW4g.js` 的 `je` 菜单、`markThreadUnfollowed` 行保留逻辑，以及官方 `inboxDoubleClickNavigation.behavior.test.tsx` 的取消／重新关注测试，证明前端保留身份、清未读并显示重新关注。Loom 的持久化字段、事务和查询是本地实现，并非宣称复制了官方服务端。
 
-针对性测试覆盖点击后并发普通回复、跨重启、重复请求、精确提及、完成、重新关注、错误序号原子拒绝、其他 Human 隔离及旧 schema 升级。浏览器使用隔离真实 Kernel，在桌面／手机尺寸检查刷新保留及响应丢失后的读回；不调用付费模型。见[验收记录](../evo/evidence/2026-10-19-official-page-audit/unfollow-history-verification.json)。
+针对性测试覆盖点击后并发普通回复、跨重启、重复请求、精确提及、完成、重新关注、错误序号原子拒绝、其他 Human 隔离及旧 schema 升级。浏览器使用隔离真实 Kernel，在桌面／手机尺寸检查刷新保留及响应丢失后的读回；不调用付费模型。消息列菜单的桌面／手机定向验证见[入口补齐](../evo/evidence/2026-10-19-official-page-audit/thread-unfollow-verification.json)。见[验收记录](../evo/evidence/2026-10-19-official-page-audit/unfollow-history-verification.json)。

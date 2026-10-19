@@ -1,10 +1,8 @@
 import { useEffect, useMemo, useState, useRef, type RefObject } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
 import type { Message } from "@rah-os/protocol";
-import {
-  ThreadActivityClient,
-  visibleThreadFrontier,
-} from "./thread-activity.ts";
+import { ThreadActivityClient } from "./thread-activity.ts";
+import { captureThreadViewportFrontier } from "./thread-viewport.ts";
 
 /** Read only geometrically visible replies, never the timeline's translation overscan window. */
 export function useThreadActivity(
@@ -56,29 +54,12 @@ export function useThreadActivity(
     let timer: ReturnType<typeof setTimeout>;
     const check = () => {
       if (disposed || document.hidden) return;
-      const scroller = element.querySelector(
-        '[data-testid="thread-message-scroller"]',
+      const seq = captureThreadViewportFrontier(
+        element,
+        messages,
+        roomId,
+        threadId,
       );
-      if (!scroller) return;
-      const bounds = scroller.getBoundingClientRect();
-      const top = Math.max(bounds.top, 0),
-        bottom = Math.min(bounds.bottom, innerHeight);
-      const ids = Array.from(
-        scroller.querySelectorAll<HTMLElement>("[data-timeline-message-id]"),
-      )
-        .filter((node) => {
-          const rect = node.getBoundingClientRect();
-          return (
-            bottom > top &&
-            rect.height > 0 &&
-            rect.bottom > top &&
-            rect.top < bottom &&
-            rect.right > 0 &&
-            rect.left < innerWidth
-          );
-        })
-        .map((node) => node.dataset.timelineMessageId!);
-      const seq = visibleThreadFrontier(messages, ids, roomId, threadId);
       void bridge.markVisible(seq).catch(() => {
         if (!disposed) setError("消息列已读状态未确认；未自动重发。");
       });
@@ -114,7 +95,16 @@ export function useThreadActivity(
       setError("");
       const desired = !following;
       try {
-        await bridge.follow(desired);
+        const captured =
+          !desired && threadId
+            ? captureThreadViewportFrontier(
+                host.current,
+                messages,
+                roomId,
+                threadId,
+              )
+            : 0;
+        await bridge.follow(desired, captured || undefined);
         if (active.current !== bridge) return;
         setFollowing(bridge.following);
         if (bridge.following !== desired)

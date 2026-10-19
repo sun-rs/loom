@@ -212,6 +212,19 @@ export async function verifyThreads({
       await page.getByTestId("thread-overflow-follow-action").click();
       await verifiedFollow;
       assert.equal(follows.length, 1, "lost follow is not resent");
+      assert.equal(initial.following, true);
+      assert.ok(
+        follows[0].retainThroughSeq > 0,
+        "thread menu captures a visible reply, not the whole fetched window",
+      );
+      const retained = (
+        await client.request("activity.list", {
+          workspaceId: workspace.workspaceId,
+          limit: 100,
+        })
+      ).items.find((i) => i.threadId === thread.threadId);
+      assert.equal(retained?.latestSeq, follows[0].retainThroughSeq);
+      assert.equal(retained?.isFollowing, false);
       const after = await client.request("thread.followers", {
         roomId: channel.roomId,
         threadId: thread.threadId,
@@ -327,6 +340,52 @@ export async function verifyThreads({
           ),
         );
         assert.ok(pages.every((p) => p.limit <= 50));
+        // A previously viewed newest reply must not become the current capture.
+        const toggles = [];
+        await page.route("**/v3/client/activity/follow", (route) => {
+          toggles.push(route.request().postDataJSON());
+          return route.continue();
+        });
+        for (const following of [true, false]) {
+          await scroller.evaluate(async (el) => {
+            el.scrollTop = 0;
+            await new Promise(requestAnimationFrame);
+            await new Promise(requestAnimationFrame);
+          });
+          await panel.getByTestId("thread-overflow-trigger").click();
+          const action = page.getByTestId("thread-overflow-follow-action");
+          await action
+            .getByText(following ? "关注消息列" : "取消关注消息列", {
+              exact: true,
+            })
+            .waitFor();
+          const updated = page.waitForResponse(
+            (r) => r.url().endsWith("/activity/thread-followers") && r.ok(),
+          );
+          await action.click();
+          await updated;
+        }
+        assert.equal(toggles.length, 2);
+        assert.equal(toggles[0].retainThroughSeq, undefined);
+        const latest = await client.request("message.list", {
+          roomId: channel.roomId,
+          threadId: thread.threadId,
+          limit: 50,
+        });
+        assert.ok(toggles[1].retainThroughSeq > 0);
+        assert.ok(
+          toggles[1].retainThroughSeq <
+            Math.max(...latest.messages.map((m) => m.roomSeq)),
+          "unfollow captures current viewport, not the previously viewed latest reply",
+        );
+        const history = (
+          await client.request("activity.list", {
+            workspaceId: workspace.workspaceId,
+            limit: 100,
+          })
+        ).items.find((i) => i.threadId === thread.threadId);
+        assert.equal(history?.latestSeq, toggles[1].retainThroughSeq);
+        await page.unroute("**/v3/client/activity/follow");
       }
       await page.goto(
         `${origin}/?room=${otherChannel.roomId}&thread=${root.messageId}`,
@@ -365,6 +424,7 @@ export async function verifyThreads({
         width,
         readOnlyOpen: true,
         followLostResponseReadback: true,
+        visibleHistoryRetainedFromThreadMenu: true,
         scopedVisibleRead: true,
         nativeMenuEscape: true,
         createAndReplyExactReplay: true,

@@ -1,0 +1,58 @@
+{
+  "date": "2026-10-19",
+  "scope": "Message-column unfollow captures current visible reply frontier; no backend/schema change",
+  "source": {
+    "release": "Raft v1.21.22",
+    "composition": "Existing ThreadOverflowMenu and native raft-ui primitives unchanged",
+    "adaptation": "Loom local viewport/API binding; not copied official persistence"
+  },
+  "tdd": {
+    "red": "Existing thread browser gate failed at missing retainThroughSeq before implementation",
+    "green": "Desktop and mobile menu retain the visible history after lost response; no mutation resend",
+    "longHistory": "55 later replies; after visiting newest and scrolling back, refollow/unfollow captures a positive position below latest and retained Activity row matches it",
+    "testAdjustment": "After refollow, explicitly restore top scroll and await two animation frames before capture; initial harness assumed position remained unchanged"
+  },
+  "checks": {
+    "clientUnitTests": 5,
+    "frontendTypecheck": "passed",
+    "build": "npm run build:web:workbench passed; existing bundler warnings",
+    "browser": [
+      {
+        "width": 1440,
+        "readOnlyOpen": true,
+        "followLostResponseReadback": true,
+        "visibleHistoryRetainedFromThreadMenu": true,
+        "scopedVisibleRead": true,
+        "nativeMenuEscape": true,
+        "createAndReplyExactReplay": true,
+        "oneReply": true,
+        "reload": true,
+        "nativeResizeOrMobileReturn": true,
+        "readFailureClearsContentAndRetainsDraft": true,
+        "foreignRootRejected": true
+      },
+      {
+        "width": 390,
+        "readOnlyOpen": true,
+        "followLostResponseReadback": true,
+        "visibleHistoryRetainedFromThreadMenu": true,
+        "scopedVisibleRead": true,
+        "nativeMenuEscape": true,
+        "createAndReplyExactReplay": true,
+        "oneReply": true,
+        "reload": true,
+        "nativeResizeOrMobileReturn": true,
+        "readFailureClearsContentAndRetainsDraft": true,
+        "foreignRootRejected": true
+      }
+    ],
+    "viewports": ["1440x1000 DPR1", "390x844 DPR1"],
+    "paidCLI": false
+  },
+  "limits": [
+    "No visible reply or hidden page omits capture rather than inventing history.",
+    "Legacy old unfollows are not backfilled.",
+    "Physical mobile touch and authenticated official pixel comparison remain unverified."
+  ],
+  "deployment": "Pending safe restart and real-page verification"
+}

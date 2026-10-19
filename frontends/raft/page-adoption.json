@@ -626,7 +626,6 @@
     }
   },
   "pending": [
-    "G2: Activity list lacks embedded follow state (thread.followers API already exists); menu state binding, upstream row-retention compatibility, grouping remain. Mobile Home summary badge and desktop first-unread focus are completed.",
     "G3: Browser push subscription/permission/test and notification navigation; existing capability-only view remains explicit.",
     "V1: Targeted unverified combinations, plain-text browser styling, successful external navigation and physical mobile/authenticated upstream comparison; see currentCloseout."
   ],
@@ -667,12 +666,23 @@
     "reuse": "Existing official menu structural port; new Kernel retention and typed binding are Loom compatibility glue, not copied official backend",
     "behavior": "Activity menu supplies captured row frontier. Kernel persists only that history boundary; no future ordinary notifications, existing exact-mention override preserved. Native Follow/Done menus and layout unchanged.",
     "migration": "schema90 nullable retained_seq; no invented backfill for legacy unfollows",
-    "limits": "Capture supplied by Activity menu only; old callers without capture retain legacy eligibility. Physical mobile and logged-in pixel parity remain separate.",
+    "limits": "Legacy callers, hidden pages and empty/nonvisible reply viewports without a capture retain legacy eligibility; no backfill. Physical mobile and logged-in pixel parity remain separate.",
     "checks": [
       "packages/kernel/test/global-discovery.test.ts",
       "packages/kernel/test/activity-history-migration.test.ts",
       "scripts/official-web/thread-activity.test.ts",
       "scripts/official-web/activity-menu-browser.mjs"
     ]
+  },
+  "threadUnfollowViewport20261019": {
+    "source": "Existing native ThreadOverflowMenu composition and v1.21.22 follow/unfollow interaction; release-lock.json records revision and hashes",
+    "reuse": "Unchanged official menu styling/composition; Loom viewport capture and API binding are local compatibility glue, not copied upstream persistence",
+    "local": ["loom/thread-viewport.ts", "loom/useThreadActivity.ts"],
+    "behavior": "Current geometric viewport at unfollow supplies retainThroughSeq. Shared existing visible-read filtering excludes parent, overscan and offscreen fetched replies. Empty/hidden viewport supplies no invented boundary. Unknown mutation is read back, not resent.",
+    "checks": [
+      "scripts/official-web/thread-browser.mjs",
+      "scripts/official-web/thread-activity.test.ts"
+    ],
+    "evidence": "../../docs/evo/evidence/2026-10-19-official-page-audit/thread-unfollow-verification.json"
   }
 }
