@@ -1,0 +1,37 @@
+{
+  "productCommit": "a4310160",
+  "upstream": {
+    "url": "https://github.com/botiverse/mobile",
+    "revision": "655975433b8492a8f4eef7bbce1b913140bc7485",
+    "license": "FSL-1.1-ALv2",
+    "reuse": "source-derived CSS adaptation; no native runtime copy"
+  },
+  "checks": {
+    "build": true,
+    "loomTypecheck": true,
+    "navigation": ["chromium390/1440", "webkit390/1440"],
+    "density": "Chromium8 viewport/preset cases",
+    "formalMetrics": ["chromium390/1440", "webkit390/1440"],
+    "formalScreenshots": "WebKit390: channels tasks agents settings activity memory; final tasks inspected",
+    "diffCheck": true
+  },
+  "reproductions": [
+    "home row46 expected32",
+    "task title16/24 expected14/20",
+    "WebKit inline baseline blank space; long card240.625 ->174.03125"
+  ],
+  "testCorrection": "desktop avatar outer frame is19 per raft-ui2xs, not16 inner content; product unchanged",
+  "restart": {
+    "verified": true,
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-mobile-components-c97d5f71-6c1c-43de-801e-6768da519396",
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true,
+    "newPid": 83291
+  },
+  "privateEvidence": "/Users/sun/.loom/reviews/2026-10-20-mobile-components",
+  "limits": [
+    "not physical iOS/Android acceptance",
+    "Activity and Loom-only Memory not fully mapped to native app",
+    "no paid CLI or whole backend suite"
+  ]
+}
