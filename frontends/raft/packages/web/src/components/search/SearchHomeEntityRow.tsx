@@ -49,14 +49,14 @@ export function SearchHomeEntityRow({
           </SearchEntityResultIcon>
         ) : result.type === "agentDm" ? (
           <AvatarSlot
-            context="surface-list"
+            context="compact-row"
             type="agent"
             agentAvatarUrl={agentAvatarUrl}
             badge={result.agentId ? <AgentActivityDot agentId={result.agentId} /> : undefined}
           />
         ) : (
           <AvatarSlot
-            context="surface-list"
+            context="compact-row"
             type="human"
             humanAvatarUrl={humanMember?.avatarUrl}
             gravatarHash={humanMember?.gravatarHash}

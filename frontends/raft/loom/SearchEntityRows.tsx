@@ -115,13 +115,13 @@ export default function SearchEntityRows({
   const { formatMessage } = useIntl();
   if (!entities.length) return null;
   return (
-    <SearchResultsSection className="mb-3 px-3">
+    <SearchResultsSection>
       <SearchResultsSectionHeading>
         {formatMessage({ id: "search.serverEntities" })}
       </SearchResultsSectionHeading>
       <SearchResultsList
         data-testid="search-entity-results"
-        className="-m-1.5 max-h-[24rem] overflow-y-auto overscroll-contain p-1.5"
+        className="max-h-[24rem] overflow-y-auto overscroll-contain"
       >
         {entities.map((entity) => (
           <SearchEntityRow

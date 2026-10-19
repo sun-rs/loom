@@ -1,7 +1,8 @@
+import { SearchResultsList, SearchResultsSectionHeading } from "raft-ui";
 import { useMemo } from "react";
 import { useIntl } from "react-intl";
 import { Star } from "lucide-react";
-import SectionEyebrow from "../packages/web/src/components/ui/SectionEyebrow.tsx";
+
 import { SearchHomeEntityRow } from "../packages/web/src/components/search/SearchHomeEntityRow.tsx";
 import {
   selectFrequentSearchEntities,
@@ -62,14 +63,14 @@ export default function SearchFrequent({
   const { formatMessage } = useIntl();
   return (
     <section aria-labelledby="search-frequent-heading">
-      <SectionEyebrow as="div" className="mb-2 flex items-center gap-1.5 px-1">
-        <Star size={12} aria-hidden="true" />
+      <SearchResultsSectionHeading>
+        <Star size={14} aria-hidden="true" />
         <span id="search-frequent-heading">
           {formatMessage({ id: "search.frequent" })}
         </span>
-      </SectionEyebrow>
+      </SearchResultsSectionHeading>
       {entities.length ? (
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <SearchResultsList>
           {entities.map((entity) => (
             <SearchHomeEntityRow
               key={entity.key}
@@ -83,11 +84,11 @@ export default function SearchFrequent({
               onActivate={() => onOpen(entity, false)}
             />
           ))}
-        </div>
+        </SearchResultsList>
       ) : (
-        <div className="border border-dashed border-line-muted px-3 py-4 text-xs text-foreground-muted   ">
+        <p className="px-4 py-2 text-callout text-foreground-hint">
           {formatMessage({ id: "search.frequentEmpty" })}
-        </div>
+        </p>
       )}
     </section>
   );

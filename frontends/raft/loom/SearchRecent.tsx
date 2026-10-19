@@ -3,8 +3,8 @@ import type { RahClient } from "@rah-os/client-sdk";
 import { useEffect, useMemo, useState } from "react";
 import { useIntl } from "react-intl";
 import { Clock3 } from "lucide-react";
-import { SearchResultsList } from "raft-ui";
-import SectionEyebrow from "../packages/web/src/components/ui/SectionEyebrow.tsx";
+import { SearchResultsList, SearchResultsSectionHeading } from "raft-ui";
+
 import {
   useRecentConversationStore,
   getRecentConversationScopeKey,
@@ -93,13 +93,13 @@ export default function SearchRecent({
 }) {
   const { formatMessage } = useIntl();
   return (
-    <div className="p-3" data-testid="search-overlay-recent">
-      <SectionEyebrow as="div" className="mb-2 flex items-center gap-1.5 px-1">
-        <Clock3 size={12} aria-hidden="true" />
+    <div data-testid="search-overlay-recent">
+      <SearchResultsSectionHeading>
+        <Clock3 size={14} aria-hidden="true" />
         <span>
           {formatMessage({ id: "search.overlay.recentConversations" })}
         </span>
-      </SectionEyebrow>
+      </SearchResultsSectionHeading>
       <SearchResultsList>
         {entities.map((entity) => (
           <SearchEntityRow

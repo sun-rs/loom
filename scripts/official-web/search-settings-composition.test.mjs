@@ -54,3 +54,15 @@ test("thread search headers use the native compact metadata hierarchy", () => {
   assert.match(s, /mb-0.5 flex min-w-0 flex-wrap items-center gap-1.5/);
   assert.match(s, /font-mono text-mono-meta text-foreground-hint/);
 });
+test("all search destination surfaces use current list composition and headings", () => {
+  for (const p of ["loom/SearchRecent.tsx", "loom/SearchFrequent.tsx"]) {
+    const s = read(p);
+    assert.match(s, /<SearchResultsSectionHeading>/);
+    assert.doesNotMatch(s, /grid-cols|<SectionEyebrow/);
+  }
+  assert.doesNotMatch(
+    read("packages/web/src/components/search/SearchHomeEntityRow.tsx"),
+    /context="surface-list"/,
+  );
+  assert.doesNotMatch(read("loom/SearchEntityRows.tsx"), /mb-3 px-3|-m-1.5/);
+});

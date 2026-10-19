@@ -630,7 +630,7 @@ function Results({
         !searchFilters.mentionSelf &&
         !searchFilters.after ? (
         !overlayHome && (history.entries.length || frequent.length) ? (
-          <div className="p-4" data-testid="search-home">
+          <div data-testid="search-home">
             {history.entries.length > 0 && (
               <SearchHistory history={history} onChoose={onChooseHistory} />
             )}
