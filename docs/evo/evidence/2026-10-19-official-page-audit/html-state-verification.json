@@ -1,0 +1,27 @@
+{
+  "productRevision": "ddb10a27",
+  "changeType": "Verification-only; no product runtime changes or service restart needed. Existing deployment retained.",
+  "command": "LOOM_HTML_OVERLAY_GATE=1 node scripts/official-web/html-attachment-browser.mjs",
+  "result": "passed",
+  "viewports": ["1440x1000 DPR1", "390x844 DPR1 mobile/touch emulation"],
+  "method": "Temporary real Kernel/gateway fixture. Hold iframe HTTP response until loading state is inspected; release for real bridge inventory. Override only fixture browser window.open to return null and count attempts; no external website traffic or paid provider.",
+  "verified": [
+    "Loading popover visible and iframe pointer-events=none before inventory",
+    "Loading disappears and parent-owned external-link hotspot becomes available",
+    "Keyboard focus-visible shadow and Enter activate hotspot",
+    "Null popup reservation shows fallback after exactly one attempt",
+    "Explicit retry performs a second attempt, keeps fallback on repeated rejection",
+    "Dismiss removes fallback without closing iframe; preview close works",
+    "No browser page errors"
+  ],
+  "visualReview": [
+    "Desktop loading and mobile blocked-popup screenshots inspected"
+  ],
+  "limits": [
+    "Mocked popup rejection tests product reaction, not all real OS/browser popup blocker policies.",
+    "No successful external navigation accepted in this batch.",
+    "No real published attachments in current data home; not real-provider acceptance or full-site parity."
+  ],
+  "privateEvidence": "/Users/sun/.loom/reviews/2026-10-19-html-states",
+  "checks": ["Changed script/registry/evidence formatted", "git diff --check"]
+}

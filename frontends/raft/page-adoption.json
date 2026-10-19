@@ -551,8 +551,8 @@
       ],
       "limits": [
         "No real published attachments in current deployment; HTML tests use temporary Core.",
-        "Browser test covers document interaction, desktop region capture, mobile unanchored comments, worker reply/filter/reload and sandbox. Popup-blocker fallback and loading transient appearance have source regression/type/build coverage only.",
-        "Does not declare full-site parity or native iOS/Android acceptance."
+        "Does not declare full-site parity or native iOS/Android acceptance.",
+        "Dedicated LOOM_HTML_OVERLAY_GATE=1 browser gate now verifies loading/inventory pointer barrier, keyboard focus/Enter, mocked browser popup rejection, explicit retry and dismiss at both viewports. Actual OS/browser popup policies and successful external navigation are not newly accepted."
       ]
     }
   },

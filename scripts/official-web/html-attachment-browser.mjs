@@ -11,6 +11,7 @@ import {
   startInstanceRunFromQueue,
 } from "../../packages/kernel/test/role-instance-fixture.ts";
 const results = [];
+const overlayOnly = process.env.LOOM_HTML_OVERLAY_GATE === "1";
 for (const width of [1440, 390]) {
   const f = roleInstanceFixture();
   let service, gateway, browser;
@@ -18,7 +19,7 @@ for (const width of [1440, 390]) {
     const run = startInstanceRun(f);
     f.kernel.syncWorker(run.execution, {});
     const body =
-      "<!doctype html><html><body><h1>FIXTURE model document</h1><button onclick=\"this.textContent='Clicked'\">Interact</button></body></html>";
+      "<!doctype html><html><body><h1>FIXTURE model document</h1><a href='https://example.com/loom-fixture'>FIXTURE external link</a><button onclick=\"this.textContent='Clicked'\">Interact</button></body></html>";
     const file = f.kernel.files.prepareWorkerMessage(run.execution, {
       filename: "model-result.html",
       mimeType: "text/html",
@@ -68,6 +69,23 @@ for (const width of [1440, 390]) {
     page.setDefaultTimeout(10000);
     const errors = [];
     page.on("pageerror", (e) => errors.push(e.message));
+    let releaseFrame;
+    if (overlayOnly) {
+      const heldFrame = new Promise((resolve) => {
+        releaseFrame = resolve;
+      });
+      await page.route(/acBridgeNonce=/, async (route) => {
+        await heldFrame;
+        await route.continue();
+      });
+      await page.addInitScript(() => {
+        window.__fixtureOpenAttempts = 0;
+        window.open = () => {
+          window.__fixtureOpenAttempts++;
+          return null;
+        };
+      });
+    }
     await page.goto(gateway.origin + "/?room=" + f.home.roomId);
     await page
       .getByTestId("loom-message-attachments")
@@ -78,6 +96,61 @@ for (const width of [1440, 390]) {
     const frame = preview.locator("iframe");
     await frame.waitFor();
     assert.equal(await frame.getAttribute("sandbox"), "allow-scripts");
+    if (overlayOnly) {
+      const loading = page.locator(
+        '[data-message-affordance="attachment-preview-external-links-loading"]',
+      );
+      await loading.waitFor();
+      assert.equal(
+        await frame.evaluate((el) => getComputedStyle(el).pointerEvents),
+        "none",
+      );
+      assert.equal(await loading.locator(".bg-layer-popover").count(), 1);
+      await page.screenshot({ path: `/tmp/loom-html-loading-${width}.png` });
+      releaseFrame();
+      const hotspot = page.locator(
+        '[data-external-href="https://example.com/loom-fixture"]',
+      );
+      await hotspot.waitFor();
+      await loading.waitFor({ state: "detached" });
+      await page.keyboard.press("Tab");
+      await hotspot.focus();
+      assert.equal(
+        await hotspot.evaluate((el) => el.matches(":focus-visible")),
+        true,
+      );
+      assert.notEqual(
+        await hotspot.evaluate((el) => getComputedStyle(el).boxShadow),
+        "none",
+      );
+      await hotspot.press("Enter");
+      const fallback = page.locator(
+        '[data-message-affordance="attachment-preview-external-link-fallback"]',
+      );
+      await fallback.waitFor();
+      assert.equal(await page.evaluate(() => window.__fixtureOpenAttempts), 1);
+      const buttons = fallback.getByRole("button");
+      assert.equal(await buttons.count(), 2);
+      await buttons.first().click();
+      assert.equal(await page.evaluate(() => window.__fixtureOpenAttempts), 2);
+      assert.equal(await fallback.isVisible(), true);
+      await page.screenshot({ path: `/tmp/loom-html-blocked-${width}.png` });
+      await buttons.last().click();
+      await fallback.waitFor({ state: "detached" });
+      assert.equal(await frame.isVisible(), true);
+      await page.getByRole("button", { name: "关闭", exact: true }).click();
+      await frame.waitFor({ state: "detached" });
+      assert.deepEqual(errors, []);
+      results.push({
+        width,
+        loadingBlocksFrameUntilInventory: true,
+        keyboardFocusAndEnter: true,
+        blockedPopupFallback: true,
+        explicitRetry: true,
+        dismissPreservesPreview: true,
+      });
+      continue;
+    }
     const content = frame.contentFrame();
     await content
       .getByRole("heading", { name: "FIXTURE model document" })
