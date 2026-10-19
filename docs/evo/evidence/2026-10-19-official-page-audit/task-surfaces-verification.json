@@ -1,0 +1,105 @@
+{
+  "date": "2026-10-19",
+  "codeCommit": "a8ce8c8fc504167a471e7658f75591b69a06e029",
+  "source": {
+    "release": "v1.21.22",
+    "revision": "af3d6ef4a22f0f05f5f9db9424285755d67e9726",
+    "locations": [
+      "app-shell-D1-nY-va.js r9/qSt/YSt at176127–176340 and TasksPanel at176750–177000",
+      "ThreadsInbox-CbSKTW4g.js He at850 and toolbar at1100–1177",
+      "raft-ui@0.6.0 taskBoardColumn/taskSection/tasksPanel recipes"
+    ],
+    "reuse": "Structural port of retained composition, not byte-exact source replacement. Existing TaskCard matches sSt; Loom data/adapters unchanged."
+  },
+  "implemented": [
+    "Remove stale task column width/border/background/padding; native recipes own responsive geometry",
+    "Remove task group heading/count/chevron/empty/load-more overrides",
+    "Native task loading Card/Skeleton composition and panel viewport; mobile navigation clearance only on global task page",
+    "Move activity all-read into native filter-right toolbar slot with tooltip; hide when unread count is zero; retain owner-requested refresh icon in title"
+  ],
+  "verification": {
+    "tdd": "Both task surface and activity toolbar regressions failed before implementation and passed after",
+    "focusedChecks": 14,
+    "typecheck": "exit 0",
+    "build": "exit 0 at final code commit",
+    "fixtureBrowser": [
+      "task-board:1440x1000 and390x844; mouse/touch drag, unknown-result exact replay, status edit/Escape focus return, channel/global list",
+      "page-polish:1440 and390; toolbar read control, durable read frontier, hides after unread zero, role tabs/drawer/computer instances"
+    ],
+    "realBefore": [
+      {
+        "width": 1440,
+        "phase": "before",
+        "board": {
+          "width": "320px",
+          "border": "1px",
+          "padding": "12px",
+          "background": "oklab(0.9642 0 0 / 0.3)"
+        },
+        "collapseExpand": true,
+        "errors": []
+      },
+      {
+        "width": 390,
+        "phase": "before",
+        "board": {
+          "width": "320px",
+          "border": "1px",
+          "padding": "12px",
+          "background": "oklab(0.9642 0 0 / 0.3)"
+        },
+        "collapseExpand": true,
+        "errors": []
+      }
+    ],
+    "realAfter": [
+      {
+        "width": 1440,
+        "phase": "after",
+        "board": {
+          "width": "252.594px",
+          "border": "0px",
+          "padding": "0px",
+          "background": "rgba(0, 0, 0, 0)"
+        },
+        "collapseExpand": true,
+        "errors": []
+      },
+      {
+        "width": 390,
+        "phase": "after",
+        "board": {
+          "width": "232px",
+          "border": "0px",
+          "padding": "0px",
+          "background": "rgba(0, 0, 0, 0)"
+        },
+        "collapseExpand": true,
+        "errors": []
+      }
+    ],
+    "realActions": "Board/list switch, collapse/expand and activity unread/all filters; no messages, task status writes or bulk-read on production",
+    "screenshots": "/Users/sun/.loom/reviews/2026-10-19-task-surfaces",
+    "visuallyInspected": [
+      "before-board-390.png",
+      "before-activity-390.png",
+      "after-board-390.png",
+      "after-list-1440.png",
+      "after-activity-390.png"
+    ]
+  },
+  "deployment": {
+    "verified": true,
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-task-surfaces-bacdd716-6832-4ce7-8888-4d9c35b04cf9",
+    "databases": 2,
+    "files": 325,
+    "businessTablesUnchanged": 18,
+    "receipt": "/Users/sun/.loom/reviews/2026-10-19-task-surfaces/restart-final.json"
+  },
+  "limits": [
+    "Remaining retained page action compositions are not yet fully audited; see page-adoption.json",
+    "Loom bounded global paging remains intentionally distinct from official per-status paging; no new backend state",
+    "No authenticated official live-site image comparison or physical iOS/Android acceptance",
+    "No backend changes, paid CLI calls or broad backend suite"
+  ]
+}
