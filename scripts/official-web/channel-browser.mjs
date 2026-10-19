@@ -1,3 +1,4 @@
+import { verifyActivityMenu } from "./activity-menu-browser.mjs";
 import { verifyNavigationUnread } from "./navigation-unread-browser.mjs";
 import { verifyRoleModelLabels } from "./role-model-label-browser.mjs";
 import { verifyHistoryWindow } from "./history-window-browser.mjs";
@@ -174,7 +175,13 @@ try {
   browser = await (
     process.env.LOOM_BROWSER_ENGINE === "webkit" ? webkit : chromium
   ).launch({ headless: true });
-  if (process.env.LOOM_BROWSER_SLICE === "navigation-unread") {
+  if (process.env.LOOM_BROWSER_SLICE === "activity-menu") {
+    console.log(
+      JSON.stringify(
+        await verifyActivityMenu({ browser, origin, client, workspace, head }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "navigation-unread") {
     await verifyNavigationUnread({ browser, origin });
   } else if (process.env.LOOM_BROWSER_SLICE === "role-model-label") {
     console.log(

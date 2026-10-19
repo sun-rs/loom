@@ -1,3 +1,7 @@
+import {
+  activityMarkRequest,
+  type ActivityAction,
+} from "./activity-actions.ts";
 import { uiActionProps } from "./ui-action-props.ts";
 import ActivityEmpty from "./ActivityEmpty.tsx";
 import { ConversationCardSkeleton } from "../packages/web/src/components/ui/Skeleton.tsx";
@@ -405,20 +409,17 @@ function Results({
   const pendingDone = useRef(new Set<string>());
   const [pendingRows, setPendingRows] = useState(new Set<string>());
   const [mutationError, setMutationError] = useState("");
-  const markDone = async (row: DiscoveryRow) => {
+  const markActivity = async (row: DiscoveryRow, action: ActivityAction) => {
     if (!row.activityFrontier || pendingDone.current.has(row.id)) return;
     pendingDone.current.add(row.id);
     setPendingRows(new Set(pendingDone.current));
     setMutationError("");
     try {
-      await client.request("activity.mark", {
-        roomId: row.message.roomId,
-        ...row.activityFrontier,
-        action: "done",
-      });
+      const request = activityMarkRequest(row, action);
+      if (request) await client.request("activity.mark", request);
     } catch {
       setMutationError(
-        "未确认动态已完成，正在重新读取状态；不会自动重发操作。",
+        "未确认动态操作结果，正在重新读取状态；不会自动重发操作。",
       );
     } finally {
       pendingDone.current.delete(row.id);
@@ -679,8 +680,8 @@ function Results({
                 data.rows.map((row) => (
                   <ActivityMessageRow
                     pending={pendingRows.has(row.id)}
-                    onDone={() => {
-                      void markDone(row);
+                    onAction={(target, action) => {
+                      void markActivity(target, action);
                     }}
                     key={row.id}
                     row={row}

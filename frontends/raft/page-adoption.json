@@ -81,6 +81,21 @@
         "scripts/official-web/task-browser.mjs",
         "scripts/official-web/chat-composition-release.test.mjs"
       ]
+    },
+    "activity-actions": {
+      "source": "v1.21.22 ThreadsInbox-CbSKTW4g.js je menu + app-shell t$/R4e MenuItem and xA ContextMenuPopup recipe",
+      "local": [
+        "loom/ActivityContextMenu.tsx",
+        "loom/ActivityMessageRow.tsx",
+        "loom/activity-actions.ts",
+        "loom/DiscoveryPage.tsx"
+      ],
+      "adaptation": "Channel/DM read, unread and done use exact captured Loom frontiers. Threads retain Done only: current activity projection lacks isFollowing, so upstream conditional read/follow controls are omitted. Canonical unknown-result handling refreshes without resending. Native ContextMenuPopup/DismissBackdrop/placement helper retained; placement measures effective native width (min-w-60 overrides upstream page width:184) to avoid edge clipping. Keyboard open/arrow/Escape and focus return added around the same native popup. Touch Done remains reachable; physical iOS/Android long-press not verified.",
+      "checks": [
+        "scripts/official-web/activity-actions.test.ts",
+        "scripts/official-web/activity-menu-browser.mjs",
+        "scripts/official-web/activity-navigation-browser.mjs"
+      ]
     }
   },
   "pending": [
@@ -89,6 +104,6 @@
     "Computers page",
     "Composer surrounding menus and suggestions not audited against full latest release",
     "Remaining channel settings content",
-    "Activity context menu, alternate list layout/grouping and mobile home unread bindings"
+    "Activity thread follow/unfollow and conditional read controls (projection lacks follow state; unfollow currently removes canonical eligibility), alternate list layout/grouping (no complete server facet/group query) and mobile home unread bindings"
   ]
 }
