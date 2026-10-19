@@ -14,6 +14,9 @@ import {
   AppShellSidebarSlot,
   AppShellMainSlot,
   SidebarRoot,
+  SidebarSectionHeader,
+  SidebarSectionDisclosure,
+  SidebarSectionCount,
   SidebarItem,
   SidebarItemIcon,
   SidebarItemSubtitle,
@@ -158,7 +161,13 @@ export default function ComputersPage({
         }
       >
         <SidebarRoot className="hidden h-full flex-col md:flex">
-          <div className="min-h-0 flex-1 overflow-y-auto px-2 py-3">
+          <div className="min-h-0 flex-1 overflow-y-auto px-2 pt-2 pb-2">
+            <SidebarSectionHeader data-testid="computer-section-header">
+              <SidebarSectionDisclosure render={<div />} type={undefined}>
+                计算机{" "}
+                <SidebarSectionCount>{inventory ? 1 : 0}</SidebarSectionCount>
+              </SidebarSectionDisclosure>
+            </SidebarSectionHeader>
             {problem}
             {inventory && (
               <SidebarItem

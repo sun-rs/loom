@@ -1,3 +1,4 @@
+import LanguageRegionSettings from "./LanguageRegionSettings.tsx";
 import NotificationSettings from "./NotificationSettings.tsx";
 import { LoomReleaseNotes } from "loom-native-release-notes";
 import { loomReleaseNotes } from "./release-notes.ts";
@@ -13,7 +14,7 @@ import {
   User,
   Type,
   Bell,
-  Building2,
+  Languages,
   Shield,
   BadgeInfo,
   FileText,
@@ -33,12 +34,12 @@ const categories = [
       { id: "account", label: "账户", icon: User },
       { id: "appearance", label: "外观", icon: Type },
       { id: "notifications", label: "通知", icon: Bell },
+      { id: "language-region", label: "语言和区域", icon: Languages },
     ],
   },
   {
     label: "工作空间",
     items: [
-      { id: "server", label: "运行设置", icon: Building2 },
       { id: "administration", label: "管理", icon: Shield },
       { id: "usage", label: "用量", icon: ChartNoAxesCombined },
     ],
@@ -81,7 +82,7 @@ export default function SettingsPage({
     update();
     return () => media.removeEventListener("change", update);
   }, []);
-  const selectedId = tab ?? "account";
+  const selectedId = tab === "server" ? "administration" : (tab ?? "account");
   const selected = categories
     .flatMap((group) => group.items)
     .find((item) => item.id === selectedId);
@@ -140,55 +141,57 @@ export default function SettingsPage({
             onMobileBack={() => onTab(null)}
             mobileBackProps={{ "aria-label": "设置列表" }}
           />
-          <div
-            className={
-              selectedId === "server"
-                ? "flex min-h-0 flex-1 flex-col"
-                : "hidden"
-            }
-          >
-            <RuntimeSettings
-              client={client}
-              workspaceId={workspaceId}
-              controlRoomId={controlRoomId}
-              active={selectedId === "server" && (desktop || tab !== null)}
-            />
-          </div>
-          {selectedId !== "server" && (
-            <div className="flex-1 overflow-y-auto bg-layer-panel px-4 py-4 text-foreground mobile-nav-clearance md:px-5">
-              {selectedId === "notifications" ? (
-                <NotificationSettings client={client} />
-              ) : selectedId === "release-notes" ? (
-                <LoomReleaseNotes releases={loomReleaseNotes} />
-              ) : selectedId === "usage" ? (
-                <UsageSummary
-                  client={client}
-                  workspaceId={workspaceId}
-                  controlRoomId={controlRoomId}
-                />
-              ) : selectedId === "appearance" ? (
-                <AppearanceSection />
-              ) : selectedId === "about" ? (
-                <LoomAboutSection appVersion={WEB_BUILD_IDENTITY.version} />
-              ) : selectedId === "account" ? (
-                <AccountSettings
-                  client={client}
-                  workspaceId={workspaceId}
-                  controlRoomId={controlRoomId}
-                />
-              ) : selectedId === "administration" ? (
+          <div className="flex-1 overflow-y-auto bg-layer-panel px-4 py-4 text-foreground mobile-nav-clearance md:px-5">
+            <div
+              className={
+                selectedId === "administration" ? "space-y-6" : "hidden"
+              }
+            >
+              {selectedId === "administration" && (
                 <SystemSettings
                   client={client}
                   workspaceId={workspaceId}
                   controlRoomId={controlRoomId}
                 />
-              ) : (
-                <p className="text-sm text-foreground-muted">
-                  {selected ? "此设置尚未接入。" : "请从设置列表选择一个项目。"}
-                </p>
               )}
+              <RuntimeSettings
+                client={client}
+                workspaceId={workspaceId}
+                controlRoomId={controlRoomId}
+                active={
+                  selectedId === "administration" && (desktop || tab !== null)
+                }
+                embedded
+              />
             </div>
-          )}
+            {selectedId === "notifications" ? (
+              <NotificationSettings client={client} />
+            ) : selectedId === "release-notes" ? (
+              <LoomReleaseNotes releases={loomReleaseNotes} />
+            ) : selectedId === "usage" ? (
+              <UsageSummary
+                client={client}
+                workspaceId={workspaceId}
+                controlRoomId={controlRoomId}
+              />
+            ) : selectedId === "appearance" ? (
+              <AppearanceSection />
+            ) : selectedId === "about" ? (
+              <LoomAboutSection appVersion={WEB_BUILD_IDENTITY.version} />
+            ) : selectedId === "account" ? (
+              <AccountSettings
+                client={client}
+                workspaceId={workspaceId}
+                controlRoomId={controlRoomId}
+              />
+            ) : selectedId === "language-region" ? (
+              <LanguageRegionSettings />
+            ) : selectedId === "administration" ? null : (
+              <p className="text-sm text-foreground-muted">
+                {selected ? "此设置尚未接入。" : "请从设置列表选择一个项目。"}
+              </p>
+            )}
+          </div>
         </Panel>
       </AppShellMainSlot>
     </div>

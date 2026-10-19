@@ -54,7 +54,7 @@ export async function verifySettingsNavigation({ browser, origin }) {
       await page.mouse.up();
       assert.equal((await sidebar.boundingBox()).width, 280);
     }
-    await list.getByRole("button", { name: "运行设置", exact: true }).click();
+    await list.getByRole("button", { name: "管理", exact: true }).click();
     const input = page.getByLabel("本机同时运行上限", { exact: true });
     await input.waitFor();
     await input.fill("6");
@@ -75,7 +75,7 @@ export async function verifySettingsNavigation({ browser, origin }) {
     );
     if (!desktop)
       await page.getByRole("button", { name: "设置列表", exact: true }).click();
-    await list.getByRole("button", { name: "运行设置", exact: true }).click();
+    await list.getByRole("button", { name: "管理", exact: true }).click();
     assert.equal(await input.inputValue(), "6");
     if (!desktop)
       await page.getByRole("button", { name: "设置列表", exact: true }).click();
@@ -94,7 +94,7 @@ export async function verifySettingsNavigation({ browser, origin }) {
     if (desktop)
       await page
         .getByTestId("loom-settings-detail")
-        .getByRole("heading", { name: "运行设置", exact: true })
+        .getByRole("heading", { name: "管理", exact: true })
         .waitFor();
     else await list.waitFor();
     assert.equal(

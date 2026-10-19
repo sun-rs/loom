@@ -22,11 +22,13 @@ export default function RuntimeSettings({
   workspaceId,
   controlRoomId,
   active,
+  embedded = false,
 }: {
   client: RahClient;
   workspaceId: string;
   controlRoomId: string;
   active: boolean;
+  embedded?: boolean;
 }) {
   const manager = useMemo(
     () => new ManagementClient(client, workspaceId, controlRoomId),
@@ -98,7 +100,13 @@ export default function RuntimeSettings({
   const stale = base && latest && base.revision !== latest.revision;
   const busy = state !== "idle";
   return (
-    <div className="flex-1 overflow-y-auto bg-layer-panel px-5 py-4 text-foreground-strong mobile-nav-clearance  ">
+    <div
+      className={
+        embedded
+          ? "min-w-0 text-foreground"
+          : "flex-1 overflow-y-auto bg-layer-panel px-5 py-4 text-foreground-strong mobile-nav-clearance"
+      }
+    >
       <div className="mb-6">
         <SectionHeader
           className="mb-3"

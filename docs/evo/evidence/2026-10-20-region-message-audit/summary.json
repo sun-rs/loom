@@ -1,0 +1,418 @@
+{
+  "date": "2026-10-20",
+  "sourceAnchor": {
+    "release": "v1.21.22",
+    "revision": "af3d6ef4a22f0f05f5f9db9424285755d67e9726",
+    "url": "https://app.raft.build/assets/app-shell-D1-nY-va.js"
+  },
+  "changes": [
+    "Computer native SidebarSectionHeader restored; outer pt-2 matches Chat/Role; obsolete page header remains removed",
+    "Language and region native Card/Select/SegmentedControl added; Chinese-only scope; timezone/time format device-local persisted atomically before publishing to existing native time formatter store",
+    "Runtime settings moved under administration, stays mounted to preserve draft/write owner; old settings=server URL is compatible",
+    "TaskModalHead removed obsolete title font overrides and description text-sm -> native text-subhead"
+  ],
+  "sourceAudit": {
+    "bodyFontPx": {
+      "sm": 14,
+      "md": 16,
+      "lg": 18
+    },
+    "messageAvatarPx": {
+      "sm": 35,
+      "md": 35,
+      "lg": 34
+    },
+    "avatarNote": "Upstream MessageItem explicitly sets --mi-avatar:2.125rem for lg; native RUI md otherwise35px. Preserved, not guessed from CONTENT_SIZE raster size36.",
+    "bodyFontStack": "Space Grotesk, PingFang SC, Hiragino Sans GB, Microsoft YaHei, Noto Sans SC, system-ui, sans-serif",
+    "references": "Inline task TaskChip inline + TaskStatusIcon matches locked source; ThreadRepliesBadge appearance/variant and 12px icons matches E7e; retained official channel reference rendering. Unknown unloaded task references do not invent statuses.",
+    "roleSpacing": "Native outer8px+SidebarSectionHeader16px confirmed; no arbitrary shrinking. Desktop Computer and Role group header both y56 at DPR1 with topbar48."
+  },
+  "tests": {
+    "unit": 2,
+    "typecheck": "frontends/raft typecheck:loom",
+    "build": "npm run build:web:workbench",
+    "regionBrowser": [
+      {
+        "width": 1440,
+        "computer": {
+          "paddingTop": "16px",
+          "y": 56
+        },
+        "agent": {
+          "paddingTop": "16px",
+          "y": 56
+        }
+      },
+      {
+        "width": 390
+      }
+    ],
+    "settingsNavigation": [
+      {
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "nativeGroupedSidebar": true,
+        "resize": true,
+        "mobileMasterDetail": false,
+        "placeholder": true,
+        "draftAcrossTabs": true,
+        "urlReloadAndBack": true,
+        "keyboardSelection": true
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "nativeGroupedSidebar": true,
+        "resize": false,
+        "mobileMasterDetail": true,
+        "placeholder": true,
+        "draftAcrossTabs": true,
+        "urlReloadAndBack": true,
+        "keyboardSelection": true
+      }
+    ],
+    "messageMetrics": [
+      {
+        "width": 1440,
+        "size": "sm",
+        "kind": "channel",
+        "font": 14,
+        "family": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif",
+        "avatarContext": "message-row",
+        "avatarCss": "35px",
+        "avatar": {
+          "w": 35,
+          "h": 35
+        }
+      },
+      {
+        "width": 1440,
+        "size": "sm",
+        "kind": "private",
+        "font": 14,
+        "family": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif",
+        "avatarContext": "message-row",
+        "avatarCss": "35px",
+        "avatar": {
+          "w": 35,
+          "h": 35
+        }
+      },
+      {
+        "width": 1440,
+        "size": "sm",
+        "kind": "thread",
+        "font": 14,
+        "family": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif",
+        "avatarContext": "message-row",
+        "avatarCss": "35px",
+        "avatar": {
+          "w": 35,
+          "h": 35
+        }
+      },
+      {
+        "width": 1440,
+        "size": "sm",
+        "kind": "task",
+        "font": 14,
+        "family": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif",
+        "avatarContext": "message-row",
+        "avatarCss": "35px",
+        "avatar": {
+          "w": 35,
+          "h": 35
+        }
+      },
+      {
+        "width": 1440,
+        "size": "md",
+        "kind": "channel",
+        "font": 16,
+        "family": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif",
+        "avatarContext": "message-row",
+        "avatarCss": "35px",
+        "avatar": {
+          "w": 35,
+          "h": 35
+        }
+      },
+      {
+        "width": 1440,
+        "size": "md",
+        "kind": "private",
+        "font": 16,
+        "family": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif",
+        "avatarContext": "message-row",
+        "avatarCss": "35px",
+        "avatar": {
+          "w": 35,
+          "h": 35
+        }
+      },
+      {
+        "width": 1440,
+        "size": "md",
+        "kind": "thread",
+        "font": 16,
+        "family": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif",
+        "avatarContext": "message-row",
+        "avatarCss": "35px",
+        "avatar": {
+          "w": 35,
+          "h": 35
+        }
+      },
+      {
+        "width": 1440,
+        "size": "md",
+        "kind": "task",
+        "font": 16,
+        "family": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif",
+        "avatarContext": "message-row",
+        "avatarCss": "35px",
+        "avatar": {
+          "w": 35,
+          "h": 35
+        }
+      },
+      {
+        "width": 1440,
+        "size": "lg",
+        "kind": "channel",
+        "font": 18,
+        "family": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif",
+        "avatarContext": "message-row",
+        "avatarCss": "34px",
+        "avatar": {
+          "w": 34,
+          "h": 34
+        }
+      },
+      {
+        "width": 1440,
+        "size": "lg",
+        "kind": "private",
+        "font": 18,
+        "family": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif",
+        "avatarContext": "message-row",
+        "avatarCss": "34px",
+        "avatar": {
+          "w": 34,
+          "h": 34
+        }
+      },
+      {
+        "width": 1440,
+        "size": "lg",
+        "kind": "thread",
+        "font": 18,
+        "family": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif",
+        "avatarContext": "message-row",
+        "avatarCss": "34px",
+        "avatar": {
+          "w": 34,
+          "h": 34
+        }
+      },
+      {
+        "width": 1440,
+        "size": "lg",
+        "kind": "task",
+        "font": 18,
+        "family": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif",
+        "avatarContext": "message-row",
+        "avatarCss": "34px",
+        "avatar": {
+          "w": 34,
+          "h": 34
+        }
+      },
+      {
+        "width": 390,
+        "size": "sm",
+        "kind": "channel",
+        "font": 14,
+        "family": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif",
+        "avatarContext": "message-row",
+        "avatarCss": "35px",
+        "avatar": {
+          "w": 35,
+          "h": 35
+        }
+      },
+      {
+        "width": 390,
+        "size": "sm",
+        "kind": "private",
+        "font": 14,
+        "family": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif",
+        "avatarContext": "message-row",
+        "avatarCss": "35px",
+        "avatar": {
+          "w": 35,
+          "h": 35
+        }
+      },
+      {
+        "width": 390,
+        "size": "sm",
+        "kind": "thread",
+        "font": 14,
+        "family": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif",
+        "avatarContext": "message-row",
+        "avatarCss": "35px",
+        "avatar": {
+          "w": 35,
+          "h": 35
+        }
+      },
+      {
+        "width": 390,
+        "size": "sm",
+        "kind": "task",
+        "font": 14,
+        "family": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif",
+        "avatarContext": "message-row",
+        "avatarCss": "35px",
+        "avatar": {
+          "w": 35,
+          "h": 35
+        }
+      },
+      {
+        "width": 390,
+        "size": "md",
+        "kind": "channel",
+        "font": 16,
+        "family": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif",
+        "avatarContext": "message-row",
+        "avatarCss": "35px",
+        "avatar": {
+          "w": 35,
+          "h": 35
+        }
+      },
+      {
+        "width": 390,
+        "size": "md",
+        "kind": "private",
+        "font": 16,
+        "family": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif",
+        "avatarContext": "message-row",
+        "avatarCss": "35px",
+        "avatar": {
+          "w": 35,
+          "h": 35
+        }
+      },
+      {
+        "width": 390,
+        "size": "md",
+        "kind": "thread",
+        "font": 16,
+        "family": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif",
+        "avatarContext": "message-row",
+        "avatarCss": "35px",
+        "avatar": {
+          "w": 35,
+          "h": 35
+        }
+      },
+      {
+        "width": 390,
+        "size": "md",
+        "kind": "task",
+        "font": 16,
+        "family": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif",
+        "avatarContext": "message-row",
+        "avatarCss": "35px",
+        "avatar": {
+          "w": 35,
+          "h": 35
+        }
+      },
+      {
+        "width": 390,
+        "size": "lg",
+        "kind": "channel",
+        "font": 18,
+        "family": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif",
+        "avatarContext": "message-row",
+        "avatarCss": "34px",
+        "avatar": {
+          "w": 34,
+          "h": 34
+        }
+      },
+      {
+        "width": 390,
+        "size": "lg",
+        "kind": "private",
+        "font": 18,
+        "family": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif",
+        "avatarContext": "message-row",
+        "avatarCss": "34px",
+        "avatar": {
+          "w": 34,
+          "h": 34
+        }
+      },
+      {
+        "width": 390,
+        "size": "lg",
+        "kind": "thread",
+        "font": 18,
+        "family": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif",
+        "avatarContext": "message-row",
+        "avatarCss": "34px",
+        "avatar": {
+          "w": 34,
+          "h": 34
+        }
+      },
+      {
+        "width": 390,
+        "size": "lg",
+        "kind": "task",
+        "font": 18,
+        "family": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif",
+        "avatarContext": "message-row",
+        "avatarCss": "34px",
+        "avatar": {
+          "w": 34,
+          "h": 34
+        }
+      }
+    ],
+    "messageReferences": [
+      {
+        "width": 1440,
+        "mention": true,
+        "channelNavigation": true
+      },
+      {
+        "width": 390,
+        "mention": true,
+        "channelNavigation": true
+      }
+    ]
+  },
+  "redGreen": [
+    "Missing language/region tab reproduced before wiring",
+    "Task description14px vs official15px reproduced before repair",
+    "Region invalid values/storage failure tests failed on missing implementation then passed"
+  ],
+  "diagnosticLimits": [
+    "Temporary fixture CLI does discovery only, no paid or real-model generation; directed fixture message attempted disabled fake MCP runtime and was refused. UI projection checks do not claim runtime execution.",
+    "Harness corrected principal-vs-definition ID and reused already-created task thread.",
+    "Initial avatar expectation36 then35 was replaced with measured-source contract35/35/34, not a product sizing change.",
+    "Physical mobile and authenticated official screenshot comparison not run.",
+    "Language remains Chinese per earlier owner scope; no cloud translation or cross-device preference sync."
+  ],
+  "deployment": "pending"
+}

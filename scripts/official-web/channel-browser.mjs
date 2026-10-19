@@ -1,3 +1,5 @@
+import { verifyMessageMetrics } from "./message-metrics-browser.mjs";
+import { verifyRegionSettings } from "./region-settings-browser.mjs";
 import { verifyAppearanceChrome } from "./appearance-chrome-browser.mjs";
 import { verifyPush } from "./push-browser.mjs";
 import { verifyReadRecovery } from "./read-recovery-browser.mjs";
@@ -391,6 +393,24 @@ try {
   } else if (process.env.LOOM_BROWSER_SLICE === "topbar") {
     console.log(
       JSON.stringify(await verifyTopbar({ browser, origin, channels })),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "message-metrics") {
+    console.log(
+      JSON.stringify(
+        await verifyMessageMetrics({
+          browser,
+          origin,
+          client,
+          workspace,
+          channels,
+          instances,
+          head,
+        }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "region-settings") {
+    console.log(
+      JSON.stringify(await verifyRegionSettings({ browser, origin })),
     );
   } else if (process.env.LOOM_BROWSER_SLICE === "appearance-chrome") {
     console.log(

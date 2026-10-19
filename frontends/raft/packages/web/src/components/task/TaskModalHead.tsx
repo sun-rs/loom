@@ -116,7 +116,7 @@ export default function TaskModalHead({ task }: { task: Task }) {
         {/* The number lives in the persistent bar, not here. Rendering it in both
             places put the same identifier twice within ~30px; the bar's copy is
             the one that survives scrolling, so this one goes. */}
-        <PanelHeading className="mb-2 line-clamp-3 break-words text-lg font-bold leading-snug" data-testid="task-modal-title">{task.title}</PanelHeading>
+        <PanelHeading className="mb-2 line-clamp-3 break-words" data-testid="task-modal-title">{task.title}</PanelHeading>
 
         {/* No placeholder when there is no description: nothing to say is not
             worth a line of chrome, and today essentially every task has none. */}
@@ -125,7 +125,7 @@ export default function TaskModalHead({ task }: { task: Task }) {
             <p
               ref={descriptionRef}
               id={`task-modal-description-${task.id}`}
-              className={`whitespace-pre-wrap break-words text-sm text-foreground-muted ${
+              className={`whitespace-pre-wrap break-words text-subhead text-foreground-muted ${
                 descriptionCollapsed ? "line-clamp-3" : ""
               }`}
               data-testid="task-modal-description"

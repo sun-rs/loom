@@ -727,5 +727,12 @@
     "localDifferences": "Single-workspace label remains non-actionable: no fake organization switch menu. Memory uses owner-requested BookOpen nav icon and icon-free headings (Loom extension).",
     "license": "Existing FSL-1.1-ALv2 notices retained; owner-authorized source reuse",
     "evidence": "../../docs/evo/evidence/2026-10-19-official-page-audit/appearance-chrome-verification.json"
+  },
+  "regionAndMessageAudit20261020": {
+    "source": "app-shell-D1-nY-va.js LanguageRegionSection (146275–146675), TaskModalHead (186288–186314), appearanceStore (80384+), sbt scroll wrapper (166716), RUI SidebarSectionHeader; locked v1.21.22",
+    "reuse": "Language/Date forms structurally ported using native Card, SectionHeader, Select and radio recipes; getTimezoneOptions and useTimeFormatter reused directly. Local glue persists device-only date preferences into existing native presentation store.",
+    "differences": "Chinese-only disabled display language; cloud translation omitted; browser-default timezone remains a selectable reset; runtime management reuses existing Loom write owner. No new backend API.",
+    "evidence": "../../docs/evo/evidence/2026-10-20-region-message-audit/summary.json",
+    "license": "Existing upstream notices and owner authorization retained"
   }
 }
