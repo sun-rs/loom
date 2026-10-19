@@ -3,6 +3,15 @@
 declare module "loom-native-appearance" {
   export const LoomNotificationStatus: import("react").ComponentType<{
     loading: boolean;
+    subscribed: boolean;
+    confirmed: boolean;
+    busy: boolean;
+    testing: boolean;
+    message: string;
+    handleEnable: () => void;
+    handleDisable: () => void;
+    handleSendTest: () => void;
+    children?: import("react").ReactNode;
     statusLabel: string;
     permission: NotificationPermission | "unsupported";
     serverConfigured: boolean;

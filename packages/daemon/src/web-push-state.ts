@@ -21,6 +21,7 @@ export class WebPushStateStore {
   readonly #directory: string;
   readonly #path: string;
   #state: State | undefined;
+  #loading: Promise<State> | undefined;
   #mutation = Promise.resolve();
 
   constructor(input: { directory: string }) {
@@ -70,9 +71,10 @@ export class WebPushStateStore {
   async #mutate<T>(operation: (state: State) => T): Promise<T> {
     let result!: T;
     const pending = this.#mutation.then(async () => {
-      const state = await this.#load();
+      const state = structuredClone(await this.#load());
       result = operation(state);
       await this.#persist(state);
+      this.#state = state;
     });
     this.#mutation = pending.catch(() => undefined);
     await pending;
@@ -81,6 +83,12 @@ export class WebPushStateStore {
 
   async #load(): Promise<State> {
     if (this.#state) return this.#state;
+    return (this.#loading ??= this.#read().finally(() => {
+      this.#loading = undefined;
+    }));
+  }
+
+  async #read(): Promise<State> {
     await mkdir(this.#directory, { recursive: true, mode: 0o700 });
     await chmod(this.#directory, 0o700);
     try {
@@ -104,8 +112,8 @@ export class WebPushStateStore {
         publicKey: keys.publicKey,
         subscriptions: [],
       };
-      this.#state = state;
       await this.#persist(state);
+      this.#state = state;
       return state;
     }
   }

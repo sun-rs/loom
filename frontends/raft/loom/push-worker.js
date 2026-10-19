@@ -1,0 +1,113 @@
+/* Structural port of Raft public/sw.js push/click handlers. Native asset-cache
+ * prefix is included verbatim at build time; Loom typed target replaces data.url.
+ * This worker owns no business acknowledgement or transcript storage. */
+function validTarget(target) {
+  if (
+    !target ||
+    typeof target !== "object" ||
+    JSON.stringify(target).length > 4096
+  )
+    return false;
+  const required = {
+    room: ["roomId"],
+    message: ["roomId", "messageId"],
+    thread: ["roomId", "threadId"],
+    task: ["roomId", "taskId"],
+    input_request: ["roomId", "inputRequestId"],
+    computer: ["hostId"],
+  };
+  return (
+    required[target.kind]?.every(
+      (k) =>
+        typeof target[k] === "string" &&
+        target[k].length > 0 &&
+        target[k].length <= 300,
+    ) ?? false
+  );
+}
+function isSameNotificationTarget(clientUrl, target) {
+  try {
+    const url = new URL(clientUrl);
+    if (url.origin !== self.location.origin) return false;
+    if (target.kind === "computer")
+      return (
+        url.searchParams.get("view") === "computers" &&
+        url.searchParams.get("computer") === target.hostId
+      );
+    if (target.kind === "task")
+      return (
+        url.searchParams.get("taskChannel") === target.roomId &&
+        url.searchParams.get("task") === target.taskId
+      );
+    if (target.kind === "input_request") return false;
+    if (
+      url.searchParams.has("view") ||
+      url.searchParams.get("room") !== target.roomId
+    )
+      return false;
+    if (target.threadId && !target.rootMessageId) return false;
+    return url.searchParams.get("thread") === (target.rootMessageId ?? null);
+  } catch {
+    return false;
+  }
+}
+self.addEventListener("push", (event) => {
+  let data;
+  try {
+    data = event.data?.json();
+  } catch {
+    return;
+  }
+  if (
+    data?.version !== 1 ||
+    !validTarget(data.target) ||
+    typeof data.title !== "string" ||
+    typeof data.body !== "string"
+  )
+    return;
+  event.waitUntil(
+    self.clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then((clients) => {
+        if (
+          !data.alwaysShow &&
+          clients.some(
+            (client) =>
+              (client.focused || client.visibilityState === "visible") &&
+              isSameNotificationTarget(client.url, data.target),
+          )
+        )
+          return;
+        return self.registration.showNotification(data.title.slice(0, 200), {
+          body: data.body.slice(0, 1000),
+          icon: "/android-chrome-192x192.png",
+          badge: "/favicon-32x32.png",
+          tag:
+            typeof data.tag === "string" ? data.tag.slice(0, 300) : "loom-push",
+          data: { target: data.target },
+        });
+      }),
+  );
+});
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const target = event.notification?.data?.target;
+  if (!validTarget(target)) return;
+  event.waitUntil(
+    self.clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then(async (clients) => {
+        const matching = clients.find((client) =>
+          isSameNotificationTarget(client.url, target),
+        );
+        if (matching) {
+          matching.postMessage({ type: "LOOM_PUSH_NAVIGATE", target });
+          await matching.focus();
+          return;
+        }
+        await self.clients.openWindow(
+          "/?" + new URLSearchParams({ push: JSON.stringify(target) }),
+        );
+      }),
+  );
+});

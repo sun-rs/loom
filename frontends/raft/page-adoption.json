@@ -626,7 +626,7 @@
     }
   },
   "pending": [
-    "G3: Browser push frontend subscription/permission/test and notification navigation are not implemented; retained capability-only view is explicit."
+    "G3: Native browser vendor subscription / physical OS delivery remains unverified; frontend registration, controls and typed navigation implemented."
   ],
   "currentCloseout": "../../docs/evo/frontend-closeout.zh-CN.md",
   "statusInterpretation": "Slice limits describe the recorded adoption batch; later evidence can supersede its pending audit items. Current page/gap status is maintained in currentCloseout, not inferred from historical remaining lists.",
@@ -703,5 +703,18 @@
     "adoptedMainPaths": "closed with explicit limits",
     "fullOfficialFeatureParity": false,
     "newProductCode": false
+  },
+  "pushAdoption20261019": {
+    "upstream": "https://github.com/botiverse/raft-source",
+    "revision": "a98ae003246a0360872a77d76dec2fccd0347ef7",
+    "license": "FSL-1.1-ALv2; existing owner authorization and upstream notices retained",
+    "sourceHashes": {
+      "packages/web/src/components/settings/SettingsPanel.tsx": "ae25dfefb1ffa09941595888de8f8c140218e28e3718b2c7c82ed32d7b4fe9e9",
+      "packages/web/src/utils/pushNotifications.ts": "d20e2bb1fbc1405ae59a8e7e891882e9dd75bef2e5f777ab9ae53fec4348f5eb",
+      "packages/web/src/utils/notificationChannel.ts": "0df04db0aee0afdc00aa2cd764cb4714253dc84e9e4afcea361b93b8a2e50911",
+      "packages/web/public/sw.js": "af23d8544fd4cf707c85e649e99c30f0aa2ea713f773e2ef8f4f75fe4fd40da9"
+    },
+    "reuse": "Native notification card/action JSX extracted without changing recipes; notificationChannel directly imported; immutable-cache worker prefix byte-exact. Permission/subscription and worker push/click flow structurally ported. Loom typed API, endpoint readback and authenticated navigation are local glue. Upstream server mute omitted.",
+    "evidence": "../../docs/evo/evidence/2026-10-19-official-page-audit/push-adoption-verification.json"
   }
 }

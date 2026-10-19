@@ -36,11 +36,19 @@ export function createWebPushAdministration(input: {
 }): WebPushAdministrationPort {
   const principalId = (actor: AuthenticatedActorContext) => actor.principalId;
   return Object.freeze({
-    async configuration(actor) {
+    async configuration(actor, request = {}) {
       const keys = await input.state.vapidKeys();
+      const subscriptions = await input.state.list(principalId(actor));
       return {
+        ...(request.endpoint
+          ? {
+              subscribed: subscriptions.some(
+                (s) => s.endpoint === request.endpoint,
+              ),
+            }
+          : {}),
         applicationServerKey: keys.publicKey,
-        subscriptionCount: (await input.state.list(principalId(actor))).length,
+        subscriptionCount: subscriptions.length,
         supported: true,
       };
     },

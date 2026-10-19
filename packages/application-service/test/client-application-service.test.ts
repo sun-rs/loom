@@ -219,7 +219,10 @@ test("Client API authenticates humans and exposes canonical Room work without ow
       },
     },
     webPushAdministration: {
-      configuration: async () => ({
+      configuration: async (_actor, input) => ({
+        ...(input?.endpoint
+          ? { subscribed: pushEndpoints.has(input.endpoint) }
+          : {}),
         applicationServerKey: "AQIDBA",
         subscriptionCount: pushEndpoints.size,
         supported: true,
@@ -654,6 +657,12 @@ test("Client API authenticates humans and exposes canonical Room work without ow
     );
     assert.equal(pushSubscribe.status, 200);
     assert.equal((await jsonObject(pushSubscribe)).subscriptionCount, 1);
+    const deviceStatus = await request(
+      "/v3/client/push/configuration",
+      { endpoint: "https://push.example/client-device" },
+      human.accessToken,
+    );
+    assert.equal((await jsonObject(deviceStatus)).subscribed, true);
     const pushTest = await request(
       "/v3/client/push/test",
       {},

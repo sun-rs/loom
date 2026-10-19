@@ -25,9 +25,12 @@ export const ClientPushSubscriptionSchema = z
   })
   .strict();
 
-export const ClientPushConfigurationRequestSchema = z.object({}).strict();
+export const ClientPushConfigurationRequestSchema = z
+  .object({ endpoint: PushEndpointSchema.optional() })
+  .strict();
 export const ClientPushConfigurationResponseSchema = z
   .object({
+    subscribed: z.boolean().optional(),
     applicationServerKey: Base64UrlSchema,
     subscriptionCount: z.number().int().nonnegative(),
     supported: z.boolean(),

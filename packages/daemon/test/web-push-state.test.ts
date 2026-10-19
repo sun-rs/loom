@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, rm, stat } from "node:fs/promises";
+import { mkdtemp, rm, stat, mkdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -36,6 +36,45 @@ test("Web Push state persists stable VAPID keys and principal-scoped subscriptio
     assert.equal(await store.remove("human-a", "https://push.example/a"), true);
     assert.equal((await store.list("human-a")).length, 0);
     assert.equal((await store.list("human-b")).length, 1);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("failed persistence never appears as confirmed browser registration", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "loom-push-failed-"));
+  try {
+    const store = new WebPushStateStore({ directory });
+    await store.vapidKeys();
+    await rm(join(directory, "web-push.json"));
+    await mkdir(join(directory, "web-push.json"));
+    await assert.rejects(
+      store.put("human", {
+        endpoint: "https://push.example/device",
+        keys: { auth: "a", p256dh: "b" },
+      }),
+    );
+    assert.deepEqual(await store.list("human"), []);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("concurrent first probes share one persisted VAPID identity", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "loom-push-concurrent-"));
+  try {
+    const store = new WebPushStateStore({ directory });
+    const keys = await Promise.all([
+      store.vapidKeys(),
+      store.vapidKeys(),
+      store.vapidKeys(),
+    ]);
+    assert.deepEqual(keys[0], keys[1]);
+    assert.deepEqual(keys[1], keys[2]);
+    assert.deepEqual(
+      await new WebPushStateStore({ directory }).vapidKeys(),
+      keys[0],
+    );
   } finally {
     await rm(directory, { recursive: true, force: true });
   }

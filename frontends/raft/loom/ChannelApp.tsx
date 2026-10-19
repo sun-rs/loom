@@ -1,3 +1,4 @@
+import PushNavigation from "./PushNavigation.tsx";
 import ChannelPrivateHistory from "./ChannelPrivateHistory.tsx";
 import { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives.ts";
 import { OverflowMenuTrigger } from "../packages/web/src/components/ui/OverflowSheet.tsx";
@@ -978,6 +979,7 @@ export default function ChannelApp() {
           className={`min-h-0 flex-1 flex-col overflow-hidden font-display ${bootstrapping ? "invisible" : ""}`}
           data-testid="loom-channel-app"
         >
+          {directory && <PushNavigation client={client} />}
           {directory && (
             <TopBarSearch
               client={client}

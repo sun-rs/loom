@@ -66,6 +66,12 @@ try {
       isMobile: width === 390,
       hasTouch: width === 390,
     });
+    await ctx.addInitScript(() => {
+      Object.defineProperty(Notification, "permission", {
+        configurable: true,
+        get: () => "default",
+      });
+    });
     const page = await ctx.newPage();
     const errors = [];
     page.on("pageerror", (e) => errors.push(e.message));
@@ -92,15 +98,15 @@ try {
       if (/push\/(subscribe|unsubscribe|test)$/.test(r.url())) mutations++;
     });
     await page.goto(gateway.origin + "/?view=settings&settings=notifications");
-    await page.getByText("订阅尚未接入", { exact: true }).waitFor();
+    await page.getByText("未启用", { exact: true }).waitFor();
     const card = page
       .locator('[data-slot="card"]')
-      .filter({ hasText: "订阅尚未接入" });
+      .filter({ hasText: "未启用" });
     assert.equal(await card.count(), 1);
     assert.equal(await card.locator(".text-subhead").count(), 1);
     assert.equal(
       await card
-        .getByText("订阅尚未接入", { exact: true })
+        .getByText("未启用", { exact: true })
         .getAttribute("data-appearance"),
       "soft",
     );
@@ -109,7 +115,7 @@ try {
       await page
         .getByRole("button", { name: "启用推送通知", exact: true })
         .count(),
-      0,
+      1,
     );
     await page.screenshot({
       path: `/tmp/loom-notification-settings-${width}.png`,
@@ -129,10 +135,10 @@ try {
       });
     });
     await page.reload();
-    await page.getByText("订阅尚未接入", { exact: true }).waitFor();
+    await page.getByText("已被浏览器阻止", { exact: true }).waitFor();
     assert.equal(
       await page
-        .getByText("订阅尚未接入", { exact: true })
+        .getByText("已被浏览器阻止", { exact: true })
         .getAttribute("data-variant"),
       "warning",
     );
@@ -144,13 +150,14 @@ try {
     await page.getByText("状态未知", { exact: true }).waitFor();
     await page
       .getByRole("alert")
-      .filter({ hasText: "无法读取通知服务状态" })
+      .filter({ hasText: "无法核实本浏览器通知状态" })
       .waitFor();
-    assert.equal(
-      await page.getByText("订阅尚未接入", { exact: true }).count(),
-      0,
-    );
-    settings.push({ width, releaseNotes: true, notificationReadOnly: true });
+    assert.equal(await page.getByText("未启用", { exact: true }).count(), 0);
+    settings.push({
+      width,
+      releaseNotes: true,
+      notificationNoAutomaticPermissionPrompt: true,
+    });
     await ctx.close();
   }
   console.log(JSON.stringify({ activity, settings }, null, 2));

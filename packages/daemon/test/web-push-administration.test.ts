@@ -40,6 +40,32 @@ test("Web Push administration scopes devices to the authenticated Human", async 
       (await administration.configuration(actor)).subscriptionCount,
       1,
     );
+    assert.equal(
+      (
+        await administration.configuration(actor, {
+          endpoint: "https://push.example/device",
+        })
+      ).subscribed,
+      true,
+    );
+    assert.equal(
+      (
+        await administration.configuration(actor, {
+          endpoint: "https://push.example/other",
+        })
+      ).subscribed,
+      false,
+    );
+    const other = kernel.provisionPrincipal({ handle: "other", kind: "human" });
+    assert.equal(
+      (
+        await administration.configuration(
+          kernel.authenticateHumanAccessToken(other.accessToken),
+          { endpoint: "https://push.example/device" },
+        )
+      ).subscribed,
+      false,
+    );
     assert.deepEqual(await administration.test(actor, {}), { delivered: 1 });
     assert.deepEqual(sent, ["https://push.example/device:computer"]);
   } finally {

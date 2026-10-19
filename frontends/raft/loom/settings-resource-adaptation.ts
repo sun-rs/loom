@@ -5,7 +5,7 @@ export function exposeNotificationStatus(source: string) {
     "  return (",
     source.indexOf("const statusLabel", start),
   );
-  const end = source.indexOf('        <div className="flex gap-2">', begin);
+  const end = source.indexOf("        {currentServer && (", begin);
   if (start < 0 || begin < 0 || end < 0)
     throw Error("Official notification card boundary changed");
   const jsx = source
@@ -13,10 +13,18 @@ export function exposeNotificationStatus(source: string) {
     .replace(
       "!serverConfigured && !loading &&",
       "!serverConfigured && !loading && !error &&",
+    )
+    .replaceAll(
+      "disabled={busy || testing",
+      "disabled={loading || busy || testing",
+    )
+    .replace(
+      "disabled={loading || busy || testing || permission",
+      "disabled={loading || busy || testing || !confirmed || permission",
     );
   return (
     source +
-    `\nexport function LoomNotificationStatus({loading,statusLabel,permission,serverConfigured,error,detail,channel}: {loading:boolean;statusLabel:string;permission:NotificationPermission|"unsupported";serverConfigured:boolean;error:string;detail:string;channel:any}) {\n const {formatMessage}=useIntl(); const message=""; const statusVariant = !loading && permission === "denied" ? "warning" : "muted"; return (${jsx}<div className="text-footnote text-foreground-muted">{detail}</div></Card></div>); }\n`
+    `\nexport function LoomNotificationStatus({loading,statusLabel,permission,serverConfigured,error,detail,channel,message,subscribed,confirmed,busy,testing,handleEnable,handleDisable,handleSendTest,children}: any) {\n const {formatMessage}=useIntl(); const statusVariant = !loading && confirmed ? "success" : !loading && permission === "denied" ? "warning" : "muted"; return (${jsx}<div className="text-footnote text-foreground-muted">{detail}</div>{children}</Card></div>); }\n`
   );
 }
 export function exposeReleaseNotes(source: string) {

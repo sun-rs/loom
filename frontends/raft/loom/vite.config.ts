@@ -1,3 +1,4 @@
+import { pushWorkerPlugin } from "./push-worker-plugin.ts";
 import { adaptComposerDirectory } from "./composer-directory-adaptation.ts";
 import { adaptTimelineWindow } from "./timeline-window-adaptation.ts";
 import {
@@ -243,6 +244,7 @@ export default defineConfig({
     },
     ...(officialConfig.plugins ?? []),
     webBuildMetadataPlugin("build"),
+    pushWorkerPlugin(),
   ],
   build: { ...officialConfig.build, outDir: "dist-workbench" },
 });

@@ -1,0 +1,51 @@
+{
+  "date": "2026-10-19",
+  "scope": "Official Web Push adoption",
+  "implemented": true,
+  "realOSDeliveryVerified": false,
+  "tests": {
+    "focusedNode": {
+      "passed": 21,
+      "files": [
+        "push-client",
+        "push-navigation",
+        "push-worker",
+        "settings-resource-adaptation",
+        "web-push-administration",
+        "web-push-state",
+        "web-push-dispatcher",
+        "client-application-service"
+      ]
+    },
+    "typecheck": ["root", "frontends/raft loom"],
+    "build": "npm run build:web:workbench",
+    "browser": [
+      "LOOM_BROWSER_SLICE=push channel-browser.mjs: 1440x1000 and 390x844 DPR1",
+      "LOOM_BROWSER_SLICE=settings-resources settings-resources-browser.mjs: 1440x1000 and 390x844 DPR1"
+    ]
+  },
+  "redGreen": [
+    "failed persistent write must not change confirmed subscription state",
+    "concurrent first load must return same VAPID key",
+    "native subscription expirationTime excluded from strict API payload"
+  ],
+  "browserEvidenceBoundary": "Real Kernel/daemon subscribe and unsubscribe with dropped responses; browser Notification/PushManager and test transport response simulated. Real generated worker registration and authenticated navigation. No paid CLI.",
+  "nativeAttempt": {
+    "capabilities": {
+      "secure": true,
+      "notification": "function",
+      "permission": "granted",
+      "push": true
+    },
+    "nativeSubscribed": false,
+    "transportAccepted": false,
+    "workerNotificationObserved": false,
+    "uiState": "通知\n推送通知\n私信、直接提及以及已关注消息列的回复\n使用网页推送，即使标签页在后台也能收到通知。\n状态未知\nError retrieving push subscription.\n启用推送通知\n仅管理当前浏览器；测试会发送到当前用户登记的设备。站内动态与未读提醒不受此开关影响。\n重新读取状态"
+  },
+  "retainedFailures": [
+    "First native harness had empty PATH and no CLI discovery; corrected environment, no model started.",
+    "Settings-only initial test assumed default permission; headless Chromium denied by default. Explicit permission fixture added.",
+    "Unscoped settings-resources run hit unrelated Activity padding assertion (expected16px,actual0px 0px 16px); no unrelated styling/assertion modified; targeted settings slice passed."
+  ],
+  "deployment": "pending"
+}

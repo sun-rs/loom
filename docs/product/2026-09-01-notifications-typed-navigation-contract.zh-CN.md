@@ -101,3 +101,9 @@ Web Push 是 hint，不是消息账本。Service Worker 收到或点击后必须
 - HTTPS LAN 浏览器覆盖 TLS、PWA Service Worker、配对、Secure/HttpOnly cookie、daemon 重启后的设备会话与 390×844；
 - schema 27 正式重启后业务数据、FTS trigger、VAPID key 和 owner-private 权限保持；
 - 真正宣称 macOS/iOS OS 通知可用前，必须由用户在目标设备授权，并发送一次测试通知验证后台展示和点击恢复。这个设备级动作不能由无授权的自动化测试冒充。
+
+## 9. evo 官方前端接线（2026-10-19）
+
+官方通知卡片及操作按钮由源码提取，原生Service Worker静态资源缓存前缀保持原样；权限/订阅和push/click处理为结构移植。Loom保留现有daemon订阅所有者与类型化导航。`push.configuration`可选接收当前浏览器endpoint并返回该Human的精确`subscribed`，不能用订阅总数推断当前设备状态。未知订阅/停用写入只读回核实，不自动重发；停用先确认服务端删除，再清理浏览器订阅。存储采用成功持久化后发布内存状态，首次VAPID初始化单飞，不改变数据库schema。
+
+点击推送先经`navigation.resolve`校验权限与目标，再使用既有页面路由；不能注入任意外部URL，也不自动完成任务或标记通知已读。测试按钮的accepted数量只证明传输服务接受，不能证明系统展示。当前采用证据及真实送达限制见[推送验收](../evo/evidence/2026-10-19-official-page-audit/push-adoption-verification.json)。

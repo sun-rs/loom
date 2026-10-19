@@ -323,6 +323,7 @@ export type TaskReassignmentAdministrationPort = Readonly<{
 export type WebPushAdministrationPort = Readonly<{
   configuration(
     actor: AuthenticatedActorContext,
+    input?: { endpoint?: string | undefined },
   ): Promise<ClientPushConfigurationResponse> | ClientPushConfigurationResponse;
   subscribe(
     actor: AuthenticatedActorContext,
@@ -913,12 +914,18 @@ export class ClientApplicationService {
       return;
     }
     if (path === "/push/configuration") {
-      parseClientRequest(ClientPushConfigurationRequestSchema, body);
+      const command = parseClientRequest(
+        ClientPushConfigurationRequestSchema,
+        body,
+      );
       writeJson(
         response,
         200,
         ClientPushConfigurationResponseSchema.parse(
-          await this.#requireWebPushAdministration().configuration(actor),
+          await this.#requireWebPushAdministration().configuration(
+            actor,
+            command,
+          ),
         ),
       );
       return;

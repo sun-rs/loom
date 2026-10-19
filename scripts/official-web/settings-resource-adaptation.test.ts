@@ -13,7 +13,7 @@ const release = readFileSync(
   "frontends/raft/packages/web/src/components/settings/ReleaseNotesPanel.tsx",
   "utf8",
 );
-test("notification read-only surface keeps native card and omits unavailable actions", () => {
+test("notification surface keeps native card and action recipes, omitting upstream server mute", () => {
   const result = exposeNotificationStatus(settings).split(
     "export function LoomNotificationStatus",
   )[1];
@@ -24,7 +24,10 @@ test("notification read-only surface keeps native card and omits unavailable act
   assert.ok(result.includes("</Card>"));
   assert.ok(!result.includes("shadow-raft-sm"));
   assert.ok(!result.includes("theme-brutal:"));
-  assert.ok(!result.includes("handleEnable"));
+  for (const action of ["handleEnable", "handleDisable", "handleSendTest"])
+    assert.ok(result.includes(`onClick={${action}}`));
+  assert.ok(!result.includes("handleSaveServerMute"));
+  assert.ok(result.includes("loading || busy || testing"));
   assert.throws(() => exposeNotificationStatus("changed"), /boundary/);
 });
 test("release content retains official card/category rendering without duplicate header or upstream fetch", () => {

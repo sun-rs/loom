@@ -1,3 +1,4 @@
+import { verifyPush } from "./push-browser.mjs";
 import { verifyReadRecovery } from "./read-recovery-browser.mjs";
 import { verifyMessageReferences } from "./message-reference-browser.mjs";
 import { verifyActivityList } from "./activity-list-browser.mjs";
@@ -408,6 +409,10 @@ try {
       JSON.stringify(
         await verifyAttachments({ browser, origin, client, workspace, head }),
       ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "push") {
+    console.log(
+      JSON.stringify(await verifyPush({ browser, origin, channels })),
     );
   } else if (process.env.LOOM_BROWSER_SLICE === "read-recovery") {
     console.log(
