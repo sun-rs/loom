@@ -73,6 +73,36 @@
     "Kernel unfollow history eligibility differs from upstream. No change to exact-mention override or thread read frontiers.",
     "Physical iOS/Android and logged-in upstream pixel comparison not performed."
   ],
-  "deployment": "pending safe restart and real-page check",
+  "deployment": {
+    "sourceCommit": "09b349bf6025d44d64512b543935ed84bfa8abab",
+    "safeRestart": true,
+    "databasesBackedUp": 2,
+    "filesBackedUp": 325,
+    "businessTablesUnchanged": 18,
+    "realPage": [
+      {
+        "width": 1440,
+        "height": 844,
+        "dpr": 1,
+        "realRows": 20,
+        "pinnedRows": 0,
+        "orderMatchesAuthoritativePreferences": true,
+        "noMutations": true,
+        "pageErrors": []
+      },
+      {
+        "width": 390,
+        "height": 844,
+        "dpr": 1,
+        "realRows": 20,
+        "pinnedRows": 0,
+        "orderMatchesAuthoritativePreferences": true,
+        "noMutations": true,
+        "pageErrors": []
+      }
+    ],
+    "privateEvidence": "/Users/sun/.loom/reviews/2026-10-19-activity-pinned/",
+    "limits": "Real first page contains no pinned conversation. Nonempty pin/unpin and failure behavior use temporary real Kernel; real deployment verifies canonical order and no spurious sections, with no user-data mutations."
+  },
   "paidProviders": false
 }
