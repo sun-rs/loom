@@ -134,11 +134,7 @@ export default function LanguageRegionSettings() {
               items={timezoneOptions}
             >
               <SelectTrigger className="w-full max-w-sm">
-                <SelectValue
-                  placeholder={formatMessage({
-                    id: "settings.dateTime.timezonePlaceholder",
-                  })}
-                />
+                <SelectValue placeholder={timezoneOptions[0]?.label} />
                 <SelectIcon />
               </SelectTrigger>
               <SelectContent>

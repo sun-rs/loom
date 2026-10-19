@@ -15,6 +15,16 @@ export async function verifyRegionSettings({ browser, origin }) {
       await page.goto(origin + "/?view=settings");
       await page.getByText("语言和区域", { exact: true }).click();
       await page.getByTestId("region-date-form").waitFor();
+      assert.notEqual(
+        (
+          await page
+            .getByTestId("region-date-form")
+            .getByRole("combobox")
+            .innerText()
+        ).trim(),
+        "时区",
+        "default timezone must display effective browser region",
+      );
       assert.equal(
         await page
           .getByTestId("loom-settings-sidebar")
