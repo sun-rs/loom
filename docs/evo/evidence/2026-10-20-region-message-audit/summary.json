@@ -405,7 +405,8 @@
   "redGreen": [
     "Missing language/region tab reproduced before wiring",
     "Task description14px vs official15px reproduced before repair",
-    "Region invalid values/storage failure tests failed on missing implementation then passed"
+    "Region invalid values/storage failure tests failed on missing implementation then passed",
+    "Real-page check exposed default timezone Select placeholder instead of detected timezone; reproducer failed, minimal label fallback fixed it, dual-size browser and real-page checks passed again."
   ],
   "diagnosticLimits": [
     "Temporary fixture CLI does discovery only, no paid or real-model generation; directed fixture message attempted disabled fake MCP runtime and was refused. UI projection checks do not claim runtime execution.",
@@ -414,5 +415,34 @@
     "Physical mobile and authenticated official screenshot comparison not run.",
     "Language remains Chinese per earlier owner scope; no cloud translation or cross-device preference sync."
   ],
-  "deployment": "pending"
+  "deployment": {
+    "sourceCommit": "07ce7e7ebab3ed866fd25280bcdd1558bfe823a8",
+    "schema": 90,
+    "service": "com.loom.evo",
+    "gracefulRestart": true,
+    "backupDatabases": 2,
+    "backupFiles": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true,
+    "sourceSha256": "b06b6ccc23e854b7f63ee1da3812db1959e19c6102103516a6f7d97b5b7c218f",
+    "verified": true,
+    "realPageChecks": [
+      {
+        "width": 1440,
+        "computer": {
+          "paddingTop": "16px",
+          "y": 56
+        },
+        "agent": {
+          "paddingTop": "16px",
+          "y": 56
+        }
+      },
+      {
+        "width": 390
+      }
+    ],
+    "visualInspection": "Final 390x844 screenshot confirms resolved default timezone and native controls; desktop Computer/Agent screenshots checked.",
+    "url": "http://127.0.0.1:4176/"
+  }
 }
