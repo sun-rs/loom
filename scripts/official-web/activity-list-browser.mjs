@@ -26,6 +26,9 @@ export async function verifyActivityList({ browser, origin, channels }) {
         const r = e.getBoundingClientRect();
         return {
           height: r.height,
+          titleSize: getComputedStyle(title).fontSize,
+          titleLine: getComputedStyle(title).lineHeight,
+          padding: getComputedStyle(e).paddingLeft,
           bodyWhiteSpace: getComputedStyle(body).whiteSpace,
           titleWhiteSpace: getComputedStyle(title).whiteSpace,
           avatar: e
@@ -39,7 +42,12 @@ export async function verifyActivityList({ browser, origin, channels }) {
       assert.ok(geometry.height <= 70, JSON.stringify(geometry));
       assert.equal(geometry.bodyWhiteSpace, "nowrap");
       assert.equal(geometry.titleWhiteSpace, "nowrap");
-      assert.equal(geometry.avatar, 36);
+      assert.equal(geometry.avatar, width === 390 ? 32 : 36);
+      if (width === 390) {
+        assert.equal(geometry.titleSize, "14px");
+        assert.equal(geometry.titleLine, "18px");
+        assert.equal(geometry.padding, "12px");
+      }
       assert.equal(geometry.metadata, false);
       const done = row.getByTestId("inbox-row-done");
       if (width === 390) {

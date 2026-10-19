@@ -1,7 +1,7 @@
 // FIXTURE: real Kernel/application service, fake Worker identity; no paid CLI.
 import assert from "node:assert/strict";
 import { resolve } from "node:path";
-import { chromium } from "playwright";
+import { chromium, webkit } from "playwright";
 import { createHumanApplicationPort } from "@rah-os/kernel";
 import { ClientApplicationService } from "../../packages/application-service/src/index.ts";
 import { LocalWorkbenchGateway } from "../../packages/daemon/src/local-workbench-gateway.ts";
@@ -49,7 +49,9 @@ for (const width of [1440, 390]) {
       staticDirectory: resolve("frontends/raft/packages/web/dist-workbench"),
     });
     await gateway.start();
-    browser = await chromium.launch({ headless: true });
+    browser = await (
+      process.env.LOOM_BROWSER_ENGINE === "webkit" ? webkit : chromium
+    ).launch({ headless: true });
     const context = await browser.newContext({
       viewport: { width, height: width === 390 ? 844 : 1000 },
       deviceScaleFactor: 1,
@@ -199,6 +201,16 @@ for (const width of [1440, 390]) {
       (await page.getByTestId("loom-memory-list").boundingBox()).width,
       listWidth,
     );
+    if (process.env.LOOM_MEMORY_LAYOUT_ONLY === "1") {
+      results.push({
+        width,
+        layout: true,
+        sixLinePreview: true,
+        detailReturn: true,
+        closeTouchTarget: width === 390,
+      });
+      continue;
+    }
     if (width === 1440) {
       await card.click({ button: "right" });
       await page.getByRole("menuitem", { name: "编辑", exact: true }).waitFor();

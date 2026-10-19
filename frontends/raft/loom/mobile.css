@@ -63,6 +63,30 @@
     height: 18px;
   }
 
+  /* SharedInboxPanel SharedActivityRow: native32 avatar,12px inset,
+   * primary14/18 and timestamp12/16. Keep the adopted latest Web list
+   * composition/menus; native's different content ordering is not ported. */
+  [data-testid="inbox-row"] {
+    padding-inline: 12px;
+  }
+  [data-testid="conversation-card-avatar"],
+  [data-testid="conversation-card-avatar"] > :first-child {
+    width: 32px;
+    height: 32px;
+  }
+  [data-testid="inbox-row"]::before {
+    left: 56px;
+  }
+  [data-testid="conversation-card-primary"],
+  [data-testid="conversation-card-body"] {
+    font-size: 14px;
+    line-height: 18px;
+  }
+  [data-testid="conversation-card-timestamp"] {
+    font-size: 12px;
+    line-height: 16px;
+  }
+
   /* SharedTasksPage SharedTaskCard:12x10 padding, title14/20,
    * description12/16. Retain Web card state, border and action handling. */
   [data-slot="task-card"] {
