@@ -1,0 +1,70 @@
+{
+  "date": "2026-10-19",
+  "codeCommit": "c7826d7ffe7506457db048faee9b1662fbe84a20",
+  "source": "Locked official v1.21.22; page-adoption.json native-list-and-avatar-rules",
+  "implemented": [
+    "Complete official activity list branch, replacing mixed list/card composition: 64px rows, single-line title/body, inline unread counter, 36px context slot, native divider inset and centered hover action",
+    "Touch timestamp/unread remain visible; hover-only Done hidden on touch, existing context menu retains Done",
+    "Official shared SurfaceListItem and AvatarListRow flat press overlay, text-body/mono typography, padding/focus behavior",
+    "Official AvatarSlot context-size mapping, removing forced frame dimensions/borders and retired elegant theme branch; native square badge",
+    "Computer instance section reuses SectionHeader and AvatarListRow, runtime subtitle and official space-y-2 wrapper",
+    "Fix activity peer lookup to read catalog entry.suggestion; missing identity stays generic, not fabricated Human"
+  ],
+  "checks": {
+    "unit": "9 focused source/action/identity tests passed; new shape/identity/spacing tests failed first",
+    "intake": "4 intake/release tests passed, updated port SHA256s preserve upstream hashes",
+    "typecheck": "npm run typecheck:loom --prefix frontends/raft exited 0 after fixing TS2339; output inspected",
+    "build": "npm run build:web:workbench exited 0 at codeCommit; retained existing chunk/dynamic-import warnings",
+    "fixtureBrowser": {
+      "activityList": "1440x844 and 390x844 DPR1: 64px row, nowrap text, context slot36px, no legacy metadata row, desktop Done pointer hit, touch menu availability, Computer instance navigation",
+      "activityMenu": "1440/390: read does not complete, stale unread rejected, unknown Done not resent, bounds/keyboard/dismissal, no accidental navigation, scoped thread Done"
+    },
+    "live": [
+      {
+        "width": 1440,
+        "realService": true,
+        "fixture": false,
+        "drawer": true,
+        "roleTabHitTest": true,
+        "roleStatus": true,
+        "activityHeader": true,
+        "computerInstances": true,
+        "pageErrors": []
+      },
+      {
+        "width": 390,
+        "realService": true,
+        "fixture": false,
+        "drawer": true,
+        "roleTabHitTest": true,
+        "roleStatus": true,
+        "activityHeader": true,
+        "computerInstances": true,
+        "pageErrors": []
+      }
+    ],
+    "liveGeometry": "Real first eight activity rows <=70px; native list-row avatar frame35px (raft-ui md recipe, distinct from36px artwork slot); Computer row gap8px; no horizontal overflow",
+    "visual": "Inspected real mobile activity and computer screenshots after final deployment",
+    "format": "Changed local files/manifests/tests Prettier, source port hash verification and git diff --check passed"
+  },
+  "corrections": [
+    "Previous page-polish record incorrectly marked typecheck passed despite TS2339; that record now explicitly corrected. Current actual check exited0.",
+    "Initial live assertion incorrectly equated avatar artwork36px with native md frame35px; corrected to the inspected official raft-ui recipe, no product size override."
+  ],
+  "deployment": {
+    "service": "com.loom.evo",
+    "at": "2026-10-19T05:33:08.635Z",
+    "backupDatabases": 2,
+    "backupFiles": 325,
+    "businessTablesUnchanged": 18,
+    "verified": true,
+    "web": "http://127.0.0.1:4176/",
+    "lan": "http://192.168.1.86:4176/"
+  },
+  "limits": [
+    "No backend changes, paid-provider test, full backend/browser suite or physical iOS/Android acceptance",
+    "Shared renderer retains local full-frame AgentAvatar leaf; official recipe owns its outer frame",
+    "No full-site parity claim; remaining uninspected composition chains stay outside this result"
+  ],
+  "privateArtifacts": "/Users/sun/.loom/reviews/2026-10-19-native-list"
+}
