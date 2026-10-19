@@ -21,9 +21,9 @@ export default function MobileHomeEntries({
           type="button"
           data-testid={`mobile-home-${entry.id}-entry`}
           onClick={() => onSelect(entry.id)}
-          className="h-auto min-h-11 gap-3 py-2.5 text-body font-semibold"
+          className="loom-mobile-home-action"
         >
-          <entry.icon size={20} className="shrink-0 text-foreground-hint" />
+          <entry.icon size={14} className="shrink-0 text-foreground-hint" />
           {entry.label}
           {entry.id === "activity" &&
           unreadCount !== undefined &&

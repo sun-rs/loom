@@ -3,6 +3,7 @@ import {
   type NavigationUnread,
 } from "./navigation-unread.ts";
 import { uiActionProps } from "./ui-action-props.ts";
+import { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives.ts";
 import MobileHomeEntries from "./MobileHomeEntries.tsx";
 import SavedNav from "./SavedNav.tsx";
 import { useAppearanceStore } from "../packages/web/src/store/appearanceStore.ts";
@@ -290,10 +291,11 @@ export default function ChannelSidebar({
     });
   };
   const hideEmpty = useAppearanceStore((s) => s.hideEmptySidebarSections);
+  const mobile = useMediaQuery("(max-width: 767px)");
   const visibleGroups = groups.filter(
     (g) =>
       !shouldHideEmptySidebarSection({
-        hideEmptySections: hideEmpty,
+        hideEmptySections: mobile || hideEmpty,
         loading: !data,
         itemCount: g.rooms.length,
       }),

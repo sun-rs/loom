@@ -18,6 +18,78 @@
   white-space: nowrap;
 }
 @media (max-width: 767px) {
+  /* Native mobile 6559754: SlockHomeComponents + SlockSectionHeader.
+   * Structural CSS adaptation, not Compose reuse. Keep desktop recipes intact.
+   * List rows deliberately use the native 32dp row; page actions retain44px. */
+  .loom-mobile-home-action,
+  [data-testid="public-server-channel-list"] [data-slot="sidebar-item"] {
+    height: 32px;
+    min-height: 32px;
+    padding-block: 0;
+    gap: 6px;
+    font-size: 14px;
+    line-height: 18px;
+  }
+  .loom-mobile-home-action > svg,
+  [data-public-channel-id] svg {
+    width: 14px;
+    height: 14px;
+  }
+  [data-public-channel-id] .text-sm {
+    font-size: 14px;
+    line-height: 18px;
+  }
+  [data-slot="sidebar-section-header"] {
+    min-height: 30px;
+    padding-block: 0;
+    margin-top: 4px;
+  }
+  [data-slot="sidebar-section-disclosure"] {
+    min-height: 30px;
+  }
+
+  /* MembersPage: role list34dp, avatar18dp, name14/20; not message avatars. */
+  [data-role-id][data-slot="sidebar-item"] {
+    height: 34px;
+    min-height: 34px;
+    gap: 6px;
+  }
+  [data-role-id] [data-slot="sidebar-item-title"] {
+    font-size: 14px;
+    line-height: 20px;
+  }
+  [data-role-id] [data-slot="avatar"] {
+    width: 18px;
+    height: 18px;
+  }
+
+  /* SharedTasksPage SharedTaskCard:12x10 padding, title14/20,
+   * description12/16. Retain Web card state, border and action handling. */
+  [data-slot="task-card"] {
+    padding: 10px 12px;
+  }
+  [data-slot="task-card-title"] {
+    font-size: 14px;
+    line-height: 20px;
+  }
+  [data-slot="task-card-description"] {
+    font-size: 12px;
+    line-height: 16px;
+  }
+  [data-slot="task-card-number"] {
+    font-size: 11px;
+    line-height: 14px;
+  }
+  /* Native LazyRow retains a single horizontally scrollable filter row. */
+  [data-slot="tasks-panel-toolbar-filters"] {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    min-width: 0;
+  }
+  [data-slot="tasks-panel-toolbar-filters"] > * {
+    flex-shrink: 0;
+  }
+
   [data-slot="panel-header"] {
     min-height: 48px;
     height: 48px;

@@ -130,6 +130,32 @@ for (const [width, preset] of [
           48,
           label + " uses the owner-approved compact root header",
         );
+        if (label === "首页") {
+          for (const id of [
+            "mobile-home-search-entry",
+            "mobile-home-activity-entry",
+            "sidebar-saved-entry",
+          ]) {
+            const row = page.getByTestId(id);
+            assert.equal(
+              (await row.boundingBox()).height,
+              32,
+              "native mobile home row",
+            );
+            assert.equal(
+              await row
+                .locator("svg")
+                .first()
+                .evaluate((el) => el.getBoundingClientRect().width),
+              14,
+            );
+          }
+          assert.equal(
+            await page.getByText("暂无频道", { exact: true }).count(),
+            0,
+            "mobile hides empty sections without changing desktop preference",
+          );
+        }
         if (label === "任务") {
           const title = await header.getByRole("heading").boundingBox();
           const count = await header.locator("p").boundingBox();

@@ -49,13 +49,10 @@ export default function SavedNav({
     <SidebarItem
       active={active}
       onClick={onOpen}
-      className={`${sidebarItemClass(active)} max-md:h-auto max-md:min-h-11 max-md:gap-3 max-md:py-2.5 max-md:text-body max-md:font-semibold`}
+      className={`${sidebarItemClass(active)} loom-mobile-home-action`}
       data-testid="sidebar-saved-entry"
     >
-      <Bookmark
-        size={14}
-        className="shrink-0 max-md:size-5 max-md:text-foreground-hint"
-      />
+      <Bookmark size={14} className="shrink-0 max-md:text-foreground-hint" />
       {formatMessage({ id: "layout.sidebar.saved" })}
       <SavedNavCount total={total} />
     </SidebarItem>
