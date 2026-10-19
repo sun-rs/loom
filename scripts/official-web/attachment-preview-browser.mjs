@@ -99,6 +99,20 @@ export async function verifyAttachmentPreview({
       const composer = preview.locator(
         '[data-message-affordance="attachment-comment-composer"]:visible',
       );
+      assert.deepEqual(
+        await composer.evaluate((el) => {
+          const style = getComputedStyle(el);
+          return { border: style.borderTopWidth, padding: style.paddingTop };
+        }),
+        { border: "1px", padding: "12px" },
+      );
+      const pendingChip = preview.locator(
+        '[data-message-affordance="attachment-comment-pending-anchor"]:visible',
+      );
+      assert.equal(
+        await pendingChip.locator("svg").first().getAttribute("width"),
+        "12",
+      );
       await page.screenshot({
         path: `/tmp/loom-preview-comments-${width}.png`,
       });
@@ -152,6 +166,12 @@ export async function verifyAttachmentPreview({
         ).length,
         1,
       );
+      const commentCard = preview
+        .locator('li:visible button[data-variant="default"]')
+        .filter({ hasText: "FIXTURE comment " + width });
+      await commentCard.waitFor({ state: "visible", timeout: 3000 });
+      assert.equal(await commentCard.count(), 1);
+      assert.equal(await commentCard.getAttribute("data-variant"), "default");
       await preview
         .locator("li:visible")
         .filter({ hasText: "FIXTURE comment " + width })

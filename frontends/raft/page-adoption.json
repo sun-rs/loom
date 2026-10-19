@@ -496,6 +496,23 @@
         "No published attachments found in the current real data home, so preview acceptance is temporary-Core fixture only; real service verification uses an existing thread and menus.",
         "Remaining media/document renderer, attachment comments body and other message menu compositions are not declared fully aligned."
       ]
+    },
+    "attachment-comment-compositions": {
+      "source": "Raft v1.21.22 revision af3d6ef4a22f0f05f5f9db9424285755d67e9726; app-shell-D1-nY-va.js o2 113993–114374 and d2 drawers 115065–115147; official Card vk 49520. Release URLs/hashes: docs/evo/evidence/2026-10-19-official-page-audit/release-lock.json.",
+      "kind": "Structural port of authorized official production composition; native raft-ui@0.6.0 Card/Button recipes. Original source notices retained; not byte-exact latest TSX.",
+      "local": [
+        "packages/web/src/components/message/AttachmentCommentsPanel.tsx",
+        "packages/web/src/components/message/attachmentPreviewSurfaces.tsx"
+      ],
+      "adaptation": "Only supported presentation replaced. Loom comment transport, permission checks, stale response fences, exact unknown-result verification, anchors, sheet states and focus/close guards retained.",
+      "preserved": "Native cards, footnote/caption/mono-meta typography, filled anchor chips, 12px anchor icons, ghost icon-sm sheet toggle, single seam header/composer/drawer borders and 12px composer padding.",
+      "checks": [
+        "scripts/official-web/preview-thread-release.test.mjs",
+        "scripts/official-web/attachment-preview-browser.mjs"
+      ],
+      "limits": [
+        "Markdown comment/jump acceptance only; other document renderer styling remains pending. No audio/video adoption. No published attachments in current real data home; fixture validation is separate from real deployment checks."
+      ]
     }
   },
   "pending": [

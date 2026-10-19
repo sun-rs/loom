@@ -46,3 +46,33 @@ test("attachment badge uses native inline placement without forced legacy size",
   assert.match(s, /className=\{className\}/);
   assert.doesNotMatch(s, /!h-|!w-|!min-|!text-/);
 });
+test("attachment comments use native card, typography and lightweight chrome", () => {
+  const s = read(
+    "packages/web/src/components/message/AttachmentCommentsPanel.tsx",
+  );
+  assert.match(
+    s,
+    /<Card\s+render=\{<button type="button" onClick=\{jump\} \/>\}/,
+  );
+  assert.match(
+    s,
+    /min-h-10 shrink-0 items-center gap-2 border-b border-line-seam/,
+  );
+  assert.match(s, /size="icon-sm" variant="ghost"/);
+  assert.match(s, /shrink-0 border-t border-line-seam p-3/);
+  assert.match(s, /font-mono text-mono-meta text-foreground-hint/);
+  assert.doesNotMatch(
+    s,
+    /text-\[\d+px\]|border-b-2|border-t-2|bg-brutal-stone|size=\{9\}/,
+  );
+});
+test("attachment comment drawers use the native seam border", () => {
+  const s = read(
+    "packages/web/src/components/message/attachmentPreviewSurfaces.tsx",
+  );
+  const shell = s.slice(
+    s.indexOf("export function AttachmentPreviewShell"),
+    s.indexOf("export function CsvPreviewPane"),
+  );
+  assert.doesNotMatch(shell, /border-line-muted/);
+});

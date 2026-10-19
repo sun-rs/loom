@@ -376,7 +376,7 @@ export function AttachmentPreviewShell({
               // animation, but its controls (filter/resolve/composer) must
               // leave the tab order and the accessibility tree (Dozy review).
               inert={!commentsOpen}
-              className={`hidden h-full shrink-0 overflow-hidden border-line-muted  transition-[width] duration-300 ease-in-out sm:block ${
+              className={`hidden h-full shrink-0 overflow-hidden border-line-seam  transition-[width] duration-300 ease-in-out sm:block ${
                 commentsOpen ? "w-80 border-l " : "w-0 border-l-0"
               }`}
             >
@@ -407,7 +407,7 @@ export function AttachmentPreviewShell({
            drawer move as one gesture. Narrow viewports use the bottom sheet
            below instead. */
         <div
-          className={`pointer-events-auto fixed bottom-0 right-0 z-20 hidden w-full max-w-80 border-l  border-t  border-line-muted  bg-layer-panel  transition-transform duration-300 ease-in-out sm:block ${
+          className={`pointer-events-auto fixed bottom-0 right-0 z-20 hidden w-full max-w-80 border-l  border-t  border-line-seam  bg-layer-panel  transition-transform duration-300 ease-in-out sm:block ${
             commentsOpen ? "translate-x-0" : "translate-x-full"
           }`}
           style={{ top: "calc(56px + env(safe-area-inset-top, 0px))" }}
@@ -437,7 +437,7 @@ export function AttachmentPreviewShell({
            surface. */
         <div
           data-message-affordance="attachment-comments-sheet"
-          className={`pointer-events-auto fixed inset-x-0 bottom-0 z-20 flex flex-col border-t  border-line-muted  bg-layer-panel  transition-[height] duration-300 ease-in-out sm:hidden ${
+          className={`pointer-events-auto fixed inset-x-0 bottom-0 z-20 flex flex-col border-t  border-line-seam  bg-layer-panel  transition-[height] duration-300 ease-in-out sm:hidden ${
             sheetState === "half" ? "h-[45dvh]" : "h-10"
           }`}
           onClick={(e) => e.stopPropagation()}
