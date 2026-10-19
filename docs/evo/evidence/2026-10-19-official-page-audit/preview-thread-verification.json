@@ -1,0 +1,89 @@
+{
+  "date": "2026-10-19",
+  "codeCommit": "e9d5a2637ee5bcec202c2cbb73213899815fcb7c",
+  "source": {
+    "release": "v1.21.22",
+    "revision": "af3d6ef4a22f0f05f5f9db9424285755d67e9726",
+    "lock": "release-lock.json",
+    "adoption": "frontends/raft/page-adoption.json#preview-thread-menu-compositions",
+    "method": "Read authorized production page/wrapper/recipe chain; structurally port retained compositions, reuse raft-ui recipes. Not a full latest TSX copy."
+  },
+  "changes": [
+    "Thread overflow uses native PanelAction, removes old outline sizing; only connected follow action retained.",
+    "Thread composer removes local top border; existing footer, draft, pending-write and reply authority retained.",
+    "Attachment preview header adopts native headline/seam,44px ghost actions and outlined comment-active state.",
+    "AttachmentTypeBadge now uses native inline placement and caller dimensions instead of forced14px/min-size/9px text.",
+    "Shared CloseButton no longer overrides native icon colors/hover.",
+    "Reaction picker and context-menu quick row use current native rounded/focus/hover/active classes."
+  ],
+  "automated": {
+    "tests": 8,
+    "testFiles": [
+      "scripts/official-web/preview-thread-release.test.mjs",
+      "scripts/official-web/reactions.test.ts"
+    ],
+    "redBeforeGreen": true,
+    "typecheck": "npm run typecheck:loom --prefix frontends/raft passed",
+    "build": "npm run build:web:workbench passed; existing chunk/import warnings remain",
+    "browserSlices": ["threads", "reactions", "attachment-preview"],
+    "viewports": [
+      [1440, 1000],
+      [390, 844]
+    ],
+    "dpr": 1,
+    "verified": [
+      "Thread readonly open, Human follow lost-result readback, reply exact verification, history/reload, resize/mobile return, read-error draft retention and foreign-root rejection",
+      "Reaction add/remove and lost-response exact replay without duplication",
+      "Markdown preview44px controls/16px type badge, comments, exact verification, selection anchors, anchor jump, close"
+    ],
+    "format": "Changed Loom files and test scripts checked; upstream source inherited formatting retained; git diff --check passed.",
+    "noFullBackendSuite": true,
+    "noPaidCalls": true
+  },
+  "failureResolved": "Focused preview browser check measured14px rather than official16px: shared AttachmentTypeBadge contained important height/min-height overrides. Fixed its native inline composition; retained16px assertion passed.",
+  "deployment": {
+    "service": "com.loom.evo",
+    "backupVerified": true,
+    "databases": 2,
+    "files": 325,
+    "businessTablesUnchanged": 18,
+    "receipt": "/Users/sun/.loom/reviews/2026-10-19-preview-thread-alignment/restart.json",
+    "reviewDirectory": "/Users/sun/.loom/reviews/2026-10-19-preview-thread-alignment",
+    "realThreadVerified": true
+  },
+  "realPageMeasurements": [
+    {
+      "width": 1440,
+      "composerBorder": "0px",
+      "menu": {
+        "width": 32,
+        "height": 32,
+        "bg": "oklab(0.1813 0.00476543 0.00151351 / 0.00830519)"
+      },
+      "escapeClosesOnlyMenu": true,
+      "errors": []
+    },
+    {
+      "width": 390,
+      "composerBorder": "0px",
+      "menu": {
+        "width": 44,
+        "height": 44,
+        "bg": "oklab(0.1813 0.00476543 0.00151351 / 0.0129603)"
+      },
+      "escapeClosesOnlyMenu": true,
+      "errors": []
+    }
+  ],
+  "visualReview": [
+    "Temporary-Core markdown preview open390 and comment-anchor result1440 screenshots inspected; explicitly fixture data.",
+    "Existing real thread390 menu screenshot inspected; desktop/mobile menu Escape leaves thread open, composer border0px."
+  ],
+  "limits": [
+    "Current persistent home has no published attachments; no real-data preview claim. Fixture URL is not the user product URL.",
+    "No every-format or real-iOS/Android acceptance; no audio/video features added.",
+    "Remaining document renderer/comments-body and other message-menu compositions require further audit.",
+    "Independent single-chat entry migration and browser push remain pending.",
+    "Loom authority, unknown writes, sandbox/file permissions and backend scheduling unchanged."
+  ]
+}
