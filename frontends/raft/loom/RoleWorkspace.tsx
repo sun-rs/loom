@@ -80,6 +80,7 @@ export default function RoleWorkspace({
         style={{ "--agent-sidebar-width": `${panel.width}px` } as CSSProperties}
       >
         <Frame
+          hideDesktopHeader
           title="Agent"
           testIdPrefix="agent-sidebar"
           scrollTestId="loom-role-list"

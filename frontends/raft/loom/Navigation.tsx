@@ -3,7 +3,7 @@ import {
   Home,
   Monitor,
   Activity,
-  Brain,
+  BookOpen,
   CheckSquare,
   MessageSquare,
   Search,
@@ -30,7 +30,7 @@ export const destinations = [
   { id: "tasks", label: "任务", icon: CheckSquare },
   { id: "agents", label: "Agent", icon: Users },
   { id: "computers", label: "计算机", icon: Monitor },
-  { id: "memory", label: "记忆", icon: Brain },
+  { id: "memory", label: "记忆", icon: BookOpen },
   { id: "settings", label: "设置", icon: Settings },
 ] as const;
 export type Destination = (typeof destinations)[number]["id"];

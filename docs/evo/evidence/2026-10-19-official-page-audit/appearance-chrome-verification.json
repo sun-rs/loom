@@ -1,0 +1,35 @@
+{
+  "date": "2026-10-19",
+  "scope": [
+    "Official light/dark/system preview cards, selected check and hover",
+    "Desktop Chat/Agent/Computer redundant list headers; Settings already suppressed",
+    "Workspace initial/avatar and frame hover",
+    "BookOpen memory nav icon; icon-free memory headers"
+  ],
+  "rootCause": "Local simplified theme segmented control and static workspace label replaced upstream composition; desktop hideTitle was not propagated into Chat/Role and Computer list headers.",
+  "red": "appearance-chrome browser gate failed before implementation: appearance-theme-light native card missing",
+  "tests": {
+    "node": 5,
+    "frontendTypecheck": "passed",
+    "build": "npm run build:web:workbench",
+    "browser": "LOOM_BROWSER_SLICE=appearance-chrome node scripts/official-web/channel-browser.mjs; 1440x1000 / 390x844 DPR1",
+    "verified": [
+      "three previews and selected check",
+      "radio keyboard change and persisted reload",
+      "native card hover backgroundImage changes",
+      "workspace avatar and hover",
+      "desktop hidden/mobile retained sidebar headers",
+      "memory icon and no horizontal overflow / page errors"
+    ]
+  },
+  "testCorrections": [
+    "Mobile list check uses chat=list; a room route intentionally hides the list.",
+    "Native press-overlay is backgroundImage, not pseudo-element opacity; corrected observation to actual official CSS property."
+  ],
+  "limits": [
+    "Official locked v1.21.22 source comparison; no newly authenticated official screenshot",
+    "No physical mobile or paid CLI test",
+    "No organization switching added"
+  ],
+  "deployment": "pending"
+}

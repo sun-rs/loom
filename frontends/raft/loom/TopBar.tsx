@@ -1,3 +1,4 @@
+import AvatarSlot from "../packages/web/src/components/ui/AvatarSlot.tsx";
 // Structural port of v1.21.22 app-shell-D1-nY-va.js Gbt/Kbt.
 // Native classes and geometry retained; single local workspace replaces Raft accounts.
 import { useEffect, useRef } from "react";
@@ -55,12 +56,18 @@ export default function TopBar({
           {/* Single-workspace adaptation: omit the unsupported organization switch action. */}
           <div
             data-testid="desktop-workspace-trigger"
-            className="flex h-9 min-w-0 shrink items-center px-2.5 text-foreground-on-frame"
+            className="flex h-9 min-w-0 shrink items-center justify-start gap-2 rounded-control px-2.5 text-foreground-on-frame hover:bg-fill-frame-pressed active:bg-fill-frame-pressed"
             title={name}
           >
+            <AvatarSlot
+              context="creator-link"
+              type="server"
+              serverInitial={name.slice(0, 1).toUpperCase() || "L"}
+              className="shrink-0"
+            />
             <span
               data-workspace-name
-              className="min-w-0 max-w-[120px] truncate text-subhead font-bold"
+              className="min-w-0 max-w-[160px] truncate text-subhead font-bold"
             >
               {name}
             </span>

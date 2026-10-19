@@ -13,7 +13,7 @@ import {
   DialogBody,
   DialogClose,
 } from "raft-ui";
-import { Brain, X } from "lucide-react";
+import { X } from "lucide-react";
 import type { RahClient } from "@rah-os/client-sdk";
 import type { MemoryEntry, MemoryEntryDetail, Room } from "@rah-os/protocol";
 import CloseButton from "../packages/web/src/components/ui/CloseButton.tsx";
@@ -217,7 +217,7 @@ export default function MemoryPage({
         }
       >
         <ActivityInboxPanel edge="attached">
-          <PanelHeader title="记忆" icon={<Brain size={18} />} />
+          <PanelHeader title="记忆" />
           <MemoryFilters
             query={query}
             onQuery={(v) => {
@@ -331,7 +331,7 @@ export default function MemoryPage({
         >
           <PanelHeader
             title={detail?.name ?? (selected ? "记忆详情" : "选择记忆")}
-            icon={<Brain size={18} />}
+
             onMobileBack={busy ? undefined : reset}
             mobileBackProps={{ "aria-label": "记忆列表" }}
             actions={

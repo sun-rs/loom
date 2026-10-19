@@ -14,8 +14,6 @@ import {
   AppShellSidebarSlot,
   AppShellMainSlot,
   SidebarRoot,
-  SidebarHeader,
-  SidebarHeaderTitle,
   SidebarItem,
   SidebarItemIcon,
   SidebarItemSubtitle,
@@ -160,9 +158,6 @@ export default function ComputersPage({
         }
       >
         <SidebarRoot className="hidden h-full flex-col md:flex">
-          <SidebarHeader>
-            <SidebarHeaderTitle>计算机</SidebarHeaderTitle>
-          </SidebarHeader>
           <div className="min-h-0 flex-1 overflow-y-auto px-2 py-3">
             {problem}
             {inventory && (

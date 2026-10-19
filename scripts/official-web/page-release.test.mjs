@@ -28,5 +28,7 @@ test("conversation and role tab strips retain official default selected recipe a
 test("single workspace identity uses native subhead typography without a disabled switcher", () => {
   const source = read("loom/TopBar.tsx");
   assert.match(source, /text-subhead font-bold/);
-  assert.doesNotMatch(source, /AvatarSlot|\bdisabled\b/);
+  assert.doesNotMatch(source, /\bdisabled\b/);
+  assert.match(source, /context="creator-link"/);
+  assert.match(source, /hover:bg-fill-frame-pressed/);
 });

@@ -1,3 +1,4 @@
+import { verifyAppearanceChrome } from "./appearance-chrome-browser.mjs";
 import { verifyPush } from "./push-browser.mjs";
 import { verifyReadRecovery } from "./read-recovery-browser.mjs";
 import { verifyMessageReferences } from "./message-reference-browser.mjs";
@@ -390,6 +391,12 @@ try {
   } else if (process.env.LOOM_BROWSER_SLICE === "topbar") {
     console.log(
       JSON.stringify(await verifyTopbar({ browser, origin, channels })),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "appearance-chrome") {
+    console.log(
+      JSON.stringify(
+        await verifyAppearanceChrome({ browser, origin, channels }),
+      ),
     );
   } else if (process.env.LOOM_BROWSER_SLICE === "appearance") {
     console.log(

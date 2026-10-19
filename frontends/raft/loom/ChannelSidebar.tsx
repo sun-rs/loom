@@ -300,6 +300,7 @@ export default function ChannelSidebar({
   );
   return (
     <Frame
+      hideDesktopHeader
       bottomSlot={<LoomLiveActivity />}
       title="聊天"
       testIdPrefix="public-server-channel-sidebar"

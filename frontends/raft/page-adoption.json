@@ -716,5 +716,16 @@
     },
     "reuse": "Native notification card/action JSX extracted without changing recipes; notificationChannel directly imported; immutable-cache worker prefix byte-exact. Permission/subscription and worker push/click flow structurally ported. Loom typed API, endpoint readback and authenticated navigation are local glue. Upstream server mute omitted.",
     "evidence": "../../docs/evo/evidence/2026-10-19-official-page-audit/push-adoption-verification.json"
+  },
+  "appearanceChrome20261019": {
+    "source": "https://app.raft.build/assets/app-shell-D1-nY-va.js",
+    "revision": "af3d6ef4a22f0f05f5f9db9424285755d67e9726",
+    "release": "v1.21.22",
+    "composition": "Yut/Xut/v8 theme radio/card/preview; Gbt + Bbt/Obt/Wbt + NU creator-link avatar; AppShell Zbt -> sbt hideTitle",
+    "sourceSha256": "cf516dfe8f479b35550b239403d30a9d021f4b6cc4d9f3ae77c6f380a1e22efd",
+    "reuse": "Structural port of theme picker preserving preview geometry, radio semantics, checked border/checkmark, keyboard focus and hover overlay; original native raft-ui primitives. Existing appearance store retained. Top bar uses official AvatarSlot and native frame hover. Desktop list titles omitted under top bar; mobile page headers retained.",
+    "localDifferences": "Single-workspace label remains non-actionable: no fake organization switch menu. Memory uses owner-requested BookOpen nav icon and icon-free headings (Loom extension).",
+    "license": "Existing FSL-1.1-ALv2 notices retained; owner-authorized source reuse",
+    "evidence": "../../docs/evo/evidence/2026-10-19-official-page-audit/appearance-chrome-verification.json"
   }
 }
