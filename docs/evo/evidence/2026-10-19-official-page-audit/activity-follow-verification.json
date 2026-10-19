@@ -56,6 +56,48 @@
     "System notices intentionally count toward sidebar unread, not Activity cards; official server exclusion not established.",
     "Physical mobile long-press and logged-in upstream pixel parity not verified."
   ],
-  "deployment": "pending safe restart and fresh real-page verification",
+  "deployment": {
+    "sourceCommit": "3f03240bb1c814b8387feb3e59ddebe83d494548",
+    "safeRestart": true,
+    "databasesBackedUp": 2,
+    "filesBackedUp": 325,
+    "businessTablesUnchanged": 18,
+    "realPage": [
+      {
+        "width": 1440,
+        "height": 844,
+        "deviceScaleFactor": 1,
+        "realThread": true,
+        "authoritativeFollowState": true,
+        "menuBounds": {
+          "x": 748,
+          "y": 574,
+          "width": 240,
+          "height": 120
+        },
+        "escapeDismiss": true,
+        "noMutations": true,
+        "pageErrors": []
+      },
+      {
+        "width": 390,
+        "height": 844,
+        "deviceScaleFactor": 1,
+        "realThread": true,
+        "authoritativeFollowState": true,
+        "menuBounds": {
+          "x": 142,
+          "y": 518,
+          "width": 240,
+          "height": 120
+        },
+        "escapeDismiss": true,
+        "noMutations": true,
+        "pageErrors": []
+      }
+    ],
+    "privateEvidence": "/Users/sun/.loom/reviews/2026-10-19-activity-follow/",
+    "limits": "Real-page check opens existing thread menus without mutations. Follow writes verified only against isolated Kernel, not changed on user data. Initial real-page probe mistakenly selected summary response; corrected to request limit20 before assessment."
+  },
   "paidProviders": false
 }
