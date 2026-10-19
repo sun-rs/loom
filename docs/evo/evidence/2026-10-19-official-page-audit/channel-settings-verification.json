@@ -1,0 +1,59 @@
+{
+  "date": "2026-10-19",
+  "codeCommit": "515ac6e76e53c11300b077e72ed65da4afa89ccf",
+  "source": "Locked Raft v1.21.22 Rxt/fU/dk/B7; structural port plus existing Loom SDK bindings",
+  "implemented": [
+    "Native channel name/description form and footer with captured room basis",
+    "Dirty dismissal/route protection; conflict retains draft, explicit reread replaces it",
+    "Unknown result exact replay without new idempotency key",
+    "Versioned activity mute shares sidebar preferences and refresh hint",
+    "Existing archive/restore and confirmation, active-work fences retained; #all cannot rename/archive",
+    "Official B7 small action size"
+  ],
+  "checks": {
+    "unit": "2 focused metadata/source tests passed after intended red failures",
+    "typecheck": "npm run typecheck:loom --prefix frontends/raft passed",
+    "build": "npm run build:web:workbench passed at committed source; existing chunk-size warning remains",
+    "fixtureBrowser": [
+      "channel-settings:1440x1000/390x844 DPR1 metadata save, exact unknown replay, stale basis rejection/draft preservation, close/discard confirmation, durable mute and archive/restore",
+      "channel-controls:1440x1000/390x844 DPR1 stop/resume, unknown replay, settings revision conflicts"
+    ],
+    "live": [
+      {
+        "width": 1440,
+        "realService": true,
+        "fixture": false,
+        "metadataLoaded": true,
+        "notificationAndArchiveVisible": true,
+        "footerInViewport": true,
+        "noWrites": true,
+        "pageErrors": []
+      },
+      {
+        "width": 390,
+        "realService": true,
+        "fixture": false,
+        "metadataLoaded": true,
+        "notificationAndArchiveVisible": true,
+        "footerInViewport": true,
+        "noWrites": true,
+        "pageErrors": []
+      }
+    ],
+    "visual": "Actual desktop/mobile form and footer screenshots inspected; no live metadata/mute/archive writes",
+    "format": "Changed adapter/tests/manifests checked, original OverflowSheet changed only one size; git diff --check passed"
+  },
+  "deployment": {
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-channel-settings-18ad703d-b8c7-4802-b734-fca119f7bf27",
+    "databases": 2,
+    "files": 325,
+    "businessTablesUnchanged": 18,
+    "verified": true
+  },
+  "limits": [
+    "Joint/guest/share/delete and expanded upstream notification policies omitted",
+    "Activity mute is not Web Push configuration and does not block agent delivery",
+    "Mobile Chromium emulation is not physical iOS/Android keyboard acceptance",
+    "No backend changes, no paid-provider calls"
+  ]
+}
