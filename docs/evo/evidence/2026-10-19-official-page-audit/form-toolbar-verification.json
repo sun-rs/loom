@@ -1,0 +1,209 @@
+{
+  "date": "2026-10-19",
+  "codeCommit": "21ec9df4af0864b547042852cbd289f3283be2d8",
+  "source": {
+    "release": "v1.21.22",
+    "revision": "af3d6ef4a22f0f05f5f9db9424285755d67e9726",
+    "lock": "release-lock.json",
+    "adoption": "frontends/raft/page-adoption.json#forms-role-list-message-toolbar",
+    "method": "Structural ports of verified production composition with direct raft-ui recipe reuse. Not whole latest TSX or pixel-perfect full-site acceptance."
+  },
+  "changes": [
+    "FormField: delegate label size, case and spacing to native FieldLabel; remove duplicate margins on label/help/error. Preserve public caller compatibility and validation.",
+    "StableField: native label/accessory/message typography; preserve exactly-one-control adoption, explicit message ID and invalid authority.",
+    "Role sidebar: native section/disclosure/count/control and row content/title. Static role grouping retained, no unimplemented double-click global DM.",
+    "Message action toolbar:18px icons, recipe-owned offset and selected color; explicit save/reaction permissions and coarse-pointer behavior retained. Update guarded source adapter together."
+  ],
+  "checkedWithoutChange": [
+    "Computer detected-runtime composition matches current soft information/muted badges and label wrapper; not complete Computer parity or runtime rescan acceptance."
+  ],
+  "automated": {
+    "tests": 7,
+    "testFiles": [
+      "scripts/official-web/form-role-release.test.mjs",
+      "scripts/official-web/reactions.test.ts"
+    ],
+    "redBeforeGreen": true,
+    "types": "npm run typecheck:loom --prefix frontends/raft passed",
+    "build": "npm run build:web:workbench passed; inherited bundle/import warnings remain",
+    "browserSlices": ["management", "reactions", "saved", "channel-settings"],
+    "viewports": [
+      [1440, 1000],
+      [390, 844]
+    ],
+    "dpr": 1,
+    "checksInclude": [
+      "Role revision/instance lifecycle and drafts",
+      "manual section/row drag, sorting, context menus",
+      "native Select Escape/focus return",
+      "reaction and saved-message exact verification after lost response",
+      "channel metadata unknown writes, conflict draft and archive/restore"
+    ],
+    "format": "Changed Loom files/scripts checked with Prettier; upstream files retain inherited formatting; git diff --check passed.",
+    "noPaidCalls": true,
+    "noFullBackendSuite": true
+  },
+  "testRepairs": [
+    "Previous batch added section counts, so exact button accessible-name matching no longer identifies headings. Tests now select data-section-handle plus exact label child; all drag/menu assertions retained.",
+    "Mobile reaction test used a fixed coordinate that opened the message thread. Failure screenshot retained. Adopted existing saved-test hit validation using elementFromPoint, excluding selectable text/buttons/avatars; no product gesture changed to satisfy test. Desktop and mobile add/remove/exact replay then passed."
+  ],
+  "deployment": {
+    "service": "com.loom.evo",
+    "backupVerified": true,
+    "databases": 2,
+    "files": 325,
+    "businessTablesUnchanged": 18,
+    "receipt": "/Users/sun/.loom/reviews/2026-10-19-form-toolbar-alignment/restart.json",
+    "realPages": true,
+    "reviewDirectory": "/Users/sun/.loom/reviews/2026-10-19-form-toolbar-alignment"
+  },
+  "realPageBefore": [
+    {
+      "width": 1440,
+      "labels": [
+        {
+          "text": "名称",
+          "font": "14px",
+          "transform": "uppercase",
+          "margin": "4px"
+        },
+        {
+          "text": "角色 Prompt",
+          "font": "14px",
+          "transform": "uppercase",
+          "margin": "4px"
+        },
+        {
+          "text": "CLI",
+          "font": "14px",
+          "transform": "uppercase",
+          "margin": "4px"
+        },
+        {
+          "text": "模型",
+          "font": "14px",
+          "transform": "uppercase",
+          "margin": "4px"
+        },
+        {
+          "text": "推理强度",
+          "font": "14px",
+          "transform": "uppercase",
+          "margin": "4px"
+        }
+      ],
+      "toolbar": {
+        "icon": "13",
+        "width": 32,
+        "height": 32
+      },
+      "errors": []
+    },
+    {
+      "width": 390,
+      "labels": [
+        {
+          "text": "名称",
+          "font": "14px",
+          "transform": "uppercase",
+          "margin": "4px"
+        },
+        {
+          "text": "角色 Prompt",
+          "font": "14px",
+          "transform": "uppercase",
+          "margin": "4px"
+        }
+      ],
+      "errors": []
+    }
+  ],
+  "realPageAfter": [
+    {
+      "width": 1440,
+      "labels": [
+        {
+          "text": "名称",
+          "font": "13px",
+          "transform": "none",
+          "margin": "0px"
+        },
+        {
+          "text": "角色 Prompt",
+          "font": "13px",
+          "transform": "none",
+          "margin": "0px"
+        },
+        {
+          "text": "CLI",
+          "font": "13px",
+          "transform": "none",
+          "margin": "0px"
+        },
+        {
+          "text": "模型",
+          "font": "13px",
+          "transform": "none",
+          "margin": "0px"
+        },
+        {
+          "text": "推理强度",
+          "font": "13px",
+          "transform": "none",
+          "margin": "0px"
+        }
+      ],
+      "toolbar": {
+        "icon": "18",
+        "width": 32,
+        "height": 32
+      },
+      "errors": []
+    },
+    {
+      "width": 390,
+      "labels": [
+        {
+          "text": "名称",
+          "font": "13px",
+          "transform": "none",
+          "margin": "0px"
+        },
+        {
+          "text": "角色 Prompt",
+          "font": "13px",
+          "transform": "none",
+          "margin": "0px"
+        },
+        {
+          "text": "CLI",
+          "font": "13px",
+          "transform": "none",
+          "margin": "0px"
+        },
+        {
+          "text": "模型",
+          "font": "13px",
+          "transform": "none",
+          "margin": "0px"
+        },
+        {
+          "text": "推理强度",
+          "font": "13px",
+          "transform": "none",
+          "margin": "0px"
+        }
+      ],
+      "errors": []
+    }
+  ],
+  "visualReview": [
+    "Real mobile create-Role form and desktop open reaction picker screenshots inspected. Form label13px/no uppercase/no extra bottom margin; message icons18px and button32px. Creation dialog opened/closed without mutation; real reaction popup opened/Escape without posting reaction."
+  ],
+  "limits": [
+    "Not whole-site or real-iOS/Android acceptance.",
+    "Independent single-chat entry migration and browser push remain pending.",
+    "Role configuration is Loom-specific; shared official form rules do not make it a copied official Agent settings page.",
+    "Remaining message popup/quick-row styling and attachment/thread compositions need continued source audit. No claim this toolbar patch upgrades every message menu."
+  ]
+}
