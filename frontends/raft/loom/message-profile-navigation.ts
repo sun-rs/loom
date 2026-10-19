@@ -1,15 +1,19 @@
-// Narrow structural adaptation of raft-source a98ae003 MessageItem. The disk
-// snapshot stays frozen; this explicit build-time change is NOT byte-exact reuse.
-// Only a controlled agent-profile callback may bypass readonly navigation.
+// Explicit Loom callback bridge over official readonly projections. No upstream
+// store navigation is enabled; unknown/absent callbacks retain readonly guards.
 export function adaptMessageProfileNavigation(code: string) {
-  const original =
-    "testId={senderAvatarTestId}\n          onNavigateAgent={readOnlyProjection ? ignoreReadOnlyProjectionNavigation : handleNavigateAgent}";
-  if (code.split(original).length !== 2)
-    throw Error(
-      "Official MessageItem profile boundary changed; review the adaptation",
+  for (const [kind, target] of [
+    ["Agent", "agent"],
+    ["Human", "human"],
+  ] as const) {
+    const original = `onNavigate${kind}={readOnlyProjection ? ignoreReadOnlyProjectionNavigation : handleNavigate${kind}}`;
+    if (code.split(original).length !== 4)
+      throw Error(
+        "Official MessageItem profile boundary changed; review the adaptation",
+      );
+    code = code.replaceAll(
+      original,
+      `onNavigate${kind}={onOpenProfile ? (id) => onOpenProfile("${target}", id) : readOnlyProjection ? ignoreReadOnlyProjectionNavigation : handleNavigate${kind}}`,
     );
-  return code.replace(
-    original,
-    'testId={senderAvatarTestId}\n          onNavigateAgent={onOpenProfile ? (id) => onOpenProfile("agent", id) : readOnlyProjection ? ignoreReadOnlyProjectionNavigation : handleNavigateAgent}',
-  );
+  }
+  return code;
 }

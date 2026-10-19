@@ -394,6 +394,26 @@
         "scripts/official-web/topbar-browser.mjs",
         "scripts/official-web/search-entities.test.ts"
       ]
+    },
+    "search-settings-composition-repair": {
+      "source": "Raft v1.21.22 af3d6ef4a22f0f05f5f9db9424285755d67e9726; production app-shell STt/CTt at181439–181650, Qe at182011 and filter visibility at183020; bqe/xqe/Sqe at80388–80396; ReleaseNotesPanel-Bzui0MZO.js; same authorized provenance/license as adoption.json",
+      "reuse": "Structural port of current production composition into retained source; not byte-exact whole-page copying",
+      "adopted": [
+        "24px compact search identities and native sibling dividers; outline entity labels; message avatar gutter; compact thread metadata",
+        "Empty search overlay hides filters; query/filter results retain them",
+        "Current 14/16/18px body preference values; font family remains native Space Grotesk plus platform Chinese fallback",
+        "Native release-note version text, category typography and neutral card; appearance preview surface",
+        "Remove desktop settings rail title and Computer entry per owner; mobile title retained"
+      ],
+      "loomGlue": [
+        "Remove intermediate result wrappers that broke native sibling selectors; expose root refs and stable result identity directly",
+        "Authorized Room member map and existing channel-directory projection feed native mentions/references; navigation uses controlled callbacks and route intent guard"
+      ],
+      "limits": [
+        "Appearance and notification main composition already matches locked source; browser push remains a capability-only view, no subscription/test actions",
+        "Usage is Loom-owned CLI reporting, default last24h; two real instance rows reflect actual data, not a render limit",
+        "Independent single-instance chat entrance and internal-only private-box navigation are owner-approved follow-up, not implemented in this slice"
+      ]
     }
   },
   "pending": [

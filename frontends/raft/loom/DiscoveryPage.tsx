@@ -161,6 +161,12 @@ export default function DiscoveryPage({
     () => nativeSearchFilters(params, query),
     [filterKey, query],
   );
+  const hasSearchFilters = Boolean(
+    params.get("senderId") ||
+    params.get("channelId") ||
+    params.get("scopes") ||
+    (params.get("range") && params.get("range") !== "any"),
+  );
   const [tick, setTick] = useState(0);
   const update = (key: string, value: string) =>
     setParams((previous) => {
@@ -246,7 +252,8 @@ export default function DiscoveryPage({
         )}
         {notice}
         <Shell edge="attached" className="min-h-0 flex-1 border-l-0">
-          {mode === "search" ? (
+          {mode === "search" &&
+          !(overlay && !query.trim() && !hasSearchFilters) ? (
             <SearchFilters
               overlay={overlay}
               params={params}

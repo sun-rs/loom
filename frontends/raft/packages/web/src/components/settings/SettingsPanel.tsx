@@ -6633,7 +6633,7 @@ function AppearanceSection() {
 
         <div className="space-y-2">
           <SectionEyebrow as="div">{formatMessage({ id: "settings.appearance.preview" })}</SectionEyebrow>
-          <div className="pointer-events-none -mx-2" aria-label={formatMessage({ id: "settings.appearance.fontSizePreviewAria" })}>
+          <div className="pointer-events-none -mx-2 rounded-control bg-layer-panel" aria-label={formatMessage({ id: "settings.appearance.fontSizePreviewAria" })}>
             <MessageItem
               message={previewMessage}
               mentionMap={APPEARANCE_PREVIEW_MENTION_MAP}

@@ -1,3 +1,4 @@
+import { verifyMessageReferences } from "./message-reference-browser.mjs";
 import { verifyActivityList } from "./activity-list-browser.mjs";
 import { verifyPagePolish } from "./page-polish-browser.mjs";
 import { verifyComposerSuggestions } from "./composer-suggestions-browser.mjs";
@@ -181,7 +182,21 @@ try {
   browser = await (
     process.env.LOOM_BROWSER_ENGINE === "webkit" ? webkit : chromium
   ).launch({ headless: true });
-  if (process.env.LOOM_BROWSER_SLICE === "activity-list") {
+  if (process.env.LOOM_BROWSER_SLICE === "message-references") {
+    console.log(
+      JSON.stringify(
+        await verifyMessageReferences({
+          browser,
+          origin,
+          client,
+          workspace,
+          channels,
+          instanceNames,
+          head,
+        }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "activity-list") {
     console.log(
       JSON.stringify(await verifyActivityList({ browser, origin, channels })),
     );

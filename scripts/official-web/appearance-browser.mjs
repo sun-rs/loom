@@ -59,7 +59,7 @@ export async function verifyAppearance({ browser, origin, channels }) {
       );
       assert.equal(
         await preview.evaluate((el) => getComputedStyle(el).fontSize),
-        "16px",
+        "18px",
       );
       await page.goto(origin + "/?room=" + channels[0].roomId);
       const body = page
@@ -68,18 +68,18 @@ export async function verifyAppearance({ browser, origin, channels }) {
       await body.waitFor();
       assert.equal(
         await body.evaluate((el) => getComputedStyle(el).fontSize),
-        "16px",
+        "18px",
       );
       await page.goto(origin + "/?view=settings&settings=appearance");
       await page.getByTestId("message-font-size-sm").click();
       assert.equal(
         await preview.evaluate((el) => getComputedStyle(el).fontSize),
-        "12px",
+        "14px",
       );
       await page.reload();
       assert.equal(
         await preview.evaluate((el) => getComputedStyle(el).fontSize),
-        "12px",
+        "14px",
       );
       assert.equal(
         await page.evaluate(

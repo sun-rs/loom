@@ -56,13 +56,13 @@ export default function SearchMessageGroups({
             selected={groupHasSelected}
           >
             <SearchThreadResultHeader>
-              <div className="mb-1 flex flex-wrap items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-foreground-muted ">
+              <div className="mb-0.5 flex min-w-0 flex-wrap items-center gap-1.5">
                 <Badge appearance="outline">
-                  <ThreadIcon width={11} height={11} />
+                  <ThreadIcon width={12} height={12} />
                   {formatMessage({ id: "search.threadBadge" })}
                 </Badge>
                 <SearchThreadResultMeta>{sourceLabel}</SearchThreadResultMeta>
-                <span>
+                <span className="font-mono text-mono-meta text-foreground-hint">
                   {formatMessage(
                     { id: "search.hitsCount" },
                     { count: group.hitCount },

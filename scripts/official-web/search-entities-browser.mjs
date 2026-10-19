@@ -95,6 +95,9 @@ export async function verifySearchEntities({
         );
       }
       if (width === 1440) {
+        await page.waitForFunction(
+          () => document.querySelectorAll("[data-entity-id]").length >= 2,
+        );
         const candidates = await page
           .locator("[data-entity-id]")
           .evaluateAll((nodes) =>

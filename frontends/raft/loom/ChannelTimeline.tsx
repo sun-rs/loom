@@ -1,5 +1,10 @@
+import { useComposerChannels } from "./ComposerDirectory.tsx";
+import { useIntentRoute, hasRouteBoundIntent } from "./useIntentRoute.ts";
 import { MessageProfileMembers } from "./MessageProfile.tsx";
-import { projectMentionMembers } from "./member-roster.ts";
+import {
+  projectMentionMembers,
+  projectMessageMentions,
+} from "./member-roster.ts";
 import type { Principal, Thread } from "@rah-os/protocol";
 import type { Agent } from "../packages/web/src/store/agentStore.ts";
 import type { ServerMember } from "../packages/web/src/store/serverStore.ts";
@@ -19,7 +24,6 @@ import { buildSystemMessageRenderStates } from "../packages/web/src/components/m
 import ThreadPanelSystemMessageGroupDisclosure from "../packages/web/src/components/message/ThreadPanelSystemMessageGroupDisclosure.tsx";
 import { useTimeFormatter } from "../packages/web/src/hooks/useTimeFormatter.ts";
 import type { Message } from "../packages/web/src/store/messageStore.ts";
-const mentionMap = new Map();
 
 /** ChatPanel's native system-row/disclosure composition; Loom owns only the read source. */
 export default function ChannelTimeline({
@@ -51,6 +55,9 @@ export default function ChannelTimeline({
   onOpenThread?: (rootMessageId: string, focusedMessageId?: string) => void;
   onOpenProfile?: (type: "agent" | "human", id: string) => void;
 }) {
+  const channels = useComposerChannels();
+  const [, setParams] = useIntentRoute();
+  const mentionMap = useMemo(() => projectMessageMentions(members), [members]);
   const roster = useMemo(() => projectMentionMembers(members), [members]);
   const { options } = useTimeFormatter();
   const { formatMessage } = useIntl();
@@ -82,7 +89,11 @@ export default function ChannelTimeline({
       followedBy={followedByFor(messages, index, grouping)}
       followsSystem={followsSystemFor(messages, index)}
       mentionMap={mentionMap}
-      channels={[]}
+      channels={channels}
+      onReadOnlyNavigateChannel={(target) => {
+        if (hasRouteBoundIntent()) return;
+        setParams(new URLSearchParams({ room: target.id }));
+      }}
       readOnlyProjection
       onOpenProfile={onOpenProfile}
       // Bounded identity-only previews; never publish these into official runtime stores.

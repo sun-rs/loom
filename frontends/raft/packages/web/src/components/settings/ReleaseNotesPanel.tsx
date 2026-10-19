@@ -239,19 +239,19 @@ export default function ReleaseNotesPanel() {
                 <Card
                   key={release.releaseId}
                   data-testid="release-entry"
-                  className={`p-4 ${isCurrentRelease ? "bg-primary-soft " : ""}`}
+                  className="p-4"
                 >
                   <div className="mb-4 flex flex-wrap items-center gap-2">
-                    <Badge appearance="solid" variant="primary">
+                    <span className="font-mono text-mono-meta text-foreground">
                       {release.version ? `${release.version} (${release.date})` : release.date}
-                    </Badge>
+                    </span>
                     {isCurrentRelease ? (
-                      <Badge appearance="solid" variant="success">
+                      <Badge appearance="solid" variant="primary">
                         {formatMessage({ id: "settings.releaseNotes.current" })}
                       </Badge>
                     ) : null}
                     {release.state === "retracted" ? (
-                      <Badge appearance="solid" variant="default">
+                      <Badge appearance="soft" variant="muted">
                         {formatMessage({ id: "settings.releaseNotes.retracted" })}
                       </Badge>
                     ) : null}
@@ -267,9 +267,9 @@ export default function ReleaseNotesPanel() {
                           <Badge appearance="soft" variant={config.badgeVariant}>
                             {formatMessage({ id: config.labelId })}
                           </Badge>
-                          <ul className="mt-1.5 list-disc space-y-1.5 pl-5 marker:text-foreground-muted ">
+                          <ul className="mt-2 list-disc space-y-1.5 pl-5 marker:text-foreground-hint">
                             {entries.map((entry) => (
-                              <li key={entry.entryId} className={`text-sm ${entry.emphasis ? "font-bold text-foreground-strong " : "text-foreground-muted "}`}>
+                              <li key={entry.entryId} className={`text-subhead text-foreground ${entry.emphasis ? "font-semibold" : ""}`}>
                                 {entry.text}
                               </li>
                             ))}

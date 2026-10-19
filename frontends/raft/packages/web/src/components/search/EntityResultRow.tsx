@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import type { MouseEvent as ReactMouseEvent } from "react";
+import type { MouseEvent as ReactMouseEvent, Ref } from "react";
 import { useIntl } from "react-intl";
 import { Monitor } from "lucide-react";
 import {
@@ -11,6 +11,7 @@ import {
   SearchEntityResultHeader,
   SearchEntityResultIcon,
   SearchEntityResultLeading,
+  SearchEntityResultTitle,
 } from "raft-ui";
 import AgentActivityDot from "../agent/AgentActivityDot";
 import AvatarSlot from "../ui/AvatarSlot";
@@ -30,6 +31,7 @@ import type { SearchSenderMember } from "./MessageSearchPage";
  */
 export function EntityResultRow({
   result,
+  rootRef,
   returnHint,
   selected,
   agentAvatarUrl,
@@ -38,6 +40,7 @@ export function EntityResultRow({
   onResultClick,
 }: {
   result: SearchEntityRecord;
+  rootRef?: Ref<HTMLDivElement>;
   returnHint: boolean;
   selected: boolean;
   agentAvatarUrl: string | null;
@@ -64,10 +67,12 @@ export function EntityResultRow({
   // corners around rui's rounded selection ring (task #694).
   return (
     <div
+      ref={rootRef}
+      data-entity-id={result.key}
       data-testid={channelPinnedRef ? `search-channel-result-${channelPinnedRef.id}` : undefined}
       data-active={selected ? "true" : undefined}
       onContextMenu={channelPinnedRef && !result.archivedAt ? handleContextMenu : undefined}
-      className="flex w-full"
+      className="relative flex w-full not-first:before:pointer-events-none not-first:before:absolute not-first:before:top-0 not-first:before:right-0 not-first:before:left-[55px] not-first:before:z-[1] not-first:before:border-t not-first:before:border-line-muted"
     >
       <SearchEntityResult
         type="button"
@@ -89,31 +94,31 @@ export function EntityResultRow({
           ) : result.type === "agentDm" ? (
             result.agentId ? (
               <AvatarSlot
-                context="surface-list"
+                context="compact-row"
                 type="agent"
                 agentAvatarUrl={agentAvatarUrl}
                 badge={<AgentActivityDot agentId={result.agentId} />}
               />
             ) : (
-              <AvatarSlot context="surface-list" type="agent" agentAvatarUrl={null} />
+              <AvatarSlot context="compact-row" type="agent" agentAvatarUrl={null} />
             )
           ) : result.userId ? (
             <AvatarSlot
-              context="surface-list"
+              context="compact-row"
               type="human"
               humanAvatarUrl={humanMember?.avatarUrl}
               gravatarHash={humanMember?.gravatarHash}
             />
           ) : (
-            <AvatarSlot context="surface-list" type="human" humanPlaceholder />
+            <AvatarSlot context="compact-row" type="human" humanPlaceholder />
           )}
         </SearchEntityResultLeading>
         <SearchEntityResultContent>
           <SearchEntityResultHeader>
-            <span className={`truncate text-sm font-bold ${isArchivedChannelResult ? ARCHIVED_CHANNEL_TEXT_CLASS : "text-foreground-strong"}`}>
+            <SearchEntityResultTitle className="truncate" muted={isArchivedChannelResult}>
               {result.title}
-            </span>
-            <Badge appearance="soft" variant="muted">
+            </SearchEntityResultTitle>
+            <Badge appearance="outline">
               {result.type === "channel" ? formatMessage({ id: "search.channel" }) : result.type === "computer" ? formatMessage({ id: "search.badgeComputer" }) : result.type === "agentDm" ? formatMessage({ id: "search.badgeAgent" }) : formatMessage({ id: "search.badgeHuman" })}
             </Badge>
             {result.archivedAt && (

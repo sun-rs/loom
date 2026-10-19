@@ -34,3 +34,19 @@ export function readMemberRoster(
   if (!reader) throw new Error("此功能尚未接入 Loom，或当前频道成员不可用");
   return projectMentionMembers(reader());
 }
+
+/** Canonical current Room members only; a mention never grants access. */
+export function projectMessageMentions(members: readonly Principal[]) {
+  return new Map(
+    members
+      .filter((p) => p.kind === "agent" || p.kind === "human")
+      .map((p) => [
+        p.handle,
+        {
+          id: p.principalId,
+          type: p.kind === "agent" ? ("agent" as const) : ("user" as const),
+          displayName: p.displayName ?? p.handle,
+        },
+      ]),
+  );
+}

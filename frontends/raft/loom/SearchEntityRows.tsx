@@ -34,8 +34,9 @@ export function SearchEntityRow({
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);
   return (
-    <div ref={row} data-entity-id={entity.key}>
+    <>
       <EntityResultRow
+        rootRef={row}
         result={
           entity.type === "agentDm" ? { ...entity, agentId: null } : entity
         }
@@ -99,7 +100,7 @@ export function SearchEntityRow({
           </>,
           document.body,
         )}
-    </div>
+    </>
   );
 }
 export default function SearchEntityRows({

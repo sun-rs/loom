@@ -11,7 +11,6 @@ import { AppShellMainSlot, AppShellSidebarSlot, Panel } from "raft-ui";
 import {
   ChartNoAxesCombined,
   User,
-  Monitor,
   Type,
   Bell,
   Building2,
@@ -39,7 +38,6 @@ const categories = [
   {
     label: "工作空间",
     items: [
-      { id: "computers", label: "计算机", icon: Monitor },
       { id: "server", label: "运行设置", icon: Building2 },
       { id: "administration", label: "管理", icon: Shield },
       { id: "usage", label: "用量", icon: ChartNoAxesCombined },
@@ -110,6 +108,7 @@ export default function SettingsPage({
       >
         <ChatSidebarFrame
           title="设置"
+          hideDesktopHeader
           testIdPrefix="settings-sidebar"
           scrollTestId="settings-sidebar-scroll"
         >

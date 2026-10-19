@@ -22,6 +22,7 @@ import type { MessageSearchResult, SearchSenderMember } from "./MessageSearchPag
 /** One message hit, top-level or nested inside a thread group. */
 export function MessageHitRow({
   result,
+  resultKey,
   nested,
   selected,
   sourceLabel,
@@ -32,6 +33,7 @@ export function MessageHitRow({
   onResultClick,
 }: {
   result: MessageSearchResult;
+  resultKey?: string;
   nested: boolean;
   selected: boolean;
   sourceLabel: string;
@@ -52,10 +54,11 @@ export function MessageHitRow({
 
   return (
     <Result
+      data-result-id={resultKey}
       type="button"
       onClick={handleClick}
       selected={selected}
-      className={nested ? "border-t-2" : undefined}
+      className="pl-[55px] not-first:before:left-[55px]"
     >
     <SearchMessageResultHeader>
       <SearchMessageResultMeta>{sourceLabel}</SearchMessageResultMeta>
@@ -78,13 +81,15 @@ export function MessageHitRow({
         </Badge>
       )}
       <SearchMessageResultSender>
+        <span className="absolute top-3 left-4 flex">
         {result.senderType === "agent" ? (
-          <AvatarSlot context="preview-mini" type="agent" agentAvatarUrl={agentAvatarUrl} />
+          <AvatarSlot context="compact-row" type="agent" agentAvatarUrl={agentAvatarUrl} />
         ) : result.senderType === "external_projection" ? (
-          <AvatarSlot context="preview-mini" type="app" appAvatarUrl={result.senderAvatarUrl} appInitials={result.senderName} />
+          <AvatarSlot context="compact-row" type="app" appAvatarUrl={result.senderAvatarUrl} appInitials={result.senderName} />
         ) : (
-          <AvatarSlot context="preview-mini" type="human" humanAvatarUrl={senderMember?.avatarUrl} gravatarHash={senderMember?.gravatarHash} />
+          <AvatarSlot context="compact-row" type="human" humanAvatarUrl={senderMember?.avatarUrl} gravatarHash={senderMember?.gravatarHash} />
         )}
+        </span>
         <span>{result.senderName}</span>
       </SearchMessageResultSender>
       <SearchMessageResultTimestamp>{(() => {

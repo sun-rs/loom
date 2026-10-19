@@ -15,15 +15,15 @@ export const MESSAGE_BODY_FONT_SIZE_OPTIONS: Array<{
   sizeLabel: string;
   className: string;
 }> = [
-  { value: "sm", sizeLabel: "12px", className: "text-xs" },
-  { value: "md", sizeLabel: "14px", className: "text-sm" },
-  { value: "lg", sizeLabel: "16px", className: "text-base" },
+  { value: "sm", sizeLabel: "14px", className: "text-sm" },
+  { value: "md", sizeLabel: "16px", className: "text-base" },
+  { value: "lg", sizeLabel: "18px", className: "text-lg" },
 ];
 
 const MESSAGE_BODY_FONT_SIZE_CLASSES: Record<MessageBodyFontSize, string> = {
-  sm: "text-xs",
-  md: "text-sm",
-  lg: "text-base",
+  sm: "text-sm",
+  md: "text-base",
+  lg: "text-lg",
 };
 
 /**
@@ -33,9 +33,9 @@ const MESSAGE_BODY_FONT_SIZE_CLASSES: Record<MessageBodyFontSize, string> = {
  * class whose cascade position can be changed by a theme recipe.
  */
 const MESSAGE_BODY_FONT_SIZE_VALUES: Record<MessageBodyFontSize, string> = {
-  sm: "0.75rem",
-  md: "0.875rem",
-  lg: "1rem",
+  sm: "0.875rem",
+  md: "1rem",
+  lg: "1.125rem",
 };
 
 function isMessageBodyFontSize(value: unknown): value is MessageBodyFontSize {
