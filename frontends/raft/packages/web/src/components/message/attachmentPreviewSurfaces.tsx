@@ -470,8 +470,8 @@ export function CsvPreviewPane({ preview, truncated }: { preview: Extract<Docume
   const { formatMessage } = useIntl();
   return (
     // No nested vertical scroller (browser-find layout) — see TextPreviewPane.
-    <div className="w-full bg-layer-canvas-muted  p-4 font-mono text-[11px] text-foreground-strong ">
-      <div className="mb-2 flex items-center justify-between gap-3 text-xs font-bold text-foreground-muted ">
+    <div className="w-full bg-layer-canvas-muted  p-4 font-mono text-mono-meta text-foreground">
+      <div className="mb-2 flex items-center justify-between gap-3 text-foreground-hint">
         <span>{formatMessage({ id: "message.messageItem.csvPreview" })}</span>
         <span>{truncated ? formatMessage({ id: "message.messageItem.csvRowsFirst" }, { count: preview.rows.length }) : formatMessage({ id: "message.messageItem.csvRows" }, { count: preview.rowCount })}{formatMessage({ id: "message.messageItem.csvColumns" }, { count: preview.columnCount })}</span>
       </div>
@@ -480,9 +480,9 @@ export function CsvPreviewPane({ preview, truncated }: { preview: Extract<Docume
           row. Known trade-off: the sticky thead pins to this wrapper (a
           scroll container), not the viewport — wide-table panning beats a
           pinned header here. */}
-      <div className="overflow-x-auto border  border-line-muted  bg-layer-panel  shadow-raft-sm ">
-        <table className="min-w-full border-collapse bg-layer-panel ">
-          <thead className="sticky top-0 z-10 bg-layer-canvas-muted ">
+      <Card className="overflow-x-auto">
+        <table className="min-w-full border-collapse bg-layer-card">
+          <thead className="sticky top-0 z-10 bg-fill-muted">
             <tr>
               {preview.headers.map((header, index) => (
                 <th key={`${header}-${index}`} className="max-w-[220px] border border-line-muted  px-2 py-1 text-left font-bold">
@@ -493,7 +493,7 @@ export function CsvPreviewPane({ preview, truncated }: { preview: Extract<Docume
           </thead>
           <tbody>
             {preview.rows.map((row, rowIndex) => (
-              <tr key={rowIndex} data-anchor-row={rowIndex + 1} className="odd:bg-black/[0.03]">
+              <tr key={rowIndex} data-anchor-row={rowIndex + 1} className="odd:bg-fill-muted/50">
                 {preview.headers.map((_, columnIndex) => {
                   const value = row[columnIndex] ?? "";
                   return (
@@ -506,8 +506,8 @@ export function CsvPreviewPane({ preview, truncated }: { preview: Extract<Docume
             ))}
           </tbody>
         </table>
-      </div>
-      <div className="mt-2 text-xs font-bold text-foreground-muted ">
+      </Card>
+      <div className="mt-2 text-foreground-hint">
         {truncated
           ? formatMessage({ id: "message.messageItem.csvTruncatedPerf" }, { count: preview.rows.length })
           : formatMessage({ id: "message.messageItem.csvShowingOf" }, { shown: preview.rows.length, total: preview.rowCount })}
@@ -523,13 +523,13 @@ export function XlsxPreviewPane({ preview, truncated }: { preview: Extract<Docum
   const handleSheetChange = useCallback((next: string) => setActiveSheet(Number(next)), []);
   const selected = preview.sheets[Math.min(activeSheet, Math.max(0, preview.sheets.length - 1))];
   if (!selected) {
-    return <div className="w-full bg-layer-canvas-muted  p-4 text-xs font-bold text-foreground-muted ">{formatMessage({ id: "message.messageItem.xlsxEmpty" })}</div>;
+    return <div className="w-full bg-layer-canvas-muted p-4 text-callout text-foreground-muted">{formatMessage({ id: "message.messageItem.xlsxEmpty" })}</div>;
   }
   const sheetTruncated = truncated || selected.truncated;
   const isEmpty = selected.headers.length === 0 && selected.rows.length === 0;
   return (
-    <div className="w-full bg-layer-canvas-muted  p-4 font-mono text-[11px] text-foreground-strong ">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-3 text-xs font-bold text-foreground-muted ">
+    <div className="w-full bg-layer-canvas-muted  p-4 font-mono text-mono-meta text-foreground">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3 text-foreground-hint">
         <span>{formatMessage({ id: "message.messageItem.xlsxPreview" })}</span>
         <span>{formatMessage({ id: "message.messageItem.xlsxSheets" }, { count: preview.sheetCount })}</span>
       </div>
@@ -545,7 +545,6 @@ export function XlsxPreviewPane({ preview, truncated }: { preview: Extract<Docum
               <TabsTab
                 key={`${sheet.name}-${index}`}
                 value={String(index)}
-                className="text-xs font-bold"
               >
                 <TabsLabel>{sheet.name || formatMessage({ id: "message.messageItem.xlsxUnnamedSheet" }, { index: index + 1 })}</TabsLabel>
               </TabsTab>
@@ -554,24 +553,24 @@ export function XlsxPreviewPane({ preview, truncated }: { preview: Extract<Docum
         </Tabs>
       ) : null}
       {isEmpty ? (
-        <div className="border  border-line-muted  bg-layer-panel  p-4 font-sans text-sm font-bold shadow-raft-sm " data-testid="xlsx-preview-empty">
+        <Card className="p-4 font-sans text-callout font-semibold text-foreground-muted" data-testid="xlsx-preview-empty">
           {formatMessage({ id: "message.messageItem.xlsxEmpty" })}
-        </div>
+        </Card>
       ) : (
-        <div className="overflow-x-auto border  border-line-muted  bg-layer-panel  shadow-raft-sm ">
-          <table className="min-w-full border-collapse bg-layer-panel ">
-            <thead className="sticky top-0 z-10 bg-layer-canvas-muted "><tr>{selected.headers.map((header, index) => (
+        <Card className="overflow-x-auto">
+          <table className="min-w-full border-collapse bg-layer-card">
+            <thead className="sticky top-0 z-10 bg-fill-muted"><tr>{selected.headers.map((header, index) => (
               <th key={`${header}-${index}`} className="max-w-[220px] border border-line-muted  px-2 py-1 text-left font-bold"><AttachmentTooltip content={header}><span className="block truncate">{header || formatMessage({ id: "message.messageItem.columnFallback" }, { index: index + 1 })}</span></AttachmentTooltip></th>
             ))}</tr></thead>
             <tbody>{selected.rows.map((row, rowIndex) => (
-              <tr key={rowIndex} data-anchor-row={rowIndex + 1} className="odd:bg-black/[0.03]">
-                {selected.headers.map((_, columnIndex) => { const value = row[columnIndex] ?? ""; return <td key={columnIndex} className="max-w-[220px] border border-black/40 px-2 py-1 align-top"><AttachmentTooltip content={value}><span className="block truncate">{value}</span></AttachmentTooltip></td>; })}
+              <tr key={rowIndex} data-anchor-row={rowIndex + 1} className="odd:bg-fill-muted/50">
+                {selected.headers.map((_, columnIndex) => { const value = row[columnIndex] ?? ""; return <td key={columnIndex} className="max-w-[220px] border border-line-muted px-2 py-1 align-top"><AttachmentTooltip content={value}><span className="block truncate">{value}</span></AttachmentTooltip></td>; })}
               </tr>
             ))}</tbody>
           </table>
-        </div>
+        </Card>
       )}
-      <div className="mt-2 text-xs font-bold text-foreground-muted ">
+      <div className="mt-2 text-foreground-hint">
         {sheetTruncated
           ? formatMessage({ id: "message.messageItem.xlsxTruncated" }, { count: selected.rows.length })
           : formatMessage({ id: "message.messageItem.xlsxShowingOf" }, { shown: selected.rows.length, total: selected.rowCount })}
@@ -625,7 +624,7 @@ export function MarkdownPreviewPane({ markdown, truncated }: { markdown: string;
           ) : null}
           <Card
             data-anchor-md-root=""
-            className="max-w-full overflow-visible overflow-x-clip bg-layer-panel  px-6 py-8 font-display text-base text-foreground-strong  md:px-10 md:py-12"
+            className="max-w-full overflow-visible overflow-x-clip px-6 py-8 font-display text-body text-foreground md:px-10 md:py-12"
           >
             <MarkdownContent
               source={markdown}
@@ -646,14 +645,14 @@ export function TextPreviewPane({ text, truncated }: { text: string; truncated: 
     // No nested vertical scroller (browser-find layout): the pane flows into
     // the document so native find can scroll the window to matches.
     <div className="w-full bg-layer-canvas-muted  p-4">
-      <div className="mb-2 flex items-center justify-between gap-3 text-xs font-bold text-foreground-muted ">
+      <div className="mb-2 flex items-center justify-between gap-3 font-mono text-mono-meta text-foreground-hint">
         <span>{formatMessage({ id: "message.messageItem.plainTextPreview" })}</span>
         {truncated ? <span>{formatMessage({ id: "message.messageItem.previewTruncated" })}</span> : null}
       </div>
       {/* Per-line elements (not one text node) so comment anchors can target
           and flash-highlight L<n> ranges (attachmentCommentAnchors). The
           preview is byte-capped server-side, so line count stays bounded. */}
-      <pre className="min-h-full whitespace-pre-wrap break-words border  border-line-muted  bg-layer-panel  p-4 font-mono text-xs leading-5 text-foreground-strong  shadow-raft-sm ">
+      <pre className="min-h-full whitespace-pre-wrap break-words rounded-container border border-line-muted bg-layer-code p-4 font-mono text-mono-code text-foreground">
         {text.split(/\r?\n/).map((line, index) => (
           <div key={index} data-anchor-line={index + 1}>
             {line.length > 0 ? line : " "}

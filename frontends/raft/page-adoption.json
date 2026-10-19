@@ -513,6 +513,28 @@
       "limits": [
         "Markdown comment/jump acceptance only; other document renderer styling remains pending. No audio/video adoption. No published attachments in current real data home; fixture validation is separate from real deployment checks."
       ]
+    },
+    "document-and-menu-recipes": {
+      "source": "Raft v1.21.22 production af3d6ef4a22f0f05f5f9db9424285755d67e9726 app-shell-D1-nY-va.js I5e/L5e/R5e/z5e 115143–115477; R4e/t$ 106447–106478; rCt 177037–177088. URL/hash: release-lock.json.",
+      "kind": "Structural port of authorized official compositions, native raft-ui Card/tabs; not byte-exact latest TSX. Existing upstream notices retained.",
+      "local": [
+        "packages/web/src/components/message/attachmentPreviewSurfaces.tsx",
+        "packages/web/src/components/ui/MenuItem.tsx",
+        "packages/web/src/components/message/ChannelFileOverflowMenu.tsx"
+      ],
+      "adaptation": "Retains Loom transport, permissions, truncation, sheet state, line/row/heading anchors and supported menu actions. No sharing/translation/media functionality enabled.",
+      "preserved": "Official document/body/code/meta type tokens, table Card/row tint, native tabs, action-menu row recipe with hover/focus/disabled rules, ghost file trigger.",
+      "checks": [
+        "scripts/official-web/preview-thread-release.test.mjs",
+        "scripts/official-web/table-attachment-browser.mjs",
+        "scripts/official-web/attachment-preview-browser.mjs",
+        "scripts/official-web/reactions-browser.mjs",
+        "scripts/official-web/saved-browser.mjs"
+      ],
+      "limits": [
+        "Not full-site parity: HTML/loading/region overlays and other retained compositions remain to audit.",
+        "Current real data has no published attachment; file preview checks use temporary Core. No real CLI or paid tests."
+      ]
     }
   },
   "pending": [

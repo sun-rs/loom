@@ -130,6 +130,20 @@ for (const format of ["csv", "xlsx"])
         .getByRole("cell", { name: "FIXTURE table", exact: true })
         .waitFor();
 
+      assert.equal(
+        await preview
+          .locator("table")
+          .evaluate((el) => el.parentElement?.getAttribute("data-slot")),
+        "card",
+      );
+      assert.equal(
+        await preview
+          .locator("table")
+          .evaluate((el) => getComputedStyle(el).fontFamily.includes("mono")),
+        true,
+      );
+      await page.screenshot({ path: `/tmp/loom-table-${format}-${width}.png` });
+
       if (format === "xlsx") {
         await preview.getByRole("tab", { name: "Second", exact: true }).click();
         await preview
