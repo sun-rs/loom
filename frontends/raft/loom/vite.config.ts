@@ -82,6 +82,21 @@ export default defineConfig({
           ),
       },
       transform(code, id) {
+        if (id.endsWith("/components/message/MentionLink.tsx")) {
+          const needle =
+            "const viewerUserId = useAuthStore((s) => s.user?.id ?? null);";
+          if (!code.includes(needle))
+            throw new Error("Official MentionLink viewer seam changed");
+          return {
+            code:
+              'import { useMessageViewerId } from "loom-composer-directory";\n' +
+              code.replace(
+                needle,
+                "const viewerUserId = useMessageViewerId();",
+              ),
+            map: null,
+          };
+        }
         if (id.endsWith("/components/message/MessageTimeline.tsx"))
           return { code: adaptTimelineWindow(code), map: null };
         if (id.endsWith("/components/settings/ReleaseNotesPanel.tsx"))
@@ -149,7 +164,19 @@ export default defineConfig({
           };
         if (id.endsWith("/packages/web/src/components/message/ThreadPanel.tsx"))
           return { code: adaptThreadFooter(code), map: null };
-        if (id.endsWith("/packages/web/src/components/message/MessageItem.tsx"))
+        if (
+          id.endsWith("/packages/web/src/components/message/MessageItem.tsx")
+        ) {
+          const mentionSeam =
+            "const effectiveMentionMap = isExternal ? EXTERNAL_MESSAGE_MENTION_MAP : mentionMap;";
+          if (code.split(mentionSeam).length !== 2)
+            throw new Error("Official mention identity seam changed");
+          code =
+            'import { boundMessageMentions } from "loom-message-profile";\n' +
+            code.replace(
+              mentionSeam,
+              "const boundMentionMap = useMemo(() => boundMessageMentions(mentionMap, message.mentions), [mentionMap, message.mentions]);\n  const effectiveMentionMap = isExternal ? EXTERNAL_MESSAGE_MENTION_MAP : readOnlyProjection ? boundMentionMap : mentionMap;",
+            );
           return {
             code: adaptReactions(
               adaptAttachmentMessage(
@@ -162,8 +189,11 @@ export default defineConfig({
             ),
             map: null,
           };
+        }
       },
       resolveId(source, importer) {
+        if (source === "loom-message-profile")
+          return resolve(import.meta.dirname, "MessageProfile.tsx");
         if (source === "loom-composer-directory")
           return resolve(import.meta.dirname, "ComposerDirectory.tsx");
         if (source === "loom-reactions")

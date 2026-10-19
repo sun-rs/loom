@@ -734,5 +734,11 @@
     "differences": "Chinese-only disabled display language; cloud translation omitted; browser-default timezone remains a selectable reset; runtime management reuses existing Loom write owner. No new backend API.",
     "evidence": "../../docs/evo/evidence/2026-10-20-region-message-audit/summary.json",
     "license": "Existing upstream notices and owner authorization retained"
+  },
+  "messageIdentity20261020": {
+    "source": "Native MentionLink/MessageItem/ThreadPanel and raft-ui message-reference recipe; locked v1.21.22",
+    "reuse": "Native presentation preserved; local glue supplies canonical bindings, authorized viewer and Room members. Legacy unbound text is not rebound by current names.",
+    "evidence": "../../docs/evo/evidence/2026-10-20-message-identity/summary.json",
+    "license": "Existing upstream notices retained"
   }
 }

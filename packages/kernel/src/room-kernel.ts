@@ -5880,7 +5880,8 @@ export class RoomKernel {
     const roomRow = this.#requireRoom(roomId);
     const members = this.#database
       .prepare(
-        `SELECT principals.principal_id, principals.handle, principals.kind
+        `SELECT principals.principal_id, principals.handle, principals.kind,
+                principals.display_name, principals.avatar_key, principals.description
          FROM memberships
          JOIN principals ON principals.principal_id = memberships.principal_id
          WHERE memberships.room_id = ?

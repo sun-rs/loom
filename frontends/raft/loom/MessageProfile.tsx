@@ -1,4 +1,6 @@
-import { createContext, useContext } from "react";
+export { boundMessageMentions } from "./member-roster.ts";
+import { projectMessageMentions } from "./member-roster.ts";
+import { createContext, useContext, useMemo } from "react";
 import { Separator } from "raft-ui";
 import type { Principal } from "@rah-os/protocol";
 import AvatarSlot from "../packages/web/src/components/ui/AvatarSlot.tsx";
@@ -7,6 +9,10 @@ import Tooltip from "../packages/web/src/components/ui/Tooltip.tsx";
 // Borrow the mounted timeline's authorized RoomSession projection, including
 // through native PreviewCard portals. Never hydrate a second upstream store.
 export const MessageProfileMembers = createContext<readonly Principal[]>([]);
+export function useMessageMentionMap() {
+  const members = useContext(MessageProfileMembers);
+  return useMemo(() => projectMessageMentions(members), [members]);
+}
 
 /** Structural port of ProfilePreviewCardContent's identity/description blocks.
  * Native PreviewCard owns trigger, timing, portal, geometry and dismissal.

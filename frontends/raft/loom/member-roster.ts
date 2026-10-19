@@ -50,3 +50,14 @@ export function projectMessageMentions(members: readonly Principal[]) {
       ]),
   );
 }
+
+/** Labels may change; only durable bindings authorize mention identity. */
+export function boundMessageMentions<T extends { id: string; type: string }>(
+  directory: Map<string, T>,
+  bindings: readonly { id: string; type: string }[] | undefined,
+): Map<string, T> {
+  const ids = new Set(bindings?.map((b) => `${b.type}:${b.id}`));
+  return new Map(
+    [...directory].filter(([, p]) => ids.has(`${p.type}:${p.id}`)),
+  );
+}

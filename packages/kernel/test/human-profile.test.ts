@@ -59,6 +59,20 @@ test("Human profile is workspace-scoped, current, and never guesses Computer own
       port.getHumanProfile(actor, request).principal.displayName,
       "New name",
     );
+    const snapshot = kernel.sync(actor, {
+      roomId: workspace.controlRoom.roomId,
+      afterSeq: 0,
+      consumerId: "profile-snapshot",
+    }).snapshot;
+    const visibleOwner = snapshot?.members.find(
+      (p) => p.principalId === actor.principalId,
+    );
+    assert.equal(
+      visibleOwner?.displayName,
+      "New name",
+      "Room members must carry current display name for message mentions",
+    );
+    assert.equal(visibleOwner?.avatarKey, "avatar-03");
     kernel.updateAuthenticatedPrincipal(actor, {
       avatarKey: null,
       displayName: "Cleared",

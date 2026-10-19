@@ -32,9 +32,9 @@ const categories = [
     label: "个人",
     items: [
       { id: "account", label: "账户", icon: User },
+      { id: "language-region", label: "语言和区域", icon: Languages },
       { id: "appearance", label: "外观", icon: Type },
       { id: "notifications", label: "通知", icon: Bell },
-      { id: "language-region", label: "语言和区域", icon: Languages },
     ],
   },
   {

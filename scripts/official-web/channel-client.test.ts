@@ -111,3 +111,68 @@ test("canonical attachments project stable IDs, names and sizes without placehol
     },
   ]);
 });
+
+test("mention projection preserves bound identity across rename and same-name recreation", () => {
+  const body = "@Tom @owner";
+  const mentions = [
+    {
+      start: 0,
+      end: 4,
+      handle: "Tom",
+      principalId: "original-instance",
+      agentId: "old-agent",
+    },
+    { start: 5, end: 11, handle: "owner", principalId: "human-a" },
+  ];
+  const projected = toOfficialMessage({ ...message, body, mentions }, [
+    {
+      principalId: "original-instance",
+      kind: "agent",
+      handle: "Jack",
+      displayName: "Jack",
+    },
+    {
+      principalId: "replacement-instance",
+      kind: "agent",
+      handle: "Tom",
+      displayName: "Tom",
+    },
+    {
+      principalId: "human-a",
+      kind: "human",
+      handle: "owner",
+      displayName: "Sun",
+    },
+  ]);
+  assert.deepEqual(projected.mentions, [
+    { type: "agent", id: "original-instance", name: "Tom" },
+    { type: "user", id: "human-a", name: "owner" },
+  ]);
+  assert.equal(
+    projected.content,
+    body,
+    "display projection must not rewrite canonical text",
+  );
+  assert.equal(
+    toOfficialMessage({ ...message, body, mentions }, []).mentions?.[0]?.id,
+    "original-instance",
+  );
+});
+
+test("historical unbound names never acquire a replacement principal", async () => {
+  const { boundMessageMentions } =
+    await import("../../frontends/raft/loom/member-roster.ts");
+  const directory = new Map([
+    ["Tom", { id: "new-tom", type: "agent" as const, displayName: "Tom" }],
+    ["Jack", { id: "old-tom", type: "agent" as const, displayName: "Jack" }],
+  ]);
+  assert.equal(boundMessageMentions(directory, undefined).size, 0);
+  assert.deepEqual(
+    [
+      ...boundMessageMentions(directory, [
+        { id: "old-tom", type: "agent" },
+      ]).keys(),
+    ],
+    ["Jack"],
+  );
+});

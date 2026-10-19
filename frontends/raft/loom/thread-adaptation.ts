@@ -18,8 +18,25 @@ export function adaptThreadItem(source: string) {
   return 'import LoomThreadToolbar from "loom-thread-toolbar";\n' + code;
 }
 export function adaptThreadFooter(source: string) {
+  // The native public read-only path has no members; Loom's authenticated
+  // thread borrows its authorized Room snapshot instead of a second store.
+  const withMentions =
+    'import { useMessageMentionMap } from "loom-message-profile";\n' +
+    source
+      .replace(
+        "}: ThreadPanelProps & { readOnlyData: ReadOnlyThreadData }) {",
+        "}: ThreadPanelProps & { readOnlyData: ReadOnlyThreadData }) {\n  const loomMentionMap = useMessageMentionMap();",
+      )
+      .replaceAll(
+        "mentionMap={EMPTY_PUBLIC_MENTION_MAP}",
+        "mentionMap={loomMentionMap}",
+      )
+      .replace(
+        "  ), [readOnlyData.channels,",
+        "  ), [loomMentionMap, readOnlyData.channels,",
+      );
   let code = replaceOnce(
-    source,
+    withMentions,
     "  readOnlyData?: ReadOnlyThreadData;",
     '  readOnlyData?: ReadOnlyThreadData;\n  loomFooter?: ReactNode;\n  loomHeaderActions?: ReactNode;\n  loomOnOpenProfile?: (kind: "agent" | "human", id: string) => void;\n  loomFocusId?: string;\n  loomHasNewer?: boolean;\n  loomLoadNewer?: () => Promise<void>;',
   );
@@ -65,8 +82,8 @@ export function adaptThreadFooter(source: string) {
   );
   code = replaceOnce(
     code,
-    "  ), [readOnlyData.channels,",
-    "  ), [loomFocusId, loomOnOpenProfile, readOnlyData.channels,",
+    "  ), [loomMentionMap, readOnlyData.channels,",
+    "  ), [loomFocusId, loomOnOpenProfile, loomMentionMap, readOnlyData.channels,",
   );
   code = replaceOnce(
     code,

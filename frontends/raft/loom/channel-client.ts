@@ -43,6 +43,13 @@ export function toOfficialMessage(
       mimeType: a.mimeType,
       sizeBytes: a.size,
     })),
+    // Kernel bindings retain identity across renamed/re-created display names.
+    // The native renderer resolves current labels by ID, not by current handle.
+    mentions: message.mentions?.map((mention) => ({
+      type: mention.agentId ? "agent" : "user",
+      id: mention.principalId,
+      name: mention.handle,
+    })),
     createdAt: message.createdAt,
   };
 }

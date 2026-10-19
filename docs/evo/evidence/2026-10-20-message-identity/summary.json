@@ -1,0 +1,60 @@
+{
+  "source": {
+    "revision": "af3d6ef4a22f0f05f5f9db9424285755d67e9726",
+    "release": "v1.21.22",
+    "files": [
+      "packages/web/src/components/message/MentionLink.tsx",
+      "packages/web/src/components/message/MessageItem.tsx",
+      "packages/web/src/components/message/ThreadPanel.tsx",
+      "raft-ui/dist/index.mjs:message-reference.recipe"
+    ],
+    "reuse": "Native mention/channel/task/thread recipes retained; checked build-time seams replace viewer and member data sources only. No screenshot-based CSS reimplementation.",
+    "license": "Existing upstream notices and owner-authorized FSL-1.1-ALv2 reuse retained"
+  },
+  "defects": [
+    "Room snapshot SELECT omitted display_name/avatar_key/description despite principalProfile.fromRow supporting them.",
+    "toOfficialMessage discarded canonical mention bindings, permitting handle-based reinterpretation.",
+    "Native MentionLink read official auth store instead of authenticated Loom viewer.",
+    "Native read-only ThreadPanel had an empty mention directory."
+  ],
+  "changes": [
+    "Language/region ordered between Account and Appearance.",
+    "Snapshot includes current profile fields; no schema or mutation changes.",
+    "Canonical principal identity projected into native structured mentions; current label resolved by ID. Missing original principal keeps original token label and ID, never new same-name principal.",
+    "Unbound historical text is not promoted into an identity-backed mention from the current directory.",
+    "Thread/Task reply presentation shares authorized member projection."
+  ],
+  "scopeLimits": [
+    "Role rename does not rename existing frozen instances. Display of a principal follows its current permitted profile; Role ID is not an instance mention target.",
+    "Legacy messages lacking bindings remain plain text; no heuristic identity backfill.",
+    "Screenshot3 large last-reply preview differs from locked latest ThreadRepliesBadge; retain latest official badge, not older screenshot layout.",
+    "Message avatar live-status badges and deleted-member labels are not fully bound in current Loom message projections; never infer them from role deletion or CLI discovery.",
+    "No real-model/paid CLI tests or physical-mobile validation."
+  ],
+  "tests": {
+    "frontendUnit": 11,
+    "kernelProfile": 5,
+    "rootTypecheck": "passed",
+    "frontendTypecheck": "passed",
+    "build": "passed",
+    "browser": {
+      "viewports": [
+        "1440x1000",
+        "390x844"
+      ],
+      "passed": [
+        "Settings order and region/save/navigation",
+        "Current Human display name @Sun and yellow self recipe",
+        "Pink channel recipe and channel navigation",
+        "Peer mention hover/profile open",
+        "Thread current display name"
+      ],
+      "limitations": [
+        "Same-name recreation binding covered by projection unit, not real provider execution.",
+        "Initial thread browser assertion used wrong test ID; corrected to read-only-thread-panel. Backend missing profile and missing binding had independent reproducing failures.",
+        "Fixture CLI discovery only; attempted fake MCP runtime refuses execution."
+      ]
+    }
+  },
+  "deployment": "pending"
+}

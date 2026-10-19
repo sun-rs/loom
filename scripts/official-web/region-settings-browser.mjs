@@ -13,6 +13,14 @@ export async function verifyRegionSettings({ browser, origin }) {
       const errors = [];
       page.on("pageerror", (e) => errors.push(e.message));
       await page.goto(origin + "/?view=settings");
+      const labels = await page
+        .getByTestId("loom-settings-sidebar")
+        .innerText();
+      assert.ok(
+        labels.indexOf("账户") < labels.indexOf("语言和区域") &&
+          labels.indexOf("语言和区域") < labels.indexOf("外观"),
+        "region tab belongs between account and appearance",
+      );
       await page.getByText("语言和区域", { exact: true }).click();
       await page.getByTestId("region-date-form").waitFor();
       assert.notEqual(
