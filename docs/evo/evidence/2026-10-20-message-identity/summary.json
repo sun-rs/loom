@@ -38,10 +38,7 @@
     "frontendTypecheck": "passed",
     "build": "passed",
     "browser": {
-      "viewports": [
-        "1440x1000",
-        "390x844"
-      ],
+      "viewports": ["1440x1000", "390x844"],
       "passed": [
         "Settings order and region/save/navigation",
         "Current Human display name @Sun and yellow self recipe",
@@ -56,5 +53,30 @@
       ]
     }
   },
-  "deployment": "pending"
+  "deployment": {
+    "sourceCommit": "b129dd140566da8d35fac4cf74e1a5610537fe05",
+    "schema": 90,
+    "gracefulRestart": true,
+    "backupDatabases": 2,
+    "backupFiles": 325,
+    "unchangedBusinessTables": 20,
+    "pushStateUnchanged": true,
+    "realPageChecks": [
+      {
+        "width": 1440,
+        "computer": {
+          "paddingTop": "16px",
+          "y": 56
+        },
+        "agent": {
+          "paddingTop": "16px",
+          "y": 56
+        }
+      },
+      {
+        "width": 390
+      }
+    ],
+    "limits": "Live page checks cover settings/sidebar on production data; mention mutations use isolated Core. Early live probe ran during graceful restart and was refused; rerun after verified readiness passed."
+  }
 }
