@@ -1,0 +1,56 @@
+{
+  "date": "2026-10-19",
+  "codeCommit": "e54605eff49a3c30ecacbddb9aef5e063b186c74",
+  "source": "Locked official v1.21.22 g0/v0/X0/Z0/Q0; source locations in page-adoption.json",
+  "implemented": [
+    "Official suggestion badge/icon/group separator/accessory styles",
+    "Bind native # suggestions to existing authorized Loom channel directory; no upstream channel store hydration"
+  ],
+  "audit": [
+    "Retained native autocomplete key handling, candidate insertion, task toggle and send composition",
+    "Owner-approved unified + file reference/upload dialog and touch Enter behavior preserved"
+  ],
+  "checks": {
+    "unit": "14 focused projection/adaptation/source tests passed; new assertions first failed",
+    "typecheck": "npm run typecheck:loom --prefix frontends/raft passed",
+    "build": "npm run build:web:workbench passed at committed source; existing chunk-size warning remains",
+    "fixtureBrowser": "1440x1000/390x844 DPR1: @ keyboard/IME/Escape, # pointer selection, Shift+Enter, task focus, file close/focus/draft, no send requests",
+    "reproducedDefect": "Initial browser check timed out on # suggestions because native store was empty; existing directory binding repaired it, both viewports passed",
+    "live": [
+      {
+        "width": 1440,
+        "realService": true,
+        "fixture": false,
+        "mentionAndChannelSuggestions": true,
+        "taskAndFileEntry": true,
+        "noSends": true,
+        "pageErrors": []
+      },
+      {
+        "width": 390,
+        "realService": true,
+        "fixture": false,
+        "mentionAndChannelSuggestions": true,
+        "taskAndFileEntry": true,
+        "noSends": true,
+        "pageErrors": []
+      }
+    ],
+    "visual": "Actual mobile mention list and desktop channel list screenshots inspected",
+    "format": "Local adapters/tests/manifests checked; only changed blocks in large original MessageInput, source hash refreshed, git diff --check passed"
+  },
+  "deployment": {
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-composer-suggestions-f7ccaea8-80a7-4064-8c33-0e3c84d54aa1",
+    "databases": 2,
+    "files": 325,
+    "businessTablesUnchanged": 18,
+    "verified": true
+  },
+  "limits": [
+    "Suggestion visibility follows existing directory refresh lifecycle",
+    "No external apps/computers/nonmember agent candidates added",
+    "File reference/upload remains owner-approved Loom composition",
+    "Physical iOS/Android keyboard not verified",
+    "No backend changes, message sends or paid-provider calls"
+  ]
+}
