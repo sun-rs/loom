@@ -184,5 +184,35 @@
     "No new backend API or lifecycle change; physical mobile not tested.",
     "AgentProfile tab screenshot captured during native transition initially; final screenshot waits for selected-state animation."
   ],
-  "deployment": "pending"
+  "deployment": {
+    "at": "2026-10-19T17:09:59.341Z",
+    "head": "1502bfb6848e7641a75dcdd6df394238dd295ca9",
+    "sourceSha256": "e4d52a9ce0880f1937434bb16d6d1f2984ae8111b8e0d33caaedb5e795036ecc",
+    "dependencies": {
+      "package-lock.json": "8eebbc1d4e01d0660df0ffe58bad7e48d708fa45e37d51291433ef1c2e640089",
+      "node_modules/@anthropic-ai/claude-agent-sdk/package.json": "a2f4bd57129cb99253877099ab6deed575b3bdd37aa0e09aa6469a63bc81690f",
+      "node_modules/@anthropic-ai/claude-agent-sdk/sdk.mjs": "5cf6f15237f9c84e6e5b724a10180478732457168921d7aa3e02632037cce299"
+    },
+    "databases": 2,
+    "files": 325,
+    "pushStateUnchanged": true,
+    "verified": true,
+    "businessTablesUnchanged": 20,
+    "liveBrowser": [
+      {
+        "width": 1440,
+        "roleProfile": true,
+        "instanceActivity": true,
+        "instanceProfile": true
+      },
+      {
+        "width": 390,
+        "roleProfile": true,
+        "instanceActivity": true,
+        "instanceProfile": true
+      }
+    ],
+    "privateEvidenceDirectory": "/Users/sun/.loom/reviews/2026-10-20-agent-profiles",
+    "initialCheckFailure": "Live selector matched Role header menu with same display name; screenshot confirmed no profile opened. Replaced fuzzy name selector with button containing exact instance text; both viewport checks passed. Product unchanged."
+  }
 }

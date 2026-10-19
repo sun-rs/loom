@@ -50,8 +50,8 @@ export async function verifyAgentProfile({
         .click();
       await page.getByRole("tab", { name: "实例", exact: true }).click();
       await detail
-        .getByRole("button", { name: new RegExp(instanceNames[0]) })
-        .first()
+        .getByRole("button")
+        .filter({ has: page.getByText(instanceNames[0], { exact: true }) })
         .click();
       const panel = page.getByTestId("profile-panel");
       await panel.waitFor();
