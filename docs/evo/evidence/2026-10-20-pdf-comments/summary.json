@@ -23,5 +23,14 @@
     "No PDF page/selection anchors or PDF renderer replacement",
     "Worker reply uses isolated real Kernel and fixture execution, no paid model",
     "Workspace paths alone do not become published attachments; this feature applies to published message PDFs"
-  ]
+  ],
+  "productCommit": "3b7bcc04",
+  "deployment": {
+    "restarted": true,
+    "databasesBackedUp": 2,
+    "filesBackedUp": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true,
+    "formal": "Fresh real WebKit390 settings/task/memory pages load new assets with no errors/overflow. Real data has no published PDF; PDF mutation acceptance uses isolated Core, not user data."
+  }
 }
