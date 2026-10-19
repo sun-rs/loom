@@ -659,7 +659,7 @@
       "loom/useFirstUnreadFocus.ts",
       "loom/DiscoveryPage.tsx"
     ],
-    "behavior": "Title detail>=2 cycles loaded unread rows in rendered pin order, wraps, no reads/writes/navigation; empty/loading lists do not queue intent. Sidebar double-click remains distinct refresh/first-unread intent.",
+    "behavior": "Title detail>=2 cycles loaded unread rows in rendered pin order, wraps, no forced refresh/writes/navigation; empty/loading lists do not queue intent. Scroll retains native cursor pagination at 240px threshold. Sidebar double-click remains distinct refresh/first-unread intent.",
     "checks": ["scripts/official-web/activity-focus-browser.mjs"]
   }
 }

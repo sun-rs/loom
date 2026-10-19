@@ -44,6 +44,38 @@
     "Physical mobile double-tap and authenticated upstream pixel comparison not verified.",
     "Unfollow history remains a documented backend compatibility gap; no browser-only retained row introduced."
   ],
-  "deployment": "pending safe restart and real page check",
+  "deployment": {
+    "sourceCommit": "56bd5ddee117bf46400042a284baaf6f52ba136d",
+    "safeRestart": true,
+    "databasesBackedUp": 2,
+    "filesBackedUp": 325,
+    "businessTablesUnchanged": 18,
+    "realPage": [
+      {
+        "width": 1440,
+        "height": 844,
+        "dpr": 1,
+        "realUnreadRows": 7,
+        "titleCyclesInRenderedOrder": true,
+        "noForcedRefreshOrMutation": true,
+        "normalPaginationReads": 1,
+        "noDetailNavigation": true,
+        "pageErrors": []
+      },
+      {
+        "width": 390,
+        "height": 844,
+        "dpr": 1,
+        "realUnreadRows": 7,
+        "titleCyclesInRenderedOrder": true,
+        "noForcedRefreshOrMutation": true,
+        "normalPaginationReads": 1,
+        "noDetailNavigation": true,
+        "pageErrors": []
+      }
+    ],
+    "privateEvidence": "/Users/sun/.loom/reviews/2026-10-19-title-unread/",
+    "paginationBoundary": "Initial live assertion forbidding every fetch was too strict: focus scroll reaches the native 240px pagination threshold. Corrected acceptance requires additional reads to carry server cursor; no forced reload or mutation."
+  },
   "paidProviders": false
 }
