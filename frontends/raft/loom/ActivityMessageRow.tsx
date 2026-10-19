@@ -124,7 +124,7 @@ export default function ActivityMessageRow({
           )}
         </span>
         <div className="min-w-0 w-full" data-testid="conversation-card-content">
-          {
+          {thread && (
             <div
               className="mb-0.5 min-w-0 truncate text-caption text-foreground-hint"
               data-testid="conversation-card-subtitle"
@@ -132,7 +132,7 @@ export default function ActivityMessageRow({
               <Hash size={12} className="mr-1 inline-block" />
               {row.roomName}
             </div>
-          }
+          )}
           <div className="mb-0.5 flex min-w-0 items-start gap-2">
             <div
               className={`line-clamp-2 min-w-0 flex-1 text-subhead ${unreadCount > 0 ? "font-bold text-foreground-strong " : "font-semibold text-foreground-muted "}`}
