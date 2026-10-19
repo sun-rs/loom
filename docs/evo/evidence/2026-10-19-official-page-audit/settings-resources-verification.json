@@ -1,0 +1,69 @@
+{
+  "date": "2026-10-19",
+  "codeCommit": "85cc69f8df25cde11875f9ff713b0093d827f258",
+  "official": {
+    "version": "1.21.22",
+    "revision": "af3d6ef4a22f0f05f5f9db9424285755d67e9726",
+    "source": "app-shell-D1-nY-va.js WebPush composition 146945–147050 and _pt About 153035–153075",
+    "reuse": "structural port, not byte-exact TSX"
+  },
+  "implemented": [
+    "Notification Card, native text hierarchy, soft badge and denied warning tone",
+    "About native section spacing and product/version typography",
+    "Existing read-only capability boundary retained; no push subscriptions or permission requests"
+  ],
+  "verification": {
+    "tdd": "2 regression assertions failed before implementation; passed afterward",
+    "focusedTests": 7,
+    "typecheck": "passed exit 0",
+    "build": "passed exit 0 at code commit",
+    "browser": {
+      "viewports": ["1440x1000", "390x844"],
+      "about": "version equality, title and version typography, actual 12px section gap, no overflow/errors",
+      "settingsResources": "release notes, notification capability and denied/error states, no subscription mutations; unrelated activity test explicitly skipped"
+    },
+    "realPage": [
+      {
+        "width": 1440,
+        "tab": "notifications",
+        "overflow": false
+      },
+      {
+        "width": 1440,
+        "tab": "about",
+        "overflow": false
+      },
+      {
+        "width": 390,
+        "tab": "notifications",
+        "overflow": false
+      },
+      {
+        "width": 390,
+        "tab": "about",
+        "overflow": false
+      }
+    ],
+    "screenshots": "/Users/sun/.loom/reviews/2026-10-19-settings-resources",
+    "visualReview": ["after-notifications-390.png", "after-about-390.png"],
+    "testCorrections": [
+      "space-y spacing is measured by element bounds, not row-gap",
+      "Real page check scopes visible cards, excluding mounted hidden runtime settings"
+    ]
+  },
+  "deployment": {
+    "head": "85cc69f8df25cde11875f9ff713b0093d827f258",
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-settings-resources-280b3fd3-6a00-47b7-a5d2-02360c70558c",
+    "databases": 2,
+    "files": 325,
+    "businessTablesUnchanged": 18,
+    "verified": true,
+    "privateReceipt": "/Users/sun/.loom/reviews/2026-10-19-settings-resources/restart.json"
+  },
+  "limits": [
+    "No authenticated official live-site pixel comparison; source revision is locked",
+    "No physical iOS/Android verification",
+    "Browser push subscription remains unavailable; no backend or paid-provider changes",
+    "Remaining shared header/action audit and activity follow/grouping coverage remain in page-adoption.json"
+  ]
+}
