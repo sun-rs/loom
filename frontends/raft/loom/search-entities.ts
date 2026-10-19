@@ -25,7 +25,8 @@ export function entitySources({
           {
             id: i.instanceId,
             name: a.handle,
-            displayName: a.currentRevision.displayName,
+            // Role revision displayName describes configuration; the member identity is its instance handle.
+            displayName: a.handle,
             description: a.currentRevision.description,
             deletedAt: null,
           },

@@ -41,7 +41,7 @@ test("entity catalog admits accessible channels and live instances, never role d
   );
   assert.deepEqual(
     result.agents.map((a) => [a.id, a.displayName]),
-    [["i", "Frozen Tom"]],
+    [["i", "tom-1"]],
   );
   assert.deepEqual(
     result.dmChannels.map((c) => c.id),
