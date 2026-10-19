@@ -1,0 +1,70 @@
+{
+  "date": "2026-10-19",
+  "codeCommit": "b1d611353b7ce3b4226f3877b15fd244f0ef0385",
+  "source": {
+    "version": "Raft v1.21.22",
+    "revision": "af3d6ef4a22f0f05f5f9db9424285755d67e9726",
+    "bundle": "app-shell-D1-nY-va.js",
+    "locations": [
+      "jn search input 182850–182900",
+      "search overlay/page wrapper 183000–183020",
+      "NW shared header 88875–88960"
+    ],
+    "reuse": "structural port; owner-approved 48px mobile adaptation retained"
+  },
+  "implemented": [
+    "Shared InputGroup search addon, icon-sm clear/18px glyph, native Kbd and wrappers",
+    "Shared header 22px back glyph and separate PanelStatus suffix"
+  ],
+  "verification": {
+    "sourceTdd": "Both new regressions failed before changes and passed afterward",
+    "focusedChecks": 6,
+    "typecheck": "exit 0",
+    "build": "exit 0 at code commit",
+    "browser": {
+      "topbar": "passed at 1440x1000 and 390x844",
+      "cases": [
+        "clear pointer hit target",
+        "IME query deferral and composing Escape",
+        "normal Escape and draft preservation",
+        "full results route/reload",
+        "overlay outside dismissal and keyboard navigation",
+        "viewport transition"
+      ],
+      "testCorrection": "Wait for lazy search input mount before inspecting addon DOM"
+    },
+    "realService": [
+      {
+        "width": 1440,
+        "errors": [],
+        "phase": "after"
+      },
+      {
+        "width": 390,
+        "errors": [],
+        "phase": "after"
+      }
+    ],
+    "screenshots": "/Users/sun/.loom/reviews/2026-10-19-search-header",
+    "visualReview": [
+      "before-search-page-390.png",
+      "after-search-page-390.png",
+      "after-search-overlay-1440.png"
+    ]
+  },
+  "deployment": {
+    "verified": true,
+    "head": "b1d611353b7ce3b4226f3877b15fd244f0ef0385",
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-search-header-a4ead103-d99d-4ec4-90fb-26f65fbc588d",
+    "databases": 2,
+    "files": 325,
+    "businessTablesUnchanged": 18,
+    "receipt": "/Users/sun/.loom/reviews/2026-10-19-search-header/restart.json"
+  },
+  "limits": [
+    "No authenticated official live screenshot comparison",
+    "No physical iOS/Android",
+    "Shared header tone API/legacy theme branches and remaining action compositions not yet fully audited",
+    "No backend change or paid CLI test"
+  ]
+}
