@@ -1,0 +1,44 @@
+{
+  "productCommit": "b298004c",
+  "scope": "Loom file picker responsive layout, native raft-ui controls retained",
+  "red": [
+    "hidden-file toggle outside body at390x560",
+    "second authorized root caused outer overflow"
+  ],
+  "checks": {
+    "build": true,
+    "loomTypecheck": true,
+    "layoutFixture": "Chromium and WebKit390x560/360x560(two roots)/1440x1000",
+    "attachmentFixture": "Chromium390/820/1440 full targeted attachment slice",
+    "formal": [
+      {
+        "engine": "webkit",
+        "height": 512,
+        "hiddenVisible": true,
+        "outerScroll": false,
+        "cancel": true
+      },
+      {
+        "engine": "chromium",
+        "height": 512,
+        "hiddenVisible": true,
+        "outerScroll": false,
+        "cancel": true
+      }
+    ],
+    "screenshot": "WebKit390x560 inspected",
+    "formatAndDiff": true
+  },
+  "restart": {
+    "verified": true,
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-mobile-picker-783ae27a-3fbc-4fad-88ce-3f28fc38f725",
+    "unchangedBusinessTables": 20,
+    "pushStateUnchanged": true
+  },
+  "limits": [
+    "physical device system picker and keyboard not verified",
+    "very short landscape retains outer scrolling fallback",
+    "no paid CLI or whole backend suite"
+  ],
+  "privateEvidence": "/Users/sun/.loom/reviews/2026-10-20-mobile-picker"
+}
