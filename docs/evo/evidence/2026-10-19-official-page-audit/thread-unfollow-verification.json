@@ -54,5 +54,52 @@
     "Legacy old unfollows are not backfilled.",
     "Physical mobile touch and authenticated official pixel comparison remain unverified."
   ],
-  "deployment": "Pending safe restart and real-page verification"
+  "deployment": {
+    "sourceCommit": "3e8d621fc3d23f10c8f5de89dd2c817959a244da",
+    "schema": 90,
+    "safeRestart": true,
+    "databasesBackedUp": 2,
+    "filesBackedUp": 325,
+    "businessTablesUnchanged": 20,
+    "comparison": "All existing fields including retained_seq preserved; only volatile subscription_cursors.updated_at excluded",
+    "realPage": [
+      {
+        "width": 1440,
+        "height": 844,
+        "deviceScaleFactor": 1,
+        "realThread": true,
+        "authoritativeFollowState": true,
+        "menuBounds": {
+          "x": 1151,
+          "y": 96,
+          "width": 240,
+          "height": 48
+        },
+        "escapeDismiss": true,
+        "noFollowMutations": true,
+        "passiveReadRequests": 0,
+        "pageErrors": []
+      },
+      {
+        "width": 390,
+        "height": 844,
+        "deviceScaleFactor": 1,
+        "realThread": true,
+        "authoritativeFollowState": true,
+        "menuBounds": {
+          "x": 145,
+          "y": 50,
+          "width": 240,
+          "height": 48
+        },
+        "escapeDismiss": true,
+        "noFollowMutations": true,
+        "passiveReadRequests": 0,
+        "pageErrors": []
+      }
+    ],
+    "screenshotsReviewed": true,
+    "privateEvidence": "/Users/sun/.loom/reviews/2026-10-19-thread-unfollow",
+    "limits": "Real product menu inspection without follow mutation; write behavior tested in isolated Core. Not a bilateral authenticated official screenshot comparison."
+  }
 }
