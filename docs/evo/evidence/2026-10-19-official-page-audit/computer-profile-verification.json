@@ -1,0 +1,62 @@
+{
+  "date": "2026-10-19",
+  "codeCommit": "ed70621a68eebc02c799f123dc18eebc777c363c",
+  "source": {
+    "release": "v1.21.22",
+    "revision": "af3d6ef4a22f0f05f5f9db9424285755d67e9726",
+    "locations": [
+      "MachineDetailPanel-C2oaC119.js un/dn/hn/gn/_n/xn at2197–2275",
+      "name/description editors at2383–2543"
+    ],
+    "reuse": "Structural port of retained editor composition. Existing revisioned Loom writes preserved."
+  },
+  "implemented": [
+    "Name Enter saves and Escape cancels; description Ctrl/Meta+Enter saves, plain Enter inserts newline",
+    "IME composing and keyCode229 do not trigger shortcuts",
+    "Unresolved/rejected writes retain guards for keyboard and button entry points",
+    "Native edit tooltip, description minimum height/vertical resize and 500-character counter"
+  ],
+  "verification": {
+    "tdd": "Two focused source regressions failed before implementation and passed after",
+    "focusedChecks": 7,
+    "typecheck": "exit 0",
+    "build": "exit 0 at code commit",
+    "browser": "chrome-repair passed 1440x1000 and390x844: Escape cancel, Enter save, Ctrl/Meta+Enter, newline, IME, unknown lock and exact replay; temporary fake-provider state",
+    "realService": [
+      {
+        "width": 1440,
+        "phase": "after",
+        "writes": [],
+        "errors": []
+      },
+      {
+        "width": 390,
+        "phase": "after",
+        "writes": [],
+        "errors": []
+      }
+    ],
+    "screenshots": "/Users/sun/.loom/reviews/2026-10-19-computer-profile",
+    "visuallyInspected": [
+      "before-description-390.png",
+      "after-description-390.png",
+      "after-description-1440.png"
+    ],
+    "realWritePolicy": "Edited drafts and cancelled only; zero profile-update requests observed"
+  },
+  "deployment": {
+    "verified": true,
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-computer-profile-99314f26-e194-4b07-8fc4-502bbf04475e",
+    "databases": 2,
+    "files": 325,
+    "businessTablesUnchanged": 18,
+    "receipt": "/Users/sun/.loom/reviews/2026-10-19-computer-profile/restart-final.json"
+  },
+  "limits": [
+    "Single-field editing and Loom revisioned mutation owner retained; upstream unchanged-value no-op optimization not adopted in this slice",
+    "Role sidebar row checked against retained source, not a complete current-production Role-page parity audit",
+    "Other retained page actions remain unexhausted; no full-site completion claim",
+    "No authenticated official live-site pixel comparison or physical-device acceptance",
+    "No backend changes or paid CLI calls"
+  ]
+}
