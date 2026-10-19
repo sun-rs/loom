@@ -747,5 +747,22 @@
     "reuse": "InfoRow structurally ported with break-words for long prompts; native panels/tabs/resize primitives/CSS directly reused. Role profile replaces upstream mutable Agent config; instance remains frozen until existing explicit restart.",
     "evidence": "../../docs/evo/evidence/2026-10-20-agent-profiles/summary.json",
     "license": "Existing upstream notices retained"
+  },
+  "mobileStatus20261020": {
+    "officialWeb": "v1.21.22 / raft-ui Status, AvatarBadge, MobileNavItem, PanelAction",
+    "nativeSource": "https://github.com/botiverse/mobile/tree/655975433b8492a8f4eef7bbce1b913140bc7485",
+    "nativeFiles": [
+      "compose/shared/src/commonMain/kotlin/build/raft/app/SlockDesignTokens.kt",
+      "compose/shared/src/commonMain/kotlin/build/raft/app/ThreadPage.kt",
+      "compose/shared/src/commonMain/kotlin/build/raft/app/SlockStatusIndicator.kt",
+      "compose/shared/src/commonMain/kotlin/build/raft/app/SlockTabBar.kt"
+    ],
+    "reuse": "Direct native Web Status/AvatarBadge reuse with Kernel read projections. Source-derived mobile default14px only without user override. Existing owner-approved icon-only capsule remains local CSS adaptation, not UIKit copying. Native code inspected only.",
+    "license": "Existing raft-ui MIT and upstream FSL-1.1-ALv2 notices retained; owner authorization",
+    "evidence": "docs/evo/mobile-status-closeout.zh-CN.md",
+    "limits": [
+      "Current conversation only; unknown observations hidden; no inference of native session online status",
+      "Physical mobile and OS keyboard/push not tested; CSS pixels not dp/sp identity"
+    ]
   }
 }

@@ -72,7 +72,28 @@ for (const [width, preset] of [
         await page.getByTestId("mobile-bottom-bar-overlay").count(),
         1,
       );
+      const centers = [];
       for (const button of await nav.getByRole("button").all()) {
+        const geometry = await button.evaluate((el) => {
+          const b = el.getBoundingClientRect(),
+            i = el.querySelector("svg").getBoundingClientRect();
+          return {
+            dx: i.x + i.width / 2 - b.x - b.width / 2,
+            dy: i.y + i.height / 2 - b.y - b.height / 2,
+            center: i.x + i.width / 2,
+            pseudo: getComputedStyle(el, "::before").display,
+          };
+        });
+        assert.ok(
+          Math.abs(geometry.dx) < 1 && Math.abs(geometry.dy) < 1,
+          "icon centered in its touch target",
+        );
+        assert.equal(
+          geometry.pseudo,
+          "none",
+          "icon-only navigation must not retain labeled-tab sticker",
+        );
+        centers.push(geometry.center);
         const box = await button.boundingBox();
         assert.ok(
           box && box.width >= 44 && box.x >= 0 && box.x + box.width <= 390,
@@ -86,6 +107,11 @@ for (const [width, preset] of [
           }),
         );
       }
+      const steps = centers.slice(1).map((x, i) => x - centers[i]);
+      assert.ok(
+        Math.max(...steps) - Math.min(...steps) < 1,
+        "equal icon spacing",
+      );
       for (const label of ["任务", "Agent", "记忆", "设置", "首页"]) {
         await nav.getByRole("button", { name: label, exact: true }).tap();
         await nav.waitFor();
@@ -96,7 +122,7 @@ for (const [width, preset] of [
           })
           .waitFor();
         const header = page
-          .locator("[data-loom-root-header]")
+          .locator("[data-loom-root-header], [data-slot=panel-header]")
           .filter({ visible: true });
         await header.waitFor();
         assert.equal(
@@ -138,10 +164,10 @@ for (const [width, preset] of [
               return [
                 css.fontSize,
                 css.lineHeight,
-                el.getBoundingClientRect().height >= 44,
+                el.getBoundingClientRect().height,
               ];
             }),
-            ["14px", "18px", true],
+            ["13px", "18px", 32],
           );
           await select.tap();
           await page.getByRole("listbox").waitFor();
@@ -175,18 +201,18 @@ for (const [width, preset] of [
       const back = page.getByRole("button", { name: "聊天列表", exact: true });
       assert.equal(
         (await back.boundingBox()).height,
-        32,
-        "compact painted header action",
+        44,
+        "native mobile header action occupies a44px cell",
       );
       assert.equal(
         await back.evaluate((el) => {
           const r = el.getBoundingClientRect();
           return el.contains(
-            document.elementFromPoint(r.x - 4, r.y + r.height / 2),
+            document.elementFromPoint(r.x + 2, r.y + r.height / 2),
           );
         }),
         true,
-        "transparent 44px touch surface remains clickable",
+        "native 44px header cell remains clickable at its edge",
       );
       await back.tap();
       await nav.waitFor();
@@ -230,18 +256,25 @@ for (const [width, preset] of [
       assert.ok(
         await settingsBack.evaluate((el) => {
           const r = el.getBoundingClientRect();
-          return [-21, 21].every((x) =>
-            [-21, 21].every((y) =>
+          return (
+            r.width >= 44 &&
+            r.height >= 44 &&
+            [
+              [-21, 0],
+              [21, 0],
+              [0, -21],
+              [0, 21],
+            ].every(([x, y]) =>
               el.contains(
                 document.elementFromPoint(
                   r.x + r.width / 2 + x,
                   r.y + r.height / 2 + y,
                 ),
               ),
-            ),
+            )
           );
         }),
-        "header action has a full centered 44px touch surface in both themes",
+        "native rounded header action spans44px and accepts edge taps",
       );
       await page.getByRole("button", { name: "设置列表", exact: true }).tap();
       await nav.waitFor();
@@ -251,7 +284,16 @@ for (const [width, preset] of [
       const nav = page.getByRole("navigation", { name: "主导航" });
       for (const label of ["任务", "Agent", "记忆", "设置"]) {
         await nav.getByRole("button", { name: label, exact: true }).click();
-        await page.getByRole("heading", { name: label, exact: true }).waitFor();
+        await page
+          .getByTestId(
+            {
+              任务: "loom-tasks-page",
+              Agent: "loom-role-list",
+              记忆: "loom-memory-list",
+              设置: "settings-sidebar-list",
+            }[label],
+          )
+          .waitFor();
       }
     }
     assert.equal(

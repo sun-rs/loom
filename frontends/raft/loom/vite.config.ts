@@ -1,3 +1,5 @@
+import { adaptMessageStatus } from "./message-status-adaptation.ts";
+import { adaptMobileMessageDefault } from "./mobile-message-default.ts";
 import { pushWorkerPlugin } from "./push-worker-plugin.ts";
 import { adaptComposerDirectory } from "./composer-directory-adaptation.ts";
 import { adaptTimelineWindow } from "./timeline-window-adaptation.ts";
@@ -82,6 +84,8 @@ export default defineConfig({
           ),
       },
       transform(code, id) {
+        if (id.endsWith("/store/appearanceStore.ts"))
+          return { code: adaptMobileMessageDefault(code), map: null };
         if (id.endsWith("/components/message/MentionLink.tsx")) {
           const needle =
             "const viewerUserId = useAuthStore((s) => s.user?.id ?? null);";
@@ -182,7 +186,9 @@ export default defineConfig({
               adaptAttachmentMessage(
                 adaptTaskMessage(
                   adaptThreadItem(
-                    adaptMessageModelLabel(adaptMessageProfileNavigation(code)),
+                    adaptMessageModelLabel(
+                      adaptMessageStatus(adaptMessageProfileNavigation(code)),
+                    ),
                   ),
                 ),
               ),
@@ -258,7 +264,7 @@ export default defineConfig({
         )
           return resolve(import.meta.dirname, "MessageProfile.tsx");
         if (
-          /\/packages\/web\/src\/components\/message\/(MessageInput|MessageItem)\.tsx$/.test(
+          /\/packages\/web\/src\/components\/message\/MessageInput\.tsx$/.test(
             importer ?? "",
           ) &&
           /(?:^|\/)ui\/AvatarSlot(?:\.tsx)?$/.test(source)

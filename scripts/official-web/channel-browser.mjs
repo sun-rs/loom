@@ -1,3 +1,4 @@
+import { verifyMessageStatus } from "./message-status-browser.mjs";
 import { verifyPanelPolicy } from "./panel-policy-browser.mjs";
 import { verifyAgentProfile } from "./agent-profile-browser.mjs";
 import { verifyMessageMetrics } from "./message-metrics-browser.mjs";
@@ -395,6 +396,27 @@ try {
   } else if (process.env.LOOM_BROWSER_SLICE === "topbar") {
     console.log(
       JSON.stringify(await verifyTopbar({ browser, origin, channels })),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "message-status") {
+    for (const instance of instances)
+      await client.request("agent.manage", {
+        action: "set_state",
+        agentId: instance.agentId,
+        state: "disabled",
+        basedOnRoomSeq: await head(workspace.controlRoomId),
+        idempotencyKey: `message-status-disable-${instance.instanceId}`,
+      });
+    console.log(
+      JSON.stringify(
+        await verifyMessageStatus({
+          browser,
+          origin,
+          client,
+          channels,
+          instances,
+          head,
+        }),
+      ),
     );
   } else if (process.env.LOOM_BROWSER_SLICE === "message-metrics") {
     console.log(

@@ -1,6 +1,6 @@
 import { useComposerChannels } from "./ComposerDirectory.tsx";
 import { useIntentRoute, hasRouteBoundIntent } from "./useIntentRoute.ts";
-import { MessageProfileMembers } from "./MessageProfile.tsx";
+import { MessageProfileMembers, MessageStatusRoom } from "./MessageProfile.tsx";
 import {
   projectMentionMembers,
   projectMessageMentions,
@@ -139,62 +139,64 @@ export default function ChannelTimeline({
     />
   );
   return (
-    <MessageProfileMembers.Provider value={members}>
-      <MessageTimeline
-        ref={timeline}
-        onAtBottomChange={onAtBottomChange}
-        source={{
-          messages,
-          hasOlder,
-          hasNewer,
-          initialFocusMessageId: focusId,
-          sentinelAutoLoadBlockKey: focusId,
-          loading,
-          loadOlder,
-          loadNewer,
-        }}
-        renderItem={(message, index) => {
-          const system = systems[index];
-          if (system?.kind === "hide") return null;
-          if (system?.kind === "summary")
-            return (
-              <div
-                className="px-2 md:px-3"
-                style={{ contain: "layout style", overflow: "clip visible" }}
-              >
-                <ThreadPanelSystemMessageGroupDisclosure
-                  summary={system.content}
-                  expanded={expanded.has(system.groupId)}
-                  groupId={system.groupId}
-                  onToggleGroup={toggle}
+    <MessageStatusRoom.Provider value={roomId}>
+      <MessageProfileMembers.Provider value={members}>
+        <MessageTimeline
+          ref={timeline}
+          onAtBottomChange={onAtBottomChange}
+          source={{
+            messages,
+            hasOlder,
+            hasNewer,
+            initialFocusMessageId: focusId,
+            sentinelAutoLoadBlockKey: focusId,
+            loading,
+            loadOlder,
+            loadNewer,
+          }}
+          renderItem={(message, index) => {
+            const system = systems[index];
+            if (system?.kind === "hide") return null;
+            if (system?.kind === "summary")
+              return (
+                <div
+                  className="px-2 md:px-3"
+                  style={{ contain: "layout style", overflow: "clip visible" }}
                 >
-                  {system.messageIndexes.map((i) => (
-                    <Fragment key={messages[i]!.id}>
-                      {item(messages[i]!, i)}
-                    </Fragment>
-                  ))}
-                </ThreadPanelSystemMessageGroupDisclosure>
-              </div>
+                  <ThreadPanelSystemMessageGroupDisclosure
+                    summary={system.content}
+                    expanded={expanded.has(system.groupId)}
+                    groupId={system.groupId}
+                    onToggleGroup={toggle}
+                  >
+                    {system.messageIndexes.map((i) => (
+                      <Fragment key={messages[i]!.id}>
+                        {item(messages[i]!, i)}
+                      </Fragment>
+                    ))}
+                  </ThreadPanelSystemMessageGroupDisclosure>
+                </div>
+              );
+            return (
+              <>
+                {grouping.get(message.id)?.showDayDivider && (
+                  <DateDivider createdAt={message.createdAt} />
+                )}
+                <div
+                  className="px-2 md:px-3"
+                  style={{ contain: "layout style", overflow: "clip visible" }}
+                >
+                  {item(message, index)}
+                </div>
+              </>
             );
-          return (
-            <>
-              {grouping.get(message.id)?.showDayDivider && (
-                <DateDivider createdAt={message.createdAt} />
-              )}
-              <div
-                className="px-2 md:px-3"
-                style={{ contain: "layout style", overflow: "clip visible" }}
-              >
-                {item(message, index)}
-              </div>
-            </>
-          );
-        }}
-        className="h-full"
-        testId="loom-message-timeline"
-        persistKey={`loom-channel:${roomId}`}
-        sparseAnchor="top"
-      />
-    </MessageProfileMembers.Provider>
+          }}
+          className="h-full"
+          testId="loom-message-timeline"
+          persistKey={`loom-channel:${roomId}`}
+          sparseAnchor="top"
+        />
+      </MessageProfileMembers.Provider>
+    </MessageStatusRoom.Provider>
   );
 }

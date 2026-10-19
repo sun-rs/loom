@@ -1,0 +1,48 @@
+{
+  "source": {
+    "web": "v1.21.22",
+    "native": "botiverse/mobile@655975433b8492a8f4eef7bbce1b913140bc7485",
+    "reuse": "native Web Status/AvatarBadge; local icon-only adaptation and default-only mobile font selection; native code read only"
+  },
+  "rootCauses": [
+    "Labeled MobileNavItem justify-start and ::before selected sticker survived icon-only adaptation",
+    "Web default16 versus native mobile14, preserving explicit preference",
+    "Tasks title/content inherited vertical wrapper"
+  ],
+  "validation": {
+    "unitTests": 5,
+    "typecheck": "passed",
+    "build": "passed",
+    "statusBrowser": [390, 1440],
+    "navigationChromium": "passed",
+    "navigationWebKit": "passed",
+    "densityChromium": "8 cases passed",
+    "densityWebKit": "8 cases passed",
+    "inspector": "Desktop/mobile passed on diagnostic repeat; initial mention-send visibility timeout retained, no product change between runs and cause not established.",
+    "logsDirectory": "/Users/sun/.loom/reviews/2026-10-20-mobile-status"
+  },
+  "measurements": {
+    "mobileNavigation": {
+      "height": 50,
+      "icon": 22,
+      "buttonHeight": 44,
+      "equalHorizontalCenters": true,
+      "verticalCentered": true
+    },
+    "reading390x844": {
+      "header": 48,
+      "composer": 54,
+      "body": 693
+    },
+    "reading360x640": {
+      "body": 489
+    }
+  },
+  "limits": [
+    "No physical iPhone/iPad/Android, OS keyboard/safe area or PWA background verification",
+    "Status browser explicitly substitutes author/activity response fixtures over temporary Core; no paid providers",
+    "Activity is current-conversation scoped; idle is not online; unknown omitted",
+    "Explicit saved font size retained; fresh mobile default14, desktop16. No global scaling."
+  ],
+  "deployment": "pending"
+}

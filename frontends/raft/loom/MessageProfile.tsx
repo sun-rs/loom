@@ -1,3 +1,5 @@
+import { useLoomMessageState } from "./AppearanceRuntime.tsx";
+import { Status } from "raft-ui";
 export { boundMessageMentions } from "./member-roster.ts";
 import { projectMessageMentions } from "./member-roster.ts";
 import { createContext, useContext, useMemo } from "react";
@@ -9,6 +11,37 @@ import Tooltip from "../packages/web/src/components/ui/Tooltip.tsx";
 // Borrow the mounted timeline's authorized RoomSession projection, including
 // through native PreviewCard portals. Never hydrate a second upstream store.
 export const MessageProfileMembers = createContext<readonly Principal[]>([]);
+export const MessageStatusRoom = createContext<string | undefined>(undefined);
+export function useMessageInstanceState(agentId: string) {
+  return useLoomMessageState(useContext(MessageStatusRoom) ?? "", agentId);
+}
+export function MessageInstanceStatusDot({ agentId }: { agentId: string }) {
+  const state = useMessageInstanceState(agentId);
+  if (state === "unknown" || state === "left") return null;
+  const labels = {
+    working: "运行中",
+    waking: "排队或启动中",
+    idle: "空闲（无正在执行的工作）",
+    error: "执行错误",
+  };
+  const tones = {
+    working: "bg-presence-online",
+    waking: "bg-presence-busy",
+    idle: "bg-presence-offline",
+    error: "bg-danger",
+  };
+  return (
+    <Tooltip content={labels[state]}>
+      <Status
+        size="lg"
+        className={tones[state]}
+        aria-label={labels[state]}
+        data-testid="message-instance-status"
+        data-state={state}
+      />
+    </Tooltip>
+  );
+}
 export function useMessageMentionMap() {
   const members = useContext(MessageProfileMembers);
   return useMemo(() => projectMessageMentions(members), [members]);

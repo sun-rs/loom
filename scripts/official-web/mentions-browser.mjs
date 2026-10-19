@@ -75,7 +75,14 @@ export async function verifyMentions({
       await composer.fill(`@${name} FIXTURE mention ${viewport.width}`);
       await composer.press("Enter");
       const body = `@${name} FIXTURE mention ${viewport.width}`;
-      await page.getByText(body, { exact: true }).waitFor();
+      await page
+        .getByText(body, { exact: true })
+        .waitFor()
+        .catch(async (error) => {
+          await page.screenshot({ path: "/tmp/loom-message-send-failure.png" });
+          console.error(await page.locator("body").innerText());
+          throw error;
+        });
       const message = (
         await client.request("message.list", {
           roomId: channel.roomId,
@@ -170,10 +177,13 @@ export async function verifyMentions({
       await composer.waitFor();
       const agentAvatar = page.locator('[data-avatar-kind="agent"]').first();
       await agentAvatar.waitFor();
+      await agentAvatar.getByTestId("message-instance-status").waitFor();
       assert.equal(
-        await agentAvatar.locator('[data-slot="avatar-badge"]').count(),
-        0,
-        "no unbound offline badge on message avatars",
+        await agentAvatar
+          .getByTestId("message-instance-status")
+          .getAttribute("data-state"),
+        "idle",
+        "disabled fixture has no active work; not a fabricated online claim",
       );
       await agentAvatar.hover();
       await profile.waitFor();
