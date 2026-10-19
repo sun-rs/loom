@@ -21,6 +21,7 @@ import { ChannelTasksContext, useChannelTasks } from "./ChannelTasks.tsx";
 import { LazyTasksPage as TasksPage } from "./LazyPages.tsx";
 import ThreadContentSlot from "./ThreadContentSlot.tsx";
 import ThreadWorkspace from "./ThreadWorkspace.tsx";
+import { LazyComputersPage as ComputersPage } from "./LazyPages.tsx";
 import { LazySettingsPage as SettingsPage } from "./LazyPages.tsx";
 import ChannelControl from "./ChannelControl.tsx";
 import InstanceInspector from "./InstanceInspector.tsx";
@@ -684,6 +685,7 @@ export default function ChannelApp() {
       const next = new URLSearchParams(previous);
       for (const key of [
         "settings",
+        "computer",
         "task",
         "thread",
         "saved",
@@ -1311,9 +1313,26 @@ export default function ChannelApp() {
                         }
                       />
                     )}
+                  {destination === "computers" && (
+                    <ComputersPage
+                      client={client}
+                      selectedId={params.get("computer")}
+                      onSettings={() => selectDestination("settings")}
+                      onSelect={(id) => {
+                        if (hasRouteBoundIntent()) return;
+                        setParams((previous) => {
+                          const next = new URLSearchParams(previous);
+                          if (id) next.set("computer", id);
+                          else next.delete("computer");
+                          return next;
+                        });
+                      }}
+                    />
+                  )}
                   {destination === "settings" &&
                     directory?.workspace.controlRoomId && (
                       <SettingsPage
+                        onComputers={() => selectDestination("computers")}
                         tab={params.get("settings")}
                         onTab={(id) => {
                           if (hasRouteBoundIntent()) return;
@@ -1335,6 +1354,7 @@ export default function ChannelApp() {
                     "search",
                     "activity",
                     "settings",
+                    "computers",
                     "memory",
                     "tasks",
                   ].includes(destination) && (
@@ -1348,6 +1368,7 @@ export default function ChannelApp() {
             destination !== "search" &&
             destination !== "activity" &&
             !params.has("thread") &&
+            !(destination === "computers" && params.has("computer")) &&
             !(destination === "settings" && params.has("settings")) &&
             !(destination === "tasks" && params.has("task")) &&
             !(destination === "agents" && params.has("role")) &&

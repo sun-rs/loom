@@ -1,3 +1,4 @@
+import { verifyComputers } from "./computers-browser.mjs";
 import { verifyActivityMenu } from "./activity-menu-browser.mjs";
 import { verifyNavigationUnread } from "./navigation-unread-browser.mjs";
 import { verifyRoleModelLabels } from "./role-model-label-browser.mjs";
@@ -175,7 +176,9 @@ try {
   browser = await (
     process.env.LOOM_BROWSER_ENGINE === "webkit" ? webkit : chromium
   ).launch({ headless: true });
-  if (process.env.LOOM_BROWSER_SLICE === "settings-navigation") {
+  if (process.env.LOOM_BROWSER_SLICE === "computers") {
+    console.log(JSON.stringify(await verifyComputers({ browser, origin })));
+  } else if (process.env.LOOM_BROWSER_SLICE === "settings-navigation") {
     console.log(
       JSON.stringify(await verifySettingsNavigation({ browser, origin })),
     );

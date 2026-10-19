@@ -33,3 +33,7 @@ export const LazyDiscoveryPage = nativePage(
   () => import("./DiscoveryPage.tsx"),
 );
 export const LazySavedPanel = nativePage(() => import("./SavedPanel.tsx"));
+
+export const LazyComputersPage = nativePage(
+  () => import("./ComputersPage.tsx"),
+);

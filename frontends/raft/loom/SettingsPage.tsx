@@ -11,6 +11,7 @@ import { AppShellMainSlot, AppShellSidebarSlot, Panel } from "raft-ui";
 import {
   ChartNoAxesCombined,
   User,
+  Monitor,
   Type,
   Bell,
   Building2,
@@ -38,6 +39,7 @@ const categories = [
   {
     label: "工作空间",
     items: [
+      { id: "computers", label: "计算机", icon: Monitor },
       { id: "server", label: "运行设置", icon: Building2 },
       { id: "administration", label: "管理", icon: Shield },
       { id: "usage", label: "用量", icon: ChartNoAxesCombined },
@@ -58,11 +60,13 @@ export default function SettingsPage({
   controlRoomId,
   tab,
   onTab,
+  onComputers,
 }: {
   client: RahClient;
   workspaceId: string;
   controlRoomId: string;
   tab: string | null;
+  onComputers: () => void;
   onTab: (id: string | null) => void;
 }) {
   const panel = useResizablePanel({
@@ -89,7 +93,7 @@ export default function SettingsPage({
       id: item.id,
       label: item.label,
       icon: <item.icon size={14} className="shrink-0" />,
-      onClick: () => onTab(item.id),
+      onClick: () => (item.id === "computers" ? onComputers() : onTab(item.id)),
     })),
   }));
   return (

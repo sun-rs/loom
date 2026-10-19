@@ -114,12 +114,26 @@
         "scripts/official-web/settings-navigation-browser.mjs",
         "scripts/official-web/appearance-browser.mjs"
       ]
+    },
+    "computers": {
+      "source": "v1.21.22 app-shell-D1-nY-va.js $yt desktop row, zCt/RCt mobile panel, wZ status dot; MachineDetailPanel-C2oaC119.js header/profile/description/info; KeyValueRow-TXegGs9j.js",
+      "local": [
+        "loom/ComputersPage.tsx",
+        "loom/computers.ts",
+        "loom/Navigation.tsx",
+        "loom/SettingsPage.tsx",
+        "loom/ChannelApp.tsx"
+      ],
+      "adaptation": "Structural port, not byte-exact TSX. Official raft-ui list/card/header/badge/status primitives and native dimensions; existing Loom resizable panel owner and guarded URL navigation. Single authenticated host.runtime.list read owner, abort on leave, serial 15s polling. Fresh host observation determines connectivity; stale/missing/read failure shows unknown, independent from runtime discovery. Local read-only name/description/hostname/OS/build information. Cloud/remote add, upgrades, deletion, profile editing and upstream sessions/agents/disk sections omitted. Mobile entry under Settings, no extra bottom navigation tab. No backend changes.",
+      "checks": [
+        "scripts/official-web/computers.test.ts",
+        "scripts/official-web/computers-browser.mjs"
+      ]
     }
   },
   "pending": [
     "Remaining shared headers and action compositions",
     "Settings account/notification/about/administration content not yet audited against the entire latest composition; shell/sidebar/appearance migrated",
-    "Computers page",
     "Composer surrounding menus and suggestions not audited against full latest release",
     "Remaining channel settings content",
     "Activity thread follow/unfollow and conditional read controls (projection lacks follow state; unfollow currently removes canonical eligibility), alternate list layout/grouping (no complete server facet/group query) and mobile home unread bindings"

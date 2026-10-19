@@ -1,6 +1,7 @@
 import type { NavigationUnread } from "./navigation-unread.ts";
 import {
   Home,
+  Monitor,
   Activity,
   Brain,
   CheckSquare,
@@ -28,6 +29,7 @@ export const destinations = [
   { id: "activity", label: "动态", icon: Activity },
   { id: "tasks", label: "任务", icon: CheckSquare },
   { id: "agents", label: "Agent", icon: Users },
+  { id: "computers", label: "计算机", icon: Monitor },
   { id: "memory", label: "记忆", icon: Brain },
   { id: "settings", label: "设置", icon: Settings },
 ] as const;
@@ -82,7 +84,12 @@ export function DesktopNavigation({
 /** Same destinations on small screens using the official mobile navigation primitive in the shared floating host. */
 export function MobileNavigation({ active, onSelect }: NavigationProps) {
   const tabs = destinations
-    .filter((entry) => entry.id !== "search" && entry.id !== "activity")
+    .filter(
+      (entry) =>
+        entry.id !== "search" &&
+        entry.id !== "activity" &&
+        entry.id !== "computers",
+    )
     .map((entry) =>
       entry.id === "channels" ? { ...entry, label: "首页", icon: Home } : entry,
     );
@@ -95,9 +102,17 @@ export function MobileNavigation({ active, onSelect }: NavigationProps) {
       {tabs.map((entry) => (
         <MobileNavItem
           key={entry.id}
-          selected={active === entry.id}
+          selected={
+            active === entry.id ||
+            (active === "computers" && entry.id === "settings")
+          }
           aria-label={entry.label}
-          aria-current={active === entry.id ? "page" : undefined}
+          aria-current={
+            active === entry.id ||
+            (active === "computers" && entry.id === "settings")
+              ? "page"
+              : undefined
+          }
           onClick={() => onSelect(entry.id)}
         >
           <entry.icon />
