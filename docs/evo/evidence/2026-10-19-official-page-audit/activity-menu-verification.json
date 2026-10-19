@@ -1,0 +1,36 @@
+{
+  "codeCommit": "715ba29b",
+  "scope": "Official v1.21.22 Activity context menu read/unread/done and thread Done subset, structural port; not full activity parity",
+  "checks": {
+    "sourceTests": 8,
+    "typecheck": "passed",
+    "build": "passed; existing large-chunk warning",
+    "fixtureBrowser": [
+      "activity-menu:1440x844/390x844 DPR1, read does not complete, stale unread rejects, committed-but-lost Done response not resent, exact thread Done scope, placement, keyboard/Escape/outside dismissal and no accidental navigation",
+      "activity-navigation:1440x1000/390x844 DPR1, existing channel/thread/DM jumps, read frontier, highlighting and responsive return passed"
+    ],
+    "fixtureBoundary": "Peer unread rendering is simulated for the new menu fixture; writes and receipts use the temporary real Kernel. No Worker identity impersonation or paid provider.",
+    "liveBrowser": "Actual-service Chromium 1440x844/390x844 DPR1, open and Escape dismissal, viewport bounds, no page errors; both screenshots inspected. No real activity mutations issued. Physical iOS/Android long-press not tested.",
+    "formatAndDiff": "passed"
+  },
+  "deployment": {
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-activity-menu-f968001a-3725-4275-997c-408230e7c80c",
+    "databases": 2,
+    "files": 325,
+    "businessTablesUnchanged": 18,
+    "verified": true
+  },
+  "remaining": [
+    "Remaining shared headers and action compositions",
+    "Settings subpages",
+    "Computers page",
+    "Composer surrounding menus and suggestions not audited against full latest release",
+    "Remaining channel settings content",
+    "Activity thread follow/unfollow and conditional read controls (projection lacks follow state; unfollow currently removes canonical eligibility), alternate list layout/grouping (no complete server facet/group query) and mobile home unread bindings"
+  ],
+  "compatibilityNotes": [
+    "Official page je specifies width184, but official xA recipe min-w-60 yields 240px. Native size retained; placement now measures actual bounds to prevent mobile-edge clipping.",
+    "Thread read/follow controls omitted because current response lacks follow state. Official unfollow preserves row; current Kernel eligibility may remove it. No frontend duplicate history/projection added.",
+    "Grouping depends on complete server facets; not approximated by grouping a single loaded page."
+  ]
+}
