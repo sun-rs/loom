@@ -63,19 +63,45 @@ export async function verifyReactions({
 
       if (width === 1440) {
         await row.hover();
+        const icon = row.locator('[data-message-affordance="reaction"] svg');
+        assert.equal(await icon.getAttribute("width"), "18");
+        assert.equal(await icon.getAttribute("height"), "18");
         await row
           .locator('[data-message-affordance="reaction"]')
           .click({ timeout: 10000 });
       } else {
         await row.scrollIntoViewIfNeeded();
-        const box = await row
+        const cdp = await context.newCDPSession(page);
+        // Native selectable text owns text selection; long-press menus belong
+        // to the surrounding message surface. Pick an actual visible hit target.
+        const point = await row
           .locator('[data-slot="message-item"]')
           .first()
-          .boundingBox();
-        const cdp = await context.newCDPSession(page);
+          .evaluate((el) => {
+            const r = el.getBoundingClientRect();
+            for (
+              let y = Math.max(1, r.top + 2);
+              y < Math.min(innerHeight, r.bottom - 1);
+              y += 4
+            ) {
+              for (const x of [r.right - 3, r.left + 3, r.left + r.width / 2]) {
+                const hit = document.elementFromPoint(x, y);
+                if (
+                  hit &&
+                  el.contains(hit) &&
+                  !hit.closest(
+                    "[data-message-selectable='true'],button,a,[data-avatar-context]",
+                  )
+                )
+                  return { x, y };
+              }
+            }
+            return null;
+          });
+        assert.ok(point, "visible non-selectable message surface must exist");
         await cdp.send("Input.dispatchTouchEvent", {
           type: "touchStart",
-          touchPoints: [{ x: box.x + box.width - 8, y: box.y + 8 }],
+          touchPoints: [point],
         });
         await page.waitForTimeout(650);
         await cdp.send("Input.dispatchTouchEvent", {
@@ -86,7 +112,23 @@ export async function verifyReactions({
       const picker = page.locator(
         '[data-message-affordance="reaction-picker"], [data-message-affordance="reaction-quick-row"]',
       );
-      await picker.waitFor();
+      await picker.waitFor().catch(async (error) => {
+        await page.screenshot({
+          path: `/tmp/loom-reaction-failure-${width}.png`,
+        });
+        console.error(
+          JSON.stringify({
+            width,
+            errors,
+            expanded: await row
+              .locator('[data-message-affordance="reaction"]')
+              .getAttribute("aria-expanded", { timeout: 1000 })
+              .catch(() => null),
+            menus: await page.getByRole("menu").count(),
+          }),
+        );
+        throw error;
+      });
       let request;
       await page.route("**/v3/client/messages/react", async (route) => {
         request = route.request().postDataJSON();

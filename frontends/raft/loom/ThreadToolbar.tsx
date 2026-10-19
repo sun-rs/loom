@@ -17,14 +17,14 @@ export default function ThreadToolbar({
   return (
     <MessageItemToolbar
       data-message-affordance="toolbar"
-      className="right-2 max-md:right-0.5 pointer-events-auto"
+      className="pointer-events-auto"
     >
       <MessageItemToolbarButton
         onClick={onReplyInThread}
         aria-label={formatMessage({ id: "message.messageItem.replyInThread" })}
         data-message-affordance="thread"
       >
-        <ThreadIcon width={13} height={13} />
+        <ThreadIcon width={18} height={18} />
       </MessageItemToolbarButton>
     </MessageItemToolbar>
   );

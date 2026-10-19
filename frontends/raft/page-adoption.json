@@ -443,6 +443,33 @@
         "Pagination error composition is source/type/build verified, not a new end-to-end failure-injection acceptance.",
         "Hover preview shows authorized identity/description only; live runtime/activity is not fabricated."
       ]
+    },
+    "forms-role-list-message-toolbar": {
+      "source": "v1.21.22 app-shell-D1-nY-va.js fU 84144–84205 (FormField), mY 95590–95694 (StableField), lyt 164912–164962 (Agent row), member section 168590–168620, l7e 116255–116310 (MessageHoverToolbar). MachineDetailPanel-C2oaC119.js 2700–2728 checked against Loom runtime badges. Hashes in release-lock.json.",
+      "kind": "Structural port of official production compositions; existing raft-ui@0.6.0 owns recipes. Not byte-exact original TSX.",
+      "local": [
+        "packages/web/src/components/ui/FormField.tsx",
+        "packages/web/src/components/agent/StableField.tsx",
+        "packages/web/src/components/message/MessageHoverToolbar.tsx",
+        "loom/RoleWorkspace.tsx",
+        "loom/ThreadToolbar.tsx",
+        "loom/reaction-adaptation.ts"
+      ],
+      "adaptation": "Retain single-control adoption/error semantics, Loom immutable Role revisions and runtime catalog, frozen instance configuration, explicit reaction/save authority. Role uses static native section label (configuration, not per-Computer instance group); search and refresh remain existing Loom controls. No upstream agent store or independent DM action is enabled.",
+      "preserved": "Native field size/spacing/case and accessories, native section/count/action and sidebar row composition,18px message action icons and recipe-owned positioning/active color. Existing menus, keyboard, pending writes, coarse-pointer behavior and backend owners retained.",
+      "checks": [
+        "scripts/official-web/form-role-release.test.mjs",
+        "scripts/official-web/reactions.test.ts",
+        "scripts/official-web/management-browser.mjs",
+        "scripts/official-web/reactions-browser.mjs",
+        "scripts/official-web/saved-browser.mjs",
+        "scripts/official-web/channel-settings-browser.mjs"
+      ],
+      "limits": [
+        "Role editor remains a Loom configuration form, not a byte-exact official Agent detail editor.",
+        "Computer runtime badge composition already matches the native soft information/muted mapping; no changes to runtime discovery or unsupported upstream rescan/install/account actions.",
+        "No full-site parity claim; attachment/thread action compositions beyond the retained toolbar remain follow-up audit work."
+      ]
     }
   },
   "pending": [

@@ -1,5 +1,5 @@
 /**
- * Thin product adapter over RUI Field. It keeps the existing label/help/error
+ * v1.21.22 fU structural port (page-adoption.json): thin adapter over RUI Field. It keeps the existing label/help/error
  * call shape while delegating field semantics and theme styling to RUI.
  */
 
@@ -15,10 +15,6 @@ import {
   LabelOptional,
 } from "raft-ui";
 import { en } from "../../i18n/messages/en";
-
-const LABEL_BASE_DEFAULT = "text-sm";
-const LABEL_BASE_COMPACT = "text-xs";
-const LABEL_UPPERCASE = "uppercase tracking-wide";
 
 export type FormFieldProps = {
   /** Field label text. */
@@ -39,8 +35,7 @@ export type FormFieldProps = {
   labelAction?: ReactNode;
   /** `<label htmlFor>` — point at the inner control's `id`. */
   htmlFor?: LabelHTMLAttributes<HTMLLabelElement>["htmlFor"];
-  /** Label case style. `"uppercase"` (default) matches the dialog/settings
-   *  convention. `"plain"` matches the auth-page convention. */
+  /** Retained for caller compatibility; current native FieldLabel owns case. */
   labelStyle?: "uppercase" | "plain";
   /** Label size. `"compact"` selects the denser settings form treatment. */
   size?: "default" | "compact";
@@ -60,7 +55,7 @@ export default function FormField({
   labelAccessory,
   labelAction,
   htmlFor,
-  labelStyle = "uppercase",
+
   size = "default",
   className,
   children,
@@ -69,14 +64,12 @@ export default function FormField({
   // without an IntlProvider; keep that path human-readable instead of throwing.
   const intl = useContext(IntlContext);
   const optionalLabel = intl?.formatMessage({ id: "ui.formField.optional" }) ?? en["ui.formField.optional"];
-  const base = size === "compact" ? LABEL_BASE_COMPACT : LABEL_BASE_DEFAULT;
-  const labelTextCls = `${base} ${labelStyle === "uppercase" ? LABEL_UPPERCASE : ""}`.trim();
-  const labelCls = `mb-1 block ${labelTextCls}`;
+  const fieldSize = size === "compact" ? "sm" : "md";
   const wrapperCls = className ? className : undefined;
   const hasLabelRow = Boolean(labelAccessory || labelAction);
   const labelElement = (
     <FieldLabel
-      className={hasLabelRow ? labelTextCls : labelCls}
+      size={fieldSize}
       htmlFor={htmlFor}
     >
       {label}
@@ -89,7 +82,7 @@ export default function FormField({
   return (
     <Field className={wrapperCls} invalid={Boolean(error)}>
       {hasLabelRow ? (
-        <div className="mb-1 flex items-center gap-1">
+        <div className="flex items-center gap-1">
           {labelElement}
           {labelAccessory}
           {labelAction ? <span className="ml-auto flex">{labelAction}</span> : null}
@@ -97,11 +90,11 @@ export default function FormField({
       ) : labelElement}
       {children}
       {error ? (
-        <FieldError className="mt-1" role="alert" match={Boolean(error)}>
+        <FieldError role="alert" match={Boolean(error)}>
           {error}
         </FieldError>
       ) : hint ? (
-        <FieldDescription className="mt-1">{hint}</FieldDescription>
+        <FieldDescription>{hint}</FieldDescription>
       ) : null}
     </Field>
   );

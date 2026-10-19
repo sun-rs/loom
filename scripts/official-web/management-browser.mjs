@@ -22,6 +22,10 @@ export async function verifyManagement({
       serviceWorkers: "block",
     });
     const page = await context.newPage();
+    const section = (label) =>
+      page
+        .locator("[data-section-handle]")
+        .filter({ has: page.getByText(label, { exact: true }) });
     const errors = [];
     page.on("pageerror", (e) => errors.push(e.message));
     await page.route("**/*", (route) =>
@@ -38,6 +42,15 @@ export async function verifyManagement({
     await page.getByRole("button", { name: "新建角色", exact: true }).click();
     let dialog = page.getByRole("dialog");
     const name = `BrowserRole${viewport.width}`;
+    const labelStyle = await dialog
+      .locator('[data-slot="field-label"]')
+      .first()
+      .evaluate((el) => ({
+        transform: getComputedStyle(el).textTransform,
+        margin: getComputedStyle(el).marginBottom,
+      }));
+    assert.equal(labelStyle.transform, "none");
+    assert.equal(labelStyle.margin, "0px");
     await dialog.getByLabel("名称", { exact: true }).fill(name);
     await dialog
       .getByLabel("角色 Prompt", { exact: true })
@@ -298,7 +311,7 @@ export async function verifyManagement({
     await showChatList(page);
     await page
       .locator('[data-sidebar-section="channels"]')
-      .getByRole("button", { name: "频道", exact: true })
+      .locator("[data-section-handle]")
       .click({ button: "right" });
     await page.getByRole("menuitem", { name: "新建分组", exact: true }).click();
     const groupName = `BrowserGroup${viewport.width}`;
@@ -411,9 +424,7 @@ export async function verifyManagement({
       ).preferences.channelSortMode,
       "recent",
     );
-    await page
-      .getByRole("button", { name: groupName, exact: true })
-      .click({ button: "right" });
+    await section(groupName).click({ button: "right" });
     await page
       .getByRole("menuitem", { name: "重命名分组", exact: true })
       .click();
@@ -470,7 +481,7 @@ export async function verifyManagement({
     };
     const customId = `custom:${(await client.request("sidebar.get", { workspaceId: workspace.workspaceId })).preferences.customSections.find((g) => g.name === `${groupName}Renamed`).id}`;
     await drag(
-      page.getByRole("button", { name: `${groupName}Renamed`, exact: true }),
+      section(`${groupName}Renamed`),
       page.locator('[data-sidebar-section="channels"] [data-section-handle]'),
     );
     await page.waitForFunction((id) => {
@@ -499,12 +510,7 @@ export async function verifyManagement({
         `[data-sidebar-section="${customId}"] [data-channel-row="${created.roomId}"]`,
       )
       .waitFor();
-    await page
-      .getByRole("button", {
-        name: `${groupName}Renamed`,
-        exact: true,
-      })
-      .click({ button: "right" });
+    await section(`${groupName}Renamed`).click({ button: "right" });
     await page.getByRole("menuitem", { name: "删除分组", exact: true }).click();
     await dialog
       .getByRole("button", { name: "确认删除分组", exact: true })

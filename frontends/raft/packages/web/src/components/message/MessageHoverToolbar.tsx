@@ -48,14 +48,8 @@ export function MessageHoverToolbar({
   return (
     <MessageItemToolbar
       data-message-affordance="toolbar"
-      // #6297 (task #477/task #532): keep the toolbar hit-testable while invisible so
-      // hovering its upper half across the row boundary does not drop row hover.
-      // Right edge rides the header action line (measured): wide elegant wants
-      // 8 from the row's padding box (`right-2`); narrow elegant 2
-      // (`max-md:right-0.5`). Brutal's narrow row wraps the padding box in
-      // mx-3+border+px-1.5, pulling the anchor 8 further left — the extra
-      // override lands the same line (−6 from that padding box).
-      className={`right-2 max-md:right-0.5 max-md:[[data-theme=brutal]_&]:-right-1.5 pointer-events-auto ${reactionActive ? "!opacity-100" : ""}`}
+      // v1.21.22 l7e: native toolbar recipe owns position and active states.
+      className="pointer-events-auto"
     >
       {!hideThreadActions && (
         <MessageItemToolbarButton
@@ -63,7 +57,7 @@ export function MessageHoverToolbar({
           aria-label={formatMessage({ id: "message.messageItem.replyInThread" })}
           data-message-affordance="thread"
         >
-          <ThreadIcon width={13} height={13} />
+          <ThreadIcon width={18} height={18} />
         </MessageItemToolbarButton>
       )}
       {!isSystem && canReact && (
@@ -74,7 +68,7 @@ export function MessageHoverToolbar({
           data-popup-open={reactionActive ? "" : undefined}
           data-message-affordance="reaction"
         >
-          <SmilePlus size={13} strokeWidth={2} />
+          <SmilePlus size={18} strokeWidth={2} />
         </MessageItemToolbarButton>
       )}
       <MessageItemToolbarButton
@@ -82,9 +76,8 @@ export function MessageHoverToolbar({
         onClick={onToggleSave}
         aria-label={isSaved ? formatMessage({ id: "message.messageItem.removeFromSaved" }) : formatMessage({ id: "message.messageItem.saveMessage" })}
         data-message-affordance="bookmark"
-        className={isSaved ? "data-active:text-accent-strong data-active:hover:text-accent-strong  " : undefined}
       >
-        <Bookmark size={13} fill={isSaved ? "currentColor" : "none"} />
+        <Bookmark size={18} fill={isSaved ? "currentColor" : "none"} />
       </MessageItemToolbarButton>
     </MessageItemToolbar>
   );

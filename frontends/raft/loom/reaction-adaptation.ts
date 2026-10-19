@@ -88,7 +88,7 @@ export function adaptReactionToolbar(source: string) {
   );
   return replace(
     code,
-    '        <Bookmark size={13} fill={isSaved ? "currentColor" : "none"} />\n      </MessageItemToolbarButton>',
-    '        <Bookmark size={13} fill={isSaved ? "currentColor" : "none"} />\n      </MessageItemToolbarButton>}',
+    '        <Bookmark size={18} fill={isSaved ? "currentColor" : "none"} />\n      </MessageItemToolbarButton>',
+    '        <Bookmark size={18} fill={isSaved ? "currentColor" : "none"} />\n      </MessageItemToolbarButton>}',
   );
 }

@@ -5,7 +5,7 @@ export async function verifySidebarInteractions(page) {
   const sidebar = page.getByTestId("public-server-channel-sidebar-root");
   const heading = page
     .locator('[data-sidebar-section="channels"]')
-    .getByRole("button", { name: "频道", exact: true });
+    .locator("[data-section-handle]");
   // Composer geometry is measured in detail, then sidebar controls in the root.
   if (
     page.viewportSize().width < 768 &&

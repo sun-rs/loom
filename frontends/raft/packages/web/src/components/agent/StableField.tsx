@@ -11,11 +11,9 @@
  *    `Field` supplies the internal rhythm (`gap-1.5`) but not a held-open row,
  *    so the row is rendered always and merely made `invisible` when empty
  *    (not unmounted — nothing shifts, and the live region survives).
- *    Reserved at two lines because the inline name error already wraps to two
- *    at 390px; one line still let the error state push the dialog 16px taller.
+ *    The current source reserves one line and allows wrapped errors to grow.
  *
- * 2. **Keep the dialog's uppercase label convention**, which is page styling
- *    rather than anything the library should know about.
+ * 2. Keep the native FieldLabel typography and accessory composition.
  *
  * `FieldControl` adopts the control passed as `children` via `render`, so id,
  * `aria-describedby` and `aria-invalid` are wired by the library instead of by
@@ -113,7 +111,7 @@ export function FieldSelectTrigger({ children, ...props }: React.ComponentProps<
   );
 }
 
-const LABEL_CLS = "text-sm font-bold text-foreground-strong uppercase tracking-wide";
+// v1.21.22 mY: native FieldLabel owns typography; see page-adoption.json.
 
 export default function StableField({
   label, required, optional, hint, error, counter, labelAccessory, belowControl, adopt = true, layout = "stacked", htmlFor, className, children,
@@ -236,11 +234,11 @@ export default function StableField({
       <div className={layout === "row" ? "flex items-center justify-between gap-3" : "contents"}>
       {labelAccessory ? (
         <div className="flex items-center gap-2">
-          <FieldLabel {...(optional ? { optional } : {})} className={LABEL_CLS} htmlFor={htmlFor}>{label}{required ? <LabelAsterisk className="ml-1 text-danger-strong " /> : null}</FieldLabel>
-          {labelAccessory}
+          <FieldLabel {...(optional ? { optional } : {})} htmlFor={htmlFor}>{label}{required ? <LabelAsterisk className="ml-1" /> : null}</FieldLabel>
+          <span data-slot="field-label-accessory" className="-my-[7px] ml-auto flex items-center gap-1">{labelAccessory}</span>
         </div>
       ) : (
-        <FieldLabel {...(optional ? { optional } : {})} className={LABEL_CLS} htmlFor={htmlFor}>{label}{required ? <LabelAsterisk className="ml-1 text-danger-strong " /> : null}</FieldLabel>
+        <FieldLabel {...(optional ? { optional } : {})} htmlFor={htmlFor}>{label}{required ? <LabelAsterisk className="ml-1" /> : null}</FieldLabel>
       )}
 
       {control ? (
@@ -293,13 +291,13 @@ export default function StableField({
       {/* A plain element, deliberately not `FieldDescription` — see `messageId`
           above. `data-slot="field-description"` is kept so the slot still names
           what this row is for anything selecting on it. */}
-      <div id={messageId} data-slot="field-description" className="text-xs">
+      <div id={messageId} data-slot="field-description" className="text-caption">
         {/* One line reserved, not two. Per cindyz: reserve a single line and let
             the dialog grow when a message genuinely wraps, rather than paying two
             lines of empty space on every field to keep the height pinned. */}
         <span className="flex min-h-4 items-start gap-2">
           <span
-            className={`flex-1 ${message ? "" : "invisible"} ${error ? "font-bold text-danger-strong " : "text-foreground-muted "}`}
+            className={`min-w-0 flex-1 ${message ? "" : "invisible"} ${error ? "font-semibold text-danger-strong" : "text-foreground-hint"}`}
             role={error ? "alert" : undefined}
           >
             {/* Holds the line box open when empty, so the row keeps its height
@@ -307,7 +305,7 @@ export default function StableField({
             {message ?? " "}
           </span>
           {counter ? (
-            <span className="shrink-0 font-mono tabular-nums text-foreground-muted ">{counter}</span>
+            <span className="shrink-0 font-mono text-mono-meta tabular-nums text-foreground-hint">{counter}</span>
           ) : null}
         </span>
       </div>

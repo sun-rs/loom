@@ -6,7 +6,12 @@ import { useState, type ReactNode, type CSSProperties } from "react";
 import {
   AppShellMainSlot,
   AppShellSidebarSlot,
-  Button,
+  SidebarSectionHeader,
+  SidebarSectionDisclosure,
+  SidebarSectionCount,
+  SidebarSectionControl,
+  SidebarItemContent,
+  SidebarItemTitle,
   Input,
   SidebarItem,
   ConversationPanelTabs,
@@ -79,29 +84,25 @@ export default function RoleWorkspace({
           testIdPrefix="agent-sidebar"
           scrollTestId="loom-role-list"
         >
-          <div className="mb-2 flex items-center gap-1">
-            <span className="min-w-0 flex-1 text-xs font-bold uppercase tracking-widest">
-              角色
-            </span>
-            <Button
-              variant="ghost"
-              size="icon-xs"
+          <SidebarSectionHeader>
+            <SidebarSectionDisclosure render={<div />} type={undefined}>
+              角色 <SidebarSectionCount>{entries.length}</SidebarSectionCount>
+            </SidebarSectionDisclosure>
+            <SidebarSectionControl
               aria-label="刷新角色"
               disabled={busy}
               onClick={onRefresh}
             >
-              <RefreshCw size={14} />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon-xs"
+              <RefreshCw size={16} />
+            </SidebarSectionControl>
+            <SidebarSectionControl
               aria-label="新建角色"
               disabled={busy}
               onClick={onCreate}
             >
-              <Plus size={14} />
-            </Button>
-          </div>
+              <Plus size={16} />
+            </SidebarSectionControl>
+          </SidebarSectionHeader>
           <Input
             aria-label="筛选角色"
             placeholder="筛选角色"
@@ -131,9 +132,9 @@ export default function RoleWorkspace({
                 type="agent"
                 badge={<RolePresence state={entry.presence ?? "unknown"} />}
               />
-              <div className="flex min-w-0 flex-1 items-baseline gap-1 text-left">
-                <span className="min-w-0 truncate text-sm">{entry.name}</span>
-              </div>
+              <SidebarItemContent>
+                <SidebarItemTitle>{entry.name}</SidebarItemTitle>
+              </SidebarItemContent>
             </SidebarItem>
           ))}
         </Frame>
