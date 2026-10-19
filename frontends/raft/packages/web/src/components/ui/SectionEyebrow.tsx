@@ -1,29 +1,14 @@
 /**
- * Canonical section-eyebrow label — replaces the inline
- * `text-xs font-bold uppercase text-black/60 tracking-widest` pattern
- * that appears 40+ times across panels, dialogs, and list headers.
- *
- * stdrc 2026-05-11 #wg-theme:93c5897c assigned this to @Wug as the
- * next Tier 1 component after PanelHeader / AvatarSlot / AvatarListRow /
- * Banner. Per @Duoyu audit msg=cc6f5542 the eyebrow class string was the
- * single biggest repeated typographic pattern in the codebase.
- *
- * The component renders the locked typographic token and accepts:
- * - `as` — element type (`"span"` | `"div"` | `"label"`, default `"span"`)
- * - `className` — callsite-specific additions (margin, padding, bg, color)
- * - `htmlFor` — forwarded when `as="label"`
- * - `children` — label text
- *
- * Do NOT inline new section eyebrows — use this primitive instead.
- *
- * Default color is `text-black/60`. To get a fully-black eyebrow
- * (e.g. Sidebar section toggle, MachineDetailPanel running label),
- * pass `className="!text-black"` to override.
+ * Shared section label. Original Raft component retained; typography adopted
+ * from production v1.21.22 $U/wXe/TXe (see page-adoption.json).
+ * Use semantic hint/muted/ink tones, without legacy uppercase/tracking overrides.
  */
 
 import type { LabelHTMLAttributes, ReactNode } from "react";
 
-const BASE_CLASS = "text-xs font-bold uppercase text-foreground-muted tracking-widest";
+// v1.21.22 $U/wXe/TXe: native semantic typography; legacy uppercase prop is retained for caller compatibility only.
+const BASE_CLASS = "text-footnote font-bold";
+const TONES = {hint:"text-foreground-hint",muted:"text-foreground-muted",ink:"text-foreground"};
 
 export type SectionEyebrowProps = {
   /** HTML element to render. Default `"span"`. Use `"div"` for block-level
@@ -37,10 +22,9 @@ export type SectionEyebrowProps = {
   children?: ReactNode;
   /** When `as="label"`, forward to the `<label htmlFor>` attribute. */
   htmlFor?: LabelHTMLAttributes<HTMLLabelElement>["htmlFor"];
-  /** `false` renders the label in natural (source-string) case instead of
-   *  the legacy all-caps token (Artea 2026-08-05: all-caps hurts
-   *  readability). Default `true` keeps every existing callsite intact. */
+  /** Legacy caller compatibility only; native labels now preserve source case. */
   uppercase?: boolean;
+  tone?: keyof typeof TONES;
 };
 
 export default function SectionEyebrow({
@@ -48,9 +32,9 @@ export default function SectionEyebrow({
   className = "",
   children,
   htmlFor,
-  uppercase = true,
+  tone = "hint",
 }: SectionEyebrowProps) {
-  const cls = `${uppercase ? BASE_CLASS : BASE_CLASS.replace(" uppercase", "")} ${className}`.trim();
+  const cls = `${BASE_CLASS} ${TONES[tone]} ${className}`.trim();
   if (Tag === "label") {
     return (
       <label className={cls} htmlFor={htmlFor}>

@@ -113,7 +113,7 @@
     },
     "packages/web/src/components/ui/SectionHeader.tsx": {
       "upstreamSha256": "a8daaa15abf158e17d3f79883448097d5ec0733e4ba4b7fdad941fd74a9c4ad3",
-      "portedSha256": "2dc2e97d4c832eeda9cbd9c99962ceac5a7687de15bb2952eb8d55daaa518b52"
+      "portedSha256": "96b5a58ab98140558c990e78f9f32d2c077c9dfbd5153db8b79ba94a04106784"
     },
     "packages/web/src/components/ui/MenuItem.tsx": {
       "upstreamSha256": "8fa3cae7100a4455a0dd2e37cac473c128135ad5bcfdd57ad4e48e10091a5ab7",
@@ -170,7 +170,7 @@
     },
     "packages/web/src/components/settings/SettingsSidebarList.tsx": {
       "upstreamSha256": "e0a801018783acafe6ebfd9d248cffa04305ce3f0537023fcb113ec265656bd7",
-      "portedSha256": "3907fee3a7ad707e81873b9944a042194d6035da7a1d2c2ba6c522996d73b475"
+      "portedSha256": "3ffc9b3fdf0861066cfaa7375ba262d37ad7f5f537e047513c6913eac5fb074d"
     },
     "packages/web/src/components/settings/SlackBridgeSetupWizard.tsx": {
       "upstreamSha256": "077e667bd9a172fb4310a125b42584b8a5f3a6a23f00d359a86d21665b429471",
@@ -230,7 +230,7 @@
     },
     "packages/web/src/components/settings/SettingsPanel.tsx": {
       "upstreamSha256": "9506c7bbdf9854694621637dab2dcd44249f48d22b933bb3dc6f55ad0f114a23",
-      "portedSha256": "89f7778068107b4068585554b1a2c7f377825b06f601ebef0a9478bd28a203f5"
+      "portedSha256": "1cdc08d52ca9d589e8fdf43448950569cf88d0a612f59418ca46a60b8b96fab7"
     },
     "packages/web/src/components/settings/DeleteServerConfirmDialog.tsx": {
       "upstreamSha256": "0937746bce6efe23af7ea98c7ddf63da357d26703e08f4eef6bd377d1caaa97e",
@@ -869,6 +869,10 @@
       "upstreamSha256": "5f3aac22151688d533c52e1030aeee2dec967c6ddee8c17d46fb05c7094d3708",
       "portedSha256": "b5b7aff6f0a6e4e3d040ccb5f290b18617c896c23c60cc1266f9c164c2464f8c",
       "pageRelease": "v1.21.22 production TaskCard footer/focus, RailTabButton single-icon Attention composition; Loom domain binding retained"
+    },
+    "packages/web/src/components/ui/SectionEyebrow.tsx": {
+      "upstreamSha256": "9b02e2b953b3e8e20a67a3e1721d912c84652db2bf3e9f8bc242c691dffed254",
+      "portedSha256": "922cbaa34efd73a0b8696b999ff370a8dabdb2f1bb432e1c9738ad0b1ebbf283"
     }
   }
 }

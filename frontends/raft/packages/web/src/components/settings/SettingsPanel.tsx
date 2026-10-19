@@ -6606,24 +6606,19 @@ function AppearanceSection() {
 
   return (
     <div className="mb-6">
-      <Card className="mb-4 border-line-muted bg-layer-panel p-4 shadow-raft-sm    ">
+      <Card className="mb-6 p-4">
         <div className="mb-3">
-          <div className="text-sm font-bold text-foreground-strong">{formatMessage({ id: "settings.appearance.themeTitle" })}</div>
-          <p className="mt-1 text-xs text-foreground-muted">{formatMessage({ id: "settings.appearance.themeDescription" })}</p>
+          <div className="text-subhead font-semibold text-foreground">{formatMessage({ id: "settings.appearance.themeTitle" })}</div>
+          <p className="mt-1 text-footnote text-foreground-muted">{formatMessage({ id: "settings.appearance.themeDescription" })}</p>
         </div>
         <AppearanceThemeSettingsControl />
       </Card>
-      <div className="flex items-center gap-2 mb-3">
-        <Type size={16} className="text-foreground-muted" />
-        <span className="text-xs font-bold uppercase text-foreground-muted tracking-widest">
-          {formatMessage({ id: "settings.appearance.sectionLabel" })}
-        </span>
-      </div>
+      <SectionHeader className="mb-3" icon={<Type size={16} />} label={formatMessage({ id: "settings.appearance.sectionLabel" })} />
 
-      <Card className="border-line-muted bg-layer-panel shadow-raft-sm p-4 space-y-4    ">
+      <Card className="space-y-4 p-4">
         <div>
-          <div className="text-sm font-bold text-foreground-strong">{formatMessage({ id: "settings.appearance.messageFontSizeTitle" })}</div>
-          <p className="mt-1 text-xs text-foreground-muted">
+          <div className="text-subhead font-semibold text-foreground">{formatMessage({ id: "settings.appearance.messageFontSizeTitle" })}</div>
+          <p className="mt-1 text-footnote text-foreground-muted">
             {formatMessage({ id: "settings.appearance.messageFontSizeDescription" })}
           </p>
         </div>
@@ -6633,14 +6628,12 @@ function AppearanceSection() {
           onValueChange={setMessageBodyFontSize}
         />
 
-        <div className="text-[11px] font-bold text-foreground-muted">
+        <div className="text-caption text-foreground-hint">
           {formatMessage({ id: "settings.appearance.savedOnDevice" })}
         </div>
 
         <div className="space-y-2">
-          <div className="text-[10px] font-bold uppercase tracking-widest text-foreground-muted">
-            {formatMessage({ id: "settings.appearance.preview" })}
-          </div>
+          <SectionEyebrow as="div">{formatMessage({ id: "settings.appearance.preview" })}</SectionEyebrow>
           <div className="pointer-events-none -mx-2" aria-label={formatMessage({ id: "settings.appearance.fontSizePreviewAria" })}>
             <MessageItem
               message={previewMessage}
@@ -6653,16 +6646,16 @@ function AppearanceSection() {
         </div>
       </Card>
 
-      <Card className="mt-4 border-line-muted bg-layer-panel p-4 shadow-raft-sm    ">
-        <div className="flex items-start justify-between gap-4">
+      <Card className="mt-4 divide-y divide-line-muted">
+        <div className="flex min-h-11 items-start justify-between gap-4 px-4 py-3">
           <span className="min-w-0">
-            <span id="live-agent-activity-setting-label" className="block text-sm font-bold text-foreground-strong">
+            <span id="live-agent-activity-setting-label" className="block text-subhead font-semibold text-foreground">
               {formatMessage({ id: "settings.appearance.liveAgentActivityTitle" })}
             </span>
-            <span id="live-agent-activity-setting-description" className="mt-0.5 block text-xs leading-5 text-foreground-muted">
+            <span id="live-agent-activity-setting-description" className="mt-0.5 block text-footnote text-foreground-muted">
               {formatMessage({ id: "settings.appearance.liveAgentActivityDescription" })}
             </span>
-            <span className="mt-2 block text-[11px] font-bold text-foreground-muted">
+            <span className="mt-1 block text-caption text-foreground-hint">
               {formatMessage({ id: "settings.appearance.savedOnDevice" })}
             </span>
           </span>
@@ -6674,18 +6667,15 @@ function AppearanceSection() {
             className="mt-0.5 shrink-0"
           />
         </div>
-      </Card>
-
-      <Card className="mt-4 border-line-muted bg-layer-panel p-4 shadow-raft-sm    ">
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex min-h-11 items-start justify-between gap-4 px-4 py-3">
           <span className="min-w-0">
-            <span id="agent-model-name-setting-label" className="block text-sm font-bold text-foreground-strong">
+            <span id="agent-model-name-setting-label" className="block text-subhead font-semibold text-foreground">
               {formatMessage({ id: "settings.appearance.showAgentModelNameTitle" })}
             </span>
-            <span id="agent-model-name-setting-description" className="mt-0.5 block text-xs leading-5 text-foreground-muted">
+            <span id="agent-model-name-setting-description" className="mt-0.5 block text-footnote text-foreground-muted">
               {formatMessage({ id: "settings.appearance.showAgentModelNameDescription" })}
             </span>
-            <span className="mt-2 block text-[11px] font-bold text-foreground-muted">
+            <span className="mt-1 block text-caption text-foreground-hint">
               {formatMessage({ id: "settings.appearance.savedOnDevice" })}
             </span>
           </span>
@@ -6697,18 +6687,15 @@ function AppearanceSection() {
             className="mt-0.5 shrink-0"
           />
         </div>
-      </Card>
-
-      <Card className="mt-4 border-line-muted bg-layer-panel p-4 shadow-raft-sm    ">
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex min-h-11 items-start justify-between gap-4 px-4 py-3">
           <span className="min-w-0">
-            <span id="hide-empty-sidebar-sections-setting-label" className="block text-sm font-bold text-foreground-strong">
+            <span id="hide-empty-sidebar-sections-setting-label" className="block text-subhead font-semibold text-foreground">
               {formatMessage({ id: "settings.appearance.hideEmptySidebarSectionsTitle" })}
             </span>
-            <span id="hide-empty-sidebar-sections-setting-description" className="mt-0.5 block text-xs leading-5 text-foreground-muted">
+            <span id="hide-empty-sidebar-sections-setting-description" className="mt-0.5 block text-footnote text-foreground-muted">
               {formatMessage({ id: "settings.appearance.hideEmptySidebarSectionsDescription" })}
             </span>
-            <span className="mt-2 block text-[11px] font-bold text-foreground-muted">
+            <span className="mt-1 block text-caption text-foreground-hint">
               {formatMessage({ id: "settings.appearance.savedOnDevice" })}
             </span>
           </span>

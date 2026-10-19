@@ -1,6 +1,6 @@
 import FeedbackUnreadDot from "../../feedback/FeedbackUnreadDot";
 import type { ReactNode } from "react";
-import { SidebarItem } from "raft-ui";
+import { SidebarItem, SidebarGroupLabel, SidebarItemContent, SidebarItemTitle } from "raft-ui";
 
 export interface SettingsSidebarItem {
   id: string;
@@ -28,12 +28,10 @@ export default function SettingsSidebarList({
   activeId: string | null;
 }) {
   return (
-    <div className="space-y-3" data-testid="settings-sidebar-list">
+    <div data-testid="settings-sidebar-list">
       {groups.filter((group) => group.items.length > 0).map((group) => (
         <div key={group.label}>
-          <div className="mb-1 px-2 text-[10px] font-bold uppercase tracking-widest text-foreground-muted ">
-            {group.label}
-          </div>
+          <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
           {group.items.map((item) => {
             const selected = activeId === item.id;
             return (
@@ -51,7 +49,7 @@ export default function SettingsSidebarList({
                 data-testid={item.testId}
               >
                 {item.icon}
-                {item.label}
+                <SidebarItemContent className="items-center"><SidebarItemTitle>{item.label}</SidebarItemTitle></SidebarItemContent>
                 {item.id === "feedback" && <FeedbackUnreadDot className="ml-auto" />}
               </SidebarItem>
             );

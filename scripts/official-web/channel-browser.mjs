@@ -175,7 +175,11 @@ try {
   browser = await (
     process.env.LOOM_BROWSER_ENGINE === "webkit" ? webkit : chromium
   ).launch({ headless: true });
-  if (process.env.LOOM_BROWSER_SLICE === "activity-menu") {
+  if (process.env.LOOM_BROWSER_SLICE === "settings-navigation") {
+    console.log(
+      JSON.stringify(await verifySettingsNavigation({ browser, origin })),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "activity-menu") {
     console.log(
       JSON.stringify(
         await verifyActivityMenu({ browser, origin, client, workspace, head }),

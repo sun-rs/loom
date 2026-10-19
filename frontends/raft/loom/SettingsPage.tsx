@@ -83,7 +83,6 @@ export default function SettingsPage({
   const selected = categories
     .flatMap((group) => group.items)
     .find((item) => item.id === selectedId);
-  const Icon = selected?.icon ?? Building2;
   const groups = categories.map((group) => ({
     label: group.label,
     items: group.items.map((item) => ({
@@ -130,13 +129,11 @@ export default function SettingsPage({
         className={`min-w-0 md:flex ${tab ? "flex" : "hidden"}`}
       >
         <Panel
-          edge="attached"
-          className="flex min-h-0 flex-1 flex-col bg-layer-canvas-muted text-foreground-strong"
+          edge="inset"
+          className="flex min-h-0 flex-1 flex-col bg-layer-panel text-foreground"
         >
           <PanelHeader
             title={selected?.label ?? "设置不存在"}
-            icon={<Icon size={18} />}
-            iconBg="bg-primary-soft text-foreground-strong  "
             onMobileBack={() => onTab(null)}
             mobileBackProps={{ "aria-label": "设置列表" }}
           />
@@ -155,7 +152,7 @@ export default function SettingsPage({
             />
           </div>
           {selectedId !== "server" && (
-            <div className="flex-1 overflow-y-auto bg-layer-panel px-5 py-4 text-foreground-strong mobile-nav-clearance  ">
+            <div className="flex-1 overflow-y-auto bg-layer-panel px-4 py-4 text-foreground mobile-nav-clearance md:px-5">
               {selectedId === "notifications" ? (
                 <NotificationSettings client={client} />
               ) : selectedId === "release-notes" ? (

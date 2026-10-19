@@ -96,11 +96,29 @@
         "scripts/official-web/activity-menu-browser.mjs",
         "scripts/official-web/activity-navigation-browser.mjs"
       ]
+    },
+    "settings-composition": {
+      "source": "v1.21.22 app-shell-D1-nY-va.js hct settings sidebar, ypt settings detail shell, gpt appearance, e8 section header and $U/wXe/TXe section label",
+      "local": [
+        "loom/SettingsPage.tsx",
+        "packages/web/src/components/settings/SettingsSidebarList.tsx",
+        "packages/web/src/components/settings/SettingsPanel.tsx (AppearanceSection only)",
+        "packages/web/src/components/ui/SectionHeader.tsx",
+        "packages/web/src/components/ui/SectionEyebrow.tsx"
+      ],
+      "adaptation": "Native group label/item content/title composition, icon-free detail header, inset panel and mobile/desktop body padding; native appearance Card typography and one divided preference group. Existing Loom appearance stores, runtime draft persistence, read/write protection, mobile navigation and unsupported-setting omissions retained. Section label uppercase prop retained for caller compatibility but native source casing wins. No backend changes.",
+      "checks": [
+        "scripts/official-web/settings-release.test.mjs",
+        "scripts/official-web/appearance-adaptation.test.ts",
+        "scripts/official-web/settings-resource-adaptation.test.ts",
+        "scripts/official-web/settings-navigation-browser.mjs",
+        "scripts/official-web/appearance-browser.mjs"
+      ]
     }
   },
   "pending": [
     "Remaining shared headers and action compositions",
-    "Settings subpages",
+    "Settings account/notification/about/administration content not yet audited against the entire latest composition; shell/sidebar/appearance migrated",
     "Computers page",
     "Composer surrounding menus and suggestions not audited against full latest release",
     "Remaining channel settings content",

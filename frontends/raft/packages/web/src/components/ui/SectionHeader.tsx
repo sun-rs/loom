@@ -57,12 +57,12 @@ export default function SectionHeader({
     <div className={wrapperCls}>
       <div className="flex min-w-0 items-center gap-2">
         {icon ? (
-          <span className="shrink-0 text-foreground-muted ">{icon}</span>
+          <span className="shrink-0 text-foreground-hint">{icon}</span>
         ) : null}
         <SectionEyebrow as={eyebrowAs} htmlFor={htmlFor}>
           {label}
           {typeof count === "number" && count >= 0 ? (
-            <span className="ml-2 font-mono text-foreground-placeholder ">{count}</span>
+            <span className="ml-2 font-mono text-mono-meta font-normal text-foreground-hint">{count}</span>
           ) : null}
         </SectionEyebrow>
       </div>
