@@ -21,62 +21,16 @@ type ButtonPassthroughProps = HTMLAttributes<HTMLButtonElement> & Record<`data-$
 
 const NO_CONTAINER_PROPS: DivPassthroughProps = {};
 
-/**
- * Header chrome for profile surfaces (agent / human / external identity).
- * These headers sit directly in a route column (no panel frame), and also
- * wrap inside ProfilePanelBody in the overlay host — either way the
- * attached-panel divider never reaches them and the column background shows
- * through, so the tint + divider arrive on the header element itself via
- * containerProps (the slot merge lets a caller className replace the recipe's
- * bg-transparent / border-b-0 — pinned by header.chrome.test.ts).
- * Elegant-only: brutal headers already carry their 2px black rule from the
- * recipe, and must stay untouched. cindyz/gzj 2026-10-10, #737.
- */
-export const PROFILE_HEADER_SURFACE_CLASS =
-  "in-data-[theme=elegant]:bg-layer-canvas-muted in-data-[theme=elegant]:border-b in-data-[theme=elegant]:border-line-muted";
+/** Current official NW composition (v1.21.22). The recipe owns surface styling.
+ * Empty compatibility export keeps existing profile callers source-compatible. */
+export const PROFILE_HEADER_SURFACE_CLASS = "";
+export const PROFILE_HANDLE_SIZE_CLASS = "font-mono";
+const HEADER_ICON_TONE = {
+  location: "",
+  neutral: "border-transparent bg-fill-muted text-foreground-muted ring-0",
+} as const;
 
-/**
- * Profile handle size (cindyz 2026-10-10): the `@name` next to / under a
- * profile name reads at 15px in elegant — the same tier as the thread channel
- * suffix. Elegant-only; brutal keeps its own meta sizing. Used for the header
- * subtitle (via `subtitleClassName`) and the detail-block handle.
- */
-export const PROFILE_HANDLE_SIZE_CLASS =
-  // Handles are mono everywhere (cindyz 2026-10-10): the header subtitle now
-  // matches the creator row and the detail-block handle; brutal's meta was
-  // already mono. Size stays at the 15px note tier.
-  "in-data-[theme=elegant]:text-[15px] font-mono";
-
-/**
- * Canonical panel-header primitive — covers every panel column header
- * in the app (12 callsites: ChatPanel / AgentDetailPanel / HumanDetailPanel
- * / MachineDetailPanel / SettingsPanel / SavedPanel / ThreadsInbox /
- * MessageSearchPage / ReleaseNotesPanel / ThreadPanel × 2 instances).
- *
- * Captures the layout contract from CLAUDE.md "Layout Dimensions" —
- * h-[62px] header, 36px icon container, mobile back chevron, title +
- * optional subtitle, right-aligned actions slot.
- *
- * stdrc 2026-05-10 #wg-theme:220bdc61 ("可以开始了") and follow-up
- * 9b4579f8 ("你想想，能用同一个组件吗？") — Tier 1 audit candidate.
- * Same component, different prop combinations for each surface.
- *
- * **API design**:
- * - `iconBg` accepts a className token (e.g. `"bg-primary"`),
- *   not a raw color value. Future theme upgrades can swap the token
- *   map without touching call sites (Joy 2026-05-10 design API note).
- * - `titleSlot` replaces the H2+subtitle stack entirely — for
- *   non-text titles like the search input in MessageSearchPage.
- * - `titleSuffix` renders inline next to the H2 title — for status
- *   dots / activity indicators in ChatPanel / AgentDetailPanel
- *   that should NOT be truncated with the title text.
- * - `subtitleMultiline` allows subtitle to wrap (default: truncate
- *   to single line). Used by ChatPanel for channel descriptions.
- * - `containerProps` / `titleClickProps` / `mobileBackProps` allow
- *   callsites to pass `data-testid`, click handlers, or HTML title
- *   attributes through to specific elements without leaking the
- *   internal DOM structure into PanelHeader's API surface.
- */
+/** Shared official header; Loom's approved compact mobile grid is retained. */
 export interface AppPanelHeaderProps {
   /** Title — primary text or custom node. Wrapped in `<h2 truncate>`.
    *  Use `titleSlot` instead for non-text titles. */
@@ -101,18 +55,16 @@ export interface AppPanelHeaderProps {
   /** Optional icon node (e.g. `<Bookmark size={18} />`) — rendered
    *  inside the size-icon-header container, desktop-only (md:flex). */
   icon?: ReactNode;
-  /** ClassName for the icon container background. Defaults to
-   *  `bg-primary`. Pass tokens like `bg-info` for
-   *  agent/DM surfaces. */
-  iconBg?: string;
+  /** Semantic icon surface from the official header composition. */
+  iconTone?: "location" | "neutral";
   /** Pre-wrapped icon slot — bypasses the size-icon-header /
-   *  border-2 / iconBg wrapper. Pass elements that bring their own
+   *  native icon surface. Pass elements that bring their own
    *  container (e.g. `<AvatarSlot context="panel-header" ... />`).
    *  Mutually exclusive with `icon`. Honors the same visibility
    *  rules as `icon` (mobile hide unless `iconAlwaysVisible`). */
   iconSlot?: ReactNode;
   /** Marks what the icon slot holds. `"avatar"` declares an identity
-   *  avatar: the elegant chip background is dropped (recipe reads
+   *  avatar: the identity background is dropped (recipe reads
    *  `data-icon-kind="avatar"` → bg-transparent) so a round avatar
    *  does not sit on a square. Glyph icons keep the chip. */
   iconKind?: "avatar";
@@ -162,7 +114,7 @@ export default function AppPanelHeader({
   subtitleMultiline = false,
   subtitleClassName,
   icon,
-  iconBg = "bg-primary",
+  iconTone = "neutral",
   iconSlot,
   iconKind,
   iconAlwaysVisible = false,
@@ -236,11 +188,7 @@ export default function AppPanelHeader({
       )}
       {icon && (
         <PanelHeaderIcon
-          // Audit note (gzj 2026-10-10): the elegant override below is
-          // LOAD-BEARING — it neutralises caller `iconBg` tokens in elegant
-          // (tailwind-merge would otherwise let them win). Its value must stay
-          // in sync with panel-header.recipe's elegant headerIcon chip token.
-          className={`${iconVisibilityClass} ${iconBg} in-data-[theme=elegant]:border-0 in-data-[theme=elegant]:bg-fill-strong`}
+          className={`${iconVisibilityClass} ${HEADER_ICON_TONE[iconTone]}`}
         >
           {icon}
         </PanelHeaderIcon>

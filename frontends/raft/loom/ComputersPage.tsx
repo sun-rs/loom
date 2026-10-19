@@ -255,7 +255,7 @@ export default function ComputersPage({
           <PanelHeader
             title={selected ? name : "计算机"}
             icon={selected ? <Monitor size={18} /> : undefined}
-            iconBg="border-transparent bg-fill-muted text-foreground-muted ring-0"
+            iconTone="neutral"
             iconAlwaysVisible
             onMobileBack={() => onSelect(null)}
             mobileBackProps={{ "aria-label": "计算机列表" }}

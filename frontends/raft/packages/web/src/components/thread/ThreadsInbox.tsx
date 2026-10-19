@@ -1463,7 +1463,7 @@ export default function ThreadsInbox({ compactActivitySidebar = false }: {
         title={formatMessage({ id: "thread.header.title" })}
         subtitle={formatMessage({ id: "thread.header.subtitle" }, { activeCount: totalCount, unreadCount: totalUnreadCount })}
         icon={<Activity size={18} />}
-        iconBg="bg-primary-soft text-foreground-strong  "
+        iconTone="neutral"
         onMobileBack={onMobileBack}
         containerProps={headerContainerProps}
         titleClickProps={headerTitleClickProps}

@@ -236,7 +236,7 @@ export default function AboutFeedbackPanel() {
       <PanelHeader
         title={formatMessage({ id: "settings.about.feedbackTitle" })}
         icon={<MessageSquare size={18} />}
-        iconBg="bg-primary-soft text-foreground-strong  "
+        iconTone="neutral"
         containerProps={PANEL_HEADER_CONTAINER_PROPS}
         onMobileBack={isInbox ? onSettingsBack : undefined}
         mobileBackProps={mobileBackProps}

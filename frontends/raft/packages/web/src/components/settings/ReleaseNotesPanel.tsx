@@ -196,7 +196,7 @@ export default function ReleaseNotesPanel() {
       <PanelHeader
         title={formatMessage({ id: "settings.releaseNotes.title" })}
         icon={<FileText size={18} />}
-        iconBg="bg-primary-soft text-foreground-strong  "
+        iconTone="neutral"
         onMobileBack={onMobileBack}
       />
 

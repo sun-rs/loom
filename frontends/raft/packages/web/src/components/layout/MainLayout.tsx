@@ -623,7 +623,7 @@ function MemberGraphRoute() {
         title={formatMessage({ id: "layout.memberGraph.title" })}
         titleSuffix={<Badge.Experimental className="-translate-y-px" />}
         icon={<GitBranch size={18} />}
-        iconBg="bg-primary-soft text-foreground-strong  "
+        iconTone="neutral"
         onMobileBack={onMobileBack}
         mobileBackProps={mobileBackProps}
       />

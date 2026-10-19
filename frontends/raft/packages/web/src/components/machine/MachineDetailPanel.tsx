@@ -1214,7 +1214,7 @@ export default function MachineDetailPanel({
         <PanelHeader
           title={machine.name}
           icon={<Monitor size={18} />}
-          iconBg="bg-primary-soft  text-foreground-strong "
+          iconTone="neutral"
           iconAlwaysVisible
           onMobileBack={onMobileBack}
           mobileBackProps={mobileBackProps}

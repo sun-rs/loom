@@ -20,6 +20,15 @@ export async function verifyChromeRepair({
     await page.goto(`${origin}/?room=${channels[2].roomId}`);
     const settings = page.getByTestId("loom-channel-control-trigger");
     await settings.waitFor();
+    const chatIcon = page.locator(
+      '.loom-chat-header [data-slot="panel-header-icon"]',
+    );
+    assert.equal(await chatIcon.count(), 1);
+    assert.equal(
+      await chatIcon.evaluate((el) => el.classList.contains("bg-fill-muted")),
+      false,
+    );
+
     assert.equal(
       await page
         .getByRole("button", { name: "频道成员与状态", exact: true })
@@ -46,6 +55,17 @@ export async function verifyChromeRepair({
     if (viewport.width < 768)
       await page.getByTestId("computer-mobile-row").click();
     await page.getByTestId("computer-detail").waitFor();
+    const computerIcon = page
+      .locator('[data-slot="panel-header-icon"]')
+      .filter({ has: page.locator("svg.lucide-monitor") });
+    assert.equal(await computerIcon.count(), 1);
+    assert.equal(
+      await computerIcon.evaluate((el) =>
+        el.classList.contains("bg-fill-muted"),
+      ),
+      true,
+    );
+
     await page.getByTestId("machine-detected-runtimes").waitFor();
     const inventory = await client.request("host.runtime.list", {});
     assert.ok(inventory.computer.profileRevision !== undefined);

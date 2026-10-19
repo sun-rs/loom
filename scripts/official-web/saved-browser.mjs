@@ -67,15 +67,38 @@ export async function verifySaved({
         await row.locator('[data-message-affordance="bookmark"]').waitFor();
       } else {
         await row.scrollIntoViewIfNeeded();
-        const box = await row
-          .locator('[data-slot="message-item"]')
-          .first()
-          .boundingBox();
         const cdp = await context.newCDPSession(page);
         await page.waitForTimeout(500);
+        // Native selectable text owns text selection; long-press menus belong
+        // to the surrounding message surface. Pick an actual visible hit target.
+        const point = await row
+          .locator('[data-slot="message-item"]')
+          .first()
+          .evaluate((el) => {
+            const r = el.getBoundingClientRect();
+            for (
+              let y = Math.max(1, r.top + 2);
+              y < Math.min(innerHeight, r.bottom - 1);
+              y += 4
+            ) {
+              for (const x of [r.right - 3, r.left + 3, r.left + r.width / 2]) {
+                const hit = document.elementFromPoint(x, y);
+                if (
+                  hit &&
+                  el.contains(hit) &&
+                  !hit.closest(
+                    "[data-message-selectable='true'],button,a,[data-avatar-context]",
+                  )
+                )
+                  return { x, y };
+              }
+            }
+            return null;
+          });
+        assert.ok(point, "visible non-selectable message surface must exist");
         await cdp.send("Input.dispatchTouchEvent", {
           type: "touchStart",
-          touchPoints: [{ x: box.x + box.width - 8, y: box.y + 8 }],
+          touchPoints: [point],
         });
         await page.waitForTimeout(650);
         await cdp.send("Input.dispatchTouchEvent", {
@@ -92,7 +115,14 @@ export async function verifySaved({
       });
       if (width === 1440)
         await row.locator('[data-message-affordance="bookmark"]').click();
-      else await page.getByText("收藏消息", { exact: true }).click();
+      else {
+        try {
+          await page.getByText("收藏消息", { exact: true }).click();
+        } catch (error) {
+          await page.screenshot({ path: "/tmp/loom-saved-touch-failure.png" });
+          throw error;
+        }
+      }
       await page
         .getByText(/结果未知/)
         .first()
@@ -123,6 +153,14 @@ export async function verifySaved({
           .getByRole("button", { name: "聊天列表", exact: true })
           .click();
       await page.getByTestId("sidebar-saved-entry").click();
+      await page.getByTestId("saved-list-scroller").waitFor();
+      assert.equal(
+        await page
+          .locator('[data-slot="panel-header"] [data-slot="panel-header-icon"]')
+          .count(),
+        0,
+      );
+
       const card = page
         .getByTestId("saved-list-scroller")
         .getByRole("button")

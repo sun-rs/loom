@@ -318,6 +318,7 @@ function Channel({
                     }
                   : { "aria-label": "聊天列表" }
               }
+              iconTone="location"
               icon={
                 isPrivate ? <MessageSquare size={18} /> : <Hash size={18} />
               }

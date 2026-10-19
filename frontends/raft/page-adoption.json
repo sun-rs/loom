@@ -298,10 +298,27 @@
         "scripts/official-web/search-header-release.test.mjs",
         "scripts/official-web/topbar-browser.mjs"
       ]
+    },
+    "native-header-tones": {
+      "source": "Raft v1.21.22 af3d6ef4a22f0f05f5f9db9424285755d67e9726 app-shell NW/sZe/cZe (88865–88960), ChatPanel (178850–178870), MachineDetailPanel header, SavedPanel header",
+      "provenance": "Structural port from owner-authorized production bundle. Source notices retained; inherited inactive callers updated for prop compatibility only, not claimed individually accepted.",
+      "local": [
+        "packages/web/src/components/ui/PanelHeader.tsx",
+        "loom/ChannelApp.tsx",
+        "loom/ComputersPage.tsx",
+        "loom/SavedPanel.tsx"
+      ],
+      "adaptation": "Semantic location/neutral tones replace arbitrary iconBg; retired elegant selectors removed. Profile handle font-mono retained; empty surface export only preserves inherited imports. Chat explicitly location, computer neutral, saved header icon omitted per official composition. Existing compact mobile grid, back/actions and avatar identity preserved. Saved root uses native bg-layer-panel.",
+      "checks": [
+        "scripts/official-web/header-tone-release.test.mjs",
+        "scripts/official-web/channel-chrome-repair.test.mjs",
+        "scripts/official-web/chrome-repair-browser.mjs",
+        "scripts/official-web/saved-browser.mjs"
+      ]
     }
   },
   "pending": [
-    "Remaining shared headers and action compositions",
+    "Remaining retained page action compositions; shared header semantic tones/status/back and search header audited, with explicit owner-approved mobile layout adaptation.",
     "Channel settings upstream-only joint/guest/share/delete and expanded notification controls remain excluded; supported metadata/mute/archive paths migrated",
     "Activity thread follow/unfollow and conditional read controls (projection lacks follow state; unfollow currently removes canonical eligibility), grouping options (no complete server facet/group query) and mobile home unread bindings",
     "Browser push subscription/permission/test actions remain unavailable; notification capability view and About version surface now audited against locked v1.21.22."

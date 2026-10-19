@@ -27,7 +27,7 @@ export default function AgentUnavailablePanel({ onClose }: { onClose?: () => voi
         onMobileBack={onMobileBack}
         mobileBackProps={mobileBackProps}
         icon={<Bot size={18} />}
-        iconBg="bg-fill-muted text-foreground-strong  "
+        iconTone="neutral"
         actions={onClose ? (
           <Tooltip content={formatMessage({ id: "common.close" })}>
             <CloseButton

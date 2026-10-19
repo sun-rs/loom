@@ -6901,7 +6901,7 @@ export default function SettingsPanel({
         <PanelHeader
           title={activeLabel}
           icon={<ActiveIcon size={18} />}
-          iconBg="bg-primary-soft text-foreground-strong  "
+          iconTone="neutral"
           containerProps={headerContainerProps}
           onMobileBack={onMobileBack}
           mobileBackProps={mobileBackProps}

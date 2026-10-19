@@ -240,13 +240,11 @@ export default function SavedPanel({ embedded = false }: {
   }, [hasMore, loadMore, loading, saved.length]);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-layer-canvas-muted ">
+    <div className="flex min-h-0 flex-1 flex-col bg-layer-panel">
       {!embedded ? (
         <PanelHeader
           title={formatMessage({ id: "saved.header.title" })}
           subtitle={formatMessage({ id: "saved.header.subtitle" }, { count: savedTotal })}
-          icon={<Bookmark size={18} />}
-          iconBg="bg-primary-soft"
           onMobileBack={onMobileBack}
         />
       ) : null}

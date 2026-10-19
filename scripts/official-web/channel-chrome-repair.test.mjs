@@ -21,7 +21,7 @@ test("computer details retain native edit/runtime affordances and automatic desk
   assert.match(page, /ComputerProfile/);
   assert.match(page, /machine-detected-runtimes/);
   assert.match(page, /min-width: 768px/);
-  assert.match(page, /iconBg="border-transparent bg-fill-muted/);
+  assert.match(page, /iconTone="neutral"/);
 });
 
 test("settings opens without forced input focus or a redundant corner close; drawer members are flat", () => {
