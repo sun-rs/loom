@@ -1,0 +1,62 @@
+{
+  "date": "2026-10-19",
+  "codeCommit": "a6a58c632e6d88df3530bfba0374a9ea5be8449c",
+  "source": {
+    "release": "v1.21.22",
+    "revision": "af3d6ef4a22f0f05f5f9db9424285755d67e9726",
+    "locations": [
+      "AgentDetailPanel bi at299–405, il at10140–10233, tabs at10660–10687",
+      "app-shell Jo=lP PanelAction and Aa=vA ConversationPanelTabs exports"
+    ],
+    "reuse": "Structural port; single available tab uses native TabsList without reorder, runtime commands remain Loom-owned"
+  },
+  "implemented": [
+    "Native ConversationPanelTabs replaces obsolete underlined clipped inspector tab",
+    "Native PanelAction replaces custom-sized close and outlined runtime overflow trigger",
+    "Shared PanelResizeHandle only mounted for docked inspector at1024px and above"
+  ],
+  "verification": {
+    "tdd": "Two presentation regressions failed before fix and passed after",
+    "focusedChecks": 3,
+    "typecheck": "exit 0",
+    "build": "exit 0 at code commit",
+    "fixtureBrowser": "inspector slice passed1440x1000 and390x844: draft/focus, resize, scope/read failure recovery, usage dialog, partial/unknown usage, trajectory paging, runtime enable/stop, unknown exact verification and cancel; fake provider",
+    "realService": [
+      {
+        "width": 1440,
+        "phase": "after",
+        "errors": [],
+        "menuEscapeThenTabFocusedPanelEscape": true
+      },
+      {
+        "width": 390,
+        "phase": "after",
+        "errors": [],
+        "menuEscapeThenTabFocusedPanelEscape": true
+      }
+    ],
+    "realActions": "Open actual message author inspector; open/dismiss operation menu without selecting commands; focus activity tab then Escape closes panel; reopen and close via desktop X/mobile back",
+    "captureCorrection": "Initial second Escape while focus remained on native menu trigger did not close panel, even after menu unmount. Moving focus to activity tab then Escape passed. No native menu keyboard override introduced; original failed assumption retained here.",
+    "screenshots": "/Users/sun/.loom/reviews/2026-10-19-inspector-chrome",
+    "visuallyInspected": [
+      "before-inspector-390.png",
+      "after-inspector-390.png",
+      "after-inspector-1440.png",
+      "after-menu-390.png"
+    ]
+  },
+  "deployment": {
+    "verified": true,
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-inspector-chrome-8bc954b0-116f-4788-be5f-34485b5c09d8",
+    "databases": 2,
+    "files": 325,
+    "businessTablesUnchanged": 18,
+    "receipt": "/Users/sun/.loom/reviews/2026-10-19-inspector-chrome/restart-final.json"
+  },
+  "limits": [
+    "Native trigger retains keyboard handling; immediate repeated Escape from focused menu trigger is not claimed to close inspector",
+    "Loom runtime/branch diagnostics are product-specific content, not full upstream agent detail parity",
+    "Other retained page operations remain unaudited; no full-site completion claim",
+    "No authenticated official live-site pixel comparison, physical device test, paid CLI calls or backend changes"
+  ]
+}
