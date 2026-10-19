@@ -1,0 +1,31 @@
+{
+  "codeCommit": "3802059f",
+  "scope": "Official v1.21.22 settings sidebar/detail shell/appearance composition and shared section typography; structural port, not all settings content parity",
+  "checks": {
+    "sourceTests": 8,
+    "typecheck": "passed",
+    "build": "passed; existing large-chunk warning",
+    "fixtureBrowser": [
+      "settings-navigation:1440x1000/390x844 DPR1, category navigation, sidebar resize, mobile list/detail, runtime draft retention across tabs, keyboard selection, URL/reload/back",
+      "appearance:1440x1000/390x844 DPR1, light/dark/system, font preview and actual chat font, persistence, model/live activity/empty-section switches and overflow"
+    ],
+    "liveBrowser": "Actual-service Chromium 1440x844/390x844 DPR1: settings list, appearance detail, preference rows and mobile return. No page errors or horizontal overflow. Desktop/mobile screenshots inspected; no configuration writes or paid calls.",
+    "formatting": "Local adapter/tests/manifests checked; small upstream primitives retain upstream formatting conventions. Large SettingsPanel edited only in appearance function, no whole-file reformat. git diff --check passed."
+  },
+  "deployment": {
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-settings-composition-9e813075-6871-4720-b8fb-139cfa15eca6",
+    "databases": 2,
+    "files": 325,
+    "businessTablesUnchanged": 18,
+    "verified": true
+  },
+  "remaining": [
+    "Remaining shared headers and action compositions",
+    "Settings account/notification/about/administration content not yet audited against the entire latest composition; shell/sidebar/appearance migrated",
+    "Computers page",
+    "Composer surrounding menus and suggestions not audited against full latest release",
+    "Remaining channel settings content",
+    "Activity thread follow/unfollow and conditional read controls (projection lacks follow state; unfollow currently removes canonical eligibility), alternate list layout/grouping (no complete server facet/group query) and mobile home unread bindings"
+  ],
+  "computerAudit": "host.runtime.list already provides authenticated host/computer facts (name/hostname/OS/status/observation freshness/profile revision), independently from CLI availability. Native desktop list/detail and mobile Settings navigation need a dedicated mapping; no computer UI added in this batch."
+}
