@@ -1,3 +1,4 @@
+import ComputerProfile from "./ComputerProfile.tsx";
 // Structural port: locked Raft v1.21.22 $yt / zCt / MachineDetailPanel.
 // Loom owns only the authenticated local inventory read; no upstream machine store.
 import { useEffect, useState, type CSSProperties } from "react";
@@ -93,6 +94,14 @@ export default function ComputersPage({
       clearInterval(clock);
     };
   }, [client, reload]);
+  useEffect(() => {
+    if (
+      !selectedId &&
+      inventory &&
+      window.matchMedia("(min-width: 768px)").matches
+    )
+      onSelect(inventory.hostId);
+  }, [selectedId, inventory?.hostId, onSelect]);
   const computer = inventory?.computer;
   const name = computer?.displayName ?? "Loom 主机";
   const status = computerStatus(error ? undefined : computer, now);
@@ -223,6 +232,7 @@ export default function ComputersPage({
           <PanelHeader
             title={selected ? name : "计算机"}
             icon={selected ? <Monitor size={18} /> : undefined}
+            iconBg="border-transparent bg-fill-muted text-foreground-muted ring-0"
             iconAlwaysVisible
             onMobileBack={() => onSelect(null)}
             mobileBackProps={{ "aria-label": "计算机列表" }}
@@ -262,21 +272,51 @@ export default function ComputersPage({
                   )}
                 </div>
               </div>
-              <Separator />
-              <div className="px-5 py-4">
-                <SectionEyebrow className="mb-3">描述</SectionEyebrow>
-                <p
-                  className={`whitespace-pre-wrap text-callout ${computer?.description ? "text-foreground" : "text-foreground-hint"}`}
-                >
-                  {computer?.description || "暂无描述"}
-                </p>
-              </div>
+              {computer && (
+                <ComputerProfile
+                  key={inventory.hostId}
+                  client={client}
+                  hostId={inventory.hostId}
+                  computer={computer}
+                  onSaved={() => setReload((x) => x + 1)}
+                />
+              )}
               <Separator />
               <div className="px-5 py-4">
                 <SectionEyebrow className="mb-3">信息</SectionEyebrow>
                 <div className="space-y-3">
                   <Fact label="操作系统" value={computer?.os} />
                   <Fact label="版本" value={computer?.buildVersion} />
+                  <div data-testid="machine-detected-runtimes">
+                    <div className="mb-1 text-footnote font-medium text-foreground-hint">
+                      检测到的 CLI
+                    </div>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {inventory.runtimes.map((runtime, index) => (
+                        <Badge
+                          key={`${runtime.executable}-${index}`}
+                          appearance="soft"
+                          variant={runtime.available ? "information" : "muted"}
+                          title={
+                            runtime.resolvedExecutablePath ??
+                            runtime.failureCode
+                          }
+                        >
+                          {runtime.displayName}
+                          {runtime.version ? ` ${runtime.version}` : ""} ·{" "}
+                          {runtime.available ? "可用" : "不可用"}
+                        </Badge>
+                      ))}
+                    </div>
+                    {inventory.runtimes.length === 0 && (
+                      <p className="text-callout text-foreground-hint">
+                        暂无检测结果
+                      </p>
+                    )}
+                    <p className="mt-2 text-caption text-foreground-hint">
+                      安装或更新 CLI 后需重启服务重新检测；可用不代表已登录。
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>

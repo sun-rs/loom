@@ -1,13 +1,22 @@
 import TaskPermissionDialog from "./TaskPermissionDialog.tsx";
 import MemoryPolicyDialog from "./MemoryPolicyDialog.tsx";
 import { useRouteIntentOwner } from "./useIntentRoute.ts";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Button, Textarea } from "raft-ui";
-import { Brain, CheckSquare, CircleStop, Settings } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  Button,
+  Textarea,
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+  DrawerClose,
+  DrawerBody,
+} from "raft-ui";
+import { Brain, CheckSquare, CircleStop, Settings, X } from "lucide-react";
 import type { RoomExecutionReadResponse } from "@rah-os/protocol";
 import {
   OverflowMenuTrigger,
-  OverflowSheet,
   OverflowActionRow,
 } from "../packages/web/src/components/ui/OverflowSheet.tsx";
 import DialogCard from "../packages/web/src/components/ui/DialogCard.tsx";
@@ -22,7 +31,11 @@ export default function ChannelControl({
   name,
   workspaceId,
   controlRoomId,
+  members,
+  readOnly = false,
 }: {
+  readOnly?: boolean;
+  members: (close: () => void) => ReactNode;
   bridge: LoomChannelClient;
   name: string;
   workspaceId: string;
@@ -107,57 +120,85 @@ export default function ChannelControl({
       <div ref={trigger}>
         <OverflowMenuTrigger
           labelId="message.chatPanel.overflow.open"
-          icon={<Settings size={22} />}
+          icon={<Settings size={18} />}
           testId="loom-channel-control-trigger"
           onClick={() => setSheet(true)}
         />
       </div>
-      <OverflowSheet
-        open={sheet}
-        onOpenChange={setSheet}
-        title={`#${name}`}
-        descriptionId="message.chatPanel.overflow.open"
-        closeLabelId="message.chatPanel.overflow.close"
-        hideDesktopClose
-        testId="loom-channel-control-sheet"
-      >
-        <OverflowActionRow
-          icon={<CheckSquare size={14} />}
-          label="实例任务权限"
-          ariaLabel="实例任务权限"
-          onClick={() => {
-            setSheet(false);
-            setTaskPolicyOpen(true);
-          }}
-        />
-        <OverflowActionRow
-          icon={<Brain size={14} />}
-          label="记忆权限"
-          ariaLabel="频道记忆权限"
-          onClick={() => {
-            setSheet(false);
-            setMemoryOpen(true);
-          }}
-        />
-        {readError && <p role="alert">{readError}</p>}
-        <OverflowActionRow
-          icon={<CircleStop size={14} />}
-          label={
-            stopped
-              ? "恢复频道"
-              : stopping
-                ? "查看急停进度"
-                : "停止频道内所有实例"
-          }
-          ariaLabel="频道急停与恢复"
-          testId="channel-overflow-stop-agents"
-          onClick={() => {
-            setSheet(false);
-            setOpen(true);
-            setError("");
-          }}
-        />
-      </OverflowSheet>
+      <Drawer open={sheet} modal swipeDirection="right" onOpenChange={setSheet}>
+        <DrawerContent
+          data-testid="loom-channel-control-sheet"
+          className="inset-y-0 right-0 h-dvh w-full [--drawer-content-height:100dvh] [--drawer-inset:0px] flex-col"
+        >
+          <DrawerHeader className="flex-row justify-between">
+            <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-x-1.5">
+              <p className="col-start-1 row-start-2 text-caption text-foreground-hint">
+                频道
+              </p>
+              <DrawerTitle className="col-span-2 col-start-1 row-start-1 truncate">
+                频道设置
+              </DrawerTitle>
+              <DrawerDescription className="col-start-2 row-start-2 min-w-0 truncate font-mono text-mono-meta text-foreground-hint">
+                #{name}
+              </DrawerDescription>
+            </div>
+            <DrawerClose
+              render={
+                <Button
+                  size="icon-sm"
+                  variant="ghost"
+                  aria-label="关闭频道设置"
+                />
+              }
+            >
+              <X size={16} />
+            </DrawerClose>
+          </DrawerHeader>
+          <DrawerBody className="min-h-0 flex-1 overflow-y-auto">
+            {sheet && members(() => setSheet(false))}
+            {!readOnly && (
+              <>
+                <OverflowActionRow
+                  icon={<CheckSquare size={14} />}
+                  label="实例任务权限"
+                  ariaLabel="实例任务权限"
+                  onClick={() => {
+                    setSheet(false);
+                    setTaskPolicyOpen(true);
+                  }}
+                />
+                <OverflowActionRow
+                  icon={<Brain size={14} />}
+                  label="记忆权限"
+                  ariaLabel="频道记忆权限"
+                  onClick={() => {
+                    setSheet(false);
+                    setMemoryOpen(true);
+                  }}
+                />
+                {readError && <p role="alert">{readError}</p>}
+                <OverflowActionRow
+                  icon={<CircleStop size={14} />}
+                  label={
+                    stopped
+                      ? "恢复频道"
+                      : stopping
+                        ? "查看急停进度"
+                        : "停止频道内所有实例"
+                  }
+                  ariaLabel="频道急停与恢复"
+                  testId="channel-overflow-stop-agents"
+                  onClick={() => {
+                    setSheet(false);
+                    setOpen(true);
+                    setError("");
+                  }}
+                />
+              </>
+            )}
+          </DrawerBody>
+        </DrawerContent>
+      </Drawer>
       {taskPolicyOpen && (
         <TaskPermissionDialog
           bridge={bridge}

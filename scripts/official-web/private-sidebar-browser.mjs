@@ -103,7 +103,7 @@ export async function verifyPrivateSidebar({
   await showChatList(page);
   assert.equal(await row.count(), 0);
   await openChatRow(page, channel.roomId);
-  await page.getByRole("button", { name: "频道成员与状态" }).click();
+  await page.getByTestId("loom-channel-control-trigger").click();
   await page.getByRole("button", { name: `私聊 ${name}`, exact: true }).click();
   await page
     .getByRole("heading", { name: `私聊 · ${name}`, exact: true })

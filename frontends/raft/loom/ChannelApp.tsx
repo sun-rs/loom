@@ -61,7 +61,7 @@ import {
   Button,
   Spinner,
 } from "raft-ui";
-import { Hash, MessageSquare } from "lucide-react";
+import { Search, Hash, MessageSquare } from "lucide-react";
 import { HttpRahClient } from "@rah-os/client-sdk";
 import { hasUnresolvedIntents } from "@rah-os/client-core/write-intent";
 import { loadOrCreateConsumerId } from "@rah-os/client-core";
@@ -323,39 +323,61 @@ function Channel({
                   headerActions
                 ) : (
                   <>
-                    <ChannelMembers
-                      bridge={bridge}
-                      onOpenPrivate={onOpenPrivate}
-                      onOpenProfile={
-                        loading || error || !controlRoomId
-                          ? undefined
-                          : (id) => {
-                              if (
-                                hasUnresolvedIntents() ||
-                                error ||
-                                !controlRoomId
-                              )
-                                return;
-                              const member = view.members.find(
-                                (m) =>
-                                  m.kind === "agent" && m.principalId === id,
-                              );
-                              if (!member) return;
-                              opener.current =
-                                document.querySelector<HTMLElement>(
-                                  '[aria-label="频道成员与状态"]',
-                                );
-                              profileSnapshot.current = member;
-                              setProfileSource("channel");
-                              setProfileId(id);
-                            }
+                    <Button
+                      {...uiActionProps.panelIcon}
+                      aria-label="搜索聊天"
+                      onClick={() =>
+                        window.dispatchEvent(new Event("loom:open-search"))
                       }
-                      onAddInstance={
-                        channel.archivedAt ? undefined : onAddInstance
-                      }
-                    />
-                    {controlRoomId && !channel.archivedAt && (
+                    >
+                      <Search size={18} />
+                    </Button>
+                    {controlRoomId && (
                       <ChannelControl
+                        readOnly={!!channel.archivedAt}
+                        members={(closeMembers) => (
+                          <ChannelMembers
+                            bridge={bridge}
+                            onOpenPrivate={(id) => {
+                              closeMembers();
+                              onOpenPrivate(id);
+                            }}
+                            onOpenProfile={
+                              loading || error || !controlRoomId
+                                ? undefined
+                                : (id) => {
+                                    if (
+                                      hasUnresolvedIntents() ||
+                                      error ||
+                                      !controlRoomId
+                                    )
+                                      return;
+                                    const member = view.members.find(
+                                      (m) =>
+                                        m.kind === "agent" &&
+                                        m.principalId === id,
+                                    );
+                                    if (!member) return;
+                                    opener.current =
+                                      document.querySelector<HTMLElement>(
+                                        '[data-testid="loom-channel-control-trigger"]',
+                                      );
+                                    closeMembers();
+                                    profileSnapshot.current = member;
+                                    setProfileSource("channel");
+                                    setProfileId(id);
+                                  }
+                            }
+                            onAddInstance={
+                              channel.archivedAt || !onAddInstance
+                                ? undefined
+                                : () => {
+                                    closeMembers();
+                                    onAddInstance();
+                                  }
+                            }
+                          />
+                        )}
                         bridge={bridge}
                         name={channel.name}
                         workspaceId={channel.workspaceId}
@@ -534,7 +556,7 @@ function Channel({
               <div
                 data-testid="chat-composer-shell"
                 data-loom-composer-shell
-                className="relative flex min-w-0 w-full items-center border-t border-line-muted bg-layer-panel px-3 pt-3 safe-bottom   "
+                className="relative flex min-w-0 w-full items-center bg-layer-panel px-3 pt-3 safe-bottom   "
               >
                 <MessageInput
                   client={client}

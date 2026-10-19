@@ -120,11 +120,9 @@ for (const width of [1440, 390]) {
     page.on("pageerror", (e) => errors.push(e.message));
     page.setDefaultTimeout(12000);
     const openMenu = async () => {
+      await page.getByTestId("loom-channel-control-trigger").click();
       await page
-        .getByRole("button", { name: "频道成员与状态", exact: true })
-        .click();
-      await page
-        .getByTestId("loom-members-dialog")
+        .getByTestId("loom-channel-control-sheet")
         .getByRole("button", { name: /^Reviewer-1/ })
         .click();
       await page.getByTestId("profile-panel").waitFor();
@@ -245,15 +243,11 @@ for (const width of [1440, 390]) {
         "native side splitter changes width",
       );
       assert.ok(
-        await page
-          .getByRole("button", { name: "频道成员与状态", exact: true })
-          .isVisible(),
+        await page.getByTestId("loom-channel-control-trigger").isVisible(),
       );
     } else {
       assert.equal(
-        await page
-          .getByRole("button", { name: "频道成员与状态", exact: true })
-          .isVisible(),
+        await page.getByTestId("loom-channel-control-trigger").isVisible(),
         false,
       );
     }

@@ -35,7 +35,7 @@ export async function verifyInstanceCreation({
       })
     ).instances.filter((i) => i.channelId === channel.roomId);
     await openChannelWithHistory(page, origin, channel.roomId);
-    await page.getByRole("button", { name: "频道成员与状态" }).click();
+    await page.getByTestId("loom-channel-control-trigger").click();
     await page.route("**/v3/client/roles/list", (route) => route.abort());
     await page.getByRole("button", { name: "添加实例", exact: true }).click();
     const dialog = page.getByRole("dialog");
@@ -59,9 +59,10 @@ export async function verifyInstanceCreation({
     await dialog.waitFor({ state: "hidden" });
     await page.waitForFunction(
       () =>
-        document.activeElement?.getAttribute("aria-label") === "频道成员与状态",
+        document.activeElement?.getAttribute("data-testid") ===
+        "loom-channel-control-trigger",
     );
-    await page.getByRole("button", { name: "频道成员与状态" }).press("Enter");
+    await page.getByTestId("loom-channel-control-trigger").press("Enter");
     await page.getByRole("button", { name: "添加实例", exact: true }).click();
     await dialog
       .getByRole("button", { name: new RegExp(role.configuration.displayName) })
@@ -121,7 +122,7 @@ export async function verifyInstanceCreation({
     assert.ok(member);
     await page.goto(`${origin}/?room=${channel.roomId}`);
     await page.reload();
-    await page.getByRole("button", { name: "频道成员与状态" }).click();
+    await page.getByTestId("loom-channel-control-trigger").click();
     await page
       .getByRole("dialog")
       .getByText(member.displayName ?? member.handle, { exact: true })

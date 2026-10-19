@@ -140,11 +140,9 @@ for (const width of [1440, 390]) {
     assert.equal(Date.parse(input.to) - Date.parse(input.from), 7 * 86400000);
     await summary.getByRole("table").waitFor();
     await page.goto(gateway.origin + "/?room=" + f.home.roomId);
+    await page.getByTestId("loom-channel-control-trigger").click();
     await page
-      .getByRole("button", { name: "频道成员与状态", exact: true })
-      .click();
-    await page
-      .getByTestId("loom-members-dialog")
+      .getByTestId("loom-channel-control-sheet")
       .getByRole("button", { name: /^Reviewer-1/ })
       .click();
     await page.getByText(/当前会话累计压缩：未知/).waitFor();

@@ -542,7 +542,7 @@ export async function verifyActivityNavigation({
         const threadPane = page.getByTestId("thread-side-column");
         const draft = threadPane.getByTestId("composer-textarea");
         await draft.fill("FIXTURE retained thread draft");
-        await page.getByRole("button", { name: "频道成员与状态" }).click();
+        await page.getByTestId("loom-channel-control-trigger").click();
         await page
           .getByTestId("loom-channel-members")
           .getByText(member.agent.displayName ?? member.agent.handle, {
@@ -561,7 +561,7 @@ export async function verifyActivityNavigation({
           "Channel-sourced profile folds thread",
         );
         await page
-          .getByTestId("loom-members-dialog")
+          .getByTestId("loom-channel-control-sheet")
           .waitFor({ state: "detached" });
         await page.keyboard.press("Escape");
         await page.getByTestId("profile-panel").waitFor({ state: "detached" });

@@ -65,8 +65,12 @@ export default function TopBarSearch({
       e.preventDefault();
       open();
     };
+    window.addEventListener("loom:open-search", open);
     document.addEventListener("keydown", key);
-    return () => document.removeEventListener("keydown", key);
+    return () => {
+      document.removeEventListener("keydown", key);
+      window.removeEventListener("loom:open-search", open);
+    };
   }, [open]);
   // Match the native responsive rule: narrow screens use the real full search route.
   useEffect(() => {

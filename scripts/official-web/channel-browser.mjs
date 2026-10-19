@@ -1,3 +1,4 @@
+import { verifyChromeRepair } from "./chrome-repair-browser.mjs";
 import { verifyComputers } from "./computers-browser.mjs";
 import { verifyActivityMenu } from "./activity-menu-browser.mjs";
 import { verifyNavigationUnread } from "./navigation-unread-browser.mjs";
@@ -176,7 +177,13 @@ try {
   browser = await (
     process.env.LOOM_BROWSER_ENGINE === "webkit" ? webkit : chromium
   ).launch({ headless: true });
-  if (process.env.LOOM_BROWSER_SLICE === "computers") {
+  if (process.env.LOOM_BROWSER_SLICE === "chrome-repair") {
+    console.log(
+      JSON.stringify(
+        await verifyChromeRepair({ browser, origin, channels, client }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "computers") {
     console.log(JSON.stringify(await verifyComputers({ browser, origin })));
   } else if (process.env.LOOM_BROWSER_SLICE === "settings-navigation") {
     console.log(
@@ -696,9 +703,7 @@ try {
       await verifyChatBootstrap(page, origin, channels[0].roomId);
       await verifyMobileChatNavigation(page, channels[0].roomId);
       await openChatRow(page, channels[2].roomId);
-      const memberButton = page.getByRole("button", {
-        name: "频道成员与状态",
-      });
+      const memberButton = page.getByTestId("loom-channel-control-trigger");
       await memberButton.click();
       const memberDialog = page.getByRole("dialog");
       await memberDialog.getByText(instanceNames[0], { exact: true }).waitFor();
@@ -748,7 +753,7 @@ try {
       );
       await memberButton.press("Enter");
       await memberDialog.waitFor();
-      await page.getByRole("button", { name: "关闭成员列表" }).click();
+      await page.getByRole("button", { name: "关闭频道设置" }).click();
       await memberDialog.waitFor({ state: "hidden" });
       await memberButton.click();
       await memberDialog.waitFor();

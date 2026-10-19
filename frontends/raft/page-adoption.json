@@ -122,12 +122,29 @@
         "loom/computers.ts",
         "loom/Navigation.tsx",
         "loom/SettingsPage.tsx",
-        "loom/ChannelApp.tsx"
+        "loom/ChannelApp.tsx",
+        "loom/ComputerProfile.tsx"
       ],
-      "adaptation": "Structural port, not byte-exact TSX. Official raft-ui list/card/header/badge/status primitives and native dimensions; existing Loom resizable panel owner and guarded URL navigation. Single authenticated host.runtime.list read owner, abort on leave, serial 15s polling. Fresh host observation determines connectivity; stale/missing/read failure shows unknown, independent from runtime discovery. Local read-only name/description/hostname/OS/build information. Cloud/remote add, upgrades, deletion, profile editing and upstream sessions/agents/disk sections omitted. Mobile entry under Settings, no extra bottom navigation tab. No backend changes.",
+      "adaptation": "Structural port, not byte-exact TSX. Native list/detail/card/header and neutral icon tone; desktop defaults to local host, mobile retains list/back. Existing authenticated host.runtime.list read owner and freshness rules. Native inline name/description editors bind computer.profile.update with captured revision and WriteIntentSlot exact unknown replay; drafts protected. Detected CLI soft badges use actual available/version/path facts, not login or online inference. Remote add, upgrades, deletion and disk/session sections omitted. No backend changes.",
       "checks": [
         "scripts/official-web/computers.test.ts",
         "scripts/official-web/computers-browser.mjs"
+      ]
+    },
+    "chat-settings-drawer": {
+      "source": "v1.21.22 app-shell-D1-nY-va.js Lxt / Rxt settings Drawer, NW neutral header tone; MachineDetailPanel-C2oaC119.js inline name/description and detected runtimes; native ChannelMemberList",
+      "local": [
+        "loom/ChannelApp.tsx",
+        "loom/ChannelControl.tsx",
+        "loom/ChannelMembers.tsx",
+        "loom/TopBarSearch.tsx"
+      ],
+      "adaptation": "Native right DrawerContent dimensions/header/title/description/scroll body replaces old action sheet; member rows move inside it, member/add/private/profile callbacks close drawer first. Existing Loom task/memory/execution policies retained as local content; archived channels remain member-readable with control actions omitted. This is not all official settings content: channel metadata/notification/archive form still incomplete. Header search reuses TopBarSearch event handler, composer outer separator removed. No backend changes.",
+      "checks": [
+        "scripts/official-web/channel-chrome-repair.test.mjs",
+        "scripts/official-web/chrome-repair-browser.mjs",
+        "scripts/official-web/channel-controls-browser.mjs",
+        "scripts/official-web/instance-browser.mjs"
       ]
     }
   },

@@ -1,17 +1,6 @@
-import { uiActionProps } from "./ui-action-props.ts";
 import { useEffect, useState } from "react";
-import { Users, MessageSquare } from "lucide-react";
-import {
-  Button,
-  Dialog,
-  DialogTrigger,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogClose,
-  DialogBody,
-  Spinner,
-} from "raft-ui";
+import { MessageSquare } from "lucide-react";
+import { Button, Spinner } from "raft-ui";
 import {
   ChannelMemberListShell,
   ChannelMemberRow,
@@ -90,7 +79,7 @@ function MemberList({
   );
 }
 
-/** Official member rows and dialog primitive, without upstream agent stores or online inference. */
+/** Native member rows embedded in the channel settings drawer. */
 export default function ChannelMembers({
   bridge,
   onOpenPrivate,
@@ -102,52 +91,24 @@ export default function ChannelMembers({
   onOpenPrivate: (id: string) => void;
   onOpenProfile?: (id: string) => void;
 }) {
-  const [open, setOpen] = useState(false);
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger
-        render={
-          <Button {...uiActionProps.panelIcon} aria-label="频道成员与状态" />
-        }
-      >
-        <Users size={16} />
-      </DialogTrigger>
-      <DialogContent data-testid="loom-members-dialog">
-        <DialogHeader>
-          <DialogTitle>频道成员</DialogTitle>
-          <DialogClose aria-label="关闭成员列表" />
-        </DialogHeader>
-        <DialogBody>
-          <Button
-            {...uiActionProps.dialogSave}
-            className="mb-3"
-            disabled={!onAddInstance}
-            onClick={() => {
-              setOpen(false);
-              onAddInstance?.();
-            }}
-          >
-            添加实例
-          </Button>
-          {open && (
-            <MemberList
-              bridge={bridge}
-              onOpenProfile={
-                onOpenProfile
-                  ? (id) => {
-                      setOpen(false);
-                      onOpenProfile(id);
-                    }
-                  : undefined
-              }
-              onOpenPrivate={(id) => {
-                setOpen(false);
-                onOpenPrivate(id);
-              }}
-            />
-          )}
-        </DialogBody>
-      </DialogContent>
-    </Dialog>
+    <section>
+      <div className="mb-3 flex items-center justify-between">
+        <h3 className="text-callout font-semibold">成员</h3>
+        <Button
+          size="sm"
+          variant="ghost"
+          disabled={!onAddInstance}
+          onClick={onAddInstance}
+        >
+          添加实例
+        </Button>
+      </div>
+      <MemberList
+        bridge={bridge}
+        onOpenProfile={onOpenProfile}
+        onOpenPrivate={onOpenPrivate}
+      />
+    </section>
   );
 }

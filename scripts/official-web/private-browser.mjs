@@ -36,7 +36,7 @@ export async function verifyPrivateBoxes({
         : route.abort(),
     );
     await page.goto(`${origin}/?room=${channel.roomId}`);
-    await page.getByRole("button", { name: "频道成员与状态" }).click();
+    await page.getByTestId("loom-channel-control-trigger").click();
     const requests = [];
     let lost = false;
     await page.route("**/v3/client/rooms/direct/open", async (route) => {

@@ -24,11 +24,9 @@ export async function verifyBlockedWork(
     })
     .click();
   await openChatRow(page, roomId);
+  await page.getByTestId("loom-channel-control-trigger").click();
   await page
-    .getByRole("button", { name: "频道成员与状态", exact: true })
-    .click();
-  await page
-    .getByTestId("loom-members-dialog")
+    .getByTestId("loom-channel-control-sheet")
     .getByRole("button", { name: new RegExp(`^${name}`) })
     .click({ timeout: 5000 });
   await panel.waitFor({ timeout: 5000 }).catch(async (error) => {
