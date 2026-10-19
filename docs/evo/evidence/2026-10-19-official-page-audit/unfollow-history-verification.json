@@ -68,5 +68,50 @@
     "Browser tests use temporary real Kernel and injected lost responses; no paid CLI.",
     "Real page verification will not modify user follow/read preferences."
   ],
-  "deployment": "pending safe restart and fresh real-page checks"
+  "deployment": {
+    "sourceCommit": "1f7a80166dc769193191f5019328dd37b622b2dd",
+    "safeRestart": true,
+    "databasesBackedUp": 2,
+    "filesBackedUp": 325,
+    "businessTablesUnchanged": 20,
+    "schema": 90,
+    "oldRowsRetainedSeqAllNullVerified": true,
+    "realPage": [
+      {
+        "width": 1440,
+        "height": 844,
+        "deviceScaleFactor": 1,
+        "realThread": true,
+        "authoritativeFollowState": true,
+        "menuBounds": {
+          "x": 748,
+          "y": 574,
+          "width": 240,
+          "height": 120
+        },
+        "escapeDismiss": true,
+        "noMutations": true,
+        "pageErrors": []
+      },
+      {
+        "width": 390,
+        "height": 844,
+        "deviceScaleFactor": 1,
+        "realThread": true,
+        "authoritativeFollowState": true,
+        "menuBounds": {
+          "x": 142,
+          "y": 518,
+          "width": 240,
+          "height": 120
+        },
+        "escapeDismiss": true,
+        "noMutations": true,
+        "pageErrors": []
+      }
+    ],
+    "privateEvidence": "/Users/sun/.loom/reviews/2026-10-19-unfollow-history/",
+    "comparison": "Existing principal/thread/following columns compared exactly; added retained_seq separately verified NULL for all migrated rows. Existing read/done frontiers unchanged.",
+    "limits": "Real product menu/read checks only; no user-data mutation. Retention/refollow/done writes verified through temporary authenticated Core and restart tests."
+  }
 }
