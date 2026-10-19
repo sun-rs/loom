@@ -34,5 +34,45 @@
     "Browser viewport tests do not establish complete native-App or cross-site pixel equality.",
     "Existing parallel WebKit search timeout is separate historical unresolved evidence, not explained by this unload reproduction."
   ],
-  "privateEvidence": "~/.loom/reviews/2026-10-20-mobile-final/"
+  "privateEvidence": "~/.loom/reviews/2026-10-20-mobile-final/",
+  "productCommit": "44818d45",
+  "deployment": {
+    "productCommit": "44818d45",
+    "databases": 2,
+    "files": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true,
+    "buildId": "6ca49cd363bc328045de450e483ae0bee05814d9a6cd10936ad74760c008b7af",
+    "verified": true,
+    "readinessNote": "Initial40s ready check timed out; process subsequently became healthy without another restart. Backup and20 business table hashes reverified."
+  },
+  "formal": {
+    "results": [
+      {
+        "name": "appearance",
+        "width": 390,
+        "noOverflow": true
+      },
+      {
+        "name": "notifications",
+        "width": 390,
+        "noOverflow": true
+      },
+      {
+        "name": "tasks",
+        "width": 390,
+        "noOverflow": true
+      },
+      {
+        "name": "memory",
+        "width": 390,
+        "noOverflow": true
+      }
+    ],
+    "errors": [],
+    "failures": [],
+    "assets": ["http://127.0.0.1:4176/assets/app-entry-K-hYGb8U.js"],
+    "physicalDevice": false,
+    "visualReview": "Appearance, task and memory screenshots inspected; notifications checked for rendered content/overflow/errors"
+  }
 }
