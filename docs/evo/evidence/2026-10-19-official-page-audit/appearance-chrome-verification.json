@@ -31,5 +31,32 @@
     "No physical mobile or paid CLI test",
     "No organization switching added"
   ],
-  "deployment": "pending"
+  "deployment": {
+    "source": "4c6531ed4523625b1e534a771eb651673b9d1e90",
+    "schema": 90,
+    "backupDatabases": 2,
+    "backupFiles": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true,
+    "service": "com.loom.evo",
+    "gracefulRestartVerified": true,
+    "realPage": [
+      {
+        "width": 1440,
+        "previewRadioChecks": true,
+        "sidebarHeaders": true,
+        "workspaceAvatarHover": true,
+        "memoryIcon": true
+      },
+      {
+        "width": 390,
+        "previewRadioChecks": true,
+        "sidebarHeaders": true,
+        "workspaceAvatarHover": false,
+        "memoryIcon": true
+      }
+    ],
+    "screenshotDirectory": "/Users/sun/.loom/reviews/2026-10-19-appearance-chrome",
+    "physicalDevice": false
+  }
 }
