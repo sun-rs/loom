@@ -1,0 +1,59 @@
+{
+  "date": "2026-10-19",
+  "codeCommit": "ec70be625d04082b30fdee1f6c3de3e24fb72c6f",
+  "source": "Official v1.21.22 locked production JS; structural ports and Loom data glue, not byte-exact TSX or complete settings parity",
+  "implemented": [
+    "Remove chat composer outer separator",
+    "Move members from separate header dialog into native right settings Drawer; keep private/profile/add callbacks and archived read-only access",
+    "Channel search reuses topbar search handler",
+    "Desktop computer entry selects local host; mobile retains native list/detail/back",
+    "Native neutral computer header icon, CLI availability/version badges",
+    "Computer inline name/description editing using existing revisioned profile API and WriteIntentSlot exact replay"
+  ],
+  "checks": {
+    "unit": "3 focused source/status tests passed; repair assertions failed before implementation",
+    "typecheck": "npm run typecheck:loom --prefix frontends/raft passed",
+    "build": "npm run build:web:workbench passed at committed source; existing chunk-size warning remains",
+    "fixtureBrowser": [
+      "chrome-repair:1440x1000/390x844 DPR1 settings right-edge/member list/search, computer default/detail/CLI, profile editing and lost-response exact replay",
+      "channel-controls:1440x1000/390x844 stop/resume, unknown exact replay, persistence, settings conflict handling",
+      "instance-create:1440x1000/390x844 member-to-add dialog, focus return, read failures, exact replay, one new instance and revision snapshot"
+    ],
+    "realService": [
+      {
+        "width": 1440,
+        "realService": true,
+        "fixture": false,
+        "computerDetailsAndEditAffordances": true,
+        "chatDrawerAndSharedSearch": true,
+        "composerOuterBorder": "0px",
+        "pageErrors": []
+      },
+      {
+        "width": 390,
+        "realService": true,
+        "fixture": false,
+        "computerDetailsAndEditAffordances": true,
+        "chatDrawerAndSharedSearch": true,
+        "composerOuterBorder": "0px",
+        "pageErrors": []
+      }
+    ],
+    "visual": "Inspected actual desktop settings drawer and mobile computer screenshots; no live profile writes",
+    "format": "Changed frontend/test files formatted; git diff --check passed"
+  },
+  "deployment": {
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-chrome-repair-5b4212be-d88e-4d98-bcca-4bc6194ade47",
+    "databases": 2,
+    "files": 325,
+    "businessTablesUnchanged": 18,
+    "verified": true
+  },
+  "limits": [
+    "Channel settings metadata/notification/archive form not yet fully migrated; drawer retains Loom-specific policy/execution controls",
+    "CLI availability is discovery data, not authentication status; rescan requires restart",
+    "Remote computer management remains unsupported",
+    "Mobile Chromium emulation is not physical iOS/Android acceptance",
+    "No backend changes or paid calls"
+  ]
+}
