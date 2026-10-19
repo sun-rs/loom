@@ -1,0 +1,75 @@
+{
+  "sourceCommit": "d74f92bf4452c9382a5e50adf4ba3afd812320c3",
+  "scope": "Mobile Home native search/activity/saved rows and authoritative activity unread badge.",
+  "upstream": "v1.21.22 app-shell g7/_7 165243–165244, Home 168110–168155; page-adoption.json mobile-home-unread provenance.",
+  "checks": {
+    "tests": "5 passed; new mobile composition tests failed first; an unrelated pre-existing SavedPanel source test still required retired card layout, corrected against locked SavedPanel-hEhyusEt.js list recipe while retaining pagination/count assertions.",
+    "typecheck": "typecheck:loom passed",
+    "build": "build:web:workbench passed; existing chunk/dynamic-import warnings retained",
+    "browser": [
+      "navigation-unread: desktop independent rail dots, mobile canonical 99+ badge, zero hidden, failed summary clears, row heights/icons and Activity click",
+      "saved: desktop/mobile save, exact replay, refresh, jump and remove"
+    ],
+    "visual": "Fixture mobile Home and real mobile Home screenshots inspected",
+    "format": "changed files formatted; git diff --check passed"
+  },
+  "deployment": {
+    "verified": true,
+    "backupDatabases": 2,
+    "backupFiles": 325,
+    "businessTablesUnchanged": 18,
+    "home": {
+      "rows": [
+        {
+          "id": "mobile-home-search-entry",
+          "height": 46
+        },
+        {
+          "id": "mobile-home-activity-entry",
+          "height": 46
+        },
+        {
+          "id": "sidebar-saved-entry",
+          "height": 46
+        }
+      ],
+      "activityNavigation": true,
+      "errors": []
+    },
+    "thread": [
+      {
+        "width": 1440,
+        "composerBorder": "0px",
+        "menu": {
+          "width": 32,
+          "height": 32,
+          "bg": "oklab(0.1813 0.00476543 0.00151351 / 0.00353589)"
+        },
+        "escapeClosesOnlyMenu": true,
+        "errors": []
+      },
+      {
+        "width": 390,
+        "composerBorder": "0px",
+        "menu": {
+          "width": 44,
+          "height": 44,
+          "bg": "oklab(0.1813 0.00476543 0.00151351 / 0.00808751)"
+        },
+        "escapeClosesOnlyMenu": true,
+        "errors": []
+      }
+    ]
+  },
+  "privateEvidence": "/Users/sun/.loom/reviews/2026-10-19-mobile-home",
+  "remaining": [
+    "G1 standalone chat/private box migration unchanged.",
+    "G2 follow/read/group projections and official double-click first-unread focus remain; mobile summary badge is now implemented.",
+    "G3 browser push remains unavailable."
+  ],
+  "limits": [
+    "Unread counts are injected fixture summaries; service reads/writes use temporary real Core, not paid models.",
+    "Real deployed page validates mobile rows and Activity entry without inventing unread data.",
+    "No true iOS/Android or full-site parity claim."
+  ]
+}
