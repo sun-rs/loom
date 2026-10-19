@@ -35,7 +35,7 @@
         "loom/TasksPage.tsx",
         "loom/mobile.css"
       ],
-      "adaptation": "Existing Loom submit/task/file interfaces retained. Single + file tool and compact mobile reading layout remain owner-approved local features. Native controls own geometry and typography; native line height is used to center compact placeholder. Creator/assignee filters are now implemented by the task-filters slice below; task row refresh remains unaudited. All close guards retained.",
+      "adaptation": "Existing Loom submit/task/file interfaces retained. Single + file tool and compact mobile reading layout remain owner-approved local features. Native controls own geometry and typography; native line height is used to center compact placeholder. Creator/assignee filters are now implemented by the task-filters slice below; task sections/board/viewport now audited in task-surfaces. All close guards retained.",
       "checks": [
         "scripts/official-web/chat-composition-release.test.mjs",
         "scripts/official-web/channel-task.test.ts",
@@ -327,6 +327,34 @@
       "checks": [
         "scripts/official-web/channel-chrome-repair.test.mjs",
         "scripts/official-web/chrome-repair-browser.mjs"
+      ]
+    },
+    "task-surfaces": {
+      "source": "app-shell-D1-nY-va.js r9/qSt/YSt/TasksPanel at 176127–176340,176960–177000; native raft-ui@0.6.0 tasksPanel/taskBoardColumn/taskSection recipes",
+      "local": [
+        "packages/web/src/components/task/TasksPanel.tsx",
+        "loom/TasksPage.tsx"
+      ],
+      "adoption": "Structural port of retained current official composition; inherited TaskCard presentation already matches sSt. Removed obsolete fixed 320px column/border/background/padding and heading/count/empty/load-more overrides. Native Card renders loading rows; native viewport owns panel surface and responsive horizontal padding.",
+      "preserved": "Loom bounded global paging (not official per-status paging), permissions, exact unknown-write replay, native mouse/touch drag, scoped task state ownership and owner-approved compact mobile header. Global extra pagination button remains local glue, using native sm outline parameters.",
+      "checks": [
+        "scripts/official-web/task-surface-release.test.mjs",
+        "scripts/official-web/task-adaptation.test.ts",
+        "scripts/official-web/task-board-browser.mjs"
+      ]
+    },
+    "activity-toolbar-actions": {
+      "source": "ThreadsInbox-CbSKTW4g.js.pretty.txt He=Fe>0 at850; header/toolbar at1100–1177",
+      "local": [
+        "loom/ActivityHeader.tsx",
+        "loom/ActivityFilters.tsx",
+        "loom/DiscoveryPage.tsx"
+      ],
+      "adoption": "Native 54px seam toolbar composition, all-read action at filter-right, ghost/sm + tooltip and unread-only visibility. Retains owner-requested icon refresh in header as explicit local addition.",
+      "preserved": "Existing captureUnreadActivity frozen frontiers and serial writes; unknown stops, no silent replay. Counts remain Loom projection. No grouping/follow capabilities invented.",
+      "checks": [
+        "scripts/official-web/activity-chrome.test.mjs",
+        "scripts/official-web/page-polish-browser.mjs"
       ]
     }
   },

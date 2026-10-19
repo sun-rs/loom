@@ -233,6 +233,13 @@ export default function DiscoveryPage({
             revision={tick}
             onBack={onBack}
             onRefresh={() => setTick((v) => v + 1)}
+            renderToolbar={(actions) => (
+              <ActivityFilters
+                value={filter!}
+                onChange={(value) => update("af", value)}
+                actions={actions}
+              />
+            )}
           />
         )}
         {notice}
@@ -245,12 +252,7 @@ export default function DiscoveryPage({
               client={client}
               workspaceId={workspaceId}
             />
-          ) : (
-            <ActivityFilters
-              value={filter!}
-              onChange={(value) => update("af", value)}
-            />
-          )}
+          ) : null}
           <Results
             history={history}
             onChooseHistory={(query) => {

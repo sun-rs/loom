@@ -819,7 +819,7 @@
     },
     "packages/web/src/components/task/TasksPanel.tsx": {
       "upstreamSha256": "baab579e05a5487051942ae97e8df23a85f4303adfa3ad309581b8dab93cb7d6",
-      "portedSha256": "713d3da5a7f113337e6c31238541fedb8432af8342052b20c51fb610d7083829"
+      "portedSha256": "39c4848f4033a5ed15fbdf13433c0961c68c617adc7813d713da7642747bb12e"
     },
     "packages/web/src/components/actions/ActionCard.tsx": {
       "upstreamSha256": "28df6d8b8a57c93e9f8b0e4623bdf2578abbc87b5a2a96b04276594be5469d31",

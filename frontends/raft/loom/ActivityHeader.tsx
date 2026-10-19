@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import Tooltip from "../packages/web/src/components/ui/Tooltip.tsx";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "raft-ui";
 import { RefreshCw } from "lucide-react";
 import type { RahClient } from "@rah-os/client-sdk";
@@ -11,12 +12,14 @@ export default function ActivityHeader({
   revision,
   onBack,
   onRefresh,
+  renderToolbar,
 }: {
   client: RahClient;
   workspaceId: string;
   revision: number;
   onBack: () => void;
   onRefresh: () => void;
+  renderToolbar: (actions: ReactNode) => ReactNode;
 }) {
   const [counts, setCounts] = useState<{ total: number; unread?: number }>();
   const [busy, setBusy] = useState(false);
@@ -107,17 +110,25 @@ export default function ActivityHeader({
             >
               <RefreshCw size={16} />
             </Button>
+          </>
+        }
+      />
+      {renderToolbar(
+        (counts?.unread ?? 0) > 0 ? (
+          <Tooltip content="全部标记为已读">
             <Button
               size="sm"
               variant="ghost"
-              disabled={busy || !counts?.unread}
+              className="shrink-0 whitespace-nowrap"
+              data-testid="inbox-mark-all-read"
+              disabled={busy}
               onClick={() => void markAll()}
             >
               全部已读
             </Button>
-          </>
-        }
-      />
+          </Tooltip>
+        ) : null,
+      )}
       {error && (
         <p role="alert" className="px-4 text-caption text-danger-strong">
           {error}

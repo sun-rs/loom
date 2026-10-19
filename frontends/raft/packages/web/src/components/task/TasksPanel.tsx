@@ -1,6 +1,7 @@
 import type { TaskStatusId } from "raft-ui";
 import {
   Button,
+  Card,
   SegmentedControl,
   SegmentedControlItem,
   SegmentedControlLabel,
@@ -190,16 +191,16 @@ function TaskSection({
           { id: collapsed ? "task.status.showGroup" : "task.status.hideGroup" },
           { status: formatMessage({ id: TASK_STATUS_UI[status].labelId }) },
         )}
-        className={`flex w-full items-center justify-between gap-3 text-left ${onToggleCollapsed ? "" : "cursor-default"}`}
+        className={onToggleCollapsed ? undefined : "cursor-default"}
       >
-        <TaskSectionHeading className="flex items-center gap-2">
+        <TaskSectionHeading>
           <TaskSectionBadge status={ruiStatus}>
             {formatMessage({ id: TASK_STATUS_UI[status].labelId })}
           </TaskSectionBadge>
-          <TaskSectionCount className="text-xs font-mono text-foreground-muted">{tasks.length}</TaskSectionCount>
+          <TaskSectionCount>{tasks.length}</TaskSectionCount>
         </TaskSectionHeading>
         {onToggleCollapsed ? (
-          <TaskSectionChevron className="inline-flex items-center text-foreground-muted hover:text-foreground-strong" />
+          <TaskSectionChevron />
         ) : (
           <span />
         )}
@@ -207,12 +208,12 @@ function TaskSection({
       <TaskSectionPanel>
         {tasks.length === 0 ? (
           loadingPage ? (
-            <SkeletonRow
-              className="gap-2 rounded border border-line-muted bg-layer-card p-3   "
-              lineWidths={SKELETON_LINE_WIDTHS}
+            <Card
+              render={<SkeletonRow lineWidths={SKELETON_LINE_WIDTHS} />}
+              className="flex-row items-center gap-2 p-3"
             />
           ) : (
-            <TaskSectionEmpty className="border-2 border-dashed border-line-muted px-3 py-5 text-sm text-foreground-muted">
+            <TaskSectionEmpty>
               {formatMessage(
                 { id: "task.status.emptyGroup" },
                 { status: formatMessage({ id: TASK_STATUS_UI[status].labelId }) },
@@ -238,7 +239,7 @@ function TaskSection({
             variant="outline"
             disabled={loadingPage}
             onClick={onLoadMore}
-            className="box-border h-8 min-h-8 w-full gap-1 py-0 text-xs"
+            className="w-full"
             data-testid={`task-load-more-${status}`}
           >
             {loadingPage ? formatMessage({ id: "common.loading" }) : formatMessage({ id: "task.panel.loadMore" })}
@@ -338,37 +339,32 @@ function DroppableColumn({
       ref={setNodeRef}
       open={!collapsed}
       onOpenChange={handleOpenChange}
-      className={`flex w-[320px] shrink-0 self-start flex-col border  ${
-        isOver ? "border-line-strong bg-primary-soft shadow-raft-sm   " : "border-line-muted bg-fill-muted/30  "
-      } p-3 transition-colors`}
+      className={`rounded-container transition-colors ${isOver ? "bg-fill-pressed" : ""}`}
     >
       <TaskBoardColumnTrigger
         aria-label={formatMessage(
           { id: collapsed ? "task.status.showGroup" : "task.status.hideGroup" },
           { status: formatMessage({ id: TASK_STATUS_UI[status].labelId }) },
         )}
-        className={`flex w-full items-center justify-between gap-3 text-left ${collapsed ? "" : "mb-3"}`}
       >
-        <TaskBoardColumnHeading className="flex items-center gap-2">
+        <TaskBoardColumnHeading>
           <TaskBoardColumnBadge status={ruiStatus}>
             {formatMessage({ id: TASK_STATUS_UI[status].labelId })}
           </TaskBoardColumnBadge>
-          <TaskBoardColumnCount className="text-xs font-mono text-foreground-muted">{statusTasks.length}</TaskBoardColumnCount>
+          <TaskBoardColumnCount>{statusTasks.length}</TaskBoardColumnCount>
         </TaskBoardColumnHeading>
-        <TaskBoardColumnChevron className="inline-flex items-center text-foreground-muted hover:text-foreground-strong" />
+        <TaskBoardColumnChevron />
       </TaskBoardColumnTrigger>
       <TaskBoardColumnPanel>
-        <TaskBoardColumnItems className="space-y-2.5">
+        <TaskBoardColumnItems>
           {statusTasks.length === 0 ? (
             loadingPage ? (
-              <SkeletonRow
-                className="gap-2 rounded border border-line-muted bg-layer-card p-3   "
-                lineWidths={SKELETON_LINE_WIDTHS}
+              <Card
+                render={<SkeletonRow lineWidths={SKELETON_LINE_WIDTHS} />}
+                className="flex-row items-center gap-2 p-3"
               />
             ) : (
-              <TaskBoardColumnEmpty className={`border border-dashed px-3 py-5 text-sm  ${
-                isOver ? "border-line-strong text-foreground-strong " : "border-line-muted text-foreground-muted "
-              }`}>
+              <TaskBoardColumnEmpty>
                 {formatMessage(
                   { id: isOver ? "task.status.dropToSet" : "task.status.emptyGroup" },
                   { status: formatMessage({ id: TASK_STATUS_UI[status].labelId }) },
@@ -392,7 +388,7 @@ function DroppableColumn({
               variant="outline"
               disabled={loadingPage}
               onClick={onLoadMore}
-              className="box-border h-8 min-h-8 w-full gap-1 py-0 text-xs"
+              className="w-full"
               data-testid={`task-load-more-${status}`}
             >
               {loadingPage ? formatMessage({ id: "common.loading" }) : formatMessage({ id: "task.panel.loadMore" })}

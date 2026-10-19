@@ -24,6 +24,7 @@ import {
   TasksPanelToolbar,
   TasksPanelViewport,
   Button,
+  Card,
   SegmentedControl,
   SegmentedControlItem,
   SegmentedControlLabel,
@@ -304,7 +305,7 @@ export default function TasksPage({
         <TasksPanelViewport
           ref={scroll}
           data-task-virtual-scroll
-          className="flex-1 overflow-auto bg-layer-canvas-muted p-4 safe-bottom  mobile-nav-clearance"
+          className={`flex-1 overflow-auto py-4 safe-bottom${channelTasks ? "" : " mobile-nav-clearance"}`}
         >
           {error && (
             <div role="alert" className="mb-4 text-sm">
@@ -318,12 +319,16 @@ export default function TasksPage({
             </div>
           )}
           {loading ? (
-            <div role="status" aria-label="正在读取任务">
+            <div
+              role="status"
+              aria-label="正在读取任务"
+              className="flex flex-col gap-2"
+            >
               {[0, 1, 2, 3, 4].map((i) => (
-                <SkeletonRow
+                <Card
                   key={i}
-                  className="gap-2 rounded border border-line-muted bg-layer-card p-3   "
-                  lineWidths={["w-1/2", "w-3/4"]}
+                  render={<SkeletonRow lineWidths={["w-1/2", "w-3/4"]} />}
+                  className="flex-row items-center gap-2 p-3"
                 />
               ))}
             </div>
@@ -404,7 +409,8 @@ export default function TasksPage({
           )}
           {next && (
             <Button
-              className="mt-4 box-border h-8 min-h-8 w-full gap-1 py-0 text-xs"
+              className="mt-4 w-full"
+              size="sm"
               variant="outline"
               disabled={loadingMore || rows.length >= 500}
               onClick={() => void more()}

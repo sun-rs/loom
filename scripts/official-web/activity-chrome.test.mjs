@@ -47,3 +47,13 @@ test("activity adopts the complete official list branch, without mixed card meta
   assert.match(row, /top-1\/2 right-3/);
   assert.match(row, /hover:none.*hidden/);
 });
+test("bulk-read uses the native toolbar action slot and unread-only visibility", () => {
+  const header = read("loom/ActivityHeader.tsx");
+  assert.match(header, /renderToolbar\(/);
+  assert.match(header, /counts\?\.unread.*> 0/);
+  assert.match(header, /inbox-mark-all-read/);
+  assert.match(header, /全部标记为已读/);
+  const filters = read("loom/ActivityFilters.tsx");
+  assert.match(filters, /border-line-seam/);
+  assert.match(filters, /\{actions\}/);
+});

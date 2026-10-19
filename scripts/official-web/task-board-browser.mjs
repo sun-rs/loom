@@ -103,6 +103,21 @@ export async function verifyTaskBoard({
         .getByTestId("task-board-draggable-card")
         .filter({ hasText: title })
         .waitFor();
+      const column = page.locator('[data-slot="task-board-column"]').first();
+      assert.deepEqual(
+        await column.evaluate((el) => {
+          const s = getComputedStyle(el);
+          return { border: s.borderTopWidth, padding: s.paddingTop };
+        }),
+        { border: "0px", padding: "0px" },
+      );
+      const viewport = page.locator('[data-slot="tasks-panel-viewport"]');
+      assert.equal(
+        await viewport.evaluate((el) =>
+          el.classList.contains("mobile-nav-clearance"),
+        ),
+        false,
+      );
       await drag(page, title);
       await page
         .getByRole("button", { name: "核实任务操作", exact: true })
@@ -155,6 +170,13 @@ export async function verifyTaskBoard({
       );
       await page.goto(
         origin + `/?view=tasks&taskRoom=${room.roomId}&taskView=list`,
+      );
+      await card.waitFor();
+      assert.equal(
+        await viewport.evaluate((el) =>
+          el.classList.contains("mobile-nav-clearance"),
+        ),
+        true,
       );
       await card.getByRole("button", { name: "待确认", exact: true }).click();
       const completed = page.waitForResponse(

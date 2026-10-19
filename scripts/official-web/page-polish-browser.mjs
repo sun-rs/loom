@@ -81,7 +81,10 @@ export async function verifyPagePolish({
       await route.fulfill({ response });
     });
     await page.goto(`${origin}/?view=activity`);
-    await page.getByRole("button", { name: "全部已读", exact: true }).waitFor();
+    await page
+      .getByTestId("inbox-toolbar")
+      .getByRole("button", { name: "全部已读", exact: true })
+      .waitFor();
     await page.getByRole("button", { name: "刷新动态", exact: true }).click();
     await page.getByText(/条进行中/).waitFor();
     const mark = page.waitForRequest(
@@ -93,6 +96,9 @@ export async function verifyPagePolish({
     const payload = (await mark).postDataJSON();
     assert.equal(payload.throughSeq, target.latestSeq);
     await page.getByText(/0 条未读/).waitFor();
+    await page
+      .getByTestId("inbox-mark-all-read")
+      .waitFor({ state: "detached" });
     assert.equal(
       (
         await client.request("activity.list", {
