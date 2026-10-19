@@ -135,7 +135,9 @@ try {
     });
     channels.push(result.room);
     if (
-      process.env.LOOM_BROWSER_SLICE === "workspace" &&
+      ["workspace", "mobile-journey"].includes(
+        process.env.LOOM_BROWSER_SLICE,
+      ) &&
       result.room.channelWorkspace?.primaryDirectory
     )
       workspaceFixtureRoots.push(result.room.channelWorkspace.primaryDirectory);
@@ -294,6 +296,14 @@ try {
     console.log(
       JSON.stringify(
         await verifyLoading({ browser, origin, channel: channels[0] }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "mobile-journey") {
+    const { verifyMobileJourney } =
+      await import("./mobile-journey-browser.mjs");
+    console.log(
+      JSON.stringify(
+        await verifyMobileJourney({ browser, origin, channel: channels[0] }),
       ),
     );
   } else if (process.env.LOOM_BROWSER_SLICE === "workspace") {

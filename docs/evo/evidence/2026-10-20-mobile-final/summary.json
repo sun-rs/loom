@@ -1,0 +1,38 @@
+{
+  "scope": "Mobile browser closeout; no backend or paid-model changes",
+  "upstream": {
+    "web": "v1.21.22 / af3d6ef4a22f0f05f5f9db9424285755d67e9726",
+    "mobile": "655975433b8492a8f4eef7bbce1b913140bc7485",
+    "license": "FSL-1.1-ALv2; existing authorized intake",
+    "source": "packages/web/src/components/message/MessageItem.tsx",
+    "adoption": "Existing official composition retained; explicit avatar focus and document request gate are local compatibility glue, not upstream copies"
+  },
+  "findings": [
+    {
+      "problem": "WebKit access-control console error during full-page navigation",
+      "evidence": "Same-origin minimal page reproduces during unload despite fetch catch; regular abort does not. API returns200 outside unload, no unhandledrejection. pagehide-only and per-effect fixes failed; thread.list exposed same lifecycle issue.",
+      "fix": "Shared document gate for four Loom JSON clients, blocks new requests at beforeunload/pagehide; persisted pageshow restores. In-flight writes are not aborted or retried; unresolved-intent owner retains leave veto."
+    },
+    {
+      "problem": "WebKit avatar click does not reliably focus the trigger; inspector close restored wrong element",
+      "fix": "Local official-source adaptation explicitly focuses agent avatar before navigation. Existing inspector test reproduced failure then passed desktop/mobile."
+    }
+  ],
+  "checks": {
+    "unit": "4 passed: request lifetime, in-flight preservation/restoration, official avatar adaptation",
+    "build": "npm run build:web:workbench passed; pre-existing >500kB chunk warning retained",
+    "types": "npm run typecheck:loom --prefix frontends/raft passed",
+    "appearance": "Chromium/WebKit full1440/390/360; final shared-gate WebKit all3 passed; no pageerror suppression",
+    "settingsNavigation": "WebKit1440/390 passed: grouping, routes, resize, back, drafts",
+    "roleDetails": "WebKit1440/390 passed: draft/discard, recovery, short viewport save controls",
+    "instanceInspector": "WebKit1440/390 passed after explicit-focus fix; includes activity, usage, runtime controls against isolated Core; no paid CLI",
+    "continuousJourney": "Final shared-gate Chromium/WebKit390x844 and390x560 passed: chat send, thread reply, file preview, return, preserved draft, no overflow/pageerror",
+    "physicalDevices": "xctrace found only Mac; adb unavailable. No physical acceptance."
+  },
+  "limits": [
+    "No physical iOS/Android device connected; keyboard/safe-area/PWA/system notifications remain unverified.",
+    "Browser viewport tests do not establish complete native-App or cross-site pixel equality.",
+    "Existing parallel WebKit search timeout is separate historical unresolved evidence, not explained by this unload reproduction."
+  ],
+  "privateEvidence": "~/.loom/reviews/2026-10-20-mobile-final/"
+}

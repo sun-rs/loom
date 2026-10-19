@@ -1,3 +1,4 @@
+import { pageFetch } from "./page-fetch.ts";
 import PushNavigation from "./PushNavigation.tsx";
 import ChannelPrivateHistory from "./ChannelPrivateHistory.tsx";
 import { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives.ts";
@@ -79,6 +80,7 @@ import MessageInput from "./ComposerFiles.tsx";
 import { LoomChannelClient, loadChannelDirectory } from "./channel-client.ts";
 import type { Principal, Room } from "@rah-os/protocol";
 const client = new HttpRahClient({
+  fetch: pageFetch,
   baseUrl: "",
   accessToken: () => "trusted-proxy-auth",
 });

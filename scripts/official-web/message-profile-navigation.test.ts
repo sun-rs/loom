@@ -18,8 +18,14 @@ test("member navigation gains controlled callbacks; unrelated readonly guards st
     "onNavigateHuman={readOnlyProjection ? ignoreReadOnlyProjectionNavigation : handleNavigateHuman}";
   const adaptedHuman =
     'onNavigateHuman={onOpenProfile ? (id) => onOpenProfile("human", id) : readOnlyProjection ? ignoreReadOnlyProjectionNavigation : handleNavigateHuman}';
+  const focused =
+    "onClick={(event) => { event.currentTarget.focus({ preventScroll: true }); onClickAgent(); }}";
+  assert.ok(result.includes(focused));
   assert.equal(
-    result.replaceAll(adapted, original).replaceAll(adaptedHuman, human),
+    result
+      .replaceAll(adapted, original)
+      .replaceAll(adaptedHuman, human)
+      .replace(focused, "onClick={onClickAgent}"),
     source,
   );
   assert.throws(() => adaptMessageProfileNavigation("unknown upstream"));

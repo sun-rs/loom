@@ -1,3 +1,4 @@
+import { pageFetch } from "./page-fetch.ts";
 import { AttachmentCommentsOwner } from "./useAttachmentComments.tsx";
 import { DocumentAttachmentPreviewModal } from "../packages/web/src/components/message/attachmentPreviewSurfaces.tsx";
 import { useDocumentPreviewStore } from "../packages/web/src/store/documentPreviewStore.ts";
@@ -6,6 +7,7 @@ import { hasRouteBoundIntent } from "./useIntentRoute.ts";
 import { showToast } from "../packages/web/src/components/toastBridge.ts";
 import type { MessageAttachment } from "../packages/web/src/store/messageStore.ts";
 const client = new HttpRahClient({
+  fetch: pageFetch,
   baseUrl: "",
   accessToken: () => "trusted-proxy-auth",
 });

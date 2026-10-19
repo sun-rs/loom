@@ -1,3 +1,4 @@
+import { pageFetch } from "./page-fetch.ts";
 import {
   isCsvAttachment,
   isXlsxAttachment,
@@ -30,6 +31,7 @@ import { AttachmentChip } from "../packages/web/src/components/message/Attachmen
 import type { MessageAttachment } from "../packages/web/src/store/messageStore.ts";
 import { HttpRahClient } from "@rah-os/client-sdk";
 const client = new HttpRahClient({
+  fetch: pageFetch,
   baseUrl: "",
   accessToken: () => "trusted-proxy-auth",
 });

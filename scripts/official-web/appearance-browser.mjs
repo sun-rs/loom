@@ -11,6 +11,38 @@ export async function verifyAppearance({ browser, origin, channels }) {
     const page = await context.newPage();
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));
+    if (process.env.LOOM_TRACE_REQUESTS === "1") {
+      const trace = (kind, details) =>
+        console.log(
+          JSON.stringify({ kind, width, at: Date.now(), ...details }),
+        );
+      page.on("requestfailed", (request) =>
+        trace("requestfailed", {
+          path: new URL(request.url()).pathname,
+          failure: request.failure(),
+        }),
+      );
+      page.on("response", (response) => {
+        if (response.url().includes("/v3/"))
+          trace("response", {
+            path: new URL(response.url()).pathname,
+            status: response.status(),
+          });
+      });
+      page.on("pageerror", (error) =>
+        trace("pageerror", { message: error.message, stack: error.stack }),
+      );
+      page.on("console", (message) => {
+        if (message.text().startsWith("LOOM_REJECTION"))
+          trace("rejection", { message: message.text() });
+      });
+      await context.addInitScript(() =>
+        addEventListener("unhandledrejection", (event) =>
+          console.log("LOOM_REJECTION " + String(event.reason)),
+        ),
+      );
+    }
+
     try {
       await page.goto(origin + "/?view=settings&settings=appearance");
       await page

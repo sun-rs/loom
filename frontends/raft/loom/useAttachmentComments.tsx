@@ -1,3 +1,4 @@
+import { pageFetch } from "./page-fetch.ts";
 import {
   createContext,
   useContext,
@@ -15,6 +16,7 @@ import type { CommentAnchor } from "../packages/web/src/components/message/attac
 import { AttachmentCommentsClient } from "./attachment-comments-client.ts";
 import { useRouteIntentOwner } from "./useIntentRoute.ts";
 const client = new HttpRahClient({
+  fetch: pageFetch,
   baseUrl: "",
   accessToken: () => "trusted-proxy-auth",
 });

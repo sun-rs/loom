@@ -47,3 +47,9 @@ ui-contract.json记下大页/详情标题栏区分。导航门禁新增五个主
 SettingsHomePage的SettingsServerActionRow与SettingsFontOptionRow采用Button14/18、Caption12/16；手机设置详情中对应subhead/footnote文字使用该层级，外层16px留白已相符。输入、消息字号预览、按钮触区和桌面不受这两个文字规则影响。不把本批称为所有设置项与App像素级一致。
 
 主题布局先复现三卡不同行；定向Chromium/WebKit各360/390/1440通过同行、整体高度<=180px、浅/深/系统选择、跟随系统、重载持久化与14/18消息预览。旧完整外观检查仍有两个问题：手机显示空分组的旧断言与已采用语义冲突（已修正测试）；WebKit完整流程报activity/member读取access-control错误，未证明根因、不列为通过。本批采用layout-only模式验证受影响内容，完整旧失败日志保留在private evidence。
+
+## 有限收口与跨页面生命周期
+
+完整外观检查中的WebKit activity/member错误已进一步定位：页面离开后仍发起新fetch时，即使捕获Promise拒绝，也会产生access-control控制台错误。独立同源最小复现成立；普通abort没有该错误。仅pagehide或单个effect取消不足，消息列thread.list也复现。现由Loom四个JSON客户端共用页面请求入口，在beforeunload/pagehide阻止新请求，持久化pageshow恢复；已发出的写入不取消、不重试，未决写入继续由原write-intent owner阻止离页。不是CORS或鉴权放宽。
+
+实例详情门禁另复现Safari点击头像未聚焦而导致关闭后焦点返回错误。保留官方MessageItem及PreviewCard组合，在本地构建适配中显式聚焦触发头像；不修改上游原文件。WebKit桌面/手机原门禁通过。完整外观三尺寸、设置导航、Role详情及连续“聊天发送→消息列回复→返回→文件预览→返回草稿”通过，详见[证据](evidence/2026-10-20-mobile-final/summary.json)。本批未增加新尺寸覆盖，未运行付费模型或全量后端检查。物理iOS/Android、系统键盘、安全区、PWA仍未验，不以浏览器模拟替代。

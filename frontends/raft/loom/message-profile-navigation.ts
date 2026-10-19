@@ -15,5 +15,13 @@ export function adaptMessageProfileNavigation(code: string) {
       `onNavigate${kind}={onOpenProfile ? (id) => onOpenProfile("${target}", id) : readOnlyProjection ? ignoreReadOnlyProjectionNavigation : handleNavigate${kind}}`,
     );
   }
-  return code;
+  // Safari does not focus buttons on pointer click. The Loom inspector uses
+  // the focused opener to restore keyboard navigation on close.
+  const avatarClick = "onClick={onClickAgent}";
+  if (code.split(avatarClick).length !== 2)
+    throw Error("Official agent avatar click changed; review focus bridge");
+  return code.replace(
+    avatarClick,
+    "onClick={(event) => { event.currentTarget.focus({ preventScroll: true }); onClickAgent(); }}",
+  );
 }
