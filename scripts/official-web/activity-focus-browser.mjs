@@ -5,6 +5,7 @@ export async function verifyActivityFocus({
   origin,
   client,
   channel,
+  otherChannel,
   head,
 }) {
   await client.request("message.post", {
@@ -13,6 +14,13 @@ export async function verifyActivityFocus({
     recipients: [],
     basedOnRoomSeq: await head(channel.roomId),
     idempotencyKey: "activity-focus-fixture",
+  });
+  await client.request("message.post", {
+    roomId: otherChannel.roomId,
+    body: "FIXTURE next unread focus",
+    recipients: [],
+    basedOnRoomSeq: await head(otherChannel.roomId),
+    idempotencyKey: "activity-next-focus-fixture",
   });
   const results = [];
   for (const width of [1440, 900, 390]) {
@@ -38,7 +46,7 @@ export async function verifyActivityFocus({
           body = await response.json();
         body.items = body.items.map((item, index) => ({
           ...item,
-          unreadCount: index === 0 ? unread : 0,
+          unreadCount: index < 2 ? unread : 0,
         }));
         await route.fulfill({ response, json: body });
       });
@@ -57,12 +65,33 @@ export async function verifyActivityFocus({
             .count(),
           0,
         );
+        unread = 2;
+        await page
+          .getByRole("button", { name: "刷新动态", exact: true })
+          .click();
+        await row.waitFor();
+        const title = page.getByTestId("inbox-header-title");
+        const active = page.locator(
+          '[data-testid="inbox-row"][data-active="true"]',
+        );
+        await title.dblclick();
+        await active.waitFor();
+        const first = await active.getAttribute("data-result-id");
+        await title.dblclick();
+        await page.waitForFunction(
+          (id) =>
+            document
+              .querySelector('[data-testid="inbox-row"][data-active="true"]')
+              ?.getAttribute("data-result-id") !== id,
+          first,
+        );
         assert.deepEqual(writes, []);
         assert.deepEqual(errors, []);
         results.push({
           width,
           mobileSingleClickPreserved: true,
           noImplicitFocus: true,
+          titleCyclesUnread: true,
         });
         continue;
       }
@@ -93,6 +122,36 @@ export async function verifyActivityFocus({
       assert.equal(new URL(page.url()).searchParams.has("thread"), false);
       assert.deepEqual(writes, []);
       await page.screenshot({ path: `/tmp/loom-activity-focus-${width}.png` });
+      const activeRow = page.locator(
+        '[data-testid="inbox-row"][data-active="true"]',
+      );
+      const firstId = await activeRow.getAttribute("data-result-id");
+      const title = page.getByTestId("inbox-header-title");
+      const readCountBeforeTitle = reads;
+      await title.dblclick();
+      await page.waitForFunction(
+        (id) =>
+          document
+            .querySelector('[data-testid="inbox-row"][data-active="true"]')
+            ?.getAttribute("data-result-id") !== id,
+        firstId,
+      );
+      const secondId = await activeRow.getAttribute("data-result-id");
+      assert.notEqual(secondId, firstId);
+      await title.dblclick();
+      await page.waitForFunction(
+        (id) =>
+          document
+            .querySelector('[data-testid="inbox-row"][data-active="true"]')
+            ?.getAttribute("data-result-id") === id,
+        firstId,
+      );
+      assert.equal(
+        reads,
+        readCountBeforeTitle,
+        "title focus does not reload or fetch history",
+      );
+      assert.deepEqual(writes, []);
       await page.waitForTimeout(3200);
       assert.equal(await row.getAttribute("data-active"), null);
       await rail.dblclick();
@@ -110,6 +169,7 @@ export async function verifyActivityFocus({
         pendingUntilUnread: true,
         repeatedGesture: true,
         highlightExpires: true,
+        titleCyclesUnreadWithoutReadsOrWrites: true,
         exitClearsIntent: true,
         noReadOrFollowWrites: true,
         noDetailNavigation: true,

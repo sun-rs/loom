@@ -507,6 +507,7 @@ try {
           origin,
           client,
           channel: channels[0],
+          otherChannel: channels[1],
           head,
         }),
       ),

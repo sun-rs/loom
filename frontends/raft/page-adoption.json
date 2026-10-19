@@ -650,5 +650,16 @@
       "scripts/official-web/activity-pinned-browser.mjs",
       "scripts/official-web/activity-focus-browser.mjs"
     ]
+  },
+  "activityTitleUnread20261019": {
+    "source": "v1.21.22 ThreadsInbox-CbSKTW4g.js Xe/Ze, et titleClickProps; existing release-lock hash",
+    "reuse": "Structural port, native PanelHeader title props and existing focus scroll/timer owner",
+    "local": [
+      "loom/ActivityHeader.tsx",
+      "loom/useFirstUnreadFocus.ts",
+      "loom/DiscoveryPage.tsx"
+    ],
+    "behavior": "Title detail>=2 cycles loaded unread rows in rendered pin order, wraps, no reads/writes/navigation; empty/loading lists do not queue intent. Sidebar double-click remains distinct refresh/first-unread intent.",
+    "checks": ["scripts/official-web/activity-focus-browser.mjs"]
   }
 }

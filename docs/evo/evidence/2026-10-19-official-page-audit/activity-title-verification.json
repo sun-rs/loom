@@ -1,0 +1,49 @@
+{
+  "date": "2026-10-19",
+  "scope": "Official Activity title next-unread double-click; no backend or follow-history semantics changed",
+  "source": "v1.21.22 ThreadsInbox-CbSKTW4g.js Xe/Ze/et; existing release-lock.json",
+  "tdd": {
+    "red": "Browser timed out finding title trigger in prior build",
+    "green": [
+      {
+        "width": 1440,
+        "pendingUntilUnread": true,
+        "repeatedGesture": true,
+        "highlightExpires": true,
+        "titleCyclesUnreadWithoutReadsOrWrites": true,
+        "exitClearsIntent": true,
+        "noReadOrFollowWrites": true,
+        "noDetailNavigation": true
+      },
+      {
+        "width": 900,
+        "pendingUntilUnread": true,
+        "repeatedGesture": true,
+        "highlightExpires": true,
+        "titleCyclesUnreadWithoutReadsOrWrites": true,
+        "exitClearsIntent": true,
+        "noReadOrFollowWrites": true,
+        "noDetailNavigation": true
+      },
+      {
+        "width": 390,
+        "mobileSingleClickPreserved": true,
+        "noImplicitFocus": true,
+        "titleCyclesUnread": true
+      }
+    ]
+  },
+  "checks": [
+    "npm run typecheck:loom --prefix frontends/raft passed",
+    "npm run build:web:workbench passed; existing bundler warnings retained",
+    "LOOM_BROWSER_SLICE=activity-focus node scripts/official-web/channel-browser.mjs passed at 1440/900/390",
+    "Changed-file prettier and git diff --check"
+  ],
+  "limits": [
+    "Fixture unread values emulate incoming peer activity; temporary real Kernel.",
+    "Physical mobile double-tap and authenticated upstream pixel comparison not verified.",
+    "Unfollow history remains a documented backend compatibility gap; no browser-only retained row introduced."
+  ],
+  "deployment": "pending safe restart and real page check",
+  "paidProviders": false
+}

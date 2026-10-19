@@ -12,6 +12,7 @@ export default function ActivityHeader({
   revision,
   onBack,
   onRefresh,
+  onNextUnread,
   renderToolbar,
 }: {
   client: RahClient;
@@ -19,6 +20,7 @@ export default function ActivityHeader({
   revision: number;
   onBack: () => void;
   onRefresh: () => void;
+  onNextUnread: () => void;
   renderToolbar: (actions: ReactNode) => ReactNode;
 }) {
   const [counts, setCounts] = useState<{ total: number; unread?: number }>();
@@ -92,6 +94,17 @@ export default function ActivityHeader({
     <>
       <PanelHeader
         title="动态"
+        containerProps={{
+          "data-testid": "inbox-header",
+          title: "双击跳转到下一条未读项",
+        }}
+        titleClickProps={{
+          "data-testid": "inbox-header-title",
+          title: "双击跳转到下一条未读项",
+          onClick: (event) => {
+            if (event.detail >= 2) onNextUnread();
+          },
+        }}
         subtitle={
           counts
             ? `${counts.total} 条进行中 · ${counts.unread ?? "—"} 条未读`

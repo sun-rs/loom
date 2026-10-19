@@ -180,6 +180,7 @@ export default function DiscoveryPage({
     (params.get("range") && params.get("range") !== "any"),
   );
   const [tick, setTick] = useState(0);
+  const [nextUnreadRequest, setNextUnreadRequest] = useState(0);
   // Upstream double-click reloads the inbox before resolving its pending focus.
   // Keep the refresh token after consumption so clearing intent never reloads it.
   const [focusRefresh, setFocusRefresh] = useState(0);
@@ -259,6 +260,7 @@ export default function DiscoveryPage({
             revision={tick}
             onBack={onBack}
             onRefresh={() => setTick((v) => v + 1)}
+            onNextUnread={() => setNextUnreadRequest((v) => v + 1)}
             renderToolbar={(actions) => (
               <ActivityFilters
                 value={filter!}
@@ -281,6 +283,7 @@ export default function DiscoveryPage({
             />
           ) : null}
           <Results
+            nextUnreadRequest={nextUnreadRequest}
             focusRequest={focusRequest === focusRefresh ? focusRequest : 0}
             consumeFocus={consumeFocus}
             history={history}
@@ -337,6 +340,7 @@ export default function DiscoveryPage({
 }
 function Results({
   focusRequest,
+  nextUnreadRequest,
   consumeFocus,
   history,
   onChooseHistory,
@@ -358,6 +362,7 @@ function Results({
   onOpenResult,
 }: {
   focusRequest: number;
+  nextUnreadRequest: number;
   consumeFocus: () => void;
   railHandler: RefObject<SearchRailHandler>;
   overlayHome?: () => void;
@@ -424,6 +429,7 @@ function Results({
     activityRows.map((item) => item.row),
     activityScroll.ref,
     mode === "activity" && !loading && !error && Boolean(pins),
+    nextUnreadRequest,
   );
   const moreRequest = useRef<AbortController | null>(null);
   const loadMoreResults = async () => {
