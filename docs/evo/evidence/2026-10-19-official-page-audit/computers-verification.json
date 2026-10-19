@@ -1,0 +1,61 @@
+{
+  "date": "2026-10-19",
+  "codeCommit": "a22139387cd1d20d6adde5742fd75b49ae2fcef7",
+  "kind": "Official production JS structural port with Loom read-only data binding; not byte-exact TSX or full-site parity",
+  "sourceManifest": "../../../../frontends/raft/page-adoption.json",
+  "sourceRelease": "v1.21.22",
+  "implemented": [
+    "Desktop computer navigation/list/detail and resizable sidebar",
+    "Mobile Settings entry, native card list, detail and back navigation",
+    "Authenticated local host facts with serial polling, abort and freshness/error handling; CLI availability does not imply connectivity"
+  ],
+  "checks": {
+    "unit": "node --test scripts/official-web/computers.test.ts scripts/official-web/settings-release.test.mjs: 4 passed; computer test first failed for missing module",
+    "typecheck": "npm run typecheck:loom --prefix frontends/raft passed",
+    "build": "npm run build:web:workbench passed, including final commit build; existing large-chunk warning remains",
+    "fixtureBrowser": [
+      "computers: 1440x1000/390x844 DPR1 navigation/reload/back, stale observation, read failure/retry, overflow/page errors",
+      "settings-navigation: 1440x1000/390x844 DPR1 categories, resize, drafts, URL and keyboard regression"
+    ],
+    "realService": [
+      {
+        "width": 1440,
+        "realService": true,
+        "fixture": false,
+        "noOverflow": true,
+        "selectionReloadBack": true,
+        "status": "在线",
+        "pageErrors": []
+      },
+      {
+        "width": 390,
+        "realService": true,
+        "fixture": false,
+        "noOverflow": true,
+        "selectionReloadBack": true,
+        "status": "在线",
+        "pageErrors": []
+      }
+    ],
+    "format": "Changed files Prettier check and git diff --check passed"
+  },
+  "deployment": {
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-computers-b6ee5846-8679-4804-b05d-366e2be6b04c",
+    "databases": 2,
+    "files": 325,
+    "businessTablesUnchanged": 18,
+    "verified": true
+  },
+  "limits": [
+    "Read-only local host only; profile editing, remote addition, delete/upgrade and upstream disk/session sections not included",
+    "Mobile Chromium emulation, not physical iOS/Android verification",
+    "No backend modifications or paid-provider calls"
+  ],
+  "remaining": [
+    "Remaining shared headers and action compositions",
+    "Settings account/notification/about/administration content not yet audited against the entire latest composition; shell/sidebar/appearance migrated",
+    "Composer surrounding menus and suggestions not audited against full latest release",
+    "Remaining channel settings content",
+    "Activity thread follow/unfollow and conditional read controls (projection lacks follow state; unfollow currently removes canonical eligibility), alternate list layout/grouping (no complete server facet/group query) and mobile home unread bindings"
+  ]
+}
