@@ -1,0 +1,52 @@
+{
+  "productCommit": "36846294",
+  "sourceRevision": "655975433b8492a8f4eef7bbce1b913140bc7485",
+  "adoption": "SharedInboxPanel mobile dimensions only; latest Web composition retained",
+  "red": "mobile avatar36 !=32",
+  "checks": {
+    "build": true,
+    "loomTypecheck": true,
+    "activityFixture": "Chromium/WebKit390/1440; row geometry, context menu, instance navigation",
+    "memoryLayoutFixture": "Chromium/WebKit390/1440; six-line preview, detail return, expanded close hit area",
+    "formal": [
+      {
+        "engine": "chromium",
+        "width": 390,
+        "avatar": 32,
+        "overflow": false
+      },
+      {
+        "engine": "chromium",
+        "width": 1440,
+        "avatar": 36,
+        "overflow": false
+      },
+      {
+        "engine": "webkit",
+        "width": 390,
+        "avatar": 32,
+        "overflow": false
+      },
+      {
+        "engine": "webkit",
+        "width": 1440,
+        "avatar": 36,
+        "overflow": false
+      }
+    ],
+    "screenshotInspected": "webkit390 formal activity",
+    "formatAndDiff": true
+  },
+  "restart": {
+    "verified": true,
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-mobile-inbox-a8194eb7-6f4b-4aab-964f-fd3b65a69c71",
+    "tablesUnchanged": 20,
+    "pushStateUnchanged": true
+  },
+  "limits": [
+    "not native whole-page port",
+    "not physical iOS/Android acceptance",
+    "no paid CLI or broad backend tests"
+  ],
+  "privateEvidence": "/Users/sun/.loom/reviews/2026-10-20-mobile-inbox"
+}
