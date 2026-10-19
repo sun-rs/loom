@@ -154,6 +154,8 @@ export class HumanSidebar {
           "sidebar version conflict; reload before retrying",
         );
       const { keys } = this.visible(actorId, input.workspaceId, controlRoomId);
+      // dmOrder/hiddenDms also accept visible room keys for owner-requested
+      // standalone Channels. ACL and optimistic version checks still apply.
       for (const field of [
         "pinned",
         "channelOrder",
@@ -167,8 +169,6 @@ export class HumanSidebar {
           if (
             !keys.has(key) ||
             (field === "channelOrder" && !key.startsWith("room:")) ||
-            ((field === "dmOrder" || field === "hiddenDms") &&
-              !key.startsWith("peer:")) ||
             ((field === "mutedActivity" ||
               field === "notifyAllMessages" ||
               field === "expandedLongMessages") &&

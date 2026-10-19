@@ -21,7 +21,7 @@
 | UI-03 | 聊天正文、composer、成员设置       | 已验收子集             | [正文](evidence/2026-10-19-official-page-audit/chat-verification.json)、[设置](evidence/2026-10-19-official-page-audit/channel-settings-verification.json)、[表单工具条](evidence/2026-10-19-official-page-audit/form-toolbar-verification.json)；输入、成员和权限仍由 Loom 拥有                                                                                                                                                      |
 | UI-04 | 消息列、实例侧栏、二/三列布局      | 已验收子集             | [消息列](evidence/2026-10-19-official-page-audit/preview-thread-verification.json)、[实例侧栏](evidence/2026-10-19-official-page-audit/inspector-chrome-verification.json)；不加入未接线的搜索/最大化动作                                                                                                                                                                                                                             |
 | UI-05 | 收藏、表情、消息菜单               | 已验收子集             | [共享菜单及行为](evidence/2026-10-19-official-page-audit/document-menu-verification.json)；收藏/表情往返、未知结果核实通过；不是每个菜单调用位置都重新验过                                                                                                                                                                                                                                                                            |
-| UI-06 | 独立单聊与频道实例私密消息         | **功能缺口 G1**        | [语义核查](evidence/2026-10-19-official-page-audit/search-private-verification.json)：当前 private box 共享频道实例 session，不是独立单聊；不能冒充官方 DM。独立单聊入口与旧 private-box 列表迁移尚未实现                                                                                                                                                                                                                             |
+| UI-06 | 独立单聊与频道实例私密消息         | 已实现独立入口         | [独立单聊](evidence/2026-10-19-official-page-audit/standalone-chat-verification.json)：Role 入口创建普通 Channel 和新实例；私聊分区为持久化展示分类，原频道实例私密消息从频道设置进入，含已移除实例的只读历史；不转换旧 session                                                                                                                                                                                                       |
 | UI-07 | 顶部搜索、最近对象、结果页         | 已验收子集             | [最近会话](evidence/2026-10-19-official-page-audit/search-private-verification.json)、[搜索组合](evidence/2026-10-19-official-page-audit/search-settings-composition-verification.json)；键盘/跳转证据保留；历史按 origin 隔离、查询有界，不代表全量最近历史                                                                                                                                                                          |
 | UI-08 | 动态列表、定位、读状态菜单         | 已验收子集＋**G2**     | [动态菜单](evidence/2026-10-19-official-page-audit/activity-menu-verification.json)；现有读/未读/完成/跳转通过，桌面双击刷新并定位首条未读通过[真实页面检查](evidence/2026-10-19-official-page-audit/activity-focus-verification.json)。手机首页未读数字已接入同一summary并通过零值/99+/失败清除验收；activity.list不携带关注状态，但thread.followers可单独读取；取消关注可能让行退出列表，条件读控件和分组仍未完整对齐；不在前端伪造 |
 | UI-09 | 任务列表、过滤、详情与消息列       | 已验收子集             | [任务组件](evidence/2026-10-19-official-page-audit/task-surfaces-verification.json)、[过滤](evidence/2026-10-19-official-page-audit/task-filters-verification.json)；Loom 的显式任务状态保持，不引入官方专属工作流                                                                                                                                                                                                                    |
@@ -39,8 +39,8 @@
 
 按以下顺序完成，不再将已通过的附件等细节重新列成无限待办。
 
-1. **G1 独立单聊入口**：用独立实例及普通频道能力提供正常聊天/任务/文件入口；现有频道实例私密消息只能在频道内部进入。先保证旧记录可达，再改变列表入口；不能把已有private box静默迁移成新session。
-2. **G2 动态行为缺口**：手机首页数字徽标已收口。已核实 `thread.followers` 可读取真实关注状态，`activity.follow` 可写且已有未知结果读回机制；缺的是列表接线与语义一致，不是整个平台缺接口。取消关注使普通消息列退出动态资格，新精确提及仍可重新出现，不能用前端缓存保留行假装官方等价。官方双击动态是“待列表有首条未读后滚动并高亮约3秒”，不打开正文也不写已读；桌面双击手势已接入：先刷新既有有界列表，再定位首条未读；不写已读或打开详情，离开页面清除请求；手机仍为单击导航。见[定向验收](evidence/2026-10-19-official-page-audit/activity-focus-verification.json)。分组不能仅重排当前加载页；缺完整数据的控件继续明确省略。该项不是单改CSS可完成。
+1. **G1 已实现**：独立单聊创建／分类和频道内私密消息历史入口已贯通，见[语义和失败边界](standalone-chat-ui.zh-CN.md)。多步骤创建可能留下可管理的部分频道；不自动恢复跨刷新向导、不新增一种执行会话类型。后续不把这些明确边界重新扩成无限架构工程。
+2. **G2 动态行为缺口**：手机首页数字徽标已收口。已核实 `thread.followers` 可读取真实关注状态，`activity.follow` 可写且已有未知结果读回机制；缺的是列表接线与语义一致，不是整个平台缺接口。取消关注使普通消息列退出动态资格，新精确提及仍可重新出现，不能用前端缓存保留行假装官方等价。官方双击动态是“待列表有首条未读后滚动并高亮约3秒”，不打开正文也不写已读；桌面双击手势已接入：先刷新既有有界列表，再定位首条未读；不写已读或打开详情，离开页面清除请求；手机仍为单击导航。见[定向验收](evidence/2026-10-19-official-page-audit/activity-focus-verification.json)。独立单聊夹具中仅见加入通知但侧栏仍有未读数字，系统通知／未读投影一致性保留复核，不由入口改造冒充已修。分组不能仅重排当前加载页；缺完整数据的控件继续明确省略。该项不是单改CSS可完成。
 3. **G3 浏览器推送**：保留当前诚实的未接入状态。涉及订阅和安全上下文能力；不能把站内铃铛已经可用等同于浏览器推送可用。它不阻断当前站内聊天MVP。
 4. **V1 验证缺口**：对发生改动的调用位置补验证；纯文本预览、成功外链跳转、低频查询错误与真正iOS/Android触摸保留边界。没有复现问题时不为追求“全部状态”无限添加门禁。逐像素跨站比较需要可访问的官方登录态，本次未完成。
 
@@ -48,7 +48,7 @@
 
 ## 退出条件
 
-当前可以声明“指定版本的保留页面主要路径已做定向对齐和复验”。只有 G1/G2 被实现或由负责人明确延期、所有保留控件均有真实后端动作、并完成所需页面组合验证后，才考虑扩大声明；仍不能声称包含主动排除功能的“官方所有功能完全一致”。官方版本变更时另建差异批，不自动重新打开所有旧测试。
+当前可以声明“指定版本的保留页面主要路径已做定向对齐和复验”。只有剩余 G2 被实现或由负责人明确延期、所有保留控件均有真实后端动作、并完成所需页面组合验证后，才考虑扩大声明；仍不能声称包含主动排除功能的“官方所有功能完全一致”。官方版本变更时另建差异批，不自动重新打开所有旧测试。
 
 本次原始日志和摘要见 [页面级复验](evidence/2026-10-19-official-page-audit/page-closeout-verification.json)。
 

@@ -48,7 +48,7 @@ export async function verifyPrivateBoxes({
       } else await route.continue();
     });
     await page
-      .getByRole("button", { name: `私聊 ${name}`, exact: true })
+      .getByRole("button", { name: `频道内私密消息 ${name}`, exact: true })
       .click();
     await page.getByRole("button", { name: "核实打开私聊" }).waitFor();
     assert.equal(requests.length, 1);
@@ -166,7 +166,7 @@ export async function verifyPrivateBoxes({
       stableBoxAcrossReload: true,
       sparseHistoryTopAlignedAndChronological: true,
       privateChannelIsolation: true,
-      sidebarPinCloseReopenAndUnknownReplay: true,
+      channelScopedHistoryEntry: true,
       inactiveHistoryReadOnly: viewport.width === 390,
     });
     await context.close();

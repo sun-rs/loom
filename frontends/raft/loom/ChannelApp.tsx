@@ -1,3 +1,4 @@
+import ChannelPrivateHistory from "./ChannelPrivateHistory.tsx";
 import { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives.ts";
 import { OverflowMenuTrigger } from "../packages/web/src/components/ui/OverflowSheet.tsx";
 import ComposerDirectory from "./ComposerDirectory.tsx";
@@ -97,6 +98,7 @@ const consumerId = consumer();
 
 function Channel({
   channel,
+  standalone = false,
   controlRoomId,
   bridge,
   onOpenPrivate,
@@ -120,6 +122,7 @@ function Channel({
   onBack: () => void;
   onOpenPrivate: (id: string) => void;
   onAddInstance: (() => void) | undefined;
+  standalone?: boolean;
   channel: Room;
   controlRoomId: string | undefined;
   bridge: LoomChannelClient;
@@ -322,7 +325,11 @@ function Channel({
               }
               iconTone="location"
               icon={
-                isPrivate ? <MessageSquare size={18} /> : <Hash size={18} />
+                isPrivate || standalone ? (
+                  <MessageSquare size={18} />
+                ) : (
+                  <Hash size={18} />
+                )
               }
               actions={
                 isPrivate ? (
@@ -342,47 +349,54 @@ function Channel({
                         onChanged={onRoomChanged}
                         readOnly={!!channel.archivedAt}
                         members={(closeMembers) => (
-                          <ChannelMembers
-                            bridge={bridge}
-                            onOpenPrivate={(id) => {
-                              closeMembers();
-                              onOpenPrivate(id);
-                            }}
-                            onOpenProfile={
-                              loading || error || !controlRoomId
-                                ? undefined
-                                : (id) => {
-                                    if (
-                                      hasUnresolvedIntents() ||
-                                      error ||
-                                      !controlRoomId
-                                    )
-                                      return;
-                                    const member = view.members.find(
-                                      (m) =>
-                                        m.kind === "agent" &&
-                                        m.principalId === id,
-                                    );
-                                    if (!member) return;
-                                    opener.current =
-                                      document.querySelector<HTMLElement>(
-                                        '[data-testid="loom-channel-control-trigger"]',
+                          <>
+                            <ChannelMembers
+                              bridge={bridge}
+                              onOpenPrivate={(id) => {
+                                closeMembers();
+                                onOpenPrivate(id);
+                              }}
+                              onOpenProfile={
+                                loading || error || !controlRoomId
+                                  ? undefined
+                                  : (id) => {
+                                      if (
+                                        hasUnresolvedIntents() ||
+                                        error ||
+                                        !controlRoomId
+                                      )
+                                        return;
+                                      const member = view.members.find(
+                                        (m) =>
+                                          m.kind === "agent" &&
+                                          m.principalId === id,
                                       );
-                                    closeMembers();
-                                    profileSnapshot.current = member;
-                                    setProfileSource("channel");
-                                    setProfileId(id);
-                                  }
-                            }
-                            onAddInstance={
-                              channel.archivedAt || !onAddInstance
-                                ? undefined
-                                : () => {
-                                    closeMembers();
-                                    onAddInstance();
-                                  }
-                            }
-                          />
+                                      if (!member) return;
+                                      opener.current =
+                                        document.querySelector<HTMLElement>(
+                                          '[data-testid="loom-channel-control-trigger"]',
+                                        );
+                                      closeMembers();
+                                      profileSnapshot.current = member;
+                                      setProfileSource("channel");
+                                      setProfileId(id);
+                                    }
+                              }
+                              onAddInstance={
+                                channel.archivedAt || !onAddInstance
+                                  ? undefined
+                                  : () => {
+                                      closeMembers();
+                                      onAddInstance();
+                                    }
+                              }
+                            />
+                            <ChannelPrivateHistory
+                              client={bridge.client}
+                              channel={channel}
+                              onOpen={closeMembers}
+                            />
+                          </>
                         )}
                         bridge={bridge}
                         name={channel.name}
@@ -684,6 +698,7 @@ function Channel({
 
 const ChannelWorkspacePanel = lazy(() => import("./ChannelWorkspacePanel.tsx"));
 export default function ChannelApp() {
+  const [standaloneRooms, setStandaloneRooms] = useState<string[]>([]);
   const [sidebarReady, setSidebarReady] = useState(false);
   const onSidebarReady = useCallback(() => setSidebarReady(true), []);
   const sidebarPanel = useResizablePanel({
@@ -1046,6 +1061,7 @@ export default function ChannelApp() {
                           controlRoomId={directory.workspace.controlRoomId}
                           onReady={onSidebarReady}
                           onUnreadChanged={setNavigationUnread}
+                          onStandaloneChanged={setStandaloneRooms}
                           name={directory.workspace.name}
                           rooms={directory.channels}
                           privateBoxes={directory.privateBoxes}
@@ -1160,6 +1176,7 @@ export default function ChannelApp() {
                             });
                           }}
                           channel={selected}
+                          standalone={standaloneRooms.includes(selected.roomId)}
                           controlRoomId={directory.workspace.controlRoomId}
                           onBack={showChatList}
                           bridge={bridge!}
@@ -1194,7 +1211,13 @@ export default function ChannelApp() {
                         active={destination === "agents"}
                         notice={privateNotice}
                         onOpenChannel={select}
-                        onOpenPrivate={openPrivate}
+                        onStandaloneCreated={async (id) => {
+                          setDirectory(await loadChannelDirectory(client));
+                          select(id);
+                          window.dispatchEvent(
+                            new Event("loom:sidebar-preferences-changed"),
+                          );
+                        }}
                       />
                     )}
                   {directory && destination === "memory" && (
@@ -1330,6 +1353,9 @@ export default function ChannelApp() {
                                 }
                                 key={`${selected.roomId}:${params.get("message")}`}
                                 channel={selected}
+                                standalone={standaloneRooms.includes(
+                                  selected.roomId,
+                                )}
                                 onProfileVisibilityChange={
                                   setDiscoveryProfileOpen
                                 }

@@ -96,7 +96,7 @@ export function withInstancePrivateBox<
   if (room.kind !== "direct") return room;
   const row = database
     .prepare(
-      `SELECT i.instance_id,
+      `SELECT i.instance_id, i.channel_id,
          EXISTS (SELECT 1 WHERE ${activeInstancePrivateBoxPredicate("d.room_id")}) AS active
        FROM direct_room_pairs d
        JOIN role_instances i
@@ -123,6 +123,7 @@ export function withInstancePrivateBox<
       : {}),
     instancePrivateBox: {
       instanceId: String(row.instance_id),
+      channelId: String(row.channel_id),
       active: Number(row.active) === 1,
     },
   };

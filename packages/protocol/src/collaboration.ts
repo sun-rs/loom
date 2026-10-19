@@ -91,7 +91,11 @@ export const RoomSchema = z
       .strict()
       .optional(),
     instancePrivateBox: z
-      .object({ instanceId: IdentifierSchema, active: z.boolean() })
+      .object({
+        instanceId: IdentifierSchema,
+        channelId: IdentifierSchema.optional(),
+        active: z.boolean(),
+      })
       .strict()
       .optional(),
     kind: RoomKindSchema,

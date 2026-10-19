@@ -182,7 +182,23 @@ try {
   browser = await (
     process.env.LOOM_BROWSER_ENGINE === "webkit" ? webkit : chromium
   ).launch({ headless: true });
-  if (process.env.LOOM_BROWSER_SLICE === "message-references") {
+  if (process.env.LOOM_BROWSER_SLICE === "standalone") {
+    const { verifyStandalone } = await import("./standalone-browser.mjs");
+    console.log(
+      JSON.stringify(
+        await verifyStandalone({
+          browser,
+          origin,
+          client,
+          workspace,
+          role,
+          channels,
+          instances,
+          head,
+        }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "message-references") {
     console.log(
       JSON.stringify(
         await verifyMessageReferences({

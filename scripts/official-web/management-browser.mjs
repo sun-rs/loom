@@ -224,7 +224,7 @@ export async function verifyManagement({
       latest.roleRevisionId,
     );
 
-    // Opening a private box from Agent keeps unknown-result recovery visible on this page.
+    // Private boxes are opened inside their channel; Agent lists no longer expose a second entry.
     let privateLost = false;
     await page.route("**/v3/client/rooms/direct/open", async (route) => {
       if (!privateLost) {
@@ -235,7 +235,14 @@ export async function verifyManagement({
     await page
       .getByRole("button", { name: `更多操作 ${instanceName}`, exact: true })
       .click();
-    await page.getByRole("menuitem", { name: "打开私聊", exact: true }).click();
+    await page.getByRole("menuitem", { name: "打开频道", exact: true }).click();
+    await page.getByTestId("loom-channel-control-trigger").click();
+    await page
+      .getByRole("button", {
+        name: `频道内私密消息 ${instanceName}`,
+        exact: true,
+      })
+      .click();
     await page
       .getByRole("button", { name: "核实打开私聊", exact: true })
       .click();

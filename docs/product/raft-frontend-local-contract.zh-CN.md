@@ -195,3 +195,7 @@ Raft 发布 Web 源码版本及哈希同上述头像组证据：移除调用 `To
 真实 Solars 消息列在 1440、900、390px 宽度下菜单命中与截图检查通过，刷新、Escape
 通过；成功移除/撤销只在隔离 fixture 验证，没有修改正式关注者。完整 check 仍被
 既有 `/v1/worker/message-present` 登记项阻断，format 仍有既有 5 个文件问题。
+
+### evo 独立单聊与频道私密入口（2026-10-19）
+
+负责人已批准将独立单聊与频道实例私密消息分开。独立单聊复用普通 Channel、新 Role 实例及既有会话生命周期；个人侧栏 `dmOrder` 的 `room:` 键仅记录展示分类。频道实例 private box 不再进入顶层聊天列表，通过频道设置查看，包括已移除实例的历史；Kernel 的可选 `instancePrivateBox.channelId` 只提供既有来源关系，不授予新权限。创建并非跨命令事务，失败步骤、关闭重开和兼容边界见 [实现说明](../evo/standalone-chat-ui.zh-CN.md)。此裁定不修改 Room-first 或固定实例会话合同。

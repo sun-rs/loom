@@ -1,0 +1,76 @@
+{
+  "scope": "Standalone channel/instance creation and channel-scoped private-box history entry.",
+  "source": "Raft v1.21.22 retained components plus Loom-specific composition; page-adoption.json standalone-chat-entry.",
+  "checks": {
+    "tdd": "Sidebar room classification and source-channel projection tests failed before implementation; old frontend browser failed at missing standalone entry.",
+    "tests": "26 passed: human-sidebar, instance-private-box, sidebar-state, private-box",
+    "typecheck": "Root tsc and frontend tsc passed",
+    "build": "build:web:workbench passed",
+    "standaloneBrowser": [
+      {
+        "width": 1440,
+        "newRoomAndInstance": true,
+        "exactUnknownReplay": true,
+        "normalTabs": true,
+        "durableDmPlacement": true,
+        "oldInactiveHistoryAccessible": true,
+        "errors": []
+      },
+      {
+        "width": 390,
+        "newRoomAndInstance": true,
+        "exactUnknownReplay": true,
+        "normalTabs": true,
+        "durableDmPlacement": true,
+        "oldInactiveHistoryAccessible": true,
+        "errors": []
+      }
+    ],
+    "privateBrowser": [
+      {
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "privateOpenUnknownReplay": true,
+        "privateSendUnknownReplay": true,
+        "mobileBackPreservesUnknownWrite": false,
+        "stableBoxAcrossReload": true,
+        "sparseHistoryTopAlignedAndChronological": true,
+        "privateChannelIsolation": true,
+        "channelScopedHistoryEntry": true,
+        "inactiveHistoryReadOnly": false
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "privateOpenUnknownReplay": true,
+        "privateSendUnknownReplay": true,
+        "mobileBackPreservesUnknownWrite": true,
+        "stableBoxAcrossReload": true,
+        "sparseHistoryTopAlignedAndChronological": true,
+        "privateChannelIsolation": true,
+        "channelScopedHistoryEntry": true,
+        "inactiveHistoryReadOnly": true
+      }
+    ],
+    "closeReopen": "Existing unread reopens hidden rows by policy. Explicit mark-read, close, route reopen and durable sidebar reveal passed at both viewports.",
+    "visual": "Inspected fixture desktop standalone tabs and mobile inactive private history screenshots.",
+    "paidCalls": false
+  },
+  "deployment": {
+    "verified": false,
+    "status": "Pending safe restart and real page verification"
+  },
+  "privateEvidence": "/Users/sun/.loom/reviews/2026-10-19-standalone-chat",
+  "limits": [
+    "Creation is a sequential existing-command UI flow; partial channels retained, no wizard resume after browser refresh.",
+    "Standalone placement does not impose a permanent single-instance membership constraint.",
+    "Fake runtime discovery only; no actual native provider session/cost acceptance.",
+    "Live UI verification will not create new user instances or incur provider calls.",
+    "Not all official features or physical mobile verification.",
+    "Fixture newly added instance produced a sidebar unread badge while only a join notice was visible; system-notice/count parity remains part of G2, not claimed fixed by this entry change."
+  ]
+}

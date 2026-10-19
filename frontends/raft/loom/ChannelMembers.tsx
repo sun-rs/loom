@@ -65,7 +65,7 @@ function MemberList({
               <Button
                 size="icon-sm"
                 variant="ghost"
-                aria-label={`私聊 ${member.name}`}
+                aria-label={`频道内私密消息 ${member.name}`}
                 onClick={() => onOpenPrivate(member.id)}
               >
                 <MessageSquare size={16} />

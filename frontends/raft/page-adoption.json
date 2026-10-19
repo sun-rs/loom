@@ -595,10 +595,36 @@
         "Focus searches the loaded bounded window, not all historical activity.",
         "Does not close G1, G2 follow/group semantics or G3 push; no authenticated upstream screenshot comparison."
       ]
+    },
+    "standalone-chat-entry": {
+      "source": "Authorized Raft v1.21.22 locked app-shell / Sidebar DmRow, reopenRouteDm and agent open-DM composition; retained native SidebarItem, AvatarSlot, Dialog, PanelHeader and ChannelMemberRow. Release URL/hash in release-lock.json; source license/provenance in adoption.json.",
+      "kind": "Native component reuse plus Loom-specific Role/Instance glue, not byte-exact upstream DM creation.",
+      "local": [
+        "loom/StandaloneChatDialog.tsx",
+        "loom/ChannelPrivateHistory.tsx",
+        "loom/DirectChatRow.tsx",
+        "loom/AgentPage.tsx",
+        "loom/ChannelApp.tsx",
+        "loom/ChannelSidebar.tsx",
+        "loom/sidebar-state.ts"
+      ],
+      "adaptation": "New ordinary Channel and new Role instance use existing command owners. Human dmOrder room keys supply presentation-only classification; old peer keys/history retained. Private boxes move from top-level sidebar to source Channel settings including inactive records; source channelId comes from Kernel. No session conversion or new scheduling lane type.",
+      "checks": [
+        "packages/kernel/test/human-sidebar.test.ts",
+        "packages/kernel/test/instance-private-box.test.ts",
+        "scripts/official-web/sidebar-state.test.ts",
+        "scripts/official-web/standalone-browser.mjs",
+        "scripts/official-web/private-browser.mjs"
+      ],
+      "limits": [
+        "Multi-command creation is not atomic; confirmed partial rooms remain accessible and are not automatically deleted. Wizard progress is not resumed after browser reload.",
+        "Standalone is presentation over a regular Channel, not an enforced permanent one-member Room type.",
+        "No real paid-provider session test; real deployment checks do not create user instances.",
+        "Not full-site official parity; G2/G3 and physical mobile checks remain."
+      ]
     }
   },
   "pending": [
-    "G1: Standalone one-instance chat entry and channel-internal private-box navigation; preserve all old history, no silent session conversion.",
     "G2: Activity list lacks embedded follow state (thread.followers API already exists); menu state binding, upstream row-retention compatibility, grouping remain. Mobile Home summary badge and desktop first-unread focus are completed.",
     "G3: Browser push subscription/permission/test and notification navigation; existing capability-only view remains explicit.",
     "V1: Targeted unverified combinations, plain-text browser styling, successful external navigation and physical mobile/authenticated upstream comparison; see currentCloseout."

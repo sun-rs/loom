@@ -8,7 +8,7 @@ import SavedNav from "./SavedNav.tsx";
 import { useAppearanceStore } from "../packages/web/src/store/appearanceStore.ts";
 import { shouldHideEmptySidebarSection } from "../packages/web/src/components/layout/sidebarEmptySectionVisibility.ts";
 import { LoomLiveActivity } from "./AppearanceRuntime.tsx";
-import PrivateBoxRow from "./PrivateBoxRow.tsx";
+import DirectChatRow from "./DirectChatRow.tsx";
 import AttentionDot from "../packages/web/src/components/ui/AttentionDot.tsx";
 import { hasUnresolvedIntents } from "@rah-os/client-core/write-intent";
 import { SidebarDrag, DragSection, DragRow } from "./SidebarDrag.tsx";
@@ -45,6 +45,7 @@ import {
 } from "./ManagementUi.tsx";
 import {
   sidebarGroups,
+  isStandaloneChat,
   sidebarKey,
   moveSidebarItem,
   groupSortMode,
@@ -66,6 +67,7 @@ export default function ChannelSidebar({
   onRoomsChanged,
   onReady,
   onUnreadChanged,
+  onStandaloneChanged,
   selected,
   onSelect,
   savedSelected,
@@ -83,6 +85,7 @@ export default function ChannelSidebar({
   onPrivateClosed: (id: string) => void;
   onRoomsChanged: () => Promise<void>;
   onReady: () => void;
+  onStandaloneChanged: (ids: string[]) => void;
   onUnreadChanged?: (value: NavigationUnread | undefined) => void;
   savedSelected: boolean;
   onOpenSaved: () => void;
@@ -136,6 +139,11 @@ export default function ChannelSidebar({
       if (ticket === request.current) {
         onUnreadChanged?.(navigationUnread(workspaceId, activity.summary));
         setActivityUnreadCount(activity.summary?.unreadActivityCount);
+        onStandaloneChanged(
+          next.preferences.dmOrder
+            .filter((k) => k.startsWith("room:"))
+            .map((k) => k.slice(5)),
+        );
         setData(next);
         setReadError("");
         setActivity(
@@ -157,7 +165,7 @@ export default function ChannelSidebar({
     } finally {
       if (ticket === request.current) setRefreshing(false);
     }
-  }, [client, workspaceId, onUnreadChanged]);
+  }, [client, workspaceId, onUnreadChanged, onStandaloneChanged]);
   useEffect(() => {
     void refresh();
     const timer = setInterval(() => {
@@ -183,6 +191,40 @@ export default function ChannelSidebar({
       void refresh();
     }
   };
+  // Official reopenRouteDm semantics: selecting a closed standalone room
+  // reveals it durably. Try once per route selection; unknown writes use the
+  // same visible recovery slot and rejected versions never auto-loop.
+  const revealAttempt = useRef<{ id: string | null; attempted: boolean }>({
+    id: null,
+    attempted: false,
+  });
+  useEffect(() => {
+    if (revealAttempt.current.id !== selected)
+      revealAttempt.current = { id: selected, attempted: false };
+    if (
+      !selected ||
+      !data ||
+      state !== "idle" ||
+      revealAttempt.current.attempted
+    )
+      return;
+    const key = `room:${selected}`;
+    if (
+      !data.preferences.dmOrder.includes(key) ||
+      !data.preferences.hiddenDms.includes(key)
+    )
+      return;
+    revealAttempt.current.attempted = true;
+    void manager.sidebar(
+      { hiddenDms: data.preferences.hiddenDms.filter((k) => k !== key) },
+      data.preferences.version,
+      (outcome) => {
+        if (outcome.kind === "ok") void refresh();
+        else if (outcome.kind === "rejected")
+          setError("会话已打开，但列表恢复失败，请刷新列表后重试。");
+      },
+    );
+  }, [selected, data, state, manager, refresh]);
   const patch = (value: SidebarPatchRequest["patch"]) => {
     if (data && state === "idle") {
       setError("");
@@ -418,7 +460,7 @@ export default function ChannelSidebar({
                     }
                   >
                     <SidebarContextMenu
-                      label={`${room.instancePrivateBox ? "私聊" : "频道"}操作 ${room.name}`}
+                      label={`${isStandaloneChat(room, prefs!) ? "私聊" : "频道"}操作 ${room.name}`}
                       onOpenChange={(open) =>
                         setMenuRoom((current) =>
                           open
@@ -435,7 +477,7 @@ export default function ChannelSidebar({
                           children: [
                             ...groups
                               .filter((g) =>
-                                room.instancePrivateBox
+                                isStandaloneChat(room, prefs!)
                                   ? g.id !== "channels"
                                   : g.id !== "dms",
                               )
@@ -478,7 +520,7 @@ export default function ChannelSidebar({
                                 : moveSidebarItem(prefs!, room, "pinned"),
                             ),
                         },
-                        ...(room.instancePrivateBox
+                        ...(isStandaloneChat(room, prefs!)
                           ? [
                               {
                                 label: "关闭会话",
@@ -522,8 +564,8 @@ export default function ChannelSidebar({
                             ]),
                       ]}
                     >
-                      {room.instancePrivateBox ? (
-                        <PrivateBoxRow
+                      {isStandaloneChat(room, prefs!) ? (
+                        <DirectChatRow
                           roomId={room.roomId}
                           name={room.name}
                           description={

@@ -6,6 +6,12 @@ export type SidebarRoom = {
   instancePrivateBox?: { instanceId: string };
 };
 type Channel = SidebarRoom;
+// Explicit Human presentation placement, never inferred from member count/name.
+// A standalone chat remains a normal Channel with its own instance/session.
+export const isStandaloneChat = (
+  room: SidebarRoom,
+  prefs: SidebarPreferences,
+) => !room.instancePrivateBox && prefs.dmOrder.includes(`room:${room.roomId}`);
 export const sidebarKey = (room: SidebarRoom) =>
   room.instancePrivateBox
     ? `peer:${room.instancePrivateBox.instanceId}`
@@ -34,9 +40,10 @@ export function sidebarGroups<T extends Channel>(
   const key = sidebarKey;
   rooms = rooms.filter(
     (r) =>
-      !r.instancePrivateBox ||
-      !prefs.hiddenDms.includes(key(r)) ||
-      (unread[r.roomId] ?? 0) > 0,
+      !r.instancePrivateBox &&
+      (!isStandaloneChat(r, prefs) ||
+        !prefs.hiddenDms.includes(key(r)) ||
+        (unread[r.roomId] ?? 0) > 0),
   );
   const pinned = new Set(prefs.pinned);
   const placed = new Set(prefs.customSections.flatMap((s) => s.items));
@@ -71,13 +78,15 @@ export function sidebarGroups<T extends Channel>(
       rooms: sort(
         rooms.filter(
           (r) =>
-            !r.instancePrivateBox && !pinned.has(key(r)) && !placed.has(key(r)),
+            !isStandaloneChat(r, prefs) &&
+            !pinned.has(key(r)) &&
+            !placed.has(key(r)),
         ),
         prefs.channelOrder,
         prefs.channelSortMode,
       ),
     },
-    ...(rooms.some((r) => r.instancePrivateBox)
+    ...(rooms.some((r) => isStandaloneChat(r, prefs))
       ? [
           {
             id: "dms",
@@ -85,7 +94,7 @@ export function sidebarGroups<T extends Channel>(
             rooms: sort(
               rooms.filter(
                 (r) =>
-                  r.instancePrivateBox &&
+                  isStandaloneChat(r, prefs) &&
                   !pinned.has(key(r)) &&
                   !placed.has(key(r)),
               ),
@@ -131,8 +140,8 @@ export function moveSidebarItem(
   beforeKey?: string,
 ): SidebarPatchRequest["patch"] {
   if (
-    (target === "channels" && room.instancePrivateBox) ||
-    (target === "dms" && !room.instancePrivateBox)
+    (target === "channels" && isStandaloneChat(room, prefs)) ||
+    (target === "dms" && !isStandaloneChat(room, prefs))
   )
     return {};
   const key = sidebarKey(room);
@@ -197,8 +206,8 @@ export function sidebarDrop(
     !target ||
     !item ||
     active === over ||
-    (target.id === "channels" && item.instancePrivateBox) ||
-    (target.id === "dms" && !item.instancePrivateBox)
+    (target.id === "channels" && isStandaloneChat(item, prefs)) ||
+    (target.id === "dms" && !isStandaloneChat(item, prefs))
   )
     return {};
   if (groupSortMode(prefs, target.id) !== "manual") return {};

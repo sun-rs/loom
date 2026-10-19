@@ -614,6 +614,7 @@ test("re-instantiating the Role opens a new private box; the old one stays inact
     });
     assert.notEqual(opened.room.roomId, f.privateBox.roomId);
     assert.deepEqual(opened.room.instancePrivateBox, {
+      channelId: f.home.roomId,
       instanceId: again.instanceId,
       active: true,
     });
@@ -635,10 +636,12 @@ test("re-instantiating the Role opens a new private box; the old one stays inact
     const boxOf = (roomId: string) =>
       rooms.find((room) => room.roomId === roomId)?.instancePrivateBox;
     assert.deepEqual(boxOf(f.privateBox.roomId), {
+      channelId: f.home.roomId,
       instanceId: f.instance.instanceId,
       active: false,
     });
     assert.deepEqual(boxOf(opened.room.roomId), {
+      channelId: f.home.roomId,
       instanceId: again.instanceId,
       active: true,
     });
@@ -668,6 +671,7 @@ test("only instance private boxes carry the instancePrivateBox projection", asyn
     });
     assert.equal(replay.room.roomId, f.privateBox.roomId);
     assert.deepEqual(replay.room.instancePrivateBox, {
+      channelId: f.home.roomId,
       instanceId: f.instance.instanceId,
       active: true,
     });
@@ -689,6 +693,7 @@ test("only instance private boxes carry the instancePrivateBox projection", asyn
       })
     ).rooms.find((room) => room.roomId === f.privateBox.roomId);
     assert.deepEqual(after?.instancePrivateBox, {
+      channelId: f.home.roomId,
       instanceId: f.instance.instanceId,
       active: false,
     });

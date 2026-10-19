@@ -1,3 +1,5 @@
+import StandaloneChatDialog from "./StandaloneChatDialog.tsx";
+import { MessageSquare } from "lucide-react";
 import { useRolePresence } from "./RolePresence.tsx";
 import { rolePresence } from "./role-presence.ts";
 import { uiActionProps } from "./ui-action-props.ts";
@@ -48,7 +50,7 @@ export default function AgentPage({
   controlRoomId,
   active,
   onOpenChannel,
-  onOpenPrivate,
+  onStandaloneCreated,
   notice,
 }: {
   client: RahClient;
@@ -57,7 +59,7 @@ export default function AgentPage({
   active: boolean;
   notice: ReactNode;
   onOpenChannel: (id: string) => void;
-  onOpenPrivate: (id: string) => void;
+  onStandaloneCreated: (id: string) => Promise<void>;
 }) {
   const manager = useMemo(
     () => new ManagementClient(client, workspaceId, controlRoomId),
@@ -86,6 +88,7 @@ export default function AgentPage({
     setParams(next);
     setTab("roles");
   };
+  const [standalone, setStandalone] = useState<RoleTemplate>();
   const [edit, setEdit] = useState<Edit>();
   const [channel, setChannel] = useState("");
   const [revision, setRevision] = useState("keep");
@@ -181,6 +184,20 @@ export default function AgentPage({
       data-testid="loom-agent-page"
     >
       {notice}
+      {standalone && (
+        <StandaloneChatDialog
+          client={client}
+          workspaceId={workspaceId}
+          controlRoomId={controlRoomId}
+          role={standalone}
+          onClose={() => setStandalone(undefined)}
+          onCreated={async (id) => {
+            await onStandaloneCreated(id);
+            setStandalone(undefined);
+            void refresh();
+          }}
+        />
+      )}
       <RoleWorkspace
         entries={entries}
         selected={selected}
@@ -196,20 +213,30 @@ export default function AgentPage({
         onRefresh={() => void refresh()}
         actions={
           role && (
-            <ActionMenu
-              label={`更多操作 ${roleName(role)}`}
-              disabled={busy}
-              items={[
-                {
-                  label: "添加实例到频道",
-                  run: () => open({ kind: "add", role }),
-                },
-                {
-                  label: "删除角色",
-                  run: () => open({ kind: "delete", role }),
-                },
-              ]}
-            />
+            <>
+              <Button
+                {...uiActionProps.menuIcon}
+                aria-label="开始独立单聊"
+                disabled={busy}
+                onClick={() => guard(() => setStandalone(role))}
+              >
+                <MessageSquare size={20} />
+              </Button>
+              <ActionMenu
+                label={`更多操作 ${roleName(role)}`}
+                disabled={busy}
+                items={[
+                  {
+                    label: "添加实例到频道",
+                    run: () => open({ kind: "add", role }),
+                  },
+                  {
+                    label: "删除角色",
+                    run: () => open({ kind: "delete", role }),
+                  },
+                ]}
+              />
+            </>
           )
         }
       >
@@ -273,10 +300,6 @@ export default function AgentPage({
                               {
                                 label: "打开频道",
                                 run: () => onOpenChannel(instance.channelId),
-                              },
-                              {
-                                label: "打开私聊",
-                                run: () => onOpenPrivate(instance.instanceId),
                               },
                               {
                                 label: "重启实例",

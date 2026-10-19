@@ -340,3 +340,64 @@ test("panel tab order persists across reopen with sparse updates, replay and per
     rmSync(directory, { recursive: true, force: true });
   }
 });
+
+test("standalone chat placement accepts an authorized channel without changing its identity", () => {
+  const k = new RoomKernel({ databasePath: ":memory:" });
+  k.initialize();
+  try {
+    const h = k.provisionPrincipal({ handle: "solo-owner", kind: "human" });
+    const a = k.authenticateAccessToken(h.accessToken);
+    const w = k.createWorkspace(a, {
+      name: "solo",
+      slug: "solo",
+      idempotencyKey: "w",
+    });
+    const room = k.createWorkspaceRoom(a, {
+      workspaceId: w.workspace.workspaceId,
+      name: "Tom",
+      slug: "tom",
+      kind: "channel",
+      idempotencyKey: "r",
+      basedOnControlRoomSeq: k.sync(a, {
+        roomId: w.controlRoom.roomId,
+        consumerId: "t",
+      }).latestRoomSeq,
+    }).room;
+    const key = `room:${room.roomId}`,
+      scope = { workspaceId: w.workspace.workspaceId };
+    const result = k.humanSidebar.patch(a, {
+      ...scope,
+      expectedVersion: 0,
+      idempotencyKey: "solo",
+      patch: { dmOrder: [key], hiddenDms: [key] },
+    });
+    assert.deepEqual(result.preferences.dmOrder, [key]);
+    assert.deepEqual(k.humanSidebar.get(a, scope).preferences.hiddenDms, [key]);
+    assert.equal(
+      k.listRooms(a).find((r) => r.roomId === room.roomId)?.kind,
+      "channel",
+    );
+    assert.throws(
+      () =>
+        k.humanSidebar.patch(a, {
+          ...scope,
+          expectedVersion: 1,
+          idempotencyKey: "bad",
+          patch: { dmOrder: ["room:unknown"] },
+        }),
+      /unavailable|inaccessible/,
+    );
+    assert.throws(
+      () =>
+        k.humanSidebar.patch(a, {
+          ...scope,
+          expectedVersion: 0,
+          idempotencyKey: "stale",
+          patch: { dmOrder: [] },
+        }),
+      /version conflict/,
+    );
+  } finally {
+    k.close();
+  }
+});

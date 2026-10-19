@@ -147,21 +147,23 @@ test("dragging cannot silently replace alphabetical sorting", async () => {
   assert.deepEqual(sidebarDrop(prefs, groups, "b", "a", false), {});
 });
 
-test("private boxes use peer identity, independent DM sorting, durable hiding and compatible drag targets", () => {
+test("standalone chats use room identity, independent DM sorting, durable hiding and compatible drag targets", () => {
   const boxes = [
     {
       roomId: "dm-a",
       name: "Zulu-1",
-      instancePrivateBox: { instanceId: "a", active: true },
     },
     {
       roomId: "dm-b",
       name: "Alpha-1",
-      instancePrivateBox: { instanceId: "b", active: false },
     },
   ];
   const rooms = [{ roomId: "channel", name: "Channel" }, ...boxes];
-  const prefs = { ...DEFAULT_SIDEBAR_PREFERENCES, dmSortMode: "az" as const };
+  const prefs = {
+    ...DEFAULT_SIDEBAR_PREFERENCES,
+    dmOrder: ["room:dm-a", "room:dm-b"],
+    dmSortMode: "az" as const,
+  };
   const groups = sidebarGroups(rooms, prefs, {});
   assert.deepEqual(
     groups.find((g) => g.id === "channels")!.rooms.map((r) => r.roomId),
@@ -178,10 +180,10 @@ test("private boxes use peer identity, independent DM sorting, durable hiding an
     "group:pinned",
     false,
   );
-  assert.deepEqual(pinned.pinned, ["peer:a"]);
+  assert.deepEqual(pinned.pinned, ["room:dm-a"]);
   const hidden = sidebarGroups(
     rooms,
-    { ...prefs, pinned: ["peer:a"], hiddenDms: ["peer:a"] },
+    { ...prefs, pinned: ["room:dm-a"], hiddenDms: ["room:dm-a"] },
     {},
   );
   assert.equal(
@@ -204,18 +206,65 @@ test("private boxes use peer identity, independent DM sorting, durable hiding an
     "dm-a",
     false,
   );
-  assert.deepEqual(moved.dmOrder, ["peer:b", "peer:a"]);
+  assert.deepEqual(moved.dmOrder, ["room:dm-b", "room:dm-a"]);
   assert.equal(moved.channelSortMode, undefined);
 });
 
-test("closed private conversation reappears on canonical unread without rewriting preferences", () => {
+test("closed standalone conversation reappears on canonical unread without rewriting preferences", () => {
   const room = {
     roomId: "dm",
     name: "Tom",
-    instancePrivateBox: { instanceId: "tom" },
   };
-  const prefs = { ...DEFAULT_SIDEBAR_PREFERENCES, hiddenDms: ["peer:tom"] };
+  const prefs = {
+    ...DEFAULT_SIDEBAR_PREFERENCES,
+    dmOrder: ["room:dm"],
+    hiddenDms: ["room:dm"],
+  };
   const groups = sidebarGroups([room], prefs, {}, { dm: 2 });
   assert.equal(groups.find((g) => g.id === "dms")?.rooms[0]?.roomId, "dm");
-  assert.deepEqual(prefs.hiddenDms, ["peer:tom"]);
+  assert.deepEqual(prefs.hiddenDms, ["room:dm"]);
+});
+
+test("standalone channel placement uses stable room identity and keeps private boxes out of top-level list", () => {
+  const rooms = [
+    { roomId: "solo", name: "Tom" },
+    { roomId: "team", name: "Team" },
+    { roomId: "box", name: "Tom-1", instancePrivateBox: { instanceId: "old" } },
+  ];
+  const prefs = {
+    ...DEFAULT_SIDEBAR_PREFERENCES,
+    dmOrder: ["room:solo"],
+    pinned: ["peer:old"],
+  };
+  const groups = sidebarGroups(rooms, prefs, {});
+  assert.deepEqual(
+    groups.find((g) => g.id === "dms")?.rooms.map((r) => r.roomId),
+    ["solo"],
+  );
+  assert.deepEqual(
+    groups.find((g) => g.id === "channels")?.rooms.map((r) => r.roomId),
+    ["team"],
+  );
+  assert.equal(
+    groups.flatMap((g) => g.rooms).some((r) => r.roomId === "box"),
+    false,
+  );
+  const hidden = sidebarGroups(
+    rooms,
+    { ...prefs, hiddenDms: ["room:solo"] },
+    {},
+  );
+  assert.equal(
+    hidden.flatMap((g) => g.rooms).some((r) => r.roomId === "solo"),
+    false,
+  );
+  assert.equal(
+    sidebarGroups(
+      rooms,
+      { ...prefs, hiddenDms: ["room:solo"] },
+      {},
+      { solo: 1 },
+    ).find((g) => g.id === "dms")?.rooms.length,
+    1,
+  );
 });

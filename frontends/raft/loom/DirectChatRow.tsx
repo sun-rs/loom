@@ -2,7 +2,7 @@
 // native AvatarSlot and SidebarItem own size, palette, hover and selected states.
 import { SidebarItem, SidebarItemCount } from "raft-ui";
 import AvatarSlot from "../packages/web/src/components/ui/AvatarSlot.tsx";
-export default function PrivateBoxRow({
+export default function DirectChatRow({
   roomId,
   name,
   description,
@@ -23,7 +23,7 @@ export default function PrivateBoxRow({
 }) {
   return (
     <SidebarItem
-      data-private-box-id={roomId}
+      data-direct-chat-id={roomId}
       data-sidebar-channel-id={roomId}
       data-slot="sidebar-item"
       active={selected}

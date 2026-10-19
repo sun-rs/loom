@@ -143,6 +143,9 @@ export const SidebarPreferencesSchema = z
     pinned: Keys,
     channelOrder: Keys,
     channelPanelTabOrder: ChannelPanelTabOrder.default([]),
+    // Human presentation only: peer keys retain legacy DMs; room keys explicitly
+    // place ordinary Channels in standalone-chat UI. Never infers membership,
+    // session identity or permissions, and does not convert a private box.
     dmOrder: Keys,
     hiddenDms: Keys.default([]),
     customSections: CustomSections.default([]),
