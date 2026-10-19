@@ -1,0 +1,229 @@
+{
+  "date": "2026-10-19",
+  "codeCommit": "fe147ce7ec2ed2633a3fdee528c2fd71b75bc4e1",
+  "source": {
+    "release": "v1.21.22",
+    "revision": "af3d6ef4a22f0f05f5f9db9424285755d67e9726",
+    "lock": "release-lock.json",
+    "adoption": "frontends/raft/page-adoption.json#shared-sidebar-search-history-preview",
+    "method": "Read current authorized production bundle composition and existing raft-ui@0.6.0 recipes. Structural port, not a screenshot redraw or full latest TSX copy."
+  },
+  "rootCause": "Updating shared primitives did not replace old page compositions. Retained wrappers still overrode semantic typography, section geometry, chips and secondary actions. Prior source tests did not cover these compositions.",
+  "changes": [
+    {
+      "surface": "Shared desktop/mobile sidebar",
+      "before": "Handwritten old headings, elegant override, font-display and padding.",
+      "after": "Native SidebarRoot/Header/HeaderTitle and PanelSectionHeader/HeaderContent/Title. Explicit h1 render retains accessible navigation; single local workspace title retained."
+    },
+    {
+      "surface": "Channel group controls",
+      "before": "12px uppercase tracking-widest heading,24px local flat buttons; counts only on private group.",
+      "after": "Native SidebarSectionHeader/Disclosure/Count/Control,14px chevron,16px plus/sort. Existing drag/context menus/revisioned mutations retained."
+    },
+    {
+      "surface": "Search history",
+      "before": "Old eyebrow/11px text buttons/outline chips/manual focus styling.",
+      "after": "Current SearchResultsSectionHeading, shared TextLink, soft chips,14px icons,22px remove target and original hover/touch edit semantics."
+    },
+    {
+      "surface": "Member hover preview",
+      "before": "Old bold text and2px description border.",
+      "after": "Native headline/mono-meta/callout and Separator; authoritative membership lookup remains."
+    },
+    {
+      "surface": "Search pagination error",
+      "before": "Handmade boxed error.",
+      "after": "Official warning Banner with icon/action slots; unchanged retry/cursor ownership."
+    }
+  ],
+  "automated": {
+    "sourceRegressionTests": 20,
+    "typecheck": "npm run typecheck:loom --prefix frontends/raft passed",
+    "build": "npm run build:web:workbench passed; existing chunk-size and dynamic-import warnings remain",
+    "browserSlices": [
+      "search-history",
+      "message-references",
+      "sidebar-actions",
+      "channel-controls",
+      "navigation"
+    ],
+    "viewports": [
+      [1440, 1000],
+      [390, 844]
+    ],
+    "dpr": 1,
+    "formatAndDiff": "passed",
+    "noFullBackendSuite": true,
+    "noPaidProviderCalls": true
+  },
+  "failuresResolved": [
+    "New source regression checks failed before implementation.",
+    "Navigation caught lost heading semantics after primitive replacement; fixed with render h1.",
+    "Older navigation test still expected the intentionally removed desktop Settings header; now checks header absence plus list/detail presence."
+  ],
+  "fixtureLimit": "message-references uses fake CLI; fake Codex MCP discovery rejects unsupported command. UI hover/navigation passed; this does not constitute runtime or paid-provider acceptance.",
+  "deployment": {
+    "service": "com.loom.evo",
+    "backupVerified": true,
+    "databases": 2,
+    "files": 325,
+    "businessTablesUnchanged": 18,
+    "realPagesVerified": true,
+    "reviewDirectory": "/Users/sun/.loom/reviews/2026-10-19-deep-ui-alignment",
+    "receipt": "/Users/sun/.loom/reviews/2026-10-19-deep-ui-alignment/restart.json",
+    "transient": "First page probe overlapped the graceful restart and saw connection refused. After successor verification, fresh desktop/mobile probe passed."
+  },
+  "realPageMeasurements": {
+    "before": [
+      {
+        "width": 1440,
+        "metrics": {
+          "header": {
+            "slot": null,
+            "width": 239,
+            "height": 56,
+            "font": "16px",
+            "family": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif"
+          },
+          "heading": {
+            "slot": null,
+            "width": 36,
+            "height": 28,
+            "font": "18px",
+            "family": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif"
+          },
+          "section": {
+            "slot": null,
+            "width": 155,
+            "height": 24,
+            "font": "12px",
+            "family": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif"
+          },
+          "control": {
+            "slot": "tooltip-trigger",
+            "width": 24,
+            "height": 24,
+            "font": "16px",
+            "family": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif"
+          }
+        },
+        "errors": []
+      },
+      {
+        "width": 390,
+        "metrics": {
+          "header": {
+            "slot": null,
+            "width": 390,
+            "height": 48,
+            "font": "16px",
+            "family": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif"
+          },
+          "heading": {
+            "slot": null,
+            "width": 32,
+            "height": 20,
+            "font": "16px",
+            "family": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif"
+          },
+          "section": {
+            "slot": null,
+            "width": 306,
+            "height": 24,
+            "font": "12px",
+            "family": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif"
+          },
+          "control": {
+            "slot": "tooltip-trigger",
+            "width": 24,
+            "height": 24,
+            "font": "16px",
+            "family": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif"
+          }
+        },
+        "errors": []
+      }
+    ],
+    "after": [
+      {
+        "width": 1440,
+        "metrics": {
+          "header": {
+            "slot": "sidebar-header",
+            "width": 239,
+            "height": 56,
+            "font": "16px",
+            "family": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif"
+          },
+          "heading": {
+            "slot": "sidebar-header-title",
+            "width": 199,
+            "height": 22,
+            "font": "17px",
+            "family": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif"
+          },
+          "section": {
+            "slot": "sidebar-section-disclosure",
+            "width": 59.359375,
+            "height": 18,
+            "font": "13px",
+            "family": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif"
+          },
+          "control": {
+            "slot": "button",
+            "width": 28,
+            "height": 28,
+            "font": "16px",
+            "family": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif"
+          }
+        },
+        "errors": []
+      },
+      {
+        "width": 390,
+        "metrics": {
+          "header": {
+            "slot": "panel-section-header",
+            "width": 390,
+            "height": 48,
+            "font": "16px",
+            "family": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif"
+          },
+          "heading": {
+            "slot": "panel-title",
+            "width": 316,
+            "height": 20,
+            "font": "16px",
+            "family": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif"
+          },
+          "section": {
+            "slot": "sidebar-section-disclosure",
+            "width": 59.359375,
+            "height": 18,
+            "font": "13px",
+            "family": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif"
+          },
+          "control": {
+            "slot": "button",
+            "width": 28,
+            "height": 28,
+            "font": "16px",
+            "family": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif"
+          }
+        },
+        "errors": []
+      }
+    ]
+  },
+  "visualReview": [
+    "before/after chat and Agent screenshots captured at1440 and390; after chat390 and Agent1440 visually inspected. No horizontal overflow or page errors; real sort menu open/Escape passed."
+  ],
+  "remaining": [
+    "Not full-site parity or authenticated official pixel-diff acceptance.",
+    "Independent single-chat creation/list separation and channel-private entry migration remain unimplemented.",
+    "Browser push and Activity follow projection remain unavailable.",
+    "Role-specific editor and memory/fork/side surfaces require Loom adaptation; cannot claim they are byte-exact official pages.",
+    "Search pagination error has source/type/build verification only; no new failure-injection browser test."
+  ],
+  "nextPriority": "Audit retained Role editor/list, Computer details, message action/attachment/thread compositions against the same locked revision; prioritize shared primitives and actual data/interaction gaps, not cosmetic guesses."
+}
