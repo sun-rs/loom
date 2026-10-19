@@ -12,7 +12,7 @@
   ],
   "checks": {
     "unit": "13 focused tests passed; new contract/data tests failed first. 3 activity chrome tests repeated after final subtitle correction.",
-    "typecheck": "npm run typecheck:loom --prefix frontends/raft passed",
+    "typecheck": "Correction: the earlier report incorrectly marked this check passed. The invocation failed with TS2339 in DiscoveryPage because catalog entries wrap fields in suggestion. Corrected and independently rechecked in native-list-verification.json; prior browser results remain valid but did not establish avatar identity correctness.",
     "build": "npm run build:web:workbench passed at codeCommit; existing chunk-size/dynamic-import warnings retained",
     "fixtureBrowser": "1440x844 and 390x844 DPR1 page-polish: drawer, first-tab pointer hit, role status attachment, all-read frontier and durable write, computer list. Peer unread presentation simulated, writes use temporary real Kernel. Settings 1440x1000/390x844: metadata, exact unknown replay, conflict draft, discard, mute, archive/restore. No paid providers.",
     "live": [

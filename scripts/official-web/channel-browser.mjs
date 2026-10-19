@@ -1,3 +1,4 @@
+import { verifyActivityList } from "./activity-list-browser.mjs";
 import { verifyPagePolish } from "./page-polish-browser.mjs";
 import { verifyComposerSuggestions } from "./composer-suggestions-browser.mjs";
 import { verifyChannelSettings } from "./channel-settings-browser.mjs";
@@ -180,7 +181,11 @@ try {
   browser = await (
     process.env.LOOM_BROWSER_ENGINE === "webkit" ? webkit : chromium
   ).launch({ headless: true });
-  if (process.env.LOOM_BROWSER_SLICE === "page-polish") {
+  if (process.env.LOOM_BROWSER_SLICE === "activity-list") {
+    console.log(
+      JSON.stringify(await verifyActivityList({ browser, origin, channels })),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "page-polish") {
     console.log(
       JSON.stringify(
         await verifyPagePolish({

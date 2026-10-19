@@ -122,18 +122,18 @@ export default function AvatarListRow({
     <div className="min-w-0 flex-1">
       {align === "start" ? (
         <div className="flex min-w-0 flex-col gap-1">
-          <span className="truncate text-sm font-semibold text-foreground-muted  ">{name}</span>
+          <span className="truncate text-body font-semibold text-foreground">{name}</span>
           {subtitle != null && subtitle !== false && (
-            <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs font-mono text-foreground-hint ">
+            <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 font-mono text-mono-meta text-foreground-hint">
               {subtitle}
             </span>
           )}
         </div>
       ) : (
         <div className="flex min-w-0 flex-wrap items-baseline gap-x-2">
-          <span className="truncate text-sm font-semibold text-foreground-muted  ">{name}</span>
+          <span className="truncate text-body font-semibold text-foreground">{name}</span>
           {subtitle != null && subtitle !== false && (
-            <span className="text-xs font-mono text-foreground-hint ">{subtitle}</span>
+            <span className="font-mono text-mono-meta text-foreground-hint">{subtitle}</span>
           )}
         </div>
       )}
@@ -164,7 +164,7 @@ export default function AvatarListRow({
       {...restButtonProps}
       type="button"
       onClick={onClick}
-      className={`flex min-w-0 flex-1 gap-3 text-left ${itemsAlignClass}`}
+      className={`flex min-w-0 flex-1 gap-3 rounded-control text-left outline-none focus-visible:shadow-raft-focus ${itemsAlignClass}`}
     >
       {body}
     </button>
@@ -173,7 +173,7 @@ export default function AvatarListRow({
     <SurfaceListItem
       selected={selected}
       interactive={interactive}
-      className={`group px-3 py-2 ${className}`}
+      className={`group px-4 py-3 ${className}`}
     >
       <div className={`flex w-full min-w-0 gap-3 ${itemsAlignClass}`}>
         {interactive ? (

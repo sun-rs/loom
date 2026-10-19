@@ -6,9 +6,14 @@ import type { ActivityAction } from "./activity-actions.ts";
 import Tooltip from "../packages/web/src/components/ui/Tooltip.tsx";
 import { useRef, useEffect, useState, useCallback } from "react";
 // Structural port of v1.21.22 ThreadsInbox-CbSKTW4g.js Ie/Le/Re and InboxRow.
-// Loom supplies canonical rows. Touch Done stays reachable; follow actions remain unbound.
+// Official list branch, including touch visibility; Done remains in the context menu.
 import { useIntl } from "react-intl";
-import { Badge, Button, DirectMessageIcon, ThreadIcon } from "raft-ui";
+import {
+  SidebarItemCount,
+  Button,
+  DirectMessageIcon,
+  ThreadIcon,
+} from "raft-ui";
 import { Hash, Check } from "lucide-react";
 import { formatRelativeTime } from "../packages/web/src/utils/relativeTime.ts";
 import InlineMarkdownPreview from "../packages/web/src/components/markdown/InlineMarkdownPreview.tsx";
@@ -43,24 +48,15 @@ export default function ActivityMessageRow({
   };
   const unreadCount = row.unread ?? 0;
   const thread = row.activityKind === "thread";
-  const iconClass =
-    "mr-1.5 inline-block align-[-2px] text-foreground-placeholder ";
-  const icon = thread ? (
-    <ThreadIcon width={13} height={13} className={iconClass} />
-  ) : row.activityKind === "direct" ? (
-    <DirectMessageIcon width={13} height={13} className={iconClass} />
-  ) : (
-    <Hash size={13} className={iconClass} />
-  );
   const hasRowAction = Boolean(row.activityFrontier);
   const rowActionVisibilityClassName = active
     ? "pointer-events-auto opacity-100"
-    : "pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-visible:pointer-events-auto group-focus-visible:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100 [@media(hover:none)]:pointer-events-auto [@media(hover:none)]:opacity-100";
+    : "pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-visible:pointer-events-auto group-focus-visible:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100 [@media(hover:none)]:hidden";
   const timestampVisibilityClassName = !hasRowAction
     ? ""
     : active
       ? "opacity-0"
-      : "transition-opacity group-hover:opacity-0 group-focus-within:opacity-0 [@media(hover:none)]:opacity-0";
+      : "transition-opacity group-hover:opacity-0 group-focus-within:opacity-0 [@media(hover:none)]:opacity-100";
   const done = () => {
     clearTimeout(timer.current);
     if (!pending) onAction(row, "done");
@@ -79,6 +75,7 @@ export default function ActivityMessageRow({
         tabIndex={0}
         data-result-id={row.id}
         data-testid="inbox-row"
+        data-layout="list"
         data-active={active ? "true" : undefined}
         aria-current={active ? "true" : undefined}
         onClick={(event) => activate(event.detail)}
@@ -100,21 +97,25 @@ export default function ActivityMessageRow({
             activate(1);
           }
         }}
-        className={`group relative flex w-full items-start gap-3 px-4 py-3 text-left outline-none transition-colors focus-visible:shadow-[inset_0_0_0_2px_var(--foreground)] before:pointer-events-none before:absolute before:top-0 before:right-0 before:left-4 before:hidden before:border-t before:border-line-muted [[data-testid=inbox-row]+&]:before:block ${active ? "bg-info-soft" : "hover:bg-fill-pressed"}`}
+        className={`group relative flex w-full items-center gap-3 px-4 py-3 text-left outline-none transition-colors focus-visible:shadow-[inset_0_0_0_2px_var(--foreground)] before:pointer-events-none before:absolute before:top-0 before:right-0 before:left-16 before:hidden before:border-t before:border-line-muted [[data-testid=inbox-row]+&]:before:block ${active ? "bg-info-soft" : "hover:bg-fill-pressed"}`}
       >
         <span
           className="relative flex size-9 shrink-0"
           data-testid="conversation-card-avatar"
           data-kind={row.activityKind}
         >
-          {row.activityKind === "direct" ? (
+          {row.activityKind === "direct" && row.senderType ? (
             <AvatarSlot
               context="panel-header"
               type={row.senderType === "agent" ? "agent" : "human"}
             />
           ) : (
             <span className="flex size-9 items-center justify-center rounded-sticker bg-fill-muted text-foreground-muted">
-              <Hash size={18} />
+              {row.activityKind === "direct" ? (
+                <DirectMessageIcon width={18} height={18} />
+              ) : (
+                <Hash size={18} />
+              )}
             </span>
           )}
           {thread && (
@@ -123,70 +124,51 @@ export default function ActivityMessageRow({
             </span>
           )}
         </span>
-        <div className="min-w-0 w-full" data-testid="conversation-card-content">
-          {thread && (
+        <div className="min-w-0 flex-1" data-testid="conversation-card-content">
+          <div className="flex min-w-0 items-center gap-2">
             <div
-              className="mb-0.5 min-w-0 truncate text-caption text-foreground-hint"
-              data-testid="conversation-card-subtitle"
-            >
-              <Hash size={12} className="mr-1 inline-block" />
-              {row.roomName}
-            </div>
-          )}
-          <div className="mb-0.5 flex min-w-0 items-start gap-2">
-            <div
-              className={`line-clamp-2 min-w-0 flex-1 text-subhead ${unreadCount > 0 ? "font-bold text-foreground-strong " : "font-semibold text-foreground-muted "}`}
+              className={`min-w-0 flex-1 truncate text-subhead ${unreadCount > 0 ? "font-bold text-foreground-strong" : "font-semibold text-foreground-muted"}`}
               data-testid="conversation-card-primary"
             >
-              <span aria-hidden="true">{icon}</span>
               {row.label}
             </div>
             <span
-              className={`shrink-0 font-mono text-mono-meta leading-5 text-foreground-hint  ${timestampVisibilityClassName}`}
+              className={`shrink-0 font-mono text-mono-meta leading-5 text-foreground-hint ${timestampVisibilityClassName}`}
               data-testid="conversation-card-timestamp"
             >
               {formatRelativeTime(row.message.createdAt, locale)}
             </span>
           </div>
-          <p
-            className={`line-clamp-2 text-callout ${unreadCount > 0 ? "text-foreground-strong " : "text-foreground-muted "}`}
-            data-testid="conversation-card-body"
-          >
-            <span className="font-bold text-foreground-muted ">
-              {row.senderName}:{" "}
-            </span>
-            <InlineMarkdownPreview markdown={row.message.body || "附件消息"} />
-          </p>
-          {(thread || unreadCount > 0) && (
-            <div
-              className="mt-2 flex min-h-5 flex-wrap items-center gap-1.5"
-              data-testid="conversation-card-metadata"
+          <div className="flex min-w-0 items-center gap-2">
+            <p
+              className={`min-w-0 flex-1 truncate text-callout ${unreadCount > 0 ? "text-foreground" : "text-foreground-muted"}`}
+              data-testid="conversation-card-body"
             >
               {thread && (
-                <Badge appearance="outline" variant="muted">
-                  {formatMessage(
-                    { id: "thread.row.replies" },
-                    { count: row.replyCount ?? 0 },
-                  )}
-                </Badge>
+                <span className="mr-1" data-testid="conversation-card-subtitle">
+                  #{row.roomName}
+                </span>
               )}
-              {unreadCount > 0 && (
-                <Badge
-                  variant="accent"
-                  data-testid="conversation-card-new-badge"
-                >
-                  {formatMessage(
-                    { id: "thread.row.unreadCount" },
-                    { count: unreadCount },
-                  )}
-                </Badge>
-              )}
-            </div>
-          )}
+              <span className="font-semibold text-foreground">
+                {row.senderName}:{" "}
+              </span>
+              <InlineMarkdownPreview
+                markdown={row.message.body || "附件消息"}
+              />
+            </p>
+            {unreadCount > 0 && (
+              <SidebarItemCount
+                className={`shrink-0 ${timestampVisibilityClassName}`}
+                data-testid="conversation-card-new-badge"
+              >
+                {unreadCount}
+              </SidebarItemCount>
+            )}
+          </div>
         </div>
         {hasRowAction && (
           <div
-            className="pointer-events-none absolute right-3 top-3 z-10 flex items-center"
+            className="pointer-events-none absolute top-1/2 right-3 z-10 flex -translate-y-1/2 items-center"
             data-testid="conversation-card-actions"
           >
             <Tooltip content={formatMessage({ id: "thread.row.markAsDone" })}>

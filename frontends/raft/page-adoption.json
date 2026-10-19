@@ -212,6 +212,37 @@
         "scripts/official-web/page-polish-browser.mjs",
         "scripts/official-web/channel-settings-browser.mjs"
       ]
+    },
+    "native-list-and-avatar-rules": {
+      "source": "v1.21.22 ThreadsInbox-CbSKTW4g.js Be list branch/Q/Ie; app-shell-D1-nY-va.js WU/KU/NU/e8; MachineDetailPanel-C2oaC119.js qt",
+      "local": [
+        "loom/ActivityMessageRow.tsx",
+        "loom/activity-peer.ts",
+        "loom/ComputersPage.tsx",
+        "packages/web/src/components/ui/SurfaceListItem.tsx",
+        "packages/web/src/components/ui/AvatarListRow.tsx",
+        "packages/web/src/components/ui/AvatarSlot.tsx"
+      ],
+      "adoption": "Structural port of the full official list branch; owner-selected list layout, not a hybrid with legacy card metadata. Official shared primitives retain flat press overlay, body/mono typography, row focus and padding, source avatar context-to-size mapping and square badges. Computer instances reuse AvatarListRow and SectionHeader; no duplicate per-page row recipe.",
+      "localGlue": "Runtime labels and instance names use existing local authorized inventory; AvatarSlot surface-list/members-row remain compatibility aliases to md/sm. Existing AgentAvatar image renderer retained with full-frame content; frame dimensions/borders are exclusively raft-ui. Peer lookup unwraps suggestion payload; unresolved peer gets neutral DM icon.",
+      "preserved": [
+        "Row single/double click routing and canonical activity frontiers",
+        "Native touch hides hover-only Done while context menu retains Done",
+        "Bounded activity history and viewport scrolling",
+        "No provider/account or remote-Computer additions"
+      ],
+      "checks": [
+        "scripts/official-web/activity-chrome.test.mjs",
+        "scripts/official-web/native-list-surfaces.test.mjs",
+        "scripts/official-web/activity-peer.test.ts",
+        "scripts/official-web/activity-list-browser.mjs",
+        "scripts/official-web/activity-menu-browser.mjs"
+      ],
+      "limits": [
+        "No claim of identity for historic deleted/legacy peers absent from current catalog",
+        "No physical iOS/Android long-press acceptance",
+        "No full-site screenshot parity claim; this slice covers listed shared recipes and activity/computer composition"
+      ]
     }
   },
   "pending": [

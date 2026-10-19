@@ -1,3 +1,5 @@
+import AvatarListRow from "../packages/web/src/components/ui/AvatarListRow.tsx";
+import SectionHeader from "../packages/web/src/components/ui/SectionHeader.tsx";
 import { computerInstances } from "./role-presence.ts";
 import AvatarSlot from "../packages/web/src/components/ui/AvatarSlot.tsx";
 import type { RoleListResponse } from "@rah-os/protocol";
@@ -346,12 +348,15 @@ export default function ComputersPage({
               </div>
               <Separator />
               <section className="px-5 py-4" data-testid="computer-instances">
-                <SectionEyebrow className="mb-3">
-                  在这台计算机上的实例{" "}
-                  {instances
-                    ? computerInstances(inventory.runtimes, instances).length
-                    : "—"}
-                </SectionEyebrow>
+                <SectionHeader
+                  className="mb-3 flex-wrap gap-y-2"
+                  label="在这台计算机上的实例"
+                  count={
+                    instances
+                      ? computerInstances(inventory.runtimes, instances).length
+                      : undefined
+                  }
+                />
                 {!instances ? (
                   <p className="text-callout text-foreground-hint">
                     实例资料尚未读取
@@ -359,16 +364,20 @@ export default function ComputersPage({
                 ) : (
                   computerInstances(inventory.runtimes, instances).map(
                     (instance) => (
-                      <button
+                      <AvatarListRow
                         key={instance.instanceId}
-                        className="flex w-full items-center gap-3 rounded-control px-3 py-2 text-left hover:bg-fill-pressed focus-visible:shadow-raft-focus"
+                        avatar={<AvatarSlot context="list-row" type="agent" />}
+                        name={instance.name}
+                        subtitle={
+                          inventory.runtimes.find((runtime) =>
+                            runtime.agentBindings.some(
+                              (binding) => binding.agentId === instance.agentId,
+                            ),
+                          )?.displayName
+                        }
                         onClick={() => onOpenRole(instance.roleId)}
-                      >
-                        <AvatarSlot context="surface-list" type="agent" />
-                        <span className="truncate text-callout">
-                          {instance.name}
-                        </span>
-                      </button>
+                        className="duration-300 motion-reduce:transition-none"
+                      />
                     ),
                   )
                 )}

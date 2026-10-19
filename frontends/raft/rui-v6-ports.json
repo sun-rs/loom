@@ -85,7 +85,7 @@
     },
     "packages/web/src/components/ui/AvatarSlot.tsx": {
       "upstreamSha256": "3d92c6eae9fe784980172fb7c9458bf8a540b669919750f41252e2526912d03c",
-      "portedSha256": "95d5ce5e9fd297d41731a635542863eb51e567bc05b900986db5f0b76266640a"
+      "portedSha256": "c291cc54744556117d5aeb72d2a936731b199cc06b51971b1409dd15367fc1c5"
     },
     "packages/web/src/components/ui/PanelResizeHandle.tsx": {
       "upstreamSha256": "da36547fc9d0040c80736e81bbe52802c5fed4b15aab2c2ce3de6c1730993f85",
@@ -97,7 +97,7 @@
     },
     "packages/web/src/components/ui/AvatarListRow.tsx": {
       "upstreamSha256": "77d1192620e97efa26dae47ce0623824a18acf03571ac20816e31d438368208a",
-      "portedSha256": "db519665540990fada66fa7fc90f6a8b2a6e1ca71db75aa15e2a1489f9c3e54a"
+      "portedSha256": "bbbd3ceba13e0a82ef415c3050cacd941a2036ea9638f4a4d774d84c22ee11e3"
     },
     "packages/web/src/components/ui/ServerSwitcherMenu.tsx": {
       "upstreamSha256": "435f10bb62a43ac147908b5b87ea6a0d5b47594878ae995ee28e71d522c204ab",
@@ -154,7 +154,7 @@
     },
     "packages/web/src/components/ui/SurfaceListItem.tsx": {
       "upstreamSha256": "5abc00077db99ff5864fc32f1a73760f5c1371da762095dd042d2ec6da3821f5",
-      "portedSha256": "5112016bb872416b40492202dab5ae09ee0b609417622071cd8959ee4669df71"
+      "portedSha256": "fc490a7c8654425caedc8f4ade0eb943d787119648824fe02e9229dea7303307"
     },
     "packages/web/src/components/ui/Skeleton.tsx": {
       "upstreamSha256": "8f6eb35eb6be7fe2e4bbc7f46e3eac816b25dfe82e06609afa5f0c53ca5f453f",

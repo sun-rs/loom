@@ -1,3 +1,4 @@
+import { activityPeerType } from "./activity-peer.ts";
 import ActivityHeader from "./ActivityHeader.tsx";
 import {
   activityMarkRequest,
@@ -688,15 +689,10 @@ function Results({
                     key={row.id}
                     row={{
                       ...row,
-                      senderType: entities.catalog.some(
-                        (e) =>
-                          e.agentId === row.message.actorId ||
-                          (row.activityKind === "direct" &&
-                            e.channelId === row.message.roomId &&
-                            !!e.agentId),
-                      )
-                        ? "agent"
-                        : "user",
+                      senderType: activityPeerType(
+                        entities.catalog,
+                        row.message.roomId,
+                      ),
                     }}
                     active={route.get("message") === row.message.messageId}
                     onOpen={(full) => {

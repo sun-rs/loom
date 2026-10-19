@@ -32,9 +32,18 @@ test("activity header exposes durable counts, all-read and icon refresh; rows us
   assert.match(header, /全部已读/);
   assert.match(header, /captureUnreadActivity/);
   assert.match(read("loom/ActivityMessageRow.tsx"), /conversation-card-avatar/);
-  assert.match(
-    read("loom/ActivityMessageRow.tsx"),
-    /thread \|\| unreadCount > 0/,
-  );
+  assert.match(read("loom/ActivityMessageRow.tsx"), /unreadCount > 0/);
   assert.doesNotMatch(read("loom/TasksPage.tsx"), /rows.length\} \/ \{total/);
+});
+test("activity adopts the complete official list branch, without mixed card metadata", () => {
+  const row = read("loom/ActivityMessageRow.tsx");
+  assert.match(row, /data-layout="list"/);
+  assert.match(row, /items-center.*before:left-16/);
+  assert.match(row, /SidebarItemCount/);
+  assert.doesNotMatch(
+    row,
+    /conversation-card-metadata|line-clamp-2|conversation-card-title-icon/,
+  );
+  assert.match(row, /top-1\/2 right-3/);
+  assert.match(row, /hover:none.*hidden/);
 });
