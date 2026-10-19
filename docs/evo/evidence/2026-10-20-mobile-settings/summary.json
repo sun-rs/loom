@@ -1,0 +1,109 @@
+{
+  "productCommit": "593177ef",
+  "headerCommit": "7c837c2b",
+  "scope": [
+    "mobile root header semantics and task edge alignment",
+    "settings labels and compact theme choices"
+  ],
+  "source": "raft-ui0.6 PanelSectionHeader; mobile6559754 SettingsHomePage Button14/18 Caption12/16; native App has no identical theme-preview cards",
+  "checks": {
+    "build": true,
+    "loomTypecheck": true,
+    "navigation": "Chromium/WebKit390/1440: root color and task left/right16",
+    "appearance": "Chromium/WebKit360/390/1440: one-row choices, theme changes/system, reload, message preview14/18",
+    "formalHeaders": [
+      {
+        "width": 390,
+        "view": "tasks",
+        "color": "oklch(0.8829 0.1623 91.900002)",
+        "height": 48,
+        "left": 16,
+        "countRight": 16
+      },
+      {
+        "width": 390,
+        "view": "memory",
+        "color": "oklch(0.8829 0.1623 91.900002)",
+        "height": 48,
+        "left": 16,
+        "countRight": null
+      },
+      {
+        "width": 1440,
+        "view": "tasks",
+        "color": "oklch(1 0 0)",
+        "height": 56,
+        "left": 20,
+        "countRight": 12
+      },
+      {
+        "width": 1440,
+        "view": "memory",
+        "color": "oklch(1 0 0)",
+        "height": 56,
+        "left": 20,
+        "countRight": null
+      }
+    ],
+    "formalSettings": [
+      {
+        "tab": "account",
+        "overflow": false
+      },
+      {
+        "tab": "language-region",
+        "overflow": false
+      },
+      {
+        "tab": "appearance",
+        "overflow": false,
+        "pickerHeight": 163
+      },
+      {
+        "tab": "notifications",
+        "overflow": false
+      },
+      {
+        "tab": "administration",
+        "overflow": false
+      },
+      {
+        "tab": "usage",
+        "overflow": false
+      },
+      {
+        "tab": "about",
+        "overflow": false
+      },
+      {
+        "tab": "release-notes",
+        "overflow": false
+      }
+    ],
+    "screenshotsInspected": [
+      "task390",
+      "memory390",
+      "appearance360/390",
+      "account390",
+      "notifications390",
+      "language-region390"
+    ],
+    "formatAndDiff": true
+  },
+  "retainedFailures": [
+    "old full appearance Chromium expected empty group visible on mobile; outdated assertion corrected",
+    "old full appearance WebKit activity/member access-control pageerrors; root cause not proven; not counted as acceptance"
+  ],
+  "restart": {
+    "verified": true,
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-mobile-settings-c23d4d69-8883-4408-8148-b0bf59883fcc",
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true
+  },
+  "limits": [
+    "not every settings control pixel-matched to native App",
+    "not physical mobile keyboard/safe-area acceptance",
+    "no paid provider tests"
+  ],
+  "privateEvidence": "/Users/sun/.loom/reviews/2026-10-20-mobile-settings"
+}
