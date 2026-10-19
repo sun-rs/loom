@@ -35,7 +35,7 @@
         "loom/TasksPage.tsx",
         "loom/mobile.css"
       ],
-      "adaptation": "Existing Loom submit/task/file interfaces retained. Single + file tool and compact mobile reading layout remain owner-approved local features. Native controls own geometry and typography; native line height is used to center compact placeholder. Only existing channel filter is exposed; creator/assignee filters and task row refresh are still pending. All close guards retained.",
+      "adaptation": "Existing Loom submit/task/file interfaces retained. Single + file tool and compact mobile reading layout remain owner-approved local features. Native controls own geometry and typography; native line height is used to center compact placeholder. Creator/assignee filters are now implemented by the task-filters slice below; task row refresh remains unaudited. All close guards retained.",
       "checks": [
         "scripts/official-web/chat-composition-release.test.mjs",
         "scripts/official-web/channel-task.test.ts",
