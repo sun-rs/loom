@@ -1,0 +1,37 @@
+{
+  "codeCommit": "b0d70b85",
+  "scope": "Official v1.21.22 task toolbar multi-select channel/creator/assignee filters with self/unassigned sentinels; structural port from locked app-shell XSt/ZSt/n8/rlt/tlt, not whole-site parity",
+  "checks": {
+    "sourceTests": 11,
+    "typecheck": "passed",
+    "build": "passed; existing large-chunk warning",
+    "fixtureBrowser": [
+      "tasks:1440x1000/390x844 DPR1, multi-channel plus creator/unassigned filters, pagination, refresh persistence, clear-all, Escape focus return",
+      "same tasks slice: board/list, detail/discussion, canonical status update, unknown exact replay/history guard, mobile return and foreign-task isolation"
+    ],
+    "liveBrowser": "Actual-service Chromium 1440x844/390x844 DPR1, unassigned filter changes canonical result count, reload retains selection, no page errors; picker screenshots inspected. No paid calls or configuration mutations.",
+    "diffAndFormatting": "passed"
+  },
+  "deployment": {
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-task-filters-5299c7f1-c81d-4102-bc68-44ef75f0183c",
+    "databases": 2,
+    "files": 325,
+    "businessTablesUnchanged": 18,
+    "verified": true
+  },
+  "boundaries": [
+    "Kernel task.global.list owns all filtering and pagination. No client-only filtering of loaded task pages.",
+    "Loom IDs and existing route names replace upstream store identity values. Authenticated search/principal.me supplies picker directory.",
+    "Native Popover owns portal positioning, outside press, Escape and focus.",
+    "Directory failure/retry is implemented and type-checked, but not failure-injected in this browser slice.",
+    "Dynamic context menu audit confirms independent read/done and thread follow actions; not implemented in this batch."
+  ],
+  "remaining": [
+    "Remaining shared headers and action compositions",
+    "Settings subpages",
+    "Computers page",
+    "Composer surrounding menus and suggestions not audited against full latest release",
+    "Remaining channel settings content",
+    "Activity context menu, alternate list layout/grouping and mobile home unread bindings"
+  ]
+}
