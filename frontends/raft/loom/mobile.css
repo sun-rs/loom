@@ -141,6 +141,40 @@
     min-height: 72px;
   }
 
+  /* SettingsHomePage: native Button14/18, supporting Caption12/16.
+   * Keep inputs and message-size preview independent from settings labels. */
+  [data-testid="loom-settings-detail"] .text-subhead {
+    font-size: 14px;
+    line-height: 18px;
+  }
+  [data-testid="loom-settings-detail"] .text-footnote {
+    font-size: 12px;
+    line-height: 16px;
+  }
+  /* Reuse Web's three-choice layout and original80px preview artwork.
+   * Native App has no equivalent preview cards: this is Loom responsive glue. */
+  [data-testid="appearance-theme-picker"] {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+  [data-testid="appearance-theme-picker"]
+    [data-slot="card"]
+    > .flex:not([aria-hidden]) {
+    gap: 4px;
+    padding-inline: 0;
+  }
+  [data-testid="appearance-theme-picker"] .text-callout {
+    font-size: 14px;
+    line-height: 18px;
+  }
+  [data-testid="appearance-theme-picker"]
+    [data-slot="card"]
+    > .flex:not([aria-hidden])
+    > svg {
+    width: 12px;
+    height: 12px;
+  }
+
   [data-slot="panel-header"] {
     min-height: 48px;
     height: 48px;

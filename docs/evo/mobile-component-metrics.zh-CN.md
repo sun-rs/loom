@@ -39,3 +39,11 @@ Loom的主机文件树没有可直接等价替换的原生App组件。本批继�
 记忆首页误用详情用的PanelHeader导致白底，手机端改用官方PanelSectionHeader；其颜色来自raft-ui0.6 `panel-header.recipe` 的layer-frame/on-frame语义，不硬编码黄色，桌面与记忆详情保持原组件。任务页上次只将PanelHeaderContent改成row，却继承justify-center，造成整组居中；手机端改为space-between，标题与数量分别对齐16px内容边缘（数量不是图标，不使用末尾图标的悬出边距）。高度仍48px。
 
 ui-contract.json记下大页/详情标题栏区分。导航门禁新增五个主入口标题底色一致、任务左右16px断言，先复现居中问题后通过；Chromium/WebKit各390和1440通过。颜色比较使用已采用的设置根标题，不锁死当前主题RGB。该修复不改动态等二级页面标题的语义。
+
+## 手机设置内容与主题预览
+
+外观页的直接原因是AppearanceThemePicker使用 `grid-cols-1 sm:grid-cols-3`，手机把三个80px高预览和标签逐个纵向堆叠。保留官方Web原预览、RadioGroup、Card、主题切换和保存状态，仅手机使用现成三列排列，标签间距适应窄卡片。官方移动端本revision的SettingsAppearanceContent没有对应的三张主题预览，不能称为App原样移植。
+
+SettingsHomePage的SettingsServerActionRow与SettingsFontOptionRow采用Button14/18、Caption12/16；手机设置详情中对应subhead/footnote文字使用该层级，外层16px留白已相符。输入、消息字号预览、按钮触区和桌面不受这两个文字规则影响。不把本批称为所有设置项与App像素级一致。
+
+主题布局先复现三卡不同行；定向Chromium/WebKit各360/390/1440通过同行、整体高度<=180px、浅/深/系统选择、跟随系统、重载持久化与14/18消息预览。旧完整外观检查仍有两个问题：手机显示空分组的旧断言与已采用语义冲突（已修正测试）；WebKit完整流程报activity/member读取access-control错误，未证明根因、不列为通过。本批采用layout-only模式验证受影响内容，完整旧失败日志保留在private evidence。

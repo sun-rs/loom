@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 export async function verifyAppearance({ browser, origin, channels }) {
   const results = [];
-  for (const width of [1440, 390]) {
+  for (const width of [1440, 390, 360]) {
     const context = await browser.newContext({
       locale: "zh-CN",
-      viewport: { width, height: width === 390 ? 844 : 1000 },
+      viewport: { width, height: width < 768 ? 844 : 1000 },
       deviceScaleFactor: 1,
       colorScheme: "light",
     });
@@ -16,6 +16,24 @@ export async function verifyAppearance({ browser, origin, channels }) {
       await page
         .getByTestId("appearance-theme-picker")
         .waitFor({ timeout: 3000 });
+      if (width < 768) {
+        const boxes = await Promise.all(
+          ["light", "dark", "system"].map((mode) =>
+            page.getByTestId("appearance-mode-" + mode).boundingBox(),
+          ),
+        );
+        assert.ok(
+          Math.max(...boxes.map((b) => b.y)) -
+            Math.min(...boxes.map((b) => b.y)) <
+            1,
+          "mobile theme choices share one row",
+        );
+        assert.ok(
+          (await page.getByTestId("appearance-theme-picker").boundingBox())
+            .height <= 180,
+          "theme preview must not consume half a phone screen",
+        );
+      }
       await page.getByTestId("appearance-mode-light").click();
       await page.waitForFunction(
         () =>
@@ -61,6 +79,25 @@ export async function verifyAppearance({ browser, origin, channels }) {
         await preview.evaluate((el) => getComputedStyle(el).fontSize),
         "18px",
       );
+      if (process.env.LOOM_APPEARANCE_LAYOUT_ONLY === "1") {
+        await page.getByTestId("message-font-size-sm").click();
+        await page.reload();
+        await preview.waitFor();
+        assert.equal(
+          await preview.evaluate((el) => getComputedStyle(el).fontSize),
+          "14px",
+        );
+        assert.deepEqual(errors, []);
+        results.push({
+          width,
+          themes: true,
+          systemMode: true,
+          fontPreview: true,
+          persistence: true,
+          layoutOnly: true,
+        });
+        continue;
+      }
       await page.goto(origin + "/?room=" + channels[0].roomId);
       const body = page
         .locator('[data-timeline-message-id] [data-slot="message-item-body"]')
@@ -118,7 +155,13 @@ export async function verifyAppearance({ browser, origin, channels }) {
         .getByRole("switch", { name: "隐藏空的侧栏分区", exact: true })
         .click();
       await page.goto(origin + "/?chat=list");
-      await sidebar.getByText("置顶", { exact: true }).waitFor();
+      if (width < 768)
+        assert.equal(
+          await sidebar.getByText("置顶", { exact: true }).count(),
+          0,
+          "mobile always hides empty sections",
+        );
+      else await sidebar.getByText("置顶", { exact: true }).waitFor();
       let fixtureWorking = true;
       // UI-only status projection over a temporary Core; no fake-provider run or paid call.
       await page.route(
@@ -141,7 +184,7 @@ export async function verifyAppearance({ browser, origin, channels }) {
         origin +
           "/?room=" +
           channels[2].roomId +
-          (width === 390 ? "&chat=list" : ""),
+          (width < 768 ? "&chat=list" : ""),
       );
       const live = page
         .getByTestId("loom-live-agent-activity")
@@ -165,7 +208,7 @@ export async function verifyAppearance({ browser, origin, channels }) {
         origin +
           "/?room=" +
           channels[2].roomId +
-          (width === 390 ? "&chat=list" : ""),
+          (width < 768 ? "&chat=list" : ""),
       );
       await sidebar.waitFor();
       assert.equal(await live.count(), 0);
@@ -181,7 +224,7 @@ export async function verifyAppearance({ browser, origin, channels }) {
         origin +
           "/?room=" +
           channels[2].roomId +
-          (width === 390 ? "&chat=list" : ""),
+          (width < 768 ? "&chat=list" : ""),
       );
       await live.waitFor();
       fixtureWorking = false;
