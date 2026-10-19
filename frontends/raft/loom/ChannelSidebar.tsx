@@ -101,6 +101,7 @@ export default function ChannelSidebar({
     preferences: SidebarPreferences;
     recent: Record<string, string>;
   }>();
+  const [activityUnreadCount, setActivityUnreadCount] = useState<number>();
   const [activity, setActivity] = useState<Record<string, number>>();
   const [menuRoom, setMenuRoom] = useState<string>();
   const [marking, setMarking] = useState(false);
@@ -134,6 +135,7 @@ export default function ChannelSidebar({
       ]);
       if (ticket === request.current) {
         onUnreadChanged?.(navigationUnread(workspaceId, activity.summary));
+        setActivityUnreadCount(activity.summary?.unreadActivityCount);
         setData(next);
         setReadError("");
         setActivity(
@@ -148,6 +150,7 @@ export default function ChannelSidebar({
     } catch {
       if (ticket === request.current) {
         setActivity(undefined);
+        setActivityUnreadCount(undefined);
         onUnreadChanged?.(undefined);
         setReadError("频道列表设置读取失败，请重试。");
       }
@@ -284,7 +287,10 @@ export default function ChannelSidebar({
             刷新列表
           </Button>
         )}
-        <MobileHomeEntries onSelect={onOpenMobileDestination} />
+        <MobileHomeEntries
+          onSelect={onOpenMobileDestination}
+          unreadCount={activityUnreadCount}
+        />
         <SavedNav
           client={client}
           workspaceId={workspaceId}

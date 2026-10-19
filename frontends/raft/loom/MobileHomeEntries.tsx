@@ -1,9 +1,12 @@
 import { Activity, Search } from "lucide-react";
+import { SidebarItem, SidebarItemCount } from "raft-ui";
 /** Sidebar.tsx mobile Home entries; official row styling, local route owner. */
 export default function MobileHomeEntries({
   onSelect,
+  unreadCount,
 }: {
   onSelect: (id: "search" | "activity") => void;
+  unreadCount?: number;
 }) {
   return (
     <div className="md:hidden">
@@ -13,16 +16,23 @@ export default function MobileHomeEntries({
           { id: "activity", label: "动态", icon: Activity },
         ] as const
       ).map((entry) => (
-        <button
+        <SidebarItem
           key={entry.id}
           type="button"
           data-testid={`mobile-home-${entry.id}-entry`}
           onClick={() => onSelect(entry.id)}
-          className="mb-1 flex w-full items-center gap-1.5 px-2 py-2 [@media(max-height:600px)]:py-1 md:py-1 text-left text-sm font-medium border border-transparent transition-colors hover:border-line-strong hover:bg-fill-muted hover:shadow-raft-sm active:border-line-strong active:bg-fill-muted active:shadow-raft-sm       "
+          className="h-auto min-h-11 gap-3 py-2.5 text-body font-semibold"
         >
-          <entry.icon size={14} className="shrink-0" />
+          <entry.icon size={20} className="shrink-0 text-foreground-hint" />
           {entry.label}
-        </button>
+          {entry.id === "activity" &&
+          unreadCount !== undefined &&
+          unreadCount > 0 ? (
+            <SidebarItemCount className="ml-auto">
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </SidebarItemCount>
+          ) : null}
+        </SidebarItem>
       ))}
     </div>
   );

@@ -554,11 +554,32 @@
         "Does not declare full-site parity or native iOS/Android acceptance.",
         "Dedicated LOOM_HTML_OVERLAY_GATE=1 browser gate now verifies loading/inventory pointer barrier, keyboard focus/Enter, mocked browser popup rejection, explicit retry and dismiss at both viewports. Actual OS/browser popup policies and successful external navigation are not newly accepted."
       ]
+    },
+    "mobile-home-unread": {
+      "source": "Raft v1.21.22 app-shell-D1-nY-va.js g7/_7 at 165243–165244 and Sidebar home entries 168110–168155; release-lock.json records URL/hash.",
+      "kind": "Structural composition port; native raft-ui SidebarItem and SidebarItemCount.",
+      "local": [
+        "loom/MobileHomeEntries.tsx",
+        "loom/ChannelSidebar.tsx",
+        "loom/SavedNav.tsx"
+      ],
+      "adaptation": "Existing sidebar request owns summary and stale-response fence; mobile count is a presentation projection of summary.unreadActivityCount, cleared on read failure. No new queue/cursor, no count inferred from loaded page. Saved entry adopts native mobile size with desktop recipe retained.",
+      "checks": [
+        "scripts/official-web/navigation-unread.test.ts",
+        "scripts/official-web/navigation-unread-browser.mjs",
+        "scripts/official-web/saved.test.ts",
+        "scripts/official-web/saved-browser.mjs"
+      ],
+      "limits": [
+        "Synthetic unread summary in isolated Core browser gate; not a paid CLI delivery test.",
+        "Official double-click Activity first-unread focus gesture is not implemented; ordinary navigation and summary badge are accepted here.",
+        "G1 standalone chat and remaining G2 Activity follow/read/group projections remain pending."
+      ]
     }
   },
   "pending": [
     "G1: Standalone one-instance chat entry and channel-internal private-box navigation; preserve all old history, no silent session conversion.",
-    "G2: Activity follow/unfollow/conditional read state, complete grouping projections and mobile home unread bindings.",
+    "G2: Activity follow/unfollow/conditional read state, complete grouping projections.",
     "G3: Browser push subscription/permission/test and notification navigation; existing capability-only view remains explicit.",
     "V1: Targeted unverified combinations, plain-text browser styling, successful external navigation and physical mobile/authenticated upstream comparison; see currentCloseout."
   ],

@@ -23,7 +23,7 @@
 | UI-05 | 收藏、表情、消息菜单               | 已验收子集             | [共享菜单及行为](evidence/2026-10-19-official-page-audit/document-menu-verification.json)；收藏/表情往返、未知结果核实通过；不是每个菜单调用位置都重新验过                                                                                                                                                                                         |
 | UI-06 | 独立单聊与频道实例私密消息         | **功能缺口 G1**        | [语义核查](evidence/2026-10-19-official-page-audit/search-private-verification.json)：当前 private box 共享频道实例 session，不是独立单聊；不能冒充官方 DM。独立单聊入口与旧 private-box 列表迁移尚未实现                                                                                                                                          |
 | UI-07 | 顶部搜索、最近对象、结果页         | 已验收子集             | [最近会话](evidence/2026-10-19-official-page-audit/search-private-verification.json)、[搜索组合](evidence/2026-10-19-official-page-audit/search-settings-composition-verification.json)；键盘/跳转证据保留；历史按 origin 隔离、查询有界，不代表全量最近历史                                                                                       |
-| UI-08 | 动态列表、定位、读状态菜单         | 已验收子集＋**G2**     | [动态菜单](evidence/2026-10-19-official-page-audit/activity-menu-verification.json)；现有读/未读/完成/跳转通过。关注状态、条件读控件、分组及手机首页部分未读绑定仍缺完整投影；不在前端伪造                                                                                                                                                         |
+| UI-08 | 动态列表、定位、读状态菜单         | 已验收子集＋**G2**     | [动态菜单](evidence/2026-10-19-official-page-audit/activity-menu-verification.json)；现有读/未读/完成/跳转通过。手机首页未读数字已接入同一summary并通过零值/99+/失败清除验收；关注状态、条件读控件和分组仍缺完整投影；不在前端伪造                                                                                                                 |
 | UI-09 | 任务列表、过滤、详情与消息列       | 已验收子集             | [任务组件](evidence/2026-10-19-official-page-audit/task-surfaces-verification.json)、[过滤](evidence/2026-10-19-official-page-audit/task-filters-verification.json)；Loom 的显式任务状态保持，不引入官方专属工作流                                                                                                                                 |
 | UI-10 | Agent 的 Role 列表、配置、实例     | 官方组件＋Loom 语义    | [Role表单](evidence/2026-10-19-official-page-audit/form-toolbar-verification.json)；本次标签页实际点击通过。Role不是官方固定session Agent；配置冻结/修订等按Loom合同，不能宣称逐项官方等价                                                                                                                                                         |
 | UI-11 | 计算机列表、详情、运行时、实例     | 已验收本机子集         | [计算机](evidence/2026-10-19-official-page-audit/computers-verification.json)、[编辑](evidence/2026-10-19-official-page-audit/computer-profile-verification.json)；本次实例展示通过；远端执行机制冻结，不伪装已上线                                                                                                                                |
@@ -40,7 +40,7 @@
 按以下顺序完成，不再将已通过的附件等细节重新列成无限待办。
 
 1. **G1 独立单聊入口**：用独立实例及普通频道能力提供正常聊天/任务/文件入口；现有频道实例私密消息只能在频道内部进入。先保证旧记录可达，再改变列表入口；不能把已有private box静默迁移成新session。
-2. **G2 动态行为缺口**：先核定关注/读状态需要哪个现有投影，再做最小接线。分组不能仅重排当前加载页；缺完整数据的控件继续明确省略。该项不是单改CSS可完成。
+2. **G2 动态行为缺口**：手机首页数字徽标已收口；先核定关注/读状态需要哪个现有投影，再做最小接线。官方双击动态聚焦首条未读手势尚未接入。分组不能仅重排当前加载页；缺完整数据的控件继续明确省略。该项不是单改CSS可完成。
 3. **G3 浏览器推送**：保留当前诚实的未接入状态。涉及订阅和安全上下文能力；不能把站内铃铛已经可用等同于浏览器推送可用。它不阻断当前站内聊天MVP。
 4. **V1 验证缺口**：对发生改动的调用位置补验证；纯文本预览、成功外链跳转、低频查询错误与真正iOS/Android触摸保留边界。没有复现问题时不为追求“全部状态”无限添加门禁。逐像素跨站比较需要可访问的官方登录态，本次未完成。
 

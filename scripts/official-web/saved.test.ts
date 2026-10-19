@@ -30,19 +30,17 @@ test("bookmark verification retains exact saved intent and idempotency key witho
   writes.discard();
 });
 import { readFileSync } from "node:fs";
-test("saved panel retains official card proportions, scroll threshold and sidebar count owner", () => {
-  const official = readFileSync(
-    "frontends/raft/packages/web/src/components/saved/SavedPanel.tsx",
-    "utf8",
-  );
+test("saved panel retains locked v1.21.22 list recipe, scroll threshold and sidebar count owner", () => {
+  // Locked production SavedPanel-hEhyusEt.js, lines 36–40 and 269–286;
+  // the initial-intake TSX still contains the superseded card layout.
   const local = readFileSync("frontends/raft/loom/SavedPanel.tsx", "utf8");
   for (const token of [
-    "relative flex flex-row items-center gap-3 transition-colors p-3 text-left w-full shadow-none border-line-muted   bg-layer-panel  hover:bg-fill-muted data-[popup-open]:bg-fill-muted",
-    "flex-1 overflow-y-auto bg-layer-canvas-muted p-4 safe-bottom ",
+    "relative flex w-full flex-row items-center gap-3 px-4 py-3 text-left outline-none transition-colors",
+    "flex-1 overflow-y-auto bg-layer-panel py-1 safe-bottom",
+    "[[data-saved-row]+&]:before:block",
     "240px 0px",
     "saved-list-scroller",
   ]) {
-    assert.ok(official.includes(token));
     assert.ok(local.includes(token));
   }
   assert.ok(!local.includes("useSavedStore("));
