@@ -362,24 +362,29 @@ export default function ComputersPage({
                     实例资料尚未读取
                   </p>
                 ) : (
-                  computerInstances(inventory.runtimes, instances).map(
-                    (instance) => (
-                      <AvatarListRow
-                        key={instance.instanceId}
-                        avatar={<AvatarSlot context="list-row" type="agent" />}
-                        name={instance.name}
-                        subtitle={
-                          inventory.runtimes.find((runtime) =>
-                            runtime.agentBindings.some(
-                              (binding) => binding.agentId === instance.agentId,
-                            ),
-                          )?.displayName
-                        }
-                        onClick={() => onOpenRole(instance.roleId)}
-                        className="duration-300 motion-reduce:transition-none"
-                      />
-                    ),
-                  )
+                  <div className="space-y-2">
+                    {computerInstances(inventory.runtimes, instances).map(
+                      (instance) => (
+                        <AvatarListRow
+                          key={instance.instanceId}
+                          avatar={
+                            <AvatarSlot context="list-row" type="agent" />
+                          }
+                          name={instance.name}
+                          subtitle={
+                            inventory.runtimes.find((runtime) =>
+                              runtime.agentBindings.some(
+                                (binding) =>
+                                  binding.agentId === instance.agentId,
+                              ),
+                            )?.displayName
+                          }
+                          onClick={() => onOpenRole(instance.roleId)}
+                          className="duration-300 motion-reduce:transition-none"
+                        />
+                      ),
+                    )}
+                  </div>
                 )}
                 {instances &&
                   !computerInstances(inventory.runtimes, instances).length && (

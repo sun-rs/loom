@@ -15,6 +15,7 @@ test("official avatar row uses body typography, native spacing and focus geometr
   const c = read("loom/ComputersPage.tsx");
   assert.match(c, /<AvatarListRow/);
   assert.match(c, /<SectionHeader/);
+  assert.match(c, /className="space-y-2"/);
 });
 test("avatar frame sizes and badge corners come from the current official recipe", () => {
   const s = read("packages/web/src/components/ui/AvatarSlot.tsx");
