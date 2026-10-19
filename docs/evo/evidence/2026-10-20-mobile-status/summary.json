@@ -44,5 +44,53 @@
     "Activity is current-conversation scoped; idle is not online; unknown omitted",
     "Explicit saved font size retained; fresh mobile default14, desktop16. No global scaling."
   ],
-  "deployment": "pending"
+  "deployment": {
+    "at": "2026-10-19T17:48:52.363Z",
+    "head": "3b314f66d6f4f212767f36d4a2a3bea7c85fca90",
+    "sourceSha256": "66daa0064a8383cb1e522441d851a1f198a797c144352703aebc24a4420855a1",
+    "databases": 2,
+    "files": 325,
+    "pushStateUnchanged": true,
+    "verified": true,
+    "businessTablesUnchanged": 20,
+    "live": [
+      {
+        "engine": "chromium",
+        "width": 390,
+        "navigationCentered": true,
+        "messageState": "idle",
+        "messageDefault": 14,
+        "overflow": false,
+        "pageErrors": 0
+      },
+      {
+        "engine": "chromium",
+        "width": 1440,
+        "navigationCentered": true,
+        "messageState": "idle",
+        "messageDefault": 16,
+        "overflow": false,
+        "pageErrors": 0
+      },
+      {
+        "engine": "webkit",
+        "width": 390,
+        "navigationCentered": true,
+        "messageState": "idle",
+        "messageDefault": 14,
+        "overflow": false,
+        "pageErrors": 0
+      },
+      {
+        "engine": "webkit",
+        "width": 1440,
+        "navigationCentered": true,
+        "messageState": "idle",
+        "messageDefault": 16,
+        "overflow": false,
+        "pageErrors": 0
+      }
+    ],
+    "screenshotsInspected": ["webkit-navigation-390.png", "webkit-chat-390.png"]
+  }
 }
