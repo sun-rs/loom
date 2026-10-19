@@ -1,0 +1,64 @@
+{
+  "date": "2026-10-19",
+  "codeCommit": "f606b67bf9db7f9c21c27cf575badb735215258f",
+  "source": {
+    "release": "v1.21.22",
+    "revision": "af3d6ef4a22f0f05f5f9db9424285755d67e9726",
+    "location": "app-shell-D1-nY-va.js yxt at 170631 and chat actions at 173710; Tooltip > PanelAction with 22px Search/Settings",
+    "reuse": "Existing official structural-port component reused; Loom search event and guarded settings ownership unchanged"
+  },
+  "implemented": [
+    "Replace outlined local search Button with native OverflowMenuTrigger/PanelAction and localized tooltip",
+    "Align search/settings icons to native 22px",
+    "Remove unused panelIcon binding from implementation and UI registry"
+  ],
+  "verification": {
+    "tdd": "New composition regression failed before change; passed afterward",
+    "focusedTests": 9,
+    "typecheck": "exit 0",
+    "build": "exit 0 at code commit",
+    "fixtureBrowser": "chrome-repair 1440x1000 and 390x844 passed; settings/search, computer edit, exact replay, CLI inventory; fake runtime",
+    "realService": [
+      {
+        "width": 1440,
+        "errors": [],
+        "phase": "after"
+      },
+      {
+        "width": 390,
+        "errors": [],
+        "phase": "after"
+      }
+    ],
+    "actualInteractions": [
+      "Search opens desktop overlay/mobile page; waited for actual search textbox, not just URL",
+      "Settings drawer opens, members load, cancel closes; waited for settled drawer geometry"
+    ],
+    "screenshots": "/Users/sun/.loom/reviews/2026-10-19-header-actions",
+    "visuallyInspected": [
+      "before-chat-390.png",
+      "after-chat-390.png",
+      "after-chat-1440.png",
+      "after-settings-390.png",
+      "after-settings-1440.png",
+      "after-search-390.png"
+    ],
+    "captureCorrections": "Initial captures caught lazy loading/drawer animation. Settled-state captures replaced them before acceptance."
+  },
+  "deployment": {
+    "verified": true,
+    "head": "f606b67bf9db7f9c21c27cf575badb735215258f",
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-header-actions-8a4c64e2-37af-4b7f-912c-f32311e1233c",
+    "databases": 2,
+    "files": 325,
+    "businessTablesUnchanged": 18,
+    "receipt": "/Users/sun/.loom/reviews/2026-10-19-header-actions/restart-final.json"
+  },
+  "limits": [
+    "No authenticated official live-site screenshot comparison; source-based matching and real Loom screenshots only",
+    "No physical iOS/Android device acceptance",
+    "Remaining retained page action compositions not fully audited; see page-adoption.json",
+    "Unsupported cloud/share/guest/push/group-follow capabilities not claimed implemented",
+    "No backend changes or paid CLI calls"
+  ]
+}
