@@ -90,3 +90,24 @@ test("passive reads are thread scoped, bounded by observed frontier and never re
     ],
   ]);
 });
+test("activity unfollow carries the captured frontier; refollow carries no history frontier", async () => {
+  const calls: any[] = [];
+  const client: any = {
+    request: async (op: string, input: any) => {
+      calls.push([op, input]);
+      return { following: op === "thread.followers" ? true : input.following };
+    },
+  };
+  const b = new ThreadActivityClient(client, "r", "t");
+  await b.refresh();
+  await b.follow(false, 17);
+  assert.deepEqual(calls.at(-1), [
+    "activity.follow",
+    { roomId: "r", threadId: "t", following: false, retainThroughSeq: 17 },
+  ]);
+  await b.follow(true, 17);
+  assert.deepEqual(calls.at(-1), [
+    "activity.follow",
+    { roomId: "r", threadId: "t", following: true },
+  ]);
+});

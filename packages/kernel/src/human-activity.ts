@@ -1,3 +1,4 @@
+import { persistHumanThreadFollow } from "./human-thread-follow.ts";
 import {
   identityDisplayName,
   directRoomDisplayName,
@@ -74,14 +75,18 @@ export class HumanActivity {
           AND ping.actor_id <> ? AND rah_has_mention(ping.body, ?) = 1
           AND EXISTS(SELECT 1 FROM memberships member WHERE member.room_id=r.room_id AND member.principal_id=?))
       )
+    ), retained_threads AS MATERIALIZED (
+      SELECT thread_id, retained_seq FROM human_thread_follows
+      WHERE principal_id = ? AND following = 0 AND retained_seq IS NOT NULL
     ), eligible AS (
       SELECT m.*, r.name AS room_name, r.kind, COALESCE(m.thread_id,'') AS scope_id,
         COALESCE(f.read_seq,0) AS read_seq, COALESCE(f.done_seq,0) AS done_seq,
         rah_has_mention(m.body, ?) AS mentioned
       FROM discovery_messages m JOIN rooms r ON r.room_id = m.room_id
+      LEFT JOIN retained_threads retained ON retained.thread_id = m.thread_id
       LEFT JOIN human_activity_frontiers f ON f.room_id = m.room_id AND f.scope_id = COALESCE(m.thread_id,'') AND f.principal_id = ?
       WHERE ${discoveryReadableRooms} AND m.message_order <= ? AND m.room_seq IS NOT NULL
-        AND ((m.thread_id IS NULL AND EXISTS(SELECT 1 FROM memberships member WHERE member.room_id=r.room_id AND member.principal_id=?)) OR m.thread_id IN (SELECT thread_id FROM thread_access))
+        AND ((m.thread_id IS NULL AND EXISTS(SELECT 1 FROM memberships member WHERE member.room_id=r.room_id AND member.principal_id=?)) OR m.thread_id IN (SELECT thread_id FROM thread_access) OR m.room_seq <= retained.retained_seq)
     ), grouped AS (
       SELECT room_id, scope_id, MAX(message_order) AS position, MAX(room_seq) AS latest_seq,
         SUM(CASE WHEN actor_id <> ? AND room_seq > read_seq THEN 1 ELSE 0 END) AS unread_count,
@@ -108,6 +113,7 @@ export class HumanActivity {
       actorId,
       handle,
       actorId,
+      actorId, // retained history belongs to this Human only
       handle,
       actorId,
       input.workspaceId,
@@ -185,7 +191,14 @@ export class HumanActivity {
           roomName,
           kind: threadId ? "thread" : row.kind,
           ...(thread
-            ? { threadId, rootMessageId: thread.root_message_id }
+            ? {
+                threadId,
+                rootMessageId: thread.root_message_id,
+                isFollowing: this.followers(actorId, {
+                  roomId,
+                  threadId: threadId!,
+                }).following,
+              }
             : {}),
           title: thread?.title ?? roomName,
           latestMessage: messageProjectionFromRow(row),
@@ -344,11 +357,7 @@ export class HumanActivity {
     requireDiscoveryHuman(this.db, actorId);
     const input = HumanThreadFollowRequestSchema.parse(request);
     this.requireScope(actorId, input.roomId, input.threadId);
-    this.db
-      .prepare(
-        "INSERT INTO human_thread_follows(principal_id, thread_id, following) VALUES(?,?,?) ON CONFLICT(principal_id, thread_id) DO UPDATE SET following = excluded.following",
-      )
-      .run(actorId, input.threadId, Number(input.following));
+    persistHumanThreadFollow(this.db, actorId, input);
     return { following: input.following };
   }
   followers(actorId: string, request: HumanThreadFollowersRequest) {

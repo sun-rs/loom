@@ -501,7 +501,7 @@ function Results({
     setPendingRows(new Set(pendingDone.current));
     setMutationError("");
     try {
-      await activity.follow(following);
+      await activity.follow(following, row.activityFrontier?.throughSeq);
       if (activity.following !== following)
         throw Error("Follow state unchanged");
     } catch {

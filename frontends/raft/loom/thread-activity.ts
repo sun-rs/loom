@@ -43,7 +43,7 @@ export class ThreadActivityClient {
       throw error;
     }
   }
-  async follow(following: boolean) {
+  async follow(following: boolean, retainThroughSeq?: number) {
     if (this.busy || this.following === undefined)
       throw Error("请先重新读取关注状态");
     if (this.following === following) return;
@@ -54,6 +54,9 @@ export class ThreadActivityClient {
           roomId: this.roomId,
           threadId: this.threadId,
           following,
+          ...(!following && retainThroughSeq !== undefined
+            ? { retainThroughSeq }
+            : {}),
         });
         this.following = result.following;
       } catch {

@@ -1270,6 +1270,121 @@ test("explicit unfollow overrides participation, but a new exact mention still r
     f.close();
   }
 });
+test("activity unfollow retains only the captured thread frontier across restart, without future ordinary delivery", () => {
+  const f = fixture();
+  try {
+    const task = f.task(f.channel.roomId, "Retained thread");
+    const scope = { roomId: f.channel.roomId, threadId: task.threadId };
+    const reply = (body: string, key: string) =>
+      f.kernel.replyThread(f.peerActor, {
+        ...scope,
+        body,
+        basedOnRoomSeq: f.head(scope.roomId),
+        idempotencyKey: key,
+        recipientIds: [],
+      });
+    const item = (kernel = f.kernel) =>
+      kernel
+        .listHumanActivity(f.actor, { workspaceId: f.workspaceId })
+        .items.find((i) => i.threadId === task.threadId);
+    reply("captured reply", "retained-1");
+    const captured = item()!;
+    reply("arrived after menu opened", "retained-2");
+    f.kernel.followHumanThread(f.actor, {
+      ...scope,
+      following: false,
+      retainThroughSeq: captured.latestSeq,
+    });
+    assert.equal(
+      item()?.latestMessage.messageId,
+      captured.latestMessage.messageId,
+    );
+    assert.equal(item()?.unreadCount, 0);
+    assert.equal(item()?.isFollowing, false);
+    assert.ok(
+      !f.kernel
+        .listHumanActivity(f.stranger, { workspaceId: f.workspaceId })
+        .items.some((i) => i.threadId === task.threadId),
+      "retained history never grants visibility to another Human",
+    );
+    assert.ok(
+      !f.kernel
+        .listHumanActivity(f.actor, {
+          workspaceId: f.workspaceId,
+          filter: "unread",
+        })
+        .items.some((i) => i.threadId === task.threadId),
+    );
+    reply("later ordinary reply", "retained-3");
+    f.kernel.followHumanThread(f.actor, {
+      ...scope,
+      following: false,
+      retainThroughSeq: f.head(scope.roomId),
+    });
+    assert.equal(
+      item()?.latestSeq,
+      captured.latestSeq,
+      "repeat must not move the retained frontier",
+    );
+    const reopened = new RoomKernel({ databasePath: f.databasePath });
+    try {
+      reopened.initialize();
+      assert.equal(item(reopened)?.latestSeq, captured.latestSeq);
+    } finally {
+      reopened.close();
+    }
+    reply("@human exact mention", "retained-4");
+    const mention = item()!;
+    assert.equal(
+      mention.hasMention,
+      true,
+      "explicit mention still overrides unfollow",
+    );
+    f.kernel.markHumanActivity(f.actor, {
+      ...scope,
+      throughSeq: mention.latestSeq,
+      action: "read",
+    });
+    assert.equal(item()?.latestSeq, captured.latestSeq);
+    f.kernel.markHumanActivity(f.actor, {
+      ...scope,
+      throughSeq: captured.latestSeq,
+      action: "done",
+    });
+    assert.equal(
+      item(),
+      undefined,
+      "Done removes retained history without following",
+    );
+    reply("ordinary after done", "retained-5");
+    assert.equal(item(), undefined);
+    f.kernel.followHumanThread(f.actor, { ...scope, following: true });
+    assert.ok(item()!.latestSeq > captured.latestSeq);
+    assert.equal(item()?.isFollowing, true);
+    assert.throws(
+      () =>
+        f.kernel.followHumanThread(f.stranger, {
+          ...scope,
+          following: false,
+          retainThroughSeq: captured.latestSeq,
+        }),
+      /member/i,
+    );
+    assert.throws(
+      () =>
+        f.kernel.followHumanThread(f.actor, {
+          ...scope,
+          following: false,
+          retainThroughSeq: 999999,
+        }),
+      /frontier/i,
+    );
+    assert.equal(item()?.isFollowing, true, "invalid retention is atomic");
+  } finally {
+    f.close();
+  }
+});
+
 test("global read queries keep a bounded response over 2,000 canonical history messages", (t) => {
   const f = fixture();
   try {

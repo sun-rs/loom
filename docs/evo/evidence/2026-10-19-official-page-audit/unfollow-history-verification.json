@@ -1,0 +1,72 @@
+{
+  "date": "2026-10-19",
+  "scope": "Durable captured Activity history after unfollow, typed API and product menu wiring",
+  "schema": {
+    "from": 89,
+    "to": 90,
+    "change": "nullable human_thread_follows.retained_seq; no old-row backfill"
+  },
+  "ownership": "Kernel HumanActivity owns authorized transaction and eligible history; UI captures known message frontier only. No provider scheduling changes.",
+  "source": {
+    "release": "v1.21.22",
+    "frontend": "ThreadsInbox-CbSKTW4g.js je; inboxStore markThreadUnfollowed; inboxDoubleClickNavigation.behavior.test.tsx",
+    "backend": "Loom local compatibility implementation, not copied official backend"
+  },
+  "tdd": {
+    "kernelRed": "retainThroughSeq rejected by old strict schema",
+    "clientRed": "captured frontier absent from outgoing request",
+    "green": "Retained across restart; captures pre-concurrent-message frontier; same-state repeat cannot move it; Done/refollow and exact mention semantics preserved"
+  },
+  "checks": {
+    "focusedTests": 33,
+    "schemaMigrationTests": 15,
+    "affectedSchemaAssertionRegressions": 201,
+    "additionalAclAssertion": "captured history hidden from another Human, targeted rerun passed",
+    "rootTypecheck": "passed",
+    "frontendTypecheck": "passed",
+    "build": "npm run build:web:workbench passed; existing bundler warnings retained",
+    "browser": [
+      {
+        "width": 1440,
+        "readDoesNotComplete": true,
+        "staleUnreadRejected": true,
+        "unknownDoneNotResent": true,
+        "officialMenuBounds": true,
+        "keyboardAndDismiss": true,
+        "noAccidentalNavigation": true,
+        "threadDoneScope": true,
+        "threadReadScope": true,
+        "threadFollowReadbackWithoutResend": true,
+        "retainedHistoryAfterReload": true,
+        "ordinaryRepliesDoNotAdvanceRetainedRow": true,
+        "unfollowedOmitsReadActions": true,
+        "followReadFailureRetry": true
+      },
+      {
+        "width": 390,
+        "readDoesNotComplete": true,
+        "staleUnreadRejected": true,
+        "unknownDoneNotResent": true,
+        "officialMenuBounds": true,
+        "keyboardAndDismiss": true,
+        "noAccidentalNavigation": true,
+        "threadDoneScope": true,
+        "threadReadScope": true,
+        "threadFollowReadbackWithoutResend": true,
+        "retainedHistoryAfterReload": true,
+        "ordinaryRepliesDoNotAdvanceRetainedRow": true,
+        "unfollowedOmitsReadActions": true,
+        "followReadFailureRetry": true
+      }
+    ],
+    "format": "changed-file check and diff check"
+  },
+  "limits": [
+    "Legacy unfollows have no known capture and remain NULL; no invented migration history.",
+    "Current capture wiring is Activity menu. Other callers without retainThroughSeq retain legacy behavior.",
+    "Existing exact-mention override remains; retained history never grants notifications or access.",
+    "Browser tests use temporary real Kernel and injected lost responses; no paid CLI.",
+    "Real page verification will not modify user follow/read preferences."
+  ],
+  "deployment": "pending safe restart and fresh real-page checks"
+}

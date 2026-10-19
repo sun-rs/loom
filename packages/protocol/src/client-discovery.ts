@@ -119,6 +119,7 @@ export const HumanActivityItemSchema = z
     unreadCount: z.number().int().nonnegative(),
     hasMention: z.boolean(),
     replyCount: z.number().int().nonnegative(),
+    isFollowing: z.boolean().optional(),
     task: TaskSchema.optional(),
     target: NavigationTargetSchema,
   })
@@ -165,8 +166,12 @@ export const HumanThreadFollowRequestSchema = z
     roomId: IdentifierSchema,
     threadId: IdentifierSchema,
     following: z.boolean(),
+    retainThroughSeq: z.number().int().positive().optional(),
   })
-  .strict();
+  .strict()
+  .refine((input) => !input.following || input.retainThroughSeq === undefined, {
+    message: "retained frontier is only valid when unfollowing",
+  });
 export const HumanThreadFollowResponseSchema = z
   .object({ following: z.boolean() })
   .strict();

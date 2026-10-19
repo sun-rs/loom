@@ -90,7 +90,7 @@
         "loom/activity-actions.ts",
         "loom/DiscoveryPage.tsx"
       ],
-      "adaptation": "Channel/DM and followed-thread read, unread and done use captured Loom frontiers. Thread menus lazily read thread.followers, show follow/unfollow from the authoritative value, and omit read actions while unknown or unfollowed. Loading is disabled; failed reads expose explicit retry. Follow uses existing ThreadActivityClient unknown-result readback without resend, closes the native menu immediately and refreshes the bounded feed. Kernel unfollow eligibility may remove a row; unlike upstream, no local retained history is fabricated. Native ContextMenuPopup/DismissBackdrop/placement, Bell/BellOff icons, keyboard/focus behavior retained. Physical mobile long-press remains unverified.",
+      "adaptation": "Channel/DM and followed-thread read, unread and done use captured Loom frontiers. Thread menus lazily read thread.followers, show follow/unfollow from the authoritative value, and omit read actions while unknown or unfollowed. Loading is disabled; failed reads expose explicit retry. Follow uses existing ThreadActivityClient unknown-result readback without resend, closes the native menu immediately and refreshes the bounded feed. Activity-menu unfollow now sends its captured frontier to Kernel durable history; refresh preserves the row without browser-only history fabrication. Legacy callers without a capture retain their earlier semantics. Native ContextMenuPopup/DismissBackdrop/placement, Bell/BellOff icons, keyboard/focus behavior retained. Physical mobile long-press remains unverified.",
       "checks": [
         "scripts/official-web/activity-actions.test.ts",
         "scripts/official-web/activity-menu-browser.mjs",
@@ -661,5 +661,18 @@
     ],
     "behavior": "Title detail>=2 cycles loaded unread rows in rendered pin order, wraps, no forced refresh/writes/navigation; empty/loading lists do not queue intent. Scroll retains native cursor pagination at 240px threshold. Sidebar double-click remains distinct refresh/first-unread intent.",
     "checks": ["scripts/official-web/activity-focus-browser.mjs"]
+  },
+  "activityUnfollowHistory20261019": {
+    "source": "v1.21.22 ThreadsInbox je; official inboxStore markThreadUnfollowed/refollowed and inboxDoubleClickNavigation.behavior.test.tsx",
+    "reuse": "Existing official menu structural port; new Kernel retention and typed binding are Loom compatibility glue, not copied official backend",
+    "behavior": "Activity menu supplies captured row frontier. Kernel persists only that history boundary; no future ordinary notifications, existing exact-mention override preserved. Native Follow/Done menus and layout unchanged.",
+    "migration": "schema90 nullable retained_seq; no invented backfill for legacy unfollows",
+    "limits": "Capture supplied by Activity menu only; old callers without capture retain legacy eligibility. Physical mobile and logged-in pixel parity remain separate.",
+    "checks": [
+      "packages/kernel/test/global-discovery.test.ts",
+      "packages/kernel/test/activity-history-migration.test.ts",
+      "scripts/official-web/thread-activity.test.ts",
+      "scripts/official-web/activity-menu-browser.mjs"
+    ]
   }
 }

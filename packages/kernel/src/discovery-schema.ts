@@ -61,6 +61,16 @@ export function initializeDiscoverySchema(db: DatabaseSync) {
       PRIMARY KEY(principal_id, thread_id)
     ) STRICT;
   `);
+  // Schema 90: old unfollows have no captured frontier; never invent one.
+  if (
+    !db
+      .prepare("PRAGMA table_info(human_thread_follows)")
+      .all()
+      .some((column) => column.name === "retained_seq")
+  )
+    db.exec(
+      "ALTER TABLE human_thread_follows ADD COLUMN retained_seq INTEGER CHECK(retained_seq IS NULL OR retained_seq > 0)",
+    );
   // Backfill once when adopting FTS; ordinary daemon starts never rebuild/hash history.
   if (!hadMessageSearch)
     db.exec("INSERT INTO message_search(message_search) VALUES('rebuild')");
