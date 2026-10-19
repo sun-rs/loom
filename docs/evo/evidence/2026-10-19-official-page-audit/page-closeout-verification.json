@@ -1,0 +1,123 @@
+{
+  "checkedAt": "2026-10-19",
+  "productRevision": "ddb10a27",
+  "upstream": {
+    "url": "https://app.raft.build/s/hakasemac/",
+    "release": "v1.21.22",
+    "revision": "af3d6ef4a22f0f05f5f9db9424285755d67e9726",
+    "assets": {
+      "app-shell-D1-nY-va.js": {
+        "sha256": "cf516dfe8f479b35550b239403d30a9d021f4b6cc4d9f3ae77c6f380a1e22efd",
+        "matchesLock": true,
+        "url": "https://app.raft.build/assets/app-shell-D1-nY-va.js"
+      },
+      "app-shell-BdGbZCNo.css": {
+        "sha256": "99926241b1cf6b4160a9163ebc7415113d6276a6e583ec08bec189d4657fd29b",
+        "matchesLock": true,
+        "url": "https://app.raft.build/assets/app-shell-BdGbZCNo.css"
+      }
+    },
+    "method": "Direct HTTPS retrieval; web fetch tool was unavailable. Homepage metadata and downloaded JS/CSS match locked source. No authenticated official screenshot comparison."
+  },
+  "scope": "Bounded page-entry audit; 18 rows in frontend-closeout.zh-CN.md, not a count of all behaviors or completion percentage.",
+  "browserCommands": [
+    "LOOM_BROWSER_SLICE=navigation node scripts/official-web/channel-browser.mjs",
+    "LOOM_BROWSER_SLICE=page-polish node scripts/official-web/channel-browser.mjs",
+    "LOOM_BROWSER_SLICE=layout node scripts/official-web/channel-browser.mjs"
+  ],
+  "results": {
+    "navigation": [
+      {
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "destinationsViaNativeEntries": true,
+        "urlReloadAndBackForward": true,
+        "keyboardNavigation": true,
+        "channelDraftPreservedAcrossPages": true,
+        "visiblePointerTargets": true,
+        "noHorizontalOverflow": true,
+        "externalRequests": 0
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "destinationsViaNativeEntries": true,
+        "urlReloadAndBackForward": true,
+        "keyboardNavigation": true,
+        "channelDraftPreservedAcrossPages": true,
+        "visiblePointerTargets": true,
+        "noHorizontalOverflow": true,
+        "externalRequests": 0
+      }
+    ],
+    "page-polish": [
+      {
+        "width": 1440,
+        "fixture": true,
+        "drawer": true,
+        "roleTabsHitTest": true,
+        "activityHeader": true,
+        "computerInstances": true
+      },
+      {
+        "width": 390,
+        "fixture": true,
+        "drawer": true,
+        "roleTabsHitTest": true,
+        "activityHeader": true,
+        "computerInstances": true
+      }
+    ],
+    "layout": [
+      {
+        "width": 390,
+        "theme": "light",
+        "headersAndOverflow": true
+      },
+      {
+        "width": 390,
+        "theme": "dark",
+        "headersAndOverflow": true
+      },
+      {
+        "width": 900,
+        "theme": "light",
+        "headersAndOverflow": true
+      },
+      {
+        "width": 900,
+        "theme": "dark",
+        "headersAndOverflow": true
+      },
+      {
+        "width": 1440,
+        "theme": "light",
+        "headersAndOverflow": true
+      },
+      {
+        "width": 1440,
+        "theme": "dark",
+        "headersAndOverflow": true
+      }
+    ]
+  },
+  "visualReview": [
+    "Mobile Agent list and desktop dark search screenshot inspected; fixture only"
+  ],
+  "findings": [
+    "No new blocking product defect reproduced by these three slices.",
+    "Dated remaining lists retained stale items superseded by later evidence. Current inventory now distinguishes supported subsets, Loom extensions, functional gaps and exclusions.",
+    "G1 standalone chat/private-box entry semantics; G2 Activity follow/read/group projections; G3 browser push remain explicit capability gaps."
+  ],
+  "limits": [
+    "Tests used temporary Core/fake execution, not paid providers or real CLI work.",
+    "No new all-state, full-site, physical iOS/Android or authenticated pixel-parity acceptance.",
+    "No product changes or restart; existing deployment retained.",
+    "G1/G2 require their own implementation slices; this audit does not mark them complete."
+  ],
+  "privateEvidence": "/Users/sun/.loom/reviews/2026-10-19-page-closeout"
+}

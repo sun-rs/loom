@@ -557,9 +557,11 @@
     }
   },
   "pending": [
-    "Remaining retained page action compositions; shared header semantic tones/status/back and search header audited, with explicit owner-approved mobile layout adaptation.",
-    "Channel settings upstream-only joint/guest/share/delete and expanded notification controls remain excluded; supported metadata/mute/archive paths migrated",
-    "Activity thread follow/unfollow and conditional read controls (projection lacks follow state; unfollow currently removes canonical eligibility), grouping options (no complete server facet/group query) and mobile home unread bindings",
-    "Browser push subscription/permission/test actions remain unavailable; notification capability view and About version surface now audited against locked v1.21.22."
-  ]
+    "G1: Standalone one-instance chat entry and channel-internal private-box navigation; preserve all old history, no silent session conversion.",
+    "G2: Activity follow/unfollow/conditional read state, complete grouping projections and mobile home unread bindings.",
+    "G3: Browser push subscription/permission/test and notification navigation; existing capability-only view remains explicit.",
+    "V1: Targeted unverified combinations, plain-text browser styling, successful external navigation and physical mobile/authenticated upstream comparison; see currentCloseout."
+  ],
+  "currentCloseout": "../../docs/evo/frontend-closeout.zh-CN.md",
+  "statusInterpretation": "Slice limits describe the recorded adoption batch; later evidence can supersede its pending audit items. Current page/gap status is maintained in currentCloseout, not inferred from historical remaining lists."
 }

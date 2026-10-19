@@ -56,6 +56,8 @@ P93 定位核查：[原生对照与归因边界](evidence/2026-10-02-claude-dire
 
 ## 2. 当前状态
 
+前端页面级当前收口口径见[有限清单](frontend-closeout.zh-CN.md)：官网 v1.21.22 的主 JS/CSS 已重新核验与锁定资源一致；navigation/page-polish/layout 三切片通过。保留页面、Loom扩展、G1独立单聊、G2动态投影、G3浏览器推送和主动排除项分别登记，不再用历史批次的过期 remaining 反复开启旧工作。本次只审查和复验，部署未变。
+
 当前批：频道 `allowInstanceTaskCreation` 默认关闭（含旧频道迁移），Human 可建
 任务/转换历史消息；开启后实例可自主创建，已有任务领取不受开关影响。Kernel
 统一拦截单项、批量、转换及 Agent token 创建；旧成功请求幂等重放保留。无审批
