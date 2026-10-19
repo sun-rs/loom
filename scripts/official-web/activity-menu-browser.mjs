@@ -43,12 +43,16 @@ export async function verifyActivityMenu({
         writes = [],
         errors = [];
       let unread = 1,
-        dropDone = false;
+        dropDone = false,
+        staleThread;
       page.on("pageerror", (e) => errors.push(e.message));
       // Only peer unread rendering is simulated; all writes and receipts use the temporary real Kernel.
       await page.route("**/v3/client/activity/list", async (route) => {
         const response = await route.fetch();
         const data = await response.json();
+        // Retained stale list response tests authoritative menu reads after an external unfollow.
+        if (staleThread && !data.items.some((i) => i.key === staleThread.key))
+          data.items.push(staleThread);
         for (const row of data.items ?? [])
           if (row.roomId === room.roomId) row.unreadCount = unread;
         await route.fulfill({ response, json: data });
@@ -130,8 +134,7 @@ export async function verifyActivityMenu({
         limit: 100,
       });
       assert.ok(!after.items.some((i) => i.roomId === room.roomId));
-      // Threads retain Done, but omit read/follow controls until the projection
-      // exposes official follow-state semantics. Never apply a thread action to its parent.
+      // Thread menu reads authoritative follow state; actions remain thread-scoped.
       dropDone = false;
       const { thread } = await client.request("thread.create", {
         roomId: room.roomId,
@@ -156,13 +159,97 @@ export async function verifyActivityMenu({
         (i) => i.threadId === thread.threadId,
       );
       assert.ok(threadItem);
+      unread = 1;
       await page.reload();
       const threadRow = page.locator(`[data-result-id="${threadItem.key}"]`);
       await threadRow.waitFor();
       await threadRow.click({ button: "right" });
       await menu.waitFor();
-      assert.equal(await menu.getByRole("menuitem").count(), 1);
-      await menu.getByRole("menuitem").click();
+      await menu
+        .getByRole("menuitem", { name: "取消关注", exact: true })
+        .waitFor();
+      assert.equal(await menu.getByRole("menuitem").count(), 3);
+      const threadReadRefresh = page.waitForResponse(
+        (r) => r.url().endsWith("/activity/list") && r.ok(),
+      );
+      await menu.getByRole("menuitem").first().click();
+      await threadReadRefresh;
+      assert.equal(writes.at(-1).request.action, "read");
+      assert.equal(writes.at(-1).request.threadId, thread.threadId);
+      assert.equal(writes.at(-1).request.throughSeq, threadItem.latestSeq);
+      await threadRow.click({ button: "right" });
+      await menu
+        .getByRole("menuitem", { name: "取消关注", exact: true })
+        .waitFor();
+      let followWrites = 0;
+      await page.route("**/v3/client/activity/follow", async (route) => {
+        followWrites++;
+        await route.fetch();
+        await route.abort("failed");
+      });
+      await menu
+        .getByRole("menuitem", { name: "取消关注", exact: true })
+        .click();
+      await threadRow.waitFor({ state: "hidden" });
+      assert.equal(followWrites, 1);
+      assert.equal(
+        (
+          await client.request("thread.followers", {
+            roomId: room.roomId,
+            threadId: thread.threadId,
+          })
+        ).following,
+        false,
+      );
+      staleThread = threadItem;
+      await page.reload();
+      await threadRow.click({ button: "right" });
+      await menu.getByRole("menuitem", { name: "关注", exact: true }).waitFor();
+      assert.equal(await menu.getByRole("menuitem").count(), 2);
+      await page.screenshot({ path: `/tmp/loom-activity-follow-${width}.png` });
+      await menu.getByRole("menuitem", { name: "关注", exact: true }).click();
+      await menu.waitFor({ state: "hidden" });
+      await page.waitForResponse(
+        (r) => r.url().endsWith("/activity/list") && r.ok(),
+      );
+      assert.equal(followWrites, 2);
+      assert.equal(
+        (
+          await client.request("thread.followers", {
+            roomId: room.roomId,
+            threadId: thread.threadId,
+          })
+        ).following,
+        true,
+      );
+      staleThread = undefined;
+      await page.unroute("**/v3/client/activity/follow");
+      let failRead = true;
+      await page.route(
+        "**/v3/client/activity/thread-followers",
+        async (route) => {
+          if (failRead) await route.abort("failed");
+          else await route.continue();
+        },
+      );
+      await threadRow.click({ button: "right" });
+      const retry = menu.getByRole("menuitem", {
+        name: "重新读取关注状态",
+        exact: true,
+      });
+      await retry.waitFor();
+      assert.equal(await menu.getByRole("menuitem").count(), 2);
+      failRead = false;
+      await retry.click();
+      await menu
+        .getByRole("menuitem", { name: "取消关注", exact: true })
+        .waitFor();
+      await page.keyboard.press("Escape");
+      await threadRow.click({ button: "right" });
+      await menu
+        .getByRole("menuitem", { name: "取消关注", exact: true })
+        .waitFor();
+      await menu.getByRole("menuitem", { name: "完成", exact: true }).click();
       await threadRow.waitFor({ state: "hidden" });
       assert.equal(writes.at(-1).request.threadId, thread.threadId);
       assert.equal(writes.at(-1).request.action, "done");
@@ -176,6 +263,10 @@ export async function verifyActivityMenu({
         keyboardAndDismiss: true,
         noAccidentalNavigation: true,
         threadDoneScope: true,
+        threadReadScope: true,
+        threadFollowReadbackWithoutResend: true,
+        unfollowedOmitsReadActions: true,
+        followReadFailureRetry: true,
       });
     } finally {
       await context.close();

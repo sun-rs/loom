@@ -1,3 +1,4 @@
+import type { ComponentProps } from "react";
 import AvatarSlot from "../packages/web/src/components/ui/AvatarSlot.tsx";
 import ActivityContextMenu, {
   type ActivityMenuTarget,
@@ -19,12 +20,16 @@ import { formatRelativeTime } from "../packages/web/src/utils/relativeTime.ts";
 import InlineMarkdownPreview from "../packages/web/src/components/markdown/InlineMarkdownPreview.tsx";
 import type { DiscoveryRow } from "./discovery-client.ts";
 export default function ActivityMessageRow({
+  client,
+  onFollow,
   row,
   active,
   onOpen,
   onAction,
   pending,
 }: {
+  client: ComponentProps<typeof ActivityContextMenu>["client"];
+  onFollow: ComponentProps<typeof ActivityContextMenu>["onFollow"];
   row: DiscoveryRow;
   onAction: (row: DiscoveryRow, action: ActivityAction) => void;
   pending: boolean;
@@ -199,6 +204,8 @@ export default function ActivityMessageRow({
       </div>
       {menu && (
         <ActivityContextMenu
+          client={client}
+          onFollow={onFollow}
           target={menu}
           pending={pending}
           onAction={onAction}

@@ -1,3 +1,4 @@
+import type { ThreadActivityClient } from "./thread-activity.ts";
 import { useFirstUnreadFocus } from "./useFirstUnreadFocus.ts";
 import { activityPeerType } from "./activity-peer.ts";
 import ActivityHeader from "./ActivityHeader.tsx";
@@ -466,6 +467,29 @@ function Results({
       setRetry((value) => value + 1);
     }
   };
+  const followActivity = async (
+    row: DiscoveryRow,
+    activity: ThreadActivityClient,
+    following: boolean,
+  ) => {
+    if (pendingDone.current.has(row.id)) return;
+    pendingDone.current.add(row.id);
+    setPendingRows(new Set(pendingDone.current));
+    setMutationError("");
+    try {
+      await activity.follow(following);
+      if (activity.following !== following)
+        throw Error("Follow state unchanged");
+    } catch {
+      setMutationError(
+        "未确认关注操作成功，请重新打开菜单读取状态；不会自动重发操作。",
+      );
+    } finally {
+      pendingDone.current.delete(row.id);
+      setPendingRows(new Set(pendingDone.current));
+      setRetry((value) => value + 1);
+    }
+  };
   useEffect(() => {
     if (mode !== "search") return;
     moreRequest.current?.abort();
@@ -718,6 +742,10 @@ function Results({
               ) : (
                 data.rows.map((row) => (
                   <ActivityMessageRow
+                    client={client}
+                    onFollow={(row, activity, following) => {
+                      void followActivity(row, activity, following);
+                    }}
                     pending={pendingRows.has(row.id)}
                     onAction={(target, action) => {
                       void markActivity(target, action);

@@ -1,0 +1,61 @@
+{
+  "date": "2026-10-19",
+  "scope": "Activity thread context menu; no backend mutation semantics changed",
+  "upstream": {
+    "release": "1.21.22",
+    "revision": "af3d6ef4a22f0f05f5f9db9424285755d67e9726",
+    "source": "ThreadsInbox-CbSKTW4g.js je; app-shell MenuItem and native raft-ui ContextMenuPopup",
+    "reuse": "structural port with existing Loom typed client; not byte-exact TSX",
+    "provenance": "frontends/raft/page-adoption.json; release-lock.json; upstream notices retained"
+  },
+  "tdd": {
+    "before": "New browser assertion timed out waiting for thread Unfollow; old implementation exposed Done only",
+    "after": "Focused browser slice passed at 1440x844 and 390x844, DPR1"
+  },
+  "checks": {
+    "unit": "node --test scripts/official-web/activity-actions.test.ts scripts/official-web/thread-activity.test.ts: 5 passed",
+    "types": "npm run typecheck:loom --prefix frontends/raft passed",
+    "build": "npm run build:web:workbench passed; existing chunk/dynamic import warnings retained",
+    "browser": "LOOM_BROWSER_SLICE=activity-menu node scripts/official-web/channel-browser.mjs passed",
+    "format": "changed-file prettier check and git diff --check passed"
+  },
+  "browser": [
+    {
+      "width": 1440,
+      "readDoesNotComplete": true,
+      "staleUnreadRejected": true,
+      "unknownDoneNotResent": true,
+      "officialMenuBounds": true,
+      "keyboardAndDismiss": true,
+      "noAccidentalNavigation": true,
+      "threadDoneScope": true,
+      "threadReadScope": true,
+      "threadFollowReadbackWithoutResend": true,
+      "unfollowedOmitsReadActions": true,
+      "followReadFailureRetry": true
+    },
+    {
+      "width": 390,
+      "readDoesNotComplete": true,
+      "staleUnreadRejected": true,
+      "unknownDoneNotResent": true,
+      "officialMenuBounds": true,
+      "keyboardAndDismiss": true,
+      "noAccidentalNavigation": true,
+      "threadDoneScope": true,
+      "threadReadScope": true,
+      "threadFollowReadbackWithoutResend": true,
+      "unfollowedOmitsReadActions": true,
+      "followReadFailureRetry": true
+    }
+  ],
+  "fixtureBoundary": "Temporary real Kernel, no paid providers. Unread display overridden to emulate incoming peer activity; retained stale thread list response tests authoritative follow reads. Follow/read/done writes and receipts use Kernel. Lost follow responses injected after commit, never resent.",
+  "limits": [
+    "Kernel unfollow removes ordinary thread activity eligibility; upstream retains a history row. No frontend cache used to fake parity.",
+    "Grouping and browser push remain pending.",
+    "System notices intentionally count toward sidebar unread, not Activity cards; official server exclusion not established.",
+    "Physical mobile long-press and logged-in upstream pixel parity not verified."
+  ],
+  "deployment": "pending safe restart and fresh real-page verification",
+  "paidProviders": false
+}

@@ -90,11 +90,12 @@
         "loom/activity-actions.ts",
         "loom/DiscoveryPage.tsx"
       ],
-      "adaptation": "Channel/DM read, unread and done use exact captured Loom frontiers. Threads retain Done only: current activity projection lacks isFollowing, so upstream conditional read/follow controls are omitted. Canonical unknown-result handling refreshes without resending. Native ContextMenuPopup/DismissBackdrop/placement helper retained; placement measures effective native width (min-w-60 overrides upstream page width:184) to avoid edge clipping. Keyboard open/arrow/Escape and focus return added around the same native popup. Touch Done remains reachable; physical iOS/Android long-press not verified.",
+      "adaptation": "Channel/DM and followed-thread read, unread and done use captured Loom frontiers. Thread menus lazily read thread.followers, show follow/unfollow from the authoritative value, and omit read actions while unknown or unfollowed. Loading is disabled; failed reads expose explicit retry. Follow uses existing ThreadActivityClient unknown-result readback without resend, closes the native menu immediately and refreshes the bounded feed. Kernel unfollow eligibility may remove a row; unlike upstream, no local retained history is fabricated. Native ContextMenuPopup/DismissBackdrop/placement, Bell/BellOff icons, keyboard/focus behavior retained. Physical mobile long-press remains unverified.",
       "checks": [
         "scripts/official-web/activity-actions.test.ts",
         "scripts/official-web/activity-menu-browser.mjs",
-        "scripts/official-web/activity-navigation-browser.mjs"
+        "scripts/official-web/activity-navigation-browser.mjs",
+        "scripts/official-web/thread-activity.test.ts"
       ]
     },
     "settings-composition": {
