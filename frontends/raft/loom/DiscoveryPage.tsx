@@ -1,3 +1,4 @@
+import { useFirstUnreadFocus } from "./useFirstUnreadFocus.ts";
 import { activityPeerType } from "./activity-peer.ts";
 import ActivityHeader from "./ActivityHeader.tsx";
 import {
@@ -58,7 +59,10 @@ import ActivityFilters from "./ActivityFilters.tsx";
 import ActivityMessageRow from "./ActivityMessageRow.tsx";
 import SearchHeader from "./SearchHeader.tsx";
 import SearchMessageGroups from "./SearchMessageGroups.tsx";
+const noFocusRequest = () => {};
 export default function DiscoveryPage({
+  focusRequest = 0,
+  consumeFocus = noFocusRequest,
   client,
   workspaceId,
   controlRoomId,
@@ -73,6 +77,8 @@ export default function DiscoveryPage({
   onBack,
   overlay = false,
 }: {
+  focusRequest?: number;
+  consumeFocus?: () => void;
   onOpenResult: (row: DiscoveryRow, full: boolean) => Promise<void>;
   overlay?: boolean;
   notice?: ReactNode;
@@ -168,6 +174,12 @@ export default function DiscoveryPage({
     (params.get("range") && params.get("range") !== "any"),
   );
   const [tick, setTick] = useState(0);
+  // Upstream double-click reloads the inbox before resolving its pending focus.
+  // Keep the refresh token after consumption so clearing intent never reloads it.
+  const [focusRefresh, setFocusRefresh] = useState(0);
+  useEffect(() => {
+    if (focusRequest) setFocusRefresh(focusRequest);
+  }, [focusRequest]);
   const update = (key: string, value: string) =>
     setParams((previous) => {
       const next = new URLSearchParams(previous);
@@ -263,6 +275,8 @@ export default function DiscoveryPage({
             />
           ) : null}
           <Results
+            focusRequest={focusRequest === focusRefresh ? focusRequest : 0}
+            consumeFocus={consumeFocus}
             history={history}
             onChooseHistory={(query) => {
               update("q", query);
@@ -276,7 +290,7 @@ export default function DiscoveryPage({
             }}
             railHandler={railHandler}
             overlayHome={overlay ? allResults : undefined}
-            key={`${mode}:${query}:${scope}:${filter}:${tick}:${filterKey}`}
+            key={`${mode}:${query}:${scope}:${filter}:${tick}:${filterKey}:${focusRefresh}`}
             client={client}
             entities={entities}
             recent={recent}
@@ -316,6 +330,8 @@ export default function DiscoveryPage({
   );
 }
 function Results({
+  focusRequest,
+  consumeFocus,
   history,
   onChooseHistory,
   railHandler,
@@ -335,6 +351,8 @@ function Results({
   tick,
   onOpenResult,
 }: {
+  focusRequest: number;
+  consumeFocus: () => void;
   railHandler: RefObject<SearchRailHandler>;
   overlayHome?: () => void;
   history: ReturnType<typeof useSearchHistory>;
@@ -380,6 +398,13 @@ function Results({
     mode === "activity",
     !loading && !error && Boolean(data?.rows.length),
     Boolean(principalId),
+  );
+  const focusedActivityId = useFirstUnreadFocus(
+    mode === "activity" ? focusRequest : 0,
+    consumeFocus,
+    data?.rows ?? [],
+    activityScroll.ref,
+    mode === "activity" && !loading && !error,
   );
   const moreRequest = useRef<AbortController | null>(null);
   const loadMoreResults = async () => {
@@ -705,7 +730,10 @@ function Results({
                         row.message.roomId,
                       ),
                     }}
-                    active={route.get("message") === row.message.messageId}
+                    active={
+                      focusedActivityId === row.id ||
+                      route.get("message") === row.message.messageId
+                    }
                     onOpen={(full) => {
                       void onOpenResult(row, full).catch(() =>
                         setError("无法打开消息，请刷新重试。"),

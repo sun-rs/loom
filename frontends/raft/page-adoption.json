@@ -575,11 +575,31 @@
         "Official double-click Activity first-unread focus gesture is not implemented; ordinary navigation and summary badge are accepted here.",
         "G1 standalone chat and remaining G2 Activity follow/read/group projections remain pending."
       ]
+    },
+    "activity-first-unread-focus": {
+      "source": "Raft v1.21.22 app-shell LeftRail focusFirstUnreadActivity plus ThreadsInbox-CbSKTW4g.js (pretty lines 856–908), pendingFocusKind, offset 8px and 3000ms highlight; exact URL/hash in release-lock.json.",
+      "kind": "Structural port from authorized production composition, not byte-exact TSX; upstream notices retained.",
+      "local": [
+        "loom/Navigation.tsx",
+        "loom/ChannelApp.tsx",
+        "loom/DiscoveryPage.tsx",
+        "loom/useFirstUnreadFocus.ts"
+      ],
+      "adaptation": "Root owns transient one-shot intent; existing bounded feed owns refreshed data, cursor and scroll restoration. Refresh completes before focus resolution; empty/read-only results retain intent. Leaving Activity clears intent. Existing native row active recipe supplies highlight. No mark/follow/detail action and no backend change.",
+      "checks": [
+        "scripts/official-web/activity-focus.test.ts",
+        "scripts/official-web/activity-focus-browser.mjs"
+      ],
+      "limits": [
+        "Desktop rail double-click only; mobile retains single-click navigation.",
+        "Focus searches the loaded bounded window, not all historical activity.",
+        "Does not close G1, G2 follow/group semantics or G3 push; no authenticated upstream screenshot comparison."
+      ]
     }
   },
   "pending": [
     "G1: Standalone one-instance chat entry and channel-internal private-box navigation; preserve all old history, no silent session conversion.",
-    "G2: Activity list lacks embedded follow state (thread.followers API already exists); menu state binding, upstream row-retention compatibility, grouping and first-unread focus remain. Mobile Home summary badge is completed.",
+    "G2: Activity list lacks embedded follow state (thread.followers API already exists); menu state binding, upstream row-retention compatibility, grouping remain. Mobile Home summary badge and desktop first-unread focus are completed.",
     "G3: Browser push subscription/permission/test and notification navigation; existing capability-only view remains explicit.",
     "V1: Targeted unverified combinations, plain-text browser styling, successful external navigation and physical mobile/authenticated upstream comparison; see currentCloseout."
   ],

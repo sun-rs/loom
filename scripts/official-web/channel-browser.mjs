@@ -467,6 +467,20 @@ try {
         }),
       ),
     );
+  } else if (process.env.LOOM_BROWSER_SLICE === "activity-focus") {
+    const { verifyActivityFocus } =
+      await import("./activity-focus-browser.mjs");
+    console.log(
+      JSON.stringify(
+        await verifyActivityFocus({
+          browser,
+          origin,
+          client,
+          channel: channels[0],
+          head,
+        }),
+      ),
+    );
   } else if (process.env.LOOM_BROWSER_SLICE === "activity-navigation") {
     console.log(
       JSON.stringify(

@@ -1,0 +1,46 @@
+{
+  "scope": "Desktop Activity double-click refresh, first unread scroll and transient highlight; mobile single-click preserved.",
+  "upstream": "v1.21.22; page-adoption.json activity-first-unread-focus; release-lock.json",
+  "checks": {
+    "tdd": "New missing-hook source test failed first. Browser reload assertion also failed before refresh wiring. Both passed after implementation.",
+    "sourceTest": "node --test scripts/official-web/activity-focus.test.ts: 1 passed",
+    "typecheck": "npm run typecheck:loom --prefix frontends/raft: passed",
+    "build": "npm run build:web:workbench: passed",
+    "browser": [
+      {
+        "width": 1440,
+        "pendingUntilUnread": true,
+        "repeatedGesture": true,
+        "highlightExpires": true,
+        "exitClearsIntent": true,
+        "noReadOrFollowWrites": true,
+        "noDetailNavigation": true
+      },
+      {
+        "width": 900,
+        "pendingUntilUnread": true,
+        "repeatedGesture": true,
+        "highlightExpires": true,
+        "exitClearsIntent": true,
+        "noReadOrFollowWrites": true,
+        "noDetailNavigation": true
+      },
+      {
+        "width": 390,
+        "mobileSingleClickPreserved": true,
+        "noImplicitFocus": true
+      }
+    ],
+    "noPaidCalls": true
+  },
+  "deployment": {
+    "verified": false,
+    "status": "Pending safe restart and real page check"
+  },
+  "privateEvidence": "/Users/sun/.loom/reviews/2026-10-19-activity-focus",
+  "limits": [
+    "Isolated browser tests override unread projection; real deployment checked separately.",
+    "Bounded loaded window only, desktop double-click; no new mobile gesture.",
+    "Not full-site parity, G1 standalone chat/G2 follow-group/G3 browser push unchanged."
+  ]
+}

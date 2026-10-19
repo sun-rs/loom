@@ -36,7 +36,7 @@ export const destinations = [
 export type Destination = (typeof destinations)[number]["id"];
 type NavigationProps = {
   active: string;
-  onSelect: (id: Destination) => void;
+  onSelect: (id: Destination, focusFirstUnread?: boolean) => void;
   unread?: NavigationUnread;
 };
 
@@ -62,6 +62,9 @@ export function DesktopNavigation({
       dotInactiveOnly
       active={active === entry.id}
       aria-current={active === entry.id ? "page" : undefined}
+      onDoubleClick={
+        entry.id === "activity" ? () => onSelect(entry.id, true) : undefined
+      }
       onClick={() => onSelect(entry.id)}
     />
   );

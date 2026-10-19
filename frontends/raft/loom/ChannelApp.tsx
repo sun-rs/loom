@@ -705,10 +705,24 @@ export default function ChannelApp() {
   if (destination === "agents") agentsVisited.current = true;
   const [navigationUnread, setNavigationUnread] = useState<NavigationUnread>();
   const activityNavigation = useRef(0);
+  const activityFocusSequence = useRef(0);
+  const [activityFocusRequest, setActivityFocusRequest] = useState(0);
+  const consumeActivityFocus = useCallback(
+    () => setActivityFocusRequest(0),
+    [],
+  );
+  useEffect(() => {
+    if (destination !== "activity") setActivityFocusRequest(0);
+  }, [destination]);
   const [discoveryProfileOpen, setDiscoveryProfileOpen] = useState(false);
   const lastChatRoom = useRef<string | undefined>(undefined);
-  const selectDestination = (id: Destination) => {
+  const selectDestination = (id: Destination, focusFirstUnread = false) => {
     if (hasRouteBoundIntent()) return;
+    setActivityFocusRequest(
+      id === "activity" && focusFirstUnread
+        ? ++activityFocusSequence.current
+        : 0,
+    );
     setParams((previous) => {
       const next = new URLSearchParams(previous);
       for (const key of [
@@ -1197,6 +1211,8 @@ export default function ChannelApp() {
                     (destination === "search" ||
                       destination === "activity") && (
                       <DiscoveryPage
+                        focusRequest={activityFocusRequest}
+                        consumeFocus={consumeActivityFocus}
                         principalId={directory.principal.principalId}
                         controlRoomId={directory.workspace.controlRoomId}
                         onOpenEntity={openSearchEntity}
