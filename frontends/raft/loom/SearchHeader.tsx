@@ -42,6 +42,9 @@ export default function SearchHeader({
   };
   const field = (
     <InputGroup className="min-w-0 flex-1">
+      <InputGroupAddon align="inline-start">
+        <Search aria-hidden="true" />
+      </InputGroupAddon>
       <InputGroupInput
         ref={inputRef}
         autoFocus={overlay}
@@ -74,30 +77,21 @@ export default function SearchHeader({
           <Button
             type="button"
             variant="ghost"
-            size="icon-xs"
+            size="icon-sm"
             onClick={() => change("")}
             aria-label={formatMessage({ id: "search.clearSearch" })}
           >
-            <X aria-hidden size={12} />
+            <X aria-hidden size={18} />
           </Button>
         ) : null}
-        <Kbd className="hidden sm:inline text-[10px] font-bold uppercase text-foreground-muted">
-          Esc
-        </Kbd>
+        <Kbd className="hidden sm:inline-flex">Esc</Kbd>
       </InputGroupAddon>
     </InputGroup>
   );
   if (overlay)
     return (
-      <div className="shrink-0 border-b border-line-muted px-3 py-2.5  ">
-        <div className="flex min-w-0 items-center gap-2">
-          <Search
-            size={16}
-            className="shrink-0 text-foreground-muted "
-            aria-hidden="true"
-          />
-          {field}
-        </div>
+      <div className="flex shrink-0 items-center border-b border-line-seam px-3 py-3">
+        {field}
       </div>
     );
   return (
@@ -105,12 +99,7 @@ export default function SearchHeader({
       onMobileBack={onBack}
       mobileBackProps={{ "aria-label": "返回聊天列表" }}
       titleSlot={
-        <div className="flex min-w-0 flex-1 items-center gap-3">
-          <div className="flex size-icon-header shrink-0 items-center justify-center border border-line-muted bg-primary-soft text-foreground-strong    ">
-            <Search size={18} />
-          </div>
-          {field}
-        </div>
+        <div className="flex min-w-0 flex-1 items-center">{field}</div>
       }
     />
   );

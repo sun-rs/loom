@@ -873,6 +873,10 @@
     "packages/web/src/components/ui/SectionEyebrow.tsx": {
       "upstreamSha256": "9b02e2b953b3e8e20a67a3e1721d912c84652db2bf3e9f8bc242c691dffed254",
       "portedSha256": "922cbaa34efd73a0b8696b999ff370a8dabdb2f1bb432e1c9738ad0b1ebbf283"
+    },
+    "packages/web/src/components/ui/PanelHeader.tsx": {
+      "upstreamSha256": "cd350d605e123726e63aaaea69c958f14209a811d736d0c66b4923ad6ff61c3e",
+      "portedSha256": "d4f47922e31dfdc234f01c91924b2c192ed1991bbb8137387f244e63ee7c237b"
     }
   }
 }

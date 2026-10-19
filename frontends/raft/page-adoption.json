@@ -285,6 +285,19 @@
         "scripts/official-web/about-browser.mjs",
         "scripts/official-web/settings-resources-browser.mjs"
       ]
+    },
+    "native-search-header": {
+      "source": "Raft v1.21.22 af3d6ef4a22f0f05f5f9db9424285755d67e9726 app-shell-D1-nY-va.js MessageSearchPage jn and overlay/page composition, archived lines 182850–182900 and 183000–183020",
+      "provenance": "Structural port of owner-authorized production composition, not byte-exact TSX",
+      "local": [
+        "loom/SearchHeader.tsx",
+        "packages/web/src/components/ui/PanelHeader.tsx"
+      ],
+      "adaptation": "Native InputGroup leading addon, icon-sm clear with 18px icon, default Kbd, seam border and py-3 wrapper, full-page field without extra icon chip. Existing Loom URL/query/IME/Escape controllers retained. Shared NW header uses 22px back glyph and PanelStatus title suffix (source 88875–88960); owner-approved mobile grid/48px adaptation retained, no claim of byte-exact complete header replacement.",
+      "checks": [
+        "scripts/official-web/search-header-release.test.mjs",
+        "scripts/official-web/topbar-browser.mjs"
+      ]
     }
   },
   "pending": [

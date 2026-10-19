@@ -9,6 +9,7 @@ import {
   PanelHeaderIcon,
   PanelHeading,
   PanelMeta,
+  PanelStatus,
   PanelTitle,
 } from "raft-ui";
 
@@ -230,7 +231,7 @@ export default function AppPanelHeader({
           onClick={onMobileBack}
           className={`max-md:col-start-1 max-md:row-start-1 ${mobileHiddenClass} ${mobileBackProps?.className ?? ""}`}
         >
-          <ArrowLeft size={14} />
+          <ArrowLeft size={22} />
         </PanelAction>
       )}
       {icon && (
@@ -264,7 +265,7 @@ export default function AppPanelHeader({
                 </h2>
               )}
             />
-            {titleSuffix && <PanelMeta>{titleSuffix}</PanelMeta>}
+            {titleSuffix && <PanelStatus>{titleSuffix}</PanelStatus>}
           </PanelHeading>
           {subtitle && (
             <PanelMeta

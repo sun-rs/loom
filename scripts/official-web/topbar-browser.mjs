@@ -1,4 +1,35 @@
 import assert from "node:assert/strict";
+async function verifyNativeSearchField(page) {
+  const input = page.getByRole("textbox", { name: "搜索内容" });
+  await input.waitFor();
+  const group = input.locator('xpath=ancestor::*[@data-slot="input-group"]');
+  assert.equal(
+    await group.locator('[data-align="inline-start"] svg').count(),
+    1,
+  );
+  await input.fill("before");
+  await input.dispatchEvent("compositionstart");
+  await input.fill("中文");
+  assert.equal(new URL(page.url()).searchParams.get("q"), "before");
+  await input.dispatchEvent("keydown", { key: "Escape", isComposing: true });
+  assert.equal(await input.isVisible(), true);
+  await input.dispatchEvent("compositionend", { data: "中文" });
+  assert.equal(new URL(page.url()).searchParams.get("q"), "中文");
+  const clear = group.getByRole("button");
+  assert.equal(await clear.locator('svg[width="18"]').count(), 1);
+  assert.equal(
+    await clear.evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      return el.contains(
+        document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2),
+      );
+    }),
+    true,
+  );
+  await clear.click();
+  assert.equal(await input.inputValue(), "");
+  assert.equal(new URL(page.url()).searchParams.get("q"), null);
+}
 export async function verifyTopbar({ browser, origin, channels }) {
   const results = [];
   for (const width of [1440, 390]) {
@@ -32,6 +63,7 @@ export async function verifyTopbar({ browser, origin, channels }) {
       await composer.fill("未发送草稿");
       await page.getByTestId("app-top-bar-search").click();
       await page.getByTestId("desktop-search-overlay").waitFor();
+      await verifyNativeSearchField(page);
       await page.getByRole("textbox", { name: "搜索内容" }).fill("fixture");
       assert.equal(new URL(page.url()).searchParams.get("view"), "search");
       await page.keyboard.press("Escape");
@@ -145,6 +177,7 @@ export async function verifyTopbar({ browser, origin, channels }) {
       assert.equal(await page.getByTestId("app-top-bar").count(), 0);
       await page.goto(origin + "/?view=search");
       await page.getByRole("textbox", { name: "搜索内容" }).waitFor();
+      await verifyNativeSearchField(page);
     }
     assert.equal(
       await page.evaluate(
