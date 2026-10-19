@@ -80,6 +80,7 @@ export default function ComputerFiles({
       }}
     >
       <DialogContent
+        data-testid="computer-file-dialog"
         aria-label="引用计算机文件或文件夹"
         className="flex min-h-[min(512px,80dvh)] max-h-[80dvh] flex-col overflow-hidden"
       >

@@ -18,10 +18,14 @@ export async function verifyAttachments({
     })
   ).room;
   const results = [];
-  for (const width of [1440, 390, 820]) {
+  const layoutOnly = process.env.LOOM_FILE_LAYOUT_ONLY === "1";
+  for (const width of layoutOnly ? [390, 360, 1440] : [1440, 390, 820]) {
     const context = await browser.newContext({
       locale: "zh-CN",
-      viewport: { width, height: width === 390 ? 844 : 1000 },
+      viewport: {
+        width,
+        height: layoutOnly && width < 768 ? 560 : width === 390 ? 844 : 1000,
+      },
       deviceScaleFactor: 1,
       hasTouch: width !== 1440,
       isMobile: width !== 1440,
@@ -69,6 +73,15 @@ export async function verifyAttachments({
             label: "FIXTURE computer",
             rootId: "fixture-root",
             roots: [
+              ...(layoutOnly && width === 360
+                ? [
+                    {
+                      rootId: "fixture-other",
+                      label: "FIXTURE other root",
+                      absolutePath: "/FIXTURE2",
+                    },
+                  ]
+                : []),
               {
                 rootId: "fixture-root",
                 label: "FIXTURE root",
@@ -129,6 +142,59 @@ export async function verifyAttachments({
         "file picker reuses the official Raft checkbox, including its focus styling",
       );
       assert.equal(await hiddenToggle.isChecked(), false);
+      if (layoutOnly) {
+        await dialog
+          .getByRole("button", { name: "small", exact: true })
+          .waitFor();
+        const layout = await dialog.evaluate((el) => {
+          const body = el.querySelector('[data-slot="dialog-body"]');
+          const hidden = el.querySelector('[role="checkbox"]');
+          const rect = body.getBoundingClientRect(),
+            toggle = hidden.getBoundingClientRect();
+          return {
+            hiddenVisible:
+              toggle.bottom <= rect.bottom && toggle.top >= rect.top,
+            nestedScroll: body.scrollHeight > body.clientHeight + 1,
+            height: el.getBoundingClientRect().height,
+            bottom: el.getBoundingClientRect().bottom,
+          };
+        });
+        if (width < 768) {
+          assert.ok(
+            layout.hiddenVisible,
+            "short mobile picker must keep hidden-file control visible",
+          );
+          assert.equal(
+            layout.nestedScroll,
+            false,
+            "only entries scroll, not outer picker body",
+          );
+        }
+        assert.ok(layout.bottom <= page.viewportSize().height);
+        const tree = dialog.getByTestId("computer-file-tree");
+        const originalHeight = (await tree.boundingBox()).height;
+        await dialog
+          .getByRole("button", { name: "small", exact: true })
+          .click();
+        await dialog
+          .getByRole("button", { name: "one.txt", exact: true })
+          .waitFor();
+        assert.equal(
+          (await tree.boundingBox()).height,
+          originalHeight,
+          "small directory does not shrink picker",
+        );
+
+        const cancel = dialog.getByRole("button", {
+          name: "取消",
+          exact: true,
+        });
+        await cancel.click();
+        await dialog.waitFor({ state: "hidden" });
+        results.push({ width, layout });
+        continue;
+      }
+
       await page.screenshot({
         path: `/tmp/loom-checkbox-first-${width}.png`,
         animations: "disabled",
@@ -359,7 +425,10 @@ export async function verifyAttachments({
         true,
         "hidden toggle is below the file-tree module",
       );
-      assert.ok(initial.treeHeight >= 256, "file tree reserves browsing space");
+      assert.ok(
+        initial.treeHeight >= (width < 768 ? 72 : 256),
+        "file tree reserves viewport-appropriate browsing space",
+      );
       assert.equal(
         await dialog
           .getByRole("button", { name: "上一级目录", exact: true })

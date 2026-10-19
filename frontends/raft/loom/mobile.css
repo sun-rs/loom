@@ -118,6 +118,29 @@
     flex-shrink: 0;
   }
 
+  /* Loom host-file picker: fixed outer size, one scroll owner for entries.
+   * The desktop256px tree must not force nested scrolling on short phones. */
+  [data-testid="computer-file-dialog"] {
+    height: min(512px, calc(100dvh - 32px));
+    min-height: 0;
+    max-height: calc(100dvh - 32px);
+  }
+  [data-testid="computer-file-dialog"] [data-slot="dialog-body"] {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    /* Very short landscape windows retain access instead of clipping fields. */
+    overflow: auto;
+  }
+  [data-testid="computer-file-dialog"] [data-slot="dialog-body"] > * {
+    flex-shrink: 0;
+  }
+  [data-testid="computer-file-dialog"] [data-testid="computer-file-tree"] {
+    flex: 1;
+    height: auto;
+    min-height: 72px;
+  }
+
   [data-slot="panel-header"] {
     min-height: 48px;
     height: 48px;
