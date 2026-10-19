@@ -112,6 +112,10 @@ for (const [width, preset] of [
         Math.max(...steps) - Math.min(...steps) < 1,
         "equal icon spacing",
       );
+      const rootHeaderColor = await page
+        .locator("[data-loom-root-header]")
+        .filter({ visible: true })
+        .evaluate((el) => getComputedStyle(el).backgroundColor);
       for (const label of ["任务", "Agent", "记忆", "设置", "首页"]) {
         await nav.getByRole("button", { name: label, exact: true }).tap();
         await nav.waitFor();
@@ -129,6 +133,11 @@ for (const [width, preset] of [
           (await header.boundingBox()).height,
           48,
           label + " uses the owner-approved compact root header",
+        );
+        assert.equal(
+          await header.evaluate((el) => getComputedStyle(el).backgroundColor),
+          rootHeaderColor,
+          label + " uses the shared root header surface",
         );
         if (label === "首页") {
           for (const id of [
@@ -159,6 +168,15 @@ for (const [width, preset] of [
         if (label === "任务") {
           const title = await header.getByRole("heading").boundingBox();
           const count = await header.locator("p").boundingBox();
+          const frame = await header.boundingBox();
+          assert.ok(
+            Math.abs(title.x - frame.x - 16) < 1,
+            "task title aligns to left content edge",
+          );
+          assert.ok(
+            Math.abs(frame.x + frame.width - count.x - count.width - 16) < 1,
+            "task count aligns to right content edge",
+          );
           assert.ok(
             Math.abs(title.y + title.height / 2 - count.y - count.height / 2) <
               2,

@@ -4,6 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import {
   AppShellMainSlot,
   ActivityInboxPanel,
+  PanelSectionHeader,
+  PanelHeaderContent,
+  PanelTitle,
   Button,
   Textarea,
   Dialog,
@@ -217,7 +220,15 @@ export default function MemoryPage({
         }
       >
         <ActivityInboxPanel edge="attached">
-          <PanelHeader title="记忆" />
+          {desktop ? (
+            <PanelHeader title="记忆" />
+          ) : (
+            <PanelSectionHeader data-loom-root-header>
+              <PanelHeaderContent>
+                <PanelTitle render={<h1 />}>记忆</PanelTitle>
+              </PanelHeaderContent>
+            </PanelSectionHeader>
+          )}
           <MemoryFilters
             query={query}
             onQuery={(v) => {

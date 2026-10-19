@@ -101,7 +101,7 @@
       "id": "mobile-compact",
       "owner": "owner-approved compact mobile adaptation, preserved by AGENTS.md",
       "implementation": "frontends/raft/loom/mobile.css",
-      "rule": "Retain owner-approved compact headers and composer layout; rUI 0.6 owns icon geometry and hit area. Do not reintroduce the old custom close pseudo-element.",
+      "rule": "Retain owner-approved compact headers and composer layout; rUI 0.6 owns icon geometry and hit area. Mobile primary pages use PanelSectionHeader and its layer-frame/on-frame tokens; detail headers use PanelHeader. Root title and trailing text count use the 16px content edges, not centered groups or trailing icon overhang. Do not reintroduce the old custom close pseudo-element.",
       "guard": "scripts/official-web/ui-contract.test.mjs",
       "browser": "scripts/official-web/memory-browser.mjs"
     },

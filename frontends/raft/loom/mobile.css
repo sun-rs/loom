@@ -190,8 +190,13 @@
     [data-loom-root-header]
     [data-slot="panel-header-content"] {
     flex-direction: row;
+    justify-content: space-between;
     align-items: center;
     gap: 8px;
+  }
+  /* Text metadata uses the16px content edge, not the trailing icon overhang. */
+  [data-testid="loom-tasks-page"] [data-loom-root-header] {
+    padding-right: 16px;
   }
 
   /* rUI 0.6 owns 32px controls and their expanded pointer targets. */
