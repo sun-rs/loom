@@ -1381,3 +1381,37 @@ test("explicit mark unread restores durable activity and refuses an obsolete mes
     f.close();
   }
 });
+
+test("search hit identity survives query-filtered directory and explicit filters", () => {
+  const f = fixture();
+  try {
+    f.post(f.channel.roomId, "identity-needle", true);
+    f.post(f.direct.roomId, "identity-needle", true);
+    for (const filters of [{}, { senderKind: "human" as const }]) {
+      const result = f.kernel.searchWorkspace(f.actor, {
+        workspaceId: f.workspaceId,
+        query: "identity-needle",
+        ...filters,
+      });
+      assert.deepEqual(result.principals, []);
+      assert.deepEqual(result.rooms, []);
+      assert.equal(result.hits.length, 2);
+      for (const hit of result.hits) {
+        assert.equal(hit.senderKind, "human");
+        assert.equal(
+          hit.roomKind,
+          hit.message.roomId === f.direct.roomId ? "direct" : "channel",
+        );
+      }
+    }
+    assert.equal(
+      f.kernel.searchWorkspace(f.stranger, {
+        workspaceId: f.workspaceId,
+        query: "identity-needle",
+      }).hits.length,
+      0,
+    );
+  } finally {
+    f.close();
+  }
+});

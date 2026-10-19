@@ -37,17 +37,20 @@ export async function searchPage(
       senderName: hit.senderName,
       label: hit.rootMessagePreview ?? hit.roomName,
       senderType:
-        result.principals.find((p) => p.principalId === hit.message.actorId)
-          ?.kind === "agent"
+        (hit.senderKind ??
+          result.principals.find((p) => p.principalId === hit.message.actorId)
+            ?.kind) === "agent"
           ? ("agent" as const)
           : ("user" as const),
       channelType:
-        result.rooms.find((r) => r.roomId === hit.message.roomId)?.kind ===
+        (hit.roomKind ??
+          result.rooms.find((r) => r.roomId === hit.message.roomId)?.kind) ===
         "direct"
           ? ("dm" as const)
           : ("channel" as const),
-      archivedAt: result.rooms.find((r) => r.roomId === hit.message.roomId)
-        ?.archivedAt,
+      archivedAt:
+        hit.roomArchivedAt ??
+        result.rooms.find((r) => r.roomId === hit.message.roomId)?.archivedAt,
       rootMessageId: hit.rootMessageId,
       rootMessagePreview: hit.rootMessagePreview,
     })),

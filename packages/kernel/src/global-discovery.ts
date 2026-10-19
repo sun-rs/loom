@@ -455,7 +455,7 @@ export class GlobalDiscovery {
     const { rank, rankArgs } = messageSearchRank(q, terms, input.sort);
     const rows = this.db
       .prepare(
-        `WITH hits AS (SELECT m.*, r.name AS room_name, sender.handle AS sender_name, th.root_message_id, (SELECT substr(root.body, 1, 160) FROM messages root WHERE root.message_id = th.root_message_id AND root.room_id = m.room_id) AS root_preview, ${rank} AS rank ${from}) SELECT * FROM hits WHERE (rank > ? OR (rank = ? AND message_order < ?)) ORDER BY rank, message_order DESC LIMIT ?`,
+        `WITH hits AS (SELECT m.*, r.name AS room_name, r.kind AS hit_room_kind, r.archived_at AS hit_room_archived_at, sender.kind AS hit_sender_kind, sender.handle AS sender_name, th.root_message_id, (SELECT substr(root.body, 1, 160) FROM messages root WHERE root.message_id = th.root_message_id AND root.room_id = m.room_id) AS root_preview, ${rank} AS rank ${from}) SELECT * FROM hits WHERE (rank > ? OR (rank = ? AND message_order < ?)) ORDER BY rank, message_order DESC LIMIT ?`,
       )
       .all(...rankArgs, ...args, p.rank, p.rank, p.before, p.limit + 1);
     const taken = rows.slice(0, p.limit);
@@ -463,6 +463,11 @@ export class GlobalDiscovery {
       total,
       ...(filtered ? { rooms: [], principals: [] } : directory),
       hits: taken.map((row) => ({
+        senderKind: row.hit_sender_kind,
+        roomKind: row.hit_room_kind,
+        ...(row.hit_room_archived_at
+          ? { roomArchivedAt: row.hit_room_archived_at }
+          : {}),
         message: messageProjectionFromRow(row),
         roomName:
           directRoomDisplayName(this.db, text(row, "room_id"), actorId) ??
