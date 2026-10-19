@@ -1,0 +1,125 @@
+{
+  "date": "2026-10-19",
+  "codeCommit": "d82656ea9b722a93ca57352c1a6db34ba090c925",
+  "codeCommits": ["edf5171f", "68bf72d9", "d82656ea"],
+  "source": {
+    "release": "v1.21.22",
+    "revision": "af3d6ef4a22f0f05f5f9db9424285755d67e9726",
+    "liveReleaseRechecked": true,
+    "archive": "/Users/sun/.loom/reviews/2026-10-19-official-page-audit",
+    "locations": [
+      "app-shell.pretty.txt:80388–80396 body size preference",
+      "app-shell.pretty.txt:60600–60645 search entity recipe",
+      "app-shell.pretty.txt:181439–181650 entity/message/home row composition",
+      "app-shell.pretty.txt:182011 and183020 empty overlay filter condition",
+      "app-shell.pretty.txt:183435–183590 recent/frequent lists",
+      "ReleaseNotesPanel-Bzui0MZO.js"
+    ],
+    "adoption": "Structural ports plus Loom data glue; not byte-exact complete latest TSX frontend"
+  },
+  "fixed": [
+    "Native sibling result separators restored by removing intermediate wrappers",
+    "Recent/frequent/entity lists and native headings replace older padding/grid composition",
+    "Compact search avatar context: native27px frame,24px image content; outline destination badges",
+    "Empty overlay filters hidden; populated query/filter results retain official filters",
+    "Body preferences upgraded from12/14/16 to14/16/18; native Latin/Chinese font stack unchanged",
+    "Authorized Room members and existing directory now feed native @member/#channel references; explicit navigation callbacks preserve route intent fences",
+    "Remove desktop Settings sidebar title and Computer entry; keep mobile title; update release-note card/version/category styling",
+    "Search hits carry senderKind/roomKind/roomArchivedAt directly: directory results are query-filtered, not an identity dictionary"
+  ],
+  "notBugsOrLimits": [
+    "Official search left # icon retains27px gray fill; outline channel label is a separate element",
+    "Appearance and notification main composition already matched locked source; preview surface and typography corrected, push subscription remains unimplemented",
+    "Real usage two rows are two active instances in default24h; no client two-row limit",
+    "Independent one-instance chat and internal-only private-box entrance approved in target contract, not implemented; old boxes unchanged"
+  ],
+  "verification": {
+    "frontendDistinctChecks": 27,
+    "kernelOwnerChecks": 26,
+    "tdd": "Presentation, callback and per-hit metadata checks observed intended failure before fixes",
+    "frontendTypecheck": "exit0",
+    "backendTypecheck": "npm run typecheck exit0",
+    "build": "npm run build:web:workbench exit0 at deployed commit",
+    "fixtureSlices": [
+      "search-recent",
+      "search-entities",
+      "settings-navigation",
+      "appearance",
+      "settings-resources",
+      "message-references"
+    ],
+    "fixtureViewports": ["1440x1000 DPR1", "390x844 DPR1"],
+    "fixtureLimits": "Fake providers only; reference test fake Codex discovery reported unsupported MCP probe, so this is UI navigation evidence, not runtime work acceptance",
+    "realBodyStyles": [
+      {
+        "font": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif",
+        "size": "16px"
+      },
+      {
+        "font": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif",
+        "size": "16px"
+      },
+      {
+        "font": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif",
+        "size": "16px"
+      },
+      {
+        "font": "\"Space Grotesk\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Noto Sans SC\", system-ui, sans-serif",
+        "size": "16px"
+      }
+    ],
+    "realRecent": {
+      "rows": 10,
+      "followingDivider": "1px",
+      "avatarFrame": 27,
+      "keyboard": true,
+      "emptyOverlayFiltersHidden": true,
+      "settingsTitleRemoved": true,
+      "settingsComputerRemoved": true
+    },
+    "realSearchResults": [
+      {
+        "width": 1440,
+        "firstFourTypes": ["agent", "agent", "agent", "human"],
+        "avatarFrames": [27, 27, 27, 27],
+        "leftGutters": ["55px", "55px", "55px", "55px"],
+        "errors": []
+      },
+      {
+        "width": 390,
+        "firstFourTypes": ["agent", "agent", "agent", "human"],
+        "avatarFrames": [27, 27, 27, 27],
+        "leftGutters": ["55px", "55px", "55px", "55px"],
+        "errors": []
+      }
+    ],
+    "artifacts": "/Users/sun/.loom/reviews/2026-10-19-composition-repair",
+    "screenshotsInspected": [
+      "after-search.png",
+      "after-appearance-1440.png",
+      "after-appearance-390.png",
+      "after-release-notes-1440.png",
+      "search-results-1440.png"
+    ],
+    "corrections": [
+      "Initial27px frame failed a mistaken24px measurement assertion; confirmed native recipe before correcting expectation",
+      "Initial search entity fixture read before destination fetch completed; now waits for two actual candidates",
+      "Initial reference fixture used nonexistent panel/slot selector; corrected to actual native trigger and profile-panel",
+      "Build initially failed because sender callback source edit invalidated existing guarded adaptation; source restored and bridge expanded with focused test"
+    ]
+  },
+  "deployment": {
+    "verified": true,
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-composition-repair-1c17127b-32bf-4f05-a9ee-82ce21358564",
+    "databases": 2,
+    "files": 325,
+    "businessTablesUnchanged": 18,
+    "receipt": "/Users/sun/.loom/reviews/2026-10-19-composition-repair/restart-final.json"
+  },
+  "uncovered": [
+    "No authenticated official-site bilateral pixel comparison",
+    "No physical iOS/Android device verification",
+    "No paid CLI runs; no cost acceptance claim",
+    "Other retained surfaces remain unaudited; no full-site completeness claim"
+  ]
+}
