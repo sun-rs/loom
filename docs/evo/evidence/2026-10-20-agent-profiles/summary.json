@@ -1,0 +1,188 @@
+{
+  "source": {
+    "revision": "af3d6ef4a22f0f05f5f9db9424285755d67e9726",
+    "release": "v1.21.22",
+    "source": "AgentDetailPanel InfoRow/AgentHeaderName/Profile composition; ProfilePanel; panelBounds; masterDetailPanelSizing; index.css thread-layout",
+    "reuse": "InfoRow structural port; existing native panels, tabs, controls and resize hook directly reused; native responsive CSS composition markers retained. Local read projections replace upstream stores.",
+    "license": "Existing FSL-1.1-ALv2 notices and owner authorization retained"
+  },
+  "changes": [
+    "Role read-first profile with explicit edit and draft-preserving existing form",
+    "Role instance row opens existing scoped runtime activity; profile/activity tabs",
+    "Instance profile reads current Agent revision and saved policy, actual host runtime binding and role-revision freshness; no Role edit silently changes instance",
+    "Native container width rules applied to Role detail plus inspector; focus restored to instance row on close"
+  ],
+  "validation": {
+    "unitInstanceActivity": 4,
+    "frontendTypecheck": "passed",
+    "build": "passed",
+    "roleLifecycle": [
+      {
+        "width": 1440,
+        "roleLifecycle": true
+      },
+      {
+        "width": 390,
+        "roleLifecycle": true
+      }
+    ],
+    "draftNavigation": [
+      {
+        "width": 1440,
+        "route": true,
+        "draftConfirmation": true,
+        "readRecovery": true
+      },
+      {
+        "width": 390,
+        "route": true,
+        "draftConfirmation": true,
+        "readRecovery": true
+      }
+    ],
+    "inspector": [
+      {
+        "humanProfileFromGateway": true,
+        "agentProfilePresentationFixture": true,
+        "blockedWorkResponseFixture": true,
+        "nativeHoverDismissal": true,
+        "unknownPresenceOmitted": true,
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "canonicalMention": true,
+        "senderClickFocus": true,
+        "keyboardOrPointerSelection": true,
+        "membershipFailureClearsAndRecovers": true,
+        "channelIsolation": true,
+        "runUsagePartialAndUnknown": true,
+        "usageDialogEscapeKeepsInspector": true,
+        "trajectoryScopedPagedAndExpandable": true,
+        "runtimeEnableStopAgainstCore": true,
+        "runtimeLostResponseExactVerification": true,
+        "runtimeCancelNoMutation": true,
+        "runtimeIdentityAndConfigurationPreserved": true
+      },
+      {
+        "humanProfileFromGateway": true,
+        "agentProfilePresentationFixture": true,
+        "blockedWorkResponseFixture": true,
+        "nativeHoverDismissal": true,
+        "unknownPresenceOmitted": true,
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "canonicalMention": true,
+        "senderClickFocus": true,
+        "keyboardOrPointerSelection": true,
+        "membershipFailureClearsAndRecovers": true,
+        "channelIsolation": true,
+        "runUsagePartialAndUnknown": true,
+        "usageDialogEscapeKeepsInspector": true,
+        "trajectoryScopedPagedAndExpandable": true,
+        "runtimeEnableStopAgainstCore": true,
+        "runtimeLostResponseExactVerification": true,
+        "runtimeCancelNoMutation": true,
+        "runtimeIdentityAndConfigurationPreserved": true
+      }
+    ],
+    "panelPolicy": [
+      {
+        "width": 1440,
+        "height": 600,
+        "available": 1151,
+        "main": "flex",
+        "thread": 400,
+        "position": "relative",
+        "overflow": false
+      },
+      {
+        "width": 968,
+        "height": 600,
+        "available": 679,
+        "main": "none",
+        "thread": 679,
+        "position": "absolute",
+        "overflow": false
+      },
+      {
+        "width": 969,
+        "height": 600,
+        "available": 680,
+        "main": "flex",
+        "thread": 360,
+        "position": "relative",
+        "overflow": false
+      },
+      {
+        "width": 767,
+        "height": 600,
+        "available": 767,
+        "main": "flex",
+        "thread": 400,
+        "position": "relative",
+        "overflow": false
+      },
+      {
+        "width": 768,
+        "height": 600,
+        "available": 479,
+        "main": "none",
+        "thread": 479,
+        "position": "absolute",
+        "overflow": false
+      },
+      {
+        "width": 1024,
+        "height": 600,
+        "available": 735,
+        "main": "flex",
+        "thread": 400,
+        "position": "relative",
+        "overflow": false
+      },
+      {
+        "width": 1024,
+        "height": 1200,
+        "available": 727,
+        "main": "none",
+        "thread": 727,
+        "position": "absolute",
+        "overflow": false
+      },
+      {
+        "width": 1280,
+        "height": 1400,
+        "available": 983,
+        "main": "flex",
+        "thread": 400,
+        "position": "relative",
+        "overflow": false
+      }
+    ],
+    "agentProfiles": [
+      {
+        "width": 1440,
+        "roleProfile": true,
+        "instanceProfile": true,
+        "instanceActivity": true
+      },
+      {
+        "width": 390,
+        "roleProfile": true,
+        "instanceProfile": true,
+        "instanceActivity": true
+      }
+    ]
+  },
+  "limits": [
+    "Activity remains scoped to the selected conversation; no cross-room private history aggregation or new log owner.",
+    "Configured model/policy is not a claim of an unreported native provider override; unavailable observations remain unknown.",
+    "Agent profile browser uses temporary Core and discovery-only fixture; no paid provider tests.",
+    "No new backend API or lifecycle change; physical mobile not tested.",
+    "AgentProfile tab screenshot captured during native transition initially; final screenshot waits for selected-state animation."
+  ],
+  "deployment": "pending"
+}

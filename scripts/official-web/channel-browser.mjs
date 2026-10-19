@@ -1,3 +1,5 @@
+import { verifyPanelPolicy } from "./panel-policy-browser.mjs";
+import { verifyAgentProfile } from "./agent-profile-browser.mjs";
 import { verifyMessageMetrics } from "./message-metrics-browser.mjs";
 import { verifyRegionSettings } from "./region-settings-browser.mjs";
 import { verifyAppearanceChrome } from "./appearance-chrome-browser.mjs";
@@ -405,6 +407,24 @@ try {
           channels,
           instances,
           head,
+        }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "panel-policy") {
+    console.log(
+      JSON.stringify(
+        await verifyPanelPolicy({ browser, origin, client, channels, head }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "agent-profile") {
+    console.log(
+      JSON.stringify(
+        await verifyAgentProfile({
+          browser,
+          origin,
+          role,
+          instances,
+          instanceNames,
         }),
       ),
     );

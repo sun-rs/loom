@@ -48,6 +48,7 @@ export default function RoleWorkspace({
   onRefresh,
   actions,
   children,
+  inspector,
 }: {
   detail: boolean;
   onBack: () => void;
@@ -61,6 +62,7 @@ export default function RoleWorkspace({
   onRefresh: () => void;
   actions?: ReactNode;
   children: ReactNode;
+  inspector?: ReactNode;
 }) {
   const [query, setQuery] = useState("");
   const panel = useResizablePanel({
@@ -74,7 +76,10 @@ export default function RoleWorkspace({
       .includes(query.trim().normalize("NFKC").toLocaleLowerCase()),
   );
   return (
-    <div className="flex min-h-0 min-w-0 flex-1">
+    <div
+      className="relative flex min-h-0 min-w-0 flex-1"
+      data-testid="loom-role-layout"
+    >
       <AppShellSidebarSlot
         className={`relative shrink-0 flex-col md:flex md:w-[var(--agent-sidebar-width)] ${detail ? "hidden" : "flex w-full"}`}
         style={{ "--agent-sidebar-width": `${panel.width}px` } as CSSProperties}
@@ -149,52 +154,65 @@ export default function RoleWorkspace({
           onPointerCancel={panel.handleResizeEnd}
         />
       </AppShellSidebarSlot>
-      <AppShellMainSlot
-        className={`min-w-0 bg-layer-panel md:flex ${detail ? "flex" : "hidden"}`}
-        data-testid="loom-role-detail"
+      <div
+        className={`thread-layout-container relative min-h-0 min-w-0 flex-1 ${detail ? "flex" : "hidden md:flex"}`}
       >
-        <PanelHeader
-          title={selected?.name ?? "选择角色"}
-          iconSlot={<AvatarSlot context="panel-header" type="agent" />}
-          iconKind="avatar"
-          iconAlwaysVisible
-          onMobileBack={onBack}
-          mobileBackProps={{ "aria-label": "角色列表" }}
-          containerProps={{
-            className: `agent-profile-header-container ${PROFILE_HEADER_SURFACE_CLASS}`,
-          }}
-          actions={actions}
-        />
-        {selected && (
-          <div className="min-w-0 max-w-full shrink-0">
-            <ConversationPanelTabs
-              render={<Tabs value={tab} onValueChange={onTab} />}
-            >
-              <TabsList aria-label="角色详情">
-                <TabsTab
-                  disabled={busy}
-                  value="roles"
-                  className="!cursor-default"
-                >
-                  <Settings2 />
-                  <TabsLabel>配置</TabsLabel>
-                </TabsTab>
-                <TabsTab
-                  disabled={busy}
-                  value="instances"
-                  className="!cursor-default"
-                >
-                  <Users />
-                  <TabsLabel>实例</TabsLabel>
-                </TabsTab>
-              </TabsList>
-            </ConversationPanelTabs>
+        <AppShellMainSlot
+          className={`thread-main-column min-w-0 bg-layer-panel md:flex ${detail ? "flex" : "hidden"}`}
+          data-testid="loom-role-detail"
+        >
+          <PanelHeader
+            title={selected?.name ?? "选择角色"}
+            iconSlot={<AvatarSlot context="panel-header" type="agent" />}
+            iconKind="avatar"
+            iconAlwaysVisible
+            onMobileBack={onBack}
+            mobileBackProps={{ "aria-label": "角色列表" }}
+            containerProps={{
+              className: `agent-profile-header-container ${PROFILE_HEADER_SURFACE_CLASS}`,
+            }}
+            actions={actions}
+          />
+          {selected && (
+            <div className="min-w-0 max-w-full shrink-0">
+              <ConversationPanelTabs
+                render={<Tabs value={tab} onValueChange={onTab} />}
+              >
+                <TabsList aria-label="角色详情">
+                  <TabsTab
+                    disabled={busy}
+                    value="roles"
+                    className="!cursor-default"
+                  >
+                    <Settings2 />
+                    <TabsLabel>配置</TabsLabel>
+                  </TabsTab>
+                  <TabsTab
+                    disabled={busy}
+                    value="instances"
+                    className="!cursor-default"
+                  >
+                    <Users />
+                    <TabsLabel>实例</TabsLabel>
+                  </TabsTab>
+                </TabsList>
+              </ConversationPanelTabs>
+            </div>
+          )}
+          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
+            {children}
+          </div>
+        </AppShellMainSlot>
+        {inspector && (
+          <div
+            className="thread-profile-side-column contents"
+            data-collapse-channel="false"
+            data-collapse-thread="false"
+          >
+            {inspector}
           </div>
         )}
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
-          {children}
-        </div>
-      </AppShellMainSlot>
+      </div>
     </div>
   );
 }

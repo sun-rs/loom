@@ -45,6 +45,10 @@ export async function verifyUiBehavior({
         .locator('[data-slot="mobile-nav-root"]')
         .waitFor({ state: "hidden" });
     await page.reload();
+    await page
+      .getByTestId("loom-role-detail")
+      .getByRole("button", { name: "编辑配置", exact: true })
+      .click();
     const name = page
       .getByTestId("loom-role-detail")
       .getByLabel("名称", { exact: true });
@@ -100,6 +104,10 @@ export async function verifyUiBehavior({
     }
     await page.goto(`${origin}/?view=agents`);
     await rows.first().click();
+    await page
+      .getByTestId("loom-role-detail")
+      .getByRole("button", { name: "编辑配置", exact: true })
+      .click();
     await name.fill("history discard draft");
     await page.goBack();
     await page
@@ -108,6 +116,10 @@ export async function verifyUiBehavior({
       .click();
     await page.waitForURL((url) => !url.searchParams.has("role"));
     await page.goForward();
+    const editButton = page
+      .getByTestId("loom-role-detail")
+      .getByRole("button", { name: "编辑配置", exact: true });
+    if (await editButton.isVisible()) await editButton.click();
     await name.waitFor();
     assert.notEqual(await name.inputValue(), "history discard draft");
     if (width === 1440) {

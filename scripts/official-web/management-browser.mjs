@@ -112,6 +112,7 @@ export async function verifyManagement({
     });
     await page.locator(`[data-role-id="${role.roleId}"]`).click();
     const detail = page.getByTestId("loom-role-detail");
+    await detail.getByRole("button", { name: "编辑配置", exact: true }).click();
     await detail
       .getByRole("combobox", { name: "CLI", exact: true })
       .filter({ hasText: "当前配置不可用" })
@@ -130,6 +131,7 @@ export async function verifyManagement({
     );
     await page.unroute(runtimeRoute);
     await page.reload();
+    await detail.getByRole("button", { name: "编辑配置", exact: true }).click();
 
     await detail.getByLabel("名称", { exact: true }).fill(`${name}Edited`);
     await page.getByRole("tab", { name: "实例", exact: true }).click();
@@ -184,6 +186,7 @@ export async function verifyManagement({
     // Editing a Role must leave the instance snapshot frozen until explicit adoption.
     const frozenRevision = instance.roleRevisionId;
     await page.getByRole("tab", { name: "配置", exact: true }).click();
+    await detail.getByRole("button", { name: "编辑配置", exact: true }).click();
     await detail
       .getByLabel("角色 Prompt", { exact: true })
       .fill("FIXTURE revised prompt; never execute");
@@ -289,6 +292,12 @@ export async function verifyManagement({
       ).instances.some((i) => i.instanceId === instance.instanceId),
       false,
     );
+    if (process.env.LOOM_BROWSER_MANAGEMENT_ROLES_ONLY === "1") {
+      assert.deepEqual(errors, []);
+      results.push({ width: viewport.width, roleLifecycle: true });
+      await context.close();
+      continue;
+    }
     if (viewport.width < 768)
       await page.getByRole("button", { name: "角色列表", exact: true }).click();
     await page

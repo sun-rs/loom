@@ -1,3 +1,5 @@
+import RoleProfile from "./RoleProfile.tsx";
+import InstanceInspector from "./InstanceInspector.tsx";
 import StandaloneChatDialog from "./StandaloneChatDialog.tsx";
 import { MessageSquare } from "lucide-react";
 import { useRolePresence } from "./RolePresence.tsx";
@@ -74,6 +76,16 @@ export default function AgentPage({
   const lastSelectedId = useRef(selectedId);
   if (selectedId) lastSelectedId.current = selectedId;
   const [dirty, setDirty] = useState(false);
+  const [profileEditing, setProfileEditing] = useState(false);
+  const [inspecting, setInspecting] = useState<string>();
+  const instanceTrigger = useRef<HTMLElement | null>(null);
+  const closeInspector = useCallback(() => {
+    setInspecting(undefined);
+    requestAnimationFrame(
+      () =>
+        instanceTrigger.current?.isConnected && instanceTrigger.current.focus(),
+    );
+  }, []);
   const [dialogDirty, setDialogDirty] = useState(false);
   const [discard, setDiscard] = useState<() => void>();
   const [editorEpoch, setEditorEpoch] = useState(0);
@@ -82,6 +94,8 @@ export default function AgentPage({
     else action();
   };
   const selectRole = (id?: string) => {
+    setInspecting(undefined);
+    setProfileEditing(false);
     const next = new URLSearchParams(params);
     if (id) next.set("role", id);
     else next.delete("role");
@@ -129,6 +143,8 @@ export default function AgentPage({
   };
   const done = (outcome: IntentOutcome<unknown>) => {
     if (outcome.kind === "ok") {
+      setProfileEditing(false);
+      setDirty(false);
       setEdit(undefined);
       setError("");
       void refresh();
@@ -199,6 +215,41 @@ export default function AgentPage({
         />
       )}
       <RoleWorkspace
+        inspector={(() => {
+          const i = instances.find((i) => i.instanceId === inspecting);
+          const a = catalog?.agents.find(
+            (a) => a.definition.agentId === i?.agentId,
+          );
+          const r = catalog?.rooms.find((r) => r.roomId === i?.channelId);
+          return active && selectedId && i && a && r ? (
+            <InstanceInspector
+              key={i.instanceId}
+              client={client}
+              controlRoomId={controlRoomId}
+              room={r}
+              member={{
+                principalId: i.instanceId,
+                kind: "agent",
+                handle: a.handle,
+                displayName: a.currentRevision.displayName,
+              }}
+              backLabel="返回实例列表"
+              onClose={closeInspector}
+              controlItems={[
+                { label: "打开频道", run: () => onOpenChannel(i.channelId) },
+                {
+                  label: "重启实例",
+                  run: () =>
+                    open({
+                      kind: "restart",
+                      instance: i,
+                      name: a.currentRevision.displayName ?? a.handle,
+                    }),
+                },
+              ]}
+            />
+          ) : null;
+        })()}
         entries={entries}
         selected={selected}
         detail={Boolean(selectedId)}
@@ -247,16 +298,41 @@ export default function AgentPage({
           <>
             <div hidden={tab !== "roles"}>
               {role ? (
-                <RoleEditor
-                  key={`${role.roleRevisionId}:${editorEpoch}`}
-                  client={client}
-                  role={role}
-                  onDirtyChange={setDirty}
-                  disabled={busy}
-                  onSave={(configuration) =>
-                    void manager.save(configuration, role, done)
-                  }
-                />
+                <>
+                  {!profileEditing && (
+                    <RoleProfile
+                      client={client}
+                      role={role}
+                      disabled={busy}
+                      onEdit={() => setProfileEditing(true)}
+                    />
+                  )}
+                  <div hidden={!profileEditing}>
+                    <Button
+                      {...uiActionProps.formCancel}
+                      disabled={busy}
+                      onClick={() =>
+                        guard(() => {
+                          setProfileEditing(false);
+                          setDirty(false);
+                          setEditorEpoch((n) => n + 1);
+                        })
+                      }
+                    >
+                      返回资料
+                    </Button>
+                    <RoleEditor
+                      key={`${role.roleRevisionId}:${editorEpoch}`}
+                      client={client}
+                      role={role}
+                      onDirtyChange={setDirty}
+                      disabled={busy}
+                      onSave={(configuration) =>
+                        void manager.save(configuration, role, done)
+                      }
+                    />
+                  </div>
+                </>
               ) : selected?.retired ? (
                 <p>角色定义已删除。已有实例保留原配置，可在实例标签页管理。</p>
               ) : (
@@ -284,6 +360,16 @@ export default function AgentPage({
                         key={instance.instanceId}
                         type="agent"
                         name={name}
+                        onRowClick={
+                          room
+                            ? () =>
+                                guard(() => {
+                                  instanceTrigger.current =
+                                    document.activeElement as HTMLElement;
+                                  setInspecting(instance.instanceId);
+                                })
+                            : undefined
+                        }
                         secondary={`${room?.name ?? "频道不可用"} · ${instance.isCurrent ? "配置为当前修订" : "保留旧配置"}`}
                         trailing={
                           <RuntimeControl

@@ -1,3 +1,5 @@
+import InstanceProfile from "./InstanceProfile.tsx";
+import { User } from "lucide-react";
 import BlockedWorkControl from "./BlockedWorkControl.tsx";
 import { useEffect, useRef, useState } from "react";
 import type { Principal, Room } from "@rah-os/protocol";
@@ -38,13 +40,18 @@ export default function InstanceInspector({
   room,
   member,
   onClose,
+  backLabel = "返回聊天",
+  controlItems,
 }: {
   client: RahClient;
   controlRoomId: string;
   room: Room;
   member: Principal;
   onClose: () => void;
+  backLabel?: string;
+  controlItems?: { label: string; run: () => void }[];
 }) {
+  const [tab, setTab] = useState("activity");
   const panel = useResizablePanel({
     storageKey: "loom:profilePanelWidth",
     min: 300,
@@ -158,7 +165,7 @@ export default function InstanceInspector({
           iconAlwaysVisible
           iconKind="avatar"
           onMobileBack={onClose}
-          mobileBackProps={{ "aria-label": "返回聊天" }}
+          mobileBackProps={{ "aria-label": backLabel }}
           containerProps={{
             className: `agent-profile-header-container ${PROFILE_HEADER_SURFACE_CLASS}`,
           }}
@@ -172,6 +179,7 @@ export default function InstanceInspector({
                   controlRoomId={controlRoomId}
                   agentId={identity.agentId}
                   branchSource={identity}
+                  items={controlItems}
                   name={member.displayName ?? member.handle}
                 />
               )}
@@ -188,8 +196,14 @@ export default function InstanceInspector({
           }
         />
         <div className="min-w-0 max-w-full shrink-0">
-          <ConversationPanelTabs render={<Tabs value="activity" />}>
+          <ConversationPanelTabs
+            render={<Tabs value={tab} onValueChange={setTab} />}
+          >
             <TabsList aria-label="实例详情">
+              <TabsTab value="profile">
+                <User />
+                <TabsLabel>资料</TabsLabel>
+              </TabsTab>
               <TabsTab value="activity">
                 <Activity />
                 <TabsLabel>动态</TabsLabel>
@@ -197,7 +211,29 @@ export default function InstanceInspector({
             </TabsList>
           </ConversationPanelTabs>
         </div>
-        <div className="flex min-h-0 flex-1 flex-col bg-layer-panel ">
+        {tab === "profile" && (
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            {result ? (
+              <InstanceProfile
+                client={client}
+                instance={result.instance}
+                room={room}
+                stateLabel={result.stateLabel}
+              />
+            ) : (
+              <p role={error ? "alert" : undefined} className="px-5 py-5">
+                {error || "正在读取实例资料…"}
+              </p>
+            )}
+          </div>
+        )}
+        <div
+          className={
+            tab === "activity"
+              ? "flex min-h-0 flex-1 flex-col bg-layer-panel"
+              : "hidden"
+          }
+        >
           <div className="flex items-center justify-between border-b  border-line-muted  bg-layer-panel  px-5 py-2">
             <SectionEyebrow as="div">本对话运行记录</SectionEyebrow>
           </div>

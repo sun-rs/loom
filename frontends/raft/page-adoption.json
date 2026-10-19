@@ -740,5 +740,12 @@
     "reuse": "Native presentation preserved; local glue supplies canonical bindings, authorized viewer and Room members. Legacy unbound text is not rebound by current names.",
     "evidence": "../../docs/evo/evidence/2026-10-20-message-identity/summary.json",
     "license": "Existing upstream notices retained"
+  },
+  "agentProfiles20261020": {
+    "source": "AgentDetailPanel.tsx:InfoRow and profile composition; ProfilePanel.tsx; panelBounds.ts; index.css thread-layout",
+    "revision": "af3d6ef4a22f0f05f5f9db9424285755d67e9726",
+    "reuse": "InfoRow structurally ported with break-words for long prompts; native panels/tabs/resize primitives/CSS directly reused. Role profile replaces upstream mutable Agent config; instance remains frozen until existing explicit restart.",
+    "evidence": "../../docs/evo/evidence/2026-10-20-agent-profiles/summary.json",
+    "license": "Existing upstream notices retained"
   }
 }
