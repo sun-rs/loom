@@ -308,7 +308,7 @@
         "loom/ComputersPage.tsx",
         "loom/SavedPanel.tsx"
       ],
-      "adaptation": "Semantic location/neutral tones replace arbitrary iconBg; retired elegant selectors removed. Profile handle font-mono retained; empty surface export only preserves inherited imports. Chat explicitly location, computer neutral, saved header icon omitted per official composition. Existing compact mobile grid, back/actions and avatar identity preserved. Saved root uses native bg-layer-panel.",
+      "adaptation": "Semantic location/neutral tones replace arbitrary iconBg; retired elegant selectors removed. Profile handle font-mono retained; empty surface export only preserves inherited imports. Chat explicitly location, computer neutral, saved header icon omitted per official composition. Existing compact mobile grid, back/actions and avatar identity preserved. Saved root uses native bg-layer-panel. Subsequent real screenshot exposed inner scroller override: complete SavedPanel j/M list branch now ported (native divider rows, typography, remove action, root/scroller, no card gap); Loom callbacks and scoped data remain.",
       "checks": [
         "scripts/official-web/header-tone-release.test.mjs",
         "scripts/official-web/channel-chrome-repair.test.mjs",

@@ -2,13 +2,12 @@ import { uiActionProps } from "./ui-action-props.ts";
 import type { RahClient } from "@rah-os/client-sdk";
 import { useSavedMessages } from "./useSavedMessages.ts";
 import { savedEntry } from "./saved-entry.ts";
-// Structural port of official SavedPanel; native card/layout retained, Loom owns data/navigation.
+// Structural port of official SavedPanel; native list/layout retained, Loom owns data/navigation.
 import { memo, useCallback, useEffect, useRef } from "react";
 import { useIntl } from "react-intl";
 import { Bookmark, MessageSquare } from "lucide-react";
 import {
   Button,
-  Card,
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
@@ -84,27 +83,29 @@ const SavedItem = memo(function SavedItem({
     <ContextMenu>
       <ContextMenuTrigger
         render={
-          <Card
-            render={<div role="button" tabIndex={0} />}
+          <div
+            role="button"
+            tabIndex={0}
+            data-saved-row=""
             onClick={handleOpen}
             onKeyDown={handleKeyDown}
-            className="relative flex flex-row items-center gap-3 transition-colors p-3 text-left w-full shadow-none border-line-muted   bg-layer-panel  hover:bg-fill-muted data-[popup-open]:bg-fill-muted"
+            className="relative flex w-full flex-row items-center gap-3 px-4 py-3 text-left outline-none transition-colors hover:bg-fill-pressed data-[popup-open]:bg-fill-pressed focus-visible:shadow-[inset_0_0_0_2px_var(--foreground)] before:pointer-events-none before:absolute before:top-0 before:right-0 before:left-4 before:hidden before:border-t before:border-line-muted [[data-saved-row]+&]:before:block"
           />
         }
       >
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 mb-1 text-xs">
-            <span className="font-bold text-foreground-muted ">
+          <div className="mb-1 flex min-w-0 items-center gap-2 text-caption">
+            <span className="shrink-0 text-foreground-hint">
               {channelLabel}
             </span>
             {isThread && (
-              <span className="inline-flex items-center gap-1 font-bold text-foreground-muted ">
-                <MessageSquare size={10} />
+              <span className="inline-flex shrink-0 items-center gap-1 text-foreground-hint">
+                <MessageSquare size={12} />
                 {formatMessage({ id: "saved.threadLabel" })}
               </span>
             )}
             {senderName && (
-              <span className="inline-flex items-center gap-1 font-bold text-foreground-strong ">
+              <span className="inline-flex min-w-0 items-center gap-1 font-semibold text-foreground">
                 {senderAgent ? (
                   <AvatarSlot
                     context="preview-mini"
@@ -125,14 +126,16 @@ const SavedItem = memo(function SavedItem({
                     humanAvatarUrl={entry.senderAvatarUrl}
                   />
                 )}
-                <span>{senderName}</span>
+                <span className="truncate">{senderName}</span>
               </span>
             )}
-            <span className="text-xs text-foreground-muted font-mono ">
+            <span className="shrink-0 font-mono text-mono-meta text-foreground-hint">
               {formatRelativeTime(entry.createdAt, locale) ?? ""}
             </span>
           </div>
-          <p className="text-sm line-clamp-3">{entry.content}</p>
+          <p className="line-clamp-3 text-callout text-foreground">
+            {entry.content}
+          </p>
         </div>
         <div className="ml-auto shrink-0 self-center">
           <PanelToggleAction
@@ -140,14 +143,9 @@ const SavedItem = memo(function SavedItem({
             onKeyDown={stopKeyPropagation}
             onClick={handleRemoveButtonClick}
             aria-label={formatMessage({ id: "saved.remove" })}
-            className="data-pressed:text-accent-strong  data-pressed:bg-accent-soft/30"
+            className="data-pressed:border-transparent data-pressed:bg-transparent data-pressed:text-foreground data-pressed:hover:bg-fill-pressed"
           >
-            <Bookmark
-              size={14}
-              fill="currentColor"
-              className="text-accent-strong "
-              aria-hidden
-            />
+            <Bookmark size={14} fill="currentColor" aria-hidden />
           </PanelToggleAction>
         </div>
       </ContextMenuTrigger>
@@ -260,7 +258,7 @@ export default function SavedPanel({
       <div
         ref={scrollerRef}
         data-testid="saved-list-scroller"
-        className="flex-1 overflow-y-auto bg-layer-canvas-muted p-4 safe-bottom "
+        className="flex-1 overflow-y-auto bg-layer-panel py-1 safe-bottom"
       >
         {loading && saved.length === 0 ? (
           <ConversationCardSkeleton />
@@ -272,7 +270,7 @@ export default function SavedPanel({
             description={formatMessage({ id: "saved.emptyDescription" })}
           />
         ) : (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col">
             {saved.map((entry) => (
               <SavedItem
                 key={entry.messageId}

@@ -167,6 +167,23 @@ export async function verifySaved({
         .filter({ hasText: targetText })
         .first();
       await card.waitFor();
+      assert.equal(await card.getAttribute("data-saved-row"), "");
+      assert.equal(
+        await card.getAttribute("data-slot"),
+        "context-menu-trigger",
+      );
+      assert.equal(
+        await page
+          .getByTestId("saved-list-scroller")
+          .evaluate((el) => getComputedStyle(el).paddingLeft),
+        "0px",
+      );
+      if (width === 1440) {
+        await card.click({ button: "right" });
+        await page.getByRole("menu").waitFor();
+        await page.keyboard.press("Escape");
+        await page.getByRole("menu").waitFor({ state: "hidden" });
+      }
       await page.reload();
       await card.waitFor();
       await card.click();
