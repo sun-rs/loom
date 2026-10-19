@@ -68,6 +68,10 @@
   [data-slot="task-card"] {
     padding: 10px 12px;
   }
+  /* Safari inline-button baseline can retain the unclamped text height. */
+  [data-slot="task-card"] > button {
+    display: block;
+  }
   [data-slot="task-card-title"] {
     font-size: 14px;
     line-height: 20px;

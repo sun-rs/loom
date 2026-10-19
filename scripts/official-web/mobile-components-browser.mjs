@@ -37,6 +37,22 @@ try {
     );
     assert.equal(metrics.padding, width < 768 ? "10px 12px" : "12px");
     assert.equal(metrics.border, "1px");
+    if (width < 768) {
+      for (const item of await page.locator('[data-slot="task-card"]').all()) {
+        const gap = await item.evaluate((el) => {
+          const button = el.querySelector(":scope > button");
+          const next = button.nextElementSibling;
+          return (
+            next.getBoundingClientRect().top -
+            button.getBoundingClientRect().bottom
+          );
+        });
+        assert.ok(
+          gap <= 10,
+          `card actions must follow clamped body without inline baseline whitespace: ${gap}`,
+        );
+      }
+    }
     console.log(JSON.stringify({ width, metrics }));
     await page.goto(origin + "/?view=agents");
     const role = page.locator("[data-role-id]").first();
@@ -47,7 +63,7 @@ try {
         .locator('[data-slot="avatar"]')
         .first()
         .evaluate((el) => el.getBoundingClientRect().width),
-      width < 768 ? 18 : 16,
+      width < 768 ? 18 : 19,
     );
     await page.close();
   }
