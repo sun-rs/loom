@@ -1,0 +1,78 @@
+{
+  "date": "2026-10-19",
+  "scope": "Current official Activity loaded-window pinned sections; no backend changes",
+  "upstream": {
+    "url": "https://app.raft.build/assets/ThreadsInbox-CbSKTW4g.js",
+    "release": "v1.21.22",
+    "revision": "af3d6ef4a22f0f05f5f9db9424285755d67e9726",
+    "sha256": "cd0713e0c0e17b647eae34f28ec397cec415bc33c33cdbfa32f204e6e76dc7e5",
+    "refetchedHashMatches": true,
+    "locations": "Oe excludes threads; He Z/Q partitions loaded window; section labels in Q.map; app-shell $U label recipe",
+    "reuse": "Structural production-source port with native SectionEyebrow, Pin, exact production Chinese labels; Loom sidebar.get preferences replace upstream store identities"
+  },
+  "tdd": {
+    "red": "Pinned ordering assertion failed against identity presentation",
+    "green": "6 scoped tests passed"
+  },
+  "checks": [
+    "npm run typecheck:loom --prefix frontends/raft",
+    "npm run build:web:workbench",
+    "node --test scripts/official-web/activity-pinned.test.ts scripts/official-web/activity-window.test.ts scripts/official-web/activity-actions.test.ts",
+    "LOOM_BROWSER_SLICE=activity-pinned node scripts/official-web/channel-browser.mjs",
+    "LOOM_BROWSER_SLICE=activity-focus node scripts/official-web/channel-browser.mjs",
+    "Changed-file prettier check; git diff --check"
+  ],
+  "browser": [
+    {
+      "width": 1440,
+      "realSidebarPreferences": true,
+      "pinnedFirst": true,
+      "unpinRefresh": true,
+      "failedReadKeepsFeed": true,
+      "noActivityWrites": true,
+      "pageErrors": []
+    },
+    {
+      "width": 390,
+      "realSidebarPreferences": true,
+      "pinnedFirst": true,
+      "unpinRefresh": true,
+      "failedReadKeepsFeed": true,
+      "noActivityWrites": true,
+      "pageErrors": []
+    }
+  ],
+  "focusRegression": [
+    {
+      "width": 1440,
+      "pendingUntilUnread": true,
+      "repeatedGesture": true,
+      "highlightExpires": true,
+      "exitClearsIntent": true,
+      "noReadOrFollowWrites": true,
+      "noDetailNavigation": true
+    },
+    {
+      "width": 900,
+      "pendingUntilUnread": true,
+      "repeatedGesture": true,
+      "highlightExpires": true,
+      "exitClearsIntent": true,
+      "noReadOrFollowWrites": true,
+      "noDetailNavigation": true
+    },
+    {
+      "width": 390,
+      "mobileSingleClickPreserved": true,
+      "noImplicitFocus": true
+    }
+  ],
+  "limits": [
+    "Only loaded-window partition; off-page pinned rows are not fetched eagerly. Matches production Q.",
+    "Current production He has channelFilterId:null and no legacy channel grouping sidebar; removed that obsolete backlog claim.",
+    "Kernel unfollow history eligibility differs from upstream. No change to exact-mention override or thread read frontiers.",
+    "Physical iOS/Android and logged-in upstream pixel comparison not performed."
+  ],
+  "deployment": "pending safe restart and real-page check",
+  "paidProviders": false
+}

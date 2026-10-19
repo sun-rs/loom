@@ -1,3 +1,8 @@
+import { Fragment } from "react";
+import { Pin } from "lucide-react";
+import SectionEyebrow from "../packages/web/src/components/ui/SectionEyebrow.tsx";
+import { activityPinnedRows } from "./activity-pinned.ts";
+import { useActivityPinned } from "./useActivityPinned.ts";
 import type { ThreadActivityClient } from "./thread-activity.ts";
 import { useFirstUnreadFocus } from "./useFirstUnreadFocus.ts";
 import { activityPeerType } from "./activity-peer.ts";
@@ -387,6 +392,16 @@ function Results({
     retry,
     principalId,
   );
+  const pins = useActivityPinned(
+    client,
+    workspaceId,
+    mode === "activity",
+    retry,
+  );
+  const activityRows = useMemo(
+    () => activityPinnedRows(activity.data?.rows ?? [], pins?.pinned ?? []),
+    [activity.data, pins],
+  );
   const data = mode === "activity" ? activity.data : searchData;
   const loading = mode === "activity" ? activity.loading : searchLoading;
   const error =
@@ -397,15 +412,18 @@ function Results({
     client,
     JSON.stringify([principalId, workspaceId, filter]),
     mode === "activity",
-    !loading && !error && Boolean(data?.rows.length),
+    !loading &&
+      !error &&
+      Boolean(data?.rows.length) &&
+      (mode !== "activity" || Boolean(pins)),
     Boolean(principalId),
   );
   const focusedActivityId = useFirstUnreadFocus(
     mode === "activity" ? focusRequest : 0,
     consumeFocus,
-    data?.rows ?? [],
+    activityRows.map((item) => item.row),
     activityScroll.ref,
-    mode === "activity" && !loading && !error,
+    mode === "activity" && !loading && !error && Boolean(pins),
   );
   const moreRequest = useRef<AbortController | null>(null);
   const loadMoreResults = async () => {
@@ -666,6 +684,14 @@ function Results({
           </Button>
         </div>
       )}
+      {pins?.failed && mode === "activity" && (
+        <p
+          role="status"
+          className="px-4 py-2 text-footnote text-foreground-muted"
+        >
+          置顶分组读取失败，请刷新动态重试。
+        </p>
+      )}
       {mutationError && (
         <p role="alert" className="px-3 py-2">
           {mutationError}
@@ -740,34 +766,45 @@ function Results({
                   }}
                 />
               ) : (
-                data.rows.map((row) => (
-                  <ActivityMessageRow
-                    client={client}
-                    onFollow={(row, activity, following) => {
-                      void followActivity(row, activity, following);
-                    }}
-                    pending={pendingRows.has(row.id)}
-                    onAction={(target, action) => {
-                      void markActivity(target, action);
-                    }}
-                    key={row.id}
-                    row={{
-                      ...row,
-                      senderType: activityPeerType(
-                        entities.catalog,
-                        row.message.roomId,
-                      ),
-                    }}
-                    active={
-                      focusedActivityId === row.id ||
-                      route.get("message") === row.message.messageId
-                    }
-                    onOpen={(full) => {
-                      void onOpenResult(row, full).catch(() =>
-                        setError("无法打开消息，请刷新重试。"),
-                      );
-                    }}
-                  />
+                activityRows.map(({ row, section }) => (
+                  <Fragment key={row.id}>
+                    {section && (
+                      <SectionEyebrow
+                        as="div"
+                        className={`flex items-center gap-1.5 px-4 pb-1 ${section === "pinned" ? "pt-2" : "pt-4"}`}
+                      >
+                        {section === "pinned" && <Pin size={12} />}
+                        {section === "pinned" ? "已置顶" : "全部会话"}
+                      </SectionEyebrow>
+                    )}
+                    <ActivityMessageRow
+                      client={client}
+                      onFollow={(row, activity, following) => {
+                        void followActivity(row, activity, following);
+                      }}
+                      pending={pendingRows.has(row.id)}
+                      onAction={(target, action) => {
+                        void markActivity(target, action);
+                      }}
+                      key={row.id}
+                      row={{
+                        ...row,
+                        senderType: activityPeerType(
+                          entities.catalog,
+                          row.message.roomId,
+                        ),
+                      }}
+                      active={
+                        focusedActivityId === row.id ||
+                        route.get("message") === row.message.messageId
+                      }
+                      onOpen={(full) => {
+                        void onOpenResult(row, full).catch(() =>
+                          setError("无法打开消息，请刷新重试。"),
+                        );
+                      }}
+                    />
+                  </Fragment>
                 ))
               )}
             </ResultList>

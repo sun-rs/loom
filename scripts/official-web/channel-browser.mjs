@@ -483,6 +483,20 @@ try {
         }),
       ),
     );
+  } else if (process.env.LOOM_BROWSER_SLICE === "activity-pinned") {
+    const { verifyActivityPinned } =
+      await import("./activity-pinned-browser.mjs");
+    console.log(
+      JSON.stringify(
+        await verifyActivityPinned({
+          browser,
+          origin,
+          client,
+          workspace,
+          head,
+        }),
+      ),
+    );
   } else if (process.env.LOOM_BROWSER_SLICE === "activity-focus") {
     const { verifyActivityFocus } =
       await import("./activity-focus-browser.mjs");

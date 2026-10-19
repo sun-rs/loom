@@ -631,5 +631,24 @@
     "V1: Targeted unverified combinations, plain-text browser styling, successful external navigation and physical mobile/authenticated upstream comparison; see currentCloseout."
   ],
   "currentCloseout": "../../docs/evo/frontend-closeout.zh-CN.md",
-  "statusInterpretation": "Slice limits describe the recorded adoption batch; later evidence can supersede its pending audit items. Current page/gap status is maintained in currentCloseout, not inferred from historical remaining lists."
+  "statusInterpretation": "Slice limits describe the recorded adoption batch; later evidence can supersede its pending audit items. Current page/gap status is maintained in currentCloseout, not inferred from historical remaining lists.",
+  "activityPinnedSections20261019": {
+    "source": "https://app.raft.build/assets/ThreadsInbox-CbSKTW4g.js",
+    "release": "v1.21.22 / af3d6ef4a22f0f05f5f9db9424285755d67e9726",
+    "sha256": "cd0713e0c0e17b647eae34f28ec397cec415bc33c33cdbfa32f204e6e76dc7e5",
+    "locations": "Oe excludes threads; He Z/Q stable partitions loaded window; Q.map section labels. app-shell $U SectionEyebrow; Chinese activity.list.pinned/allConversations.",
+    "reuse": "Structural production-source port; retained official SectionEyebrow and lucide Pin; upstream notices preserved. Not byte-exact whole-page copying.",
+    "local": [
+      "loom/activity-pinned.ts",
+      "loom/useActivityPinned.ts",
+      "loom/DiscoveryPage.tsx"
+    ],
+    "adaptation": "Canonical sidebar.get pinned room keys replace upstream channel/peer lookup, including Loom standalone conversations. No thread inheritance, full-history fetch, cursor rewrite or unread mutation. Explicit refresh rereads preferences. Preference failure keeps feed usable and displays retry guidance. Focus uses rendered order.",
+    "limits": "Only loaded-window pin partition, exactly as current production composition. Old source channel-group sidebar is absent from this production branch; no new backend grouping added.",
+    "checks": [
+      "scripts/official-web/activity-pinned.test.ts",
+      "scripts/official-web/activity-pinned-browser.mjs",
+      "scripts/official-web/activity-focus-browser.mjs"
+    ]
+  }
 }
