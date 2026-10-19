@@ -1,3 +1,4 @@
+import { OverflowMenuTrigger } from "../packages/web/src/components/ui/OverflowSheet.tsx";
 import ComposerDirectory from "./ComposerDirectory.tsx";
 import type { NavigationUnread } from "./navigation-unread.ts";
 import { uiActionProps } from "./ui-action-props.ts";
@@ -327,15 +328,14 @@ function Channel({
                   headerActions
                 ) : (
                   <>
-                    <Button
-                      {...uiActionProps.panelIcon}
-                      aria-label="搜索聊天"
+                    <OverflowMenuTrigger
+                      labelId="message.chatPanel.searchChannel"
+                      testId="channel-topbar-search"
+                      icon={<Search size={22} />}
                       onClick={() =>
                         window.dispatchEvent(new Event("loom:open-search"))
                       }
-                    >
-                      <Search size={18} />
-                    </Button>
+                    />
                     {controlRoomId && (
                       <ChannelControl
                         onChanged={onRoomChanged}

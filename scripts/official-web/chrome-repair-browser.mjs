@@ -20,6 +20,14 @@ export async function verifyChromeRepair({
     await page.goto(`${origin}/?room=${channels[2].roomId}`);
     const settings = page.getByTestId("loom-channel-control-trigger");
     await settings.waitFor();
+    for (const action of [
+      settings,
+      page.getByTestId("channel-topbar-search"),
+    ]) {
+      assert.equal(await action.getAttribute("data-slot"), "panel-action");
+      assert.equal(await action.locator("svg").getAttribute("width"), "22");
+    }
+
     const chatIcon = page.locator(
       '.loom-chat-header [data-slot="panel-header-icon"]',
     );
@@ -47,7 +55,7 @@ export async function verifyChromeRepair({
     });
     await sheet.getByRole("button", { name: "取消", exact: true }).click();
     await sheet.waitFor({ state: "hidden" });
-    await page.getByRole("button", { name: "搜索聊天", exact: true }).click();
+    await page.getByRole("button", { name: "搜索此频道", exact: true }).click();
     await page.waitForURL((u) => u.searchParams.get("view") === "search");
     if (viewport.width >= 768)
       await page.getByTestId("desktop-search-overlay").waitFor();

@@ -37,9 +37,4 @@ export const uiActionProps = {
     variant: "ghost",
     "data-loom-action": "menuIcon",
   },
-  panelIcon: {
-    size: "icon-md",
-    variant: "outline",
-    "data-loom-action": "panelIcon",
-  },
 } as const satisfies Record<string, ActionBinding>;

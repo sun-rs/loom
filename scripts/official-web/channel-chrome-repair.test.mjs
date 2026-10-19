@@ -34,3 +34,17 @@ test("role tabs retain the current official conversation wrapper without a confl
   assert.match(page, /ConversationPanelTabs/);
   assert.doesNotMatch(page, /<TabsList[^>]*className=/s);
 });
+
+test("chat header actions retain official tooltip/PanelAction composition and 22px icons", () => {
+  const app = read("ChannelApp.tsx");
+  assert.match(
+    app,
+    /<OverflowMenuTrigger\s+labelId="message.chatPanel.searchChannel"/,
+  );
+  assert.match(app, /icon=\{<Search size=\{22\} \/>\}/);
+  assert.doesNotMatch(app, /uiActionProps.panelIcon/);
+  assert.match(
+    read("ChannelControl.tsx"),
+    /icon=\{<Settings size=\{22\} \/>\}/,
+  );
+});

@@ -129,7 +129,7 @@ export default function ChannelControl({
       <div ref={trigger}>
         <OverflowMenuTrigger
           labelId="message.chatPanel.overflow.open"
-          icon={<Settings size={18} />}
+          icon={<Settings size={22} />}
           testId="loom-channel-control-trigger"
           onClick={() => setSheet(true)}
         />

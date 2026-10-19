@@ -178,12 +178,6 @@
       "rule": "Icon-only menu uses native icon-md recipe; preserve existing ghost interaction.",
       "implementation": "frontends/raft/loom/ui-action-props.ts",
       "adoption": "local parameter binding; native recipe, not byte-exact copied page"
-    },
-    "panelIcon": {
-      "source": "frontends/raft/packages/web/src/components/ui/CloseButton.tsx",
-      "rule": "Compact panel icon uses native icon-md outline; does not replace CloseButton.",
-      "implementation": "frontends/raft/loom/ui-action-props.ts",
-      "adoption": "local parameter binding; native recipe, not byte-exact copied page"
     }
   }
 }

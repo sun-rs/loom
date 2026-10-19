@@ -315,6 +315,19 @@
         "scripts/official-web/chrome-repair-browser.mjs",
         "scripts/official-web/saved-browser.mjs"
       ]
+    },
+    "chat-header-actions": {
+      "source": "app-shell-D1-nY-va.js yxt (Tooltip > PanelAction), search/settings callsite; v1.21.22 af3d6ef4a22f0f05f5f9db9424285755d67e9726",
+      "local": [
+        "loom/ChannelApp.tsx",
+        "loom/ChannelControl.tsx",
+        "packages/web/src/components/ui/OverflowSheet.tsx"
+      ],
+      "adaptation": "Native tooltip, localized accessible labels and PanelAction recipe; search/settings icons 22px. Loom shared-search route and guarded settings drawer retained. Removed unused local outlined panelIcon binding. No new backend capability.",
+      "checks": [
+        "scripts/official-web/channel-chrome-repair.test.mjs",
+        "scripts/official-web/chrome-repair-browser.mjs"
+      ]
     }
   },
   "pending": [
