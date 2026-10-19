@@ -2,7 +2,7 @@
 export function exposeAboutVersion(source: string) {
   const start = source.indexOf("export function AboutSection({");
   const section = source.indexOf(
-    '      <section className="space-y-2">',
+    '      <section className="space-y-3">',
     start,
   );
   const end = source.indexOf("      </section>", section);
@@ -16,13 +16,13 @@ export function exposeAboutVersion(source: string) {
   const jsx = source
     .slice(section, end + "      </section>".length)
     .replace(
-      '<section className="space-y-2">',
-      '<section className="space-y-2" data-testid="loom-about-version">',
+      '<section className="space-y-3">',
+      '<section className="space-y-3" data-testid="loom-about-version">',
     )
     .replace('{formatMessage({ id: "brand.productName" })}', "Loom");
   return (
     source +
-    '\nexport function LoomAboutSection({appVersion}: {appVersion: string}) {\n const {formatMessage}=useIntl();\n return <div className="space-y-4">' +
+    '\nexport function LoomAboutSection({appVersion}: {appVersion: string}) {\n const {formatMessage}=useIntl();\n return <div className="space-y-6">' +
     jsx +
     "</div>;\n}\n"
   );

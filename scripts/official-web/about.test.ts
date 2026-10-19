@@ -17,6 +17,10 @@ test("About selects native version section and renames product without cloud con
   );
   assert.ok(result.includes(">Loom</div>"));
   assert.ok(result.includes("{appVersion}"));
+  assert.ok(result.includes('className="space-y-6"'));
+  assert.ok(result.includes('className="space-y-3"'));
+  assert.ok(result.includes("text-subhead font-semibold text-foreground"));
+  assert.ok(result.includes("font-mono text-mono-meta"));
   assert.ok(!result.includes("mobileApp"));
   assert.ok(!result.includes("Feedback"));
   assert.throws(() => exposeAboutVersion("changed source"));

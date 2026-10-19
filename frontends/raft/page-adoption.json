@@ -269,12 +269,28 @@
         "scripts/official-web/system-settings.test.ts",
         "scripts/official-web/system-settings-browser.mjs"
       ]
+    },
+    "settings-resources-current": {
+      "source": "Raft v1.21.22 af3d6ef4a22f0f05f5f9db9424285755d67e9726 app-shell-D1-nY-va.js WebPush composition (146945–147050), _pt About (153035–153075)",
+      "provenance": "Structural port of retained presentation from owner-authorized production bundle, not byte-exact TSX. Original source notices retained.",
+      "local": [
+        "packages/web/src/components/settings/SettingsPanel.tsx",
+        "loom/about-adaptation.ts",
+        "loom/settings-resource-adaptation.ts"
+      ],
+      "adaptation": "Official Card, typography, soft status badge and About spacing/version typography. Browser push remains read-only/unconnected: no success badge, subscription or permission request. Cloud downloads, feedback and organization controls remain excluded.",
+      "checks": [
+        "scripts/official-web/about.test.ts",
+        "scripts/official-web/settings-resource-adaptation.test.ts",
+        "scripts/official-web/about-browser.mjs",
+        "scripts/official-web/settings-resources-browser.mjs"
+      ]
     }
   },
   "pending": [
     "Remaining shared headers and action compositions",
-    "Settings account profile composition audited and migrated; administration system-channel form migrated; notification/about full latest-source audit remains open; shell/sidebar/appearance migrated",
     "Channel settings upstream-only joint/guest/share/delete and expanded notification controls remain excluded; supported metadata/mute/archive paths migrated",
-    "Activity thread follow/unfollow and conditional read controls (projection lacks follow state; unfollow currently removes canonical eligibility), grouping options (no complete server facet/group query) and mobile home unread bindings"
+    "Activity thread follow/unfollow and conditional read controls (projection lacks follow state; unfollow currently removes canonical eligibility), grouping options (no complete server facet/group query) and mobile home unread bindings",
+    "Browser push subscription/permission/test actions remain unavailable; notification capability view and About version surface now audited against locked v1.21.22."
   ]
 }

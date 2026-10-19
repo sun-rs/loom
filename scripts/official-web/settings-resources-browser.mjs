@@ -48,12 +48,15 @@ try {
     baseUrl: service.origin,
     accessToken: () => f.owner.accessToken,
   });
-  const activity = await verifyActivityReturn({
-    browser,
-    origin: gateway.origin,
-    client,
-    workspace: f.workspace.workspace,
-  });
+  const activity =
+    process.env.LOOM_BROWSER_SLICE === "settings-resources"
+      ? "not-run: settings-only slice"
+      : await verifyActivityReturn({
+          browser,
+          origin: gateway.origin,
+          client,
+          workspace: f.workspace.workspace,
+        });
   const settings = [];
   for (const width of [1440, 390]) {
     const ctx = await browser.newContext({
@@ -90,6 +93,18 @@ try {
     });
     await page.goto(gateway.origin + "/?view=settings&settings=notifications");
     await page.getByText("订阅尚未接入", { exact: true }).waitFor();
+    const card = page
+      .locator('[data-slot="card"]')
+      .filter({ hasText: "订阅尚未接入" });
+    assert.equal(await card.count(), 1);
+    assert.equal(await card.locator(".text-subhead").count(), 1);
+    assert.equal(
+      await card
+        .getByText("订阅尚未接入", { exact: true })
+        .getAttribute("data-appearance"),
+      "soft",
+    );
+
     assert.equal(
       await page
         .getByRole("button", { name: "启用推送通知", exact: true })
@@ -106,6 +121,20 @@ try {
         () => document.documentElement.scrollWidth > innerWidth,
       ),
       false,
+    );
+    await page.addInitScript(() => {
+      Object.defineProperty(Notification, "permission", {
+        configurable: true,
+        get: () => "denied",
+      });
+    });
+    await page.reload();
+    await page.getByText("订阅尚未接入", { exact: true }).waitFor();
+    assert.equal(
+      await page
+        .getByText("订阅尚未接入", { exact: true })
+        .getAttribute("data-variant"),
+      "warning",
     );
     await page.unroute("**/v3/client/push/configuration");
     await page.route("**/v3/client/push/configuration", (route) =>

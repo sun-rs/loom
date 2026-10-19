@@ -18,7 +18,11 @@ test("notification read-only surface keeps native card and omits unavailable act
     "export function LoomNotificationStatus",
   )[1];
   assert.ok(result.includes("settings.notifications.mainTitle"));
-  assert.ok(result.includes("bg-layer-panel"));
+  assert.ok(result.includes('<Card className="space-y-3 p-4">'));
+  assert.ok(result.includes("text-subhead font-semibold text-foreground"));
+  assert.ok(result.includes('appearance="soft"'));
+  assert.ok(result.includes("</Card>"));
+  assert.ok(!result.includes("shadow-raft-sm"));
   assert.ok(!result.includes("theme-brutal:"));
   assert.ok(!result.includes("handleEnable"));
   assert.throws(() => exposeNotificationStatus("changed"), /boundary/);

@@ -15,6 +15,23 @@ export async function verifyAbout({ browser, origin }) {
       const section = page.getByTestId("loom-about-version");
       await section.waitFor({ timeout: 5000 });
       assert.ok((await section.innerText()).includes("Loom"));
+      assert.equal(
+        await section.locator(".text-subhead.font-semibold").count(),
+        1,
+      );
+      assert.equal(
+        await section.locator(".font-mono.text-mono-meta").count(),
+        1,
+      );
+      assert.equal(
+        await section.evaluate((el) => {
+          const title = el.children[0].getBoundingClientRect();
+          const card = el.children[1].getBoundingClientRect();
+          return Math.round(card.top - title.bottom);
+        }),
+        12,
+      );
+      await page.screenshot({ path: `/tmp/loom-about-native-${width}.png` });
       const version = await page.evaluate(
         () =>
           JSON.parse(

@@ -1685,6 +1685,8 @@ function WebPushNotificationsCard({ channel }: { channel: Exclude<NotificationCh
               ? formatMessage({ id: "settings.notifications.statusDenied" })
               : formatMessage({ id: "settings.notifications.statusDisabled" });
 
+  const statusVariant = loading ? "muted" : subscribed && serverConfigured && permission !== "unsupported" ? "success" : permission === "denied" ? "warning" : "muted";
+
   return (
     <div>
       <SectionHeader
@@ -1693,43 +1695,43 @@ function WebPushNotificationsCard({ channel }: { channel: Exclude<NotificationCh
         label={formatMessage({ id: "settings.notifications.sectionLabel" })}
       />
 
-      <div className="border border-line-muted bg-layer-panel shadow-raft-sm     p-4 space-y-3">
+      <Card className="space-y-3 p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <div className="text-sm font-bold text-foreground-strong ">{formatMessage({ id: "settings.notifications.mainTitle" })}</div>
-            <div className="text-xs text-foreground-muted  mt-0.5">
+            <div className="text-subhead font-semibold text-foreground">{formatMessage({ id: "settings.notifications.mainTitle" })}</div>
+            <div className="text-footnote text-foreground-muted mt-0.5">
               {formatMessage({ id: "settings.notifications.mainDescription" })}
             </div>
           </div>
-          <Badge variant="muted">
+          <Badge appearance="soft" variant={statusVariant}>
             {statusLabel}
           </Badge>
         </div>
 
         {permission === "unsupported" && (
-          <div className="text-xs text-foreground-muted ">
+          <div className="text-footnote text-foreground-muted">
             {formatMessage({ id: channel.kind === "unsupported" ? UNSUPPORTED_REASON_MESSAGE[channel.reason] : "settings.notifications.unsupportedHint" })}
           </div>
         )}
 
         {permission !== "unsupported" && !serverConfigured && !loading && (
-          <div className="text-xs text-foreground-muted ">
+          <div className="text-footnote text-foreground-muted">
             {formatMessage({ id: "settings.notifications.notConfiguredHint" })}
           </div>
         )}
 
         {permission === "denied" && (
-          <div className="text-xs text-foreground-muted ">
+          <div className="text-footnote text-foreground-muted">
             {formatMessage({ id: "settings.notifications.deniedHint" })}
           </div>
         )}
 
         {error && (
-          <Banner intent="warning" density="sm" className="font-bold">{error}</Banner>
+          <Banner intent="warning" density="sm">{error}</Banner>
         )}
 
         {message && (
-          <div className="border border-line-muted   bg-brutal-lime/30 p-2 text-xs font-bold">{message}</div>
+          <Banner intent="success" density="sm" role="status">{message}</Banner>
         )}
 
         <div className="flex gap-2">
@@ -1773,8 +1775,8 @@ function WebPushNotificationsCard({ channel }: { channel: Exclude<NotificationCh
                   className="mt-0.5"
                 />
                 <span className="min-w-0">
-                  <span className="block text-sm font-bold text-foreground-strong ">{formatMessage({ id: "settings.notifications.muteServerTitle" })}</span>
-                  <span className="block text-xs text-foreground-muted  mt-0.5">
+                  <span className="block text-subhead font-semibold text-foreground">{formatMessage({ id: "settings.notifications.muteServerTitle" })}</span>
+                  <span className="block text-footnote text-foreground-muted mt-0.5">
                     {formatMessage({ id: "settings.notifications.muteServerDescription" }, { serverName: currentServer.name })}
                   </span>
                 </span>
@@ -1791,7 +1793,7 @@ function WebPushNotificationsCard({ channel }: { channel: Exclude<NotificationCh
             </form>
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }
@@ -6738,13 +6740,13 @@ export function AboutSection({
   const mobileDownloadQrUrl = `${typeof window === "undefined" ? "" : shareableWebOrigin()}${MOBILE_DOWNLOAD_CHOOSER_PATH}`;
 
   return (
-    <div className="space-y-4">
-      <section className="space-y-2">
+    <div className="space-y-6">
+      <section className="space-y-3">
         <SectionHeader label={formatMessage({ id: "settings.about.versionSectionLabel" })} icon={<Tag size={16} />} />
         <SurfaceListItem interactive={false} className="space-y-1">
           {/* Product wordmark — catalog brand id; locale values may match. */}
-          <div className="text-sm font-bold text-foreground-strong ">{formatMessage({ id: "brand.productName" })}</div>
-          <div className="text-xs text-foreground-muted ">{appVersion}</div>
+          <div className="text-subhead font-semibold text-foreground">{formatMessage({ id: "brand.productName" })}</div>
+          <div className="font-mono text-mono-meta text-foreground-muted">{appVersion}</div>
         </SurfaceListItem>
       </section>
 
