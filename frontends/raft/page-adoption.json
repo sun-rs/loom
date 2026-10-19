@@ -356,6 +356,16 @@
         "scripts/official-web/activity-chrome.test.mjs",
         "scripts/official-web/page-polish-browser.mjs"
       ]
+    },
+    "computer-profile-editor": {
+      "source": "MachineDetailPanel-C2oaC119.js.pretty.txt un/dn/hn/gn/_n/xn at2197–2275, name/description editor at2383–2543; v1.21.22 af3d6ef4a22f0f05f5f9db9424285755d67e9726",
+      "local": ["loom/ComputerProfile.tsx"],
+      "adoption": "Structural port of edit tooltip, name Enter/Escape and description Ctrl/Meta+Enter/Escape, description resize/min-height and character-counter composition. Existing Input/Textarea and Button parameters preserved.",
+      "localChanges": "IME confirmation/keyCode229 ignored; unresolved/rejected writes retain Loom fences. Revisioned profile command and exact replay remain sole mutation owner. Single-field editing remains intentional. Upstream store/no-op optimization not adopted in this slice.",
+      "checks": [
+        "scripts/official-web/computer-profile-release.test.mjs",
+        "scripts/official-web/chrome-repair-browser.mjs"
+      ]
     }
   },
   "pending": [

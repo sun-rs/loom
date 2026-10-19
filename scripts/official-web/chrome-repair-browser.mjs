@@ -78,6 +78,21 @@ export async function verifyChromeRepair({
     const inventory = await client.request("host.runtime.list", {});
     assert.ok(inventory.computer.profileRevision !== undefined);
     const original = inventory.computer.displayName;
+    const nameInput = page.getByRole("textbox", {
+      name: "计算机名称",
+      exact: true,
+    });
+    await page
+      .getByRole("button", { name: "编辑计算机名称", exact: true })
+      .click();
+    await nameInput.fill("FIXTURE cancelled name");
+    await nameInput.press("Escape");
+    await nameInput.waitFor({ state: "detached" });
+    assert.equal(
+      (await client.request("host.runtime.list", {})).computer.displayName,
+      original,
+    );
+
     await page
       .getByRole("button", { name: "编辑计算机名称", exact: true })
       .click();
@@ -90,7 +105,19 @@ export async function verifyChromeRepair({
       await route.fetch();
       await route.abort();
     });
-    await page.getByRole("button", { name: "保存", exact: true }).click();
+    await nameInput.dispatchEvent("keydown", {
+      key: "Enter",
+      code: "Enter",
+      isComposing: true,
+    });
+    assert.equal(request, undefined);
+    await nameInput.press("Enter");
+    await page.getByRole("button", { name: "核实操作结果" }).waitFor();
+    // Even a dispatched event on the disabled input cannot dismiss or resend an unknown write.
+    const unknownRequest = request;
+    await nameInput.dispatchEvent("keydown", { key: "Escape", code: "Escape" });
+    await nameInput.dispatchEvent("keydown", { key: "Enter", code: "Enter" });
+    assert.equal(request, unknownRequest);
     await page.getByRole("button", { name: "核实操作结果" }).waitFor();
     await page.unroute("**/v3/client/computers/profile/update");
     const replay = page.waitForRequest((r) =>
@@ -111,7 +138,16 @@ export async function verifyChromeRepair({
     await page
       .getByRole("textbox", { name: "计算机描述", exact: true })
       .fill("FIXTURE description");
-    await page.getByRole("button", { name: "保存", exact: true }).click();
+    const description = page.getByRole("textbox", {
+      name: "计算机描述",
+      exact: true,
+    });
+    await page.getByText("19/500", { exact: true }).waitFor();
+    await description.press("Enter");
+    assert.equal(await description.inputValue(), "FIXTURE description\n");
+    await description.press(
+      viewport.width === 390 ? "Control+Enter" : "Meta+Enter",
+    );
     await page
       .getByRole("button", { name: "编辑计算机描述", exact: true })
       .waitFor();
@@ -131,6 +167,7 @@ export async function verifyChromeRepair({
       drawerSearch: true,
       defaultComputer: viewport.width >= 768,
       profileEditAndExactReplay: true,
+      keyboardImeAndUnknownGuards: true,
       cliInventory: true,
     });
     await context.close();
