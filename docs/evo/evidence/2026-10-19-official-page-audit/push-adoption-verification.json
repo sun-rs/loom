@@ -47,5 +47,43 @@
     "Settings-only initial test assumed default permission; headless Chromium denied by default. Explicit permission fixture added.",
     "Unscoped settings-resources run hit unrelated Activity padding assertion (expected16px,actual0px 0px 16px); no unrelated styling/assertion modified; targeted settings slice passed."
   ],
-  "deployment": "pending"
+  "deployment": {
+    "sourceCommit": "d73dddadde1327a8211ed31be2ac4798a88ff173",
+    "schema": 90,
+    "service": "com.loom.evo",
+    "restart": "verified graceful exact-instance restart after active-work check",
+    "backupDatabases": 2,
+    "backupFiles": 325,
+    "unchangedBusinessTables": 20,
+    "pushKeysAndSubscriptionsUnchanged": true,
+    "live": {
+      "results": [
+        {
+          "width": 1440,
+          "height": 1000,
+          "DPR": 1,
+          "configurationRead": true,
+          "nativeCard": true,
+          "generatedWorkerServed": true,
+          "noSubscriptionMutations": true,
+          "noPageErrors": true,
+          "secureContext": true
+        },
+        {
+          "width": 390,
+          "height": 844,
+          "DPR": 1,
+          "configurationRead": true,
+          "nativeCard": true,
+          "generatedWorkerServed": true,
+          "noSubscriptionMutations": true,
+          "noPageErrors": true,
+          "secureContext": true
+        }
+      ],
+      "pushStateUnchanged": true
+    },
+    "visualInspection": "Desktop and mobile real-page screenshots inspected; native denied-permission state, no overflow. No production enable/test calls.",
+    "privateEvidenceDirectory": "/Users/sun/.loom/reviews/2026-10-19-push-adoption"
+  }
 }
