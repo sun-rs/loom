@@ -5,6 +5,8 @@ import type { RahClient } from "@rah-os/client-sdk";
 import { Activity, ChevronRight, X } from "lucide-react";
 import {
   ProfilePanel,
+  PanelAction,
+  ConversationPanelTabs,
   ProfilePanelBody,
   Tabs,
   TabsList,
@@ -17,7 +19,7 @@ import PanelHeader, {
   PROFILE_HEADER_SURFACE_CLASS,
   PROFILE_HANDLE_SIZE_CLASS,
 } from "../packages/web/src/components/ui/PanelHeader.tsx";
-import CloseButton from "../packages/web/src/components/ui/CloseButton.tsx";
+import PanelResizeHandle from "../packages/web/src/components/ui/PanelResizeHandle.tsx";
 import AvatarSlot from "../packages/web/src/components/ui/AvatarSlot.tsx";
 import SectionEyebrow from "../packages/web/src/components/ui/SectionEyebrow.tsx";
 import { useResizablePanel } from "../packages/web/src/hooks/useResizablePanel.ts";
@@ -136,14 +138,17 @@ export default function InstanceInspector({
       className="absolute inset-0 z-30 flex flex-col border-l-0 lg:relative lg:inset-auto lg:z-auto"
       style={desktop ? { width: panel.width, flex: "0 0 auto" } : undefined}
     >
-      <div
-        data-testid="loom-inspector-resize"
-        className="hidden md:block absolute left-0 top-0 bottom-0 w-2 -ml-1 z-10 cursor-col-resize touch-none select-none"
-        onPointerDown={panel.handleResizeStart}
-        onPointerMove={panel.handleResizeMove}
-        onPointerUp={panel.handleResizeEnd}
-        onPointerCancel={panel.handleResizeEnd}
-      />
+      {desktop && (
+        <PanelResizeHandle
+          side="left"
+          visibleFrom="md"
+          data-testid="loom-inspector-resize"
+          onPointerDown={panel.handleResizeStart}
+          onPointerMove={panel.handleResizeMove}
+          onPointerUp={panel.handleResizeEnd}
+          onPointerCancel={panel.handleResizeEnd}
+        />
+      )}
       <ProfilePanelBody className="flex min-h-0 flex-1 flex-col bg-layer-panel font-sans ">
         <PanelHeader
           title={member.displayName ?? member.handle}
@@ -170,27 +175,27 @@ export default function InstanceInspector({
                   name={member.displayName ?? member.handle}
                 />
               )}
-              <CloseButton
+              <PanelAction
                 data-loom-control="detail-close"
                 onClick={onClose}
-                className="size-8 items-center justify-center hidden md:flex"
+                className="hidden md:flex"
                 aria-label="关闭实例详情"
                 title="关闭实例详情"
               >
-                <X size={14} />
-              </CloseButton>
+                <X />
+              </PanelAction>
             </>
           }
         />
-        <div className="min-w-0 max-w-full overflow-x-auto overflow-y-hidden scrollbar-none">
-          <Tabs value="activity" className="bg-layer-panel   ">
-            <TabsList variant="underline" className="max-w-full  ">
-              <TabsTab value="activity" className="!cursor-default">
-                <Activity size={12} />
+        <div className="min-w-0 max-w-full shrink-0">
+          <ConversationPanelTabs render={<Tabs value="activity" />}>
+            <TabsList aria-label="实例详情">
+              <TabsTab value="activity">
+                <Activity />
                 <TabsLabel>动态</TabsLabel>
               </TabsTab>
             </TabsList>
-          </Tabs>
+          </ConversationPanelTabs>
         </div>
         <div className="flex min-h-0 flex-1 flex-col bg-layer-panel ">
           <div className="flex items-center justify-between border-b  border-line-muted  bg-layer-panel  px-5 py-2">

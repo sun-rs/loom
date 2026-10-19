@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
 import type { ClientAgentGetResponse } from "@rah-os/protocol";
 import {
-  Button,
+  PanelAction,
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
@@ -98,15 +98,13 @@ export default function RuntimeControl({
         <Tooltip content="更多操作" contentProps={{ side: "bottom" }}>
           <DropdownMenuTrigger
             render={
-              <Button
-                size="icon-sm"
-                variant="outline"
+              <PanelAction
                 aria-label={`更多操作 ${name}`}
                 disabled={disabled || state !== "idle" || branches.busy}
               />
             }
           >
-            <EllipsisVertical size={14} />
+            <EllipsisVertical />
           </DropdownMenuTrigger>
         </Tooltip>
         <DropdownMenuContent side="bottom" align="end" sideOffset={4}>

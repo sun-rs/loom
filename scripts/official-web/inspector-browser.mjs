@@ -29,6 +29,23 @@ export async function verifyInspector({
   await agentAvatar.click();
   const panel = page.getByTestId("profile-panel");
   await panel.waitFor();
+  assert.equal(
+    await panel.locator('[data-slot="conversation-panel-tabs"]').count(),
+    1,
+  );
+  assert.equal(
+    await panel
+      .getByRole("button", {
+        name: "关闭实例详情",
+        exact: true,
+        includeHidden: true,
+      })
+      .getAttribute("data-slot"),
+    "panel-action",
+  );
+  if (viewport.width < 1024)
+    assert.equal(await panel.getByTestId("loom-inspector-resize").count(), 0);
+
   assert.equal(await page.getByTestId("loom-message-profile").count(), 0);
   assert.equal(
     await panel
@@ -37,6 +54,13 @@ export async function verifyInspector({
     "true",
   );
   await panel.getByTestId("loom-instance-activity").waitFor();
+  assert.equal(
+    await panel
+      .getByRole("button", { name: `更多操作 ${name}`, exact: true })
+      .getAttribute("data-slot"),
+    "panel-action",
+  );
+
   assert.ok((await panel.innerText()).includes(name));
   assert.ok((await panel.innerText()).includes("本频道无排队工作"));
   const box = await panel.boundingBox();

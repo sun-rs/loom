@@ -366,6 +366,16 @@
         "scripts/official-web/computer-profile-release.test.mjs",
         "scripts/official-web/chrome-repair-browser.mjs"
       ]
+    },
+    "instance-inspector-chrome": {
+      "source": "AgentDetailPanel-B3FrpUPj.js bi overflow trigger at299–405, il header at10140–10233, tab wrapper at10660–10687; app-shell exports Jo=lP PanelAction, Aa=vA ConversationPanelTabs",
+      "local": ["loom/InstanceInspector.tsx", "loom/RuntimeControl.tsx"],
+      "adoption": "Structural port of header PanelAction close/overflow and ConversationPanelTabs. Single available activity tab uses native non-sortable TabsList; no invented empty tabs. Shared existing PanelResizeHandle replaces local naked handle and is only mounted when inspector is docked at1024px.",
+      "preserved": "Runtime/branch command ownership, confirmation and unknown-write guards unchanged. Existing diagnostics, bounded history, Escape/focus/draft preservation remain. Inline multi-action expansion is not adopted; Loom keeps one explicit operation menu.",
+      "checks": [
+        "scripts/official-web/inspector-chrome-release.test.mjs",
+        "scripts/official-web/inspector-browser.mjs"
+      ]
     }
   },
   "pending": [
