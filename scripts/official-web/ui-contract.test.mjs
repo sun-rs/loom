@@ -112,6 +112,20 @@ test("new local close affordances cannot silently bypass scenario owners", () =>
       if (exception) {
         assert.equal(c.source, "raft-ui#Button", file);
         assert.equal(c.props["data-loom-control"], "panel-back", file);
+      } else if (
+        file === "InstanceInspector.tsx" &&
+        c.props["aria-label"] === "关闭实例详情"
+      ) {
+        const scenario = contract.families.find(
+          (f) => f.id === "profile-header-close",
+        );
+        assert.equal(scenario?.selector.file, file);
+        assert.equal(scenario?.selector.ariaLabel, c.props["aria-label"]);
+        assert.equal(c.source, "raft-ui#PanelAction");
+        assert.equal(c.props.className, "hidden md:flex");
+        assert.equal(c.props["data-loom-control"], "detail-close");
+        assert.equal(c.props.size, undefined);
+        assert.equal(c.props.variant, undefined);
       } else
         assert.ok(
           allowed.has(c.source),

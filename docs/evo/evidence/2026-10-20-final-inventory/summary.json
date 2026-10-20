@@ -1,0 +1,35 @@
+{
+  "scope": "Finite closeout inventory and verification maintenance; no product runtime/backend changes",
+  "findings": [
+    {
+      "id": "UI-registry-drift",
+      "before": "ui-contract required CloseButton for InstanceInspector; current official release mapping and inspector gate require PanelAction. Mandatory UI contract failed2 assertions.",
+      "resolution": "Registered exact profile-header-close scenario and guarded source/label/mobile visibility/no size overrides. Other closes still require their original owners."
+    },
+    {
+      "id": "PDF-registration",
+      "before": "PDF acceptance recorded but scenario registry missing new whole-file scope",
+      "resolution": "Registered native shell/panel, null-anchor limitation, source and gate; no UI redesign."
+    },
+    {
+      "id": "navigation-old-heading",
+      "before": "WebKit navigation reached agents but awaited removed desktop Agent heading, timeout30s. RoleWorkspace explicitly hideDesktopHeader.",
+      "resolution": "Assert real agent-page visibility, create action and route; keep keyboard/back/forward/draft/overflow checks. Passed1440/390."
+    }
+  ],
+  "checks": {
+    "uiContract": "8 passed",
+    "inspectorSource": "2 passed",
+    "searchRecent": "WebKit1440/390 passed",
+    "navigation": "WebKit1440/390 passed",
+    "topbar": "WebKit1440/390 passed: overlay Escape/outside, full page, keyboard result activation, highlight and drafts"
+  },
+  "disposition": {
+    "currentScope": "No newly reproduced runtime defect found. UI registry and obsolete acceptance assertions repaired.",
+    "watchOnly": "Historical concurrent WebKit search overlay timeout not reproduced by current focused checks; root cause remains unknown. Retain failure evidence, reopen on concrete recurrence; not proven fixed.",
+    "deferred": "PDF page/selection anchors, state badges outside active conversation, complete cross-site pixel comparison are unsupported scope/evidence limits, not unfinished current-MVP work.",
+    "externalAcceptance": "Physical iOS/Android keyboard, safe area, PWA and OS notification display require devices.",
+    "backend": "Existing frozen MVP and provider/cost evidence limits unchanged; no new completeness claim."
+  },
+  "deployment": "No runtime source change; existing deployed3b7bcc04 retained, no paid providers."
+}

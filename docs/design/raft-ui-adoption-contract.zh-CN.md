@@ -20,11 +20,13 @@
 
 ## 当前已固化的边界
 
-- 本地详情关闭使用官方CloseButton，涵盖正常、加载、错误分支；明确标记data-loom-control=detail-close。
+- 一般本地详情关闭使用官方CloseButton，涵盖正常、加载、错误分支；明确标记data-loom-control=detail-close。实例资料页依照锁定v1.21.22的AgentDetailPanel采用PanelAction，登记为profile-header-close：桌面关闭、手机返回，不将其推广到其他详情。
 - 弹窗与抽屉使用DialogClose／DrawerClose，保留原有焦点及关闭阻挡；手机任务返回箭头是登记的独立语义例外。
 - 移动紧凑适配识别上述语义标记、panel-back或官方panel-action slot，不从SVG/span层级推断类型。视觉大小与点击区域分开核实，避免侵占相邻控件。
 - 筛选与表单分属不同组件族；任务／记忆紧凑筛选的适配不是全局重设所有筛选器。
 - 原生树节点、disclosure和消息工具栏不强制改成通用Button。ghost也不能全局替换outline。
+
+- 附件评论保留官方AttachmentPreviewShell/AttachmentCommentsPanel的按钮、桌面侧栏和手机sheet。PDF整份文件评论是已授权的Loom范围扩展，必须保留null锚点、范围说明和跨源查看器，不能声称支持页码/选区定位。
 
 ## 自动检查与证据
 

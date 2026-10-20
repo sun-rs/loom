@@ -62,6 +62,11 @@ export async function verifyGlobalNavigation({ browser, origin, channel }) {
             0,
           );
           await page.getByTestId("loom-settings-detail").waitFor();
+        } else if (id === "agents") {
+          await page.getByTestId("loom-agent-page").waitFor();
+          await page
+            .getByRole("button", { name: "新建角色", exact: true })
+            .waitFor();
         } else {
           await page
             .getByRole("heading", { name: label, exact: true })
@@ -116,9 +121,11 @@ export async function verifyGlobalNavigation({ browser, origin, channel }) {
     await showChatList(page);
     await nav.getByRole("button", { name: "Agent", exact: true }).focus();
     await page.keyboard.press("Enter");
-    await page.getByRole("heading", { name: "Agent", exact: true }).waitFor();
+    await page.getByTestId("loom-agent-page").waitFor();
+    assert.equal(new URL(page.url()).searchParams.get("view"), "agents");
     await page.reload();
-    await page.getByRole("heading", { name: "Agent", exact: true }).waitFor();
+    await page.getByTestId("loom-agent-page").waitFor();
+    assert.equal(new URL(page.url()).searchParams.get("view"), "agents");
     await page.mouse.move(viewport.width - 12, 100);
     await page.screenshot({
       path: join(tmpdir(), `loom-official-shell-agents-${viewport.width}.png`),
@@ -126,7 +133,8 @@ export async function verifyGlobalNavigation({ browser, origin, channel }) {
     });
     await nav.getByRole("button", { name: "任务", exact: true }).click();
     await page.goBack();
-    await page.getByRole("heading", { name: "Agent", exact: true }).waitFor();
+    await page.getByTestId("loom-agent-page").waitFor();
+    assert.equal(new URL(page.url()).searchParams.get("view"), "agents");
     await page.goForward();
     await page.getByRole("heading", { name: "任务", exact: true }).waitFor();
     assert.equal(

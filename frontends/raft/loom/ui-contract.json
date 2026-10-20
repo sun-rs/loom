@@ -25,7 +25,6 @@
       ],
       "bindings": [
         "MemoryPage.tsx",
-        "InstanceInspector.tsx",
         "TaskDetail.tsx",
         "SideWorkspace.tsx",
         "ThreadWorkspace.tsx"
@@ -94,6 +93,38 @@
         "frontends/raft/packages/web/src/components/ConfirmDialog.tsx"
       ],
       "bindings": ["DiscardChangesDialog.tsx", "MemoryEditor.tsx"]
+    },
+    {
+      "id": "profile-header-close",
+      "owner": "raft-ui PanelAction within official Agent profile header",
+      "rule": "Only the registered instance profile close uses native PanelAction; desktop action hidden below md, mobile uses native back. No size/variant override. Preserve Escape, opener focus and unknown-write guards.",
+      "sources": [
+        "frontends/raft/page-adoption.json",
+        "frontends/raft/packages/web/src/components/agent/AgentDetailPanel.tsx"
+      ],
+      "sourceRevision": "v1.21.22 af3d6ef4a22f0f05f5f9db9424285755d67e9726 / AgentDetailPanel-B3FrpUPj.js il; page-adoption instance-inspector-chrome",
+      "bindings": ["InstanceInspector.tsx"],
+      "selector": {
+        "file": "InstanceInspector.tsx",
+        "ariaLabel": "关闭实例详情"
+      },
+      "guard": "scripts/official-web/inspector-chrome-release.test.mjs"
+    },
+    {
+      "id": "attachment-comment-preview",
+      "owner": "official AttachmentPreviewShell / AttachmentCommentsPanel",
+      "rule": "Native comment toggle icon-lg ghost/outline and desktop sidebar/mobile sheet; Loom binds existing attachment comment owner. Published PDF permits whole-file discussion only, forces null anchors and displays scope. Cross-origin viewer unchanged; no page/selection annotations.",
+      "sources": [
+        "frontends/raft/packages/web/src/components/message/attachmentPreviewSurfaces.tsx",
+        "frontends/raft/packages/web/src/components/message/AttachmentCommentsPanel.tsx"
+      ],
+      "bindings": [
+        "DocumentPreview.tsx",
+        "useAttachmentComments.tsx",
+        "attachment-adaptation.ts"
+      ],
+      "guard": "scripts/official-web/pdf-attachment-browser.mjs",
+      "evidence": "docs/evo/evidence/2026-10-20-pdf-comments/summary.json"
     }
   ],
   "exceptions": [
