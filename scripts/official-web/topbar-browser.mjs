@@ -203,6 +203,13 @@ export async function openFullSearch(page) {
       .getByTestId("desktop-search-overlay")
       .getByRole("textbox", { name: "搜索内容" })
       .fill("fixture");
+    // fill() can return before React commits the query route. The old empty
+    // query button is replaced and moves down when filters mount; clicking it
+    // in that interval loses the native click between pointerdown and up.
+    await page
+      .getByTestId("desktop-search-overlay")
+      .locator('[data-slot="search-shell-filters"]')
+      .waitFor();
     await page.getByTestId("search-view-all-results").click();
     await page
       .getByTestId("desktop-search-overlay")

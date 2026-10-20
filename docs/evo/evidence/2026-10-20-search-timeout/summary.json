@@ -1,0 +1,74 @@
+{
+  "scope": "Historical desktop search overlay timeout causal investigation; no product runtime change",
+  "originalFailure": "Both retained2026-10-19 logs: openFullSearch click completed but desktop-search-overlay remained visible for30000ms. Not an API timeout.",
+  "reproduction": {
+    "automaticClick": "Serial WebKit locator.click reproduced at zero-based iteration12 of bounded30 loop; no concurrent gate needed.",
+    "eventEvidence": [
+      {
+        "event": "pointerdown",
+        "target": "search-view-all-results",
+        "url": "?view=search&q=fixture",
+        "rect": {
+          "x": 376,
+          "y": 90.5,
+          "width": 688,
+          "height": 70,
+          "top": 90.5,
+          "right": 1064,
+          "bottom": 160.5,
+          "left": 376
+        },
+        "active": null,
+        "sameNode": true,
+        "downConnected": true
+      },
+      {
+        "event": "focusin",
+        "url": "?view=search&q=fixture",
+        "rect": {
+          "x": 376,
+          "y": 90.5,
+          "width": 688,
+          "height": 70,
+          "top": 90.5,
+          "right": 1064,
+          "bottom": 160.5,
+          "left": 376
+        },
+        "active": null,
+        "sameNode": true,
+        "downConnected": true
+      },
+      {
+        "event": "pointerup",
+        "target": "discovery-results",
+        "url": "?view=search&q=fixture",
+        "rect": {
+          "x": 376,
+          "y": 139.5,
+          "width": 688,
+          "height": 70,
+          "top": 139.5,
+          "right": 1064,
+          "bottom": 209.5,
+          "left": 376
+        },
+        "active": null,
+        "sameNode": false,
+        "downConnected": false,
+        "filterHeight": 49
+      }
+    ],
+    "controlledPointer": "Fresh route, fill fixture, mouse down on visible old all-results button, hold300ms, mouse up at same coordinates: reproduced first iteration. Old button disconnected; filters mounted49px; replacement button moved90.5→139.5. No click event or presentation=page route transition.",
+    "control": "Same controlled pointer after native filter row visible:3/3 passed. Diagnostic output incorrectly hardcoded iterations60; actual retained script loops i<3. Natural-click geometry-instrumented60 iteration run also passed, illustrating timing dependence; not used as causal proof."
+  },
+  "cause": "Test did not wait for query render commit. fill() updates location before React commits conditional filters and query-keyed Results replacement. Existing empty-query all-results target passes visibility but can detach/move between pointerdown/up; browser correctly emits no button click. Parallel load only changes scheduling, not necessary cause.",
+  "fix": "openFullSearch waits for native search-shell-filters after nonempty query, then clicks; condition-based synchronization, no sleep/retry/longer timeout and no product UI change.",
+  "limits": [
+    "Historical runs had no event trace; cannot prove retrospective event identity. Same entry/symptom reproduced with causal event evidence now.",
+    "A physical user who presses during that exact query transition can also miss the moving target; not claiming zero layout-transition click loss. Changing retained UI layout would be separate product decision.",
+    "No changes to network/backend, model/provider or permissions."
+  ],
+  "privateEvidence": "/Users/sun/.loom/reviews/2026-10-20-search-timeout",
+  "verification": "WebKit navigation1440/390 passed after helper synchronization; URLs/back-forward/keyboard/draft/targets/overflow/external-request assertions retained. git diff --check and changed formatting passed. No runtime build/deploy needed for test/documentation-only change."
+}
