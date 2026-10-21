@@ -24,7 +24,7 @@ export default function RoleEditor({
   onNavigationDiscard,
 }: {
   client: RahClient;
-  field?: "runtimeOfferId" | "modelBindingId" | "reasoning";
+  field?: "runtimeOfferId" | "modelBindingId";
   role?: RoleTemplate;
   disabled: boolean;
   onDirtyChange?: (dirty: boolean) => void;
@@ -135,7 +135,7 @@ export default function RoleEditor({
                 }
               />
             </div>
-            <div hidden={field === "reasoning"}>
+            <div>
               <SelectField
                 label="模型"
                 value={form.modelBindingId}

@@ -295,7 +295,15 @@
       "guard": "scripts/official-web/role-profile-source.test.mjs",
       "scope": "Exact AgentHeaderName/InfoRow/style-constant extraction; structural composition of official hero, description and separated property groups. Loom maps configuration to Role, omits nonexistent handle/live status, retains immutable revision and field editors. No upstream business stores execute.",
       "compositionSource": "AgentDetailPanel hero lines 3167–3234; AgentProfileInfo description lines 1807+, info/runtime blocks lines 1958+/2088+ at pinned db5e399",
-      "localDifference": "Role prompt replaces description; runtime configuration uses existing Loom CLI/model/effort fields; field editors remain inline with dirty/permission guards. RoleWorkspace removes outer inset for Role profile so official section padding is applied once."
+      "localDifference": "Role model and effort edited together using published binding-specific options; existing immutable revision save. Default first tab Activity; profile includes native instance member list after a separated section. Local Role semantics and inline editors retained."
+    },
+    "roleActivity": {
+      "source": "frontends/raft/upstream/raft-web-source/packages/web/src/components/agent/AgentActivityLog.tsx",
+      "generator": "scripts/official-web/generate-activity.mjs",
+      "binding": "frontends/raft/loom/RoleActivity.tsx",
+      "guard": "scripts/official-web/role-activity.test.ts",
+      "scope": "Exact official LogItem and timeline recipes. Local read-only adapter merges member-scoped existing diagnostic pages and labels rows by frozen instance display name. PickerTriggerButton owns filter trigger. No upstream store/socket and no inferred task state.",
+      "bounds": "50 records per source, concurrency 4, most recent 100 rendered in aggregate; single-source cursor pagination. Visible named failures; active view only."
     }
   }
 }

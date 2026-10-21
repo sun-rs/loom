@@ -20,7 +20,7 @@ import {
   TabsTab,
   TabsLabel,
 } from "raft-ui";
-import { Plus, RefreshCw, Bot, Users } from "lucide-react";
+import { Plus, RefreshCw, Bot, Activity } from "lucide-react";
 import Frame from "./ChatSidebarFrame.tsx";
 import AvatarSlot from "../packages/web/src/components/ui/AvatarSlot.tsx";
 import PanelHeader, {
@@ -189,25 +189,27 @@ export default function RoleWorkspace({
                 <TabsList aria-label="角色详情">
                   <TabsTab
                     disabled={busy}
+                    value="activity"
+                    className="!cursor-default"
+                  >
+                    <Activity />
+                    <TabsLabel>动态</TabsLabel>
+                  </TabsTab>
+                  <TabsTab
+                    disabled={busy}
                     value="roles"
                     className="!cursor-default"
                   >
                     <Bot />
                     <TabsLabel>资料</TabsLabel>
                   </TabsTab>
-                  <TabsTab
-                    disabled={busy}
-                    value="instances"
-                    className="!cursor-default"
-                  >
-                    <Users />
-                    <TabsLabel>实例</TabsLabel>
-                  </TabsTab>
                 </TabsList>
               </ConversationPanelTabs>
             </div>
           )}
-          <div className={`min-h-0 flex-1 overflow-y-auto ${tab === "roles" && selected ? "" : "px-5 py-5"}`}>
+          <div
+            className={`min-h-0 flex-1 overflow-y-auto ${selected ? "" : "px-5 py-5"}`}
+          >
             {children}
           </div>
         </AppShellMainSlot>

@@ -20,6 +20,7 @@ export async function verifyAgentProfile({
       page.on("pageerror", (e) => errors.push(e.message));
       await page.goto(`${origin}/?view=agents&role=${role.roleId}`);
       const detail = page.getByTestId("loom-role-detail");
+      await detail.getByRole("tab", {name:"资料",exact:true}).click();
       await detail.getByTestId("loom-role-profile").waitFor();
       assert.equal(
         await detail.locator('input[aria-label="名称"]:visible').count(),
@@ -31,12 +32,12 @@ export async function verifyAgentProfile({
         ),
       );
       await detail
-        .getByRole("button", { name: "编辑名称", exact: true })
+        .getByRole("button", { name: "编辑显示名称", exact: true })
         .click();
       await detail
         .getByLabel("名称", { exact: true })
         .fill("FIXTURE unsaved profile");
-      await page.getByRole("tab", { name: "实例", exact: true }).click();
+      await page.getByRole("tab", { name: "动态", exact: true }).click();
       await page.getByRole("tab", { name: "资料", exact: true }).click();
       assert.equal(
         await detail.getByLabel("名称", { exact: true }).inputValue(),
@@ -46,7 +47,7 @@ export async function verifyAgentProfile({
         .getByLabel("名称", { exact: true })
         .fill(role.configuration.displayName);
       await detail.getByRole("button", { name: "取消", exact: true }).click();
-      await page.getByRole("tab", { name: "实例", exact: true }).click();
+      await page.getByRole("tab", { name: "资料", exact: true }).click();
       await detail
         .getByRole("button")
         .filter({ has: page.getByText(instanceNames[0], { exact: true }) })

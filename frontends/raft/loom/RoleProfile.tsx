@@ -4,11 +4,7 @@ import type {
   RoleTemplate,
   LocalRuntimeInventoryResponse,
 } from "@rah-os/protocol";
-import {
-  DescriptionList,
-  Separator,
-  Badge,
-} from "raft-ui";
+import { DescriptionList, Separator, Badge } from "raft-ui";
 import { Pencil, Cpu } from "lucide-react";
 import { roleFormFrom } from "@rah-os/client-core/role-form";
 import RoleFieldEditor, { type RoleField } from "./RoleFieldEditor.tsx";
@@ -18,7 +14,13 @@ import type { RoleCreateRequest } from "@rah-os/protocol";
 import { useTimeFormatter } from "../packages/web/src/hooks/useTimeFormatter.ts";
 import SectionEyebrow from "@loom/raft-web-source/SectionEyebrow";
 import AvatarEditVeil from "@loom/raft-web-source/AvatarEditVeil";
-import {InfoRow, AgentHeaderName, PROFILE_AVATAR_BUTTON_CLASS, RUNTIME_CHIP_CLASS, INFO_ICON_BUTTON_CLASS} from "./OfficialProfile.generated";
+import {
+  InfoRow,
+  AgentHeaderName,
+  PROFILE_AVATAR_BUTTON_CLASS,
+  RUNTIME_CHIP_CLASS,
+  INFO_ICON_BUTTON_CLASS,
+} from "./OfficialProfile.generated";
 export default function RoleProfile({
   client,
   role,
@@ -84,15 +86,17 @@ export default function RoleProfile({
     },
     {
       field: "modelBindingId",
-      label: "模型",
-      value:
-        (model?.displayName ?? model?.modelId ?? form.modelBindingId) ||
-        "未指定",
-    },
-    {
-      field: "reasoning",
-      label: "推理强度",
-      value: form.reasoning || "未指定",
+      label: "模型与推理强度",
+      value: (
+        <>
+          {(model?.displayName ?? model?.modelId ?? form.modelBindingId) ||
+            "未指定"}
+          <span className="text-foreground-hint">
+            {" "}
+            · 推理强度：{form.reasoning || "不适用／默认"}
+          </span>
+        </>
+      ),
     },
   ];
   const editor = (current: RoleField) => (
@@ -109,10 +113,13 @@ export default function RoleProfile({
   );
   const editAction = (current: RoleField, label: string) => (
     <Tooltip content={`编辑${label}`}>
-      <button type="button" aria-label={`编辑${label}`}
+      <button
+        type="button"
+        aria-label={`编辑${label}`}
         disabled={disabled || Boolean(field)}
         onClick={(e) => edit(current, e.currentTarget)}
-        className={INFO_ICON_BUTTON_CLASS}>
+        className={INFO_ICON_BUTTON_CLASS}
+      >
         <Pencil size={14} />
       </button>
     </Tooltip>
@@ -121,24 +128,51 @@ export default function RoleProfile({
   // Role configuration has no live presence or unique native session handle.
   return (
     <div data-testid="loom-role-profile" className="font-sans bg-layer-canvas">
-      <div data-testid="role-profile-hero" className="flex items-start gap-4 px-5 py-5">
+      <div
+        data-testid="role-profile-hero"
+        className="flex items-start gap-4 px-5 py-5"
+      >
         <Tooltip content="更换头像">
-          <button type="button" aria-label="更换头像"
+          <button
+            type="button"
+            aria-label="更换头像"
             disabled={disabled || Boolean(field)}
             onClick={(e) => edit("avatarKey", e.currentTarget)}
-            className={PROFILE_AVATAR_BUTTON_CLASS}>
-            <AvatarSlot context="profile-hero" type="agent" agentAvatarUrl={role.configuration.avatarKey} />
+            className={PROFILE_AVATAR_BUTTON_CLASS}
+          >
+            <AvatarSlot
+              context="profile-hero"
+              type="agent"
+              agentAvatarUrl={role.configuration.avatarKey}
+            />
             <AvatarEditVeil icon={Pencil} />
           </button>
         </Tooltip>
-        <div data-testid="role-profile-identity" className="min-w-0 flex-1 pt-1">
+        <div
+          data-testid="role-profile-identity"
+          className="min-w-0 flex-1 pt-1"
+        >
           <div ref={nameAction} className="flex min-w-0 items-center gap-2">
-            <AgentHeaderName agent={{name: role.configuration.displayName}}
-              onEdit={!disabled && !field ? () => { const button = nameAction.current?.querySelector("button"); if (button) edit("displayName", button); } : undefined} />
+            <AgentHeaderName
+              agent={{ name: role.configuration.displayName }}
+              onEdit={
+                !disabled && !field
+                  ? () => {
+                      const button =
+                        nameAction.current?.querySelector("button");
+                      if (button) edit("displayName", button);
+                    }
+                  : undefined
+              }
+            />
           </div>
           <div className="mt-2 flex min-w-0 flex-wrap items-center gap-1.5">
             <Badge appearance="outline">角色</Badge>
-            <Badge appearance="soft" variant="information" className={RUNTIME_CHIP_CLASS}>
+            <Badge
+              appearance="soft"
+              variant="information"
+              className={RUNTIME_CHIP_CLASS}
+            >
               <Cpu size={14} aria-hidden="true" />
               {runtime?.displayName ?? (loading ? "读取中…" : "当前配置不可用")}
             </Badge>
@@ -148,30 +182,53 @@ export default function RoleProfile({
           </p>
         </div>
       </div>
-      {(field === "avatarKey" || field === "displayName") && <div className="px-5 pb-4">{editor(field)}</div>}
+      {(field === "avatarKey" || field === "displayName") && (
+        <div className="px-5 pb-4">{editor(field)}</div>
+      )}
       <Separator />
       <section data-testid="role-profile-prompt" className="px-5 py-3">
         <div className="flex items-center gap-2 mb-1">
           <SectionEyebrow as="div">角色 Prompt</SectionEyebrow>
           {editAction("instructions", "角色 Prompt")}
         </div>
-        {field === "instructions" ? editor(field) :
-          <p className="text-subhead text-foreground whitespace-pre-wrap break-words">{form.instructions || <span className="text-foreground-hint">未设置</span>}</p>}
+        {field === "instructions" ? (
+          editor(field)
+        ) : (
+          <p className="text-subhead text-foreground whitespace-pre-wrap break-words">
+            {form.instructions || (
+              <span className="text-foreground-hint">未设置</span>
+            )}
+          </p>
+        )}
       </section>
       <Separator />
       <section className="px-5 py-4">
-        <SectionEyebrow as="div" className="mb-3">基本信息</SectionEyebrow>
+        <SectionEyebrow as="div" className="mb-3">
+          基本信息
+        </SectionEyebrow>
         <DescriptionList direction="horizontal">
-          <InfoRow label="创建时间">{formatShortDateTime(role.createdAt)}</InfoRow>
+          <InfoRow label="创建时间">
+            {formatShortDateTime(role.createdAt)}
+          </InfoRow>
         </DescriptionList>
       </section>
       <Separator />
       <section data-testid="role-profile-runtime" className="px-5 py-4">
-        <SectionEyebrow as="div" className="mb-3">运行配置</SectionEyebrow>
+        <SectionEyebrow as="div" className="mb-3">
+          运行配置
+        </SectionEyebrow>
         <DescriptionList direction="horizontal">
-          {facts.map(({field: current, label, value}) => (
-            <InfoRow key={current} label={label} actions={editAction(current, label)}>
-              {field === current ? <div className="w-full">{editor(current)}</div> : value}
+          {facts.map(({ field: current, label, value }) => (
+            <InfoRow
+              key={current}
+              label={label}
+              actions={editAction(current, label)}
+            >
+              {field === current ? (
+                <div className="w-full">{editor(current)}</div>
+              ) : (
+                value
+              )}
             </InfoRow>
           ))}
         </DescriptionList>

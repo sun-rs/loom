@@ -1,3 +1,5 @@
+import RoleActivity from "./RoleActivity.tsx";
+import SectionEyebrow from "@loom/raft-web-source/SectionEyebrow";
 import RoleProfile from "./RoleProfile.tsx";
 import InstanceInspector from "./InstanceInspector.tsx";
 import StandaloneChatDialog from "./StandaloneChatDialog.tsx";
@@ -14,7 +16,7 @@ import {
   useRef,
   type ReactNode,
 } from "react";
-import { Button, Spinner, AppShellMainSlot } from "raft-ui";
+import { Button, Spinner, AppShellMainSlot, Separator } from "raft-ui";
 import RoleWorkspace, { type RoleEntry } from "./RoleWorkspace.tsx";
 import type { RahClient } from "@rah-os/client-sdk";
 import type { RoleTemplate } from "@rah-os/protocol";
@@ -69,7 +71,7 @@ export default function AgentPage({
   );
   const { state, error, setError } = useManagement(manager);
   const [catalog, setCatalog] = useState<Catalog>();
-  const [tab, setTab] = useState("roles");
+  const [tab, setTab] = useState("activity");
   const [params, setParams] = useIntentRoute();
   const selectedId = params.get("role") ?? undefined;
   // Returning to a root tab hides detail without destroying its draft.
@@ -98,7 +100,7 @@ export default function AgentPage({
     if (id) next.set("role", id);
     else next.delete("role");
     setParams(next);
-    setTab("roles");
+    setTab("activity");
   };
   const [standalone, setStandalone] = useState<RoleTemplate>();
   const [edit, setEdit] = useState<Edit>();
@@ -294,6 +296,31 @@ export default function AgentPage({
           !error && <Spinner aria-label="读取角色和实例" />
         ) : (
           <>
+            {selected && (
+              <div hidden={tab !== "activity"}>
+                <RoleActivity
+                  key={selected.id}
+                  client={client}
+                  active={active && Boolean(selectedId) && tab === "activity"}
+                  sources={instances.flatMap((instance) => {
+                    const agent = catalog.agents.find(
+                      (a) => a.definition.agentId === instance.agentId,
+                    );
+                    return agent
+                      ? [
+                          {
+                            agentId: instance.agentId,
+                            instanceId: agent.definition.participantId,
+                            roomId: instance.channelId,
+                            name:
+                              agent.currentRevision.displayName ?? agent.handle,
+                          },
+                        ]
+                      : [];
+                  })}
+                />
+              </div>
+            )}
             <div hidden={tab !== "roles"}>
               {role ? (
                 <>
@@ -313,73 +340,80 @@ export default function AgentPage({
               ) : (
                 <p>从左侧选择或创建角色。</p>
               )}
-            </div>
-            <div hidden={tab !== "instances"}>
-              {!instances.length ? (
-                <p>此角色暂无实例</p>
-              ) : (
-                <ChannelMemberListShell framed={false}>
-                  {instances.map((instance) => {
-                    const agent = catalog.agents.find(
-                      (a) => a.definition.agentId === instance.agentId,
-                    );
-                    const name =
-                      agent?.currentRevision.displayName ??
-                      agent?.handle ??
-                      "实例";
-                    const room = catalog.rooms.find(
-                      (r) => r.roomId === instance.channelId,
-                    );
-                    return (
-                      <ChannelMemberRow
-                        key={instance.instanceId}
-                        type="agent"
-                        name={name}
-                        onRowClick={
-                          room
-                            ? () =>
-                                guard(() => {
-                                  instanceTrigger.current =
-                                    document.activeElement as HTMLElement;
-                                  setInspecting(instance.instanceId);
-                                })
-                            : undefined
-                        }
-                        secondary={`${room?.name ?? "频道不可用"} · ${instance.isCurrent ? "配置为当前修订" : "保留旧配置"}`}
-                        trailing={
-                          <RuntimeControl
-                            client={client}
-                            controlRoomId={controlRoomId}
-                            workspaceId={workspaceId}
-                            agentId={instance.agentId}
-                            branchSource={instance}
-                            onBranched={() => void refresh()}
-                            name={name}
-                            active={active && tab === "instances"}
-                            disabled={busy}
-                            items={[
-                              {
-                                label: "打开频道",
-                                run: () => onOpenChannel(instance.channelId),
-                              },
-                              {
-                                label: "重启实例",
-                                run: () =>
-                                  open({ kind: "restart", instance, name }),
-                              },
-                              {
-                                label: "移除实例",
-                                run: () =>
-                                  open({ kind: "remove", instance, name }),
-                              },
-                            ]}
-                          />
-                        }
-                      />
-                    );
-                  })}
-                </ChannelMemberListShell>
-              )}
+              <Separator />
+              <section
+                className="px-5 py-4"
+                data-testid="role-profile-instances"
+              >
+                <SectionEyebrow as="div" className="mb-3">
+                  实例 {instances.length}
+                </SectionEyebrow>
+                {!instances.length ? (
+                  <p>此角色暂无实例</p>
+                ) : (
+                  <ChannelMemberListShell framed={false}>
+                    {instances.map((instance) => {
+                      const agent = catalog.agents.find(
+                        (a) => a.definition.agentId === instance.agentId,
+                      );
+                      const name =
+                        agent?.currentRevision.displayName ??
+                        agent?.handle ??
+                        "实例";
+                      const room = catalog.rooms.find(
+                        (r) => r.roomId === instance.channelId,
+                      );
+                      return (
+                        <ChannelMemberRow
+                          key={instance.instanceId}
+                          type="agent"
+                          name={name}
+                          onRowClick={
+                            room
+                              ? () =>
+                                  guard(() => {
+                                    instanceTrigger.current =
+                                      document.activeElement as HTMLElement;
+                                    setInspecting(instance.instanceId);
+                                  })
+                              : undefined
+                          }
+                          secondary={`${room?.name ?? "频道不可用"} · ${instance.isCurrent ? "配置为当前修订" : "保留旧配置"}`}
+                          trailing={
+                            <RuntimeControl
+                              client={client}
+                              controlRoomId={controlRoomId}
+                              workspaceId={workspaceId}
+                              agentId={instance.agentId}
+                              branchSource={instance}
+                              onBranched={() => void refresh()}
+                              name={name}
+                              active={active && tab === "roles"}
+                              disabled={busy}
+                              items={[
+                                {
+                                  label: "打开频道",
+                                  run: () => onOpenChannel(instance.channelId),
+                                },
+                                {
+                                  label: "重启实例",
+                                  run: () =>
+                                    open({ kind: "restart", instance, name }),
+                                },
+                                {
+                                  label: "移除实例",
+                                  run: () =>
+                                    open({ kind: "remove", instance, name }),
+                                },
+                              ]}
+                            />
+                          }
+                        />
+                      );
+                    })}
+                  </ChannelMemberListShell>
+                )}
+              </section>
             </div>
           </>
         )}

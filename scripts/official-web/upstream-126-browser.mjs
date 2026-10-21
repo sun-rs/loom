@@ -15,6 +15,7 @@ export async function verifyUpstream126({ browser, origin, role, client }) {
     try {
       await page.goto(`${origin}/?view=agents&role=${role.roleId}`);
       const profile = page.getByTestId("loom-role-profile");
+      await page.getByRole("tab", {name:"资料",exact:true}).click();
       await profile.waitFor();
       await page.getByRole("tab", { name: "资料", exact: true }).waitFor();
       const avatarBounds = await profile.getByRole("button", {name:"更换头像",exact:true}).boundingBox();
@@ -49,6 +50,7 @@ export async function verifyUpstream126({ browser, origin, role, client }) {
         .getByRole("button", { name: "编辑显示名称", exact: true })
         .waitFor();
       await page.reload();
+      await page.getByRole("tab", {name:"资料",exact:true}).click();
       await profile.waitFor();
       assert.ok((await profile.innerText()).includes(name));
       await profile
@@ -62,7 +64,7 @@ export async function verifyUpstream126({ browser, origin, role, client }) {
         .getByRole("button", { name: "保存", exact: true })
         .waitFor({ state: "hidden" });
       await profile
-        .getByRole("button", { name: "编辑模型", exact: true })
+        .getByRole("button", { name: "编辑模型与推理强度", exact: true })
         .click();
       await profile.getByRole("button", { name: "取消", exact: true }).click();
       await profile

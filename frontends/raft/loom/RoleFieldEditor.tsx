@@ -16,7 +16,6 @@ export type RoleField =
   | "instructions"
   | "runtimeOfferId"
   | "modelBindingId"
-  | "reasoning"
   | "avatarKey";
 export default function RoleFieldEditor({
   field,

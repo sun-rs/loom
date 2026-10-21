@@ -22,3 +22,7 @@ Remaining `loom/` pages and other historical compatibility ports are **not** res
 ## Role profile
 
 Original `AgentDetailPanel.tsx` is retained as extraction input only. `node scripts/official-web/generate-profile.mjs` extracts native name, property-row and icon/style declarations verbatim; the generated file uses a minimal display projection rather than importing an upstream Agent store. `RoleProfile.tsx` structurally ports the official hero / description / separated information groups, using original parameters, with explicit Loom fields. This surrounding composition is a **structural port**, not a byte-identical full Agent page. Roles have no live status or native mention handle; neither is fabricated. Inline revision editors and approved mobile adaptation remain local. The native AvatarEditVeil is directly imported.
+
+## Role activity
+
+`AgentActivityLog.tsx` is extraction input only. `node scripts/official-web/generate-activity.mjs` extracts its native LogItem and timeline classes without upstream socket/store code. RoleActivity binds existing member-scoped diagnostic reads, annotates names and uses native picker controls. Default Role tab is Activity; profile retains instance management below its separated information sections. Aggregation is a bounded recent view (50 per member, at most 100 displayed, four concurrent reads); selecting one instance enables existing cursor history. Diagnostic timeline color does not establish live presence or task completion.

@@ -134,7 +134,7 @@ export async function verifyManagement({
     await detail.getByRole("button", { name: "编辑配置", exact: true }).click();
 
     await detail.getByLabel("名称", { exact: true }).fill(`${name}Edited`);
-    await page.getByRole("tab", { name: "实例", exact: true }).click();
+    await page.getByRole("tablist", { name: "角色详情" }).getByRole("tab", { name: "资料", exact: true }).click();
     await page.getByRole("tab", { name: "配置", exact: true }).click();
     assert.equal(
       await detail.getByLabel("名称", { exact: true }).inputValue(),
@@ -164,7 +164,7 @@ export async function verifyManagement({
       await client.request("agent.get", { agentId: instance.agentId })
     ).agent;
     const instanceName = agent.currentRevision.displayName ?? agent.handle;
-    await page.getByRole("tab", { name: "实例", exact: true }).click();
+    await page.getByRole("tablist", { name: "角色详情" }).getByRole("tab", { name: "资料", exact: true }).click();
     // Only this role's single instance is offered, although the fixture has other roles.
     assert.equal(
       await detail.getByRole("button", { name: /^更多操作 / }).count(),
@@ -205,7 +205,7 @@ export async function verifyManagement({
         .roleRevisionId,
       frozenRevision,
     );
-    await page.getByRole("tab", { name: "实例", exact: true }).click();
+    await page.getByRole("tablist", { name: "角色详情" }).getByRole("tab", { name: "资料", exact: true }).click();
     await page
       .getByRole("button", { name: `更多操作 ${instanceName}`, exact: true })
       .click();
@@ -277,7 +277,7 @@ export async function verifyManagement({
     assert.ok(
       catalog.instances.some((i) => i.instanceId === instance.instanceId),
     );
-    await page.getByRole("tab", { name: "实例", exact: true }).click();
+    await page.getByRole("tablist", { name: "角色详情" }).getByRole("tab", { name: "资料", exact: true }).click();
     await page
       .getByRole("button", { name: `更多操作 ${instanceName}`, exact: true })
       .click();
