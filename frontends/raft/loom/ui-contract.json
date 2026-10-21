@@ -219,6 +219,29 @@
         "Activity read filter only maps supported mentions/unread/all; other upstream filters omitted"
       ],
       "limits": "Generated boundaries are not whole-page equivalence; query state, overlays and task modal composition remain local."
+    },
+    {
+      "id": "task-board-source",
+      "owner": "db5e399 TasksPanel TaskSection/DroppableColumn/DraggableTaskWrapper, TaskCard, VirtualizedTaskStack",
+      "rule": "Generate native presentation and explicitly bind Loom TaskBoardActions. Permission and pending/unknown state disable both keyboard status control and drag initiation; local backend remains the sole task owner. VirtualizedTaskStack and TaskVirtualLayout share the single official context.",
+      "sources": [
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/task/TasksPanel.tsx",
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/task/TaskCard.tsx",
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/task/VirtualizedTaskStack.tsx"
+      ],
+      "bindings": [
+        "TasksPage.tsx",
+        "TaskBoardActions.tsx",
+        "OfficialTaskBoard.generated.tsx",
+        "OfficialTaskCard.generated.tsx"
+      ],
+      "guard": "scripts/official-web/task-board-source.test.mjs",
+      "localDifferences": [
+        "TaskCard controller replaced by useTaskCardActions; busy forwarded to status editor",
+        "DraggableTaskWrapper combines caller disabled with Loom canEditStatus and busy",
+        "Official cloud task/page stores excluded; only selected display declarations extracted"
+      ],
+      "limits": "Task page composition/filtering/create flow remains local; source hashes and license in source-lock.json."
     }
   ],
   "exceptions": [

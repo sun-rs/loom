@@ -19,7 +19,8 @@
     "./panelBounds": "./packages/web/src/lib/panelBounds.ts",
     "./AvatarListRow": "./packages/web/src/components/ui/AvatarListRow.tsx",
     "./KeyValueRow": "./packages/web/src/components/ui/KeyValueRow.tsx",
-    "./ShowMoreToggle": "./packages/web/src/components/ui/ShowMoreToggle.tsx"
+    "./ShowMoreToggle": "./packages/web/src/components/ui/ShowMoreToggle.tsx",
+    "./VirtualizedTaskStack": "./packages/web/src/components/task/VirtualizedTaskStack.tsx"
   },
   "peerDependencies": {
     "react": "^19.0.0",

@@ -7,7 +7,7 @@
 | 层次 | 已落地 | 边界 |
 | --- | --- | --- |
 | 基础设计系统 | `@botiverse/raft-ui@0.10.5`，canonical/legacy 导入共享运行时 | 原生控件、recipe、字体和状态；不能据此认定每个页面组合原生 |
-| 直接源码依赖 | Tooltip、CloseButton、EmptyState、SectionHeader、SectionEyebrow、PanelHeader、AppearanceThemePicker、AvatarEditVeil、SettingsProfileCard、SurfaceListItem、SlugInput、panelBounds、AvatarListRow、KeyValueRow、ShowMoreToggle | 私有本地分发包的原文件保留官方字节，不是官方发布的完整 Web npm 包 |
+| 直接源码依赖 | Tooltip、CloseButton、EmptyState、SectionHeader、SectionEyebrow、PanelHeader、AppearanceThemePicker、AvatarEditVeil、SettingsProfileCard、SurfaceListItem、SlugInput、panelBounds、AvatarListRow、KeyValueRow、ShowMoreToggle、VirtualizedTaskStack | 私有本地分发包的原文件保留官方字节，不是官方发布的完整 Web npm 包 |
 | 外观区块 | 从官方 SettingsPanel 精确提取正文与预览声明 | 显式接入现有设备偏好和主题hook；消息预览和字号组件仍沿用原模块 |
 | 日期与时间 | 从官方 LanguageRegionSection 原样提取日期/时间 JSX 子树 | 保存/错误绑定浏览器设备偏好；中文限定语言块仍为本地组合 |
 | 更新日志 | 原样提取官方内容 JSX、分类与徽标规则 | Loom 自有静态发布记录；既有设置外壳负责标题和滚动，旧构建时切片已移除 |
@@ -24,7 +24,8 @@
 
 - 顶栏、导航、分栏及响应式组合仍有结构移植。
 - 聊天、单聊、消息列、composer：原组件与构建时变换混合，须逐步提炼稳定数据/事件接口；保留草稿、IME、虚拟历史、焦点、发送权限与因果屏障。
-- 搜索、动态、任务：基础控件可升级，但页面级查询、列表、预览、筛选、拖动和跳转组合仍需迁移。
+- 搜索、动态：页面级查询、列表、预览、筛选和跳转组合仍需迁移。公开SearchOverlay使用DialogSurface与遮罩，现有资源移植用PopoverPopup及透明遮罩，定位契约也不同；须核对完整版本链再替换，不作为等价依赖。
+- 任务：看板列、分组列表、拖动包装和卡片已提取为显式生成边界，虚拟列表直接依赖；页面工具栏、过滤、创建和详情整体组合仍需收拢。
 - Agent：列表、工作区、实例资料/控制仍有本地组合。Role/Instance区别不是等待删除的“偏差”。
 - 计算机：手机按官方仅在设置列表中提供二级入口，桌面仍独立导航；手机列表采用官方ListRow/IconTile组合。实例列表和只读属性行直接依赖官方原文件；运行时、编辑和详情组合仍在本地。历史附件卡片行尚未迁移，不能把同名组件一并算作完成。
 - 设置：外观、日期时间、更新日志及账户/通知/关于/系统频道展示已迁移；归档、侧栏、表单也已迁入；设置外壳、用量、运行配置和部分子组件仍有本地组合。用量和运行配置与Raft云端计费/分析设置并不等价，不列为等待照抄的业务页面。

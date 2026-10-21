@@ -25,7 +25,6 @@ import {
   adaptTaskComposer,
   adaptTaskMessage,
 } from "./channel-task-adaptation.ts";
-import { exposeTaskPresentation, adaptTaskCard } from "./task-adaptation.ts";
 import {
   adaptThreadItem,
   adaptThreadFooter,
@@ -126,10 +125,6 @@ export default defineConfig({
           )
         )
           return { code: adaptPdfComments(code), map: null };
-        if (id.endsWith("/packages/web/src/components/task/TaskCard.tsx"))
-          return { code: adaptTaskCard(code), map: null };
-        if (id.endsWith("/packages/web/src/components/task/TasksPanel.tsx"))
-          return { code: exposeTaskPresentation(code), map: null };
         if (
           id.endsWith("/packages/web/src/components/message/MessageInput.tsx")
         )
@@ -179,8 +174,6 @@ export default defineConfig({
           return resolve(import.meta.dirname, "ComposerDirectory.tsx");
         if (source === "loom-reactions")
           return resolve(import.meta.dirname, "MessageReactions.tsx");
-        if (source === "loom-task-board-actions")
-          return resolve(import.meta.dirname, "TaskBoardActions.tsx");
         if (
           importer?.endsWith("/components/member/GravatarAvatar.tsx") &&
           source === "../../utils/humanAvatar"

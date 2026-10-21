@@ -44,11 +44,9 @@ import type {
   TaskWorkflowStatus,
 } from "@rah-os/protocol";
 import {
-  // @ts-expect-error -- checked build adapter exports this unchanged native function.
   TaskSection,
-  // @ts-expect-error -- checked build adapter exports this unchanged native function.
   DroppableColumn,
-} from "../packages/web/src/components/task/TasksPanel.tsx";
+} from "./OfficialTaskBoard.generated.tsx";
 import { TaskVirtualLayout } from "../packages/web/src/components/task/VirtualizedTaskStack.tsx";
 import { SkeletonRow } from "../packages/web/src/components/ui/Skeleton.tsx";
 import EmptyState from "../packages/web/src/components/ui/EmptyState.tsx";

@@ -34,6 +34,9 @@
     "packages/web/src/components/search/EntityResultRow.tsx": "93bda2715fa48af7d0c7f9dde8d553fcccccd883c12e5e4bb46b11b6ef050be7",
     "packages/web/src/components/search/SearchHomeEntityRow.tsx": "56f2ddfef73fc959ce186a7961edae9d85ab72b90fbab77bfeaf5fc329100323",
     "packages/web/src/components/thread/ThreadsInbox.tsx": "d48bd5bed86349f5f18ee06cf12a5918bdf8f400ac0d13b6967f96e863a38a00",
-    "packages/web/src/components/ui/ShowMoreToggle.tsx": "b30d6899fd6a0709f4519dc89d7019ad3202a1028576090d467a28f004c247ac"
+    "packages/web/src/components/ui/ShowMoreToggle.tsx": "b30d6899fd6a0709f4519dc89d7019ad3202a1028576090d467a28f004c247ac",
+    "packages/web/src/components/task/TasksPanel.tsx": "fa98a20364d6d46a181e12c7b5bb5b682250b7589855a35006425ca950274e8b",
+    "packages/web/src/components/task/TaskCard.tsx": "229296e9e09af27cfba3e70939ac8d7f8899af62c7dd668f9fc0d016835d3c04",
+    "packages/web/src/components/task/VirtualizedTaskStack.tsx": "74fd0131324201d5f08ec30d8c2e4573e71fab864e27a93629e2411b15ccf25d"
   }
 }
