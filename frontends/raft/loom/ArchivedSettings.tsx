@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
-import NativeArchivedChannels from "loom-native-archived-channels";
+import NativeArchivedChannels from "./OfficialArchivedChannels.generated.tsx";
 import { ManagementClient } from "./management-client.ts";
 import { OperationStatus, useManagement } from "./ManagementUi.tsx";
 import { useIntentRoute, useRouteIntentOwner } from "./useIntentRoute.ts";

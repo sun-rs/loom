@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 const read = (p) => readFileSync("frontends/raft/" + p, "utf8");
 test("FormField delegates label density and spacing to native Field recipes", () => {
-  const s = read("packages/web/src/components/ui/FormField.tsx");
-  assert.match(s, /size=\{fieldSize\}/);
+  const s = read("loom/OfficialFormField.generated.tsx");
+  assert.match(s, /size=\{labelSize\}/);
   assert.doesNotMatch(
     s,
     /LABEL_BASE|LABEL_UPPERCASE|className="mt-1"|mb-1 flex/,

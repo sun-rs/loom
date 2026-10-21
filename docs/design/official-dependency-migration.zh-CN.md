@@ -7,11 +7,12 @@
 | 层次 | 已落地 | 边界 |
 | --- | --- | --- |
 | 基础设计系统 | `@botiverse/raft-ui@0.10.5`，canonical/legacy 导入共享运行时 | 原生控件、recipe、字体和状态；不能据此认定每个页面组合原生 |
-| 直接源码依赖 | Tooltip、CloseButton、EmptyState、SectionHeader、SectionEyebrow、PanelHeader、AppearanceThemePicker、AvatarEditVeil、SettingsProfileCard、SurfaceListItem、SlugInput | 私有本地分发包的原文件保留官方字节，不是官方发布的完整 Web npm 包 |
+| 直接源码依赖 | Tooltip、CloseButton、EmptyState、SectionHeader、SectionEyebrow、PanelHeader、AppearanceThemePicker、AvatarEditVeil、SettingsProfileCard、SurfaceListItem、SlugInput、panelBounds | 私有本地分发包的原文件保留官方字节，不是官方发布的完整 Web npm 包 |
 | 外观区块 | 从官方 SettingsPanel 精确提取正文与预览声明 | 显式接入现有设备偏好和主题hook；消息预览和字号组件仍沿用原模块 |
 | 日期与时间 | 从官方 LanguageRegionSection 原样提取日期/时间 JSX 子树 | 保存/错误绑定浏览器设备偏好；中文限定语言块仍为本地组合 |
 | 更新日志 | 原样提取官方内容 JSX、分类与徽标规则 | Loom 自有静态发布记录；既有设置外壳负责标题和滚动，旧构建时切片已移除 |
 | 账户／通知／关于／系统频道 | 锁定官方展示切片，系统频道 JSX 原样提取；删除四条运行时改写 | 账户删去云端字段并保留编辑围栏；通知保留未知状态保护与恢复操作；关于只保留产品版本。子组件闭包尚有历史适配，不称整页原封不动 |
+| 归档／设置侧栏／表单 | 官方展示声明提取，恢复按钮与Field原声明复用；分栏尺寸直接依赖官方 | 归档频道标签本地化；省去云端反馈；表单兼容旧labelStyle参数但不采用旧样式 |
 | Role 资料 | 官方名称、属性行、样式声明精确提取 | 头像/Prompt/信息/运行配置分区是有记录的结构移植；Role语义和实例管理保持本地 |
 | 动态时间线 | 官方 LogItem 与 recipe 精确提取，Role 与实例轨迹共用 TrajectoryRow | 数据读取/实例名/诊断文本映射在 Loom，历史分页和权限仍由既有 API 负责 |
 
@@ -24,7 +25,7 @@
 - 搜索、动态、任务：基础控件可升级，但页面级查询、列表、预览、筛选、拖动和跳转组合仍需迁移。
 - Agent：列表、工作区、实例资料/控制仍有本地组合。Role/Instance区别不是等待删除的“偏差”。
 - 计算机：运行时和实例列表接线仍在本地详情组合中。
-- 设置：外观、日期时间、更新日志及账户/通知/关于/系统频道展示已迁移；设置外壳、归档、用量、运行配置和部分子组件仍有本地实现/旧源码适配。
+- 设置：外观、日期时间、更新日志及账户/通知/关于/系统频道展示已迁移；归档、侧栏、表单也已迁入；设置外壳、用量、运行配置和部分子组件仍有本地组合。用量和运行配置与Raft云端计费/分析设置并不等价，不列为等待照抄的业务页面。
 - 附件、评论、文件树、diff：展示原模块与本地适配并存，不能绕过文件访问和附件授权。
 - 全局记忆、Fork/Side：没有完全对应的官方业务页面，应维持 Loom 语义，以官方场景组件组合；不为“依赖化”引入官方业务 store 或改变后端。
 

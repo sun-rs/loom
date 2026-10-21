@@ -468,6 +468,13 @@ try {
         await verifyPanelPolicy({ browser, origin, client, channels, head }),
       ),
     );
+  } else if (process.env.LOOM_BROWSER_SLICE === "settings-foundation") {
+    const results={};
+    results.navigation=await verifySettingsNavigation({browser,origin});
+    results.archive=await verifySettingsArchive({browser,origin,client,workspace,head});
+    results.account=await verifyAccountSettings({browser,origin,client});
+    results.region=await verifyRegionSettings({browser,origin});
+    console.log(JSON.stringify(results));
   } else if (process.env.LOOM_BROWSER_SLICE === "settings-sections") {
     const results = {};
     results.account = await verifyAccountSettings({browser,origin,client});

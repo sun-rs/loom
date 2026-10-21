@@ -1,3 +1,4 @@
+import { SIDEBAR_PANEL_BOUNDS } from "../../frontends/raft/upstream/raft-web-source/packages/web/src/lib/panelBounds.ts";
 import assert from "node:assert/strict";
 // Temporary Core only; navigation and unsaved drafts do not mutate settings.
 export async function verifySettingsNavigation({ browser, origin }) {
@@ -37,7 +38,7 @@ export async function verifySettingsNavigation({ browser, origin }) {
         .waitFor({ timeout: 5000 });
       const sidebar = page.getByTestId("loom-settings-sidebar");
       const before = await sidebar.boundingBox();
-      assert.equal(before.width, 240);
+      assert.equal(before.width, SIDEBAR_PANEL_BOUNDS.defaultWidth);
       const handle = await page
         .getByTestId("settings-sidebar-resize")
         .boundingBox();
@@ -52,7 +53,33 @@ export async function verifySettingsNavigation({ browser, origin }) {
         { steps: 5 },
       );
       await page.mouse.up();
-      assert.equal((await sidebar.boundingBox()).width, 280);
+      assert.equal(
+        (await sidebar.boundingBox()).width,
+        Math.min(
+          SIDEBAR_PANEL_BOUNDS.max,
+          SIDEBAR_PANEL_BOUNDS.defaultWidth + 40,
+        ),
+      );
+      for (const [delta, expected] of [
+        [600, SIDEBAR_PANEL_BOUNDS.max],
+        [-600, SIDEBAR_PANEL_BOUNDS.min],
+      ]) {
+        const current = await page
+          .getByTestId("settings-sidebar-resize")
+          .boundingBox();
+        await page.mouse.move(
+          current.x + current.width / 2,
+          current.y + current.height / 2,
+        );
+        await page.mouse.down();
+        await page.mouse.move(
+          Math.max(1, current.x + delta),
+          current.y + current.height / 2,
+          { steps: 5 },
+        );
+        await page.mouse.up();
+        assert.equal((await sidebar.boundingBox()).width, expected);
+      }
     }
     await list.getByRole("button", { name: "管理", exact: true }).click();
     const input = page.getByLabel("本机同时运行上限", { exact: true });

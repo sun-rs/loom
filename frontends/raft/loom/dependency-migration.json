@@ -16,7 +16,10 @@
       "loom/OfficialActivity.generated.tsx",
       "loom/OfficialDateTime.generated.tsx",
       "loom/OfficialReleaseNotes.generated.tsx",
-      "loom/OfficialSettingsSections.generated.tsx"
+      "loom/OfficialSettingsSections.generated.tsx",
+      "loom/OfficialArchivedChannels.generated.tsx",
+      "loom/OfficialSettingsSidebar.generated.tsx",
+      "loom/OfficialFormField.generated.tsx"
     ],
     "foundation": "package.json#dependencies.raft-ui"
   },
@@ -104,11 +107,14 @@
         "loom/NotificationSettings.tsx",
         "loom/OfficialDateTime.generated.tsx",
         "loom/OfficialReleaseNotes.generated.tsx",
-        "loom/OfficialSettingsSections.generated.tsx"
+        "loom/OfficialSettingsSections.generated.tsx",
+        "loom/OfficialArchivedChannels.generated.tsx",
+        "loom/OfficialSettingsSidebar.generated.tsx",
+        "loom/OfficialFormField.generated.tsx"
       ],
-      "adopted": "外观声明和日期/时间JSX自动提取；主题选择器直接依赖；其他Tab仍混合；更新日志内容区块及分类规则自动提取，旧构建切片已删除；账户资料/通知/关于/系统频道采用锁定源码展示切片与显式兼容补丁，删除四条运行时改写",
+      "adopted": "外观声明和日期/时间JSX自动提取；主题选择器直接依赖；其他Tab仍混合；更新日志内容区块及分类规则自动提取，旧构建切片已删除；账户资料/通知/关于/系统频道采用锁定源码展示切片与显式兼容补丁，删除四条运行时改写；归档及恢复按钮/设置侧栏/表单已提取，panelBounds直接依赖官方",
       "remaining": [
-        "归档/用量/运行配置及设置外壳仍有本地组合或旧源码适配；账户FormField/AvatarSlot等依赖闭包未全部直接化；外观消息预览/字号组件仍沿用原模块"
+        "设置外壳路由/响应式组合、AvatarSlot及外观消息预览等仍有本地适配；用量和执行设置无等价官方业务页，明确保留Loom语义和官方原语组合"
       ]
     }
   ],

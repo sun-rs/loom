@@ -15,7 +15,8 @@
     "./AvatarEditVeil": "./packages/web/src/components/ui/AvatarEditVeil.tsx",
     "./SettingsProfileCard": "./packages/web/src/components/settings/SettingsProfileCard.tsx",
     "./SurfaceListItem": "./packages/web/src/components/ui/SurfaceListItem.tsx",
-    "./SlugInput": "./packages/web/src/components/ui/SlugInput.tsx"
+    "./SlugInput": "./packages/web/src/components/ui/SlugInput.tsx",
+    "./panelBounds": "./packages/web/src/lib/panelBounds.ts"
   },
   "peerDependencies": {
     "react": "^19.0.0",

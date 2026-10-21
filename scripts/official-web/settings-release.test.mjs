@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 const read = (p) => readFileSync("frontends/raft/" + p, "utf8");
 test("settings sidebar adopts native group and item composition instead of hand-sized labels", () => {
   const s = read(
-    "packages/web/src/components/settings/SettingsSidebarList.tsx",
+    "loom/OfficialSettingsSidebar.generated.tsx",
   );
   for (const name of [
     "SidebarGroupLabel",

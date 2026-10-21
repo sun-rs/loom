@@ -1,33 +1,29 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { adaptArchivedChannels } from "../../frontends/raft/loom/settings-archive-adaptation.ts";
-const source = readFileSync(
-  new URL(
-    "../../frontends/raft/packages/web/src/components/settings/ArchivedChannelsSection.tsx",
-    import.meta.url,
-  ),
-  "utf8",
-);
-test("Archived settings keep official section markup, row/button composition and scoped controller", () => {
-  const output = adaptArchivedChannels(source);
-  const render = source.slice(
-    source.indexOf("  return (\n    <section"),
-    source.indexOf("\nexport default"),
+import { generateSettingsFoundation } from "./generate-settings-foundation.mjs";
+test("Archive adopts official rows, restore button and visibility rule with local authority", () => {
+  const output = generateSettingsFoundation().OfficialArchivedChannels;
+  assert.match(output, /useArchivedSettings\(\)/);
+  assert.match(
+    output,
+    /!capabilities.archiveChannels \|\| loading \|\| archivedChannels.length === 0/,
+  );
+  assert.match(output, /disabled=\{busyChannelId !== null\}/);
+  assert.match(output, /const typeLabel = "频道"/);
+  assert.doesNotMatch(
+    output,
+    /useServerStore|useChannelStore|await unarchiveChannel/,
+  );
+  const source = readFileSync(
+    "frontends/raft/upstream/raft-web-source/packages/web/src/components/settings/UnarchiveChannelButton.tsx",
+    "utf8",
   );
   assert.ok(
     output.includes(
-      render.replace(
-        "formatMessage({ id: channelTypeMessageId(channel.type) })",
-        '"频道"',
-      ),
-    ),
-  );
-  assert.ok(output.includes("useArchivedSettings()"));
-  assert.ok(!output.includes("await unarchiveChannel(channel.id)"));
-  assert.throws(() =>
-    adaptArchivedChannels(
-      source.replace("await unarchiveChannel(channel.id);", "await other();"),
+      source
+        .slice(source.indexOf("export function UnarchiveChannelButton"))
+        .trim(),
     ),
   );
 });

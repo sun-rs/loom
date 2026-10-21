@@ -22,6 +22,11 @@
     "packages/web/src/components/settings/ReleaseNotesPanel.tsx": "7dfee1133aa9aaefca394a762a58b01f0a08f5b51767dc59cb66dc2af227794f",
     "packages/web/src/components/settings/SettingsProfileCard.tsx": "17d8cf87ac286848effdf7dee69fa7f1cd0d5ac46401cc3f4307e0ff074e490d",
     "packages/web/src/components/ui/SurfaceListItem.tsx": "e9d68bf2e470af40712836fb3cbe441cbd14212dceac9744395928b3a1be7599",
-    "packages/web/src/components/ui/SlugInput.tsx": "d9eae57c97a4f61841ff9a0e15c0bb76917780d6decca4ac1a2bf9e8bfa492ff"
+    "packages/web/src/components/ui/SlugInput.tsx": "d9eae57c97a4f61841ff9a0e15c0bb76917780d6decca4ac1a2bf9e8bfa492ff",
+    "packages/web/src/components/settings/ArchivedChannelsSection.tsx": "d39c8865c0b8f760c6ea71d4dd57a9011f111d02e58cc97920cde52873bc07bd",
+    "packages/web/src/components/settings/UnarchiveChannelButton.tsx": "14a2ef2e93e850c09b91cffdc06fc4b1ff0764220f65894862ce5e1d1057e335",
+    "packages/web/src/components/settings/SettingsSidebarList.tsx": "cad7aea8a60e5f02536e152bbfa5cdbcb1cd611b045bc770764a0f201e160677",
+    "packages/web/src/components/ui/FormField.tsx": "47d1deed8e88ba19193fba249a7769b5fcd9c34d699495670ddd803c096fae36",
+    "packages/web/src/lib/panelBounds.ts": "1631bd5e9497909d4504199ba0fadec30e77b26f2991a16a8b6de527c797d5c9"
   }
 }

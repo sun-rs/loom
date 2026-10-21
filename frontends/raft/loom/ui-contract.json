@@ -350,5 +350,40 @@
       "SurfaceListItem",
       "SlugInput"
     ]
+  },
+  "settingsFoundationSourceParity": {
+    "sources": [
+      "upstream/raft-web-source/packages/web/src/components/settings/ArchivedChannelsSection.tsx",
+      "upstream/raft-web-source/packages/web/src/components/settings/UnarchiveChannelButton.tsx",
+      "upstream/raft-web-source/packages/web/src/components/settings/SettingsSidebarList.tsx",
+      "upstream/raft-web-source/packages/web/src/components/ui/FormField.tsx",
+      "upstream/raft-web-source/packages/web/src/lib/panelBounds.ts"
+    ],
+    "generator": "scripts/official-web/generate-settings-foundation.mjs",
+    "bindings": [
+      "loom/ArchivedSettings.tsx",
+      "packages/web/src/components/settings/SettingsSidebarList.tsx",
+      "packages/web/src/components/ui/FormField.tsx",
+      "packages/web/src/lib/panelBounds.ts"
+    ],
+    "guards": [
+      "scripts/official-web/settings-foundation-source.test.mjs",
+      "scripts/official-web/settings-archive.test.ts",
+      "scripts/official-web/settings-release.test.mjs",
+      "scripts/official-web/form-role-release.test.mjs"
+    ],
+    "browser": "settings-foundation slice: archive/navigation/account/region desktop1440 and mobile390",
+    "localDifferences": [
+      "Archive type label is channel, not upstream public/nonmember; original local permission and write controller retained",
+      "Settings sidebar omits cloud feedback unread dot, Loom supplies supported category entries",
+      "FormField retains type-only legacy labelStyle argument ignored; official FieldLabel owns style",
+      "FormField i18n fallback binds existing local message catalog; archive timestamps bind existing time formatter",
+      "Settings shell still owns local routing, draft preservation and mobile master-detail; no claim of whole native shell extraction"
+    ],
+    "directDependency": "panelBounds exact source; default/min/max browser assertions derive from same locked source",
+    "nonEquivalent": [
+      "UsageDataSettings is analytics consent, not token usage",
+      "HostedRuntimeSpendCard and agent hosted-runtime settings concern Raft cloud products; Loom usage and execution settings remain intentional local compositions of native primitives"
+    ]
   }
 }
