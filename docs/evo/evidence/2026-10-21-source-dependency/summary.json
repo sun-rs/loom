@@ -1,0 +1,84 @@
+{
+  "productCommit": "315b2e4a",
+  "scope": "First immutable official source dependency slice, not full Web conversion",
+  "upstream": {
+    "sourceRevision": "db5e399f017d584e49597e3a28757645d6807893",
+    "sourceRelease": "v1.21.23-source.1",
+    "uiPackage": "@botiverse/raft-ui@0.10.5",
+    "officialOriginalFiles": 8,
+    "selectedComponents": [
+      "Tooltip",
+      "CloseButton",
+      "EmptyState",
+      "SectionHeader",
+      "SectionEyebrow",
+      "PanelHeader"
+    ],
+    "directComparison": "8/8 byte-identical to authorized checkout"
+  },
+  "checks": {
+    "tdd": "Dependency hash/adapter guard first failed before implementation; direct comparison test failed before export was added.",
+    "sourceTests": 22,
+    "uiContractTests": 8,
+    "typecheck": true,
+    "build": true,
+    "lockfileDryRunOffline": true,
+    "webkitPanelPolicy": "8 widths/orientations; responsive visibility, splitter and no-overflow checks passed",
+    "webkitProfile": "1440/390; name and avatar changes persisted, instances retained; fake-provider fixture only",
+    "formalReadOnly": {
+      "readOnly": true,
+      "physicalDevice": false,
+      "results": [
+        {
+          "width": 1440,
+          "message": {
+            "gap": "6px",
+            "time": "TIME",
+            "datetime": "2026-10-13T05:21:37.595Z",
+            "leading": "16px"
+          },
+          "activityRowPresent": true,
+          "noOverflow": true
+        },
+        {
+          "width": 900,
+          "message": {
+            "gap": "6px",
+            "time": "TIME",
+            "datetime": "2026-10-13T05:21:37.595Z",
+            "leading": "16px"
+          },
+          "activityRowPresent": true,
+          "noOverflow": true
+        },
+        {
+          "width": 390,
+          "message": {
+            "gap": "6px",
+            "time": "TIME",
+            "datetime": "2026-10-13T05:21:37.595Z",
+            "leading": "16px"
+          },
+          "activityRowPresent": true,
+          "noOverflow": true
+        }
+      ]
+    }
+  },
+  "deployment": {
+    "verified": true,
+    "backedUpDatabases": 2,
+    "backedUpFiles": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true,
+    "dataHomeUnchanged": true
+  },
+  "limits": [
+    "Whole application remains partially ported; selected package is our private distribution, not upstream npm.",
+    "Exact public source revision differs from locked production Web asset revision; no latest-source claim.",
+    "Approved mobile header placement remains outer CSS adaptation.",
+    "No paid CLI, physical phone or whole-site acceptance in this batch.",
+    "Upgrades still require affected API/composition/responsive/focus checks; no zero-QA promise."
+  ],
+  "privateEvidence": "/Users/sun/.loom/reviews/2026-10-21-source-dependency"
+}
