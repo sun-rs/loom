@@ -1,0 +1,76 @@
+{
+  "productCommit": "6744d19c",
+  "sourceRevision": "db5e399f017d584e49597e3a28757645d6807893",
+  "scope": "Role profile hierarchy restoration and selected official source reuse",
+  "sourceReuse": {
+    "immutableFiles": 13,
+    "exactDeclarations": [
+      "AgentHeaderName",
+      "InfoRow",
+      "PROFILE_AVATAR_BUTTON_CLASS",
+      "RUNTIME_CHIP_CLASS",
+      "INFO_ICON_BUTTON_CLASS"
+    ],
+    "directComponent": "AvatarEditVeil",
+    "structuralPort": "RoleProfile hero/description/info/runtime composition; preserves native section spacing and separators",
+    "localBindings": [
+      "Role display name, avatar, frozen revision configuration",
+      "Role Prompt instead of agent description",
+      "No invented live Role presence or native @handle",
+      "Existing inline editors with dirty/permission/revision guards"
+    ]
+  },
+  "checks": {
+    "sourceTests": 11,
+    "uiContractTests": 8,
+    "typecheck": true,
+    "build": true,
+    "webkit": [
+      1440,
+      390
+    ],
+    "browserBehavior": [
+      "identity beside avatar",
+      "3 native separators",
+      "name edit and cancel focus restoration",
+      "name/avatar saved",
+      "instances preserved"
+    ],
+    "tdd": "Source guard failed before generator; browser reproduced cancel focus timeout then passed after restoring focus to remounted native action",
+    "formalReadOnly": {
+      "readOnly": true,
+      "physicalDevice": false,
+      "results": [
+        {
+          "width": 1440,
+          "identityBesideAvatar": true,
+          "separators": 3,
+          "noOverflow": true
+        },
+        {
+          "width": 390,
+          "identityBesideAvatar": true,
+          "separators": 3,
+          "noOverflow": true
+        }
+      ]
+    },
+    "screenshotsReviewed": [
+      1440,
+      390
+    ]
+  },
+  "deployment": {
+    "verified": true,
+    "databasesBackedUp": 2,
+    "filesBackedUp": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true
+  },
+  "limits": [
+    "Not full untouched AgentDetailPanel reuse; source helpers exact, Role composition structural port",
+    "No real-phone or paid-provider run",
+    "Other application pages still include historical ports"
+  ],
+  "privateEvidence": "/Users/sun/.loom/reviews/2026-10-21-role-source"
+}
