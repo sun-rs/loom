@@ -40,7 +40,9 @@
       "loom/OfficialMentionLink.generated.tsx",
       "loom/OfficialThreadAgentFollowers.generated.tsx",
       "loom/OfficialThreadAgentFollowerRow.generated.tsx",
-      "loom/OfficialComposerView.generated.tsx"
+      "loom/OfficialComposerView.generated.tsx",
+      "loom/OfficialMessageTimeline.generated.tsx",
+      "loom/OfficialThreadPanel.generated.tsx"
     ],
     "foundation": "package.json#dependencies.raft-ui"
   },
@@ -78,11 +80,13 @@
         "loom/OfficialMentionLink.generated.tsx",
         "loom/OfficialThreadAgentFollowers.generated.tsx",
         "loom/OfficialThreadAgentFollowerRow.generated.tsx",
-        "loom/OfficialComposerView.generated.tsx"
+        "loom/OfficialComposerView.generated.tsx",
+        "loom/OfficialMessageTimeline.generated.tsx",
+        "loom/OfficialThreadPanel.generated.tsx"
       ],
-      "adopted": "官方消息组件与构建时适配并存；悬浮工具栏/@提及/关注成员及成员行按锁定原件生成，composer输入与按钮组合提取原Composer子树；5处对应Vite改写移除，资料预览显式接入Loom",
+      "adopted": "官方消息组件与构建时适配并存；悬浮工具栏/@提及/关注成员及成员行按锁定原件生成，composer输入与按钮组合提取原Composer子树；5处对应Vite改写移除，资料预览显式接入Loom；Timeline整模块原件加显式有界窗口补丁、ThreadPanel只读展示声明加Loom快照/页游标/操作槽生成，移除两处运行时改写及宿主类型强转",
       "remaining": [
-        "MessageItem正文整体、ThreadPanel及Timeline窗口仍有构建时适配；继续保留消息身份、锚点、权限与有界历史",
+        "MessageItem正文整体仍有构建时适配，原件涉及Markdown AST、安全与身份映射变化，待独立迁移验证；ThreadPanel认证业务store不引入Loom，保留现有SDK权限、锚点和有界历史所有者",
         "MessageInput草稿/输入法/发送和文件控制器尚未整体迁移；只迁入输入与操作展示子树，不能称完整官方composer模块直用"
       ]
     },

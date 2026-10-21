@@ -380,6 +380,21 @@
       ],
       "guard": "scripts/official-web/chat-affordances-source.test.mjs",
       "rule": "Original message toolbar, mention preview and pixel badge, follower rows, Composer input/action subtree; native recipes own geometry. Loom supplies authenticated viewer, profile, file slot, send/IME callbacks and durable follower mutations. No upstream socket owner or fabricated agent presence."
+    },
+    {
+      "id": "chat-native-history",
+      "owner": "locked Raft db5e399 source; Loom authoritative snapshot and bounded window",
+      "sources": [
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/message/MessageTimeline.tsx",
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/message/ThreadPanel.tsx"
+      ],
+      "bindings": [
+        "OfficialMessageTimeline.generated.tsx",
+        "OfficialThreadPanel.generated.tsx",
+        "ThreadWorkspace.tsx"
+      ],
+      "guard": "scripts/official-web/chat-history-source.test.mjs",
+      "rule": "Native timeline scroll owner and readonly thread header/body. Explicit offline bounded-window and authenticated snapshot slots; no upstream store/socket. Preserve compact mobile PanelHeader binding, access-error redaction, task parent slot, focus and forward paging."
     }
   ],
   "exceptions": [

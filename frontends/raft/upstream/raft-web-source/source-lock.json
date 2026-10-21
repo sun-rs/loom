@@ -57,6 +57,8 @@
     "packages/web/src/components/message/MentionLink.tsx": "69b57127d221dd09da8e2ae0d4325d9557eded6abc4c48a2d6ec1ba019f5812a",
     "packages/web/src/components/thread/ThreadAgentFollowers.tsx": "fc53c54200ce1425749e51250f5db354641e537dd8fa7c2eb6fcb5d2b706340e",
     "packages/web/src/components/thread/ThreadAgentFollowerRow.tsx": "4d64240a1340f4861bb39c27e6ffca020820148c1ffe315bd8f144aac8cb332f",
-    "packages/web/src/components/message/MessageInput.tsx": "ac33c23073cb31cfa304ad4043e95bf22d53a21aa5a81e7c511a82b6cde43c55"
+    "packages/web/src/components/message/MessageInput.tsx": "ac33c23073cb31cfa304ad4043e95bf22d53a21aa5a81e7c511a82b6cde43c55",
+    "packages/web/src/components/message/MessageTimeline.tsx": "42fa78cb4bd81084cce084b951f3ba5ab075bb5c0e55f24c8cc727df6d8d6783",
+    "packages/web/src/components/message/ThreadPanel.tsx": "4f93ea3467527d6036a8c931db6f982c4dfd337d554b1c95f15265d1f0de9481"
   }
 }

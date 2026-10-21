@@ -1,0 +1,95 @@
+/** Narrow, checked build-time integration; frozen source remains unchanged. */
+function replaceOnce(source: string, from: string, to: string) {
+  if (source.split(from).length !== 2)
+    throw Error("Official thread boundary changed; review adaptation");
+  return source.replace(from, to);
+}
+export function adaptThreadFooter(source: string) {
+  // The native public read-only path has no members; Loom's authenticated
+  // thread borrows its authorized Room snapshot instead of a second store.
+  const withMentions =
+    'import { useMessageMentionMap } from "loom-message-profile";\n' +
+    source
+      .replace(
+        "}: ThreadPanelProps & { readOnlyData: ReadOnlyThreadData }) {",
+        "}: ThreadPanelProps & { readOnlyData: ReadOnlyThreadData }) {\n  const loomMentionMap = useMessageMentionMap();",
+      )
+      .replaceAll(
+        "mentionMap={EMPTY_PUBLIC_MENTION_MAP}",
+        "mentionMap={loomMentionMap}",
+      )
+      .replace(
+        "  ), [readOnlyData.channels,",
+        "  ), [loomMentionMap, readOnlyData.channels,",
+      );
+  let code = replaceOnce(
+    withMentions,
+    "  readOnlyData?: ReadOnlyThreadData;",
+    '  readOnlyData?: ReadOnlyThreadData;\n  loomFooter?: ReactNode;\n  loomHeaderActions?: ReactNode;\n  loomOnOpenProfile?: (kind: "agent" | "human", id: string) => void;\n  loomFocusId?: string;\n  loomHasNewer?: boolean;\n  loomLoadNewer?: () => Promise<void>;',
+  );
+  code = replaceOnce(
+    code,
+    "  readOnlyData,\n}: ThreadPanelProps &",
+    "  readOnlyData,\n  loomFooter,\n  loomHeaderActions,\n  loomOnOpenProfile,\n  loomFocusId,\n  loomHasNewer,\n  loomLoadNewer,\n  hideParentMessage,\n  parentSlot,\n}: ThreadPanelProps &",
+  );
+  code = replaceOnce(
+    code,
+    '  const parent = (\n    <div data-testid="thread-panel-parent"',
+    '  const parent = parentSlot ?? (hideParentMessage ? null : (\n    <div data-testid="thread-panel-parent"',
+  );
+  code = replaceOnce(
+    code,
+    "  );\n\n  return (\n    <ThreadPanelRoot className={READ_ONLY_THREAD_PANEL_CLASS_NAME}",
+    "  ));\n\n  return (\n    <ThreadPanelRoot className={READ_ONLY_THREAD_PANEL_CLASS_NAME}",
+  );
+  code = replaceOnce(
+    code,
+    'readOnlyData.error ? (\n          <div className="flex h-full flex-col overflow-auto">\n            {parent}',
+    'readOnlyData.error ? (\n          <div className="flex h-full flex-col overflow-auto">',
+  );
+  code = replaceOnce(
+    code,
+    "    hasNewer: false,",
+    "    hasNewer: loomHasNewer ?? false,\n    initialFocusMessageId: loomFocusId,\n    sentinelAutoLoadBlockKey: loomFocusId,",
+  );
+  code = replaceOnce(
+    code,
+    "    loadNewer: () => undefined,",
+    "    loadNewer: loomLoadNewer ?? (() => undefined),",
+  );
+  code = replaceOnce(
+    code,
+    "  }), [readOnlyData.hasOlder,",
+    "  }), [loomFocusId, loomHasNewer, loomLoadNewer, readOnlyData.hasOlder,",
+  );
+  code = replaceOnce(
+    code,
+    "        readOnlySender={readOnlyData.senderByMessageId.get(message.id)}",
+    "        onOpenProfile={loomOnOpenProfile}\n        threadSearchActive={message.id === loomFocusId}\n        readOnlySender={readOnlyData.senderByMessageId.get(message.id)}",
+  );
+  code = replaceOnce(
+    code,
+    "  ), [loomMentionMap, readOnlyData.channels,",
+    "  ), [loomFocusId, loomOnOpenProfile, loomMentionMap, readOnlyData.channels,",
+  );
+  code = replaceOnce(
+    code,
+    "        readOnlySender={readOnlyData.senderByMessageId.get(readOnlyData.parentMessage.id)}",
+    "        onOpenProfile={loomOnOpenProfile}\n        readOnlySender={readOnlyData.senderByMessageId.get(readOnlyData.parentMessage.id)}",
+  );
+  code = replaceOnce(
+    code,
+    '          actions={presentation !== "mobile-modal" ? (',
+    '          actions={<>{loomHeaderActions}{presentation !== "mobile-modal" ? (',
+  );
+  code = replaceOnce(
+    code,
+    "          ) : undefined}",
+    "          ) : undefined}</>}",
+  );
+  return replaceOnce(
+    code,
+    "      </ThreadPanelBody>\n      </ThreadPanelContent>\n    </ThreadPanelRoot>",
+    "      </ThreadPanelBody>\n      {loomFooter}\n      </ThreadPanelContent>\n    </ThreadPanelRoot>",
+  );
+}

@@ -2,7 +2,6 @@ import { adaptMessageStatus } from "./message-status-adaptation.ts";
 import { adaptMobileMessageDefault } from "./mobile-message-default.ts";
 import { pushWorkerPlugin } from "./push-worker-plugin.ts";
 import { adaptComposerDirectory } from "./composer-directory-adaptation.ts";
-import { adaptTimelineWindow } from "./timeline-window-adaptation.ts";
 import { adaptChineseLocale } from "./locale-adaptation.ts";
 import { adaptReactions } from "./reaction-adaptation.ts";
 import tailwindcss from "@tailwindcss/postcss";
@@ -19,11 +18,7 @@ import {
   adaptTaskComposer,
   adaptTaskMessage,
 } from "./channel-task-adaptation.ts";
-import {
-  adaptThreadItem,
-  adaptThreadFooter,
-  adaptComposerSubmit,
-} from "./thread-adaptation.ts";
+import { adaptThreadItem, adaptComposerSubmit } from "./thread-adaptation.ts";
 import { adaptMessageProfileNavigation } from "./message-profile-navigation.ts";
 import { defineConfig } from "vite";
 import { resolve } from "node:path";
@@ -69,8 +64,6 @@ export default defineConfig({
       transform(code, id) {
         if (id.endsWith("/store/appearanceStore.ts"))
           return { code: adaptMobileMessageDefault(code), map: null };
-        if (id.endsWith("/components/message/MessageTimeline.tsx"))
-          return { code: adaptTimelineWindow(code), map: null };
         if (id.endsWith("/packages/web/src/i18n/LocaleProvider.tsx"))
           return { code: adaptChineseLocale(code), map: null };
         if (
@@ -94,8 +87,6 @@ export default defineConfig({
             ),
             map: null,
           };
-        if (id.endsWith("/packages/web/src/components/message/ThreadPanel.tsx"))
-          return { code: adaptThreadFooter(code), map: null };
         if (
           id.endsWith("/packages/web/src/components/message/MessageItem.tsx")
         ) {

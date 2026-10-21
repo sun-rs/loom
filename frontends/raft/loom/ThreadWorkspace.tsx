@@ -9,7 +9,6 @@ import {
   useMemo,
   useState,
   useRef,
-  type ComponentType,
   type ReactNode,
   type CSSProperties,
 } from "react";
@@ -17,9 +16,7 @@ import { MessageProfileMembers, MessageStatusRoom } from "./MessageProfile.tsx";
 import type { Principal, Room } from "@rah-os/protocol";
 import type { RahClient } from "@rah-os/client-sdk";
 import { Button, ThreadPanelRoot, ThreadPanelFooter } from "raft-ui";
-import ThreadPanel, {
-  type ThreadPanelProps,
-} from "../packages/web/src/components/message/ThreadPanel.tsx";
+import ControlledThreadPanel from "./OfficialThreadPanel.generated.tsx";
 import MessageInput from "./ComposerFiles.tsx";
 import PanelHeader from "../packages/web/src/components/ui/PanelHeader.tsx";
 import { composerHostClassName } from "../packages/web/src/components/message/composerHost.ts";
@@ -32,16 +29,6 @@ import {
 import { LoomThreadClient } from "./thread-client.ts";
 import { toOfficialMessage } from "./channel-client.ts";
 import { useRouteIntentOwner } from "./useIntentRoute.ts";
-const ControlledThreadPanel = ThreadPanel as ComponentType<
-  ThreadPanelProps & {
-    loomFooter: ReactNode;
-    loomHeaderActions?: ReactNode;
-    loomOnOpenProfile?: (kind: "agent" | "human", id: string) => void;
-    loomFocusId?: string;
-    loomHasNewer?: boolean;
-    loomLoadNewer?: () => Promise<void>;
-  }
->;
 export default function ThreadWorkspace({
   client,
   room,
@@ -333,7 +320,7 @@ export default function ThreadWorkspace({
                 loomFooter={footer}
               />
             ) : (
-              <ThreadPanelRoot className="isolate flex h-full min-h-0 w-full flex-col bg-layer-panel dark:bg-layer-card ">
+              <ThreadPanelRoot className="isolate flex h-full min-h-0 w-full flex-col bg-layer-canvas">
                 <PanelHeader
                   title="消息列"
                   onMobileBack={close}

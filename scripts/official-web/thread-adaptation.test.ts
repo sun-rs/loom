@@ -3,9 +3,9 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
   adaptThreadItem,
-  adaptThreadFooter,
   adaptComposerSubmit,
 } from "../../frontends/raft/loom/thread-adaptation.ts";
+import { adaptThreadFooter } from "./thread-panel-binding.ts";
 test("controlled thread entry preserves all non-thread readonly guards and requires exact upstream boundaries", () => {
   const source = readFileSync(
     "frontends/raft/packages/web/src/components/message/MessageItem.tsx",
@@ -23,7 +23,7 @@ test("controlled thread entry preserves all non-thread readonly guards and requi
 });
 test("native readonly thread gains only a caller-owned footer slot", () => {
   const source = readFileSync(
-    "frontends/raft/packages/web/src/components/message/ThreadPanel.tsx",
+    "frontends/raft/upstream/raft-web-source/packages/web/src/components/message/ThreadPanel.tsx",
     "utf8",
   );
   const result = adaptThreadFooter(source);
@@ -47,7 +47,7 @@ test("Loom composer preserves IME and Shift guards while applying Enter send to 
 });
 test("controlled task thread uses the native parent slot without repeating its root message", () => {
   const source = readFileSync(
-    "frontends/raft/packages/web/src/components/message/ThreadPanel.tsx",
+    "frontends/raft/upstream/raft-web-source/packages/web/src/components/message/ThreadPanel.tsx",
     "utf8",
   );
   const result = adaptThreadFooter(source);
@@ -60,7 +60,7 @@ test("controlled task thread uses the native parent slot without repeating its r
 
 test("controlled thread forwards native parent and reply profile actions to its host", () => {
   const source = readFileSync(
-    "frontends/raft/packages/web/src/components/message/ThreadPanel.tsx",
+    "frontends/raft/upstream/raft-web-source/packages/web/src/components/message/ThreadPanel.tsx",
     "utf8",
   );
   const result = adaptThreadFooter(source);
@@ -70,7 +70,7 @@ test("controlled thread forwards native parent and reply profile actions to its 
 test("thread host exposes native header actions without changing header geometry", () => {
   const result = adaptThreadFooter(
     readFileSync(
-      "frontends/raft/packages/web/src/components/message/ThreadPanel.tsx",
+      "frontends/raft/upstream/raft-web-source/packages/web/src/components/message/ThreadPanel.tsx",
       "utf8",
     ),
   );

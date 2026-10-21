@@ -99,3 +99,13 @@ MessageInput 只提取原 Composer 展示子树：输入属性槽、文件工具
 @提及采用新版方形已读像素和组件默认预览宽度，显示名及稳定身份映射仍由 Loom 提供。迁移验证发现旧 ProfilePreviewCardContent 的 importer-sensitive Vite alias 在新位置失效，现改为显式 MessageProfile 导入，并补独立守卫和预览/导航验收。较早浏览器脚本的 bg-primary/bg-accent-soft 与英文 Undo 已与锁定 RUI/中文界面不一致，按原生 bg-brand/bg-attention-soft 与“撤销”更新断言，未更改产品来迎合测试。
 
 本批不是完整聊天页完成。后续聊天主线仍需处理 MessageItem、ThreadPanel、Timeline 和输入控制器的深层组合；附件预览/评论及页面外壳保留在迁移清单，不能以本批五个展示边界替代全站验收。
+
+### 消息列与历史窗口（2026-10-22）
+
+`generate-chat-history.mjs` 从同一 db5e399 原件生成 Timeline 全模块与 ThreadPanel 的 ReadOnlyThreadPanel/接口/展示常量。原件字节及许可证按 source-lock 保留；不复制其 AuthenticatedThreadPanel、socket 或业务 store。
+
+Timeline 的官方键盘滚动意图与 sentinel 再检查随源采用；Loom 的有界双端窗口锚点补丁移到离线生成阶段。消息列保持官方标题/副标题、PanelAction、正文原件，只接入已授权快照、成员提及、前后分页、定位、footer/header 操作槽和任务 parentSlot。权限失败仍不显示父消息；保留 compact mobile 的共享 PanelHeader 参数接线。ThreadWorkspace 不再以类型强制转换掩盖接口，两条 Vite 改写已移除。
+
+验证：chat-history-source、thread-adaptation、timeline-window-adaptation 检查生成一致性、边界漂移和权限/分页接线；history-window、threads、channel-tasks 浏览器切片覆盖实际交互。生成一致性不替代浏览器验收。
+
+尚未完成：MessageItem 的新旧源码约 1,800 行差异涉及 Markdown AST、清洗、提及身份和附件，不当作纯展示直接覆盖。完整输入控制器、附件组合和全站壳层仍以迁移清单为准，不能宣布全站纯依赖完成。
