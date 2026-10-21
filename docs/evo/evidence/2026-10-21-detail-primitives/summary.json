@@ -1,0 +1,81 @@
+{
+  "date": "2026-10-21",
+  "productCommit": "93d1a6eda36282d5f614233b8ff2a2c3c83dc916",
+  "scope": "Computer detail read-only facts and instance rows; shared KeyValueRow bridge",
+  "upstream": {
+    "revision": "db5e399f017d584e49597e3a28757645d6807893",
+    "release": "v1.21.23-source.1",
+    "adoption": "Byte-exact AvatarListRow and KeyValueRow plus direct exports; hashes in source-lock.json",
+    "localBindings": "Loom instance identity, role navigation, runtime labels and unknown-value fallback; no upstream business stores"
+  },
+  "checks": {
+    "red": "detail-primitives-source.test.mjs failed before adding official exports",
+    "sourceTests": 9,
+    "uiContract": 8,
+    "typecheck": "passed",
+    "build": "passed; existing chunk-size warnings retained",
+    "chromium": {
+      "fixture": true,
+      "computers": [
+        {
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "selectionReloadBack": "passed",
+          "horizontalOverflow": false,
+          "officialRowKeyboardNavigation": "passed",
+          "monoFactsAndPointerTargets": "passed"
+        },
+        {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "selectionReloadBack": "passed",
+          "horizontalOverflow": false,
+          "officialRowKeyboardNavigation": "passed",
+          "monoFactsAndPointerTargets": "passed"
+        }
+      ]
+    },
+    "webkitFixture": {
+      "status": "failed",
+      "reason": "Navigation recorded pageerror access-control checks for principals/me and workspaces/list; not counted as acceptance; cause not yet isolated"
+    },
+    "formalWebkit": [
+      {
+        "width": 1440,
+        "readOnly": true,
+        "computerToRole": true,
+        "profileDefault": true,
+        "noOverflow": true
+      },
+      {
+        "width": 390,
+        "readOnly": true,
+        "computerToRole": true,
+        "profileDefault": true,
+        "noOverflow": true
+      }
+    ],
+    "screenshots": "Inspected formal-computer-390.png; read-only formal screenshots retained in private review directory"
+  },
+  "deployment": {
+    "databases": 2,
+    "files": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true,
+    "sourceSha256": "5c27ac7e930e9b92de9ba7f21a7925b0e50d4a2911ec3f1d9adaa9367a16652c",
+    "schema": 90,
+    "method": "checked idle, backed up same data home, graceful exact launchd restart"
+  },
+  "remaining": [
+    "Mobile computer destination has no obvious navigation entry after its Settings entry was removed; direct URL and back flow passed, navigation completeness not claimed",
+    "Computer edit/runtime/page composition remains local; Role profile composition unchanged",
+    "Legacy attachment AvatarListRow remains a separate structural port",
+    "Whole-site official dependency migration remains incomplete"
+  ],
+  "noPaidCli": true,
+  "physicalDeviceAcceptance": false
+}
