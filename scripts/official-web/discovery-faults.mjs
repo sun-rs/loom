@@ -27,12 +27,23 @@ export async function verifyDiscoveryFaults(page, channel) {
     }
   });
   await page.getByLabel("搜索内容", { exact: true }).fill("FIXTURE");
-  await page.getByLabel("搜索内容", { exact: true }).press("Enter");
-  await began;
+  let waitTimer;
+  try {
+    await Promise.race([
+      began,
+      new Promise((_, reject) => {
+        waitTimer = setTimeout(
+          () => reject(new Error("held search request did not start")),
+          10000,
+        );
+      }),
+    ]);
+  } finally {
+    clearTimeout(waitTimer);
+  }
   await page
     .getByLabel("搜索内容", { exact: true })
     .fill("no-such-FIXTURE-later");
-  await page.getByLabel("搜索内容", { exact: true }).press("Enter");
   await page
     .getByText("没有找到“no-such-FIXTURE-later”的结果", { exact: true })
     .waitFor();
@@ -42,7 +53,6 @@ export async function verifyDiscoveryFaults(page, channel) {
   await page.unroute("**/v3/client/search");
   await page.route("**/v3/client/search", (route) => route.abort());
   await page.getByLabel("搜索内容", { exact: true }).fill("history");
-  await page.getByLabel("搜索内容", { exact: true }).press("Enter");
   await page.getByRole("button", { name: "重新读取", exact: true }).waitFor();
   assert.equal(await page.locator("[data-result-id]").count(), 0);
   await page.unroute("**/v3/client/search");

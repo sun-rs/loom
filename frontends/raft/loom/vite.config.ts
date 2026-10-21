@@ -12,7 +12,6 @@ import {
   adaptThreadFollowers,
   adaptThreadFollowerRow,
 } from "./thread-followers-adaptation.ts";
-import { adaptTaskCreation } from "./task-create-adaptation.ts";
 import { officialUiAliases } from "./ui-resolution.ts";
 import { adaptMessageModelLabel } from "./appearance-adaptation.ts";
 import {
@@ -110,10 +109,6 @@ export default defineConfig({
         )
           return { code: adaptThreadFollowerRow(code), map: null };
         if (
-          id.endsWith("/packages/web/src/components/task/CreateTaskDialog.tsx")
-        )
-          return { code: adaptTaskCreation(code), map: null };
-        if (
           id.endsWith(
             "/packages/web/src/components/message/AttachmentCommentsPanel.tsx",
           )
@@ -179,8 +174,6 @@ export default defineConfig({
           source === "../../utils/humanAvatar"
         )
           return resolve(import.meta.dirname, "profile-avatar.ts");
-        if (source === "loom-task-create")
-          return resolve(import.meta.dirname, "TaskCreate.tsx");
         if (source === "loom-attachment-comments")
           return resolve(import.meta.dirname, "useAttachmentComments.tsx");
         if (source === "loom-appearance")

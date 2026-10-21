@@ -1,3 +1,7 @@
+import {
+  OfficialTaskToolbar,
+  OfficialTasksHeader,
+} from "./OfficialTaskSurfaces.generated";
 import TaskFilters from "./TaskFilters.tsx";
 import {
   taskFilterRequest,
@@ -15,21 +19,8 @@ import TaskCreate from "./TaskCreate.tsx";
 import type { ChannelTaskClient } from "./channel-task-client.ts";
 import { useIntl } from "react-intl";
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import {
-  PanelSectionHeader,
-  PanelHeaderContent,
-  PanelTitle,
-  PanelMeta,
-  TasksPanelRoot,
-  TasksPanelToolbar,
-  TasksPanelViewport,
-  Button,
-  Card,
-  SegmentedControl,
-  SegmentedControlItem,
-  SegmentedControlLabel,
-} from "raft-ui";
-import { CheckSquare, Columns3, LayoutList, Plus } from "lucide-react";
+import { TasksPanelRoot, TasksPanelViewport, Button, Card } from "raft-ui";
+import { CheckSquare } from "lucide-react";
 import {
   DndContext,
   PointerSensor,
@@ -225,23 +216,20 @@ export default function TasksPage({
         data-testid="loom-tasks-page"
       >
         {!channelTasks && (
-          <PanelSectionHeader data-loom-root-header>
-            <PanelHeaderContent>
-              <PanelTitle render={<h2>任务</h2>} />
-              <PanelMeta render={<p />}>
-                {loading ? (
-                  "加载中…"
-                ) : (
-                  <>
-                    <span className="font-mono">{total}</span> 个频道任务
-                  </>
-                )}
-              </PanelMeta>
-            </PanelHeaderContent>
-          </PanelSectionHeader>
+          <OfficialTasksHeader
+            meta={
+              loading ? (
+                "加载中…"
+              ) : (
+                <>
+                  <span className="font-mono">{total}</span> 个频道任务
+                </>
+              )
+            }
+          />
         )}
-        <TasksPanelToolbar>
-          <div className="flex flex-wrap items-center gap-2">
+        <OfficialTaskToolbar
+          filters={
             <TaskFilters
               client={client}
               workspaceId={workspaceId}
@@ -260,45 +248,18 @@ export default function TasksPage({
                 });
               }}
             />
-            {channelTasks &&
-              !channelTasks.channel.room.state.snapshot?.room.archivedAt && (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    if (!hasRouteBoundIntent()) setCreating(true);
-                  }}
-                >
-                  <Plus size={16} />
-                  {formatMessage({ id: "task.board.newTask" })}
-                </Button>
-              )}
-            <SegmentedControl
-              value={mode}
-              onValueChange={(value) => update("taskView", value)}
-              aria-label="任务视图"
-              className="sm:ml-auto"
-            >
-              {(["board", "list"] as const).map((value) => (
-                <SegmentedControlItem
-                  key={value}
-                  value={value}
-                  data-testid={`channel-task-view-${value}`}
-                >
-                  {value === "board" ? (
-                    <Columns3 size={16} aria-hidden="true" />
-                  ) : (
-                    <LayoutList size={16} aria-hidden="true" />
-                  )}
-                  <SegmentedControlLabel className="max-sm:sr-only">
-                    {value === "board" ? "看板" : "列表"}
-                  </SegmentedControlLabel>
-                </SegmentedControlItem>
-              ))}
-            </SegmentedControl>
-          </div>
-        </TasksPanelToolbar>
+          }
+          isChannelMode={!!channelTasks}
+          canModifyTasks={
+            !!channelTasks &&
+            !channelTasks.channel.room.state.snapshot?.room.archivedAt
+          }
+          openCreateDialog={() => {
+            if (!hasRouteBoundIntent()) setCreating(true);
+          }}
+          viewMode={mode}
+          setView={(value) => update("taskView", value)}
+        />
         <TaskBoardNotice board={board} reload={() => setTick((v) => v + 1)} />
         <TasksPanelViewport
           ref={scroll}

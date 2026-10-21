@@ -45,6 +45,13 @@
     "packages/web/src/components/search/MessageHitRow.tsx": "baefd113b3f458b0450fd0886c5d9322a137a4019c28270512037d83348f7d74",
     "packages/web/src/components/search/searchGrouping.ts": "9a5aeb210f048807de41836119bb8ac2d65cafa05a133f86779f2feb4592347b",
     "packages/web/src/components/search/MessageSearchPage.tsx": "209bf6b9d60aeac230938f0c9e9c0bdc9eeac5b485f47d844bfd10831bfb5a3a",
-    "packages/web/src/components/ui/TextLink.tsx": "c352756bf4329610b04c24647fcdbba3d6ee89ebc06f2b832ac912fb6423d97e"
+    "packages/web/src/components/ui/TextLink.tsx": "c352756bf4329610b04c24647fcdbba3d6ee89ebc06f2b832ac912fb6423d97e",
+    "packages/web/src/components/ui/SelectionPopover.tsx": "8af0b00698de999e8ec3c1d79e9427e6aa1ccd7c1097cc4e5943ba3d9b1228c6",
+    "packages/web/src/components/ui/Banner.tsx": "42c0a0274144c27ef86ab7cf568b7493b4ad437d9e6fafd22773d05535279976",
+    "packages/web/src/components/ui/DialogCard.tsx": "bfcbf1e265e4cc3971236e35b4a3734eed11875eb07c348760b7c592da2818a8",
+    "packages/web/src/components/task/CreateTaskDialog.tsx": "c31555fd61dc66a5e1a463996510c7bb8ac218fb4c85f8c0a7a97e6bd27ebfa3",
+    "packages/web/src/components/task/TaskTitleRow.tsx": "25f7a940a128d182cfe210b63421b9af8ae23f269881a2952bceddd21b1ea9b0",
+    "packages/web/src/components/task/TaskProperties.tsx": "042c4c27448e7565a3602297b23368d08dbc533593b003c7128dcd4f6086389f",
+    "packages/web/src/components/layout/MainLayout.tsx": "d75aa4149313310bfbd8f64611ef242adbcd8e308748c455b2b889fdc028c944"
   }
 }

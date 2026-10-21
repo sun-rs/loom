@@ -1,9 +1,12 @@
-import Tooltip from "../packages/web/src/components/ui/Tooltip.tsx";
+import {
+  OfficialActivityHeader,
+  OfficialActivityMarkAll,
+} from "./OfficialActivityHeader.generated";
+import DiscoveryNotice from "./DiscoveryNotice";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "raft-ui";
 import { RefreshCw } from "lucide-react";
 import type { RahClient } from "@rah-os/client-sdk";
-import PanelHeader from "../packages/web/src/components/ui/PanelHeader.tsx";
 import { captureUnreadActivity } from "./activity-bulk.ts";
 /** Native ThreadsInbox header; counts and read frontiers come from Loom. */
 export default function ActivityHeader({
@@ -92,26 +95,21 @@ export default function ActivityHeader({
   };
   return (
     <>
-      <PanelHeader
-        title="动态"
-        containerProps={{
+      <OfficialActivityHeader
+        totalCount={counts?.total ?? "—"}
+        totalUnreadCount={counts?.unread ?? "—"}
+        headerContainerProps={{
           "data-testid": "inbox-header",
           title: "双击跳转到下一条未读项",
         }}
-        titleClickProps={{
+        headerTitleClickProps={{
           "data-testid": "inbox-header-title",
           title: "双击跳转到下一条未读项",
           onClick: (event) => {
             if (event.detail >= 2) onNextUnread();
           },
         }}
-        subtitle={
-          counts
-            ? `${counts.total} 条进行中 · ${counts.unread ?? "—"} 条未读`
-            : undefined
-        }
         onMobileBack={onBack}
-        mobileBackProps={{ "aria-label": "返回聊天列表" }}
         actions={
           <>
             <Button
@@ -128,25 +126,13 @@ export default function ActivityHeader({
       />
       {renderToolbar(
         (counts?.unread ?? 0) > 0 ? (
-          <Tooltip content="全部标记为已读">
-            <Button
-              size="sm"
-              variant="ghost"
-              className="shrink-0 whitespace-nowrap"
-              data-testid="inbox-mark-all-read"
-              disabled={busy}
-              onClick={() => void markAll()}
-            >
-              全部已读
-            </Button>
-          </Tooltip>
+          <OfficialActivityMarkAll
+            busy={busy}
+            handleMarkAllRead={() => void markAll()}
+          />
         ) : null,
       )}
-      {error && (
-        <p role="alert" className="px-4 text-caption text-danger-strong">
-          {error}
-        </p>
-      )}
+      {error && <DiscoveryNotice>{error}</DiscoveryNotice>}
     </>
   );
 }

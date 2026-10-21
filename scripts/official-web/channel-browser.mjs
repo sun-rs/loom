@@ -62,6 +62,7 @@ import {
 } from "./mobile-chat-browser.mjs";
 import { verifyChatBootstrap } from "./chat-rules-browser.mjs";
 import { verifySidebarActions } from "./sidebar-actions-browser.mjs";
+import { verifyDiscoveryFaults } from "./discovery-faults.mjs";
 import { verifyDiscovery } from "./discovery-browser.mjs";
 import { verifyTabOrder } from "./tab-order-browser.mjs";
 import { verifyUiBehavior } from "./ui-behavior-browser.mjs";
@@ -744,6 +745,15 @@ try {
         await verifyChannelTasks({ browser, origin, client, workspace, head }),
       ),
     );
+  } else if (process.env.LOOM_BROWSER_SLICE === "discovery-faults") {
+    for (const width of [1440, 390]) {
+      const context = await browser.newContext({viewport:{width,height:844}});
+      const page = await context.newPage();
+      await page.goto(`${origin}/?view=search&presentation=page`);
+      await verifyDiscoveryFaults(page, channels[0]);
+      console.log(JSON.stringify({width, staleSearchIgnored:true, queryFailureRetry:true, contextDeniedRecovery:true}));
+      await context.close();
+    }
   } else if (process.env.LOOM_BROWSER_SLICE === "tasks") {
     console.log(
       JSON.stringify(

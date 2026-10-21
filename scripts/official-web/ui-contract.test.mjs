@@ -126,6 +126,23 @@ test("new local close affordances cannot silently bypass scenario owners", () =>
         assert.equal(c.props["data-loom-control"], "detail-close");
         assert.equal(c.props.size, undefined);
         assert.equal(c.props.variant, undefined);
+      } else if (
+        file === "OfficialTaskSurfaces.generated.tsx" &&
+        c.props["aria-label"] === "关闭任务"
+      ) {
+        assert.ok(
+          contract.families
+            .find((f) => f.id === "task-native-modal")
+            ?.bindings.includes(file),
+        );
+        assert.equal(c.source, "raft-ui#PanelAction");
+        assert.ok(
+          ["task-modal-close", "task-modal-mobile-back"].includes(
+            c.props["data-testid"],
+          ),
+        );
+        for (const prop of ["size", "variant", "className"])
+          assert.equal(c.props[prop], undefined);
       } else
         assert.ok(
           allowed.has(c.source),

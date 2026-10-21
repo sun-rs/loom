@@ -120,6 +120,12 @@ export async function verifyTasks({
       assert.ok((await description.boundingBox()).height > collapsed);
       await toggle.click();
       assert.equal(await toggle.getAttribute("aria-expanded"), "false");
+      const history = modal.getByTestId("task-history-toggle");
+      await history.click();
+      assert.equal(await history.getAttribute("aria-expanded"), "true");
+      await modal.locator('[data-version]').waitFor();
+      await history.click();
+      assert.equal(await history.getAttribute("aria-expanded"), "false");
       const status = modal.getByTestId("task-properties-status");
       await page.route("**/v3/client/tasks/workflow", async (route) => {
         writes.push(route.request().postDataJSON());

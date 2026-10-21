@@ -1,12 +1,14 @@
+import {
+  OfficialTaskSurface,
+  OfficialTaskModalBar,
+  OfficialTaskReadBar,
+} from "./OfficialTaskSurfaces.generated";
 import { uiActionProps } from "./ui-action-props.ts";
 import TaskHistory from "./TaskHistory.tsx";
 import { useEffect, useMemo, useState, useRef } from "react";
 import { Button } from "raft-ui";
-import CloseButton from "../packages/web/src/components/ui/CloseButton.tsx";
-import { ArrowLeft, X } from "lucide-react";
 import type { RahClient } from "@rah-os/client-sdk";
 import type { TaskWorkflowStatus } from "@rah-os/protocol";
-import Modal from "../packages/web/src/components/Modal.tsx";
 import TaskModalHead from "../packages/web/src/components/task/TaskModalHead.tsx";
 import { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives.ts";
 import { LoomTaskClient, toOfficialTask } from "./task-client.ts";
@@ -115,51 +117,21 @@ export default function TaskDetail({
     ? toOfficialTask(data.task, data.room?.name ?? "", data.members)
     : undefined;
   const content = (
-    <div
-      className={
-        mobile
-          ? "absolute inset-0 z-30 flex flex-col bg-layer-panel "
-          : "flex h-[min(86vh,900px)] max-h-[calc(100dvh-2rem)] w-[min(960px,calc(100vw-2rem))] flex-col overflow-hidden rounded-lg border border-line-muted bg-layer-popover shadow-raft-xl     "
+    <OfficialTaskSurface
+      mobile={mobile}
+      onClose={close}
+      header={
+        !error && task ? (
+          <OfficialTaskModalBar task={task} onClose={close} mobile={mobile} />
+        ) : (
+          <OfficialTaskReadBar
+            mobile={mobile}
+            onClose={close}
+            label={error ? "任务" : "读取任务"}
+          />
+        )
       }
-      data-testid="task-thread-modal"
     >
-      <div className="flex shrink-0 items-center gap-3 border-b border-line-muted bg-layer-panel px-4 py-2   ">
-        {mobile && (
-          <Button
-            onClick={close}
-            aria-label="关闭任务"
-            data-testid="task-modal-mobile-back"
-            data-loom-control="panel-back"
-            size="icon-sm"
-            variant="outline"
-            className="size-8 shrink-0"
-          >
-            <ArrowLeft size={14} />
-          </Button>
-        )}
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-xs font-bold text-foreground-muted">
-            {!error && task ? `#${task.channelName}` : "任务"}
-          </div>
-          <div
-            className="truncate text-sm font-bold"
-            data-testid="task-modal-bar-label"
-          >
-            {!error && task ? `任务 #${task.taskNumber}` : "读取任务"}
-          </div>
-        </div>
-        {!mobile && (
-          <CloseButton
-            data-loom-control="detail-close"
-            onClick={close}
-            aria-label="关闭任务"
-            data-testid="task-modal-close"
-            className="flex size-8 shrink-0 items-center justify-center"
-          >
-            <X size={14} />
-          </CloseButton>
-        )}
-      </div>
       {state === "unknown" && (
         <div role="alert" className="p-3 text-sm">
           {bridge.writes.current?.action === "task-assignment"
@@ -219,13 +191,7 @@ export default function TaskDetail({
           {error || "加载中…"}
         </div>
       )}
-    </div>
+    </OfficialTaskSurface>
   );
-  return mobile ? (
-    content
-  ) : (
-    <Modal onClose={close} closeOnBackdrop>
-      {content}
-    </Modal>
-  );
+  return content;
 }

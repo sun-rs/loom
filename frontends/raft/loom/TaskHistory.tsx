@@ -1,5 +1,5 @@
+import { OfficialTaskHistoryFrame } from "./OfficialTaskSurfaces.generated";
 import { useEffect, useMemo, useState, useRef } from "react";
-import { ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "raft-ui";
 import { useIntl } from "react-intl";
 import type { RahClient } from "@rah-os/client-sdk";
@@ -55,76 +55,60 @@ export default function TaskHistory({
     return p?.displayName ?? p?.handle ?? "已离开的成员";
   };
   return (
-    <div
-      className="mb-4 border-b border-line-muted  pb-3"
-      data-testid="task-history"
+    <OfficialTaskHistoryFrame
+      historyOpen={open}
+      toggleHistory={() => setOpen((v) => !v)}
     >
-      <button
-        type="button"
-        className="mb-1 flex w-full items-center gap-1 text-left text-xs font-bold"
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
-        data-testid="task-history-toggle"
-      >
-        <span>{formatMessage({ id: "task.properties.history" })}</span>
-        {open ? (
-          <ChevronDown size={14} aria-hidden="true" />
+      <div data-version={version}>
+        {error ? (
+          <p role="alert" className="text-xs text-warning-strong">
+            {formatMessage({ id: "task.history.error" })}
+          </p>
+        ) : loading ? (
+          <p role="status" className="text-xs text-foreground-muted">
+            加载中…
+          </p>
+        ) : reader.events.length === 0 ? (
+          <p className="text-xs text-foreground-muted ">
+            {formatMessage({ id: "task.history.empty" })}
+          </p>
         ) : (
-          <ChevronRight size={14} aria-hidden="true" />
-        )}
-      </button>
-      {open && (
-        <div className="mt-3 w-full" data-version={version}>
-          {error ? (
-            <p role="alert" className="text-xs text-warning-strong">
-              {formatMessage({ id: "task.history.error" })}
-            </p>
-          ) : loading ? (
-            <p role="status" className="text-xs text-foreground-muted">
-              加载中…
-            </p>
-          ) : reader.events.length === 0 ? (
-            <p className="text-xs text-foreground-muted ">
-              {formatMessage({ id: "task.history.empty" })}
-            </p>
-          ) : (
-            <>
-              <HistoryTimeline
-                history={reader.events.map((e) =>
-                  toTaskHistoryEvent(e, taskNumber, members),
-                )}
-                resolveName={resolveName}
-              />
-              {reader.nextCursor && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={reader.events.length >= 500}
-                  onClick={() => {
-                    setLoading(true);
-                    const signal = activeRead.current?.signal;
-                    void reader
-                      .older(signal)
-                      .then(() => {
-                        if (!signal?.aborted) setVersion((v) => v + 1);
-                      })
-                      .catch(() => {
-                        if (!signal?.aborted) setError(true);
-                      })
-                      .finally(() => {
-                        if (!signal?.aborted) setLoading(false);
-                      });
-                  }}
-                >
-                  {reader.events.length >= 500
-                    ? "已显示500条历史"
-                    : "加载更早历史"}
-                </Button>
+          <>
+            <HistoryTimeline
+              history={reader.events.map((e) =>
+                toTaskHistoryEvent(e, taskNumber, members),
               )}
-            </>
-          )}
-        </div>
-      )}
-    </div>
+              resolveName={resolveName}
+            />
+            {reader.nextCursor && (
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={reader.events.length >= 500}
+                onClick={() => {
+                  setLoading(true);
+                  const signal = activeRead.current?.signal;
+                  void reader
+                    .older(signal)
+                    .then(() => {
+                      if (!signal?.aborted) setVersion((v) => v + 1);
+                    })
+                    .catch(() => {
+                      if (!signal?.aborted) setError(true);
+                    })
+                    .finally(() => {
+                      if (!signal?.aborted) setLoading(false);
+                    });
+                }}
+              >
+                {reader.events.length >= 500
+                  ? "已显示500条历史"
+                  : "加载更早历史"}
+              </Button>
+            )}
+          </>
+        )}
+      </div>
+    </OfficialTaskHistoryFrame>
   );
 }

@@ -1,12 +1,7 @@
+import { OfficialTaskProperties } from "./OfficialTaskSurfaces.generated";
 import MentionAvatar from "./MentionAvatar.tsx";
 import type { Principal } from "@rah-os/protocol";
 import { createContext, useContext, useState, type ReactNode } from "react";
-import {
-  DescriptionList,
-  DescriptionItem,
-  DescriptionTerm,
-  DescriptionDetails,
-} from "raft-ui";
 import { useIntl } from "react-intl";
 import InlineBadgeEditor from "../packages/web/src/components/InlineBadgeEditor.tsx";
 import {
@@ -27,14 +22,6 @@ export const TaskActions = createContext<{
   history?: ReactNode;
   update: (status: TaskWorkflowStatus) => void;
 }>({ canManage: false, disabled: true, update: () => {} });
-function Property({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <DescriptionItem className="flex min-w-0 items-center gap-2">
-      <DescriptionTerm className="mb-0 shrink-0">{label}</DescriptionTerm>
-      <DescriptionDetails className="min-w-0">{children}</DescriptionDetails>
-    </DescriptionItem>
-  );
-}
 /** Native TaskProperties composition; status and assignee use the connected native editors. */
 export default function TaskProperties({ task }: { task: Task }) {
   const { formatMessage } = useIntl(),
@@ -43,10 +30,7 @@ export default function TaskProperties({ task }: { task: Task }) {
   const [search, setSearch] = useState("");
   return (
     <>
-      {actions.history}
-      <DescriptionList
-        className="flex flex-wrap items-center gap-x-6 gap-y-2"
-        data-testid="task-properties"
+      <OfficialTaskProperties
         onKeyDownCapture={(event) => {
           if (event.key !== "Escape" || !open) return;
           event.preventDefault();
@@ -57,8 +41,7 @@ export default function TaskProperties({ task }: { task: Task }) {
           setOpen(null);
           trigger?.focus();
         }}
-      >
-        <Property label={formatMessage({ id: "task.properties.status" })}>
+        status={
           <InlineBadgeEditor
             displayValue={formatMessage({
               id: STATUS_STYLES[task.status].labelId,
@@ -84,8 +67,8 @@ export default function TaskProperties({ task }: { task: Task }) {
             buttonTestId="task-properties-status"
             optionTestIdPrefix="task-properties-status-option"
           />
-        </Property>
-        <Property label={formatMessage({ id: "task.properties.assignee" })}>
+        }
+        assignee={
           <InlineBadgeEditor
             displayValue={
               task.claimedByName
@@ -131,8 +114,7 @@ export default function TaskProperties({ task }: { task: Task }) {
               setOpen((v) => (v === "assignee" ? null : "assignee"));
             }}
             onRequestClose={() => setOpen(null)}
-            badgeClassName="bg-layer-panel text-foreground-strong  "
-            uppercase={false}
+            badgeClassName="bg-transparent text-foreground"
             disabled={
               actions.disabled || !actions.canAssign || task.status === "done"
             }
@@ -151,11 +133,10 @@ export default function TaskProperties({ task }: { task: Task }) {
             })}
             popoverTitle={formatMessage({ id: "task.properties.assignee" })}
           />
-        </Property>
-        <Property label={formatMessage({ id: "task.properties.createdBy" })}>
-          {task.createdByName}
-        </Property>
-      </DescriptionList>
+        }
+        createdBy={<span>{task.createdByName}</span>}
+      />
+      {actions.history}
     </>
   );
 }

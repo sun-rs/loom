@@ -31,7 +31,11 @@
       "loom/OfficialActivityFilters.generated.tsx",
       "loom/OfficialConversationAvatar.generated.tsx",
       "loom/OfficialSearchSections.generated.tsx",
-      "loom/OfficialSearchControls.generated.tsx"
+      "loom/OfficialSearchControls.generated.tsx",
+      "loom/OfficialTaskSelection.generated.tsx",
+      "loom/OfficialTaskCreate.generated.tsx",
+      "loom/OfficialTaskSurfaces.generated.tsx",
+      "loom/OfficialActivityHeader.generated.tsx"
     ],
     "foundation": "package.json#dependencies.raft-ui"
   },
@@ -48,12 +52,13 @@
         "loom/OfficialSearchOverlay.generated.tsx",
         "loom/OfficialMessageHitRow.generated.tsx",
         "loom/OfficialSearchSections.generated.tsx",
-        "loom/OfficialSearchControls.generated.tsx"
+        "loom/OfficialSearchControls.generated.tsx",
+        "loom/DiscoveryNotice.tsx"
       ],
-      "adopted": "官方控件、旧页面及Loom查询绑定混合；搜索目标行和常用对象行由锁定官方源码生成，保留菜单焦点ref兼容接线；SearchOverlay原声明生成、官方Modal和searchOverlayAnchor直接依赖，删除内容隐式Vite别名；Loom提供固定overlay结果导航接线；MessageHitRow原声明生成（仅稳定键兼容补丁），searchGrouping纯函数直接依赖官方文件；最近会话/历史/常用对象/消息列分组/分页状态采用MessageSearchPage原JSX区块，TextLink直接依赖；原展示文件仅保留数据/状态/事件接线；输入栏/头部、五类筛选控件、首页/结果空态、结果骨架采用原JSX/声明，目录/输入法/路由仅本地控制器接线；已选筛选使用原生data-has-value",
+      "adopted": "官方控件、旧页面及Loom查询绑定混合；搜索目标行和常用对象行由锁定官方源码生成，保留菜单焦点ref兼容接线；SearchOverlay原声明生成、官方Modal和searchOverlayAnchor直接依赖，删除内容隐式Vite别名；Loom提供固定overlay结果导航接线；MessageHitRow原声明生成（仅稳定键兼容补丁），searchGrouping纯函数直接依赖官方文件；最近会话/历史/常用对象/消息列分组/分页状态采用MessageSearchPage原JSX区块，TextLink直接依赖；原展示文件仅保留数据/状态/事件接线；输入栏/头部、五类筛选控件、首页/结果空态、结果骨架采用原JSX/声明，目录/输入法/路由仅本地控制器接线；已选筛选使用原生data-has-value；错误区使用官方 Banner warning 原件，保留查询和消息打开失败的真实原因及重试",
       "remaining": [
-        "结果页外壳与响应式组合仍有本地适配；错误区同时承载查询失败和消息打开失败，保留真实原因/重试，尚待统一官方展示边界",
-        "查询/权限/分页/导航状态归Loom；新版生产资源与公开源码差异保留显式适配记录，无顶栏原生宿主分支未启用"
+        "结果外壳/响应式路由组合仍为明确的Loom适配；查询、权限、分页、导航状态归Loom，不复制官方业务store",
+        "公开源码与生产资源版本不同，未启用原生宿主搜索分支和不具备后端语义的 incomplete-search"
       ]
     },
     {
@@ -66,7 +71,9 @@
         "packages/web/src/components/message/MessageItem.tsx"
       ],
       "adopted": "官方消息组件与构建时适配并存",
-      "remaining": ["消息正文/composer/消息列的适配变换仍需收敛到明确数据接口"]
+      "remaining": [
+        "消息正文/composer/消息列的适配变换仍需收敛到明确数据接口"
+      ]
     },
     {
       "id": "activity",
@@ -77,11 +84,14 @@
         "loom/ActivityMessageRow.tsx",
         "loom/OfficialActivityEmpty.generated.tsx",
         "loom/OfficialActivityFilters.generated.tsx",
-        "loom/OfficialConversationAvatar.generated.tsx"
+        "loom/OfficialConversationAvatar.generated.tsx",
+        "loom/OfficialActivityHeader.generated.tsx",
+        "loom/DiscoveryNotice.tsx"
       ],
-      "adopted": "raft-ui InboxItem及Loom聚合/跳转接线；空状态原JSX提取，筛选语义绑定Loom；过滤栏原JSX提取（显式批量已读动作槽），ConversationAvatar原声明提取（本地最小身份输入类型）；保留已采用的新版紧凑InboxItem行，不回退旧版卡片",
+      "adopted": "raft-ui InboxItem及Loom聚合/跳转接线；空状态原JSX提取，筛选语义绑定Loom；过滤栏原JSX提取（显式批量已读动作槽），ConversationAvatar原声明提取（本地最小身份输入类型）；保留已采用的新版紧凑InboxItem行，不回退旧版卡片；原生标题/计数/全部已读展示由原JSX生成，刷新动作slot和未知计数由Loom提供，失败采用官方Banner",
       "remaining": [
-        "页面/列表/预览/分页组合仍是本地维护，需提取官方完整展示边界"
+        "紧凑InboxItem来自较新的v1.21.26资源结构移植，非公开源码原样依赖；分栏/预览复用聊天宿主，后续随聊天批次迁移",
+        "持久化已读、分页窗口、跳转与未知写入保护仍归Loom，不替换成官方store"
       ]
     },
     {
@@ -93,11 +103,15 @@
         "loom/TaskDetail.tsx",
         "loom/OfficialTaskModalHead.generated.tsx",
         "loom/OfficialTaskBoard.generated.tsx",
-        "loom/OfficialTaskCard.generated.tsx"
+        "loom/OfficialTaskCard.generated.tsx",
+        "loom/OfficialTaskSurfaces.generated.tsx",
+        "loom/OfficialTaskCreate.generated.tsx",
+        "loom/OfficialTaskSelection.generated.tsx"
       ],
-      "adopted": "官方任务组件、提取变换及本地任务状态绑定；TaskModalHead完整非导入声明生成、ShowMoreToggle原文件依赖，删除任务头部隐式Vite属性替换；看板列/分组列表/拖动包装及卡片原声明提取、显式Loom权限写入接线，VirtualizedTaskStack直接依赖，删除两条Vite变换及两处类型豁免",
+      "adopted": "官方任务组件、提取变换及本地任务状态绑定；TaskModalHead完整非导入声明生成、ShowMoreToggle原文件依赖，删除任务头部隐式Vite属性替换；看板列/分组列表/拖动包装及卡片原声明提取、显式Loom权限写入接线，VirtualizedTaskStack直接依赖，删除两条Vite变换及两处类型豁免；工具栏/页头/IdentityFilterChip/SelectionPopover、创建DialogCard与标题行、MainLayout任务外框/标题栏、属性与历史容器均从锁定原件直接依赖或生成；删除创建弹窗Vite临时改写，保留未知写入核实slot和冻结fieldset",
       "remaining": [
-        "页面工具栏/过滤、创建与详情整体组合仍混合；看板和列表展示边界已显式迁入"
+        "任务消息正文复用ThreadWorkspace，随聊天/消息列批次迁移；权限、五状态任务语义、批量提交与历史读取是Loom接线",
+        "官方可选“查看消息列”动作尚无本次入口绑定，继续不显示；没有复制官方任务store"
       ]
     },
     {
@@ -120,7 +134,9 @@
       "id": "computers",
       "name": "计算机",
       "status": "mixed",
-      "sources": ["loom/ComputersPage.tsx"],
+      "sources": [
+        "loom/ComputersPage.tsx"
+      ],
       "adopted": "官方Header、KeyValueRow、完整AvatarListRow直接依赖；Loom保留计算机与实例身份、运行时数据和导航绑定；恢复官方仅手机设置入口，手机列表采用官方ListRow/IconTile组合",
       "remaining": [
         "详情页组合、资料编辑和运行时区块仍有结构移植；历史附件场景的AvatarListRow尚未迁入完整依赖"
@@ -130,7 +146,9 @@
       "id": "memory",
       "name": "记忆",
       "status": "loom-native-composition",
-      "sources": ["loom/MemoryPage.tsx"],
+      "sources": [
+        "loom/MemoryPage.tsx"
+      ],
       "adopted": "Loom全局记忆语义，复用官方基础及关闭/标题组件",
       "remaining": [
         "无可直接替换的官方等价全局记忆页；保留本地语义，继续收敛展示原语并记录例外"
@@ -168,7 +186,9 @@
         "loom/Navigation.tsx",
         "loom/RoleWorkspace.tsx"
       ],
-      "remaining": ["共享控件已原生，外壳/响应式/拖动组合仍需迁移"]
+      "remaining": [
+        "共享控件已原生，外壳/响应式/拖动组合仍需迁移"
+      ]
     },
     {
       "id": "files",
@@ -187,7 +207,10 @@
       "id": "branches",
       "name": "Fork／Side／实例生命周期",
       "status": "mixed",
-      "sources": ["loom/SideWorkspace.tsx", "loom/InstanceInspector.tsx"],
+      "sources": [
+        "loom/SideWorkspace.tsx",
+        "loom/InstanceInspector.tsx"
+      ],
       "remaining": [
         "Loom专属交互继续使用官方场景组件，不引入Raft执行状态所有者"
       ]

@@ -24,7 +24,10 @@
     "./searchOverlayAnchor": "./packages/web/src/components/search/searchOverlayAnchor.ts",
     "./Modal": "./packages/web/src/components/Modal.tsx",
     "./searchGrouping": "./packages/web/src/components/search/searchGrouping.ts",
-    "./TextLink": "./packages/web/src/components/ui/TextLink.tsx"
+    "./TextLink": "./packages/web/src/components/ui/TextLink.tsx",
+    "./Banner": "./packages/web/src/components/ui/Banner.tsx",
+    "./DialogCard": "./packages/web/src/components/ui/DialogCard.tsx",
+    "./TaskTitleRow": "./packages/web/src/components/task/TaskTitleRow.tsx"
   },
   "peerDependencies": {
     "react": "^19.0.0",

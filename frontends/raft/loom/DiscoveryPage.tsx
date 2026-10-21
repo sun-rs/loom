@@ -1,3 +1,4 @@
+import DiscoveryNotice from "./DiscoveryNotice";
 import {
   SearchLoading,
   SearchHomeEmpty,
@@ -692,26 +693,20 @@ function Results({
         onOpen={selectEntity}
       />
       {entities.error && (
-        <div role="alert" className="p-3">
+        <DiscoveryNotice
+          actions={
+            <Button {...uiActionProps.recovery} onClick={entities.retry}>
+              重新读取目录
+            </Button>
+          }
+        >
           对话目录读取失败。
-          <Button {...uiActionProps.recovery} onClick={entities.retry}>
-            重新读取目录
-          </Button>
-        </div>
+        </DiscoveryNotice>
       )}
       {pins?.failed && mode === "activity" && (
-        <p
-          role="status"
-          className="px-4 py-2 text-footnote text-foreground-muted"
-        >
-          置顶分组读取失败，请刷新动态重试。
-        </p>
+        <DiscoveryNotice>置顶分组读取失败，请刷新动态重试。</DiscoveryNotice>
       )}
-      {mutationError && (
-        <p role="alert" className="px-3 py-2">
-          {mutationError}
-        </p>
-      )}
+      {mutationError && <DiscoveryNotice>{mutationError}</DiscoveryNotice>}
       {showRecent ? null : mode === "search" &&
         !query.trim() &&
         !searchFilters.senderIds?.length &&
@@ -736,15 +731,18 @@ function Results({
           <SearchLoading />
         )
       ) : error ? (
-        <div role="alert" className="p-4">
+        <DiscoveryNotice
+          actions={
+            <Button
+              {...uiActionProps.recovery}
+              onClick={() => setRetry((v) => v + 1)}
+            >
+              重新读取
+            </Button>
+          }
+        >
           {error}
-          <Button
-            {...uiActionProps.recovery}
-            onClick={() => setRetry((v) => v + 1)}
-          >
-            重新读取
-          </Button>
-        </div>
+        </DiscoveryNotice>
       ) : (
         data && (
           <>
