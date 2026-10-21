@@ -1,8 +1,5 @@
 import { useEffect, useState } from "react";
-import { useIntl } from "react-intl";
-import { Badge, SearchResultsSectionHeading } from "raft-ui";
-import { Clock3, X } from "lucide-react";
-import TextLink from "../packages/web/src/components/ui/TextLink.tsx";
+import { SearchHistorySection } from "./OfficialSearchSections.generated";
 import { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives.ts";
 import {
   addSearchHistoryEntry,
@@ -11,7 +8,6 @@ import {
   readSearchHistory,
   removeSearchHistoryEntry,
   resolveSearchHistoryEditing,
-  shouldRenderSearchHistoryRemove,
 } from "../packages/web/src/components/search/searchHome.ts";
 function storage() {
   try {
@@ -65,7 +61,6 @@ export default function SearchHistory({
   history: ReturnType<typeof useSearchHistory>;
   onChoose: (query: string) => void;
 }) {
-  const { formatMessage } = useIntl();
   const searchHistory = history.entries;
   const isTouchSearchHome = useMediaQuery("(max-width: 767px)");
   const [searchHistoryEditRequested, setSearchHistoryEditRequested] =
@@ -85,85 +80,16 @@ export default function SearchHistory({
   };
   const chooseSearchHistoryEntry = onChoose;
   return (
-    <>
-      <section aria-labelledby="search-history-heading">
-        <div className="flex items-center justify-between gap-3 pr-4">
-          <SearchResultsSectionHeading>
-            <Clock3 size={14} aria-hidden="true" />
-            <span id="search-history-heading">
-              {formatMessage({ id: "search.history" })}
-            </span>
-          </SearchResultsSectionHeading>
-          <div className="flex items-center gap-4 pt-5 pb-2">
-            {isTouchSearchHome ? (
-              <TextLink
-                variant="primary"
-                onClick={() =>
-                  setSearchHistoryEditRequested((editing) => !editing)
-                }
-                className="text-footnote"
-                data-testid="search-history-edit-toggle"
-              >
-                {formatMessage({
-                  id: searchHistoryEditing
-                    ? "search.doneEditHistory"
-                    : "search.editHistory",
-                })}
-              </TextLink>
-            ) : null}
-            <TextLink
-              variant="primary"
-              onClick={clearSearchHistory}
-              className="text-footnote"
-            >
-              {formatMessage({ id: "search.clearHistory" })}
-            </TextLink>
-          </div>
-        </div>
-        <div
-          className="flex flex-wrap gap-1.5 px-4"
-          data-testid="search-history-tags"
-        >
-          {searchHistory.map((historyQuery) => (
-            <Badge
-              key={historyQuery.toLocaleLowerCase()}
-              render={<div />}
-              appearance="soft"
-              className="group relative hover:press-overlay focus-within:shadow-raft-focus"
-              data-testid="search-history-tag"
-            >
-              <button
-                type="button"
-                onClick={() => chooseSearchHistoryEntry(historyQuery)}
-                className="flex min-w-0 items-center gap-1 text-left outline-none after:absolute after:inset-0"
-              >
-                <Clock3 size={14} aria-hidden="true" />
-                <span className="truncate">{historyQuery}</span>
-              </button>
-              {shouldRenderSearchHistoryRemove({
-                isTouchViewport: isTouchSearchHome,
-                editing: searchHistoryEditing,
-              }) ? (
-                <button
-                  type="button"
-                  onClick={() => forgetSearchQuery(historyQuery)}
-                  className={
-                    searchHistoryEditing
-                      ? "relative z-10 -my-1 -mr-1 flex size-5.5 shrink-0 items-center justify-center rounded-sticker text-foreground-hint hover:bg-fill-pressed"
-                      : "pointer-events-none relative z-10 -my-1 -mr-1 flex size-5.5 shrink-0 items-center justify-center rounded-sticker text-foreground-hint hover:bg-fill-pressed opacity-0 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100 focus:pointer-events-auto focus:opacity-100"
-                  }
-                  aria-label={formatMessage(
-                    { id: "search.removeHistory" },
-                    { query: historyQuery },
-                  )}
-                >
-                  <X size={14} aria-hidden="true" />
-                </button>
-              ) : null}
-            </Badge>
-          ))}
-        </div>
-      </section>
-    </>
+    <SearchHistorySection
+      searchHistory={searchHistory}
+      isTouchSearchHome={isTouchSearchHome}
+      searchHistoryEditing={searchHistoryEditing}
+      toggleSearchHistoryEdit={() =>
+        setSearchHistoryEditRequested((editing) => !editing)
+      }
+      clearSearchHistory={clearSearchHistory}
+      chooseSearchHistoryEntry={chooseSearchHistoryEntry}
+      forgetSearchQuery={forgetSearchQuery}
+    />
   );
 }

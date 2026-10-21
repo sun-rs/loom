@@ -279,6 +279,30 @@
         "OfficialConversationAvatar.generated.tsx"
       ],
       "guard": "scripts/official-web/discovery-foundation-source.test.mjs"
+    },
+    {
+      "id": "search-sections-source",
+      "owner": "db5e399 MessageSearchPage presentation sections and TextLink",
+      "rule": "Generate exact JSX for history, recent, frequent, thread grouping and pagination. Loom supplies bounded data, stable selected key, guarded commands and render slots; no local geometry in section adapters. Native TextLink owns focus and hover.",
+      "sources": [
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/search/MessageSearchPage.tsx",
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/ui/TextLink.tsx"
+      ],
+      "bindings": [
+        "OfficialSearchSections.generated.tsx",
+        "SearchHistory.tsx",
+        "SearchRecent.tsx",
+        "SearchFrequent.tsx",
+        "SearchMessageGroups.tsx",
+        "SearchLoadMore.tsx"
+      ],
+      "guard": "scripts/official-web/search-sections-source.test.mjs",
+      "localDifferences": [
+        "Typed props and render slots replace upstream lexical store dependencies",
+        "Thread group test marker only JSX patch",
+        "Pagination incomplete-search defaults false; no unimplemented backend continuation claim",
+        "TextLink legacy inline prop is discarded by thin compatibility adapter"
+      ]
     }
   ],
   "exceptions": [

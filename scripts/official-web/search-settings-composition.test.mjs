@@ -50,12 +50,12 @@ test("readonly Loom timeline retains explicit channel navigation", () => {
   assert.match(read("loom/ChannelTimeline.tsx"), /onReadOnlyNavigateChannel/);
 });
 test("thread search headers use the native compact metadata hierarchy", () => {
-  const s = read("loom/SearchMessageGroups.tsx");
+  const s = read("loom/OfficialSearchSections.generated.tsx");
   assert.match(s, /mb-0.5 flex min-w-0 flex-wrap items-center gap-1.5/);
   assert.match(s, /font-mono text-mono-meta text-foreground-hint/);
 });
 test("all search destination surfaces use current list composition and headings", () => {
-  for (const p of ["loom/SearchRecent.tsx", "loom/SearchFrequent.tsx"]) {
+  for (const p of ["loom/OfficialSearchSections.generated.tsx"]) {
     const s = read(p);
     assert.match(s, /<SearchResultsSectionHeading>/);
     assert.doesNotMatch(s, /grid-cols|<SectionEyebrow/);
@@ -67,7 +67,7 @@ test("all search destination surfaces use current list composition and headings"
   assert.doesNotMatch(read("loom/SearchEntityRows.tsx"), /mb-3 px-3|-m-1.5/);
 });
 test("search history uses current native heading, soft chips and shared text actions", () => {
-  const s = read("loom/SearchHistory.tsx");
+  const s = read("loom/OfficialSearchSections.generated.tsx");
   assert.match(s, /SearchResultsSectionHeading/);
   assert.match(s, /appearance="soft"/);
   assert.match(s, /<TextLink/);
@@ -98,7 +98,7 @@ test("shared sidebars and channel sections use native recipes instead of local s
   assert.match(read("loom/SidebarMenus.tsx"), /<SidebarSectionControl/);
 });
 test("search pagination error uses the native warning banner", () => {
-  const s = read("loom/SearchLoadMore.tsx");
+  const s = read("loom/OfficialSearchSections.generated.tsx");
   assert.match(s, /intent="warning"/);
   assert.match(s, /withIcon/);
   assert.doesNotMatch(s, /shadow-raft-sm|font-bold/);

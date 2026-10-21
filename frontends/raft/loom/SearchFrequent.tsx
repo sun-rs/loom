@@ -1,7 +1,5 @@
-import { SearchResultsList, SearchResultsSectionHeading } from "raft-ui";
+import { SearchFrequentSection } from "./OfficialSearchSections.generated";
 import { useMemo } from "react";
-import { useIntl } from "react-intl";
-import { Star } from "lucide-react";
 
 import { SearchHomeEntityRow } from "../packages/web/src/components/search/SearchHomeEntityRow.tsx";
 import {
@@ -60,36 +58,20 @@ export default function SearchFrequent({
   entities: SearchEntity[];
   onOpen: (entity: SearchEntity, full: boolean) => void;
 }) {
-  const { formatMessage } = useIntl();
   return (
-    <section aria-labelledby="search-frequent-heading">
-      <SearchResultsSectionHeading>
-        <Star size={14} aria-hidden="true" />
-        <span id="search-frequent-heading">
-          {formatMessage({ id: "search.frequent" })}
-        </span>
-      </SearchResultsSectionHeading>
-      {entities.length ? (
-        <SearchResultsList>
-          {entities.map((entity) => (
-            <SearchHomeEntityRow
-              key={entity.key}
-              result={
-                entity.type === "agentDm"
-                  ? { ...entity, agentId: null }
-                  : entity
-              }
-              agentAvatarUrl={null}
-              humanMember={undefined}
-              onActivate={() => onOpen(entity, false)}
-            />
-          ))}
-        </SearchResultsList>
-      ) : (
-        <p className="px-4 py-2 text-callout text-foreground-hint">
-          {formatMessage({ id: "search.frequentEmpty" })}
-        </p>
+    <SearchFrequentSection
+      frequentSearchEntities={entities}
+      renderSearchHomeEntity={(entity) => (
+        <SearchHomeEntityRow
+          key={entity.key}
+          result={
+            entity.type === "agentDm" ? { ...entity, agentId: null } : entity
+          }
+          agentAvatarUrl={null}
+          humanMember={undefined}
+          onActivate={() => onOpen(entity, false)}
+        />
       )}
-    </section>
+    />
   );
 }

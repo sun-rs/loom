@@ -1,9 +1,7 @@
 import type { RahClient } from "@rah-os/client-sdk";
 // Native recent-conversation store contains bounded visit IDs only, not messages or business state.
 import { useEffect, useMemo, useState } from "react";
-import { useIntl } from "react-intl";
-import { Clock3 } from "lucide-react";
-import { SearchResultsList, SearchResultsSectionHeading } from "raft-ui";
+import { SearchRecentSection } from "./OfficialSearchSections.generated";
 
 import {
   useRecentConversationStore,
@@ -91,26 +89,18 @@ export default function SearchRecent({
   selectedId: string | null;
   onOpen: (entity: SearchEntity, full: boolean) => void;
 }) {
-  const { formatMessage } = useIntl();
   return (
-    <div data-testid="search-overlay-recent">
-      <SearchResultsSectionHeading>
-        <Clock3 size={14} aria-hidden="true" />
-        <span>
-          {formatMessage({ id: "search.overlay.recentConversations" })}
-        </span>
-      </SearchResultsSectionHeading>
-      <SearchResultsList>
-        {entities.map((entity) => (
-          <SearchEntityRow
-            key={entity.key}
-            entity={entity}
-            selected={selectedId === entity.key}
-            onOpen={onOpen}
-            returnHint
-          />
-        ))}
-      </SearchResultsList>
-    </div>
+    <SearchRecentSection
+      recentConversationEntities={entities}
+      renderEntityResultRow={(entity, { returnHint }) => (
+        <SearchEntityRow
+          key={entity.key}
+          entity={entity}
+          selected={selectedId === entity.key}
+          onOpen={onOpen}
+          returnHint={returnHint}
+        />
+      )}
+    />
   );
 }
