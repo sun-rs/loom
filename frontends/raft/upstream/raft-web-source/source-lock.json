@@ -89,6 +89,7 @@
     "packages/web/src/components/layout/LeftRail.tsx": "8f07356a3b551527195df117f28d0681c9edf514d381045209996896e0adbde2",
     "packages/web/src/components/layout/Sidebar.tsx": "d5adc62fe25588a0d5a99a056462f6cce324b5f8fae5f1d0a4e6442fbca2b79c",
     "packages/web/src/components/agent/ChannelMembers.tsx": "63080c343c7e39a75595b219a90bd9e6a8c7144fd0c0820b52198ed2fc741af8",
-    "packages/web/src/components/topbar/AppTopBar.tsx": "9c7a289189a6ad78805d4332984e678ee2f1607eec3735be9472d63a745a2f19"
+    "packages/web/src/components/topbar/AppTopBar.tsx": "9c7a289189a6ad78805d4332984e678ee2f1607eec3735be9472d63a745a2f19",
+    "packages/web/src/components/layout/MemberAgentRow.tsx": "8ac202cbf14bf68bafcca06ba078f08e3ba1c60e46edeebbf18d8ef9332e27b2"
   }
 }

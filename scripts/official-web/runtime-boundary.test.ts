@@ -9,6 +9,7 @@ test("built chunks cannot contain the original cloud transport or unused full pa
     "components/agent/ChannelMembers.tsx",
     "components/layout/Sidebar.tsx",
     "components/layout/LeftRail.tsx",
+    "components/layout/LiveAgentActivityBar.tsx",
   ]) {
     assert.throws(
       () =>

@@ -1,3 +1,4 @@
+import { OfficialRoleRow } from "./OfficialIdentityRows.generated";
 import RolePresence from "./RolePresence.tsx";
 import type { rolePresence } from "./role-presence.ts";
 // Structural port: MainLayout member master/detail, MemberAgentRow and
@@ -10,10 +11,7 @@ import {
   SidebarSectionDisclosure,
   SidebarSectionCount,
   SidebarSectionControl,
-  SidebarItemContent,
-  SidebarItemTitle,
   Input,
-  SidebarItem,
   ConversationPanelTabs,
   Tabs,
   TabsList,
@@ -123,27 +121,14 @@ export default function RoleWorkspace({
             </p>
           )}
           {visible.map((entry) => (
-            <SidebarItem
+            <OfficialRoleRow
               key={entry.id}
-              active={selected?.id === entry.id}
-              disabled={busy}
-              data-role-id={entry.id}
-              aria-label={entry.name}
-              onClick={() => {
-                onSelect(entry.id);
-              }}
-              className={`mx-0 w-full items-center ${selected?.id === entry.id ? "  " : ""}`}
-            >
-              <AvatarSlot
-                context="sidebar-list"
-                type="agent"
-                agentAvatarUrl={entry.avatarUrl}
-                badge={<RolePresence state={entry.presence ?? "unknown"} />}
-              />
-              <SidebarItemContent>
-                <SidebarItemTitle>{entry.name}</SidebarItemTitle>
-              </SidebarItemContent>
-            </SidebarItem>
+              agent={entry}
+              selected={selected?.id === entry.id}
+              busy={busy}
+              onSelect={onSelect}
+              statusDot={<RolePresence state={entry.presence ?? "unknown"} />}
+            />
           ))}
         </Frame>
         <PanelResizeHandle

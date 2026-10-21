@@ -140,11 +140,20 @@ for (const width of [1440, 390]) {
       const border = await page.getByTestId("memory-master").evaluate((el) => ({
         width: getComputedStyle(el).borderRightWidth,
         color: getComputedStyle(el).borderRightColor,
+        expected: (() => {
+          const probe = document.createElement("div");
+          probe.className = "border-r border-line-seam";
+          el.appendChild(probe);
+          const value = getComputedStyle(probe).borderRightColor;
+          probe.remove();
+          return value;
+        })(),
       }));
       assert.equal(border.width, "1px");
-      assert.ok(
-        border.color.includes("0.149"),
-        "rUI muted seam, not the retired black theme border",
+      assert.equal(
+        border.color,
+        border.expected,
+        "native seam token owns the divider",
       );
       const actionBorder = await page
         .getByTestId("memory-detail")
@@ -334,7 +343,9 @@ for (const width of [1440, 390]) {
     assert.equal((await saveAction.boundingBox()).height, 32);
     assert.equal(
       await saveAction.evaluate((el) => getComputedStyle(el).fontSize),
-      "13px",
+      await saveAction.evaluate((el) =>
+        getComputedStyle(el).getPropertyValue("--text-control").trim(),
+      ),
     );
     await saveAction.click();
     await edit.getByText(/保存结果未知/).waitFor();

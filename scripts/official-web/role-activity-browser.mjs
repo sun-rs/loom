@@ -114,7 +114,19 @@ export async function verifyRoleActivity({ browser, origin, client, role }) {
         await page
           .getByRole("button", { name: "角色列表", exact: true })
           .click();
-      await page.locator(`[data-role-id="${role.roleId}"]`).click();
+      const roleRow = page.locator(`[data-role-id="${role.roleId}"]`);
+      const rowHit = await roleRow.evaluate((el) => {
+        const r = el.getBoundingClientRect(),
+          top = document.elementFromPoint(
+            r.x + r.width / 2,
+            r.y + r.height / 2,
+          );
+        return { height: r.height, clickable: top === el || el.contains(top) };
+      });
+      assert.ok(rowHit.clickable);
+      if (width < 768)
+        assert.equal(rowHit.height, 34, "approved native-app compact Role row");
+      await roleRow.click();
       await page.getByTestId("loom-role-profile").waitFor();
       assert.equal(
         await tabs

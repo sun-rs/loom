@@ -6,6 +6,7 @@ const forbidden = [
   "components/agent/ChannelMembers.tsx",
   "components/layout/Sidebar.tsx",
   "components/layout/LeftRail.tsx",
+  "components/layout/LiveAgentActivityBar.tsx",
 ];
 export function assertOfficialRuntimeBoundary(ids: Iterable<string>) {
   for (const id of ids) {

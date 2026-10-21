@@ -203,3 +203,13 @@ IconTile替换本地51px方块。Role配置/实例关系、CLI状态、设备设
 `OfficialWorkspace.generated.tsx` 扩展到 AgentWorkspace 的外框、路径栏、分栏、文件树容器、拖动手柄、正文容器、文件标题和图片预览原子树。恢复 canvas/seam 配色、原生文件名排版与手机 32px 返回按钮/18px 图标；原图片容器和透明背景也进入依赖。Loom 保留根目录选择/Git选择槽、按需读取、长内容上限、HTML/PDF安全策略；Markdown模式切换保持在现有正文工具位置，未复制官方远程文件服务。
 
 迁移清单现在区分 `retainedBoundaries`（永久本地职责）和 `openMigrationWork`（实际待收口展示组），测试要求二者分离。剩余三组为：身份主从列表、资源/旧版兼容展示、Loom专属组合。计数表示审查分组，不表示三个控件，也不是完成百分比或承诺三轮。`wholeSiteDependencyComplete` 仍为 false。
+
+### 2026-10-22：身份行、旧版实时状态与本地页面复核
+
+Role 行采用 db5e399 `MemberAgentRow` 的原 JSX，计算机行采用 `Sidebar.ComputerRowBody` 原 JSX。生成器只移除不适用于 Role 的实例运行时/双击私聊/上下文菜单，接入 Loom 名称、冻结身份、聚合状态及点击事件；计算机的升级/磁盘/版本信息槽替换为本地主机的真实连接状态。官方 `sidebarItemClass` 提供 Web 基准；已批准的原生 App 紧凑适配继续覆盖为手机 Role 行 34px，不能把 Web 的 44px 基准误报为最终手机尺寸。单击 Role 默认资料、实例活动以及计算机默认选择逻辑仍由原本的 Loom 路由拥有。
+
+实时活动条不在当前 db5e399 源码包内。其 a98ae003 官方原件从初次 intake 提交恢复，SHA-256 与 `adoption.json` 原记录吻合，单独存于 `upstream/compatibility/live-activity`，避免伪造当前版本来源。生成器保留既有单一设计系统兼容调整，提取纯展示声明；`AppearanceRuntime` 继续提供真实观察值，旧连接组件被生产 bundle 守卫禁止。未复制旧活动 store，也未新增活动生成逻辑。
+
+本地专属页面按已有 scenario registry 复核：记忆/Side 的自定 14px X 改回官方 CloseButton 默认 16px；记忆主从分隔线使用原生 seam。其余保留本地语义：记忆修订及来源、Side 只读权限、实例生命期、Kernel 用量统计。资源型兼容组与本地专属组的审查范围、依据和保留原因写入 `reviewedCompositionGroups`，不将它们称作当前官方整页。
+
+剩余一组：Role/计算机的页面外框、共享侧栏标题及 tabs 组合。身份行本身已迁移；全站完成标志继续为 false，避免用局部审查替代所有前端逻辑验收。

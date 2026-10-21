@@ -11,7 +11,6 @@ import {
 import type { RahClient } from "@rah-os/client-sdk";
 import type { Room } from "@rah-os/protocol";
 import { Button, Spinner, ThreadPanelRoot } from "raft-ui";
-import { X } from "lucide-react";
 import { useResizablePanel } from "../packages/web/src/hooks/useResizablePanel.ts";
 import {
   THREAD_PANEL_MIN_WIDTH,
@@ -127,13 +126,11 @@ export default function SideWorkspace({
     <>
       <CloseButton
         data-loom-control="detail-close"
-        className="flex size-8 shrink-0 items-center justify-center"
+
         aria-label="关闭 Side"
         data-testid="thread-close"
         onClick={close}
-      >
-        <X size={14} />
-      </CloseButton>
+      ></CloseButton>
     </>
   );
   return (

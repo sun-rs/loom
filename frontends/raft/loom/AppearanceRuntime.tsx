@@ -12,7 +12,7 @@ import {
 import type { RahClient } from "@rah-os/client-sdk";
 import type { AgentCatalogEntry } from "@rah-os/protocol";
 import { useAppearanceStore } from "../packages/web/src/store/appearanceStore.ts";
-import { LiveAgentActivityBarPresentation } from "../packages/web/src/components/layout/LiveAgentActivityBar.tsx";
+import { LiveAgentActivityBarPresentation } from "./OfficialLiveActivity.generated";
 import type { LiveAgentActivityItem } from "../packages/web/src/utils/liveAgentActivity.ts";
 const AppearanceRuntime = createContext<{
   facts?: MessageStatusFacts;

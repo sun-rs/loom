@@ -16,7 +16,6 @@ import {
   DialogBody,
   DialogClose,
 } from "raft-ui";
-import { X } from "lucide-react";
 import type { RahClient } from "@rah-os/client-sdk";
 import type { MemoryEntry, MemoryEntryDetail, Room } from "@rah-os/protocol";
 import CloseButton from "../packages/web/src/components/ui/CloseButton.tsx";
@@ -210,7 +209,7 @@ export default function MemoryPage({
     <div className="flex min-h-0 min-w-0 flex-1" data-testid="loom-memory-page">
       <AppShellMainSlot
         data-testid="memory-master"
-        className={`relative min-w-0 bg-layer-canvas  ${selected && desktop ? "border-r border-line-muted " : ""}`}
+        className={`relative min-w-0 bg-layer-canvas  ${selected && desktop ? "border-r border-line-seam " : ""}`}
         style={
           selected
             ? desktop
@@ -373,13 +372,11 @@ export default function MemoryPage({
                 )}
                 <CloseButton
                   data-loom-control="detail-close"
-                  className="flex size-8 shrink-0 items-center justify-center"
+
                   aria-label="关闭记忆正文"
                   disabled={busy}
                   onClick={reset}
-                >
-                  <X size={14} />
-                </CloseButton>
+                ></CloseButton>
               </>
             }
           />

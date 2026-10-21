@@ -504,6 +504,25 @@
         "OfficialTopBar.generated.tsx",
         "OfficialWorkspace.generated.tsx"
       ]
+    },
+    {
+      "id": "identity-rows-and-retained-live-status",
+      "owner": "db5e399 MemberAgentRow/Sidebar.ComputerRowBody; a98ae003 LiveAgentActivityBar presentation",
+      "rule": "Generate native row anatomy and mobile min-height; Loom injects names, aggregate/observed status and selection. Omit instance DM/runtime actions on Role. Retained live bar has separate original hash and explicit existing design-system compatibility; never import its connected store. Memory/Side detail close uses the native default glyph; memory divider uses line-seam. The approved mobile.css native-app compact Role override remains 34px; do not confuse the web 44px base with final mobile geometry.",
+      "sources": [
+        "scripts/official-web/generate-identity-rows.mjs",
+        "scripts/official-web/generate-live-activity.mjs",
+        "scripts/official-web/identity-rows.test.mjs",
+        "scripts/official-web/live-activity-source.test.mjs",
+        "scripts/official-web/local-composition-controls.test.mjs"
+      ],
+      "bindings": [
+        "RoleWorkspace.tsx",
+        "ComputersPage.tsx",
+        "AppearanceRuntime.tsx",
+        "MemoryPage.tsx",
+        "SideWorkspace.tsx"
+      ]
     }
   ],
   "exceptions": [

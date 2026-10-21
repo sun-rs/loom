@@ -24,10 +24,12 @@ test("Role sidebar adopts shared section controls and row content without local 
     "SidebarSectionHeader",
     "SidebarSectionControl",
     "SidebarSectionCount",
-    "SidebarItemContent",
-    "SidebarItemTitle",
   ])
     assert.ok(s.includes("<" + n));
+  assert.match(s, /<OfficialRoleRow/);
+  const row = read("loom/OfficialIdentityRows.generated.tsx");
+  for (const name of ["SidebarItemContent", "SidebarItemTitle"])
+    assert.ok(row.includes("<" + name));
   assert.doesNotMatch(s, /tracking-widest|size="icon-xs"|truncate text-sm/);
 });
 test("message toolbar delegates position and active color to native recipe with current 18px icons", () => {

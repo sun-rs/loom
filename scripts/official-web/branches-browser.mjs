@@ -122,7 +122,7 @@ for (const width of [1440, 390]) {
     const openMenu = async () => {
       await page.getByTestId("loom-channel-control-trigger").click();
       await page
-        .getByTestId("loom-channel-control-sheet")
+        .getByTestId("loom-channel-members")
         .getByRole("button", { name: /^Reviewer-1/ })
         .click();
       await page.getByTestId("profile-panel").waitFor();
@@ -133,7 +133,9 @@ for (const width of [1440, 390]) {
     await page
       .getByRole("menuitem", { name: "Fork · 分叉为新成员", exact: true })
       .click();
-    const forkDialog = page.getByRole("dialog");
+    const forkDialog = page.locator(
+      '[role="dialog"][data-slot="dialog-content"]',
+    );
     await forkDialog
       .getByRole("button", { name: "创建 Fork", exact: true })
       .click();
@@ -173,8 +175,16 @@ for (const width of [1440, 390]) {
         .evaluate((el) => ({
           border: getComputedStyle(el).borderTopColor,
           marker: el.getAttribute("data-loom-control"),
+          width: el.getBoundingClientRect().width,
+          icon: el.querySelector("svg")?.getAttribute("width"),
         }));
-      assert.match(closeStyle.border, /^(rgb\(0, 0, 0\)|oklch\(0 0 0\))$/);
+      assert.equal(
+        closeStyle.border,
+        "rgba(0, 0, 0, 0)",
+        "native ghost close has no permanent ink border",
+      );
+      assert.equal(closeStyle.width, 32);
+      assert.equal(closeStyle.icon, "16");
       assert.equal(closeStyle.marker, "detail-close");
     } else {
       assert.equal(
@@ -183,10 +193,32 @@ for (const width of [1440, 390]) {
         "native mobile uses back instead of X",
       );
       const back = panel.getByTestId("thread-mobile-back");
+      const touch = await back.evaluate((el) => {
+        const r = el.getBoundingClientRect(),
+          style = getComputedStyle(el),
+          after = getComputedStyle(el, "::after");
+        const target = document.elementFromPoint(r.x + 1, r.y + r.height / 2);
+        return {
+          width: r.width,
+          expanded: parseFloat(after.width),
+          expected:
+            r.width -
+            parseFloat(style.borderLeftWidth) -
+            parseFloat(style.borderRightWidth),
+          left: after.left,
+          right: after.right,
+          owns: target === el || el.contains(target),
+        };
+      });
+      assert.equal(touch.width, 44);
+      assert.equal(touch.left, "0px");
+      assert.equal(touch.right, "0px");
       assert.equal(
-        await back.evaluate((el) => getComputedStyle(el, "::after").width),
-        "44px",
+        touch.expanded,
+        touch.expected,
+        "native mobile action uses the padding box with zero extra inset",
       );
+      assert.ok(touch.owns, "native mobile back owns its outer hit area");
     }
     assert.equal(copies, 2);
     assert.equal(

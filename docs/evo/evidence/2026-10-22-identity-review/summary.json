@@ -1,0 +1,188 @@
+{
+  "source": "db5e399f017d584e49597e3a28757645d6807893",
+  "retainedLiveSource": "a98ae003246a0360872a77d76dec2fccd0347ef7",
+  "foundation": "@botiverse/raft-ui@0.10.5",
+  "implemented": [
+    "Role/Computer row JSX generation with explicit Loom identity/status/actions",
+    "Pinned older live activity original and generated pure presentation; connected module forbidden in bundle",
+    "Memory/Side native close glyph and memory seam token",
+    "Separate reviewed resource/local-only boundaries from remaining outer-frame/tab review"
+  ],
+  "checks": {
+    "source": {
+      "passed": 331,
+      "failed": 0
+    },
+    "uiContract": {
+      "passed": 8,
+      "failed": 0
+    },
+    "typecheck": true,
+    "build": true,
+    "fixtureBrowser": {
+      "computers": {
+        "fixture": true,
+        "computers": [
+          {
+            "viewport": {
+              "width": 1440,
+              "height": 1000
+            },
+            "selectionReloadBack": "passed",
+            "horizontalOverflow": false,
+            "officialRowKeyboardNavigation": "passed",
+            "monoFactsAndPointerTargets": "passed"
+          },
+          {
+            "viewport": {
+              "width": 390,
+              "height": 844
+            },
+            "selectionReloadBack": "passed",
+            "horizontalOverflow": false,
+            "officialRowKeyboardNavigation": "passed",
+            "monoFactsAndPointerTargets": "passed"
+          }
+        ]
+      },
+      "role": [
+        {
+          "width": 1440,
+          "aggregateMembers": 2,
+          "scopeFiltered": true,
+          "singleFilterAndPagination": true,
+          "combinedModelEditor": true,
+          "instancesInProfile": true,
+          "sharedInstanceTimeline": true,
+          "expansionAndPagination": true
+        },
+        {
+          "width": 390,
+          "aggregateMembers": 2,
+          "scopeFiltered": true,
+          "singleFilterAndPagination": true,
+          "combinedModelEditor": true,
+          "instancesInProfile": true,
+          "sharedInstanceTimeline": true,
+          "expansionAndPagination": true
+        }
+      ],
+      "appearance": [
+        {
+          "width": 1440,
+          "themes": true,
+          "systemMode": true,
+          "fontPreviewAndChat": true,
+          "persistence": true,
+          "modelToggle": true,
+          "emptySections": true,
+          "liveActivityToggle": true,
+          "noOverflow": true
+        },
+        {
+          "width": 390,
+          "themes": true,
+          "systemMode": true,
+          "fontPreviewAndChat": true,
+          "persistence": true,
+          "modelToggle": true,
+          "emptySections": true,
+          "liveActivityToggle": true,
+          "noOverflow": true
+        },
+        {
+          "width": 360,
+          "themes": true,
+          "systemMode": true,
+          "fontPreviewAndChat": true,
+          "persistence": true,
+          "modelToggle": true,
+          "emptySections": true,
+          "liveActivityToggle": true,
+          "noOverflow": true
+        }
+      ],
+      "memory": [
+        {
+          "width": 1440,
+          "list": true,
+          "history": true,
+          "deletedHistoryRedacted": true,
+          "policyDefaultsOverrideInherit": true,
+          "policyUnknownReplay": true,
+          "policyConflictReread": true,
+          "detail": true,
+          "bodySearch": true,
+          "edit": true,
+          "invalidateRestore": true,
+          "pin": true,
+          "delete": true,
+          "unknownExactReplay": true
+        },
+        {
+          "width": 390,
+          "list": true,
+          "history": true,
+          "deletedHistoryRedacted": true,
+          "policyDefaultsOverrideInherit": true,
+          "policyUnknownReplay": true,
+          "policyConflictReread": true,
+          "detail": true,
+          "bodySearch": true,
+          "edit": true,
+          "invalidateRestore": true,
+          "pin": true,
+          "delete": true,
+          "unknownExactReplay": true
+        }
+      ],
+      "branches": [
+        {
+          "width": 1440,
+          "copies": 2,
+          "fork": true,
+          "sideRoundTrip": true,
+          "refresh": true,
+          "reopen": true,
+          "sourceUnchanged": true,
+          "workerSourceWriteDenied": true,
+          "unknownCreateReplay": true,
+          "unknownDiscardReplay": true,
+          "busyDiscard": false,
+          "nativeResponsive": true,
+          "resize": true
+        },
+        {
+          "width": 390,
+          "copies": 2,
+          "fork": true,
+          "sideRoundTrip": true,
+          "refresh": true,
+          "reopen": true,
+          "sourceUnchanged": true,
+          "workerSourceWriteDenied": true,
+          "unknownCreateReplay": true,
+          "unknownDiscardReplay": true,
+          "busyDiscard": true,
+          "nativeResponsive": true,
+          "resize": false
+        }
+      ]
+    }
+  },
+  "initialFailures": [
+    "TDD import/row/native-close/seam assertions failed before implementation",
+    "Typechecks caught ReactNode badge vs ReactElement and old avatar size props; fixed via correct slot type and existing compatibility bridge",
+    "Source assertions still targeted original host JSX; migrated them to generated owner plus host binding",
+    "Memory browser asserted retired seam alpha and fixed 13px instead of native text-control token",
+    "Branch browser clicked matching private history instead of member row and selected toast as business dialog; scope selectors to member list and dialog-content",
+    "Branch browser asserted retired permanent ink border and confused padding-box pseudo width with 44px button; verified current native recipe and real edge hit",
+    "Initial Role mobile 44px assertion ignored approved 34px native-app compact override; corrected against explicit existing mobile.css rule"
+  ],
+  "limits": [
+    "Not whole-site dependency completion; one outer-frame/sidebar-header/tab review group remains",
+    "Older live presentation is not current-source code",
+    "No backend mutation changes, paid CLI runs or efficiency claims"
+  ],
+  "privateEvidence": "/Users/sun/.loom/reviews/2026-10-22-identity-review"
+}

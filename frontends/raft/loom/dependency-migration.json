@@ -62,7 +62,9 @@
       "loom/OfficialPixelAvatar.generated.tsx",
       "loom/OfficialComputerProfile.generated.tsx",
       "loom/OfficialNavigationLeaves.generated.tsx",
-      "loom/OfficialTopBar.generated.tsx"
+      "loom/OfficialTopBar.generated.tsx",
+      "loom/OfficialIdentityRows.generated.tsx",
+      "loom/OfficialLiveActivity.generated.tsx"
     ],
     "foundation": "package.json#dependencies.raft-ui"
   },
@@ -289,20 +291,12 @@
     "Loom business state, access control and lifecycle remain local owners"
   ],
   "remainingBatchPlan": {
-    "estimate": "Three explicit review groups remain; permanent Loom bindings are excluded, no fixed turn-count guarantee",
+    "estimate": "One composition review group remains (outer frames/sidebar header/tabs), not one control or a guaranteed one-turn estimate",
     "fixedSource": "db5e399 / raft-ui 0.10.5; no automatic chase of newer releases",
     "batches": [
       {
         "scope": "identity-master-detail",
-        "exit": "Audit every retained list/header/tab/frame composition against the pinned source chain; generate equivalent retained presentation or record an explicit Loom-only composition. Preserve default profile, responsive navigation and real instance state."
-      },
-      {
-        "scope": "resource-only-shell",
-        "exit": "Identify exact resource/older-source provenance and test boundaries for remaining workspace identity, adaptive width, compact activity row and live status bar; do not claim byte-exact current source where unavailable."
-      },
-      {
-        "scope": "local-exclusive-compositions",
-        "exit": "Final retained-control audit against the scenario registry; distinguish approved local composition from unexplained per-page sizing or bypassed primitives. No new backend capabilities."
+        "exit": "Row anatomy has migrated. Finish direct source comparison of retained Role/Computer master-detail outer frames, shared sidebar header and tabs; extract equivalent source or explicitly document data-independent compatibility. Preserve default profile, responsive navigation and state authority."
       }
     ],
     "completionBoundary": "Immutable upstream presentation plus explicit Loom data/authority composition and approved exceptions; not zero local code or arbitrary future package replacement without acceptance"
@@ -316,29 +310,41 @@
         "loom/ChatSidebarFrame.tsx"
       ],
       "sourceBoundary": "MemberAgentRow / MachineDetailPanel / Sidebar db5e399 plus retained v1.21.26 resource ports",
-      "acceptance": "Audit every retained list/header/tab/frame composition against the pinned source chain; generate equivalent retained presentation or record an explicit Loom-only composition. Preserve default profile, responsive navigation and real instance state."
-    },
+      "acceptance": "Row anatomy has migrated. Finish direct source comparison of retained Role/Computer master-detail outer frames, shared sidebar header and tabs; extract equivalent source or explicitly document data-independent compatibility. Preserve default profile, responsive navigation and state authority."
+    }
+  ],
+  "reviewedCompositionGroups": [
     {
       "id": "resource-only-shell",
-      "files": [
-        "loom/TopBar.tsx",
-        "loom/useTopbarSearchWidth.ts",
-        "loom/ActivityMessageRow.tsx",
-        "loom/AppearanceRuntime.tsx"
-      ],
-      "sourceBoundary": "Current source does not supply every adopted v1.21.26 behavior; LiveAgentActivityBar is a retained older compatibility port",
-      "acceptance": "Identify exact resource/older-source provenance and test boundaries for remaining workspace identity, adaptive width, compact activity row and live status bar; do not claim byte-exact current source where unavailable."
+      "decision": "Retain explicitly versioned compatibility; no claim of untouched current pages",
+      "bindings": {
+        "TopBar.tsx": "Single local workspace identity; AppTopBar frame is generated; organization switch omitted",
+        "useTopbarSearchWidth.ts": "v1.21.26 resource port, guarded by upstream-126 tests",
+        "ActivityMessageRow.tsx": "v1.21.26 compact InboxItem composition; durable actions and preview scheduling remain Loom",
+        "AppearanceRuntime.tsx": "Read-only Loom projection; older a98ae003 live activity presentation is now separately pinned/generated without upstream connected state"
+      },
+      "evidence": [
+        "live-activity-source.test.mjs",
+        "upstream-126.test.mjs",
+        "appearance-browser.mjs"
+      ]
     },
     {
       "id": "local-exclusive-compositions",
-      "files": [
-        "loom/MemoryPage.tsx",
-        "loom/SideWorkspace.tsx",
-        "loom/InstanceInspector.tsx",
-        "loom/UsageSummary.tsx"
-      ],
-      "sourceBoundary": "Loom-only semantics, official primitives/scenario components",
-      "acceptance": "Final retained-control audit against the scenario registry; distinguish approved local composition from unexplained per-page sizing or bypassed primitives. No new backend capabilities."
+      "decision": "Retain Loom semantics using registered native scenarios; corrected discovered close-glyph and divider overrides",
+      "bindings": {
+        "MemoryPage.tsx": "Owner-approved card list and revision-safe detail editor; native CloseButton/PanelHeader/filter contract",
+        "SideWorkspace.tsx": "Read-only Side semantics in ThreadPanelRoot; native close recipe, existing responsive shell",
+        "InstanceInspector.tsx": "Instance lifecycle and execution details in official profile/LogItem/action recipes; Role is not an upstream agent principal",
+        "UsageSummary.tsx": "Native table/segmented controls; Kernel-only totals, no official cloud billing or inferred token counts"
+      },
+      "evidence": [
+        "local-composition-controls.test.mjs",
+        "ui-contract.test.mjs",
+        "memory-browser.mjs",
+        "branches-browser.mjs",
+        "role-activity-browser.mjs"
+      ]
     }
   ]
 }

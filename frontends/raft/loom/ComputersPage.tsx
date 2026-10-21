@@ -1,3 +1,4 @@
+import { OfficialComputerRow } from "./OfficialIdentityRows.generated";
 import {
   OfficialComputerProfile,
   OfficialComputerRuntimes,
@@ -25,10 +26,6 @@ import {
   SidebarSectionHeader,
   SidebarSectionDisclosure,
   SidebarSectionCount,
-  SidebarItem,
-  SidebarItemIcon,
-  SidebarItemSubtitle,
-  SidebarItemMeta,
   Panel,
   PanelTitle,
   Badge,
@@ -166,31 +163,17 @@ export default function ComputersPage({
             </SidebarSectionHeader>
             {problem}
             {inventory && (
-              <SidebarItem
-                wrap
-                active={selected}
+              <OfficialComputerRow
+                machine={{
+                  id: inventory.hostId,
+                  name,
+                  description: computer?.description,
+                }}
+                selected={selected}
                 onClick={() => onSelect(inventory.hostId)}
-                data-testid="computer-desktop-row"
-                className="text-left max-md:h-auto max-md:min-h-11 max-md:py-[8.5px] max-md:text-body max-md:font-semibold"
-              >
-                <SidebarItemIcon className="relative overflow-visible">
-                  <Monitor />
-                  {dot("absolute -right-1 -bottom-1")}
-                </SidebarItemIcon>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center">
-                    <span className="min-w-0 truncate">{name}</span>
-                  </div>
-                  {computer?.description && (
-                    <SidebarItemSubtitle className="mt-0.5">
-                      {computer.description}
-                    </SidebarItemSubtitle>
-                  )}
-                  <SidebarItemMeta className="mt-0.5 flex items-center gap-1.5">
-                    {label}
-                  </SidebarItemMeta>
-                </div>
-              </SidebarItem>
+                statusDot={dot("absolute -right-1 -bottom-1")}
+                statusLabel={label}
+              />
             )}
           </div>
         </SidebarRoot>

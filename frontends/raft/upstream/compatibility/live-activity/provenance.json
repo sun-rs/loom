@@ -1,0 +1,8 @@
+{
+  "upstream": "https://github.com/botiverse/raft-source",
+  "revision": "a98ae003246a0360872a77d76dec2fccd0347ef7",
+  "sourcePath": "packages/web/src/components/layout/LiveAgentActivityBar.tsx",
+  "sha256": "db8171cdcd47ffbf9cf766b95372f4a6ed0f5e38f1b8fb8fdbfa4edd257e49bd",
+  "license": "FSL-1.1-ALv2; see ../../raft-web-source/LICENSE",
+  "scope": "Retained older presentation, absent from locked db5e399 source; generator applies only previously adopted UI-family compatibility, never connected store."
+}
