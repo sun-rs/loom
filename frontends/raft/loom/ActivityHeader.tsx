@@ -111,6 +111,7 @@ export default function ActivityHeader({
           },
         }}
         onMobileBack={onBack}
+        mobileBackProps={{ "aria-label": "返回聊天列表" }}
         actions={
           <>
             <Button

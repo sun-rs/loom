@@ -183,3 +183,15 @@ IconTile替换本地51px方块。Role配置/实例关系、CLI状态、设备设
 上批证据中的typecheck成功误报已纠正，保留修正说明；不能把旧记录当作全通过。
 当前尚未宣称全站依赖完成：最后一批核对共享展示闭包、顶栏/导航/列表本地组合的
 来源分类，并执行固定版本升级演练。预估1–2轮，以实际发现为准。
+
+### 2026-10-22：展示依赖闭包与升级演练
+
+构建模块图发现三条不必要的父页面依赖：Navigation → LeftRail、SavedNav → Sidebar、ThreadAgentFollowerRow → ChannelMembers → ProfilePanel。现在从同一锁定版本 db5e399 的完整原件中提取具名声明，生成 `OfficialNavigationLeaves.generated.tsx`。声明正文保持原样，只收窄 imports；角色/频道/收藏/未读状态继续来自 Loom。原件、许可证及 SHA-256 均在 source-lock 中。不是整页替换，也不是手写视觉复刻。
+
+另修复 Vite 的 API 边界：原规则按 import 字符串匹配，漏掉 `api/overloadRetry.ts` 中的 `./client`。现在按实际目标路径接到现有拒绝未知端点/写入的 Loom facade。发现的是原网络客户端进入产物，没有证据证明发生过云端请求。
+
+生产构建直接检查 emitted chunk module IDs；原 cloud client、上述三张父页面、ProfilePanel 和 AgentMcpTab 再次被带入时构建失败。升级演练验证声明改名时生成明确失败、上游样式变化时生成差异；这是模拟升级，不是已验证任意新版可无条件替换。
+
+全站完成标志仍为 false。剩余是本地页面组合及其他兼容展示模块的最终来源分类；本批消除了已证实的多余依赖，不将仍保留的本地路由、权限和 Loom 专属业务称为官方原件。
+
+浏览器复验同时修复动态页手机返回按钮的无障碍名称漏接：通过官方 `mobileBackProps` 传入“返回聊天列表”，不修改原组件尺寸。导航测试跟随官方筛选名称“筛选收件箱”，继续验证真实入口、键盘、草稿和历史导航。

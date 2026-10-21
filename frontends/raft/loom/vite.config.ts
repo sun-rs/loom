@@ -1,3 +1,5 @@
+import { assertOfficialRuntimeBoundary } from "./runtime-boundary.ts";
+import { resolveOfficialApi } from "./api-resolution.ts";
 import { adaptMobileMessageDefault } from "./mobile-message-default.ts";
 import { pushWorkerPlugin } from "./push-worker-plugin.ts";
 import { adaptChineseLocale } from "./locale-adaptation.ts";
@@ -53,6 +55,11 @@ export default defineConfig({
         if (id.endsWith("/packages/web/src/i18n/LocaleProvider.tsx"))
           return { code: adaptChineseLocale(code), map: null };
       },
+      generateBundle(_, bundle) {
+        for (const chunk of Object.values(bundle))
+          if (chunk.type === "chunk")
+            assertOfficialRuntimeBoundary(Object.keys(chunk.modules));
+      },
       resolveId(source, importer) {
         if (source === "loom-message-profile")
           return resolve(import.meta.dirname, "MessageProfile.tsx");
@@ -91,12 +98,8 @@ export default defineConfig({
           /(?:^|\/)ui\/AvatarSlot(?:\.tsx)?$/.test(source)
         )
           return resolve(import.meta.dirname, "MentionAvatar.tsx");
-        if (
-          importer &&
-          /(?:^|\/)api\/client(?:\.ts)?$/.test(source) &&
-          importer.includes("/packages/web/src/")
-        )
-          return resolve(import.meta.dirname, "upstream-api.ts");
+        const api = resolveOfficialApi(source, importer, import.meta.dirname);
+        if (api) return api;
       },
     },
     ...(officialConfig.plugins ?? []),

@@ -20,7 +20,7 @@ import {
   MobileNavItem,
   MobileNavLabel,
 } from "raft-ui";
-import { RailTabButton } from "../packages/web/src/components/layout/LeftRail.tsx";
+import { RailTabButton } from "./OfficialNavigationLeaves.generated";
 import PanelHeader from "../packages/web/src/components/ui/PanelHeader.tsx";
 
 export const destinations = [

@@ -60,7 +60,9 @@
       "sources": [
         "frontends/raft/packages/web/src/components/agent/StableField.tsx"
       ],
-      "bindings": ["ManagementUi.tsx"]
+      "bindings": [
+        "ManagementUi.tsx"
+      ]
     },
     {
       "id": "message-composer",
@@ -69,7 +71,10 @@
       "sources": [
         "frontends/raft/packages/web/src/components/message/MessageInput.tsx"
       ],
-      "bindings": ["ComposerFiles.tsx", "MessageReactions.tsx"]
+      "bindings": [
+        "ComposerFiles.tsx",
+        "MessageReactions.tsx"
+      ]
     },
     {
       "id": "navigation-disclosure",
@@ -91,7 +96,10 @@
       "sources": [
         "frontends/raft/packages/web/src/components/ConfirmDialog.tsx"
       ],
-      "bindings": ["DiscardChangesDialog.tsx", "MemoryEditor.tsx"]
+      "bindings": [
+        "DiscardChangesDialog.tsx",
+        "MemoryEditor.tsx"
+      ]
     },
     {
       "id": "profile-header-close",
@@ -102,7 +110,9 @@
         "frontends/raft/packages/web/src/components/agent/AgentDetailPanel.tsx"
       ],
       "sourceRevision": "v1.21.22 af3d6ef4a22f0f05f5f9db9424285755d67e9726 / AgentDetailPanel-B3FrpUPj.js il; page-adoption instance-inspector-chrome",
-      "bindings": ["InstanceInspector.tsx"],
+      "bindings": [
+        "InstanceInspector.tsx"
+      ],
       "selector": {
         "file": "InstanceInspector.tsx",
         "ariaLabel": "关闭实例详情"
@@ -143,7 +153,9 @@
       "id": "release-126-compatibility",
       "owner": "@botiverse/raft-ui 0.10.5 native typography/control sizes, SearchTrigger, ListRowGroup/ListRow and DescriptionList; official page wAt / AgentProfileEditDialog composition",
       "rule": "Use pinned production source recipes; no new size system. Fine-pointer desktop typography only; explicit message tier remains user-owned. Role field writes use immutable Role revisions. Existing instances become out of date; they are never silently changed.",
-      "sources": ["docs/evo/evidence/2026-10-21-search-fix/upstream-lock.json"],
+      "sources": [
+        "docs/evo/evidence/2026-10-21-search-fix/upstream-lock.json"
+      ],
       "bindings": [
         "useTopbarSearchWidth.ts",
         "OfficialListRows.tsx",
@@ -160,8 +172,13 @@
       "id": "activity-native-row",
       "owner": "raft-ui InboxItem compact / InboxItemTrigger / InboxItemActions reveal=hover",
       "rule": "Official v1.21.26 compact row composition. Trigger owns row navigation, trailing action owns done; touch action remains visible, keyboard focus returns to trigger. Activity preview840px, search unaffected.",
-      "sources": ["frontends/raft/node_modules/raft-ui/dist/index.mjs"],
-      "bindings": ["ActivityMessageRow.tsx", "activity-layout.ts"],
+      "sources": [
+        "frontends/raft/node_modules/raft-ui/dist/index.mjs"
+      ],
+      "bindings": [
+        "ActivityMessageRow.tsx",
+        "activity-layout.ts"
+      ],
       "guard": "scripts/official-web/activity-list-browser.mjs"
     },
     {
@@ -172,7 +189,10 @@
         "frontends/raft/upstream/raft-web-source/packages/web/src/components/ui/AvatarListRow.tsx",
         "frontends/raft/upstream/raft-web-source/packages/web/src/components/ui/KeyValueRow.tsx"
       ],
-      "bindings": ["ComputersPage.tsx", "OfficialListRows.tsx"],
+      "bindings": [
+        "ComputersPage.tsx",
+        "OfficialListRows.tsx"
+      ],
       "guard": "scripts/official-web/detail-primitives-source.test.mjs"
     },
     {
@@ -191,7 +211,10 @@
         "frontends/raft/loom/SettingsPage.tsx",
         "frontends/raft/loom/ComputersPage.tsx"
       ],
-      "bindings": ["SettingsPage.tsx", "ComputersPage.tsx"],
+      "bindings": [
+        "SettingsPage.tsx",
+        "ComputersPage.tsx"
+      ],
       "guard": "scripts/official-web/mobile-computer-source.test.mjs"
     },
     {
@@ -331,7 +354,10 @@
       "sources": [
         "frontends/raft/upstream/raft-web-source/packages/web/src/components/layout/MainLayout.tsx"
       ],
-      "bindings": ["TaskDetail.tsx", "OfficialTaskSurfaces.generated.tsx"],
+      "bindings": [
+        "TaskDetail.tsx",
+        "OfficialTaskSurfaces.generated.tsx"
+      ],
       "guard": "scripts/official-web/discovery-task-closeout-source.test.mjs",
       "rule": "Native TaskModalBar PanelAction and DialogSurface; loading/error use same header primitives, no size or variant overrides."
     },
@@ -426,7 +452,9 @@
         "OfficialAttachmentMetaText.generated.tsx"
       ],
       "rule": "Generate full hosts with explicit Loom identity, authority, send/draft and comment bindings. Preserve accessible timestamp compatibility. No native provider media or upstream business store is enabled.",
-      "checks": ["scripts/official-web/chat-host-source.test.mjs"]
+      "checks": [
+        "scripts/official-web/chat-host-source.test.mjs"
+      ]
     },
     {
       "id": "official-workspace",
@@ -469,6 +497,23 @@
       "checks": [
         "scripts/official-web/shell-profile-source.test.mjs",
         "scripts/official-web/shared-content-source.test.mjs"
+      ]
+    },
+    {
+      "id": "dependency-navigation-leaves",
+      "owner": "Raft db5e399 LeftRail / Sidebar / ChannelMembers exact declarations",
+      "rule": "RailTabButton, SavedNavCount, sidebarItemClass and JointPeerBadge are generated unchanged; imports contain only React, intl and official primitives. Loom owns selected destination, unread counts, saved reads and follower authority. Full official pages and cloud transport are forbidden in emitted runtime chunks. Activity header passes the mobile return accessible name through native PanelHeader.mobileBackProps; no style override.",
+      "bindings": [
+        "Navigation.tsx",
+        "SavedNav.tsx",
+        "OfficialThreadAgentFollowerRow.generated.tsx",
+        "ActivityHeader.tsx"
+      ],
+      "sources": [
+        "frontends/raft/loom/OfficialNavigationLeaves.generated.tsx",
+        "scripts/official-web/generate-navigation-leaves.mjs",
+        "scripts/official-web/navigation-leaves.test.mjs",
+        "scripts/official-web/runtime-boundary.test.ts"
       ]
     }
   ],

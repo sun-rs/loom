@@ -85,6 +85,9 @@
     "packages/web/src/components/ui/PanelResizeHandle.tsx": "492ac006fad3a6f7a751346c004764ffdba659dd8728e6b28a05cfe7a9f48137",
     "packages/web/src/hooks/useResizablePanel.ts": "371235c02db4088a295450b1f65489abf8fa404bcd2c8494efe5e8313dc023b4",
     "packages/web/src/components/machine/MachineDetailPanel.tsx": "ff226d5082318aca5961b1bc28293cb6227fecff997a7f3d6784133cd068951b",
-    "packages/web/assets/avatars/pixelAvatars.json": "cbc90485cd5395b366c41e56c0648ab97988430c58d88038b8608028b349c914"
+    "packages/web/assets/avatars/pixelAvatars.json": "cbc90485cd5395b366c41e56c0648ab97988430c58d88038b8608028b349c914",
+    "packages/web/src/components/layout/LeftRail.tsx": "8f07356a3b551527195df117f28d0681c9edf514d381045209996896e0adbde2",
+    "packages/web/src/components/layout/Sidebar.tsx": "d5adc62fe25588a0d5a99a056462f6cce324b5f8fae5f1d0a4e6442fbca2b79c",
+    "packages/web/src/components/agent/ChannelMembers.tsx": "63080c343c7e39a75595b219a90bd9e6a8c7144fd0c0820b52198ed2fc741af8"
   }
 }

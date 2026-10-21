@@ -60,7 +60,8 @@
       "loom/OfficialDiffStats.generated.tsx",
       "loom/OfficialAvatarSlot.generated.tsx",
       "loom/OfficialPixelAvatar.generated.tsx",
-      "loom/OfficialComputerProfile.generated.tsx"
+      "loom/OfficialComputerProfile.generated.tsx",
+      "loom/OfficialNavigationLeaves.generated.tsx"
     ],
     "foundation": "package.json#dependencies.raft-ui"
   },
@@ -274,7 +275,10 @@
     "appearance-source / role-profile-source / role-activity tests: generated declarations",
     "ui-version.test.mjs: one canonical/legacy UI runtime",
     "dependency-migration.test.mjs: navigation coverage and source paths",
-    "focused browser acceptance and safe service restart per changed slice"
+    "focused browser acceptance and safe service restart per changed slice",
+    "navigation-leaves.test.mjs: exact declarations and simulated upstream rename/style upgrade",
+    "runtime-boundary.test.ts + Vite generateBundle: forbid full unused page/cloud client inclusion",
+    "api-resolution.test.ts: relative import target resolution, including api/overloadRetry ./client"
   ],
   "upgradeLimits": [
     "Package replacement does not replace local page composition",
@@ -283,7 +287,7 @@
     "Loom business state, access control and lifecycle remain local owners"
   ],
   "remainingBatchPlan": {
-    "estimate": "1–2 further close-out rounds after shared shell/profile batch; estimate, not a completion guarantee",
+    "estimate": "Final classification remains; dependency closure repair completed, no fixed turn-count guarantee",
     "fixedSource": "db5e399 / raft-ui 0.10.5; no automatic chase of newer releases",
     "batches": [
       {

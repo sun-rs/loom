@@ -1,0 +1,60 @@
+{
+  "source": "db5e399f017d584e49597e3a28757645d6807893",
+  "foundation": "@botiverse/raft-ui@0.10.5",
+  "scope": [
+    "exact generated navigation/saved/follower badge declarations",
+    "relative official API import target binding",
+    "emitted bundle dependency guard",
+    "simulated upstream rename and style change rehearsal"
+  ],
+  "rootCauses": [
+    "small named exports imported whole page modules with side effects and lazy descendants",
+    "API specifier regexp missed ./client in api/overloadRetry.ts"
+  ],
+  "networkClaim": "Original cloud client was bundled; no evidence of an actual cloud request or data disclosure.",
+  "runtimeBoundary": {
+    "api/client.ts": true,
+    "components/profile/ProfilePanel.tsx": true,
+    "components/agent/AgentMcpTab.tsx": true,
+    "components/agent/ChannelMembers.tsx": true,
+    "components/layout/Sidebar.tsx": true,
+    "components/layout/LeftRail.tsx": true
+  },
+  "checks": {
+    "source": {
+      "passed": 321,
+      "failed": 0
+    },
+    "uiContract": {
+      "passed": 8,
+      "failed": 0
+    },
+    "typecheck": true,
+    "build": true,
+    "fixtureBrowser": {
+      "saved": [
+        1440,
+        390
+      ],
+      "thread-followers": [
+        1440,
+        390
+      ],
+      "navigation": [
+        1440,
+        390
+      ]
+    },
+    "upgradeRehearsal": "simulated declaration rename fails closed; simulated class change produces generated diff, not acceptance of a real newer release"
+  },
+  "limits": [
+    "Whole-site dependency migration is not declared complete.",
+    "No backend behavior change, paid CLI call or cost benchmark.",
+    "Large chunk warning remains; no claim of all performance concerns resolved."
+  ],
+  "privateEvidence": "/Users/sun/.loom/reviews/2026-10-22-dependency-closeout",
+  "initialFailures": [
+    "navigation test used retired 动态范围 name; changed to official 筛选收件箱",
+    "mobile Activity back lacked accessible name; added native mobileBackProps binding, then rebuilt and passed"
+  ]
+}

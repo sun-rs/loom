@@ -4,7 +4,7 @@ import { useIntl } from "react-intl";
 import {
   SavedNavCount,
   sidebarItemClass,
-} from "../packages/web/src/components/layout/Sidebar.tsx";
+} from "./OfficialNavigationLeaves.generated";
 import type { RahClient } from "@rah-os/client-sdk";
 import { useEffect, useState } from "react";
 export default function SavedNav({

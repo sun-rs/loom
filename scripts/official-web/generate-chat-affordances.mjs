@@ -75,7 +75,11 @@ export function generateChatAffordances() {
         bindImports(source, path, ["../../store/authStore"]);
       source = replace(source, '"loom-bound-profile"', '"./MessageProfile"');
       source = replace(source, "          fallbackAgent={fallbackAgent}\n", "");
-      source = replace(source, "          fallbackMember={fallbackMember}\n", "");
+      source = replace(
+        source,
+        "          fallbackMember={fallbackMember}\n",
+        "",
+      );
     }
     if (name.endsWith("ThreadAgentFollowers")) {
       source = bindImports(adaptThreadFollowers(source), path, [
@@ -96,7 +100,7 @@ export function generateChatAffordances() {
         "../agent/ChannelMembers",
       ]);
       source =
-        'import {JointPeerBadge} from "../packages/web/src/components/agent/ChannelMembers";\n' +
+        'import {JointPeerBadge} from "./OfficialNavigationLeaves.generated";\n' +
         replace(source, '"loom-thread-followers"', '"./ThreadFollowers"');
     }
     out["Official" + posix.basename(name) + ".generated.tsx"] =

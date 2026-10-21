@@ -42,10 +42,11 @@ export async function verifyGlobalNavigation({ browser, origin, channel }) {
       ["activity", "动态"],
       ["settings", "设置"],
     ]) {
-      if (viewport.width < 768 && !(await nav.isVisible()))
-        await page
-          .getByRole("button", { name: "返回聊天列表", exact: true })
-          .click();
+      if (viewport.width < 768 && !(await nav.isVisible())) {
+        const view = new URL(page.url()).searchParams.get("view");
+        const backName = view === "agents" ? "角色列表" : "返回聊天列表";
+        await page.getByRole("button", { name: backName, exact: true }).click();
+      }
       if (id === "search") {
         if (viewport.width < 768)
           await nav.getByRole("button", { name: "首页", exact: true }).click();
@@ -88,7 +89,7 @@ export async function verifyGlobalNavigation({ browser, origin, channel }) {
       else if (id === "search")
         await page.getByLabel("搜索内容", { exact: true }).waitFor();
       else if (id === "activity")
-        await page.getByLabel("动态范围", { exact: true }).waitFor();
+        await page.getByLabel("筛选收件箱", { exact: true }).waitFor();
       else if (id === "settings")
         await page.getByTestId("settings-sidebar-list").waitFor();
       else if (id === "tasks") {

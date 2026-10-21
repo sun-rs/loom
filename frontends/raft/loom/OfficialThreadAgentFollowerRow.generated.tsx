@@ -1,5 +1,5 @@
 // GENERATED from immutable Raft db5e399 source. Explicit Loom data/authority bindings; do not edit.
-import {JointPeerBadge} from "../packages/web/src/components/agent/ChannelMembers";
+import {JointPeerBadge} from "./OfficialNavigationLeaves.generated";
 import { useLoomFollowerProfile } from "./ThreadFollowers";
 import { Button } from "raft-ui";
 import { X } from "lucide-react";
