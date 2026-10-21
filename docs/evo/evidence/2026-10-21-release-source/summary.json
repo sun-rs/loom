@@ -1,0 +1,50 @@
+{
+  "productCommit": "171083af5e5de9bf1a779a91d32961f20e57083c",
+  "sourceRevision": "db5e399f017d584e49597e3a28757645d6807893",
+  "sourceFile": "packages/web/src/components/settings/ReleaseNotesPanel.tsx",
+  "reuse": "New byte-exact pinned source file; generated content JSX children, types and category declarations. Local typed wrapper binds curated Loom release records. Not whole upstream page execution.",
+  "removed": [
+    "exposeReleaseNotes build string slicing",
+    "loom-native-release-notes Vite alias",
+    "legacy virtual module declaration"
+  ],
+  "checks": {
+    "sourceAndAffected": 19,
+    "uiContract": 8,
+    "typecheck": true,
+    "build": true,
+    "webkitFixtureWidths": [1440, 390],
+    "formalReadOnly": [
+      {
+        "width": 1440,
+        "entries": 3,
+        "officialCategoryOrder": true,
+        "singleCurrentBadge": true,
+        "reload": true,
+        "noOverflow": true
+      },
+      {
+        "width": 390,
+        "entries": 3,
+        "officialCategoryOrder": true,
+        "singleCurrentBadge": true,
+        "reload": true,
+        "noOverflow": true
+      }
+    ],
+    "visualInspection": "390px fixture screenshot"
+  },
+  "deployment": {
+    "verified": true,
+    "backedUpDatabases": 2,
+    "backedUpFiles": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true
+  },
+  "limits": [
+    "Static curated Loom release data; no upstream release service",
+    "Settings shell remains local owner; other settings sections remain mixed",
+    "Browser widths are not physical-device acceptance; no paid CLI tests"
+  ],
+  "privateEvidence": "/Users/sun/.loom/reviews/2026-10-21-release-source"
+}
