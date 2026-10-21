@@ -1,0 +1,152 @@
+{
+  "date": "2026-10-22",
+  "productCommit": "2d5f98d2ff39fbd9ccfa1d087a731e50e6ef11ee",
+  "scope": [
+    "1: search/activity notices and native header/action composition",
+    "2: task filters, creation, detail header/surface/properties/history composition"
+  ],
+  "upstream": {
+    "sourceRevision": "db5e399f017d584e49597e3a28757645d6807893",
+    "publicSourceVersion": "v1.21.23-source.1",
+    "foundation": "@botiverse/raft-ui@0.10.5",
+    "newImmutableFiles": 7,
+    "generatedBoundaries": 4,
+    "activityCompactRows": "existing v1.21.26 production-resource port retained, not byte-exact public source"
+  },
+  "verification": {
+    "redBeforeImplementation": true,
+    "sourceAndUiChecks": {
+      "passed": 19
+    },
+    "taskAuthorityAndHistoryUnitChecks": {
+      "passed": 4
+    },
+    "typecheck": true,
+    "build": true,
+    "chromium": {
+      "tasks": [
+        1440,
+        390
+      ],
+      "taskCreate": [
+        1440,
+        390
+      ],
+      "activityList": [
+        1440,
+        900,
+        390
+      ],
+      "discoveryFaults": [
+        1440,
+        390
+      ]
+    },
+    "taskChecks": [
+      "multi-filter keyboard and reload",
+      "description and history disclosure",
+      "unknown write exact replay and navigation fence",
+      "batch partial failure and no duplicate creation",
+      "foreign task rejection"
+    ],
+    "discoveryChecks": [
+      "superseded search result ignored",
+      "query failure retry",
+      "forbidden context recovery"
+    ],
+    "paidCli": false,
+    "fullRepositorySuite": false,
+    "formalWebkit": {
+      "viewports": [
+        1440,
+        390
+      ],
+      "views": [
+        "search",
+        "activity",
+        "tasks",
+        "task-detail"
+      ],
+      "noPageErrors": true,
+      "noHorizontalOverflow": true,
+      "unknownCountsFailureAndRecovery": true,
+      "screenshotsReviewed": true,
+      "results": [
+        {
+          "width": 1440,
+          "view": "search",
+          "readOnly": true,
+          "noOverflow": true,
+          "entityRows": 1
+        },
+        {
+          "width": 1440,
+          "view": "activity",
+          "readOnly": true,
+          "noOverflow": true
+        },
+        {
+          "width": 1440,
+          "view": "tasks",
+          "readOnly": true,
+          "noOverflow": true
+        },
+        {
+          "width": 390,
+          "view": "search",
+          "readOnly": true,
+          "noOverflow": true,
+          "entityRows": 1
+        },
+        {
+          "width": 390,
+          "view": "activity",
+          "readOnly": true,
+          "noOverflow": true
+        },
+        {
+          "width": 390,
+          "view": "tasks",
+          "readOnly": true,
+          "noOverflow": true
+        }
+      ]
+    },
+    "screenshots": {
+      "formal-tasks-390.png": "8347f615bea35eb7f0109e435c666a9c1f518528ec1657820e0aa4a5fa8a1900",
+      "formal-search-390.png": "2f29284d0b112c54a404ebf9c9ec6347c8d50de9ed082f862b3c9ecb10192140",
+      "formal-search-1440.png": "4d1da9c18756e82304af6e73b1ba3477c41c10f4fbf982be6fe47c46f1f038f4",
+      "formal-task-detail-1440.png": "3fe13c2435d3d10c99b0182295ce5becdd44a0b063972113e1c8ce65261371cc",
+      "formal-activity-unknown-390.png": "c28bfa6227068cb9a5f279631a64985fb7a26dffacae97ecb7e7b0f97ae60d53",
+      "formal-tasks-1440.png": "8c04890b635fa488210e8722de2eaf1d0848487391edc624838cfcb9d83e3612",
+      "formal-activity-unknown-1440.png": "c0e5cef5262086deee55da6971edac728efbb41bda436534035df2b84aec451a",
+      "formal-task-detail-390.png": "55bb3971abc24852cb7eaad9cfcd15cc4bcb5e44e914d574b270fc077c9e5481",
+      "formal-activity-1440.png": "d00e52476537338828ea3331ac564ae05b2e3f05413a02fa36c99b150ce8c37f",
+      "formal-activity-390.png": "e05b8ed5f3b967e8c2c76fa2e654dda94e10361c66a4f495dba601d6d3150ff1"
+    }
+  },
+  "deployment": {
+    "verified": true,
+    "sourceSha256": "364ffd16a931109b78e866bbf399dc226e281414e069702e2f50e751ea36bd83",
+    "databasesBackedUp": 2,
+    "filesBackedUp": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true,
+    "gracefulRestart": true,
+    "schema": 90
+  },
+  "reviewFindings": [
+    "Formal screenshot exposed ICU NaN for unknown unread counts; regression test added, explicit unknown subtitle implemented and rebuilt/redeployed.",
+    "Legacy discovery aggregate expects removed next-page UI; used focused discovery-faults path. Its immediate Enter also activated recent navigation before auto-query; removed obsolete submit steps and added bounded wait.",
+    "Initial focused fixture used wrong expected room; corrected to seeded history channel.",
+    "Formal unknown-count check initially held activity request during bootstrap and hid the entire page; changed read-only injection to refresh after bootstrap, then verified failure placeholder and recovery in both viewports."
+  ],
+  "limits": [
+    "Whole-site dependency migration remains incomplete.",
+    "Search/activity route, paging, read state and responsive host remain explicit Loom glue.",
+    "Task discussion uses shared ThreadWorkspace; chat/composer/file migration remains future work.",
+    "Optional upstream view-in-thread task action is not bound and remains omitted.",
+    "No real mobile-device or paid CLI acceptance claimed."
+  ],
+  "privateEvidence": "/Users/sun/.loom/reviews/2026-10-22-discovery-task-closeout"
+}
