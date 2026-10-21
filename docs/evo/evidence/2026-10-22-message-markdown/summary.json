@@ -1,0 +1,141 @@
+{
+  "date": "2026-10-22",
+  "productCommit": "2286b77501dfeb752192d8ed5231eb934560ac0d",
+  "scope": [
+    "official useRenderMessageMarkdown and eight helper declarations",
+    "official AST token, markdown repair, sanitizer, autolink and source alignment dependency closure",
+    "official thread-search AST highlight declarations"
+  ],
+  "source": {
+    "revision": "db5e399f017d584e49597e3a28757645d6807893",
+    "version": "v1.21.23-source.1",
+    "foundation": "@botiverse/raft-ui@0.10.5",
+    "classification": "byte-exact upstream files and extracted declaration bodies; explicit imports bind existing UI and Loom callbacks"
+  },
+  "reproducedDefect": {
+    "before": "tilde-fenced code was changed by quote spacing, strong-closing whitespace and literal backslash-n preprocessing",
+    "redBrowserAssertion": true,
+    "after": "code content preserved literally by official parsed-tree pipeline"
+  },
+  "verification": {
+    "focusedSourceAndUnitTests": 23,
+    "uiContractTests": 8,
+    "typecheck": true,
+    "build": true,
+    "browserFixtures": {
+      "browser": [
+        {
+          "width": 1440,
+          "tildeCodeUnchanged": true,
+          "rawHtmlText": true,
+          "noExecutableMarkup": true,
+          "checkedList": true
+        },
+        {
+          "width": 390,
+          "tildeCodeUnchanged": true,
+          "rawHtmlText": true,
+          "noExecutableMarkup": true,
+          "checkedList": true
+        }
+      ],
+      "references": [
+        {
+          "width": 1440,
+          "mention": true,
+          "channelNavigation": true
+        },
+        {
+          "width": 390,
+          "mention": true,
+          "channelNavigation": true
+        }
+      ],
+      "tasks": [
+        {
+          "width": 1440,
+          "nativeComposerTask": true,
+          "atomicCreate": true,
+          "exactUnknownReplay": true,
+          "routeGuard": true,
+          "nativeContextMenu": true,
+          "touchLongPress": false,
+          "convertPreservesMessageIdentity": true,
+          "taskBadgeAndReload": true,
+          "escapeDismiss": true,
+          "ordinarySendUnchanged": true,
+          "taskReadDenialAndRecovery": true,
+          "singleModalAcrossDestinations": true
+        },
+        {
+          "width": 390,
+          "nativeComposerTask": true,
+          "atomicCreate": true,
+          "exactUnknownReplay": true,
+          "routeGuard": true,
+          "nativeContextMenu": true,
+          "touchLongPress": true,
+          "convertPreservesMessageIdentity": true,
+          "taskBadgeAndReload": true,
+          "escapeDismiss": true,
+          "ordinarySendUnchanged": true,
+          "taskReadDenialAndRecovery": true,
+          "singleModalAcrossDestinations": true
+        }
+      ]
+    },
+    "formalWebKit": [
+      {
+        "width": 1440,
+        "existingReplies": 4,
+        "nativeCloseOrBack": {
+          "width": 32,
+          "height": 32,
+          "clickable": true
+        },
+        "noSend": true,
+        "noErrors": true,
+        "noOverflow": true
+      },
+      {
+        "width": 390,
+        "existingReplies": 4,
+        "nativeCloseOrBack": {
+          "width": 44,
+          "height": 44,
+          "clickable": true
+        },
+        "noSend": true,
+        "noErrors": true,
+        "noOverflow": true
+      }
+    ],
+    "screenshotsReviewed": [
+      {
+        "name": "formal-thread-1440.png",
+        "sha256": "ae8f55e78d0f219e49538554aa29a37ad501fe154fdd2b99068f361c8dff91ae"
+      },
+      {
+        "name": "formal-thread-390.png",
+        "sha256": "9c80ae07360ac049db17d9506e39d664321fd39f2ed76bbd0e2cdf8704b3bb66"
+      }
+    ]
+  },
+  "deployment": {
+    "gracefulRestart": true,
+    "databaseBackups": 2,
+    "fileBackups": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true,
+    "schema": 90,
+    "runtimeSourceSha256": "e1db0eff0363cbf83620ee500e3dbf5b715b358dc17fc14e7875842b1afc16c6"
+  },
+  "limits": [
+    "Not a full MessageItem replacement: existing local message shell, identity/status/reaction/attachment bindings retained",
+    "MarkdownContent and CodeBlock shared presentation still use previously adopted local version",
+    "No whole-site dependency completion claim",
+    "Available source version differs from production-resource v1.21.26 reference",
+    "No paid CLI or efficiency acceptance; fake-provider fixture activity refusal is not real runtime acceptance",
+    "WebKit desktop/mobile viewport inspection is not physical iOS device acceptance"
+  ]
+}
