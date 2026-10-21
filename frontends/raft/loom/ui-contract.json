@@ -303,6 +303,28 @@
         "Pagination incomplete-search defaults false; no unimplemented backend continuation claim",
         "TextLink legacy inline prop is discarded by thin compatibility adapter"
       ]
+    },
+    {
+      "id": "search-controls-source",
+      "owner": "db5e399 MessageSearchPage field/header/filter/empty/skeleton declarations",
+      "rule": "Source JSX owns input layout, select and combobox recipes, applied data-has-value, scope-count typography, empty and loading presentation. Loom controllers own directory authority, query and route, IME, disabled readiness and nested Escape handling.",
+      "sources": [
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/search/MessageSearchPage.tsx"
+      ],
+      "bindings": [
+        "OfficialSearchControls.generated.tsx",
+        "SearchHeader.tsx",
+        "SearchFilters.tsx",
+        "SearchIdentityFilter.tsx"
+      ],
+      "guard": "scripts/official-web/search-controls-source.test.mjs",
+      "localDifferences": [
+        "Input retains stable Chinese aria label, 300 character limit, overlay autofocus and IME-safe Escape callback",
+        "Filter bar adds explicit identity slots, readiness disablement, directory error slot and inner Escape callback",
+        "Source header uses existing approved mobile PanelHeader adapter",
+        "Skeleton gets one accessible loading region; incomplete-search branch remains disabled",
+        "Loom error reasons and retries remain local rather than invented upstream error classification"
+      ]
     }
   ],
   "exceptions": [

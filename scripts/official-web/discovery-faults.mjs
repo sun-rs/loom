@@ -33,7 +33,9 @@ export async function verifyDiscoveryFaults(page, channel) {
     .getByLabel("搜索内容", { exact: true })
     .fill("no-such-FIXTURE-later");
   await page.getByLabel("搜索内容", { exact: true }).press("Enter");
-  await page.getByText("没有匹配结果", { exact: true }).waitFor();
+  await page
+    .getByText("没有找到“no-such-FIXTURE-later”的结果", { exact: true })
+    .waitFor();
   release();
   await ended;
   assert.equal(await page.locator("[data-result-id]").count(), 0);

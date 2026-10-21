@@ -29,6 +29,13 @@ async function verifyNativeSearchField(page) {
   await clear.click();
   assert.equal(await input.inputValue(), "");
   assert.equal(new URL(page.url()).searchParams.get("q"), null);
+  await input.fill("no-such-FIXTURE-control-needle");
+  await page
+    .getByText("没有找到“no-such-FIXTURE-control-needle”的结果", {
+      exact: true,
+    })
+    .waitFor();
+  await clear.click();
 }
 export async function verifyTopbar({ browser, origin, channels }) {
   const results = [];

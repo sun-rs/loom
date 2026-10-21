@@ -30,7 +30,8 @@
       "loom/OfficialMessageHitRow.generated.tsx",
       "loom/OfficialActivityFilters.generated.tsx",
       "loom/OfficialConversationAvatar.generated.tsx",
-      "loom/OfficialSearchSections.generated.tsx"
+      "loom/OfficialSearchSections.generated.tsx",
+      "loom/OfficialSearchControls.generated.tsx"
     ],
     "foundation": "package.json#dependencies.raft-ui"
   },
@@ -46,12 +47,13 @@
         "loom/OfficialSearchHomeRow.generated.tsx",
         "loom/OfficialSearchOverlay.generated.tsx",
         "loom/OfficialMessageHitRow.generated.tsx",
-        "loom/OfficialSearchSections.generated.tsx"
+        "loom/OfficialSearchSections.generated.tsx",
+        "loom/OfficialSearchControls.generated.tsx"
       ],
-      "adopted": "官方控件、旧页面及Loom查询绑定混合；搜索目标行和常用对象行由锁定官方源码生成，保留菜单焦点ref兼容接线；SearchOverlay原声明生成、官方Modal和searchOverlayAnchor直接依赖，删除内容隐式Vite别名；Loom提供固定overlay结果导航接线；MessageHitRow原声明生成（仅稳定键兼容补丁），searchGrouping纯函数直接依赖官方文件；最近会话/历史/常用对象/消息列分组/分页状态采用MessageSearchPage原JSX区块，TextLink直接依赖；原展示文件仅保留数据/状态/事件接线",
+      "adopted": "官方控件、旧页面及Loom查询绑定混合；搜索目标行和常用对象行由锁定官方源码生成，保留菜单焦点ref兼容接线；SearchOverlay原声明生成、官方Modal和searchOverlayAnchor直接依赖，删除内容隐式Vite别名；Loom提供固定overlay结果导航接线；MessageHitRow原声明生成（仅稳定键兼容补丁），searchGrouping纯函数直接依赖官方文件；最近会话/历史/常用对象/消息列分组/分页状态采用MessageSearchPage原JSX区块，TextLink直接依赖；原展示文件仅保留数据/状态/事件接线；输入栏/头部、五类筛选控件、首页/结果空态、结果骨架采用原JSX/声明，目录/输入法/路由仅本地控制器接线；已选筛选使用原生data-has-value",
       "remaining": [
-        "搜索外壳、输入/过滤、总结果加载/失败/空态及完整结果页组合仍有本地适配；查询/权限/分页状态归Loom，不以删除本地业务接线为目标",
-        "公开源码之外的新版展示差异须保留显式兼容记录；无顶栏原生宿主分支未启用"
+        "结果页外壳与响应式组合仍有本地适配；错误区同时承载查询失败和消息打开失败，保留真实原因/重试，尚待统一官方展示边界",
+        "查询/权限/分页/导航状态归Loom；新版生产资源与公开源码差异保留显式适配记录，无顶栏原生宿主分支未启用"
       ]
     },
     {

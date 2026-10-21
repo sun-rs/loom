@@ -166,6 +166,12 @@ export async function verifyActivityNavigation({
         .getByRole("option", { name: "最近 7 天", exact: true })
         .click();
       await timeRequest;
+      assert.equal(
+        await page
+          .getByRole("combobox", { name: "时间", exact: true })
+          .getAttribute("data-has-value"),
+        "",
+      );
       await page.goto(origin + "/?view=search&q=target");
       await searchInput.waitFor();
       await page.getByLabel("发送者", { exact: true }).click();
@@ -179,6 +185,12 @@ export async function verifyActivityNavigation({
       assert.equal(
         senderBody.senderIds[0],
         (await client.request("principal.me", {})).principal.principalId,
+      );
+      assert.equal(
+        await page
+          .locator('[data-slot="picker-trigger-button"][aria-label="发送者"]')
+          .getAttribute("data-has-value"),
+        "",
       );
       await page.keyboard.press("Escape");
       await page.getByLabel("打开频道筛选", { exact: true }).click();

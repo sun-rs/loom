@@ -1,3 +1,8 @@
+import {
+  SearchLoading,
+  SearchHomeEmpty,
+  SearchNoResults,
+} from "./OfficialSearchControls.generated";
 import { ACTIVITY_PREVIEW_QUERY } from "./activity-layout.ts";
 import { Fragment } from "react";
 import { Pin } from "lucide-react";
@@ -41,7 +46,6 @@ import { useSearchPresentation as useSearchParams } from "./useSearchPresentatio
 import {
   AppShellMainSlot,
   Button,
-  Spinner,
   SearchShellRoot,
   ActivityInboxPanel,
   ActivityInboxViewport,
@@ -723,13 +727,13 @@ function Results({
             <SearchFrequent entities={frequent} onOpen={openEntity} />
           </div>
         ) : (
-          <p className="p-4">输入关键词搜索可访问的消息。</p>
+          <SearchHomeEmpty />
         )
       ) : loading ? (
         mode === "activity" ? (
           <ConversationCardSkeleton />
         ) : (
-          <Spinner aria-label="正在读取结果" />
+          <SearchLoading />
         )
       ) : error ? (
         <div role="alert" className="p-4">
@@ -762,7 +766,7 @@ function Results({
                 mode === "activity" ? (
                   <ActivityEmpty filter={filter} />
                 ) : (
-                  <p>没有匹配结果</p>
+                  <SearchNoResults query={query} />
                 )
               ) : mode === "search" ? (
                 <SearchMessageGroups

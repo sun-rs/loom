@@ -122,7 +122,7 @@ export async function verifyDiscovery({
     await page.getByLabel("范围", { exact: true }).click();
     await page.getByRole("option", { name: "Agent", exact: true }).click();
     await page.keyboard.press("Escape");
-    await page.getByText("没有匹配结果", { exact: true }).waitFor();
+    await page.getByText("没有找到“history”的结果", { exact: true }).waitFor();
     await page.getByLabel("范围", { exact: true }).click();
     await page.getByRole("option", { name: "Agent", exact: true }).click();
     await page.keyboard.press("Escape");
@@ -133,7 +133,9 @@ export async function verifyDiscovery({
       .getByLabel("搜索内容", { exact: true })
       .fill("no-such-FIXTURE-needle");
     await page.getByLabel("搜索内容", { exact: true }).press("Enter");
-    await page.getByText("没有匹配结果", { exact: true }).waitFor();
+    await page
+      .getByText("没有找到“no-such-FIXTURE-needle”的结果", { exact: true })
+      .waitFor();
     await verifyDiscoveryFaults(page, channel);
     await page.screenshot({
       path: join(tmpdir(), `loom-discovery-search-${viewport.width}.png`),

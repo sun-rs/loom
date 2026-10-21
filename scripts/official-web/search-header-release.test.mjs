@@ -2,7 +2,10 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 test("search field retains native leading addon, clear control and shared full-page composition", () => {
-  const s = readFileSync("frontends/raft/loom/SearchHeader.tsx", "utf8");
+  const s = readFileSync(
+    "frontends/raft/loom/OfficialSearchControls.generated.tsx",
+    "utf8",
+  );
   assert.match(s, /<InputGroupAddon align="inline-start">/);
   assert.match(s, /size="icon-sm"/);
   assert.match(s, /<X aria-hidden size=\{18\}/);
