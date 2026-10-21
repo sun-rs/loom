@@ -214,6 +214,20 @@ try {
         }),
       ),
     );
+  } else if (process.env.LOOM_BROWSER_SLICE === "message-markdown") {
+    const { verifyMessageMarkdown } =
+      await import("./message-markdown-browser.mjs");
+    console.log(
+      JSON.stringify(
+        await verifyMessageMarkdown({
+          browser,
+          origin,
+          client,
+          channel: channels[0],
+          head,
+        }),
+      ),
+    );
   } else if (process.env.LOOM_BROWSER_SLICE === "message-references") {
     console.log(
       JSON.stringify(
@@ -470,23 +484,38 @@ try {
       ),
     );
   } else if (process.env.LOOM_BROWSER_SLICE === "settings-foundation") {
-    const results={};
-    results.navigation=await verifySettingsNavigation({browser,origin});
-    results.archive=await verifySettingsArchive({browser,origin,client,workspace,head});
-    results.account=await verifyAccountSettings({browser,origin,client});
-    results.region=await verifyRegionSettings({browser,origin});
+    const results = {};
+    results.navigation = await verifySettingsNavigation({ browser, origin });
+    results.archive = await verifySettingsArchive({
+      browser,
+      origin,
+      client,
+      workspace,
+      head,
+    });
+    results.account = await verifyAccountSettings({ browser, origin, client });
+    results.region = await verifyRegionSettings({ browser, origin });
     console.log(JSON.stringify(results));
   } else if (process.env.LOOM_BROWSER_SLICE === "settings-sections") {
     const results = {};
-    results.account = await verifyAccountSettings({browser,origin,client});
-    results.system = await verifySystemSettings({browser,origin,client,workspace});
-    results.about = await verifyAbout({browser,origin});
-    results.notifications = await verifyPush({browser,origin,channels});
+    results.account = await verifyAccountSettings({ browser, origin, client });
+    results.system = await verifySystemSettings({
+      browser,
+      origin,
+      client,
+      workspace,
+    });
+    results.about = await verifyAbout({ browser, origin });
+    results.notifications = await verifyPush({ browser, origin, channels });
     console.log(JSON.stringify(results));
   } else if (process.env.LOOM_BROWSER_SLICE === "release-source") {
-    console.log(JSON.stringify(await verifyReleaseSource({browser,origin})));
+    console.log(JSON.stringify(await verifyReleaseSource({ browser, origin })));
   } else if (process.env.LOOM_BROWSER_SLICE === "role-activity") {
-    console.log(JSON.stringify(await verifyRoleActivity({browser,origin,client,role})));
+    console.log(
+      JSON.stringify(
+        await verifyRoleActivity({ browser, origin, client, role }),
+      ),
+    );
   } else if (process.env.LOOM_BROWSER_SLICE === "upstream-126") {
     console.log(
       JSON.stringify(
@@ -747,11 +776,20 @@ try {
     );
   } else if (process.env.LOOM_BROWSER_SLICE === "discovery-faults") {
     for (const width of [1440, 390]) {
-      const context = await browser.newContext({viewport:{width,height:844}});
+      const context = await browser.newContext({
+        viewport: { width, height: 844 },
+      });
       const page = await context.newPage();
       await page.goto(`${origin}/?view=search&presentation=page`);
       await verifyDiscoveryFaults(page, channels[0]);
-      console.log(JSON.stringify({width, staleSearchIgnored:true, queryFailureRetry:true, contextDeniedRecovery:true}));
+      console.log(
+        JSON.stringify({
+          width,
+          staleSearchIgnored: true,
+          queryFailureRetry: true,
+          contextDeniedRecovery: true,
+        }),
+      );
       await context.close();
     }
   } else if (process.env.LOOM_BROWSER_SLICE === "tasks") {

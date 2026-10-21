@@ -395,6 +395,23 @@
       ],
       "guard": "scripts/official-web/chat-history-source.test.mjs",
       "rule": "Native timeline scroll owner and readonly thread header/body. Explicit offline bounded-window and authenticated snapshot slots; no upstream store/socket. Preserve compact mobile PanelHeader binding, access-error redaction, task parent slot, focus and forward paging."
+    },
+    {
+      "id": "chat-native-markdown",
+      "owner": "locked Raft db5e399 declarations and parser modules; Loom identity and navigation callbacks",
+      "sources": [
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/message/MessageItem.tsx",
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/message/messageMarkdownSecurity.ts",
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/message/remarkMessageTokens.ts",
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/message/repairGeneratedMarkdown.ts",
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/message/threadSearch.ts"
+      ],
+      "bindings": [
+        "OfficialMessageMarkdown.generated.tsx",
+        "OfficialMarkdownSearch.generated.ts"
+      ],
+      "guard": "scripts/official-web/message-markdown-source.test.mjs",
+      "rule": "Original hook and helper declarations, native inline reference/search recipes. AST recognition preserves code/link/escape boundaries. Raw HTML remains text and all generated markup passes official sanitization. Canonical mention IDs stay bound by Loom; no new store, transport or implicit authority."
     }
   ],
   "exceptions": [

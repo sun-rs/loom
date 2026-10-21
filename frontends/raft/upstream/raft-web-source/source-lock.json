@@ -59,6 +59,14 @@
     "packages/web/src/components/thread/ThreadAgentFollowerRow.tsx": "4d64240a1340f4861bb39c27e6ffca020820148c1ffe315bd8f144aac8cb332f",
     "packages/web/src/components/message/MessageInput.tsx": "ac33c23073cb31cfa304ad4043e95bf22d53a21aa5a81e7c511a82b6cde43c55",
     "packages/web/src/components/message/MessageTimeline.tsx": "42fa78cb4bd81084cce084b951f3ba5ab075bb5c0e55f24c8cc727df6d8d6783",
-    "packages/web/src/components/message/ThreadPanel.tsx": "4f93ea3467527d6036a8c931db6f982c4dfd337d554b1c95f15265d1f0de9481"
+    "packages/web/src/components/message/ThreadPanel.tsx": "4f93ea3467527d6036a8c931db6f982c4dfd337d554b1c95f15265d1f0de9481",
+    "packages/web/src/components/message/MessageItem.tsx": "217f7da6e226c7b07086fa264d55b80290debfb8a32f9c4dc37e76ac067b32d9",
+    "packages/web/src/components/message/messageMarkdownSecurity.ts": "75ba3639c052ed6830eac38163eb1a72ebab2a6609acfae5eb62dda0b5e638f9",
+    "packages/web/src/components/message/remarkMessageTokens.ts": "b969b38dc669aa8de2c1499de5609c44a3c0ca403cef11859dac5c82c0f946ba",
+    "packages/web/src/components/message/repairGeneratedMarkdown.ts": "0635c4c5d79e5b4f223d77e6c578c4c49be3085dee72ce79b7e5578e66caadde",
+    "packages/web/src/components/message/threadSearch.ts": "f78d5d417bac9af383a02f4ea842a7fbc9959ade1ce916dba8c707dcae92f20e",
+    "packages/web/src/components/markdown/markdownSanitizeSchema.ts": "e52e5bf087ce066f8ee9473410805e9f6845734638425bbde1cc7841128ca54a",
+    "packages/web/src/utils/markdownAutolink.ts": "70edb58d76382e6e0b71cdbfb16d1226421f7c0acb97eb35a93bafbe5e80353c",
+    "packages/web/src/utils/markdownSourceAlignment.ts": "df7b89b8bda437b61e1a66b37a446dbcf7152368986227de07ec394296e525af"
   }
 }

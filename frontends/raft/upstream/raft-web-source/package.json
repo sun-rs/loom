@@ -27,7 +27,10 @@
     "./TextLink": "./packages/web/src/components/ui/TextLink.tsx",
     "./Banner": "./packages/web/src/components/ui/Banner.tsx",
     "./DialogCard": "./packages/web/src/components/ui/DialogCard.tsx",
-    "./TaskTitleRow": "./packages/web/src/components/task/TaskTitleRow.tsx"
+    "./TaskTitleRow": "./packages/web/src/components/task/TaskTitleRow.tsx",
+    "./messageMarkdownSecurity": "./packages/web/src/components/message/messageMarkdownSecurity.ts",
+    "./remarkMessageTokens": "./packages/web/src/components/message/remarkMessageTokens.ts",
+    "./repairGeneratedMarkdown": "./packages/web/src/components/message/repairGeneratedMarkdown.ts"
   },
   "peerDependencies": {
     "react": "^19.0.0",

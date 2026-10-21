@@ -42,7 +42,9 @@
       "loom/OfficialThreadAgentFollowerRow.generated.tsx",
       "loom/OfficialComposerView.generated.tsx",
       "loom/OfficialMessageTimeline.generated.tsx",
-      "loom/OfficialThreadPanel.generated.tsx"
+      "loom/OfficialThreadPanel.generated.tsx",
+      "loom/OfficialMessageMarkdown.generated.tsx",
+      "loom/OfficialMarkdownSearch.generated.ts"
     ],
     "foundation": "package.json#dependencies.raft-ui"
   },
@@ -82,11 +84,13 @@
         "loom/OfficialThreadAgentFollowerRow.generated.tsx",
         "loom/OfficialComposerView.generated.tsx",
         "loom/OfficialMessageTimeline.generated.tsx",
-        "loom/OfficialThreadPanel.generated.tsx"
+        "loom/OfficialThreadPanel.generated.tsx",
+        "loom/OfficialMessageMarkdown.generated.tsx",
+        "loom/OfficialMarkdownSearch.generated.ts"
       ],
-      "adopted": "官方消息组件与构建时适配并存；悬浮工具栏/@提及/关注成员及成员行按锁定原件生成，composer输入与按钮组合提取原Composer子树；5处对应Vite改写移除，资料预览显式接入Loom；Timeline整模块原件加显式有界窗口补丁、ThreadPanel只读展示声明加Loom快照/页游标/操作槽生成，移除两处运行时改写及宿主类型强转",
+      "adopted": "官方消息组件与构建时适配并存；悬浮工具栏/@提及/关注成员及成员行按锁定原件生成，composer输入与按钮组合提取原Composer子树；5处对应Vite改写移除，资料预览显式接入Loom；Timeline整模块原件加显式有界窗口补丁、ThreadPanel只读展示声明加Loom快照/页游标/操作槽生成，移除两处运行时改写及宿主类型强转；MessageItem正文渲染hook及搜索高亮声明按原件生成，Markdown AST token/修复/安全清洗及源位置对齐直接依赖锁定原件，删除旧正文正则预处理",
       "remaining": [
-        "MessageItem正文整体仍有构建时适配，原件涉及Markdown AST、安全与身份映射变化，待独立迁移验证；ThreadPanel认证业务store不引入Loom，保留现有SDK权限、锚点和有界历史所有者",
+        "MessageItem外壳、身份/状态/反应/附件的Loom构建时接线仍保留；正文渲染hook已迁移，MarkdownContent/CodeBlock等共享展示组件仍是既有本地采用版本，不能称完整MessageItem直接依赖",
         "MessageInput草稿/输入法/发送和文件控制器尚未整体迁移；只迁入输入与操作展示子树，不能称完整官方composer模块直用"
       ]
     },

@@ -109,3 +109,13 @@ Timeline 的官方键盘滚动意图与 sentinel 再检查随源采用；Loom �
 验证：chat-history-source、thread-adaptation、timeline-window-adaptation 检查生成一致性、边界漂移和权限/分页接线；history-window、threads、channel-tasks 浏览器切片覆盖实际交互。生成一致性不替代浏览器验收。
 
 尚未完成：MessageItem 的新旧源码约 1,800 行差异涉及 Markdown AST、清洗、提及身份和附件，不当作纯展示直接覆盖。完整输入控制器、附件组合和全站壳层仍以迁移清单为准，不能宣布全站纯依赖完成。
+
+### 消息正文 Markdown（2026-10-22）
+
+`generate-message-markdown.mjs` 从同一 db5e399 `MessageItem.tsx` 提取正文渲染 hook 与八项依赖声明，声明正文原样保留，仅显式绑定 import；消息列搜索高亮从官方 `threadSearch.ts` 提取。原始 MessageItem、threadSearch 与六个解析/安全/源对齐模块以原始字节和 source-lock 固定，保留 FSL-1.1-ALv2 来源。解析模块保持相对依赖闭包，不引入官方业务 store。
+
+旧 MessageItem 的字符串占位符/正则预处理已从产品正文路径删除。新路径采用官方 Markdown AST token 匹配、生成内容修复、raw HTML 文本化和 sanitize allowlist；提及身份依旧经过 Loom boundMessageMentions，导航回调、只读权限和附件由原宿主接线。原生引用标识和搜索高亮使用官方 recipe。
+
+实际回归：旧正文把 `~~~` 围栏内的引文加空行、`**bold **` 改写为 `**bold**`、字面量反斜线 n 改成换行；新增浏览器用例先失败，迁移后桌面/390通过。覆盖围栏/行内代码、转义频道引用、危险 HTML/链接和 checked 清单，并复验显示名/资料预览/频道跳转与任务场景。
+
+范围限制：这是正文解析及渲染声明的依赖化，不是整个 MessageItem 替换。消息外壳/附件/状态/反应仍有已登记接线，MarkdownContent/CodeBlock 等共享展示组件仍来自既有采用版本；全站状态以迁移清单为准。
