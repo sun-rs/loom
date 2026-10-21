@@ -1,0 +1,55 @@
+{
+  "productCommit": "f20e317f9c2dae7cdd7886909a74731926510c9a",
+  "sourceRevision": "db5e399f017d584e49597e3a28757645d6807893",
+  "scope": "Exact LanguageRegionSection date/time JSX extraction, explicit local device persistence adapter",
+  "provenance": "Same locked SettingsPanel source and upstream notices; generated subtree is byte-exact, typed wrapper/imports and device state are local glue. Not whole SettingsPanel reuse.",
+  "checks": {
+    "sourceAndInventoryPassed": 2,
+    "uiContractPassed": 8,
+    "typecheck": true,
+    "build": true,
+    "browserWidths": [1440, 390],
+    "browserBehaviors": [
+      "default timezone is effective browser region",
+      "clean save disabled",
+      "Chinese language disabled",
+      "timezone selection",
+      "12h/24h persistence across reload"
+    ],
+    "formalReadOnly": [
+      {
+        "width": 1440,
+        "cleanSaveDisabled": true,
+        "chineseOnly": true,
+        "timezoneOpenEscape": true,
+        "noOverflow": true
+      },
+      {
+        "width": 390,
+        "cleanSaveDisabled": true,
+        "chineseOnly": true,
+        "timezoneOpenEscape": true,
+        "noOverflow": true
+      }
+    ],
+    "visualInspection": "formal-390.png"
+  },
+  "initialFailures": [
+    "Source test failed before generated component existed",
+    "Browser rejected empty timezone displaying placeholder instead of effective region; fixed via adapter-only browser sentinel"
+  ],
+  "deployment": {
+    "verified": true,
+    "backedUpDatabases": 2,
+    "backedUpFiles": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true
+  },
+  "limits": [
+    "Chinese-only language block remains local composition",
+    "No upstream cloud translation/account persistence adopted",
+    "Other settings sections remain mixed",
+    "No physical-device or paid-provider tests"
+  ],
+  "privateEvidence": "/Users/sun/.loom/reviews/2026-10-21-region-source"
+}
