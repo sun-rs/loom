@@ -1,0 +1,231 @@
+{
+  "date": "2026-10-22",
+  "productCommit": "a204539baa0d50e797aab0b66e537ed6e86f268c",
+  "scope": [
+    "MessageHoverToolbar",
+    "MentionLink",
+    "ThreadAgentFollowers",
+    "ThreadAgentFollowerRow",
+    "MessageInput Composer presentation subtree"
+  ],
+  "source": {
+    "revision": "db5e399f017d584e49597e3a28757645d6807893",
+    "version": "v1.21.23-source.1",
+    "foundation": "@botiverse/raft-ui@0.10.5",
+    "immutableNewFiles": 5,
+    "generatedBoundaries": 5,
+    "classification": "immutable source plus explicit generated bindings, not byte-identical complete pages"
+  },
+  "changes": [
+    "remove five Vite transform paths",
+    "explicit authenticated viewer and profile preview imports",
+    "native square mention read marker and preview sizing",
+    "original follower view with Loom roster/remove/undo authority",
+    "source Composer subtree with original full/compact branch, official CheckboxIndicator and focus recipe; Loom input/file/task/send callbacks retained"
+  ],
+  "verification": {
+    "redBeforeImplementation": true,
+    "focusedSourceAndUnitTests": 29,
+    "uiContractTests": 8,
+    "typecheck": true,
+    "build": true,
+    "browserFixtures": {
+      "core": [
+        {
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "memberNamesAndIdleState": true,
+          "memberChannelIsolation": true,
+          "memberReadFailureClearsStaleStatusAndRecovers": true,
+          "memberDialogPointerKeyboardFocus": true,
+          "sendAndReload": true,
+          "historyPagination": true,
+          "sparseHistoryTopAlignedAndChronological": true,
+          "unavailableChannelFailsClosed": true,
+          "mobileMasterDetailDraftAndHistory": false,
+          "switchIsolation": true,
+          "ime": true,
+          "unknownResultVerified": true,
+          "unknownSendPreservedAcrossGlobalNavigation": true,
+          "externalRequests": 0
+        },
+        {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "memberNamesAndIdleState": true,
+          "memberChannelIsolation": true,
+          "memberReadFailureClearsStaleStatusAndRecovers": true,
+          "memberDialogPointerKeyboardFocus": true,
+          "sendAndReload": true,
+          "historyPagination": true,
+          "sparseHistoryTopAlignedAndChronological": true,
+          "unavailableChannelFailsClosed": true,
+          "mobileMasterDetailDraftAndHistory": true,
+          "switchIsolation": true,
+          "ime": true,
+          "unknownResultVerified": true,
+          "unknownSendPreservedAcrossGlobalNavigation": true,
+          "externalRequests": 0
+        }
+      ],
+      "references": [
+        {
+          "width": 1440,
+          "mention": true,
+          "channelNavigation": true
+        },
+        {
+          "width": 390,
+          "mention": true,
+          "channelNavigation": true
+        }
+      ],
+      "followers": [
+        {
+          "width": 1440,
+          "nativeRoster": true,
+          "removeAndUndo": true,
+          "lostRemoveReadbackWithoutRetry": true,
+          "noFakePresence": true,
+          "pageErrors": []
+        },
+        {
+          "width": 390,
+          "nativeRoster": true,
+          "removeAndUndo": true,
+          "lostRemoveReadbackWithoutRetry": true,
+          "noFakePresence": true,
+          "pageErrors": []
+        }
+      ],
+      "reactions": [
+        {
+          "width": 1440,
+          "thread": false,
+          "addRemove": true,
+          "lostResponseExactReplay": true,
+          "noDuplicate": true
+        },
+        {
+          "width": 390,
+          "thread": false,
+          "addRemove": true,
+          "lostResponseExactReplay": true,
+          "noDuplicate": true
+        }
+      ],
+      "channel-tasks": [
+        {
+          "width": 1440,
+          "nativeComposerTask": true,
+          "atomicCreate": true,
+          "exactUnknownReplay": true,
+          "routeGuard": true,
+          "nativeContextMenu": true,
+          "touchLongPress": false,
+          "convertPreservesMessageIdentity": true,
+          "taskBadgeAndReload": true,
+          "escapeDismiss": true,
+          "ordinarySendUnchanged": true,
+          "taskReadDenialAndRecovery": true,
+          "singleModalAcrossDestinations": true
+        },
+        {
+          "width": 390,
+          "nativeComposerTask": true,
+          "atomicCreate": true,
+          "exactUnknownReplay": true,
+          "routeGuard": true,
+          "nativeContextMenu": true,
+          "touchLongPress": true,
+          "convertPreservesMessageIdentity": true,
+          "taskBadgeAndReload": true,
+          "escapeDismiss": true,
+          "ordinarySendUnchanged": true,
+          "taskReadDenialAndRecovery": true,
+          "singleModalAcrossDestinations": true
+        }
+      ],
+      "suggestions": {
+        "fixture": true,
+        "results": [
+          {
+            "viewport": {
+              "width": 1440,
+              "height": 1000
+            },
+            "mentionKeyboardAndIME": true,
+            "channelPointer": true,
+            "taskFocus": true,
+            "fileCloseFocus": true,
+            "noSends": true
+          },
+          {
+            "viewport": {
+              "width": 390,
+              "height": 844
+            },
+            "mentionKeyboardAndIME": true,
+            "channelPointer": true,
+            "taskFocus": true,
+            "fileCloseFocus": true,
+            "noSends": true
+          }
+        ]
+      }
+    },
+    "paidCli": false,
+    "fullRepositorySuite": false,
+    "formalWebkit": [
+      {
+        "width": 1440,
+        "nativeComposerTaskToggle": true,
+        "fileDialogAndDraftPreserved": true,
+        "noSend": true,
+        "noErrors": true,
+        "noOverflow": true
+      },
+      {
+        "width": 390,
+        "nativeComposerTaskToggle": true,
+        "fileDialogAndDraftPreserved": true,
+        "noSend": true,
+        "noErrors": true,
+        "noOverflow": true
+      }
+    ],
+    "screenshotsReviewed": {
+      "formal-chat-390.png": "ecd0813c05f3696cdf6f5ae7d1b4bbe1c3e9e23d67ec24968be401e24184e56b",
+      "formal-files-390.png": "5c8e5264667fa48a5e5887f9ce64021c1cb8d81314ea307850e0e1755ef5a8b6",
+      "formal-files-1440.png": "012f1791f4f93c536e4c48ca800ee469dfabce761939c053c5d5b6949c6f59fb",
+      "formal-chat-1440.png": "c3a4ec69498b44da40db42da3de809e922da6ca73ba46bb5e46151610890eb77"
+    }
+  },
+  "deployment": {
+    "gracefulRestart": true,
+    "verified": true,
+    "sourceSha256": "52425a788c8487ac62f1846d0a1d225a263d29a7d59e8bd8842642359fdd2a5a",
+    "databases": 2,
+    "files": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true,
+    "schema": 90
+  },
+  "findings": [
+    "Browser reference check reproduced missing profile preview after moving modules: old importer-sensitive alias no longer applied. Replaced with explicit Loom import; added source guard and reran desktop/mobile preview/navigation.",
+    "Typecheck exposed previously implicit ignored upstream profile fallback props; generated binding now omits them rather than treating upstream fallback as Loom identity.",
+    "Legacy browser assertions used retired bg-primary/bg-accent-soft and English Undo. Updated to locked native bg-brand/bg-attention-soft and Chinese 撤销; did not change native UI for tests.",
+    "Fake runtime MCP discovery may refuse activation in fixture logs; these are isolated fake CLIs, no paid provider execution or runtime acceptance claimed."
+  ],
+  "limits": [
+    "MessageItem, ThreadPanel, Timeline and full composer controller still have local or build-time adaptations.",
+    "New official upload-recovery business code was not imported.",
+    "Whole-site dependency migration remains incomplete.",
+    "No physical iOS/Android-device acceptance claimed."
+  ],
+  "privateEvidence": "/Users/sun/.loom/reviews/2026-10-22-chat-affordances"
+}
