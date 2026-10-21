@@ -1,0 +1,227 @@
+{
+  "date": "2026-10-22",
+  "productCommit": "fbc33d15a34c8f57bee1ae87e9bbce9d0f3a7867",
+  "scope": [
+    "MarkdownContent",
+    "CodeBlock",
+    "CustomProtocolLink",
+    "CopyButton",
+    "CopyIconButton",
+    "AttachmentChip"
+  ],
+  "source": {
+    "revision": "db5e399f017d584e49597e3a28757645d6807893",
+    "foundation": "@botiverse/raft-ui@0.10.5",
+    "classification": "full source modules with import-only bindings; originals and module bodies preserved",
+    "compatibility": "AttachmentChip wrapper ignores retired variant/icon props with no visual override"
+  },
+  "verification": {
+    "redBeforeImplementation": true,
+    "sourceTests": 5,
+    "uiContractTests": 8,
+    "typecheck": true,
+    "build": true,
+    "browserFixtures": {
+      "markdown": [
+        {
+          "width": 1440,
+          "tildeCodeUnchanged": true,
+          "rawHtmlText": true,
+          "noExecutableMarkup": true,
+          "checkedList": true,
+          "nativeCodeQuoteTable": true,
+          "copiedCodeExact": true
+        },
+        {
+          "width": 390,
+          "tildeCodeUnchanged": true,
+          "rawHtmlText": true,
+          "noExecutableMarkup": true,
+          "checkedList": true,
+          "nativeCodeQuoteTable": true,
+          "copiedCodeExact": true
+        }
+      ],
+      "preview": [
+        {
+          "width": 1440,
+          "nativeMarkdownPreview": true,
+          "nativeComments": true,
+          "unknownExactReplay": true,
+          "oneDurableComment": true,
+          "nativeSelectionAnchor": true,
+          "anchorJump": true
+        },
+        {
+          "width": 390,
+          "nativeMarkdownPreview": true,
+          "nativeComments": true,
+          "unknownExactReplay": true,
+          "oneDurableComment": true,
+          "nativeSelectionAnchor": true,
+          "anchorJump": true
+        }
+      ],
+      "workspace": [
+        {
+          "width": 1440,
+          "initialResourceCount": 67,
+          "initialEncodedBytes": 1223102,
+          "workspaceChunkAbsentBeforeOpen": true,
+          "operations": [
+            {
+              "operation": "roots",
+              "path": ""
+            },
+            {
+              "operation": "list",
+              "path": ""
+            },
+            {
+              "operation": "list",
+              "path": "src"
+            },
+            {
+              "operation": "read",
+              "path": "src/demo.md"
+            },
+            {
+              "operation": "changes",
+              "path": ""
+            },
+            {
+              "operation": "diff",
+              "path": "src/demo.md"
+            },
+            {
+              "operation": "diff",
+              "path": "long.txt"
+            },
+            {
+              "operation": "list",
+              "path": ""
+            },
+            {
+              "operation": "read",
+              "path": "report.html"
+            },
+            {
+              "operation": "read",
+              "path": "report.pdf"
+            }
+          ]
+        },
+        {
+          "width": 390,
+          "initialResourceCount": 67,
+          "initialEncodedBytes": 1206404,
+          "workspaceChunkAbsentBeforeOpen": true,
+          "operations": [
+            {
+              "operation": "roots",
+              "path": ""
+            },
+            {
+              "operation": "list",
+              "path": ""
+            },
+            {
+              "operation": "list",
+              "path": "src"
+            },
+            {
+              "operation": "read",
+              "path": "src/demo.md"
+            },
+            {
+              "operation": "changes",
+              "path": ""
+            },
+            {
+              "operation": "diff",
+              "path": "src/demo.md"
+            },
+            {
+              "operation": "diff",
+              "path": "long.txt"
+            },
+            {
+              "operation": "list",
+              "path": ""
+            },
+            {
+              "operation": "read",
+              "path": "report.html"
+            },
+            {
+              "operation": "read",
+              "path": "report.pdf"
+            }
+          ]
+        }
+      ]
+    },
+    "formalWebKit": [
+      {
+        "width": 1440,
+        "existingReplies": 4,
+        "nativeCloseOrBack": {
+          "width": 32,
+          "height": 32,
+          "clickable": true
+        },
+        "noSend": true,
+        "noErrors": true,
+        "noOverflow": true
+      },
+      {
+        "width": 390,
+        "existingReplies": 4,
+        "nativeCloseOrBack": {
+          "width": 44,
+          "height": 44,
+          "clickable": true
+        },
+        "noSend": true,
+        "noErrors": true,
+        "noOverflow": true
+      }
+    ],
+    "screenshotsReviewed": [
+      {
+        "name": "formal-thread-1440.png",
+        "sha256": "0bf72b312aade7e3ab9204906e7016749802c6044cd657b52d63f8d58bab09e0"
+      },
+      {
+        "name": "formal-thread-390.png",
+        "sha256": "5e37bae11b2ab63714d7f1a699c9a368ca7c0ae5e7926feeac105441865744fa"
+      }
+    ]
+  },
+  "historicalAssertionCorrection": {
+    "baselineProduct": "2286b775",
+    "baselineReproduced": "attachment-preview expected desktop44, previous formal static build measured32",
+    "nativeEvidence": [
+      "raft-ui 0.10.5 dist/foundation.css control-height and control-hit-inset",
+      "raft-ui 0.10.5 dist/drawer-yZD16Ybl.mjs icon-lg recipe"
+    ],
+    "updatedGuard": "desktop32 with after inset -6; mobile44 with after inset0; actual edge pointer ownership verified; no production size changes to satisfy old assertion"
+  },
+  "deployment": {
+    "gracefulRestart": true,
+    "databaseBackups": 2,
+    "fileBackups": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true,
+    "schema": 90,
+    "runtimeSourceSha256": "7cc7ff58d6dd76c29ac85649b693fe23f93ba5bfe40bec7406d8d821c90ed897"
+  },
+  "remainingEstimate": "4–6 substantial rounds at pinned source scope; four batch exit criteria in dependency-migration.json#remainingBatchPlan",
+  "limits": [
+    "No claim of whole-site dependency completion",
+    "Shiki/Mermaid downstream, preview/comments shell, workspace and main UI composition retain explicit migration work",
+    "No real paid CLI or efficiency run",
+    "Formal state contained no published unreclaimed Markdown attachment; attachment interaction verified with isolated fixtures, real formal inspection covered existing message/thread pages",
+    "WebKit viewports are not physical iOS device acceptance"
+  ]
+}
