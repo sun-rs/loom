@@ -1,0 +1,218 @@
+{
+  "date": "2026-10-22",
+  "productCommit": "0f65df6c74f37126189c6e19a9f9f8bc0e9619ba",
+  "scope": [
+    "Search entity result row",
+    "Search frequent destination row",
+    "Activity all/unread/mentions empty presentation",
+    "TaskModalHead title/description measurement/disclosure and explicit Loom properties binding",
+    "ShowMoreToggle direct official source dependency"
+  ],
+  "source": {
+    "revision": "db5e399f017d584e49597e3a28757645d6807893",
+    "release": "v1.21.23-source.1",
+    "generator": "scripts/official-web/generate-discovery-task.mjs",
+    "hashes": "frontends/raft/upstream/raft-web-source/source-lock.json",
+    "localPatches": [
+      "Explicit imports use existing Loom TaskProperties, avatars, identities and locale helpers",
+      "EntityResultRow adds rootRef and data-entity-id for menu focus and keyboard rail",
+      "Activity filter maps only all/unread/mentions"
+    ],
+    "removals": [
+      "Five old presentation bodies replaced with bridges",
+      "Implicit TaskModalHead TaskProperties Vite interception removed"
+    ]
+  },
+  "verification": {
+    "red": "source generation test initially failed; search browser then caught missing stable keyboard identity and passed after explicit adaptation",
+    "sourceTests": 20,
+    "uiContractTests": 8,
+    "typecheck": "passed",
+    "build": "passed; existing chunk-size warnings retained",
+    "searchEntities": [
+      {
+        "width": 1440,
+        "channelCandidate": true,
+        "privateBoxCandidate": true,
+        "exactOverlay": true,
+        "partialOverlay": true,
+        "refresh": true
+      },
+      {
+        "width": 390,
+        "channelCandidate": true,
+        "privateBoxCandidate": true,
+        "exactOverlay": false,
+        "partialOverlay": false,
+        "refresh": true
+      }
+    ],
+    "searchHistoryAndFrequent": [
+      {
+        "width": 1440,
+        "committedOnly": true,
+        "persistsAcrossReload": true,
+        "chooseRunsSearch": true,
+        "nativeRemove": true,
+        "clearAllPersists": true,
+        "overlayCommitAndSeparation": true,
+        "noErrors": true
+      },
+      {
+        "width": 390,
+        "committedOnly": true,
+        "persistsAcrossReload": true,
+        "chooseRunsSearch": true,
+        "nativeRemove": true,
+        "clearAllPersists": true,
+        "overlayCommitAndSeparation": false,
+        "noErrors": true
+      }
+    ],
+    "activity": [
+      {
+        "width": 1440,
+        "fixture": true,
+        "geometry": {
+          "height": 68,
+          "titleSize": "14px",
+          "titleLine": "22px",
+          "padding": "16px",
+          "bodyWhiteSpace": "normal",
+          "bodyClamp": "1",
+          "titleClamp": "1",
+          "titleWhiteSpace": "normal",
+          "avatar": 36,
+          "metadata": false
+        },
+        "touchDoneVisible": false,
+        "computerInstanceNavigation": true,
+        "supportedEmptyStates": true
+      },
+      {
+        "width": 900,
+        "fixture": true,
+        "geometry": {
+          "height": 68,
+          "titleSize": "14px",
+          "titleLine": "22px",
+          "padding": "16px",
+          "bodyWhiteSpace": "normal",
+          "bodyClamp": "1",
+          "titleClamp": "1",
+          "titleWhiteSpace": "normal",
+          "avatar": 36,
+          "metadata": false
+        },
+        "touchDoneVisible": false,
+        "computerInstanceNavigation": true,
+        "supportedEmptyStates": true
+      },
+      {
+        "width": 390,
+        "fixture": true,
+        "geometry": {
+          "height": 60,
+          "titleSize": "14px",
+          "titleLine": "18px",
+          "padding": "12px",
+          "bodyWhiteSpace": "normal",
+          "bodyClamp": "1",
+          "titleClamp": "1",
+          "titleWhiteSpace": "normal",
+          "avatar": 32,
+          "metadata": false
+        },
+        "touchDoneVisible": true,
+        "computerInstanceNavigation": true,
+        "supportedEmptyStates": true
+      }
+    ],
+    "tasks": [
+      {
+        "width": 1440,
+        "nativeBoardAndList": true,
+        "boundedPagination": true,
+        "nativeMultiFiltersReloadAndClear": true,
+        "taskDetailAndDiscussion": true,
+        "canonicalStatusUpdate": true,
+        "unknownExactReplay": true,
+        "unknownHistoryGuard": true,
+        "reload": true,
+        "mobileReturnOrClose": true,
+        "foreignTaskRejected": true
+      },
+      {
+        "width": 390,
+        "nativeBoardAndList": true,
+        "boundedPagination": true,
+        "nativeMultiFiltersReloadAndClear": true,
+        "taskDetailAndDiscussion": true,
+        "canonicalStatusUpdate": true,
+        "unknownExactReplay": true,
+        "unknownHistoryGuard": true,
+        "reload": true,
+        "mobileReturnOrClose": true,
+        "foreignTaskRejected": true
+      }
+    ],
+    "taskDescription": "12-line task description expands and collapses at 1440/390; assertions included in the passing tasks run",
+    "formalWebkit": [
+      {
+        "width": 1440,
+        "view": "search",
+        "readOnly": true,
+        "noOverflow": true,
+        "entityRows": 1
+      },
+      {
+        "width": 1440,
+        "view": "activity",
+        "readOnly": true,
+        "noOverflow": true
+      },
+      {
+        "width": 1440,
+        "view": "tasks",
+        "readOnly": true,
+        "noOverflow": true
+      },
+      {
+        "width": 390,
+        "view": "search",
+        "readOnly": true,
+        "noOverflow": true,
+        "entityRows": 1
+      },
+      {
+        "width": 390,
+        "view": "activity",
+        "readOnly": true,
+        "noOverflow": true
+      },
+      {
+        "width": 390,
+        "view": "tasks",
+        "readOnly": true,
+        "noOverflow": true
+      }
+    ],
+    "formalTaskDetail": "Opened existing Task 新体系正式页面验收 in both viewports; no edit or model execution",
+    "screenshots": "Inspected mobile search, task list and task detail; screenshots retained privately"
+  },
+  "deployment": {
+    "method": "idle check, same-data-home backup, graceful exact launchd restart",
+    "databases": 2,
+    "files": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true,
+    "sourceSha256": "cf49e3c22c1beebdd21337e0ae95b1e5b20d87e5aee2d794655cd870c424179f",
+    "schema": 90
+  },
+  "limits": [
+    "Not whole-page source dependency equivalence; local query/overlay/list/modal/board compositions remain",
+    "Activity row remains native primitive composition, not extracted full ThreadsInbox",
+    "No physical-device or paid-provider acceptance",
+    "Official imports still bind local AvatarSlot and search formatting; full dependency closure not claimed"
+  ]
+}
