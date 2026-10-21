@@ -179,5 +179,81 @@
     "No backend changes or paid-provider calls",
     "Build retains preexisting chunk-size and native-config warnings"
   ],
-  "privateEvidence": "/Users/sun/.loom/reviews/2026-10-22-composition-boundaries"
+  "privateEvidence": "/Users/sun/.loom/reviews/2026-10-22-composition-boundaries",
+  "deployment": {
+    "head": "aa989b97cc5635611c0e6dafe245afb658783d90",
+    "newStaticDirectory": "/Users/sun/Code/repos/rah_os/.workbench-web/5041882db6744afe1ed512faa16a6fd4a5a3939b7fa6dabbd681efab1e6b7d99",
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-composition-boundaries-85b9bea4-3c10-41cc-a528-4a9133afe035",
+    "databases": 2,
+    "files": 325,
+    "pushStateUnchanged": true,
+    "businessTablesUnchanged": 20
+  },
+  "formalWebKit": [
+    {
+      "width": 1440,
+      "navHit": {
+        "width": 40,
+        "height": 40,
+        "clickable": true
+      },
+      "activityMobileBack": true,
+      "existingReplies": 4,
+      "nativeCloseOrBack": {
+        "width": 32,
+        "height": 32,
+        "clickable": true
+      },
+      "noSend": true,
+      "noErrors": true,
+      "noOverflow": true,
+      "workspaceOpened": true,
+      "computerProfile": true,
+      "settingsAppearance": true,
+      "roleProfile": true,
+      "workspaceRefresh": {
+        "width": 32,
+        "height": 32,
+        "clickable": true
+      }
+    },
+    {
+      "width": 390,
+      "navHit": {
+        "width": 68.796875,
+        "height": 44,
+        "clickable": true
+      },
+      "activityMobileBack": true,
+      "existingReplies": 4,
+      "nativeCloseOrBack": {
+        "width": 44,
+        "height": 44,
+        "clickable": true
+      },
+      "noSend": true,
+      "noErrors": true,
+      "noOverflow": true,
+      "workspaceOpened": true,
+      "computerProfile": true,
+      "settingsAppearance": true,
+      "roleProfile": true,
+      "workspaceRefresh": {
+        "width": 32,
+        "height": 32,
+        "clickable": true
+      }
+    }
+  ],
+  "visualReview": [
+    {
+      "file": "formal-workspace-390.png",
+      "sha256": "a7c51bd1d7f8f295b7ba6379f4498222bd3f96c8d5c7762a17e225ccad6b6888"
+    },
+    {
+      "file": "formal-chat-1440.png",
+      "sha256": "c6f00b1bf8b849c2a6d9c4b9703323d414748f3c8a06afe2a51ea44d54defc91"
+    }
+  ],
+  "visualLimit": "Formal workspace directory is empty; file/preview interactions are verified in isolated browser fixtures, not fabricated in user data."
 }
