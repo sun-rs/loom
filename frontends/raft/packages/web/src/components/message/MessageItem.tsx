@@ -4533,11 +4533,7 @@ const ConnectedMessageItem = memo(function ConnectedMessageItem({ message, menti
         // (stdrc), aligned in a consistent left column instead of the header.
         <MessageItemGutter>
           <Tooltip content={gutterFullTimestamp}>
-          <MessageItemContinuationTime
-            // No transition — the time reveals instantly on hover, like the row
-            // border (stdrc: 时间不要动画呈现，跟边框一样立即出现).
-          className="absolute right-1 top-1 select-none font-mono text-[10px] leading-none tabular-nums text-transparent group-hover/message:text-foreground-placeholder "
-          >
+          <MessageItemContinuationTime dateTime={new Date(message.createdAt).toISOString()}>
             {gutterClock}
           </MessageItemContinuationTime>
           </Tooltip>
@@ -4555,11 +4551,11 @@ const ConnectedMessageItem = memo(function ConnectedMessageItem({ message, menti
               still shaves a sub-pixel off the name and shows "C…". The time
               and status stay OUTSIDE the cluster, so a narrow panel can never
               clip them. */}
-          <span className="flex min-w-0 items-center gap-2 overflow-hidden in-data-[theme=elegant]:gap-1.5">
+          <span className="flex min-w-0 items-center gap-1.5 overflow-hidden">
           {senderMention ? (
             <Tooltip content={formatMessage({ id: "message.messageItem.mentionSender" }, { name: senderMention.name })}>
             <MessageItemSenderButton
-              className={`max-w-full shrink-0 ${messageNameSizeClass} in-data-[theme=elegant]:leading-none`}
+              className={`max-w-full shrink-0 ${messageNameSizeClass} leading-5`}
               onClick={handleSenderNameMention}
               onContextMenu={readOnlyProjection ? undefined : handleSenderContextMenu}
               data-testid={`message-sender-mention-${message.id}`}
@@ -4569,18 +4565,18 @@ const ConnectedMessageItem = memo(function ConnectedMessageItem({ message, menti
             </Tooltip>
           ) : (
             <MessageItemSender
-              className={`max-w-full shrink-0 ${messageNameSizeClass} in-data-[theme=elegant]:leading-none`}
+              className={`max-w-full shrink-0 ${messageNameSizeClass} leading-5`}
               onContextMenu={readOnlyProjection ? undefined : handleSenderContextMenu}
             >
               {senderDisplayName}
             </MessageItemSender>
           )}
-          <span data-testid={`message-sender-tail-${message.id}`} className="flex min-w-0 items-center gap-2 overflow-hidden in-data-[theme=elegant]:gap-1.5">
+          <span data-testid={`message-sender-tail-${message.id}`} className="flex min-w-0 items-center gap-1.5 overflow-hidden">
           {agentModelLabelText && (
             <Tooltip content={agentModelLabelText}>
             <MessageItemMeta
               render={<span />}
-              className={`min-w-0 max-w-full shrink-0 truncate ${messageMetaSizeClass} in-data-[theme=elegant]:leading-none`}
+              className={`min-w-0 max-w-full shrink-0 truncate ${messageMetaSizeClass} leading-4`}
               data-testid={`message-sender-model-${message.id}`}
             >
               {agentModelLabelText}
@@ -4588,12 +4584,12 @@ const ConnectedMessageItem = memo(function ConnectedMessageItem({ message, menti
             </Tooltip>
           )}
           {isDeactivatedAgent && (
-            <span className="inline-flex shrink-0 items-center whitespace-nowrap border border-line-muted bg-fill-muted px-1.5 py-0.5 text-[10px] font-bold uppercase text-foreground-muted   ">
+            <span className="inline-flex h-5 shrink-0 items-center whitespace-nowrap rounded-chip bg-fill-muted px-1.5 text-caption font-semibold text-foreground-muted">
               {formatMessage({ id: "message.messageItem.deletedBadge" })}
             </span>
           )}
           {humanDepartureLabel && (
-            <span className="inline-flex shrink-0 items-center whitespace-nowrap border border-line-muted bg-fill-muted px-1.5 py-0.5 text-[10px] font-bold uppercase text-foreground-muted   ">
+            <span className="inline-flex h-5 shrink-0 items-center whitespace-nowrap rounded-chip bg-fill-muted px-1.5 text-caption font-semibold text-foreground-muted">
               {humanDepartureLabel}
             </span>
           )}
@@ -4601,7 +4597,7 @@ const ConnectedMessageItem = memo(function ConnectedMessageItem({ message, menti
             <Tooltip content={senderSubtitle}>
             <MessageItemMeta
               render={<span />}
-              className={`min-w-0 shrink truncate ${messageMetaSizeClass} in-data-[theme=elegant]:leading-none`}
+              className={`min-w-0 shrink truncate ${messageMetaSizeClass} leading-4`}
             >
               {senderSubtitle}
             </MessageItemMeta>
@@ -4609,7 +4605,14 @@ const ConnectedMessageItem = memo(function ConnectedMessageItem({ message, menti
           )}
           </span>
           </span>
-          <MessageItemTime render={<span />} className={`shrink-0 whitespace-nowrap ${messageMetaSizeClass} in-data-[theme=elegant]:leading-none`}>{time}</MessageItemTime>
+          <Tooltip content={gutterFullTimestamp}>
+            <MessageItemTime
+              dateTime={new Date(message.createdAt).toISOString()}
+              className={`${messageMetaSizeClass} leading-4`}
+            >
+              {time}
+            </MessageItemTime>
+          </Tooltip>
           {converting && (
             <MessageItemInlineStatus render={<span />}>
               {formatMessage({ id: "message.messageItem.converting" })}

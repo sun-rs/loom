@@ -38,14 +38,14 @@ test("activity header exposes durable counts, all-read and icon refresh; rows us
 test("activity adopts the complete official list branch, without mixed card metadata", () => {
   const row = read("loom/ActivityMessageRow.tsx");
   assert.match(row, /data-layout="list"/);
-  assert.match(row, /items-center.*before:left-16/);
+  assert.match(row, /<InboxItem[\s\S]*density="compact"/);
   assert.match(row, /SidebarItemCount/);
   assert.doesNotMatch(
     row,
     /conversation-card-metadata|line-clamp-2|conversation-card-title-icon/,
   );
-  assert.match(row, /top-1\/2 right-3/);
-  assert.match(row, /hover:none.*hidden/);
+  assert.match(row, /<InboxItemActions\s+reveal="hover"/);
+  assert.doesNotMatch(row, /hover:none.*hidden/);
 });
 test("bulk-read uses the native toolbar action slot and unread-only visibility", () => {
   const header = read("loom/ActivityHeader.tsx");

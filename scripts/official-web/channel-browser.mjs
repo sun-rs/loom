@@ -227,7 +227,17 @@ try {
     );
   } else if (process.env.LOOM_BROWSER_SLICE === "activity-list") {
     console.log(
-      JSON.stringify(await verifyActivityList({ browser, origin, channels })),
+      JSON.stringify(
+        await verifyActivityList({
+          browser,
+          origin,
+          channels,
+          client,
+          head,
+          workspace,
+          instances,
+        }),
+      ),
     );
   } else if (process.env.LOOM_BROWSER_SLICE === "page-polish") {
     console.log(

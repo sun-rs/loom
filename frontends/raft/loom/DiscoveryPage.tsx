@@ -1,3 +1,4 @@
+import { ACTIVITY_PREVIEW_QUERY } from "./activity-layout.ts";
 import { Fragment } from "react";
 import { Pin } from "lucide-react";
 import SectionEyebrow from "../packages/web/src/components/ui/SectionEyebrow.tsx";
@@ -115,7 +116,9 @@ export default function DiscoveryPage({
     );
   };
   const desktop = useMediaQuery("(min-width: 768px)");
-  const wide = useMediaQuery("(min-width: 1024px)");
+  const wide = useMediaQuery(
+    mode === "activity" ? ACTIVITY_PREVIEW_QUERY : "(min-width: 1024px)",
+  );
   const fullPanel = useResizablePanel({
     storageKey: "loom:activityPanelWidth",
     min: 400,

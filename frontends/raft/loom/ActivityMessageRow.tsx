@@ -5,11 +5,23 @@ import ActivityContextMenu, {
 } from "./ActivityContextMenu.tsx";
 import type { ActivityAction } from "./activity-actions.ts";
 import Tooltip from "../packages/web/src/components/ui/Tooltip.tsx";
-import { useRef, useEffect, useState, useCallback } from "react";
-// Structural port of v1.21.22 ThreadsInbox-CbSKTW4g.js Ie/Le/Re and InboxRow.
-// Official list branch, including touch visibility; Done remains in the context menu.
+import { useRef, useEffect, useState, useCallback, useId } from "react";
+// Structural port of v1.21.26 ThreadsInbox-vmpxj7RN.js compact InboxItem branch.
+// Loom binds durable activity actions; native recipes own row/action presentation.
+import { ACTIVITY_PREVIEW_QUERY } from "./activity-layout.ts";
 import { useIntl } from "react-intl";
 import {
+  InboxItem,
+  InboxItemTrigger as InboxItemOpen,
+  InboxItemLeading,
+  InboxItemContent,
+  InboxItemHeading,
+  InboxItemTitle,
+  InboxItemBody,
+  InboxItemTrailing,
+  InboxItemTimestamp,
+  InboxItemMarks,
+  InboxItemActions,
   SidebarItemCount,
   Button,
   DirectMessageIcon,
@@ -38,37 +50,36 @@ export default function ActivityMessageRow({
 }) {
   const { formatMessage, locale } = useIntl();
   const root = useRef<HTMLDivElement>(null);
+  const titleId = useId(),
+    bodyId = useId();
   const [menu, setMenu] = useState<ActivityMenuTarget>();
   const closeMenu = useCallback(() => {
     setMenu(undefined);
-    root.current?.focus();
+    root.current
+      ?.querySelector<HTMLButtonElement>('[data-testid="inbox-row-open"]')
+      ?.focus();
   }, []);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);
   const activate = (detail: number) => {
     clearTimeout(timer.current);
-    if (!window.matchMedia("(min-width: 1024px)").matches || detail >= 2)
+    if (!window.matchMedia(ACTIVITY_PREVIEW_QUERY).matches || detail >= 2)
       onOpen(true);
     else timer.current = setTimeout(() => onOpen(false), 220);
   };
   const unreadCount = row.unread ?? 0;
   const thread = row.activityKind === "thread";
   const hasRowAction = Boolean(row.activityFrontier);
-  const rowActionVisibilityClassName = active
-    ? "pointer-events-auto opacity-100"
-    : "pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-visible:pointer-events-auto group-focus-visible:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100 [@media(hover:none)]:hidden";
-  const timestampVisibilityClassName = !hasRowAction
-    ? ""
-    : active
-      ? "opacity-0"
-      : "transition-opacity group-hover:opacity-0 group-focus-within:opacity-0 [@media(hover:none)]:opacity-100";
   const done = () => {
     clearTimeout(timer.current);
     if (!pending) onAction(row, "done");
   };
   return (
     <>
-      <div
+      <InboxItem
+        density="compact"
+        active={active}
+        data-unread={unreadCount > 0 || undefined}
         ref={root}
         onContextMenu={(event) => {
           event.preventDefault();
@@ -76,14 +87,9 @@ export default function ActivityMessageRow({
           if (row.activityFrontier)
             setMenu({ row, x: event.clientX, y: event.clientY });
         }}
-        role="button"
-        tabIndex={0}
         data-result-id={row.id}
         data-testid="inbox-row"
         data-layout="list"
-        data-active={active ? "true" : undefined}
-        aria-current={active ? "true" : undefined}
-        onClick={(event) => activate(event.detail)}
         onKeyDown={(event) => {
           if (
             event.key === "ContextMenu" ||
@@ -96,16 +102,21 @@ export default function ActivityMessageRow({
               setMenu({ row, x: rect.left + 12, y: rect.bottom });
             return;
           }
-
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            activate(1);
-          }
         }}
-        className={`group relative flex w-full items-center gap-3 px-4 py-3 text-left outline-none transition-colors focus-visible:shadow-[inset_0_0_0_2px_var(--foreground)] before:pointer-events-none before:absolute before:top-0 before:right-0 before:left-16 before:hidden before:border-t before:border-line-muted [[data-testid=inbox-row]+&]:before:block ${active ? "bg-info-soft" : "hover:bg-fill-pressed"}`}
       >
-        <span
-          className="relative flex size-9 shrink-0"
+        <InboxItemOpen
+          data-testid="inbox-row-open"
+          aria-current={active ? "true" : undefined}
+          aria-labelledby={`${titleId} ${bodyId}`}
+          onClick={(event) => activate(event.detail)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              activate(1);
+            }
+          }}
+        />
+        <InboxItemLeading
           data-testid="conversation-card-avatar"
           data-kind={row.activityKind}
         >
@@ -128,80 +139,70 @@ export default function ActivityMessageRow({
               <ThreadIcon width={11} height={11} />
             </span>
           )}
-        </span>
-        <div className="min-w-0 flex-1" data-testid="conversation-card-content">
-          <div className="flex min-w-0 items-center gap-2">
-            <div
-              className={`min-w-0 flex-1 truncate text-subhead ${unreadCount > 0 ? "font-bold text-foreground-strong" : "font-semibold text-foreground-muted"}`}
+        </InboxItemLeading>
+        <InboxItemContent data-testid="conversation-card-content">
+          <InboxItemHeading>
+            <InboxItemTitle
+              id={titleId}
               data-testid="conversation-card-primary"
             >
               {row.label}
-            </div>
-            <span
-              className={`shrink-0 font-mono text-mono-meta leading-5 text-foreground-hint ${timestampVisibilityClassName}`}
-              data-testid="conversation-card-timestamp"
-            >
-              {formatRelativeTime(row.message.createdAt, locale)}
-            </span>
-          </div>
-          <div className="flex min-w-0 items-center gap-2">
-            <p
-              className={`min-w-0 flex-1 truncate text-callout ${unreadCount > 0 ? "text-foreground" : "text-foreground-muted"}`}
-              data-testid="conversation-card-body"
-            >
-              {thread && (
-                <span className="mr-1" data-testid="conversation-card-subtitle">
-                  #{row.roomName}
-                </span>
-              )}
-              <span className="font-semibold text-foreground">
-                {row.senderName}:{" "}
+            </InboxItemTitle>
+          </InboxItemHeading>
+          <InboxItemBody id={bodyId} data-testid="conversation-card-body">
+            {thread && (
+              <span className="mr-1" data-testid="conversation-card-subtitle">
+                #{row.roomName}
               </span>
-              <InlineMarkdownPreview
-                markdown={row.message.body || "附件消息"}
-              />
-            </p>
+            )}
+            <span className="font-semibold text-foreground">
+              {row.senderName}:{" "}
+            </span>
+            <InlineMarkdownPreview markdown={row.message.body || "附件消息"} />
+          </InboxItemBody>
+        </InboxItemContent>
+        <InboxItemTrailing>
+          <InboxItemTimestamp data-testid="conversation-card-timestamp">
+            {formatRelativeTime(row.message.createdAt, locale)}
+          </InboxItemTimestamp>
+          <InboxItemMarks data-testid="conversation-card-marks">
             {unreadCount > 0 && (
-              <SidebarItemCount
-                className={`shrink-0 ${timestampVisibilityClassName}`}
-                data-testid="conversation-card-new-badge"
-              >
+              <SidebarItemCount data-testid="conversation-card-new-badge">
                 {unreadCount}
               </SidebarItemCount>
             )}
-          </div>
-        </div>
-        {hasRowAction && (
-          <div
-            className="pointer-events-none absolute top-1/2 right-3 z-10 flex -translate-y-1/2 items-center"
-            data-testid="conversation-card-actions"
-          >
-            <Tooltip content={formatMessage({ id: "thread.row.markAsDone" })}>
-              <Button
-                variant="outline"
-                size="icon-md"
-                type="button"
-                disabled={pending}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  done();
-                }}
-                onKeyDown={(event) => {
-                  event.stopPropagation();
-                  if (event.key !== "Enter" && event.key !== " ") return;
-                  event.preventDefault();
-                  done();
-                }}
-                className={`relative z-10 shrink-0 transition-opacity  ${rowActionVisibilityClassName}`}
-                aria-label={formatMessage({ id: "thread.row.markAsDone" })}
-                data-testid="inbox-row-done"
-              >
-                <Check />
-              </Button>
-            </Tooltip>
-          </div>
-        )}
-      </div>
+          </InboxItemMarks>
+          {hasRowAction && (
+            <InboxItemActions
+              reveal="hover"
+              data-testid="conversation-card-actions"
+            >
+              <Tooltip content={formatMessage({ id: "thread.row.markAsDone" })}>
+                <Button
+                  variant="outline"
+                  size="icon-md"
+                  type="button"
+                  disabled={pending}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    done();
+                  }}
+                  onKeyDown={(event) => {
+                    event.stopPropagation();
+                    if (event.key !== "Enter" && event.key !== " ") return;
+                    event.preventDefault();
+                    done();
+                  }}
+                  aria-label={formatMessage({ id: "thread.row.markAsDone" })}
+                  data-testid="inbox-row-done"
+                >
+                  <Check />
+                </Button>
+              </Tooltip>
+            </InboxItemActions>
+          )}
+        </InboxItemTrailing>
+      </InboxItem>
       {menu && (
         <ActivityContextMenu
           client={client}

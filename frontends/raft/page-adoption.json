@@ -797,5 +797,19 @@
       "Current conversation only; unknown observations hidden; no inference of native session online status",
       "Physical mobile and OS keyboard/push not tested; CSS pixels not dp/sp identity"
     ]
+  },
+  "messageActivity126Repair": {
+    "source": "v1.21.26 aa975b0e25ecc07ee6917d88d3ca973782550e6a app-shell-Bc6GbYfj.js MessageItem header; ThreadsInbox-vmpxj7RN.js compact InboxItem branch and et840 preview",
+    "reuse": "Structural port of page composition; raft-ui0.10.5 InboxItem primitives directly reused. SDK activity writes/navigation remain Loom-owned.",
+    "changes": [
+      "6px sender clusters,20px rounded departure badges,16px time metadata leading,semantic timestamps/full timestamp tooltip",
+      "Native compact InboxItem and hover actions including touch-visible done; Activity-only840px preview query"
+    ],
+    "limits": [
+      "Existing approved mobile compact CSS remains",
+      "Search retains its1024px breakpoint; no backend changes"
+    ],
+    "evidence": "../../docs/evo/evidence/2026-10-21-ui-repair/summary.json",
+    "license": "Existing upstream FSL-1.1-ALv2 and raft-ui MIT notices retained; owner-authorized reuse"
   }
 }

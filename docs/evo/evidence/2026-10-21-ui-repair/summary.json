@@ -1,0 +1,33 @@
+{
+  "scope": "Fix confirmed v1.21.26 message and Activity composition drift; no backend changes",
+  "implemented": [
+    "Message header6px clusters/name20px leading/metadata16px leading/native departure badges",
+    "Semantic time/dateTime/full timestamp Tooltip and native continuation clock",
+    "Native compact InboxItem with separate row trigger and touch-visible done action",
+    "Activity preview840px; Search1024px unchanged",
+    "Read-only upstream-diff command classifies original baseline/current Loom/supplied official source hashes"
+  ],
+  "verification": {
+    "red": "Three targeted source invariants failed before repair",
+    "sourceTests": 18,
+    "uiContractTests": 8,
+    "typecheck": "pass",
+    "build": "pass",
+    "browsers": [
+      "WebKit1440/900/390 Activity rows, right-click/Escape,900px preview, done without navigation, phone pointer hit",
+      "Chromium1440/390 three message font tiers across channel/private/thread/task;24cases semantic timestamp/lineheight/spacing/avatar metrics"
+    ],
+    "paidModels": false
+  },
+  "limits": [
+    "Not full-site latest parity or physical mobile acceptance",
+    "Native fake Codex refuses MCP discovery in message fixtures; no paid provider execution",
+    "Upstream source comparison example uses available v1.21.23-source.1, not production v1.21.26",
+    "Loom-only pages still require explicit upstream composition mapping; not yet a wholesale vendor/adapter restructuring"
+  ],
+  "deployment": {
+    "verified": false,
+    "pending": "safe restart and real-page verification"
+  },
+  "sourceEvidence": "../2026-10-21-version-diff/manifest.json"
+}

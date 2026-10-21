@@ -43,3 +43,22 @@ test("Role profile exposes field actions, native avatar presets and immutable re
   assert.match(read("loom/RoleWorkspace.tsx"), /<TabsLabel>资料<\/TabsLabel>/);
   assert.match(read("loom/RoleFieldEditor.tsx"), /AVATAR_KEYS/);
 });
+
+test("message headers retain official spacing, badges and semantic full timestamps", () => {
+  const s = read("packages/web/src/components/message/MessageItem.tsx");
+  const header = s.slice(
+    s.indexOf("<MessageItemHeader>"),
+    s.indexOf("</MessageItemHeader>"),
+  );
+  assert.doesNotMatch(header, /gap-2|text-\[10px\]|theme=elegant/);
+  assert.match(header, /h-5.*rounded-chip/);
+  assert.match(header, /<Tooltip content=\{gutterFullTimestamp\}>/);
+  assert.match(header, /<MessageItemTime\s+dateTime=/);
+  assert.match(s, /<MessageItemContinuationTime dateTime=/);
+});
+test("only Activity adopts the native 840px preview threshold", () => {
+  const row = read("loom/ActivityMessageRow.tsx");
+  assert.match(row, /ACTIVITY_PREVIEW_QUERY/);
+  const page = read("loom/DiscoveryPage.tsx");
+  assert.match(page, /mode === "activity"\s*\? ACTIVITY_PREVIEW_QUERY/);
+});

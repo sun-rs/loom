@@ -49,3 +49,11 @@
 本地角色／实例管理、频道操作、记忆／权限表单、收藏、消息列／Side、用量及文件选择中的相应动作采用这些绑定。官方消息工具栏、Composer、PickerTriggerButton、Sidebar、文件树、面板关闭和 Dialog/Drawer 继续使用各自场景 owner，不改成统一按钮。0.6 统一使用原生 32px 常规／图标控件（旧 xs/sm 为兼容别名），不继续维护 24px／28px 的旧版尺寸。
 
 新增场景绑定必须登记上游来源。检查会拒绝绑定上的 size/variant/style 二次覆盖，也检查全部本地 TSX 的语法；动态业务动作仍须定向浏览器验证。此批应用是本地动作参数收敛，不宣称所有主题、全部上游子树已经逐像素验收。
+
+
+## 官方差异的自动盘点
+
+只读命令：`node scripts/official-web/upstream-diff.mjs /path/to/official-source-checkout`。
+输入是含 `packages/web/src` 的官方源码 checkout；输出记录真实 Git revision，逐文件对比原始 intake hash、当前 Loom 文件和输入官方文件，区分 identical / upstream-only / loom-only / both-changed-review / missing，并检查未登记的本地漂移。不自动合并、不改版本记录，也不把字节相同称为功能验收。稀疏 checkout 缺文件不能算官方删除。
+
+当前混合移植的 `loom/` 页面没有对应官方路径，这个工具会明确保留该限制；不能用其结果宣称全站对齐。发布 bundle 的 revision 与公开源码 revision 不同也必须显式区分。长期应保持官方展示源文件的路径和版本可追踪，将 SDK/权限/领域转换放在 adapter，Loom 特有 Role/Instance/Memory 等单列；逐个受影响页面收敛，不以升级 UI 为由恢复官方后台 store 成为业务真相。完整的 vendor/fork 重组属于后续工程，不是本次已经完成的能力。

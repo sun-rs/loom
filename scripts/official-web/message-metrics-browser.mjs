@@ -119,6 +119,15 @@ export async function verifyMessageMetrics({
             return {
               font: parseFloat(getComputedStyle(el).fontSize),
               family: getComputedStyle(el).fontFamily,
+              headerGap: getComputedStyle(
+                row.querySelector('[data-slot="message-item-header"] > span'),
+              ).gap,
+              timeTag: row.querySelector("time[datetime]")?.tagName,
+              dateTime: row
+                .querySelector("time[datetime]")
+                ?.getAttribute("datetime"),
+              timeLine: getComputedStyle(row.querySelector("time[datetime]"))
+                .lineHeight,
               avatarContext: avatar?.getAttribute("data-avatar-context"),
               avatarCss: avatar ? getComputedStyle(avatar).width : null,
               avatar: avatar
@@ -134,6 +143,12 @@ export async function verifyMessageMetrics({
             width >= 768 ? expected - 2 : expected,
             kind + " " + size,
           );
+          assert.equal(metrics.headerGap, "6px");
+          assert.equal(metrics.timeTag, "TIME");
+          assert.ok(
+            metrics.dateTime && Number.isFinite(Date.parse(metrics.dateTime)),
+          );
+          assert.equal(metrics.timeLine, "16px");
           assert.ok(metrics.avatar, "first fixture message has native avatar");
           assert.deepEqual(metrics.avatar, {
             w: size === "lg" ? 34 : 35,

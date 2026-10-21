@@ -6,13 +6,13 @@ test("activity adopts native separator rows and semantic typography", () => {
   const s = read("loom/ActivityMessageRow.tsx");
   assert.doesNotMatch(s, /<Card|shadow-raft-sm/);
   for (const c of [
-    "before:border-t",
-    "text-subhead",
-    "text-callout",
-    "bg-info-soft",
-    "hover:bg-fill-pressed",
+    "InboxItem",
+    "InboxItemTitle",
+    "InboxItemBody",
+    "InboxItemTrailing",
   ])
     assert.ok(s.includes(c), c);
+  assert.match(s, /active=\{active\}/);
   assert.doesNotMatch(
     read("loom/DiscoveryPage.tsx"),
     /icon=\{<Activity|flex flex-col gap-2/,

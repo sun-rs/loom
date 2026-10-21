@@ -168,6 +168,19 @@
         "Loom Role prompt/runtime fields compose native DescriptionList with existing catalog validation. Avatar picker supports official pixel presets; image upload is not enabled without a Role upload-intent binding.",
         "Existing approved compact mobile adaptations remain; this release does not broaden desktop typography to coarse-pointer tablets."
       ]
+    },
+    {
+      "id": "activity-native-row",
+      "owner": "raft-ui InboxItem compact / InboxItemTrigger / InboxItemActions reveal=hover",
+      "rule": "Official v1.21.26 compact row composition. Trigger owns row navigation, trailing action owns done; touch action remains visible, keyboard focus returns to trigger. Activity preview840px, search unaffected.",
+      "sources": [
+        "frontends/raft/node_modules/raft-ui/dist/index.mjs"
+      ],
+      "bindings": [
+        "ActivityMessageRow.tsx",
+        "activity-layout.ts"
+      ],
+      "guard": "scripts/official-web/activity-list-browser.mjs"
     }
   ],
   "exceptions": [

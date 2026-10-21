@@ -480,9 +480,10 @@
     },
     "packages/web/src/components/message/MessageItem.tsx": {
       "upstreamSha256": "aa71f3dbf177a0537bfee84b0e24b9363719450a2f1777200418cedca6dfbac3",
-      "portedSha256": "9ccab8fc1adfc0d85dd2cd09bac9d68bfca3a1cb2aeaffc24cbbd0f10c23f84c",
+      "portedSha256": "eae2cf8015963509c5f9ea65fd4fa2f0eddb06bee45427e28805d8a0219b1abe",
       "localRevision": "e9d5a2637ee5bcec202c2cbb73213899815fcb7c",
-      "adoption": "Historical already-committed compatibility port; reconciled stale hash on 2026-10-21. See page-adoption.json and exact cited Git revision, not a v1.21.26 source change."
+      "adoption": "Message header spacing/badges/time and continuation clock structurally ported; existing Loom message binding retained.",
+      "sourceRelease": "v1.21.26 / aa975b0e25ecc07ee6917d88d3ca973782550e6a"
     },
     "packages/web/src/components/message/InlineThreadReplies.tsx": {
       "upstreamSha256": "9b948322d29e6a10f0bb7554d89eab1dd6b918b5f0c27248a50655950e93cf64",
