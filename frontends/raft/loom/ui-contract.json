@@ -1,5 +1,5 @@
 {
-  "scope": "Raft 0.6 single design system; modes light/dark/system. Semantic recipes are owned by the pinned official package.",
+  "scope": "Raft single design system, pinned @botiverse/raft-ui 0.10.5 (import alias raft-ui); modes light/dark/system. Semantic recipes owned by official package.",
   "sourceVersions": {
     "pageSource": "frontends/raft/adoption.json",
     "primitiveSource": "frontends/raft/node_modules/raft-ui/package.json",
@@ -149,6 +149,25 @@
         "OverlayAllResults.tsx"
       ],
       "guard": "scripts/official-web/search-transition-browser.mjs"
+    },
+    {
+      "id": "release-126-compatibility",
+      "owner": "@botiverse/raft-ui 0.10.5 native typography/control sizes, SearchTrigger, ListRowGroup/ListRow and DescriptionList; official page wAt / AgentProfileEditDialog composition",
+      "rule": "Use pinned production source recipes; no new size system. Fine-pointer desktop typography only; explicit message tier remains user-owned. Role field writes use immutable Role revisions. Existing instances become out of date; they are never silently changed.",
+      "sources": [
+        "docs/evo/evidence/2026-10-21-search-fix/upstream-lock.json"
+      ],
+      "bindings": [
+        "useTopbarSearchWidth.ts",
+        "OfficialListRows.tsx",
+        "RoleProfile.tsx",
+        "RoleFieldEditor.tsx"
+      ],
+      "guard": "scripts/official-web/upstream-126.test.mjs",
+      "exceptions": [
+        "Loom Role prompt/runtime fields compose native DescriptionList with existing catalog validation. Avatar picker supports official pixel presets; image upload is not enabled without a Role upload-intent binding.",
+        "Existing approved compact mobile adaptations remain; this release does not broaden desktop typography to coarse-pointer tablets."
+      ]
     }
   ],
   "exceptions": [

@@ -2,6 +2,8 @@
 
 本规范适用于 evo。它约束如何采用官方代码，不定义另一套组件库、颜色或尺寸。
 
+当前锁定（2026-10-21）：官方包已更名为 `@botiverse/raft-ui`，使用 npm alias `raft-ui` 固定 `0.10.5`，对应本批核对的 Web v1.21.26 场景。旧无作用域包的 `0.6.0` 不代表官方最新发布。包提供的 SearchTrigger、ListRowGroup、DescriptionList 等直接复用，优先撤除本地兼容 recipe。组件升级与页面移植分别记账；不追随未验收的滚动最新版。
+
 ## 唯一来源与维护入口
 
 - 负责人边界：根目录 AGENTS.md 的 Mandatory Raft UI layering。

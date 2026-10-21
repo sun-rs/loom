@@ -28,11 +28,11 @@ test("settings rail has no desktop title or computer navigation entry", () => {
   assert.doesNotMatch(s, /id: "computers"/);
   assert.match(s, /hideDesktopHeader/);
 });
-test("message size preferences match official current 14 16 18", () => {
+test("message size preferences follow v1.21.26 responsive typography", () => {
   const s = read("packages/web/src/store/appearanceStore.ts");
-  for (const n of ["14px", "16px", "18px"])
-    assert.ok(s.includes('sizeLabel: "' + n + '"'));
-  assert.match(s, /md: "1rem"/);
+  assert.match(s, /fontSize: "var\(--text-body\)"/);
+  assert.match(s, /lineHeight: "var\(--text-body--line-height\)"/);
+  assert.doesNotMatch(s, /sizeLabel: "16px"/);
 });
 test("timeline supplies member mentions rather than empty map", () => {
   const s = read("loom/ChannelTimeline.tsx");

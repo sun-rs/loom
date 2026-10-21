@@ -382,6 +382,13 @@ neither an old reference fixture nor a visible tab proves product completeness.
 - Missing backend capabilities stay explicitly unavailable with accurate labels;
   never connect an enabled production button to fixture success.
 
+Current source upgrade (owner requested 2026-10-21): the official component package
+is now `@botiverse/raft-ui`, pinned at `0.10.5` through npm alias `raft-ui`.
+The obsolete unscoped package stopped at `0.6.0`; do not mistake that old
+package version for the current official release. This slice is anchored to
+Raft Web v1.21.26. Prefer its exported primitives over local compatibility
+recipes; keep existing owner-approved compact mobile exceptions explicit.
+
 ### Mandatory Raft UI layering (owner approved 2026-10-19)
 
 For evo, adopt the official Raft UI rules as the implementation contract, not

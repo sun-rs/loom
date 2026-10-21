@@ -1,8 +1,14 @@
+import { useTopbarSearchWidth } from "./useTopbarSearchWidth.ts";
 import AvatarSlot from "../packages/web/src/components/ui/AvatarSlot.tsx";
 // Structural port of v1.21.22 app-shell-D1-nY-va.js Gbt/Kbt.
 // Native classes and geometry retained; single local workspace replaces Raft accounts.
 import { useEffect, useRef } from "react";
-import { Button, Kbd } from "raft-ui";
+import {
+  SearchTrigger as OfficialSearchTrigger,
+  SearchTriggerLabel,
+  SearchTriggerShortcut,
+} from "raft-ui";
+import { Kbd } from "raft-ui";
 import { Search } from "lucide-react";
 import SystemNotifications from "./SystemNotifications.tsx";
 import { DESKTOP_SEARCH_ANCHOR_VARS } from "../packages/web/src/components/search/searchOverlayAnchor.ts";
@@ -14,6 +20,9 @@ export default function TopBar({
   onSearch: () => void;
 }) {
   const anchor = useRef<HTMLButtonElement>(null);
+  const leading = useRef<HTMLDivElement>(null),
+    trailing = useRef<HTMLDivElement>(null);
+  const searchWidth = useTopbarSearchWidth(anchor, leading, trailing);
   useEffect(() => {
     const el = anchor.current;
     if (!el) return;
@@ -46,6 +55,7 @@ export default function TopBar({
       className="relative flex h-12 w-full shrink-0 items-center border-b border-line-seam bg-layer-frame text-foreground-on-frame    "
     >
       <div
+        ref={leading}
         className="flex min-w-0 flex-1 items-center px-2"
         style={{
           marginRight:
@@ -56,7 +66,7 @@ export default function TopBar({
           {/* Single-workspace adaptation: omit the unsupported organization switch action. */}
           <div
             data-testid="desktop-workspace-trigger"
-            className="flex h-9 min-w-0 shrink items-center justify-start gap-2 rounded-control px-2.5 text-foreground-on-frame hover:bg-fill-frame-pressed active:bg-fill-frame-pressed"
+            className="flex h-9 min-w-0 shrink items-center justify-start gap-2 rounded-control px-2.5 font-sans font-bold text-subhead text-foreground-on-frame hover:bg-fill-frame-pressed active:bg-fill-frame-pressed"
             title={name}
           >
             <AvatarSlot
@@ -67,7 +77,7 @@ export default function TopBar({
             />
             <span
               data-workspace-name
-              className="min-w-0 max-w-[160px] truncate text-subhead font-bold"
+              className="min-w-0 max-w-[160px] truncate"
             >
               {name}
             </span>
@@ -78,25 +88,24 @@ export default function TopBar({
           className="ml-auto flex shrink-0 items-center gap-0.5 pl-2"
         />
       </div>
-      <Button
+      <OfficialSearchTrigger
         ref={anchor}
-        variant="outline"
-        size="sm"
+        style={searchWidth === undefined ? undefined : { width: searchWidth }}
         onClick={onSearch}
         data-testid="app-top-bar-search"
-        className="w-[clamp(360px,32vw,520px)] shrink-0 h-9 justify-start gap-2 px-3 text-body font-normal text-foreground-hint [&>[data-slot=button-content]]:flex [&>[data-slot=button-content]]:w-full [&>[data-slot=button-content]]:items-center [&>[data-slot=button-content]]:gap-2"
       >
         <Search
           size={18}
           aria-hidden
           className="shrink-0 text-foreground-hint"
         />
-        <span className="truncate">搜索</span>
-        <Kbd className="ml-auto shrink-0">
-          {navigator.platform.includes("Mac") ? "⌘ K" : "Ctrl K"}
-        </Kbd>
-      </Button>
+        <SearchTriggerLabel>搜索</SearchTriggerLabel>
+        <SearchTriggerShortcut>
+          <Kbd>{navigator.platform.includes("Mac") ? "⌘ K" : "Ctrl K"}</Kbd>
+        </SearchTriggerShortcut>
+      </OfficialSearchTrigger>
       <div
+        ref={trailing}
         className="flex min-w-0 flex-1 items-center justify-end gap-1 px-2"
         style={{
           marginLeft:

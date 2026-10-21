@@ -13,7 +13,7 @@ import {
   DialogTitle,
   Field,
   FieldLabel,
-  buttonVariants,
+  textLinkVariants,
   useTheme,
 } from "raft-ui";
 import { ExternalLink } from "lucide-react";
@@ -80,8 +80,7 @@ export function AgentMigrationDialog({
   // A real anchor (new tab) dressed as raft-ui's link button, so it reads as
   // a quiet text link in every theme instead of a primary-colored hyperlink.
 
-  const recoveryLinkClassName = buttonVariants({ variant: "link", size: "inline" })
-    .root({ className: "w-fit gap-1 text-sm" });
+  const recoveryLinkClassName = textLinkVariants({ variant: "strong", className: "w-fit gap-1 text-sm" });
   const recoveryComputersHref = serverSlug
     ? `/s/${serverSlug}/${recoveryComputerId ? `computer/${recoveryComputerId}` : "computers"}`
     : null;

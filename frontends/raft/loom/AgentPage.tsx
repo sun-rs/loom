@@ -76,7 +76,6 @@ export default function AgentPage({
   const lastSelectedId = useRef(selectedId);
   if (selectedId) lastSelectedId.current = selectedId;
   const [dirty, setDirty] = useState(false);
-  const [profileEditing, setProfileEditing] = useState(false);
   const [inspecting, setInspecting] = useState<string>();
   const instanceTrigger = useRef<HTMLElement | null>(null);
   const closeInspector = useCallback(() => {
@@ -95,7 +94,6 @@ export default function AgentPage({
   };
   const selectRole = (id?: string) => {
     setInspecting(undefined);
-    setProfileEditing(false);
     const next = new URLSearchParams(params);
     if (id) next.set("role", id);
     else next.delete("role");
@@ -143,7 +141,6 @@ export default function AgentPage({
   };
   const done = (outcome: IntentOutcome<unknown>) => {
     if (outcome.kind === "ok") {
-      setProfileEditing(false);
       setDirty(false);
       setEdit(undefined);
       setError("");
@@ -165,6 +162,7 @@ export default function AgentPage({
   const entries: RoleEntry[] = (catalog?.roles ?? []).map((role) => ({
     id: role.roleId,
     name: roleName(role),
+    avatarUrl: role.configuration.avatarKey,
     presence: rolePresence(
       (catalog?.instances ?? [])
         .filter((i) => i.roleId === role.roleId)
@@ -299,39 +297,16 @@ export default function AgentPage({
             <div hidden={tab !== "roles"}>
               {role ? (
                 <>
-                  {!profileEditing && (
-                    <RoleProfile
-                      client={client}
-                      role={role}
-                      disabled={busy}
-                      onEdit={() => setProfileEditing(true)}
-                    />
-                  )}
-                  <div hidden={!profileEditing}>
-                    <Button
-                      {...uiActionProps.formCancel}
-                      disabled={busy}
-                      onClick={() =>
-                        guard(() => {
-                          setProfileEditing(false);
-                          setDirty(false);
-                          setEditorEpoch((n) => n + 1);
-                        })
-                      }
-                    >
-                      返回资料
-                    </Button>
-                    <RoleEditor
-                      key={`${role.roleRevisionId}:${editorEpoch}`}
-                      client={client}
-                      role={role}
-                      onDirtyChange={setDirty}
-                      disabled={busy}
-                      onSave={(configuration) =>
-                        void manager.save(configuration, role, done)
-                      }
-                    />
-                  </div>
+                  <RoleProfile
+                    key={`${role.roleRevisionId}:${editorEpoch}`}
+                    client={client}
+                    role={role}
+                    disabled={busy}
+                    onDirtyChange={setDirty}
+                    onSave={(configuration) =>
+                      void manager.save(configuration, role, done)
+                    }
+                  />
                 </>
               ) : selected?.retired ? (
                 <p>角色定义已删除。已有实例保留原配置，可在实例标签页管理。</p>

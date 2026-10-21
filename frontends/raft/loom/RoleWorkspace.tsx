@@ -20,7 +20,7 @@ import {
   TabsTab,
   TabsLabel,
 } from "raft-ui";
-import { Plus, RefreshCw, Settings2, Users } from "lucide-react";
+import { Plus, RefreshCw, Bot, Users } from "lucide-react";
 import Frame from "./ChatSidebarFrame.tsx";
 import AvatarSlot from "../packages/web/src/components/ui/AvatarSlot.tsx";
 import PanelHeader, {
@@ -33,6 +33,7 @@ export type RoleEntry = {
   id: string;
   name: string;
   retired?: boolean;
+  avatarUrl?: string;
   presence?: ReturnType<typeof rolePresence>;
 };
 export default function RoleWorkspace({
@@ -136,6 +137,7 @@ export default function RoleWorkspace({
               <AvatarSlot
                 context="sidebar-list"
                 type="agent"
+                agentAvatarUrl={entry.avatarUrl}
                 badge={<RolePresence state={entry.presence ?? "unknown"} />}
               />
               <SidebarItemContent>
@@ -163,7 +165,13 @@ export default function RoleWorkspace({
         >
           <PanelHeader
             title={selected?.name ?? "选择角色"}
-            iconSlot={<AvatarSlot context="panel-header" type="agent" />}
+            iconSlot={
+              <AvatarSlot
+                context="panel-header"
+                type="agent"
+                agentAvatarUrl={selected?.avatarUrl}
+              />
+            }
             iconKind="avatar"
             iconAlwaysVisible
             onMobileBack={onBack}
@@ -184,8 +192,8 @@ export default function RoleWorkspace({
                     value="roles"
                     className="!cursor-default"
                   >
-                    <Settings2 />
-                    <TabsLabel>配置</TabsLabel>
+                    <Bot />
+                    <TabsLabel>资料</TabsLabel>
                   </TabsTab>
                   <TabsTab
                     disabled={busy}

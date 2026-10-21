@@ -74,7 +74,7 @@ export async function verifyLocalFonts({ browser, origin }) {
               fontSize: getComputedStyle(el).fontSize,
               fontFamily: getComputedStyle(el).fontFamily,
             }));
-          assert.equal(metrics.fontSize, px + "px");
+          assert.equal(metrics.fontSize, (width >= 768 ? px - 2 : px) + "px");
           const { root } = await cdp.send("DOM.getDocument");
           const { nodeId } = await cdp.send("DOM.querySelector", {
             nodeId: root.nodeId,

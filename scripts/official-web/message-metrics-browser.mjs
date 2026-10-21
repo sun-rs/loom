@@ -129,7 +129,11 @@ export async function verifyMessageMetrics({
                 : null,
             };
           });
-          assert.equal(metrics.font, expected, kind + " " + size);
+          assert.equal(
+            metrics.font,
+            width >= 768 ? expected - 2 : expected,
+            kind + " " + size,
+          );
           assert.ok(metrics.avatar, "first fixture message has native avatar");
           assert.deepEqual(metrics.avatar, {
             w: size === "lg" ? 34 : 35,
@@ -140,7 +144,7 @@ export async function verifyMessageMetrics({
               await page
                 .getByTestId("task-modal-description")
                 .evaluate((el) => parseFloat(getComputedStyle(el).fontSize)),
-              15,
+              width >= 768 ? 14 : 15,
               "official task description text-subhead",
             );
           }

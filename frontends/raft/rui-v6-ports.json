@@ -1,6 +1,6 @@
 {
   "upstreamRevision": "a98ae003246a0360872a77d76dec2fccd0347ef7",
-  "uiPackage": "raft-ui@0.6.0",
+  "uiPackage": "@botiverse/raft-ui@0.10.5 (npm alias raft-ui)",
   "reason": "Owner-authorized 0.6 migration: remove retired family styling and APIs; mode-only settings, native semantics. Not latest upstream page source.",
   "files": {
     "packages/web/public/app-theme-bootstrap.js": {
@@ -13,7 +13,9 @@
     },
     "packages/web/src/index.css": {
       "upstreamSha256": "e3015311362c000b3354980cd03d59a3fd783f386243889c52c6defe3ce61fcb",
-      "portedSha256": "aac13df65bc4151f387b94c82fab46d87ca99822159d6d227c5c288031c982e4"
+      "portedSha256": "aac13df65bc4151f387b94c82fab46d87ca99822159d6d227c5c288031c982e4",
+      "sourceRelease": "v1.21.26 / aa975b0e25ecc07ee6917d88d3ca973782550e6a",
+      "adoption": "Existing index.css retained; updated official package styles imported without a local typography override."
     },
     "packages/web/src/utils/attachmentBadgeType.ts": {
       "upstreamSha256": "06da28317a03b22327429ded4bd149c2bdb5798f9068536ac3b55235cc0c5c03",
@@ -117,7 +119,9 @@
     },
     "packages/web/src/components/ui/MenuItem.tsx": {
       "upstreamSha256": "8fa3cae7100a4455a0dd2e37cac473c128135ad5bcfdd57ad4e48e10091a5ab7",
-      "portedSha256": "f0ce260bdd04847f8672767bd35d6f57de03a74acd4b3d6101f4d4cbd53e8171"
+      "portedSha256": "ac68ee8655659511081bf515619985f12618c27e8e2b45211544b1d300b5addf",
+      "localRevision": "85ec9243fa2827838c80834f9d78d4186da7e40f",
+      "adoption": "Historical already-committed compatibility port; reconciled stale hash on 2026-10-21. See page-adoption.json and exact cited Git revision, not a v1.21.26 source change."
     },
     "packages/web/src/components/ui/PreviewShell.tsx": {
       "upstreamSha256": "bad4f5d78aa9ebc1df4de296c79370cf1cdb3d552be05ded992f16b433333b3e",
@@ -137,7 +141,9 @@
     },
     "packages/web/src/components/ui/CloseButton.tsx": {
       "upstreamSha256": "34f7e49073c8992a7ad3bd7519dbf891b029065a6c31387d687ee3074c8245c2",
-      "portedSha256": "28bfd29b61a638437af26ea44eb5d2b4f46bdda22ba4d6a205de68bc08197883"
+      "portedSha256": "96b3dfeab67c75edc7bd9ec2cb5c2bd1cfa35193f1902dbdb694362f4c32789d",
+      "localRevision": "e9d5a2637ee5bcec202c2cbb73213899815fcb7c",
+      "adoption": "Historical already-committed compatibility port; reconciled stale hash on 2026-10-21. See page-adoption.json and exact cited Git revision, not a v1.21.26 source change."
     },
     "packages/web/src/components/ui/OverflowSheet.tsx": {
       "upstreamSha256": "2419949f6c03d1adac9dd52c096f65065e1b48540c2ca4a59579819ba8e0d27c",
@@ -150,7 +156,9 @@
     },
     "packages/web/src/components/ui/TextLink.tsx": {
       "upstreamSha256": "af443a5ab287eb5e6bae9c2e9a7e34a3ac18bb467189f3d0bc54294291b7a875",
-      "portedSha256": "49ae38c04b848a0a42b45eada13b89580809bb160af1e7d87a0606a507849d2d"
+      "portedSha256": "93b3bfdb1a0616be570322ab44c7a7a39a42293f3db5478c6acafb4a1e073c96",
+      "localRevision": "fe147ce7ec2ed2633a3fdee528c2fd71b75bc4e1",
+      "adoption": "Historical already-committed compatibility port; reconciled stale hash on 2026-10-21. See page-adoption.json and exact cited Git revision, not a v1.21.26 source change."
     },
     "packages/web/src/components/ui/SurfaceListItem.tsx": {
       "upstreamSha256": "5abc00077db99ff5864fc32f1a73760f5c1371da762095dd042d2ec6da3821f5",
@@ -182,7 +190,9 @@
     },
     "packages/web/src/components/settings/ReleaseNotesPanel.tsx": {
       "upstreamSha256": "1b8f9e23bf1d4ed87f68a5a77a3790320a98a30340053bca82c6f30ec0e789d1",
-      "portedSha256": "a869648f8db161742f7061b07e6f65a4a50cf606faf0c8efcec6cfc9576f7ebe"
+      "portedSha256": "5c6b4084496cf24b4324cce840f93f44615d557532bb3a3efe7703e5cf879603",
+      "localRevision": "edf5171ffd1aaba0068af14f94c68518ea4be79b",
+      "adoption": "Historical already-committed compatibility port; reconciled stale hash on 2026-10-21. See page-adoption.json and exact cited Git revision, not a v1.21.26 source change."
     },
     "packages/web/src/components/settings/AppNotificationGroupCheckbox.tsx": {
       "upstreamSha256": "9864d7e7ee3a477248df5848ba716bc99d1d7116f968ac506b068bd31d8bcd93",
@@ -218,7 +228,9 @@
     },
     "packages/web/src/components/settings/AppearanceThemePicker.tsx": {
       "upstreamSha256": "c88d4472de1234599d8f6fc661dc108277217c52afa8a498c946daa8f5cee8c5",
-      "portedSha256": "8618da068063466dd3cf203c003cd4be173cba6da1c6ce453a7535a3937c9c62"
+      "portedSha256": "e07ade89d4c0a2bf4a94a3a283cffb7c9892fe6118a9e5aaf30ad02f3ab6e342",
+      "localRevision": "4c6531ed4523625b1e534a771eb651673b9d1e90",
+      "adoption": "Historical already-committed compatibility port; reconciled stale hash on 2026-10-21. See page-adoption.json and exact cited Git revision, not a v1.21.26 source change."
     },
     "packages/web/src/components/settings/AboutFeedbackDialog.tsx": {
       "upstreamSha256": "82d203503994270ccd565fde0df037ab353babb58e25d32adb7c1dcbe0ed2b57",
@@ -230,7 +242,9 @@
     },
     "packages/web/src/components/settings/SettingsPanel.tsx": {
       "upstreamSha256": "9506c7bbdf9854694621637dab2dcd44249f48d22b933bb3dc6f55ad0f114a23",
-      "portedSha256": "9daad3d65cc7ef5dbac7ea784c2f5830602450246d1f875b32fdb51f109b0622"
+      "portedSha256": "ae25dfefb1ffa09941595888de8f8c140218e28e3718b2c7c82ed32d7b4fe9e9",
+      "localRevision": "edf5171ffd1aaba0068af14f94c68518ea4be79b",
+      "adoption": "Historical already-committed compatibility port; reconciled stale hash on 2026-10-21. See page-adoption.json and exact cited Git revision, not a v1.21.26 source change."
     },
     "packages/web/src/components/settings/DeleteServerConfirmDialog.tsx": {
       "upstreamSha256": "0937746bce6efe23af7ea98c7ddf63da357d26703e08f4eef6bd377d1caaa97e",
@@ -310,7 +324,9 @@
     },
     "packages/web/src/components/agentMigration/AgentMigrationDialog.tsx": {
       "upstreamSha256": "e5da4511a2f5b298c2751ebeae4f5ebee02da1830af139d0690bb3ec8f9bc7a3",
-      "portedSha256": "95499ad99f32ab801a2ff19b99125d11e2bf1e1276acd08e75e69d6a89305b7b"
+      "portedSha256": "daa845b8d7228a10b23151f002a3cc7dfa74cf93433f99142540212fbd4be3f5",
+      "sourceRelease": "Raft v1.21.26 / @botiverse/raft-ui 0.10.5",
+      "adoption": "Official responsive typography port, package alias update, or documented removed link/inline Button API migrated to native TextLink. No upstream hash rewriting."
     },
     "packages/web/src/components/auth/RegisterPage.tsx": {
       "upstreamSha256": "6b58a7def704b5cdcac0225cf439d46e4606af57ad8e2b7696a0b234a820f806",
@@ -350,7 +366,9 @@
     },
     "packages/web/src/components/handoff/HandoffCreateFlow.tsx": {
       "upstreamSha256": "613900e7a2a33211610d284ce48393e911d757c3c1378a95aae4a5e3159e5ffa",
-      "portedSha256": "13c1c6f1e758b4f4e692b52de8703551aae3f33b40c4d20261e93c53f6a7c17c"
+      "portedSha256": "01a442a14013f52c1ef31b1a71ec41d5b7202fc36cd0feb3e4e3d11ff97729a6",
+      "sourceRelease": "Raft v1.21.26 / @botiverse/raft-ui 0.10.5",
+      "adoption": "Official responsive typography port, package alias update, or documented removed link/inline Button API migrated to native TextLink. No upstream hash rewriting."
     },
     "packages/web/src/components/handoff/HandoffDialog.tsx": {
       "upstreamSha256": "3fa47cfdc868278a312187e0728af0323f87ee318fc7bddd0c65c6483ca9da39",
@@ -429,11 +447,15 @@
     },
     "packages/web/src/components/message/AttachmentCommentsPanel.tsx": {
       "upstreamSha256": "c89a4c0850e0c784ede646c8a75e8d251560d57acee2142665f9ba002d3119c6",
-      "portedSha256": "c13caa034a197c388001a5171171342acc635fb4bbef0387aa8cc60dcfcd3b85"
+      "portedSha256": "d72ecea19245fc8923020df2def746bbee4082fcf8b3ff048937cbafbc2d64e4",
+      "localRevision": "126f7fce79c8a7227850509c788568c0eea62c96",
+      "adoption": "Historical already-committed compatibility port; reconciled stale hash on 2026-10-21. See page-adoption.json and exact cited Git revision, not a v1.21.26 source change."
     },
     "packages/web/src/components/message/AttachmentTypeBadge.tsx": {
       "upstreamSha256": "c8894b8f46623a74d629f0af449808e9bf94be6148db0a65aaaf4f08820fc66a",
-      "portedSha256": "ee20aa4e4d5764f52ce37d7ff762c440cc913490d54c8262d1398d940ae8e5a4"
+      "portedSha256": "80a667698dc66af5cb213e7c5cd6ad86581493b9848dcd683f6548e186209036",
+      "localRevision": "e9d5a2637ee5bcec202c2cbb73213899815fcb7c",
+      "adoption": "Historical already-committed compatibility port; reconciled stale hash on 2026-10-21. See page-adoption.json and exact cited Git revision, not a v1.21.26 source change."
     },
     "packages/web/src/components/message/MessageInput.tsx": {
       "upstreamSha256": "0b3727c8e8cd4b202bd08f08ac3f67bf80c7c94c6f7e9c76c9cfb7da05c59786",
@@ -458,8 +480,9 @@
     },
     "packages/web/src/components/message/MessageItem.tsx": {
       "upstreamSha256": "aa71f3dbf177a0537bfee84b0e24b9363719450a2f1777200418cedca6dfbac3",
-      "portedSha256": "ad071099aee5cbf1435b68eee7978cc61b0bb425494750e0202f1c0d93fb9e2a",
-      "pageRelease": "v1.21.22 MessageItem highlighted bg-info-soft and hover:bg-info-soft; existing Loom adapter unchanged"
+      "portedSha256": "9ccab8fc1adfc0d85dd2cd09bac9d68bfca3a1cb2aeaffc24cbbd0f10c23f84c",
+      "localRevision": "e9d5a2637ee5bcec202c2cbb73213899815fcb7c",
+      "adoption": "Historical already-committed compatibility port; reconciled stale hash on 2026-10-21. See page-adoption.json and exact cited Git revision, not a v1.21.26 source change."
     },
     "packages/web/src/components/message/InlineThreadReplies.tsx": {
       "upstreamSha256": "9b948322d29e6a10f0bb7554d89eab1dd6b918b5f0c27248a50655950e93cf64",
@@ -491,7 +514,9 @@
     },
     "packages/web/src/components/message/AttachmentCommentRefChip.tsx": {
       "upstreamSha256": "29ef559572f9f08538bb003a6836821c73841ea59161ffa81a5360a694e53e2b",
-      "portedSha256": "08259f611e18e39e8ed0aafd8a2475f5e4d263976f7222380757d9a7658335f6"
+      "portedSha256": "e292cb00adeb3bc80aa3ba8ef2c24eba6a6d9ca650d9d805f1e354efc2314f15",
+      "localRevision": "ddb10a27dc440d5bff327ebd7f0d9ad462a18370",
+      "adoption": "Historical already-committed compatibility port; reconciled stale hash on 2026-10-21. See page-adoption.json and exact cited Git revision, not a v1.21.26 source change."
     },
     "packages/web/src/components/message/AttachmentChip.tsx": {
       "upstreamSha256": "d39a00674550892f947eeb211f9d3ea093e9e61d66abcfe5ab682c5cb7f41470",
@@ -511,7 +536,9 @@
     },
     "packages/web/src/components/message/MessageHoverToolbar.tsx": {
       "upstreamSha256": "6800ee18b2fe74e256ab40006699aa9d75e6081b68fb127d545ab315d51b4cce",
-      "portedSha256": "c0a4489061b9fbf6cb9c36aae21ca95f4fa23294e55ec5c4aaf5615e88e10e66"
+      "portedSha256": "518e006f85946a77d8e9f40384e9a9f80ef8e099cb2ecbcbb2242a0c472dfcd5",
+      "localRevision": "21ec9df4af0864b547042852cbd289f3283be2d8",
+      "adoption": "Historical already-committed compatibility port; reconciled stale hash on 2026-10-21. See page-adoption.json and exact cited Git revision, not a v1.21.26 source change."
     },
     "packages/web/src/components/message/HistoryTopState.tsx": {
       "upstreamSha256": "4030aaafb294365d478e44319480308c8f641dff0333876ec69ceecabdc30992",
@@ -519,7 +546,9 @@
     },
     "packages/web/src/components/message/attachmentPreviewSurfaces.tsx": {
       "upstreamSha256": "85656537ad2ec8369fdd2343aef0a70458d31b4aef382a9e3482769443f65458",
-      "portedSha256": "2f012af6c46462581d39b2c26b520a5a77d752ff643699bb284ec6e98968ac90"
+      "portedSha256": "b6aaff67e8fe13e9c4219f2885d7976daa1bf8a1d363264eabd4a8c0f3b9b8f2",
+      "localRevision": "ddb10a27dc440d5bff327ebd7f0d9ad462a18370",
+      "adoption": "Historical already-committed compatibility port; reconciled stale hash on 2026-10-21. See page-adoption.json and exact cited Git revision, not a v1.21.26 source change."
     },
     "packages/web/src/components/message/MentionHoverActivityPreview.tsx": {
       "upstreamSha256": "d344774f1f1dfcc3dac9971c0a84fd68a4907cfe109d3e63a1c024342b45ce4f",
@@ -619,11 +648,15 @@
     },
     "packages/web/src/components/agent/RuntimeConfigFields.tsx": {
       "upstreamSha256": "60385725c26fa9fdbc92d9dd318227395ab97ee7c399f2938e7dbce8ffaa1053",
-      "portedSha256": "096045d538071bc8fd52c3ac6d6f4368e5c868eff80a0fa5ee292fcc75e6159e"
+      "portedSha256": "cf394ae09fe1383c03c980a1f2e2f159581b5c64c68805854669ce38d6c832f9",
+      "sourceRelease": "Raft v1.21.26 / @botiverse/raft-ui 0.10.5",
+      "adoption": "Official responsive typography port, package alias update, or documented removed link/inline Button API migrated to native TextLink. No upstream hash rewriting."
     },
     "packages/web/src/components/agent/CreateAgentDialog.tsx": {
       "upstreamSha256": "659974e02182ce9cfa3a2fae67ed1bcb953fae5e20a549a398aad6a63bd677c7",
-      "portedSha256": "d75419e7c7007084f81362021630b3f31c621992fdbed1e0344f51d26c0f8b17"
+      "portedSha256": "e7f83aee019e42ded3ed4b5a65aae662412a06cc13b9857c306276ff9e34aa72",
+      "sourceRelease": "Raft v1.21.26 / @botiverse/raft-ui 0.10.5",
+      "adoption": "Official responsive typography port, package alias update, or documented removed link/inline Button API migrated to native TextLink. No upstream hash rewriting."
     },
     "packages/web/src/components/agent/AgentSkills.tsx": {
       "upstreamSha256": "3ddf83d3ff0dfe1a1e54e461c90191b41859e4903df4578f9e4c9991091461b8",
@@ -679,7 +712,9 @@
     },
     "packages/web/src/components/agent/StableField.tsx": {
       "upstreamSha256": "c82a322953ea47205885fb2874054442aed1a1cce8b9665a11111a502243f4ce",
-      "portedSha256": "23eddf8f17017035593891b8b3ca5a5f56614290f20a11df026c59b187021a6a"
+      "portedSha256": "38c14128676bda2468deb67e15719081eb2ceeee9d0e7ed6d8404f54af6a48f3",
+      "localRevision": "21ec9df4af0864b547042852cbd289f3283be2d8",
+      "adoption": "Historical already-committed compatibility port; reconciled stale hash on 2026-10-21. See page-adoption.json and exact cited Git revision, not a v1.21.26 source change."
     },
     "packages/web/src/components/search/SearchOverlay.tsx": {
       "upstreamSha256": "bebb1102a8e9ab772f77543f45377192e02bcc506704994382a076d8e1c5e69a",
@@ -691,11 +726,15 @@
     },
     "packages/web/src/components/search/EntityResultRow.tsx": {
       "upstreamSha256": "f277c886b80bb80f478c337bf80a1aa646ead160f0498a27c7cba6435999bf3e",
-      "portedSha256": "f71831dacd0762e7570f251cd971e4eade9895d9d4ce0b0655686b7dbd1a07f2"
+      "portedSha256": "e93181b1e0d8fa4325ef3d0b2da5502b54ecbe4d70825b3c578b1f845fc73452",
+      "localRevision": "edf5171ffd1aaba0068af14f94c68518ea4be79b",
+      "adoption": "Historical already-committed compatibility port; reconciled stale hash on 2026-10-21. See page-adoption.json and exact cited Git revision, not a v1.21.26 source change."
     },
     "packages/web/src/components/search/MessageHitRow.tsx": {
       "upstreamSha256": "169010d0b5ee1daa47aa7e141d1821dbb8685967dc67522e7acc70d730df16ba",
-      "portedSha256": "b2deb33a5ac596eb228970e155397e3114079a98fdba55a537b2796a83307dcb"
+      "portedSha256": "9299aa0975ac3d7c6021719fc0788657af0b7e05e553eb2294d755d197b8526a",
+      "localRevision": "edf5171ffd1aaba0068af14f94c68518ea4be79b",
+      "adoption": "Historical already-committed compatibility port; reconciled stale hash on 2026-10-21. See page-adoption.json and exact cited Git revision, not a v1.21.26 source change."
     },
     "packages/web/src/components/channel/EditChannelDialog.tsx": {
       "upstreamSha256": "0647237c55c95894eab0b0af1410748ed10703d2c0cb29ada4e302b1e29d9f95",
@@ -815,7 +854,9 @@
     },
     "packages/web/src/components/task/TaskModalHead.tsx": {
       "upstreamSha256": "87efb6c3f60830d813b89bdfe0efdde4cc187ee015504b2ffc760dc2c117221e",
-      "portedSha256": "b32dc837b64307a788a95f0d791539afa6f9d842f5780ebb893af327a98f1aab"
+      "portedSha256": "d32a7f52bdd70ff76bff8714e2bf9c3861128d86b33556330c3df7f81d10c390",
+      "localRevision": "c8f194b6f77524cb3734826172ae319fd9135a01",
+      "adoption": "Historical already-committed compatibility port; reconciled stale hash on 2026-10-21. See page-adoption.json and exact cited Git revision, not a v1.21.26 source change."
     },
     "packages/web/src/components/task/TasksPanel.tsx": {
       "upstreamSha256": "baab579e05a5487051942ae97e8df23a85f4303adfa3ad309581b8dab93cb7d6",
@@ -877,6 +918,30 @@
     "packages/web/src/components/ui/PanelHeader.tsx": {
       "upstreamSha256": "cd350d605e123726e63aaaea69c958f14209a811d736d0c66b4923ad6ff61c3e",
       "portedSha256": "62d1f6851a211521734ac718fbe52e9bb891cc2eed2f453c6f1c8d701b5c0992"
+    },
+    "packages/web/src/store/appearanceStore.ts": {
+      "upstreamSha256": "57259eeb7197862e84cf10cc2125ef19cd40c277f053b30ab01d450c52278d41",
+      "portedSha256": "3f0973ff49823304f49468df0e4018ae9b8bd1e728378e6d4780feef044337b2",
+      "sourceRelease": "Raft v1.21.26 / @botiverse/raft-ui 0.10.5",
+      "adoption": "Official responsive typography port, package alias update, or documented removed link/inline Button API migrated to native TextLink. No upstream hash rewriting."
+    },
+    "packages/web/src/components/ui/FormField.tsx": {
+      "upstreamSha256": "e9dc3c025e3c583b66473248508621d16a6c859d1fe801b8166a848ef80be733",
+      "portedSha256": "52f70d4480ef9235c7ac4d57a9a795ae6c91f8c9a7b796ba4c402ea44399cfab",
+      "localRevision": "21ec9df4af0864b547042852cbd289f3283be2d8",
+      "adoption": "Historical already-committed compatibility port; reconciled stale hash on 2026-10-21. See page-adoption.json and exact cited Git revision, not a v1.21.26 source change."
+    },
+    "packages/web/src/components/message/ChannelFileOverflowMenu.tsx": {
+      "upstreamSha256": "37522191d41ed0330ccf75ce839947b01994a3c4c9502b1a43d2960dbc959b35",
+      "portedSha256": "389e89ef96490346953429325139a03ff58b012fc42df9de16ad5ace42f005b6",
+      "localRevision": "85ec9243fa2827838c80834f9d78d4186da7e40f",
+      "adoption": "Historical already-committed compatibility port; reconciled stale hash on 2026-10-21. See page-adoption.json and exact cited Git revision, not a v1.21.26 source change."
+    },
+    "packages/web/src/components/search/SearchHomeEntityRow.tsx": {
+      "upstreamSha256": "f48a4fccfa1e7d9d661abdb36b65bd1c4ef049e86ba7b2f64cf64c61648cfc48",
+      "portedSha256": "877906efd24c07abfce60ba0b0ee4d7ad6aa8a01e791c6d047412de9c1c6c5c0",
+      "localRevision": "d82656ea9b722a93ca57352c1a6db34ba090c925",
+      "adoption": "Historical already-committed compatibility port; reconciled stale hash on 2026-10-21. See page-adoption.json and exact cited Git revision, not a v1.21.26 source change."
     }
   }
 }

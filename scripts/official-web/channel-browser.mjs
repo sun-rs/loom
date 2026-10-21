@@ -1,3 +1,4 @@
+import { verifyUpstream126 } from "./upstream-126-browser.mjs";
 import { verifySearchTransition } from "./search-transition-browser.mjs";
 import { verifyMessageStatus } from "./message-status-browser.mjs";
 import { verifyPanelPolicy } from "./panel-policy-browser.mjs";
@@ -453,6 +454,12 @@ try {
     console.log(
       JSON.stringify(
         await verifyPanelPolicy({ browser, origin, client, channels, head }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "upstream-126") {
+    console.log(
+      JSON.stringify(
+        await verifyUpstream126({ browser, origin, role, client }),
       ),
     );
   } else if (process.env.LOOM_BROWSER_SLICE === "agent-profile") {

@@ -263,7 +263,9 @@
     "system-channel-current": {
       "source": "Raft v1.21.22 app-shell-D1-nY-va.js systemChannels composition at archived lines 149005–149080",
       "provenance": "Structural port from owner-authorized production bundle; Card form renderer, disabled label, subhead/footnote; existing upstream notices retained.",
-      "local": ["packages/web/src/components/settings/SettingsPanel.tsx"],
+      "local": [
+        "packages/web/src/components/settings/SettingsPanel.tsx"
+      ],
       "adaptation": "Existing Loom controller and guarded mutation retained; no backend changes.",
       "checks": [
         "scripts/official-web/native-list-surfaces.test.mjs",
@@ -360,7 +362,9 @@
     },
     "computer-profile-editor": {
       "source": "MachineDetailPanel-C2oaC119.js.pretty.txt un/dn/hn/gn/_n/xn at2197–2275, name/description editor at2383–2543; v1.21.22 af3d6ef4a22f0f05f5f9db9424285755d67e9726",
-      "local": ["loom/ComputerProfile.tsx"],
+      "local": [
+        "loom/ComputerProfile.tsx"
+      ],
       "adoption": "Structural port of edit tooltip, name Enter/Escape and description Ctrl/Meta+Enter/Escape, description resize/min-height and character-counter composition. Existing Input/Textarea and Button parameters preserved.",
       "localChanges": "IME confirmation/keyCode229 ignored; unresolved/rejected writes retain Loom fences. Revisioned profile command and exact replay remain sole mutation owner. Single-field editing remains intentional. Upstream store/no-op optimization not adopted in this slice.",
       "checks": [
@@ -370,7 +374,10 @@
     },
     "instance-inspector-chrome": {
       "source": "AgentDetailPanel-B3FrpUPj.js bi overflow trigger at299–405, il header at10140–10233, tab wrapper at10660–10687; app-shell exports Jo=lP PanelAction, Aa=vA ConversationPanelTabs",
-      "local": ["loom/InstanceInspector.tsx", "loom/RuntimeControl.tsx"],
+      "local": [
+        "loom/InstanceInspector.tsx",
+        "loom/RuntimeControl.tsx"
+      ],
       "adoption": "Structural port of header PanelAction close/overflow and ConversationPanelTabs. Single available activity tab uses native non-sortable TabsList; no invented empty tabs. Shared existing PanelResizeHandle replaces local naked handle and is only mounted when inspector is docked at1024px.",
       "preserved": "Runtime/branch command ownership, confirmation and unknown-write guards unchanged. Existing diagnostics, bounded history, Escape/focus/draft preservation remain. Inline multi-action expansion is not adopted; Loom keeps one explicit operation menu.",
       "checks": [
@@ -623,6 +630,27 @@
         "No real paid-provider session test; real deployment checks do not create user instances.",
         "Not full-site official parity; G2/G3 and physical mobile checks remain."
       ]
+    },
+    "v1.21.26-density-profile": {
+      "release": "v1.21.26",
+      "evidence": "../../docs/evo/evidence/2026-10-21-search-fix/upstream-lock.json",
+      "package": "@botiverse/raft-ui@0.10.5",
+      "source": "Official package recipes plus app-shell bAt/xAt/SAt/CAt/wAt; AgentDetailPanel Xl/e8/profile; MachineDetailPanel ct/SJ. Package 0.10.5 source revision 2b5dc64. Matching selected recipes verified, production package metadata not exposed.",
+      "local": [
+        "loom/TopBar.tsx",
+        "loom/useTopbarSearchWidth.ts",
+        "loom/OfficialListRows.tsx",
+        "loom/ComputersPage.tsx",
+        "loom/RoleProfile.tsx",
+        "loom/RoleFieldEditor.tsx",
+        "packages/web/src/store/appearanceStore.ts"
+      ],
+      "adoption": "Native package reuse for fonts/control sizes/SearchTrigger/ListRowGroup/ListRow/DescriptionList. Structural page measurement/message-tier port and Loom-only immutable Role field-save binding. No local replacement style system.",
+      "limits": [
+        "Single workspace omits organization switch. Sidebar bounds remain native 180/240/320; stored widths retained.",
+        "Role avatar supports pixel presets, not uploaded Role image intents. Existing instance snapshots remain unchanged.",
+        "Retain registered compact mobile exceptions; no claim of whole-site or iOS byte-exact parity."
+      ]
     }
   },
   "pending": [
@@ -658,7 +686,9 @@
       "loom/DiscoveryPage.tsx"
     ],
     "behavior": "Title detail>=2 cycles loaded unread rows in rendered pin order, wraps, no forced refresh/writes/navigation; empty/loading lists do not queue intent. Scroll retains native cursor pagination at 240px threshold. Sidebar double-click remains distinct refresh/first-unread intent.",
-    "checks": ["scripts/official-web/activity-focus-browser.mjs"]
+    "checks": [
+      "scripts/official-web/activity-focus-browser.mjs"
+    ]
   },
   "activityUnfollowHistory20261019": {
     "source": "v1.21.22 ThreadsInbox je; official inboxStore markThreadUnfollowed/refollowed and inboxDoubleClickNavigation.behavior.test.tsx",
@@ -676,7 +706,10 @@
   "threadUnfollowViewport20261019": {
     "source": "Existing native ThreadOverflowMenu composition and v1.21.22 follow/unfollow interaction; release-lock.json records revision and hashes",
     "reuse": "Unchanged official menu styling/composition; Loom viewport capture and API binding are local compatibility glue, not copied upstream persistence",
-    "local": ["loom/thread-viewport.ts", "loom/useThreadActivity.ts"],
+    "local": [
+      "loom/thread-viewport.ts",
+      "loom/useThreadActivity.ts"
+    ],
     "behavior": "Current geometric viewport at unfollow supplies retainThroughSeq. Shared existing visible-read filtering excludes parent, overscan and offscreen fetched replies. Empty/hidden viewport supplies no invented boundary. Unknown mutation is read back, not resent.",
     "checks": [
       "scripts/official-web/thread-browser.mjs",

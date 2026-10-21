@@ -1,3 +1,4 @@
+import { TextLink as OfficialTextLink } from "raft-ui";
 import { Card,
   Banner,
   BannerAction,
@@ -1590,16 +1591,16 @@ export default function CreateAgentDialog({
                         limit: agentCapacityLimitState.limit,
                         planName: PLAN_CONFIG[(billing?.plan || plan) as ServerPlan].displayName,
                         upgrade: (chunks) => (
-                          <Button
+                          <OfficialTextLink
                             key="upgrade"
                             type="button"
                             onClick={handleUpgradeToBilling}
-                            variant="link"
-                            size="inline"
+                            variant="strong"
+                            
                             className="dark:!text-warning-strong"
                           >
                             {chunks}
-                          </Button>
+                          </OfficialTextLink>
                         ),
                       },
                     )}
@@ -1870,16 +1871,16 @@ export default function CreateAgentDialog({
                     limit: agentCapacityLimitState.limit,
                     planName: PLAN_CONFIG[(billing?.plan || plan) as ServerPlan].displayName,
                     upgrade: (chunks) => (
-                      <Button
+                      <OfficialTextLink
                         key="upgrade"
                         type="button"
                         onClick={handleUpgradeToBilling}
-                        variant="link"
-                            size="inline"
+                        variant="strong"
+                            
                             className="dark:!text-warning-strong"
                       >
                         {chunks}
-                      </Button>
+                      </OfficialTextLink>
                     ),
                   },
                 )}
@@ -1893,14 +1894,14 @@ export default function CreateAgentDialog({
                 {isQuotaError(error) && (
                   <>
                     {" "}
-                    <Button
+                    <OfficialTextLink
                       type="button"
                       onClick={handleUpgradeToBilling}
-                      variant="link"
-                            size="inline"
+                      variant="strong"
+                            
                     >
                       {formatMessage({ id: "agent.create.viewPlans" })}
-                    </Button>
+                    </OfficialTextLink>
                   </>
                 )}
               </BannerDescription>

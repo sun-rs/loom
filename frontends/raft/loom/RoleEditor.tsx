@@ -17,12 +17,14 @@ import { SelectField } from "./ManagementUi.tsx";
 export default function RoleEditor({
   client,
   role,
+  field,
   disabled,
   onSave,
   onDirtyChange,
   onNavigationDiscard,
 }: {
   client: RahClient;
+  field?: "runtimeOfferId" | "modelBindingId" | "reasoning";
   role?: RoleTemplate;
   disabled: boolean;
   onDirtyChange?: (dirty: boolean) => void;
@@ -88,60 +90,70 @@ export default function RoleEditor({
       }}
     >
       <fieldset disabled={disabled}>
-        <FormField label="名称" className="mb-3">
-          <Input
-            aria-label="名称"
-            required
-            value={form.displayName}
-            onChange={(e) => setForm({ ...form, displayName: e.target.value })}
-          />
-        </FormField>
-        <FormField label="角色 Prompt" className="mb-3">
-          <Textarea
-            aria-label="角色 Prompt"
-            required
-            rows={5}
-            value={form.instructions}
-            onChange={(e) => setForm({ ...form, instructions: e.target.value })}
-          />
-        </FormField>
+        <div hidden={Boolean(field)}>
+          <FormField label="名称" className="mb-3">
+            <Input
+              aria-label="名称"
+              required
+              value={form.displayName}
+              onChange={(e) =>
+                setForm({ ...form, displayName: e.target.value })
+              }
+            />
+          </FormField>
+          <FormField label="角色 Prompt" className="mb-3">
+            <Textarea
+              aria-label="角色 Prompt"
+              required
+              rows={5}
+              value={form.instructions}
+              onChange={(e) =>
+                setForm({ ...form, instructions: e.target.value })
+              }
+            />
+          </FormField>
+        </div>
         {!choices && !error ? (
           <Spinner aria-label="读取 CLI 目录" />
         ) : (
           <>
-            <SelectField
-              label="CLI"
-              value={form.runtimeOfferId}
-              options={(choices ?? []).map((r) => ({
-                value: r.runtimeOfferId,
-                label: r.label.split("（")[0]!,
-              }))}
-              onChange={(value) =>
-                setForm({
-                  ...form,
-                  runtimeOfferId: value,
-                  modelBindingId: "",
-                  reasoning: "",
-                })
-              }
-            />
-            <SelectField
-              label="模型"
-              value={form.modelBindingId}
-              options={(runtime?.bindings ?? []).map((b) => ({
-                value: b.modelBindingId,
-                label: roleModelLabel(b, runtime?.bindings ?? []),
-              }))}
-              onChange={(value) =>
-                setForm({
-                  ...form,
-                  modelBindingId: value,
-                  reasoning:
-                    runtime?.bindings.find((b) => b.modelBindingId === value)
-                      ?.reasoning[0] ?? "",
-                })
-              }
-            />
+            <div hidden={Boolean(field && field !== "runtimeOfferId")}>
+              <SelectField
+                label="CLI"
+                value={form.runtimeOfferId}
+                options={(choices ?? []).map((r) => ({
+                  value: r.runtimeOfferId,
+                  label: r.label.split("（")[0]!,
+                }))}
+                onChange={(value) =>
+                  setForm({
+                    ...form,
+                    runtimeOfferId: value,
+                    modelBindingId: "",
+                    reasoning: "",
+                  })
+                }
+              />
+            </div>
+            <div hidden={field === "reasoning"}>
+              <SelectField
+                label="模型"
+                value={form.modelBindingId}
+                options={(runtime?.bindings ?? []).map((b) => ({
+                  value: b.modelBindingId,
+                  label: roleModelLabel(b, runtime?.bindings ?? []),
+                }))}
+                onChange={(value) =>
+                  setForm({
+                    ...form,
+                    modelBindingId: value,
+                    reasoning:
+                      runtime?.bindings.find((b) => b.modelBindingId === value)
+                        ?.reasoning[0] ?? "",
+                  })
+                }
+              />
+            </div>
             <SelectField
               label="推理强度"
               value={form.reasoning}

@@ -31,13 +31,13 @@ export async function verifyAgentProfile({
         ),
       );
       await detail
-        .getByRole("button", { name: "编辑配置", exact: true })
+        .getByRole("button", { name: "编辑名称", exact: true })
         .click();
       await detail
         .getByLabel("名称", { exact: true })
         .fill("FIXTURE unsaved profile");
       await page.getByRole("tab", { name: "实例", exact: true }).click();
-      await page.getByRole("tab", { name: "配置", exact: true }).click();
+      await page.getByRole("tab", { name: "资料", exact: true }).click();
       assert.equal(
         await detail.getByLabel("名称", { exact: true }).inputValue(),
         "FIXTURE unsaved profile",
@@ -45,9 +45,7 @@ export async function verifyAgentProfile({
       await detail
         .getByLabel("名称", { exact: true })
         .fill(role.configuration.displayName);
-      await detail
-        .getByRole("button", { name: "返回资料", exact: true })
-        .click();
+      await detail.getByRole("button", { name: "取消", exact: true }).click();
       await page.getByRole("tab", { name: "实例", exact: true }).click();
       await detail
         .getByRole("button")

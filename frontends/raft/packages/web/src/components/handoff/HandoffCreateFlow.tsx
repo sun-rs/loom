@@ -1,3 +1,4 @@
+import { TextLink as OfficialTextLink } from "raft-ui";
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import { useIntl } from "react-intl";
@@ -381,17 +382,17 @@ export default function HandoffCreateFlow({ onClose, onStateChange }: {
               {TOOL_LABEL[selected.tool]} · {selected.cwd ?? "-"}
             </div>
           </div>
-          <Button
+          <OfficialTextLink
             type="button"
-            variant="link"
-            size="inline"
+            variant="strong"
+            
             onClick={chooseAnother}
             disabled={creating}
             data-testid="handoff-choose-another"
             className="shrink-0 text-xs font-bold text-foreground-muted underline-offset-2 hover:text-foreground-strong hover:underline disabled:opacity-50"
           >
             {formatMessage({ id: "handoff.wizard.chooseAnother" })}
-          </Button>
+          </OfficialTextLink>
         </div>
 
         {selected.activeRecently && (

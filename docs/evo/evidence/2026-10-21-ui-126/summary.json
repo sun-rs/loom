@@ -1,0 +1,44 @@
+{
+  "scope": "Selected v1.21.26 frontend adoption, no backend semantic changes",
+  "package": {
+    "name": "@botiverse/raft-ui",
+    "version": "0.10.5",
+    "importAlias": "raft-ui",
+    "lock": "frontends/raft/rui-resources.lock.json"
+  },
+  "implemented": [
+    "Native package typography and pointer-aware controls; removed temporary local typography/SearchTrigger recipes",
+    "Official SearchTrigger and measured topbar width; native sidebar bounds unchanged",
+    "Native ListRowGroup/ListRow Computer instances",
+    "Token-relative message body/name/meta/preview tiers",
+    "Role profile uses native DescriptionList, per-field edits and official pixel avatar presets; immutable Role Revision writes"
+  ],
+  "verification": {
+    "sourceTests": 25,
+    "uiContractTests": 8,
+    "typecheck": "pass",
+    "build": "pass",
+    "browsers": [
+      "WebKit 1440/390 Role save/avatar/frozen instances and Computer group",
+      "Chromium 1440/390 Role name/Prompt/avatar persistence, model editor cancel, Computer group and topbar resize",
+      "WebKit 1440/390/360 appearance modes, message tiers, persistence and overflow",
+      "WebKit 1440/390 topbar search, IME and transitions",
+      "Chromium 1440/390 message tiers in Channel/private/thread/task; avatar metrics",
+      "WebKit 1440/390 language-region settings and sidebar alignment"
+    ],
+    "paidModels": false
+  },
+  "limits": [
+    "Not full-site latest Web parity or physical iOS/Android acceptance",
+    "Role images upload not enabled; official pixel presets only",
+    "Existing compact mobile exceptions retained",
+    "Legacy hands-feedback-react has pre-existing old peer range ^0.5; product pages and Loom now resolve one actual scoped package, guarded by test",
+    "Fixture metric test triggered fake Codex discovery diagnostics; fake CLI refused startup, not a real provider acceptance"
+  ],
+  "corrections": [
+    "Prior analysis checked only old unscoped npm name. New scoped package exists; original report now superseded.",
+    "19 historical source hash entries reconciled against already committed Git revisions, no blind reclassification as v1.21.26 source.",
+    "Browser tests wait for save receipt/editor dismissal before reload; isCurrent must become false while frozen instance revision IDs remain identical."
+  ],
+  "deployment": "pending"
+}

@@ -1,3 +1,4 @@
+import { TextLink as OfficialTextLink } from "raft-ui";
 import { ChevronDown, ChevronRight, Info, Pencil, RefreshCw } from "lucide-react";
 import type { ChangeEvent, RefObject, ReactNode } from "react";
 import { useCallback, useId, useMemo, useState } from "react";
@@ -116,7 +117,7 @@ export function FieldAction({ tone, className: _legacyClassName, children, ...pr
     // `h-auto p-0 align-baseline leading-[inherit]`, i.e. a word in a line of
     // text that happens to be clickable. No `mt-1` either — a top margin on an
     // inline action is what forced it onto its own row.
-    : <Button variant="link" size="inline" {...props}>{children}</Button>;
+    : <OfficialTextLink variant="strong"  {...props}>{children}</OfficialTextLink>;
 }
 
 /**

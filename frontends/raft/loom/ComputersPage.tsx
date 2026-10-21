@@ -1,4 +1,7 @@
-import AvatarListRow from "../packages/web/src/components/ui/AvatarListRow.tsx";
+import {
+  OfficialListRowGroup,
+  OfficialAvatarListRow,
+} from "./OfficialListRows.tsx";
 import SectionHeader from "../packages/web/src/components/ui/SectionHeader.tsx";
 import { computerInstances } from "./role-presence.ts";
 import AvatarSlot from "../packages/web/src/components/ui/AvatarSlot.tsx";
@@ -366,10 +369,10 @@ export default function ComputersPage({
                     实例资料尚未读取
                   </p>
                 ) : (
-                  <div className="space-y-2">
+                  <OfficialListRowGroup>
                     {computerInstances(inventory.runtimes, instances).map(
                       (instance) => (
-                        <AvatarListRow
+                        <OfficialAvatarListRow
                           key={instance.instanceId}
                           avatar={
                             <AvatarSlot context="list-row" type="agent" />
@@ -384,11 +387,10 @@ export default function ComputersPage({
                             )?.displayName
                           }
                           onClick={() => onOpenRole(instance.roleId)}
-                          className="duration-300 motion-reduce:transition-none"
                         />
                       ),
                     )}
-                  </div>
+                  </OfficialListRowGroup>
                 )}
                 {instances &&
                   !computerInstances(inventory.runtimes, instances).length && (

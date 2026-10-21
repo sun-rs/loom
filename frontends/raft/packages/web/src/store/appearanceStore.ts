@@ -10,32 +10,17 @@ export const MESSAGE_BODY_FONT_SIZE_STORAGE_KEY = "slock_message_body_font_size"
 export const SHOW_LIVE_AGENT_ACTIVITY_BAR_STORAGE_KEY = "slock_show_live_agent_activity_bar";
 export const SHOW_AGENT_MODEL_NAME_STORAGE_KEY = "slock_show_agent_model_name";
 
-export const MESSAGE_BODY_FONT_SIZE_OPTIONS: Array<{
-  value: MessageBodyFontSize;
-  sizeLabel: string;
-  className: string;
-}> = [
-  { value: "sm", sizeLabel: "14px", className: "text-sm" },
-  { value: "md", sizeLabel: "16px", className: "text-base" },
-  { value: "lg", sizeLabel: "18px", className: "text-lg" },
-];
-
+// Structural port of v1.21.26 jW/KKe/JKe: tiers relative to native typography.
 const MESSAGE_BODY_FONT_SIZE_CLASSES: Record<MessageBodyFontSize, string> = {
-  sm: "text-sm",
-  md: "text-base",
-  lg: "text-lg",
+  sm: "text-[length:calc(var(--text-body)_-_2px)] leading-[calc(var(--text-body--line-height)_-_4px)]",
+  md: "text-[length:var(--text-body)] leading-[var(--text-body--line-height)]",
+  lg: "text-[length:calc(var(--text-body)_+_2px)] leading-[calc(var(--text-body--line-height)_+_4px)]",
 };
-
-/**
- * RUI's MessageItemBody recipe intentionally provides a family default size
- * (`theme-*:text-sm`). The product preference is a user-owned override, so it
- * needs a terminal inline value at the shared message-body seam rather than a
- * class whose cascade position can be changed by a theme recipe.
- */
-const MESSAGE_BODY_FONT_SIZE_VALUES: Record<MessageBodyFontSize, string> = {
-  sm: "0.875rem",
-  md: "1rem",
-  lg: "1.125rem",
+export const MESSAGE_BODY_FONT_SIZE_OPTIONS = (["sm", "md", "lg"] as const).map(value => ({value, className: MESSAGE_BODY_FONT_SIZE_CLASSES[value]}));
+const MESSAGE_BODY_FONT_SIZE_VALUES = {
+  sm: {fontSize: "calc(var(--text-body) - 2px)", lineHeight: "calc(var(--text-body--line-height) - 4px)"},
+  md: {fontSize: "var(--text-body)", lineHeight: "var(--text-body--line-height)"},
+  lg: {fontSize: "calc(var(--text-body) + 2px)", lineHeight: "calc(var(--text-body--line-height) + 4px)"},
 };
 
 function isMessageBodyFontSize(value: unknown): value is MessageBodyFontSize {
@@ -117,27 +102,27 @@ export function getMessageBodyFontSizeClass(size: MessageBodyFontSize): string {
  * the recipes' leading-none).
  */
 const MESSAGE_NAME_SIZE_CLASSES: Record<MessageBodyFontSize, string> = {
-  sm: "text-[12px]",
-  md: "text-[14px]",
-  lg: "text-[16px]",
+  sm: "text-[length:calc(var(--text-subhead)_-_2px)]",
+  md: "text-[length:var(--text-subhead)]",
+  lg: "text-[length:calc(var(--text-subhead)_+_2px)]",
 };
 
 const MESSAGE_META_SIZE_CLASSES: Record<MessageBodyFontSize, string> = {
-  sm: "text-[11px]",
-  md: "text-[12px]",
-  lg: "text-[14px]",
+  sm: "text-[length:calc(var(--text-caption)_-_1px)]",
+  md: "text-[length:var(--text-caption)]",
+  lg: "text-[length:calc(var(--text-caption)_+_1px)]",
 };
 
 const MESSAGE_PREVIEW_SIZE_CLASSES: Record<MessageBodyFontSize, string> = {
-  sm: "text-[11px]",
-  md: "text-[12.5px]",
-  lg: "text-[14px]",
+  sm: "text-[length:calc(var(--text-footnote)_-_1px)]",
+  md: "text-[length:var(--text-footnote)]",
+  lg: "text-[length:calc(var(--text-footnote)_+_1px)]",
 };
 
 const MESSAGE_PREVIEW_TIME_SIZE_CLASSES: Record<MessageBodyFontSize, string> = {
-  sm: "text-[11px]",
-  md: "text-[11.5px]",
-  lg: "text-[13px]",
+  sm: "text-[length:calc(var(--text-caption)_-_1px)]",
+  md: "text-[length:var(--text-caption)]",
+  lg: "text-[length:calc(var(--text-caption)_+_1px)]",
 };
 
 export function getMessageNameSizeClass(size: MessageBodyFontSize): string {
@@ -156,8 +141,8 @@ export function getMessagePreviewTimeSizeClass(size: MessageBodyFontSize): strin
   return MESSAGE_PREVIEW_TIME_SIZE_CLASSES[size];
 }
 
-export function getMessageBodyFontSizeStyle(size: MessageBodyFontSize): { fontSize: string } {
-  return { fontSize: MESSAGE_BODY_FONT_SIZE_VALUES[size] };
+export function getMessageBodyFontSizeStyle(size: MessageBodyFontSize): { fontSize: string; lineHeight: string } {
+  return { ...MESSAGE_BODY_FONT_SIZE_VALUES[size] };
 }
 
 interface AppearanceState {

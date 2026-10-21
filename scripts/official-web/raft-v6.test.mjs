@@ -5,13 +5,13 @@ const read = (p) => readFileSync(p, "utf8");
 test("product pins the single Raft design system", () => {
   assert.equal(
     JSON.parse(read("frontends/raft/package.json")).dependencies["raft-ui"],
-    "0.6.0",
+    "npm:@botiverse/raft-ui@0.10.5",
   );
   assert.equal(
     JSON.parse(read("frontends/raft/packages/web/package.json")).dependencies[
       "raft-ui"
     ],
-    "0.6.0",
+    "npm:@botiverse/raft-ui@0.10.5",
   );
 });
 test("existing device mode survives removal of visual families", async () => {
@@ -35,7 +35,7 @@ test("existing device mode survives removal of visual families", async () => {
 test("installed official resources match the reviewed immutable lock", async () => {
   const { createHash } = await import("node:crypto");
   const lock = JSON.parse(read("frontends/raft/rui-resources.lock.json"));
-  assert.equal(lock.version, "0.6.0");
+  assert.equal(lock.version, "0.10.5");
   for (const [path, expected] of Object.entries({
     ...lock.files,
     ...lock.guides,
@@ -70,4 +70,14 @@ test("first paint migrates mode without restoring a removed family", async () =>
     assert.ok(classes.has(dark ? "dark" : "light"));
     assert.equal(root.style.colorScheme, dark ? "dark" : "light");
   }
+});
+test("Loom and adopted pages resolve the same official component installation", async () => {
+  const { createRequire } = await import("node:module");
+  const { resolve } = await import("node:path");
+  const root = createRequire(resolve("frontends/raft/package.json"));
+  const page = createRequire(
+    resolve("frontends/raft/packages/web/package.json"),
+  );
+  assert.equal(root.resolve("raft-ui"), page.resolve("raft-ui"));
+  assert.equal(root("raft-ui/package.json").name, "@botiverse/raft-ui");
 });
