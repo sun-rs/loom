@@ -1,0 +1,87 @@
+{
+  "productCommit": "5975f7b2",
+  "scope": "Combined model/effort editing, Role Activity default and profile instance management",
+  "sourceRevision": "db5e399f017d584e49597e3a28757645d6807893",
+  "immutableFilesVerified": 14,
+  "implementation": [
+    "One model/effort editor using binding-specific supportedReasoning; choosing another binding resets effort",
+    "Default tabs Activity/Profile; instance list and existing controls under Profile",
+    "Read-only Role activity aggregation using existing agent.trajectory.list and per-member room/participant filtering",
+    "Native LogItem and timeline recipe declarations extracted exactly; no upstream agent store/socket",
+    "Native PickerTriggerButton filters by readable frozen instance name"
+  ],
+  "bounds": {
+    "perInstancePage": 50,
+    "aggregateRendered": 100,
+    "readConcurrency": 4,
+    "activeRefreshSeconds": 10,
+    "hiddenDocumentRefreshSeconds": 30,
+    "inactiveViewPolling": false,
+    "singleInstanceCursorPaging": true,
+    "namedPartialFailures": true
+  },
+  "checks": {
+    "sourceAndUnit": 8,
+    "uiContract": 8,
+    "typecheck": true,
+    "build": true,
+    "webkitRoleActivityWidths": [
+      1440,
+      390
+    ],
+    "browserBehavior": [
+      "two-instance aggregation",
+      "foreign-room records excluded",
+      "name filter and earlier-page navigation",
+      "model and effort visible together",
+      "switch to high-only model resets effort",
+      "switch to no-effort model disables selector",
+      "instance list in profile"
+    ],
+    "webkitProfileWidths": [
+      1440,
+      390
+    ],
+    "profileBehavior": [
+      "draft preserved between activity/profile tabs",
+      "instance inspector profile/activity remain usable"
+    ],
+    "formalReadOnly": {
+      "readOnly": true,
+      "physicalDevice": false,
+      "results": [
+        {
+          "width": 1440,
+          "identityBesideAvatar": true,
+          "separators": 3,
+          "noOverflow": true,
+          "activityDefault": true,
+          "instancesInProfile": true
+        },
+        {
+          "width": 390,
+          "identityBesideAvatar": true,
+          "separators": 3,
+          "noOverflow": true,
+          "activityDefault": true,
+          "instancesInProfile": true
+        }
+      ]
+    },
+    "visualInspection": "390px diagnostic fixture screenshot"
+  },
+  "deployment": {
+    "verified": true,
+    "backedUpDatabases": 2,
+    "backedUpFiles": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true
+  },
+  "limits": [
+    "Aggregate is recent diagnostic activity, not all historical records; select individual instance for older pages",
+    "Timeline colors do not establish live presence or task completion",
+    "No paid-provider or physical-phone tests",
+    "Other application pages still include structural ports; not whole-site dependency conversion"
+  ],
+  "privateEvidence": "/Users/sun/.loom/reviews/2026-10-21-role-activity"
+}
