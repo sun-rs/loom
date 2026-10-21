@@ -11,7 +11,8 @@
     "./SectionHeader": "./packages/web/src/components/ui/SectionHeader.tsx",
     "./SectionEyebrow": "./packages/web/src/components/ui/SectionEyebrow.tsx",
     "./PanelHeader": "./packages/web/src/components/ui/PanelHeader.tsx",
-    "./AppearanceThemePicker": "./packages/web/src/components/settings/AppearanceThemePicker.tsx"
+    "./AppearanceThemePicker": "./packages/web/src/components/settings/AppearanceThemePicker.tsx",
+    "./AvatarEditVeil": "./packages/web/src/components/ui/AvatarEditVeil.tsx"
   },
   "peerDependencies": {
     "react": "^19.0.0",

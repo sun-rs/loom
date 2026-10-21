@@ -277,7 +277,8 @@
       "SectionHeader",
       "SectionEyebrow",
       "PanelHeader",
-      "AppearanceThemePicker"
+      "AppearanceThemePicker",
+      "AvatarEditVeil"
     ],
     "rule": "Byte-exact source; no edits in upstream snapshot. Compatibility entry points only forward props; PanelHeader retains approved mobile placement via data attributes and mobile.css. Retired uppercase prop is discarded by SectionEyebrow adapter. Both raft-ui import names resolve to one runtime.",
     "appearancePage": {
@@ -286,6 +287,15 @@
       "binding": "frontends/raft/loom/appearance-source-binding.ts",
       "guard": "scripts/official-web/appearance-source.test.mjs",
       "scope": "Exact declaration extraction, not whole module execution. Existing device preference store and MessageItem preview retained; no upstream account, billing or server stores."
+    },
+    "roleProfile": {
+      "source": "frontends/raft/upstream/raft-web-source/packages/web/src/components/agent/AgentDetailPanel.tsx",
+      "generator": "scripts/official-web/generate-profile.mjs",
+      "binding": "frontends/raft/loom/RoleProfile.tsx",
+      "guard": "scripts/official-web/role-profile-source.test.mjs",
+      "scope": "Exact AgentHeaderName/InfoRow/style-constant extraction; structural composition of official hero, description and separated property groups. Loom maps configuration to Role, omits nonexistent handle/live status, retains immutable revision and field editors. No upstream business stores execute.",
+      "compositionSource": "AgentDetailPanel hero lines 3167–3234; AgentProfileInfo description lines 1807+, info/runtime blocks lines 1958+/2088+ at pinned db5e399",
+      "localDifference": "Role prompt replaces description; runtime configuration uses existing Loom CLI/model/effort fields; field editors remain inline with dirty/permission guards. RoleWorkspace removes outer inset for Role profile so official section padding is applied once."
     }
   }
 }

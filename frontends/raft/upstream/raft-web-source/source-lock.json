@@ -15,6 +15,8 @@
     "packages/web/src/components/ui/PanelHeader.tsx": "180445abf8be7036c4d31cc410435129cd833f6d7ddbf246c7ba7d86ce1c0f1b",
     "packages/web/src/components/settings/SettingsPanel.tsx": "4d7175f391747ada6fe7125938626139b2040768d5917cde11584df6b9029052",
     "packages/web/src/components/settings/AppearanceThemePicker.tsx": "d1306a0dd5be5921804aab92dea2c4a7acfae0e4afc592c1b271afd4ec3923ef",
-    "packages/web/src/theme/appTheme.ts": "83d6c836a172fb011dda40dd750294d5d20622646df03f59f57aada36c561085"
+    "packages/web/src/theme/appTheme.ts": "83d6c836a172fb011dda40dd750294d5d20622646df03f59f57aada36c561085",
+    "packages/web/src/components/agent/AgentDetailPanel.tsx": "e15d57664c9365b80ed65199ba153aa294d2101cb142a2ddb1acdb1f8903f8fa",
+    "packages/web/src/components/ui/AvatarEditVeil.tsx": "5eab19a12d28a1f6be5c82c8da7d65fe24c9a000fedc8174ca44206229f23a7b"
   }
 }

@@ -207,7 +207,7 @@ export default function RoleWorkspace({
               </ConversationPanelTabs>
             </div>
           )}
-          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
+          <div className={`min-h-0 flex-1 overflow-y-auto ${tab === "roles" && selected ? "" : "px-5 py-5"}`}>
             {children}
           </div>
         </AppShellMainSlot>

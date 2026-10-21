@@ -17,6 +17,15 @@ export async function verifyUpstream126({ browser, origin, role, client }) {
       const profile = page.getByTestId("loom-role-profile");
       await profile.waitFor();
       await page.getByRole("tab", { name: "资料", exact: true }).waitFor();
+      const avatarBounds = await profile.getByRole("button", {name:"更换头像",exact:true}).boundingBox();
+      const identity = await profile.getByTestId("role-profile-identity").boundingBox();
+      assert.ok(identity.x >= avatarBounds.x + avatarBounds.width, "name and identity stay beside the avatar");
+      assert.ok(Math.abs(identity.y - avatarBounds.y) < 8, "hero aligns at the top");
+      assert.equal(await profile.locator('[data-slot="separator"]').count(), 3);
+      assert.equal(await profile.getByTestId("role-profile-runtime").getByText("运行配置",{exact:true}).count(),1);
+      await profile.getByRole("button", {name:"编辑显示名称",exact:true}).click();
+      await profile.getByRole("button", {name:"取消",exact:true}).click();
+      await page.waitForFunction(() => document.activeElement?.getAttribute("aria-label") === "编辑显示名称");
       const token = await page.evaluate(() =>
         getComputedStyle(document.documentElement)
           .getPropertyValue("--text-body")
@@ -24,7 +33,7 @@ export async function verifyUpstream126({ browser, origin, role, client }) {
       );
       assert.equal(token, width === 1440 ? "14px" : "16px");
       await profile
-        .getByRole("button", { name: "编辑名称", exact: true })
+        .getByRole("button", { name: "编辑显示名称", exact: true })
         .click();
       assert.equal(
         await profile.getByLabel("角色 Prompt", { exact: true }).count(),
@@ -37,7 +46,7 @@ export async function verifyUpstream126({ browser, origin, role, client }) {
         .getByRole("button", { name: "保存", exact: true })
         .waitFor({ state: "hidden" });
       await profile
-        .getByRole("button", { name: "编辑名称", exact: true })
+        .getByRole("button", { name: "编辑显示名称", exact: true })
         .waitFor();
       await page.reload();
       await profile.waitFor();
@@ -69,7 +78,7 @@ export async function verifyUpstream126({ browser, origin, role, client }) {
         .getByRole("button", { name: "保存", exact: true })
         .waitFor({ state: "hidden" });
       await profile
-        .getByRole("button", { name: "编辑名称", exact: true })
+        .getByRole("button", { name: "编辑显示名称", exact: true })
         .waitFor();
       await page.reload();
       await profile.waitFor();
