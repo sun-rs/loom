@@ -1,0 +1,175 @@
+[
+  {
+    "width": 1440,
+    "fine": true,
+    "body": "14px",
+    "control": "32px",
+    "elements": [
+      {
+        "selector": "[data-slot=\"message-item-header\"]",
+        "tag": "DIV",
+        "font": "14px",
+        "line": "22px",
+        "gap": "6px",
+        "width": 1056,
+        "children": [
+          {
+            "tag": "SPAN",
+            "gap": "8px"
+          },
+          {
+            "tag": "SPAN",
+            "gap": "normal"
+          }
+        ],
+        "datetime": null
+      },
+      {
+        "selector": "[data-slot=\"message-item-time\"]",
+        "tag": "SPAN",
+        "font": "12px",
+        "line": "22px",
+        "gap": "normal",
+        "width": 80.796875,
+        "children": [],
+        "datetime": null
+      },
+      {
+        "selector": "[data-slot=\"message-item-sender-button\"]",
+        "present": false
+      },
+      {
+        "selector": "[data-testid=\"app-top-bar-search\"]",
+        "tag": "BUTTON",
+        "font": "14px",
+        "line": "22px",
+        "gap": "8px",
+        "width": 520,
+        "children": [
+          {
+            "tag": "svg",
+            "gap": "normal"
+          },
+          {
+            "tag": "SPAN",
+            "gap": "normal"
+          },
+          {
+            "tag": "KBD",
+            "gap": "4px"
+          }
+        ],
+        "datetime": null
+      }
+    ]
+  },
+  {
+    "width": 1024,
+    "fine": false,
+    "body": "16px",
+    "control": "44px",
+    "elements": [
+      {
+        "selector": "[data-slot=\"message-item-header\"]",
+        "tag": "DIV",
+        "font": "16px",
+        "line": "24px",
+        "gap": "6px",
+        "width": 640,
+        "children": [
+          {
+            "tag": "SPAN",
+            "gap": "8px"
+          },
+          {
+            "tag": "SPAN",
+            "gap": "normal"
+          }
+        ],
+        "datetime": null
+      },
+      {
+        "selector": "[data-slot=\"message-item-time\"]",
+        "tag": "SPAN",
+        "font": "12px",
+        "line": "24px",
+        "gap": "normal",
+        "width": 80.796875,
+        "children": [],
+        "datetime": null
+      },
+      {
+        "selector": "[data-slot=\"message-item-sender-button\"]",
+        "present": false
+      },
+      {
+        "selector": "[data-testid=\"app-top-bar-search\"]",
+        "tag": "BUTTON",
+        "font": "16px",
+        "line": "24px",
+        "gap": "8px",
+        "width": 520,
+        "children": [
+          {
+            "tag": "svg",
+            "gap": "normal"
+          },
+          {
+            "tag": "SPAN",
+            "gap": "normal"
+          },
+          {
+            "tag": "KBD",
+            "gap": "4px"
+          }
+        ],
+        "datetime": null
+      }
+    ]
+  },
+  {
+    "width": 390,
+    "fine": false,
+    "body": "16px",
+    "control": "44px",
+    "elements": [
+      {
+        "selector": "[data-slot=\"message-item-header\"]",
+        "tag": "DIV",
+        "font": "16px",
+        "line": "24px",
+        "gap": "6px",
+        "width": 0,
+        "children": [
+          {
+            "tag": "SPAN",
+            "gap": "8px"
+          },
+          {
+            "tag": "SPAN",
+            "gap": "normal"
+          }
+        ],
+        "datetime": null
+      },
+      {
+        "selector": "[data-slot=\"message-item-time\"]",
+        "tag": "SPAN",
+        "font": "11px",
+        "line": "24px",
+        "gap": "normal",
+        "width": 0,
+        "children": [],
+        "datetime": null
+      },
+      {
+        "selector": "[data-slot=\"message-item-sender-button\"]",
+        "present": false
+      },
+      {
+        "selector": "[data-testid=\"app-top-bar-search\"]",
+        "present": false
+      }
+    ]
+  }
+]

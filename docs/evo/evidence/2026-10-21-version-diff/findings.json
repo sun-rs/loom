@@ -1,0 +1,142 @@
+{
+  "findings": [
+    {
+      "id": "type-desktop",
+      "status": "aligned-package",
+      "old": "body 16/24, headline 17/22; no desktop density split",
+      "new": "width >= 48rem AND pointer:fine: body/subhead/callout 14/22, headline16/24, footnote/caption/mono-meta12/18; touch retains mobile values",
+      "loom": "scoped raft-ui0.10.5; central import; previous formal acceptance and current read-only probe",
+      "source": "packages/ui/src/styles.css"
+    },
+    {
+      "id": "controls",
+      "status": "aligned-package",
+      "old": "fields44px; Button lg44px xl52px; field border1.5px",
+      "new": "fine desktop fields32px, lg32px/icon18px with44px hit target, xl40px; touch44px/icon22px; field borders1px",
+      "loom": "native recipe; visual size is not hit target size. No blanket 32px conversion",
+      "source": "packages/ui/src/components/button/button.tsx; foundation.css; styles.css"
+    },
+    {
+      "id": "message-tiers",
+      "status": "aligned-selected-port",
+      "old": "previous Loom fixed body14/16/18",
+      "new": "body token -2/base/+2; leading token -4/base/+4",
+      "loom": "appearanceStore.ts matches desktop12/14/16 and touch14/16/18; mobile implicit small preference is approved exception"
+    },
+    {
+      "id": "sidebar",
+      "status": "unchanged-aligned",
+      "old": "min180/default240/max320",
+      "new": "min180/default240/max320",
+      "loom": "panelBounds.ts exact; stored user width can differ from default; do not widen based on screenshot"
+    },
+    {
+      "id": "thread-width",
+      "status": "unchanged-aligned",
+      "old": "min360/default400/max=max(400,floor(viewport*0.6))",
+      "new": "same",
+      "loom": "panelBounds.ts; responsive composition must be assessed separately from width constants"
+    },
+    {
+      "id": "search-width",
+      "status": "aligned-selected-port",
+      "new": "base=min(520,max(360,viewport*0.32)); expands using min free width of adjacent slots, max520",
+      "loom": "useTopbarSearchWidth.ts matches bAt/xAt/CAt functions; native SearchTrigger"
+    },
+    {
+      "id": "message-recipe",
+      "status": "aligned-package",
+      "old": "py8; compact pt0; toolbar button32/icon18; timestamp right-aligned and fades on hover",
+      "new": "py4 + transparent top border8; compact removes top border; toolbar button28/icon16; timestamp follows sender and stays visible; fine-pointer header reserve6.5rem",
+      "loom": "native MessageItem recipe installed; mobile horizontal inset2px/gap6px remains approved exception"
+    },
+    {
+      "id": "message-header-spacing",
+      "status": "confirmed-gap-existing",
+      "old": "official v1.21.22 nested clusters gap1.5=6px; name leading5=20px and metadata leading4=16px",
+      "new": "v1.21.26 same",
+      "loom": "MessageItem.tsx4548+: clusters gap2=8px; official lineheight rules only under retired elegant branch, therefore inactive. This predates latest upgrade."
+    },
+    {
+      "id": "departure-badges",
+      "status": "confirmed-gap-existing",
+      "old": "official h5=20px,rounded-chip,bg-fill-muted,px1.5,text-caption,font-semibold; no border",
+      "new": "v1.21.26 same",
+      "loom": "MessageItem.tsx4590+: border,line-muted,py0.5,text10,font-bold,uppercase; old local retained composition"
+    },
+    {
+      "id": "message-time",
+      "status": "confirmed-gap-new",
+      "old": "span without dateTime",
+      "new": "native time element,dateTime plus Tooltip formatted full time; continuation time also dateTime",
+      "loom": "MessageItem.tsx4612 explicitly render span, no datetime, no main-time Tooltip; continuation also missing dateTime"
+    },
+    {
+      "id": "sender-group",
+      "status": "not-a-web-parity-defect",
+      "new": "library adds MessageItemSenderGroup",
+      "loom": "absent but official v1.21.26 page also retains nested spans; do not force migration solely because API exists"
+    },
+    {
+      "id": "theme-cards",
+      "status": "unchanged-aligned-selected",
+      "old": "selected border1.5px,padding7.5px; default padding8px",
+      "new": "same official Web composition",
+      "loom": "AppearanceThemePicker.tsx preserves; do not flatten selected border to1px merely because input field border changed"
+    },
+    {
+      "id": "computer-group",
+      "status": "aligned-selected-port",
+      "old": "KeyValueRow/older composition",
+      "new": "native ListRowGroup and divider rows",
+      "loom": "ComputersPage -> OfficialListRows thin native composition; previous browser acceptance"
+    },
+    {
+      "id": "role-profile",
+      "status": "aligned-selected-port-with-limits",
+      "new": "profile fields, DescriptionList, per-field edit and avatar affordance",
+      "loom": "RoleProfile/RoleFieldEditor immutable revision binding; presets supported, image upload omitted explicitly"
+    },
+    {
+      "id": "focus",
+      "status": "aligned-package",
+      "old": "focus rings can appear after pointer focus",
+      "new": "input modality tracker gates rings; ThemeProvider installs tracker",
+      "loom": "AppThemeProvider uses official ThemeProvider; no duplicate tracker required"
+    },
+    {
+      "id": "legacy-aliases",
+      "status": "not-proven-defects",
+      "loom": "primary-soft/accent-soft/shadow-raft callsites exist",
+      "new": "0.10.5 retains compatibility aliases; grep hits do not prove wrong rendered color or shadow; review scenario rather than blanket replace"
+    },
+    {
+      "id": "mobile",
+      "status": "intentional-exception",
+      "loom": "mobile.css native-app compact adaptations: rows32/34px, message inset2px, nav50px, collapsed composer40px",
+      "new": "official Web is distinct from native mobile; package0.10.6+ mobile nav changes excluded from fixed0.10.5 target",
+      "note": "No physical phone acceptance this audit; do not label these unmodified official Web"
+    },
+    {
+      "id": "activity-composition",
+      "status": "confirmed-gap-new",
+      "old": "v1.21.22 custom row, hide done action on hover:none",
+      "new": "v1.21.26 InboxItem/InboxItemOpen/InboxItemLeading/InboxItemActions reveal=hover; list uses density=compact, touch actions visible; divider uses line-hairline",
+      "loom": "ActivityMessageRow.tsx still custom div and hover:none hidden action, border-line-muted. Installed package alone cannot replace page composition."
+    },
+    {
+      "id": "activity-preview-breakpoint",
+      "status": "confirmed-gap-new",
+      "old": "1024px",
+      "new": "840px; single click220ms preview, double click direct navigation",
+      "loom": "ActivityMessageRow.tsx activate and DiscoveryPage.tsx still1024px; only Activity should adopt840, not every page breakpoint"
+    }
+  ],
+  "conclusion": "Package upgrade propagated many recipe changes, but retained page composition contains confirmed old deviations and an unported new timestamp behavior. Full-site parity is not established.",
+  "nextOrder": [
+    "Shared message header gaps/badges/timestamp with targeted TDD across channel/private/thread/task",
+    "Obtain remaining fixed-release lazy chunks and compare Activity/Search/settings compositions",
+    "Review approved mobile exceptions separately, including tablet pointer conditions"
+  ],
+  "verification": "Read-only source/bundle diffs and formal WebKit metrics at1440 fine,1024 touch,390 touch. At390 the initial route leaves message pane hidden (width0), so its metrics are not a visible mobile-message acceptance. No writes/paid models/redeployment."
+}

@@ -1,0 +1,49 @@
+{
+  "uiOld": "213320bcd298162f485aaf607fd9aea4eab6f1ad",
+  "uiNew": "2b5dc64f32f0f6348f98bcede5903321df3bd68a",
+  "webOld": "af3d6ef4a22f0f05f5f9db9424285755d67e9726",
+  "webNew": "aa975b0e25ecc07ee6917d88d3ca973782550e6a",
+  "loom": "21088d5b805e7d2df11b80d5a938352be20b5d7d",
+  "artifacts": {
+    "AgentDetailPanel.diff": {
+      "bytes": 561272,
+      "sha256": "f99b068167f97a912c1567cf9a80ea1a1ab2ccbbe2bb18b3d4c65a9f4ac1f07d"
+    },
+    "MachineDetailPanel.diff": {
+      "bytes": 232981,
+      "sha256": "c6f480362776e686ba02402e06a1fdbcc26eefb3d61b1770e3efc506cbfe3544"
+    },
+    "app-shell.diff": {
+      "bytes": 7498358,
+      "sha256": "cda02705a6c28cdb854ec5fe6444deb2265ca870e2cf51d82fe28032374dae78"
+    },
+    "rui-stat.txt": {
+      "bytes": 20991,
+      "sha256": "ec7340ee8b0f206845fbd89667e9a88d7230cdf85e65efd1b37b7ade3d635f16"
+    },
+    "rui-0.6.0-to-0.10.5.diff": {
+      "bytes": 1296318,
+      "sha256": "1781137d4ac0c7b1eaa5261551ddcb05e98f9b6b04056eb0e9bfe648554e4c9d"
+    },
+    "ThreadsInbox.diff": {
+      "bytes": 68749,
+      "sha256": "859f0f0f06bf2e5eff6b437d45b3a243db978c72f4bc5f2abf94e4b50527a4ee"
+    }
+  },
+  "archive": "/Users/sun/.loom/reviews/2026-10-21-version-diff",
+  "scope": "Audit only; no product changes. Full UI-library git diff and three archived Web bundle diffs; selected composition review, not full-site acceptance.",
+  "additionalAssets": {
+    "ThreadsInbox-vmpxj7RN.js": {
+      "url": "https://app.raft.build/assets/ThreadsInbox-vmpxj7RN.js",
+      "sha256": "84878249457373d6c66885565e8b0badf5dce1fc60e87796872f604807ce8661",
+      "bytes": 22047,
+      "retrieval": "curl browser user-agent200; initial urllib403 was not absence"
+    },
+    "ReleaseNotesPanel-Dig1TeOE.js": {
+      "url": "https://app.raft.build/assets/ReleaseNotesPanel-Dig1TeOE.js",
+      "sha256": "4634f924c54d34ad52fee199d6e7d6bd4c0878c9f052d4f8a77f0c94881c5ca4",
+      "bytes": 6003,
+      "retrieval": "curl browser user-agent200; initial urllib403 was not absence"
+    }
+  }
+}
