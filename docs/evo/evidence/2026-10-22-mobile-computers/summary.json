@@ -1,0 +1,186 @@
+{
+  "date": "2026-10-22",
+  "productCommit": "d6ba06a7d50ae188bca58bfa6443921820c23c52",
+  "scope": "Mobile-only Settings computer entry, native mobile computer row, real-entry browser test",
+  "source": "db5e399 Sidebar.settingsGroups mobileInline conditional and MobileComputersPanel; hashes/license in ui-contract.json",
+  "adoption": "Structural port with official ListRow/ListRowGroup/IconTile and SidebarItemIcon; Loom navigation/data kept. Not a byte-exact whole-page dependency.",
+  "red": [
+    "Mobile browser timed out at missing Settings computer entry",
+    "Source guard rejected handwritten mobileRow"
+  ],
+  "verification": {
+    "sourceTests": 5,
+    "uiContractTests": 8,
+    "typecheck": "passed",
+    "build": "passed; existing chunk warnings",
+    "chromium": {
+      "fixture": true,
+      "computers": [
+        {
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "selectionReloadBack": "passed",
+          "horizontalOverflow": false,
+          "officialRowKeyboardNavigation": "passed",
+          "monoFactsAndPointerTargets": "passed"
+        },
+        {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "selectionReloadBack": "passed",
+          "horizontalOverflow": false,
+          "officialRowKeyboardNavigation": "passed",
+          "monoFactsAndPointerTargets": "passed"
+        }
+      ]
+    },
+    "webkit": {
+      "fixture": true,
+      "computers": [
+        {
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "selectionReloadBack": "passed",
+          "horizontalOverflow": false,
+          "officialRowKeyboardNavigation": "passed",
+          "monoFactsAndPointerTargets": "passed"
+        },
+        {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "selectionReloadBack": "passed",
+          "horizontalOverflow": false,
+          "officialRowKeyboardNavigation": "passed",
+          "monoFactsAndPointerTargets": "passed"
+        }
+      ]
+    },
+    "formalWebkit": [
+      {
+        "width": 1440,
+        "readOnly": true,
+        "computerToRole": true,
+        "profileDefault": true,
+        "noOverflow": true
+      },
+      {
+        "width": 390,
+        "readOnly": true,
+        "computerToRole": true,
+        "profileDefault": true,
+        "noOverflow": true
+      }
+    ],
+    "mobileScreenshot": "Inspected formal-list-390.png; no overflow"
+  },
+  "previousWebkitFailure": {
+    "finding": "Old test performed a second full navigation immediately after goto(settings), before application readiness, cancelling initialization requests. Current test awaits rendered Settings and clicks real entry; no errors filtered.",
+    "controlledDiagnostic": [
+      {
+        "waitForReady": false,
+        "errors": [
+          "TypeError: Importing a module script failed."
+        ],
+        "failed": [
+          {
+            "url": "/assets/AvatarSlot-uGbbHTM0.js",
+            "reason": "cancelled"
+          },
+          {
+            "url": "/assets/en-B-P_0cml.js",
+            "reason": "cancelled"
+          },
+          {
+            "url": "/assets/ChatSidebarFrame-DifdKZOq.js",
+            "reason": "cancelled"
+          },
+          {
+            "url": "/assets/StableField-BojehcPR.js",
+            "reason": "cancelled"
+          },
+          {
+            "url": "/assets/write-intent-DIcP8YIp.js",
+            "reason": "cancelled"
+          },
+          {
+            "url": "/assets/threadStore-DRnqNkfp.js",
+            "reason": "cancelled"
+          },
+          {
+            "url": "/assets/SectionEyebrow-CcPYr_1b.js",
+            "reason": "cancelled"
+          },
+          {
+            "url": "/assets/readStateSync-C40BWeoJ.js",
+            "reason": "cancelled"
+          },
+          {
+            "url": "/assets/messageStore-IXdGAMN3.js",
+            "reason": "cancelled"
+          },
+          {
+            "url": "/v3/client/rooms/agents/activity/list",
+            "reason": "cancelled"
+          },
+          {
+            "url": "/v3/client/rooms/members/list",
+            "reason": "cancelled"
+          },
+          {
+            "url": "/v3/client/rooms/agents/activity/list",
+            "reason": "cancelled"
+          },
+          {
+            "url": "/v3/client/rooms/members/list",
+            "reason": "cancelled"
+          }
+        ]
+      },
+      {
+        "waitForReady": true,
+        "errors": [],
+        "failed": [
+          {
+            "url": "/v3/client/rooms/agents/activity/list",
+            "reason": "cancelled"
+          },
+          {
+            "url": "/v3/client/rooms/members/list",
+            "reason": "cancelled"
+          },
+          {
+            "url": "/v3/client/rooms/agents/activity/list",
+            "reason": "cancelled"
+          },
+          {
+            "url": "/v3/client/rooms/members/list",
+            "reason": "cancelled"
+          }
+        ]
+      }
+    ],
+    "limit": "Read-only diagnostic reproduced cancelled resources and module-import failure rather than the identical historical access-control error. Evidence supports navigation teardown cause, not a reproduced server ACL defect."
+  },
+  "deployment": {
+    "databases": 2,
+    "files": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true,
+    "sourceSha256": "90d0485bbe2307f52bdd0a6708ae1504319df36775df7bf6db82fb605fc209ce",
+    "schema": 90,
+    "method": "Idle check, same-home backup, graceful exact launchd restart"
+  },
+  "limits": [
+    "Not physical iOS/Android device acceptance",
+    "No paid CLI work",
+    "Whole-site official dependency migration remains incomplete"
+  ]
+}
