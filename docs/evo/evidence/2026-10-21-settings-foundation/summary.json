@@ -1,0 +1,151 @@
+{
+  "productCommit": "c37b2a2319ee4243f3c0d8a3b0981079c4611dd4",
+  "sourceRevision": "db5e399f017d584e49597e3a28757645d6807893",
+  "implemented": [
+    "Official archive content and unarchive button declarations with existing controller",
+    "Official settings sidebar declaration without unavailable cloud feedback badge",
+    "Exact official FormField declarations; thin compatibility for ignored legacy labelStyle",
+    "Direct official panelBounds dependency; removed local constant copy",
+    "Removed archived-section Vite transform, virtual aliases and declaration"
+  ],
+  "intentionalLocalSemantics": [
+    "Token usage summary is not upstream analytics consent or hosted-service billing",
+    "Local execution limits/watchdog/runtime settings remain Loom-owned native-primitive composition",
+    "Settings shell still composes local routes, draft preservation and mobile master-detail"
+  ],
+  "checks": {
+    "sourceAndAffected": 15,
+    "uiContract": 8,
+    "typecheck": true,
+    "build": true,
+    "chromiumFixture": {
+      "navigation": [
+        {
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "nativeGroupedSidebar": true,
+          "resize": true,
+          "mobileMasterDetail": false,
+          "placeholder": true,
+          "draftAcrossTabs": true,
+          "urlReloadAndBack": true,
+          "keyboardSelection": true
+        },
+        {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "nativeGroupedSidebar": true,
+          "resize": false,
+          "mobileMasterDetail": true,
+          "placeholder": true,
+          "draftAcrossTabs": true,
+          "urlReloadAndBack": true,
+          "keyboardSelection": true
+        }
+      ],
+      "archive": [
+        {
+          "width": 1440,
+          "open": true,
+          "unknownRetrySameKey": true,
+          "restored": true
+        },
+        {
+          "width": 390,
+          "open": true,
+          "unknownRetrySameKey": true,
+          "restored": true
+        }
+      ],
+      "account": [
+        {
+          "width": 1440,
+          "unknownReadOnlyRecovery": true,
+          "staleRejected": true,
+          "avatar": true,
+          "unsavedNamePreserved": true
+        },
+        {
+          "width": 390,
+          "unknownReadOnlyRecovery": true,
+          "staleRejected": true,
+          "avatar": true,
+          "unsavedNamePreserved": true
+        }
+      ],
+      "region": [
+        {
+          "width": 1440,
+          "computer": {
+            "paddingTop": "16px",
+            "y": 56
+          },
+          "agent": {
+            "paddingTop": "16px",
+            "y": 56
+          }
+        },
+        {
+          "width": 390
+        }
+      ]
+    },
+    "resizeAssertions": "defaultWidth, max and min computed from pinned official source",
+    "formalWebkitReadOnly": [
+      {
+        "width": 1440,
+        "tab": "account",
+        "readOnly": true,
+        "noOverflow": true
+      },
+      {
+        "width": 1440,
+        "tab": "administration",
+        "readOnly": true,
+        "noOverflow": true
+      },
+      {
+        "width": 1440,
+        "tab": "usage",
+        "readOnly": true,
+        "noOverflow": true
+      },
+      {
+        "width": 390,
+        "tab": "account",
+        "readOnly": true,
+        "noOverflow": true
+      },
+      {
+        "width": 390,
+        "tab": "administration",
+        "readOnly": true,
+        "noOverflow": true
+      },
+      {
+        "width": 390,
+        "tab": "usage",
+        "readOnly": true,
+        "noOverflow": true
+      }
+    ],
+    "visualInspection": ["formal-list-390.png", "formal-administration-390.png"]
+  },
+  "deployment": {
+    "verified": true,
+    "backedUpDatabases": 2,
+    "backedUpFiles": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true
+  },
+  "limits": [
+    "Not whole-site or entire settings-shell source migration",
+    "No live production archive restore or settings writes; mutation paths exercised on temporary Core",
+    "No physical-device or paid-provider test"
+  ],
+  "privateEvidence": "/Users/sun/.loom/reviews/2026-10-21-settings-foundation"
+}
