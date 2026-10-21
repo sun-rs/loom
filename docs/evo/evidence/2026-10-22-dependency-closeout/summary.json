@@ -56,5 +56,75 @@
   "initialFailures": [
     "navigation test used retired 动态范围 name; changed to official 筛选收件箱",
     "mobile Activity back lacked accessible name; added native mobileBackProps binding, then rebuilt and passed"
-  ]
+  ],
+  "deployment": {
+    "head": "e8af7e4d9021a9adcae3ac6a22bf99f0fb228655",
+    "newStaticDirectory": "/Users/sun/Code/repos/rah_os/.workbench-web/a5ba4958d77e8ebe5dc2b9fa1aabf61bf50c03fcd2eeeed06045f795a0943ffb",
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-dependency-closeout-dcfb8938-4cb6-4b38-b5aa-a9991c2f2d48",
+    "databases": 2,
+    "files": 325,
+    "pushStateUnchanged": true,
+    "businessTablesUnchanged": 20
+  },
+  "formalWebKit": [
+    {
+      "width": 1440,
+      "navHit": {
+        "width": 40,
+        "height": 40,
+        "clickable": true
+      },
+      "activityMobileBack": true,
+      "existingReplies": 4,
+      "nativeCloseOrBack": {
+        "width": 32,
+        "height": 32,
+        "clickable": true
+      },
+      "noSend": true,
+      "noErrors": true,
+      "noOverflow": true,
+      "workspaceOpened": true,
+      "computerProfile": true,
+      "settingsAppearance": true,
+      "roleProfile": true,
+      "workspaceRefresh": {
+        "width": 32,
+        "height": 32,
+        "clickable": true
+      }
+    },
+    {
+      "width": 390,
+      "navHit": {
+        "width": 68.796875,
+        "height": 44,
+        "clickable": true
+      },
+      "activityMobileBack": true,
+      "existingReplies": 4,
+      "nativeCloseOrBack": {
+        "width": 44,
+        "height": 44,
+        "clickable": true
+      },
+      "noSend": true,
+      "noErrors": true,
+      "noOverflow": true,
+      "workspaceOpened": true,
+      "computerProfile": true,
+      "settingsAppearance": true,
+      "roleProfile": true,
+      "workspaceRefresh": {
+        "width": 32,
+        "height": 32,
+        "clickable": true
+      }
+    }
+  ],
+  "visualReview": {
+    "file": "formal-thread-390.png",
+    "sha256": "59841026a2a402ba05c0099bfdc24246e99148b3ae7a13eab48ac06fe4bd033e",
+    "scope": "existing mobile thread, avatars/text/header/composer; no screenshot claim of complete upstream parity"
+  }
 }
