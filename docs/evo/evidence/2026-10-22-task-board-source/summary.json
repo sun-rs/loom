@@ -1,0 +1,113 @@
+{
+  "date": "2026-10-22",
+  "productCommit": "0450dd9c97ae15977825c3118b1ee3788cce4470",
+  "scope": [
+    "TaskSection and DroppableColumn source declarations",
+    "DraggableTaskWrapper with explicit Loom authorization/busy guard",
+    "TaskCard with explicit Loom controller",
+    "Byte-exact VirtualizedTaskStack and shared TaskVirtualLayout dependency"
+  ],
+  "source": {
+    "revision": "db5e399f017d584e49597e3a28757645d6807893",
+    "generator": "scripts/official-web/generate-task-board.mjs",
+    "provenance": "source-lock.json and ui-contract.json",
+    "localDifferences": [
+      "TaskCard uses Loom TaskBoardActions instead of upstream task/auth/server stores",
+      "Drag disabled combines requestedDisabled, canEditStatus and busy",
+      "Status editor disabled explicitly receives busy"
+    ],
+    "removed": [
+      "task-adaptation.ts and its obsolete transform tests",
+      "Two Vite source rewrites and loom-task-board-actions alias",
+      "Two TasksPage @ts-expect-error directives"
+    ]
+  },
+  "verification": {
+    "red": [
+      "Missing generator",
+      "Missing direct VirtualizedTaskStack dependency"
+    ],
+    "sourceChecks": 6,
+    "uiContract": 8,
+    "typecheck": "passed",
+    "build": "passed; existing chunk warnings retained",
+    "board": [
+      {
+        "width": 1440,
+        "drag": true,
+        "input": "mouse",
+        "unknownExactRetry": true,
+        "channelList": true,
+        "globalList": true
+      },
+      {
+        "width": 390,
+        "drag": true,
+        "input": "touch",
+        "unknownExactRetry": true,
+        "channelList": true,
+        "globalList": true
+      }
+    ],
+    "tasks": [
+      {
+        "width": 1440,
+        "nativeBoardAndList": true,
+        "boundedPagination": true,
+        "nativeMultiFiltersReloadAndClear": true,
+        "taskDetailAndDiscussion": true,
+        "nativeDescriptionExpandCollapse": true,
+        "canonicalStatusUpdate": true,
+        "unknownExactReplay": true,
+        "unknownHistoryGuard": true,
+        "reload": true,
+        "mobileReturnOrClose": true,
+        "foreignTaskRejected": true
+      },
+      {
+        "width": 390,
+        "nativeBoardAndList": true,
+        "boundedPagination": true,
+        "nativeMultiFiltersReloadAndClear": true,
+        "taskDetailAndDiscussion": true,
+        "nativeDescriptionExpandCollapse": true,
+        "canonicalStatusUpdate": true,
+        "unknownExactReplay": true,
+        "unknownHistoryGuard": true,
+        "reload": true,
+        "mobileReturnOrClose": true,
+        "foreignTaskRejected": true
+      }
+    ],
+    "formalWebkit": [
+      {
+        "width": 1440,
+        "view": "tasks",
+        "readOnly": true,
+        "noOverflow": true
+      },
+      {
+        "width": 390,
+        "view": "tasks",
+        "readOnly": true,
+        "noOverflow": true
+      }
+    ],
+    "formalBehavior": "Read-only board/list switching and existing task detail at 1440/390; mobile board screenshot inspected"
+  },
+  "deployment": {
+    "method": "idle check, same-home backup, graceful exact launchd restart",
+    "databases": 2,
+    "files": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true,
+    "schema": 90,
+    "sourceSha256": "a24d684948a78028e5d0367f8c945f003bd9249f8a169173293f7ec07eab6acd"
+  },
+  "remaining": [
+    "Task page toolbar/filter/create/detail composition remains local",
+    "Full activity row/page composition not migrated in this batch",
+    "SearchOverlay pinned public source differs from existing resource port in scrim, DialogSurface versus PopoverPopup and anchor parameters; reconcile full version chain before replacement",
+    "Whole-site dependency migration incomplete; no physical-device or paid-provider acceptance"
+  ]
+}
