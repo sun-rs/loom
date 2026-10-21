@@ -1,4 +1,5 @@
 import ts from "typescript";
+import { extractDeclarations } from "./generate-appearance.mjs";
 import { readFileSync, writeFileSync } from "node:fs";
 import { posix, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -92,7 +93,66 @@ export function generateDiscoveryTask() {
     'activityReadFilter(filter) === "unread"',
     'filter === "unread"',
   );
+  let hit = module("search/MessageHitRow");
+  hit = replaceOnce(
+    hit,
+    "  result,\n  nested,",
+    "  result,\n  resultKey,\n  nested,",
+  );
+  hit = replaceOnce(
+    hit,
+    "  result: MessageSearchResult;",
+    "  result: MessageSearchResult;\n  resultKey?: string;",
+  );
+  hit = replaceOnce(
+    hit,
+    '    <Result\n      type="button"',
+    '    <Result\n      data-result-id={resultKey}\n      type="button"',
+  );
+  let toolbar;
+  function toolbarWalk(n) {
+    if (
+      ts.isJsxElement(n) &&
+      n.openingElement.getText(file).includes('data-testid="inbox-toolbar"')
+    ) {
+      if (toolbar) throw Error("Ambiguous activity toolbar");
+      toolbar = n.getText(file);
+    }
+    ts.forEachChild(n, toolbarWalk);
+  }
+  toolbarWalk(file);
+  if (!toolbar) throw Error("Missing activity toolbar");
+  // Keep the exact native wrapper; Loom supplies the guarded bulk-read action.
+  let action;
+  function actionWalk(n) {
+    if (
+      ts.isJsxExpression(n) &&
+      n.expression &&
+      n.expression.getText(file).startsWith("showMarkAllRead &&")
+    ) {
+      if (action) throw Error("Ambiguous bulk-read action");
+      action = n.getText(file);
+    }
+    ts.forEachChild(n, actionWalk);
+  }
+  actionWalk(file);
+  if (!action) throw Error("Missing bulk-read action");
+  toolbar = replaceOnce(toolbar, action, "{actions}");
+  const avatar = extractDeclarations(parse("thread/ThreadsInbox").source, [
+    "ConversationAvatar",
+  ]);
   return {
+    "OfficialMessageHitRow.generated.tsx": hit,
+    "OfficialConversationAvatar.generated.tsx":
+      header +
+      'import {IconTile, DirectMessageIcon, ThreadIcon} from "raft-ui";\nimport {Hash} from "lucide-react";\nimport AvatarSlot from "../packages/web/src/components/ui/AvatarSlot";\ntype Channel = {peerType: "agent" | "user"; peerAvatarUrl?: string | null; peerGravatarHash?: string | null};\n' +
+      avatar +
+      "\nexport default ConversationAvatar;\n",
+    "OfficialActivityFilters.generated.tsx":
+      header +
+      'import type {ReactNode} from "react";\nimport {useIntl} from "react-intl";\nimport {SegmentedControl,SegmentedControlItem,SegmentedControlLabel} from "raft-ui";\nexport default function ActivityFilters({value:filter,onChange:setFilter,actions}:{value:string;onChange:(value:string)=>void;actions?:ReactNode}) {const {formatMessage}=useIntl();return (' +
+      toolbar +
+      "); }\n",
     "OfficialTaskModalHead.generated.tsx": module("task/TaskModalHead"),
     "OfficialSearchEntityRow.generated.tsx": entity,
     "OfficialSearchHomeRow.generated.tsx": module("search/SearchHomeEntityRow"),

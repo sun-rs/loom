@@ -4,17 +4,17 @@
 
 ## 已建立的依赖边界
 
-| 层次 | 已落地 | 边界 |
-| --- | --- | --- |
-| 基础设计系统 | `@botiverse/raft-ui@0.10.5`，canonical/legacy 导入共享运行时 | 原生控件、recipe、字体和状态；不能据此认定每个页面组合原生 |
-| 直接源码依赖 | Tooltip、CloseButton、EmptyState、SectionHeader、SectionEyebrow、PanelHeader、AppearanceThemePicker、AvatarEditVeil、SettingsProfileCard、SurfaceListItem、SlugInput、panelBounds、AvatarListRow、KeyValueRow、ShowMoreToggle、VirtualizedTaskStack、searchOverlayAnchor、Modal | 私有本地分发包的原文件保留官方字节，不是官方发布的完整 Web npm 包 |
-| 外观区块 | 从官方 SettingsPanel 精确提取正文与预览声明 | 显式接入现有设备偏好和主题hook；消息预览和字号组件仍沿用原模块 |
-| 日期与时间 | 从官方 LanguageRegionSection 原样提取日期/时间 JSX 子树 | 保存/错误绑定浏览器设备偏好；中文限定语言块仍为本地组合 |
-| 更新日志 | 原样提取官方内容 JSX、分类与徽标规则 | Loom 自有静态发布记录；既有设置外壳负责标题和滚动，旧构建时切片已移除 |
-| 账户／通知／关于／系统频道 | 锁定官方展示切片，系统频道 JSX 原样提取；删除四条运行时改写 | 账户删去云端字段并保留编辑围栏；通知保留未知状态保护与恢复操作；关于只保留产品版本。子组件闭包尚有历史适配，不称整页原封不动 |
-| 归档／设置侧栏／表单 | 官方展示声明提取，恢复按钮与Field原声明复用；分栏尺寸直接依赖官方 | 归档频道标签本地化；省去云端反馈；表单兼容旧labelStyle参数但不采用旧样式 |
-| Role 资料 | 官方名称、属性行、样式声明精确提取 | 头像/Prompt/信息/运行配置分区是有记录的结构移植；Role语义和实例管理保持本地 |
-| 动态时间线 | 官方 LogItem 与 recipe 精确提取，Role 与实例轨迹共用 TrajectoryRow | 数据读取/实例名/诊断文本映射在 Loom，历史分页和权限仍由既有 API 负责 |
+| 层次                       | 已落地                                                                                                                                                                                                                                                                          | 边界                                                                                                                         |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| 基础设计系统               | `@botiverse/raft-ui@0.10.5`，canonical/legacy 导入共享运行时                                                                                                                                                                                                                    | 原生控件、recipe、字体和状态；不能据此认定每个页面组合原生                                                                   |
+| 直接源码依赖               | Tooltip、CloseButton、EmptyState、SectionHeader、SectionEyebrow、PanelHeader、AppearanceThemePicker、AvatarEditVeil、SettingsProfileCard、SurfaceListItem、SlugInput、panelBounds、AvatarListRow、KeyValueRow、ShowMoreToggle、VirtualizedTaskStack、searchOverlayAnchor、Modal | 私有本地分发包的原文件保留官方字节，不是官方发布的完整 Web npm 包                                                            |
+| 外观区块                   | 从官方 SettingsPanel 精确提取正文与预览声明                                                                                                                                                                                                                                     | 显式接入现有设备偏好和主题hook；消息预览和字号组件仍沿用原模块                                                               |
+| 日期与时间                 | 从官方 LanguageRegionSection 原样提取日期/时间 JSX 子树                                                                                                                                                                                                                         | 保存/错误绑定浏览器设备偏好；中文限定语言块仍为本地组合                                                                      |
+| 更新日志                   | 原样提取官方内容 JSX、分类与徽标规则                                                                                                                                                                                                                                            | Loom 自有静态发布记录；既有设置外壳负责标题和滚动，旧构建时切片已移除                                                        |
+| 账户／通知／关于／系统频道 | 锁定官方展示切片，系统频道 JSX 原样提取；删除四条运行时改写                                                                                                                                                                                                                     | 账户删去云端字段并保留编辑围栏；通知保留未知状态保护与恢复操作；关于只保留产品版本。子组件闭包尚有历史适配，不称整页原封不动 |
+| 归档／设置侧栏／表单       | 官方展示声明提取，恢复按钮与Field原声明复用；分栏尺寸直接依赖官方                                                                                                                                                                                                               | 归档频道标签本地化；省去云端反馈；表单兼容旧labelStyle参数但不采用旧样式                                                     |
+| Role 资料                  | 官方名称、属性行、样式声明精确提取                                                                                                                                                                                                                                              | 头像/Prompt/信息/运行配置分区是有记录的结构移植；Role语义和实例管理保持本地                                                  |
+| 动态时间线                 | 官方 LogItem 与 recipe 精确提取，Role 与实例轨迹共用 TrajectoryRow                                                                                                                                                                                                              | 数据读取/实例名/诊断文本映射在 Loom，历史分页和权限仍由既有 API 负责                                                         |
 
 搜索目标行／常用对象行与任务详情头部已转为锁定原声明生成；动态空状态采用官方 JSX 提取。搜索行仅新增菜单关闭焦点 ref；任务属性显式绑定 Loom，移除 Vite 隐式替换。TaskModalHead 的三行折叠、测量、缩放监听和展开状态保留官方实现。仍非整页依赖化。
 
@@ -55,3 +55,9 @@
 ## 入口行为对齐回归
 
 Role 资料入口以锁定的 `AgentDetailPanel.defaultAgentTab` 表达式为对照：资料存在时优先资料，不由标签排序决定。`role-activity.test.ts` 对官方规则和 Loom 初始/重新选择默认值做差异检查；浏览器用例在1440和390宽度验证首次进入及从动态重新选择Role后的资料选中状态与正文。实例头像打开动态仍是另一个入口，不受此默认规则覆盖。源码一致、入口交互一致分别验证，不能互相替代。
+
+### 搜索消息及动态展示边界（2026-10-22）
+
+MessageHitRow 的官方非导入声明由生成器复用，仅保留 `resultKey` / `data-result-id` 键盘定位补丁；修复消息列图标偏离原源码尺寸的问题。纯函数 `searchGrouping` 改为原文件直接依赖，移除本地重复实现。ThreadsInbox 的过滤栏 JSX 与 ConversationAvatar 声明从同一锁定源码提取，分别使用批量已读动作槽和最小身份类型接入 Loom；过滤栏恢复官方 canvas 背景及国际化文案，会话图标使用官方 IconTile。
+
+动态行本体仍是已采用 v1.21.26 资源的紧凑 InboxItem 结构移植，未回退为公共源码的旧卡片。Loom 的已读持久化、异步结果防护、预览/导航、菜单焦点和移动端紧凑例外保持本地所有权。这不代表完整动态页已依赖化。新增 source equality / bridge guards，受影响路径使用桌面和移动端浏览器验收。

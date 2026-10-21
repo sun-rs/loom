@@ -1,5 +1,5 @@
 {
-  "asOf": "2026-10-21",
+  "asOf": "2026-10-22",
   "wholeSiteDependencyComplete": false,
   "meaning": "迁移单元清单，不是所有函数的验收清单；不按文件数或组件数计算完成率。",
   "versions": {
@@ -26,7 +26,10 @@
       "loom/OfficialTaskModalHead.generated.tsx",
       "loom/OfficialTaskBoard.generated.tsx",
       "loom/OfficialTaskCard.generated.tsx",
-      "loom/OfficialSearchOverlay.generated.tsx"
+      "loom/OfficialSearchOverlay.generated.tsx",
+      "loom/OfficialMessageHitRow.generated.tsx",
+      "loom/OfficialActivityFilters.generated.tsx",
+      "loom/OfficialConversationAvatar.generated.tsx"
     ],
     "foundation": "package.json#dependencies.raft-ui"
   },
@@ -40,11 +43,12 @@
         "loom/DiscoveryPage.tsx",
         "loom/OfficialSearchEntityRow.generated.tsx",
         "loom/OfficialSearchHomeRow.generated.tsx",
-        "loom/OfficialSearchOverlay.generated.tsx"
+        "loom/OfficialSearchOverlay.generated.tsx",
+        "loom/OfficialMessageHitRow.generated.tsx"
       ],
-      "adopted": "官方控件、旧页面及Loom查询绑定混合；搜索目标行和常用对象行由锁定官方源码生成，保留菜单焦点ref兼容接线；SearchOverlay原声明生成、官方Modal和searchOverlayAnchor直接依赖，删除内容隐式Vite别名；Loom提供固定overlay结果导航接线",
+      "adopted": "官方控件、旧页面及Loom查询绑定混合；搜索目标行和常用对象行由锁定官方源码生成，保留菜单焦点ref兼容接线；SearchOverlay原声明生成、官方Modal和searchOverlayAnchor直接依赖，删除内容隐式Vite别名；Loom提供固定overlay结果导航接线；MessageHitRow原声明生成（仅稳定键兼容补丁），searchGrouping纯函数直接依赖官方文件",
       "remaining": [
-        "完整查询/筛选/结果页及消息结果行仍有本地适配；无顶栏原生宿主的contentColumnRef分支未启用"
+        "完整查询/筛选/结果页仍有本地适配；无顶栏原生宿主的contentColumnRef分支未启用"
       ]
     },
     {
@@ -66,9 +70,11 @@
       "sources": [
         "loom/DiscoveryPage.tsx",
         "loom/ActivityMessageRow.tsx",
-        "loom/OfficialActivityEmpty.generated.tsx"
+        "loom/OfficialActivityEmpty.generated.tsx",
+        "loom/OfficialActivityFilters.generated.tsx",
+        "loom/OfficialConversationAvatar.generated.tsx"
       ],
-      "adopted": "raft-ui InboxItem及Loom聚合/跳转接线；空状态原JSX提取，筛选语义绑定Loom",
+      "adopted": "raft-ui InboxItem及Loom聚合/跳转接线；空状态原JSX提取，筛选语义绑定Loom；过滤栏原JSX提取（显式批量已读动作槽），ConversationAvatar原声明提取（本地最小身份输入类型）；保留已采用的新版紧凑InboxItem行，不回退旧版卡片",
       "remaining": [
         "页面/列表/预览/分页组合仍是本地维护，需提取官方完整展示边界"
       ]

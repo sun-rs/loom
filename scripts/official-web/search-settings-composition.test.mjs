@@ -11,7 +11,7 @@ test("search entity rows retain compact native identities, outline labels and si
   assert.match(read("loom/SearchEntityRows.tsx"), /rootRef=\{row\}/);
 });
 test("search message result retains native avatar gutter and direct sibling result composition", () => {
-  const s = read("packages/web/src/components/search/MessageHitRow.tsx");
+  const s = read("loom/OfficialMessageHitRow.generated.tsx");
   assert.match(s, /pl-\[55px\]/);
   assert.match(s, /absolute top-3 left-4 flex/);
   assert.doesNotMatch(s, /preview-mini|border-t-2/);

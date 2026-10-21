@@ -22,7 +22,8 @@
     "./ShowMoreToggle": "./packages/web/src/components/ui/ShowMoreToggle.tsx",
     "./VirtualizedTaskStack": "./packages/web/src/components/task/VirtualizedTaskStack.tsx",
     "./searchOverlayAnchor": "./packages/web/src/components/search/searchOverlayAnchor.ts",
-    "./Modal": "./packages/web/src/components/Modal.tsx"
+    "./Modal": "./packages/web/src/components/Modal.tsx",
+    "./searchGrouping": "./packages/web/src/components/search/searchGrouping.ts"
   },
   "peerDependencies": {
     "react": "^19.0.0",

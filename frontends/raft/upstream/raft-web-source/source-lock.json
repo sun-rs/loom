@@ -41,6 +41,8 @@
     "packages/web/src/components/search/SearchOverlay.tsx": "af68dea5f5df2ccaf024d12d5e210431e35c7d9069d38b6e1c7762b38d6acb66",
     "packages/web/src/components/search/searchOverlayAnchor.ts": "1fa0b9767e79899de3a2b1df1a50c0327277dc5233827ed91257a841c3789816",
     "packages/web/src/components/Modal.tsx": "db01fc0e46f5f21d60e392e8b444b9dff36401757469bc79b68bc9b52f45de65",
-    "packages/web/src/components/ui/dismissLayer.ts": "0608cfae243129203aa751c211bba7b96182a028b01ad45896d8b2c93d5b99c5"
+    "packages/web/src/components/ui/dismissLayer.ts": "0608cfae243129203aa751c211bba7b96182a028b01ad45896d8b2c93d5b99c5",
+    "packages/web/src/components/search/MessageHitRow.tsx": "baefd113b3f458b0450fd0886c5d9322a137a4019c28270512037d83348f7d74",
+    "packages/web/src/components/search/searchGrouping.ts": "9a5aeb210f048807de41836119bb8ac2d65cafa05a133f86779f2feb4592347b"
   }
 }

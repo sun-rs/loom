@@ -263,6 +263,22 @@
         "No Electron/native-host column rendering is enabled; desktopShell helper remains existing adapter"
       ],
       "limits": "Other modal consumers retain legacy local Modal and are not counted migrated; not a claim of latest live website equivalence."
+    },
+    {
+      "id": "discovery-foundation-source",
+      "owner": "db5e399 MessageHitRow / searchGrouping / ThreadsInbox toolbar and ConversationAvatar",
+      "rule": "Preserve source rendering, native icon and segmented-control recipes; stable resultKey and guarded bulk-read action remain explicit Loom slots. Conversation identity uses minimal typed input, without upstream stores. Newer compact InboxItem layout remains unchanged.",
+      "sources": [
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/search/MessageHitRow.tsx",
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/search/searchGrouping.ts",
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/thread/ThreadsInbox.tsx"
+      ],
+      "bindings": [
+        "OfficialMessageHitRow.generated.tsx",
+        "OfficialActivityFilters.generated.tsx",
+        "OfficialConversationAvatar.generated.tsx"
+      ],
+      "guard": "scripts/official-web/discovery-foundation-source.test.mjs"
     }
   ],
   "exceptions": [

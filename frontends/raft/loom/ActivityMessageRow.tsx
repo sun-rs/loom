@@ -1,5 +1,5 @@
 import type { ComponentProps } from "react";
-import AvatarSlot from "../packages/web/src/components/ui/AvatarSlot.tsx";
+import OfficialConversationAvatar from "./OfficialConversationAvatar.generated";
 import ActivityContextMenu, {
   type ActivityMenuTarget,
 } from "./ActivityContextMenu.tsx";
@@ -24,10 +24,8 @@ import {
   InboxItemActions,
   SidebarItemCount,
   Button,
-  DirectMessageIcon,
-  ThreadIcon,
 } from "raft-ui";
-import { Hash, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { formatRelativeTime } from "../packages/web/src/utils/relativeTime.ts";
 import InlineMarkdownPreview from "../packages/web/src/components/markdown/InlineMarkdownPreview.tsx";
 import type { DiscoveryRow } from "./discovery-client.ts";
@@ -116,29 +114,21 @@ export default function ActivityMessageRow({
             }
           }}
         />
-        <InboxItemLeading
-          data-testid="conversation-card-avatar"
-          data-kind={row.activityKind}
-        >
-          {row.activityKind === "direct" && row.senderType ? (
-            <AvatarSlot
-              context="panel-header"
-              type={row.senderType === "agent" ? "agent" : "human"}
-            />
-          ) : (
-            <span className="flex size-9 items-center justify-center rounded-sticker bg-fill-muted text-foreground-muted">
-              {row.activityKind === "direct" ? (
-                <DirectMessageIcon width={18} height={18} />
-              ) : (
-                <Hash size={18} />
-              )}
-            </span>
-          )}
-          {thread && (
-            <span className="absolute -bottom-1 -right-1 flex size-[18px] items-center justify-center rounded-sticker border border-line-seam bg-layer-card text-foreground-muted">
-              <ThreadIcon width={11} height={11} />
-            </span>
-          )}
+        <InboxItemLeading>
+          <OfficialConversationAvatar
+            kind={
+              thread
+                ? "thread"
+                : row.activityKind === "direct"
+                  ? "dm"
+                  : "channel"
+            }
+            dmChannel={
+              row.activityKind === "direct" && row.senderType
+                ? { peerType: row.senderType === "agent" ? "agent" : "user" }
+                : null
+            }
+          />
         </InboxItemLeading>
         <InboxItemContent data-testid="conversation-card-content">
           <InboxItemHeading>
