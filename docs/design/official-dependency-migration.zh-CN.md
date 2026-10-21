@@ -9,6 +9,7 @@
 | 基础设计系统 | `@botiverse/raft-ui@0.10.5`，canonical/legacy 导入共享运行时 | 原生控件、recipe、字体和状态；不能据此认定每个页面组合原生 |
 | 直接源码依赖 | Tooltip、CloseButton、EmptyState、SectionHeader、SectionEyebrow、PanelHeader、AppearanceThemePicker、AvatarEditVeil | 私有本地分发包的原文件保留官方字节，不是官方发布的完整 Web npm 包 |
 | 外观区块 | 从官方 SettingsPanel 精确提取正文与预览声明 | 显式接入现有设备偏好和主题hook；消息预览和字号组件仍沿用原模块 |
+| 日期与时间 | 从官方 LanguageRegionSection 原样提取日期/时间 JSX 子树 | 保存/错误绑定浏览器设备偏好；中文限定语言块仍为本地组合 |
 | Role 资料 | 官方名称、属性行、样式声明精确提取 | 头像/Prompt/信息/运行配置分区是有记录的结构移植；Role语义和实例管理保持本地 |
 | 动态时间线 | 官方 LogItem 与 recipe 精确提取，Role 与实例轨迹共用 TrajectoryRow | 数据读取/实例名/诊断文本映射在 Loom，历史分页和权限仍由既有 API 负责 |
 
@@ -28,7 +29,7 @@
 ## 怎么保证，以及不能保证什么
 
 1. `source-lock.json` 与 `upstream-package.test.mjs` 校验原文件哈希；`upstream-diff.mjs` 对新官方 checkout 直接比对，独立报告本地漂移。原有 intake/ports 保留历史来源。
-2. 三类 generated 文件必须等于生成器从锁定源码得到的声明正文；改 JSX 必须通过更新来源或显式外层适配，不能偷偷编辑生成结果。
+2. 各类 generated 文件必须等于生成器从锁定源码得到的声明正文；改 JSX 必须通过更新来源或显式外层适配，不能偷偷编辑生成结果。
 3. `ui-version.test.mjs` 验证两种包名解析到同一官方运行时，避免组件上下文/样式重复。
 4. `dependency-migration.test.mjs` 要求每个导航目的地都在清单中，所引实现文件必须存在。它保证范围不漏记，**不证明该页面功能完整或视觉一致**。
 5. 每个迁移切片先失败复现，再类型/构建/定向行为检查；浏览器验证相关宽度、键盘、焦点、禁用、分页、错误及数据隔离。fixture只证明前端流程，不冒充付费模型或真机验收。

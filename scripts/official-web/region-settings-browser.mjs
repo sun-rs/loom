@@ -23,6 +23,18 @@ export async function verifyRegionSettings({ browser, origin }) {
       );
       await page.getByText("语言和区域", { exact: true }).click();
       await page.getByTestId("region-date-form").waitFor();
+      assert.equal(
+        await page
+          .getByTestId("region-date-form")
+          .getByRole("button", { name: "保存", exact: true })
+          .isDisabled(),
+        true,
+      );
+      assert.equal(
+        await page.getByTestId("display-language-select").isDisabled(),
+        true,
+      );
+
       assert.notEqual(
         (
           await page

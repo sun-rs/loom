@@ -13,7 +13,8 @@
     "generated": [
       "loom/OfficialAppearance.generated.tsx",
       "loom/OfficialProfile.generated.tsx",
-      "loom/OfficialActivity.generated.tsx"
+      "loom/OfficialActivity.generated.tsx",
+      "loom/OfficialDateTime.generated.tsx"
     ],
     "foundation": "package.json#dependencies.raft-ui"
   },
@@ -98,9 +99,10 @@
         "loom/SettingsPage.tsx",
         "loom/OfficialAppearance.generated.tsx",
         "loom/LanguageRegionSettings.tsx",
-        "loom/NotificationSettings.tsx"
+        "loom/NotificationSettings.tsx",
+        "loom/OfficialDateTime.generated.tsx"
       ],
-      "adopted": "外观正文原声明提取、主题选择器直接依赖；其他Tab混合",
+      "adopted": "外观声明和日期/时间JSX自动提取；主题选择器直接依赖；其他Tab仍混合",
       "remaining": [
         "账户/语言区域/通知/管理/归档/用量/更新说明等仍需逐项拆分，外观的消息预览/字号组件仍沿用原模块"
       ]
