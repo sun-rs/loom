@@ -1,0 +1,776 @@
+import type { ReactElement } from "react";
+import { useCallback, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useIntl } from "react-intl";
+import { ChevronRight, CircleStop, Plus, Search, Settings } from "lucide-react";
+import { Badge, TooltipProvider, Button, DialogSurface, Skeleton } from "@botiverse/raft-ui";
+import EditChannelDialog from "./EditChannelDialog";
+import { ChannelPreferencesSection } from "./ChannelPreferencesSection";
+import Modal from "../Modal";
+import ChannelMembers, { agentStatusFallbackActivity } from "../agent/ChannelMembers";
+import AgentActivityDot from "../agent/AgentActivityDot";
+import type { ChannelAgent, ChannelExternalMember, ChannelHuman } from "../../hooks/useChannelMembers";
+import { useAgentStore } from "../../store/agentStore";
+import { useAuthStore } from "../../store/authStore";
+import { useChannelStore } from "../../store/channelStore";
+import { useServerStore } from "../../store/serverStore";
+import { canUseChannelMemberAction } from "../../utils/channelMemberPermissions";
+import AvatarSlot from "../ui/AvatarSlot";
+import SectionEyebrow from "../ui/SectionEyebrow";
+import {
+  OverflowActionRow,
+  OverflowMenuTrigger,
+  OverflowSheet,
+} from "../ui/OverflowSheet";
+import Tooltip from "../ui/Tooltip";
+
+/** v2 members strip (Artea 2026-08-06「重量随风险」): the channel IS its
+ *  people, so members are a bare strip right under the identity header —
+ *  no row chrome. Tiles are two-tone by member kind (lavender = human,
+ *  cyan = agent — Raft is the only product with agents as first-class
+ *  members, so the split is shown, not summed); the count row swaps the
+ *  drawer into its members page, the dashed add tile jumps straight
+ *  into the add flow (one hop fewer). Artea 2026-08-10: the preview may
+ *  wrap to at most three rows; overflow and add always keep their slots. */
+const STRIP_MAX_ROWS = 3;
+// DS md identity: 35px (8n + two 1.5px edges).
+const STRIP_TILE_SIZE_PX = 35;
+const STRIP_TILE_GAP_PX = 8;
+const STRIP_FALLBACK_COLUMNS = 7;
+// Every strip tile is a square identity button: sticker radius and the shared
+// keyboard focus ring; the avatar inside draws its own frame.
+const STRIP_TILE_BUTTON_CLASS = "shrink-0 rounded-sticker outline-none focus-visible:shadow-focus";
+const STRIP_PRELOAD_LIMIT = STRIP_MAX_ROWS * STRIP_FALLBACK_COLUMNS;
+export const MEMBERS_STRIP_TOOLTIP_DELAY_MS = 250;
+const NO_CHANNEL_AGENTS: ChannelAgent[] = [];
+const NO_CHANNEL_HUMANS: ChannelHuman[] = [];
+const NO_CHANNEL_EXTERNAL_MEMBERS: ChannelExternalMember[] = [];
+
+function MemberStripTooltip({
+  children,
+  label,
+}: {
+  children: ReactElement;
+  label: string;
+}) {
+  return (
+    <Tooltip
+      content={label}
+    >
+      {children}
+    </Tooltip>
+  );
+}
+
+function getStripColumnCount(width: number): number {
+  if (width <= 0) return STRIP_FALLBACK_COLUMNS;
+  return Math.max(1, Math.floor(
+    (width + STRIP_TILE_GAP_PX) / (STRIP_TILE_SIZE_PX + STRIP_TILE_GAP_PX),
+  ));
+}
+
+function getVisibleMemberLimit(total: number, columnCount: number): number {
+  const capacity = STRIP_MAX_ROWS * columnCount;
+  // The add slot is always visible. Once members overflow, reserve one more
+  // slot for +N so the strip never spills into a fourth row.
+  return total + 1 <= capacity
+    ? total
+    : Math.max(0, capacity - 2);
+}
+
+function createStripColumnStore() {
+  let columnCount = STRIP_FALLBACK_COLUMNS;
+  let observer: ResizeObserver | null = null;
+  const listeners = new Set<() => void>();
+
+  const measure = (width: number) => {
+    if (width <= 0) return;
+    const nextColumnCount = getStripColumnCount(width);
+    if (nextColumnCount === columnCount) return;
+    columnCount = nextColumnCount;
+    for (const listener of listeners) listener();
+  };
+
+  return {
+    attach(grid: HTMLDivElement | null) {
+      observer?.disconnect();
+      observer = null;
+      if (!grid) return;
+      measure(grid.getBoundingClientRect().width);
+      if (typeof ResizeObserver === "undefined") return;
+      observer = new ResizeObserver((entries) => {
+        measure(entries[0]?.contentRect.width ?? grid.getBoundingClientRect().width);
+      });
+      observer.observe(grid);
+    },
+    subscribe(listener: () => void) {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+    getSnapshot: () => columnCount,
+    getServerSnapshot: () => STRIP_FALLBACK_COLUMNS,
+  };
+}
+
+function MembersStrip({
+  channelAgents,
+  channelHumans,
+  channelExternalMembers = NO_CHANNEL_EXTERNAL_MEMBERS,
+  loading,
+  onOpen,
+  onAdd,
+}: {
+  channelAgents: ChannelAgent[];
+  channelHumans: ChannelHuman[];
+  /** Slack participants of a bridged channel (display-only, never Raft members). */
+  channelExternalMembers?: ChannelExternalMember[];
+  loading: boolean;
+  onOpen: () => void;
+  onAdd?: () => void;
+}) {
+  const { formatMessage } = useIntl();
+  const [columnStore] = useState(createStripColumnStore);
+  const columnCount = useSyncExternalStore(
+    columnStore.subscribe,
+    columnStore.getSnapshot,
+    columnStore.getServerSnapshot,
+  );
+  const totalMembers = channelHumans.length + channelAgents.length + channelExternalMembers.length;
+  const visibleMemberLimit = getVisibleMemberLimit(totalMembers, columnCount);
+  const humans = channelHumans.slice(0, visibleMemberLimit);
+  const agents = channelAgents.slice(0, Math.max(0, visibleMemberLimit - humans.length));
+  const externalMembers = channelExternalMembers.slice(
+    0,
+    Math.max(0, visibleMemberLimit - humans.length - agents.length),
+  );
+  const overflow = totalMembers - humans.length - agents.length - externalMembers.length;
+  // Machine text (the remaining count), kept out of JSX as a protocol literal.
+  const overflowLabel = `+${overflow}`;
+
+  return (
+    <div className="px-4 pb-3 pt-3" data-testid="channel-overflow-members-strip">
+      {/* DS drawer section: a 13/18 700 ink-2 heading; the entry into the
+          full member page is the whole heading row, with its count in ink-3. */}
+      <button
+        type="button"
+        onClick={onOpen}
+        className="-mx-2 flex w-[calc(100%+1rem)] items-center justify-between gap-2 rounded-control px-2 py-1 text-left outline-none hover:bg-fill-pressed focus-visible:shadow-focus"
+        data-testid="channel-overflow-members-entry"
+      >
+        <SectionEyebrow
+          tone="muted"
+          role="heading"
+          aria-level={3}
+          data-testid="channel-overflow-members-heading"
+        >
+          {formatMessage({ id: "message.chatPanel.overflow.members" })}
+        </SectionEyebrow>
+        <span className="inline-flex min-w-0 items-center gap-1 text-caption text-foreground-hint">
+          {loading
+            ? formatMessage({ id: "message.chatPanel.overflow.membersLoading" })
+            : channelExternalMembers.length > 0
+              ? formatMessage(
+                { id: "message.chatPanel.overflow.membersSummaryWithSlack" },
+                {
+                  humans: channelHumans.length,
+                  agents: channelAgents.length,
+                  slack: channelExternalMembers.length,
+                },
+              )
+              : formatMessage(
+                { id: "message.chatPanel.overflow.membersSummary" },
+                { humans: channelHumans.length, agents: channelAgents.length },
+              )}
+          <ChevronRight size={16} aria-hidden="true" />
+        </span>
+      </button>
+      <TooltipProvider delay={MEMBERS_STRIP_TOOLTIP_DELAY_MS}>
+        <div
+          ref={columnStore.attach}
+          className="mt-2 flex flex-wrap content-start items-center gap-2"
+          aria-busy={loading}
+          data-testid="channel-overflow-members-grid"
+          data-max-rows={STRIP_MAX_ROWS}
+          data-column-count={columnCount}
+        >
+          {loading && Array.from({ length: 3 }, (_, index) => (
+            <Skeleton
+              key={index}
+              variant="block"
+              className="size-[35px] shrink-0"
+              data-testid="channel-overflow-member-skeleton"
+            />
+          ))}
+          {!loading && humans.map((human) => {
+            const label = human.displayName ?? human.name;
+            return (
+              <MemberStripTooltip key={human.id} label={label}>
+                <button
+                  type="button"
+                  onClick={onOpen}
+                  aria-label={label}
+                  data-kind="human"
+                  className={STRIP_TILE_BUTTON_CLASS}
+                >
+                  <AvatarSlot
+                    context="panel-header"
+                    type="human"
+                    humanAvatarUrl={human.avatarUrl}
+                    gravatarHash={human.gravatarHash}
+                  />
+                </button>
+              </MemberStripTooltip>
+            );
+          })}
+          {!loading && agents.map((agent) => {
+            const label = agent.displayName ?? agent.name;
+            return (
+              <MemberStripTooltip key={agent.id} label={label}>
+                <button
+                  type="button"
+                  onClick={onOpen}
+                  aria-label={label}
+                  data-kind="agent"
+                  className={STRIP_TILE_BUTTON_CLASS}
+                >
+                  <AvatarSlot
+                    context="panel-header"
+                    type="agent"
+                    agentAvatarUrl={agent.avatarUrl}
+                    badge={(
+                      <AgentActivityDot
+                        agentId={agent.id}
+                        fallbackActivity={agentStatusFallbackActivity(agent.status)}
+                      />
+                    )}
+                  />
+                </button>
+              </MemberStripTooltip>
+            );
+          })}
+          {!loading && externalMembers.map((member) => {
+            const label = formatMessage(
+              { id: "message.chatPanel.overflow.slackMemberLabel" },
+              { name: member.displayName },
+            );
+            return (
+              <MemberStripTooltip key={member.id} label={label}>
+                <button
+                  type="button"
+                  onClick={onOpen}
+                  aria-label={label}
+                  data-kind="external"
+                  className={STRIP_TILE_BUTTON_CLASS}
+                >
+                  <AvatarSlot context="panel-header" type="human" humanAvatarUrl={member.avatarUrl} />
+                </button>
+              </MemberStripTooltip>
+            );
+          })}
+          {!loading && overflow > 0 && (
+            /* DS avatar stack overflow (`rf-avatars__more`): a sunken tile
+               with the remaining count in machine type. */
+            <button
+              type="button"
+              onClick={onOpen}
+              className={`${STRIP_TILE_BUTTON_CLASS} flex h-[35px] min-w-[35px] items-center justify-center bg-fill-muted px-1 font-mono text-mono-meta font-bold text-foreground-muted hover:press-overlay`}
+              data-testid="channel-overflow-members-more"
+            >
+              {overflowLabel}
+            </button>
+          )}
+          {onAdd && (
+            <Tooltip content={formatMessage({ id: "agent.channelMembers.addMember" })}>
+              {/* DS empty identity (`rf-avatar--empty`): a dashed ink-3 square
+                  with a plus — the place a new member would take. */}
+              <button
+                type="button"
+                onClick={onAdd}
+                disabled={loading}
+                aria-label={formatMessage({ id: "agent.channelMembers.addMember" })}
+                className={`${STRIP_TILE_BUTTON_CLASS} flex size-[35px] items-center justify-center border-[1.5px] border-dashed border-foreground-hint text-foreground-hint hover:bg-fill-pressed disabled:cursor-wait disabled:border-line-hairline disabled:text-foreground-disabled`}
+                data-testid="channel-overflow-members-add-tile"
+              >
+                <Plus size={20} aria-hidden="true" />
+              </button>
+            </Tooltip>
+          )}
+        </div>
+      </TooltipProvider>
+    </div>
+  );
+}
+
+/**
+ * Warm the exact avatar renderers used by the strip while the drawer is still
+ * closed. Member data is fetched by ChatPanel for mentions on page mount; this
+ * tiny offscreen surface lets uploaded images and Gravatar's session cache
+ * settle at the same time instead of making the first drawer open pay for it.
+ * The limit matches the largest strip viewport, so a large channel does not
+ * turn preloading into an unbounded background gallery.
+ */
+function MemberAvatarPreloader({
+  channelAgents,
+  channelHumans,
+  loading,
+}: {
+  channelAgents: ChannelAgent[];
+  channelHumans: ChannelHuman[];
+  loading: boolean;
+}) {
+  if (loading) return null;
+  const humans = channelHumans.slice(0, STRIP_PRELOAD_LIMIT);
+  const remaining = Math.max(0, STRIP_PRELOAD_LIMIT - humans.length);
+  const agents = channelAgents
+    .filter((agent) => agent.avatarUrl && !agent.avatarUrl.startsWith("pixel:"))
+    .slice(0, remaining);
+
+  return (
+    <div
+      className="pointer-events-none absolute size-px overflow-hidden opacity-0"
+      aria-hidden="true"
+      data-testid="channel-overflow-avatar-preloader"
+    >
+      {humans.map((human) => (
+        <AvatarSlot
+          key={human.id}
+          context="panel-header"
+          type="human"
+          humanAvatarUrl={human.avatarUrl}
+          gravatarHash={human.gravatarHash}
+        />
+      ))}
+      {agents.map((agent) => (
+        <img key={agent.id} src={agent.avatarUrl!} alt="" />
+      ))}
+    </div>
+  );
+}
+
+/**
+ * Channel topbar details and settings surface.
+ *
+ * Collects the channel-header settings actions (members / channel settings
+ * incl. activity mute / stop-all-agents) into a drawer. Search remains a
+ * sibling topbar action, so it is available without opening Settings. Every control maps to an existing
+ * API — this component introduces no new endpoints. Visibility is
+ * trimmed by the caller with the same RBAC predicates the old header
+ * buttons used: optional props left undefined simply omit the
+ * row/section.
+ *
+ * Members is a two-tone avatar STRIP (v2「重量随风险」, Artea
+ * 2026-08-06: lavender = human, cyan = agent, count row 「N humans · M
+ * agents ›」 swaps the drawer into its second-level MEMBERS VIEW; the
+ * dashed pink 「+」 tile lands directly in the add flow) — page
+ * navigation inside the drawer, size unchanged, ‹ back returns, ✕
+ * closes through the same unsaved-draft guard.
+ * v2 visual thesis: weight follows risk. The yellow header is the
+ * identity surface (name + visibility pill + description);
+ * preferences stay bare on the paper; the channel
+ * actions (visibility → Archive → Leave → Stop agents → Delete) form
+ * the drawer's SINGLE bordered zone, and Delete is the only filled
+ * row. Channel settings stays a FLAT section inside this drawer
+ * (design master final11: 平铺, sections instead of stacked modal /
+ * side sheet / second-level page).
+ */
+export interface ChannelOverflowMenuProps {
+  channelId: string;
+  channelName: string;
+  /** Opens channel search. Rendered as the header icon (v2). */
+  onSearch: () => void;
+  /** Activity-mute switch, rendered in the settings panel's preferences
+   *  group between Pin and collapse (final11: Mute is a per-user
+   *  preference). Omit when the server does not support it. */
+  activityMute?: {
+    muted: boolean;
+    busy: boolean;
+    onToggle: () => void;
+  };
+  /** Collapse-long-messages switch, rendered in the settings panel's
+   *  preferences group next to Pin. Omit when the server does not
+   *  support it. */
+  collapseLongMessages?: {
+    enabled: boolean;
+    busy: boolean;
+    onToggle: () => void;
+  };
+  /** Show the members section (false e.g. for #all with
+   *  hideHumansFromMembers). */
+  showMembers?: boolean;
+  /** Already-prefetched channel roster from ChatPanel. Passing it here keeps
+   *  the settings drawer from issuing a second request only after opening. */
+  members?: {
+    agents: ChannelAgent[];
+    humans: ChannelHuman[];
+    externalMembers: ChannelExternalMember[];
+    loading: boolean;
+    addMembers: (input: { userIds: string[]; agentIds: string[] }) => Promise<unknown>;
+    addAgent: (agentId: string) => Promise<void>;
+    removeAgent: (agentId: string) => Promise<void>;
+    addHuman: (userId: string) => Promise<void>;
+    removeHuman: (userId: string) => Promise<void>;
+    changeMemberRole: (targetType: "user" | "agent", memberId: string, role: "member" | "admin") => Promise<void>;
+    roleChangeFailed: boolean;
+  };
+  /** Settings entry follows the existing management/leave policy.
+   *  Individual actions retain their own capability checks. */
+  settings?: {
+    initialName: string;
+    initialDescription: string;
+    onLeaveChannel?: () => Promise<void> | void;
+  };
+  /** Danger-zone row. Omit unless joined && canManageAgents. */
+  onStopAllAgents?: () => void;
+  /** Controlled open state — used when another surface (e.g. the archived
+   *  channel banner's Unarchive link) must open this drawer directly.
+   *  Omit for the self-triggered usage. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export default function ChannelOverflowMenu({
+  channelId,
+  channelName,
+  onSearch,
+  activityMute,
+  collapseLongMessages,
+  showMembers = false,
+  members,
+  settings,
+  onStopAllAgents,
+  open: controlledOpen,
+  onOpenChange,
+}: ChannelOverflowMenuProps) {
+  const { formatMessage } = useIntl();
+  const [internalOpen, setInternalOpen] = useState(false);
+  const [showUnsavedPrompt, setShowUnsavedPrompt] = useState(false);
+  const [unsavedCanSave, setUnsavedCanSave] = useState(true);
+  const [unsavedBusy, setUnsavedBusy] = useState(false);
+  // Drawer-internal page navigation (task #187): "members" swaps the
+  // sheet into the members page (bare mode — the sheet SIZE is fixed);
+  // the root view stays mounted underneath so a dirty settings draft
+  // survives root → members → back. membersInitialView lets the strip's
+  // dashed 「+」 tile land DIRECTLY in the add flow (v2: one hop fewer).
+  const [view, setView] = useState<"root" | "members">("root");
+  const [membersInitialView, setMembersInitialView] = useState<"add" | undefined>(undefined);
+  const open = controlledOpen ?? internalOpen;
+  // v2 identity header: visibility badge reads the live channel. DMs live in
+  // the store's dmChannels list, so look there too (task #703: this sheet IS
+  // the DM settings surface as well — same component as channels).
+  const channel = useChannelStore((s) =>
+    s.channels.find((c) => c.id === channelId) ?? s.dmChannels.find((c) => c.id === channelId));
+  const isDmChannel = channel?.type === "dm";
+  const currentUserId = useAuthStore((s) => s.user?.id);
+  const currentServerId = useServerStore((s) => s.current?.id);
+  const serverMembers = useServerStore((s) => s.members);
+  const isAllChannel = channel?.name === "all" && channel?.type === "channel";
+  const canAddMembers = canUseChannelMemberAction({
+    currentUserId,
+    currentServerId,
+    channelServerId: channel?.serverId,
+    channelHumans: members?.humans ?? [],
+    serverMembers,
+    hasChannelMemberCapability: channel?.channelCapabilities?.addChannelMembers === true,
+    isAllChannel,
+  }) && !channel?.archivedAt;
+  // task #187: the flat settings panel carries no Drawer chrome, so the
+  // host drawer owns the unsaved-draft guard — a close attempt while a
+  // draft exists opens the save/discard prompt (final6) instead of
+  // silently blocking or discarding. Refs keep dirtiness and the save
+  // callback out of this component's render cycle.
+  const settingsDirtyRef = useRef(false);
+  const settingsSaveAndCloseAvailableRef = useRef(true);
+  const settingsSaveRef = useRef<(() => Promise<boolean>) | null>(null);
+  const postCloseActionRef = useRef<(() => void) | null>(null);
+  const setOpen = useCallback((next: boolean) => {
+    if (!next) {
+      settingsDirtyRef.current = false;
+      settingsSaveAndCloseAvailableRef.current = true;
+      postCloseActionRef.current = null;
+      setView("root");
+      setMembersInitialView(undefined);
+    }
+    if (onOpenChange) onOpenChange(next);
+    else setInternalOpen(next);
+  }, [onOpenChange]);
+  const close = useCallback(() => setOpen(false), [setOpen]);
+  const handleOpen = useCallback(() => setOpen(true), [setOpen]);
+  // The members page ✕ rides the same draft guard as every other close
+  // affordance; row → profile keeps the historical unguarded close (the
+  // old drawer panel behavior).
+  const guardedClose = useCallback((postCloseAction?: () => void) => {
+    if (settingsDirtyRef.current) {
+      postCloseActionRef.current = postCloseAction ?? null;
+      setUnsavedCanSave(settingsSaveAndCloseAvailableRef.current);
+      setShowUnsavedPrompt(true);
+      return;
+    }
+    close();
+    postCloseAction?.();
+  }, [close]);
+  const handleSearch = useCallback(() => guardedClose(onSearch), [guardedClose, onSearch]);
+  const handleCloseGuarded = useCallback(() => {
+    postCloseActionRef.current = null;
+    setUnsavedCanSave(settingsSaveAndCloseAvailableRef.current);
+    setShowUnsavedPrompt(true);
+  }, []);
+  const handleOpenMembers = useCallback(() => {
+    setMembersInitialView(undefined);
+    setView("members");
+  }, []);
+  const handleAddMembers = useCallback(() => {
+    if (!canAddMembers) return;
+    setMembersInitialView("add");
+    // The add picker opens straight away: fetch the agent roster it lists.
+    void useAgentStore.getState().loadAgents();
+    setView("members");
+  }, [canAddMembers]);
+  const handleBackToRoot = useCallback(() => setView("root"), []);
+  const prefetchedMembers = useMemo(() => members ? {
+    channelAgents: members.agents,
+    channelHumans: members.humans,
+    channelExternalMembers: members.externalMembers,
+    loading: members.loading,
+    addMembers: members.addMembers,
+    addAgent: members.addAgent,
+    removeAgent: members.removeAgent,
+    addHuman: members.addHuman,
+    removeHuman: members.removeHuman,
+    changeMemberRole: members.changeMemberRole,
+    roleChangeFailed: members.roleChangeFailed,
+  } : undefined, [members]);
+  const handleKeepEditing = useCallback(() => {
+    postCloseActionRef.current = null;
+    setShowUnsavedPrompt(false);
+  }, []);
+  const handleUnsavedPromptClose = useCallback(() => {
+    if (unsavedBusy) return;
+    handleKeepEditing();
+  }, [unsavedBusy, handleKeepEditing]);
+  const handleDiscardAndClose = useCallback(() => {
+    const postCloseAction = postCloseActionRef.current;
+    postCloseActionRef.current = null;
+    setShowUnsavedPrompt(false);
+    close();
+    postCloseAction?.();
+  }, [close]);
+  const handleSaveAndClose = useCallback(async () => {
+    setUnsavedBusy(true);
+    try {
+      const saved = (await settingsSaveRef.current?.()) ?? true;
+      if (saved) {
+        const postCloseAction = postCloseActionRef.current;
+        postCloseActionRef.current = null;
+        setShowUnsavedPrompt(false);
+        close();
+        postCloseAction?.();
+      }
+    } finally {
+      setUnsavedBusy(false);
+    }
+  }, [close]);
+
+  return (
+    <>
+      <OverflowMenuTrigger
+        labelId="message.chatPanel.searchChannel"
+        onClick={handleSearch}
+        icon={<Search size={22} />}
+        testId="channel-topbar-search"
+      />
+      <OverflowMenuTrigger
+        labelId="message.chatPanel.overflow.open"
+        onClick={handleOpen}
+        icon={<Settings size={22} />}
+        testId="channel-overflow-trigger"
+      />
+      {showMembers && members && (
+        <MemberAvatarPreloader
+          channelAgents={members.agents}
+          channelHumans={members.humans}
+          loading={members.loading}
+        />
+      )}
+      <OverflowSheet
+        open={open}
+        onOpenChange={setOpen}
+        title={(
+          /* v2「重量随风险」 (Artea 2026-08-06): the yellow header is the
+             identity surface — name + visibility pill live ON the title
+             row, the description below it, search/mute-state ride the
+             header instead of body rows. */
+          <span className="flex min-w-0 items-center gap-2">
+            <span className="truncate" data-testid="channel-overflow-title-text">
+              {/* A DM has no "#" name — the title is the peer's plain name. */}
+              {isDmChannel
+                ? channelName
+                : formatMessage({ id: "message.chatPanel.overflow.channelName" }, { name: channelName })}
+            </span>
+            {channel && (
+              /* Visibility is a fact about the place, not a status: a neutral
+                 machine label (DS `rf-tag`), never a colour. */
+              <Badge
+                appearance="outline"
+                className="shrink-0"
+                data-testid="channel-overflow-visibility-badge"
+              >
+                {isDmChannel
+                  ? formatMessage({ id: "message.chatPanel.dmOverflow.dmBadge" })
+                  : channel.type === "private"
+                  ? formatMessage({ id: "message.chatPanel.overflow.visibilityPrivate" })
+                  : channel.type === "joint"
+                    ? formatMessage({ id: "channel.edit.jointChannelBadge" })
+                    : formatMessage({ id: "message.chatPanel.overflow.visibilityPublic" })}
+              </Badge>
+            )}
+          </span>
+        )}
+        subtitle={settings?.initialDescription ? (
+          <p className="truncate text-caption text-foreground-hint" data-testid="channel-overflow-identity-desc">
+            {settings.initialDescription}
+          </p>
+        ) : undefined}
+        descriptionId="message.chatPanel.overflow.open"
+        closeLabelId="message.chatPanel.overflow.close"
+        hideDesktopClose
+        closeGuardRef={settingsDirtyRef}
+        onCloseGuarded={handleCloseGuarded}
+        bare={view === "members"}
+        testId="channel-overflow-sheet"
+      >
+        {/* Root view stays MOUNTED (hidden) while the members page shows,
+            so an unsaved name/description draft survives the round trip. */}
+        <div className={view === "members" ? "hidden" : undefined}>
+          {showMembers && (
+            <MembersStrip
+              channelAgents={members?.agents ?? NO_CHANNEL_AGENTS}
+              channelHumans={members?.humans ?? NO_CHANNEL_HUMANS}
+              channelExternalMembers={members?.externalMembers ?? NO_CHANNEL_EXTERNAL_MEMBERS}
+              loading={members?.loading ?? true}
+              onOpen={handleOpenMembers}
+              onAdd={canAddMembers ? handleAddMembers : undefined}
+            />
+          )}
+
+          {settings && (
+            <EditChannelDialog
+              channelId={channelId}
+              initialName={settings.initialName}
+              initialDescription={settings.initialDescription}
+              onLeaveChannel={settings.onLeaveChannel}
+              onClose={close}
+              presentation="panel"
+              dirtyRef={settingsDirtyRef}
+              saveAndCloseAvailableRef={settingsSaveAndCloseAvailableRef}
+              saveRef={settingsSaveRef}
+              activityMute={activityMute}
+              collapseLongMessages={collapseLongMessages}
+              stopAgentsRow={onStopAllAgents ? (
+                /* v2: agent runtime joins the single action zone as a
+                   plain row (reversible — agents can be restarted), NOT
+                   a danger-red separate group. */
+                <OverflowActionRow
+                  icon={<CircleStop size={16} />}
+                  label={formatMessage({ id: "message.chatPanel.overflow.stopAgents" })}
+                  ariaLabel={formatMessage({ id: "message.chatPanel.stopAllAgents" })}
+                  onClick={onStopAllAgents}
+                  testId="channel-overflow-stop-agents"
+                />
+              ) : undefined}
+            />
+          )}
+
+          {/* task #703: a DM shares THIS sheet (same component, same
+              language) but has no name/description form — its root view is
+              the two-participant strip plus the shared preferences block.
+              Per-DM mute stays out (documented non-feature). */}
+          {isDmChannel && (
+            <div className="px-4 pb-2">
+              <ChannelPreferencesSection
+                channelId={channelId}
+                isPanel
+                activityMute={activityMute}
+                collapseLongMessages={collapseLongMessages}
+              />
+            </div>
+          )}
+        </div>
+
+        {view === "members" && (
+          <ChannelMembers
+            presentation="page"
+            channelId={channelId}
+            initialView={membersInitialView}
+            prefetchedMembers={prefetchedMembers}
+            onBack={handleBackToRoot}
+            onClose={guardedClose}
+            onRequestClose={close}
+          />
+        )}
+      </OverflowSheet>
+
+      {showUnsavedPrompt && (
+        /* Closing the drawer with unsaved settings asks first. Only
+           name/description drafts can be saved here; an invitation draft
+           must be sent from its own form or explicitly discarded. Three
+           actions, so a plain Modal instead of the two-action ConfirmDialog. */
+        <Modal
+          onClose={handleUnsavedPromptClose}
+          layer={1}
+        >
+          {/* DS Dialog surface (raft-ui's DialogSurface draws the frame), 20
+              padding; title 17/22 700, body 15/20 ink-2; Keep is ghost,
+              Discard (loses the draft, reversible) orange, Save pink. */}
+          <DialogSurface
+            className="w-full max-w-[400px] p-5"
+            role="dialog"
+            aria-modal="true"
+            data-testid="channel-overflow-unsaved-prompt"
+          >
+            <h2 className="text-headline">
+              {formatMessage({ id: "message.chatPanel.overflow.unsavedTitle" })}
+            </h2>
+            <p className="mt-1.5 text-subhead text-foreground-muted">
+              {formatMessage({
+                id: unsavedCanSave
+                  ? "message.chatPanel.overflow.unsavedMessage"
+                  : "message.chatPanel.overflow.unsavedInvitationMessage",
+              })}
+            </p>
+            <div className="mt-5 flex flex-wrap justify-end gap-2">
+              <Button
+                onClick={handleKeepEditing}
+                disabled={unsavedBusy}
+                size="lg"
+                variant="ghost"
+              >
+                {formatMessage({ id: "message.chatPanel.overflow.keepEditing" })}
+              </Button>
+              <Button
+                onClick={handleDiscardAndClose}
+                disabled={unsavedBusy}
+                size="lg"
+                variant="warning"
+                data-testid="channel-overflow-unsaved-discard"
+              >
+                {formatMessage({ id: "message.chatPanel.overflow.discardChanges" })}
+              </Button>
+              {unsavedCanSave && (
+                <Button
+                  onClick={handleSaveAndClose}
+                  disabled={unsavedBusy}
+                  size="lg"
+                  variant="accent"
+                  data-testid="channel-overflow-unsaved-save"
+                >
+                  {unsavedBusy
+                    ? formatMessage({ id: "channel.edit.saving" })
+                    : formatMessage({ id: "message.chatPanel.overflow.saveAndClose" })}
+                </Button>
+              )}
+            </div>
+          </DialogSurface>
+        </Modal>
+      )}
+    </>
+  );
+}

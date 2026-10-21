@@ -1,47 +1,8 @@
-// Structurally extracted from official MessageItem.tsx a98ae00; renderer unchanged.
-import { useIntl } from "react-intl";
-import {
-  MessageAttachmentDiffSummary,
-  MessageAttachmentDiffAddition,
-  MessageAttachmentDiffDeletion,
-} from "raft-ui";
-import type { DiffAttachmentPreview } from "../packages/web/src/components/message/attachmentPreview.ts";
 import { useState, useEffect } from "react";
-import { readStructuredPreview } from "./structured-preview.ts";
-export function DiffPatchStatsLine({
-  preview,
-}: {
-  preview: DiffAttachmentPreview | null;
-}) {
-  const { formatMessage } = useIntl();
-  if (!preview) {
-    return (
-      <span className="text-foreground-muted ">
-        {formatMessage({ id: "message.messageItem.diffPreview" })}
-      </span>
-    );
-  }
-
-  const { files, hunks, additions, deletions } = preview.stats;
-
-  return (
-    <MessageAttachmentDiffSummary className="inline-flex min-w-0 items-center">
-      <span className="text-foreground-muted ">
-        {formatMessage(
-          { id: "message.messageItem.diffStats" },
-          { fileCount: files, hunkCount: hunks },
-        )}
-      </span>
-      <MessageAttachmentDiffAddition>
-        +{additions}
-      </MessageAttachmentDiffAddition>
-      <MessageAttachmentDiffDeletion>
-        -{deletions}
-      </MessageAttachmentDiffDeletion>
-    </MessageAttachmentDiffSummary>
-  );
-}
-
+import type { DiffAttachmentPreview } from "../packages/web/src/components/message/attachmentPreview";
+import { readStructuredPreview } from "./structured-preview";
+import { DiffPatchStatsLine } from "./OfficialDiffStats.generated";
+export { DiffPatchStatsLine } from "./OfficialDiffStats.generated";
 export default function DiffSummary({ id }: { id: string }) {
   const [preview, setPreview] = useState<DiffAttachmentPreview | null>(null);
   useEffect(() => {

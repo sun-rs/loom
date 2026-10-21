@@ -55,7 +55,9 @@
       "loom/OfficialMessageItem.generated.tsx",
       "loom/OfficialAttachmentCommentsPanel.generated.tsx",
       "loom/OfficialAttachmentPreviewSurfaces.generated.tsx",
-      "loom/OfficialAttachmentMetaText.generated.tsx"
+      "loom/OfficialAttachmentMetaText.generated.tsx",
+      "loom/OfficialWorkspace.generated.tsx",
+      "loom/OfficialDiffStats.generated.tsx"
     ],
     "foundation": "package.json#dependencies.raft-ui"
   },
@@ -233,10 +235,15 @@
         "loom/WorkspaceFileTree.tsx",
         "loom/WorkspaceFileContent.tsx",
         "loom/OfficialAttachmentChip.generated.tsx",
-        "loom/OfficialMarkdownContent.generated.tsx"
+        "loom/OfficialMarkdownContent.generated.tsx",
+        "loom/OfficialWorkspace.generated.tsx",
+        "loom/OfficialDiffStats.generated.tsx",
+        "loom/OfficialAttachmentPreviewSurfaces.generated.tsx",
+        "loom/OfficialAttachmentCommentsPanel.generated.tsx"
       ],
       "remaining": [
-        "附件卡片和共享Markdown/代码展示已依赖化；预览外壳/评论/文件树/diff仍有本地组合和构建变换，保持根目录与访问权限"
+        "文件树/原文与Markdown/树头部控件/Diff统计及附件预览评论已来自锁定原件；ChannelWorkspacePanel外框和Loom特有Git切换/根目录选择归入下一批页面组合核对",
+        "根目录授权、按需读取、长文件限额、图片外链抑制和真实错误仍由Loom拥有；工作区diff为有界文本显示，不宣称官方结构化附件diff"
       ]
     },
     {
@@ -263,16 +270,11 @@
     "Loom business state, access control and lifecycle remain local owners"
   ],
   "remainingBatchPlan": {
-    "estimate": "3–4 further substantial implementation/acceptance rounds after chat-host batch; estimate, not a completion guarantee",
+    "estimate": "2–3 further substantial implementation/acceptance rounds after workspace batch; estimate, not a completion guarantee",
     "fixedSource": "db5e399 / raft-ui 0.10.5; no automatic chase of newer releases",
     "batches": [
       {
-        "scope": "workspace file tree/diff presentation and attachment card bindings",
-        "rounds": "1",
-        "exit": "native presentation binding and scoped preview/comment/file/diff verification; root and read permissions unchanged"
-      },
-      {
-        "scope": "shell/responsive composition plus Role/Computer/Settings remaining sections",
+        "scope": "shell/responsive composition plus Role/Computer/Settings and remaining workspace host chrome",
         "rounds": "1–2",
         "exit": "official retained layout declarations or explicitly documented Loom-specific composition; no silent bespoke styling"
       },

@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 const read = (p) => readFileSync(`frontends/raft/${p}`, "utf8");
 test("activity uses the upstream compact segmented filter toolbar, not a form field", () => {
-  const local = read("loom/ActivityFilters.tsx");
+  const local = read("loom/OfficialActivityFilters.generated.tsx");
   const source = read("packages/web/src/components/thread/ThreadsInbox.tsx");
   for (const name of [
     "SegmentedControl",
@@ -31,7 +31,10 @@ test("activity header exposes durable counts, all-read and icon refresh; rows us
   assert.match(header, /unreadActivityCount/);
   assert.match(header, /全部已读/);
   assert.match(header, /captureUnreadActivity/);
-  assert.match(read("loom/ActivityMessageRow.tsx"), /conversation-card-avatar/);
+  assert.match(
+    read("loom/ActivityMessageRow.tsx"),
+    /<InboxItemLeading>[\s\S]*<OfficialConversationAvatar/,
+  );
   assert.match(read("loom/ActivityMessageRow.tsx"), /unreadCount > 0/);
   assert.doesNotMatch(read("loom/TasksPage.tsx"), /rows.length\} \/ \{total/);
 });
@@ -51,9 +54,16 @@ test("bulk-read uses the native toolbar action slot and unread-only visibility",
   const header = read("loom/ActivityHeader.tsx");
   assert.match(header, /renderToolbar\(/);
   assert.match(header, /counts\?\.unread.*> 0/);
-  assert.match(header, /inbox-mark-all-read/);
-  assert.match(header, /全部标记为已读/);
-  const filters = read("loom/ActivityFilters.tsx");
+  assert.match(header, /<OfficialActivityMarkAll/);
+  assert.match(
+    read("loom/OfficialActivityHeader.generated.tsx"),
+    /inbox-mark-all-read/,
+  );
+  assert.match(
+    read("loom/OfficialActivityHeader.generated.tsx"),
+    /thread.markAllRead.label/,
+  );
+  const filters = read("loom/OfficialActivityFilters.generated.tsx");
   assert.match(filters, /border-line-seam/);
   assert.match(filters, /\{actions\}/);
 });

@@ -1,3 +1,7 @@
+import {
+  WorkspaceTreeHeader,
+  TREE_ROW_CLASS,
+} from "./OfficialWorkspace.generated";
 import WorkspaceDocument from "./WorkspaceDocument.tsx";
 import { useEffect, useState } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
@@ -10,7 +14,7 @@ import {
   SegmentedControlItem,
   SegmentedControlLabel,
 } from "raft-ui";
-import { ArrowLeft, RefreshCw, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { SelectField } from "./ManagementUi.tsx";
 import { useResizablePanel } from "../packages/web/src/hooks/useResizablePanel.ts";
 import WorkspaceFileTree from "./WorkspaceFileTree.tsx";
@@ -98,17 +102,6 @@ export default function ChannelWorkspacePanel({
             </span>
           )}
         </div>
-        <button
-          type="button"
-          className="text-foreground-placeholder  hover:text-foreground-strong  transition-colors"
-          aria-label="刷新工作区"
-          onClick={() => {
-            setSelection(undefined);
-            setVersion((v) => v + 1);
-          }}
-        >
-          <RefreshCw size={12} />
-        </button>
       </div>
       {error ? (
         <p role="alert" className="p-3 text-sm text-danger">
@@ -132,35 +125,34 @@ export default function ChannelWorkspacePanel({
               onPointerUp={resize.handleResizeEnd}
               onPointerCancel={resize.handleResizeEnd}
             />
-            <div className="flex items-center justify-between border-b border-line-muted  px-3 py-2">
-              <SegmentedControl
-                value={mode}
-                onValueChange={(v) => {
-                  setMode(v);
-                  setSelection(undefined);
-                }}
-                aria-label="工作区视图"
-              >
-                <SegmentedControlItem value="files">
-                  <SegmentedControlLabel>文件</SegmentedControlLabel>
-                </SegmentedControlItem>
-                <SegmentedControlItem value="changes">
-                  <SegmentedControlLabel>Git 变更</SegmentedControlLabel>
-                </SegmentedControlItem>
-              </SegmentedControl>
-              <button
-                type="button"
-                aria-label="显示隐藏文件"
-                aria-pressed={hidden}
-                className="flex size-8 shrink-0 items-center justify-center text-foreground-placeholder  hover:text-foreground-strong "
-                onClick={() => {
-                  setHidden((v) => !v);
-                  setSelection(undefined);
-                }}
-              >
-                {hidden ? <Eye size={13} /> : <EyeOff size={13} />}
-              </button>
-            </div>
+            <WorkspaceTreeHeader
+              showHiddenFiles={hidden}
+              handleToggleHiddenFiles={(value) => {
+                setHidden(value);
+                setSelection(undefined);
+              }}
+              handleRefresh={() => {
+                setSelection(undefined);
+                setVersion((v) => v + 1);
+              }}
+              viewSelector={
+                <SegmentedControl
+                  value={mode}
+                  onValueChange={(v) => {
+                    setMode(v);
+                    setSelection(undefined);
+                  }}
+                  aria-label="工作区视图"
+                >
+                  <SegmentedControlItem value="files">
+                    <SegmentedControlLabel>文件</SegmentedControlLabel>
+                  </SegmentedControlItem>
+                  <SegmentedControlItem value="changes">
+                    <SegmentedControlLabel>Git 变更</SegmentedControlLabel>
+                  </SegmentedControlItem>
+                </SegmentedControl>
+              }
+            />
             <div
               className="flex-1 overflow-y-auto py-1"
               key={`${rootId}:${version}:${hidden}:${mode}`}
@@ -276,7 +268,7 @@ function WorkspaceChanges({
         <button
           key={e.path}
           type="button"
-          className={`flex w-full items-center gap-1 py-1 px-2 text-sm text-left transition-colors ${selectedPath === e.path ? "bg-accent-soft  border-r  border-line-strong " : "hover:bg-fill-muted "}`}
+          className={`${TREE_ROW_CLASS} pl-2 ${selectedPath === e.path ? "bg-info-soft" : "hover:bg-fill-pressed"}`}
           aria-label={`查看差异 ${e.path}`}
           onClick={() => onSelect({ path: e.path, diff: true })}
         >

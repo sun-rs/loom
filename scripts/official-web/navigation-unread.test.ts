@@ -27,7 +27,7 @@ test("mobile Home adopts official SidebarItem/count composition from the same su
   );
   assert.match(entry, /<SidebarItem/);
   assert.match(entry, /<SidebarItemCount/);
-  assert.match(entry, /min-h-11 gap-3 py-2.5 text-body font-semibold/);
+  assert.match(entry, /loom-mobile-home-action/);
   assert.match(entry, /unreadCount > 99 \? "99\+" : unreadCount/);
   const sidebar = readFileSync(
     "frontends/raft/loom/ChannelSidebar.tsx",
@@ -43,9 +43,26 @@ test("mobile Home adopts official SidebarItem/count composition from the same su
 test("mobile saved entry shares official Home row sizing while desktop remains compact", async () => {
   const { readFileSync } = await import("node:fs");
   const s = readFileSync("frontends/raft/loom/SavedNav.tsx", "utf8");
+  assert.match(s, /loom-mobile-home-action/);
   assert.match(
     s,
-    /max-md:min-h-11 max-md:gap-3 max-md:py-2.5 max-md:text-body max-md:font-semibold/,
+    /size=\{14\} className="shrink-0 max-md:text-foreground-hint"/,
   );
-  assert.match(s, /max-md:size-5 max-md:text-foreground-hint/);
+});
+
+test("mobile Home sizing follows the recorded native compact exception, not old Web row defaults", async () => {
+  const { readFileSync } = await import("node:fs");
+  const css = readFileSync("frontends/raft/loom/mobile.css", "utf8");
+  assert.match(
+    css,
+    /\.loom-mobile-home-action,[\s\S]*?height: 32px;[\s\S]*?font-size: 14px;/,
+  );
+  assert.match(
+    css,
+    /\.loom-mobile-home-action > svg,[\s\S]*?width: 14px;[\s\S]*?height: 14px;/,
+  );
+  assert.match(
+    readFileSync("docs/evo/mobile-component-metrics.zh-CN.md", "utf8"),
+    /655975433b8492a8f4eef7bbce1b913140bc7485/,
+  );
 });

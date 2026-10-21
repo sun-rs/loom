@@ -1,16 +1,11 @@
 import { uiActionProps } from "./ui-action-props.ts";
 import { useState } from "react";
-import ReactMarkdown from "react-markdown";
-import {
-  Button,
-  SegmentedControl,
-  SegmentedControlItem,
-  SegmentedControlLabel,
-} from "raft-ui";
+import { Button } from "raft-ui";
 import {
   WORKSPACE_MARKDOWN_COMPONENTS,
-  WORKSPACE_MARKDOWN_REMARK_PLUGINS,
-} from "./WorkspaceNativeParts.tsx";
+  WorkspaceTextView,
+  WorkspaceViewToggle,
+} from "./OfficialWorkspace.generated";
 const components = {
   ...WORKSPACE_MARKDOWN_COMPONENTS,
   img: ({ alt }: { alt?: string }) => (
@@ -38,45 +33,18 @@ export default function WorkspaceFileContent({
   return (
     <>
       {markdown && (
-        <SegmentedControl
-          value={mode}
-          onValueChange={setMode}
-          aria-label="文件视图"
-          className="mb-3"
-        >
-          <SegmentedControlItem
-            value="raw"
-            data-testid="workspace-file-view-raw"
-          >
-            <SegmentedControlLabel>原文</SegmentedControlLabel>
-          </SegmentedControlItem>
-          <SegmentedControlItem
-            value="preview"
-            data-testid="workspace-file-view-preview"
-          >
-            <SegmentedControlLabel>预览</SegmentedControlLabel>
-          </SegmentedControlItem>
-        </SegmentedControl>
+        <WorkspaceViewToggle viewMode={mode} setViewMode={setMode} />
       )}
       {truncated && (
         <p role="status" className="mb-2 text-xs text-foreground-muted">
           内容较长，仅显示预览范围。
         </p>
       )}
-      {markdown && mode === "preview" ? (
-        <div className="text-sm text-foreground-strong  break-words">
-          <ReactMarkdown
-            remarkPlugins={WORKSPACE_MARKDOWN_REMARK_PLUGINS}
-            components={components}
-          >
-            {body}
-          </ReactMarkdown>
-        </div>
-      ) : (
-        <pre className="whitespace-pre-wrap break-words text-sm font-mono text-foreground-strong ">
-          {body}
-        </pre>
-      )}
+      <WorkspaceTextView
+        text={body}
+        preview={markdown && mode === "preview"}
+        components={components}
+      />
       {lines.length > lineLimit && (!markdown || mode === "raw") && (
         <Button
           {...uiActionProps.secondary}

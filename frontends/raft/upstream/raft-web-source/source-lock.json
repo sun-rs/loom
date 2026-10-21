@@ -77,6 +77,8 @@
     "packages/web/src/components/message/AttachmentMetaText.tsx": "8ac4ba9326bd7f755b69f2e3d721e7d62377e95c34ce44eae532e1d84a1cfabc",
     "packages/web/src/components/message/AttachmentCommentsPanel.tsx": "3dd67b4896d9ec0e1c3e7c641505f8127c2519fb2ac5eff106f308717be5b0db",
     "packages/web/src/components/message/attachmentPreviewSurfaces.tsx": "da9ca670a5fe4fa63894a48b76b3f4f897be868a55769d33837b25cb3e469e7d",
-    "packages/web/src/components/message/composerHost.ts": "de60dcc3e5bf12c92bf16329b9a3d571126b51bd3b9ebcd530ef9b622b91b546"
+    "packages/web/src/components/message/composerHost.ts": "de60dcc3e5bf12c92bf16329b9a3d571126b51bd3b9ebcd530ef9b622b91b546",
+    "packages/web/src/components/agent/AgentWorkspace.tsx": "92b14f70388fb59748e0ec903432f826aaa9224f50696e1f9182e248235a6d46",
+    "packages/web/src/components/channel/ChannelOverflowMenu.tsx": "7314d8f67ff2e70cfd1faeba292a6998e20e8aff109662f4202b98da45add0af"
   }
 }

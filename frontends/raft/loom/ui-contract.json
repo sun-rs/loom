@@ -427,6 +427,27 @@
       ],
       "rule": "Generate full hosts with explicit Loom identity, authority, send/draft and comment bindings. Preserve accessible timestamp compatibility. No native provider media or upstream business store is enabled.",
       "checks": ["scripts/official-web/chat-host-source.test.mjs"]
+    },
+    {
+      "id": "official-workspace",
+      "owner": "Raft db5e399 AgentWorkspace TreeNode, markdown map, tree header, preview/raw JSX; MessageItem DiffPatchStatsLine",
+      "sources": [
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/agent/AgentWorkspace.tsx",
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/message/MessageItem.tsx"
+      ],
+      "bindings": [
+        "OfficialWorkspace.generated.tsx",
+        "OfficialDiffStats.generated.tsx",
+        "WorkspaceNativeParts.tsx",
+        "WorkspaceFileContent.tsx",
+        "ChannelWorkspacePanel.tsx",
+        "DiffSummary.tsx"
+      ],
+      "rule": "Native declarations/JSX, exact styles and 32px header controls. Loom supplies tree callbacks, rooted bounded content and Git selector slot. Accessible labels/expanded state retained. Root shell and Git rows are explicit local compositions; remote Markdown images stay suppressed.",
+      "checks": [
+        "scripts/official-web/workspace-source.test.mjs",
+        "scripts/official-web/workspace-browser.mjs"
+      ]
     }
   ],
   "exceptions": [

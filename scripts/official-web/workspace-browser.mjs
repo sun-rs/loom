@@ -55,7 +55,36 @@ export async function verifyWorkspace({ browser, origin, client, channel }) {
       false,
     );
     await page.getByTestId("panel-tab-workspace").click({ timeout: 5000 });
+    const controls = [];
+    for (const name of ["刷新", "已隐藏隐藏文件"]) {
+      const control = page
+        .getByTestId("channel-workspace")
+        .getByRole("button", { name, exact: true });
+      const hit = await control.evaluate((el) => {
+        const r = el.getBoundingClientRect(),
+          top = document.elementFromPoint(
+            r.x + r.width / 2,
+            r.y + r.height / 2,
+          );
+        return {
+          width: r.width,
+          height: r.height,
+          clickable: top === el || el.contains(top),
+        };
+      });
+      assert.equal(hit.width, 32);
+      assert.equal(hit.height, 32);
+      assert.ok(hit.clickable);
+      controls.push({ name, ...hit });
+    }
     await page.getByRole("button", { name: "展开 src", exact: true }).click();
+    assert.equal(
+      await page
+        .getByRole("button", { name: "收起 src", exact: true })
+        .getAttribute("aria-expanded"),
+      "true",
+    );
+
     await page
       .getByRole("button", { name: "打开 demo.md", exact: true })
       .click();
@@ -177,6 +206,8 @@ export async function verifyWorkspace({ browser, origin, client, channel }) {
         0,
       ),
       workspaceChunkAbsentBeforeOpen: true,
+      nativeHeaderControls: controls,
+      accessibleDirectoryExpansion: true,
       operations: requests.map((r) => ({
         operation: r.operation,
         path: r.path,
