@@ -19,7 +19,11 @@
       "loom/OfficialSettingsSections.generated.tsx",
       "loom/OfficialArchivedChannels.generated.tsx",
       "loom/OfficialSettingsSidebar.generated.tsx",
-      "loom/OfficialFormField.generated.tsx"
+      "loom/OfficialFormField.generated.tsx",
+      "loom/OfficialSearchEntityRow.generated.tsx",
+      "loom/OfficialSearchHomeRow.generated.tsx",
+      "loom/OfficialActivityEmpty.generated.tsx",
+      "loom/OfficialTaskModalHead.generated.tsx"
     ],
     "foundation": "package.json#dependencies.raft-ui"
   },
@@ -28,8 +32,13 @@
       "id": "search",
       "name": "搜索",
       "status": "mixed",
-      "sources": ["loom/SearchOverlayContent.tsx", "loom/DiscoveryPage.tsx"],
-      "adopted": "官方控件、旧页面及Loom查询绑定混合",
+      "sources": [
+        "loom/SearchOverlayContent.tsx",
+        "loom/DiscoveryPage.tsx",
+        "loom/OfficialSearchEntityRow.generated.tsx",
+        "loom/OfficialSearchHomeRow.generated.tsx"
+      ],
+      "adopted": "官方控件、旧页面及Loom查询绑定混合；搜索目标行和常用对象行由锁定官方源码生成，保留菜单焦点ref兼容接线",
       "remaining": ["拆开搜索结果/浮层的展示与查询适配，撤除保留场景的重复布局"]
     },
     {
@@ -48,8 +57,12 @@
       "id": "activity",
       "name": "动态",
       "status": "mixed",
-      "sources": ["loom/DiscoveryPage.tsx", "loom/ActivityMessageRow.tsx"],
-      "adopted": "raft-ui InboxItem及Loom聚合/跳转接线",
+      "sources": [
+        "loom/DiscoveryPage.tsx",
+        "loom/ActivityMessageRow.tsx",
+        "loom/OfficialActivityEmpty.generated.tsx"
+      ],
+      "adopted": "raft-ui InboxItem及Loom聚合/跳转接线；空状态原JSX提取，筛选语义绑定Loom",
       "remaining": [
         "页面/列表/预览/分页组合仍是本地维护，需提取官方完整展示边界"
       ]
@@ -58,8 +71,12 @@
       "id": "tasks",
       "name": "任务",
       "status": "mixed",
-      "sources": ["loom/TasksPage.tsx", "loom/TaskDetail.tsx"],
-      "adopted": "官方任务组件、提取变换及本地任务状态绑定",
+      "sources": [
+        "loom/TasksPage.tsx",
+        "loom/TaskDetail.tsx",
+        "loom/OfficialTaskModalHead.generated.tsx"
+      ],
+      "adopted": "官方任务组件、提取变换及本地任务状态绑定；TaskModalHead完整非导入声明生成、ShowMoreToggle原文件依赖，删除任务头部隐式Vite属性替换",
       "remaining": ["列表/详情/创建表单仍混合，不能只换底层包宣称整页升级"]
     },
     {

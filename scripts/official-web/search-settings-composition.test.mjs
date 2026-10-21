@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 const read = (p) => readFileSync("frontends/raft/" + p, "utf8");
 test("search entity rows retain compact native identities, outline labels and sibling separators", () => {
-  const s = read("packages/web/src/components/search/EntityResultRow.tsx");
+  const s = read("loom/OfficialSearchEntityRow.generated.tsx");
   assert.match(s, /context="compact-row"/);
   assert.doesNotMatch(s, /context="surface-list"/);
   assert.match(s, /not-first:before:border-t/);
@@ -25,7 +25,7 @@ test("empty overlay hides filters but search results retain them", () => {
 });
 test("settings rail has no desktop title or computer navigation entry", () => {
   const s = read("loom/SettingsPage.tsx");
-  assert.doesNotMatch(s, /id: "computers"/);
+  assert.match(s, /!desktop && group.label === "工作空间"/);
   assert.match(s, /hideDesktopHeader/);
 });
 test("message size preferences follow v1.21.26 responsive typography", () => {
@@ -61,7 +61,7 @@ test("all search destination surfaces use current list composition and headings"
     assert.doesNotMatch(s, /grid-cols|<SectionEyebrow/);
   }
   assert.doesNotMatch(
-    read("packages/web/src/components/search/SearchHomeEntityRow.tsx"),
+    read("loom/OfficialSearchHomeRow.generated.tsx"),
     /context="surface-list"/,
   );
   assert.doesNotMatch(read("loom/SearchEntityRows.tsx"), /mb-3 px-3|-m-1.5/);

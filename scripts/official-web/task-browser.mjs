@@ -20,7 +20,10 @@ export async function verifyTasks({
     await client.request("task.create", {
       roomId: room.roomId,
       title: `FIXTURE task ${i}`,
-      description: "FIXTURE deliverable",
+      description:
+        i === 52
+          ? "FIXTURE long description\n".repeat(12)
+          : "FIXTURE deliverable",
       dependencyTaskIds: [],
       basedOnRoomSeq: await head(room.roomId),
       idempotencyKey: `task-${i}`,
@@ -107,6 +110,16 @@ export async function verifyTasks({
         0,
         "native task header replaces duplicate root",
       );
+      const toggle = modal.getByTestId("task-modal-description-toggle");
+      await toggle.waitFor();
+      assert.equal(await toggle.getAttribute("aria-expanded"), "false");
+      const description = modal.getByTestId("task-modal-description");
+      const collapsed = (await description.boundingBox()).height;
+      await toggle.click();
+      assert.equal(await toggle.getAttribute("aria-expanded"), "true");
+      assert.ok((await description.boundingBox()).height > collapsed);
+      await toggle.click();
+      assert.equal(await toggle.getAttribute("aria-expanded"), "false");
       const status = modal.getByTestId("task-properties-status");
       await page.route("**/v3/client/tasks/workflow", async (route) => {
         writes.push(route.request().postDataJSON());
@@ -294,6 +307,7 @@ export async function verifyTasks({
         boundedPagination: true,
         nativeMultiFiltersReloadAndClear: true,
         taskDetailAndDiscussion: true,
+        nativeDescriptionExpandCollapse: true,
         canonicalStatusUpdate: true,
         unknownExactReplay: true,
         unknownHistoryGuard: true,

@@ -153,6 +153,23 @@ export async function verifyActivityList({
         ),
         false,
       );
+      await page.route("**/v3/client/activity/list", async (route) => {
+        const response = await route.fetch();
+        const body = await response.json();
+        await route.fulfill({
+          response,
+          json: { ...body, items: [], total: 0, nextCursor: undefined },
+        });
+      });
+      for (const [filter, title] of [
+        ["all", "动态为空"],
+        ["unread", "没有未读会话"],
+        ["mentions", "暂无提及"],
+      ]) {
+        await page.goto(`${origin}/?view=activity&af=${filter}`);
+        await page.getByText(title, { exact: true }).waitFor();
+        assert.equal(await page.getByTestId("inbox-row").count(), 0);
+      }
       assert.deepEqual(errors, []);
       results.push({
         width,
@@ -160,6 +177,7 @@ export async function verifyActivityList({
         geometry,
         touchDoneVisible: width === 390,
         computerInstanceNavigation: true,
+        supportedEmptyStates: true,
       });
     } finally {
       await context.close();

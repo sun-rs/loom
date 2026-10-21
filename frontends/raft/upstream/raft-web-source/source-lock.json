@@ -29,6 +29,11 @@
     "packages/web/src/components/ui/FormField.tsx": "47d1deed8e88ba19193fba249a7769b5fcd9c34d699495670ddd803c096fae36",
     "packages/web/src/lib/panelBounds.ts": "1631bd5e9497909d4504199ba0fadec30e77b26f2991a16a8b6de527c797d5c9",
     "packages/web/src/components/ui/AvatarListRow.tsx": "7ca48ac7266cfe9888f4efae815637760a3d1efdeec49a96fccbeae199a28e16",
-    "packages/web/src/components/ui/KeyValueRow.tsx": "326ba4e471cb05a7d23941af953e154d1c3ae38717a974c304b1114fb812db36"
+    "packages/web/src/components/ui/KeyValueRow.tsx": "326ba4e471cb05a7d23941af953e154d1c3ae38717a974c304b1114fb812db36",
+    "packages/web/src/components/task/TaskModalHead.tsx": "b3fb861c6e8182ae2a85a87d4ca7bbefaf1c0b378adb34cd408b6e9a7d70ca7b",
+    "packages/web/src/components/search/EntityResultRow.tsx": "93bda2715fa48af7d0c7f9dde8d553fcccccd883c12e5e4bb46b11b6ef050be7",
+    "packages/web/src/components/search/SearchHomeEntityRow.tsx": "56f2ddfef73fc959ce186a7961edae9d85ab72b90fbab77bfeaf5fc329100323",
+    "packages/web/src/components/thread/ThreadsInbox.tsx": "d48bd5bed86349f5f18ee06cf12a5918bdf8f400ac0d13b6967f96e863a38a00",
+    "packages/web/src/components/ui/ShowMoreToggle.tsx": "b30d6899fd6a0709f4519dc89d7019ad3202a1028576090d467a28f004c247ac"
   }
 }

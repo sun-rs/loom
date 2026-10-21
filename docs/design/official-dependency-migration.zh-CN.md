@@ -7,7 +7,7 @@
 | 层次 | 已落地 | 边界 |
 | --- | --- | --- |
 | 基础设计系统 | `@botiverse/raft-ui@0.10.5`，canonical/legacy 导入共享运行时 | 原生控件、recipe、字体和状态；不能据此认定每个页面组合原生 |
-| 直接源码依赖 | Tooltip、CloseButton、EmptyState、SectionHeader、SectionEyebrow、PanelHeader、AppearanceThemePicker、AvatarEditVeil、SettingsProfileCard、SurfaceListItem、SlugInput、panelBounds、AvatarListRow、KeyValueRow | 私有本地分发包的原文件保留官方字节，不是官方发布的完整 Web npm 包 |
+| 直接源码依赖 | Tooltip、CloseButton、EmptyState、SectionHeader、SectionEyebrow、PanelHeader、AppearanceThemePicker、AvatarEditVeil、SettingsProfileCard、SurfaceListItem、SlugInput、panelBounds、AvatarListRow、KeyValueRow、ShowMoreToggle | 私有本地分发包的原文件保留官方字节，不是官方发布的完整 Web npm 包 |
 | 外观区块 | 从官方 SettingsPanel 精确提取正文与预览声明 | 显式接入现有设备偏好和主题hook；消息预览和字号组件仍沿用原模块 |
 | 日期与时间 | 从官方 LanguageRegionSection 原样提取日期/时间 JSX 子树 | 保存/错误绑定浏览器设备偏好；中文限定语言块仍为本地组合 |
 | 更新日志 | 原样提取官方内容 JSX、分类与徽标规则 | Loom 自有静态发布记录；既有设置外壳负责标题和滚动，旧构建时切片已移除 |
@@ -15,6 +15,8 @@
 | 归档／设置侧栏／表单 | 官方展示声明提取，恢复按钮与Field原声明复用；分栏尺寸直接依赖官方 | 归档频道标签本地化；省去云端反馈；表单兼容旧labelStyle参数但不采用旧样式 |
 | Role 资料 | 官方名称、属性行、样式声明精确提取 | 头像/Prompt/信息/运行配置分区是有记录的结构移植；Role语义和实例管理保持本地 |
 | 动态时间线 | 官方 LogItem 与 recipe 精确提取，Role 与实例轨迹共用 TrajectoryRow | 数据读取/实例名/诊断文本映射在 Loom，历史分页和权限仍由既有 API 负责 |
+
+搜索目标行／常用对象行与任务详情头部已转为锁定原声明生成；动态空状态采用官方 JSX 提取。搜索行仅新增菜单关闭焦点 ref；任务属性显式绑定 Loom，移除 Vite 隐式替换。TaskModalHead 的三行折叠、测量、缩放监听和展开状态保留官方实现。仍非整页依赖化。
 
 公开源码锁定 db5e399 / v1.21.23-source.1；历史生产资源参考 v1.21.26。两者不同，不能标为同一“最新版源码”。
 

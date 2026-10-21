@@ -203,11 +203,6 @@ export default defineConfig({
           return resolve(import.meta.dirname, "Attachments.tsx");
         if (source === "loom-channel-tasks")
           return resolve(import.meta.dirname, "ChannelTasks.tsx");
-        if (
-          importer?.endsWith("/components/task/TaskModalHead.tsx") &&
-          source === "./TaskProperties"
-        )
-          return resolve(import.meta.dirname, "TaskProperties.tsx");
         if (source === "loom-thread-followers")
           return resolve(import.meta.dirname, "ThreadFollowers.tsx");
         if (source === "loom-thread-toolbar")

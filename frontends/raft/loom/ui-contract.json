@@ -194,6 +194,31 @@
       ],
       "bindings": ["SettingsPage.tsx", "ComputersPage.tsx"],
       "guard": "scripts/official-web/mobile-computer-source.test.mjs"
+    },
+    {
+      "id": "discovery-task-source-boundaries",
+      "owner": "Locked db5e399 EntityResultRow / SearchHomeEntityRow / ThreadsInbox empty JSX / TaskModalHead / ShowMoreToggle",
+      "rule": "Generate source presentation and retain native recipes, description measurement and expansion. Loom owns queries, mutations, focus-return ref and supported activity filters.",
+      "sources": [
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/search/EntityResultRow.tsx",
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/search/SearchHomeEntityRow.tsx",
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/thread/ThreadsInbox.tsx",
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/task/TaskModalHead.tsx",
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/ui/ShowMoreToggle.tsx"
+      ],
+      "bindings": [
+        "SearchEntityRows.tsx",
+        "SearchFrequent.tsx",
+        "ActivityEmpty.tsx",
+        "TaskDetail.tsx"
+      ],
+      "guard": "scripts/official-web/discovery-task-source.test.mjs",
+      "localDifferences": [
+        "Explicit imports bind Loom TaskProperties and existing local avatar/identity/locale helpers; no upstream task or query controller adopted",
+        "EntityResultRow adds rootRef for context-menu focus return and data-entity-id for the stable keyboard/navigation rail",
+        "Activity read filter only maps supported mentions/unread/all; other upstream filters omitted"
+      ],
+      "limits": "Generated boundaries are not whole-page equivalence; query state, overlays and task modal composition remain local."
     }
   ],
   "exceptions": [

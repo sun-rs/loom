@@ -18,7 +18,8 @@
     "./SlugInput": "./packages/web/src/components/ui/SlugInput.tsx",
     "./panelBounds": "./packages/web/src/lib/panelBounds.ts",
     "./AvatarListRow": "./packages/web/src/components/ui/AvatarListRow.tsx",
-    "./KeyValueRow": "./packages/web/src/components/ui/KeyValueRow.tsx"
+    "./KeyValueRow": "./packages/web/src/components/ui/KeyValueRow.tsx",
+    "./ShowMoreToggle": "./packages/web/src/components/ui/ShowMoreToggle.tsx"
   },
   "peerDependencies": {
     "react": "^19.0.0",
