@@ -59,7 +59,7 @@ export async function verifyThreadFollowers({
       );
       await popover.getByTestId("thread-follower-remove").first().click();
       await removed;
-      const undo = page.getByRole("button", { name: "Undo", exact: true });
+      const undo = page.getByRole("button", { name: "撤销", exact: true });
       await undo.waitFor();
       assert.equal(
         (await client.request("thread.followers", scope)).agentParticipantIds

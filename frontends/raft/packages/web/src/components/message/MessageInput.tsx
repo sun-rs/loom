@@ -1,3 +1,5 @@
+import OfficialComposerView from "../../../../../loom/OfficialComposerView.generated";
+import {ComposerFilesTools} from "../../../../../loom/ComposerFiles";
 import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
 import { useIntl } from "react-intl";
 import type { IntlShape } from "react-intl";
@@ -47,7 +49,6 @@ import { AutocompleteOptionRow } from "./AutocompleteOptionRow";
 import { extractClipboardFiles } from "../../utils/clipboardFiles";
 import AvatarSlot from "../ui/AvatarSlot";
 import Banner from "../ui/Banner";
-import CheckMarker from "../ui/CheckMarker";
 import Tooltip from "../ui/Tooltip";
 import AgentActivityDot from "../agent/AgentActivityDot";
 import api from "../../api/client";
@@ -3047,78 +3048,29 @@ export default function MessageInput({
           </ComposerSuggestionList>
         )}
 
-        <Composer>
-          <ComposerInput
-            id={textareaId}
-            data-testid="composer-textarea"
-            ref={composerTextareaRef}
-            onChange={handleChange}
-            onKeyDown={handleKeyDown}
-            onPaste={handlePaste}
-            placeholder={placeholder ?? formatMessage({ id: "message.composer.messagePlaceholder" }, { channel: channelName })}
-            maxLength={maxLength}
-            rows={1}
-          />
-          <ComposerToolbar>
-            {variant === "compact" ? (
-              <div />
-            ) : (
-              <ComposerActions>
-                <Tooltip content={formatMessage({ id: "message.composer.attachImage" })}>
-                <ComposerIconButton
-                  onPointerDown={preventToolbarButtonPointerDownBlur}
-                  onClick={handleAttachImageClick}
-                  data-slot="button"
-                  aria-label={formatMessage({ id: "message.composer.attachImage" })}
-                >
-                  <ImagePlus size={18} />
-                </ComposerIconButton>
-                </Tooltip>
-                <Tooltip content={formatMessage({ id: "message.composer.attachFile" })}>
-                <ComposerIconButton
-                  onPointerDown={preventToolbarButtonPointerDownBlur}
-                  onClick={handleAttachFileClick}
-                  data-slot="button"
-                  aria-label={formatMessage({ id: "message.composer.attachFile" })}
-                >
-                  <Paperclip size={18} />
-                </ComposerIconButton>
-                </Tooltip>
-              </ComposerActions>
-            )}
-            <div className="flex items-center gap-2">
-              {showTaskButton && (
-                <Tooltip content={formatMessage({ id: "message.composer.sendAsTaskTooltip" })}>
-                <ComposerToolbarLabel
-                  render={<button type="button" />}
-                  role="checkbox"
-                  data-testid="composer-as-task-toggle"
-                  aria-checked={alsoCreateTask}
-                  className="rounded-control outline-none focus-visible:shadow-raft-focus"
-                  onPointerDown={preventTaskTogglePointerDownBlur}
-                  onClick={toggleTaskModeWithoutBlur}
-                >
-                  <CheckMarker
-                    checked={alsoCreateTask}
-                  />
-                  {formatMessage({ id: "message.composer.asTask" })}
-                </ComposerToolbarLabel>
-                </Tooltip>
-              )}
-              <Tooltip content={submitTitle}>
-              <ComposerSubmit
-                size="icon-sm"
-                data-slot="button"
-                onPointerDown={preventSendButtonPointerDownBlur}
-                disabled={submitBlocked}
-                aria-label={submitLabel}
-              >
-                {submitIcon}
-              </ComposerSubmit>
-              </Tooltip>
-            </div>
-          </ComposerToolbar>
-        </Composer>
+        <OfficialComposerView
+          variant={variant} preventToolbarButtonPointerDownBlur={preventToolbarButtonPointerDownBlur}
+          handleAttachImageClick={handleAttachImageClick} handleAttachFileClick={handleAttachFileClick}
+          input={{id:textareaId,ref:composerTextareaRef,onChange:handleChange,onKeyDown:handleKeyDown,onPaste:handlePaste,placeholder:placeholder ?? formatMessage({id:"message.composer.messagePlaceholder"},{channel:channelName}),maxLength}}
+          fileTools={<ComposerFilesTools taskMode={alsoCreateTask} insert={(text) => {
+            const input = textareaRef.current;
+            const start = input?.selectionStart ?? content.length;
+            const end = input?.selectionEnd ?? start;
+            const next = content.slice(0, start) + text + content.slice(end);
+            contentRef.current = next;
+            setContent(next);
+            requestAnimationFrame(() => {
+              input?.focus({preventScroll:true});
+              input?.setSelectionRange(start + text.length, start + text.length);
+              autoResize();
+            });
+          }} />}
+          showTaskButton={showTaskButton} alsoCreateTask={alsoCreateTask}
+          preventTaskTogglePointerDownBlur={preventTaskTogglePointerDownBlur}
+          toggleTaskModeWithoutBlur={toggleTaskModeWithoutBlur}
+          submitTitle={submitTitle} preventSendButtonPointerDownBlur={preventSendButtonPointerDownBlur}
+          submitBlocked={submitBlocked} submitLabel={submitLabel} submitIcon={submitIcon}
+        />
       </div>
     </ComposerRoot>
   );

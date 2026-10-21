@@ -74,21 +74,3 @@ export function adaptReactions(source: string) {
   );
   return 'import {useLoomReactions} from "loom-reactions";\n' + code;
 }
-export function adaptReactionToolbar(source: string) {
-  let code = replace(
-    source,
-    "  isSaved: boolean;",
-    "  isSaved: boolean;\n  loomHideSave?: boolean;",
-  );
-  code = replace(code, "  isSaved,\n", "  isSaved,\n  loomHideSave,\n");
-  code = replace(
-    code,
-    "      <MessageItemToolbarButton\n        active={isSaved}",
-    "      {!loomHideSave && <MessageItemToolbarButton\n        active={isSaved}",
-  );
-  return replace(
-    code,
-    '        <Bookmark size={18} fill={isSaved ? "currentColor" : "none"} />\n      </MessageItemToolbarButton>',
-    '        <Bookmark size={18} fill={isSaved ? "currentColor" : "none"} />\n      </MessageItemToolbarButton>}',
-  );
-}

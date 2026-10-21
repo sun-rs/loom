@@ -35,7 +35,12 @@
       "loom/OfficialTaskSelection.generated.tsx",
       "loom/OfficialTaskCreate.generated.tsx",
       "loom/OfficialTaskSurfaces.generated.tsx",
-      "loom/OfficialActivityHeader.generated.tsx"
+      "loom/OfficialActivityHeader.generated.tsx",
+      "loom/OfficialMessageHoverToolbar.generated.tsx",
+      "loom/OfficialMentionLink.generated.tsx",
+      "loom/OfficialThreadAgentFollowers.generated.tsx",
+      "loom/OfficialThreadAgentFollowerRow.generated.tsx",
+      "loom/OfficialComposerView.generated.tsx"
     ],
     "foundation": "package.json#dependencies.raft-ui"
   },
@@ -68,11 +73,17 @@
       "sources": [
         "loom/ChannelApp.tsx",
         "loom/ThreadWorkspace.tsx",
-        "packages/web/src/components/message/MessageItem.tsx"
+        "packages/web/src/components/message/MessageItem.tsx",
+        "loom/OfficialMessageHoverToolbar.generated.tsx",
+        "loom/OfficialMentionLink.generated.tsx",
+        "loom/OfficialThreadAgentFollowers.generated.tsx",
+        "loom/OfficialThreadAgentFollowerRow.generated.tsx",
+        "loom/OfficialComposerView.generated.tsx"
       ],
-      "adopted": "官方消息组件与构建时适配并存",
+      "adopted": "官方消息组件与构建时适配并存；悬浮工具栏/@提及/关注成员及成员行按锁定原件生成，composer输入与按钮组合提取原Composer子树；5处对应Vite改写移除，资料预览显式接入Loom",
       "remaining": [
-        "消息正文/composer/消息列的适配变换仍需收敛到明确数据接口"
+        "MessageItem正文整体、ThreadPanel及Timeline窗口仍有构建时适配；继续保留消息身份、锚点、权限与有界历史",
+        "MessageInput草稿/输入法/发送和文件控制器尚未整体迁移；只迁入输入与操作展示子树，不能称完整官方composer模块直用"
       ]
     },
     {

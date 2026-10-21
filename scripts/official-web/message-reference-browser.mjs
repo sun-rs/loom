@@ -77,11 +77,11 @@ export async function verifyMessageReferences({
     const self = timeline.getByText("@Sun", { exact: true });
     await self.waitFor({ timeout: 5000 });
     assert.ok(
-      (await self.getAttribute("class")).includes("bg-primary"),
+      (await self.getAttribute("class")).includes("bg-brand"),
       "self mention must use official yellow primary recipe",
     );
     assert.ok(
-      (await channel.getAttribute("class")).includes("bg-accent-soft"),
+      (await channel.getAttribute("class")).includes("bg-attention-soft"),
       "channel references retain official pink accent",
     );
     assert.equal(await mention.evaluate((el) => el.tagName), "A");

@@ -360,6 +360,26 @@
       ],
       "guard": "scripts/official-web/discovery-task-closeout-source.test.mjs",
       "rule": "Native TaskModalBar PanelAction and DialogSurface; loading/error use same header primitives, no size or variant overrides."
+    },
+    {
+      "id": "chat-native-affordances",
+      "owner": "locked Raft db5e399 source, explicit Loom authority bindings",
+      "sources": [
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/message/MessageHoverToolbar.tsx",
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/message/MentionLink.tsx",
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/message/MessageInput.tsx",
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/thread/ThreadAgentFollowers.tsx",
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/thread/ThreadAgentFollowerRow.tsx"
+      ],
+      "bindings": [
+        "OfficialMessageHoverToolbar.generated.tsx",
+        "OfficialMentionLink.generated.tsx",
+        "OfficialThreadAgentFollowers.generated.tsx",
+        "OfficialThreadAgentFollowerRow.generated.tsx",
+        "OfficialComposerView.generated.tsx"
+      ],
+      "guard": "scripts/official-web/chat-affordances-source.test.mjs",
+      "rule": "Original message toolbar, mention preview and pixel badge, follower rows, Composer input/action subtree; native recipes own geometry. Loom supplies authenticated viewer, profile, file slot, send/IME callbacks and durable follower mutations. No upstream socket owner or fabricated agent presence."
     }
   ],
   "exceptions": [

@@ -4,18 +4,13 @@ import { pushWorkerPlugin } from "./push-worker-plugin.ts";
 import { adaptComposerDirectory } from "./composer-directory-adaptation.ts";
 import { adaptTimelineWindow } from "./timeline-window-adaptation.ts";
 import { adaptChineseLocale } from "./locale-adaptation.ts";
-import { adaptReactions, adaptReactionToolbar } from "./reaction-adaptation.ts";
+import { adaptReactions } from "./reaction-adaptation.ts";
 import tailwindcss from "@tailwindcss/postcss";
 import postcss from "postcss";
 import { localizeFontCss } from "./local-fonts.ts";
-import {
-  adaptThreadFollowers,
-  adaptThreadFollowerRow,
-} from "./thread-followers-adaptation.ts";
 import { officialUiAliases } from "./ui-resolution.ts";
 import { adaptMessageModelLabel } from "./appearance-adaptation.ts";
 import {
-  adaptAttachmentComposer,
   adaptAttachmentMessage,
   adaptAttachmentComments,
   adaptPdfComments,
@@ -74,40 +69,10 @@ export default defineConfig({
       transform(code, id) {
         if (id.endsWith("/store/appearanceStore.ts"))
           return { code: adaptMobileMessageDefault(code), map: null };
-        if (id.endsWith("/components/message/MentionLink.tsx")) {
-          const needle =
-            "const viewerUserId = useAuthStore((s) => s.user?.id ?? null);";
-          if (!code.includes(needle))
-            throw new Error("Official MentionLink viewer seam changed");
-          return {
-            code:
-              'import { useMessageViewerId } from "loom-composer-directory";\n' +
-              code.replace(
-                needle,
-                "const viewerUserId = useMessageViewerId();",
-              ),
-            map: null,
-          };
-        }
         if (id.endsWith("/components/message/MessageTimeline.tsx"))
           return { code: adaptTimelineWindow(code), map: null };
         if (id.endsWith("/packages/web/src/i18n/LocaleProvider.tsx"))
           return { code: adaptChineseLocale(code), map: null };
-        if (id.endsWith("/components/message/MessageHoverToolbar.tsx"))
-          return { code: adaptReactionToolbar(code), map: null };
-
-        if (
-          id.endsWith(
-            "/packages/web/src/components/thread/ThreadAgentFollowers.tsx",
-          )
-        )
-          return { code: adaptThreadFollowers(code), map: null };
-        if (
-          id.endsWith(
-            "/packages/web/src/components/thread/ThreadAgentFollowerRow.tsx",
-          )
-        )
-          return { code: adaptThreadFollowerRow(code), map: null };
         if (
           id.endsWith(
             "/packages/web/src/components/message/AttachmentCommentsPanel.tsx",
@@ -124,10 +89,8 @@ export default defineConfig({
           id.endsWith("/packages/web/src/components/message/MessageInput.tsx")
         )
           return {
-            code: adaptAttachmentComposer(
-              adaptComposerDirectory(
-                adaptTaskComposer(adaptComposerSubmit(code)),
-              ),
+            code: adaptComposerDirectory(
+              adaptTaskComposer(adaptComposerSubmit(code)),
             ),
             map: null,
           };

@@ -52,6 +52,11 @@
     "packages/web/src/components/task/CreateTaskDialog.tsx": "c31555fd61dc66a5e1a463996510c7bb8ac218fb4c85f8c0a7a97e6bd27ebfa3",
     "packages/web/src/components/task/TaskTitleRow.tsx": "25f7a940a128d182cfe210b63421b9af8ae23f269881a2952bceddd21b1ea9b0",
     "packages/web/src/components/task/TaskProperties.tsx": "042c4c27448e7565a3602297b23368d08dbc533593b003c7128dcd4f6086389f",
-    "packages/web/src/components/layout/MainLayout.tsx": "d75aa4149313310bfbd8f64611ef242adbcd8e308748c455b2b889fdc028c944"
+    "packages/web/src/components/layout/MainLayout.tsx": "d75aa4149313310bfbd8f64611ef242adbcd8e308748c455b2b889fdc028c944",
+    "packages/web/src/components/message/MessageHoverToolbar.tsx": "929603176b5c00bbdf80e1f1c72c009f8e86dae0de76f26daca8927a8a68a062",
+    "packages/web/src/components/message/MentionLink.tsx": "69b57127d221dd09da8e2ae0d4325d9557eded6abc4c48a2d6ec1ba019f5812a",
+    "packages/web/src/components/thread/ThreadAgentFollowers.tsx": "fc53c54200ce1425749e51250f5db354641e537dd8fa7c2eb6fcb5d2b706340e",
+    "packages/web/src/components/thread/ThreadAgentFollowerRow.tsx": "4d64240a1340f4861bb39c27e6ffca020820148c1ffe315bd8f144aac8cb332f",
+    "packages/web/src/components/message/MessageInput.tsx": "ac33c23073cb31cfa304ad4043e95bf22d53a21aa5a81e7c511a82b6cde43c55"
   }
 }

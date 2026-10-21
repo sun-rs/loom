@@ -4,30 +4,6 @@ function replace(source: string, from: string, to: string) {
     throw Error("Attachment composition boundary changed");
   return source.replace(from, to);
 }
-export function adaptAttachmentComposer(source: string) {
-  return (
-    'import { ComposerFilesTools } from "loom-composer-files";\n' +
-    replace(
-      source,
-      "<div />\n            ) : (\n              <ComposerActions>",
-      `<ComposerFilesTools taskMode={alsoCreateTask} insert={(text) => {
-      const input = textareaRef.current;
-      const start = input?.selectionStart ?? content.length;
-      const end = input?.selectionEnd ?? start;
-      const next = content.slice(0, start) + text + content.slice(end);
-      contentRef.current = next;
-      setContent(next);
-      requestAnimationFrame(() => {
-        input?.focus({preventScroll:true});
-        input?.setSelectionRange(start + text.length, start + text.length);
-        autoResize();
-      });
-    }} />
-            ) : (
-              <ComposerActions>`,
-    )
-  );
-}
 export function adaptAttachmentMessage(source: string) {
   let code = replace(
     source,

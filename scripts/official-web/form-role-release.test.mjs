@@ -31,7 +31,7 @@ test("Role sidebar adopts shared section controls and row content without local 
   assert.doesNotMatch(s, /tracking-widest|size="icon-xs"|truncate text-sm/);
 });
 test("message toolbar delegates position and active color to native recipe with current 18px icons", () => {
-  const s = read("packages/web/src/components/message/MessageHoverToolbar.tsx");
+  const s = read("loom/OfficialMessageHoverToolbar.generated.tsx");
   assert.match(s, /className="pointer-events-auto"/);
   assert.match(s, /<ThreadIcon width=\{18\} height=\{18\}/);
   assert.match(s, /<Bookmark size=\{18\}/);

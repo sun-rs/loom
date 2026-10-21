@@ -5,11 +5,11 @@ import { ThreadFollowersClient } from "../../frontends/raft/loom/thread-follower
 import {
   adaptThreadFollowers,
   adaptThreadFollowerRow,
-} from "../../frontends/raft/loom/thread-followers-adaptation.ts";
+} from "./chat-affordance-bindings.ts";
 
 test("native follower presentation retained while stores and fabricated presence are removed", () => {
   const source = readFileSync(
-    "frontends/raft/packages/web/src/components/thread/ThreadAgentFollowers.tsx",
+    "frontends/raft/upstream/raft-web-source/packages/web/src/components/thread/ThreadAgentFollowers.tsx",
     "utf8",
   );
   const result = adaptThreadFollowers(source);
@@ -20,7 +20,7 @@ test("native follower presentation retained while stores and fabricated presence
   assert.ok(!result.includes("const roster = useThreadAgentFollowerStore"));
   const row = adaptThreadFollowerRow(
     readFileSync(
-      "frontends/raft/packages/web/src/components/thread/ThreadAgentFollowerRow.tsx",
+      "frontends/raft/upstream/raft-web-source/packages/web/src/components/thread/ThreadAgentFollowerRow.tsx",
       "utf8",
     ),
   );

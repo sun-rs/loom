@@ -89,3 +89,13 @@ TextLink 直接依赖原文件；历史遗留 inline 参数由兼容入口丢弃
 边界不是整页零本地代码：搜索/动态保留路由、真实错误、已读和查询控制器；任务讨论仍使用聊天 ThreadWorkspace；较新动态资源移植、全局记忆和 Role/实例差异继续明确登记。此批完成后，后续约4–6个批次：聊天/消息列深层组合（约2批）、Agent/计算机/设置剩余组合、文件、全站整合验收；不以文件数或一次通过的截图宣称全站完成。
 
 正式截图发现的未知计数补充：官方 ICU plural 不能接收“—”作为数值。现在已知数值仍走原格式化表达式，未知状态使用明确文案槽，防止短暂 NaN；独立回归测试先失败再通过。
+
+### 聊天操作、提及、消息列成员与 composer 展示（2026-10-22）
+
+新增锁定 MessageHoverToolbar、MentionLink、ThreadAgentFollowers、ThreadAgentFollowerRow、MessageInput 原件（同 db5e399、保留许可证）。前四者从完整模块生成，明确改接查看者身份、权限、资料预览和关注成员控制器；删除对应 Vite transform。关注成员不再导入官方 socket/store，不伪造活动状态。旧函数移动到离线生成脚本，原件/生成结果/运行入口分别有守卫，不宣称生成文件与原件字节完全相同。
+
+MessageInput 只提取原 Composer 展示子树：输入属性槽、文件工具槽、任务勾选与发送按钮。保留原 full/compact 分支，恢复 CheckboxIndicator 与原生 focus token；移除旧文件入口 Vite 变换。输入法、同一草稿、提交与未知结果保留既有单一控制器，目录/任务/触屏Enter兼容变换尚未全部迁移。新版 MessageInput 还改变上传恢复控制器，本批不复制其服务端/上传业务状态。
+
+@提及采用新版方形已读像素和组件默认预览宽度，显示名及稳定身份映射仍由 Loom 提供。迁移验证发现旧 ProfilePreviewCardContent 的 importer-sensitive Vite alias 在新位置失效，现改为显式 MessageProfile 导入，并补独立守卫和预览/导航验收。较早浏览器脚本的 bg-primary/bg-accent-soft 与英文 Undo 已与锁定 RUI/中文界面不一致，按原生 bg-brand/bg-attention-soft 与“撤销”更新断言，未更改产品来迎合测试。
+
+本批不是完整聊天页完成。后续聊天主线仍需处理 MessageItem、ThreadPanel、Timeline 和输入控制器的深层组合；附件预览/评论及页面外壳保留在迁移清单，不能以本批五个展示边界替代全站验收。

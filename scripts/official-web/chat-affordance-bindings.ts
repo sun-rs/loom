@@ -1,3 +1,4 @@
+// Offline, exact-boundary Loom bindings for immutable official presentation. Not a Vite/runtime transform.
 function replaceOnce(source: string, from: string, to: string) {
   if (source.split(from).length !== 2)
     throw Error("Official thread followers changed; review source");
@@ -43,5 +44,24 @@ export function adaptThreadFollowerRow(source: string) {
   );
   return (
     'import { useLoomFollowerProfile } from "loom-thread-followers";\n' + code
+  );
+}
+
+export function adaptReactionToolbar(source: string) {
+  let code = replaceOnce(
+    source,
+    "  isSaved: boolean;",
+    "  isSaved: boolean;\n  loomHideSave?: boolean;",
+  );
+  code = replaceOnce(code, "  isSaved,\n", "  isSaved,\n  loomHideSave,\n");
+  code = replaceOnce(
+    code,
+    "      <MessageItemToolbarButton\n        active={isSaved}",
+    "      {!loomHideSave && <MessageItemToolbarButton\n        active={isSaved}",
+  );
+  return replaceOnce(
+    code,
+    '        <Bookmark size={18} fill={isSaved ? "currentColor" : "none"} />\n      </MessageItemToolbarButton>',
+    '        <Bookmark size={18} fill={isSaved ? "currentColor" : "none"} />\n      </MessageItemToolbarButton>}',
   );
 }

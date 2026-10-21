@@ -5,7 +5,8 @@ import { readFileSync } from "node:fs";
 const read = (p) => readFileSync("frontends/raft/" + p, "utf8");
 test("composer uses official toolbar label and send geometry without old font overrides", () => {
   const s = read("packages/web/src/components/message/MessageInput.tsx");
-  assert.match(s, /<ComposerToolbarLabel/);
+  assert.match(s, /<OfficialComposerView/);
+  assert.match(read("loom/OfficialComposerView.generated.tsx"), /<ComposerToolbarLabel/);
   assert.match(s, /<Send size=\{18\}/);
   assert.doesNotMatch(s, /data-tone="pink"|md:text-sm font-display/);
 });
