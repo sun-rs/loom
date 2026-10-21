@@ -1,0 +1,125 @@
+{
+  "date": "2026-10-22",
+  "productCommit": "dbf032847c4372c05ec2a233afdb7b2859b63f5e",
+  "source": {
+    "revision": "db5e399f017d584e49597e3a28757645d6807893",
+    "foundation": "@botiverse/raft-ui@0.10.5",
+    "classification": "Complete shared identity modules with import-only bindings; exact resize dependencies; generated profile/settings JSX with explicit Loom slots"
+  },
+  "scope": [
+    "AvatarSlot and PixelAvatar with immutable palette",
+    "PanelResizeHandle and useResizablePanel",
+    "Computer profile hero and runtime container",
+    "Role hero and identity layout",
+    "Settings frame and scrolling body",
+    "Workspace Markdown Separator import regression"
+  ],
+  "verification": {
+    "redBeforeImplementation": true,
+    "allSourceTests": {
+      "passed": 313,
+      "failed": 0
+    },
+    "uiContractTests": 8,
+    "typecheck": true,
+    "build": true,
+    "fixtureSlices": [
+      "computers",
+      "panel-policy",
+      "role-activity",
+      "workspace including Markdown horizontal rule",
+      "settings-navigation",
+      "message-metrics across channel/private/thread/task and all text tiers"
+    ],
+    "viewports": "1440/390 for page flows; panel-policy additionally covers 767/768/968/969/1024/1280 and height-dependent collapse",
+    "realWebKit": [
+      {
+        "width": 1440,
+        "existingReplies": 4,
+        "nativeCloseOrBack": {
+          "width": 32,
+          "height": 32,
+          "clickable": true
+        },
+        "noSend": true,
+        "noErrors": true,
+        "noOverflow": true,
+        "workspaceOpened": true,
+        "computerProfile": true,
+        "settingsAppearance": true,
+        "roleProfile": true,
+        "workspaceRefresh": {
+          "width": 32,
+          "height": 32,
+          "clickable": true
+        }
+      },
+      {
+        "width": 390,
+        "existingReplies": 4,
+        "nativeCloseOrBack": {
+          "width": 44,
+          "height": 44,
+          "clickable": true
+        },
+        "noSend": true,
+        "noErrors": true,
+        "noOverflow": true,
+        "workspaceOpened": true,
+        "computerProfile": true,
+        "settingsAppearance": true,
+        "roleProfile": true,
+        "workspaceRefresh": {
+          "width": 32,
+          "height": 32,
+          "clickable": true
+        }
+      }
+    ],
+    "screenshotsReviewed": [
+      "formal-role-390.png",
+      "formal-computer-1440.png",
+      "formal-settings-390.png"
+    ]
+  },
+  "correction": {
+    "previousRecord": "../2026-10-22-workspace-source/summary.json",
+    "problem": "Previous typecheck success report was incorrect. Generated workspace Markdown map referenced Separator without import.",
+    "repair": "Reproducing source assertion, required import, successful typecheck, browser rendering of horizontal rule at both viewports.",
+    "notClaimed": "The earlier fixture did not contain a horizontal rule and could not detect this failure."
+  },
+  "deployment": {
+    "verified": true,
+    "newPid": 81332,
+    "schema": 90,
+    "databasesBackedUp": 2,
+    "filesBackedUp": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true
+  },
+  "limits": [
+    "Whole-site dependency migration remains incomplete",
+    "Shell route composition, Role/instance differences, runtime labels and management authority remain Loom-owned",
+    "No upstream hosted upgrade operations or account state enabled",
+    "Real deployment verified read-only navigation and existing content, not paid runtime execution or native mobile devices"
+  ],
+  "remainingEstimate": "1–2 close-out rounds for retained-composition classification, dependency closure and upgrade rehearsal",
+  "privateEvidence": "/Users/sun/.loom/reviews/2026-10-22-shell-profile",
+  "logSha256": {
+    "loom-shell-type.log": "be9daa8ccc2ebd10f0491f299c52fbc747390844e8b4ca9f64af8def58c2b5e4",
+    "loom-shell-build.log": "5d872dde9f962ff6e6111dbb049b9e30b6edbb00855642e104b1adfea1ca3e74",
+    "loom-shell-role.log": "40c62404f7b92d140d52e40be64d0b26d9f57b75ffac53487b7ee18167573214",
+    "loom-shell-source.log": "e36d0f604411374bb0242e0f34ebce8eb7f2c3a85ebd012f81d94f553962eede",
+    "loom-shell-format.log": "13f40417b5f6739828545d25b31b6dda74af4d24398a1d6656430387dcda79e0",
+    "loom-shell-metrics.log": "1b9f68ec6bd2245bcc46849702287daaf0c203f4af5decd6cb2a6f6cdee2a86e",
+    "loom-shell-ui.log": "f3bd0c3f7ed46a41c535c93a5a4af52a3c4e53e038ee35a941307c1ec32451b1",
+    "loom-shell-workspace.log": "2379487c3e318f7b5e1cf62544d8c138e52ca011bd9c6d1661bee0dab6d4f528",
+    "loom-shell-workspace-red.log": "1f424b35486a4d34efdc7fffce081b613cb8b1151be29c65134a71d27652ee6e",
+    "loom-shell-red.log": "82bfd9a3769d536b77196c593bd5018d681422cff87c3636a2834ff4160ed4ee",
+    "loom-shell-settings.log": "2372e18d1ba5565e11188af9a963cf457891917531a7a989f010d72b2366c1f9",
+    "loom-shell-computers.log": "7f7b27fbe8092fd3fb1c00e0028a958db50a6e6d948c36f9262334324a878463",
+    "restart.log": "b7014f101be6d154b83c36b64af4952fe9904e94d3ac2c3c91655c67894b6d62",
+    "formal.log": "fe9cfd17d5324e85c91db278f818f454e5089bf8aa1a7483386869f52ee80fea",
+    "loom-shell-panels.log": "e19634ff6e96cca6a931d1df5f599feb9ddb031c9f05e20652f7135ffc9baf19"
+  }
+}
