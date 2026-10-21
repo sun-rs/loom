@@ -1,3 +1,4 @@
+import { verifyReleaseSource } from "./release-source-browser.mjs";
 import { verifyRoleActivity } from "./role-activity-browser.mjs";
 import { verifyUpstream126 } from "./upstream-126-browser.mjs";
 import { verifySearchTransition } from "./search-transition-browser.mjs";
@@ -467,6 +468,8 @@ try {
         await verifyPanelPolicy({ browser, origin, client, channels, head }),
       ),
     );
+  } else if (process.env.LOOM_BROWSER_SLICE === "release-source") {
+    console.log(JSON.stringify(await verifyReleaseSource({browser,origin})));
   } else if (process.env.LOOM_BROWSER_SLICE === "role-activity") {
     console.log(JSON.stringify(await verifyRoleActivity({browser,origin,client,role})));
   } else if (process.env.LOOM_BROWSER_SLICE === "upstream-126") {

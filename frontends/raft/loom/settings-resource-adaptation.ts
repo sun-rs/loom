@@ -27,15 +27,3 @@ export function exposeNotificationStatus(source: string) {
     `\nexport function LoomNotificationStatus({loading,statusLabel,permission,serverConfigured,error,detail,channel,message,subscribed,confirmed,busy,testing,handleEnable,handleDisable,handleSendTest,children}: any) {\n const {formatMessage}=useIntl(); const statusVariant = !loading && confirmed ? "success" : !loading && permission === "denied" ? "warning" : "muted"; return (${jsx}<div className="text-footnote text-foreground-muted">{detail}</div>{children}</Card></div>); }\n`
   );
 }
-export function exposeReleaseNotes(source: string) {
-  const begin = source.indexOf(
-    '        <div className="mb-4 flex items-center gap-2">',
-  );
-  const end = source.indexOf("\n      </div>\n    </div>\n  );", begin);
-  if (begin < 0 || end < 0)
-    throw Error("Official release notes boundary changed");
-  return (
-    source +
-    `\nexport function LoomReleaseNotes({releases}: {releases:Array<Pick<PublishedReleaseNote,"releaseId"|"version"|"date"|"state"|"entries">>}) { const {formatMessage}=useIntl(); const state={status:"ready" as string,releases}; const currentReleaseId=releases[0]?.releaseId; const handleRetry=()=>{}; return (<>${source.slice(begin, end)}</>); }\n`
-  );
-}

@@ -309,5 +309,13 @@
     "browser": "scripts/official-web/region-settings-browser.mjs",
     "scope": "Exact date/time JSX subtree; explicit synchronous device preference callbacks. Loading flags false because storage is synchronous; warning slot receives local storage error. Chinese-only language block remains Loom composition; no upstream account or translation store introduced.",
     "localCompatibility": "Select uses browser sentinel for empty inherited timezone; adapter restores empty draft and null persistence. Avoids placeholder replacing effective timezone label."
+  },
+  "releaseNotesSourceParity": {
+    "source": "upstream/raft-web-source/packages/web/src/components/settings/ReleaseNotesPanel.tsx",
+    "generator": "scripts/official-web/generate-release.mjs",
+    "binding": "loom/SettingsPage.tsx + loom/release-notes.ts",
+    "guard": "scripts/official-web/release-source.test.mjs",
+    "browser": "scripts/official-web/release-source-browser.mjs",
+    "scope": "Exact content JSX children and category declarations; Loom typed static release list supplies ready state. Existing SettingsPage owns header/scroll. No upstream fetch, store or duplicate header; old Vite exposeReleaseNotes path removed."
   }
 }

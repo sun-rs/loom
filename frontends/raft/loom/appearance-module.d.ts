@@ -25,9 +25,3 @@ declare module "loom-native-appearance" {
     appVersion: string;
   }>;
 }
-
-declare module "loom-native-release-notes" {
-  export const LoomReleaseNotes: import("react").ComponentType<{
-    releases: readonly unknown[];
-  }>;
-}

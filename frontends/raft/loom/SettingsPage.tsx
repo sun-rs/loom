@@ -1,6 +1,6 @@
 import LanguageRegionSettings from "./LanguageRegionSettings.tsx";
 import NotificationSettings from "./NotificationSettings.tsx";
-import { LoomReleaseNotes } from "loom-native-release-notes";
+import { LoomReleaseNotes } from "./OfficialReleaseNotes.generated.tsx";
 import { loomReleaseNotes } from "./release-notes.ts";
 import { WEB_BUILD_IDENTITY } from "./build-identity.ts";
 import UsageSummary from "./UsageSummary.tsx";

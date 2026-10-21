@@ -3,10 +3,7 @@ import { adaptMobileMessageDefault } from "./mobile-message-default.ts";
 import { pushWorkerPlugin } from "./push-worker-plugin.ts";
 import { adaptComposerDirectory } from "./composer-directory-adaptation.ts";
 import { adaptTimelineWindow } from "./timeline-window-adaptation.ts";
-import {
-  exposeNotificationStatus,
-  exposeReleaseNotes,
-} from "./settings-resource-adaptation.ts";
+import { exposeNotificationStatus } from "./settings-resource-adaptation.ts";
 import { adaptChineseLocale } from "./locale-adaptation.ts";
 import { adaptReactions, adaptReactionToolbar } from "./reaction-adaptation.ts";
 import tailwindcss from "@tailwindcss/postcss";
@@ -22,9 +19,7 @@ import { adaptSystemSettings } from "./system-settings-adaptation.ts";
 import { adaptArchivedChannels } from "./settings-archive-adaptation.ts";
 import { adaptTaskCreation } from "./task-create-adaptation.ts";
 import { officialUiAliases } from "./ui-resolution.ts";
-import {
-  adaptMessageModelLabel,
-} from "./appearance-adaptation.ts";
+import { adaptMessageModelLabel } from "./appearance-adaptation.ts";
 import {
   adaptAttachmentComposer,
   adaptAttachmentMessage,
@@ -103,8 +98,6 @@ export default defineConfig({
         }
         if (id.endsWith("/components/message/MessageTimeline.tsx"))
           return { code: adaptTimelineWindow(code), map: null };
-        if (id.endsWith("/components/settings/ReleaseNotesPanel.tsx"))
-          return { code: exposeReleaseNotes(code), map: null };
         if (id.endsWith("/packages/web/src/i18n/LocaleProvider.tsx"))
           return { code: adaptChineseLocale(code), map: null };
         if (id.endsWith("/components/message/MessageHoverToolbar.tsx"))
@@ -150,9 +143,7 @@ export default defineConfig({
           return {
             code: exposeNotificationStatus(
               exposeAboutVersion(
-                exposeAccountProfile(
-                  adaptSystemSettings(code),
-                ),
+                exposeAccountProfile(adaptSystemSettings(code)),
               ),
             ),
             map: null,
@@ -237,11 +228,6 @@ export default defineConfig({
           source === "./MessageSearchPage"
         )
           return resolve(import.meta.dirname, "SearchOverlayContent.tsx");
-        if (source === "loom-native-release-notes")
-          return resolve(
-            import.meta.dirname,
-            "../packages/web/src/components/settings/ReleaseNotesPanel.tsx",
-          );
         if (source === "loom-native-appearance")
           return resolve(
             import.meta.dirname,

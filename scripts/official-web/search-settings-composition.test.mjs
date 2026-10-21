@@ -40,7 +40,7 @@ test("timeline supplies member mentions rather than empty map", () => {
   assert.match(s, /projectMessageMentions\(members\)/);
 });
 test("release notes retain current native text hierarchy without highlighted card fill", () => {
-  const s = read("packages/web/src/components/settings/ReleaseNotesPanel.tsx");
+  const s = read("loom/OfficialReleaseNotes.generated.tsx");
   assert.match(s, /font-mono text-mono-meta text-foreground/);
   assert.doesNotMatch(s, /isCurrentRelease \? "bg-primary-soft/);
   assert.match(s, /text-subhead text-foreground/);

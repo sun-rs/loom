@@ -14,7 +14,8 @@
       "loom/OfficialAppearance.generated.tsx",
       "loom/OfficialProfile.generated.tsx",
       "loom/OfficialActivity.generated.tsx",
-      "loom/OfficialDateTime.generated.tsx"
+      "loom/OfficialDateTime.generated.tsx",
+      "loom/OfficialReleaseNotes.generated.tsx"
     ],
     "foundation": "package.json#dependencies.raft-ui"
   },
@@ -100,11 +101,12 @@
         "loom/OfficialAppearance.generated.tsx",
         "loom/LanguageRegionSettings.tsx",
         "loom/NotificationSettings.tsx",
-        "loom/OfficialDateTime.generated.tsx"
+        "loom/OfficialDateTime.generated.tsx",
+        "loom/OfficialReleaseNotes.generated.tsx"
       ],
-      "adopted": "外观声明和日期/时间JSX自动提取；主题选择器直接依赖；其他Tab仍混合",
+      "adopted": "外观声明和日期/时间JSX自动提取；主题选择器直接依赖；其他Tab仍混合；更新日志内容区块及分类规则自动提取，旧构建切片已删除",
       "remaining": [
-        "账户/语言区域/通知/管理/归档/用量/更新说明等仍需逐项拆分，外观的消息预览/字号组件仍沿用原模块"
+        "账户/语言区域/通知/管理/归档/用量等仍需逐项拆分，外观的消息预览/字号组件仍沿用原模块"
       ]
     }
   ],
