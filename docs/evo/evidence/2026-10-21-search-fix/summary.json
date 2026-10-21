@@ -20,6 +20,38 @@
   },
   "backendChanges": false,
   "paidModelsUsed": false,
-  "deployment": "pending",
+  "deployment": {
+    "productCommit": "4d5eedc9",
+    "verified": true,
+    "databasesBackedUp": 2,
+    "filesBackedUp": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true,
+    "service": "com.loom.evo",
+    "readOnlyFormalWebKit": {
+      "results": [
+        {
+          "width": 1440,
+          "committed": {
+            "q": "搜索验证",
+            "filter": true,
+            "label": "搜索「搜索验证」打开完整结果页，可筛选并预览上下文↵"
+          },
+          "heldPointer": true
+        },
+        {
+          "width": 390,
+          "noOverflow": true
+        }
+      ],
+      "errors": [],
+      "assets": [
+        "http://127.0.0.1:4176/assets/app-entry-T3R8LFUQ.js"
+      ],
+      "readOnly": true,
+      "physicalDevice": false
+    },
+    "evidenceDirectory": "/Users/sun/.loom/reviews/2026-10-21-search-fix"
+  },
   "upstreamUiAdopted": false
 }
