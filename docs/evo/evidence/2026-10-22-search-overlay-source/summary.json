@@ -1,0 +1,83 @@
+{
+  "date": "2026-10-22",
+  "productCommit": "fdb467a424732a2316bf066db3b8fd0ba005011a",
+  "scope": [
+    "SearchOverlay exact non-import declarations",
+    "Direct official Modal plus dismissLayer dependency",
+    "Direct official searchOverlayAnchor dependency",
+    "Explicit Loom overlay content import replaces Vite interception"
+  ],
+  "source": {
+    "revision": "db5e399f017d584e49597e3a28757645d6807893",
+    "release": "v1.21.23-source.1",
+    "hashes": "source-lock.json",
+    "generator": "scripts/official-web/generate-search-overlay.mjs",
+    "adoptedChanges": [
+      "DialogSurface replaces old PopoverPopup",
+      "Dim scrim without legacy blur replaces transparent backdrop",
+      "Window-centered overlay with topbar vertical anchor",
+      "Native footer typography, Escape/defaultPrevented/IME guards"
+    ],
+    "localBinding": "Loom Web passes contentColumnRef=null because it has topbar; fixed true presentation flags map to existing overlay context and query owner; desktopShell helper remains local"
+  },
+  "verification": {
+    "red": [
+      "Generator absent",
+      "Official Modal export absent"
+    ],
+    "sourceChecks": 5,
+    "uiContract": 8,
+    "typecheck": "passed",
+    "build": "passed; existing chunk warnings retained",
+    "topbar": [
+      {
+        "width": 1440,
+        "passed": true
+      },
+      {
+        "width": 390,
+        "passed": true
+      }
+    ],
+    "topbarCoverage": [
+      "IME composition",
+      "Escape and nested-filter priority",
+      "Outside click",
+      "Keyboard result navigation",
+      "Draft preservation",
+      "Viewport center/top alignment/bounded height",
+      "Nonblurred scrim",
+      "1440-to-390 responsive search and query preservation"
+    ],
+    "heldPointerTransition": {
+      "searchTransition": "passed",
+      "heldPointer": true
+    },
+    "formalWebkit": {
+      "engine": "webkit",
+      "readOnly": true,
+      "desktopCenter": true,
+      "scrimWithoutBlur": true,
+      "escapeReturn": true,
+      "responsiveQueryPreserved": true,
+      "mobileNoOverflow": true
+    },
+    "screenshots": "Desktop overlay inspected; desktop/mobile screenshots retained privately"
+  },
+  "deployment": {
+    "method": "idle check, same-home backup, graceful exact launchd restart",
+    "databases": 2,
+    "files": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true,
+    "schema": 90,
+    "sourceSha256": "486aadff0b139a903e96557c18d9efe2125656f7d258c35a3689aaec9f0e54b5"
+  },
+  "limits": [
+    "Pinned official source, not latest live-site claim",
+    "Electron/native-host content-column branch not enabled or accepted",
+    "Other Modal consumers retain local version",
+    "Search result-page and activity-page composition still incomplete",
+    "No physical device or paid CLI acceptance"
+  ]
+}
