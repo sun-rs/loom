@@ -184,5 +184,83 @@
     "Older live presentation is not current-source code",
     "No backend mutation changes, paid CLI runs or efficiency claims"
   ],
-  "privateEvidence": "/Users/sun/.loom/reviews/2026-10-22-identity-review"
+  "privateEvidence": "/Users/sun/.loom/reviews/2026-10-22-identity-review",
+  "deployment": {
+    "head": "1171569d8ef8e47f7e3d4dcaaff3ff74cce2d898",
+    "newStaticDirectory": "/Users/sun/Code/repos/rah_os/.workbench-web/64acec0837e3be4863b635a073c702955189df854d6b114d46c8240c9cb94ce9",
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-identity-review-ff501464-072b-44d7-a75a-3036ebf6a3f6",
+    "databases": 2,
+    "files": 325,
+    "pushStateUnchanged": true,
+    "businessTablesUnchanged": 20
+  },
+  "formalWebKit": [
+    {
+      "width": 1440,
+      "roleHit": {
+        "height": 36,
+        "clickable": true
+      },
+      "navHit": {
+        "width": 40,
+        "height": 40,
+        "clickable": true
+      },
+      "activityMobileBack": true,
+      "existingReplies": 4,
+      "nativeCloseOrBack": {
+        "width": 32,
+        "height": 32,
+        "clickable": true
+      },
+      "noSend": true,
+      "noErrors": true,
+      "noOverflow": true,
+      "workspaceOpened": true,
+      "computerProfile": true,
+      "settingsAppearance": true,
+      "roleProfile": true,
+      "workspaceRefresh": {
+        "width": 32,
+        "height": 32,
+        "clickable": true
+      }
+    },
+    {
+      "width": 390,
+      "roleHit": {
+        "height": 34,
+        "clickable": true
+      },
+      "navHit": {
+        "width": 68.796875,
+        "height": 44,
+        "clickable": true
+      },
+      "activityMobileBack": true,
+      "existingReplies": 4,
+      "nativeCloseOrBack": {
+        "width": 44,
+        "height": 44,
+        "clickable": true
+      },
+      "noSend": true,
+      "noErrors": true,
+      "noOverflow": true,
+      "workspaceOpened": true,
+      "computerProfile": true,
+      "settingsAppearance": true,
+      "roleProfile": true,
+      "workspaceRefresh": {
+        "width": 32,
+        "height": 32,
+        "clickable": true
+      }
+    }
+  ],
+  "visualReview": {
+    "file": "formal-role-list-390.png",
+    "sha256": "23d99303dc4c39b466de321c8e5da9b652b05be92c1472bd9c807dadc1631978",
+    "scope": "Real mobile Role list, no claim of bilateral whole-site screenshot parity"
+  }
 }
