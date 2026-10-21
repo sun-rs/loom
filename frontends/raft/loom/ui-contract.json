@@ -412,6 +412,28 @@
       ],
       "guard": "scripts/official-web/message-markdown-source.test.mjs",
       "rule": "Original hook and helper declarations, native inline reference/search recipes. AST recognition preserves code/link/escape boundaries. Raw HTML remains text and all generated markup passes official sanitization. Canonical mention IDs stay bound by Loom; no new store, transport or implicit authority."
+    },
+    {
+      "id": "shared-native-content",
+      "owner": "locked db5e399 modules with import-only binding",
+      "sources": [
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/markdown/MarkdownContent.tsx",
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/markdown/CodeBlock.tsx",
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/markdown/CustomProtocolLink.tsx",
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/ui/CopyButton.tsx",
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/ui/CopyIconButton.tsx",
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/message/AttachmentChip.tsx"
+      ],
+      "bindings": [
+        "OfficialMarkdownContent.generated.tsx",
+        "OfficialCodeBlock.generated.tsx",
+        "OfficialCustomProtocolLink.generated.tsx",
+        "OfficialCopyButton.generated.tsx",
+        "OfficialCopyIconButton.generated.tsx",
+        "OfficialAttachmentChip.generated.tsx"
+      ],
+      "guard": "scripts/official-web/shared-content-source.test.mjs",
+      "rule": "Shared native markdown/code/quote/table/link/copy and attachment card recipes; no per-page geometry. AttachmentChip compatibility wrapper discards retired variant/icon props only. Preview action tests distinguish desktop native geometry from approved mobile geometry and verify expanded pointer targets."
     }
   ],
   "exceptions": [

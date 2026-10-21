@@ -67,6 +67,12 @@
     "packages/web/src/components/message/threadSearch.ts": "f78d5d417bac9af383a02f4ea842a7fbc9959ade1ce916dba8c707dcae92f20e",
     "packages/web/src/components/markdown/markdownSanitizeSchema.ts": "e52e5bf087ce066f8ee9473410805e9f6845734638425bbde1cc7841128ca54a",
     "packages/web/src/utils/markdownAutolink.ts": "70edb58d76382e6e0b71cdbfb16d1226421f7c0acb97eb35a93bafbe5e80353c",
-    "packages/web/src/utils/markdownSourceAlignment.ts": "df7b89b8bda437b61e1a66b37a446dbcf7152368986227de07ec394296e525af"
+    "packages/web/src/utils/markdownSourceAlignment.ts": "df7b89b8bda437b61e1a66b37a446dbcf7152368986227de07ec394296e525af",
+    "packages/web/src/components/markdown/MarkdownContent.tsx": "1dde920662f6b9578b6460502d6240eb43d24ed1f5645a915e02e4234a1e1770",
+    "packages/web/src/components/markdown/CodeBlock.tsx": "73cfbd9c040c05cf01ea335dd643f75dec679d7c8951f49572459614d2e8d26f",
+    "packages/web/src/components/markdown/CustomProtocolLink.tsx": "1f38e3f241fe0837a94b7b0bf5e3ea2f49e157273f8f51af6fad1fde905201f2",
+    "packages/web/src/components/ui/CopyButton.tsx": "18b7c39bca148960c88fc92646bb70fb1751249eeca3ad61528b8284e99c868d",
+    "packages/web/src/components/ui/CopyIconButton.tsx": "cdebbec9488f607c57532ede2c9d30caeaeb41dc32230af51db59b9a9a039f38",
+    "packages/web/src/components/message/AttachmentChip.tsx": "6534fd0024ddb52b4012ae8c0e5d43d3ea1a3d92d7846462bb5b0b9efec90eff"
   }
 }

@@ -30,7 +30,9 @@
     "./TaskTitleRow": "./packages/web/src/components/task/TaskTitleRow.tsx",
     "./messageMarkdownSecurity": "./packages/web/src/components/message/messageMarkdownSecurity.ts",
     "./remarkMessageTokens": "./packages/web/src/components/message/remarkMessageTokens.ts",
-    "./repairGeneratedMarkdown": "./packages/web/src/components/message/repairGeneratedMarkdown.ts"
+    "./repairGeneratedMarkdown": "./packages/web/src/components/message/repairGeneratedMarkdown.ts",
+    "./markdownAutolink": "./packages/web/src/utils/markdownAutolink.ts",
+    "./markdownSanitizeSchema": "./packages/web/src/components/markdown/markdownSanitizeSchema.ts"
   },
   "peerDependencies": {
     "react": "^19.0.0",

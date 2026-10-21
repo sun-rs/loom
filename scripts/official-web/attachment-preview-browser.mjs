@@ -69,11 +69,40 @@ export async function verifyAttachmentPreview({
       );
       await preview.waitFor({ timeout: 3000 });
       for (const label of ["下载", "关闭"]) {
-        const box = await preview
-          .getByRole("button", { name: label, exact: true })
-          .boundingBox();
-        assert.equal(box.width, 44);
-        assert.equal(box.height, 44);
+        const control = preview.getByRole("button", {
+          name: label,
+          exact: true,
+        });
+        const hit = await control.evaluate((el, mobile) => {
+          const r = el.getBoundingClientRect(),
+            after = getComputedStyle(el, "::after");
+          const owned = (x, y) => {
+            const top = document.elementFromPoint(x, y);
+            return top === el || el.contains(top);
+          };
+          return {
+            width: r.width,
+            height: r.height,
+            left: after.left,
+            top: after.top,
+            edgeHit:
+              owned(r.x + r.width / 2, r.y + (mobile ? 2 : -3)) &&
+              owned(r.x + r.width / 2, r.bottom + (mobile ? -2 : 3)),
+          };
+        }, width === 390);
+        // raft-ui 0.10.5 icon-lg: 32px visual control, ::after inset -6px.
+        // Compact mobile retains the approved 44px visual target.
+        // Its absolute containing block excludes the border; probe inside the actual extension.
+        // Previous deployed build also measured 32; boundingBox excludes ::after.
+        assert.equal(hit.width, width === 390 ? 44 : 32);
+        assert.equal(hit.height, width === 390 ? 44 : 32);
+        assert.equal(hit.left, width === 390 ? "0px" : "-6px");
+        assert.equal(hit.top, width === 390 ? "0px" : "-6px");
+        assert.equal(
+          hit.edgeHit,
+          true,
+          "native expanded hit area is clickable",
+        );
       }
       assert.equal(
         await preview

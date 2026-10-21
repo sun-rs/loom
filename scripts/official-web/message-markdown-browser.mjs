@@ -9,6 +9,8 @@ export async function verifyMessageMarkdown({
   const literal = "> quoted\nplain **bold ** \\n #" + channel.slug;
   const body = [
     "FIXTURE markdown tree",
+    "> native quote",
+    "| header |\n| --- |\n| cell |",
     "~~~text\n" + literal + "\n~~~",
     "`**inline ** \\n`",
     '<img src=x onerror="window.__loomXss=1">',
@@ -34,6 +36,16 @@ export async function verifyMessageMarkdown({
     const page = await browser.newPage({ viewport: { width, height: 844 } }),
       errors = [];
     page.on("pageerror", (e) => errors.push(e.message));
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, "clipboard", {
+        configurable: true,
+        value: {
+          writeText: async (text) => {
+            window.__copiedCode = text;
+          },
+        },
+      });
+    });
     await page.goto(`${origin}/?room=${channel.roomId}`);
     const row = page.locator(`[data-timeline-message-id="${msg.messageId}"]`);
     await row.waitFor();
@@ -64,6 +76,19 @@ export async function verifyMessageMarkdown({
     );
     assert.equal(await page.evaluate(() => window.__loomXss), undefined);
     assert.equal(await row.locator("input[type=checkbox]:checked").count(), 1);
+    assert.equal(await row.locator("pre.bg-layer-code").count(), 1);
+    assert.equal(await row.locator("blockquote.border-line-seam").count(), 1);
+    assert.equal(await row.locator("th.bg-fill-muted").count(), 1);
+    const copy = row.locator("button.r-code-copy");
+    await copy.click();
+    await page.waitForFunction(() => typeof window.__copiedCode === "string");
+    assert.equal(
+      (await page.evaluate(() => window.__copiedCode)).trimEnd(),
+      literal,
+    );
+    assert.ok(
+      (await copy.getAttribute("class")).includes("r-code-copy--copied"),
+    );
     assert.deepEqual(errors, []);
     results.push({
       width,
@@ -71,6 +96,8 @@ export async function verifyMessageMarkdown({
       rawHtmlText: true,
       noExecutableMarkup: true,
       checkedList: true,
+      nativeCodeQuoteTable: true,
+      copiedCodeExact: true,
     });
     await page.close();
   }
