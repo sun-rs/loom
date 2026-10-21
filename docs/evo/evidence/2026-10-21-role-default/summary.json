@@ -1,0 +1,49 @@
+{
+  "productCommit": "0e093ccfa27255b50ed28dd434152b1ea202b3fe",
+  "rootCause": "Local initial and selection state forced activity; prior test asserted local behavior instead of official defaultAgentTab rule.",
+  "source": "frontends/raft/upstream/raft-web-source/packages/web/src/components/agent/AgentDetailPanel.tsx#defaultAgentTab",
+  "implementation": "Role entry opens profile independent of tab order; instance inspector activity default preserved.",
+  "checks": {
+    "redBeforeFix": 2,
+    "unitPassed": 5,
+    "uiContractPassed": 8,
+    "typecheck": true,
+    "build": true,
+    "browserWidths": [1440, 390],
+    "browserAssertions": [
+      "initial profile selected and rendered",
+      "return from activity via Role list selects and renders profile",
+      "existing activity filtering, cursor paging, combined model editor and shared instance timeline"
+    ],
+    "formal": [
+      {
+        "width": 1440,
+        "identityBesideAvatar": true,
+        "separators": 3,
+        "noOverflow": true,
+        "profileDefault": true,
+        "instancesInProfile": true
+      },
+      {
+        "width": 390,
+        "identityBesideAvatar": true,
+        "separators": 3,
+        "noOverflow": true,
+        "profileDefault": true,
+        "instancesInProfile": true
+      }
+    ]
+  },
+  "deployment": {
+    "verified": true,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true,
+    "backedUpDatabases": 2,
+    "backedUpFiles": 325
+  },
+  "limits": [
+    "Source parity regression covers this entry rule, not all site interactions",
+    "No physical-device or paid-provider tests"
+  ],
+  "privateEvidence": "/Users/sun/.loom/reviews/2026-10-21-role-default"
+}
