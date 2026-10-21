@@ -9,6 +9,7 @@ export const sharedContentModules = [
   "ui/CopyButton",
   "ui/CopyIconButton",
   "message/AttachmentChip",
+  "message/AttachmentMetaText",
 ];
 export function generateSharedContent() {
   const output = {};

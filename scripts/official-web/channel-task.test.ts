@@ -68,7 +68,7 @@ test("private rooms cannot expose channel task writes", async () => {
 });
 test("native task toggle is delivered to the override and reset only after success", () => {
   const source = readFileSync(
-    "frontends/raft/packages/web/src/components/message/MessageInput.tsx",
+    "frontends/raft/upstream/raft-web-source/packages/web/src/components/message/MessageInput.tsx",
     "utf8",
   );
   const result = adaptTaskComposer(source);
@@ -80,7 +80,7 @@ test("native task toggle is delivered to the override and reset only after succe
 });
 test("native message menu enables only connected read-only actions, preserves native popup and touch handlers", () => {
   const source = readFileSync(
-    "frontends/raft/packages/web/src/components/message/MessageItem.tsx",
+    "frontends/raft/upstream/raft-web-source/packages/web/src/components/message/MessageItem.tsx",
     "utf8",
   );
   const result = adaptTaskMessage(source);

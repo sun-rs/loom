@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { adaptMessageProfileNavigation } from "../../frontends/raft/loom/message-profile-navigation.ts";
 test("member navigation gains controlled callbacks; unrelated readonly guards stay unchanged", () => {
   const source = readFileSync(
-    "frontends/raft/packages/web/src/components/message/MessageItem.tsx",
+    "frontends/raft/upstream/raft-web-source/packages/web/src/components/message/MessageItem.tsx",
     "utf8",
   );
   const result = adaptMessageProfileNavigation(source);

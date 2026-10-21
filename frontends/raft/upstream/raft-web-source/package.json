@@ -32,7 +32,8 @@
     "./remarkMessageTokens": "./packages/web/src/components/message/remarkMessageTokens.ts",
     "./repairGeneratedMarkdown": "./packages/web/src/components/message/repairGeneratedMarkdown.ts",
     "./markdownAutolink": "./packages/web/src/utils/markdownAutolink.ts",
-    "./markdownSanitizeSchema": "./packages/web/src/components/markdown/markdownSanitizeSchema.ts"
+    "./markdownSanitizeSchema": "./packages/web/src/components/markdown/markdownSanitizeSchema.ts",
+    "./composerHost": "./packages/web/src/components/message/composerHost.ts"
   },
   "peerDependencies": {
     "react": "^19.0.0",

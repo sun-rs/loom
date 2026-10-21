@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 const source = () =>
   readFileSync(
-    "frontends/raft/packages/web/src/components/message/MessageInput.tsx",
+    "frontends/raft/loom/OfficialMessageInput.generated.tsx",
     "utf8",
   );
 test("mention badges and icons keep locked official native dimensions", () => {
@@ -13,7 +13,11 @@ test("mention badges and icons keep locked official native dimensions", () => {
     s.indexOf("function MentionCandidateActivityBadge"),
   );
   assert.ok(!body.includes("text-[10px]"));
-  assert.ok(body.includes("size-[19px]"));
+  assert.match(
+    s,
+    /<IconTile size="xs" data-mention-candidate-avatar="computer">/,
+  );
+  assert.match(s, /<IconTile size="xs" data-mention-candidate-avatar="app">/);
   assert.ok(!body.includes("!border-black/40"));
 });
 test("autocomplete groups use explicit native separators and native accessory spacing", () => {

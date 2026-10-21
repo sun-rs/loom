@@ -19,9 +19,9 @@ test("activity adopts native separator rows and semantic typography", () => {
   );
 });
 test("task card uses official footer placement and keyboard focus treatment", () => {
-  const s = read("packages/web/src/components/task/TaskCard.tsx");
+  const s = read("loom/OfficialTaskCard.generated.tsx");
   assert.match(s, /dropdownAlign="left"/);
-  assert.match(s, /focus-visible:shadow-raft-focus/);
+  assert.match(s, /focus-visible:shadow-focus/);
   assert.doesNotMatch(s, /mt-2 flex justify-end/);
 });
 test("navigation consumes separate canonical unread projections", () => {
@@ -31,7 +31,7 @@ test("navigation consumes separate canonical unread projections", () => {
   assert.match(read("loom/ChannelSidebar.tsx"), /onUnreadChanged/);
 });
 test("located message retains native soft highlight on hover without old ring", () => {
-  const s = read("packages/web/src/components/message/MessageItem.tsx");
+  const s = read("loom/OfficialMessageItem.generated.tsx");
   assert.ok(s.includes("bg-info-soft hover:bg-info-soft"));
   assert.ok(!s.includes("bg-info/10 ring-1 ring-inset ring-info/50"));
 });

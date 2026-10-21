@@ -1,0 +1,23 @@
+<OfficialComposerView
+          variant={variant} preventToolbarButtonPointerDownBlur={preventToolbarButtonPointerDownBlur}
+          handleAttachImageClick={handleAttachImageClick} handleAttachFileClick={handleAttachFileClick}
+          input={{id:textareaId,ref:composerTextareaRef,onChange:handleChange,onKeyDown:handleKeyDown,onPaste:handlePaste,placeholder:placeholder ?? formatMessage({id:"message.composer.messagePlaceholder"},{channel:channelName}),maxLength}}
+          fileTools={<ComposerFilesTools taskMode={alsoCreateTask} insert={(text) => {
+            const input = textareaRef.current;
+            const start = input?.selectionStart ?? content.length;
+            const end = input?.selectionEnd ?? start;
+            const next = content.slice(0, start) + text + content.slice(end);
+            contentRef.current = next;
+            setContent(next);
+            requestAnimationFrame(() => {
+              input?.focus({preventScroll:true});
+              input?.setSelectionRange(start + text.length, start + text.length);
+              autoResize();
+            });
+          }} />}
+          showTaskButton={showTaskButton} alsoCreateTask={alsoCreateTask}
+          preventTaskTogglePointerDownBlur={preventTaskTogglePointerDownBlur}
+          toggleTaskModeWithoutBlur={toggleTaskModeWithoutBlur}
+          submitTitle={submitTitle} preventSendButtonPointerDownBlur={preventSendButtonPointerDownBlur}
+          submitBlocked={submitBlocked} submitLabel={submitLabel} submitIcon={submitIcon}
+        />

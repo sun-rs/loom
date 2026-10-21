@@ -50,7 +50,7 @@ test("composer native input and action composition are source-derived while Loom
     generateComposerView(),
   );
   assert.match(
-    read("packages/web/src/components/message/MessageInput.tsx"),
+    read("loom/OfficialMessageInput.generated.tsx"),
     /<OfficialComposerView/,
   );
   assert.doesNotMatch(read("loom/vite.config.ts"), /adaptAttachmentComposer/);

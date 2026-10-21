@@ -30,7 +30,7 @@ test("directory binding changes only the composer read source and fails on upstr
     await import("../../frontends/raft/loom/composer-directory-adaptation.ts");
   const { readFile } = await import("node:fs/promises");
   const source = await readFile(
-    "frontends/raft/packages/web/src/components/message/MessageInput.tsx",
+    "frontends/raft/upstream/raft-web-source/packages/web/src/components/message/MessageInput.tsx",
     "utf8",
   );
   const adapted = adaptComposerDirectory(source);

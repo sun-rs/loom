@@ -33,7 +33,7 @@ test("computer instance rows use one native group and sibling separators", () =>
   assert.match(s, /<OfficialAvatarListRow/);
   const port = read("loom/OfficialListRows.tsx");
   assert.match(port, /ListRowGroup as OfficialListRowGroup/);
-  assert.match(port, /<ListRow onClick=/);
+  assert.match(port, /@loom\/raft-web-source\/AvatarListRow/);
 });
 test("Role profile exposes field actions, native avatar presets and immutable revision binding", () => {
   const s = read("loom/RoleProfile.tsx");
@@ -45,7 +45,7 @@ test("Role profile exposes field actions, native avatar presets and immutable re
 });
 
 test("message headers retain official spacing, badges and semantic full timestamps", () => {
-  const s = read("packages/web/src/components/message/MessageItem.tsx");
+  const s = read("loom/OfficialMessageItem.generated.tsx");
   const header = s.slice(
     s.indexOf("<MessageItemHeader>"),
     s.indexOf("</MessageItemHeader>"),

@@ -1,25 +1,11 @@
-import { adaptMessageStatus } from "./message-status-adaptation.ts";
 import { adaptMobileMessageDefault } from "./mobile-message-default.ts";
 import { pushWorkerPlugin } from "./push-worker-plugin.ts";
-import { adaptComposerDirectory } from "./composer-directory-adaptation.ts";
 import { adaptChineseLocale } from "./locale-adaptation.ts";
-import { adaptReactions } from "./reaction-adaptation.ts";
 import tailwindcss from "@tailwindcss/postcss";
 import postcss from "postcss";
 import { localizeFontCss } from "./local-fonts.ts";
 import { officialUiAliases } from "./ui-resolution.ts";
-import { adaptMessageModelLabel } from "./appearance-adaptation.ts";
-import {
-  adaptAttachmentMessage,
-  adaptAttachmentComments,
-  adaptPdfComments,
-} from "./attachment-adaptation.ts";
-import {
-  adaptTaskComposer,
-  adaptTaskMessage,
-} from "./channel-task-adaptation.ts";
-import { adaptThreadItem, adaptComposerSubmit } from "./thread-adaptation.ts";
-import { adaptMessageProfileNavigation } from "./message-profile-navigation.ts";
+
 import { defineConfig } from "vite";
 import { resolve } from "node:path";
 import officialConfig from "../packages/web/vite.config.ts";
@@ -66,55 +52,6 @@ export default defineConfig({
           return { code: adaptMobileMessageDefault(code), map: null };
         if (id.endsWith("/packages/web/src/i18n/LocaleProvider.tsx"))
           return { code: adaptChineseLocale(code), map: null };
-        if (
-          id.endsWith(
-            "/packages/web/src/components/message/AttachmentCommentsPanel.tsx",
-          )
-        )
-          return { code: adaptAttachmentComments(code), map: null };
-        if (
-          id.endsWith(
-            "/packages/web/src/components/message/attachmentPreviewSurfaces.tsx",
-          )
-        )
-          return { code: adaptPdfComments(code), map: null };
-        if (
-          id.endsWith("/packages/web/src/components/message/MessageInput.tsx")
-        )
-          return {
-            code: adaptComposerDirectory(
-              adaptTaskComposer(adaptComposerSubmit(code)),
-            ),
-            map: null,
-          };
-        if (
-          id.endsWith("/packages/web/src/components/message/MessageItem.tsx")
-        ) {
-          const mentionSeam =
-            "const effectiveMentionMap = isExternal ? EXTERNAL_MESSAGE_MENTION_MAP : mentionMap;";
-          if (code.split(mentionSeam).length !== 2)
-            throw new Error("Official mention identity seam changed");
-          code =
-            'import { boundMessageMentions } from "loom-message-profile";\n' +
-            code.replace(
-              mentionSeam,
-              "const boundMentionMap = useMemo(() => boundMessageMentions(mentionMap, message.mentions), [mentionMap, message.mentions]);\n  const effectiveMentionMap = isExternal ? EXTERNAL_MESSAGE_MENTION_MAP : readOnlyProjection ? boundMentionMap : mentionMap;",
-            );
-          return {
-            code: adaptReactions(
-              adaptAttachmentMessage(
-                adaptTaskMessage(
-                  adaptThreadItem(
-                    adaptMessageModelLabel(
-                      adaptMessageStatus(adaptMessageProfileNavigation(code)),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            map: null,
-          };
-        }
       },
       resolveId(source, importer) {
         if (source === "loom-message-profile")

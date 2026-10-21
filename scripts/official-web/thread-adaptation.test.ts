@@ -8,7 +8,7 @@ import {
 import { adaptThreadFooter } from "./thread-panel-binding.ts";
 test("controlled thread entry preserves all non-thread readonly guards and requires exact upstream boundaries", () => {
   const source = readFileSync(
-    "frontends/raft/packages/web/src/components/message/MessageItem.tsx",
+    "frontends/raft/upstream/raft-web-source/packages/web/src/components/message/MessageItem.tsx",
     "utf8",
   );
   const result = adaptThreadItem(source);
@@ -34,7 +34,7 @@ test("native readonly thread gains only a caller-owned footer slot", () => {
 
 test("Loom composer preserves IME and Shift guards while applying Enter send to touch", () => {
   const source = readFileSync(
-    "frontends/raft/packages/web/src/components/message/MessageInput.tsx",
+    "frontends/raft/upstream/raft-web-source/packages/web/src/components/message/MessageInput.tsx",
     "utf8",
   );
   const result = adaptComposerSubmit(source);

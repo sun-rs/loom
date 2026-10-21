@@ -46,15 +46,13 @@ test("reaction reads are bounded and writes preserve explicit active intent on e
   bridge.writes.discard();
 });
 import { readFileSync } from "node:fs";
-import {
-  adaptReactions,
-} from "../../frontends/raft/loom/reaction-adaptation.ts";
-import {adaptReactionToolbar} from "./chat-affordance-bindings.ts";
+import { adaptReactions } from "../../frontends/raft/loom/reaction-adaptation.ts";
+import { adaptReactionToolbar } from "./chat-affordance-bindings.ts";
 import { adaptTaskMessage } from "../../frontends/raft/loom/channel-task-adaptation.ts";
 import { adaptThreadItem } from "../../frontends/raft/loom/thread-adaptation.ts";
 test("reaction adapter preserves native quick row and toolbar rules without exposing sharing; bookmarks bind to Loom", () => {
   const original = readFileSync(
-    "frontends/raft/packages/web/src/components/message/MessageItem.tsx",
+    "frontends/raft/upstream/raft-web-source/packages/web/src/components/message/MessageItem.tsx",
     "utf8",
   );
   const adapted = adaptReactions(adaptTaskMessage(adaptThreadItem(original)));

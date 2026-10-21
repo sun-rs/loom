@@ -14,9 +14,7 @@ test("thread overflow uses native PanelAction and composer has no added separato
   );
 });
 test("preview header adopts native title and icon-lg ghost actions", () => {
-  const s = read(
-    "packages/web/src/components/message/attachmentPreviewSurfaces.tsx",
-  );
+  const s = read("loom/OfficialAttachmentPreviewSurfaces.generated.tsx");
   const h = s.slice(
     s.indexOf('<div className="flex h-14'),
     s.indexOf("{browserFindLayout && <div"),
@@ -27,17 +25,19 @@ test("preview header adopts native title and icon-lg ghost actions", () => {
   assert.doesNotMatch(h, /size="icon-sm"|font-display|!min-h/);
 });
 test("shared close action delegates colors to native recipe", () => {
-  const s = read("upstream/raft-web-source/packages/web/src/components/ui/CloseButton.tsx");
+  const s = read(
+    "upstream/raft-web-source/packages/web/src/components/ui/CloseButton.tsx",
+  );
   assert.match(s, /className=\{className\}/);
   assert.doesNotMatch(s, /hover:bg|text-foreground/);
 });
 test("both reaction picker and menu rows retain current focus and selected colors", () => {
-  const s = read("packages/web/src/components/message/MessageItem.tsx");
+  const s = read("loom/OfficialMessageItem.generated.tsx");
   assert.equal(
     s.split(
-      "flex size-7 items-center justify-center rounded-control bg-transparent outline-none hover:bg-primary-soft active:bg-primary-soft focus-visible:shadow-raft-focus",
+      "flex size-7 items-center justify-center rounded-control bg-transparent outline-none hover:bg-brand-soft active:bg-brand-soft focus-visible:shadow-focus",
     ).length - 1,
-    2,
+    3,
   );
 });
 test("attachment badge uses native inline placement without forced legacy size", () => {
@@ -47,9 +47,7 @@ test("attachment badge uses native inline placement without forced legacy size",
   assert.doesNotMatch(s, /!h-|!w-|!min-|!text-/);
 });
 test("attachment comments use native card, typography and lightweight chrome", () => {
-  const s = read(
-    "packages/web/src/components/message/AttachmentCommentsPanel.tsx",
-  );
+  const s = read("loom/OfficialAttachmentCommentsPanel.generated.tsx");
   assert.match(
     s,
     /<Card\s+render=\{<button type="button" onClick=\{jump\} \/>\}/,
@@ -59,7 +57,13 @@ test("attachment comments use native card, typography and lightweight chrome", (
     /min-h-10 shrink-0 items-center gap-2 border-b border-line-seam/,
   );
   assert.match(s, /size="icon-sm" variant="ghost"/);
-  assert.match(s, /shrink-0 border-t border-line-seam p-3/);
+  assert.match(s, /className=\{`\$\{COMPOSER_DOCK_CLASS\}/);
+  assert.match(
+    read(
+      "upstream/raft-web-source/packages/web/src/components/message/composerHost.ts",
+    ),
+    /shrink-0 border-t border-line-seam p-3/,
+  );
   assert.match(s, /font-mono text-mono-meta text-foreground-hint/);
   assert.doesNotMatch(
     s,
@@ -67,9 +71,7 @@ test("attachment comments use native card, typography and lightweight chrome", (
   );
 });
 test("attachment comment drawers use the native seam border", () => {
-  const s = read(
-    "packages/web/src/components/message/attachmentPreviewSurfaces.tsx",
-  );
+  const s = read("loom/OfficialAttachmentPreviewSurfaces.generated.tsx");
   const shell = s.slice(
     s.indexOf("export function AttachmentPreviewShell"),
     s.indexOf("export function CsvPreviewPane"),
@@ -77,9 +79,7 @@ test("attachment comment drawers use the native seam border", () => {
   assert.doesNotMatch(shell, /border-line-muted/);
 });
 test("document panes retain current native Card, tabs and semantic typography", () => {
-  const all = read(
-    "packages/web/src/components/message/attachmentPreviewSurfaces.tsx",
-  );
+  const all = read("loom/OfficialAttachmentPreviewSurfaces.generated.tsx");
   const s = all.slice(
     all.indexOf("export function CsvPreviewPane"),
     all.indexOf("export function DocumentAttachmentPreviewModal"),
@@ -105,9 +105,7 @@ test("action menu rows use official native button recipe without Button override
   assert.match(file, /size="icon-sm"\s+variant="ghost"/);
 });
 test("HTML preview overlays follow official popover, HUD and focus recipes", () => {
-  const all = read(
-    "packages/web/src/components/message/attachmentPreviewSurfaces.tsx",
-  );
+  const all = read("loom/OfficialAttachmentPreviewSurfaces.generated.tsx");
   const s = all.slice(
     all.indexOf("function HtmlPreviewBody"),
     all.indexOf("function VideoPreviewBody"),
@@ -115,11 +113,11 @@ test("HTML preview overlays follow official popover, HUD and focus recipes", () 
   assert.match(s, /bg-layer-popover px-3 py-2 text-callout/);
   assert.match(
     s,
-    /rounded-chip bg-layer-hud px-2 py-1 text-caption text-layer-hud-foreground/,
+    /rounded-chip bg-layer-hud px-2 py-1 text-caption text-foreground-on-hud/,
   );
   assert.match(
     s,
-    /rounded-\[2px\] bg-transparent outline-none focus-visible:shadow-raft-focus/,
+    /rounded-\[2px\] bg-transparent outline-none focus-visible:shadow-focus/,
   );
   assert.match(s, /sandbox="allow-scripts"/);
   assert.doesNotMatch(

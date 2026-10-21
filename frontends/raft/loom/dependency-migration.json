@@ -50,7 +50,12 @@
       "loom/OfficialCustomProtocolLink.generated.tsx",
       "loom/OfficialCopyButton.generated.tsx",
       "loom/OfficialCopyIconButton.generated.tsx",
-      "loom/OfficialAttachmentChip.generated.tsx"
+      "loom/OfficialAttachmentChip.generated.tsx",
+      "loom/OfficialMessageInput.generated.tsx",
+      "loom/OfficialMessageItem.generated.tsx",
+      "loom/OfficialAttachmentCommentsPanel.generated.tsx",
+      "loom/OfficialAttachmentPreviewSurfaces.generated.tsx",
+      "loom/OfficialAttachmentMetaText.generated.tsx"
     ],
     "foundation": "package.json#dependencies.raft-ui"
   },
@@ -98,12 +103,16 @@
         "loom/OfficialCustomProtocolLink.generated.tsx",
         "loom/OfficialCopyButton.generated.tsx",
         "loom/OfficialCopyIconButton.generated.tsx",
-        "loom/OfficialAttachmentChip.generated.tsx"
+        "loom/OfficialAttachmentChip.generated.tsx",
+        "loom/OfficialMessageItem.generated.tsx",
+        "loom/OfficialMessageInput.generated.tsx",
+        "loom/OfficialAttachmentCommentsPanel.generated.tsx",
+        "loom/OfficialAttachmentPreviewSurfaces.generated.tsx"
       ],
-      "adopted": "官方消息组件与构建时适配并存；悬浮工具栏/@提及/关注成员及成员行按锁定原件生成，composer输入与按钮组合提取原Composer子树；5处对应Vite改写移除，资料预览显式接入Loom；Timeline整模块原件加显式有界窗口补丁、ThreadPanel只读展示声明加Loom快照/页游标/操作槽生成，移除两处运行时改写及宿主类型强转；MessageItem正文渲染hook及搜索高亮声明按原件生成，Markdown AST token/修复/安全清洗及源位置对齐直接依赖锁定原件，删除旧正文正则预处理；共享MarkdownContent/CodeBlock/CustomProtocolLink/复制控件与AttachmentChip完整模块采用原件，仅重绑定import",
+      "adopted": "官方消息组件与构建时适配并存；悬浮工具栏/@提及/关注成员及成员行按锁定原件生成，composer输入与按钮组合提取原Composer子树；5处对应Vite改写移除，资料预览显式接入Loom；Timeline整模块原件加显式有界窗口补丁、ThreadPanel只读展示声明加Loom快照/页游标/操作槽生成，移除两处运行时改写及宿主类型强转；MessageItem正文渲染hook及搜索高亮声明按原件生成，Markdown AST token/修复/安全清洗及源位置对齐直接依赖锁定原件，删除旧正文正则预处理；共享MarkdownContent/CodeBlock/CustomProtocolLink/复制控件与AttachmentChip完整模块采用原件，仅重绑定import；MessageItem/MessageInput完整宿主及附件评论/预览外壳现在从锁定原件生成，移除对应Vite变换，旧入口仅桥接",
       "remaining": [
-        "MessageItem外壳、身份/状态/反应/附件的Loom构建时接线仍保留；正文hook及共享Markdown/代码块/复制展示已迁移，Shiki/Mermaid下游仍为既有采用模块，不能称完整MessageItem直接依赖",
-        "MessageInput草稿/输入法/发送和文件控制器尚未整体迁移；只迁入输入与操作展示子树，不能称完整官方composer模块直用"
+        "Channel/DM宿主、文件权限/会话目录、草稿和未知发送状态仍由Loom拥有；不是直接启用Raft状态仓库",
+        "原件生成仍带明确兼容绑定（显示名、时间语义、关注投影、任务/评论、文件工具槽），升级需检查绑定并定向验收"
       ]
     },
     {
@@ -165,9 +174,7 @@
       "id": "computers",
       "name": "计算机",
       "status": "mixed",
-      "sources": [
-        "loom/ComputersPage.tsx"
-      ],
+      "sources": ["loom/ComputersPage.tsx"],
       "adopted": "官方Header、KeyValueRow、完整AvatarListRow直接依赖；Loom保留计算机与实例身份、运行时数据和导航绑定；恢复官方仅手机设置入口，手机列表采用官方ListRow/IconTile组合",
       "remaining": [
         "详情页组合、资料编辑和运行时区块仍有结构移植；历史附件场景的AvatarListRow尚未迁入完整依赖"
@@ -177,9 +184,7 @@
       "id": "memory",
       "name": "记忆",
       "status": "loom-native-composition",
-      "sources": [
-        "loom/MemoryPage.tsx"
-      ],
+      "sources": ["loom/MemoryPage.tsx"],
       "adopted": "Loom全局记忆语义，复用官方基础及关闭/标题组件",
       "remaining": [
         "无可直接替换的官方等价全局记忆页；保留本地语义，继续收敛展示原语并记录例外"
@@ -217,9 +222,7 @@
         "loom/Navigation.tsx",
         "loom/RoleWorkspace.tsx"
       ],
-      "remaining": [
-        "共享控件已原生，外壳/响应式/拖动组合仍需迁移"
-      ]
+      "remaining": ["共享控件已原生，外壳/响应式/拖动组合仍需迁移"]
     },
     {
       "id": "files",
@@ -240,10 +243,7 @@
       "id": "branches",
       "name": "Fork／Side／实例生命周期",
       "status": "mixed",
-      "sources": [
-        "loom/SideWorkspace.tsx",
-        "loom/InstanceInspector.tsx"
-      ],
+      "sources": ["loom/SideWorkspace.tsx", "loom/InstanceInspector.tsx"],
       "remaining": [
         "Loom专属交互继续使用官方场景组件，不引入Raft执行状态所有者"
       ]
@@ -263,16 +263,11 @@
     "Loom business state, access control and lifecycle remain local owners"
   ],
   "remainingBatchPlan": {
-    "estimate": "4–6 further substantial implementation/acceptance rounds after shared-content batch; estimate, not a completion guarantee",
+    "estimate": "3–4 further substantial implementation/acceptance rounds after chat-host batch; estimate, not a completion guarantee",
     "fixedSource": "db5e399 / raft-ui 0.10.5; no automatic chase of newer releases",
     "batches": [
       {
-        "scope": "MessageItem shell and MessageInput controller boundaries",
-        "rounds": "1–2",
-        "exit": "retained presentation comes from locked source; remove implicit runtime transforms where equivalent, preserve identity, draft, IME and unknown-send owners"
-      },
-      {
-        "scope": "attachment preview/comments and workspace presentation",
+        "scope": "workspace file tree/diff presentation and attachment card bindings",
         "rounds": "1",
         "exit": "native presentation binding and scoped preview/comment/file/diff verification; root and read permissions unchanged"
       },

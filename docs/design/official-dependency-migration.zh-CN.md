@@ -129,3 +129,22 @@ Timeline 的官方键盘滚动意图与 sentinel 再检查随源采用；Loom �
 ### 剩余施工批次估算
 
 固定当前官方源版本，不追逐新发布，预计本批后还需 **4–6轮**：聊天外壳及输入控制器1–2轮；附件预览/评论与工作区1轮；全站分栏导航和Role/计算机/设置剩余组合1–2轮；清理、升级演练及定向跨页验收1轮。此为按依赖范围的估算，不是承诺或完成率。具体退出条件保存在 dependency-migration.json 的 remainingBatchPlan。Loom业务状态、权限、记忆/Fork/Side等原创语义保留为明确接线；收口不是删掉所有本地代码，也不声称未来任意替换上游包无需验收。
+
+### 消息宿主与附件评论批（2026-10-22）
+
+MessageInput、MessageItem、AttachmentCommentsPanel、attachmentPreviewSurfaces 由
+`generate-chat-hosts.mjs` 从 db5e399 原件生成，旧路径仅导出桥接，移除四条 Vite
+变换分支。AttachmentMetaText 完整模块仅重绑定 import，composerHost 直接依赖原件。
+不是未经修改的官方整页，也未启用官方业务 store。
+
+显式差异：Loom 成员 ID/当前显示名与权限、模型标签、任务/反应/关注操作、
+Enter/IME/发送覆盖、评论读写和 PDF 整文评论；composer 文件工具槽使用已有 Loom
+授权文件界面。保留既有完整时间提示和语义 time 元素。官方新 followOverrides
+没有映射为第二份业务状态，已有宿主关注投影仍为真源；旧结构化提及的名称字段由
+认证成员目录补齐。按 owner 范围省略原生音视频展示，正文复用此前生成的 Markdown hook。
+生成失败即要求审查边界，不能静默猜测替换。
+
+定向自动化和真实部署证据见本批记录。全量源码检查另有 7 条未通过的既有跨页规格断言
+（动态、导航、频道控制），不据此宣称全站对齐完成。剩余按工作区文件展示、
+全站布局/剩余资料设置组合、依赖清单及升级演练三批推进，估计 3–4 轮，
+以验收结果为准。

@@ -123,13 +123,12 @@ export async function verifyMobileChatNavigation(page, roomId) {
 // Seed a real same-document history entry for unresolved-write Back checks.
 export async function openChannelWithHistory(page, origin, roomId) {
   await page.goto(`${origin}/?view=agents&room=${roomId}`);
-  await page
-    .getByRole("navigation", { name: "主导航" })
-    .getByRole("button", {
-      name: page.viewportSize().width < 768 ? "首页" : "频道",
-      exact: true,
-    })
-    .click();
+  const navigation = page.getByRole("navigation", { name: "主导航" });
+  await (
+    page.viewportSize().width < 768
+      ? navigation.getByRole("button", { name: "首页", exact: true })
+      : navigation.getByTestId("left-rail-tab-channels")
+  ).click();
   if (page.viewportSize().width < 768)
     await page.locator(`[data-public-channel-id="${roomId}"]`).click();
   await page.getByTestId("composer-textarea").waitFor();

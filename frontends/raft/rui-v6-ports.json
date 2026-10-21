@@ -116,8 +116,8 @@
     "packages/web/src/components/ui/SectionHeader.tsx": {
       "upstreamSha256": "a8daaa15abf158e17d3f79883448097d5ec0733e4ba4b7fdad941fd74a9c4ad3",
       "portedSha256": "72ff0a4d10b8f04a1902b2264bc0a06ac92982fed6dc0bb8074ed2c39e074da7",
-      "adoption": "Compatibility entry into byte-exact @loom/raft-web-source; presentation owned by upstream dependency. See upstream/raft-web-source/source-lock.json.",
-      "sourceRelease": "v1.21.23-source.1 / db5e399f017d584e49597e3a28757645d6807893"
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Dependency bridge; immutable bytes in source-lock.json, explicit generated bindings recorded in dependency-migration.json."
     },
     "packages/web/src/components/ui/MenuItem.tsx": {
       "upstreamSha256": "8fa3cae7100a4455a0dd2e37cac473c128135ad5bcfdd57ad4e48e10091a5ab7",
@@ -131,7 +131,9 @@
     },
     "packages/web/src/components/ui/KeyValueRow.tsx": {
       "upstreamSha256": "149093d1fed29bf6ebd9addbddc835387b968a47d4764c2306150ea3596cb64d",
-      "portedSha256": "8e75140c244066fdce2c5ee0259653d78d0a02cce2736a07aa4266f1e75791a9"
+      "portedSha256": "35259afe819e2eced21ceb61d98590708f3309c3d176704642c48dbb8b658631",
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Dependency bridge; immutable bytes in source-lock.json, explicit generated bindings recorded in dependency-migration.json."
     },
     "packages/web/src/components/ui/AttentionDot.tsx": {
       "upstreamSha256": "6c405253aa797b05052ec34a15b63938ae2661a727cc71fcc892814768e4f1ea",
@@ -139,14 +141,15 @@
     },
     "packages/web/src/components/ui/ShowMoreToggle.tsx": {
       "upstreamSha256": "32609d9550d30eca1629395701fb0af25270983769fa20f69f76a529221417a8",
-      "portedSha256": "580a0a3f8fa88b9f8c4d6be5c45f0103eaca2d81defb2624014ef92bd4498488"
+      "portedSha256": "b01e7c92ceeeb2505f5fba7a6e32f595d5f850fa9289435f3eead6eca5bfd3a7",
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Dependency bridge; immutable bytes in source-lock.json, explicit generated bindings recorded in dependency-migration.json."
     },
     "packages/web/src/components/ui/CloseButton.tsx": {
       "upstreamSha256": "34f7e49073c8992a7ad3bd7519dbf891b029065a6c31387d687ee3074c8245c2",
       "portedSha256": "ac1051b65a190c0d7002216aba0cfc33e7f42da304f8f365d1e7d4b961e4791e",
-      "localRevision": "e9d5a2637ee5bcec202c2cbb73213899815fcb7c",
-      "adoption": "Compatibility entry into byte-exact @loom/raft-web-source; presentation owned by upstream dependency. See upstream/raft-web-source/source-lock.json.",
-      "sourceRelease": "v1.21.23-source.1 / db5e399f017d584e49597e3a28757645d6807893"
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Dependency bridge; immutable bytes in source-lock.json, explicit generated bindings recorded in dependency-migration.json."
     },
     "packages/web/src/components/ui/OverflowSheet.tsx": {
       "upstreamSha256": "2419949f6c03d1adac9dd52c096f65065e1b48540c2ca4a59579819ba8e0d27c",
@@ -159,13 +162,15 @@
     },
     "packages/web/src/components/ui/TextLink.tsx": {
       "upstreamSha256": "af443a5ab287eb5e6bae9c2e9a7e34a3ac18bb467189f3d0bc54294291b7a875",
-      "portedSha256": "93b3bfdb1a0616be570322ab44c7a7a39a42293f3db5478c6acafb4a1e073c96",
-      "localRevision": "fe147ce7ec2ed2633a3fdee528c2fd71b75bc4e1",
-      "adoption": "Historical already-committed compatibility port; reconciled stale hash on 2026-10-21. See page-adoption.json and exact cited Git revision, not a v1.21.26 source change."
+      "portedSha256": "4dcb23531d3e0b7671251cbdf0f64e9d48eeb3c39f1ba2e2f224c5cd82747cd9",
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Dependency bridge; immutable bytes in source-lock.json, explicit generated bindings recorded in dependency-migration.json."
     },
     "packages/web/src/components/ui/SurfaceListItem.tsx": {
       "upstreamSha256": "5abc00077db99ff5864fc32f1a73760f5c1371da762095dd042d2ec6da3821f5",
-      "portedSha256": "fc490a7c8654425caedc8f4ade0eb943d787119648824fe02e9229dea7303307"
+      "portedSha256": "2802b5e301774a62bed46c2ad41b7b11ca496a0302563de4ab5e9a657cf2e321",
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Dependency bridge; immutable bytes in source-lock.json, explicit generated bindings recorded in dependency-migration.json."
     },
     "packages/web/src/components/ui/Skeleton.tsx": {
       "upstreamSha256": "8f6eb35eb6be7fe2e4bbc7f46e3eac816b25dfe82e06609afa5f0c53ca5f453f",
@@ -181,7 +186,9 @@
     },
     "packages/web/src/components/settings/SettingsSidebarList.tsx": {
       "upstreamSha256": "e0a801018783acafe6ebfd9d248cffa04305ce3f0537023fcb113ec265656bd7",
-      "portedSha256": "3ffc9b3fdf0861066cfaa7375ba262d37ad7f5f537e047513c6913eac5fb074d"
+      "portedSha256": "bf821c305556a57c8dafe0b917718a57198e9adea0177d65f2dcec8b06519df7",
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Dependency bridge; immutable bytes in source-lock.json, explicit generated bindings recorded in dependency-migration.json."
     },
     "packages/web/src/components/settings/SlackBridgeSetupWizard.tsx": {
       "upstreamSha256": "077e667bd9a172fb4310a125b42584b8a5f3a6a23f00d359a86d21665b429471",
@@ -232,9 +239,8 @@
     "packages/web/src/components/settings/AppearanceThemePicker.tsx": {
       "upstreamSha256": "c88d4472de1234599d8f6fc661dc108277217c52afa8a498c946daa8f5cee8c5",
       "portedSha256": "7ef8f0197e90f7bc973e639b4ff40f32326ca2e00b8ccba6903e85aeb17fc107",
-      "localRevision": "4c6531ed4523625b1e534a771eb651673b9d1e90",
-      "adoption": "Appearance body removed in favor of exact official declaration extraction; picker delegates to immutable source dependency. Other settings sections remain historical ports.",
-      "sourceRelease": "v1.21.23-source.1 / db5e399f017d584e49597e3a28757645d6807893"
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Dependency bridge; immutable bytes in source-lock.json, explicit generated bindings recorded in dependency-migration.json."
     },
     "packages/web/src/components/settings/AboutFeedbackDialog.tsx": {
       "upstreamSha256": "82d203503994270ccd565fde0df037ab353babb58e25d32adb7c1dcbe0ed2b57",
@@ -261,7 +267,9 @@
     },
     "packages/web/src/components/settings/SettingsProfileCard.tsx": {
       "upstreamSha256": "35e1ce3d4fd3301a4a4f72c17759e737208868f705044c1373680438bbf1f22d",
-      "portedSha256": "06779a9553110fdcbc9f36eec11a755d7e97da0330f71d7bbec30579b760ce96"
+      "portedSha256": "fa4abd33b088d3ba6275a09baf2c830b61c1cc0571cabe6518ac62b4e6fe6acf",
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Dependency bridge; immutable bytes in source-lock.json, explicit generated bindings recorded in dependency-migration.json."
     },
     "packages/web/src/components/settings/IMBridgesSettingsSection.tsx": {
       "upstreamSha256": "c8b1f0c546fdeb24a1f89c72aaf09d395f8c3feae621bf472df0d29ff464f121",
@@ -381,7 +389,9 @@
     },
     "packages/web/src/components/markdown/MarkdownContent.tsx": {
       "upstreamSha256": "ea7eeaa9ea6bb77bc36d50416d3d36926305afba4d4c90d0c63dbfd58a72cc8f",
-      "portedSha256": "d4683f3b095dee4e0213c5071114ab74ad2d5c8f3619e3cfd81a069c2ae3a863"
+      "portedSha256": "70226b158eab9d73c7226748d2ed4a009ee44cb8f860d6723f8ad0779061fd8d",
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Dependency bridge; immutable bytes in source-lock.json, explicit generated bindings recorded in dependency-migration.json."
     },
     "packages/web/src/components/markdown/MarkdownOutline.tsx": {
       "upstreamSha256": "a63639cddf44d2c4faab9ff17678844a42798a029c4ed107da6602e6708aba63",
@@ -452,9 +462,9 @@
     },
     "packages/web/src/components/message/AttachmentCommentsPanel.tsx": {
       "upstreamSha256": "c89a4c0850e0c784ede646c8a75e8d251560d57acee2142665f9ba002d3119c6",
-      "portedSha256": "d72ecea19245fc8923020df2def746bbee4082fcf8b3ff048937cbafbc2d64e4",
-      "localRevision": "126f7fce79c8a7227850509c788568c0eea62c96",
-      "adoption": "Historical already-committed compatibility port; reconciled stale hash on 2026-10-21. See page-adoption.json and exact cited Git revision, not a v1.21.26 source change."
+      "portedSha256": "7d605812551f3887e85e68232b5e96ea4917af9bb3c2284aec33e532786a388b",
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Dependency bridge; immutable bytes in source-lock.json, explicit generated bindings recorded in dependency-migration.json."
     },
     "packages/web/src/components/message/AttachmentTypeBadge.tsx": {
       "upstreamSha256": "c8894b8f46623a74d629f0af449808e9bf94be6148db0a65aaaf4f08820fc66a",
@@ -464,8 +474,9 @@
     },
     "packages/web/src/components/message/MessageInput.tsx": {
       "upstreamSha256": "0b3727c8e8cd4b202bd08f08ac3f67bf80c7c94c6f7e9c76c9cfb7da05c59786",
-      "portedSha256": "98aee8a9d6c5674490987eab61e296194394d48e9d6a5b24f5659ff57984a8eb",
-      "pageRelease": "v1.21.22 official production composition, local data/submit/close guard retained"
+      "portedSha256": "374f82d5196ace4544352d105964980c427523e6f29d6a01795f9514db140cdb",
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Dependency bridge; immutable bytes in source-lock.json, explicit generated bindings recorded in dependency-migration.json."
     },
     "packages/web/src/components/message/CollapsibleMessageContent.tsx": {
       "upstreamSha256": "ad2a22be2cfc24dee4c72bc4d72df80eca716e6acc2e4e7f921648920f479b8b",
@@ -485,10 +496,9 @@
     },
     "packages/web/src/components/message/MessageItem.tsx": {
       "upstreamSha256": "aa71f3dbf177a0537bfee84b0e24b9363719450a2f1777200418cedca6dfbac3",
-      "portedSha256": "eae2cf8015963509c5f9ea65fd4fa2f0eddb06bee45427e28805d8a0219b1abe",
-      "localRevision": "e9d5a2637ee5bcec202c2cbb73213899815fcb7c",
-      "adoption": "Message header spacing/badges/time and continuation clock structurally ported; existing Loom message binding retained.",
-      "sourceRelease": "v1.21.26 / aa975b0e25ecc07ee6917d88d3ca973782550e6a"
+      "portedSha256": "f177eee36c7071e88112119a659ee436885f97ee88e8366c33bfde0dbca8674e",
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Dependency bridge; immutable bytes in source-lock.json, explicit generated bindings recorded in dependency-migration.json."
     },
     "packages/web/src/components/message/InlineThreadReplies.tsx": {
       "upstreamSha256": "9b948322d29e6a10f0bb7554d89eab1dd6b918b5f0c27248a50655950e93cf64",
@@ -526,7 +536,9 @@
     },
     "packages/web/src/components/message/AttachmentChip.tsx": {
       "upstreamSha256": "d39a00674550892f947eeb211f9d3ea093e9e61d66abcfe5ab682c5cb7f41470",
-      "portedSha256": "410ca6f6c335f9cbd64bb9e7fd2631f6799cceec725188f6423e03d850d35bed"
+      "portedSha256": "8614b12a9a99710c1d14486cedc627d5acf772e5d6aecfaf5ef4d10a081c9761",
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Dependency bridge; immutable bytes in source-lock.json, explicit generated bindings recorded in dependency-migration.json."
     },
     "packages/web/src/components/message/ThreadPanel.tsx": {
       "upstreamSha256": "776983c9c88e7c685749feae46e42f9017e9e6f551f237b28ba8fde1e5415fe6",
@@ -542,9 +554,9 @@
     },
     "packages/web/src/components/message/MessageHoverToolbar.tsx": {
       "upstreamSha256": "6800ee18b2fe74e256ab40006699aa9d75e6081b68fb127d545ab315d51b4cce",
-      "portedSha256": "518e006f85946a77d8e9f40384e9a9f80ef8e099cb2ecbcbb2242a0c472dfcd5",
-      "localRevision": "21ec9df4af0864b547042852cbd289f3283be2d8",
-      "adoption": "Historical already-committed compatibility port; reconciled stale hash on 2026-10-21. See page-adoption.json and exact cited Git revision, not a v1.21.26 source change."
+      "portedSha256": "65f2abd7548d1d64ed8265384ff074fcede65f79a83567f2769a44eedc695028",
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Dependency bridge; immutable bytes in source-lock.json, explicit generated bindings recorded in dependency-migration.json."
     },
     "packages/web/src/components/message/HistoryTopState.tsx": {
       "upstreamSha256": "4030aaafb294365d478e44319480308c8f641dff0333876ec69ceecabdc30992",
@@ -552,9 +564,9 @@
     },
     "packages/web/src/components/message/attachmentPreviewSurfaces.tsx": {
       "upstreamSha256": "85656537ad2ec8369fdd2343aef0a70458d31b4aef382a9e3482769443f65458",
-      "portedSha256": "b6aaff67e8fe13e9c4219f2885d7976daa1bf8a1d363264eabd4a8c0f3b9b8f2",
-      "localRevision": "ddb10a27dc440d5bff327ebd7f0d9ad462a18370",
-      "adoption": "Historical already-committed compatibility port; reconciled stale hash on 2026-10-21. See page-adoption.json and exact cited Git revision, not a v1.21.26 source change."
+      "portedSha256": "788daa6644e134cb1ef4ed5436ffea1c1407eb9b4157d8efc0c5727b1d6c863a",
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Dependency bridge; immutable bytes in source-lock.json, explicit generated bindings recorded in dependency-migration.json."
     },
     "packages/web/src/components/message/MentionHoverActivityPreview.tsx": {
       "upstreamSha256": "d344774f1f1dfcc3dac9971c0a84fd68a4907cfe109d3e63a1c024342b45ce4f",
@@ -724,7 +736,9 @@
     },
     "packages/web/src/components/search/SearchOverlay.tsx": {
       "upstreamSha256": "bebb1102a8e9ab772f77543f45377192e02bcc506704994382a076d8e1c5e69a",
-      "portedSha256": "cabd7f730a6d39a0ccae2956f296f0a6afc65b885558278109102711b5815b6f"
+      "portedSha256": "5317e8d3fab98bf227a8b18e716bc4db3ffe1376ee564ecc30bfc2f6ee6c5716",
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Dependency bridge; immutable bytes in source-lock.json, explicit generated bindings recorded in dependency-migration.json."
     },
     "packages/web/src/components/search/MessageSearchPage.tsx": {
       "upstreamSha256": "67110380be56e642258c7d9afac15214f4c96cfda96c47bf548722f9bf9dcdc6",
@@ -732,15 +746,15 @@
     },
     "packages/web/src/components/search/EntityResultRow.tsx": {
       "upstreamSha256": "f277c886b80bb80f478c337bf80a1aa646ead160f0498a27c7cba6435999bf3e",
-      "portedSha256": "e93181b1e0d8fa4325ef3d0b2da5502b54ecbe4d70825b3c578b1f845fc73452",
-      "localRevision": "edf5171ffd1aaba0068af14f94c68518ea4be79b",
-      "adoption": "Historical already-committed compatibility port; reconciled stale hash on 2026-10-21. See page-adoption.json and exact cited Git revision, not a v1.21.26 source change."
+      "portedSha256": "274a5b0b7f77fc7f037b41cc71d38c311f33ec1b2f1614061ab95167a90cefcc",
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Dependency bridge; immutable bytes in source-lock.json, explicit generated bindings recorded in dependency-migration.json."
     },
     "packages/web/src/components/search/MessageHitRow.tsx": {
       "upstreamSha256": "169010d0b5ee1daa47aa7e141d1821dbb8685967dc67522e7acc70d730df16ba",
-      "portedSha256": "9299aa0975ac3d7c6021719fc0788657af0b7e05e553eb2294d755d197b8526a",
-      "localRevision": "edf5171ffd1aaba0068af14f94c68518ea4be79b",
-      "adoption": "Historical already-committed compatibility port; reconciled stale hash on 2026-10-21. See page-adoption.json and exact cited Git revision, not a v1.21.26 source change."
+      "portedSha256": "2d072f33ac595f71637824c3dc46ffa7d3b02c4e90861f7a1b233ac431e69c97",
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Dependency bridge; immutable bytes in source-lock.json, explicit generated bindings recorded in dependency-migration.json."
     },
     "packages/web/src/components/channel/EditChannelDialog.tsx": {
       "upstreamSha256": "0647237c55c95894eab0b0af1410748ed10703d2c0cb29ada4e302b1e29d9f95",
@@ -860,9 +874,9 @@
     },
     "packages/web/src/components/task/TaskModalHead.tsx": {
       "upstreamSha256": "87efb6c3f60830d813b89bdfe0efdde4cc187ee015504b2ffc760dc2c117221e",
-      "portedSha256": "d32a7f52bdd70ff76bff8714e2bf9c3861128d86b33556330c3df7f81d10c390",
-      "localRevision": "c8f194b6f77524cb3734826172ae319fd9135a01",
-      "adoption": "Historical already-committed compatibility port; reconciled stale hash on 2026-10-21. See page-adoption.json and exact cited Git revision, not a v1.21.26 source change."
+      "portedSha256": "0671058fadb48d9b9b5a021aba71339e162d9f73ef1ab492779f2db32c9b708e",
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Dependency bridge; immutable bytes in source-lock.json, explicit generated bindings recorded in dependency-migration.json."
     },
     "packages/web/src/components/task/TasksPanel.tsx": {
       "upstreamSha256": "baab579e05a5487051942ae97e8df23a85f4303adfa3ad309581b8dab93cb7d6",
@@ -886,7 +900,9 @@
     },
     "packages/web/src/components/thread/ThreadAgentFollowers.tsx": {
       "upstreamSha256": "0a4a6ac5213f42caa95683d32b934c4a7dd6bf73462e63dda77a26fc38fae1e9",
-      "portedSha256": "32b01b56e4c069373279a938701d268d52deec643474b0f7eb01d3ab7598fd12"
+      "portedSha256": "6bbb11bce0874f1fb7b04796f0b69dc11fee9d7a72524f7e0708555f5682ef25",
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Dependency bridge; immutable bytes in source-lock.json, explicit generated bindings recorded in dependency-migration.json."
     },
     "packages/web/src/components/onboarding/ServerSetupProjectionGate.tsx": {
       "upstreamSha256": "2ea70b0fd8b63d1082adba9d8a2a079f36ddfaaa58aa4f7a39f9a1734d489ad1",
@@ -914,14 +930,15 @@
     },
     "packages/web/src/components/task/TaskCard.tsx": {
       "upstreamSha256": "5f3aac22151688d533c52e1030aeee2dec967c6ddee8c17d46fb05c7094d3708",
-      "portedSha256": "b5b7aff6f0a6e4e3d040ccb5f290b18617c896c23c60cc1266f9c164c2464f8c",
-      "pageRelease": "v1.21.22 production TaskCard footer/focus, RailTabButton single-icon Attention composition; Loom domain binding retained"
+      "portedSha256": "8f2d52dbce3d156497ffd216cc09d31a6488fc7f9750e673b404d1f779700ea6",
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Dependency bridge; immutable bytes in source-lock.json, explicit generated bindings recorded in dependency-migration.json."
     },
     "packages/web/src/components/ui/SectionEyebrow.tsx": {
       "upstreamSha256": "9b02e2b953b3e8e20a67a3e1721d912c84652db2bf3e9f8bc242c691dffed254",
       "portedSha256": "1e34ccb364245fd2e4aaf28061d33f037863318967c48d8471633b7a5021a772",
-      "adoption": "Compatibility entry into byte-exact @loom/raft-web-source; presentation owned by upstream dependency. See upstream/raft-web-source/source-lock.json.",
-      "sourceRelease": "v1.21.23-source.1 / db5e399f017d584e49597e3a28757645d6807893"
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Dependency bridge; immutable bytes in source-lock.json, explicit generated bindings recorded in dependency-migration.json."
     },
     "packages/web/src/components/ui/PanelHeader.tsx": {
       "upstreamSha256": "cd350d605e123726e63aaaea69c958f14209a811d736d0c66b4923ad6ff61c3e",
@@ -937,9 +954,9 @@
     },
     "packages/web/src/components/ui/FormField.tsx": {
       "upstreamSha256": "e9dc3c025e3c583b66473248508621d16a6c859d1fe801b8166a848ef80be733",
-      "portedSha256": "52f70d4480ef9235c7ac4d57a9a795ae6c91f8c9a7b796ba4c402ea44399cfab",
-      "localRevision": "21ec9df4af0864b547042852cbd289f3283be2d8",
-      "adoption": "Historical already-committed compatibility port; reconciled stale hash on 2026-10-21. See page-adoption.json and exact cited Git revision, not a v1.21.26 source change."
+      "portedSha256": "ac61c9a13eb4c69fd3c8b90943102fb4c8d05b3e7dd25a5eec7553f92ca496fd",
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Dependency bridge; immutable bytes in source-lock.json, explicit generated bindings recorded in dependency-migration.json."
     },
     "packages/web/src/components/message/ChannelFileOverflowMenu.tsx": {
       "upstreamSha256": "37522191d41ed0330ccf75ce839947b01994a3c4c9502b1a43d2960dbc959b35",
@@ -949,21 +966,105 @@
     },
     "packages/web/src/components/search/SearchHomeEntityRow.tsx": {
       "upstreamSha256": "f48a4fccfa1e7d9d661abdb36b65bd1c4ef049e86ba7b2f64cf64c61648cfc48",
-      "portedSha256": "877906efd24c07abfce60ba0b0ee4d7ad6aa8a01e791c6d047412de9c1c6c5c0",
-      "localRevision": "d82656ea9b722a93ca57352c1a6db34ba090c925",
-      "adoption": "Historical already-committed compatibility port; reconciled stale hash on 2026-10-21. See page-adoption.json and exact cited Git revision, not a v1.21.26 source change."
+      "portedSha256": "18e00af4afaa78044919327b5bf666c35064b848a6abe9c21c3b6864430cc95c",
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Dependency bridge; immutable bytes in source-lock.json, explicit generated bindings recorded in dependency-migration.json."
     },
     "packages/web/src/components/ui/Tooltip.tsx": {
       "upstreamSha256": "91f5eebadaa91959534aaa62a9a06ea2d9054c3fead055af2a68c8fa86dfb572",
       "portedSha256": "c93997cb8549cb2ca5b064935f32fc648c8f7550d5ff85c91be757363c29692d",
-      "adoption": "Compatibility entry into byte-exact @loom/raft-web-source; presentation owned by upstream dependency. See upstream/raft-web-source/source-lock.json.",
-      "sourceRelease": "v1.21.23-source.1 / db5e399f017d584e49597e3a28757645d6807893"
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Dependency bridge; immutable bytes in source-lock.json, explicit generated bindings recorded in dependency-migration.json."
     },
     "packages/web/src/components/ui/EmptyState.tsx": {
       "upstreamSha256": "baa1dd79052349925373e6de2e9f57fecf8b8bad37ba67270efdb1fecf093560",
       "portedSha256": "7ddcfbee77e47e38fc9d2b80fcab6618a77a8b89e8d153040cf168f2c11c849a",
-      "adoption": "Compatibility entry into byte-exact @loom/raft-web-source; presentation owned by upstream dependency. See upstream/raft-web-source/source-lock.json.",
-      "sourceRelease": "v1.21.23-source.1 / db5e399f017d584e49597e3a28757645d6807893"
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Dependency bridge; immutable bytes in source-lock.json, explicit generated bindings recorded in dependency-migration.json."
+    },
+    "packages/web/src/lib/panelBounds.ts": {
+      "upstreamSha256": "1631bd5e9497909d4504199ba0fadec30e77b26f2991a16a8b6de527c797d5c9",
+      "portedSha256": "0d360867518fc8138685072e95ed9f95f68647adadbdc47c1f5d65efbf05729e",
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Dependency bridge; immutable bytes in source-lock.json, explicit generated bindings recorded in dependency-migration.json."
+    },
+    "packages/web/src/components/ui/SlugInput.tsx": {
+      "upstreamSha256": "4f88ca98ccb06b62c4b88125553ffe6347c89d40b7b77bcce122843278a6013c",
+      "portedSha256": "e33e3e955dc16f10007a16f88799386bbf7a23be0744dc7b91e73f7edccfb518",
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Dependency bridge; immutable bytes in source-lock.json, explicit generated bindings recorded in dependency-migration.json."
+    },
+    "packages/web/src/components/ui/CopyIconButton.tsx": {
+      "upstreamSha256": "4b123fd32ca73f1857a2af288d74338fdaf8081b7326491f98715557381a863c",
+      "portedSha256": "376627a4c0e34d8e492585cf199944cb3d33051c7422845f3011cc8f4a50178b",
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Dependency bridge; immutable bytes in source-lock.json, explicit generated bindings recorded in dependency-migration.json."
+    },
+    "packages/web/src/components/ui/CopyButton.tsx": {
+      "upstreamSha256": "18b7c39bca148960c88fc92646bb70fb1751249eeca3ad61528b8284e99c868d",
+      "portedSha256": "2fcf7a372889aed0b11bb66be101cbbbdd38883e4a9288dee72968bc97a2a9ba",
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Dependency bridge; immutable bytes in source-lock.json, explicit generated bindings recorded in dependency-migration.json."
+    },
+    "packages/web/src/components/markdown/CodeBlock.tsx": {
+      "upstreamSha256": "73cfbd9c040c05cf01ea335dd643f75dec679d7c8951f49572459614d2e8d26f",
+      "portedSha256": "c36943b4b56df7c7b9a18be9d9e9874bd12a1b1725757bdee43e0d32ac53b02f",
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Dependency bridge; immutable bytes in source-lock.json, explicit generated bindings recorded in dependency-migration.json."
+    },
+    "packages/web/src/components/markdown/CustomProtocolLink.tsx": {
+      "upstreamSha256": "0c1f013e8f82245b8fd23d745aef1321ad1f3a956c70d6a6925617815757f2b3",
+      "portedSha256": "116f6cd0ae70cce7ad06f3d7fb69c0ceb9f4adb06aa1ecbd832343dde2d83845",
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Dependency bridge; immutable bytes in source-lock.json, explicit generated bindings recorded in dependency-migration.json."
+    },
+    "packages/web/src/components/message/MentionLink.tsx": {
+      "upstreamSha256": "f25ae0a1fba0ef7578a6aa73ae32a3cf356152c73438995585d0dcb6d2664c03",
+      "portedSha256": "8d72311401f2391fca5f57f13be9ad68c6213db808640af4a91bbaadb92f3433",
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Dependency bridge; immutable bytes in source-lock.json, explicit generated bindings recorded in dependency-migration.json."
+    },
+    "packages/web/src/components/message/composerHost.ts": {
+      "upstreamSha256": "e531be3d01e4d100420bfff5e87efc1bbe136ab348b6ee6b4d02139756e5bb0d",
+      "portedSha256": "1f703b507cfc463c1143283db872754d5a4fbf358cfc09fbb1388a71a8ba9525",
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Dependency bridge; immutable bytes in source-lock.json, explicit generated bindings recorded in dependency-migration.json."
+    },
+    "packages/web/src/components/message/MessageTimeline.tsx": {
+      "upstreamSha256": "a8e49b392089d7ae556ef860da9b800d0e92661a43e88470af1de5b00267396e",
+      "portedSha256": "89b219c8351ddda0a6abe88d199992d9bad8d2cbff5958decd3610c1481f7241",
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Dependency bridge; immutable bytes in source-lock.json, explicit generated bindings recorded in dependency-migration.json."
+    },
+    "packages/web/src/components/search/searchGrouping.ts": {
+      "upstreamSha256": "9a5aeb210f048807de41836119bb8ac2d65cafa05a133f86779f2feb4592347b",
+      "portedSha256": "f2a113037dd376bc210ee93f649ce27de6c05845a3fa76f66889965451e31615",
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Dependency bridge; immutable bytes in source-lock.json, explicit generated bindings recorded in dependency-migration.json."
+    },
+    "packages/web/src/components/search/searchOverlayAnchor.ts": {
+      "upstreamSha256": "bbc2d7ad6a704bc94984a6efeb3b29f413dce4254ccdc5bfc7c909a69d4fdd7d",
+      "portedSha256": "90f8202da9e6eed3c146d941e2cc8b7ec49ad8614731bbf1bfc06283450e3c3b",
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Dependency bridge; immutable bytes in source-lock.json, explicit generated bindings recorded in dependency-migration.json."
+    },
+    "packages/web/src/components/task/VirtualizedTaskStack.tsx": {
+      "upstreamSha256": "74fd0131324201d5f08ec30d8c2e4573e71fab864e27a93629e2411b15ccf25d",
+      "portedSha256": "fcb12075ffd984488d9915a68da215abbd0d01b520f0b3463a6a029a55443c55",
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Dependency bridge; immutable bytes in source-lock.json, explicit generated bindings recorded in dependency-migration.json."
+    },
+    "packages/web/src/components/task/CreateTaskDialog.tsx": {
+      "upstreamSha256": "c25f29e0edd8645729065ffac6cb3a04eb86d0abf98db2233c95d755ea5c736d",
+      "portedSha256": "d7638d04180a1e7b299fa422f6c99d7e9189795c72724c920cb6285f203887a6",
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Dependency bridge; immutable bytes in source-lock.json, explicit generated bindings recorded in dependency-migration.json."
+    },
+    "packages/web/src/components/thread/ThreadAgentFollowerRow.tsx": {
+      "upstreamSha256": "257f603bc8220737acedd5dc56fb25d6d4b2d217cee5a300a5c1f87190f4bc69",
+      "portedSha256": "9f04b03486ae88a303457d1517c1451fdb67452479369859635afd9c2cdae6a6",
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Dependency bridge; immutable bytes in source-lock.json, explicit generated bindings recorded in dependency-migration.json."
     }
   }
 }

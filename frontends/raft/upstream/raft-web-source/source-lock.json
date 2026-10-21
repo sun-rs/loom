@@ -73,6 +73,10 @@
     "packages/web/src/components/markdown/CustomProtocolLink.tsx": "1f38e3f241fe0837a94b7b0bf5e3ea2f49e157273f8f51af6fad1fde905201f2",
     "packages/web/src/components/ui/CopyButton.tsx": "18b7c39bca148960c88fc92646bb70fb1751249eeca3ad61528b8284e99c868d",
     "packages/web/src/components/ui/CopyIconButton.tsx": "cdebbec9488f607c57532ede2c9d30caeaeb41dc32230af51db59b9a9a039f38",
-    "packages/web/src/components/message/AttachmentChip.tsx": "6534fd0024ddb52b4012ae8c0e5d43d3ea1a3d92d7846462bb5b0b9efec90eff"
+    "packages/web/src/components/message/AttachmentChip.tsx": "6534fd0024ddb52b4012ae8c0e5d43d3ea1a3d92d7846462bb5b0b9efec90eff",
+    "packages/web/src/components/message/AttachmentMetaText.tsx": "8ac4ba9326bd7f755b69f2e3d721e7d62377e95c34ce44eae532e1d84a1cfabc",
+    "packages/web/src/components/message/AttachmentCommentsPanel.tsx": "3dd67b4896d9ec0e1c3e7c641505f8127c2519fb2ac5eff106f308717be5b0db",
+    "packages/web/src/components/message/attachmentPreviewSurfaces.tsx": "da9ca670a5fe4fa63894a48b76b3f4f897be868a55769d33837b25cb3e469e7d",
+    "packages/web/src/components/message/composerHost.ts": "de60dcc3e5bf12c92bf16329b9a3d571126b51bd3b9ebcd530ef9b622b91b546"
   }
 }
