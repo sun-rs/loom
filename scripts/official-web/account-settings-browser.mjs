@@ -20,7 +20,12 @@ export async function verifyAccountSettings({ browser, origin, client }) {
       assert.equal(await profile.getAttribute("data-slot"), "card");
       const uploadInput = profile.locator('input[type="file"]');
       await name.focus();
-      await page.keyboard.press("Shift+Tab");
+      // WebKit follows macOS full keyboard navigation: Option-Tab includes file controls.
+      await page.keyboard.press(
+        browser.browserType().name() === "webkit"
+          ? "Alt+Shift+Tab"
+          : "Shift+Tab",
+      );
       assert.equal(
         await uploadInput.evaluate((el) => document.activeElement === el),
         true,

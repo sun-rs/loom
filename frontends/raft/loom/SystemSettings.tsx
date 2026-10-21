@@ -8,7 +8,7 @@ import {
   type FormEvent,
 } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
-import { SystemChannelsSection } from "loom-native-appearance";
+import { SystemChannelsSection } from "./OfficialSettingsSections.generated.tsx";
 import { ManagementClient } from "./management-client.ts";
 import { OperationStatus, useManagement } from "./ManagementUi.tsx";
 import { useRouteIntentOwner } from "./useIntentRoute.ts";

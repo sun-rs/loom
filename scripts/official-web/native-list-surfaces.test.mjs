@@ -3,7 +3,9 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 const read = (p) => readFileSync("frontends/raft/" + p, "utf8");
 test("shared official list surface uses flat press overlay, without legacy border/shadow hover", () => {
-  const s = read("packages/web/src/components/ui/SurfaceListItem.tsx");
+  const s = read(
+    "upstream/raft-web-source/packages/web/src/components/ui/SurfaceListItem.tsx",
+  );
   assert.match(s, /hover:press-overlay active:press-overlay/);
   assert.doesNotMatch(s, /hover:border|shadow-raft|bg-info-muted/);
 });
@@ -13,9 +15,12 @@ test("official avatar row uses body typography, native spacing and focus geometr
   assert.match(s, /group px-4 py-3/);
   assert.match(s, /focus-visible:shadow-raft-focus/);
   const c = read("loom/ComputersPage.tsx");
-  assert.match(c, /<AvatarListRow/);
+  assert.match(c, /<OfficialAvatarListRow/);
   assert.match(c, /<SectionHeader/);
-  assert.match(c, /className="space-y-2"/);
+  assert.match(c, /<OfficialListRowGroup>/);
+  const row = read("loom/OfficialListRows.tsx");
+  assert.match(row, /<ListRow onClick=\{onClick\}>/);
+  assert.match(row, /<ListRowTitle>/);
 });
 test("avatar frame sizes and badge corners come from the current official recipe", () => {
   const s = read("packages/web/src/components/ui/AvatarSlot.tsx");
@@ -26,24 +31,28 @@ test("avatar frame sizes and badge corners come from the current official recipe
 });
 test("account profile uses current native card, typography and keyboard-accessible avatar edit", () => {
   const card = read(
-    "packages/web/src/components/settings/SettingsProfileCard.tsx",
+    "upstream/raft-web-source/packages/web/src/components/settings/SettingsProfileCard.tsx",
   );
   assert.match(card, /<Card/);
   assert.match(card, /<Separator className="mb-4"/);
   assert.match(card, /text-headline text-foreground/);
   assert.doesNotMatch(card, /shadow-raft-sm|border-t|text-lg/);
-  const panel = read("packages/web/src/components/settings/SettingsPanel.tsx");
+  const panel = read(
+    "upstream/raft-web-source/packages/web/src/components/settings/SettingsPanel.tsx",
+  );
   const profile = panel.slice(
     panel.indexOf('testId="account-profile-card"'),
     panel.indexOf("{/* Profile form */}"),
   );
   assert.match(profile, /peer\/avatar-edit sr-only/);
-  assert.match(profile, /has-\[:focus-visible\]:shadow-raft-focus/);
+  assert.match(profile, /has-\[:focus-visible\]:shadow-focus/);
   assert.match(profile, /<AvatarEditVeil busy={avatarSaving}/);
   assert.doesNotMatch(profile, /size-16|className="hidden"|bg-black\/40/);
 });
 test("system channel settings retain native form Card and disabled typography", () => {
-  const s = read("packages/web/src/components/settings/SettingsPanel.tsx");
+  const s = read(
+    "upstream/raft-web-source/packages/web/src/components/settings/SettingsPanel.tsx",
+  );
   const section = s.slice(
     s.indexOf("function SystemChannelsSection()"),
     s.indexOf("function ServerTranslationSection()"),

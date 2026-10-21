@@ -37,7 +37,10 @@ export async function verifySystemSettings({
         },
       );
       await box.click();
-      await page.getByRole("button", { name: "保存", exact: true }).click();
+      await page
+        .locator('form[data-slot="card"]')
+        .getByRole("button", { name: "保存", exact: true })
+        .click();
       await page
         .getByRole("button", { name: "核实操作结果", exact: true })
         .waitFor();
@@ -68,7 +71,10 @@ export async function verifySystemSettings({
       await box.waitFor();
       assert.equal(await box.isChecked(), true);
       await box.click();
-      await page.getByRole("button", { name: "保存", exact: true }).click();
+      await page
+        .locator('form[data-slot="card"]')
+        .getByRole("button", { name: "保存", exact: true })
+        .click();
       await page.getByRole("button", { name: "已保存", exact: true }).waitFor();
       assert.equal(
         (

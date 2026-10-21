@@ -1,15 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { exposeAboutVersion } from "../../frontends/raft/loom/about-adaptation.ts";
+import { extractSettingsSections } from "./generate-settings-sections.mjs";
 test("About selects native version section and renames product without cloud controls", () => {
   const source = readFileSync(
-    "frontends/raft/packages/web/src/components/settings/SettingsPanel.tsx",
+    "frontends/raft/upstream/raft-web-source/packages/web/src/components/settings/SettingsPanel.tsx",
     "utf8",
   );
-  const result = exposeAboutVersion(source).split(
-    "export function LoomAboutSection",
-  )[1];
+  const result = extractSettingsSections(source).about;
   assert.ok(
     result.includes(
       'SurfaceListItem interactive={false} className="space-y-1"',
@@ -23,5 +21,5 @@ test("About selects native version section and renames product without cloud con
   assert.ok(result.includes("font-mono text-mono-meta"));
   assert.ok(!result.includes("mobileApp"));
   assert.ok(!result.includes("Feedback"));
-  assert.throws(() => exposeAboutVersion("changed source"));
+  assert.throws(() => extractSettingsSections("changed source"));
 });

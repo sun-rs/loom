@@ -10,7 +10,7 @@ import {
   type FormEvent,
 } from "react";
 import { Button } from "raft-ui";
-import { LoomAccountSection } from "loom-native-appearance";
+import { LoomAccountSection } from "./OfficialSettingsSections.generated.tsx";
 import type { RahClient } from "@rah-os/client-sdk";
 import type { Principal, ClientPrincipalUpdateRequest } from "@rah-os/protocol";
 import {

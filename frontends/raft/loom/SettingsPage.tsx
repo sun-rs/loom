@@ -6,7 +6,7 @@ import { WEB_BUILD_IDENTITY } from "./build-identity.ts";
 import UsageSummary from "./UsageSummary.tsx";
 import AccountSettings from "./AccountSettings.tsx";
 import SystemSettings from "./SystemSettings.tsx";
-import { LoomAboutSection } from "loom-native-appearance";
+import { LoomAboutSection } from "./OfficialSettingsSections.generated.tsx";
 import { AppearanceSection } from "./OfficialAppearance.generated";
 import { useEffect, useState, type CSSProperties } from "react";
 import { AppShellMainSlot, AppShellSidebarSlot, Panel } from "raft-ui";

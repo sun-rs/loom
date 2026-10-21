@@ -3,7 +3,6 @@ import { adaptMobileMessageDefault } from "./mobile-message-default.ts";
 import { pushWorkerPlugin } from "./push-worker-plugin.ts";
 import { adaptComposerDirectory } from "./composer-directory-adaptation.ts";
 import { adaptTimelineWindow } from "./timeline-window-adaptation.ts";
-import { exposeNotificationStatus } from "./settings-resource-adaptation.ts";
 import { adaptChineseLocale } from "./locale-adaptation.ts";
 import { adaptReactions, adaptReactionToolbar } from "./reaction-adaptation.ts";
 import tailwindcss from "@tailwindcss/postcss";
@@ -13,9 +12,6 @@ import {
   adaptThreadFollowers,
   adaptThreadFollowerRow,
 } from "./thread-followers-adaptation.ts";
-import { exposeAboutVersion } from "./about-adaptation.ts";
-import { exposeAccountProfile } from "./account-settings-adaptation.ts";
-import { adaptSystemSettings } from "./system-settings-adaptation.ts";
 import { adaptArchivedChannels } from "./settings-archive-adaptation.ts";
 import { adaptTaskCreation } from "./task-create-adaptation.ts";
 import { officialUiAliases } from "./ui-resolution.ts";
@@ -137,17 +133,6 @@ export default defineConfig({
           )
         )
           return { code: adaptPdfComments(code), map: null };
-        if (
-          id.endsWith("/packages/web/src/components/settings/SettingsPanel.tsx")
-        )
-          return {
-            code: exposeNotificationStatus(
-              exposeAboutVersion(
-                exposeAccountProfile(adaptSystemSettings(code)),
-              ),
-            ),
-            map: null,
-          };
         if (id.endsWith("/packages/web/src/components/task/TaskCard.tsx"))
           return { code: adaptTaskCard(code), map: null };
         if (id.endsWith("/packages/web/src/components/task/TasksPanel.tsx"))
@@ -208,10 +193,6 @@ export default defineConfig({
           source === "../../utils/humanAvatar"
         )
           return resolve(import.meta.dirname, "profile-avatar.ts");
-        if (source === "loom-account-settings")
-          return resolve(import.meta.dirname, "AccountSettings.tsx");
-        if (source === "loom-system-settings")
-          return resolve(import.meta.dirname, "SystemSettings.tsx");
         if (source === "loom-archived-settings")
           return resolve(import.meta.dirname, "ArchivedSettings.tsx");
         if (source === "loom-native-archived-channels")
@@ -228,11 +209,6 @@ export default defineConfig({
           source === "./MessageSearchPage"
         )
           return resolve(import.meta.dirname, "SearchOverlayContent.tsx");
-        if (source === "loom-native-appearance")
-          return resolve(
-            import.meta.dirname,
-            "../packages/web/src/components/settings/SettingsPanel.tsx",
-          );
         if (source === "loom-appearance")
           return resolve(import.meta.dirname, "AppearanceRuntime.tsx");
         if (source === "loom-composer-files")

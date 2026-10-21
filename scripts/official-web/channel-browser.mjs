@@ -468,6 +468,13 @@ try {
         await verifyPanelPolicy({ browser, origin, client, channels, head }),
       ),
     );
+  } else if (process.env.LOOM_BROWSER_SLICE === "settings-sections") {
+    const results = {};
+    results.account = await verifyAccountSettings({browser,origin,client});
+    results.system = await verifySystemSettings({browser,origin,client,workspace});
+    results.about = await verifyAbout({browser,origin});
+    results.notifications = await verifyPush({browser,origin,channels});
+    console.log(JSON.stringify(results));
   } else if (process.env.LOOM_BROWSER_SLICE === "release-source") {
     console.log(JSON.stringify(await verifyReleaseSource({browser,origin})));
   } else if (process.env.LOOM_BROWSER_SLICE === "role-activity") {

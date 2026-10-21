@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
 import { Button } from "raft-ui";
-import { LoomNotificationStatus } from "loom-native-appearance";
+import { LoomNotificationStatus } from "./OfficialSettingsSections.generated.tsx";
 import { LoomPushClient, browserPushPlatform } from "./push-client.ts";
 import { resolveNotificationChannel } from "../packages/web/src/utils/notificationChannel.ts";
 import { uiActionProps } from "./ui-action-props.ts";

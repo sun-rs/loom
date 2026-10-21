@@ -19,6 +19,9 @@
     "packages/web/src/components/agent/AgentDetailPanel.tsx": "e15d57664c9365b80ed65199ba153aa294d2101cb142a2ddb1acdb1f8903f8fa",
     "packages/web/src/components/ui/AvatarEditVeil.tsx": "5eab19a12d28a1f6be5c82c8da7d65fe24c9a000fedc8174ca44206229f23a7b",
     "packages/web/src/components/agent/AgentActivityLog.tsx": "0cdc873c67aaf6f6a1bd7686a3d73d9937f707e6dd1b2a8184b08b511b358da1",
-    "packages/web/src/components/settings/ReleaseNotesPanel.tsx": "7dfee1133aa9aaefca394a762a58b01f0a08f5b51767dc59cb66dc2af227794f"
+    "packages/web/src/components/settings/ReleaseNotesPanel.tsx": "7dfee1133aa9aaefca394a762a58b01f0a08f5b51767dc59cb66dc2af227794f",
+    "packages/web/src/components/settings/SettingsProfileCard.tsx": "17d8cf87ac286848effdf7dee69fa7f1cd0d5ac46401cc3f4307e0ff074e490d",
+    "packages/web/src/components/ui/SurfaceListItem.tsx": "e9d68bf2e470af40712836fb3cbe441cbd14212dceac9744395928b3a1be7599",
+    "packages/web/src/components/ui/SlugInput.tsx": "d9eae57c97a4f61841ff9a0e15c0bb76917780d6decca4ac1a2bf9e8bfa492ff"
   }
 }

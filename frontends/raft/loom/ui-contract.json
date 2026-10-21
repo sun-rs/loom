@@ -317,5 +317,38 @@
     "guard": "scripts/official-web/release-source.test.mjs",
     "browser": "scripts/official-web/release-source-browser.mjs",
     "scope": "Exact content JSX children and category declarations; Loom typed static release list supplies ready state. Existing SettingsPage owns header/scroll. No upstream fetch, store or duplicate header; old Vite exposeReleaseNotes path removed."
+  },
+  "settingsSectionsSourceParity": {
+    "source": "upstream/raft-web-source/packages/web/src/components/settings/SettingsPanel.tsx",
+    "generator": "scripts/official-web/generate-settings-sections.mjs",
+    "bindings": [
+      "loom/AccountSettings.tsx",
+      "loom/NotificationSettings.tsx",
+      "loom/SystemSettings.tsx",
+      "loom/SettingsPage.tsx"
+    ],
+    "guards": [
+      "scripts/official-web/settings-sections-source.test.mjs",
+      "scripts/official-web/account-settings.test.ts",
+      "scripts/official-web/about.test.ts",
+      "scripts/official-web/system-settings.test.ts",
+      "scripts/official-web/settings-resource-adaptation.test.ts"
+    ],
+    "browser": "LOOM_BROWSER_SLICE=settings-sections: account/system/about/push at 1440 and 390",
+    "exact": "System channel JSX unchanged. About version section with product rename/test marker. Account profile and notification subtrees retain native layout with explicit omissions and guards. Not untouched whole SettingsPanel.",
+    "localChanges": [
+      "Omit cloud account email/identity/password/signout, omit avatar email absent from Loom identity",
+      "Keep account editingDisabled fence and maxLength=120",
+      "Omit upstream desktop/mobile downloads and workspace billing identity",
+      "Omit upstream notification server-wide mute; retain local details/recovery actions",
+      "Preserve loading/error/confirmed notification guards; green badge requires confirmed subscription",
+      "FormField/AvatarSlot bindings remain; SettingsProfileCard/SurfaceListItem/SlugInput now directly depend on exact official source"
+    ],
+    "removed": "Four runtime SettingsPanel transforms, loom-native-appearance module and account/system virtual aliases",
+    "directDependencies": [
+      "SettingsProfileCard",
+      "SurfaceListItem",
+      "SlugInput"
+    ]
   }
 }
