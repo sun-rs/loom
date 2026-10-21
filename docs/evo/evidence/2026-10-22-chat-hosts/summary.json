@@ -1,0 +1,123 @@
+{
+  "date": "2026-10-22",
+  "productCommit": "31b61367635e99491c1d216bc3098f0f946b4823",
+  "source": {
+    "revision": "db5e399f017d584e49597e3a28757645d6807893",
+    "foundation": "@botiverse/raft-ui@0.10.5",
+    "classification": "Immutable original modules plus explicit generated Loom bindings, not untouched upstream pages"
+  },
+  "scope": [
+    "MessageItem host",
+    "MessageInput controller",
+    "AttachmentCommentsPanel",
+    "attachmentPreviewSurfaces",
+    "AttachmentMetaText",
+    "composerHost"
+  ],
+  "verification": {
+    "redBeforeImplementation": "chat-host-source.test.mjs failed before generator existed",
+    "focusedSourceTests": 56,
+    "intakeHashTests": 1,
+    "uiContractTests": 8,
+    "typecheck": true,
+    "build": true,
+    "fixtureBrowsers": [
+      "chat-core",
+      "message-references",
+      "composer-suggestions",
+      "attachment-preview",
+      "reactions",
+      "channel-tasks",
+      "message-markdown"
+    ],
+    "viewports": [
+      1440,
+      390
+    ],
+    "browserTestRepair": "channel-tasks initially stopped at old role/name navigation selector before task behavior; fixed to existing left-rail-tab-channels identity; rerun passed",
+    "sourceSuite": {
+      "tests": 310,
+      "passed": 303,
+      "failed": 7,
+      "unresolved": [
+        "activity-chrome: compact filter toolbar source location",
+        "activity-chrome: activity header counts/leading context source location",
+        "activity-chrome: mark-all action source location",
+        "channel-controls-chrome: native settings trigger/composition parameters",
+        "navigation-unread: mobile Home row sizing",
+        "navigation-unread: mobile Saved row sizing",
+        "page-release: workspace title typography assertion"
+      ],
+      "claim": "Full source suite is NOT green; these unchanged cross-page assertions require source-chain review in next shell batch."
+    },
+    "realWebKit": [
+      {
+        "width": 1440,
+        "existingReplies": 4,
+        "nativeCloseOrBack": {
+          "width": 32,
+          "height": 32,
+          "clickable": true
+        },
+        "noSend": true,
+        "noErrors": true,
+        "noOverflow": true
+      },
+      {
+        "width": 390,
+        "existingReplies": 4,
+        "nativeCloseOrBack": {
+          "width": 44,
+          "height": 44,
+          "clickable": true
+        },
+        "noSend": true,
+        "noErrors": true,
+        "noOverflow": true
+      }
+    ],
+    "screenshotsReviewed": [
+      "formal-thread-390.png",
+      "formal-chat-1440.png"
+    ]
+  },
+  "deployment": {
+    "verified": true,
+    "newPid": 19285,
+    "databasesBackedUp": 2,
+    "filesBackedUp": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true,
+    "schema": 90
+  },
+  "limits": [
+    "Whole-site dependency migration remains incomplete",
+    "Explicit compatibility patches remain; package upgrades still require review and scoped acceptance",
+    "Real deployment verified existing Room/thread read-only and draft paths; attachment/task writes verified only in isolated fake-provider fixtures",
+    "No real CLI or paid efficiency gate run",
+    "Audio/video remain excluded per owner scope"
+  ],
+  "remainingEstimate": "3–4 substantial rounds across three batches, not a guarantee",
+  "privateEvidence": "/Users/sun/.loom/reviews/2026-10-22-chat-hosts",
+  "logSha256": {
+    "loom-host-markdown.log": "52e4c67b181ec8d1763e320c8a8e554eddfc895dd07a6c1a73d53ff106783d8a",
+    "loom-host-suggestions.log": "45f54e9b6f945d06a81c84364df45c589672835151c676308dce076ea303ea11",
+    "loom-host-type.log": "be9daa8ccc2ebd10f0491f299c52fbc747390844e8b4ca9f64af8def58c2b5e4",
+    "loom-host-source-final.log": "3342d2243d0972d99939081a4237b070a803d13f24bea30f180a5e1112b840f2",
+    "loom-host-format.log": "fa744c46dea0fa506d65e2e6fd7be187a79f1d621f0411dc214188ddc02d2750",
+    "loom-host-source.log": "6f792e361eef81e63871c41067445e6b21e24a8b316fcba8fbdcbb25bdaad108",
+    "loom-host-probe.log": "ff3a701c65e275d1111d34c0d991958b57667fb63a07d667a90e3da482f2ed58",
+    "loom-host-intake.log": "12986f7b9daea18c58acbe621f6bac6c63553ce9774ec9b678fb8364b6ee7cd1",
+    "loom-host-core.log": "235681a29e8ab7e2013eef96dc7b23baa967cbc2b54312b4cb7739cd55f916f0",
+    "loom-host-focused.log": "1e35c9e2ed2ddfc6a9aaeb3f934a3b1007c7af3f1c2e6dd1933739ea70b4c082",
+    "loom-host-tasks.log": "f690519345a916d8de0582f36268ebbbac311f050da15d2e312ed5b7ac7edb36",
+    "loom-host-ui.log": "bf128d1daf6df84b29f138760acb0de8a894d5ed30d8a263743e4db687dce1e0",
+    "restart.log": "9d7c6a5bdd42a8465d2933f088411d49ae5e337f4a04ae28e447d2d544597c2e",
+    "loom-host-reactions.log": "74eb50016aa5e6234b7edb0989717dd5930cc82f34dd826550495cbfcd1b8d03",
+    "loom-host-references.log": "cba60628cc9dcac16a0d932e0f95bc35bef79e53285dd6d76d346d613b6542c1",
+    "loom-host-preview.log": "f01aaf694e3ffe18ba22a77d55391b0f0693915bfbb356ccc72f7d39a93dad8e",
+    "loom-host-build.log": "09d9c983dd0395ae8473bc80435746cf95f60439afa8533fc0a2cec0e640a697",
+    "formal.log": "5daab4dbde22d3cabcb1266bc699e1056aff95a3b53725bf86f4b226e2a97db2",
+    "loom-host-red.log": "11ae02a005ede260bac1f9da37450ec6780201e50503c65b501dba6b18c5a52a"
+  }
+}
