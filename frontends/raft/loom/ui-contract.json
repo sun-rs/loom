@@ -61,9 +61,7 @@
       "sources": [
         "frontends/raft/packages/web/src/components/agent/StableField.tsx"
       ],
-      "bindings": [
-        "ManagementUi.tsx"
-      ]
+      "bindings": ["ManagementUi.tsx"]
     },
     {
       "id": "message-composer",
@@ -72,10 +70,7 @@
       "sources": [
         "frontends/raft/packages/web/src/components/message/MessageInput.tsx"
       ],
-      "bindings": [
-        "ComposerFiles.tsx",
-        "MessageReactions.tsx"
-      ]
+      "bindings": ["ComposerFiles.tsx", "MessageReactions.tsx"]
     },
     {
       "id": "navigation-disclosure",
@@ -97,10 +92,7 @@
       "sources": [
         "frontends/raft/packages/web/src/components/ConfirmDialog.tsx"
       ],
-      "bindings": [
-        "DiscardChangesDialog.tsx",
-        "MemoryEditor.tsx"
-      ]
+      "bindings": ["DiscardChangesDialog.tsx", "MemoryEditor.tsx"]
     },
     {
       "id": "profile-header-close",
@@ -111,9 +103,7 @@
         "frontends/raft/packages/web/src/components/agent/AgentDetailPanel.tsx"
       ],
       "sourceRevision": "v1.21.22 af3d6ef4a22f0f05f5f9db9424285755d67e9726 / AgentDetailPanel-B3FrpUPj.js il; page-adoption instance-inspector-chrome",
-      "bindings": [
-        "InstanceInspector.tsx"
-      ],
+      "bindings": ["InstanceInspector.tsx"],
       "selector": {
         "file": "InstanceInspector.tsx",
         "ariaLabel": "关闭实例详情"
@@ -154,9 +144,7 @@
       "id": "release-126-compatibility",
       "owner": "@botiverse/raft-ui 0.10.5 native typography/control sizes, SearchTrigger, ListRowGroup/ListRow and DescriptionList; official page wAt / AgentProfileEditDialog composition",
       "rule": "Use pinned production source recipes; no new size system. Fine-pointer desktop typography only; explicit message tier remains user-owned. Role field writes use immutable Role revisions. Existing instances become out of date; they are never silently changed.",
-      "sources": [
-        "docs/evo/evidence/2026-10-21-search-fix/upstream-lock.json"
-      ],
+      "sources": ["docs/evo/evidence/2026-10-21-search-fix/upstream-lock.json"],
       "bindings": [
         "useTopbarSearchWidth.ts",
         "OfficialListRows.tsx",
@@ -173,13 +161,8 @@
       "id": "activity-native-row",
       "owner": "raft-ui InboxItem compact / InboxItemTrigger / InboxItemActions reveal=hover",
       "rule": "Official v1.21.26 compact row composition. Trigger owns row navigation, trailing action owns done; touch action remains visible, keyboard focus returns to trigger. Activity preview840px, search unaffected.",
-      "sources": [
-        "frontends/raft/node_modules/raft-ui/dist/index.mjs"
-      ],
-      "bindings": [
-        "ActivityMessageRow.tsx",
-        "activity-layout.ts"
-      ],
+      "sources": ["frontends/raft/node_modules/raft-ui/dist/index.mjs"],
+      "bindings": ["ActivityMessageRow.tsx", "activity-layout.ts"],
       "guard": "scripts/official-web/activity-list-browser.mjs"
     }
   ],

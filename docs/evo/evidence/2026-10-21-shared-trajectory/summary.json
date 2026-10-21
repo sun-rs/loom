@@ -1,0 +1,56 @@
+{
+  "productCommit": "52e331451a7bd2711ffced27e8f4a7dec391be7b",
+  "scope": "Shared official diagnostic timeline and whole-site dependency migration inventory",
+  "implementation": [
+    "Role and instance activity consume one TrajectoryRow backed by generated official LogItem",
+    "Removed duplicate instance row rendering",
+    "All eight navigation destinations and cross-cutting capabilities registered with explicit remaining work"
+  ],
+  "checks": {
+    "sourceAndUnit": 9,
+    "uiContract": 8,
+    "typecheck": true,
+    "build": true,
+    "webkitFixtureWidths": [1440, 390],
+    "fixtureBehaviors": [
+      "aggregation and room isolation",
+      "instance filtering and cursor paging",
+      "combined model-effort editor",
+      "profile instance list",
+      "shared inspector timeline",
+      "long diagnostic expansion"
+    ],
+    "formalReadOnly": [
+      {
+        "width": 1440,
+        "identityBesideAvatar": true,
+        "separators": 3,
+        "noOverflow": true,
+        "activityDefault": true,
+        "instancesInProfile": true
+      },
+      {
+        "width": 390,
+        "identityBesideAvatar": true,
+        "separators": 3,
+        "noOverflow": true,
+        "activityDefault": true,
+        "instancesInProfile": true
+      }
+    ],
+    "visualInspection": "390px fixture screenshot"
+  },
+  "deployment": {
+    "verified": true,
+    "backedUpDatabases": 2,
+    "backedUpFiles": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true
+  },
+  "limits": [
+    "Whole-site dependency conversion is incomplete; inventory describes adoption boundaries, not behavioral completeness",
+    "No paid-provider or physical-device tests",
+    "Formal page verification is read-only; diagnostic interactions exercised with clearly isolated fixtures"
+  ],
+  "privateEvidence": "/Users/sun/.loom/reviews/2026-10-21-shared-trajectory"
+}

@@ -22,14 +22,9 @@
       "id": "search",
       "name": "搜索",
       "status": "mixed",
-      "sources": [
-        "loom/SearchOverlayContent.tsx",
-        "loom/DiscoveryPage.tsx"
-      ],
+      "sources": ["loom/SearchOverlayContent.tsx", "loom/DiscoveryPage.tsx"],
       "adopted": "官方控件、旧页面及Loom查询绑定混合",
-      "remaining": [
-        "拆开搜索结果/浮层的展示与查询适配，撤除保留场景的重复布局"
-      ]
+      "remaining": ["拆开搜索结果/浮层的展示与查询适配，撤除保留场景的重复布局"]
     },
     {
       "id": "channels",
@@ -41,18 +36,13 @@
         "packages/web/src/components/message/MessageItem.tsx"
       ],
       "adopted": "官方消息组件与构建时适配并存",
-      "remaining": [
-        "消息正文/composer/消息列的适配变换仍需收敛到明确数据接口"
-      ]
+      "remaining": ["消息正文/composer/消息列的适配变换仍需收敛到明确数据接口"]
     },
     {
       "id": "activity",
       "name": "动态",
       "status": "mixed",
-      "sources": [
-        "loom/DiscoveryPage.tsx",
-        "loom/ActivityMessageRow.tsx"
-      ],
+      "sources": ["loom/DiscoveryPage.tsx", "loom/ActivityMessageRow.tsx"],
       "adopted": "raft-ui InboxItem及Loom聚合/跳转接线",
       "remaining": [
         "页面/列表/预览/分页组合仍是本地维护，需提取官方完整展示边界"
@@ -62,14 +52,9 @@
       "id": "tasks",
       "name": "任务",
       "status": "mixed",
-      "sources": [
-        "loom/TasksPage.tsx",
-        "loom/TaskDetail.tsx"
-      ],
+      "sources": ["loom/TasksPage.tsx", "loom/TaskDetail.tsx"],
       "adopted": "官方任务组件、提取变换及本地任务状态绑定",
-      "remaining": [
-        "列表/详情/创建表单仍混合，不能只换底层包宣称整页升级"
-      ]
+      "remaining": ["列表/详情/创建表单仍混合，不能只换底层包宣称整页升级"]
     },
     {
       "id": "agents",
@@ -91,21 +76,15 @@
       "id": "computers",
       "name": "计算机",
       "status": "mixed",
-      "sources": [
-        "loom/ComputersPage.tsx"
-      ],
+      "sources": ["loom/ComputersPage.tsx"],
       "adopted": "官方基础控件、共享Header及本地运行时数据",
-      "remaining": [
-        "详情/运行时/实例列表的整块展示仍为移植组合"
-      ]
+      "remaining": ["详情/运行时/实例列表的整块展示仍为移植组合"]
     },
     {
       "id": "memory",
       "name": "记忆",
       "status": "loom-native-composition",
-      "sources": [
-        "loom/MemoryPage.tsx"
-      ],
+      "sources": ["loom/MemoryPage.tsx"],
       "adopted": "Loom全局记忆语义，复用官方基础及关闭/标题组件",
       "remaining": [
         "无可直接替换的官方等价全局记忆页；保留本地语义，继续收敛展示原语并记录例外"
@@ -137,9 +116,7 @@
         "loom/Navigation.tsx",
         "loom/RoleWorkspace.tsx"
       ],
-      "remaining": [
-        "共享控件已原生，外壳/响应式/拖动组合仍需迁移"
-      ]
+      "remaining": ["共享控件已原生，外壳/响应式/拖动组合仍需迁移"]
     },
     {
       "id": "files",
@@ -158,10 +135,7 @@
       "id": "branches",
       "name": "Fork／Side／实例生命周期",
       "status": "mixed",
-      "sources": [
-        "loom/SideWorkspace.tsx",
-        "loom/InstanceInspector.tsx"
-      ],
+      "sources": ["loom/SideWorkspace.tsx", "loom/InstanceInspector.tsx"],
       "remaining": [
         "Loom专属交互继续使用官方场景组件，不引入Raft执行状态所有者"
       ]

@@ -73,7 +73,9 @@ export async function verifyRoleActivity({ browser, origin, client, role }) {
           kind: "text",
           text: input.beforeActivityId
             ? "FIXTURE older detail"
-            : inspectLong ? "FIXTURE long diagnostic ".repeat(40) : "FIXTURE activity detail",
+            : inspectLong
+              ? "FIXTURE long diagnostic ".repeat(40)
+              : "FIXTURE activity detail",
         },
       };
       await route.fulfill({
@@ -168,19 +170,40 @@ export async function verifyRoleActivity({ browser, origin, client, role }) {
       );
       await profile.getByRole("button", { name: "取消", exact: true }).click();
       inspectLong = true;
-      await page.getByTestId("role-profile-instances").getByRole("button").filter({has:page.getByText(name,{exact:true})}).click();
+      await page
+        .getByTestId("role-profile-instances")
+        .getByRole("button")
+        .filter({ has: page.getByText(name, { exact: true }) })
+        .click();
       const inspector = page.getByTestId("profile-panel");
       const trajectory = inspector.getByTestId("loom-trajectory");
       await trajectory.getByTestId("loom-trajectory-row").waitFor();
-      assert.equal(await trajectory.getByTestId("loom-trajectory-row").count(),1);
-      assert.equal(await trajectory.getByText("SECRET").count(),0);
-      const output = trajectory.getByRole("button",{name:"输出",exact:true});
-      assert.equal(await output.getAttribute("aria-expanded"),"false");await output.click();
-      assert.equal(await output.getAttribute("aria-expanded"),"true");
-      assert.equal(await trajectory.locator('ul > li').count(),1,"official log row is the list item");
-      await trajectory.getByRole("button",{name:"更早轨迹",exact:true}).click();
-      await trajectory.getByText("FIXTURE older detail",{exact:true}).waitFor();
-      await page.screenshot({path:`/tmp/loom-shared-trajectory-${width}.png`});
+      assert.equal(
+        await trajectory.getByTestId("loom-trajectory-row").count(),
+        1,
+      );
+      assert.equal(await trajectory.getByText("SECRET").count(), 0);
+      const output = trajectory.getByRole("button", {
+        name: "输出",
+        exact: true,
+      });
+      assert.equal(await output.getAttribute("aria-expanded"), "false");
+      await output.click();
+      assert.equal(await output.getAttribute("aria-expanded"), "true");
+      assert.equal(
+        await trajectory.locator("ul > li").count(),
+        1,
+        "official log row is the list item",
+      );
+      await trajectory
+        .getByRole("button", { name: "更早轨迹", exact: true })
+        .click();
+      await trajectory
+        .getByText("FIXTURE older detail", { exact: true })
+        .waitFor();
+      await page.screenshot({
+        path: `/tmp/loom-shared-trajectory-${width}.png`,
+      });
       assert.equal(
         await page.evaluate(
           () => document.documentElement.scrollWidth > innerWidth,
