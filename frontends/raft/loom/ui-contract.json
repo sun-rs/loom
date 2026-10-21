@@ -164,6 +164,17 @@
       "sources": ["frontends/raft/node_modules/raft-ui/dist/index.mjs"],
       "bindings": ["ActivityMessageRow.tsx", "activity-layout.ts"],
       "guard": "scripts/official-web/activity-list-browser.mjs"
+    },
+    {
+      "id": "computer-detail-source-rows",
+      "owner": "@loom/raft-web-source AvatarListRow / KeyValueRow, db5e399",
+      "rule": "Complete pinned source owns list metadata, static/interactive states and label/value recipes. Loom supplies instance identity, runtime labels, navigation, and unknown values; no cloud machine store. Editable ComputerProfile is a separate inline-edit scenario.",
+      "sources": [
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/ui/AvatarListRow.tsx",
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/ui/KeyValueRow.tsx"
+      ],
+      "bindings": ["ComputersPage.tsx", "OfficialListRows.tsx"],
+      "guard": "scripts/official-web/detail-primitives-source.test.mjs"
     }
   ],
   "exceptions": [

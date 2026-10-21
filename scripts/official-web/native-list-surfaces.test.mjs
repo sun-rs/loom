@@ -19,8 +19,12 @@ test("official avatar row uses body typography, native spacing and focus geometr
   assert.match(c, /<SectionHeader/);
   assert.match(c, /<OfficialListRowGroup>/);
   const row = read("loom/OfficialListRows.tsx");
-  assert.match(row, /<ListRow onClick=\{onClick\}>/);
-  assert.match(row, /<ListRowTitle>/);
+  assert.match(row, /@loom\/raft-web-source\/AvatarListRow/);
+  const native = read(
+    "upstream/raft-web-source/packages/web/src/components/ui/AvatarListRow.tsx",
+  );
+  assert.match(native, /<ListRowMeta>/);
+  assert.match(native, /interactive=\{interactive\}/);
 });
 test("avatar frame sizes and badge corners come from the current official recipe", () => {
   const s = read("packages/web/src/components/ui/AvatarSlot.tsx");

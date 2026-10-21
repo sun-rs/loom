@@ -16,7 +16,9 @@
     "./SettingsProfileCard": "./packages/web/src/components/settings/SettingsProfileCard.tsx",
     "./SurfaceListItem": "./packages/web/src/components/ui/SurfaceListItem.tsx",
     "./SlugInput": "./packages/web/src/components/ui/SlugInput.tsx",
-    "./panelBounds": "./packages/web/src/lib/panelBounds.ts"
+    "./panelBounds": "./packages/web/src/lib/panelBounds.ts",
+    "./AvatarListRow": "./packages/web/src/components/ui/AvatarListRow.tsx",
+    "./KeyValueRow": "./packages/web/src/components/ui/KeyValueRow.tsx"
   },
   "peerDependencies": {
     "react": "^19.0.0",

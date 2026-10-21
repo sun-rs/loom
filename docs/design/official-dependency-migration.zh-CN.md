@@ -7,7 +7,7 @@
 | 层次 | 已落地 | 边界 |
 | --- | --- | --- |
 | 基础设计系统 | `@botiverse/raft-ui@0.10.5`，canonical/legacy 导入共享运行时 | 原生控件、recipe、字体和状态；不能据此认定每个页面组合原生 |
-| 直接源码依赖 | Tooltip、CloseButton、EmptyState、SectionHeader、SectionEyebrow、PanelHeader、AppearanceThemePicker、AvatarEditVeil、SettingsProfileCard、SurfaceListItem、SlugInput、panelBounds | 私有本地分发包的原文件保留官方字节，不是官方发布的完整 Web npm 包 |
+| 直接源码依赖 | Tooltip、CloseButton、EmptyState、SectionHeader、SectionEyebrow、PanelHeader、AppearanceThemePicker、AvatarEditVeil、SettingsProfileCard、SurfaceListItem、SlugInput、panelBounds、AvatarListRow、KeyValueRow | 私有本地分发包的原文件保留官方字节，不是官方发布的完整 Web npm 包 |
 | 外观区块 | 从官方 SettingsPanel 精确提取正文与预览声明 | 显式接入现有设备偏好和主题hook；消息预览和字号组件仍沿用原模块 |
 | 日期与时间 | 从官方 LanguageRegionSection 原样提取日期/时间 JSX 子树 | 保存/错误绑定浏览器设备偏好；中文限定语言块仍为本地组合 |
 | 更新日志 | 原样提取官方内容 JSX、分类与徽标规则 | Loom 自有静态发布记录；既有设置外壳负责标题和滚动，旧构建时切片已移除 |
@@ -24,7 +24,7 @@
 - 聊天、单聊、消息列、composer：原组件与构建时变换混合，须逐步提炼稳定数据/事件接口；保留草稿、IME、虚拟历史、焦点、发送权限与因果屏障。
 - 搜索、动态、任务：基础控件可升级，但页面级查询、列表、预览、筛选、拖动和跳转组合仍需迁移。
 - Agent：列表、工作区、实例资料/控制仍有本地组合。Role/Instance区别不是等待删除的“偏差”。
-- 计算机：运行时和实例列表接线仍在本地详情组合中。
+- 计算机：实例列表和只读属性行直接依赖官方原文件；运行时、编辑和详情组合仍在本地。历史附件卡片行尚未迁移，不能把同名组件一并算作完成。
 - 设置：外观、日期时间、更新日志及账户/通知/关于/系统频道展示已迁移；归档、侧栏、表单也已迁入；设置外壳、用量、运行配置和部分子组件仍有本地组合。用量和运行配置与Raft云端计费/分析设置并不等价，不列为等待照抄的业务页面。
 - 附件、评论、文件树、diff：展示原模块与本地适配并存，不能绕过文件访问和附件授权。
 - 全局记忆、Fork/Side：没有完全对应的官方业务页面，应维持 Loom 语义，以官方场景组件组合；不为“依赖化”引入官方业务 store 或改变后端。

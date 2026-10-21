@@ -35,11 +35,7 @@ export async function verifyComputers({ browser, origin }) {
     await page.goto(`${origin}/?view=settings`);
     if (viewport.width >= 768)
       await page.getByTestId("left-rail-tab-computers").click();
-    else
-      await page
-        .getByTestId("settings-sidebar-list")
-        .getByRole("button", { name: "计算机", exact: true })
-        .click();
+    else await page.goto(`${origin}/?view=computers`);
     const row = page.getByTestId(
       viewport.width >= 768 ? "computer-desktop-row" : "computer-mobile-row",
     );
@@ -56,6 +52,31 @@ export async function verifyComputers({ browser, origin }) {
       ),
       false,
     );
+    const facts = page.getByTestId("computer-detail");
+    await facts.getByText("fixture-os", { exact: true }).waitFor();
+    assert.equal(
+      await facts
+        .getByText("fixture-os", { exact: true })
+        .evaluate((el) => getComputedStyle(el).fontFamily.includes("Mono")),
+      true,
+    );
+    const instanceRows = page
+      .getByTestId("computer-instances")
+      .getByRole("button");
+    await instanceRows.first().waitFor();
+    const hit = await instanceRows.first().boundingBox();
+    assert.ok(
+      hit &&
+        hit.height >= 44 &&
+        hit.x >= 0 &&
+        hit.x + hit.width <= viewport.width,
+    );
+    await instanceRows.first().focus();
+    await page.keyboard.press("Enter");
+    await page.getByTestId("loom-role-profile").waitFor();
+    assert.equal(new URL(page.url()).searchParams.get("view"), "agents");
+    await page.goBack();
+    await page.getByTestId("computer-detail").waitFor();
     if (viewport.width < 768) {
       await page
         .getByRole("button", { name: "计算机列表", exact: true })
@@ -94,6 +115,8 @@ export async function verifyComputers({ browser, origin }) {
       viewport,
       selectionReloadBack: "passed",
       horizontalOverflow: false,
+      officialRowKeyboardNavigation: "passed",
+      monoFactsAndPointerTargets: "passed",
     });
     await context.close();
   }

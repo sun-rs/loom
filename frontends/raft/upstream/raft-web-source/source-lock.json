@@ -27,6 +27,8 @@
     "packages/web/src/components/settings/UnarchiveChannelButton.tsx": "14a2ef2e93e850c09b91cffdc06fc4b1ff0764220f65894862ce5e1d1057e335",
     "packages/web/src/components/settings/SettingsSidebarList.tsx": "cad7aea8a60e5f02536e152bbfa5cdbcb1cd611b045bc770764a0f201e160677",
     "packages/web/src/components/ui/FormField.tsx": "47d1deed8e88ba19193fba249a7769b5fcd9c34d699495670ddd803c096fae36",
-    "packages/web/src/lib/panelBounds.ts": "1631bd5e9497909d4504199ba0fadec30e77b26f2991a16a8b6de527c797d5c9"
+    "packages/web/src/lib/panelBounds.ts": "1631bd5e9497909d4504199ba0fadec30e77b26f2991a16a8b6de527c797d5c9",
+    "packages/web/src/components/ui/AvatarListRow.tsx": "7ca48ac7266cfe9888f4efae815637760a3d1efdeec49a96fccbeae199a28e16",
+    "packages/web/src/components/ui/KeyValueRow.tsx": "326ba4e471cb05a7d23941af953e154d1c3ae38717a974c304b1114fb812db36"
   }
 }

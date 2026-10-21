@@ -83,8 +83,11 @@
       "name": "计算机",
       "status": "mixed",
       "sources": ["loom/ComputersPage.tsx"],
-      "adopted": "官方基础控件、共享Header及本地运行时数据",
-      "remaining": ["详情/运行时/实例列表的整块展示仍为移植组合"]
+      "adopted": "官方Header、KeyValueRow、完整AvatarListRow直接依赖；Loom保留计算机与实例身份、运行时数据和导航绑定",
+      "remaining": [
+        "详情页组合、资料编辑和运行时区块仍有结构移植；历史附件场景的AvatarListRow尚未迁入完整依赖",
+        "手机计算机页直达及返回可验收，但设置中入口已移除、底栏也无计算机；导航入口待按官方移动端场景补齐"
+      ]
     },
     {
       "id": "memory",

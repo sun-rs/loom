@@ -1,3 +1,4 @@
+import KeyValueRow from "@loom/raft-web-source/KeyValueRow";
 import {
   OfficialListRowGroup,
   OfficialAvatarListRow,
@@ -40,21 +41,6 @@ import { SIDEBAR_PANEL_BOUNDS } from "../packages/web/src/lib/panelBounds.ts";
 import { computerStatus, computerStatusLabels } from "./computers.ts";
 const mobileRow =
   "relative flex min-h-16 w-full items-center gap-3 px-4 py-3 text-left text-foreground outline-none hover:bg-fill-pressed active:bg-fill-pressed focus-visible:shadow-[inset_0_0_0_2px_var(--foreground)] not-first:before:absolute not-first:before:top-0 not-first:before:right-0 not-first:before:left-[63px] not-first:before:border-t not-first:before:border-line-muted";
-// KeyValueRow-TXegGs9j: native label/value typography, local read-only content.
-function Fact({ label, value }: { label: string; value?: string }) {
-  return (
-    <div>
-      <div className="mb-1 flex items-center gap-2">
-        <div className="text-footnote font-medium text-foreground-hint">
-          {label}
-        </div>
-      </div>
-      <div className="break-all font-mono text-mono-meta text-foreground">
-        {value || "未知"}
-      </div>
-    </div>
-  );
-}
 export default function ComputersPage({
   client,
   controlRoomId,
@@ -315,8 +301,18 @@ export default function ComputersPage({
               <div className="px-5 py-4">
                 <SectionEyebrow className="mb-3">信息</SectionEyebrow>
                 <div className="space-y-3">
-                  <Fact label="操作系统" value={computer?.os} />
-                  <Fact label="版本" value={computer?.buildVersion} />
+                  <KeyValueRow
+                    label="操作系统"
+                    value={computer?.os || "未知"}
+                    mono
+                    breakAll
+                  />
+                  <KeyValueRow
+                    label="版本"
+                    value={computer?.buildVersion || "未知"}
+                    mono
+                    breakAll
+                  />
                   <div data-testid="machine-detected-runtimes">
                     <div className="mb-1 text-footnote font-medium text-foreground-hint">
                       检测到的 CLI
