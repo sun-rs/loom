@@ -1,0 +1,165 @@
+{
+  "productCommit": "421e9904038776a44a506d53e755637f96d2a017",
+  "sourceRevision": "db5e399f017d584e49597e3a28757645d6807893",
+  "scope": [
+    "Account profile",
+    "Web push settings",
+    "About version",
+    "System channel settings",
+    "Direct SettingsProfileCard, SurfaceListItem, SlugInput dependencies"
+  ],
+  "reuse": {
+    "exact": "System channel JSX, three original component files, selected native presentation subtrees",
+    "compatibility": "Account omits cloud fields and keeps editingDisabled/maxLength; notification omits upstream server mute and keeps loading/unknown/confirmed guards; About brand rename and version only",
+    "removed": "Four runtime SettingsPanel transforms, virtual module declaration and related aliases",
+    "notClaimed": "Untouched whole upstream page or whole-site dependency completion"
+  },
+  "checks": {
+    "sourceAndAffected": 15,
+    "uiContract": 8,
+    "typecheck": true,
+    "build": true,
+    "chromiumFixture": {
+      "account": [
+        {
+          "width": 1440,
+          "unknownReadOnlyRecovery": true,
+          "staleRejected": true,
+          "avatar": true,
+          "unsavedNamePreserved": true
+        },
+        {
+          "width": 390,
+          "unknownReadOnlyRecovery": true,
+          "staleRejected": true,
+          "avatar": true,
+          "unsavedNamePreserved": true
+        }
+      ],
+      "system": [
+        {
+          "width": 1440,
+          "unknownExactRetry": true,
+          "hiddenPersists": true,
+          "restoreSameRoom": true
+        },
+        {
+          "width": 390,
+          "unknownExactRetry": true,
+          "hiddenPersists": true,
+          "restoreSameRoom": true
+        }
+      ],
+      "about": [
+        {
+          "width": 1440,
+          "versionMatches": true,
+          "officialVersionCard": true
+        },
+        {
+          "width": 390,
+          "versionMatches": true,
+          "officialVersionCard": true
+        }
+      ],
+      "notifications": [
+        {
+          "width": 1440,
+          "nativeControls": true,
+          "realWorkerRegistered": true,
+          "fakeBrowserSubscription": true,
+          "realDaemonRegistrationReadback": true,
+          "lostWritesVerifiedWithoutResend": true,
+          "testReceiptNotDeliveryClaim": true,
+          "authenticatedNavigation": true,
+          "deniedTargetDoesNotNavigate": true
+        },
+        {
+          "width": 390,
+          "nativeControls": true,
+          "realWorkerRegistered": true,
+          "fakeBrowserSubscription": true,
+          "realDaemonRegistrationReadback": true,
+          "lostWritesVerifiedWithoutResend": true,
+          "testReceiptNotDeliveryClaim": true,
+          "authenticatedNavigation": true,
+          "deniedTargetDoesNotNavigate": true
+        }
+      ]
+    },
+    "formalWebkitReadOnly": [
+      {
+        "width": 1440,
+        "tab": "account",
+        "readOnly": true,
+        "noOverflow": true
+      },
+      {
+        "width": 1440,
+        "tab": "administration",
+        "readOnly": true,
+        "noOverflow": true
+      },
+      {
+        "width": 1440,
+        "tab": "about",
+        "readOnly": true,
+        "noOverflow": true
+      },
+      {
+        "width": 1440,
+        "tab": "notifications",
+        "readOnly": true,
+        "noOverflow": true
+      },
+      {
+        "width": 390,
+        "tab": "account",
+        "readOnly": true,
+        "noOverflow": true
+      },
+      {
+        "width": 390,
+        "tab": "administration",
+        "readOnly": true,
+        "noOverflow": true
+      },
+      {
+        "width": 390,
+        "tab": "about",
+        "readOnly": true,
+        "noOverflow": true
+      },
+      {
+        "width": 390,
+        "tab": "notifications",
+        "readOnly": true,
+        "noOverflow": true
+      }
+    ],
+    "visualInspection": [
+      "formal-account-390.png",
+      "formal-administration-390.png",
+      "formal-notifications-390.png"
+    ]
+  },
+  "testCorrections": [
+    "WebKit Shift-Tab excludes file controls under default macOS navigation; reproduced on previously deployed build, use Option-Shift-Tab for full navigation",
+    "System save selector scoped to its form because administration includes a separate runtime save",
+    "Stale computer-row source assertion updated to existing OfficialAvatarListRow/ListRowGroup binding; no Computer product change"
+  ],
+  "retainedEvidenceLimits": [
+    "WebKit push fixture first lacks PushManager; synthetic capability trial then cannot establish request-interception evidence, not accepted as lost-response push proof. Synthetic trial removed; final full push flow verified in Chromium.",
+    "Push subscription and push-service receipt are synthetic; real temporary daemon registration and readback verified. Not OS notification delivery acceptance.",
+    "Production verification read-only, no real account edits or notification enablement.",
+    "No physical device or paid CLI testing."
+  ],
+  "deployment": {
+    "verified": true,
+    "backedUpDatabases": 2,
+    "backedUpFiles": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true
+  },
+  "privateEvidence": "/Users/sun/.loom/reviews/2026-10-21-settings-sections"
+}
