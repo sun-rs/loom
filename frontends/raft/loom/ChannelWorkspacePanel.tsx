@@ -1,5 +1,13 @@
 import {
   WorkspaceTreeHeader,
+  WorkspaceImage,
+  WorkspaceFrame,
+  WorkspacePathBar,
+  WorkspaceSplit,
+  WorkspaceTreePane,
+  WorkspaceDetailPane,
+  WorkspaceResizeHandle,
+  WorkspaceFileHeader,
   TREE_ROW_CLASS,
 } from "./OfficialWorkspace.generated";
 import WorkspaceDocument from "./WorkspaceDocument.tsx";
@@ -14,7 +22,6 @@ import {
   SegmentedControlItem,
   SegmentedControlLabel,
 } from "raft-ui";
-import { ArrowLeft } from "lucide-react";
 import { SelectField } from "./ManagementUi.tsx";
 import { useResizablePanel } from "../packages/web/src/hooks/useResizablePanel.ts";
 import WorkspaceFileTree from "./WorkspaceFileTree.tsx";
@@ -80,11 +87,8 @@ export default function ChannelWorkspacePanel({
   }, [client, roomId, version]);
   const source = { client, roomId, rootId, hidden };
   return (
-    <div
-      className="flex min-h-0 min-w-0 flex-1 flex-col bg-layer-canvas-muted "
-      data-testid="channel-workspace"
-    >
-      <div className="flex items-center gap-2 border-b border-line-muted  bg-layer-panel  px-3 py-1.5">
+    <WorkspaceFrame>
+      <WorkspacePathBar>
         <div className="min-w-0 flex-1">
           {roots.length > 1 ? (
             <SelectField
@@ -102,7 +106,7 @@ export default function ChannelWorkspacePanel({
             </span>
           )}
         </div>
-      </div>
+      </WorkspacePathBar>
       {error ? (
         <p role="alert" className="p-3 text-sm text-danger">
           {error}
@@ -112,18 +116,15 @@ export default function ChannelWorkspacePanel({
           加载中…
         </p>
       ) : (
-        <div className="flex min-h-0 min-w-0 flex-1">
-          <div
-            className={`${selection ? "hidden md:flex" : "flex"} relative min-w-full md:min-w-0 shrink-0 flex-col border-r  border-line-muted  bg-layer-panel `}
-            style={{ width: resize.width }}
+        <WorkspaceSplit>
+          <WorkspaceTreePane
+            selectedPath={selection?.path}
+            treeWidth={resize.width}
           >
-            <div
-              data-testid="workspace-resize"
-              className="hidden md:block absolute right-0 top-0 bottom-0 w-2 -mr-1 z-10 cursor-col-resize touch-none select-none"
-              onPointerDown={resize.handleResizeStart}
-              onPointerMove={resize.handleResizeMove}
-              onPointerUp={resize.handleResizeEnd}
-              onPointerCancel={resize.handleResizeEnd}
+            <WorkspaceResizeHandle
+              handleResizeStart={resize.handleResizeStart}
+              handleResizeMove={resize.handleResizeMove}
+              handleResizeEnd={resize.handleResizeEnd}
             />
             <WorkspaceTreeHeader
               showHiddenFiles={hidden}
@@ -171,25 +172,14 @@ export default function ChannelWorkspacePanel({
                 />
               )}
             </div>
-          </div>
-          <div
-            className={`${selection ? "flex" : "hidden md:flex"} min-h-0 min-w-0 flex-1 flex-col`}
-          >
+          </WorkspaceTreePane>
+          <WorkspaceDetailPane selectedPath={selection?.path}>
             {selection ? (
               <>
-                <div className="flex items-center gap-2 border-b border-line-muted  bg-layer-panel  px-4 py-2">
-                  <button
-                    type="button"
-                    className="md:hidden shrink-0 text-foreground-muted  hover:text-foreground-strong  transition-colors"
-                    aria-label="返回文件列表"
-                    onClick={() => setSelection(undefined)}
-                  >
-                    <ArrowLeft size={16} />
-                  </button>
-                  <span className="min-w-0 flex-1 font-mono text-sm font-medium text-foreground-strong  truncate">
-                    {selection.path}
-                  </span>
-                </div>
+                <WorkspaceFileHeader
+                  path={selection.path}
+                  onBack={() => setSelection(undefined)}
+                />
                 <WorkspacePreview
                   key={`${rootId}:${selection.path}:${selection.diff}:${version}`}
                   source={source}
@@ -201,10 +191,10 @@ export default function ChannelWorkspacePanel({
                 选择文件或 Git 变更
               </div>
             )}
-          </div>
-        </div>
+          </WorkspaceDetailPane>
+        </WorkspaceSplit>
       )}
-    </div>
+    </WorkspaceFrame>
   );
 }
 function useRead(
@@ -324,10 +314,12 @@ function WorkspacePreview({
             markdown={selection.path.endsWith(".md")}
           />
         ) : value.value.encoding === "base64" ? (
-          <img
-            className="max-h-full max-w-full border  border-line-muted  object-contain"
-            alt={selection.path}
-            src={`data:${value.value.mimeType};base64,${value.value.content}`}
+          <WorkspaceImage
+            fileContent={{
+              path: selection.path,
+              mimeType: value.value.mimeType,
+              content: value.value.content,
+            }}
           />
         ) : (
           <p className="text-sm">

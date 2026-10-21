@@ -1,0 +1,183 @@
+{
+  "source": "db5e399f017d584e49597e3a28757645d6807893",
+  "foundation": "@botiverse/raft-ui@0.10.5",
+  "implemented": [
+    "Generated native topbar frame, edge balance, regions and search with explicit identity/notification/width slots",
+    "Generated workspace shell, split panes, file header, resize handle and image preview",
+    "Separate retained Loom authority bindings from three concrete presentation review groups"
+  ],
+  "checks": {
+    "source": {
+      "passed": 325,
+      "failed": 0
+    },
+    "uiContract": {
+      "passed": 8,
+      "failed": 0
+    },
+    "typecheck": true,
+    "build": true,
+    "fixtureBrowser": {
+      "workspace": [
+        {
+          "markdownSeparatorRendered": true,
+          "width": 1440,
+          "initialResourceCount": 56,
+          "initialEncodedBytes": 1211759,
+          "workspaceChunkAbsentBeforeOpen": true,
+          "nativeHeaderControls": [
+            {
+              "name": "刷新",
+              "width": 32,
+              "height": 32,
+              "clickable": true
+            },
+            {
+              "name": "已隐藏隐藏文件",
+              "width": 32,
+              "height": 32,
+              "clickable": true
+            }
+          ],
+          "accessibleDirectoryExpansion": true,
+          "operations": [
+            {
+              "operation": "roots",
+              "path": ""
+            },
+            {
+              "operation": "list",
+              "path": ""
+            },
+            {
+              "operation": "list",
+              "path": "src"
+            },
+            {
+              "operation": "read",
+              "path": "src/demo.md"
+            },
+            {
+              "operation": "changes",
+              "path": ""
+            },
+            {
+              "operation": "diff",
+              "path": "src/demo.md"
+            },
+            {
+              "operation": "diff",
+              "path": "long.txt"
+            },
+            {
+              "operation": "list",
+              "path": ""
+            },
+            {
+              "operation": "read",
+              "path": "report.html"
+            },
+            {
+              "operation": "read",
+              "path": "report.pdf"
+            },
+            {
+              "operation": "read",
+              "path": "separator.md"
+            }
+          ]
+        },
+        {
+          "markdownSeparatorRendered": true,
+          "width": 390,
+          "initialResourceCount": 51,
+          "initialEncodedBytes": 1174208,
+          "workspaceChunkAbsentBeforeOpen": true,
+          "nativeHeaderControls": [
+            {
+              "name": "刷新",
+              "width": 32,
+              "height": 32,
+              "clickable": true
+            },
+            {
+              "name": "已隐藏隐藏文件",
+              "width": 32,
+              "height": 32,
+              "clickable": true
+            }
+          ],
+          "accessibleDirectoryExpansion": true,
+          "operations": [
+            {
+              "operation": "roots",
+              "path": ""
+            },
+            {
+              "operation": "list",
+              "path": ""
+            },
+            {
+              "operation": "list",
+              "path": "src"
+            },
+            {
+              "operation": "read",
+              "path": "src/demo.md"
+            },
+            {
+              "operation": "changes",
+              "path": ""
+            },
+            {
+              "operation": "diff",
+              "path": "src/demo.md"
+            },
+            {
+              "operation": "diff",
+              "path": "long.txt"
+            },
+            {
+              "operation": "list",
+              "path": ""
+            },
+            {
+              "operation": "read",
+              "path": "report.html"
+            },
+            {
+              "operation": "read",
+              "path": "report.pdf"
+            },
+            {
+              "operation": "read",
+              "path": "separator.md"
+            }
+          ]
+        }
+      ],
+      "topbar": [
+        {
+          "width": 1440,
+          "passed": true
+        },
+        {
+          "width": 390,
+          "passed": true
+        }
+      ]
+    }
+  },
+  "initialFailures": [
+    "Source regressions failed before migration",
+    "Initial TopBar edit missed useEffect cleanup closure; typecheck/build failed, fixed before successful checks",
+    "Existing width source assertion still targeted host; updated to assert both host prop binding and generated width/refs"
+  ],
+  "limits": [
+    "Not whole-site completion",
+    "Adaptive width remains v1.21.26 resource port; workspace identity remains local noninteractive slot",
+    "No backend changes or paid-provider calls",
+    "Build retains preexisting chunk-size and native-config warnings"
+  ],
+  "privateEvidence": "/Users/sun/.loom/reviews/2026-10-22-composition-boundaries"
+}

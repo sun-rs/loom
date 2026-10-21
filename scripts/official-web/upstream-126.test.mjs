@@ -24,7 +24,14 @@ test("message tiers follow upstream body tokens and retain explicit user prefere
 test("topbar measures both adjacent slots instead of fixing the trigger width", () => {
   const s = read("loom/TopBar.tsx");
   assert.match(s, /useTopbarSearchWidth/);
-  assert.match(s, /style=\{.*searchWidth/s);
+  assert.match(s, /searchWidth=\{searchWidth\}/);
+  const view = read("loom/OfficialTopBar.generated.tsx");
+  assert.match(
+    view,
+    /style=\{searchWidth === undefined \? undefined : \{width:searchWidth\}\}/,
+  );
+  assert.match(view, /ref=\{leadingRef\}/);
+  assert.match(view, /ref=\{trailingRef\}/);
   assert.doesNotMatch(s, /truncate text-subhead font-bold/);
 });
 test("computer instance rows use one native group and sibling separators", () => {

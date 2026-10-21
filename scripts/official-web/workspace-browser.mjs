@@ -93,6 +93,31 @@ export async function verifyWorkspace({ browser, origin, client, channel }) {
       .getByTestId("workspace-preview")
       .getByRole("heading", { name: "After", exact: true })
       .waitFor();
+    if (width === 390) {
+      const back = page.getByRole("button", {
+        name: "返回文件列表",
+        exact: true,
+      });
+      const hit = await back.evaluate((el) => {
+        const r = el.getBoundingClientRect(),
+          top = document.elementFromPoint(
+            r.x + r.width / 2,
+            r.y + r.height / 2,
+          );
+        return {
+          width: r.width,
+          height: r.height,
+          clickable: top === el || el.contains(top),
+          icon: el.querySelector("svg")?.getAttribute("width"),
+        };
+      });
+      assert.deepEqual(hit, {
+        width: 32,
+        height: 32,
+        clickable: true,
+        icon: "18",
+      });
+    }
     await page.getByTestId("workspace-file-view-raw").click();
     await page
       .getByTestId("workspace-preview")

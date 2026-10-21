@@ -1,9 +1,9 @@
 // GENERATED from immutable Raft db5e399 AgentWorkspace and MessageItem declarations.
 // Loom owns rooted reads, cancellation, bounded rendering and external-image suppression.
 import {InlineCode,Separator,Spinner,SegmentedControl,SegmentedControlItem,SegmentedControlLabel} from "raft-ui";
-import type {ReactNode} from "react";
+import type {ReactNode,PointerEventHandler} from "react";
 import Tooltip from "@loom/raft-web-source/Tooltip";
-import {ChevronRight,FolderClosed,FolderOpen,FileText,Eye,EyeOff,RefreshCw} from "lucide-react";
+import {ArrowLeft,ChevronRight,FolderClosed,FolderOpen,FileText,Eye,EyeOff,RefreshCw} from "lucide-react";
 import {useIntl} from "react-intl";
 import ReactMarkdown from "react-markdown";
 import type {Components,Options} from "react-markdown";
@@ -224,6 +224,47 @@ export function TreeNode({
     </button>
   );
 }
+
+export function WorkspaceImage({fileContent}:{fileContent:{path:string;mimeType:string;content:string|null}}){return (<div className="flex h-full min-h-0 items-center justify-center overflow-auto">
+                  <img
+                    src={`data:${fileContent.mimeType};base64,${fileContent.content}`}
+                    alt={fileContent.path}
+                    className={`max-h-full max-w-full rounded-container border border-line-hairline object-contain ${transparentImageBackgroundClass}`}
+                  />
+                </div>);}
+export function WorkspaceFrame({children}:{children:ReactNode}){return (<div data-testid="channel-workspace" className="flex min-h-0 flex-1 flex-col bg-layer-canvas">{children}</div>);}
+export function WorkspacePathBar({children}:{children:ReactNode}){return (<div className="flex items-center gap-2 border-b border-line-seam bg-layer-canvas px-3 py-1.5">{children}</div>);}
+export function WorkspaceSplit({children}:{children:ReactNode}){return (<div className="flex min-h-0 flex-1">{children}</div>);}
+export function WorkspaceTreePane({selectedPath,treeWidth,children}:{selectedPath?:string;treeWidth:number;children:ReactNode}){const compact=false;return (<div
+        className={`${selectedPath ? (compact ? "hidden" : "hidden md:flex") : "flex"} relative ${compact ? "min-w-full" : "min-w-full md:min-w-0"} shrink-0 flex-col ${compact ? "" : "border-r border-line-seam"} bg-layer-canvas`}
+        style={compact ? undefined : { width: treeWidth }}
+      >{children}</div>);}
+export function WorkspaceDetailPane({selectedPath,children}:{selectedPath?:string;children:ReactNode}){const compact=false;return (<div className={`${!selectedPath ? (compact ? "hidden" : "hidden md:flex") : "flex"} min-w-0 flex-1 flex-col`}>{children}</div>);}
+export function WorkspaceResizeHandle({handleResizeStart,handleResizeMove,handleResizeEnd}:{handleResizeStart:PointerEventHandler<HTMLDivElement>;handleResizeMove:PointerEventHandler<HTMLDivElement>;handleResizeEnd:PointerEventHandler<HTMLDivElement>}){return (<div data-testid="workspace-resize"
+          className="hidden md:block absolute right-0 top-0 bottom-0 w-2 -mr-1 z-10 cursor-col-resize touch-none select-none"
+          onPointerDown={handleResizeStart}
+          onPointerMove={handleResizeMove}
+          onPointerUp={handleResizeEnd}
+          onPointerCancel={handleResizeEnd}
+        />);}
+export function WorkspaceFileHeader({path,onBack,actions}:{path:string;onBack:()=>void;actions?:ReactNode}){const compact=false,fileContent={path};return (<div className="flex items-center gap-2 border-b border-line-seam bg-layer-canvas px-4 py-2">
+              <button
+                type="button"
+                aria-label="返回文件列表" onClick={onBack}
+                className={`${compact ? "" : "md:hidden"} -ml-2 ${TREE_ICON_BUTTON_CLASS} text-foreground-muted`}
+              >
+                <ArrowLeft size={18} />
+              </button>
+              {/* min-w-0 wrapper so truncate engages in flex context. Without
+                  it, a long unbreakable path keeps its intrinsic width and
+                  pushes the right-side toggle/buttons past the panel edge.
+                  #proj-uiux task #133. */}
+              <span className="min-w-0 flex-1 truncate font-mono text-mono-code text-foreground">
+                {fileContent.path}
+              </span>
+              {actions}
+            </div>);}
+
 
 export function WorkspaceTreeHeader({viewSelector,showHiddenFiles,handleToggleHiddenFiles,handleRefresh}:{viewSelector:ReactNode;showHiddenFiles:boolean;handleToggleHiddenFiles:(value:boolean)=>void;handleRefresh:()=>void}){const {formatMessage}=useIntl();return (<div className="flex items-center justify-between border-b border-line-seam py-1.5 pr-1.5 pl-3">
           {viewSelector}

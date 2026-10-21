@@ -12,10 +12,31 @@ test("migration inventory covers every navigation destination and only cites exi
   assert.deepEqual(inventory.surfaces.map((s) => s.id).sort(), ids);
   for (const entry of [...inventory.surfaces, ...inventory.crossCutting]) {
     assert.ok(["mixed", "loom-native-composition"].includes(entry.status));
-    assert.ok(entry.remaining.length > 0);
+    assert.ok(entry.retainedBoundaries.length > 0);
+    assert.equal(
+      "remaining" in entry,
+      false,
+      "Permanent Loom owners must not masquerade as unfinished migration tasks",
+    );
     assert.ok(entry.sources.length > 0);
     for (const path of entry.sources)
       assert.ok(existsSync("frontends/raft/" + path), path);
   }
   assert.equal(inventory.wholeSiteDependencyComplete, false);
+});
+
+test("remaining presentation work is enumerated separately from permanent Loom bindings", () => {
+  const inventory = JSON.parse(
+    readFileSync("frontends/raft/loom/dependency-migration.json", "utf8"),
+  );
+  assert.ok(Array.isArray(inventory.openMigrationWork));
+  assert.equal(
+    new Set(inventory.openMigrationWork.map((x) => x.id)).size,
+    inventory.openMigrationWork.length,
+  );
+  for (const item of inventory.openMigrationWork) {
+    assert.ok(item.acceptance && item.sourceBoundary && item.files.length);
+    for (const file of item.files)
+      assert.ok(existsSync("frontends/raft/" + file), file);
+  }
 });

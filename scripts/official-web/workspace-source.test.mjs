@@ -25,3 +25,23 @@ test("workspace presentation is generated from locked source while authority sta
     /OfficialDiffStats.generated/,
   );
 });
+test("workspace shell, split panes and mobile file header come from official source", async () => {
+  const { generateWorkspace } = await import("./generate-workspace.mjs");
+  const generated = generateWorkspace()["OfficialWorkspace.generated.tsx"];
+  for (const name of [
+    "WorkspaceFrame",
+    "WorkspacePathBar",
+    "WorkspaceSplit",
+    "WorkspaceTreePane",
+    "WorkspaceDetailPane",
+    "WorkspaceFileHeader",
+    "WorkspaceResizeHandle",
+  ])
+    assert.ok(generated.includes(`export function ${name}(`), name);
+  const host = read("frontends/raft/loom/ChannelWorkspacePanel.tsx");
+  assert.doesNotMatch(
+    host,
+    /border-line-muted|bg-layer-panel|bg-layer-canvas-muted|<ArrowLeft/,
+  );
+  assert.match(host, /<WorkspaceFileHeader/);
+});

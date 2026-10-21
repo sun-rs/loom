@@ -61,7 +61,8 @@
       "loom/OfficialAvatarSlot.generated.tsx",
       "loom/OfficialPixelAvatar.generated.tsx",
       "loom/OfficialComputerProfile.generated.tsx",
-      "loom/OfficialNavigationLeaves.generated.tsx"
+      "loom/OfficialNavigationLeaves.generated.tsx",
+      "loom/OfficialTopBar.generated.tsx"
     ],
     "foundation": "package.json#dependencies.raft-ui"
   },
@@ -82,9 +83,8 @@
         "loom/DiscoveryNotice.tsx"
       ],
       "adopted": "官方控件、旧页面及Loom查询绑定混合；搜索目标行和常用对象行由锁定官方源码生成，保留菜单焦点ref兼容接线；SearchOverlay原声明生成、官方Modal和searchOverlayAnchor直接依赖，删除内容隐式Vite别名；Loom提供固定overlay结果导航接线；MessageHitRow原声明生成（仅稳定键兼容补丁），searchGrouping纯函数直接依赖官方文件；最近会话/历史/常用对象/消息列分组/分页状态采用MessageSearchPage原JSX区块，TextLink直接依赖；原展示文件仅保留数据/状态/事件接线；输入栏/头部、五类筛选控件、首页/结果空态、结果骨架采用原JSX/声明，目录/输入法/路由仅本地控制器接线；已选筛选使用原生data-has-value；错误区使用官方 Banner warning 原件，保留查询和消息打开失败的真实原因及重试",
-      "remaining": [
-        "结果外壳/响应式路由组合仍为明确的Loom适配；查询、权限、分页、导航状态归Loom，不复制官方业务store",
-        "公开源码与生产资源版本不同，未启用原生宿主搜索分支和不具备后端语义的 incomplete-search"
+      "retainedBoundaries": [
+        "Loom owns query/permissions/bounded pagination and result routing. Native desktop-host search and unsupported incomplete-search remain omitted."
       ]
     },
     {
@@ -116,9 +116,9 @@
         "loom/OfficialAttachmentPreviewSurfaces.generated.tsx"
       ],
       "adopted": "官方消息组件与构建时适配并存；悬浮工具栏/@提及/关注成员及成员行按锁定原件生成，composer输入与按钮组合提取原Composer子树；5处对应Vite改写移除，资料预览显式接入Loom；Timeline整模块原件加显式有界窗口补丁、ThreadPanel只读展示声明加Loom快照/页游标/操作槽生成，移除两处运行时改写及宿主类型强转；MessageItem正文渲染hook及搜索高亮声明按原件生成，Markdown AST token/修复/安全清洗及源位置对齐直接依赖锁定原件，删除旧正文正则预处理；共享MarkdownContent/CodeBlock/CustomProtocolLink/复制控件与AttachmentChip完整模块采用原件，仅重绑定import；MessageItem/MessageInput完整宿主及附件评论/预览外壳现在从锁定原件生成，移除对应Vite变换，旧入口仅桥接",
-      "remaining": [
-        "Channel/DM宿主、文件权限/会话目录、草稿和未知发送状态仍由Loom拥有；不是直接启用Raft状态仓库",
-        "原件生成仍带明确兼容绑定（显示名、时间语义、关注投影、任务/评论、文件工具槽），升级需检查绑定并定向验收"
+      "retainedBoundaries": [
+        "Loom owns channel/private-box/side authority, drafts, unknown-write reconciliation, bounded cursors and file roots.",
+        "Generated official presentation retains explicit identity/time/follower/task/comment bindings; upgrades require focused checks."
       ]
     },
     {
@@ -135,9 +135,9 @@
         "loom/DiscoveryNotice.tsx"
       ],
       "adopted": "raft-ui InboxItem及Loom聚合/跳转接线；空状态原JSX提取，筛选语义绑定Loom；过滤栏原JSX提取（显式批量已读动作槽），ConversationAvatar原声明提取（本地最小身份输入类型）；保留已采用的新版紧凑InboxItem行，不回退旧版卡片；原生标题/计数/全部已读展示由原JSX生成，刷新动作slot和未知计数由Loom提供，失败采用官方Banner",
-      "remaining": [
-        "紧凑InboxItem来自较新的v1.21.26资源结构移植，非公开源码原样依赖；分栏/预览复用聊天宿主，后续随聊天批次迁移",
-        "持久化已读、分页窗口、跳转与未知写入保护仍归Loom，不替换成官方store"
+      "retainedBoundaries": [
+        "Loom owns durable read frontiers, paging, jump anchors and unknown-write protection.",
+        "Compact InboxItem is the adopted v1.21.26 resource port, not byte-exact public-source code; preview reuses migrated chat/thread presentation."
       ]
     },
     {
@@ -155,9 +155,9 @@
         "loom/OfficialTaskSelection.generated.tsx"
       ],
       "adopted": "官方任务组件、提取变换及本地任务状态绑定；TaskModalHead完整非导入声明生成、ShowMoreToggle原文件依赖，删除任务头部隐式Vite属性替换；看板列/分组列表/拖动包装及卡片原声明提取、显式Loom权限写入接线，VirtualizedTaskStack直接依赖，删除两条Vite变换及两处类型豁免；工具栏/页头/IdentityFilterChip/SelectionPopover、创建DialogCard与标题行、MainLayout任务外框/标题栏、属性与历史容器均从锁定原件直接依赖或生成；删除创建弹窗Vite临时改写，保留未知写入核实slot和冻结fieldset",
-      "remaining": [
-        "任务消息正文复用ThreadWorkspace，随聊天/消息列批次迁移；权限、五状态任务语义、批量提交与历史读取是Loom接线",
-        "官方可选“查看消息列”动作尚无本次入口绑定，继续不显示；没有复制官方任务store"
+      "retainedBoundaries": [
+        "Loom owns five task states, permission checks, batch writes and history. Task messages reuse the migrated ThreadWorkspace.",
+        "Optional official view-thread control remains omitted where no route binding is supplied."
       ]
     },
     {
@@ -174,8 +174,8 @@
         "loom/OfficialAvatarSlot.generated.tsx"
       ],
       "adopted": "名称/属性行/时间线原声明提取，Role和实例轨迹共用官方LogItem；Role资料hero和identity布局按AgentDetailPanel原JSX提取，AvatarSlot/像素头像完整模块生成，保留角色/实例语义与默认资料入口",
-      "remaining": [
-        "Role列表/工作区/实例详情为明确的Loom组合；最后清单核对保留场景和来源，不启用上游Agent状态仓库"
+      "retainedBoundaries": [
+        "Role configuration, frozen revisions, aggregate presence, instance lifecycle and activity filters are Loom semantics; official Agent stores are not adopted."
       ]
     },
     {
@@ -187,8 +187,8 @@
         "loom/OfficialComputerProfile.generated.tsx"
       ],
       "adopted": "官方Header、KeyValueRow、完整AvatarListRow直接依赖；Loom保留计算机与实例身份、运行时数据和导航绑定；恢复官方仅手机设置入口，手机列表采用官方ListRow/IconTile组合；计算机资料hero/原生IconTile/状态徽标以及运行时属性容器均从MachineDetailPanel提取，真实状态标签与CLI清单由Loom注入",
-      "remaining": [
-        "资料编辑和实例关联为Loom数据接线；列表外框与本地新增控件仍需最后来源分类，不能宣称整页无修改"
+      "retainedBoundaries": [
+        "Loom owns local host discovery/state, runtime inventory, revision-safe edits and instance associations. No cloud Computer control is enabled."
       ]
     },
     {
@@ -197,8 +197,8 @@
       "status": "loom-native-composition",
       "sources": ["loom/MemoryPage.tsx"],
       "adopted": "Loom全局记忆语义，复用官方基础及关闭/标题组件",
-      "remaining": [
-        "无可直接替换的官方等价全局记忆页；保留本地语义，继续收敛展示原语并记录例外"
+      "retainedBoundaries": [
+        "Channel-scoped memory browsing/editing with revision and provenance checks is Loom-only; user approved activity-style cards and native primitives, not an upstream global memory page."
       ]
     },
     {
@@ -219,8 +219,9 @@
         "loom/OfficialComputerProfile.generated.tsx"
       ],
       "adopted": "外观声明和日期/时间JSX自动提取；主题选择器直接依赖；其他Tab仍混合；更新日志内容区块及分类规则自动提取，旧构建切片已删除；账户资料/通知/关于/系统频道采用锁定源码展示切片与显式兼容补丁，删除四条运行时改写；归档及恢复按钮/设置侧栏/表单已提取，panelBounds直接依赖官方；设置Panel/滚动正文按SettingsPanel原JSX生成，恢复canvas表面；AvatarSlot和像素资源进入锁定依赖",
-      "remaining": [
-        "设置路由/移动端主从及草稿仍归Loom，最后核对外观预览与其余共享展示闭包；用量/执行设置为无等价上游业务的本地组合"
+      "retainedBoundaries": [
+        "Loom owns local settings routing, drafts and device preferences; usage/runtime management has no equivalent Raft cloud business owner.",
+        "Unsupported cloud account/billing/managed MCP controls remain omitted."
       ]
     }
   ],
@@ -236,8 +237,9 @@
         "packages/web/src/components/ui/PanelResizeHandle.tsx",
         "packages/web/src/hooks/useResizablePanel.ts"
       ],
-      "remaining": [
-        "分栏拖动手柄和宽度hook已直接依赖完整官方原件；顶栏/导航/多列宿主保持Loom路由和响应式组合，最后逐项分类来源与批准例外"
+      "retainedBoundaries": [
+        "Loom owns route/history/responsive composition and single-workspace identity; official splitters and width hooks are direct dependencies.",
+        "Topbar frame/regions/search come from AppTopBar source; v1.21.26 adaptive width remains a documented resource port."
       ]
     },
     {
@@ -255,9 +257,9 @@
         "loom/OfficialAttachmentPreviewSurfaces.generated.tsx",
         "loom/OfficialAttachmentCommentsPanel.generated.tsx"
       ],
-      "remaining": [
-        "文件树/原文与Markdown/树头部控件/Diff统计及附件预览评论已来自锁定原件；ChannelWorkspacePanel外框和Loom特有Git切换/根目录选择归入下一批页面组合核对",
-        "根目录授权、按需读取、长文件限额、图片外链抑制和真实错误仍由Loom拥有；工作区diff为有界文本显示，不宣称官方结构化附件diff"
+      "retainedBoundaries": [
+        "Loom owns rooted reads/cancellation/bounds and HTML/PDF permissions; channel roots and Git view selectors are thin native primitive compositions.",
+        "Workspace frame/split panes/file header/image preview now come from AgentWorkspace; local Git diff stays bounded text, not official structured attachment diff."
       ]
     },
     {
@@ -265,8 +267,8 @@
       "name": "Fork／Side／实例生命周期",
       "status": "mixed",
       "sources": ["loom/SideWorkspace.tsx", "loom/InstanceInspector.tsx"],
-      "remaining": [
-        "Loom专属交互继续使用官方场景组件，不引入Raft执行状态所有者"
+      "retainedBoundaries": [
+        "Fork/Side authority, lifecycle and read-only boundaries have no matching Raft business owner; use official scenario components without importing execution state."
       ]
     }
   ],
@@ -287,15 +289,56 @@
     "Loom business state, access control and lifecycle remain local owners"
   ],
   "remainingBatchPlan": {
-    "estimate": "Final classification remains; dependency closure repair completed, no fixed turn-count guarantee",
+    "estimate": "Three explicit review groups remain; permanent Loom bindings are excluded, no fixed turn-count guarantee",
     "fixedSource": "db5e399 / raft-ui 0.10.5; no automatic chase of newer releases",
     "batches": [
       {
-        "scope": "remaining shell/preview dependency closure classification, source drift/upgrade rehearsal and focused cross-page deployment",
-        "rounds": "1–2",
-        "exit": "Each retained local presentation explicitly sourced or justified; generation/import closure and source upgrade dry-run verified; no unsupported claim of zero local UI or latest upstream parity"
+        "scope": "identity-master-detail",
+        "exit": "Audit every retained list/header/tab/frame composition against the pinned source chain; generate equivalent retained presentation or record an explicit Loom-only composition. Preserve default profile, responsive navigation and real instance state."
+      },
+      {
+        "scope": "resource-only-shell",
+        "exit": "Identify exact resource/older-source provenance and test boundaries for remaining workspace identity, adaptive width, compact activity row and live status bar; do not claim byte-exact current source where unavailable."
+      },
+      {
+        "scope": "local-exclusive-compositions",
+        "exit": "Final retained-control audit against the scenario registry; distinguish approved local composition from unexplained per-page sizing or bypassed primitives. No new backend capabilities."
       }
     ],
     "completionBoundary": "Immutable upstream presentation plus explicit Loom data/authority composition and approved exceptions; not zero local code or arbitrary future package replacement without acceptance"
-  }
+  },
+  "openMigrationWork": [
+    {
+      "id": "identity-master-detail",
+      "files": [
+        "loom/RoleWorkspace.tsx",
+        "loom/ComputersPage.tsx",
+        "loom/ChatSidebarFrame.tsx"
+      ],
+      "sourceBoundary": "MemberAgentRow / MachineDetailPanel / Sidebar db5e399 plus retained v1.21.26 resource ports",
+      "acceptance": "Audit every retained list/header/tab/frame composition against the pinned source chain; generate equivalent retained presentation or record an explicit Loom-only composition. Preserve default profile, responsive navigation and real instance state."
+    },
+    {
+      "id": "resource-only-shell",
+      "files": [
+        "loom/TopBar.tsx",
+        "loom/useTopbarSearchWidth.ts",
+        "loom/ActivityMessageRow.tsx",
+        "loom/AppearanceRuntime.tsx"
+      ],
+      "sourceBoundary": "Current source does not supply every adopted v1.21.26 behavior; LiveAgentActivityBar is a retained older compatibility port",
+      "acceptance": "Identify exact resource/older-source provenance and test boundaries for remaining workspace identity, adaptive width, compact activity row and live status bar; do not claim byte-exact current source where unavailable."
+    },
+    {
+      "id": "local-exclusive-compositions",
+      "files": [
+        "loom/MemoryPage.tsx",
+        "loom/SideWorkspace.tsx",
+        "loom/InstanceInspector.tsx",
+        "loom/UsageSummary.tsx"
+      ],
+      "sourceBoundary": "Loom-only semantics, official primitives/scenario components",
+      "acceptance": "Final retained-control audit against the scenario registry; distinguish approved local composition from unexplained per-page sizing or bypassed primitives. No new backend capabilities."
+    }
+  ]
 }

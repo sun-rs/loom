@@ -195,3 +195,11 @@ IconTile替换本地51px方块。Role配置/实例关系、CLI状态、设备设
 全站完成标志仍为 false。剩余是本地页面组合及其他兼容展示模块的最终来源分类；本批消除了已证实的多余依赖，不将仍保留的本地路由、权限和 Loom 专属业务称为官方原件。
 
 浏览器复验同时修复动态页手机返回按钮的无障碍名称漏接：通过官方 `mobileBackProps` 传入“返回聊天列表”，不修改原组件尺寸。导航测试跟随官方筛选名称“筛选收件箱”，继续验证真实入口、键盘、草稿和历史导航。
+
+### 2026-10-22：顶栏、工作区组合与职责分类
+
+`OfficialTopBar.generated.tsx` 从锁定 `AppTopBar.tsx` 的完整返回子树生成，保留原外框、左右区域、edgeBalance 和 SearchTrigger；工作区身份和通知改为 Loom 插槽，移除组织切换/WorkspaceStrip 业务。已采用的 v1.21.26 自适应宽度和本地快捷键标签通过显式参数传入。单工作区非交互名称仍为有来源的本地组合，不宣称整张顶栏无差异。
+
+`OfficialWorkspace.generated.tsx` 扩展到 AgentWorkspace 的外框、路径栏、分栏、文件树容器、拖动手柄、正文容器、文件标题和图片预览原子树。恢复 canvas/seam 配色、原生文件名排版与手机 32px 返回按钮/18px 图标；原图片容器和透明背景也进入依赖。Loom 保留根目录选择/Git选择槽、按需读取、长内容上限、HTML/PDF安全策略；Markdown模式切换保持在现有正文工具位置，未复制官方远程文件服务。
+
+迁移清单现在区分 `retainedBoundaries`（永久本地职责）和 `openMigrationWork`（实际待收口展示组），测试要求二者分离。剩余三组为：身份主从列表、资源/旧版兼容展示、Loom专属组合。计数表示审查分组，不表示三个控件，也不是完成百分比或承诺三轮。`wholeSiteDependencyComplete` 仍为 false。

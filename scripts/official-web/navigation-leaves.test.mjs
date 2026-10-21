@@ -47,3 +47,25 @@ test("upgrade rehearsal exposes upstream presentation changes in the generated d
   assert.notEqual(changed, generateNavigationLeaves());
   assert.match(changed, /size-12 \[@media/);
 });
+test("top bar uses generated upstream composition with explicit Loom slots", () => {
+  const host = read("frontends/raft/loom/TopBar.tsx");
+  assert.match(host, /OfficialTopBar.generated/);
+  assert.doesNotMatch(
+    host,
+    /relative flex h-12|SearchTriggerLabel|marginRight:/,
+  );
+});
+test("topbar generated body is reproducible and has no cloud state imports", async () => {
+  const { generateTopbar } = await import("./generate-topbar.mjs");
+  const source = generateTopbar();
+  assert.equal(
+    read("frontends/raft/loom/OfficialTopBar.generated.tsx"),
+    source,
+  );
+  assert.doesNotMatch(
+    source,
+    /from ["'][^"']*(?:store\/|ServerSwitcher|WorkspaceStrip)/,
+  );
+  assert.match(source, /style=\{edges.leading\}/);
+  assert.match(source, /style=\{edges.trailing\}/);
+});
