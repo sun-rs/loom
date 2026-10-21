@@ -40,5 +40,103 @@
     "19 historical source hash entries reconciled against already committed Git revisions, no blind reclassification as v1.21.26 source.",
     "Browser tests wait for save receipt/editor dismissal before reload; isCurrent must become false while frozen instance revision IDs remain identical."
   ],
-  "deployment": "pending"
+  "deployment": {
+    "productCommit": "582676c3",
+    "verified": true,
+    "databasesBackedUp": 2,
+    "filesBackedUp": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true,
+    "formal": {
+      "results": [
+        {
+          "width": 1440,
+          "name": "appearance",
+          "body": "14px",
+          "control": "32px",
+          "noOverflow": true
+        },
+        {
+          "width": 1440,
+          "name": "region",
+          "body": "14px",
+          "control": "32px",
+          "noOverflow": true
+        },
+        {
+          "width": 1440,
+          "name": "agents",
+          "body": "14px",
+          "control": "32px",
+          "noOverflow": true
+        },
+        {
+          "width": 1440,
+          "name": "computers",
+          "body": "14px",
+          "control": "32px",
+          "noOverflow": true
+        },
+        {
+          "width": 1440,
+          "name": "activity",
+          "body": "14px",
+          "control": "32px",
+          "noOverflow": true
+        },
+        {
+          "width": 1440,
+          "name": "tasks",
+          "body": "14px",
+          "control": "32px",
+          "noOverflow": true
+        },
+        {
+          "width": 390,
+          "name": "appearance",
+          "body": "16px",
+          "control": "44px",
+          "noOverflow": true
+        },
+        {
+          "width": 390,
+          "name": "region",
+          "body": "16px",
+          "control": "44px",
+          "noOverflow": true
+        },
+        {
+          "width": 390,
+          "name": "agents",
+          "body": "16px",
+          "control": "44px",
+          "noOverflow": true
+        },
+        {
+          "width": 390,
+          "name": "computers",
+          "body": "16px",
+          "control": "44px",
+          "noOverflow": true
+        },
+        {
+          "width": 390,
+          "name": "activity",
+          "body": "16px",
+          "control": "44px",
+          "noOverflow": true
+        },
+        {
+          "width": 390,
+          "name": "tasks",
+          "body": "16px",
+          "control": "44px",
+          "noOverflow": true
+        }
+      ],
+      "readOnly": true,
+      "physicalDevice": false
+    },
+    "archive": "/Users/sun/.loom/reviews/2026-10-21-ui-126"
+  }
 }
