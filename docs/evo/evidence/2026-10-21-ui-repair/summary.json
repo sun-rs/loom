@@ -17,7 +17,8 @@
       "WebKit1440/900/390 Activity rows, right-click/Escape,900px preview, done without navigation, phone pointer hit",
       "Chromium1440/390 three message font tiers across channel/private/thread/task;24cases semantic timestamp/lineheight/spacing/avatar metrics"
     ],
-    "paidModels": false
+    "paidModels": false,
+    "formalTooltip": "Visible inert native tooltip verified via data-slot (excluded from accessibility role query by upstream design)"
   },
   "limits": [
     "Not full-site latest parity or physical mobile acceptance",
@@ -26,8 +27,55 @@
     "Loom-only pages still require explicit upstream composition mapping; not yet a wholesale vendor/adapter restructuring"
   ],
   "deployment": {
-    "verified": false,
-    "pending": "safe restart and real-page verification"
+    "verified": true,
+    "productCommit": "53ededd6",
+    "databasesBackedUp": 2,
+    "filesBackedUp": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true,
+    "formal": {
+      "readOnly": true,
+      "physicalDevice": false,
+      "results": [
+        {
+          "width": 1440,
+          "message": {
+            "gap": "6px",
+            "time": "TIME",
+            "datetime": "2026-10-13T05:21:37.595Z",
+            "leading": "16px"
+          },
+          "activityRowPresent": true,
+          "noOverflow": true
+        },
+        {
+          "width": 900,
+          "message": {
+            "gap": "6px",
+            "time": "TIME",
+            "datetime": "2026-10-13T05:21:37.595Z",
+            "leading": "16px"
+          },
+          "activityRowPresent": true,
+          "noOverflow": true
+        },
+        {
+          "width": 390,
+          "message": {
+            "gap": "6px",
+            "time": "TIME",
+            "datetime": "2026-10-13T05:21:37.595Z",
+            "leading": "16px"
+          },
+          "activityRowPresent": true,
+          "noOverflow": true
+        }
+      ]
+    },
+    "screenshotsInspected": [
+      "activity390",
+      "message1440"
+    ]
   },
   "sourceEvidence": "../2026-10-21-version-diff/manifest.json"
 }
