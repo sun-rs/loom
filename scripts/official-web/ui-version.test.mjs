@@ -16,6 +16,9 @@ test("product UI alias binds JS and CSS to the same pinned package without inter
     const matches = aliases.filter((a) => a.find.test(source));
     assert.equal(matches.length, 1);
     assert.equal(matches[0].replacement, resolveOfficialUi(source));
+    const canonical = source.replace(/^raft-ui/, "@botiverse/raft-ui");
+    assert.equal(resolveOfficialUi(canonical), resolveOfficialUi(source));
+    assert.equal(aliases.filter((a) => a.find.test(canonical)).length, 1);
     assert.match(
       matches[0].replacement,
       /frontends\/raft\/node_modules\/raft-ui\/dist\//,
@@ -31,5 +34,5 @@ test("product UI alias binds JS and CSS to the same pinned package without inter
   );
   const pin = JSON.parse(readFileSync("frontends/raft/package.json", "utf8"))
     .dependencies["raft-ui"];
-  assert.equal(installed.version, pin);
+  assert.equal(`${installed.name}@${installed.version}`, pin.replace(/^npm:/, ""));
 });

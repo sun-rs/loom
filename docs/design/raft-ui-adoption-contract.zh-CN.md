@@ -11,6 +11,12 @@
 - 官方页面版本由 frontends/raft/adoption.json 记录；基础组件包版本由实际 raft-ui 依赖与锁文件管理。升级其中之一都应检查对应集成，不假设两者版本一致。
 - 字体、尺寸、颜色、边框、阴影与状态规则只维护在官方 recipe/token。这里不复制尺寸常量，不新增万能 LoomButton。
 
+## 官方源码依赖边界（2026-10-21）
+
+首批 Tooltip、CloseButton、EmptyState、SectionHeader、SectionEyebrow、PanelHeader 已恢复为 `@loom/raft-web-source` 私有本地源码依赖，保留官方原路径和逐字节内容。它是我们封装的授权源码分发包，不是官方发布的 npm 包，也不代表整个 Web 已完成依赖化。版本、哈希和升级步骤见 [依赖说明](../../frontends/raft/upstream/raft-web-source/README.md)。
+
+禁止修改依赖内的官方原文件。旧路径仅提供兼容转发；Loom 数据、事件和已批准手机布局例外留在外层。两种 raft-ui 导入名绑定同一运行时。比较工具直接比较此依赖与新官方源码，同时将历史页面移植单独列出。升级不再逐页手抄这些组件，但 API、组合、响应式或焦点规则变化仍需定向验证，不承诺免验收。
+
 ## 每次新增或修改控件的顺序
 
 1. 确认语义：详情关闭、对话框关闭、筛选、表单、消息操作、导航、危险确认等，不能仅按图标形状分类。

@@ -1,0 +1,26 @@
+{
+  "name": "@loom/raft-web-source",
+  "version": "0.0.0-db5e399",
+  "private": true,
+  "type": "module",
+  "license": "FSL-1.1-ALv2",
+  "exports": {
+    "./Tooltip": "./packages/web/src/components/ui/Tooltip.tsx",
+    "./CloseButton": "./packages/web/src/components/ui/CloseButton.tsx",
+    "./EmptyState": "./packages/web/src/components/ui/EmptyState.tsx",
+    "./SectionHeader": "./packages/web/src/components/ui/SectionHeader.tsx",
+    "./SectionEyebrow": "./packages/web/src/components/ui/SectionEyebrow.tsx",
+    "./PanelHeader": "./packages/web/src/components/ui/PanelHeader.tsx"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-intl": "^7.0.0",
+    "lucide-react": "*",
+    "@botiverse/raft-ui": "0.10.5"
+  },
+  "peerDependenciesMeta": {
+    "@botiverse/raft-ui": {
+      "optional": true
+    }
+  }
+}

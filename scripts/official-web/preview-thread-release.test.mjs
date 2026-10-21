@@ -27,7 +27,7 @@ test("preview header adopts native title and icon-lg ghost actions", () => {
   assert.doesNotMatch(h, /size="icon-sm"|font-display|!min-h/);
 });
 test("shared close action delegates colors to native recipe", () => {
-  const s = read("packages/web/src/components/ui/CloseButton.tsx");
+  const s = read("upstream/raft-web-source/packages/web/src/components/ui/CloseButton.tsx");
   assert.match(s, /className=\{className\}/);
   assert.doesNotMatch(s, /hover:bg|text-foreground/);
 });

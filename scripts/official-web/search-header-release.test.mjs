@@ -15,7 +15,7 @@ test("search field retains native leading addon, clear control and shared full-p
 });
 test("shared header uses native status slot and back icon size", () => {
   const s = readFileSync(
-    "frontends/raft/packages/web/src/components/ui/PanelHeader.tsx",
+    "frontends/raft/upstream/raft-web-source/packages/web/src/components/ui/PanelHeader.tsx",
     "utf8",
   );
   assert.match(s, /<PanelStatus>{titleSuffix}<\/PanelStatus>/);

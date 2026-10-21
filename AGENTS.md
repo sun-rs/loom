@@ -389,6 +389,15 @@ package version for the current official release. This slice is anchored to
 Raft Web v1.21.26. Prefer its exported primitives over local compatibility
 recipes; keep existing owner-approved compact mobile exceptions explicit.
 
+The selected official Web source dependency at
+`frontends/raft/upstream/raft-web-source` is immutable upstream code, pinned by
+`source-lock.json`. Do not edit its original files; keep Loom compatibility and
+approved mobile exceptions in outer adapters. This selected closure is not the
+whole official application or an upstream-published npm package. Compare it
+directly with the next official checkout using `scripts/official-web/upstream-diff.mjs`,
+then validate affected contracts. Follow its README for upgrades and keep the
+canonical and legacy raft-ui imports bound to one runtime.
+
 ### Mandatory Raft UI layering (owner approved 2026-10-19)
 
 For evo, adopt the official Raft UI rules as the implementation contract, not

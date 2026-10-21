@@ -266,5 +266,18 @@
       "implementation": "frontends/raft/loom/ui-action-props.ts",
       "adoption": "local parameter binding; native recipe, not byte-exact copied page"
     }
+  },
+  "sourceDependency": {
+    "manifest": "frontends/raft/upstream/raft-web-source/source-lock.json",
+    "guard": "scripts/official-web/upstream-package.test.mjs",
+    "components": [
+      "Tooltip",
+      "CloseButton",
+      "EmptyState",
+      "SectionHeader",
+      "SectionEyebrow",
+      "PanelHeader"
+    ],
+    "rule": "Byte-exact source; no edits in upstream snapshot. Compatibility entry points only forward props; PanelHeader retains approved mobile placement via data attributes and mobile.css. Retired uppercase prop is discarded by SectionEyebrow adapter. Both raft-ui import names resolve to one runtime."
   }
 }

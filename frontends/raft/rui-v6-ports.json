@@ -115,7 +115,9 @@
     },
     "packages/web/src/components/ui/SectionHeader.tsx": {
       "upstreamSha256": "a8daaa15abf158e17d3f79883448097d5ec0733e4ba4b7fdad941fd74a9c4ad3",
-      "portedSha256": "96b5a58ab98140558c990e78f9f32d2c077c9dfbd5153db8b79ba94a04106784"
+      "portedSha256": "72ff0a4d10b8f04a1902b2264bc0a06ac92982fed6dc0bb8074ed2c39e074da7",
+      "adoption": "Compatibility entry into byte-exact @loom/raft-web-source; presentation owned by upstream dependency. See upstream/raft-web-source/source-lock.json.",
+      "sourceRelease": "v1.21.23-source.1 / db5e399f017d584e49597e3a28757645d6807893"
     },
     "packages/web/src/components/ui/MenuItem.tsx": {
       "upstreamSha256": "8fa3cae7100a4455a0dd2e37cac473c128135ad5bcfdd57ad4e48e10091a5ab7",
@@ -141,9 +143,10 @@
     },
     "packages/web/src/components/ui/CloseButton.tsx": {
       "upstreamSha256": "34f7e49073c8992a7ad3bd7519dbf891b029065a6c31387d687ee3074c8245c2",
-      "portedSha256": "96b3dfeab67c75edc7bd9ec2cb5c2bd1cfa35193f1902dbdb694362f4c32789d",
+      "portedSha256": "ac1051b65a190c0d7002216aba0cfc33e7f42da304f8f365d1e7d4b961e4791e",
       "localRevision": "e9d5a2637ee5bcec202c2cbb73213899815fcb7c",
-      "adoption": "Historical already-committed compatibility port; reconciled stale hash on 2026-10-21. See page-adoption.json and exact cited Git revision, not a v1.21.26 source change."
+      "adoption": "Compatibility entry into byte-exact @loom/raft-web-source; presentation owned by upstream dependency. See upstream/raft-web-source/source-lock.json.",
+      "sourceRelease": "v1.21.23-source.1 / db5e399f017d584e49597e3a28757645d6807893"
     },
     "packages/web/src/components/ui/OverflowSheet.tsx": {
       "upstreamSha256": "2419949f6c03d1adac9dd52c096f65065e1b48540c2ca4a59579819ba8e0d27c",
@@ -914,11 +917,15 @@
     },
     "packages/web/src/components/ui/SectionEyebrow.tsx": {
       "upstreamSha256": "9b02e2b953b3e8e20a67a3e1721d912c84652db2bf3e9f8bc242c691dffed254",
-      "portedSha256": "922cbaa34efd73a0b8696b999ff370a8dabdb2f1bb432e1c9738ad0b1ebbf283"
+      "portedSha256": "1e34ccb364245fd2e4aaf28061d33f037863318967c48d8471633b7a5021a772",
+      "adoption": "Compatibility entry into byte-exact @loom/raft-web-source; presentation owned by upstream dependency. See upstream/raft-web-source/source-lock.json.",
+      "sourceRelease": "v1.21.23-source.1 / db5e399f017d584e49597e3a28757645d6807893"
     },
     "packages/web/src/components/ui/PanelHeader.tsx": {
       "upstreamSha256": "cd350d605e123726e63aaaea69c958f14209a811d736d0c66b4923ad6ff61c3e",
-      "portedSha256": "62d1f6851a211521734ac718fbe52e9bb891cc2eed2f453c6f1c8d701b5c0992"
+      "portedSha256": "dfb289cec8b65128ec2c0cd6690da7b7e23f471e433ea54e5a6128eff2c63dbd",
+      "adoption": "Compatibility entry into byte-exact @loom/raft-web-source; presentation owned by upstream dependency. See upstream/raft-web-source/source-lock.json.",
+      "sourceRelease": "v1.21.23-source.1 / db5e399f017d584e49597e3a28757645d6807893"
     },
     "packages/web/src/store/appearanceStore.ts": {
       "upstreamSha256": "57259eeb7197862e84cf10cc2125ef19cd40c277f053b30ab01d450c52278d41",
@@ -943,6 +950,18 @@
       "portedSha256": "877906efd24c07abfce60ba0b0ee4d7ad6aa8a01e791c6d047412de9c1c6c5c0",
       "localRevision": "d82656ea9b722a93ca57352c1a6db34ba090c925",
       "adoption": "Historical already-committed compatibility port; reconciled stale hash on 2026-10-21. See page-adoption.json and exact cited Git revision, not a v1.21.26 source change."
+    },
+    "packages/web/src/components/ui/Tooltip.tsx": {
+      "upstreamSha256": "91f5eebadaa91959534aaa62a9a06ea2d9054c3fead055af2a68c8fa86dfb572",
+      "portedSha256": "c93997cb8549cb2ca5b064935f32fc648c8f7550d5ff85c91be757363c29692d",
+      "adoption": "Compatibility entry into byte-exact @loom/raft-web-source; presentation owned by upstream dependency. See upstream/raft-web-source/source-lock.json.",
+      "sourceRelease": "v1.21.23-source.1 / db5e399f017d584e49597e3a28757645d6807893"
+    },
+    "packages/web/src/components/ui/EmptyState.tsx": {
+      "upstreamSha256": "baa1dd79052349925373e6de2e9f57fecf8b8bad37ba67270efdb1fecf093560",
+      "portedSha256": "7ddcfbee77e47e38fc9d2b80fcab6618a77a8b89e8d153040cf168f2c11c849a",
+      "adoption": "Compatibility entry into byte-exact @loom/raft-web-source; presentation owned by upstream dependency. See upstream/raft-web-source/source-lock.json.",
+      "sourceRelease": "v1.21.23-source.1 / db5e399f017d584e49597e3a28757645d6807893"
     }
   }
 }

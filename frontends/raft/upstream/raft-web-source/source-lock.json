@@ -1,0 +1,17 @@
+{
+  "repository": "https://github.com/botiverse/raft-source",
+  "revision": "db5e399f017d584e49597e3a28757645d6807893",
+  "release": "v1.21.23-source.1",
+  "license": "FSL-1.1-ALv2; owner-authorized reuse",
+  "kind": "byte-exact selected upstream dependency closure, not an official published npm package or a full Web replacement",
+  "files": {
+    "LICENSE": "7b0afda469123fdf2758d16941aa1a5a216e73ba5bc241165a36cac49c20b1b5",
+    "packages/web/src/embed.ts": "e3764dac3d9a9467379e230a1a455c86810687b130f79cbd930842a769ec3ea5",
+    "packages/web/src/components/ui/Tooltip.tsx": "b8aa62bf7423179cafa0c15fb4000135f98d72642bfdb102c3a5dcacb3387f19",
+    "packages/web/src/components/ui/CloseButton.tsx": "54bd3d2e6a8567ef6432f1ca9d4b6e96baf5ee72768aa652013bbcd46b96d5f5",
+    "packages/web/src/components/ui/EmptyState.tsx": "20a571951fe832d8c87be0e45bb321b2868a0e4b8cc5328feea7239f99d81706",
+    "packages/web/src/components/ui/SectionHeader.tsx": "ec4795964fb21f6b67b385b8ca40e726d1a04284b4259e8762b544b9a2ce5b03",
+    "packages/web/src/components/ui/SectionEyebrow.tsx": "842e6ec0e8cfcd3948d384ef8a9cde6fd2b41be4db8dfd8ccd0321c12c4555b0",
+    "packages/web/src/components/ui/PanelHeader.tsx": "180445abf8be7036c4d31cc410435129cd833f6d7ddbf246c7ba7d86ce1c0f1b"
+  }
+}

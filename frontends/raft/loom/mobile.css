@@ -385,3 +385,17 @@
     padding-bottom: calc(116px + env(safe-area-inset-bottom, 0px));
   }
 }
+
+/* Approved compact header exception, isolated from immutable upstream source.
+ * Same four-column placement as the former inline adapter; source owns all styling. */
+@media (max-width: 767px) {
+  [data-loom-header-back="true"] > [data-slot="panel-action"] {
+    grid-column-start: 1;
+    grid-row-start: 1;
+  }
+  [data-loom-header-identity="true"][data-loom-header-back="false"] > [data-slot="panel-header-icon"] { grid-column-start: 1; }
+  [data-loom-header-identity="true"][data-loom-header-back="true"] > [data-slot="panel-header-content"] { grid-column: 3; }
+  [data-loom-header-identity="true"][data-loom-header-back="false"] > [data-slot="panel-header-content"],
+  [data-loom-header-identity="false"][data-loom-header-back="true"] > [data-slot="panel-header-content"] { grid-column: 2 / span 2; }
+  [data-loom-header-identity="false"][data-loom-header-back="false"] > [data-slot="panel-header-content"] { grid-column: span 3; }
+}

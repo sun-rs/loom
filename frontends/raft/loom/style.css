@@ -2,3 +2,5 @@
 @import "./mobile.css";
 @source "./";
 @source "../node_modules/raft-ui/dist";
+
+@source "../upstream/raft-web-source/packages/web/src";

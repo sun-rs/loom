@@ -17,6 +17,17 @@ function hash(path) {
     ? createHash("sha256").update(readFileSync(path)).digest("hex")
     : null;
 }
+export function inventoryDependency(localRoot, upstreamRoot) {
+  const lock = JSON.parse(readFileSync(resolve(localRoot, "source-lock.json"), "utf8"));
+  return {
+    baseRevision: lock.revision,
+    rows: Object.entries(lock.files).map(([file, base]) => {
+      const local = hash(resolve(localRoot, file)), upstream = hash(resolve(upstreamRoot, file));
+      return { file, status: classify(base, local, upstream), base, local, upstream,
+        unexpectedLocalDrift: local !== base };
+    }),
+  };
+}
 export function inventory(localRoot, upstreamRoot) {
   const adoption = JSON.parse(
     readFileSync(resolve(localRoot, "adoption.json"), "utf8"),
@@ -39,6 +50,8 @@ export function inventory(localRoot, upstreamRoot) {
   });
   return {
     baseRevision: adoption.revision,
+    sourceDependency: existsSync(resolve(localRoot, "upstream/raft-web-source/source-lock.json"))
+      ? inventoryDependency(resolve(localRoot, "upstream/raft-web-source"), upstreamRoot) : null,
     summary: rows.reduce((out, row) => {
       out[row.status] = (out[row.status] ?? 0) + 1;
       return out;

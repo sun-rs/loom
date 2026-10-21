@@ -1,21 +1,3 @@
-import { X } from "lucide-react";
-import { Button } from "raft-ui";
-import type { ButtonProps } from "raft-ui";
-import { useIntl } from "react-intl";
-
-/** Dismissal is a quiet icon action; the primary action owns the filled button. */
-export default function CloseButton({ children, className = "", ...props }: ButtonProps) {
-  const { formatMessage } = useIntl();
-  return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="icon-sm"
-      aria-label={formatMessage({ id: "common.close" })}
-      {...props}
-      className={className}
-    >
-      {children ?? <X size={16} />}
-    </Button>
-  );
-}
+// Compatibility entry; presentation is owned by the exact upstream source dependency.
+export { default } from "@loom/raft-web-source/CloseButton";
+export * from "@loom/raft-web-source/CloseButton";

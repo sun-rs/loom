@@ -6,7 +6,8 @@
     "paths": {
       "raft-ui": ["../node_modules/raft-ui/dist/index.d.mts"],
       "raft-ui/cn": ["../node_modules/raft-ui/dist/cn.d.mts"],
-      "raft-ui/wip": ["../node_modules/raft-ui/dist/wip.d.mts"]
+      "raft-ui/wip": ["../node_modules/raft-ui/dist/wip.d.mts"],
+      "@botiverse/raft-ui": ["../node_modules/raft-ui/dist/index.d.mts"]
     }
   }
 }
