@@ -3,7 +3,6 @@ import type { RahClient } from "@rah-os/client-sdk";
 import {
   Button,
   Spinner,
-  Badge,
   Select,
   SelectTrigger,
   SelectValue,
@@ -16,83 +15,7 @@ import {
   PickerTriggerButton,
 } from "raft-ui";
 import { loadRoleActivity, type ActivitySource } from "./role-activity.ts";
-import {
-  LogItem,
-  LOG_TITLE_CLASS,
-  LOG_DETAIL_CLASS,
-} from "./OfficialActivity.generated";
-import { useTimeFormatter } from "../packages/web/src/hooks/useTimeFormatter";
-function ActivityRow({
-  row,
-}: {
-  row: Awaited<ReturnType<typeof loadRoleActivity>>["rows"][number];
-}) {
-  const [expanded, setExpanded] = useState(false);
-  const { formatShortDateTime } = useTimeFormatter();
-  const e = row.record.entry;
-  const title =
-    e.kind === "tool_start"
-      ? e.toolName
-      : e.kind === "thinking"
-        ? "思考"
-        : e.kind === "text"
-          ? "输出"
-          : e.kind === "status"
-            ? (e.detailKind ?? e.activity)
-            : e.kind === "compaction_started"
-              ? "上下文压缩开始"
-              : e.kind === "compaction_finished"
-                ? "上下文压缩结束"
-                : "title" in e
-                  ? e.title
-                  : e.kind;
-  const text =
-    e.kind === "tool_start"
-      ? (e.toolInput ?? "")
-      : e.kind === "status"
-        ? (e.detail ?? "")
-        : "text" in e
-          ? e.text
-          : "";
-  return (
-    <LogItem
-      presence={
-        e.kind === "thinking" || e.kind === "tool_start"
-          ? "busy"
-          : e.kind === "text"
-            ? "online"
-            : "offline"
-      }
-      timestamp={Date.parse(row.record.observedAt)}
-      formatTimestamp={(t) => formatShortDateTime(new Date(t).toISOString())}
-    >
-      <div data-testid="role-activity-row">
-        <div className="text-footnote font-semibold">{row.source.name}</div>
-        <button
-          type="button"
-          className={LOG_TITLE_CLASS}
-          aria-expanded={text.length > 200 ? expanded : undefined}
-          onClick={() => setExpanded((v) => !v)}
-        >
-          {title}
-        </button>
-        {e.subagent && (
-          <Badge appearance="outline">
-            子代理
-            {e.subagent.subagentType ? ` · ${e.subagent.subagentType}` : ""}
-          </Badge>
-        )}
-        {text && (
-          <p
-            className={`${LOG_DETAIL_CLASS} whitespace-pre-wrap ${text.length > 200 && !expanded ? "line-clamp-2" : ""}`}
-          >
-            {text}
-          </p>
-        )}
-      </div>
-    </LogItem>
-  );
-}
+import TrajectoryRow from "./TrajectoryRow.tsx";
 export default function RoleActivity({
   client,
   sources,
@@ -197,9 +120,10 @@ export default function RoleActivity({
           )}
           <ul className="px-5 py-3">
             {data.rows.map((row) => (
-              <ActivityRow
+              <TrajectoryRow
                 key={`${row.source.agentId}:${row.record.activityId}`}
-                row={row}
+                record={row.record}
+                name={row.source.name}
               />
             ))}
           </ul>

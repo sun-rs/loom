@@ -300,10 +300,12 @@
     "roleActivity": {
       "source": "frontends/raft/upstream/raft-web-source/packages/web/src/components/agent/AgentActivityLog.tsx",
       "generator": "scripts/official-web/generate-activity.mjs",
-      "binding": "frontends/raft/loom/RoleActivity.tsx",
+      "binding": "frontends/raft/loom/TrajectoryRow.tsx (shared by RoleActivity and InstanceTrajectory)",
       "guard": "scripts/official-web/role-activity.test.ts",
       "scope": "Exact official LogItem and timeline recipes. Local read-only adapter merges member-scoped existing diagnostic pages and labels rows by frozen instance display name. PickerTriggerButton owns filter trigger. No upstream store/socket and no inferred task state.",
-      "bounds": "50 records per source, concurrency 4, most recent 100 rendered in aggregate; single-source cursor pagination. Visible named failures; active view only."
-    }
+      "bounds": "50 records per source, concurrency 4, most recent 100 rendered in aggregate; single-source cursor pagination. Visible named failures; active view only.",
+      "sharedGuard": "scripts/official-web/shared-trajectory.test.mjs"
+    },
+    "migrationInventory": "frontends/raft/loom/dependency-migration.json"
   }
 }
