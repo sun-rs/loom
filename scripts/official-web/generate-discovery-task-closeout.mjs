@@ -217,11 +217,12 @@ export function generateCloseout() {
       tag(n, "Tooltip") &&
       n.getText(activity.file).includes('data-testid="inbox-mark-all-read"'),
   ).getText(activity.file);
-  const ah = replace(
+  let ah = replace(
     activityHeader,
     "        title=",
     "        actions={actions}\n        title=",
   );
+  ah = replace(ah, 'subtitle={formatMessage({ id: "thread.header.subtitle" }, { activeCount: totalCount, unreadCount: totalUnreadCount })}', 'subtitle={typeof totalCount === "number" && typeof totalUnreadCount === "number" ? formatMessage({ id: "thread.header.subtitle" }, { activeCount: totalCount, unreadCount: totalUnreadCount }) : unknownSubtitle}');
   const aa = replace(
     activityAction,
     "                    onClick={handleMarkAllRead}",
@@ -252,7 +253,7 @@ export function OfficialTasksHeader({meta}:{meta:ReactNode}){const {formatMessag
     "OfficialActivityHeader.generated.tsx":
       header +
       `import type {ReactNode,ComponentProps} from "react";import {useIntl} from "react-intl";import {Button} from "raft-ui";import PanelHeader from "../packages/web/src/components/ui/PanelHeader";import SectionEyebrow from "@loom/raft-web-source/SectionEyebrow";import Tooltip from "@loom/raft-web-source/Tooltip";
-export function OfficialActivityHeader({totalCount,totalUnreadCount,onMobileBack,headerContainerProps,headerTitleClickProps,actions}:{totalCount:number|string;totalUnreadCount:number|string;onMobileBack:()=>void;headerContainerProps:ComponentProps<typeof PanelHeader>["containerProps"];headerTitleClickProps:ComponentProps<typeof PanelHeader>["titleClickProps"];actions:ReactNode}){const {formatMessage}=useIntl();return (${ah});}
+export function OfficialActivityHeader({totalCount,totalUnreadCount,unknownSubtitle,onMobileBack,headerContainerProps,headerTitleClickProps,actions}:{totalCount:number|undefined;totalUnreadCount:number|undefined;unknownSubtitle?:string;onMobileBack:()=>void;headerContainerProps:ComponentProps<typeof PanelHeader>["containerProps"];headerTitleClickProps:ComponentProps<typeof PanelHeader>["titleClickProps"];actions:ReactNode}){const {formatMessage}=useIntl();return (${ah});}
 export function OfficialActivityMarkAll({busy,handleMarkAllRead}:{busy:boolean;handleMarkAllRead:()=>void}){const {formatMessage}=useIntl();return (${aa});}
 `,
   };

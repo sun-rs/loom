@@ -42,3 +42,24 @@ test("discovery failure keeps true local cause and uses native warning surface",
   assert.match(s, /<DiscoveryNotice/);
   assert.doesNotMatch(s, /<div role="alert" className="p-[34]">/);
 });
+
+test('activity counts never send unknown strings into ICU numeric plural formatting',async()=>{
+ const ts=(await import('typescript')).default;
+ const vm=await import('node:vm');
+ const source=read('loom/OfficialActivityHeader.generated.tsx');
+ const module={exports:{}};
+ const numericFormatter=({id},values)=>{
+   if(id==='thread.header.subtitle'){
+     assert.equal(typeof values.activeCount,'number');
+     assert.equal(typeof values.unreadCount,'number');
+     return `${values.activeCount}/${values.unreadCount}`;
+   }
+   return id;
+ };
+ vm.runInNewContext(ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX}}).outputText,{
+   exports:module.exports,require:(id)=>id==='react/jsx-runtime'?{jsx:(type,props)=>({type,props}),jsxs:(type,props)=>({type,props})}:id==='react-intl'?{useIntl:()=>({formatMessage:numericFormatter})}:{}
+ });
+ const header=module.exports.OfficialActivityHeader;
+ assert.equal(header({totalCount:undefined,totalUnreadCount:undefined,unknownSubtitle:'—'}).props.subtitle,'—');
+ assert.equal(header({totalCount:4,totalUnreadCount:2}).props.subtitle,'4/2');
+});

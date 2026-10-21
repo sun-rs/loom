@@ -96,8 +96,9 @@ export default function ActivityHeader({
   return (
     <>
       <OfficialActivityHeader
-        totalCount={counts?.total ?? "—"}
-        totalUnreadCount={counts?.unread ?? "—"}
+        totalCount={counts?.total}
+        totalUnreadCount={counts?.unread}
+        unknownSubtitle="— 条进行中 · — 条未读"
         headerContainerProps={{
           "data-testid": "inbox-header",
           title: "双击跳转到下一条未读项",
