@@ -1,0 +1,236 @@
+{
+  "date": "2026-10-22",
+  "productCommit": "1eb92033d8ce96a4107e8648c4cadd647c8d94c8",
+  "source": {
+    "revision": "db5e399f017d584e49597e3a28757645d6807893",
+    "foundation": "@botiverse/raft-ui@0.10.5",
+    "classification": "Exact declaration/JSX extraction with Loom slots and accessible directory labels; not a whole AgentWorkspace page replacement"
+  },
+  "scope": [
+    "TreeNode and TruncationHint",
+    "Workspace markdown map and raw/preview JSX",
+    "Native tree header hidden/refresh controls",
+    "DiffPatchStatsLine",
+    "seven stale cross-page source assertions"
+  ],
+  "verification": {
+    "redBeforeImplementation": true,
+    "allSourceTests": {
+      "passed": 312,
+      "failed": 0
+    },
+    "uiContractTests": 8,
+    "typecheck": true,
+    "build": true,
+    "fixtureWorkspace": [
+      {
+        "width": 1440,
+        "initialResourceCount": 67,
+        "initialEncodedBytes": 1220494,
+        "workspaceChunkAbsentBeforeOpen": true,
+        "nativeHeaderControls": [
+          {
+            "name": "刷新",
+            "width": 32,
+            "height": 32,
+            "clickable": true
+          },
+          {
+            "name": "已隐藏隐藏文件",
+            "width": 32,
+            "height": 32,
+            "clickable": true
+          }
+        ],
+        "accessibleDirectoryExpansion": true,
+        "operations": [
+          {
+            "operation": "roots",
+            "path": ""
+          },
+          {
+            "operation": "list",
+            "path": ""
+          },
+          {
+            "operation": "list",
+            "path": "src"
+          },
+          {
+            "operation": "read",
+            "path": "src/demo.md"
+          },
+          {
+            "operation": "changes",
+            "path": ""
+          },
+          {
+            "operation": "diff",
+            "path": "src/demo.md"
+          },
+          {
+            "operation": "diff",
+            "path": "long.txt"
+          },
+          {
+            "operation": "list",
+            "path": ""
+          },
+          {
+            "operation": "read",
+            "path": "report.html"
+          },
+          {
+            "operation": "read",
+            "path": "report.pdf"
+          }
+        ]
+      },
+      {
+        "width": 390,
+        "initialResourceCount": 67,
+        "initialEncodedBytes": 1203796,
+        "workspaceChunkAbsentBeforeOpen": true,
+        "nativeHeaderControls": [
+          {
+            "name": "刷新",
+            "width": 32,
+            "height": 32,
+            "clickable": true
+          },
+          {
+            "name": "已隐藏隐藏文件",
+            "width": 32,
+            "height": 32,
+            "clickable": true
+          }
+        ],
+        "accessibleDirectoryExpansion": true,
+        "operations": [
+          {
+            "operation": "roots",
+            "path": ""
+          },
+          {
+            "operation": "list",
+            "path": ""
+          },
+          {
+            "operation": "list",
+            "path": "src"
+          },
+          {
+            "operation": "read",
+            "path": "src/demo.md"
+          },
+          {
+            "operation": "changes",
+            "path": ""
+          },
+          {
+            "operation": "diff",
+            "path": "src/demo.md"
+          },
+          {
+            "operation": "diff",
+            "path": "long.txt"
+          },
+          {
+            "operation": "list",
+            "path": ""
+          },
+          {
+            "operation": "read",
+            "path": "report.html"
+          },
+          {
+            "operation": "read",
+            "path": "report.pdf"
+          }
+        ]
+      }
+    ],
+    "realWebKit": [
+      {
+        "width": 1440,
+        "existingReplies": 4,
+        "nativeCloseOrBack": {
+          "width": 32,
+          "height": 32,
+          "clickable": true
+        },
+        "noSend": true,
+        "noErrors": true,
+        "noOverflow": true,
+        "workspaceOpened": true,
+        "workspaceRefresh": {
+          "width": 32,
+          "height": 32,
+          "clickable": true
+        }
+      },
+      {
+        "width": 390,
+        "existingReplies": 4,
+        "nativeCloseOrBack": {
+          "width": 44,
+          "height": 44,
+          "clickable": true
+        },
+        "noSend": true,
+        "noErrors": true,
+        "noOverflow": true,
+        "workspaceOpened": true,
+        "workspaceRefresh": {
+          "width": 32,
+          "height": 32,
+          "clickable": true
+        }
+      }
+    ],
+    "screenshotsReviewed": [
+      "formal-workspace-390.png",
+      "formal-workspace-1440.png"
+    ],
+    "realScope": "Existing history/thread and real workspace root/empty state/controls only. The chosen real channel primary root is empty; file content and diff acceptance is isolated fixture evidence."
+  },
+  "deployment": {
+    "verified": true,
+    "newPid": 43759,
+    "schema": 90,
+    "databasesBackedUp": 2,
+    "filesBackedUp": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true
+  },
+  "limits": [
+    "Whole-site dependency migration not complete",
+    "Remaining workspace host chrome and root/Git selector composition goes into shell batch",
+    "Workspace diff remains bounded plain text; structured attachment diff summary is a separate path",
+    "No new backend capability, paid CLI gate, real-device iOS/Android acceptance or cost claim"
+  ],
+  "remainingEstimate": "2–3 further substantial rounds across shell/remaining profiles and inventory/upgrade rehearsal",
+  "privateEvidence": "/Users/sun/.loom/reviews/2026-10-22-workspace-source",
+  "logSha256": {
+    "loom-workspace-html-bridge-red.log": "85098954fc75ae602e2da888fa02b028ed6657a387fbd684628b155112476a39",
+    "loom-workspace-doc-format.log": "7077c024e109e1047b04aaa66d03ce279d4c55081fc1b6825c69f263cdccfff1",
+    "loom-workspace-ui-types.log": "be9daa8ccc2ebd10f0491f299c52fbc747390844e8b4ca9f64af8def58c2b5e4",
+    "loom-workspace-webkit.log": "34fef32ddca72e19ef49f375e921bda7f4e95a5e2ac8abe2b365726710428919",
+    "loom-workspace-browser.log": "1cdaabde245cf5f8c7c966acafabf0e54bcac3d251f158c7784c27bf0c08d53f",
+    "loom-workspace-browser-red.log": "884151158979e7d63f43147d8578f6ee8536ef34bf8d16be4c74253a2088d89f",
+    "loom-workspace-format.log": "08316fd00fb0cccba733993e8fcb8ab7ae021d5271f7e9b469a9a98a1505de37",
+    "loom-workspace-types.log": "a820689f12c47c62cb8a31cf7a4d1c613058257a8aaa2fcec2c10a80b347a04a",
+    "loom-workspace-source.log": "b176213a6c9866846b70396b69b3f121f0a4f2b897de726986a70bb716bec8bf",
+    "loom-workspace-ui.log": "1a6724c98af1a7d4c9c78629dbdadc093720743d20fed36f97a4220dee2ccfec",
+    "loom-workspace-tabs.log": "31013198c1d12ed16d2f304ff2cd9070870acdac89ec06677e40c4c6e293fde0",
+    "loom-workspace-build.log": "5e61739d0be55271c70be47685ae58defd34071381c22ab56c1b4e8df26fde6c",
+    "loom-workspace-final-tests.log": "0528960d9f400c42426c8ec08eb547813e2715869be513001dddb8ec3c8592db",
+    "restart.log": "a13f5142a55eb2c967c2e514b5e84a4a09745353708730bd4bd80db64006bc9d",
+    "loom-workspace-type.log": "8045d27c1370c646d037a78685399b6baaea58fc8d3684e1d86f9d43a9bc74a0",
+    "formal.log": "2cb2e1e48103d2b1445d6ae6d958a641563cecb2e2be449a9d1af06b5d994de6",
+    "loom-workspace-tests.log": "d90c6f8c72c250ddb0fe77bb925014dbf48059ea0548fec469dd6f9a8776e6f9",
+    "loom-workspace-all-source.log": "1d45043a3d79085e949f4690d90f3386f82cbbde8610bd7029ead99dec1d6e3a",
+    "loom-workspace-format-check.log": "17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20",
+    "loom-workspace-red.log": "f4cb0d31d488dec2cd1fd87e8d8c6075b4e3344fd18b8f8d72a022aa6b8fe1ed"
+  }
+}
