@@ -25,6 +25,7 @@ export async function verifyWorkspace({ browser, origin, client, channel }) {
     "<h1>Workspace HTML</h1><script>parent.document.body.dataset.escaped='yes'</script>",
   );
   writeFileSync(join(root, "report.pdf"), createPdfFixture());
+  writeFileSync(join(root, "separator.md"), "# Separator regression\n\n---\n");
   writeFileSync(
     join(root, "long.txt"),
     Array.from({ length: 4100 }, (_, i) => "line-" + i).join("\n"),
@@ -198,7 +199,16 @@ export async function verifyWorkspace({ browser, origin, client, channel }) {
           .getByRole("button", { name: "返回文件列表", exact: true })
           .click();
     }
+    await page
+      .getByRole("button", { name: "打开 separator.md", exact: true })
+      .click();
+    await page
+      .getByTestId("workspace-preview")
+      .locator('[data-slot="separator"],hr')
+      .first()
+      .waitFor();
     result.push({
+      markdownSeparatorRendered: true,
       width,
       initialResourceCount: initialResources.length,
       initialEncodedBytes: initialResources.reduce(

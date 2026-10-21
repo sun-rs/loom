@@ -10,6 +10,8 @@ export const sharedContentModules = [
   "ui/CopyIconButton",
   "message/AttachmentChip",
   "message/AttachmentMetaText",
+  "ui/AvatarSlot",
+  "agent/PixelAvatar",
 ];
 export function generateSharedContent() {
   const output = {};
@@ -25,15 +27,18 @@ export function generateSharedContent() {
       if (!ts.isImportDeclaration(node)) continue;
       const spec = node.moduleSpecifier.text;
       const bound =
-        spec === "@botiverse/raft-ui"
-          ? "raft-ui"
-          : spec === "../../utils/markdownAutolink"
-            ? "@loom/raft-web-source/markdownAutolink"
-            : spec === "./markdownSanitizeSchema"
-              ? "@loom/raft-web-source/markdownSanitizeSchema"
-              : spec.startsWith(".")
-                ? "../" + posix.normalize(posix.join(posix.dirname(path), spec))
-                : spec;
+        spec === "../../../assets/avatars/pixelAvatars.json"
+          ? "@loom/raft-web-source/pixelAvatars"
+          : spec === "@botiverse/raft-ui"
+            ? "raft-ui"
+            : spec === "../../utils/markdownAutolink"
+              ? "@loom/raft-web-source/markdownAutolink"
+              : spec === "./markdownSanitizeSchema"
+                ? "@loom/raft-web-source/markdownSanitizeSchema"
+                : spec.startsWith(".")
+                  ? "../" +
+                    posix.normalize(posix.join(posix.dirname(path), spec))
+                  : spec;
       if (bound !== spec)
         edits.push([
           node.moduleSpecifier.getStart(ast),

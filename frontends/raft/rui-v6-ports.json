@@ -87,11 +87,15 @@
     },
     "packages/web/src/components/ui/AvatarSlot.tsx": {
       "upstreamSha256": "3d92c6eae9fe784980172fb7c9458bf8a540b669919750f41252e2526912d03c",
-      "portedSha256": "c291cc54744556117d5aeb72d2a936731b199cc06b51971b1409dd15367fc1c5"
+      "portedSha256": "342e34fb5ba73c400f5361e8b81df79aa054f9a24c74006dacc10225f65cecdf",
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Official dependency bridge; Avatar context aliases and retired leaf-size arguments retained as explicit nonvisual compatibility."
     },
     "packages/web/src/components/ui/PanelResizeHandle.tsx": {
       "upstreamSha256": "da36547fc9d0040c80736e81bbe52802c5fed4b15aab2c2ce3de6c1730993f85",
-      "portedSha256": "5991f9497fa56abf8efe69d283dbbc00c68708d0bc5fa7fedba535e04ce248fd"
+      "portedSha256": "706c4b07bb9265f325f92f50ce17e50f78daf3b6efd4cc7b52c3f5993c9016a9",
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Official dependency bridge; Avatar context aliases and retired leaf-size arguments retained as explicit nonvisual compatibility."
     },
     "packages/web/src/components/ui/CheckMarker.tsx": {
       "upstreamSha256": "6b7d32d07ea1fa5f6394b102f63b6ad7ba011ea596ce272bfc1900be41db3afa",
@@ -1065,6 +1069,18 @@
       "portedSha256": "9f04b03486ae88a303457d1517c1451fdb67452479369859635afd9c2cdae6a6",
       "sourceRelease": "db5e399 / v1.21.23-source.1",
       "adoption": "Dependency bridge; immutable bytes in source-lock.json, explicit generated bindings recorded in dependency-migration.json."
+    },
+    "packages/web/src/components/agent/PixelAvatar.tsx": {
+      "upstreamSha256": "12638925be53a579ab402b0a7122749500bb9101bbf0c801b02edec2598e5755",
+      "portedSha256": "c94e5b590a63bfc5413b978821b33136f5ef9092ef8ae540ecd900b85ff6ea47",
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Official dependency bridge; Avatar context aliases and retired leaf-size arguments retained as explicit nonvisual compatibility."
+    },
+    "packages/web/src/hooks/useResizablePanel.ts": {
+      "upstreamSha256": "371235c02db4088a295450b1f65489abf8fa404bcd2c8494efe5e8313dc023b4",
+      "portedSha256": "ad86fbc77f134695626ed14e6d01add0012031a2bf5f0a99bd1e16a45f1ab0d3",
+      "sourceRelease": "db5e399 / v1.21.23-source.1",
+      "adoption": "Official dependency bridge; Avatar context aliases and retired leaf-size arguments retained as explicit nonvisual compatibility."
     }
   }
 }

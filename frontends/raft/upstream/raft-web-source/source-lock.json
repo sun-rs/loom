@@ -79,6 +79,12 @@
     "packages/web/src/components/message/attachmentPreviewSurfaces.tsx": "da9ca670a5fe4fa63894a48b76b3f4f897be868a55769d33837b25cb3e469e7d",
     "packages/web/src/components/message/composerHost.ts": "de60dcc3e5bf12c92bf16329b9a3d571126b51bd3b9ebcd530ef9b622b91b546",
     "packages/web/src/components/agent/AgentWorkspace.tsx": "92b14f70388fb59748e0ec903432f826aaa9224f50696e1f9182e248235a6d46",
-    "packages/web/src/components/channel/ChannelOverflowMenu.tsx": "7314d8f67ff2e70cfd1faeba292a6998e20e8aff109662f4202b98da45add0af"
+    "packages/web/src/components/channel/ChannelOverflowMenu.tsx": "7314d8f67ff2e70cfd1faeba292a6998e20e8aff109662f4202b98da45add0af",
+    "packages/web/src/components/ui/AvatarSlot.tsx": "ff5075729e1099942f3aeedf4e60d9f69c3b025bf9fbb518e674ac0514a00de7",
+    "packages/web/src/components/agent/PixelAvatar.tsx": "6771844c88c98251252baed58a49f25e5e20795c4edcd51a0bbb98af33df9e69",
+    "packages/web/src/components/ui/PanelResizeHandle.tsx": "492ac006fad3a6f7a751346c004764ffdba659dd8728e6b28a05cfe7a9f48137",
+    "packages/web/src/hooks/useResizablePanel.ts": "371235c02db4088a295450b1f65489abf8fa404bcd2c8494efe5e8313dc023b4",
+    "packages/web/src/components/machine/MachineDetailPanel.tsx": "ff226d5082318aca5961b1bc28293cb6227fecff997a7f3d6784133cd068951b",
+    "packages/web/assets/avatars/pixelAvatars.json": "cbc90485cd5395b366c41e56c0648ab97988430c58d88038b8608028b349c914"
   }
 }

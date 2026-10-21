@@ -20,7 +20,7 @@
       "failed": 0
     },
     "uiContractTests": 8,
-    "typecheck": true,
+    "typecheck": false,
     "build": true,
     "fixtureWorkspace": [
       {
@@ -192,7 +192,8 @@
       "formal-workspace-390.png",
       "formal-workspace-1440.png"
     ],
-    "realScope": "Existing history/thread and real workspace root/empty state/controls only. The chosen real channel primary root is empty; file content and diff acceptance is isolated fixture evidence."
+    "realScope": "Existing history/thread and real workspace root/empty state/controls only. The chosen real channel primary root is empty; file content and diff acceptance is isolated fixture evidence.",
+    "typecheckReportingCorrection": "Follow-up shell-profile batch found missing Separator import in generated workspace Markdown hr renderer. Previous typecheck success claim was incorrect; reproduced with typecheck and regression assertion, repaired and browser-verified in shell-profile evidence."
   },
   "deployment": {
     "verified": true,

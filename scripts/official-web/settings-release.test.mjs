@@ -3,9 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 const read = (p) => readFileSync("frontends/raft/" + p, "utf8");
 test("settings sidebar adopts native group and item composition instead of hand-sized labels", () => {
-  const s = read(
-    "loom/OfficialSettingsSidebar.generated.tsx",
-  );
+  const s = read("loom/OfficialSettingsSidebar.generated.tsx");
   for (const name of [
     "SidebarGroupLabel",
     "SidebarItemContent",
@@ -15,7 +13,9 @@ test("settings sidebar adopts native group and item composition instead of hand-
   assert.doesNotMatch(s, /tracking-widest|text-\[10px\]|space-y-3/);
 });
 test("settings detail retains native header and responsive body composition", () => {
-  const s = read("loom/SettingsPage.tsx");
+  const s = read("loom/OfficialComputerProfile.generated.tsx");
+  assert.match(read("loom/SettingsPage.tsx"), /<OfficialSettingsFrame/);
+  assert.match(read("loom/SettingsPage.tsx"), /<OfficialSettingsBody/);
   assert.ok(
     s.includes("px-4 py-4 text-foreground mobile-nav-clearance md:px-5"),
   );

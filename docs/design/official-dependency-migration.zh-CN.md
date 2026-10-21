@@ -167,3 +167,19 @@ Drawer及未保存/执行中的关闭围栏。这些调整未修改产品行为�
 桌面/390工作区浏览器验证按需加载、原文/Markdown切换不重复读文件、Git diff、
 长文本分段、HTML sandbox、PDF隔离地址；新增树目录aria-expanded及32px控件真实
 命中测试。全量来源检查已通过，仍不等于全站视觉或真实设备验收。
+
+### 共用分栏／身份与资料外壳（2026-10-22）
+
+AvatarSlot、PixelAvatar完整原件仅重绑定导入，像素JSON进入不可变依赖；旧场景名称
+surface-list/members-row分别映射list-row/compact-row，旧叶子size参数在已有头像框内
+丢弃，不恢复第二套尺寸。PanelResizeHandle/useResizablePanel直接依赖完整原件，
+不再保留本地重复实现；拖动持久化key和分栏状态仍由各宿主提供。
+
+计算机资料hero、运行时属性容器、Role资料hero/identity、设置Panel与正文滚动容器
+从锁定原件提取。计算机在线/排空/离线文案来自Loom，不冒用Raft升级状态；原生
+IconTile替换本地51px方块。Role配置/实例关系、CLI状态、设备设置和权限归原owner。
+
+同时修复上批生成器遗漏Separator导入，补源码断言及含横线Markdown的浏览器用例。
+上批证据中的typecheck成功误报已纠正，保留修正说明；不能把旧记录当作全通过。
+当前尚未宣称全站依赖完成：最后一批核对共享展示闭包、顶栏/导航/列表本地组合的
+来源分类，并执行固定版本升级演练。预估1–2轮，以实际发现为准。

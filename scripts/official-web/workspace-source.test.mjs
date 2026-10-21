@@ -13,6 +13,7 @@ test("workspace presentation is generated from locked source while authority sta
   const generated = generateWorkspace()["OfficialWorkspace.generated.tsx"];
   assert.match(generated, /aria-expanded=\{isExpanded\}/);
   assert.match(generated, /bg-info-soft/);
+  assert.match(generated, /import \{[^}]*Separator[^}]*\} from "raft-ui"/);
   assert.doesNotMatch(generated, /api\.get|useAgentStore|localStorage/);
   assert.match(read("frontends/raft/loom/WorkspaceFileContent.tsx"), /65536/);
   assert.match(

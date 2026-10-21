@@ -1,3 +1,7 @@
+import {
+  OfficialComputerProfile,
+  OfficialComputerRuntimes,
+} from "./OfficialComputerProfile.generated";
 import KeyValueRow from "@loom/raft-web-source/KeyValueRow";
 import {
   OfficialListRowGroup,
@@ -261,35 +265,12 @@ export default function ComputersPage({
               data-testid="computer-detail"
             >
               {error && problem}
-              <div className="flex items-start gap-4 px-5 py-5">
-                <div className="flex size-[51px] shrink-0 items-center justify-center rounded-sticker bg-fill-muted text-foreground-muted">
-                  <Monitor size={26} aria-hidden />
-                </div>
-                <div className="min-w-0 flex-1 space-y-1">
-                  <PanelTitle className="min-w-0">{name}</PanelTitle>
-                  <div className="flex min-w-0 items-center gap-2">
-                    <Badge
-                      appearance="soft"
-                      variant={status === "online" ? "success" : "muted"}
-                      className="shrink-0"
-                    >
-                      <Status
-                        size="md"
-                        variant={status === "online" ? "success" : "default"}
-                        aria-hidden
-                      />
-                      <span data-testid="machine-connection-status">
-                        {label}
-                      </span>
-                    </Badge>
-                  </div>
-                  {computer?.hostname && (
-                    <div className="truncate font-mono text-mono-meta text-foreground-hint">
-                      {computer.hostname}
-                    </div>
-                  )}
-                </div>
-              </div>
+              <OfficialComputerProfile
+                name={name}
+                hostname={computer?.hostname}
+                status={status}
+                label={label}
+              />
               {computer && (
                 <ComputerProfile
                   key={inventory.hostId}
@@ -316,10 +297,7 @@ export default function ComputersPage({
                     breakAll
                   />
                   <div data-testid="machine-detected-runtimes">
-                    <div className="mb-1 text-footnote font-medium text-foreground-hint">
-                      检测到的 CLI
-                    </div>
-                    <div className="flex items-center gap-1.5 flex-wrap">
+                    <OfficialComputerRuntimes>
                       {inventory.runtimes.map((runtime, index) => (
                         <Badge
                           key={`${runtime.executable}-${index}`}
@@ -339,7 +317,7 @@ export default function ComputersPage({
                           {runtime.available ? "可用" : "不可用"}
                         </Badge>
                       ))}
-                    </div>
+                    </OfficialComputerRuntimes>
                     {inventory.runtimes.length === 0 && (
                       <p className="text-callout text-foreground-hint">
                         暂无检测结果

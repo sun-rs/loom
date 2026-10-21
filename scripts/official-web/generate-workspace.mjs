@@ -90,7 +90,7 @@ export function generateWorkspace() {
   );
   const workspace = `// GENERATED from immutable Raft db5e399 AgentWorkspace and MessageItem declarations.
 // Loom owns rooted reads, cancellation, bounded rendering and external-image suppression.
-import {InlineCode,Spinner,SegmentedControl,SegmentedControlItem,SegmentedControlLabel} from "raft-ui";
+import {InlineCode,Separator,Spinner,SegmentedControl,SegmentedControlItem,SegmentedControlLabel} from "raft-ui";
 import type {ReactNode} from "react";
 import Tooltip from "@loom/raft-web-source/Tooltip";
 import {ChevronRight,FolderClosed,FolderOpen,FileText,Eye,EyeOff,RefreshCw} from "lucide-react";

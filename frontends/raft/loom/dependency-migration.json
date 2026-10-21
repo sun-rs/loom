@@ -57,7 +57,10 @@
       "loom/OfficialAttachmentPreviewSurfaces.generated.tsx",
       "loom/OfficialAttachmentMetaText.generated.tsx",
       "loom/OfficialWorkspace.generated.tsx",
-      "loom/OfficialDiffStats.generated.tsx"
+      "loom/OfficialDiffStats.generated.tsx",
+      "loom/OfficialAvatarSlot.generated.tsx",
+      "loom/OfficialPixelAvatar.generated.tsx",
+      "loom/OfficialComputerProfile.generated.tsx"
     ],
     "foundation": "package.json#dependencies.raft-ui"
   },
@@ -165,21 +168,26 @@
         "loom/RoleProfile.tsx",
         "loom/OfficialProfile.generated.tsx",
         "loom/OfficialActivity.generated.tsx",
-        "loom/TrajectoryRow.tsx"
+        "loom/TrajectoryRow.tsx",
+        "loom/OfficialComputerProfile.generated.tsx",
+        "loom/OfficialAvatarSlot.generated.tsx"
       ],
-      "adopted": "名称/属性行/时间线原声明提取，Role和实例轨迹共用官方LogItem",
+      "adopted": "名称/属性行/时间线原声明提取，Role和实例轨迹共用官方LogItem；Role资料hero和identity布局按AgentDetailPanel原JSX提取，AvatarSlot/像素头像完整模块生成，保留角色/实例语义与默认资料入口",
       "remaining": [
-        "Role列表/工作区/实例详情仍有结构移植；保留Loom Role与实例差异"
+        "Role列表/工作区/实例详情为明确的Loom组合；最后清单核对保留场景和来源，不启用上游Agent状态仓库"
       ]
     },
     {
       "id": "computers",
       "name": "计算机",
       "status": "mixed",
-      "sources": ["loom/ComputersPage.tsx"],
-      "adopted": "官方Header、KeyValueRow、完整AvatarListRow直接依赖；Loom保留计算机与实例身份、运行时数据和导航绑定；恢复官方仅手机设置入口，手机列表采用官方ListRow/IconTile组合",
+      "sources": [
+        "loom/ComputersPage.tsx",
+        "loom/OfficialComputerProfile.generated.tsx"
+      ],
+      "adopted": "官方Header、KeyValueRow、完整AvatarListRow直接依赖；Loom保留计算机与实例身份、运行时数据和导航绑定；恢复官方仅手机设置入口，手机列表采用官方ListRow/IconTile组合；计算机资料hero/原生IconTile/状态徽标以及运行时属性容器均从MachineDetailPanel提取，真实状态标签与CLI清单由Loom注入",
       "remaining": [
-        "详情页组合、资料编辑和运行时区块仍有结构移植；历史附件场景的AvatarListRow尚未迁入完整依赖"
+        "资料编辑和实例关联为Loom数据接线；列表外框与本地新增控件仍需最后来源分类，不能宣称整页无修改"
       ]
     },
     {
@@ -206,11 +214,12 @@
         "loom/OfficialSettingsSections.generated.tsx",
         "loom/OfficialArchivedChannels.generated.tsx",
         "loom/OfficialSettingsSidebar.generated.tsx",
-        "loom/OfficialFormField.generated.tsx"
+        "loom/OfficialFormField.generated.tsx",
+        "loom/OfficialComputerProfile.generated.tsx"
       ],
-      "adopted": "外观声明和日期/时间JSX自动提取；主题选择器直接依赖；其他Tab仍混合；更新日志内容区块及分类规则自动提取，旧构建切片已删除；账户资料/通知/关于/系统频道采用锁定源码展示切片与显式兼容补丁，删除四条运行时改写；归档及恢复按钮/设置侧栏/表单已提取，panelBounds直接依赖官方",
+      "adopted": "外观声明和日期/时间JSX自动提取；主题选择器直接依赖；其他Tab仍混合；更新日志内容区块及分类规则自动提取，旧构建切片已删除；账户资料/通知/关于/系统频道采用锁定源码展示切片与显式兼容补丁，删除四条运行时改写；归档及恢复按钮/设置侧栏/表单已提取，panelBounds直接依赖官方；设置Panel/滚动正文按SettingsPanel原JSX生成，恢复canvas表面；AvatarSlot和像素资源进入锁定依赖",
       "remaining": [
-        "设置外壳路由/响应式组合、AvatarSlot及外观消息预览等仍有本地适配；用量和执行设置无等价官方业务页，明确保留Loom语义和官方原语组合"
+        "设置路由/移动端主从及草稿仍归Loom，最后核对外观预览与其余共享展示闭包；用量/执行设置为无等价上游业务的本地组合"
       ]
     }
   ],
@@ -222,9 +231,13 @@
       "sources": [
         "loom/TopBar.tsx",
         "loom/Navigation.tsx",
-        "loom/RoleWorkspace.tsx"
+        "loom/RoleWorkspace.tsx",
+        "packages/web/src/components/ui/PanelResizeHandle.tsx",
+        "packages/web/src/hooks/useResizablePanel.ts"
       ],
-      "remaining": ["共享控件已原生，外壳/响应式/拖动组合仍需迁移"]
+      "remaining": [
+        "分栏拖动手柄和宽度hook已直接依赖完整官方原件；顶栏/导航/多列宿主保持Loom路由和响应式组合，最后逐项分类来源与批准例外"
+      ]
     },
     {
       "id": "files",
@@ -270,18 +283,13 @@
     "Loom business state, access control and lifecycle remain local owners"
   ],
   "remainingBatchPlan": {
-    "estimate": "2–3 further substantial implementation/acceptance rounds after workspace batch; estimate, not a completion guarantee",
+    "estimate": "1–2 further close-out rounds after shared shell/profile batch; estimate, not a completion guarantee",
     "fixedSource": "db5e399 / raft-ui 0.10.5; no automatic chase of newer releases",
     "batches": [
       {
-        "scope": "shell/responsive composition plus Role/Computer/Settings and remaining workspace host chrome",
+        "scope": "remaining shell/preview dependency closure classification, source drift/upgrade rehearsal and focused cross-page deployment",
         "rounds": "1–2",
-        "exit": "official retained layout declarations or explicitly documented Loom-specific composition; no silent bespoke styling"
-      },
-      {
-        "scope": "dependency inventory cleanup and upgrade rehearsal",
-        "rounds": "1",
-        "exit": "source hashes/generation/exception registry verified, remaining local authorities classified, focused cross-page regression and deployment"
+        "exit": "Each retained local presentation explicitly sourced or justified; generation/import closure and source upgrade dry-run verified; no unsupported claim of zero local UI or latest upstream parity"
       }
     ],
     "completionBoundary": "Immutable upstream presentation plus explicit Loom data/authority composition and approved exceptions; not zero local code or arbitrary future package replacement without acceptance"

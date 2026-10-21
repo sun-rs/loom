@@ -1,3 +1,7 @@
+import {
+  OfficialSettingsFrame,
+  OfficialSettingsBody,
+} from "./OfficialComputerProfile.generated";
 import LanguageRegionSettings from "./LanguageRegionSettings.tsx";
 import NotificationSettings from "./NotificationSettings.tsx";
 import { LoomReleaseNotes } from "./OfficialReleaseNotes.generated.tsx";
@@ -149,16 +153,13 @@ export default function SettingsPage({
         data-testid="loom-settings-detail"
         className={`min-w-0 md:flex ${tab ? "flex" : "hidden"}`}
       >
-        <Panel
-          edge="inset"
-          className="flex min-h-0 flex-1 flex-col bg-layer-panel text-foreground"
-        >
+        <OfficialSettingsFrame>
           <PanelHeader
             title={selected?.label ?? "设置不存在"}
             onMobileBack={() => onTab(null)}
             mobileBackProps={{ "aria-label": "设置列表" }}
           />
-          <div className="flex-1 overflow-y-auto bg-layer-panel px-4 py-4 text-foreground mobile-nav-clearance md:px-5">
+          <OfficialSettingsBody>
             <div
               className={
                 selectedId === "administration" ? "space-y-6" : "hidden"
@@ -208,8 +209,8 @@ export default function SettingsPage({
                 {selected ? "此设置尚未接入。" : "请从设置列表选择一个项目。"}
               </p>
             )}
-          </div>
-        </Panel>
+          </OfficialSettingsBody>
+        </OfficialSettingsFrame>
       </AppShellMainSlot>
     </div>
   );

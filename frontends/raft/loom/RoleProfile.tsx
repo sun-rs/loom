@@ -1,3 +1,7 @@
+import {
+  OfficialRoleHero,
+  OfficialRoleIdentity,
+} from "./OfficialComputerProfile.generated";
 import { useEffect, useState, useRef } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
 import type {
@@ -128,10 +132,7 @@ export default function RoleProfile({
   // Role configuration has no live presence or unique native session handle.
   return (
     <div data-testid="loom-role-profile" className="font-sans bg-layer-canvas">
-      <div
-        data-testid="role-profile-hero"
-        className="flex items-start gap-4 px-5 py-5"
-      >
+      <OfficialRoleHero data-testid="role-profile-hero">
         <Tooltip content="更换头像">
           <button
             type="button"
@@ -148,10 +149,7 @@ export default function RoleProfile({
             <AvatarEditVeil icon={Pencil} />
           </button>
         </Tooltip>
-        <div
-          data-testid="role-profile-identity"
-          className="min-w-0 flex-1 pt-1"
-        >
+        <OfficialRoleIdentity data-testid="role-profile-identity">
           <div ref={nameAction} className="flex min-w-0 items-center gap-2">
             <AgentHeaderName
               agent={{ name: role.configuration.displayName }}
@@ -180,8 +178,8 @@ export default function RoleProfile({
           <p className="mt-1.5 text-footnote text-foreground-hint">
             修改保存为新的角色修订；已有实例保持原配置。
           </p>
-        </div>
-      </div>
+        </OfficialRoleIdentity>
+      </OfficialRoleHero>
       {(field === "avatarKey" || field === "displayName") && (
         <div className="px-5 pb-4">{editor(field)}</div>
       )}

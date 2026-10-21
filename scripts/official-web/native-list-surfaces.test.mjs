@@ -27,7 +27,7 @@ test("official avatar row uses body typography, native spacing and focus geometr
   assert.match(native, /interactive=\{interactive\}/);
 });
 test("avatar frame sizes and badge corners come from the current official recipe", () => {
-  const s = read("packages/web/src/components/ui/AvatarSlot.tsx");
+  const s = read("loom/OfficialAvatarSlot.generated.tsx");
   assert.doesNotMatch(s, /!size-|!border|theme=elegant|rounded-full/);
   assert.match(s, /"profile-tile": "lg"/);
   assert.match(s, /"list-row": "md"/);

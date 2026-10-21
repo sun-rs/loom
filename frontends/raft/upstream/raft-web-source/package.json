@@ -33,7 +33,10 @@
     "./repairGeneratedMarkdown": "./packages/web/src/components/message/repairGeneratedMarkdown.ts",
     "./markdownAutolink": "./packages/web/src/utils/markdownAutolink.ts",
     "./markdownSanitizeSchema": "./packages/web/src/components/markdown/markdownSanitizeSchema.ts",
-    "./composerHost": "./packages/web/src/components/message/composerHost.ts"
+    "./composerHost": "./packages/web/src/components/message/composerHost.ts",
+    "./PanelResizeHandle": "./packages/web/src/components/ui/PanelResizeHandle.tsx",
+    "./useResizablePanel": "./packages/web/src/hooks/useResizablePanel.ts",
+    "./pixelAvatars": "./packages/web/assets/avatars/pixelAvatars.json"
   },
   "peerDependencies": {
     "react": "^19.0.0",

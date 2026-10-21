@@ -448,6 +448,28 @@
         "scripts/official-web/workspace-source.test.mjs",
         "scripts/official-web/workspace-browser.mjs"
       ]
+    },
+    {
+      "id": "official-shell-profile",
+      "owner": "Raft db5e399 AvatarSlot/PixelAvatar/PanelResizeHandle/useResizablePanel and MachineDetailPanel/AgentDetailPanel/SettingsPanel display subtrees",
+      "sources": [
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/ui/AvatarSlot.tsx",
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/ui/PanelResizeHandle.tsx",
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/machine/MachineDetailPanel.tsx"
+      ],
+      "bindings": [
+        "OfficialAvatarSlot.generated.tsx",
+        "OfficialPixelAvatar.generated.tsx",
+        "OfficialComputerProfile.generated.tsx",
+        "RoleProfile.tsx",
+        "ComputersPage.tsx",
+        "SettingsPage.tsx"
+      ],
+      "rule": "Complete shared module generation with import-only changes; immutable resize hook/handle. Legacy avatar context aliases map to native sizes, obsolete leaf size arguments ignored inside existing frames. Profile status labels and runtime chips are Loom data slots. Settings/Role source layout retained; no cloud machine/upgrade actions enabled.",
+      "checks": [
+        "scripts/official-web/shell-profile-source.test.mjs",
+        "scripts/official-web/shared-content-source.test.mjs"
+      ]
     }
   ],
   "exceptions": [
