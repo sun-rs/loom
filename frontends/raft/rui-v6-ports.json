@@ -231,9 +231,10 @@
     },
     "packages/web/src/components/settings/AppearanceThemePicker.tsx": {
       "upstreamSha256": "c88d4472de1234599d8f6fc661dc108277217c52afa8a498c946daa8f5cee8c5",
-      "portedSha256": "e07ade89d4c0a2bf4a94a3a283cffb7c9892fe6118a9e5aaf30ad02f3ab6e342",
+      "portedSha256": "7ef8f0197e90f7bc973e639b4ff40f32326ca2e00b8ccba6903e85aeb17fc107",
       "localRevision": "4c6531ed4523625b1e534a771eb651673b9d1e90",
-      "adoption": "Historical already-committed compatibility port; reconciled stale hash on 2026-10-21. See page-adoption.json and exact cited Git revision, not a v1.21.26 source change."
+      "adoption": "Appearance body removed in favor of exact official declaration extraction; picker delegates to immutable source dependency. Other settings sections remain historical ports.",
+      "sourceRelease": "v1.21.23-source.1 / db5e399f017d584e49597e3a28757645d6807893"
     },
     "packages/web/src/components/settings/AboutFeedbackDialog.tsx": {
       "upstreamSha256": "82d203503994270ccd565fde0df037ab353babb58e25d32adb7c1dcbe0ed2b57",
@@ -245,9 +246,10 @@
     },
     "packages/web/src/components/settings/SettingsPanel.tsx": {
       "upstreamSha256": "9506c7bbdf9854694621637dab2dcd44249f48d22b933bb3dc6f55ad0f114a23",
-      "portedSha256": "ae25dfefb1ffa09941595888de8f8c140218e28e3718b2c7c82ed32d7b4fe9e9",
+      "portedSha256": "becf23fad7dda0585fd24f26009e03c9af9d6c6883e1671b12556a3ebd0fac60",
       "localRevision": "edf5171ffd1aaba0068af14f94c68518ea4be79b",
-      "adoption": "Historical already-committed compatibility port; reconciled stale hash on 2026-10-21. See page-adoption.json and exact cited Git revision, not a v1.21.26 source change."
+      "adoption": "Appearance body removed in favor of exact official declaration extraction; picker delegates to immutable source dependency. Other settings sections remain historical ports.",
+      "sourceRelease": "v1.21.23-source.1 / db5e399f017d584e49597e3a28757645d6807893"
     },
     "packages/web/src/components/settings/DeleteServerConfirmDialog.tsx": {
       "upstreamSha256": "0937746bce6efe23af7ea98c7ddf63da357d26703e08f4eef6bd377d1caaa97e",

@@ -23,12 +23,9 @@ test("settings detail retains native header and responsive body composition", ()
   assert.ok(s.includes('edge="inset"'));
 });
 test("appearance uses official native type hierarchy and unified divided preference group", () => {
-  const all = read("packages/web/src/components/settings/SettingsPanel.tsx");
-  const s = all.slice(
-    all.indexOf("function AppearanceSection()"),
-    all.indexOf("export function AboutSection"),
-  );
-  assert.match(s, /mt-4 divide-y divide-line-muted/);
+  const s = read("loom/OfficialAppearance.generated.tsx");
+  assert.match(s, /<ListRowGroup className="mt-4">/);
+  assert.match(s, /<ListRow variant="plain" interactive=\{false\}>/);
   assert.match(s, /text-subhead font-semibold text-foreground/);
   assert.doesNotMatch(s, /shadow-raft-sm|tracking-widest|text-\[11px\]/);
 });

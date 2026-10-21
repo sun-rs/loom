@@ -51,7 +51,7 @@ export async function verifyAppearance({ browser, origin, channels }) {
       if (width < 768) {
         const boxes = await Promise.all(
           ["light", "dark", "system"].map((mode) =>
-            page.getByTestId("appearance-mode-" + mode).boundingBox(),
+            page.getByTestId("appearance-theme-" + mode).locator('[data-slot="card"]').boundingBox(),
           ),
         );
         assert.ok(
@@ -66,13 +66,13 @@ export async function verifyAppearance({ browser, origin, channels }) {
           "theme preview must not consume half a phone screen",
         );
       }
-      await page.getByTestId("appearance-mode-light").click();
+      await page.getByTestId("appearance-theme-light").locator('[data-slot="card"]').click();
       await page.waitForFunction(
         () =>
           !document.documentElement.hasAttribute("data-theme") &&
           !document.documentElement.classList.contains("dark"),
       );
-      await page.getByTestId("appearance-mode-dark").click();
+      await page.getByTestId("appearance-theme-dark").locator('[data-slot="card"]').click();
       await page.waitForFunction(() =>
         document.documentElement.classList.contains("dark"),
       );
@@ -82,7 +82,7 @@ export async function verifyAppearance({ browser, origin, channels }) {
           !document.documentElement.hasAttribute("data-theme") &&
           document.documentElement.classList.contains("dark"),
       );
-      await page.getByTestId("appearance-mode-system").click();
+      await page.getByTestId("appearance-theme-system").locator('[data-slot="card"]').click();
       await page.emulateMedia({ colorScheme: "light" });
       await page.waitForFunction(
         () => !document.documentElement.classList.contains("dark"),
@@ -91,7 +91,7 @@ export async function verifyAppearance({ browser, origin, channels }) {
       await page.waitForFunction(() =>
         document.documentElement.classList.contains("dark"),
       );
-      await page.getByTestId("appearance-mode-light").click();
+      await page.getByTestId("appearance-theme-light").locator('[data-slot="card"]').click();
       await page.waitForFunction(
         () => !document.documentElement.hasAttribute("data-theme"),
       );

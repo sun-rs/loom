@@ -24,7 +24,6 @@ declare module "loom-native-appearance" {
   export const LoomAboutSection: import("react").ComponentType<{
     appVersion: string;
   }>;
-  export const AppearanceSection: import("react").ComponentType;
 }
 
 declare module "loom-native-release-notes" {

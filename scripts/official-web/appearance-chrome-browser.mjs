@@ -53,7 +53,7 @@ export async function verifyAppearanceChrome({ browser, origin, channels }) {
         document.documentElement.classList.contains("dark"),
       );
       if (width === 1440) {
-        const card = page.getByTestId("appearance-mode-light");
+        const card = page.getByTestId("appearance-theme-light").locator('[data-slot="card"]');
         await page.mouse.move(0, 0);
         const before = await card.evaluate(
           (e) => getComputedStyle(e).backgroundImage,

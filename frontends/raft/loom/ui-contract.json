@@ -276,8 +276,16 @@
       "EmptyState",
       "SectionHeader",
       "SectionEyebrow",
-      "PanelHeader"
+      "PanelHeader",
+      "AppearanceThemePicker"
     ],
-    "rule": "Byte-exact source; no edits in upstream snapshot. Compatibility entry points only forward props; PanelHeader retains approved mobile placement via data attributes and mobile.css. Retired uppercase prop is discarded by SectionEyebrow adapter. Both raft-ui import names resolve to one runtime."
+    "rule": "Byte-exact source; no edits in upstream snapshot. Compatibility entry points only forward props; PanelHeader retains approved mobile placement via data attributes and mobile.css. Retired uppercase prop is discarded by SectionEyebrow adapter. Both raft-ui import names resolve to one runtime.",
+    "appearancePage": {
+      "source": "frontends/raft/upstream/raft-web-source/packages/web/src/components/settings/SettingsPanel.tsx",
+      "generator": "scripts/official-web/generate-appearance.mjs",
+      "binding": "frontends/raft/loom/appearance-source-binding.ts",
+      "guard": "scripts/official-web/appearance-source.test.mjs",
+      "scope": "Exact declaration extraction, not whole module execution. Existing device preference store and MessageItem preview retained; no upstream account, billing or server stores."
+    }
   }
 }

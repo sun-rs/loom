@@ -12,6 +12,9 @@
     "packages/web/src/components/ui/EmptyState.tsx": "20a571951fe832d8c87be0e45bb321b2868a0e4b8cc5328feea7239f99d81706",
     "packages/web/src/components/ui/SectionHeader.tsx": "ec4795964fb21f6b67b385b8ca40e726d1a04284b4259e8762b544b9a2ce5b03",
     "packages/web/src/components/ui/SectionEyebrow.tsx": "842e6ec0e8cfcd3948d384ef8a9cde6fd2b41be4db8dfd8ccd0321c12c4555b0",
-    "packages/web/src/components/ui/PanelHeader.tsx": "180445abf8be7036c4d31cc410435129cd833f6d7ddbf246c7ba7d86ce1c0f1b"
+    "packages/web/src/components/ui/PanelHeader.tsx": "180445abf8be7036c4d31cc410435129cd833f6d7ddbf246c7ba7d86ce1c0f1b",
+    "packages/web/src/components/settings/SettingsPanel.tsx": "4d7175f391747ada6fe7125938626139b2040768d5917cde11584df6b9029052",
+    "packages/web/src/components/settings/AppearanceThemePicker.tsx": "d1306a0dd5be5921804aab92dea2c4a7acfae0e4afc592c1b271afd4ec3923ef",
+    "packages/web/src/theme/appTheme.ts": "83d6c836a172fb011dda40dd750294d5d20622646df03f59f57aada36c561085"
   }
 }

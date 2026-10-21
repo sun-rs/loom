@@ -1,3 +1,4 @@
+import { AppearanceSection, AppearanceThemeSettingsControl } from "../../../../../loom/OfficialAppearance.generated";
 import AvatarEditVeil from "../ui/AvatarEditVeil";
 import { AppWhenToUseField } from "./AppWhenToUseField";
 import { AgentJwtSettings } from "./AgentJwtSettings";
@@ -284,42 +285,13 @@ function renderSelectItems(options: readonly SelectOption[]) {
   ));
 }
 
-const APPEARANCE_PREVIEW_AGENT: Agent = {
-  id: "appearance-preview-agent",
-  name: "cindy-preview",
-  displayName: "Cindy",
-  avatarUrl: "pixel:random:cindy-preview",
-  description: null,
-  status: "active",
-  model: "preview",
-  runtime: "preview",
-  serverRole: null,
-  reasoningEffort: null,
-  executionMode: "cloud",
-  envVars: null,
-  machineId: null,
-  runtimeProfile: null,
-  creatorType: null,
-  creatorId: null,
-  creator: null,
-  createdAgents: [],
-  deletedAt: null,
-  createdAt: "2026-05-19T00:00:00.000Z",
-};
 
-const APPEARANCE_PREVIEW_CHANNEL: Channel = {
-  id: "appearance-preview-channel",
-  name: "proj-uiux",
-  description: null,
-  type: "channel",
-  createdAt: "2026-05-19T00:00:00.000Z",
-};
 
-const APPEARANCE_PREVIEW_CHANNELS: Channel[] = [APPEARANCE_PREVIEW_CHANNEL];
 
-const APPEARANCE_PREVIEW_MENTION_MAP = new Map<string, MentionEntry>([
-  ["joy", { displayName: "Joy", type: "user", id: "appearance-preview-joy" }],
-]);
+
+
+
+
 
 const PRE_JOIN_AGREEMENT_BODY_MAX_LENGTH = 5_000;
 const PRE_JOIN_AGREEMENT_BODY_MAX_LENGTH_LABEL = "5,000";
@@ -6575,141 +6547,9 @@ export const ADMINISTRATION_VISUAL_SECTIONS = {
   "member-permissions": MemberPermissionsSection,
 } as const;
 
-export function AppearanceThemeSettingsControl() {
- const theme=useOptionalAppTheme();
- return theme ? <AppearanceThemePicker mode={theme.preferences.mode} onModeChange={theme.setMode} /> : null;
-}
 
-function AppearanceSection() {
-  const { formatMessage } = useIntl();
-  const messageBodyFontSize = useAppearanceStore((s) => s.messageBodyFontSize);
-  const setMessageBodyFontSize = useAppearanceStore((s) => s.setMessageBodyFontSize);
-  const showLiveAgentActivityBar = useAppearanceStore((s) => s.showLiveAgentActivityBar);
-  const setShowLiveAgentActivityBar = useAppearanceStore((s) => s.setShowLiveAgentActivityBar);
-  const showAgentModelName = useAppearanceStore((s) => s.showAgentModelName);
-  const setShowAgentModelName = useAppearanceStore((s) => s.setShowAgentModelName);
-  const hideEmptySidebarSections = useAppearanceStore((s) => s.hideEmptySidebarSections);
-  const setHideEmptySidebarSections = useAppearanceStore((s) => s.setHideEmptySidebarSections);
-  const previewMessage = useMemo<Message>(() => ({
-    id: "appearance-preview-message",
-    channelId: APPEARANCE_PREVIEW_CHANNEL.id,
-    senderType: "agent",
-    senderId: APPEARANCE_PREVIEW_AGENT.id,
-    senderName: APPEARANCE_PREVIEW_AGENT.displayName ?? APPEARANCE_PREVIEW_AGENT.name,
-    messageType: "chat",
-    content: formatMessage({ id: "settings.appearance.fontPreviewSample" }),
-    createdAt: new Date().toISOString(),
-    attachments: [],
-    reactions: [],
-  }), [formatMessage]);
 
-  return (
-    <div className="mb-6">
-      <Card className="mb-6 p-4">
-        <div className="mb-3">
-          <div className="text-subhead font-semibold text-foreground">{formatMessage({ id: "settings.appearance.themeTitle" })}</div>
-          <p className="mt-1 text-footnote text-foreground-muted">{formatMessage({ id: "settings.appearance.themeDescription" })}</p>
-        </div>
-        <AppearanceThemeSettingsControl />
-      </Card>
-      <SectionHeader className="mb-3" icon={<Type size={16} />} label={formatMessage({ id: "settings.appearance.sectionLabel" })} />
 
-      <Card className="space-y-4 p-4">
-        <div>
-          <div className="text-subhead font-semibold text-foreground">{formatMessage({ id: "settings.appearance.messageFontSizeTitle" })}</div>
-          <p className="mt-1 text-footnote text-foreground-muted">
-            {formatMessage({ id: "settings.appearance.messageFontSizeDescription" })}
-          </p>
-        </div>
-
-        <MessageBodyFontSizeSegmentedControl
-          value={messageBodyFontSize}
-          onValueChange={setMessageBodyFontSize}
-        />
-
-        <div className="text-caption text-foreground-hint">
-          {formatMessage({ id: "settings.appearance.savedOnDevice" })}
-        </div>
-
-        <div className="space-y-2">
-          <SectionEyebrow as="div">{formatMessage({ id: "settings.appearance.preview" })}</SectionEyebrow>
-          <div className="pointer-events-none -mx-2 rounded-control bg-layer-panel" aria-label={formatMessage({ id: "settings.appearance.fontSizePreviewAria" })}>
-            <MessageItem
-              message={previewMessage}
-              mentionMap={APPEARANCE_PREVIEW_MENTION_MAP}
-              channels={APPEARANCE_PREVIEW_CHANNELS}
-              previewSenderAgent={APPEARANCE_PREVIEW_AGENT}
-              hideThreadActions
-            />
-          </div>
-        </div>
-      </Card>
-
-      <Card className="mt-4 divide-y divide-line-muted">
-        <div className="flex min-h-11 items-start justify-between gap-4 px-4 py-3">
-          <span className="min-w-0">
-            <span id="live-agent-activity-setting-label" className="block text-subhead font-semibold text-foreground">
-              {formatMessage({ id: "settings.appearance.liveAgentActivityTitle" })}
-            </span>
-            <span id="live-agent-activity-setting-description" className="mt-0.5 block text-footnote text-foreground-muted">
-              {formatMessage({ id: "settings.appearance.liveAgentActivityDescription" })}
-            </span>
-            <span className="mt-1 block text-caption text-foreground-hint">
-              {formatMessage({ id: "settings.appearance.savedOnDevice" })}
-            </span>
-          </span>
-          <Switch
-            checked={showLiveAgentActivityBar}
-            onCheckedChange={setShowLiveAgentActivityBar}
-            aria-labelledby="live-agent-activity-setting-label"
-            aria-describedby="live-agent-activity-setting-description"
-            className="mt-0.5 shrink-0"
-          />
-        </div>
-        <div className="flex min-h-11 items-start justify-between gap-4 px-4 py-3">
-          <span className="min-w-0">
-            <span id="agent-model-name-setting-label" className="block text-subhead font-semibold text-foreground">
-              {formatMessage({ id: "settings.appearance.showAgentModelNameTitle" })}
-            </span>
-            <span id="agent-model-name-setting-description" className="mt-0.5 block text-footnote text-foreground-muted">
-              {formatMessage({ id: "settings.appearance.showAgentModelNameDescription" })}
-            </span>
-            <span className="mt-1 block text-caption text-foreground-hint">
-              {formatMessage({ id: "settings.appearance.savedOnDevice" })}
-            </span>
-          </span>
-          <Switch
-            checked={showAgentModelName}
-            onCheckedChange={setShowAgentModelName}
-            aria-labelledby="agent-model-name-setting-label"
-            aria-describedby="agent-model-name-setting-description"
-            className="mt-0.5 shrink-0"
-          />
-        </div>
-        <div className="flex min-h-11 items-start justify-between gap-4 px-4 py-3">
-          <span className="min-w-0">
-            <span id="hide-empty-sidebar-sections-setting-label" className="block text-subhead font-semibold text-foreground">
-              {formatMessage({ id: "settings.appearance.hideEmptySidebarSectionsTitle" })}
-            </span>
-            <span id="hide-empty-sidebar-sections-setting-description" className="mt-0.5 block text-footnote text-foreground-muted">
-              {formatMessage({ id: "settings.appearance.hideEmptySidebarSectionsDescription" })}
-            </span>
-            <span className="mt-1 block text-caption text-foreground-hint">
-              {formatMessage({ id: "settings.appearance.savedOnDevice" })}
-            </span>
-          </span>
-          <Switch
-            checked={hideEmptySidebarSections}
-            onCheckedChange={setHideEmptySidebarSections}
-            aria-labelledby="hide-empty-sidebar-sections-setting-label"
-            aria-describedby="hide-empty-sidebar-sections-setting-description"
-            className="mt-0.5 shrink-0"
-          />
-        </div>
-      </Card>
-    </div>
-  );
-}
 
 // Exported for settingsSubBatchC.i18n.behavior.test.tsx — rendered directly so the
 // zh teeth exercise the real component without mounting the full SettingsPanel

@@ -1,9 +1,3 @@
-/** Directly expose the original section; no copied layout or second preferences owner. */
-export function exposeAppearance(source: string) {
-  if (source.split("function AppearanceSection()").length !== 2)
-    throw Error("Official appearance section boundary changed");
-  return source + "\nexport { AppearanceSection };\n";
-}
 export function adaptMessageModelLabel(source: string) {
   const boundary =
     "const agentModelLabelText = showAgentModelNameOption\n    ? catalogModelLabelText ?? agentModelLabel(senderAgent)";

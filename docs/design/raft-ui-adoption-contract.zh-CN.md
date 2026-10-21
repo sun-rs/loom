@@ -15,6 +15,8 @@
 
 首批 Tooltip、CloseButton、EmptyState、SectionHeader、SectionEyebrow、PanelHeader 已恢复为 `@loom/raft-web-source` 私有本地源码依赖，保留官方原路径和逐字节内容。它是我们封装的授权源码分发包，不是官方发布的 npm 包，也不代表整个 Web 已完成依赖化。版本、哈希和升级步骤见 [依赖说明](../../frontends/raft/upstream/raft-web-source/README.md)。
 
+外观页进一步采用官方 `SettingsPanel.tsx` 的声明级自动提取：原文件完整保留、不执行其账户/计费依赖；生成文件禁止手改，`appearance-source-binding.ts` 只转换现有主题 hook 形状。提取保留原函数正文，不称为整模块无改动复用。
+
 禁止修改依赖内的官方原文件。旧路径仅提供兼容转发；Loom 数据、事件和已批准手机布局例外留在外层。两种 raft-ui 导入名绑定同一运行时。比较工具直接比较此依赖与新官方源码，同时将历史页面移植单独列出。升级不再逐页手抄这些组件，但 API、组合、响应式或焦点规则变化仍需定向验证，不承诺免验收。
 
 ## 每次新增或修改控件的顺序

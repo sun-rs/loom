@@ -1,6 +1,6 @@
 # Official source dependency
 
-Private local distribution of six byte-exact Raft Web components, **not** an npm package published by Raft and **not** the complete Raft Web application. `source-lock.json` pins the authorized source commit, paths, license and hashes. Upstream paths and notices are preserved. The exported components and `embed.ts` form the selected source closure; no upstream business store is included.
+Private local distribution of selected byte-exact Raft Web components, **not** an npm package published by Raft and **not** the complete Raft Web application. `source-lock.json` pins the authorized source commit, paths, license and hashes. Upstream paths and notices are preserved. The exported components, `embed.ts` and theme helpers form the selected runtime closure. The complete original `SettingsPanel.tsx` is retained as source evidence and extraction input, **never imported as a module**; its account/billing/store imports are not executed.
 
 Product import chain: Loom data/events → compatibility entries in `packages/web/src/components/ui` → this dependency → official `@botiverse/raft-ui` recipes. `PanelHeader` preserves approved compact mobile placement using container data attributes; `SectionEyebrow` drops the retired `uppercase` parameter. Neither adapter renders a second copy of native presentation.
 
@@ -14,3 +14,7 @@ The host installs `@botiverse/raft-ui@0.10.5` under the existing `raft-ui` npm a
 4. Run the dependency hash and alias checks, typecheck/build, and focused affected interaction checks. Stable API/style-only upgrades need no page-by-page redesign. Changed composition, responsive behavior, focus or data contracts still need targeted browser verification.
 
 Remaining `loom/` pages and other historical compatibility ports are **not** restored by this slice. They must be migrated by complete presentation/import closure with Loom SDK adapters, not relabeled as official source. The published `raft-ui` package and this selected application source have independent versions.
+
+## Appearance page
+
+`node scripts/official-web/generate-appearance.mjs` extracts six named declarations from the pinned SettingsPanel using the TypeScript parser, preserving exact bodies. It emits `loom/OfficialAppearance.generated.tsx`; a source test rejects manual edits or changed declaration boundaries. The import prelude is explicit Loom glue, not upstream bytes: existing appearance store, native theme provider through `appearance-source-binding.ts`, MessageItem preview and font control. Only types reference agent/channel/message stores. No second preferences store is created. The picker is imported directly from this package. Approved mobile card density remains outer CSS. This is **exact source extraction plus local bindings**, not untouched whole-page-module reuse. Other settings tabs retain their previous paths.

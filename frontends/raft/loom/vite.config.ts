@@ -23,7 +23,6 @@ import { adaptArchivedChannels } from "./settings-archive-adaptation.ts";
 import { adaptTaskCreation } from "./task-create-adaptation.ts";
 import { officialUiAliases } from "./ui-resolution.ts";
 import {
-  exposeAppearance,
   adaptMessageModelLabel,
 } from "./appearance-adaptation.ts";
 import {
@@ -152,7 +151,7 @@ export default defineConfig({
             code: exposeNotificationStatus(
               exposeAboutVersion(
                 exposeAccountProfile(
-                  exposeAppearance(adaptSystemSettings(code)),
+                  adaptSystemSettings(code),
                 ),
               ),
             ),

@@ -10,7 +10,8 @@
     "./EmptyState": "./packages/web/src/components/ui/EmptyState.tsx",
     "./SectionHeader": "./packages/web/src/components/ui/SectionHeader.tsx",
     "./SectionEyebrow": "./packages/web/src/components/ui/SectionEyebrow.tsx",
-    "./PanelHeader": "./packages/web/src/components/ui/PanelHeader.tsx"
+    "./PanelHeader": "./packages/web/src/components/ui/PanelHeader.tsx",
+    "./AppearanceThemePicker": "./packages/web/src/components/settings/AppearanceThemePicker.tsx"
   },
   "peerDependencies": {
     "react": "^19.0.0",
