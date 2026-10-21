@@ -1,0 +1,87 @@
+{
+  "date": "2026-10-22",
+  "productCommit": "324361072d1ffc81913e851396280b83b6f71509",
+  "scope": [
+    "Generated MessageHitRow original declarations with explicit stable result key",
+    "Direct official searchGrouping pure helpers",
+    "Extracted ThreadsInbox toolbar JSX with guarded Loom action slot",
+    "Extracted ConversationAvatar declaration with minimal typed identity input"
+  ],
+  "source": {
+    "revision": "db5e399f017d584e49597e3a28757645d6807893",
+    "release": "v1.21.23-source.1",
+    "hashes": "frontends/raft/upstream/raft-web-source/source-lock.json",
+    "generator": "scripts/official-web/generate-discovery-task.mjs",
+    "localBindings": [
+      "resultKey preserves keyboard result identity",
+      "actions slot retains durable bulk-read and pending/unknown guards",
+      "ConversationAvatar Channel type contains only peer presentation metadata",
+      "Newer compact InboxItem structural port and approved mobile adaptations retained"
+    ]
+  },
+  "verification": {
+    "red": "New generated boundaries and direct grouping bridge assertions failed before implementation",
+    "sourceGuards": [
+      "discovery-foundation-source",
+      "discovery-task-source",
+      "upstream-package",
+      "dependency-migration",
+      "search-settings-composition"
+    ],
+    "uiContract": 8,
+    "typecheck": "passed",
+    "build": "passed; existing chunk warning retained",
+    "chromiumActivityWidths": [1440, 900, 390],
+    "chromiumActivityCoverage": [
+      "row geometry",
+      "context menu and Escape",
+      "preview navigation",
+      "done does not open conversation",
+      "all/unread/mentions empty states"
+    ],
+    "chromiumTopbarWidths": [1440, 390],
+    "formalWebkit": [
+      {
+        "width": 1440,
+        "engine": "webkit",
+        "readOnly": true,
+        "geometry": {
+          "height": 68,
+          "avatar": 36
+        },
+        "searchMessagesVisible": true,
+        "noOverflow": true,
+        "noPageErrors": true
+      },
+      {
+        "width": 390,
+        "engine": "webkit",
+        "readOnly": true,
+        "geometry": {
+          "height": 60,
+          "avatar": 32
+        },
+        "searchMessagesVisible": true,
+        "noOverflow": true,
+        "noPageErrors": true
+      }
+    ],
+    "screenshots": "Formal mobile activity and desktop/mobile search inspected; private artifacts retained",
+    "harnessCorrection": "Initial formal script assumed desktop search trigger on mobile; changed mobile check to existing full search route. No product fix or suppressed error."
+  },
+  "deployment": {
+    "method": "Idle check, same-home backup and exact launchd graceful restart",
+    "databases": 2,
+    "files": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true,
+    "schema": 90,
+    "sourceSha256": "140c3a37239fba32d40964625eb5c64f9fe1774b9e2c7463fff0ae01dff79cc6"
+  },
+  "limits": [
+    "Pinned official source, not latest live-site parity claim",
+    "Activity row and page/controller remain mixed, not whole-page dependency migration",
+    "Query, pagination, navigation, authority and durable activity actions remain Loom owners",
+    "No physical device or paid CLI acceptance"
+  ]
+}
