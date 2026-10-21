@@ -290,5 +290,15 @@
       "sharedGuard": "scripts/official-web/shared-trajectory.test.mjs"
     },
     "migrationInventory": "frontends/raft/loom/dependency-migration.json"
+  },
+  "roleEntryParity": {
+    "source": "upstream/raft-web-source/packages/web/src/components/agent/AgentDetailPanel.tsx#defaultAgentTab",
+    "rule": "Profile when available, independently of tab order",
+    "binding": "loom/AgentPage.tsx: roles maps to official profile",
+    "guards": [
+      "scripts/official-web/role-activity.test.ts",
+      "scripts/official-web/role-activity-browser.mjs"
+    ],
+    "scope": "Role page initial entry and list selection; not instance avatar inspector"
   }
 }

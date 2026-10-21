@@ -47,13 +47,14 @@ test("role activity is scoped to each member, merged by time and retains partial
   );
   assert.equal(single.nextCursor, "older");
 });
-test("model/effort have one editor and Role tabs default to activity with instances inside profile", () => {
+test("model/effort have one editor and Role tabs default to profile with instances inside profile", () => {
   const profile = readFileSync("frontends/raft/loom/RoleProfile.tsx", "utf8");
   assert.doesNotMatch(profile, /field: "reasoning"/);
   const editor = readFileSync("frontends/raft/loom/RoleEditor.tsx", "utf8");
   assert.doesNotMatch(editor, /field === "reasoning"/);
   const page = readFileSync("frontends/raft/loom/AgentPage.tsx", "utf8");
-  assert.match(page, /useState\("activity"\)/);
+  assert.match(page, /useState\("roles"\)/);
+  assert.match(page, /setTab\("roles"\)/);
   assert.doesNotMatch(page, /tab !== "instances"/);
 });
 
@@ -97,4 +98,40 @@ test("aggregate read concurrency and rendered history remain bounded", async () 
   const result = await loadRoleActivity(client as never, sources);
   assert.ok(max <= 4);
   assert.equal(result.rows.length, 100);
+});
+
+// Differential contract: evaluate the pinned upstream default expression,
+// rather than asserting whichever default Loom currently implements.
+test("Role entry default matches official AgentDetailPanel regardless of tab order", () => {
+  const upstream = readFileSync(
+    "frontends/raft/upstream/raft-web-source/packages/web/src/components/agent/AgentDetailPanel.tsx",
+    "utf8",
+  );
+  const expression = upstream.match(
+    /const defaultAgentTab: AgentTab = ([\s\S]*?);/,
+  );
+  assert.ok(
+    expression,
+    "Upstream default rule changed: review the composition before updating this test",
+  );
+  const officialDefault = new Function(
+    "visibleAgentTabs",
+    `return (${expression[1]});`,
+  );
+  const local = readFileSync("frontends/raft/loom/AgentPage.tsx", "utf8");
+  const initial = local.match(
+    /const \[tab, setTab\] = useState\("([^" ]+)"\)/,
+  )?.[1];
+  const selection = local.match(
+    /const selectRole = [\s\S]*?setTab\("([^" ]+)"\)/,
+  )?.[1];
+  const semanticName = (tab: string | undefined) =>
+    tab === "roles" ? "profile" : tab;
+  for (const tabs of [
+    ["activity", "profile"],
+    ["profile", "activity"],
+  ]) {
+    assert.equal(semanticName(initial), officialDefault(tabs));
+    assert.equal(semanticName(selection), officialDefault(tabs));
+  }
 });

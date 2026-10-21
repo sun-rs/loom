@@ -101,6 +101,28 @@ export async function verifyRoleActivity({ browser, origin, client, role }) {
         "动态",
         "资料",
       ]);
+      await page.getByTestId("loom-role-profile").waitFor();
+      assert.equal(
+        await tabs
+          .getByRole("tab", { name: "资料", exact: true })
+          .getAttribute("aria-selected"),
+        "true",
+      );
+      await tabs.getByRole("tab", { name: "动态", exact: true }).click();
+      // Re-selecting from the Role list uses the same official profile default.
+      if (width < 768)
+        await page
+          .getByRole("button", { name: "角色列表", exact: true })
+          .click();
+      await page.locator(`[data-role-id="${role.roleId}"]`).click();
+      await page.getByTestId("loom-role-profile").waitFor();
+      assert.equal(
+        await tabs
+          .getByRole("tab", { name: "资料", exact: true })
+          .getAttribute("aria-selected"),
+        "true",
+      );
+      await tabs.getByRole("tab", { name: "动态", exact: true }).click();
       const activity = page.getByTestId("role-activity");
       await activity.getByTestId("role-activity-row").first().waitFor();
       assert.equal(

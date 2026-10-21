@@ -71,7 +71,7 @@ export default function AgentPage({
   );
   const { state, error, setError } = useManagement(manager);
   const [catalog, setCatalog] = useState<Catalog>();
-  const [tab, setTab] = useState("activity");
+  const [tab, setTab] = useState("roles");
   const [params, setParams] = useIntentRoute();
   const selectedId = params.get("role") ?? undefined;
   // Returning to a root tab hides detail without destroying its draft.
@@ -100,7 +100,7 @@ export default function AgentPage({
     if (id) next.set("role", id);
     else next.delete("role");
     setParams(next);
-    setTab("activity");
+    setTab("roles");
   };
   const [standalone, setStandalone] = useState<RoleTemplate>();
   const [edit, setEdit] = useState<Edit>();
