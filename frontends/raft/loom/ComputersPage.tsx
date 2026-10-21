@@ -30,7 +30,12 @@ import {
   Badge,
   Status,
   Separator,
-  Card,
+  IconTile,
+  ListRow,
+  ListRowBody,
+  ListRowTitle,
+  ListRowDescription,
+  ListRowGroup,
   Button,
 } from "raft-ui";
 import PanelHeader from "../packages/web/src/components/ui/PanelHeader.tsx";
@@ -39,8 +44,6 @@ import PanelResizeHandle from "../packages/web/src/components/ui/PanelResizeHand
 import { useResizablePanel } from "../packages/web/src/hooks/useResizablePanel.ts";
 import { SIDEBAR_PANEL_BOUNDS } from "../packages/web/src/lib/panelBounds.ts";
 import { computerStatus, computerStatusLabels } from "./computers.ts";
-const mobileRow =
-  "relative flex min-h-16 w-full items-center gap-3 px-4 py-3 text-left text-foreground outline-none hover:bg-fill-pressed active:bg-fill-pressed focus-visible:shadow-[inset_0_0_0_2px_var(--foreground)] not-first:before:absolute not-first:before:top-0 not-first:before:right-0 not-first:before:left-[63px] not-first:before:border-t not-first:before:border-line-muted";
 export default function ComputersPage({
   client,
   controlRoomId,
@@ -200,31 +203,30 @@ export default function ComputersPage({
             <div className="flex flex-col gap-2.5">
               {problem}
               {inventory && (
-                <Card>
-                  <button
-                    className={mobileRow}
+                <ListRowGroup>
+                  <ListRow
                     data-testid="computer-mobile-row"
                     onClick={() => onSelect(inventory.hostId)}
                   >
-                    <span className="relative flex size-[35px] shrink-0 items-center justify-center rounded-sticker bg-fill-muted text-foreground-muted">
-                      <Monitor size={18} aria-hidden />
+                    <span className="relative shrink-0">
+                      <IconTile>
+                        <Monitor aria-hidden="true" />
+                      </IconTile>
                       {dot("absolute -right-1 -top-1")}
                     </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="min-w-0 truncate text-body font-semibold">
-                        {name}
-                      </div>
+                    <ListRowBody>
+                      <ListRowTitle>{name}</ListRowTitle>
                       {computer?.description && (
-                        <div className="truncate text-callout text-foreground-muted">
+                        <ListRowDescription>
                           {computer.description}
-                        </div>
+                        </ListRowDescription>
                       )}
-                      <div className="mt-0.5 flex items-center gap-1.5 font-mono text-mono-meta text-foreground-hint">
-                        {label}
+                      <div className="flex min-w-0 items-center gap-1.5 font-mono text-mono-meta text-foreground-hint">
+                        <span className="truncate">{label}</span>
                       </div>
-                    </div>
-                  </button>
-                </Card>
+                    </ListRowBody>
+                  </ListRow>
+                </ListRowGroup>
               )}
             </div>
           </div>

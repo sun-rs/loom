@@ -9,7 +9,12 @@ import SystemSettings from "./SystemSettings.tsx";
 import { LoomAboutSection } from "./OfficialSettingsSections.generated.tsx";
 import { AppearanceSection } from "./OfficialAppearance.generated";
 import { useEffect, useState, type CSSProperties } from "react";
-import { AppShellMainSlot, AppShellSidebarSlot, Panel } from "raft-ui";
+import {
+  AppShellMainSlot,
+  AppShellSidebarSlot,
+  Panel,
+  SidebarItemIcon,
+} from "raft-ui";
 import {
   ChartNoAxesCombined,
   User,
@@ -19,6 +24,7 @@ import {
   Shield,
   BadgeInfo,
   FileText,
+  Monitor,
 } from "lucide-react";
 import type { RahClient } from "@rah-os/client-sdk";
 import SettingsSidebarList from "../packages/web/src/components/settings/SettingsSidebarList.tsx";
@@ -89,10 +95,20 @@ export default function SettingsPage({
     .find((item) => item.id === selectedId);
   const groups = categories.map((group) => ({
     label: group.label,
-    items: group.items.map((item) => ({
+    // Official Sidebar.settingsGroups: Computers is a mobile-only level-2 route.
+    items: [
+      ...group.items,
+      ...(!desktop && group.label === "工作空间"
+        ? [{ id: "computers", label: "计算机", icon: Monitor }]
+        : []),
+    ].map((item) => ({
       id: item.id,
       label: item.label,
-      icon: <item.icon size={14} className="shrink-0" />,
+      icon: (
+        <SidebarItemIcon>
+          <item.icon />
+        </SidebarItemIcon>
+      ),
       onClick: () => (item.id === "computers" ? onComputers() : onTab(item.id)),
     })),
   }));

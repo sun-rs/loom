@@ -10,6 +10,7 @@ export async function verifyComputers({ browser, origin }) {
       deviceScaleFactor: 1,
     });
     const page = await context.newPage();
+    page.setDefaultTimeout(5000);
     const errors = [];
     let mode = "fresh";
     await page.route("**/v1/local/runtimes/list", async (route) => {
@@ -33,12 +34,34 @@ export async function verifyComputers({ browser, origin }) {
     });
     page.on("pageerror", (e) => errors.push(e.message));
     await page.goto(`${origin}/?view=settings`);
-    if (viewport.width >= 768)
+    await page.getByTestId("settings-sidebar-list").waitFor();
+    if (viewport.width >= 768) {
+      assert.equal(
+        await page
+          .getByTestId("settings-sidebar-list")
+          .getByRole("button", { name: "计算机", exact: true })
+          .count(),
+        0,
+      );
       await page.getByTestId("left-rail-tab-computers").click();
-    else await page.goto(`${origin}/?view=computers`);
+    } else
+      await page
+        .getByTestId("settings-sidebar-list")
+        .getByRole("button", { name: "计算机", exact: true })
+        .click();
     const row = page.getByTestId(
       viewport.width >= 768 ? "computer-desktop-row" : "computer-mobile-row",
     );
+    await row.waitFor();
+    if (viewport.width < 768) {
+      const bounds = await row.boundingBox();
+      assert.ok(
+        bounds &&
+          bounds.height >= 44 &&
+          bounds.x >= 0 &&
+          bounds.x + bounds.width <= viewport.width,
+      );
+    }
     await row.click();
     await page.getByTestId("computer-detail").waitFor();
     const id = new URL(page.url()).searchParams.get("computer");

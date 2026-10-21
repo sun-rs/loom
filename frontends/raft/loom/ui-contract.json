@@ -175,6 +175,25 @@
       ],
       "bindings": ["ComputersPage.tsx", "OfficialListRows.tsx"],
       "guard": "scripts/official-web/detail-primitives-source.test.mjs"
+    },
+    {
+      "id": "mobile-computer-navigation",
+      "owner": "Raft Sidebar mobileInline settingsGroups / MobileComputersPanel ListRow composition",
+      "rule": "Desktop computer rail remains independent; mobile-only Settings link opens computer list, then detail. Use SidebarItemIcon and native ListRow/IconTile recipes; retain Loom local identity and connection status.",
+      "upstreamRevision": "db5e399f017d584e49597e3a28757645d6807893",
+      "upstreamFiles": {
+        "packages/web/src/components/layout/Sidebar.tsx": "d5adc62fe25588a0d5a99a056462f6cce324b5f8fae5f1d0a4e6442fbca2b79c",
+        "packages/web/src/components/machine/MobileComputersPanel.tsx": "60be4b8c85e1e9e1d32ea8adad85bb37069ab57593d7b6269f7879669da691a9"
+      },
+      "provenance": "https://github.com/botiverse/raft-source/tree/db5e399f017d584e49597e3a28757645d6807893/packages/web/src/components",
+      "license": "FSL-1.1-ALv2; owner-authorized reuse",
+      "adoption": "Structural port of conditional navigation and mobile row composition, not byte-exact whole page; cloud registration/version/disk controls omitted.",
+      "sources": [
+        "frontends/raft/loom/SettingsPage.tsx",
+        "frontends/raft/loom/ComputersPage.tsx"
+      ],
+      "bindings": ["SettingsPage.tsx", "ComputersPage.tsx"],
+      "guard": "scripts/official-web/mobile-computer-source.test.mjs"
     }
   ],
   "exceptions": [
