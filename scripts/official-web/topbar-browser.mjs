@@ -63,6 +63,23 @@ export async function verifyTopbar({ browser, origin, channels }) {
       await composer.fill("未发送草稿");
       await page.getByTestId("app-top-bar-search").click();
       await page.getByTestId("desktop-search-overlay").waitFor();
+      assert.equal(
+        await page
+          .locator('[data-slot="modal-backdrop"]')
+          .evaluate((el) => getComputedStyle(el).backdropFilter),
+        "none",
+      );
+      const panelBounds = await page
+        .getByTestId("desktop-search-overlay")
+        .boundingBox();
+      const triggerBounds = await page
+        .getByTestId("app-top-bar-search")
+        .boundingBox();
+      assert.ok(
+        Math.abs(panelBounds.x + panelBounds.width / 2 - width / 2) < 1,
+      );
+      assert.ok(Math.abs(panelBounds.y - triggerBounds.y) < 1);
+      assert.ok(panelBounds.y + panelBounds.height <= 1000 - 24 + 1);
       await verifyNativeSearchField(page);
       await page.getByRole("textbox", { name: "搜索内容" }).fill("fixture");
       assert.equal(new URL(page.url()).searchParams.get("view"), "search");

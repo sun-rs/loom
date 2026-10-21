@@ -242,6 +242,27 @@
         "Official cloud task/page stores excluded; only selected display declarations extracted"
       ],
       "limits": "Task page composition/filtering/create flow remains local; source hashes and license in source-lock.json."
+    },
+    {
+      "id": "search-overlay-source",
+      "owner": "db5e399 SearchOverlay / searchOverlayAnchor / Modal / dismissLayer",
+      "rule": "Use native DialogSurface, dim nonblurred scrim, viewport-centered anchor, bounded height, keyboard and IME dismissal. Loom Web has top bar, so contentColumnRef is null; query/navigation and unresolved intents remain local.",
+      "sources": [
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/search/SearchOverlay.tsx",
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/search/searchOverlayAnchor.ts",
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/Modal.tsx"
+      ],
+      "bindings": [
+        "TopBarSearch.tsx",
+        "SearchOverlayContent.tsx",
+        "OfficialSearchOverlay.generated.tsx"
+      ],
+      "guard": "scripts/official-web/search-overlay-source.test.mjs",
+      "localDifferences": [
+        "Only imports change in generated overlay; SearchOverlayContent binds existing Loom overlay query and activation callbacks",
+        "No Electron/native-host column rendering is enabled; desktopShell helper remains existing adapter"
+      ],
+      "limits": "Other modal consumers retain legacy local Modal and are not counted migrated; not a claim of latest live website equivalence."
     }
   ],
   "exceptions": [

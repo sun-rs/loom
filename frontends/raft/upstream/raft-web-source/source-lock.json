@@ -37,6 +37,10 @@
     "packages/web/src/components/ui/ShowMoreToggle.tsx": "b30d6899fd6a0709f4519dc89d7019ad3202a1028576090d467a28f004c247ac",
     "packages/web/src/components/task/TasksPanel.tsx": "fa98a20364d6d46a181e12c7b5bb5b682250b7589855a35006425ca950274e8b",
     "packages/web/src/components/task/TaskCard.tsx": "229296e9e09af27cfba3e70939ac8d7f8899af62c7dd668f9fc0d016835d3c04",
-    "packages/web/src/components/task/VirtualizedTaskStack.tsx": "74fd0131324201d5f08ec30d8c2e4573e71fab864e27a93629e2411b15ccf25d"
+    "packages/web/src/components/task/VirtualizedTaskStack.tsx": "74fd0131324201d5f08ec30d8c2e4573e71fab864e27a93629e2411b15ccf25d",
+    "packages/web/src/components/search/SearchOverlay.tsx": "af68dea5f5df2ccaf024d12d5e210431e35c7d9069d38b6e1c7762b38d6acb66",
+    "packages/web/src/components/search/searchOverlayAnchor.ts": "1fa0b9767e79899de3a2b1df1a50c0327277dc5233827ed91257a841c3789816",
+    "packages/web/src/components/Modal.tsx": "db01fc0e46f5f21d60e392e8b444b9dff36401757469bc79b68bc9b52f45de65",
+    "packages/web/src/components/ui/dismissLayer.ts": "0608cfae243129203aa751c211bba7b96182a028b01ad45896d8b2c93d5b99c5"
   }
 }

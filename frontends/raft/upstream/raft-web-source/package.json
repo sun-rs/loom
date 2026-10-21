@@ -20,13 +20,16 @@
     "./AvatarListRow": "./packages/web/src/components/ui/AvatarListRow.tsx",
     "./KeyValueRow": "./packages/web/src/components/ui/KeyValueRow.tsx",
     "./ShowMoreToggle": "./packages/web/src/components/ui/ShowMoreToggle.tsx",
-    "./VirtualizedTaskStack": "./packages/web/src/components/task/VirtualizedTaskStack.tsx"
+    "./VirtualizedTaskStack": "./packages/web/src/components/task/VirtualizedTaskStack.tsx",
+    "./searchOverlayAnchor": "./packages/web/src/components/search/searchOverlayAnchor.ts",
+    "./Modal": "./packages/web/src/components/Modal.tsx"
   },
   "peerDependencies": {
     "react": "^19.0.0",
     "react-intl": "^7.0.0",
     "lucide-react": "*",
-    "@botiverse/raft-ui": "0.10.5"
+    "@botiverse/raft-ui": "0.10.5",
+    "react-dom": "^19.0.0"
   },
   "peerDependenciesMeta": {
     "@botiverse/raft-ui": {

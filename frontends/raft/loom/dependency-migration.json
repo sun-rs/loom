@@ -25,7 +25,8 @@
       "loom/OfficialActivityEmpty.generated.tsx",
       "loom/OfficialTaskModalHead.generated.tsx",
       "loom/OfficialTaskBoard.generated.tsx",
-      "loom/OfficialTaskCard.generated.tsx"
+      "loom/OfficialTaskCard.generated.tsx",
+      "loom/OfficialSearchOverlay.generated.tsx"
     ],
     "foundation": "package.json#dependencies.raft-ui"
   },
@@ -38,10 +39,13 @@
         "loom/SearchOverlayContent.tsx",
         "loom/DiscoveryPage.tsx",
         "loom/OfficialSearchEntityRow.generated.tsx",
-        "loom/OfficialSearchHomeRow.generated.tsx"
+        "loom/OfficialSearchHomeRow.generated.tsx",
+        "loom/OfficialSearchOverlay.generated.tsx"
       ],
-      "adopted": "官方控件、旧页面及Loom查询绑定混合；搜索目标行和常用对象行由锁定官方源码生成，保留菜单焦点ref兼容接线",
-      "remaining": ["拆开搜索结果/浮层的展示与查询适配，撤除保留场景的重复布局"]
+      "adopted": "官方控件、旧页面及Loom查询绑定混合；搜索目标行和常用对象行由锁定官方源码生成，保留菜单焦点ref兼容接线；SearchOverlay原声明生成、官方Modal和searchOverlayAnchor直接依赖，删除内容隐式Vite别名；Loom提供固定overlay结果导航接线",
+      "remaining": [
+        "完整查询/筛选/结果页及消息结果行仍有本地适配；无顶栏原生宿主的contentColumnRef分支未启用"
+      ]
     },
     {
       "id": "channels",

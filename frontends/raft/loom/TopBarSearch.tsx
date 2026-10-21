@@ -136,7 +136,7 @@ export default function TopBarSearch({
             },
           }}
         >
-          <SearchOverlay onClose={close} />
+          <SearchOverlay onClose={close} contentColumnRef={null} />
         </OverlaySearchContext.Provider>
       )}
     </>

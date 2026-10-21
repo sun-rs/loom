@@ -183,11 +183,6 @@ export default defineConfig({
           return resolve(import.meta.dirname, "TaskCreate.tsx");
         if (source === "loom-attachment-comments")
           return resolve(import.meta.dirname, "useAttachmentComments.tsx");
-        if (
-          importer?.endsWith("/components/search/SearchOverlay.tsx") &&
-          source === "./MessageSearchPage"
-        )
-          return resolve(import.meta.dirname, "SearchOverlayContent.tsx");
         if (source === "loom-appearance")
           return resolve(import.meta.dirname, "AppearanceRuntime.tsx");
         if (source === "loom-composer-files")
