@@ -391,12 +391,12 @@ export function SearchHomeEmpty(){const {formatMessage}=useIntl();return (<AppEm
       title={formatMessage({ id: "search.emptyTitle" })}
       description={formatMessage({ id: "search.emptyBody" })}
     />);}
-export function SearchNoResults({query}:{query:string}){const {formatMessage}=useIntl(); const searchIncomplete=false,incompleteSearchNote=undefined,loadingMore=false,loadMoreResults=()=>{};return (<AppEmptyState
+export function SearchNoResults({query,hasEntityResults=false}:{query:string;hasEntityResults?:boolean}){const {formatMessage}=useIntl(); const searchIncomplete=false,incompleteSearchNote=undefined,loadingMore=false,loadMoreResults=()=>{};return (<AppEmptyState
                 className="py-16"
                 icon={<Search size={36} aria-hidden="true" />}
                 title={searchIncomplete
                   ? formatMessage({ id: "search.incompleteNoMatchesYet" })
-                  : query.trim() ? formatMessage({ id: "search.noResultsForQuery" }, { query: query.trim() }) : formatMessage({ id: "search.noMatchingMessages" })}
+                  : !hasEntityResults && query.trim() ? formatMessage({ id: "search.noResultsForQuery" }, { query: query.trim() }) : formatMessage({ id: "search.noMatchingMessages" })}
                 description={searchIncomplete
                   ? incompleteSearchNote
                   : query.trim() ? formatMessage({ id: "search.tryDifferentKeywords" }) : formatMessage({ id: "search.tryDifferentFilters" })}

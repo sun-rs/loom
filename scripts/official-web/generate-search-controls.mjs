@@ -88,12 +88,17 @@ export function generateSearchControls() {
       n.getText(file).includes("{searchFieldInner}"),
   ).getText(file);
   const empty = variable("centeredEmptyState");
-  const noResults = one(
+  let noResults = one(
     (n) =>
       ts.isJsxSelfClosingElement(n) &&
       n.tagName.getText(file) === "AppEmptyState" &&
       n.getText(file).includes("search.noResultsForQuery"),
   ).getText(file);
+  noResults = replace(
+    noResults,
+    ': query.trim() ? formatMessage({ id: "search.noResultsForQuery" }',
+    ': !hasEntityResults && query.trim() ? formatMessage({ id: "search.noResultsForQuery" }',
+  );
   const helpers = extractDeclarations(source, [
     "SEARCH_SCOPE_OPTIONS",
     "SEARCH_TIME_RANGES",
@@ -123,7 +128,7 @@ export function OfficialSearchHeader({inputRef,query,overlayChrome,handleBack,mo
 export function OfficialSearchFilters({query,overlayChrome,filtersPortalRef,filtersPortalProps,openFilterMenu,scopes,scopeValue,sort,timeRange,scopeItems,timeRangeItems,sortItems,handleScopeMenuOpenChange,handleTimeMenuOpenChange,handleSortMenuOpenChange,setScopeFilters,handleTimeRangeChange,handleSortChange,hasActiveFilters,clearAllFilters,handleFilterKeyDown,senderSlot,channelSlot,directoryError}:ReturnType<typeof import("./SearchFilters").useSearchFilterController>) {const {formatMessage}=useIntl();return (${filters});}
 export function OfficialSearchIdentityFilter({kind,disabled,filtersPortalProps,openFilterMenu,senderFilterQuery,senderItemIds,senderItemLabel,senderIdParam,handleFromMenuOpenChange,handleSenderInputChange,handleSenderChange,clearSenderFilter,selectedSender,filteredSenderOptions,channelIdParam,channels,dmChannels,clearChannelFilter,channelFilterQuery,channelItemIds,channelItemLabel,handleChannelMenuOpenChange,handleChannelInputChange,handleChannelChange,filteredChannels}:ReturnType<typeof import("./SearchIdentityFilter").useSearchIdentityController>){const {formatMessage}=useIntl();return kind==="from"?(${identity}):(${channelIdentity});}
 export function SearchHomeEmpty(){const {formatMessage}=useIntl();return (${empty});}
-export function SearchNoResults({query}:{query:string}){const {formatMessage}=useIntl(); const searchIncomplete=false,incompleteSearchNote=undefined,loadingMore=false,loadMoreResults=()=>{};return (${noResults});}
+export function SearchNoResults({query,hasEntityResults=false}:{query:string;hasEntityResults?:boolean}){const {formatMessage}=useIntl(); const searchIncomplete=false,incompleteSearchNote=undefined,loadingMore=false,loadMoreResults=()=>{};return (${noResults});}
 `,
   };
 }

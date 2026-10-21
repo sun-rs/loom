@@ -323,7 +323,8 @@
         "Filter bar adds explicit identity slots, readiness disablement, directory error slot and inner Escape callback",
         "Source header uses existing approved mobile PanelHeader adapter",
         "Skeleton gets one accessible loading region; incomplete-search branch remains disabled",
-        "Loom error reasons and retries remain local rather than invented upstream error classification"
+        "Loom error reasons and retries remain local rather than invented upstream error classification",
+        "When entity results exist but messages are empty, retain native no-matching-messages label instead of claiming the query has no results"
       ]
     }
   ],

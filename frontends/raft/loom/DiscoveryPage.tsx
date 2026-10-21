@@ -766,7 +766,10 @@ function Results({
                 mode === "activity" ? (
                   <ActivityEmpty filter={filter} />
                 ) : (
-                  <SearchNoResults query={query} />
+                  <SearchNoResults
+                    query={query}
+                    hasEntityResults={entities.results.length > 0}
+                  />
                 )
               ) : mode === "search" ? (
                 <SearchMessageGroups

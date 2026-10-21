@@ -30,3 +30,13 @@ test("search loading uses native result skeleton with one accessible loading reg
   assert.match(g, /function SearchSkeleton/);
   assert.match(g, /role="status" aria-label="正在读取结果"/);
 });
+test("message empty state does not deny a matching channel or identity result", () => {
+  assert.match(
+    read("loom/DiscoveryPage.tsx"),
+    /hasEntityResults=\{entities.results.length > 0\}/,
+  );
+  assert.match(
+    read("loom/OfficialSearchControls.generated.tsx"),
+    /!hasEntityResults && query.trim\(\)/,
+  );
+});
