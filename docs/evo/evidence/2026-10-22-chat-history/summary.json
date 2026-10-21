@@ -1,0 +1,187 @@
+{
+  "date": "2026-10-22",
+  "productCommit": "20cbbc7e504c7a9a9dead2a0dd1a1e453471dc0b",
+  "scope": [
+    "MessageTimeline full source module with bounded-window binding",
+    "ThreadPanel ReadOnlyThreadPanel declarations with Loom snapshot bindings"
+  ],
+  "source": {
+    "revision": "db5e399f017d584e49597e3a28757645d6807893",
+    "version": "v1.21.23-source.1",
+    "foundation": "@botiverse/raft-ui@0.10.5",
+    "classification": "byte-exact vendored originals plus explicit offline generated bindings, not complete untouched pages"
+  },
+  "changes": [
+    "remove Timeline and ThreadPanel Vite transforms",
+    "explicit typed readonly thread host, no ComponentType cast",
+    "native keyboard scroll intent and sentinel recheck",
+    "preserve bounded-window anchor owner, focus, forward paging and error redaction",
+    "preserve shared compact mobile PanelHeader compatibility binding"
+  ],
+  "verification": {
+    "redBeforeImplementation": "new generation/import test failed before generator existed",
+    "sourceAndUnitTests": 12,
+    "uiContractTests": 8,
+    "typecheck": true,
+    "build": true,
+    "browserFixtures": {
+      "history-window": [
+        {
+          "width": 1440,
+          "samples": [
+            100,
+            150,
+            200,
+            250,
+            300,
+            300,
+            300,
+            300
+          ],
+          "backgroundPreserved": true,
+          "forwardPaging": true,
+          "anchorWithin3px": true
+        },
+        {
+          "width": 390,
+          "samples": [
+            100,
+            150,
+            200,
+            250,
+            300,
+            300,
+            300,
+            300
+          ],
+          "backgroundPreserved": true,
+          "forwardPaging": true,
+          "anchorWithin3px": true
+        }
+      ],
+      "threads": [
+        {
+          "width": 1440,
+          "readOnlyOpen": true,
+          "followLostResponseReadback": true,
+          "visibleHistoryRetainedFromThreadMenu": true,
+          "scopedVisibleRead": true,
+          "nativeMenuEscape": true,
+          "createAndReplyExactReplay": true,
+          "oneReply": true,
+          "reload": true,
+          "nativeResizeOrMobileReturn": true,
+          "readFailureClearsContentAndRetainsDraft": true,
+          "foreignRootRejected": true
+        },
+        {
+          "width": 390,
+          "readOnlyOpen": true,
+          "followLostResponseReadback": true,
+          "visibleHistoryRetainedFromThreadMenu": true,
+          "scopedVisibleRead": true,
+          "nativeMenuEscape": true,
+          "createAndReplyExactReplay": true,
+          "oneReply": true,
+          "reload": true,
+          "nativeResizeOrMobileReturn": true,
+          "readFailureClearsContentAndRetainsDraft": true,
+          "foreignRootRejected": true
+        }
+      ],
+      "channel-tasks": [
+        {
+          "width": 1440,
+          "nativeComposerTask": true,
+          "atomicCreate": true,
+          "exactUnknownReplay": true,
+          "routeGuard": true,
+          "nativeContextMenu": true,
+          "touchLongPress": false,
+          "convertPreservesMessageIdentity": true,
+          "taskBadgeAndReload": true,
+          "escapeDismiss": true,
+          "ordinarySendUnchanged": true,
+          "taskReadDenialAndRecovery": true,
+          "singleModalAcrossDestinations": true
+        },
+        {
+          "width": 390,
+          "nativeComposerTask": true,
+          "atomicCreate": true,
+          "exactUnknownReplay": true,
+          "routeGuard": true,
+          "nativeContextMenu": true,
+          "touchLongPress": true,
+          "convertPreservesMessageIdentity": true,
+          "taskBadgeAndReload": true,
+          "escapeDismiss": true,
+          "ordinarySendUnchanged": true,
+          "taskReadDenialAndRecovery": true,
+          "singleModalAcrossDestinations": true
+        }
+      ]
+    },
+    "formalWebKit": [
+      {
+        "width": 1440,
+        "existingReplies": 4,
+        "nativeCloseOrBack": {
+          "width": 32,
+          "height": 32,
+          "clickable": true
+        },
+        "noSend": true,
+        "noErrors": true,
+        "noOverflow": true
+      },
+      {
+        "width": 390,
+        "existingReplies": 4,
+        "nativeCloseOrBack": {
+          "width": 44,
+          "height": 44,
+          "clickable": true
+        },
+        "noSend": true,
+        "noErrors": true,
+        "noOverflow": true
+      }
+    ],
+    "screenshotsReviewed": [
+      {
+        "name": "formal-chat-1440.png",
+        "sha256": "23df68f2161972c68be27a6097fa18d5942d9d69861f7d112d69dfb5a6d5687c"
+      },
+      {
+        "name": "formal-chat-390.png",
+        "sha256": "3960df82bc484fc7b4618a9f6ca499be5f1c17875a444bbf726faf49b9075e4f"
+      },
+      {
+        "name": "formal-thread-1440.png",
+        "sha256": "e38792bf176cc6195de88ec9547024b1e73eb61b5711406b712b02895fdc6fcd"
+      },
+      {
+        "name": "formal-thread-390.png",
+        "sha256": "e71b2638e3c6b8aa5eb7b7321e0f095936f7d41c0fb4d47fa2a1ad509435590f"
+      }
+    ]
+  },
+  "deployment": {
+    "gracefulRestart": true,
+    "databaseBackups": 2,
+    "fileBackups": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true,
+    "schema": 90,
+    "runtimeSourceSha256": "a5eb41b0b41c1549794f6e2042b22a22555722b62fbd6d15dc86bdaceaf156f5"
+  },
+  "limits": [
+    "No paid CLI or efficiency gate; frontend-only fake-provider tests and real read-only UI inspection",
+    "No claim of whole-site official dependency completion",
+    "MessageItem markdown/identity/media closure, full composer controller, attachment compositions and shell remain",
+    "Upstream authenticated ThreadPanel business implementation not used by Loom; retained source reference is not product acceptance",
+    "Production resource reference v1.21.26 is distinct from pinned available source version",
+    "WebKit viewport checks are not physical iOS device acceptance"
+  ]
+}
