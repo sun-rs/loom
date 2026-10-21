@@ -1,0 +1,25 @@
+{
+  "scope": "Search input route/UI commit race fix; upstream release analysis only",
+  "productChanges": [
+    "DiscoveryPage input setParams uses flushSync true"
+  ],
+  "reproduction": "WebKit deterministic failure before fix: query URL committed but filter/button layout not committed",
+  "validation": {
+    "searchTransition": [
+      "WebKit 1440 pass",
+      "Chromium 1440 pass"
+    ],
+    "topbar": [
+      "WebKit 1440 pass",
+      "WebKit 390 pass"
+    ],
+    "focusedTests": 21,
+    "uiContractTests": 8,
+    "typecheck": "pass",
+    "build": "pass"
+  },
+  "backendChanges": false,
+  "paidModelsUsed": false,
+  "deployment": "pending",
+  "upstreamUiAdopted": false
+}

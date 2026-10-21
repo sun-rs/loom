@@ -237,7 +237,9 @@ export default function DiscoveryPage({
                   else next.delete("q");
                   return next;
                 },
-                { replace: true },
+                // Commit the query and its clickable layout in the input event.
+                // A deferred router transition can remove the pressed result.
+                { replace: true, flushSync: true },
               )
             }
             onEscape={() => {

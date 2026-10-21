@@ -61,7 +61,9 @@
       "sources": [
         "frontends/raft/packages/web/src/components/agent/StableField.tsx"
       ],
-      "bindings": ["ManagementUi.tsx"]
+      "bindings": [
+        "ManagementUi.tsx"
+      ]
     },
     {
       "id": "message-composer",
@@ -70,7 +72,10 @@
       "sources": [
         "frontends/raft/packages/web/src/components/message/MessageInput.tsx"
       ],
-      "bindings": ["ComposerFiles.tsx", "MessageReactions.tsx"]
+      "bindings": [
+        "ComposerFiles.tsx",
+        "MessageReactions.tsx"
+      ]
     },
     {
       "id": "navigation-disclosure",
@@ -92,7 +97,10 @@
       "sources": [
         "frontends/raft/packages/web/src/components/ConfirmDialog.tsx"
       ],
-      "bindings": ["DiscardChangesDialog.tsx", "MemoryEditor.tsx"]
+      "bindings": [
+        "DiscardChangesDialog.tsx",
+        "MemoryEditor.tsx"
+      ]
     },
     {
       "id": "profile-header-close",
@@ -103,7 +111,9 @@
         "frontends/raft/packages/web/src/components/agent/AgentDetailPanel.tsx"
       ],
       "sourceRevision": "v1.21.22 af3d6ef4a22f0f05f5f9db9424285755d67e9726 / AgentDetailPanel-B3FrpUPj.js il; page-adoption instance-inspector-chrome",
-      "bindings": ["InstanceInspector.tsx"],
+      "bindings": [
+        "InstanceInspector.tsx"
+      ],
       "selector": {
         "file": "InstanceInspector.tsx",
         "ariaLabel": "关闭实例详情"
@@ -125,6 +135,20 @@
       ],
       "guard": "scripts/official-web/pdf-attachment-browser.mjs",
       "evidence": "docs/evo/evidence/2026-10-20-pdf-comments/summary.json"
+    },
+    {
+      "id": "search-query-layout",
+      "owner": "official SearchHeader / SearchEntityResult; Loom data-router presentation binding",
+      "rule": "Input query and its clickable layout commit atomically; preserve native click, IME, filtering, keyboard rail and background-location semantics. Only input updates use data-router flushSync; network requests remain asynchronous.",
+      "sources": [
+        "frontends/raft/packages/web/src/components/search/MessageSearchPage.tsx"
+      ],
+      "bindings": [
+        "DiscoveryPage.tsx",
+        "SearchHeader.tsx",
+        "OverlayAllResults.tsx"
+      ],
+      "guard": "scripts/official-web/search-transition-browser.mjs"
     }
   ],
   "exceptions": [

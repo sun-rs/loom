@@ -1,0 +1,33 @@
+{
+  "releaseId": "aa975b0e25ecc07ee6917d88d3ca973782550e6a",
+  "commitSha": "aa975b0e25ecc07ee6917d88d3ca973782550e6a",
+  "builtAt": "2026-10-21T00:10:40Z",
+  "branch": "release/v1.21.26",
+  "deploymentEnvironment": "production",
+  "resources": {
+    "index.html": {
+      "url": "https://app.raft.build/",
+      "sha256": "562b408a31acccabaae23b1470fc46c500851386682842ba8ffb0f75d1110373"
+    },
+    "app-shell.js": {
+      "url": "https://app.raft.build/assets/app-shell-Bc6GbYfj.js",
+      "sha256": "b187ada73e0fdcca13a90e1a56f85b4db229fd82df3569257f436062eb798bc6"
+    },
+    "app-shell.css": {
+      "url": "https://app.raft.build/assets/app-shell-yyv9MJQ9.css",
+      "sha256": "344bb28c56938bab1fcba5ec508e8ec2c45c9b7410f1e1d5f51b0b450d0c8a54"
+    },
+    "AgentDetailPanel.js": {
+      "url": "https://app.raft.build/assets/AgentDetailPanel-z4qDhPCx.js",
+      "sha256": "6c271a6d0c442512ac5826c7efcb992309ec1fe2aac3bda8b7da2f3702295d77"
+    },
+    "MachineDetailPanel.js": {
+      "url": "https://app.raft.build/assets/MachineDetailPanel-CYcAfXdQ.js",
+      "sha256": "70eda897216042d84e73b401e75325f731ba434c1bcb168547dfa4090c8cd327"
+    }
+  },
+  "archive": "/Users/sun/.loom/reviews/2026-10-21-upstream",
+  "scope": "Analysis only; these resources are not yet adopted by product",
+  "npmRaftUiLatest": "0.6.0",
+  "authorization": "Owner authorization to reuse Raft code for noncommercial Loom; preserve upstream notices on adoption."
+}

@@ -1,3 +1,4 @@
+import { verifySearchTransition } from "./search-transition-browser.mjs";
 import { verifyMessageStatus } from "./message-status-browser.mjs";
 import { verifyPanelPolicy } from "./panel-policy-browser.mjs";
 import { verifyAgentProfile } from "./agent-profile-browser.mjs";
@@ -402,6 +403,12 @@ try {
   } else if (process.env.LOOM_BROWSER_SLICE === "layout") {
     console.log(
       JSON.stringify(await verifyLayout({ browser, origin, channels, client })),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "search-transition") {
+    console.log(
+      JSON.stringify(
+        await verifySearchTransition({ browser, origin, channels }),
+      ),
     );
   } else if (process.env.LOOM_BROWSER_SLICE === "topbar") {
     console.log(
