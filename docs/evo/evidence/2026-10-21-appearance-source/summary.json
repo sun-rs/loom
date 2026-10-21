@@ -1,0 +1,86 @@
+{
+  "productCommit": "518041c8",
+  "scope": "Settings appearance page: exact official declaration extraction with explicit local bindings; not whole application dependency conversion",
+  "sourceRevision": "db5e399f017d584e49597e3a28757645d6807893",
+  "immutableFilesVerified": 11,
+  "implementation": [
+    "Full original SettingsPanel stored only as extraction input; account/billing imports not executed",
+    "Six declarations copied verbatim by TypeScript AST extraction; generated-file equality guard",
+    "Official AppearanceThemePicker and theme helper original files consumed directly",
+    "Existing device theme and preferences remain sole state owners; hook shape adapter only",
+    "Old duplicated appearance declarations and export transform removed"
+  ],
+  "verification": {
+    "tdd": "New source-slice tests failed before generator existed, then passed",
+    "focusedSourceTests": 10,
+    "uiContractTests": 8,
+    "typecheck": true,
+    "build": true,
+    "webkitAppearanceWidths": [
+      1440,
+      390,
+      360
+    ],
+    "appearanceBehavior": [
+      "light/dark/system",
+      "font preview and actual chat",
+      "persistence",
+      "model names",
+      "hide empty sections",
+      "live activity toggle",
+      "no overflow"
+    ],
+    "webkitChromeWidths": [
+      1440,
+      390
+    ],
+    "chromeBehavior": [
+      "native hover",
+      "radio keyboard switching",
+      "selected check",
+      "persistence"
+    ],
+    "formalReadOnly": {
+      "readOnly": true,
+      "physicalDevice": false,
+      "results": [
+        {
+          "width": 1440,
+          "radios": 3,
+          "switches": 3,
+          "noOverflow": true,
+          "errors": []
+        },
+        {
+          "width": 390,
+          "radios": 3,
+          "switches": 3,
+          "noOverflow": true,
+          "errors": []
+        },
+        {
+          "width": 360,
+          "radios": 3,
+          "switches": 3,
+          "noOverflow": true,
+          "errors": []
+        }
+      ]
+    }
+  },
+  "deployment": {
+    "verified": true,
+    "databasesBackedUp": 2,
+    "filesBackedUp": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true
+  },
+  "limits": [
+    "Other settings pages remain existing ports",
+    "Message preview and font control retain existing presentation modules",
+    "No physical-device or paid-CLI acceptance",
+    "Source declaration extraction is not untouched whole-module reuse",
+    "Approved compact mobile CSS remains an intentional outer adaptation"
+  ],
+  "privateEvidence": "/Users/sun/.loom/reviews/2026-10-21-appearance-source"
+}
