@@ -17,7 +17,7 @@ import {
 import { hasUnresolvedIntents } from "@rah-os/client-core/write-intent";
 import { useDocumentPreviewStore } from "../packages/web/src/store/documentPreviewStore.ts";
 import { useMediaPreviewStore } from "../packages/web/src/store/mediaPreviewStore.ts";
-import { downloadLoomAttachment } from "./DocumentPreview.tsx";
+import { downloadLoomAttachment } from "./download-attachment.ts";
 import type { Message } from "../packages/web/src/store/messageStore.ts";
 import { useState, useRef, useEffect } from "react";
 import {

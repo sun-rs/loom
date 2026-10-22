@@ -265,7 +265,20 @@ function message(s) {
   );
 }
 export function generateChatHosts() {
+  const previewSource = readFileSync(
+    base + path + "attachmentPreviewSurfaces.tsx",
+    "utf8",
+  );
+  const labels = previewSource.match(
+    /export const DOCUMENT_PREVIEW_LABEL_ID = \{[\s\S]*?\} as const;/g,
+  );
+  if (labels?.length !== 1)
+    throw Error("Official preview label boundary changed");
   return {
+    "OfficialPreviewLabels.generated.tsx":
+      "// GENERATED: exact Raft preview label declaration; no presentation dependencies.\n" +
+      labels[0] +
+      "\n",
     "OfficialAttachmentCommentsPanel.generated.tsx":
       "// GENERATED from Raft db5e399; Loom comment data/authority bindings.\n" +
       imports(
@@ -287,7 +300,11 @@ export function generateChatHosts() {
       composer(readFileSync(base + path + "MessageInput.tsx", "utf8")),
     "OfficialMessageItem.generated.tsx":
       "// GENERATED from Raft db5e399; explicit Loom identity/permission/action bindings.\n" +
-      message(readFileSync(base + path + "MessageItem.tsx", "utf8")),
+      replace(
+        message(readFileSync(base + path + "MessageItem.tsx", "utf8")),
+        '"../packages/web/src/components/message/attachmentPreviewSurfaces"',
+        '"./OfficialPreviewLabels.generated"',
+      ),
   };
 }
 if (

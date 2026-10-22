@@ -3,7 +3,7 @@ import { HtmlAttachmentPreviewModal } from "../packages/web/src/components/messa
 import { useMediaPreviewStore } from "../packages/web/src/store/mediaPreviewStore.ts";
 import { hasRouteBoundIntent } from "./useIntentRoute.ts";
 import { showToast } from "../packages/web/src/components/toastBridge.ts";
-import { downloadLoomAttachment } from "./DocumentPreview.tsx";
+import { downloadLoomAttachment } from "./download-attachment.ts";
 /** Official HTML surface and presentation store; Loom owns access and comments. */
 export default function HtmlPreview() {
   const entry = useMediaPreviewStore((s) => s.entry);

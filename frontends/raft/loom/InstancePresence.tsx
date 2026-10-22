@@ -1,3 +1,4 @@
+import { usePageVisible } from "./usePageVisible.ts";
 import { Status } from "raft-ui";
 import type { AgentPresence } from "@rah-os/protocol";
 import { useEffect, useState } from "react";
@@ -7,10 +8,11 @@ export function useInstancePresence(
   controlRoomId: string | undefined,
   active = true,
 ) {
+  const visible = usePageVisible();
   const [states, setStates] = useState<AgentPresence[]>([]);
   useEffect(() => {
     setStates([]);
-    if (!active || !controlRoomId) return;
+    if (!active || !visible || !controlRoomId) return;
     const abort = new AbortController();
     let timer: ReturnType<typeof setTimeout>;
     const read = async () => {
@@ -32,7 +34,7 @@ export function useInstancePresence(
       abort.abort();
       clearTimeout(timer);
     };
-  }, [client, controlRoomId, active]);
+  }, [client, controlRoomId, active, visible]);
   return states;
 }
 export default function InstancePresence({

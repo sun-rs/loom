@@ -1,3 +1,4 @@
+import { usePageVisible } from "./usePageVisible.ts";
 import { useEffect, useState } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
 import type { RoomAgentActivity } from "@rah-os/protocol";
@@ -8,10 +9,11 @@ export function useRolePresence(
   active: boolean,
 ) {
   const key = JSON.stringify(instances.map((i) => [i.instanceId, i.channelId]));
+  const visible = usePageVisible();
   const [states, setStates] = useState<RoomAgentActivity[]>([]);
   useEffect(() => {
     setStates([]);
-    if (!active) return;
+    if (!active || !visible) return;
     const abort = new AbortController();
     let timer: ReturnType<typeof setTimeout>;
     const read = async () => {
@@ -37,7 +39,7 @@ export function useRolePresence(
       abort.abort();
       clearTimeout(timer);
     };
-  }, [client, key, active]);
+  }, [client, key, active, visible]);
   return states;
 }
 export default function RolePresence({

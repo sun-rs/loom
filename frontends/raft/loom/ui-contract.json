@@ -112,13 +112,15 @@
     {
       "id": "attachment-comment-preview",
       "owner": "official AttachmentPreviewShell / AttachmentCommentsPanel",
-      "rule": "Native comment toggle icon-lg ghost/outline and desktop sidebar/mobile sheet; Loom binds existing attachment comment owner. Published PDF permits whole-file discussion only, forces null anchors and displays scope. Cross-origin viewer unchanged; no page/selection annotations.",
+      "rule": "Native comment toggle icon-lg ghost/outline and desktop sidebar/mobile sheet; Loom binds existing attachment comment owner. Published PDF permits whole-file discussion only, forces null anchors and displays scope. Cross-origin viewer unchanged; no page/selection annotations. PreviewHosts defers the unchanged presentation behind native store open state. Pending imports use Lightbox/Spinner/CloseButton with native canvas backdrop; download transport and exact generated labels have no preview dependencies.",
       "sources": [
         "frontends/raft/packages/web/src/components/message/attachmentPreviewSurfaces.tsx",
         "frontends/raft/packages/web/src/components/message/AttachmentCommentsPanel.tsx"
       ],
       "bindings": [
         "DocumentPreview.tsx",
+        "PreviewHosts.tsx",
+        "download-attachment.ts",
         "useAttachmentComments.tsx",
         "attachment-adaptation.ts"
       ],

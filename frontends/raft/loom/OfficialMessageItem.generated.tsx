@@ -90,7 +90,7 @@ import {openDocumentPreview} from "../packages/web/src/components/message/openDo
 import {openMediaPreview} from "../packages/web/src/components/message/openMediaPreview";
 import {useMediaPreviewStore} from "../packages/web/src/store/mediaPreviewStore";
 import {useDocumentPreviewStore} from "../packages/web/src/store/documentPreviewStore";
-import {DOCUMENT_PREVIEW_LABEL_ID} from "../packages/web/src/components/message/attachmentPreviewSurfaces";
+import {DOCUMENT_PREVIEW_LABEL_ID} from "./OfficialPreviewLabels.generated";
 import {parseTimestampLabel,setPendingVideoSeek} from "../packages/web/src/components/message/attachmentCommentAnchors";
 import {useAttachmentCommentsEnabled} from "../packages/web/src/components/message/useAttachmentCommentsEnabled";
 import {READ_RECEIPTS_FEATURE_FLAG_KEY,useServerFeatureFlag} from "../packages/web/src/store/serverFeatureFlags";
