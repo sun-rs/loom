@@ -1,0 +1,32 @@
+{
+  "productCommit": "2503b750bcb809eaac2231dc80e0e42974936d30",
+  "source": "Locked official SectionHeader, AvatarListRow, ListRowGroup and StatusDot; existing role add dialog and Kernel agent.presence.list",
+  "changes": [
+    "Role instance list uses same computer list primitives with frame and row dividers; sibling overflow action, explicit create-instance button",
+    "Computer instances show observed online/offline/working/thinking/error; missing presence unknown; enabled configuration never implies online",
+    "Presence fetch failure does not change computer connectivity projection"
+  ],
+  "verification": {
+    "tdd": "Two new regressions failed before changes; passed after",
+    "focusedTests": 8,
+    "uiContractTests": 8,
+    "typecheck": "passed",
+    "build": "passed",
+    "nativeChrome": "Formal loopback product: desktop role list screenshot, create-instance dialog open/close and disabled confirmation without channel; computer list displays observed online. At 390x844 clicked instance to Role then create-instance button, verified dialog; no instances created. Restored desktop.",
+    "nativeMacNotifications": "Firefox permission enabled; desktop, notification center and lock-screen checked. No settings changed. Notification center automation exposes widget only; actual test notification display remains unconfirmed. Firefox user activity detected; no additional notification sent or further Firefox automation."
+  },
+  "deployment": {
+    "verified": true,
+    "databases": 2,
+    "files": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true,
+    "localEvidence": "/Users/sun/.loom/reviews/2026-10-23-instance-ui"
+  },
+  "pendingDecision": "Recommend Computer keeps actual instances, primary creation becomes choose existing Role + channel; retain separate Role creation. Existing Computer new-role flow retained pending owner decision.",
+  "remaining": [
+    "Mac notification actual display",
+    "Physical iOS/Android acceptance"
+  ],
+  "paidCalls": 0
+}
