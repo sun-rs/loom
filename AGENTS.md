@@ -80,6 +80,10 @@ never installs them or configures their accounts.
 
 - **Role** is configuration, not an entity: CLI + model + effort + prompt +
   skills and optional launch environment, with a stable Role ID. Every save creates an immutable Revision.
+  Runtime Fast uses the selected model's published service tier (including
+  Codex priority and Claude supportsFastMode); never infer it from the CLI name
+  or silently switch models. Default mode overrides inherited native Fast
+  settings per launch, without editing user CLI configuration.
   Launch environment belongs to that revision and the frozen instance definition;
   it must not write global runtime settings. Reuse RuntimeLaunchEnvironmentSchema
   and preserve protected environment keys at both save and launch boundaries.

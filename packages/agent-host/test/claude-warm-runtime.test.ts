@@ -37,6 +37,9 @@ test("warm Claude: three Activations run on one process and one session, each qu
     }
     assert.equal(starts(state).length, 1, "one Claude process");
     const argv = starts(state)[0]!.argv as string[];
+    assert.deepEqual(JSON.parse(argv[argv.lastIndexOf("--settings") + 1]!), {
+      fastMode: false,
+    });
     assert.ok(argv.includes("--replay-user-messages"));
     assert.ok(argv.includes("--input-format"));
     assert.ok(argv.includes("--session-id"), "a fresh session id is chosen");
@@ -633,5 +636,47 @@ test("the registry builds the warm Claude adapter for claude-stream-json/v1 and 
   } finally {
     kernel.close();
     rmSync(directory, { force: true, recursive: true });
+  }
+});
+
+test("warm Claude applies frozen Fast settings on fresh process and native session resume", async () => {
+  const state = await harness({
+    idleTtlMs: 1,
+    resolvedModel: {
+      source: "explicit_binding",
+      modelBindingId: "fixture-opus",
+      modelId: "opus",
+      provider: "anthropic",
+      serviceTier: "fast",
+    },
+  });
+  try {
+    state.post("[fake:ack] fast one");
+    assert.equal(
+      (await state.current.agentHost.reconcileOnce()).state,
+      "completed",
+    );
+    state.advance(2000);
+    await state.current.pool.sweepIdle();
+    state.post("[fake:ack] fast resumed");
+    assert.equal(
+      (await state.current.agentHost.reconcileOnce()).state,
+      "completed",
+    );
+    assert.equal(starts(state).length, 2);
+    const resumed = starts(state)[1]!.argv as string[];
+    assert.equal(
+      resumed[resumed.indexOf("--resume") + 1],
+      starts(state)[0]!.sessionId,
+    );
+    assert.deepEqual(JSON.parse(resumed[resumed.indexOf("--settings") + 1]!), {
+      fastMode: true,
+    });
+    const argv = starts(state)[0]!.argv as string[];
+    assert.deepEqual(JSON.parse(argv[argv.indexOf("--settings") + 1]!), {
+      fastMode: true,
+    });
+  } finally {
+    await state.cleanup();
   }
 });

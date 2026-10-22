@@ -86,7 +86,7 @@ mkdirSync(bin);
 mkdirSync(cwd);
 writeFileSync(
   join(bin, "codex"),
-  `#!${process.execPath}\nconst args=process.argv.slice(2).join(' ');if(args==='--version') console.log('FAKE discovery only');else if(args==='debug models --bundled') console.log(JSON.stringify({models:[{slug:"gpt-members-fixture",visibility:"list",supported_in_api:true,supported_reasoning_levels:[{effort:"low"}],service_tiers:[]}]}));else process.exitCode=2;\n`,
+  `#!${process.execPath}\nconst args=process.argv.slice(2).join(' ');if(args==='--version') console.log('FAKE discovery only');else if(args==='debug models --bundled') console.log(JSON.stringify({models:[{slug:"gpt-members-fixture",visibility:"list",supported_in_api:true,supported_reasoning_levels:[{effort:"low"}],service_tiers:[{id:"priority"}]},{slug:"standard-only-fixture",visibility:"list",supported_in_api:true,supported_reasoning_levels:[{effort:"low"}],service_tiers:[]}]}));else process.exitCode=2;\n`,
   { mode: 0o700 },
 );
 let running;

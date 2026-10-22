@@ -2,6 +2,7 @@ import {
   RoleConfigurationSchema,
   type LocalRuntimeInventoryResponse,
   type RoleCreateRequest,
+  type ServiceTier,
 } from "@rah-os/protocol";
 type Checked<T> = { ok: true; value: T } | { ok: false; error: string };
 type SchemaIssues = {
@@ -19,6 +20,7 @@ function issues(error: SchemaIssues): string {
 }
 
 export type BindingChoice = {
+  serviceTiers?: readonly string[];
   label: string;
   modelBindingId: string;
   reasoning: string[];
@@ -53,6 +55,7 @@ export function runtimeChoices(
               label: `${binding.displayName ?? binding.modelId}（${binding.modelBindingId}）`,
               modelBindingId: binding.modelBindingId,
               reasoning: [...binding.supportedReasoning],
+              serviceTiers: [...binding.supportedServiceTiers],
             })),
             label: `${runtime.displayName}${runtime.version === undefined ? "" : ` ${runtime.version}`}（${runtime.runtimeOfferId}）`,
             runtimeOfferId: runtime.runtimeOfferId,
@@ -63,6 +66,7 @@ export function runtimeChoices(
 }
 
 export type RoleForm = {
+  serviceTier?: ServiceTier;
   environment?: Record<string, string>;
   displayName: string;
   handle: string;
@@ -78,6 +82,7 @@ type RoleConfiguration = RoleCreateRequest["configuration"];
 /** The editable fields of an existing Role configuration (for role.revise). */
 export function roleFormFrom(configuration: RoleConfiguration): RoleForm {
   return {
+    serviceTier: configuration.modelIntent.serviceTier ?? "default",
     environment: configuration.environment ?? {},
     displayName: configuration.displayName,
     handle: configuration.handle,
@@ -120,6 +125,12 @@ export function buildRoleConfiguration(
   ) {
     return { ok: false, error: "请选择该模型发布的推理强度" };
   }
+  if (
+    form.serviceTier &&
+    form.serviceTier !== "default" &&
+    !binding.serviceTiers?.includes(form.serviceTier)
+  )
+    return { ok: false, error: "所选模型未发布该运行模式，请重新选择" };
   const parsed = RoleConfigurationSchema.safeParse({
     ...base,
     environment: form.environment ?? base?.environment ?? {},
@@ -129,6 +140,7 @@ export function buildRoleConfiguration(
     modelIntent: {
       exactBindingIds: [binding.modelBindingId],
       fallback: "disabled",
+      ...(form.serviceTier ? { serviceTier: form.serviceTier } : {}),
       ...(binding.reasoning.length === 0 ? {} : { reasoning: form.reasoning }),
     },
     role: form.displayName.trim(),

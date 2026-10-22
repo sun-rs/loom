@@ -607,6 +607,16 @@ export class CodexWarmAdapter implements RuntimeAdapter {
         model.reasoning !== "default"
           ? ["--reasoning", model.reasoning]
           : []),
+        ...(["claude-stream-json/v1", "codex-app-server/v1"].includes(
+          this.#driver.provider,
+        )
+          ? [
+              "--service-tier",
+              model?.source === "explicit_binding"
+                ? (model.serviceTier ?? "default")
+                : "default",
+            ]
+          : []),
         ...(lease.args ?? []),
         "--runtime-id",
         layout.instanceRuntimeId,
@@ -1199,6 +1209,9 @@ function turnModel(model: ResolvedModel | undefined) {
     return {};
   return {
     model: model.modelId,
+    ...(model.source === "explicit_binding" && model.serviceTier
+      ? { serviceTier: model.serviceTier }
+      : {}),
     ...(model.source === "explicit_binding" &&
     model.reasoning !== undefined &&
     model.reasoning !== "default"

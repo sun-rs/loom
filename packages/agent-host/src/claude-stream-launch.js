@@ -91,3 +91,10 @@ export function settleClaudeControlResponse(frame, requests) {
       ),
     );
 }
+
+/** Per-process settings; never mutate the user's CLI settings or implicitly switch models. */
+export function claudeFastModeArguments(tier = "default") {
+  if (tier !== "default" && tier !== "fast")
+    throw new Error("Unsupported Claude service tier");
+  return ["--settings", JSON.stringify({ fastMode: tier === "fast" })];
+}

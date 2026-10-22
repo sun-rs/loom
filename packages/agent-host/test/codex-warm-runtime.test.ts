@@ -2523,3 +2523,41 @@ test("warm Codex explicit final output: ambiguous HTTP result blocks automatic r
     await state.cleanup();
   }
 });
+
+for (const serviceTier of ["default", "fast"] as const) {
+  test(`Codex warm requests keep ${serviceTier} across consecutive turns`, async () => {
+    const state = await harness({
+      perAdapter: () => ({
+        resolvedModel: {
+          source: "explicit_binding",
+          modelBindingId: "fixture",
+          modelId: "fixture",
+          provider: "openai",
+          serviceTier,
+        },
+      }),
+    });
+    try {
+      for (let n = 0; n < 2; n++) {
+        state.post("[fake:ack] tier test");
+        const result = await state.current.agentHost.reconcileOnce();
+        assert.equal(result.state, "completed", JSON.stringify(result));
+      }
+      const requests = state
+        .records()
+        .filter(
+          (r) =>
+            r.event === "request" &&
+            ["thread/start", "turn/start"].includes(String(r.method)),
+        );
+      assert.equal(requests.length, 3);
+      for (const request of requests)
+        assert.equal(
+          (request.params as { serviceTier: string }).serviceTier,
+          serviceTier,
+        );
+    } finally {
+      await state.cleanup();
+    }
+  });
+}

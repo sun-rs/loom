@@ -16,9 +16,18 @@ RuntimeFormV2Fields、RuntimeDisclosureToggle、RuntimeSelectControl、RuntimeEn
 
 复用 RuntimeLaunchEnvironmentSchema（名称、数量、容量、NUL 及保护键校验），运行边界再次解析。没有另外写全局配置，没有新增数据库表或迁移。高级环境变量不用于覆写 PATH、HOME、RAH_、LOOM_ 等受保护项。
 
-## 未完成
+## Fast 链路（本日后续批）
 
-Fast 不在本批完成范围内：Codex exec 适配器仍明确拒绝非默认档位，Claude 目录当前只发布 default。不能仅按 CLI 名字放出一个保存成功但启动无效的复选框。下一步需完成能力探测和启动参数验证，再由同一个官方 boolean 字段展示；不另造 Fast 控件。未进行付费 CLI 验收，不声称 Fast 或整套运行时功能完工。
+同一个官方 boolean 卡片显示快速模式；不另造开关。Host 读取原生模型能力，Role 保存 modelIntent.serviceTier，实例仍冻结原修订；修改 Role 不影响既有实例。
+
+- Codex 0.163.0 原生目录实际把 Fast 发布为 priority；也保留目录明确发布 fast 的兼容路径。普通 exec/resume 通过 service_tier 配置传入，app-server 冷/暖请求传入原生 serviceTier。关闭或未选时显式 default，不继承用户全局 Fast。
+- Claude 2.1.303 的无推理 initialize 返回 supportsFastMode；只有 true 的绑定提供 Fast。冷/暖进程通过 --settings 的 fastMode 布尔值设置，普通模式明确 false，不写用户配置文件。暖进程拒绝档位不同的后续 turn。
+- 不支持的绑定保存/启动拒绝；通用 argv 适配器缺少可执行档位映射时拒绝，不能静默忽略。该泛型路径不宣称支持 Claude Fast，正式 Claude 专用 driver 负责翻译。
+- 原生能力目录/配置解析探测没有发起模型请求。自动化使用隔离假 CLI 证明传参、同 session 恢复和保存链路；未做付费 Fast 推理，也不保证账户额度、实际提速或提供商最终应用档位。
+
+[Codex service_tier 配置](https://learn.chatgpt.com/docs/config-file/config-reference)；[Claude Fast 文档](https://code.claude.com/docs/en/fast-mode)。Claude 在不支持模型上开启 Fast 可能自动切换模型，因此必须以当前精确绑定的 supportsFastMode 为门槛，不能仅按 CLI 名字显示。
+
+浏览器发现官方表单 boolean 在当前固定组件依赖下引用了空 Field label，补充 aria-label={field.label}；此为非视觉兼容补丁，已记录 rui-v6-ports，未改变官方尺寸或重写控件。
 
 ## 定向证据
 

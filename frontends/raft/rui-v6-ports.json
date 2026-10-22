@@ -727,7 +727,8 @@
     },
     "packages/web/src/components/agent/RuntimeFormV2FieldControl.tsx": {
       "upstreamSha256": "e1a16ce973fd2c087b7c6345dc146c83ad7d10de22a73537a0909e6aa6265a59",
-      "portedSha256": "366419088185095fe6990495b4e1e0389785065bb6d8f6348dd6b5a58d35c8c2"
+      "portedSha256": "4b929ae7fc36654b20a149ed4372e897e3ea5f08aa3f0288acaa5a62679d93da",
+      "adoption": "Existing official field composition; add aria-label from the field label to boolean Checkbox because the pinned primitive otherwise binds an empty Field label. No geometry or styles changed. Verified by accessible-name pointer checks at 1440/390."
     },
     "packages/web/src/components/agent/AgentHostedRuntimeModel.tsx": {
       "upstreamSha256": "6f69fd18fd2d9f690bdb42343344119faf1b1630d0b5b8d370dce03514a4c4ec",

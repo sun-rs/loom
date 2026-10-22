@@ -233,6 +233,7 @@ try {
     ...codexWorkspaceRoots(process.cwd(), options.additionalDirectories),
     sandbox: "danger-full-access",
   };
+  threadStart.serviceTier = options.serviceTier ?? "default";
   if (options.model !== undefined) threadStart.model = options.model;
   if (options.reasoning !== undefined)
     threadStart.config.model_reasoning_effort = options.reasoning;
@@ -325,6 +326,7 @@ async function beginTurn(command) {
     threadId,
   };
   if (typeof command.model === "string") params.model = command.model;
+  params.serviceTier = command.serviceTier ?? options.serviceTier ?? "default";
   if (typeof command.effort === "string") params.effort = command.effort;
   let result;
   try {
@@ -882,6 +884,7 @@ function parseArguments(args) {
     else if (name === "--prompt") parsed.prompt = value;
     else if (name === "--prompt-file")
       parsed.prompt = readProviderPromptFile(value);
+    else if (name === "--service-tier") parsed.serviceTier = value;
     else if (name === "--model") parsed.model = value;
     else if (name === "--reasoning") parsed.reasoning = value;
     else if (name === "--resume-session") parsed.resumeSession = value;

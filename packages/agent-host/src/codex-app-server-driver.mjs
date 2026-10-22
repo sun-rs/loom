@@ -177,6 +177,7 @@ try {
     ...codexWorkspaceRoots(process.cwd(), options.additionalDirectories),
     sandbox: sandboxMode(options.toolAccessMode),
   };
+  threadStart.serviceTier = options.serviceTier ?? "default";
   if (options.model !== undefined) threadStart.model = options.model;
   if (options.reasoning !== undefined) {
     threadStart.config.model_reasoning_effort = options.reasoning;
@@ -251,6 +252,7 @@ try {
     ],
     threadId: activeThreadId,
   };
+  turnStart.serviceTier = options.serviceTier ?? "default";
   if (options.reasoning !== undefined) turnStart.effort = options.reasoning;
   startingTurn = true;
   const startedTurn = await request(
@@ -594,6 +596,7 @@ function parseArguments(args) {
     else if (name === "--prompt") parsed.prompt = value;
     else if (name === "--prompt-file")
       parsed.prompt = readProviderPromptFile(value);
+    else if (name === "--service-tier") parsed.serviceTier = value;
     else if (name === "--model") parsed.model = value;
     else if (name === "--reasoning") parsed.reasoning = value;
     else if (name === "--resume-session") parsed.resumeSession = value;

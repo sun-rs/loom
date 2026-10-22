@@ -157,7 +157,7 @@ export function RuntimeFormV2FieldControl({
           <Card variant="option" render={<label />}>
             <CardHeader>
               <CardLeading>
-                <Checkbox checked={value === true} disabled={connectionOwnedNow} onCheckedChange={handleCheckedChange} data-testid={testId} />
+                <Checkbox aria-label={field.label} checked={value === true} disabled={connectionOwnedNow} onCheckedChange={handleCheckedChange} data-testid={testId} />
               </CardLeading>
               <CardTitle>{field.label}</CardTitle>
               {field.hint && <CardDescription>{field.hint}</CardDescription>}

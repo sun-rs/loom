@@ -100,15 +100,18 @@ export function createCodexExecRuntime(
       "codex-exec/v1 requires an explicit model and reasoning binding",
     );
   if (resolvedModel?.source === "explicit_binding") {
-    // The placement owner treats "default" as absence of a tier override.
+    const binding = requireModelBinding(
+      probeReport,
+      resolvedModel.modelBindingId,
+    );
     if (
       resolvedModel.serviceTier !== undefined &&
-      resolvedModel.serviceTier !== "default"
+      !binding.supportedServiceTiers.includes(resolvedModel.serviceTier)
     )
       throw new Error(
-        "codex-exec/v1 service tier override is not yet verified",
+        "Codex model binding does not support service tier " +
+          resolvedModel.serviceTier,
       );
-    requireModelBinding(probeReport, resolvedModel.modelBindingId);
   }
   if (
     resolvedModel?.source === "custom_model" &&
@@ -153,6 +156,8 @@ export function createCodexExecRuntime(
       ...(manifest.adapter.fixedArgs[0] === undefined
         ? []
         : ["--prompt", manifest.adapter.fixedArgs[0]]),
+      "-c",
+      `service_tier=${JSON.stringify(resolvedModel?.source === "explicit_binding" ? (resolvedModel.serviceTier ?? "default") : "default")}`,
       ...(nativeFinalText ? ["--native-final-text"] : []),
     ],
     env: { ...manifest.staticEnv },

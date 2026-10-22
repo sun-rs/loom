@@ -498,3 +498,38 @@ process.stdout.write(JSON.stringify({ models: [{
     rmSync(cwd, { force: true, recursive: true });
   }
 });
+
+test("generic launch refuses a published tier without executable mapping", () => {
+  const [binding] = parseLocalModelCatalog(
+    "claude-cli/v1",
+    JSON.stringify({ models: [{ value: "opus", supportsFastMode: true }] }),
+  );
+  assert.throws(
+    () =>
+      resolveModelBindingArguments(binding!, {
+        source: "explicit_binding",
+        modelBindingId: binding!.modelBindingId,
+        modelId: binding!.modelId,
+        provider: binding!.provider,
+        serviceTier: "fast",
+      }),
+    /service tier.*mapping/i,
+  );
+});
+
+test("Claude Fast is advertised only when the native model explicitly supports it", () => {
+  const models = parseLocalModelCatalog(
+    "claude-cli/v1",
+    JSON.stringify({
+      models: [
+        { value: "opus", supportsFastMode: true },
+        { value: "sonnet" },
+        { value: "old-opus", supportsFastMode: false },
+      ],
+    }),
+  );
+  assert.deepEqual(
+    models.map((m) => m.supportedServiceTiers),
+    [["default", "fast"], ["default"], ["default"]],
+  );
+});

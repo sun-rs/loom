@@ -423,6 +423,21 @@ export class RuntimeImplementationRegistry {
     }
     validateMatchingProbeReport(revision, probeReport, true);
     if (
+      resolvedModel?.source === "explicit_binding" &&
+      resolvedModel.serviceTier &&
+      resolvedModel.serviceTier !== "default"
+    ) {
+      const binding = requireModelBinding(
+        probeReport,
+        resolvedModel.modelBindingId,
+      );
+      if (!binding.supportedServiceTiers.includes(resolvedModel.serviceTier))
+        throw new Error(
+          "Runtime model binding does not support service tier " +
+            resolvedModel.serviceTier,
+        );
+    }
+    if (
       resolvedModel?.source === "custom_model" &&
       customModelRuntime(revision) !== resolvedModel.runtime
     )
@@ -676,6 +691,12 @@ function createClaudeStreamJsonRuntime(
       args.push("--effort", resolvedModel.reasoning);
     }
   }
+  args.push(
+    "--service-tier",
+    resolvedModel?.source === "explicit_binding"
+      ? (resolvedModel.serviceTier ?? "default")
+      : "default",
+  );
   const systemMemory = new ProviderSystemMemory();
   const standingPromptDigests = createStandingPromptDigestLedger();
   const protocolUpgrade = new SessionProtocolUpgrade(providerSessionStore);
@@ -887,6 +908,12 @@ function createCodexAppServerRuntime(
       args.push("--reasoning", resolvedModel.reasoning);
     }
   }
+  args.push(
+    "--service-tier",
+    resolvedModel?.source === "explicit_binding"
+      ? (resolvedModel.serviceTier ?? "default")
+      : "default",
+  );
   const systemMemory = new ProviderSystemMemory();
   const standingPromptDigests = createStandingPromptDigestLedger();
   const protocolUpgrade = new SessionProtocolUpgrade(providerSessionStore);

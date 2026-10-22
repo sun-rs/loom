@@ -27,6 +27,14 @@ export default function RoleRuntimeFields({
   hideRuntime?: boolean;
 }) {
   const runtime = choices.find((r) => r.runtimeOfferId === form.runtimeOfferId);
+  const binding = runtime?.bindings.find(
+    (b) => b.modelBindingId === form.modelBindingId,
+  );
+  const fastTier = binding?.serviceTiers?.includes("fast")
+    ? "fast"
+    : binding?.serviceTiers?.includes("priority")
+      ? "priority"
+      : undefined;
   const schema: ParsedRuntimeFormV2 = {
     runtimeId: form.runtimeOfferId,
     schemaVersion: "loom-published-capabilities-v1",
@@ -70,6 +78,21 @@ export default function RoleRuntimeFields({
         advanced: false,
         visibleWhen: [],
       },
+      ...(fastTier ||
+      form.serviceTier === "fast" ||
+      form.serviceTier === "priority"
+        ? [
+            {
+              key: "fastMode",
+              kind: "boolean" as const,
+              label: "快速模式",
+              hint: "以更高的单 token 成本换取更快的速度启动此运行时。",
+              required: false,
+              advanced: false,
+              visibleWhen: [],
+            },
+          ]
+        : []),
       {
         key: "environment",
         kind: "string_map",
@@ -125,6 +148,7 @@ export default function RoleRuntimeFields({
     model: form.modelBindingId,
     effort: form.reasoning,
     environment: form.environment ?? {},
+    fastMode: form.serviceTier === "fast" || form.serviceTier === "priority",
   };
   return (
     <RuntimeFormV2Fields
@@ -143,6 +167,14 @@ export default function RoleRuntimeFields({
         );
         onChange({
           ...form,
+          serviceTier:
+            key === "runtime" || key === "model"
+              ? "default"
+              : key === "fastMode"
+                ? value === true
+                  ? (fastTier ?? form.serviceTier ?? "default")
+                  : "default"
+                : (form.serviceTier ?? "default"),
           environment:
             typeof next.environment === "object" && next.environment !== null
               ? next.environment

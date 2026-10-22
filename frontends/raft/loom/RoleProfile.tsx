@@ -216,6 +216,11 @@ export default function RoleProfile({
             </span>
           </InfoRow>
           <InfoRow label="推理强度">{form.reasoning || "默认／不适用"}</InfoRow>
+          <InfoRow label="模式">
+            {["fast", "priority"].includes(form.serviceTier ?? "")
+              ? "快速模式"
+              : "默认"}
+          </InfoRow>
         </DescriptionList>
       </section>
       {field === "runtimeOfferId" && (

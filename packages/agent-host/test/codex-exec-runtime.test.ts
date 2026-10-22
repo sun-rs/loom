@@ -48,9 +48,9 @@ test("ordinary Codex: two native finals publish once each, exec then resume same
       assert.equal(argv[0], "exec");
       assert.equal(argv.includes("app-server"), false);
       assert.equal(
-        argv.some((arg) => /service[_-]tier/u.test(arg)),
-        false,
-        "default service tier adds no CLI override",
+        argv.includes('service_tier="default"'),
+        true,
+        "default tier explicitly prevents inheriting a user's paid Fast setting",
       );
       assert.ok(argv.includes("--json"));
       assert.ok(argv.includes("--output-last-message"));
@@ -365,6 +365,9 @@ test("ordinary Codex: registry accepts its explicit profile without substituting
     );
     assert.equal(runtime.guideRuntimeId, "codex");
     assert.equal(runtime.busyInputSupported, false);
+    const standard = report.modelBindings.find(
+      (b) => b.modelId === "fake-standard-only",
+    )!;
     assert.throws(
       () =>
         implementations.createRuntime(
@@ -373,16 +376,16 @@ test("ordinary Codex: registry accepts its explicit profile without substituting
           { cwd: state.directory },
           {
             source: "explicit_binding",
-            modelBindingId: binding.modelBindingId,
-            provider: binding.provider,
-            modelId: binding.modelId,
+            modelBindingId: standard.modelBindingId,
+            provider: standard.provider,
+            modelId: standard.modelId,
             reasoning: "low",
             serviceTier: "priority",
           },
           "full_access",
         ),
-      /service tier.*not.*verified/i,
-      "unverified service tier must fail before launching rather than be silently ignored",
+      /does not support service tier/i,
+      "unadvertised service tier must fail before launching rather than be silently ignored",
     );
     let credentialsIssued = 0;
     let prepared = 0;
@@ -475,6 +478,42 @@ test("ordinary Codex: registry accepts its explicit profile without substituting
       0,
       "catalog probing never starts a model turn",
     );
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("ordinary Codex Fast uses advertised tier on initial and same-session resume", async () => {
+  const state = await codexExecHarness({ serviceTier: "fast" });
+  try {
+    for (let turn = 0; turn < 2; turn++) {
+      state.post(`fast fixture ${turn}`);
+      const result = await state.agentHost.reconcileOnce();
+      assert.equal(result.state, "completed", JSON.stringify(result));
+    }
+    const launches = state.records().filter((r) => r.event === "launch");
+    assert.equal(launches.length, 2);
+    assert.equal(new Set(launches.map((r) => r.session)).size, 1);
+    for (const launch of launches)
+      assert.ok((launch.args as string[]).includes('service_tier="fast"'));
+  } finally {
+    await state.cleanup();
+  }
+});
+
+test("ordinary Codex priority Fast uses advertised tier on initial and same-session resume", async () => {
+  const state = await codexExecHarness({ serviceTier: "priority" });
+  try {
+    for (let turn = 0; turn < 2; turn++) {
+      state.post(`fast fixture ${turn}`);
+      const result = await state.agentHost.reconcileOnce();
+      assert.equal(result.state, "completed", JSON.stringify(result));
+    }
+    const launches = state.records().filter((r) => r.event === "launch");
+    assert.equal(launches.length, 2);
+    assert.equal(new Set(launches.map((r) => r.session)).size, 1);
+    for (const launch of launches)
+      assert.ok((launch.args as string[]).includes('service_tier="priority"'));
   } finally {
     await state.cleanup();
   }

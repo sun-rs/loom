@@ -23,6 +23,13 @@ if (args[0] === "debug" && args[1] === "models") {
           visibility: "list",
           supported_in_api: true,
           supported_reasoning_levels: [{ effort: "low" }],
+          service_tiers: [{ id: "fast" }, { id: "priority" }],
+        },
+        {
+          slug: "fake-standard-only",
+          visibility: "list",
+          supported_in_api: true,
+          supported_reasoning_levels: [{ effort: "low" }],
           service_tiers: [],
         },
       ],

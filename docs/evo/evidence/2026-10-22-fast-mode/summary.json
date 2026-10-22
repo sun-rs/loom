@@ -1,0 +1,26 @@
+{
+  "scope": "Official runtime boolean field + capability-gated Fast launch/resume",
+  "source": "../../runtime-form-reuse.zh-CN.md",
+  "checks": {
+    "focusedBackendTests": 29,
+    "warmRuntimeTests": 4,
+    "uiContractTests": 8,
+    "sourceAndIntakeTests": 3,
+    "rootTypecheck": "passed",
+    "frontendTypecheck": "passed",
+    "productionBuild": "passed",
+    "isolatedBrowserWidths": [1440, 390],
+    "saveAndReopen": true,
+    "unsupportedModelClearsFast": true
+  },
+  "nativeNoInference": {
+    "codex": "0.163.0: bundled model catalog publishes priority with Fast label; default/priority config accepted without inference",
+    "claude": "2.1.303: initialize handshake publishes per-model supportsFastMode; no user message or model turn"
+  },
+  "limits": [
+    "No paid Fast model inference, entitlement or speed acceptance",
+    "Generic argv path without service-tier mapping rejects Fast; dedicated Claude native drivers translate it",
+    "Official renderer functions preserved, boolean accessible label is a recorded nonvisual compatibility patch",
+    "No physical mobile-device acceptance"
+  ]
+}

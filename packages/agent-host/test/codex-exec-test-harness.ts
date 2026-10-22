@@ -28,7 +28,7 @@ export async function codexExecHarness(
     nativeFinalText?: boolean;
     executable?: string;
     modelBindingId?: string;
-    serviceTier?: "default";
+    serviceTier?: "default" | "fast" | "priority";
     env?: Record<string, string>;
   } = {},
 ) {

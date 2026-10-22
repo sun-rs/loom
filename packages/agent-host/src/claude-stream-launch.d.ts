@@ -18,3 +18,5 @@ export function settleClaudeControlResponse(
     }
   >,
 ): void;
+
+export function claudeFastModeArguments(tier?: string): string[];

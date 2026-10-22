@@ -38,6 +38,18 @@ export async function verifyRoleCreation({ browser, origin }) {
       .fill("FIXTURE ONLY");
     await chooseOption(page, dialog, "运行时", 0);
     await chooseOption(page, dialog, "模型", 0);
+    await dialog.getByRole("checkbox", { name: /快速模式/ }).check();
+    await chooseOption(page, dialog, "模型", 1);
+    assert.equal(
+      await dialog.getByRole("checkbox", { name: /快速模式/ }).count(),
+      0,
+    );
+    await chooseOption(page, dialog, "模型", 0);
+    assert.equal(
+      await dialog.getByRole("checkbox", { name: /快速模式/ }).isChecked(),
+      false,
+    );
+    await dialog.getByRole("checkbox", { name: /快速模式/ }).check();
     await dialog.getByRole("button", { name: "高级", exact: true }).click();
     await dialog.getByRole("button", { name: /添加变量/ }).click();
     await dialog
@@ -46,10 +58,15 @@ export async function verifyRoleCreation({ browser, origin }) {
     await dialog
       .getByRole("textbox", { name: /EXAMPLE_ROLE_VALUE/ })
       .fill("fixture-only");
-    assert.equal(await dialog.getByRole("checkbox").isChecked(), false);
+    assert.equal(await dialog.getByRole("checkbox").last().isChecked(), false);
     const save = dialog.getByRole("button", { name: "保存角色", exact: true });
     await save.click();
     await dialog.waitFor({ state: "hidden" });
+    assert.equal(
+      writes.find((w) => w.path.endsWith("/create")).body.configuration
+        .modelIntent.serviceTier,
+      "priority",
+    );
     assert.deepEqual(
       writes.find((w) => w.path.endsWith("/create")).body.configuration
         .environment,
@@ -61,6 +78,24 @@ export async function verifyRoleCreation({ browser, origin }) {
     );
     assert.equal(writes.filter((w) => w.path.endsWith("/create")).length, 1);
     await page.goto(`${origin}/?view=agents`);
+    await page
+      .locator("[data-role-id]")
+      .filter({ hasText: `CreationFixture${width}` })
+      .click();
+    await page
+      .getByRole("button", { name: "编辑运行时配置", exact: true })
+      .click();
+    const runtimeDialog = page.getByTestId("agent-runtime-config-dialog");
+    assert.equal(
+      await runtimeDialog
+        .getByRole("checkbox", { name: /快速模式/ })
+        .isChecked(),
+      true,
+    );
+    await runtimeDialog
+      .getByRole("button", { name: "取消", exact: true })
+      .click();
+    await page.goto(`${origin}/?view=agents`);
     await page.getByRole("button", { name: "新建角色", exact: true }).click();
     await dialog.waitFor();
     await dialog
@@ -71,7 +106,7 @@ export async function verifyRoleCreation({ browser, origin }) {
       .fill("FIXTURE ONLY");
     await chooseOption(page, dialog, "运行时", 0);
     await chooseOption(page, dialog, "模型", 0);
-    await dialog.getByRole("checkbox").check();
+    await dialog.getByRole("checkbox").last().check();
     assert.equal(await save.isDisabled(), true);
     await chooseOption(page, dialog, "频道", 0);
     await save.click();
@@ -170,6 +205,8 @@ export async function verifyRoleCreation({ browser, origin }) {
       width,
       deletedSectionAndRestore: true,
       sharedDialog: true,
+      fastSavedAndReopened: true,
+      unsupportedModelClearsFast: true,
       randomName: true,
       defaultSaveOnly: true,
       separateChannelCreation: true,

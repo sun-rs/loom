@@ -1,3 +1,4 @@
+import { claudeFastModeArguments } from "./claude-stream-launch.js";
 import { withWorkerMcpGuidance } from "./worker-mcp-guidance.js";
 import { assertClaudeWorkerMcpReady } from "./claude-worker-mcp-ready.js";
 import { claudeConnectionEnvironment } from "./claude-connection-environment.js";
@@ -184,7 +185,10 @@ async function runTurn(resumeSession) {
   if (options.effort !== undefined) args.push("--effort", options.effort);
   if (resumeSession !== undefined) args.push("--resume", resumeSession);
   args.push(...claudeAttachedDirectoryArgs(options.additionalDirectories));
-  args.push(...options.providerArgs);
+  args.push(
+    ...options.providerArgs,
+    ...claudeFastModeArguments(options.serviceTier),
+  );
 
   const child = spawn(options.executable, args, {
     cwd: process.cwd(),
@@ -703,7 +707,8 @@ function parseArguments(args) {
     const flag = args[index];
     const value = args[index + 1];
     if (value === undefined) throw new Error(`missing value for ${flag}`);
-    if (flag === "--effort") parsed.effort = value;
+    if (flag === "--service-tier") parsed.serviceTier = value;
+    else if (flag === "--effort") parsed.effort = value;
     else if (flag === "--executable") parsed.executable = value;
     else if (flag === "--model") parsed.model = value;
     else if (flag === "--prompt") parsed.prompt = value;

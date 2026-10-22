@@ -373,7 +373,8 @@ function parseClaudeCatalog(serialized: string): RuntimeModelBinding[] {
         reasoningOptions,
         ...(description === undefined ? {} : { description }),
         ...(displayName === undefined ? {} : { displayName }),
-        serviceTiers: ["default"],
+        serviceTiers:
+          model.supportsFastMode === true ? ["default", "fast"] : ["default"],
       }),
     ];
   });
@@ -393,6 +394,13 @@ export function resolveModelBindingArguments(
     config.serviceTierArguments,
     "serviceTierArguments",
   );
+  if (
+    values.serviceTier &&
+    values.serviceTier !== "default" &&
+    !serviceTierArguments?.length
+  ) {
+    throw new Error("Runtime service tier has no executable argument mapping");
+  }
   return [
     ...expandArguments(modelArguments, values, "modelArguments"),
     ...(values.reasoning === undefined

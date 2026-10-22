@@ -606,7 +606,7 @@
       "sources": [
         "frontends/raft/upstream/published-2026-10-22/runtime-form/provenance.json"
       ],
-      "rule": "Create and edit share official fields, popup and advanced environment editor. Loom translates published Host bindings; no provider/account management or guessed capability. Role environment is revisioned and frozen per instance. Fast remains unavailable until its driver gate is completed.",
+      "rule": "Create and edit share official fields, popup and advanced environment editor. Loom translates published Host bindings; no provider/account management or guessed capability. Role environment is revisioned and frozen per instance. Fast uses the same official boolean field and only published model tiers (Codex priority/fast, Claude supportsFastMode). Explicit default disables inherited CLI Fast. Boolean accessible label is a documented nonvisual compatibility patch.",
       "evidence": [
         "scripts/official-web/runtime-fields-source.test.mjs",
         "scripts/official-web/role-create-browser.mjs",

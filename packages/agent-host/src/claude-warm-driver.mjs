@@ -1,3 +1,4 @@
+import { claudeFastModeArguments } from "./claude-stream-launch.js";
 import { claudeConnectionEnvironment } from "./claude-connection-environment.js";
 // S2-c1 warm Claude driver (S2 spec §2/§4, contract §6a): one long-lived
 // `claude -p --input-format stream-json --output-format stream-json
@@ -165,6 +166,7 @@ const args = [
   ...(resumed ? ["--resume", sessionId] : ["--session-id", sessionId]),
   ...claudeAttachedDirectoryArgs(options.additionalDirectories),
   ...options.providerArgs,
+  ...claudeFastModeArguments(options.serviceTier),
 ];
 const claude = spawn(options.executable, args, {
   cwd: process.cwd(),
@@ -231,9 +233,12 @@ function beginTurn(command) {
   // choice needs a new process (the Host restarts it at an idle boundary).
   if (
     (command.model !== undefined && command.model !== options.model) ||
-    (command.effort !== undefined && command.effort !== options.effort)
+    (command.effort !== undefined && command.effort !== options.effort) ||
+    (command.serviceTier ?? "default") !== (options.serviceTier ?? "default")
   )
-    return refuse("the turn's model or effort differs from this process");
+    return refuse(
+      "the turn's model, effort or service tier differs from this process",
+    );
   const turn = createTurn(runAttemptId, command.text);
   active = turn;
   if (!writeInput(turn, turn.wakeUuid, command.text, "wake")) {
@@ -920,6 +925,7 @@ function parseArguments(argv) {
       parsed.prompt = readProviderPromptFile(value);
     else if (name === "--final-output-mode" && value === "native-text")
       parsed.finalOutputMode = value;
+    else if (name === "--service-tier") parsed.serviceTier = value;
     else if (name === "--model") parsed.model = value;
     else if (name === "--effort" || name === "--reasoning")
       parsed.effort = value;

@@ -82,6 +82,10 @@ test("Claude custom native model ID reaches the CLI unchanged", async () => {
       "vendor/claude-special-v2",
     );
     assert.equal(spawn.args.includes("--effort"), false);
+    assert.deepEqual(
+      JSON.parse(spawn.args[spawn.args.lastIndexOf("--settings") + 1]),
+      { fastMode: false },
+    );
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }
@@ -361,6 +365,7 @@ test("Claude stream-json resumes only accepted sessions and interrupts natively"
         provider: binding!.provider,
         reasoning: "high",
         source: "explicit_binding",
+        serviceTier: "fast",
       },
       "full_access",
     );
@@ -451,6 +456,16 @@ test("Claude stream-json resumes only accepted sessions and interrupts natively"
       .trim()
       .split("\n")
       .map((line) => JSON.parse(line));
+    for (const record of records.filter((r) => r.kind === "spawn")) {
+      assert.deepEqual(
+        JSON.parse(record.args[record.args.lastIndexOf("--settings") + 1]),
+        { fastMode: true },
+      );
+      assert.equal(
+        record.args[record.args.indexOf("--model") + 1],
+        "claude-test",
+      );
+    }
     assert.equal(
       records.filter(
         (r) =>
@@ -709,7 +724,7 @@ if (args.includes("--input-format") && args.includes("stream-json") && !activati
   rl.on("line", (line) => {
     const frame = JSON.parse(line);
     if (frame.type === "control_request") process.stdout.write(JSON.stringify({
-      type:"control_response",response:{request_id:frame.request_id,subtype:"success",response:{models:[{value:"claude-test",displayName:"Claude Test",description:"test",supportsEffort:true,supportedEffortLevels:["low","high"]},{value:"haiku",displayName:"Haiku (fake)",description:"no effort levels",supportsEffort:false}]}}
+      type:"control_response",response:{request_id:frame.request_id,subtype:"success",response:{models:[{value:"claude-test",supportsFastMode:true,displayName:"Claude Test",description:"test",supportsEffort:true,supportedEffortLevels:["low","high"]},{value:"haiku",displayName:"Haiku (fake)",description:"no effort levels",supportsEffort:false}]}}
     }) + "\\n");
   });
 } else {
