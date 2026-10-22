@@ -1,0 +1,67 @@
+{
+  "productCommit": "751a058bf6a821288d33dcfcf9c8025b1d02dce4",
+  "upstreamSource": "db5e399f017d584e49597e3a28757645d6807893",
+  "implemented": [
+    "source-derived member strip, full-height roster, search/groups and staged multi-select picker",
+    "existing Role creation entry and authenticated per-instance add/remove",
+    "root draft preservation across member/add subpages",
+    "current member list fixes stale bootstrap-only membership projection",
+    "private box native back/close to durable parent channel after refresh"
+  ],
+  "verification": {
+    "sourceAndFocusedUnitTests": 10,
+    "uiContractTests": 8,
+    "loomTypecheck": "passed",
+    "productBuild": "passed",
+    "isolatedWebKit": [
+      "channel-settings 1440/390: draft roundtrip, lost-response exact add replay, current roster, removal cancel, existing metadata/mute/archive guards",
+      "private 1440/390: open/send exact replay, parent return after reload, unknown send preserved and removed-instance read-only history"
+    ],
+    "formal": [
+      {
+        "width": 1440,
+        "realPage": true,
+        "nativeMemberLevels": true,
+        "selectionCancelled": true,
+        "privateParentReturn": true,
+        "noLifecycleOrConfigurationWrites": true,
+        "noPageErrors": true
+      },
+      {
+        "width": 390,
+        "realPage": true,
+        "nativeMemberLevels": true,
+        "selectionCancelled": true,
+        "privateParentReturn": true,
+        "noLifecycleOrConfigurationWrites": true,
+        "noPageErrors": true
+      }
+    ],
+    "visualInspection": [
+      "members-390.png: full-height native content, groups and pinned add",
+      "add-390.png: scrollable candidates, pinned create and confirm",
+      "private-390.png: native back and close with preserved conversation"
+    ]
+  },
+  "deployment": {
+    "newPid": 1570,
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-member-flow-b7aaefee-fa9e-470e-be84-b917af03adcc",
+    "databases": 2,
+    "files": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true,
+    "schema": 90
+  },
+  "reproducedAndFixed": [
+    "member count did not change after successful add because RoomSession bootstrap snapshot is immutable; current membership now uses authenticated list and bounded on-demand identity snapshot",
+    "first native Drawer portal targeted Popup rather than Content, causing half-height blank space; DOM-parent assertion reproduced failure and native content slot fixed it"
+  ],
+  "limits": [
+    "No paid inference or real provider lifecycle mutation",
+    "Batch additions are per-instance atomic, not batch atomic; unknown/rejected stops remainder",
+    "No unsupported administrator controls or fabricated online badges",
+    "Channel-private conversation uses subordinate page navigation, not a new three-column container",
+    "Remaining settings preferences/actions, sender/message overflow and navigation reorder/collapse are not claimed complete"
+  ],
+  "localScreenshots": "/Users/sun/.loom/reviews/2026-10-22-member-flow"
+}

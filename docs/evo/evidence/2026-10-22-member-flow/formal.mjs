@@ -1,0 +1,31 @@
+import {webkit} from '/Users/sun/Code/repos/rah_os/node_modules/playwright/index.mjs';
+import {readFile,writeFile} from 'node:fs/promises';
+import assert from 'node:assert/strict';
+const root='/Users/sun/.loom/reviews/2026-10-22-member-flow',target=JSON.parse(await readFile(root+'/target.json','utf8'));
+const browser=await webkit.launch(),results=[];
+try{for(const width of [1440,390]){
+ const context=await browser.newContext({viewport:{width,height:844},isMobile:width===390,hasTouch:width===390}),page=await context.newPage(),errors=[],mutations=[];page.setDefaultTimeout(15000);
+ page.on('pageerror',e=>errors.push(e.message));page.on('request',r=>{if(/\/(revise|create|instantiate|reset|restore|manage|remove|delete|update)$/.test(new URL(r.url()).pathname))mutations.push(r.url());});
+ await page.goto('http://127.0.0.1:4176/?room='+target.channel);
+ await page.getByTestId('loom-channel-control-trigger').click();
+ const sheet=page.getByTestId('loom-channel-control-sheet');
+ await sheet.locator('[data-testid="channel-overflow-members-grid"][aria-busy="false"]').waitFor();
+ await page.screenshot({animations:"disabled",path:`${root}/root-${width}.png`});
+ await sheet.getByTestId('channel-overflow-members-entry').click();
+ const member=sheet.getByTestId('member-page');await member.getByTestId('member-page-search').waitFor();assert.ok((await member.boundingBox()).height>844*0.9);
+ assert.ok(Number(await member.getByTestId('member-page-count').textContent())>0);
+ await page.screenshot({animations:"disabled",path:`${root}/members-${width}.png`});
+ await member.getByTestId('member-page-add').click();
+ const candidates=member.locator('[data-testid^="add-candidate-agent-"]');await candidates.first().waitFor();
+ await candidates.first().click();assert.equal(await member.getByTestId('add-member-confirm').isEnabled(),true);
+ await page.screenshot({animations:"disabled",path:`${root}/add-${width}.png`});
+ await member.getByTestId('add-member-back').click();await member.getByTestId('member-page-back').click();
+ await sheet.getByRole('button',{name:'取消',exact:true}).click();await sheet.waitFor({state:'hidden'});
+ await page.goto('http://127.0.0.1:4176/?room='+target.privateRoom);
+ const back=page.getByRole('button',{name:width<768?'返回频道':'关闭频道内私聊',exact:true});await back.waitFor();
+ await page.screenshot({animations:"disabled",path:`${root}/private-${width}.png`});await back.click();
+ assert.equal(new URL(page.url()).searchParams.get('room'),target.channel);
+ assert.deepEqual(errors,[]);assert.deepEqual(mutations,[]);
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+ results.push({width,realPage:true,nativeMemberLevels:true,selectionCancelled:true,privateParentReturn:true,noLifecycleOrConfigurationWrites:true,noPageErrors:true});await context.close();
+}await writeFile(root+'/formal.json',JSON.stringify(results,null,2));console.log(JSON.stringify(results));}finally{await browser.close();}
