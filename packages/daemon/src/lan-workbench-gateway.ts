@@ -66,7 +66,8 @@ type PairingAttemptWindow = {
 };
 
 export class LanWorkbenchGateway {
-  readonly #accessStore: LanWorkbenchAccessStore;
+  readonly #accessStore: LanWorkbenchAccessStore | undefined;
+  readonly #trustedNetwork: boolean;
   readonly #serviceControl: WorkbenchServiceControl | undefined;
   readonly #accessToken: string;
   readonly #bindHost: string;
@@ -83,7 +84,8 @@ export class LanWorkbenchGateway {
   #connections = new Set<Duplex>();
 
   constructor(input: {
-    accessStore: LanWorkbenchAccessStore;
+    accessStore?: LanWorkbenchAccessStore;
+    browserAccess?: "paired" | "trusted-network";
     serviceControl?: WorkbenchServiceControl;
     accessToken: string;
     bindHost: string;
@@ -94,6 +96,22 @@ export class LanWorkbenchGateway {
     staticDirectory: string;
     tls: { certificate: Buffer; privateKey: Buffer };
   }) {
+    this.#trustedNetwork = input.browserAccess === "trusted-network";
+    if (!this.#trustedNetwork && !input.accessStore)
+      throw new Error("Paired LAN gateway requires an access store");
+    if (
+      this.#trustedNetwork &&
+      (isIP(input.bindHost) !== 4 ||
+        !(
+          input.bindHost === "127.0.0.1" ||
+          /^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(input.bindHost)
+        ) ||
+        input.publicHostname !== input.bindHost)
+    ) {
+      throw new Error(
+        "Trusted HTTPS requires an exact private IPv4 binding and matching hostname",
+      );
+    }
     if (input.accessToken.trim().length === 0) {
       throw new Error("LAN workbench Human access token is required");
     }
@@ -155,6 +173,8 @@ export class LanWorkbenchGateway {
   }
 
   issuePairingCode() {
+    if (this.#trustedNetwork || !this.#accessStore)
+      throw new Error("Pairing is disabled for trusted HTTPS");
     return this.#accessStore.issuePairingCode({ ttlMs: PAIRING_CODE_TTL_MS });
   }
 
@@ -248,8 +268,7 @@ export class LanWorkbenchGateway {
       return;
     }
     if (isApiPath(requestUrl.pathname)) {
-      const device = this.#authenticatedDevice(request.headers.cookie);
-      if (device === null) {
+      if (!this.#authorized(request.headers.cookie)) {
         sendText(response, 401, "LAN device pairing required");
         return;
       }
@@ -267,7 +286,7 @@ export class LanWorkbenchGateway {
     if (
       request.method === "GET" &&
       request.headers.accept?.includes("text/html") === true &&
-      this.#authenticatedDevice(request.headers.cookie) === null
+      !this.#authorized(request.headers.cookie)
     ) {
       redirect(response, "/_rah/pair");
       return;
@@ -288,7 +307,7 @@ export class LanWorkbenchGateway {
         request,
         response,
         this.#serviceControl,
-        () => this.#authenticatedDevice(request.headers.cookie) !== null,
+        () => this.#authorized(request.headers.cookie),
         request.headers.origin === this.origin,
       );
       return;
@@ -297,6 +316,20 @@ export class LanWorkbenchGateway {
       // Same answer as the loopback gateway, from one owner, so the LAN and
       // loopback entries can never report two different builds.
       sendJson(response, 200, workbenchHealthPayload());
+      return;
+    }
+    if (this.#trustedNetwork) {
+      if (requestUrl.pathname === "/_rah/pair" && request.method === "GET")
+        redirect(response, "/");
+      else if (
+        requestUrl.pathname === "/_rah/session" &&
+        request.method === "GET"
+      )
+        sendJson(response, 200, {
+          authenticated: true,
+          mode: "trusted-network",
+        });
+      else sendText(response, 404, "Gateway route was not found");
       return;
     }
     if (requestUrl.pathname === "/_rah/pair") {
@@ -323,7 +356,7 @@ export class LanWorkbenchGateway {
         return;
       }
       const pairing = await readPairingRequest(request);
-      const result = this.#accessStore.exchangePairingCode(
+      const result = this.#accessStore!.exchangePairingCode(
         pairing.code,
         pairing.deviceName,
       );
@@ -351,7 +384,7 @@ export class LanWorkbenchGateway {
       return;
     }
     if (requestUrl.pathname === "/_rah/devices" && request.method === "GET") {
-      sendJson(response, 200, { devices: this.#accessStore.listDevices() });
+      sendJson(response, 200, { devices: this.#accessStore!.listDevices() });
       return;
     }
     if (
@@ -376,7 +409,7 @@ export class LanWorkbenchGateway {
       }
       await consumeEmptyJsonObject(request);
       const deviceId = decodeURIComponent(revokeMatch[1]!);
-      if (!this.#accessStore.revokeDevice(deviceId)) {
+      if (!this.#accessStore!.revokeDevice(deviceId)) {
         sendText(response, 404, "LAN device was not found");
         return;
       }
@@ -390,11 +423,17 @@ export class LanWorkbenchGateway {
     sendText(response, 404, "Gateway route was not found");
   }
 
+  #authorized(cookieHeader: string | undefined) {
+    return (
+      this.#trustedNetwork || this.#authenticatedDevice(cookieHeader) !== null
+    );
+  }
+
   #authenticatedDevice(cookieHeader: string | undefined) {
     const token = cookieValue(cookieHeader, SESSION_COOKIE);
     return token === undefined
       ? null
-      : this.#accessStore.authenticateSession(token);
+      : (this.#accessStore?.authenticateSession(token) ?? null);
   }
 
   #hasExactMutationOrigin(request: IncomingMessage): boolean {

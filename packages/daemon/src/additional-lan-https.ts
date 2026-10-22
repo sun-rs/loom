@@ -2,7 +2,6 @@ import { readFileSync } from "node:fs";
 import { isIP } from "node:net";
 import { join } from "node:path";
 import { provisionLanCertificate } from "./lan-certificate-provisioning.ts";
-import { LanWorkbenchAccessStore } from "./lan-workbench-access-store.ts";
 import { LanWorkbenchGateway } from "./lan-workbench-gateway.ts";
 import type { WorkbenchServiceControl } from "./workbench-service-control.ts";
 
@@ -53,9 +52,7 @@ export async function startAdditionalLanHttps(input: {
     publicHostname: hostname,
   });
   const gateway = new LanWorkbenchGateway({
-    accessStore: new LanWorkbenchAccessStore({
-      path: join(input.workbenchHome, "state", "lan-access.json"),
-    }),
+    browserAccess: "trusted-network",
     accessToken: input.accessToken,
     daemonOrigin: input.daemonOrigin,
     staticDirectory: input.staticDirectory,
@@ -70,14 +67,11 @@ export async function startAdditionalLanHttps(input: {
   });
   try {
     await gateway.start();
-    const pairing = gateway.issuePairingCode();
     return {
       gateway,
       descriptor: {
         webOrigin: gateway.origin,
-        pairingUrl: `${gateway.origin}/_rah/pair`,
-        pairingCode: pairing.code,
-        pairingExpiresAt: pairing.expiresAt,
+        browserAccess: "trusted-network" as const,
         caCertificatePath: identity.caCertificatePath,
         certificateFingerprint256: identity.certificateFingerprint256,
       },

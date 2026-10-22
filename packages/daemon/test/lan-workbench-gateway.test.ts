@@ -139,6 +139,103 @@ test("the formal LAN gateway requires TLS pairing and keeps Human authority serv
 
   try {
     await gateway.start();
+    await t.test(
+      "explicit trusted HTTPS needs no cookie or pairing but retains host/origin fences",
+      async () => {
+        const trusted = new LanWorkbenchGateway({
+          browserAccess: "trusted-network",
+          accessToken: "server-only-human-token",
+          bindHost: "127.0.0.1",
+          publicHostname: "127.0.0.1",
+          port: 0,
+          daemonOrigin: upstreamOrigin,
+          staticDirectory,
+          tls: {
+            certificate: readFileSync(certificatePath),
+            privateKey: readFileSync(keyPath),
+          },
+        });
+        try {
+          await trusted.start();
+          const base = trusted.origin;
+          for (const host of ["0.0.0.0", "8.8.8.8"]) {
+            assert.throws(
+              () =>
+                new LanWorkbenchGateway({
+                  browserAccess: "trusted-network",
+                  accessToken: "fixture",
+                  bindHost: host,
+                  publicHostname: host,
+                  port: 0,
+                  daemonOrigin: upstreamOrigin,
+                  staticDirectory,
+                  tls: {
+                    certificate: readFileSync(certificatePath),
+                    privateKey: readFileSync(keyPath),
+                  },
+                }),
+              /exact private IPv4/,
+            );
+          }
+          const home = await secureRequest(base, "/", {
+            headers: { accept: "text/html" },
+          });
+          assert.equal(home.statusCode, 200);
+          assert.equal(home.headers["set-cookie"], undefined);
+          assert.match(home.body, /RAH OS/);
+          assert.equal(
+            (await secureRequest(base, "/v3/client/health")).statusCode,
+            200,
+          );
+          assert.equal(
+            (
+              await secureRequest(base, "/v3/client/health", {
+                method: "POST",
+                body: "{}",
+                headers: { origin: base },
+              })
+            ).statusCode,
+            200,
+          );
+          assert.equal(
+            observed.at(-1)?.authorization,
+            "Bearer server-only-human-token",
+          );
+          assert.equal(
+            (
+              await secureRequest(base, "/v3/client/health", {
+                method: "POST",
+                body: "{}",
+                headers: { origin: "https://foreign.invalid" },
+              })
+            ).statusCode,
+            403,
+          );
+          assert.equal(
+            (
+              await secureRequest(base, "/", {
+                headers: { host: "foreign.invalid" },
+              })
+            ).statusCode,
+            421,
+          );
+          const oldPair = await secureRequest(base, "/_rah/pair");
+          assert.equal(oldPair.statusCode, 303);
+          assert.equal(oldPair.headers.location, "/");
+          for (const path of ["/_rah/devices", "/_rah/pairing-codes"])
+            assert.equal((await secureRequest(base, path)).statusCode, 404);
+          assert.equal(
+            (await secureRequest(base, "/_rah/service")).statusCode,
+            200,
+          );
+          assert.throws(() => trusted.issuePairingCode(), /disabled/);
+        } finally {
+          await trusted.stop();
+          // The following paired-edge assertions use their own upstream request history.
+          observed.length = 0;
+        }
+      },
+    );
     const origin = gateway.origin;
     assert.match(origin, /^https:\/\/127\.0\.0\.1:\d+$/u);
 

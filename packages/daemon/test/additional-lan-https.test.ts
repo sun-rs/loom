@@ -11,16 +11,21 @@ import {
 import { LanWorkbenchGateway } from "../src/lan-workbench-gateway.ts";
 import { runningWorkbench } from "../src/local-core-workbench.ts";
 
-test("additional TLS edge uses the existing pairing gateway and closes a failed startup", async (t) => {
+test("additional TLS edge explicitly selects trusted access and closes a failed startup", async (t) => {
   const home = mkdtempSync(join(tmpdir(), "loom-additional-https-"));
   mkdirSync(join(home, "state"), { mode: 0o700 });
   mkdirSync(join(home, "dist"));
   writeFileSync(join(home, "dist", "index.html"), "fixture");
   let stops = 0;
   const refusal = new Error("fixture listener occupied");
-  t.mock.method(LanWorkbenchGateway.prototype, "start", async () => {
-    throw refusal;
-  });
+  t.mock.method(
+    LanWorkbenchGateway.prototype,
+    "start",
+    async function (this: LanWorkbenchGateway) {
+      assert.throws(() => this.issuePairingCode(), /disabled/);
+      throw refusal;
+    },
+  );
   t.mock.method(LanWorkbenchGateway.prototype, "stop", async () => {
     stops++;
   });
