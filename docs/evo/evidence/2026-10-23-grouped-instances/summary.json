@@ -1,0 +1,24 @@
+{
+  "implementation": "957e55d2",
+  "scope": "Role分组实例列表修正及计算机双创建入口",
+  "rootCause": "官方AvatarListRow的actionContent分支使用AvatarCardRow/SurfaceListItem，导致分组内独立卡片边框。此前组件名复用未证明组合对齐。",
+  "source": "pinned db5e399 AvatarListRow.tsx; raft-ui ListRowGroup/ListRow/Status; upstream remains unchanged",
+  "adoption": "本地薄组合InstanceListRow使用官方ListRow作为直接子行，正文按钮与操作菜单为兄弟，边框/缩进分隔线由官方recipe负责。Presence共享Kernel批量观察，不由enabled推断在线。",
+  "checks": {
+    "focusedTests": 9,
+    "uiContractTests": 8,
+    "typecheck": true,
+    "build": true,
+    "desktop": "正式数据E2E Codex审查员4实例：单外框/缩进分隔线/绿色状态/独立菜单；计算机新建实例弹窗包含角色及频道，未选择时禁用提交。",
+    "mobile": "Chrome390x844计算机页紧凑按钮正常换行；点击实例进入选择弹窗并取消。非真机。",
+    "creationMutation": "未创建正式实例，复用既有ManagementClient.instance；本批未运行付费CLI。"
+  },
+  "deployment": {
+    "pid": 20803,
+    "backupDatabases": 2,
+    "backupFiles": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true
+  },
+  "notification": "沿用此前Firefox推送服务接受1设备证据；本轮未重复发送。OS实际横幅及移动真机送达未确认。"
+}
