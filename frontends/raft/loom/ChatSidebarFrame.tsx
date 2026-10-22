@@ -1,17 +1,11 @@
 import SystemNotifications from "./SystemNotifications.tsx";
-// Current v1.21.22 Sidebar (sbt) composition; see page-adoption.json.
+// Locked db5e399 generated headers; retained v1.21.26 resource shell composition.
 // Native recipes own desktop/mobile header, typography and shell seams.
 // Upstream revision/license: ../adoption.json. Loom replaces the server switcher
 // with its single local Chat title; no unavailable account action is presented.
 import { useEffect, useState, type ReactNode } from "react";
-import {
-  SidebarRoot,
-  SidebarHeader,
-  SidebarHeaderTitle,
-  PanelSectionHeader,
-  PanelHeaderContent,
-  PanelTitle,
-} from "raft-ui";
+import { SidebarRoot } from "raft-ui";
+import { OfficialSidebarHeader } from "./OfficialIdentityFrames.generated";
 export default function ChatSidebarFrame({
   title,
   hideDesktopHeader = false,
@@ -42,27 +36,17 @@ export default function ChatSidebarFrame({
       className="relative flex h-full w-full flex-col font-sans text-foreground select-none"
       data-testid={`${testIdPrefix}-root`}
     >
-      {desktop ? (
-        !hideDesktopHeader && (
-          <SidebarHeader
-            data-testid={`${testIdPrefix}-header`}
-            data-loom-root-header
-          >
-            <SidebarHeaderTitle render={<h1 />} className="min-w-0 flex-1">
-              {title}
-            </SidebarHeaderTitle>
-          </SidebarHeader>
-        )
-      ) : (
-        <PanelSectionHeader
-          data-testid={`${testIdPrefix}-header`}
-          data-loom-root-header
-        >
-          <PanelHeaderContent>
-            <PanelTitle render={<h1 />}>{title}</PanelTitle>
-          </PanelHeaderContent>
-          {title === "聊天" && <SystemNotifications flavor="mobile-navbar" />}
-        </PanelSectionHeader>
+      {(!desktop || !hideDesktopHeader) && (
+        <OfficialSidebarHeader
+          desktop={desktop}
+          title={title}
+          testId={`${testIdPrefix}-header`}
+          trailing={
+            title === "聊天" ? (
+              <SystemNotifications flavor="mobile-navbar" />
+            ) : undefined
+          }
+        />
       )}
       <div
         className={`scrollbar-quiet min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-2 pb-2 mobile-nav-clearance ${hideDesktopHeader ? "pt-2" : "pt-1"}`}

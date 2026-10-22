@@ -83,8 +83,10 @@ test("member preview adopts current typography and native separator", () => {
 });
 test("shared sidebars and channel sections use native recipes instead of local sizes", () => {
   const s = read("loom/ChatSidebarFrame.tsx");
-  assert.match(s, /<SidebarHeaderTitle/);
-  assert.match(s, /<PanelSectionHeader/);
+  assert.match(s, /<OfficialSidebarHeader/);
+  const generated = read("loom/OfficialIdentityFrames.generated.tsx");
+  assert.match(generated, /<SidebarHeaderTitle/);
+  assert.match(generated, /<PanelSectionHeader/);
   assert.doesNotMatch(s, /theme=elegant|font-display|text-lg/);
   const c = read("loom/ChannelSidebar.tsx");
   for (const name of [

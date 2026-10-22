@@ -22,7 +22,17 @@ test("conversation and role tab strips retain official default selected recipe a
   for (const file of ["ChannelTabs.tsx", "RoleWorkspace.tsx"]) {
     const source = read("loom/" + file);
     assert.doesNotMatch(source, /variant="underline"/);
-    assert.match(source, /<ConversationPanelTabs/);
+    assert.match(
+      source,
+      file === "RoleWorkspace.tsx"
+        ? /<OfficialRoleTabs/
+        : /<ConversationPanelTabs/,
+    );
+    if (file === "RoleWorkspace.tsx")
+      assert.match(
+        read("loom/OfficialIdentityFrames.generated.tsx"),
+        /<ConversationPanelTabs/,
+      );
   }
 });
 test("single workspace identity uses native subhead typography without a disabled switcher", () => {

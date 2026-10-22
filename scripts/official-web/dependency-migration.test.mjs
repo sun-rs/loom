@@ -40,3 +40,30 @@ test("remaining presentation work is enumerated separately from permanent Loom b
       assert.ok(existsSync("frontends/raft/" + file), file);
   }
 });
+
+test("fixed-source migration closure accounts for all reviewed composition groups", () => {
+  const inventory = JSON.parse(
+    readFileSync("frontends/raft/loom/dependency-migration.json", "utf8"),
+  );
+  assert.equal(inventory.plannedMigrationComplete, true);
+  assert.deepEqual(inventory.openMigrationWork, []);
+  for (const id of [
+    "identity-master-detail",
+    "resource-only-shell",
+    "local-exclusive-compositions",
+  ]) {
+    const group = inventory.reviewedCompositionGroups.find((x) => x.id === id);
+    assert.ok(
+      group?.decision &&
+        Object.keys(group.bindings).length &&
+        group.evidence.length,
+    );
+    for (const file of Object.keys(group.bindings))
+      assert.ok(existsSync("frontends/raft/loom/" + file));
+  }
+  assert.equal(
+    inventory.wholeSiteDependencyComplete,
+    false,
+    "Closure does not claim zero local composition or arbitrary latest upstream parity",
+  );
+});

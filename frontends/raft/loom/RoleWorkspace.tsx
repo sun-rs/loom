@@ -1,3 +1,4 @@
+import { OfficialRoleTabs } from "./OfficialIdentityFrames.generated";
 import { OfficialRoleRow } from "./OfficialIdentityRows.generated";
 import RolePresence from "./RolePresence.tsx";
 import type { rolePresence } from "./role-presence.ts";
@@ -12,8 +13,6 @@ import {
   SidebarSectionCount,
   SidebarSectionControl,
   Input,
-  ConversationPanelTabs,
-  Tabs,
   TabsList,
   TabsTab,
   TabsLabel,
@@ -167,30 +166,26 @@ export default function RoleWorkspace({
             actions={actions}
           />
           {selected && (
-            <div className="min-w-0 max-w-full shrink-0">
-              <ConversationPanelTabs
-                render={<Tabs value={tab} onValueChange={onTab} />}
-              >
-                <TabsList aria-label="角色详情">
-                  <TabsTab
-                    disabled={busy}
-                    value="activity"
-                    className="!cursor-default"
-                  >
-                    <Activity />
-                    <TabsLabel>动态</TabsLabel>
-                  </TabsTab>
-                  <TabsTab
-                    disabled={busy}
-                    value="roles"
-                    className="!cursor-default"
-                  >
-                    <Bot />
-                    <TabsLabel>资料</TabsLabel>
-                  </TabsTab>
-                </TabsList>
-              </ConversationPanelTabs>
-            </div>
+            <OfficialRoleTabs value={tab} onValueChange={onTab}>
+              <TabsList aria-label="角色详情">
+                <TabsTab
+                  disabled={busy}
+                  value="activity"
+                  className="!cursor-default"
+                >
+                  <Activity />
+                  <TabsLabel>动态</TabsLabel>
+                </TabsTab>
+                <TabsTab
+                  disabled={busy}
+                  value="roles"
+                  className="!cursor-default"
+                >
+                  <Bot />
+                  <TabsLabel>资料</TabsLabel>
+                </TabsTab>
+              </TabsList>
+            </OfficialRoleTabs>
           )}
           <div
             className={`min-h-0 flex-1 overflow-y-auto ${selected ? "" : "px-5 py-5"}`}

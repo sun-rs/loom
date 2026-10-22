@@ -213,3 +213,9 @@ Role 行采用 db5e399 `MemberAgentRow` 的原 JSX，计算机行采用 `Sidebar
 本地专属页面按已有 scenario registry 复核：记忆/Side 的自定 14px X 改回官方 CloseButton 默认 16px；记忆主从分隔线使用原生 seam。其余保留本地语义：记忆修订及来源、Side 只读权限、实例生命期、Kernel 用量统计。资源型兼容组与本地专属组的审查范围、依据和保留原因写入 `reviewedCompositionGroups`，不将它们称作当前官方整页。
 
 剩余一组：Role/计算机的页面外框、共享侧栏标题及 tabs 组合。身份行本身已迁移；全站完成标志继续为 false，避免用局部审查替代所有前端逻辑验收。
+
+### 2026-10-22：固定版本迁移范围收口
+
+最后一组对照了 db5e399 的 `MainLayout` Sidebar slot/resize/主从容器、`Sidebar` 桌面与手机标题、`AgentDetailPanel` tabs 及 `MachineDetailPanel` 外壳。共享标题和 Role tabs 外壳现在由 `generate-identity-frames.mjs` 从不可变原件生成。保留的显式差异：单工作区手机聊天标题/通知槽；Role 的两个固定业务 tabs，不引入官方 Agent 的多标签排序；本地路由控制的 Role/实例 inspector 和计算机默认选择。侧栏尺寸、拖动与断点沿用已迁入的官方 bounds/resizer 和既有响应式策略，未另造一份状态。
+
+外层 MainLayout 不能整件导入：它拥有官方组织、云账户和 store 路由。Loom 的 AppShell slot 组合因此作为永久适配层保留，而不是继续列为待迁移。`plannedMigrationComplete=true` 表示本次固定版本、已登记范围的迁移及来源分类完成；`wholeSiteDependencyComplete=false` 明确保留“并非所有页面都是未经修改官方原件”的事实。这不是最新官网全站逐像素一致、任意升级可无验收替换的声明。后续升级按 source-lock 差异、生成器差异、构建依赖守卫及受影响场景验证推进，不继续为永久业务 owner 开迁移任务。

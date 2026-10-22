@@ -31,7 +31,8 @@ test("settings opens without forced input focus or a redundant corner close; dra
 });
 test("role tabs retain the current official conversation wrapper without a conflicting width override", () => {
   const page = read("RoleWorkspace.tsx");
-  assert.match(page, /ConversationPanelTabs/);
+  assert.match(page, /OfficialRoleTabs/);
+  assert.match(read("OfficialIdentityFrames.generated.tsx"), /ConversationPanelTabs/);
   assert.doesNotMatch(page, /<TabsList[^>]*className=/s);
 });
 

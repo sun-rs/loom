@@ -523,6 +523,14 @@
         "MemoryPage.tsx",
         "SideWorkspace.tsx"
       ]
+    },
+    {
+      "id": "identity-source-frames",
+      "owner": "db5e399 Sidebar / AgentDetailPanel generated presentation",
+      "rule": "Source-generated desktop/mobile titles and Role tab wrapper; Loom binds fixed Role tabs, single-workspace title and notification. MainLayout shell retains Loom route authority, official bounds and responsive primitives; no upstream store import.",
+      "sources": ["frontends/raft/loom/OfficialIdentityFrames.generated.tsx"],
+      "bindings": ["ChatSidebarFrame.tsx", "RoleWorkspace.tsx"],
+      "guard": "scripts/official-web/identity-frames.test.mjs"
     }
   ],
   "exceptions": [

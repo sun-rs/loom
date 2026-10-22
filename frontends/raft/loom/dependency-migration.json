@@ -291,28 +291,12 @@
     "Loom business state, access control and lifecycle remain local owners"
   ],
   "remainingBatchPlan": {
-    "estimate": "One composition review group remains (outer frames/sidebar header/tabs), not one control or a guaranteed one-turn estimate",
+    "estimate": "Fixed-source migration review completed; future upstream upgrades are separate scoped work",
     "fixedSource": "db5e399 / raft-ui 0.10.5; no automatic chase of newer releases",
-    "batches": [
-      {
-        "scope": "identity-master-detail",
-        "exit": "Row anatomy has migrated. Finish direct source comparison of retained Role/Computer master-detail outer frames, shared sidebar header and tabs; extract equivalent source or explicitly document data-independent compatibility. Preserve default profile, responsive navigation and state authority."
-      }
-    ],
+    "batches": [],
     "completionBoundary": "Immutable upstream presentation plus explicit Loom data/authority composition and approved exceptions; not zero local code or arbitrary future package replacement without acceptance"
   },
-  "openMigrationWork": [
-    {
-      "id": "identity-master-detail",
-      "files": [
-        "loom/RoleWorkspace.tsx",
-        "loom/ComputersPage.tsx",
-        "loom/ChatSidebarFrame.tsx"
-      ],
-      "sourceBoundary": "MemberAgentRow / MachineDetailPanel / Sidebar db5e399 plus retained v1.21.26 resource ports",
-      "acceptance": "Row anatomy has migrated. Finish direct source comparison of retained Role/Computer master-detail outer frames, shared sidebar header and tabs; extract equivalent source or explicitly document data-independent compatibility. Preserve default profile, responsive navigation and state authority."
-    }
-  ],
+  "openMigrationWork": [],
   "reviewedCompositionGroups": [
     {
       "id": "resource-only-shell",
@@ -345,6 +329,22 @@
         "branches-browser.mjs",
         "role-activity-browser.mjs"
       ]
+    },
+    {
+      "id": "identity-master-detail",
+      "decision": "Generated source headers and Role tab wrapper; retain explicit Loom route/authority shell composition, not untouched official pages",
+      "bindings": {
+        "ChatSidebarFrame.tsx": "db5e399 SidebarHeader / mobile non-chat PanelHeaderContent generated; single workspace chat title and notification slot, resource-era shell and one seam owner retained",
+        "RoleWorkspace.tsx": "AgentDetailPanel ConversationPanelTabs wrapper generated; two owner-requested fixed Role tabs omit native agent tab reorder. MainLayout AppShell slots, native panel bounds/resizer retained with Loom selected-role/inspector route",
+        "ComputersPage.tsx": "MainLayout AppShell slots and native panel bounds/resizer; MachineDetailPanel native header/profile/runtimes; mobile root list and selected host remain Loom route composition"
+      },
+      "evidence": [
+        "identity-frames.test.mjs",
+        "role-activity-browser.mjs",
+        "computers-browser.mjs",
+        "panel-policy-browser.mjs"
+      ]
     }
-  ]
+  ],
+  "plannedMigrationComplete": true
 }
