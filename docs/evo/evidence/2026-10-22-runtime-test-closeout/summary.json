@@ -1,0 +1,59 @@
+{
+  "scope": "Close retained role-activity browser failure; test changes only, no product-source changes",
+  "commit": "bdddd195d35bbbc8717a88fb595ffbdbf526ba9b",
+  "rootCauses": [
+    "Official required marker is part of accessible model name: 模型*",
+    "Official input combobox selected value is inputValue, not innerText",
+    "Official optional effort combobox remains searchable with empty source; correctness is cleared selection and no unsupported option, not disabled state"
+  ],
+  "officialSources": [
+    "frontends/raft/packages/web/src/components/agent/RuntimeFormV2FieldControl.tsx",
+    "frontends/raft/packages/web/src/components/agent/RuntimeChoiceCombobox.tsx"
+  ],
+  "verification": {
+    "fixtureCommand": "LOOM_BROWSER_SLICE=role-activity node scripts/official-web/channel-browser.mjs",
+    "fixtureWidths": [1440, 390],
+    "fixtureResult": "passed; aggregate activity, filter/pagination, combined model/effort, cancellation, action menus, instance timeline; two-instance stop/enable/reset at390",
+    "sourceTests": {
+      "command": "node --test scripts/official-web/runtime-fields-source.test.mjs",
+      "passed": 2
+    },
+    "build": "npm run build:official-web:channel passed",
+    "formalWebKit": [
+      {
+        "width": 1440,
+        "modelFieldNamed": true,
+        "effortFieldPresent": true,
+        "unchangedSaveDisabled": true,
+        "cancelCloses": true,
+        "noBusinessWrites": true
+      },
+      {
+        "width": 390,
+        "modelFieldNamed": true,
+        "effortFieldPresent": true,
+        "unchangedSaveDisabled": true,
+        "cancelCloses": true,
+        "noBusinessWrites": true
+      }
+    ],
+    "screenshotsReviewed": true,
+    "formalLimit": "Existing Smoke Codex role has historical runtime/model values absent from current catalog; official retained-value notices rendered. Read/cancel only, no real configuration mutation or CLI execution."
+  },
+  "deployment": {
+    "head": "bdddd195d35bbbc8717a88fb595ffbdbf526ba9b",
+    "newStaticDirectory": "/Users/sun/Code/repos/rah_os/.workbench-web/21c8404d826db7da8152baf9e669ab06f204c8ab63a74eafc6e6ed68d5ca99af",
+    "backupDatabases": 2,
+    "backupFiles": 325,
+    "unchangedBusinessTables": 20,
+    "pushStateUnchanged": true,
+    "verified": true
+  },
+  "localEvidence": "/Users/sun/.loom/reviews/2026-10-22-runtime-test-closeout",
+  "paidCalls": 0,
+  "historicalFailure": "../2026-10-22-shell-closeout/summary.json",
+  "limits": [
+    "No full-site parity claim",
+    "No paid-provider or efficiency acceptance"
+  ]
+}
