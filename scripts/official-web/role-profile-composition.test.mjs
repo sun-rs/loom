@@ -12,3 +12,12 @@ test("runtime modal and action controls regenerate from locked AgentDetailPanel"
   assert.doesNotMatch(read("RoleProfile.tsx"), /基本信息|>运行配置</);
   assert.match(read("AgentPage.tsx"), /RoleBatchDialog/);
 });
+test("role instance section shares computer list frame and section header with explicit create-instance action", () => {
+  const s = read("AgentPage.tsx");
+  assert.match(s, /<OfficialListRowGroup>/);
+  assert.match(s, /<OfficialAvatarListRow/);
+  assert.match(s, /actionContent=\{/);
+  assert.match(s, /<SectionHeader[\s\S]*?label="实例"/);
+  assert.match(s, /新建实例/);
+  assert.doesNotMatch(s, /ChannelMemberListShell|ChannelMemberRow/);
+});

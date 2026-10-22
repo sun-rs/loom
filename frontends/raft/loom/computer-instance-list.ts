@@ -1,5 +1,6 @@
 import type {
   AgentCatalogEntry,
+  AgentPresence,
   LocalRuntimeInventoryResponse,
   RoleListResponse,
 } from "@rah-os/protocol";
@@ -15,6 +16,7 @@ export function computerInstanceRows(
   runtimes: LocalRuntimeInventoryResponse["runtimes"],
   instances: RoleListResponse["instances"],
   agents: readonly AgentCatalogEntry[],
+  presences: readonly AgentPresence[] = [],
 ) {
   return computerInstances(runtimes, instances).map((instance) => {
     const agent = agents.find((a) => a.definition.agentId === instance.agentId);
@@ -28,6 +30,9 @@ export function computerInstanceRows(
     const model = runtime?.modelBindingDescriptors.find(
       (b) => b.modelBindingId === agent?.modelBindingId,
     );
+    const presence = presences.find((p) => p.agentId === instance.agentId);
+    const activity =
+      agent?.definition.state === "disabled" ? "offline" : presence?.activity;
     return {
       ...instance,
       name: agent?.currentRevision.displayName ?? instance.name,
@@ -39,12 +44,16 @@ export function computerInstanceRows(
           agent?.modelBindingId ??
           "模型未指定",
       ].join(" · "),
-      stateLabel:
-        agent?.definition.state === "disabled"
-          ? "已停止"
-          : agent?.definition.state === "enabled"
-            ? "已启用"
-            : "状态未知",
+      activity,
+      stateLabel: activity
+        ? {
+            online: "在线",
+            offline: "离线",
+            working: "工作中",
+            thinking: "思考中",
+            error: "异常",
+          }[activity]
+        : "状态未知",
     };
   });
 }

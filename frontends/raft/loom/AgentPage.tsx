@@ -34,9 +34,11 @@ import type { RahClient } from "@rah-os/client-sdk";
 import type { RoleTemplate } from "@rah-os/protocol";
 import type { IntentOutcome } from "@rah-os/client-core/write-intent";
 import {
-  ChannelMemberListShell,
-  ChannelMemberRow,
-} from "../packages/web/src/components/channel/ChannelMemberList.tsx";
+  OfficialListRowGroup,
+  OfficialAvatarListRow,
+} from "./OfficialListRows.tsx";
+import SectionHeader from "../packages/web/src/components/ui/SectionHeader.tsx";
+import AvatarSlot from "../packages/web/src/components/ui/AvatarSlot.tsx";
 import {
   ManagementClient,
   type Catalog,
@@ -448,25 +450,28 @@ export default function AgentPage({
                 className="px-5 py-4"
                 data-testid="role-profile-instances"
               >
-                <div className="flex items-center justify-between mb-3">
-                  <SectionEyebrow as="div">
-                    实例 {instances.length}
-                  </SectionEyebrow>
-                  {role && (
-                    <Button
-                      {...uiActionProps.menuIcon}
-                      disabled={busy}
-                      aria-label="添加实例到频道"
-                      onClick={() => guard(() => open({ kind: "add", role }))}
-                    >
-                      <Plus size={16} />
-                    </Button>
-                  )}
-                </div>
+                <SectionHeader
+                  label="实例"
+                  count={instances.length}
+                  className="mb-3"
+                  action={
+                    role && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={busy}
+                        onClick={() => guard(() => open({ kind: "add", role }))}
+                      >
+                        <Plus size={16} />
+                        新建实例
+                      </Button>
+                    )
+                  }
+                />
                 {!instances.length ? (
                   <p>此角色暂无实例</p>
                 ) : (
-                  <ChannelMemberListShell framed={false}>
+                  <OfficialListRowGroup>
                     {instances.map((instance) => {
                       const agent = catalog.agents.find(
                         (a) => a.definition.agentId === instance.agentId,
@@ -479,11 +484,17 @@ export default function AgentPage({
                         (r) => r.roomId === instance.channelId,
                       );
                       return (
-                        <ChannelMemberRow
+                        <OfficialAvatarListRow
                           key={instance.instanceId}
-                          type="agent"
+                          avatar={
+                            <AvatarSlot
+                              context="list-row"
+                              type="agent"
+                              agentAvatarUrl={agent?.currentRevision.avatarKey}
+                            />
+                          }
                           name={name}
-                          onRowClick={
+                          onClick={
                             room
                               ? () =>
                                   guard(() => {
@@ -493,8 +504,8 @@ export default function AgentPage({
                                   })
                               : undefined
                           }
-                          secondary={`${room?.name ?? "频道不可用"} · ${instance.isCurrent ? "配置为当前修订" : "保留旧配置"}`}
-                          trailing={
+                          subtitle={`${room?.name ?? "频道不可用"} · ${instance.isCurrent ? "配置为当前修订" : "保留旧配置"}`}
+                          actionContent={
                             <RuntimeControl
                               client={client}
                               controlRoomId={controlRoomId}
@@ -529,7 +540,7 @@ export default function AgentPage({
                         />
                       );
                     })}
-                  </ChannelMemberListShell>
+                  </OfficialListRowGroup>
                 )}
               </section>
               {role && (

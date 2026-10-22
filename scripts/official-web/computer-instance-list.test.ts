@@ -26,7 +26,7 @@ test("computer rows use instance model and identity, not the latest Role configu
   const rows = computerInstanceRows(runtimes, instances, agents);
   assert.equal(rows[0].name, "Frozen Tom-1");
   assert.equal(rows[0].subtitle, "Codex CLI · Model B");
-  assert.equal(rows[0].stateLabel, "已停止");
+  assert.equal(rows[0].stateLabel, "离线");
   agents[0].modelBindingId = "unknown";
   assert.equal(
     computerInstanceRows(runtimes, instances, agents)[0].subtitle,
@@ -38,4 +38,33 @@ test("computer list defaults to six and expands without losing order or identity
   assert.deepEqual(visibleComputerInstances(rows, false), rows.slice(0, 6));
   assert.deepEqual(visibleComputerInstances(rows, true), rows);
   assert.deepEqual(visibleComputerInstances([], false), []);
+});
+test("computer status reflects observed presence, never enabled configuration", () => {
+  const runtimes: any = [
+    {
+      agentBindings: [{ agentId: "a", participantId: "i", handle: "Tom" }],
+      modelBindingDescriptors: [],
+    },
+  ];
+  const instances: any = [{ instanceId: "i", agentId: "a", roleId: "r" }];
+  const agents: any = [
+    { definition: { agentId: "a", state: "enabled" }, currentRevision: {} },
+  ];
+  assert.equal(
+    computerInstanceRows(runtimes, instances, agents)[0].stateLabel,
+    "状态未知",
+  );
+  for (const [activity, label] of [
+    ["online", "在线"],
+    ["offline", "离线"],
+    ["working", "工作中"],
+    ["error", "异常"],
+  ]) {
+    assert.equal(
+      computerInstanceRows(runtimes, instances, agents, [
+        { agentId: "a", activity, reason: "online" },
+      ] as any)[0].stateLabel,
+      label,
+    );
+  }
 });

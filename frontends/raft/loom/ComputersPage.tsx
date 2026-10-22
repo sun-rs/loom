@@ -18,7 +18,11 @@ import Tooltip from "../packages/web/src/components/ui/Tooltip.tsx";
 import CreateRoleDialog from "./CreateRoleDialog.tsx";
 import ComputerSelection from "./ComputerSelection.tsx";
 import RoleBatchDialog, { type RoleBatchAction } from "./RoleBatchDialog.tsx";
-import type { RoleListResponse, AgentCatalogEntry } from "@rah-os/protocol";
+import type {
+  AgentPresence,
+  RoleListResponse,
+  AgentCatalogEntry,
+} from "@rah-os/protocol";
 import ComputerProfile from "./ComputerProfile.tsx";
 // Structural port: locked Raft v1.21.22 $yt / zCt / MachineDetailPanel.
 // Loom owns only the authenticated local inventory read; no upstream machine store.
@@ -68,6 +72,7 @@ export default function ComputersPage({
   onSelect: (id: string | null) => void;
   onSettings: () => void;
 }) {
+  const [presences, setPresences] = useState<AgentPresence[]>([]);
   const [creating, setCreating] = useState(false);
   const [selectedInstances, setSelectedInstances] = useState<string[] | null>(
     null,
@@ -125,8 +130,23 @@ export default function ComputersPage({
           setError(false);
           setNow(Date.now());
         }
+        if (controlRoomId) {
+          try {
+            const presence = await client.request(
+              "agent.presence.list",
+              { controlRoomId },
+              { signal: abort.signal },
+            );
+            if (!abort.signal.aborted) setPresences(presence.agents);
+          } catch {
+            if (!abort.signal.aborted) setPresences([]);
+          }
+        }
       } catch {
-        if (!abort.signal.aborted) setError(true);
+        if (!abort.signal.aborted) {
+          setError(true);
+          setPresences([]);
+        }
       } finally {
         if (!abort.signal.aborted) timer = setTimeout(read, 15000);
       }
@@ -138,7 +158,7 @@ export default function ComputersPage({
       clearTimeout(timer);
       clearInterval(clock);
     };
-  }, [client, reload]);
+  }, [client, reload, controlRoomId]);
   useEffect(() => {
     if (
       !selectedId &&
@@ -149,7 +169,7 @@ export default function ComputersPage({
   }, [selectedId, inventory?.hostId, onSelect]);
   const rows =
     inventory && instances
-      ? computerInstanceRows(inventory.runtimes, instances, agents)
+      ? computerInstanceRows(inventory.runtimes, instances, agents, presences)
       : [];
   const computer = inventory?.computer;
   const name = computer?.displayName ?? "Loom 主机";
