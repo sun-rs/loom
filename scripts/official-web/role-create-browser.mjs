@@ -38,10 +38,23 @@ export async function verifyRoleCreation({ browser, origin }) {
       .fill("FIXTURE ONLY");
     await chooseOption(page, dialog, "运行时", 0);
     await chooseOption(page, dialog, "模型", 0);
+    await dialog.getByRole("button", { name: "高级", exact: true }).click();
+    await dialog.getByRole("button", { name: /添加变量/ }).click();
+    await dialog
+      .getByRole("textbox", { name: "环境变量名", exact: true })
+      .fill("EXAMPLE_ROLE_VALUE");
+    await dialog
+      .getByRole("textbox", { name: /EXAMPLE_ROLE_VALUE/ })
+      .fill("fixture-only");
     assert.equal(await dialog.getByRole("checkbox").isChecked(), false);
     const save = dialog.getByRole("button", { name: "保存角色", exact: true });
     await save.click();
     await dialog.waitFor({ state: "hidden" });
+    assert.deepEqual(
+      writes.find((w) => w.path.endsWith("/create")).body.configuration
+        .environment,
+      { EXAMPLE_ROLE_VALUE: "fixture-only" },
+    );
     assert.equal(
       writes.filter((w) => w.path.endsWith("/instantiate")).length,
       0,

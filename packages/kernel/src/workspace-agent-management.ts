@@ -485,6 +485,9 @@ function configureAgent(
 
   const agentDefinitionRevisionId = owner.createId("agent_definition_revision");
   const revisionContent = {
+    ...(input.environment === undefined
+      ? {}
+      : { environment: input.environment }),
     ...(currentRevision.executionWorkspace === undefined
       ? {}
       : { executionWorkspace: currentRevision.executionWorkspace }),

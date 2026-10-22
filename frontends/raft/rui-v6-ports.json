@@ -670,9 +670,10 @@
     },
     "packages/web/src/components/agent/RuntimeConfigFields.tsx": {
       "upstreamSha256": "60385725c26fa9fdbc92d9dd318227395ab97ee7c399f2938e7dbce8ffaa1053",
-      "portedSha256": "cf394ae09fe1383c03c980a1f2e2f159581b5c64c68805854669ce38d6c832f9",
+      "portedSha256": "db4c565d165546271c63e9870b02e430331d8a087bc5f89e21b0403b45fa52ab",
       "sourceRelease": "Raft v1.21.26 / @botiverse/raft-ui 0.10.5",
-      "adoption": "Official responsive typography port, package alias update, or documented removed link/inline Button API migrated to native TextLink. No upstream hash rewriting."
+      "adoption": "Official responsive typography port, package alias update, or documented removed link/inline Button API migrated to native TextLink. No upstream hash rewriting.",
+      "runtimeFormUpdate": "Exact RuntimeFormV2Fields / RuntimeDisclosureToggle / RuntimeSelectControl / RuntimeEnvVarsField / RuntimeFormV2StringMapField from db5e399, raw evidence under upstream/published-2026-10-22/runtime-form"
     },
     "packages/web/src/components/agent/CreateAgentDialog.tsx": {
       "upstreamSha256": "659974e02182ce9cfa3a2fae67ed1bcb953fae5e20a549a398aad6a63bd677c7",

@@ -1,0 +1,8 @@
+{
+  "revision": "db5e399f017d584e49597e3a28757645d6807893",
+  "url": "https://github.com/botiverse/raft-source",
+  "source": "packages/web/src/components/agent/RuntimeConfigFields.tsx",
+  "sha256": "5606e3af7f633b8a550787b65aa4afa1e1f4bf65da5c833c74237e7fee6ea937",
+  "license": "FSL-1.1-ALv2",
+  "adoption": "Exact named function reuse; existing pinned component imports and package compatibility remain separate. Not whole-page/latest-site parity."
+}

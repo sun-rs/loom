@@ -63,6 +63,7 @@ export function runtimeChoices(
 }
 
 export type RoleForm = {
+  environment?: Record<string, string>;
   displayName: string;
   handle: string;
   instructions: string;
@@ -77,6 +78,7 @@ type RoleConfiguration = RoleCreateRequest["configuration"];
 /** The editable fields of an existing Role configuration (for role.revise). */
 export function roleFormFrom(configuration: RoleConfiguration): RoleForm {
   return {
+    environment: configuration.environment ?? {},
     displayName: configuration.displayName,
     handle: configuration.handle,
     instructions:
@@ -120,6 +122,7 @@ export function buildRoleConfiguration(
   }
   const parsed = RoleConfigurationSchema.safeParse({
     ...base,
+    environment: form.environment ?? base?.environment ?? {},
     displayName: form.displayName.trim(),
     handle: form.handle.trim(),
     instructions: form.instructions.trim(),

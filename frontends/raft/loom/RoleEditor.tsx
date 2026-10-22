@@ -1,5 +1,6 @@
 import { uiActionProps } from "./ui-action-props.ts";
 import { useDraftNavigation } from "./DraftNavigation.tsx";
+import RoleRuntimeFields from "./RoleRuntimeFields.tsx";
 import { Dices } from "lucide-react";
 import StableField from "../packages/web/src/components/agent/StableField.tsx";
 import { suggestAgentName } from "./role-suggested-name.ts";
@@ -7,7 +8,6 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Button, Input, Textarea, Spinner } from "raft-ui";
 import {
   roleFormFrom,
-  roleModelLabel,
   buildRoleConfiguration,
   runtimeChoices,
   type RoleForm,
@@ -97,7 +97,7 @@ export default function RoleEditor({
   const Field = creation ? StableField : FormField;
   return (
     <form
-      className={creation ? "space-y-1" : field ? "space-y-4" : undefined}
+      className="space-y-1"
       onSubmit={(e) => {
         e.preventDefault();
         if (disabled || submitDisabled || !choices) return;
@@ -113,16 +113,14 @@ export default function RoleEditor({
                   ...role.configuration,
                   runtimeOfferId: result.value.runtimeOfferId,
                   modelIntent: result.value.modelIntent,
+                  environment: result.value.environment,
                 }
               : result.value,
           );
         else setError(result.error);
       }}
     >
-      <fieldset
-        disabled={disabled}
-        className={creation ? "space-y-1" : field ? "space-y-4" : undefined}
-      >
+      <fieldset disabled={disabled} className="space-y-1">
         {creation && computerName && (
           <SelectField
             stable
@@ -188,61 +186,13 @@ export default function RoleEditor({
         {!choices && !error ? (
           <Spinner aria-label="读取 CLI 目录" />
         ) : (
-          <>
-            <div hidden={Boolean(field && field !== "runtimeOfferId")}>
-              <SelectField
-                stable={creation}
-                portalContainer={portalContainer}
-                label="运行时"
-                value={form.runtimeOfferId}
-                options={(choices ?? []).map((r) => ({
-                  value: r.runtimeOfferId,
-                  label: r.label.split("（")[0]!,
-                }))}
-                onChange={(value) =>
-                  setForm({
-                    ...form,
-                    runtimeOfferId: value,
-                    modelBindingId: "",
-                    reasoning: "",
-                  })
-                }
-              />
-            </div>
-            <div>
-              <SelectField
-                stable={creation}
-                portalContainer={portalContainer}
-                label="模型"
-                value={form.modelBindingId}
-                options={(runtime?.bindings ?? []).map((b) => ({
-                  value: b.modelBindingId,
-                  label: roleModelLabel(b, runtime?.bindings ?? []),
-                }))}
-                onChange={(value) =>
-                  setForm({
-                    ...form,
-                    modelBindingId: value,
-                    reasoning:
-                      runtime?.bindings.find((b) => b.modelBindingId === value)
-                        ?.reasoning[0] ?? "",
-                  })
-                }
-              />
-            </div>
-            <SelectField
-              stable={creation}
-              portalContainer={portalContainer}
-              label="推理强度"
-              value={form.reasoning}
-              options={(binding?.reasoning ?? []).map((value) => ({
-                value,
-                label: value,
-              }))}
-              disabled={!binding?.reasoning.length}
-              onChange={(value) => setForm({ ...form, reasoning: value })}
-            />
-          </>
+          <RoleRuntimeFields
+            form={form}
+            choices={choices ?? []}
+            onChange={setForm}
+            portalContainer={portalContainer}
+            hideRuntime={Boolean(field && field !== "runtimeOfferId")}
+          />
         )}
         {role && (
           <p className="mb-3 text-sm">

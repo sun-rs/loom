@@ -79,7 +79,10 @@ never installs them or configures their accounts.
 ## Role / Instance / Session / Channel
 
 - **Role** is configuration, not an entity: CLI + model + effort + prompt +
-  skills, with a stable Role ID. Every save creates an immutable Revision.
+  skills and optional launch environment, with a stable Role ID. Every save creates an immutable Revision.
+  Launch environment belongs to that revision and the frozen instance definition;
+  it must not write global runtime settings. Reuse RuntimeLaunchEnvironmentSchema
+  and preserve protected environment keys at both save and launch boundaries.
   Active names are unique within a workspace (case/NFKC normalized); renaming
   preserves the ID and deletion/recreation gives a new ID. Deleting configuration
   retains existing instances and snapshots. Human restoration (owner 2026-10-22)

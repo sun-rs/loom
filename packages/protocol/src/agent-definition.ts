@@ -1,3 +1,4 @@
+import { RuntimeLaunchEnvironmentSchema } from "./runtime-guide-settings.ts";
 import { z } from "zod";
 import {
   ChannelAttachedDirectoriesSchema,
@@ -105,6 +106,7 @@ export type HostExecutionWorkspaceBinding = z.infer<
 
 export const AgentDefinitionRevisionSchema = z
   .object({
+    environment: RuntimeLaunchEnvironmentSchema.optional(),
     executionWorkspace: AgentExecutionWorkspaceSchema.optional(),
     agentDefinitionRevisionId: IdentifierSchema,
     agentId: IdentifierSchema,

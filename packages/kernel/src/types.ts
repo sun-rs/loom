@@ -142,6 +142,7 @@ export type AgentDefinitionRecord = {
 };
 
 export type WorkspaceAgentProvisionInput = {
+  environment?: AgentDefinitionRevision["environment"];
   executionWorkspace?: AgentDefinitionRevision["executionWorkspace"];
   avatarKey?: string;
   basedOnRoomSeq: number;

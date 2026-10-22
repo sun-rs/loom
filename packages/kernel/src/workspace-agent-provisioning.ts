@@ -5,6 +5,7 @@ import { allocateRecreatedAgentHandle } from "./message-reference-identity.ts";
 import type { DatabaseSync } from "node:sqlite";
 
 import {
+  RuntimeLaunchEnvironmentSchema,
   AgentCatalogEntrySchema,
   AgentExecutionWorkspaceSchema,
   AgentDefinitionRevisionSchema,
@@ -308,6 +309,9 @@ export function provisionWorkspaceAgentTransaction(
   });
 
   const definitionContent: AgentDefinitionContent = {
+    ...(normalized.environment === undefined
+      ? {}
+      : { environment: normalized.environment }),
     ...(executionWorkspace === undefined ? {} : { executionWorkspace }),
     avatarKey:
       normalized.avatarKey ??
@@ -428,6 +432,11 @@ export function normalizeAgentDefinitionContent(
   input: AgentDefinitionContent,
 ): AgentDefinitionContent {
   return {
+    ...(input.environment === undefined
+      ? {}
+      : {
+          environment: RuntimeLaunchEnvironmentSchema.parse(input.environment),
+        }),
     ...(input.avatarKey === undefined ? {} : { avatarKey: input.avatarKey }),
     ...(input.description === undefined
       ? {}
@@ -651,6 +660,11 @@ function normalizeWorkspaceAgentProvisionInput(
     throw new Error("avatarKey must not exceed 128 characters");
   }
   return {
+    ...(input.environment === undefined
+      ? {}
+      : {
+          environment: RuntimeLaunchEnvironmentSchema.parse(input.environment),
+        }),
     ...(input.executionWorkspace === undefined
       ? {}
       : {

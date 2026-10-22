@@ -1,3 +1,4 @@
+import { RuntimeLaunchEnvironmentSchema } from "./runtime-guide-settings.ts";
 import { z } from "zod";
 import { IdentifierSchema } from "./common.ts";
 import { AgentExecutionWorkspaceSchema } from "./agent-definition.ts";
@@ -7,6 +8,7 @@ import {
 } from "./execution-policy.ts";
 export const ClientAgentProvisionRequestSchema = z
   .object({
+    environment: RuntimeLaunchEnvironmentSchema.optional(),
     executionWorkspace: AgentExecutionWorkspaceSchema.optional(),
     avatarKey: IdentifierSchema.optional(),
     basedOnRoomSeq: z.number().int().nonnegative(),

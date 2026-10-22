@@ -18,6 +18,7 @@ test("explicit restart adopts a selected Role revision atomically and keeps iden
         ...f.role.configuration,
         displayName: "审查 Jerry",
         instructions: "new prompt",
+        environment: { ROLE_ENV_TEST: "new snapshot" },
       },
     }).role;
     const before = readAgentDefinition(f.db, f.agentId);
@@ -36,6 +37,9 @@ test("explicit restart adopts a selected Role revision atomically and keeps iden
     const result = f.kernel.roles.resetInstanceSession(f.actor, input);
     const after = readAgentDefinition(f.db, f.agentId);
     assert.equal(after.currentRevision.instructions, "new prompt");
+    assert.deepEqual(after.currentRevision.environment, {
+      ROLE_ENV_TEST: "new snapshot",
+    });
     assert.equal(after.currentRevision.displayName, "审查 Jerry-1");
     assert.equal(after.definition.participantId, f.instance.instanceId);
     assert.equal(result.sessionGeneration, 2);

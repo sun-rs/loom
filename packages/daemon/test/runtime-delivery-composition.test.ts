@@ -178,6 +178,7 @@ for (const mode of ["direct", "gated", undefined] as const) {
             participantId: agent.principal.principalId,
             handle: "delivery-agent",
             agentDefinitionRevision: {
+              environment: { AGENT_ENV_FIXTURE: "role-snapshot" },
               agentId: "definition-delivery",
               agentDefinitionRevisionId: "revision-delivery",
               contentDigest: `sha256:${"1".repeat(64)}`,
@@ -205,7 +206,7 @@ for (const mode of ["direct", "gated", undefined] as const) {
               ["-e", "process.stdout.write(process.env.AGENT_ENV_FIXTURE)"],
               { env: lease.env, encoding: "utf8" },
             ),
-            "definition-delivery",
+            "role-snapshot",
           );
           assert.deepEqual(
             JSON.parse(lease.env?.RAH_PROVIDER_LAUNCH_ARGS_JSON ?? "{}")

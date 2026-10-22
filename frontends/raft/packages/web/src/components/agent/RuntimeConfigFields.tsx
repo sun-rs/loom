@@ -1,3 +1,4 @@
+import SectionEyebrow from "@loom/raft-web-source/SectionEyebrow";
 import { TextLink as OfficialTextLink } from "raft-ui";
 import { ChevronDown, ChevronRight, Info, Pencil, RefreshCw } from "lucide-react";
 import type { ChangeEvent, RefObject, ReactNode } from "react";
@@ -329,11 +330,9 @@ export function RuntimeSelectControl({
   );
   return (
     <Select
-      // `chrome` lives on the Select ROOT and reaches the popup through context,
-      // so the trigger and its options share one contract. Restating metrics as
-      // classes on the trigger (the old FIELD_METRIC_* constants) could not do
-      // that — it hardcoded 16px, which is brutal's token, so elegant silently
-      // rendered at the wrong size.
+      // `chrome` lives on the Select ROOT and reaches the portal popup through
+      // context, so the trigger and its options share the field type contract.
+      // Never restate field metrics as classes on the trigger or the popup.
       chrome="field"
       value={value}
       onValueChange={handleValueChange}
@@ -716,7 +715,7 @@ export function RuntimeEnvVarsField({
   }, [entries, onChange]);
   return (
     <Field label={formatMessage({ id: "agent.runtimeConfig.envVars" })} optional={optional} adopt={false}>
-      {hint && <p className="mb-2 -mt-1 text-xs text-foreground-muted">{hint}</p>}
+      {hint && <p className="mb-2 -mt-1 text-caption text-foreground-hint">{hint}</p>}
       <div className="space-y-2">
         {entries.map((entry, index) => (
           <RuntimeEnvVarRow
@@ -1539,6 +1538,25 @@ export default function RuntimeConfigFields({
  * visibility, validation) live in @botiverse/raft-runtime-form so mobile follows
  * the same ones.
  */
+export function RuntimeDisclosureToggle({ open, onOpenChange, children }: {
+  open: boolean;
+  onOpenChange?: (open: boolean) => void;
+  children: ReactNode;
+}) {
+  const handleClick = useCallback(() => onOpenChange?.(!open), [onOpenChange, open]);
+  return (
+    <SectionEyebrow
+      as="button"
+      onClick={handleClick}
+      aria-expanded={open}
+      className="flex items-center gap-2 rounded-control outline-none hover:text-foreground focus-visible:shadow-focus"
+    >
+      {open ? <ChevronDown size={14} aria-hidden="true" /> : <ChevronRight size={14} aria-hidden="true" />}
+      {children}
+    </SectionEyebrow>
+  );
+}
+
 export function RuntimeFormV2Fields({
   form,
   sources,
@@ -1638,17 +1656,11 @@ export function RuntimeFormV2Fields({
       {main.map(renderField)}
       {advanced.length > 0 && (
         <div>
-          <button
-            type="button"
-            onClick={() => setAdvancedOpen(!advancedOpen)}
-            aria-expanded={advancedOpen}
-            className="flex items-center gap-1 text-sm font-bold uppercase tracking-wide text-foreground-muted hover:text-foreground-strong"
-          >
-            {advancedOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+          <RuntimeDisclosureToggle open={advancedOpen} onOpenChange={setAdvancedOpen}>
             {formatMessage({ id: "agent.runtimeConfig.advanced" })}
-          </button>
+          </RuntimeDisclosureToggle>
           {advancedOpen && (
-            <div className="mt-3 border-l border-line-muted   pl-3">
+            <div className="mt-3 space-y-3 border-l border-line-hairline pl-3">
               {advanced.map(renderField)}
             </div>
           )}

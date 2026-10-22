@@ -598,6 +598,21 @@
         "RoleEditor.tsx"
       ],
       "guard": "scripts/official-web/published-panel-bounds.test.mjs"
+    },
+    {
+      "id": "role-runtime-form",
+      "owner": "Official RuntimeFormV2Fields and @botiverse/raft-runtime-form state transitions",
+      "bindings": ["RoleRuntimeFields.tsx", "RoleEditor.tsx"],
+      "sources": [
+        "frontends/raft/upstream/published-2026-10-22/runtime-form/provenance.json"
+      ],
+      "rule": "Create and edit share official fields, popup and advanced environment editor. Loom translates published Host bindings; no provider/account management or guessed capability. Role environment is revisioned and frozen per instance. Fast remains unavailable until its driver gate is completed.",
+      "evidence": [
+        "scripts/official-web/runtime-fields-source.test.mjs",
+        "scripts/official-web/role-create-browser.mjs",
+        "packages/kernel/test/role-runtime-environment.test.ts",
+        "packages/daemon/test/runtime-delivery-composition.test.ts"
+      ]
     }
   ],
   "exceptions": [

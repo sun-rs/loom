@@ -1,6 +1,10 @@
 // Exercise the official popup with real pointer actions, including portalled menus.
 export async function chooseOption(page, scope, label, choice) {
-  await scope.getByRole("combobox", { name: label, exact: true }).click();
+  await scope
+    .getByRole("combobox", {
+      name: new RegExp("^" + RegExp.escape(label) + "\\s*\\*?$"),
+    })
+    .click();
   const options = page.getByRole("listbox").getByRole("option");
   await (
     typeof choice === "number"

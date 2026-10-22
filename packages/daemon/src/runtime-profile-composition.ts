@@ -1,5 +1,8 @@
 import { withRuntimeExecutionWorkspace } from "@rah-os/agent-host";
-import type { RuntimeRecoveryDescriptor } from "@rah-os/protocol";
+import {
+  RuntimeLaunchEnvironmentSchema,
+  type RuntimeRecoveryDescriptor,
+} from "@rah-os/protocol";
 import { join } from "node:path";
 
 import {
@@ -175,10 +178,18 @@ export function createConfiguredRuntime(input: {
         runtimeId ?? "unknown",
         scope.agent?.agentDefinitionRevision.agentId,
       ) ?? {};
+    const roleEnvironment = RuntimeLaunchEnvironmentSchema.parse(
+      scope.agent?.agentDefinitionRevision.environment ?? {},
+    );
     const secretLease = await input.credentialEnvironment.resolve();
     const leases: ActivationEnvironmentLease[] = [
       secretLease,
-      { env: launchEnv },
+      {
+        env: {
+          ...launchEnv,
+          ...roleEnvironment,
+        },
+      },
     ];
     try {
       if (scope.agent !== undefined) {
