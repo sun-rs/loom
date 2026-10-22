@@ -8,5 +8,6 @@ test("computer instance disclosure belongs to the bordered instance group", () =
     source.indexOf("</OfficialListRowGroup>"),
   );
   assert.match(group, /<ShowMoreToggle/);
+  assert.match(group, /border-line-hairline/);
   assert.match(group, /aria-expanded=\{expanded\}/);
 });

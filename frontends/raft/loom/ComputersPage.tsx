@@ -464,7 +464,7 @@ export default function ComputersPage({
                     ))}
                     {selectedInstances === null &&
                       rows.length > COMPUTER_INSTANCE_PREVIEW_COUNT && (
-                        <div className="border-t border-line-subtle px-4 py-3 text-center">
+                        <div className="border-t border-line-hairline px-4 py-3 text-center">
                           <ShowMoreToggle
                             expanded={expanded}
                             aria-expanded={expanded}
