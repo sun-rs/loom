@@ -115,6 +115,8 @@ export async function verifyRoleActivity({ browser, origin, client, role }) {
           .getByRole("button", { name: "角色列表", exact: true })
           .click();
       const roleRow = page.locator(`[data-role-id="${role.roleId}"]`);
+      await roleRow.scrollIntoViewIfNeeded();
+      await roleRow.click({ trial: true });
       const rowHit = await roleRow.evaluate((el) => {
         const r = el.getBoundingClientRect(),
           top = document.elementFromPoint(
@@ -170,39 +172,129 @@ export async function verifyRoleActivity({ browser, origin, client, role }) {
         0,
       );
       await profile
-        .getByRole("button", { name: "编辑模型与推理强度", exact: true })
+        .getByRole("button", { name: "编辑运行时配置", exact: true })
         .click();
-      await profile
+      const runtimeDialog = page.getByTestId("agent-runtime-config-dialog");
+      await runtimeDialog
         .getByRole("combobox", { name: "模型", exact: true })
         .waitFor();
-      await profile
+      await page.screenshot({ path: `/tmp/loom-runtime-dialog-${width}.png` });
+      await runtimeDialog
         .getByRole("combobox", { name: "推理强度", exact: true })
         .waitFor();
-      await profile
+      await runtimeDialog
         .getByRole("combobox", { name: "模型", exact: true })
         .click();
       await page
         .getByRole("option", { name: "FIXTURE high model", exact: true })
         .click();
       assert.match(
-        await profile
+        await runtimeDialog
           .getByRole("combobox", { name: "推理强度", exact: true })
           .innerText(),
         /high/,
       );
-      await profile
+      await runtimeDialog
         .getByRole("combobox", { name: "模型", exact: true })
         .click();
       await page
         .getByRole("option", { name: "FIXTURE no effort model", exact: true })
         .click();
       assert.equal(
-        await profile
+        await runtimeDialog
           .getByRole("combobox", { name: "推理强度", exact: true })
           .isDisabled(),
         true,
       );
-      await profile.getByRole("button", { name: "取消", exact: true }).click();
+      await runtimeDialog
+        .getByRole("button", { name: "取消", exact: true })
+        .click();
+      await page.getByRole("button", { name: "放弃修改", exact: true }).click();
+      await runtimeDialog.waitFor({ state: "hidden" });
+      const actions = page.getByTestId("role-profile-actions");
+      for (const label of [
+        "添加实例到频道",
+        "停止所有实例",
+        "启用所有实例",
+        "重启／重置所有实例",
+        "删除角色",
+      ]) {
+        const button = actions.getByRole("button", {
+          name: label,
+          exact: true,
+        });
+        assert.equal(await button.locator("svg").count(), 1);
+      }
+      await actions
+        .getByRole("button", { name: "停止所有实例", exact: true })
+        .click();
+      const confirm = page.locator(
+        '[role="dialog"][data-slot="dialog-content"]',
+      );
+      await confirm
+        .getByText(
+          `本次操作 ${members.length} 个实例。遇到拒绝或结果未知即停止；已成功的操作不会回滚。`,
+        )
+        .waitFor();
+      await confirm.getByRole("button", { name: "取消", exact: true }).click();
+      await actions
+        .getByRole("button", { name: "重启／重置所有实例", exact: true })
+        .click();
+      await confirm
+        .getByRole("combobox", { name: "重启配置", exact: true })
+        .waitFor();
+      await confirm.getByRole("button", { name: "取消", exact: true }).click();
+      await actions
+        .getByRole("button", { name: "删除角色", exact: true })
+        .click();
+      await confirm
+        .getByRole("button", { name: "确认删除角色", exact: true })
+        .waitFor();
+      await confirm.getByRole("button", { name: "取消", exact: true }).click();
+      assert.equal(
+        await page
+          .getByTestId("role-profile-instances")
+          .getByRole("button", { name: "添加实例到频道", exact: true })
+          .count(),
+        1,
+      );
+      if (width === 390) {
+        for (const label of [
+          "停止所有实例",
+          "启用所有实例",
+          "重启／重置所有实例",
+        ]) {
+          await actions
+            .getByRole("button", { name: label, exact: true })
+            .click();
+          await confirm
+            .getByRole("button", { name: label, exact: true })
+            .click();
+          await confirm
+            .locator("li")
+            .filter({ hasText: "已完成" })
+            .nth(members.length - 1)
+            .waitFor();
+          assert.equal(
+            await confirm.locator("li").filter({ hasText: "已完成" }).count(),
+            members.length,
+          );
+          await confirm
+            .getByRole("button", { name: "取消", exact: true })
+            .click();
+        }
+        const after = (
+          await client.request("agent.list", {
+            controlRoomId: role.controlRoomId,
+          })
+        ).agents;
+        for (const member of members)
+          assert.equal(
+            after.find((a) => a.definition.agentId === member.agentId)
+              .definition.state,
+            "enabled",
+          );
+      }
       inspectLong = true;
       await page
         .getByTestId("role-profile-instances")
@@ -251,6 +343,9 @@ export async function verifyRoleActivity({ browser, origin, client, role }) {
         scopeFiltered: true,
         singleFilterAndPagination: true,
         combinedModelEditor: true,
+        actionIconsAndConfirmCancel: true,
+        batchStopEnableReset:
+          width === 390 ? "passed on two fixture instances" : "not-run",
         instancesInProfile: true,
         sharedInstanceTimeline: true,
         expansionAndPagination: true,

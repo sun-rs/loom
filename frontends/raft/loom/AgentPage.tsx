@@ -1,9 +1,21 @@
+import RoleBatchDialog, { type RoleBatchAction } from "./RoleBatchDialog.tsx";
+import { OfficialRoleAction } from "./OfficialRoleControls.generated";
+import ConfirmDialog from "../packages/web/src/components/ConfirmDialog.tsx";
 import RoleActivity from "./RoleActivity.tsx";
 import SectionEyebrow from "@loom/raft-web-source/SectionEyebrow";
 import RoleProfile from "./RoleProfile.tsx";
 import InstanceInspector from "./InstanceInspector.tsx";
 import StandaloneChatDialog from "./StandaloneChatDialog.tsx";
-import { MessageSquare } from "lucide-react";
+import {
+  MessageSquare,
+  Plus,
+  Square,
+  Play,
+  RotateCcw,
+  Trash2,
+  LogIn,
+  UserMinus,
+} from "lucide-react";
 import { useRolePresence } from "./RolePresence.tsx";
 import { rolePresence } from "./role-presence.ts";
 import { uiActionProps } from "./ui-action-props.ts";
@@ -104,6 +116,11 @@ export default function AgentPage({
   };
   const [standalone, setStandalone] = useState<RoleTemplate>();
   const [edit, setEdit] = useState<Edit>();
+  const [batch, setBatch] = useState<{
+    action: RoleBatchAction;
+    role: RoleTemplate;
+    instances: (Instance & { name: string })[];
+  }>();
   const [channel, setChannel] = useState("");
   const [revision, setRevision] = useState("keep");
   const request = useRef(0);
@@ -194,6 +211,54 @@ export default function AgentPage({
     catalog?.instances.filter((instance) => instance.roleId === selected?.id) ??
     [];
 
+  const roleActions = role
+    ? [
+        {
+          label: "添加实例到频道",
+          icon: <Plus size={14} />,
+          run: () => guard(() => open({ kind: "add", role })),
+        },
+        {
+          label: "停止所有实例",
+          icon: <Square size={14} />,
+          run: () => startBatch("stop"),
+          disabled: !instances.length,
+        },
+        {
+          label: "启用所有实例",
+          icon: <Play size={14} />,
+          run: () => startBatch("enable"),
+          disabled: !instances.length,
+        },
+        {
+          label: "重启／重置所有实例",
+          icon: <RotateCcw size={14} />,
+          run: () => startBatch("restart"),
+          disabled: !instances.length,
+        },
+        {
+          label: "删除角色",
+          icon: <Trash2 size={14} />,
+          danger: true,
+          run: () => guard(() => open({ kind: "delete", role })),
+        },
+      ]
+    : [];
+  function startBatch(action: RoleBatchAction) {
+    if (!role || busy) return;
+    guard(() =>
+      setBatch({
+        action,
+        role,
+        instances: instances.map((i) => ({
+          ...i,
+          name:
+            catalog?.agents.find((a) => a.definition.agentId === i.agentId)
+              ?.currentRevision.displayName ?? "实例",
+        })),
+      }),
+    );
+  }
   return (
     <AppShellMainSlot
       className={active ? "bg-layer-canvas " : "hidden"}
@@ -236,9 +301,14 @@ export default function AgentPage({
               backLabel="返回实例列表"
               onClose={closeInspector}
               controlItems={[
-                { label: "打开频道", run: () => onOpenChannel(i.channelId) },
+                {
+                  label: "打开频道",
+                  icon: <LogIn size={14} />,
+                  run: () => onOpenChannel(i.channelId),
+                },
                 {
                   label: "重启实例",
+                  icon: <RotateCcw size={14} />,
                   run: () =>
                     open({
                       kind: "restart",
@@ -276,16 +346,7 @@ export default function AgentPage({
               <ActionMenu
                 label={`更多操作 ${roleName(role)}`}
                 disabled={busy}
-                items={[
-                  {
-                    label: "添加实例到频道",
-                    run: () => open({ kind: "add", role }),
-                  },
-                  {
-                    label: "删除角色",
-                    run: () => open({ kind: "delete", role }),
-                  },
-                ]}
+                items={roleActions}
               />
             </>
           )
@@ -345,9 +406,21 @@ export default function AgentPage({
                 className="px-5 py-4"
                 data-testid="role-profile-instances"
               >
-                <SectionEyebrow as="div" className="mb-3">
-                  实例 {instances.length}
-                </SectionEyebrow>
+                <div className="flex items-center justify-between mb-3">
+                  <SectionEyebrow as="div">
+                    实例 {instances.length}
+                  </SectionEyebrow>
+                  {role && (
+                    <Button
+                      {...uiActionProps.menuIcon}
+                      disabled={busy}
+                      aria-label="添加实例到频道"
+                      onClick={() => guard(() => open({ kind: "add", role }))}
+                    >
+                      <Plus size={16} />
+                    </Button>
+                  )}
+                </div>
                 {!instances.length ? (
                   <p>此角色暂无实例</p>
                 ) : (
@@ -393,15 +466,18 @@ export default function AgentPage({
                               items={[
                                 {
                                   label: "打开频道",
+                                  icon: <LogIn size={14} />,
                                   run: () => onOpenChannel(instance.channelId),
                                 },
                                 {
                                   label: "重启实例",
+                                  icon: <RotateCcw size={14} />,
                                   run: () =>
                                     open({ kind: "restart", instance, name }),
                                 },
                                 {
                                   label: "移除实例",
+                                  icon: <UserMinus size={14} />,
                                   run: () =>
                                     open({ kind: "remove", instance, name }),
                                 },
@@ -414,24 +490,80 @@ export default function AgentPage({
                   </ChannelMemberListShell>
                 )}
               </section>
+              {role && (
+                <>
+                  <Separator />
+                  <section
+                    className="px-5 py-4"
+                    data-testid="role-profile-actions"
+                  >
+                    <SectionEyebrow as="div" className="mb-3">
+                      操作
+                    </SectionEyebrow>
+                    <div className="space-y-2">
+                      {roleActions.map((item) => (
+                        <OfficialRoleAction
+                          key={item.label}
+                          onClick={item.run}
+                          disabled={busy || item.disabled}
+                          danger={item.danger}
+                        >
+                          {item.icon}
+                          {item.label}
+                        </OfficialRoleAction>
+                      ))}
+                    </div>
+                  </section>
+                </>
+              )}
             </div>
           </>
         )}
       </RoleWorkspace>
-      {edit && (
+      {batch && (
+        <RoleBatchDialog
+          client={client}
+          workspaceId={workspaceId}
+          controlRoomId={controlRoomId}
+          {...batch}
+          onClose={() => setBatch(undefined)}
+          onChanged={() => void refresh()}
+        />
+      )}
+      {edit?.kind === "delete" && (
+        <ConfirmDialog
+          title="删除角色"
+          confirmLabel="确认删除角色"
+          confirmVariant="danger"
+          closeOnConfirm={false}
+          confirmDisabled={busy}
+          onClose={() => {
+            if (!busy) setEdit(undefined);
+          }}
+          message={
+            <>
+              <p>
+                删除“{roleName(edit.role)}
+                ”的角色定义？已有实例、配置快照与历史保留。以后重建同名角色属于新身份。
+              </p>
+              <OperationStatus manager={manager} error={error} />
+            </>
+          }
+          onConfirm={() => manager.deleteRole(edit.role, done).then(() => {})}
+        />
+      )}
+      {edit && edit.kind !== "delete" && (
         <ActionDialog
           title={
             edit.kind === "create"
               ? "新建角色"
               : edit.kind === "edit"
                 ? "编辑角色"
-                : edit.kind === "delete"
-                  ? "删除角色"
-                  : edit.kind === "add"
-                    ? "添加实例到频道"
-                    : edit.kind === "restart"
-                      ? "重启实例"
-                      : "移除实例"
+                : edit.kind === "add"
+                  ? "添加实例到频道"
+                  : edit.kind === "restart"
+                    ? "重启实例"
+                    : "移除实例"
           }
           manager={manager}
           error={error}
@@ -452,20 +584,6 @@ export default function AgentPage({
                 )
               }
             />
-          ) : edit.kind === "delete" ? (
-            <>
-              <p className="mb-4">
-                删除“{roleName(edit.role)}
-                ”的角色定义？已有实例、配置快照与历史保留。以后重建同名角色属于新身份。
-              </p>
-              <Button
-                {...uiActionProps.confirmDelete}
-                disabled={busy}
-                onClick={() => void manager.deleteRole(edit.role, done)}
-              >
-                确认删除角色
-              </Button>
-            </>
           ) : edit.kind === "add" ? (
             <>
               <SelectField

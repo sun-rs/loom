@@ -1,3 +1,6 @@
+import { OfficialRuntimeDialog } from "./OfficialRoleControls.generated";
+import RoleEditor from "./RoleEditor.tsx";
+import ConfirmDialog from "../packages/web/src/components/ConfirmDialog.tsx";
 import {
   OfficialRoleHero,
   OfficialRoleIdentity,
@@ -38,6 +41,9 @@ export default function RoleProfile({
   onSave: (configuration: RoleCreateRequest["configuration"]) => void;
   onDirtyChange: (dirty: boolean) => void;
 }) {
+  const runtimeContainer = useRef<HTMLDivElement | null>(null);
+  const [runtimeDirty, setRuntimeDirty] = useState(false);
+  const [discardRuntime, setDiscardRuntime] = useState(false);
   const [field, setField] = useState<RoleField>();
   const nameAction = useRef<HTMLDivElement | null>(null);
   const trigger = useRef<HTMLButtonElement | null>(null);
@@ -78,31 +84,6 @@ export default function RoleProfile({
     (b) => b.modelBindingId === form.modelBindingId,
   );
   const { formatShortDateTime } = useTimeFormatter();
-  const facts: Array<{
-    field: RoleField;
-    label: string;
-    value: React.ReactNode;
-  }> = [
-    {
-      field: "runtimeOfferId",
-      label: "CLI",
-      value: runtime?.displayName ?? (loading ? "读取中…" : "当前配置不可用"),
-    },
-    {
-      field: "modelBindingId",
-      label: "模型与推理强度",
-      value: (
-        <>
-          {(model?.displayName ?? model?.modelId ?? form.modelBindingId) ||
-            "未指定"}
-          <span className="text-foreground-hint">
-            {" "}
-            · 推理强度：{form.reasoning || "不适用／默认"}
-          </span>
-        </>
-      ),
-    },
-  ];
   const editor = (current: RoleField) => (
     <RoleFieldEditor
       key={current}
@@ -183,11 +164,10 @@ export default function RoleProfile({
       {(field === "avatarKey" || field === "displayName") && (
         <div className="px-5 pb-4">{editor(field)}</div>
       )}
-      <Separator />
       <section data-testid="role-profile-prompt" className="px-5 py-3">
         <div className="flex items-center gap-2 mb-1">
-          <SectionEyebrow as="div">角色 Prompt</SectionEyebrow>
-          {editAction("instructions", "角色 Prompt")}
+          <SectionEyebrow as="div">描述</SectionEyebrow>
+          {editAction("instructions", "描述")}
         </div>
         {field === "instructions" ? (
           editor(field)
@@ -202,35 +182,84 @@ export default function RoleProfile({
       <Separator />
       <section className="px-5 py-4">
         <SectionEyebrow as="div" className="mb-3">
-          基本信息
+          信息
         </SectionEyebrow>
         <DescriptionList direction="horizontal">
           <InfoRow label="创建时间">
             {formatShortDateTime(role.createdAt)}
           </InfoRow>
+          <InfoRow label="修改时间">
+            {role.updatedAt ? formatShortDateTime(role.updatedAt) : "未记录"}
+          </InfoRow>
         </DescriptionList>
       </section>
       <Separator />
       <section data-testid="role-profile-runtime" className="px-5 py-4">
-        <SectionEyebrow as="div" className="mb-3">
-          运行配置
-        </SectionEyebrow>
+        <div className="flex items-center gap-2 mb-3">
+          <SectionEyebrow as="div">运行时配置</SectionEyebrow>
+          {editAction("runtimeOfferId", "运行时配置")}
+        </div>
         <DescriptionList direction="horizontal">
-          {facts.map(({ field: current, label, value }) => (
-            <InfoRow
-              key={current}
-              label={label}
-              actions={editAction(current, label)}
+          <InfoRow label="运行时">
+            <Badge
+              appearance="soft"
+              variant="information"
+              className={RUNTIME_CHIP_CLASS}
             >
-              {field === current ? (
-                <div className="w-full">{editor(current)}</div>
-              ) : (
-                value
-              )}
-            </InfoRow>
-          ))}
+              {runtime?.displayName ?? (loading ? "读取中…" : "当前配置不可用")}
+            </Badge>
+          </InfoRow>
+          <InfoRow label="模型">
+            <span className="min-w-0 break-all font-mono">
+              {(model?.displayName ?? model?.modelId ?? form.modelBindingId) ||
+                "未指定"}
+            </span>
+          </InfoRow>
+          <InfoRow label="推理强度">{form.reasoning || "默认／不适用"}</InfoRow>
         </DescriptionList>
       </section>
+      {field === "runtimeOfferId" && (
+        <OfficialRuntimeDialog
+          containerRef={runtimeContainer}
+          onClose={() => {
+            if (!disabled) {
+              if (runtimeDirty) setDiscardRuntime(true);
+              else cancel();
+            }
+          }}
+        >
+          <RoleEditor
+            client={client}
+            role={role}
+            field="runtimeOfferId"
+            portalContainer={runtimeContainer}
+            disabled={disabled}
+            onSave={onSave}
+            onDirtyChange={(value) => {
+              setRuntimeDirty(value);
+              onDirtyChange(value);
+            }}
+            onCancel={() => (runtimeDirty ? setDiscardRuntime(true) : cancel())}
+            onNavigationDiscard={cancel}
+          />
+        </OfficialRuntimeDialog>
+      )}
+      {discardRuntime && (
+        <ConfirmDialog
+          layer={2}
+          title="尚未保存的修改"
+          message="离开将放弃尚未保存的修改。"
+          confirmLabel="放弃修改"
+          cancelLabel="继续编辑"
+          confirmVariant="danger"
+          onClose={() => setDiscardRuntime(false)}
+          onConfirm={() => {
+            setDiscardRuntime(false);
+            setRuntimeDirty(false);
+            cancel();
+          }}
+        />
+      )}
     </div>
   );
 }

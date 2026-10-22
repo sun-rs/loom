@@ -44,7 +44,12 @@ export function ActionMenu({
 }: {
   label: string;
   disabled?: boolean;
-  items: { label: string; run: () => void; disabled?: boolean }[];
+  items: {
+    label: string;
+    run: () => void;
+    disabled?: boolean;
+    icon?: ReactNode;
+  }[];
 }) {
   return (
     <DropdownMenu>
@@ -66,6 +71,7 @@ export function ActionMenu({
             disabled={item.disabled}
             onClick={item.run}
           >
+            {item.icon}
             {item.label}
           </DropdownMenuItem>
         ))}
@@ -145,11 +151,13 @@ export function SelectField({
   onChange,
   options,
   disabled = false,
+  portalContainer,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   options: { value: string; label: string }[];
+  portalContainer?: React.RefObject<HTMLElement | null>;
   disabled?: boolean;
 }) {
   const unavailable =
@@ -172,7 +180,11 @@ export function SelectField({
           />
           <SelectIcon />
         </FieldSelectTrigger>
-        <SelectContent>
+        <SelectContent
+          portalProps={
+            portalContainer ? { container: portalContainer } : undefined
+          }
+        >
           <SelectList>
             {options.map((option) => (
               <SelectItem key={option.value} value={option.value}>

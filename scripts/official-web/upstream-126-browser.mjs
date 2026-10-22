@@ -15,18 +15,39 @@ export async function verifyUpstream126({ browser, origin, role, client }) {
     try {
       await page.goto(`${origin}/?view=agents&role=${role.roleId}`);
       const profile = page.getByTestId("loom-role-profile");
-      await page.getByRole("tab", {name:"资料",exact:true}).click();
+      await page.getByRole("tab", { name: "资料", exact: true }).click();
       await profile.waitFor();
       await page.getByRole("tab", { name: "资料", exact: true }).waitFor();
-      const avatarBounds = await profile.getByRole("button", {name:"更换头像",exact:true}).boundingBox();
-      const identity = await profile.getByTestId("role-profile-identity").boundingBox();
-      assert.ok(identity.x >= avatarBounds.x + avatarBounds.width, "name and identity stay beside the avatar");
-      assert.ok(Math.abs(identity.y - avatarBounds.y) < 8, "hero aligns at the top");
-      assert.equal(await profile.locator('[data-slot="separator"]').count(), 3);
-      assert.equal(await profile.getByTestId("role-profile-runtime").getByText("运行配置",{exact:true}).count(),1);
-      await profile.getByRole("button", {name:"编辑显示名称",exact:true}).click();
-      await profile.getByRole("button", {name:"取消",exact:true}).click();
-      await page.waitForFunction(() => document.activeElement?.getAttribute("aria-label") === "编辑显示名称");
+      const avatarBounds = await profile
+        .getByRole("button", { name: "更换头像", exact: true })
+        .boundingBox();
+      const identity = await profile
+        .getByTestId("role-profile-identity")
+        .boundingBox();
+      assert.ok(
+        identity.x >= avatarBounds.x + avatarBounds.width,
+        "name and identity stay beside the avatar",
+      );
+      assert.ok(
+        Math.abs(identity.y - avatarBounds.y) < 8,
+        "hero aligns at the top",
+      );
+      assert.equal(await profile.locator('[data-slot="separator"]').count(), 2);
+      assert.equal(
+        await profile
+          .getByTestId("role-profile-runtime")
+          .getByText("运行时配置", { exact: true })
+          .count(),
+        1,
+      );
+      await profile
+        .getByRole("button", { name: "编辑显示名称", exact: true })
+        .click();
+      await profile.getByRole("button", { name: "取消", exact: true }).click();
+      await page.waitForFunction(
+        () =>
+          document.activeElement?.getAttribute("aria-label") === "编辑显示名称",
+      );
       const token = await page.evaluate(() =>
         getComputedStyle(document.documentElement)
           .getPropertyValue("--text-body")
@@ -50,11 +71,11 @@ export async function verifyUpstream126({ browser, origin, role, client }) {
         .getByRole("button", { name: "编辑显示名称", exact: true })
         .waitFor();
       await page.reload();
-      await page.getByRole("tab", {name:"资料",exact:true}).click();
+      await page.getByRole("tab", { name: "资料", exact: true }).click();
       await profile.waitFor();
       assert.ok((await profile.innerText()).includes(name));
       await profile
-        .getByRole("button", { name: "编辑角色 Prompt", exact: true })
+        .getByRole("button", { name: "编辑描述", exact: true })
         .click();
       await profile
         .getByLabel("角色 Prompt", { exact: true })
@@ -64,9 +85,12 @@ export async function verifyUpstream126({ browser, origin, role, client }) {
         .getByRole("button", { name: "保存", exact: true })
         .waitFor({ state: "hidden" });
       await profile
-        .getByRole("button", { name: "编辑模型与推理强度", exact: true })
+        .getByRole("button", { name: "编辑运行时配置", exact: true })
         .click();
-      await profile.getByRole("button", { name: "取消", exact: true }).click();
+      await page
+        .getByTestId("agent-runtime-config-dialog")
+        .getByRole("button", { name: "取消", exact: true })
+        .click();
       await profile
         .getByRole("button", { name: "更换头像", exact: true })
         .click();

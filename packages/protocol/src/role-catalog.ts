@@ -16,6 +16,7 @@ export const RoleTemplateSchema = z
     controlRoomId: IdentifierSchema,
     configuration: RoleConfigurationSchema,
     createdAt: TimestampSchema,
+    updatedAt: TimestampSchema.optional(),
   })
   .strict();
 export const RoleCreateRequestSchema = z

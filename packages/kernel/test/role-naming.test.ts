@@ -183,3 +183,31 @@ test("readable Unicode instance names remain usable for native model configurati
     f.close();
   }
 });
+
+test("Role modification time survives list and exact revision replay while creation time stays fixed", () => {
+  const f = roleInstanceFixture();
+  try {
+    const input = {
+      roleId: f.role.roleId,
+      expectedRoleRevisionId: f.role.roleRevisionId,
+      basedOnRoomSeq: f.head(f.role.controlRoomId),
+      idempotencyKey: "timestamp-revision",
+      configuration: { ...f.role.configuration, instructions: "updated" },
+    };
+    const result = f.kernel.roles.revise(f.actor, input);
+    assert.equal(typeof result.role.updatedAt, "string");
+    assert.equal(result.role.createdAt, f.role.createdAt);
+    assert.equal(
+      f.kernel.roles
+        .list(f.actor, { controlRoomId: f.role.controlRoomId })
+        .roles.find((r) => r.roleId === f.role.roleId)?.updatedAt,
+      result.role.updatedAt,
+    );
+    assert.equal(
+      f.kernel.roles.revise(f.actor, input).role.updatedAt,
+      result.role.updatedAt,
+    );
+  } finally {
+    f.close();
+  }
+});

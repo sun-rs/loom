@@ -64,7 +64,8 @@
       "loom/OfficialNavigationLeaves.generated.tsx",
       "loom/OfficialTopBar.generated.tsx",
       "loom/OfficialIdentityRows.generated.tsx",
-      "loom/OfficialLiveActivity.generated.tsx"
+      "loom/OfficialLiveActivity.generated.tsx",
+      "loom/OfficialRoleControls.generated.tsx"
     ],
     "foundation": "package.json#dependencies.raft-ui"
   },

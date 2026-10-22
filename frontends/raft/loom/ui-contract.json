@@ -531,6 +531,22 @@
       "sources": ["frontends/raft/loom/OfficialIdentityFrames.generated.tsx"],
       "bindings": ["ChatSidebarFrame.tsx", "RoleWorkspace.tsx"],
       "guard": "scripts/official-web/identity-frames.test.mjs"
+    },
+    {
+      "id": "role-runtime-and-operations",
+      "owner": "db5e399 AgentDetailPanel runtime modal/action recipe; official ConfirmDialog",
+      "rule": "One runtime/model/effort editor; native modal container owns select portals. Role operation section and overflow share actions. User-confirmed instance batch uses existing fenced mutations, stops at first unconfirmed outcome; no new backend scheduling owner.",
+      "sources": [
+        "frontends/raft/loom/OfficialRoleControls.generated.tsx",
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/agent/AgentDetailPanel.tsx"
+      ],
+      "bindings": [
+        "RoleProfile.tsx",
+        "RoleEditor.tsx",
+        "AgentPage.tsx",
+        "RoleBatchDialog.tsx"
+      ],
+      "guard": "scripts/official-web/role-profile-composition.test.mjs"
     }
   ],
   "exceptions": [

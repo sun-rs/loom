@@ -1,3 +1,4 @@
+import { GitFork, MessagesSquare } from "lucide-react";
 import { uiActionProps } from "./ui-action-props.ts";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
@@ -94,9 +95,18 @@ export function useInstanceBranches(
     busy: state !== "idle",
     items: source
       ? [
-          { label: "Fork · 分叉为新成员", run: () => begin("fork") },
-          { label: "Side · 打开独立侧聊", run: () => begin("side") },
+          {
+            icon: <GitFork size={14} />,
+            label: "Fork · 分叉为新成员",
+            run: () => begin("fork"),
+          },
+          {
+            icon: <MessagesSquare size={14} />,
+            label: "Side · 打开独立侧聊",
+            run: () => begin("side"),
+          },
           ...sides.map((room) => ({
+            icon: <MessagesSquare size={14} />,
             label: `Side · ${room.name}${room.side?.discarded ? "（已丢弃）" : room.side?.discarding ? "（正在关闭）" : ""}`,
             run: () => openSide(room.roomId),
           })),

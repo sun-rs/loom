@@ -2,7 +2,7 @@ import {
   useInstanceBranches,
   type BranchSource,
 } from "./useInstanceBranches.tsx";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
 import type { ClientAgentGetResponse } from "@rah-os/protocol";
 import {
@@ -37,7 +37,12 @@ export default function RuntimeControl({
   name: string;
   branchSource?: BranchSource;
   onBranched?: () => void;
-  items?: { label: string; run: () => void; disabled?: boolean }[];
+  items?: {
+    label: string;
+    run: () => void;
+    disabled?: boolean;
+    icon?: ReactNode;
+  }[];
   active?: boolean;
   disabled?: boolean;
 }) {
@@ -124,6 +129,7 @@ export default function RuntimeControl({
               disabled={"disabled" in item ? !!item.disabled : false}
               onClick={item.run}
             >
+              {"icon" in item ? item.icon : null}
               {item.label}
             </DropdownMenuItem>
           ))}

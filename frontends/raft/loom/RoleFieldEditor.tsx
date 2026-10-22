@@ -1,3 +1,4 @@
+import { editableRolePrompt, patchRoleText } from "./role-profile-values.ts";
 // Loom Revision binding around official AgentProfileEditDialog field/preset composition.
 import { useState, useEffect } from "react";
 import { Button, Input, Textarea } from "raft-ui";
@@ -38,7 +39,11 @@ export default function RoleFieldEditor({
     field === "displayName" ||
     field === "instructions" ||
     field === "avatarKey";
-  const initial = textual ? (role.configuration[field] ?? "") : "";
+  const initial = textual
+    ? field === "instructions"
+      ? editableRolePrompt(role.configuration)
+      : (role.configuration[field] ?? "")
+    : "";
   const [value, setValue] = useState(initial),
     [error, setError] = useState("");
   const dirty = textual && value !== initial;
@@ -72,11 +77,11 @@ export default function RoleFieldEditor({
     );
   const save = () => {
     if (disabled) return;
-    const config = {
-      ...role.configuration,
-      [field]: value.trim(),
-      ...(field === "displayName" ? { role: value.trim() } : {}),
-    };
+    const config = patchRoleText(
+      role.configuration,
+      field as "displayName" | "instructions" | "avatarKey",
+      value,
+    );
     const parsed = RoleConfigurationSchema.safeParse(config);
     if (parsed.success) onSave(parsed.data);
     else setError("请输入有效内容。");

@@ -49,7 +49,7 @@ export default function InstanceInspector({
   member: Principal;
   onClose: () => void;
   backLabel?: string;
-  controlItems?: { label: string; run: () => void }[];
+  controlItems?: { label: string; run: () => void; icon?: React.ReactNode }[];
 }) {
   const [tab, setTab] = useState("activity");
   const panel = useResizablePanel({

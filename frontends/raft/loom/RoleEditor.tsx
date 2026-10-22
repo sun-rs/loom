@@ -22,6 +22,8 @@ export default function RoleEditor({
   onSave,
   onDirtyChange,
   onNavigationDiscard,
+  onCancel,
+  portalContainer,
 }: {
   client: RahClient;
   field?: "runtimeOfferId" | "modelBindingId";
@@ -29,6 +31,8 @@ export default function RoleEditor({
   disabled: boolean;
   onDirtyChange?: (dirty: boolean) => void;
   onNavigationDiscard?: () => void;
+  onCancel?: () => void;
+  portalContainer?: React.RefObject<HTMLElement | null>;
   onSave: (config: RoleCreateRequest["configuration"]) => void;
 }) {
   const [form, setForm] = useState<RoleForm>(() =>
@@ -77,6 +81,7 @@ export default function RoleEditor({
   );
   return (
     <form
+      className={field ? "space-y-4" : undefined}
       onSubmit={(e) => {
         e.preventDefault();
         if (disabled || !choices) return;
@@ -85,11 +90,20 @@ export default function RoleEditor({
           choices,
           role?.configuration,
         );
-        if (result.ok) onSave(result.value);
+        if (result.ok)
+          onSave(
+            field && role
+              ? {
+                  ...role.configuration,
+                  runtimeOfferId: result.value.runtimeOfferId,
+                  modelIntent: result.value.modelIntent,
+                }
+              : result.value,
+          );
         else setError(result.error);
       }}
     >
-      <fieldset disabled={disabled}>
+      <fieldset disabled={disabled} className={field ? "space-y-4" : undefined}>
         <div hidden={Boolean(field)}>
           <FormField label="名称" className="mb-3">
             <Input
@@ -119,7 +133,8 @@ export default function RoleEditor({
           <>
             <div hidden={Boolean(field && field !== "runtimeOfferId")}>
               <SelectField
-                label="CLI"
+                portalContainer={portalContainer}
+                label={field ? "运行时" : "CLI"}
                 value={form.runtimeOfferId}
                 options={(choices ?? []).map((r) => ({
                   value: r.runtimeOfferId,
@@ -137,6 +152,7 @@ export default function RoleEditor({
             </div>
             <div>
               <SelectField
+                portalContainer={portalContainer}
                 label="模型"
                 value={form.modelBindingId}
                 options={(runtime?.bindings ?? []).map((b) => ({
@@ -155,6 +171,7 @@ export default function RoleEditor({
               />
             </div>
             <SelectField
+              portalContainer={portalContainer}
               label="推理强度"
               value={form.reasoning}
               options={(binding?.reasoning ?? []).map((value) => ({
@@ -172,13 +189,41 @@ export default function RoleEditor({
           </p>
         )}
         {error && <p role="alert">{error}</p>}
-        <Button
-          {...uiActionProps.formSave}
-          type="submit"
-          disabled={disabled || !choices || !binding}
-        >
-          保存角色
-        </Button>
+        <div className="flex flex-wrap justify-end gap-2">
+          {onCancel && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="lg"
+              disabled={disabled}
+              onClick={onCancel}
+            >
+              取消
+            </Button>
+          )}
+          {field ? (
+            <Button
+              variant="accent"
+              size="lg"
+              type="submit"
+              disabled={
+                disabled || !choices || !binding || (Boolean(role) && !dirty)
+              }
+            >
+              保存运行时配置
+            </Button>
+          ) : (
+            <Button
+              {...uiActionProps.formSave}
+              type="submit"
+              disabled={
+                disabled || !choices || !binding || (Boolean(role) && !dirty)
+              }
+            >
+              保存角色
+            </Button>
+          )}
+        </div>
       </fieldset>
     </form>
   );

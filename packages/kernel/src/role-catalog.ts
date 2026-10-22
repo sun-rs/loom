@@ -86,12 +86,21 @@ export class RoleCatalog {
     return reconcileSideDiscards(this.context);
   }
   private role(row: Row) {
+    const snapshot = this.context.database
+      .prepare(
+        "SELECT snapshot_json FROM role_revisions WHERE role_revision_id=?",
+      )
+      .get(text(row, "role_revision_id"));
+    const updatedAt = snapshot
+      ? JSON.parse(text(snapshot, "snapshot_json")).updatedAt
+      : undefined;
     return P.RoleTemplateSchema.parse({
       roleId: text(row, "role_id"),
       roleRevisionId: text(row, "role_revision_id"),
       controlRoomId: text(row, "control_room_id"),
       configuration: JSON.parse(text(row, "configuration_json")),
       createdAt: text(row, "created_at"),
+      ...(updatedAt ? { updatedAt } : {}),
     });
   }
   private requireRole(id: string) {
@@ -199,6 +208,7 @@ export class RoleCatalog {
       const role = P.RoleTemplateSchema.parse({
         ...current,
         configuration: input.configuration,
+        updatedAt: c.now().toISOString(),
         roleRevisionId: c.createId("role_revision"),
       });
       this.saveSnapshot(role);
