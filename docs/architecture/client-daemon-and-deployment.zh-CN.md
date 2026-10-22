@@ -406,6 +406,6 @@ Owner 要求自建内网 HTTPS 并保留现有 HTTP／Tailnet。仓库 launcher 
 
 `local-core-workbench` 仍只创建一个 DaemonApplication。额外入口复用 LanWorkbenchGateway、LanWorkbenchAccessStore、既有 TLS provisioner 和同一个 Human/API owner；HTTP 的既有网络信任策略保持，HTTPS 按 owner 再次确认同样采用 trusted-network，无配对／cookie 门槛，保留精确 Host／Origin 校验；默认独立 LAN 配对模式不变。Core 退出或任一启动失败时关闭两条入口；重启回执保留额外 origin，清除 shell 中未经回执授权的残余配置。
 
-此部署不申请外部证书：复用 data home 中的私有 CA 和按主机签发的证书。客户端只接收 CA 公共证书，私钥不离开 Core；只需在各设备信任 CA；该并行入口不要求设备配对。通知权限、真实推送送达、iOS 主屏幕安装是另行验收项，TLS握手或服务回执不证明送达。旧 HTTPS gateway 尚无 HTTP gateway 专属的工作区 HTML／PDF预览及独立 PDF viewer 路由；这些功能继续使用保留的原入口，不将新增 HTTPS 入口声称为全站功能等价。
+此部署不申请外部证书：复用 data home 中的私有 CA 和按主机签发的证书。客户端只接收 CA 公共证书，私钥不离开 Core；只需在各设备信任 CA；该并行入口不要求设备配对。通知权限、真实推送送达、iOS 主屏幕安装是另行验收项，TLS握手或服务回执不证明送达。HTTPS gateway 复用现有工作区 HTML／PDF 和附件 PDF 预览 owner：HTML 保留 CSP 沙箱与官方评论 bridge，附件代理透传沙箱响应头；PDF 使用同一证书、同一明确绑定网卡上的独立 HTTPS 临时端口，签名限时链接逐次重查权限，不携带浏览器凭据、不开放应用路由。应用 CSP 仅额外允许该 PDF 来源，避免 HTTPS 嵌入 HTTP；预览 listener 随 gateway 一起关闭。客户端网络须允许该内网临时端口；不新增公网绑定。
 
 2026-10-22 后继纠正：首次并行HTTPS部署错误地携带了旧网关的配对要求，owner指出违背既定内网信任边界。新增显式 `browserAccess: trusted-network`，限制精确私网IPv4／回环与匹配主机名；不创建或读取配对存储，不生成配对码，历史配对URL重定向首页，设备／邀请码管理路由不开放。服务控制沿既有 generation／idle 检查，不改变 Kernel 权限或服务端 Human凭据所有权。

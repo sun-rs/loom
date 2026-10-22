@@ -317,7 +317,7 @@ test("the formal LAN gateway requires TLS pairing and keeps Human authority serv
     );
     assert.match(
       String(authenticatedRoot.headers["content-security-policy"]),
-      /frame-src 'self';/u,
+      /frame-src 'self' https:\/\/127\.0\.0\.1:\d+;/u,
     );
     assert.match(authenticatedRoot.body, /RAH OS/u);
     const workerModule = await secureRequest(origin, "/assets/pdf.worker.mjs", {

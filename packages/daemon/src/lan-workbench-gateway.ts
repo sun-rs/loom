@@ -1,3 +1,5 @@
+import { PdfPreviewGateway } from "./pdf-preview-gateway.ts";
+import { handleWorkbenchPreview } from "./workbench-preview-routes.ts";
 import { sendStaticFile } from "./static-file-response.ts";
 import {
   handleWorkbenchServiceControl,
@@ -79,6 +81,7 @@ export class LanWorkbenchGateway {
   readonly #staticDirectory: string;
   readonly #tls: { certificate: Buffer; privateKey: Buffer };
   readonly #webBuildId: string | undefined;
+  #pdf: PdfPreviewGateway | undefined;
   #origin: string | undefined;
   #server: HttpsServer | undefined;
   #connections = new Set<Duplex>();
@@ -232,9 +235,25 @@ export class LanWorkbenchGateway {
       throw new Error("LAN workbench gateway did not bind a TCP port");
     }
     this.#origin = httpsOrigin(this.#publicHostname, address.port);
+    this.#pdf = new PdfPreviewGateway({
+      host: this.#bindHost,
+      publicHostname: this.#publicHostname,
+      appOrigin: this.origin,
+      daemonOrigin: this.#daemonOrigin.origin,
+      accessToken: this.#accessToken,
+      tls: this.#tls,
+    });
+    try {
+      await this.#pdf.start();
+    } catch (error) {
+      await this.stop();
+      throw error;
+    }
   }
 
   async stop(): Promise<void> {
+    await this.#pdf?.stop();
+    this.#pdf = undefined;
     const server = this.#server;
     const connections = this.#connections;
     this.#server = undefined;
@@ -257,12 +276,29 @@ export class LanWorkbenchGateway {
     response: ServerResponse,
   ): Promise<void> {
     setSecurityHeaders(response);
+    response.setHeader(
+      "content-security-policy",
+      CONTENT_SECURITY_POLICY.replace(
+        "frame-src 'self'",
+        `frame-src 'self' ${this.#pdf!.origin}`,
+      ),
+    );
     if (request.headers.host !== new URL(this.origin).host) {
       sendText(response, 421, "Misdirected request");
       return;
     }
     this.#setWebBuildHeader(response);
     const requestUrl = new URL(request.url ?? "/", this.origin);
+    if (
+      await handleWorkbenchPreview(request, response, {
+        daemonOrigin: this.#daemonOrigin.origin,
+        accessToken: this.#accessToken,
+        pdf: this.#pdf!,
+        authorized: this.#authorized(request.headers.cookie),
+        origin: this.origin,
+      })
+    )
+      return;
     if (requestUrl.pathname.startsWith("/_rah/")) {
       await this.#handleGatewayRoute(request, response, requestUrl);
       return;
@@ -720,12 +756,17 @@ function copyResponseHeaders(
   source: IncomingHttpHeaders,
   response: ServerResponse,
 ): void {
+  if (source["content-security-policy"]?.includes("frame-ancestors 'self'"))
+    response.removeHeader("x-frame-options");
   for (const name of [
     "accept-ranges",
     "cache-control",
     "content-length",
     "content-range",
     "content-type",
+    "content-security-policy",
+    "content-disposition",
+    "referrer-policy",
   ]) {
     const value = source[name];
     if (value !== undefined) response.setHeader(name, value);

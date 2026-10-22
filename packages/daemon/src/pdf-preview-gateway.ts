@@ -1,3 +1,5 @@
+import { createServer as createHttpsServer } from "node:https";
+import type { Duplex } from "node:stream";
 import {
   ChannelWorkspaceReadRequestSchema,
   type ChannelWorkspaceReadRequest,
@@ -18,6 +20,7 @@ import {
 export class PdfPreviewGateway {
   readonly #key = randomBytes(32);
   #server: Server | undefined;
+  #connections = new Set<Duplex>();
   #origin: string | undefined;
   readonly #options: {
     host: string;
@@ -26,6 +29,8 @@ export class PdfPreviewGateway {
     daemonOrigin: string;
     accessToken: string;
     now?: () => number;
+    tls?: { certificate: Buffer; privateKey: Buffer };
+    publicHostname?: string;
   };
   constructor(options: {
     host: string;
@@ -34,6 +39,8 @@ export class PdfPreviewGateway {
     daemonOrigin: string;
     accessToken: string;
     now?: () => number;
+    tls?: { certificate: Buffer; privateKey: Buffer };
+    publicHostname?: string;
   }) {
     this.#options = options;
   }
@@ -42,11 +49,25 @@ export class PdfPreviewGateway {
     return this.#origin;
   }
   async start() {
-    const server = createServer((req, res) => {
+    const handle = (req: IncomingMessage, res: ServerResponse) => {
       void this.#handle(req, res).catch(() => {
         if (res.headersSent) res.destroy();
         else this.#fail(res, 502);
       });
+    };
+    const server = this.#options.tls
+      ? createHttpsServer(
+          {
+            cert: this.#options.tls.certificate,
+            key: this.#options.tls.privateKey,
+            minVersion: "TLSv1.2",
+          },
+          handle,
+        )
+      : createServer(handle);
+    server.on("connection", (socket) => {
+      this.#connections.add(socket);
+      socket.once("close", () => this.#connections.delete(socket));
     });
     this.#server = server;
     await new Promise<void>((resolve, reject) => {
@@ -56,7 +77,7 @@ export class PdfPreviewGateway {
     const address = server.address();
     if (!address || typeof address === "string")
       throw Error("PDF origin unavailable");
-    this.#origin = `http://${this.#options.host}:${address.port}`;
+    this.#origin = `${this.#options.tls ? "https" : "http"}://${this.#options.publicHostname ?? this.#options.host}:${address.port}`;
   }
   async stop() {
     const server = this.#server;
@@ -66,6 +87,8 @@ export class PdfPreviewGateway {
     await new Promise<void>((resolve, reject) => {
       server.close((e) => (e ? reject(e) : resolve()));
       server.closeAllConnections();
+      for (const socket of this.#connections) socket.destroy();
+      this.#connections.clear();
     });
   }
   #now() {
