@@ -6,7 +6,7 @@ const settings = readFileSync(
   "frontends/raft/upstream/raft-web-source/packages/web/src/components/settings/SettingsPanel.tsx",
   "utf8",
 );
-test("notification surface keeps native card and action recipes, omitting upstream server mute", () => {
+test("notification surface keeps native card recipes and separately exposes native workspace mute form", () => {
   const result = extractSettingsSections(settings).notification;
   assert.ok(result.includes("settings.notifications.mainTitle"));
   assert.ok(result.includes('<Card className="space-y-3 p-4">'));
@@ -18,6 +18,10 @@ test("notification surface keeps native card and action recipes, omitting upstre
   for (const action of ["handleEnable", "handleDisable", "handleSendTest"])
     assert.ok(result.includes(`onClick={${action}}`));
   assert.ok(!result.includes("handleSaveServerMute"));
+  const mute = extractSettingsSections(settings).workspaceMute;
+  assert.ok(mute.includes("handleSaveServerMute"));
+  assert.ok(mute.includes("serverPushMuted === savedServerPushMuted"));
+  assert.ok(mute.includes('variant="accent" size="sm"'));
   assert.ok(result.includes("loading || busy || testing"));
   assert.throws(() => extractSettingsSections("changed"), /boundary/);
 });

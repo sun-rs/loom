@@ -1,3 +1,4 @@
+import { verifyPersistentPreferences } from "./persistent-preferences-browser.mjs";
 import { verifyReleaseSource } from "./release-source-browser.mjs";
 import { verifyRoleActivity } from "./role-activity-browser.mjs";
 import { verifyUpstream126 } from "./upstream-126-browser.mjs";
@@ -276,6 +277,18 @@ try {
           origin,
           channels,
           instanceNames,
+        }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "persistent-preferences") {
+    console.log(
+      JSON.stringify(
+        await verifyPersistentPreferences({
+          browser,
+          origin,
+          client,
+          workspace,
+          head,
         }),
       ),
     );

@@ -1,0 +1,63 @@
+{
+  "sourceUrl": "https://app.raft.build/assets/app-shell-EHP4m3Or.js",
+  "sha256": "9eab18f8d1a59b45707f1554b97e64b143b4d6abf5707269b7a9d82f7a944a42",
+  "retrieved": "2026-10-22",
+  "authorization": "Owner-authorized Raft code reuse; see frontend adoption notices",
+  "status": "Source evidence captured, not yet mounted",
+  "declarations": [
+    {
+      "name": "HTt",
+      "sha256": "dbb9635bba11d7c22233ae4578d2863bb1d6c5ed3d4837a1ecaa32071fc7d05c"
+    },
+    {
+      "name": "UTt",
+      "sha256": "508d85b447311909a69f23fb342a668f92f6d99fc53760d34f440fa6ae2a8398"
+    },
+    {
+      "name": "WTt",
+      "sha256": "2f9e60478453518426eece532fb612370f7874589dc73b1d2993dd35afef09c0"
+    },
+    {
+      "name": "GTt",
+      "sha256": "94d3f7a30588b93dc6f84fa0528d7432b9737bd6ebaf4ab801cd64f8cc53408b"
+    },
+    {
+      "name": "KTt",
+      "sha256": "e8ddbe2e5646c3edc50795ea1fa3fae742c32ef9078cf8c9ead3b97253959e0d"
+    },
+    {
+      "name": "qTt",
+      "sha256": "f2fe4f5d184583b1cbe9eb62d04444fc68576ec2264d1c3b7048269ae250d9de"
+    },
+    {
+      "name": "JTt",
+      "sha256": "09fd3358a1ba75e4e74b27b4a06fcb5be6364280f0f5454695ab1a1484b3b780"
+    },
+    {
+      "name": "ZTt",
+      "sha256": "481fa0ebed52af17dc4adbacc4a963f42094b6a6c90d8a0ca6853305b20c0da3"
+    },
+    {
+      "name": "QTt",
+      "sha256": "adce085c646e66a63f4890c09da4adf5fc4de9e80dfee38dd4acf349e38aabd9"
+    },
+    {
+      "name": "$Tt",
+      "sha256": "325177968d6b4cb278cc4588c5cf26d515be323bae7f6580356d37bed391cc84"
+    },
+    {
+      "name": "lEt",
+      "sha256": "0ea63adbe716e4491affcfb6fe8dcedcb2142ea220fd585bd0da5d285a835504"
+    }
+  ],
+  "behavior": {
+    "qTt": "Sortable vertical navigation with 6px pointer activation, Space/arrow keyboard, drag click guard, user order persistence",
+    "JTt": "Native sortable item wrapper",
+    "lEt": "Sidebar toggle presentation",
+    "$Tt": "Focus transfer from hidden sidebar to toggle before changing sidebarHidden"
+  },
+  "localDecisionsNeeded": [
+    "Bind account-level order to a Loom preference owner; do not silently substitute another business store",
+    "Wire sidebarHidden to actual shared layout owner and retained focus/shortcut semantics"
+  ]
+}

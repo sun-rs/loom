@@ -1,3 +1,4 @@
+import WorkspaceMute from "./WorkspaceMute";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
 import { Button } from "raft-ui";
@@ -7,8 +8,12 @@ import { resolveNotificationChannel } from "../packages/web/src/utils/notificati
 import { uiActionProps } from "./ui-action-props.ts";
 export default function NotificationSettings({
   client,
+  workspaceId,
+  controlRoomId,
 }: {
   client: RahClient;
+  workspaceId: string;
+  controlRoomId: string;
 }) {
   const channel = resolveNotificationChannel();
   const supported = channel.kind === "web-push";
@@ -131,6 +136,12 @@ export default function NotificationSettings({
           : "站内动态与未读提醒仍可使用。"
       }
     >
+      <WorkspaceMute
+        client={client}
+        workspaceId={workspaceId}
+        controlRoomId={controlRoomId}
+        busy={busy || testing}
+      />
       {(error || (!!state?.subscription && !confirmed)) && (
         <div className="flex gap-2">
           <Button

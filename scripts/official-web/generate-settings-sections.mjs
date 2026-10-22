@@ -126,7 +126,7 @@ export function extractSettingsSections(
     ),
     "system form",
   ).getText(file);
-  // Notifications: keep native card children before unsupported server-wide mute.
+  // Notifications: native browser controls and separately bound workspace-mute form.
   const notification = fn("WebPushNotificationsCard");
   const notificationCard = one(
     elements(notification, (n) => tag(n) === "Card"),
@@ -169,15 +169,16 @@ export function extractSettingsSections(
     about: `<div className="space-y-6">${about}</div>`,
     system,
     notification: `<div>${notificationHeader.getText(file)}${notify}</div>`,
+    workspaceMute: stop.getText(file),
     reasons: extractDeclarations(source, ["UNSUPPORTED_REASON_MESSAGE"])[0],
   };
 }
 export function generateSettingsSections() {
   const parts = extractSettingsSections();
-  return `// GENERATED from pinned official SettingsPanel. Explicit omissions and write-fence patches are recorded in generate-settings-sections.mjs and ui-contract.json.\nimport type {ReactNode} from 'react';
+  return `// GENERATED from pinned official SettingsPanel. Explicit omissions and write-fence patches are recorded in generate-settings-sections.mjs and ui-contract.json.\nimport type {ReactNode,FormEvent} from 'react';
 import {useIntl} from 'react-intl';
 import {User,Tag,Eye,Bell,Check} from 'lucide-react';
-import {Card,Button,Badge,Checkbox,Input} from 'raft-ui';
+import {Card,Button,Badge,Checkbox,Input,Separator} from 'raft-ui';
 import SectionHeader from '@loom/raft-web-source/SectionHeader';
 import Tooltip from '@loom/raft-web-source/Tooltip';
 import AvatarEditVeil from '@loom/raft-web-source/AvatarEditVeil';
@@ -196,6 +197,7 @@ ${parts.reasons}
 export function LoomAccountSection(){const {formatMessage}=useIntl();const {user,displayName,saving,editingDisabled,saved,error,avatarSaving,avatarError,profileDirty,handleSaveProfile,handleUploadAvatar,handleDisplayNameChange}=useAccountSettings();if(!user)return null;return (${parts.account});}
 export function LoomAboutSection({appVersion}:{appVersion:string}){const {formatMessage}=useIntl();return (${parts.about});}
 export function SystemChannelsSection(){const {formatMessage}=useIntl();const {allChannelHidden,saving,saved,error,dirty,handleSave,handleAllChannelHiddenChange,ready}=useSystemSettings();if(!ready)return null;return (${parts.system});}
+export function LoomWorkspaceMute({currentServer,loading,busy,testing,muting,serverPushMuted,savedServerPushMuted,handleSaveServerMute,handleServerPushMutedChange}:{currentServer:{name:string};loading:boolean;busy:boolean;testing:boolean;muting:boolean;serverPushMuted:boolean;savedServerPushMuted:boolean;handleSaveServerMute:(event:FormEvent)=>void;handleServerPushMutedChange:(checked:boolean)=>void}){const {formatMessage}=useIntl();return <>${parts.workspaceMute}</>;}
 export type NotificationViewProps={loading:boolean;subscribed:boolean;confirmed:boolean;busy:boolean;testing:boolean;message:string;handleEnable:()=>void;handleDisable:()=>void;handleSendTest:()=>void;children?:ReactNode;statusLabel:string;permission:NotificationPermission|'unsupported';serverConfigured:boolean;error:string;detail:string;channel:NotificationChannel};
 export function LoomNotificationStatus({loading,statusLabel,permission,serverConfigured,error,detail,channel,message,subscribed,confirmed,busy,testing,handleEnable,handleDisable,handleSendTest,children}:NotificationViewProps){const {formatMessage}=useIntl();const statusTone=!loading&&confirmed?'success':!loading&&permission==='denied'?'warning':'muted';return (${parts.notification});}\n`;
 }

@@ -1,3 +1,4 @@
+import { useSidebarPreferences } from "./useSidebarPreferences";
 import {
   messageInstanceState,
   type MessageStatusFacts,
@@ -16,6 +17,7 @@ import { LiveAgentActivityBarPresentation } from "./OfficialLiveActivity.generat
 import type { LiveAgentActivityItem } from "../packages/web/src/utils/liveAgentActivity.ts";
 const AppearanceRuntime = createContext<{
   facts?: MessageStatusFacts;
+  expandedRooms?: readonly string[];
   models: Record<string, string>;
   latest: LiveAgentActivityItem | null;
 }>({ models: {}, latest: null });
@@ -23,18 +25,23 @@ export const useLoomModelLabel = (id: string) =>
   useContext(AppearanceRuntime).models[id];
 export const useLoomMessageState = (roomId: string, id: string) =>
   messageInstanceState(useContext(AppearanceRuntime).facts, roomId, id);
+export const useLoomCollapseLongMessages = (roomId: string) =>
+  !useContext(AppearanceRuntime).expandedRooms?.includes(`room:${roomId}`);
 /** Read-only view data. No upstream server stores, inferred presence, or mutation path. */
 export function AppearanceRuntimeProvider({
   client,
   controlRoomId,
+  workspaceId,
   roomId,
   children,
 }: {
   client: RahClient;
   controlRoomId?: string;
+  workspaceId?: string;
   roomId?: string;
   children: ReactNode;
 }) {
+  const { preferences } = useSidebarPreferences(client, workspaceId);
   const showModels = useAppearanceStore((s) => s.showAgentModelName);
   const showActivity = useAppearanceStore((s) => s.showLiveAgentActivityBar);
   const [facts, setFacts] = useState<MessageStatusFacts>();
@@ -171,6 +178,7 @@ export function AppearanceRuntimeProvider({
     <AppearanceRuntime.Provider
       value={{
         models,
+        expandedRooms: preferences?.expandedLongMessages,
         latest,
         facts: facts?.roomId === roomId ? facts : undefined,
       }}

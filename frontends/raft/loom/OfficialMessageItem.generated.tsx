@@ -6,6 +6,7 @@ import {useLoomReactions} from "./MessageReactions";
 import {useLoomTaskActions,LoomTaskMenu} from "./ChannelTasks";
 
 import {useLoomModelLabel} from "./AppearanceRuntime";
+import {useLoomCollapseLongMessages} from "./AppearanceRuntime";
 import {SenderActionItems} from "./SenderActions";
 import {useLoomMessageState} from "./AppearanceRuntime";
 import {MessageInstanceStatusDot,useMessageInstanceState} from "./MessageProfile";
@@ -1343,13 +1344,7 @@ const ConnectedMessageItem = memo(function ConnectedMessageItem({ message, menti
   // pref. OFF = long messages on this surface always render fully expanded
   // (CollapsibleMessageContent behaves as if disabled). Missing hydration
   // defaults to collapsing — the server default.
-  const storedCollapseLongMessages = useChannelStore(
-    (state) =>
-      (state.channels.find((candidate) => candidate.id === referenceSurfaceChannelId)
-        ?? state.dmChannels.find((candidate) => candidate.id === referenceSurfaceChannelId))
-        ?.collapseLongMessages ?? true,
-  );
-  const collapseLongMessages = storedCollapseLongMessages;
+  const collapseLongMessages = useLoomCollapseLongMessages(referenceSurfaceChannelId);
   const isJointReferenceSurface = channels.some(
     (channel) => channel.id === referenceSurfaceChannelId && channel.type === "joint",
   );

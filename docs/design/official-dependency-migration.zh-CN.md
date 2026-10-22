@@ -295,17 +295,17 @@ Role 行采用 db5e399 `MemberAgentRow` 的原 JSX，计算机行采用 `Sidebar
 
 已修正：实例 inspector 的 tab 顺序为动态、资料；频道和消息列入口共用既有私密会话回调，原生更多菜单增加私聊。计算机实例列表的 ShowMoreToggle 放入同一个 ListRowGroup，保留官方按钮 recipe；分组内 footer 是 owner 请求的 Loom 大量实例适配，不冒称官方列表原样拥有此功能。定向 WebKit 在 1440/390 验证 inspector 顺序、菜单、关闭和焦点；不发真实模型请求。
 
-| 待核对项 | 代码事实及边界 | 下一步 |
+| 项目 | 当前代码事实及边界 | 状态／下一步 |
 | --- | --- | --- |
-| 频道设置成员摘要 → 成员 → 添加成员 | 官方 ChannelOverflowMenu 保持根页 mounted，MembersStrip 跳转 ChannelMembers page；Loom 仍是本地 ChannelSettingsContent + 平铺 ChannelMembers | 提取完整展示链，复用官方摘要、分组、搜索和返回；Loom Role 选择创建新实例，不把现有实例跨频道移动 |
-| 头像右键 | 官方 MessageItem 有 copyName/copyHandle；Loom readOnlyProjection 同时关闭了 sender contextmenu | 为官方菜单建立独立安全回调槽，接入复制、私聊、Fork/Side；不能全局关闭 readOnlyProjection 或恢复官方 store 写入 |
-| 正文工具栏更多按钮 | 锁定 db5e399 MessageHoverToolbar 仅 thread/reaction/bookmark；现有生成器没有删除第四项 | 查对应生产资源的新菜单及触发组合，再纳入来源锁；不得自画菜单后宣称原样复用 |
-| 频道操作／偏好 | stop-all、归档、mutedActivity 已有；pin 有 sidebar owner，但设置页未接；collapseLongMessages 未证明 Loom 持久偏好已接 | 接入官方偏好组合；删除频道未找到对应公开命令，公开频道也不属于当前单 Human MVP，不能放置假成功按钮 |
-| 操作文字居中 | 现锁 OverflowActionRow 原件是 justify-start；与 owner 当前要求有差异 | 对比该场景生产资源，不修改不可变原件或把截图数值当源码值 |
-| 导航拖动／折叠 | Loom DesktopNavigation 固定 destinations.map，没有此交互；当前锁 LeftRail 未找到对应 collapse/drag 实现 | 获取对应已发布组件及偏好逻辑，显式升级该来源，而非自造全站状态 |
-| 通知 | NotificationSettings 已绑定官方生成片段，enable/disable/test 走 LoomPushClient；没有证明服务器静音已完整绑定 | 区分设备推送订阅与工作区静音，用既有通知权限 owner 接线，不导入 Raft 云端账户逻辑 |
+| 频道成员摘要 → 成员 → 添加 | 已生成官方三级页面，保留根页草稿，接现有逐实例幂等写入 | 已验收，见 2026-10-22-member-flow |
+| 头像菜单 | 官方复制行后追加 owner 请求的私聊／Fork／Side，使用已有操作 owner | 已验收，见 2026-10-22-message-actions；新增项明确为 Loom 扩展 |
+| 正文更多入口 | 使用官方 toolbar recipe 加省略号，打开同一个已有消息菜单；手机保留长按 | 已验收；不声称锁定源码原本具有第四项 |
+| 频道偏好 | 置顶、静音和 expandedLongMessages 都由既有 sidebar API 持久化；正文复用原生折叠组件 | 已补绑定并定向验收，见 2026-10-22-persistent-preferences |
+| 频道操作 | stop-all、归档已接；SDK 实际存在 room.delete | 纠正此前“未找到公开删除命令”的结论；删除入口／确认与居中规则仍需核对，不需要先假设新增后端 |
+| 导航拖动／折叠 | 公开仓库没有该版实现，但同日官网发布包已有 qTt/JTt/lEt/$Tt 等声明，已锁入 navigation-source.js 和 manifest | 原始代码证据已取得，尚未接入；需绑定排序偏好和共享布局 owner，不再称源码缺失 |
+| 通知 | 浏览器启停／测试已有；Kernel 既有 mutedWorkspace 实际抑制工作区 Web Push；官方复选框／保存表单已提取并绑定 | 已定向验收，设备订阅与工作区静音分开；未知结果精确重放、旧版本拒绝保留草稿 |
 
-以上是明确未完成项；此次小批修正不将频道设置整页或上述菜单标记为验收完成。
+以上记录覆盖这些入口，不能推导为整站最新版本完全对齐。先前把 expandedLongMessages、mutedWorkspace 和 room.delete 当成后端缺口的判断不准确；后续以协议、SDK、Kernel 三层检索确认能力，不能只看前端绑定。
 
 
 ### 成员三级流程与频道内私聊返回（2026-10-22，后继修正）

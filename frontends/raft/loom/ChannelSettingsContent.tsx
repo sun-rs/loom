@@ -203,6 +203,25 @@ export default function ChannelSettingsContent({
       },
     );
   };
+  const toggleCollapse = () => {
+    if (!preferences || !base || busy) return;
+    const key = sidebarKey(base.room);
+    void manager.sidebar(
+      {
+        expandedLongMessages: preferences.expandedLongMessages.includes(key)
+          ? preferences.expandedLongMessages.filter((x) => x !== key)
+          : [...preferences.expandedLongMessages, key],
+      },
+      preferences.version,
+      (outcome) => {
+        if (outcome.kind === "ok") void refreshPreferences();
+        else if (outcome.kind === "rejected") {
+          setPreferences(undefined);
+          setPrefsError("偏好已变化，请重新读取后再操作。");
+        }
+      },
+    );
+  };
   const archive = (room: Room, value: boolean) => {
     if (busy) return;
     setError("");
@@ -293,6 +312,16 @@ export default function ChannelSettingsContent({
         </form>
         <div className="space-y-5 mt-5 px-4">
           <ChannelPreferencesSection
+            collapseLongMessages={{
+              enabled: !(
+                base &&
+                preferences?.expandedLongMessages.includes(
+                  sidebarKey(base.room),
+                )
+              ),
+              busy: busy || !base || !preferences,
+              onToggle: toggleCollapse,
+            }}
             isPanel
             pin={{
               pinned: !!(

@@ -993,6 +993,7 @@ export default function ChannelApp() {
     { directory },
     <AppearanceRuntimeProvider
       client={client}
+      workspaceId={directory?.workspace.workspaceId}
       controlRoomId={directory?.workspace.controlRoomId}
       roomId={selected?.roomId}
     >

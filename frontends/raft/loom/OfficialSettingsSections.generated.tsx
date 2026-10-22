@@ -1,8 +1,8 @@
 // GENERATED from pinned official SettingsPanel. Explicit omissions and write-fence patches are recorded in generate-settings-sections.mjs and ui-contract.json.
-import type {ReactNode} from 'react';
+import type {ReactNode,FormEvent} from 'react';
 import {useIntl} from 'react-intl';
 import {User,Tag,Eye,Bell,Check} from 'lucide-react';
-import {Card,Button,Badge,Checkbox,Input} from 'raft-ui';
+import {Card,Button,Badge,Checkbox,Input,Separator} from 'raft-ui';
 import SectionHeader from '@loom/raft-web-source/SectionHeader';
 import Tooltip from '@loom/raft-web-source/Tooltip';
 import AvatarEditVeil from '@loom/raft-web-source/AvatarEditVeil';
@@ -146,6 +146,36 @@ export function SystemChannelsSection(){const {formatMessage}=useIntl();const {a
         </Button>
       </Card>
     </div>);}
+export function LoomWorkspaceMute({currentServer,loading,busy,testing,muting,serverPushMuted,savedServerPushMuted,handleSaveServerMute,handleServerPushMutedChange}:{currentServer:{name:string};loading:boolean;busy:boolean;testing:boolean;muting:boolean;serverPushMuted:boolean;savedServerPushMuted:boolean;handleSaveServerMute:(event:FormEvent)=>void;handleServerPushMutedChange:(checked:boolean)=>void}){const {formatMessage}=useIntl();return <>{currentServer && (
+          <div>
+            <Separator className="mb-3" />
+            <form onSubmit={handleSaveServerMute} className="space-y-3">
+              <label className={`flex items-start gap-3 ${loading || busy || testing || muting ? "cursor-not-allowed" : ""}`}>
+                <Checkbox
+                  checked={serverPushMuted}
+                  disabled={loading || busy || testing || muting}
+                  onCheckedChange={handleServerPushMutedChange}
+                  className="mt-0.5"
+                />
+                <span className="min-w-0">
+                  <span className={`block text-subhead font-semibold ${loading || busy || testing || muting ? "text-foreground-disabled" : "text-foreground"}`}>{formatMessage({ id: "settings.notifications.muteServerTitle" })}</span>
+                  <span className="block text-footnote text-foreground-muted mt-0.5">
+                    {formatMessage({ id: "settings.notifications.muteServerDescription" }, { serverName: currentServer.name })}
+                  </span>
+                </span>
+              </label>
+              <div className="flex justify-end">
+                <Button
+                  variant="accent" size="sm"
+                  type="submit"
+                  disabled={serverPushMuted === savedServerPushMuted || loading || busy || testing || muting}
+                >
+                  {muting ? formatMessage({ id: "settings.common.saving" }) : formatMessage({ id: "settings.common.save" })}
+                </Button>
+              </div>
+            </form>
+          </div>
+        )}</>;}
 export type NotificationViewProps={loading:boolean;subscribed:boolean;confirmed:boolean;busy:boolean;testing:boolean;message:string;handleEnable:()=>void;handleDisable:()=>void;handleSendTest:()=>void;children?:ReactNode;statusLabel:string;permission:NotificationPermission|'unsupported';serverConfigured:boolean;error:string;detail:string;channel:NotificationChannel};
 export function LoomNotificationStatus({loading,statusLabel,permission,serverConfigured,error,detail,channel,message,subscribed,confirmed,busy,testing,handleEnable,handleDisable,handleSendTest,children}:NotificationViewProps){const {formatMessage}=useIntl();const statusTone=!loading&&confirmed?'success':!loading&&permission==='denied'?'warning':'muted';return (<div><SectionHeader
         className="mb-3"

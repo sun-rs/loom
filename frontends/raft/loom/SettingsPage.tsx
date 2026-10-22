@@ -183,7 +183,11 @@ export default function SettingsPage({
               />
             </div>
             {selectedId === "notifications" ? (
-              <NotificationSettings client={client} />
+              <NotificationSettings
+                client={client}
+                workspaceId={workspaceId}
+                controlRoomId={controlRoomId}
+              />
             ) : selectedId === "release-notes" ? (
               <LoomReleaseNotes releases={loomReleaseNotes} />
             ) : selectedId === "usage" ? (

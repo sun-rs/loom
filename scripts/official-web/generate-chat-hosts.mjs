@@ -113,6 +113,20 @@ function message(s) {
     "    setCtxMenu({\n      anchorX: e.clientX,\n      anchorY: e.clientY,\n      x: e.clientX,\n      y: e.clientY,",
     '    const keyboardAnchor = e.type === "click" && e.detail === 0 ? e.currentTarget.getBoundingClientRect() : null;\n    const x = keyboardAnchor?.right ?? e.clientX, y = keyboardAnchor?.bottom ?? e.clientY;\n    setCtxMenu({\n      anchorX: x,\n      anchorY: y,\n      x,\n      y,',
   );
+  const collapseStart = s.indexOf(
+    "  const storedCollapseLongMessages = useChannelStore(",
+  );
+  const collapseEnd = s.indexOf(
+    "  const isJointReferenceSurface",
+    collapseStart,
+  );
+  if (collapseStart < 0 || collapseEnd < collapseStart)
+    throw Error("Official collapse binding changed");
+  s =
+    'import {useLoomCollapseLongMessages} from "loom-appearance";\n' +
+    s.slice(0, collapseStart) +
+    "  const collapseLongMessages = useLoomCollapseLongMessages(referenceSurfaceChannelId);\n" +
+    s.slice(collapseEnd);
   s = adaptMessageModelLabel(s);
   s = adaptReactions(adaptTaskMessage(adaptThreadItem(s)));
   // Preserve adopted accessible timestamp semantics while retaining native typography.
