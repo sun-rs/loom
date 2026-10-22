@@ -1,0 +1,46 @@
+{
+  "implementation": "2a2a3b08",
+  "findings": [
+    {
+      "verified": "HTTPS proxy did not destroy upstream when browser response closed; HTTP did. Regression test reproduced upstream stream surviving browser cancellation.",
+      "fix": "Match existing HTTP response close -> upstream.destroy handling.",
+      "limit": "Reproduced lifecycle defect, not proof this caused the entire reported one-minute slowdown."
+    },
+    {
+      "verified": "Repeated manual push tests used the same push-test tag. Native worker otherwise retains pinned official showNotification options.",
+      "fix": "Each explicit test gets a UUID notificationId/tag, preserving normal message grouping.",
+      "limit": "Does not force macOS presentation. Actual banner must be observed."
+    }
+  ],
+  "verification": {
+    "focusedTests": 8,
+    "typecheck": true,
+    "build": true,
+    "safeRestart": true,
+    "backupDatabases": 2,
+    "backupFiles": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true,
+    "httpsHtmlHealth200": true,
+    "singleRealPush": {
+      "status": 200,
+      "delivered": 1,
+      "elapsedMs": 1915
+    },
+    "browser": "CUA cgWindowNotFound for Firefox and Chrome; no post-restart rendered-page or banner claim.",
+    "httpsRestartWindow": {
+      "durationSeconds": 80,
+      "successfulSamples": 140,
+      "plannedRestartConnectionFailures": 12,
+      "maxSuccessfulLatencyMs": 138,
+      "allPostRestartSamples200": true,
+      "postRestartSamples": 128,
+      "postRestartDurationMs": 67387
+    }
+  },
+  "notificationSemanticsSource": "https://developer.mozilla.org/en-US/docs/Web/API/Notification/renotify",
+  "remaining": [
+    "User banner observation pending",
+    "Startup browser main-thread/network waiting timing not captured"
+  ]
+}
