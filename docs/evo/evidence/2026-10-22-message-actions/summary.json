@@ -1,0 +1,126 @@
+{
+  "productCommit": "2d478e8555f55da6d4f094336c3102436ed5b744",
+  "source": {
+    "repository": "https://github.com/botiverse/raft-source",
+    "revision": "db5e399f017d584e49597e3a28757645d6807893",
+    "license": "FSL-1.1-ALv2; owner-authorized reuse",
+    "native": [
+      "MessageItem sender menu and copy rows",
+      "MessageHoverToolbar and raft-ui toolbar recipe",
+      "existing official ConfirmDialog binding"
+    ],
+    "localExtensions": [
+      "Owner-requested private/Fork/Side entries after official copy rows; not present in original source",
+      "Owner-requested toolbar ellipsis reuses existing message context-menu state and permission-filtered actions",
+      "SenderActionsProvider is UI coordination only; existing private-box and BranchClient owners retain mutations",
+      "Keyboard toolbar anchor uses button bounds; coarse pointer retains native long press"
+    ],
+    "originalBytesUnchanged": true
+  },
+  "implemented": [
+    "Avatar/name menu private entry uses channel private-box owner",
+    "Lazy identity lookup checks exact channel membership; Fork/Side confirmations outlive menu unmount",
+    "Existing branch confirmation, capability check, stale/unknown intent/retry and side navigation reused",
+    "Desktop toolbar more entry, keyboard anchor and native dismissal",
+    "Retired console fallback link removed"
+  ],
+  "tests": {
+    "sourceTests": 9,
+    "uiContractTests": 8,
+    "typecheck": true,
+    "productBuild": true,
+    "generatedMatchesGenerator": true,
+    "branchFixture": [
+      {
+        "width": 1440,
+        "copies": 2,
+        "fork": true,
+        "sideRoundTrip": true,
+        "refresh": true,
+        "reopen": true,
+        "sourceUnchanged": true,
+        "workerSourceWriteDenied": true,
+        "unknownCreateReplay": true,
+        "unknownDiscardReplay": true,
+        "busyDiscard": false,
+        "nativeResponsive": true,
+        "resize": true
+      },
+      {
+        "width": 390,
+        "copies": 2,
+        "fork": true,
+        "sideRoundTrip": true,
+        "refresh": true,
+        "reopen": true,
+        "sourceUnchanged": true,
+        "workerSourceWriteDenied": true,
+        "unknownCreateReplay": true,
+        "unknownDiscardReplay": true,
+        "busyDiscard": true,
+        "nativeResponsive": true,
+        "resize": false
+      }
+    ],
+    "messageFixture": [
+      {
+        "width": 1440,
+        "thread": false,
+        "addRemove": true,
+        "lostResponseExactReplay": true,
+        "noDuplicate": true
+      },
+      {
+        "width": 390,
+        "thread": false,
+        "addRemove": true,
+        "lostResponseExactReplay": true,
+        "noDuplicate": true
+      }
+    ],
+    "limits": "Temporary databases and fake runtime copy/run adapters; no real provider capability/efficiency claim. Mobile pointer fixture plus responsive rendering; not physical iOS/Android acceptance."
+  },
+  "deployment": {
+    "verified": true,
+    "databaseBackups": 2,
+    "files": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true
+  },
+  "formal": [
+    {
+      "width": 1440,
+      "senderFiveEntries": true,
+      "forkConfirmCancelled": true,
+      "keyboardMore": true,
+      "noBusinessWrites": true
+    },
+    {
+      "width": 390,
+      "senderFiveEntries": true,
+      "forkConfirmCancelled": true,
+      "keyboardMore": false,
+      "noBusinessWrites": true
+    }
+  ],
+  "screenshotsInspected": [
+    "sender-390.png",
+    "more-1440.png"
+  ],
+  "noPaidCalls": true,
+  "remaining": {
+    "needsLoomCapabilityBinding": [
+      "Channel collapse-long-message persistent preference",
+      "Workspace-wide mute distinct from current-browser push subscription",
+      "Channel delete/public controls where no supported backend action exists"
+    ],
+    "needsNewerOfficialSourceClosure": [
+      "Navigation drag order and collapse affordance absent from locked LeftRail source"
+    ],
+    "notClaimed": [
+      "Whole settings drawer byte-exact/native replacement",
+      "Full current website parity",
+      "Physical phone validation"
+    ]
+  }
+}
