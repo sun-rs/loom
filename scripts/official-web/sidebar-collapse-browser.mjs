@@ -37,6 +37,16 @@ export async function verifySidebarCollapse({ browser, origin }) {
         .first()
         .boundingBox();
       assert.ok(rect.x < before.x + 10, JSON.stringify({ view, rect, before }));
+      assert.equal(
+        await main.evaluate((el) => {
+          const r = el.getBoundingClientRect();
+          return el.contains(
+            document.elementFromPoint(r.left + 16, r.top + 20),
+          );
+        }),
+        true,
+        view + " collapsed content must be painted and hit-testable",
+      );
       await page.reload();
       await toggle.waitFor();
       assert.equal(await toggle.getAttribute("aria-pressed"), "false");

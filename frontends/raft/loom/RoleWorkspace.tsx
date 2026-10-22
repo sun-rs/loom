@@ -191,68 +191,74 @@ export default function RoleWorkspace({
         />
       </LoomSidebarSlot>
       <div
-        className={`thread-layout-container relative min-h-0 min-w-0 flex-1 ${detail ? "flex" : "hidden md:flex"}`}
+        className={`relative min-h-0 min-w-0 flex-1 ${detail ? "flex" : "hidden md:flex"}`}
       >
         <AppShellMainSlot
           style={{ zIndex: 1 }}
-          className={`thread-main-column min-w-0 bg-layer-panel md:flex ${detail ? "flex" : "hidden"}`}
-          data-testid="loom-role-detail"
+          className={`min-w-0 bg-layer-panel md:flex ${detail ? "flex" : "hidden"}`}
         >
-          <PanelHeader
-            title={selected?.name ?? "选择角色"}
-            iconSlot={
-              <AvatarSlot
-                context="panel-header"
-                type="agent"
-                agentAvatarUrl={selected?.avatarUrl}
+          <div className="thread-layout-container flex min-h-0 min-w-0 flex-1">
+            <div
+              className="thread-main-column flex min-h-0 min-w-0 flex-1 flex-col"
+              data-testid="loom-role-detail"
+            >
+              <PanelHeader
+                title={selected?.name ?? "选择角色"}
+                iconSlot={
+                  <AvatarSlot
+                    context="panel-header"
+                    type="agent"
+                    agentAvatarUrl={selected?.avatarUrl}
+                  />
+                }
+                iconKind="avatar"
+                iconAlwaysVisible
+                onMobileBack={onBack}
+                mobileBackProps={{ "aria-label": "角色列表" }}
+                containerProps={{
+                  className: `agent-profile-header-container ${PROFILE_HEADER_SURFACE_CLASS}`,
+                }}
+                actions={actions}
               />
-            }
-            iconKind="avatar"
-            iconAlwaysVisible
-            onMobileBack={onBack}
-            mobileBackProps={{ "aria-label": "角色列表" }}
-            containerProps={{
-              className: `agent-profile-header-container ${PROFILE_HEADER_SURFACE_CLASS}`,
-            }}
-            actions={actions}
-          />
-          {selected && (
-            <OfficialRoleTabs value={tab} onValueChange={onTab}>
-              <TabsList aria-label="角色详情">
-                <TabsTab
-                  disabled={busy}
-                  value="activity"
-                  className="!cursor-default"
-                >
-                  <Activity />
-                  <TabsLabel>动态</TabsLabel>
-                </TabsTab>
-                <TabsTab
-                  disabled={busy}
-                  value="roles"
-                  className="!cursor-default"
-                >
-                  <Bot />
-                  <TabsLabel>资料</TabsLabel>
-                </TabsTab>
-              </TabsList>
-            </OfficialRoleTabs>
-          )}
-          <div
-            className={`min-h-0 flex-1 overflow-y-auto ${selected ? "" : "px-5 py-5"}`}
-          >
-            {children}
+              {selected && (
+                <OfficialRoleTabs value={tab} onValueChange={onTab}>
+                  <TabsList aria-label="角色详情">
+                    <TabsTab
+                      disabled={busy}
+                      value="activity"
+                      className="!cursor-default"
+                    >
+                      <Activity />
+                      <TabsLabel>动态</TabsLabel>
+                    </TabsTab>
+                    <TabsTab
+                      disabled={busy}
+                      value="roles"
+                      className="!cursor-default"
+                    >
+                      <Bot />
+                      <TabsLabel>资料</TabsLabel>
+                    </TabsTab>
+                  </TabsList>
+                </OfficialRoleTabs>
+              )}
+              <div
+                className={`min-h-0 flex-1 overflow-y-auto ${selected ? "" : "px-5 py-5"}`}
+              >
+                {children}
+              </div>
+            </div>
+            {inspector && (
+              <div
+                className="thread-profile-side-column contents"
+                data-collapse-channel="false"
+                data-collapse-thread="false"
+              >
+                {inspector}
+              </div>
+            )}
           </div>
         </AppShellMainSlot>
-        {inspector && (
-          <div
-            className="thread-profile-side-column contents"
-            data-collapse-channel="false"
-            data-collapse-thread="false"
-          >
-            {inspector}
-          </div>
-        )}
       </div>
     </div>
   );
