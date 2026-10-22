@@ -1,3 +1,5 @@
+import CreateInstanceDialog from "./CreateInstanceDialog.tsx";
+import { useInstancePresence } from "./InstancePresence.tsx";
 import { LoomSidebarSlot } from "./SidebarLayout.tsx";
 import { OfficialComputerRow } from "./OfficialIdentityRows.generated";
 import {
@@ -18,11 +20,7 @@ import Tooltip from "../packages/web/src/components/ui/Tooltip.tsx";
 import CreateRoleDialog from "./CreateRoleDialog.tsx";
 import ComputerSelection from "./ComputerSelection.tsx";
 import RoleBatchDialog, { type RoleBatchAction } from "./RoleBatchDialog.tsx";
-import type {
-  AgentPresence,
-  RoleListResponse,
-  AgentCatalogEntry,
-} from "@rah-os/protocol";
+import type { RoleListResponse, AgentCatalogEntry } from "@rah-os/protocol";
 import ComputerProfile from "./ComputerProfile.tsx";
 // Structural port: locked Raft v1.21.22 $yt / zCt / MachineDetailPanel.
 // Loom owns only the authenticated local inventory read; no upstream machine store.
@@ -72,7 +70,8 @@ export default function ComputersPage({
   onSelect: (id: string | null) => void;
   onSettings: () => void;
 }) {
-  const [presences, setPresences] = useState<AgentPresence[]>([]);
+  const presences = useInstancePresence(client, controlRoomId);
+  const [creatingInstance, setCreatingInstance] = useState(false);
   const [creating, setCreating] = useState(false);
   const [selectedInstances, setSelectedInstances] = useState<string[] | null>(
     null,
@@ -130,22 +129,9 @@ export default function ComputersPage({
           setError(false);
           setNow(Date.now());
         }
-        if (controlRoomId) {
-          try {
-            const presence = await client.request(
-              "agent.presence.list",
-              { controlRoomId },
-              { signal: abort.signal },
-            );
-            if (!abort.signal.aborted) setPresences(presence.agents);
-          } catch {
-            if (!abort.signal.aborted) setPresences([]);
-          }
-        }
       } catch {
         if (!abort.signal.aborted) {
           setError(true);
-          setPresences([]);
         }
       } finally {
         if (!abort.signal.aborted) timer = setTimeout(read, 15000);
@@ -199,6 +185,18 @@ export default function ComputersPage({
       className="flex min-h-0 min-w-0 flex-1"
       data-testid="loom-computers-page"
     >
+      {creatingInstance && workspaceId && controlRoomId && (
+        <CreateInstanceDialog
+          client={client}
+          workspaceId={workspaceId}
+          controlRoomId={controlRoomId}
+          onClose={() => setCreatingInstance(false)}
+          onChanged={() => {
+            setCatalogReload((n) => n + 1);
+            setReload((n) => n + 1);
+          }}
+        />
+      )}
       {creating && workspaceId && controlRoomId && (
         <CreateRoleDialog
           client={client}
@@ -429,14 +427,26 @@ export default function ComputersPage({
                             />
                           )}
                           {selectedInstances === null && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setCreating(true)}
-                            >
-                              <Plus size={16} />
-                              新建角色
-                            </Button>
+                            <>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                aria-label="新建实例"
+                                onClick={() => setCreatingInstance(true)}
+                              >
+                                <Plus size={16} />
+                                实例
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                aria-label="新建角色"
+                                onClick={() => setCreating(true)}
+                              >
+                                <Plus size={16} />
+                                角色
+                              </Button>
+                            </>
                           )}
                         </div>
                       ) : undefined

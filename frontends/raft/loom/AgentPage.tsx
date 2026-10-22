@@ -1,3 +1,5 @@
+import InstanceListRow from "./InstanceListRow.tsx";
+import InstancePresence, { useInstancePresence } from "./InstancePresence.tsx";
 import RoleBatchDialog, { type RoleBatchAction } from "./RoleBatchDialog.tsx";
 import { OfficialRoleAction } from "./OfficialRoleControls.generated";
 import ConfirmDialog from "../packages/web/src/components/ConfirmDialog.tsx";
@@ -33,10 +35,7 @@ import RoleWorkspace, { type RoleEntry } from "./RoleWorkspace.tsx";
 import type { RahClient } from "@rah-os/client-sdk";
 import type { RoleTemplate } from "@rah-os/protocol";
 import type { IntentOutcome } from "@rah-os/client-core/write-intent";
-import {
-  OfficialListRowGroup,
-  OfficialAvatarListRow,
-} from "./OfficialListRows.tsx";
+import { OfficialListRowGroup } from "./OfficialListRows.tsx";
 import SectionHeader from "../packages/web/src/components/ui/SectionHeader.tsx";
 import AvatarSlot from "../packages/web/src/components/ui/AvatarSlot.tsx";
 import {
@@ -182,6 +181,7 @@ export default function AgentPage({
       : undefined;
   const roleName = (role: RoleTemplate) => role.configuration.displayName;
   const busy = state !== "idle" || refreshing;
+  const instancePresences = useInstancePresence(client, controlRoomId, active);
   const presence = useRolePresence(client, catalog?.instances ?? [], active);
   const entries: RoleEntry[] = [
     ...(catalog?.roles ?? []),
@@ -461,9 +461,10 @@ export default function AgentPage({
                         variant="outline"
                         disabled={busy}
                         onClick={() => guard(() => open({ kind: "add", role }))}
+                        aria-label="新建实例"
                       >
                         <Plus size={16} />
-                        新建实例
+                        实例
                       </Button>
                     )
                   }
@@ -484,7 +485,7 @@ export default function AgentPage({
                         (r) => r.roomId === instance.channelId,
                       );
                       return (
-                        <OfficialAvatarListRow
+                        <InstanceListRow
                           key={instance.instanceId}
                           avatar={
                             <AvatarSlot
@@ -505,7 +506,18 @@ export default function AgentPage({
                               : undefined
                           }
                           subtitle={`${room?.name ?? "频道不可用"} · ${instance.isCurrent ? "配置为当前修订" : "保留旧配置"}`}
-                          actionContent={
+                          status={
+                            <InstancePresence
+                              activity={
+                                agent?.definition.state === "disabled"
+                                  ? "offline"
+                                  : instancePresences.find(
+                                      (p) => p.agentId === instance.agentId,
+                                    )?.activity
+                              }
+                            />
+                          }
+                          actions={
                             <RuntimeControl
                               client={client}
                               controlRoomId={controlRoomId}

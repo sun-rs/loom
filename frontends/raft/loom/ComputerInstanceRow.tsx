@@ -1,4 +1,4 @@
-import StatusDot from "../packages/web/src/components/ui/StatusDot.tsx";
+import InstancePresence from "./InstancePresence.tsx";
 // Structural port: db5e399 MachineAgentRow.tsx. Loom supplies instance identity/status.
 import {
   CheckboxIndicator,
@@ -29,13 +29,10 @@ export default function ComputerInstanceRow({
     />
   );
   const status = (
-    <span className="inline-flex items-center gap-1.5 text-footnote text-foreground-hint">
-      <StatusDot
-        activity={instance.activity ?? "offline"}
-        title={instance.stateLabel}
-      />
-      {instance.stateLabel}
-    </span>
+    <InstancePresence
+      activity={instance.activity}
+      label={instance.stateLabel}
+    />
   );
   return selectionMode ? (
     <ListRow
