@@ -398,6 +398,44 @@ directly with the next official checkout using `scripts/official-web/upstream-di
 then validate affected contracts. Follow its README for upgrades and keep the
 canonical and legacy raft-ui imports bound to one runtime.
 
+### Official dependency boundary and upgrade procedure
+
+Follow [the dependency and upgrade contract](docs/design/official-dependency-migration.zh-CN.md)
+and `frontends/raft/loom/dependency-migration.json`. Completion of the declared
+migration plan is not proof that the entire official Web is an untouched library
+or every Loom page is a thin adapter. Distinguish the official package, immutable
+selected source, generated presentation, resource compatibility ports and retained
+Loom composition. Never advertise whole-site/latest parity from hashes or the
+migration-complete flag alone. Dated construction notes are historical, not new
+backlogs; consult the current inventory before reopening migration work.
+
+When the owner reports an upstream UI change:
+
+1. Verify Web source, package and production-resource versions separately. Keep
+   the existing pins and inspect an independently acquired candidate first.
+2. Run `npm run audit:official-web:upstream -- /path/to/official-checkout`.
+   Check candidate identity/dirty state and distinguish sourceDependency from
+   historical intake rows. Exit 2 means local drift or missing paths need review;
+   exit 0 is not UI acceptance. Missing paths do not prove missing product features.
+3. Trace changed source/recipes through exports/generators to Loom consumers and
+   registered scenarios. The report is byte-level, not an automatic semantic
+   impact graph. Include shared style/font/responsive effects where applicable.
+4. Update the relevant package/resource/source locks, preserve notices, regenerate
+   affected presentation, and adapt explicit bindings only as needed. Never patch
+   immutable originals or generated output by hand. Do not import upstream stores
+   as a second business owner. Keep existing mobile exceptions explicit.
+5. Apply TDD and scoped source/UI-contract/type/build and desktop/mobile browser
+   checks to affected behavior; broaden only when shared changes justify it.
+   Preserve the safe deployment and real-page verification requirements for
+   product changes. Document/push the accepted version and its evidence.
+
+If production resources lead published source, record that gap and retain the
+verified version unless a separately sourced compatibility port is adopted under
+the existing UI contract. Do not label a resource port latest official source or
+recreate a screenshot to hide the gap. Tooling/document-only updates do not require
+a product restart. Do not create a second `agent.md` rule file; this `AGENTS.md`
+is the repository instruction entry point.
+
 ### Mandatory Raft UI layering (owner approved 2026-10-19)
 
 For evo, adopt the official Raft UI rules as the implementation contract, not
