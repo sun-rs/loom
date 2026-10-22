@@ -174,37 +174,60 @@ export async function verifyRoleActivity({ browser, origin, client, role }) {
       await profile
         .getByRole("button", { name: "编辑运行时配置", exact: true })
         .click();
+      // Official v2 FieldLabel includes the required marker in its accessible name.
+      // Effort loses that marker when the selected model has no effort capability.
       const runtimeDialog = page.getByTestId("agent-runtime-config-dialog");
+      await runtimeDialog.waitFor();
       await runtimeDialog
-        .getByRole("combobox", { name: "模型", exact: true })
+        .getByRole("status", { name: "读取 CLI 目录" })
+        .waitFor({ state: "hidden" });
+
+      await runtimeDialog
+        .getByRole("combobox", { name: "模型*", exact: true })
         .waitFor();
       await page.screenshot({ path: `/tmp/loom-runtime-dialog-${width}.png` });
       await runtimeDialog
-        .getByRole("combobox", { name: "推理强度", exact: true })
+        .getByRole("combobox", { name: /^推理强度\*?$/ })
         .waitFor();
       await runtimeDialog
-        .getByRole("combobox", { name: "模型", exact: true })
+        .getByRole("combobox", { name: "模型*", exact: true })
         .click();
       await page
         .getByRole("option", { name: "FIXTURE high model", exact: true })
         .click();
       assert.match(
         await runtimeDialog
-          .getByRole("combobox", { name: "推理强度", exact: true })
-          .innerText(),
+          .getByRole("combobox", { name: /^推理强度\*?$/ })
+          .inputValue(),
         /high/,
       );
       await runtimeDialog
-        .getByRole("combobox", { name: "模型", exact: true })
+        .getByRole("combobox", { name: "模型*", exact: true })
         .click();
       await page
         .getByRole("option", { name: "FIXTURE no effort model", exact: true })
         .click();
+      // The official v2 control remains searchable for an optional empty source.
+      // It must clear the former effort and refuse unsupported typed values.
+      const effort = runtimeDialog.getByRole("combobox", {
+        name: "推理强度",
+        exact: true,
+      });
+      assert.equal(await effort.inputValue(), "");
+      await effort.fill("high");
+      await page.waitForFunction(
+        () =>
+          document
+            .querySelector('[data-testid="runtime-form-v2-effort"]')
+            ?.getAttribute("aria-expanded") === "true",
+      );
+      await page.getByText("没有匹配项", { exact: true }).waitFor();
+      assert.equal(await page.getByRole("option").count(), 0);
+      await page.keyboard.press("Escape");
       assert.equal(
-        await runtimeDialog
-          .getByRole("combobox", { name: "推理强度", exact: true })
-          .isDisabled(),
-        true,
+        await effort.inputValue(),
+        "",
+        "unsupported typed effort must not become the selection",
       );
       await runtimeDialog
         .getByRole("button", { name: "取消", exact: true })
