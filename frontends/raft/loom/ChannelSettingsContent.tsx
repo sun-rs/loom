@@ -198,10 +198,11 @@ export default function ChannelSettingsContent({
   };
   return (
     <>
-      <DrawerBody className="min-h-0 flex-1 overflow-y-auto">
+      <DrawerBody className="min-h-0 flex-1 overflow-y-auto px-0 py-2">
+        <div inert={busy}>{members}</div>
         <form
           id="loom-channel-settings-form"
-          className="space-y-5"
+          className="space-y-5 px-4"
           onSubmit={(event) => {
             event.preventDefault();
             void submit();
@@ -222,7 +223,10 @@ export default function ChannelSettingsContent({
           ) : !base ? (
             <p role="status">正在读取频道资料…</p>
           ) : (
-            <section className="space-y-3">
+            <FormSection
+              title="信息"
+              description="在整个工作空间中显示的名称和描述。"
+            >
               <div className="space-y-3">
                 <Field>
                   <FieldLabel size="md" htmlFor="channel-settings-name">
@@ -266,11 +270,10 @@ export default function ChannelSettingsContent({
                 )}
               </div>
               <Separator className="mt-5" />
-            </section>
+            </FormSection>
           )}
         </form>
-        <div className="space-y-5 mt-5">
-          <div inert={busy || dirty}>{members}</div>
+        <div className="space-y-5 mt-5 px-4">
           <FormSection title="通知">
             <div className="flex items-center justify-between gap-3 py-3">
               <div className="min-w-0">

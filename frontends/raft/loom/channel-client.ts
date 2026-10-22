@@ -1,3 +1,4 @@
+import { readCurrentChannelMembers } from "./current-channel-members.ts";
 import { projectChannelMembers } from "./channel-members.ts";
 import { RoomTimelineSession, RoomSession } from "@rah-os/client-core";
 import {
@@ -92,6 +93,7 @@ export class LoomChannelClient {
   readonly client: RahClient;
   readonly roomId: string;
   private threads: Thread[] = [];
+  private memberIdentities: Principal[] | undefined;
   private directRoom: Room | null = null;
   private tail: Promise<unknown> = Promise.resolve();
   constructor(client: RahClient, roomId: string, consumerId: string) {
@@ -137,6 +139,12 @@ export class LoomChannelClient {
   members(signal?: AbortSignal) {
     return this.serial(async () => {
       await this.room.syncUntilCurrent({ maxPages: 10, signal });
+      this.memberIdentities = await readCurrentChannelMembers(
+        this.client,
+        this.roomId,
+        this.memberIdentities ?? this.room.state.snapshot?.members ?? [],
+        signal,
+      );
       const activity = await this.client.request(
         "room.agent.activity.list",
         { roomId: this.roomId },
@@ -144,7 +152,7 @@ export class LoomChannelClient {
       );
       return projectChannelMembers(
         this.roomId,
-        this.room.state.snapshot?.members ?? [],
+        this.memberIdentities ?? this.room.state.snapshot?.members ?? [],
         activity.agents,
       );
     });
@@ -172,17 +180,17 @@ export class LoomChannelClient {
     return {
       hasNewer: !this.messages.state.complete,
       threads: this.threads,
-      members: this.room.state.snapshot?.members ?? [],
+      members: this.memberIdentities ?? this.room.state.snapshot?.members ?? [],
       room:
         this.room.state.snapshot?.room.kind === "direct"
           ? this.directRoom
           : (this.room.state.snapshot?.room ?? null),
       messages: this.messages.state.items.map((item) =>
         item.kind === "message"
-          ? toOfficialMessage(
-              item.message,
-              this.room.state.snapshot?.members ?? [],
-            )
+          ? toOfficialMessage(item.message, [
+              ...(this.memberIdentities ?? []),
+              ...(this.room.state.snapshot?.members ?? []),
+            ])
           : {
               id: `event:${item.notice.eventId}`,
               channelId: item.notice.roomId,

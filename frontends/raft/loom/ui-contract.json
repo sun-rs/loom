@@ -626,6 +626,27 @@
         "scripts/official-web/confirmation-source.test.mjs",
         "scripts/official-web/computers-browser.mjs"
       ]
+    },
+    {
+      "id": "channel-member-flow",
+      "owner": "Locked db5e399 ChannelOverflowMenu MembersStrip / ChannelMembers page and staged picker / ChannelMemberList rows",
+      "sources": [
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/channel/ChannelOverflowMenu.tsx",
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/agent/ChannelMembers.tsx",
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/channel/ChannelMemberList.tsx"
+      ],
+      "bindings": [
+        "OfficialMemberFlow.generated.tsx",
+        "ChannelMembers.tsx",
+        "ChannelControl.tsx"
+      ],
+      "rule": "Native drawer-internal root/member/add navigation keeps root drafts mounted. Role choice instantiates a new member through existing intent owner; per-instance successes survive partial failure and unknown pauses the batch. Unknown presence omits badges; no unsupported administrator action. Private box back/close uses durable parent Channel, distinct from standalone DM.",
+      "evidence": [
+        "scripts/official-web/member-flow-source.test.mjs",
+        "scripts/official-web/private-parent-navigation.test.mjs",
+        "scripts/official-web/channel-settings-browser.mjs",
+        "scripts/official-web/private-browser.mjs"
+      ]
     }
   ],
   "exceptions": [

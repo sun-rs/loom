@@ -37,6 +37,7 @@ export async function verifyPrivateBoxes({
     );
     await page.goto(`${origin}/?room=${channel.roomId}`);
     await page.getByTestId("loom-channel-control-trigger").click();
+    await page.getByTestId("channel-overflow-members-entry").click();
     const requests = [];
     let lost = false;
     await page.route("**/v3/client/rooms/direct/open", async (route) => {
@@ -81,8 +82,9 @@ export async function verifyPrivateBoxes({
         await page.getByRole("navigation", { name: "主导航" }).isVisible(),
         false,
       );
-      await showChatList(page);
+      await page.getByRole("button", { name: "返回频道", exact: true }).click();
       await page.goBack();
+      assert.equal(new URL(page.url()).searchParams.get("room"), boxId);
     }
     await page.getByRole("button", { name: "核实发送" }).click();
     await page.getByText(body, { exact: true }).waitFor();
@@ -105,6 +107,16 @@ export async function verifyPrivateBoxes({
     );
     await page.reload();
     await page.getByText(body, { exact: true }).waitFor();
+    const privateUrl = page.url();
+    const returnButton =
+      viewport.width < 768
+        ? page.getByRole("button", { name: "返回频道", exact: true })
+        : page.getByRole("button", { name: "关闭频道内私聊", exact: true });
+    await returnButton.click();
+    assert.equal(new URL(page.url()).searchParams.get("room"), channel.roomId);
+    await page.goto(privateUrl);
+    await page.getByText(body, { exact: true }).waitFor();
+
     await assertSparseHistoryStartsAtTop(
       page,
       viewport.width === 1440

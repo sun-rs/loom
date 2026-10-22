@@ -1,3 +1,4 @@
+import CloseButton from "../packages/web/src/components/ui/CloseButton.tsx";
 import { pageFetch } from "./page-fetch.ts";
 import PushNavigation from "./PushNavigation.tsx";
 import ChannelPrivateHistory from "./ChannelPrivateHistory.tsx";
@@ -319,7 +320,7 @@ function Channel({
               subtitle={channel.description}
               onMobileBack={onBack}
               mobileBackProps={
-                channel.side
+                isPrivate || channel.side
                   ? {
                       "aria-label": "返回频道",
                       "data-testid": "thread-mobile-back",
@@ -336,7 +337,16 @@ function Channel({
               }
               actions={
                 isPrivate ? (
-                  headerActions
+                  <>
+                    {headerActions}
+                    {!channel.side && (
+                      <CloseButton
+                        data-loom-control="detail-close"
+                        aria-label="关闭频道内私聊"
+                        onClick={onBack}
+                      />
+                    )}
+                  </>
                 ) : (
                   <>
                     <OverflowMenuTrigger
@@ -351,9 +361,13 @@ function Channel({
                       <ChannelControl
                         onChanged={onRoomChanged}
                         readOnly={!!channel.archivedAt}
-                        members={(closeMembers) => (
+                        members={(closeMembers, onPageChange, container) => (
                           <>
                             <ChannelMembers
+                              workspaceId={channel.workspaceId}
+                              controlRoomId={controlRoomId}
+                              container={container}
+                              onPageChange={onPageChange}
                               bridge={bridge}
                               onOpenPrivate={(id) => {
                                 closeMembers();
@@ -1183,7 +1197,15 @@ export default function ChannelApp() {
                           channel={selected}
                           standalone={standaloneRooms.includes(selected.roomId)}
                           controlRoomId={directory.workspace.controlRoomId}
-                          onBack={showChatList}
+                          onBack={
+                            selected.instancePrivateBox?.channelId
+                              ? () => {
+                                  const parent =
+                                    selected.instancePrivateBox?.channelId;
+                                  if (parent) setParams({ room: parent });
+                                }
+                              : showChatList
+                          }
                           bridge={bridge!}
                           onOpenPrivate={openPrivate}
                           onAddInstance={

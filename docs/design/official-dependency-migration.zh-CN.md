@@ -306,3 +306,17 @@ Role 行采用 db5e399 `MemberAgentRow` 的原 JSX，计算机行采用 `Sidebar
 | 通知 | NotificationSettings 已绑定官方生成片段，enable/disable/test 走 LoomPushClient；没有证明服务器静音已完整绑定 | 区分设备推送订阅与工作区静音，用既有通知权限 owner 接线，不导入 Raft 云端账户逻辑 |
 
 以上是明确未完成项；此次小批修正不将频道设置整页或上述菜单标记为验收完成。
+
+
+### 成员三级流程与频道内私聊返回（2026-10-22，后继修正）
+
+上节成员流程缺口已替换：`generate-member-flow.mjs` 从锁定 db5e399 的 ChannelOverflowMenu 提取 MembersStrip（含三行溢出计算、观察宽度、tooltip 和加号），从 ChannelMembers 提取成员页 header、分组／搜索／底部添加及多选 picker JSX，从新纳入原字节锁的 ChannelMemberList 提取成员行、分隔线和移除操作。生成结果绑定已有 i18n、AvatarSlot 与 raft-ui；不导入上游 store。删除不可用的旧单选即加入分支及官方云端 created-but-not-joined 分支，不保留假成功 callback。Loom 保留以下显式差异：
+
+- 选择 Role 配置创建新的频道实例，允许同一 Role 再次添加；新建角色复用共享配置弹窗，其可选加入能力不被偷偷转为自动创建实例。创建后返回列表选择也可继续；入口文案准确说明此行为。
+- 多选是逐个现有幂等接口；停止于拒绝或未知，成功项从选择集移除；核实原请求后仍不自动继续未执行项。没有添加第二个业务队列。移除用既有 room.member.remove 和官方确认弹窗；不展示没有对应产品权限模型的“实例设为管理员”。
+- 官方根页保持 mounted，二三级内容由同一个 Drawer 挂载；返回保留名称／描述草稿、成员搜索状态。实例资料仍使用既有 inspector；不增加一套资料业务实现。未知在线状态不画伪造绿色点，头像取真实 Human 资料与实例当前配置。
+- 本轮真实联调复现首次 RoomSync snapshot 成员名单长期不变，导致成功添加后名单不更新。当前成员改读 room.member.list；遇缓存中没有的身份时，使用 limit=1 的 latest bootstrap 只补取身份，不 ACK、不持有第二个游标、不拉取整段聊天。历史/执行依然由原 RoomSession/RoomTimelineSession 拥有。缺失资料报错，不把不完整名单报作成功。
+
+频道内私聊是所属频道的下级会话，区别于顶层独立单聊。复用现有官方 PanelHeader 的手机返回与 CloseButton，返回目标来自持久 instancePrivateBox.channelId，因此刷新／深链后仍有效；桌面 X 和手机返回都回所属频道，不关闭实例或删除私聊。当前采用子页面导航，而非新增一个三列私聊容器；此前的消息发送未知结果仍由原 WriteIntentSlot 保留和核实。
+
+本轮不宣称频道设置所有偏好／删除公开操作、头像右键、消息工具栏更多菜单、导航排序和折叠已一并完成。那些事项仍按上节独立边界跟踪。

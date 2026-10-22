@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 export async function showChatList(page) {
   if (page.viewportSize().width >= 768) return;
   await page.getByTestId("loom-channel-app").waitFor();
+  const parent = page.getByRole("button", { name: "返回频道", exact: true });
+  if (await parent.isVisible()) await parent.click();
   const back = page.getByRole("button", { name: "聊天列表", exact: true });
   const sidebar = page.getByTestId("public-server-channel-sidebar-root");
   await back.or(sidebar).filter({ visible: true }).first().waitFor();

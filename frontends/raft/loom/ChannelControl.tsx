@@ -1,3 +1,4 @@
+import { hasUnresolvedIntents } from "@rah-os/client-core/write-intent";
 import ChannelSettingsContent from "./ChannelSettingsContent.tsx";
 import DiscardChangesDialog from "./DiscardChangesDialog.tsx";
 import TaskPermissionDialog from "./TaskPermissionDialog.tsx";
@@ -5,6 +6,7 @@ import MemoryPolicyDialog from "./MemoryPolicyDialog.tsx";
 import { useRouteIntentOwner } from "./useIntentRoute.ts";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
+  Badge,
   Button,
   Textarea,
   Drawer,
@@ -37,7 +39,11 @@ export default function ChannelControl({
 }: {
   onChanged: () => Promise<void>;
   readOnly?: boolean;
-  members: (close: () => void) => ReactNode;
+  members: (
+    close: () => void,
+    onPageChange: (open: boolean) => void,
+    container: HTMLElement | null,
+  ) => ReactNode;
   bridge: LoomChannelClient;
   name: string;
   workspaceId: string;
@@ -51,10 +57,14 @@ export default function ChannelControl({
   const { state, error, setError } = useManagement(manager);
   const [sheet, setSheet] = useState(false),
     [open, setOpen] = useState(false);
+  const [memberPage, setMemberPage] = useState(false);
+  const [memberContainer, setMemberContainer] = useState<HTMLDivElement | null>(
+    null,
+  );
   const [dirty, setDirty] = useState(false);
   const [discard, setDiscard] = useState(false);
   const closeSettings = () => {
-    if (manager.writes.state !== "idle") return;
+    if (manager.writes.state !== "idle" || hasUnresolvedIntents()) return;
     if (dirty) setDiscard(true);
     else setSheet(false);
   };
@@ -103,7 +113,7 @@ export default function ChannelControl({
     if (stopped && open) textarea.current?.focus({ preventScroll: true });
   }, [stopped, open]);
   const close = () => {
-    if (manager.writes.state !== "idle") return;
+    if (manager.writes.state !== "idle" || hasUnresolvedIntents()) return;
     setOpen(false);
     requestAnimationFrame(() =>
       trigger.current?.querySelector("button")?.focus(),
@@ -138,7 +148,9 @@ export default function ChannelControl({
         open={sheet}
         modal
         swipeDirection="right"
-        disablePointerDismissal={dirty || state !== "idle"}
+        disablePointerDismissal={
+          dirty || state !== "idle" || hasUnresolvedIntents()
+        }
         onOpenChange={(next, event) => {
           if (next) setSheet(true);
           else {
@@ -154,79 +166,97 @@ export default function ChannelControl({
         }}
       >
         <DrawerContent
+          ref={setMemberContainer}
           data-testid="loom-channel-control-sheet"
           className="inset-y-0 right-0 h-dvh w-full [--drawer-content-height:100dvh] [--drawer-inset:0px] flex-col"
         >
-          <DrawerHeader className="flex-row justify-between">
-            <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-x-1.5">
-              <p className="col-start-1 row-start-2 text-caption text-foreground-hint">
-                频道
-              </p>
-              <DrawerTitle className="col-span-2 col-start-1 row-start-1 truncate">
-                频道设置
-              </DrawerTitle>
-              <DrawerDescription className="col-start-2 row-start-2 min-w-0 truncate font-mono text-mono-meta text-foreground-hint">
-                #{name}
-              </DrawerDescription>
-            </div>
-          </DrawerHeader>
-          <ChannelSettingsContent
-            bridge={bridge}
-            manager={manager}
-            busy={state !== "idle"}
-            onDirty={setDirty}
-            onClose={closeSettings}
-            onSaved={() => {
-              setDirty(false);
-              setSheet(false);
-            }}
-            onChanged={onChanged}
-            members={members(() => setSheet(false))}
+          <div
+            className={memberPage ? "hidden" : "flex min-h-0 flex-1 flex-col"}
           >
-            {!readOnly && (
-              <>
-                <OverflowActionRow
-                  disabled={dirty || state !== "idle"}
-                  icon={<CheckSquare size={14} />}
-                  label="实例任务权限"
-                  ariaLabel="实例任务权限"
-                  onClick={() => {
-                    setSheet(false);
-                    setTaskPolicyOpen(true);
-                  }}
-                />
-                <OverflowActionRow
-                  disabled={dirty || state !== "idle"}
-                  icon={<Brain size={14} />}
-                  label="记忆权限"
-                  ariaLabel="频道记忆权限"
-                  onClick={() => {
-                    setSheet(false);
-                    setMemoryOpen(true);
-                  }}
-                />
-                {readError && <p role="alert">{readError}</p>}
-                <OverflowActionRow
-                  disabled={dirty || state !== "idle"}
-                  icon={<CircleStop size={14} />}
-                  label={
-                    stopped
-                      ? "恢复频道"
-                      : stopping
-                        ? "查看急停进度"
-                        : "停止频道内所有实例"
-                  }
-                  ariaLabel="频道急停与恢复"
-                  testId="channel-overflow-stop-agents"
-                  onClick={() => {
-                    setSheet(false);
-                    setOpen(true);
-                    setError("");
-                  }}
-                />
-              </>
-            )}
-          </ChannelSettingsContent>
+            <DrawerHeader className="flex-row justify-between">
+              <div className="min-w-0">
+                <DrawerTitle>
+                  <span className="flex min-w-0 items-center gap-2">
+                    <span
+                      className="truncate"
+                      data-testid="channel-overflow-title-text"
+                    >
+                      #{name}
+                    </span>
+                    <Badge appearance="outline" className="shrink-0">
+                      {bridge.room.state.snapshot?.room.visibility === "public"
+                        ? "公开"
+                        : "私密"}
+                    </Badge>
+                  </span>
+                </DrawerTitle>
+                <DrawerDescription className="truncate text-caption text-foreground-hint">
+                  {bridge.room.state.snapshot?.room.description ?? "频道设置"}
+                </DrawerDescription>
+              </div>
+            </DrawerHeader>
+            <ChannelSettingsContent
+              bridge={bridge}
+              manager={manager}
+              busy={state !== "idle"}
+              onDirty={setDirty}
+              onClose={closeSettings}
+              onSaved={() => {
+                setDirty(false);
+                setSheet(false);
+              }}
+              onChanged={onChanged}
+              members={members(
+                () => setSheet(false),
+                setMemberPage,
+                memberContainer,
+              )}
+            >
+              {!readOnly && (
+                <>
+                  <OverflowActionRow
+                    disabled={dirty || state !== "idle"}
+                    icon={<CheckSquare size={14} />}
+                    label="实例任务权限"
+                    ariaLabel="实例任务权限"
+                    onClick={() => {
+                      setSheet(false);
+                      setTaskPolicyOpen(true);
+                    }}
+                  />
+                  <OverflowActionRow
+                    disabled={dirty || state !== "idle"}
+                    icon={<Brain size={14} />}
+                    label="记忆权限"
+                    ariaLabel="频道记忆权限"
+                    onClick={() => {
+                      setSheet(false);
+                      setMemoryOpen(true);
+                    }}
+                  />
+                  {readError && <p role="alert">{readError}</p>}
+                  <OverflowActionRow
+                    disabled={dirty || state !== "idle"}
+                    icon={<CircleStop size={14} />}
+                    label={
+                      stopped
+                        ? "恢复频道"
+                        : stopping
+                          ? "查看急停进度"
+                          : "停止频道内所有实例"
+                    }
+                    ariaLabel="频道急停与恢复"
+                    testId="channel-overflow-stop-agents"
+                    onClick={() => {
+                      setSheet(false);
+                      setOpen(true);
+                      setError("");
+                    }}
+                  />
+                </>
+              )}
+            </ChannelSettingsContent>
+          </div>
         </DrawerContent>
       </Drawer>
       {discard && (

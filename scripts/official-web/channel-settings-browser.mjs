@@ -24,6 +24,91 @@ export async function verifyChannelSettings({
     const name = sheet.getByRole("textbox", { name: "名称", exact: false });
     await name.waitFor();
     await name.fill("FIXTURE unsaved");
+    await sheet.getByTestId("channel-overflow-members-entry").click();
+    const memberPage = sheet.getByTestId("member-page");
+    await memberPage.getByTestId("member-page-search").fill("NO SUCH MEMBER");
+    await memberPage.getByText(/NO SUCH MEMBER/).waitFor();
+    await memberPage.getByTestId("member-page-search").fill("");
+    const beforeMembers = Number(
+      await memberPage.getByTestId("member-page-count").textContent(),
+    );
+    await memberPage.getByTestId("member-page-add").click();
+    const candidates = memberPage.locator(
+      '[data-testid^="add-candidate-agent-"]',
+    );
+    await candidates.first().waitFor();
+    await candidates.first().click();
+    await memberPage
+      .getByTestId("add-member-confirm")
+      .waitFor({ state: "visible" });
+    assert.equal(
+      await memberPage.getByTestId("add-member-confirm").isEnabled(),
+      true,
+    );
+    await memberPage.getByTestId("add-member-create-agent-entry").click();
+    await page
+      .getByTestId("loom-create-role")
+      .getByRole("button", { name: "取消", exact: true })
+      .click();
+    const instantiateRequests = [];
+    let lostAdd = false;
+    await page.route("**/v3/client/roles/instantiate", async (route) => {
+      instantiateRequests.push(route.request().postDataJSON());
+      if (!lostAdd) {
+        lostAdd = true;
+        await route.fetch();
+        await route.abort();
+      } else await route.continue();
+    });
+    await memberPage.getByTestId("add-member-confirm").click();
+    await memberPage
+      .getByRole("button", { name: "核实操作结果", exact: true })
+      .waitFor();
+    const addReplay = page.waitForResponse(
+      (r) => r.url().endsWith("/roles/instantiate") && r.status() === 200,
+    );
+    await memberPage
+      .getByRole("button", { name: "核实操作结果", exact: true })
+      .click();
+    await addReplay;
+    await memberPage.getByTestId("add-member-confirm").waitFor();
+    await page.waitForFunction(() =>
+      document
+        .querySelector('[data-testid="add-member-confirm"]')
+        ?.textContent?.includes("0"),
+    );
+    assert.equal(instantiateRequests.length, 2);
+    assert.deepEqual(instantiateRequests[0], instantiateRequests[1]);
+    await page.unroute("**/v3/client/roles/instantiate");
+    await memberPage.getByTestId("add-member-back").click();
+    await page.waitForFunction(
+      (expected) =>
+        Number(
+          document.querySelector('[data-testid="member-page-count"]')
+            ?.textContent,
+        ) === expected,
+      beforeMembers + 1,
+    );
+    assert.equal(
+      Number(await memberPage.getByTestId("member-page-count").textContent()),
+      beforeMembers + 1,
+    );
+    await memberPage
+      .getByRole("button", { name: /^移除 / })
+      .first()
+      .click();
+    await page
+      .getByRole("dialog")
+      .getByRole("button", { name: "取消", exact: true })
+      .click();
+
+    await memberPage.getByTestId("member-page-back").click();
+    assert.equal(
+      await name.inputValue(),
+      "FIXTURE unsaved",
+      "member roundtrip preserves root draft",
+    );
+
     await sheet.getByRole("button", { name: "取消", exact: true }).click();
     const discard = page.getByRole("alertdialog");
     await discard.waitFor();
@@ -125,6 +210,11 @@ export async function verifyChannelSettings({
     assert.deepEqual(errors, []);
     results.push({
       viewport,
+      sourceMemberPages: true,
+      rootDraftPreserved: true,
+      addedMemberAppearsWithoutReload: true,
+      addLostResponseExactReplay: true,
+      removeConfirmationCancelled: true,
       metadata: true,
       unknownExactReplay: true,
       conflictPreservesDraft: true,

@@ -66,7 +66,8 @@
       "loom/OfficialIdentityRows.generated.tsx",
       "loom/OfficialLiveActivity.generated.tsx",
       "loom/OfficialRoleControls.generated.tsx",
-      "loom/OfficialConfirmation.generated.tsx"
+      "loom/OfficialConfirmation.generated.tsx",
+      "loom/OfficialMemberFlow.generated.tsx"
     ],
     "foundation": "package.json#dependencies.raft-ui"
   },
@@ -354,6 +355,19 @@
         "OfficialConfirmation.generated.tsx": "Full upstream props and implementation declarations; existing i18n and canonical UI import bindings"
       },
       "evidence": ["confirmation-source.test.mjs", "computers-browser.mjs"]
+    },
+    {
+      "id": "channel-member-flow",
+      "decision": "Replace flat local member list with source-derived strip, full-height roster and staged picker. Frozen Role/new-instance semantics and per-instance intent outcomes are explicit Loom bindings.",
+      "bindings": {
+        "OfficialMemberFlow.generated.tsx": "Locked db5e399 declarations/JSX, omits upstream stores and unsupported legacy single-add/cloud membership branches",
+        "ChannelMembers.tsx": "SDK reads and sequential authenticated writes; partial successes retained, unknown verification stops progression"
+      },
+      "evidence": [
+        "member-flow-source.test.mjs",
+        "channel-settings-browser.mjs",
+        "private-browser.mjs"
+      ]
     }
   ],
   "plannedMigrationComplete": true
