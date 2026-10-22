@@ -51,16 +51,16 @@ export async function verifyManagement({
       }));
     assert.equal(labelStyle.transform, "none");
     assert.equal(labelStyle.margin, "0px");
-    await dialog.getByLabel("名称", { exact: true }).fill(name);
+    await dialog.getByRole("textbox", { name: /^名称/ }).fill(name);
     await dialog
       .getByLabel("角色 Prompt", { exact: true })
       .fill("FIXTURE ONLY do not execute");
-    await chooseOption(page, dialog, "CLI", 0);
+    await chooseOption(page, dialog, "运行时", 0);
     await chooseOption(page, dialog, "模型", 0);
     // Official Select is a focusable popup, never a platform-native select.
     assert.equal(await dialog.locator("select").count(), 0);
     const cliChoice = dialog.getByRole("combobox", {
-      name: "CLI",
+      name: "运行时",
       exact: true,
     });
     await cliChoice.click();
@@ -114,12 +114,12 @@ export async function verifyManagement({
     const detail = page.getByTestId("loom-role-detail");
     await detail.getByRole("button", { name: "编辑配置", exact: true }).click();
     await detail
-      .getByRole("combobox", { name: "CLI", exact: true })
+      .getByRole("combobox", { name: "运行时", exact: true })
       .filter({ hasText: "当前配置不可用" })
       .waitFor();
     assert.equal(
       await detail
-        .getByRole("combobox", { name: "CLI", exact: true })
+        .getByRole("combobox", { name: "运行时", exact: true })
         .innerText(),
       "当前配置不可用",
     );
@@ -133,11 +133,14 @@ export async function verifyManagement({
     await page.reload();
     await detail.getByRole("button", { name: "编辑配置", exact: true }).click();
 
-    await detail.getByLabel("名称", { exact: true }).fill(`${name}Edited`);
-    await page.getByRole("tablist", { name: "角色详情" }).getByRole("tab", { name: "资料", exact: true }).click();
+    await detail.getByRole("textbox", { name: /^名称/ }).fill(`${name}Edited`);
+    await page
+      .getByRole("tablist", { name: "角色详情" })
+      .getByRole("tab", { name: "资料", exact: true })
+      .click();
     await page.getByRole("tab", { name: "配置", exact: true }).click();
     assert.equal(
-      await detail.getByLabel("名称", { exact: true }).inputValue(),
+      await detail.getByRole("textbox", { name: /^名称/ }).inputValue(),
       `${name}Edited`,
       "switching detail tabs preserves the unsaved configuration",
     );
@@ -164,7 +167,10 @@ export async function verifyManagement({
       await client.request("agent.get", { agentId: instance.agentId })
     ).agent;
     const instanceName = agent.currentRevision.displayName ?? agent.handle;
-    await page.getByRole("tablist", { name: "角色详情" }).getByRole("tab", { name: "资料", exact: true }).click();
+    await page
+      .getByRole("tablist", { name: "角色详情" })
+      .getByRole("tab", { name: "资料", exact: true })
+      .click();
     // Only this role's single instance is offered, although the fixture has other roles.
     assert.equal(
       await detail.getByRole("button", { name: /^更多操作 / }).count(),
@@ -205,7 +211,10 @@ export async function verifyManagement({
         .roleRevisionId,
       frozenRevision,
     );
-    await page.getByRole("tablist", { name: "角色详情" }).getByRole("tab", { name: "资料", exact: true }).click();
+    await page
+      .getByRole("tablist", { name: "角色详情" })
+      .getByRole("tab", { name: "资料", exact: true })
+      .click();
     await page
       .getByRole("button", { name: `更多操作 ${instanceName}`, exact: true })
       .click();
@@ -277,7 +286,10 @@ export async function verifyManagement({
     assert.ok(
       catalog.instances.some((i) => i.instanceId === instance.instanceId),
     );
-    await page.getByRole("tablist", { name: "角色详情" }).getByRole("tab", { name: "资料", exact: true }).click();
+    await page
+      .getByRole("tablist", { name: "角色详情" })
+      .getByRole("tab", { name: "资料", exact: true })
+      .click();
     await page
       .getByRole("button", { name: `更多操作 ${instanceName}`, exact: true })
       .click();
@@ -317,7 +329,7 @@ export async function verifyManagement({
       .first()
       .click();
     const channelName = `BrowserChannel${viewport.width}`;
-    await dialog.getByLabel("名称", { exact: true }).fill(channelName);
+    await dialog.getByRole("textbox", { name: /^名称/ }).fill(channelName);
     await dialog.getByRole("button", { name: "创建频道", exact: true }).click();
     await dialog.waitFor({ state: "hidden" });
     const created = (
@@ -331,7 +343,7 @@ export async function verifyManagement({
       .click({ button: "right" });
     await page.getByRole("menuitem", { name: "新建分组", exact: true }).click();
     const groupName = `BrowserGroup${viewport.width}`;
-    await dialog.getByLabel("名称", { exact: true }).fill(groupName);
+    await dialog.getByRole("textbox", { name: /^名称/ }).fill(groupName);
     await dialog.getByRole("button", { name: "保存分组", exact: true }).click();
     await dialog.waitFor({ state: "hidden" });
     await page
@@ -445,7 +457,7 @@ export async function verifyManagement({
       .getByRole("menuitem", { name: "重命名分组", exact: true })
       .click();
     await dialog
-      .getByLabel("名称", { exact: true })
+      .getByRole("textbox", { name: /^名称/ })
       .fill(`${groupName}Renamed`);
     await dialog.getByRole("button", { name: "保存分组", exact: true }).click();
     await dialog.waitFor({ state: "hidden" });

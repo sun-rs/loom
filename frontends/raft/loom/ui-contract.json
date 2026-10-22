@@ -562,6 +562,29 @@
         "RoleBatchDialog.tsx"
       ],
       "guard": "scripts/official-web/computers-browser.mjs"
+    },
+    {
+      "id": "role-create-and-computer-stability",
+      "owner": "db5e399 CreateAgentDialog / DialogCard / StableField / agentNameGenerator",
+      "rule": "Both pages share CreateRoleDialog. Native StableField reserved helper rows plus space-y-1; default Role save creates no session. Optional channel addition is a separate confirmed write; failure retains Role. Owner requested outlined selection cancel and stable scrollbar gutter in Computer detail; omit redundant available copy, retain unavailable state. Single local computer is capability source, not portable Role placement.",
+      "sources": [
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/ui/DialogCard.tsx",
+        "frontends/raft/packages/web/src/components/agent/StableField.tsx"
+      ],
+      "upstream": "https://github.com/botiverse/raft-source/tree/db5e399f017d584e49597e3a28757645d6807893",
+      "sourceSha256": {
+        "packages/shared/src/agentNameGenerator.ts": "f395f7e6094e7ccd25d4afbec4fc76bea4d680e3f94d6031ad8e2c27596a4345",
+        "packages/web/src/components/agent/CreateAgentDialog.tsx": "985e92d2b6ce84d9e5c9c36a5976463b82f3b02e4731e88bb83cf800cff55d40"
+      },
+      "bindings": [
+        "CreateRoleDialog.tsx",
+        "RoleEditor.tsx",
+        "ComputerSelection.tsx",
+        "ComputersPage.tsx",
+        "role-suggested-name.ts"
+      ],
+      "localDifferences": "Creation is a Loom Role flow, structural port; existing upstream license/adoption authorization applies. Name algorithm copied with Math.random in place of clock helper. Environment/serviceTier remain unavailable pending verified execution support.",
+      "guard": "scripts/official-web/computer-create-source.test.mjs"
     }
   ],
   "exceptions": [

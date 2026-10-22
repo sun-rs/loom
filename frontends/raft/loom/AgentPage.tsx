@@ -52,6 +52,7 @@ import {
 import RuntimeControl from "./RuntimeControl.tsx";
 import DiscardChangesDialog from "./DiscardChangesDialog.tsx";
 import { useIntentRoute } from "./useIntentRoute.ts";
+import CreateRoleDialog from "./CreateRoleDialog.tsx";
 import RoleEditor from "./RoleEditor.tsx";
 type Edit =
   | { kind: "create" }
@@ -544,7 +545,7 @@ export default function AgentPage({
             <>
               <p>
                 删除“{roleName(edit.role)}
-                ”的角色定义？已有实例、配置快照与历史保留。以后重建同名角色属于新身份。
+                ”的角色定义？运行中的实例不会停止，仍可继续收发消息；已有会话、配置快照与历史保留。删除后不能再用该角色新增实例。以后重建同名角色属于新身份。
               </p>
               <OperationStatus manager={manager} error={error} />
             </>
@@ -552,24 +553,31 @@ export default function AgentPage({
           onConfirm={() => manager.deleteRole(edit.role, done).then(() => {})}
         />
       )}
-      {edit && edit.kind !== "delete" && (
+      {edit?.kind === "create" && (
+        <CreateRoleDialog
+          client={client}
+          workspaceId={workspaceId}
+          controlRoomId={controlRoomId}
+          onClose={() => setEdit(undefined)}
+          onChanged={() => void refresh()}
+        />
+      )}
+      {edit && edit.kind !== "delete" && edit.kind !== "create" && (
         <ActionDialog
           title={
-            edit.kind === "create"
-              ? "新建角色"
-              : edit.kind === "edit"
-                ? "编辑角色"
-                : edit.kind === "add"
-                  ? "添加实例到频道"
-                  : edit.kind === "restart"
-                    ? "重启实例"
-                    : "移除实例"
+            edit.kind === "edit"
+              ? "编辑角色"
+              : edit.kind === "add"
+                ? "添加实例到频道"
+                : edit.kind === "restart"
+                  ? "重启实例"
+                  : "移除实例"
           }
           manager={manager}
           error={error}
           onClose={() => guard(() => setEdit(undefined), dialogDirty)}
         >
-          {edit.kind === "create" || edit.kind === "edit" ? (
+          {edit.kind === "edit" ? (
             <RoleEditor
               client={client}
               onDirtyChange={setDialogDirty}

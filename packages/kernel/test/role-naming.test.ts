@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { roleInstanceFixture } from "./role-instance-fixture.ts";
+import {
+  roleInstanceFixture,
+  startInstanceRun,
+} from "./role-instance-fixture.ts";
 
 function create(
   f: ReturnType<typeof roleInstanceFixture>,
@@ -207,6 +210,40 @@ test("Role modification time survives list and exact revision replay while creat
       f.kernel.roles.revise(f.actor, input).role.updatedAt,
       result.role.updatedAt,
     );
+  } finally {
+    f.close();
+  }
+});
+
+// Audit evidence: deleting configuration must not stop an already running instance.
+test("deleting Role while running leaves execution, session and frozen revisions intact", () => {
+  const f = roleInstanceFixture();
+  try {
+    const work = startInstanceRun(f);
+    const tables = [
+      "role_instances",
+      "role_revisions",
+      "agent_definitions",
+      "agent_definition_revisions",
+      "role_instance_sessions",
+      "run_attempts",
+      "runtime_processes",
+      "inbox_items",
+      "messages",
+    ];
+    const snapshot = () =>
+      tables.map((table) =>
+        f.db.prepare(`SELECT * FROM ${table} ORDER BY rowid`).all(),
+      );
+    const before = snapshot();
+    f.kernel.roles.delete(f.actor, {
+      roleId: f.role.roleId,
+      expectedRoleRevisionId: f.role.roleRevisionId,
+      basedOnRoomSeq: f.head(f.controlRoomId),
+      idempotencyKey: "delete-live-role",
+    });
+    assert.deepEqual(snapshot(), before);
+    work.finish(0);
   } finally {
     f.close();
   }

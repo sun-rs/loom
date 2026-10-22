@@ -22,7 +22,9 @@ import {
   DropdownMenuItem,
 } from "raft-ui";
 import { MoreHorizontal } from "lucide-react";
-import { FieldSelectTrigger } from "../packages/web/src/components/agent/StableField.tsx";
+import StableField, {
+  FieldSelectTrigger,
+} from "../packages/web/src/components/agent/StableField.tsx";
 import FormField from "../packages/web/src/components/ui/FormField.tsx";
 import type { ManagementClient } from "./management-client.ts";
 export function useManagement(manager: ManagementClient) {
@@ -152,7 +154,9 @@ export function SelectField({
   options,
   disabled = false,
   portalContainer,
+  stable = false,
 }: {
+  stable?: boolean;
   label: string;
   value: string;
   onChange: (value: string) => void;
@@ -162,8 +166,9 @@ export function SelectField({
 }) {
   const unavailable =
     Boolean(value) && !options.some((option) => option.value === value);
+  const Field = stable ? StableField : FormField;
   return (
-    <FormField label={label} className="mb-3">
+    <Field label={label} className={stable ? undefined : "mb-3"}>
       <Select
         chrome="field"
         value={unavailable ? null : value || null}
@@ -195,6 +200,6 @@ export function SelectField({
           </SelectList>
         </SelectContent>
       </Select>
-    </FormField>
+    </Field>
   );
 }

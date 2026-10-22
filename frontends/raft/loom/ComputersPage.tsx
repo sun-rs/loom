@@ -13,6 +13,7 @@ import {
 } from "./computer-instance-list.ts";
 import ShowMoreToggle from "@loom/raft-web-source/ShowMoreToggle";
 import ComputerInstanceRow from "./ComputerInstanceRow.tsx";
+import CreateRoleDialog from "./CreateRoleDialog.tsx";
 import ComputerSelection from "./ComputerSelection.tsx";
 import RoleBatchDialog, { type RoleBatchAction } from "./RoleBatchDialog.tsx";
 import type { RoleListResponse, AgentCatalogEntry } from "@rah-os/protocol";
@@ -20,7 +21,7 @@ import ComputerProfile from "./ComputerProfile.tsx";
 // Structural port: locked Raft v1.21.22 $yt / zCt / MachineDetailPanel.
 // Loom owns only the authenticated local inventory read; no upstream machine store.
 import { useEffect, useState, type CSSProperties } from "react";
-import { Monitor, ChevronDown, ChevronUp } from "lucide-react";
+import { Monitor, ChevronDown, ChevronUp, Plus } from "lucide-react";
 import type { RahClient } from "@rah-os/client-sdk";
 import type { LocalRuntimeInventoryResponse } from "@rah-os/protocol";
 import {
@@ -66,6 +67,7 @@ export default function ComputersPage({
   onSelect: (id: string | null) => void;
   onSettings: () => void;
 }) {
+  const [creating, setCreating] = useState(false);
   const [selectedInstances, setSelectedInstances] = useState<string[] | null>(
     null,
   );
@@ -176,6 +178,18 @@ export default function ComputersPage({
       className="flex min-h-0 min-w-0 flex-1"
       data-testid="loom-computers-page"
     >
+      {creating && workspaceId && controlRoomId && (
+        <CreateRoleDialog
+          client={client}
+          workspaceId={workspaceId}
+          controlRoomId={controlRoomId}
+          onClose={() => setCreating(false)}
+          onChanged={() => {
+            setCatalogReload((n) => n + 1);
+            setReload((n) => n + 1);
+          }}
+        />
+      )}
       {batch && workspaceId && controlRoomId && (
         <RoleBatchDialog
           client={client}
@@ -288,6 +302,7 @@ export default function ComputersPage({
           {selected ? (
             <div
               className="flex-1 overflow-y-auto bg-layer-panel"
+              style={{ scrollbarGutter: "stable" }}
               data-testid="computer-detail"
             >
               {error && problem}
@@ -339,8 +354,8 @@ export default function ComputersPage({
                             className={`size-2 shrink-0 rounded-[2px] ${runtime.available ? "bg-info" : "bg-fill-muted"}`}
                           />
                           {runtime.displayName}
-                          {runtime.version ? ` ${runtime.version}` : ""} ·{" "}
-                          {runtime.available ? "可用" : "不可用"}
+                          {runtime.version ? ` ${runtime.version}` : ""}
+                          {!runtime.available && " · 不可用"}
                         </Badge>
                       ))}
                     </OfficialComputerRuntimes>
@@ -362,20 +377,34 @@ export default function ComputersPage({
                   label="在这台计算机上的实例"
                   count={instances ? rows.length : undefined}
                   action={
-                    workspaceId && controlRoomId && rows.length ? (
-                      <ComputerSelection
-                        rows={rows}
-                        selected={selectedInstances}
-                        onSelect={setSelectedInstances}
-                        onAction={(action) =>
-                          setBatch({
-                            action,
-                            instances: rows.filter((row) =>
-                              selectedInstances?.includes(row.instanceId),
-                            ),
-                          })
-                        }
-                      />
+                    workspaceId && controlRoomId ? (
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {rows.length > 0 && (
+                          <ComputerSelection
+                            rows={rows}
+                            selected={selectedInstances}
+                            onSelect={setSelectedInstances}
+                            onAction={(action) =>
+                              setBatch({
+                                action,
+                                instances: rows.filter((row) =>
+                                  selectedInstances?.includes(row.instanceId),
+                                ),
+                              })
+                            }
+                          />
+                        )}
+                        {selectedInstances === null && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setCreating(true)}
+                          >
+                            <Plus size={16} />
+                            新建角色
+                          </Button>
+                        )}
+                      </div>
                     ) : undefined
                   }
                 />

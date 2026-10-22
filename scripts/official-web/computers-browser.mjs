@@ -1,3 +1,4 @@
+import { verifyRoleCreation } from "./role-create-browser.mjs";
 import assert from "node:assert/strict";
 export async function verifyComputers({ browser, origin }) {
   const results = [];
@@ -114,10 +115,25 @@ export async function verifyComputers({ browser, origin }) {
     await rows.nth(5).waitFor();
     assert.equal(await rows.count(), 6);
     assert.match(await rows.first().innerText(), /fixture-model/);
+    const beforeWidth = await page
+      .getByTestId("machine-detected-runtimes")
+      .boundingBox();
     await list
       .getByRole("button", { name: "展开全部 9 个实例", exact: true })
       .click();
     assert.equal(await rows.count(), 9);
+    const afterWidth = await page
+      .getByTestId("machine-detected-runtimes")
+      .boundingBox();
+    assert.equal(beforeWidth.width, afterWidth.width);
+    assert.equal(beforeWidth.height, afterWidth.height);
+    assert.equal(
+      await page
+        .getByTestId("machine-detected-runtimes")
+        .getByText(/ · 可用/)
+        .count(),
+      0,
+    );
     await list.getByRole("button", { name: "收起", exact: true }).click();
     assert.equal(await rows.count(), 6);
     await list.getByRole("button", { name: "选择", exact: true }).click();
@@ -227,5 +243,9 @@ export async function verifyComputers({ browser, origin }) {
     });
     await context.close();
   }
-  return { fixture: true, computers: results };
+  return {
+    fixture: true,
+    computers: results,
+    creation: await verifyRoleCreation({ browser, origin }),
+  };
 }

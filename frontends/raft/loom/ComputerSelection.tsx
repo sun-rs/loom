@@ -78,7 +78,7 @@ export default function ComputerSelection({
             <Check size={16} />
             {count === rows.length ? "清空选择" : "全选"}
           </Button>
-          <Button size="sm" variant="ghost" onClick={() => onSelect(null)}>
+          <Button size="sm" variant="outline" onClick={() => onSelect(null)}>
             <X size={16} />
             取消
           </Button>

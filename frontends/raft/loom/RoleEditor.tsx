@@ -1,6 +1,9 @@
 import { uiActionProps } from "./ui-action-props.ts";
 import { useDraftNavigation } from "./DraftNavigation.tsx";
-import { useEffect, useState } from "react";
+import { Dices } from "lucide-react";
+import StableField from "../packages/web/src/components/agent/StableField.tsx";
+import { suggestAgentName } from "./role-suggested-name.ts";
+import { useEffect, useState, type ReactNode } from "react";
 import { Button, Input, Textarea, Spinner } from "raft-ui";
 import {
   roleFormFrom,
@@ -24,8 +27,16 @@ export default function RoleEditor({
   onNavigationDiscard,
   onCancel,
   portalContainer,
+  creation = false,
+  takenNames = [],
+  beforeSubmit,
+  submitDisabled = false,
 }: {
   client: RahClient;
+  creation?: boolean;
+  submitDisabled?: boolean;
+  takenNames?: string[];
+  beforeSubmit?: ReactNode;
   field?: "runtimeOfferId" | "modelBindingId";
   role?: RoleTemplate;
   disabled: boolean;
@@ -57,6 +68,7 @@ export default function RoleEditor({
     setForm(initial);
     onNavigationDiscard?.();
   });
+  const [computerName, setComputerName] = useState("");
   const [choices, setChoices] = useState<RuntimeChoice[]>();
   const [error, setError] = useState("");
   useEffect(() => {
@@ -64,7 +76,10 @@ export default function RoleEditor({
     void client
       .request("host.runtime.list", {})
       .then((result) => {
-        if (alive) setChoices(runtimeChoices(result));
+        if (alive) {
+          setChoices(runtimeChoices(result));
+          setComputerName(result.computer?.displayName ?? result.hostId);
+        }
       })
       .catch(() => {
         if (alive) setError("无法读取 CLI 目录，请关闭后重试。");
@@ -79,12 +94,13 @@ export default function RoleEditor({
   const binding = runtime?.bindings.find(
     (b) => b.modelBindingId === form.modelBindingId,
   );
+  const Field = creation ? StableField : FormField;
   return (
     <form
-      className={field ? "space-y-4" : undefined}
+      className={creation ? "space-y-1" : field ? "space-y-4" : undefined}
       onSubmit={(e) => {
         e.preventDefault();
-        if (disabled || !choices) return;
+        if (disabled || submitDisabled || !choices) return;
         const result = buildRoleConfiguration(
           form,
           choices,
@@ -103,9 +119,41 @@ export default function RoleEditor({
         else setError(result.error);
       }}
     >
-      <fieldset disabled={disabled} className={field ? "space-y-4" : undefined}>
-        <div hidden={Boolean(field)}>
-          <FormField label="名称" className="mb-3">
+      <fieldset
+        disabled={disabled}
+        className={creation ? "space-y-1" : field ? "space-y-4" : undefined}
+      >
+        <div
+          hidden={Boolean(field)}
+          className={creation ? "space-y-1" : undefined}
+        >
+          <Field
+            label="名称"
+            required
+            className={creation ? undefined : "mb-3"}
+            labelAccessory={
+              creation ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  className="ml-auto"
+                  aria-label="随机名称"
+                  onClick={() =>
+                    setForm({
+                      ...form,
+                      displayName: suggestAgentName([
+                        ...takenNames,
+                        form.displayName,
+                      ]),
+                    })
+                  }
+                >
+                  <Dices size={12} />
+                </Button>
+              ) : undefined
+            }
+          >
             <Input
               aria-label="名称"
               required
@@ -114,27 +162,38 @@ export default function RoleEditor({
                 setForm({ ...form, displayName: e.target.value })
               }
             />
-          </FormField>
-          <FormField label="角色 Prompt" className="mb-3">
+          </Field>
+          <Field label="角色 Prompt" className={creation ? undefined : "mb-3"}>
             <Textarea
               aria-label="角色 Prompt"
               required
-              rows={5}
+              rows={creation ? 3 : 5}
               value={form.instructions}
               onChange={(e) =>
                 setForm({ ...form, instructions: e.target.value })
               }
             />
-          </FormField>
+          </Field>
         </div>
+        {creation && computerName && (
+          <SelectField
+            stable
+            label="计算机（能力来源）"
+            value="local"
+            options={[{ value: "local", label: computerName }]}
+            onChange={() => {}}
+            disabled
+          />
+        )}
         {!choices && !error ? (
           <Spinner aria-label="读取 CLI 目录" />
         ) : (
           <>
             <div hidden={Boolean(field && field !== "runtimeOfferId")}>
               <SelectField
+                stable={creation}
                 portalContainer={portalContainer}
-                label={field ? "运行时" : "CLI"}
+                label="运行时"
                 value={form.runtimeOfferId}
                 options={(choices ?? []).map((r) => ({
                   value: r.runtimeOfferId,
@@ -152,6 +211,7 @@ export default function RoleEditor({
             </div>
             <div>
               <SelectField
+                stable={creation}
                 portalContainer={portalContainer}
                 label="模型"
                 value={form.modelBindingId}
@@ -171,6 +231,7 @@ export default function RoleEditor({
               />
             </div>
             <SelectField
+              stable={creation}
               portalContainer={portalContainer}
               label="推理强度"
               value={form.reasoning}
@@ -188,6 +249,7 @@ export default function RoleEditor({
             保存为新修订。已有实例保持原配置，可在重启时选择更新。
           </p>
         )}
+        {beforeSubmit}
         {error && <p role="alert">{error}</p>}
         <div className="flex flex-wrap justify-end gap-2">
           {onCancel && (
@@ -207,17 +269,27 @@ export default function RoleEditor({
               size="lg"
               type="submit"
               disabled={
-                disabled || !choices || !binding || (Boolean(role) && !dirty)
+                disabled ||
+                submitDisabled ||
+                !choices ||
+                !binding ||
+                (Boolean(role) && !dirty)
               }
             >
               保存运行时配置
             </Button>
           ) : (
             <Button
-              {...uiActionProps.formSave}
+              {...(creation
+                ? { variant: "accent" as const, size: "lg" as const }
+                : uiActionProps.formSave)}
               type="submit"
               disabled={
-                disabled || !choices || !binding || (Boolean(role) && !dirty)
+                disabled ||
+                submitDisabled ||
+                !choices ||
+                !binding ||
+                (Boolean(role) && !dirty)
               }
             >
               保存角色
