@@ -33,7 +33,10 @@ export async function verifyChannelSettings({
       true,
       "members must occupy native drawer content, not popup sibling",
     );
-    assert.ok((await memberPage.boundingBox()).height > viewport.height * 0.9, "member page fills drawer height");
+    assert.ok(
+      (await memberPage.boundingBox()).height > viewport.height * 0.9,
+      "member page fills drawer height",
+    );
     await memberPage.getByTestId("member-page-search").fill("NO SUCH MEMBER");
     await memberPage.getByText(/NO SUCH MEMBER/).waitFor();
     await memberPage.getByTestId("member-page-search").fill("");
@@ -152,12 +155,27 @@ export async function verifyChannelSettings({
     await page.getByTestId("loom-channel-control-trigger").click();
     await name.waitFor();
     assert.equal(await name.inputValue(), `FIXTURE renamed ${viewport.width}`);
-    const mute = sheet.getByRole("switch", { name: "静音动态" });
+    const pin = sheet.getByTestId("channel-settings-pin-switch");
+    await pin.click();
+    await page.waitForFunction(
+      () =>
+        document
+          .querySelector('[data-testid="channel-settings-pin-switch"]')
+          ?.getAttribute("aria-checked") === "true",
+    );
+    assert.ok(
+      (
+        await client.request("sidebar.get", {
+          workspaceId: channel.workspaceId,
+        })
+      ).preferences.pinned.includes(`room:${channel.roomId}`),
+    );
+    const mute = sheet.getByRole("switch", { name: "静音活动" });
     await mute.click();
     await page.waitForFunction(
       () =>
         document
-          .querySelector('[aria-label="静音动态"]')
+          .querySelector('[data-testid="channel-overflow-mute-switch"]')
           ?.getAttribute("aria-checked") === "true",
     );
     const prefs = await client.request("sidebar.get", {

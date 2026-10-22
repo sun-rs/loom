@@ -63,6 +63,15 @@ export async function verifyMessageReferences({
     const page = await context.newPage(),
       errors = [];
     page.on("pageerror", (e) => errors.push(e.message));
+    await context.addInitScript(() => {
+      window.__copiedLabels = [];
+      Object.defineProperty(navigator.clipboard, "writeText", {
+        value: async (text) => {
+          window.__copiedLabels.push(text);
+        },
+        configurable: true,
+      });
+    });
     await page.goto(`${origin}/?room=${channels[2].roomId}`);
     const timeline = page.getByTestId("loom-message-timeline");
     await timeline.waitFor();
@@ -85,6 +94,43 @@ export async function verifyMessageReferences({
       "channel references retain official pink accent",
     );
     assert.equal(await mention.evaluate((el) => el.tagName), "A");
+    // Native sender menu remains independent of the message mutation menu.
+    const sender = page.getByTestId(`message-sender-mention-${root.messageId}`);
+    await sender.click({ button: "right" });
+    const senderMenu = page.getByRole("menu", {
+      name: "发送者菜单",
+      exact: true,
+    });
+    await senderMenu.waitFor();
+    assert.equal(await senderMenu.getByRole("menuitem").count(), 2);
+    await senderMenu.getByText("复制名称", { exact: true }).click();
+    await senderMenu.waitFor({ state: "hidden" });
+    assert.equal(
+      await page.evaluate(() => window.__copiedLabels.at(-1)),
+      "Sun",
+    );
+    await sender.click({ button: "right" });
+    await senderMenu.getByText("复制 Handle", { exact: true }).click();
+    assert.equal(
+      await page.evaluate(() => window.__copiedLabels.at(-1)),
+      `@${principal.handle}`,
+    );
+    await sender.click({ button: "right" });
+    await page.keyboard.press("Escape");
+    await senderMenu.waitFor({ state: "hidden" });
+    const avatar = timeline.locator('[data-avatar-kind="human"]').first();
+    await avatar.focus();
+    await avatar.click({ button: "right" });
+    await senderMenu.waitFor();
+    await page.keyboard.press("Escape");
+    await senderMenu.waitFor({ state: "hidden" });
+    assert.ok(await avatar.evaluate((el) => document.activeElement === el));
+    await avatar.click({ button: "right" });
+    await page
+      .locator('[data-slot="dismiss-backdrop"]')
+      .last()
+      .click({ position: { x: width - 4, y: 4 } });
+    await senderMenu.waitFor({ state: "hidden" });
     await mention.hover();
     const preview = page.getByTestId("loom-message-profile");
     await preview.waitFor();
@@ -115,7 +161,13 @@ export async function verifyMessageReferences({
       "thread must use authorized current member display names",
     );
     assert.deepEqual(errors, []);
-    out.push({ width, mention: true, channelNavigation: true });
+    out.push({
+      width,
+      mention: true,
+      channelNavigation: true,
+      senderMenu: true,
+      displayNameAndHandle: true,
+    });
     await context.close();
   }
   return out;

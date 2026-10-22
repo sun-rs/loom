@@ -15,7 +15,6 @@ import {
   DrawerBody,
   DrawerFooter,
   FormSection,
-  Switch,
   Separator,
 } from "raft-ui";
 import type { LoomChannelClient } from "./channel-client.ts";
@@ -24,7 +23,8 @@ import { OperationStatus } from "./ManagementUi.tsx";
 import { useDraftNavigation } from "./DraftNavigation.tsx";
 import ChannelArchiveDialog from "./ChannelArchiveDialog.tsx";
 import { channelMetadataPayload } from "./channel-settings.ts";
-import { sidebarKey } from "./sidebar-state.ts";
+import { ChannelPreferencesSection } from "./OfficialChannelPreferences.generated";
+import { moveSidebarItem, sidebarKey } from "./sidebar-state.ts";
 export default function ChannelSettingsContent({
   bridge,
   manager,
@@ -185,6 +185,24 @@ export default function ChannelSettingsContent({
       },
     );
   };
+  const pin = () => {
+    if (!preferences || !base || busy) return;
+    const key = sidebarKey(base.room);
+    setPrefsError("");
+    void manager.sidebar(
+      preferences.pinned.includes(key)
+        ? { pinned: preferences.pinned.filter((x) => x !== key) }
+        : moveSidebarItem(preferences, base.room, "pinned"),
+      preferences.version,
+      (outcome) => {
+        if (outcome.kind === "ok") void refreshPreferences();
+        else if (outcome.kind === "rejected") {
+          setPrefsError("偏好已变化，请重新读取后再操作。");
+          setPreferences(undefined);
+        }
+      },
+    );
+  };
   const archive = (room: Room, value: boolean) => {
     if (busy) return;
     setError("");
@@ -274,42 +292,42 @@ export default function ChannelSettingsContent({
           )}
         </form>
         <div className="space-y-5 mt-5 px-4">
-          <FormSection title="通知">
-            <div className="flex items-center justify-between gap-3 py-3">
-              <div className="min-w-0">
-                <h4 className="text-subhead font-medium text-foreground">
-                  静音动态
-                </h4>
-                <p className="mt-0.5 text-footnote text-foreground-hint">
-                  与聊天列表的静音设置一致，不影响实例接收消息。
-                </p>
-              </div>
-              <Switch
-                aria-label="静音动态"
-                checked={
-                  !!(
-                    base &&
-                    preferences?.mutedActivity.includes(sidebarKey(base.room))
-                  )
-                }
-                disabled={busy || !base || !preferences}
-                onCheckedChange={mute}
-              />
-            </div>
-            {prefsError && (
-              <p role="alert">
-                {prefsError}
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  disabled={busy}
-                  onClick={() => void refreshPreferences()}
-                >
-                  重新读取通知偏好
-                </Button>
-              </p>
-            )}
-          </FormSection>
+          <ChannelPreferencesSection
+            isPanel
+            pin={{
+              pinned: !!(
+                base && preferences?.pinned.includes(sidebarKey(base.room))
+              ),
+              busy: busy || !base || !preferences,
+              onToggle: pin,
+            }}
+            activityMute={{
+              muted: !!(
+                base &&
+                preferences?.mutedActivity.includes(sidebarKey(base.room))
+              ),
+              busy: busy || !base || !preferences,
+              onToggle: () =>
+                mute(
+                  !preferences?.mutedActivity.includes(
+                    base ? sidebarKey(base.room) : "",
+                  ),
+                ),
+            }}
+          />
+          {prefsError && (
+            <p role="alert">
+              {prefsError}
+              <Button
+                size="sm"
+                variant="ghost"
+                disabled={busy}
+                onClick={() => void refreshPreferences()}
+              >
+                重新读取通知偏好
+              </Button>
+            </p>
+          )}
           <FormSection title="操作">
             <div className="flex flex-col gap-3">
               {children}

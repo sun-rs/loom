@@ -18,6 +18,11 @@ test("member navigation gains controlled callbacks; unrelated readonly guards st
     "onNavigateHuman={readOnlyProjection ? ignoreReadOnlyProjectionNavigation : handleNavigateHuman}";
   const adaptedHuman =
     'onNavigateHuman={onOpenProfile ? (id) => onOpenProfile("human", id) : readOnlyProjection ? ignoreReadOnlyProjectionNavigation : handleNavigateHuman}';
+  const senderOriginal =
+    "onContextMenu={readOnlyProjection ? undefined : handleSenderContextMenu}";
+  const senderAdapted =
+    "onContextMenu={readOnlyProjection && !onOpenProfile ? undefined : handleSenderContextMenu}";
+  assert.equal(result.split(senderAdapted).length, 4);
   const focused =
     "onClick={(event) => { event.currentTarget.focus({ preventScroll: true }); onClickAgent(); }}";
   assert.ok(result.includes(focused));
@@ -25,7 +30,12 @@ test("member navigation gains controlled callbacks; unrelated readonly guards st
     result
       .replaceAll(adapted, original)
       .replaceAll(adaptedHuman, human)
-      .replace(focused, "onClick={onClickAgent}"),
+      .replace(focused, "onClick={onClickAgent}")
+      .replaceAll(senderAdapted, senderOriginal)
+      .replace(
+        /\n  \/\/ Loom authenticated menu lifecycle;[\s\S]*?\/\/ End Loom authenticated menu lifecycle.\n/,
+        "",
+      ),
     source,
   );
   assert.throws(() => adaptMessageProfileNavigation("unknown upstream"));

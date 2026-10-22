@@ -2116,6 +2116,22 @@ const ConnectedMessageItem = memo(function ConnectedMessageItem({ message, menti
     });
   };
   const closeSenderCtxMenu = useCallback(() => setSenderCtxMenu(null), []);
+  // Loom authenticated menu lifecycle; native backdrop handles outside press.
+  useEffect(() => {
+    if (!senderCtxMenu) return;
+    const focused = document.activeElement as HTMLElement | null;
+    const dismiss = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopPropagation();
+      closeSenderCtxMenu();
+      focused?.focus({ preventScroll: true });
+    };
+    document.addEventListener("keydown", dismiss, true);
+    return () => document.removeEventListener("keydown", dismiss, true);
+  }, [senderCtxMenu, closeSenderCtxMenu]);
+  // End Loom authenticated menu lifecycle.
+
 
   const handleOpenThreadFromContextMenu = useCallback(() => {
     setCtxMenu(null);
@@ -2986,7 +3002,7 @@ const ConnectedMessageItem = memo(function ConnectedMessageItem({ message, menti
           onNavigateAgentActivity={readOnlyProjection ? ignoreReadOnlyProjectionNavigation : handleNavigateAgentActivity}
           onNavigateHuman={onOpenProfile ? (id) => onOpenProfile("human", id) : readOnlyProjection ? ignoreReadOnlyProjectionNavigation : handleNavigateHuman}
           onNavigateExternal={readOnlyProjection ? ignoreReadOnlyProjectionNavigation : handleNavigateExternal}
-          onContextMenu={readOnlyProjection ? undefined : handleSenderContextMenu}
+          onContextMenu={readOnlyProjection && !onOpenProfile ? undefined : handleSenderContextMenu}
           onLongPressMention={!readOnlyProjection && senderMention ? insertSenderMention : undefined}
             />
           </MessageItemAvatarSlot>
@@ -3030,7 +3046,7 @@ const ConnectedMessageItem = memo(function ConnectedMessageItem({ message, menti
             <MessageItemSenderButton
               className={`max-w-full shrink-0 ${messageNameSizeClass} leading-5`}
               onClick={handleSenderNameMention}
-              onContextMenu={readOnlyProjection ? undefined : handleSenderContextMenu}
+              onContextMenu={readOnlyProjection && !onOpenProfile ? undefined : handleSenderContextMenu}
               data-testid={`message-sender-mention-${message.id}`}
             >
               {senderDisplayName}
@@ -3039,7 +3055,7 @@ const ConnectedMessageItem = memo(function ConnectedMessageItem({ message, menti
           ) : (
             <MessageItemSender
               className={`max-w-full shrink-0 ${messageNameSizeClass} leading-5`}
-              onContextMenu={readOnlyProjection ? undefined : handleSenderContextMenu}
+              onContextMenu={readOnlyProjection && !onOpenProfile ? undefined : handleSenderContextMenu}
             >
               {senderDisplayName}
             </MessageItemSender>

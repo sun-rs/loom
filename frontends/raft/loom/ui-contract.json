@@ -647,6 +647,21 @@
         "scripts/official-web/channel-settings-browser.mjs",
         "scripts/official-web/private-browser.mjs"
       ]
+    },
+    {
+      "id": "channel-preferences-native",
+      "owner": "db5e399 ChannelPreferencesSection native composition; Loom sidebar authority",
+      "rule": "Native pin/mute labels, switch parameters and separators; explicit SDK callbacks and revision fences. Collapse row omitted until Loom persistence is bound. Sender copy menu is enabled only on authenticated profile-enabled projections, not upstream writes.",
+      "sources": [
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/channel/ChannelPreferencesSection.tsx",
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/message/MessageItem.tsx"
+      ],
+      "bindings": [
+        "OfficialChannelPreferences.generated.tsx",
+        "ChannelSettingsContent.tsx",
+        "message-profile-navigation.ts"
+      ],
+      "guard": "scripts/official-web/channel-preferences-source.test.mjs"
     }
   ],
   "exceptions": [

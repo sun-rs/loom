@@ -92,6 +92,8 @@
     "packages/web/src/components/topbar/AppTopBar.tsx": "9c7a289189a6ad78805d4332984e678ee2f1607eec3735be9472d63a745a2f19",
     "packages/web/src/components/layout/MemberAgentRow.tsx": "8ac202cbf14bf68bafcca06ba078f08e3ba1c60e46edeebbf18d8ef9332e27b2",
     "packages/web/src/components/ConfirmDialog.tsx": "fa7de2c0c4df3364bdddc240a89bfdeb6cbd4ffd86a6e2965a2facb1f222364e",
-    "packages/web/src/components/channel/ChannelMemberList.tsx": "c727c72e06575490c307769185184eab55a669540e67edd94560c17fdef148a8"
+    "packages/web/src/components/channel/ChannelMemberList.tsx": "c727c72e06575490c307769185184eab55a669540e67edd94560c17fdef148a8",
+    "packages/web/src/components/channel/ChannelPreferencesSection.tsx": "f5509d18b95f0532e62bb77147faf801a1eb6ae85f94a4cf681f92c0323e5367",
+    "packages/web/src/components/channel/channelSettingsClasses.ts": "5ffeddf0502a1fc1897ee6330b2bafb3fb59244297b6b233513c08a227c1fc61"
   }
 }
