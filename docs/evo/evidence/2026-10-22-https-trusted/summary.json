@@ -61,9 +61,9 @@
   },
   "remaining": [
     "Provider accepted the follow-up test for 1 device; actual OS notification display awaiting owner confirmation. Intermittent outbound failure hop unproven.",
-    "Physical iOS/Android validation",
-    "Existing HTTPS gateway lacks HTTP-only workspace HTML/PDF preview routes"
+    "Physical iOS/Android validation"
   ],
   "localEvidence": "/Users/sun/.loom/reviews/2026-10-22-https-trusted",
-  "paidCalls": 0
+  "paidCalls": 0,
+  "previewFollowup": "../2026-10-23-https-preview/summary.json closes HTTPS preview route gap"
 }

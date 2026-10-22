@@ -1,0 +1,33 @@
+{
+  "productCommit": "4517e62bc2bff6e35bfff2060a5e4a2e0dd459a2",
+  "changes": [
+    "HTTPS mounts existing Human-scoped workspace HTML/PDF and attachment PDF routes",
+    "Attachment HTML sandbox CSP and disposition survive proxy; preview HTML is not blocked by shell X-Frame-Options DENY",
+    "Existing signed PDF transport gains TLS on isolated ephemeral port bound to same authorized interface; same certificate, exact app frame ancestor, per-read permission checks",
+    "PDF listener closes with parent, including incomplete TLS connections"
+  ],
+  "verification": {
+    "tdd": "New integration test failed with 404 before implementation; passes after wiring",
+    "focusedTests": 12,
+    "typecheck": "passed",
+    "build": "passed",
+    "formalTlsApi": "Existing cookie-free home/API, legacy pair redirect, Host/Origin guards, worker and original HTTP entries passed",
+    "nativeFirefox": "Refreshed formal HTTPS notification page: enabled subscription retained. Opened existing channel workspace summary.html via product UI; embedded title/body visible.",
+    "pdf": "Temporary TLS integration verifies signed workspace and attachment PDF, 206 range read, invalid signature, revoked access and shutdown; no new formal PDF fixture created",
+    "push": "No new notification sent this batch; previous provider acceptance stands, OS display unconfirmed"
+  },
+  "deployment": {
+    "verified": true,
+    "databasesBackedUp": 2,
+    "filesBackedUp": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true,
+    "localEvidence": "/Users/sun/.loom/reviews/2026-10-22-https-preview"
+  },
+  "remaining": [
+    "Owner confirmation of Mac OS notification display",
+    "Physical iOS/Android CA trust, page access, PDF and background notification acceptance; no attached phone available",
+    "PDF uses an isolated LAN TLS ephemeral port; client network must permit it"
+  ],
+  "paidCalls": 0
+}
