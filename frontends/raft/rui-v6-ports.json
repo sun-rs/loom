@@ -1083,6 +1083,12 @@
       "portedSha256": "ad86fbc77f134695626ed14e6d01add0012031a2bf5f0a99bd1e16a45f1ab0d3",
       "sourceRelease": "db5e399 / v1.21.23-source.1",
       "adoption": "Official dependency bridge; Avatar context aliases and retired leaf-size arguments retained as explicit nonvisual compatibility."
+    },
+    "packages/web/src/components/ConfirmDialog.tsx": {
+      "upstreamSha256": "be8aacb405856ce63b2f6f24d357a117a3cb04389b0c7367508413df542e0613",
+      "portedSha256": "7f46430edd9e86482422d8c51ce629f43d0ff6020b14b2845aa38adf9333b09a",
+      "sourceRelease": "db5e399",
+      "adoption": "Parameter-only bridge to unchanged official ConfirmDialog declarations; only legacy confirmColor maps to native variants."
     }
   }
 }

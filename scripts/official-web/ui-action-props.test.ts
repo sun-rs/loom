@@ -28,8 +28,14 @@ test("scenario bindings use native parameters without a parallel geometry or com
     "frontends/raft/packages/web/src/components/ConfirmDialog.tsx",
     "utf8",
   );
-  assert.ok(source.includes('actionSize = "sm"'));
-  assert.ok(source.includes('variant="outline"'));
+  assert.ok(
+    !source.includes('actionSize = "sm"'),
+    "modal must not override official lg default",
+  );
+  assert.ok(
+    !source.includes('variant="outline"'),
+    "cancel presentation belongs to upstream",
+  );
   assert.ok(source.includes('?? "danger"'));
   const agent = readFileSync(
     "frontends/raft/packages/web/src/components/agent/AgentDetailPanel.tsx",

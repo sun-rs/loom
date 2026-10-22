@@ -613,6 +613,19 @@
         "packages/kernel/test/role-runtime-environment.test.ts",
         "packages/daemon/test/runtime-delivery-composition.test.ts"
       ]
+    },
+    {
+      "id": "shared-confirmation-source",
+      "owner": "Locked db5e399 ConfirmDialog declarations",
+      "bindings": ["OfficialConfirmation.generated.tsx"],
+      "sources": [
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/ConfirmDialog.tsx"
+      ],
+      "rule": "Official modal defaults, danger banner, ghost cancel and pending/error/close lifecycle. Parameter-only bridge translates legacy confirmColor. Geometry comes from pinned raft-ui tokens, not numerical source comments.",
+      "evidence": [
+        "scripts/official-web/confirmation-source.test.mjs",
+        "scripts/official-web/computers-browser.mjs"
+      ]
     }
   ],
   "exceptions": [
@@ -658,7 +671,7 @@
     },
     "confirmDelete": {
       "source": "frontends/raft/packages/web/src/components/ConfirmDialog.tsx",
-      "rule": "Destructive confirmation, native default md danger.",
+      "rule": "Explicit compact destructive action uses md danger; modal ConfirmDialog default is upstream lg.",
       "implementation": "frontends/raft/loom/ui-action-props.ts",
       "adoption": "local parameter binding; native recipe, not byte-exact copied page"
     },
@@ -676,7 +689,7 @@
     },
     "secondary": {
       "source": "frontends/raft/packages/web/src/components/ConfirmDialog.tsx",
-      "rule": "Secondary compact dialog/content action, native md outline.",
+      "rule": "Explicit compact content action uses md outline; modal cancel belongs to official ConfirmDialog and is ghost.",
       "implementation": "frontends/raft/loom/ui-action-props.ts",
       "adoption": "local parameter binding; native recipe, not byte-exact copied page"
     },

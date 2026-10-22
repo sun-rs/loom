@@ -65,7 +65,8 @@
       "loom/OfficialTopBar.generated.tsx",
       "loom/OfficialIdentityRows.generated.tsx",
       "loom/OfficialLiveActivity.generated.tsx",
-      "loom/OfficialRoleControls.generated.tsx"
+      "loom/OfficialRoleControls.generated.tsx",
+      "loom/OfficialConfirmation.generated.tsx"
     ],
     "foundation": "package.json#dependencies.raft-ui"
   },
@@ -345,6 +346,14 @@
         "computers-browser.mjs",
         "panel-policy-browser.mjs"
       ]
+    },
+    {
+      "id": "shared-confirmation",
+      "decision": "Replace legacy local dialog presentation with unchanged db5e399 declarations; retain only legacy parameter translation. This disproves the stronger claim that every retained local presentation was already necessary.",
+      "bindings": {
+        "OfficialConfirmation.generated.tsx": "Full upstream props and implementation declarations; existing i18n and canonical UI import bindings"
+      },
+      "evidence": ["confirmation-source.test.mjs", "computers-browser.mjs"]
     }
   ],
   "plannedMigrationComplete": true

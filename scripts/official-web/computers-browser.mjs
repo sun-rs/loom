@@ -193,7 +193,29 @@ export async function verifyComputers({ browser, origin }) {
       await reset.getByRole("combobox", { name: "重启配置" }).count(),
       0,
     );
-    await reset.getByRole("button", { name: "取消", exact: true }).click();
+    const cancelReset = reset.getByRole("button", {
+      name: "取消",
+      exact: true,
+    });
+    const target = await cancelReset.evaluate((el) => {
+      const r = el.getBoundingClientRect(),
+        after = getComputedStyle(el, "::after");
+      const y = r.y + r.height / 2;
+      const x = r.x + r.width / 2;
+      return {
+        x,
+        y,
+        hit: el.contains(document.elementFromPoint(x, y)),
+        height:
+          r.height -
+          parseFloat(after.top || "0") -
+          parseFloat(after.bottom || "0"),
+        native: el.classList.contains("h-control"),
+      };
+    });
+    assert.ok(target.native && target.hit, JSON.stringify(target));
+    await page.mouse.click(target.x, target.y);
+    await reset.waitFor({ state: "hidden" });
     await list.getByRole("button", { name: "取消", exact: true }).click();
     assert.equal(await list.locator("[data-selected]").count(), 0);
     await page.screenshot({
