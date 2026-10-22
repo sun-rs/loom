@@ -1,0 +1,66 @@
+{
+  "productCommit": "0efb844b0b26cb1dd0a78f58c09561162ce66777",
+  "scope": [
+    "Computer selection cancel outline",
+    "Stable scrollbar gutter on Computer detail",
+    "Remove redundant available label",
+    "Shared Role creation dialog with native StableField and random name",
+    "Explicit post-save channel instance creation; no implicit DM",
+    "Deletion behavior audit and confirmation copy"
+  ],
+  "verification": {
+    "focusedSourceTests": 7,
+    "uiContractTests": 8,
+    "roleNamingAndDeletionKernelTests": 7,
+    "computerRowsAndBatchHelpers": "passed",
+    "frontendTypecheck": "passed",
+    "workbenchBuild": "passed",
+    "fixtureBrowser": {
+      "widths": [1440, 390],
+      "layoutWidthAndHeightStableAcrossExpand": "passed",
+      "defaultRoleSaveCreatesNoInstance": "passed",
+      "optionalChannelAddAfterSave": "passed",
+      "rejectedAddRetainsSavedRoleAndRetryDoesNotRecreate": "passed",
+      "sharedComputerAndAgentDialog": "passed"
+    },
+    "formalReadOnly": [
+      {
+        "width": 1440,
+        "sharedCreationForm": true,
+        "defaultNoInstance": true,
+        "boundedRows": true,
+        "runtimeAndModel": true,
+        "selectAndResetConfirmation": true,
+        "noMutations": true,
+        "noErrors": true,
+        "noOverflow": true
+      },
+      {
+        "width": 390,
+        "sharedCreationForm": true,
+        "defaultNoInstance": true,
+        "boundedRows": true,
+        "runtimeAndModel": true,
+        "selectAndResetConfirmation": true,
+        "noMutations": true,
+        "noErrors": true,
+        "noOverflow": true
+      }
+    ]
+  },
+  "deployment": {
+    "verified": true,
+    "databases": 2,
+    "files": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true,
+    "schema": 90
+  },
+  "limits": [
+    "No paid CLI or real instance execution on formal data",
+    "Phone viewport/WebKit checks are not physical-device acceptance",
+    "Environment variables and fast mode are not exposed before Role snapshot and execution support",
+    "Only local host is available as capability source; no new remote-host placement",
+    "Backend deletion implementation unchanged; running-instance test adds evidence"
+  ]
+}
