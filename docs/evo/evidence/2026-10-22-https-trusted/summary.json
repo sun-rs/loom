@@ -1,0 +1,58 @@
+{
+  "productCommit": "9eacf74b624abd3138c6767058c5f1314f56c402",
+  "correction": "Supplemental HTTPS must preserve owner-approved trusted-network access, not introduce pairing",
+  "changes": [
+    "Explicit trusted-network option restricted to precise private IPv4/loopback and matching hostname",
+    "No pairing store or invite generation for supplemental HTTPS",
+    "Cookie-free homepage/API; old pairing URL redirects home; pairing-management routes unavailable",
+    "Default paired LAN mode unchanged; Host/Origin and server-owned Human authority retained"
+  ],
+  "verification": {
+    "focusedTests": 30,
+    "typecheck": "passed",
+    "build": "passed",
+    "realTlsApi": {
+      "tlsWithExplicitCA": true,
+      "noCookieHome200": true,
+      "noCookieApi200": true,
+      "pairRedirectsHome": true,
+      "noPairingManagement": true,
+      "origin403": true,
+      "host421": true,
+      "pushConfigured": true,
+      "serviceWorker200": true,
+      "allOriginalHttpEntries200": true,
+      "noMutations": true
+    },
+    "nativeFirefox": {
+      "caTrusted": true,
+      "productNotificationPageOpenedWithoutPairing": true,
+      "notificationPermissionGranted": true,
+      "subscriptionEnabled": true,
+      "testButtonVisible": true,
+      "testPushAttempts": 1,
+      "testPushResult": "unconfirmed; not automatically retried",
+      "systemDeliveryVerified": false
+    },
+    "diagnostic": {
+      "offlineVapidEncryption": "passed without sending",
+      "pushHostHead": "ECONNRESET connecting to updates.push.services.mozilla.com; no subscription endpoint or payload sent",
+      "inference": "Transport connectivity issue observed; does not prove full cause of original push failure"
+    }
+  },
+  "deployment": {
+    "verified": true,
+    "databasesBackedUp": 2,
+    "filesBackedUp": 325,
+    "businessTablesUnchanged": 20,
+    "preTestPushStateUnchanged": true,
+    "postDeploymentPushState": "One owner-requested real Firefox subscription enabled; intentional transport-state change"
+  },
+  "remaining": [
+    "Actual push delivery: unconfirmed; investigate daemon-to-Mozilla connectivity",
+    "Physical iOS/Android validation",
+    "Existing HTTPS gateway lacks HTTP-only workspace HTML/PDF preview routes"
+  ],
+  "localEvidence": "/Users/sun/.loom/reviews/2026-10-22-https-trusted",
+  "paidCalls": 0
+}
