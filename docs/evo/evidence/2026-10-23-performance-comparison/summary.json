@@ -1,0 +1,334 @@
+{
+  "verdict": "Partial static delivery comparison only; authenticated browser timing blocked. No performance parity claim.",
+  "official": {
+    "url": "https://app.raft.build/s/hakasemac/",
+    "release": "v1.21.28",
+    "commit": "5c68fd2d2086179f21bc3648a08031f3dbe8a432",
+    "builtAt": "2026-10-21T22:18:53Z"
+  },
+  "loomCommit": "2a2a3b08",
+  "method": "Downloaded public published official JS; parsed static import/export dependencies using TypeScript AST. Compared with deployed Loom production build. Included unconditional Loom app-entry dynamic bootstrap. Gzip recompressed identically locally; not observed browser wire transfer. Excludes fonts, runtime locale imports, API/data, images, conditional imports and workers. HTML modulepreloads covered by closure. Files/count do not establish request timing or browser parse cost.",
+  "startup": {
+    "raft": {
+      "scope": "Static JS dependency closure, not browser waterfall. Loom includes unconditional app-entry dynamic bootstrap. Comparable gzip recompressed locally, not measured wire transfer.",
+      "roots": ["/assets/index-BNXDNFDE.js"],
+      "count": 6,
+      "bytes": 4624187,
+      "gzipComparable": 1280316,
+      "assets": [
+        {
+          "path": "/assets/index-BNXDNFDE.js",
+          "bytes": 4919,
+          "gzipComparable": 1783,
+          "sha256": "fc9f1ba9e2cf68020023f3b2fe01da7ce7a54da6d4f462b3f6e4495887d73d5f"
+        },
+        {
+          "path": "/assets/rolldown-runtime-hePW80VL.js",
+          "bytes": 716,
+          "gzipComparable": 430,
+          "sha256": "580ad8c58061a4dde99bde0a56905e382f0568516ee2f5b84dbfb52085709021"
+        },
+        {
+          "path": "/assets/vendor-react-B99DtKrr.js",
+          "bytes": 259413,
+          "gzipComparable": 81532,
+          "sha256": "129cead7ea5548fbe7b938c4e6f7af755e9e55a8cc0b936f0e6d345745fc6e47"
+        },
+        {
+          "path": "/assets/app-shell-EHP4m3Or.js",
+          "bytes": 4159635,
+          "gzipComparable": 1137005,
+          "sha256": "9eab18f8d1a59b45707f1554b97e64b143b4d6abf5707269b7a9d82f7a944a42"
+        },
+        {
+          "path": "/assets/vendor-markdown-BVUzeZ3O.js",
+          "bytes": 158349,
+          "gzipComparable": 46835,
+          "sha256": "50d004371fe7977c93517bb9253f5b53ad8bc8b37436d6a39e83b0934a462939"
+        },
+        {
+          "path": "/assets/vendor-socketio-DWoewfxI.js",
+          "bytes": 41155,
+          "gzipComparable": 12731,
+          "sha256": "b54ec4ad3aebd58dc61598d6e43329c18b6ddaa208db4b0236f338ac84bcbf19"
+        }
+      ]
+    },
+    "loom": {
+      "scope": "Static JS dependency closure, not browser waterfall. Loom includes unconditional app-entry dynamic bootstrap. Comparable gzip recompressed locally, not measured wire transfer.",
+      "roots": ["/assets/index-CtHly-lo.js", "/assets/app-entry-D_V5ghTK.js"],
+      "count": 31,
+      "bytes": 3656959,
+      "gzipComparable": 1044092,
+      "assets": [
+        {
+          "path": "/assets/index-CtHly-lo.js",
+          "bytes": 3413,
+          "gzipComparable": 1661,
+          "sha256": "e8ab22e2bd49506b04fe855945c047b4e49c787bf34758dd94715572563c81d5"
+        },
+        {
+          "path": "/assets/app-entry-D_V5ghTK.js",
+          "bytes": 567132,
+          "gzipComparable": 164763,
+          "sha256": "a2c4420076887ec6c24856c90733be193e5a98e0f6741bd54030aaa764113e76"
+        },
+        {
+          "path": "/assets/vendor-react-DBoKU7U9.js",
+          "bytes": 314328,
+          "gzipComparable": 98717,
+          "sha256": "2ce411af92f3f6129732897c90644c3444f21040a3301160325bd984f13b9593"
+        },
+        {
+          "path": "/assets/rolldown-runtime-hePW80VL.js",
+          "bytes": 716,
+          "gzipComparable": 430,
+          "sha256": "580ad8c58061a4dde99bde0a56905e382f0568516ee2f5b84dbfb52085709021"
+        },
+        {
+          "path": "/assets/en-D5yh1ctg.js",
+          "bytes": 1136000,
+          "gzipComparable": 302860,
+          "sha256": "96abf40432b5458c6a2ddfb3ec4c254bf27a4d5464c14944df49f55e7e603547"
+        },
+        {
+          "path": "/assets/attachmentPreviewSurfaces-BSmHJGo1.js",
+          "bytes": 233282,
+          "gzipComparable": 69824,
+          "sha256": "e9b3e7f75228823da55cb7b76aa7a4b534744d59c8a2a85461bba392aa7a6364"
+        },
+        {
+          "path": "/assets/bell-58sPpu4Y.js",
+          "bytes": 317,
+          "gzipComparable": 251,
+          "sha256": "a17bfeb8da58da53bedaca852d9473a8fb8cfeb91592ff565b929be4903a07c0"
+        },
+        {
+          "path": "/assets/chevron-up-BNECM5CO.js",
+          "bytes": 155,
+          "gzipComparable": 154,
+          "sha256": "5297320c788c8e802cac1099b183080e1049a3e9b60f1385b3f6d04b8b61cc1a"
+        },
+        {
+          "path": "/assets/Banner-BG8l8c86.js",
+          "bytes": 909,
+          "gzipComparable": 510,
+          "sha256": "9ca7ef9d137ab59699caa4b6d026ac5dcb9b61457218267b0073270b352d6771"
+        },
+        {
+          "path": "/assets/CloseButton-0835wpwF.js",
+          "bytes": 312944,
+          "gzipComparable": 85932,
+          "sha256": "ad5a9b749ee2b16eca73c27c6322fb1859ab1c09a902c88d5801b34f11fefdb1"
+        },
+        {
+          "path": "/assets/AgentActivityDot-DHgMYWTE.js",
+          "bytes": 109679,
+          "gzipComparable": 49071,
+          "sha256": "b69e1b2a30753ef77f54062fe18b498a5f80eb8053f65da1e87e1b0d06bbb2fd"
+        },
+        {
+          "path": "/assets/monitor-4INutvNp.js",
+          "bytes": 286,
+          "gzipComparable": 217,
+          "sha256": "c57f89d5051645f213cd3a857bd66576ec64694ab958c908c9435a925a5a91fd"
+        },
+        {
+          "path": "/assets/SectionEyebrow-B1aOHtQV.js",
+          "bytes": 1765,
+          "gzipComparable": 827,
+          "sha256": "4ec28afdf30c495ae86d3bdabfd5bfbc85a7eb7cde3b13a6f99d59c41dc6d218"
+        },
+        {
+          "path": "/assets/panelBounds-CvsHU1Ks.js",
+          "bytes": 66659,
+          "gzipComparable": 18785,
+          "sha256": "464c04bee7189a49bc7a2a92e7b123a9ddb1c046851b4f22a66eab8a04f7e418"
+        },
+        {
+          "path": "/assets/plus-BcNQrZGN.js",
+          "bytes": 180,
+          "gzipComparable": 166,
+          "sha256": "4d2ce1401b0812ffc1c9f7c4c133b9d502e1b8715471160c39ea50434d331957"
+        },
+        {
+          "path": "/assets/useResizablePanel-CyvWM7fl.js",
+          "bytes": 1610,
+          "gzipComparable": 844,
+          "sha256": "121f70f83c1206379ff4c58d5940aa7c583dba69266707fbc003a159a76afea8"
+        },
+        {
+          "path": "/assets/AvatarSlot-Drgpv83p.js",
+          "bytes": 8809,
+          "gzipComparable": 3848,
+          "sha256": "3ee57432973dd8ef178a67ea5bd5961d1f5e8db26c060101645f3cdc3edcdea2"
+        },
+        {
+          "path": "/assets/useIntentRoute-pueSSUnu.js",
+          "bytes": 234856,
+          "gzipComparable": 58534,
+          "sha256": "7858a9b384009ee206758977c38ed2f48bc21429adad7c841b3de9d6ba43a48e"
+        },
+        {
+          "path": "/assets/createIntl-kB5ar4U8.js",
+          "bytes": 9380,
+          "gzipComparable": 3019,
+          "sha256": "6e1ef30b2f1b1cef2357e55a09f30606c5eb64ec7753ae2fc9e1e7d479aecce5"
+        },
+        {
+          "path": "/assets/src-BHcp80rv.js",
+          "bytes": 308945,
+          "gzipComparable": 76593,
+          "sha256": "f32c4a424e222d50efe64b3a01ba821d8b4fdfd9831bc0868020200e9bb04c80"
+        },
+        {
+          "path": "/assets/clock-aWBdZ44U.js",
+          "bytes": 214,
+          "gzipComparable": 133,
+          "sha256": "a8e0f18b7b1848ad5fe989f33d2fd9d7b3a0cd4183c6f99c1c9d04091ccacf3b"
+        },
+        {
+          "path": "/assets/authStore-BSW5WIkD.js",
+          "bytes": 29938,
+          "gzipComparable": 9300,
+          "sha256": "42eafd9ac1e665ccadda1913caf53d659bf11018c515cbd6fcf84143b1962988"
+        },
+        {
+          "path": "/assets/useTimeFormatter-BY-17ZqI.js",
+          "bytes": 17112,
+          "gzipComparable": 3813,
+          "sha256": "2f9c35b62d56ff385d9826500730e2badd981e48f5e6a7c230182d14b8d15437"
+        },
+        {
+          "path": "/assets/channelStore-CX7YjGXS.js",
+          "bytes": 17154,
+          "gzipComparable": 5247,
+          "sha256": "60b1210490aa87993a22175ca2e077b9ac824db801105bfd7a5482bd54b5fad3"
+        },
+        {
+          "path": "/assets/serverStore-DEr8pcKO.js",
+          "bytes": 77830,
+          "gzipComparable": 26853,
+          "sha256": "61f5870ef4d65c58f84c143c04310839d5e4f09b81d8ae2f4320b06e139e6275"
+        },
+        {
+          "path": "/assets/vendor-markdown-Bkod87Ne.js",
+          "bytes": 160071,
+          "gzipComparable": 47724,
+          "sha256": "56d728584bc9ba42ab33c473a301bde96bb4417add29d959a24300c313ac4d58"
+        },
+        {
+          "path": "/assets/CloseButton-BY6WZlhH.js",
+          "bytes": 34,
+          "gzipComparable": 54,
+          "sha256": "52203645855b4fd327bdf3c85ba2ecf91d80235e5af43cce29069f8afa8cb3c7"
+        },
+        {
+          "path": "/assets/relativeTime-ClEIJrSr.js",
+          "bytes": 858,
+          "gzipComparable": 518,
+          "sha256": "38161337dd97b72d52a339287e0157b52642966808d61f8647b4fbcbd5ac22a1"
+        },
+        {
+          "path": "/assets/upload-e-dlJ5hD.js",
+          "bytes": 257,
+          "gzipComparable": 205,
+          "sha256": "2747cbda6c38c725f958a106dd6e166ae9c0e90e985420e2e3673c2be82431e2"
+        },
+        {
+          "path": "/assets/codeBlockLanguages-C4olgTgx.js",
+          "bytes": 942,
+          "gzipComparable": 493,
+          "sha256": "cce0908e36acc932bc0da6e0ffb2b5a7c876d23d480e5454fef6164e459deb7c"
+        },
+        {
+          "path": "/assets/vendor-socketio-CwPEc2Qn.js",
+          "bytes": 41184,
+          "gzipComparable": 12746,
+          "sha256": "bc4203259bacd8268b00b7588ca2fdd949c5aaa701f908cb116832387fd9ed1b"
+        }
+      ]
+    }
+  },
+  "css": {
+    "raft": {
+      "bytes": 378524,
+      "gzipComparable": 59467
+    },
+    "loom": {
+      "bytes": 395225,
+      "gzipComparable": 61371
+    }
+  },
+  "firstOpenIncrementalStaticJs": [
+    {
+      "kind": "raft",
+      "root": "./AgentDetailPanel-DChVkyKn.js",
+      "chunks": 2,
+      "bytes": 224081,
+      "gzip": 58666
+    },
+    {
+      "kind": "raft",
+      "root": "./MachineDetailPanel-DxO99SzZ.js",
+      "chunks": 1,
+      "bytes": 70082,
+      "gzip": 17325
+    },
+    {
+      "kind": "loom",
+      "root": "./SettingsPage-Bqchb8uI.js",
+      "chunks": 4,
+      "bytes": 66623,
+      "gzip": 20813
+    },
+    {
+      "kind": "loom",
+      "root": "./AgentPage-C1xiRIBE.js",
+      "chunks": 4,
+      "bytes": 44093,
+      "gzip": 16094
+    },
+    {
+      "kind": "loom",
+      "root": "./TasksPage-Ck17fwvn.js",
+      "chunks": 3,
+      "bytes": 53145,
+      "gzip": 17850
+    },
+    {
+      "kind": "loom",
+      "root": "./MemoryPage-CKJ4qmAg.js",
+      "chunks": 2,
+      "bytes": 20186,
+      "gzip": 7005
+    },
+    {
+      "kind": "loom",
+      "root": "./DiscoveryPage-CP_4XzYn.js",
+      "chunks": 3,
+      "bytes": 55101,
+      "gzip": 17627
+    },
+    {
+      "kind": "loom",
+      "root": "./ComputersPage-Coq9aBio.js",
+      "chunks": 4,
+      "bytes": 28351,
+      "gzip": 10768
+    }
+  ],
+  "interpretation": [
+    "Loom startup static JS approximately21% smaller, comparable gzip approximately18% smaller;31 chunks vs6 is potential request-overhead risk, not proof of slower load.",
+    "Loom CSS approximately4.4% larger raw,3.2% larger recompressed.",
+    "Main Loom pages are deferred. Attachment preview surface wrapper is eager; this does not prove PDF engine/file content is eagerly loaded.",
+    "Official Agent detail and Loom Agent page are not identical semantic scope, so incremental sizes must not be treated as direct speed ratios."
+  ],
+  "browserBlocker": "Chrome official app displays login. Existing Firefox native access returns cgWindowNotFound. User asked to login or restore Firefox; no credentials accessed.",
+  "remaining": [
+    "Same-browser same-viewport cold/warm repeat runs with full cache including SW controlled",
+    "Click-to-usable for navigation/detail/thread/attachment; actual network bytes and main-thread long tasks",
+    "Matched data-size buckets, separate TTFB/network from rendering",
+    "Loom HTTP vs HTTPS vs HTTPS with notification SW under identical data and cache states"
+  ]
+}
