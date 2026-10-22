@@ -1,0 +1,61 @@
+{
+  "productCommit": "141e127272cc25a727b1584872d2cd44a0bc5295",
+  "scope": "Owner requested self-managed LAN HTTPS, continuing recommended parallel entry while retaining HTTP/Tailnet",
+  "owner": "Daemon composition; existing LanWorkbenchGateway, pairing store and certificate provisioner; no second Core",
+  "verification": {
+    "focusedTests": 32,
+    "rootTypecheck": "passed",
+    "productBuild": "passed",
+    "realTlsAndApi": {
+      "tlsVerifiedWithCA": true,
+      "unauthenticatedApi401": true,
+      "pairingAndRevocation": true,
+      "crossOrigin403": true,
+      "productHtml200": true,
+      "serviceWorker200": true,
+      "pushServerConfigured": true,
+      "originalThreeHttpEntries200": true,
+      "noBusinessMutations": true,
+      "noPushSent": true
+    },
+    "nativeFirefox": "New HTTPS origin reaches certificate warning because local CA is not yet trusted. Warning not bypassed; no HTTPS product-page/browser-push acceptance claimed.",
+    "redEvidence": [
+      "Missing additional HTTPS mode/receipt retention assertions failed before implementation",
+      "Reserved PDF listener port assertion failed before validation was added"
+    ],
+    "testCorrections": [
+      "Temporary state fixture needed mode0700 to meet existing access-store contract",
+      "Formal HTTP redirect assertion corrected from302 to existing gateway303; first run stopped before pairing"
+    ]
+  },
+  "deployment": {
+    "verified": true,
+    "httpsOrigin": "https://192.168.1.86:4178",
+    "httpEntriesPreserved": [
+      "http://127.0.0.1:4176",
+      "http://192.168.1.86:4176",
+      "http://100.101.107.87:4176"
+    ],
+    "samePidAndCore": true,
+    "databasesBackedUp": 2,
+    "filesBackedUp": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true
+  },
+  "certificate": {
+    "existingCAReused": true,
+    "publicCAExport": "/Users/sun/.loom/evo/client-setup/Loom-LAN-CA.cer",
+    "privateKeysExported": false
+  },
+  "remaining": [
+    "Client trust of private CA",
+    "Owner device pairing and notification permission",
+    "Actual system notification receipt and physical iOS/Android acceptance"
+  ],
+  "limitations": [
+    "Supplemental HTTPS uses existing LAN gateway: HTTP-only workspace HTML/PDF preview routes remain on original entry",
+    "HTTPS origin is LAN IPv4 only, not a newly enabled Tailnet TLS origin",
+    "No public listeners, external certificate service, paid CLI calls or push delivery claim"
+  ],
+  "localEvidence": "/Users/sun/.loom/reviews/2026-10-22-lan-https"
+}
