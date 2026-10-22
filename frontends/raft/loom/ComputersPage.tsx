@@ -462,30 +462,30 @@ export default function ComputersPage({
                         }
                       />
                     ))}
+                    {selectedInstances === null &&
+                      rows.length > COMPUTER_INSTANCE_PREVIEW_COUNT && (
+                        <div className="border-t border-line-subtle px-4 py-3 text-center">
+                          <ShowMoreToggle
+                            expanded={expanded}
+                            aria-expanded={expanded}
+                            onClick={() => setExpanded((v) => !v)}
+                            collapsedLabel={
+                              <span className="inline-flex items-center gap-1">
+                                <ChevronDown size={14} />
+                                展开全部 {rows.length} 个实例
+                              </span>
+                            }
+                            expandedLabel={
+                              <span className="inline-flex items-center gap-1">
+                                <ChevronUp size={14} />
+                                收起
+                              </span>
+                            }
+                          />
+                        </div>
+                      )}
                   </OfficialListRowGroup>
                 )}
-                {selectedInstances === null &&
-                  rows.length > COMPUTER_INSTANCE_PREVIEW_COUNT && (
-                    <div className="mt-3">
-                      <ShowMoreToggle
-                        expanded={expanded}
-                        aria-expanded={expanded}
-                        onClick={() => setExpanded((v) => !v)}
-                        collapsedLabel={
-                          <span className="inline-flex items-center gap-1">
-                            <ChevronDown size={14} />
-                            展开全部 {rows.length} 个实例
-                          </span>
-                        }
-                        expandedLabel={
-                          <span className="inline-flex items-center gap-1">
-                            <ChevronUp size={14} />
-                            收起
-                          </span>
-                        }
-                      />
-                    </div>
-                  )}
                 {instances && !rows.length && (
                   <p className="text-callout text-foreground-hint">
                     暂无绑定到这台计算机的实例

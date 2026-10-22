@@ -661,6 +661,7 @@ function Channel({
                 controlRoomId={controlRoomId}
                 room={channel}
                 member={profileMember}
+                onOpenPrivate={onOpenPrivate}
                 onClose={closeProfile}
               />
             </div>
@@ -1321,6 +1322,7 @@ export default function ChannelApp() {
                             params.get("detail") === "thread" &&
                             params.get("thread") ? (
                               <ThreadContentSlot
+                                onOpenPrivate={openPrivate}
                                 controlRoomId={
                                   directory.workspace.controlRoomId!
                                 }

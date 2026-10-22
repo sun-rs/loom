@@ -288,3 +288,21 @@ Role 行采用 db5e399 `MemberAgentRow` 的原 JSX，计算机行采用 `Sidebar
 描述区与头像属于同一块，不在两者之间加分隔线。历史 `configuration.role` 与 `instructions` 合并展示的完整 Prompt 现在也合并编辑；保存时以显示名规范化 role 字段，完整语义只保存一次。改名不丢失历史前缀，单独修改运行时不暗改 Prompt。信息区读取创建时间和可用的真实修订时间，旧快照未记录修改时间时明确显示未知，不伪造。
 
 底部操作与右上角菜单使用同一份动作数组，实例区加号复用添加入口。停止／启用／重启（重置原生会话）是 owner 请求的跨频道 Role 实例批量 UI，不是新工作流引擎：确认时固定实例列表，逐个调用原有 ManagementClient 因果/idempotency 接口；遇拒绝或未知立即停止，不回滚已成功项，不自动重跑。未知结果可沿已有同 key 核实流程核实，但不自动继续剩余批次。重启默认保留各实例实际配置，可明确选择当前 Role 修订；不自动启用已停止实例。没有删除频道历史、记忆或工作区的全量重置选项。Role 删除沿用保留实例／快照的契约和官方 ConfirmDialog。
+
+### 频道成员与菜单的增量复核（2026-10-22）
+
+官网 `app-shell-EHP4m3Or.js` 本次重新下载 SHA-256 为 `9eab18f8d1a59b45707f1554b97e64b143b4d6abf5707269b7a9d82f7a944a42`，与 published-2026-10-22 锁一致；源码远端 HEAD 仍为 db5e399。仅证明这两个对象未变化，不证明所有异步页面资源都没有变化。不能把本轮观察到的缺失统称为官网又更新。
+
+已修正：实例 inspector 的 tab 顺序为动态、资料；频道和消息列入口共用既有私密会话回调，原生更多菜单增加私聊。计算机实例列表的 ShowMoreToggle 放入同一个 ListRowGroup，保留官方按钮 recipe；分组内 footer 是 owner 请求的 Loom 大量实例适配，不冒称官方列表原样拥有此功能。定向 WebKit 在 1440/390 验证 inspector 顺序、菜单、关闭和焦点；不发真实模型请求。
+
+| 待核对项 | 代码事实及边界 | 下一步 |
+| --- | --- | --- |
+| 频道设置成员摘要 → 成员 → 添加成员 | 官方 ChannelOverflowMenu 保持根页 mounted，MembersStrip 跳转 ChannelMembers page；Loom 仍是本地 ChannelSettingsContent + 平铺 ChannelMembers | 提取完整展示链，复用官方摘要、分组、搜索和返回；Loom Role 选择创建新实例，不把现有实例跨频道移动 |
+| 头像右键 | 官方 MessageItem 有 copyName/copyHandle；Loom readOnlyProjection 同时关闭了 sender contextmenu | 为官方菜单建立独立安全回调槽，接入复制、私聊、Fork/Side；不能全局关闭 readOnlyProjection 或恢复官方 store 写入 |
+| 正文工具栏更多按钮 | 锁定 db5e399 MessageHoverToolbar 仅 thread/reaction/bookmark；现有生成器没有删除第四项 | 查对应生产资源的新菜单及触发组合，再纳入来源锁；不得自画菜单后宣称原样复用 |
+| 频道操作／偏好 | stop-all、归档、mutedActivity 已有；pin 有 sidebar owner，但设置页未接；collapseLongMessages 未证明 Loom 持久偏好已接 | 接入官方偏好组合；删除频道未找到对应公开命令，公开频道也不属于当前单 Human MVP，不能放置假成功按钮 |
+| 操作文字居中 | 现锁 OverflowActionRow 原件是 justify-start；与 owner 当前要求有差异 | 对比该场景生产资源，不修改不可变原件或把截图数值当源码值 |
+| 导航拖动／折叠 | Loom DesktopNavigation 固定 destinations.map，没有此交互；当前锁 LeftRail 未找到对应 collapse/drag 实现 | 获取对应已发布组件及偏好逻辑，显式升级该来源，而非自造全站状态 |
+| 通知 | NotificationSettings 已绑定官方生成片段，enable/disable/test 走 LoomPushClient；没有证明服务器静音已完整绑定 | 区分设备推送订阅与工作区静音，用既有通知权限 owner 接线，不导入 Raft 云端账户逻辑 |
+
+以上是明确未完成项；此次小批修正不将频道设置整页或上述菜单标记为验收完成。

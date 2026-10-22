@@ -96,7 +96,7 @@
     {
       "id": "profile-header-close",
       "owner": "raft-ui PanelAction within official Agent profile header",
-      "rule": "Only the registered instance profile close uses native PanelAction; desktop action hidden below md, mobile uses native back. No size/variant override. Preserve Escape, opener focus and unknown-write guards.",
+      "rule": "Only the registered instance profile close uses native PanelAction; desktop action hidden below md, mobile uses native back. No size/variant override. Preserve Escape, opener focus and unknown-write guards. Instance tabs remain Activity then Profile; its native overflow exposes private messaging through the existing Channel/DirectBox owner, never an upstream write.",
       "sources": [
         "frontends/raft/page-adoption.json",
         "frontends/raft/packages/web/src/components/agent/AgentDetailPanel.tsx"

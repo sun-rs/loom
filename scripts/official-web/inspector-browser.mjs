@@ -29,6 +29,21 @@ export async function verifyInspector({
   await agentAvatar.click();
   const panel = page.getByTestId("profile-panel");
   await panel.waitFor();
+  assert.deepEqual(await panel.getByRole("tab").allTextContents(), [
+    "动态",
+    "资料",
+  ]);
+  const more = panel.getByRole("button", {
+    name: `更多操作 ${name}`,
+    exact: true,
+  });
+  await more.click();
+  await page.getByRole("menuitem", { name: "私聊", exact: true }).waitFor();
+  await page.keyboard.press("Escape");
+  await page
+    .getByRole("menuitem", { name: "私聊", exact: true })
+    .waitFor({ state: "hidden" });
+  await panel.getByRole("tab", { name: "动态", exact: true }).focus();
   assert.equal(
     await panel.locator('[data-slot="conversation-panel-tabs"]').count(),
     1,

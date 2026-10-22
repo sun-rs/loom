@@ -8,8 +8,10 @@ import InstanceInspector from "./InstanceInspector.tsx";
 export default function ThreadContentSlot({
   controlRoomId,
   onProfileVisibilityChange,
+  onOpenPrivate,
   ...props
 }: ComponentProps<typeof ThreadWorkspace> & {
+  onOpenPrivate?: (principalId: string) => void;
   controlRoomId: string;
   onProfileVisibilityChange: (open: boolean) => void;
 }) {
@@ -42,6 +44,7 @@ export default function ThreadContentSlot({
             controlRoomId={controlRoomId}
             room={props.room}
             member={member}
+            onOpenPrivate={onOpenPrivate}
             onClose={close}
           />
         </div>

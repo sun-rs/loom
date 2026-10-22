@@ -1,5 +1,5 @@
 import InstanceProfile from "./InstanceProfile.tsx";
-import { User } from "lucide-react";
+import { User, MessageSquare } from "lucide-react";
 import BlockedWorkControl from "./BlockedWorkControl.tsx";
 import { useEffect, useRef, useState } from "react";
 import type { Principal, Room } from "@rah-os/protocol";
@@ -42,6 +42,7 @@ export default function InstanceInspector({
   onClose,
   backLabel = "返回聊天",
   controlItems,
+  onOpenPrivate,
 }: {
   client: RahClient;
   controlRoomId: string;
@@ -49,6 +50,7 @@ export default function InstanceInspector({
   member: Principal;
   onClose: () => void;
   backLabel?: string;
+  onOpenPrivate?: (principalId: string) => void;
   controlItems?: { label: string; run: () => void; icon?: React.ReactNode }[];
 }) {
   const [tab, setTab] = useState("activity");
@@ -179,7 +181,18 @@ export default function InstanceInspector({
                   controlRoomId={controlRoomId}
                   agentId={identity.agentId}
                   branchSource={identity}
-                  items={controlItems}
+                  items={[
+                    ...(onOpenPrivate
+                      ? [
+                          {
+                            label: "私聊",
+                            icon: <MessageSquare size={14} />,
+                            run: () => onOpenPrivate(member.principalId),
+                          },
+                        ]
+                      : []),
+                    ...(controlItems ?? []),
+                  ]}
                   name={member.displayName ?? member.handle}
                 />
               )}
@@ -200,13 +213,13 @@ export default function InstanceInspector({
             render={<Tabs value={tab} onValueChange={setTab} />}
           >
             <TabsList aria-label="实例详情">
-              <TabsTab value="profile">
-                <User />
-                <TabsLabel>资料</TabsLabel>
-              </TabsTab>
               <TabsTab value="activity">
                 <Activity />
                 <TabsLabel>动态</TabsLabel>
+              </TabsTab>
+              <TabsTab value="profile">
+                <User />
+                <TabsLabel>资料</TabsLabel>
               </TabsTab>
             </TabsList>
           </ConversationPanelTabs>
