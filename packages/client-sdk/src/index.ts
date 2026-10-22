@@ -58,6 +58,8 @@ import {
 } from "@rah-os/protocol";
 import {
   type RoleCreateRequest,
+  type RoleRestoreRequest,
+  RoleRestoreRequestSchema,
   type RoleDeleteRequest,
   type RoleDeleteResponse,
   RoleDeleteRequestSchema,
@@ -476,6 +478,7 @@ export type RahClientOperationMap = ComposerOperationMap &
       input: ClientAgentManageRequest;
       output: ClientAgentManageResponse;
     };
+    "role.restore": { input: RoleRestoreRequest; output: RoleCreateResponse };
     "role.delete": { input: RoleDeleteRequest; output: RoleDeleteResponse };
     "role.revise": { input: RoleReviseRequest; output: RoleCreateResponse };
     "role.create": { input: RoleCreateRequest; output: RoleCreateResponse };
@@ -950,6 +953,13 @@ const operationDefinitions: Record<RahClientOperation, OperationDefinition> = {
     method: "POST",
     output: ClientAgentManageResponseSchema,
     path: "/v3/client/agents/manage",
+  },
+  "role.restore": {
+    authenticated: true,
+    input: RoleRestoreRequestSchema,
+    output: RoleCreateResponseSchema,
+    method: "POST",
+    path: "/v3/client/roles/restore",
   },
   "role.delete": {
     authenticated: true,

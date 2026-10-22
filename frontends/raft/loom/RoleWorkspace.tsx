@@ -17,7 +17,14 @@ import {
   TabsTab,
   TabsLabel,
 } from "raft-ui";
-import { Plus, RefreshCw, Bot, Activity } from "lucide-react";
+import {
+  Plus,
+  RefreshCw,
+  Bot,
+  Activity,
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react";
 import Frame from "./ChatSidebarFrame.tsx";
 import AvatarSlot from "../packages/web/src/components/ui/AvatarSlot.tsx";
 import PanelHeader, {
@@ -62,6 +69,7 @@ export default function RoleWorkspace({
   children: ReactNode;
   inspector?: ReactNode;
 }) {
+  const [showDeleted, setShowDeleted] = useState(false);
   const [query, setQuery] = useState("");
   const panel = useResizablePanel({
     storageKey: "loom:agentSidebarWidth",
@@ -90,7 +98,10 @@ export default function RoleWorkspace({
         >
           <SidebarSectionHeader>
             <SidebarSectionDisclosure render={<div />} type={undefined}>
-              角色 <SidebarSectionCount>{entries.length}</SidebarSectionCount>
+              角色{" "}
+              <SidebarSectionCount>
+                {entries.filter((e) => !e.retired).length}
+              </SidebarSectionCount>
             </SidebarSectionDisclosure>
             <SidebarSectionControl
               aria-label="刷新角色"
@@ -119,16 +130,54 @@ export default function RoleWorkspace({
               {query ? "没有匹配的角色" : "暂无角色"}
             </p>
           )}
-          {visible.map((entry) => (
-            <OfficialRoleRow
-              key={entry.id}
-              agent={entry}
-              selected={selected?.id === entry.id}
-              busy={busy}
-              onSelect={onSelect}
-              statusDot={<RolePresence state={entry.presence ?? "unknown"} />}
-            />
-          ))}
+          {visible
+            .filter((entry) => !entry.retired)
+            .map((entry) => (
+              <OfficialRoleRow
+                key={entry.id}
+                agent={entry}
+                selected={selected?.id === entry.id}
+                busy={busy}
+                onSelect={onSelect}
+                statusDot={<RolePresence state={entry.presence ?? "unknown"} />}
+              />
+            ))}
+          {entries.some((entry) => entry.retired) && (
+            <>
+              <SidebarSectionHeader>
+                <SidebarSectionDisclosure
+                  render={<button type="button" />}
+                  aria-expanded={showDeleted}
+                  onClick={() => setShowDeleted((v) => !v)}
+                >
+                  {showDeleted ? (
+                    <ChevronDown size={12} />
+                  ) : (
+                    <ChevronRight size={12} />
+                  )}
+                  已删除{" "}
+                  <SidebarSectionCount>
+                    {entries.filter((entry) => entry.retired).length}
+                  </SidebarSectionCount>
+                </SidebarSectionDisclosure>
+              </SidebarSectionHeader>
+              {showDeleted &&
+                visible
+                  .filter((entry) => entry.retired)
+                  .map((entry) => (
+                    <OfficialRoleRow
+                      key={entry.id}
+                      agent={entry}
+                      selected={selected?.id === entry.id}
+                      busy={busy}
+                      onSelect={onSelect}
+                      statusDot={
+                        <RolePresence state={entry.presence ?? "unknown"} />
+                      }
+                    />
+                  ))}
+            </>
+          )}
         </Frame>
         <PanelResizeHandle
           side="right"

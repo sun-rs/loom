@@ -17,7 +17,7 @@
 | Session  | 实例的原生 CLI session。一个实例始终延续同一个 session，不按任务、轮数或 token 自动轮换                                |
 | Channel  | 协作记录与消息盒子；成员是实例，不是 Role。拥有一个平台创建的主工作目录与可选附加目录（见 §2a）                        |
 
-- 同一工作区当前有效的 Role 名称唯一（忽略大小写与 Unicode 兼容写法），Role ID 创建后不变；改名只产生新 Revision。删除 Role 配置保留旧实例、修订与历史，同名重建得到新 Role ID（owner 2026-10-13）。
+- 同一工作区当前有效的 Role 名称唯一（忽略大小写与 Unicode 兼容写法），Role ID 创建后不变；改名只产生新 Revision。删除 Role 配置保留旧实例、修订与历史，同名重建得到新 Role ID（owner 2026-10-13）。Human可显式恢复已删除Role（owner 2026-10-22）：保留原Role ID，生成新修订，名称仍须唯一；名称被占用时改名恢复，不合并身份，不自动更改或启停已有实例。
 - 新实例使用 Role 名称加可读数字后缀，显示名与 @ 名称一致，Instance ID 不变；历史实例不自动改名。名称不替代历史消息中已绑定的实例 ID。角色编辑只显示一个 Prompt，旧职责简介与详细指令合并保留。
 - 修改 Role 不影响已有实例的名称或配置；实例显示"与当前 Role 配置不一致"。
 - 普通连续 session 内可以切换模型和 effort（原生能力），不能直接切换 CLI。CLI 升级产生新的 RuntimeOffer ID 时，配置修改允许显式选择同 Host、同 RuntimeProfile 的有效入口；入口 ID 变化本身不算切换 CLI，不重置实例的 session 绑定。不同 Host / Profile 仍拒绝。

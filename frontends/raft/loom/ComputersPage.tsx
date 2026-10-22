@@ -13,6 +13,7 @@ import {
 } from "./computer-instance-list.ts";
 import ShowMoreToggle from "@loom/raft-web-source/ShowMoreToggle";
 import ComputerInstanceRow from "./ComputerInstanceRow.tsx";
+import Tooltip from "../packages/web/src/components/ui/Tooltip.tsx";
 import CreateRoleDialog from "./CreateRoleDialog.tsx";
 import ComputerSelection from "./ComputerSelection.tsx";
 import RoleBatchDialog, { type RoleBatchAction } from "./RoleBatchDialog.tsx";
@@ -277,6 +278,7 @@ export default function ComputersPage({
         </div>
         <PanelResizeHandle
           side="right"
+          data-testid="computer-sidebar-resize"
           visibleFrom="md"
           onPointerDown={panel.handleResizeStart}
           onPointerMove={panel.handleResizeMove}
@@ -302,7 +304,6 @@ export default function ComputersPage({
           {selected ? (
             <div
               className="flex-1 overflow-y-auto bg-layer-panel"
-              style={{ scrollbarGutter: "stable" }}
               data-testid="computer-detail"
             >
               {error && problem}
@@ -340,23 +341,31 @@ export default function ComputersPage({
                   <div data-testid="machine-detected-runtimes">
                     <OfficialComputerRuntimes>
                       {inventory.runtimes.map((runtime, index) => (
-                        <Badge
+                        <Tooltip
                           key={`${runtime.executable}-${index}`}
-                          appearance="soft"
-                          variant={runtime.available ? "information" : "muted"}
-                          title={
+                          content={[
+                            runtime.displayName,
+                            runtime.version,
                             runtime.resolvedExecutablePath ??
-                            runtime.failureCode
-                          }
+                              runtime.failureCode,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")}
                         >
-                          <span
-                            aria-hidden
-                            className={`size-2 shrink-0 rounded-[2px] ${runtime.available ? "bg-info" : "bg-fill-muted"}`}
-                          />
-                          {runtime.displayName}
-                          {runtime.version ? ` ${runtime.version}` : ""}
-                          {!runtime.available && " · 不可用"}
-                        </Badge>
+                          <Badge
+                            appearance="soft"
+                            variant={
+                              runtime.available ? "information" : "muted"
+                            }
+                          >
+                            <span
+                              aria-hidden
+                              className={`size-2 shrink-0 rounded-[2px] ${runtime.available ? "bg-info" : "bg-fill-muted"}`}
+                            />
+                            {runtime.displayName}
+                            {!runtime.available && " · 不可用"}
+                          </Badge>
+                        </Tooltip>
                       ))}
                     </OfficialComputerRuntimes>
                     {inventory.runtimes.length === 0 && (
@@ -378,7 +387,7 @@ export default function ComputersPage({
                   count={instances ? rows.length : undefined}
                   action={
                     workspaceId && controlRoomId ? (
-                      <div className="flex flex-wrap items-center gap-1.5">
+                      <div className="flex items-center gap-1.5">
                         {rows.length > 0 && (
                           <ComputerSelection
                             rows={rows}

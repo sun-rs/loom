@@ -71,6 +71,24 @@ export class ManagementClient {
       onSettled: done,
     });
   }
+  restoreRole(role: RoleTemplate, displayName: string, done: Done) {
+    return this.writes.submit({
+      action: "role-restore",
+      session: this.control,
+      payload: {
+        roleId: role.roleId,
+        expectedRoleRevisionId: role.roleRevisionId,
+        displayName,
+      },
+      send: (payload, basedOnRoomSeq, idempotencyKey) =>
+        this.client.request("role.restore", {
+          ...payload,
+          basedOnRoomSeq,
+          idempotencyKey,
+        }),
+      onSettled: done,
+    });
+  }
   deleteRole(role: RoleTemplate, done: Done) {
     return this.writes.submit({
       action: "role-delete",

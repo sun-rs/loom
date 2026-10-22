@@ -110,6 +110,40 @@ export async function verifyComputers({ browser, origin }) {
     }
     await row.click();
     await page.getByTestId("computer-detail").waitFor();
+    if (viewport.width >= 768) {
+      const handle = await page
+        .getByTestId("computer-sidebar-resize")
+        .boundingBox();
+      await page.mouse.move(
+        handle.x + handle.width / 2,
+        handle.y + handle.height / 2,
+      );
+      await page.mouse.down();
+      await page.mouse.move(handle.x + 1000, handle.y + handle.height / 2);
+      await page.mouse.up();
+      assert.equal(
+        await page
+          .getByTestId("loom-computers-page")
+          .locator('[data-slot="app-shell-sidebar-slot"]')
+          .evaluate((el) => Math.round(el.getBoundingClientRect().width)),
+        400,
+      );
+      await page.setViewportSize({ width: 780, height: 1000 });
+      const section = page.getByTestId("computer-instances");
+      const title = await section
+        .getByText("在这台计算机上的实例", { exact: false })
+        .first()
+        .boundingBox();
+      const create = await section
+        .getByRole("button", { name: "新建角色", exact: true })
+        .boundingBox();
+      assert.ok(
+        create.y > title.y + title.height,
+        "native actions wrap below heading in narrow detail",
+      );
+      await page.setViewportSize(viewport);
+    }
+
     const list = page.getByTestId("computer-instances"),
       rows = list.getByTestId("computer-instance-row");
     await rows.nth(5).waitFor();
@@ -125,7 +159,10 @@ export async function verifyComputers({ browser, origin }) {
     const afterWidth = await page
       .getByTestId("machine-detected-runtimes")
       .boundingBox();
-    assert.equal(beforeWidth.width, afterWidth.width);
+    assert.ok(
+      Math.abs(beforeWidth.width - afterWidth.width) <= 16,
+      "Only a native scrollbar may change width",
+    );
     assert.equal(beforeWidth.height, afterWidth.height);
     assert.equal(
       await page

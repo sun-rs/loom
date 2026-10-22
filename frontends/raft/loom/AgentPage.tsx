@@ -52,6 +52,7 @@ import {
 import RuntimeControl from "./RuntimeControl.tsx";
 import DiscardChangesDialog from "./DiscardChangesDialog.tsx";
 import { useIntentRoute } from "./useIntentRoute.ts";
+import RestoreRoleDialog from "./RestoreRoleDialog.tsx";
 import CreateRoleDialog from "./CreateRoleDialog.tsx";
 import RoleEditor from "./RoleEditor.tsx";
 type Edit =
@@ -115,6 +116,7 @@ export default function AgentPage({
     setParams(next);
     setTab("roles");
   };
+  const [restoring, setRestoring] = useState<RoleTemplate>();
   const [standalone, setStandalone] = useState<RoleTemplate>();
   const [edit, setEdit] = useState<Edit>();
   const [batch, setBatch] = useState<{
@@ -179,7 +181,12 @@ export default function AgentPage({
   const roleName = (role: RoleTemplate) => role.configuration.displayName;
   const busy = state !== "idle" || refreshing;
   const presence = useRolePresence(client, catalog?.instances ?? [], active);
-  const entries: RoleEntry[] = (catalog?.roles ?? []).map((role) => ({
+  const entries: RoleEntry[] = [
+    ...(catalog?.roles ?? []),
+    ...(catalog?.deletedRoles ?? []),
+  ].map((role) => ({
+    retired:
+      catalog?.deletedRoles?.some((r) => r.roleId === role.roleId) ?? false,
     id: role.roleId,
     name: roleName(role),
     avatarUrl: role.configuration.avatarKey,
@@ -208,6 +215,9 @@ export default function AgentPage({
       (entry) => entry.id === (selectedId ?? lastSelectedId.current),
     ) ?? entries[0];
   const role = catalog?.roles.find((role) => role.roleId === selected?.id);
+  const deletedRole = catalog?.deletedRoles?.find(
+    (r) => r.roleId === selected?.id,
+  );
   const instances =
     catalog?.instances.filter((instance) => instance.roleId === selected?.id) ??
     [];
@@ -266,6 +276,19 @@ export default function AgentPage({
       data-testid="loom-agent-page"
     >
       {notice}
+      {restoring && (
+        <RestoreRoleDialog
+          client={client}
+          workspaceId={workspaceId}
+          controlRoomId={controlRoomId}
+          role={restoring}
+          onClose={() => setRestoring(undefined)}
+          onRestored={() => {
+            setRestoring(undefined);
+            void refresh();
+          }}
+        />
+      )}
       {standalone && (
         <StandaloneChatDialog
           client={client}
@@ -398,7 +421,21 @@ export default function AgentPage({
                   />
                 </>
               ) : selected?.retired ? (
-                <p>角色定义已删除。已有实例保留原配置，可在实例标签页管理。</p>
+                <div className="px-5 py-4 space-y-3">
+                  <p className="text-callout">
+                    角色定义已删除。已有实例保留原配置和运行状态，可在下方管理。
+                  </p>
+                  {deletedRole && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setRestoring(deletedRole)}
+                    >
+                      <RotateCcw size={16} />
+                      恢复角色
+                    </Button>
+                  )}
+                </div>
               ) : (
                 <p>从左侧选择或创建角色。</p>
               )}

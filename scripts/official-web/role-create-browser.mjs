@@ -91,8 +91,71 @@ export async function verifyRoleCreation({ browser, origin }) {
       writes.filter((w) => w.path.endsWith("/instantiate")).length,
       2,
     );
+    await page
+      .locator("[data-role-id]")
+      .filter({ hasText: `CreationChannelFixture${width}` })
+      .click();
+    await page
+      .getByTestId("role-profile-actions")
+      .getByRole("button", { name: "删除角色", exact: true })
+      .click();
+    const deletedResponse = page.waitForResponse(
+      (r) => r.url().endsWith("/roles/delete") && r.status() === 200,
+    );
+    await page
+      .getByRole("button", { name: "确认删除角色", exact: true })
+      .click();
+    await deletedResponse;
+    await page.getByRole("dialog").waitFor({ state: "hidden" });
+    await page
+      .getByRole("button", { name: "确认删除角色", exact: true })
+      .waitFor({ state: "hidden" });
+    await page.goto(`${origin}/?view=agents`);
+    const retiredToggle = page.getByRole("button", { name: /^已删除/ });
+    try {
+      await retiredToggle.waitFor();
+    } catch (error) {
+      console.error((await page.locator("body").innerText()).slice(0, 2500));
+      throw error;
+    }
+    assert.equal(await retiredToggle.getAttribute("aria-expanded"), "false");
+    assert.equal(
+      await page
+        .locator("[data-role-id]")
+        .filter({ hasText: `CreationChannelFixture${width}` })
+        .count(),
+      0,
+    );
+    await retiredToggle.click();
+    await page
+      .locator("[data-role-id]")
+      .filter({ hasText: `CreationChannelFixture${width}` })
+      .click();
+    await page
+      .getByTestId("role-profile-instances")
+      .getByText("实例 1", { exact: true })
+      .waitFor();
+    await page.getByRole("button", { name: "恢复角色", exact: true }).click();
+    const restore = page.getByRole("dialog");
+    await restore
+      .getByRole("textbox", { name: "名称", exact: true })
+      .fill(`RestoredFixture${width}`);
+    await restore
+      .getByRole("button", { name: "确认恢复", exact: true })
+      .click();
+    await restore.waitFor({ state: "hidden" });
+    await page
+      .getByTestId("loom-role-profile")
+      .getByText(`RestoredFixture${width}`, { exact: true })
+      .first()
+      .waitFor();
+    await page
+      .getByTestId("role-profile-instances")
+      .getByText("实例 1", { exact: true })
+      .waitFor();
     results.push({
       width,
+      deletedSectionAndRestore: true,
       sharedDialog: true,
       randomName: true,
       defaultSaveOnly: true,

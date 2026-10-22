@@ -566,7 +566,7 @@
     {
       "id": "role-create-and-computer-stability",
       "owner": "db5e399 CreateAgentDialog / DialogCard / StableField / agentNameGenerator",
-      "rule": "Both pages share CreateRoleDialog. Native StableField reserved helper rows plus space-y-1; default Role save creates no session. Optional channel addition is a separate confirmed write; failure retains Role. Owner requested outlined selection cancel and stable scrollbar gutter in Computer detail; omit redundant available copy, retain unavailable state. Single local computer is capability source, not portable Role placement.",
+      "rule": "Both pages share CreateRoleDialog. Native StableField reserved helper rows plus space-y-1; default Role save creates no session. Optional channel addition is a separate confirmed write; failure retains Role. Owner requested outlined selection cancel ; stable scrollbar gutter was retired after current published source verification, using native auto scrolling and short runtime labels; omit redundant available copy, retain unavailable state. Single local computer is capability source, not portable Role placement.",
       "sources": [
         "frontends/raft/upstream/raft-web-source/packages/web/src/components/ui/DialogCard.tsx",
         "frontends/raft/packages/web/src/components/agent/StableField.tsx"
@@ -585,6 +585,19 @@
       ],
       "localDifferences": "Creation is a Loom Role flow, structural port; existing upstream license/adoption authorization applies. Name algorithm copied with Math.random in place of clock helper. Environment/serviceTier remain unavailable pending verified execution support.",
       "guard": "scripts/official-web/computer-create-source.test.mjs"
+    },
+    {
+      "id": "computer-current-layout-and-role-recovery",
+      "owner": "Official published app-shell-EHP4m3Or and MachineDetailPanel-DxO99SzZ; native SidebarSectionDisclosure/Role rows/dialog primitives",
+      "rule": "Use published sidebar 200–400 default240. Native auto scrolling; runtime tags show short names with version in Tooltip. Computer first in Role creation reflects actual host capability binding. Deleted Roles have a default-collapsed group from authenticated catalog, preserve identity/snapshots; explicit restore creates a new revision with unique name and never changes instances.",
+      "sources": ["frontends/raft/upstream/published-2026-10-22/manifest.json"],
+      "bindings": [
+        "ComputersPage.tsx",
+        "RoleWorkspace.tsx",
+        "RestoreRoleDialog.tsx",
+        "RoleEditor.tsx"
+      ],
+      "guard": "scripts/official-web/published-panel-bounds.test.mjs"
     }
   ],
   "exceptions": [
@@ -789,7 +802,7 @@
       "FormField i18n fallback binds existing local message catalog; archive timestamps bind existing time formatter",
       "Settings shell still owns local routing, draft preservation and mobile master-detail; no claim of whole native shell extraction"
     ],
-    "directDependency": "panelBounds exact source; default/min/max browser assertions derive from same locked source",
+    "directDependency": "Sidebar bounds use byte-exact official published app-shell-EHP4m3Or registry (200/400/240); thread bounds remain the older locked Git source. See upstream/published-2026-10-22/manifest.json.",
     "nonEquivalent": [
       "UsageDataSettings is analytics consent, not token usage",
       "HostedRuntimeSpendCard and agent hosted-runtime settings concern Raft cloud products; Loom usage and execution settings remain intentional local compositions of native primitives"

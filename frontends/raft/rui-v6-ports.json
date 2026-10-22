@@ -988,9 +988,9 @@
     },
     "packages/web/src/lib/panelBounds.ts": {
       "upstreamSha256": "1631bd5e9497909d4504199ba0fadec30e77b26f2991a16a8b6de527c797d5c9",
-      "portedSha256": "0d360867518fc8138685072e95ed9f95f68647adadbdc47c1f5d65efbf05729e",
-      "sourceRelease": "db5e399 / v1.21.23-source.1",
-      "adoption": "Dependency bridge; immutable bytes in source-lock.json, explicit generated bindings recorded in dependency-migration.json."
+      "portedSha256": "5bcaf83280c43a574b9c1c09c8802f296c065c19950267cef035485b2b43dbf6",
+      "sourceRelease": "db5e399 thread bounds + 2026-10-22 app-shell-EHP4m3Or sidebar registry",
+      "adoption": "Sidebar reads exact published registry declaration (manifest under upstream/published-2026-10-22); thread remains immutable old Git source. This is a mixed-source compatibility bridge, not a full upstream upgrade."
     },
     "packages/web/src/components/ui/SlugInput.tsx": {
       "upstreamSha256": "4f88ca98ccb06b62c4b88125553ffe6347c89d40b7b77bcce122843278a6013c",

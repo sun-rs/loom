@@ -82,7 +82,9 @@ never installs them or configures their accounts.
   skills, with a stable Role ID. Every save creates an immutable Revision.
   Active names are unique within a workspace (case/NFKC normalized); renaming
   preserves the ID and deletion/recreation gives a new ID. Deleting configuration
-  retains existing instances and snapshots. Editing a Role never changes existing
+  retains existing instances and snapshots. Human restoration (owner 2026-10-22)
+  preserves Role ID, creates a new revision and requires a unique active name;
+  it never merges a replacement Role or changes existing instances. Editing a Role never changes existing
   instances; they show as out of date.
 - **Instance** is a Channel member and principal (Instance ID) with a frozen
   Role Revision snapshot; one Role may have several instances per Channel. It

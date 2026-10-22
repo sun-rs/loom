@@ -170,7 +170,35 @@ export class RoleCatalog {
       .prepare("INSERT INTO role_revisions VALUES(?,?,?)")
       .run(role.roleRevisionId, role.roleId, JSON.stringify(role));
   }
+  restore(auth: AuthenticatedActorContext, raw: P.RoleRestoreRequest) {
+    const input = P.RoleRestoreRequestSchema.parse(raw);
+    this.context.requireActor(auth);
+    const current = this.requireRole(input.roleId);
+    const { displayName, ...base } = input;
+    return this.changeRevision(
+      auth,
+      {
+        ...base,
+        configuration: {
+          ...current.configuration,
+          displayName,
+          role:
+            current.configuration.role === current.configuration.displayName
+              ? displayName
+              : current.configuration.role,
+        },
+      },
+      canonicalDigest(input),
+    );
+  }
   revise(auth: AuthenticatedActorContext, raw: P.RoleReviseRequest) {
+    return this.changeRevision(auth, raw);
+  }
+  private changeRevision(
+    auth: AuthenticatedActorContext,
+    raw: P.RoleReviseRequest,
+    restoreDigest?: string,
+  ) {
     const input = P.RoleReviseRequestSchema.parse(raw),
       c = this.context;
     return c.transaction(() => {
@@ -181,12 +209,13 @@ export class RoleCatalog {
         current.controlRoomId,
         actorId,
       );
-      const requestDigest = canonicalDigest(input);
+      const requestDigest = restoreDigest ?? canonicalDigest(input);
+      const eventType = restoreDigest ? "role.restored" : "role.revised";
       const prior = this.replay(
         actorId,
         current.controlRoomId,
         input.idempotencyKey,
-        "role.revised",
+        eventType,
         requestDigest,
       );
       if (prior)
@@ -195,7 +224,14 @@ export class RoleCatalog {
           event: prior,
           deduplicated: true,
         };
-      this.requireActive(current.roleId);
+      if (restoreDigest) {
+        if (
+          c.database
+            .prepare("SELECT deleted_at FROM role_templates WHERE role_id=?")
+            .get(current.roleId)?.deleted_at == null
+        )
+          throw new ConflictError("Role is not deleted");
+      } else this.requireActive(current.roleId);
       if (current.roleRevisionId !== input.expectedRoleRevisionId)
         throw new ConflictError("Role revision changed; reload before editing");
       this.fresh(current.controlRoomId, input.basedOnRoomSeq);
@@ -214,7 +250,7 @@ export class RoleCatalog {
       this.saveSnapshot(role);
       c.database
         .prepare(
-          "UPDATE role_templates SET role_revision_id=?,configuration_json=? WHERE role_id=?",
+          "UPDATE role_templates SET role_revision_id=?,configuration_json=?,deleted_at=NULL WHERE role_id=?",
         )
         .run(
           role.roleRevisionId,
@@ -227,7 +263,7 @@ export class RoleCatalog {
         aggregateType: "role",
         roomId: role.controlRoomId,
         idempotencyKey: input.idempotencyKey,
-        type: "role.revised",
+        type: eventType,
         payload: {
           roleId: role.roleId,
           roleRevisionId: role.roleRevisionId,
@@ -265,6 +301,12 @@ export class RoleCatalog {
             text(row, "instance_id"),
           ),
         })),
+      deletedRoles: this.context.database
+        .prepare(
+          "SELECT * FROM role_templates WHERE control_room_id=? AND deleted_at IS NOT NULL ORDER BY deleted_at DESC,role_id",
+        )
+        .all(controlRoomId)
+        .map((row) => this.role(row)),
       roles: this.context.database
         .prepare(
           "SELECT * FROM role_templates WHERE control_room_id=? AND deleted_at IS NULL ORDER BY created_at,role_id",

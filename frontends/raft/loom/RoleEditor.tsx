@@ -123,6 +123,16 @@ export default function RoleEditor({
         disabled={disabled}
         className={creation ? "space-y-1" : field ? "space-y-4" : undefined}
       >
+        {creation && computerName && (
+          <SelectField
+            stable
+            label="计算机（能力来源）"
+            value="local"
+            options={[{ value: "local", label: computerName }]}
+            onChange={() => {}}
+            disabled
+          />
+        )}
         <div
           hidden={Boolean(field)}
           className={creation ? "space-y-1" : undefined}
@@ -175,16 +185,6 @@ export default function RoleEditor({
             />
           </Field>
         </div>
-        {creation && computerName && (
-          <SelectField
-            stable
-            label="计算机（能力来源）"
-            value="local"
-            options={[{ value: "local", label: computerName }]}
-            onChange={() => {}}
-            disabled
-          />
-        )}
         {!choices && !error ? (
           <Spinner aria-label="读取 CLI 目录" />
         ) : (

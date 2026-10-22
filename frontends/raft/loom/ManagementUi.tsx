@@ -1,3 +1,4 @@
+import { useRouteIntentOwner } from "./useIntentRoute.ts";
 import { uiActionProps } from "./ui-action-props.ts";
 import { useEffect, useState, type ReactNode } from "react";
 import {
@@ -28,6 +29,7 @@ import StableField, {
 import FormField from "../packages/web/src/components/ui/FormField.tsx";
 import type { ManagementClient } from "./management-client.ts";
 export function useManagement(manager: ManagementClient) {
+  useRouteIntentOwner(manager.writes);
   const [state, setState] = useState(manager.writes.state);
   const [error, setError] = useState("");
   useEffect(() => {

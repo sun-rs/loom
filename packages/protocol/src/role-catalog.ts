@@ -49,6 +49,8 @@ export const RoleInstanceSchema = z
 export const RoleListResponseSchema = z
   .object({
     roles: z.array(RoleTemplateSchema),
+    /** Human-managed deleted definitions; retained identity, never instantiable. */
+    deletedRoles: z.array(RoleTemplateSchema).optional(),
     instances: z.array(
       RoleInstanceSchema.extend({
         isCurrent: z.boolean(),
@@ -82,6 +84,10 @@ export const RoleDeleteResponseSchema = z
     deduplicated: z.boolean(),
   })
   .strict();
+export const RoleRestoreRequestSchema = RoleDeleteRequestSchema.extend({
+  displayName: z.string().trim().min(1).max(128),
+}).strict();
+export type RoleRestoreRequest = z.infer<typeof RoleRestoreRequestSchema>;
 export type RoleDeleteRequest = z.infer<typeof RoleDeleteRequestSchema>;
 export type RoleDeleteResponse = z.infer<typeof RoleDeleteResponseSchema>;
 export const RoleInstantiateRequestSchema = z

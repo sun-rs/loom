@@ -1,0 +1,10 @@
+{
+  "retrieved": "2026-10-22",
+  "sourceUrl": "https://app.raft.build/assets/app-shell-EHP4m3Or.js",
+  "sourceSha256": "9eab18f8d1a59b45707f1554b97e64b143b4d6abf5707269b7a9d82f7a944a42",
+  "declarationSha256": "fcacb89c07172af6d072a248bea541a91fdf6a6a4099a09b1a368a804495c233",
+  "reuse": "Byte-exact registry declaration; export and comment are Loom glue. Only sidebar bounds adopted in this slice, other entries retained as evidence, not enabled.",
+  "authorization": "Owner authorized Raft code reuse; upstream original notices retained in frontend adoption records.",
+  "machineSourceUrl": "https://app.raft.build/assets/MachineDetailPanel-DxO99SzZ.js",
+  "machineSourceSha256": "a59f80d84743a225f8193650d3fa6fde652a989f3a4226494d6d0cc36de58cbe"
+}

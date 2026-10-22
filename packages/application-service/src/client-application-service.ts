@@ -21,6 +21,7 @@ import {
   type RoleInstantiateResponse,
 } from "@rah-os/protocol";
 import {
+  RoleRestoreRequestSchema,
   RoleDeleteRequestSchema,
   RoleDeleteResponseSchema,
   RoleCreateRequestSchema,
@@ -460,6 +461,7 @@ const CLIENT_V3_DATA_PATHS = new Set([
   "/agents/rooms/list",
   "/agents/manage",
   "/roles/create",
+  "/roles/restore",
   "/roles/delete",
   "/roles/revise",
   "/roles/list",
@@ -1360,6 +1362,15 @@ export class ClientApplicationService {
         ClientAgentManageResponseSchema.parse(
           await manageAgentAfterTerminalProof(this.#human, actor, command),
         ),
+      );
+      return;
+    }
+    if (path === "/roles/restore") {
+      const command = parseClientRequest(RoleRestoreRequestSchema, body);
+      writeJson(
+        response,
+        200,
+        RoleCreateResponseSchema.parse(this.#human.restoreRole(actor, command)),
       );
       return;
     }

@@ -2,12 +2,12 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 const read = (n) => readFileSync("frontends/raft/loom/" + n, "utf8");
-test("computer selection cancellation has an outline and detail reserves scrollbar space", () => {
+test("computer selection cancellation has an outline and detail retains native auto scrolling", () => {
   assert.match(
     read("ComputerSelection.tsx"),
     /variant="outline" onClick=\{\(\) => onSelect\(null\)\}/,
   );
-  assert.match(read("ComputersPage.tsx"), /scrollbarGutter: "stable"/);
+  assert.doesNotMatch(read("ComputersPage.tsx"), /scrollbarGutter/);
   assert.doesNotMatch(read("ComputersPage.tsx"), /runtime.available \? "可用"/);
 });
 test("both entry points use the same role creation flow without implicit DM creation", () => {

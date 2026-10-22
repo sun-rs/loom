@@ -138,6 +138,8 @@ test("deleting a Role releases its name without changing instances or historical
       [replacement.roleId],
     );
     assert.equal(list.instances[0]!.roleId, f.role.roleId);
+    assert.equal(list.deletedRoles?.[0]?.roleId, f.role.roleId);
+    assert.equal(list.deletedRoles?.[0]?.configuration.displayName, "Reviewer");
     assert.throws(
       () =>
         f.kernel.roles.instantiate(f.actor, {
@@ -244,6 +246,56 @@ test("deleting Role while running leaves execution, session and frozen revisions
     });
     assert.deepEqual(snapshot(), before);
     work.finish(0);
+  } finally {
+    f.close();
+  }
+});
+
+test("restoring a deleted Role preserves identity and instances, rejects occupied names, and replays exactly", () => {
+  const f = roleInstanceFixture();
+  try {
+    f.kernel.roles.delete(f.actor, {
+      roleId: f.role.roleId,
+      expectedRoleRevisionId: f.role.roleRevisionId,
+      basedOnRoomSeq: f.head(f.controlRoomId),
+      idempotencyKey: "retire",
+    });
+    const replacement = create(f, "Reviewer", "replacement").role;
+    const input = {
+      roleId: f.role.roleId,
+      expectedRoleRevisionId: f.role.roleRevisionId,
+      displayName: "Reviewer",
+      basedOnRoomSeq: f.head(f.controlRoomId),
+      idempotencyKey: "restore",
+    };
+    assert.throws(
+      () => f.kernel.roles.restore(f.actor, input),
+      /name.*already|名称.*已/i,
+    );
+    const restored = f.kernel.roles.restore(f.actor, {
+      ...input,
+      displayName: "Original Reviewer",
+    });
+    assert.equal(restored.role.roleId, f.role.roleId);
+    assert.notEqual(restored.role.roleRevisionId, f.role.roleRevisionId);
+    assert.equal(
+      restored.role.configuration.runtimeOfferId,
+      f.role.configuration.runtimeOfferId,
+    );
+    assert.equal(
+      f.kernel.roles.restore(f.actor, {
+        ...input,
+        displayName: "Original Reviewer",
+      }).deduplicated,
+      true,
+    );
+    const list = f.kernel.roles.list(f.actor, {
+      controlRoomId: f.controlRoomId,
+    });
+    assert.equal(list.deletedRoles.length, 0);
+    assert.equal(list.instances[0]!.roleRevisionId, f.role.roleRevisionId);
+    assert.equal(list.instances[0]!.roleId, f.role.roleId);
+    assert.ok(list.roles.some((r) => r.roleId === replacement.roleId));
   } finally {
     f.close();
   }

@@ -1,4 +1,4 @@
-import { SIDEBAR_PANEL_BOUNDS } from "../../frontends/raft/upstream/raft-web-source/packages/web/src/lib/panelBounds.ts";
+import { SIDEBAR_PANEL_BOUNDS } from "../../frontends/raft/packages/web/src/lib/panelBounds.ts";
 import assert from "node:assert/strict";
 // Temporary Core only; navigation and unsaved drafts do not mutate settings.
 export async function verifySettingsNavigation({ browser, origin }) {
