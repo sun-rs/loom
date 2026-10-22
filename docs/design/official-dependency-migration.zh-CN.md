@@ -219,3 +219,16 @@ Role 行采用 db5e399 `MemberAgentRow` 的原 JSX，计算机行采用 `Sidebar
 最后一组对照了 db5e399 的 `MainLayout` Sidebar slot/resize/主从容器、`Sidebar` 桌面与手机标题、`AgentDetailPanel` tabs 及 `MachineDetailPanel` 外壳。共享标题和 Role tabs 外壳现在由 `generate-identity-frames.mjs` 从不可变原件生成。保留的显式差异：单工作区手机聊天标题/通知槽；Role 的两个固定业务 tabs，不引入官方 Agent 的多标签排序；本地路由控制的 Role/实例 inspector 和计算机默认选择。侧栏尺寸、拖动与断点沿用已迁入的官方 bounds/resizer 和既有响应式策略，未另造一份状态。
 
 外层 MainLayout 不能整件导入：它拥有官方组织、云账户和 store 路由。Loom 的 AppShell slot 组合因此作为永久适配层保留，而不是继续列为待迁移。`plannedMigrationComplete=true` 表示本次固定版本、已登记范围的迁移及来源分类完成；`wholeSiteDependencyComplete=false` 明确保留“并非所有页面都是未经修改官方原件”的事实。这不是最新官网全站逐像素一致、任意升级可无验收替换的声明。后续升级按 source-lock 差异、生成器差异、构建依赖守卫及受影响场景验证推进，不继续为永久业务 owner 开迁移任务。
+
+### 升级前的一次性差异检查
+
+运行 `npm run audit:official-web:upstream -- /绝对路径/官方源码checkout`。该命令只读文件，不拉取、不替换源码、不改来源锁，也不启动服务。JSON 分别记录：
+
+- `sourceDependency.summary`：当前不可变依赖与候选源码的差异汇总。
+- `summary`：初始 intake 与当前适配代码、候选源码的三方分类，不能与不可变依赖混为一谈。
+- `candidate`：候选提交、工作区是否有未提交/未跟踪文件；目录快照没有可证明的提交身份时明确记录未知。
+- `localIntegrity`：所有已登记路径的本地漂移汇总。原件或未登记适配变化不会被“与候选恰好相同”掩盖。
+
+退出码 0 表示该次比较没有本地漂移或缺失路径，**不代表 UI 验收通过**；退出码 2 表示需先核对本地漂移或缺失路径。上游正常修改仍通过 JSON 分类报告。历史 intake 的缺失路径可能是官方移动/删除，也可能是 checkout 不全；不能直接当作未实现功能。只将确认影响当前保留界面的差异带入生成器、构建及定向浏览器验收。源码升级、资源型兼容端口和 `raft-ui` 包升级仍是不同来源，不用一个 Git 提交号替代三者。
+
+本次对已保存的 db5e399 干净 checkout 实跑：当前依赖 86/86 字节相同，登记路径本地漂移为 0；旧 intake 对比仍有 140 个候选缺失路径，因此命令退出 2，未声称全量历史路径核对完成。该结果不改变已部署产品，也不表示检查过在线官网的最新发布。

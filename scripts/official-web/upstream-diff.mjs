@@ -17,17 +17,62 @@ function hash(path) {
     ? createHash("sha256").update(readFileSync(path)).digest("hex")
     : null;
 }
-export function inventoryDependency(localRoot, upstreamRoot) {
-  const lock = JSON.parse(readFileSync(resolve(localRoot, "source-lock.json"), "utf8"));
+export function summarize(rows) {
   return {
-    baseRevision: lock.revision,
-    rows: Object.entries(lock.files).map(([file, base]) => {
-      const local = hash(resolve(localRoot, file)), upstream = hash(resolve(upstreamRoot, file));
-      return { file, status: classify(base, local, upstream), base, local, upstream,
-        unexpectedLocalDrift: local !== base };
-    }),
+    total: rows.length,
+    byStatus: rows.reduce((out, row) => {
+      out[row.status] = (out[row.status] ?? 0) + 1;
+      return out;
+    }, {}),
+    unexpectedLocalDrift: rows.filter((row) => row.unexpectedLocalDrift).length,
   };
 }
+export function comparisonExitCode(report) {
+  const rows = [...report.rows, ...(report.sourceDependency?.rows ?? [])];
+  return rows.some(
+    (row) =>
+      row.unexpectedLocalDrift ||
+      row.status === "missing-upstream" ||
+      row.status === "missing-loom",
+  )
+    ? 2
+    : 0;
+}
+export function candidateIdentity(root) {
+  const git = (args) =>
+    execFileSync("git", ["-C", root, ...args], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    }).trim();
+  try {
+    return {
+      revision: git(["rev-parse", "HEAD"]),
+      dirty: git(["status", "--porcelain", "--untracked-files=all"]).length > 0,
+      kind: "git-checkout",
+    };
+  } catch {
+    return { revision: null, dirty: null, kind: "directory-snapshot" };
+  }
+}
+export function inventoryDependency(localRoot, upstreamRoot) {
+  const lock = JSON.parse(
+    readFileSync(resolve(localRoot, "source-lock.json"), "utf8"),
+  );
+  const rows = Object.entries(lock.files).map(([file, base]) => {
+    const local = hash(resolve(localRoot, file)),
+      upstream = hash(resolve(upstreamRoot, file));
+    return {
+      file,
+      status: classify(base, local, upstream),
+      base,
+      local,
+      upstream,
+      unexpectedLocalDrift: local !== base,
+    };
+  });
+  return { baseRevision: lock.revision, summary: summarize(rows), rows };
+}
+
 export function inventory(localRoot, upstreamRoot) {
   const adoption = JSON.parse(
     readFileSync(resolve(localRoot, "adoption.json"), "utf8"),
@@ -50,8 +95,14 @@ export function inventory(localRoot, upstreamRoot) {
   });
   return {
     baseRevision: adoption.revision,
-    sourceDependency: existsSync(resolve(localRoot, "upstream/raft-web-source/source-lock.json"))
-      ? inventoryDependency(resolve(localRoot, "upstream/raft-web-source"), upstreamRoot) : null,
+    sourceDependency: existsSync(
+      resolve(localRoot, "upstream/raft-web-source/source-lock.json"),
+    )
+      ? inventoryDependency(
+          resolve(localRoot, "upstream/raft-web-source"),
+          upstreamRoot,
+        )
+      : null,
     summary: rows.reduce((out, row) => {
       out[row.status] = (out[row.status] ?? 0) + 1;
       return out;
@@ -77,14 +128,15 @@ if (
   }
   const root = resolve(import.meta.dirname, "../../frontends/raft");
   const report = inventory(root, resolve(upstream));
-  try {
-    report.comparedRevision = execFileSync(
-      "git",
-      ["-C", resolve(upstream), "rev-parse", "HEAD"],
-      { encoding: "utf8" },
-    ).trim();
-  } catch {
-    report.comparedRevision = "unknown (directory snapshot)";
-  }
+  report.candidate = candidateIdentity(resolve(upstream));
+  report.comparedRevision =
+    report.candidate.revision ?? "unknown (directory snapshot)";
+  report.localIntegrity = summarize([
+    ...report.rows,
+    ...(report.sourceDependency?.rows ?? []),
+  ]);
+  report.acceptance =
+    "Not evaluated: source differences require scoped generation/build/browser review";
   console.log(JSON.stringify(report, null, 2));
+  process.exitCode = comparisonExitCode(report);
 }

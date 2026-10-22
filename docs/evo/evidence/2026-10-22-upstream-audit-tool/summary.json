@@ -1,0 +1,44 @@
+{
+  "scope": "Read-only upgrade inventory tooling; no product/runtime changes",
+  "candidate": {
+    "revision": "db5e399f017d584e49597e3a28757645d6807893",
+    "dirty": false,
+    "kind": "git-checkout"
+  },
+  "sourceDependency": {
+    "total": 86,
+    "byStatus": {
+      "identical": 86
+    },
+    "unexpectedLocalDrift": 0
+  },
+  "historicalIntake": {
+    "identical": 1389,
+    "upstream-only": 503,
+    "missing-upstream": 140,
+    "both-changed-review": 226,
+    "loom-only": 6
+  },
+  "localIntegrity": {
+    "total": 2350,
+    "byStatus": {
+      "identical": 1475,
+      "upstream-only": 503,
+      "missing-upstream": 140,
+      "both-changed-review": 226,
+      "loom-only": 6
+    },
+    "unexpectedLocalDrift": 0
+  },
+  "commandExitCode": 2,
+  "exitReason": "Historical candidate paths missing; not local drift, UI completeness or proof of deletion",
+  "tests": {
+    "focused": 4,
+    "failed": 0
+  },
+  "limits": [
+    "Compared saved checkout, not latest online release",
+    "Byte differences are not visual or semantic acceptance",
+    "No UI build/restart necessary: tooling and documentation only"
+  ]
+}
