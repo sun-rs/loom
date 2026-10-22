@@ -1,0 +1,30 @@
+{
+  "scope": "Close owner-requested channel/member/private navigation/message menus/sidebar/notification integration batch",
+  "productChanges": false,
+  "deployment": "bdddd195",
+  "checks": {
+    "command": "node --test scripts/official-web/{dependency-migration,member-flow-source,private-parent-navigation,sortable-navigation,sidebar-collapse,channel-delete,persistent-preferences}.test.mjs",
+    "passed": 12,
+    "failed": 0
+  },
+  "closedByEvidence": [
+    "2026-10-22-member-flow",
+    "2026-10-22-message-actions",
+    "2026-10-22-persistent-preferences",
+    "2026-10-22-navigation-order",
+    "2026-10-22-shell-closeout",
+    "2026-10-22-runtime-test-closeout",
+    "2026-10-22-computer-parity",
+    "2026-10-22-runtime-form"
+  ],
+  "remainingValidation": [
+    "physical iOS/Android",
+    "actual system push delivery"
+  ],
+  "intentionalLimits": [
+    "No nonmember public-channel parity",
+    "Kernel protects channels containing historical/current Role instances from deletion",
+    "No entire latest upstream parity or zero-adaptation upgrade claim"
+  ],
+  "paidCalls": 0
+}
