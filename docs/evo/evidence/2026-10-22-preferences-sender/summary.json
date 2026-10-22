@@ -1,0 +1,67 @@
+{
+  "productCommit": "8810ad8c",
+  "scope": [
+    "频道偏好复用官方完整组合，置顶和静音接既有 sidebar 版本化接口",
+    "恢复头像及发送者名字原生复制菜单，保持其他 readonly guard",
+    "补 Escape 关闭和焦点返回，保留官方点外关闭"
+  ],
+  "upstream": {
+    "revision": "db5e399f017d584e49597e3a28757645d6807893",
+    "repository": "https://github.com/botiverse/raft-source",
+    "license": "FSL-1.1-ALv2; owner-authorized reuse",
+    "raw": [
+      "ChannelPreferencesSection.tsx",
+      "channelSettingsClasses.ts"
+    ],
+    "generated": "OfficialChannelPreferences.generated.tsx: original JSX/recipes, upstream pin store replaced by explicit pin callback and pending/read-failure disable guard",
+    "sender": "MessageItem original menu/copy handlers; authenticated callback guard plus local Escape lifecycle"
+  },
+  "tests": {
+    "red": [
+      "sender navigation unit failed 1 != 4 before change",
+      "preference source test failed before generator existed",
+      "browser reproduced Escape failing to dismiss sender menu"
+    ],
+    "green": [
+      "focused source/intake/dependency tests: 6",
+      "UI contract: 8",
+      "typecheck:loom",
+      "build:official-web:channel",
+      "isolated WebKit message-references 1440/390: actual clipboard labels, avatar/name menu, Escape, focus, outside close, mention navigation",
+      "isolated WebKit channel-settings 1440/390: persisted pin/mute, existing member lost response and metadata stale/unknown handling"
+    ]
+  },
+  "deployment": {
+    "verified": true,
+    "productCommit": "8810ad8ce0dd773c860cf29adf1fbe1c5ed5cb1d",
+    "databases": 2,
+    "files": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true
+  },
+  "formal": [
+    {
+      "width": 1440,
+      "preferences": true,
+      "avatarMenu": true,
+      "escape": true,
+      "noBusinessWrites": true
+    },
+    {
+      "width": 390,
+      "preferences": true,
+      "avatarMenu": true,
+      "escape": true,
+      "noBusinessWrites": true
+    }
+  ],
+  "visualInspection": "390 screenshots inspected: native preferences separators/switches and sender copy menu. No claim of full-site visual parity.",
+  "notCompleted": [
+    "发送者菜单尚未直接追加私聊/Fork/Side；现有资料菜单入口保持",
+    "折叠长消息缺少 Loom 持久偏好绑定，按官方可选参数省略",
+    "消息 hover 省略号：锁定源码为三动作，仍需核对新版源码",
+    "导航拖动/折叠、通知设置整体替换及其余频道操作仍未全部完成"
+  ],
+  "noPaidCalls": true,
+  "formalNoBusinessWrites": true
+}
