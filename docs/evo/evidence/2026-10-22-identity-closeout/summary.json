@@ -1,0 +1,138 @@
+{
+  "source": "db5e399f017d584e49597e3a28757645d6807893",
+  "foundation": "@botiverse/raft-ui@0.10.5",
+  "productCommit": "00d1ceafb8f4ba58ca6396e19b5d161d78faa91b",
+  "implemented": [
+    "Generated Sidebar desktop/mobile header and AgentDetailPanel tab wrapper from immutable source",
+    "Reviewed MainLayout/Computer/Role outer frame and retained explicit Loom route/authority compositions",
+    "Closed fixed-source migration inventory, without claiming zero local composition or latest website parity"
+  ],
+  "checks": {
+    "source": {
+      "passed": 333,
+      "failed": 0
+    },
+    "uiContract": {
+      "passed": 8,
+      "failed": 0
+    },
+    "typecheck": true,
+    "build": true,
+    "fixtureBrowser": {
+      "roleActivity": [
+        1440,
+        390
+      ],
+      "computers": [
+        1440,
+        390
+      ],
+      "panelPolicyWidths": [
+        1440,
+        968,
+        969,
+        767,
+        768,
+        1024,
+        1280
+      ]
+    },
+    "formalWebKit": [
+      {
+        "width": 1440,
+        "roleHit": {
+          "height": 36,
+          "clickable": true
+        },
+        "navHit": {
+          "width": 40,
+          "height": 40,
+          "clickable": true
+        },
+        "activityMobileBack": true,
+        "existingReplies": 4,
+        "nativeCloseOrBack": {
+          "width": 32,
+          "height": 32,
+          "clickable": true
+        },
+        "noSend": true,
+        "noErrors": true,
+        "noOverflow": true,
+        "workspaceOpened": true,
+        "computerProfile": true,
+        "settingsAppearance": true,
+        "roleProfile": true,
+        "workspaceRefresh": {
+          "width": 32,
+          "height": 32,
+          "clickable": true
+        }
+      },
+      {
+        "width": 390,
+        "roleHit": {
+          "height": 34,
+          "clickable": true
+        },
+        "navHit": {
+          "width": 68.796875,
+          "height": 44,
+          "clickable": true
+        },
+        "activityMobileBack": true,
+        "existingReplies": 4,
+        "nativeCloseOrBack": {
+          "width": 44,
+          "height": 44,
+          "clickable": true
+        },
+        "noSend": true,
+        "noErrors": true,
+        "noOverflow": true,
+        "workspaceOpened": true,
+        "computerProfile": true,
+        "settingsAppearance": true,
+        "roleProfile": true,
+        "workspaceRefresh": {
+          "width": 32,
+          "height": 32,
+          "clickable": true
+        }
+      }
+    ]
+  },
+  "failuresResolved": [
+    "Initial TDD missing generator/module",
+    "Existing source-location assertions updated to follow generated child instead of inline JSX; no behavioral assertion removed"
+  ],
+  "retainedWarnings": [
+    "Existing build chunk size warning",
+    "Panel-policy fake runtime discovery emitted MCP refusal diagnostics; layout gate passed; no paid provider acceptance claimed"
+  ],
+  "deployment": {
+    "verified": true,
+    "databases": 2,
+    "files": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true,
+    "schema": 90
+  },
+  "screenshots": {
+    "formal-chat-390.png": "3960df82bc484fc7b4618a9f6ca499be5f1c17875a444bbf726faf49b9075e4f",
+    "formal-workspace-1440.png": "2c995015604a8902232f28b61478a1f552de21e4fac650a91c2be553c73b5c8e",
+    "formal-role-list-1440.png": "1926f5927aab0a0d19b99606b6dd31535ed8ec2e308a53a83616209cc9c9596f",
+    "formal-thread-1440.png": "0d2b54674d70b6bb6402e87637bdf1bd45c2e3c643d1ce13c6332fffd335807b",
+    "formal-workspace-390.png": "a7c51bd1d7f8f295b7ba6379f4498222bd3f96c8d5c7762a17e225ccad6b6888",
+    "formal-role-list-390.png": "4c0fcc0627152c9a2b3f925262635e57f26a17b35a21433696d5b265d5f7c00c",
+    "formal-settings-1440.png": "a60e46524c9a8d6ec7e797c1db077ffe9c8d1d2ee8daf36eebd5151241a9ace5",
+    "formal-thread-390.png": "5e37bae11b2ab63714d7f1a699c9a368ca7c0ae5e7926feeac105441865744fa",
+    "formal-role-390.png": "2c062ad279209b3065b4490604d466f21fc56724325e27af5c720f86982aef01",
+    "formal-role-1440.png": "342916facb1aaf3ceea540ccac11e8a4a91c12a4941df783ad3b82de97347175",
+    "formal-computer-390.png": "b366f9bd89387ee117961051858b8f2c984f1e2ec1698f405e97f9543076cc13",
+    "formal-chat-1440.png": "92c8fdffcb35a9fbabc27c92740f6699132e569cbd26e4ab6f897b441218147e",
+    "formal-settings-390.png": "d709338fc846e44a3f49e122f8d1e644d67aeb4b6d1b7d6e430480b2b7275831",
+    "formal-computer-1440.png": "6528f7f57f5ef1f69be60a1a1b2176a182aa8ea824b652a498e2bb8634e69552"
+  },
+  "completionBoundary": "Fixed-source declared migration scope closed. Official originals remain immutable; generated presentation, resource compatibility ports and Loom business composition remain explicitly distinct. Not universal visual parity or no-validation future upgrades."
+}
