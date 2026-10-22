@@ -23,7 +23,7 @@ export default function RoleBatchDialog({
   client: RahClient;
   workspaceId: string;
   controlRoomId: string;
-  role: RoleTemplate;
+  role?: RoleTemplate;
   instances: readonly (Instance & { name: string })[];
   action: RoleBatchAction;
   onClose: () => void;
@@ -37,12 +37,13 @@ export default function RoleBatchDialog({
   const [revision, setRevision] = useState("keep");
   const [rows, setRows] = useState<BatchRow[]>();
   const [running, setRunning] = useState(false);
+  const scope = role ? "所有实例" : "所选实例";
   const title =
     action === "stop"
-      ? "停止所有实例"
+      ? `停止${scope}`
       : action === "enable"
-        ? "启用所有实例"
-        : "重启／重置所有实例";
+        ? `启用${scope}`
+        : `重启／重置${scope}`;
   const labels: Record<string, string> = {
     ok: "已完成",
     rejected: "被拒绝",
@@ -78,7 +79,7 @@ export default function RoleBatchDialog({
             本次操作 {instances.length}{" "}
             个实例。遇到拒绝或结果未知即停止；已成功的操作不会回滚。
           </p>
-          {action === "restart" && (
+          {action === "restart" && role && (
             <SelectField
               label="重启配置"
               value={revision}

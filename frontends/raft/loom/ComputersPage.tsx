@@ -4,19 +4,23 @@ import {
   OfficialComputerRuntimes,
 } from "./OfficialComputerProfile.generated";
 import KeyValueRow from "@loom/raft-web-source/KeyValueRow";
-import {
-  OfficialListRowGroup,
-  OfficialAvatarListRow,
-} from "./OfficialListRows.tsx";
+import { OfficialListRowGroup } from "./OfficialListRows.tsx";
 import SectionHeader from "../packages/web/src/components/ui/SectionHeader.tsx";
-import { computerInstances } from "./role-presence.ts";
-import AvatarSlot from "../packages/web/src/components/ui/AvatarSlot.tsx";
-import type { RoleListResponse } from "@rah-os/protocol";
+import {
+  computerInstanceRows,
+  visibleComputerInstances,
+  COMPUTER_INSTANCE_PREVIEW_COUNT,
+} from "./computer-instance-list.ts";
+import ShowMoreToggle from "@loom/raft-web-source/ShowMoreToggle";
+import ComputerInstanceRow from "./ComputerInstanceRow.tsx";
+import ComputerSelection from "./ComputerSelection.tsx";
+import RoleBatchDialog, { type RoleBatchAction } from "./RoleBatchDialog.tsx";
+import type { RoleListResponse, AgentCatalogEntry } from "@rah-os/protocol";
 import ComputerProfile from "./ComputerProfile.tsx";
 // Structural port: locked Raft v1.21.22 $yt / zCt / MachineDetailPanel.
 // Loom owns only the authenticated local inventory read; no upstream machine store.
 import { useEffect, useState, type CSSProperties } from "react";
-import { Monitor } from "lucide-react";
+import { Monitor, ChevronDown, ChevronUp } from "lucide-react";
 import type { RahClient } from "@rah-os/client-sdk";
 import type { LocalRuntimeInventoryResponse } from "@rah-os/protocol";
 import {
@@ -48,6 +52,7 @@ import { computerStatus, computerStatusLabels } from "./computers.ts";
 export default function ComputersPage({
   client,
   controlRoomId,
+  workspaceId,
   onOpenRole,
   selectedId,
   onSelect,
@@ -55,25 +60,45 @@ export default function ComputersPage({
 }: {
   client: RahClient;
   controlRoomId?: string;
+  workspaceId?: string;
   onOpenRole: (id: string) => void;
   selectedId: string | null;
   onSelect: (id: string | null) => void;
   onSettings: () => void;
 }) {
+  const [selectedInstances, setSelectedInstances] = useState<string[] | null>(
+    null,
+  );
+  const [batch, setBatch] = useState<{
+    action: RoleBatchAction;
+    instances: ReturnType<typeof computerInstanceRows>;
+  }>();
+  const [catalogReload, setCatalogReload] = useState(0);
+  const [expanded, setExpanded] = useState(false);
+  const [agents, setAgents] = useState<AgentCatalogEntry[]>([]);
   const [instances, setInstances] = useState<RoleListResponse["instances"]>();
   useEffect(() => {
     if (!controlRoomId) return;
     const abort = new AbortController();
-    void client
-      .request("role.list", { controlRoomId }, { signal: abort.signal })
-      .then((r) => {
-        if (!abort.signal.aborted) setInstances(r.instances);
+    void Promise.all([
+      client.request("role.list", { controlRoomId }, { signal: abort.signal }),
+      client.request("agent.list", { controlRoomId }, { signal: abort.signal }),
+    ])
+      .then(([roles, catalog]) => {
+        if (!abort.signal.aborted) {
+          setInstances(roles.instances);
+          setAgents(catalog.agents);
+        }
       })
       .catch(() => {
         if (!abort.signal.aborted) setInstances(undefined);
       });
     return () => abort.abort();
-  }, [client, controlRoomId]);
+  }, [client, controlRoomId, catalogReload]);
+  useEffect(() => {
+    setExpanded(false);
+    setSelectedInstances(null);
+  }, [selectedId]);
   const [inventory, setInventory] = useState<LocalRuntimeInventoryResponse>();
   const [error, setError] = useState(false);
   const [reload, setReload] = useState(0);
@@ -119,6 +144,10 @@ export default function ComputersPage({
     )
       onSelect(inventory.hostId);
   }, [selectedId, inventory?.hostId, onSelect]);
+  const rows =
+    inventory && instances
+      ? computerInstanceRows(inventory.runtimes, instances, agents)
+      : [];
   const computer = inventory?.computer;
   const name = computer?.displayName ?? "Loom 主机";
   const status = computerStatus(error ? undefined : computer, now);
@@ -147,6 +176,20 @@ export default function ComputersPage({
       className="flex min-h-0 min-w-0 flex-1"
       data-testid="loom-computers-page"
     >
+      {batch && workspaceId && controlRoomId && (
+        <RoleBatchDialog
+          client={client}
+          workspaceId={workspaceId}
+          controlRoomId={controlRoomId}
+          instances={batch.instances}
+          action={batch.action}
+          onClose={() => setBatch(undefined)}
+          onChanged={() => {
+            setCatalogReload((n) => n + 1);
+            setReload((n) => n + 1);
+          }}
+        />
+      )}
       <AppShellSidebarSlot
         className={`relative min-w-0 shrink-0 flex-col md:flex md:w-[var(--computers-sidebar-width)] ${selectedId ? "hidden" : "flex w-full"}`}
         style={
@@ -317,10 +360,37 @@ export default function ComputersPage({
                 <SectionHeader
                   className="mb-3 flex-wrap gap-y-2"
                   label="在这台计算机上的实例"
-                  count={
-                    instances
-                      ? computerInstances(inventory.runtimes, instances).length
-                      : undefined
+                  count={instances ? rows.length : undefined}
+                  action={
+                    workspaceId && controlRoomId && rows.length ? (
+                      <ComputerSelection
+                        rows={rows}
+                        selected={selectedInstances}
+                        onSelect={setSelectedInstances}
+                        onAction={(action) =>
+                          setBatch({
+                            action,
+                            instances: rows.filter((row) =>
+                              selectedInstances?.includes(row.instanceId),
+                            ),
+                          })
+                        }
+                      />
+                    ) : undefined
+                  }
+                />
+                <ComputerSelection
+                  toolbar
+                  rows={rows}
+                  selected={selectedInstances}
+                  onSelect={setSelectedInstances}
+                  onAction={(action) =>
+                    setBatch({
+                      action,
+                      instances: rows.filter((row) =>
+                        selectedInstances?.includes(row.instanceId),
+                      ),
+                    })
                   }
                 />
                 {!instances ? (
@@ -329,34 +399,60 @@ export default function ComputersPage({
                   </p>
                 ) : (
                   <OfficialListRowGroup>
-                    {computerInstances(inventory.runtimes, instances).map(
-                      (instance) => (
-                        <OfficialAvatarListRow
-                          key={instance.instanceId}
-                          avatar={
-                            <AvatarSlot context="list-row" type="agent" />
-                          }
-                          name={instance.name}
-                          subtitle={
-                            inventory.runtimes.find((runtime) =>
-                              runtime.agentBindings.some(
-                                (binding) =>
-                                  binding.agentId === instance.agentId,
-                              ),
-                            )?.displayName
-                          }
-                          onClick={() => onOpenRole(instance.roleId)}
-                        />
-                      ),
-                    )}
+                    {visibleComputerInstances(
+                      rows,
+                      expanded || selectedInstances !== null,
+                    ).map((instance) => (
+                      <ComputerInstanceRow
+                        key={instance.instanceId}
+                        instance={instance}
+                        selectionMode={selectedInstances !== null}
+                        selected={
+                          selectedInstances?.includes(instance.instanceId) ??
+                          false
+                        }
+                        onClick={() =>
+                          selectedInstances === null
+                            ? onOpenRole(instance.roleId)
+                            : setSelectedInstances(
+                                selectedInstances.includes(instance.instanceId)
+                                  ? selectedInstances.filter(
+                                      (id) => id !== instance.instanceId,
+                                    )
+                                  : [...selectedInstances, instance.instanceId],
+                              )
+                        }
+                      />
+                    ))}
                   </OfficialListRowGroup>
                 )}
-                {instances &&
-                  !computerInstances(inventory.runtimes, instances).length && (
-                    <p className="text-callout text-foreground-hint">
-                      暂无绑定到这台计算机的实例
-                    </p>
+                {selectedInstances === null &&
+                  rows.length > COMPUTER_INSTANCE_PREVIEW_COUNT && (
+                    <div className="mt-3">
+                      <ShowMoreToggle
+                        expanded={expanded}
+                        aria-expanded={expanded}
+                        onClick={() => setExpanded((v) => !v)}
+                        collapsedLabel={
+                          <span className="inline-flex items-center gap-1">
+                            <ChevronDown size={14} />
+                            展开全部 {rows.length} 个实例
+                          </span>
+                        }
+                        expandedLabel={
+                          <span className="inline-flex items-center gap-1">
+                            <ChevronUp size={14} />
+                            收起
+                          </span>
+                        }
+                      />
+                    </div>
                   )}
+                {instances && !rows.length && (
+                  <p className="text-callout text-foreground-hint">
+                    暂无绑定到这台计算机的实例
+                  </p>
+                )}
               </section>
             </div>
           ) : (

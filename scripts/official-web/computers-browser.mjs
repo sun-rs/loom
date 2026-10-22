@@ -13,6 +13,41 @@ export async function verifyComputers({ browser, origin }) {
     page.setDefaultTimeout(5000);
     const errors = [];
     let mode = "fresh";
+    // Presentation fixture: nine instances without creating or starting sessions.
+    for (const [endpoint, key] of [
+      ["roles", "instances"],
+      ["agents", "agents"],
+    ]) {
+      await page.route(`**/v3/client/${endpoint}/list`, async (route) => {
+        const response = await route.fetch(),
+          body = await response.json(),
+          original = body[key][0];
+        if (original)
+          body[key] = Array.from({ length: 9 }, (_, i) =>
+            endpoint === "roles"
+              ? {
+                  ...original,
+                  instanceId: `fixture-instance-${i}`,
+                  agentId: `fixture-agent-${i}`,
+                }
+              : {
+                  ...original,
+                  definition: {
+                    ...original.definition,
+                    agentId: `fixture-agent-${i}`,
+                    participantId: `fixture-instance-${i}`,
+                  },
+                  handle: `Fixture-${i}`,
+                  currentRevision: {
+                    ...original.currentRevision,
+                    displayName: `Fixture-${i}`,
+                  },
+                  modelBindingId: "fixture-model",
+                },
+          );
+        await route.fulfill({ response, json: body });
+      });
+    }
     await page.route("**/v1/local/runtimes/list", async (route) => {
       if (mode === "error")
         return route.fulfill({
@@ -22,6 +57,16 @@ export async function verifyComputers({ browser, origin }) {
         });
       const response = await route.fetch();
       const body = await response.json();
+      for (let i = 0; i < body.runtimes.length; i++) {
+        body.runtimes[i].agentBindings =
+          i === 0
+            ? Array.from({ length: 9 }, (_, n) => ({
+                agentId: `fixture-agent-${n}`,
+                participantId: `fixture-instance-${n}`,
+                handle: `Fixture-${n}`,
+              }))
+            : [];
+      }
       body.computer = {
         displayName: "Fixture computer",
         hostname: "fixture-host",
@@ -64,6 +109,43 @@ export async function verifyComputers({ browser, origin }) {
     }
     await row.click();
     await page.getByTestId("computer-detail").waitFor();
+    const list = page.getByTestId("computer-instances"),
+      rows = list.getByTestId("computer-instance-row");
+    await rows.nth(5).waitFor();
+    assert.equal(await rows.count(), 6);
+    assert.match(await rows.first().innerText(), /fixture-model/);
+    await list
+      .getByRole("button", { name: "展开全部 9 个实例", exact: true })
+      .click();
+    assert.equal(await rows.count(), 9);
+    await list.getByRole("button", { name: "收起", exact: true }).click();
+    assert.equal(await rows.count(), 6);
+    await list.getByRole("button", { name: "选择", exact: true }).click();
+    await list.getByRole("button", { name: "全选", exact: true }).click();
+    await list.getByText("已选择 9 个实例", { exact: true }).waitFor();
+    await list.getByRole("button", { name: "停止", exact: true }).click();
+    await page
+      .getByRole("heading", { name: "停止所选实例", exact: true })
+      .waitFor();
+    await page
+      .getByRole("button", { name: "取消", exact: true })
+      .last()
+      .click();
+    await list.getByRole("button", { name: "重启／重置", exact: true }).click();
+    const reset = page.getByRole("dialog");
+    await reset
+      .getByRole("heading", { name: "重启／重置所选实例", exact: true })
+      .waitFor();
+    assert.equal(
+      await reset.getByRole("combobox", { name: "重启配置" }).count(),
+      0,
+    );
+    await reset.getByRole("button", { name: "取消", exact: true }).click();
+    await list.getByRole("button", { name: "取消", exact: true }).click();
+    assert.equal(await list.locator("[data-selected]").count(), 0);
+    await page.screenshot({
+      path: `/tmp/loom-computer-instances-${viewport.width}.png`,
+    });
     const id = new URL(page.url()).searchParams.get("computer");
     assert.ok(id);
     await page.reload();
@@ -85,7 +167,7 @@ export async function verifyComputers({ browser, origin }) {
     );
     const instanceRows = page
       .getByTestId("computer-instances")
-      .getByRole("button");
+      .getByTestId("computer-instance-row");
     await instanceRows.first().waitFor();
     const hit = await instanceRows.first().boundingBox();
     assert.ok(
@@ -137,6 +219,8 @@ export async function verifyComputers({ browser, origin }) {
     results.push({
       viewport,
       selectionReloadBack: "passed",
+      modelAndSixRowDisclosure: "passed",
+      batchSelectionConfirmCancel: "passed",
       horizontalOverflow: false,
       officialRowKeyboardNavigation: "passed",
       monoFactsAndPointerTargets: "passed",

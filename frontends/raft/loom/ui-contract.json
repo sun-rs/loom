@@ -547,6 +547,21 @@
         "RoleBatchDialog.tsx"
       ],
       "guard": "scripts/official-web/role-profile-composition.test.mjs"
+    },
+    {
+      "id": "computer-instance-selection",
+      "owner": "db5e399 MachineDetailPanel MachineAgentList + native ListRow/ShowMoreToggle",
+      "rule": "Computer list shows actual instance runtime/model. Owner-approved preview of six rows expands for selection; cross-role confirmed actions retain individual configuration. Native outline sm selection, success sm enable and selected SurfaceListItem toolbar. Creation remains a separate Role decision. This is a structural port, not untouched upstream.",
+      "sources": [
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/machine/MachineDetailPanel.tsx",
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/ui/ShowMoreToggle.tsx"
+      ],
+      "bindings": [
+        "ComputersPage.tsx",
+        "ComputerSelection.tsx",
+        "RoleBatchDialog.tsx"
+      ],
+      "guard": "scripts/official-web/computers-browser.mjs"
     }
   ],
   "exceptions": [

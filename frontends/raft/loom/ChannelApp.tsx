@@ -1404,6 +1404,7 @@ export default function ChannelApp() {
                   {destination === "computers" && (
                     <ComputersPage
                       client={client}
+                      workspaceId={directory?.workspace.workspaceId}
                       controlRoomId={directory?.workspace.controlRoomId}
                       onOpenRole={(id) =>
                         setParams((previous) => {

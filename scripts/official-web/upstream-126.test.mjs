@@ -37,7 +37,8 @@ test("topbar measures both adjacent slots instead of fixing the trigger width", 
 test("computer instance rows use one native group and sibling separators", () => {
   const s = read("loom/ComputersPage.tsx");
   assert.match(s, /<OfficialListRowGroup>/);
-  assert.match(s, /<OfficialAvatarListRow/);
+  assert.match(s, /<ComputerInstanceRow/);
+  assert.match(read("loom/ComputerInstanceRow.tsx"), /<OfficialAvatarListRow/);
   const port = read("loom/OfficialListRows.tsx");
   assert.match(port, /ListRowGroup as OfficialListRowGroup/);
   assert.match(port, /@loom\/raft-web-source\/AvatarListRow/);
