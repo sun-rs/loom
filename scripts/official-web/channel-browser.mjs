@@ -1,3 +1,4 @@
+import { verifyNavigationOrder } from "./navigation-order-browser.mjs";
 import { verifyPersistentPreferences } from "./persistent-preferences-browser.mjs";
 import { verifyReleaseSource } from "./release-source-browser.mjs";
 import { verifyRoleActivity } from "./role-activity-browser.mjs";
@@ -279,6 +280,10 @@ try {
           instanceNames,
         }),
       ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "navigation-order") {
+    console.log(
+      JSON.stringify(await verifyNavigationOrder({ browser, origin })),
     );
   } else if (process.env.LOOM_BROWSER_SLICE === "persistent-preferences") {
     console.log(

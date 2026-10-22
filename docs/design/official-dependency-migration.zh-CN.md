@@ -301,8 +301,8 @@ Role 行采用 db5e399 `MemberAgentRow` 的原 JSX，计算机行采用 `Sidebar
 | 头像菜单 | 官方复制行后追加 owner 请求的私聊／Fork／Side，使用已有操作 owner | 已验收，见 2026-10-22-message-actions；新增项明确为 Loom 扩展 |
 | 正文更多入口 | 使用官方 toolbar recipe 加省略号，打开同一个已有消息菜单；手机保留长按 | 已验收；不声称锁定源码原本具有第四项 |
 | 频道偏好 | 置顶、静音和 expandedLongMessages 都由既有 sidebar API 持久化；正文复用原生折叠组件 | 已补绑定并定向验收，见 2026-10-22-persistent-preferences |
-| 频道操作 | stop-all、归档已接；SDK 实际存在 room.delete | 纠正此前“未找到公开删除命令”的结论；删除入口／确认与居中规则仍需核对，不需要先假设新增后端 |
-| 导航拖动／折叠 | 公开仓库没有该版实现，但同日官网发布包已有 qTt/JTt/lEt/$Tt 等声明，已锁入 navigation-source.js 和 manifest | 原始代码证据已取得，尚未接入；需绑定排序偏好和共享布局 owner，不再称源码缺失 |
+| 频道操作 | stop-all、归档已接；SDK/Kernel 存在 room.delete，但 room-deletion-service 明确拒绝任何曾有 Role 实例的频道 | 删除入口／确认与居中规则仍需核对；实例频道沿用归档，不绕过后端删除保护 |
+| 导航拖动／折叠 | 排序 HTt–JTt 声明逐字节生成并挂载；官方 6px 指针门槛、键盘与点击保护保留 | 排序采用明确的设备偏好适配；折叠仍需统一 main-slot 包含层，不能直接启用导致正文错位 |
 | 通知 | 浏览器启停／测试已有；Kernel 既有 mutedWorkspace 实际抑制工作区 Web Push；官方复选框／保存表单已提取并绑定 | 已定向验收，设备订阅与工作区静音分开；未知结果精确重放、旧版本拒绝保留草稿 |
 
 以上记录覆盖这些入口，不能推导为整站最新版本完全对齐。先前把 expandedLongMessages、mutedWorkspace 和 room.delete 当成后端缺口的判断不准确；后续以协议、SDK、Kernel 三层检索确认能力，不能只看前端绑定。
@@ -320,3 +320,9 @@ Role 行采用 db5e399 `MemberAgentRow` 的原 JSX，计算机行采用 `Sidebar
 频道内私聊是所属频道的下级会话，区别于顶层独立单聊。复用现有官方 PanelHeader 的手机返回与 CloseButton，返回目标来自持久 instancePrivateBox.channelId，因此刷新／深链后仍有效；桌面 X 和手机返回都回所属频道，不关闭实例或删除私聊。当前采用子页面导航，而非新增一个三列私聊容器；此前的消息发送未知结果仍由原 WriteIntentSlot 保留和核实。
 
 本轮不宣称频道设置所有偏好／删除公开操作、头像右键、消息工具栏更多菜单、导航排序和折叠已一并完成。那些事项仍按上节独立边界跟踪。
+
+### 发布包导航排序接入（2026-10-22）
+
+`generate-sortable-navigation.mjs` 对已锁发布包的七个声明逐一验证 SHA，然后原样写入运行依赖。仅替换导入依赖和数据 owner；`Navigation.tsx` 继续使用原生 RailTabButton，接入排序 props 和点击保护。新中文读屏提示是缺失 locale key 的本地翻译。Raft 账户排序改为本浏览器 `loom:device:rail-order`，不承诺跨设备同步；设置固定底部，手机导航保持既有原生组合。生成结果是原声明复用，不是整页不变。
+
+频道删除审查：`packages/kernel/src/room-deletion-service.ts` 拒绝含 Role 实例的频道；停止实例不解除该保护。`#all` 另有永久频道保护。后续删除 UI 只能准确表达现有范围，不能以 UI 对齐为由扩大数据销毁语义。侧栏折叠的原声明仍为证据，尚未挂载。

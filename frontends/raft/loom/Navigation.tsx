@@ -1,3 +1,7 @@
+import {
+  OfficialSortableNavigation,
+  type SortableRailBinding,
+} from "./OfficialSortableNavigation.generated.js";
 import type { NavigationUnread } from "./navigation-unread.ts";
 import {
   Home,
@@ -46,8 +50,12 @@ export function DesktopNavigation({
   onSelect,
   unread,
 }: NavigationProps) {
-  const item = (entry: (typeof destinations)[number]) => (
+  const item = (
+    entry: (typeof destinations)[number],
+    binding?: SortableRailBinding,
+  ) => (
     <RailTabButton
+      {...binding?.dragProps}
       key={entry.id}
       icon={<entry.icon size={18} />}
       label={entry.label}
@@ -65,16 +73,28 @@ export function DesktopNavigation({
       onDoubleClick={
         entry.id === "activity" ? () => onSelect(entry.id, true) : undefined
       }
-      onClick={() => onSelect(entry.id)}
+      onClick={
+        binding
+          ? binding.guardClick(() => onSelect(entry.id))
+          : () => onSelect(entry.id)
+      }
     />
   );
   return (
     <AppShellRailSlot className="hidden md:flex">
       <AppRailRoot className="pb-2" role="navigation" aria-label="主导航">
         <AppRailNav className="relative w-full">
-          {destinations
-            .filter((entry) => entry.id !== "settings" && entry.id !== "search")
-            .map(item)}
+          <OfficialSortableNavigation
+            tabs={destinations
+              .filter(
+                (entry) => entry.id !== "settings" && entry.id !== "search",
+              )
+              .map((entry) => ({
+                id: entry.id,
+                label: entry.label,
+                render: (binding: SortableRailBinding) => item(entry, binding),
+              }))}
+          />
         </AppRailNav>
         <AppRailFooter>
           {item(destinations.find((entry) => entry.id === "settings")!)}

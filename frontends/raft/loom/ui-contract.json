@@ -474,18 +474,22 @@
     {
       "id": "dependency-navigation-leaves",
       "owner": "Raft db5e399 LeftRail / Sidebar / ChannelMembers exact declarations",
-      "rule": "RailTabButton, SavedNavCount, sidebarItemClass and JointPeerBadge are generated unchanged; imports contain only React, intl and official primitives. Loom owns selected destination, unread counts, saved reads and follower authority. Full official pages and cloud transport are forbidden in emitted runtime chunks. Activity header passes the mobile return accessible name through native PanelHeader.mobileBackProps; no style override.",
+      "rule": "RailTabButton, SavedNavCount, sidebarItemClass and JointPeerBadge are generated unchanged; imports contain only React, intl and official primitives. Loom owns selected destination, unread counts, saved reads and follower authority. Full official pages and cloud transport are forbidden in emitted runtime chunks. Activity header passes the mobile return accessible name through native PanelHeader.mobileBackProps; no style override. Published qTt/JTt sorting bodies are byte-exact generated dependencies; pointer distance 6, keyboard Space/arrows/Escape and click guard retained. Order is an explicitly device-only Loom preference, not Raft account persistence. Sidebar collapse is not yet mounted.",
       "bindings": [
         "Navigation.tsx",
         "SavedNav.tsx",
         "OfficialThreadAgentFollowerRow.generated.tsx",
-        "ActivityHeader.tsx"
+        "ActivityHeader.tsx",
+        "navigation-preferences.ts"
       ],
       "sources": [
         "frontends/raft/loom/OfficialNavigationLeaves.generated.tsx",
         "scripts/official-web/generate-navigation-leaves.mjs",
         "scripts/official-web/navigation-leaves.test.mjs",
-        "scripts/official-web/runtime-boundary.test.ts"
+        "scripts/official-web/runtime-boundary.test.ts",
+        "scripts/official-web/generate-sortable-navigation.mjs",
+        "scripts/official-web/sortable-navigation.test.mjs",
+        "scripts/official-web/navigation-order-browser.mjs"
       ]
     },
     {
@@ -671,7 +675,11 @@
         "frontends/raft/upstream/raft-web-source/packages/web/src/components/message/MessageItem.tsx",
         "frontends/raft/upstream/raft-web-source/packages/web/src/components/message/MessageHoverToolbar.tsx"
       ],
-      "bindings": ["SenderActions.tsx", "OfficialMessageItem.generated.tsx", "OfficialMessageHoverToolbar.generated.tsx"],
+      "bindings": [
+        "SenderActions.tsx",
+        "OfficialMessageItem.generated.tsx",
+        "OfficialMessageHoverToolbar.generated.tsx"
+      ],
       "guard": "scripts/official-web/sender-actions.test.mjs"
     }
   ],
