@@ -3,7 +3,7 @@
   "sha256": "9eab18f8d1a59b45707f1554b97e64b143b4d6abf5707269b7a9d82f7a944a42",
   "retrieved": "2026-10-22",
   "authorization": "Owner-authorized Raft code reuse; see frontend adoption notices",
-  "status": "Sorting declarations HTt through JTt mounted byte-exact through generated dependency imports. Sidebar declarations remain evidence only.",
+  "status": "Sorting and sidebar toggle/focus declarations mounted byte-exact through generated dependency imports.",
   "declarations": [
     {
       "name": "HTt",
@@ -56,13 +56,9 @@
     "lEt": "Sidebar toggle presentation",
     "$Tt": "Focus transfer from hidden sidebar to toggle before changing sidebarHidden"
   },
-  "localDecisionsNeeded": [
-    "Bind account-level order to a Loom preference owner; do not silently substitute another business store",
-    "Wire sidebarHidden to actual shared layout owner and retained focus/shortcut semantics"
-  ],
   "localBindings": {
     "sorting": "Loom device-only rail order; existing RailTabButton receives native sortable props and click guard. Memory replaces upstream-only destinations. Chinese announcement fallback for keys absent from pinned locale.",
     "sourceBodies": "Unmodified; generator checks each declaration SHA before emitting.",
-    "sidebar": "Not mounted: shared main-slot containment and responsive/focus integration still required."
+    "sidebar": "SidebarLayout binds native shell geometry to device preference, active-page IDs, focus transfer and desktop-only collapse. Shortcut labels use local OS detection. Main-slot composition corrected on four master/detail pages."
   }
 }

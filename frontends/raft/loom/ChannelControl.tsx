@@ -214,6 +214,7 @@ export default function ChannelControl({
               {!readOnly && (
                 <>
                   <OverflowActionRow
+                    className="justify-center text-center [&_[data-slot=button-content]]:justify-center"
                     disabled={dirty || state !== "idle"}
                     icon={<CheckSquare size={14} />}
                     label="实例任务权限"
@@ -224,6 +225,7 @@ export default function ChannelControl({
                     }}
                   />
                   <OverflowActionRow
+                    className="justify-center text-center [&_[data-slot=button-content]]:justify-center"
                     disabled={dirty || state !== "idle"}
                     icon={<Brain size={14} />}
                     label="记忆权限"
@@ -235,6 +237,7 @@ export default function ChannelControl({
                   />
                   {readError && <p role="alert">{readError}</p>}
                   <OverflowActionRow
+                    className="justify-center text-center [&_[data-slot=button-content]]:justify-center"
                     disabled={dirty || state !== "idle"}
                     icon={<CircleStop size={14} />}
                     label={

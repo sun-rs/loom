@@ -1,3 +1,4 @@
+import { LoomShellRoot, LoomSidebarSlot } from "./SidebarLayout.tsx";
 import { SenderActionsProvider } from "./SenderActions.tsx";
 import CloseButton from "../packages/web/src/components/ui/CloseButton.tsx";
 import { pageFetch } from "./page-fetch.ts";
@@ -61,8 +62,6 @@ import {
 } from "react";
 import { useIntentRoute, hasRouteBoundIntent } from "./useIntentRoute.ts";
 import {
-  AppShellRoot,
-  AppShellSidebarSlot,
   AppShellMainSlot,
   ConversationPanelRoot,
   ConversationPanelContent,
@@ -1011,7 +1010,8 @@ export default function ChannelApp() {
         client={client}
         workspaceId={directory?.workspace.workspaceId}
       >
-        <AppShellRoot
+        <LoomShellRoot
+          destination={destination}
           inert={bootstrapping ? true : undefined}
           className={`min-h-0 flex-1 flex-col overflow-hidden font-display ${bootstrapping ? "invisible" : ""}`}
           data-testid="loom-channel-app"
@@ -1062,7 +1062,8 @@ export default function ChannelApp() {
                         : "hidden"
                     }
                   >
-                    <AppShellSidebarSlot
+                    <LoomSidebarSlot
+                      page="channels"
                       className={`relative min-w-0 shrink-0 flex-col md:flex md:w-[var(--chat-sidebar-width)] ${mobileList ? "flex w-full" : "hidden"}`}
                       style={
                         {
@@ -1132,122 +1133,129 @@ export default function ChannelApp() {
                           }}
                         />
                       )}
-                    </AppShellSidebarSlot>
-                    <AppShellMainSlot
-                      className={`min-w-0 bg-layer-canvas  md:flex ${mobileList ? "hidden" : "flex"}`}
+                    </LoomSidebarSlot>
+                    <div
+                      className={`relative min-h-0 min-w-0 flex-1 ${mobileList ? "hidden md:flex" : "flex"}`}
                     >
-                      {!savedOpen && !selected && (
-                        <PanelHeader
-                          title="聊天"
-                          onMobileBack={showChatList}
-                          mobileBackProps={{ "aria-label": "聊天列表" }}
-                        />
-                      )}
-                      {privateNotice}
-                      {error ? (
-                        <p role="alert" className="p-6">
-                          {error}
-                        </p>
-                      ) : !directory ? (
-                        <Spinner aria-label="正在连接 Loom" />
-                      ) : savedOpen ? (
-                        <SavedPanel
-                          client={client}
-                          workspaceId={directory.workspace.workspaceId}
-                          onMobileBack={showChatList}
-                          onOpenEntry={(entry) => {
-                            if (hasUnresolvedIntents()) return;
-                            const expected = params.toString(),
-                              ticket = ++activityNavigation.current;
-                            void client
-                              .request("message.context", {
-                                roomId: entry.channelId,
-                                messageId: entry.messageId,
-                              })
-                              .then(async (context) => {
-                                const fresh =
-                                  await loadChannelDirectory(client);
-                                if (ticket !== activityNavigation.current)
-                                  return;
-                                setDirectory(fresh);
-                                setParams((previous) => {
-                                  if (
-                                    previous.toString() !== expected ||
-                                    hasUnresolvedIntents()
-                                  )
-                                    return previous;
-                                  const next = new URLSearchParams({
-                                    room: context.message.roomId,
-                                    message: context.message.messageId,
-                                  });
-                                  if (context.rootMessageId)
-                                    next.set("thread", context.rootMessageId);
-                                  return next;
-                                });
-                              })
-                              .catch(() =>
-                                showToast({
-                                  title: "无法打开原消息",
-                                  type: "error",
-                                }),
-                              );
-                          }}
-                        />
-                      ) : selected && destination === "channels" ? (
-                        <Channel
-                          onRoomChanged={async () =>
-                            setDirectory(await loadChannelDirectory(client))
-                          }
-                          key={`${selected.roomId}:${params.get("message") ?? "latest"}`}
-                          focusId={params.get("message") ?? undefined}
-                          threadRootId={params.get("thread") ?? undefined}
-                          onThread={(id, focusedMessageId) => {
-                            if (hasRouteBoundIntent()) return;
-                            setParams((previous) => {
-                              const next = new URLSearchParams(previous);
-                              next.set("room", selected.roomId);
-                              next.delete("message");
-                              if (id && focusedMessageId)
-                                next.set("message", focusedMessageId);
-                              if (id) next.set("thread", id);
-                              else next.delete("thread");
-                              return next;
-                            });
-                          }}
-                          channel={selected}
-                          standalone={standaloneRooms.includes(selected.roomId)}
-                          controlRoomId={directory.workspace.controlRoomId}
-                          onBack={
-                            selected.instancePrivateBox?.channelId
-                              ? () => {
-                                  const parent =
-                                    selected.instancePrivateBox?.channelId;
-                                  if (parent) setParams({ room: parent });
-                                }
-                              : showChatList
-                          }
-                          bridge={bridge!}
-                          onOpenPrivate={openPrivate}
-                          onAddInstance={
-                            directory.workspace.controlRoomId
-                              ? () => {
-                                  if (!hasUnresolvedIntents())
-                                    setInstanceTarget({
-                                      bridge: bridge!,
-                                      name: selected.name,
+                      <AppShellMainSlot
+                        style={{ zIndex: 1 }}
+                        className={`min-w-0 bg-layer-canvas  md:flex ${mobileList ? "hidden" : "flex"}`}
+                      >
+                        {!savedOpen && !selected && (
+                          <PanelHeader
+                            title="聊天"
+                            onMobileBack={showChatList}
+                            mobileBackProps={{ "aria-label": "聊天列表" }}
+                          />
+                        )}
+                        {privateNotice}
+                        {error ? (
+                          <p role="alert" className="p-6">
+                            {error}
+                          </p>
+                        ) : !directory ? (
+                          <Spinner aria-label="正在连接 Loom" />
+                        ) : savedOpen ? (
+                          <SavedPanel
+                            client={client}
+                            workspaceId={directory.workspace.workspaceId}
+                            onMobileBack={showChatList}
+                            onOpenEntry={(entry) => {
+                              if (hasUnresolvedIntents()) return;
+                              const expected = params.toString(),
+                                ticket = ++activityNavigation.current;
+                              void client
+                                .request("message.context", {
+                                  roomId: entry.channelId,
+                                  messageId: entry.messageId,
+                                })
+                                .then(async (context) => {
+                                  const fresh =
+                                    await loadChannelDirectory(client);
+                                  if (ticket !== activityNavigation.current)
+                                    return;
+                                  setDirectory(fresh);
+                                  setParams((previous) => {
+                                    if (
+                                      previous.toString() !== expected ||
+                                      hasUnresolvedIntents()
+                                    )
+                                      return previous;
+                                    const next = new URLSearchParams({
+                                      room: context.message.roomId,
+                                      message: context.message.messageId,
                                     });
-                                }
-                              : undefined
-                          }
-                        />
-                      ) : (
-                        <p className="p-6">
-                          {requested
-                            ? "此频道不存在或没有访问权限"
-                            : "暂无频道，请从频道列表菜单创建"}
-                        </p>
-                      )}
-                    </AppShellMainSlot>
+                                    if (context.rootMessageId)
+                                      next.set("thread", context.rootMessageId);
+                                    return next;
+                                  });
+                                })
+                                .catch(() =>
+                                  showToast({
+                                    title: "无法打开原消息",
+                                    type: "error",
+                                  }),
+                                );
+                            }}
+                          />
+                        ) : selected && destination === "channels" ? (
+                          <Channel
+                            onRoomChanged={async () =>
+                              setDirectory(await loadChannelDirectory(client))
+                            }
+                            key={`${selected.roomId}:${params.get("message") ?? "latest"}`}
+                            focusId={params.get("message") ?? undefined}
+                            threadRootId={params.get("thread") ?? undefined}
+                            onThread={(id, focusedMessageId) => {
+                              if (hasRouteBoundIntent()) return;
+                              setParams((previous) => {
+                                const next = new URLSearchParams(previous);
+                                next.set("room", selected.roomId);
+                                next.delete("message");
+                                if (id && focusedMessageId)
+                                  next.set("message", focusedMessageId);
+                                if (id) next.set("thread", id);
+                                else next.delete("thread");
+                                return next;
+                              });
+                            }}
+                            channel={selected}
+                            standalone={standaloneRooms.includes(
+                              selected.roomId,
+                            )}
+                            controlRoomId={directory.workspace.controlRoomId}
+                            onBack={
+                              selected.instancePrivateBox?.channelId
+                                ? () => {
+                                    const parent =
+                                      selected.instancePrivateBox?.channelId;
+                                    if (parent) setParams({ room: parent });
+                                  }
+                                : showChatList
+                            }
+                            bridge={bridge!}
+                            onOpenPrivate={openPrivate}
+                            onAddInstance={
+                              directory.workspace.controlRoomId
+                                ? () => {
+                                    if (!hasUnresolvedIntents())
+                                      setInstanceTarget({
+                                        bridge: bridge!,
+                                        name: selected.name,
+                                      });
+                                  }
+                                : undefined
+                            }
+                          />
+                        ) : (
+                          <p className="p-6">
+                            {requested
+                              ? "此频道不存在或没有访问权限"
+                              : "暂无频道，请从频道列表菜单创建"}
+                          </p>
+                        )}
+                      </AppShellMainSlot>
+                    </div>
                   </div>
                   {agentsVisited.current &&
                     directory?.workspace.controlRoomId && (
@@ -1527,7 +1535,7 @@ export default function ChannelApp() {
                 }
               />
             )}
-        </AppShellRoot>
+        </LoomShellRoot>
       </SystemNotificationsProvider>
     </AppearanceRuntimeProvider>,
   );

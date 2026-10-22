@@ -301,8 +301,8 @@ Role 行采用 db5e399 `MemberAgentRow` 的原 JSX，计算机行采用 `Sidebar
 | 头像菜单 | 官方复制行后追加 owner 请求的私聊／Fork／Side，使用已有操作 owner | 已验收，见 2026-10-22-message-actions；新增项明确为 Loom 扩展 |
 | 正文更多入口 | 使用官方 toolbar recipe 加省略号，打开同一个已有消息菜单；手机保留长按 | 已验收；不声称锁定源码原本具有第四项 |
 | 频道偏好 | 置顶、静音和 expandedLongMessages 都由既有 sidebar API 持久化；正文复用原生折叠组件 | 已补绑定并定向验收，见 2026-10-22-persistent-preferences |
-| 频道操作 | stop-all、归档已接；SDK/Kernel 存在 room.delete，但 room-deletion-service 明确拒绝任何曾有 Role 实例的频道 | 删除入口／确认与居中规则仍需核对；实例频道沿用归档，不绕过后端删除保护 |
-| 导航拖动／折叠 | 排序 HTt–JTt 声明逐字节生成并挂载；官方 6px 指针门槛、键盘与点击保护保留 | 排序采用明确的设备偏好适配；折叠仍需统一 main-slot 包含层，不能直接启用导致正文错位 |
+| 频道操作 | stop-all、归档已接；SDK/Kernel 存在 room.delete，但 room-deletion-service 明确拒绝任何曾有 Role 实例的频道 | 已接原生确认框与既有删除接口；实例频道禁用并提示归档，版本冲突保留确认，未知响应精确重放。底部居中为 owner 明确要求的局部适配 |
+| 导航拖动／折叠 | 排序 HTt–JTt 声明逐字节生成并挂载；官方 6px 指针门槛、键盘与点击保护保留 | 排序与折叠已挂载，均为设备偏好；四个 master/detail 页修正原生 main-slot 包含层，手机不继承折叠，保留官方 inert／焦点及快捷键 |
 | 通知 | 浏览器启停／测试已有；Kernel 既有 mutedWorkspace 实际抑制工作区 Web Push；官方复选框／保存表单已提取并绑定 | 已定向验收，设备订阅与工作区静音分开；未知结果精确重放、旧版本拒绝保留草稿 |
 
 以上记录覆盖这些入口，不能推导为整站最新版本完全对齐。先前把 expandedLongMessages、mutedWorkspace 和 room.delete 当成后端缺口的判断不准确；后续以协议、SDK、Kernel 三层检索确认能力，不能只看前端绑定。
@@ -326,3 +326,9 @@ Role 行采用 db5e399 `MemberAgentRow` 的原 JSX，计算机行采用 `Sidebar
 `generate-sortable-navigation.mjs` 对已锁发布包的七个声明逐一验证 SHA，然后原样写入运行依赖。仅替换导入依赖和数据 owner；`Navigation.tsx` 继续使用原生 RailTabButton，接入排序 props 和点击保护。新中文读屏提示是缺失 locale key 的本地翻译。Raft 账户排序改为本浏览器 `loom:device:rail-order`，不承诺跨设备同步；设置固定底部，手机导航保持既有原生组合。生成结果是原声明复用，不是整页不变。
 
 频道删除审查：`packages/kernel/src/room-deletion-service.ts` 拒绝含 Role 实例的频道；停止实例不解除该保护。`#all` 另有永久频道保护。后续删除 UI 只能准确表达现有范围，不能以 UI 对齐为由扩大数据销毁语义。侧栏折叠的原声明仍为证据，尚未挂载。
+
+### 侧栏折叠与频道删除接线（2026-10-22）
+
+发布包 ZTt/QTt/$Tt/lEt 的声明由生成器逐 SHA 校验后原样复用；别名只连接已安装 raft-ui、官方 Tooltip、Lucide 和设备偏好。官方 AppShellRoot 负责宽度观察与位移。Channel/Computer/Settings 的正文增加官方所用 relative remaining-space 容器；Agent 页最外层只是页面组合容器，移除错误的 MainSlot 嵌套。仅桌面四个带侧栏大页启用折叠；隐藏侧栏 inert，快捷键关闭时焦点回 toggle，手机恢复正常列表。上述为 Loom 页面组合适配，未声称完整官方页面逐字节复用。
+
+频道删除复用原生 ConfirmDialog，开启确认时重新读取频道 seq；确认后新事实仍会触发 stale_context，绝不自动更新版本重发。未知响应通过既有 WriteIntentSlot 精确重放。role.list 仅用于界面预判（保留历史实例），最终由 Kernel 裁定；#all 隐藏删除入口，含实例频道禁用并提示归档。删除后刷新目录返回聊天列表，失败不假装刷新成功。没有新增或放宽后端销毁能力。频道底部居中依据 owner 的明确要求，是对固定源 OverflowActionRow 左对齐的已登记例外。

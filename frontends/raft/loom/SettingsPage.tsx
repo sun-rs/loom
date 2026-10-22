@@ -1,3 +1,4 @@
+import { LoomSidebarSlot } from "./SidebarLayout.tsx";
 import {
   OfficialSettingsFrame,
   OfficialSettingsBody,
@@ -13,12 +14,7 @@ import SystemSettings from "./SystemSettings.tsx";
 import { LoomAboutSection } from "./OfficialSettingsSections.generated.tsx";
 import { AppearanceSection } from "./OfficialAppearance.generated";
 import { useEffect, useState, type CSSProperties } from "react";
-import {
-  AppShellMainSlot,
-  AppShellSidebarSlot,
-  Panel,
-  SidebarItemIcon,
-} from "raft-ui";
+import { AppShellMainSlot, Panel, SidebarItemIcon } from "raft-ui";
 import {
   ChartNoAxesCombined,
   User,
@@ -121,7 +117,8 @@ export default function SettingsPage({
       className="flex min-h-0 min-w-0 flex-1"
       data-testid="loom-settings-page"
     >
-      <AppShellSidebarSlot
+      <LoomSidebarSlot
+        page="settings"
         data-testid="loom-settings-sidebar"
         className={`relative min-w-0 shrink-0 flex-col md:flex md:w-[var(--settings-sidebar-width)] ${tab ? "hidden" : "flex w-full"}`}
         style={
@@ -148,74 +145,79 @@ export default function SettingsPage({
           onPointerUp={panel.handleResizeEnd}
           onPointerCancel={panel.handleResizeEnd}
         />
-      </AppShellSidebarSlot>
-      <AppShellMainSlot
-        data-testid="loom-settings-detail"
-        className={`min-w-0 md:flex ${tab ? "flex" : "hidden"}`}
+      </LoomSidebarSlot>
+      <div
+        className={`relative min-h-0 min-w-0 flex-1 ${tab ? "flex" : "hidden md:flex"}`}
       >
-        <OfficialSettingsFrame>
-          <PanelHeader
-            title={selected?.label ?? "设置不存在"}
-            onMobileBack={() => onTab(null)}
-            mobileBackProps={{ "aria-label": "设置列表" }}
-          />
-          <OfficialSettingsBody>
-            <div
-              className={
-                selectedId === "administration" ? "space-y-6" : "hidden"
-              }
-            >
-              {selectedId === "administration" && (
-                <SystemSettings
+        <AppShellMainSlot
+          style={{ zIndex: 1 }}
+          data-testid="loom-settings-detail"
+          className={`min-w-0 md:flex ${tab ? "flex" : "hidden"}`}
+        >
+          <OfficialSettingsFrame>
+            <PanelHeader
+              title={selected?.label ?? "设置不存在"}
+              onMobileBack={() => onTab(null)}
+              mobileBackProps={{ "aria-label": "设置列表" }}
+            />
+            <OfficialSettingsBody>
+              <div
+                className={
+                  selectedId === "administration" ? "space-y-6" : "hidden"
+                }
+              >
+                {selectedId === "administration" && (
+                  <SystemSettings
+                    client={client}
+                    workspaceId={workspaceId}
+                    controlRoomId={controlRoomId}
+                  />
+                )}
+                <RuntimeSettings
+                  client={client}
+                  workspaceId={workspaceId}
+                  controlRoomId={controlRoomId}
+                  active={
+                    selectedId === "administration" && (desktop || tab !== null)
+                  }
+                  embedded
+                />
+              </div>
+              {selectedId === "notifications" ? (
+                <NotificationSettings
                   client={client}
                   workspaceId={workspaceId}
                   controlRoomId={controlRoomId}
                 />
+              ) : selectedId === "release-notes" ? (
+                <LoomReleaseNotes releases={loomReleaseNotes} />
+              ) : selectedId === "usage" ? (
+                <UsageSummary
+                  client={client}
+                  workspaceId={workspaceId}
+                  controlRoomId={controlRoomId}
+                />
+              ) : selectedId === "appearance" ? (
+                <AppearanceSection />
+              ) : selectedId === "about" ? (
+                <LoomAboutSection appVersion={WEB_BUILD_IDENTITY.version} />
+              ) : selectedId === "account" ? (
+                <AccountSettings
+                  client={client}
+                  workspaceId={workspaceId}
+                  controlRoomId={controlRoomId}
+                />
+              ) : selectedId === "language-region" ? (
+                <LanguageRegionSettings />
+              ) : selectedId === "administration" ? null : (
+                <p className="text-sm text-foreground-muted">
+                  {selected ? "此设置尚未接入。" : "请从设置列表选择一个项目。"}
+                </p>
               )}
-              <RuntimeSettings
-                client={client}
-                workspaceId={workspaceId}
-                controlRoomId={controlRoomId}
-                active={
-                  selectedId === "administration" && (desktop || tab !== null)
-                }
-                embedded
-              />
-            </div>
-            {selectedId === "notifications" ? (
-              <NotificationSettings
-                client={client}
-                workspaceId={workspaceId}
-                controlRoomId={controlRoomId}
-              />
-            ) : selectedId === "release-notes" ? (
-              <LoomReleaseNotes releases={loomReleaseNotes} />
-            ) : selectedId === "usage" ? (
-              <UsageSummary
-                client={client}
-                workspaceId={workspaceId}
-                controlRoomId={controlRoomId}
-              />
-            ) : selectedId === "appearance" ? (
-              <AppearanceSection />
-            ) : selectedId === "about" ? (
-              <LoomAboutSection appVersion={WEB_BUILD_IDENTITY.version} />
-            ) : selectedId === "account" ? (
-              <AccountSettings
-                client={client}
-                workspaceId={workspaceId}
-                controlRoomId={controlRoomId}
-              />
-            ) : selectedId === "language-region" ? (
-              <LanguageRegionSettings />
-            ) : selectedId === "administration" ? null : (
-              <p className="text-sm text-foreground-muted">
-                {selected ? "此设置尚未接入。" : "请从设置列表选择一个项目。"}
-              </p>
-            )}
-          </OfficialSettingsBody>
-        </OfficialSettingsFrame>
-      </AppShellMainSlot>
+            </OfficialSettingsBody>
+          </OfficialSettingsFrame>
+        </AppShellMainSlot>
+      </div>
     </div>
   );
 }

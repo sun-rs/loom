@@ -40,6 +40,8 @@ export const useNavigationPreferences = create<{
 import { useIntl } from "react-intl";
 // Chinese labels for newly published keys absent from the pinned Git locale.
 const navigationMessages: Record<string, string> = {
+  "layout.leftRail.expandSidebar": "展开侧栏",
+  "layout.leftRail.collapseSidebar": "折叠侧栏",
   "layout.leftRail.dragInstructions":
     "按空格键拿起标签，方向键移动，空格键放下，Escape 取消。按 Enter 打开。",
   "layout.leftRail.dragPickedUp": "已拿起{name}。",

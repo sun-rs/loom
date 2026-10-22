@@ -1,3 +1,5 @@
+import { verifyChannelDelete } from "./channel-delete-browser.mjs";
+import { verifySidebarCollapse } from "./sidebar-collapse-browser.mjs";
 import { verifyNavigationOrder } from "./navigation-order-browser.mjs";
 import { verifyPersistentPreferences } from "./persistent-preferences-browser.mjs";
 import { verifyReleaseSource } from "./release-source-browser.mjs";
@@ -280,6 +282,23 @@ try {
           instanceNames,
         }),
       ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "channel-delete") {
+    console.log(
+      JSON.stringify(
+        await verifyChannelDelete({
+          browser,
+          origin,
+          client,
+          workspace,
+          head,
+          channels,
+        }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "sidebar-collapse") {
+    console.log(
+      JSON.stringify(await verifySidebarCollapse({ browser, origin })),
     );
   } else if (process.env.LOOM_BROWSER_SLICE === "navigation-order") {
     console.log(

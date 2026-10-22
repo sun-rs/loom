@@ -1,3 +1,4 @@
+import { OfficialSidebarToggle } from "./OfficialSidebarToggle.generated.js";
 import {
   OfficialSortableNavigation,
   type SortableRailBinding,
@@ -97,6 +98,7 @@ export function DesktopNavigation({
           />
         </AppRailNav>
         <AppRailFooter>
+          <OfficialSidebarToggle />
           {item(destinations.find((entry) => entry.id === "settings")!)}
         </AppRailFooter>
       </AppRailRoot>

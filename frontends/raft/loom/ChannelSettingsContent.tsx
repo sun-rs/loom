@@ -1,3 +1,4 @@
+import { ChannelDeleteAction } from "./ChannelDeleteAction.tsx";
 // Structural port: Raft v1.21.22 Rxt form, dk FormSection, B7 action and drawer footer.
 // Kernel metadata and SDK sidebar preferences remain the only business owners.
 import { useEffect, useState, type ReactNode } from "react";
@@ -364,7 +365,7 @@ export default function ChannelSettingsContent({
                 <Button
                   size="sm"
                   variant="outline"
-                  className="w-full justify-start text-left [&_[data-slot=button-content]]:w-full [&_[data-slot=button-content]]:justify-start"
+                  className="w-full"
                   disabled={busy || dirty}
                   onClick={() =>
                     base.room.archivedAt
@@ -379,6 +380,14 @@ export default function ChannelSettingsContent({
                   )}
                   <span>{base.room.archivedAt ? "恢复频道" : "归档频道"}</span>
                 </Button>
+              )}
+              {base && (
+                <ChannelDeleteAction
+                  room={base.room}
+                  manager={manager}
+                  disabled={busy || dirty}
+                  onChanged={onChanged}
+                />
               )}
             </div>
           </FormSection>

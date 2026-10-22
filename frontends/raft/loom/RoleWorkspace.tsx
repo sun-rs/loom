@@ -1,3 +1,4 @@
+import { LoomSidebarSlot } from "./SidebarLayout.tsx";
 import { OfficialRoleTabs } from "./OfficialIdentityFrames.generated";
 import { OfficialRoleRow } from "./OfficialIdentityRows.generated";
 import RolePresence from "./RolePresence.tsx";
@@ -7,7 +8,6 @@ import type { rolePresence } from "./role-presence.ts";
 import { useState, type ReactNode, type CSSProperties } from "react";
 import {
   AppShellMainSlot,
-  AppShellSidebarSlot,
   SidebarSectionHeader,
   SidebarSectionDisclosure,
   SidebarSectionCount,
@@ -86,7 +86,8 @@ export default function RoleWorkspace({
       className="relative flex min-h-0 min-w-0 flex-1"
       data-testid="loom-role-layout"
     >
-      <AppShellSidebarSlot
+      <LoomSidebarSlot
+        page="agents"
         className={`relative shrink-0 flex-col md:flex md:w-[var(--agent-sidebar-width)] ${detail ? "hidden" : "flex w-full"}`}
         style={{ "--agent-sidebar-width": `${panel.width}px` } as CSSProperties}
       >
@@ -188,11 +189,12 @@ export default function RoleWorkspace({
           onPointerUp={panel.handleResizeEnd}
           onPointerCancel={panel.handleResizeEnd}
         />
-      </AppShellSidebarSlot>
+      </LoomSidebarSlot>
       <div
         className={`thread-layout-container relative min-h-0 min-w-0 flex-1 ${detail ? "flex" : "hidden md:flex"}`}
       >
         <AppShellMainSlot
+          style={{ zIndex: 1 }}
           className={`thread-main-column min-w-0 bg-layer-panel md:flex ${detail ? "flex" : "hidden"}`}
           data-testid="loom-role-detail"
         >

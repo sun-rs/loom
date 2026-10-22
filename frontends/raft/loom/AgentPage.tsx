@@ -28,7 +28,7 @@ import {
   useRef,
   type ReactNode,
 } from "react";
-import { Button, Spinner, AppShellMainSlot, Separator } from "raft-ui";
+import { Button, Spinner, Separator } from "raft-ui";
 import RoleWorkspace, { type RoleEntry } from "./RoleWorkspace.tsx";
 import type { RahClient } from "@rah-os/client-sdk";
 import type { RoleTemplate } from "@rah-os/protocol";
@@ -271,8 +271,12 @@ export default function AgentPage({
     );
   }
   return (
-    <AppShellMainSlot
-      className={active ? "bg-layer-canvas " : "hidden"}
+    <div
+      className={
+        active
+          ? "relative flex min-h-0 min-w-0 flex-1 flex-col bg-layer-canvas"
+          : "hidden"
+      }
       data-testid="loom-agent-page"
     >
       {notice}
@@ -727,6 +731,6 @@ export default function AgentPage({
           }}
         />
       )}
-    </AppShellMainSlot>
+    </div>
   );
 }

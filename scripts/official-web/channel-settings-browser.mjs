@@ -33,6 +33,16 @@ export async function verifyChannelSettings({
       true,
       "members must occupy native drawer content, not popup sibling",
     );
+    // The member portal and the root hiding effect commit separately. Wait for
+    // the required geometry, rather than accepting a transient half-height frame.
+    await page.waitForFunction(
+      (height) => {
+        const el = document.querySelector('[data-testid="member-page"]');
+        return el && el.getBoundingClientRect().height > height * 0.9;
+      },
+      viewport.height,
+      { timeout: 5000 },
+    );
     assert.ok(
       (await memberPage.boundingBox()).height > viewport.height * 0.9,
       "member page fills drawer height",
