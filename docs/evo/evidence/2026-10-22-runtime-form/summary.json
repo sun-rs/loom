@@ -1,0 +1,54 @@
+{
+  "productCommit": "9650c88d",
+  "scope": "Official runtime field renderer and frozen Role launch environment",
+  "source": "../../runtime-form-reuse.zh-CN.md",
+  "checks": {
+    "backendFocusedTests": 12,
+    "uiContractTests": 8,
+    "sourceReuseTests": 2,
+    "rootTypecheck": "passed",
+    "frontendTypecheck": "passed",
+    "productionBuild": "passed",
+    "isolatedBrowserWidths": [1440, 390],
+    "environmentSavedInBrowser": true,
+    "nodeChildReceivesFrozenEnvironment": true
+  },
+  "deployment": {
+    "verified": true,
+    "businessTablesUnchanged": 20,
+    "databasesBackedUp": 2,
+    "filesBackedUp": 325,
+    "pushStateUnchanged": true,
+    "schema": 90
+  },
+  "formalBrowser": [
+    {
+      "width": 1440,
+      "sharedCreationForm": true,
+      "defaultNoInstance": true,
+      "boundedRows": true,
+      "runtimeAndModel": true,
+      "selectAndResetConfirmation": true,
+      "noMutations": true,
+      "noErrors": true,
+      "noOverflow": true
+    },
+    {
+      "width": 390,
+      "sharedCreationForm": true,
+      "defaultNoInstance": true,
+      "boundedRows": true,
+      "runtimeAndModel": true,
+      "selectAndResetConfirmation": true,
+      "noMutations": true,
+      "noErrors": true,
+      "noOverflow": true
+    }
+  ],
+  "limits": [
+    "No paid or real-provider launch test",
+    "Fast service-tier support remains unfinished and is not exposed",
+    "Official functions are exact reuse; remaining component dependencies retain documented compatibility ports",
+    "No physical iOS or Android device test"
+  ]
+}
