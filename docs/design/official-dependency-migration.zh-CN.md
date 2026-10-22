@@ -332,3 +332,5 @@ Role 行采用 db5e399 `MemberAgentRow` 的原 JSX，计算机行采用 `Sidebar
 发布包 ZTt/QTt/$Tt/lEt 的声明由生成器逐 SHA 校验后原样复用；别名只连接已安装 raft-ui、官方 Tooltip、Lucide 和设备偏好。官方 AppShellRoot 负责宽度观察与位移。Channel/Computer/Settings 的正文增加官方所用 relative remaining-space 容器；Agent 页最外层只是页面组合容器，移除错误的 MainSlot 嵌套。仅桌面四个带侧栏大页启用折叠；隐藏侧栏 inert，快捷键关闭时焦点回 toggle，手机恢复正常列表。上述为 Loom 页面组合适配，未声称完整官方页面逐字节复用。
 
 频道删除复用原生 ConfirmDialog，开启确认时重新读取频道 seq；确认后新事实仍会触发 stale_context，绝不自动更新版本重发。未知响应通过既有 WriteIntentSlot 精确重放。role.list 仅用于界面预判（保留历史实例），最终由 Kernel 裁定；#all 隐藏删除入口，含实例频道禁用并提示归档。删除后刷新目录返回聊天列表，失败不假装刷新成功。没有新增或放宽后端销毁能力。频道底部居中依据 owner 的明确要求，是对固定源 OverflowActionRow 左对齐的已登记例外。
+
+本批正式截图曾发现 Agent thread-layout-container 在位移层外裁切正文；已将包含层移入 native MainSlot 内，并以 elementFromPoint 命中检查＋重新部署截图复验，不能仅凭 bounding box 宣称可见。扩展 role-activity 测试在模型 combobox 查找处超时，改动前 2619cdc1 的固定产物也复现；保留未通过记录，未归因于本轮、也未宣称该测试通过。详见 2026-10-22-shell-closeout 证据。
