@@ -6,6 +6,7 @@ import {useLoomReactions} from "./MessageReactions";
 import {useLoomTaskActions,LoomTaskMenu} from "./ChannelTasks";
 
 import {useLoomModelLabel} from "./AppearanceRuntime";
+import {SenderActionItems} from "./SenderActions";
 import {useLoomMessageState} from "./AppearanceRuntime";
 import {MessageInstanceStatusDot,useMessageInstanceState} from "./MessageProfile";
 import Tooltip from "../packages/web/src/components/ui/Tooltip";
@@ -2199,11 +2200,13 @@ const ConnectedMessageItem = memo(function ConnectedMessageItem({ message, menti
       return;
     }
     e.preventDefault();
+    const keyboardAnchor = e.type === "click" && e.detail === 0 ? e.currentTarget.getBoundingClientRect() : null;
+    const x = keyboardAnchor?.right ?? e.clientX, y = keyboardAnchor?.bottom ?? e.clientY;
     setCtxMenu({
-      anchorX: e.clientX,
-      anchorY: e.clientY,
-      x: e.clientX,
-      y: e.clientY,
+      anchorX: x,
+      anchorY: y,
+      x,
+      y,
       source: "pointer",
     });
     setReactionPicker(null);
@@ -2970,7 +2973,7 @@ const ConnectedMessageItem = memo(function ConnectedMessageItem({ message, menti
         onReplyInThread={handleReplyInThread}
         onReactionClick={handleReactionClick}
         onToggleSave={handleToggleSave}
-      /> : (onOpenThread && !hideThreadActions) || canReact || loomReactions?.canSave ? <MessageHoverToolbar isSaved={!!loomReactions?.saved} loomHideSave={!loomReactions?.canSave} reactionActive={!!reactionPicker} hideThreadActions={!onOpenThread || hideThreadActions} isSystem={isSystem} canReact={canReact} onReplyInThread={handleReplyInThread} onReactionClick={handleReactionClick} onToggleSave={(event) => {event.stopPropagation(); loomReactions?.toggleSave();}} /> : null}
+      /> : (onOpenThread && !hideThreadActions) || canReact || loomReactions?.canSave ? <MessageHoverToolbar onMoreMenu={handleContextMenu} menuActive={!!ctxMenu} isSaved={!!loomReactions?.saved} loomHideSave={!loomReactions?.canSave} reactionActive={!!reactionPicker} hideThreadActions={!onOpenThread || hideThreadActions} isSystem={isSystem} canReact={canReact} onReplyInThread={handleReplyInThread} onReactionClick={handleReactionClick} onToggleSave={(event) => {event.stopPropagation(); loomReactions?.toggleSave();}} /> : null}
       {showSelectedGroupedHeader ? (
         <MessageItemGutter>
           {/* flex + items-start: the slot is otherwise a block box whose lone
@@ -3838,6 +3841,7 @@ const ConnectedMessageItem = memo(function ConnectedMessageItem({ message, menti
               {formatMessage({ id: "message.messageItem.copyHandle" })}
             </MenuItem>
           ) : null}
+          {isAgent && <SenderActionItems id={message.senderId} close={closeSenderCtxMenu} />}
         </ContextMenuPopup>
       </>,
       document.body

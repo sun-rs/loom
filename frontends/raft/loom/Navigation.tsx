@@ -140,19 +140,9 @@ export function DestinationPlaceholder({ active }: { active: string }) {
       <div className="p-6">
         <p>
           {destination
-            ? "页面骨架已就位，内容尚未接入。"
+            ? "此页面暂不可用，请从主导航选择。"
             : "这个页面地址无效，请从主导航选择。"}
         </p>
-        {destination && (
-          <a
-            className="mt-4 inline-block underline"
-            href="/_rah/console/"
-            target="_blank"
-            rel="noreferrer"
-          >
-            打开临时控制台
-          </a>
-        )}
       </div>
     </AppShellMainSlot>
   );

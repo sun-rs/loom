@@ -91,6 +91,7 @@ export function useInstanceBranches(
     }
   };
   return {
+    begin,
     refreshSides,
     busy: state !== "idle",
     items: source

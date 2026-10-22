@@ -662,6 +662,17 @@
         "message-profile-navigation.ts"
       ],
       "guard": "scripts/official-web/channel-preferences-source.test.mjs"
+    },
+    {
+      "id": "message-action-entry-extensions",
+      "owner": "Official MessageItem sender menu, MessageHoverToolbar and native MenuItem/toolbar recipes; Loom lifecycle bindings",
+      "rule": "Owner-requested additions: sender private/Fork/Side entries and toolbar ellipsis. These are local extensions of db5e399 composition, not claims that locked upstream contains those entries. Preserve original copy rows, pointer/coarse behavior and existing context-menu state. Branch dialogs survive menu close and reuse the existing BranchClient intent owner.",
+      "sources": [
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/message/MessageItem.tsx",
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/message/MessageHoverToolbar.tsx"
+      ],
+      "bindings": ["SenderActions.tsx", "OfficialMessageItem.generated.tsx", "OfficialMessageHoverToolbar.generated.tsx"],
+      "guard": "scripts/official-web/sender-actions.test.mjs"
     }
   ],
   "exceptions": [

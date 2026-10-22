@@ -63,6 +63,26 @@ export async function verifyReactions({
 
       if (width === 1440) {
         await row.hover();
+        const more = row.getByRole("button", {
+          name: "更多消息操作",
+          exact: true,
+        });
+        await more.click();
+        const menu = page.getByRole("menu", { name: "消息菜单", exact: true });
+        await menu.waitFor();
+        await page.keyboard.press("Escape");
+        await menu.waitFor({ state: "hidden" });
+        await more.focus();
+        await more.press("Enter");
+        await menu.waitFor();
+        const bounds = await menu.boundingBox();
+        assert.ok(
+          bounds.x > 0 && bounds.y > 0,
+          "keyboard menu is anchored to toolbar",
+        );
+        await page.keyboard.press("Escape");
+        await menu.waitFor({ state: "hidden" });
+        assert.ok(await more.evaluate((el) => document.activeElement === el));
         const icon = row.locator('[data-message-affordance="reaction"] svg');
         assert.equal(await icon.getAttribute("width"), "18");
         assert.equal(await icon.getAttribute("height"), "18");

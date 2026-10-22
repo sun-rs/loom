@@ -48,6 +48,34 @@ export function adaptThreadFollowerRow(source: string) {
 }
 
 export function adaptReactionToolbar(source: string) {
+  source = replaceOnce(
+    source,
+    "import { Bookmark, SmilePlus }",
+    "import { Bookmark, SmilePlus, Ellipsis }",
+  );
+  source = replaceOnce(
+    source,
+    "  isSaved: boolean;",
+    "  onMoreMenu?: (event: MouseEvent<HTMLButtonElement>) => void;\n  menuActive?: boolean;\n  isSaved: boolean;",
+  );
+  source = replaceOnce(
+    source,
+    "  isSaved,\n",
+    "  onMoreMenu,\n  menuActive,\n  isSaved,\n",
+  );
+  source = replaceOnce(
+    source,
+    "    </MessageItemToolbar>",
+    `      {onMoreMenu && <MessageItemToolbarButton
+        onClick={(event) => { event.stopPropagation(); onMoreMenu(event); }}
+        aria-label="更多消息操作"
+        aria-haspopup="menu"
+        aria-expanded={!!menuActive}
+        data-popup-open={menuActive ? "" : undefined}
+        data-message-affordance="more"
+      ><Ellipsis size={18} /></MessageItemToolbarButton>}
+    </MessageItemToolbar>`,
+  );
   let code = replaceOnce(
     source,
     "  isSaved: boolean;",

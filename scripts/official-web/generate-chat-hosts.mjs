@@ -31,6 +31,7 @@ function imports(s, name) {
   const aliases = {
     "loom-attachment-comments": "./useAttachmentComments",
     "loom-message-profile": "./MessageProfile",
+    "loom-sender-actions": "./SenderActions",
     "loom-appearance": "./AppearanceRuntime",
     "loom-channel-tasks": "./ChannelTasks",
     "loom-reactions": "./MessageReactions",
@@ -95,6 +96,23 @@ function composer(s) {
 }
 function message(s) {
   s = adaptMessageStatus(adaptMessageProfileNavigation(s));
+  const senderHandleStart = s.indexOf("          {senderHandleText ? (");
+  const senderHandleEnd =
+    s.indexOf("          ) : null}", senderHandleStart) +
+    "          ) : null}".length;
+  if (senderHandleStart < 0 || senderHandleEnd < senderHandleStart)
+    throw Error("Sender menu slot changed");
+  s =
+    'import {SenderActionItems} from "loom-sender-actions";\n' +
+    s.slice(0, senderHandleEnd) +
+    "\n          {isAgent && <SenderActionItems id={message.senderId} close={closeSenderCtxMenu} />}" +
+    s.slice(senderHandleEnd);
+  // Keyboard activation of the added toolbar entry anchors to that control.
+  s = replace(
+    s,
+    "    setCtxMenu({\n      anchorX: e.clientX,\n      anchorY: e.clientY,\n      x: e.clientX,\n      y: e.clientY,",
+    '    const keyboardAnchor = e.type === "click" && e.detail === 0 ? e.currentTarget.getBoundingClientRect() : null;\n    const x = keyboardAnchor?.right ?? e.clientX, y = keyboardAnchor?.bottom ?? e.clientY;\n    setCtxMenu({\n      anchorX: x,\n      anchorY: y,\n      x,\n      y,',
+  );
   s = adaptMessageModelLabel(s);
   s = adaptReactions(adaptTaskMessage(adaptThreadItem(s)));
   // Preserve adopted accessible timestamp semantics while retaining native typography.

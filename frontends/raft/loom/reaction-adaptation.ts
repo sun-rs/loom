@@ -42,7 +42,7 @@ export function adaptReactions(source: string) {
   code = replace(
     code,
     "onOpenThread && !hideThreadActions ? <LoomThreadToolbar onReplyInThread={handleReplyInThread} /> : null",
-    "(onOpenThread && !hideThreadActions) || canReact || loomReactions?.canSave ? <MessageHoverToolbar isSaved={!!loomReactions?.saved} loomHideSave={!loomReactions?.canSave} reactionActive={!!reactionPicker} hideThreadActions={!onOpenThread || hideThreadActions} isSystem={isSystem} canReact={canReact} onReplyInThread={handleReplyInThread} onReactionClick={handleReactionClick} onToggleSave={(event) => {event.stopPropagation(); loomReactions?.toggleSave();}} /> : null",
+    "(onOpenThread && !hideThreadActions) || canReact || loomReactions?.canSave ? <MessageHoverToolbar onMoreMenu={handleContextMenu} menuActive={!!ctxMenu} isSaved={!!loomReactions?.saved} loomHideSave={!loomReactions?.canSave} reactionActive={!!reactionPicker} hideThreadActions={!onOpenThread || hideThreadActions} isSystem={isSystem} canReact={canReact} onReplyInThread={handleReplyInThread} onReactionClick={handleReactionClick} onToggleSave={(event) => {event.stopPropagation(); loomReactions?.toggleSave();}} /> : null",
   );
   code = replace(
     code,

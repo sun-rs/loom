@@ -2,7 +2,7 @@
 import { MessageItemToolbar, MessageItemToolbarButton, ThreadIcon } from "raft-ui";
 import type { MouseEvent } from "react";
 import { useIntl } from "react-intl";
-import { Bookmark, SmilePlus } from "lucide-react";
+import { Bookmark, SmilePlus, Ellipsis } from "lucide-react";
 import { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives";
 
 /**
@@ -19,6 +19,8 @@ import { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives";
  */
 export interface MessageHoverToolbarProps {
   /** Whether the message is currently saved/bookmarked. */
+  onMoreMenu?: (event: MouseEvent<HTMLButtonElement>) => void;
+  menuActive?: boolean;
   isSaved: boolean;
   loomHideSave?: boolean;
   /** Whether the reaction picker is open (keeps the reaction button lit). */
@@ -35,6 +37,8 @@ export interface MessageHoverToolbarProps {
 }
 
 export function MessageHoverToolbar({
+  onMoreMenu,
+  menuActive,
   isSaved,
   loomHideSave,
   reactionActive,
@@ -87,6 +91,14 @@ export function MessageHoverToolbar({
       >
         <Bookmark size={18} fill={isSaved ? "currentColor" : "none"} />
       </MessageItemToolbarButton>}
+      {onMoreMenu && <MessageItemToolbarButton
+        onClick={(event) => { event.stopPropagation(); onMoreMenu(event); }}
+        aria-label="更多消息操作"
+        aria-haspopup="menu"
+        aria-expanded={!!menuActive}
+        data-popup-open={menuActive ? "" : undefined}
+        data-message-affordance="more"
+      ><Ellipsis size={18} /></MessageItemToolbarButton>}
     </MessageItemToolbar>
   );
 }

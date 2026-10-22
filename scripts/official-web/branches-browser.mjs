@@ -55,6 +55,11 @@ for (const width of [1440, 390]) {
       runAttemptId: run.run.runAttemptId,
       runtimeRunId: run.runtime.runtimeRunId,
     });
+    f.kernel.postWorkerMessage(run.execution, {
+      body: "FIXTURE sender action entry",
+      basedOnRoomSeq: run.scope.toSeq,
+      idempotencyKey: "sender-action-message",
+    });
     run.finish(0);
     service = new ClientApplicationService({
       human: createHumanApplicationPort(f.kernel),
@@ -121,15 +126,33 @@ for (const width of [1440, 390]) {
     page.setDefaultTimeout(12000);
     const openMenu = async () => {
       await page.getByTestId("loom-channel-control-trigger").click();
+      await page.getByTestId("channel-overflow-members-entry").click();
       await page
-        .getByTestId("loom-channel-members")
+        .getByTestId("member-page")
         .getByRole("button", { name: /^Reviewer-1/ })
         .click();
       await page.getByTestId("profile-panel").waitFor();
       await page.getByRole("button", { name: "更多操作 Reviewer-1" }).click();
     };
     await page.goto(gateway.origin + "/?room=" + f.home.roomId);
-    await openMenu();
+    const avatar = page
+      .getByTestId("loom-message-timeline")
+      .locator('[data-avatar-kind="agent"]')
+      .first();
+    await avatar.click({ button: "right" });
+    await page
+      .getByRole("menuitem", { name: "频道内私聊", exact: true })
+      .click();
+    await page
+      .getByRole("button", { name: "关闭频道内私聊", exact: true })
+      .waitFor();
+    await page
+      .getByRole("button", {
+        name: width === 390 ? "返回频道" : "关闭频道内私聊",
+        exact: true,
+      })
+      .click();
+    await avatar.click({ button: "right" });
     await page
       .getByRole("menuitem", { name: "Fork · 分叉为新成员", exact: true })
       .click();
@@ -146,8 +169,8 @@ for (const width of [1440, 390]) {
         .length,
       2,
     );
-    // Existing inspector remains; create Side and drop successful response to test exact verification.
-    await page.getByRole("button", { name: "更多操作 Reviewer-1" }).click();
+    // Same sender menu, same branch owner; verify a lost Side response.
+    await avatar.click({ button: "right" });
     await page
       .getByRole("menuitem", { name: "Side · 打开独立侧聊", exact: true })
       .click();
