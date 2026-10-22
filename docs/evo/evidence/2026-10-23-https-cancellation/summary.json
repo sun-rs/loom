@@ -36,11 +36,11 @@
       "allPostRestartSamples200": true,
       "postRestartSamples": 128,
       "postRestartDurationMs": 67387
-    }
+    },
+    "ownerBannerConfirmation": "用户确认：现在可以看到弹窗提示了。"
   },
   "notificationSemanticsSource": "https://developer.mozilla.org/en-US/docs/Web/API/Notification/renotify",
   "remaining": [
-    "User banner observation pending",
     "Startup browser main-thread/network waiting timing not captured"
   ]
 }
