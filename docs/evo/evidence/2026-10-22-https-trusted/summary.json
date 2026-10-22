@@ -38,6 +38,17 @@
       "offlineVapidEncryption": "passed without sending",
       "pushHostHead": "ECONNRESET connecting to updates.push.services.mozilla.com; no subscription endpoint or payload sent",
       "inference": "Transport connectivity issue observed; does not prove full cause of original push failure"
+    },
+    "followupNetworkAndPush": {
+      "networkChanges": false,
+      "productChanges": false,
+      "systemProxy": "macOS HTTP/HTTPS proxy configured; daemon has no proxy environment",
+      "publicHostProbes": "Explicit system-proxy HEAD initially failed TLS; direct curl and subsequent Node HEAD (default/family4/family6) returned HTTP 406. No subscription endpoint or payload used in probes.",
+      "interpretation": "Earlier ECONNRESET is not a persistent missing-proxy failure. Intermittent outbound connectivity observed; exact failing network hop remains unproven.",
+      "newExplicitTestAttempts": 1,
+      "nativeFirefoxResult": "推送服务已接受 1 个设备的测试请求；请检查系统通知。",
+      "systemDeliveryVerified": false,
+      "limitation": "Native notification-center automation did not expose the notification; owner observation requested. No automatic resend, proxy change, or unrelated service restart."
     }
   },
   "deployment": {
@@ -49,7 +60,7 @@
     "postDeploymentPushState": "One owner-requested real Firefox subscription enabled; intentional transport-state change"
   },
   "remaining": [
-    "Actual push delivery: unconfirmed; investigate daemon-to-Mozilla connectivity",
+    "Provider accepted the follow-up test for 1 device; actual OS notification display awaiting owner confirmation. Intermittent outbound failure hop unproven.",
     "Physical iOS/Android validation",
     "Existing HTTPS gateway lacks HTTP-only workspace HTML/PDF preview routes"
   ],
