@@ -1,0 +1,66 @@
+{
+  "productCommit": "59a0165146766ced938048cae71aa9ebbd91cf81",
+  "sourceEvidence": "frontends/raft/upstream/published-2026-10-22/manifest.json",
+  "implemented": [
+    "Official current published sidebar bounds 200–400/default240",
+    "Native auto scrolling and short runtime tags with version tooltip",
+    "Computer first in Role creation",
+    "Default-collapsed deleted Role group including roles with no instances",
+    "Authenticated idempotent Role restore preserves identity and frozen instances; unique name required"
+  ],
+  "checks": {
+    "rootTypecheck": "passed",
+    "frontendTypecheck": "passed",
+    "workbenchBuild": "passed",
+    "kernelNamingAndHTTPTests": 10,
+    "sourceTests": 5,
+    "uiContractTests": 8,
+    "fixtureBrowser": {
+      "widths": [1440, 390],
+      "resizeTo400AndNarrowHeaderWrap": "passed",
+      "expandRuntimeHeightStable": "passed",
+      "deleteCollapsedGroupRestore": "passed",
+      "creationRetryAndNoImplicitInstance": "passed"
+    },
+    "formalReadOnly": [
+      {
+        "width": 1440,
+        "sharedCreationForm": true,
+        "defaultNoInstance": true,
+        "boundedRows": true,
+        "runtimeAndModel": true,
+        "selectAndResetConfirmation": true,
+        "noMutations": true,
+        "noErrors": true,
+        "noOverflow": true
+      },
+      {
+        "width": 390,
+        "sharedCreationForm": true,
+        "defaultNoInstance": true,
+        "boundedRows": true,
+        "runtimeAndModel": true,
+        "selectAndResetConfirmation": true,
+        "noMutations": true,
+        "noErrors": true,
+        "noOverflow": true
+      }
+    ],
+    "formalRestoreDialog": "Not exercised: no deleted Roles in formal catalog; end-to-end restore verified only in isolated fixture"
+  },
+  "deployment": {
+    "verified": true,
+    "schema": 90,
+    "databasesBackedUp": 2,
+    "filesBackedUp": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true
+  },
+  "notCompleted": [
+    "Role environment snapshot and Host launch propagation",
+    "Codex exec/Claude Fast mode support and complete official RuntimeConfigFields adoption",
+    "Whole-site raft-ui upgrade from pinned0.10.5 to latest npm0.21.0",
+    "Physical iOS/Android acceptance"
+  ],
+  "paidCLI": "not run"
+}

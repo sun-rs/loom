@@ -1,5 +1,7 @@
 # Raft Computer 1.0.51 与 Loom 创建入口边界
 
+后继更正：计算机布局与恢复能力以[当前官网核查](computer-current-ui-and-role-recovery.zh-CN.md)为准；本报告中的stable gutter处理已撤回。
+
 核查日期：2026-10-22。此处区分发布说明、可见源码与 Loom 实现，不把二进制版本当完整服务端版本。
 
 ## 发布证据
