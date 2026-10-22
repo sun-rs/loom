@@ -220,3 +220,31 @@ test("a receipt whose Tailnet entry left the CGNAT range fails closed", () => {
       `expected receipt bindHost ${bindHost} to fail closed`,
     );
 });
+
+test("restart preserves explicit supplemental HTTPS and clears inherited additions", () => {
+  const env = {
+    RAH_TAILNET_HOST: "100.64.0.2",
+    RAH_TRUSTED_LAN_HOSTS: "192.168.1.86",
+    RAH_WEB_PORT: "4176",
+    RAH_ADDITIONAL_HTTPS_ORIGIN: "https://192.168.1.86:4178",
+  };
+  const mode = workbenchLaunchMode(env, "/tmp/rah");
+  const restored = restartNetworkEnvironment(
+    {},
+    { schemaVersion: 1, pid: 42, mode },
+    42,
+  );
+  assert.equal(
+    restored.RAH_ADDITIONAL_HTTPS_ORIGIN,
+    env.RAH_ADDITIONAL_HTTPS_ORIGIN,
+  );
+  assert.deepEqual(workbenchLaunchMode(restored, "/tmp/rah"), mode);
+  assert.equal(
+    restartNetworkEnvironment(
+      env,
+      { schemaVersion: 1, pid: 42, mode: { kind: "loopback", port: 4176 } },
+      42,
+    ).RAH_ADDITIONAL_HTTPS_ORIGIN,
+    undefined,
+  );
+});

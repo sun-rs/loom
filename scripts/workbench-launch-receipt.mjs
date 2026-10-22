@@ -1,3 +1,4 @@
+import { additionalHttpsAddress } from "../packages/daemon/src/additional-lan-https.ts";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { readFile, writeFile, rename, rm } from "node:fs/promises";
@@ -13,6 +14,7 @@ import {
 // replays the recorded Tailnet and trusted LAN addresses instead of rescanning
 // interfaces, so a restart can neither drop nor widen the incumbent entry set.
 const networkKeys = [
+  "RAH_ADDITIONAL_HTTPS_ORIGIN",
   "RAH_TAILNET_HOST",
   "RAH_TRUSTED_LAN_HOSTS",
   "RAH_LAN_ORIGIN",
@@ -53,9 +55,14 @@ function networkEnvironment(mode) {
   if (mode.kind !== "tailnet") return { RAH_WEB_PORT: String(mode.port) };
   assertTailnetHost(mode.bindHost, "Launch receipt Tailnet entry");
   const trusted = receiptTrustedLanHosts(mode);
+  if (mode.additionalHttpsOrigin !== undefined)
+    additionalHttpsAddress(mode.additionalHttpsOrigin, trusted, mode.port);
   return {
     RAH_WEB_PORT: String(mode.port),
     RAH_TAILNET_HOST: mode.bindHost,
+    ...(mode.additionalHttpsOrigin
+      ? { RAH_ADDITIONAL_HTTPS_ORIGIN: mode.additionalHttpsOrigin }
+      : {}),
     ...(trusted.length === 0
       ? {}
       : { RAH_TRUSTED_LAN_HOSTS: trusted.join(",") }),

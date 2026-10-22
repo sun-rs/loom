@@ -399,3 +399,11 @@ LocalWorkbenchGateway 仅监听所选 Tailscale、家庭局域网和 loopback �
 Web 入口在加载官方模块之前补齐 HTTP 浏览器的 UUID 能力，使用 `crypto.getRandomValues`，
 保留安全上下文的原生实现。HTTP 不会因此获得 HTTPS 专属的浏览器权限。
 当前部署与验证边界见 [evo状态](../evo/status.zh-CN.md)。
+
+### 并行内网 HTTPS 入口（2026-10-22）
+
+Owner 要求自建内网 HTTPS 并保留现有 HTTP／Tailnet。仓库 launcher 在 `tailnet` 模式下接受可选 `RAH_ADDITIONAL_HTTPS_ORIGIN`，例如 `https://192.168.1.86:4178`。只能使用已在 `RAH_TRUSTED_LAN_HOSTS` 显式列出的私网 IPv4，端口不得与 HTTP 或其 PDF listener 相同；不扫描接口、不启用公网通配绑定。未配置时行为不变。
+
+`local-core-workbench` 仍只创建一个 DaemonApplication。额外入口复用 LanWorkbenchGateway、LanWorkbenchAccessStore、既有 TLS provisioner 和同一个 Human/API owner；HTTP 的既有网络信任策略保持，HTTPS 独立采用设备配对 cookie 和精确 Origin 校验。Core 退出或任一启动失败时关闭两条入口；重启回执保留额外 origin，清除 shell 中未经回执授权的残余配置。
+
+此部署不申请外部证书：复用 data home 中的私有 CA 和按主机签发的证书。客户端只接收 CA 公共证书，私钥不离开 Core；需在各设备信任 CA 后完成首次配对。通知权限、真实推送送达、iOS 主屏幕安装是另行验收项，TLS握手或服务回执不证明送达。旧 HTTPS gateway 尚无 HTTP gateway 专属的工作区 HTML／PDF预览及独立 PDF viewer 路由；这些功能继续使用保留的原入口，不将新增 HTTPS 入口声称为全站功能等价。

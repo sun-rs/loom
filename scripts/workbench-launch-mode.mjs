@@ -1,3 +1,4 @@
+import { additionalHttpsAddress } from "../packages/daemon/src/additional-lan-https.ts";
 import { isIP } from "node:net";
 import { join } from "node:path";
 // Mirror the supported service launcher configuration; Core validates TLS/origin.
@@ -68,19 +69,28 @@ function configuredTrustedLanHosts(value, tailnetHost) {
 }
 export function workbenchLaunchMode(environment, workbenchHome) {
   const tailnetHost = environment.RAH_TAILNET_HOST?.trim();
-  if (tailnetHost)
+  const additionalHttpsOrigin = environment.RAH_ADDITIONAL_HTTPS_ORIGIN?.trim();
+  if (additionalHttpsOrigin && !tailnetHost)
+    throw new Error("Additional HTTPS requires an explicit Tailnet/LAN entry");
+  if (tailnetHost) {
+    const hosts = configuredTrustedLanHosts(
+      environment.RAH_TRUSTED_LAN_HOSTS,
+      tailnetHost,
+    );
+    if (additionalHttpsOrigin)
+      additionalHttpsAddress(
+        additionalHttpsOrigin,
+        hosts,
+        Number(environment.RAH_WEB_PORT ?? "4173"),
+      );
     return {
       kind: "tailnet",
+      ...(additionalHttpsOrigin ? { additionalHttpsOrigin } : {}),
       bindHost: assertTailnetHost(tailnetHost, "RAH_TAILNET_HOST"),
-      additionalBindHosts: [
-        "127.0.0.1",
-        ...configuredTrustedLanHosts(
-          environment.RAH_TRUSTED_LAN_HOSTS,
-          tailnetHost,
-        ),
-      ],
+      additionalBindHosts: ["127.0.0.1", ...hosts],
       port: Number(environment.RAH_WEB_PORT ?? "4173"),
     };
+  }
   if (environment.RAH_TRUSTED_LAN_HOSTS !== undefined) {
     throw new Error(
       "RAH_TRUSTED_LAN_HOSTS requires an explicit RAH_TAILNET_HOST entry; ordinary LAN exposure without Tailnet must use the authenticated RAH_LAN_ORIGIN gateway",

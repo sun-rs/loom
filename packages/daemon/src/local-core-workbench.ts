@@ -1,3 +1,7 @@
+import {
+  startAdditionalLanHttps,
+  stopWorkbenchGateways,
+} from "./additional-lan-https.ts";
 import type { WorkbenchServiceControl } from "./workbench-service-control.ts";
 import { existsSync, lstatSync, readFileSync, statSync } from "node:fs";
 import { isAbsolute, join, resolve } from "node:path";
@@ -30,6 +34,7 @@ export type LocalCoreWorkbenchMode =
       port: number;
       bindHost: string;
       additionalBindHosts?: string[];
+      additionalHttpsOrigin?: string;
     }
   | {
       bindHost: string;
@@ -46,6 +51,7 @@ export type LocalCoreRuntimeDescriptor = {
 };
 
 export type LocalCoreLoopbackDescriptor = {
+  https?: Awaited<ReturnType<typeof startAdditionalLanHttps>>["descriptor"];
   defaultRoomId: string;
   persistent: true;
   runtimes: LocalCoreRuntimeDescriptor[];
@@ -167,6 +173,8 @@ export async function startLocalCoreWorkbench(input: {
   );
 
   let gateway: LocalWorkbenchGateway | LanWorkbenchGateway | undefined;
+  let additionalHttps:
+    Awaited<ReturnType<typeof startAdditionalLanHttps>> | undefined;
   try {
     await waitForDaemonOrigin({
       application,
@@ -200,11 +208,21 @@ export async function startLocalCoreWorkbench(input: {
         port: validatePort(input.mode.port, true),
       });
       await gateway.start();
+      if (input.mode.kind === "tailnet" && input.mode.additionalHttpsOrigin) {
+        additionalHttps = await startAdditionalLanHttps({
+          ...common,
+          workbenchHome,
+          origin: input.mode.additionalHttpsOrigin,
+          hosts: input.mode.additionalBindHosts ?? [],
+          httpPort: input.mode.port,
+        });
+      }
       return withCliExecutables(
         cliExecutables,
         runningWorkbench({
           applicationRun,
           descriptor: {
+            ...(additionalHttps ? { https: additionalHttps.descriptor } : {}),
             ...baseDescriptor({
               prepared,
               runtimeSpecs,
@@ -213,7 +231,10 @@ export async function startLocalCoreWorkbench(input: {
               workspaceCwd,
             }),
           },
-          gateway,
+          gateway: {
+            stop: () =>
+              stopWorkbenchGateways([gateway, additionalHttps?.gateway]),
+          },
           shutdown,
         }),
         application,
@@ -265,7 +286,9 @@ export async function startLocalCoreWorkbench(input: {
       application,
     );
   } catch (error) {
-    await gateway?.stop().catch(() => undefined);
+    await stopWorkbenchGateways([gateway, additionalHttps?.gateway]).catch(
+      () => undefined,
+    );
     shutdown.abort("local-core-startup-failed");
     await applicationRun.catch(() => undefined);
     throw error;
