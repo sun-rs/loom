@@ -1,0 +1,299 @@
+{
+  "implementation": "616be3db",
+  "baseline": "5f61d227 (deployed immutable web snapshot)",
+  "changes": [
+    "Shared HTTP/HTTPS gateway negotiates streaming gzip for finite JSON >=1024 bytes; SSE, ranges, no-transform, HEAD and already encoded responses excluded. Browser decodes original JSON; no schema/history/authority change.",
+    "Loom module demand loader retains exact official PanelFallback and native page components, immediately publishes resolved modules and retains nested Suspense handling; aborts late mounted-page state updates and propagates import failures.",
+    "Computer auto-selection checks actual current destination before using a render-captured router setter; stale callbacks cannot resurrect an old destination."
+  ],
+  "tests": {
+    "redThenGreen": [
+      "API negotiation/content equivalence",
+      "page module resolution/unmount/failure",
+      "stale computer selection route reproduction"
+    ],
+    "focusedPassed": 23,
+    "uiContractPassed": 8,
+    "rootTypecheck": "passed",
+    "frontendTypecheck": "passed",
+    "workbenchBuild": "passed"
+  },
+  "method": {
+    "browser": "Existing Chrome, viewport 1440x1000, no network or CPU throttle",
+    "backend": "Same live Core/data both arms; identical controlled proxy/static gzip. Before arm serves previous immutable UI and requests identity API responses, matching previous API transport. After serves new UI and forwards encoding negotiation.",
+    "scope": "Local HTTP controlled comparison, not remote-device latency or Firefox full-page HTTPS",
+    "cold": "HTTP cache bypass (no-store), not new browser/JIT process",
+    "warm": "Primed static-resource cache, API remains no-store",
+    "ready": "composer and 54 message DOM elements, no alert, then two frames. Resources collected ready+400ms; transferSize excludes navigation document/probe.",
+    "click": "real captured click to visible target page plus two frames; measures presentation not all async data or INP. 6 paired journeys, each 6 pages and 2 cycles.",
+    "sampling": "24 alternating successful loads; 144 successful measured clicks; no exclusions, blocked API paths or failed journeys.",
+    "noDataMutation": "No messages, role configurations or CLI work created. Normal channel read acknowledgements allowed."
+  },
+  "loadResults": {
+    "before-cold": {
+      "readyMs": {
+        "n": 6,
+        "median": 417.65,
+        "min": 382.5,
+        "max": 451.1
+      },
+      "transferBytes": {
+        "n": 6,
+        "median": 1885524.0,
+        "min": 1885522,
+        "max": 1885524
+      },
+      "resourceCount": {
+        "n": 6,
+        "median": 61.0,
+        "min": 61,
+        "max": 61
+      }
+    },
+    "before-warm": {
+      "readyMs": {
+        "n": 6,
+        "median": 297.8,
+        "min": 284.4,
+        "max": 441.4
+      },
+      "transferBytes": {
+        "n": 6,
+        "median": 425305.0,
+        "min": 425305,
+        "max": 425305
+      },
+      "resourceCount": {
+        "n": 6,
+        "median": 61.0,
+        "min": 61,
+        "max": 61
+      }
+    },
+    "after-cold": {
+      "readyMs": {
+        "n": 6,
+        "median": 421.0,
+        "min": 382.4,
+        "max": 652.8
+      },
+      "transferBytes": {
+        "n": 6,
+        "median": 1538717.0,
+        "min": 1538717,
+        "max": 1538718
+      },
+      "resourceCount": {
+        "n": 6,
+        "median": 61.0,
+        "min": 61,
+        "max": 61
+      }
+    },
+    "after-warm": {
+      "readyMs": {
+        "n": 6,
+        "median": 333.1,
+        "min": 280,
+        "max": 563.9
+      },
+      "transferBytes": {
+        "n": 6,
+        "median": 78381.5,
+        "min": 78381,
+        "max": 78382
+      },
+      "resourceCount": {
+        "n": 6,
+        "median": 61.0,
+        "min": 61,
+        "max": 61
+      }
+    }
+  },
+  "clickResults": {
+    "before/Agent/first": {
+      "n": 6,
+      "median": 330.15,
+      "min": 324.4,
+      "max": 334
+    },
+    "before/计算机/first": {
+      "n": 6,
+      "median": 327.25,
+      "min": 326.3,
+      "max": 343.4
+    },
+    "before/任务/first": {
+      "n": 6,
+      "median": 333.95,
+      "min": 328.4,
+      "max": 338.5
+    },
+    "before/记忆/first": {
+      "n": 6,
+      "median": 328.95,
+      "min": 323.6,
+      "max": 338.4
+    },
+    "before/设置/first": {
+      "n": 6,
+      "median": 327.1,
+      "min": 321.8,
+      "max": 351.1
+    },
+    "before/频道/first": {
+      "n": 6,
+      "median": 27.35,
+      "min": 24.2,
+      "max": 37.2
+    },
+    "before/Agent/repeat": {
+      "n": 6,
+      "median": 37.6,
+      "min": 32.2,
+      "max": 42.2
+    },
+    "before/计算机/repeat": {
+      "n": 6,
+      "median": 27.2,
+      "min": 20.1,
+      "max": 29.7
+    },
+    "before/任务/repeat": {
+      "n": 6,
+      "median": 21.45,
+      "min": 18.7,
+      "max": 23.7
+    },
+    "before/记忆/repeat": {
+      "n": 6,
+      "median": 24.4,
+      "min": 18,
+      "max": 29.9
+    },
+    "before/设置/repeat": {
+      "n": 6,
+      "median": 20.7,
+      "min": 19.4,
+      "max": 36.3
+    },
+    "before/频道/repeat": {
+      "n": 6,
+      "median": 24.45,
+      "min": 23.5,
+      "max": 33.5
+    },
+    "after/Agent/first": {
+      "n": 6,
+      "median": 34.8,
+      "min": 26.3,
+      "max": 38.9
+    },
+    "after/计算机/first": {
+      "n": 6,
+      "median": 36.85,
+      "min": 34.7,
+      "max": 39
+    },
+    "after/任务/first": {
+      "n": 6,
+      "median": 60.7,
+      "min": 30.4,
+      "max": 67.7
+    },
+    "after/记忆/first": {
+      "n": 6,
+      "median": 34.7,
+      "min": 26.9,
+      "max": 44.3
+    },
+    "after/设置/first": {
+      "n": 6,
+      "median": 34.15,
+      "min": 29.2,
+      "max": 49.2
+    },
+    "after/频道/first": {
+      "n": 6,
+      "median": 31.5,
+      "min": 25.1,
+      "max": 33.7
+    },
+    "after/Agent/repeat": {
+      "n": 6,
+      "median": 36.55,
+      "min": 35.4,
+      "max": 42.3
+    },
+    "after/计算机/repeat": {
+      "n": 6,
+      "median": 30.25,
+      "min": 26.7,
+      "max": 37
+    },
+    "after/任务/repeat": {
+      "n": 6,
+      "median": 21.7,
+      "min": 16.6,
+      "max": 24.2
+    },
+    "after/记忆/repeat": {
+      "n": 6,
+      "median": 23.05,
+      "min": 20,
+      "max": 37.6
+    },
+    "after/设置/repeat": {
+      "n": 6,
+      "median": 20.75,
+      "min": 18.6,
+      "max": 21.8
+    },
+    "after/频道/repeat": {
+      "n": 6,
+      "median": 25.2,
+      "min": 23.8,
+      "max": 37.6
+    }
+  },
+  "wireVerification": [
+    {
+      "scheme": "http",
+      "identityBytes": 28133,
+      "gzipBytes": 3641,
+      "decodedEqual": true,
+      "status": 200
+    },
+    {
+      "scheme": "https",
+      "identityBytes": 28133,
+      "gzipBytes": 3641,
+      "decodedEqual": true,
+      "status": 200
+    }
+  ],
+  "browserAcceptance": {
+    "desktop": "Formal product switched Computers -> Tasks; nine task cards loaded. Same channel renders 54 message DOM nodes with no alert.",
+    "mobile": "390x844 formal task/Agent/chat pages visible; mobile Agent nav target 68.8x44, actual center hit true. No viewport emulation claimed as real-device acceptance."
+  },
+  "deployment": {
+    "pid": 50026,
+    "assets": "/Users/sun/Code/repos/rah_os/.workbench-web/633b9d1d9b4ec5d62862761b3b695e2b52c460f56116404f454021a5a2146547",
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-page-performance-900877b8-4863-4da6-8038-443dc42fb750",
+    "databases": 2,
+    "files": 325,
+    "unchangedBusinessTables": 20,
+    "pushStateUnchanged": true,
+    "sourceHash": "6f0bccae57bf77a976d5f7c949a5ba786b6c0c9f482e49f063a73b19c88a3e51"
+  },
+  "limits": [
+    "First page presentation improved; full bootstrap ready time did not consistently improve. Cold median418->421ms, warm298->333ms, broad ranges overlap; do not claim startup acceleration.",
+    "Computer stale callback reproduced in isolated test; previous browser missed-navigation symptoms are compatible with it but not proven exclusively caused by it. Both arms had zero missed destinations in this repetition.",
+    "Compression reduces wire bytes, not decoded JSON/parse work, source data size or model tokens.",
+    "No authenticated live Raft comparator, Firefox timing, long-running stutter acceptance or physical mobile acceptance.",
+    "No paid CLI gates run."
+  ],
+  "conclusion": "First-open five-page median improved from327-334ms to34-61ms. Warm refresh resource transfer425305->78382 bytes (-81.57%); cold1885524->1538717 (-18.39%). Repeat navigation stays approximately21-37ms; startup latency not improved consistently.",
+  "rawLocalDirectory": "/Users/sun/.loom/reviews/2026-10-23-page-performance"
+}
