@@ -1,0 +1,107 @@
+{
+  "productCommit": "5d878318a80b639705dc11ed5b023850df8553be",
+  "scope": [
+    "Bind native ChannelPreferencesSection collapse switch to existing expandedLongMessages opt-outs",
+    "Generated MessageItem reads authoritative workspace sidebar snapshot, preserving official collapse component and default",
+    "Extract exact native workspace-mute form from pinned SettingsPanel and bind existing mutedWorkspace revisioned mutation",
+    "Capture current published navigation source declarations without enabling them"
+  ],
+  "correction": "Previous reports incorrectly treated expandedLongMessages/mutedWorkspace as missing backend capability. Both already exist in protocol, SDK and Kernel. room.delete is also published; its UI still needs audit. No backend changes made.",
+  "upstream": {
+    "repository": "https://github.com/botiverse/raft-source",
+    "revision": "db5e399f017d584e49597e3a28757645d6807893",
+    "license": "FSL-1.1-ALv2; owner-authorized reuse",
+    "sourceLocations": [
+      "packages/web/src/components/channel/ChannelPreferencesSection.tsx",
+      "packages/web/src/components/message/MessageItem.tsx",
+      "packages/web/src/components/settings/SettingsPanel.tsx:WebPushNotificationsCard"
+    ],
+    "localBindings": "Native JSX/recipes retained. Existing sidebar API replaces upstream stores/HTTP. Unknown operation exact replay, captured expectedVersion and explicit rejection/reload retain Loom semantics.",
+    "navigation": "published-2026-10-22/navigation-source.js and navigation-manifest.json preserve extracted original declarations and source hash. Evidence only, not mounted."
+  },
+  "verification": {
+    "sourceTests": 8,
+    "uiContractTests": 8,
+    "typecheck": true,
+    "productBuild": true,
+    "generatedEquality": true,
+    "fixturePreferences": [
+      {
+        "width": 1440,
+        "collapsedByDefault": true,
+        "expandedAfterReload": true,
+        "workspaceMutePersisted": true,
+        "staleWritePreservesDraft": true,
+        "lostResponseExactReplay": true,
+        "unrelatedPreferencesPreserved": true
+      },
+      {
+        "width": 390,
+        "collapsedByDefault": true,
+        "expandedAfterReload": true,
+        "workspaceMutePersisted": true,
+        "staleWritePreservesDraft": true,
+        "lostResponseExactReplay": true,
+        "unrelatedPreferencesPreserved": true
+      }
+    ],
+    "fixturePush": [
+      {
+        "width": 1440,
+        "nativeControls": true,
+        "realWorkerRegistered": true,
+        "fakeBrowserSubscription": true,
+        "realDaemonRegistrationReadback": true,
+        "lostWritesVerifiedWithoutResend": true,
+        "testReceiptNotDeliveryClaim": true,
+        "authenticatedNavigation": true,
+        "deniedTargetDoesNotNavigate": true
+      },
+      {
+        "width": 390,
+        "nativeControls": true,
+        "realWorkerRegistered": true,
+        "fakeBrowserSubscription": true,
+        "realDaemonRegistrationReadback": true,
+        "lostWritesVerifiedWithoutResend": true,
+        "testReceiptNotDeliveryClaim": true,
+        "authenticatedNavigation": true,
+        "deniedTargetDoesNotNavigate": true
+      }
+    ],
+    "formal": [
+      {
+        "width": 1440,
+        "collapseControl": true,
+        "workspaceMuteNativeForm": true,
+        "unchangedSaveDisabled": true,
+        "noBusinessWrites": true
+      },
+      {
+        "width": 390,
+        "collapseControl": true,
+        "workspaceMuteNativeForm": true,
+        "unchangedSaveDisabled": true,
+        "noBusinessWrites": true
+      }
+    ],
+    "screenshotsInspected": [
+      "mute-390.png",
+      "collapse-390.png"
+    ],
+    "limits": "Viewport/browser fixtures are not physical iOS/Android acceptance; push fixture uses simulated browser subscription. Formal checks only read/cancel, no real push test or preference mutation."
+  },
+  "deployment": {
+    "verified": true,
+    "databasesBackedUp": 2,
+    "files": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true
+  },
+  "noPaidCalls": true,
+  "remaining": [
+    "Mount published navigation reorder/collapse with correct preference/layout owners",
+    "Audit and bind channel delete/action composition against existing backend; do not assume API missing",
+    "No claim of all-site latest parity"
+  ]
+}
