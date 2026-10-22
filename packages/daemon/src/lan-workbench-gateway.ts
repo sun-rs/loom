@@ -523,6 +523,8 @@ export class LanWorkbenchGateway {
       );
       upstream.once("error", reject);
       request.once("error", reject);
+      // Match the HTTP edge: a cancelled browser stream must release Core work.
+      response.once("close", () => upstream.destroy());
       request.pipe(upstream);
     });
   }

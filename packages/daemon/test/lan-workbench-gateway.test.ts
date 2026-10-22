@@ -66,7 +66,18 @@ test("the formal LAN gateway requires TLS pairing and keeps Human authority serv
     range?: string;
     url?: string;
   }> = [];
+  let streamClosed = false;
+  let endStream: (() => void) | undefined;
   const upstream = createServer(async (request, response) => {
+    if (request.url === "/v3/client/health?stream=1") {
+      response.writeHead(200, { "content-type": "text/event-stream" });
+      response.write("data: ready\n\n");
+      response.on("close", () => {
+        streamClosed = true;
+      });
+      endStream = () => response.end();
+      return;
+    }
     observed.push({
       ...(request.headers.authorization === undefined
         ? {}
@@ -158,6 +169,34 @@ test("the formal LAN gateway requires TLS pairing and keeps Human authority serv
         try {
           await trusted.start();
           const base = trusted.origin;
+          try {
+            await new Promise<void>((resolve, reject) => {
+              const request = createHttpsRequest(
+                base + "/v3/client/health?stream=1",
+                {
+                  ca: readFileSync(certificatePath),
+                },
+                (response) => {
+                  response.once("data", () => {
+                    response.destroy();
+                    resolve();
+                  });
+                },
+              );
+              request.once("error", reject);
+              request.end();
+            });
+            for (let i = 0; i < 20 && !streamClosed; i++)
+              await new Promise((resolve) => setTimeout(resolve, 10));
+            assert.equal(
+              streamClosed,
+              true,
+              "browser cancellation must close daemon stream",
+            );
+          } finally {
+            endStream?.();
+          }
+
           for (const host of ["0.0.0.0", "8.8.8.8"]) {
             assert.throws(
               () =>

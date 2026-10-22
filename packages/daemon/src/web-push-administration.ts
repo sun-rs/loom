@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { AuthenticatedActorContext } from "@rah-os/core";
 import type { WebPushAdministrationPort } from "@rah-os/application-service";
 import {
@@ -68,11 +69,12 @@ export function createWebPushAdministration(input: {
     },
     async test(actor, request) {
       const subscriptions = await input.state.list(principalId(actor));
+      const notificationId = `push-test:${randomUUID()}`;
       const payload = WebPushPayloadSchema.parse({
         alwaysShow: true,
         body: "macOS / iOS PWA 通知链已连接。",
-        notificationId: `push-test:${Date.now()}`,
-        tag: "push-test",
+        notificationId,
+        tag: notificationId,
         target: request.target ?? { kind: "computer", hostId: input.hostId },
         title: "RAH OS 通知测试",
         version: 1,

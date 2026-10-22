@@ -16,12 +16,14 @@ test("Web Push administration scopes devices to the authenticated Human", async 
     const human = kernel.provisionPrincipal({ handle: "human", kind: "human" });
     const actor = kernel.authenticateHumanAccessToken(human.accessToken);
     const sent: string[] = [];
+    const tags: string[] = [];
     const state = new WebPushStateStore({ directory: join(directory, "push") });
     const administration = createWebPushAdministration({
       hostId: "host-local",
       state,
       transport: {
         async send(subscription, payload) {
+          tags.push(payload.tag);
           sent.push(`${subscription.endpoint}:${payload.target.kind}`);
         },
       },
@@ -68,6 +70,12 @@ test("Web Push administration scopes devices to the authenticated Human", async 
     );
     assert.deepEqual(await administration.test(actor, {}), { delivered: 1 });
     assert.deepEqual(sent, ["https://push.example/device:computer"]);
+    await administration.test(actor, {});
+    assert.notEqual(
+      tags[0],
+      tags[1],
+      "explicit tests must not replace the previous notification",
+    );
   } finally {
     kernel.close();
     await rm(directory, { recursive: true, force: true });
