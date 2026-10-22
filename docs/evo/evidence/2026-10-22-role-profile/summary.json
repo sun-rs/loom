@@ -1,0 +1,80 @@
+{
+  "productCommit": "8085674a6bac2b732465ea8114badc25f7eaa55d",
+  "source": "db5e399f017d584e49597e3a28757645d6807893",
+  "implemented": [
+    "One runtime/model/effort modal with native portal container",
+    "Prompt description shares hero region; legacy role preamble editable without silent deletion",
+    "Info creation time and optional actual revision updatedAt; old snapshots remain unknown",
+    "Shared Role overflow/action list, add-instance header control, native icons and delete confirmation",
+    "Fixed-snapshot stop/enable/reset batch over existing fenced single-instance APIs; stop at first unconfirmed outcome"
+  ],
+  "checks": {
+    "source": 339,
+    "uiContract": 8,
+    "focusedKernelAndRoleTests": 12,
+    "typecheckFrontend": true,
+    "typecheckRoot": true,
+    "build": true,
+    "fixtureBrowser": {
+      "roleActivity": [
+        1440,
+        390
+      ],
+      "roleProfileSaveAndAvatar": [
+        1440,
+        390
+      ],
+      "batchStopEnableReset": "passed for two fixture instances at 390; no paid runtime"
+    },
+    "formalWebKit": [
+      {
+        "width": 1440,
+        "promptDisplayEqualsEditor": true,
+        "runtimeDialog": true,
+        "actionsAndOverflowIdentical": true,
+        "confirmCancel": true,
+        "noMutations": true,
+        "noErrors": true,
+        "noOverflow": true
+      },
+      {
+        "width": 390,
+        "promptDisplayEqualsEditor": true,
+        "runtimeDialog": true,
+        "actionsAndOverflowIdentical": true,
+        "confirmCancel": true,
+        "noMutations": true,
+        "noErrors": true,
+        "noOverflow": true
+      }
+    ]
+  },
+  "resolvedFailures": [
+    "Native runtime modal Select popup originally portaled outside modal and was covered; fixed native container ref binding",
+    "Runtime save button initially overrode generic action binding; now uses source-specific native recipe",
+    "Browser hit test awaited native actionability before measurement; formal menu waits for portal visibility"
+  ],
+  "deployment": {
+    "verified": true,
+    "backupDatabases": 2,
+    "backupFiles": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true,
+    "schema": 90
+  },
+  "screenshots": {
+    "runtime-390.png": "c48fb55b6ff705d675708d58ccad506ed0cf80c20e150f9edf3e8022838b4c32",
+    "actions-1440.png": "3998d53ccc73415b8b6638c12c8a1332dfba8370158694297e3e2dff6787eb28",
+    "runtime-1440.png": "8e623fcd07737fe97b6b4081c4943d1e43c5c18a4190ba724b0572f49d6b46b7",
+    "actions-390.png": "ab131c1b59b23c0985bf78c707d847df2de27534ba69c4db52d8cf58ac63edda",
+    "profile-390.png": "98d665e6cb2cb02dd51b525095dd19d711a1d823d94002812f1d75e8673ca0a1",
+    "profile-1440.png": "3c871dfd178f45bfd14e914b13608961339b8eaebfbafc9774986e2704c211df"
+  },
+  "limits": [
+    "No Fast mode/cloud provider/advanced settings without backend support",
+    "Reset creates new native session, does not erase channel history/memory or automatically enable stopped instances",
+    "Batch is sequential, not atomic; earlier successes remain after later rejection/unknown",
+    "Old revision snapshots without modification time show unknown",
+    "Fixed-source reuse is not latest official Web parity; local data/form/authority composition remains explicit"
+  ]
+}
