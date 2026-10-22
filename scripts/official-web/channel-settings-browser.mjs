@@ -26,6 +26,14 @@ export async function verifyChannelSettings({
     await name.fill("FIXTURE unsaved");
     await sheet.getByTestId("channel-overflow-members-entry").click();
     const memberPage = sheet.getByTestId("member-page");
+    assert.equal(
+      await memberPage.evaluate(
+        (el) => !!el.closest('[data-slot="drawer-content"]'),
+      ),
+      true,
+      "members must occupy native drawer content, not popup sibling",
+    );
+    assert.ok((await memberPage.boundingBox()).height > viewport.height * 0.9, "member page fills drawer height");
     await memberPage.getByTestId("member-page-search").fill("NO SUCH MEMBER");
     await memberPage.getByText(/NO SUCH MEMBER/).waitFor();
     await memberPage.getByTestId("member-page-search").fill("");

@@ -166,7 +166,6 @@ export default function ChannelControl({
         }}
       >
         <DrawerContent
-          ref={setMemberContainer}
           data-testid="loom-channel-control-sheet"
           className="inset-y-0 right-0 h-dvh w-full [--drawer-content-height:100dvh] [--drawer-inset:0px] flex-col"
         >
@@ -257,6 +256,7 @@ export default function ChannelControl({
               )}
             </ChannelSettingsContent>
           </div>
+          <div ref={setMemberContainer} className="contents" />
         </DrawerContent>
       </Drawer>
       {discard && (
