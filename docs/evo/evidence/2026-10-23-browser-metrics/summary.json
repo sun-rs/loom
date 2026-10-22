@@ -1,0 +1,401 @@
+{
+  "implementation": "5f61d227",
+  "baseline": "2a2a3b08 (same frontend as d157e8c4 docs commit)",
+  "method": {
+    "browser": "Existing Chrome extension session, 1440x1000; no CPU/network throttle",
+    "data": "Same live backend and same channel; 54 message DOM elements verified each navigation, no visible alert. Role 44, instance 70. No messages or role configurations changed; normal read acknowledgements allowed.",
+    "frontend": "Original immutable deployment assets served through two identical localhost benchmark gateways; same gzip policy. Cold=no-store HTTP cache bypass, not a fresh browser/JIT process. Warm=primed browser cache.",
+    "ready": "Existing composer + message content present without alert, then two animation frames; not FCP or TTI. Resource totals at ready+400ms; resource timing API transferSize, excludes navigation document and probe script.",
+    "click": "Captured real click -> target page visible -> two frames. Measures page presentation, NOT complete async data readiness or INP.",
+    "order": "6 alternating before/after pairs per cache arm, 24 successful navigations. 4 complete paired click journeys, each 6 pages x 2 cycles = 96 recorded clicks.",
+    "probe": "Test-only observer served before app scripts; does not simulate clicks. Browser clicks via CUA. Same observer in both arms.",
+    "instrumentationCorrections": [
+      "Initial pilot rejected because local runtime /v1 endpoint was not proxied; final runs forward it and have zero blocked requests.",
+      "Initial warm Agent measurement used DOM existence and was missing due retained hidden node; final runs require CSS visibility.",
+      "Pilot numbers from progress messages superseded by final sample table."
+    ]
+  },
+  "loads": {
+    "before-cold": {
+      "readyMs": {
+        "n": 6,
+        "median": 448.3,
+        "min": 444.3,
+        "max": 557.1
+      },
+      "fcpMs": {
+        "n": 6,
+        "median": 216.0,
+        "min": 204,
+        "max": 252
+      },
+      "transferBytes": {
+        "n": 6,
+        "median": 1898047.0,
+        "min": 1898047,
+        "max": 1898047
+      },
+      "resourceCount": {
+        "n": 6,
+        "median": 63.0,
+        "min": 63,
+        "max": 63
+      },
+      "longTaskTotalMs": {
+        "n": 6,
+        "median": 241.5,
+        "min": 211,
+        "max": 341
+      }
+    },
+    "before-warm": {
+      "readyMs": {
+        "n": 6,
+        "median": 367.4,
+        "min": 306.4,
+        "max": 432.1
+      },
+      "fcpMs": {
+        "n": 6,
+        "median": 92.0,
+        "min": 84,
+        "max": 116
+      },
+      "transferBytes": {
+        "n": 6,
+        "median": 425305.0,
+        "min": 425305,
+        "max": 425305
+      },
+      "resourceCount": {
+        "n": 6,
+        "median": 63.0,
+        "min": 63,
+        "max": 63
+      },
+      "longTaskTotalMs": {
+        "n": 6,
+        "median": 222.5,
+        "min": 131,
+        "max": 272
+      }
+    },
+    "after-cold": {
+      "readyMs": {
+        "n": 6,
+        "median": 453.0,
+        "min": 430.2,
+        "max": 586.4
+      },
+      "fcpMs": {
+        "n": 6,
+        "median": 214.0,
+        "min": 212,
+        "max": 228
+      },
+      "transferBytes": {
+        "n": 6,
+        "median": 1885524.0,
+        "min": 1885524,
+        "max": 1885524
+      },
+      "resourceCount": {
+        "n": 6,
+        "median": 61.0,
+        "min": 61,
+        "max": 61
+      },
+      "longTaskTotalMs": {
+        "n": 6,
+        "median": 246.0,
+        "min": 193,
+        "max": 362
+      }
+    },
+    "after-warm": {
+      "readyMs": {
+        "n": 6,
+        "median": 346.05,
+        "min": 320.9,
+        "max": 377.5
+      },
+      "fcpMs": {
+        "n": 6,
+        "median": 88.0,
+        "min": 84,
+        "max": 100
+      },
+      "transferBytes": {
+        "n": 6,
+        "median": 425305.0,
+        "min": 425305,
+        "max": 425305
+      },
+      "resourceCount": {
+        "n": 6,
+        "median": 61.0,
+        "min": 61,
+        "max": 62
+      },
+      "longTaskTotalMs": {
+        "n": 6,
+        "median": 168.0,
+        "min": 80,
+        "max": 245
+      }
+    }
+  },
+  "clicks": {
+    "before/Agent/first": {
+      "n": 4,
+      "median": 334.55,
+      "min": 329.8,
+      "max": 339.6
+    },
+    "before/计算机/first": {
+      "n": 4,
+      "median": 330.35,
+      "min": 329,
+      "max": 338.1
+    },
+    "before/任务/first": {
+      "n": 4,
+      "median": 333.6,
+      "min": 329.6,
+      "max": 336.3
+    },
+    "before/记忆/first": {
+      "n": 4,
+      "median": 327.1,
+      "min": 325.3,
+      "max": 329.6
+    },
+    "before/设置/first": {
+      "n": 4,
+      "median": 325.95,
+      "min": 324.5,
+      "max": 326.3
+    },
+    "before/频道/first": {
+      "n": 4,
+      "median": 26.75,
+      "min": 24.4,
+      "max": 31.3
+    },
+    "before/Agent/repeat": {
+      "n": 4,
+      "median": 38.35,
+      "min": 35.7,
+      "max": 43.1
+    },
+    "before/计算机/repeat": {
+      "n": 4,
+      "median": 24.5,
+      "min": 21.8,
+      "max": 26.8
+    },
+    "before/任务/repeat": {
+      "n": 4,
+      "median": 20.65,
+      "min": 20.1,
+      "max": 21.3
+    },
+    "before/记忆/repeat": {
+      "n": 4,
+      "median": 25.3,
+      "min": 20.1,
+      "max": 28.9
+    },
+    "before/设置/repeat": {
+      "n": 4,
+      "median": 21.55,
+      "min": 21.2,
+      "max": 22.4
+    },
+    "before/频道/repeat": {
+      "n": 4,
+      "median": 25.35,
+      "min": 24.1,
+      "max": 27.3
+    },
+    "after/Agent/first": {
+      "n": 4,
+      "median": 332.8,
+      "min": 329.7,
+      "max": 344.7
+    },
+    "after/计算机/first": {
+      "n": 4,
+      "median": 334.3,
+      "min": 325.7,
+      "max": 345.9
+    },
+    "after/任务/first": {
+      "n": 4,
+      "median": 334.45,
+      "min": 326.8,
+      "max": 337
+    },
+    "after/记忆/first": {
+      "n": 4,
+      "median": 325.35,
+      "min": 324.1,
+      "max": 326.9
+    },
+    "after/设置/first": {
+      "n": 4,
+      "median": 328.7,
+      "min": 327,
+      "max": 338.6
+    },
+    "after/频道/first": {
+      "n": 4,
+      "median": 26.95,
+      "min": 24.2,
+      "max": 29.4
+    },
+    "after/Agent/repeat": {
+      "n": 4,
+      "median": 40.8,
+      "min": 37.2,
+      "max": 45.5
+    },
+    "after/计算机/repeat": {
+      "n": 4,
+      "median": 26.95,
+      "min": 19.8,
+      "max": 34.7
+    },
+    "after/任务/repeat": {
+      "n": 4,
+      "median": 20.7,
+      "min": 17.7,
+      "max": 22.9
+    },
+    "after/记忆/repeat": {
+      "n": 4,
+      "median": 21.2,
+      "min": 18,
+      "max": 22.9
+    },
+    "after/设置/repeat": {
+      "n": 4,
+      "median": 20.3,
+      "min": 19.6,
+      "max": 22.7
+    },
+    "after/频道/repeat": {
+      "n": 4,
+      "median": 24.5,
+      "min": 23.6,
+      "max": 27.6
+    }
+  },
+  "largestWarmResources": [
+    {
+      "url": "/v3/client/rooms/sync",
+      "transfer": 168095,
+      "encoded": 167795,
+      "decoded": 167795,
+      "duration": 74.19999980926514
+    },
+    {
+      "url": "/v3/client/agents/list",
+      "transfer": 123866,
+      "encoded": 123566,
+      "decoded": 123566,
+      "duration": 73.39999961853027
+    },
+    {
+      "url": "/v1/local/runtimes/list",
+      "transfer": 59302,
+      "encoded": 59002,
+      "decoded": 59002,
+      "duration": 73.09999990463257
+    },
+    {
+      "url": "/v3/client/rooms/list",
+      "transfer": 28433,
+      "encoded": 28133,
+      "decoded": 28133,
+      "duration": 5.899999618530273
+    },
+    {
+      "url": "/v3/client/rooms/timeline",
+      "transfer": 20156,
+      "encoded": 19856,
+      "decoded": 19856,
+      "duration": 3
+    },
+    {
+      "url": "/v3/client/sidebar/get",
+      "transfer": 3840,
+      "encoded": 3540,
+      "decoded": 3540,
+      "duration": 39
+    },
+    {
+      "url": "/v3/client/sidebar/get",
+      "transfer": 3840,
+      "encoded": 3540,
+      "decoded": 3540,
+      "duration": 48.80000019073486
+    },
+    {
+      "url": "/v3/client/sidebar/get",
+      "transfer": 3840,
+      "encoded": 3540,
+      "decoded": 3540,
+      "duration": 49.40000009536743
+    },
+    {
+      "url": "/v3/client/messages/social",
+      "transfer": 3379,
+      "encoded": 3079,
+      "decoded": 3079,
+      "duration": 5.400000095367432
+    },
+    {
+      "url": "/v3/client/activity/list",
+      "transfer": 3012,
+      "encoded": 2712,
+      "decoded": 2712,
+      "duration": 40.299999713897705
+    }
+  ],
+  "tlsHtmlFetch": {
+    "method": "12 alternating requests per scheme over same LAN IP; new urllib connections, verified local CA; not browser rendering or remote LAN device",
+    "summaryMs": {
+      "http": {
+        "n": 12,
+        "median": 1.09,
+        "min": 0.9,
+        "max": 7.13
+      },
+      "https": {
+        "n": 12,
+        "median": 3.31,
+        "min": 3.19,
+        "max": 4.18
+      }
+    }
+  },
+  "failures": [
+    {
+      "arm": "before",
+      "sample": "click-4",
+      "observed": "Two rapid computer-to-task transitions did not reach tasks marker within browser wait deadline; page remained Computers. Subsequent explicit task click worked. Partial journey excluded in full from paired timing statistics, retained as failure.",
+      "classification": "Unresolved navigation/input reliability observation, not proven 30-second rendering latency; cannot identify cause from timing alone."
+    }
+  ],
+  "limits": [
+    "Chrome HTTP controlled benchmark is not Firefox LAN HTTPS end-to-end acceptance.",
+    "Existing browser process/JIT and OS cache stay warm even in no-store arm.",
+    "Four complete click pairs are small-sample descriptive evidence, not p95/causal significance.",
+    "No usable official authenticated Raft browser comparator; no Raft parity claim.",
+    "CUA tabs reported visibility visible even after opening another test tab; native Chrome control unavailable, so no real hidden-tab polling count claimed. Prior deterministic hook tests remain evidence for hidden pause.",
+    "First minute stutter not reproduced or closed by these short samples."
+  ],
+  "conclusion": "Resource reduction proved (2 requests and about12.5KB transfer per cold startup); no consistent end-user latency improvement proved. Existing page first-open delay and repeated API payloads are more promising follow-up targets.",
+  "rawLocalDirectory": "/Users/sun/.loom/reviews/2026-10-23-browser-metrics"
+}

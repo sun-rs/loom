@@ -1,0 +1,1208 @@
+{
+  "loads": [
+    {
+      "arm": "before",
+      "cache": "cold",
+      "sample": "run-0",
+      "readyMs": 453.40000009536743,
+      "fcpMs": 228,
+      "transferBytes": 1898047,
+      "resourceCount": 63,
+      "visibility": "visible"
+    },
+    {
+      "arm": "before",
+      "cache": "cold",
+      "sample": "run-1",
+      "readyMs": 450.19999980926514,
+      "fcpMs": 216,
+      "transferBytes": 1898047,
+      "resourceCount": 63,
+      "visibility": "visible"
+    },
+    {
+      "arm": "before",
+      "cache": "cold",
+      "sample": "run-2",
+      "readyMs": 446.30000019073486,
+      "fcpMs": 216,
+      "transferBytes": 1898047,
+      "resourceCount": 63,
+      "visibility": "visible"
+    },
+    {
+      "arm": "before",
+      "cache": "cold",
+      "sample": "run-3",
+      "readyMs": 446.40000009536743,
+      "fcpMs": 216,
+      "transferBytes": 1898047,
+      "resourceCount": 63,
+      "visibility": "visible"
+    },
+    {
+      "arm": "before",
+      "cache": "cold",
+      "sample": "run-4",
+      "readyMs": 444.30000019073486,
+      "fcpMs": 204,
+      "transferBytes": 1898047,
+      "resourceCount": 63,
+      "visibility": "visible"
+    },
+    {
+      "arm": "before",
+      "cache": "cold",
+      "sample": "run-5",
+      "readyMs": 557.1000003814697,
+      "fcpMs": 252,
+      "transferBytes": 1898047,
+      "resourceCount": 63,
+      "visibility": "visible"
+    },
+    {
+      "arm": "before",
+      "cache": "warm",
+      "sample": "run-0",
+      "readyMs": 381.30000019073486,
+      "fcpMs": 88,
+      "transferBytes": 425305,
+      "resourceCount": 63,
+      "visibility": "visible"
+    },
+    {
+      "arm": "before",
+      "cache": "warm",
+      "sample": "run-1",
+      "readyMs": 432.09999990463257,
+      "fcpMs": 84,
+      "transferBytes": 425305,
+      "resourceCount": 63,
+      "visibility": "visible"
+    },
+    {
+      "arm": "before",
+      "cache": "warm",
+      "sample": "run-2",
+      "readyMs": 365.2000002861023,
+      "fcpMs": 116,
+      "transferBytes": 425305,
+      "resourceCount": 63,
+      "visibility": "visible"
+    },
+    {
+      "arm": "before",
+      "cache": "warm",
+      "sample": "run-3",
+      "readyMs": 348.40000009536743,
+      "fcpMs": 96,
+      "transferBytes": 425305,
+      "resourceCount": 63,
+      "visibility": "visible"
+    },
+    {
+      "arm": "before",
+      "cache": "warm",
+      "sample": "run-4",
+      "readyMs": 369.59999990463257,
+      "fcpMs": 96,
+      "transferBytes": 425305,
+      "resourceCount": 63,
+      "visibility": "visible"
+    },
+    {
+      "arm": "before",
+      "cache": "warm",
+      "sample": "run-5",
+      "readyMs": 306.40000009536743,
+      "fcpMs": 88,
+      "transferBytes": 425305,
+      "resourceCount": 63,
+      "visibility": "visible"
+    },
+    {
+      "arm": "after",
+      "cache": "cold",
+      "sample": "run-0",
+      "readyMs": 476.59999990463257,
+      "fcpMs": 228,
+      "transferBytes": 1885524,
+      "resourceCount": 61,
+      "visibility": "visible"
+    },
+    {
+      "arm": "after",
+      "cache": "cold",
+      "sample": "run-1",
+      "readyMs": 451.5,
+      "fcpMs": 220,
+      "transferBytes": 1885524,
+      "resourceCount": 61,
+      "visibility": "visible"
+    },
+    {
+      "arm": "after",
+      "cache": "cold",
+      "sample": "run-2",
+      "readyMs": 586.4000000953674,
+      "fcpMs": 212,
+      "transferBytes": 1885524,
+      "resourceCount": 61,
+      "visibility": "visible"
+    },
+    {
+      "arm": "after",
+      "cache": "cold",
+      "sample": "run-3",
+      "readyMs": 430.19999980926514,
+      "fcpMs": 212,
+      "transferBytes": 1885524,
+      "resourceCount": 61,
+      "visibility": "visible"
+    },
+    {
+      "arm": "after",
+      "cache": "cold",
+      "sample": "run-4",
+      "readyMs": 454.5,
+      "fcpMs": 216,
+      "transferBytes": 1885524,
+      "resourceCount": 61,
+      "visibility": "visible"
+    },
+    {
+      "arm": "after",
+      "cache": "cold",
+      "sample": "run-5",
+      "readyMs": 447.59999990463257,
+      "fcpMs": 212,
+      "transferBytes": 1885524,
+      "resourceCount": 61,
+      "visibility": "visible"
+    },
+    {
+      "arm": "after",
+      "cache": "warm",
+      "sample": "run-0",
+      "readyMs": 343.40000009536743,
+      "fcpMs": 88,
+      "transferBytes": 425305,
+      "resourceCount": 61,
+      "visibility": "visible"
+    },
+    {
+      "arm": "after",
+      "cache": "warm",
+      "sample": "run-1",
+      "readyMs": 320.90000009536743,
+      "fcpMs": 84,
+      "transferBytes": 425305,
+      "resourceCount": 61,
+      "visibility": "visible"
+    },
+    {
+      "arm": "after",
+      "cache": "warm",
+      "sample": "run-2",
+      "readyMs": 350.7999997138977,
+      "fcpMs": 88,
+      "transferBytes": 425305,
+      "resourceCount": 61,
+      "visibility": "visible"
+    },
+    {
+      "arm": "after",
+      "cache": "warm",
+      "sample": "run-3",
+      "readyMs": 348.7000002861023,
+      "fcpMs": 92,
+      "transferBytes": 425305,
+      "resourceCount": 61,
+      "visibility": "visible"
+    },
+    {
+      "arm": "after",
+      "cache": "warm",
+      "sample": "run-4",
+      "readyMs": 377.5,
+      "fcpMs": 88,
+      "transferBytes": 425305,
+      "resourceCount": 61,
+      "visibility": "visible"
+    },
+    {
+      "arm": "after",
+      "cache": "warm",
+      "sample": "run-5",
+      "readyMs": 322.90000009536743,
+      "fcpMs": 100,
+      "transferBytes": 425305,
+      "resourceCount": 62,
+      "visibility": "visible"
+    }
+  ],
+  "clicks": [
+    {
+      "arm": "before",
+      "sample": "click-0",
+      "label": "Agent",
+      "duration": 332.2000002861023,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "before",
+      "sample": "click-0",
+      "label": "计算机",
+      "duration": 329.3999996185303,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "before",
+      "sample": "click-0",
+      "label": "任务",
+      "duration": 329.59999990463257,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "before",
+      "sample": "click-0",
+      "label": "记忆",
+      "duration": 325.2999997138977,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "before",
+      "sample": "click-0",
+      "label": "设置",
+      "duration": 326.2000002861023,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "before",
+      "sample": "click-0",
+      "label": "频道",
+      "duration": 26.40000009536743,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "before",
+      "sample": "click-0",
+      "label": "Agent",
+      "duration": 36.19999980926514,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "before",
+      "sample": "click-0",
+      "label": "计算机",
+      "duration": 22.59999990463257,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "before",
+      "sample": "click-0",
+      "label": "任务",
+      "duration": 21.300000190734863,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "before",
+      "sample": "click-0",
+      "label": "记忆",
+      "duration": 28.90000009536743,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "before",
+      "sample": "click-0",
+      "label": "设置",
+      "duration": 22.40000009536743,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "before",
+      "sample": "click-0",
+      "label": "频道",
+      "duration": 27.300000190734863,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "after",
+      "sample": "click-0",
+      "label": "Agent",
+      "duration": 332.30000019073486,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "after",
+      "sample": "click-0",
+      "label": "计算机",
+      "duration": 327.59999990463257,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "after",
+      "sample": "click-0",
+      "label": "任务",
+      "duration": 337,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "after",
+      "sample": "click-0",
+      "label": "记忆",
+      "duration": 324.09999990463257,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "after",
+      "sample": "click-0",
+      "label": "设置",
+      "duration": 327,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "after",
+      "sample": "click-0",
+      "label": "频道",
+      "duration": 29.40000009536743,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "after",
+      "sample": "click-0",
+      "label": "Agent",
+      "duration": 37.90000009536743,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "after",
+      "sample": "click-0",
+      "label": "计算机",
+      "duration": 19.799999713897705,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "after",
+      "sample": "click-0",
+      "label": "任务",
+      "duration": 22.90000009536743,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "after",
+      "sample": "click-0",
+      "label": "记忆",
+      "duration": 22.90000009536743,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "after",
+      "sample": "click-0",
+      "label": "设置",
+      "duration": 19.59999990463257,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "after",
+      "sample": "click-0",
+      "label": "频道",
+      "duration": 24.90000009536743,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "after",
+      "sample": "click-1",
+      "label": "Agent",
+      "duration": 329.7000002861023,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "after",
+      "sample": "click-1",
+      "label": "计算机",
+      "duration": 345.90000009536743,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "after",
+      "sample": "click-1",
+      "label": "任务",
+      "duration": 336.2999997138977,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "after",
+      "sample": "click-1",
+      "label": "记忆",
+      "duration": 325.40000009536743,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "after",
+      "sample": "click-1",
+      "label": "设置",
+      "duration": 338.6000003814697,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "after",
+      "sample": "click-1",
+      "label": "频道",
+      "duration": 28.5,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "after",
+      "sample": "click-1",
+      "label": "Agent",
+      "duration": 45.5,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "after",
+      "sample": "click-1",
+      "label": "计算机",
+      "duration": 27.699999809265137,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "after",
+      "sample": "click-1",
+      "label": "任务",
+      "duration": 17.700000286102295,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "after",
+      "sample": "click-1",
+      "label": "记忆",
+      "duration": 18,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "after",
+      "sample": "click-1",
+      "label": "设置",
+      "duration": 20.800000190734863,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "after",
+      "sample": "click-1",
+      "label": "频道",
+      "duration": 23.59999990463257,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "before",
+      "sample": "click-1",
+      "label": "Agent",
+      "duration": 339.59999990463257,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "before",
+      "sample": "click-1",
+      "label": "计算机",
+      "duration": 338.1000003814697,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "before",
+      "sample": "click-1",
+      "label": "任务",
+      "duration": 332.40000009536743,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "before",
+      "sample": "click-1",
+      "label": "记忆",
+      "duration": 328.3999996185303,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "before",
+      "sample": "click-1",
+      "label": "设置",
+      "duration": 325.7000002861023,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "before",
+      "sample": "click-1",
+      "label": "频道",
+      "duration": 31.299999713897705,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "before",
+      "sample": "click-1",
+      "label": "Agent",
+      "duration": 40.5,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "before",
+      "sample": "click-1",
+      "label": "计算机",
+      "duration": 26.799999713897705,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "before",
+      "sample": "click-1",
+      "label": "任务",
+      "duration": 20.59999990463257,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "before",
+      "sample": "click-1",
+      "label": "记忆",
+      "duration": 20.09999990463257,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "before",
+      "sample": "click-1",
+      "label": "设置",
+      "duration": 21.59999990463257,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "before",
+      "sample": "click-1",
+      "label": "频道",
+      "duration": 24.100000381469727,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "before",
+      "sample": "click-2",
+      "label": "Agent",
+      "duration": 329.80000019073486,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "before",
+      "sample": "click-2",
+      "label": "计算机",
+      "duration": 331.2999997138977,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "before",
+      "sample": "click-2",
+      "label": "任务",
+      "duration": 336.2999997138977,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "before",
+      "sample": "click-2",
+      "label": "记忆",
+      "duration": 329.6000003814697,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "before",
+      "sample": "click-2",
+      "label": "设置",
+      "duration": 326.30000019073486,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "before",
+      "sample": "click-2",
+      "label": "频道",
+      "duration": 24.40000009536743,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "before",
+      "sample": "click-2",
+      "label": "Agent",
+      "duration": 43.09999990463257,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "before",
+      "sample": "click-2",
+      "label": "计算机",
+      "duration": 26.40000009536743,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "before",
+      "sample": "click-2",
+      "label": "任务",
+      "duration": 20.700000286102295,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "before",
+      "sample": "click-2",
+      "label": "记忆",
+      "duration": 28,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "before",
+      "sample": "click-2",
+      "label": "设置",
+      "duration": 21.5,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "before",
+      "sample": "click-2",
+      "label": "频道",
+      "duration": 24.800000190734863,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "after",
+      "sample": "click-2",
+      "label": "Agent",
+      "duration": 344.69999980926514,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "after",
+      "sample": "click-2",
+      "label": "计算机",
+      "duration": 325.69999980926514,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "after",
+      "sample": "click-2",
+      "label": "任务",
+      "duration": 332.59999990463257,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "after",
+      "sample": "click-2",
+      "label": "记忆",
+      "duration": 326.90000009536743,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "after",
+      "sample": "click-2",
+      "label": "设置",
+      "duration": 327.69999980926514,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "after",
+      "sample": "click-2",
+      "label": "频道",
+      "duration": 25.399999618530273,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "after",
+      "sample": "click-2",
+      "label": "Agent",
+      "duration": 43.69999980926514,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "after",
+      "sample": "click-2",
+      "label": "计算机",
+      "duration": 26.200000286102295,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "after",
+      "sample": "click-2",
+      "label": "任务",
+      "duration": 19.600000381469727,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "after",
+      "sample": "click-2",
+      "label": "记忆",
+      "duration": 20.700000286102295,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "after",
+      "sample": "click-2",
+      "label": "设置",
+      "duration": 22.700000286102295,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "after",
+      "sample": "click-2",
+      "label": "频道",
+      "duration": 24.100000381469727,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "after",
+      "sample": "click-3",
+      "label": "Agent",
+      "duration": 333.2999997138977,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "after",
+      "sample": "click-3",
+      "label": "计算机",
+      "duration": 341,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "after",
+      "sample": "click-3",
+      "label": "任务",
+      "duration": 326.80000019073486,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "after",
+      "sample": "click-3",
+      "label": "记忆",
+      "duration": 325.2999997138977,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "after",
+      "sample": "click-3",
+      "label": "设置",
+      "duration": 329.7000002861023,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "after",
+      "sample": "click-3",
+      "label": "频道",
+      "duration": 24.200000286102295,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "after",
+      "sample": "click-3",
+      "label": "Agent",
+      "duration": 37.200000286102295,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "after",
+      "sample": "click-3",
+      "label": "计算机",
+      "duration": 34.69999980926514,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "after",
+      "sample": "click-3",
+      "label": "任务",
+      "duration": 21.800000190734863,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "after",
+      "sample": "click-3",
+      "label": "记忆",
+      "duration": 21.700000286102295,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "after",
+      "sample": "click-3",
+      "label": "设置",
+      "duration": 19.800000190734863,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "after",
+      "sample": "click-3",
+      "label": "频道",
+      "duration": 27.600000381469727,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "before",
+      "sample": "click-3",
+      "label": "Agent",
+      "duration": 336.90000009536743,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "before",
+      "sample": "click-3",
+      "label": "计算机",
+      "duration": 329,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "before",
+      "sample": "click-3",
+      "label": "任务",
+      "duration": 334.80000019073486,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "before",
+      "sample": "click-3",
+      "label": "记忆",
+      "duration": 325.80000019073486,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "before",
+      "sample": "click-3",
+      "label": "设置",
+      "duration": 324.5,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "before",
+      "sample": "click-3",
+      "label": "频道",
+      "duration": 27.09999990463257,
+      "visibility": "visible",
+      "cycle": 0
+    },
+    {
+      "arm": "before",
+      "sample": "click-3",
+      "label": "Agent",
+      "duration": 35.700000286102295,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "before",
+      "sample": "click-3",
+      "label": "计算机",
+      "duration": 21.799999713897705,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "before",
+      "sample": "click-3",
+      "label": "任务",
+      "duration": 20.100000381469727,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "before",
+      "sample": "click-3",
+      "label": "记忆",
+      "duration": 22.600000381469727,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "before",
+      "sample": "click-3",
+      "label": "设置",
+      "duration": 21.199999809265137,
+      "visibility": "visible",
+      "cycle": 1
+    },
+    {
+      "arm": "before",
+      "sample": "click-3",
+      "label": "频道",
+      "duration": 25.899999618530273,
+      "visibility": "visible",
+      "cycle": 1
+    }
+  ],
+  "tls": [
+    {
+      "i": 0,
+      "scheme": "http",
+      "status": 200,
+      "ttfbMs": 7.104000076651573,
+      "totalMs": 7.130249869078398,
+      "bytes": 2211
+    },
+    {
+      "i": 0,
+      "scheme": "https",
+      "status": 200,
+      "ttfbMs": 4.112542141228914,
+      "totalMs": 4.180541727691889,
+      "bytes": 2211
+    },
+    {
+      "i": 1,
+      "scheme": "https",
+      "status": 200,
+      "ttfbMs": 3.6528753116726875,
+      "totalMs": 3.6852918565273285,
+      "bytes": 2211
+    },
+    {
+      "i": 1,
+      "scheme": "http",
+      "status": 200,
+      "ttfbMs": 1.0874588042497635,
+      "totalMs": 1.109750010073185,
+      "bytes": 2211
+    },
+    {
+      "i": 2,
+      "scheme": "http",
+      "status": 200,
+      "ttfbMs": 0.9520002640783787,
+      "totalMs": 0.978332944214344,
+      "bytes": 2211
+    },
+    {
+      "i": 2,
+      "scheme": "https",
+      "status": 200,
+      "ttfbMs": 3.246000036597252,
+      "totalMs": 3.2785842195153236,
+      "bytes": 2211
+    },
+    {
+      "i": 3,
+      "scheme": "https",
+      "status": 200,
+      "ttfbMs": 3.265583887696266,
+      "totalMs": 3.2962500117719173,
+      "bytes": 2211
+    },
+    {
+      "i": 3,
+      "scheme": "http",
+      "status": 200,
+      "ttfbMs": 0.9357086382806301,
+      "totalMs": 0.9682499803602695,
+      "bytes": 2211
+    },
+    {
+      "i": 4,
+      "scheme": "http",
+      "status": 200,
+      "ttfbMs": 0.8826246485114098,
+      "totalMs": 0.9012497030198574,
+      "bytes": 2211
+    },
+    {
+      "i": 4,
+      "scheme": "https",
+      "status": 200,
+      "ttfbMs": 3.1642080284655094,
+      "totalMs": 3.1949160620570183,
+      "bytes": 2211
+    },
+    {
+      "i": 5,
+      "scheme": "https",
+      "status": 200,
+      "ttfbMs": 3.2047503627836704,
+      "totalMs": 3.243708051741123,
+      "bytes": 2211
+    },
+    {
+      "i": 5,
+      "scheme": "http",
+      "status": 200,
+      "ttfbMs": 1.0903333313763142,
+      "totalMs": 1.1133751831948757,
+      "bytes": 2211
+    },
+    {
+      "i": 6,
+      "scheme": "http",
+      "status": 200,
+      "ttfbMs": 1.190208364278078,
+      "totalMs": 1.2515410780906677,
+      "bytes": 2211
+    },
+    {
+      "i": 6,
+      "scheme": "https",
+      "status": 200,
+      "ttfbMs": 3.3395420759916306,
+      "totalMs": 3.373958170413971,
+      "bytes": 2211
+    },
+    {
+      "i": 7,
+      "scheme": "https",
+      "status": 200,
+      "ttfbMs": 3.266750369220972,
+      "totalMs": 3.2959170639514923,
+      "bytes": 2211
+    },
+    {
+      "i": 7,
+      "scheme": "http",
+      "status": 200,
+      "ttfbMs": 1.381167210638523,
+      "totalMs": 1.402209047228098,
+      "bytes": 2211
+    },
+    {
+      "i": 8,
+      "scheme": "http",
+      "status": 200,
+      "ttfbMs": 1.0535838082432747,
+      "totalMs": 1.0704169981181622,
+      "bytes": 2211
+    },
+    {
+      "i": 8,
+      "scheme": "https",
+      "status": 200,
+      "ttfbMs": 3.845667000859976,
+      "totalMs": 3.887041937559843,
+      "bytes": 2211
+    },
+    {
+      "i": 9,
+      "scheme": "https",
+      "status": 200,
+      "ttfbMs": 3.2879160717129707,
+      "totalMs": 3.317916300147772,
+      "bytes": 2211
+    },
+    {
+      "i": 9,
+      "scheme": "http",
+      "status": 200,
+      "ttfbMs": 1.1025830172002316,
+      "totalMs": 1.121625304222107,
+      "bytes": 2211
+    },
+    {
+      "i": 10,
+      "scheme": "http",
+      "status": 200,
+      "ttfbMs": 1.0004173964262009,
+      "totalMs": 1.0238750837743282,
+      "bytes": 2211
+    },
+    {
+      "i": 10,
+      "scheme": "https",
+      "status": 200,
+      "ttfbMs": 3.4285420551896095,
+      "totalMs": 3.4557092003524303,
+      "bytes": 2211
+    },
+    {
+      "i": 11,
+      "scheme": "https",
+      "status": 200,
+      "ttfbMs": 3.2117911614477634,
+      "totalMs": 3.267708234488964,
+      "bytes": 2211
+    },
+    {
+      "i": 11,
+      "scheme": "http",
+      "status": 200,
+      "ttfbMs": 1.0465411469340324,
+      "totalMs": 1.065750140696764,
+      "bytes": 2211
+    }
+  ]
+}
