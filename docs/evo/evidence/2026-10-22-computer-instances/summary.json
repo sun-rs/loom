@@ -1,0 +1,51 @@
+{
+  "productCommit": "c922c4050efc8be7ab4b31ad6c0723ca11d68648",
+  "scope": "Computer instance runtime/model, six-row disclosure and confirmed cross-role batch controls; Raft release research and creation design recommendations",
+  "automated": {
+    "focusedTests": 14,
+    "uiContractTests": 8,
+    "frontendTypecheck": "passed",
+    "workbenchBuild": "passed",
+    "browserFixture": {
+      "widths": [1440, 390],
+      "modelAndDisclosure": "passed",
+      "selectionConfirmCancel": "passed",
+      "keyboardAndOverflow": "passed"
+    },
+    "batchExecution": "Existing runRoleBatch unit coverage retained; this browser batch checks selection and confirmation cancellation, not provider execution"
+  },
+  "formal": [
+    {
+      "width": 1440,
+      "boundedRows": true,
+      "runtimeAndModel": true,
+      "selectAndResetConfirmation": true,
+      "noMutations": true,
+      "noErrors": true,
+      "noOverflow": true
+    },
+    {
+      "width": 390,
+      "boundedRows": true,
+      "runtimeAndModel": true,
+      "selectAndResetConfirmation": true,
+      "noMutations": true,
+      "noErrors": true,
+      "noOverflow": true
+    }
+  ],
+  "deployment": {
+    "verified": true,
+    "databasesBackedUp": 2,
+    "filesBackedUp": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true,
+    "schema": 90
+  },
+  "limits": [
+    "No real CLI or paid gate",
+    "No true-device iOS acceptance",
+    "Create Role dialog changes and machine/default DM semantics are proposals, not implemented",
+    "Raft1.0.51 release notes verified; public source1.0.49, not full1.0.32-to51 source diff"
+  ]
+}
