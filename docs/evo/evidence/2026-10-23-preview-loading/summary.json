@@ -1,0 +1,65 @@
+{
+  "date": "2026-10-23",
+  "implementation": "5f61d227",
+  "scope": [
+    "Defer existing official document, HTML and image presentation hosts until their existing stores open",
+    "Extract attachment download transport and byte-exact official preview labels from presentation imports",
+    "Pause diagnostic role activity and instance presence reads while document hidden; abort stale reads and refresh when visible"
+  ],
+  "provenance": "Official pages/components untouched; generator extracts labels from pinned attachmentPreviewSurfaces.tsx, with exact regeneration guard. Loom controls host loading and visibility only. UI mapping in loom/ui-contract.json.",
+  "tests": {
+    "focused": 11,
+    "uiContract": 8,
+    "typecheck": "passed",
+    "workbenchBuild": "passed",
+    "manifestLoadingGuard": "passed",
+    "redBeforeImplementation": [
+      "preview eager imports",
+      "labels surface import",
+      "missing chunk failure boundary"
+    ],
+    "presenceBehavior": "Both hooks: hidden abort, stale result rejected, no hidden timer, visible refresh, cleanup; role channel dedup preserved"
+  },
+  "bundle": {
+    "baselineCommit": "d157e8c4",
+    "before": {
+      "jsChunks": 31,
+      "decodedBytes": 3656959,
+      "comparableGzipBytes": 1044092
+    },
+    "after": {
+      "jsChunks": 29,
+      "decodedBytes": 3612347,
+      "comparableGzipBytes": 1032169
+    },
+    "saved": {
+      "decodedBytes": 44612,
+      "comparableGzipBytes": 11923
+    },
+    "method": "manifest static import closure of index and app-entry; local gzip recompression, not wire bytes or runtime timing; excludes conditional imports/fonts/API/images"
+  },
+  "browser": {
+    "engine": "Chrome extension",
+    "viewports": ["1440x1000", "390x844"],
+    "formal": "Refreshed real channel; messages and workspace tab usable; no preview scripts in initial observed asset inventory. Formal DB has no room_files so preview samples used isolated temporary Core.",
+    "fixture": "Markdown body, HTML iframe content and image lightbox displayed and closed at both viewports. HTML Escape close also verified. No preview modules observed initially; DocumentPreview + attachmentPreviewSurfaces loaded on Markdown click, HtmlPreview and ImageLightbox on corresponding clicks. Mobile document Close 44x44 and edge point hit verified. Fixture stopped. No paid CLI work.",
+    "limitations": [
+      "No live Raft-versus-Loom click/load timing result; official browser lacks login",
+      "No Firefox-specific timing or new first-minute stutter reproduction",
+      "No forced network failure browser test; chunk failure boundary source checked",
+      "No PDF content test in this slice; document presentation shared, PDF endpoint unchanged"
+    ]
+  },
+  "deployment": {
+    "pid": 38446,
+    "immutableAssets": "/Users/sun/Code/repos/rah_os/.workbench-web/26c2c2818d592e4843df1092c698c3daae1ad9e938b8a7e8ac685496d31b6c4c",
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-preview-loading-05d87be5-db11-494b-bed5-585ecc930235",
+    "databaseCount": 2,
+    "fileCount": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true,
+    "sourceHashAtRestart": "67edff5cc6c8c50e99936d5a4131d909cce062222a19e9e6b5c603b60af46b36",
+    "localReceipt": "/Users/sun/.loom/reviews/2026-10-23-preview-loading/restart.json"
+  },
+  "conclusion": "Small verified startup reduction and eliminated hidden-tab diagnostic polling; not proof of perceptible click acceleration, official speed parity, or root-cause closure for prior stutter."
+}
