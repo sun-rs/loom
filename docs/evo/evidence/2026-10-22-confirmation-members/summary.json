@@ -1,0 +1,61 @@
+{
+  "productCommit": "c8294a56916add72a4f539f372a61a7d6fafe27a",
+  "scope": [
+    "Locked-source shared confirmation with parameter-only bridge",
+    "Instance activity/profile order and existing private-message owner",
+    "Computer disclosure inside bordered instance list"
+  ],
+  "automated": {
+    "uiContract": 8,
+    "focusedSource": 4,
+    "loomTypecheck": "passed",
+    "productBuild": "passed",
+    "isolatedWebKit": [
+      "inspector 1440/390",
+      "computers 1440/390"
+    ]
+  },
+  "formal": [
+    {
+      "width": 1440,
+      "realService": true,
+      "expanded": true,
+      "confirmationCancelled": true,
+      "noMutations": true,
+      "noPageErrors": true,
+      "noOverflow": true
+    },
+    {
+      "width": 390,
+      "realService": true,
+      "expanded": true,
+      "confirmationCancelled": true,
+      "noMutations": true,
+      "noPageErrors": true,
+      "noOverflow": true
+    }
+  ],
+  "deployment": {
+    "newPid": 62616,
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-confirmation-members-e39ebe64-2394-4797-970a-17b8b8ddd4f5",
+    "databases": 2,
+    "files": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true,
+    "schema": 90
+  },
+  "limits": [
+    "Full channel settings/member navigation NOT yet replaced",
+    "Sender context menu, message toolbar overflow and navigation reorder/collapse pending",
+    "No paid CLI run; real page cancellation only, no runtime mutations",
+    "Whole-site latest upstream parity remains false",
+    "Generic build:official-web upstream intake command failed on unresolved @botiverse/raft-ui; supported product build:official-web:channel passed",
+    "Official confirmation lg uses pinned package recipe; no 44px hit-area claim"
+  ],
+  "upstreamCheck": {
+    "sourceHead": "db5e399f017d584e49597e3a28757645d6807893",
+    "asset": "app-shell-EHP4m3Or.js",
+    "sha256": "9eab18f8d1a59b45707f1554b97e64b143b4d6abf5707269b7a9d82f7a944a42",
+    "matchesLocked": true
+  }
+}
