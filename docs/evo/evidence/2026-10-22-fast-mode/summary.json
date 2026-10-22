@@ -22,5 +22,52 @@
     "Generic argv path without service-tier mapping rejects Fast; dedicated Claude native drivers translate it",
     "Official renderer functions preserved, boolean accessible label is a recorded nonvisual compatibility patch",
     "No physical mobile-device acceptance"
+  ],
+  "productCommit": "4b0b003ecc7fcab0e027f32dfcdc954337e1dbda",
+  "deployment": {
+    "verified": true,
+    "businessTablesUnchanged": 20,
+    "databasesBackedUp": 2,
+    "filesBackedUp": 325,
+    "pushStateUnchanged": true,
+    "schema": 90
+  },
+  "formalBrowser": [
+    {
+      "width": 1440,
+      "cli": "Codex",
+      "model": "gpt-6.1-sol",
+      "publishedTiers": ["default", "priority"],
+      "officialFastPointer": true,
+      "advanced": true,
+      "cancelWithoutMutation": true
+    },
+    {
+      "width": 1440,
+      "cli": "Claude",
+      "model": "default",
+      "publishedTiers": ["default", "fast"],
+      "officialFastPointer": true,
+      "advanced": true,
+      "cancelWithoutMutation": true
+    },
+    {
+      "width": 390,
+      "cli": "Codex",
+      "model": "gpt-6.1-sol",
+      "publishedTiers": ["default", "priority"],
+      "officialFastPointer": true,
+      "advanced": true,
+      "cancelWithoutMutation": true
+    },
+    {
+      "width": 390,
+      "cli": "Claude",
+      "model": "default",
+      "publishedTiers": ["default", "fast"],
+      "officialFastPointer": true,
+      "advanced": true,
+      "cancelWithoutMutation": true
+    }
   ]
 }
