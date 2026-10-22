@@ -702,6 +702,16 @@
         "scripts/official-web/channel-delete-browser.mjs",
         "scripts/official-web/channel-delete.test.mjs"
       ]
+    },
+    {
+      "id": "demand-page-loading",
+      "owner": "Official MainLayout PanelFallback presentation; Loom module-loading lifetime",
+      "rule": "Keep the pinned PanelFallback JSX and native page UI. Loom demand-loads modules once, publishes resolved components immediately without Suspense reveal throttling, rejects late unmounted completions and preserves error propagation. No eager all-page preload or business data cache.",
+      "sources": [
+        "frontends/raft/packages/web/src/components/layout/MainLayout.tsx"
+      ],
+      "bindings": ["LazyPages.tsx"],
+      "guard": "scripts/official-web/page-loading.test.mjs"
     }
   ],
   "exceptions": [

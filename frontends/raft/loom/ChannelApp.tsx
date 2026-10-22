@@ -1469,7 +1469,15 @@ export default function ChannelApp() {
                       selectedId={params.get("computer")}
                       onSettings={() => selectDestination("settings")}
                       onSelect={(id) => {
-                        if (hasRouteBoundIntent()) return;
+                        // Inventory may finish after the Human has already changed pages.
+                        // A render-captured router setter must not resurrect its old URL.
+                        if (
+                          hasRouteBoundIntent() ||
+                          new URLSearchParams(window.location.search).get(
+                            "view",
+                          ) !== "computers"
+                        )
+                          return;
                         setParams((previous) => {
                           const next = new URLSearchParams(previous);
                           if (id) next.set("computer", id);

@@ -1,3 +1,4 @@
+import { pipeApiResponse } from "./api-response-compression.ts";
 import { serveWorkspacePreview } from "./workspace-preview-gateway.ts";
 import { PdfPreviewGateway } from "./pdf-preview-gateway.ts";
 import { sendStaticFile } from "./static-file-response.ts";
@@ -417,9 +418,10 @@ export class LocalWorkbenchGateway {
           response.statusCode = upstreamResponse.statusCode ?? 502;
           copyResponseHeaders(upstreamResponse.headers, response);
           this.#setWebBuildHeader(response);
-          upstreamResponse.once("error", reject);
-          upstreamResponse.once("end", resolvePromise);
-          upstreamResponse.pipe(response);
+          void pipeApiResponse(request, upstreamResponse, response).then(
+            resolvePromise,
+            reject,
+          );
         },
       );
       upstream.once("error", reject);
@@ -558,6 +560,8 @@ function copyResponseHeaders(
     "accept-ranges",
     "cache-control",
     "content-length",
+    "content-encoding",
+    "vary",
     "content-range",
     "content-type",
     "content-security-policy",
