@@ -358,9 +358,9 @@ Existing deployed immutable assets are not deleted by source retirement. Source 
 current limits are recorded in `frontends/raft/adoption.json` and
 `docs/evo/evidence/2026-10-14-official-frontend-intake/summary.json`.
 
-This section applies to `main`'s frozen frontend and to phase-4 integration.
-evo uses the official-source replacement described above; reconstructed UI
-implementation instructions below apply only to historical main.
+Current `main` uses the official-source replacement described above.
+References to reconstructed UI implementation apply only to the retired
+pre-promotion baseline, never to current Loom or the imported Chatbox.
 
 Visual and functional parity are separate obligations. The behavior guide uses
 `official trigger -> source component/parameters -> content/data source ->
