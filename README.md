@@ -1,6 +1,6 @@
 # Loom
 
-Loom 是本地优先的多 Agent 协作平台。当前开发分支为 **evo**；main 保留旧 UI 里程碑，仅接受紧急修复。
+Loom 是本地优先的多 Agent 协作平台。当前开发分支为 **main**（由 evo 晋升）；**chatbox** 保留原 main 的旧 UI 里程碑，仅接受紧急修复。它不是独立的 `sun-rs/rah` 仓库。分支关系和保留边界见[主线晋升记录](docs/evo/branch-promotion.zh-CN.md)。
 
 用户自行安装并登录 Codex、Claude Code、OpenCode、Kimi 或 Pi。Loom 负责实例、频道、消息投递与运行管理，不代为安装 CLI 或配置账号。
 

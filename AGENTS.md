@@ -1,12 +1,19 @@
-# Loom engineering contract (evo branch)
+# Loom engineering contract (main; promoted from evo)
 
-This guide applies to the `evo` branch of Loom (repository `rah_os`), not the
+This guide applies to the current `main` of Loom (repository `rah_os`, promoted
+from `evo` on 2026-10-23), not the
 legacy sibling `rah` repository. There is no `HANDOVER.md`. Do not import the
 legacy project's Session-first rules or obsolete roadmap restrictions.
 
-- `main` is the frozen UI milestone (tag `milestone-ui-raft`) and accepts
-  emergency fixes only.
-- `evo` has frozen its backend MVP and entered the official-source frontend
+- `chatbox` preserves the former `main` UI milestone at `f1bc8c9d` and accepts
+  emergency fixes only. It is not the separate sibling `rah` repository.
+- `main` is the active product branch; `evo` is retained as a historical reference.
+  Existing instructions to develop/commit/push `evo` now apply to `main`.
+  Historical comparisons to `main` mean the old baseline now named `chatbox`.
+  Keep `docs/evo`, deployment labels and data paths unchanged; branch promotion
+  does not certify unresolved acceptance gates. See
+  `docs/evo/branch-promotion.zh-CN.md`.
+- The promoted product has frozen its backend MVP and entered the official-source frontend
   replacement. The owner explicitly retired the reconstructed `apps/web`,
   `packages/ui-web`, `packages/ui-tokens` and `packages/raft-ui-snapshot` source
   on 2026-10-14; do not restore them. `frontends/raft` is the sole product UI base.
