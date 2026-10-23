@@ -1,0 +1,65 @@
+{
+  "date": "2026-10-23",
+  "scope": "Environment repair of Mozilla Web Push sender route; no Loom source or service restart",
+  "reference": "Raft server push.ts and pushService.ts send from server; same browser reception does not exercise Loom local Mac sender network. Source revision db5e399f017d584e49597e3a28757645d6807893 inspected in previous evidence.",
+  "change": {
+    "rule": "DOMAIN,updates.push.services.mozilla.com,通用出口",
+    "location": "Existing active Surge profile Rule section; placed before broader rules",
+    "before": "No matching domain rule; FINAL,DIRECT",
+    "after": "Exact-domain rule verified in effective rules after reload",
+    "backup": "Private local review directory; full profile and credentials excluded from repository",
+    "unchanged": [
+      "TLS verification",
+      "Other rules and policy selection",
+      "Browser receive endpoint",
+      "Loom process and code"
+    ]
+  },
+  "verification": {
+    "independentHttpsRoot": [
+      {
+        "status": 406,
+        "ms": 404
+      },
+      {
+        "status": 406,
+        "ms": 400
+      },
+      {
+        "status": 406,
+        "ms": 407
+      },
+      {
+        "status": 406,
+        "ms": 403
+      },
+      {
+        "status": 406,
+        "ms": 302
+      }
+    ],
+    "realHttpsPushTests": [
+      {
+        "status": 200,
+        "delivered": 1,
+        "seconds": 0.570385
+      },
+      {
+        "status": 200,
+        "delivered": 1,
+        "seconds": 0.534682
+      },
+      {
+        "status": 200,
+        "delivered": 1,
+        "seconds": 0.657812
+      }
+    ]
+  },
+  "conclusion": "Routing the sender domain through the existing outbound policy restored fast repeated push-service acceptance, supporting unstable direct routing as the incident cause. Exact failing remote hop not established.",
+  "limits": [
+    "Three successful test sends do not prove permanent network availability",
+    "OS banner receipt not independently observed",
+    "Existing 15s server / 20s client timeout protection remains"
+  ]
+}
