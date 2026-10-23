@@ -1,9 +1,14 @@
-import LocalNotificationSettings from "./LocalNotificationSettings.tsx";
-import { describePushTestFailure } from "./push-failure.ts";
 import WorkspaceMute from "./WorkspaceMute";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
-import { Button } from "raft-ui";
+import { Button, Checkbox, Separator } from "raft-ui";
+import {
+  localNotificationsEnabled,
+  setLocalNotifications,
+  supportsLocalNotifications,
+  showLocalNotification,
+} from "./local-notifications.ts";
+import { setSystemNotifications } from "./notification-preferences.ts";
 import { LoomNotificationStatus } from "./OfficialSettingsSections.generated.tsx";
 import { LoomPushClient, browserPushPlatform } from "./push-client.ts";
 import { resolveNotificationChannel } from "../packages/web/src/utils/notificationChannel.ts";
@@ -18,7 +23,22 @@ export default function NotificationSettings({
   controlRoomId: string;
 }) {
   const channel = resolveNotificationChannel();
-  const supported = channel.kind === "web-push";
+  const supported = supportsLocalNotifications();
+  const pushSupported = channel.kind === "web-push";
+  const [localEnabled, setLocalEnabled] = useState(() =>
+    localNotificationsEnabled(workspaceId),
+  );
+  useEffect(() => {
+    const changed = () =>
+      setLocalEnabled(localNotificationsEnabled(workspaceId));
+    changed();
+    window.addEventListener("storage", changed);
+    window.addEventListener("loom-local-notifications", changed);
+    return () => {
+      window.removeEventListener("storage", changed);
+      window.removeEventListener("loom-local-notifications", changed);
+    };
+  }, [workspaceId]);
   const bridge = useMemo(
     () => new LoomPushClient(client, browserPushPlatform),
     [client],
@@ -40,7 +60,7 @@ export default function NotificationSettings({
     const ticket = ++generation.current;
     setLoading(true);
     try {
-      const value = supported
+      const value = pushSupported
         ? await bridge.read()
         : await client
             .request("push.configuration", {})
@@ -67,8 +87,12 @@ export default function NotificationSettings({
       ++generation.current;
     };
   }, [bridge]);
-  const act = async (kind: "enable" | "disable" | "test") => {
-    if (inFlight.current || loading || !state || !supported) return;
+  const act = async (
+    kind: "enable" | "disable" | "test" | "background-on" | "background-off",
+  ) => {
+    if (inFlight.current || !supported) return;
+    if (kind.startsWith("background-") && (loading || !state || !pushSupported))
+      return;
     inFlight.current = true;
     setBusy(kind !== "test");
     setTesting(kind === "test");
@@ -77,105 +101,154 @@ export default function NotificationSettings({
     let failure = "";
     try {
       if (kind === "test") {
-        const result = await bridge.test();
+        await showLocalNotification({
+          version: 1,
+          alwaysShow: true,
+          notificationId: crypto.randomUUID(),
+          tag: "loom-test:" + crypto.randomUUID(),
+          title: "Loom 通知测试",
+          body: "此通知通过本机浏览器显示，未请求外部推送服务。",
+          target: { kind: "room", roomId: controlRoomId },
+        });
         if (alive.current)
-          setMessage(
-            result.delivered > 0
-              ? `推送服务已接受 ${result.delivered} 个设备的测试请求；请检查系统通知。`
-              : "没有设备接受测试请求，请重新启用本浏览器通知。",
-          );
-      } else await bridge[kind]();
+          setMessage("浏览器已接受通知，请检查系统横幅或通知中心。");
+      } else if (kind === "background-on") {
+        if (!localEnabled || !state?.supported) return;
+        await bridge.enable();
+      } else if (kind === "background-off") {
+        await bridge.disable();
+      } else {
+        await setSystemNotifications(kind === "enable", {
+          requestPermission: async () => {
+            const value = await Notification.requestPermission();
+            if (alive.current) setPermission(value);
+            return value;
+          },
+          setLocal: (value) => setLocalNotifications(workspaceId, value),
+          stopBackground: () => bridge.disable(),
+        });
+      }
     } catch (e) {
-      failure =
-        kind === "test"
-          ? describePushTestFailure(e)
-          : e instanceof Error
-            ? e.message
-            : "通知操作未确认，未自动重发。";
+      failure = e instanceof Error ? e.message : "通知操作未确认，未自动重发。";
+    } finally {
+      if (alive.current) {
+        if (kind !== "test") await refresh();
+        if (failure) setError(failure);
+        setBusy(false);
+        setTesting(false);
+      }
+      inFlight.current = false;
     }
-    if (alive.current) {
-      if (kind !== "test") await refresh();
-      if (failure) setError(failure);
-      setBusy(false);
-      setTesting(false);
-    }
-    inFlight.current = false;
   };
-  const confirmed = state?.subscribed === true;
+  const backgroundEnabled = state?.subscribed === true;
+  const enabled = localEnabled || backgroundEnabled;
   return (
-    <div className="space-y-6">
-      <LocalNotificationSettings
+    <LoomNotificationStatus
+      labels={{
+        "settings.notifications.sectionLabel": "系统通知",
+        "settings.notifications.mainDescription":
+          "接收私信、提及及已关注消息列的回复。",
+        "settings.notifications.enable": "启用通知",
+        "settings.notifications.disable": "停用通知",
+        "settings.notifications.sendTest": "发送测试通知",
+      }}
+      loading={false}
+      serverConfigured={true}
+      permission={permission}
+      channel={
+        supported
+          ? { kind: "web-push" }
+          : { kind: "unsupported", reason: "insecure-context" }
+      }
+      subscribed={enabled}
+      confirmed={enabled && permission === "granted"}
+      busy={busy}
+      testing={testing}
+      error={error}
+      message={message}
+      handleEnable={() => void act("enable")}
+      handleDisable={() => void act("disable")}
+      handleSendTest={() => void act("test")}
+      statusLabel={
+        !supported
+          ? "当前浏览器不可用"
+          : permission === "denied"
+            ? "已被浏览器阻止"
+            : enabled
+              ? "已启用"
+              : "未启用"
+      }
+      detail="页面运行时优先通过本机或局域网接收通知。仅管理当前浏览器，站内动态与未读提醒不受影响。"
+    >
+      <WorkspaceMute
+        client={client}
         workspaceId={workspaceId}
-        roomId={controlRoomId}
+        controlRoomId={controlRoomId}
+        busy={busy || testing}
       />
-      <LoomNotificationStatus
-        labels={{
-          "settings.notifications.sectionLabel": "后台推送（可选）",
-          "settings.notifications.mainDescription":
-            "页面关闭后通过浏览器厂商推送服务接收，需要外网可达。",
-        }}
-        loading={loading}
-        serverConfigured={state?.supported === true}
-        permission={permission}
-        channel={channel}
-        subscribed={confirmed}
-        confirmed={confirmed}
-        busy={busy}
-        testing={testing}
-        error={error}
-        message={message}
-        handleEnable={() => void act("enable")}
-        handleDisable={() => void act("disable")}
-        handleSendTest={() => void act("test")}
-        statusLabel={
-          loading
-            ? "正在检查…"
-            : !state
-              ? "状态未知"
-              : !supported
-                ? "当前浏览器不可用"
-                : confirmed
-                  ? "已启用"
-                  : permission === "denied"
-                    ? "已被浏览器阻止"
-                    : state.subscription
-                      ? "浏览器订阅未登记"
-                      : "未启用"
-        }
-        detail={
-          supported
-            ? "仅管理当前浏览器；测试会发送到当前用户登记的设备。站内动态与未读提醒不受此开关影响。"
-            : "站内动态与未读提醒仍可使用。"
-        }
-      >
-        <WorkspaceMute
-          client={client}
-          workspaceId={workspaceId}
-          controlRoomId={controlRoomId}
-          busy={busy || testing}
-        />
-        {(error || (!!state?.subscription && !confirmed)) && (
-          <div className="flex gap-2">
-            <Button
-              {...uiActionProps.recovery}
-              disabled={loading || busy || testing}
-              onClick={() => void refresh()}
-            >
-              重新读取状态
-            </Button>
-            {state?.subscription && !confirmed && (
+      <Separator />
+      <details className="text-footnote">
+        <summary className="cursor-pointer font-semibold text-foreground-muted">
+          高级
+        </summary>
+        <div className="space-y-3 mt-3">
+          <label className="flex items-start gap-3">
+            <Checkbox
+              className="mt-0.5"
+              checked={backgroundEnabled}
+              disabled={
+                loading ||
+                busy ||
+                testing ||
+                !pushSupported ||
+                !state ||
+                (!backgroundEnabled && (!localEnabled || !state.supported))
+              }
+              onCheckedChange={(checked) =>
+                void act(checked ? "background-on" : "background-off")
+              }
+            />
+            <span className="min-w-0">
+              <span className="block text-subhead font-semibold">
+                页面关闭后仍接收通知
+              </span>
+              <span className="block text-footnote text-foreground-muted mt-0.5">
+                需要连接浏览器厂商的外部推送服务。新设备默认关闭；已有订阅保持原状态。
+              </span>
+            </span>
+          </label>
+          {loading && (
+            <p className="text-foreground-muted">正在检查后台通知状态…</p>
+          )}
+          {!pushSupported && (
+            <p className="text-foreground-muted">当前浏览器不支持后台推送。</p>
+          )}
+          {state && !state.supported && (
+            <p className="text-foreground-muted">服务器尚未配置后台推送。</p>
+          )}
+          {(!state || (!!state.subscription && !backgroundEnabled)) && (
+            <div className="flex gap-2">
               <Button
-                variant="outline"
-                size="sm"
+                {...uiActionProps.recovery}
                 disabled={loading || busy || testing}
-                onClick={() => void act("disable")}
+                onClick={() => void refresh()}
               >
-                清理浏览器订阅
+                重新读取状态
               </Button>
-            )}
-          </div>
-        )}
-      </LoomNotificationStatus>
-    </div>
+              {state?.subscription && !backgroundEnabled && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={loading || busy || testing}
+                  onClick={() => void act("background-off")}
+                >
+                  清理浏览器订阅
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
+      </details>
+    </LoomNotificationStatus>
   );
 }

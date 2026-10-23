@@ -1,0 +1,29 @@
+{
+  "scope": "Owner-approved unified notification settings; no new delivery transport or backend changes",
+  "implemented": [
+    "One official notification card, one enable/disable/test action set",
+    "Default local enable and local test; optional background checkbox in closed native details",
+    "Master disable confirms background disable before local off; unknown result not reported as disabled",
+    "Existing background subscriptions retained; no automatic opt-in; native workspace mute form preserved"
+  ],
+  "verification": {
+    "automated": "13 focused settings, notification client, and preference tests passed; UI contract 8 passed; frontend typecheck and workbench build passed",
+    "browser": "Real Chrome formal localhost page: one card, default advanced closed, local test accepted, disable->enable restored local on with background off. 390x844 disclosure click and test button hit true (105x32).",
+    "limits": [
+      "No external subscription newly enabled or external test push sent",
+      "No new physical-mobile or OS-banner claim",
+      "Existing local/remote delivery still shares dedup; this UI slice does not add server presence-based transport routing"
+    ]
+  },
+  "deployment": {
+    "at": "2026-10-23T04:31:52.049Z",
+    "newPid": 91800,
+    "newStaticDirectory": "/Users/sun/Code/repos/rah_os/.workbench-web/3d5dc47a0b29627828d029b7704fb4f5254bc5211d131808682c9c12a8ddf111",
+    "sourceSha256": "4c73ea076c6dbe6f964d8671162ebe80b8ed157b249b4ed6eb0632198f4e0974",
+    "pushStateUnchanged": true,
+    "databases": 2,
+    "files": 325
+  },
+  "data": "20 business tables unchanged; backup and graceful restart verified",
+  "paidCli": "Not run"
+}
