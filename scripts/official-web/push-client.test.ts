@@ -108,3 +108,30 @@ test("test notification failure is not silently retried", async () => {
   await assert.rejects(f.bridge.test());
   assert.equal(f.calls.filter((x) => x === "push.test").length, 1);
 });
+
+test("test push aborts a stalled request at its deadline without retry", async (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  let signal: AbortSignal | undefined,
+    calls = 0;
+  const bridge = new LoomPushClient(
+    {
+      request: (_op: string, _input: unknown, options: any) => {
+        calls++;
+        signal = options?.signal;
+        return new Promise(() => {});
+      },
+    } as any,
+    {} as any,
+  );
+  let finished = false;
+  const check = bridge.test().catch((e) => {
+    finished = true;
+    assert.equal(e.name, "TimeoutError");
+  });
+  t.mock.timers.tick(20000);
+  await new Promise<void>((resolve) => setImmediate(resolve));
+  assert.equal(finished, true);
+  await check;
+  assert.equal(signal?.aborted, true);
+  assert.equal(calls, 1);
+});

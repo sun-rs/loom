@@ -1,0 +1,50 @@
+{
+  "upstreamRevision": "db5e399f017d584e49597e3a28757645d6807893",
+  "upstream": "https://github.com/botiverse/raft-source",
+  "sourceEvidence": [
+    {
+      "path": "packages/server/src/routes/push.ts",
+      "sha256": "76960c0faca23b3c61fb24a96fef8765532018f952c5c72320c1fee2a64ed823"
+    },
+    {
+      "path": "packages/server/src/services/pushService.ts",
+      "sha256": "6ea88d6feebf12e347eceff23f708922b8328b1c4522372e3fdfe59d68a654fb"
+    }
+  ],
+  "findings": [
+    "Official Web Push sendPushToUsers uses web-push, per-send HttpsAgent and Promise.allSettled; no timeout specified. Test route awaits that call.",
+    "Pinned official frontend Axios has no timeout; handleSendTest awaits refreshState before resetting testing.",
+    "Official APNs createApnsHttpClient uses an absolute timer, destroys transport on timeout and clears timer on settle. This is reference behavior, not copied Web Push implementation.",
+    "Loom production recorded ECONNRESET. Missing deadlines independently reproduced with never-resolving test transports; original network reset cause unknown."
+  ],
+  "implementation": [
+    "Official generated notification UI unchanged",
+    "Loom transport retains web-push encryption/VAPID; adds 10s socket inactivity / 15s absolute deadline with dedicated agent destruction",
+    "Loom test request has 20s absolute deadline plus abort; no automatic resend",
+    "Test action no longer blocks completion on subscription refresh; no change to enable/disable verification"
+  ],
+  "reuseClassification": "Existing official presentation retained. Timeout lifecycle is a Loom compatibility fix informed by official APNs; not claimed byte-exact reuse of official push service. Official server DB/auth/central-account dependencies not imported.",
+  "validation": {
+    "focusedTests": 9,
+    "uiContractTests": 8,
+    "typecheck": "root and Loom passed",
+    "build": "passed"
+  },
+  "limits": [
+    "No proof of why Mozilla connection reset or stalled",
+    "Timeout leaves delivery unknown; late OS notification possible",
+    "No actual Firefox or OS banner acceptance claimed"
+  ],
+  "deployment": {
+    "pid": 24012,
+    "unchangedBusinessTables": 20,
+    "pushStateUnchanged": true,
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-push-timeout-183c0dc8-a9fa-4205-a9a8-65cb554578be",
+    "freshFormalPage": "Settings rendered in browser on existing HTTP entry; HTTPS API separately CA-verified",
+    "httpsTest": {
+      "status": 200,
+      "delivered": 1,
+      "seconds": 2.099965
+    }
+  }
+}

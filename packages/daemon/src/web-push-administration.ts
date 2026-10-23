@@ -1,3 +1,4 @@
+import { Agent } from "node:https";
 import { randomUUID } from "node:crypto";
 import type { AuthenticatedActorContext } from "@rah-os/core";
 import type { WebPushAdministrationPort } from "@rah-os/application-service";
@@ -17,15 +18,36 @@ export function createNodeWebPushTransport(input: {
 }): WebPushTransport {
   return Object.freeze({
     async send(subscription: ClientPushSubscription, payload: WebPushPayload) {
-      await webPush.sendNotification(subscription, JSON.stringify(payload), {
-        TTL: 60 * 60,
-        urgency: "normal",
-        vapidDetails: {
-          subject: "mailto:local@rah-os.invalid",
-          privateKey: input.privateKey,
-          publicKey: input.publicKey,
-        },
-      });
+      const agent = new Agent({ keepAlive: false });
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      try {
+        await Promise.race([
+          webPush.sendNotification(subscription, JSON.stringify(payload), {
+            agent,
+            timeout: 10000,
+            TTL: 60 * 60,
+            urgency: "normal",
+            vapidDetails: {
+              subject: "mailto:local@rah-os.invalid",
+              privateKey: input.privateKey,
+              publicKey: input.publicKey,
+            },
+          }),
+          new Promise<never>((_, reject) => {
+            timer = setTimeout(() => {
+              reject(
+                Object.assign(new Error("Push provider deadline exceeded"), {
+                  code: "ETIMEDOUT",
+                }),
+              );
+              agent.destroy();
+            }, 15000);
+          }),
+        ]);
+      } finally {
+        clearTimeout(timer);
+        agent.destroy();
+      }
     },
   });
 }

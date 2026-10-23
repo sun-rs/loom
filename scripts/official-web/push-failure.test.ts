@@ -35,3 +35,12 @@ test("push failures distinguish server rejection from lost responses without lea
     assert.match(message, /未自动重发/);
   }
 });
+
+test("deadline explains unknown delivery rather than claiming a failed send", () => {
+  const message = describePushTestFailure(
+    new DOMException("deadline", "TimeoutError"),
+  );
+  assert.match(message, /20 秒/);
+  assert.match(message, /稍后到达/);
+  assert.match(message, /未自动重发/);
+});

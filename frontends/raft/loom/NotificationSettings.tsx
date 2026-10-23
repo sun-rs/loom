@@ -93,7 +93,7 @@ export default function NotificationSettings({
             : "通知操作未确认，未自动重发。";
     }
     if (alive.current) {
-      await refresh();
+      if (kind !== "test") await refresh();
       if (failure) setError(failure);
       setBusy(false);
       setTesting(false);

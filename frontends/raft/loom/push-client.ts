@@ -79,7 +79,25 @@ export class LoomPushClient {
     return await this.read();
   }
   async test() {
-    return await this.client.request("push.test", {});
+    const controller = new AbortController();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      return await Promise.race([
+        this.client.request("push.test", {}, { signal: controller.signal }),
+        new Promise<never>((_, reject) => {
+          timer = setTimeout(() => {
+            const error = new DOMException(
+              "Push test deadline exceeded",
+              "TimeoutError",
+            );
+            reject(error);
+            controller.abort(error);
+          }, 20000);
+        }),
+      ]);
+    } finally {
+      clearTimeout(timer);
+    }
   }
 }
 /** Structural port of official pushNotifications.ts registration/base64/subscription flow. */
