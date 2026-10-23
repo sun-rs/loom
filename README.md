@@ -1,4 +1,8 @@
-# RAH
+# RAH / Chatbox
+
+本分支是 `sun-rs/loom` 的独立 `chatbox` 产品，导入自 `sun-rs/rah` 的
+`871ace825954750a546a027a832d76332cbd467e`。Loom 协作平台在 `main`，两套产品不混合构建或部署。
+以下历史 `main` 描述指源 RAH 主线；本分支遵守自己的 AGENTS.md。
 
 Runtime-owned AI workbench for local-first, cross-device session continuity.
 

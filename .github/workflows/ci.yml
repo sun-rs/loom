@@ -3,7 +3,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [chatbox]
 
 permissions:
   contents: read
@@ -22,6 +22,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - run: node --test scripts/branch-ci.test.mjs
       - name: Use repository npm version
         run: npm install --global npm@11.12.1
       - run: npm ci

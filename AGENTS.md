@@ -1,5 +1,10 @@
 # RAH engineering guide
 
+Repository placement: this product is now the `chatbox` branch of `sun-rs/loom`,
+imported from RAH commit `871ace825954750a546a027a832d76332cbd467e`.
+Historical `main` references mean the source RAH branch, not Loom main.
+Keep this workbench isolated from Loom main; use this branch's commands and owners.
+
 Read this file before changing RAH. Start with `HANDOVER.md` and `docs/README.md`, then open only the owner documents relevant to the change.
 
 ## Product and architecture
