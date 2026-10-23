@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
-function setup(clients = []) {
+function setup(clients = [], receipts = new Map(), showNotification) {
   const handlers = {},
     shown = [],
     opened = [];
@@ -15,9 +15,13 @@ function setup(clients = []) {
       matchAll: async () => clients,
       openWindow: async (url) => opened.push(url),
     },
-    registration: { showNotification: async (...args) => shown.push(args) },
+    registration: {
+      showNotification: async (...args) => {
+        await showNotification?.(...args);
+        shown.push(args);
+      },
+    },
   };
-  const receipts = new Map();
   const cache = {
     match: async (k) => receipts.get(k),
     put: async (k, v) => receipts.set(k, v),
@@ -133,4 +137,56 @@ test("local source rejection returns a failure receipt instead of silently timin
   assert.equal(replies[0]?.ok, false);
   assert.equal(replies[0]?.error, "source");
   assert.equal(f.shown.length, 0);
+});
+
+// Browser lifecycle coverage: every setup creates a fresh JS worker, while only
+// CacheStorage survives. There is no Window client or local polling producer.
+test("closed-page push survives worker restart and click reopens its target", async () => {
+  const receipts = new Map();
+  const first = setup([], receipts);
+  await first.emit("push", { data: { json: () => payload } });
+  assert.equal(first.shown.length, 1);
+  const restarted = setup([], receipts);
+  await restarted.emit("push", { data: { json: () => payload } });
+  assert.equal(
+    restarted.shown.length,
+    0,
+    "durable receipt suppresses a duplicate",
+  );
+  await restarted.emit("push", {
+    data: { json: () => ({ ...payload, notificationId: "after-restart" }) },
+  });
+  assert.equal(restarted.shown.length, 1, "new activity wakes a fresh worker");
+  let closed = false;
+  await restarted.emit("notificationclick", {
+    notification: {
+      close() {
+        closed = true;
+      },
+      data: restarted.shown[0][1].data,
+    },
+  });
+  assert.equal(closed, true);
+  assert.equal(restarted.opened.length, 1);
+  assert.deepEqual(
+    JSON.parse(
+      new URL(restarted.opened[0], "https://loom.test").searchParams.get(
+        "push",
+      ),
+    ),
+    payload.target,
+  );
+});
+
+test("failed background display does not save a false delivery receipt", async () => {
+  const receipts = new Map();
+  const failing = setup([], receipts, async () => {
+    throw Error("OS unavailable");
+  });
+  await failing.emit("push", { data: { json: () => payload } });
+  assert.equal(failing.shown.length, 0);
+  assert.equal(receipts.size, 0);
+  const restarted = setup([], receipts);
+  await restarted.emit("push", { data: { json: () => payload } });
+  assert.equal(restarted.shown.length, 1);
 });
