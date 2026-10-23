@@ -27,6 +27,17 @@ function setup() {
     },
   };
   const exports = {};
+  const recovery = {};
+  vm.runInNewContext(
+    ts.transpileModule(
+      readFileSync(
+        "frontends/raft/packages/web/src/utils/dynamicImportRecovery.ts",
+        "utf8",
+      ),
+      { compilerOptions: { module: ts.ModuleKind.CommonJS } },
+    ).outputText,
+    { exports: recovery, Error },
+  );
   const js = ts.transpileModule(
     readFileSync("frontends/raft/loom/LazyPages.tsx", "utf8") +
       "\nexport {nativePage};",
@@ -41,13 +52,17 @@ function setup() {
   vm.runInNewContext(js, {
     exports,
     require: (id) =>
-      id === "react"
-        ? react
-        : id === "react-intl"
-          ? { useIntl: () => ({ formatMessage: () => "加载中…" }) }
-          : id === "react/jsx-runtime"
-            ? { jsx: (type, props) => ({ type, props }) }
-            : null,
+      id.endsWith("dynamicImportRecovery.ts")
+        ? recovery
+        : id.endsWith("PageLoadRecovery.tsx")
+          ? { default: "PageLoadRecovery" }
+          : id === "react"
+            ? react
+            : id === "react-intl"
+              ? { useIntl: () => ({ formatMessage: () => "加载中…" }) }
+              : id === "react/jsx-runtime"
+                ? { jsx: (type, props) => ({ type, props }) }
+                : null,
   });
   return {
     nativePage: exports.nativePage,
@@ -124,4 +139,29 @@ test("a module resolving between remount and effect still becomes visible", asyn
   h.runEffect();
   assert.equal(View({}).props.children.type, Page);
   assert.equal(h.published.length, 1);
+});
+
+test("stale deployed imports render recovery without throwing away the mounted application", async () => {
+  const h = setup();
+  const failure = new Error(
+    "Failed to fetch dynamically imported module: /assets/old.js",
+  );
+  const View = h.nativePage(() => Promise.reject(failure));
+  View({});
+  h.runEffect();
+  await Promise.resolve();
+  await Promise.resolve();
+  let output;
+  assert.doesNotThrow(() => {
+    output = View({});
+  });
+  assert.equal(output.props.error, failure);
+});
+
+test("refresh confirmation is above the search overlay and retains native confirmation", () => {
+  const source = readFileSync(
+    "frontends/raft/loom/PageLoadRecovery.tsx",
+    "utf8",
+  );
+  assert.match(source, /<ConfirmDialog\s+layer=\{1\}/);
 });

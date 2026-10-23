@@ -1,0 +1,39 @@
+{
+  "scope": "Recover failed demand-loaded product pages without unmounting the Loom shell",
+  "rootCause": "Old open page requested expired hashed DiscoveryPage asset after deployment; nativePage threw into default router error screen.",
+  "implementation": [
+    "Classify dynamic module errors with adopted official utility; retain ChannelApp, draft and write owners and render official AppRefreshRequiredScreen inside failed demand page",
+    "Continue returns to channel through existing route guards; refresh requires official nested confirmation layer 1 and checks registered unresolved write owners",
+    "No automatic reload, cache clearing, worker unsubscribe or business mutation replay"
+  ],
+  "provenance": {
+    "repository": "https://github.com/botiverse/raft-source",
+    "license": "FSL-1.1-ALv2; owner authorized reuse",
+    "screen": "a98ae003 AppUpdateGate, existing RUI compatibility port recorded in rui-v6-ports.json; direct reuse with Loom label override",
+    "scrollerAndClassifier": "a98ae003 adopted source, hashes match adoption.json",
+    "confirmation": "db5e399 OfficialConfirmation.generated.tsx; unchanged generated declaration",
+    "local": "PageLoadRecovery routing, confirmation and write-owner glue; no immutable source edits"
+  },
+  "tests": {
+    "red": "Stale module regression failed by throwing before fix; nested confirmation layer assertion failed before repair",
+    "passed": 9,
+    "uiContractPassed": 8,
+    "frontendTypecheck": "passed",
+    "workbenchBuild": "passed; existing large chunk warnings remain",
+    "browser": "Read-only local proxy injected one DiscoveryPage 404. Official recovery appeared, unsent draft survived cancel and continue, confirmed refresh recovered search. Initial confirmation hit was covered by search footer; native layer 1 fixed and retested. At 390x844 confirm center hit true, in viewport, cancel/continue worked.",
+    "formal": "New service Chrome product refresh, search open/close, channel composer and 390x844 layout verified"
+  },
+  "deployment": {
+    "newPid": 27821,
+    "newStaticDirectory": "/Users/sun/Code/repos/rah_os/.workbench-web/3e849712e179517d11b536a726e9c43f4b2d4358adda53c4286a06f56158b1c3",
+    "databases": 2,
+    "files": 325,
+    "pushStateUnchanged": true
+  },
+  "data": "20 business tables unchanged across safe backup and graceful restart; no paid CLI or business mutations submitted",
+  "limits": [
+    "Existing old JavaScript cannot acquire this handler without one explicit refresh",
+    "Covers failed DemandPage imports; not initial bootstrap failure, arbitrary React errors or indefinite compatibility with every old asset",
+    "True physical-mobile/closed-page push/performance gates remain separate"
+  ]
+}

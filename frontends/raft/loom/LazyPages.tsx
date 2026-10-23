@@ -1,3 +1,5 @@
+import PageLoadRecovery from "./PageLoadRecovery.tsx";
+import { isDynamicImportFailure } from "../packages/web/src/utils/dynamicImportRecovery.ts";
 import {
   Suspense,
   useEffect,
@@ -48,7 +50,11 @@ function nativePage<T extends ComponentType<any>>(
         active = false;
       };
     }, []);
-    if (result.failed) throw result.error;
+    if (result.failed) {
+      if (isDynamicImportFailure(result.error))
+        return <PageLoadRecovery error={result.error} />;
+      throw result.error;
+    }
     return result.page ? (
       <Suspense fallback={<PanelFallback />}>
         {createElement(result.page, props)}

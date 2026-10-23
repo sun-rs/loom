@@ -8,6 +8,24 @@
   },
   "families": [
     {
+      "id": "page-load-recovery",
+      "owner": "official AppRefreshRequiredScreen plus OfficialConfirmation",
+      "rule": "Keep mounted Loom shell and drafts; explicit reload confirmation only, unresolved write blocks reload. No cache clearing, worker removal or mutation replay. Continue returns to channel using existing route guards. AppUpdateGate is the recorded a98ae003-to-RUI compatibility port, not db5e399 byte-exact source; confirmation uses db5e399 generated declaration at nested layer 1.",
+      "sources": [
+        "frontends/raft/packages/web/src/components/errors/AppUpdateGate.tsx",
+        "frontends/raft/packages/web/src/components/errors/RootFallbackScroller.tsx",
+        "frontends/raft/packages/web/src/utils/dynamicImportRecovery.ts"
+      ],
+      "bindings": [
+        "PageLoadRecovery.tsx",
+        "LazyPages.tsx"
+      ],
+      "evidence": [
+        "scripts/official-web/page-loading.test.mjs",
+        "scripts/official-web/page-recovery.test.ts"
+      ]
+    },
+    {
       "id": "foundation",
       "owner": "raft-ui Button and recipes",
       "rule": "Use native size/variant/state recipes. Defined defaults are allowed; unexplained page overrides are not.",
