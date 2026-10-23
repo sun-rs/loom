@@ -1,0 +1,26 @@
+{
+  "date": "2026-10-23",
+  "scope": "Read-only network diagnosis after three user test clicks; no restart, no code or network configuration changes",
+  "findings": {
+    "daemonLog": "Repeated LOOM_PUSH_TEST_FAILED with ECONNRESET and no HTTP status; log timestamps unavailable, cannot uniquely map all lines to three clicks",
+    "socketSnapshot": "No outbound Mozilla socket remained at inspection; not proof against all leaks",
+    "dns": "updates.push.services.mozilla.com -> 198.18.8.100 via utun5; Surge running",
+    "independentNodeProbe": {
+      "requests": 4,
+      "path": "GET / without subscription or credentials",
+      "result": "all timed out at 10 seconds after TCP connect, before secureConnect"
+    },
+    "explicitSystemProxyProbe": "Three HEAD requests through local system HTTP proxy timed out; third completed TLS at 5.81s but received no HTTP response by 10s",
+    "control": "www.mozilla.org via same proxy HTTP 200 in 0.269s",
+    "recoveryWithoutRestart": {
+      "proxy": "Mozilla root later responded HTTP 406",
+      "node": "Mozilla root HTTP 406 in 0.732s"
+    }
+  },
+  "conclusion": "Intermittent reachability to Mozilla push host reproduced independently of Loom and notification sends; HTTP 406 on root only proves transport recovered, not push acceptance. No evidence of HTTP 429 rate limit. Exact failing hop/policy remains unproven.",
+  "limits": [
+    "Did not change Surge rules or exit node",
+    "Did not send additional actual push notifications",
+    "Need active Surge request rule/egress evidence to distinguish proxy policy, exit or remote failures"
+  ]
+}
