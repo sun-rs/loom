@@ -2,7 +2,7 @@
 
 Owner 要求：当前可施工问题先处理；没有具体新缺陷时，evo 转为 main，原 main 保存为 chatbox。
 
-## 身份与操作
+## 首次晋升操作（后继裁定见下）
 
 - 原 main：`f1bc8c9d2f70b44aa5e1cacc2362e8905ed4c612`，旧 Raft 复刻 UI 基线，完整保留到 chatbox。
 - 晋升基线：`51ce2565717ee32797f0f8ce49a136e799a17be6`，官方源码前端及 Loom Role/Instance 后端。
@@ -22,3 +22,17 @@ Owner 要求：当前可施工问题先处理；没有具体新缺陷时，evo �
 
 后台通知结构已沿用官方 Worker push/click 处理；最近19项专项通过，真实闭页横幅仍待验。
 此次仅整理 Git 主线和入口文档，不改变产品行为，不为改名重跑全产品或付费模型测试。
+
+## 最终分支布局（同日 Owner 更正）
+
+负责人明确不要旧复刻版 chatbox，要求吸收同级 rah 项目并删除 evo。
+
+- main：当前 Loom，官方源码前端与 Role/Instance 协作后端不变。
+- chatbox：逐提交引入 `../rah` 当前 main，源提交 `871ace825954750a546a027a832d76332cbd467e`，远端来源 `git@github.com:sun-rs/rah.git`。保留全部可达历史与原始文件，不将其代码合并进 Loom main。
+- 源 rah 工作区干净，原仓库、远端与其他审计分支未改。`audit/d925e01-surgery` 是不同版本，本次未替 owner 选择它。
+- 旧 chatbox 分支被替换；干净旧工作树 `../loom-main` 已移除。旧复刻代码仍可从既有 `milestone-ui-raft` 标签及 Git 历史追溯，不重写或清除历史。
+- 远端 evo 分支删除；提交已包含在 main 历史中。docs/evo、运行标签、数据目录继续保留原路径，与 Git 分支存在与否无关。
+- 替换采用远端旧 SHA 校验及原子 push，避免覆盖并发更新。Chatbox 导入按提交／tree 相同验证，不代表重新构建、部署或验收其功能。
+
+今后 Loom 在 main 工作，Chatbox 在 chatbox 工作，两者分别遵守各自 AGENTS.md。
+“吸收”本轮是同仓库独立分支托管，不是合并两套后端、包管理或服务部署。

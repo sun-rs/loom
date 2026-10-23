@@ -5,11 +5,15 @@ from `evo` on 2026-10-23), not the
 legacy sibling `rah` repository. There is no `HANDOVER.md`. Do not import the
 legacy project's Session-first rules or obsolete roadmap restrictions.
 
-- `chatbox` preserves the former `main` UI milestone at `f1bc8c9d` and accepts
-  emergency fixes only. It is not the separate sibling `rah` repository.
-- `main` is the active product branch; `evo` is retained as a historical reference.
+- `chatbox` now contains the independently imported `rah/main` workbench
+  (initial source `871ace825954750a546a027a832d76332cbd467e`). It is a separate
+  product branch with its own engineering contract; never merge its Session-first
+  rules or source into Loom implicitly. The former reconstructed UI branch is
+  retired; existing tags and Git history retain it.
+- `main` is the active Loom product branch; the obsolete `evo` branch is removed.
   Existing instructions to develop/commit/push `evo` now apply to `main`.
-  Historical comparisons to `main` mean the old baseline now named `chatbox`.
+  Historical comparisons to `main` mean the retired baseline `f1bc8c9d`,
+  not today's imported `chatbox`.
   Keep `docs/evo`, deployment labels and data paths unchanged; branch promotion
   does not certify unresolved acceptance gates. See
   `docs/evo/branch-promotion.zh-CN.md`.
