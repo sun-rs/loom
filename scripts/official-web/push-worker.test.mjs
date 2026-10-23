@@ -110,7 +110,7 @@ test("local and remote delivery share one receipt and one notification", async (
   });
   await f.emit("push", { data: { json: () => payload } });
   assert.equal(f.shown.length, 1);
-  assert.equal(replies[0].ok, true);
+  assert.equal(replies.at(-1).ok, true);
 });
 test("local notification rejects foreign source without displaying", async () => {
   const f = setup();
@@ -119,5 +119,18 @@ test("local notification rejects foreign source without displaying", async () =>
     data: { type: "LOOM_LOCAL_NOTIFY", payload },
     ports: [],
   });
+  assert.equal(f.shown.length, 0);
+});
+
+test("local source rejection returns a failure receipt instead of silently timing out", async () => {
+  const f = setup();
+  const replies = [];
+  await f.emit("message", {
+    source: null,
+    data: { type: "LOOM_LOCAL_NOTIFY", payload },
+    ports: [{ postMessage: (r) => replies.push(r) }],
+  });
+  assert.equal(replies[0]?.ok, false);
+  assert.equal(replies[0]?.error, "source");
   assert.equal(f.shown.length, 0);
 });

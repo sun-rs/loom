@@ -19,6 +19,10 @@ test("the local workbench gateway keeps Human authority server-side", async () =
     join(staticDirectory, ".rah-web-build.json"),
     JSON.stringify({ schemaVersion: 1, webBuildId: "web-generation-local" }),
   );
+  writeFileSync(
+    join(staticDirectory, "loom-push-sw.js"),
+    "// notification worker",
+  );
   writeFileSync(join(staticDirectory, "assets", "app-deadbeef.js"), "ok");
   writeFileSync(join(staticDirectory, "sw.js"), "ok");
   writeFileSync(
@@ -228,6 +232,9 @@ test("the local workbench gateway keeps Human authority server-side", async () =
     const serviceWorker = await fetch(`${origin}/sw.js`);
     assert.equal(serviceWorker.status, 200);
     assert.equal(serviceWorker.headers.get("cache-control"), "no-cache");
+
+    const notificationWorker = await fetch(`${origin}/loom-push-sw.js`);
+    assert.equal(notificationWorker.headers.get("cache-control"), "no-cache");
 
     const spaFallback = await fetch(`${origin}/rooms/room-1`);
     assert.equal(spaFallback.status, 200);

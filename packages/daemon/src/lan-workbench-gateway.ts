@@ -589,7 +589,9 @@ export class LanWorkbenchGateway {
 }
 
 function revalidatedShellFile(path: string): boolean {
-  return ["manifest.webmanifest", "sw.js"].includes(basename(path));
+  return ["manifest.webmanifest", "sw.js", "loom-push-sw.js"].includes(
+    basename(path),
+  );
 }
 
 function normalizePublicHostname(value: string): string {

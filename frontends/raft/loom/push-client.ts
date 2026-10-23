@@ -125,11 +125,30 @@ export const browserPushPlatform: PushPlatform = {
   },
 };
 
+// Fixed protocol revision bypasses legacy immutable HTTP cache without replacing
+// the root registration (and its existing push subscription).
+export const NOTIFICATION_WORKER_URL = "/loom-push-sw.js?protocol=local-v1";
 export async function ensureNotificationWorker() {
   const registration = await navigator.serviceWorker.register(
-    "/loom-push-sw.js",
+    NOTIFICATION_WORKER_URL,
     { scope: "/", updateViaCache: "none" },
   );
+  // register() may return the existing active worker without checking its bytes.
+  // Explicitly update before relying on the current notification protocol.
+  let updateTimer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    await Promise.race([
+      registration.update(),
+      new Promise<never>((_, reject) => {
+        updateTimer = setTimeout(
+          () => reject(Error("通知工作进程更新超时；未发送。")),
+          10000,
+        );
+      }),
+    ]);
+  } finally {
+    clearTimeout(updateTimer);
+  }
   if (registration.installing || registration.waiting || !registration.active)
     await new Promise<void>((resolve, reject) => {
       const worker = registration.installing ?? registration.waiting;

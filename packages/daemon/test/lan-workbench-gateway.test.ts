@@ -31,6 +31,10 @@ test("the formal LAN gateway requires TLS pairing and keeps Human authority serv
     join(staticDirectory, ".rah-web-build.json"),
     JSON.stringify({ schemaVersion: 1, webBuildId: "web-generation-lan" }),
   );
+  writeFileSync(
+    join(staticDirectory, "loom-push-sw.js"),
+    "// notification worker",
+  );
   writeFileSync(join(staticDirectory, "assets", "app.js"), "ok");
   writeFileSync(
     join(staticDirectory, "assets", "pdf.worker.mjs"),
@@ -359,6 +363,10 @@ test("the formal LAN gateway requires TLS pairing and keeps Human authority serv
       /frame-src 'self' https:\/\/127\.0\.0\.1:\d+;/u,
     );
     assert.match(authenticatedRoot.body, /RAH OS/u);
+    const notificationWorker = await secureRequest(origin, "/loom-push-sw.js", {
+      headers: { cookie },
+    });
+    assert.equal(notificationWorker.headers["cache-control"], "no-cache");
     const workerModule = await secureRequest(origin, "/assets/pdf.worker.mjs", {
       headers: { cookie },
     });

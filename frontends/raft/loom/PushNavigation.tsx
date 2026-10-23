@@ -9,6 +9,7 @@ import { Button } from "raft-ui";
 import Banner from "../packages/web/src/components/ui/Banner.tsx";
 import { hasRouteBoundIntent } from "./useIntentRoute.ts";
 import { hasUnresolvedIntents } from "@rah-os/client-core/write-intent";
+import { NOTIFICATION_WORKER_URL } from "./push-client.ts";
 import { pushTargetParams } from "./push-navigation.ts";
 /** Official worker-message listener pattern, using the authenticated Loom navigation owner. */
 export default function PushNavigation({ client }: { client: RahClient }) {
@@ -37,8 +38,9 @@ export default function PushNavigation({ client }: { client: RahClient }) {
       const source = event.source as ServiceWorker | null;
       if (
         !source?.scriptURL ||
-        source.scriptURL !==
-          new URL("/loom-push-sw.js", locationOrigin()).href ||
+        !["/loom-push-sw.js", NOTIFICATION_WORKER_URL].some(
+          (path) => source.scriptURL === new URL(path, locationOrigin()).href,
+        ) ||
         event.data?.type !== "LOOM_PUSH_NAVIGATE"
       )
         return;

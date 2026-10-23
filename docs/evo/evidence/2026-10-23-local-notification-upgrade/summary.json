@@ -1,0 +1,28 @@
+{
+  "rootCause": {
+    "observed": "Firefox 158 existing active worker source inspected through native DevTools: LOOM_LOCAL_NOTIFY absent; frontend timeout at worker-response stage",
+    "server": "Fixed worker URL erroneously served as public,max-age=31536000,immutable",
+    "insufficientFix": "Changing response to no-cache and calling registration.update still left the existing Firefox worker unresponsive",
+    "effectiveFix": "Fixed protocol-version URL bypasses existing cached resource; root scope/subscription retained; explicit bounded update and activation wait"
+  },
+  "verification": {
+    "red": "Source rejection lacked reply; both gateway cache headers immutable; existing registration not explicitly updated; protocol URL missing",
+    "green": "23 focused gateway/notification tests; final frontend subset 13 passed; root/frontend types, UI contract 8, workbench build passed",
+    "browser": "Existing Firefox 158 HTTPS registration: three consecutive manual local notification tests returned browser accepted; no subscription removal or permission reset. Original user tab refreshed afterwards.",
+    "limitations": [
+      "No claim of independently observed OS banner",
+      "No physical offline test",
+      "No paid CLI tests"
+    ]
+  },
+  "deployment": {
+    "at": "2026-10-23T04:12:12.972Z",
+    "newPid": 36138,
+    "sourceSha256": "7bad08b9c85838da4634106322c19752e028a76ab2b869ccba4ebd08cc8e00aa",
+    "newStaticDirectory": "/Users/sun/Code/repos/rah_os/.workbench-web/6ad3254caf56673002ac0f8a0e9c679545a2bbe91868bc9f126b6539de540454",
+    "pushStateUnchanged": true,
+    "databases": 2,
+    "files": 325
+  },
+  "data": "20 business tables unchanged; subscription state preserved; no unregister, browser data clearing or network policy change"
+}

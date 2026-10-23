@@ -526,7 +526,9 @@ export class LocalWorkbenchGateway {
 }
 
 function revalidatedShellFile(path: string): boolean {
-  return ["manifest.webmanifest", "sw.js"].includes(basename(path));
+  return ["manifest.webmanifest", "sw.js", "loom-push-sw.js"].includes(
+    basename(path),
+  );
 }
 
 function isApiPath(pathname: string): boolean {

@@ -4,6 +4,7 @@ import { showLocalNotification } from "../../frontends/raft/loom/local-notificat
 
 test("local display registers only local worker and never calls PushManager or network fetch", async (t) => {
   let shown = 0;
+  let updated = false;
   t.mock.method(globalThis, "fetch", async () => {
     throw Error("external network blocked");
   });
@@ -13,10 +14,18 @@ test("local display registers only local worker and never calls PushManager or n
     value: {
       serviceWorker: {
         register: async (url: string) => {
-          assert.equal(url, "/loom-push-sw.js");
+          assert.equal(url, "/loom-push-sw.js?protocol=local-v1");
           return {
+            update: async () => {
+              updated = true;
+            },
             active: {
               postMessage: (message: any, ports: MessagePort[]) => {
+                assert.equal(
+                  updated,
+                  true,
+                  "Refresh an existing worker before sending new protocol messages",
+                );
                 assert.equal(message.type, "LOOM_LOCAL_NOTIFY");
                 shown++;
                 ports[0]!.postMessage({ ok: true });

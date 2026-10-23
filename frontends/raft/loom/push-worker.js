@@ -54,7 +54,7 @@ function isSameNotificationTarget(clientUrl, target) {
 // One worker serializes both transports. Only bounded notification IDs are stored;
 // never messages, business cursors or read acknowledgements.
 let notificationWork = Promise.resolve();
-function displayNotification(data) {
+function displayNotification(data, progress = () => {}) {
   const work = notificationWork
     .catch(() => {})
     .then(async () => {
@@ -67,6 +67,7 @@ function displayNotification(data) {
         data.notificationId.length > 300
       )
         throw Error("Invalid notification");
+      progress("clients");
       const clients = await self.clients.matchAll({
         type: "window",
         includeUncontrolled: true,
@@ -80,12 +81,14 @@ function displayNotification(data) {
         )
       )
         return;
+      progress("receipts");
       const cache = await caches.open("loom-notification-receipts-v1");
       const key =
         self.location.origin +
         "/__notification_receipt/" +
         encodeURIComponent(data.notificationId);
       if (await cache.match(key)) return;
+      progress("display");
       await self.registration.showNotification(data.title.slice(0, 200), {
         body: data.body.slice(0, 1000),
         icon: "/android-chrome-192x192.png",
@@ -94,6 +97,7 @@ function displayNotification(data) {
           typeof data.tag === "string" ? data.tag.slice(0, 300) : "loom-push",
         data: { target: data.target },
       });
+      progress("save");
       await cache.put(key, new Response("1"));
       const keys = await cache.keys();
       for (const old of keys.slice(0, Math.max(0, keys.length - 500)))
@@ -113,13 +117,19 @@ self.addEventListener("push", (event) => {
 });
 self.addEventListener("message", (event) => {
   if (event.data?.type !== "LOOM_LOCAL_NOTIFY") return;
+  const reply = (value) => event.ports?.[0]?.postMessage(value);
   try {
-    if (new URL(event.source?.url).origin !== self.location.origin) return;
+    if (new URL(event.source?.url).origin !== self.location.origin) {
+      reply({ ok: false, error: "source" });
+      return;
+    }
   } catch {
+    reply({ ok: false, error: "source" });
     return;
   }
+  reply({ stage: "received" });
   event.waitUntil(
-    displayNotification(event.data.payload).then(
+    displayNotification(event.data.payload, (stage) => reply({ stage })).then(
       () => event.ports?.[0]?.postMessage({ ok: true }),
       () => event.ports?.[0]?.postMessage({ ok: false }),
     ),
