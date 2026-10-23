@@ -1,0 +1,38 @@
+{
+  "date": "2026-10-23",
+  "scope": "Test push failure diagnostics; original intermittent failure not reproduced",
+  "observed": {
+    "httpsTest": {
+      "status": 200,
+      "delivered": 1,
+      "seconds": 1.231234,
+      "beforeRepair": true
+    },
+    "subscriptions": 1,
+    "compression": "Small test response is below 1024-byte threshold; not gzip compressed",
+    "originalFailure": "No original response/error retained; root cause unknown. Successful API call is not Firefox banner acceptance."
+  },
+  "changes": [
+    "Distinguish auth rejection, HTTP errors, malformed responses and browser/network failures in existing notification UI",
+    "Log safe provider failure status/code and partial acceptance count, never raw endpoints, keys or error body",
+    "No automatic test resend; existing delivery semantics unchanged"
+  ],
+  "checks": [
+    "12 focused tests passed",
+    "8 UI contract tests passed",
+    "root and Loom typechecks passed",
+    "product build passed",
+    "formal HTTP page and notification settings checked; Chrome HTTPS blocked by untrusted CA, not bypassed"
+  ],
+  "deployment": {
+    "pid": 83267,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true,
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-push-diagnostics-5bcd1d61-83c9-47a9-8c6c-407d26c283af"
+  },
+  "limits": [
+    "No proof of original failure root cause",
+    "No post-repair Firefox UI test; Firefox not exposed by browser tools",
+    "No claim of actual OS notification delivery"
+  ]
+}

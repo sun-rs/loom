@@ -1,3 +1,4 @@
+import { describePushTestFailure } from "./push-failure.ts";
 import WorkspaceMute from "./WorkspaceMute";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
@@ -86,7 +87,7 @@ export default function NotificationSettings({
     } catch (e) {
       failure =
         kind === "test"
-          ? "测试推送结果未确认，未自动重发。"
+          ? describePushTestFailure(e)
           : e instanceof Error
             ? e.message
             : "通知操作未确认，未自动重发。";

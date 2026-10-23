@@ -8,7 +8,7 @@ import { RoomKernel } from "@rah-os/core";
 import { createWebPushAdministration } from "../src/web-push-administration.ts";
 import { WebPushStateStore } from "../src/web-push-state.ts";
 
-test("Web Push administration scopes devices to the authenticated Human", async () => {
+test("Web Push administration scopes devices to the authenticated Human", async (t) => {
   const directory = await mkdtemp(join(tmpdir(), "rah-web-push-admin-"));
   const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
   try {
@@ -71,6 +71,22 @@ test("Web Push administration scopes devices to the authenticated Human", async 
     assert.deepEqual(await administration.test(actor, {}), { delivered: 1 });
     assert.deepEqual(sent, ["https://push.example/device:computer"]);
     await administration.test(actor, {});
+    const warnings: unknown[][] = [];
+    t.mock.method(console, "warn", (...args: unknown[]) => warnings.push(args));
+    const failed = createWebPushAdministration({
+      hostId: "host-local",
+      state,
+      transport: {
+        async send() {
+          throw Object.assign(new Error("secret endpoint"), {
+            code: "ECONNRESET",
+          });
+        },
+      },
+    });
+    await assert.rejects(failed.test(actor, {}), /secret endpoint/);
+    assert.match(JSON.stringify(warnings), /ECONNRESET/);
+    assert.doesNotMatch(JSON.stringify(warnings), /secret|push.example/);
     assert.notEqual(
       tags[0],
       tags[1],

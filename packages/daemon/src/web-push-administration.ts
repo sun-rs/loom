@@ -93,6 +93,26 @@ export function createWebPushAdministration(input: {
             await input.state.remove(principalId(actor), subscription.endpoint);
             continue;
           }
+          const code =
+            typeof error === "object" && error && "code" in error
+              ? String(error.code)
+              : "";
+          // Push library errors include subscription URLs/keys: never log the raw error.
+          console.warn("LOOM_PUSH_TEST_FAILED", {
+            acceptedBeforeFailure: delivered,
+            statusCode: Number.isInteger(statusCode) ? statusCode : undefined,
+            code: [
+              "ECONNRESET",
+              "ETIMEDOUT",
+              "ENOTFOUND",
+              "EAI_AGAIN",
+              "ECONNREFUSED",
+              "ENETUNREACH",
+              "EHOSTUNREACH",
+            ].includes(code)
+              ? code
+              : "unknown",
+          });
           throw error;
         }
       }
