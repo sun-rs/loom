@@ -17,9 +17,22 @@ function setup(clients = []) {
     },
     registration: { showNotification: async (...args) => shown.push(args) },
   };
+  const receipts = new Map();
+  const cache = {
+    match: async (k) => receipts.get(k),
+    put: async (k, v) => receipts.set(k, v),
+    keys: async () => [...receipts.keys()],
+    delete: async (k) => receipts.delete(k),
+  };
   vm.runInNewContext(
     readFileSync("frontends/raft/loom/push-worker.js", "utf8"),
-    { self, URL, URLSearchParams },
+    {
+      self,
+      URL,
+      URLSearchParams,
+      Response,
+      caches: { open: async () => cache },
+    },
   );
   return {
     shown,
@@ -85,4 +98,26 @@ test("same target reuses client with navigation message and focus", async () => 
   assert.equal(f.opened.length, 0);
   assert.equal(events[0].type, "LOOM_PUSH_NAVIGATE");
   assert.equal(events[1], "focus");
+});
+
+test("local and remote delivery share one receipt and one notification", async () => {
+  const f = setup();
+  const replies = [];
+  await f.emit("message", {
+    source: { url: "https://loom.test/" },
+    data: { type: "LOOM_LOCAL_NOTIFY", payload },
+    ports: [{ postMessage: (r) => replies.push(r) }],
+  });
+  await f.emit("push", { data: { json: () => payload } });
+  assert.equal(f.shown.length, 1);
+  assert.equal(replies[0].ok, true);
+});
+test("local notification rejects foreign source without displaying", async () => {
+  const f = setup();
+  await f.emit("message", {
+    source: { url: "https://evil.test/" },
+    data: { type: "LOOM_LOCAL_NOTIFY", payload },
+    ports: [],
+  });
+  assert.equal(f.shown.length, 0);
 });

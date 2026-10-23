@@ -1,0 +1,39 @@
+{
+  "scope": "Owner-authorized local-first system notifications; optional existing Web Push retained",
+  "implemented": [
+    "Authenticated read-only bounded Room-event feed reuses Web Push projection and permissions",
+    "Device opt-in, single browser reader, scalar transport cursor; no read ACK or new domain state",
+    "Local service-worker display without PushManager or external fetch; shared bounded ID-only deduplication",
+    "Official notification card reused with label overrides"
+  ],
+  "verification": {
+    "tests": "Focused Kernel pagination/auth/no-read-ack, application HTTP auth, SDK registry, worker local/remote dedup, local-display no-fetch, existing push-client and settings-source tests passed",
+    "types": "Root and frontend passed",
+    "uiContract": "8 passed",
+    "build": "build:web:workbench passed",
+    "browser": "Real Chrome localhost secure context: local enabled, optional background push not enabled, two local tests returned browser accepted. 390x844 test button 105x32 and center hit true.",
+    "notVerified": [
+      "Actual OS banner appearance",
+      "Firefox local path",
+      "Physical offline network test",
+      "Real iOS/Android background delivery"
+    ]
+  },
+  "deployment": {
+    "at": "2026-10-23T03:51:21.206Z",
+    "newPid": 74663,
+    "newStaticDirectory": "/Users/sun/Code/repos/rah_os/.workbench-web/8018b5df69f765eeefad2d564235085aa288b510e4a29cac2ffab8bda71b3d3f",
+    "sourceSha256": "ae24eac2dd20af648ab7b3eb4f513996e0e63752a66d4cf3c1e42ee562ec1ce7",
+    "databases": 2,
+    "files": 325,
+    "pushStateUnchanged": true
+  },
+  "limits": [
+    "Five-second polling while page runs; throttled/frozen/closed pages cannot guarantee local delivery",
+    "First start begins at head; reconnect scans 100 events/page and only presents last 15 minutes",
+    "500 ID receipts; best-effort dedup, crash between display and receipt may duplicate",
+    "Existing external subscriptions remain enabled unless explicitly disabled",
+    "LAN still requires trusted HTTPS; localhost secure-context exception permits HTTP"
+  ],
+  "paidCli": "Not run"
+}

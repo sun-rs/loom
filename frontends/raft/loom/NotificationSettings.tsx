@@ -1,3 +1,4 @@
+import LocalNotificationSettings from "./LocalNotificationSettings.tsx";
 import { describePushTestFailure } from "./push-failure.ts";
 import WorkspaceMute from "./WorkspaceMute";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -102,68 +103,79 @@ export default function NotificationSettings({
   };
   const confirmed = state?.subscribed === true;
   return (
-    <LoomNotificationStatus
-      loading={loading}
-      serverConfigured={state?.supported === true}
-      permission={permission}
-      channel={channel}
-      subscribed={confirmed}
-      confirmed={confirmed}
-      busy={busy}
-      testing={testing}
-      error={error}
-      message={message}
-      handleEnable={() => void act("enable")}
-      handleDisable={() => void act("disable")}
-      handleSendTest={() => void act("test")}
-      statusLabel={
-        loading
-          ? "正在检查…"
-          : !state
-            ? "状态未知"
-            : !supported
-              ? "当前浏览器不可用"
-              : confirmed
-                ? "已启用"
-                : permission === "denied"
-                  ? "已被浏览器阻止"
-                  : state.subscription
-                    ? "浏览器订阅未登记"
-                    : "未启用"
-      }
-      detail={
-        supported
-          ? "仅管理当前浏览器；测试会发送到当前用户登记的设备。站内动态与未读提醒不受此开关影响。"
-          : "站内动态与未读提醒仍可使用。"
-      }
-    >
-      <WorkspaceMute
-        client={client}
+    <div className="space-y-6">
+      <LocalNotificationSettings
         workspaceId={workspaceId}
-        controlRoomId={controlRoomId}
-        busy={busy || testing}
+        roomId={controlRoomId}
       />
-      {(error || (!!state?.subscription && !confirmed)) && (
-        <div className="flex gap-2">
-          <Button
-            {...uiActionProps.recovery}
-            disabled={loading || busy || testing}
-            onClick={() => void refresh()}
-          >
-            重新读取状态
-          </Button>
-          {state?.subscription && !confirmed && (
+      <LoomNotificationStatus
+        labels={{
+          "settings.notifications.sectionLabel": "后台推送（可选）",
+          "settings.notifications.mainDescription":
+            "页面关闭后通过浏览器厂商推送服务接收，需要外网可达。",
+        }}
+        loading={loading}
+        serverConfigured={state?.supported === true}
+        permission={permission}
+        channel={channel}
+        subscribed={confirmed}
+        confirmed={confirmed}
+        busy={busy}
+        testing={testing}
+        error={error}
+        message={message}
+        handleEnable={() => void act("enable")}
+        handleDisable={() => void act("disable")}
+        handleSendTest={() => void act("test")}
+        statusLabel={
+          loading
+            ? "正在检查…"
+            : !state
+              ? "状态未知"
+              : !supported
+                ? "当前浏览器不可用"
+                : confirmed
+                  ? "已启用"
+                  : permission === "denied"
+                    ? "已被浏览器阻止"
+                    : state.subscription
+                      ? "浏览器订阅未登记"
+                      : "未启用"
+        }
+        detail={
+          supported
+            ? "仅管理当前浏览器；测试会发送到当前用户登记的设备。站内动态与未读提醒不受此开关影响。"
+            : "站内动态与未读提醒仍可使用。"
+        }
+      >
+        <WorkspaceMute
+          client={client}
+          workspaceId={workspaceId}
+          controlRoomId={controlRoomId}
+          busy={busy || testing}
+        />
+        {(error || (!!state?.subscription && !confirmed)) && (
+          <div className="flex gap-2">
             <Button
-              variant="outline"
-              size="sm"
+              {...uiActionProps.recovery}
               disabled={loading || busy || testing}
-              onClick={() => void act("disable")}
+              onClick={() => void refresh()}
             >
-              清理浏览器订阅
+              重新读取状态
             </Button>
-          )}
-        </div>
-      )}
-    </LoomNotificationStatus>
+            {state?.subscription && !confirmed && (
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={loading || busy || testing}
+                onClick={() => void act("disable")}
+              >
+                清理浏览器订阅
+              </Button>
+            )}
+          </div>
+        )}
+      </LoomNotificationStatus>
+    </div>
   );
 }

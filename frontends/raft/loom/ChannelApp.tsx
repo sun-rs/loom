@@ -1,3 +1,4 @@
+import LocalNotifications from "./LocalNotifications.tsx";
 import { LoomShellRoot, LoomSidebarSlot } from "./SidebarLayout.tsx";
 import { SenderActionsProvider } from "./SenderActions.tsx";
 import CloseButton from "../packages/web/src/components/ui/CloseButton.tsx";
@@ -1016,7 +1017,15 @@ export default function ChannelApp() {
           className={`min-h-0 flex-1 flex-col overflow-hidden font-display ${bootstrapping ? "invisible" : ""}`}
           data-testid="loom-channel-app"
         >
-          {directory && <PushNavigation client={client} />}
+          {directory && (
+            <>
+              <PushNavigation client={client} />
+              <LocalNotifications
+                client={client}
+                workspaceId={directory.workspace.workspaceId}
+              />
+            </>
+          )}
           {directory && (
             <TopBarSearch
               client={client}

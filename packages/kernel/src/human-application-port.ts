@@ -100,6 +100,7 @@ export type HumanApplicationPort = Pick<
   deleteTask: RoomKernel["taskDeletions"]["human"];
   listTaskHistory: RoomKernel["humanTaskHistory"]["list"];
   listWorkspaceHumans: RoomKernel["humanProfiles"]["list"];
+  listLocalNotifications: RoomKernel["humanNotifications"]["local"];
   listNotificationDismissals: RoomKernel["humanNotifications"]["listDismissals"];
   dismissNotification: RoomKernel["humanNotifications"]["dismiss"];
   requestRoomAgentSos: RoomKernel["roomAgentSos"]["requestStop"];
@@ -184,6 +185,8 @@ export function createHumanApplicationPort(
       kernel.humanSidebar.patch(actor, input),
     resolveNavigationTarget: (actor, input) =>
       kernel.humanNavigation.resolve(actor, input),
+    listLocalNotifications: (actor, input) =>
+      kernel.humanNotifications.local(actor, input),
     listNotificationDismissals: (actor, input) =>
       kernel.humanNotifications.listDismissals(actor, input),
     dismissNotification: (actor, input) =>

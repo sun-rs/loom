@@ -176,8 +176,8 @@ export function LoomWorkspaceMute({currentServer,loading,busy,testing,muting,ser
             </form>
           </div>
         )}</>;}
-export type NotificationViewProps={loading:boolean;subscribed:boolean;confirmed:boolean;busy:boolean;testing:boolean;message:string;handleEnable:()=>void;handleDisable:()=>void;handleSendTest:()=>void;children?:ReactNode;statusLabel:string;permission:NotificationPermission|'unsupported';serverConfigured:boolean;error:string;detail:string;channel:NotificationChannel};
-export function LoomNotificationStatus({loading,statusLabel,permission,serverConfigured,error,detail,channel,message,subscribed,confirmed,busy,testing,handleEnable,handleDisable,handleSendTest,children}:NotificationViewProps){const {formatMessage}=useIntl();const statusTone=!loading&&confirmed?'success':!loading&&permission==='denied'?'warning':'muted';return (<div><SectionHeader
+export type NotificationViewProps={loading:boolean;subscribed:boolean;confirmed:boolean;busy:boolean;testing:boolean;message:string;handleEnable:()=>void;handleDisable:()=>void;handleSendTest:()=>void;children?:ReactNode;statusLabel:string;permission:NotificationPermission|'unsupported';serverConfigured:boolean;error:string;detail:string;channel:NotificationChannel;labels?:Partial<Record<string,string>>};
+export function LoomNotificationStatus({loading,statusLabel,permission,serverConfigured,error,detail,channel,message,subscribed,confirmed,busy,testing,handleEnable,handleDisable,handleSendTest,children,labels}:NotificationViewProps){const intl=useIntl();const formatMessage=(input:{id:string})=>labels?.[input.id]??intl.formatMessage(input);const statusTone=!loading&&confirmed?'success':!loading&&permission==='denied'?'warning':'muted';return (<div><SectionHeader
         className="mb-3"
         icon={<Bell size={16} />}
         label={formatMessage({ id: "settings.notifications.sectionLabel" })}

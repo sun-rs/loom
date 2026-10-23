@@ -109,37 +109,7 @@ export const browserPushPlatform: PushPlatform = {
       await navigator.serviceWorker.getRegistration("/")
     )?.pushManager.getSubscription() ?? null,
   subscribe: async (key) => {
-    const registration = await navigator.serviceWorker.register(
-      "/loom-push-sw.js",
-      { scope: "/", updateViaCache: "none" },
-    );
-    if (registration.installing || registration.waiting || !registration.active)
-      await new Promise<void>((resolve, reject) => {
-        const worker = registration.installing ?? registration.waiting;
-        if (!worker) {
-          reject(Error("通知工作进程未启动。"));
-          return;
-        }
-        const done = () => {
-          clearTimeout(timer);
-          worker.removeEventListener("statechange", changed);
-        };
-        const changed = () => {
-          if (worker.state === "activated") {
-            done();
-            resolve();
-          } else if (worker.state === "redundant") {
-            done();
-            reject(Error("通知工作进程安装失败。"));
-          }
-        };
-        const timer = setTimeout(() => {
-          done();
-          reject(Error("通知工作进程启动超时，请重新读取状态。"));
-        }, 10000);
-        worker.addEventListener("statechange", changed);
-        changed();
-      });
+    const registration = await ensureNotificationWorker();
     const normalized = key.replace(/-/g, "+").replace(/_/g, "/");
     const bytes = Uint8Array.from(
       atob(normalized + "=".repeat((4 - (normalized.length % 4)) % 4)),
@@ -154,3 +124,38 @@ export const browserPushPlatform: PushPlatform = {
     );
   },
 };
+
+export async function ensureNotificationWorker() {
+  const registration = await navigator.serviceWorker.register(
+    "/loom-push-sw.js",
+    { scope: "/", updateViaCache: "none" },
+  );
+  if (registration.installing || registration.waiting || !registration.active)
+    await new Promise<void>((resolve, reject) => {
+      const worker = registration.installing ?? registration.waiting;
+      if (!worker) {
+        reject(Error("通知工作进程未启动。"));
+        return;
+      }
+      const done = () => {
+        clearTimeout(timer);
+        worker.removeEventListener("statechange", changed);
+      };
+      const changed = () => {
+        if (worker.state === "activated") {
+          done();
+          resolve();
+        } else if (worker.state === "redundant") {
+          done();
+          reject(Error("通知工作进程安装失败。"));
+        }
+      };
+      const timer = setTimeout(() => {
+        done();
+        reject(Error("通知工作进程启动超时，请重新读取状态。"));
+      }, 10000);
+      worker.addEventListener("statechange", changed);
+      changed();
+    });
+  return registration;
+}

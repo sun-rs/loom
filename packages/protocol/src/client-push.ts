@@ -86,3 +86,21 @@ export type ClientPushUnsubscribeRequest = z.infer<
   typeof ClientPushUnsubscribeRequestSchema
 >;
 export type WebPushPayload = z.infer<typeof WebPushPayloadSchema>;
+
+/** Read-only bounded transport projection; cursor never acknowledges Room activity. */
+export const ClientLocalNotificationRequestSchema = z
+  .object({
+    workspaceId: z.string().min(1),
+    after: z.number().int().nonnegative().optional(),
+  })
+  .strict();
+export const ClientLocalNotificationResponseSchema = z
+  .object({
+    cursor: z.number().int().nonnegative(),
+    hasMore: z.boolean(),
+    notifications: z.array(WebPushPayloadSchema).max(100),
+  })
+  .strict();
+export type ClientLocalNotificationRequest = z.infer<
+  typeof ClientLocalNotificationRequestSchema
+>;

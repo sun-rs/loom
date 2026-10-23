@@ -638,6 +638,19 @@ test("Client API authenticates humans and exposes canonical Room work without ow
       kind: "computer",
       hostId: "client-host",
     });
+    const local = await request(
+      "/v3/client/notifications/local",
+      globalInput,
+      human.accessToken,
+    );
+    assert.equal(local.status, 200);
+    const localBody = await jsonObject(local);
+    assert.deepEqual(localBody.notifications, []);
+    assert.equal(typeof localBody.cursor, "number");
+    assert.equal(
+      (await request("/v3/client/notifications/local", globalInput)).status,
+      401,
+    );
     const pushConfiguration = await request(
       "/v3/client/push/configuration",
       {},

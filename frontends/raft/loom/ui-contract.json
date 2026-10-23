@@ -868,7 +868,8 @@
       "scripts/official-web/account-settings.test.ts",
       "scripts/official-web/about.test.ts",
       "scripts/official-web/system-settings.test.ts",
-      "scripts/official-web/settings-resource-adaptation.test.ts"
+      "scripts/official-web/settings-resource-adaptation.test.ts",
+      "scripts/official-web/local-notifications.test.ts"
     ],
     "browser": "LOOM_BROWSER_SLICE=settings-sections: account/system/about/push at 1440 and 390",
     "exact": "System channel JSX unchanged. About version section with product rename/test marker. Account profile and notification subtrees retain native layout with explicit omissions and guards. Not untouched whole SettingsPanel.",
@@ -878,7 +879,8 @@
       "Omit upstream desktop/mobile downloads and workspace billing identity",
       "Native server-mute form extracted separately and bound to existing mutedWorkspace with revisioned writes; retain local details/recovery actions",
       "Preserve loading/error/confirmed notification guards; green badge requires confirmed subscription",
-      "FormField/AvatarSlot bindings remain; SettingsProfileCard/SurfaceListItem/SlugInput now directly depend on exact official source"
+      "FormField/AvatarSlot bindings remain; SettingsProfileCard/SurfaceListItem/SlugInput now directly depend on exact official source",
+      "Local online notifications reuse the exact generated notification card with text-only labels; optional external Web Push remains a separate card. Local display shares worker target navigation and bounded ID deduplication with Push, without marking read."
     ],
     "removed": "Four runtime SettingsPanel transforms, loom-native-appearance module and account/system virtual aliases",
     "directDependencies": [

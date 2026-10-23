@@ -29,6 +29,46 @@ export class HumanNotifications {
     initializePersonalState(this.#context.database);
   }
 
+  local(
+    auth: AuthenticatedActorContext,
+    request: P.ClientLocalNotificationRequest,
+  ) {
+    const input = P.ClientLocalNotificationRequestSchema.parse(request);
+    const actorId = this.#scope(auth, input.workspaceId);
+    const db = this.#context.database;
+    const head = Number(
+      db.prepare("SELECT COALESCE(MAX(rowid),0) AS n FROM room_events").get()!
+        .n,
+    );
+    if (input.after === undefined || input.after > head)
+      return { cursor: head, hasMore: false, notifications: [] };
+    const rows = db
+      .prepare(
+        `SELECT e.rowid AS position,e.room_id,e.room_seq,e.created_at FROM room_events e
+      JOIN rooms r ON r.room_id=e.room_id
+      JOIN memberships m ON m.room_id=r.room_id AND m.principal_id=?
+      WHERE r.workspace_id=? AND e.rowid>? ORDER BY e.rowid LIMIT 100`,
+      )
+      .all(actorId, input.workspaceId, input.after);
+    const cutoff = this.#context.now().getTime() - 15 * 60_000;
+    const notifications = rows.flatMap((row) =>
+      Date.parse(String(row.created_at)) < cutoff
+        ? []
+        : this.webPush
+            .project({
+              roomId: String(row.room_id),
+              roomSeq: Number(row.room_seq),
+            })
+            .filter((candidate) => candidate.principalId === actorId)
+            .map((candidate) => candidate.payload),
+    );
+    return P.ClientLocalNotificationResponseSchema.parse({
+      cursor: rows.length === 100 ? Number(rows.at(-1)!.position) : head,
+      hasMore: rows.length === 100,
+      notifications,
+    });
+  }
+
   listDismissals(
     auth: AuthenticatedActorContext,
     request: P.ClientNotificationListRequest,

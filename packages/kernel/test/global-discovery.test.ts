@@ -1530,3 +1530,68 @@ test("search hit identity survives query-filtered directory and explicit filters
     f.close();
   }
 });
+
+test("local notifications start at the head, recover other-room mentions and never mark read", () => {
+  const f = fixture();
+  try {
+    f.post(f.channel.roomId, "@human old", true);
+    assert.throws(() =>
+      f.kernel.humanNotifications.local(f.stranger, {
+        workspaceId: f.workspaceId,
+      }),
+    );
+    const start = f.kernel.humanNotifications.local(f.actor, {
+      workspaceId: f.workspaceId,
+    });
+    assert.deepEqual(start.notifications, []);
+    f.post(f.second.roomId, "@human new", true);
+    const before = f.kernel.listHumanActivity(f.actor, {
+      workspaceId: f.workspaceId,
+    });
+    const next = f.kernel.humanNotifications.local(f.actor, {
+      workspaceId: f.workspaceId,
+      after: start.cursor,
+    });
+    assert.equal(next.notifications.length, 1);
+    assert.match(next.notifications[0]!.body, /new/);
+    assert.deepEqual(
+      f.kernel.listHumanActivity(f.actor, { workspaceId: f.workspaceId }),
+      before,
+    );
+    assert.deepEqual(
+      f.kernel.humanNotifications.local(f.actor, {
+        workspaceId: f.workspaceId,
+        after: next.cursor,
+      }).notifications,
+      [],
+    );
+    assert.throws(() =>
+      f.kernel.humanNotifications.local(f.actor, { workspaceId: "missing" }),
+    );
+  } finally {
+    f.close();
+  }
+});
+
+test("local notification recovery is bounded and paged", () => {
+  const f = fixture();
+  try {
+    const scope = { workspaceId: f.workspaceId };
+    const start = f.kernel.humanNotifications.local(f.actor, scope);
+    for (let i = 0; i < 105; i++) f.post(f.channel.roomId, `@human ${i}`, true);
+    const page = f.kernel.humanNotifications.local(f.actor, {
+      ...scope,
+      after: start.cursor,
+    });
+    assert.equal(page.notifications.length, 100);
+    assert.equal(page.hasMore, true);
+    const end = f.kernel.humanNotifications.local(f.actor, {
+      ...scope,
+      after: page.cursor,
+    });
+    assert.equal(end.notifications.length, 5);
+    assert.equal(end.hasMore, false);
+  } finally {
+    f.close();
+  }
+});

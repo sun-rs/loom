@@ -6,6 +6,7 @@ import * as P from "@rah-os/protocol";
 import type { ZodType } from "zod";
 
 export const DISCOVERY_DATA_PATHS = [
+  "/notifications/local",
   "/rooms/preview",
   "/rooms/public/discover",
   "/rooms/public/join",
@@ -38,6 +39,13 @@ export function routeDiscovery(
   parse: <T>(schema: ZodType<T>, body: Record<string, unknown>) => T,
 ): unknown {
   switch (path) {
+    case "/notifications/local":
+      return P.ClientLocalNotificationResponseSchema.parse(
+        human.listLocalNotifications(
+          actor,
+          parse(P.ClientLocalNotificationRequestSchema, body),
+        ),
+      );
     case "/rooms/preview":
       return P.ChannelPreviewResponseSchema.parse(
         human.previewChannel(actor, parse(P.ChannelPreviewRequestSchema, body)),

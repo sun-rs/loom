@@ -149,6 +149,13 @@ export const discoveryOperations = {
     authenticated: true,
     method: "POST",
   },
+  "notification.local": {
+    input: P.ClientLocalNotificationRequestSchema,
+    output: P.ClientLocalNotificationResponseSchema,
+    path: "/v3/client/notifications/local",
+    authenticated: true,
+    method: "POST",
+  },
   "push.test": {
     input: P.ClientPushTestRequestSchema,
     output: P.ClientPushTestResponseSchema,
