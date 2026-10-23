@@ -1,0 +1,37 @@
+{
+  "revision": "bbf74d7a",
+  "verdict": "not fully accepted: reproduced stale-tab lazy-module failure",
+  "environment": "Existing Chrome product tab, loopback HTTP; 390x844 responsive override reset after checks. Firefox was being used by owner, so further Firefox interaction was deferred.",
+  "passed": [
+    "After explicit reload, search recent entries rendered; ArrowDown and Enter opened the selected instance private conversation",
+    "Desktop private conversation close returned to Agent Council",
+    "Channel settings -> member roster -> back -> cancel retained the channel",
+    "At 390x844, channel settings -> members -> private conversation loaded real history",
+    "Mobile private conversation had both return and close; return measured 44x44 with center hit true and returned to Agent Council"
+  ],
+  "failed": {
+    "trigger": "Old already-open product tab, first search open after deployment changes",
+    "visibleResult": "Unexpected Application Error! Failed to fetch dynamically imported module: /assets/DiscoveryPage-C3-SHXNh.js",
+    "independentEvidence": "Direct GET of that exact path returned HTTP 404; file absent from retained .workbench-web snapshots",
+    "recovery": "Explicit browser reload loaded current search successfully",
+    "source": [
+      "frontends/raft/loom/DraftNavigation.tsx: LoomRouter creates wildcard route without errorElement",
+      "frontends/raft/loom/app-entry.tsx: custom entry does not install official main.tsx RootErrorBoundary",
+      "scripts/workbench-web-assets.mjs: release retention leases protect daemon releases, not long-lived browser tabs"
+    ],
+    "boundary": "Established stale module failure and missing recovery integration, not proof of which historical deployment removed the file or of all reported startup slowness",
+    "repairRequired": "Integrate official-compatible dynamic import recovery through Loom router/entry without automatic reload that silently loses drafts or unknown writes; cover old-open-tab deployment transition and expired asset recovery"
+  },
+  "automated": {
+    "command": "node --test scripts/official-web/search-recent.test.ts scripts/official-web/search-pages.test.ts scripts/official-web/private-parent-navigation.test.mjs scripts/official-web/published-panel-bounds.test.mjs scripts/official-web/thread-client.test.ts",
+    "passed": 10,
+    "failed": 0,
+    "limit": "These existing checks do not cover stale deployed lazy imports; browser failure remains open"
+  },
+  "unchanged": "No product source, deployment, subscriptions, messages, model calls or configuration changed; normal read acknowledgements may occur",
+  "uncovered": [
+    "Physical phones and OS notifications",
+    "Closed-page background delivery",
+    "Firefox post-restart timing and authenticated same-condition Raft performance comparison"
+  ]
+}
