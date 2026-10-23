@@ -1,0 +1,34 @@
+{
+  "revision": "8a96ce47c1f694eec0208e2cda570d1d47998c5d",
+  "scope": "Focused acceptance of deployed product in existing Firefox over trusted LAN HTTPS; no implementation change",
+  "automated": {
+    "command": "node --test scripts/official-web/local-notifications.test.ts scripts/official-web/notification-preferences.test.ts scripts/official-web/notifications.test.ts scripts/official-web/runtime-boundary.test.ts scripts/official-web/upstream-package.test.mjs",
+    "passed": 11,
+    "failed": 0
+  },
+  "firefoxDesktop": {
+    "notifications": "Three sequential local test clicks each returned browser accepted and restored enabled controls; no HTTP 500 or indefinite sending reproduced. OS banner delivery was not independently observed.",
+    "navigation": "Tasks, Computers, Agent, Memory, Activity, Channels and Settings rendered real data or settings. Computer runtime/model/status rows and 70-instance expansion affordance present; Role profile and instance actions present.",
+    "files": "Opened channel file picker, entered Code, returned to parent, cancelled without upload or reference submission.",
+    "search": "Recent conversations showed multiple entries; receipt query returned real channel and thread matches without visible timeout.",
+    "refresh": "Channel title and composer restored after refresh.",
+    "backgroundPreference": "Existing background subscription checkbox remained checked; no change made to subscription or mute. Local tests do not prove background push transport."
+  },
+  "responsive": {
+    "environment": "Firefox responsive mode, 390x844, DPR2, touch simulation; not a physical phone",
+    "passed": [
+      "All five bottom navigation destinations reached their selected state and expected heading",
+      "Settings list -> notification detail -> settings list",
+      "Advanced notification disclosure reveals existing background preference"
+    ],
+    "observation": "First immediate AX snapshots sometimes preceded async navigation completion. Subsequent snapshots confirmed destinations. Tool action/observation time is not page performance or INP."
+  },
+  "remaining": [
+    "Physical iOS/Android keyboard, system file picker, viewport and OS notification/background acceptance",
+    "Repeated Firefox HTTPS timing and post-service-restart first-minute performance; no service restart performed in this read-only batch",
+    "Closed/frozen-page external push delivery and OS-banner verification",
+    "Large-history stress and same-condition authenticated live Raft performance comparison"
+  ],
+  "limits": "Navigation and read-only checks do not establish every mutation, full backend acceptance, latest upstream UI parity or paid CLI efficiency. No model work launched; no configuration, message, memory or task mutation submitted. Normal read acknowledgements may occur.",
+  "deployment": "Unchanged; no product code, build or service restart required"
+}
