@@ -151,3 +151,20 @@ test("file picker retains upload in sheet body and commits from header", () => {
   assert.match(source, /<DialogFooterNote>[\s\S]*?<DeviceFileUpload/);
   assert.match(source, /<DialogCommit[\s\S]*?引用所选/);
 });
+
+test("phone home is Loom; task statistics stay below the title like native app", () => {
+  const frame = readFileSync(
+    "frontends/raft/loom/ChatSidebarFrame.tsx",
+    "utf8",
+  );
+  assert.match(
+    frame,
+    /title=\{!desktop && title === "聊天" \? "Loom" : title\}/,
+  );
+  const css = readFileSync("frontends/raft/loom/mobile.css", "utf8");
+  const task = css.match(
+    /\[data-testid="loom-tasks-page"\][\s\S]*?\[data-slot="panel-header-content"\]\s*\{([^}]+)\}/,
+  );
+  assert.ok(task);
+  assert.match(task[1], /flex-direction: column/);
+});

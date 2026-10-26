@@ -226,13 +226,14 @@
     line-height: 20px;
   }
 
+  /* Native main-tab title + subtitle stack (owner correction 2026-10-27). */
   [data-testid="loom-tasks-page"]
     [data-loom-root-header]
     [data-slot="panel-header-content"] {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    gap: 8px;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 0;
   }
   /* Text metadata uses the16px content edge, not the trailing icon overhang. */
   [data-testid="loom-tasks-page"] [data-loom-root-header] {

@@ -45,7 +45,7 @@ export default function ChatSidebarFrame({
         ) : (
           <OfficialSidebarHeader
             desktop={desktop}
-            title={title}
+            title={!desktop && title === "聊天" ? "Loom" : title}
             testId={`${testIdPrefix}-header`}
             trailing={
               title === "聊天" ? (
