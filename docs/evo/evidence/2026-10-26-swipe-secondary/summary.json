@@ -1,0 +1,42 @@
+{
+  "productCommit": "8957a5fa75b183e25b467e1441cc6982a8c95eb0",
+  "checks": {
+    "sourceTests": 430,
+    "types": "passed",
+    "build": "passed"
+  },
+  "behaviorTests": [
+    "mute reads current revision and preserves other muted rooms",
+    "undo rejects a changed preference revision",
+    "unfollow refreshes and retains accepted throughSeq",
+    "unknown unfollow reads back once without resending",
+    "unmounted owner initial read cannot cause later follow write",
+    "original secondary-action recipe and unresolved-write recovery binding"
+  ],
+  "browser": {
+    "desktopViewport": [
+      1440,
+      1000
+    ],
+    "rows": 20,
+    "consoleErrors": [],
+    "mobileViewport": [
+      390,
+      844
+    ],
+    "listWidth": 390,
+    "realTouchMutation": "not exercised; no real user follow/mute state changed",
+    "screenshot": "mobile.png"
+  },
+  "deployment": {
+    "verified": true,
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-swipe-secondary-a111c1bc-cc3a-4b72-90cc-29dde0d426c3",
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true
+  },
+  "remaining": [
+    "Physical touch actions and undo acceptance.",
+    "Follow relation has no revision token; undo re-reads boolean but cannot distinguish another client deliberately unfollowing again.",
+    "Mute undo conservatively refuses any intervening preference revision."
+  ]
+}
