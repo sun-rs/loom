@@ -1,0 +1,44 @@
+{
+  "date": "2026-10-26",
+  "productCommit": "90548fc8",
+  "source": {
+    "webResource": "1.21.34",
+    "componentPackage": "0.35.1",
+    "publicSourceBaseline": "db5e399 / 1.21.23",
+    "reuse": "Theme option/preview function bodies extracted unchanged from official production resource; import bindings and persistence are Loom adapters. Theme page composition is a structural port, not untouched official application."
+  },
+  "implemented": [
+    "11 personal workspace themes with official themes.css; light/dark/system remains independent",
+    "Pixel frame decor control and topbar decor utility",
+    "Pinned activity filtering before pagination, including eligible followed threads; actor/workspace isolation retained"
+  ],
+  "checks": {
+    "focusedKernelTests": 37,
+    "officialSourceTests": 404,
+    "rootTypecheck": true,
+    "frontendTypecheck": true,
+    "workbenchBuild": true,
+    "browser": {
+      "desktop": "1440x1000 theme cards and pinned empty state",
+      "mobile": "390x844 theme two-column cards and activity four filters; toolbar clientWidth=scrollWidth=390",
+      "consoleErrors": 0,
+      "realPreferenceMutation": "Not performed; persistence/version/idempotency verified in isolated Kernel tests. Existing personal theme unchanged.",
+      "interactionNote": "Pointer click had one browser automation dispatch timeout; fresh state showed no selection; keyboard Space successfully selected pinned filter."
+    }
+  },
+  "deployment": {
+    "pid": 15507,
+    "backupDatabases": 2,
+    "backupFiles": 325,
+    "unchangedBusinessTables": 20,
+    "pushStateUnchanged": true,
+    "staticDirectory": "/Users/sun/Code/repos/rah_os/.workbench-web/11839513dd1d88a310d1a357f293f4b03a017534d5bda97c7cc74bd0ab5b9f60"
+  },
+  "remaining": [
+    "Appearance page link to workspace theme",
+    "Latest responsive icon-only activity filter composition",
+    "Third pane drag-to-edge collapse and mobile swipe rules",
+    "Full-site latest Web parity not established"
+  ],
+  "screenshots": ["desktop.png", "mobile.png", "pinned.png"]
+}
