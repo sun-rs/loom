@@ -1,0 +1,41 @@
+{
+  "productCommit": "2d2f41cd",
+  "source": "source-review.md",
+  "checks": {
+    "sourceTests": 411,
+    "frontendTypes": true,
+    "build": true,
+    "nativeHandlerTests": [
+      "measured max=840 for 400+800-360",
+      "16px keyboard / Home / End",
+      "focus threshold +40 with reverse drag restoration",
+      "pointercancel removes global listeners",
+      "double-click reset"
+    ],
+    "browserPreview": [
+      "1440x1000 actual thread max783/min360/current400; End set783; Enter focused without losing reply; menu restored channel; double-click reset400",
+      "390x844 full-width thread; main display:none; resize hidden; final menu lacks hidden-channel option"
+    ],
+    "formal": [
+      "Existing reply and follow state loaded without preview-proxy alerts",
+      "1440px Enter focus hides channel without losing message; native menu restores it",
+      "390px thread width390/main display none"
+    ]
+  },
+  "deployment": {
+    "pid": 13651,
+    "backedUpDatabases": 2,
+    "backedUpFiles": 325,
+    "unchangedBusinessTables": 20,
+    "pushStateUnchanged": true
+  },
+  "limits": [
+    "No actual pointer-drag browser gesture was exercised; pointer math/cancel tested via original LF handlers",
+    "Side real page not exercised in this batch; shares extracted resize component with independent width key",
+    "List/sidebar collapse and mobile swipe remain unimplemented"
+  ],
+  "screenshots": ["desktop.png", "focused.png", "mobile.png"],
+  "observations": [
+    "Composer member lookup emitted current-channel members unavailable in both preview and formal page. It did not prevent reply display or layout actions; root cause not closed in this slice. No claim of error-free full page."
+  ]
+}
