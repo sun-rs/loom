@@ -33,3 +33,26 @@ test("layout changes do not alter explicit task or font choices", () => {
   const mobile = readFileSync("frontends/raft/loom/mobile.css", "utf8");
   assert.match(mobile, /@media \(max-width: 767px\), \(pointer: coarse\)/);
 });
+
+test("native source thresholds and CSS third-pane admission stay synchronized", async () => {
+  const { readAdaptiveContract } =
+    await import("./mobile-adaptive-contract.mjs");
+  const contract = readAdaptiveContract(
+    "frontends/raft/upstream/raft-mobile-source",
+  );
+  assert.equal(adaptiveLayout(contract.dualPaneMinimum - 1, true).dual, false);
+  assert.equal(adaptiveLayout(contract.dualPaneMinimum, true).dual, true);
+  const css = readFileSync("frontends/raft/loom/mobile.css", "utf8");
+  assert.ok(
+    css.includes(
+      `@media (pointer: coarse) and (min-width: ${contract.sideThread.windowMinimum}px)`,
+    ),
+  );
+  assert.ok(
+    css.includes(
+      `@container thread-layout (min-width: ${contract.sideThread.mainMinimum + contract.sideThread.divider + contract.sideThread.column}px)`,
+    ),
+  );
+  assert.ok(css.includes(`min-width: ${contract.sideThread.mainMinimum}px`));
+  assert.ok(css.includes(`width: ${contract.sideThread.column}px`));
+});

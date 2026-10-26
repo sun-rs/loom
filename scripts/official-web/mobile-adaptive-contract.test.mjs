@@ -43,7 +43,9 @@ test("semantic diff names changed layout rule and preserves local implementation
       (r) => r.sourcePaths.length && r.consumers.length && r.status,
     ),
   );
-  assert.ok(coverage.rules.some((r) => r.status === "pending"));
+  assert.ok(
+    coverage.rules.some((r) => ["pending", "partial"].includes(r.status)),
+  );
 });
 test("unknown native shape fails explicitly instead of silently retaining old constants", () => {
   assert.throws(
