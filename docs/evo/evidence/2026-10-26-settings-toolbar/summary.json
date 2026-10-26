@@ -1,0 +1,37 @@
+{
+  "productCommit": "44fe5cca",
+  "sourceEvidence": "sources.json",
+  "sourceReview": "source-review.md",
+  "checks": {
+    "sourceTests": 406,
+    "finalFocusedTests": 7,
+    "frontendTypecheck": true,
+    "buildWorkbench": true,
+    "diffCheck": true,
+    "browser": {
+      "readOnlyPreview": [
+        "appearance theme link click navigates to theme page",
+        "390px toolbar remains text filters with 32px mark-all icon",
+        "260px toolbar switches all four filters to 32px icons; scrollWidth=clientWidth=260"
+      ],
+      "formal": [
+        "390x844 activity toolbar rendered with mark-all icon",
+        "1440x1000 appearance link in correct position; pointer click navigated to settings=theme",
+        "No browser console errors observed"
+      ]
+    }
+  },
+  "deployment": {
+    "pid": 40540,
+    "backedUpDatabases": 2,
+    "backedUpFiles": 325,
+    "unchangedBusinessTables": 20,
+    "pushStateUnchanged": true
+  },
+  "notClaimed": [
+    "Third-column focus and sidebar-collapse migration",
+    "Mobile swipe parity",
+    "Full-site latest Web parity"
+  ],
+  "screenshots": ["mobile.png", "appearance.png"]
+}
