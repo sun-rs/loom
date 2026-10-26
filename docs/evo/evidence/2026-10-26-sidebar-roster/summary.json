@@ -1,0 +1,44 @@
+{
+  "date": "2026-10-26",
+  "productCommit": "1a0fdedbed7826d08ac183943c29fa19ffba6ea9",
+  "sourceReview": "source-review.md",
+  "checks": {
+    "officialSourceTests": 415,
+    "frontendTypes": "passed",
+    "build": "passed",
+    "diffCheck": "passed"
+  },
+  "formalBrowser": {
+    "origin": "http://127.0.0.1:4176",
+    "desktop": [
+      1440,
+      1000
+    ],
+    "mobile": [
+      390,
+      844
+    ],
+    "independentActivityThreadMention": "owner 人类成员 @owner; draft cleared, no message sent",
+    "consoleErrors": [],
+    "sidebarKeyboardCollapse": "Enter collapses; focus returns to expand toggle",
+    "sidebarRestoreWidth": 240,
+    "screenshots": [
+      "thread-members.png",
+      "mobile.png",
+      "sidebar-restored.png"
+    ]
+  },
+  "deployment": {
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-sidebar-roster-1cac37e0-b606-49b5-8e1d-b17973adab00",
+    "verified": true,
+    "businessTablesCompared": 20,
+    "pushStateUnchanged": true,
+    "newPid": 56584
+  },
+  "limits": [
+    "Activity/search independent list collapse and mobile swipe remain open.",
+    "Real pointer drag was not browser-tested; native handler tests cover snap and listener cleanup.",
+    "Attachment comment mention fallback is unchanged and not covered by this slice.",
+    "Mobile viewport emulation is not physical iOS/Android acceptance."
+  ]
+}
