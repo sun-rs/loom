@@ -14,9 +14,11 @@ export function useSearchHeaderController({
   onBack,
   onEscape,
   overlay = false,
+  conversation,
 }: {
   inputRef?: Ref<HTMLInputElement>;
   overlay?: boolean;
+  conversation?: string;
   query: string;
   onQuery: (query: string) => void;
   onBack: () => void;
@@ -39,7 +41,9 @@ export function useSearchHeaderController({
     mobileBackProps: { "aria-label": "返回聊天列表" },
     searchPlaceholder: overlay
       ? formatMessage({ id: "search.overlay.placeholder" })
-      : formatMessage({ id: "search.placeholder" }, { shortcutHint: "" }),
+      : conversation
+        ? `在 ${conversation} 中搜索`
+        : formatMessage({ id: "search.placeholder" }, { shortcutHint: "" }),
     handleQueryChange: (event: import("react").ChangeEvent<HTMLInputElement>) =>
       change(event.target.value),
     handleQueryCompositionStart: () => {

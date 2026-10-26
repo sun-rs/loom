@@ -5,6 +5,7 @@ import { LoomSidebarSlot } from "./SidebarLayout.tsx";
 import { OfficialComputerRow } from "./OfficialIdentityRows.generated";
 import {
   OfficialComputerProfile,
+  OfficialComputerSections,
   OfficialComputerRuntimes,
 } from "./OfficialComputerProfile.generated";
 import KeyValueRow from "@loom/raft-web-source/KeyValueRow";
@@ -333,192 +334,197 @@ export default function ComputersPage({
                   />
                 )}
                 <Separator />
-                <div className="px-5 py-4">
-                  <SectionEyebrow className="mb-3">信息</SectionEyebrow>
-                  <div className="space-y-3">
-                    <KeyValueRow
-                      label="操作系统"
-                      value={computer?.os || "未知"}
-                      mono
-                      breakAll
-                    />
-                    <KeyValueRow
-                      label="版本"
-                      value={computer?.buildVersion || "未知"}
-                      mono
-                      breakAll
-                    />
-                    <div data-testid="machine-detected-runtimes">
-                      <OfficialComputerRuntimes>
-                        {inventory.runtimes.map((runtime, index) => (
-                          <Tooltip
-                            key={`${runtime.executable}-${index}`}
-                            content={[
-                              runtime.displayName,
-                              runtime.version,
-                              runtime.resolvedExecutablePath ??
-                                runtime.failureCode,
-                            ]
-                              .filter(Boolean)
-                              .join(" · ")}
-                          >
-                            <Badge
-                              appearance="soft"
-                              variant={
-                                runtime.available ? "information" : "muted"
-                              }
+                <OfficialComputerSections>
+                  <div>
+                    <SectionEyebrow className="mb-3">信息</SectionEyebrow>
+                    <div className="space-y-3">
+                      <KeyValueRow
+                        label="操作系统"
+                        value={computer?.os || "未知"}
+                        mono
+                        breakAll
+                      />
+                      <KeyValueRow
+                        label="版本"
+                        value={computer?.buildVersion || "未知"}
+                        mono
+                        breakAll
+                      />
+                      <div data-testid="machine-detected-runtimes">
+                        <OfficialComputerRuntimes>
+                          {inventory.runtimes.map((runtime, index) => (
+                            <Tooltip
+                              key={`${runtime.executable}-${index}`}
+                              content={[
+                                runtime.displayName,
+                                runtime.version,
+                                runtime.resolvedExecutablePath ??
+                                  runtime.failureCode,
+                              ]
+                                .filter(Boolean)
+                                .join(" · ")}
                             >
-                              <span
-                                aria-hidden
-                                className={`size-2 shrink-0 rounded-[2px] ${runtime.available ? "bg-info" : "bg-fill-muted"}`}
-                              />
-                              {runtime.displayName}
-                              {!runtime.available && " · 不可用"}
-                            </Badge>
-                          </Tooltip>
-                        ))}
-                      </OfficialComputerRuntimes>
-                      {inventory.runtimes.length === 0 && (
-                        <p className="text-callout text-foreground-hint">
-                          暂无检测结果
+                              <Badge
+                                appearance="soft"
+                                variant={
+                                  runtime.available ? "information" : "muted"
+                                }
+                              >
+                                <span
+                                  aria-hidden
+                                  className={`size-2 shrink-0 rounded-[2px] ${runtime.available ? "bg-info" : "bg-fill-muted"}`}
+                                />
+                                {runtime.displayName}
+                                {!runtime.available && " · 不可用"}
+                              </Badge>
+                            </Tooltip>
+                          ))}
+                        </OfficialComputerRuntimes>
+                        {inventory.runtimes.length === 0 && (
+                          <p className="text-callout text-foreground-hint">
+                            暂无检测结果
+                          </p>
+                        )}
+                        <p className="mt-2 text-caption text-foreground-hint">
+                          安装或更新 CLI
+                          后需重启服务重新检测；可用不代表已登录。
                         </p>
-                      )}
-                      <p className="mt-2 text-caption text-foreground-hint">
-                        安装或更新 CLI 后需重启服务重新检测；可用不代表已登录。
-                      </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <Separator />
-                <section className="px-5 py-4" data-testid="computer-instances">
-                  <SectionHeader
-                    className="mb-3 flex-wrap gap-y-2"
-                    label="在这台计算机上的实例"
-                    count={instances ? rows.length : undefined}
-                    action={
-                      workspaceId && controlRoomId ? (
-                        <div className="flex items-center gap-1.5">
-                          {rows.length > 0 && (
-                            <ComputerSelection
-                              rows={rows}
-                              selected={selectedInstances}
-                              onSelect={setSelectedInstances}
-                              onAction={(action) =>
-                                setBatch({
-                                  action,
-                                  instances: rows.filter((row) =>
-                                    selectedInstances?.includes(row.instanceId),
-                                  ),
-                                })
-                              }
-                            />
-                          )}
-                          {selectedInstances === null && (
-                            <>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                aria-label="新建实例"
-                                onClick={() => setCreatingInstance(true)}
-                              >
-                                <Plus size={16} />
-                                实例
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                aria-label="新建角色"
-                                onClick={() => setCreating(true)}
-                              >
-                                <Plus size={16} />
-                                角色
-                              </Button>
-                            </>
-                          )}
-                        </div>
-                      ) : undefined
-                    }
-                  />
-                  <ComputerSelection
-                    toolbar
-                    rows={rows}
-                    selected={selectedInstances}
-                    onSelect={setSelectedInstances}
-                    onAction={(action) =>
-                      setBatch({
-                        action,
-                        instances: rows.filter((row) =>
-                          selectedInstances?.includes(row.instanceId),
-                        ),
-                      })
-                    }
-                  />
-                  {!instances ? (
-                    <p className="text-callout text-foreground-hint">
-                      实例资料尚未读取
-                    </p>
-                  ) : (
-                    <OfficialListRowGroup>
-                      {visibleComputerInstances(
-                        rows,
-                        expanded || selectedInstances !== null,
-                      ).map((instance) => (
-                        <ComputerInstanceRow
-                          key={instance.instanceId}
-                          instance={instance}
-                          selectionMode={selectedInstances !== null}
-                          selected={
-                            selectedInstances?.includes(instance.instanceId) ??
-                            false
-                          }
-                          onClick={() =>
-                            selectedInstances === null
-                              ? onOpenRole(instance.roleId)
-                              : setSelectedInstances(
-                                  selectedInstances.includes(
-                                    instance.instanceId,
-                                  )
-                                    ? selectedInstances.filter(
-                                        (id) => id !== instance.instanceId,
-                                      )
-                                    : [
-                                        ...selectedInstances,
-                                        instance.instanceId,
-                                      ],
-                                )
-                          }
-                        />
-                      ))}
-                      {selectedInstances === null &&
-                        rows.length > COMPUTER_INSTANCE_PREVIEW_COUNT && (
-                          <div className="border-t border-line-hairline px-4 py-3 text-center">
-                            <ShowMoreToggle
-                              expanded={expanded}
-                              aria-expanded={expanded}
-                              onClick={() => setExpanded((v) => !v)}
-                              collapsedLabel={
-                                <span className="inline-flex items-center gap-1">
-                                  <ChevronDown size={14} />
-                                  展开全部 {rows.length} 个实例
-                                </span>
-                              }
-                              expandedLabel={
-                                <span className="inline-flex items-center gap-1">
-                                  <ChevronUp size={14} />
-                                  收起
-                                </span>
-                              }
-                            />
+                  <section data-testid="computer-instances">
+                    <SectionHeader
+                      className="mb-3 flex-wrap gap-y-2"
+                      label="在这台计算机上的实例"
+                      count={instances ? rows.length : undefined}
+                      action={
+                        workspaceId && controlRoomId ? (
+                          <div className="flex items-center gap-1.5">
+                            {rows.length > 0 && (
+                              <ComputerSelection
+                                rows={rows}
+                                selected={selectedInstances}
+                                onSelect={setSelectedInstances}
+                                onAction={(action) =>
+                                  setBatch({
+                                    action,
+                                    instances: rows.filter((row) =>
+                                      selectedInstances?.includes(
+                                        row.instanceId,
+                                      ),
+                                    ),
+                                  })
+                                }
+                              />
+                            )}
+                            {selectedInstances === null && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  aria-label="新建实例"
+                                  onClick={() => setCreatingInstance(true)}
+                                >
+                                  <Plus size={16} />
+                                  实例
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  aria-label="新建角色"
+                                  onClick={() => setCreating(true)}
+                                >
+                                  <Plus size={16} />
+                                  角色
+                                </Button>
+                              </>
+                            )}
                           </div>
-                        )}
-                    </OfficialListRowGroup>
-                  )}
-                  {instances && !rows.length && (
-                    <p className="text-callout text-foreground-hint">
-                      暂无绑定到这台计算机的实例
-                    </p>
-                  )}
-                </section>
+                        ) : undefined
+                      }
+                    />
+                    <ComputerSelection
+                      toolbar
+                      rows={rows}
+                      selected={selectedInstances}
+                      onSelect={setSelectedInstances}
+                      onAction={(action) =>
+                        setBatch({
+                          action,
+                          instances: rows.filter((row) =>
+                            selectedInstances?.includes(row.instanceId),
+                          ),
+                        })
+                      }
+                    />
+                    {!instances ? (
+                      <p className="text-callout text-foreground-hint">
+                        实例资料尚未读取
+                      </p>
+                    ) : (
+                      <OfficialListRowGroup>
+                        {visibleComputerInstances(
+                          rows,
+                          expanded || selectedInstances !== null,
+                        ).map((instance) => (
+                          <ComputerInstanceRow
+                            key={instance.instanceId}
+                            instance={instance}
+                            selectionMode={selectedInstances !== null}
+                            selected={
+                              selectedInstances?.includes(
+                                instance.instanceId,
+                              ) ?? false
+                            }
+                            onClick={() =>
+                              selectedInstances === null
+                                ? onOpenRole(instance.roleId)
+                                : setSelectedInstances(
+                                    selectedInstances.includes(
+                                      instance.instanceId,
+                                    )
+                                      ? selectedInstances.filter(
+                                          (id) => id !== instance.instanceId,
+                                        )
+                                      : [
+                                          ...selectedInstances,
+                                          instance.instanceId,
+                                        ],
+                                  )
+                            }
+                          />
+                        ))}
+                        {selectedInstances === null &&
+                          rows.length > COMPUTER_INSTANCE_PREVIEW_COUNT && (
+                            <div className="border-t border-line-hairline px-4 py-3 text-center">
+                              <ShowMoreToggle
+                                expanded={expanded}
+                                aria-expanded={expanded}
+                                onClick={() => setExpanded((v) => !v)}
+                                collapsedLabel={
+                                  <span className="inline-flex items-center gap-1">
+                                    <ChevronDown size={14} />
+                                    展开全部 {rows.length} 个实例
+                                  </span>
+                                }
+                                expandedLabel={
+                                  <span className="inline-flex items-center gap-1">
+                                    <ChevronUp size={14} />
+                                    收起
+                                  </span>
+                                }
+                              />
+                            </div>
+                          )}
+                      </OfficialListRowGroup>
+                    )}
+                    {instances && !rows.length && (
+                      <p className="text-callout text-foreground-hint">
+                        暂无绑定到这台计算机的实例
+                      </p>
+                    )}
+                  </section>
+                </OfficialComputerSections>
               </div>
             ) : (
               <div className="p-5 text-callout text-foreground-muted">

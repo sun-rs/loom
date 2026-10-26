@@ -94,6 +94,12 @@ export function generateCloseout() {
   if (start < 0 || end < start) throw Error("toolbar slots changed");
   toolbar =
     toolbar.slice(0, start) + "          {filters}\n" + toolbar.slice(end);
+  // Web 1.21.34 TasksPanel: align by task container, not viewport.
+  toolbar = replace(
+    toolbar,
+    'className="sm:ml-auto"',
+    'className="@min-md/tasks:ml-auto"',
+  );
   const mainHeader = one(task.file, (n) =>
     tag(n, "PanelSectionHeader"),
   ).getText(task.file);

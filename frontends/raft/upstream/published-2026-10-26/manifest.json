@@ -23,5 +23,16 @@
     "sourceSha256": "49655190845fa5f8b2a48b5354d202db8a6737aac3d62c320c2892edcf12df14",
     "extractedSha256": "19b84409509038e6826b2befc37b313d3201fda555b0eb54b72e5c1301e3d2c1",
     "reuse": "Byte-exact thread-layout-container through end of thread layout rules, before Tailwind @property declarations. Old matching rules removed from outer compatibility CSS."
+  },
+  "pageFollowup": {
+    "sourceEvidence": "docs/evo/evidence/2026-10-26-page-audit/sources.json",
+    "sourceExcerpts": "docs/evo/evidence/2026-10-26-page-audit/source-excerpts.md",
+    "reuse": "Structural ports, not byte-exact upstream page: scoped search row/empty; task container alignment; computer lower-body and hero spacing; channel Drawer body/actions. Chinese scoped-search labels from same zh-cn release.",
+    "generators": [
+      "scripts/official-web/generate-page134-followup.mjs",
+      "scripts/official-web/generate-discovery-task-closeout.mjs",
+      "scripts/official-web/generate-computer-profile.mjs"
+    ],
+    "localBindings": "SDK-scoped query and bounded paging; permission-safe catalog display names; keyboard rail; existing revisioned mutations. Approved channel header/member slots retained, no X added; no upstream stores."
   }
 }

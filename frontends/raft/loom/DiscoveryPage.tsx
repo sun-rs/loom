@@ -1,3 +1,12 @@
+import {
+  scopedSearchLabel,
+  searchEverywhereParams,
+  isScopedSearchIdle,
+} from "./scoped-search";
+import {
+  OfficialScopedSearchEntry,
+  OfficialScopedSearchEmpty,
+} from "./OfficialScopedSearch.generated";
 import { useActivitySecondary } from "./useActivitySecondary";
 import { OperationStatus } from "./ManagementUi";
 import { useActivitySwipeUndo } from "./useActivitySwipeUndo";
@@ -179,6 +188,21 @@ export default function DiscoveryPage({
     () => nativeSearchFilters(params, query),
     [filterKey, query],
   );
+  const scopedRoomId =
+    mode === "search" && !overlay
+      ? params.get("channelId") || undefined
+      : undefined;
+  const scopedConversation = scopedRoomId
+    ? scopedSearchLabel(
+        scopedRoomId,
+        entities.catalog.map((entry) => entry.suggestion),
+      )
+    : undefined;
+  const scopedIdle = isScopedSearchIdle(scopedRoomId, query, searchFilters);
+  const searchEverywhere = () => {
+    history.remember(query);
+    setParams(searchEverywhereParams(params), { state: null });
+  };
   const hasSearchFilters = Boolean(
     params.get("senderId") ||
     params.get("channelId") ||
@@ -233,6 +257,7 @@ export default function DiscoveryPage({
           <SearchHeader
             inputRef={searchInput}
             overlay={overlay}
+            conversation={scopedConversation}
             query={query}
             onBack={onBack}
             onQuery={(value) =>
@@ -291,6 +316,9 @@ export default function DiscoveryPage({
             />
           ) : null}
           <Results
+            scopedConversation={scopedConversation}
+            scopedIdle={scopedIdle}
+            searchEverywhere={searchEverywhere}
             nextUnreadRequest={nextUnreadRequest}
             focusRequest={focusRequest === focusRefresh ? focusRequest : 0}
             consumeFocus={consumeFocus}
@@ -359,6 +387,9 @@ export default function DiscoveryPage({
   );
 }
 function Results({
+  scopedConversation,
+  scopedIdle,
+  searchEverywhere,
   focusRequest,
   nextUnreadRequest,
   consumeFocus,
@@ -382,6 +413,9 @@ function Results({
   tick,
   onOpenResult,
 }: {
+  scopedConversation?: string;
+  scopedIdle: boolean;
+  searchEverywhere: () => void;
   focusRequest: number;
   nextUnreadRequest: number;
   consumeFocus: () => void;
@@ -561,6 +595,10 @@ function Results({
     const controller = new AbortController();
     setData(undefined);
     setError("");
+    if (scopedIdle) {
+      setLoading(false);
+      return;
+    }
     if (
       mode === "search" &&
       !query.trim() &&
@@ -607,6 +645,7 @@ function Results({
     query,
     scope,
     searchFilters,
+    scopedIdle,
     filter,
     tick,
     retry,
@@ -624,17 +663,22 @@ function Results({
     !searchFilters.mentionSelf &&
     !searchFilters.after &&
     recent.length > 0;
+  const searchEntities = scopedConversation ? [] : entities.results;
   const exact = overlayHome ? entities.exact : null;
   type RailRow =
     | { id: string; entity: SearchEntity }
     | { id: string; message: DiscoveryRow }
-    | { id: string; home: true };
+    | { id: string; home: true }
+    | { id: string; everywhere: true };
   const railRows: RailRow[] = showRecent
     ? recent.map((entity) => ({ id: entity.key, entity }))
     : [
+        ...(scopedConversation
+          ? [{ id: "$everywhere", everywhere: true as const }]
+          : []),
         ...(exact ? [{ id: exact.key, entity: exact }] : []),
         ...(overlayHome ? [{ id: "$all", home: true as const }] : []),
-        ...entities.results
+        ...searchEntities
           .filter((e) => e.key !== exact?.key)
           .map((entity) => ({ id: entity.key, entity })),
         ...visibleRows.map((message) => ({ id: message.id, message })),
@@ -653,6 +697,7 @@ function Results({
     railHandler,
     (row) => {
       if ("home" in row) overlayHome?.();
+      else if ("everywhere" in row) searchEverywhere();
       else if ("entity" in row) openEntity(row.entity, false);
       else
         void onOpenResult(row.message, false).catch(() =>
@@ -693,6 +738,13 @@ function Results({
           : "min-h-0 overflow-y-auto"
       }
     >
+      {scopedConversation && (
+        <OfficialScopedSearchEntry
+          query={query}
+          onOpen={searchEverywhere}
+          selected={rail.selectedId === "$everywhere"}
+        />
+      )}
       {showRecent && (
         <SearchRecent
           entities={recent}
@@ -716,7 +768,7 @@ function Results({
         </OverlayAllResults>
       )}
       <SearchEntityRows
-        entities={entities.results.filter((e) => e.key !== exact?.key)}
+        entities={searchEntities.filter((e) => e.key !== exact?.key)}
         selectedId={rail.selectedId}
         onOpen={selectEntity}
       />
@@ -736,7 +788,9 @@ function Results({
       )}
       <OperationStatus manager={secondary.manager} error={secondary.error} />
       {mutationError && <DiscoveryNotice>{mutationError}</DiscoveryNotice>}
-      {showRecent ? null : mode === "search" &&
+      {scopedIdle && scopedConversation ? (
+        <OfficialScopedSearchEmpty conversation={scopedConversation} />
+      ) : showRecent ? null : mode === "search" &&
         !query.trim() &&
         !searchFilters.senderIds?.length &&
         !searchFilters.roomIds?.length &&

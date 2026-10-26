@@ -1,5 +1,5 @@
 import { ChannelDeleteAction } from "./ChannelDeleteAction.tsx";
-// Structural port: Raft v1.21.22 Rxt form, dk FormSection, B7 action and drawer footer.
+// Web 1.21.34 EditChannelDialog drawer branch; Loom retains approved header/member slots.
 // Kernel metadata and SDK sidebar preferences remain the only business owners.
 import { useEffect, useState, type ReactNode } from "react";
 import { RoomSession } from "@rah-os/client-core";
@@ -15,6 +15,7 @@ import {
   LabelOptional,
   DrawerBody,
   DrawerFooter,
+  DrawerActions,
   FormSection,
   Separator,
 } from "raft-ui";
@@ -236,11 +237,11 @@ export default function ChannelSettingsContent({
   };
   return (
     <>
-      <DrawerBody className="min-h-0 flex-1 overflow-y-auto px-0 py-2">
+      <DrawerBody className="min-h-0 flex-1 overflow-y-auto">
         <div inert={busy}>{members}</div>
         <form
           id="loom-channel-settings-form"
-          className="space-y-5 px-4"
+          className="stack-y-5"
           onSubmit={(event) => {
             event.preventDefault();
             void submit();
@@ -265,7 +266,7 @@ export default function ChannelSettingsContent({
               title="信息"
               description="在整个工作空间中显示的名称和描述。"
             >
-              <div className="space-y-3">
+              <div className="stack-y-3">
                 <Field>
                   <FieldLabel size="md" htmlFor="channel-settings-name">
                     名称
@@ -311,7 +312,7 @@ export default function ChannelSettingsContent({
             </FormSection>
           )}
         </form>
-        <div className="space-y-5 mt-5 px-4">
+        <div className="stack-y-5 mt-5">
           <ChannelPreferencesSection
             collapseLongMessages={{
               enabled: !(
@@ -394,7 +395,7 @@ export default function ChannelSettingsContent({
         </div>
       </DrawerBody>
       <DrawerFooter className="safe-bottom">
-        <div className="flex w-full justify-end gap-2">
+        <DrawerActions>
           <Button size="lg" variant="ghost" disabled={busy} onClick={onClose}>
             取消
           </Button>
@@ -409,7 +410,7 @@ export default function ChannelSettingsContent({
               保存更改
             </Button>
           )}
-        </div>
+        </DrawerActions>
       </DrawerFooter>
       {confirmArchive && base && (
         <ChannelArchiveDialog

@@ -83,8 +83,10 @@ export function OfficialComputerProfile({name,hostname,status,label}:{name:strin
  const machine={name,hostname,status};
  // A draining Loom host keeps its own busy state; no upstream upgrade operation is started.
  const upgradeReconnecting=status==="draining";
- return (${hero.replace(statusText, "{label}")});
+ return (${hero.replace(statusText, "{label}").replace("min-w-0 flex-1 space-y-1", "min-w-0 flex-1 stack-y-1")});
 }
+// Web1.21.34 MachineDetailPanel lower-body wrapper; children are Loom sections.
+export function OfficialComputerSections({children}:{children:ReactNode}){return <div className="px-5 py-4 stack-y-6">{children}</div>;}
 export function OfficialComputerRuntimes({children}:{children:ReactNode}){
  const {formatMessage}=useIntl();
  return (${runtime.replace(runtimeMap, "{children}")});

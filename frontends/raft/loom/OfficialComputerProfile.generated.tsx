@@ -13,7 +13,7 @@ export function OfficialComputerProfile({name,hostname,status,label}:{name:strin
           <IconTile size="lg">
             <Monitor aria-hidden="true" />
           </IconTile>
-          <div className="min-w-0 flex-1 space-y-1">
+          <div className="min-w-0 flex-1 stack-y-1">
             <PanelTitle className="min-w-0">{machine.name}</PanelTitle>
             {/* Raft DS StatusChip: soft wash, square pixel, one word — online
                 lime, a web upgrade's reconnect is busy (yellow), offline stone. */}
@@ -39,6 +39,8 @@ export function OfficialComputerProfile({name,hostname,status,label}:{name:strin
           </div>
         </div>);
 }
+// Web1.21.34 MachineDetailPanel lower-body wrapper; children are Loom sections.
+export function OfficialComputerSections({children}:{children:ReactNode}){return <div className="px-5 py-4 stack-y-6">{children}</div>;}
 export function OfficialComputerRuntimes({children}:{children:ReactNode}){
  const {formatMessage}=useIntl();
  return (<KeyValueRow

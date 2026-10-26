@@ -170,7 +170,7 @@ export function OfficialTaskToolbar({filters,isChannelMode,canModifyTasks,openCr
             value={viewMode}
             onValueChange={setView}
             aria-label={formatMessage({ id: "task.viewAria" })}
-            className="sm:ml-auto"
+            className="@min-md/tasks:ml-auto"
           >
             {/* Phone: icons only; the label stays as the accessible name. */}
             <SegmentedControlItem
