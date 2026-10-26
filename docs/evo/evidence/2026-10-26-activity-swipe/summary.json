@@ -1,0 +1,46 @@
+{
+  "productCommit": "9070d10b3acf165f81771dd8755733e6efa3d141",
+  "checks": {
+    "sourceTests": 422,
+    "types": "passed",
+    "build": "passed",
+    "diff": "passed"
+  },
+  "nativeGestureTests": [
+    "edge/vertical/mouse yield",
+    "60 percent threshold",
+    "velocity and reveal threshold",
+    "pointer cancellation does not commit",
+    "full swipe commits once including cleanup",
+    "post-swipe click suppression",
+    "declaration hashes unchanged"
+  ],
+  "browser": {
+    "desktopViewport": [
+      1440,
+      1000
+    ],
+    "rowCount": 20,
+    "desktopSwipeActionCount": 0,
+    "mobileViewport": [
+      390,
+      844
+    ],
+    "mobileListWidth": 390,
+    "nonCoarseMobileSwipeActionCount": 0,
+    "consoleErrors": [],
+    "actualTouchGesture": "not tested on physical device; viewport override alone does not make a coarse primary pointer",
+    "screenshot": "mobile.png"
+  },
+  "deployment": {
+    "verified": true,
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-activity-swipe-c037c3c9-4536-4a6c-8303-78b8a1a4ff9a",
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true
+  },
+  "limits": [
+    "Only done action bound; mute/unfollow swipe actions and upstream undo toast not adopted.",
+    "No paid/provider runs, no real activity mutation in browser acceptance.",
+    "No general page swipe-back claim."
+  ]
+}
