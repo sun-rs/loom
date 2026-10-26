@@ -13,9 +13,9 @@
     },
     "packages/web/src/index.css": {
       "upstreamSha256": "e3015311362c000b3354980cd03d59a3fd783f386243889c52c6defe3ce61fcb",
-      "portedSha256": "b0117fa15ac0518184f864ca2ce2ab53b8141915f450a475d675ddc652af85a2",
+      "portedSha256": "14cf38a544f50f17b295b831e15ba18c785594364145ee0ace760ab8c747336c",
       "sourceRelease": "v1.21.26 / aa975b0e25ecc07ee6917d88d3ca973782550e6a",
-      "adoption": "2026-10-26 workspace theme adoption: official themes.css; device mode no longer clears the separate workspace theme attribute. Original upstream hash retained."
+      "adoption": "2026-10-26 workspace theme adoption: official themes.css; device mode no longer clears the separate workspace theme attribute. Original upstream hash retained. 2026-10-26: old thread CSS replaced by byte-exact 1.21.34 production thread-layout.css; see published manifest."
     },
     "packages/web/src/utils/attachmentBadgeType.ts": {
       "upstreamSha256": "06da28317a03b22327429ded4bd149c2bdb5798f9068536ac3b55235cc0c5c03",

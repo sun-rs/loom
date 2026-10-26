@@ -20,12 +20,10 @@ import ControlledThreadPanel from "./OfficialThreadPanel.generated.tsx";
 import MessageInput from "./ComposerFiles.tsx";
 import PanelHeader from "../packages/web/src/components/ui/PanelHeader.tsx";
 import { composerHostClassName } from "../packages/web/src/components/message/composerHost.ts";
-import { useResizablePanel } from "../packages/web/src/hooks/useResizablePanel.ts";
 import {
-  THREAD_PANEL_MIN_WIDTH,
-  THREAD_PANEL_DEFAULT_WIDTH,
-  getThreadPanelDynamicMax,
-} from "../packages/web/src/lib/panelBounds.ts";
+  CurrentColumnResize,
+  useCurrentColumnWidth,
+} from "../upstream/published-2026-10-26/column-resize.js";
 import { LoomThreadClient } from "./thread-client.ts";
 import { toOfficialMessage } from "./channel-client.ts";
 import { useRouteIntentOwner } from "./useIntentRoute.ts";
@@ -42,7 +40,13 @@ export default function ThreadWorkspace({
   covered = false,
   taskHead,
   readError,
+  focused = false,
+  canFocus = false,
+  onFocusChange,
 }: {
+  focused?: boolean;
+  canFocus?: boolean;
+  onFocusChange?: (value: boolean) => boolean;
   embedded?: boolean;
   contentSlot?: boolean;
   covered?: boolean;
@@ -66,7 +70,6 @@ export default function ThreadWorkspace({
   const [localError, setError] = useState("");
   const error = readError || localError;
   const [tick, setTick] = useState(0);
-  const [max, setMax] = useState(getThreadPanelDynamicMax);
   const host = useRef<HTMLDivElement>(null);
   const activity = useThreadActivity(
     client,
@@ -76,14 +79,19 @@ export default function ThreadWorkspace({
     host,
     !!data && !error && !covered,
   );
-  const size = useResizablePanel({
-    storageKey: "loom:threadPanelWidth",
-    min: THREAD_PANEL_MIN_WIDTH,
-    max,
-    defaultWidth: THREAD_PANEL_DEFAULT_WIDTH,
-    direction: "left",
-    getDragStartWidth: () => host.current?.getBoundingClientRect().width,
-  });
+  const width = useCurrentColumnWidth("thread");
+  const canToggleFocus = () => {
+    if (!canFocus || !data?.thread || covered) return false;
+    const main = host.current?.parentElement?.querySelector<HTMLElement>(
+      ":scope > .thread-main-column",
+    );
+    return !!main && getComputedStyle(main).display !== "none";
+  };
+  const requestFocus = (value: boolean) => {
+    if (value && !canToggleFocus()) return false;
+    return onFocusChange?.(value) ?? false;
+  };
+
   useEffect(() => {
     const stop = bridge.writes.onChange(setState);
     return () => {
@@ -217,21 +225,24 @@ export default function ThreadWorkspace({
             data-testid={
               contentSlot ? "activity-thread-content" : "thread-side-column"
             }
-            style={
-              { "--thread-panel-width": `${size.width}px` } as CSSProperties
-            }
+            style={{ "--thread-panel-width": `${width}px` } as CSSProperties}
           >
             {!embedded && !contentSlot && (
-              <div
-                className="thread-side-column-resizer absolute left-0 top-0 bottom-0 w-2 -ml-1 z-10 cursor-col-resize touch-none select-none"
+              <CurrentColumnResize
+                column="thread"
+                edge="left"
+                label="调整消息列宽度"
+                className="thread-side-column-resizer"
                 data-testid="loom-thread-resizer"
-                onPointerDown={(e) => {
-                  setMax(getThreadPanelDynamicMax());
-                  size.handleResizeStart(e);
-                }}
-                onPointerMove={size.handleResizeMove}
-                onPointerUp={size.handleResizeEnd}
-                onPointerCancel={size.handleResizeEnd}
+                snap={
+                  canFocus
+                    ? {
+                        kind: "focus",
+                        snapped: focused,
+                        onSnappedChange: requestFocus,
+                      }
+                    : undefined
+                }
               />
             )}
             {parent && data ? (
@@ -305,6 +316,11 @@ export default function ThreadWorkspace({
                         onOpenProfile={onOpenProfile}
                       />
                       <ThreadFollowMenu
+                        focused={focused}
+                        canToggleFocus={canToggleFocus}
+                        onToggleFocus={
+                          canFocus ? () => requestFocus(!focused) : undefined
+                        }
                         followed={activity.following ?? false}
                         followBusy={
                           activity.busy ||

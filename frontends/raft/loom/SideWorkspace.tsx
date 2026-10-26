@@ -11,12 +11,10 @@ import {
 import type { RahClient } from "@rah-os/client-sdk";
 import type { Room } from "@rah-os/protocol";
 import { Button, Spinner, ThreadPanelRoot } from "raft-ui";
-import { useResizablePanel } from "../packages/web/src/hooks/useResizablePanel.ts";
 import {
-  THREAD_PANEL_MIN_WIDTH,
-  THREAD_PANEL_DEFAULT_WIDTH,
-  getThreadPanelDynamicMax,
-} from "../packages/web/src/lib/panelBounds.ts";
+  CurrentColumnResize,
+  useCurrentColumnWidth,
+} from "../upstream/published-2026-10-26/column-resize.js";
 import ConfirmDialog from "../packages/web/src/components/ConfirmDialog.tsx";
 import { LoomChannelClient } from "./channel-client.ts";
 import { BranchClient } from "./branch-client.ts";
@@ -55,16 +53,8 @@ export default function SideWorkspace({
     [error, setError] = useState(""),
     [confirm, setConfirm] = useState(false),
     [tick, setTick] = useState(0);
-  const host = useRef<HTMLDivElement>(null),
-    [max, setMax] = useState(getThreadPanelDynamicMax);
-  const size = useResizablePanel({
-    storageKey: "loom:sidePanelWidth",
-    min: THREAD_PANEL_MIN_WIDTH,
-    max,
-    defaultWidth: THREAD_PANEL_DEFAULT_WIDTH,
-    direction: "left",
-    getDragStartWidth: () => host.current?.getBoundingClientRect().width,
-  });
+  const host = useRef<HTMLDivElement>(null);
+  const width = useCurrentColumnWidth("side");
   useEffect(() => {
     const stop = bridge.writes.onChange(setState);
     return () => {
@@ -138,18 +128,14 @@ export default function SideWorkspace({
       ref={host}
       className="thread-side-column flex flex-col bg-layer-card "
       data-testid="side-panel"
-      style={{ "--thread-panel-width": `${size.width}px` } as CSSProperties}
+      style={{ "--thread-panel-width": `${width}px` } as CSSProperties}
     >
-      <div
-        className="thread-side-column-resizer absolute left-0 top-0 bottom-0 w-2 -ml-1 z-10 cursor-col-resize touch-none select-none"
-        data-testid="side-resizer"
-        onPointerDown={(e) => {
-          setMax(getThreadPanelDynamicMax());
-          size.handleResizeStart(e);
-        }}
-        onPointerMove={size.handleResizeMove}
-        onPointerUp={size.handleResizeEnd}
-        onPointerCancel={size.handleResizeEnd}
+      <CurrentColumnResize
+        column="side"
+        edge="left"
+        label="调整消息列宽度"
+        className="thread-side-column-resizer"
+        data-testid="loom-thread-resizer"
       />
       <ThreadPanelRoot className="isolate flex h-full min-h-0 w-full flex-col bg-layer-panel dark:bg-layer-card ">
         {error && (

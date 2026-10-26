@@ -154,6 +154,9 @@ function Channel({
   const workspaceTab = !isPrivate && selectedTab === "workspace";
   const profileSnapshot = useRef<Principal | undefined>(undefined);
   const [profileId, setProfileId] = useState<string>();
+  const [focusedThreadId, setFocusedThreadId] = useState<string>();
+  const threadFocused =
+    !!threadRootId && focusedThreadId === threadRootId && !profileId && !sideId;
   const [profileSource, setProfileSource] = useState<"channel" | "thread">(
     "channel",
   );
@@ -318,10 +321,12 @@ function Channel({
       <MessageReactionsProvider bridge={bridge} messages={view.messages}>
         <ChannelTasksContext.Provider value={tasks.context}>
           <div
+            data-thread-maximized={threadFocused ? "true" : undefined}
             className={`${channel.side ? "" : "thread-layout-container "}relative flex min-h-0 min-w-0 flex-1`}
           >
             <ConversationPanelRoot
               edge="attached"
+              data-main-column=""
               className="thread-main-column relative border-l-0"
             >
               <PanelHeader
@@ -658,6 +663,13 @@ function Channel({
                 room={channel}
                 rootMessageId={threadRootId}
                 covered={!!profileMember}
+                focused={threadFocused}
+                canFocus={!profileMember && !sideId}
+                onFocusChange={(value) => {
+                  if (profileMember || sideId) return false;
+                  setFocusedThreadId(value ? threadRootId : undefined);
+                  return true;
+                }}
                 onOpenProfile={(member) => {
                   if (hasUnresolvedIntents()) return;
                   opener.current =

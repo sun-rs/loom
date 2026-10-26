@@ -1,8 +1,11 @@
 /** Current native ThreadOverflowMenu composition, v1.21.22; see page-adoption.json.
  * Unsupported search/split/location commands omitted; controller belongs to Loom. */
+import { useState } from "react";
 import { useIntl } from "react-intl";
 import {
   EllipsisVertical,
+  Minimize2,
+  Maximize2,
   MessageCircleOff,
   MessageCirclePlus,
 } from "lucide-react";
@@ -15,18 +18,29 @@ import {
 } from "raft-ui";
 import Tooltip from "../packages/web/src/components/ui/Tooltip.tsx";
 export default function ThreadFollowMenu({
+  focused = false,
+  onToggleFocus,
+  canToggleFocus,
   followed,
   followBusy,
   onFollow,
 }: {
+  focused?: boolean;
+  onToggleFocus?: () => void;
+  canToggleFocus?: () => boolean;
   followed: boolean;
   followBusy: boolean;
   onFollow: () => void;
 }) {
   const { formatMessage } = useIntl();
   const handleFollowAction = onFollow;
+  const [showFocus, setShowFocus] = useState(false);
   return (
-    <DropdownMenu>
+    <DropdownMenu
+      onOpenChange={(open) => {
+        if (open) setShowFocus(canToggleFocus?.() ?? false);
+      }}
+    >
       <Tooltip
         content={formatMessage({ id: "message.threadPanel.overflow.open" })}
       >
@@ -50,6 +64,15 @@ export default function ThreadFollowMenu({
         aria-label={formatMessage({ id: "message.threadPanel.overflow.open" })}
         data-testid="thread-overflow-menu"
       >
+        {onToggleFocus && showFocus && (
+          <DropdownMenuItem
+            onClick={onToggleFocus}
+            data-testid="thread-overflow-maximize"
+          >
+            {focused ? <Minimize2 /> : <Maximize2 />}
+            {focused ? "显示频道" : "隐藏频道"}
+          </DropdownMenuItem>
+        )}
         {
           <DropdownMenuItem
             onClick={handleFollowAction}

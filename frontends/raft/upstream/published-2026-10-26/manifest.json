@@ -11,5 +11,17 @@
     "sourceSha256": "277407df728df819584edf0ec5b0aca2ff75a3f9c9529d1e489e980939b9ab86",
     "extractedSha256": "afefaa92d461e84873c94d79cbf4912fb764355736423444434292b106cd2efb",
     "reuse": "qa/Ja option and preview functions, unchanged formatted bodies; imports bound to the one official package runtime. No account or billing stores."
+  },
+  "columnResize": {
+    "url": "https://app.raft.build/assets/app-shell-BWgtfY02.js",
+    "sourceSha256": "65eff83bf1a82aa2933130aecea417189fd44abd7a379f7cfc10aeda2aa6a3cc",
+    "extractedSha256": "85e1dd3ef6deb40feef53f2e0d7a927ae1a42e512d879fbed4ebd60e365c7abf",
+    "reuse": "oOe through LF unchanged formatted bodies; React/Intl/layout-effect bindings and Loom storage registry supplied externally. UI width store only, no server/domain stores."
+  },
+  "threadLayout": {
+    "url": "https://app.raft.build/assets/app-shell-C3nLSlu4.css",
+    "sourceSha256": "49655190845fa5f8b2a48b5354d202db8a6737aac3d62c320c2892edcf12df14",
+    "extractedSha256": "19b84409509038e6826b2befc37b313d3201fda555b0eb54b72e5c1301e3d2c1",
+    "reuse": "Byte-exact thread-layout-container through end of thread layout rules, before Tailwind @property declarations. Old matching rules removed from outer compatibility CSS."
   }
 }
