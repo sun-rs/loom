@@ -1,0 +1,38 @@
+{
+  "productCommit": "5f926b77f94761db9bf5b048136f24e2d70fb555",
+  "checks": {
+    "sourceTests": 425,
+    "types": "passed",
+    "build": "passed"
+  },
+  "undoTests": [
+    "undo before request restores row",
+    "stale toast callback cannot submit replacement",
+    "new frontier invalidates pending completion",
+    "close/page-hide submits original snapshot once",
+    "ordinary done remains immediate"
+  ],
+  "browser": {
+    "origin": "http://127.0.0.1:4176",
+    "desktopRows": 20,
+    "consoleErrors": [],
+    "mobileViewport": [
+      390,
+      844
+    ],
+    "mobileListWidth": 390,
+    "touchUndo": "not physically exercised; hook/controller/official toast callback wiring exercised with fake callbacks",
+    "screenshot": "mobile.png"
+  },
+  "deployment": {
+    "verified": true,
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-swipe-undo-fe58c624-909d-47f2-a860-1d5f46ce57e2",
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true
+  },
+  "remaining": [
+    "physical touch and toast UI acceptance",
+    "swipe mute/unfollow not yet wired",
+    "pagehide submit best effort, no durable offline queue"
+  ]
+}
