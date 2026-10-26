@@ -1,3 +1,4 @@
+import { useActivitySwipeUndo } from "./useActivitySwipeUndo";
 import { useActivitySwipe } from "./useActivitySwipe";
 import { ActivityListSlot, useActivityCollapseSnap } from "./SidebarLayout";
 import ActivityNothingOpen from "./ActivityNothingOpen";
@@ -508,6 +509,12 @@ function Results({
       setRetry((value) => value + 1);
     }
   };
+  const swipeUndo = useActivitySwipeUndo(
+    activityRows.map((item) => item.row),
+    (row) => {
+      void markActivity(row, "done");
+    },
+  );
   const followActivity = async (
     row: DiscoveryRow,
     activity: ThreadActivityClient,
@@ -789,47 +796,50 @@ function Results({
                   }}
                 />
               ) : (
-                activityRows.map(({ row, section }) => (
-                  <Fragment key={row.id}>
-                    {section && (
-                      <SectionEyebrow
-                        as="div"
-                        className={`flex items-center gap-1.5 px-4 pb-1 ${section === "pinned" ? "pt-2" : "pt-4"}`}
-                      >
-                        {section === "pinned" && <Pin size={12} />}
-                        {section === "pinned" ? "已置顶" : "全部会话"}
-                      </SectionEyebrow>
-                    )}
-                    <ActivityMessageRow
-                      swipe={rowSwipe}
-                      client={client}
-                      onFollow={(row, activity, following) => {
-                        void followActivity(row, activity, following);
-                      }}
-                      pending={pendingRows.has(row.id)}
-                      onAction={(target, action) => {
-                        void markActivity(target, action);
-                      }}
-                      key={row.id}
-                      row={{
-                        ...row,
-                        senderType: activityPeerType(
-                          entities.catalog,
-                          row.message.roomId,
-                        ),
-                      }}
-                      active={
-                        focusedActivityId === row.id ||
-                        route.get("message") === row.message.messageId
-                      }
-                      onOpen={(full) => {
-                        void onOpenResult(row, full).catch(() =>
-                          setError("无法打开消息，请刷新重试。"),
-                        );
-                      }}
-                    />
-                  </Fragment>
-                ))
+                activityRows
+                  .filter(({ row }) => row.id !== swipeUndo.hidden)
+                  .map(({ row, section }) => (
+                    <Fragment key={row.id}>
+                      {section && (
+                        <SectionEyebrow
+                          as="div"
+                          className={`flex items-center gap-1.5 px-4 pb-1 ${section === "pinned" ? "pt-2" : "pt-4"}`}
+                        >
+                          {section === "pinned" && <Pin size={12} />}
+                          {section === "pinned" ? "已置顶" : "全部会话"}
+                        </SectionEyebrow>
+                      )}
+                      <ActivityMessageRow
+                        swipe={rowSwipe}
+                        onSwipeDone={swipeUndo.done}
+                        client={client}
+                        onFollow={(row, activity, following) => {
+                          void followActivity(row, activity, following);
+                        }}
+                        pending={pendingRows.has(row.id)}
+                        onAction={(target, action) => {
+                          void markActivity(target, action);
+                        }}
+                        key={row.id}
+                        row={{
+                          ...row,
+                          senderType: activityPeerType(
+                            entities.catalog,
+                            row.message.roomId,
+                          ),
+                        }}
+                        active={
+                          focusedActivityId === row.id ||
+                          route.get("message") === row.message.messageId
+                        }
+                        onOpen={(full) => {
+                          void onOpenResult(row, full).catch(() =>
+                            setError("无法打开消息，请刷新重试。"),
+                          );
+                        }}
+                      />
+                    </Fragment>
+                  ))
               )}
             </ResultList>
             {mode === "search" ? (

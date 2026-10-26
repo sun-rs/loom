@@ -46,8 +46,10 @@ export default function ActivityMessageRow({
   onAction,
   pending,
   swipe,
+  onSwipeDone,
 }: {
   swipe?: ActivitySwipeBinding;
+  onSwipeDone?: (row: DiscoveryRow) => void;
   client: ComponentProps<typeof ActivityContextMenu>["client"];
   onFollow: ComponentProps<typeof ActivityContextMenu>["onFollow"];
   row: DiscoveryRow;
@@ -82,13 +84,20 @@ export default function ActivityMessageRow({
     clearTimeout(timer.current);
     if (!pending) onAction(row, "done");
   };
+  const swipeDone = () => {
+    clearTimeout(timer.current);
+    if (!pending) {
+      if (onSwipeDone) onSwipeDone(row);
+      else done();
+    }
+  };
   const swipeEnabled = !!swipe?.enabled && hasRowAction && !pending;
   const gesture = useOfficialRowSwipe({
     enabled: swipeEnabled,
     actionsWidth: 72,
     open: swipe?.openId === row.id,
     onOpenChange: (open) => swipe?.onOpenChange(row.id, open),
-    onFullSwipe: done,
+    onFullSwipe: swipeDone,
     shouldYield: () => !!menu,
   });
   const rowRef = useCallback(
@@ -158,7 +167,7 @@ export default function ActivityMessageRow({
               className={swipeDoneClass}
               onClick={() => {
                 swipe?.onOpenChange(row.id, false);
-                done();
+                swipeDone();
               }}
             >
               <Check />
