@@ -1,0 +1,44 @@
+{
+  "productCommit": "aa68ca23f48df854a4b9384644b1a8dd038b78da",
+  "at": "2026-10-26T14:11:32.032Z",
+  "checks": {
+    "sourceTests": 12,
+    "gestureDomTests": 6,
+    "types": "passed",
+    "build": "passed",
+    "browserViewports": [
+      [
+        390,
+        844
+      ],
+      [
+        1440,
+        1000
+      ]
+    ],
+    "capsules": 1,
+    "primaryTargets": {
+      "count": 5,
+      "widthApprox": 68.8,
+      "height": 44,
+      "centersHit": true
+    },
+    "secondaryTargets": {
+      "count": 4,
+      "width": 80.5,
+      "height": 58
+    },
+    "memoryNavigation": "passed",
+    "consoleErrors": 0
+  },
+  "source": "Pinned Web1.21.34 native fn focus-only recipe, not newly acquired iOS app code",
+  "limits": [
+    "Viewport browser uses mouse; touch gesture/undo verified in DOM tests, not a new physical-iOS run"
+  ],
+  "restart": {
+    "newPid": 86510,
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-mobile-more-b21621d4-8051-47d4-9fec-15960135ae12",
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true
+  }
+}

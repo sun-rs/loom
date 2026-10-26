@@ -573,7 +573,7 @@
         "loom/ChannelSidebar.tsx",
         "loom/SavedNav.tsx"
       ],
-      "adaptation": "Home, Activity, Tasks and Search are peer roots; one local workspace menu provides members/computers/settings and Loom memory. Existing server summary supplies unread status; no duplicate Home search/activity rows.",
+      "adaptation": "Home, Activity, Tasks and Search are peer roots; one More entry in the same capsule opens the native workspace menu with four equal members/computers/settings/memory cells. Existing server summary supplies unread status; no duplicate Home search/activity rows.",
       "checks": [
         "scripts/official-web/mobile-app-navigation.test.ts",
         "scripts/official-web/navigation-unread.test.ts",
