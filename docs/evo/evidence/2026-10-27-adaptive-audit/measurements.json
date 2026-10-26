@@ -1,0 +1,55 @@
+{
+  "phone": {
+    "card": {
+      "font": "16px",
+      "height": 174.5,
+      "line": "24px",
+      "top": 209,
+      "width": 343
+    },
+    "cardTitle": {
+      "font": "14px",
+      "height": 60,
+      "line": "20px",
+      "top": 244,
+      "width": 317
+    },
+    "heading": {
+      "font": "16px",
+      "height": 20,
+      "line": "20px",
+      "top": 5.25,
+      "width": 32
+    },
+    "viewport": [390, 844]
+  },
+  "tablet": {
+    "card": {
+      "font": "16px",
+      "height": 202.5,
+      "line": "24px",
+      "top": 223,
+      "width": 232
+    },
+    "cardTitle": {
+      "font": "14px",
+      "height": 66,
+      "line": "22px",
+      "top": 266,
+      "width": 206
+    },
+    "heading": {
+      "font": "16px",
+      "height": 24,
+      "line": "24px",
+      "top": 54.25,
+      "width": 723
+    },
+    "nav": null,
+    "viewport": [820, 1180]
+  },
+  "notes": [
+    "Chrome viewport emulation; not physical tablet or iOS",
+    "Default view switches list to board; task title font remains 14px, line-height and card width change"
+  ]
+}
