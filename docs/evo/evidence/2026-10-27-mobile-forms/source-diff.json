@@ -1,0 +1,93 @@
+{
+  "repository": "https://github.com/botiverse/mobile",
+  "baseline": "eff04722b5904a0d001115d90d3ec49d59fb4f03",
+  "candidate": "eff04722b5904a0d001115d90d3ec49d59fb4f03",
+  "candidateDirty": false,
+  "scope": "Selected immutable native source for mobile Web semantic ports; not executable Kotlin dependency or proof of installed App version",
+  "files": [
+    {
+      "path": "LICENSE",
+      "localDrift": false,
+      "candidateSha256": "7b0afda469123fdf2758d16941aa1a5a216e73ba5bc241165a36cac49c20b1b5",
+      "changed": false
+    },
+    {
+      "path": "NOTICE",
+      "localDrift": false,
+      "candidateSha256": "fa734d1ac45f90d6c83af7ee4a7906cf994f3e90647e483f93c561bc765d18f0",
+      "changed": false
+    },
+    {
+      "path": "compose/shared/src/commonMain/kotlin/build/raft/app/ActivityConversationSwipe.kt",
+      "localDrift": false,
+      "candidateSha256": "ada0ca55b95a8326992b897a12e193e713f853c52143c452ce71344abcd6db0a",
+      "changed": false
+    },
+    {
+      "path": "compose/shared/src/commonMain/kotlin/build/raft/app/SharedInboxPanel.kt",
+      "localDrift": false,
+      "candidateSha256": "eed49e10c8e8c10aeaa8650a2ccb43b5413a584941c5b9f72e26df91245bf4d9",
+      "changed": false
+    },
+    {
+      "path": "compose/shared/src/commonMain/kotlin/build/raft/app/components/RaftPullToRefresh.kt",
+      "localDrift": false,
+      "candidateSha256": "0e92a10f0d07562f8ccfe9ff11444973ad2f2d5c9721851f40fbf3156c081efe",
+      "changed": false
+    },
+    {
+      "path": "compose/shared/src/commonMain/kotlin/build/raft/app/components/RaftPullToRefreshController.kt",
+      "localDrift": false,
+      "candidateSha256": "2180b0f5c5f819bc84d98eed951bedeedacb1a75e26337daca5f12a3d740ca18",
+      "changed": false
+    },
+    {
+      "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftSectionHeader.kt",
+      "localDrift": false,
+      "candidateSha256": "629969ebaa13931c4509be5f4a95a98a9db70ff68e202f0d5f1d642bda5ba55b",
+      "changed": false
+    },
+    {
+      "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftTopTabBar.kt",
+      "localDrift": false,
+      "candidateSha256": "c3dc900267343d7cb69628526f26dc27d0d178d54d91f14a0240d1ebc015f1fa",
+      "changed": false
+    },
+    {
+      "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftAppServerTab.kt",
+      "localDrift": false,
+      "candidateSha256": "2557df09cd6394fb979f3a2487dadea17c3173235bdd3deda2eb6afe91f366bc",
+      "changed": false
+    },
+    {
+      "path": "compose/shared/src/commonMain/kotlin/build/raft/app/components/SharedHomeSearchInput.kt",
+      "localDrift": false,
+      "candidateSha256": "f260e898f2eacfaba204362cf14ab0e6647ac92349dd612228202f0d68487230",
+      "changed": false
+    },
+    {
+      "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftTabs.kt",
+      "localDrift": false,
+      "candidateSha256": "20704ced6fb882f71d4e72b5cbdfa8924e226fbae8c1298bb59244fef35d3366",
+      "changed": false
+    },
+    {
+      "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftMobileNavServer.kt",
+      "localDrift": false,
+      "candidateSha256": "2e1eb9ffe93c663f2b202daf2235fc713fabd6fca66faac64db41bf97c9279a1",
+      "changed": false
+    },
+    {
+      "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/theme/RaftTypography.kt",
+      "localDrift": false,
+      "candidateSha256": "95f63b166026aeb13314018a9a43da7c331014216b349090483607b5e7adc043",
+      "changed": false
+    },
+    {
+      "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftDialogSheet.kt",
+      "localDrift": false,
+      "candidateSha256": "a5f2a8d63f70bbc908274ff6ea5cb800a9ac2747c8cd36208d14f5e35e6f3e2b",
+      "changed": false
+    }
+  ]
+}

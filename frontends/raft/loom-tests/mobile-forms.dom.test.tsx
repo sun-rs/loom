@@ -87,3 +87,23 @@ test("desktop remains a centered dialog with footer submit", async () => {
       .closest('[data-slot="dialog-footer"]'),
   ).not.toBeNull();
 });
+
+test("official sheet follows the visual viewport while editing and restores after keyboard dismissal", async () => {
+  media(true);
+  const viewport = Object.assign(new EventTarget(), {
+    height: 844,
+    offsetTop: 0,
+  });
+  vi.stubGlobal("innerHeight", 844);
+  vi.stubGlobal("visualViewport", viewport);
+  render(<Form />);
+  const dialog = await screen.findByRole("dialog");
+  screen.getByRole("textbox", { name: "正文" }).focus();
+  viewport.height = 480;
+  fireEvent(viewport, new Event("resize"));
+  await waitFor(() => expect(dialog.style.height).toBe("480px"));
+  expect(dialog.style.top).toBe("0px");
+  viewport.height = 844;
+  fireEvent(viewport, new Event("resize"));
+  await waitFor(() => expect(dialog.style.height).toBe(""));
+});
