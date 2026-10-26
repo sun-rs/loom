@@ -1,0 +1,51 @@
+{
+  "date": "2026-10-26",
+  "productCommit": "6c2d5480",
+  "package": {
+    "from": "0.10.5",
+    "to": "0.35.1",
+    "alias": "raft-ui",
+    "provenance": "https://github.com/botiverse/raft-design/blob/v0.35.1/CHANGELOG.md"
+  },
+  "source": {
+    "revision": "db5e399f017d584e49597e3a28757645d6807893",
+    "selectedFiles": 90,
+    "identical": 90,
+    "localDrift": 0,
+    "webProductionObserved": "1.21.34",
+    "webProductionCommit": "97b97cfed9ae99d34ade2657b17e53c1a8d111ed",
+    "wholeSiteParity": false
+  },
+  "validation": {
+    "pinTestBefore": "2 expected failures before upgrade",
+    "sourceTests": 397,
+    "sourceTestsPassed": 397,
+    "staleTests": "3 pre-existing text assertions followed old member-row delegation and a shorter dismissal guard; corrected to actual immutable composition without changing product behavior",
+    "typecheck": "passed",
+    "build": "passed",
+    "browser": "Chrome desktop1440x1000, intermediate900x844, mobile390x844; messages/article labels, mention chips, channel settings, model filtering/effort/Fast, discard confirmation, sidebar collapse aria-expanded, instance detail, no browser error/warn observed",
+    "mobileHitArea": "file button visual32x32, official after inset -7.5px; outside-edge elementFromPoint hits button",
+    "mutations": "No message sent, Role saved, paid CLI launched or runtime configuration changed"
+  },
+  "deployment": {
+    "oldPid": 27821,
+    "newPid": 40734,
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-ui035-0663ea53-4ca3-4e88-8de9-7aaa7008e9c2",
+    "businessTablesUnchanged": 20,
+    "pushSubscriptionsUnchanged": true,
+    "databases": 2,
+    "files": 325,
+    "formalPage": "Fresh production tab after restart: 12 named message articles; browser error/warn log empty;390px scrollWidth=clientWidth; screenshots retained"
+  },
+  "limits": [
+    "Desktop viewport emulation is not iOS/Android physical-device acceptance",
+    "No new page-level theme picker, swipe/pull refresh or new drag-to-focus implementation claimed",
+    "Retained db5e399 panel width policy; no claim of latest website page parity",
+    "Deprecated official token aliases retained for immutable old-source compatibility",
+    "Background real Firefox push acceptance remains separate"
+  ],
+  "screenshots": [
+    "desktop.png",
+    "mobile.png"
+  ]
+}
