@@ -64,9 +64,9 @@ test("message headers retain official spacing, badges and semantic full timestam
   assert.match(header, /<MessageItemTime\s+dateTime=/);
   assert.match(s, /<MessageItemContinuationTime dateTime=/);
 });
-test("only Activity adopts the native 840px preview threshold", () => {
+test("Activity row preview retains its source threshold; column sizing uses the newer shared policy", () => {
   const row = read("loom/ActivityMessageRow.tsx");
   assert.match(row, /ACTIVITY_PREVIEW_QUERY/);
   const page = read("loom/DiscoveryPage.tsx");
-  assert.match(page, /mode === "activity"\s*\? ACTIVITY_PREVIEW_QUERY/);
+  assert.match(page, /useCurrentListPanel/);
 });

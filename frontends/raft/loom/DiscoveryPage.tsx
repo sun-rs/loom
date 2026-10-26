@@ -1,10 +1,11 @@
+import ActivityNothingOpen from "./ActivityNothingOpen";
+import { useCurrentListPanel } from "./useCurrentListPanel";
 import DiscoveryNotice from "./DiscoveryNotice";
 import {
   SearchLoading,
   SearchHomeEmpty,
   SearchNoResults,
 } from "./OfficialSearchControls.generated";
-import { ACTIVITY_PREVIEW_QUERY } from "./activity-layout.ts";
 import { Fragment } from "react";
 import { Pin } from "lucide-react";
 import SectionEyebrow from "../packages/web/src/components/ui/SectionEyebrow.tsx";
@@ -38,9 +39,7 @@ import { appendSearchPage, MAX_SEARCH_RESULT_ROWS } from "./search-pages.ts";
 import { useSearchRail, type SearchRailHandler } from "./useSearchRail.ts";
 import type { RefObject } from "react";
 import OverlayAllResults from "./OverlayAllResults.tsx";
-import { useResizablePanel } from "../packages/web/src/hooks/useResizablePanel.ts";
 import { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives.ts";
-import { MASTER_DETAIL_COMPACT_PANEL_BOUNDS } from "../packages/web/src/components/layout/masterDetailPanelSizing.ts";
 import PanelResizeHandle from "../packages/web/src/components/ui/PanelResizeHandle.tsx";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useSearchPresentation as useSearchParams } from "./useSearchPresentation.ts";
@@ -121,25 +120,14 @@ export default function DiscoveryPage({
     );
   };
   const desktop = useMediaQuery("(min-width: 768px)");
-  const wide = useMediaQuery(
-    mode === "activity" ? ACTIVITY_PREVIEW_QUERY : "(min-width: 1024px)",
+  const panel = useCurrentListPanel(
+    "loom:activityPanelWidth",
+    mode === "activity" && !!detail,
+    profileOpen || (params.has("thread") && params.get("detail") !== "thread")
+      ? 360
+      : 0,
   );
-  const fullPanel = useResizablePanel({
-    storageKey: "loom:activityPanelWidth",
-    min: 400,
-    max: 720,
-    defaultWidth: 560,
-  });
-  const compactPanel = useResizablePanel({
-    storageKey: "loom:activityCompactWidth",
-    ...MASTER_DETAIL_COMPACT_PANEL_BOUNDS,
-  });
-  const panel =
-    !wide ||
-    profileOpen ||
-    (params.has("thread") && params.get("detail") !== "thread")
-      ? compactPanel
-      : fullPanel;
+  const showSplit = !!detail || (mode === "activity" && desktop);
   const query = params.get("q") ?? "";
   const entities = useSearchEntities(
     client,
@@ -206,21 +194,22 @@ export default function DiscoveryPage({
   return (
     <>
       <AppShellMainSlot
+        ref={panel.ref}
         onKeyDown={
           mode === "search"
             ? (event) => railHandler.current?.(event)
             : undefined
         }
-        className={`relative bg-layer-canvas  ${detail && desktop ? `border-r border-line-muted  ${mode === "search" ? "" : ""}` : ""}`}
+        className={`relative bg-layer-canvas  ${showSplit && desktop ? `border-r border-line-muted  ${mode === "search" ? "" : ""}` : ""}`}
         style={
-          detail
+          showSplit
             ? desktop
               ? { flex: `0 0 ${panel.width}px`, width: panel.width }
               : { display: "none" }
             : undefined
         }
       >
-        {detail && desktop && (
+        {showSplit && desktop && (
           <PanelResizeHandle
             side="right"
             visibleFrom="md"
@@ -344,7 +333,8 @@ export default function DiscoveryPage({
           />
         </Shell>
       </AppShellMainSlot>
-      {detail}
+      {detail ??
+        (mode === "activity" && desktop ? <ActivityNothingOpen /> : null)}
     </>
   );
 }

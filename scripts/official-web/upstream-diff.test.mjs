@@ -109,3 +109,20 @@ test("candidate metadata distinguishes clean commits, dirty checkouts and direct
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+test("candidate discovery includes new source files outside the pinned inventory without treating them as adopted", async () => {
+  const { discoverUntrackedCandidateFiles } =
+    await import("./upstream-diff.mjs");
+  const root = mkdtempSync(join(tmpdir(), "loom-candidate-coverage-"));
+  try {
+    mkdirSync(join(root, "packages/web/src"), { recursive: true });
+    writeFileSync(join(root, "packages/web/src/existing.tsx"), "old");
+    writeFileSync(join(root, "packages/web/src/new-theme.tsx"), "new");
+    assert.deepEqual(
+      discoverUntrackedCandidateFiles(root, ["packages/web/src/existing.tsx"]),
+      ["packages/web/src/new-theme.tsx"],
+    );
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});

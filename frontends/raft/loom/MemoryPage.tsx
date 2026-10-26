@@ -1,3 +1,4 @@
+import { useCurrentListPanel } from "./useCurrentListPanel";
 import { uiActionProps } from "./ui-action-props.ts";
 // Local channel-memory binding; native Sidebar / PanelHeader / form primitives.
 import { useEffect, useMemo, useState } from "react";
@@ -22,8 +23,6 @@ import CloseButton from "../packages/web/src/components/ui/CloseButton.tsx";
 import PanelHeader from "../packages/web/src/components/ui/PanelHeader.tsx";
 import PanelResizeHandle from "../packages/web/src/components/ui/PanelResizeHandle.tsx";
 import FormField from "../packages/web/src/components/ui/FormField.tsx";
-import { useResizablePanel } from "../packages/web/src/hooks/useResizablePanel.ts";
-import { MASTER_DETAIL_COMPACT_PANEL_BOUNDS } from "../packages/web/src/components/layout/masterDetailPanelSizing.ts";
 import { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives.ts";
 import MemoryCard, { type MemoryAction } from "./MemoryCard.tsx";
 import MemoryHistory from "./MemoryHistory.tsx";
@@ -71,18 +70,7 @@ export default function MemoryPage({
     .map((r) => r.roomId)
     .join("\n");
   const desktop = useMediaQuery("(min-width: 768px)");
-  const wide = useMediaQuery("(min-width: 1024px)");
-  const fullPanel = useResizablePanel({
-    storageKey: "loom:memoryPanelWidth",
-    min: 400,
-    max: 720,
-    defaultWidth: 560,
-  });
-  const compactPanel = useResizablePanel({
-    storageKey: "loom:memoryCompactWidth",
-    ...MASTER_DETAIL_COMPACT_PANEL_BOUNDS,
-  });
-  const panel = wide ? fullPanel : compactPanel;
+  const panel = useCurrentListPanel("loom:memoryPanelWidth", !!selected);
   useEffect(() => {
     if (
       editRequested &&
@@ -208,6 +196,7 @@ export default function MemoryPage({
   return (
     <div className="flex min-h-0 min-w-0 flex-1" data-testid="loom-memory-page">
       <AppShellMainSlot
+        ref={panel.ref}
         data-testid="memory-master"
         className={`relative min-w-0 bg-layer-canvas  ${selected && desktop ? "border-r border-line-seam " : ""}`}
         style={

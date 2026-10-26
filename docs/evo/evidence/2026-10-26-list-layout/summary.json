@@ -1,0 +1,26 @@
+{
+  "scope": "official production list sizing and diff coverage; NOT whole-site parity",
+  "source": "Web1.21.34 app-shell-BWgtfY02.js",
+  "tests": {
+    "officialSource": 401,
+    "typecheck": true,
+    "build": true
+  },
+  "browser": {
+    "readOnlyProxy": "51835",
+    "desktop": [1440, 1000],
+    "tablet": [900, 844],
+    "mobile": [390, 844],
+    "defaultActivityListWidth": 380,
+    "defaultMemoryDetailListWidth": 380,
+    "activityEmptyDetail": true,
+    "mobileReturnToList": true
+  },
+  "remaining": [
+    "themes",
+    "pinned activity filter",
+    "third-pane drag-collapse",
+    "mobile gestures"
+  ],
+  "deployment": "pending"
+}

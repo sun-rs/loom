@@ -1,5 +1,5 @@
 // Read-only three-way inventory. It never merges, rewrites provenance or declares UI parity.
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
@@ -73,6 +73,24 @@ export function inventoryDependency(localRoot, upstreamRoot) {
   return { baseRevision: lock.revision, summary: summarize(rows), rows };
 }
 
+// Discovery is intentionally separate from byte parity: untracked does not mean new
+// since the pin, missing in Loom, or required by the product.
+export function discoverUntrackedCandidateFiles(root, tracked) {
+  const known = new Set(tracked),
+    result = [];
+  function visit(relative) {
+    const path = resolve(root, relative);
+    if (!existsSync(path)) return;
+    for (const entry of readdirSync(path, { withFileTypes: true })) {
+      const file = `${relative}/${entry.name}`;
+      if (entry.isDirectory()) visit(file);
+      else if (entry.isFile() && !known.has(file)) result.push(file);
+    }
+  }
+  visit("packages/web/src");
+  return result.sort();
+}
+
 export function inventory(localRoot, upstreamRoot) {
   const adoption = JSON.parse(
     readFileSync(resolve(localRoot, "adoption.json"), "utf8"),
@@ -95,6 +113,20 @@ export function inventory(localRoot, upstreamRoot) {
   });
   return {
     baseRevision: adoption.revision,
+    candidateDiscovery: {
+      scope: "packages/web/src",
+      untrackedFiles: discoverUntrackedCandidateFiles(
+        upstreamRoot,
+        Object.keys(adoption.files),
+      ),
+      status:
+        "Unclassified; not automatic adoption requirements or proof of newly added features",
+    },
+    pageParity: {
+      status: "not-evaluated",
+      reason:
+        "Production routes, default states, new features and Loom compositions need independent coverage",
+    },
     sourceDependency: existsSync(
       resolve(localRoot, "upstream/raft-web-source/source-lock.json"),
     )

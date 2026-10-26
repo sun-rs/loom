@@ -1,0 +1,9 @@
+{
+  "webVersion": "1.21.34",
+  "sourceUrl": "https://app.raft.build/assets/app-shell-BWgtfY02.js",
+  "sourceSha256": "65eff83bf1a82aa2933130aecea417189fd44abd7a379f7cfc10aeda2aa6a3cc",
+  "extractedSha256": "b23a69df4cca1ae5117229f9b3a8e7b0648eca97407fc17cd54792b8e4c7608b",
+  "reuse": "Official registry and width math, formatting only; export is Loom glue. Resource extraction, not published TypeScript source.",
+  "adopted": "list bounds and width resolution; other registry entries are evidence only",
+  "license": "Owner-authorized reuse; original notices in frontends/raft/adoption.json"
+}

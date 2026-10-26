@@ -67,6 +67,10 @@ Read the target contract before changing behavior; this map is not a replacement
   type/build, desktop/mobile messages/forms/panels and safe deployment. Deprecated
   official aliases may bridge older immutable source; do not blanket-codemod it.
   Passing hashes/build does not prove visual or behavioral parity.
+  Candidate files outside the lock must be reported separately, not silently ignored.
+  Compare each retained page's empty/default/selected state and its sidebar/list
+  width policy (default, persisted drag, min/max and narrow-screen transition).
+  A component-package upgrade never closes these page-level checks.
 - **Current package:** `@botiverse/raft-ui@0.35.1` via alias `raft-ui`.
   Selected page source remains `db5e399` (Web 1.21.23 source); resource ports retain
   their original provenance. This does not claim full Web 1.21.34 parity or add
