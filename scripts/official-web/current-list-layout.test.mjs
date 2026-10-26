@@ -1,3 +1,4 @@
+import { currentColumnRegistry } from "../../frontends/raft/loom/current-column-registry.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -21,6 +22,9 @@ test("desktop activity retains an empty detail while mobile remains a single lis
   assert.doesNotMatch(page, /defaultWidth: 560/);
 });
 test("memory adopts the same list sizing without replacing ordinary 240px navigation sidebars", () => {
+  assert.equal(currentColumnRegistry.sidebar.defaultWidth, 240);
+  assert.equal(currentColumnRegistry.sidebar.min, 200);
+  assert.equal(currentColumnRegistry.sidebar.max, 400);
   const memory = readFileSync("frontends/raft/loom/MemoryPage.tsx", "utf8");
   assert.match(memory, /useCurrentListPanel/);
   assert.doesNotMatch(memory, /defaultWidth: 560/);
@@ -32,7 +36,7 @@ test("memory adopts the same list sizing without replacing ordinary 240px naviga
   ]) {
     assert.match(
       readFileSync(`frontends/raft/loom/${name}.tsx`, "utf8"),
-      /SIDEBAR_PANEL_BOUNDS/,
+      /useSidebarColumn/,
     );
   }
 });

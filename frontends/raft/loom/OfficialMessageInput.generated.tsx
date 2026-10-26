@@ -36,7 +36,7 @@ import { useMachineStore } from "../packages/web/src/store/machineStore";
 import { useServerFeatureFlag } from "../packages/web/src/store/serverFeatureFlags";
 import type { Channel } from "../packages/web/src/store/channelStore";
 import { useChannelFirstPageSettled } from "../packages/web/src/hooks/useChannelFirstPageSettled";
-import { useChannelMembers } from "../packages/web/src/hooks/useChannelMembers";
+import { useChannelMembers } from "./ComposerMembers";
 import { readChannelConversionBlocked, useChannelConversionState } from "../packages/web/src/hooks/useChannelConversionState";
 import { notifyChannelMembersChanged } from "../packages/web/src/store/channelMemberEvents";
 import {

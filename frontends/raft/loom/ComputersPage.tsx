@@ -1,3 +1,4 @@
+import { SidebarResize, useSidebarColumn } from "./SidebarLayout";
 import CreateInstanceDialog from "./CreateInstanceDialog.tsx";
 import { useInstancePresence } from "./InstancePresence.tsx";
 import { LoomSidebarSlot } from "./SidebarLayout.tsx";
@@ -49,9 +50,6 @@ import {
 } from "raft-ui";
 import PanelHeader from "../packages/web/src/components/ui/PanelHeader.tsx";
 import SectionEyebrow from "../packages/web/src/components/ui/SectionEyebrow.tsx";
-import PanelResizeHandle from "../packages/web/src/components/ui/PanelResizeHandle.tsx";
-import { useResizablePanel } from "../packages/web/src/hooks/useResizablePanel.ts";
-import { SIDEBAR_PANEL_BOUNDS } from "../packages/web/src/lib/panelBounds.ts";
 import { computerStatus, computerStatusLabels } from "./computers.ts";
 export default function ComputersPage({
   client,
@@ -110,10 +108,7 @@ export default function ComputersPage({
   const [error, setError] = useState(false);
   const [reload, setReload] = useState(0);
   const [now, setNow] = useState(Date.now);
-  const panel = useResizablePanel({
-    storageKey: "loom:computersSidebarWidth",
-    ...SIDEBAR_PANEL_BOUNDS,
-  });
+  const panel = useSidebarColumn();
   useEffect(() => {
     const abort = new AbortController();
     let timer: ReturnType<typeof setTimeout>;
@@ -295,15 +290,7 @@ export default function ComputersPage({
             </div>
           </div>
         </div>
-        <PanelResizeHandle
-          side="right"
-          data-testid="computer-sidebar-resize"
-          visibleFrom="md"
-          onPointerDown={panel.handleResizeStart}
-          onPointerMove={panel.handleResizeMove}
-          onPointerUp={panel.handleResizeEnd}
-          onPointerCancel={panel.handleResizeEnd}
-        />
+        <SidebarResize testId="computer-sidebar-resize" />
       </LoomSidebarSlot>
       <div
         className={`relative min-h-0 min-w-0 flex-1 ${selectedId ? "flex" : "hidden md:flex"}`}

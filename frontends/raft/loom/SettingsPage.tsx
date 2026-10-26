@@ -1,3 +1,4 @@
+import { SidebarResize, useSidebarColumn } from "./SidebarLayout";
 import WorkspaceThemeLink from "./WorkspaceThemeLink";
 import WorkspaceThemeSettings from "./WorkspaceThemeSettings";
 import { LoomSidebarSlot } from "./SidebarLayout.tsx";
@@ -32,9 +33,6 @@ import {
 import type { RahClient } from "@rah-os/client-sdk";
 import SettingsSidebarList from "../packages/web/src/components/settings/SettingsSidebarList.tsx";
 import PanelHeader from "../packages/web/src/components/ui/PanelHeader.tsx";
-import PanelResizeHandle from "../packages/web/src/components/ui/PanelResizeHandle.tsx";
-import { useResizablePanel } from "../packages/web/src/hooks/useResizablePanel.ts";
-import { SIDEBAR_PANEL_BOUNDS } from "../packages/web/src/lib/panelBounds.ts";
 import ChatSidebarFrame from "./ChatSidebarFrame.tsx";
 import RuntimeSettings from "./RuntimeSettings.tsx";
 const categories = [
@@ -82,10 +80,7 @@ export default function SettingsPage({
   onComputers: () => void;
   onTab: (id: string | null) => void;
 }) {
-  const panel = useResizablePanel({
-    storageKey: "loom:settingsSidebarWidth",
-    ...SIDEBAR_PANEL_BOUNDS,
-  });
+  const panel = useSidebarColumn();
   const [desktop, setDesktop] = useState(
     () => window.matchMedia("(min-width: 768px)").matches,
   );
@@ -143,15 +138,7 @@ export default function SettingsPage({
             activeId={desktop ? selectedId : tab}
           />
         </ChatSidebarFrame>
-        <PanelResizeHandle
-          side="right"
-          visibleFrom="md"
-          data-testid="settings-sidebar-resize"
-          onPointerDown={panel.handleResizeStart}
-          onPointerMove={panel.handleResizeMove}
-          onPointerUp={panel.handleResizeEnd}
-          onPointerCancel={panel.handleResizeEnd}
-        />
+        <SidebarResize testId="settings-sidebar-resize" />
       </LoomSidebarSlot>
       <div
         className={`relative min-h-0 min-w-0 flex-1 ${tab ? "flex" : "hidden md:flex"}`}

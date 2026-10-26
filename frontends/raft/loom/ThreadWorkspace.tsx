@@ -189,6 +189,7 @@ export default function ThreadWorkspace({
           channelName={room.name}
           mentionChannelId={room.roomId}
           mentionScopeChannelType="private"
+          mentionMembers={data?.members ?? []}
           loadMentionMembers={!!data && !error}
           variant="compact"
           showTaskButton={false}

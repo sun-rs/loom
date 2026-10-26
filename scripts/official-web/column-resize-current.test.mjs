@@ -16,7 +16,7 @@ test("thread focus is host-owned, reversible and does not close or replace conve
 });
 import vm from "node:vm";
 import { createHash } from "node:crypto";
-function harness() {
+function harness(kind = "focus") {
   const saved = new Map(),
     events = new Map(),
     previews = [],
@@ -79,7 +79,7 @@ function harness() {
     source,
     mainColumn: () => main,
     snap: {
-      kind: "focus",
+      kind,
       snapped: false,
       onSnappedChange: (v) => {
         snaps.push(v);
@@ -139,10 +139,32 @@ test("published resize and layout are pinned; current thread split uses 720px an
     /max-width:calc\(100% - 360px\)/,
   );
 });
-test('focus is withheld when the parent channel is not visible or a profile covers it',()=>{
- const s=read('loom/ThreadWorkspace.tsx');
- assert.match(s,/getComputedStyle\(main\)\.display !== "none"/);
- assert.match(s,/if \(!canFocus \|\| !data\?\.thread \|\| covered\) return false/);
- assert.match(s,/canToggleFocus=\{canToggleFocus\}/);
- assert.match(read('loom/ThreadFollowMenu.tsx'),/onToggleFocus && showFocus/);
+test("focus is withheld when the parent channel is not visible or a profile covers it", () => {
+  const s = read("loom/ThreadWorkspace.tsx");
+  assert.match(s, /getComputedStyle\(main\)\.display !== "none"/);
+  assert.match(
+    s,
+    /if \(!canFocus \|\| !data\?\.thread \|\| covered\) return false/,
+  );
+  assert.match(s, /canToggleFocus=\{canToggleFocus\}/);
+  assert.match(read("loom/ThreadFollowMenu.tsx"), /onToggleFocus && showFocus/);
+});
+
+test("native collapse threshold restores the saved width and reverses before release", () => {
+  const h = harness("collapse");
+  h.props.onPointerDown({
+    button: 0,
+    clientX: 900,
+    pointerId: 1,
+    currentTarget: h.currentTarget,
+    preventDefault() {},
+  });
+  h.events.get("pointermove")({ pointerId: 1, clientX: 981 });
+  assert.deepEqual(h.snaps, [true]);
+  assert.equal(h.previews.at(-1), 400);
+  h.events.get("pointermove")({ pointerId: 1, clientX: 950 });
+  assert.deepEqual(h.snaps, [true, false]);
+  assert.equal(h.previews.at(-1), 360);
+  h.events.get("blur")();
+  assert.equal(h.events.size, 0);
 });

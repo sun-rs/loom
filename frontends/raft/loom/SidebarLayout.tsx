@@ -1,4 +1,8 @@
 import {
+  CurrentColumnResize,
+  useCurrentColumnWidth,
+} from "../upstream/published-2026-10-26/column-resize.js";
+import {
   createContext,
   useContext,
   useEffect,
@@ -62,6 +66,32 @@ export function LoomSidebarSlot({
       id={layout.destination === page ? "app-sidebar" : undefined}
       inert={layout.collapsed || undefined}
       className={`${props.className ?? ""} group-data-[state=expanded]/app-shell:md:z-2`}
+    />
+  );
+}
+
+/** Current official column mechanism; existing shell preference owns collapse/focus restoration. */
+export function useSidebarColumn() {
+  return { width: useCurrentColumnWidth("sidebar") };
+}
+export function SidebarResize({ testId }: { testId: string }) {
+  const hidden = useSidebarPreference((s) => s.sidebarHidden);
+  return (
+    <CurrentColumnResize
+      column="sidebar"
+      edge="right"
+      visibleFrom="md"
+      label="调整侧栏宽度"
+      data-testid={testId}
+      snap={{
+        kind: "collapse",
+        snapped: hidden,
+        onSnappedChange(value) {
+          if (useSidebarPreference.getState().sidebarHidden !== value)
+            toggleSidebar();
+          return true;
+        },
+      }}
     />
   );
 }

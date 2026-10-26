@@ -1,3 +1,5 @@
+import { ComposerMemberContext } from "./ComposerMembers";
+import type { Principal } from "@rah-os/protocol";
 import DraftAttachment from "./DraftAttachment.tsx";
 import {
   createContext,
@@ -37,6 +39,7 @@ const Context = createContext<{
 type Props = Omit<ComponentProps<typeof NativeInput>, "onSendOverride"> & {
   client: RahClient;
   roomId: string;
+  mentionMembers?: readonly Principal[];
   onSendOverride: (
     body: string,
     mentions?: unknown,
@@ -48,6 +51,7 @@ export default function ComposerFiles({
   client,
   roomId,
   onSendOverride,
+  mentionMembers,
   ...props
 }: Props) {
   const store = useMemo(() => storeFor(client), [client]);
@@ -66,82 +70,88 @@ export default function ComposerFiles({
         .catch((e) => setError(String(e)));
   };
   const blocked = rows.some((row) => row.status !== "ready");
+  const memberScope = useMemo(
+    () => (mentionMembers ? { roomId, members: mentionMembers } : null),
+    [roomId, mentionMembers],
+  );
   return (
-    <Context.Provider value={{ client, disabled, add }}>
-      <div
-        className="loom-composer contents"
-        data-has-accessories={
-          !!props.accessoryRow || !!error || rows.length > 0
-        }
-        onDragOver={(e) => {
-          if (e.dataTransfer.types.includes("Files")) {
-            e.preventDefault();
+    <ComposerMemberContext.Provider value={memberScope}>
+      <Context.Provider value={{ client, disabled, add }}>
+        <div
+          className="loom-composer contents"
+          data-has-accessories={
+            !!props.accessoryRow || !!error || rows.length > 0
           }
-        }}
-        onDropCapture={(e) => {
-          if (e.dataTransfer.files.length) {
-            e.preventDefault();
-            e.stopPropagation();
-            add(e.dataTransfer.files);
-          }
-        }}
-        onPasteCapture={(e) => {
-          if (e.clipboardData.files.length) {
-            e.preventDefault();
-            e.stopPropagation();
-            add(e.clipboardData.files);
-          }
-        }}
-      >
-        <NativeInput
-          {...props}
-          showTaskButton={props.showTaskButton}
-          allowEmptySubmit={rows.length > 0 && !blocked}
-          submitDisabled={disabled || blocked}
-          accessoryRow={
-            props.accessoryRow || error || rows.length ? (
-              <>
-                {props.accessoryRow}
-                {error && <p role="alert">{error}</p>}
-                {!!rows.length && (
-                  <ComposerAttachments data-testid="loom-attachment-drafts">
-                    {rows.map((row) => (
-                      <DraftAttachment
-                        key={row.id}
-                        row={row}
-                        disabled={disabled}
-                        remove={() => store.remove(props.channelId, row.id)}
-                      />
-                    ))}
-                  </ComposerAttachments>
-                )}
-              </>
-            ) : undefined
-          }
-          onSendOverride={async (body, mentions, asTask?: boolean) => {
-            if (disabled || blocked) throw Error("附件尚未就绪");
-            const snapshot = [...store.read(props.channelId)];
-            if (asTask && snapshot.length)
-              throw Error("任务创建不支持附件，请先发送消息");
-            setSending(true);
-            try {
-              await onSendOverride(
-                body,
-                mentions,
-                asTask,
-                snapshot.map((row) => row.attachmentId!),
-              );
-              store.accept(
-                props.channelId,
-                snapshot.map((row) => row.id),
-              );
-            } finally {
-              setSending(false);
+          onDragOver={(e) => {
+            if (e.dataTransfer.types.includes("Files")) {
+              e.preventDefault();
             }
           }}
-        />
-      </div>
-    </Context.Provider>
+          onDropCapture={(e) => {
+            if (e.dataTransfer.files.length) {
+              e.preventDefault();
+              e.stopPropagation();
+              add(e.dataTransfer.files);
+            }
+          }}
+          onPasteCapture={(e) => {
+            if (e.clipboardData.files.length) {
+              e.preventDefault();
+              e.stopPropagation();
+              add(e.clipboardData.files);
+            }
+          }}
+        >
+          <NativeInput
+            {...props}
+            showTaskButton={props.showTaskButton}
+            allowEmptySubmit={rows.length > 0 && !blocked}
+            submitDisabled={disabled || blocked}
+            accessoryRow={
+              props.accessoryRow || error || rows.length ? (
+                <>
+                  {props.accessoryRow}
+                  {error && <p role="alert">{error}</p>}
+                  {!!rows.length && (
+                    <ComposerAttachments data-testid="loom-attachment-drafts">
+                      {rows.map((row) => (
+                        <DraftAttachment
+                          key={row.id}
+                          row={row}
+                          disabled={disabled}
+                          remove={() => store.remove(props.channelId, row.id)}
+                        />
+                      ))}
+                    </ComposerAttachments>
+                  )}
+                </>
+              ) : undefined
+            }
+            onSendOverride={async (body, mentions, asTask?: boolean) => {
+              if (disabled || blocked) throw Error("附件尚未就绪");
+              const snapshot = [...store.read(props.channelId)];
+              if (asTask && snapshot.length)
+                throw Error("任务创建不支持附件，请先发送消息");
+              setSending(true);
+              try {
+                await onSendOverride(
+                  body,
+                  mentions,
+                  asTask,
+                  snapshot.map((row) => row.attachmentId!),
+                );
+                store.accept(
+                  props.channelId,
+                  snapshot.map((row) => row.id),
+                );
+              } finally {
+                setSending(false);
+              }
+            }}
+          />
+        </div>
+      </Context.Provider>
+    </ComposerMemberContext.Provider>
   );
 }
 export function ComposerFilesTools({

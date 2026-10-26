@@ -1,3 +1,4 @@
+import { SidebarResize, useSidebarColumn } from "./SidebarLayout";
 import { LoomSidebarSlot } from "./SidebarLayout.tsx";
 import { OfficialRoleTabs } from "./OfficialIdentityFrames.generated";
 import { OfficialRoleRow } from "./OfficialIdentityRows.generated";
@@ -30,9 +31,6 @@ import AvatarSlot from "../packages/web/src/components/ui/AvatarSlot.tsx";
 import PanelHeader, {
   PROFILE_HEADER_SURFACE_CLASS,
 } from "../packages/web/src/components/ui/PanelHeader.tsx";
-import PanelResizeHandle from "../packages/web/src/components/ui/PanelResizeHandle.tsx";
-import { useResizablePanel } from "../packages/web/src/hooks/useResizablePanel.ts";
-import { SIDEBAR_PANEL_BOUNDS } from "../packages/web/src/lib/panelBounds.ts";
 export type RoleEntry = {
   id: string;
   name: string;
@@ -71,10 +69,7 @@ export default function RoleWorkspace({
 }) {
   const [showDeleted, setShowDeleted] = useState(false);
   const [query, setQuery] = useState("");
-  const panel = useResizablePanel({
-    storageKey: "loom:agentSidebarWidth",
-    ...SIDEBAR_PANEL_BOUNDS,
-  });
+  const panel = useSidebarColumn();
   const visible = entries.filter((entry) =>
     entry.name
       .normalize("NFKC")
@@ -180,15 +175,7 @@ export default function RoleWorkspace({
             </>
           )}
         </Frame>
-        <PanelResizeHandle
-          side="right"
-          visibleFrom="md"
-          data-testid="agent-sidebar-resize"
-          onPointerDown={panel.handleResizeStart}
-          onPointerMove={panel.handleResizeMove}
-          onPointerUp={panel.handleResizeEnd}
-          onPointerCancel={panel.handleResizeEnd}
-        />
+        <SidebarResize testId="agent-sidebar-resize" />
       </LoomSidebarSlot>
       <div
         className={`relative min-h-0 min-w-0 flex-1 ${detail ? "flex" : "hidden md:flex"}`}

@@ -1,3 +1,4 @@
+import { SidebarResize, useSidebarColumn } from "./SidebarLayout";
 import WorkspaceTheme from "./WorkspaceTheme";
 import LocalNotifications from "./LocalNotifications.tsx";
 import { LoomShellRoot, LoomSidebarSlot } from "./SidebarLayout.tsx";
@@ -39,9 +40,6 @@ import InstanceInspector from "./InstanceInspector.tsx";
 import { bindMemberRoster } from "./member-roster.ts";
 import { notifyChannelMembersChanged } from "../packages/web/src/store/channelMemberEvents.ts";
 import ChannelTimeline from "./ChannelTimeline.tsx";
-import { useResizablePanel } from "../packages/web/src/hooks/useResizablePanel.ts";
-import { SIDEBAR_PANEL_BOUNDS } from "../packages/web/src/lib/panelBounds.ts";
-import PanelResizeHandle from "../packages/web/src/components/ui/PanelResizeHandle.tsx";
 import { LazyDiscoveryPage as DiscoveryPage } from "./LazyPages.tsx";
 import {
   DesktopNavigation,
@@ -624,7 +622,8 @@ function Channel({
                     channelId={channel.roomId}
                     channelName={channel.name}
                     variant="compact"
-                    loadMentionMembers={!loading}
+                    mentionMembers={view.members}
+                    loadMentionMembers={!loading && !error}
                     mentionScopeChannelType="private"
                     showTaskButton={!isPrivate && !channel.archivedAt}
                     onSendOverride={send}
@@ -751,10 +750,7 @@ export default function ChannelApp() {
   const [standaloneRooms, setStandaloneRooms] = useState<string[]>([]);
   const [sidebarReady, setSidebarReady] = useState(false);
   const onSidebarReady = useCallback(() => setSidebarReady(true), []);
-  const sidebarPanel = useResizablePanel({
-    storageKey: "loom:chatSidebarWidth",
-    ...SIDEBAR_PANEL_BOUNDS,
-  });
+  const sidebarPanel = useSidebarColumn();
   const [directory, setDirectory] =
     useState<Awaited<ReturnType<typeof loadChannelDirectory>>>();
   const [error, setError] = useState("");
@@ -1097,15 +1093,7 @@ export default function ChannelApp() {
                         } as React.CSSProperties
                       }
                     >
-                      <PanelResizeHandle
-                        side="right"
-                        visibleFrom="md"
-                        data-testid="chat-sidebar-resize"
-                        onPointerDown={sidebarPanel.handleResizeStart}
-                        onPointerMove={sidebarPanel.handleResizeMove}
-                        onPointerUp={sidebarPanel.handleResizeEnd}
-                        onPointerCancel={sidebarPanel.handleResizeEnd}
-                      />
+                      <SidebarResize testId="chat-sidebar-resize" />
                       {!directory && error && (
                         <div className="h-full md:hidden">
                           <ChatSidebarFrame

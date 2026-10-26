@@ -52,6 +52,10 @@ function imports(s, name) {
     if (!ts.isImportDeclaration(n)) continue;
     const spec = n.moduleSpecifier.text;
     const bound =
+      (spec === "../../hooks/useChannelMembers" &&
+      name.endsWith("MessageInput.tsx")
+        ? "./ComposerMembers"
+        : undefined) ??
       aliases[spec] ??
       (spec === "../ui/AvatarSlot" && name.endsWith("MessageInput.tsx")
         ? "./MentionAvatar"

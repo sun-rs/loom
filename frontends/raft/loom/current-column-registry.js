@@ -4,7 +4,12 @@ const prior = {
   thread: ["loom:threadPanelWidth"],
   detail: ["loom:profilePanelWidth"],
   list: [],
-  sidebar: [],
+  sidebar: [
+    "loom:chatSidebarWidth",
+    "loom:agentSidebarWidth",
+    "loom:computersSidebarWidth",
+    "loom:settingsSidebarWidth",
+  ],
   sideCards: [],
   workspaceTree: [],
 };
