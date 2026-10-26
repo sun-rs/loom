@@ -1,11 +1,12 @@
+import { DialogCommit } from "raft-ui/wip";
 import { uiActionProps } from "./ui-action-props.ts";
 import { useDraftNavigation } from "./DraftNavigation.tsx";
 import RoleRuntimeFields from "./RoleRuntimeFields.tsx";
 import { Dices } from "lucide-react";
 import StableField from "../packages/web/src/components/agent/StableField.tsx";
 import { suggestAgentName } from "./role-suggested-name.ts";
-import { useEffect, useState, type ReactNode } from "react";
-import { Button, Input, Textarea, Spinner } from "raft-ui";
+import { useEffect, useState, useId, type ReactNode } from "react";
+import { DialogFooter, Button, Input, Textarea, Spinner } from "raft-ui";
 import {
   roleFormFrom,
   buildRoleConfiguration,
@@ -94,9 +95,11 @@ export default function RoleEditor({
   const binding = runtime?.bindings.find(
     (b) => b.modelBindingId === form.modelBindingId,
   );
+  const formId = useId();
   const Field = creation ? StableField : FormField;
   return (
     <form
+      id={formId}
       className="space-y-1"
       onSubmit={(e) => {
         e.preventDefault();
@@ -201,7 +204,7 @@ export default function RoleEditor({
         )}
         {beforeSubmit}
         {error && <p role="alert">{error}</p>}
-        <div className="flex flex-wrap justify-end gap-2">
+        <DialogFooter>
           {onCancel && (
             <Button
               type="button"
@@ -214,7 +217,8 @@ export default function RoleEditor({
             </Button>
           )}
           {field ? (
-            <Button
+            <DialogCommit
+              form={formId}
               variant="accent"
               size="lg"
               type="submit"
@@ -227,9 +231,10 @@ export default function RoleEditor({
               }
             >
               保存运行时配置
-            </Button>
+            </DialogCommit>
           ) : (
-            <Button
+            <DialogCommit
+              form={formId}
               {...(creation
                 ? { variant: "accent" as const, size: "lg" as const }
                 : uiActionProps.formSave)}
@@ -243,9 +248,9 @@ export default function RoleEditor({
               }
             >
               保存角色
-            </Button>
+            </DialogCommit>
           )}
-        </div>
+        </DialogFooter>
       </fieldset>
     </form>
   );

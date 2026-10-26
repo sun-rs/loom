@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
-import DialogCard from "@loom/raft-web-source/DialogCard";
-import { Button } from "raft-ui";
+import MobileFormDialog from "./MobileFormDialog";
+import { DialogCommit } from "raft-ui/wip";
+import { Button, DialogFooter } from "raft-ui";
 import { ManagementClient, type Catalog } from "./management-client.ts";
 import {
   SelectField,
@@ -47,7 +48,8 @@ export default function CreateInstanceDialog({
   }, [manager, setError]);
   const busy = state !== "idle";
   return (
-    <DialogCard
+    <MobileFormDialog
+      busy={busy}
       title="新建实例"
       onClose={() => {
         if (!busy) onClose();
@@ -75,11 +77,11 @@ export default function CreateInstanceDialog({
             .map((r) => ({ value: r.roomId, label: r.name }))}
         />
         <OperationStatus manager={manager} error={error} />
-        <div className="flex justify-end gap-2">
+        <DialogFooter>
           <Button variant="ghost" disabled={busy} onClick={onClose}>
             取消
           </Button>
-          <Button
+          <DialogCommit
             disabled={busy || !roleId || !channel}
             onClick={() =>
               void manager.instance("add", channel, roleId, (result) => {
@@ -92,9 +94,9 @@ export default function CreateInstanceDialog({
             }
           >
             确认添加
-          </Button>
-        </div>
+          </DialogCommit>
+        </DialogFooter>
       </div>
-    </DialogCard>
+    </MobileFormDialog>
   );
 }

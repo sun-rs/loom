@@ -54,6 +54,10 @@
     {
       "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/theme/RaftTypography.kt",
       "sha256": "95f63b166026aeb13314018a9a43da7c331014216b349090483607b5e7adc043"
+    },
+    {
+      "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftDialogSheet.kt",
+      "sha256": "a5f2a8d63f70bbc908274ff6ea5cb800a9ac2747c8cd36208d14f5e35e6f3e2b"
     }
   ]
 }

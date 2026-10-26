@@ -3,8 +3,9 @@
 import { useMemo, useRef, useState, useEffect } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
 import { RoleCreateResponseSchema, type RoleTemplate } from "@rah-os/protocol";
-import { Button, Checkbox } from "raft-ui";
-import DialogCard from "@loom/raft-web-source/DialogCard";
+import { Button, Checkbox, DialogFooter } from "raft-ui";
+import MobileFormDialog from "./MobileFormDialog";
+import { DialogCommit } from "raft-ui/wip";
 import RoleEditor from "./RoleEditor.tsx";
 import { useDraftNavigation } from "./DraftNavigation.tsx";
 import DiscardChangesDialog from "./DiscardChangesDialog.tsx";
@@ -80,7 +81,12 @@ export default function CreateRoleDialog({
   };
   return (
     <>
-      <DialogCard title="新建角色" onClose={close} testId="loom-create-role">
+      <MobileFormDialog
+        busy={busy}
+        title="新建角色"
+        onClose={close}
+        testId="loom-create-role"
+      >
         <div ref={container}>
           {savedRole ? (
             <div className="space-y-4">
@@ -99,7 +105,7 @@ export default function CreateRoleDialog({
                   .filter((r) => r.kind === "channel" && !r.archivedAt)
                   .map((r) => ({ value: r.roomId, label: r.name }))}
               />
-              <div className="flex justify-end gap-2">
+              <DialogFooter>
                 <Button
                   variant="ghost"
                   size="lg"
@@ -108,15 +114,15 @@ export default function CreateRoleDialog({
                 >
                   暂不添加
                 </Button>
-                <Button
+                <DialogCommit
                   variant="accent"
                   size="lg"
                   disabled={busy || !channel}
                   onClick={attach}
                 >
                   确认添加实例
-                </Button>
-              </div>
+                </DialogCommit>
+              </DialogFooter>
             </div>
           ) : (
             <RoleEditor
@@ -174,7 +180,7 @@ export default function CreateRoleDialog({
           )}
           <OperationStatus manager={manager} error={error} />
         </div>
-      </DialogCard>
+      </MobileFormDialog>
       {discard && (
         <DiscardChangesDialog
           onCancel={() => setDiscard(false)}
