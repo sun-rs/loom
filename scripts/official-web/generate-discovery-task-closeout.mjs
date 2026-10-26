@@ -232,10 +232,22 @@ export function generateCloseout() {
     'subtitle={formatMessage({ id: "thread.header.subtitle" }, { activeCount: totalCount, unreadCount: totalUnreadCount })}',
     'subtitle={typeof totalCount === "number" && typeof totalUnreadCount === "number" ? formatMessage({ id: "thread.header.subtitle" }, { activeCount: totalCount, unreadCount: totalUnreadCount }) : unknownSubtitle}',
   );
-  const aa = replace(
+  let aa = replace(
     activityAction,
     "                    onClick={handleMarkAllRead}",
     "                    disabled={busy}\n                    onClick={handleMarkAllRead}",
+  );
+  // 1.21.34 ThreadsInbox yn: narrow toolbar mark-all action becomes CheckCheck.
+  aa = replace(aa, 'size="sm"', 'size="md"');
+  aa = replace(
+    aa,
+    'className="shrink-0 whitespace-nowrap"',
+    'className="-mr-[calc(--spacing(3)+1.5px)] shrink-0 whitespace-nowrap @max-[30rem]:-mr-2 @max-[30rem]:size-8 @max-[30rem]:px-0"',
+  );
+  aa = replace(
+    aa,
+    '{formatMessage({ id: "thread.markAllRead.label" })}',
+    '<CheckCheck aria-hidden className="hidden @max-[30rem]:block" /><span className="@max-[30rem]:sr-only">{formatMessage({ id: "thread.markAllRead.label" })}</span>',
   );
   return {
     "OfficialTaskSelection.generated.tsx": header + selection,
@@ -261,7 +273,7 @@ export function OfficialTasksHeader({meta}:{meta:ReactNode}){const {formatMessag
 `,
     "OfficialActivityHeader.generated.tsx":
       header +
-      `import type {ReactNode,ComponentProps} from "react";import {useIntl} from "react-intl";import {Button} from "raft-ui";import PanelHeader from "../packages/web/src/components/ui/PanelHeader";import SectionEyebrow from "@loom/raft-web-source/SectionEyebrow";import Tooltip from "@loom/raft-web-source/Tooltip";
+      `import {CheckCheck} from "lucide-react";import type {ReactNode,ComponentProps} from "react";import {useIntl} from "react-intl";import {Button} from "raft-ui";import PanelHeader from "../packages/web/src/components/ui/PanelHeader";import SectionEyebrow from "@loom/raft-web-source/SectionEyebrow";import Tooltip from "@loom/raft-web-source/Tooltip";
 export function OfficialActivityHeader({totalCount,totalUnreadCount,unknownSubtitle,onMobileBack,mobileBackProps,headerContainerProps,headerTitleClickProps,actions}:{totalCount:number|undefined;totalUnreadCount:number|undefined;unknownSubtitle?:string;onMobileBack:()=>void;mobileBackProps:ComponentProps<typeof PanelHeader>["mobileBackProps"];headerContainerProps:ComponentProps<typeof PanelHeader>["containerProps"];headerTitleClickProps:ComponentProps<typeof PanelHeader>["titleClickProps"];actions:ReactNode}){const {formatMessage}=useIntl();return (${ah});}
 export function OfficialActivityMarkAll({busy,handleMarkAllRead}:{busy:boolean;handleMarkAllRead:()=>void}){const {formatMessage}=useIntl();return (${aa});}
 `,

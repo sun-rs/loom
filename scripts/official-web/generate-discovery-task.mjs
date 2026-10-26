@@ -157,6 +157,43 @@ export function generateDiscoveryTask() {
     `<SegmentedControlItem value="pinned" data-testid="inbox-filter-pinned"><SegmentedControlLabel>{formatMessage({id:"thread.filter.pinned",defaultMessage:"已置顶"})}</SegmentedControlLabel></SegmentedControlItem></SegmentedControl>`,
   );
 
+  // 1.21.34 resource yn: direct children permit automatic available-width measurement.
+  toolbar = replaceOnce(
+    toolbar,
+    'className="flex h-[54px]',
+    'className="@container flex h-[54px]',
+  );
+  toolbar = replaceOnce(
+    toolbar,
+    '<div className="flex min-w-0 items-center gap-2">\n              <div className="min-w-0">',
+    "",
+  );
+  toolbar = replaceOnce(
+    toolbar,
+    '</SegmentedControl>\n              </div>\n            </div>\n            <div className="flex shrink-0 items-center gap-2">\n              {actions}\n            </div>',
+    "</SegmentedControl>\n            {actions}",
+  );
+  toolbar = replaceOnce(
+    toolbar,
+    "<SegmentedControl\n",
+    '<SegmentedControl iconsOnlyBelow="auto"\n',
+  );
+  for (const [value, icon] of [
+    ["all", "Inbox"],
+    ["unread", "CircleDot"],
+    ["mentions", "AtSign"],
+    ["pinned", "Pin"],
+  ]) {
+    const tag = `<SegmentedControlItem value="${value}" data-testid="inbox-filter-${value}">`;
+    toolbar = replaceOnce(
+      toolbar,
+      tag,
+      tag +
+        `<${icon} aria-hidden className="hidden in-data-icons-only:block" />`,
+    );
+  }
+
+  toolbar = toolbar.replace(/^[ \t]+$/gm, "");
   const avatar = extractDeclarations(parse("thread/ThreadsInbox").source, [
     "ConversationAvatar",
   ]);
@@ -169,7 +206,7 @@ export function generateDiscoveryTask() {
       "\nexport default ConversationAvatar;\n",
     "OfficialActivityFilters.generated.tsx":
       header +
-      'import type {ReactNode} from "react";\nimport {useIntl} from "react-intl";\nimport {SegmentedControl,SegmentedControlItem,SegmentedControlLabel} from "raft-ui";\nexport default function ActivityFilters({value:filter,onChange:setFilter,actions}:{value:string;onChange:(value:string)=>void;actions?:ReactNode}) {const {formatMessage}=useIntl();return (' +
+      'import {Inbox,CircleDot,AtSign,Pin} from "lucide-react";\nimport type {ReactNode} from "react";\nimport {useIntl} from "react-intl";\nimport {SegmentedControl,SegmentedControlItem,SegmentedControlLabel} from "raft-ui";\nexport default function ActivityFilters({value:filter,onChange:setFilter,actions}:{value:string;onChange:(value:string)=>void;actions?:ReactNode}) {const {formatMessage}=useIntl();return (' +
       toolbar +
       "); }\n",
     "OfficialTaskModalHead.generated.tsx": module("task/TaskModalHead"),

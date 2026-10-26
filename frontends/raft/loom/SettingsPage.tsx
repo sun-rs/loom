@@ -1,3 +1,4 @@
+import WorkspaceThemeLink from "./WorkspaceThemeLink";
 import WorkspaceThemeSettings from "./WorkspaceThemeSettings";
 import { LoomSidebarSlot } from "./SidebarLayout.tsx";
 import {
@@ -210,7 +211,11 @@ export default function SettingsPage({
                   controlRoomId={controlRoomId}
                 />
               ) : selectedId === "appearance" ? (
-                <AppearanceSection />
+                <AppearanceSection
+                  themeLink={
+                    <WorkspaceThemeLink onOpen={() => onTab("theme")} />
+                  }
+                />
               ) : selectedId === "about" ? (
                 <LoomAboutSection appVersion={WEB_BUILD_IDENTITY.version} />
               ) : selectedId === "account" ? (
