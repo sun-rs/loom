@@ -1,3 +1,5 @@
+import MobileWorkspaceMenu from "./MobileWorkspaceMenu";
+import { mobilePrimaryDestinations } from "./mobile-app-navigation";
 import { CurrentSidebarToggle } from "./CurrentSidebarToggle.generated.js";
 import {
   OfficialSortableNavigation,
@@ -24,6 +26,7 @@ import {
   MobileNavRoot,
   MobileNavItem,
   MobileNavLabel,
+  Status,
 } from "raft-ui";
 import { RailTabButton } from "./OfficialNavigationLeaves.generated";
 import PanelHeader from "../packages/web/src/components/ui/PanelHeader.tsx";
@@ -108,45 +111,53 @@ export function DesktopNavigation({
   );
 }
 
-/** Same destinations on small screens using the official mobile navigation primitive in the shared floating host. */
-export function MobileNavigation({ active, onSelect }: NavigationProps) {
-  const tabs = destinations
-    .filter(
-      (entry) =>
-        entry.id !== "search" &&
-        entry.id !== "activity" &&
-        entry.id !== "computers",
-    )
-    .map((entry) =>
-      entry.id === "channels" ? { ...entry, label: "首页", icon: Home } : entry,
-    );
+/** Owner-confirmed app roots, rendered with the official Web navigation primitives. */
+export function MobileNavigation({
+  active,
+  onSelect,
+  workspaceName = "Loom",
+  unread,
+}: NavigationProps & { workspaceName?: string }) {
+  const tabs = mobilePrimaryDestinations.map((id) =>
+    destinations.find((entry) => entry.id === id)!,
+  );
   return (
-    <MobileNavRoot
-      className="loom-mobile-nav pointer-events-auto md:hidden"
-      aria-label="主导航"
+    <div
+      className="loom-mobile-nav-group pointer-events-auto md:hidden"
       role="navigation"
+      aria-label="主导航"
     >
-      {tabs.map((entry) => (
-        <MobileNavItem
-          key={entry.id}
-          selected={
-            active === entry.id ||
-            (active === "computers" && entry.id === "settings")
-          }
-          aria-label={entry.label}
-          aria-current={
-            active === entry.id ||
-            (active === "computers" && entry.id === "settings")
-              ? "page"
-              : undefined
-          }
-          onClick={() => onSelect(entry.id)}
-        >
-          <entry.icon />
-          <MobileNavLabel className="sr-only">{entry.label}</MobileNavLabel>
-        </MobileNavItem>
-      ))}
-    </MobileNavRoot>
+      <MobileNavRoot className="loom-mobile-nav" role="presentation">
+        {tabs.map((entry) => (
+          <MobileNavItem
+            key={entry.id}
+            data-testid={`mobile-nav-${entry.id}`}
+            selected={active === entry.id}
+            aria-label={entry.id === "channels" ? "首页" : entry.label}
+            aria-current={active === entry.id ? "page" : undefined}
+            onClick={() => onSelect(entry.id)}
+          >
+            {entry.id === "channels" ? <Home /> : <entry.icon />}
+            {((entry.id === "channels" && unread?.channels) ||
+              (entry.id === "activity" && unread?.activity)) && (
+              <Status
+                variant="accent"
+                className="!absolute right-2 top-1"
+                aria-label="有未读消息"
+              />
+            )}
+            <MobileNavLabel className="sr-only">
+              {entry.id === "channels" ? "首页" : entry.label}
+            </MobileNavLabel>
+          </MobileNavItem>
+        ))}
+      </MobileNavRoot>
+      <MobileWorkspaceMenu
+        name={workspaceName}
+        active={active}
+        onSelect={onSelect}
+      />
+    </div>
   );
 }
 

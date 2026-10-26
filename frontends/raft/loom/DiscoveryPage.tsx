@@ -291,7 +291,6 @@ export default function DiscoveryPage({
             client={client}
             workspaceId={workspaceId}
             revision={tick}
-            onBack={onBack}
             onRefresh={() => setTick((v) => v + 1)}
             onNextUnread={() => setNextUnreadRequest((v) => v + 1)}
             renderToolbar={(actions) => (
@@ -734,8 +733,8 @@ function Results({
       data-testid="discovery-results"
       className={
         mode === "activity"
-          ? "scrollbar-quiet safe-bottom"
-          : "min-h-0 overflow-y-auto"
+          ? "scrollbar-quiet safe-bottom mobile-nav-clearance"
+          : "min-h-0 overflow-y-auto mobile-nav-clearance"
       }
     >
       {scopedConversation && (

@@ -509,6 +509,15 @@ recreate a screenshot to hide the gap. Tooling/document-only updates do not requ
 a product restart. Do not create a second `agent.md` rule file; this `AGENTS.md`
 is the repository instruction entry point.
 
+Owner mobile-navigation ruling (2026-10-26): mobile Web follows the confirmed
+native-app information hierarchy: Home / Activity / Tasks / Search, plus the
+workspace initial menu for Members / Computers / Settings. Keep Loom memory
+reachable there. These are peer roots, not Home subpages. Use the pinned official
+`raft-ui/wip` MobileNavServerPopover scenario; keep the approved compact touch
+layout explicit. Direct Activity completion has no undo; swipe completion keeps
+its bounded undo. This is an owner-approved Web adaptation, not a claim of copied
+native iOS source or multi-workspace support.
+
 ### Mandatory Raft UI layering (owner approved 2026-10-19)
 
 For evo, adopt the official Raft UI rules as the implementation contract, not

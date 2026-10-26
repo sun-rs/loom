@@ -13,7 +13,6 @@ export default function ActivityHeader({
   client,
   workspaceId,
   revision,
-  onBack,
   onRefresh,
   onNextUnread,
   renderToolbar,
@@ -21,7 +20,6 @@ export default function ActivityHeader({
   client: RahClient;
   workspaceId: string;
   revision: number;
-  onBack: () => void;
   onRefresh: () => void;
   onNextUnread: () => void;
   renderToolbar: (actions: ReactNode) => ReactNode;
@@ -110,7 +108,7 @@ export default function ActivityHeader({
             if (event.detail >= 2) onNextUnread();
           },
         }}
-        onMobileBack={onBack}
+        onMobileBack={undefined}
         mobileBackProps={{ "aria-label": "返回聊天列表" }}
         actions={
           <>

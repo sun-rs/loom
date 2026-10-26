@@ -37,7 +37,7 @@ export function useSearchHeaderController({
     inputRef,
     query: input,
     overlayChrome: overlay,
-    handleBack: onBack,
+    handleBack: conversation ? onBack : undefined,
     mobileBackProps: {
       "aria-label": conversation ? `返回${conversation}` : "返回聊天列表",
     },

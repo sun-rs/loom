@@ -4,7 +4,6 @@ import {
 } from "./navigation-unread.ts";
 import { uiActionProps } from "./ui-action-props.ts";
 import { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives.ts";
-import MobileHomeEntries from "./MobileHomeEntries.tsx";
 import SavedNav from "./SavedNav.tsx";
 import { useAppearanceStore } from "../packages/web/src/store/appearanceStore.ts";
 import { shouldHideEmptySidebarSection } from "../packages/web/src/components/layout/sidebarEmptySectionVisibility.ts";
@@ -73,7 +72,6 @@ export default function ChannelSidebar({
   onSelect,
   savedSelected,
   onOpenSaved,
-  onOpenMobileDestination,
   onCreated,
 }: {
   client: RahClient;
@@ -90,7 +88,6 @@ export default function ChannelSidebar({
   onUnreadChanged?: (value: NavigationUnread | undefined) => void;
   savedSelected: boolean;
   onOpenSaved: () => void;
-  onOpenMobileDestination: (id: "search" | "activity") => void;
   selected: string | null;
   onSelect: (id: string) => boolean;
   onCreated: (room: Room) => Promise<void>;
@@ -105,7 +102,6 @@ export default function ChannelSidebar({
     preferences: SidebarPreferences;
     recent: Record<string, string>;
   }>();
-  const [activityUnreadCount, setActivityUnreadCount] = useState<number>();
   const [activity, setActivity] = useState<Record<string, number>>();
   const [menuRoom, setMenuRoom] = useState<string>();
   const [marking, setMarking] = useState(false);
@@ -139,7 +135,6 @@ export default function ChannelSidebar({
       ]);
       if (ticket === request.current) {
         onUnreadChanged?.(navigationUnread(workspaceId, activity.summary));
-        setActivityUnreadCount(activity.summary?.unreadActivityCount);
         onStandaloneChanged(
           next.preferences.dmOrder
             .filter((k) => k.startsWith("room:"))
@@ -159,7 +154,6 @@ export default function ChannelSidebar({
     } catch {
       if (ticket === request.current) {
         setActivity(undefined);
-        setActivityUnreadCount(undefined);
         onUnreadChanged?.(undefined);
         setReadError("频道列表设置读取失败，请重试。");
       }
@@ -332,10 +326,6 @@ export default function ChannelSidebar({
             刷新列表
           </Button>
         )}
-        <MobileHomeEntries
-          onSelect={onOpenMobileDestination}
-          unreadCount={activityUnreadCount}
-        />
         <SavedNav
           client={client}
           workspaceId={workspaceId}

@@ -1,3 +1,4 @@
+import { showMobileRootNavigation } from "./mobile-app-navigation";
 import { SidebarResize, useSidebarColumn } from "./SidebarLayout";
 import WorkspaceTheme from "./WorkspaceTheme";
 import LocalNotifications from "./LocalNotifications.tsx";
@@ -804,6 +805,8 @@ export default function ChannelApp() {
         "memory",
         "message",
         "detail",
+        "channelId",
+        "presentation",
       ])
         next.delete(key);
       if (id === "channels") {
@@ -1117,7 +1120,6 @@ export default function ChannelApp() {
                       )}
                       {directory?.workspace.controlRoomId && (
                         <ChannelSidebar
-                          onOpenMobileDestination={selectDestination}
                           client={client}
                           workspaceId={directory.workspace.workspaceId}
                           controlRoomId={directory.workspace.controlRoomId}
@@ -1550,27 +1552,26 @@ export default function ChannelApp() {
               }
             />
           </Routes>
-          {(destination !== "channels" || mobileList) &&
-            destination !== "search" &&
-            destination !== "activity" &&
-            !params.has("thread") &&
-            !(destination === "computers" && params.has("computer")) &&
-            !(destination === "settings" && params.has("settings")) &&
-            !(destination === "tasks" && params.has("task")) &&
-            !(destination === "agents" && params.has("role")) &&
-            !(destination === "memory" && params.has("memory")) && (
-              <MobileBottomBarStack
-                floating
-                showLiveActivity
-                liveActivity={<LoomLiveActivity />}
-                tabBar={
-                  <MobileNavigation
-                    active={destination}
-                    onSelect={selectDestination}
-                  />
-                }
-              />
-            )}
+          {showMobileRootNavigation(destination, params, mobileList) && (
+            <MobileBottomBarStack
+              floating
+              showLiveActivity
+              liveActivity={<LoomLiveActivity />}
+              tabBar={
+                <MobileNavigation
+                  unread={
+                    navigationUnread?.workspaceId ===
+                    directory?.workspace.workspaceId
+                      ? navigationUnread
+                      : undefined
+                  }
+                  workspaceName={directory?.workspace.name ?? "Loom"}
+                  active={destination}
+                  onSelect={selectDestination}
+                />
+              }
+            />
+          )}
         </LoomShellRoot>
       </SystemNotificationsProvider>
     </AppearanceRuntimeProvider>,

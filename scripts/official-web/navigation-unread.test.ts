@@ -19,27 +19,6 @@ test("navigation derives independent flags from complete server summary, never p
     { workspaceId: "other", channels: false, activity: false },
   );
 });
-test("mobile Home adopts official SidebarItem/count composition from the same summary", async () => {
-  const { readFileSync } = await import("node:fs");
-  const entry = readFileSync(
-    "frontends/raft/loom/MobileHomeEntries.tsx",
-    "utf8",
-  );
-  assert.match(entry, /<SidebarItem/);
-  assert.match(entry, /<SidebarItemCount/);
-  assert.match(entry, /loom-mobile-home-action/);
-  assert.match(entry, /unreadCount > 99 \? "99\+" : unreadCount/);
-  const sidebar = readFileSync(
-    "frontends/raft/loom/ChannelSidebar.tsx",
-    "utf8",
-  );
-  assert.match(
-    sidebar,
-    /setActivityUnreadCount\(activity.summary\?\.unreadActivityCount\)/,
-  );
-  assert.match(sidebar, /setActivityUnreadCount\(undefined\)/);
-  assert.match(sidebar, /unreadCount=\{activityUnreadCount\}/);
-});
 test("mobile saved entry shares official Home row sizing while desktop remains compact", async () => {
   const { readFileSync } = await import("node:fs");
   const s = readFileSync("frontends/raft/loom/SavedNav.tsx", "utf8");

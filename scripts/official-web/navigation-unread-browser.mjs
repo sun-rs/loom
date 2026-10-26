@@ -50,30 +50,17 @@ export async function verifyNavigationUnread({ browser, origin }) {
       .waitFor({ state: "attached" });
     assert.equal(await dot("channels").count(), 0);
     assert.equal(await dot("activity").count(), 0);
-    // Mobile Home consumes the same complete summary, not the visible page size.
+    // Mobile Activity tab consumes the same complete summary, not the visible page size.
     await page.setViewportSize({ width: 390, height: 844 });
     fail = false;
     summary = { unreadActivityCount: 123, rooms: [] };
     await page.goto(origin + "/?view=channels");
     await showChatList(page);
-    const entry = page.getByTestId("mobile-home-activity-entry");
-    const badge = entry.locator('[data-slot="sidebar-item-count"]');
-    await badge.getByText("99+", { exact: true }).waitFor();
+    const entry = page.getByTestId("mobile-nav-activity");
+    const badge = entry.locator('[data-slot="status"]');
+    await badge.waitFor();
     const rowBox = await entry.boundingBox();
     assert.ok(rowBox.height >= 44);
-    assert.equal(
-      await entry.locator("svg").first().getAttribute("width"),
-      "20",
-    );
-    const saved = page.getByTestId("sidebar-saved-entry");
-    assert.ok((await saved.boundingBox()).height >= 44);
-    assert.equal(
-      await saved
-        .locator("svg")
-        .first()
-        .evaluate((el) => el.getBoundingClientRect().width),
-      20,
-    );
     await page.screenshot({ path: "/tmp/loom-mobile-home-unread.png" });
     await entry.click();
     assert.equal(new URL(page.url()).searchParams.get("view"), "activity");

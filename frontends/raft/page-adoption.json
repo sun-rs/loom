@@ -564,24 +564,26 @@
       ]
     },
     "mobile-home-unread": {
-      "source": "Raft v1.21.22 app-shell-D1-nY-va.js g7/_7 at 165243–165244 and Sidebar home entries 168110–168155; release-lock.json records URL/hash.",
-      "kind": "Structural composition port; native raft-ui SidebarItem and SidebarItemCount.",
+      "source": "Superseded 2026-10-26 by owner-observed iOS navigation. @botiverse/raft-ui 0.35.1 mobile-nav and raft-ui/wip MobileNavServerPopover exports.",
+      "kind": "Official dependency composition with approved compact mobile CSS; not native iOS source copy.",
       "local": [
-        "loom/MobileHomeEntries.tsx",
+        "loom/Navigation.tsx",
+        "loom/MobileWorkspaceMenu.tsx",
+        "loom/mobile-app-navigation.ts",
         "loom/ChannelSidebar.tsx",
         "loom/SavedNav.tsx"
       ],
-      "adaptation": "Existing sidebar request owns summary and stale-response fence; mobile count is a presentation projection of summary.unreadActivityCount, cleared on read failure. No new queue/cursor, no count inferred from loaded page. Saved entry adopts native mobile size with desktop recipe retained.",
+      "adaptation": "Home, Activity, Tasks and Search are peer roots; one local workspace menu provides members/computers/settings and Loom memory. Existing server summary supplies unread status; no duplicate Home search/activity rows.",
       "checks": [
+        "scripts/official-web/mobile-app-navigation.test.ts",
         "scripts/official-web/navigation-unread.test.ts",
-        "scripts/official-web/navigation-unread-browser.mjs",
-        "scripts/official-web/saved.test.ts",
-        "scripts/official-web/saved-browser.mjs"
+        "scripts/official-web/mobile-navigation-browser.mjs",
+        "scripts/official-web/navigation-unread-browser.mjs"
       ],
       "limits": [
-        "Synthetic unread summary in isolated Core browser gate; not a paid CLI delivery test.",
-        "Official double-click Activity first-unread focus gesture is not implemented; ordinary navigation and summary badge are accepted here.",
-        "G1 standalone chat and remaining G2 Activity follow/read/group projections remain pending."
+        "MobileNavServerPopover is an official wip export; version remains pinned.",
+        "Single local workspace; no fabricated cloud multi-workspace switch.",
+        "Physical-device acceptance is separate from browser viewport evidence."
       ]
     },
     "activity-first-unread-focus": {
