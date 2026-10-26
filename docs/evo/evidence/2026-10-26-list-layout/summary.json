@@ -8,9 +8,18 @@
   },
   "browser": {
     "readOnlyProxy": "51835",
-    "desktop": [1440, 1000],
-    "tablet": [900, 844],
-    "mobile": [390, 844],
+    "desktop": [
+      1440,
+      1000
+    ],
+    "tablet": [
+      900,
+      844
+    ],
+    "mobile": [
+      390,
+      844
+    ],
     "defaultActivityListWidth": 380,
     "defaultMemoryDetailListWidth": 380,
     "activityEmptyDetail": true,
@@ -22,5 +31,14 @@
     "third-pane drag-collapse",
     "mobile gestures"
   ],
-  "deployment": "pending"
+  "deployment": {
+    "commit": "c09e2064",
+    "oldPid": 40734,
+    "newPid": 70149,
+    "backupVerified": true,
+    "databaseCount": 2,
+    "fileCount": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true
+  }
 }
