@@ -1,0 +1,55 @@
+{
+  "date": "2026-10-26",
+  "productCommit": "cf6f57a4",
+  "upstream": "Web1.21.34 selected resource composition + installed @botiverse/raft-ui@0.35.1",
+  "changes": [
+    "TaskDndProvider/TaskDraggable/TaskDropZone/TaskDropPlaceholder/TaskDragOverlay now direct official dependencies",
+    "Keyboard move/cancel focus restoration waits for matching task projection; no status inferred from drag end",
+    "Native allowed/blocked empty-column hints; Chinese screen-reader display names; existing Kernel permission/causal/write-intent owners unchanged"
+  ],
+  "tests": {
+    "focused": 16,
+    "typecheck": "passed",
+    "build": "passed with existing chunk/CSS warnings",
+    "format": "passed",
+    "diff": "passed"
+  },
+  "fixture": {
+    "script": "scripts/official-web/task-side134-fixture.mjs",
+    "kernel": "real temporary Kernel/application service/gateway",
+    "runtime": "fake native copy and fake completed run; no model/provider CLI process",
+    "permissionProjection": "Second fixture overrides only global-read canManageAnyTask=false to exercise ordinary-editor UI; allowed updates still execute via real Kernel",
+    "keyboardSuccess": "Space/Right/Space: todo->in_progress, matching task focused, Chinese confirmed success; reload preserves column",
+    "cancel": "Space/Right/Escape: in_progress preserved and same task focused",
+    "blocked": "todo->in_review: reason visible, Chinese blocked announcement; Space leaves task in todo, no success announcement, same task focused",
+    "mobile": "390x844; document width390; board1272px scroll inside390px viewport; list mode works",
+    "side": "Actual Side produced by real Kernel with fake native-copy callback; no production Side created",
+    "sideWidths": {
+      "initial": 400,
+      "keyboardLeft": 416,
+      "mouseDrag": 496,
+      "doubleClickReset": 400,
+      "mobile": 390
+    },
+    "sideBack": "390px native 返回频道 returns source room route, removes side parameter",
+    "sideScope": "Presentation/route/resize acceptance; not new native-provider lifecycle acceptance"
+  },
+  "deployment": {
+    "verified": true,
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-task-side134-0ea9accd-a6b5-4071-84ad-c40b465337b9",
+    "newPid": 13632,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true
+  },
+  "remaining": [
+    "Physical phone touch/long-press/scroll-conflict validation not done",
+    "No current production Side sample; isolated real-Kernel UI accepted, no paid native fork/side rerun",
+    "New Agent overview and bulk model editing remain separate optional scope; not whole-site/latest parity"
+  ],
+  "productionBrowser": {
+    "desktop": "1440x1000, five columns/six cards, native task-draggable slot, no page overflow",
+    "mobile": "390x844, document390, list radio selected",
+    "errors": [],
+    "mutations": "No real task/message/role/lifecycle mutations; route/UI state only"
+  }
+}
