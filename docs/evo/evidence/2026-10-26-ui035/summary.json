@@ -44,8 +44,5 @@
     "Deprecated official token aliases retained for immutable old-source compatibility",
     "Background real Firefox push acceptance remains separate"
   ],
-  "screenshots": [
-    "desktop.png",
-    "mobile.png"
-  ]
+  "screenshots": ["desktop.png", "mobile.png"]
 }
