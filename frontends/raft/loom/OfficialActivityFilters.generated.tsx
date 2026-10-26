@@ -22,7 +22,7 @@ export default function ActivityFilters({value:filter,onChange:setFilter,actions
                   <SegmentedControlItem value="mentions" data-testid="inbox-filter-mentions">
                     <SegmentedControlLabel>{formatMessage({ id: "thread.filter.mentions" })}</SegmentedControlLabel>
                   </SegmentedControlItem>
-                </SegmentedControl>
+                <SegmentedControlItem value="pinned" data-testid="inbox-filter-pinned"><SegmentedControlLabel>{formatMessage({id:"thread.filter.pinned",defaultMessage:"已置顶"})}</SegmentedControlLabel></SegmentedControlItem></SegmentedControl>
               </div>
             </div>
             <div className="flex shrink-0 items-center gap-2">

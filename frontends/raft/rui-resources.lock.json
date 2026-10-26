@@ -13,7 +13,8 @@
     "dist/index.mjs": "f0527fe0a7d92aae5520f7204c0d5de63d91e41af53b02c4b65e3b03d1bff1ce",
     "dist/styles.css": "de66fe7057a7a86eb15621b3b613dc8380e1005816a795656acdb461d351ed6d",
     "dist/foundation.css": "b3cf18148a40ed1d2e42d8221fccee8c4ba6de9e706cdc8d2487fbbb68739924",
-    "dist/fonts.css": "7c792b65befe09a1d3b64d1def23af4239e02d674886345f31397f001720736d"
+    "dist/fonts.css": "7c792b65befe09a1d3b64d1def23af4239e02d674886345f31397f001720736d",
+    "dist/themes.css": "d676bb4b3ad783cfbe81a1428939d76783f2bee1b9ed1ec5d3913e661b65093d"
   },
   "guides": {
     "skills/raft-ui-guide/SKILL.md": "6d833863cbf0ab97ee62860c57abc024cf470b2f9ffb16c8d610caf33a498572",

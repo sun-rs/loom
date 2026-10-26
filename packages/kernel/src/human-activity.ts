@@ -54,7 +54,17 @@ export class HumanActivity {
         .prepare("SELECT handle FROM principals WHERE principal_id = ?")
         .get(actorId)!.handle,
     );
-    const cte = `WITH muted_rooms AS MATERIALIZED (
+    const cte = `WITH pinned_rooms AS MATERIALIZED (
+      SELECT substr(pref.value, 6) AS room_id
+      FROM human_sidebar_preferences sidebar, json_each(sidebar.preferences_json, '$.pinned') pref
+      WHERE sidebar.principal_id = ? AND sidebar.workspace_id = ? AND pref.value LIKE 'room:%'
+      UNION
+      SELECT pair.room_id FROM human_sidebar_preferences sidebar,
+        json_each(sidebar.preferences_json, '$.pinned') pref JOIN direct_room_pairs pair
+        ON (pair.left_principal_id = sidebar.principal_id AND pair.right_principal_id = substr(pref.value,6))
+        OR (pair.right_principal_id = sidebar.principal_id AND pair.left_principal_id = substr(pref.value,6))
+      WHERE sidebar.principal_id = ? AND sidebar.workspace_id = ? AND pref.value LIKE 'peer:%'
+    ), muted_rooms AS MATERIALIZED (
       SELECT substr(pref.value, 6) AS room_id
       FROM human_sidebar_preferences sidebar,
         json_each(sidebar.preferences_json, '$.mutedActivity') pref
@@ -96,8 +106,12 @@ export class HumanActivity {
       FROM eligible GROUP BY room_id, scope_id
     ), visible AS (SELECT * FROM grouped WHERE latest_seq > done_seq
       AND (muted = 0 OR has_mention = 1)
-      ${input.filter === "unread" ? "AND unread_count > 0" : input.filter === "mentions" ? "AND has_mention = 1" : ""})`;
+      ${input.filter === "unread" ? "AND unread_count > 0" : input.filter === "mentions" ? "AND has_mention = 1" : input.filter === "pinned" ? "AND room_id IN (SELECT room_id FROM pinned_rooms)" : ""})`;
     const eligibilityArguments = (ceiling: number): SQLInputValue[] => [
+      actorId,
+      input.workspaceId,
+      actorId,
+      input.workspaceId,
       actorId,
       input.workspaceId,
       actorId,

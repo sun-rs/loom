@@ -2,6 +2,7 @@
 
 @import "tailwindcss";
 @import "raft-ui/styles.css";
+@import "raft-ui/themes.css";
 @import "./components/mermaid/mermaid.css";
 
 /* Tailwind utilities scoped to the app's Brutal theme root. */

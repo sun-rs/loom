@@ -137,9 +137,25 @@ const ChannelPanelTabOrder = z
   .array(z.enum(["chat", "tasks", "workspace"]))
   .max(3)
   .refine((v) => new Set(v).size === v.length);
+// Official Web workspace-personal themes; independent from device light/dark mode.
+export const WorkspaceThemeSchema = z.enum([
+  "raft",
+  "boring",
+  "bots",
+  "critters",
+  "space",
+  "desk",
+  "food",
+  "quest",
+  "weather",
+  "plants",
+  "spooky",
+]);
 export const SidebarPreferencesSchema = z
   .object({
     version: z.number().int().nonnegative(),
+    theme: WorkspaceThemeSchema.optional(),
+    themeDecor: z.boolean().optional(),
     pinned: Keys,
     channelOrder: Keys,
     channelPanelTabOrder: ChannelPanelTabOrder.default([]),
@@ -185,6 +201,8 @@ export const SidebarPatchRequestSchema = SidebarGetRequestSchema.extend({
   // one-field patch into an accidental reset of every omitted defaulted field.
   patch: z
     .object({
+      theme: WorkspaceThemeSchema,
+      themeDecor: z.boolean(),
       pinned: Keys,
       channelOrder: Keys,
       channelPanelTabOrder: ChannelPanelTabOrder,

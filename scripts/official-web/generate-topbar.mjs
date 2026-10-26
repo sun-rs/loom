@@ -63,6 +63,11 @@ export function generateTopbar() {
     "getGlobalSearchShortcutLabel(undefined, formatMessage)",
     "shortcut",
   );
+  // Official 1.21.34 BAR_FRAME adds the theme decoration utility.
+  view = view.replace(
+    "className={BAR_FRAME}",
+    "className={`${BAR_FRAME} frame-decor-top`}",
+  );
   return `// GENERATED from locked db5e399 AppTopBar. Native frame/regions/search; Loom supplies workspace, notification and route slots.
 // Explicit compatibility: v1.21.26 adaptive search width remains a Loom port; no account/workspace switching.
 import type {ReactNode,Ref} from "react";

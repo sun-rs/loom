@@ -18,7 +18,6 @@ function ModeContext({
 }) {
   const { resolvedMode } = useTheme();
   useLayoutEffect(() => {
-    document.documentElement.removeAttribute("data-theme");
     const meta = document.querySelector<HTMLMetaElement>(
       'meta[name="theme-color"]',
     );

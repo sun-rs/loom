@@ -93,6 +93,17 @@ export function generateDiscoveryTask() {
     'activityReadFilter(filter) === "unread"',
     'filter === "unread"',
   );
+  // Official 1.21.34 pinned empty state, Chinese resource zh-cn-DEd8tY9e.js.
+  empty = replaceOnce(
+    empty,
+    'title={filter === "mentions"',
+    'title={filter === "pinned" ? "没有置顶的会话" : filter === "mentions"',
+  );
+  empty = replaceOnce(
+    empty,
+    'description={filter === "mentions"',
+    'description={filter === "pinned" ? "在侧栏置顶的频道和私信会显示在这里，连同它们的消息列。" : filter === "mentions"',
+  );
   let hit = module("search/MessageHitRow");
   hit = replaceOnce(
     hit,
@@ -138,6 +149,14 @@ export function generateDiscoveryTask() {
   actionWalk(file);
   if (!action) throw Error("Missing bulk-read action");
   toolbar = replaceOnce(toolbar, action, "{actions}");
+  // Published Web 1.21.34 ThreadsInbox-CM-EY6gw.js adds the pinned scope.
+  // Keep generation reproducible; do not hand-edit the generated surface.
+  toolbar = replaceOnce(
+    toolbar,
+    "</SegmentedControl>",
+    `<SegmentedControlItem value="pinned" data-testid="inbox-filter-pinned"><SegmentedControlLabel>{formatMessage({id:"thread.filter.pinned",defaultMessage:"已置顶"})}</SegmentedControlLabel></SegmentedControlItem></SegmentedControl>`,
+  );
+
   const avatar = extractDeclarations(parse("thread/ThreadsInbox").source, [
     "ConversationAvatar",
   ]);

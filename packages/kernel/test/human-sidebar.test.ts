@@ -401,3 +401,55 @@ test("standalone chat placement accepts an authorized channel without changing i
     k.close();
   }
 });
+
+test("workspace theme is personal, validated, version fenced and preserved by unrelated patches", () => {
+  const k = new RoomKernel({ databasePath: ":memory:" });
+  k.initialize();
+  try {
+    const h = k.provisionPrincipal({ handle: "theme-owner", kind: "human" });
+    const h2 = k.provisionPrincipal({ handle: "theme-peer", kind: "human" });
+    const a = k.authenticateAccessToken(h.accessToken),
+      b = k.authenticateAccessToken(h2.accessToken);
+    const w = k.createWorkspace(a, {
+      name: "theme",
+      slug: "theme",
+      idempotencyKey: "theme",
+    });
+    k.addMember(a, {
+      roomId: w.controlRoom.roomId,
+      principalId: h2.principal.principalId,
+    });
+    const scope = { workspaceId: w.workspace.workspaceId };
+    const request = {
+      ...scope,
+      expectedVersion: 0,
+      idempotencyKey: "set-theme",
+      patch: { theme: "bots" as const, themeDecor: false },
+    };
+    assert.equal(k.humanSidebar.patch(a, request).preferences.theme, "bots");
+    assert.equal(k.humanSidebar.patch(a, request).preferences.version, 1);
+    assert.equal(k.humanSidebar.get(b, scope).preferences.theme, undefined);
+    assert.throws(
+      () => k.humanSidebar.patch(a, { ...request, idempotencyKey: "stale" }),
+      /version/,
+    );
+    const after = k.humanSidebar.patch(a, {
+      ...scope,
+      expectedVersion: 1,
+      idempotencyKey: "mute",
+      patch: { mutedWorkspace: true },
+    }).preferences;
+    assert.equal(after.theme, "bots");
+    assert.equal(after.themeDecor, false);
+    assert.throws(() =>
+      k.humanSidebar.patch(a, {
+        ...scope,
+        expectedVersion: 2,
+        idempotencyKey: "bad",
+        patch: { theme: "unknown" as any },
+      }),
+    );
+  } finally {
+    k.close();
+  }
+});

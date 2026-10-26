@@ -5,5 +5,11 @@
   "extractedSha256": "b23a69df4cca1ae5117229f9b3a8e7b0648eca97407fc17cd54792b8e4c7608b",
   "reuse": "Official registry and width math, formatting only; export is Loom glue. Resource extraction, not published TypeScript source.",
   "adopted": "list bounds and width resolution; other registry entries are evidence only",
-  "license": "Owner-authorized reuse; original notices in frontends/raft/adoption.json"
+  "license": "Owner-authorized reuse; original notices in frontends/raft/adoption.json",
+  "themeOption": {
+    "url": "https://app.raft.build/assets/SettingsPanel-Cg0my9Pp.js",
+    "sourceSha256": "277407df728df819584edf0ec5b0aca2ff75a3f9c9529d1e489e980939b9ab86",
+    "extractedSha256": "afefaa92d461e84873c94d79cbf4912fb764355736423444434292b106cd2efb",
+    "reuse": "qa/Ja option and preview functions, unchanged formatted bodies; imports bound to the one official package runtime. No account or billing stores."
+  }
 }

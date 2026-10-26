@@ -155,6 +155,7 @@ export default function DiscoveryPage({
   const filter: HumanActivityRequest["filter"] = [
     "unread",
     "mentions",
+    "pinned",
   ].includes(params.get("af") ?? "")
     ? (params.get("af") as HumanActivityRequest["filter"])
     : "all";

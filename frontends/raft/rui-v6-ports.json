@@ -13,9 +13,9 @@
     },
     "packages/web/src/index.css": {
       "upstreamSha256": "e3015311362c000b3354980cd03d59a3fd783f386243889c52c6defe3ce61fcb",
-      "portedSha256": "aac13df65bc4151f387b94c82fab46d87ca99822159d6d227c5c288031c982e4",
+      "portedSha256": "b0117fa15ac0518184f864ca2ce2ab53b8141915f450a475d675ddc652af85a2",
       "sourceRelease": "v1.21.26 / aa975b0e25ecc07ee6917d88d3ca973782550e6a",
-      "adoption": "Existing index.css retained; updated official package styles imported without a local typography override."
+      "adoption": "2026-10-26 workspace theme adoption: official themes.css; device mode no longer clears the separate workspace theme attribute. Original upstream hash retained."
     },
     "packages/web/src/utils/attachmentBadgeType.ts": {
       "upstreamSha256": "06da28317a03b22327429ded4bd149c2bdb5798f9068536ac3b55235cc0c5c03",
@@ -39,7 +39,8 @@
     },
     "packages/web/src/theme/AppThemeProvider.tsx": {
       "upstreamSha256": "79f1783c40241ba09babc1eddb92c5b054681a0bca88e1191f662e4048296143",
-      "portedSha256": "eb835550b6b8edbc5c0d5a6cf1739a7b03ff9553b70673dc6acbf6c4f5edb3d0"
+      "portedSha256": "c01fcd6780d9d119580f7eeed287ed90b8e89bde11ae60928565c1ee9cbeab16",
+      "adoption": "2026-10-26 workspace theme adoption: official themes.css; device mode no longer clears the separate workspace theme attribute. Original upstream hash retained."
     },
     "packages/web/src/hooks/useAppTheme.ts": {
       "upstreamSha256": "ec46d42bd283545b11dd9337d23531d33b2e15da6178929b2c700cc25fcacbf6",

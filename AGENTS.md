@@ -381,6 +381,10 @@ not the retired Brutal/Elegant families. `frontends/raft/rui-resources.lock.json
 pins package, guides, styles and font provenance. `adoption.json` retains original
 upstream hashes; `rui-v6-ports.json` separately records owner-authorized page
 compatibility ports. Do not call these ports untouched/latest upstream pages.
+Workspace-personal color themes are the official Raft theme IDs (owner requested
+2026-10-26), persisted through Human sidebar preferences with version fences.
+They are independent from device mode; never restore the retired Elegant family
+or import upstream billing restrictions.
 Mode selection is light/dark/system; migrate existing device mode without
 restoring a family switch. The pinned native recipes own typography, radius,
 borders, states and pointer targets. Earlier family-specific dimensions and

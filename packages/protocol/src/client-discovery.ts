@@ -101,7 +101,7 @@ export const HumanActivityRequestSchema = z
   .object({
     ...Page,
     workspaceId: IdentifierSchema,
-    filter: z.enum(["all", "unread", "mentions"]).optional(),
+    filter: z.enum(["all", "unread", "mentions", "pinned"]).optional(),
   })
   .strict();
 export const HumanActivityItemSchema = z

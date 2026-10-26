@@ -1,3 +1,4 @@
+import WorkspaceThemeSettings from "./WorkspaceThemeSettings";
 import { LoomSidebarSlot } from "./SidebarLayout.tsx";
 import {
   OfficialSettingsFrame,
@@ -25,6 +26,7 @@ import {
   BadgeInfo,
   FileText,
   Monitor,
+  Palette,
 } from "lucide-react";
 import type { RahClient } from "@rah-os/client-sdk";
 import SettingsSidebarList from "../packages/web/src/components/settings/SettingsSidebarList.tsx";
@@ -43,6 +45,10 @@ const categories = [
       { id: "appearance", label: "外观", icon: Type },
       { id: "notifications", label: "通知", icon: Bell },
     ],
+  },
+  {
+    label: "我在当前工作区",
+    items: [{ id: "theme", label: "主题", icon: Palette }],
   },
   {
     label: "工作空间",
@@ -193,6 +199,12 @@ export default function SettingsPage({
                 <LoomReleaseNotes releases={loomReleaseNotes} />
               ) : selectedId === "usage" ? (
                 <UsageSummary
+                  client={client}
+                  workspaceId={workspaceId}
+                  controlRoomId={controlRoomId}
+                />
+              ) : selectedId === "theme" ? (
+                <WorkspaceThemeSettings
                   client={client}
                   workspaceId={workspaceId}
                   controlRoomId={controlRoomId}

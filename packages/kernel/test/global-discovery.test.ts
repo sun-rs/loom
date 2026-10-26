@@ -1595,3 +1595,72 @@ test("local notification recovery is bounded and paged", () => {
     f.close();
   }
 });
+
+test("pinned activity filters before pagination and keeps global unread summary and personal scope", () => {
+  const f = fixture();
+  try {
+    f.post(f.channel.roomId, "old pinned", true);
+    f.post(f.second.roomId, "newer unpinned", true);
+    f.post(f.direct.roomId, "newest pinned direct", true);
+    f.kernel.humanSidebar.patch(f.actor, {
+      workspaceId: f.workspaceId,
+      expectedVersion: 0,
+      idempotencyKey: "pins",
+      patch: {
+        pinned: [
+          `room:${f.channel.roomId}`,
+          `peer:${f.peer.principal.principalId}`,
+        ],
+      },
+    });
+    const scope = {
+      workspaceId: f.workspaceId,
+      filter: "pinned" as const,
+      limit: 1,
+    };
+    const first = f.kernel.listHumanActivity(f.actor, scope);
+    assert.equal(first.total, 2);
+    assert.equal(first.items[0]?.roomId, f.direct.roomId);
+    assert.equal(first.summary?.unreadActivityCount, 3);
+    assert.ok(first.nextCursor);
+    const next = f.kernel.listHumanActivity(f.actor, {
+      ...scope,
+      cursor: first.nextCursor,
+    });
+    assert.equal(next.items[0]?.roomId, f.channel.roomId);
+    assert.equal(next.nextCursor, undefined);
+    assert.equal(f.kernel.listHumanActivity(f.peerActor, scope).total, 0);
+  } finally {
+    f.close();
+  }
+});
+test("pinned conversation scope includes its eligible followed threads", () => {
+  const f = fixture();
+  try {
+    const task = f.task(f.channel.roomId, "pinned thread");
+    f.kernel.replyThread(f.peerActor, {
+      roomId: f.channel.roomId,
+      threadId: task.threadId,
+      body: "review",
+      basedOnRoomSeq: f.head(f.channel.roomId),
+      idempotencyKey: "pinned-thread-reply",
+      recipientIds: [],
+    });
+    f.kernel.humanSidebar.patch(f.actor, {
+      workspaceId: f.workspaceId,
+      expectedVersion: 0,
+      idempotencyKey: "pin-thread-parent",
+      patch: { pinned: [`room:${f.channel.roomId}`] },
+    });
+    assert.ok(
+      f.kernel
+        .listHumanActivity(f.actor, {
+          workspaceId: f.workspaceId,
+          filter: "pinned",
+        })
+        .items.some((i) => i.threadId === task.threadId),
+    );
+  } finally {
+    f.close();
+  }
+});

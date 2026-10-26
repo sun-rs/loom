@@ -18,7 +18,7 @@ const BAR_FRAME =
 export function OfficialTopBar({identity,trailing,shortcut,leadingRef,trailingRef,searchFieldRef,searchWidth,openSearch}:{identity:ReactNode;trailing:ReactNode;shortcut:ReactNode;leadingRef:Ref<HTMLDivElement>;trailingRef:Ref<HTMLDivElement>;searchFieldRef:Ref<HTMLButtonElement>;searchWidth?:number;openSearch:()=>void}){
  const titleBar=false,edges=EDGE_BALANCE.web,leadingEnd=null;
  const {formatMessage}=useIntl();
- return (<div {...(titleBar ? { "data-raft-titlebar": "" } : {})} data-testid="app-top-bar" className={BAR_FRAME}>
+ return (<div {...(titleBar ? { "data-raft-titlebar": "" } : {})} data-testid="app-top-bar" className={`${BAR_FRAME} frame-decor-top`}>
       {/* Web: the same 8px side padding as the right region, so the two flex-1
           regions are equal and the search field is centred on the window. */}
       <div ref={leadingRef} className={`flex min-w-0 flex-1 items-center ${titleBar ? "" : "px-2"}`} style={edges.leading}>

@@ -1,3 +1,4 @@
+import WorkspaceTheme from "./WorkspaceTheme";
 import LocalNotifications from "./LocalNotifications.tsx";
 import { LoomShellRoot, LoomSidebarSlot } from "./SidebarLayout.tsx";
 import { SenderActionsProvider } from "./SenderActions.tsx";
@@ -1011,6 +1012,10 @@ export default function ChannelApp() {
         client={client}
         workspaceId={directory?.workspace.workspaceId}
       >
+        <WorkspaceTheme
+          client={client}
+          workspaceId={directory?.workspace.workspaceId}
+        />
         <LoomShellRoot
           destination={destination}
           inert={bootstrapping ? true : undefined}
