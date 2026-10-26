@@ -1,0 +1,43 @@
+{
+  "productCommit": "58a57ca7a5fde70d404563637fa9335731294a99",
+  "at": "2026-10-26T15:16:30.974Z",
+  "nativeRevision": "eff04722b5904a0d001115d90d3ec49d59fb4f03",
+  "tests": {
+    "source": 15,
+    "reactGestureDom": 10,
+    "typecheck": "passed",
+    "productBuild": "passed",
+    "paidCli": false
+  },
+  "browser": {
+    "viewports": [
+      [
+        390,
+        844
+      ],
+      [
+        1440,
+        1000
+      ]
+    ],
+    "formalService": true,
+    "mobileTitleScroll": {
+      "before": 524,
+      "after": 0
+    },
+    "desktopTitle": "double-click next unread retained",
+    "consoleErrors": 0,
+    "touch": "DOM-tested, not physical iOS or browser-touch-emulator proof"
+  },
+  "deployment": {
+    "newPid": 68837,
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-native-activity-45ca2b6b-bd57-4ede-9719-44f796873d67",
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true
+  },
+  "remaining": [
+    "Native dialog/sheet classification",
+    "Chat back/keyboard/draft journey comparison",
+    "Physical iOS gesture acceptance"
+  ]
+}
