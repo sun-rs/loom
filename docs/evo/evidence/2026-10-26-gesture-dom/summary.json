@@ -1,0 +1,20 @@
+{
+  "productCommit": "8957a5fa",
+  "productChanged": false,
+  "serviceRestarted": false,
+  "command": "npm run test:official-web:gesture-dom",
+  "environment": "Vitest 5.0.4 / jsdom / real React / official raft-ui ToastProvider and native generated swipe hook",
+  "passed": 4,
+  "checks": [
+    "synthetic touch pointer sequence -> native gesture -> real React unmount -> official toast Undo -> row restored without request",
+    "pointercancel retains row and sends no request",
+    "official toast dismiss -> request once; unmount does not repeat",
+    "React rerender with new frontier cancels pending request"
+  ],
+  "limits": [
+    "Harness uses an isolated row, not the entire production ActivityMessageRow/page.",
+    "Geometry and matchMedia are supplied by fixture; no CSS layout or physical pointer verification.",
+    "No physical iOS/Android, edge-back competition, haptics or background network-delivery proof.",
+    "No formal follow/mute data changed."
+  ]
+}
