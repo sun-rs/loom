@@ -1,0 +1,32 @@
+{
+  "productCommit": "9cb1a3b6588f840b87446fc78b39377e33f37626",
+  "checks": {
+    "sourceContracts": 417,
+    "types": "passed",
+    "build": "passed"
+  },
+  "deployment": {
+    "verified": true,
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-list-resize-118af431-55a1-48a6-804c-67d333c400d2",
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true
+  },
+  "browser": {
+    "dynamicList": "380 -> ArrowRight 396 -> double click 380; DOM width equals aria value",
+    "memoryList": "380 -> ArrowRight 396 -> double click 380; explicit label; no console errors after repair",
+    "mobile": "390x844 dynamic list has no separator; memory detail renders single pane",
+    "screenshots": [
+      "desktop.png",
+      "mobile.png",
+      "memory.png",
+      "memory-mobile.png"
+    ]
+  },
+  "caughtDuringAcceptance": "First deployment memoryList alias lacked official translation ID and crashed on opening detail. Reproducing contract added red, explicit label fixed, rebuilt and safely redeployed. Final real page verified.",
+  "remaining": [
+    "Activity independent collapse needs official sidebar slot and independent preference wiring.",
+    "Search master/detail is not collapsible in inspected official D6; removed erroneous parity requirement.",
+    "Mobile swipe behavior remains unverified; do not conflate row actions and navigation.",
+    "No physical-device or real-pointer-drag acceptance this slice."
+  ]
+}
