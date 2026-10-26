@@ -1,3 +1,4 @@
+import { ActivityListSlot, useActivityCollapseSnap } from "./SidebarLayout";
 import ActivityNothingOpen from "./ActivityNothingOpen";
 import { useCurrentListPanel } from "./useCurrentListPanel";
 import DiscoveryNotice from "./DiscoveryNotice";
@@ -127,6 +128,10 @@ export default function DiscoveryPage({
       ? 360
       : 0,
   );
+  const ListSlot = mode === "activity" ? ActivityListSlot : AppShellMainSlot;
+  const activityCollapseSnap = useActivityCollapseSnap(
+    mode === "activity" && desktop,
+  );
   const showSplit = !!detail || (mode === "activity" && desktop);
   const query = params.get("q") ?? "";
   const entities = useSearchEntities(
@@ -194,14 +199,14 @@ export default function DiscoveryPage({
   const Shell = mode === "search" ? SearchShellRoot : ActivityInboxPanel;
   return (
     <>
-      <AppShellMainSlot
+      <ListSlot
         ref={panel.ref}
         onKeyDown={
           mode === "search"
             ? (event) => railHandler.current?.(event)
             : undefined
         }
-        className={`relative bg-layer-canvas  ${showSplit && desktop ? `border-r border-line-muted  ${mode === "search" ? "" : ""}` : ""}`}
+        className={`relative flex min-w-0 flex-1 bg-layer-canvas  ${showSplit && desktop ? `border-r border-line-muted  ${mode === "search" ? "" : ""}` : ""}`}
         style={
           showSplit
             ? desktop
@@ -213,6 +218,7 @@ export default function DiscoveryPage({
         {showSplit && desktop && (
           <ListColumnResize
             column="list"
+            snap={activityCollapseSnap}
             edge="right"
             maxWidth={panel.maxWidth}
             visibleFrom="md"
@@ -331,9 +337,19 @@ export default function DiscoveryPage({
             }}
           />
         </Shell>
-      </AppShellMainSlot>
-      {detail ??
-        (mode === "activity" && desktop ? <ActivityNothingOpen /> : null)}
+      </ListSlot>
+      {mode === "activity" && (desktop || detail) ? (
+        <div
+          className="relative flex min-h-0 min-w-0 flex-1"
+          data-testid="activity-main-host"
+        >
+          <AppShellMainSlot className="bg-layer-canvas">
+            {detail ?? <ActivityNothingOpen />}
+          </AppShellMainSlot>
+        </div>
+      ) : (
+        detail
+      )}
     </>
   );
 }

@@ -1,4 +1,4 @@
-import { OfficialSidebarToggle } from "./OfficialSidebarToggle.generated.js";
+import { CurrentSidebarToggle } from "./CurrentSidebarToggle.generated.js";
 import {
   OfficialSortableNavigation,
   type SortableRailBinding,
@@ -98,7 +98,9 @@ export function DesktopNavigation({
           />
         </AppRailNav>
         <AppRailFooter>
-          <OfficialSidebarToggle />
+          <CurrentSidebarToggle
+            column={active === "activity" ? "activityList" : "sidebar"}
+          />
           {item(destinations.find((entry) => entry.id === "settings")!)}
         </AppRailFooter>
       </AppRailRoot>

@@ -1,17 +1,29 @@
 import { create } from "zustand";
 const key = "loom:device:sidebar-hidden";
-function read() {
+const activityKey = "loom:device:activity-list-hidden";
+function read(storageKey = key) {
   try {
-    return localStorage.getItem(key) === "true";
+    return localStorage.getItem(storageKey) === "true";
   } catch {
     return false;
   }
 }
 export const useSidebarPreference = create<{
   sidebarHidden: boolean;
+  activityListHidden: boolean;
+  setActivityListHidden: (hidden: boolean) => void;
   setSidebarHidden: (hidden: boolean) => void;
 }>((set) => ({
   sidebarHidden: read(),
+  activityListHidden: read(activityKey),
+  setActivityListHidden: (activityListHidden) => {
+    try {
+      localStorage.setItem(activityKey, String(activityListHidden));
+    } catch {
+      /* session-only */
+    }
+    set({ activityListHidden });
+  },
   setSidebarHidden: (sidebarHidden) => {
     try {
       localStorage.setItem(key, String(sidebarHidden));

@@ -11,6 +11,10 @@ import {
 import { AppShellRoot, AppShellSidebarSlot } from "raft-ui";
 import { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives.ts";
 import { useSidebarPreference } from "./sidebar-preference.ts";
+import {
+  toggleColumn,
+  setColumnHidden,
+} from "./CurrentSidebarToggle.generated.js";
 import { toggleSidebar } from "./OfficialSidebarToggle.generated.js";
 const Layout = createContext({ destination: "", collapsed: false });
 /** Native shell owns measurement, transition and main offset. This binds device preference and active page identity. */
@@ -19,10 +23,15 @@ export function LoomShellRoot({
   ...props
 }: ComponentProps<typeof AppShellRoot> & { destination: string }) {
   const desktop = useMediaQuery("(min-width: 768px)");
-  const hidden = useSidebarPreference((s) => s.sidebarHidden);
+  const column = destination === "activity" ? "activityList" : "sidebar";
+  const hidden = useSidebarPreference((s) =>
+    column === "activityList" ? s.activityListHidden : s.sidebarHidden,
+  );
   const enabled =
     desktop &&
-    ["channels", "agents", "computers", "settings"].includes(destination);
+    ["channels", "agents", "computers", "settings", "activity"].includes(
+      destination,
+    );
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       const mac = /Mac|iPhone|iPad|iPod/.test(navigator.platform);
@@ -36,12 +45,12 @@ export function LoomShellRoot({
         !event.defaultPrevented
       ) {
         event.preventDefault();
-        toggleSidebar();
+        toggleColumn(document, column);
       }
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [enabled]);
+  }, [enabled, column]);
   return (
     <Layout.Provider value={{ destination, collapsed: enabled && hidden }}>
       <AppShellRoot
@@ -49,7 +58,7 @@ export function LoomShellRoot({
         sidebarCollapsible={enabled}
         sidebarOpen={!enabled || !hidden}
         onSidebarOpenChange={(open) => {
-          if (open === hidden) toggleSidebar();
+          if (open === hidden) setColumnHidden(column, !open);
         }}
       />
     </Layout.Provider>
@@ -94,4 +103,23 @@ export function SidebarResize({ testId }: { testId: string }) {
       }}
     />
   );
+}
+
+export function ActivityListSlot(
+  props: ComponentProps<typeof AppShellSidebarSlot>,
+) {
+  return <LoomSidebarSlot {...props} page="activity" />;
+}
+export function useActivityCollapseSnap(enabled: boolean) {
+  const hidden = useSidebarPreference((s) => s.activityListHidden);
+  return enabled
+    ? {
+        kind: "collapse" as const,
+        snapped: hidden,
+        onSnappedChange(value: boolean) {
+          setColumnHidden("activityList", value);
+          return true;
+        },
+      }
+    : undefined;
 }

@@ -1,0 +1,32 @@
+{
+  "webVersion": "1.21.34",
+  "sourceUrl": "https://app.raft.build/assets/app-shell-BWgtfY02.js",
+  "sourceSha256": "65eff83bf1a82aa2933130aecea417189fd44abd7a379f7cfc10aeda2aa6a3cc",
+  "reuse": "Formatted official function bodies, unchanged; external React/UI/store bindings supplied by Loom. Authorization/notices: adoption.json. Production resource port, not published TypeScript.",
+  "declarations": [
+    {
+      "name": "SKe",
+      "sha256": "3a67145300ac85c95974cf66f0bc1570ffd9e78b623fe02dbd554d632fcfce0e"
+    },
+    {
+      "name": "h$",
+      "sha256": "03ca50dfde8b4455df1581c325b7b0d61fe508bc1eaf327969abe34c6299ac78"
+    },
+    {
+      "name": "g$",
+      "sha256": "58718acb28741a6d3d0ae974c95f426795b3aee78271450629ffbfae5c4a1d07"
+    },
+    {
+      "name": "CKe",
+      "sha256": "07528740cc04bc054eeb78e0e31fbbe72c9dad24537dc6b5a4be0f7aa88a7df8"
+    },
+    {
+      "name": "_$",
+      "sha256": "65fc5b27c8e2501946e5e8fb9bb992274bd2e4a2749c8804e9f0a29fd9803d36"
+    },
+    {
+      "name": "kKe",
+      "sha256": "bf3286de312a98cab58a7182d1317c8f14afeba7bceb908ad08ec0e589533ee4"
+    }
+  ]
+}
