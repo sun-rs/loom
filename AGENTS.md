@@ -32,6 +32,51 @@ legacy project's Session-first rules or obsolete roadmap restrictions.
   describe the `main` baseline and are superseded where they conflict with the
   evo documents.
 
+## Current architecture and modification map
+
+This is Loom main, a local-first single-Human multi-instance collaboration product.
+Read the target contract before changing behavior; this map is not a replacement.
+
+- **Role** is a reusable configuration with a stable ID and immutable revisions.
+  **Instance** is a Channel member/principal with its own stable ID, frozen Role
+  revision and serial execution lane. Several instances run in parallel.
+  **Session** is that instance's continuous native CLI conversation, not the
+  business ledger. **Channel** is the durable collaboration/message-box boundary.
+  Names are presentation; stable IDs own references. Editing/deleting a Role
+  never silently changes or deletes existing instances or their history.
+- **Backend ownership:** protocol validates contracts; Kernel owns transactions,
+  Room events, delivery, tasks, memory and execution fences; AgentHost owns native
+  CLI lifecycle; application-service/SDK expose authenticated operations;
+  client-core reconciles durable state. UI and provider transcripts never create
+  a competing business owner. Backend MVP is frozen: reproduced fixes and
+  owner-authorized compatibility changes only, not a new orchestration rewrite.
+- **Frontend ownership:** `frontends/raft` is the only product UI. Official
+  `raft-ui` owns primitives/recipes; `upstream/raft-web-source` owns the pinned
+  immutable selected source closure; generators own extracted presentation;
+  `loom/` owns explicit SDK/data/route bindings and recorded exceptions. Keep
+  upstream stores out of business state. Some page composition and resource
+  ports remain local: this is not an untouched copy of the whole official Web.
+- **Change location:** component appearance -> official package; upstream page
+  changes -> independently acquired source plus generator/export closure;
+  Loom-specific behavior -> thin adapter and its existing backend owner.
+  Never hand-edit generated output or immutable source to make an upgrade pass.
+- **Upgrade method:** identify package/Web/source/Computer/server separately;
+  acquire the candidate without moving pins; inspect official old/new diff and
+  changelog; add failing affected contracts; update exact dependencies/resource
+  hashes, then adapt only affected bindings; verify source integrity, one runtime,
+  type/build, desktop/mobile messages/forms/panels and safe deployment. Deprecated
+  official aliases may bridge older immutable source; do not blanket-codemod it.
+  Passing hashes/build does not prove visual or behavioral parity.
+- **Current package:** `@botiverse/raft-ui@0.35.1` via alias `raft-ui`.
+  Selected page source remains `db5e399` (Web 1.21.23 source); resource ports retain
+  their original provenance. This does not claim full Web 1.21.34 parity or add
+  new themes/swipe workflows merely because the package supports them.
+
+Executable upgrade practice and the current change matrix:
+`docs/design/official-ui-upgrade-workflow.zh-CN.md`. Commit/push active product
+work to `main`; `docs/evo` and `com.loom.evo` are retained paths/labels, not active
+Git branch names. Chatbox has its own branch and engineering contract.
+
 ## Reading map
 
 - Target contract: `docs/evo/target-contract.zh-CN.md`; current evo state,
@@ -403,10 +448,10 @@ neither an old reference fixture nor a visible tab proves product completeness.
   never connect an enabled production button to fixture success.
 
 Current source upgrade (owner requested 2026-10-21): the official component package
-is now `@botiverse/raft-ui`, pinned at `0.10.5` through npm alias `raft-ui`.
+is now `@botiverse/raft-ui`, pinned at `0.35.1` through npm alias `raft-ui`.
 The obsolete unscoped package stopped at `0.6.0`; do not mistake that old
-package version for the current official release. This slice is anchored to
-Raft Web v1.21.26. Prefer its exported primitives over local compatibility
+package version for the current official release. The package was upgraded on 2026-10-26; retained resource ports are anchored to
+Raft Web v1.21.26, not relabeled as newer source. Prefer its exported primitives over local compatibility
 recipes; keep existing owner-approved compact mobile exceptions explicit.
 
 The selected official Web source dependency at
@@ -588,7 +633,7 @@ page verification remain in force; none implies paid-CLI or efficiency acceptanc
 
 Do not commit, push, publish, or run paid-provider tests unless the user
 explicitly requests it. Exception: the owner has authorized the lead agent to
-commit and push completed evo slices to `evo` routinely. Paid gates still need
+commit and push completed Loom slices to `main` routinely. Paid gates still need
 explicit authorization per run batch.
 
 ## User-requested repair handoff

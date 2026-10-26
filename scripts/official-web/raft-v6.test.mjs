@@ -5,13 +5,13 @@ const read = (p) => readFileSync(p, "utf8");
 test("product pins the single Raft design system", () => {
   assert.equal(
     JSON.parse(read("frontends/raft/package.json")).dependencies["raft-ui"],
-    "npm:@botiverse/raft-ui@0.10.5",
+    "npm:@botiverse/raft-ui@0.35.1",
   );
   assert.equal(
     JSON.parse(read("frontends/raft/packages/web/package.json")).dependencies[
       "raft-ui"
     ],
-    "npm:@botiverse/raft-ui@0.10.5",
+    "npm:@botiverse/raft-ui@0.35.1",
   );
 });
 test("existing device mode survives removal of visual families", async () => {
@@ -35,7 +35,7 @@ test("existing device mode survives removal of visual families", async () => {
 test("installed official resources match the reviewed immutable lock", async () => {
   const { createHash } = await import("node:crypto");
   const lock = JSON.parse(read("frontends/raft/rui-resources.lock.json"));
-  assert.equal(lock.version, "0.10.5");
+  assert.equal(lock.version, "0.35.1");
   for (const [path, expected] of Object.entries({
     ...lock.files,
     ...lock.guides,

@@ -1,18 +1,18 @@
 {
   "package": "@botiverse/raft-ui",
-  "version": "0.10.5",
-  "resolved": "https://registry.npmjs.org/@botiverse/raft-ui/-/raft-ui-0.10.5.tgz",
-  "integrity": "sha512-bt3ZvN2OFlUOlmLR9BJ84v2j9VgJ0gbOYWE0WxrnhcrPicGF43EMWo4Tg69MHn7+xGpy2u2Ly1pq/qpCtLTMiw==",
+  "version": "0.35.1",
+  "resolved": "https://registry.npmjs.org/@botiverse/raft-ui/-/raft-ui-0.35.1.tgz",
+  "integrity": "sha512-9JlOB8YTUY1NA0+vp/TXFO5hpoLEHK23rPV939HLBFtgeVJ6btEF6SW20E64RUtexKdlGR4QJgh9UqvAqMxbDA==",
   "license": "MIT",
   "repository": "https://github.com/botiverse/raft-design",
-  "retrieved": "2026-10-21",
+  "retrieved": "2026-10-26",
   "files": {
-    "package.json": "ac82a6d30a436420accc62f6bcb945c9d84a1d98bf9b6f0a6202793c19f883c3",
-    "CHANGELOG.md": "b6fab7103d8f6e6958b7e255cc562a074ad83632466de09e7d80f9c6675459d7",
-    "dist/index.d.mts": "b9889208b4e7c37561314f85b0c5aa2b074c6717deb0de2d9e485c9c303af384",
-    "dist/index.mjs": "b367bbd9c22257002522d41f040c41a8d7d31314747caef18d5aa04c2139e0cb",
-    "dist/styles.css": "88b63110918e5a1018ab7852a20aecbcab18988cbc43a76da8b15024f7d9e28e",
-    "dist/foundation.css": "69d8677d3d39d91b312e9909c3b8f21b575e749bbe6da358b1e72d55fd6ca5b7",
+    "package.json": "7edfd4f00c5bc19e54b3ff122683159664ae721496f88600542abcdbd91069ea",
+    "CHANGELOG.md": "936aeed78a0fe0b63dd2e7453ffb44bc59edc7c28dd23db9b4d61ee6632a99c4",
+    "dist/index.d.mts": "31673fbcaf663ae7212c92164be2cfeea573258767c72e479ccf2489e13eaf75",
+    "dist/index.mjs": "f0527fe0a7d92aae5520f7204c0d5de63d91e41af53b02c4b65e3b03d1bff1ce",
+    "dist/styles.css": "de66fe7057a7a86eb15621b3b613dc8380e1005816a795656acdb461d351ed6d",
+    "dist/foundation.css": "b3cf18148a40ed1d2e42d8221fccee8c4ba6de9e706cdc8d2487fbbb68739924",
     "dist/fonts.css": "7c792b65befe09a1d3b64d1def23af4239e02d674886345f31397f001720736d"
   },
   "guides": {
@@ -32,8 +32,8 @@
     "skills/raft-ui-guide/rules/conversation.md": "ac7be00578cd7d0fb1aabca764bb16ff427d49a78bee8c88e7a3919308f52645",
     "skills/raft-ui-guide/rules/lookup.md": "460932f40a688a958ccd922153397eeff7e9ed97aa08d32c447fa086b2e311c2"
   },
-  "pageSource": "Mixed explicitly registered page ports; v1.21.26 selected slices, not full-site replacement",
+  "pageSource": "Selected db5e399 source plus explicitly registered older resource ports; package upgrade is not whole-site Web 1.21.34 parity",
   "fontSource": "loom/fonts/provenance.json",
   "importAlias": "raft-ui",
-  "sourceRevision": "2b5dc64 (release 0.10.5); matching v1.21.26 typography/control/list/search recipes"
+  "sourceRevision": "npm 0.35.1; official raft-design v0.35.1"
 }

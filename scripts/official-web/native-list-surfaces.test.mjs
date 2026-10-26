@@ -15,7 +15,8 @@ test("official avatar row uses body typography, native spacing and focus geometr
   assert.match(s, /group px-4 py-3/);
   assert.match(s, /focus-visible:shadow-raft-focus/);
   const c = read("loom/ComputersPage.tsx");
-  assert.match(c, /<OfficialAvatarListRow/);
+  assert.match(c, /<ComputerInstanceRow/);
+  assert.match(read("loom/ComputerInstanceRow.tsx"), /<OfficialAvatarListRow/);
   assert.match(c, /<SectionHeader/);
   assert.match(c, /<OfficialListRowGroup>/);
   const row = read("loom/OfficialListRows.tsx");

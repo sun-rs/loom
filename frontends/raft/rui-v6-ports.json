@@ -1,6 +1,6 @@
 {
   "upstreamRevision": "a98ae003246a0360872a77d76dec2fccd0347ef7",
-  "uiPackage": "@botiverse/raft-ui@0.10.5 (npm alias raft-ui)",
+  "uiPackage": "@botiverse/raft-ui@0.35.1 (npm alias raft-ui)",
   "reason": "Owner-authorized 0.6 migration: remove retired family styling and APIs; mode-only settings, native semantics. Not latest upstream page source.",
   "files": {
     "packages/web/public/app-theme-bootstrap.js": {

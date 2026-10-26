@@ -4,7 +4,7 @@ Private local distribution of selected byte-exact Raft Web components, **not** a
 
 Product import chain: Loom data/events → compatibility entries in `packages/web/src/components/ui` → this dependency → official `@botiverse/raft-ui` recipes. `PanelHeader` preserves approved compact mobile placement using container data attributes; `SectionEyebrow` drops the retired `uppercase` parameter. Neither adapter renders a second copy of native presentation.
 
-The host installs `@botiverse/raft-ui@0.10.5` under the existing `raft-ui` npm alias. The canonical peer is optional only to prevent npm installing a duplicate; the host's Vite and TypeScript mappings bind canonical and legacy imports to the same mandatory pinned runtime. React is likewise supplied by the host. Tailwind scans this source explicitly.
+The host installs `@botiverse/raft-ui@0.35.1` under the existing `raft-ui` npm alias. The canonical peer is optional only to prevent npm installing a duplicate; the host's Vite and TypeScript mappings bind canonical and legacy imports to the same mandatory pinned runtime. React is likewise supplied by the host. Tailwind scans this source explicitly.
 
 ## Upgrade
 
@@ -25,4 +25,4 @@ Original `AgentDetailPanel.tsx` is retained as extraction input only. `node scri
 
 ## Role activity
 
-`AgentActivityLog.tsx` is extraction input only. `node scripts/official-web/generate-activity.mjs` extracts its native LogItem and timeline classes without upstream socket/store code. RoleActivity binds existing member-scoped diagnostic reads, annotates names and uses native picker controls. Default Role tab is Activity; profile retains instance management below its separated information sections. Aggregation is a bounded recent view (50 per member, at most 100 displayed, four concurrent reads); selecting one instance enables existing cursor history. Diagnostic timeline color does not establish live presence or task completion.
+`AgentActivityLog.tsx` is extraction input only. `node scripts/official-web/generate-activity.mjs` extracts its native LogItem and timeline classes without upstream socket/store code. RoleActivity binds existing member-scoped diagnostic reads, annotates names and uses native picker controls. Default Role tab is Profile (owner-corrected; message-avatar instance detail still opens Activity); profile retains instance management below its separated information sections. Aggregation is a bounded recent view (50 per member, at most 100 displayed, four concurrent reads); selecting one instance enables existing cursor history. Diagnostic timeline color does not establish live presence or task completion.

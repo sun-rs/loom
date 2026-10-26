@@ -20,7 +20,7 @@ test("channel control retains official settings trigger and overflow dismissal p
   assert.match(local, /swipeDirection="right"/);
   assert.match(
     local,
-    /disablePointerDismissal=\{dirty \|\| state !== "idle"\}/,
+    /disablePointerDismissal=\{\s*dirty \|\| state !== "idle" \|\| hasUnresolvedIntents\(\)\s*\}/,
   );
   assert.match(
     local,

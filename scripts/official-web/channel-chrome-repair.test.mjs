@@ -27,12 +27,18 @@ test("computer details retain native edit/runtime affordances and automatic desk
 test("settings opens without forced input focus or a redundant corner close; drawer members are flat", () => {
   assert.doesNotMatch(read("ChannelSettingsContent.tsx"), /autoFocus/);
   assert.doesNotMatch(read("ChannelControl.tsx"), /DrawerClose/);
-  assert.match(read("ChannelMembers.tsx"), /framed=\{false\}/);
+  assert.match(read("ChannelMembers.tsx"), /<MembersStrip/);
+  assert.match(read("ChannelMembers.tsx"), /<ChannelMemberRow/);
+  assert.match(read("ChannelMembers.tsx"), /OfficialMemberFlow.generated/);
+  assert.doesNotMatch(read("ChannelMembers.tsx"), /<Card|<ListRowGroup/);
 });
 test("role tabs retain the current official conversation wrapper without a conflicting width override", () => {
   const page = read("RoleWorkspace.tsx");
   assert.match(page, /OfficialRoleTabs/);
-  assert.match(read("OfficialIdentityFrames.generated.tsx"), /ConversationPanelTabs/);
+  assert.match(
+    read("OfficialIdentityFrames.generated.tsx"),
+    /ConversationPanelTabs/,
+  );
   assert.doesNotMatch(page, /<TabsList[^>]*className=/s);
 });
 
