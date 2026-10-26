@@ -37,7 +37,7 @@ test("task board announces only confirmed writes, with native polite live region
   const s = read("frontends/raft/loom/TaskBoardActions.tsx");
   assert.match(
     s,
-    /result.kind === "ok"\) \{\s*changed\(result.result.task\);\s*setAnnouncement/,
+    /result.kind === "ok"\) \{\s*changed\(result.result.task\);\s*confirmed = true;\s*setAnnouncement/,
   );
   assert.match(s, /data-testid="task-board-announcement"/);
   assert.match(s, /aria-live="polite"/);

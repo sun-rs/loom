@@ -71,15 +71,17 @@ export function useTaskBoard(
   };
   const update = async (task: Task, status: TaskWorkflowStatus) => {
     if (hasUnresolvedIntents() || !canEdit(task) || task.status === status)
-      return;
+      return false;
     const row = rowFor(task);
-    if (!row) return;
+    if (!row) return false;
+    let confirmed = false;
     setError("");
     setAnnouncement("");
     try {
       await bridge.update(row, status, principalId, (result) => {
         if (result.kind === "ok") {
           changed(result.result.task);
+          confirmed = true;
           setAnnouncement(
             `任务 ${task.title} 已移至${formatMessage({ id: STATUS_STYLES[taskWorkflowStatus(result.result.task.state)].labelId })}`,
           );
@@ -89,6 +91,7 @@ export function useTaskBoard(
     } catch (e) {
       setError(e instanceof Error ? e.message : "无法修改任务。");
     }
+    return confirmed;
   };
   return {
     bridge,

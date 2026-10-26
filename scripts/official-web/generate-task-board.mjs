@@ -1,3 +1,4 @@
+import { taskDnd134 } from "./task-dnd134-template.mjs";
 import ts from "typescript";
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -54,6 +55,11 @@ export function generateTaskBoard() {
     "  const actions = useTaskCardActions(task);\n  const disabled = requestedDisabled || !actions.canEditStatus || actions.busy;\n" +
       marker,
   );
+  declarations =
+    declarations.slice(
+      0,
+      declarations.indexOf("function DraggableTaskWrapper("),
+    ) + taskDnd134;
   let cardFn = extractDeclarations(card, ["TaskCard"])[0];
   const start = cardFn.indexOf("  const updateTaskStatus = useTaskStore("),
     end = cardFn.indexOf("\n  return (", start);
@@ -71,10 +77,9 @@ export function generateTaskBoard() {
     "OfficialTaskBoard.generated.tsx":
       header +
       ruiImports(source) +
-      `\nimport {useCallback} from "react";
+      `\nimport {useCallback,useMemo} from "react";
+import {TaskDraggable,TaskDropZone,TaskDropPlaceholder,TaskBoardColumnEmptyIdle,TaskBoardColumnEmptyAllowed,TaskBoardColumnEmptyBlocked} from "raft-ui";
 import {useIntl} from "react-intl";
-import {useDraggable,useDroppable} from "@dnd-kit/core";
-import {CSS} from "@dnd-kit/utilities";
 import type {Task,TaskStatus} from "../packages/web/src/store/taskStore";
 import {TASK_STATUS_UI} from "../packages/web/src/components/task/taskStatusUi";
 import {SkeletonRow} from "../packages/web/src/components/ui/Skeleton";

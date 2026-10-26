@@ -49,5 +49,13 @@
     "reuse": "Structural port of row-container status and subtitle branches; immutable AvatarListRow and raft-ui ListRow retained.",
     "generator": "scripts/official-web/generate-computer-row134.mjs",
     "localBindings": "Loom presence maps to native Status. Unknown presence stays explicitly unknown, never inferred online. No cloud activity details or bulk model mutation."
+  },
+  "taskDnd": {
+    "sourceEvidence": "docs/evo/evidence/2026-10-26-page-audit/sources.json",
+    "sourceFunctions": "TasksPanel-ChzWhoKN.js Ft/Rt/zt and drag callbacks",
+    "nativeDependency": "@botiverse/raft-ui@0.35.1 TaskDndProvider/TaskDraggable/TaskDropZone/TaskDropPlaceholder/TaskDragOverlay",
+    "reuse": "Native package primitives unchanged; Rt/zt and focus callback flow structurally ported in generator template/useTaskDrag, not byte-exact TS source.",
+    "generator": "scripts/official-web/generate-task-board.mjs + task-dnd134-template.mjs",
+    "localBindings": "Kernel transition/permission fences; confirmed board projection and success announcement; Chinese accessible title/status instead of opaque IDs. No task reordering or upstream business store."
   }
 }

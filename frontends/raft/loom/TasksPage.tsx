@@ -1,3 +1,5 @@
+import { useTaskDrag } from "./useTaskDrag";
+import { TASK_STATUS_UI } from "../packages/web/src/components/task/taskStatusUi";
 import {
   OfficialTaskToolbar,
   OfficialTasksHeader,
@@ -19,15 +21,15 @@ import TaskCreate from "./TaskCreate.tsx";
 import type { ChannelTaskClient } from "./channel-task-client.ts";
 import { useIntl } from "react-intl";
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { TasksPanelRoot, TasksPanelViewport, Button, Card } from "raft-ui";
-import { CheckSquare } from "lucide-react";
 import {
-  DndContext,
-  PointerSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-} from "@dnd-kit/core";
+  TaskDndProvider,
+  TaskDragOverlay,
+  TasksPanelRoot,
+  TasksPanelViewport,
+  Button,
+  Card,
+} from "raft-ui";
+import { CheckSquare } from "lucide-react";
 import type { RahClient } from "@rah-os/client-sdk";
 import type {
   GlobalTasksResponse,
@@ -45,6 +47,7 @@ import { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives.ts";
 import type { Task } from "../packages/web/src/store/taskStore.ts";
 import { toOfficialTask } from "./task-client.ts";
 import { useIntentRoute, hasRouteBoundIntent } from "./useIntentRoute.ts";
+import TaskCard from "./OfficialTaskCard.generated";
 import TaskDetail from "./TaskDetail.tsx";
 const statuses: TaskWorkflowStatus[] = [
   "todo",
@@ -180,13 +183,8 @@ export default function TasksPage({
       ),
     );
   });
-  const [dragged, setDragged] = useState<string>();
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(TouchSensor, {
-      activationConstraint: { delay: 200, tolerance: 5 },
-    }),
-  );
+  const drag = useTaskDrag(tasks, board);
+  const draggedTask = tasks.find((t) => t.id === drag.activeTaskId);
   const open = useCallback(
     (task: Task) => {
       if (hasRouteBoundIntent()) return;
@@ -298,21 +296,7 @@ export default function TasksPage({
               title="暂无任务"
             />
           ) : (
-            <DndContext
-              sensors={sensors}
-              onDragStart={({ active }) => setDragged(String(active.id))}
-              onDragCancel={() => setDragged(undefined)}
-              onDragEnd={({ active, over }) => {
-                setDragged(undefined);
-                const task = tasks.find((t) => t.id === active.id);
-                if (
-                  task &&
-                  over &&
-                  statuses.includes(over.id as TaskWorkflowStatus)
-                )
-                  void board.update(task, over.id as TaskWorkflowStatus);
-              }}
-            >
+            <TaskDndProvider {...drag.props}>
               <TaskVirtualLayout
                 scrollElementRef={scroll}
                 className={
@@ -342,15 +326,17 @@ export default function TasksPage({
                       statusTasks={group}
                       openTask={open}
                       isChannelMode={Boolean(channelTasks)}
+                      activeTaskId={drag.activeTaskId}
+                      blockedReason={
+                        draggedTask &&
+                        !board.options(draggedTask).includes(status) &&
+                        draggedTask.status !== status
+                          ? `不能从${formatMessage({ id: TASK_STATUS_UI[draggedTask.status].labelId })}移至${formatMessage({ id: TASK_STATUS_UI[status].labelId })}`
+                          : undefined
+                      }
                       canModifyTasks={
                         board.state === "idle" &&
-                        tasks.some(
-                          (task) =>
-                            board.canEdit(task) &&
-                            (!dragged ||
-                              (task.id === dragged &&
-                                board.options(task).includes(status))),
-                        )
+                        tasks.some((task) => board.canEdit(task))
                       }
                     />
                   ) : (
@@ -364,7 +350,16 @@ export default function TasksPage({
                   );
                 })}
               </TaskVirtualLayout>
-            </DndContext>
+              <TaskDragOverlay>
+                {draggedTask ? (
+                  <TaskCard
+                    task={draggedTask}
+                    onOpen={open}
+                    showChannelName={!channelTasks}
+                  />
+                ) : null}
+              </TaskDragOverlay>
+            </TaskDndProvider>
           )}
           {next && (
             <Button
