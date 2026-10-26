@@ -1,0 +1,46 @@
+{
+  "productCommit": "dbd18e351acf4aec0f0f755c3652b01e4f8ccf46",
+  "upstream": "Raft Web 1.21.34 locked production resource; package 0.35.1 unchanged",
+  "checks": {
+    "sourceSuite": 419,
+    "finalFocusedTests": 5,
+    "types": "passed",
+    "build": "passed",
+    "diff": "passed"
+  },
+  "browser": {
+    "desktopViewport": [
+      1440,
+      1000
+    ],
+    "expandedMainWidth": 1003,
+    "collapsedMainWidth": 1383,
+    "keyboardCollapseFocusReturn": true,
+    "reloadPersists": true,
+    "channelExpandedWhileActivityCollapsed": true,
+    "independentThreadVisible": true,
+    "mobileViewport": [
+      390,
+      844
+    ],
+    "mobileListWidth": 390,
+    "consoleErrors": [],
+    "testPreferencesRestored": true,
+    "screenshots": [
+      "collapsed.png",
+      "mobile.png",
+      "thread-expanded-area.png"
+    ]
+  },
+  "deployment": {
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-activity-collapse-aa411862-0405-4c80-9fed-67f8fce8c7f6",
+    "verified": true,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true
+  },
+  "limits": [
+    "Real pointer drag uses tested native handler but was not manually dragged in browser.",
+    "Mobile viewport verification is not physical-device acceptance.",
+    "Mobile swipe source/behavior audit remains open; no whole-site parity claim."
+  ]
+}
