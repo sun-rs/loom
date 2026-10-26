@@ -1,6 +1,10 @@
-import InstancePresence from "./InstancePresence.tsx";
+import {
+  OfficialComputerRowStatus,
+  OfficialComputerRowSubtitle,
+} from "./OfficialComputerRow.generated.tsx";
 // Structural port: db5e399 MachineAgentRow.tsx. Loom supplies instance identity/status.
 import {
+  Status,
   CheckboxIndicator,
   ListRow,
   ListRowBody,
@@ -28,17 +32,38 @@ export default function ComputerInstanceRow({
       agentAvatarUrl={instance.avatarKey}
     />
   );
+  const simple =
+    instance.activity === "online" || instance.activity === "offline";
+  const dot = (
+    <Status
+      presence={
+        instance.activity === "working" || instance.activity === "thinking"
+          ? "busy"
+          : (instance.activity ?? "offline")
+      }
+      aria-label={instance.stateLabel}
+    />
+  );
   const status = (
-    <InstancePresence
-      activity={instance.activity}
+    <OfficialComputerRowStatus
+      simple={simple}
       label={instance.stateLabel}
+      dot={dot}
+    />
+  );
+  const subtitle = (
+    <OfficialComputerRowSubtitle
+      simple={simple}
+      label={instance.stateLabel}
+      subtitle={instance.subtitle}
+      dot={dot}
     />
   );
   return selectionMode ? (
     <ListRow
       selected={selected}
       onClick={onClick}
-      className="group"
+      className="group @container"
       aria-pressed={selected}
       aria-label={`${selected ? "取消选择" : "选择"} ${instance.name}`}
       data-testid="computer-instance-row"
@@ -47,15 +72,16 @@ export default function ComputerInstanceRow({
       {avatar}
       <ListRowBody>
         <ListRowTitle>{instance.name}</ListRowTitle>
-        <ListRowMeta>{instance.subtitle}</ListRowMeta>
+        <ListRowMeta>{subtitle}</ListRowMeta>
       </ListRowBody>
       <span className="flex shrink-0 items-center gap-1.5">{status}</span>
     </ListRow>
   ) : (
     <OfficialAvatarListRow
+      className="@container"
       avatar={avatar}
       name={instance.name}
-      subtitle={instance.subtitle}
+      subtitle={subtitle}
       rightContent={status}
       selected={false}
       onClick={onClick}

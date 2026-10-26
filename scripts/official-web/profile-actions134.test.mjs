@@ -43,3 +43,13 @@ test("task board announces only confirmed writes, with native polite live region
   assert.match(s, /aria-live="polite"/);
   assert.match(s, /aria-atomic="true"/);
 });
+test("computer selection and normal rows retain native container status disclosure", () => {
+  const row = read("frontends/raft/loom/ComputerInstanceRow.tsx");
+  assert.match(row, /className="group @container"/);
+  assert.match(row, /className="@container"/);
+  assert.match(row, /OfficialComputerRowSubtitle/);
+  assert.match(row, /OfficialComputerRowStatus/);
+  const generator = read("scripts/official-web/generate-computer-row134.mjs");
+  assert.match(generator, /@md:hidden/);
+  assert.match(generator, /max-w-\[min\(32rem,42cqw\)\]/);
+});

@@ -42,5 +42,12 @@
     "extractedCssSha256": "18a24b59be690306136aecc6cc7a0530403b5f8780b4a8b75cb7655eb44ec13c",
     "generator": "scripts/official-web/generate-profile-actions134.mjs",
     "localBindings": "Existing instance start/stop confirmation and explicitly supplied private/restart callbacks only. Overflow remains at wide widths to expose Loom Fork/Side/channel actions. Role aggregate controls unchanged."
+  },
+  "computerRow": {
+    "sourceEvidence": "docs/evo/evidence/2026-10-26-page-audit/sources.json",
+    "sourceFunction": "MachineDetailPanel-DYB7F72N.js MachineAgentRow",
+    "reuse": "Structural port of row-container status and subtitle branches; immutable AvatarListRow and raft-ui ListRow retained.",
+    "generator": "scripts/official-web/generate-computer-row134.mjs",
+    "localBindings": "Loom presence maps to native Status. Unknown presence stays explicitly unknown, never inferred online. No cloud activity details or bulk model mutation."
   }
 }
