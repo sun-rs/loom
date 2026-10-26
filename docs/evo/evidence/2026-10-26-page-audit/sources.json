@@ -1,0 +1,73 @@
+{
+  "baseline": "Web 1.21.34; filenames referenced by locked app-shell-BWgtfY02.js",
+  "retrieved": "2026-10-26",
+  "scope": "Published JS resources, not newly published TypeScript source",
+  "resources": [
+    {
+      "file": "AgentDetailPanel-CnHZV8Ck.js",
+      "url": "https://app.raft.build/assets/AgentDetailPanel-CnHZV8Ck.js",
+      "sha256": "b88c460774ec1ce6b96cf8e43e66155e58adb501a822ca01917495381afd7b89",
+      "bytes": 206371
+    },
+    {
+      "file": "CreateAgentDialog-Bim0RWy7.js",
+      "url": "https://app.raft.build/assets/CreateAgentDialog-Bim0RWy7.js",
+      "sha256": "c2a503e7e322dfaeaefa33aa784f4e0f62cf64d1cb85359c2e4ba23d9fd8a910",
+      "bytes": 30675
+    },
+    {
+      "file": "EditChannelDialog-djVCk2XF.js",
+      "url": "https://app.raft.build/assets/EditChannelDialog-djVCk2XF.js",
+      "sha256": "af87eb07e754fe6a54dc4f7c358cd9d18f0047213e580e2d27c6feb834cf81d3",
+      "bytes": 47153
+    },
+    {
+      "file": "MachineDetailPanel-DYB7F72N.js",
+      "url": "https://app.raft.build/assets/MachineDetailPanel-DYB7F72N.js",
+      "sha256": "70f1e5702ba71d41f4f0bab239a5cddecd470db2c3454e1fc272526089006e90",
+      "bytes": 62907
+    },
+    {
+      "file": "MessageSearchPage-B7MQRg0I.js",
+      "url": "https://app.raft.build/assets/MessageSearchPage-B7MQRg0I.js",
+      "sha256": "09b4c1d5d90979d8ddd5b5ec1f3d2480e455bc38333f643108b4c734c7991adf",
+      "bytes": 58450
+    },
+    {
+      "file": "ReleaseNotesPanel-W2TPpYA4.js",
+      "url": "https://app.raft.build/assets/ReleaseNotesPanel-W2TPpYA4.js",
+      "sha256": "396febc08dbe630701ab66934d465cc3a93d012b49d88cfab42c9c1280a3a69a",
+      "bytes": 6086
+    },
+    {
+      "file": "RuntimeConfigFields-BF3R7fc4.js",
+      "url": "https://app.raft.build/assets/RuntimeConfigFields-BF3R7fc4.js",
+      "sha256": "2a5bcc0764550373008f9264e58bf48e890c5f70168b74e835808af5e66c13de",
+      "bytes": 49296
+    },
+    {
+      "file": "SearchOverlay-DpGPHO_W.js",
+      "url": "https://app.raft.build/assets/SearchOverlay-DpGPHO_W.js",
+      "sha256": "ac4e8a06e50610407d427e73318c41d42f844e8c81afc430674454671d890ba1",
+      "bytes": 1980
+    },
+    {
+      "file": "TasksPanel-ChzWhoKN.js",
+      "url": "https://app.raft.build/assets/TasksPanel-ChzWhoKN.js",
+      "sha256": "e56c22d70939fea14777389c73ae12220691df1d7ee56129f5abba7efa7ad496",
+      "bytes": 51119
+    },
+    {
+      "file": "SettingsPanel-Cg0my9Pp.js",
+      "url": "https://app.raft.build/assets/SettingsPanel-Cg0my9Pp.js",
+      "sha256": "277407df728df819584edf0ec5b0aca2ff75a3f9c9529d1e489e980939b9ab86",
+      "bytes": 329631
+    },
+    {
+      "file": "app-shell-BWgtfY02.js",
+      "url": "https://app.raft.build/assets/app-shell-BWgtfY02.js",
+      "sha256": "65eff83bf1a82aa2933130aecea417189fd44abd7a379f7cfc10aeda2aa6a3cc",
+      "bytes": 2739236
+    }
+  ]
+}

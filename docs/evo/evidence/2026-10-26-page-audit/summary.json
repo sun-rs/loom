@@ -1,0 +1,29 @@
+{
+  "baseline": "Raft Web 1.21.34",
+  "kind": "source composition audit; not browser acceptance",
+  "groups": [
+    "search",
+    "tasks",
+    "role",
+    "computers",
+    "settings",
+    "channel settings/menu"
+  ],
+  "resources": 11,
+  "focusedExistingTestsPassed": 13,
+  "productChanged": false,
+  "serviceRestarted": false,
+  "confirmedFollowups": [
+    "scoped search entry/placeholder/empty state",
+    "task toolbar container breakpoint",
+    "computer detail spacing/composition review",
+    "channel settings panel vs drawer host migration"
+  ],
+  "semanticReview": [
+    "instance vs role responsive actions",
+    "agent activity overview",
+    "computer bulk model edit",
+    "notification page split vs approved local design"
+  ],
+  "wholeSiteAccepted": false
+}
