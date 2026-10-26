@@ -38,7 +38,9 @@ export function useSearchHeaderController({
     query: input,
     overlayChrome: overlay,
     handleBack: onBack,
-    mobileBackProps: { "aria-label": "返回聊天列表" },
+    mobileBackProps: {
+      "aria-label": conversation ? `返回${conversation}` : "返回聊天列表",
+    },
     searchPlaceholder: overlay
       ? formatMessage({ id: "search.overlay.placeholder" })
       : conversation

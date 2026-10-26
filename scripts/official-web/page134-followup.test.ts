@@ -91,3 +91,24 @@ test("member strip cancels only its own inline padding inside native DrawerBody"
     /<div className="-mx-4" data-testid="channel-member-strip-inset">\s*<MembersStrip/,
   );
 });
+test("channel search entry routes to current room scope through guarded navigation", () => {
+  const s = read("loom/ChannelApp.tsx");
+  const start = s.indexOf('testId="channel-topbar-search"');
+  const end = s.indexOf("{controlRoomId", start);
+  const entry = s.slice(start, end);
+  assert.match(entry, /hasUnresolvedIntents/);
+  assert.match(entry, /setPanelParams/);
+  assert.match(entry, /channelId: channel.roomId/);
+  assert.match(entry, /presentation: "page"/);
+  assert.doesNotMatch(entry, /dispatchEvent/);
+});
+test("scoped search Back retains the originating conversation and accurate accessible label", () => {
+  assert.match(
+    read("loom/ChannelApp.tsx"),
+    /destination === "search" && params.get\("channelId"\)/,
+  );
+  assert.match(
+    read("loom/SearchHeader.tsx"),
+    /conversation \? `返回\$\{conversation\}`/,
+  );
+});

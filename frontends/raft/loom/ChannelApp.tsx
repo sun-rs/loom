@@ -372,9 +372,17 @@ function Channel({
                         labelId="message.chatPanel.searchChannel"
                         testId="channel-topbar-search"
                         icon={<Search size={22} />}
-                        onClick={() =>
-                          window.dispatchEvent(new Event("loom:open-search"))
-                        }
+                        onClick={() => {
+                          if (hasUnresolvedIntents()) return;
+                          setPanelParams(
+                            {
+                              view: "search",
+                              presentation: "page",
+                              channelId: channel.roomId,
+                            },
+                            { state: null },
+                          );
+                        }}
                       />
                       {controlRoomId && (
                         <ChannelControl
@@ -1312,7 +1320,13 @@ export default function ChannelApp() {
                         client={client}
                         workspaceId={directory.workspace.workspaceId}
                         mode={destination}
-                        onBack={() => setParams({ chat: "list" })}
+                        onBack={() =>
+                          setParams(
+                            destination === "search" && params.get("channelId")
+                              ? { room: params.get("channelId")! }
+                              : { chat: "list" },
+                          )
+                        }
                         profileOpen={discoveryProfileOpen}
                         onOpenResult={async (row, full) => {
                           if (hasUnresolvedIntents())
