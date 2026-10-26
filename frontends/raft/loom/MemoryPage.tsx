@@ -1,3 +1,4 @@
+import { layoutQueries } from "./adaptive-layout.ts";
 import { useCurrentListPanel } from "./useCurrentListPanel";
 import { uiActionProps } from "./ui-action-props.ts";
 // Local channel-memory binding; native Sidebar / PanelHeader / form primitives.
@@ -69,7 +70,7 @@ export default function MemoryPage({
     .filter((r) => channel === "all" || r.roomId === channel)
     .map((r) => r.roomId)
     .join("\n");
-  const desktop = useMediaQuery("(min-width: 768px)");
+  const desktop = useMediaQuery(layoutQueries.dual);
   const panel = useCurrentListPanel("memoryList", !!selected);
   useEffect(() => {
     if (

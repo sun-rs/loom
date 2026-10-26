@@ -1,3 +1,4 @@
+import { layoutQueries } from "./adaptive-layout.ts";
 import { MobilePageNavigation } from "./MobilePageNavigation";
 import {
   showMobileRootNavigation,
@@ -800,7 +801,7 @@ export default function ChannelApp() {
     setParams((previous) => {
       const next = new URLSearchParams(previous);
       const mobileSecondary =
-        window.matchMedia("(max-width: 767.98px)").matches &&
+        window.matchMedia(layoutQueries.single).matches &&
         ["agents", "computers", "settings", "memory"].includes(id);
       if (mobileSecondary) {
         const origin = new URLSearchParams(previous);
@@ -825,7 +826,7 @@ export default function ChannelApp() {
         next.delete("view");
         if (!next.has("room") && lastChatRoom.current)
           next.set("room", lastChatRoom.current);
-        if (window.matchMedia("(max-width: 767.98px)").matches)
+        if (window.matchMedia(layoutQueries.single).matches)
           next.set("chat", "list");
       } else {
         next.set("view", id);
@@ -923,7 +924,7 @@ export default function ChannelApp() {
       })
       .catch(() => setBoxError("无法打开私聊"));
   };
-  const desktopChat = useMediaQuery("(min-width: 768px)");
+  const desktopChat = useMediaQuery(layoutQueries.dual);
   const requested = params.get("room");
   // Presentation route only: mobile list visibility does not clear room selection.
   // No delivery/read/write state lives here.

@@ -1,3 +1,4 @@
+import { layoutQueries } from "./adaptive-layout.ts";
 import { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives";
 import {
   OfficialActivityHeader,
@@ -27,7 +28,7 @@ export default function ActivityHeader({
   onScrollTop: () => void;
   renderToolbar: (actions: ReactNode) => ReactNode;
 }) {
-  const mobile = useMediaQuery("(max-width: 767px)");
+  const mobile = useMediaQuery(layoutQueries.single);
   const [counts, setCounts] = useState<{ total: number; unread?: number }>();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");

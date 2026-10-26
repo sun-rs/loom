@@ -1,3 +1,4 @@
+import { layoutQueries } from "./adaptive-layout.ts";
 import type { ReactNode } from "react";
 import type { SearchEntity } from "./search-entities.ts";
 import { useCallback, useEffect, useRef } from "react";
@@ -30,7 +31,7 @@ export default function TopBarSearch({
 }) {
   const location = useLocation();
   const [params, setParams] = useSearchParams();
-  const desktop = useMediaQuery("(min-width: 768px)");
+  const desktop = useMediaQuery(layoutQueries.dual);
   const background = searchBackground(location.search, location.state);
   const opener = useRef<HTMLElement | null>(null);
   const locationRef = useRef(location);

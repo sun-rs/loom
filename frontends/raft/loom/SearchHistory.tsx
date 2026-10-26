@@ -1,3 +1,4 @@
+import { layoutQueries } from "./adaptive-layout.ts";
 import { useEffect, useState } from "react";
 import { SearchHistorySection } from "./OfficialSearchSections.generated";
 import { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives.ts";
@@ -62,7 +63,7 @@ export default function SearchHistory({
   onChoose: (query: string) => void;
 }) {
   const searchHistory = history.entries;
-  const isTouchSearchHome = useMediaQuery("(max-width: 767px)");
+  const isTouchSearchHome = useMediaQuery(layoutQueries.single);
   const [searchHistoryEditRequested, setSearchHistoryEditRequested] =
     useState(false);
   const searchHistoryEditing = resolveSearchHistoryEditing({

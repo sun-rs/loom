@@ -1,3 +1,4 @@
+import { layoutQueries } from "./adaptive-layout.ts";
 import { useMobilePullRefresh } from "./useMobilePullRefresh";
 import { Spinner } from "raft-ui";
 import {
@@ -135,7 +136,7 @@ export default function DiscoveryPage({
       { state: null },
     );
   };
-  const desktop = useMediaQuery("(min-width: 768px)");
+  const desktop = useMediaQuery(layoutQueries.dual);
   const panel = useCurrentListPanel(
     "list",
     mode === "activity" && !!detail,

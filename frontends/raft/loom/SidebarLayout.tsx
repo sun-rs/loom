@@ -1,3 +1,4 @@
+import { layoutQueries } from "./adaptive-layout.ts";
 import {
   CurrentColumnResize,
   useCurrentColumnWidth,
@@ -22,7 +23,7 @@ export function LoomShellRoot({
   destination,
   ...props
 }: ComponentProps<typeof AppShellRoot> & { destination: string }) {
-  const desktop = useMediaQuery("(min-width: 768px)");
+  const desktop = useMediaQuery(layoutQueries.dual);
   const column = destination === "activity" ? "activityList" : "sidebar";
   const hidden = useSidebarPreference((s) =>
     column === "activityList" ? s.activityListHidden : s.sidebarHidden,

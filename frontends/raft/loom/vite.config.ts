@@ -1,3 +1,4 @@
+import { adaptLayoutMedia } from "./adaptive-layout.ts";
 import { assertOfficialRuntimeBoundary } from "./runtime-boundary.ts";
 import { resolveOfficialApi } from "./api-resolution.ts";
 import { adaptMobileMessageDefault } from "./mobile-message-default.ts";
@@ -25,6 +26,9 @@ export default defineConfig({
         {
           postcssPlugin: "loom-local-font-delivery",
           OnceExit(root) {
+            root.walkAtRules("media", (rule) => {
+              rule.params = adaptLayoutMedia(rule.params);
+            });
             const localized = localizeFontCss(root.toString());
             root
               .removeAll()
@@ -50,6 +54,15 @@ export default defineConfig({
           ),
       },
       transform(code, id) {
+        // Retained official routing hook; immutable source stays untouched.
+        if (id.endsWith("/hooks/useMobileNav.ts"))
+          return {
+            code: code.replaceAll(
+              '"(max-width: 767px)"',
+              JSON.stringify(adaptLayoutMedia("(max-width: 767px)")),
+            ),
+            map: null,
+          };
         if (id.endsWith("/store/appearanceStore.ts"))
           return { code: adaptMobileMessageDefault(code), map: null };
         if (id.endsWith("/packages/web/src/i18n/LocaleProvider.tsx"))

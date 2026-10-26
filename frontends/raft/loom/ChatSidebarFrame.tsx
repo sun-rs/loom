@@ -1,3 +1,4 @@
+import { layoutQueries } from "./adaptive-layout.ts";
 import { useMobilePageBack } from "./MobilePageNavigation";
 import PanelHeader from "../packages/web/src/components/ui/PanelHeader";
 import SystemNotifications from "./SystemNotifications.tsx";
@@ -25,10 +26,10 @@ export default function ChatSidebarFrame({
 }) {
   const secondaryBack = useMobilePageBack();
   const [desktop, setDesktop] = useState(
-    () => window.matchMedia("(min-width: 768px)").matches,
+    () => window.matchMedia(layoutQueries.dual).matches,
   );
   useEffect(() => {
-    const query = window.matchMedia("(min-width: 768px)");
+    const query = window.matchMedia(layoutQueries.dual);
     const update = () => setDesktop(query.matches);
     query.addEventListener("change", update);
     update();

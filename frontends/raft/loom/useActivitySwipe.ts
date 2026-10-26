@@ -1,3 +1,4 @@
+import { layoutQueries } from "./adaptive-layout.ts";
 import { useCallback, useEffect, useState, type RefObject } from "react";
 import { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives";
 import { suppressNextSwipeClick } from "./OfficialActivitySwipe.generated";
@@ -6,7 +7,7 @@ export function useActivitySwipe(
   enabled: boolean,
   viewport: RefObject<HTMLElement | null>,
 ) {
-  const narrow = useMediaQuery("(max-width: 767px)");
+  const narrow = useMediaQuery(layoutQueries.single);
   const coarse = useMediaQuery("(pointer: coarse)");
   const [selected, setSelected] = useState<string | null>(null);
   const openId = enabled && narrow && coarse ? selected : null;

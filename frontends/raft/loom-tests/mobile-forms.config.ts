@@ -5,7 +5,10 @@ export default defineConfig({
   resolve: { alias: { "@botiverse/raft-ui": "raft-ui" } },
   test: {
     environment: "jsdom",
-    include: ["loom-tests/mobile-forms.dom.test.tsx"],
+    include: [
+      "loom-tests/mobile-forms.dom.test.tsx",
+      "loom-tests/adaptive-layout.dom.test.tsx",
+    ],
     maxWorkers: 1,
   },
 });

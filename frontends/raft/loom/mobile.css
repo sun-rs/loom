@@ -17,7 +17,7 @@
   justify-content: flex-end;
   white-space: nowrap;
 }
-@media (max-width: 767px) {
+@media (max-width: 767px), (pointer: coarse) {
   /* Native mobile 6559754: SlockHomeComponents + SlockSectionHeader.
    * Structural CSS adaptation, not Compose reuse. Keep desktop recipes intact.
    * List rows deliberately use the native 32dp row; page actions retain44px. */
@@ -339,7 +339,10 @@
     column-gap: 6px;
     padding-inline: 2px;
   }
+}
 
+/* Layout-only clearance and navigation: density must not force a bottom bar on tablets. */
+@media (max-width: 767px) {
   /* Main's owner-approved iOS screenshot adaptation; UIKit owns native
    * Liquid Glass, so these web material values are not claimed as UIKit reuse. */
   [data-testid="mobile-bottom-bar-overlay"] {
@@ -470,4 +473,55 @@
   .loom-start-swipe-actions
   > button {
   flex-grow: 1;
+}
+
+/* Native AdaptiveSideThread: a wide window alone is insufficient. Preserve the
+ * mounted conversation and its draft; replace only its visual pane when the
+ * measured detail cannot hold 440px main + 1px seam + 400px thread. */
+@media (pointer: coarse) {
+  .thread-layout-container:has(> .thread-side-column) > .thread-main-column {
+    display: none;
+  }
+  .thread-side-column {
+    position: absolute;
+    inset: 0;
+    width: auto;
+    max-width: none;
+    z-index: 30;
+  }
+  .thread-side-column-resizer {
+    display: none;
+  }
+  .thread-side-column [data-testid="thread-mobile-back"] {
+    display: flex;
+  }
+  .thread-side-column [data-testid="thread-close"] {
+    display: none;
+  }
+}
+@media (pointer: coarse) and (min-width: 1200px) {
+  @container thread-layout (min-width: 841px) {
+    .thread-layout-container:not([data-thread-maximized="true"]):has(
+        > .thread-side-column
+      )
+      > .thread-main-column {
+      display: flex;
+      min-width: 440px;
+    }
+    .thread-layout-container:not([data-thread-maximized="true"])
+      > .thread-side-column {
+      position: relative;
+      inset: auto;
+      width: 400px;
+      max-width: calc(100% - 441px);
+      flex-shrink: 0;
+      z-index: auto;
+    }
+    .thread-side-column [data-testid="thread-mobile-back"] {
+      display: none;
+    }
+    .thread-side-column [data-testid="thread-close"] {
+      display: flex;
+    }
+  }
 }

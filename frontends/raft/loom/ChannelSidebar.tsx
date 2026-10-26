@@ -1,3 +1,4 @@
+import { layoutQueries } from "./adaptive-layout.ts";
 import { DialogCommit } from "raft-ui/wip";
 import {
   navigationUnread,
@@ -286,7 +287,7 @@ export default function ChannelSidebar({
     });
   };
   const hideEmpty = useAppearanceStore((s) => s.hideEmptySidebarSections);
-  const mobile = useMediaQuery("(max-width: 767px)");
+  const mobile = useMediaQuery(layoutQueries.single);
   const visibleGroups = groups.filter(
     (g) =>
       !shouldHideEmptySidebarSection({

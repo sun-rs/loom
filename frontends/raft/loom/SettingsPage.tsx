@@ -1,3 +1,4 @@
+import { layoutQueries } from "./adaptive-layout.ts";
 import { SidebarResize, useSidebarColumn } from "./SidebarLayout";
 import WorkspaceThemeLink from "./WorkspaceThemeLink";
 import WorkspaceThemeSettings from "./WorkspaceThemeSettings";
@@ -82,10 +83,10 @@ export default function SettingsPage({
 }) {
   const panel = useSidebarColumn();
   const [desktop, setDesktop] = useState(
-    () => window.matchMedia("(min-width: 768px)").matches,
+    () => window.matchMedia(layoutQueries.dual).matches,
   );
   useEffect(() => {
-    const media = window.matchMedia("(min-width: 768px)");
+    const media = window.matchMedia(layoutQueries.dual);
     const update = () => setDesktop(media.matches);
     media.addEventListener("change", update);
     update();

@@ -1,3 +1,4 @@
+import { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives.ts";
 import { useLayoutEffect, useRef, useState } from "react";
 import { useListColumnWidth, type ListColumn } from "./ListColumnResize";
 import { LIST_BOUNDS, resolveListWidth } from "./current-list-layout";
@@ -7,6 +8,8 @@ export function useCurrentListPanel(
   half: boolean,
   rightMin = 0,
 ) {
+  const touch = useMediaQuery("(pointer: coarse)");
+  const detailMinimum = touch ? Math.max(360, rightMin) : rightMin;
   const ref = useRef<HTMLDivElement>(null);
   const [available, setAvailable] = useState<number>();
   const preferred = useListColumnWidth(column);
@@ -40,12 +43,15 @@ export function useCurrentListPanel(
   return {
     maxWidth:
       half && available !== undefined
-        ? Math.max(LIST_BOUNDS.min, Math.floor(available / 2))
+        ? Math.max(
+            LIST_BOUNDS.min,
+            Math.min(Math.floor(available / 2), available - detailMinimum),
+          )
         : undefined,
     ref,
     width:
       available === undefined
         ? preferred
-        : resolveListWidth(preferred, available, half, rightMin),
+        : resolveListWidth(preferred, available, half, detailMinimum),
   };
 }

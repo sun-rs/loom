@@ -1,3 +1,4 @@
+import { layoutQueries } from "./adaptive-layout.ts";
 import {
   OfficialTaskSurface,
   OfficialTaskModalBar,
@@ -41,7 +42,7 @@ export default function TaskDetail({
     [writeError, setWriteError] = useState(""),
     [state, setState] = useState(bridge.writes.state),
     [tick, setTick] = useState(0);
-  const mobile = useMediaQuery("(max-width: 767.98px)");
+  const mobile = useMediaQuery(layoutQueries.single);
   const opener = useRef<HTMLElement | null>(null);
   useEffect(() => {
     opener.current =

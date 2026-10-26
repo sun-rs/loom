@@ -1,3 +1,4 @@
+import { layoutQueries } from "./adaptive-layout.ts";
 import { useTaskDrag } from "./useTaskDrag";
 import { TASK_STATUS_UI } from "../packages/web/src/components/task/taskStatusUi";
 import {
@@ -70,7 +71,7 @@ export default function TasksPage({
   const { formatMessage } = useIntl();
   const [creating, setCreating] = useState(false);
   const [params, setParams] = useIntentRoute();
-  const mobile = useMediaQuery("(max-width: 767.98px)");
+  const mobile = useMediaQuery(layoutQueries.compactDensity);
   const mode =
     params.get("taskView") === "board"
       ? "board"

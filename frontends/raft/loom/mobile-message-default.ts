@@ -7,6 +7,6 @@ export function adaptMobileMessageDefault(source: string) {
     throw Error("Official message preference seam changed");
   return source.replace(
     seam,
-    'return normalizeMessageBodyFontSize(localStorage.getItem(MESSAGE_BODY_FONT_SIZE_STORAGE_KEY) ?? (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches ? "sm" : null));',
+    'return normalizeMessageBodyFontSize(localStorage.getItem(MESSAGE_BODY_FONT_SIZE_STORAGE_KEY) ?? (typeof window !== "undefined" && window.matchMedia("(max-width: 767px), (pointer: coarse)").matches ? "sm" : null));',
   );
 }

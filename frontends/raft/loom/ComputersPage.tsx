@@ -1,3 +1,4 @@
+import { layoutQueries } from "./adaptive-layout.ts";
 import { SidebarResize, useSidebarColumn } from "./SidebarLayout";
 import CreateInstanceDialog from "./CreateInstanceDialog.tsx";
 import { useInstancePresence } from "./InstancePresence.tsx";
@@ -145,7 +146,7 @@ export default function ComputersPage({
     if (
       !selectedId &&
       inventory &&
-      window.matchMedia("(min-width: 768px)").matches
+      window.matchMedia(layoutQueries.dual).matches
     )
       onSelect(inventory.hostId);
   }, [selectedId, inventory?.hostId, onSelect]);
