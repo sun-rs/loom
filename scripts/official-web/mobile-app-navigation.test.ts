@@ -12,15 +12,7 @@ test("mobile app roots are home, activity, tasks and search; secondary destinati
     "tasks",
     "search",
   ]);
-  for (const view of [
-    "activity",
-    "search",
-    "tasks",
-    "agents",
-    "computers",
-    "settings",
-    "memory",
-  ])
+  for (const view of ["activity", "search", "tasks"])
     assert.equal(
       showMobileRootNavigation(view, new URLSearchParams(), true),
       true,
@@ -106,7 +98,49 @@ test("touch rows wire native focus-only completion rather than a second visible 
 });
 
 test("More uses the same Lucide outline family with a full circular silhouette", () => {
-  const source = readFileSync("frontends/raft/loom/MobileWorkspaceMenu.tsx", "utf8");
+  const source = readFileSync(
+    "frontends/raft/loom/MobileWorkspaceMenu.tsx",
+    "utf8",
+  );
   assert.match(source, /<CircleEllipsis\s*\/>/);
   assert.doesNotMatch(source, /<Ellipsis\s*\/>/);
+});
+
+test("More destinations are full-screen; nested details retain their own back", () => {
+  for (const view of ["agents", "computers", "settings", "memory"]) {
+    assert.equal(
+      showMobileRootNavigation(view, new URLSearchParams(), true),
+      false,
+    );
+  }
+});
+
+test("mobile page chrome shares frame color and one seam across header families", () => {
+  const css = readFileSync("frontends/raft/loom/mobile.css", "utf8");
+  assert.match(
+    css,
+    /:is\(\[data-loom-root-header\], \[data-slot="panel-header"\]\) \{[^}]*background: var\(--layer-frame\)/,
+  );
+  assert.match(
+    css,
+    /:is\(\[data-loom-root-header\], \[data-slot="panel-header"\]\) \{[^}]*border-bottom: 1px solid var\(--line-seam\)/,
+  );
+});
+
+test("secondary root back never overrides a selected detail's back", async () => {
+  const { mobileSecondaryRoot } =
+    await import("../../frontends/raft/loom/mobile-app-navigation.ts");
+  for (const [view, key] of [
+    ["agents", "role"],
+    ["computers", "computer"],
+    ["settings", "settings"],
+    ["memory", "memory"],
+  ]) {
+    assert.equal(mobileSecondaryRoot(view, new URLSearchParams()), true);
+    assert.equal(
+      mobileSecondaryRoot(view, new URLSearchParams(`${key}=x`)),
+      false,
+    );
+  }
+  assert.equal(mobileSecondaryRoot("activity", new URLSearchParams()), false);
 });

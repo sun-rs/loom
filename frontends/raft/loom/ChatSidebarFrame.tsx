@@ -1,3 +1,5 @@
+import { useMobilePageBack } from "./MobilePageNavigation";
+import PanelHeader from "../packages/web/src/components/ui/PanelHeader";
 import SystemNotifications from "./SystemNotifications.tsx";
 // Locked db5e399 generated headers; retained v1.21.26 resource shell composition.
 // Native recipes own desktop/mobile header, typography and shell seams.
@@ -21,6 +23,7 @@ export default function ChatSidebarFrame({
   scrollTestId: string;
   children: ReactNode;
 }) {
+  const secondaryBack = useMobilePageBack();
   const [desktop, setDesktop] = useState(
     () => window.matchMedia("(min-width: 768px)").matches,
   );
@@ -36,18 +39,21 @@ export default function ChatSidebarFrame({
       className="relative flex h-full w-full flex-col font-sans text-foreground select-none"
       data-testid={`${testIdPrefix}-root`}
     >
-      {(!desktop || !hideDesktopHeader) && (
-        <OfficialSidebarHeader
-          desktop={desktop}
-          title={title}
-          testId={`${testIdPrefix}-header`}
-          trailing={
-            title === "聊天" ? (
-              <SystemNotifications flavor="mobile-navbar" />
-            ) : undefined
-          }
-        />
-      )}
+      {(!desktop || !hideDesktopHeader) &&
+        (!desktop && secondaryBack ? (
+          <PanelHeader title={title} onMobileBack={secondaryBack} />
+        ) : (
+          <OfficialSidebarHeader
+            desktop={desktop}
+            title={title}
+            testId={`${testIdPrefix}-header`}
+            trailing={
+              title === "聊天" ? (
+                <SystemNotifications flavor="mobile-navbar" />
+              ) : undefined
+            }
+          />
+        ))}
       <div
         className={`scrollbar-quiet min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-2 pb-2 mobile-nav-clearance ${hideDesktopHeader ? "pt-2" : "pt-1"}`}
         data-testid={scrollTestId}

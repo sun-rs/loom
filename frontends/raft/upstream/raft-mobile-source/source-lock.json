@@ -26,6 +26,34 @@
     {
       "path": "compose/shared/src/commonMain/kotlin/build/raft/app/components/RaftPullToRefreshController.kt",
       "sha256": "2180b0f5c5f819bc84d98eed951bedeedacb1a75e26337daca5f12a3d740ca18"
+    },
+    {
+      "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftSectionHeader.kt",
+      "sha256": "629969ebaa13931c4509be5f4a95a98a9db70ff68e202f0d5f1d642bda5ba55b"
+    },
+    {
+      "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftTopTabBar.kt",
+      "sha256": "c3dc900267343d7cb69628526f26dc27d0d178d54d91f14a0240d1ebc015f1fa"
+    },
+    {
+      "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftAppServerTab.kt",
+      "sha256": "2557df09cd6394fb979f3a2487dadea17c3173235bdd3deda2eb6afe91f366bc"
+    },
+    {
+      "path": "compose/shared/src/commonMain/kotlin/build/raft/app/components/SharedHomeSearchInput.kt",
+      "sha256": "f260e898f2eacfaba204362cf14ab0e6647ac92349dd612228202f0d68487230"
+    },
+    {
+      "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftTabs.kt",
+      "sha256": "20704ced6fb882f71d4e72b5cbdfa8924e226fbae8c1298bb59244fef35d3366"
+    },
+    {
+      "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftMobileNavServer.kt",
+      "sha256": "2e1eb9ffe93c663f2b202daf2235fc713fabd6fca66faac64db41bf97c9279a1"
+    },
+    {
+      "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/theme/RaftTypography.kt",
+      "sha256": "95f63b166026aeb13314018a9a43da7c331014216b349090483607b5e7adc043"
     }
   ]
 }

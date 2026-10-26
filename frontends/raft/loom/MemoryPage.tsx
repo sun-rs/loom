@@ -208,15 +208,7 @@ export default function MemoryPage({
         }
       >
         <ActivityInboxPanel edge="attached">
-          {desktop ? (
-            <PanelHeader title="记忆" />
-          ) : (
-            <PanelSectionHeader data-loom-root-header>
-              <PanelHeaderContent>
-                <PanelTitle render={<h1 />}>记忆</PanelTitle>
-              </PanelHeaderContent>
-            </PanelSectionHeader>
-          )}
+          <PanelHeader title="记忆" />
           <MemoryFilters
             query={query}
             onQuery={(v) => {

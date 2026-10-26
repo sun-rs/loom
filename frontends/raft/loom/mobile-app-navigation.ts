@@ -10,6 +10,8 @@ export function showMobileRootNavigation(
   params: URLSearchParams,
   mobileList: boolean,
 ) {
+  if (["agents", "computers", "settings", "memory"].includes(destination))
+    return false;
   if (destination === "channels" && !mobileList) return false;
   if (params.has("thread") || params.has("side")) return false;
   if (
@@ -25,4 +27,18 @@ export function showMobileRootNavigation(
     memory: "memory",
   };
   return !detail[destination] || !params.has(detail[destination]!);
+}
+
+/** Secondary roots are pushed from More; URL snapshot restores filters and list position. */
+export function mobileSecondaryRoot(
+  destination: string,
+  params: URLSearchParams,
+) {
+  const detail: Record<string, string> = {
+    agents: "role",
+    computers: "computer",
+    settings: "settings",
+    memory: "memory",
+  };
+  return Boolean(detail[destination]) && !params.has(detail[destination]!);
 }
