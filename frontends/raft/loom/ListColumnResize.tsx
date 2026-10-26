@@ -9,7 +9,10 @@ export type ListColumn = "list" | "memoryList";
 type Props = Omit<ComponentProps<typeof CurrentColumnResize>, "column"> & {
   column: ListColumn;
 };
-export const ListColumnResize = CurrentColumnResize as ComponentType<Props>;
+const NativeResize = CurrentColumnResize as ComponentType<Props>;
+export function ListColumnResize({ label = "调整列表宽度", ...props }: Props) {
+  return <NativeResize {...props} label={label} />;
+}
 export const useListColumnWidth = useCurrentColumnWidth as (
   column: ListColumn,
 ) => number;

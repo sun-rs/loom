@@ -22,3 +22,7 @@ test("list resizing uses current official keyboard/cancel lifecycle and preserve
   ]);
   assert.match(read("useCurrentListPanel.ts"), /maxWidth/);
 });
+test("Loom-only column aliases supply a label instead of looking up an absent official message id", () => {
+  assert.match(read("ListColumnResize.tsx"), /label = "调整列表宽度"/);
+  assert.match(read("ListColumnResize.tsx"), /label=\{label\}/);
+});
