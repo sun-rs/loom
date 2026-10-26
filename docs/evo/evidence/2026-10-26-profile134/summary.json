@@ -1,0 +1,52 @@
+{
+  "date": "2026-10-26",
+  "productCommit": "c70f542b",
+  "baseline": "Raft Web1.21.34; resource structural ports, not whole latest TypeScript source",
+  "implemented": [
+    "Instance header inline private/start-stop and provided restart actions above native 480px container breakpoint; overflow retained for Loom extensions",
+    "Task polite live announcement only in confirmed-success callback; rejected/unknown preserves existing error flow",
+    "Computer instance row native container status disclosure in normal and selection mode"
+  ],
+  "verification": {
+    "focusedTestRuns": [
+      {
+        "groups": "profile/inspector/runtime/task-board",
+        "passed": 16
+      },
+      {
+        "groups": "branches/search-entities/search-hit-identity",
+        "passed": 5
+      },
+      {
+        "groups": "profile/task-announcement/computer-row/computer-instance",
+        "passed": 7
+      }
+    ],
+    "testCountsOverlap": true,
+    "typecheck": "passed after both changes",
+    "build": "passed; existing chunk/CSS warnings retained",
+    "browser": {
+      "desktop": "1440x1000",
+      "mobile": "390x844",
+      "instanceDrag": "actual pointer drag 379px to599px; inline none to flex",
+      "instanceConfirmation": "clicked stop, cancelled; focus returned; no lifecycle mutation",
+      "mobileInstance": "header390px; inline hidden; 44px overflow hit target; menu private/Fork/Side present",
+      "sidebarDrag": "expanded actual sidebar;240->320px, double-click reset240",
+      "computerRows": "desktop1086px/mobile333px; row inline-size container; mobile online label hidden, dot visible; normal and selection mode; document width390",
+      "side": "NOT verified on production: side_sessions count0; isolated branches tests passed, no new Side created"
+    }
+  },
+  "deployment": {
+    "verified": true,
+    "newPid": 65902,
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-profile134-ead4b9c2-83f8-4ee0-ac6e-28c827981181",
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true
+  },
+  "remaining": [
+    "Task keyboard drag/focus restoration and blocked-column explanation are not ported by the success announcement",
+    "Native mobile gestures need physical device acceptance",
+    "Production Side page needs an existing authorized Side or a separate isolated browser scenario",
+    "Not whole-site current-version acceptance; new Agent overview and bulk model change remain separate scope"
+  ]
+}
