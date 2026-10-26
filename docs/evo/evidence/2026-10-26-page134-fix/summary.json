@@ -17,9 +17,18 @@
   ],
   "browser": {
     "formalOrigin": "http://127.0.0.1:4176",
-    "desktopViewport": [1440, 1000],
-    "mobileViewport": [390, 844],
-    "computerInitialViewport": [1098, 770],
+    "desktopViewport": [
+      1440,
+      1000
+    ],
+    "mobileViewport": [
+      390,
+      844
+    ],
+    "computerInitialViewport": {
+      "width": 1098,
+      "height": "not recorded"
+    },
     "computerSpacing": {
       "parentClass": "px-5 py-4 stack-y-6",
       "sectionGapPx": 24,
