@@ -1,0 +1,51 @@
+{
+  "productCommit": "54a7aafba26ef0cd2623e7263362dba8b17112a6",
+  "baseline": "Web 1.21.34 resources / raft-ui 0.35.1; selected TypeScript source unchanged",
+  "checks": {
+    "focusedTests": 24,
+    "types": "passed",
+    "build": "passed",
+    "diff": "passed"
+  },
+  "implemented": [
+    "scoped search display names, empty state and everywhere action using native search primitives",
+    "scope entry from channel header and return-to-channel navigation",
+    "keyboard rail with stable everywhere identity and original query retained",
+    "task view alignment uses named task container breakpoint",
+    "computer lower detail one px-5 py-4 stack-y-6 spacing owner",
+    "channel Drawer branch uses native body/actions; member strip double inset corrected"
+  ],
+  "browser": {
+    "formalOrigin": "http://127.0.0.1:4176",
+    "desktopViewport": [1440, 1000],
+    "mobileViewport": [390, 844],
+    "computerInitialViewport": [1098, 770],
+    "computerSpacing": {
+      "parentClass": "px-5 py-4 stack-y-6",
+      "sectionGapPx": 24,
+      "padding": "16px 20px"
+    },
+    "scopedSearch": "Actual channel button -> channelId route; date query 1 scoped result; ArrowDown/Up/Enter -> global search preserving q and removing channelId",
+    "mobileBack": "returns original room route",
+    "mobileOverflow": "search and task document scrollWidth=390",
+    "channelDrawer": "width390; footer bottom844; unchanged save disabled; cancel returns focus; final name input x20",
+    "consoleErrors": [],
+    "physicalDevice": false,
+    "writes": "No messages, task/role/config mutations or paid models; search history is device-local"
+  },
+  "deployment": {
+    "verified": true,
+    "pid": 16798,
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-page134-d859f8c1-3d8b-4f62-b7eb-98b5a5421853",
+    "databases": 2,
+    "files": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true
+  },
+  "limits": [
+    "No whole-site 1.21.34 acceptance",
+    "No new activity overview, bulk model edit, or notification page split",
+    "Channel adopted header/member slots remain Loom composition; this updates Drawer branch, not the entire official panel branch",
+    "Existing large-chunk build warning retained; no new performance claim"
+  ]
+}
