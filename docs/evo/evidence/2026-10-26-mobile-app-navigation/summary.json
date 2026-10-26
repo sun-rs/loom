@@ -1,0 +1,80 @@
+{
+  "productCommit": "83e03c3992eceaf8fcf68e7723dfbb69c8dcd236",
+  "at": "2026-10-26T13:01:10.824Z",
+  "officialPackage": "@botiverse/raft-ui@0.35.1",
+  "sourceKind": "official raft-ui/wip components + owner-confirmed iOS navigation adaptation",
+  "tests": {
+    "focused": 19,
+    "typecheck": "passed",
+    "workbenchBuild": "passed",
+    "paidCli": false,
+    "wholeSuite": false
+  },
+  "browser": {
+    "engine": "Chrome via CUA",
+    "viewports": [
+      [
+        390,
+        844
+      ],
+      [
+        1440,
+        1000
+      ]
+    ],
+    "formalPage": true,
+    "primaryRoots": [
+      "home",
+      "activity",
+      "tasks",
+      "search"
+    ],
+    "secondaryMenu": [
+      "members",
+      "computers",
+      "settings",
+      "memory"
+    ],
+    "escapeReturnsFocus": true,
+    "horizontalOverflow": false,
+    "primaryHitTargets": [
+      {
+        "width": 72,
+        "height": 44
+      },
+      {
+        "width": 72,
+        "height": 44
+      },
+      {
+        "width": 72,
+        "height": 44
+      },
+      {
+        "width": 72,
+        "height": 44
+      }
+    ],
+    "workspaceHitTarget": {
+      "width": 44,
+      "height": 44
+    },
+    "consoleErrors": 0,
+    "directCompleteWithoutUndo": "verified only in isolated real-Kernel fixture",
+    "swipeUndo": "existing focused regression tests; not newly physical-device tested"
+  },
+  "restart": {
+    "oldPid": 13632,
+    "newPid": 98306,
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-mobile-app-navigation-4d1f4c4b-47a5-4171-89b1-8f44b1d3efdd",
+    "databases": 2,
+    "files": 325,
+    "businessTablesUnchanged": 20,
+    "pushStateUnchanged": true
+  },
+  "limits": [
+    "No claim of copied latest native iOS source",
+    "Only existing local workspace is shown",
+    "Physical iOS keyboard/long-press/safe-area remains owner verification"
+  ]
+}

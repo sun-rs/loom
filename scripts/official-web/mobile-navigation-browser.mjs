@@ -106,7 +106,97 @@ for (const [width, preset] of [
       await page.locator(`[data-public-channel-id="${f.home.roomId}"]`).tap();
       await nav.waitFor({ state: "hidden" });
       await page.getByTestId("composer-textarea").waitFor();
-      await page.getByRole("button", { name: "聊天列表", exact: true }).tap();
+      const back = page.getByRole("button", { name: "聊天列表", exact: true });
+      assert.equal(
+        (await back.boundingBox()).height,
+        44,
+        "native mobile header action occupies a44px cell",
+      );
+      assert.equal(
+        await back.evaluate((el) => {
+          const r = el.getBoundingClientRect();
+          return el.contains(
+            document.elementFromPoint(r.x + 2, r.y + r.height / 2),
+          );
+        }),
+        true,
+        "native 44px header cell remains clickable at its edge",
+      );
+      await back.tap();
+      await nav.waitFor();
+      await nav
+        .getByRole("button", { name: "工作区与更多页面", exact: true })
+        .tap();
+      await page
+        .getByTestId("mobile-workspace-menu")
+        .getByRole("button", { name: "成员", exact: true })
+        .tap();
+      await page.getByPlaceholder("筛选角色").waitFor({ state: "visible" });
+      await page.getByPlaceholder("筛选角色").focus();
+      await page.evaluate(() => {
+        Object.defineProperty(window.visualViewport, "height", {
+          configurable: true,
+          value: 560,
+        });
+        window.visualViewport.dispatchEvent(new Event("resize"));
+      });
+      assert.equal(
+        await page.evaluate(() =>
+          document.documentElement.style.getPropertyValue("--vv-height"),
+        ),
+        "560px",
+      );
+      await page.getByPlaceholder("筛选角色").blur();
+      await page.evaluate(() => {
+        delete window.visualViewport.height;
+        window.visualViewport.dispatchEvent(new Event("resize"));
+      });
+      assert.equal(
+        await page.evaluate(() =>
+          document.documentElement.style.getPropertyValue("--vv-height"),
+        ),
+        "",
+      );
+      await nav
+        .getByRole("button", { name: "工作区与更多页面", exact: true })
+        .tap();
+      await page
+        .getByTestId("mobile-workspace-menu")
+        .getByRole("button", { name: "设置", exact: true })
+        .tap();
+      await page
+        .getByTestId("settings-sidebar-list")
+        .getByText("外观", { exact: true })
+        .tap();
+      await nav.waitFor({ state: "hidden" });
+      const settingsBack = page.getByRole("button", {
+        name: "设置列表",
+        exact: true,
+      });
+      assert.ok(
+        await settingsBack.evaluate((el) => {
+          const r = el.getBoundingClientRect();
+          return (
+            r.width >= 44 &&
+            r.height >= 44 &&
+            [
+              [-21, 0],
+              [21, 0],
+              [0, -21],
+              [0, 21],
+            ].every(([x, y]) =>
+              el.contains(
+                document.elementFromPoint(
+                  r.x + r.width / 2 + x,
+                  r.y + r.height / 2 + y,
+                ),
+              ),
+            )
+          );
+        }),
+        "native rounded header action spans44px and accepts edge taps",
+      );
+      await page.getByRole("button", { name: "设置列表", exact: true }).tap();
       await nav.waitFor();
       await page.screenshot({ path: "/tmp/loom-mobile-navigation-after.png" });
     }
