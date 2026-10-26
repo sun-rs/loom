@@ -15,7 +15,7 @@ import {
   Settings,
   BookOpen,
   Check,
-  Ellipsis,
+  CircleEllipsis,
 } from "lucide-react";
 import AvatarSlot from "../packages/web/src/components/ui/AvatarSlot";
 import type { Destination } from "./Navigation";
@@ -38,7 +38,7 @@ export default function MobileWorkspaceMenu({
   return (
     <MobileNavServerPopover open={open} onOpenChange={setOpen}>
       <MobileNavServerItem aria-label="更多">
-        <Ellipsis />
+        <CircleEllipsis />
       </MobileNavServerItem>
       <MobileNavServerPopoverContent data-testid="mobile-workspace-menu">
         <MobileNavServerPopoverList>

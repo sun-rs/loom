@@ -104,3 +104,9 @@ test("touch rows wire native focus-only completion rather than a second visible 
   );
   assert.match(row, /reveal=\{swipe\?\.enabled \? undefined : "hover"\}/);
 });
+
+test("More uses the same Lucide outline family with a full circular silhouette", () => {
+  const source = readFileSync("frontends/raft/loom/MobileWorkspaceMenu.tsx", "utf8");
+  assert.match(source, /<CircleEllipsis\s*\/>/);
+  assert.doesNotMatch(source, /<Ellipsis\s*\/>/);
+});
