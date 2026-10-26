@@ -21,3 +21,13 @@ semantics; pinned Web1.21.34 supplies actual browser pointer handling, adapted b
 scripts/official-web/generate-mobile-activity-swipe.mjs. Native refresh geometry
 and title navigation are structural TypeScript ports, with browser listeners and
 official raft-ui Spinner. Original code is never patched for Loom.
+
+Adaptive-layout intake (2026-10-27): additionally pins native pane admission,
+AppShell navigation, list/detail measurement, side-thread headroom and large-screen
+preference sources. The audit now emits `adaptive.baseline`, `adaptive.candidate`
+and semantic `changes`; an unrecognized source shape fails with exit 2.
+`frontends/raft/loom/native-adaptive-bindings.json` names Loom consumers and current
+pending/partial status. It is an audit map, not runtime code and not a parity claim.
+The 840dp/1200dp thresholds must not be confused with the Web package's separate
+768px pointer/overlay recipes. Compare layout admission, navigation and density
+separately. Full-file diffs remain required when numeric summaries do not change.

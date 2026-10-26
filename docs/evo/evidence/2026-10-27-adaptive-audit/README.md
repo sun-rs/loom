@@ -38,3 +38,17 @@ Loom `mobile.css` 的紧凑规则整体限制在 max-width:767px；Navigation �
 
 当前仅确认任务页布局密度回退，未量化同一聊天正文的可见字符数，也没有物理折叠屏验收。
 具体设备识别/导航偏好须在实施时统一到一个前端布局策略，不新增后台业务状态。
+
+## 依赖边界补齐（2026-10-27）
+
+引入同一固定 revision 的六份官方原件：RaftAdaptivePane、RaftAdaptiveListDetailSplit、
+RaftAppShell、AdaptiveSideThread、LocalPreferences、AdaptiveListPaneWidth。
+均由 git show 提取、原始 SHA256 锁定，未改官方文件。
+`audit-mobile-source.mjs` 现在除字节差异外，还提取并比较九组布局规则；
+无法识别源码格式或缺文件时退出2，不沿用旧值。未变的数值不代表其他函数行为未变，
+完整源码diff仍要看。Loom消费者及待完成状态单独记录在 native-adaptive-bindings.json。
+
+4项定向测试通过：固定合同、修改官方源码数值的差异检测、不识别格式失败、
+20份原件摘要及绑定路径。实际独立checkout对比：20文件无本地漂移、候选干净、
+语义无变化，见 [source-intake.json](source-intake.json)。AGENTS.md加入中间宽度和
+连续缩放的验收边界。本批未修改运行时布局；平板适配尚未实施，不重启服务或跑产品构建。

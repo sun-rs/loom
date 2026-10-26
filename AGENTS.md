@@ -705,3 +705,24 @@ including directed and broadcast peer messages, do not alone hold an in-flight
 ordinary text reply. They retain delivery and follow-up obligations; unread
 positions never advance on publication. Human facts, attachments and business
 state mutations retain their causal barriers. See target contract §3.
+
+
+## Adaptive mobile and large-screen acceptance
+
+Owner ruling (2026-10-27): adopting official component primitives does not prove
+responsive composition parity. Track the selected Raft Mobile layout sources in
+`frontends/raft/upstream/raft-mobile-source/source-lock.json`; run
+`scripts/official-web/audit-mobile-source.mjs` for byte and semantic layout diffs.
+`frontends/raft/loom/native-adaptive-bindings.json` records actual consumer and
+pending/partial status. Do not relabel source intake or a passing hash audit as a
+completed runtime migration.
+
+Navigation placement, typography/control density and single/dual/triple-pane
+admission are separate policies. Native logical dp is not physical device pixels;
+Web integration must use logical viewport and actual available content dimensions.
+Never replace all md breakpoints or scale all UI to address tablet density.
+Preserve the desktop official Web rules and explicit font-size preferences. For
+adaptive changes include intermediate and boundary widths (767/768, 839/840,
+1199/1200), phone, tablet portrait/landscape and desktop, plus continuous resizing.
+Check draft, selection, scroll anchor and back navigation preservation. CSS viewport
+emulation is not physical folding, pointer/keyboard capability or iOS acceptance.

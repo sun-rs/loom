@@ -1,0 +1,61 @@
+{
+  "scope": "Loom-owned audit map; not upstream original. Source coverage is not runtime acceptance.",
+  "wholeProductParity": false,
+  "rules": [
+    {
+      "rule": "dualPaneMinimum",
+      "sourcePaths": [
+        "compose/shared/src/commonMain/kotlin/build/raft/app/RaftAdaptivePane.kt"
+      ],
+      "consumers": [
+        "frontends/raft/loom/ChannelApp.tsx",
+        "frontends/raft/loom/SidebarLayout.tsx",
+        "frontends/raft/loom/Navigation.tsx"
+      ],
+      "status": "pending"
+    },
+    {
+      "rule": "columnBounds",
+      "sourcePaths": [
+        "compose/shared/src/commonMain/kotlin/build/raft/app/RaftAdaptiveListDetailSplit.kt",
+        "compose/core/src/commonMain/kotlin/build/raft/app/data/AdaptiveListPaneWidth.kt"
+      ],
+      "consumers": [
+        "frontends/raft/loom/useCurrentListPanel.ts",
+        "frontends/raft/loom/SidebarLayout.tsx"
+      ],
+      "status": "partial"
+    },
+    {
+      "rule": "sideThread",
+      "sourcePaths": [
+        "compose/shared/src/commonMain/kotlin/build/raft/app/data/AdaptiveSideThread.kt"
+      ],
+      "consumers": ["frontends/raft/loom/ThreadWorkspace.tsx"],
+      "status": "pending"
+    },
+    {
+      "rule": "navigation",
+      "sourcePaths": [
+        "compose/shared/src/commonMain/kotlin/build/raft/app/RaftAppShell.kt",
+        "compose/shared/src/commonMain/kotlin/build/raft/app/data/LocalPreferences.kt"
+      ],
+      "consumers": [
+        "frontends/raft/loom/Navigation.tsx",
+        "frontends/raft/loom/mobile-app-navigation.ts"
+      ],
+      "status": "partial"
+    },
+    {
+      "rule": "density",
+      "sourcePaths": [
+        "compose/shared/src/commonMain/kotlin/build/raft/app/RaftAdaptivePane.kt"
+      ],
+      "consumers": [
+        "frontends/raft/loom/mobile.css",
+        "frontends/raft/loom/mobile-message-default.ts"
+      ],
+      "status": "pending"
+    }
+  ]
+}

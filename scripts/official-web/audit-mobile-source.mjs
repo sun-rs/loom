@@ -1,3 +1,7 @@
+import {
+  readAdaptiveContract,
+  compareAdaptiveContracts,
+} from "./mobile-adaptive-contract.mjs";
 // Read-only selected-source comparison; never edits pins or claims whole-App parity.
 import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
@@ -23,6 +27,23 @@ const rows = lock.files.map((f) => ({
   changed: hash(resolve(candidate, f.path)) !== f.sha256,
 }));
 const dirty = git("status", "--porcelain");
+let adaptive;
+let adaptiveError;
+try {
+  const baseline = readAdaptiveContract(root);
+  const next = readAdaptiveContract(candidate);
+  adaptive = {
+    baseline,
+    candidate: next,
+    changes: compareAdaptiveContracts(baseline, next),
+    bindings: JSON.parse(
+      readFileSync("frontends/raft/loom/native-adaptive-bindings.json", "utf8"),
+    ),
+  };
+} catch (error) {
+  adaptiveError = String(error);
+}
+
 console.log(
   JSON.stringify(
     {
@@ -32,10 +53,16 @@ console.log(
       candidateDirty: Boolean(dirty),
       scope: lock.scope,
       files: rows,
+      adaptive,
+      adaptiveError,
     },
     null,
     2,
   ),
 );
-if (dirty || rows.some((r) => r.localDrift || !r.candidateSha256))
+if (
+  adaptiveError ||
+  dirty ||
+  rows.some((r) => r.localDrift || !r.candidateSha256)
+)
   process.exitCode = 2;

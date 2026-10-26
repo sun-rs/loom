@@ -58,6 +58,30 @@
     {
       "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftDialogSheet.kt",
       "sha256": "a5f2a8d63f70bbc908274ff6ea5cb800a9ac2747c8cd36208d14f5e35e6f3e2b"
+    },
+    {
+      "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftAdaptivePane.kt",
+      "sha256": "cac53dfd7d6cd03f802149fa17a123c89c62e852d00227d5d80461d5220ffc6b"
+    },
+    {
+      "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftAdaptiveListDetailSplit.kt",
+      "sha256": "7f46d5f28b6f4846b9bb637c8e470e937eb0708ee68348f76af61a53168946a2"
+    },
+    {
+      "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftAppShell.kt",
+      "sha256": "dd3e4b95197d06f25ad20ea91790719ed8d43914c72fa153c0b9b078bab8d745"
+    },
+    {
+      "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/AdaptiveSideThread.kt",
+      "sha256": "d8428345da38b8a60644d861e0b2ed6bb18e895632a87aa5c237d7405deb3b37"
+    },
+    {
+      "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/LocalPreferences.kt",
+      "sha256": "b221452024e42bcfe91fa1333ad3601f106ceb59ade57c359887a510c40c9280"
+    },
+    {
+      "path": "compose/core/src/commonMain/kotlin/build/raft/app/data/AdaptiveListPaneWidth.kt",
+      "sha256": "e159e377c549f9024f86dd27539b11db47ceea893a7a8e16a6098dfe1e8715e9"
     }
   ]
 }
