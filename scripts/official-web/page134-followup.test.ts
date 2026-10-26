@@ -84,3 +84,10 @@ test("everywhere native row exposes rail identity and selected prop for keyboard
   assert.match(s, /data-search-rail-id="\$everywhere"/);
   assert.match(s, /selected=\{selected\}/);
 });
+test("member strip cancels only its own inline padding inside native DrawerBody", () => {
+  const s = read("loom/ChannelMembers.tsx");
+  assert.match(
+    s,
+    /<div className="-mx-4" data-testid="channel-member-strip-inset">\s*<MembersStrip/,
+  );
+});

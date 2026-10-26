@@ -257,13 +257,16 @@ export default function ChannelMembers({
   );
   return (
     <>
-      <MembersStrip
-        channelHumans={humans}
-        channelAgents={agents}
-        loading={!members}
-        onOpen={() => setView("members")}
-        onAdd={onAddInstance ? () => setView("add") : undefined}
-      />
+      {/* Native strip owns px-4; cancel that inset inside the native DrawerBody. */}
+      <div className="-mx-4" data-testid="channel-member-strip-inset">
+        <MembersStrip
+          channelHumans={humans}
+          channelAgents={agents}
+          loading={!members}
+          onOpen={() => setView("members")}
+          onAdd={onAddInstance ? () => setView("add") : undefined}
+        />
+      </div>
       {view !== "root" && container && createPortal(page, container)}
       {create && (
         <CreateRoleDialog
