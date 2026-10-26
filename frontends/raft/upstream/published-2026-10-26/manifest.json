@@ -34,5 +34,13 @@
       "scripts/official-web/generate-computer-profile.mjs"
     ],
     "localBindings": "SDK-scoped query and bounded paging; permission-safe catalog display names; keyboard rail; existing revisioned mutations. Approved channel header/member slots retained, no X added; no upstream stores."
+  },
+  "profileActions": {
+    "sourceEvidence": "docs/evo/evidence/2026-10-26-page-audit/sources.json",
+    "sourceFunction": "AgentDetailPanel-CnHZV8Ck.js Wa",
+    "reuse": "Structural port of inline wrapper; byte-exact responsive CSS from app-shell-C3nLSlu4.css. Existing header container rule retained; duplicate older CSS removed.",
+    "extractedCssSha256": "18a24b59be690306136aecc6cc7a0530403b5f8780b4a8b75cb7655eb44ec13c",
+    "generator": "scripts/official-web/generate-profile-actions134.mjs",
+    "localBindings": "Existing instance start/stop confirmation and explicitly supplied private/restart callbacks only. Overflow remains at wide widths to expose Loom Fork/Side/channel actions. Role aggregate controls unchanged."
   }
 }

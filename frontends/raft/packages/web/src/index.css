@@ -1,3 +1,4 @@
+@import "../../../upstream/published-2026-10-26/profile-actions.css";
 @import "../../../upstream/published-2026-10-26/thread-layout.css";
 @import "raft-ui/fonts.css";
 
@@ -740,33 +741,6 @@
 
 .agent-profile-header-container {
   container-type: inline-size;
-}
-
-.agent-profile-responsive-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-}
-
-.agent-profile-responsive-actions .agent-profile-inline-actions {
-  display: flex;
-}
-
-.agent-profile-responsive-actions .agent-profile-overflow-actions {
-  display: none;
-}
-
-/* The profile drawer is commonly ~600px wide even on a very wide desktop
-   viewport. Keep its compact icon actions visible there; reserve the menu
-   for genuinely narrow drawers and phones. */
-@container (max-width: 480px) {
-  .agent-profile-responsive-actions .agent-profile-inline-actions {
-    display: none;
-  }
-
-  .agent-profile-responsive-actions .agent-profile-overflow-actions {
-    display: flex;
-  }
 }
 
 .channel-file-responsive-actions {

@@ -1,3 +1,4 @@
+import { OfficialProfileInlineActions } from "./OfficialProfileActions.generated.tsx";
 import {
   useInstanceBranches,
   type BranchSource,
@@ -29,6 +30,7 @@ export default function RuntimeControl({
   onBranched,
   active = true,
   disabled = false,
+  responsive = false,
 }: {
   client: RahClient;
   controlRoomId: string;
@@ -42,9 +44,11 @@ export default function RuntimeControl({
     run: () => void;
     disabled?: boolean;
     icon?: ReactNode;
+    inline?: boolean;
   }[];
   active?: boolean;
   disabled?: boolean;
+  responsive?: boolean;
 }) {
   const branches = useInstanceBranches(
     client,
@@ -90,11 +94,53 @@ export default function RuntimeControl({
   const enabled = agent?.agent.definition.state === "enabled";
   const allowed = agent && agent.agent.definition.state !== "tombstoned";
   const label = enabled ? "停止实例" : "启用实例";
+  const requestToggle = () => {
+    setError("");
+    setConfirm(!enabled);
+  };
   const close = () => {
     if (manager.writes.state === "idle") setConfirm(undefined);
   };
   return (
     <>
+      {responsive && (
+        <OfficialProfileInlineActions>
+          {items
+            .filter((item) => item.inline)
+            .map((item) => (
+              <Tooltip
+                key={item.label}
+                content={item.label}
+                contentProps={{ side: "bottom" }}
+              >
+                <PanelAction
+                  aria-label={item.label}
+                  onClick={item.run}
+                  disabled={
+                    disabled ||
+                    state !== "idle" ||
+                    branches.busy ||
+                    item.disabled
+                  }
+                >
+                  {item.icon}
+                </PanelAction>
+              </Tooltip>
+            ))}
+          <Tooltip content={label} contentProps={{ side: "bottom" }}>
+            <PanelAction
+              aria-label={label}
+              onClick={requestToggle}
+              disabled={
+                disabled || state !== "idle" || branches.busy || !allowed
+              }
+            >
+              {enabled ? <Square /> : <Play />}
+            </PanelAction>
+          </Tooltip>
+        </OfficialProfileInlineActions>
+      )}
+      {/* Loom retains the overflow at every width for Fork/Side and channel actions. */}
       <DropdownMenu
         onOpenChange={(open) => {
           if (open) void branches.refreshSides();
@@ -113,13 +159,7 @@ export default function RuntimeControl({
           </DropdownMenuTrigger>
         </Tooltip>
         <DropdownMenuContent side="bottom" align="end" sideOffset={4}>
-          <DropdownMenuItem
-            disabled={!allowed}
-            onClick={() => {
-              setError("");
-              setConfirm(!enabled);
-            }}
-          >
+          <DropdownMenuItem disabled={!allowed} onClick={requestToggle}>
             {enabled ? <Square /> : <Play />}
             {label}
           </DropdownMenuItem>

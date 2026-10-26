@@ -338,6 +338,7 @@ export default function AgentPage({
                 },
                 {
                   label: "重启实例",
+                  inline: true,
                   icon: <RotateCcw size={14} />,
                   run: () =>
                     open({

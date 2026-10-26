@@ -51,7 +51,12 @@ export default function InstanceInspector({
   onClose: () => void;
   backLabel?: string;
   onOpenPrivate?: (principalId: string) => void;
-  controlItems?: { label: string; run: () => void; icon?: React.ReactNode }[];
+  controlItems?: {
+    label: string;
+    run: () => void;
+    icon?: React.ReactNode;
+    inline?: boolean;
+  }[];
 }) {
   const [tab, setTab] = useState("activity");
   const panel = useResizablePanel({
@@ -175,6 +180,7 @@ export default function InstanceInspector({
             <>
               {identity && (
                 <RuntimeControl
+                  responsive
                   disabled={!result}
                   client={client}
                   workspaceId={room.workspaceId}
@@ -186,6 +192,7 @@ export default function InstanceInspector({
                       ? [
                           {
                             label: "私聊",
+                            inline: true,
                             icon: <MessageSquare size={14} />,
                             run: () => onOpenPrivate(member.principalId),
                           },

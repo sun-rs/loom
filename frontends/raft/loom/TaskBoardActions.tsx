@@ -5,6 +5,7 @@ import type { RahClient } from "@rah-os/client-sdk";
 import { hasUnresolvedIntents } from "@rah-os/client-core/write-intent";
 import {
   taskWorkflowTransitionOptions,
+  taskWorkflowStatus,
   type Task as KernelTask,
   type TaskWorkflowStatus,
 } from "@rah-os/protocol";
@@ -28,6 +29,8 @@ export function useTaskBoard(
   rows: TaskBoardRow[],
   changed: (task: KernelTask) => void,
 ) {
+  const { formatMessage } = useIntl();
+  const [announcement, setAnnouncement] = useState("");
   const bridge = useMemo(
     () => new TaskBoardClient(client, channel),
     [client, channel],
@@ -72,10 +75,15 @@ export function useTaskBoard(
     const row = rowFor(task);
     if (!row) return;
     setError("");
+    setAnnouncement("");
     try {
       await bridge.update(row, status, principalId, (result) => {
-        if (result.kind === "ok") changed(result.result.task);
-        else if (result.kind === "rejected")
+        if (result.kind === "ok") {
+          changed(result.result.task);
+          setAnnouncement(
+            `任务 ${task.title} 已移至${formatMessage({ id: STATUS_STYLES[taskWorkflowStatus(result.result.task.state)].labelId })}`,
+          );
+        } else if (result.kind === "rejected")
           setError("任务修改被拒绝；原卡片未移动，请重新读取任务后重试。");
       });
     } catch (e) {
@@ -84,6 +92,7 @@ export function useTaskBoard(
   };
   return {
     bridge,
+    announcement,
     state,
     error,
     principalId,
@@ -111,6 +120,14 @@ export function TaskBoardNotice({
 }) {
   return (
     <>
+      <span
+        className="sr-only"
+        aria-live="polite"
+        aria-atomic="true"
+        data-testid="task-board-announcement"
+      >
+        {board.announcement}
+      </span>
       {board.error && (
         <div role="alert" className="mb-3 text-sm">
           {board.error}
