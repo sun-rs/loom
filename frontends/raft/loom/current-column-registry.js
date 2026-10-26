@@ -3,7 +3,7 @@ import { officialPanelLayout } from "../upstream/published-2026-10-26/panel-layo
 const prior = {
   thread: ["loom:threadPanelWidth"],
   detail: ["loom:profilePanelWidth"],
-  list: [],
+  list: ["loom:activityPanelWidth"],
   sidebar: [
     "loom:chatSidebarWidth",
     "loom:agentSidebarWidth",
@@ -29,4 +29,11 @@ currentColumnRegistry.side = {
   ...currentColumnRegistry.thread,
   storageKey: "loom:columnWidth:side",
   legacyStorageKeys: ["loom:sidePanelWidth"],
+};
+
+// Loom memory has the same list mechanics, with its own existing device preference.
+currentColumnRegistry.memoryList = {
+  ...currentColumnRegistry.list,
+  storageKey: "loom:columnWidth:memoryList",
+  legacyStorageKeys: ["loom:memoryPanelWidth"],
 };

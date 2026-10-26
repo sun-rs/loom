@@ -1,19 +1,15 @@
 import { useLayoutEffect, useRef, useState } from "react";
-import { useResizablePanel } from "../packages/web/src/hooks/useResizablePanel";
+import { useListColumnWidth, type ListColumn } from "./ListColumnResize";
 import { LIST_BOUNDS, resolveListWidth } from "./current-list-layout";
 // Outer binding of official n2 measurement to Loom's existing sibling layout.
 export function useCurrentListPanel(
-  storageKey: string,
+  column: ListColumn,
   half: boolean,
   rightMin = 0,
 ) {
   const ref = useRef<HTMLDivElement>(null);
   const [available, setAvailable] = useState<number>();
-  const panel = useResizablePanel({
-    storageKey,
-    ...LIST_BOUNDS,
-    getDragStartWidth: () => ref.current?.getBoundingClientRect().width,
-  });
+  const preferred = useListColumnWidth(column);
   useLayoutEffect(() => {
     const node = ref.current;
     if (!node) return;
@@ -42,11 +38,14 @@ export function useCurrentListPanel(
     };
   }, []);
   return {
-    ...panel,
+    maxWidth:
+      half && available !== undefined
+        ? Math.max(LIST_BOUNDS.min, Math.floor(available / 2))
+        : undefined,
     ref,
     width:
       available === undefined
-        ? panel.width
-        : resolveListWidth(panel.width, available, half, rightMin),
+        ? preferred
+        : resolveListWidth(preferred, available, half, rightMin),
   };
 }

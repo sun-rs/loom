@@ -40,7 +40,7 @@ import { useSearchRail, type SearchRailHandler } from "./useSearchRail.ts";
 import type { RefObject } from "react";
 import OverlayAllResults from "./OverlayAllResults.tsx";
 import { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives.ts";
-import PanelResizeHandle from "../packages/web/src/components/ui/PanelResizeHandle.tsx";
+import { ListColumnResize } from "./ListColumnResize";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useSearchPresentation as useSearchParams } from "./useSearchPresentation.ts";
 import {
@@ -121,7 +121,7 @@ export default function DiscoveryPage({
   };
   const desktop = useMediaQuery("(min-width: 768px)");
   const panel = useCurrentListPanel(
-    "loom:activityPanelWidth",
+    "list",
     mode === "activity" && !!detail,
     profileOpen || (params.has("thread") && params.get("detail") !== "thread")
       ? 360
@@ -211,14 +211,12 @@ export default function DiscoveryPage({
         }
       >
         {showSplit && desktop && (
-          <PanelResizeHandle
-            side="right"
+          <ListColumnResize
+            column="list"
+            edge="right"
+            maxWidth={panel.maxWidth}
             visibleFrom="md"
             data-testid="activity-detail-resize"
-            onPointerDown={panel.handleResizeStart}
-            onPointerMove={panel.handleResizeMove}
-            onPointerUp={panel.handleResizeEnd}
-            onPointerCancel={panel.handleResizeEnd}
           />
         )}
         {mode === "search" ? (

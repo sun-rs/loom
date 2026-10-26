@@ -21,7 +21,7 @@ import type { RahClient } from "@rah-os/client-sdk";
 import type { MemoryEntry, MemoryEntryDetail, Room } from "@rah-os/protocol";
 import CloseButton from "../packages/web/src/components/ui/CloseButton.tsx";
 import PanelHeader from "../packages/web/src/components/ui/PanelHeader.tsx";
-import PanelResizeHandle from "../packages/web/src/components/ui/PanelResizeHandle.tsx";
+import { ListColumnResize } from "./ListColumnResize";
 import FormField from "../packages/web/src/components/ui/FormField.tsx";
 import { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives.ts";
 import MemoryCard, { type MemoryAction } from "./MemoryCard.tsx";
@@ -70,7 +70,7 @@ export default function MemoryPage({
     .map((r) => r.roomId)
     .join("\n");
   const desktop = useMediaQuery("(min-width: 768px)");
-  const panel = useCurrentListPanel("loom:memoryPanelWidth", !!selected);
+  const panel = useCurrentListPanel("memoryList", !!selected);
   useEffect(() => {
     if (
       editRequested &&
@@ -313,13 +313,11 @@ export default function MemoryPage({
           </div>
         </ActivityInboxPanel>
         {selected && desktop && (
-          <PanelResizeHandle
-            side="right"
+          <ListColumnResize
+            column="memoryList"
+            edge="right"
+            maxWidth={panel.maxWidth}
             visibleFrom="md"
-            onPointerDown={panel.handleResizeStart}
-            onPointerMove={panel.handleResizeMove}
-            onPointerUp={panel.handleResizeEnd}
-            onPointerCancel={panel.handleResizeEnd}
           />
         )}
       </AppShellMainSlot>
