@@ -151,3 +151,137 @@ test("a newer activity frontier cancels deferred completion in a real React upda
   view.unmount();
   expect(commit).not.toHaveBeenCalled();
 });
+
+import { IntlProvider } from "react-intl";
+import ActivityMessageRow from "../loom/ActivityMessageRow";
+import { useActivitySwipe } from "../loom/useActivitySwipe";
+const completeRow = {
+  ...row,
+  label: "Isolated activity",
+  roomName: "fixture",
+  senderName: "Human",
+  activityKind: "channel",
+  message: {
+    ...row.message,
+    body: "Isolated content",
+    createdAt: "2026-10-26T00:00:00.000Z",
+  },
+} as DiscoveryRow;
+function FullRowHarness({
+  commit,
+  open,
+  mute,
+  unfollow,
+  pending = false,
+}: {
+  commit: ReturnType<typeof vi.fn>;
+  open: ReturnType<typeof vi.fn>;
+  mute: ReturnType<typeof vi.fn>;
+  unfollow: ReturnType<typeof vi.fn>;
+  pending?: boolean;
+}) {
+  const viewport = React.useRef<HTMLDivElement>(null);
+  const swipe = useActivitySwipe(true, viewport);
+  const undo = useActivitySwipeUndo([completeRow], commit);
+  return (
+    <IntlProvider
+      locale="en"
+      messages={{ "thread.row.markAsDone": "Mark done" }}
+    >
+      <ToastProvider>
+        <div ref={viewport}>
+          {undo.hidden !== row.id && (
+            <ActivityMessageRow
+              client={{ request: vi.fn() } as any}
+              row={completeRow}
+              active={false}
+              pending={pending}
+              onOpen={open}
+              onAction={commit}
+              onFollow={() => {}}
+              swipe={swipe}
+              onSwipeDone={undo.done}
+              onSwipeMute={mute}
+              onSwipeUnfollow={unfollow}
+            />
+          )}
+        </div>
+      </ToastProvider>
+    </IntlProvider>
+  );
+}
+function coarse() {
+  Object.defineProperty(window, "matchMedia", {
+    configurable: true,
+    value: vi.fn((query: string) => ({
+      matches: query === "(max-width: 767px)" || query === "(pointer: coarse)",
+      addEventListener() {},
+      removeEventListener() {},
+    })),
+  });
+}
+test("complete production row: touch completion does not open conversation; Undo restores native content", async () => {
+  coarse();
+  const commit = vi.fn(),
+    open = vi.fn();
+  render(
+    <FullRowHarness
+      commit={commit}
+      open={open}
+      mute={vi.fn()}
+      unfollow={vi.fn()}
+    />,
+  );
+  const element = screen.getByTestId("inbox-row");
+  vi.spyOn(element, "getBoundingClientRect").mockReturnValue({
+    left: 0,
+    right: 390,
+    width: 390,
+  } as DOMRect);
+  pointer(element, "pointerdown", 300);
+  pointer(element, "pointermove", 260);
+  pointer(element, "pointermove", 0);
+  pointer(element, "pointerup", 0);
+  await waitFor(() => expect(screen.queryByTestId("inbox-row")).toBeNull());
+  expect(commit).not.toHaveBeenCalled();
+  expect(open).not.toHaveBeenCalled();
+  fireEvent.click(await screen.findByRole("button", { name: "撤销" }));
+  await waitFor(() => expect(screen.getByTestId("inbox-row")).toBeTruthy());
+  expect(screen.getByText("Isolated content")).toBeTruthy();
+  expect(commit).not.toHaveBeenCalled();
+});
+test("complete production row secondary buttons select only their callback and pending disables gestures", () => {
+  coarse();
+  const commit = vi.fn(),
+    open = vi.fn(),
+    mute = vi.fn(),
+    unfollow = vi.fn();
+  const view = render(
+    <FullRowHarness
+      commit={commit}
+      open={open}
+      mute={mute}
+      unfollow={unfollow}
+    />,
+  );
+  fireEvent.click(screen.getByTestId("inbox-row-swipe-mute"));
+  expect(mute).toHaveBeenCalledTimes(1);
+  expect(unfollow).not.toHaveBeenCalled();
+  expect(open).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByTestId("inbox-row-swipe-unfollow"));
+  expect(unfollow).toHaveBeenCalledTimes(1);
+  expect(commit).not.toHaveBeenCalled();
+  view.rerender(
+    <FullRowHarness
+      commit={commit}
+      open={open}
+      mute={mute}
+      unfollow={unfollow}
+      pending
+    />,
+  );
+  expect(screen.queryByTestId("inbox-row-swipe-actions")).toBeNull();
+  expect(screen.getByTestId("inbox-row-done").hasAttribute("disabled")).toBe(
+    true,
+  );
+});

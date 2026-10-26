@@ -2,6 +2,7 @@ import { defineConfig } from "vitest/config";
 import { fileURLToPath } from "node:url";
 export default defineConfig({
   root: fileURLToPath(new URL("..", import.meta.url)),
+  resolve: { alias: { "@botiverse/raft-ui": "raft-ui" } },
   test: {
     environment: "jsdom",
     include: ["loom-tests/activity-swipe.dom.test.tsx"],
