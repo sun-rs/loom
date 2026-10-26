@@ -1,0 +1,60 @@
+{
+  "sourceRepository": "https://github.com/botiverse/mobile",
+  "pinned": "eff04722b5904a0d001115d90d3ec49d59fb4f03",
+  "candidate": "720cd7fc90b1fa72fbcfa7389e5180072eab941b",
+  "sourceComparison": [
+    {
+      "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/tokens/RaftUiColorTokens.g.kt",
+      "oldSha256": "2eb64f4c9b3c1e7b9544c7f60c14ac989f214e9bc2f055abce9087adcdf2bfcd",
+      "newSha256": "2eb64f4c9b3c1e7b9544c7f60c14ac989f214e9bc2f055abce9087adcdf2bfcd",
+      "equal": true
+    },
+    {
+      "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftDesignTokens.kt",
+      "oldSha256": "25b68f94cba86a3bf675e8fccb4ae658b6279eb077d08ca997a59491f719ba20",
+      "newSha256": "25b68f94cba86a3bf675e8fccb4ae658b6279eb077d08ca997a59491f719ba20",
+      "equal": true
+    },
+    {
+      "path": "compose/shared/src/commonMain/kotlin/build/raft/app/SharedInboxPanel.kt",
+      "oldSha256": "eed49e10c8e8c10aeaa8650a2ccb43b5413a584941c5b9f72e26df91245bf4d9",
+      "newSha256": "eed49e10c8e8c10aeaa8650a2ccb43b5413a584941c5b9f72e26df91245bf4d9",
+      "equal": true
+    },
+    {
+      "path": "compose/shared/src/commonMain/kotlin/build/raft/app/SharedTasksPage.kt",
+      "oldSha256": "0d928d49ae616225c1e74cc5e1fb02ab9ad1b5e8d16cf6a6f25ab18cb119cbd9",
+      "newSha256": "0d928d49ae616225c1e74cc5e1fb02ab9ad1b5e8d16cf6a6f25ab18cb119cbd9",
+      "equal": true
+    },
+    {
+      "path": "compose/shared/src/commonMain/kotlin/build/raft/app/SettingsAppearancePage.kt",
+      "oldSha256": "7d3ba6a5ab237db85beba9ad236d735b365127b0e35bcc2df0bad271ebc6391e",
+      "newSha256": "7d3ba6a5ab237db85beba9ad236d735b365127b0e35bcc2df0bad271ebc6391e",
+      "equal": true
+    },
+    {
+      "path": "compose/shared/src/commonMain/kotlin/build/raft/app/SettingsHomePage.kt",
+      "oldSha256": "5e62418a29a3d070a0bfc857841c12b0568e223a241d631346d69bb4629a4f4b",
+      "newSha256": "5e62418a29a3d070a0bfc857841c12b0568e223a241d631346d69bb4629a4f4b",
+      "equal": true
+    }
+  ],
+  "colors": {
+    "canvas": "#FFFFFF",
+    "card": "#FFFFFF",
+    "sidebarAndCream": "#FFFAEF",
+    "frame": "#FFD440"
+  },
+  "browser": {
+    "viewport": [390, 844],
+    "archiveSheet": true,
+    "archiveHeight": 759.59375,
+    "archiveState": "empty",
+    "consoleErrors": 0,
+    "consoleWarnings": 0,
+    "noArchiveOrRestoreSubmitted": true
+  },
+  "productChanged": false,
+  "installedIosVersionVerified": false
+}
