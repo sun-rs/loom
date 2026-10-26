@@ -3,6 +3,7 @@ import {
   swipeRowClass,
   swipeLayerClass,
   swipeDoneClass,
+  swipeSecondaryClass,
 } from "./OfficialActivitySwipe.generated";
 import type { ActivitySwipeBinding } from "./useActivitySwipe";
 import type { ComponentProps } from "react";
@@ -33,7 +34,7 @@ import {
   SidebarItemCount,
   Button,
 } from "raft-ui";
-import { Check } from "lucide-react";
+import { Check, BellOff, BellMinus } from "lucide-react";
 import { formatRelativeTime } from "../packages/web/src/utils/relativeTime.ts";
 import InlineMarkdownPreview from "../packages/web/src/components/markdown/InlineMarkdownPreview.tsx";
 import type { DiscoveryRow } from "./discovery-client.ts";
@@ -47,8 +48,12 @@ export default function ActivityMessageRow({
   pending,
   swipe,
   onSwipeDone,
+  onSwipeMute,
+  onSwipeUnfollow,
 }: {
   swipe?: ActivitySwipeBinding;
+  onSwipeMute?: (row: DiscoveryRow) => void;
+  onSwipeUnfollow?: (row: DiscoveryRow) => void;
   onSwipeDone?: (row: DiscoveryRow) => void;
   client: ComponentProps<typeof ActivityContextMenu>["client"];
   onFollow: ComponentProps<typeof ActivityContextMenu>["onFollow"];
@@ -94,7 +99,7 @@ export default function ActivityMessageRow({
   const swipeEnabled = !!swipe?.enabled && hasRowAction && !pending;
   const gesture = useOfficialRowSwipe({
     enabled: swipeEnabled,
-    actionsWidth: 72,
+    actionsWidth: 72 * (1 + Number(!!onSwipeMute) + Number(!!onSwipeUnfollow)),
     open: swipe?.openId === row.id,
     onOpenChange: (open) => swipe?.onOpenChange(row.id, open),
     onFullSwipe: swipeDone,
@@ -159,6 +164,38 @@ export default function ActivityMessageRow({
             data-testid="inbox-row-swipe-actions"
             className={swipeLayerClass}
           >
+            {onSwipeMute && (
+              <button
+                type="button"
+                tabIndex={-1}
+                data-row-swipe-action="mute"
+                data-testid="inbox-row-swipe-mute"
+                className={swipeSecondaryClass}
+                onClick={() => {
+                  swipe?.onOpenChange(row.id, false);
+                  onSwipeMute(row);
+                }}
+              >
+                <BellOff />
+                静音
+              </button>
+            )}
+            {onSwipeUnfollow && (
+              <button
+                type="button"
+                tabIndex={-1}
+                data-row-swipe-action="unfollow"
+                data-testid="inbox-row-swipe-unfollow"
+                className={swipeSecondaryClass}
+                onClick={() => {
+                  swipe?.onOpenChange(row.id, false);
+                  onSwipeUnfollow(row);
+                }}
+              >
+                <BellMinus />
+                取消关注
+              </button>
+            )}
             <button
               type="button"
               tabIndex={-1}

@@ -14,3 +14,5 @@ export function suppressNextSwipeClick(event: PointerEvent): void;
 export const swipeRowClass: string,
   swipeLayerClass: string,
   swipeDoneClass: string;
+
+export const swipeSecondaryClass: string;

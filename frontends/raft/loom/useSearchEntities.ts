@@ -15,6 +15,7 @@ export function useSearchEntities(
   enabled: boolean,
 ) {
   const [source, setSource] = useState<ReturnType<typeof entitySources>>();
+  const [mutedActivity, setMutedActivity] = useState<string[]>();
   const [hiddenDms, setHiddenDms] = useState<string[]>([]);
   const [error, setError] = useState(false);
   const [retry, setRetry] = useState(0);
@@ -23,6 +24,7 @@ export function useSearchEntities(
     const controller = new AbortController(),
       options = { signal: controller.signal };
     setSource(undefined);
+    setMutedActivity(undefined);
     setError(false);
     void Promise.all([
       client.request("room.list", { workspaceId }, options),
@@ -34,6 +36,7 @@ export function useSearchEntities(
         if (!controller.signal.aborted) {
           setSource(entitySources({ ...rooms, ...roles, ...agents }));
           setHiddenDms(sidebar.preferences.hiddenDms);
+          setMutedActivity(sidebar.preferences.mutedActivity);
         }
       })
       .catch(() => {
@@ -55,6 +58,7 @@ export function useSearchEntities(
     results: ranked.slice(0, 50),
     catalog,
     hiddenDms,
+    mutedActivity,
     exact: findExactDestination(query, ranked),
     error: enabled && error,
     retry: () => setRetry((v) => v + 1),

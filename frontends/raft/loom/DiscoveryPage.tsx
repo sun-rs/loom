@@ -1,3 +1,5 @@
+import { useActivitySecondary } from "./useActivitySecondary";
+import { OperationStatus } from "./ManagementUi";
 import { useActivitySwipeUndo } from "./useActivitySwipeUndo";
 import { useActivitySwipe } from "./useActivitySwipe";
 import { ActivityListSlot, useActivityCollapseSnap } from "./SidebarLayout";
@@ -307,6 +309,7 @@ export default function DiscoveryPage({
             overlayHome={overlay ? allResults : undefined}
             key={`${mode}:${query}:${scope}:${filter}:${tick}:${filterKey}:${focusRefresh}`}
             client={client}
+            controlRoomId={controlRoomId}
             entities={entities}
             recent={recent}
             frequent={frequent}
@@ -364,6 +367,7 @@ function Results({
   railHandler,
   overlayHome,
   client,
+  controlRoomId,
   workspaceId,
   principalId,
   entities,
@@ -387,6 +391,7 @@ function Results({
   onChooseHistory: (query: string) => void;
   onOpenResult: (row: DiscoveryRow, full: boolean) => Promise<void>;
   client: RahClient;
+  controlRoomId?: string;
   workspaceId: string;
   principalId?: string;
   entities: ReturnType<typeof useSearchEntities>;
@@ -513,6 +518,15 @@ function Results({
     activityRows.map((item) => item.row),
     (row) => {
       void markActivity(row, "done");
+    },
+  );
+  const secondary = useActivitySecondary(
+    client,
+    workspaceId,
+    controlRoomId,
+    () => {
+      setRetry((value) => value + 1);
+      entities.retry();
     },
   );
   const followActivity = async (
@@ -720,6 +734,7 @@ function Results({
       {pins?.failed && mode === "activity" && (
         <DiscoveryNotice>置顶分组读取失败，请刷新动态重试。</DiscoveryNotice>
       )}
+      <OperationStatus manager={secondary.manager} error={secondary.error} />
       {mutationError && <DiscoveryNotice>{mutationError}</DiscoveryNotice>}
       {showRecent ? null : mode === "search" &&
         !query.trim() &&
@@ -812,11 +827,28 @@ function Results({
                       <ActivityMessageRow
                         swipe={rowSwipe}
                         onSwipeDone={swipeUndo.done}
+                        onSwipeMute={
+                          secondary.enabled &&
+                          row.activityKind === "channel" &&
+                          entities.mutedActivity &&
+                          !entities.mutedActivity.includes(
+                            `room:${row.message.roomId}`,
+                          )
+                            ? secondary.mute
+                            : undefined
+                        }
+                        onSwipeUnfollow={
+                          secondary.enabled &&
+                          row.activityKind === "thread" &&
+                          row.isFollowing === true
+                            ? secondary.unfollow
+                            : undefined
+                        }
                         client={client}
                         onFollow={(row, activity, following) => {
                           void followActivity(row, activity, following);
                         }}
-                        pending={pendingRows.has(row.id)}
+                        pending={pendingRows.has(row.id) || secondary.busy}
                         onAction={(target, action) => {
                           void markActivity(target, action);
                         }}

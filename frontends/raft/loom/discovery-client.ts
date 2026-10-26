@@ -15,6 +15,7 @@ export type DiscoveryRow = {
   activityFrontier?: { throughSeq: number; threadId?: string };
   activityKind?: "channel" | "direct" | "thread";
   replyCount?: number;
+  isFollowing?: boolean;
   senderType?: "user" | "agent";
   channelType?: "channel" | "dm";
   archivedAt?: string;
@@ -78,6 +79,7 @@ export async function activityPage(
       },
       activityKind: item.kind,
       replyCount: item.replyCount,
+      isFollowing: item.isFollowing,
     })),
   };
 }
