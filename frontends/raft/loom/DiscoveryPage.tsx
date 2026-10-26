@@ -1,3 +1,4 @@
+import { useActivitySwipe } from "./useActivitySwipe";
 import { ActivityListSlot, useActivityCollapseSnap } from "./SidebarLayout";
 import ActivityNothingOpen from "./ActivityNothingOpen";
 import { useCurrentListPanel } from "./useCurrentListPanel";
@@ -438,6 +439,7 @@ function Results({
       (mode !== "activity" || Boolean(pins)),
     Boolean(principalId),
   );
+  const rowSwipe = useActivitySwipe(mode === "activity", activityScroll.ref);
   const focusedActivityId = useFirstUnreadFocus(
     mode === "activity" ? focusRequest : 0,
     consumeFocus,
@@ -799,6 +801,7 @@ function Results({
                       </SectionEyebrow>
                     )}
                     <ActivityMessageRow
+                      swipe={rowSwipe}
                       client={client}
                       onFollow={(row, activity, following) => {
                         void followActivity(row, activity, following);

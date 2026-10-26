@@ -1,3 +1,10 @@
+import {
+  useOfficialRowSwipe,
+  swipeRowClass,
+  swipeLayerClass,
+  swipeDoneClass,
+} from "./OfficialActivitySwipe.generated";
+import type { ActivitySwipeBinding } from "./useActivitySwipe";
 import type { ComponentProps } from "react";
 import OfficialConversationAvatar from "./OfficialConversationAvatar.generated";
 import ActivityContextMenu, {
@@ -6,7 +13,8 @@ import ActivityContextMenu, {
 import type { ActivityAction } from "./activity-actions.ts";
 import Tooltip from "../packages/web/src/components/ui/Tooltip.tsx";
 import { useRef, useEffect, useState, useCallback, useId } from "react";
-// Structural port of v1.21.26 ThreadsInbox-vmpxj7RN.js compact InboxItem branch.
+// Compact row composition from v1.21.26; native v1.21.34 touch gesture/recipes
+// are an immutable generated dependency. See activity-swipe-manifest.json.
 // Loom binds durable activity actions; native recipes own row/action presentation.
 import { ACTIVITY_PREVIEW_QUERY } from "./activity-layout.ts";
 import { useIntl } from "react-intl";
@@ -37,7 +45,9 @@ export default function ActivityMessageRow({
   onOpen,
   onAction,
   pending,
+  swipe,
 }: {
+  swipe?: ActivitySwipeBinding;
   client: ComponentProps<typeof ActivityContextMenu>["client"];
   onFollow: ComponentProps<typeof ActivityContextMenu>["onFollow"];
   row: DiscoveryRow;
@@ -72,13 +82,32 @@ export default function ActivityMessageRow({
     clearTimeout(timer.current);
     if (!pending) onAction(row, "done");
   };
+  const swipeEnabled = !!swipe?.enabled && hasRowAction && !pending;
+  const gesture = useOfficialRowSwipe({
+    enabled: swipeEnabled,
+    actionsWidth: 72,
+    open: swipe?.openId === row.id,
+    onOpenChange: (open) => swipe?.onOpenChange(row.id, open),
+    onFullSwipe: done,
+    shouldYield: () => !!menu,
+  });
+  const rowRef = useCallback(
+    (element: HTMLDivElement | null) => {
+      root.current = element;
+      gesture.ref(element);
+    },
+    [gesture.ref],
+  );
   return (
     <>
       <InboxItem
         density="compact"
         active={active}
         data-unread={unreadCount > 0 || undefined}
-        ref={root}
+        ref={rowRef}
+        {...(swipeEnabled ? gesture.handlers : {})}
+        className={swipeEnabled ? swipeRowClass : undefined}
+        data-inbox-key={row.id}
         onContextMenu={(event) => {
           event.preventDefault();
           clearTimeout(timer.current);
@@ -114,6 +143,29 @@ export default function ActivityMessageRow({
             }
           }}
         />
+        {swipeEnabled && (
+          <div
+            data-row-swipe-layer=""
+            aria-hidden="true"
+            data-testid="inbox-row-swipe-actions"
+            className={swipeLayerClass}
+          >
+            <button
+              type="button"
+              tabIndex={-1}
+              data-row-swipe-action="done"
+              data-testid="inbox-row-swipe-done"
+              className={swipeDoneClass}
+              onClick={() => {
+                swipe?.onOpenChange(row.id, false);
+                done();
+              }}
+            >
+              <Check />
+              完成
+            </button>
+          </div>
+        )}
         <InboxItemLeading>
           <OfficialConversationAvatar
             kind={
