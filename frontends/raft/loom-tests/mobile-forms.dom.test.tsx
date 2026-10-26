@@ -107,3 +107,19 @@ test("official sheet follows the visual viewport while editing and restores afte
   fireEvent(viewport, new Event("resize"));
   await waitFor(() => expect(dialog.style.height).toBe(""));
 });
+
+test("sheet exposes its container for nested runtime pickers", async () => {
+  media(true);
+  const container = React.createRef<HTMLDivElement>();
+  render(
+    <MobileFormDialog
+      title="运行时配置"
+      onClose={() => {}}
+      containerRef={container}
+    >
+      <Input aria-label="模型" />
+    </MobileFormDialog>,
+  );
+  const dialog = await screen.findByRole("dialog");
+  expect(container.current).toBe(dialog);
+});

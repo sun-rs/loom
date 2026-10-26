@@ -144,3 +144,10 @@ test("secondary root back never overrides a selected detail's back", async () =>
   }
   assert.equal(mobileSecondaryRoot("activity", new URLSearchParams()), false);
 });
+
+test("file picker retains upload in sheet body and commits from header", () => {
+  const source = readFileSync("frontends/raft/loom/ComputerFiles.tsx", "utf8");
+  assert.match(source, /<DialogSheetContent/);
+  assert.match(source, /<DialogFooterNote>[\s\S]*?<DeviceFileUpload/);
+  assert.match(source, /<DialogCommit[\s\S]*?引用所选/);
+});

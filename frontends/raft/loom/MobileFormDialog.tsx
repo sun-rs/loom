@@ -1,4 +1,4 @@
-import React, { type ReactNode } from "react";
+import React, { type RefObject, type ReactNode } from "react";
 import {
   Dialog,
   DialogBody,
@@ -15,12 +15,14 @@ export default function MobileFormDialog({
   onClose,
   testId,
   children,
+  containerRef,
 }: {
   title: string;
   busy?: boolean;
   onClose: () => void;
   testId?: string;
   children: ReactNode;
+  containerRef?: RefObject<HTMLDivElement | null>;
 }) {
   return (
     <Dialog
@@ -30,7 +32,7 @@ export default function MobileFormDialog({
         if (!open && !busy) onClose();
       }}
     >
-      <DialogSheetContent data-testid={testId}>
+      <DialogSheetContent ref={containerRef} data-testid={testId}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogClose disabled={busy} aria-label="关闭" />

@@ -1,3 +1,8 @@
+import {
+  DialogSheetContent,
+  DialogCommit,
+  DialogFooterNote,
+} from "raft-ui/wip";
 import { uiActionProps } from "./ui-action-props.ts";
 import DeviceFileUpload from "./DeviceFileUpload.tsx";
 import { SelectField } from "./ManagementUi.tsx";
@@ -9,7 +14,7 @@ import {
   Card,
   Checkbox,
   Dialog,
-  DialogContent,
+  DialogClose,
   DialogBody,
   DialogFooter,
   DialogHeader,
@@ -75,17 +80,19 @@ export default function ComputerFiles({
   return (
     <Dialog
       open
+      disablePointerDismissal
       onOpenChange={(open) => {
         if (!open) onClose();
       }}
     >
-      <DialogContent
+      <DialogSheetContent
         data-testid="computer-file-dialog"
         aria-label="引用计算机文件或文件夹"
         className="flex min-h-[min(512px,80dvh)] max-h-[80dvh] flex-col overflow-hidden"
       >
         <DialogHeader>
           <DialogTitle>引用文件或文件夹</DialogTitle>
+          <DialogClose aria-label="关闭文件选择" />
         </DialogHeader>
         <DialogBody className="min-h-0 flex-initial overflow-auto">
           {data && (
@@ -211,11 +218,13 @@ export default function ComputerFiles({
           {data?.truncated && <p role="status">目录过大，仅显示前1000项。</p>}
         </DialogBody>
         <DialogFooter className="flex-wrap gap-2">
-          <DeviceFileUpload disabled={uploadDisabled} onFiles={onUpload} />
+          <DialogFooterNote>
+            <DeviceFileUpload disabled={uploadDisabled} onFiles={onUpload} />
+          </DialogFooterNote>
           <Button {...uiActionProps.secondary} onClick={onClose}>
             取消
           </Button>
-          <Button
+          <DialogCommit
             {...uiActionProps.dialogSave}
             disabled={loading || !!error || !data}
             onClick={() =>
@@ -224,9 +233,9 @@ export default function ComputerFiles({
           >
             <Check size={14} />
             引用所选
-          </Button>
+          </DialogCommit>
         </DialogFooter>
-      </DialogContent>
+      </DialogSheetContent>
     </Dialog>
   );
 }

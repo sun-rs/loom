@@ -120,7 +120,7 @@
 
   /* Loom host-file picker: fixed outer size, one scroll owner for entries.
    * The desktop256px tree must not force nested scrolling on short phones. */
-  [data-testid="computer-file-dialog"] {
+  [data-testid="computer-file-dialog"]:not([data-sheet]) {
     height: min(512px, calc(100dvh - 32px));
     min-height: 0;
     max-height: calc(100dvh - 32px);

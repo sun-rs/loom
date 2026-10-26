@@ -1,4 +1,4 @@
-import { OfficialRuntimeDialog } from "./OfficialRoleControls.generated";
+import MobileFormDialog from "./MobileFormDialog";
 import RoleEditor from "./RoleEditor.tsx";
 import ConfirmDialog from "../packages/web/src/components/ConfirmDialog.tsx";
 import {
@@ -224,7 +224,10 @@ export default function RoleProfile({
         </DescriptionList>
       </section>
       {field === "runtimeOfferId" && (
-        <OfficialRuntimeDialog
+        <MobileFormDialog
+          title="编辑运行时配置"
+          testId="agent-runtime-config-dialog"
+          busy={disabled}
           containerRef={runtimeContainer}
           onClose={() => {
             if (!disabled) {
@@ -247,7 +250,7 @@ export default function RoleProfile({
             onCancel={() => (runtimeDirty ? setDiscardRuntime(true) : cancel())}
             onNavigationDiscard={cancel}
           />
-        </OfficialRuntimeDialog>
+        </MobileFormDialog>
       )}
       {discardRuntime && (
         <ConfirmDialog
