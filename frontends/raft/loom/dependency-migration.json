@@ -5,7 +5,7 @@
   "versions": {
     "foundation": "@botiverse/raft-ui@0.35.1",
     "source": "db5e399f017d584e49597e3a28757645d6807893 / v1.21.23-source.1",
-    "productionResourceReference": "v1.21.26; not the same as available source revision"
+    "productionResourceReference": "v1.21.26 retained ports plus explicitly adopted v1.21.34 resource slices; not whole-site current-source parity"
   },
   "completedBoundaries": {
     "directExports": "upstream/raft-web-source/package.json#exports",
@@ -370,5 +370,11 @@
       ]
     }
   ],
-  "plannedMigrationComplete": true
+  "plannedMigrationComplete": true,
+  "currentUpgradeReview": {
+    "baseline": "Web 1.21.34 / raft-ui 0.35.1",
+    "inventory": "docs/evo/raft-1.21.34-closeout.zh-CN.md",
+    "wholeSiteAccepted": false,
+    "note": "remainingBatchPlan describes the historical fixed-source migration, not acceptance of this upgrade."
+  }
 }
