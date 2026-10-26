@@ -1,0 +1,142 @@
+{
+  "productCommit": "0f59a16a",
+  "officialPackage": "@botiverse/raft-ui@0.35.1",
+  "nativeReference": "eff04722b5904a0d001115d90d3ec49d59fb4f03",
+  "tests": {
+    "sourceAndPolicy": 7,
+    "dom": 5,
+    "typecheck": "pass",
+    "build": "pass",
+    "paid": false
+  },
+  "browser": {
+    "viewports": [
+      [390, 844],
+      [1440, 1000]
+    ],
+    "memoryPolicy": {
+      "mobileSheetHeight": 759.59375,
+      "headerCommitLinked": true,
+      "unchangedSaveDisabled": true
+    },
+    "taskPermission": "ordinary dialog retained",
+    "createChannel": "official sheet, closed without submitting",
+    "usage": {
+      "historicalGenerations": 2,
+      "disclosureExpanded": true,
+      "desktopSize": [512, 554],
+      "desktopSheet": false
+    },
+    "consoleErrors": 0,
+    "consoleWarnings": 0,
+    "contentOrPermissionMutations": false,
+    "note": "Normal navigation can advance read positions; no model was launched."
+  },
+  "deployment": {
+    "pushStateUnchanged": true,
+    "at": "2026-10-26T16:26:44.244Z",
+    "newStaticDirectory": "/Users/sun/Code/repos/rah_os/.workbench-web/0c6dfef83d6b4d6ea5b731c76f867e6d6c4b61d0e6a44468edf1cae23eefc56e",
+    "oldPid": 43610,
+    "newPid": 68987,
+    "backup": "/Users/sun/.loom/evo/backups/pre-restart-mobile-secondary-5f526a14-64aa-4917-a7db-87a462d6b53e",
+    "sourceSha256": "d0d6c7369621268231873d98f9b395da96fcd3d90e6f3b612f09aa070d912d62",
+    "dependencies": {
+      "package-lock.json": "8eebbc1d4e01d0660df0ffe58bad7e48d708fa45e37d51291433ef1c2e640089",
+      "node_modules/@anthropic-ai/claude-agent-sdk/package.json": "a2f4bd57129cb99253877099ab6deed575b3bdd37aa0e09aa6469a63bc81690f",
+      "node_modules/@anthropic-ai/claude-agent-sdk/sdk.mjs": "5cf6f15237f9c84e6e5b724a10180478732457168921d7aa3e02632037cce299"
+    },
+    "head": "0f59a16acee5160a453c384df10518da8ab7d0d5",
+    "databases": 2,
+    "files": 325,
+    "businessTables": {
+      "principals": {
+        "rows": 76,
+        "sha256": "ecf9819acacbdb4f0a4a169d32f085e471f4892eb8553ed3c8bb7c33bc6ebe6b"
+      },
+      "agent_definition_revisions": {
+        "rows": 91,
+        "sha256": "7dd94eacf8d838690bdc6fe44ce5a8dc4857097a198db098bc66e7c1af2a4c33"
+      },
+      "execution_policy_revisions": {
+        "rows": 91,
+        "sha256": "b5e24dc465ab50f60fd7d8ab2fd601e74cab5370e6da03e59c3a4e5e692b9cb0"
+      },
+      "messages": {
+        "rows": 256,
+        "sha256": "461b9d9012990deeddef9c94ef851092612814b5e12dbca579800b88fe610f9f"
+      },
+      "tasks": {
+        "rows": 9,
+        "sha256": "123ea50571a2aa471b099655d3483ac05fdb226baf625b6ca286ecfc7cffbaa4"
+      },
+      "role_templates": {
+        "rows": 44,
+        "sha256": "5d332a4827aab2d7c69a2bd323909f5df8049633aeae0a52d6f657e4f2b00c3e"
+      },
+      "role_revisions": {
+        "rows": 46,
+        "sha256": "59182dc6c9bcbcd9a457af50d3d2f27af804b4cfe21fa156e2be8a3668d8e0f9"
+      },
+      "role_instances": {
+        "rows": 70,
+        "sha256": "39d6d5649509b54de90a1802ca89b4bb096cf5ed958265419c1480b240c87f7a"
+      },
+      "memory_entries": {
+        "rows": 4,
+        "sha256": "d0d2bb98894716fcfbda8ea5f4b3112a99595d70192c7df088ac553b00cef08b"
+      },
+      "memory_revisions": {
+        "rows": 4,
+        "sha256": "21b7e112c7deda7a547b68d235b562c0d88bb8103ef385d553673e0f044d5893"
+      },
+      "role_instance_sessions": {
+        "rows": 68,
+        "sha256": "c0d73fae244610cc75a060a2328f8ce52365531aa0906d79e6400c793c21866d"
+      },
+      "room_events": {
+        "rows": 2268,
+        "sha256": "5cf4e0ffe07b2f896715008006324aff496257a4861c8a5133f26f12a0f2a3fb"
+      },
+      "agent_definitions": {
+        "rows": 74,
+        "sha256": "6e082e006acba0d40e4b4a83a6239a9277001e7ef7fab29407531429e1d8c842"
+      },
+      "inbox_items": {
+        "rows": 185,
+        "sha256": "59ce598abc24bfaa3933ae19711be87c50f0336f4a4612deda521976503cf8ad"
+      },
+      "side_sessions": {
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "run_attempts": {
+        "rows": 189,
+        "sha256": "38f8dd7288303de793f31b7638a084e41128545aab581e7f047f23af7d6afde8"
+      },
+      "subscription_cursors": {
+        "rows": 1103,
+        "sha256": "ffaf95c8df264308b908591268a77cfd01f56e630e9d78e746ebe22401417f7d"
+      },
+      "run_attempt_final_replies": {
+        "rows": 91,
+        "sha256": "73ca03f0b2d20d9eae388ed94b36b21edf0d79f00001cdaad8cb19a55499eda5"
+      },
+      "human_thread_follows": {
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "human_activity_frontiers": {
+        "rows": 31,
+        "sha256": "c780a979d6ae5f70db3a6486dd0f6f7e3d8597356aa88c00e79709256849ee9b"
+      }
+    },
+    "volatileFieldExcluded": "subscription_cursors.updated_at only; retained_seq included in exact comparison",
+    "verified": true
+  },
+  "limits": [
+    "Archive list and full-role-edit branches have source/type coverage, not individual browser acceptance this batch.",
+    "Member-specific memory policy overrides not browser-tested: inspected legacy channel had no instance members.",
+    "No physical iOS keyboard, safe-area or gesture acceptance; DOM visualViewport tests are simulated.",
+    "No claim of whole-site or latest installed iOS app parity."
+  ]
+}
