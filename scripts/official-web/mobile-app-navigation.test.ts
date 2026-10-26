@@ -80,3 +80,27 @@ test("mobile unread remains sourced from server summary and workspace trigger ke
     /\[data-slot="mobile-nav-server-item"\] \{[\s\S]*?min-height: 44px/,
   );
 });
+
+test("one bottom capsule includes More; four secondary destinations share native cells", () => {
+  const nav = readFileSync("frontends/raft/loom/Navigation.tsx", "utf8");
+  assert.match(nav, /<MobileWorkspaceMenu[\s\S]*?<\/MobileNavRoot>/);
+  const menu = readFileSync(
+    "frontends/raft/loom/MobileWorkspaceMenu.tsx",
+    "utf8",
+  );
+  assert.doesNotMatch(menu, /<MobileNavRoot/);
+  assert.match(menu, /aria-label="更多"/);
+  assert.match(menu, /label: "记忆"/);
+  assert.doesNotMatch(menu, /<MobileNavServerPopoverGroup/);
+});
+test("touch rows wire native focus-only completion rather than a second visible action", () => {
+  const row = readFileSync(
+    "frontends/raft/loom/ActivityMessageRow.tsx",
+    "utf8",
+  );
+  assert.match(
+    row,
+    /className=\{\s*swipe\?\.enabled \? swipeAccessibleActionClass : undefined\s*\}/,
+  );
+  assert.match(row, /reveal=\{swipe\?\.enabled \? undefined : "hover"\}/);
+});

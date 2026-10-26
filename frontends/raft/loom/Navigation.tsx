@@ -151,12 +151,12 @@ export function MobileNavigation({
             </MobileNavLabel>
           </MobileNavItem>
         ))}
+        <MobileWorkspaceMenu
+          name={workspaceName}
+          active={active}
+          onSelect={onSelect}
+        />
       </MobileNavRoot>
-      <MobileWorkspaceMenu
-        name={workspaceName}
-        active={active}
-        onSelect={onSelect}
-      />
     </div>
   );
 }

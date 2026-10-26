@@ -511,11 +511,12 @@ is the repository instruction entry point.
 
 Owner mobile-navigation ruling (2026-10-26): mobile Web follows the confirmed
 native-app information hierarchy: Home / Activity / Tasks / Search, plus the
-workspace initial menu for Members / Computers / Settings. Keep Loom memory
-reachable there. These are peer roots, not Home subpages. Use the pinned official
+More entry in the same bottom capsule. Members / Computers / Settings / Memory
+share equal native destination cells in its upward popover. These are peer roots, not Home subpages. Use the pinned official
 `raft-ui/wip` MobileNavServerPopover scenario; keep the approved compact touch
-layout explicit. Direct Activity completion has no undo; swipe completion keeps
-its bounded undo. This is an owner-approved Web adaptation, not a claim of copied
+layout explicit. Touch narrow-screen Activity rows use the native focus-only direct action
+recipe: visual completion is by swipe with bounded undo; keyboard focus can
+reveal the accessible action. Desktop hover completion remains unchanged. This is an owner-approved Web adaptation, not a claim of copied
 native iOS source or multi-workspace support.
 
 ### Mandatory Raft UI layering (owner approved 2026-10-19)

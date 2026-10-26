@@ -18,6 +18,11 @@ writeFileSync(
 import * as q from 'react';
 import * as _t from 'react-dom';
 ${bodies.join("\n")}
-export {Ht as useOfficialRowSwipe,Pt as suppressNextSwipeClick,Lt as decideSwipe,Rt as isFullSwipe,zt as settleSwipe,sn as swipeRowClass,cn as swipeLayerClass,un as swipeDoneClass,dn as swipeSecondaryClass};
+export {Ht as useOfficialRowSwipe,Pt as suppressNextSwipeClick,Lt as decideSwipe,Rt as isFullSwipe,zt as settleSwipe,sn as swipeRowClass,cn as swipeLayerClass,un as swipeDoneClass,dn as swipeSecondaryClass,fn as swipeAccessibleActionClass};
 `,
+);
+
+writeFileSync(
+  "frontends/raft/loom/OfficialActivitySwipe.generated.d.ts",
+  'import type { HTMLAttributes } from "react";\nexport function useOfficialRowSwipe(options: {\n  enabled: boolean;\n  actionsWidth: number;\n  open: boolean;\n  onOpenChange: (open: boolean) => void;\n  onFullSwipe: () => void;\n  shouldYield?: () => boolean;\n}): {\n  ref: (element: HTMLElement | null) => void;\n  handlers: HTMLAttributes<HTMLElement>;\n};\nexport function suppressNextSwipeClick(event: PointerEvent): void;\nexport const swipeRowClass: string,\n  swipeLayerClass: string,\n  swipeDoneClass: string;\n\nexport const swipeSecondaryClass: string;\n\nexport const swipeAccessibleActionClass: string;\n',
 );

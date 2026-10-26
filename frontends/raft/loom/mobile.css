@@ -339,7 +339,7 @@
     position: absolute;
   }
 
-  /* Owner-approved app navigation: four roots plus a separate workspace pill.
+  /* Owner-approved app navigation: four roots plus More in a single capsule.
      Reuses the existing compact mobile material and 44px pointer targets. */
   .loom-mobile-nav-group {
     display: flex;
@@ -354,11 +354,6 @@
     flex: 1;
     min-width: 0;
     width: auto;
-    margin: 0;
-  }
-  .loom-mobile-nav-group .loom-mobile-workspace-nav {
-    flex: 0 0 50px;
-    width: 50px;
     margin: 0;
   }
   .loom-mobile-nav {

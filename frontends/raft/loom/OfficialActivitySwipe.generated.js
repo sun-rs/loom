@@ -309,4 +309,4 @@ var an = 10,
     `has-[:focus-visible]:whitespace-normal has-[:focus-visible]:[clip-path:none] has-[:focus-visible]:[clip:auto]`,
     `has-[:focus-visible]:bg-layer-canvas`,
   ].join(` `);
-export {Ht as useOfficialRowSwipe,Pt as suppressNextSwipeClick,Lt as decideSwipe,Rt as isFullSwipe,zt as settleSwipe,sn as swipeRowClass,cn as swipeLayerClass,un as swipeDoneClass,dn as swipeSecondaryClass};
+export {Ht as useOfficialRowSwipe,Pt as suppressNextSwipeClick,Lt as decideSwipe,Rt as isFullSwipe,zt as settleSwipe,sn as swipeRowClass,cn as swipeLayerClass,un as swipeDoneClass,dn as swipeSecondaryClass,fn as swipeAccessibleActionClass};

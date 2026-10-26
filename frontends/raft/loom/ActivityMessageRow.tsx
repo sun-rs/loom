@@ -4,6 +4,7 @@ import {
   swipeLayerClass,
   swipeDoneClass,
   swipeSecondaryClass,
+  swipeAccessibleActionClass,
 } from "./OfficialActivitySwipe.generated";
 import type { ActivitySwipeBinding } from "./useActivitySwipe";
 import type { ComponentProps } from "react";
@@ -262,7 +263,10 @@ export default function ActivityMessageRow({
           </InboxItemMarks>
           {hasRowAction && (
             <InboxItemActions
-              reveal="hover"
+              reveal={swipe?.enabled ? undefined : "hover"}
+              className={
+                swipe?.enabled ? swipeAccessibleActionClass : undefined
+              }
               data-testid="conversation-card-actions"
             >
               <Tooltip content={formatMessage({ id: "thread.row.markAsDone" })}>

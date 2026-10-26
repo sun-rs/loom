@@ -59,7 +59,7 @@ for (const [width, preset] of [
         "动态",
         "任务",
         "搜索",
-        "工作区与更多页面",
+        "更多",
       ]) {
         const button = nav.getByRole("button", { name: label, exact: true });
         const box = await button.boundingBox();
@@ -93,7 +93,7 @@ for (const [width, preset] of [
         ["记忆", "记忆"],
       ]) {
         await nav
-          .getByRole("button", { name: "工作区与更多页面", exact: true })
+          .getByRole("button", { name: "更多", exact: true })
           .tap();
         const menu = page.getByTestId("mobile-workspace-menu");
         await menu.getByRole("button", { name: label, exact: true }).tap();
@@ -125,7 +125,7 @@ for (const [width, preset] of [
       await back.tap();
       await nav.waitFor();
       await nav
-        .getByRole("button", { name: "工作区与更多页面", exact: true })
+        .getByRole("button", { name: "更多", exact: true })
         .tap();
       await page
         .getByTestId("mobile-workspace-menu")
@@ -158,7 +158,7 @@ for (const [width, preset] of [
         "",
       );
       await nav
-        .getByRole("button", { name: "工作区与更多页面", exact: true })
+        .getByRole("button", { name: "更多", exact: true })
         .tap();
       await page
         .getByTestId("mobile-workspace-menu")

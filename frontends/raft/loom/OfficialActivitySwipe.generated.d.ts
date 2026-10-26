@@ -16,3 +16,5 @@ export const swipeRowClass: string,
   swipeDoneClass: string;
 
 export const swipeSecondaryClass: string;
+
+export const swipeAccessibleActionClass: string;
