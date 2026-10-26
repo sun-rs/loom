@@ -418,3 +418,10 @@
   [data-loom-header-identity="false"][data-loom-header-back="true"] > [data-slot="panel-header-content"] { grid-column: 2 / span 2; }
   [data-loom-header-identity="false"][data-loom-header-back="false"] > [data-slot="panel-header-content"] { grid-column: span 3; }
 }
+
+/* Native mobile start/end actions; official end recipe is retained unchanged. */
+.loom-mobile-activity-swipe .loom-start-swipe-actions { display: none; }
+.loom-mobile-activity-swipe[data-swipe-side="start"] > :not([data-row-swipe-layer]) { transform: translateX(var(--row-swipe-reveal, 0px)); }
+.loom-mobile-activity-swipe[data-swipe-side="start"] > [data-row-swipe-layer]:not(.loom-start-swipe-actions) { display: none; }
+.loom-mobile-activity-swipe[data-swipe-side="start"] .loom-start-swipe-actions { display: flex; left: 0; right: auto; justify-content: flex-start; }
+.loom-mobile-activity-swipe[data-swipe-side="start"] .loom-start-swipe-actions > button { flex-grow: 1; }

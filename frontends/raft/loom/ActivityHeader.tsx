@@ -1,3 +1,4 @@
+import { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives";
 import {
   OfficialActivityHeader,
   OfficialActivityMarkAll,
@@ -15,6 +16,7 @@ export default function ActivityHeader({
   revision,
   onRefresh,
   onNextUnread,
+  onScrollTop,
   renderToolbar,
 }: {
   client: RahClient;
@@ -22,8 +24,10 @@ export default function ActivityHeader({
   revision: number;
   onRefresh: () => void;
   onNextUnread: () => void;
+  onScrollTop: () => void;
   renderToolbar: (actions: ReactNode) => ReactNode;
 }) {
+  const mobile = useMediaQuery("(max-width: 767px)");
   const [counts, setCounts] = useState<{ total: number; unread?: number }>();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -99,13 +103,22 @@ export default function ActivityHeader({
         unknownSubtitle="— 条进行中 · — 条未读"
         headerContainerProps={{
           "data-testid": "inbox-header",
-          title: "双击跳转到下一条未读项",
+          title: mobile ? "回到顶部" : "双击跳转到下一条未读项",
         }}
         headerTitleClickProps={{
           "data-testid": "inbox-header-title",
-          title: "双击跳转到下一条未读项",
+          role: mobile ? "button" : undefined,
+          tabIndex: mobile ? 0 : undefined,
+          onKeyDown: (event) => {
+            if (mobile && (event.key === "Enter" || event.key === " ")) {
+              event.preventDefault();
+              onScrollTop();
+            }
+          },
+          title: mobile ? "回到顶部" : "双击跳转到下一条未读项",
           onClick: (event) => {
-            if (event.detail >= 2) onNextUnread();
+            if (mobile) onScrollTop();
+            else if (event.detail >= 2) onNextUnread();
           },
         }}
         onMobileBack={undefined}

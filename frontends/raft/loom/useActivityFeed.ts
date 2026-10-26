@@ -25,7 +25,9 @@ export function useActivityFeed(
   principalId?: string,
 ) {
   const scope = JSON.stringify([principalId, workspaceId, filter]);
+  const loadedScope = useRef<string | undefined>(undefined);
   const [data, setData] = useState<DiscoveryPageResult>();
+  const [completed, setCompleted] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [loadingMore, setLoadingMore] = useState(false);
@@ -51,7 +53,10 @@ export function useActivityFeed(
           : 1;
     windows.set(client, { scope, depth: wanted });
     setLoading(true);
-    setData(undefined);
+    if (loadedScope.current !== scope) {
+      setData(undefined);
+      loadedScope.current = scope;
+    }
     setError("");
     setMoreError(false);
     setLoadingMore(false);
@@ -73,7 +78,10 @@ export function useActivityFeed(
         if (!controller.signal.aborted) setError("读取失败，请重试。");
       })
       .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+          setCompleted((v) => v + 1);
+        }
       });
     return () => {
       controller.abort();
@@ -129,5 +137,14 @@ export function useActivityFeed(
       }
     }
   };
-  return { data, loading, error, loadingMore, moreError, atLimit, loadMore };
+  return {
+    data,
+    loading,
+    error,
+    loadingMore,
+    moreError,
+    atLimit,
+    loadMore,
+    completed,
+  };
 }

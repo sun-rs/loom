@@ -1,5 +1,6 @@
+import { useMobileActivitySwipe } from "./MobileActivitySwipe.generated";
+import { activityReadToggle } from "./mobile-activity";
 import {
-  useOfficialRowSwipe,
   swipeRowClass,
   swipeLayerClass,
   swipeDoneClass,
@@ -35,7 +36,13 @@ import {
   SidebarItemCount,
   Button,
 } from "raft-ui";
-import { Check, BellOff, BellMinus } from "lucide-react";
+import {
+  Check,
+  BellOff,
+  BellMinus,
+  MessageSquareCheck,
+  MessageSquareDot,
+} from "lucide-react";
 import { formatRelativeTime } from "../packages/web/src/utils/relativeTime.ts";
 import InlineMarkdownPreview from "../packages/web/src/components/markdown/InlineMarkdownPreview.tsx";
 import type { DiscoveryRow } from "./discovery-client.ts";
@@ -98,7 +105,13 @@ export default function ActivityMessageRow({
     }
   };
   const swipeEnabled = !!swipe?.enabled && hasRowAction && !pending;
-  const gesture = useOfficialRowSwipe({
+  const readToggle = activityReadToggle(row);
+  const swipeRead = () => {
+    clearTimeout(timer.current);
+    if (!pending && readToggle) onAction(row, readToggle);
+  };
+  const gesture = useMobileActivitySwipe({
+    onStartSwipe: readToggle ? swipeRead : undefined,
     enabled: swipeEnabled,
     actionsWidth: 72 * (1 + Number(!!onSwipeMute) + Number(!!onSwipeUnfollow)),
     open: swipe?.openId === row.id,
@@ -121,7 +134,11 @@ export default function ActivityMessageRow({
         data-unread={unreadCount > 0 || undefined}
         ref={rowRef}
         {...(swipeEnabled ? gesture.handlers : {})}
-        className={swipeEnabled ? swipeRowClass : undefined}
+        className={
+          swipeEnabled
+            ? `${swipeRowClass} loom-mobile-activity-swipe`
+            : undefined
+        }
         data-inbox-key={row.id}
         onContextMenu={(event) => {
           event.preventDefault();
@@ -158,6 +175,32 @@ export default function ActivityMessageRow({
             }
           }}
         />
+        {swipeEnabled && readToggle && (
+          <div
+            data-row-swipe-layer=""
+            aria-hidden="true"
+            className={`${swipeLayerClass} loom-start-swipe-actions`}
+          >
+            <button
+              type="button"
+              tabIndex={-1}
+              data-row-swipe-action="read-toggle"
+              data-testid="inbox-row-swipe-read"
+              className={swipeSecondaryClass}
+              onClick={() => {
+                swipe?.onOpenChange(row.id, false);
+                swipeRead();
+              }}
+            >
+              {readToggle === "read" ? (
+                <MessageSquareCheck />
+              ) : (
+                <MessageSquareDot />
+              )}
+              {readToggle === "read" ? "标记已读" : "标记未读"}
+            </button>
+          </div>
+        )}
         {swipeEnabled && (
           <div
             data-row-swipe-layer=""

@@ -9,7 +9,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { ToastProvider, toast } from "raft-ui";
-import { useOfficialRowSwipe } from "../loom/OfficialActivitySwipe.generated";
+import { useMobileActivitySwipe as useOfficialRowSwipe } from "../loom/MobileActivitySwipe.generated";
 import { useActivitySwipeUndo } from "../loom/useActivitySwipeUndo";
 import type { DiscoveryRow } from "../loom/discovery-client";
 const row = {
@@ -284,4 +284,153 @@ test("complete production row secondary buttons select only their callback and p
   expect(screen.getByTestId("inbox-row-done").hasAttribute("disabled")).toBe(
     true,
   );
+});
+
+test("native start swipe calls read action once, never Done, and preserves edge arbitration", async () => {
+  const { useMobileActivitySwipe } =
+    await import("../loom/MobileActivitySwipe.generated");
+  const read = vi.fn(),
+    done = vi.fn();
+  function Row() {
+    const g = useMobileActivitySwipe({
+      enabled: true,
+      actionsWidth: 144,
+      open: false,
+      onOpenChange: () => {},
+      onStartSwipe: read,
+      onFullSwipe: done,
+    });
+    return <div ref={g.ref} {...g.handlers} data-testid="start-row" />;
+  }
+  render(<Row />);
+  const el = screen.getByTestId("start-row");
+  vi.spyOn(el, "getBoundingClientRect").mockReturnValue({
+    left: 0,
+    right: 390,
+    width: 390,
+  } as DOMRect);
+  pointer(el, "pointerdown", 2);
+  pointer(el, "pointermove", 50);
+  pointer(el, "pointermove", 390);
+  pointer(el, "pointerup", 390);
+  expect(read).not.toHaveBeenCalled();
+  pointer(el, "pointerdown", 50);
+  pointer(el, "pointermove", 85);
+  pointer(el, "pointermove", 360);
+  pointer(el, "pointerup", 360);
+  await waitFor(() => expect(read).toHaveBeenCalledTimes(1));
+  expect(done).not.toHaveBeenCalled();
+  expect(el.getAttribute("data-swipe-side")).toBe("start");
+});
+
+function touch(el: HTMLElement, type: string, x: number, y: number, count = 1) {
+  const e = new Event(type, { bubbles: true, cancelable: true });
+  Object.defineProperty(e, "touches", {
+    value:
+      type === "touchend" || type === "touchcancel"
+        ? []
+        : Array.from({ length: count }, (_, identifier) => ({
+            identifier,
+            clientX: x,
+            clientY: y,
+          })),
+  });
+  fireEvent(el, e);
+  return e;
+}
+async function pullHarness() {
+  const { useMobilePullRefresh } = await import("../loom/useMobilePullRefresh");
+  const refresh = vi.fn();
+  let setLoading: (v: boolean) => void = () => {};
+  function Harness() {
+    const ref = React.useRef<HTMLDivElement>(null),
+      [loading, set] = React.useState(false);
+    setLoading = set;
+    const pull = useMobilePullRefresh(ref, true, loading, () => {
+      refresh();
+      set(true);
+    });
+    return (
+      <div
+        ref={ref}
+        data-testid="pull"
+        data-distance={pull.distance}
+        data-pending={pull.pending}
+      />
+    );
+  }
+  render(<Harness />);
+  const el = screen.getByTestId("pull");
+  vi.spyOn(el, "getBoundingClientRect").mockReturnValue({
+    left: 0,
+    right: 390,
+    width: 390,
+  } as DOMRect);
+  Object.defineProperty(el, "clientHeight", { value: 600 });
+  return { el, refresh, setLoading };
+}
+test("pull at top refreshes once, holds60 and clears after success or failure settles", async () => {
+  const { el, refresh, setLoading } = await pullHarness();
+  touch(el, "touchstart", 100, 0);
+  expect(touch(el, "touchmove", 102, 250).defaultPrevented).toBe(true);
+  touch(el, "touchend", 102, 250);
+  expect(refresh).toHaveBeenCalledTimes(1);
+  expect(el.dataset.distance).toBe("60");
+  touch(el, "touchstart", 100, 0);
+  touch(el, "touchmove", 100, 260);
+  touch(el, "touchend", 100, 260);
+  expect(refresh).toHaveBeenCalledTimes(1);
+  await act(async () => setLoading(false));
+  expect(el.dataset.pending).toBe("false");
+  expect(el.dataset.distance).toBe("0");
+});
+test("pull ignores horizontal swipes, scrolled lists, edge gestures, cancellation and short pulls", async () => {
+  const { el, refresh } = await pullHarness();
+  touch(el, "touchstart", 100, 0);
+  expect(touch(el, "touchmove", 200, 30).defaultPrevented).toBe(false);
+  touch(el, "touchend", 200, 300);
+  el.scrollTop = 12;
+  touch(el, "touchstart", 100, 0);
+  touch(el, "touchmove", 100, 300);
+  touch(el, "touchend", 100, 300);
+  el.scrollTop = 0;
+  touch(el, "touchstart", 2, 0);
+  touch(el, "touchmove", 2, 300);
+  touch(el, "touchend", 2, 300);
+  touch(el, "touchstart", 100, 0);
+  touch(el, "touchmove", 100, 300);
+  touch(el, "touchcancel", 100, 300);
+  touch(el, "touchstart", 100, 0);
+  touch(el, "touchmove", 100, 30);
+  touch(el, "touchend", 100, 30);
+  expect(refresh).not.toHaveBeenCalled();
+  expect(el.dataset.distance).toBe("0");
+});
+
+test("instant refresh settlement clears pull even when React batches away loading=true", async () => {
+  const { useMobilePullRefresh } = await import("../loom/useMobilePullRefresh");
+  function Instant() {
+    const ref = React.useRef<HTMLDivElement>(null),
+      [completed, setCompleted] = React.useState(0);
+    const p = useMobilePullRefresh(
+      ref,
+      true,
+      false,
+      () => setCompleted((v) => v + 1),
+      completed,
+    );
+    return <div ref={ref} data-testid="instant" data-pending={p.pending} />;
+  }
+  render(<Instant />);
+  const el = screen.getByTestId("instant");
+  Object.defineProperty(el, "clientHeight", { value: 600 });
+  vi.spyOn(el, "getBoundingClientRect").mockReturnValue({
+    left: 0,
+    right: 390,
+    width: 390,
+  } as DOMRect);
+  touch(el, "touchstart", 100, 0);
+  touch(el, "touchmove", 100, 260);
+  touch(el, "touchend", 100, 260);
+  await waitFor(() => expect(el.dataset.pending).toBe("false"));
 });

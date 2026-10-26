@@ -1,0 +1,31 @@
+{
+  "repository": "https://github.com/botiverse/mobile",
+  "commit": "eff04722b5904a0d001115d90d3ec49d59fb4f03",
+  "scope": "Selected immutable native source for mobile Web semantic ports; not executable Kotlin dependency or proof of installed App version",
+  "files": [
+    {
+      "path": "LICENSE",
+      "sha256": "7b0afda469123fdf2758d16941aa1a5a216e73ba5bc241165a36cac49c20b1b5"
+    },
+    {
+      "path": "NOTICE",
+      "sha256": "fa734d1ac45f90d6c83af7ee4a7906cf994f3e90647e483f93c561bc765d18f0"
+    },
+    {
+      "path": "compose/shared/src/commonMain/kotlin/build/raft/app/ActivityConversationSwipe.kt",
+      "sha256": "ada0ca55b95a8326992b897a12e193e713f853c52143c452ce71344abcd6db0a"
+    },
+    {
+      "path": "compose/shared/src/commonMain/kotlin/build/raft/app/SharedInboxPanel.kt",
+      "sha256": "eed49e10c8e8c10aeaa8650a2ccb43b5413a584941c5b9f72e26df91245bf4d9"
+    },
+    {
+      "path": "compose/shared/src/commonMain/kotlin/build/raft/app/components/RaftPullToRefresh.kt",
+      "sha256": "0e92a10f0d07562f8ccfe9ff11444973ad2f2d5c9721851f40fbf3156c081efe"
+    },
+    {
+      "path": "compose/shared/src/commonMain/kotlin/build/raft/app/components/RaftPullToRefreshController.kt",
+      "sha256": "2180b0f5c5f819bc84d98eed951bedeedacb1a75e26337daca5f12a3d740ca18"
+    }
+  ]
+}

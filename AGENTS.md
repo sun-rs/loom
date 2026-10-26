@@ -519,6 +519,18 @@ recipe: visual completion is by swipe with bounded undo; keyboard focus can
 reveal the accessible action. Desktop hover completion remains unchanged. This is an owner-approved Web adaptation, not a claim of copied
 native iOS source or multi-workspace support.
 
+### Native mobile reference boundary
+
+Mobile Web must be compared against both the pinned Web source and the selected
+native reference at `frontends/raft/upstream/raft-mobile-source/source-lock.json`.
+Use `scripts/official-web/audit-mobile-source.mjs` on an independent candidate;
+verify immutable originals, retain notices, and trace semantic/layout changes.
+This reference is not an executable Kotlin dependency or whole-App parity.
+Prefer official Web scenario primitives; native-only interactions require
+explicitly recorded browser adapters and focused gesture/cancel/keyboard tests.
+Do not infer the owner's installed iOS release from repository HEAD. Keep native
+and Web source versions and physical-device versus simulated evidence separate.
+
 ### Mandatory Raft UI layering (owner approved 2026-10-19)
 
 For evo, adopt the official Raft UI rules as the implementation contract, not

@@ -38,7 +38,7 @@ test("official mobile swipe arbitrates edge/scroll, distance and fling without a
     );
 });
 test("row gesture uses the existing durable action and is limited to touch narrow screens", () => {
-  assert.match(read("ActivityMessageRow.tsx"), /useOfficialRowSwipe/);
+  assert.match(read("ActivityMessageRow.tsx"), /useMobileActivitySwipe/);
   assert.match(read("ActivityMessageRow.tsx"), /onFullSwipe: swipeDone/);
   assert.match(read("ActivityMessageRow.tsx"), /swipeDoneClass/);
   assert.match(read("useActivitySwipe.ts"), /\(pointer: coarse\)/);

@@ -1,3 +1,5 @@
+import { useMobilePullRefresh } from "./useMobilePullRefresh";
+import { Spinner } from "raft-ui";
 import {
   scopedSearchLabel,
   searchEverywhereParams,
@@ -210,6 +212,8 @@ export default function DiscoveryPage({
     (params.get("range") && params.get("range") !== "any"),
   );
   const [tick, setTick] = useState(0);
+  const [headerRevision, setHeaderRevision] = useState(0);
+  const [scrollTopRequest, setScrollTopRequest] = useState(0);
   const [nextUnreadRequest, setNextUnreadRequest] = useState(0);
   // Upstream double-click reloads the inbox before resolving its pending focus.
   // Keep the refresh token after consumption so clearing intent never reloads it.
@@ -290,8 +294,9 @@ export default function DiscoveryPage({
           <ActivityHeader
             client={client}
             workspaceId={workspaceId}
-            revision={tick}
+            revision={tick + headerRevision}
             onRefresh={() => setTick((v) => v + 1)}
+            onScrollTop={() => setScrollTopRequest((v) => v + 1)}
             onNextUnread={() => setNextUnreadRequest((v) => v + 1)}
             renderToolbar={(actions) => (
               <ActivityFilters
@@ -318,6 +323,8 @@ export default function DiscoveryPage({
             scopedConversation={scopedConversation}
             scopedIdle={scopedIdle}
             searchEverywhere={searchEverywhere}
+            onRefreshCounts={() => setHeaderRevision((v) => v + 1)}
+            scrollTopRequest={scrollTopRequest}
             nextUnreadRequest={nextUnreadRequest}
             focusRequest={focusRequest === focusRefresh ? focusRequest : 0}
             consumeFocus={consumeFocus}
@@ -391,6 +398,8 @@ function Results({
   searchEverywhere,
   focusRequest,
   nextUnreadRequest,
+  scrollTopRequest,
+  onRefreshCounts,
   consumeFocus,
   history,
   onChooseHistory,
@@ -417,6 +426,8 @@ function Results({
   searchEverywhere: () => void;
   focusRequest: number;
   nextUnreadRequest: number;
+  scrollTopRequest: number;
+  onRefreshCounts: () => void;
   consumeFocus: () => void;
   railHandler: RefObject<SearchRailHandler>;
   overlayHome?: () => void;
@@ -479,6 +490,29 @@ function Results({
     Boolean(principalId),
   );
   const rowSwipe = useActivitySwipe(mode === "activity", activityScroll.ref);
+  const pull = useMobilePullRefresh(
+    activityScroll.ref,
+    rowSwipe.enabled,
+    loading,
+    () => {
+      rowSwipe.onOpenChange("", false);
+      setRetry((v) => v + 1);
+      onRefreshCounts();
+    },
+    activity.completed,
+  );
+  const consumedTop = useRef(scrollTopRequest);
+  useEffect(() => {
+    if (consumedTop.current === scrollTopRequest) return;
+    consumedTop.current = scrollTopRequest;
+    if (mode === "activity")
+      activityScroll.ref.current?.scrollTo({
+        top: 0,
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "instant"
+          : "smooth",
+      });
+  }, [scrollTopRequest, mode, activityScroll.ref]);
   const focusedActivityId = useFirstUnreadFocus(
     mode === "activity" ? focusRequest : 0,
     consumeFocus,
@@ -737,6 +771,23 @@ function Results({
           : "min-h-0 overflow-y-auto mobile-nav-clearance"
       }
     >
+      {mode === "activity" && pull.distance > 0 && (
+        <div
+          role="status"
+          aria-live="polite"
+          aria-label={
+            pull.pending
+              ? "正在刷新动态"
+              : pull.distance >= 100
+                ? "松开刷新"
+                : "下拉刷新"
+          }
+          className="flex shrink-0 items-center justify-center text-foreground-muted"
+          style={{ height: pull.distance }}
+        >
+          <Spinner />
+        </div>
+      )}
       {scopedConversation && (
         <OfficialScopedSearchEntry
           query={query}
@@ -806,7 +857,7 @@ function Results({
         ) : (
           <SearchHomeEmpty />
         )
-      ) : loading ? (
+      ) : loading && !pull.pending ? (
         mode === "activity" ? (
           <ConversationCardSkeleton />
         ) : (
