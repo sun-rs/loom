@@ -1,10 +1,10 @@
+import { DialogSheetContent } from "raft-ui/wip";
 import { uiActionProps } from "./ui-action-props.ts";
 import { useEffect, useState } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
 import type { ClientRunAttemptUsageGetResponse } from "@rah-os/protocol";
 import {
   Dialog,
-  DialogContent,
   DialogHeader,
   DialogTitle,
   DialogClose,
@@ -53,7 +53,7 @@ export default function RunUsageDialog({
         if (!open) onClose();
       }}
     >
-      <DialogContent className="max-w-lg max-h-[90dvh] overflow-y-auto">
+      <DialogSheetContent className="max-w-lg max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>运行用量</DialogTitle>
           <DialogClose aria-label="关闭用量" />
@@ -126,7 +126,7 @@ export default function RunUsageDialog({
             </div>
           )}
         </DialogBody>
-      </DialogContent>
+      </DialogSheetContent>
     </Dialog>
   );
 }

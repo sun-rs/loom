@@ -629,6 +629,7 @@ export default function AgentPage({
       )}
       {edit && edit.kind !== "delete" && edit.kind !== "create" && (
         <ActionDialog
+          sheet={edit.kind === "edit"}
           title={
             edit.kind === "edit"
               ? "编辑角色"

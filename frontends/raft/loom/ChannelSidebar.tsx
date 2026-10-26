@@ -1,3 +1,4 @@
+import { DialogCommit } from "raft-ui/wip";
 import {
   navigationUnread,
   type NavigationUnread,
@@ -618,6 +619,7 @@ export default function ChannelSidebar({
       )}
       {edit && (
         <ActionDialog
+          sheet={edit.kind === "channel"}
           title={
             edit.kind === "channel"
               ? "新建频道"
@@ -655,6 +657,7 @@ export default function ChannelSidebar({
             </>
           ) : (
             <form
+              id="loom-sidebar-edit-form"
               onSubmit={(event) => {
                 event.preventDefault();
                 if (busy || !title.trim()) return;
@@ -735,14 +738,15 @@ export default function ChannelSidebar({
                   </details>
                 </>
               )}
-              <Button
+              <DialogCommit
+                form="loom-sidebar-edit-form"
                 {...uiActionProps.dialogSave}
                 className="mt-3"
                 type="submit"
                 disabled={busy || !title.trim()}
               >
                 {edit.kind === "channel" ? "创建频道" : "保存分组"}
-              </Button>
+              </DialogCommit>
             </form>
           )}
         </ActionDialog>

@@ -1,3 +1,4 @@
+import { DialogSheetContent } from "raft-ui/wip";
 import { useRouteIntentOwner } from "./useIntentRoute.ts";
 import { uiActionProps } from "./ui-action-props.ts";
 import { useEffect, useState, type ReactNode } from "react";
@@ -84,18 +85,21 @@ export function ActionMenu({
   );
 }
 export function ActionDialog({
+  sheet = false,
   title,
   manager,
   error,
   onClose,
   children,
 }: {
+  sheet?: boolean;
   title: string;
   manager: ManagementClient;
   error: string;
   onClose: () => void;
   children: ReactNode;
 }) {
+  const Content = sheet ? DialogSheetContent : DialogContent;
   return (
     <Dialog
       open
@@ -104,7 +108,7 @@ export function ActionDialog({
         if (!open && manager.writes.state === "idle") onClose();
       }}
     >
-      <DialogContent className="max-h-[90dvh] overflow-y-auto">
+      <Content className="max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogClose
@@ -116,7 +120,7 @@ export function ActionDialog({
           {children}
           <OperationStatus manager={manager} error={error} />
         </DialogBody>
-      </DialogContent>
+      </Content>
     </Dialog>
   );
 }

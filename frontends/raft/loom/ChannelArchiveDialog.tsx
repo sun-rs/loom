@@ -24,6 +24,7 @@ export default function ChannelArchiveDialog({
 }) {
   return (
     <ActionDialog
+      sheet={target === "list"}
       title={target === "list" ? "已归档频道" : "归档频道"}
       manager={manager}
       error={error}

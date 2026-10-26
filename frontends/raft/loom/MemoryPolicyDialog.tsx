@@ -1,11 +1,12 @@
+import { DialogSheetContent, DialogCommit } from "raft-ui/wip";
 import { uiActionProps } from "./ui-action-props.ts";
 // Native Dialog/FormField/Select/Switch composition; Kernel owns effective access.
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useId } from "react";
 import {
   Button,
   Switch,
   Dialog,
-  DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogBody,
@@ -31,6 +32,7 @@ export default function MemoryPolicyDialog({
   bridge: LoomChannelClient;
   onClose: () => void;
 }) {
+  const formId = useId();
   const owner = useMemo(() => new MemoryPolicyClient(bridge.client), [bridge]);
   const [state, setState] = useState(owner.writes.state),
     [base, setBase] = useState<MemoryPolicy>(),
@@ -96,11 +98,12 @@ export default function MemoryPolicyDialog({
   return (
     <Dialog
       open
+      disablePointerDismissal
       onOpenChange={(open) => {
         if (!open && !busy) onClose();
       }}
     >
-      <DialogContent className="max-h-[90dvh] overflow-y-auto">
+      <DialogSheetContent>
         <DialogHeader>
           <DialogTitle>频道记忆权限</DialogTitle>
           <DialogClose disabled={busy} aria-label="关闭记忆权限" />
@@ -112,6 +115,7 @@ export default function MemoryPolicyDialog({
           {!draft && !error && <p role="status">正在读取记忆权限…</p>}
           {draft && (
             <form
+              id={formId}
               onSubmit={(e) => {
                 e.preventDefault();
                 if (!base || busy) return;
@@ -191,13 +195,16 @@ export default function MemoryPolicyDialog({
                   </div>
                 );
               })}
-              <Button
-                {...uiActionProps.formSave}
-                type="submit"
-                disabled={busy || !base || !policyPatch(base, draft)}
-              >
-                保存权限
-              </Button>
+              <DialogFooter>
+                <DialogCommit
+                  form={formId}
+                  {...uiActionProps.formSave}
+                  type="submit"
+                  disabled={busy || !base || !policyPatch(base, draft)}
+                >
+                  保存权限
+                </DialogCommit>
+              </DialogFooter>
             </form>
           )}
           {error && (
@@ -233,7 +240,7 @@ export default function MemoryPolicyDialog({
             </div>
           )}
         </DialogBody>
-      </DialogContent>
+      </DialogSheetContent>
     </Dialog>
   );
 }
