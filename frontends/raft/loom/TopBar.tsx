@@ -23,6 +23,13 @@ export default function TopBar({
     const root = document.documentElement;
     const update = () => {
       const r = el.getBoundingClientRect();
+      // A consolidated touch header has no search-field anchor. Use the
+      // official overlay's fallback rather than publishing a zero-size field.
+      if (r.width === 0) {
+        root.style.removeProperty(DESKTOP_SEARCH_ANCHOR_VARS.top);
+        root.style.removeProperty(DESKTOP_SEARCH_ANCHOR_VARS.width);
+        return;
+      }
       root.style.setProperty(
         DESKTOP_SEARCH_ANCHOR_VARS.top,
         `${Number(r.top.toFixed(3))}px`,

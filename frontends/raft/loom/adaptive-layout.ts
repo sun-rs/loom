@@ -31,3 +31,19 @@ export function adaptLayoutMedia(query: string): string {
       layoutQueries.single,
     );
 }
+
+/** Owner-approved Loom exception: consolidate chrome only in primary reading. */
+export function compactConversationRoute(
+  params: URLSearchParams,
+  primaryRoom: boolean,
+) {
+  return (
+    primaryRoom &&
+    (params.get("view") ?? "channels") === "channels" &&
+    params.has("room") &&
+    params.get("chat") !== "list" &&
+    params.get("saved") !== "1" &&
+    !params.has("thread") &&
+    !params.has("side")
+  );
+}

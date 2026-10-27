@@ -1,4 +1,4 @@
-import { layoutQueries } from "./adaptive-layout.ts";
+import { compactConversationRoute, layoutQueries } from "./adaptive-layout.ts";
 import { MobilePageNavigation } from "./MobilePageNavigation";
 import {
   showMobileRootNavigation,
@@ -24,7 +24,9 @@ import { createElement, type ReactNode } from "react";
 import { showToast } from "../packages/web/src/components/toastBridge.ts";
 import { LazySavedPanel as SavedPanel } from "./LazyPages.tsx";
 import { MessageReactionsProvider } from "./MessageReactions.tsx";
-import { SystemNotificationsProvider } from "./SystemNotifications.tsx";
+import SystemNotifications, {
+  SystemNotificationsProvider,
+} from "./SystemNotifications.tsx";
 import ChannelTabs from "./ChannelTabs.tsx";
 import { useRecordSearchVisit } from "./SearchRecent.tsx";
 import { useSearchDestination } from "./useSearchDestination.ts";
@@ -374,6 +376,9 @@ function Channel({
                     </>
                   ) : (
                     <>
+                      <span className="loom-conversation-notifications">
+                        <SystemNotifications flavor="mobile-navbar" />
+                      </span>
                       <OverflowMenuTrigger
                         labelId="message.chatPanel.searchChannel"
                         testId="channel-topbar-search"
@@ -1053,6 +1058,16 @@ export default function ChannelApp() {
           inert={bootstrapping ? true : undefined}
           className={`min-h-0 flex-1 flex-col overflow-hidden font-display ${bootstrapping ? "invisible" : ""}`}
           data-testid="loom-channel-app"
+          data-compact-conversation={
+            compactConversationRoute(
+              params,
+              Boolean(
+                selected && !selected.instancePrivateBox && !selected.side,
+              ),
+            )
+              ? "true"
+              : undefined
+          }
         >
           {directory && (
             <>

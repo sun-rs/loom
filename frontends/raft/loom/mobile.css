@@ -529,3 +529,19 @@
     }
   }
 }
+
+/* Loom touch landscape conversation chrome */
+.loom-conversation-notifications {
+  display: none;
+}
+@media (pointer: coarse) and (min-width: 840px) and (orientation: landscape) {
+  [data-compact-conversation="true"] > [data-testid="app-top-bar"] {
+    display: none;
+  }
+  [data-compact-conversation="true"]
+    .loom-chat-header
+    .loom-conversation-notifications {
+    display: flex;
+    align-items: center;
+  }
+}
