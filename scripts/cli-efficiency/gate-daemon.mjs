@@ -82,6 +82,7 @@ export async function prepareGateDaemon({
   consumerId,
   launchRecordPath,
   memoryRecordPath,
+  environment,
 }) {
   const stateDirectory = join(root, "state");
   const realCli = execFileSync("which", [provider], {
@@ -137,7 +138,10 @@ export async function prepareGateDaemon({
     child = spawn(
       process.execPath,
       [new URL("./daemon.mjs", import.meta.url).pathname, configPath],
-      { stdio: ["ignore", "pipe", "pipe"] },
+      {
+        stdio: ["ignore", "pipe", "pipe"],
+        env: { ...process.env, ...environment },
+      },
     );
     exit = new Promise((r) =>
       child.once("close", (code, signal) => r({ code, signal })),

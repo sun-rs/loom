@@ -386,6 +386,9 @@ export function createConfiguredRuntime(input: {
           {
             nativeFinalText:
               (input.runtimeProfileRevision.manifest.adapter.kind ===
+                "codex-app-server/v1" &&
+                process.env.LOOM_CODEX_NATIVE_FINAL_TRIAL === "1") ||
+              (input.runtimeProfileRevision.manifest.adapter.kind ===
                 "claude-stream-json/v1" &&
                 process.env.LOOM_CLAUDE_NATIVE_FINAL_TRIAL === "1") ||
               (input.runtimeProfileRevision.manifest.adapter.kind ===

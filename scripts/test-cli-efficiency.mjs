@@ -1,3 +1,4 @@
+import { gateReplyTransport } from "./cli-efficiency/reply-transport.mjs";
 import { claudeGateRoute } from "./cli-efficiency/claude-route.mjs";
 // Opt-in paid release gate. Never included in npm run check.
 import assert from "node:assert/strict";
@@ -55,6 +56,15 @@ assert.ok(
 // here before any process starts. See efficiency-config.mjs.
 const config = parseEfficiencyEnv(process.env);
 const { provider, model, effort, bindingId, order } = config;
+config.replyTransport = gateReplyTransport(
+  provider,
+  process.env.RAH_EFFICIENCY_REPLY_TRANSPORT,
+);
+if (config.replyTransport.mode === "native-final" && provider !== "kimi")
+  assert.ok(
+    order.every((kind) => kind === "native" || kind === "role-warm"),
+    "Native final requires the warm product adapter for this CLI",
+  );
 if (provider === "claude") nativeClaudeEnvironment(config);
 const cliVersion = execFileSync(provider, ["--version"], {
   encoding: "utf8",

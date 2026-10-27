@@ -231,15 +231,17 @@ const server = createServer(async (socket) => {
           type: "agentMessage",
           id: `final-${turn.id}`,
           phase: has("commentary-envelope") ? "commentary" : "final_answer",
-          text: JSON.stringify({
-            kind: "room.reply",
-            version: 1,
-            body: `FAKE CODEX FINAL ${turnCounter}`,
-            final: true,
-            basedOnRoomSeq: Number(
-              /--based-on-room-seq (\d+)/u.exec(turn.text)?.[1],
-            ),
-          }),
+          text: has("plain-final")
+            ? `FAKE CODEX FINAL ${turnCounter}`
+            : JSON.stringify({
+                kind: "room.reply",
+                version: 1,
+                body: `FAKE CODEX FINAL ${turnCounter}`,
+                final: true,
+                basedOnRoomSeq: Number(
+                  /--based-on-room-seq (\d+)/u.exec(turn.text)?.[1],
+                ),
+              }),
         },
       });
       record({ event: "envelope-emitted", turnId: turn.id });

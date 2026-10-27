@@ -56,6 +56,7 @@ type Harness = Awaited<ReturnType<typeof harness>>;
 async function harness(
   options: {
     explicitFinalOutput?: boolean;
+    nativeFinalText?: boolean;
     skipDeliveryRegistration?: boolean;
     failBinding?: boolean;
     hostHygiene?: boolean;
@@ -182,8 +183,14 @@ async function harness(
       new CodexWarmAdapter({
         cwd: directory,
         ...(options.explicitFinalOutput ? { explicitFinalOutput: true } : {}),
+        ...(options.nativeFinalText ? { nativeFinalText: true } : {}),
         recordDeliveryAcceptance: (input) => {
-          if (options.explicitFinalOutput && !options.skipDeliveryRegistration)
+          if (options.nativeFinalText && options.skipDeliveryRegistration)
+            throw new Error("FAKE delivery registration failed");
+          if (
+            (options.explicitFinalOutput || options.nativeFinalText) &&
+            !options.skipDeliveryRegistration
+          )
             kernel.markPresentedDeliverySent(host, {
               activationId: input.activationId,
               consumerId: input.consumerId,
@@ -233,6 +240,7 @@ async function harness(
             env: input.env,
             participantId: input.participantId,
             turnHandle: input.turnHandle,
+            ...(input.onPresented ? { onPresented: input.onPresented } : {}),
           }),
         runtimeEnvironment: async (input) => {
           const previous = sessions.get(input.participantId);
@@ -2561,3 +2569,65 @@ for (const serviceTier of ["default", "fast"] as const) {
     }
   });
 }
+
+test("warm Codex native text: one continuous session publishes plain final without reply tools or output schema", async () => {
+  const state = await harness({ nativeFinalText: true });
+  try {
+    for (let turn = 1; turn <= 2; turn++) {
+      state.post(`[fake:envelope] [fake:plain-final] question ${turn}`);
+      const result = await state.current.agentHost.reconcileOnce();
+      assert.equal(result.state, "completed", JSON.stringify(result));
+      const replies = sql(
+        state,
+        "SELECT body FROM messages WHERE actor_id=? ORDER BY rowid",
+        state.participantId,
+      );
+      assert.equal(replies.length, turn);
+      assert.equal(replies.at(-1)!.body, `FAKE CODEX FINAL ${turn}`);
+    }
+    const requests = state
+      .records()
+      .filter((r) => r.event === "request" && r.method === "turn/start");
+    assert.equal(requests.length, 2);
+    for (const r of requests)
+      assert.equal(
+        (r.params as Record<string, unknown>).outputSchema,
+        undefined,
+      );
+    for (const r of state.records().filter((r) => r.event === "turn")) {
+      assert.match(String(r.text), /Reply transport: native-final-text/);
+      assert.doesNotMatch(String(r.text), /Use loom_reply for replies/);
+    }
+    assert.equal(state.records().filter((r) => r.event === "worker").length, 0);
+    assert.equal(
+      new Set(orderedRuns(state).map((r) => r.instanceRuntimeId)).size,
+      1,
+    );
+  } finally {
+    await state.cleanup();
+  }
+});
+for (const [label, options, token] of [
+  ["commentary", { nativeFinalText: true }, "[fake:commentary-envelope]"],
+  ["interrupted", { nativeFinalText: true }, "[fake:envelope-interrupted]"],
+  [
+    "registration failure",
+    { nativeFinalText: true, skipDeliveryRegistration: true },
+    "",
+  ],
+] as const)
+  test(`warm Codex native text rejects ${label}`, async () => {
+    const s = await harness(options);
+    try {
+      s.post(`[fake:envelope] [fake:plain-final] ${token}`);
+      const r = await s.current.agentHost.reconcileOnce();
+      assert.notEqual(r.state, "completed");
+      assert.equal(
+        sql(s, "SELECT * FROM messages WHERE actor_id=?", s.participantId)
+          .length,
+        0,
+      );
+    } finally {
+      await s.cleanup();
+    }
+  });

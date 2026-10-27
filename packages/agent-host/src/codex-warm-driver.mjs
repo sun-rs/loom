@@ -1,5 +1,8 @@
 import { createCodexFinalOutput } from "./codex-final-output.js";
-import { finalOutputInstructions } from "./final-output-instructions.js";
+import {
+  finalOutputInstructions,
+  nativeFinalTextInstructions,
+} from "./final-output-instructions.js";
 // S2-a warm Codex driver (S2 spec §2/§4, contract §6a): one long-lived
 // `codex app-server --listen unix://<0700 dir>/app-server.sock` per Role
 // instance. The driver is the process-group leader and the Host's only
@@ -225,9 +228,12 @@ try {
     config: { ...memoryConfig("codex") },
     approvalPolicy: "never",
     cwd: process.cwd(),
-    developerInstructions: finalOutputInstructions(
-      options.prompt,
-      options.finalOutputMode === "enabled",
+    developerInstructions: nativeFinalTextInstructions(
+      finalOutputInstructions(
+        options.prompt,
+        options.finalOutputMode === "enabled",
+      ),
+      options.finalOutputMode === "native-text",
     ),
     experimentalRawEvents: true,
     ...codexWorkspaceRoots(process.cwd(), options.additionalDirectories),
@@ -879,7 +885,10 @@ function parseArguments(args) {
     if (value === undefined) throw new Error(`missing value for ${name}`);
     if (name === "--executable") parsed.executable = value;
     else if (name === "--tool-access-mode") parsed.toolAccessMode = value;
-    else if (name === "--final-output-mode" && value === "enabled")
+    else if (
+      name === "--final-output-mode" &&
+      ["enabled", "native-text"].includes(value)
+    )
       parsed.finalOutputMode = value;
     else if (name === "--prompt") parsed.prompt = value;
     else if (name === "--prompt-file")

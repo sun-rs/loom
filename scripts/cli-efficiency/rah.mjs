@@ -61,6 +61,7 @@ export async function rahArm({
     processes: arm.processes,
     save,
     consumerId: "efficiency-gate",
+    environment: config.replyTransport?.environment,
   });
   const { spec, prepared, stateDirectory, post, head } = gate;
   // OpenCode: the compaction options the guarded serve was given (evidence).

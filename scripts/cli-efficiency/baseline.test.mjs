@@ -238,3 +238,20 @@ test("native denominator cannot hide unreported native requests behind complete 
     /request.*coverage/i,
   );
 });
+
+test("native-final and tool posting never share a benchmark identity", () => {
+  const input = fixture();
+  const worker = createCostBaseline(input);
+  const native = createCostBaseline({
+    ...input,
+    config: {
+      ...input.config,
+      replyTransport: {
+        mode: "native-final",
+        environment: { LOOM_CODEX_NATIVE_FINAL_TRIAL: "1" },
+      },
+    },
+  });
+  assert.notEqual(native.baselineId, worker.baselineId);
+  assert.equal(native.identity.delivery.loom, "host-bound-native-final");
+});

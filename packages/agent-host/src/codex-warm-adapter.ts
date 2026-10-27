@@ -243,6 +243,7 @@ type LaunchCapture = {
 
 type TurnBinding = {
   nativeFinalSeq?: number;
+  nativeDeliveryAccepted?: boolean;
   finalOutput?: WorkerFinalOutput;
   finalOutputDone?: boolean;
   activationId: string;
@@ -293,7 +294,8 @@ export class CodexWarmAdapter implements RuntimeAdapter {
   #nativeFinalText(): boolean {
     return (
       this.#options.nativeFinalText === true &&
-      (this.#driver === CLAUDE_WARM_DRIVER ||
+      (this.#driver === CODEX_WARM_DRIVER ||
+        this.#driver === CLAUDE_WARM_DRIVER ||
         this.#driver === OPENCODE_WARM_DRIVER)
     );
   }
@@ -433,6 +435,8 @@ export class CodexWarmAdapter implements RuntimeAdapter {
             activation,
             acceptance,
           );
+          binding.nativeDeliveryAccepted =
+            this.#options.recordDeliveryAcceptance !== undefined;
         }
         return {
           runtimeNoticeAccepted:
@@ -1004,7 +1008,13 @@ export class CodexWarmAdapter implements RuntimeAdapter {
         withFinalOutputGuidance(
           withWorkerMcpGuidance(
             withWorkerTurnHandle(base, handle),
-            runtime.workerMcp !== undefined && !this.#explicitFinalOutput(),
+            runtime.workerMcp !== undefined &&
+              !this.#explicitFinalOutput() &&
+              !(
+                this.#nativeFinalText() &&
+                bodied !== undefined &&
+                nativeFinalSeq != null
+              ),
           ),
           this.#explicitFinalOutput(),
         ) +
@@ -1040,6 +1050,7 @@ export class CodexWarmAdapter implements RuntimeAdapter {
     await Promise.all(turn.integrityWrites);
     const finalOutput =
       binding.finalOutput &&
+      (!this.#nativeFinalText() || binding.nativeDeliveryAccepted === true) &&
       outcome.kind === "drained" &&
       outcome.status === "completed" &&
       !outcome.errorMessage &&

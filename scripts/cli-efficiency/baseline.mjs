@@ -122,7 +122,13 @@ export function createCostBaseline({
     },
     delivery: {
       native: "native-final-text",
-      loom: "explicit-room-post",
+      loom:
+        config.replyTransport?.mode === "native-final"
+          ? "host-bound-native-final"
+          : "explicit-room-post",
+      ...(config.replyTransport === undefined
+        ? {}
+        : { transportSelection: config.replyTransport }),
       successfulAnswer:
         "review-prefix-and-80-characters; human-quality-review-required",
       final: "explicit-only; never infer completion from stdout",
