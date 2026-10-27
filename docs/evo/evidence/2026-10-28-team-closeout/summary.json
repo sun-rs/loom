@@ -1,0 +1,1380 @@
+{
+  "schema": "team-closeout-evidence/v1",
+  "sourceRevision": "93c25d23",
+  "models": {
+    "codex": "gpt-6-luna/low",
+    "kimi": "kimi-code/k3-256k/low"
+  },
+  "versions": {
+    "codex": "0.164.0",
+    "kimi": "2.1.1"
+  },
+  "observedTotalsIncludingFailedSetup": {
+    "input": 2642260,
+    "output": 40039,
+    "cached": 2396160,
+    "generations": 117
+  },
+  "rows": [
+    {
+      "sample": "pair1-loom",
+      "status": "execution-failed",
+      "runnerError": "Error: Owner interrupted",
+      "usage": {
+        "input": 23520,
+        "cached": 18944,
+        "output": 58,
+        "generations": 1,
+        "complete": false
+      },
+      "measurementError": "AssertionError [ERR_ASSERTION]: Incomplete accounting",
+      "receipts": {
+        "kimi": {
+          "sha256": "fe59e666ce7d4d69e0cee34861659b6b63a1d9fa458227461d6aad6e28c31716",
+          "usage": {
+            "input": 23520,
+            "cached": 18944,
+            "output": 58,
+            "generations": 1,
+            "requests": 1,
+            "complete": true
+          },
+          "agentLedgerDirectories": ["main"]
+        }
+      },
+      "productMatches": true,
+      "externalChecks": [
+        {
+          "id": "basic",
+          "passed": false
+        },
+        {
+          "id": "many-and-zero",
+          "passed": false
+        },
+        {
+          "id": "empty",
+          "passed": false
+        },
+        {
+          "id": "cancelled-skips-validation",
+          "passed": false
+        },
+        {
+          "id": "tax-half-up",
+          "passed": false
+        },
+        {
+          "id": "aggregate-tax-once",
+          "passed": false
+        },
+        {
+          "id": "discount-before-tax",
+          "passed": false
+        },
+        {
+          "id": "fractional-discounts-aggregate",
+          "passed": false
+        },
+        {
+          "id": "invalid-negative",
+          "passed": false
+        },
+        {
+          "id": "invalid-nan",
+          "passed": false
+        },
+        {
+          "id": "invalid-float",
+          "passed": false
+        },
+        {
+          "id": "invalid-boolean",
+          "passed": false
+        },
+        {
+          "id": "invalid-exponent",
+          "passed": false
+        },
+        {
+          "id": "invalid-whitespace",
+          "passed": false
+        },
+        {
+          "id": "invalid-too-many-decimals",
+          "passed": false
+        },
+        {
+          "id": "missing-price",
+          "passed": false
+        },
+        {
+          "id": "discount-over-100",
+          "passed": false
+        },
+        {
+          "id": "bad-cancelled",
+          "passed": false
+        },
+        {
+          "id": "tax-over-100",
+          "passed": false
+        },
+        {
+          "id": "groups-grand-not-sum-rounded",
+          "passed": false
+        },
+        {
+          "id": "missing-groups-sort",
+          "passed": false
+        },
+        {
+          "id": "cli-file",
+          "passed": false
+        },
+        {
+          "id": "cli-stdin",
+          "passed": false
+        },
+        {
+          "id": "cli-error",
+          "passed": false
+        },
+        {
+          "id": "no-per-line-rounding",
+          "passed": false
+        },
+        {
+          "id": "empty-grouped",
+          "passed": false
+        },
+        {
+          "id": "large-decimal-precision",
+          "passed": false
+        },
+        {
+          "id": "integer-over-range",
+          "passed": false
+        },
+        {
+          "id": "negative-price",
+          "passed": false
+        },
+        {
+          "id": "negative-discount",
+          "passed": false
+        },
+        {
+          "id": "tax-float",
+          "passed": false
+        },
+        {
+          "id": "tax-on-exact-unrounded-net",
+          "passed": false
+        },
+        {
+          "id": "unsupported-grouping",
+          "passed": false
+        },
+        {
+          "id": "cli-malformed-json",
+          "passed": false
+        },
+        {
+          "id": "cli-unknown-request-key",
+          "passed": false
+        },
+        {
+          "id": "cli-no-argument",
+          "passed": false
+        },
+        {
+          "id": "cli-missing-file",
+          "passed": false
+        },
+        {
+          "id": "cli-two-arguments",
+          "passed": false
+        },
+        {
+          "id": "unrelated-active-false-counted",
+          "passed": false
+        },
+        {
+          "id": "unrelated-active-false-still-validates",
+          "passed": false
+        }
+      ],
+      "selfTestsPassed": false,
+      "independentReviewAndFinalDelivery": false,
+      "qualityReviewMethod": "lead reviewed actual transcript handoffs, reviewer tool executions, final response and external oracle; not blinded",
+      "recoveryEvents": [],
+      "rawResultSha256": "c356639d40bfaa00468e245784bc402c457baca73bede6ff1cf54e1b7569c180"
+    },
+    {
+      "sample": "pair1-native",
+      "status": "execution-failed",
+      "runnerError": "Error: Owner interrupted",
+      "usage": {
+        "input": 22307,
+        "cached": 18944,
+        "output": 58,
+        "generations": 1,
+        "complete": false
+      },
+      "measurementError": "AssertionError [ERR_ASSERTION]: Incomplete accounting",
+      "receipts": {
+        "kimi": {
+          "sha256": "9c74b763b2b577dcfea111b6999726412123a1621858fdbf1d27807e699284f3",
+          "usage": {
+            "input": 22307,
+            "cached": 18944,
+            "output": 58,
+            "generations": 1,
+            "requests": 1,
+            "complete": true
+          },
+          "agentLedgerDirectories": ["main"]
+        }
+      },
+      "externalChecks": [
+        {
+          "id": "basic",
+          "passed": false
+        },
+        {
+          "id": "many-and-zero",
+          "passed": false
+        },
+        {
+          "id": "empty",
+          "passed": false
+        },
+        {
+          "id": "cancelled-skips-validation",
+          "passed": false
+        },
+        {
+          "id": "tax-half-up",
+          "passed": false
+        },
+        {
+          "id": "aggregate-tax-once",
+          "passed": false
+        },
+        {
+          "id": "discount-before-tax",
+          "passed": false
+        },
+        {
+          "id": "fractional-discounts-aggregate",
+          "passed": false
+        },
+        {
+          "id": "invalid-negative",
+          "passed": false
+        },
+        {
+          "id": "invalid-nan",
+          "passed": false
+        },
+        {
+          "id": "invalid-float",
+          "passed": false
+        },
+        {
+          "id": "invalid-boolean",
+          "passed": false
+        },
+        {
+          "id": "invalid-exponent",
+          "passed": false
+        },
+        {
+          "id": "invalid-whitespace",
+          "passed": false
+        },
+        {
+          "id": "invalid-too-many-decimals",
+          "passed": false
+        },
+        {
+          "id": "missing-price",
+          "passed": false
+        },
+        {
+          "id": "discount-over-100",
+          "passed": false
+        },
+        {
+          "id": "bad-cancelled",
+          "passed": false
+        },
+        {
+          "id": "tax-over-100",
+          "passed": false
+        },
+        {
+          "id": "groups-grand-not-sum-rounded",
+          "passed": false
+        },
+        {
+          "id": "missing-groups-sort",
+          "passed": false
+        },
+        {
+          "id": "cli-file",
+          "passed": false
+        },
+        {
+          "id": "cli-stdin",
+          "passed": false
+        },
+        {
+          "id": "cli-error",
+          "passed": false
+        },
+        {
+          "id": "no-per-line-rounding",
+          "passed": false
+        },
+        {
+          "id": "empty-grouped",
+          "passed": false
+        },
+        {
+          "id": "large-decimal-precision",
+          "passed": false
+        },
+        {
+          "id": "integer-over-range",
+          "passed": false
+        },
+        {
+          "id": "negative-price",
+          "passed": false
+        },
+        {
+          "id": "negative-discount",
+          "passed": false
+        },
+        {
+          "id": "tax-float",
+          "passed": false
+        },
+        {
+          "id": "tax-on-exact-unrounded-net",
+          "passed": false
+        },
+        {
+          "id": "unsupported-grouping",
+          "passed": false
+        },
+        {
+          "id": "cli-malformed-json",
+          "passed": false
+        },
+        {
+          "id": "cli-unknown-request-key",
+          "passed": false
+        },
+        {
+          "id": "cli-no-argument",
+          "passed": false
+        },
+        {
+          "id": "cli-missing-file",
+          "passed": false
+        },
+        {
+          "id": "cli-two-arguments",
+          "passed": false
+        },
+        {
+          "id": "unrelated-active-false-counted",
+          "passed": false
+        },
+        {
+          "id": "unrelated-active-false-still-validates",
+          "passed": false
+        }
+      ],
+      "selfTestsPassed": false,
+      "independentReviewAndFinalDelivery": false,
+      "qualityReviewMethod": "lead reviewed actual transcript handoffs, reviewer tool executions, final response and external oracle; not blinded",
+      "recoveryEvents": [],
+      "rawResultSha256": "6935386cd162c3afdf28a38cfe9fe1fb9393694e3c698a399c56e1b60ff6d8fa"
+    },
+    {
+      "sample": "pair2-native",
+      "status": "quiescent-quality-pending",
+      "runnerError": null,
+      "usage": {
+        "input": 589702,
+        "cached": 528000,
+        "output": 11530,
+        "generations": 27,
+        "complete": true
+      },
+      "measurementError": null,
+      "receipts": {
+        "codex": {
+          "sha256": "277afdd2f638830c7a24b5367c593c1503f3621fa1e3244ce26af6ba500bafe2",
+          "usage": {
+            "input": 263869,
+            "cached": 216960,
+            "output": 6862,
+            "generations": 15,
+            "complete": true
+          },
+          "cumulativeMatchesReceipts": true,
+          "delegationCalls": 0
+        },
+        "kimi": {
+          "sha256": "7fb3d6ece59bb8849b5f326eea6e588bb7415741f39aadc42edb4fca35792e61",
+          "usage": {
+            "input": 325833,
+            "cached": 311040,
+            "output": 4668,
+            "generations": 12,
+            "requests": 12,
+            "complete": true
+          },
+          "agentLedgerDirectories": ["main"]
+        }
+      },
+      "externalChecks": [
+        {
+          "id": "basic",
+          "passed": true
+        },
+        {
+          "id": "many-and-zero",
+          "passed": true
+        },
+        {
+          "id": "empty",
+          "passed": true
+        },
+        {
+          "id": "cancelled-skips-validation",
+          "passed": true
+        },
+        {
+          "id": "tax-half-up",
+          "passed": true
+        },
+        {
+          "id": "aggregate-tax-once",
+          "passed": true
+        },
+        {
+          "id": "discount-before-tax",
+          "passed": true
+        },
+        {
+          "id": "fractional-discounts-aggregate",
+          "passed": true
+        },
+        {
+          "id": "invalid-negative",
+          "passed": true
+        },
+        {
+          "id": "invalid-nan",
+          "passed": true
+        },
+        {
+          "id": "invalid-float",
+          "passed": true
+        },
+        {
+          "id": "invalid-boolean",
+          "passed": true
+        },
+        {
+          "id": "invalid-exponent",
+          "passed": true
+        },
+        {
+          "id": "invalid-whitespace",
+          "passed": true
+        },
+        {
+          "id": "invalid-too-many-decimals",
+          "passed": true
+        },
+        {
+          "id": "missing-price",
+          "passed": true
+        },
+        {
+          "id": "discount-over-100",
+          "passed": true
+        },
+        {
+          "id": "bad-cancelled",
+          "passed": true
+        },
+        {
+          "id": "tax-over-100",
+          "passed": true
+        },
+        {
+          "id": "groups-grand-not-sum-rounded",
+          "passed": true
+        },
+        {
+          "id": "missing-groups-sort",
+          "passed": true
+        },
+        {
+          "id": "cli-file",
+          "passed": true
+        },
+        {
+          "id": "cli-stdin",
+          "passed": true
+        },
+        {
+          "id": "cli-error",
+          "passed": true
+        },
+        {
+          "id": "no-per-line-rounding",
+          "passed": true
+        },
+        {
+          "id": "empty-grouped",
+          "passed": true
+        },
+        {
+          "id": "large-decimal-precision",
+          "passed": true
+        },
+        {
+          "id": "integer-over-range",
+          "passed": true
+        },
+        {
+          "id": "negative-price",
+          "passed": true
+        },
+        {
+          "id": "negative-discount",
+          "passed": true
+        },
+        {
+          "id": "tax-float",
+          "passed": true
+        },
+        {
+          "id": "tax-on-exact-unrounded-net",
+          "passed": true
+        },
+        {
+          "id": "unsupported-grouping",
+          "passed": true
+        },
+        {
+          "id": "cli-malformed-json",
+          "passed": true
+        },
+        {
+          "id": "cli-unknown-request-key",
+          "passed": true
+        },
+        {
+          "id": "cli-no-argument",
+          "passed": true
+        },
+        {
+          "id": "cli-missing-file",
+          "passed": true
+        },
+        {
+          "id": "cli-two-arguments",
+          "passed": true
+        },
+        {
+          "id": "unrelated-active-false-counted",
+          "passed": true
+        },
+        {
+          "id": "unrelated-active-false-still-validates",
+          "passed": true
+        }
+      ],
+      "selfTestsPassed": true,
+      "independentReviewAndFinalDelivery": true,
+      "qualityReviewMethod": "lead reviewed actual transcript handoffs, reviewer tool executions, final response and external oracle; not blinded",
+      "recoveryEvents": [],
+      "rawResultSha256": "12c38da47b7f31b5821865fd6dbd14fcab87d1b7c3c91e6377acc242353b3e6f"
+    },
+    {
+      "sample": "pair2-loom",
+      "status": "quiescent-quality-pending",
+      "runnerError": null,
+      "usage": {
+        "input": 456024,
+        "cached": 416896,
+        "output": 6723,
+        "generations": 21,
+        "complete": true
+      },
+      "measurementError": null,
+      "receipts": {
+        "codex": {
+          "sha256": "e55fd0f7b854ffe94745f83925f99bad147cf8cd801610c2c56d3309c37c4a24",
+          "usage": {
+            "input": 405541,
+            "cached": 374144,
+            "output": 5531,
+            "generations": 19,
+            "complete": true
+          },
+          "cumulativeMatchesReceipts": true,
+          "delegationCalls": 0
+        },
+        "kimi": {
+          "sha256": "5557afa8ddd6907733630b4f5345e5b2d6a5b29b2579eea6386099db6c3faed6",
+          "usage": {
+            "input": 50483,
+            "cached": 42752,
+            "output": 1192,
+            "generations": 2,
+            "requests": 2,
+            "complete": true
+          },
+          "agentLedgerDirectories": ["main"]
+        }
+      },
+      "productMatches": true,
+      "externalChecks": [
+        {
+          "id": "basic",
+          "passed": true
+        },
+        {
+          "id": "many-and-zero",
+          "passed": true
+        },
+        {
+          "id": "empty",
+          "passed": true
+        },
+        {
+          "id": "cancelled-skips-validation",
+          "passed": true
+        },
+        {
+          "id": "tax-half-up",
+          "passed": true
+        },
+        {
+          "id": "aggregate-tax-once",
+          "passed": true
+        },
+        {
+          "id": "discount-before-tax",
+          "passed": true
+        },
+        {
+          "id": "fractional-discounts-aggregate",
+          "passed": true
+        },
+        {
+          "id": "invalid-negative",
+          "passed": true
+        },
+        {
+          "id": "invalid-nan",
+          "passed": true
+        },
+        {
+          "id": "invalid-float",
+          "passed": true
+        },
+        {
+          "id": "invalid-boolean",
+          "passed": true
+        },
+        {
+          "id": "invalid-exponent",
+          "passed": true
+        },
+        {
+          "id": "invalid-whitespace",
+          "passed": true
+        },
+        {
+          "id": "invalid-too-many-decimals",
+          "passed": true
+        },
+        {
+          "id": "missing-price",
+          "passed": true
+        },
+        {
+          "id": "discount-over-100",
+          "passed": true
+        },
+        {
+          "id": "bad-cancelled",
+          "passed": true
+        },
+        {
+          "id": "tax-over-100",
+          "passed": true
+        },
+        {
+          "id": "groups-grand-not-sum-rounded",
+          "passed": true
+        },
+        {
+          "id": "missing-groups-sort",
+          "passed": true
+        },
+        {
+          "id": "cli-file",
+          "passed": true
+        },
+        {
+          "id": "cli-stdin",
+          "passed": true
+        },
+        {
+          "id": "cli-error",
+          "passed": true
+        },
+        {
+          "id": "no-per-line-rounding",
+          "passed": true
+        },
+        {
+          "id": "empty-grouped",
+          "passed": true
+        },
+        {
+          "id": "large-decimal-precision",
+          "passed": true
+        },
+        {
+          "id": "integer-over-range",
+          "passed": true
+        },
+        {
+          "id": "negative-price",
+          "passed": true
+        },
+        {
+          "id": "negative-discount",
+          "passed": true
+        },
+        {
+          "id": "tax-float",
+          "passed": true
+        },
+        {
+          "id": "tax-on-exact-unrounded-net",
+          "passed": true
+        },
+        {
+          "id": "unsupported-grouping",
+          "passed": true
+        },
+        {
+          "id": "cli-malformed-json",
+          "passed": true
+        },
+        {
+          "id": "cli-unknown-request-key",
+          "passed": true
+        },
+        {
+          "id": "cli-no-argument",
+          "passed": true
+        },
+        {
+          "id": "cli-missing-file",
+          "passed": true
+        },
+        {
+          "id": "cli-two-arguments",
+          "passed": true
+        },
+        {
+          "id": "unrelated-active-false-counted",
+          "passed": true
+        },
+        {
+          "id": "unrelated-active-false-still-validates",
+          "passed": true
+        }
+      ],
+      "selfTestsPassed": true,
+      "independentReviewAndFinalDelivery": false,
+      "qualityReviewMethod": "lead reviewed actual transcript handoffs, reviewer tool executions, final response and external oracle; not blinded",
+      "recoveryEvents": [
+        {
+          "type": "activation.retry_scheduled",
+          "payload": {
+            "activationId": "activation_1cc9cc57-bc76-48c3-bdc6-26f072cacd05",
+            "availableAt": "2026-10-27T18:53:00.948Z",
+            "error": "warm turn left tools in flight; runtime stopped",
+            "errorFingerprint": "9e68c283ff29f7fb867bc3d8b577b76f1f0652ecdb36eadb5b7c35b416f8a5b2",
+            "hostId": "local-workbench-host-56bb2aa6-60f5-49af-aac0-ddc3c7b7f151",
+            "sameErrorCount": 1,
+            "threshold": 3,
+            "retryDisposition": "recoverable",
+            "actionRequired": false,
+            "sticky": false
+          }
+        }
+      ],
+      "rawResultSha256": "da5b51faed9acc84d4458e60012a6a7a8001529eb4367c188cfcafa2198769f7"
+    },
+    {
+      "sample": "pair3-loom",
+      "status": "execution-failed",
+      "runnerError": "AssertionError [ERR_ASSERTION]: Failed activation",
+      "usage": {
+        "input": 316156,
+        "cached": 265728,
+        "output": 5808,
+        "generations": 17,
+        "complete": true
+      },
+      "measurementError": null,
+      "receipts": {
+        "codex": {
+          "sha256": "a7c5202f1dc5e1eca3f58fb352931224ac01f90f306f9540e1277ec145e1d466",
+          "usage": {
+            "input": 265713,
+            "cached": 222976,
+            "output": 5214,
+            "generations": 15,
+            "complete": true
+          },
+          "cumulativeMatchesReceipts": true,
+          "delegationCalls": 0
+        },
+        "kimi": {
+          "sha256": "9bc60fbb0c2502a982040843310955395024d1578ccb2426352cc672b7c9b64e",
+          "usage": {
+            "input": 50443,
+            "cached": 42752,
+            "output": 594,
+            "generations": 2,
+            "requests": 2,
+            "complete": true
+          },
+          "agentLedgerDirectories": ["main"]
+        }
+      },
+      "productMatches": true,
+      "externalChecks": [
+        {
+          "id": "basic",
+          "passed": true
+        },
+        {
+          "id": "many-and-zero",
+          "passed": true
+        },
+        {
+          "id": "empty",
+          "passed": true
+        },
+        {
+          "id": "cancelled-skips-validation",
+          "passed": true
+        },
+        {
+          "id": "tax-half-up",
+          "passed": true
+        },
+        {
+          "id": "aggregate-tax-once",
+          "passed": true
+        },
+        {
+          "id": "discount-before-tax",
+          "passed": true
+        },
+        {
+          "id": "fractional-discounts-aggregate",
+          "passed": true
+        },
+        {
+          "id": "invalid-negative",
+          "passed": true
+        },
+        {
+          "id": "invalid-nan",
+          "passed": true
+        },
+        {
+          "id": "invalid-float",
+          "passed": true
+        },
+        {
+          "id": "invalid-boolean",
+          "passed": true
+        },
+        {
+          "id": "invalid-exponent",
+          "passed": true
+        },
+        {
+          "id": "invalid-whitespace",
+          "passed": true
+        },
+        {
+          "id": "invalid-too-many-decimals",
+          "passed": true
+        },
+        {
+          "id": "missing-price",
+          "passed": true
+        },
+        {
+          "id": "discount-over-100",
+          "passed": true
+        },
+        {
+          "id": "bad-cancelled",
+          "passed": true
+        },
+        {
+          "id": "tax-over-100",
+          "passed": true
+        },
+        {
+          "id": "groups-grand-not-sum-rounded",
+          "passed": true
+        },
+        {
+          "id": "missing-groups-sort",
+          "passed": true
+        },
+        {
+          "id": "cli-file",
+          "passed": true
+        },
+        {
+          "id": "cli-stdin",
+          "passed": true
+        },
+        {
+          "id": "cli-error",
+          "passed": true
+        },
+        {
+          "id": "no-per-line-rounding",
+          "passed": true
+        },
+        {
+          "id": "empty-grouped",
+          "passed": true
+        },
+        {
+          "id": "large-decimal-precision",
+          "passed": true
+        },
+        {
+          "id": "integer-over-range",
+          "passed": true
+        },
+        {
+          "id": "negative-price",
+          "passed": true
+        },
+        {
+          "id": "negative-discount",
+          "passed": true
+        },
+        {
+          "id": "tax-float",
+          "passed": true
+        },
+        {
+          "id": "tax-on-exact-unrounded-net",
+          "passed": true
+        },
+        {
+          "id": "unsupported-grouping",
+          "passed": true
+        },
+        {
+          "id": "cli-malformed-json",
+          "passed": true
+        },
+        {
+          "id": "cli-unknown-request-key",
+          "passed": true
+        },
+        {
+          "id": "cli-no-argument",
+          "passed": true
+        },
+        {
+          "id": "cli-missing-file",
+          "passed": true
+        },
+        {
+          "id": "cli-two-arguments",
+          "passed": true
+        },
+        {
+          "id": "unrelated-active-false-counted",
+          "passed": true
+        },
+        {
+          "id": "unrelated-active-false-still-validates",
+          "passed": true
+        }
+      ],
+      "selfTestsPassed": true,
+      "independentReviewAndFinalDelivery": false,
+      "qualityReviewMethod": "lead reviewed actual transcript handoffs, reviewer tool executions, final response and external oracle; not blinded",
+      "recoveryEvents": [
+        {
+          "type": "activation.retry_scheduled",
+          "payload": {
+            "activationId": "activation_ed1d25c8-a832-478d-a9a9-7c2225ff5255",
+            "availableAt": "2026-10-27T18:57:39.696Z",
+            "error": "warm turn left tools in flight; runtime stopped",
+            "errorFingerprint": "9e68c283ff29f7fb867bc3d8b577b76f1f0652ecdb36eadb5b7c35b416f8a5b2",
+            "hostId": "local-workbench-host-58d02082-cdff-4f56-98cd-f8bcc7dc2616",
+            "sameErrorCount": 1,
+            "threshold": 3,
+            "retryDisposition": "recoverable",
+            "actionRequired": false,
+            "sticky": false
+          }
+        },
+        {
+          "type": "activation.retry_blocked",
+          "payload": {
+            "activationId": "activation_ed1d25c8-a832-478d-a9a9-7c2225ff5255",
+            "error": "Final output saved, not published: held; draft held_draft_d33ee1db-2da3-483a-b2d0-125a8d4f3f75. Human recovery is required.",
+            "errorFingerprint": "ec0aa80bfb4607d2836540a74ecb3efcf762638d761d85d4f3e15e6db0aa34b8",
+            "hostId": "local-workbench-host-58d02082-cdff-4f56-98cd-f8bcc7dc2616",
+            "sameErrorCount": 0,
+            "threshold": 3,
+            "retryDisposition": "action_required",
+            "actionRequired": true,
+            "sticky": true
+          }
+        }
+      ],
+      "rawResultSha256": "d75702a7f6adcd7f4f457b27ccff65daba5bf91cc64992f271a2a0705e95a8cb"
+    },
+    {
+      "sample": "pair3-native",
+      "status": "quiescent-quality-pending",
+      "runnerError": null,
+      "usage": {
+        "input": 1234551,
+        "cached": 1147648,
+        "output": 15862,
+        "generations": 50,
+        "complete": true
+      },
+      "measurementError": null,
+      "receipts": {
+        "codex": {
+          "sha256": "35069d4ee7624533299327e3f8f59ee2f21512424a6d2c8dc59e24bf3dc758d5",
+          "usage": {
+            "input": 740007,
+            "cached": 671744,
+            "output": 8187,
+            "generations": 33,
+            "complete": true
+          },
+          "cumulativeMatchesReceipts": true,
+          "delegationCalls": 0
+        },
+        "kimi": {
+          "sha256": "f0d3a4b1e604d26ae44987372f3d6ad2bc279bd24c2f3e85d2b8a81d949bff20",
+          "usage": {
+            "input": 494544,
+            "cached": 475904,
+            "output": 7675,
+            "generations": 17,
+            "requests": 17,
+            "complete": true
+          },
+          "agentLedgerDirectories": ["main"]
+        }
+      },
+      "externalChecks": [
+        {
+          "id": "basic",
+          "passed": true
+        },
+        {
+          "id": "many-and-zero",
+          "passed": true
+        },
+        {
+          "id": "empty",
+          "passed": true
+        },
+        {
+          "id": "cancelled-skips-validation",
+          "passed": true
+        },
+        {
+          "id": "tax-half-up",
+          "passed": true
+        },
+        {
+          "id": "aggregate-tax-once",
+          "passed": true
+        },
+        {
+          "id": "discount-before-tax",
+          "passed": true
+        },
+        {
+          "id": "fractional-discounts-aggregate",
+          "passed": true
+        },
+        {
+          "id": "invalid-negative",
+          "passed": true
+        },
+        {
+          "id": "invalid-nan",
+          "passed": true
+        },
+        {
+          "id": "invalid-float",
+          "passed": true
+        },
+        {
+          "id": "invalid-boolean",
+          "passed": true
+        },
+        {
+          "id": "invalid-exponent",
+          "passed": true
+        },
+        {
+          "id": "invalid-whitespace",
+          "passed": true
+        },
+        {
+          "id": "invalid-too-many-decimals",
+          "passed": true
+        },
+        {
+          "id": "missing-price",
+          "passed": true
+        },
+        {
+          "id": "discount-over-100",
+          "passed": true
+        },
+        {
+          "id": "bad-cancelled",
+          "passed": true
+        },
+        {
+          "id": "tax-over-100",
+          "passed": true
+        },
+        {
+          "id": "groups-grand-not-sum-rounded",
+          "passed": true
+        },
+        {
+          "id": "missing-groups-sort",
+          "passed": true
+        },
+        {
+          "id": "cli-file",
+          "passed": true
+        },
+        {
+          "id": "cli-stdin",
+          "passed": true
+        },
+        {
+          "id": "cli-error",
+          "passed": true
+        },
+        {
+          "id": "no-per-line-rounding",
+          "passed": true
+        },
+        {
+          "id": "empty-grouped",
+          "passed": true
+        },
+        {
+          "id": "large-decimal-precision",
+          "passed": true
+        },
+        {
+          "id": "integer-over-range",
+          "passed": true
+        },
+        {
+          "id": "negative-price",
+          "passed": true
+        },
+        {
+          "id": "negative-discount",
+          "passed": true
+        },
+        {
+          "id": "tax-float",
+          "passed": true
+        },
+        {
+          "id": "tax-on-exact-unrounded-net",
+          "passed": true
+        },
+        {
+          "id": "unsupported-grouping",
+          "passed": true
+        },
+        {
+          "id": "cli-malformed-json",
+          "passed": true
+        },
+        {
+          "id": "cli-unknown-request-key",
+          "passed": true
+        },
+        {
+          "id": "cli-no-argument",
+          "passed": true
+        },
+        {
+          "id": "cli-missing-file",
+          "passed": true
+        },
+        {
+          "id": "cli-two-arguments",
+          "passed": true
+        },
+        {
+          "id": "unrelated-active-false-counted",
+          "passed": true
+        },
+        {
+          "id": "unrelated-active-false-still-validates",
+          "passed": true
+        }
+      ],
+      "selfTestsPassed": true,
+      "independentReviewAndFinalDelivery": true,
+      "qualityReviewMethod": "lead reviewed actual transcript handoffs, reviewer tool executions, final response and external oracle; not blinded",
+      "recoveryEvents": [],
+      "rawResultSha256": "11500993f4d53f2f60e9dfcf2d26a2dcf2c4b362e8880eb85543a39f67b4c401"
+    }
+  ],
+  "comparableSuccessPairs": 0,
+  "equalQualityCostRatio": null,
+  "conclusion": "Not accepted: no Loom arm completed independent review and final delivery. No automatic replacement.",
+  "nativeSuccessfulInputVariation": 2.0935167253968956,
+  "cleanup": {
+    "recordedProcesses": [
+      {
+        "pid": 81875,
+        "startedAt": "2026-10-27T18:46:07.781Z",
+        "finishedAt": "2026-10-27T18:46:46.780Z",
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "present": false
+      },
+      {
+        "kind": "owned-terminal-controller",
+        "pid": 84776,
+        "present": false
+      },
+      {
+        "kind": "owned-terminal-controller",
+        "pid": 84782,
+        "present": false
+      },
+      {
+        "kind": "owned-terminal-controller",
+        "pid": 87250,
+        "present": false
+      },
+      {
+        "kind": "owned-terminal-controller",
+        "pid": 87256,
+        "present": false
+      },
+      {
+        "pid": 1084,
+        "startedAt": "2026-10-27T18:52:04.362Z",
+        "finishedAt": "2026-10-27T18:54:43.076Z",
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "present": false
+      },
+      {
+        "pid": 10045,
+        "startedAt": "2026-10-27T18:55:31.222Z",
+        "finishedAt": "2026-10-27T18:57:54.802Z",
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "present": false
+      },
+      {
+        "kind": "owned-terminal-controller",
+        "pid": 18762,
+        "present": false
+      },
+      {
+        "kind": "owned-terminal-controller",
+        "pid": 18769,
+        "present": false
+      }
+    ],
+    "ownedPaidPanesAbsent": true,
+    "currentConversationPreserved": true
+  },
+  "hashes": {
+    "plan.json": "1618c0422cc94f665704891bf35dba374302a833d133ba75795ec89b8b0553c3",
+    "amendment-1.json": "1b4837934ae79a37af0da8e4a933ad6727ea097a06640328265e761e0fc58d12",
+    "amendment-2.json": "9b5797ff54770eaf58eb746d215ebfae8278e5684a2d63fbb8c8f580bb14eb5b",
+    "run.mjs": "18bbfe32d49456dc4179d0f78e58ce080554599cd0369f10471885b34b2cd65e",
+    "gate.mjs": "b8f41552fe7d0540594c1a9403370460f5e0eae84b0d11e1554fcac18264e0a6",
+    "support.mjs": "98116d1412ee17113836e79f46a24016c63ccdb2d0f89ba561102f5b8b444fb3",
+    "support.test.mjs": "e26e8c86f7ec490853c41f5e82e8acdbf6844a5eff46f3b260cf1fc661780dcd",
+    "terminal.py": "721fa5ac7cba00a72163c4b748f8423647686b3b461b9e3106f9608ef6d175b1",
+    "audit.mjs": "93fb87cb53030be292d3bbf8e37e1e45b5dd68a47785739d1ef9db9a5f6e3800"
+  },
+  "offlineReplay": {
+    "unclosedToolsAtFailedTurnEnd": [
+      {
+        "producerFactId": "exec-3fa5ab64-0bb0-47f6-a1d1-8b4630e7e2c0:item/started",
+        "kind": "tool_start",
+        "toolInput": "/bin/zsh -lc \"pwd && rg --files -g 'AGENTS.md' -g 'README*' -g 'invoice.py' -g 'tests/**' -g 'pyproject.toml' -g 'setup.cfg'\"",
+        "toolName": "\u8fd0\u884c\u547d\u4ee4"
+      }
+    ],
+    "heldDraftPositions": [
+      {
+        "based_on_room_seq": 19,
+        "seen_up_to_seq": 27,
+        "reply_based_on_room_seq": 19
+      }
+    ],
+    "scope": "normalized durable tool trajectory replay; not complete raw app-server replay; no claim about why the command hung"
+  }
+}
