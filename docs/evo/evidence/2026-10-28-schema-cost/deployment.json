@@ -1,0 +1,17 @@
+{
+  "sourceRevision": "0698f207",
+  "oldPid": 47909,
+  "newPid": 85930,
+  "backup": "/Users/sun/.loom/evo/backups/pre-causal-guidance-1793120973141",
+  "ledgerUnchanged": true,
+  "at": "2026-10-27T17:09:52.395Z",
+  "webAssets": "unchanged; backend-only change",
+  "label": "gui/501/com.loom.evo",
+  "realPage": {
+    "url": "http://127.0.0.1:4176/",
+    "channel": "Agent Council",
+    "historyRendered": true,
+    "pageErrors": [],
+    "screenshot": "/Users/sun/.loom/reviews/2026-10-28-schema-cost/page.png"
+  }
+}
