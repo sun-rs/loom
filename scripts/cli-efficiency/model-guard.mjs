@@ -69,6 +69,7 @@ function textInput(input, where) {
 }
 const THREAD_KEYS = [
   "model",
+  "serviceTier",
   "config",
   "approvalPolicy",
   "cwd",
@@ -78,8 +79,13 @@ const THREAD_KEYS = [
   // Channel attached directories (evo status §39): [cwd, ...attached].
   "runtimeWorkspaceRoots",
 ];
+function defaultTier(p, where) {
+  if (p.serviceTier !== undefined && p.serviceTier !== "default")
+    refuse(`${where}.serviceTier must be default`);
+}
 function threadParams(p, approved, where, extra) {
   onlyKeys(p, [...THREAD_KEYS, ...extra], where);
+  defaultTier(p, where);
   assert.equal(p.model, approved.model, "Unapproved model");
   const config = onlyKeys(
     p.config,
@@ -182,6 +188,7 @@ export function createCodexRequestGuard(approved) {
             "model",
             "effort",
             "outputSchema",
+            "serviceTier",
           ],
           where,
         );
@@ -194,6 +201,7 @@ export function createCodexRequestGuard(approved) {
           assert.equal(p.model, approved.model, "Unapproved turn model");
         if (p.effort !== undefined)
           assert.equal(p.effort, approved.effort, "Unapproved turn effort");
+        defaultTier(p, where);
         str(p.threadId, `${where}.threadId`);
         textInput(p.input, where);
         return;

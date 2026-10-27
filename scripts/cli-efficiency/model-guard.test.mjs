@@ -689,3 +689,19 @@ import {createInterface} from 'node:readline';createInterface({input:process.std
     }
   },
 );
+
+test("current product explicit default tier is admitted, paid priority remains rejected", () => {
+  for (const [method, params] of [
+    ["thread/start", threadStart],
+    ["thread/resume", { ...threadStart, threadId: "t" }],
+    ["turn/start", { threadId: "t", input: text }],
+  ]) {
+    assert.doesNotThrow(() =>
+      guard({ method, params: { ...params, serviceTier: "default" } }),
+    );
+    for (const serviceTier of ["priority", "fast", null, 0])
+      assert.throws(() =>
+        guard({ method, params: { ...params, serviceTier } }),
+      );
+  }
+});
