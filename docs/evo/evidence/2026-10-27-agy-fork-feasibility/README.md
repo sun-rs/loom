@@ -42,3 +42,13 @@ AGY 1.4.8 的交互式 `/fork` 确实复制原生上下文。但本批没有找�
 - [官方会话文档](https://www.antigravity.google/docs/cli/conversations/)：交互式 /fork、独立会话及不隔离 Git 工作区。
 - [官方 SDK](https://github.com/google-antigravity/antigravity-sdk-python/tree/91dc5f84565bb505577ac9524f107f453a6e8d1f)：本批只读核实，没有复制源码。
 - 本机 CLI help/changelog、原生 TUI、只读原生数据库；不把生成的普通回答作为复制成功证据。
+
+## 官方文档补核（owner 追问后）
+
+重新阅读 [CLI reference](https://www.antigravity.google/docs/cli/reference/)、[Headless mode](https://www.antigravity.google/docs/cli/headless/)、[SDK overview](https://www.antigravity.google/docs/sdk/overview) 与会话页：
+
+- reference 将 /fork 列为 slash command，没有对应 fork 命令行参数。
+- Headless 的 Unsupported messages 明确拒绝 control_request/control_response；CLI控制类 slash 命令不支持通过 stream-json 执行。
+- SDK公开文档没有声称能复制现有订阅CLI会话；只有续接持久化示例，不能据此推导fork。
+
+精确结论是“已查公开文档和本机接口，没有受支持且已验证的外部复制入口”，不是“官方声明任何外部接口永远不可能”。结合本机 -p /fork 的明确拒绝，按 owner 最新指示暂停AGY Fork/Side扩展，转回文章和Cindy，不追私有RPC或终端按键驱动。

@@ -1,5 +1,7 @@
 # Loom 当前主线现状（原 evo）
 
+2026-10-27 上游研究续收口：补核 AGY 官方 reference/headless/SDK 文档，保持 Fork/Side 不支持并按 owner 指示转入两篇文章与 Cindy。核对官方 cwc / single-agent-loop-kit 和 Cindy 固定源码，排除文章误述；建议优先完整任务验收汇总、离线无效消耗诊断，再精简交接。保留 Room-first 与连续会话，不引入新调度框架。见[研究与实施顺序](article-cindy-adoption-review.zh-CN.md)。本批仅研究文档，无性能提升宣称。
+
 2026-10-27 AGY Fork/Side 核实：原生交互式 `/fork` 实际复制成功，但 print 明确拒绝、prompt-interactive 则作为普通模型输入，未找到公开已验证的无交互复制接口。产品能力仍未开放；两次探针误触发及源 session 额外诊断输入留账，不宣称运行时全功能完工。见[核实与限制](evidence/2026-10-27-agy-fork-feasibility/README.md)。
 
 2026-10-27 AGY 日常路径复查：正式新建/编辑表单草稿、13 个模型与 effort 联动、无 Fast 误展示、390×844 表单边界及实例真实用量弹窗通过；18 项假 CLI 定向测试通过。未复现新缺陷，无产品修改/付费生成/重启。真实创建、启停和各模型覆盖的证据边界分别保留，见[日常验收](evidence/2026-10-27-agy-daily/README.md)。
