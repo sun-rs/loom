@@ -26,7 +26,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createInterface } from "node:readline";
-import { claudeModelMatches } from "./claude-usage.mjs";
+import { claudeGateModelMatches } from "./claude-route.mjs";
 
 const FORBIDDEN = new Set([
   "--fallback-model",
@@ -189,7 +189,7 @@ export function createClaudeOutputWatcher(approved) {
     if (frame?.type === "assistant") {
       const m = frame.message?.model;
       if (m === undefined || m === "<synthetic>") return undefined;
-      if (!claudeModelMatches(approved.model, m))
+      if (!claudeGateModelMatches(approved, m))
         return `Unapproved model ${m}${frame.parent_tool_use_id ? " (sub-agent)" : ""}`;
     }
     if (
@@ -198,7 +198,7 @@ export function createClaudeOutputWatcher(approved) {
       typeof frame.modelUsage === "object"
     )
       for (const m of Object.keys(frame.modelUsage))
-        if (!claudeModelMatches(approved.model, m))
+        if (!claudeGateModelMatches(approved, m))
           return `Unapproved model ${m} (result modelUsage)`;
     return undefined;
   };

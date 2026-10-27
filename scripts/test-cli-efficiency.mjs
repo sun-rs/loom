@@ -1,3 +1,4 @@
+import { claudeGateRoute } from "./cli-efficiency/claude-route.mjs";
 // Opt-in paid release gate. Never included in npm run check.
 import assert from "node:assert/strict";
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync } from "node:fs";
@@ -90,6 +91,9 @@ const result = {
   schemaVersion: 1,
   sampleId: randomUUID(),
   nativeMemoryPolicy,
+  ...(provider === "claude"
+    ? { explicitModelRoute: claudeGateRoute(config) }
+    : {}),
   root,
   startedAt: new Date().toISOString(),
   provider,

@@ -1,3 +1,4 @@
+import { claudeGateRoute, claudeGateModelMatches } from "./claude-route.mjs";
 import { assertNativeMemoryPolicy } from "./native-memory-policy.mjs";
 // Claude native arm: the installed `claude -p` directly (no RAH worker,
 // scheduler or runtime adapter), one process per round, the same session
@@ -24,7 +25,9 @@ export function nativeClaudeEnvironment(config, extra = {}) {
   const env = claudeConnectionEnvironment(nativeEnvironment(extra));
   const alias = env[`ANTHROPIC_DEFAULT_${config.model.toUpperCase()}_MODEL`];
   assert.ok(
-    alias === undefined || claudeModelMatches(config.model, alias),
+    claudeGateRoute(config) !== undefined
+      ? alias === claudeGateRoute(config)
+      : alias === undefined || claudeModelMatches(config.model, alias),
     "Configured Claude alias is outside the approved model family",
   );
   return env;
@@ -109,7 +112,7 @@ export async function nativeClaudeRound({
     ...parsed.subagentModels,
     ...parsed.resultModels,
   ])
-    assert.ok(claudeModelMatches(config.model, m), `Unapproved model ${m}`);
+    assert.ok(claudeGateModelMatches(config, m), `Unapproved model ${m}`);
   assert.ok(parsed.models.length, "No native model evidence");
   assert.ok(parsed.answer && parsed.finalAt, "Missing final answer");
   round.replySeconds = (parsed.finalAt - Date.parse(round.startedAt)) / 1000;
@@ -167,7 +170,7 @@ export function transcriptCheck(transcript, generations) {
 export function assertClaudeTranscriptModel(transcript, config) {
   const models = [...transcript.models, ...(transcript.sidechainModels ?? [])];
   for (const m of models)
-    assert.ok(claudeModelMatches(config.model, m), `Unapproved model ${m}`);
+    assert.ok(claudeGateModelMatches(config, m), `Unapproved model ${m}`);
   for (const e of transcript.efforts)
     assert.equal(
       e,

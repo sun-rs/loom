@@ -298,8 +298,15 @@ and only with owner approval.
 | Kimi CLI    | `kimi-code/k3`                 | `high`    | 2026-09-09 |
 | Kimi CLI    | `kimi-code/k3-256k`            | `low`     | 2026-09-25 |
 | Pi          | `aihubmix/deepseek-v4.1-flash` | `low`     | 2026-10-10 |
+| Pi          | `magpie/kimi-code-cn/k3.1-pro` | `low`     | 2026-10-28 |
 
 The 2026-10-03 additions are owner-approved for the Loom advantage discussion test.
+
+Owner 2026-10-28 additionally approved Claude CLI `sonnet`/`low` routed to
+`kimi-code-cn/k3.1-pro[1m]` for the current comparison batch. This requires the
+explicit gate route selection and exact resolved-model checks in
+`scripts/cli-efficiency/claude-route.mjs`; it is reported as Claude CLI / Kimi,
+never as Claude Sonnet. The ordinary Sonnet family fence remains unchanged.
 
 Binding ids are the ones the installed CLIs actually publish (verified with
 `probeLocalModelCatalog`); do not invent version-suffixed ids. The Claude Code

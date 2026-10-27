@@ -8,6 +8,13 @@ const row = (provider, model, effort, approvedOn, note) =>
   Object.freeze({ provider, model, effort, approvedOn, note });
 
 export const APPROVED_GATE_MODELS = Object.freeze([
+  row(
+    "pi",
+    "magpie/kimi-code-cn/k3.1-pro",
+    "low",
+    "2026-10-28",
+    "Owner approved current Kimi route",
+  ),
   row("pi", "aihubmix/deepseek-v4.1-flash", "low", "2026-10-10"),
   row(
     "codex",
