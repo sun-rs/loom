@@ -24,3 +24,16 @@ test("explicit owner-approved Kimi route does not weaken ordinary Claude family 
     claudeGateRoute(config, { RAH_EFFICIENCY_CLAUDE_ROUTE: "other" }),
   );
 });
+
+test("explicit route survives sanitized child environment through frozen guard config", () => {
+  const config = {
+    model: "sonnet",
+    effort: "low",
+    actualModelRoute: "kimi-code-cn/k3.1-pro[1m]",
+  };
+  assert.equal(claudeGateModelMatches(config, "k3.1-pro", {}), true);
+  assert.equal(claudeGateModelMatches(config, "claude-sonnet-5", {}), false);
+  assert.throws(() =>
+    claudeGateRoute({ ...config, actualModelRoute: "other" }, {}),
+  );
+});

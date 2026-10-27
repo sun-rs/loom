@@ -2,7 +2,7 @@ import { claudeModelMatches } from "./claude-usage.mjs";
 // Owner 2026-10-28: explicit current Kimi route, never an implicit expansion
 // of the sonnet family. Leave installed connection configuration untouched.
 export function claudeGateRoute(config, env = process.env) {
-  const route = env.RAH_EFFICIENCY_CLAUDE_ROUTE;
+  const route = config.actualModelRoute ?? env.RAH_EFFICIENCY_CLAUDE_ROUTE;
   if (route === undefined) return undefined;
   if (
     route !== "kimi-code-cn/k3.1-pro[1m]" ||

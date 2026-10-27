@@ -1,3 +1,4 @@
+import { claudeGateRoute } from "./claude-route.mjs";
 // Writes the test-only guarded executable the isolated gate daemon launches
 // instead of the provider CLI; every model request crosses its fence. A shim
 // is written only for a combination in the owner approval table.
@@ -121,6 +122,10 @@ export function writeGuardedShim({
     model: approved.model,
     effort: approved.effort,
   });
+  if (provider === "claude") {
+    const route = claudeGateRoute({ model, effort });
+    if (route !== undefined) approved.actualModelRoute = route;
+  }
   const shimOptions =
     provider === "claude"
       ? { ...options, violationRecordPath: guardViolationPath(path) }
