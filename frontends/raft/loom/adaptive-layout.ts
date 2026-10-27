@@ -23,7 +23,7 @@ export function adaptiveLayout(width: number, touch: boolean) {
 export function adaptLayoutMedia(query: string): string {
   return query
     .replace(
-      /\((?:min-width\s*:\s*768px|width\s*>=\s*(?:48rem|768px))\)/g,
+      /\((?:min-width\s*:\s*(?:768px|48rem)|width\s*>=\s*(?:48rem|768px))\)/g,
       layoutQueries.dual,
     )
     .replace(

@@ -18,6 +18,7 @@ test("native touch layout changes panes at 840, never density; fine-pointer desk
 });
 test("CSS media and JS queries share the same policy; unrelated breakpoints and pointer tests retained", () => {
   assert.equal(adaptLayoutMedia("(width >= 48rem)"), layoutQueries.dual);
+  assert.equal(adaptLayoutMedia("(min-width:48rem)"), layoutQueries.dual);
   assert.equal(adaptLayoutMedia("(max-width: 767px)"), layoutQueries.single);
   assert.equal(adaptLayoutMedia("(max-width: 767.98px)"), layoutQueries.single);
   assert.equal(
