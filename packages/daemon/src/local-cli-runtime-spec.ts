@@ -5,6 +5,26 @@ export function localCliRuntimeSpec(
   executable: string,
   workspaceCwd: string,
 ): LocalWorkbenchRuntimeSpec | undefined {
+  if (executable === "agy") {
+    return {
+      adapterKind: "agy-print-json/v1",
+      agentHandle: "Antigravity",
+      avatarKey: "agy",
+      cliId: "agy",
+      description:
+        "Antigravity connected through its configured local provider.",
+      displayName: "Antigravity",
+      executable,
+      instructions:
+        "Work from canonical Room context and report verified outcomes.",
+      modelCatalogProbe: { kind: "agy-cli/v1" },
+      reasoning: "default",
+      role: "Antigravity Agent using the configured provider and model",
+      runtimeProfileId: "local-workbench-profile-agy",
+      toolAccessMode: "full_access",
+      workspaceCwd,
+    };
+  }
   if (executable === "pi") {
     return {
       adapterKind: "pi-print-json/v1",

@@ -1,3 +1,4 @@
+import { parseAgyModelCatalog } from "./agy-model-catalog.ts";
 import {
   parsePiModelCatalog,
   probePiModelCatalog,
@@ -27,7 +28,8 @@ export type LocalModelCatalogKind =
   | "codex-cli/v1"
   | "kimi-cli/v1"
   | "opencode-cli/v1"
-  | "pi-cli/v1";
+  | "pi-cli/v1"
+  | "agy-cli/v1";
 
 export type LocalModelCatalogProbeInput = {
   cwd: string;
@@ -103,6 +105,8 @@ export class LocalModelCatalogProbeCache {
 export async function probeLocalModelCatalog(
   input: LocalModelCatalogProbeInput,
 ): Promise<RuntimeModelBinding[]> {
+  if (input.kind === "agy-cli/v1")
+    return parseAgyModelCatalog(await executeCatalogProbe(input, ["models"]));
   if (input.kind === "pi-cli/v1") return await probePiModelCatalog(input);
   if (input.kind === "claude-cli/v1") {
     return await probeClaudeModelCatalog(input);
@@ -328,6 +332,7 @@ export function parseLocalModelCatalog(
   kind: LocalModelCatalogKind,
   serialized: string,
 ): RuntimeModelBinding[] {
+  if (kind === "agy-cli/v1") return parseAgyModelCatalog(serialized);
   if (kind === "pi-cli/v1") return parsePiModelCatalog(serialized);
   const bindings =
     kind === "claude-cli/v1"

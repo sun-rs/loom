@@ -35,6 +35,7 @@ export const KNOWN_LOCAL_CLIS = Object.freeze([
   { displayName: "OpenCode", executable: "opencode" },
   { displayName: "Claude Code", executable: "claude" },
   { displayName: "Pi", executable: "pi" },
+  { displayName: "Antigravity", executable: "agy" },
 ]);
 
 export type ConfiguredLocalRuntime = {
@@ -93,9 +94,11 @@ export function runtimeProfileCliId(
           ? "claude"
           : probeKind === "opencode-cli/v1"
             ? "opencode"
-            : probeKind === "pi-cli/v1"
-              ? "pi"
-              : undefined;
+            : probeKind === "agy-cli/v1"
+              ? "agy"
+              : probeKind === "pi-cli/v1"
+                ? "pi"
+                : undefined;
   return cliId;
 }
 

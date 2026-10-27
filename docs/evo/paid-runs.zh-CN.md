@@ -955,3 +955,11 @@ Owner 要求继续试 Kimi K3.1 Pro 并比较 OpenCode/Pi。使用现有 OpenCod
 正式186次转发，已知10645436输入/157053输出，1次429无usage；Pi已知3389128/56592、OpenCode7256308/100461，均包含失败尝试。前置300秒校准Pi被截断，后续OpenCode主动中断，统一900秒后才开始正式批次；校准14条已封口转发327274/8656，另1份未封口请求费用未知，全部保留。资格探测90/43；3次本机拒绝预检零转发。未用未知填零。缓存计量不重复加，5项计量/目录测试通过；源码快照无修改/新增，原始model/effort审计通过。
 
 前批DeepSeek上限300秒，本批900秒，不拿跨模型完成率做等时比较。缓存未清、顺序运行和迟到HTTP影响仍在。此实验不经Loom调度，不是Loom/native效率门禁。详见[结果与边界](evidence/2026-10-27-kimi-harness-study/report.json)、[逐份审阅](evidence/2026-10-27-kimi-harness-study/reviews.json)、[原始流归档](evidence/2026-10-27-kimi-harness-study/raw-archive.json)。
+
+## 2026-10-27 AGY 运行时接入（owner 授权，非效率 gate）
+
+- 目的：把用户已配置的 AGY 接入 Loom 原有运行时管理，不替换顶层框架。实际 CLI `agy 1.4.8`，精确模型 `gemini-3.8-flash-low`、effort `low`，沿用本机已登录账号。无密钥/账户配置修改，无模型静默替换。
+- 共 7 次真实启动：首次探索读文件（cwd 误设 /tmp，额外搜索后找到文件，保留记录）；新 driver 连续 3 轮（文件读取、无工具复述、附加目录读取）；正式 Loom 实例 3 轮（目录读取、原 session 续接、daemon 重启后原 session 续接）。没有失败重跑掩盖；取消/错误流验收使用 fake CLI，不消耗额外真实模型。
+- 首次独立探针 57,270 输入/216 输出；driver 连续三轮累计 36,685 输入/106 输出。AGY `result.usage` 为跨轮累计，产品只记各 `step_update` 的 usage，不把每轮 result 再相加。`duration_seconds` 同样不是可靠单轮耗时。
+- 正式三轮均 exit 0、Activation completed、每轮一条 Host final 回复；所有 usage response ID 的 conversation 前缀一致，重启不换 session。原始步骤/用量/回复及截图见[证据](evidence/2026-10-27-agy-runtime/summary.json)与[范围](evidence/2026-10-27-agy-runtime/README.md)。
+- 未证明自动记忆禁用，不是 native-vs-Loom 成本对照；不将 token 换算账单，不推断订阅额度、全部模型质量、子代理/压缩完整计量或 Fork/Side 已通过。

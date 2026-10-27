@@ -305,6 +305,19 @@ This authorization covers the model matrix for gates only; each paid run batch
 still needs explicit owner authorization. Commit/push rules are in "Verification
 and evidence".
 
+## Antigravity runtime boundary
+
+Owner authorized AGY integration on 2026-10-27. AGY is a native runtime below
+Loom, not a replacement orchestrator: `agy-print-json/v1` uses the existing
+Role/Instance/Channel, provider-session store and WorkerFinalOutput owners.
+Discover models from `agy models`, resume only the exact bound `--conversation`,
+and fail closed on session/model mismatch or incomplete final evidence.
+Count per-step usage once; AGY result usage/turn count/duration can be cumulative
+across the conversation. Do not use those totals as per-turn measurements.
+No native Fast/Fork/Side, benchmark automatic-memory isolation or complete
+subagent/compaction accounting is claimed. See
+[AGY intake and evidence](docs/evo/evidence/2026-10-27-agy-runtime/README.md).
+
 ## Ownership rules
 
 - `packages/protocol` owns public commands, events, schemas, identities, and validation.

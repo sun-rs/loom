@@ -1,3 +1,4 @@
+import { createAgyPrintRuntime } from "./agy-print-runtime.ts";
 import { createKimiNativeFinalTransport } from "./kimi-native-final-lease.ts";
 import { createCodexExecRuntime } from "./codex-exec-runtime.ts";
 import { createPiPrintRuntime } from "./pi-print-runtime.ts";
@@ -196,6 +197,11 @@ export class RuntimeImplementationRegistry {
     this.#adapterImplementations.set("codex-exec/v1", {
       create: createCodexExecRuntime,
       implementationVersion: "codex-exec-driver/v1",
+      recoveryDrivers,
+    });
+    this.#adapterImplementations.set("agy-print-json/v1", {
+      create: createAgyPrintRuntime,
+      implementationVersion: "agy-print-json-driver/v1",
       recoveryDrivers,
     });
     this.#adapterImplementations.set("pi-print-json/v1", {

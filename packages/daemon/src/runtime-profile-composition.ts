@@ -171,6 +171,7 @@ export function createConfiguredRuntime(input: {
         "kimi-acp/v1": "kimi",
         "opencode-server/v1": "opencode",
         "pi-print-json/v1": "pi",
+        "agy-print-json/v1": "agy",
       } as Record<string, string>
     )[input.runtimeProfileRevision.manifest.adapter.kind];
     const launchEnv =
@@ -362,6 +363,8 @@ export function createConfiguredRuntime(input: {
           ),
         }),
     nativeFinalText:
+      input.runtimeProfileRevision.manifest.adapter.kind ===
+        "agy-print-json/v1" ||
       (input.runtimeProfileRevision.manifest.adapter.kind === "codex-exec/v1" &&
         process.env.LOOM_CODEX_EXEC_NATIVE_FINAL_TRIAL === "1") ||
       (input.runtimeProfileRevision.manifest.adapter.kind === "kimi-acp/v1" &&

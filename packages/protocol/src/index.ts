@@ -439,6 +439,7 @@ export const RuntimeProfileManifestV3Schema = z
           "codex-app-server/v1",
           "codex-exec/v1",
           "pi-print-json/v1",
+          "agy-print-json/v1",
           "kimi-acp/v1",
           "opencode-server/v1",
         ]),
@@ -473,10 +474,22 @@ export const RuntimeProfileManifestV3Schema = z
       z.object({ kind: z.literal("kimi-cli/v1") }).strict(),
       z.object({ kind: z.literal("opencode-cli/v1") }).strict(),
       z.object({ kind: z.literal("pi-cli/v1") }).strict(),
+      z.object({ kind: z.literal("agy-cli/v1") }).strict(),
     ]),
   })
   .strict()
   .superRefine((manifest, context) => {
+    if (
+      manifest.adapter.kind === "agy-print-json/v1" &&
+      manifest.modelCatalogProbe.kind !== "agy-cli/v1"
+    ) {
+      context.addIssue({
+        code: "custom",
+        message:
+          "agy-print-json/v1 requires the agy-cli/v1 model catalog probe",
+        path: ["modelCatalogProbe", "kind"],
+      });
+    }
     if (
       manifest.adapter.kind === "pi-print-json/v1" &&
       manifest.modelCatalogProbe.kind !== "pi-cli/v1"
