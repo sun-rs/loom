@@ -36,4 +36,4 @@ node scripts/cli-efficiency/task-outcome-report.mjs docs/evo/evidence/2026-10-27
 node --test scripts/cli-efficiency/task-outcome-report.test.mjs scripts/cli-efficiency/paired-usage-summary.test.mjs
 ```
 
-后续先使用这份报告暴露证据不足，再针对实际采用的 runner 补采集。不要为了报告字段另造业务状态；更不能补写虚假的历史 Inbox 或推定未知费用为零。离线消耗诊断是下一切片，尚未实现。
+后续先使用这份报告暴露证据不足，再针对实际采用的 runner 补采集。不要为了报告字段另造业务状态；更不能补写虚假的历史 Inbox 或推定未知费用为零。后继[离线诊断入口](runtime-diagnostics.zh-CN.md)已提供原流观察，仍不自动判断浪费或改动运行时。

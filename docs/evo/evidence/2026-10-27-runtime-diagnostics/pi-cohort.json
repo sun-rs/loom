@@ -1,0 +1,165 @@
+{
+  "kind": "archived-pi-stream-diagnostic-replay/v1",
+  "sourceLedger": "docs/evo/evidence/2026-10-10-request-capture/pi-compaction-gap-location.json",
+  "sourceHashesMatched": true,
+  "scope": "All nine stdout paths recorded in the historical ledger; no provider execution. Not full private session/native/HTTP coverage.",
+  "reports": [
+    {
+      "kind": "loom-offline-runtime-diagnostics/v1",
+      "frames": 3,
+      "recognizedFrames": 0,
+      "coverage": "partial-or-unknown",
+      "compactions": [],
+      "retryObservations": [],
+      "retryWasteVerdict": "unknown",
+      "wastedTokens": null,
+      "interpretation": "Observations only. A non-decreasing prompt pair is not proof of wasted work or a compression storm. Retry signals do not establish executed requests, necessity or cost. No automatic interruption, session replacement or billing estimate.",
+      "source": {
+        "path": "/Users/sun/.loom/reviews/2026-10-10-pi-p181/runs/1791604761567-paid/launch-loom-1791604762280-85711.stdout",
+        "sha256": "b9b0dd3d6ff77c4e76f6e53951ee9ddbd7eb6cd88f7261e3b34174e4666f5a2d",
+        "bytes": 1142
+      }
+    },
+    {
+      "kind": "loom-offline-runtime-diagnostics/v1",
+      "frames": 7718,
+      "recognizedFrames": 1,
+      "coverage": "partial-or-unknown",
+      "compactions": [],
+      "retryObservations": [],
+      "retryWasteVerdict": "unknown",
+      "wastedTokens": null,
+      "interpretation": "Observations only. A non-decreasing prompt pair is not proof of wasted work or a compression storm. Retry signals do not establish executed requests, necessity or cost. No automatic interruption, session replacement or billing estimate.",
+      "source": {
+        "path": "/Users/sun/.loom/reviews/2026-10-10-pi-p181/runs/1791604761567-paid/launch-loom-1791604814746-87941.stdout",
+        "sha256": "ccf7c7b725340cc465a1aefbf3070869adfa0c15927552a76e8e99b7fb8d6252",
+        "bytes": 2366572
+      }
+    },
+    {
+      "kind": "loom-offline-runtime-diagnostics/v1",
+      "frames": 1434,
+      "recognizedFrames": 1,
+      "coverage": "partial-or-unknown",
+      "compactions": [],
+      "retryObservations": [],
+      "retryWasteVerdict": "unknown",
+      "wastedTokens": null,
+      "interpretation": "Observations only. A non-decreasing prompt pair is not proof of wasted work or a compression storm. Retry signals do not establish executed requests, necessity or cost. No automatic interruption, session replacement or billing estimate.",
+      "source": {
+        "path": "/Users/sun/.loom/reviews/2026-10-10-pi-p181/runs/1791604761567-paid/launch-loom-1791604937432-93175.stdout",
+        "sha256": "f2d9a8c38920cd06d37e4ea6b768eca4b67edacddcd05468facdeba041c9fefd",
+        "bytes": 459575
+      }
+    },
+    {
+      "kind": "loom-offline-runtime-diagnostics/v1",
+      "frames": 2182,
+      "recognizedFrames": 1,
+      "coverage": "partial-or-unknown",
+      "compactions": [],
+      "retryObservations": [],
+      "retryWasteVerdict": "unknown",
+      "wastedTokens": null,
+      "interpretation": "Observations only. A non-decreasing prompt pair is not proof of wasted work or a compression storm. Retry signals do not establish executed requests, necessity or cost. No automatic interruption, session replacement or billing estimate.",
+      "source": {
+        "path": "/Users/sun/.loom/reviews/2026-10-10-pi-p181/runs/1791604761567-paid/launch-loom-1791605004043-96050.stdout",
+        "sha256": "b3d63c78278b569ad1c68ce252fe47487b12c52100f214c6b19a8b85ed7c8230",
+        "bytes": 687757
+      }
+    },
+    {
+      "kind": "loom-offline-runtime-diagnostics/v1",
+      "frames": 7006,
+      "recognizedFrames": 1,
+      "coverage": "partial-or-unknown",
+      "compactions": [],
+      "retryObservations": [],
+      "retryWasteVerdict": "unknown",
+      "wastedTokens": null,
+      "interpretation": "Observations only. A non-decreasing prompt pair is not proof of wasted work or a compression storm. Retry signals do not establish executed requests, necessity or cost. No automatic interruption, session replacement or billing estimate.",
+      "source": {
+        "path": "/Users/sun/.loom/reviews/2026-10-10-pi-p181/runs/1791604761567-paid/launch-loom-1791605037122-97665.stdout",
+        "sha256": "ea715d0fc5182c30ad685dd278fdf384406894c76a5b30b21b807779ae2d605b",
+        "bytes": 2188496
+      }
+    },
+    {
+      "kind": "loom-offline-runtime-diagnostics/v1",
+      "frames": 6044,
+      "recognizedFrames": 1,
+      "coverage": "partial-or-unknown",
+      "compactions": [],
+      "retryObservations": [],
+      "retryWasteVerdict": "unknown",
+      "wastedTokens": null,
+      "interpretation": "Observations only. A non-decreasing prompt pair is not proof of wasted work or a compression storm. Retry signals do not establish executed requests, necessity or cost. No automatic interruption, session replacement or billing estimate.",
+      "source": {
+        "path": "/Users/sun/.loom/reviews/2026-10-10-pi-p181/runs/1791604761567-paid/launch-loom-1791605237309-6761.stdout",
+        "sha256": "4fa61767ea96df700a174acdf2edd62c5a3685c46dfbc61c072ebade1d0ae03e",
+        "bytes": 1869234
+      }
+    },
+    {
+      "kind": "loom-offline-runtime-diagnostics/v1",
+      "frames": 14449,
+      "recognizedFrames": 1,
+      "coverage": "partial-or-unknown",
+      "compactions": [],
+      "retryObservations": [],
+      "retryWasteVerdict": "unknown",
+      "wastedTokens": null,
+      "interpretation": "Observations only. A non-decreasing prompt pair is not proof of wasted work or a compression storm. Retry signals do not establish executed requests, necessity or cost. No automatic interruption, session replacement or billing estimate.",
+      "source": {
+        "path": "/Users/sun/.loom/reviews/2026-10-10-pi-p181/runs/1791604761567-paid/launch-loom-1791605306765-10152.stdout",
+        "sha256": "ace3d427424ce696573cda9bbf49a326b49d3fd27265a90c30ba7f9a988eb038",
+        "bytes": 4569252
+      }
+    },
+    {
+      "kind": "loom-offline-runtime-diagnostics/v1",
+      "frames": 8699,
+      "recognizedFrames": 1,
+      "coverage": "partial-or-unknown",
+      "compactions": [],
+      "retryObservations": [],
+      "retryWasteVerdict": "unknown",
+      "wastedTokens": null,
+      "interpretation": "Observations only. A non-decreasing prompt pair is not proof of wasted work or a compression storm. Retry signals do not establish executed requests, necessity or cost. No automatic interruption, session replacement or billing estimate.",
+      "source": {
+        "path": "/Users/sun/.loom/reviews/2026-10-10-pi-p181/runs/1791604761567-paid/launch-loom-1791605714753-28531.stdout",
+        "sha256": "3f48c9d5e463ca9648f772b361c19317fe9f2e51b1087b936827b5d8528876ae",
+        "bytes": 2817811
+      }
+    },
+    {
+      "kind": "loom-offline-runtime-diagnostics/v1",
+      "frames": 5829,
+      "recognizedFrames": 3,
+      "coverage": "partial-or-unknown",
+      "compactions": [
+        {
+          "provider": "pi",
+          "sessionId": "01a123f7-f44e-7078-a144-b630e6f69994",
+          "line": 3460,
+          "pre": 112091,
+          "post": null,
+          "estimatedPost": 25888,
+          "aborted": false,
+          "measurement": "native-pre-and-optional-estimated-post",
+          "classification": "unknown",
+          "reason": "estimated-or-missing-post"
+        }
+      ],
+      "retryObservations": [],
+      "retryWasteVerdict": "unknown",
+      "wastedTokens": null,
+      "interpretation": "Observations only. A non-decreasing prompt pair is not proof of wasted work or a compression storm. Retry signals do not establish executed requests, necessity or cost. No automatic interruption, session replacement or billing estimate.",
+      "source": {
+        "path": "/Users/sun/.loom/reviews/2026-10-10-pi-p181/runs/1791604761567-paid/launch-loom-1791605829070-33416.stdout",
+        "sha256": "f93ca0f374527fdf5f2284db6142140e7a1309cdd6dcd31067d3023ea6c7b8c4",
+        "bytes": 1812923
+      }
+    }
+  ]
+}

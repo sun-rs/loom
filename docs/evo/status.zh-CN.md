@@ -46,7 +46,7 @@
 
 ## 4. 未决项
 
-没有因本次整理新增产品阻断或重新开启历史验收。新的能力改造顺序是[文章/Cindy研究](article-cindy-adoption-review.zh-CN.md)中的：复用完整任务验收汇总 → 离线无效消耗诊断 → 有证据再精简交接输入。第一步已落地[离线报告入口](task-outcome-report.zh-CN.md)：重放旧三对团队批与 AGY 恢复审查，保留失败/人工介入/未知计量，复用已有算术；未重新运行真实模型或补判验收。其余仍是候选计划，没有新增调度框架、自动换 session、静默记忆生成或收益数字。
+没有因本次整理新增产品阻断或重新开启历史验收。新的能力改造顺序是[文章/Cindy研究](article-cindy-adoption-review.zh-CN.md)中的：复用完整任务验收汇总 → 离线无效消耗诊断 → 有证据再精简交接输入。第一步已落地[离线报告入口](task-outcome-report.zh-CN.md)：重放旧三对团队批与 AGY 恢复审查，保留失败/人工介入/未知计量，复用已有算术；未重新运行真实模型或补判验收。第二步已增加[原流离线诊断](runtime-diagnostics.zh-CN.md)，旧 Pi 批9份stdout哈希匹配，仅1次压缩且post为估计值，未建立无效压缩/不必要重试根因。没有证据支持继续改prompt或运行时；不新增调度框架、自动换session、静默记忆生成或收益数字。
 
 文档与退役引用整理见[清理记录](../audits/2026-10-27-repository-cleanup.zh-CN.md)；后继报告工具的检查与重放见[证据](evidence/2026-10-27-task-outcome-report/README.md)。
 
