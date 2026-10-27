@@ -2,7 +2,7 @@
 
 Loom 是本地优先的多 Agent 协作平台。当前开发分支为 **main**（由 evo 晋升）；**chatbox** 独立承载从 `sun-rs/rah` 引入的多 CLI 工作台。旧复刻 UI 分支和 evo 分支已退役，不参与当前产品开发。分支关系见[主线与 Chatbox 记录](docs/evo/branch-promotion.zh-CN.md)。
 
-用户自行安装并登录 Codex、Claude Code、OpenCode、Kimi 或 Pi。Loom 负责实例、频道、消息投递与运行管理，不代为安装 CLI 或配置账号。
+用户自行安装并登录 Codex、Claude Code、OpenCode、Kimi、Pi 或 Antigravity（AGY）。Loom 负责实例、频道、消息投递与运行管理，不代为安装 CLI 或配置账号。
 
 ## 当前架构
 
@@ -67,7 +67,7 @@ npm run start:local-workbench
 - [目标合同](docs/evo/target-contract.zh-CN.md)
 - [当前状态与部署](docs/evo/status.zh-CN.md)
 - [真实 CLI 与付费运行记录](docs/evo/paid-runs.zh-CN.md)
-- [前端清理与后续官方接入清单](docs/audits/2026-10-17-frontend-cleanup-and-next.zh-CN.md)
-- [临时控制台退役](docs/audits/2026-10-17-console-retirement.zh-CN.md)
+- [当前文档索引与历史入口](docs/README.md)
+- [官方 UI 依赖升级工作流](docs/design/official-ui-upgrade-workflow.zh-CN.md)
 
 历史审计描述当时的源码和限制，不代表当前能力。各 CLI 的真实验收与效率结论，以对应证据为准；源码接入、自动测试、真实页面、真实 CLI 和效率验收是不同结论。

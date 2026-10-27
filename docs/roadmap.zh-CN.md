@@ -1,3 +1,5 @@
+> 历史路线：本页保留早期 RAH OS 阶段计划与当时状态，不是当前 Loom main 的发布待办。当前入口见[文档索引](README.md)、[目标合同](evo/target-contract.zh-CN.md)和[当前状态](evo/status.zh-CN.md)。下方版本、旧 UI 和未完成描述均须按后继证据解释，不能据此恢复退役代码。
+
 # RAH OS 实施路线与门禁
 
 当前发布范围以[单 Human 主线与多人备选项目](./product/single-human-mainline-and-multi-human-backlog.zh-CN.md)为准。

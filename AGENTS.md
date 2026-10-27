@@ -26,7 +26,7 @@ legacy project's Session-first rules or obsolete roadmap restrictions.
   `frontends/raft`, API and focused tests. Do not restore the console workspace,
   gateway route, deployment environment or dedicated build/test scripts.
 - `docs/evo/target-contract.zh-CN.md` is the single target contract and takes
-  precedence; `docs/evo/status.zh-CN.md` records the evo-vs-main delta; code
+  precedence; `docs/evo/status.zh-CN.md` records current main state and retained acceptance limits; code
   proves current behavior but never overrides owner goals or safety
   constraints. Owner documents in `docs/architecture` and `docs/product`
   describe the `main` baseline and are superseded where they conflict with the
@@ -83,7 +83,8 @@ Git branch names. Chatbox has its own branch and engineering contract.
 
 ## Reading map
 
-- Target contract: `docs/evo/target-contract.zh-CN.md`; current evo state,
+- Current documentation index: `docs/README.md`.
+- Target contract: `docs/evo/target-contract.zh-CN.md`; current main state,
   contract deviations and open items: `docs/evo/status.zh-CN.md`; paid and
   real-CLI runs: `docs/evo/paid-runs.zh-CN.md`; construction history (sections
   1–65, cited as "status §N"): `docs/evo/log/status-history-2026-09.zh-CN.md`;
@@ -107,6 +108,15 @@ Main-baseline references (valid unless superseded by the evo documents):
 
 Dated audits specify evidence and limits at that revision, not current
 completion. Resolve contradictions against code and recent evidence explicitly.
+
+Keep current-state summaries separate from construction history. Append detailed
+runs to dated evidence, not to the documentation index or an ever-growing status
+page. The verbatim pre-cleanup index and status are retained as
+`docs/history-index-2026-10-27.md` and
+`docs/evo/status-history-through-2026-10-27.zh-CN.md`; their "current" and "next"
+wording is historical, not a new backlog. Never erase failed gates, unknown usage,
+upstream provenance or compatibility fixtures to make the repository look clean.
+Retired-path mentions in retirement tests enforce absence and must remain.
 
 ## Product boundary
 
@@ -133,7 +143,7 @@ Loom is a local-first multi-Agent platform: single-Mac Core/daemon/runtime
 first, secure LAN access, future direct remote-Computer extension; no Raft
 central account, billing or relay. Local deployment keeps authentication, ACL,
 causal barriers and execution fencing. Users install and authenticate their own
-Codex/Claude/Kimi/OpenCode CLIs; Loom discovers, invokes and manages them but
+Codex/Claude/Kimi/OpenCode/Pi/Antigravity CLIs; Loom discovers, invokes and manages them but
 never installs them or configures their accounts.
 
 ## Role / Instance / Session / Channel
@@ -718,7 +728,6 @@ including directed and broadcast peer messages, do not alone hold an in-flight
 ordinary text reply. They retain delivery and follow-up obligations; unread
 positions never advance on publication. Human facts, attachments and business
 state mutations retain their causal barriers. See target contract §3.
-
 
 ## Adaptive mobile and large-screen acceptance
 
