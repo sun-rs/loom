@@ -1,0 +1,28 @@
+{
+  "sourceRevision": "57299f8a",
+  "oldPid": 84949,
+  "newPid": 8422,
+  "backup": "/Users/sun/.loom/evo/backups/pre-peer-wait-1793114927577",
+  "ledgerUnchanged": true,
+  "at": "2026-10-27T15:29:04.793Z",
+  "webAssets": "unchanged; backend-only change",
+  "label": "gui/501/com.loom.evo",
+  "tests": {
+    "focused": 8,
+    "typecheck": "passed",
+    "tdd": "New boundary assertion failed before change, passed afterward"
+  },
+  "browser": {
+    "url": "http://127.0.0.1:4176/",
+    "result": "Channel list, Agent Council conversation and textarea composer rendered",
+    "screenshot": "/Users/sun/.loom/reviews/2026-10-27-daily-report-r2/peer-wait-page.png",
+    "sha256": "d93ed748859a6502852454a0e220a3ef68c2f7bdb9765435ef2f5183df663306",
+    "probeCorrections": "Initial probe incorrectly searched placeholder in body innerText, then contenteditable; actual composer is textarea with placeholder. Inspected DOM and screenshot; no product change."
+  },
+  "paidCalls": 0,
+  "limitations": [
+    "Guidance only, not enforcement or proof of model compliance.",
+    "No measured token savings; per-turn guidance adds input.",
+    "Native subagents remain allowed; routing/final semantics unchanged."
+  ]
+}

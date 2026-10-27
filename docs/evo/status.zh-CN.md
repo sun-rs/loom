@@ -9,7 +9,7 @@
 - `main` 是当前 Loom；`evo` 已晋升并移除；`chatbox` 独立承载 `rah/main` 导入，不参与 Loom 构建。见[分支记录](branch-promotion.zh-CN.md)。
 - 唯一产品前端为 `frontends/raft`。旧复刻 UI 和 `apps/console` 已退役，不恢复其路由、构建或测试入口。
 - 保留部署标签 `com.loom.evo`、数据目录 `~/.loom/evo`、日志目录及频道主目录 `~/.loom/channel-workspaces/`。这些名称不是旧分支残留任务，不能为整洁搬迁数据。
-- 最近产品后端代码已在 `4cdcc58d`（MCP参数错误指引）安全重启，Web静态产物沿用原版本；[备份及真实页面证据](evidence/2026-10-27-mcp-argument-guidance/summary.json)。此前AGY部署为 `ed76bb2f`。实际部署结论见[运行时证据](evidence/2026-10-27-agy-runtime/README.md)与[协作收尾](evidence/2026-10-27-agy-closeout/README.md)，不能把文档 HEAD 当成服务版本。
+- 最近产品后端代码已在 `57299f8a`（MCP频道交接/原生等待边界指引）安全重启，Web静态产物沿用原版本；[备份及真实页面证据](evidence/2026-10-27-peer-wait-guidance/summary.json)。此前AGY部署为 `ed76bb2f`。实际部署结论见[运行时证据](evidence/2026-10-27-agy-runtime/README.md)与[协作收尾](evidence/2026-10-27-agy-closeout/README.md)，不能把文档 HEAD 当成服务版本。
 - HTTP 4176、LAN HTTPS 4178 和隔离预览的部署记录见[HTTPS接入](evidence/2026-10-22-https-trusted/summary.json)、[预览边界](evidence/2026-10-23-https-preview/summary.json)。本次未重新探测监听地址、数据库版本或运行时设置；部署前仍须读取实际状态，不沿用旧快照里的临时 loopback 配置。
 
 ## 2. 当前状态
@@ -52,7 +52,7 @@ Owner随后授权正确开场复验：7 Run完成设计→实施→审查拒绝�
 
 没有因本次整理新增产品阻断或重新开启历史验收。新的能力改造顺序是[文章/Cindy研究](article-cindy-adoption-review.zh-CN.md)中的：复用完整任务验收汇总 → 离线无效消耗诊断 → 有证据再精简交接输入。第一步已落地[离线报告入口](task-outcome-report.zh-CN.md)：重放旧三对团队批与 AGY 恢复审查，保留失败/人工介入/未知计量，复用已有算术；未重新运行真实模型或补判验收。第二步已增加[原流离线诊断](runtime-diagnostics.zh-CN.md)，旧 Pi 批9份stdout哈希匹配，仅1次压缩且post为估计值，未建立无效压缩/不必要重试根因。没有证据支持继续改prompt或运行时；不新增调度框架、自动换session、静默记忆生成或收益数字。
 
-成功批后续只读诊断确认：Codex三次新回复遗漏final后修正、两次原生wait超时（违反本批指令）；业务交付通过不等于工具首试和指令遵循通过。Claude重读发生在代码修正前后，非无效重读证据。共用MCP参数错误指引已修复并重启部署，13项针对性测试及类型检查通过；非法调用不转发、不回显输入、不默认final。没有新付费复验，原生wait误用未改；不据此重构上下文或扩大付费实验。见[诊断](evidence/2026-10-27-handoff-diagnostics/README.md)。
+成功批后续只读诊断确认：Codex三次新回复遗漏final后修正、两次原生wait超时（违反本批指令）；业务交付通过不等于工具首试和指令遵循通过。Claude重读发生在代码修正前后，非无效重读证据。共用MCP参数错误指引已修复并重启部署，13项针对性测试及类型检查通过；非法调用不转发、不回显输入、不默认final。后续共用MCP指引已补频道交接结束本轮、原生等待仅适用于自身子代理的区分，8项测试及类型检查通过并安全重启；没有新付费复验，不宣称模型行为已根除或节省比例。见[修复边界](evidence/2026-10-27-peer-wait-guidance/README.md)；不据此重构上下文或扩大付费实验。见[诊断](evidence/2026-10-27-handoff-diagnostics/README.md)。
 
 文档与退役引用整理见[清理记录](../audits/2026-10-27-repository-cleanup.zh-CN.md)；后继报告工具的检查与重放见[证据](evidence/2026-10-27-task-outcome-report/README.md)。
 
