@@ -1,0 +1,65 @@
+{
+  "kind": "loom-task-outcome-report/v1",
+  "sourceKind": "daily-task-failed-handoff/v1",
+  "source": {
+    "path": "docs/evo/evidence/2026-10-27-daily-report/summary.json",
+    "sha256": "4741e0a859a23515e5bf08fc5953efbd425cde04b96473661165ac660adaf63e"
+  },
+  "cases": [
+    {
+      "id": "daily-markdown-report",
+      "sourceRevision": "52c0b4a4",
+      "bindings": [
+        {
+          "cli": "codex",
+          "binding": "local:codex-cli/v1:gpt-6-luna",
+          "effort": "low"
+        },
+        {
+          "cli": "claude",
+          "binding": "local:claude-cli/v1:sonnet",
+          "effort": "low"
+        }
+      ],
+      "outcome": "failed",
+      "executionFinished": true,
+      "humanIntervention": "recorded",
+      "humanDeclaration": "No new model run, replacement or Human rescue message after idle. Channel SOS stopped. Lead subsequently implemented the requested tool in the repository; this is not peer-delivered success.",
+      "usage": {
+        "input": {
+          "known": 221102,
+          "complete": false,
+          "total": null
+        },
+        "output": {
+          "known": 1787,
+          "complete": false,
+          "total": null
+        },
+        "cachedInput": {
+          "known": 176512,
+          "complete": false,
+          "total": null
+        },
+        "generations": {
+          "known": 12,
+          "complete": false,
+          "total": null
+        }
+      },
+      "descendantCoverage": "unknown",
+      "handoff": {
+        "proof": "no-directed-peer-request",
+        "limitation": "Human opener woke both; author plan had zero recipients; no A→B→A delivery claim."
+      },
+      "limitations": [
+        "Lead opener contained literal reviewer mentions in workflow instructions, waking both members; repeated known setup error.",
+        "Author final plan omitted reviewer mention; message 15 has no recipients. Reviewer only acknowledged waiting; no accepted peer request was lost.",
+        "One task attempt, two CLI bindings, invalid single-recipient opener. No native/Herdr control or efficiency/model ranking claim.",
+        "Exit code null remains null; completed Activation is not completed business task.",
+        "Private launcher received a preflight fix after closeout; original opening/body and failure retained, no rerun."
+      ]
+    }
+  ],
+  "comparison": null
+}

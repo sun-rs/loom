@@ -37,3 +37,13 @@ node --test scripts/cli-efficiency/task-outcome-report.test.mjs scripts/cli-effi
 ```
 
 后续先使用这份报告暴露证据不足，再针对实际采用的 runner 补采集。不要为了报告字段另造业务状态；更不能补写虚假的历史 Inbox 或推定未知费用为零。后继[离线诊断入口](runtime-diagnostics.zh-CN.md)已提供原流观察，仍不自动判断浪费或改动运行时。
+
+## 可读报告
+
+已有 `loom-task-outcome-report/v1` JSON 可转为中文 Markdown：
+
+```sh
+node scripts/cli-efficiency/task-outcome-markdown.mjs docs/evo/evidence/2026-10-27-daily-report/task-report.json
+```
+
+逐案保留结果、运行结束、有限审查、人工介入、已知消耗/完整性与来源限制，展示原报告的描述性比率，不计算新倍率。用户文本转义；未知kind、缺cases和非法计量拒绝。这个工具由lead在双实例任务停滞后完成，不属于双实例交付成果，见[实际任务记录](evidence/2026-10-27-daily-report/README.md)。

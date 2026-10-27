@@ -46,6 +46,8 @@
 
 ## 4. 未决项
 
+2026-10-27 实际协作任务未完成：Codex luna/low＋Claude sonnet/low 停在方案阶段。lead开场的流程说明误含审查者完整@，同时唤醒两位；实施者最终方案又未点名，无新的peer请求，不是已接受投递丢失的证据。2 Run、已记录221,102输入/1,787输出保留；未补跑。Markdown工具由lead另行完成，新增发送前canonical mention预检；不改变Kernel路由。见[本次任务与接手边界](evidence/2026-10-27-daily-report/README.md)。
+
 没有因本次整理新增产品阻断或重新开启历史验收。新的能力改造顺序是[文章/Cindy研究](article-cindy-adoption-review.zh-CN.md)中的：复用完整任务验收汇总 → 离线无效消耗诊断 → 有证据再精简交接输入。第一步已落地[离线报告入口](task-outcome-report.zh-CN.md)：重放旧三对团队批与 AGY 恢复审查，保留失败/人工介入/未知计量，复用已有算术；未重新运行真实模型或补判验收。第二步已增加[原流离线诊断](runtime-diagnostics.zh-CN.md)，旧 Pi 批9份stdout哈希匹配，仅1次压缩且post为估计值，未建立无效压缩/不必要重试根因。没有证据支持继续改prompt或运行时；不新增调度框架、自动换session、静默记忆生成或收益数字。
 
 文档与退役引用整理见[清理记录](../audits/2026-10-27-repository-cleanup.zh-CN.md)；后继报告工具的检查与重放见[证据](evidence/2026-10-27-task-outcome-report/README.md)。

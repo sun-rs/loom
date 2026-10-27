@@ -1,0 +1,289 @@
+{
+  "date": "2026-10-27",
+  "kind": "daily-task-failed-handoff/v1",
+  "sourceRevision": "52c0b4a4",
+  "roomId": "room_67a7b338-e72f-4103-886a-04d9dee5c351",
+  "channelName": "report-markdown-1793111174268",
+  "authorization": "Owner said 开始 after proposal to perform a real two-instance task; fixed one task, no retries or replacements.",
+  "limits": {
+    "runs": 10,
+    "input": 1200000,
+    "output": 25000,
+    "minutes": 20
+  },
+  "instances": {
+    "author": {
+      "instanceId": "principal_7125fe76-e574-4840-8df6-e80d788d33f1",
+      "handle": "Report Builder-1",
+      "roleId": "role_5cf35521-755e-4ea9-83e3-7947feb044ff",
+      "binding": "local:codex-cli/v1:gpt-6-luna",
+      "provider": "codex",
+      "effort": "low"
+    },
+    "reviewer": {
+      "instanceId": "principal_7b019453-83c6-4125-88cc-67d9ebeebc9a",
+      "handle": "Report Reviewer-1",
+      "roleId": "role_eeee04e1-82bb-4e7e-b3ca-8ad99dd9cdd9",
+      "binding": "local:claude-cli/v1:sonnet",
+      "provider": "claude",
+      "effort": "low"
+    }
+  },
+  "opening": {
+    "at": "2026-10-27T14:26:36.564Z",
+    "body": "@Report Builder-1 请与 Report Reviewer-1 合作完成一个会实际合入Loom的离线工具：将现有 task-outcome-report/v1 JSON 转成简洁中文 Markdown，供用户直接读验收结果。\n共同任务：在 scripts/cli-efficiency/ 新增 task-outcome-markdown.mjs 与 task-outcome-markdown.test.mjs；导出 renderTaskOutcomeMarkdown(report)，并支持 node scripts/cli-efficiency/task-outcome-markdown.mjs <report.json> 输出到stdout。输入示例 fixtures/team-v8.json 和 fixtures/agy-review.json。不得改已有文件，不联网，不增加依赖。\n报告必须显示每个case的标识、CLI/模型/effort（若已提供）、任务结果与执行结束分开、人工介入声明、已知input/output与完整性、交接证据等级及限制；AGY limited review通过不能变成完整任务通过。不得丢失败样本，不得把null/unknown填零，不把token称账单。批次有arithmetic比率也必须说明只是描述值、同质量比率未知；保留来源路径/hash和关键limitations。用户字段里的换行、竖线、HTML、反引号不得破坏表格或形成原始HTML。未知报告kind/缺cases要明确拒绝。\n协作流程由本条要求：你先读输入并提出简短方案，@Report Reviewer-1 请审方案后结束本轮；审查者只审查普通最终回复，不@回来。你收到建议后先写测试确认失败，再实施最小修改，执行测试，然后@Report Reviewer-1最终代码复审。审查者必须读代码并实际运行测试，普通最终回复接受或指出缺陷。最多一轮修复复审；通过后你收尾写 DAILY_REPORT_COMPLETE，不再@任何成员。每条频道回复控制在250中文字左右，报告测试红/绿和文件路径即可。不要自己代替对方审查，不要等待/轮询同伴，不要使用其他通信工具。"
+  },
+  "watchResult": {
+    "reason": "idle-without-complete",
+    "at": "2026-10-27T14:28:18.228Z",
+    "note": "Observed-budget stop may overshoot for in-flight work; no automatic retry."
+  },
+  "verdict": "collaborative-task-incomplete; lead-implemented-tool-separately",
+  "causes": [
+    "Lead opener contained literal reviewer mentions in workflow instructions, waking both members; repeated known setup error.",
+    "Author final plan omitted reviewer mention; message 15 has no recipients. Reviewer only acknowledged waiting; no accepted peer request was lost."
+  ],
+  "intervention": "No new model run, replacement or Human rescue message after idle. Channel SOS stopped. Lead subsequently implemented the requested tool in the repository; this is not peer-delivered success.",
+  "runs": [
+    {
+      "run_attempt_id": "run_0d72dca3-6e84-454a-9de4-cbac551af4b2",
+      "participant_id": "principal_7125fe76-e574-4840-8df6-e80d788d33f1",
+      "state": "exited",
+      "started_at": "2026-10-27T14:26:36.785Z",
+      "finished_at": "2026-10-27T14:27:30.437Z",
+      "activation_id": "activation_01b44bd6-f02b-4811-9fca-5727365391e4",
+      "exit_code": null,
+      "error": null
+    },
+    {
+      "run_attempt_id": "run_864ea711-0e26-401a-b23a-ac92bb427048",
+      "participant_id": "principal_7b019453-83c6-4125-88cc-67d9ebeebc9a",
+      "state": "exited",
+      "started_at": "2026-10-27T14:26:36.786Z",
+      "finished_at": "2026-10-27T14:27:13.459Z",
+      "activation_id": "activation_5526d1a4-308f-49f2-a8b1-c639998b982a",
+      "exit_code": null,
+      "error": null
+    }
+  ],
+  "activations": [
+    {
+      "activation_id": "activation_01b44bd6-f02b-4811-9fca-5727365391e4",
+      "participant_id": "principal_7125fe76-e574-4840-8df6-e80d788d33f1",
+      "state": "completed",
+      "from_seq": 6,
+      "to_seq": 6,
+      "last_error": null
+    },
+    {
+      "activation_id": "activation_5526d1a4-308f-49f2-a8b1-c639998b982a",
+      "participant_id": "principal_7b019453-83c6-4125-88cc-67d9ebeebc9a",
+      "state": "completed",
+      "from_seq": 6,
+      "to_seq": 6,
+      "last_error": null
+    }
+  ],
+  "usage": [
+    {
+      "run_attempt_id": "run_0d72dca3-6e84-454a-9de4-cbac551af4b2",
+      "generations": 8,
+      "input": 157624,
+      "output": 711,
+      "cached": 131968
+    },
+    {
+      "run_attempt_id": "run_864ea711-0e26-401a-b23a-ac92bb427048",
+      "generations": 4,
+      "input": 63478,
+      "output": 1076,
+      "cached": 44544
+    }
+  ],
+  "usageGaps": [],
+  "placements": [
+    {
+      "participantId": "principal_7125fe76-e574-4840-8df6-e80d788d33f1",
+      "placementId": "placement_79e0366a-4c13-41ab-9343-1dfc761d9ea6",
+      "activationId": "activation_01b44bd6-f02b-4811-9fca-5727365391e4",
+      "resolvedModel": {
+        "source": "explicit_binding",
+        "modelBindingId": "local:codex-cli/v1:gpt-6-luna",
+        "provider": "openai",
+        "modelId": "gpt-6-luna",
+        "reasoning": "low"
+      },
+      "protocolFamily": "rah-worker-process/v1",
+      "createdAt": "2026-10-27T14:26:36.744Z"
+    },
+    {
+      "participantId": "principal_7b019453-83c6-4125-88cc-67d9ebeebc9a",
+      "placementId": "placement_72e66995-4252-4b4b-809f-f5be4517e965",
+      "activationId": "activation_5526d1a4-308f-49f2-a8b1-c639998b982a",
+      "resolvedModel": {
+        "source": "explicit_binding",
+        "modelBindingId": "local:claude-cli/v1:sonnet",
+        "provider": "anthropic",
+        "modelId": "sonnet",
+        "reasoning": "low"
+      },
+      "protocolFamily": "rah-worker-process/v1",
+      "createdAt": "2026-10-27T14:26:36.747Z"
+    }
+  ],
+  "messages": [
+    {
+      "event_id": "event_929a24ca-0563-4fd4-a5c5-747bfdadee9e",
+      "room_seq": 6,
+      "actor_id": "principal_379720e9-6c80-4ecb-b06e-530a78150911",
+      "payload_json": {
+        "body": "@Report Builder-1 请与 Report Reviewer-1 合作完成一个会实际合入Loom的离线工具：将现有 task-outcome-report/v1 JSON 转成简洁中文 Markdown，供用户直接读验收结果。\n共同任务：在 scripts/cli-efficiency/ 新增 task-outcome-markdown.mjs 与 task-outcome-markdown.test.mjs；导出 renderTaskOutcomeMarkdown(report)，并支持 node scripts/cli-efficiency/task-outcome-markdown.mjs <report.json> 输出到stdout。输入示例 fixtures/team-v8.json 和 fixtures/agy-review.json。不得改已有文件，不联网，不增加依赖。\n报告必须显示每个case的标识、CLI/模型/effort（若已提供）、任务结果与执行结束分开、人工介入声明、已知input/output与完整性、交接证据等级及限制；AGY limited review通过不能变成完整任务通过。不得丢失败样本，不得把null/unknown填零，不把token称账单。批次有arithmetic比率也必须说明只是描述值、同质量比率未知；保留来源路径/hash和关键limitations。用户字段里的换行、竖线、HTML、反引号不得破坏表格或形成原始HTML。未知报告kind/缺cases要明确拒绝。\n协作流程由本条要求：你先读输入并提出简短方案，@Report Reviewer-1 请审方案后结束本轮；审查者只审查普通最终回复，不@回来。你收到建议后先写测试确认失败，再实施最小修改，执行测试，然后@Report Reviewer-1最终代码复审。审查者必须读代码并实际运行测试，普通最终回复接受或指出缺陷。最多一轮修复复审；通过后你收尾写 DAILY_REPORT_COMPLETE，不再@任何成员。每条频道回复控制在250中文字左右，报告测试红/绿和文件路径即可。不要自己代替对方审查，不要等待/轮询同伴，不要使用其他通信工具。",
+        "messageId": "message_3ec7519e-c9ab-4b2f-8b59-ee31b225d229",
+        "basedOnRoomSeq": 5,
+        "recipientIds": [
+          "principal_7125fe76-e574-4840-8df6-e80d788d33f1",
+          "principal_7b019453-83c6-4125-88cc-67d9ebeebc9a"
+        ],
+        "recipients": [
+          {
+            "participantId": "principal_7125fe76-e574-4840-8df6-e80d788d33f1",
+            "reason": "room_policy"
+          },
+          {
+            "participantId": "principal_7b019453-83c6-4125-88cc-67d9ebeebc9a",
+            "reason": "room_policy"
+          }
+        ],
+        "mentions": [
+          {
+            "start": 0,
+            "end": 17,
+            "handle": "Report Builder-1",
+            "principalId": "principal_7125fe76-e574-4840-8df6-e80d788d33f1",
+            "agentId": "agent_definition_1e722571-827e-4b8b-a172-5109afd95710"
+          },
+          {
+            "start": 698,
+            "end": 716,
+            "handle": "Report Reviewer-1",
+            "principalId": "principal_7b019453-83c6-4125-88cc-67d9ebeebc9a",
+            "agentId": "agent_definition_a42cf66e-91d3-4fab-84e4-fd81b162707a"
+          },
+          {
+            "start": 775,
+            "end": 793,
+            "handle": "Report Reviewer-1",
+            "principalId": "principal_7b019453-83c6-4125-88cc-67d9ebeebc9a",
+            "agentId": "agent_definition_a42cf66e-91d3-4fab-84e4-fd81b162707a"
+          }
+        ]
+      },
+      "body": "@Report Builder-1 请与 Report Reviewer-1 合作完成一个会实际合入Loom的离线工具：将现有 task-outcome-report/v1 JSON 转成简洁中文 Markdown，供用户直接读验收结果。\n共同任务：在 scripts/cli-efficiency/ 新增 task-outcome-markdown.mjs 与 task-outcome-markdown.test.mjs；导出 renderTaskOutcomeMarkdown(report)，并支持 node scripts/cli-efficiency/task-outcome-markdown.mjs <report.json> 输出到stdout。输入示例 fixtures/team-v8.json 和 fixtures/agy-review.json。不得改已有文件，不联网，不增加依赖。\n报告必须显示每个case的标识、CLI/模型/effort（若已提供）、任务结果与执行结束分开、人工介入声明、已知input/output与完整性、交接证据等级及限制；AGY limited review通过不能变成完整任务通过。不得丢失败样本，不得把null/unknown填零，不把token称账单。批次有arithmetic比率也必须说明只是描述值、同质量比率未知；保留来源路径/hash和关键limitations。用户字段里的换行、竖线、HTML、反引号不得破坏表格或形成原始HTML。未知报告kind/缺cases要明确拒绝。\n协作流程由本条要求：你先读输入并提出简短方案，@Report Reviewer-1 请审方案后结束本轮；审查者只审查普通最终回复，不@回来。你收到建议后先写测试确认失败，再实施最小修改，执行测试，然后@Report Reviewer-1最终代码复审。审查者必须读代码并实际运行测试，普通最终回复接受或指出缺陷。最多一轮修复复审；通过后你收尾写 DAILY_REPORT_COMPLETE，不再@任何成员。每条频道回复控制在250中文字左右，报告测试红/绿和文件路径即可。不要自己代替对方审查，不要等待/轮询同伴，不要使用其他通信工具。",
+      "mentions_json": [
+        {
+          "start": 0,
+          "end": 17,
+          "handle": "Report Builder-1",
+          "principalId": "principal_7125fe76-e574-4840-8df6-e80d788d33f1",
+          "agentId": "agent_definition_1e722571-827e-4b8b-a172-5109afd95710"
+        },
+        {
+          "start": 698,
+          "end": 716,
+          "handle": "Report Reviewer-1",
+          "principalId": "principal_7b019453-83c6-4125-88cc-67d9ebeebc9a",
+          "agentId": "agent_definition_a42cf66e-91d3-4fab-84e4-fd81b162707a"
+        },
+        {
+          "start": 775,
+          "end": 793,
+          "handle": "Report Reviewer-1",
+          "principalId": "principal_7b019453-83c6-4125-88cc-67d9ebeebc9a",
+          "agentId": "agent_definition_a42cf66e-91d3-4fab-84e4-fd81b162707a"
+        }
+      ]
+    },
+    {
+      "event_id": "event_aab16117-3b25-4385-91c1-cf10153e282c",
+      "room_seq": 15,
+      "actor_id": "principal_7125fe76-e574-4840-8df6-e80d788d33f1",
+      "payload_json": {
+        "activationId": "activation_01b44bd6-f02b-4811-9fca-5727365391e4",
+        "basedOnRoomSeq": 6,
+        "body": "方案：新增纯 Node 渲染器与测试，严格检查报告 kind/cases；逐案 Markdown 表格安全转义用户文本，分别呈现结果/执行结束、人工声明、token 完整性、交接证据和限制。批次说明 arithmetic 仅描述值、同质量比率未知；AGY bounded review 不升格为任务通过，保留来源路径/hash。",
+        "messageId": "message_ca76bc3f-26dd-4717-9a0d-2f276e8b4426",
+        "recipientIds": [],
+        "recipients": [],
+        "mentions": []
+      },
+      "body": "方案：新增纯 Node 渲染器与测试，严格检查报告 kind/cases；逐案 Markdown 表格安全转义用户文本，分别呈现结果/执行结束、人工声明、token 完整性、交接证据和限制。批次说明 arithmetic 仅描述值、同质量比率未知；AGY bounded review 不升格为任务通过，保留来源路径/hash。",
+      "mentions_json": []
+    },
+    {
+      "event_id": "event_907b0c90-78fc-4126-867e-0f13ddd2e792",
+      "room_seq": 16,
+      "actor_id": "principal_7b019453-83c6-4125-88cc-67d9ebeebc9a",
+      "payload_json": {
+        "activationId": "activation_5526d1a4-308f-49f2-a8b1-c639998b982a",
+        "basedOnRoomSeq": 6,
+        "body": "已读取两份输入，待方案提交后审查。",
+        "messageId": "message_cd434c08-1eed-40bd-85bc-241efaeba514",
+        "recipientIds": [],
+        "recipients": [],
+        "mentions": []
+      },
+      "body": "已读取两份输入，待方案提交后审查。",
+      "mentions_json": []
+    }
+  ],
+  "inbox": [
+    {
+      "inbox_item_id": "inbox_66094851-35bf-4a0c-8a27-751761719e88",
+      "room_id": "room_67a7b338-e72f-4103-886a-04d9dee5c351",
+      "participant_id": "principal_7125fe76-e574-4840-8df6-e80d788d33f1",
+      "event_id": "event_929a24ca-0563-4fd4-a5c5-747bfdadee9e",
+      "event_seq": 6,
+      "reason": "mention",
+      "state": "pending",
+      "created_at": "2026-10-27T14:26:36.578Z",
+      "acknowledged_at": null
+    },
+    {
+      "inbox_item_id": "inbox_99cad46d-58d7-4ece-9eaa-9e334d96a8f3",
+      "room_id": "room_67a7b338-e72f-4103-886a-04d9dee5c351",
+      "participant_id": "principal_7b019453-83c6-4125-88cc-67d9ebeebc9a",
+      "event_id": "event_929a24ca-0563-4fd4-a5c5-747bfdadee9e",
+      "event_seq": 6,
+      "reason": "mention",
+      "state": "pending",
+      "created_at": "2026-10-27T14:26:36.578Z",
+      "acknowledged_at": null
+    }
+  ],
+  "presented": [
+    {
+      "activation_id": "activation_01b44bd6-f02b-4811-9fca-5727365391e4",
+      "run_attempt_id": "run_0d72dca3-6e84-454a-9de4-cbac551af4b2",
+      "from_seq": 1,
+      "to_seq": 6,
+      "presented_seqs_json": "[1,2,3,4,5,6]",
+      "content_digest": "sha256:24b553eb9560519e67ecfdd36630e1c05d09b428a8aedfe0a9d98a57704db794",
+      "sent_at": "2026-10-27T14:26:38.010Z"
+    },
+    {
+      "activation_id": "activation_5526d1a4-308f-49f2-a8b1-c639998b982a",
+      "run_attempt_id": "run_864ea711-0e26-401a-b23a-ac92bb427048",
+      "from_seq": 1,
+      "to_seq": 6,
+      "presented_seqs_json": "[1,2,3,4,5,6]",
+      "content_digest": "sha256:54ce276eef4858c35c0282fc9ac7ebc72381f1db1d0a0f63461f7fe8312ba7dd",
+      "sent_at": "2026-10-27T14:26:41.705Z"
+    }
+  ],
+  "usageScope": "Kernel-observed generation usage; no fresh independent native reconciliation, no descendants proof, not billing. All observed failed attempt cost retained.",
+  "limitations": [
+    "One task attempt, two CLI bindings, invalid single-recipient opener. No native/Herdr control or efficiency/model ranking claim.",
+    "Exit code null remains null; completed Activation is not completed business task.",
+    "Private launcher received a preflight fix after closeout; original opening/body and failure retained, no rerun."
+  ]
+}

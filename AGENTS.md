@@ -659,6 +659,14 @@ fixture URLs and Fake CLI replies unmistakably and never hand one to the user as
 the product. Real-provider acceptance is opt-in, narrowly scoped and records
 actual model/effort/results. Never use GPT-5.6 Ultra for tests.
 
+Before sending a Human opener in an automated collaboration run, use
+`scripts/cli-efficiency/human-wake-preflight.mjs` with the current enabled-member
+handles and the intended recipient set. It reuses canonical mention parsing:
+literal peer mentions inside workflow instructions also wake those peers.
+Use plain names for future steps; do not assume only the first @ is active.
+Record setup mistakes and all consumed usage; repairing the launcher does not
+retroactively pass the run or authorize an automatic replacement batch.
+
 Run the opt-in efficiency gate (`docs/design/cli-efficiency-gate.zh-CN.md`) at
 the end of S1, S2 and S6 and after meaningful scheduling, prompt/context,
 memory-transport or provider-session batches before accepting performance.
