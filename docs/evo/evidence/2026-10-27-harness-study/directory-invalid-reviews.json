@@ -1,0 +1,135 @@
+{
+  "return-0-opencode": {
+    "checks": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "material_errors": [],
+    "scores": {
+      "correctness": 50,
+      "evidence_accuracy": 22,
+      "boundary_coverage": 15,
+      "uncertainty_discipline": 9
+    },
+    "notes": "All ten facts present. Basename source citations mostly clear. Checked native-final test has no literal replyReturn assertion, so its narrower claim is accurate. No tests claimed executed.",
+    "excluded_from_comparison": "Harness fixture inherited original project working directory; source scope not equivalent.",
+    "citation_assessment_superseded": "Any absence-from-snapshot accusation withdrawn: actual OpenCode scope included main workspace; this is fixture contamination, not proof of invented citation."
+  },
+  "return-1-opencode": {
+    "checks": [
+      1,
+      0.5,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "material_errors": [],
+    "precision_notes": [
+      "Says any @ blocks automatic return; code checks resolved canonical mentions, not arbitrary raw @ text. Main SQL condition correctly cited."
+    ],
+    "scores": {
+      "correctness": 47.5,
+      "evidence_accuracy": 22,
+      "boundary_coverage": 15,
+      "uncertainty_discipline": 9
+    },
+    "notes": "All central boundaries covered; minor overbroad mention wording. Separates static code, FakeRuntime evidence and tests not run.",
+    "excluded_from_comparison": "Harness fixture inherited original project working directory; source scope not equivalent.",
+    "citation_assessment_superseded": "Any absence-from-snapshot accusation withdrawn: actual OpenCode scope included main workspace; this is fixture contamination, not proof of invented citation."
+  },
+  "return-2-opencode": {
+    "checks": [
+      0.5,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "material_errors": [],
+    "citation_errors": [
+      "Cites docs/evo/conversation-delivery-design.zh-CN.md:69-71, which is absent from provided source snapshot; unsupported evidence."
+    ],
+    "scores": {
+      "correctness": 47.5,
+      "evidence_accuracy": 19,
+      "boundary_coverage": 14,
+      "uncertainty_discipline": 9
+    },
+    "notes": "Main conditions correct, no explicit B run-state admission. Cites missing document; must not treat a plausible reference as verified.",
+    "excluded_from_comparison": "Harness fixture inherited original project working directory; source scope not equivalent.",
+    "citation_assessment_superseded": "Any absence-from-snapshot accusation withdrawn: actual OpenCode scope included main workspace; this is fixture contamination, not proof of invented citation."
+  },
+  "roles-0-opencode": {
+    "checks": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      0.5,
+      0.5,
+      1,
+      1
+    ],
+    "material_errors": [],
+    "precision_notes": [
+      "After successful restore, a fresh restore request hits Role is not deleted before revision changed. Report generalizes revision-changed error too broadly.",
+      "Permission section says control Room manager but omits explicit Human-only restriction."
+    ],
+    "scores": {
+      "correctness": 45,
+      "evidence_accuracy": 23,
+      "boundary_coverage": 15,
+      "uncertainty_discipline": 10
+    },
+    "notes": "Main identities and lifecycle correct; good no-implicit-rebind explanation and composed-test limitation.",
+    "excluded_from_comparison": "Harness fixture inherited original project working directory; source scope not equivalent.",
+    "citation_assessment_superseded": "Any absence-from-snapshot accusation withdrawn: actual OpenCode scope included main workspace; this is fixture contamination, not proof of invented citation."
+  },
+  "roles-1-opencode": {
+    "checks": [
+      1,
+      1,
+      1,
+      0.5,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "material_errors": [],
+    "citation_errors": [
+      "frontends/raft/loom/RestoreRoleDialog.tsx:37-42 absent from supplied snapshot; cannot count as verified evidence."
+    ],
+    "scores": {
+      "correctness": 47.5,
+      "evidence_accuracy": 19,
+      "boundary_coverage": 15,
+      "uncertainty_discipline": 8
+    },
+    "notes": "Core conclusions correct. Old instance revision may still equal current role revision after deletion, so stale-instance language is conditional, not universal.",
+    "excluded_from_comparison": "Harness fixture inherited original project working directory; source scope not equivalent.",
+    "citation_assessment_superseded": "Any absence-from-snapshot accusation withdrawn: actual OpenCode scope included main workspace; this is fixture contamination, not proof of invented citation."
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "purpose": "Harness code-analysis effectiveness; not a Loom efficiency release gate",
+  "snapshot": "1caf92c66fddcdf3f8c3a252204e0ac87e800bf8",
+  "model": "deepseek-flash",
+  "served_release_evidence": "https://api-docs.deepseek.com/quick_start/agent_integrations/ -> DeepSeek-V4.1-Flash-1017; alias not immutable server pin",
+  "provider": "DeepSeek official",
+  "effort": "low",
+  "arms": {
+    "dsh": "0.2.1-rc.2 native Messages",
+    "pi": "1.1.0 + bundled subagent + read/grep/find/ls/bash; AGENTS loading enabled",
+    "opencode": "1.18.35 native OpenAI + built-in agents"
+  },
+  "replicates_per_task": 3,
+  "tasks": {
+    "return": "请只读分析此 Loom 代码快照：频道内实例 A 明确请求 B 后，B 普通最终回复不再写 @A，系统是否一定自动交回 A？请追踪真正调用链和数据库条件，说明至少 8 个成立/不成立边界（特别是实际交付、多个来源、消息列、附件、会话代际、已回复、自动回传链），给出文件路径和精确行号，引用相应测试。区分实现事实、测试证据和待验证假设。不要强凑缺陷。中文报告最多1800字。",
+    "roles": "请只读分析此 Loom 代码快照：Tom Role 有运行中实例，删除 Tom 再新建同名 Tom，再恢复旧 Tom 会怎样？请追踪 Role/Revision/Instance/Session 身份与权限、名称冲突、幂等、过期修订、现有实例配置和执行状态。说明重启时保留配置与采用最新配置的边界，并用实际代码文件路径和精确行号、相应测试支持结论。区分实现事实和推测。不要修改代码。中文报告最多1800字。"
+  },
+  "common_prompt": "你在固定的 Loom 源码快照中。仅阅读当前快照，不访问主项目工作区、个人目录、网络、过去会话或外部记忆，不运行模型CLI或外部agent。允许使用本Harness的原生子代理，但只能用同一 deepseek-flash / low，最多2个。不要写文件或执行构建。任务目的是证据准确的分析，不是字数或发现问题的数量。最终报告必须包含关键结论、证据和不确定性。\n",
+  "order": "Latin square rotation per replicate; sequential to avoid local load confound",
+  "limits": {
+    "max_seconds_per_run": 300,
+    "max_requests_per_run": 60,
+    "batch_input_stop_threshold": 40000000,
+    "batch_output_stop_threshold": 500000,
+    "batch_requests_stop_threshold": 1000,
+    "max_output_per_request": 16384,
+    "per_run_input_stop_threshold": 2500000,
+    "per_run_output_stop_threshold": 50000
+  },
+  "interpretation": "Budget checks between requests/runs may overshoot by active request/run; output/context limits identical; native protocol differences retained as part of harness. No automatic paid batch retries. Failed samples retained. Three repeats are pilot evidence, not population ranking. Source subset and task family limit generalization.",
+  "memory": "Fresh per-run configs/sessions; no user skills or persisted cross-run memory; same source snapshot. Native in-run history retained. No project modifications allowed.",
+  "pi_plugin": "Unmodified bundled subagent implementation, model-free read-only scout/reviewer configs inherit fixed parent model. Default example Haiku/Sonnet agents NOT installed.",
+  "score_policy": {
+    "correctness": 50,
+    "evidence_accuracy": 25,
+    "boundary_coverage": 15,
+    "uncertainty_discipline": 10
+  },
+  "preflight": "All three actual clients reached local rejecting relay with deepseek-flash, low and <=16384 max output; no paid requests in preflight. Pi can exit 0 on model error: evaluate output and HTTP evidence, not exit alone.",
+  "calibration": {
+    "reason": "800k input cutoff censored exploration; not a ranking",
+    "path": "calibration",
+    "interrupted": "return-1-dsh deliberately cancelled; any unsealed in-flight usage remains unknown",
+    "prior_results_retained": true
+  },
+  "formal_status": "completed",
+  "configuration_audit": {
+    "not_scored": true,
+    "reason": "Pi no-context-files omitted auto AGENTS and bash permission differed. Corrected before accepted formal cohort. All prior samples retained as setup/calibration, including interruptions."
+  },
+  "context_preflight": "Pi and DSH main request contain AGENTS; OpenCode main request contains explicit same AGENTS (title helper separately counted). All native outbound requests checked model+low+output cap before forwarding.",
+  "script_sha256": "7711ec8d57beacd4d3afce920dc8d770a0600150a1434484bd38f59851ce7dba",
+  "sources": {
+    "pricing": "https://api-docs.deepseek.com/quick_start/pricing/",
+    "dsh": "https://github.com/deepseek-ai/deepseek-harness",
+    "pi": "installed @earendil-works/pi-coding-agent 1.1.0 official bundled subagent example"
+  },
+  "directory_correction": {
+    "excluded": "directory-invalid/*-opencode",
+    "reason": "Inherited PWD made OpenCode report/use original workspace despite subprocess cwd. Six OpenCode samples excluded as scope-contaminated, not failed model responses.",
+    "fix": "Explicit run --dir and child PWD canonical snapshot; failing-then-passing unit test and zero-paid native request inspection.",
+    "replacement": "6 fixed OpenCode samples, same prompts/config/model/budgets. Run after other arms, not Latin-square; cache/order limitation retained.",
+    "other_arms": "Pi and DSH native request context and observed tools use snapshot; retained.",
+    "original_script_sha256": "de0426cf11ce58d2be3d8c503da9e63ba401c3adc2c615f57244f88d4d75b539"
+  },
+  "accepted_scope_runs": 18,
+  "usage_complete_runs": 17,
+  "unknown_usage": "roles-1-opencode request 11: provider connection waited 90s without response; TimeoutError, no usage, CLI continued to final. Not zero, no sample rerun."
+}

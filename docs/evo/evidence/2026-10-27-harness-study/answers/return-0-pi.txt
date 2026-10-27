@@ -1,0 +1,28 @@
+## 结论
+
+**不是。** 系统只在 `peerReplyReturn` 成功识别“唯一、已实际呈现、仍未失效的请求者”时，才把 A 追加为 `reason="reply"` 的收件人；随后还要经过唤醒链限制，才可能生成 Inbox/Activation。**即使事件中出现 `payload.replyReturn`，也不等于 A 已被实际唤醒**（链上限时只有回传证据、没有 Activation）。
+
+调用链：`worker-message-command.ts:152-157` 或 `worker-target-context.ts:484-486` 设置 final 标记 → `collaboration-service.ts:2263-2278` 调 `peerReplyReturn` → `peer-reply-return.ts` 判定 → `collaboration-service.ts:2280-2322` 写事件并 `deriveAttention` → `instance-wake-guard.ts:187-237` 决定 Inbox/Activation。native final 经 `room-kernel.ts:1819-1837`、`worker-final-output.ts:28-42` 以 `final:true` 进入同一路径。
+
+## 成立/不成立边界
+
+1. **必须是 final；progress 不成立。** `worker-message-command.ts:152-157` 只在 `context.finalOutput || parsed.final===true` 时传 `replyReturnRunAttemptId`；无 final 直接返回。测试：`packages/kernel/test/peer-reply-return.test.ts:50-92`（`progress` 断言无 `replyReturn`、无 activation）。
+2. **必须是有 live Run 的 Channel Role 实例。** `peer-reply-return.ts:19` 无 runAttempt 即退出；`20-36` 要求 `rooms.kind='channel'`、实例属于该房间、Run 为 `starting/running`。私聊/非 Channel、已终止 Run 不成立。
+3. **请求源必须唯一。** `peer-reply-return.ts:49-57` 只取该 Run range 内 Inbox，`LIMIT 2`，只有一条才继续；多个合并来源一律不猜请求者。测试 `peer-reply-return.test.ts:33-38, 58-92` 的 `ambiguous`。
+4. **请求必须实际交付给 B。** `peer-reply-return.ts:101-113` 要求源事件 seq 在该 Run 的 `activation_presented_windows.presented_seqs_json` 中且 `sent_at` 非空；`activation-presented-window.ts:228-243` 还限定为凭据冻结的呈现范围。仅 cursor、通知或 catch-up 不算。测试只清 `sent_at`：`peer-reply-return.test.ts:70-75`；源 seq 被截断仅有代码证据，无专门测试。
+5. **B 的最终消息列必须“干净”。** `peer-reply-return.ts:41-47`：`thread_id` 非空、`attachments_json != "[]"`、`mentions_json` 非空、正文广播提及，任一即不成立。任何已解析 `@` 都会阻止，甚至不是 @A；测试用 @Human：`peer-reply-return.test.ts:77-86`。
+6. **附件必须没有。** B 的最终消息附件由上述 `:43` 阻止；A 的请求事件若带 attachments、`attachmentComment` 或 threadId，也由 `:60-68` 阻止。该附件路径本套测试未覆盖，属代码事实。
+7. **A 的请求必须只提及 B 且无广播、无回传标记。** `peer-reply-return.ts:60-75`；源必须是 `message.posted`，`payload.mentions.length===1` 且 principalId 为 B，且 `payload.replyReturn` 为空。A 同时 @B 与 @C、@all，均不成立；无对应聚焦测试。
+8. **会话代际必须一致。** `peer-reply-return.ts:76-88` 要求源事件在 `worker_run_message_writes` 中的 `session_generation` 等于 A 当前 generation；A 被 reset 或源无 worker 写入证据则不成立。测试：`peer-reply-return.test.ts:62-69, 86`。
+9. **A 必须仍是启用成员。** `peer-reply-return.ts:89-100`：A 不能是 B 自己，且须仍是该 Channel 的 Role 实例、membership 存在、agent 状态 enabled。测试：`peer-reply-return.test.ts:61, 86`。
+10. **“已回复”会消费回传。** `peer-reply-return.ts:114-133`：同一 Activation 中 B 已有提及 A 的消息，或已有针对同一源事件的 `replyReturn`，则不再回传。测试：`peer-reply-return.test.ts:177-196`。
+11. **自动回传不接自动回传。** 源事件带 `payload.replyReturn` 时 `peer-reply-return.ts:60-68` 拒绝，形成单跳。测试：A 被唤醒后的下一 final 无 `replyReturn`，`peer-reply-return.test.ts:124-133`；`native-final-reply-return.test.ts:22-125` 用 Fake runtime 验证三回合不循环。
+12. **频道唤醒链上限可压掉实际交付。** `instance-wake-guard.ts:187-237` 对 `reply` 计链；超限返回 `chain_limit`，`room-event-writer.ts:200-221` 不写 Inbox/Activation。测试 `peer-reply-return.test.ts:199-220` 明确：payload 有 `replyReturn`，但 `activationIds=[]`、`admitted=0`。默认上限 10：`packages/protocol/src/run-watchdog.ts:12-13`。
+13. **A 忙时只排队，不是立即执行。** `room-event-writer.ts:223-256` 合并/新建 queued Activation；测试 `peer-reply-return.test.ts:141-175`。
+14. **final 被 freshness hold 时不产生事件。** `collaboration-service.ts:2163-2221` 返回 held draft，未发布消息，因此不会进入回传。该边界无 `peer-reply-return` 聚焦测试。
+
+## 证据性质与不确定性
+
+- **实现事实**：上述 SQL/条件、final 标记、队列与链限制均来自源码。
+- **测试证据**：仅 `packages/kernel/test/peer-reply-return.test.ts` 与 `packages/agent-host/test/native-final-reply-return.test.ts` 直接覆盖；覆盖 progress、removed、generation、unpresented、explicit、ambiguous、busy、链上限及 Fake native 三回合。
+- **待验证/无直接测试**：线程、附件、源多提及、源被呈现窗口截断、held final、终止 Run 等边界目前主要是代码推导；native 测试使用 Fake runtime，不等于真实 CLI。

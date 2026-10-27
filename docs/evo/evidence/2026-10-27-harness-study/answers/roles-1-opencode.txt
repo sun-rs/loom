@@ -1,0 +1,24 @@
+## 关键结论
+
+1. **删除 Tom 只是软删除，不影响运行中的实例。** `delete` 仅写 `deleted_at` 并追加事件（`packages/kernel/src/role-catalog.ts:121-158`）。测试对运行中的 Role 删除前后比对了实例、revision、会话、RunAttempt、runtime、Inbox 等表，结果完全不变（`packages/kernel/test/role-naming.test.ts:221-252`）。
+
+2. **旧实例仍归属于旧 Role，冻结旧 Revision。** 实例行的 `role_id`/`role_revision_id` 不会被删除或恢复改写；`list` 用“实例版本是否等于 Role 当前版本”生成 `isCurrent`（`role-catalog.ts:275-304`）。恢复旧 Tom 后，旧实例仍显示旧 revision，`isCurrent=false`（测试 `role-naming.test.ts:296-297`）。
+
+3. **新建同名 Tom 是允许的，但会拿到新 Role ID。** 名称唯一性只扫描 `deleted_at IS NULL` 的 Role，已删除 Role 释放名称（`packages/kernel/src/role-names.ts:13-22`；测试 `role-naming.test.ts:119-164`）。新 Tom 与旧 Tom 不是同一配置，也没有修订继承关系。实例名额外避开所有历史 principal handle：旧实例已占 `Tom-1`，新 Tom 的首个实例会是 `Tom-2`（`role-names.ts:25-42`；测试 `role-naming.test.ts:153-160`）。
+
+4. **“再恢复旧 Tom”若坚持同名，会被拒绝。** restore 走 `changeRevision`，在确认旧 Role 已删除、修订匹配后执行同名检查；新 Tom 活跃时名称为 “Tom” 会抛 `Role name already exists`（`role-catalog.ts:227-243`；测试 `role-naming.test.ts:254-298`）。因此字面场景的结论是：**不能同时存在两个同名活跃 Tom**；必须先删除/改名新 Tom，或恢复旧 Tom 时改用别的名称。
+
+5. **换名恢复保留旧身份：** 同一 `roleId`，`deleted_at=NULL`，生成**新的 revision ID**，配置以删除前快照为基础并替换请求中的 `displayName`（`role-catalog.ts:173-192,244-259`；测试 `role-naming.test.ts:275-284`）。旧实例、旧会话、运行状态均不被恢复操作触碰，也不会被迁到新 Tom。恢复后旧实例只有显式“采用新修订”才会更新配置。
+
+6. **幂等与过期修订：** Role 命令按“控制室 + idempotencyKey + 事件类型 + 请求摘要”重放；完全相同的 restore 重试返回原快照并 `deduplicated=true`，摘要不同则冲突（`role-catalog.ts:212-226`；测试 `role-naming.test.ts:285-291`）。restore 要求 `expectedRoleRevisionId` 等于该 Role 当前最新修订；新 Tom 是新 `roleId`，不会使旧 Tom 的期望修订过期。删除期间旧 Role 无法通过 revise 修改（`role-catalog.ts:234`），所以原修订通常仍有效。恢复成功后产生了新 revision，之后再用旧 revision 恢复/修订就会过期冲突。
+
+7. **权限：** create/delete/revise/restore/instantiate 均要求控制室 Human manager（`role-catalog.ts:127,207-211,428`），instantiate 还要求目标频道 manager；实例会话重置额外要求两者（`role-catalog.ts:571-576`）。恢复操作本身不改变实例授权或频道成员关系。
+
+8. **重启边界：**
+   - 默认重启（不带 `adoptRoleRevisionId`）只推进会话 generation，**保留实例实际当前配置，包括原生 model/effort 覆盖**；即使 Role 已删除也可默认重启，配置不变（`role-catalog.ts:613-620`；测试 `instance-restart-config.test.ts:25-30,190-198,250-258`）。identity、participant 与既有历史保留。
+   - 显式“采用最新配置”必须：Role 未删除、`adoptRoleRevisionId` 精确等于最新 revision、实例仍有成员关系、无运行中 Run/runtime 进程/未解决清理、无 leased Activation/reserved placement（`role-catalog.ts:599-614`；`instance-restart-config.ts:28-47`）。随后原子改写 agent 配置和实例 revision，失败整体回滚（`instance-restart-config.ts:65-90`；测试 `instance-restart-config.test.ts:76-115,259-289`）。
+   - 采用时仅在当前 handle 不符合“新 Role 名-数字”格式时重新分配名称；因此旧 `Tom-1` 在恢复为同名 Tom 并采用新修订时会保留，若恢复成别的名称则可能改成新前缀（`instance-restart-config.ts:55-62`；测试 `instance-restart-config.test.ts:295-328`）。实例 ID、participant、会话历史不变。
+
+## 不确定性
+
+代码中没有“运行中删除→新建同名→恢复旧 Role”的单一端到端测试；上述组合结论来自删除运行态、名称释放/冲突、恢复与重启采用四组测试及实现路径，属于高置信度组合推断，而非单条测试直接覆盖。特别是“先删除新 Tom 再同名恢复旧 Tom”没有专门测试，但其行为可由名称检查仅限活跃 Role 直接推出。另：运行中实例在删除/恢复期间继续执行是删除测试所证；恢复本身没有调度或取消逻辑。

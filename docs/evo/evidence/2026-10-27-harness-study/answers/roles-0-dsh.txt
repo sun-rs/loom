@@ -1,0 +1,21 @@
+路径均相对 `packages/`：`kernel/src/role-catalog.ts`（RC）、`kernel/src/role-names.ts`（RN）、`kernel/src/instance-restart-config.ts`（IRC）；`kernel/test/role-naming.test.ts`（RNT）、`kernel/test/instance-restart-config.test.ts`（IRT）。
+
+结论（按删除 Role 理解）：
+
+1. 删除 Tom 仅写 `role_templates.deleted_at` 并记 `role.deleted`（RC:121-158）；实例、agent、session、run 表不变（RNT:220-252 逐表快照），运行中实例继续跑。
+2. 可新建同名 Tom：重名只查未删除 Role（RN:6-22），新 RoleId/RevisionId（RC:361-419）。新实例有新 Instance ID；实例名不复用旧 principal，旧 Tom-1 存在时新名 Tom-2（RN:25-41；RNT:119-164）。
+3. 恢复旧 Tom 若仍用“Tom”必冲突；改名或先释放新名才可（RC:238-243；RNT:254-301）。成功保留旧 RoleId、生成新 Revision、清 `deleted_at`；配置仍来自旧 Role，只换 `displayName`，不合并新 Tom（RC:173-193,244-259）。旧实例仍冻结旧 revision，`isCurrent=false`，不自动改配置或启停（RC:285-315；RNT:292-298）。恢复不重建实例/session。
+
+权限：Role 写操作需 Human+控制室 manager；instantiate/reset 另需 Channel manager（RC:127,207-211,366,428-438）。删除/恢复不查实例忙闲，只有“采用新配置”查。
+
+幂等：重放按 control room 的 key+digest，先于 deleted/revision/name（RC:128-137,212-226,367-380）；成功命令同 key 重试返回旧事件，即使名称后来被占；同 key 改内容冲突。
+
+过期：`expectedRoleRevisionId` 须等于当前 revision；删除不换 revision，故旧值可恢复；恢复后旧值失效（RC:235-236）。`basedOnRoomSeq` 须等于 control-room 当前 head，新建同名 Role 已推进 head，恢复前需刷新（RC:143,237,353-359）。
+
+重启边界：
+
+- 普通服务重启没有调用 `adoptInstanceRoleRevision`/`advanceInstanceSessionGeneration` 的路径（全仓仅 RC:613-620 调用），持久配置及 session generation/bound 不变。
+- 显式 reset 不传 `adoptRoleRevisionId`=保留实际配置/名称（含原生模型覆盖），已删 Role 也可；但仍推进 generation、清绑定，故是“保配置换新 session”（RC:613-620；`kernel/src/instance-session.ts:50-65`；IRT:184-198,228-258）。
+- 传 `adoptRoleRevisionId`=采用最新：Role 未删、ID 等于当前最新 revision、仍有 membership、无 leased Activation/reserved Placement；外层还须无 live Run、无 prepared/active/orphaned runtime 和未清进程（IRC:28-47；RC:599-612）。成功后原子 configure+更新 `role_instances.revision`，再推进 generation；失败全回滚（IRC:65-90；IRT:76-119,267-289）。采用对象是恢复后的新 Revision，不是旧实例冻结的 Revision。
+
+不确定：若“删除 Tom”指移除 Channel 实例，重新加入必为新 Instance（`kernel/src/collaboration-service.ts:1406-1477`）。本文为静态代码与测试推断，未运行测试/服务。

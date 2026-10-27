@@ -1,0 +1,41 @@
+{
+  "checked_at": "2026-10-27",
+  "conclusion": "Wonder Full subscription should remain inside official Muse Code CLI; Loom integration feasible via official SDK, not implemented or locally Full-verified in this batch.",
+  "plans": [
+    {
+      "name": "Power Usage",
+      "usd_per_month": 50,
+      "wonder_full": true,
+      "relative_everyday_usage": 20
+    },
+    {
+      "name": "Maximum Usage",
+      "usd_per_month": 200,
+      "wonder_full": true,
+      "relative_everyday_usage": 80
+    }
+  ],
+  "constraints": [
+    "Subscription is usage-limited, not unlimited.",
+    "Subscription onboarding credential is for Muse Code only; other API keys are pay-as-you-go.",
+    "Wonder Full not public ordinary Wonder API; high effort is not proof of Full.",
+    "Contributor mode defaults on; user may turn off, with lower quota.",
+    "SDK Developer Preview requires pinned host/schema compatibility."
+  ],
+  "recommended_integration": [
+    "Discover owner-installed and authenticated Muse CLI and actual model catalog.",
+    "Official SDK launches muse serve using MSP over stdio.",
+    "Map start/resume/cancel/events/usage into AgentHost adapter; native session remains continuous.",
+    "Keep Role revision, Instance identity, Channel ledger and delivery owners unchanged.",
+    "Use Full only if account catalog confirms it; never silently substitute."
+  ],
+  "sources": [
+    "https://dev.meta.ai/help/subscriptions/what-is-a-muse-code-subscription",
+    "https://dev.meta.ai/docs/models",
+    "https://github.com/meta-models/muse-code-sdk",
+    "https://meta-models.github.io/muse-code-sdk/next/guides/quickstart/",
+    "https://meta-models.github.io/muse-code-sdk/next/cookbook/resume-a-session/",
+    "https://github.com/rtravellin/muse-code-plugin-cc"
+  ],
+  "existing_integration": "muse-code-plugin-cc invokes local muse exec --json and session-id. Useful reference, not proof Full validated and not required as nested Claude intermediary."
+}

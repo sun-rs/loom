@@ -1,0 +1,17 @@
+**结论** 删除 Tom 只软删 Role 配置，不停止运行实例；新 Tom 是独立 Role ID；旧 Tom 若在新 Tom 仍活动时恢复为“Tom”会 409，换唯一名才成功；旧实例仍冻结旧 revision/session，不自动采用新配置，也不与新 Tom 合并。
+
+简写：K=`packages/kernel/src`，T=`packages/kernel/test`，P=`packages/protocol/src`，D=`packages/daemon/src`。
+
+1. **身份/权限**：Role 有稳定 ID 和不可变 revision；Instance 冻结 `role_instances.role_revision_id`，Session 另存（K/role-catalog-schema.ts:4-27；K/instance-session.ts:22-31）。删除/恢复须 Human 且为旧 Role 所在 control room 的 owner/admin，实例化还须 channel manager（K/role-catalog.ts:127,207-211,428-429；K/collaboration-policy.ts:15-39）。
+
+2. **删除**：只 `UPDATE role_templates SET deleted_at`，无级联（K/role-catalog.ts:145-146）。运行中删除后实例、revision、session、run/process 表不变且 run 可完成（T/role-naming.test.ts:221-252）；删除并 keep 后旧实例仍可执行新 Activation（T/instance-restart-config.test.ts:184-222）。
+
+3. **名称/新 Tom**：Role 名只在活动角色间按 trim+NFKC+lowercase 唯一；实例名另查全体 principals（K/role-names.ts:6-41；P/message-mention.ts:121-123）。故同名新 Tom 成功但 ID 不同，旧 `Tom-1` 保留，新实例通常 `Tom-2`（T/role-naming.test.ts:119-160）。
+
+4. **恢复**：提交“Tom”时名称检查只排除旧 roleId，新 Tom 仍活动，故 409（K/role-catalog.ts:238-243；T/role-naming.test.ts:254-274）。改“Old Tom”成功：保旧 Role ID、新建 revision、清 deleted_at（K/role-catalog.ts:173-193,244-259）；旧实例 revision 不变、`isCurrent=false`，新 Tom 不受影响（K/role-catalog.ts:285-303；测试 275-298）。旧实例不能 adopt 新 Tom 的 revision，因为 adopt 按自身 `role_id` join（K/instance-restart-config.ts:21-30）。
+
+5. **修订/幂等**：`expectedRoleRevisionId` 须等于该 Role 当前 revision，`basedOnRoomSeq` 须最新；删除不改 revision，故恢复旧 Tom 仍用删除前 revision（K/role-catalog.ts:235-237,353-359）。精确重复删除/恢复返回 `deduplicated:true`；同 key 异体冲突（K/role-catalog.ts:128-137,214-226；T/role-naming.test.ts:128-130,285-290）。复用旧 create/instantiate key 只重放旧收据，不复活旧 Role（T/role-http-closeout.test.ts:93-121）。
+
+6. **重启边界**：普通 session reset 不传 `adoptRoleRevisionId`：仅推进 generation，保留实际当前配置含 native override；Role 已删也可 keep（K/role-catalog.ts:613-620；T/instance-restart-config.test.ts:25-30,184-198）。显式 adopt 才采用最新 revision，要求 Role 未删、revision 最新、仍有 membership、无 leased/reserved、无 live run/runtime/cleanup；保持 instance ID，按新 Role 名重算/保留 handle（K/instance-restart-config.ts:28-62；K/role-catalog.ts:599-614；T/instance-restart-config.test.ts:9-65）。daemon 重启不走 adopt，只保留 inert work（D/state-backup.ts:263-264）。故普通重启不改配置；采用最新配置须显式 reset+adopt，运行中会被拒绝。
+
+**不确定性** 快照无前端，无法确认恢复 UI 是否默认旧名；“Tom-2”由 allocator 和 Reviewer 测试推导，非 Tom 专项测试；运行测试用 fake runtime，不证明真实 OS 进程在删除瞬间存活。未访问网络或主工作区。

@@ -1,0 +1,39 @@
+# 结论
+
+不一定。B 不写 `@A` 只是自动回传的必要条件之一。真正决定是否“交回”的，是 Kernel 在 B 发布 final 的同一事务中调用 `peerReplyReturn()`，只有一组数据库条件全部通过，才会把 A 追加为 `reason:"reply"` 接收者，再由 `deriveAttention()` 生成 Inbox/Activation。即使事件 payload 写入了 `replyReturn`，仍可能被频道唤醒链上限拦掉，实际激活数为 0；A 忙时也只是排队，不是立即执行。
+
+# 真正调用链
+
+1. AgentHost 的 native final 文本先经 `nativeFinalSequence()` 判定是否可发布（`packages/agent-host/src/native-final-transport.ts:6-30`），再由 `WorkerFinalOutput.submit()` POST `/v1/worker/messages/final-output`（`packages/agent-host/src/worker-final-output.ts:72-84`）。
+2. 服务端入口 `packages/application-service/src/worker-application-service.ts:1032-1040` → `room-kernel.ts:1819-1837` → `submitWorkerFinalOutputTransaction()`（`packages/kernel/src/worker-final-output.ts:20-33`）。
+3. `postWorkerMessageTransaction()` 仅在 `finalOutput` 或 `final:true` 时传 `replyReturnRunAttemptId`（`packages/kernel/src/worker-message-command.ts:152-157`；target 路由见 `worker-target-context.ts:484-486`）。普通进度/工具消息不传，因此没有自动回传。
+4. `postActivationMessage()` 调 `peerReplyReturn()`（`packages/kernel/src/collaboration-service.ts:2263-2269`）；通过才追加 reply recipient 并写 payload（同文件 `2270-2287`）。
+5. `deriveAttention()` → `decideInstanceWake()` → Inbox/Activation（`packages/kernel/src/room-event-writer.ts:200-256`）。
+
+成立的最小组合是：A 的请求是 B 本次 run 唯一 Inbox source、单 `@B`、顶层无附件、由 A 当前代际的 worker run 写入且已送达；B 的 final 顶层无附件/mention/thread；链未超限。此时产生 1 个 reply Activation（测试 `packages/kernel/test/peer-reply-return.test.ts:94-139`；Host 端三回合见 `packages/agent-host/test/native-final-reply-return.test.ts:122-129`）。
+
+# 边界（任一不成立即不会自动交回）
+
+| 边界 | 结果与证据 |
+|---|---|
+| 1. 非 final 路径 | 普通 `postWorkerMessage` 不传 `replyReturnRunAttemptId`，不自动回传。`worker-message-command.ts:152-157`；`peer-reply-return.test.ts:50-92` 的 `progress`。 |
+| 2. B 的 final 消息列 | `messages.thread_id` 非 null、`attachments_json != "[]"`、`mentions_json` 非空、body 含 `@all`，任一即不返回。`peer-reply-return.ts:41-47`；mention 情形见测试 `:76-87`。 |
+| 3. 多个来源 | B 的 Activation 范围 `[from_seq,to_seq]` 内必须恰有 1 个 Inbox 事件；0 个或 ≥2 个都不返回。`peer-reply-return.ts:48-57`；`ambiguous` 测试 `:33-38,50-91`。 |
+| 4. source 形态与附件 | source 必须是 `message.posted`，无 `replyReturn`、thread、attachmentComment、attachments，body 为字符串且非广播，mentions 恰好只有 B。`peer-reply-return.ts:60-75`。 |
+| 5. A 的成员资格 | A 必须仍是同频道 enabled instance member，且不是 B；移除后不返回。`peer-reply-return.ts:89-100`；测试 `:61`。 |
+| 6. 会话代际 | source 必须由 A 的 worker run 写入，且写入时 `session_generation` 等于 A 当前 generation；A 会话换代后不返回。`peer-reply-return.ts:76-88`；测试 `:62-69`。 |
+| 7. 实际交付 | source seq 必须出现在 B 本次 activation/run 的 `activation_presented_windows.presented_seqs_json`，且 `sent_at` 非空。`peer-reply-return.ts:103-113`；`unpresented` 测试 `:70-75`；Host 标记见 `native-final-reply-return.test.ts:59-63`。 |
+| 8. native final 自身前提 | `presentedThroughSeq === toSeq`、`noticeCount===0`，且只有一个 compact target；否则根本不会生成 final 事件。`native-final-transport.ts:9-29`；测试 `native-final-transport.test.ts:38-69`。 |
+| 9. 当前运行与房间 | run 必须仍为 `starting/running`，room 必须为 channel，且 activation/participant/room 匹配；跨房间或已结束 run 不返回。`peer-reply-return.ts:20-36`。 |
+| 10. 已回复 | B 在同一 activation 已有 `@A` 的显式回复，或已有同一 source 的 `replyReturn`，不再自动返回。`peer-reply-return.ts:114-133`；测试 `peer-reply-return.test.ts:177-197`。 |
+| 11. 自动回传链上限 | reply 仍走 `decideInstanceWake()` 的链上限；超限时 payload 可保留 `replyReturn`，但没有 Inbox/Activation。`instance-wake-guard.ts:187-217`、`room-event-writer.ts:205-215`；测试 `:199-217` 明确断言 `activationIds=[]`、`admitted=0`。 |
+| 12. 自动回传不接力 | source 自身带 `replyReturn` 会被拒绝；A 收到的自动返回不能再次自动返回。`peer-reply-return.ts:60-63`；内核测试 `:124-133`。 |
+| 13. A 正忙 | 返回只形成排队 Activation，不会立刻抢占 A 的 lane；测试 `peer-reply-return.test.ts:141-175` 断言 `leaseNextActivation()` 仍为 null。 |
+
+# 测试证据与不确定性
+
+已被测试覆盖的失败边界：`progress`、`removed`、`generation`、`unpresented`、`explicit` mention、`ambiguous`（`peer-reply-return.test.ts:50-92`）；早先显式回复消耗回传（`:177-197`）；链上限（`:199-217`）；A 忙时排队（`:141-175`）。正路覆盖 native/worker/worker-target 三种 transport（`:94-139`），Host 端到端覆盖三回合且不形成循环（`native-final-reply-return.test.ts:35-78,122-129`）。
+
+**实现事实但无直接测试锁定**：final/source 的附件与 thread、广播、self、跨房间、run-state、provenance 缺失等分支；代码均已返回 `undefined`，但本快照没有针对性测试。
+
+**待验证假设**：`sent_at` 只证明 Host 已发送给 runtime，不证明模型已阅读（`activation-presented-window.ts:22-42`）；真实 CLI 是否把普通最终文本交给 Host，还取决于 runtime 是否启用 native-final-text，现有端到端测试使用 FakeRuntimeAdapter。另，B 的 final 检查 `messages` 列，而 A 的 source 检查事件 payload；历史/导入数据若两者不一致，行为可能不同，这是待验证风险，不是已确认缺陷。

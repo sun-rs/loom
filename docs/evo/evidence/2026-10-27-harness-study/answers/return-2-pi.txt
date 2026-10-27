@@ -1,0 +1,25 @@
+## 结论
+
+**不是。** 这是 Kernel 的“单跳、条件式自动回传”：只有一整组数据库条件同时成立，B 的无 `@` 最终消息才会自动生成指向 A 的 `reply` Activation；任一条件不成立，消息照常发布，但不交回 A。且“交回”只到 Inbox/Activation，不等于 A 已处理，甚至可能只合并进 A 已排队的 Activation。
+
+## 真正调用链
+
+CLI/Host final → `WorkerFinalOutput` POST `/v1/worker/messages/final-output`（`packages/agent-host/src/worker-final-output.ts:72-84`）→ 路由（`packages/application-service/src/worker-application-service.ts:1032-1041`）→ `RoomKernel.submitWorkerFinalOutput`（`packages/kernel/src/room-kernel.ts:1819-1836`）→ 置 `final:true`（`packages/kernel/src/worker-final-output.ts:33`）→ 传 `replyReturnRunAttemptId`（`packages/kernel/src/worker-message-command.ts:148-157`）→ `postActivationMessage` 调 `peerReplyReturn`（`packages/kernel/src/collaboration-service.ts:2263-2288`）→ 追加 `reply` recipient 后 `deriveAttention`（同文件 `2321-2323`）→ 唤醒裁决与链限制（`packages/kernel/src/room-event-writer.ts:200-255`、`packages/kernel/src/instance-wake-guard.ts:187-237`）。
+
+## 成立/不成立边界
+
+1. **必须是 final 通道**：普通进度消息不带 `replyReturnRunAttemptId`。`peer-reply-return.ts:19` 直接返回；测试 `kernel/test/peer-reply-return.test.ts:50-57,76-87` 的 `progress` 边界证明无回传。
+2. **Run/Activation/Room 必须绑定当前频道实例**：`peer-reply-return.ts:20-36` 要求 `run_attempts.state IN ('starting','running')`、同 activation/participant/room、`room.kind='channel'` 且实例 channel 等于该 Room。跨频道 target 因此不成立；测试只覆盖同频道 `worker-target`（`peer-reply-return.test.ts:94-113`），跨频道为**代码推断、未测**。
+3. **B 的最终消息形态**：`peer-reply-return.ts:38-47` 要求 `thread_id IS NULL`、无附件、`mentions_json` 为空、无广播词。B 若在 Thread 内回复、带附件、或写了任何可解析 `@`，均不自动交回。`explicit` 测试（`peer-reply-return.test.ts:177-193`）证明写 `@` 会抑制；Thread/附件分支仅代码事实，未见本文件测试。
+4. **B 本次 Activation 只能有一个来源 Inbox**：`peer-reply-return.ts:48-57` 取窗口内 `LIMIT 2`，`sources.length!==1` 即放弃。A 连发两条、或同时有别的 @/跟进，则不成立；`ambiguous` 测试（`peer-reply-return.test.ts:33-38,56-59,76-87`）覆盖。
+5. **来源事件本身必须是“单点请求”**：`peer-reply-return.ts:58-75` 要求来源是 `message.posted`、无 `replyReturn`、无 Thread、无附件/附件评论、正文为字符串、非广播，且 `mentions` 恰好只有 B。A 的请求若同时 @ 多人、@all、在 Thread/附件中，或本身是自动回传，均不成立。`no chaining` 由 `peer-reply-return.test.ts:124-133` 间接覆盖；多 @/Thread 分支仅代码事实。
+6. **会话代际必须一致**：`peer-reply-return.ts:76-88` 要求来源消息由 A 的 Run 写入（`worker_run_message_writes`），且其 `session_generation` 等于 A 当前 generation。A 在 B 回复前重启会话即失效；`generation` 测试（`peer-reply-return.test.ts:62-69`）覆盖。
+7. **A 必须仍是启用的频道实例成员**：`peer-reply-return.ts:89-100` 排除 B 自己，并要求 A 的 `role_instances/memberships/agent_definitions.state='enabled'`。A 被移出频道或禁用则不成立；`removed` 测试（`peer-reply-return.test.ts:61`）覆盖。
+8. **必须证明请求实际交付给 B 的本次 Run**：`peer-reply-return.ts:101-113` 查 `activation_presented_windows` 中本次 activation/run 的 `sent_at` 非空且包含来源 `room_seq`。仅有 Inbox、唤醒提示或 catch-up 不够；`unpresented` 测试（`peer-reply-return.test.ts:70-75`）覆盖。
+9. **“已回复/已回传”会消费唯一一次回传**：`peer-reply-return.ts:114-133` 若同一 Activation 内 B 已显式 @A，或已存在同来源 `replyReturn`，则不再自动回传。`peer-reply-return.test.ts:177-197` 覆盖；重复提交 final 也只返回去重结果（`121-123`）。
+10. **频道唤醒链上限仍可拒绝**：即使 `replyReturn` 已写入事件，`decideInstanceWake` 仍计 `instance_wake_guards.streak`，超限时 `activatedIds` 为空且 `instance_wake_chain.admitted=0`（`instance-wake-guard.ts:200-237`）。测试 `peer-reply-return.test.ts:199-217` 明确：事件有 `replyReturn`，但没有 Activation。
+11. **A 忙时只排队/合并**：`room-event-writer.ts:223-255` 会复用 A 已有 queued Activation 并扩大 `to_seq`，不新建并行 lane。测试 `peer-reply-return.test.ts:141-175` 证明回传先排队，A 结束后下一次 Activation 才覆盖回传消息。
+
+## 证据分类与不确定性
+
+**实现事实**：上述 SQL 条件、final 标记、recipient 注入、链限制均是当前代码。**测试证据**：`peer-reply-return.test.ts` 覆盖 progress、removed、generation、unpresented、explicit、ambiguous、三种 transport、忙碌排队、显式回复消费、链上限；`agent-host/test/native-final-reply-return.test.ts:13-121` 覆盖真实 Host final 的一次自动恢复且不形成回路。**待验证假设**：Thread/附件/多 @ 来源、跨频道 target、Run 进入终态后才提交 final 等分支未被上述测试直接覆盖，只能依据代码条件推断；此外测试使用 Fake CLI/内存数据库，不证明真实模型一定在无 @ 下提交 final。

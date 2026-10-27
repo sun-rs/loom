@@ -1,0 +1,43 @@
+# 结论
+
+不是“B 不写 @A 就必回”。Kernel 不判断 B 回复的语义，只看两条证据：本次回复是否有 `final` 标记，以及 B 本 Activation 的唯一来源是否是一个已实际投递、只点名 B 的频道顶层请求。全部条件成立才派生一个 `reply` 收件人；即使派生，也未必立即执行。
+
+设计边界见 `docs/evo/target-contract.zh-CN.md:58-60`。
+
+# 调用链
+
+原生最终回复：`A/worker-final-output.ts:73,81-84` → `S/worker-application-service.ts:1032-1037` → `K/room-kernel.ts:1819-1836` → `K/worker-final-output.ts:33`（置 `final:true`）→ `K/worker-message-command.ts:148-157` → `K/collaboration-service.ts:2263-2278` 调 `peerReplyReturn`，并写事件 `replyReturn`（`:2280-2308`）→ `deriveAttention`（`:2322`）→ `K/room-event-writer.ts:200-275` → `K/instance-wake-guard.ts:187-247`。
+
+CLI `message-post --final` 走 `K/worker-target-context.ts:479-508`；普通 `message-post` 不带 `--final` 时不传 `replyReturnRunAttemptId`（`K/worker-message-command.ts:152-154`），不会自动回传。写回复后由 `recordWorkerRunMessageWrite` 记录 session generation（`K/worker-message-command.ts:182`、`K/worker-run-message-writes.ts:26-44`）。
+
+注：`K=packages/kernel/src`，`KT=packages/kernel/test`，`A=packages/agent-host/src`，`AT=packages/agent-host/test`，`S=packages/application-service/src`。
+
+# 成立/不成立边界
+
+1. **final 标记**：成立=Host final-output 或显式 `--final`；不成立=普通 message-post、进度、仅进程退出。`K/worker-message-command.ts:152-154`；`KT/peer-reply-return.test.ts:50-87`（progress 无返回）。
+
+2. **运行与请求者资格**：成立=Run 仍 `starting/running`，activation/run/participant/room 对齐，频道实例匹配；不成立=Run 终态、DM/私有 box、A 已移除/禁用、A 是 B 自己。`K/peer-reply-return.ts:20-36,89-100`；`KT/peer-reply-return.test.ts:61`（removed）。
+
+3. **B 的消息列**：成立=顶层、`attachments_json="[]"`、`mentions_json` 为空、无广播；不成立=有 thread、任何附件、任何 @、`@all`。`K/peer-reply-return.ts:41-47`；`KT/peer-reply-return.test.ts:76-87`（explicit @Human）。原生 final 只发 body/basedOnSeq（`A/worker-final-output.ts:81-84`），但 CLI `--final` 可带附件或线程，从而关闭自动回传。注意：B 只要 @C（不是 A），自动回传也会关闭，A 不会被补发。
+
+4. **来源唯一**：成立=B 的 `inbox_items` 在 `[from_seq,to_seq]` 恰好 1 条；不成立=0 条或 ≥2 条（同 Activation 多个请求/多个来源）。`K/peer-reply-return.ts:49-57`；`KT/peer-reply-return.test.ts:33-38,50-91`（ambiguous）。
+
+5. **来源形状**：成立=`message.posted`、非自动回传、非线程、非附件评论、无附件、body 字符串、非广播；不成立=任一。`K/peer-reply-return.ts:60-69`。[实现，当前测试未逐项单测]
+
+6. **来源点名唯一性**：成立=来源 `mentions` 恰好 1 个且就是 B；不成立=0 个、多个、`@all`、只 @ 别人，或历史事件无 mentions。`K/peer-reply-return.ts:70-75`；请求构造见 `KT/peer-reply-return.test.ts:39-42`。[多点名无单独测试]
+
+7. **会话代际**：成立=A 写请求时的 `worker_run_message_writes.session_generation` 等于 A 当前 `role_instance_sessions.generation`；不成立=A 之后 reset/换代、无认证写入 provenance。`K/peer-reply-return.ts:77-88`；`KT/peer-reply-return.test.ts:62-69`。
+
+8. **实际交付**：成立=B 的 presented window `sent_at` 非空，且 A 请求的 `room_seq` 在 `presented_seqs_json` 中；不成立=只渲染未发送、未呈现、仅高水位游标或通知。`K/peer-reply-return.ts:101-113`；`KT/peer-reply-return.test.ts:23-30,70-75`。
+
+9. **已回复/幂等**：成立=此前没有同一 `replyReturn.sourceEventId`，且本 Activation 没有已 @A 的回复；不成立=已有自动回传、已显式 @A、或同 idempotency 重放。`K/peer-reply-return.ts:114-133`；`KT/peer-reply-return.test.ts:121-123,177-197`。普通无 @ 的非 final 回复不在该查询内，不能简单说“B 已回复任何内容”就消耗返回。
+
+10. **自动回传链**：成立=来源不是 `replyReturn`；不成立=来源本身是上一次自动回传，则不再产生下一跳。`K/peer-reply-return.ts:60-63`；`KT/peer-reply-return.test.ts:127-133`；`AT/native-final-reply-return.test.ts:64-71,122-130`（三轮后停止）。
+
+11. **链上限/忙碌**：成立=链上限内且 A 空闲，则建 Activation；不成立=链上限到顶时仍可能写 `replyReturn` 事件，但 `activationIds=[]`、`admitted=0`；A 忙时则进同一 lane 排队/合并，不立即执行。`K/instance-wake-guard.ts:187-247`；`K/room-event-writer.ts:200-275`；`KT/peer-reply-return.test.ts:199-217,141-175`。
+
+# 证据性质与不确定性
+
+- **实现事实**：以上路径和 SQL 条件来自当前快照代码；`messages` 基表含 `thread_id`（`K/schema.ts:295`），`attachments_json`、`mentions_json` 是迁移列（`K/room-files.ts:179-185`、`K/identity-accounts.ts:92-97`）。
+- **测试证据**：上述 `KT/`、`AT/` 文件中的断言是源码证据，本次只读未执行测试或构建。
+- **待验证**：`AT/native-final-reply-return.test.ts` 和 `AT/native-final-peer-collaboration.test.ts:22-23` 明确使用 FakeRuntime/synthetic native text，不证明真实 CLI 总把无 @ 的最终散文交给 final-output；若真实运行只走普通 `message-post`，第 1 条直接失败。真实附件、线程、多来源组合也需实跑验证。

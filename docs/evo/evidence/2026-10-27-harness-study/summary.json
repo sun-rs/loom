@@ -1,0 +1,831 @@
+[
+  {
+    "arm": "dsh",
+    "task": "return",
+    "rep": 0,
+    "exit": 0,
+    "timeout": false,
+    "seconds": 134.63,
+    "requests": 24,
+    "usage_known": true,
+    "input": 1258753,
+    "output": 18848,
+    "wire_rejections": [],
+    "complete": true,
+    "answer_chars": 4331,
+    "provider_requests": 24,
+    "local_guard_rejections": 0,
+    "usage_coverage_complete": true,
+    "cache_read": 1202173,
+    "estimated_peak_usd": 0.046805,
+    "estimated_offpeak_usd": 0.023402,
+    "tool_calls": 41,
+    "subagent_calls": 0,
+    "citations": [
+      {
+        "path": "packages/agent-host/src/native-final-transport.ts",
+        "line": 6,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/agent-host/src/worker-final-output.ts",
+        "line": 72,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/application-service/src/worker-application-service.ts",
+        "line": 1032,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/worker-final-output.ts",
+        "line": 20,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/worker-message-command.ts",
+        "line": 152,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/collaboration-service.ts",
+        "line": 2263,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/room-event-writer.ts",
+        "line": 200,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/test/peer-reply-return.test.ts",
+        "line": 94,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/agent-host/test/native-final-reply-return.test.ts",
+        "line": 122,
+        "exists_in_snapshot": true
+      }
+    ],
+    "answer_file": "/tmp/loom-harness-study-20261027/runs/return-0-dsh/answer.txt"
+  },
+  {
+    "arm": "opencode",
+    "task": "return",
+    "rep": 0,
+    "exit": 0,
+    "timeout": false,
+    "seconds": 105.38,
+    "requests": 22,
+    "usage_known": true,
+    "input": 905827,
+    "output": 13912,
+    "wire_rejections": [],
+    "complete": true,
+    "answer_chars": 2694,
+    "provider_requests": 22,
+    "local_guard_rejections": 0,
+    "usage_coverage_complete": true,
+    "cache_read": 849408,
+    "estimated_peak_usd": 0.038717,
+    "estimated_offpeak_usd": 0.019358,
+    "tool_calls": 46,
+    "subagent_calls": 0,
+    "citations": [],
+    "answer_file": "/tmp/loom-harness-study-20261027/runs/return-0-opencode/answer.txt"
+  },
+  {
+    "arm": "pi",
+    "task": "return",
+    "rep": 0,
+    "exit": 0,
+    "timeout": false,
+    "seconds": 117.88,
+    "requests": 27,
+    "usage_known": true,
+    "input": 1205831,
+    "output": 15501,
+    "wire_rejections": [],
+    "complete": true,
+    "answer_chars": 3657,
+    "provider_requests": 27,
+    "local_guard_rejections": 0,
+    "usage_coverage_complete": true,
+    "cache_read": 1139456,
+    "estimated_peak_usd": 0.04535,
+    "estimated_offpeak_usd": 0.022675,
+    "tool_calls": 61,
+    "subagent_calls": 0,
+    "citations": [
+      {
+        "path": "packages/kernel/test/peer-reply-return.test.ts",
+        "line": 50,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/protocol/src/run-watchdog.ts",
+        "line": 12,
+        "exists_in_snapshot": true
+      }
+    ],
+    "answer_file": "/tmp/loom-harness-study-20261027/runs/return-0-pi/answer.txt"
+  },
+  {
+    "arm": "dsh",
+    "task": "return",
+    "rep": 1,
+    "exit": 0,
+    "timeout": false,
+    "seconds": 167.68,
+    "requests": 29,
+    "usage_known": true,
+    "input": 1738073,
+    "output": 24460,
+    "wire_rejections": [],
+    "complete": true,
+    "answer_chars": 3828,
+    "provider_requests": 29,
+    "local_guard_rejections": 0,
+    "usage_coverage_complete": true,
+    "cache_read": 1668221,
+    "estimated_peak_usd": 0.060317,
+    "estimated_offpeak_usd": 0.030158,
+    "tool_calls": 51,
+    "subagent_calls": 0,
+    "citations": [
+      {
+        "path": "docs/evo/target-contract.zh-CN.md",
+        "line": 58,
+        "exists_in_snapshot": true
+      }
+    ],
+    "answer_file": "/tmp/loom-harness-study-20261027/runs/return-1-dsh/answer.txt"
+  },
+  {
+    "arm": "opencode",
+    "task": "return",
+    "rep": 1,
+    "exit": 0,
+    "timeout": false,
+    "seconds": 90.3,
+    "requests": 22,
+    "usage_known": true,
+    "input": 1109599,
+    "output": 11266,
+    "wire_rejections": [],
+    "complete": true,
+    "answer_chars": 3097,
+    "provider_requests": 22,
+    "local_guard_rejections": 0,
+    "usage_coverage_complete": true,
+    "cache_read": 1051264,
+    "estimated_peak_usd": 0.037327,
+    "estimated_offpeak_usd": 0.018664,
+    "tool_calls": 38,
+    "subagent_calls": 0,
+    "citations": [
+      {
+        "path": "packages/agent-host/src/worker-final-output.ts",
+        "line": 52,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/application-service/src/worker-application-service.ts",
+        "line": 1032,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/room-kernel.ts",
+        "line": 1819,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/worker-final-output.ts",
+        "line": 20,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/worker-message-command.ts",
+        "line": 148,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/collaboration-service.ts",
+        "line": 2242,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/peer-reply-return.ts",
+        "line": 9,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/room-event-writer.ts",
+        "line": 200,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/instance-wake-guard.ts",
+        "line": 176,
+        "exists_in_snapshot": true
+      }
+    ],
+    "answer_file": "/tmp/loom-harness-study-20261027/runs/return-1-opencode/answer.txt"
+  },
+  {
+    "arm": "pi",
+    "task": "return",
+    "rep": 1,
+    "exit": 0,
+    "timeout": false,
+    "seconds": 72.83,
+    "requests": 14,
+    "usage_known": true,
+    "input": 414725,
+    "output": 10062,
+    "wire_rejections": [],
+    "complete": true,
+    "answer_chars": 3152,
+    "provider_requests": 14,
+    "local_guard_rejections": 0,
+    "usage_coverage_complete": true,
+    "cache_read": 387072,
+    "estimated_peak_usd": 0.022693,
+    "estimated_offpeak_usd": 0.011346,
+    "tool_calls": 28,
+    "subagent_calls": 0,
+    "citations": [
+      {
+        "path": "packages/kernel/src/room-kernel.ts",
+        "line": 1819,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/worker-message-command.ts",
+        "line": 152,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/collaboration-service.ts",
+        "line": 2263,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/room-event-writer.ts",
+        "line": 200,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/test/peer-reply-return.test.ts",
+        "line": 50,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/instance-wake-guard.ts",
+        "line": 187,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/agent-host/src/native-final-transport.ts",
+        "line": 6,
+        "exists_in_snapshot": true
+      }
+    ],
+    "answer_file": "/tmp/loom-harness-study-20261027/runs/return-1-pi/answer.txt"
+  },
+  {
+    "arm": "dsh",
+    "task": "return",
+    "rep": 2,
+    "exit": 0,
+    "timeout": false,
+    "seconds": 248.06,
+    "requests": 34,
+    "usage_known": true,
+    "input": 2432515,
+    "output": 39383,
+    "wire_rejections": [],
+    "complete": true,
+    "answer_chars": 1830,
+    "provider_requests": 34,
+    "local_guard_rejections": 0,
+    "usage_coverage_complete": true,
+    "cache_read": 2370173,
+    "estimated_peak_usd": 0.080183,
+    "estimated_offpeak_usd": 0.040092,
+    "tool_calls": 51,
+    "subagent_calls": 0,
+    "citations": [],
+    "answer_file": "/tmp/loom-harness-study-20261027/runs/return-2-dsh/answer.txt"
+  },
+  {
+    "arm": "opencode",
+    "task": "return",
+    "rep": 2,
+    "exit": 0,
+    "timeout": false,
+    "seconds": 99.67,
+    "requests": 20,
+    "usage_known": true,
+    "input": 755963,
+    "output": 13731,
+    "wire_rejections": [],
+    "complete": true,
+    "answer_chars": 2888,
+    "provider_requests": 20,
+    "local_guard_rejections": 0,
+    "usage_coverage_complete": true,
+    "cache_read": 719872,
+    "estimated_peak_usd": 0.031624,
+    "estimated_offpeak_usd": 0.015812,
+    "tool_calls": 42,
+    "subagent_calls": 0,
+    "citations": [
+      {
+        "path": "packages/kernel/src/worker-message-command.ts",
+        "line": 148,
+        "exists_in_snapshot": true
+      }
+    ],
+    "answer_file": "/tmp/loom-harness-study-20261027/runs/return-2-opencode/answer.txt"
+  },
+  {
+    "arm": "pi",
+    "task": "return",
+    "rep": 2,
+    "exit": 0,
+    "timeout": false,
+    "seconds": 100.04,
+    "requests": 28,
+    "usage_known": true,
+    "input": 1140691,
+    "output": 12629,
+    "wire_rejections": [],
+    "complete": true,
+    "answer_chars": 3730,
+    "provider_requests": 28,
+    "local_guard_rejections": 0,
+    "usage_coverage_complete": true,
+    "cache_read": 1095040,
+    "estimated_peak_usd": 0.03542,
+    "estimated_offpeak_usd": 0.01771,
+    "tool_calls": 41,
+    "subagent_calls": 0,
+    "citations": [
+      {
+        "path": "packages/agent-host/src/worker-final-output.ts",
+        "line": 72,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/application-service/src/worker-application-service.ts",
+        "line": 1032,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/room-kernel.ts",
+        "line": 1819,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/worker-final-output.ts",
+        "line": 33,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/worker-message-command.ts",
+        "line": 148,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/collaboration-service.ts",
+        "line": 2263,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/room-event-writer.ts",
+        "line": 200,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/instance-wake-guard.ts",
+        "line": 187,
+        "exists_in_snapshot": true
+      }
+    ],
+    "answer_file": "/tmp/loom-harness-study-20261027/runs/return-2-pi/answer.txt"
+  },
+  {
+    "arm": "dsh",
+    "task": "roles",
+    "rep": 0,
+    "exit": 0,
+    "timeout": false,
+    "seconds": 175.91,
+    "requests": 33,
+    "usage_known": true,
+    "input": 2153344,
+    "output": 25679,
+    "wire_rejections": [],
+    "complete": true,
+    "answer_chars": 1931,
+    "provider_requests": 33,
+    "local_guard_rejections": 0,
+    "usage_coverage_complete": true,
+    "cache_read": 2079488,
+    "estimated_peak_usd": 0.065449,
+    "estimated_offpeak_usd": 0.032724,
+    "tool_calls": 46,
+    "subagent_calls": 0,
+    "citations": [],
+    "answer_file": "/tmp/loom-harness-study-20261027/runs/roles-0-dsh/answer.txt"
+  },
+  {
+    "arm": "opencode",
+    "task": "roles",
+    "rep": 0,
+    "exit": 0,
+    "timeout": false,
+    "seconds": 94.84,
+    "requests": 20,
+    "usage_known": true,
+    "input": 792812,
+    "output": 12830,
+    "wire_rejections": [],
+    "complete": true,
+    "answer_chars": 3133,
+    "provider_requests": 20,
+    "local_guard_rejections": 0,
+    "usage_coverage_complete": true,
+    "cache_read": 752128,
+    "estimated_peak_usd": 0.032114,
+    "estimated_offpeak_usd": 0.016057,
+    "tool_calls": 35,
+    "subagent_calls": 0,
+    "citations": [
+      {
+        "path": "packages/kernel/src/role-catalog.ts",
+        "line": 144,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/test/role-naming.test.ts",
+        "line": 220,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/test/instance-restart-config.test.ts",
+        "line": 184,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/role-names.ts",
+        "line": 13,
+        "exists_in_snapshot": true
+      }
+    ],
+    "answer_file": "/tmp/loom-harness-study-20261027/runs/roles-0-opencode/answer.txt"
+  },
+  {
+    "arm": "pi",
+    "task": "roles",
+    "rep": 0,
+    "exit": 0,
+    "timeout": false,
+    "seconds": 78.58,
+    "requests": 21,
+    "usage_known": true,
+    "input": 821528,
+    "output": 10546,
+    "wire_rejections": [],
+    "complete": true,
+    "answer_chars": 3653,
+    "provider_requests": 21,
+    "local_guard_rejections": 0,
+    "usage_coverage_complete": true,
+    "cache_read": 782208,
+    "estimated_peak_usd": 0.029144,
+    "estimated_offpeak_usd": 0.014572,
+    "tool_calls": 40,
+    "subagent_calls": 0,
+    "citations": [
+      {
+        "path": "packages/kernel/src/role-catalog.ts",
+        "line": 121,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/protocol/src/role-catalog.ts",
+        "line": 87,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/protocol/src/role-catalog.ts",
+        "line": 140,
+        "exists_in_snapshot": true
+      }
+    ],
+    "answer_file": "/tmp/loom-harness-study-20261027/runs/roles-0-pi/answer.txt"
+  },
+  {
+    "arm": "dsh",
+    "task": "roles",
+    "rep": 1,
+    "exit": 0,
+    "timeout": false,
+    "seconds": 144.6,
+    "requests": 31,
+    "usage_known": true,
+    "input": 1513262,
+    "output": 18424,
+    "wire_rejections": [],
+    "complete": true,
+    "answer_chars": 4258,
+    "provider_requests": 31,
+    "local_guard_rejections": 0,
+    "usage_coverage_complete": true,
+    "cache_read": 1461760,
+    "estimated_peak_usd": 0.04633,
+    "estimated_offpeak_usd": 0.023165,
+    "tool_calls": 49,
+    "subagent_calls": 0,
+    "citations": [
+      {
+        "path": "docs/evo/target-contract.zh-CN.md",
+        "line": 26,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/role-catalog.ts",
+        "line": 144,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/test/role-naming.test.ts",
+        "line": 220,
+        "exists_in_snapshot": true
+      }
+    ],
+    "answer_file": "/tmp/loom-harness-study-20261027/runs/roles-1-dsh/answer.txt"
+  },
+  {
+    "arm": "opencode",
+    "task": "roles",
+    "rep": 1,
+    "exit": 0,
+    "timeout": false,
+    "seconds": 142.16,
+    "requests": 12,
+    "usage_known": false,
+    "input": 284558,
+    "output": 6148,
+    "wire_rejections": [],
+    "complete": true,
+    "answer_chars": 2815,
+    "provider_requests": 12,
+    "local_guard_rejections": 0,
+    "usage_coverage_complete": false,
+    "cache_read": 259200,
+    "estimated_peak_usd": 0.01654,
+    "estimated_offpeak_usd": 0.00827,
+    "tool_calls": 18,
+    "subagent_calls": 0,
+    "citations": [
+      {
+        "path": "packages/kernel/src/role-catalog.ts",
+        "line": 121,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/test/role-naming.test.ts",
+        "line": 221,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/role-names.ts",
+        "line": 13,
+        "exists_in_snapshot": true
+      }
+    ],
+    "answer_file": "/tmp/loom-harness-study-20261027/runs/roles-1-opencode/answer.txt"
+  },
+  {
+    "arm": "pi",
+    "task": "roles",
+    "rep": 1,
+    "exit": 0,
+    "timeout": false,
+    "seconds": 71.66,
+    "requests": 20,
+    "usage_known": true,
+    "input": 773643,
+    "output": 9187,
+    "wire_rejections": [],
+    "complete": true,
+    "answer_chars": 3068,
+    "provider_requests": 20,
+    "local_guard_rejections": 0,
+    "usage_coverage_complete": true,
+    "cache_read": 732928,
+    "estimated_peak_usd": 0.027636,
+    "estimated_offpeak_usd": 0.013818,
+    "tool_calls": 31,
+    "subagent_calls": 0,
+    "citations": [
+      {
+        "path": "packages/kernel/src/role-catalog.ts",
+        "line": 144,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/test/role-naming.test.ts",
+        "line": 220,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/role-names.ts",
+        "line": 13,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/collaboration-policy.ts",
+        "line": 15,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/test/instance-restart-config.test.ts",
+        "line": 184,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/instance-restart-config.ts",
+        "line": 28,
+        "exists_in_snapshot": true
+      }
+    ],
+    "answer_file": "/tmp/loom-harness-study-20261027/runs/roles-1-pi/answer.txt"
+  },
+  {
+    "arm": "dsh",
+    "task": "roles",
+    "rep": 2,
+    "exit": 0,
+    "timeout": false,
+    "seconds": 180.85,
+    "requests": 23,
+    "usage_known": true,
+    "input": 1360137,
+    "output": 29588,
+    "wire_rejections": [],
+    "complete": true,
+    "answer_chars": 2368,
+    "provider_requests": 23,
+    "local_guard_rejections": 0,
+    "usage_coverage_complete": true,
+    "cache_read": 1306880,
+    "estimated_peak_usd": 0.059324,
+    "estimated_offpeak_usd": 0.029662,
+    "tool_calls": 41,
+    "subagent_calls": 0,
+    "citations": [],
+    "answer_file": "/tmp/loom-harness-study-20261027/runs/roles-2-dsh/answer.txt"
+  },
+  {
+    "arm": "opencode",
+    "task": "roles",
+    "rep": 2,
+    "exit": 0,
+    "timeout": false,
+    "seconds": 81.93,
+    "requests": 17,
+    "usage_known": true,
+    "input": 671229,
+    "output": 10574,
+    "wire_rejections": [],
+    "complete": true,
+    "answer_chars": 3157,
+    "provider_requests": 17,
+    "local_guard_rejections": 0,
+    "usage_coverage_complete": true,
+    "cache_read": 636032,
+    "estimated_peak_usd": 0.027064,
+    "estimated_offpeak_usd": 0.013532,
+    "tool_calls": 31,
+    "subagent_calls": 0,
+    "citations": [
+      {
+        "path": "packages/kernel/src/role-catalog.ts",
+        "line": 121,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/test/role-naming.test.ts",
+        "line": 119,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/protocol/src/message-mention.ts",
+        "line": 121,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "docs/evo/target-contract.zh-CN.md",
+        "line": 20,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/test/role-naming.test.ts",
+        "line": 220,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/test/instance-restart-config.test.ts",
+        "line": 184,
+        "exists_in_snapshot": true
+      }
+    ],
+    "answer_file": "/tmp/loom-harness-study-20261027/runs/roles-2-opencode/answer.txt"
+  },
+  {
+    "arm": "pi",
+    "task": "roles",
+    "rep": 2,
+    "exit": 0,
+    "timeout": false,
+    "seconds": 91.98,
+    "requests": 20,
+    "usage_known": true,
+    "input": 893742,
+    "output": 11590,
+    "wire_rejections": [],
+    "complete": true,
+    "answer_chars": 3644,
+    "provider_requests": 20,
+    "local_guard_rejections": 0,
+    "usage_coverage_complete": true,
+    "cache_read": 850048,
+    "estimated_peak_usd": 0.032116,
+    "estimated_offpeak_usd": 0.016058,
+    "tool_calls": 36,
+    "subagent_calls": 0,
+    "citations": [
+      {
+        "path": "packages/kernel/src/role-catalog.ts",
+        "line": 121,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/test/role-naming.test.ts",
+        "line": 220,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/test/instance-restart-config.test.ts",
+        "line": 184,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/role-names.ts",
+        "line": 6,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/protocol/src/message-mention.ts",
+        "line": 121,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/test/role-naming.test.ts",
+        "line": 42,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/test/role-naming.test.ts",
+        "line": 254,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/collaboration-policy.ts",
+        "line": 15,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/collaboration-service.ts",
+        "line": 1394,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/test/role-instance-lifecycle.test.ts",
+        "line": 45,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/instance-restart-config.ts",
+        "line": 88,
+        "exists_in_snapshot": true
+      }
+    ],
+    "answer_file": "/tmp/loom-harness-study-20261027/runs/roles-2-pi/answer.txt"
+  }
+]

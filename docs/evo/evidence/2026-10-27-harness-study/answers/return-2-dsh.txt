@@ -1,0 +1,17 @@
+结论：否。只有 B 的本次 final、单一请求来源、无歧义寻址等条件全部满足，Kernel 才会在 B 的事件上附加 replyReturn；它只是“指定回传对象”，还必须经过唤醒链生成 A 的 Inbox/Activation。任一条件不满足，B 的普通最终回复仍可发布，但不会自动交回 A。
+
+以下路径均省略 packages/：K=kernel/src，T=kernel/test，H=agent-host/src，HT=agent-host/test，S=application-service/src；P=K/peer-reply-return.ts，R=T/peer-reply-return.test.ts。调用链：H/native-final-transport.ts:6-29,34-45 → H/worker-final-output.ts:72-84 → S/worker-application-service.ts:1032-1040 → K/worker-final-output.ts:20-33 → K/worker-message-command.ts:148-157 → K/collaboration-service.ts:2242-2269，命中后添加 reason:"reply" 并写入 payload.replyReturn（:2270-2308）→ K/room-event-writer.ts:180-279 创建 Inbox/Activation。
+
+边界（全部成立才可能回传）：
+1. 必须 final，且 B 的 run 为 starting/running：P:19-36；非 final 进度不触发（R:50-92）。
+2. 本次 Activation 的 Inbox 来源必须恰好 1 个；两个以上则放弃：P:49-57（R:33-38,50-59）。
+3. 来源必须是普通顶层消息，且唯一 @B：线程、附件、附件评论、广播、多个 mention 均拒绝（P:60-75）。
+4. B 的最终消息必须无 thread_id、无附件、无任何可绑定 mention、无广播（P:41-47；消息插入 K/collaboration-service.ts:2245；附件列 K/schema.ts:556）。写 @A 则走普通 mention，不是自动回传；附件/线程只能显式 @A。
+5. 来源必须实际交付到本次 run：seq 在 activation_presented_windows.presented_seqs_json 且 sent_at 非空（P:101-113；标记 K/activation-presented-window.ts:553-596）；unpresented 测试（R:70-75）。
+6. A 必须仍为频道启用 agent/成员：P:89-100；removed 测试（R:61）。
+7. A 的会话代际不能变化：来源写入的 worker_run_message_writes.session_generation 必须等于 A 当前代际（P:76-88；generation 测试 R:62-69）。
+8. 不能已经回过：同一来源已有 replyReturn，或同一 Activation 中 B 已显式 @A，则不再回传（P:114-133；显式先回测试 R:177-197）。
+9. 回传受唤醒链上限约束：超限时 payload.replyReturn 仍可能存在，但不建 Inbox/Activation（K/instance-wake-guard.ts:187-199,200-237；R:199-221）。
+10. 自动回传不接龙：来源事件自身带 replyReturn 时直接返回（P:60-69），故 B→A 的自动回传不会被 A 的普通 final 再自动传回 B；三轮测试 HT/native-final-reply-return.test.ts:38-41,118-133。
+
+性质：1–10 为代码实现事实；线程/附件/广播无回传专项测试，属测试空白。sent_at 只证明交给 runtime，不证明已读/ACK；真实 provider 最终文本采纳待真实验证。成功/单次见 R:94-139；测试主体为临时 DB/FakeRuntime。

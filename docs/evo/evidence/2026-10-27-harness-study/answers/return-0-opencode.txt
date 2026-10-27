@@ -1,0 +1,29 @@
+**结论**
+
+不是一定。B 的普通最终回复只有在 Kernel 能唯一证明“这次执行确实收到了 A 的一条单一普通请求”时，才会派生 `replyReturn`；即使派生成功，还要过唤醒链上限，才真正生成 A 的 Inbox/Activation。文本里写不写 `@A` 不是触发条件，`@` 反而会阻断自动回传。
+
+**真实调用链**
+
+`room-kernel.ts:1819-1835`（原生 final）或 `1840-1854`（worker final）→ `worker-message-command.ts:148-181`（`final` 才传 `replyReturnRunAttemptId`）→ `collaboration-service.ts:2263-2308` 调 `peerReplyReturn`，写入返回收件人并 append 事件 → `2322` 调 `deriveAttention` → `room-event-writer.ts:200-275` 生成 Inbox、Activation、Outbox。
+
+**成立/不成立边界**
+
+1. **必须是 final**：progress 型普通消息不带 `replyReturnRunAttemptId`，不会回传（`worker-message-command.ts:148-157`；测试 `peer-reply-return.test.ts:50-91` 的 `progress`）。
+2. **B 的回复列必须干净**：`thread_id=null`、`attachments_json="[]"`、`mentions_json` 为空、正文无广播（`peer-reply-return.ts:41-47`）。因此进 Thread、带附件、任何 `@` 或 `@all` 都不成立；测试正向只覆盖空 mentions（`:106-116`），附件/Thread 无专项测试。
+3. **实际交付到 B 的本次 Run**：源请求 seq 必须出现在 `activation_presented_windows` 且 `sent_at` 非空（`peer-reply-return.ts:103-113`）；测试 `unpresented` 清空 `sent_at` 后不成立（`:70-75`）。
+4. **单一来源**：B 的 Activation 窗口内必须恰好一个 Inbox 源；有第二个请求即失败（`:49-57`）；测试 `ambiguous` 先追加一条 A→B 请求（`:33-38`）。
+5. **源事件形态**：必须是 `message.posted`，且源 payload 无 `replyReturn`、`threadId`、`attachmentComment`、附件、广播（`:60-69`）。这切断自动回传链；测试 `:127-133` 显示回传后的下一轮普通 final 不再回传。
+6. **源 @ 集合必须恰好是 B**：且不是广播（`:70-75`）；多 @ 或 `@all` 不成立。测试请求为 `@peer` 单提及（`:39-42`）。
+7. **A 必须是当时仍启用的频道实例成员**：需 `memberships`、`agent_definitions.state='enabled'`，且 A≠B（`:89-100`）；测试 `removed`（`:61`）。
+8. **会话代际一致**：A 写源消息的 `worker_run_message_writes.session_generation` 必须等于 A 当前代际（`:77-88`）；测试 `generation` 将 A 升到 1 后不成立（`:62-69`）。
+9. **未显式回复过**：B 之前若已对同一源回传，或同一 Activation 内已发过带 A mention 的消息，则不再回传（`:114-133`）；测试 `:117-123`（重复发送去重）与 `:177-197`（先显式 @A 后 final 不再回传）。
+10. **唤醒链上限可吞掉“已派生”的回传**：`instance-wake-guard.ts:187-199` 允许 reply，但 `200-247` 仍计链；超限时 `replyReturn` 留在 payload，却不建 Inbox/Activation。测试 `:199-221` 断言 `admitted=0`、`activationIds=[]`。
+11. **A 正忙时是排队交回**：`room-event-writer.ts:223-255` 合并/新建 queued Activation；测试 `:141-175` 证明 reason=`reply`、链记录 admitted=1，但当下 lease 不到，A 结束后才运行。
+12. **仅 Channel**：查询要求 `rooms.kind='channel'` 且 `role_instances.channel_id=room`（`peer-reply-return.ts:27`）。私有盒子是 direct room（`role-instance-fixture.ts:103`），故不会自动回传。此为代码事实，无专项测试。
+
+**不确定性与证据边界**
+
+- 实现还要求 B 的 `run_attempts.state IN ('starting','running')`（`:28`），测试未覆盖已完成/隔离 Run。
+- Human 发起的请求通常不被回传：源需要 A 的 worker 写入及 Role 实例行（`:76-100`）；无专项测试。
+- B 若只发 attachment comment 而不新增附件，`peer-reply-return.ts` 只检查 `attachments_json`，未检查 B 的 `attachmentComment`；是否仍可回传属待验证假设。
+- 唯一集中测试是 `packages/kernel/test/peer-reply-return.test.ts`，全部使用 fake run，并手工调用 `present()`/`markPresentedDeliverySent` 模拟交付（`:23-30`）。因此“真实 Host 已把请求送达该 Run”的端到端行为仍需真实链路验证。

@@ -1,0 +1,36 @@
+## 关键结论
+
+1. **删除 Tom 不会停止运行中的实例。** `packages/kernel/src/role-catalog.ts:121-158` 的 `delete` 只校验管理权限、`expectedRoleRevisionId`、`basedOnRoomSeq`，随后执行 `UPDATE role_templates SET deleted_at=...`，不触碰实例、成员、RunAttempt、runtime 进程或 session。旧的 Tom 实例继续保留频道成员身份和冻结配置，能继续运行或接收工作。
+2. **新建同名 Tom 是一个全新 Role。** 名称检查只读取 `deleted_at IS NULL` 的角色（`role-names.ts:6-23`），所以同名创建成功，得到新 `roleId` 和新 Revision，与旧 Tom 实例无关。若再实例化，实例名不是 `Tom-1` 而是 `Tom-2`，因为分配名称时扫描所有 principals（含旧实例和已移除实例，`role-names.ts:26-41`）；测试见 `packages/kernel/test/role-naming.test.ts:119-164`。
+3. **恢复旧 Tom 必须显式指定旧 `roleId`。** `restore` 按该 ID 读取其删除时的配置，生成新 Revision 并清除 `deleted_at`，保留原 `roleId`（`role-catalog.ts:173-193, 227-259`）。它不会合并新 Tom，也不会自动更改、启动或停止旧实例。
+4. **名称冲突仍然存在。** 若新 Tom 仍是有效 Role，恢复旧 Tom 并要求名称为 `Tom` 会报“角色名称已存在”；必须改名恢复，或先删除新 Tom。测试见 `role-naming.test.ts:254-302`（先断言同名恢复失败，再以 `Original Reviewer` 恢复）。名称比较为 trim+NFKC+小写（`packages/protocol/src/message-mention.ts:121-123`）。
+
+## 身份、修订与权限
+
+- `role_instances` 在实例化时冻结 `roleId/roleRevisionId`，见 `role-catalog.ts:480-508`；删除或恢复 Role 都不修改该行。因此恢复后旧实例仍指向其原冻结 Revision，`isCurrent` 相对恢复出的新 Revision 通常为 false（列表计算见 `role-catalog.ts:285-303`）。
+- 恢复出的新 Revision 基于**删除时 Role 的最新配置**，不是旧实例实际冻结的配置；若旧实例创建后 Role 曾更新过，两者可能不同。
+- 删除、恢复、创建、修改均要求 Actor 是控制室 Human 管理者（`role-catalog.ts:127,207,366`）；旧 Tom 实例不能自行删除或恢复 Role。显式重启还要求频道管理者（`role-catalog.ts:562-576`）。
+- 过期校验：删除/恢复均要求 `expectedRoleRevisionId` 等于 Role 当前修订，且 `basedOnRoomSeq` 等于控制室最新序号（`role-catalog.ts:139-143, 235-237`）。新建同名 Tom 会推进控制室序号，使旧请求上下文过期。旧实例自身的 Revision ID 不能当作恢复的 `expectedRoleRevisionId`。
+- 幂等：`role.restored` 精确重放返回 `deduplicated:true`；键按控制室事件表校验 Actor、事件类型和请求摘要（`role-catalog.ts:214-226, 331-352`）。同一键换名称或内容会触发 IdempotencyConflict。恢复测试见 `role-naming.test.ts:285-291`。
+
+## 重启时“保留配置”与“采用最新配置”的边界
+
+显式 session 重启入口是 `resetInstanceSession`（`role-catalog.ts:556-678`）：
+
+- **不传 `adoptRoleRevisionId`（保留）**：保留实例实际配置，包括原生模型等覆盖，不还原初始 Role；但会推进 session generation，下一轮是新原生 session。
+- **传 `adoptRoleRevisionId`（采用）**：必须是该 Role 当前最新 Revision（`instance-restart-config.ts:28-30`），Role 不能已删除；替换名称、Prompt、CLI、模型、effort，同时保留 Instance ID、历史和频道工作目录。
+- 两种模式都拒绝运行中的 RunAttempt 或 prepared/active/orphaned 运行时进程（`role-catalog.ts:599-612`），并检查未完成清理；采用模式还拒绝已租约/已预留工作（`instance-restart-config.ts:37-47`）。
+- 采用后若实例已有可读的 `Role名-数字` 名称则沿用，否则重新分配（`instance-restart-config.ts:49-62`），并更新 `role_instances.role_revision_id`（88-90）。
+- **服务进程重启、Role 保存/删除/恢复本身不会调用该入口**，因此不会自动采用新配置；这与目标契约第 20、24 条一致（`docs/evo/target-contract.zh-CN.md:20,24`）。
+
+## 测试支持
+
+- 删除运行中 Role 后，`role_instances`、`role_revisions`、`agent_definitions`、session、run、runtime、Inbox、messages 快照全部不变：`packages/kernel/test/role-naming.test.ts:220-252`。
+- 恢复保留 `roleId`、生成新 Revision、拒绝占用名称、实例仍指向旧 Revision、精确重放：同文件 `254-302`。
+- 删除后仍可“保留配置”重启，且旧配置继续运行：`packages/kernel/test/instance-restart-config.test.ts:184-222`。
+- 采用最新配置与保留实际覆盖的边界：`instance-restart-config.test.ts:9-74, 228-293`；删除后采用被拒：`109-115`。
+- 运行中或租约/预留时拒绝重启：`role-instance-lifecycle.test.ts:356-430` 及 `instance-restart-config.test.ts:76-119`。
+
+## 不确定性
+
+以上均为 Kernel 快照的代码与 fake-host 测试事实。测试验证的是持久化状态和运行围栏，不等于真实 CLI 进程在删除 Role 后必然继续；但删除路径确实没有任何停止进程或取消执行的调用。快照未包含前端，因此 UI 是否自动实例化新 Tom、是否强制改名恢复，未能在本次只读范围内验证。

@@ -1,0 +1,435 @@
+{
+  "return-0-pi": {
+    "checks": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "material_errors": [],
+    "scores": {
+      "correctness": 50,
+      "evidence_accuracy": 22,
+      "boundary_coverage": 15,
+      "uncertainty_discipline": 9
+    },
+    "notes": "Covers all ten frozen checks plus freshness hold and chain-limit distinction. Most source citations use unambiguous basenames rather than full paths. Explicit fake-vs-real distinction; tests not executed."
+  },
+  "return-0-dsh": {
+    "checks": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "material_errors": [],
+    "scores": {
+      "correctness": 50,
+      "evidence_accuracy": 23,
+      "boundary_coverage": 15,
+      "uncertainty_discipline": 10
+    },
+    "notes": "All ten facts, plus host native-final admission and sent-not-read distinction. Explicit FakeRuntimeAdapter caveat. Historical payload mismatch framed as unverified risk, not confirmed defect."
+  },
+  "return-1-dsh": {
+    "checks": [
+      1,
+      0.5,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "material_errors": [],
+    "precision_notes": [
+      "Any @ phrasing broader than canonical resolved mentions; SQL condition itself correct."
+    ],
+    "scores": {
+      "correctness": 47.5,
+      "evidence_accuracy": 23,
+      "boundary_coverage": 15,
+      "uncertainty_discipline": 10
+    },
+    "notes": "Clear path aliases and fake-vs-real distinction; no real-test success asserted."
+  },
+  "return-1-pi": {
+    "checks": [
+      0.5,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "material_errors": [],
+    "citation_errors": [
+      "native-final-reply-return.test.ts:127-133 is misattributed: second final payload replyReturn assertion is kernel peer-reply-return.test.ts:127-133. Native host file has 130 lines."
+    ],
+    "scores": {
+      "correctness": 47.5,
+      "evidence_accuracy": 19,
+      "boundary_coverage": 14,
+      "uncertainty_discipline": 10
+    },
+    "notes": "Core result correct; no explicit live B run/state/channel SQL admission discussion; one test citation wrong."
+  },
+  "return-2-dsh": {
+    "checks": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      0.5
+    ],
+    "material_errors": [],
+    "scores": {
+      "correctness": 47.5,
+      "evidence_accuracy": 19,
+      "boundary_coverage": 14,
+      "uncertainty_discipline": 10
+    },
+    "notes": "Concise accurate main conditions and canonical-mention wording. Busy requester queue not explained explicitly; native host test range extends past file end but relevant test cited.",
+    "citation_errors": [
+      "schema.ts:556 is held_message_drafts.attachments_json, not messages.attachments_json as cited.",
+      "native-final-reply-return.test.ts:118-133 extends past file end (130)."
+    ]
+  },
+  "return-2-pi": {
+    "checks": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "material_errors": [],
+    "citation_errors": [
+      "Uses peer-reply-return.test.ts:177-193 to support current final mention suppression; that test covers prior explicit reply consuming later return. Direct current-mention case is parameterized explicit test at 76-87."
+    ],
+    "scores": {
+      "correctness": 50,
+      "evidence_accuracy": 21,
+      "boundary_coverage": 15,
+      "uncertainty_discipline": 9
+    },
+    "notes": "All core conditions covered, correct canonical mention wording; fake CLI limitation clear."
+  },
+  "roles-0-pi": {
+    "checks": [
+      1,
+      1,
+      1,
+      0.5,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "material_errors": [],
+    "scores": {
+      "correctness": 47.5,
+      "evidence_accuracy": 23,
+      "boundary_coverage": 15,
+      "uncertainty_discipline": 10
+    },
+    "notes": "Correct scenario and keep/adopt fences; does not explain case/NFKC name normalization. Explicit no frontend snapshot and no real CLI verification."
+  },
+  "roles-0-dsh": {
+    "checks": [
+      1,
+      1,
+      1,
+      0.5,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "material_errors": [],
+    "scores": {
+      "correctness": 47.5,
+      "evidence_accuracy": 23,
+      "boundary_coverage": 15,
+      "uncertainty_discipline": 10
+    },
+    "notes": "Main lifecycle and fences correct; omits explicit case/NFKC normalization. Static-only and composed evidence stated."
+  },
+  "roles-1-dsh": {
+    "checks": [
+      1,
+      1,
+      1,
+      0.5,
+      1,
+      1,
+      1,
+      1,
+      1,
+      0.5
+    ],
+    "material_errors": [],
+    "scores": {
+      "correctness": 45,
+      "evidence_accuracy": 23,
+      "boundary_coverage": 15,
+      "uncertainty_discipline": 10
+    },
+    "notes": "Correct lifecycle, own-role-only adoption and identity. Omits explicit name normalization and native model override persistence. Static-only verification clearly labeled."
+  },
+  "roles-1-pi": {
+    "checks": [
+      1,
+      1,
+      1,
+      0.5,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "material_errors": [],
+    "precision_notes": [
+      "Claims no existing test covers post-delete new delivery; instance-restart-config.test.ts:184-222 does cover it.",
+      "Historical session identity phrase ambiguous; report correctly says generation advances and native session is new."
+    ],
+    "scores": {
+      "correctness": 47.5,
+      "evidence_accuracy": 21,
+      "boundary_coverage": 15,
+      "uncertainty_discipline": 9
+    },
+    "notes": "Main scenario correct; no case/NFKC normalization. Explicitly qualifies further replay sequence as inference."
+  },
+  "roles-2-dsh": {
+    "checks": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "material_errors": [],
+    "precision_notes": [
+      "state-backup.ts:263-264 describes retaining inert work, not direct evidence of no config adoption at startup."
+    ],
+    "scores": {
+      "correctness": 50,
+      "evidence_accuracy": 22,
+      "boundary_coverage": 15,
+      "uncertainty_discipline": 9
+    },
+    "notes": "All main facts including name normalization and native override. Clear real-process evidence limit."
+  },
+  "roles-2-pi": {
+    "checks": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "material_errors": [],
+    "scores": {
+      "correctness": 50,
+      "evidence_accuracy": 23,
+      "boundary_coverage": 15,
+      "uncertainty_discipline": 10
+    },
+    "notes": "Covers all expected facts including normalization and native overrides; static/composed test limits explicit. Statement only reset changes config interpreted in Role-adoption scope, since native overrides are separately acknowledged."
+  },
+  "return-0-opencode": {
+    "checks": [
+      1,
+      0.5,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "material_errors": [],
+    "precision_notes": [
+      "Any @ is too broad; suppression uses canonical resolved mention set/broadcast."
+    ],
+    "scores": {
+      "correctness": 47.5,
+      "evidence_accuracy": 23,
+      "boundary_coverage": 15,
+      "uncertainty_discipline": 9
+    },
+    "notes": "Core chain complete, current run state explicit; clearly labels static and fake evidence. Mentions potential attachment-comment gap as hypothesis only."
+  },
+  "return-1-opencode": {
+    "checks": [
+      1,
+      0.5,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "material_errors": [],
+    "citation_errors": [
+      "native-final-reply-return.test.ts:13-137 extends beyond 130-line source; named test exists and verifies three turns."
+    ],
+    "precision_notes": [
+      "Any @ oversimplifies canonical resolved mentions."
+    ],
+    "scores": {
+      "correctness": 47.5,
+      "evidence_accuracy": 21,
+      "boundary_coverage": 15,
+      "uncertainty_discipline": 9
+    },
+    "notes": "Correct main chain and conditions; actual boundary tests differentiated."
+  },
+  "return-2-opencode": {
+    "checks": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "material_errors": [],
+    "scores": {
+      "correctness": 50,
+      "evidence_accuracy": 23,
+      "boundary_coverage": 15,
+      "uncertainty_discipline": 10
+    },
+    "notes": "Full main conditions, distinguishes durable delivery from model reading/Task completion, static/fake evidence limits explicit."
+  },
+  "roles-0-opencode": {
+    "checks": [
+      1,
+      1,
+      1,
+      0.5,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "material_errors": [],
+    "scores": {
+      "correctness": 47.5,
+      "evidence_accuracy": 23,
+      "boundary_coverage": 15,
+      "uncertainty_discipline": 9
+    },
+    "notes": "Correct complete lifecycle and failed-idempotency-key distinction. Omits normalization. Does not claim executed tests; UI and concurrency evidence limits clear."
+  },
+  "roles-1-opencode": {
+    "checks": [
+      1,
+      1,
+      1,
+      0.5,
+      1,
+      1,
+      0.5,
+      0.5,
+      1,
+      1
+    ],
+    "material_errors": [],
+    "precision_notes": [
+      "Omits basedOnRoomSeq freshness and case/NFKC name normalization.",
+      "Fresh restore after successful restore hits Role is not deleted before revision mismatch."
+    ],
+    "scores": {
+      "correctness": 42.5,
+      "evidence_accuracy": 22,
+      "boundary_coverage": 14,
+      "uncertainty_discipline": 9
+    },
+    "notes": "Main lifecycle correct; incomplete freshness explanation. One provider request timed out without usage; report completed after CLI continued; cost unknown."
+  },
+  "roles-2-opencode": {
+    "checks": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      0.5,
+      1,
+      1
+    ],
+    "material_errors": [],
+    "precision_notes": [
+      "Instance frozen revision can equal current Role revision; cannot use it is overbroad, should compare current role revision.",
+      "Adopt description does not explicitly mention membership fence, though cited implementation includes it."
+    ],
+    "scores": {
+      "correctness": 47.5,
+      "evidence_accuracy": 23,
+      "boundary_coverage": 14,
+      "uncertainty_discipline": 10
+    },
+    "notes": "Main scenario and normalization correct, native/fake evidence distinction explicit."
+  }
+}

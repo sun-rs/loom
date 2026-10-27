@@ -1,0 +1,18 @@
+**结论**：不一定。B 的普通 `final` 只满足“可回传”的一个前提；真正回传是 `peerReplyReturn` 的窄条件集合，任一不满足就不产生 A 的 Inbox/Activation。即使事件写了 `replyReturn`，频道自动回传链上限仍可拒绝唤醒。
+
+**真实调用链**
+Native final：`packages/agent-host/src/worker-final-output.ts:52-84` POST `/v1/worker/messages/final-output` → `packages/application-service/src/worker-application-service.ts:1032-1038` → `packages/kernel/src/room-kernel.ts:1819-1835` → `packages/kernel/src/worker-final-output.ts:20-39` → `packages/kernel/src/worker-message-command.ts:148-157`（仅 `finalOutput`/`final` 才传 `replyReturnRunAttemptId`）→ `packages/kernel/src/collaboration-service.ts:2242-2287` → `packages/kernel/src/peer-reply-return.ts:9-135`。随后 payload 的 `replyReturn` 经 `packages/kernel/src/room-event-writer.ts:200-276` → `packages/kernel/src/instance-wake-guard.ts:176-247` 派生 Inbox/Activation。普通 post 的 final 走 `room-kernel.ts:1840-1854` 或 `worker-target-context.ts:479-508`，最终同源。
+
+**成立/不成立边界**
+1. **必须 final**：progress 非 final 不传 `replyReturnRunAttemptId`，测试 `peer-reply-return.test.ts:50-87`；`native-final` 测试 `native-final-reply-return.test.ts:13-137` 验证 A→B→A 三回合且不循环。
+2. **运行态与房间**：要求 `runAttemptId`、Activation/run/instance/room 对齐，run 为 `starting|running`，房间 `kind='channel'`，实例 `channel_id` 等于房间（`peer-reply-return.ts:19-36`）。DM、跨房 final、已结束 run 不成立。
+3. **回传消息的列/正文**：`messages.thread_id` 必须为空、`attachments_json` 必须恰为 `"[]"`、`mentions_json` 为空、正文无 `@all`（`:41-47`）。任一 `@`（包括非 A 的 `@owner`）都抑制自动回传，测试 `peer-reply-return.test.ts:76-87`；Thread/附件/broadcast 分支没有专门回传测试。
+4. **来源必须唯一**：在本次 Activation `[from_seq,to_seq]` 内查 B 的 inbox，`LIMIT 2` 且必须恰好 1 条（`:49-57`）；来源事件还须是 `message.posted`、无既有 `replyReturn`、无 `threadId`、无 `attachmentComment`、无附件、正文为字符串且无 broadcast、规范化 mention 只有 B（`:60-75`）。A 连发两条请求时来源数为 2，测试 `ambiguous` 在 `:33-38,50-87`。
+5. **来源写入代际**：来源事件必须在 `worker_run_message_writes` 中有 A 的、同房间的写入，且其 `session_generation` 等于 A 当前 generation；缺 provenance 或不相等即失败（`:77-88`）；测试 `generation` 在 `:62-69`。
+6. **A 仍是有效实例**：A≠B，且 A 是启用的 Role instance、仍是该 Channel 成员（`:89-100`）；`removed` 测试 `:61`。A 被禁用无专门测试。
+7. **实际交付，而非仅入 Inbox**：来源 seq 必须出现在 B 本次 Activation/run 的 `activation_presented_windows.presented_seqs_json`，且该窗口 `sent_at` 非空（`:101-113`）；未发送测试 `unpresented` 在 `:70-75`。仅渲染、通知、catch-up 或预算降级均不成立。
+8. **已回复/至多一次**：若 B 已有同一 `replyReturn.sourceEventId` 的事件，或同 Activation 内已有提及 A 的事件，则不再回传（`:114-133`）；测试“显式早回复消费回传”在 `:177-197`。幂等重放返回 `deduplicated` 且无新 Activation（`:121-123`），这是另一层保护。
+9. **自动回传链上限**：`reply` 属于允许的显式路由，但 `decideInstanceWake` 仍按 Channel 连续实例唤醒 streak 限制（`instance-wake-guard.ts:187-247`）；超限时不建 Inbox/Activation。测试 `peer-reply-return.test.ts:199-220` 显示 payload 仍有 `replyReturn`，但 `activationIds=[]`、chain `admitted=0`。故“写了回传标记”不等于“实际交回 A”。
+10. **A 忙碌**：不丢弃，回传 Activation 以 `reason='reply'` 排队，A lane 忙时不能立即 lease；测试 `:141-175`。满足其余条件时最终回传，但不是同步送达。
+
+**证据性质与不确定点**：以上 1–10 是代码/数据库实现事实；有直接测试的是 final、progress、removed、generation、unpresented、explicit、ambiguous、已回复、链上限、忙碌排队和 native 端到端。Thread、附件、`@all`、禁用实例、非 Channel、无 provenance 等分支代码明确返回不成立，但未见针对自动回传的专门测试，属于测试空白而非已证缺陷。另代码未检查 A 的来源 Activation 事后是否成功完成，只检查 A 的成员/启用/代际；因此“请求已提交、A 的 run 后来失败”仍可能回传，此行为待验证/未必是缺陷。

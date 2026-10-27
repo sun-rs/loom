@@ -1,0 +1,24 @@
+## 关键结论
+
+**并非“一定自动交回 A”。** 只有在 B 的本次 Run 明确以 final 发布、且 Kernel 的 `peerReplyReturn` 判定命中时，Room 事件才会写入 `replyReturn`，并把 A 作为 `reason:"reply"` 收件人；随后还要经过唤醒判定。即使事件带有 `replyReturn`，也可能因频道唤醒链上限而不生成 Activation。A 正忙时也只是持久排队，不是立即交回。
+
+**真正调用链：** `submitWorkerFinalOutput`（`packages/kernel/src/room-kernel.ts:1819-1837`）→ `worker-final-output.ts:33` 以 `final:true` 发布；普通工具路径由 `packages/kernel/src/worker-message-command.ts:152-154` 仅在 `final:true` 时传 `replyReturnRunAttemptId`；target 路径见 `worker-target-context.ts:484-486`。最终在 `packages/kernel/src/collaboration-service.ts:2263-2279` 调用 `peerReplyReturn`，命中后追加 `reply` 收件人，并在 `:2287` 写入事件 payload，再由 `packages/kernel/src/room-event-writer.ts:200-211` 唤醒。
+
+## 成立/不成立边界
+
+1. **必须 final。** 非 final 的普通进度消息不传 `replyReturnRunAttemptId`，不回传。`worker-message-command.ts:152-154`；测试 `packages/kernel/test/peer-reply-return.test.ts:50-92`（`progress`）。
+2. **实际交付必须可证。** 要求 `activation_presented_windows.sent_at IS NOT NULL`，且请求的 `room_seq` 确实在该 Run 的 `presented_seqs_json` 中；仅通知、高水位或已 present 未 sent 都不够。`peer-reply-return.ts:101-113`；测试 `peer-reply-return.test.ts:70-75`（`unpresented`）。
+3. **本次 Activation 只能有一个来源。** 在 `from_seq..to_seq` 内按 `inbox_items` 计数，`sources.length !== 1` 即不回传；因此“请求 + 另一条 Human/实例消息”也不成立。`peer-reply-return.ts:48-57`；测试 `peer-reply-return.test.ts:50-59` 的 `ambiguous` 构造了第二条来源。
+4. **来源消息形状受限。** 必须是 `message.posted`，且无 `replyReturn`、Thread、附件评论、附件、广播 mention，body 为字符串。`peer-reply-return.ts:60-68`。其中附件/Thread/广播分支没有专门断言，属实现事实而非直接测试证据。
+5. **来源必须恰好只 mention B。** `mentions.length===1` 且 principalId 是 B；`@all` 等广播也不成立。`peer-reply-return.ts:70-75`。测试的 `explicit` 只覆盖 B 回复带 mention，不直接覆盖请求侧多 mention。
+6. **B 的回复消息列也受限。** `messages.thread_id` 必须为空、`attachments_json==="[]"`、`mentions_json` 为空且 body 无广播；B 回复写 `@A` 会走显式 mention，而不是自动回传。`peer-reply-return.ts:41-47`；测试 `peer-reply-return.test.ts:76-84`（`explicit`）。附件边界无直接测试。
+7. **会话代际必须未变。** A 写入请求时的 `worker_run_message_writes.session_generation` 必须等于 A 当前 generation；A 重启/换代后不成立。`peer-reply-return.ts:77-88`；测试 `peer-reply-return.test.ts:62-69`（`generation`）。
+8. **A 必须是同频道、仍启用的实例成员，且不能是 B 自己。** `peer-reply-return.ts:89-100`；测试 `peer-reply-return.test.ts:61`（`removed`）。
+9. **“已回复”会消费唯一回传。** 只要 B 已有事件以 `replyReturn.sourceEventId` 指向该请求，或同一 Activation 内已显式 mention A，就不再自动回传。`peer-reply-return.ts:114-133`；测试 `peer-reply-return.test.ts:177-197`。
+10. **自动回传链不续跳。** 来源事件自带 `replyReturn` 即拒绝，因此 A 的自动回传回复再 final 不会继续自动回传。`peer-reply-return.ts:62`；`native-final-reply-return.test.ts:127-133` 验证第二轮 final 无回传，`:122-125` 验证三 Turn 后停止。
+11. **即使事件带 `replyReturn`，也不保证醒来。** `decideInstanceWake` 对 `reply` 放行，但频道连续唤醒上限可拒绝；测试 `peer-reply-return.test.ts:199-215` 明确断言 `replyReturn` 存在而 `activationIds=[]`。见 `packages/kernel/src/instance-wake-guard.ts:187-199` 及后续链上限逻辑。
+12. **A 忙时只排队。** 回传激活可持久入队，须等 A 当前 lane 结束；`peer-reply-return.test.ts:141-174`。
+
+## 证据性质与不确定性
+
+以上第 1、2、3、6(显式)、7、8、9、10、11、12 有直接自动化测试；第 4、5、B 回复附件/Thread 分支主要是代码事实。测试均为 kernel/agent-host 的 fake fixture，不是真实 CLI 或浏览器验收。另需注意 native-final 传输还要求 `nativeFinalSequence` 判定只有一个回复目标且无 task/review 事件，否则 envelope 为空（`packages/agent-host/src/native-final-transport.ts:6-30`），因此“普通最终回复”是否被提交本身还依赖传输层条件。

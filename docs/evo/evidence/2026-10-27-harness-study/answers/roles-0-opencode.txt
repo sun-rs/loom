@@ -1,0 +1,24 @@
+## 关键结论
+
+**实现事实：删除旧 Tom 不终止已运行实例；同名新建得到独立新 Role；恢复旧 Tom 若仍叫“Tom”会因新 Tom 占用名称而失败；改名可恢复，原 Role ID 与旧实例保留，但不会自动同步配置或合并实例。**
+
+### 1. 删除与执行状态
+`roles.delete` 只把 `role_templates.deleted_at` 置值并追加 `role.deleted` 事件（`packages/kernel/src/role-catalog.ts:144-155`），不删除 `role_instances`、`role_revisions`、agent 定义/修订、`role_instance_sessions`、RunAttempt、Inbox 或消息；测试对运行中的实例先启动 Run，删除后这些表逐行不变（`packages/kernel/test/role-naming.test.ts:220-252`）。删除路径不检查运行/租约（对比重置在 `role-catalog.ts:599-612`），因此旧 Tom 的实例和原生 session 继续存在；删除后仍可给该实例投递并调度运行（`packages/kernel/test/instance-restart-config.test.ts:184-215`）。但旧角色不能再实例化（`role-catalog.ts:113-120`；测试 `role-naming.test.ts:143-152`）。
+
+### 2. 新建同名 Tom
+角色名唯一性只检查 `deleted_at IS NULL` 的有效 Role（`packages/kernel/src/role-names.ts:13-22`），所以旧 Tom 删除后可以新建同名 Tom。新 Tom 得到新的 `roleId`/`roleRevisionId`（`role-catalog.ts:387-405`），是独立身份，不继承旧实例或修订。实例名另行从全局 `principals.handle` 分配（`role-names.ts:25-41`），旧实例 `Tom-1` 仍占用，新 Tom 的实例会成为 `Tom-2`（`role-naming.test.ts:153-160`）。角色名与实例 handle 属于不同命名空间。
+
+### 3. 恢复旧 Tom：名称冲突与身份
+`restore` 读取已删除 Role（`role-catalog.ts:173-176`），要求其确实已删除（`227-234`），并再次执行有效名称检查（`238-243`）。若新 Tom 仍叫“Tom”，用 `displayName: "Tom"` 恢复会抛出 `ConflictError("Role name already exists")`（测试 `role-naming.test.ts:254-274`）。改名恢复可成功：保留原 `roleId`，生成新 `roleRevisionId` 和新修订，清空 `deleted_at`（`role-catalog.ts:244-259`；测试 `275-284`），旧实例的 `roleId` 和冻结修订不变（测试 `296-297`）。恢复复制的是当前 `role_templates.configuration_json` 加新显示名，并非回滚到某个历史修订；仅当旧 `configuration.role` 等于旧显示名时才同步替换（`177-190`）。若先删除新 Tom，则“Tom”重新变为未占用，推断旧 Tom 可用同名恢复；这是软删除与名称过滤的直接结果，没有专门测试。
+
+### 4. 旧实例配置与权限
+恢复不自动修改旧实例名称、配置、session 或执行状态。`role.list` 用实例冻结的 `role_revision_id` 与 Role 当前修订比较得出 `isCurrent`（`role-catalog.ts:285-299`），恢复后旧实例变为“过期”。实例继续使用其冻结的 agent 配置运行，除非显式重启并采用新配置。删除、创建、修订、恢复均要求 Human 控制室管理者（`role-catalog.ts:127,207-211,366`；`collaboration-policy.ts:15-42`）；实例重置还要求频道管理者（`role-catalog.ts:571-576`）。
+
+### 5. 幂等与过期修订
+Role 命令在事务内按 `actor + room + idempotencyKey + eventType + requestDigest` 重放：完全一致才去重，否则 `IdempotencyConflictError`（`role-catalog.ts:331-351`）。重复删除、精确恢复分别有去重测试（`role-naming.test.ts:128-130,285-291`）。名称冲突导致的失败不写事件，因此同一 key 改名重试可以成功（测试 `271-291`）；成功后同 key 改参数则因 digest 不同而冲突。删除/恢复都做 `expectedRoleRevisionId` CAS（`139-142,235-236`）；删除不产生新修订，所以删除前的 revision id 仍然有效；删除期间 `revise` 被拒绝（`234`），旧 Role 修订不会漂移。另 `basedOnRoomSeq` 必须等于控制室最新序号（`fresh`，`353-360`；恢复在 `237`），新建 Tom 会推进控制室序号，因此旧序号会报 `StaleContextError`，这与修订过期是两件事。
+
+### 6. 重启：保留 vs 采用最新配置
+`resetInstanceSession` 不传 `adoptRoleRevisionId` 时只推进 session generation（`role-catalog.ts:615-620`），不调用 adopt（`613-614`），保留实例实际配置（含原生 override）；即使 Role 已删除也可保留（`instance-restart-config.test.ts:24-30,184-198`）。传 adopt 时要求：Role 未删除、请求修订等于当前最新修订、实例仍是频道成员、无 leased Activation/Reserved Placement（`instance-restart-config.ts:28-47`）；同时重置本身拒绝 starting/running Run、prepared/active/orphaned runtime（`role-catalog.ts:599-612`）。通过后原子更新 agent 配置、必要时按新 Role 前缀重命名 handle，并更新 `role_instances.role_revision_id`（`instance-restart-config.ts:48-90`）。session generation 仅显式重置增长，增长会清绑定证据但不删历史（`instance-session.ts:13-20,51-66`）。
+
+### 不确定性
+“删除新 Tom 后再同名恢复旧 Tom”未有专门测试，属代码推断；并发恢复/新建的竞争由事务串行化覆盖，但未单独压测。UI 表现不在本次只读代码分析范围内。

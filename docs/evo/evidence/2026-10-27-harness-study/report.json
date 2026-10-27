@@ -1,0 +1,140 @@
+{
+  "study": "2026-10-27 DeepSeek V4.1 Flash 1017 native harness pilot",
+  "results": [
+    {
+      "usage_complete_runs": 6,
+      "known_only_mean_input": 875027,
+      "known_only_mean_output": 11586,
+      "known_only_mean_peak_usd": 0.03206,
+      "partial_usage_fields_are_lower_bounds": false,
+      "arm": "pi",
+      "runs": 6,
+      "complete": 6,
+      "mean_input": 875027,
+      "mean_output": 11586,
+      "mean_seconds": 88.8,
+      "mean_requests": 21.7,
+      "mean_peak_usd": 0.03206,
+      "mean_manual_score": 94.6,
+      "score_n": 6,
+      "subagent_calls": 0
+    },
+    {
+      "usage_complete_runs": 5,
+      "known_only_mean_input": 847086,
+      "known_only_mean_output": 12463,
+      "known_only_mean_peak_usd": 0.03337,
+      "partial_usage_fields_are_lower_bounds": true,
+      "arm": "opencode",
+      "runs": 6,
+      "complete": 6,
+      "mean_input": 753331,
+      "mean_output": 11410,
+      "mean_seconds": 102.4,
+      "mean_requests": 18.8,
+      "mean_peak_usd": 0.03056,
+      "mean_manual_score": 93.6,
+      "score_n": 6,
+      "subagent_calls": 0
+    },
+    {
+      "usage_complete_runs": 6,
+      "known_only_mean_input": 1742681,
+      "known_only_mean_output": 26064,
+      "known_only_mean_peak_usd": 0.05973,
+      "partial_usage_fields_are_lower_bounds": false,
+      "arm": "dsh",
+      "runs": 6,
+      "complete": 6,
+      "mean_input": 1742681,
+      "mean_output": 26064,
+      "mean_seconds": 175.3,
+      "mean_requests": 29,
+      "mean_peak_usd": 0.05973,
+      "mean_manual_score": 94.8,
+      "score_n": 6,
+      "subagent_calls": 0
+    }
+  ],
+  "accounting": [
+    {
+      "cohort": "runs",
+      "runs_with_request_logs": 18,
+      "forwarded_requests": 417,
+      "local_rejections": 0,
+      "unknown_forwarded_usage": 1,
+      "unsealed_request_files": 0,
+      "known_input_lower_bound": 20226232,
+      "known_output_lower_bound": 294358,
+      "known_peak_usd_lower_bound": 0.734154
+    },
+    {
+      "cohort": "calibration",
+      "runs_with_request_logs": 5,
+      "forwarded_requests": 82,
+      "local_rejections": 3,
+      "unknown_forwarded_usage": 0,
+      "unsealed_request_files": 1,
+      "known_input_lower_bound": 3531576,
+      "known_output_lower_bound": 32031,
+      "known_peak_usd_lower_bound": 0.15267
+    },
+    {
+      "cohort": "configuration-audit",
+      "runs_with_request_logs": 2,
+      "forwarded_requests": 46,
+      "local_rejections": 0,
+      "unknown_forwarded_usage": 0,
+      "unsealed_request_files": 1,
+      "known_input_lower_bound": 1835106,
+      "known_output_lower_bound": 17243,
+      "known_peak_usd_lower_bound": 0.064433
+    },
+    {
+      "cohort": "directory-invalid",
+      "runs_with_request_logs": 6,
+      "forwarded_requests": 128,
+      "local_rejections": 0,
+      "unknown_forwarded_usage": 0,
+      "unsealed_request_files": 0,
+      "known_input_lower_bound": 5444883,
+      "known_output_lower_bound": 67917,
+      "known_peak_usd_lower_bound": 0.195912
+    },
+    {
+      "cohort": "preflight",
+      "runs_with_request_logs": 8,
+      "forwarded_requests": 0,
+      "local_rejections": 12,
+      "unknown_forwarded_usage": 0,
+      "unsealed_request_files": 0,
+      "known_input_lower_bound": 0,
+      "known_output_lower_bound": 0,
+      "known_peak_usd_lower_bound": 0.0
+    }
+  ],
+  "review": "Manual rubric review against exact code/tests; not blind or independent. Scores are descriptive aids, not calibrated accuracy percentages.",
+  "scope": "Two read-only backend analysis tasks, three repeats each. No implementation/fix test, no Loom dispatch, no Loom/native ratio.",
+  "limitations": [
+    "OpenCode initial six samples used wrong source root; excluded and retained. Replacement follows other arms, so strict Latin-square balance lost.",
+    "Provider cache is not flushed. Actual input and cache hits reported separately; cost estimates are not billing invoices.",
+    "Alias deepseek-flash served version is documented, not immutable server revision attestation.",
+    "Pi bundled subagent plugin available; actual fan-out must be checked, no plugin ablation.",
+    "Different native system prompts, protocols and harness capabilities retained; this compares configurations, not a pure tool-loop variable.",
+    "Calibrations and interrupted setup samples retained; unknown usage is never zero."
+  ],
+  "source_integrity": {
+    "files": 1286,
+    "changed": []
+  },
+  "original_workspace_tool_input_violations": [],
+  "raw_archive": "/Users/sun/.local/share/loom-harness-study/20261027/raw.tar.gz",
+  "status": "All 18 reports completed; 17 fully metered. One provider timeout unknown, not zero. No product code changes or deployment.",
+  "pi_extension_provenance": "Unmodified installed @earendil-works/pi-coding-agent 1.1.0 examples/extensions/subagent; repository https://github.com/earendil-works/pi; model-free scout/reviewer configs are local glue.",
+  "raw_archive_sha256": "1f759dccdaa363ea61b8e5c7e65b5ff108dd87453526cc351dbd2e459293a246",
+  "raw_archive_bytes": 52932118,
+  "raw_archive_exclusions": [
+    "Generated xdg-cache and xdg-data (native request/output logs retained)",
+    "node_modules and Python caches; exact DSH npm lock and source snapshot retained"
+  ]
+}

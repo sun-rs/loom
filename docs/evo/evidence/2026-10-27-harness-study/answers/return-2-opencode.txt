@@ -1,0 +1,22 @@
+**结论**：不一定。B 的普通最终回复只有在 Kernel 的窄条件下才会派生“一次 reply 交回”；即使派生了 `replyReturn`，仍可能因链上限等没有 Inbox/Activation。
+
+**真实调用链**：B 提交 final → `packages/kernel/src/worker-message-command.ts:148-156`（仅 final/finalOutput 传 `replyReturnRunAttemptId`；target 路由见 `worker-target-context.ts:481-489`）→ `collaboration-service.ts:2245-2268` 写入 messages，`2263-2288` 调 `peerReplyReturn`，命中才追加 reason=`reply` 并写 `payload.replyReturn` → `2322` 调 `deriveAttention` → `room-event-writer.ts:205-221` 调 `decideInstanceWake` → `instance-wake-guard.ts:187-206` 再判返回与链上限。
+
+**成立/不成立边界**（实现事实）：
+1. **final**：progress 不传返回标记；`worker-message-command.ts:152-153`。`submitWorkerFinalOutputTransaction` 固定 `final:true`（`worker-final-output.ts:34-39`）。
+2. **B 回复本身可返回**：`peer-reply-return.ts:41-47` 要求 messages 的 `thread_id IS NULL`、`attachments_json='[]'`、`mentions_json` 为空且正文无 `@all/@所有人`；带 @ 会转为显式 mention 路径，而不是自动返回。
+3. **B 的本次运行/房间精确匹配**：`peer-reply-return.ts:20-35` 要求同一 `run_attempt_id/activation_id/participant_id/room_id`、Channel 且 B 仍是该 Channel 实例、run 为 starting/running。
+4. **来源唯一**：`49-57` 要求 Activation 区间内 B 的 `inbox_items` 恰好 1 条；B 忙时把先前事件和 A 请求合并、或 Task/线程等第二来源，均不返回。测试 `peer-reply-return.test.ts:33-38` 与 `50-92` 的 ambiguous 覆盖。
+5. **来源消息列**：`60-69` 要求来源是 `message.posted`、无 `replyReturn`、无 threadId、无 attachmentComment、无 attachments、正文为字符串且无广播；Task 事件、线程、附件评论均不推断。
+6. **来源只显式点名 B**：`70-75` 要求 `payload.mentions.length===1` 且就是 B；多人请求、@all、A 同时 @ 他人均不返回。
+7. **实际交付证据**：`101-113` 要求 `activation_presented_windows` 中存在**本 run**、`sent_at` 非空、`presented_seqs_json` 含来源 `room_seq`；仅有 Inbox、高水位或通知不算。测试 `peer-reply-return.test.ts:70-75` 清空 `sent_at` 后即失败。
+8. **来源 provenance 与 session 代际**：`77-88` 要求来源事件由 A 的 Run 写入，且写入时 `session_generation` 等于 A 当前 generation；无写入证明、A reset 后代际变化均不返回。测试 `62-69` 覆盖代际。
+9. **请求者仍有效**：`76-100` 要求 requester≠B、A 仍是该 Channel 成员且 Agent enabled；`detachFromChannel` 测试见 `peer-reply-return.test.ts:61`。
+10. **已回复/已返回优先**：`115-133` 同来源已有 `replyReturn.sourceEventId`，或 B 在本 Activation 已显式 @A，则不再补发；测试 `177-197`。
+11. **自动回传链不再回传**：来源自身带 `replyReturn` 被拒绝（`61-63`），验收码只把匹配 participant 的 reason=`reply` 视为返回（`instance-wake-guard.ts:187-193`）；A 收到返回后的普通最终回复不再自动回 B，测试 `peer-reply-return.test.ts:125-133`。
+12. **链上限**：`instance-wake-guard.ts:200-213` 超过 `instanceChainLimit` 不建 Inbox/Activation；测试 `peer-reply-return.test.ts:199-220` 明确先有 `payload.replyReturn`、但 `activationIds=[]`。
+13. **请求者忙碌**：返回会持久排队，不是立即交回；测试 `141-175`。
+
+**测试证据区分**：`peer-reply-return.test.ts:94-139` 覆盖 native-final、worker、worker-target 三种普通 final 各返回一次，`116-120` 断言正文 mentions 仍为空、只写 `replyReturn`。上述 6 个 boundary 测试覆盖 progress/removed/generation/unpresented/explicit/ambiguous；线程无唤醒另有 `instance-wake-guard.test.ts:125-154`。这些是 Fake Host、无真实 CLI。
+
+**待验证假设/不确定性**：快照中未见专门测试来源为 thread/附件、来源或回复带附件、广播、Task 消息列、A 的 Agent 被 disabled、跨 Channel target 的组合；这些目前只能算代码事实，不是测试证明。`sent_at + presented seq` 证明交付到运行，不证明模型已读；也不证明 A 已完成任何 Task。

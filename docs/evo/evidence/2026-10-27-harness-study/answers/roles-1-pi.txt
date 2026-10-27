@@ -1,0 +1,22 @@
+## 结论
+
+**1. 删除 Tom 不会删除、停止或改动 Tom 的现有实例。** `delete` 只把 `role_templates.deleted_at` 置为当前时间（`packages/kernel/src/role-catalog.ts:144-146`），没有执行围栏、成员删除或会话清理。因此运行中的 RunAttempt、runtime process、`role_instance_sessions`、实例冻结的 revision 均不变；测试用前后整表快照断言这点（`packages/kernel/test/role-naming.test.ts:220-252`）。旧实例的 `role_instances.role_id` 仍指向已删除的旧 Tom Role。
+
+**2. 新建同名 Tom 是全新的 Role 身份。** 名称唯一性只检查“未删除”的 Role（`packages/kernel/src/role-names.ts:13-21`），所以旧 Tom 删除后可以新建显示名为 Tom 的 Role，获得新 `roleId`、新 revision（`role-catalog.ts:382-405`）。其新实例也会获得新 `instanceId`、新 native session；实例 handle 由全部 principal 分配且永不复用（`role-names.ts:25-41`），旧 Tom 实例已占 `Tom-1`，新实例通常为 `Tom-2`（调用处 `role-catalog.ts:471-474`；测试 `role-naming.test.ts:153-160`）。Role 显示名与实例 principal handle 是两个命名空间。
+
+**3. 恢复旧 Tom 恢复的是 Role 定义，不是实例或会话。** `restore` 走 `changeRevision`：要求目标 Role 当前处于删除状态、`expectedRoleRevisionId` 等于该 Role 当前 revision、`basedOnRoomSeq` 为最新、名称在活跃 Role 中可用（`role-catalog.ts:227-243`）。成功后保留旧 `roleId`，生成**新 revision**，清空 `deleted_at`（`:244-259`），配置默认沿用当前保存内容，仅替换 `displayName`，并在 `role` 字段原本等于旧显示名时同步改名（`:173-193`）。不会改动旧实例的 `role_revision_id`；恢复后旧实例显示 `isCurrent=false`（`role-catalog.ts:287-299`；测试 `role-naming.test.ts:296-297`）。
+
+**4. 同名恢复会发生冲突。** 新 Tom 处于活跃状态，旧 Tom 以 `displayName: "Tom"` 恢复会被 `assertRoleNameAvailable` 拒绝（`role-names.ts:6-22`；测试 `role-naming.test.ts:263-274`）。必须先把新 Role 改名/删除，或给旧 Tom 使用另一个显示名。即使删除新 Role，其 `Tom-2` 实例仍保留，因为 Role 删除不删除实例；之后旧 Role 再实例化还会避开已占 handle。
+
+**5. 权限。** 删除和恢复都要求已认证 Human 且为 control Room 管理者（`role-catalog.ts:127`, `:207-211`；`packages/kernel/src/collaboration-policy.ts:15-43`）。不会因为 Role 同名而继承旧实例或权限；旧实例仍凭既有 membership 作为 channel 成员存在。
+
+**6. 幂等与过期修订。** `delete`/`changeRevision` 都先按同一 Room、actor、事件类型和 request digest 查找历史事件（`role-catalog.ts:128-137`, `:212-226`）。因此完全相同的恢复请求会返回此前的 `role.restored` 事件和 revision 快照（测试 `role-naming.test.ts:285-290`）。但 replay 发生在“是否仍删除”“revision 是否仍匹配”检查之前：实现事实是旧命令键的精确重放会返回旧回执，而不会重新执行当前状态变更。**推测**：若旧 Tom 恢复后又删除、再用旧 restore 键精确重放，可能返回旧的“已恢复”快照却不真正解除删除；现有测试未覆盖该序列。过期 revision 会由 `:235-236` 拒绝，过期房间序号由 `fresh` 拒绝（`:237`），但精确 replay 先于这些检查。
+
+## 重启：保留配置与采用最新配置
+
+- **默认“保留”**：`resetInstanceSession` 不带 `adoptRoleRevisionId`，只推进 session generation、开始新的 native session，不改 Agent 配置、不更新实例 revision；Role 已删除时也可执行（`role-catalog.ts:613-620`；测试 `packages/kernel/test/instance-restart-config.test.ts:184-198`）。实际 native 覆盖配置保持不变（同文件 `:225-259`）。
+- **显式“采用”**：必须 Role 未删除、指定 revision 正是最新 revision、实例仍具 membership、无运行中/清理中的执行、无 leased activation 或 reserved placement（`packages/kernel/src/instance-restart-config.ts:28-47`；入口围栏 `role-catalog.ts:599-614`）。通过后替换 Agent 配置、更新 `role_instances.role_revision_id`（`instance-restart-config.ts:48-90`）。若恢复时改了显示名，实例可能按新前缀分配 handle，但 `instanceId`、历史 session 身份不变；该操作本身会推进 session generation，因此仍会开始新 native session。运行中的旧 Tom 不能采用新配置（测试 `instance-restart-config.test.ts:94-95`）。
+
+## 证据边界与不确定性
+
+以上为当前快照代码事实及对应单元测试。未运行真实 CLI、Host、服务重启或 UI。旧实例删除 Role 后是否继续接收并调度新消息，代码中未见 `role_templates.deleted_at` 的调度围栏，**推测**仍按既有 principal/membership 继续；现有测试只证明运行中状态不被删除改变，未直接覆盖删除后的新消息投递。第二轮回删后的 restore 重放行为亦为代码顺序推断，未有测试证明。

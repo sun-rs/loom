@@ -1,0 +1,80 @@
+[
+  {
+    "arm": "opencode",
+    "task": "return",
+    "rep": 0,
+    "exit": 0,
+    "timeout": false,
+    "seconds": 105.38,
+    "requests": 22,
+    "usage_known": true,
+    "input": 905827,
+    "output": 13912,
+    "wire_rejections": []
+  },
+  {
+    "arm": "opencode",
+    "task": "return",
+    "rep": 1,
+    "exit": 0,
+    "timeout": false,
+    "seconds": 90.3,
+    "requests": 22,
+    "usage_known": true,
+    "input": 1109599,
+    "output": 11266,
+    "wire_rejections": []
+  },
+  {
+    "arm": "opencode",
+    "task": "return",
+    "rep": 2,
+    "exit": 0,
+    "timeout": false,
+    "seconds": 99.67,
+    "requests": 20,
+    "usage_known": true,
+    "input": 755963,
+    "output": 13731,
+    "wire_rejections": []
+  },
+  {
+    "arm": "opencode",
+    "task": "roles",
+    "rep": 0,
+    "exit": 0,
+    "timeout": false,
+    "seconds": 94.84,
+    "requests": 20,
+    "usage_known": true,
+    "input": 792812,
+    "output": 12830,
+    "wire_rejections": []
+  },
+  {
+    "arm": "opencode",
+    "task": "roles",
+    "rep": 1,
+    "exit": 0,
+    "timeout": false,
+    "seconds": 142.16,
+    "requests": 12,
+    "usage_known": false,
+    "input": 284558,
+    "output": 6148,
+    "wire_rejections": []
+  },
+  {
+    "arm": "opencode",
+    "task": "roles",
+    "rep": 2,
+    "exit": 0,
+    "timeout": false,
+    "seconds": 81.93,
+    "requests": 17,
+    "usage_known": true,
+    "input": 671229,
+    "output": 10574,
+    "wire_rejections": []
+  }
+]

@@ -1,0 +1,60 @@
+[
+  {
+    "arm": "pi",
+    "task": "return",
+    "rep": 0,
+    "exit": 0,
+    "timeout": false,
+    "seconds": 94.74,
+    "requests": 18,
+    "usage_known": true,
+    "input": 635514,
+    "output": 13624,
+    "wire_rejections": []
+  },
+  {
+    "arm": "opencode",
+    "task": "return",
+    "rep": 0,
+    "exit": 1,
+    "timeout": false,
+    "seconds": 53.01,
+    "requests": 18,
+    "usage_known": false,
+    "input": 878833,
+    "output": 6005,
+    "wire_rejections": [
+      "run-input-budget"
+    ]
+  },
+  {
+    "arm": "dsh",
+    "task": "return",
+    "rep": 0,
+    "exit": 1,
+    "timeout": false,
+    "seconds": 44.78,
+    "requests": 21,
+    "usage_known": false,
+    "input": 865414,
+    "output": 4577,
+    "wire_rejections": [
+      "run-input-budget"
+    ]
+  },
+  {
+    "arm": "opencode",
+    "task": "return",
+    "rep": 1,
+    "exit": 1,
+    "timeout": false,
+    "seconds": 49.98,
+    "requests": 18,
+    "usage_known": false,
+    "input": 804300,
+    "output": 5190,
+    "wire_rejections": [
+      "run-input-budget"
+    ]
+  }
+]

@@ -1,0 +1,41 @@
+# 只读分析：删除 Tom Role、重建同名 Role、恢复旧 Role
+
+## 结论
+
+在快照实现中，**删除 Tom Role 只软删除配置，不会停止其运行中的实例**。旧实例继续持有原 Instance ID、冻结的 Role Revision、原 Session 和执行状态；新建同名 Tom 是**新的 Role ID**。此后若仍用原名 `Tom` 恢复旧 Role，会因活动名称冲突失败；只能改名恢复。改名恢复保留旧 Role ID、生成新 Revision，但**不会自动修改、改名、重启或停止任何已有实例**，旧实例仍显示为过期。
+
+若“删除 Tom”指删除**实例（Agent）**而非 Role，则不存在恢复旧实例的路径；重新加入是新实例（`docs/evo/target-contract.zh-CN.md:26`），不能与 Role 恢复混为一谈。
+
+## 身份与权限
+
+- Role 是配置；删除是 `role_templates.deleted_at` 软删除，Role ID 保留（`packages/kernel/src/role-catalog.ts:144-146`）。Revision 只插入、不更新，实例创建时冻结 `role_revision_id`（`role-catalog.ts:484-507`；`workspace-agent-provisioning.ts:409-417`）。
+- Instance 的稳定身份是 `instance_id`/principal；Session 以 `instance_id` 为主键并带 generation（`instance-session.ts:22-31`）。Role 删除不触碰这些表；测试对 `role_instances`、`role_revisions`、`role_instance_sessions`、`run_attempts`、`runtime_processes` 等做前后快照，结果完全一致（`packages/kernel/test/role-naming.test.ts:220-247`）。
+- 删除、恢复、创建 Role 都要求已认证 Human 且是 control Room 管理者（`role-catalog.ts:127,207-211,366`；`collaboration-policy.ts:15-42`）。实例化还要求目标 Channel 的 room manager（`role-catalog.ts:428-429`）；session reset 两者都要（`role-catalog.ts:571-576`）。Role 本身没有执行权限。
+
+## 删除 → 新建同名 → 恢复
+
+1. **删除**：CAS 校验 `expectedRoleRevisionId` 后写入 `deleted_at`，没有运行中实例检查，也没有取消执行（`role-catalog.ts:138-146`）。因此运行中的 Tom 实例不受影响；测试明确验证删除后执行、session、冻结修订不变（`role-naming.test.ts:220-252`）。
+2. **新建同名 Tom**：名称检查只遍历 `deleted_at IS NULL` 的 Role（`role-names.ts:13-21`），所以删除后名称立即释放；但新 Role 得到新 `roleId` 和新 revision（`role-catalog.ts:382-405`；测试 `role-naming.test.ts:131-132`）。若实例化新 Tom，实例名从 `Tom-1` 开始找空位，旧实例的 handle 仍占用，因此通常得到 `Tom-2`（`role-names.ts:26-41`；`role-catalog.ts:471-474`；测试 `role-naming.test.ts:153-160`）。名称不是身份，旧 `@Tom-1` 仍指向旧实例。
+3. **恢复旧 Role**：
+   - 必须处于已删除状态，`expectedRoleRevisionId` 必须等于该 Role 当前 revision（`role-catalog.ts:227-236`）。
+   - 名称仍须在活动 Role 中唯一。`assertRoleNameAvailable` 虽排除了旧 Role 自身，但**新 Tom 是活动 Role**，所以原名恢复抛 `Role name already exists`（`role-catalog.ts:238-243`；`role-names.ts:13-21`；测试 `role-naming.test.ts:271-274`）。
+   - 改名后可恢复：Role ID 不变，生成新 revision，清空 `deleted_at`（`role-catalog.ts:244-259`）。配置取自**删除时该 Role 的当前 revision**，仅 displayName 被替换；不会合并新 Tom 的配置（`role-catalog.ts:176-190`）。
+   - 旧实例仍引用旧 revision；恢复不会更新 `role_instances`。测试确认旧实例的 `roleId` 和 `roleRevisionId` 保持不变（`role-naming.test.ts:292-298`）。`role.list` 以模板当前 revision 计算 `isCurrent`，因此旧实例为 false（`role-catalog.ts:287-300`；同类断言见 `role-http-closeout.test.ts:88-92`）。
+4. **幂等与过期**：
+   - `replay` 按 Room + idempotencyKey 查找；actor、事件类型、requestDigest 全同才返回原事件，否则 `IdempotencyConflict`（`role-catalog.ts:331-351`）。恢复的精确重放返回原恢复 revision 和 `deduplicated:true`（`role-catalog.ts:214-226`；测试 `role-naming.test.ts:285-291`）。
+   - 重放在 CAS、`deleted_at` 和 `basedOnRoomSeq` 检查之前，所以精确重试可绕过后来变化；换 key 或换 displayName 则不能。
+   - 恢复还要求 `basedOnRoomSeq` 是最新 control Room 序号（`role-catalog.ts:237,353-359`）；新建 Tom 已追加事件，旧请求会得到 stale context（同类验证见 `role-channel-mvp.test.ts:547-555`）。
+
+## 重启：保留配置与采用最新配置的边界
+
+- **默认保留**：`resetInstanceSession` 不传 `adoptRoleRevisionId` 时只推进 session generation，不修改实例配置；即使旧 Role 已删除也可保留配置（`role-catalog.ts:613-620`；测试 `instance-restart-config.test.ts:24-30,184-198`）。但存在 `starting/running` RunAttempt、`prepared/active/orphaned` runtime process 或未清理运行状态时会拒绝（`role-catalog.ts:599-612`）。
+- **采用最新**：传入 `adoptRoleRevisionId` 时，必须 Role 未删除、该 revision 仍是该 Role 的最新 revision、实例仍在 Channel 中、没有 leased Activation 或 reserved Placement（`instance-restart-config.ts:23-47`）。满足后原子替换 Agent 配置、更新实例冻结 revision，并推进 session generation（`instance-restart-config.ts:48-90`；`role-catalog.ts:613-620`）。失败会整体回滚配置和 generation（`instance-restart-config.test.ts:228-292`）。
+- **只能采用自己 Role 的 revision**：SQL 按 `role_instances.role_id` 连接 `role_templates`（`instance-restart-config.ts:23-30`），所以旧 Tom 实例不能采用新 Tom Role 的 revision；反之亦然。
+- **服务进程重启不更新配置**：生产代码对 `role_instances` 只有两处写入——实例化时插入、显式 adopt 时更新（`workspace-agent-provisioning.ts:409-417`；`instance-restart-config.ts:88-90`）。这与契约“服务进程重启与 Role 保存不能触发配置更新”一致（`target-contract:24`）。
+- adopt 后的名称：只有当前 handle 符合“新 displayName-数字”时才保留；否则重新分配可读后缀（`instance-restart-config.ts:55-62`）。因此旧实例采用改名后的旧 Role 时可能被改成新的 handle，但 Instance ID 和历史不变。
+
+## 不确定性
+
+- 未运行任何测试或构建（按只读要求）；以上是源码与测试代码断言，不是执行结果。
+- `Tom-2` 是通常结果；若旧实例 handle 非 `Tom-数字` 形式，后缀可能不同。
+- 后端不会自动改名恢复；前端是否提示改名、是否自动填入候选名，未在本快照的这段后端证据内验证。
