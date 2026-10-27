@@ -94,6 +94,8 @@ export function renderTaskOutcomeMarkdown(report) {
       `| 人工介入 | ${human} |`,
       `| 来源中的人工介入声明 | ${escapeText(c.humanDeclaration)} |`,
       `| token | 输入：${usage(c.usage?.input)}；输出：${usage(c.usage?.output)} |`,
+      `| 耗时（毫秒） | ${count(c.wallMs) ? c.wallMs : "未知"} |`,
+      `| 耗时范围 | ${escapeText(c.wallScope)} |`,
       `| 后代计量覆盖 | ${escapeText(c.descendantCoverage)} |`,
       `| 交接证据 | ${escapeText(c.handoff?.proof)} |`,
       `| 交接限制 | ${escapeText(c.handoff?.limitation)} |`,
@@ -128,7 +130,10 @@ export function renderTaskOutcomeMarkdown(report) {
     lines.push(
       "## 比较边界",
       "",
-      `描述性输入比率：${ratio(comp.arithmetic?.full?.ratios?.input)}；描述性输出比率：${ratio(comp.arithmetic?.full?.ratios?.output)}。`,
+      ...["full", "late", "prefix"].map(
+        (window) =>
+          `${window}：描述性输入比率：${ratio(comp.arithmetic?.[window]?.ratios?.input)}；描述性输出比率：${ratio(comp.arithmetic?.[window]?.ratios?.output)}。`,
+      ),
       `同质量输入比率：${ratio(comp.equalQualityRatio?.input)}；同质量输出比率：${ratio(comp.equalQualityRatio?.output)}。`,
       escapeText(comp.limitation),
       ...(comp.arithmetic?.comparisonIssues ?? []).map(

@@ -989,3 +989,9 @@ Owner 在“用 Loom 完成真实任务”的建议后明确说“开始”。�
 开场流程说明包含审查者完整@，错误同时唤醒两位；这类已知开场问题被lead重复引入。实施者方案回复未@审查者，审查者回复等待；两者均结束后无后续定向请求。45秒静默后停止本频道，无重试、无替换、无新付费恢复。2 Run/2 Activation completed不是业务完成。
 
 已记录12次生成：输入221,102，其中缓存176,512；输出1,787；Kernel gap0，但未做新的独立原生对账/后代覆盖核查，因此完整费用仍未知。无原生/Herdr对照，不宣称效率或模型排名。最终工具由lead接手编写和验证，不计为双实例成功。新增canonical mention开场预检已离线拒绝本次原错误消息，未重发。见[证据](evidence/2026-10-27-daily-report/summary.json)、[可读报告](evidence/2026-10-27-daily-report/report.md)。
+
+## 2026-10-27 Markdown 任务正确开场复验（owner 再次授权）
+
+Owner「如果需要继续测试你就推进」后，一次独立新频道复验，Codex gpt-6-luna/low＋Claude sonnet/low，源码fdb8e368；10 Run/120万输入/2.5万输出/20分钟观察上限。发送前canonical mention核验只有实施者，实际Activation一致。7 Run完成方案、实施、拒绝、修复、复审、收尾；三次无@自动回传有精确请求/返回/Activation关联。无人工救援、无失败重跑，约131秒执行后自然空闲。上一失败批次不移除。
+
+716,094输入（含627,840缓存）/6,474输出/29生成；Codex原生最终累计与Claude按message.id去重的usage合计，和Kernel完全一致。不将缓存重复加算、不换算账单，后代完整性未独立建立；无native/Herdr对照或成本倍率。审查者两次实际运行5项测试，第一次通过测试后仍指出功能遗漏，修复后接受；负责人独立复跑候选5项通过。审查发现的适用遗漏另以TDD合入现有报告工具，7项通过，不替换已有安全校验。见[报告](evidence/2026-10-27-daily-report-r2/README.md)、[证据](evidence/2026-10-27-daily-report-r2/summary.json)。

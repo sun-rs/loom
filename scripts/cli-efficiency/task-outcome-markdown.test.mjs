@@ -80,3 +80,17 @@ test("CLI renders the same report without changing the source", async () => {
   assert.equal(result.stdout, renderTaskOutcomeMarkdown(JSON.parse(before)));
   assert.deepEqual(readFileSync(file), before);
 });
+test("comparison windows and elapsed-time scope survive readable rendering", () => {
+  const report = load("team-v8");
+  report.cases[0].wallMs = 131318;
+  report.cases[0].wallScope = "first-start to last-finish";
+  report.comparison.arithmetic.late.ratios.input = null;
+  report.comparison.arithmetic.prefix.ratios.input = 1.234567;
+  const text = renderTaskOutcomeMarkdown(report);
+  assert.match(text, /full：描述性输入比率：1.034842/);
+  assert.match(text, /late：描述性输入比率：未知/);
+  assert.match(text, /prefix：描述性输入比率：1.234567/);
+  assert.match(text, /131318/);
+  assert.match(text, /first-start to last-finish/);
+  assert.match(text, /同质量输入比率：未知/);
+});
