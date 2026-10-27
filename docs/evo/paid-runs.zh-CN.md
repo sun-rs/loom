@@ -995,3 +995,29 @@ Owner 在“用 Loom 完成真实任务”的建议后明确说“开始”。�
 Owner「如果需要继续测试你就推进」后，一次独立新频道复验，Codex gpt-6-luna/low＋Claude sonnet/low，源码fdb8e368；10 Run/120万输入/2.5万输出/20分钟观察上限。发送前canonical mention核验只有实施者，实际Activation一致。7 Run完成方案、实施、拒绝、修复、复审、收尾；三次无@自动回传有精确请求/返回/Activation关联。无人工救援、无失败重跑，约131秒执行后自然空闲。上一失败批次不移除。
 
 716,094输入（含627,840缓存）/6,474输出/29生成；Codex原生最终累计与Claude按message.id去重的usage合计，和Kernel完全一致。不将缓存重复加算、不换算账单，后代完整性未独立建立；无native/Herdr对照或成本倍率。审查者两次实际运行5项测试，第一次通过测试后仍指出功能遗漏，修复后接受；负责人独立复跑候选5项通过。审查发现的适用遗漏另以TDD合入现有报告工具，7项通过，不替换已有安全校验。见[报告](evidence/2026-10-27-daily-report-r2/README.md)、[证据](evidence/2026-10-27-daily-report-r2/summary.json)。
+
+## 2026-10-28 修复后原生 token 对照（owner 授权每 CLI）
+
+固定两文件只读审查，每 CLI 计划3独立样本×原生/Loom双臂×连续3轮，先后顺序交替。
+观察上限每CLI200万输入/3万输出/40分钟，不承诺阻止在途超额；失败批原始费用保留。
+Claude/Pi实际Kimi K3.1 Pro/low路由另获owner批准，不冒称Claude Sonnet。
+
+| CLI / 实际模型 | 完整样本 | 原生输入/输出 | Loom输入/输出 | 总输入比 | 边界 |
+| --- | --- | --- | --- | --- | --- |
+| Codex / gpt-6-luna low | 3 | 157732 / 2312 | 569613 / 5925 | 3.611 | 12对34请求、11次MCP参数拒绝；缓存包含在输入，不是账单倍率 |
+| OpenCode / aihubmix DeepSeek v4.1 flash low | 3 | 140779 / 6955 | 167361 / 9909 | 1.189 | 12对12请求；native-final与正式开关一致，保留延迟门禁失败 |
+| Claude CLI / Kimi K3.1 Pro low | 3 | 158886 / 5822 | 170916 / 6221 | 1.076 | 12对12请求；精确路由显式批准、不是Sonnet模型 |
+| Pi / magpie Kimi K3.1 Pro low | 3 | 107082 / 4862 | 111595 / 4212 | 1.042 | 15对14请求；单组0.690–1.231，native-final试验、匹配插件隔离/cacheWarming off，不替代默认配置 |
+| Kimi / k3-256k low | 未完成 | 92270 / 1418 | 两轮已知101608 / 1697 | 不计算 | 发表后EOF5秒退出失败；两请求缺终态usage，失败成本未填零 |
+| AGY | 未调用 | 未调用 | 未调用 | 不计算 | 自动记忆禁用未证实 |
+
+Codex最早入口被旧guard拒绝serviceTier，已发生原生52639/822；Kimi最早入口缺默认模型，
+已知用量缺失、不等于账单零。Claude另两入口失败批分别因guard拒绝产品fastMode:false和
+路由信息被子进程环境清理；后一批Loom已发生原生账本33844/606，连同两批原生费用均
+独立留账（具体见summary.entryFailures），没有合并为成功样本或隐藏。
+
+源修订按每批记录：Codex/Kimi 2b1e45e3，OpenCode65e90624，最终Claude/Pi08a94cd9。
+测试工具维护不改变产品；正式服务未重启。四家完整臂统计与原生账本逐项核对，
+Pi付费前实际安装CLI免费首次/续接及完整daemon六请求通过。部分回答接受/拒绝判断
+不同，不宣称质量统一通过；本批不覆盖复杂长任务、多模型矩阵、多人协作或完整账单。
+见[报告](evidence/2026-10-28-postfix-cost/README.md)、[完整证据](evidence/2026-10-28-postfix-cost/summary.json)。

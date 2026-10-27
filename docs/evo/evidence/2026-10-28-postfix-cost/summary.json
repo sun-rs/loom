@@ -1,0 +1,3759 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-28",
+  "authorization": "Owner requested current-code native comparisons for each CLI; no new model combinations inferred.",
+  "scope": "3 independent pairs per admitted CLI; 3 continuous-session rounds per arm; fixed two-file read-only review. Not long-task or teamwork acceptance.",
+  "limits": {
+    "inputPerCli": 2000000,
+    "outputPerCli": 30000,
+    "minutesPerCli": 40,
+    "enforcement": "Observed at pair boundaries; in-flight overshoot retained; stop on execution or measurement failure; no replacement samples."
+  },
+  "batch": {
+    "codex": {
+      "model": "gpt-6-luna",
+      "effort": "low",
+      "source": "2b1e45e3fb5ce6013f55bf1287f614e6b9849cae",
+      "finishedAt": "2026-10-27T16:05:34.165Z",
+      "stop": null,
+      "pairs": [
+        {
+          "pair": 1,
+          "order": "native,role-warm",
+          "status": "over-budget",
+          "rawResult": "/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/rah-cli-efficiency-Q5cwoK/result.json",
+          "rawSha256": "155764c66780518e36ec52c2fff26d85128bdc3b56fee6e8559cdfe7d125e59d",
+          "arms": {
+            "native": {
+              "status": "complete",
+              "totals": {
+                "input": 52505,
+                "cached": 23552,
+                "uncached": 28953,
+                "output": 738,
+                "generations": 4
+              },
+              "rounds": [
+                {
+                  "round": 1,
+                  "sessionId": "01a17e17-d661-7831-9994-262df584a5c5",
+                  "metrics": {
+                    "generations": 2,
+                    "generationsTotal": 2,
+                    "generationsBeforeReply": 2,
+                    "generationsAfterReply": 0,
+                    "input": 23597,
+                    "cached": 9472,
+                    "uncached": 14125,
+                    "output": 353,
+                    "reasoning": 0,
+                    "firstInput": 9679,
+                    "peakInput": 13918,
+                    "replySeconds": 13.38,
+                    "toolCalls": [
+                      {
+                        "at": "2026-10-27T16:01:01.227Z",
+                        "name": "exec",
+                        "kind": "other"
+                      }
+                    ]
+                  },
+                  "runVerdict": null,
+                  "nativeMemoryPolicy": {
+                    "provider": "codex",
+                    "supported": true,
+                    "status": "enforced",
+                    "scope": "provider-native-auto-memory",
+                    "mechanism": "cli-config",
+                    "evidence": "spawn-configuration",
+                    "config": {
+                      "features.memories": false,
+                      "memories.generate_memories": false,
+                      "memories.use_memories": false
+                    }
+                  }
+                },
+                {
+                  "round": 2,
+                  "sessionId": "01a17e17-d661-7831-9994-262df584a5c5",
+                  "metrics": {
+                    "generations": 1,
+                    "generationsTotal": 1,
+                    "generationsBeforeReply": 1,
+                    "generationsAfterReply": 0,
+                    "input": 14314,
+                    "cached": 0,
+                    "uncached": 14314,
+                    "output": 190,
+                    "reasoning": 0,
+                    "firstInput": 14314,
+                    "peakInput": 14314,
+                    "replySeconds": 9.177,
+                    "toolCalls": []
+                  },
+                  "runVerdict": null,
+                  "nativeMemoryPolicy": {
+                    "provider": "codex",
+                    "supported": true,
+                    "status": "enforced",
+                    "scope": "provider-native-auto-memory",
+                    "mechanism": "cli-config",
+                    "evidence": "spawn-configuration",
+                    "config": {
+                      "features.memories": false,
+                      "memories.generate_memories": false,
+                      "memories.use_memories": false
+                    }
+                  }
+                },
+                {
+                  "round": 3,
+                  "sessionId": "01a17e17-d661-7831-9994-262df584a5c5",
+                  "metrics": {
+                    "generations": 1,
+                    "generationsTotal": 1,
+                    "generationsBeforeReply": 1,
+                    "generationsAfterReply": 0,
+                    "input": 14594,
+                    "cached": 14080,
+                    "uncached": 514,
+                    "output": 195,
+                    "reasoning": 0,
+                    "firstInput": 14594,
+                    "peakInput": 14594,
+                    "replySeconds": 8.803,
+                    "toolCalls": []
+                  },
+                  "runVerdict": null,
+                  "nativeMemoryPolicy": {
+                    "provider": "codex",
+                    "supported": true,
+                    "status": "enforced",
+                    "scope": "provider-native-auto-memory",
+                    "mechanism": "cli-config",
+                    "evidence": "spawn-configuration",
+                    "config": {
+                      "features.memories": false,
+                      "memories.generate_memories": false,
+                      "memories.use_memories": false
+                    }
+                  }
+                }
+              ],
+              "rawUsageCheck": {
+                "sourceSha256": "6592f01b85d0c96e6a29edf613bfb2f55c3e7b74ce2b669e44a0dc8a100f76a4",
+                "matches": true,
+                "invalidReplyCalls": 0
+              }
+            },
+            "role-warm": {
+              "status": "complete",
+              "totals": {
+                "input": 182672,
+                "cached": 162560,
+                "uncached": 20112,
+                "output": 1781,
+                "generations": 11
+              },
+              "rounds": [
+                {
+                  "round": 1,
+                  "sessionId": "01a17e18-9978-79a1-823c-afa6237bb221",
+                  "metrics": {
+                    "generations": 4,
+                    "generationsTotal": 4,
+                    "generationsBeforeReply": null,
+                    "generationsAfterReply": null,
+                    "replyTimingEvidence": {
+                      "basis": "usage-record-upper-bound",
+                      "knownBeforeReply": 2,
+                      "unresolved": 2
+                    },
+                    "input": 59825,
+                    "cached": 42752,
+                    "uncached": 17073,
+                    "output": 668,
+                    "reasoning": 0,
+                    "firstInput": 11499,
+                    "peakInput": 16479,
+                    "replySeconds": 16.151,
+                    "toolCalls": [
+                      {
+                        "at": "2026-10-27T16:01:51.558Z",
+                        "name": "exec",
+                        "kind": "other"
+                      },
+                      {
+                        "at": "2026-10-27T16:01:56.013Z",
+                        "name": "loom_reply",
+                        "kind": "worker-mcp-reply"
+                      },
+                      {
+                        "at": "2026-10-27T16:01:58.967Z",
+                        "name": "loom_reply",
+                        "kind": "worker-mcp-reply"
+                      }
+                    ],
+                    "replyAt": "2026-10-27T16:01:58.977Z",
+                    "productUsage": {
+                      "completeness": "complete",
+                      "gaps": [],
+                      "totals": {
+                        "generations": 4,
+                        "inputTokens": 59825,
+                        "cachedInputTokens": 42752,
+                        "outputTokens": 668,
+                        "reasoningOutputTokens": 0
+                      }
+                    },
+                    "finalInterrupt": {
+                      "committedRoomSeq": 9,
+                      "requested": false,
+                      "accepted": "unknown",
+                      "terminal": false,
+                      "sent": false,
+                      "preemptedFollowUp": "unknown"
+                    }
+                  },
+                  "runVerdict": [],
+                  "nativeMemoryPolicy": null
+                },
+                {
+                  "round": 2,
+                  "sessionId": "01a17e18-9978-79a1-823c-afa6237bb221",
+                  "metrics": {
+                    "generations": 4,
+                    "generationsTotal": 4,
+                    "generationsBeforeReply": null,
+                    "generationsAfterReply": null,
+                    "replyTimingEvidence": {
+                      "basis": "usage-record-upper-bound",
+                      "knownBeforeReply": 2,
+                      "unresolved": 2
+                    },
+                    "input": 68615,
+                    "cached": 66816,
+                    "uncached": 1799,
+                    "output": 688,
+                    "reasoning": 0,
+                    "firstInput": 16704,
+                    "peakInput": 17586,
+                    "replySeconds": 9.388,
+                    "toolCalls": [
+                      {
+                        "at": "2026-10-27T16:02:04.134Z",
+                        "name": "loom_reply",
+                        "kind": "worker-mcp-reply"
+                      },
+                      {
+                        "at": "2026-10-27T16:02:06.908Z",
+                        "name": "loom_reply",
+                        "kind": "worker-mcp-reply"
+                      },
+                      {
+                        "at": "2026-10-27T16:02:09.455Z",
+                        "name": "loom_reply",
+                        "kind": "worker-mcp-reply"
+                      }
+                    ],
+                    "replyAt": "2026-10-27T16:02:09.466Z",
+                    "productUsage": {
+                      "completeness": "complete",
+                      "gaps": [],
+                      "totals": {
+                        "generations": 4,
+                        "inputTokens": 68615,
+                        "cachedInputTokens": 66816,
+                        "outputTokens": 688,
+                        "reasoningOutputTokens": 0
+                      }
+                    },
+                    "finalInterrupt": {
+                      "committedRoomSeq": 18,
+                      "requested": false,
+                      "accepted": "unknown",
+                      "terminal": false,
+                      "sent": false,
+                      "preemptedFollowUp": "unknown"
+                    }
+                  },
+                  "runVerdict": [],
+                  "nativeMemoryPolicy": null
+                },
+                {
+                  "round": 3,
+                  "sessionId": "01a17e18-9978-79a1-823c-afa6237bb221",
+                  "metrics": {
+                    "generations": 3,
+                    "generationsTotal": 3,
+                    "generationsBeforeReply": null,
+                    "generationsAfterReply": null,
+                    "replyTimingEvidence": {
+                      "basis": "usage-record-upper-bound",
+                      "knownBeforeReply": 1,
+                      "unresolved": 2
+                    },
+                    "input": 54232,
+                    "cached": 52992,
+                    "uncached": 1240,
+                    "output": 425,
+                    "reasoning": 0,
+                    "firstInput": 17798,
+                    "peakInput": 18353,
+                    "replySeconds": 5.664,
+                    "toolCalls": [
+                      {
+                        "at": "2026-10-27T16:02:14.191Z",
+                        "name": "loom_reply",
+                        "kind": "worker-mcp-reply"
+                      },
+                      {
+                        "at": "2026-10-27T16:02:16.376Z",
+                        "name": "loom_reply",
+                        "kind": "worker-mcp-reply"
+                      }
+                    ],
+                    "replyAt": "2026-10-27T16:02:16.381Z",
+                    "productUsage": {
+                      "completeness": "complete",
+                      "gaps": [],
+                      "totals": {
+                        "generations": 3,
+                        "inputTokens": 54232,
+                        "cachedInputTokens": 52992,
+                        "outputTokens": 425,
+                        "reasoningOutputTokens": 0
+                      }
+                    },
+                    "finalInterrupt": {
+                      "committedRoomSeq": 27,
+                      "requested": false,
+                      "accepted": "unknown",
+                      "terminal": false,
+                      "sent": false,
+                      "preemptedFollowUp": "unknown"
+                    }
+                  },
+                  "runVerdict": [],
+                  "nativeMemoryPolicy": null
+                }
+              ],
+              "rawUsageCheck": {
+                "sourceSha256": "8e49fef510282bf04b3d135180663638953017d28aaa797f4c9d3f2ed7319d5e",
+                "matches": true,
+                "invalidReplyCalls": 4
+              }
+            }
+          },
+          "inputRatio": 3.4791353204456716
+        },
+        {
+          "pair": 2,
+          "order": "role-warm,native",
+          "status": "over-budget",
+          "rawResult": "/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/rah-cli-efficiency-COzBm6/result.json",
+          "rawSha256": "65bd4344b655a1922b8a6f0ecacd460c2987a97097f7b1236d0ecf772dc63b2c",
+          "arms": {
+            "role-warm": {
+              "status": "complete",
+              "totals": {
+                "input": 202441,
+                "cached": 181632,
+                "uncached": 20809,
+                "output": 2174,
+                "generations": 12
+              },
+              "rounds": [
+                {
+                  "round": 1,
+                  "sessionId": "01a17e19-2e9b-7581-8c82-813a78f28a2d",
+                  "metrics": {
+                    "generations": 6,
+                    "generationsTotal": 6,
+                    "generationsBeforeReply": null,
+                    "generationsAfterReply": null,
+                    "replyTimingEvidence": {
+                      "basis": "usage-record-upper-bound",
+                      "knownBeforeReply": 4,
+                      "unresolved": 2
+                    },
+                    "input": 93861,
+                    "cached": 75776,
+                    "uncached": 18085,
+                    "output": 1196,
+                    "reasoning": 0,
+                    "firstInput": 11499,
+                    "peakInput": 17153,
+                    "replySeconds": 20.391,
+                    "toolCalls": [
+                      {
+                        "at": "2026-10-27T16:02:28.820Z",
+                        "name": "exec",
+                        "kind": "other"
+                      },
+                      {
+                        "at": "2026-10-27T16:02:32.476Z",
+                        "name": "loom_reply",
+                        "kind": "worker-mcp-reply"
+                      },
+                      {
+                        "at": "2026-10-27T16:02:36.130Z",
+                        "name": "loom_reply",
+                        "kind": "worker-mcp-reply"
+                      },
+                      {
+                        "at": "2026-10-27T16:02:38.868Z",
+                        "name": "loom_reply",
+                        "kind": "worker-mcp-reply"
+                      },
+                      {
+                        "at": "2026-10-27T16:02:41.453Z",
+                        "name": "loom_reply",
+                        "kind": "worker-mcp-reply"
+                      }
+                    ],
+                    "replyAt": "2026-10-27T16:02:41.458Z",
+                    "productUsage": {
+                      "completeness": "complete",
+                      "gaps": [],
+                      "totals": {
+                        "generations": 6,
+                        "inputTokens": 93861,
+                        "cachedInputTokens": 75776,
+                        "outputTokens": 1196,
+                        "reasoningOutputTokens": 0
+                      }
+                    },
+                    "finalInterrupt": {
+                      "committedRoomSeq": 9,
+                      "requested": false,
+                      "accepted": "unknown",
+                      "terminal": false,
+                      "sent": false,
+                      "preemptedFollowUp": "unknown"
+                    }
+                  },
+                  "runVerdict": [],
+                  "nativeMemoryPolicy": null
+                },
+                {
+                  "round": 2,
+                  "sessionId": "01a17e19-2e9b-7581-8c82-813a78f28a2d",
+                  "metrics": {
+                    "generations": 3,
+                    "generationsTotal": 3,
+                    "generationsBeforeReply": null,
+                    "generationsAfterReply": null,
+                    "replyTimingEvidence": {
+                      "basis": "usage-record-upper-bound",
+                      "knownBeforeReply": 1,
+                      "unresolved": 2
+                    },
+                    "input": 53047,
+                    "cached": 51712,
+                    "uncached": 1335,
+                    "output": 486,
+                    "reasoning": 0,
+                    "firstInput": 17376,
+                    "peakInput": 17989,
+                    "replySeconds": 6.762,
+                    "toolCalls": [
+                      {
+                        "at": "2026-10-27T16:02:46.668Z",
+                        "name": "loom_reply",
+                        "kind": "worker-mcp-reply"
+                      },
+                      {
+                        "at": "2026-10-27T16:02:49.434Z",
+                        "name": "loom_reply",
+                        "kind": "worker-mcp-reply"
+                      }
+                    ],
+                    "replyAt": "2026-10-27T16:02:49.442Z",
+                    "productUsage": {
+                      "completeness": "complete",
+                      "gaps": [],
+                      "totals": {
+                        "generations": 3,
+                        "inputTokens": 53047,
+                        "cachedInputTokens": 51712,
+                        "outputTokens": 486,
+                        "reasoningOutputTokens": 0
+                      }
+                    },
+                    "finalInterrupt": {
+                      "committedRoomSeq": 18,
+                      "requested": false,
+                      "accepted": "unknown",
+                      "terminal": false,
+                      "sent": false,
+                      "preemptedFollowUp": "unknown"
+                    }
+                  },
+                  "runVerdict": [],
+                  "nativeMemoryPolicy": null
+                },
+                {
+                  "round": 3,
+                  "sessionId": "01a17e19-2e9b-7581-8c82-813a78f28a2d",
+                  "metrics": {
+                    "generations": 3,
+                    "generationsTotal": 3,
+                    "generationsBeforeReply": null,
+                    "generationsAfterReply": null,
+                    "replyTimingEvidence": {
+                      "basis": "usage-record-upper-bound",
+                      "knownBeforeReply": 1,
+                      "unresolved": 2
+                    },
+                    "input": 55533,
+                    "cached": 54144,
+                    "uncached": 1389,
+                    "output": 492,
+                    "reasoning": 0,
+                    "firstInput": 18202,
+                    "peakInput": 18820,
+                    "replySeconds": 6.84,
+                    "toolCalls": [
+                      {
+                        "at": "2026-10-27T16:02:55.448Z",
+                        "name": "loom_reply",
+                        "kind": "worker-mcp-reply"
+                      },
+                      {
+                        "at": "2026-10-27T16:02:57.888Z",
+                        "name": "loom_reply",
+                        "kind": "worker-mcp-reply"
+                      }
+                    ],
+                    "replyAt": "2026-10-27T16:02:57.899Z",
+                    "productUsage": {
+                      "completeness": "complete",
+                      "gaps": [],
+                      "totals": {
+                        "generations": 3,
+                        "inputTokens": 55533,
+                        "cachedInputTokens": 54144,
+                        "outputTokens": 492,
+                        "reasoningOutputTokens": 0
+                      }
+                    },
+                    "finalInterrupt": {
+                      "committedRoomSeq": 27,
+                      "requested": false,
+                      "accepted": "unknown",
+                      "terminal": false,
+                      "sent": false,
+                      "preemptedFollowUp": "unknown"
+                    }
+                  },
+                  "runVerdict": [],
+                  "nativeMemoryPolicy": null
+                }
+              ],
+              "rawUsageCheck": {
+                "sourceSha256": "91da96073d7e25621c881ed785f1b6d93f39cf904d87e7f3839086140edd09c3",
+                "matches": true,
+                "invalidReplyCalls": 4
+              }
+            },
+            "native": {
+              "status": "complete",
+              "totals": {
+                "input": 52701,
+                "cached": 31488,
+                "uncached": 21213,
+                "output": 820,
+                "generations": 4
+              },
+              "rounds": [
+                {
+                  "round": 1,
+                  "sessionId": "01a17e19-c496-79e2-b343-b78ddbed14ae",
+                  "metrics": {
+                    "generations": 2,
+                    "generationsTotal": 2,
+                    "generationsBeforeReply": 2,
+                    "generationsAfterReply": 0,
+                    "input": 23650,
+                    "cached": 8192,
+                    "uncached": 15458,
+                    "output": 405,
+                    "reasoning": 0,
+                    "firstInput": 9679,
+                    "peakInput": 13971,
+                    "replySeconds": 14.01,
+                    "toolCalls": [
+                      {
+                        "at": "2026-10-27T16:03:09.222Z",
+                        "name": "exec",
+                        "kind": "other"
+                      }
+                    ]
+                  },
+                  "runVerdict": null,
+                  "nativeMemoryPolicy": {
+                    "provider": "codex",
+                    "supported": true,
+                    "status": "enforced",
+                    "scope": "provider-native-auto-memory",
+                    "mechanism": "cli-config",
+                    "evidence": "spawn-configuration",
+                    "config": {
+                      "features.memories": false,
+                      "memories.generate_memories": false,
+                      "memories.use_memories": false
+                    }
+                  }
+                },
+                {
+                  "round": 2,
+                  "sessionId": "01a17e19-c496-79e2-b343-b78ddbed14ae",
+                  "metrics": {
+                    "generations": 1,
+                    "generationsTotal": 1,
+                    "generationsBeforeReply": 1,
+                    "generationsAfterReply": 0,
+                    "input": 14366,
+                    "cached": 9472,
+                    "uncached": 4894,
+                    "output": 229,
+                    "reasoning": 0,
+                    "firstInput": 14366,
+                    "peakInput": 14366,
+                    "replySeconds": 13.652,
+                    "toolCalls": []
+                  },
+                  "runVerdict": null,
+                  "nativeMemoryPolicy": {
+                    "provider": "codex",
+                    "supported": true,
+                    "status": "enforced",
+                    "scope": "provider-native-auto-memory",
+                    "mechanism": "cli-config",
+                    "evidence": "spawn-configuration",
+                    "config": {
+                      "features.memories": false,
+                      "memories.generate_memories": false,
+                      "memories.use_memories": false
+                    }
+                  }
+                },
+                {
+                  "round": 3,
+                  "sessionId": "01a17e19-c496-79e2-b343-b78ddbed14ae",
+                  "metrics": {
+                    "generations": 1,
+                    "generationsTotal": 1,
+                    "generationsBeforeReply": 1,
+                    "generationsAfterReply": 0,
+                    "input": 14685,
+                    "cached": 13824,
+                    "uncached": 861,
+                    "output": 186,
+                    "reasoning": 0,
+                    "firstInput": 14685,
+                    "peakInput": 14685,
+                    "replySeconds": 8.936,
+                    "toolCalls": []
+                  },
+                  "runVerdict": null,
+                  "nativeMemoryPolicy": {
+                    "provider": "codex",
+                    "supported": true,
+                    "status": "enforced",
+                    "scope": "provider-native-auto-memory",
+                    "mechanism": "cli-config",
+                    "evidence": "spawn-configuration",
+                    "config": {
+                      "features.memories": false,
+                      "memories.generate_memories": false,
+                      "memories.use_memories": false
+                    }
+                  }
+                }
+              ],
+              "rawUsageCheck": {
+                "sourceSha256": "7c3660f89fceaed74d69d5a047b4952690817c234cbd1f42bf839bf5e3e564da",
+                "matches": true,
+                "invalidReplyCalls": 0
+              }
+            }
+          },
+          "inputRatio": 3.841312309064344
+        },
+        {
+          "pair": 3,
+          "order": "native,role-warm",
+          "status": "over-budget",
+          "rawResult": "/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/rah-cli-efficiency-VTcTHf/result.json",
+          "rawSha256": "60f62b19aade422eac45525157122d4a59e829878792b3fe33d68e4bb66b599e",
+          "arms": {
+            "native": {
+              "status": "complete",
+              "totals": {
+                "input": 52526,
+                "cached": 23168,
+                "uncached": 29358,
+                "output": 754,
+                "generations": 4
+              },
+              "rounds": [
+                {
+                  "round": 1,
+                  "sessionId": "01a17e1a-8ded-74f1-bcc5-52ffb0729fef",
+                  "metrics": {
+                    "generations": 2,
+                    "generationsTotal": 2,
+                    "generationsBeforeReply": 2,
+                    "generationsAfterReply": 0,
+                    "input": 23591,
+                    "cached": 9472,
+                    "uncached": 14119,
+                    "output": 354,
+                    "reasoning": 0,
+                    "firstInput": 9676,
+                    "peakInput": 13915,
+                    "replySeconds": 11.878,
+                    "toolCalls": [
+                      {
+                        "at": "2026-10-27T16:03:59.813Z",
+                        "name": "exec",
+                        "kind": "other"
+                      }
+                    ]
+                  },
+                  "runVerdict": null,
+                  "nativeMemoryPolicy": {
+                    "provider": "codex",
+                    "supported": true,
+                    "status": "enforced",
+                    "scope": "provider-native-auto-memory",
+                    "mechanism": "cli-config",
+                    "evidence": "spawn-configuration",
+                    "config": {
+                      "features.memories": false,
+                      "memories.generate_memories": false,
+                      "memories.use_memories": false
+                    }
+                  }
+                },
+                {
+                  "round": 2,
+                  "sessionId": "01a17e1a-8ded-74f1-bcc5-52ffb0729fef",
+                  "metrics": {
+                    "generations": 1,
+                    "generationsTotal": 1,
+                    "generationsBeforeReply": 1,
+                    "generationsAfterReply": 0,
+                    "input": 14312,
+                    "cached": 13696,
+                    "uncached": 616,
+                    "output": 221,
+                    "reasoning": 0,
+                    "firstInput": 14312,
+                    "peakInput": 14312,
+                    "replySeconds": 8.569,
+                    "toolCalls": []
+                  },
+                  "runVerdict": null,
+                  "nativeMemoryPolicy": {
+                    "provider": "codex",
+                    "supported": true,
+                    "status": "enforced",
+                    "scope": "provider-native-auto-memory",
+                    "mechanism": "cli-config",
+                    "evidence": "spawn-configuration",
+                    "config": {
+                      "features.memories": false,
+                      "memories.generate_memories": false,
+                      "memories.use_memories": false
+                    }
+                  }
+                },
+                {
+                  "round": 3,
+                  "sessionId": "01a17e1a-8ded-74f1-bcc5-52ffb0729fef",
+                  "metrics": {
+                    "generations": 1,
+                    "generationsTotal": 1,
+                    "generationsBeforeReply": 1,
+                    "generationsAfterReply": 0,
+                    "input": 14623,
+                    "cached": 0,
+                    "uncached": 14623,
+                    "output": 179,
+                    "reasoning": 0,
+                    "firstInput": 14623,
+                    "peakInput": 14623,
+                    "replySeconds": 8.667,
+                    "toolCalls": []
+                  },
+                  "runVerdict": null,
+                  "nativeMemoryPolicy": {
+                    "provider": "codex",
+                    "supported": true,
+                    "status": "enforced",
+                    "scope": "provider-native-auto-memory",
+                    "mechanism": "cli-config",
+                    "evidence": "spawn-configuration",
+                    "config": {
+                      "features.memories": false,
+                      "memories.generate_memories": false,
+                      "memories.use_memories": false
+                    }
+                  }
+                }
+              ],
+              "rawUsageCheck": {
+                "sourceSha256": "7737f1c4efc37937203f8c9a5e98797d5ade10620fb04e84c73d096862ffc5df",
+                "matches": true,
+                "invalidReplyCalls": 0
+              }
+            },
+            "role-warm": {
+              "status": "complete",
+              "totals": {
+                "input": 184500,
+                "cached": 164096,
+                "uncached": 20404,
+                "output": 1970,
+                "generations": 11
+              },
+              "rounds": [
+                {
+                  "round": 1,
+                  "sessionId": "01a17e1b-486a-7b13-8ba2-f1587ab631e8",
+                  "metrics": {
+                    "generations": 5,
+                    "generationsTotal": 5,
+                    "generationsBeforeReply": null,
+                    "generationsAfterReply": null,
+                    "replyTimingEvidence": {
+                      "basis": "usage-record-upper-bound",
+                      "knownBeforeReply": 3,
+                      "unresolved": 2
+                    },
+                    "input": 77031,
+                    "cached": 59264,
+                    "uncached": 17767,
+                    "output": 1142,
+                    "reasoning": 0,
+                    "firstInput": 11497,
+                    "peakInput": 17030,
+                    "replySeconds": 22.667,
+                    "toolCalls": [
+                      {
+                        "at": "2026-10-27T16:04:46.394Z",
+                        "name": "exec",
+                        "kind": "other"
+                      },
+                      {
+                        "at": "2026-10-27T16:04:52.870Z",
+                        "name": "loom_reply",
+                        "kind": "worker-mcp-reply"
+                      },
+                      {
+                        "at": "2026-10-27T16:04:57.170Z",
+                        "name": "loom_reply",
+                        "kind": "worker-mcp-reply"
+                      },
+                      {
+                        "at": "2026-10-27T16:05:01.402Z",
+                        "name": "loom_reply",
+                        "kind": "worker-mcp-reply"
+                      }
+                    ],
+                    "replyAt": "2026-10-27T16:05:01.408Z",
+                    "productUsage": {
+                      "completeness": "complete",
+                      "gaps": [],
+                      "totals": {
+                        "generations": 5,
+                        "inputTokens": 77031,
+                        "cachedInputTokens": 59264,
+                        "outputTokens": 1142,
+                        "reasoningOutputTokens": 0
+                      }
+                    },
+                    "finalInterrupt": {
+                      "committedRoomSeq": 9,
+                      "requested": false,
+                      "accepted": "unknown",
+                      "terminal": false,
+                      "sent": false,
+                      "preemptedFollowUp": "unknown"
+                    }
+                  },
+                  "runVerdict": [],
+                  "nativeMemoryPolicy": null
+                },
+                {
+                  "round": 2,
+                  "sessionId": "01a17e1b-486a-7b13-8ba2-f1587ab631e8",
+                  "metrics": {
+                    "generations": 3,
+                    "generationsTotal": 3,
+                    "generationsBeforeReply": null,
+                    "generationsAfterReply": null,
+                    "replyTimingEvidence": {
+                      "basis": "usage-record-upper-bound",
+                      "knownBeforeReply": 1,
+                      "unresolved": 2
+                    },
+                    "input": 52601,
+                    "cached": 51328,
+                    "uncached": 1273,
+                    "output": 441,
+                    "reasoning": 0,
+                    "firstInput": 17251,
+                    "peakInput": 17819,
+                    "replySeconds": 9.013,
+                    "toolCalls": [
+                      {
+                        "at": "2026-10-27T16:05:10.416Z",
+                        "name": "loom_reply",
+                        "kind": "worker-mcp-reply"
+                      },
+                      {
+                        "at": "2026-10-27T16:05:14.158Z",
+                        "name": "loom_reply",
+                        "kind": "worker-mcp-reply"
+                      }
+                    ],
+                    "replyAt": "2026-10-27T16:05:14.162Z",
+                    "productUsage": {
+                      "completeness": "complete",
+                      "gaps": [],
+                      "totals": {
+                        "generations": 3,
+                        "inputTokens": 52601,
+                        "cachedInputTokens": 51328,
+                        "outputTokens": 441,
+                        "reasoningOutputTokens": 0
+                      }
+                    },
+                    "finalInterrupt": {
+                      "committedRoomSeq": 18,
+                      "requested": false,
+                      "accepted": "unknown",
+                      "terminal": false,
+                      "sent": false,
+                      "preemptedFollowUp": "unknown"
+                    }
+                  },
+                  "runVerdict": [],
+                  "nativeMemoryPolicy": null
+                },
+                {
+                  "round": 3,
+                  "sessionId": "01a17e1b-486a-7b13-8ba2-f1587ab631e8",
+                  "metrics": {
+                    "generations": 3,
+                    "generationsTotal": 3,
+                    "generationsBeforeReply": null,
+                    "generationsAfterReply": null,
+                    "replyTimingEvidence": {
+                      "basis": "usage-record-upper-bound",
+                      "knownBeforeReply": 1,
+                      "unresolved": 2
+                    },
+                    "input": 54868,
+                    "cached": 53504,
+                    "uncached": 1364,
+                    "output": 387,
+                    "reasoning": 0,
+                    "firstInput": 18032,
+                    "peakInput": 18551,
+                    "replySeconds": 8.814,
+                    "toolCalls": [
+                      {
+                        "at": "2026-10-27T16:05:27.763Z",
+                        "name": "loom_reply",
+                        "kind": "worker-mcp-reply"
+                      },
+                      {
+                        "at": "2026-10-27T16:05:31.405Z",
+                        "name": "loom_reply",
+                        "kind": "worker-mcp-reply"
+                      }
+                    ],
+                    "replyAt": "2026-10-27T16:05:31.413Z",
+                    "productUsage": {
+                      "completeness": "complete",
+                      "gaps": [],
+                      "totals": {
+                        "generations": 3,
+                        "inputTokens": 54868,
+                        "cachedInputTokens": 53504,
+                        "outputTokens": 387,
+                        "reasoningOutputTokens": 0
+                      }
+                    },
+                    "finalInterrupt": {
+                      "committedRoomSeq": 27,
+                      "requested": false,
+                      "accepted": "unknown",
+                      "terminal": false,
+                      "sent": false,
+                      "preemptedFollowUp": "unknown"
+                    }
+                  },
+                  "runVerdict": [],
+                  "nativeMemoryPolicy": null
+                }
+              ],
+              "rawUsageCheck": {
+                "sourceSha256": "974b4244bd0846c7482148a9a5a007b84a54bb6457270b8b5a8181cf3d0e1d09",
+                "matches": true,
+                "invalidReplyCalls": 3
+              }
+            }
+          },
+          "inputRatio": 3.5125461676122303
+        }
+      ],
+      "totals": {
+        "native": {
+          "input": 157732,
+          "cached": 78208,
+          "uncached": 79524,
+          "output": 2312,
+          "generations": 12
+        },
+        "role-warm": {
+          "input": 569613,
+          "cached": 508288,
+          "uncached": 61325,
+          "output": 5925,
+          "generations": 34
+        }
+      },
+      "ratios": {
+        "input": 3.611271016661172,
+        "cached": 6.499181669394435,
+        "uncached": 0.7711508475428801,
+        "output": 2.5627162629757785,
+        "generations": 2.8333333333333335
+      },
+      "pairedInputRange": [
+        3.4791353204456716,
+        3.841312309064344
+      ]
+    },
+    "kimi": {
+      "model": "kimi-code/k3-256k",
+      "effort": "low",
+      "source": "2b1e45e3fb5ce6013f55bf1287f614e6b9849cae",
+      "finishedAt": "2026-10-27T16:10:36.994Z",
+      "stop": "Measurement/execution failure; no replacement sample",
+      "pairs": [
+        {
+          "pair": 1,
+          "order": "native,role",
+          "status": "failed",
+          "rawResult": "/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/rah-cli-efficiency-JqWWrz/result.json",
+          "rawSha256": "32f372daa0efbd6e30006a314dca50646e31285070f06f1dc435a957e4ef35a1",
+          "arms": {
+            "native": {
+              "status": "complete",
+              "totals": {
+                "input": 92270,
+                "cached": 79616,
+                "uncached": 12654,
+                "output": 1418,
+                "generations": 4
+              },
+              "rounds": [
+                {
+                  "round": 1,
+                  "sessionId": "session_b820f28f-c09f-44cc-8177-19af2fe1e893",
+                  "metrics": {
+                    "generations": 2,
+                    "generationsTotal": 2,
+                    "generationsBeforeReply": 2,
+                    "generationsAfterReply": 0,
+                    "input": 44096,
+                    "cached": 38912,
+                    "uncached": 5184,
+                    "output": 667,
+                    "reasoning": null,
+                    "firstInput": 20203,
+                    "peakInput": 23893,
+                    "replySeconds": 21.549,
+                    "requestCoverage": {
+                      "status": "complete",
+                      "requests": 2,
+                      "matchedRequests": 2,
+                      "unreportedRequests": 0,
+                      "unmatchedUsageRecords": 0
+                    },
+                    "toolCalls": [
+                      {
+                        "at": "2026-10-27T16:08:32.736Z",
+                        "name": "Read",
+                        "kind": "other"
+                      },
+                      {
+                        "at": "2026-10-27T16:08:32.736Z",
+                        "name": "Read",
+                        "kind": "other"
+                      }
+                    ]
+                  },
+                  "runVerdict": null,
+                  "nativeMemoryPolicy": {
+                    "provider": "kimi",
+                    "supported": true,
+                    "status": "not-applicable",
+                    "scope": "provider-native-auto-memory",
+                    "mechanism": "version-audit",
+                    "version": "2.1.1",
+                    "sourceRevision": "installed-bundle-sha256:2563a338c94868a34e1bfd2e5579067d5a472acf4cb0bf350a3bfe1092bbe59d",
+                    "evidence": "audited-cli-version"
+                  }
+                },
+                {
+                  "round": 2,
+                  "sessionId": "session_b820f28f-c09f-44cc-8177-19af2fe1e893",
+                  "metrics": {
+                    "generations": 1,
+                    "generationsTotal": 1,
+                    "generationsBeforeReply": 1,
+                    "generationsAfterReply": 0,
+                    "input": 23790,
+                    "cached": 17152,
+                    "uncached": 6638,
+                    "output": 392,
+                    "reasoning": null,
+                    "firstInput": 23790,
+                    "peakInput": 23790,
+                    "replySeconds": 7.782,
+                    "requestCoverage": {
+                      "status": "complete",
+                      "requests": 1,
+                      "matchedRequests": 1,
+                      "unreportedRequests": 0,
+                      "unmatchedUsageRecords": 0
+                    },
+                    "toolCalls": []
+                  },
+                  "runVerdict": null,
+                  "nativeMemoryPolicy": {
+                    "provider": "kimi",
+                    "supported": true,
+                    "status": "not-applicable",
+                    "scope": "provider-native-auto-memory",
+                    "mechanism": "version-audit",
+                    "version": "2.1.1",
+                    "sourceRevision": "installed-bundle-sha256:2563a338c94868a34e1bfd2e5579067d5a472acf4cb0bf350a3bfe1092bbe59d",
+                    "evidence": "audited-cli-version"
+                  }
+                },
+                {
+                  "round": 3,
+                  "sessionId": "session_b820f28f-c09f-44cc-8177-19af2fe1e893",
+                  "metrics": {
+                    "generations": 1,
+                    "generationsTotal": 1,
+                    "generationsBeforeReply": 1,
+                    "generationsAfterReply": 0,
+                    "input": 24384,
+                    "cached": 23552,
+                    "uncached": 832,
+                    "output": 359,
+                    "reasoning": null,
+                    "firstInput": 24384,
+                    "peakInput": 24384,
+                    "replySeconds": 6.096,
+                    "requestCoverage": {
+                      "status": "complete",
+                      "requests": 1,
+                      "matchedRequests": 1,
+                      "unreportedRequests": 0,
+                      "unmatchedUsageRecords": 0
+                    },
+                    "toolCalls": []
+                  },
+                  "runVerdict": null,
+                  "nativeMemoryPolicy": {
+                    "provider": "kimi",
+                    "supported": true,
+                    "status": "not-applicable",
+                    "scope": "provider-native-auto-memory",
+                    "mechanism": "version-audit",
+                    "version": "2.1.1",
+                    "sourceRevision": "installed-bundle-sha256:2563a338c94868a34e1bfd2e5579067d5a472acf4cb0bf350a3bfe1092bbe59d",
+                    "evidence": "audited-cli-version"
+                  }
+                }
+              ]
+            },
+            "role": {
+              "status": "failed",
+              "totals": {
+                "input": 74237,
+                "cached": 58624,
+                "uncached": 15613,
+                "output": 1361,
+                "generations": 3
+              },
+              "rounds": [
+                {
+                  "round": 1,
+                  "sessionId": "session_f407d20d-fc37-49cb-a6f5-12e98ef772a5",
+                  "metrics": {
+                    "generations": 3,
+                    "generationsTotal": 3,
+                    "generationsBeforeReply": 3,
+                    "generationsAfterReply": 0,
+                    "replyTimingEvidence": {
+                      "basis": "native-generation-timing",
+                      "knownBeforeReply": 3,
+                      "knownAfterReply": 0,
+                      "unresolved": 0
+                    },
+                    "input": 74237,
+                    "cached": 58624,
+                    "uncached": 15613,
+                    "output": 1361,
+                    "reasoning": null,
+                    "firstInput": 21990,
+                    "peakInput": 26564,
+                    "replySeconds": 41.794,
+                    "requestCoverage": {
+                      "status": "incomplete",
+                      "requests": 4,
+                      "matchedRequests": 3,
+                      "unreportedRequests": 1,
+                      "unmatchedUsageRecords": 0
+                    },
+                    "toolCalls": [
+                      {
+                        "at": "2026-10-27T16:09:37.673Z",
+                        "name": "Read",
+                        "kind": "other"
+                      },
+                      {
+                        "at": "2026-10-27T16:09:37.673Z",
+                        "name": "Read",
+                        "kind": "other"
+                      },
+                      {
+                        "at": "2026-10-27T16:10:01.906Z",
+                        "name": "mcp__loom_worker__loom_reply",
+                        "kind": "worker-mcp-reply"
+                      },
+                      {
+                        "at": "2026-10-27T16:10:11.070Z",
+                        "name": "mcp__loom_worker__loom_reply",
+                        "kind": "worker-mcp-reply"
+                      }
+                    ],
+                    "replyAt": "2026-10-27T16:10:11.075Z",
+                    "productUsage": {
+                      "completeness": "partial",
+                      "gaps": [
+                        {
+                          "reason": "parse_error",
+                          "provider": "kimi-acp/v1",
+                          "occurrences": 1,
+                          "firstObservedAt": "2026-10-27T16:10:11.117Z",
+                          "lastObservedAt": "2026-10-27T16:10:11.117Z"
+                        }
+                      ],
+                      "totals": {
+                        "generations": 3,
+                        "inputTokens": 74237,
+                        "cachedInputTokens": 58624,
+                        "outputTokens": 1361,
+                        "reasoningOutputTokens": null
+                      }
+                    },
+                    "finalInterrupt": {
+                      "committedRoomSeq": 9,
+                      "requested": true,
+                      "accepted": true,
+                      "terminal": true,
+                      "sent": true,
+                      "preemptedFollowUp": "unknown"
+                    }
+                  },
+                  "runVerdict": [],
+                  "nativeMemoryPolicy": null
+                },
+                {
+                  "round": 2,
+                  "sessionId": null,
+                  "metrics": null,
+                  "runVerdict": [
+                    "runFailed"
+                  ],
+                  "nativeMemoryPolicy": null
+                }
+              ],
+              "totalsArePartial": true
+            }
+          }
+        }
+      ]
+    },
+    "opencode": {
+      "model": "aihubmix/deepseek-v4.1-flash",
+      "effort": "low",
+      "source": "65e90624fa57711e57246ff3f01b0acf80f0a258",
+      "finishedAt": "2026-10-27T16:17:27.909Z",
+      "stop": null,
+      "pairs": [
+        {
+          "pair": 1,
+          "order": "native,role-warm",
+          "status": "needs-quality-review",
+          "rawResult": "/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/rah-cli-efficiency-demXKj/result.json",
+          "rawSha256": "039646e6495ff0bbd1055543e72eddec5bce57f3c0aa3d4382c55870669b96b7",
+          "arms": {
+            "native": {
+              "status": "complete",
+              "totals": {
+                "input": 47104,
+                "cached": 32768,
+                "uncached": 14336,
+                "output": 2489,
+                "generations": 4
+              },
+              "rounds": [
+                {
+                  "round": 1,
+                  "sessionId": "ses_e81dc6357ffey2SGaQr2PL9QPU",
+                  "metrics": {
+                    "generations": 2,
+                    "generationsTotal": 2,
+                    "generationsBeforeReply": 2,
+                    "generationsAfterReply": 0,
+                    "input": 19597,
+                    "cached": 7552,
+                    "uncached": 12045,
+                    "output": 1544,
+                    "reasoning": 898,
+                    "firstInput": 7643,
+                    "peakInput": 11954,
+                    "replySeconds": 19.34,
+                    "toolCalls": [
+                      {
+                        "at": "2026-10-27T16:13:48.732Z",
+                        "name": "read",
+                        "kind": "other"
+                      },
+                      {
+                        "at": "2026-10-27T16:13:49.062Z",
+                        "name": "read",
+                        "kind": "other"
+                      }
+                    ]
+                  },
+                  "runVerdict": null,
+                  "nativeMemoryPolicy": {
+                    "provider": "opencode",
+                    "supported": true,
+                    "status": "not-applicable",
+                    "scope": "provider-native-auto-memory",
+                    "mechanism": "version-audit",
+                    "version": "1.19.4",
+                    "sourceRevision": "148842ef7cb1bc34192b3fff57d0f9721ab9c801",
+                    "evidence": "audited-cli-version"
+                  }
+                },
+                {
+                  "round": 2,
+                  "sessionId": "ses_e81dc6357ffey2SGaQr2PL9QPU",
+                  "metrics": {
+                    "generations": 1,
+                    "generationsTotal": 1,
+                    "generationsBeforeReply": 1,
+                    "generationsAfterReply": 0,
+                    "input": 13402,
+                    "cached": 11904,
+                    "uncached": 1498,
+                    "output": 626,
+                    "reasoning": 371,
+                    "firstInput": 13402,
+                    "peakInput": 13402,
+                    "replySeconds": 9.533,
+                    "toolCalls": []
+                  },
+                  "runVerdict": null,
+                  "nativeMemoryPolicy": {
+                    "provider": "opencode",
+                    "supported": true,
+                    "status": "not-applicable",
+                    "scope": "provider-native-auto-memory",
+                    "mechanism": "version-audit",
+                    "version": "1.19.4",
+                    "sourceRevision": "148842ef7cb1bc34192b3fff57d0f9721ab9c801",
+                    "evidence": "audited-cli-version"
+                  }
+                },
+                {
+                  "round": 3,
+                  "sessionId": "ses_e81dc6357ffey2SGaQr2PL9QPU",
+                  "metrics": {
+                    "generations": 1,
+                    "generationsTotal": 1,
+                    "generationsBeforeReply": 1,
+                    "generationsAfterReply": 0,
+                    "input": 14105,
+                    "cached": 13312,
+                    "uncached": 793,
+                    "output": 319,
+                    "reasoning": 48,
+                    "firstInput": 14105,
+                    "peakInput": 14105,
+                    "replySeconds": 5.789,
+                    "toolCalls": []
+                  },
+                  "runVerdict": null,
+                  "nativeMemoryPolicy": {
+                    "provider": "opencode",
+                    "supported": true,
+                    "status": "not-applicable",
+                    "scope": "provider-native-auto-memory",
+                    "mechanism": "version-audit",
+                    "version": "1.19.4",
+                    "sourceRevision": "148842ef7cb1bc34192b3fff57d0f9721ab9c801",
+                    "evidence": "audited-cli-version"
+                  }
+                }
+              ],
+              "rawUsageCheck": {
+                "totals": {
+                  "input": 47104,
+                  "cached": 32768,
+                  "output": 2489,
+                  "generations": 4
+                },
+                "matches": true,
+                "allThreePromptsPreserved": true
+              }
+            },
+            "role-warm": {
+              "status": "complete",
+              "totals": {
+                "input": 55847,
+                "cached": 38656,
+                "uncached": 17191,
+                "output": 3596,
+                "generations": 4
+              },
+              "rounds": [
+                {
+                  "round": 1,
+                  "sessionId": "ses_e81dbc568ffez2P2n6GR7RCmh4",
+                  "metrics": {
+                    "generations": 2,
+                    "generationsTotal": 2,
+                    "generationsBeforeReply": 2,
+                    "generationsAfterReply": 0,
+                    "replyTimingEvidence": {
+                      "basis": "native-generation-timing",
+                      "knownBeforeReply": 2,
+                      "knownAfterReply": 0,
+                      "unresolved": 0
+                    },
+                    "input": 23313,
+                    "cached": 9472,
+                    "uncached": 13841,
+                    "output": 1750,
+                    "reasoning": 1212,
+                    "firstInput": 9497,
+                    "peakInput": 13816,
+                    "replySeconds": 18.87,
+                    "toolCalls": [
+                      {
+                        "at": "2026-10-27T16:14:28.398Z",
+                        "name": "read",
+                        "kind": "other"
+                      },
+                      {
+                        "at": "2026-10-27T16:14:28.868Z",
+                        "name": "read",
+                        "kind": "other"
+                      }
+                    ],
+                    "usageSource": "product",
+                    "replyAt": "2026-10-27T16:14:43.503Z",
+                    "productUsage": {
+                      "completeness": "complete",
+                      "gaps": [],
+                      "totals": {
+                        "generations": 2,
+                        "inputTokens": 23313,
+                        "cachedInputTokens": 9472,
+                        "outputTokens": 1750,
+                        "reasoningOutputTokens": 1212
+                      }
+                    },
+                    "finalInterrupt": {
+                      "committedRoomSeq": 9,
+                      "requested": false,
+                      "accepted": "unknown",
+                      "terminal": "unknown",
+                      "sent": false,
+                      "preemptedFollowUp": "unknown"
+                    }
+                  },
+                  "runVerdict": [],
+                  "nativeMemoryPolicy": null
+                },
+                {
+                  "round": 2,
+                  "sessionId": "ses_e81dbc568ffez2P2n6GR7RCmh4",
+                  "metrics": {
+                    "generations": 1,
+                    "generationsTotal": 1,
+                    "generationsBeforeReply": 1,
+                    "generationsAfterReply": 0,
+                    "replyTimingEvidence": {
+                      "basis": "native-generation-timing",
+                      "knownBeforeReply": 1,
+                      "knownAfterReply": 0,
+                      "unresolved": 0
+                    },
+                    "input": 15529,
+                    "cached": 13696,
+                    "uncached": 1833,
+                    "output": 1337,
+                    "reasoning": 1132,
+                    "firstInput": 15529,
+                    "peakInput": 15529,
+                    "replySeconds": 12.554,
+                    "toolCalls": [],
+                    "usageSource": "product",
+                    "replyAt": "2026-10-27T16:14:56.157Z",
+                    "productUsage": {
+                      "completeness": "complete",
+                      "gaps": [],
+                      "totals": {
+                        "generations": 1,
+                        "inputTokens": 15529,
+                        "cachedInputTokens": 13696,
+                        "outputTokens": 1337,
+                        "reasoningOutputTokens": 1132
+                      }
+                    },
+                    "finalInterrupt": {
+                      "committedRoomSeq": 18,
+                      "requested": false,
+                      "accepted": "unknown",
+                      "terminal": "unknown",
+                      "sent": false,
+                      "preemptedFollowUp": "unknown"
+                    }
+                  },
+                  "runVerdict": [],
+                  "nativeMemoryPolicy": null
+                },
+                {
+                  "round": 3,
+                  "sessionId": "ses_e81dbc568ffez2P2n6GR7RCmh4",
+                  "metrics": {
+                    "generations": 1,
+                    "generationsTotal": 1,
+                    "generationsBeforeReply": 1,
+                    "generationsAfterReply": 0,
+                    "replyTimingEvidence": {
+                      "basis": "native-generation-timing",
+                      "knownBeforeReply": 1,
+                      "knownAfterReply": 0,
+                      "unresolved": 0
+                    },
+                    "input": 17005,
+                    "cached": 15488,
+                    "uncached": 1517,
+                    "output": 509,
+                    "reasoning": 294,
+                    "firstInput": 17005,
+                    "peakInput": 17005,
+                    "replySeconds": 6.576,
+                    "toolCalls": [],
+                    "usageSource": "product",
+                    "replyAt": "2026-10-27T16:15:02.826Z",
+                    "productUsage": {
+                      "completeness": "complete",
+                      "gaps": [],
+                      "totals": {
+                        "generations": 1,
+                        "inputTokens": 17005,
+                        "cachedInputTokens": 15488,
+                        "outputTokens": 509,
+                        "reasoningOutputTokens": 294
+                      }
+                    },
+                    "finalInterrupt": {
+                      "committedRoomSeq": 27,
+                      "requested": false,
+                      "accepted": "unknown",
+                      "terminal": "unknown",
+                      "sent": false,
+                      "preemptedFollowUp": "unknown"
+                    }
+                  },
+                  "runVerdict": [],
+                  "nativeMemoryPolicy": null
+                }
+              ],
+              "rawUsageCheck": {
+                "totals": {
+                  "input": 55847,
+                  "cached": 38656,
+                  "output": 3596,
+                  "generations": 4
+                },
+                "matches": true,
+                "allThreePromptsPreserved": true
+              }
+            }
+          },
+          "inputRatio": 1.1856105638586956
+        },
+        {
+          "pair": 2,
+          "order": "role-warm,native",
+          "status": "needs-quality-review",
+          "rawResult": "/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/rah-cli-efficiency-4AP9el/result.json",
+          "rawSha256": "3a30b97b01594f6fa06cc78e2ded74a07a8eb7dbf845cf5588c69c8145f6a4f2",
+          "arms": {
+            "role-warm": {
+              "status": "complete",
+              "totals": {
+                "input": 55834,
+                "cached": 38912,
+                "uncached": 16922,
+                "output": 3120,
+                "generations": 4
+              },
+              "rounds": [
+                {
+                  "round": 1,
+                  "sessionId": "ses_e81db1e73ffeTIo42v4nUpqMdY",
+                  "metrics": {
+                    "generations": 2,
+                    "generationsTotal": 2,
+                    "generationsBeforeReply": 2,
+                    "generationsAfterReply": 0,
+                    "replyTimingEvidence": {
+                      "basis": "native-generation-timing",
+                      "knownBeforeReply": 2,
+                      "knownAfterReply": 0,
+                      "unresolved": 0
+                    },
+                    "input": 23343,
+                    "cached": 9472,
+                    "uncached": 13871,
+                    "output": 1928,
+                    "reasoning": 1328,
+                    "firstInput": 9510,
+                    "peakInput": 13833,
+                    "replySeconds": 21.482,
+                    "toolCalls": [
+                      {
+                        "at": "2026-10-27T16:15:13.480Z",
+                        "name": "read",
+                        "kind": "other"
+                      },
+                      {
+                        "at": "2026-10-27T16:15:13.913Z",
+                        "name": "read",
+                        "kind": "other"
+                      }
+                    ],
+                    "usageSource": "product",
+                    "replyAt": "2026-10-27T16:15:28.816Z",
+                    "productUsage": {
+                      "completeness": "complete",
+                      "gaps": [],
+                      "totals": {
+                        "generations": 2,
+                        "inputTokens": 23343,
+                        "cachedInputTokens": 9472,
+                        "outputTokens": 1928,
+                        "reasoningOutputTokens": 1328
+                      }
+                    },
+                    "finalInterrupt": {
+                      "committedRoomSeq": 9,
+                      "requested": false,
+                      "accepted": "unknown",
+                      "terminal": "unknown",
+                      "sent": false,
+                      "preemptedFollowUp": "unknown"
+                    }
+                  },
+                  "runVerdict": [],
+                  "nativeMemoryPolicy": null
+                },
+                {
+                  "round": 2,
+                  "sessionId": "ses_e81db1e73ffeTIo42v4nUpqMdY",
+                  "metrics": {
+                    "generations": 1,
+                    "generationsTotal": 1,
+                    "generationsBeforeReply": 1,
+                    "generationsAfterReply": 0,
+                    "replyTimingEvidence": {
+                      "basis": "native-generation-timing",
+                      "knownBeforeReply": 1,
+                      "knownAfterReply": 0,
+                      "unresolved": 0
+                    },
+                    "input": 15722,
+                    "cached": 13824,
+                    "uncached": 1898,
+                    "output": 907,
+                    "reasoning": 641,
+                    "firstInput": 15722,
+                    "peakInput": 15722,
+                    "replySeconds": 11.441,
+                    "toolCalls": [],
+                    "usageSource": "product",
+                    "replyAt": "2026-10-27T16:15:40.346Z",
+                    "productUsage": {
+                      "completeness": "complete",
+                      "gaps": [],
+                      "totals": {
+                        "generations": 1,
+                        "inputTokens": 15722,
+                        "cachedInputTokens": 13824,
+                        "outputTokens": 907,
+                        "reasoningOutputTokens": 641
+                      }
+                    },
+                    "finalInterrupt": {
+                      "committedRoomSeq": 18,
+                      "requested": false,
+                      "accepted": "unknown",
+                      "terminal": "unknown",
+                      "sent": false,
+                      "preemptedFollowUp": "unknown"
+                    }
+                  },
+                  "runVerdict": [],
+                  "nativeMemoryPolicy": null
+                },
+                {
+                  "round": 3,
+                  "sessionId": "ses_e81db1e73ffeTIo42v4nUpqMdY",
+                  "metrics": {
+                    "generations": 1,
+                    "generationsTotal": 1,
+                    "generationsBeforeReply": 1,
+                    "generationsAfterReply": 0,
+                    "replyTimingEvidence": {
+                      "basis": "native-generation-timing",
+                      "knownBeforeReply": 1,
+                      "knownAfterReply": 0,
+                      "unresolved": 0
+                    },
+                    "input": 16769,
+                    "cached": 15616,
+                    "uncached": 1153,
+                    "output": 285,
+                    "reasoning": 24,
+                    "firstInput": 16769,
+                    "peakInput": 16769,
+                    "replySeconds": 5.312,
+                    "toolCalls": [],
+                    "usageSource": "product",
+                    "replyAt": "2026-10-27T16:15:45.756Z",
+                    "productUsage": {
+                      "completeness": "complete",
+                      "gaps": [],
+                      "totals": {
+                        "generations": 1,
+                        "inputTokens": 16769,
+                        "cachedInputTokens": 15616,
+                        "outputTokens": 285,
+                        "reasoningOutputTokens": 24
+                      }
+                    },
+                    "finalInterrupt": {
+                      "committedRoomSeq": 27,
+                      "requested": false,
+                      "accepted": "unknown",
+                      "terminal": "unknown",
+                      "sent": false,
+                      "preemptedFollowUp": "unknown"
+                    }
+                  },
+                  "runVerdict": [],
+                  "nativeMemoryPolicy": null
+                }
+              ],
+              "rawUsageCheck": {
+                "totals": {
+                  "input": 55834,
+                  "cached": 38912,
+                  "output": 3120,
+                  "generations": 4
+                },
+                "matches": true,
+                "allThreePromptsPreserved": true
+              }
+            },
+            "native": {
+              "status": "complete",
+              "totals": {
+                "input": 47933,
+                "cached": 33280,
+                "uncached": 14653,
+                "output": 2824,
+                "generations": 4
+              },
+              "rounds": [
+                {
+                  "round": 1,
+                  "sessionId": "ses_e81da8675ffeCNERie2yfs1ZPb",
+                  "metrics": {
+                    "generations": 2,
+                    "generationsTotal": 2,
+                    "generationsBeforeReply": 2,
+                    "generationsAfterReply": 0,
+                    "input": 19605,
+                    "cached": 7552,
+                    "uncached": 12053,
+                    "output": 1997,
+                    "reasoning": 1452,
+                    "firstInput": 7645,
+                    "peakInput": 11960,
+                    "replySeconds": 18.076,
+                    "toolCalls": [
+                      {
+                        "at": "2026-10-27T16:15:50.086Z",
+                        "name": "read",
+                        "kind": "other"
+                      },
+                      {
+                        "at": "2026-10-27T16:15:50.336Z",
+                        "name": "read",
+                        "kind": "other"
+                      }
+                    ]
+                  },
+                  "runVerdict": null,
+                  "nativeMemoryPolicy": {
+                    "provider": "opencode",
+                    "supported": true,
+                    "status": "not-applicable",
+                    "scope": "provider-native-auto-memory",
+                    "mechanism": "version-audit",
+                    "version": "1.19.4",
+                    "sourceRevision": "148842ef7cb1bc34192b3fff57d0f9721ab9c801",
+                    "evidence": "audited-cli-version"
+                  }
+                },
+                {
+                  "round": 2,
+                  "sessionId": "ses_e81da8675ffeCNERie2yfs1ZPb",
+                  "metrics": {
+                    "generations": 1,
+                    "generationsTotal": 1,
+                    "generationsBeforeReply": 1,
+                    "generationsAfterReply": 0,
+                    "input": 13859,
+                    "cached": 11904,
+                    "uncached": 1955,
+                    "output": 533,
+                    "reasoning": 264,
+                    "firstInput": 13859,
+                    "peakInput": 13859,
+                    "replySeconds": 7.649,
+                    "toolCalls": []
+                  },
+                  "runVerdict": null,
+                  "nativeMemoryPolicy": {
+                    "provider": "opencode",
+                    "supported": true,
+                    "status": "not-applicable",
+                    "scope": "provider-native-auto-memory",
+                    "mechanism": "version-audit",
+                    "version": "1.19.4",
+                    "sourceRevision": "148842ef7cb1bc34192b3fff57d0f9721ab9c801",
+                    "evidence": "audited-cli-version"
+                  }
+                },
+                {
+                  "round": 3,
+                  "sessionId": "ses_e81da8675ffeCNERie2yfs1ZPb",
+                  "metrics": {
+                    "generations": 1,
+                    "generationsTotal": 1,
+                    "generationsBeforeReply": 1,
+                    "generationsAfterReply": 0,
+                    "input": 14469,
+                    "cached": 13824,
+                    "uncached": 645,
+                    "output": 294,
+                    "reasoning": 39,
+                    "firstInput": 14469,
+                    "peakInput": 14469,
+                    "replySeconds": 5.387,
+                    "toolCalls": []
+                  },
+                  "runVerdict": null,
+                  "nativeMemoryPolicy": {
+                    "provider": "opencode",
+                    "supported": true,
+                    "status": "not-applicable",
+                    "scope": "provider-native-auto-memory",
+                    "mechanism": "version-audit",
+                    "version": "1.19.4",
+                    "sourceRevision": "148842ef7cb1bc34192b3fff57d0f9721ab9c801",
+                    "evidence": "audited-cli-version"
+                  }
+                }
+              ],
+              "rawUsageCheck": {
+                "totals": {
+                  "input": 47933,
+                  "cached": 33280,
+                  "output": 2824,
+                  "generations": 4
+                },
+                "matches": true,
+                "allThreePromptsPreserved": true
+              }
+            }
+          },
+          "inputRatio": 1.1648342478042268
+        },
+        {
+          "pair": 3,
+          "order": "native,role-warm",
+          "status": "over-budget",
+          "rawResult": "/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/rah-cli-efficiency-jmydly/result.json",
+          "rawSha256": "2d6e54b69626618a1a497068dbf317b5888e2dc28944427d288251875495a729",
+          "arms": {
+            "native": {
+              "status": "complete",
+              "totals": {
+                "input": 45742,
+                "cached": 32256,
+                "uncached": 13486,
+                "output": 1642,
+                "generations": 4
+              },
+              "rounds": [
+                {
+                  "round": 1,
+                  "sessionId": "ses_e81d9fdf8ffefBdSVpdIcHtjI9",
+                  "metrics": {
+                    "generations": 2,
+                    "generationsTotal": 2,
+                    "generationsBeforeReply": 2,
+                    "generationsAfterReply": 0,
+                    "input": 19598,
+                    "cached": 7552,
+                    "uncached": 12046,
+                    "output": 993,
+                    "reasoning": 473,
+                    "firstInput": 7643,
+                    "peakInput": 11955,
+                    "replySeconds": 11.827,
+                    "toolCalls": [
+                      {
+                        "at": "2026-10-27T16:16:25.001Z",
+                        "name": "read",
+                        "kind": "other"
+                      },
+                      {
+                        "at": "2026-10-27T16:16:25.265Z",
+                        "name": "read",
+                        "kind": "other"
+                      }
+                    ]
+                  },
+                  "runVerdict": null,
+                  "nativeMemoryPolicy": {
+                    "provider": "opencode",
+                    "supported": true,
+                    "status": "not-applicable",
+                    "scope": "provider-native-auto-memory",
+                    "mechanism": "version-audit",
+                    "version": "1.19.4",
+                    "sourceRevision": "148842ef7cb1bc34192b3fff57d0f9721ab9c801",
+                    "evidence": "audited-cli-version"
+                  }
+                },
+                {
+                  "round": 2,
+                  "sessionId": "ses_e81d9fdf8ffefBdSVpdIcHtjI9",
+                  "metrics": {
+                    "generations": 1,
+                    "generationsTotal": 1,
+                    "generationsBeforeReply": 1,
+                    "generationsAfterReply": 0,
+                    "input": 12851,
+                    "cached": 11904,
+                    "uncached": 947,
+                    "output": 365,
+                    "reasoning": 55,
+                    "firstInput": 12851,
+                    "peakInput": 12851,
+                    "replySeconds": 8.035,
+                    "toolCalls": []
+                  },
+                  "runVerdict": null,
+                  "nativeMemoryPolicy": {
+                    "provider": "opencode",
+                    "supported": true,
+                    "status": "not-applicable",
+                    "scope": "provider-native-auto-memory",
+                    "mechanism": "version-audit",
+                    "version": "1.19.4",
+                    "sourceRevision": "148842ef7cb1bc34192b3fff57d0f9721ab9c801",
+                    "evidence": "audited-cli-version"
+                  }
+                },
+                {
+                  "round": 3,
+                  "sessionId": "ses_e81d9fdf8ffefBdSVpdIcHtjI9",
+                  "metrics": {
+                    "generations": 1,
+                    "generationsTotal": 1,
+                    "generationsBeforeReply": 1,
+                    "generationsAfterReply": 0,
+                    "input": 13293,
+                    "cached": 12800,
+                    "uncached": 493,
+                    "output": 284,
+                    "reasoning": 43,
+                    "firstInput": 13293,
+                    "peakInput": 13293,
+                    "replySeconds": 5.508,
+                    "toolCalls": []
+                  },
+                  "runVerdict": null,
+                  "nativeMemoryPolicy": {
+                    "provider": "opencode",
+                    "supported": true,
+                    "status": "not-applicable",
+                    "scope": "provider-native-auto-memory",
+                    "mechanism": "version-audit",
+                    "version": "1.19.4",
+                    "sourceRevision": "148842ef7cb1bc34192b3fff57d0f9721ab9c801",
+                    "evidence": "audited-cli-version"
+                  }
+                }
+              ],
+              "rawUsageCheck": {
+                "totals": {
+                  "input": 45742,
+                  "cached": 32256,
+                  "output": 1642,
+                  "generations": 4
+                },
+                "matches": true,
+                "allThreePromptsPreserved": true
+              }
+            },
+            "role-warm": {
+              "status": "complete",
+              "totals": {
+                "input": 55680,
+                "cached": 39040,
+                "uncached": 16640,
+                "output": 3193,
+                "generations": 4
+              },
+              "rounds": [
+                {
+                  "round": 1,
+                  "sessionId": "ses_e81d984bfffejjwevb8nOGdjUR",
+                  "metrics": {
+                    "generations": 2,
+                    "generationsTotal": 2,
+                    "generationsBeforeReply": 2,
+                    "generationsAfterReply": 0,
+                    "replyTimingEvidence": {
+                      "basis": "native-generation-timing",
+                      "knownBeforeReply": 2,
+                      "knownAfterReply": 0,
+                      "unresolved": 0
+                    },
+                    "input": 23331,
+                    "cached": 9472,
+                    "uncached": 13859,
+                    "output": 1991,
+                    "reasoning": 1542,
+                    "firstInput": 9506,
+                    "peakInput": 13825,
+                    "replySeconds": 20.286,
+                    "toolCalls": [
+                      {
+                        "at": "2026-10-27T16:16:55.781Z",
+                        "name": "read",
+                        "kind": "other"
+                      },
+                      {
+                        "at": "2026-10-27T16:16:56.053Z",
+                        "name": "read",
+                        "kind": "other"
+                      }
+                    ],
+                    "usageSource": "product",
+                    "replyAt": "2026-10-27T16:17:12.560Z",
+                    "productUsage": {
+                      "completeness": "complete",
+                      "gaps": [],
+                      "totals": {
+                        "generations": 2,
+                        "inputTokens": 23331,
+                        "cachedInputTokens": 9472,
+                        "outputTokens": 1991,
+                        "reasoningOutputTokens": 1542
+                      }
+                    },
+                    "finalInterrupt": {
+                      "committedRoomSeq": 9,
+                      "requested": false,
+                      "accepted": "unknown",
+                      "terminal": "unknown",
+                      "sent": false,
+                      "preemptedFollowUp": "unknown"
+                    }
+                  },
+                  "runVerdict": [],
+                  "nativeMemoryPolicy": null
+                },
+                {
+                  "round": 2,
+                  "sessionId": "ses_e81d984bfffejjwevb8nOGdjUR",
+                  "metrics": {
+                    "generations": 1,
+                    "generationsTotal": 1,
+                    "generationsBeforeReply": 1,
+                    "generationsAfterReply": 0,
+                    "replyTimingEvidence": {
+                      "basis": "native-generation-timing",
+                      "knownBeforeReply": 1,
+                      "knownAfterReply": 0,
+                      "unresolved": 0
+                    },
+                    "input": 15780,
+                    "cached": 13824,
+                    "uncached": 1956,
+                    "output": 646,
+                    "reasoning": 395,
+                    "firstInput": 15780,
+                    "peakInput": 15780,
+                    "replySeconds": 7.324,
+                    "toolCalls": [],
+                    "usageSource": "product",
+                    "replyAt": "2026-10-27T16:17:19.998Z",
+                    "productUsage": {
+                      "completeness": "complete",
+                      "gaps": [],
+                      "totals": {
+                        "generations": 1,
+                        "inputTokens": 15780,
+                        "cachedInputTokens": 13824,
+                        "outputTokens": 646,
+                        "reasoningOutputTokens": 395
+                      }
+                    },
+                    "finalInterrupt": {
+                      "committedRoomSeq": 18,
+                      "requested": false,
+                      "accepted": "unknown",
+                      "terminal": "unknown",
+                      "sent": false,
+                      "preemptedFollowUp": "unknown"
+                    }
+                  },
+                  "runVerdict": [],
+                  "nativeMemoryPolicy": null
+                },
+                {
+                  "round": 3,
+                  "sessionId": "ses_e81d984bfffejjwevb8nOGdjUR",
+                  "metrics": {
+                    "generations": 1,
+                    "generationsTotal": 1,
+                    "generationsBeforeReply": 1,
+                    "generationsAfterReply": 0,
+                    "replyTimingEvidence": {
+                      "basis": "native-generation-timing",
+                      "knownBeforeReply": 1,
+                      "knownAfterReply": 0,
+                      "unresolved": 0
+                    },
+                    "input": 16569,
+                    "cached": 15744,
+                    "uncached": 825,
+                    "output": 556,
+                    "reasoning": 325,
+                    "firstInput": 16569,
+                    "peakInput": 16569,
+                    "replySeconds": 7.385,
+                    "toolCalls": [],
+                    "usageSource": "product",
+                    "replyAt": "2026-10-27T16:17:27.408Z",
+                    "productUsage": {
+                      "completeness": "complete",
+                      "gaps": [],
+                      "totals": {
+                        "generations": 1,
+                        "inputTokens": 16569,
+                        "cachedInputTokens": 15744,
+                        "outputTokens": 556,
+                        "reasoningOutputTokens": 325
+                      }
+                    },
+                    "finalInterrupt": {
+                      "committedRoomSeq": 27,
+                      "requested": false,
+                      "accepted": "unknown",
+                      "terminal": "unknown",
+                      "sent": false,
+                      "preemptedFollowUp": "unknown"
+                    }
+                  },
+                  "runVerdict": [],
+                  "nativeMemoryPolicy": null
+                }
+              ],
+              "rawUsageCheck": {
+                "totals": {
+                  "input": 55680,
+                  "cached": 39040,
+                  "output": 3193,
+                  "generations": 4
+                },
+                "matches": true,
+                "allThreePromptsPreserved": true
+              }
+            }
+          },
+          "inputRatio": 1.2172620348913472
+        }
+      ],
+      "totals": {
+        "native": {
+          "input": 140779,
+          "cached": 98304,
+          "uncached": 42475,
+          "output": 6955,
+          "generations": 12
+        },
+        "role-warm": {
+          "input": 167361,
+          "cached": 116608,
+          "uncached": 50753,
+          "output": 9909,
+          "generations": 12
+        }
+      },
+      "ratios": {
+        "input": 1.18882077582594,
+        "cached": 1.1861979166666667,
+        "uncached": 1.19489111241907,
+        "output": 1.4247304097771387,
+        "generations": 1.0
+      },
+      "pairedInputRange": [
+        1.1648342478042268,
+        1.2172620348913472
+      ]
+    },
+    "claude": {
+      "model": "sonnet",
+      "actualModelRoute": "kimi-code-cn/k3.1-pro[1m]",
+      "effort": "low",
+      "source": "08a94cd9676f22dc15850cecb85a0da5946ef163",
+      "finishedAt": "2026-10-27T16:40:39.807Z",
+      "pairs": [
+        {
+          "pair": 1,
+          "order": "native,role-warm",
+          "status": "over-budget",
+          "rawResult": "/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/rah-cli-efficiency-Y7Mz3K/result.json",
+          "rawSha256": "f0cb107361c80a8b7be0a6f7e2059634abf2c6d122b0d9cf885990742633c16e",
+          "arms": {
+            "native": {
+              "status": "complete",
+              "totals": {
+                "input": 52922,
+                "output": 1780,
+                "cached": 41728,
+                "uncached": 11194,
+                "generations": 4
+              },
+              "rawUsageCheck": {
+                "matches": true,
+                "batch": "claude-routefixed",
+                "rawSha256": "85676ba70bc14f3c383ed49a9f95e5c5ccdca6b4a7317ac5b146b60ca155f282",
+                "totals": {
+                  "generations": 4,
+                  "inputTokens": 52922,
+                  "cachedInputTokens": 41728,
+                  "outputTokens": 1780
+                },
+                "models": [
+                  "k3.1-pro"
+                ],
+                "efforts": [
+                  "low"
+                ],
+                "sidechainGenerations": 0
+              },
+              "rounds": [
+                {
+                  "round": 1,
+                  "sessionId": "a5313ece-789f-4f69-89c8-fb7b200b0717",
+                  "metrics": {
+                    "generations": 2,
+                    "generationsTotal": 2,
+                    "generationsBeforeReply": 2,
+                    "generationsAfterReply": 0,
+                    "input": 24186,
+                    "cached": 17664,
+                    "uncached": 6522,
+                    "output": 943,
+                    "reasoning": null,
+                    "firstInput": 10233,
+                    "peakInput": 13953,
+                    "replySeconds": 35.725,
+                    "toolCalls": [
+                      {
+                        "at": "2026-10-27T16:32:18.787Z",
+                        "name": "Read",
+                        "kind": "other"
+                      },
+                      {
+                        "at": "2026-10-27T16:32:18.791Z",
+                        "name": "Read",
+                        "kind": "other"
+                      }
+                    ]
+                  },
+                  "nativeMemoryPolicy": {
+                    "provider": "claude",
+                    "supported": true,
+                    "status": "enforced",
+                    "scope": "provider-native-auto-memory",
+                    "mechanism": "environment",
+                    "evidence": "spawn-configuration",
+                    "environment": {
+                      "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1"
+                    }
+                  }
+                },
+                {
+                  "round": 2,
+                  "sessionId": "a5313ece-789f-4f69-89c8-fb7b200b0717",
+                  "metrics": {
+                    "generations": 1,
+                    "generationsTotal": 1,
+                    "generationsBeforeReply": 1,
+                    "generationsAfterReply": 0,
+                    "input": 14244,
+                    "cached": 9984,
+                    "uncached": 4260,
+                    "output": 369,
+                    "reasoning": null,
+                    "firstInput": 14244,
+                    "peakInput": 14244,
+                    "replySeconds": 21.392,
+                    "toolCalls": []
+                  },
+                  "nativeMemoryPolicy": {
+                    "provider": "claude",
+                    "supported": true,
+                    "status": "enforced",
+                    "scope": "provider-native-auto-memory",
+                    "mechanism": "environment",
+                    "evidence": "spawn-configuration",
+                    "environment": {
+                      "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1"
+                    }
+                  }
+                },
+                {
+                  "round": 3,
+                  "sessionId": "a5313ece-789f-4f69-89c8-fb7b200b0717",
+                  "metrics": {
+                    "generations": 1,
+                    "generationsTotal": 1,
+                    "generationsBeforeReply": 1,
+                    "generationsAfterReply": 0,
+                    "input": 14492,
+                    "cached": 14080,
+                    "uncached": 412,
+                    "output": 468,
+                    "reasoning": null,
+                    "firstInput": 14492,
+                    "peakInput": 14492,
+                    "replySeconds": 19.914,
+                    "toolCalls": []
+                  },
+                  "nativeMemoryPolicy": {
+                    "provider": "claude",
+                    "supported": true,
+                    "status": "enforced",
+                    "scope": "provider-native-auto-memory",
+                    "mechanism": "environment",
+                    "evidence": "spawn-configuration",
+                    "environment": {
+                      "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1"
+                    }
+                  }
+                }
+              ]
+            },
+            "role-warm": {
+              "status": "complete",
+              "totals": {
+                "input": 57124,
+                "output": 2200,
+                "cached": 47104,
+                "uncached": 10020,
+                "generations": 4
+              },
+              "rawUsageCheck": {
+                "matches": true,
+                "batch": "claude-routefixed",
+                "rawSha256": "d285548a6b174ea8bd3034d6b3bfdd1f4348c9615ec605e41ffe58c766cc5b23",
+                "totals": {
+                  "generations": 4,
+                  "inputTokens": 57124,
+                  "cachedInputTokens": 47104,
+                  "outputTokens": 2200
+                },
+                "models": [
+                  "k3.1-pro"
+                ],
+                "efforts": [
+                  "low"
+                ],
+                "sidechainGenerations": 0
+              },
+              "rounds": [
+                {
+                  "round": 1,
+                  "sessionId": "ac43108f-b502-453d-84f5-fcd27b8aee1d",
+                  "metrics": {
+                    "generations": 2,
+                    "generationsTotal": 2,
+                    "generationsBeforeReply": 2,
+                    "generationsAfterReply": 0,
+                    "replyTimingEvidence": {
+                      "basis": "native-generation-timing",
+                      "knownBeforeReply": 2,
+                      "knownAfterReply": 0,
+                      "unresolved": 0
+                    },
+                    "input": 25276,
+                    "cached": 17152,
+                    "uncached": 8124,
+                    "output": 1174,
+                    "reasoning": null,
+                    "firstInput": 10766,
+                    "peakInput": 14510,
+                    "replySeconds": 42.857,
+                    "toolCalls": [
+                      {
+                        "at": "2026-10-27T16:33:44.350Z",
+                        "name": "Read",
+                        "kind": "other"
+                      },
+                      {
+                        "at": "2026-10-27T16:33:44.360Z",
+                        "name": "Read",
+                        "kind": "other"
+                      }
+                    ],
+                    "transcriptUsage": {
+                      "generations": 2,
+                      "inputTokens": 25276,
+                      "cachedInputTokens": 17152
+                    },
+                    "usageSource": "product",
+                    "replyAt": "2026-10-27T16:34:18.910Z",
+                    "productUsage": {
+                      "completeness": "complete",
+                      "gaps": [],
+                      "totals": {
+                        "generations": 2,
+                        "inputTokens": 25276,
+                        "cachedInputTokens": 17152,
+                        "outputTokens": 1174,
+                        "reasoningOutputTokens": null
+                      }
+                    },
+                    "finalInterrupt": {
+                      "committedRoomSeq": 9,
+                      "requested": false,
+                      "accepted": "unknown",
+                      "terminal": "unknown",
+                      "sent": false,
+                      "preemptedFollowUp": "unknown"
+                    }
+                  },
+                  "nativeMemoryPolicy": null
+                },
+                {
+                  "round": 2,
+                  "sessionId": "ac43108f-b502-453d-84f5-fcd27b8aee1d",
+                  "metrics": {
+                    "generations": 1,
+                    "generationsTotal": 1,
+                    "generationsBeforeReply": 1,
+                    "generationsAfterReply": 0,
+                    "replyTimingEvidence": {
+                      "basis": "native-generation-timing",
+                      "knownBeforeReply": 1,
+                      "knownAfterReply": 0,
+                      "unresolved": 0
+                    },
+                    "input": 15614,
+                    "cached": 14336,
+                    "uncached": 1278,
+                    "output": 468,
+                    "reasoning": null,
+                    "firstInput": 15614,
+                    "peakInput": 15614,
+                    "replySeconds": 21.992,
+                    "toolCalls": [],
+                    "transcriptUsage": {
+                      "generations": 1,
+                      "inputTokens": 15614,
+                      "cachedInputTokens": 14336
+                    },
+                    "usageSource": "product",
+                    "replyAt": "2026-10-27T16:34:40.940Z",
+                    "productUsage": {
+                      "completeness": "complete",
+                      "gaps": [],
+                      "totals": {
+                        "generations": 1,
+                        "inputTokens": 15614,
+                        "cachedInputTokens": 14336,
+                        "outputTokens": 468,
+                        "reasoningOutputTokens": null
+                      }
+                    },
+                    "finalInterrupt": {
+                      "committedRoomSeq": 18,
+                      "requested": false,
+                      "accepted": "unknown",
+                      "terminal": "unknown",
+                      "sent": false,
+                      "preemptedFollowUp": "unknown"
+                    }
+                  },
+                  "nativeMemoryPolicy": null
+                },
+                {
+                  "round": 3,
+                  "sessionId": "ac43108f-b502-453d-84f5-fcd27b8aee1d",
+                  "metrics": {
+                    "generations": 1,
+                    "generationsTotal": 1,
+                    "generationsBeforeReply": 1,
+                    "generationsAfterReply": 0,
+                    "replyTimingEvidence": {
+                      "basis": "native-generation-timing",
+                      "knownBeforeReply": 1,
+                      "knownAfterReply": 0,
+                      "unresolved": 0
+                    },
+                    "input": 16234,
+                    "cached": 15616,
+                    "uncached": 618,
+                    "output": 558,
+                    "reasoning": null,
+                    "firstInput": 16234,
+                    "peakInput": 16234,
+                    "replySeconds": 24.468,
+                    "toolCalls": [],
+                    "transcriptUsage": {
+                      "generations": 1,
+                      "inputTokens": 16234,
+                      "cachedInputTokens": 15616
+                    },
+                    "usageSource": "product",
+                    "replyAt": "2026-10-27T16:35:05.435Z",
+                    "productUsage": {
+                      "completeness": "complete",
+                      "gaps": [],
+                      "totals": {
+                        "generations": 1,
+                        "inputTokens": 16234,
+                        "cachedInputTokens": 15616,
+                        "outputTokens": 558,
+                        "reasoningOutputTokens": null
+                      }
+                    },
+                    "finalInterrupt": {
+                      "committedRoomSeq": 27,
+                      "requested": false,
+                      "accepted": "unknown",
+                      "terminal": "unknown",
+                      "sent": false,
+                      "preemptedFollowUp": "unknown"
+                    }
+                  },
+                  "nativeMemoryPolicy": null
+                }
+              ]
+            }
+          },
+          "inputRatio": 1.0793998715090132
+        },
+        {
+          "pair": 2,
+          "order": "role-warm,native",
+          "status": "needs-quality-review",
+          "rawResult": "/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/rah-cli-efficiency-BrMacy/result.json",
+          "rawSha256": "84c246d4bcffed2903a664acf49f16bdf3f9661a8d206832d689f68f182a2b1a",
+          "arms": {
+            "role-warm": {
+              "status": "complete",
+              "totals": {
+                "input": 56785,
+                "output": 1934,
+                "cached": 41728,
+                "uncached": 15057,
+                "generations": 4
+              },
+              "rawUsageCheck": {
+                "matches": true,
+                "batch": "claude-routefixed",
+                "rawSha256": "915a598ab003c5ceb5df68facbccfff80089d54e114952780875818343626ac7",
+                "totals": {
+                  "generations": 4,
+                  "inputTokens": 56785,
+                  "cachedInputTokens": 41728,
+                  "outputTokens": 1934
+                },
+                "models": [
+                  "k3.1-pro"
+                ],
+                "efforts": [
+                  "low"
+                ],
+                "sidechainGenerations": 0
+              },
+              "rounds": [
+                {
+                  "round": 1,
+                  "sessionId": "f8305e0c-24cd-4495-a0f5-b6ea2adc6501",
+                  "metrics": {
+                    "generations": 2,
+                    "generationsTotal": 2,
+                    "generationsBeforeReply": 2,
+                    "generationsAfterReply": 0,
+                    "replyTimingEvidence": {
+                      "basis": "native-generation-timing",
+                      "knownBeforeReply": 2,
+                      "knownAfterReply": 0,
+                      "unresolved": 0
+                    },
+                    "input": 25249,
+                    "cached": 12032,
+                    "uncached": 13217,
+                    "output": 1025,
+                    "reasoning": null,
+                    "firstInput": 10759,
+                    "peakInput": 14490,
+                    "replySeconds": 38.204,
+                    "toolCalls": [
+                      {
+                        "at": "2026-10-27T16:35:19.900Z",
+                        "name": "Read",
+                        "kind": "other"
+                      },
+                      {
+                        "at": "2026-10-27T16:35:19.906Z",
+                        "name": "Read",
+                        "kind": "other"
+                      }
+                    ],
+                    "transcriptUsage": {
+                      "generations": 2,
+                      "inputTokens": 25249,
+                      "cachedInputTokens": 12032
+                    },
+                    "usageSource": "product",
+                    "replyAt": "2026-10-27T16:35:50.927Z",
+                    "productUsage": {
+                      "completeness": "complete",
+                      "gaps": [],
+                      "totals": {
+                        "generations": 2,
+                        "inputTokens": 25249,
+                        "cachedInputTokens": 12032,
+                        "outputTokens": 1025,
+                        "reasoningOutputTokens": null
+                      }
+                    },
+                    "finalInterrupt": {
+                      "committedRoomSeq": 9,
+                      "requested": false,
+                      "accepted": "unknown",
+                      "terminal": "unknown",
+                      "sent": false,
+                      "preemptedFollowUp": "unknown"
+                    }
+                  },
+                  "nativeMemoryPolicy": null
+                },
+                {
+                  "round": 2,
+                  "sessionId": "f8305e0c-24cd-4495-a0f5-b6ea2adc6501",
+                  "metrics": {
+                    "generations": 1,
+                    "generationsTotal": 1,
+                    "generationsBeforeReply": 1,
+                    "generationsAfterReply": 0,
+                    "replyTimingEvidence": {
+                      "basis": "native-generation-timing",
+                      "knownBeforeReply": 1,
+                      "knownAfterReply": 0,
+                      "unresolved": 0
+                    },
+                    "input": 15457,
+                    "cached": 14336,
+                    "uncached": 1121,
+                    "output": 472,
+                    "reasoning": null,
+                    "firstInput": 15457,
+                    "peakInput": 15457,
+                    "replySeconds": 22.019,
+                    "toolCalls": [],
+                    "transcriptUsage": {
+                      "generations": 1,
+                      "inputTokens": 15457,
+                      "cachedInputTokens": 14336
+                    },
+                    "usageSource": "product",
+                    "replyAt": "2026-10-27T16:36:13.031Z",
+                    "productUsage": {
+                      "completeness": "complete",
+                      "gaps": [],
+                      "totals": {
+                        "generations": 1,
+                        "inputTokens": 15457,
+                        "cachedInputTokens": 14336,
+                        "outputTokens": 472,
+                        "reasoningOutputTokens": null
+                      }
+                    },
+                    "finalInterrupt": {
+                      "committedRoomSeq": 18,
+                      "requested": false,
+                      "accepted": "unknown",
+                      "terminal": "unknown",
+                      "sent": false,
+                      "preemptedFollowUp": "unknown"
+                    }
+                  },
+                  "nativeMemoryPolicy": null
+                },
+                {
+                  "round": 3,
+                  "sessionId": "f8305e0c-24cd-4495-a0f5-b6ea2adc6501",
+                  "metrics": {
+                    "generations": 1,
+                    "generationsTotal": 1,
+                    "generationsBeforeReply": 1,
+                    "generationsAfterReply": 0,
+                    "replyTimingEvidence": {
+                      "basis": "native-generation-timing",
+                      "knownBeforeReply": 1,
+                      "knownAfterReply": 0,
+                      "unresolved": 0
+                    },
+                    "input": 16079,
+                    "cached": 15360,
+                    "uncached": 719,
+                    "output": 437,
+                    "reasoning": null,
+                    "firstInput": 16079,
+                    "peakInput": 16079,
+                    "replySeconds": 18.251,
+                    "toolCalls": [],
+                    "transcriptUsage": {
+                      "generations": 1,
+                      "inputTokens": 16079,
+                      "cachedInputTokens": 15360
+                    },
+                    "usageSource": "product",
+                    "replyAt": "2026-10-27T16:36:31.387Z",
+                    "productUsage": {
+                      "completeness": "complete",
+                      "gaps": [],
+                      "totals": {
+                        "generations": 1,
+                        "inputTokens": 16079,
+                        "cachedInputTokens": 15360,
+                        "outputTokens": 437,
+                        "reasoningOutputTokens": null
+                      }
+                    },
+                    "finalInterrupt": {
+                      "committedRoomSeq": 27,
+                      "requested": false,
+                      "accepted": "unknown",
+                      "terminal": "unknown",
+                      "sent": false,
+                      "preemptedFollowUp": "unknown"
+                    }
+                  },
+                  "nativeMemoryPolicy": null
+                }
+              ]
+            },
+            "native": {
+              "status": "complete",
+              "totals": {
+                "input": 53004,
+                "output": 2078,
+                "cached": 41728,
+                "uncached": 11276,
+                "generations": 4
+              },
+              "rawUsageCheck": {
+                "matches": true,
+                "batch": "claude-routefixed",
+                "rawSha256": "c114c905c5acb25774347b6a71b954e908586ab08549c8554e96059154b68996",
+                "totals": {
+                  "generations": 4,
+                  "inputTokens": 53004,
+                  "cachedInputTokens": 41728,
+                  "outputTokens": 2078
+                },
+                "models": [
+                  "k3.1-pro"
+                ],
+                "efforts": [
+                  "low"
+                ],
+                "sidechainGenerations": 0
+              },
+              "rounds": [
+                {
+                  "round": 1,
+                  "sessionId": "2ebd6b1c-0f99-45d7-a2b9-f658d509e2a8",
+                  "metrics": {
+                    "generations": 2,
+                    "generationsTotal": 2,
+                    "generationsBeforeReply": 2,
+                    "generationsAfterReply": 0,
+                    "input": 24194,
+                    "cached": 17664,
+                    "uncached": 6530,
+                    "output": 1185,
+                    "reasoning": null,
+                    "firstInput": 10227,
+                    "peakInput": 13967,
+                    "replySeconds": 42.056,
+                    "toolCalls": [
+                      {
+                        "at": "2026-10-27T16:36:40.853Z",
+                        "name": "Read",
+                        "kind": "other"
+                      },
+                      {
+                        "at": "2026-10-27T16:36:40.858Z",
+                        "name": "Read",
+                        "kind": "other"
+                      }
+                    ]
+                  },
+                  "nativeMemoryPolicy": {
+                    "provider": "claude",
+                    "supported": true,
+                    "status": "enforced",
+                    "scope": "provider-native-auto-memory",
+                    "mechanism": "environment",
+                    "evidence": "spawn-configuration",
+                    "environment": {
+                      "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1"
+                    }
+                  }
+                },
+                {
+                  "round": 2,
+                  "sessionId": "2ebd6b1c-0f99-45d7-a2b9-f658d509e2a8",
+                  "metrics": {
+                    "generations": 1,
+                    "generationsTotal": 1,
+                    "generationsBeforeReply": 1,
+                    "generationsAfterReply": 0,
+                    "input": 14268,
+                    "cached": 9984,
+                    "uncached": 4284,
+                    "output": 501,
+                    "reasoning": null,
+                    "firstInput": 14268,
+                    "peakInput": 14268,
+                    "replySeconds": 24.545,
+                    "toolCalls": []
+                  },
+                  "nativeMemoryPolicy": {
+                    "provider": "claude",
+                    "supported": true,
+                    "status": "enforced",
+                    "scope": "provider-native-auto-memory",
+                    "mechanism": "environment",
+                    "evidence": "spawn-configuration",
+                    "environment": {
+                      "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1"
+                    }
+                  }
+                },
+                {
+                  "round": 3,
+                  "sessionId": "2ebd6b1c-0f99-45d7-a2b9-f658d509e2a8",
+                  "metrics": {
+                    "generations": 1,
+                    "generationsTotal": 1,
+                    "generationsBeforeReply": 1,
+                    "generationsAfterReply": 0,
+                    "input": 14542,
+                    "cached": 14080,
+                    "uncached": 462,
+                    "output": 392,
+                    "reasoning": null,
+                    "firstInput": 14542,
+                    "peakInput": 14542,
+                    "replySeconds": 18.934,
+                    "toolCalls": []
+                  },
+                  "nativeMemoryPolicy": {
+                    "provider": "claude",
+                    "supported": true,
+                    "status": "enforced",
+                    "scope": "provider-native-auto-memory",
+                    "mechanism": "environment",
+                    "evidence": "spawn-configuration",
+                    "environment": {
+                      "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "inputRatio": 1.0713342389253642
+        },
+        {
+          "pair": 3,
+          "order": "native,role-warm",
+          "status": "over-budget",
+          "rawResult": "/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/rah-cli-efficiency-2yMSQ1/result.json",
+          "rawSha256": "74365f17ca8fbd1f9240276937bea8a5962ef5d2f3977a52ecd535707ccb1703",
+          "arms": {
+            "native": {
+              "status": "complete",
+              "totals": {
+                "input": 52960,
+                "output": 1964,
+                "cached": 40704,
+                "uncached": 12256,
+                "generations": 4
+              },
+              "rawUsageCheck": {
+                "matches": true,
+                "batch": "claude-routefixed",
+                "rawSha256": "32bf1f60e3a2650791666eaad3a626b9a5fbc12da452bd1bda3e74337fbca2fb",
+                "totals": {
+                  "generations": 4,
+                  "inputTokens": 52960,
+                  "cachedInputTokens": 40704,
+                  "outputTokens": 1964
+                },
+                "models": [
+                  "k3.1-pro"
+                ],
+                "efforts": [
+                  "low"
+                ],
+                "sidechainGenerations": 0
+              },
+              "rounds": [
+                {
+                  "round": 1,
+                  "sessionId": "356f87b5-4bad-4c32-9f23-3975406a12b3",
+                  "metrics": {
+                    "generations": 2,
+                    "generationsTotal": 2,
+                    "generationsBeforeReply": 2,
+                    "generationsAfterReply": 0,
+                    "input": 24191,
+                    "cached": 16640,
+                    "uncached": 7551,
+                    "output": 918,
+                    "reasoning": null,
+                    "firstInput": 10236,
+                    "peakInput": 13955,
+                    "replySeconds": 29.803,
+                    "toolCalls": [
+                      {
+                        "at": "2026-10-27T16:38:06.832Z",
+                        "name": "Read",
+                        "kind": "other"
+                      },
+                      {
+                        "at": "2026-10-27T16:38:06.837Z",
+                        "name": "Read",
+                        "kind": "other"
+                      }
+                    ]
+                  },
+                  "nativeMemoryPolicy": {
+                    "provider": "claude",
+                    "supported": true,
+                    "status": "enforced",
+                    "scope": "provider-native-auto-memory",
+                    "mechanism": "environment",
+                    "evidence": "spawn-configuration",
+                    "environment": {
+                      "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1"
+                    }
+                  }
+                },
+                {
+                  "round": 2,
+                  "sessionId": "356f87b5-4bad-4c32-9f23-3975406a12b3",
+                  "metrics": {
+                    "generations": 1,
+                    "generationsTotal": 1,
+                    "generationsBeforeReply": 1,
+                    "generationsAfterReply": 0,
+                    "input": 14263,
+                    "cached": 9984,
+                    "uncached": 4279,
+                    "output": 555,
+                    "reasoning": null,
+                    "firstInput": 14263,
+                    "peakInput": 14263,
+                    "replySeconds": 21.464,
+                    "toolCalls": []
+                  },
+                  "nativeMemoryPolicy": {
+                    "provider": "claude",
+                    "supported": true,
+                    "status": "enforced",
+                    "scope": "provider-native-auto-memory",
+                    "mechanism": "environment",
+                    "evidence": "spawn-configuration",
+                    "environment": {
+                      "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1"
+                    }
+                  }
+                },
+                {
+                  "round": 3,
+                  "sessionId": "356f87b5-4bad-4c32-9f23-3975406a12b3",
+                  "metrics": {
+                    "generations": 1,
+                    "generationsTotal": 1,
+                    "generationsBeforeReply": 1,
+                    "generationsAfterReply": 0,
+                    "input": 14506,
+                    "cached": 14080,
+                    "uncached": 426,
+                    "output": 491,
+                    "reasoning": null,
+                    "firstInput": 14506,
+                    "peakInput": 14506,
+                    "replySeconds": 18.823,
+                    "toolCalls": []
+                  },
+                  "nativeMemoryPolicy": {
+                    "provider": "claude",
+                    "supported": true,
+                    "status": "enforced",
+                    "scope": "provider-native-auto-memory",
+                    "mechanism": "environment",
+                    "evidence": "spawn-configuration",
+                    "environment": {
+                      "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1"
+                    }
+                  }
+                }
+              ]
+            },
+            "role-warm": {
+              "status": "complete",
+              "totals": {
+                "input": 57007,
+                "output": 2087,
+                "cached": 46848,
+                "uncached": 10159,
+                "generations": 4
+              },
+              "rawUsageCheck": {
+                "matches": true,
+                "batch": "claude-routefixed",
+                "rawSha256": "d15aadaba96a9e3ebb0818df6bf3afe7e2e13738eefc50752712375656c41806",
+                "totals": {
+                  "generations": 4,
+                  "inputTokens": 57007,
+                  "cachedInputTokens": 46848,
+                  "outputTokens": 2087
+                },
+                "models": [
+                  "k3.1-pro"
+                ],
+                "efforts": [
+                  "low"
+                ],
+                "sidechainGenerations": 0
+              },
+              "rounds": [
+                {
+                  "round": 1,
+                  "sessionId": "b7a6b6a8-c3b1-4f51-afcc-0b52f06062b3",
+                  "metrics": {
+                    "generations": 2,
+                    "generationsTotal": 2,
+                    "generationsBeforeReply": 2,
+                    "generationsAfterReply": 0,
+                    "replyTimingEvidence": {
+                      "basis": "native-generation-timing",
+                      "knownBeforeReply": 2,
+                      "knownAfterReply": 0,
+                      "unresolved": 0
+                    },
+                    "input": 25239,
+                    "cached": 17152,
+                    "uncached": 8087,
+                    "output": 1092,
+                    "reasoning": null,
+                    "firstInput": 10754,
+                    "peakInput": 14485,
+                    "replySeconds": 44.132,
+                    "toolCalls": [
+                      {
+                        "at": "2026-10-27T16:39:28.655Z",
+                        "name": "Read",
+                        "kind": "other"
+                      },
+                      {
+                        "at": "2026-10-27T16:39:28.660Z",
+                        "name": "Read",
+                        "kind": "other"
+                      }
+                    ],
+                    "transcriptUsage": {
+                      "generations": 2,
+                      "inputTokens": 25239,
+                      "cachedInputTokens": 17152
+                    },
+                    "usageSource": "product",
+                    "replyAt": "2026-10-27T16:39:59.887Z",
+                    "productUsage": {
+                      "completeness": "complete",
+                      "gaps": [],
+                      "totals": {
+                        "generations": 2,
+                        "inputTokens": 25239,
+                        "cachedInputTokens": 17152,
+                        "outputTokens": 1092,
+                        "reasoningOutputTokens": null
+                      }
+                    },
+                    "finalInterrupt": {
+                      "committedRoomSeq": 9,
+                      "requested": false,
+                      "accepted": "unknown",
+                      "terminal": "unknown",
+                      "sent": false,
+                      "preemptedFollowUp": "unknown"
+                    }
+                  },
+                  "nativeMemoryPolicy": null
+                },
+                {
+                  "round": 2,
+                  "sessionId": "b7a6b6a8-c3b1-4f51-afcc-0b52f06062b3",
+                  "metrics": {
+                    "generations": 1,
+                    "generationsTotal": 1,
+                    "generationsBeforeReply": 1,
+                    "generationsAfterReply": 0,
+                    "replyTimingEvidence": {
+                      "basis": "native-generation-timing",
+                      "knownBeforeReply": 1,
+                      "knownAfterReply": 0,
+                      "unresolved": 0
+                    },
+                    "input": 15519,
+                    "cached": 14336,
+                    "uncached": 1183,
+                    "output": 579,
+                    "reasoning": null,
+                    "firstInput": 15519,
+                    "peakInput": 15519,
+                    "replySeconds": 21.94,
+                    "toolCalls": [],
+                    "transcriptUsage": {
+                      "generations": 1,
+                      "inputTokens": 15519,
+                      "cachedInputTokens": 14336
+                    },
+                    "usageSource": "product",
+                    "replyAt": "2026-10-27T16:40:21.923Z",
+                    "productUsage": {
+                      "completeness": "complete",
+                      "gaps": [],
+                      "totals": {
+                        "generations": 1,
+                        "inputTokens": 15519,
+                        "cachedInputTokens": 14336,
+                        "outputTokens": 579,
+                        "reasoningOutputTokens": null
+                      }
+                    },
+                    "finalInterrupt": {
+                      "committedRoomSeq": 18,
+                      "requested": false,
+                      "accepted": "unknown",
+                      "terminal": "unknown",
+                      "sent": false,
+                      "preemptedFollowUp": "unknown"
+                    }
+                  },
+                  "nativeMemoryPolicy": null
+                },
+                {
+                  "round": 3,
+                  "sessionId": "b7a6b6a8-c3b1-4f51-afcc-0b52f06062b3",
+                  "metrics": {
+                    "generations": 1,
+                    "generationsTotal": 1,
+                    "generationsBeforeReply": 1,
+                    "generationsAfterReply": 0,
+                    "replyTimingEvidence": {
+                      "basis": "native-generation-timing",
+                      "knownBeforeReply": 1,
+                      "knownAfterReply": 0,
+                      "unresolved": 0
+                    },
+                    "input": 16249,
+                    "cached": 15360,
+                    "uncached": 889,
+                    "output": 416,
+                    "reasoning": null,
+                    "firstInput": 16249,
+                    "peakInput": 16249,
+                    "replySeconds": 17.2,
+                    "toolCalls": [],
+                    "transcriptUsage": {
+                      "generations": 1,
+                      "inputTokens": 16249,
+                      "cachedInputTokens": 15360
+                    },
+                    "usageSource": "product",
+                    "replyAt": "2026-10-27T16:40:39.196Z",
+                    "productUsage": {
+                      "completeness": "complete",
+                      "gaps": [],
+                      "totals": {
+                        "generations": 1,
+                        "inputTokens": 16249,
+                        "cachedInputTokens": 15360,
+                        "outputTokens": 416,
+                        "reasoningOutputTokens": null
+                      }
+                    },
+                    "finalInterrupt": {
+                      "committedRoomSeq": 27,
+                      "requested": false,
+                      "accepted": "unknown",
+                      "terminal": "unknown",
+                      "sent": false,
+                      "preemptedFollowUp": "unknown"
+                    }
+                  },
+                  "nativeMemoryPolicy": null
+                }
+              ]
+            }
+          },
+          "inputRatio": 1.076416163141994
+        }
+      ],
+      "totals": {
+        "native": {
+          "input": 158886,
+          "output": 5822,
+          "cached": 124160,
+          "uncached": 34726,
+          "generations": 12
+        },
+        "role-warm": {
+          "input": 170916,
+          "output": 6221,
+          "cached": 135680,
+          "uncached": 35236,
+          "generations": 12
+        }
+      },
+      "ratios": {
+        "input": 1.0757146633435293,
+        "output": 1.0685331501202335,
+        "cached": 1.092783505154639,
+        "uncached": 1.0146864021194495,
+        "generations": 1.0
+      },
+      "pairedInputRange": [
+        1.0713342389253642,
+        1.0793998715090132
+      ]
+    },
+    "pi": {
+      "model": "magpie/kimi-code-cn/k3.1-pro",
+      "effort": "low",
+      "source": "08a94cd9676f22dc15850cecb85a0da5946ef163",
+      "finishedAt": "2026-10-27T16:39:56.831Z",
+      "scope": "3 paired samples x 3 rounds; isolated matching memory/extension policy; existing Pi native-final trial explicitly enabled; not default deployment",
+      "memoryPolicy": {
+        "extensions": false,
+        "skills": false,
+        "contextFiles": false,
+        "mcp": false,
+        "promptTemplates": false,
+        "cacheWarming": "off",
+        "normalSessionHistory": true
+      },
+      "rawResult": "/Users/sun/.loom/reviews/2026-10-27-postfix-cost/pi-paid/result.json",
+      "rawSha256": "9b642c2ef582d9d9e7d44dce298c8d3768ff9f5410f49bc14d7ef6b47228f17d",
+      "pairs": [
+        {
+          "pair": 1,
+          "order": [
+            "native",
+            "loom"
+          ],
+          "inputRatio": 0.6896532422826117,
+          "arms": {
+            "native": {
+              "status": "complete",
+              "usage": {
+                "sessionId": "01a17e35-a57e-759d-a0f6-693d7892abbd",
+                "calls": 3,
+                "gaps": [],
+                "totals": {
+                  "input": 35731,
+                  "output": 1513,
+                  "cached": 26368,
+                  "generations": 5
+                }
+              },
+              "daemonExit": null,
+              "rawCaptureHashes": {
+                "06d7d11c-84a0-4fec-9d7b-7c40933215e2.stdout": "f194d18a7f909823d3ade4cdc8fc9c1dbdf2c2658eb99f01b19eed4c4e32856b",
+                "81e2902e-8bee-4f2c-8d86-ac05033ca3b9.stdout": "715dcfb8d2fde4842da2aade822e9f01431ae00690c18592d916b49a021787dc",
+                "99646e26-bc5c-4f06-8110-f8770b6fe759.stdout": "33ff1c38894062c2c77c42d1b73b40a38fbfbe18069205ae30fe79e8e714c526"
+              }
+            },
+            "loom": {
+              "status": "complete",
+              "usage": {
+                "sessionId": "01a17e36-8c25-762e-990c-5d3fff98cc31",
+                "calls": 3,
+                "gaps": [],
+                "totals": {
+                  "input": 24642,
+                  "output": 1524,
+                  "cached": 17920,
+                  "generations": 4
+                }
+              },
+              "daemonExit": {
+                "code": 0,
+                "signal": null
+              },
+              "rawCaptureHashes": {
+                "462cb52b-ca98-49af-84b1-7619e1987315.stdout": "1dad9b34096e90f8dfed110941c5b4c5d2d8f6c6f31fddce484774e7ec2b72f0",
+                "df225d9d-2fe6-4f8c-a632-df1213afc650.stdout": "6d089e9270c05b3e96119a265181840462441e2f86e5a324b52337b3e09cc2c9",
+                "8e91dfa3-def1-4d23-ae48-364291a854e1.stdout": "c43da62ee41bd066463be6b1ada7a0176f0c9367bf856d122ed6a61190a2704b",
+                "4b234faf-c959-4b3e-a226-0acc506b6c6b.stdout": "0795b14fcdffe0569c6c0689475a8ae8932dddfc839de33b470db41c42cea050"
+              },
+              "productUsageMatches": true
+            }
+          }
+        },
+        {
+          "pair": 2,
+          "order": [
+            "loom",
+            "native"
+          ],
+          "inputRatio": 1.2069071416606176,
+          "arms": {
+            "loom": {
+              "status": "complete",
+              "usage": {
+                "sessionId": "01a17e37-5ffb-7562-81d7-ea54df232b14",
+                "calls": 3,
+                "gaps": [],
+                "totals": {
+                  "input": 43229,
+                  "output": 1328,
+                  "cached": 32000,
+                  "generations": 5
+                }
+              },
+              "daemonExit": {
+                "code": 0,
+                "signal": null
+              },
+              "rawCaptureHashes": {
+                "f79ad9b6-1f12-4ef9-819a-954e15b49b06.stdout": "2e83a09bc6089df9d15cee6d3eae0edb99b1b0a71e2287fe5248cf47c7896a3d",
+                "5a29a5b1-09cd-4ed9-9688-1749d607f648.stdout": "8a9c3532e12353944b3f449fb72d75c91d015f4a20d1dda292e02d0c23375ebd",
+                "54d2ecb4-e355-4fd5-bbb2-d0e31ff4075b.stdout": "03b63b3cbd1d31b5146422d606c376cce356078308f85d206c30a629c8d2d2eb",
+                "abe93dd6-308d-4b69-978d-88f459d65d7a.stdout": "142b0c85df4896dd2cad5895e172105846cb477a04fc3454346cb3e0fb6c6c34"
+              },
+              "productUsageMatches": true
+            },
+            "native": {
+              "status": "complete",
+              "usage": {
+                "sessionId": "01a17e38-2cf8-7205-bfb4-ad9943d41662",
+                "calls": 3,
+                "gaps": [],
+                "totals": {
+                  "input": 35818,
+                  "output": 1643,
+                  "cached": 26112,
+                  "generations": 5
+                }
+              },
+              "daemonExit": null,
+              "rawCaptureHashes": {
+                "96ea0601-d1ea-4ee5-bc65-d1df12fe2bd5.stdout": "10a603e156414dff558ed2570a011be368f63864e2cd4d71108b579e6531cc2d",
+                "bb446f38-d760-4b76-8cf1-f619acd670b9.stdout": "0c234dff68ed39e830dbc31f36439ce38826fdb72e74f6fefba723b0759d0bcc",
+                "2ccae58c-c708-4b88-9af0-48d89c6bd595.stdout": "15c57c73ede20c95f0aabc4f2b6bd0a26c5e4b91f80cf1f3141c7eb6183408bf"
+              }
+            }
+          }
+        },
+        {
+          "pair": 3,
+          "order": [
+            "native",
+            "loom"
+          ],
+          "inputRatio": 1.2305181099259843,
+          "arms": {
+            "native": {
+              "status": "complete",
+              "usage": {
+                "sessionId": "01a17e39-448c-7556-989c-b7bd8e11da42",
+                "calls": 3,
+                "gaps": [],
+                "totals": {
+                  "input": 35533,
+                  "output": 1706,
+                  "cached": 26112,
+                  "generations": 5
+                }
+              },
+              "daemonExit": null,
+              "rawCaptureHashes": {
+                "3fdb560c-f09e-4b87-acc7-115df842fe95.stdout": "fbc0dfe129ffc4fedee72e0daeed57b9a8622ae362c59f7c6b3f3caf951446de",
+                "fffc252c-b15d-423b-a2a6-de08e69699e8.stdout": "154963d0c40c4990df0e7765ef8e3dd9150df828a4f64e76390698ec343576a0",
+                "6a56dcde-1e04-4c41-83da-919f7b112ba7.stdout": "3f54fb4c4be34f61976a7d6580860e0752418e642335e947aaa7b311dc5cc287"
+              }
+            },
+            "loom": {
+              "status": "complete",
+              "usage": {
+                "sessionId": "01a17e3a-c0c8-77e4-a446-493b59ed0a62",
+                "calls": 3,
+                "gaps": [],
+                "totals": {
+                  "input": 43724,
+                  "output": 1360,
+                  "cached": 32768,
+                  "generations": 5
+                }
+              },
+              "daemonExit": {
+                "code": 0,
+                "signal": null
+              },
+              "rawCaptureHashes": {
+                "f3131385-3fd3-47eb-a638-bc1d47a53a9a.stdout": "94deae38bf9d9ff55661a4fce231ce14d85aab017bb29bd16b53ccd4ad2be549",
+                "3a6a9b68-1554-4fda-b2d4-1f2b5dc1e8c4.stdout": "b89820c3cc5ce72299c0af358ad9b01d35b0f9583221e0f0748778b898ff7623",
+                "a06e7d49-4d90-4354-94a0-908b2bd9066c.stdout": "409117a39d827b15890dc24b2c14144567d10e107284fa3f69db3396f81a901a",
+                "2f44a923-a7d3-4783-ac6b-efdd5fe06333.stdout": "0f008ff496e54315a6e0cfca2d76af69a75854bca9c8efabf358677f5fea5c70"
+              },
+              "productUsageMatches": true
+            }
+          }
+        }
+      ],
+      "totals": {
+        "native": {
+          "input": 107082,
+          "output": 4862,
+          "cached": 78592,
+          "generations": 15
+        },
+        "loom": {
+          "input": 111595,
+          "output": 4212,
+          "cached": 82688,
+          "generations": 14
+        }
+      },
+      "ratios": {
+        "input": 1.0421452718477429,
+        "output": 0.8663101604278075,
+        "cached": 1.0521172638436482,
+        "generations": 0.9333333333333333
+      },
+      "pairedInputRange": [
+        0.6896532422826117,
+        1.2305181099259843
+      ]
+    }
+  },
+  "entryFailures": [
+    {
+      "provider": "codex",
+      "rawResult": "/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/rah-cli-efficiency-7jFRko/result.json",
+      "source": "f7773b0d1f0ae2b44deee968e6fc992a1ac411b0",
+      "status": "failed",
+      "knownMeasuredTotals": {
+        "input": 52639,
+        "output": 822
+      },
+      "zeroIsNotBillingProof": true
+    },
+    {
+      "provider": "kimi",
+      "rawResult": "/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/rah-cli-efficiency-B3AxMx/result.json",
+      "source": "f7773b0d1f0ae2b44deee968e6fc992a1ac411b0",
+      "status": "failed",
+      "knownMeasuredTotals": {
+        "input": 0,
+        "output": 0
+      },
+      "zeroIsNotBillingProof": true
+    },
+    {
+      "provider": "claude",
+      "batch": "claude-corrected",
+      "source": "ab9431738a2a78f91cc1b59a5413fd04131020ce",
+      "rawResult": "/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/rah-cli-efficiency-qvll9l/result.json",
+      "transcripts": [
+        {
+          "batch": "claude-corrected",
+          "rawSha256": "1ebe7ad2fdde5a5f11284e4b1f1bca460dcb16ced59415129dc3201f2f0c5b75",
+          "totals": {
+            "generations": 4,
+            "inputTokens": 53014,
+            "cachedInputTokens": 40704,
+            "outputTokens": 1619
+          },
+          "models": [
+            "k3.1-pro"
+          ],
+          "efforts": [
+            "low"
+          ],
+          "sidechainGenerations": 0
+        }
+      ],
+      "knownMeasuredTotals": {
+        "input": 53014,
+        "output": 1619
+      },
+      "completeBilling": false
+    },
+    {
+      "provider": "claude",
+      "batch": "claude-tierfixed",
+      "source": "a195d7994503bb9931269ce196f6651f2d15f7bb",
+      "rawResult": "/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/rah-cli-efficiency-zZ9uch/result.json",
+      "transcripts": [
+        {
+          "batch": "claude-tierfixed",
+          "rawSha256": "c018f50ccb702027c99d3b88596846cbde6df77eebc056857faaed8e9558170f",
+          "totals": {
+            "generations": 3,
+            "inputTokens": 33844,
+            "cachedInputTokens": 24064,
+            "outputTokens": 606
+          },
+          "models": [
+            "k3.1-pro"
+          ],
+          "efforts": [
+            "low"
+          ],
+          "sidechainGenerations": 0
+        },
+        {
+          "batch": "claude-tierfixed",
+          "rawSha256": "ad4e2779c4066ba501da20468f91f9b247e60115a842e61333991d05d7687e43",
+          "totals": {
+            "generations": 4,
+            "inputTokens": 52953,
+            "cachedInputTokens": 41728,
+            "outputTokens": 2065
+          },
+          "models": [
+            "k3.1-pro"
+          ],
+          "efforts": [
+            "low"
+          ],
+          "sidechainGenerations": 0
+        }
+      ],
+      "knownMeasuredTotals": {
+        "input": 86797,
+        "output": 2671
+      },
+      "completeBilling": false
+    }
+  ],
+  "limitations": [
+    "Only one exact model per completed CLI; do not generalize across models.",
+    "Ratios include cached input; not invoice multipliers.",
+    "Quality runner is effective-answer check, not independent full quality acceptance.",
+    "Global CLI configuration and shared provider caches remain inherited; order alternates but cache states not reset.",
+    "Normal conversation history retained; platform memory is not proven disabled; fresh task instructs no memory writes.",
+    "No full descendant/invisible auxiliary billing claim; known coverage gaps retained."
+  ],
+  "kimiRecoveredUsage": [
+    {
+      "round": 1,
+      "requestCoverage": {
+        "status": "incomplete",
+        "requests": 4,
+        "matchedRequests": 3,
+        "unreportedRequests": 1,
+        "unmatchedUsageRecords": 0
+      },
+      "generations": [
+        {
+          "responseId": "chatcmpl-cyRnLLNSyJSGody1xwJVcK9f",
+          "inputTokens": 21990,
+          "cachedInputTokens": 11264,
+          "outputTokens": 102,
+          "reasoningOutputTokens": null,
+          "observedAt": "2026-10-27T16:09:37.678Z",
+          "startedAt": "2026-10-27T16:09:30.632Z"
+        },
+        {
+          "responseId": "chatcmpl-qNK6mjg6TERTXfC7WVRfd615",
+          "inputTokens": 25683,
+          "cachedInputTokens": 21760,
+          "outputTokens": 775,
+          "reasoningOutputTokens": null,
+          "observedAt": "2026-10-27T16:10:01.928Z",
+          "startedAt": "2026-10-27T16:09:37.681Z"
+        },
+        {
+          "responseId": "chatcmpl-957Uhey7T6cCn2TErRUX7Vxm",
+          "inputTokens": 26564,
+          "cachedInputTokens": 25600,
+          "outputTokens": 484,
+          "reasoningOutputTokens": null,
+          "observedAt": "2026-10-27T16:10:11.080Z",
+          "startedAt": "2026-10-27T16:10:01.931Z"
+        }
+      ],
+      "requests": [
+        {
+          "kind": "loop",
+          "modelAlias": "kimi-code/k3-256k",
+          "thinkingEffort": "low"
+        },
+        {
+          "kind": "loop",
+          "modelAlias": "kimi-code/k3-256k",
+          "thinkingEffort": "low"
+        },
+        {
+          "kind": "loop",
+          "modelAlias": "kimi-code/k3-256k",
+          "thinkingEffort": "low"
+        },
+        {
+          "kind": "loop",
+          "modelAlias": "kimi-code/k3-256k",
+          "thinkingEffort": "low"
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "requestCoverage": {
+        "status": "incomplete",
+        "requests": 2,
+        "matchedRequests": 1,
+        "unreportedRequests": 1,
+        "unmatchedUsageRecords": 0
+      },
+      "generations": [
+        {
+          "responseId": "chatcmpl-6qmyHfJovXooaqxvz6msBbSi",
+          "inputTokens": 27371,
+          "cachedInputTokens": 26880,
+          "outputTokens": 336,
+          "reasoningOutputTokens": null,
+          "observedAt": "2026-10-27T16:10:28.775Z",
+          "startedAt": "2026-10-27T16:10:17.067Z"
+        }
+      ],
+      "requests": [
+        {
+          "kind": "loop",
+          "modelAlias": "kimi-code/k3-256k",
+          "thinkingEffort": "low"
+        },
+        {
+          "kind": "loop",
+          "modelAlias": "kimi-code/k3-256k",
+          "thinkingEffort": "low"
+        }
+      ]
+    }
+  ],
+  "remaining": {
+    "kimi": "Failed second Loom run after reply: did not exit within 5000ms after EOF. Two requests lack terminal usage; no reliable full ratio.",
+    "agy": "1.4.8 automatic memory disablement unverified; no paid comparison."
+  },
+  "qualityNotes": [
+    "All completed arms produced task-related review responses, but acceptance/rejection judgments vary. Some responses require unrequested integrity protection; no independent full quality pass is asserted.",
+    "Old gate statuses retained: Codex all over-budget; OpenCode and Claude include latency over-budget and needs-quality-review. Descriptive aggregate ratios do not override these."
+  ],
+  "harnessHashes": {
+    "run-corrected.mjs": "2399cf127ae7879984fc1daae16570c5c3020c3bbf44bd75900f2d89ae044361",
+    "run-opencode.mjs": "97cecbdfe0f6af7db29b1cbdfba9430591c7445a7e169c93fdb73d9ea70b7d38",
+    "run-claude-routefixed.mjs": "4f640b8e3fb977e7108906dd42da7e2a6dffb95f448f1092307148181265f672",
+    "pi-batch.mjs": "7cb2c32e1d3df618a05e6ed98a79a648ea0cd8655b9754fdfdf3918d636cd8a9",
+    "pi-wrapper.mjs": "b2d80c8e83642ac521f1018ee01efac29be0affc0756dc81dac701022a331844",
+    "pi-full-free-verified.mjs": "7473a86cfe712015222db746499a660932b7d555cb4269dc8dc13cd1b1691416",
+    "summarize.py": "c709892da75b82d82efede4090239f7d63c580d446fbe9d9854f6bf0564deba4",
+    "claude-ledger.mjs": "287d5aed46dbb3db0fb7ab5abe7c4ce7ec24f1e6bb0a34dcb7225184988e8851"
+  },
+  "freePiEvidence": {
+    "passed": true,
+    "requests": 2,
+    "paid": false,
+    "version": "1.4.0",
+    "sameSession": true,
+    "productParser": true
+  },
+  "freePiWholePair": "pi-free-full-verified/result.json: native3 + Loom3, 6 requests, exact product/native accounting passed."
+}

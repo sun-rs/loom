@@ -7,6 +7,7 @@ import {
 
 test("admits exactly the owner-approved provider/model/effort combinations", () => {
   const admitted = [
+    ["pi", "magpie/kimi-code-cn/k3.1-pro", "low"],
     ["pi", "aihubmix/deepseek-v4.1-flash", "low"],
     ["codex", "gpt-6-sol", "low"],
     ["codex", "gpt-6-astra", "low"],
@@ -32,6 +33,7 @@ test("admits exactly the owner-approved provider/model/effort combinations", () 
 
 test("rejects every combination outside the table before any paid call", () => {
   const rejected = [
+    ["pi", "magpie/kimi-code-cn/k3.1-pro", "high"],
     ["pi", "aihubmix/deepseek-v4.1-flash", "high"],
     ["pi", "deepseek/deepseek-flash", "low"],
     ["codex", "gpt-6.1-sol", "low"],

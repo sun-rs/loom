@@ -52,7 +52,9 @@ Owner随后授权正确开场复验：7 Run完成设计→实施→审查拒绝�
 
 没有因本次整理新增产品阻断或重新开启历史验收。新的能力改造顺序是[文章/Cindy研究](article-cindy-adoption-review.zh-CN.md)中的：复用完整任务验收汇总 → 离线无效消耗诊断 → 有证据再精简交接输入。第一步已落地[离线报告入口](task-outcome-report.zh-CN.md)：重放旧三对团队批与 AGY 恢复审查，保留失败/人工介入/未知计量，复用已有算术；未重新运行真实模型或补判验收。第二步已增加[原流离线诊断](runtime-diagnostics.zh-CN.md)，旧 Pi 批9份stdout哈希匹配，仅1次压缩且post为估计值，未建立无效压缩/不必要重试根因。没有证据支持继续改prompt或运行时；不新增调度框架、自动换session、静默记忆生成或收益数字。
 
-成功批后续只读诊断确认：Codex三次新回复遗漏final后修正、两次原生wait超时（违反本批指令）；业务交付通过不等于工具首试和指令遵循通过。Claude重读发生在代码修正前后，非无效重读证据。共用MCP参数错误指引已修复并重启部署，13项针对性测试及类型检查通过；非法调用不转发、不回显输入、不默认final。后续共用MCP指引已补频道交接结束本轮、原生等待仅适用于自身子代理的区分，8项测试及类型检查通过并安全重启；没有新付费复验，不宣称模型行为已根除或节省比例。见[修复边界](evidence/2026-10-27-peer-wait-guidance/README.md)；不据此重构上下文或扩大付费实验。见[诊断](evidence/2026-10-27-handoff-diagnostics/README.md)。
+成功批后续只读诊断确认：Codex三次新回复遗漏final后修正、两次原生wait超时（违反本批指令）；业务交付通过不等于工具首试和指令遵循通过。Claude重读发生在代码修正前后，非无效重读证据。共用MCP参数错误指引已修复并重启部署，13项针对性测试及类型检查通过；非法调用不转发、不回显输入、不默认final。后续共用MCP指引已补频道交接结束本轮、原生等待仅适用于自身子代理的区分，8项测试及类型检查通过并安全重启；修复当时没有新付费复验，不宣称模型行为已根除或节省比例；后继对照见下文。见[修复边界](evidence/2026-10-27-peer-wait-guidance/README.md)；不据此重构上下文或扩大付费实验。见[诊断](evidence/2026-10-27-handoff-diagnostics/README.md)。
+
+Owner 后续授权修复后原生对照：Codex、OpenCode、Claude CLI/Kimi、Pi/Kimi各3组×双臂3轮，输入总和比依次3.611、1.189、1.076、1.042。Codex三组均高、11次缺final参数拒绝，错误指引未根除重试；Kimi第二轮EOF退出失败且有缺usage请求，不给完整倍率；AGY自动记忆禁用仍未证实，不发起不公平对照。四家用量已与原生账本核验，非长任务/质量/全部门禁通过。Pi明确为native-final试验、两臂扩展隔离与cacheWarming关闭，非日常默认配置。测试保护器版本/服务层参数/Claude路由传递缺陷及先前费用保留，本次不改部署。见[重复短任务报告](evidence/2026-10-28-postfix-cost/README.md)。
 
 文档与退役引用整理见[清理记录](../audits/2026-10-27-repository-cleanup.zh-CN.md)；后继报告工具的检查与重放见[证据](evidence/2026-10-27-task-outcome-report/README.md)。
 
