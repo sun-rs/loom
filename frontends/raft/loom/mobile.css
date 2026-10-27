@@ -245,6 +245,15 @@
     gap: 12px;
   }
 
+  [data-testid="loom-message-timeline"] [data-slot="message-item"] {
+    column-gap: 6px;
+    padding-inline: 2px;
+  }
+}
+
+/* Loom exception: short windows reuse the existing empty-editor disclosure.
+ * 600px is the retained official short-header breakpoint. No font/nav changes. */
+@media (max-width: 767px), (pointer: coarse), (max-height: 600px) {
   [data-loom-composer-shell] {
     padding: 4px 8px calc(env(safe-area-inset-bottom, 0px) + 4px);
   }
@@ -333,11 +342,6 @@
     height: 40px !important;
     max-height: 40px;
     overflow: hidden;
-  }
-
-  [data-testid="loom-message-timeline"] [data-slot="message-item"] {
-    column-gap: 6px;
-    padding-inline: 2px;
   }
 }
 
