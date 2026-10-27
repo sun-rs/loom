@@ -8,14 +8,18 @@ export const NATIVE_MEMORY_VERSION_AUDITS = Object.freeze({
       "installed-bundle-sha256:2563a338c94868a34e1bfd2e5579067d5a472acf4cb0bf350a3bfe1092bbe59d",
   }),
   opencode: Object.freeze({
-    version: "1.18.35",
-    sourceRevision: "53d1eabb61e21162157817bf677da0a4ad3332e3",
+    version: "1.19.4",
+    sourceRevision: "148842ef7cb1bc34192b3fff57d0f9721ab9c801",
   }),
 });
 // Historical exact-version evidence remains verifiable; this is not a semver range.
 const PREVIOUS_KIMI_AUDIT = Object.freeze({
   version: "0.39.1",
   sourceRevision: "5efca0c3116743855c28426000073bfe34a4862f",
+});
+const OPENCODE_11835_AUDIT = Object.freeze({
+  version: "1.18.35",
+  sourceRevision: "53d1eabb61e21162157817bf677da0a4ad3332e3",
 });
 const PREVIOUS_OPENCODE_AUDIT = Object.freeze({
   version: "1.18.32",
@@ -26,6 +30,8 @@ export function nativeMemoryAuditForVersion(provider, version) {
   if (current?.version === version) return current;
   if (provider === "kimi" && version === PREVIOUS_KIMI_AUDIT.version)
     return PREVIOUS_KIMI_AUDIT;
+  if (provider === "opencode" && version === OPENCODE_11835_AUDIT.version)
+    return OPENCODE_11835_AUDIT;
   if (provider === "opencode" && version === PREVIOUS_OPENCODE_AUDIT.version)
     return PREVIOUS_OPENCODE_AUDIT;
 }

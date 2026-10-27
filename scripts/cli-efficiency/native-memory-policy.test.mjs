@@ -233,6 +233,7 @@ test("audited native versions are not-applicable, never falsely memory-off, and 
       ["kimi", "2.1.1"],
       ["opencode", "1.18.32"],
       ["opencode", "1.18.35"],
+      ["opencode", "1.19.4"],
     ]) {
       const executable = join(dir, provider);
       writeFileSync(
@@ -268,9 +269,11 @@ test("audited native versions are not-applicable, never falsely memory-off, and 
         if (provider === "opencode")
           assert.equal(
             evidence.sourceRevision,
-            version === "1.18.35"
-              ? "53d1eabb61e21162157817bf677da0a4ad3332e3"
-              : "545f51d26cc39a907d2867492d498d9607ea5fa4",
+            version === "1.19.4"
+              ? "148842ef7cb1bc34192b3fff57d0f9721ab9c801"
+              : version === "1.18.35"
+                ? "53d1eabb61e21162157817bf677da0a4ad3332e3"
+                : "545f51d26cc39a907d2867492d498d9607ea5fa4",
           );
         assert.equal(JSON.stringify(evidence).includes("private-value"), false);
         if (provider === "opencode") {
