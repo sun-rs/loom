@@ -977,3 +977,7 @@ Owner 要求继续试 Kimi K3.1 Pro 并比较 OpenCode/Pi。使用现有 OpenCod
 - 新增 5 个 Run，5 个 Activation completed。Codex 实际读取产物、执行10项测试通过，最终回复没有 @；Kernel replyReturn 精确关联 AGY 请求，自动唤醒原 AGY，后者收尾后没有再次派送。原生 session ID 和源码/测试 hash 未变。
 - 已记录合计：145,018 输入（其中107,347缓存读取）、633输出、9次模型生成。其中恢复准备44,537/16,000缓存/42输出；三轮复审交接100,481/91,347缓存/591输出。不同统计维度不相加，缓存已包含在输入内；没有账单或原生对照，不计算成本倍率。
 - Codex 采用现有 Worker MCP loom_reply(final=true)，AGY采用Host native-final。只判本批有限复审/无 @ 自动返回通过；先前设置错误和中止继续留账，不声称最初开发全程无人干预完成。见[报告](evidence/2026-10-27-agy-closeout/README.md)和[逐步证据](evidence/2026-10-27-agy-closeout/summary.json)。
+
+## 2026-10-27 AGY Fork 核实中的失败原生探针
+
+Owner 要求核实并完成 Fork/Side。本批交互式 /fork 实际复制成功，但发生两次非预期普通生成：Escape 与 /fork 连发吞掉斜杠，原验收 session 在 TUI 默认 Gemini 4 Argon Medium 下回复一次（未锁定预期模型，非合格 gate）；随后原生子会话显式 Gemini 3.8 Flash Low 的 --prompt-interactive /fork 仍作为普通输入生成一次。均未经 Loom 发布。逐轮消耗未知，不能写为零；没有回滚原生历史、没有开放产品能力。两探针已退出。见[完整记录](evidence/2026-10-27-agy-fork-feasibility/README.md)。
