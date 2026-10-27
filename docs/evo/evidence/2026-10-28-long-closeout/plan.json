@@ -135,5 +135,11 @@
   "accounting": "Independent native ledger reconciliation required before publishing total ratios; no substitution, no failure exclusion; cached input included. Limits checked between rounds; inflight overshoot retained.",
   "quality": "Use existing workload rubric. Independently read stage9 defect finding and stage12 final artifact for each arm; assess final handoff correctness, safe fix, regression proposals and proof limits. Intermediate rounds retain text for review; word-count compliance separately measured. This is targeted deliverable review, not exhaustive sentence-level review.",
   "latency": "Different CLI batches run concurrently on same host; latency descriptive. Existing Kimi role gate restarts daemon before round3 while preserving native session; not a pure zero-restart timing comparison.",
-  "team": "Live Herdr comparison not admitted: current session has no HERDR_ENV=1; do not operate external user session or impersonate Herdr using scripted relay."
+  "team": "Live Herdr comparison not admitted: current session has no HERDR_ENV=1; do not operate external user session or impersonate Herdr using scripted relay.",
+  "teamEnvironmentCorrection": {
+    "previousAssessmentWrong": true,
+    "evidence": "herdr status and agent list show server0.9.1 and repository pane wA:p2; herdr agent read wA:p2 shows current assistant tool commands",
+    "cause": "Tool process is a descendant of detached Codex app-server without HERDR context environment; this does not identify the owning TUI pane",
+    "effect": "Original non-admission rationale withdrawn; no team run is retroactively claimed. Original plan team field retained as historical mistaken assessment."
+  }
 }

@@ -794,3 +794,14 @@ approved coarse landscape primary-channel exception consolidates the global
 upstream parity claim. Its scope and exclusions are tested by
 `scripts/official-web/landscape-conversation.test.ts`. Preserve notification,
 search and return paths; do not generalize it to other routes without review.
+
+## Herdr caller context through background runtimes
+
+A tool subprocess may be launched by detached Codex app-server without inherited
+`HERDR_*` variables even while the owning conversation runs in a Herdr pane.
+Missing variables alone do not prove Herdr is unavailable. When the owner
+confirms the conversation is inside Herdr, verify read-only service/pane metadata
+and a recent command echo from the matching repository pane before acting. Use
+the verified explicit pane/session IDs; never fabricate caller environment,
+operate the UI-focused pane by default, or touch unrelated sessions. Preserve
+Herdr's remaining lifecycle and ownership constraints.

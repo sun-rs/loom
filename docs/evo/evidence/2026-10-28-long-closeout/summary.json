@@ -2857,7 +2857,7 @@
     "Only two exact CLI/model combinations, three pairs and one fixed read-only workload",
     "Not full quality or latency gate acceptance; targeted lead review is not blinded",
     "Raw input includes cache and is not billing cost",
-    "No current Herdr/team paired test; current execution environment is outside Herdr",
+    "No current Herdr/team paired test. Earlier outside-Herdr claim retracted after owner correction and live pane verification; detached tool process lacks HERDR variables.",
     "Kimi isolated daemon restarts before round3; continuous native session still verified",
     "144 turns total; 72 Loom turns; all cost retained including semantically flawed native output"
   ]
