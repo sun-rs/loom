@@ -52,6 +52,8 @@ Owner随后授权正确开场复验：7 Run完成设计→实施→审查拒绝�
 
 没有因本次整理新增产品阻断或重新开启历史验收。新的能力改造顺序是[文章/Cindy研究](article-cindy-adoption-review.zh-CN.md)中的：复用完整任务验收汇总 → 离线无效消耗诊断 → 有证据再精简交接输入。第一步已落地[离线报告入口](task-outcome-report.zh-CN.md)：重放旧三对团队批与 AGY 恢复审查，保留失败/人工介入/未知计量，复用已有算术；未重新运行真实模型或补判验收。第二步已增加[原流离线诊断](runtime-diagnostics.zh-CN.md)，旧 Pi 批9份stdout哈希匹配，仅1次压缩且post为估计值，未建立无效压缩/不必要重试根因。没有证据支持继续改prompt或运行时；不新增调度框架、自动换session、静默记忆生成或收益数字。
 
+成功批后续只读诊断确认：Codex三次新回复遗漏final后修正、两次原生wait超时（违反本批指令）；业务交付通过不等于工具首试和指令遵循通过。Claude重读发生在代码修正前后，非无效重读证据。下一项只考虑共用MCP明确参数错误，不据此重构上下文或扩大付费实验。见[诊断](evidence/2026-10-27-handoff-diagnostics/README.md)。
+
 文档与退役引用整理见[清理记录](../audits/2026-10-27-repository-cleanup.zh-CN.md)；后继报告工具的检查与重放见[证据](evidence/2026-10-27-task-outcome-report/README.md)。
 
 ## 5. phase 4 删除清单

@@ -21,3 +21,5 @@ Codex gpt-6-luna/low 实施，Claude sonnet/low 审查。7 Run、7 Activation co
 发送前 canonical mention 只包含实施者；实际首个Activation也只有实施者。取证脚本最初错误地将 message recipientIds 当成唤醒名单，随后只读修正：它表示消息投递成员，真正唤醒须核对 canonical mentions 和 Activation。此取证错误没有改变消息或影响执行，原误判说明保留在 preflight 证据。
 
 详见 [结构化证据](summary.json)。未新增后端框架、自动重试或针对单一模型的特殊路由；本次不支持为上轮失败重构调度的结论。
+
+后续逐工具核对发现：Codex三次回复参数拒绝后修正，以及两次被本批禁止的原生wait超时。因此业务通过不等于指令遵循或通信首试全部通过。见[离线诊断](../2026-10-27-handoff-diagnostics/README.md)。

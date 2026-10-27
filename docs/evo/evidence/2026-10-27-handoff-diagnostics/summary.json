@@ -1,0 +1,123 @@
+{
+  "kind": "bounded-handoff-diagnostics/v1",
+  "source": {
+    "path": "docs/evo/evidence/2026-10-27-daily-report-r2/summary.json",
+    "sha256": "e3ff6d2d350deede8e277d5bb3416f8a2e55cdf43901c3ca2e4aa2426c456214"
+  },
+  "nativeSources": {
+    "codex": {
+      "path": "/Users/sun/.codex/sessions/2026/10/27/rollout-2026-10-27T22-41-22-01a17dcf-07fb-7b91-8028-c248ae3ca265.jsonl",
+      "sha256": "ec7d81b92595e2854d07a52fde76261984823915a602ac4ab71912088b744bf6"
+    },
+    "claude": {
+      "path": "/Users/sun/.claude/projects/-Users-sun--loom-channel-workspaces-room-b9adfde8-9e92-4fdb-8547-3ac0e739d614/b31d8252-e029-4539-8bc2-b4c5d52abd8a.jsonl",
+      "sha256": "dcb514cda83912ddabc79843b4eb1b27322065e8cab75fb42e9e3eececb24513"
+    }
+  },
+  "scope": "One successful corrected batch, read-only replay, no paid model calls",
+  "codex": {
+    "generations": 21,
+    "replyCalls": [
+      {
+        "at": "2026-10-27T14:41:36.722Z",
+        "callId": "call_2ace547eca4d41f0a01defe781afac49",
+        "argumentKeys": ["basedOnRoomSeq", "body"],
+        "final": null,
+        "result": "rejected-arguments"
+      },
+      {
+        "at": "2026-10-27T14:41:45.897Z",
+        "callId": "call_a8c893128aff4ae2a8b1f1d2e350b130",
+        "argumentKeys": ["basedOnRoomSeq", "body", "final"],
+        "final": false,
+        "result": "published"
+      },
+      {
+        "at": "2026-10-27T14:42:34.048Z",
+        "callId": "call_a3840f70384743a9858dae24c1fe983c",
+        "argumentKeys": ["body"],
+        "final": null,
+        "result": "rejected-arguments"
+      },
+      {
+        "at": "2026-10-27T14:42:36.385Z",
+        "callId": "call_bb0793f597404af3af464b34ffca686f",
+        "argumentKeys": ["basedOnRoomSeq", "body", "final"],
+        "final": false,
+        "result": "published"
+      },
+      {
+        "at": "2026-10-27T14:43:13.533Z",
+        "callId": "call_e93e8e77c6b045dc8b43c32f204cacc0",
+        "argumentKeys": ["body"],
+        "final": null,
+        "result": "rejected-arguments"
+      },
+      {
+        "at": "2026-10-27T14:43:15.928Z",
+        "callId": "call_d2afda54632147c59abb7856c12841f2",
+        "argumentKeys": ["basedOnRoomSeq", "body", "final"],
+        "final": false,
+        "result": "published"
+      },
+      {
+        "at": "2026-10-27T14:43:33.076Z",
+        "callId": "call_cfc53862e6994640899f34b163780227",
+        "argumentKeys": ["basedOnRoomSeq", "body", "final"],
+        "final": true,
+        "result": "published"
+      }
+    ],
+    "nativeWaitCalls": [
+      {
+        "at": "2026-10-27T14:42:37.748Z",
+        "callId": "call_7f315d24b8b14a54b3daea5085b64cb8",
+        "arguments": {
+          "timeout_ms": 10000
+        },
+        "result": {
+          "message": "Wait timed out.",
+          "timed_out": true
+        }
+      },
+      {
+        "at": "2026-10-27T14:43:17.012Z",
+        "callId": "call_e254b01f94624e9bbe7b79b149a5881c",
+        "arguments": {
+          "timeout_ms": 10000
+        },
+        "result": {
+          "message": "Wait timed out.",
+          "timed_out": true
+        }
+      }
+    ],
+    "helpCalls": 0,
+    "costAttribution": null
+  },
+  "claude": {
+    "generations": 8,
+    "uniqueToolCalls": 11,
+    "readCounts": {
+      "fixtures/agy-review.json": 1,
+      "fixtures/team-v8.json": 1,
+      "scripts/cli-efficiency/task-outcome-report.mjs": 1,
+      "scripts/cli-efficiency/task-outcome-markdown.mjs": 2,
+      "scripts/cli-efficiency/task-outcome-markdown.test.mjs": 2
+    }
+  },
+  "findings": [
+    "Three new reply calls omit final, rejected before publication, then corrected. Four replies published; no duplicate canonical message caused by rejected calls.",
+    "Two native wait_agent calls time out; task prohibited waiting. Native subagent mailbox is not Loom peer delivery.",
+    "Reviewer rereads the two changed implementation/test files after correction; not evidence of unnecessary unchanged-history reread.",
+    "MCP inputSchema structurally requires only body while server superRefine requires final for new replies. Property description states the rule; generic error omits the specific cause. This is a discoverability issue, not proof of sole causation."
+  ],
+  "verdict": {
+    "businessOutcome": "passed per prior bounded evidence",
+    "instructionAdherence": "not fully passed: prohibited native waits",
+    "communicationFirstTry": "failed for three new replies",
+    "wastedTokens": null,
+    "savingsRatio": null
+  },
+  "nextStep": "Narrow shared MCP argument-error improvement first; preserve explicit final intent and revision semantics. Do not silently default final, enable native-final, disable all subagents, or rewrite session context on this sample."
+}
