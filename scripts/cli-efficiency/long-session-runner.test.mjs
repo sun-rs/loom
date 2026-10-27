@@ -22,11 +22,21 @@ test("arm flags override inherited trials without changing account environment",
   for (const kind of ["native", "default", "final-output"]) {
     const e = longArmEnvironment(kind, {
       SECRET: "kept",
+      LOOM_CODEX_NATIVE_FINAL_TRIAL: "1",
+      LOOM_KIMI_NATIVE_FINAL_TRIAL: "1",
+      LOOM_CLAUDE_NATIVE_FINAL_TRIAL: "1",
+      LOOM_OPENCODE_NATIVE_FINAL_TRIAL: "1",
+      LOOM_CODEX_EXEC_NATIVE_FINAL_TRIAL: "1",
+      LOOM_PI_NATIVE_FINAL_TRIAL: "1",
       LOOM_CODEX_FINAL_OUTPUT_TRIAL: "1",
       LOOM_OPENCODE_FINAL_OUTPUT_TRIAL: "1",
       RAH_EFFICIENCY_WARM_RESTART: "1",
     });
     assert.equal(e.SECRET, "kept");
+    for (const key of Object.keys(e).filter((k) =>
+      k.endsWith("NATIVE_FINAL_TRIAL"),
+    ))
+      assert.equal(e[key], "0", key);
     assert.equal(
       e.LOOM_CODEX_FINAL_OUTPUT_TRIAL,
       kind === "final-output" ? "1" : "0",

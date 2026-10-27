@@ -1,5 +1,6 @@
 // Explicit opt-in observational gate. --plan never probes a model/catalog.
 import assert from "node:assert/strict";
+import { gateReplyTransport } from "./cli-efficiency/reply-transport.mjs";
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -121,8 +122,8 @@ export function longArmEnvironment(kind, environment = process.env) {
   );
   return {
     ...environment,
+    ...gateReplyTransport("codex", "worker").environment,
     LOOM_CODEX_FINAL_OUTPUT_TRIAL: kind === "final-output" ? "1" : "0",
-    LOOM_OPENCODE_FINAL_OUTPUT_TRIAL: "0",
     RAH_EFFICIENCY_WARM_RESTART: "0",
   };
 }
@@ -293,11 +294,10 @@ export async function runLongSession(args) {
       save();
       const startedAt = Date.now();
       const savedEnv = Object.fromEntries(
-        [
-          "LOOM_CODEX_FINAL_OUTPUT_TRIAL",
-          "LOOM_OPENCODE_FINAL_OUTPUT_TRIAL",
-          "RAH_EFFICIENCY_WARM_RESTART",
-        ].map((k) => [k, process.env[k]]),
+        Object.keys(longArmEnvironment(kind, {})).map((k) => [
+          k,
+          process.env[k],
+        ]),
       );
       Object.assign(process.env, longArmEnvironment(kind));
       const verify = () => {

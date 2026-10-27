@@ -392,11 +392,7 @@ export async function runMultiChannel(args, profile = DEFAULT_PROFILE) {
       result.arms[kind] = arm;
       save();
       const startedAt = Date.now();
-      const keys = [
-        "LOOM_CODEX_FINAL_OUTPUT_TRIAL",
-        "LOOM_OPENCODE_FINAL_OUTPUT_TRIAL",
-        "RAH_EFFICIENCY_WARM_RESTART",
-      ];
+      const keys = Object.keys(longArmEnvironment("default", {}));
       const saved = Object.fromEntries(keys.map((k) => [k, process.env[k]]));
       Object.assign(
         process.env,

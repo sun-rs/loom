@@ -195,7 +195,7 @@ test("observation profile stays distinct under native-subagent policy and never 
   );
   assert.equal(
     multiMcpPlan(["--plan"], "codex-cli 0.160.0").baselineIdentity,
-    "6a3f430ac58947c6bf328e193b66b550e99c2ecfb518a5ba3d5867bcf6bc8b22",
+    "a944c07304134d93d2701f2402919deb16cd1a69f09edbc2875bf89268bf5df0",
   );
   assert.equal(
     p.validationPolicy.repeatPolicy,

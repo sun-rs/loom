@@ -35,15 +35,16 @@ test("MCP inline profile is separately registered with candidate flags disabled"
   assert.ok(!JSON.stringify(p).includes('"answer"'));
   assert.throws(() => multiMcpPlan(["--paid", "--plan"], "codex-cli 0.160.0"));
 });
+// Environment identity now includes all disabled native-final switches; historical evidence is unchanged.
 test("existing profiles pin exact identities under the approved native-subagent policy", () => {
   assert.deepEqual(
     [multiPlan, multiInlinePlan, multiLongPlan].map(
       (f) => f(["--plan"], "codex-cli 0.160.0").baselineIdentity,
     ),
     [
-      "17d48b59c7d290418282d28535a480296d45491dd67c537e1eb3ddc8990f6589",
-      "04cb1ec169bef08cc649f19dd06bd8d81820d13dd3a6d00668782b5c327bfcc8",
-      "d17baef38da9bc9e8f8565fe0c2add87767f87f1f82f07123dea363daeec0028",
+      "4be3de98f8c15b8e3585dc95d6e35a3192df5bb106da6d720d45947426e99bae",
+      "3eab603b22300211b31368070c3ea31e7fabebc9fddab2b256e7e553192bae2c",
+      "61dbba24c4b6edca9f1b8f9dc3035da20b00496fdd84ed10a4ca5df260d0eb93",
     ],
   );
 });
