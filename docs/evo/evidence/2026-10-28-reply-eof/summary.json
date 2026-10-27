@@ -1,0 +1,18 @@
+{
+  "date": "2026-10-28",
+  "paidCalls": 0,
+  "schemaTests": 6,
+  "eofTests": 9,
+  "typecheck": "passed",
+  "codexMcpDiscovery": "passed; no turn/start",
+  "kimiFreeEofProbeMs": {
+    "withoutMcp": 3628,
+    "withMcp": 6299
+  },
+  "newEofDeadlineMs": 15000,
+  "limits": [
+    "No new efficiency ratio",
+    "Canceled Kimi request usage remains unknown",
+    "Tool schema acceptance is not model compliance"
+  ]
+}

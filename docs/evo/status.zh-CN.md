@@ -56,6 +56,8 @@ Owner随后授权正确开场复验：7 Run完成设计→实施→审查拒绝�
 
 Owner 后续授权修复后原生对照：Codex、OpenCode、Claude CLI/Kimi、Pi/Kimi各3组×双臂3轮，输入总和比依次3.611、1.189、1.076、1.042。Codex三组均高、11次缺final参数拒绝，错误指引未根除重试；Kimi第二轮EOF退出失败且有缺usage请求，不给完整倍率；AGY自动记忆禁用仍未证实，不发起不公平对照。四家用量已与原生账本核验，非长任务/质量/全部门禁通过。Pi明确为native-final试验、两臂扩展隔离与cacheWarming关闭，非日常默认配置。测试保护器版本/服务层参数/Claude路由传递缺陷及先前费用保留，本次不改部署。见[重复短任务报告](evidence/2026-10-28-postfix-cost/README.md)。
 
+共用 MCP 的对外 JSON Schema 已补齐新回复 final 必填/修订互斥约束，修复 advertised schema 与实际校验不一致；Kimi 免费 ACP+MCP 探针正常退出 6.299 秒，超过旧 5 秒期限，改为有界 15 秒且保留真实退出/取消围栏。15 项针对性测试、类型检查与 Codex 免费工具发现通过，无新付费模型调用；Kimi 取消请求缺 usage 与旧成本失败保留，未宣称倍率改善。见[修复证据](evidence/2026-10-28-reply-eof/README.md)。
+
 文档与退役引用整理见[清理记录](../audits/2026-10-27-repository-cleanup.zh-CN.md)；后继报告工具的检查与重放见[证据](evidence/2026-10-27-task-outcome-report/README.md)。
 
 ## 5. phase 4 删除清单

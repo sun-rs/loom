@@ -3,7 +3,7 @@ import test from "node:test";
 import { waitForKimiEofExit } from "../src/kimi-eof-drain.mjs";
 
 for (const code of [0, 7]) {
-  test(`EOF drain waits beyond 500ms and preserves actual exit ${code}`, async (t) => {
+  test(`EOF drain waits beyond the former five-second deadline and preserves actual exit ${code}`, async (t) => {
     t.mock.timers.enable({ apis: ["setTimeout"] });
     let finish;
     const exit = new Promise((resolve) => {
@@ -13,7 +13,7 @@ for (const code of [0, 7]) {
     const result = waitForKimiEofExit(exit).finally(() => {
       settled = true;
     });
-    t.mock.timers.tick(800);
+    t.mock.timers.tick(8000);
     await Promise.resolve();
     assert.equal(settled, false);
     finish({ code, signal: null });
@@ -21,7 +21,7 @@ for (const code of [0, 7]) {
     t.mock.timers.tick(6000);
   });
 }
-test("EOF drain has a five second bound and cannot turn later zero exit into success", async (t) => {
+test("EOF drain has a fifteen second bound and cannot turn later zero exit into success", async (t) => {
   t.mock.timers.enable({ apis: ["setTimeout"] });
   let finish;
   const result = waitForKimiEofExit(
@@ -31,9 +31,9 @@ test("EOF drain has a five second bound and cannot turn later zero exit into suc
   );
   const rejected = assert.rejects(
     result,
-    /Kimi did not exit within 5000ms after EOF/,
+    /Kimi did not exit within 15000ms after EOF/,
   );
-  t.mock.timers.tick(5000);
+  t.mock.timers.tick(15000);
   await rejected;
   finish({ code: 0, signal: null });
   await assert.rejects(result);

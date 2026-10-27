@@ -26,7 +26,7 @@ export const WorkerReplyMcpArgumentsSchema = z
 export const WORKER_REPLY_MCP_TOOL = {
   name: "loom_reply",
   description:
-    "Reply to the unique delivered conversation; Loom resolves the target from this execution. Set final=true only when all current work is complete; false for progress. To revise a held draft, provide only body and reviseDraftId. Identity is bound by Loom. If delivery spans multiple targets, use the Worker CLI to select one explicitly. Other targets and attachments also use the Worker CLI.",
+    "Reply to the unique delivered conversation; Loom resolves the target from this execution. Every new reply MUST include final: true when all current work is complete, false for progress. A new reply containing only body is invalid. To revise a held draft, provide only body and reviseDraftId. Identity is bound by Loom. If delivery spans multiple targets, use the Worker CLI to select one explicitly. Other targets and attachments also use the Worker CLI.",
   inputSchema: {
     type: "object",
     properties: {
@@ -36,9 +36,21 @@ export const WORKER_REPLY_MCP_TOOL = {
         description: "Required for a new reply; omit for a draft revision.",
       },
       basedOnRoomSeq: { type: "integer", minimum: 0 },
-      reviseDraftId: { type: "string" },
+      reviseDraftId: { type: "string", minLength: 1 },
     },
     required: ["body"],
+    oneOf: [
+      {
+        required: ["final"],
+        not: { required: ["reviseDraftId"] },
+      },
+      {
+        required: ["reviseDraftId"],
+        not: {
+          anyOf: [{ required: ["final"] }, { required: ["basedOnRoomSeq"] }],
+        },
+      },
+    ],
     additionalProperties: false,
   },
 } as const;

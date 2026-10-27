@@ -67,3 +67,29 @@ test("current reply has no model-selectable target, including explicit room null
       false,
     );
 });
+
+test("advertised JSON Schema enforces the same new-reply and revision intent as the service", async () => {
+  const { Ajv } = await import("ajv");
+  const validate = new Ajv({ strict: false }).compile(
+    WORKER_REPLY_MCP_TOOL.inputSchema,
+  );
+  for (const value of [
+    { body: "done" },
+    { body: "done", basedOnRoomSeq: 4 },
+    { body: "done", final: true },
+    { body: "progress", final: false, basedOnRoomSeq: 4 },
+    { body: "revision", reviseDraftId: "draft" },
+    { body: "revision", reviseDraftId: "draft", final: true },
+    { body: "revision", reviseDraftId: "draft", final: false },
+    { body: "revision", reviseDraftId: "draft", basedOnRoomSeq: 4 },
+    { body: "revision", reviseDraftId: "" },
+    { body: "done", final: "true" },
+    { body: "done", final: true, actorId: "other" },
+  ]) {
+    assert.equal(
+      validate(value),
+      WorkerReplyMcpArgumentsSchema.safeParse(value).success,
+      JSON.stringify(value),
+    );
+  }
+});
