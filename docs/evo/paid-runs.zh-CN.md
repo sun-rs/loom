@@ -963,3 +963,10 @@ Owner 要求继续试 Kimi K3.1 Pro 并比较 OpenCode/Pi。使用现有 OpenCod
 - 首次独立探针 57,270 输入/216 输出；driver 连续三轮累计 36,685 输入/106 输出。AGY `result.usage` 为跨轮累计，产品只记各 `step_update` 的 usage，不把每轮 result 再相加。`duration_seconds` 同样不是可靠单轮耗时。
 - 正式三轮均 exit 0、Activation completed、每轮一条 Host final 回复；所有 usage response ID 的 conversation 前缀一致，重启不换 session。原始步骤/用量/回复及截图见[证据](evidence/2026-10-27-agy-runtime/summary.json)与[范围](evidence/2026-10-27-agy-runtime/README.md)。
 - 未证明自动记忆禁用，不是 native-vs-Loom 成本对照；不将 token 换算账单，不推断订阅额度、全部模型质量、子代理/压缩完整计量或 Fork/Side 已通过。
+
+## 2026-10-27 AGY × Codex 协作（owner 同意，未完整通过）
+
+- 精确组合：AGY 1.4.8 `gemini-3.8-flash-low` / low；Codex `gpt-6-luna` / low。原生 AGY 13 个 ID/effort 与产品目录一致；没有逐个调用其他模型，未使用 xhigh/max。
+- 任务：独立快照内修复 AGY usage 数值边界，方案讨论→实现→复审。第一组 Human 开场错误地把审查员也 @ 进去，同时唤醒两位，已停止，设置失误和消耗留账。第二组正确请求/回复并形成补丁，但两组总输入达到预设停止线，最终复审/收尾未完成；没有第三组重跑。
+- 已记录用量（含停止清理期间完成的生成；取消时尚未返回的消耗未知）：320,589 输入，含 84,113 缓存输入；3,546 输出。第二组单列：188,795 输入，含 31,249 缓存输入；2,416 输出。包含缓存的 token 总量不等于货币费用，无原生对照，不能给 Loom 开销倍率。模型子代理未授权，本次不扩大历史成本结论。
+- AGY 的补丁由负责人独立复核并补足边界测试，不能称 Codex 完成最终审查；Codex 方案回复用了显式 @，本次不证明无 @ 自动返回。运行、消息、逐生成用量、停止前快照与最终账见[证据](evidence/2026-10-27-agy-collaboration/summary.json)，结论和模型表见[报告](evidence/2026-10-27-agy-collaboration/README.md)。

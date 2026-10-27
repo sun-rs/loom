@@ -57,11 +57,21 @@ export class AgyStream {
         const cacheWrite = u.cache_write_tokens ?? 0;
         if (!Number.isSafeInteger(cacheWrite) || cacheWrite < 0)
           return { usageGap: true };
+        if (
+          u.thinking_tokens !== undefined &&
+          u.thinking_tokens !== null &&
+          (!Number.isSafeInteger(u.thinking_tokens) ||
+            u.thinking_tokens < 0 ||
+            u.thinking_tokens > u.output_tokens)
+        )
+          return { usageGap: true };
+        const inputTokens = u.input_tokens + u.cache_read_tokens + cacheWrite;
+        if (!Number.isSafeInteger(inputTokens)) return { usageGap: true };
         return {
           usage: {
             provider: "agy-print-json/v1",
             responseId: `${this.session}:${s.step_index}`,
-            inputTokens: u.input_tokens + u.cache_read_tokens + cacheWrite,
+            inputTokens,
             cachedInputTokens: u.cache_read_tokens,
             outputTokens: u.output_tokens,
             reasoningOutputTokens: Number.isSafeInteger(u.thinking_tokens)

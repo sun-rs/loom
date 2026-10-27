@@ -67,3 +67,53 @@ test("AGY rejects replacement sessions, wrong models, missing input/result, erro
     ready().push({ ...final, result: { ...final.result, status: "ERROR" } }),
   );
 });
+
+for (const [name, fields] of [
+  ["negative thinking", { thinking_tokens: -1 }],
+  ["fractional thinking", { thinking_tokens: 0.5 }],
+  ["string thinking", { thinking_tokens: "1" }],
+  ["unsafe thinking", { thinking_tokens: Number.MAX_SAFE_INTEGER + 1 }],
+  ["thinking exceeds output", { thinking_tokens: 5 }],
+  [
+    "input sum overflow",
+    { input_tokens: Number.MAX_SAFE_INTEGER, cache_read_tokens: 1 },
+  ],
+  [
+    "cache write sum overflow",
+    {
+      input_tokens: Number.MAX_SAFE_INTEGER,
+      cache_read_tokens: 0,
+      cache_write_tokens: 1,
+    },
+  ],
+]) {
+  test(`AGY marks ${name} as a usage gap while preserving a separately valid final`, () => {
+    const p = new AgyStream({ model: "model-low" });
+    p.push(init);
+    p.push(step(0, "user_input"));
+    const frame = step(1, "agent_response", "DONE", {
+      usage: { ...usage, ...fields },
+    });
+    assert.deepEqual(p.push(frame), { usageGap: true });
+    assert.deepEqual(p.push(frame), {});
+    assert.equal(p.push(final).final.text, "verified");
+  });
+}
+test("AGY preserves unknown thinking and accepts the exact safe input boundary", () => {
+  for (const thinking_tokens of [undefined, null]) {
+    const p = new AgyStream({ model: "model-low" });
+    p.push(init);
+    p.push(step(0, "user_input"));
+    const result = p.push(
+      step(1, "agent_response", "DONE", {
+        usage: {
+          ...usage,
+          input_tokens: Number.MAX_SAFE_INTEGER - 10,
+          thinking_tokens,
+        },
+      }),
+    );
+    assert.equal(result.usage.inputTokens, Number.MAX_SAFE_INTEGER);
+    assert.equal(result.usage.reasoningOutputTokens, null);
+  }
+});
