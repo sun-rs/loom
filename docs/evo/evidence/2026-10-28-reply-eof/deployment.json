@@ -1,0 +1,20 @@
+{
+  "sourceRevision": "9b8ba5b7",
+  "oldPid": 8422,
+  "newPid": 47909,
+  "backup": "/Users/sun/.loom/evo/backups/pre-reply-eof-1793120210052",
+  "ledgerUnchanged": true,
+  "at": "2026-10-27T16:57:15.174Z",
+  "webAssets": "unchanged; backend-only change",
+  "label": "gui/501/com.loom.evo",
+  "realPage": {
+    "url": "http://127.0.0.1:4176/",
+    "browser": "Playwright Chromium; fresh context",
+    "channel": "Agent Council",
+    "channelCount": 46,
+    "historyRendered": true,
+    "pageErrors": [],
+    "screenshot": "~/.loom/reviews/2026-10-28-reply-eof/page.png",
+    "scope": "read-only render smoke, not paid CLI acceptance"
+  }
+}

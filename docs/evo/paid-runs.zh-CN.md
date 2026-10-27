@@ -1021,3 +1021,7 @@ Codex最早入口被旧guard拒绝serviceTier，已发生原生52639/822；Kimi�
 Pi付费前实际安装CLI免费首次/续接及完整daemon六请求通过。部分回答接受/拒绝判断
 不同，不宣称质量统一通过；本批不覆盖复杂长任务、多模型矩阵、多人协作或完整账单。
 见[报告](evidence/2026-10-28-postfix-cost/README.md)、[完整证据](evidence/2026-10-28-postfix-cost/summary.json)。
+
+## 2026-10-28 回复 schema / EOF 免费原生兼容验证
+
+没有新增模型请求或付费批：真实 Codex app-server 仅 initialize、thread/start、MCP tools discovery，零 turn/start；修正后的共用 schema 可被读取。真实 Kimi 2.1.1 仅 ACP initialize、session/new、EOF，零 session/prompt；无 MCP 正常退出约 3.628 秒，带空工具 MCP 为 6.299 秒，均退出 0。证明旧 5 秒期限不足以覆盖这次正常清理，不构成延迟分布或模型行为验收。修复部署 `9b8ba5b7`；旧实验费用、失败与缺失 usage 不变。见[修复记录](evidence/2026-10-28-reply-eof/README.md)。

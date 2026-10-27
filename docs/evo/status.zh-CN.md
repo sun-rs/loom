@@ -9,7 +9,7 @@
 - `main` 是当前 Loom；`evo` 已晋升并移除；`chatbox` 独立承载 `rah/main` 导入，不参与 Loom 构建。见[分支记录](branch-promotion.zh-CN.md)。
 - 唯一产品前端为 `frontends/raft`。旧复刻 UI 和 `apps/console` 已退役，不恢复其路由、构建或测试入口。
 - 保留部署标签 `com.loom.evo`、数据目录 `~/.loom/evo`、日志目录及频道主目录 `~/.loom/channel-workspaces/`。这些名称不是旧分支残留任务，不能为整洁搬迁数据。
-- 最近产品后端代码已在 `57299f8a`（MCP频道交接/原生等待边界指引）安全重启，Web静态产物沿用原版本；[备份及真实页面证据](evidence/2026-10-27-peer-wait-guidance/summary.json)。此前AGY部署为 `ed76bb2f`。实际部署结论见[运行时证据](evidence/2026-10-27-agy-runtime/README.md)与[协作收尾](evidence/2026-10-27-agy-closeout/README.md)，不能把文档 HEAD 当成服务版本。
+- 最近产品后端代码已在 `9b8ba5b7`（回复工具 schema 与 Kimi EOF 正常退出等待）安全重启，Web 静态产物沿用原版本；[备份及真实页面证据](evidence/2026-10-28-reply-eof/deployment.json)。前次部署为 `57299f8a`。文档 HEAD 不代表服务版本；本批没有真实付费成本复验。
 - HTTP 4176、LAN HTTPS 4178 和隔离预览的部署记录见[HTTPS接入](evidence/2026-10-22-https-trusted/summary.json)、[预览边界](evidence/2026-10-23-https-preview/summary.json)。本次未重新探测监听地址、数据库版本或运行时设置；部署前仍须读取实际状态，不沿用旧快照里的临时 loopback 配置。
 
 ## 2. 当前状态
