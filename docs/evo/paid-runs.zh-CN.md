@@ -970,3 +970,10 @@ Owner 要求继续试 Kimi K3.1 Pro 并比较 OpenCode/Pi。使用现有 OpenCod
 - 任务：独立快照内修复 AGY usage 数值边界，方案讨论→实现→复审。第一组 Human 开场错误地把审查员也 @ 进去，同时唤醒两位，已停止，设置失误和消耗留账。第二组正确请求/回复并形成补丁，但两组总输入达到预设停止线，最终复审/收尾未完成；没有第三组重跑。
 - 已记录用量（含停止清理期间完成的生成；取消时尚未返回的消耗未知）：320,589 输入，含 84,113 缓存输入；3,546 输出。第二组单列：188,795 输入，含 31,249 缓存输入；2,416 输出。包含缓存的 token 总量不等于货币费用，无原生对照，不能给 Loom 开销倍率。模型子代理未授权，本次不扩大历史成本结论。
 - AGY 的补丁由负责人独立复核并补足边界测试，不能称 Codex 完成最终审查；Codex 方案回复用了显式 @，本次不证明无 @ 自动返回。运行、消息、逐生成用量、停止前快照与最终账见[证据](evidence/2026-10-27-agy-collaboration/summary.json)，结论和模型表见[报告](evidence/2026-10-27-agy-collaboration/README.md)。
+
+## 2026-10-27 AGY × Codex 最终复审补验（owner 指示继续）
+
+- 沿用原 Gemini AGY-3 / Codex Reviewer-2 实例及原生 session，组合仍为 AGY `gemini-3.8-flash-low` / low、Codex `gpt-6-luna` / low。显式 SOS 恢复后先各回复准备就绪，再由 Human 单次点名 AGY 发起最终复审；人工准备和自动交接明确分开。
+- 新增 5 个 Run，5 个 Activation completed。Codex 实际读取产物、执行10项测试通过，最终回复没有 @；Kernel replyReturn 精确关联 AGY 请求，自动唤醒原 AGY，后者收尾后没有再次派送。原生 session ID 和源码/测试 hash 未变。
+- 已记录合计：145,018 输入（其中107,347缓存读取）、633输出、9次模型生成。其中恢复准备44,537/16,000缓存/42输出；三轮复审交接100,481/91,347缓存/591输出。不同统计维度不相加，缓存已包含在输入内；没有账单或原生对照，不计算成本倍率。
+- Codex 采用现有 Worker MCP loom_reply(final=true)，AGY采用Host native-final。只判本批有限复审/无 @ 自动返回通过；先前设置错误和中止继续留账，不声称最初开发全程无人干预完成。见[报告](evidence/2026-10-27-agy-closeout/README.md)和[逐步证据](evidence/2026-10-27-agy-closeout/summary.json)。

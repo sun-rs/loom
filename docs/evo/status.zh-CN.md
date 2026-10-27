@@ -1,5 +1,7 @@
 # Loom 当前主线现状（原 evo）
 
+2026-10-27 AGY 协作收尾：owner 指示继续后，原实例显式恢复（2轮准备）并完成 AGY 请求→Codex 实际运行10项测试/接受→无 @ 的 Kernel replyReturn→AGY 原 session 收尾（3轮交接）。5个新 Run 已结束、Activation completed，双 session ID 和产物 hash 保持，无额外回环。AGY 为 native-final，Codex 仍用已有 loom_reply(final=true)，不外推纯原生回复或成本通过；此前中止不改判。本批只补验收文档，产品代码/部署仍为 ed76bb2f。[收尾证据](evidence/2026-10-27-agy-closeout/README.md)。
+
 2026-10-27 AGY 后续：核对本机 13 个模型/effort 与正式目录一致，未凭通用 CLI 参数扩充 xhigh/max。AGY＋Codex 协作只验证了方案交接与生成补丁；首组设置错误、第二组触及累计输入停止线，最终复审未完成，不作为完整协作或成本 gate 通过。独立复核已修复 AGY usage 负 reasoning／thinking 超 output／求和溢出缺陷，18 项定向检查和类型通过，沿原有 gap 计量，不改调度。详见[模型和协作报告](evidence/2026-10-27-agy-collaboration/README.md)。
 
 2026-10-27 AGY 运行时接入：正式服务已发现 Antigravity 1.4.8，复用原有 Role/实例/频道与官方运行时配置表单。精确模型目录、原生会话续接、工具执行、Host 最终回复及逐步骤用量已接入；真实 Gemini 3.8 Flash Low 三轮频道验收完成（含 daemon 重启后续接），同 session、各一次回复/Activation completed，停止/错误流由定向假 CLI 检查覆盖。34 项边界检查、类型与产品构建通过。Fast/Fork/Side、自动记忆禁用、长任务成本和完整子代理计量不作通过宣称。[实现、验收与限制](evidence/2026-10-27-agy-runtime/README.md)。本次后端已安全备份重启，前端复用原有布局；最终重启后仍为原 conversation，结论见同目录 summary.json。

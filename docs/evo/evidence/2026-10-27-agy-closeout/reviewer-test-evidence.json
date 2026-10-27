@@ -1,0 +1,27 @@
+{
+  "kind": "provider diagnostic evidence; Room ledger remains authoritative",
+  "sessionId": "01a17ce3-b70b-7010-877d-84758e588362",
+  "events": [
+    {
+      "timestamp": "2026-10-27T11:21:05.185Z",
+      "type": "custom_tool_call",
+      "callId": "call_c4cec3964e144c03b784727a875aef1f",
+      "input": "const r = await tools.exec_command({cmd:\"node --test test/agy-stream.test.mjs\",yield_time_ms:30000,max_output_tokens:3000}); text(r.output);\n"
+    },
+    {
+      "timestamp": "2026-10-27T11:21:05.364Z",
+      "type": "custom_tool_call_output",
+      "callId": "call_c4cec3964e144c03b784727a875aef1f",
+      "output": [
+        {
+          "type": "input_text",
+          "text": "Script completed\nWall time 0.2 seconds\nOutput:\n"
+        },
+        {
+          "type": "input_text",
+          "text": "✔ AGY exact session input and final are scoped to current launch; aggregate usage is not counted twice (1.916667ms)\n✔ AGY rejects replacement sessions, wrong models, missing input/result, errors and a second user turn (0.185375ms)\n✔ AGY marks negative thinking as a usage gap while preserving a separately valid final (0.156542ms)\n✔ AGY marks fractional thinking as a usage gap while preserving a separately valid final (0.071291ms)\n✔ AGY marks string thinking as a usage gap while preserving a separately valid final (0.051542ms)\n✔ AGY marks unsafe thinking as a usage gap while preserving a separately valid final (0.042625ms)\n✔ AGY marks thinking exceeds output as a usage gap while preserving a separately valid final (0.051334ms)\n✔ AGY marks input sum overflow as a usage gap while preserving a separately valid final (0.042792ms)\n✔ AGY marks cache write sum overflow as a usage gap while preserving a separately valid final (0.061833ms)\n✔ AGY preserves unknown thinking and accepts the exact safe input boundary (0.120958ms)\nℹ tests 10\nℹ suites 0\nℹ pass 10\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 69.05125\n"
+        }
+      ]
+    }
+  ]
+}
