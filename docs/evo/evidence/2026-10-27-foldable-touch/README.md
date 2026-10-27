@@ -1,0 +1,56 @@
+# 折叠屏与平板触屏布局验收（2026-10-27）
+
+产品修复 `15b8cbf5`，对照基线 `676f1517`。本轮修复构建后的断点适配遗漏，不是新的全站缩放方案。正式服务已安全部署；备份重启记录位于本机 `/Users/sun/.loom/reviews/2026-10-27-foldable-touch/restart.json`，20项业务表及推送状态保持不变。没有发送频道消息或调用付费模型。
+
+## 方法与证据边界
+
+Chrome Sensors 强制触屏，逐场景确认 `pointer: coarse=true`、`hover: hover=false`；通过浏览器 viewport 能力设置逻辑尺寸，在同一个正式频道测量 `loom-message-timeline` 的 DOM 矩形，保存全视口截图。结束后恢复 Sensors 基于设备及默认视口，关闭 DevTools。
+
+这些是代表设备形态的 **CSS 视口探针**，不是实际设备验收。物理像素不能直接当 CSS 像素；尚未取得对应设备浏览器的真实 DPR、地址栏、安全区和缩放设置。iPhone Duo 与 XT2 探针按物理像素/3近似，iPad按/2近似，均不声称是真机逻辑分辨率。产品规格参考：
+
+- [iPhone Duo](https://www.apple.com/iphone-duo/specs/)：内屏1878×2670。
+- [Huawei Mate XT 2](https://consumer.huawei.com/cn/phones/mate-xt-2-ultimate-design/specs/)：全展开2232×3184。
+- [iPad Pro](https://www.apple.com/ipad-pro/specs/)：11寸当前型号1668×2420；老型号高度可能不同。
+
+原生布局来源继续由 `frontends/raft/upstream/raft-mobile-source/source-lock.json` 与 `native-adaptive-bindings.json` 管理。触屏840px与Web768px的分流不变；本次只修复其CSS实现遗漏。
+
+## 根因与修复
+
+JS已经采用触屏840px单/双栏门限，但编译产物生成 `(min-width:48rem)`。外层PostCSS适配器未覆盖这一等价写法，导致768–839px触屏仍显示桌面侧栏，和JS单栏判定冲突。834px正文因此只剩537px宽。
+
+修复 `frontends/raft/loom/adaptive-layout.ts` 的识别规则；未修改不可变官方源文件。先为rem写法及实际构建CSS添加失败检查，再修复并重建：4项适配检查、1项构建产物检查、Loom类型检查与产品构建通过。新增检查直接审计生成的 `.md\:flex` 媒体条件，不再仅靠源码字符串证明最终CSS正确。
+
+## 面积结果
+
+面积占比 = 正文滚动容器宽×高 / 浏览器内容视口宽×高，不等于文字像素占比或阅读效率。该频道列表在宽屏为折叠状态；其他侧栏偏好可能改变正文宽度。
+
+| 场景                 | CSS视口  | 正文修复前→后       | 面积占比前→后 |
+| -------------------- | -------- | ------------------- | ------------- |
+| 经典手机             | 390×844  | 390×692 → 390×692   | 82% → 82%     |
+| 双折叠内屏竖屏探针   | 626×890  | 626×738 → 626×738   | 82.9% → 82.9% |
+| 双折叠内屏横屏探针   | 890×626  | 833×426 → 833×426   | 63.7% → 63.7% |
+| 三折叠全展开竖屏探针 | 744×1061 | 744×909 → 744×909   | 85.7% → 85.7% |
+| 三折叠全展开横屏探针 | 1061×744 | 1004×544 → 1004×544 | 69.2% → 69.2% |
+| 11寸平板竖屏探针     | 834×1210 | 537×1058 → 834×1058 | 56.3% → 87.4% |
+| 11寸平板横屏探针     | 1210×834 | 1153×634 → 1153×634 | 72.4% → 72.4% |
+
+平板竖屏正文面积增加55.3%，其他六组面积不变。839px边界正文839px宽、顶部97px；840px正文783px宽、顶部145px，符合当前宽屏导航切换。原始值见 `measurements.json`、`after-measurements.json`、`boundaries.json`。
+
+**截图字号不可当成修复收益：** 前组沿用桌面热切换后的16px/24px正文；后组触屏冷启动默认14px/20px。本次未改字体实现，也未强制修改用户偏好，因此不报告可见行数提升。面积几何比较独立成立，但严格阅读密度A/B还需固定显式字号与同一滚动锚点。此前960×540的20%高度提升是fine指针对照，不能套用到coarse设备；这些触屏场景的composer修复前后均55px。
+
+## 截图
+
+- 经典手机：[前](phone.png) / [后](after-phone.png)。
+- 双折叠内屏竖屏探针：[前](duo-portrait-probe.png) / [后](after-duo-portrait-probe.png)。
+- 双折叠内屏横屏探针：[前](duo-landscape-probe.png) / [后](after-duo-landscape-probe.png)。
+- 三折叠全展开竖屏探针：[前](xt2-portrait-probe.png) / [后](after-xt2-portrait-probe.png)。
+- 三折叠全展开横屏探针：[前](xt2-landscape-probe.png) / [后](after-xt2-landscape-probe.png)。
+- 11寸平板竖屏探针：[前](ipad11-portrait-probe.png) / [后](after-ipad11-portrait-probe.png)。
+- 11寸平板横屏探针：[前](ipad11-landscape-probe.png) / [后](after-ipad11-landscape-probe.png)。
+
+## 剩余边界与后续顺序
+
+1. 本轮已收口768–839px触屏混合布局缺陷，并建立四类设备形态的对照矩阵。
+2. 横屏触屏顶部145px加输入55px，固定占用200px；双折叠横屏探针正文占比63.7%、三折叠69.2%。后续应对照原生源码评估顶部信息层级，而非缩小所有字体或改变触控目标。当前不宣称横屏密度优化完成。
+3. 需要固定显式字号补阅读密度对照；实际设备逻辑视口、软键盘、安全区、折叠状态转换及第三栏交互未由本轮模拟验收。
+4. 本轮没有重新全量验收各大页，不把一个频道的结果扩写成全站或iOS/Harmony原生等价。

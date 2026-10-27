@@ -726,3 +726,14 @@ adaptive changes include intermediate and boundary widths (767/768, 839/840,
 1199/1200), phone, tablet portrait/landscape and desktop, plus continuous resizing.
 Check draft, selection, scroll anchor and back navigation preservation. CSS viewport
 emulation is not physical folding, pointer/keyboard capability or iOS acceptance.
+
+Owner acceptance matrix (2026-10-27): retain classic portrait phone, unfolded
+book-style foldable (iPhone Duo), fully unfolded tri-fold (Mate XT 2), and
+11-inch tablet (iPad Pro), with both orientations for the latter three. Record
+logical viewport, pointer/hover capability, font preference, sidebar state,
+body rectangle and screenshots. Physical resolution divided by an assumed DPR
+is only a probe, not a verified device viewport. Compare fixed typography and
+scroll anchors before claiming visible-content gains. Audit generated CSS as
+well as helper/source tests: after the product build run
+`node --test scripts/official-web/adaptive-built-css.test.mjs`; equivalent rem
+and px breakpoint syntax must preserve the same coarse/fine layout boundary.
