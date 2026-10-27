@@ -1,0 +1,74 @@
+[
+  {
+    "bodyPercent": 63,
+    "composer": 55,
+    "font": "14px",
+    "height": 540,
+    "lineHeight": "22px",
+    "timelineHeight": 340,
+    "timelineTop": 145,
+    "timelineWidth": 911,
+    "visibleBodyBlocks": 12,
+    "width": 960
+  },
+  {
+    "bodyPercent": 67,
+    "composer": 55,
+    "font": "14px",
+    "height": 600,
+    "lineHeight": "22px",
+    "timelineHeight": 400,
+    "timelineTop": 145,
+    "timelineWidth": 911,
+    "visibleBodyBlocks": 14,
+    "width": 960
+  },
+  {
+    "bodyPercent": 56,
+    "composer": 112,
+    "font": "14px",
+    "height": 601,
+    "lineHeight": "22px",
+    "timelineHeight": 336,
+    "timelineTop": 153,
+    "timelineWidth": 903,
+    "visibleBodyBlocks": 11,
+    "width": 960
+  },
+  {
+    "bodyPercent": 68,
+    "composer": 112,
+    "font": "14px",
+    "height": 820,
+    "lineHeight": "22px",
+    "timelineHeight": 555,
+    "timelineTop": 153,
+    "timelineWidth": 1123,
+    "visibleBodyBlocks": 17,
+    "width": 1180
+  },
+  {
+    "bodyPercent": 78,
+    "composer": 112,
+    "font": "14px",
+    "height": 1180,
+    "lineHeight": "22px",
+    "timelineHeight": 915,
+    "timelineTop": 153,
+    "timelineWidth": 763,
+    "visibleBodyBlocks": 23,
+    "width": 820
+  },
+  {
+    "bodyPercent": 82,
+    "composer": 55,
+    "font": "16px",
+    "height": 844,
+    "lineHeight": "24px",
+    "timelineHeight": 692,
+    "timelineTop": 97,
+    "timelineWidth": 390,
+    "visibleBodyBlocks": 16,
+    "width": 390
+  }
+]
