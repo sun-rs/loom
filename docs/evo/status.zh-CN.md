@@ -9,7 +9,7 @@
 - `main` 是当前 Loom；`evo` 已晋升并移除；`chatbox` 独立承载 `rah/main` 导入，不参与 Loom 构建。见[分支记录](branch-promotion.zh-CN.md)。
 - 唯一产品前端为 `frontends/raft`。旧复刻 UI 和 `apps/console` 已退役，不恢复其路由、构建或测试入口。
 - 保留部署标签 `com.loom.evo`、数据目录 `~/.loom/evo`、日志目录及频道主目录 `~/.loom/channel-workspaces/`。这些名称不是旧分支残留任务，不能为整洁搬迁数据。
-- 最近产品后端代码已在 `0698f207`（共用 MCP 因果序号映射说明）安全重启，Web 静态产物沿用原版本；[备份及真实页面证据](evidence/2026-10-28-schema-cost/deployment.json)。前次 `9b8ba5b7` 的 schema/EOF 修复已付费复验但未通过成本门禁；本次说明修复尚无后继付费效果证据。文档 HEAD 不代表服务版本。
+- 最近产品后端代码已在 `da34e205` 安全部署，本机正式服务选择 Codex warm / Kimi ACP native-final，保留 Claude/OpenCode 既有选择。Web 静态产物未变，备份含旧 plist，账本不变；[部署与页面证据](evidence/2026-10-28-native-repair/deployment.json)。库默认仍 opt-in，不能从代码默认推断服务开关。
 - HTTP 4176、LAN HTTPS 4178 和隔离预览的部署记录见[HTTPS接入](evidence/2026-10-22-https-trusted/summary.json)、[预览边界](evidence/2026-10-23-https-preview/summary.json)。本次未重新探测监听地址、数据库版本或运行时设置；部署前仍须读取实际状态，不沿用旧快照里的临时 loopback 配置。
 
 ## 2. 当前状态
@@ -59,6 +59,8 @@ Owner 后续授权修复后原生对照：Codex、OpenCode、Claude CLI/Kimi、P
 共用 MCP 的对外 JSON Schema 已补齐新回复 final 必填/修订互斥约束，修复 advertised schema 与实际校验不一致；Kimi 免费 ACP+MCP 探针正常退出 6.299 秒，超过旧 5 秒期限，改为有界 15 秒且保留真实退出/取消围栏。15 项针对性测试、类型检查与 Codex 免费工具发现通过，无新付费模型调用；Kimi 取消请求缺 usage 与旧成本失败保留，未宣称倍率改善。见[修复证据](evidence/2026-10-28-reply-eof/README.md)。
 
 修复后固定复验两家均在首对按规则停止：Codex 无缺 final，但四次投递未确认及 CLI 兜底漏 turn，单对输入 3.622 仍失败；Kimi 三轮退出成功，三个取消请求缺 usage，仍无完整倍率。已补共用 Reply context 的 CLI 序号到 MCP basedOnRoomSeq 的明确映射说明，保留因果围栏；12 项针对性测试与类型检查通过，尚无该说明的后继付费效果证据。[本批记录](evidence/2026-10-28-schema-cost/README.md)。
+
+已追溯近期失败与历史好结果的传输差异：旧 v7 为 native-final，近期 Codex/Kimi 为工具发表。Codex 常驻补接已有 final_answer 验证/共享发布器，并移除竞争回复 MCP；Kimi复用既有native-final。最终固定三对输入总和比分别1.241、1.088，请求12/13和12/12，完整原流核账；零回复MCP拒绝、Kimi无取消usage缺口。本机正式服务已采用；复杂长任务/多模型/全部质量时延门禁仍不外推。首次不完整候选费用另留，详情见[传输修复](evidence/2026-10-28-native-repair/README.md)。
 
 文档与退役引用整理见[清理记录](../audits/2026-10-27-repository-cleanup.zh-CN.md)；后继报告工具的检查与重放见[证据](evidence/2026-10-27-task-outcome-report/README.md)。
 

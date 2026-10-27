@@ -19,6 +19,12 @@ P118–P120 的指定路径 profile 多次在产品首轮截断，不能作为�
 最小入口 `node scripts/test-cli-business-smoke.mjs --plan` / `--paid` 已实现；三 session×两阶段、产品先，完整上限和未覆盖分支见设计 §10。owner 本批要求开始测试，仅一次冒烟，不授权四配对长期研究。合同 §6 与旧裁决不变。
 长期入口与逐批限额见[业务长期观察清单](../evo/business-long-plan.zh-CN.md)；本轮只免费准备，平台记忆显式关闭并持续核验。不得将旧路径限定入口直接作为新业务观察研究运行。
 
+## 固定回复传输（2026-10-28）
+
+`RAH_EFFICIENCY_REPLY_TRANSPORT=worker|native-final` 是本入口的显式选择，省略为旧 Worker 发表。入口清除其他继承的 final-output 环境开关，并把模式和开关选择纳入 baselineId；不能把开了 native-final 的历史好结果与默认 Worker 路径直接比较为回归。CLI、模型、effort、自动记忆关闭和完整新原生分母仍独立核验。
+
+Codex native-final 使用原来的常驻 app-server 与连续会话；Claude/OpenCode 同样要求 `role-warm`；Kimi 使用 `role` ACP。普通最终正文经过 Host 的原身份、唯一目标、当前投递及原生正常终态证明进入现有 Worker 服务，不把任意 stdout 当成回复。此时不再向 Codex 公开旧回复 MCP；多目标和不可自动接收的唤醒保留 Worker CLI 回退。源码开关支持、正式服务已启用、免费测试、真实短任务、长期质量与效率分别报告。
+
 ## 固定成本基线与官方记忆关闭（2026-10-04）
 
 先运行 `RAH_EFFICIENCY_ORDER=native,role-warm npm run test:cli:efficiency -- --plan` 免费检查实验身份；它只读取本地代码、配置与 CLI 版本，不启动模型回合。`--paid` 仍须本批用户授权。

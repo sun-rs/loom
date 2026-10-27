@@ -1,0 +1,22 @@
+{
+  "sourceRevision": "da34e205b62c533c2054a850a52bf3cefbe6a46d",
+  "oldPid": 85930,
+  "newPid": 77376,
+  "backup": "/Users/sun/.loom/evo/backups/pre-native-reply-1793122544551",
+  "ledgerUnchanged": true,
+  "at": "2026-10-27T17:36:01.757Z",
+  "webAssets": "unchanged",
+  "selection": {
+    "codex": "warm app-server native-final",
+    "kimi": "ACP native-final"
+  },
+  "scope": "local formal service source runtime; library defaults remain opt-in; existing CLI/model/Role revisions unchanged",
+  "plistSha256": "d1620298a973bfe2282195394e6c1b5c219ac195e021f77c9e0a53c46d778175",
+  "realPage": {
+    "url": "http://127.0.0.1:4176/",
+    "channel": "Agent Council",
+    "historyRendered": true,
+    "errors": [],
+    "screenshot": "/Users/sun/.loom/reviews/2026-10-28-native-repair/page.png"
+  }
+}

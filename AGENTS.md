@@ -393,6 +393,18 @@ do not restate the numbers elsewhere. Per-turn usage, context-window occupancy
 and compaction count are shown per instance; data a CLI does not provide is
 shown as unknown, never estimated.
 
+Benchmark reply transport is part of experiment identity. The efficiency runner
+requires `RAH_EFFICIENCY_REPLY_TRANSPORT=native-final` to measure Host-bound
+final text; omitted means the legacy Worker reply path. It clears unrelated
+final-output switches and records the selection in the baseline hash. Never
+compare these modes as if only the code revision changed, or infer the deployed
+service selection from library defaults. Codex warm native text uses
+`LOOM_CODEX_NATIVE_FINAL_TRIAL`; Kimi uses `LOOM_KIMI_NATIVE_FINAL_TRIAL`.
+Native-final selection must not also advertise the competing reply MCP tool;
+retain Worker CLI fallback for ineligible/multiple targets. Preserve original
+session identity and require successful current delivery registration plus
+verified native terminal evidence before Host publication.
+
 Raft source is reference only, not the default port source; keep the verified
 ledger, authentication, idempotency and execution-fence foundations. Rules code
 can enforce must not live in prompts; exception guidance appears only on error.
