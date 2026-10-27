@@ -737,3 +737,11 @@ scroll anchors before claiming visible-content gains. Audit generated CSS as
 well as helper/source tests: after the product build run
 `node --test scripts/official-web/adaptive-built-css.test.mjs`; equivalent rem
 and px breakpoint syntax must preserve the same coarse/fine layout boundary.
+
+Owner mobile typography boundary (2026-10-27): orientation-driven area
+optimization must not change the selected message font or line height. The
+approved coarse landscape primary-channel exception consolidates the global
+48px bar into existing channel controls; it is local layout glue, not an
+upstream parity claim. Its scope and exclusions are tested by
+`scripts/official-web/landscape-conversation.test.ts`. Preserve notification,
+search and return paths; do not generalize it to other routes without review.

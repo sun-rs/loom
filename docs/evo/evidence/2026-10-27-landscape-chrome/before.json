@@ -1,0 +1,74 @@
+[
+  {
+    "id": "duo-p",
+    "bodyHeight": 738,
+    "bodyWidth": 626,
+    "coarse": true,
+    "composer": 55,
+    "font": "14px",
+    "height": 890,
+    "line": "20px",
+    "top": 97,
+    "width": 626
+  },
+  {
+    "id": "duo-l",
+    "bodyHeight": 426,
+    "bodyWidth": 833,
+    "coarse": true,
+    "composer": 55,
+    "font": "14px",
+    "height": 626,
+    "line": "20px",
+    "top": 145,
+    "width": 890
+  },
+  {
+    "id": "xt2-p",
+    "bodyHeight": 909,
+    "bodyWidth": 744,
+    "coarse": true,
+    "composer": 55,
+    "font": "14px",
+    "height": 1061,
+    "line": "20px",
+    "top": 97,
+    "width": 744
+  },
+  {
+    "id": "xt2-l",
+    "bodyHeight": 544,
+    "bodyWidth": 1004,
+    "coarse": true,
+    "composer": 55,
+    "font": "14px",
+    "height": 744,
+    "line": "20px",
+    "top": 145,
+    "width": 1061
+  },
+  {
+    "id": "ipad-p",
+    "bodyHeight": 1058,
+    "bodyWidth": 834,
+    "coarse": true,
+    "composer": 55,
+    "font": "14px",
+    "height": 1210,
+    "line": "20px",
+    "top": 97,
+    "width": 834
+  },
+  {
+    "id": "ipad-l",
+    "bodyHeight": 634,
+    "bodyWidth": 1153,
+    "coarse": true,
+    "composer": 55,
+    "font": "14px",
+    "height": 834,
+    "line": "20px",
+    "top": 145,
+    "width": 1210
+  }
+]
