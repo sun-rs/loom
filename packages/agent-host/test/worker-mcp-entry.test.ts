@@ -94,6 +94,51 @@ test("installed-style MCP stdio exposes exact schema and forwards native envelop
       params,
       "invalid arguments never reach Host bridge",
     );
+    for (const [arguments_, expected] of [
+      [{ body: "working" }, /new reply requires final/],
+      [{ body: "working", basedOnRoomSeq: 6 }, /new reply requires final/],
+      [
+        { body: "revised", reviseDraftId: "draft", final: true },
+        /revision accepts only body and reviseDraftId/,
+      ],
+      [
+        { body: "revised", reviseDraftId: "draft", basedOnRoomSeq: 6 },
+        /revision accepts only body and reviseDraftId/,
+      ],
+      [{ body: "working", final: "yes" }, /final must be a boolean/],
+      [
+        { body: "working", final: false, basedOnRoomSeq: -1 },
+        /basedOnRoomSeq must be a nonnegative integer/,
+      ],
+      [{ body: " ", final: false }, /body must be nonempty text/],
+      [
+        { body: "working", final: false, secretValue: "do-not-echo-me" },
+        /Remove undeclared fields/,
+      ],
+    ] as const) {
+      const result = (
+        await call("tools/call", { name: "loom_reply", arguments: arguments_ })
+      ).result;
+      assert.equal(result.isError, true);
+      assert.match(result.content[0].text, expected);
+      assert.match(result.content[0].text, /not forwarded/);
+      assert.ok(!result.content[0].text.includes("do-not-echo-me"));
+      assert.deepEqual(
+        received,
+        params,
+        "local rejection cannot publish or reach bridge",
+      );
+    }
+    const revision = {
+      name: "loom_reply",
+      arguments: { body: "revised", reviseDraftId: "draft" },
+    };
+    await call("tools/call", revision);
+    assert.deepEqual(
+      received,
+      revision,
+      "valid revision still omits final and seq",
+    );
   } finally {
     child.stdin.end();
     child.kill();

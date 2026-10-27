@@ -30,12 +30,38 @@ async function invoke(params: unknown): Promise<unknown> {
     typeof params !== "object" ||
     !("name" in params) ||
     params.name !== "loom_reply" ||
-    !("arguments" in params) ||
-    !WorkerReplyMcpArgumentsSchema.safeParse(params.arguments).success
+    !("arguments" in params)
   )
     return errorResult(
       "Invalid loom_reply arguments. Supply only declared business fields; identity is supplied by the CLI.",
     );
+  const parsed = WorkerReplyMcpArgumentsSchema.safeParse(params.arguments);
+  if (!parsed.success) {
+    // Only fixed guidance is returned: never echo bodies, extra keys or values.
+    const fields: Record<string, string> = {
+      body: "body must be nonempty text (at most 1000000 characters).",
+      final: "final must be a boolean: true when finished, false for progress.",
+      basedOnRoomSeq: "basedOnRoomSeq must be a nonnegative integer.",
+      reviseDraftId: "reviseDraftId must be a valid nonempty identifier.",
+    };
+    const guidance = [
+      ...new Set(
+        parsed.error.issues.map((issue) => {
+          if (issue.code === "custom")
+            return "A new reply requires final (true when finished, false for progress); a revision accepts only body and reviseDraftId and preserves saved intent.";
+          if (issue.code === "unrecognized_keys")
+            return "Remove undeclared fields; identity is supplied by the CLI.";
+          return (
+            fields[String(issue.path[0])] ??
+            "Supply an object with the declared business fields."
+          );
+        }),
+      ),
+    ];
+    return errorResult(
+      `Invalid loom_reply arguments; this call was not forwarded. ${guidance.join(" ")}`,
+    );
+  }
   return await new Promise((resolve) => {
     const req = request(
       {
