@@ -1,0 +1,173 @@
+{
+  "kind": "loom-task-outcome-report/v1",
+  "sourceKind": "agy-bounded-review-closeout",
+  "cases": [
+    {
+      "id": "agy-review-resumed",
+      "sourceRevision": "ed76bb2f",
+      "bindings": [
+        {
+          "participantId": "principal_ab428800-03f5-4449-a9d0-05171bf7840d",
+          "resolvedModel": {
+            "source": "explicit_binding",
+            "modelBindingId": "local:agy-cli/v1:gemini-3.8-flash-low",
+            "provider": "antigravity",
+            "modelId": "gemini-3.8-flash-low",
+            "reasoning": "low"
+          }
+        },
+        {
+          "participantId": "principal_509ce106-aec4-4f5e-9e07-b20356aa928a",
+          "resolvedModel": {
+            "source": "explicit_binding",
+            "modelBindingId": "local:codex-cli/v1:gpt-6-luna",
+            "provider": "openai",
+            "modelId": "gpt-6-luna",
+            "reasoning": "low"
+          }
+        },
+        {
+          "participantId": "principal_ab428800-03f5-4449-a9d0-05171bf7840d",
+          "resolvedModel": {
+            "source": "explicit_binding",
+            "modelBindingId": "local:agy-cli/v1:gemini-3.8-flash-low",
+            "provider": "antigravity",
+            "modelId": "gemini-3.8-flash-low",
+            "reasoning": "low"
+          }
+        },
+        {
+          "participantId": "principal_ab428800-03f5-4449-a9d0-05171bf7840d",
+          "resolvedModel": {
+            "source": "explicit_binding",
+            "modelBindingId": "local:agy-cli/v1:gemini-3.8-flash-low",
+            "provider": "antigravity",
+            "modelId": "gemini-3.8-flash-low",
+            "reasoning": "low"
+          }
+        },
+        {
+          "participantId": "principal_509ce106-aec4-4f5e-9e07-b20356aa928a",
+          "resolvedModel": {
+            "source": "explicit_binding",
+            "modelBindingId": "local:codex-cli/v1:gpt-6-luna",
+            "provider": "openai",
+            "modelId": "gpt-6-luna",
+            "reasoning": "low"
+          }
+        },
+        {
+          "participantId": "principal_ab428800-03f5-4449-a9d0-05171bf7840d",
+          "resolvedModel": {
+            "source": "explicit_binding",
+            "modelBindingId": "local:agy-cli/v1:gemini-3.8-flash-low",
+            "provider": "antigravity",
+            "modelId": "gemini-3.8-flash-low",
+            "reasoning": "low"
+          }
+        },
+        {
+          "participantId": "principal_509ce106-aec4-4f5e-9e07-b20356aa928a",
+          "resolvedModel": {
+            "source": "explicit_binding",
+            "modelBindingId": "local:codex-cli/v1:gpt-6-luna",
+            "provider": "openai",
+            "modelId": "gpt-6-luna",
+            "reasoning": "low"
+          }
+        },
+        {
+          "participantId": "principal_ab428800-03f5-4449-a9d0-05171bf7840d",
+          "resolvedModel": {
+            "source": "explicit_binding",
+            "modelBindingId": "local:agy-cli/v1:gemini-3.8-flash-low",
+            "provider": "antigravity",
+            "modelId": "gemini-3.8-flash-low",
+            "reasoning": "low"
+          }
+        }
+      ],
+      "sourceScope": "Human resumed the original stopped sessions, then issued one directed request; the three review handoffs were automatic. Not an uninterrupted implementation acceptance or cost comparison.",
+      "executionFinished": true,
+      "outcome": "unknown",
+      "boundedReview": "passed",
+      "humanIntervention": "recorded",
+      "humanDeclaration": "Human resumed the original stopped sessions, then issued one directed request; the three review handoffs were automatic. Not an uninterrupted implementation acceptance or cost comparison.",
+      "descendantCoverage": "unknown",
+      "billing": null,
+      "automaticMemoryDisabled": null,
+      "wallMs": 90730,
+      "wallScope": "Earliest observed Run start to latest finish; excludes prior stopped attempts and Human waiting.",
+      "runIds": [
+        "run_647fab39-4626-4779-973e-70ab4b2b268b",
+        "run_c8cba0c3-dd98-406c-bb93-604bc971d56d",
+        "run_bbc1f6e5-9ebd-464b-9e3d-680e31371226",
+        "run_17098b4f-d61f-4c94-8692-e1d2d18b52d6",
+        "run_2aa41881-3164-4c44-947a-e7e9f6116646"
+      ],
+      "usage": {
+        "requests": {
+          "known": 0,
+          "complete": false,
+          "total": null
+        },
+        "input": {
+          "known": 145018,
+          "complete": false,
+          "total": null
+        },
+        "output": {
+          "known": 633,
+          "complete": false,
+          "total": null
+        },
+        "cachedInput": {
+          "known": 107347,
+          "complete": false,
+          "total": null
+        },
+        "generations": {
+          "known": 9,
+          "complete": false,
+          "total": null
+        }
+      },
+      "usageByStage": {
+        "manual_resume": {
+          "input": 44537,
+          "cached": 16000,
+          "output": 42,
+          "generations": 3
+        },
+        "review": {
+          "input": 100481,
+          "cached": 91347,
+          "output": 591,
+          "generations": 6
+        }
+      },
+      "handoff": {
+        "proof": "linked-summary-without-inbox",
+        "sourceEventId": "event_c2595bfa-1ae1-427e-a4a3-26f4f220ddc8",
+        "replyEventId": "event_3f903331-3d95-49db-ba14-4c499bef8d57",
+        "finalEventId": "event_cf558f4a-23db-4c7e-8331-26e1780e6645",
+        "reviewRunId": "run_17098b4f-d61f-4c94-8692-e1d2d18b52d6",
+        "returnRunId": "run_2aa41881-3164-4c44-947a-e7e9f6116646",
+        "limitation": "Cross-checks archived summary links and presentation only; raw Room events/Inbox and consumed-delivery receipts are not included. Not a fresh ledger audit."
+      },
+      "limitations": [
+        "Prior invalid setup and budget-stopped trial remain incomplete historical evidence",
+        "10 parser tests plus focused review are not an exhaustive audit",
+        "Input includes cached reads; no native or Herdr control, no efficiency ratio or model-ranking claim",
+        "No new model or effort combinations tested",
+        "Whole implementation task remains unassessed here; bounded resumed review is not uninterrupted completion.",
+        "Earlier failed attempts are outside this source and remain in their original evidence; this is not cumulative project expense."
+      ]
+    }
+  ],
+  "comparison": null,
+  "source": {
+    "path": "docs/evo/evidence/2026-10-27-agy-closeout/summary.json",
+    "sha256": "8f682a25bde09d2f08713b12561bb31c81b05b6da2bb4c9ee9d293dbfed78353"
+  }
+}

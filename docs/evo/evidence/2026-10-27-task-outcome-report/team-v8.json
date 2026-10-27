@@ -1,0 +1,725 @@
+{
+  "kind": "loom-task-outcome-report/v1",
+  "sourceKind": "bounded-team-cohort-closeout/v8",
+  "cases": [
+    {
+      "id": "pair1-loom",
+      "round": 1,
+      "arm": "loom",
+      "sourceRevision": "a8464ec",
+      "bindings": [
+        {
+          "cli": "claude",
+          "binding": "sonnet",
+          "actualModel": "claude-sonnet-5-5",
+          "effort": "low"
+        },
+        {
+          "cli": "opencode",
+          "binding": "aihubmix/deepseek-v4.1-flash",
+          "actualModel": "deepseek-v4.1-flash",
+          "effort": "low"
+        }
+      ],
+      "versions": {
+        "claude": "2.1.293",
+        "opencode": "1.18.35"
+      },
+      "evidencePointer": "/samples/0",
+      "humanIntervention": "unknown",
+      "humanDeclaration": "Owner explicitly approved this fixed three-pair batch; release now closed. No retries, replacements or Human business rescue.",
+      "descendantCoverage": "unknown",
+      "wallMs": null,
+      "runIds": null,
+      "billing": null,
+      "automaticMemoryDisabled": true,
+      "executionFinished": true,
+      "outcome": "passed",
+      "usage": {
+        "input": {
+          "known": 719118,
+          "complete": true,
+          "total": 719118
+        },
+        "output": {
+          "known": 26344,
+          "complete": true,
+          "total": 26344
+        },
+        "requests": {
+          "known": 27,
+          "complete": true,
+          "total": 27
+        },
+        "cachedInput": {
+          "known": 0,
+          "complete": false,
+          "total": null
+        }
+      },
+      "artifactEvidence": {
+        "resultSha256": "53da9bd95e1cdb490fb3153e98bb272c00078b052bedc9cdedeeeb6be8f261f6",
+        "auditSha256": "ae90117ffd574de66c22c4b1c82baa8d0e6a6d3cc3b8d77a16a206f8744737e4"
+      },
+      "handoff": {
+        "proof": "aggregate-only",
+        "publicActivations": 8,
+        "automaticReturns": 2,
+        "limitation": "Counts cannot prove ordered delivery, Inbox consumption or A→B→A causality."
+      },
+      "limitations": []
+    },
+    {
+      "id": "pair1-native",
+      "round": 1,
+      "arm": "native",
+      "sourceRevision": "a8464ec",
+      "bindings": [
+        {
+          "cli": "claude",
+          "binding": "sonnet",
+          "actualModel": "claude-sonnet-5-5",
+          "effort": "low"
+        },
+        {
+          "cli": "opencode",
+          "binding": "aihubmix/deepseek-v4.1-flash",
+          "actualModel": "deepseek-v4.1-flash",
+          "effort": "low"
+        }
+      ],
+      "versions": {
+        "claude": "2.1.293",
+        "opencode": "1.18.35"
+      },
+      "evidencePointer": "/samples/1",
+      "humanIntervention": "unknown",
+      "humanDeclaration": "Owner explicitly approved this fixed three-pair batch; release now closed. No retries, replacements or Human business rescue.",
+      "descendantCoverage": "unknown",
+      "wallMs": null,
+      "runIds": null,
+      "billing": null,
+      "automaticMemoryDisabled": true,
+      "executionFinished": true,
+      "outcome": "passed",
+      "usage": {
+        "input": {
+          "known": 1158847,
+          "complete": true,
+          "total": 1158847
+        },
+        "output": {
+          "known": 34409,
+          "complete": true,
+          "total": 34409
+        },
+        "requests": {
+          "known": 40,
+          "complete": true,
+          "total": 40
+        },
+        "cachedInput": {
+          "known": 0,
+          "complete": false,
+          "total": null
+        }
+      },
+      "artifactEvidence": {
+        "resultSha256": "6e3aa1e931879e39bdf2bbbef180995e86f8d3b521526fb1ecaba92555ae83c1",
+        "auditSha256": "d741a748738a778b51ff454b9c43ab466fb00135f4ca370b2ab828372b11f9b5"
+      },
+      "handoff": {
+        "proof": "aggregate-only",
+        "publicActivations": 0,
+        "automaticReturns": 0,
+        "limitation": "Counts cannot prove ordered delivery, Inbox consumption or A→B→A causality."
+      },
+      "limitations": []
+    },
+    {
+      "id": "pair2-native",
+      "round": 2,
+      "arm": "native",
+      "sourceRevision": "a8464ec",
+      "bindings": [
+        {
+          "cli": "claude",
+          "binding": "sonnet",
+          "actualModel": "claude-sonnet-5-5",
+          "effort": "low"
+        },
+        {
+          "cli": "opencode",
+          "binding": "aihubmix/deepseek-v4.1-flash",
+          "actualModel": "deepseek-v4.1-flash",
+          "effort": "low"
+        }
+      ],
+      "versions": {
+        "claude": "2.1.293",
+        "opencode": "1.18.35"
+      },
+      "evidencePointer": "/samples/2",
+      "humanIntervention": "unknown",
+      "humanDeclaration": "Owner explicitly approved this fixed three-pair batch; release now closed. No retries, replacements or Human business rescue.",
+      "descendantCoverage": "unknown",
+      "wallMs": null,
+      "runIds": null,
+      "billing": null,
+      "automaticMemoryDisabled": true,
+      "executionFinished": true,
+      "outcome": "failed",
+      "usage": {
+        "input": {
+          "known": 100935,
+          "complete": true,
+          "total": 100935
+        },
+        "output": {
+          "known": 6730,
+          "complete": true,
+          "total": 6730
+        },
+        "requests": {
+          "known": 7,
+          "complete": true,
+          "total": 7
+        },
+        "cachedInput": {
+          "known": 0,
+          "complete": false,
+          "total": null
+        }
+      },
+      "artifactEvidence": {
+        "resultSha256": "7ec7db129a68eeaf87fed693a0c1fbb3bf68600984e072ca7cb269c31de582c9",
+        "auditSha256": "ccd7d149511f423d9becd8bfaae315fd4dfc76556d1d71054f393b4db73afa16"
+      },
+      "handoff": {
+        "proof": "aggregate-only",
+        "publicActivations": 0,
+        "automaticReturns": 0,
+        "limitation": "Counts cannot prove ordered delivery, Inbox consumption or A→B→A causality."
+      },
+      "limitations": []
+    },
+    {
+      "id": "pair2-loom",
+      "round": 2,
+      "arm": "loom",
+      "sourceRevision": "a8464ec",
+      "bindings": [
+        {
+          "cli": "claude",
+          "binding": "sonnet",
+          "actualModel": "claude-sonnet-5-5",
+          "effort": "low"
+        },
+        {
+          "cli": "opencode",
+          "binding": "aihubmix/deepseek-v4.1-flash",
+          "actualModel": "deepseek-v4.1-flash",
+          "effort": "low"
+        }
+      ],
+      "versions": {
+        "claude": "2.1.293",
+        "opencode": "1.18.35"
+      },
+      "evidencePointer": "/samples/3",
+      "humanIntervention": "unknown",
+      "humanDeclaration": "Owner explicitly approved this fixed three-pair batch; release now closed. No retries, replacements or Human business rescue.",
+      "descendantCoverage": "unknown",
+      "wallMs": null,
+      "runIds": null,
+      "billing": null,
+      "automaticMemoryDisabled": true,
+      "executionFinished": true,
+      "outcome": "passed",
+      "usage": {
+        "input": {
+          "known": 686932,
+          "complete": true,
+          "total": 686932
+        },
+        "output": {
+          "known": 20606,
+          "complete": true,
+          "total": 20606
+        },
+        "requests": {
+          "known": 28,
+          "complete": true,
+          "total": 28
+        },
+        "cachedInput": {
+          "known": 0,
+          "complete": false,
+          "total": null
+        }
+      },
+      "artifactEvidence": {
+        "resultSha256": "4f1466684a95e84692af6212eb322ff14618a8cee9e1f71763e0af6ddfc698ab",
+        "auditSha256": "75d0a7739a82e0eb7ee738256631b3bbe582001deb1d25ca00561609c9dc70ab"
+      },
+      "handoff": {
+        "proof": "aggregate-only",
+        "publicActivations": 7,
+        "automaticReturns": 1,
+        "limitation": "Counts cannot prove ordered delivery, Inbox consumption or A→B→A causality."
+      },
+      "limitations": []
+    },
+    {
+      "id": "pair3-loom",
+      "round": 3,
+      "arm": "loom",
+      "sourceRevision": "a8464ec",
+      "bindings": [
+        {
+          "cli": "claude",
+          "binding": "sonnet",
+          "actualModel": "claude-sonnet-5-5",
+          "effort": "low"
+        },
+        {
+          "cli": "opencode",
+          "binding": "aihubmix/deepseek-v4.1-flash",
+          "actualModel": "deepseek-v4.1-flash",
+          "effort": "low"
+        }
+      ],
+      "versions": {
+        "claude": "2.1.293",
+        "opencode": "1.18.35"
+      },
+      "evidencePointer": "/samples/4",
+      "humanIntervention": "unknown",
+      "humanDeclaration": "Owner explicitly approved this fixed three-pair batch; release now closed. No retries, replacements or Human business rescue.",
+      "descendantCoverage": "unknown",
+      "wallMs": null,
+      "runIds": null,
+      "billing": null,
+      "automaticMemoryDisabled": true,
+      "executionFinished": true,
+      "outcome": "passed",
+      "usage": {
+        "input": {
+          "known": 601547,
+          "complete": true,
+          "total": 601547
+        },
+        "output": {
+          "known": 22402,
+          "complete": true,
+          "total": 22402
+        },
+        "requests": {
+          "known": 25,
+          "complete": true,
+          "total": 25
+        },
+        "cachedInput": {
+          "known": 0,
+          "complete": false,
+          "total": null
+        }
+      },
+      "artifactEvidence": {
+        "resultSha256": "d0ad493cc21468b52f551ab2d3c1df3bcf22adbc01ec1693d31e2de3d7da8762",
+        "auditSha256": "b83d9ec3524aa102b50c9fb025f5d21d79a8ff8101ed3d8188af5cbe76f16f07"
+      },
+      "handoff": {
+        "proof": "aggregate-only",
+        "publicActivations": 8,
+        "automaticReturns": 1,
+        "limitation": "Counts cannot prove ordered delivery, Inbox consumption or A→B→A causality."
+      },
+      "limitations": []
+    },
+    {
+      "id": "pair3-native",
+      "round": 3,
+      "arm": "native",
+      "sourceRevision": "a8464ec",
+      "bindings": [
+        {
+          "cli": "claude",
+          "binding": "sonnet",
+          "actualModel": "claude-sonnet-5-5",
+          "effort": "low"
+        },
+        {
+          "cli": "opencode",
+          "binding": "aihubmix/deepseek-v4.1-flash",
+          "actualModel": "deepseek-v4.1-flash",
+          "effort": "low"
+        }
+      ],
+      "versions": {
+        "claude": "2.1.293",
+        "opencode": "1.18.35"
+      },
+      "evidencePointer": "/samples/5",
+      "humanIntervention": "unknown",
+      "humanDeclaration": "Owner explicitly approved this fixed three-pair batch; release now closed. No retries, replacements or Human business rescue.",
+      "descendantCoverage": "unknown",
+      "wallMs": null,
+      "runIds": null,
+      "billing": null,
+      "automaticMemoryDisabled": true,
+      "executionFinished": true,
+      "outcome": "passed",
+      "usage": {
+        "input": {
+          "known": 680221,
+          "complete": true,
+          "total": 680221
+        },
+        "output": {
+          "known": 30527,
+          "complete": true,
+          "total": 30527
+        },
+        "requests": {
+          "known": 25,
+          "complete": true,
+          "total": 25
+        },
+        "cachedInput": {
+          "known": 0,
+          "complete": false,
+          "total": null
+        }
+      },
+      "artifactEvidence": {
+        "resultSha256": "0007b47f9b9e34b4fa4d7c4e614ebf626e214aa9cdfdc7645a20055741740283",
+        "auditSha256": "90ee574dea5450e2859ddc31edceab7f4c5def6d1d35804508bcd5e0b63792d5"
+      },
+      "handoff": {
+        "proof": "aggregate-only",
+        "publicActivations": 0,
+        "automaticReturns": 0,
+        "limitation": "Counts cannot prove ordered delivery, Inbox consumption or A→B→A causality."
+      },
+      "limitations": [
+        "B claimed mutation testing of cancellation behavior; no recorded tool operation performs it. A repeated the unsupported claim. Not credited as performed verification.",
+        "B read first 40 README lines only; full documentation semantics independently reviewed by lead."
+      ]
+    }
+  ],
+  "arms": {
+    "native": {
+      "planned": 3,
+      "passed": 2,
+      "failed": 1,
+      "unknown": 0,
+      "input": {
+        "known": 1940003,
+        "complete": true,
+        "total": 1940003
+      },
+      "output": {
+        "known": 71666,
+        "complete": true,
+        "total": 71666
+      },
+      "failedInput": {
+        "known": 100935,
+        "complete": true,
+        "total": 100935
+      },
+      "unknownOutcomeInput": {
+        "known": 0,
+        "complete": false,
+        "total": null
+      }
+    },
+    "loom": {
+      "planned": 3,
+      "passed": 3,
+      "failed": 0,
+      "unknown": 0,
+      "input": {
+        "known": 2007597,
+        "complete": true,
+        "total": 2007597
+      },
+      "output": {
+        "known": 69352,
+        "complete": true,
+        "total": 69352
+      },
+      "failedInput": {
+        "known": 0,
+        "complete": true,
+        "total": 0
+      },
+      "unknownOutcomeInput": {
+        "known": 0,
+        "complete": false,
+        "total": null
+      }
+    }
+  },
+  "comparison": {
+    "arithmetic": {
+      "comparable": false,
+      "comparisonIssues": [
+        "not-all-planned-tasks-passed",
+        "descendant-coverage-and-policy-not-established-by-this-source"
+      ],
+      "full": {
+        "rounds": [
+          1,
+          2,
+          3
+        ],
+        "native": {
+          "input": {
+            "known": 1940003,
+            "complete": true,
+            "total": 1940003
+          },
+          "output": {
+            "known": 71666,
+            "complete": true,
+            "total": 71666
+          },
+          "cachedInput": {
+            "known": 0,
+            "complete": false,
+            "total": null
+          },
+          "reasoningOutput": {
+            "known": 0,
+            "complete": false,
+            "total": null
+          }
+        },
+        "loom": {
+          "input": {
+            "known": 2007597,
+            "complete": true,
+            "total": 2007597
+          },
+          "output": {
+            "known": 69352,
+            "complete": true,
+            "total": 69352
+          },
+          "cachedInput": {
+            "known": 0,
+            "complete": false,
+            "total": null
+          },
+          "reasoningOutput": {
+            "known": 0,
+            "complete": false,
+            "total": null
+          }
+        },
+        "finished": true,
+        "ratios": {
+          "input": 1.0348422141615246,
+          "output": 0.967711327547233,
+          "cachedInput": null,
+          "reasoningOutput": null
+        }
+      },
+      "late": {
+        "rounds": [
+          3
+        ],
+        "native": {
+          "input": {
+            "known": 680221,
+            "complete": true,
+            "total": 680221
+          },
+          "output": {
+            "known": 30527,
+            "complete": true,
+            "total": 30527
+          },
+          "cachedInput": {
+            "known": 0,
+            "complete": false,
+            "total": null
+          },
+          "reasoningOutput": {
+            "known": 0,
+            "complete": false,
+            "total": null
+          }
+        },
+        "loom": {
+          "input": {
+            "known": 601547,
+            "complete": true,
+            "total": 601547
+          },
+          "output": {
+            "known": 22402,
+            "complete": true,
+            "total": 22402
+          },
+          "cachedInput": {
+            "known": 0,
+            "complete": false,
+            "total": null
+          },
+          "reasoningOutput": {
+            "known": 0,
+            "complete": false,
+            "total": null
+          }
+        },
+        "finished": true,
+        "ratios": {
+          "input": 0.8843405305040568,
+          "output": 0.7338421725030301,
+          "cachedInput": null,
+          "reasoningOutput": null
+        }
+      },
+      "prefix": {
+        "rounds": [
+          1,
+          2,
+          3
+        ],
+        "native": {
+          "input": {
+            "known": 1940003,
+            "complete": true,
+            "total": 1940003
+          },
+          "output": {
+            "known": 71666,
+            "complete": true,
+            "total": 71666
+          },
+          "cachedInput": {
+            "known": 0,
+            "complete": false,
+            "total": null
+          },
+          "reasoningOutput": {
+            "known": 0,
+            "complete": false,
+            "total": null
+          }
+        },
+        "loom": {
+          "input": {
+            "known": 2007597,
+            "complete": true,
+            "total": 2007597
+          },
+          "output": {
+            "known": 69352,
+            "complete": true,
+            "total": 69352
+          },
+          "cachedInput": {
+            "known": 0,
+            "complete": false,
+            "total": null
+          },
+          "reasoningOutput": {
+            "known": 0,
+            "complete": false,
+            "total": null
+          }
+        },
+        "finished": true,
+        "ratios": {
+          "input": 1.0348422141615246,
+          "output": 0.967711327547233,
+          "cachedInput": null,
+          "reasoningOutput": null
+        }
+      },
+      "observed": {
+        "native": {
+          "input": {
+            "known": 1940003,
+            "complete": true,
+            "total": 1940003
+          },
+          "output": {
+            "known": 71666,
+            "complete": true,
+            "total": 71666
+          },
+          "cachedInput": {
+            "known": 0,
+            "complete": false,
+            "total": null
+          },
+          "reasoningOutput": {
+            "known": 0,
+            "complete": false,
+            "total": null
+          }
+        },
+        "loom": {
+          "input": {
+            "known": 2007597,
+            "complete": true,
+            "total": 2007597
+          },
+          "output": {
+            "known": 69352,
+            "complete": true,
+            "total": 69352
+          },
+          "cachedInput": {
+            "known": 0,
+            "complete": false,
+            "total": null
+          },
+          "reasoningOutput": {
+            "known": 0,
+            "complete": false,
+            "total": null
+          }
+        }
+      },
+      "quality": {
+        "native": {
+          "allPassed": false,
+          "failedRounds": [
+            2
+          ]
+        },
+        "loom": {
+          "allPassed": true,
+          "failedRounds": []
+        }
+      },
+      "interpretation": "Ratios are observed arithmetic for the labeled window, not an efficiency verdict. Comparability and quality are independent. Prefixes do not replace the planned full task. Observed known expense includes unfinished work; unknown is never zero. Tokens are not invoices."
+    },
+    "equalQualityRatio": {
+      "input": null,
+      "output": null
+    },
+    "limitation": "Arithmetic retains all attempts; it is not a same-quality efficiency verdict or billing ratio."
+  },
+  "sourceLimitations": [
+    "Completion means archived artifact/oracle, independent README semantics and real external design/review evidence. It does not validate every model sentence or prove exhaustive code review.",
+    "H3 reviewer claimed mutation testing, but no tool record supports it; A repeated claim. The claim is explicitly not credited. Actual source reading, suite, probes and final artifact checks are independently evidenced.",
+    "L3 reviewer inspected test names and first 60 README lines, H3 first 40 README lines; lead reviewed complete README semantics. Do not claim full peer line-by-line review of those files.",
+    "L2 reviewer attempted old Worker message-post before native-final fallback; the rejected extra call and all final sign-offs stay in measured costs."
+  ],
+  "sourceFailure": {
+    "sample": "pair2-native",
+    "classification": "model communication omission",
+    "detail": "A sent design request through Herdr then ended turn. B answered only in ordinary final text, with no Herdr prompt to A. Both idle/done, no accepted pending peer request, no implementation. Frozen 30-second quiet rule closed sample. All consumed tokens retained."
+  },
+  "source": {
+    "path": "docs/evo/evidence/2026-10-13-backend-finish/team-v8.json",
+    "sha256": "f170cb01f9650453af0fc61c11084b2ffe6ae34797aece4bae14590e6ef12c43"
+  }
+}
