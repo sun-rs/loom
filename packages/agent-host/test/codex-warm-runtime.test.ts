@@ -2599,6 +2599,12 @@ test("warm Codex native text: one continuous session publishes plain final witho
       assert.doesNotMatch(String(r.text), /Use loom_reply for replies/);
     }
     assert.equal(state.records().filter((r) => r.event === "worker").length, 0);
+    for (const start of state.records().filter((r) => r.event === "start"))
+      assert.doesNotMatch(
+        JSON.stringify(start.argv),
+        /mcp_servers\.loom_worker/,
+        "native final must not also advertise a competing reply MCP tool",
+      );
     assert.equal(
       new Set(orderedRuns(state).map((r) => r.instanceRuntimeId)).size,
       1,
@@ -2631,3 +2637,32 @@ for (const [label, options, token] of [
       await s.cleanup();
     }
   });
+
+test("warm Codex switches reply transport without replacing the native session", async () => {
+  const options = { nativeFinalText: false, adapterPerClaim: true };
+  const s = await harness(options);
+  try {
+    s.post("[fake:final] old reply path");
+    assert.equal(
+      (await s.current.agentHost.reconcileOnce()).state,
+      "completed",
+    );
+    const original = s.sessions.get(s.participantId);
+    assert.ok(original);
+    options.nativeFinalText = true;
+    s.post("[fake:envelope] [fake:plain-final] new reply path");
+    const result = await s.current.agentHost.reconcileOnce();
+    assert.equal(result.state, "completed", JSON.stringify(result));
+    assert.equal(s.sessions.get(s.participantId), original);
+    const resumes = s
+      .records()
+      .filter((r) => r.event === "request" && r.method === "thread/resume");
+    assert.equal(resumes.length, 1);
+    assert.equal(
+      (resumes[0]!.params as Record<string, unknown>).threadId,
+      original,
+    );
+  } finally {
+    await s.cleanup();
+  }
+});

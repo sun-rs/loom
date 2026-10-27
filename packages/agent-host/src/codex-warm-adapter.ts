@@ -184,7 +184,7 @@ export type WarmWorkerCredential = {
 export type CodexWarmAdapterOptions = {
   /** Opt-in Codex/OpenCode terminal command path; not a model-owned setting. */
   explicitFinalOutput?: boolean;
-  /** Claude warm only: Host publishes proved native text. Opt-in trial. */
+  /** Host publishes proved native text for Codex/Claude/OpenCode warm turns. */
   nativeFinalText?: boolean;
   /** The warm driver; Codex when omitted. */
   driver?: WarmDriverDescriptor;
@@ -577,7 +577,10 @@ export class CodexWarmAdapter implements RuntimeAdapter {
     const pool = this.#options.pool;
     const lease = await this.#options.runtimeEnvironment(input);
     let mcp: WorkerMcpBridge | undefined;
-    if (this.#driver.kind === CODEX_WARM_DRIVER_KIND) {
+    if (
+      this.#driver.kind === CODEX_WARM_DRIVER_KIND &&
+      !this.#nativeFinalText()
+    ) {
       try {
         mcp = await createWorkerMcpBridge({
           socketPath: join(layout.socketDirectory, "worker.sock"),

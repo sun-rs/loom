@@ -15,3 +15,7 @@ Owner 要求追查并修复近期 Codex/Kimi 效率问题。历史 v7 study 明�
 新增测试先红后绿：Codex warm plain-final 两轮、无工具/无 outputSchema、评论/中断/投递登记失败拒绝；真实驱动以假 app-server 分别验证 JSON/native-text 模式的原始终态证据。共用 baseline、配置/组合、driver 22 项；Codex warm 11 项；Kimi native-final 14 项；Claude 15 项；OpenCode 11 项；类型检查通过。无关全套测试未跑。
 
 此前失败实验费用与未知用量继续保留。本批真实模型验证结果后补，不由免费测试推断成本通过。
+
+## 首次真实候选发现与保留
+
+`538af19f` 的 Codex 三对真实对照保留：两对 over-budget，一对 needs-quality-review。接入 native-final 后仍暴露旧回复 MCP，模型部分轮次走回旧路。这不是消除工具开销的完整实现，也不能用最后一对低值宣称通过。后续先增加实际进程启动参数断言，移除 native-final 模式的竞争回复工具；Worker CLI 回退仍保留。新增模式切换测试验证同一个原生 session 续接，未替换实例会话；12 项 Codex 针对性测试通过。后继候选另立批次，不拼接前批。
