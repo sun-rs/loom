@@ -33,7 +33,6 @@ const FORBIDDEN = new Set([
   "--fork-session",
   "--continue",
   "-c",
-  "--settings",
   "--agents",
   "--agent",
 ]);
@@ -108,6 +107,24 @@ export function classifyClaudeLaunch(args, approved) {
   for (const a of args)
     if (FORBIDDEN.has(a.split("=")[0]))
       throw new Error(`Unsupported gate argument ${a}`);
+  const settings = flagValues(args, "--settings");
+  if (settings.length) {
+    assert.equal(settings.length, 1, "Settings must be unique");
+    let value;
+    try {
+      value = JSON.parse(settings[0]);
+    } catch {
+      throw new Error("Only inline default-tier settings permitted");
+    }
+    assert.ok(
+      value &&
+        typeof value === "object" &&
+        !Array.isArray(value) &&
+        Object.keys(value).length === 1 &&
+        value.fastMode === false,
+      "Only fastMode:false permitted",
+    );
+  }
   assertWorkerMcpConfig(args);
   const models = flagValues(args, "--model");
   const efforts = flagValues(args, "--effort");

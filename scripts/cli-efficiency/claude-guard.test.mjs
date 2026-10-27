@@ -454,3 +454,35 @@ test("MCP launch only admits the fixed internal worker entry and strict isolatio
   ])
     assert.throws(() => classifyClaudeLaunch(invalid, approved), /MCP/);
 });
+
+test("launch: exact product default-tier settings only, no extra configuration", () => {
+  assert.equal(
+    classifyClaudeLaunch(
+      [...product, "--settings", '{"fastMode":false}'],
+      approved,
+    ),
+    "turn",
+  );
+  for (const value of [
+    '{"fastMode":true}',
+    '{"fastMode":false,"model":"other"}',
+    "{}",
+    "/tmp/settings.json",
+    "null",
+  ])
+    assert.throws(() =>
+      classifyClaudeLaunch([...product, "--settings", value], approved),
+    );
+  assert.throws(() =>
+    classifyClaudeLaunch(
+      [
+        ...product,
+        "--settings",
+        '{"fastMode":false}',
+        "--settings",
+        '{"fastMode":false}',
+      ],
+      approved,
+    ),
+  );
+});
