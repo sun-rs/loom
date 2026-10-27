@@ -15,6 +15,10 @@ export function claudeGateRoute(config, env = process.env) {
 export function claudeGateModelMatches(config, actual, env = process.env) {
   const route = claudeGateRoute(config, env);
   if (route !== undefined)
-    return actual === route || actual === "kimi-code-cn/k3.1-pro";
+    return (
+      actual === route ||
+      actual === "kimi-code-cn/k3.1-pro" ||
+      actual === "k3.1-pro"
+    );
   return claudeModelMatches(config.model, actual);
 }

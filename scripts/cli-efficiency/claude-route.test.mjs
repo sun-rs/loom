@@ -10,7 +10,11 @@ test("explicit owner-approved Kimi route does not weaken ordinary Claude family 
   );
   const env = { RAH_EFFICIENCY_CLAUDE_ROUTE: "kimi-code-cn/k3.1-pro[1m]" };
   assert.equal(claudeGateRoute(config, env), "kimi-code-cn/k3.1-pro[1m]");
-  for (const model of ["kimi-code-cn/k3.1-pro", "kimi-code-cn/k3.1-pro[1m]"])
+  for (const model of [
+    "k3.1-pro",
+    "kimi-code-cn/k3.1-pro",
+    "kimi-code-cn/k3.1-pro[1m]",
+  ])
     assert.equal(claudeGateModelMatches(config, model, env), true);
   for (const model of ["claude-sonnet-5", "kimi-code-cn/k3", "sonnet"])
     assert.equal(claudeGateModelMatches(config, model, env), false);
