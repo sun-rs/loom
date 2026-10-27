@@ -1,0 +1,28 @@
+{
+  "sourceRevision": "4cdcc58d",
+  "oldPid": 48529,
+  "newPid": 84949,
+  "backup": "/Users/sun/.loom/evo/backups/pre-mcp-error-1793114439099",
+  "ledgerUnchanged": true,
+  "at": "2026-10-27T15:20:58.636Z",
+  "webAssets": "unchanged; backend-only change",
+  "label": "gui/501/com.loom.evo",
+  "tests": {
+    "focused": 13,
+    "typecheck": "passed",
+    "tdd": "Reproduction failed on generic old error; passed after fixed guidance"
+  },
+  "browser": {
+    "url": "http://127.0.0.1:4176/",
+    "result": "Real channel list and Agent Council conversation rendered after restart",
+    "screenshot": "/Users/sun/.loom/reviews/2026-10-27-daily-report-r2/restart-page.png",
+    "sha256": "d93ed748859a6502852454a0e220a3ef68c2f7bdb9765435ef2f5183df663306"
+  },
+  "paidCalls": 0,
+  "limitations": [
+    "Does not prove models will stop omitting final.",
+    "Native wait_agent misuse is not changed.",
+    "Public tool schema and valid call envelope unchanged."
+  ],
+  "operatorNote": "Initial preflight called stateWriteEvidence with a DatabaseSync instead of state-directory path and failed before backup or restart; corrected to existing API signature."
+}
