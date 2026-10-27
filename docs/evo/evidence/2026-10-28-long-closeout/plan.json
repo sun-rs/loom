@@ -1,0 +1,139 @@
+{
+  "date": "2026-10-28",
+  "sourceRevision": "ead15510",
+  "runnerSha256": "ec53ba4453f1f78fd11eab7770fc98327e1c6dd3ba866e567d72197828f865f5",
+  "plans": [
+    {
+      "id": "native-final-complex-review-12/v1",
+      "provider": "codex",
+      "model": "gpt-6-luna",
+      "effort": "low",
+      "cliVersion": "codex-cli 0.164.0",
+      "memory": {
+        "provider": "codex",
+        "supported": true,
+        "status": "supported",
+        "scope": "provider-native-auto-memory",
+        "mechanism": "cli-config"
+      },
+      "transport": {
+        "mode": "native-final",
+        "environment": {
+          "LOOM_CODEX_NATIVE_FINAL_TRIAL": "1",
+          "LOOM_KIMI_NATIVE_FINAL_TRIAL": "0",
+          "LOOM_CLAUDE_NATIVE_FINAL_TRIAL": "0",
+          "LOOM_OPENCODE_NATIVE_FINAL_TRIAL": "0",
+          "LOOM_CODEX_EXEC_NATIVE_FINAL_TRIAL": "0",
+          "LOOM_PI_NATIVE_FINAL_TRIAL": "0",
+          "LOOM_CODEX_FINAL_OUTPUT_TRIAL": "0",
+          "LOOM_OPENCODE_FINAL_OUTPUT_TRIAL": "0"
+        }
+      },
+      "sourceRevision": "ead15510ca62f6fc8be8a2cfa798b53fecb43bd1",
+      "workload": "restart-audit-12/v1",
+      "sourceRef": "7afe141",
+      "sourceHashes": {
+        "scripts/workbench-launch-receipt.mjs": "3a3172ea85a970ff74eb410ef5c8aee4673e2d94037c9d4a77b67a02efbb5059",
+        "scripts/workbench-launch-receipt.test.mjs": "10bdfcbfe0512dfd9e877d7f0609981cd21131a392a7c9a8853563b00bb12fd2",
+        "scripts/restart-local-workbench.mjs": "7e954b65a955e92848049141452ee1f58c371acce4387b353948cbd5b34bab9f",
+        "scripts/workbench-restart-guard.mjs": "6e6ff19f1660e5554c1f537989a58d417cf09067ee0a6e235ad8b8d06e54c5cb",
+        "packages/daemon/src/state-backup.ts": "061b44268498eac1e3a8587ad3263724bab83a701b9d21039fe860273a929436",
+        "packages/daemon/test/workbench-restart-guard.test.ts": "f0688cf676099e14d2cadaad96177eacff4feadfc768905d4c3977a1d93f41ab"
+      },
+      "instructionsHash": "06b5b5e5acbcf6cc7a808517eb45a1175f0429e9d4b74bcaeea927ca3f2dcad7",
+      "questionsHash": "fe2b80c08f3c9e904266ab04d3fccbb94ebd8cdab0a693d33b433df3810c4935",
+      "plannedPairs": 3,
+      "roundsPerArm": 12,
+      "orders": [
+        [
+          "native",
+          "role-warm"
+        ],
+        [
+          "role-warm",
+          "native"
+        ],
+        [
+          "native",
+          "role-warm"
+        ]
+      ],
+      "limits": {
+        "perProviderInput": 5000000,
+        "perProviderOutput": 90000,
+        "minutes": 70
+      },
+      "authorization": "Owner said 开始 after proposed complex continuous and team validation. Exact existing approved model combinations only. No retries or replacement samples.",
+      "scope": "Read-only complex continuous review. No claim of arbitrary coding or collaboration coverage. Quality evaluated separately with pre-existing rubric."
+    },
+    {
+      "id": "native-final-complex-review-12/v1",
+      "provider": "kimi",
+      "model": "kimi-code/k3-256k",
+      "effort": "low",
+      "cliVersion": "2.1.1",
+      "memory": {
+        "provider": "kimi",
+        "supported": true,
+        "status": "supported",
+        "scope": "provider-native-auto-memory",
+        "mechanism": "version-audit",
+        "version": "2.1.1",
+        "sourceRevision": "installed-bundle-sha256:2563a338c94868a34e1bfd2e5579067d5a472acf4cb0bf350a3bfe1092bbe59d"
+      },
+      "transport": {
+        "mode": "native-final",
+        "environment": {
+          "LOOM_CODEX_NATIVE_FINAL_TRIAL": "0",
+          "LOOM_KIMI_NATIVE_FINAL_TRIAL": "1",
+          "LOOM_CLAUDE_NATIVE_FINAL_TRIAL": "0",
+          "LOOM_OPENCODE_NATIVE_FINAL_TRIAL": "0",
+          "LOOM_CODEX_EXEC_NATIVE_FINAL_TRIAL": "0",
+          "LOOM_PI_NATIVE_FINAL_TRIAL": "0",
+          "LOOM_CODEX_FINAL_OUTPUT_TRIAL": "0",
+          "LOOM_OPENCODE_FINAL_OUTPUT_TRIAL": "0"
+        }
+      },
+      "sourceRevision": "ead15510ca62f6fc8be8a2cfa798b53fecb43bd1",
+      "workload": "restart-audit-12/v1",
+      "sourceRef": "7afe141",
+      "sourceHashes": {
+        "scripts/workbench-launch-receipt.mjs": "3a3172ea85a970ff74eb410ef5c8aee4673e2d94037c9d4a77b67a02efbb5059",
+        "scripts/workbench-launch-receipt.test.mjs": "10bdfcbfe0512dfd9e877d7f0609981cd21131a392a7c9a8853563b00bb12fd2",
+        "scripts/restart-local-workbench.mjs": "7e954b65a955e92848049141452ee1f58c371acce4387b353948cbd5b34bab9f",
+        "scripts/workbench-restart-guard.mjs": "6e6ff19f1660e5554c1f537989a58d417cf09067ee0a6e235ad8b8d06e54c5cb",
+        "packages/daemon/src/state-backup.ts": "061b44268498eac1e3a8587ad3263724bab83a701b9d21039fe860273a929436",
+        "packages/daemon/test/workbench-restart-guard.test.ts": "f0688cf676099e14d2cadaad96177eacff4feadfc768905d4c3977a1d93f41ab"
+      },
+      "instructionsHash": "06b5b5e5acbcf6cc7a808517eb45a1175f0429e9d4b74bcaeea927ca3f2dcad7",
+      "questionsHash": "fe2b80c08f3c9e904266ab04d3fccbb94ebd8cdab0a693d33b433df3810c4935",
+      "plannedPairs": 3,
+      "roundsPerArm": 12,
+      "orders": [
+        [
+          "native",
+          "role"
+        ],
+        [
+          "role",
+          "native"
+        ],
+        [
+          "native",
+          "role"
+        ]
+      ],
+      "limits": {
+        "perProviderInput": 5000000,
+        "perProviderOutput": 90000,
+        "minutes": 70
+      },
+      "authorization": "Owner said 开始 after proposed complex continuous and team validation. Exact existing approved model combinations only. No retries or replacement samples.",
+      "scope": "Read-only complex continuous review. No claim of arbitrary coding or collaboration coverage. Quality evaluated separately with pre-existing rubric."
+    }
+  ],
+  "accounting": "Independent native ledger reconciliation required before publishing total ratios; no substitution, no failure exclusion; cached input included. Limits checked between rounds; inflight overshoot retained.",
+  "quality": "Use existing workload rubric. Independently read stage9 defect finding and stage12 final artifact for each arm; assess final handoff correctness, safe fix, regression proposals and proof limits. Intermediate rounds retain text for review; word-count compliance separately measured. This is targeted deliverable review, not exhaustive sentence-level review.",
+  "latency": "Different CLI batches run concurrently on same host; latency descriptive. Existing Kimi role gate restarts daemon before round3 while preserving native session; not a pure zero-restart timing comparison.",
+  "team": "Live Herdr comparison not admitted: current session has no HERDR_ENV=1; do not operate external user session or impersonate Herdr using scripted relay."
+}

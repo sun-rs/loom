@@ -1,0 +1,145 @@
+{
+  "method": "Independent lead review against pre-existing frozen workload rubric; no provider feedback or correction.",
+  "observations": [
+    {
+      "provider": "codex",
+      "pair": 1,
+      "arm": "native",
+      "stage": 6,
+      "verdict": "pass-five-state-table",
+      "note": "Correct T/F/F/T/F restartable and all-false idle."
+    },
+    {
+      "provider": "kimi",
+      "pair": 1,
+      "arm": "native",
+      "stage": 6,
+      "verdict": "incorrect",
+      "note": "Claims plain queued without lease/hold is restartable. SQL NOT(NULL-leases AND EXISTS stopped hold) is true when hold absent; actual rejects. Other four entries correct. Await final artifact to see whether retained or corrected."
+    },
+    {
+      "provider": "codex",
+      "pair": 1,
+      "arm": "native",
+      "stage": "9,12",
+      "verdict": "targeted-deliverable-pass",
+      "note": "Finds conditional omittedRuntimeCredentials mismatch before stop, compares complete receipt manifest, proposes stable/changed-directory regressions, retains static-only and race limits."
+    },
+    {
+      "provider": "codex",
+      "pair": 1,
+      "arm": "role-warm",
+      "stage": "6,9,12",
+      "verdict": "finding-pass-fix-wording-ambiguous",
+      "note": "Five-state table correct, defect and trigger correct, tests and limits retained. Fix says 按receipt是否含该字段纳入现场对应字段; should explicitly compare against receipt value to avoid self-comparison. No implemented patch is evaluated."
+    },
+    {
+      "provider": "kimi",
+      "pair": 1,
+      "arm": "native",
+      "stage": "9,12",
+      "verdict": "targeted-deliverable-pass-with-earlier-error",
+      "note": "Correct main defect and conditional spread suggestion, meaningful tests and static limits. Stage6 plain queued error not corrected; final explicitly claims no earlier error. Cannot call whole report error-free."
+    },
+    {
+      "provider": "codex",
+      "pair": 2,
+      "arm": "role-warm",
+      "stage": "6,9,12",
+      "verdict": "final-pass-intermediate-unsafe-fix",
+      "note": "Stage6 correct. Stage9 recommends dropping omittedRuntimeCredentials comparison (unsafe per rubric). Final stage12 switches to comparing three fields and requiring credential-directory changes to fail, without explicitly acknowledging stage9 correction. Final handoff meets core condition, intermediate advice must not be accepted."
+    },
+    {
+      "provider": "kimi",
+      "pair": 1,
+      "arm": "role",
+      "stage": "6,9,12",
+      "verdict": "targeted-deliverable-pass",
+      "note": "Correct five-state table and defect; explicit receipt-based conditional spread preserves set comparison. Final retains static-only limits and regression plan."
+    },
+    {
+      "provider": "codex",
+      "pair": 2,
+      "arm": "native",
+      "stage": "6,9,12",
+      "verdict": "final-pass-intermediate-unsafe-alternative",
+      "note": "Correct state table. Stage9 offers dropping credential-directory comparison as alternative; final preserves directory-set check but incorrectly says no prior conclusion needs correction. Same kind of reasoning drift occurs in native control."
+    },
+    {
+      "provider": "kimi",
+      "pair": 2,
+      "arm": "role",
+      "stage": "6,9,12",
+      "verdict": "targeted-deliverable-pass",
+      "note": "Correct state table, explicit receipt-shape comparison, regression tests and static limits. Some explanatory analogy to provider-session backup is unnecessary, not used as evidence of new defect."
+    },
+    {
+      "provider": "codex",
+      "pair": 1,
+      "arm": "role-warm",
+      "stage": 7,
+      "verdict": "extra-read",
+      "note": "One extra generation issues sed -n 492,491p after the allowed310..491 read. Raw custom_tool_call records identify source-reading action, not reply MCP or notification round. Cost retained; not silently attributed to Loom transport."
+    },
+    {
+      "provider": "codex",
+      "pair": 3,
+      "arm": "native",
+      "stage": "6,9,12",
+      "verdict": "final-deliverable-fail",
+      "note": "State table correct, but stage9 invents projection on both sides, denies actual stable-directory deepEqual failure. Stage12 continues wrong failure mechanism (directory changes would be missed); it does not identify the real false rejection. Final includes safe comparison/tests but main diagnosis is wrong. Retain full cost; no replacement."
+    },
+    {
+      "provider": "kimi",
+      "pair": 2,
+      "arm": "native",
+      "stage": "6,9,12",
+      "verdict": "targeted-deliverable-pass",
+      "note": "Correct key state decisions, conditional mismatch, receipt-based comparison, regression plan and static limits. Stage9 names guardedStop error string even though deepEqual throws first; minor diagnostic wording error, not credited as exact exception proof."
+    },
+    {
+      "provider": "codex",
+      "pair": 3,
+      "arm": "role-warm",
+      "stage": "6,9,12",
+      "verdict": "targeted-deliverable-pass",
+      "note": "Correct five-state table and conditional defect; explicit receipt field addition, no weakening comparison; final preserves regression/unsupported evidence boundaries."
+    },
+    {
+      "provider": "kimi",
+      "pair": 3,
+      "arm": "native",
+      "stage": "6,9,12",
+      "verdict": "targeted-main-finding-pass-diagnostic-error",
+      "note": "Correct five-state table and conditional missing-field failure plus receipt-preserving fix. Incorrectly attributes Canonical events changed message to first deepEqual (message belongs to subsequent event comparison). Do not credit exact exception text; core defect still correctly located."
+    },
+    {
+      "provider": "codex",
+      "pair": 3,
+      "arm": "role-warm",
+      "stage": 1,
+      "verdict": "extra-environment-query",
+      "note": "One extra generation queries RAH_WORKER_CLI using printf after source read; raw custom_tool_call confirms no reply MCP. Counted in all totals; not assumed necessary business work."
+    },
+    {
+      "provider": "kimi",
+      "pair": 3,
+      "arm": "role",
+      "stage": "6,9,12",
+      "verdict": "targeted-deliverable-pass-with-wording-error",
+      "note": "Correct five decisions and actual missing-field defect, explicit receipt comparison, final tests/static limits. Stage6 says NOT condition is false for plain queued while its reject decision is correct; explanation should say true. Not sentence-level error-free."
+    }
+  ],
+  "scope": "Non-blinded lead review of stages6/9/12 only. Final-artifact quality and intermediate mistakes separated. No statistical equivalence, no fully equal-quality cost claim.",
+  "finalAssessment": {
+    "codex": {
+      "native": "2 main conclusions correct; pair3 misdiagnoses the actual false rejection",
+      "loom": "2 main conclusions and fix directions correct; pair1 fix wording needs clarification; pair2 unsafe intermediate advice corrected in final"
+    },
+    "kimi": {
+      "native": "3 main final conclusions correct; pair1 earlier state decision wrong and uncorrected, pair2/3 error-text attribution incorrect",
+      "loom": "3 main final conclusions correct; pair3 state-predicate explanation wording wrong despite correct decision"
+    }
+  },
+  "equalQualityRatio": null
+}
