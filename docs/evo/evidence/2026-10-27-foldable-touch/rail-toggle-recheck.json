@@ -1,0 +1,56 @@
+{
+  "environment": "fine pointer; native window unavailable; not a new touch run",
+  "rows": [
+    {
+      "name": "duo",
+      "width": 890,
+      "height": 626,
+      "expanded": {
+        "height": 361,
+        "top": 153,
+        "width": 593
+      },
+      "collapsed": {
+        "coarse": false,
+        "composer": 112,
+        "height": 361,
+        "top": 153,
+        "width": 833
+      }
+    },
+    {
+      "name": "xt2",
+      "width": 1061,
+      "height": 744,
+      "expanded": {
+        "height": 479,
+        "top": 153,
+        "width": 764
+      },
+      "collapsed": {
+        "coarse": false,
+        "composer": 112,
+        "height": 479,
+        "top": 153,
+        "width": 1004
+      }
+    },
+    {
+      "name": "ipad11",
+      "width": 1210,
+      "height": 834,
+      "expanded": {
+        "height": 569,
+        "top": 153,
+        "width": 913.0546875
+      },
+      "collapsed": {
+        "coarse": false,
+        "composer": 112,
+        "height": 569,
+        "top": 153,
+        "width": 1153
+      }
+    }
+  ]
+}
