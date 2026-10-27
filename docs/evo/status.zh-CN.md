@@ -1,5 +1,7 @@
 # Loom 当前主线现状（原 evo）
 
+2026-10-27 AGY 日常路径复查：正式新建/编辑表单草稿、13 个模型与 effort 联动、无 Fast 误展示、390×844 表单边界及实例真实用量弹窗通过；18 项假 CLI 定向测试通过。未复现新缺陷，无产品修改/付费生成/重启。真实创建、启停和各模型覆盖的证据边界分别保留，见[日常验收](evidence/2026-10-27-agy-daily/README.md)。
+
 2026-10-27 AGY 协作收尾：owner 指示继续后，原实例显式恢复（2轮准备）并完成 AGY 请求→Codex 实际运行10项测试/接受→无 @ 的 Kernel replyReturn→AGY 原 session 收尾（3轮交接）。5个新 Run 已结束、Activation completed，双 session ID 和产物 hash 保持，无额外回环。AGY 为 native-final，Codex 仍用已有 loom_reply(final=true)，不外推纯原生回复或成本通过；此前中止不改判。本批只补验收文档，产品代码/部署仍为 ed76bb2f。[收尾证据](evidence/2026-10-27-agy-closeout/README.md)。
 
 2026-10-27 AGY 后续：核对本机 13 个模型/effort 与正式目录一致，未凭通用 CLI 参数扩充 xhigh/max。AGY＋Codex 协作只验证了方案交接与生成补丁；首组设置错误、第二组触及累计输入停止线，最终复审未完成，不作为完整协作或成本 gate 通过。独立复核已修复 AGY usage 负 reasoning／thinking 超 output／求和溢出缺陷，18 项定向检查和类型通过，沿原有 gap 计量，不改调度。详见[模型和协作报告](evidence/2026-10-27-agy-collaboration/README.md)。

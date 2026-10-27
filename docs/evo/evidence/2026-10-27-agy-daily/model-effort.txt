@@ -1,0 +1,55 @@
+[
+  {
+    "label": "Gemini 4 Argon (Medium)local:agy-cli/v1:gemini-4-argon-medium",
+    "effort": "medium"
+  },
+  {
+    "label": "Gemini 4 Argon (High)local:agy-cli/v1:gemini-4-argon-high",
+    "effort": "high"
+  },
+  {
+    "label": "Gemini 4 Argon (Low)local:agy-cli/v1:gemini-4-argon-low",
+    "effort": "low"
+  },
+  {
+    "label": "Gemini 3.8 Flash (High)local:agy-cli/v1:gemini-3.8-flash-high",
+    "effort": "high"
+  },
+  {
+    "label": "Gemini 3.8 Flash (Medium)local:agy-cli/v1:gemini-3.8-flash-medium",
+    "effort": "medium"
+  },
+  {
+    "label": "Gemini 3.8 Flash (Low)local:agy-cli/v1:gemini-3.8-flash-low",
+    "effort": "low"
+  },
+  {
+    "label": "Claude Opus 5.5 (Low)local:agy-cli/v1:claude-opus-5-5-low",
+    "effort": "low"
+  },
+  {
+    "label": "Claude Opus 5.5 (Medium)local:agy-cli/v1:claude-opus-5-5-medium",
+    "effort": "medium"
+  },
+  {
+    "label": "Claude Opus 5.5 (High)local:agy-cli/v1:claude-opus-5-5-high",
+    "effort": "high"
+  },
+  {
+    "label": "Claude Sonnet 5.5 (Low)local:agy-cli/v1:claude-sonnet-5-5-low",
+    "effort": "low"
+  },
+  {
+    "label": "Claude Sonnet 5.5 (Medium)local:agy-cli/v1:claude-sonnet-5-5-medium",
+    "effort": "medium"
+  },
+  {
+    "label": "Claude Sonnet 5.5 (High)local:agy-cli/v1:claude-sonnet-5-5-high",
+    "effort": "high"
+  },
+  {
+    "label": "GPT-OSS 120B (Medium)local:agy-cli/v1:gpt-oss-120b-medium",
+    "effort": "medium"
+  }
+]
+13 models effort linkage passed; draft discarded

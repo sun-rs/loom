@@ -1,0 +1,26 @@
+✔ AGY discovery uses its own adapter and exact native model IDs, never a display label (2.250834ms)
+✔ AGY rejects ambiguous or malformed model listings instead of guessing (0.164333ms)
+✔ AGY resumes only explicit conversation, sends standing instructions once, and creates guarded final proof (233.339458ms)
+✔ AGY failed, truncated and replaced sessions cannot publish even on exit zero (347.045125ms)
+✔ AGY cancellation terminates the native child, retains usage, and creates no final proof (114.661208ms)
+✔ AGY forwards only the host-owned attached directories on resumed launches (109.846459ms)
+✔ Agy is an explicit cold profile and accepts host-owned attached directories (20.641958ms)
+✔ Agy runtime resumes its durable conversation on successive Host instances (388.057334ms)
+✔ AGY exact session input and final are scoped to current launch; aggregate usage is not counted twice (1.948333ms)
+✔ AGY rejects replacement sessions, wrong models, missing input/result, errors and a second user turn (0.183583ms)
+✔ AGY marks negative thinking as a usage gap while preserving a separately valid final (0.128041ms)
+✔ AGY marks fractional thinking as a usage gap while preserving a separately valid final (0.059791ms)
+✔ AGY marks string thinking as a usage gap while preserving a separately valid final (0.050833ms)
+✔ AGY marks unsafe thinking as a usage gap while preserving a separately valid final (0.043042ms)
+✔ AGY marks thinking exceeds output as a usage gap while preserving a separately valid final (0.042292ms)
+✔ AGY marks input sum overflow as a usage gap while preserving a separately valid final (0.04625ms)
+✔ AGY marks cache write sum overflow as a usage gap while preserving a separately valid final (0.059416ms)
+✔ AGY preserves unknown thinking and accepts the exact safe input boundary (0.120375ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 874.186542
