@@ -1,0 +1,742 @@
+{
+  "date": "2026-10-28",
+  "sourceRevision": "29145cdaa46ef8872591e056072b6f7141aa4a6c",
+  "plannedPairsPerCli": 3,
+  "completedPairsPerCli": 1,
+  "stoppingRule": "stop on execution or measurement failure; no replacements",
+  "scope": "same fixed three-round workload as preceding batch; not repeated acceptance",
+  "batches": {
+    "codex": {
+      "model": "gpt-6-luna",
+      "effort": "low",
+      "stop": "Measurement/execution failure; no replacement sample",
+      "gateStatus": "failed",
+      "measuredStatus": "over-budget",
+      "rawEvidence": "/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/rah-cli-efficiency-8jBuzw/result.json",
+      "rawSha256": "d2d7f3e33993f467890def0b8a8356a272a536ba224b08015ee1d51fb2bd6ecd",
+      "arms": {
+        "native": {
+          "status": "complete",
+          "error": null,
+          "knownTotals": {
+            "input": 52835,
+            "output": 884,
+            "cached": 37504,
+            "uncached": 15331,
+            "generations": 4
+          },
+          "rounds": [
+            {
+              "round": 1,
+              "sessionId": "01a17e50-6109-7960-9260-4a3e52dc2b13",
+              "metrics": {
+                "generations": 2,
+                "generationsTotal": 2,
+                "generationsBeforeReply": 2,
+                "generationsAfterReply": 0,
+                "input": 23603,
+                "cached": 9472,
+                "uncached": 14131,
+                "output": 499,
+                "reasoning": 0,
+                "firstInput": 9682,
+                "peakInput": 13921,
+                "replySeconds": 11.369,
+                "toolCalls": [
+                  {
+                    "at": "2026-10-27T17:02:45.868Z",
+                    "name": "exec",
+                    "kind": "other"
+                  }
+                ]
+              },
+              "runVerdict": null,
+              "runs": null
+            },
+            {
+              "round": 2,
+              "sessionId": "01a17e50-6109-7960-9260-4a3e52dc2b13",
+              "metrics": {
+                "generations": 1,
+                "generationsTotal": 1,
+                "generationsBeforeReply": 1,
+                "generationsAfterReply": 0,
+                "input": 14463,
+                "cached": 13696,
+                "uncached": 767,
+                "output": 216,
+                "reasoning": 0,
+                "firstInput": 14463,
+                "peakInput": 14463,
+                "replySeconds": 12.169,
+                "toolCalls": []
+              },
+              "runVerdict": null,
+              "runs": null
+            },
+            {
+              "round": 3,
+              "sessionId": "01a17e50-6109-7960-9260-4a3e52dc2b13",
+              "metrics": {
+                "generations": 1,
+                "generationsTotal": 1,
+                "generationsBeforeReply": 1,
+                "generationsAfterReply": 0,
+                "input": 14769,
+                "cached": 14336,
+                "uncached": 433,
+                "output": 169,
+                "reasoning": 0,
+                "firstInput": 14769,
+                "peakInput": 14769,
+                "replySeconds": 12.495,
+                "toolCalls": []
+              },
+              "runVerdict": null,
+              "runs": null
+            }
+          ],
+          "nativeLedgerCheck": {
+            "matches": true,
+            "sha256": "df135edf33c341efe9a5029a9c901392fe96a08112c2c6f70070c64356ed5f88",
+            "invalidArgumentReplies": 0,
+            "unconfirmedDeliveryReplies": 0
+          }
+        },
+        "role-warm": {
+          "status": "failed",
+          "error": "AssertionError [ERR_ASSERTION]: Warm execution contract\n+ actual - expected\n\n+ [\n+   'turnHandleMissing:r1'\n+ ]\n- []\n",
+          "knownTotals": {
+            "input": 191348,
+            "output": 2103,
+            "cached": 150144,
+            "uncached": 41204,
+            "generations": 11
+          },
+          "rounds": [
+            {
+              "round": 1,
+              "sessionId": "01a17e51-2f6a-7002-809c-3d631ad620ae",
+              "metrics": {
+                "generations": 9,
+                "generationsTotal": 9,
+                "generationsBeforeReply": null,
+                "generationsAfterReply": null,
+                "replyTimingEvidence": {
+                  "basis": "usage-record-upper-bound",
+                  "knownBeforeReply": 7,
+                  "unresolved": 2
+                },
+                "input": 151883,
+                "cached": 112384,
+                "uncached": 39499,
+                "output": 1671,
+                "reasoning": 0,
+                "firstInput": 11494,
+                "peakInput": 19229,
+                "replySeconds": 25.812,
+                "toolCalls": [
+                  {
+                    "at": "2026-10-27T17:03:38.147Z",
+                    "name": "exec",
+                    "kind": "other"
+                  },
+                  {
+                    "at": "2026-10-27T17:03:42.124Z",
+                    "name": "loom_reply",
+                    "kind": "worker-mcp-reply"
+                  },
+                  {
+                    "at": "2026-10-27T17:03:45.358Z",
+                    "name": "loom_reply",
+                    "kind": "worker-mcp-reply"
+                  },
+                  {
+                    "at": "2026-10-27T17:03:47.780Z",
+                    "name": "loom_reply",
+                    "kind": "worker-mcp-reply"
+                  },
+                  {
+                    "at": "2026-10-27T17:03:49.405Z",
+                    "name": "exec",
+                    "kind": "worker-command"
+                  },
+                  {
+                    "at": "2026-10-27T17:03:52.728Z",
+                    "name": "loom_reply",
+                    "kind": "worker-mcp-reply"
+                  },
+                  {
+                    "at": "2026-10-27T17:03:54.245Z",
+                    "name": "exec",
+                    "kind": "box-post",
+                    "turnHandle": false
+                  },
+                  {
+                    "at": "2026-10-27T17:03:57.037Z",
+                    "name": "loom_reply",
+                    "kind": "worker-mcp-reply"
+                  }
+                ],
+                "replyAt": "2026-10-27T17:03:57.041Z",
+                "productUsage": {
+                  "completeness": "complete",
+                  "gaps": [],
+                  "totals": {
+                    "generations": 9,
+                    "inputTokens": 151883,
+                    "cachedInputTokens": 112384,
+                    "outputTokens": 1671,
+                    "reasoningOutputTokens": 0
+                  }
+                },
+                "finalInterrupt": {
+                  "committedRoomSeq": 9,
+                  "requested": false,
+                  "accepted": "unknown",
+                  "terminal": false,
+                  "sent": false,
+                  "preemptedFollowUp": "unknown"
+                }
+              },
+              "runVerdict": [],
+              "runs": [
+                {
+                  "runAttemptId": "run_319493fd-4b65-458d-9b39-b5b2e0a7b06c",
+                  "startedAt": "2026-10-27T17:03:31.299Z",
+                  "finishedAt": "2026-10-27T17:03:58.010Z",
+                  "state": "exited",
+                  "succeeded": true
+                }
+              ]
+            },
+            {
+              "round": 2,
+              "sessionId": "01a17e51-2f6a-7002-809c-3d631ad620ae",
+              "metrics": {
+                "generations": 1,
+                "generationsTotal": 1,
+                "generationsBeforeReply": null,
+                "generationsAfterReply": null,
+                "replyTimingEvidence": {
+                  "basis": "usage-record-upper-bound",
+                  "knownBeforeReply": 0,
+                  "unresolved": 1
+                },
+                "input": 19453,
+                "cached": 19072,
+                "uncached": 381,
+                "output": 235,
+                "reasoning": 0,
+                "firstInput": 19453,
+                "peakInput": 19453,
+                "replySeconds": 4.038,
+                "toolCalls": [
+                  {
+                    "at": "2026-10-27T17:04:02.086Z",
+                    "name": "loom_reply",
+                    "kind": "worker-mcp-reply"
+                  }
+                ],
+                "replyAt": "2026-10-27T17:04:02.090Z",
+                "productUsage": {
+                  "completeness": "complete",
+                  "gaps": [],
+                  "totals": {
+                    "generations": 1,
+                    "inputTokens": 19453,
+                    "cachedInputTokens": 19072,
+                    "outputTokens": 235,
+                    "reasoningOutputTokens": 0
+                  }
+                },
+                "finalInterrupt": {
+                  "committedRoomSeq": 18,
+                  "requested": true,
+                  "accepted": true,
+                  "terminal": true,
+                  "sent": true,
+                  "preemptedFollowUp": true
+                }
+              },
+              "runVerdict": [],
+              "runs": [
+                {
+                  "runAttemptId": "run_e4d0734d-88e8-473e-8c5e-f4fb5a7dc964",
+                  "startedAt": "2026-10-27T17:03:58.154Z",
+                  "finishedAt": "2026-10-27T17:04:02.107Z",
+                  "state": "exited",
+                  "succeeded": true
+                }
+              ]
+            },
+            {
+              "round": 3,
+              "sessionId": "01a17e51-2f6a-7002-809c-3d631ad620ae",
+              "metrics": {
+                "generations": 1,
+                "generationsTotal": 1,
+                "generationsBeforeReply": null,
+                "generationsAfterReply": null,
+                "replyTimingEvidence": {
+                  "basis": "usage-record-upper-bound",
+                  "knownBeforeReply": 0,
+                  "unresolved": 1
+                },
+                "input": 20012,
+                "cached": 18688,
+                "uncached": 1324,
+                "output": 197,
+                "reasoning": 0,
+                "firstInput": 20012,
+                "peakInput": 20012,
+                "replySeconds": 3.288,
+                "toolCalls": [
+                  {
+                    "at": "2026-10-27T17:04:05.499Z",
+                    "name": "loom_reply",
+                    "kind": "worker-mcp-reply"
+                  }
+                ],
+                "replyAt": "2026-10-27T17:04:05.503Z",
+                "productUsage": {
+                  "completeness": "complete",
+                  "gaps": [],
+                  "totals": {
+                    "generations": 1,
+                    "inputTokens": 20012,
+                    "cachedInputTokens": 18688,
+                    "outputTokens": 197,
+                    "reasoningOutputTokens": 0
+                  }
+                },
+                "finalInterrupt": {
+                  "committedRoomSeq": 27,
+                  "requested": true,
+                  "accepted": true,
+                  "terminal": true,
+                  "sent": true,
+                  "preemptedFollowUp": true
+                }
+              },
+              "runVerdict": [],
+              "runs": [
+                {
+                  "runAttemptId": "run_87675988-eb43-402d-8240-251e98f4a95a",
+                  "startedAt": "2026-10-27T17:04:02.417Z",
+                  "finishedAt": "2026-10-27T17:04:05.595Z",
+                  "state": "exited",
+                  "succeeded": true
+                }
+              ]
+            }
+          ],
+          "nativeLedgerCheck": {
+            "matches": true,
+            "sha256": "1aa1465a806d0df12762365c6e673948a86720d6ad7c914515e69ec9f937dc88",
+            "invalidArgumentReplies": 0,
+            "unconfirmedDeliveryReplies": 4
+          }
+        }
+      },
+      "descriptiveSinglePairInputRatio": 3.6216144601116684,
+      "ratioIsAcceptance": false
+    },
+    "kimi": {
+      "model": "kimi-code/k3-256k",
+      "effort": "low",
+      "stop": "Incomplete measurement; no further paid pairs",
+      "gateStatus": "failed",
+      "measuredStatus": "missing-evidence",
+      "rawEvidence": "/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/rah-cli-efficiency-nZyWVh/result.json",
+      "rawSha256": "be64c2da2b927867ab21ac9792f16bb2dfd04437b2a2ded98eed1f91817eef07",
+      "arms": {
+        "native": {
+          "status": "complete",
+          "error": null,
+          "knownTotals": {
+            "input": 92004,
+            "output": 1202,
+            "cached": 60416,
+            "uncached": 31588,
+            "generations": 4
+          },
+          "rounds": [
+            {
+              "round": 1,
+              "sessionId": "session_308842b4-92a4-4801-9ea8-8d43d2d436aa",
+              "metrics": {
+                "generations": 2,
+                "generationsTotal": 2,
+                "generationsBeforeReply": 2,
+                "generationsAfterReply": 0,
+                "input": 44092,
+                "cached": 19968,
+                "uncached": 24124,
+                "output": 578,
+                "reasoning": null,
+                "firstInput": 20201,
+                "peakInput": 23891,
+                "replySeconds": 23.405,
+                "requestCoverage": {
+                  "status": "complete",
+                  "requests": 2,
+                  "matchedRequests": 2,
+                  "unreportedRequests": 0,
+                  "unmatchedUsageRecords": 0
+                },
+                "toolCalls": [
+                  {
+                    "at": "2026-10-27T17:04:47.246Z",
+                    "name": "Read",
+                    "kind": "other"
+                  },
+                  {
+                    "at": "2026-10-27T17:04:47.246Z",
+                    "name": "Read",
+                    "kind": "other"
+                  }
+                ]
+              },
+              "runVerdict": null,
+              "runs": null
+            },
+            {
+              "round": 2,
+              "sessionId": "session_308842b4-92a4-4801-9ea8-8d43d2d436aa",
+              "metrics": {
+                "generations": 1,
+                "generationsTotal": 1,
+                "generationsBeforeReply": 1,
+                "generationsAfterReply": 0,
+                "input": 23702,
+                "cached": 16896,
+                "uncached": 6806,
+                "output": 306,
+                "reasoning": null,
+                "firstInput": 23702,
+                "peakInput": 23702,
+                "replySeconds": 10.019,
+                "requestCoverage": {
+                  "status": "complete",
+                  "requests": 1,
+                  "matchedRequests": 1,
+                  "unreportedRequests": 0,
+                  "unmatchedUsageRecords": 0
+                },
+                "toolCalls": []
+              },
+              "runVerdict": null,
+              "runs": null
+            },
+            {
+              "round": 3,
+              "sessionId": "session_308842b4-92a4-4801-9ea8-8d43d2d436aa",
+              "metrics": {
+                "generations": 1,
+                "generationsTotal": 1,
+                "generationsBeforeReply": 1,
+                "generationsAfterReply": 0,
+                "input": 24210,
+                "cached": 23552,
+                "uncached": 658,
+                "output": 318,
+                "reasoning": null,
+                "firstInput": 24210,
+                "peakInput": 24210,
+                "replySeconds": 7.787,
+                "requestCoverage": {
+                  "status": "complete",
+                  "requests": 1,
+                  "matchedRequests": 1,
+                  "unreportedRequests": 0,
+                  "unmatchedUsageRecords": 0
+                },
+                "toolCalls": []
+              },
+              "runVerdict": null,
+              "runs": null
+            }
+          ],
+          "nativeLedgerCheck": {
+            "knownTotalsMatch": true,
+            "sha256": "0b02fd5d6cd699c2d5d88f44f3c8c64bdc1f4e52a2354227f286ff365eebdf28",
+            "requests": 4,
+            "usageReceipts": 4,
+            "unreportedRequests": 0,
+            "interruptedSteps": 0
+          }
+        },
+        "role": {
+          "status": "complete",
+          "error": null,
+          "knownTotals": {
+            "input": 130315,
+            "output": 2156,
+            "cached": 113920,
+            "uncached": 16395,
+            "generations": 5
+          },
+          "rounds": [
+            {
+              "round": 1,
+              "sessionId": "session_246d4f36-c080-4892-8eda-2d88688367f6",
+              "metrics": {
+                "generations": 3,
+                "generationsTotal": 3,
+                "generationsBeforeReply": 3,
+                "generationsAfterReply": 0,
+                "replyTimingEvidence": {
+                  "basis": "native-generation-timing",
+                  "knownBeforeReply": 3,
+                  "knownAfterReply": 0,
+                  "unresolved": 0
+                },
+                "input": 74556,
+                "cached": 58880,
+                "uncached": 15676,
+                "output": 1455,
+                "reasoning": null,
+                "firstInput": 22053,
+                "peakInput": 26759,
+                "replySeconds": 34.259,
+                "requestCoverage": {
+                  "status": "incomplete",
+                  "requests": 4,
+                  "matchedRequests": 3,
+                  "unreportedRequests": 1,
+                  "unmatchedUsageRecords": 0
+                },
+                "toolCalls": [
+                  {
+                    "at": "2026-10-27T17:05:31.399Z",
+                    "name": "Read",
+                    "kind": "other"
+                  },
+                  {
+                    "at": "2026-10-27T17:05:31.400Z",
+                    "name": "Read",
+                    "kind": "other"
+                  },
+                  {
+                    "at": "2026-10-27T17:05:49.941Z",
+                    "name": "mcp__loom_worker__loom_reply",
+                    "kind": "worker-mcp-reply"
+                  },
+                  {
+                    "at": "2026-10-27T17:05:57.470Z",
+                    "name": "mcp__loom_worker__loom_reply",
+                    "kind": "worker-mcp-reply"
+                  }
+                ],
+                "replyAt": "2026-10-27T17:05:57.474Z",
+                "productUsage": {
+                  "completeness": "partial",
+                  "gaps": [
+                    {
+                      "reason": "parse_error",
+                      "provider": "kimi-acp/v1",
+                      "occurrences": 1,
+                      "firstObservedAt": "2026-10-27T17:05:57.514Z",
+                      "lastObservedAt": "2026-10-27T17:05:57.514Z"
+                    }
+                  ],
+                  "totals": {
+                    "generations": 3,
+                    "inputTokens": 74556,
+                    "cachedInputTokens": 58880,
+                    "outputTokens": 1455,
+                    "reasoningOutputTokens": null
+                  }
+                },
+                "finalInterrupt": {
+                  "committedRoomSeq": 9,
+                  "requested": true,
+                  "accepted": true,
+                  "terminal": true,
+                  "sent": true,
+                  "preemptedFollowUp": "unknown"
+                }
+              },
+              "runVerdict": [],
+              "runs": [
+                {
+                  "runAttemptId": "run_05d4ea03-dbf9-440b-8ad6-cb1f206aa594",
+                  "startedAt": "2026-10-27T17:05:23.288Z",
+                  "finishedAt": "2026-10-27T17:06:02.487Z",
+                  "state": "exited",
+                  "exitCode": 0,
+                  "succeeded": true
+                }
+              ]
+            },
+            {
+              "round": 2,
+              "sessionId": "session_246d4f36-c080-4892-8eda-2d88688367f6",
+              "metrics": {
+                "generations": 1,
+                "generationsTotal": 1,
+                "generationsBeforeReply": 1,
+                "generationsAfterReply": 0,
+                "replyTimingEvidence": {
+                  "basis": "native-generation-timing",
+                  "knownBeforeReply": 1,
+                  "knownAfterReply": 0,
+                  "unresolved": 0
+                },
+                "input": 27547,
+                "cached": 27136,
+                "uncached": 411,
+                "output": 344,
+                "reasoning": null,
+                "firstInput": 27547,
+                "peakInput": 27547,
+                "replySeconds": 25.181,
+                "requestCoverage": {
+                  "status": "incomplete",
+                  "requests": 2,
+                  "matchedRequests": 1,
+                  "unreportedRequests": 1,
+                  "unmatchedUsageRecords": 0
+                },
+                "toolCalls": [
+                  {
+                    "at": "2026-10-27T17:06:27.757Z",
+                    "name": "mcp__loom_worker__loom_reply",
+                    "kind": "worker-mcp-reply"
+                  }
+                ],
+                "replyAt": "2026-10-27T17:06:27.764Z",
+                "productUsage": {
+                  "completeness": "partial",
+                  "gaps": [
+                    {
+                      "reason": "parse_error",
+                      "provider": "kimi-acp/v1",
+                      "occurrences": 1,
+                      "firstObservedAt": "2026-10-27T17:06:27.814Z",
+                      "lastObservedAt": "2026-10-27T17:06:27.814Z"
+                    }
+                  ],
+                  "totals": {
+                    "generations": 1,
+                    "inputTokens": 27547,
+                    "cachedInputTokens": 27136,
+                    "outputTokens": 344,
+                    "reasoningOutputTokens": null
+                  }
+                },
+                "finalInterrupt": {
+                  "committedRoomSeq": 18,
+                  "requested": true,
+                  "accepted": true,
+                  "terminal": true,
+                  "sent": true,
+                  "preemptedFollowUp": true
+                }
+              },
+              "runVerdict": [],
+              "runs": [
+                {
+                  "runAttemptId": "run_98f62b41-99d3-4578-9413-9bcd522548d7",
+                  "startedAt": "2026-10-27T17:06:02.678Z",
+                  "finishedAt": "2026-10-27T17:06:28.073Z",
+                  "state": "exited",
+                  "exitCode": 0,
+                  "succeeded": true
+                }
+              ]
+            },
+            {
+              "round": 3,
+              "sessionId": "session_246d4f36-c080-4892-8eda-2d88688367f6",
+              "metrics": {
+                "generations": 1,
+                "generationsTotal": 1,
+                "generationsBeforeReply": 1,
+                "generationsAfterReply": 0,
+                "replyTimingEvidence": {
+                  "basis": "native-generation-timing",
+                  "knownBeforeReply": 1,
+                  "knownAfterReply": 0,
+                  "unresolved": 0
+                },
+                "input": 28212,
+                "cached": 27904,
+                "uncached": 308,
+                "output": 357,
+                "reasoning": null,
+                "firstInput": 28212,
+                "peakInput": 28212,
+                "replySeconds": 11.553,
+                "requestCoverage": {
+                  "status": "incomplete",
+                  "requests": 2,
+                  "matchedRequests": 1,
+                  "unreportedRequests": 1,
+                  "unmatchedUsageRecords": 0
+                },
+                "toolCalls": [
+                  {
+                    "at": "2026-10-27T17:06:40.742Z",
+                    "name": "mcp__loom_worker__loom_reply",
+                    "kind": "worker-mcp-reply"
+                  }
+                ],
+                "replyAt": "2026-10-27T17:06:40.750Z",
+                "productUsage": {
+                  "completeness": "partial",
+                  "gaps": [
+                    {
+                      "reason": "parse_error",
+                      "provider": "kimi-acp/v1",
+                      "occurrences": 1,
+                      "firstObservedAt": "2026-10-27T17:06:40.792Z",
+                      "lastObservedAt": "2026-10-27T17:06:40.792Z"
+                    }
+                  ],
+                  "totals": {
+                    "generations": 1,
+                    "inputTokens": 28212,
+                    "cachedInputTokens": 27904,
+                    "outputTokens": 357,
+                    "reasoningOutputTokens": null
+                  }
+                },
+                "finalInterrupt": {
+                  "committedRoomSeq": 27,
+                  "requested": true,
+                  "accepted": true,
+                  "terminal": true,
+                  "sent": true,
+                  "preemptedFollowUp": true
+                }
+              },
+              "runVerdict": [],
+              "runs": [
+                {
+                  "runAttemptId": "run_88412588-5267-4358-8dc2-e43b78515c54",
+                  "startedAt": "2026-10-27T17:06:29.338Z",
+                  "finishedAt": "2026-10-27T17:06:41.471Z",
+                  "state": "exited",
+                  "exitCode": 0,
+                  "succeeded": true
+                }
+              ]
+            }
+          ],
+          "nativeLedgerCheck": {
+            "knownTotalsMatch": true,
+            "sha256": "119a70069f2fcbf90bda45b6f3e26bf82f32494621dfe2276cf6f93986084d04",
+            "requests": 8,
+            "usageReceipts": 5,
+            "unreportedRequests": 3,
+            "interruptedSteps": 3
+          }
+        }
+      },
+      "inputRatio": null,
+      "reason": "Three canceled follow-up requests lack usage; known totals are partial"
+    }
+  }
+}

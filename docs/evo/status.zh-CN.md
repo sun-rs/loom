@@ -58,6 +58,8 @@ Owner 后续授权修复后原生对照：Codex、OpenCode、Claude CLI/Kimi、P
 
 共用 MCP 的对外 JSON Schema 已补齐新回复 final 必填/修订互斥约束，修复 advertised schema 与实际校验不一致；Kimi 免费 ACP+MCP 探针正常退出 6.299 秒，超过旧 5 秒期限，改为有界 15 秒且保留真实退出/取消围栏。15 项针对性测试、类型检查与 Codex 免费工具发现通过，无新付费模型调用；Kimi 取消请求缺 usage 与旧成本失败保留，未宣称倍率改善。见[修复证据](evidence/2026-10-28-reply-eof/README.md)。
 
+修复后固定复验两家均在首对按规则停止：Codex 无缺 final，但四次投递未确认及 CLI 兜底漏 turn，单对输入 3.622 仍失败；Kimi 三轮退出成功，三个取消请求缺 usage，仍无完整倍率。已补共用 Reply context 的 CLI 序号到 MCP basedOnRoomSeq 的明确映射说明，保留因果围栏；12 项针对性测试与类型检查通过，尚无该说明的后继付费效果证据。[本批记录](evidence/2026-10-28-schema-cost/README.md)。
+
 文档与退役引用整理见[清理记录](../audits/2026-10-27-repository-cleanup.zh-CN.md)；后继报告工具的检查与重放见[证据](evidence/2026-10-27-task-outcome-report/README.md)。
 
 ## 5. phase 4 删除清单

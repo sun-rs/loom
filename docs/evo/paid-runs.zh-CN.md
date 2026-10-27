@@ -1025,3 +1025,7 @@ Pi付费前实际安装CLI免费首次/续接及完整daemon六请求通过。�
 ## 2026-10-28 回复 schema / EOF 免费原生兼容验证
 
 没有新增模型请求或付费批：真实 Codex app-server 仅 initialize、thread/start、MCP tools discovery，零 turn/start；修正后的共用 schema 可被读取。真实 Kimi 2.1.1 仅 ACP initialize、session/new、EOF，零 session/prompt；无 MCP 正常退出约 3.628 秒，带空工具 MCP 为 6.299 秒，均退出 0。证明旧 5 秒期限不足以覆盖这次正常清理，不构成延迟分布或模型行为验收。修复部署 `9b8ba5b7`；旧实验费用、失败与缺失 usage 不变。见[修复记录](evidence/2026-10-28-reply-eof/README.md)。
+
+## 2026-10-28 schema 修复后固定对照（停止于第一对）
+
+Owner「继续」授权修复后重复对照，计划 Codex gpt-6-luna/low、Kimi k3-256k/low 各三对、每臂三轮；固定原快照/问题、原生自动记忆禁用，失败不补跑。源 `29145cda`。Codex 首对原生 52,835/884、Loom 191,348/2,103，输入单对 3.622；没有缺 final，四次投递未确认后补显式序号，CLI 兜底漏 turn 导致 warm 合同失败，停止。Kimi 原生 92,004/1,202，Loom 已知 130,315/2,156；三轮 Run 成功退出，但三个被取消后续请求缺 usage，停止且不计算完整比率。全部已知计量与原生账本核对；失败成本保留，不构成重复样本通过。后继共用参数映射说明修复未付费重测。[证据](evidence/2026-10-28-schema-cost/README.md)。

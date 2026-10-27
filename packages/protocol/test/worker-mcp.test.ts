@@ -93,3 +93,10 @@ test("advertised JSON Schema enforces the same new-reply and revision intent as 
     );
   }
 });
+
+test("reply schema explains the delivered causal marker needed before final acknowledgement", () => {
+  const field = WORKER_REPLY_MCP_TOOL.inputSchema.properties
+    .basedOnRoomSeq as unknown as { description?: string };
+  assert.match(field.description ?? "", /Reply context.*--based-on-room-seq/);
+  assert.match(field.description ?? "", /Do not guess/);
+});

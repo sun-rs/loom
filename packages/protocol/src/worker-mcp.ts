@@ -35,7 +35,12 @@ export const WORKER_REPLY_MCP_TOOL = {
         type: "boolean",
         description: "Required for a new reply; omit for a draft revision.",
       },
-      basedOnRoomSeq: { type: "integer", minimum: 0 },
+      basedOnRoomSeq: {
+        type: "integer",
+        minimum: 0,
+        description:
+          "For a new reply, copy the Reply context's --based-on-room-seq value here to confirm delivered context. Do not guess or use a newer message's sequence. If delivery is incomplete, use message-check first. Omit for a draft revision.",
+      },
       reviseDraftId: { type: "string", minLength: 1 },
     },
     required: ["body"],
