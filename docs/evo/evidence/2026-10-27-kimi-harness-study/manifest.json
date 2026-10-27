@@ -1,0 +1,51 @@
+{
+  "snapshot": "1caf92c66fddcdf3f8c3a252204e0ac87e800bf8",
+  "replicates_per_task": 3,
+  "tasks": {
+    "return": "请只读分析此 Loom 代码快照：频道内实例 A 明确请求 B 后，B 普通最终回复不再写 @A，系统是否一定自动交回 A？请追踪真正调用链和数据库条件，说明至少 8 个成立/不成立边界（特别是实际交付、多个来源、消息列、附件、会话代际、已回复、自动回传链），给出文件路径和精确行号，引用相应测试。区分实现事实、测试证据和待验证假设。不要强凑缺陷。中文报告最多1800字。",
+    "roles": "请只读分析此 Loom 代码快照：Tom Role 有运行中实例，删除 Tom 再新建同名 Tom，再恢复旧 Tom 会怎样？请追踪 Role/Revision/Instance/Session 身份与权限、名称冲突、幂等、过期修订、现有实例配置和执行状态。说明重启时保留配置与采用最新配置的边界，并用实际代码文件路径和精确行号、相应测试支持结论。区分实现事实和推测。不要修改代码。中文报告最多1800字。"
+  },
+  "limits": {
+    "max_seconds_per_run": 900,
+    "max_requests_per_run": 60,
+    "batch_input_stop_threshold": 24000000,
+    "batch_output_stop_threshold": 300000,
+    "batch_requests_stop_threshold": 600,
+    "max_output_per_request": 16384,
+    "per_run_input_stop_threshold": 2500000,
+    "per_run_output_stop_threshold": 50000
+  },
+  "memory": "Fresh per-run configs/sessions; no user skills or persisted cross-run memory; same source snapshot. Native in-run history retained. No project modifications allowed.",
+  "pi_plugin": "Unmodified bundled subagent implementation, model-free read-only scout/reviewer configs inherit fixed parent model. Default example Haiku/Sonnet agents NOT installed.",
+  "score_policy": {
+    "correctness": 50,
+    "evidence_accuracy": 25,
+    "boundary_coverage": 15,
+    "uncertainty_discipline": 10
+  },
+  "purpose": "Kimi K3.1 Pro OpenCode/Pi read-only analysis pilot; not Loom gate",
+  "model": "k3.1-pro",
+  "provider": "Kimi Code subscription, existing OpenCode kimi-for-coding key",
+  "effort": "low",
+  "arms": {
+    "pi": "1.1.0 + bundled subagent",
+    "opencode": "1.18.35"
+  },
+  "protocol": "Both official native OpenAI Chat Completions; relay observes bytes, no protocol translation",
+  "account_entitlement": "Catalog contains k3.1-pro; 512 output-cap probe returned model k3.1-pro, 90 input / 43 output",
+  "scope": "Same snapshot/tasks as DeepSeek pilot, replaces model name in common instruction; new configs/sessions; no global changes.",
+  "formal_status": "completed: 12 attempts, 10 final reports, no replacements",
+  "order": "Alternate first arm by replicate; sequential",
+  "sources": [
+    "https://www.kimi.com/code/docs/en/kimi-code/models.html",
+    "https://www.kimi.com/code/docs/en/third-party-tools/opencode.html"
+  ],
+  "billing": "Subscription quota; report tokens, never equate API tariff estimates to invoice.",
+  "script_sha256": "a76116f82aef84db77ff7025b9efef521d7608e6bbd407ff1ca94687ceacd7af",
+  "calibration": {
+    "path": "latency-calibration",
+    "reason": "Pi first attempt hit 300s with successful but increasingly slow provider requests. OpenCode next attempt interrupted to freeze equal new limit. Both retained.",
+    "formal_policy": "900 seconds equally for both; same token/request caps; no failed formal sample replacement.",
+    "quota_bounds": "24M cumulative input / 300k output / 600 requests between runs, each 2.5M input /50k output /60 requests between requests."
+  }
+}

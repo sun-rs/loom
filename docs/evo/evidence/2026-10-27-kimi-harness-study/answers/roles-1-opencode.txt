@@ -1,0 +1,30 @@
+## 关键结论
+
+**旧 Tom 的实例不会因删除、同名重建或恢复而换身份、换配置或停止运行。若新 Tom 已占用名称，直接以“Tom”恢复旧 Role 会冲突失败；必须换一个规范化后仍唯一的名称恢复。恢复保留旧 Role ID、生成新 Revision，不与新 Tom 合并，也不自动更新旧实例。**
+
+## 实现事实与证据
+
+1. **删除只停用 Role 配置。**  
+   `packages/kernel/src/role-catalog.ts:121-156` 校验 Human 控制室管理权限、`expectedRoleRevisionId` 和 `basedOnRoomSeq`，随后仅设置 `role_templates.deleted_at` 并追加事件；不修改 Instance、Session 或执行记录。运行中删除的测试对 `role_instances`、修订、会话、RunAttempt、runtime process、Inbox、消息逐表比较，确认完全不变：`packages/kernel/test/role-naming.test.ts:220-251`。
+
+2. **同名新建是另一身份。**  
+   名称检查只扫描未删除 Role，且比较大小写/Unicode 规范化名称：`packages/kernel/src/role-names.ts:6-22`。创建时分别新生成 `roleId`、`roleRevisionId`：`role-catalog.ts:361-405`。因此新 Tom 不继承旧 Role 的实例或权限。对应测试确认替换 Role ID 不同，旧实例仍指向旧 Role；旧实例 `Reviewer-1` 存在时，新 Role 的实例为 `Reviewer-2` 且 Instance ID 不同：`role-naming.test.ts:119-160`。实例名称还会避开所有保留的 principal 名称，包括已移除实例：`role-names.ts:25-41`。
+
+3. **恢复旧 Tom 的两种结果。**  
+   - 仍填 `Tom`：`assertRoleNameAvailable` 在保存前抛出“角色名称已存在”：`role-catalog.ts:227-250`。  
+   - 改用如 `Old Tom`：恢复沿用旧 Role ID，以其删除前配置为基础，只替换显示名，生成新 Revision 并清除 `deleted_at`：`role-catalog.ts:173-192,244-274`。  
+   测试完整覆盖“同名拒绝、换名成功、Role ID 不变、Revision 改变、旧实例仍持原 Revision、新 Tom 独立存在”：`role-naming.test.ts:254-299`。恢复没有运行状态检查，所以运行中的旧实例可继续执行；它随后因实例 Revision≠Role 最新 Revision 而 `isCurrent=false`，比较逻辑见 `role-catalog.ts:287-303`。Role 操作本身不推进 Session generation。
+
+4. **Instance/Session/权限边界。**  
+   Instance 是独立 principal，持久保存自己的 `role_id` 和冻结 `role_revision_id`：`packages/kernel/src/role-catalog-schema.ts:1-2,21-27`。Session 也以 `instance_id` 为主键，不以 Role 名称为键：`packages/kernel/src/instance-session.ts:22-30`。实例化要求 Human 同时具有控制室及目标 Channel 管理权限，且 Role 必须未删除：`role-catalog.ts:422-465`。删除或恢复 Role 不会把旧实例的成员身份、执行 lane 或 Session 转给新 Tom。
+
+5. **幂等与过期修订。**  
+   命令按 Room、幂等键、actor、事件类型及请求摘要精确重放；成功请求换内容复用同一键会报冲突：`role-catalog.ts:331-351`。删除和恢复精确重放分别见 `role-naming.test.ts:128-130,285-290`；同名恢复失败不产生事件，测试还用同一键换名成功（`271-290`）。非重放的恢复若 `expectedRoleRevisionId` 已过期则拒绝：`role-catalog.ts:214-237`。
+
+## 重启边界
+
+- **普通服务重启、删除/新建/恢复 Role：均保留实例实际配置和连续 Session，不采用任何“最新 Tom”。**
+- **显式实例 Session 重置且不传 `adoptRoleRevisionId`：**保留包含原生模型覆盖在内的实际配置，仅推进 generation、清除旧绑定证据：`role-catalog.ts:599-620`；`instance-session.ts:50-65`；测试 `instance-restart-config.test.ts:121-225,228-258`。
+- **采用配置：**只能采用该实例原 Role 的**当前最新且未删除** Revision；新同名 Tom 的 Revision 不匹配，会被拒绝。运行中、清理未结束、 leased/reserved 执行也拒绝：`role-catalog.ts:599-614`；`instance-restart-config.ts:21-47`。成功才原子更新配置、Revision 和 Session generation；旧 Role 删除期间只能“保留”，不能采用：`instance-restart-config.test.ts:76-119,184-214`。
+
+**不确定性：**未运行测试或真实 CLI；以上是源码及测试源码静态证据。完整“运行中删除→同名新建→换名恢复”没有单一端到端测试，但其各步及不变量由上述实现和测试直接支持。

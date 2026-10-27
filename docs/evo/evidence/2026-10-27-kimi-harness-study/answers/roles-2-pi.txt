@@ -1,0 +1,26 @@
+## 关键结论
+
+设旧 Role 为 **A/A1**，其实例为 **I**；删除后新建的同名 Tom 为 **B/B1**。
+
+1. **删除 A 是软删除，不停止 I。** 删除仅写入 `deleted_at`；I 仍属于 A、冻结在 A1，其 Channel 成员权限、Agent 配置、运行中 RunAttempt、原生 Session 和历史均不变。实现见 `packages/kernel/src/role-catalog.ts:121-156`；运行中删除前后对实例、会话、运行进程、Inbox、消息等表逐行一致的测试见 `packages/kernel/test/role-naming.test.ts:221-248`。
+2. **新建 Tom 得到全新 B/B1，不继承 A 的身份。** 新 ID 在 `role-catalog.ts:361-397` 生成；删除释放 Role 名称的测试同时证明替代 Role ID 不同，见 `role-naming.test.ts:119-161`。
+3. **随后仍以“Tom”恢复 A 会冲突失败，不会合并 B、覆盖 B 或自动改名。** 名称只在同一 Control Room 的未删除 Role 间唯一，比较会 trim、NFKC、忽略大小写：`packages/kernel/src/role-names.ts:6-21`、`packages/protocol/src/message-mention.ts:121-122`。A 保持删除状态。
+4. **改用未占用名称恢复才成功：** A 的原 Role ID 保留，但生成新修订 **A2**；B 和 I 都不被改写。I 仍指向 A/A1，恢复后因此 `isCurrent=false`，不会被自动采用 A2。实现见 `role-catalog.ts:173-274、287-300`；同名冲突、改名恢复、保留 Role ID、换 Revision、精确重放及实例仍用旧修订的测试见 `role-naming.test.ts:254-298`。
+
+若给 B 创建实例，它是另一个 Instance/Session；原 I 的名称也不会被回收。实例名从所有历史 principal 中分配，因此通常得到 `Tom-2`，而非复用 `Tom-1`：`role-names.ts:25-40`，测试见 `role-naming.test.ts:154-160`。恢复 A 本身同样不改现有实例显示名。
+
+## 权限、过期与幂等
+
+- 创建、删除、恢复要求经认证的 **Human Control Room owner/admin**；实例化和 Session reset 还要求 Channel owner/admin：`role-catalog.ts:127、207-210、366、428-429、571-576`，权限定义见 `packages/kernel/src/collaboration-policy.ts:15-42、92-103`。
+- 删除/恢复携带 `expectedRoleRevisionId`，且 `basedOnRoomSeq` 必须等于最新 Room 序列：`role-catalog.ts:139-143、235-243、353-359`。新建 B 不改变 A 的当前修订，所以 A1 仍可用于恢复；但若沿用创建 B 之前的 Room 序列，会先因上下文过期失败。
+- 幂等按 **Room + key** 查原事件，并核对 actor、事件类型和请求摘要；不同请求复用 key 会冲突：`role-catalog.ts:331-350`。精确重放发生在删除状态、修订和 freshness 检查之前，因此返回原结果而不会再次恢复或重置。名称冲突没有成功事件；测试证明同一 key 可改用新名称后成功，之后精确重放返回 `deduplicated=true`：`role-naming.test.ts:263-290`。
+
+## 显式 Session 重启的边界
+
+这里指 `resetInstanceSession`，不是上述 Role 删除/恢复：
+
+- **省略 `adoptRoleRevisionId`：保留实例“实际当前配置”**，包括原生 model override；即使 A 仍被删除也允许。Session generation 增加、绑定证据清除，但历史不删：`role-catalog.ts:556-646`、`packages/kernel/src/instance-session.ts:19-20、51-64`。测试见 `packages/kernel/test/instance-restart-config.test.ts:121-225、228-292`。
+- **传入该参数：只能采用 A 当前最新的 A2**，不能拿 A1 或任意历史修订冒充最新；A 必须已恢复且未删除。采用会原子更新 Agent 配置及 `role_instances.role_revision_id`，CLI 切换也只能经此显式路径：`packages/kernel/src/instance-restart-config.ts:23-46、65-90`。
+- 任何 reset 都拒绝活动 Run/运行时进程及未解决清理；采用配置还拒绝 leased Activation、reserved Placement 和已移除成员。失败不会留下部分配置或 generation 变更：`role-catalog.ts:599-616`；测试见 `instance-restart-config.test.ts:76-118、228-292`。因此运行中的 I 会继续旧配置，必须等工作及相应租约清理后再重启采用。
+
+**不确定性：**快照没有一个测试完整串联“运行中删除→同名重建→恢复”；上述组合结论由分别覆盖这些路径的测试和实现共同支持。本次仅静态阅读，未执行测试；快照亦无前端，不能据此断定 UI 是否提供自动改名引导。

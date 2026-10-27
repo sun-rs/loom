@@ -1,0 +1,12 @@
+{
+  "path": "/Users/sun/.local/share/loom-harness-study/20261027-kimi/raw.tar.gz",
+  "bytes": 29114803,
+  "sha256": "8af1d84311de181ab994533a8a045767711a1f26239f50c7ba7c1b7d9f52627b",
+  "excludes": [
+    "xdg-cache",
+    "xdg-data",
+    "node_modules",
+    "__pycache__"
+  ],
+  "preserves": "All requests/responses, stdout, source snapshot and per-run configuration. No real credential stored."
+}

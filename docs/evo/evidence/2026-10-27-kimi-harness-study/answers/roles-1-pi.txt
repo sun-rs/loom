@@ -1,0 +1,33 @@
+## 关键结论
+
+假设“新建”使用新的幂等键：**以原名 `Tom` 恢复旧 Role 会失败，不会覆盖、合并或接管新 Tom。** 删除只停用旧 Role；正在运行的旧实例、其成员身份、冻结 Revision、Session 和执行记录均继续保留。改用未占用名称恢复后，系统中会有两个不同 Role ID；旧 Role 获得新 Revision，但旧实例仍冻结在原 Revision，显示为非最新。
+
+## 实现事实与证据
+
+1. **删除与同名新建**
+   - 删除要求已认证 Human 且为控制 Room 管理者，并校验 `expectedRoleRevisionId`、最新 Room Seq；实际仅写入 `deleted_at`：`packages/kernel/src/role-catalog.ts:121-157`。
+   - 活跃 Role 名才参与冲突检查，因此删除释放名称：`packages/kernel/src/role-names.ts:7-23`。新建生成全新的 `roleId`、`roleRevisionId`：`packages/kernel/src/role-catalog.ts:388-390`。
+   - 测试明确验证新旧 Role ID 不同，旧实例仍指向旧 Role；若再实例化新 Role，新实例 ID 不同，名称因旧 principal 名仍保留而为 `Reviewer-2`：`packages/kernel/test/role-naming.test.ts:119-160`。实例名永不复用：`packages/kernel/src/role-names.ts:25-41`。
+
+2. **运行中实例与恢复**
+   - 删除运行中 Role 前后，`role_instances`、Role/Agent revisions、Session、RunAttempt、runtime process、Inbox、消息均逐行不变：`packages/kernel/test/role-naming.test.ts:221-250`。因此旧实例不会停止，也无需恢复来重新获得成员权限；Role 本身不是 Channel 成员。
+   - 恢复同样要求 Human 控制 Room 管理权限：`packages/kernel/src/role-catalog.ts:197-211`。它只基于旧 Role 当前配置替换 `displayName`，随后走 Revision 变更：`packages/kernel/src/role-catalog.ts:173-190`。
+   - 新 Tom 仍活跃时，恢复名 `Tom` 在 `assertRoleNameAvailable` 处冲突：`packages/kernel/src/role-catalog.ts:235-245`。测试直接覆盖“同名拒绝、换 `Original Reviewer` 成功”：`packages/kernel/test/role-naming.test.ts:254-298`。
+   - 成功恢复保留旧 Role ID，但创建新 Revision 并清除 `deleted_at`：`packages/kernel/src/role-catalog.ts:246-258`。旧实例的 `role_revision_id` 不被更新；`isCurrent` 是实例 Revision 与 Role 当前 Revision 的比较：`packages/kernel/src/role-catalog.ts:285-300`，故恢复后旧实例为 `false`。
+
+3. **幂等与过期修订**
+   - 命令先按 Room、幂等键、actor、事件类型及请求摘要重放；同键异参报冲突：`packages/kernel/src/role-catalog.ts:332-357`。
+   - 精确恢复重放返回原恢复结果；删除重放也成立：`packages/kernel/test/role-naming.test.ts:285-290`、`:127-130`。
+   - **例外：若“新建”复用最初 create 的同一幂等键和相同请求，则只是重放旧创建，不会得到新 Role；删除后仍如此。** 测试见 `packages/kernel/test/role-http-closeout.test.ts:107-114`。
+   - 删除、恢复、修订均有 Revision CAS；采用配置时还要求所给 Revision 恰为当前最新，历史 Revision 会被拒绝：`packages/kernel/src/instance-restart-config.ts:28-30`。
+
+## “重启”的边界
+
+- **普通服务重启**：没有自动采用最新 Role 的路径；唯一业务 adopt 调用位于显式 Session reset：`packages/kernel/src/role-catalog.ts:613-616`。
+- **显式 Session reset，省略 `adoptRoleRevisionId`**：保留实例实际当前配置，包括原生模型覆盖，即使 Role 已删除也可执行；测试见 `packages/kernel/test/instance-restart-config.test.ts:181-213`、`:228-263`。
+- **显式采用**：必须 Role 未删除、Revision 最新、实例仍有成员资格，且无 leased/reserved 工作：`packages/kernel/src/instance-restart-config.ts:28-46`。它原子更新 Agent 配置和实例 Revision：`:65-91`。
+- 任一 reset 都拒绝 live Run/进程及未解决清理：`packages/kernel/src/role-catalog.ts:597-612`；成功后递增 Session generation，保留下次启动新建原生 Session，不删除历史：`:616-647`。运行中、过期 Revision、deleted Role 的拒绝测试见 `packages/kernel/test/instance-restart-config.test.ts:76-116`。
+
+## 不确定性
+
+本次仅静态阅读，未执行测试；现有测试分别覆盖各阶段，没有一个测试完整串联“运行中删除→新建→恢复→再重启”。上述结论是这些实现路径的组合推演，不涉及具体 UI 提示或真实 CLI 行为。

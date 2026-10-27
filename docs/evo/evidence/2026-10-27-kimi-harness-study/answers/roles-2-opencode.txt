@@ -1,0 +1,31 @@
+## 关键结论
+
+**直接用“Tom”恢复旧 Role 会失败**：新 Tom 已占用活动名称；旧 Tom 仍是已删除状态，新 Tom 保持独立，原运行中 Instance/Session 不受影响。恢复时改用未占用名称，或先释放新 Tom 的名称，才可成功；成功恢复也**不会合并两个 Role，也不会自动更新或重启旧实例**。
+
+## 实现事实与证据
+
+1. **删除只是软删除，运行不停止。**  
+   删除仅写入 `deleted_at` 并追加事件，不产生新 Revision，也不检查或终止 Run：`packages/kernel/src/role-catalog.ts:121-157`。运行中删除测试逐表确认 Instance、Revision、Session、RunAttempt、runtime、Inbox、消息均不变，随后 Run 正常结束：`packages/kernel/test/role-naming.test.ts:220-248`。
+
+2. **同名新建是全新身份。**  
+   活动名称检查排除已删除 Role，因此删除释放“Tom”；新建生成新的 `roleId`、`roleRevisionId`：`packages/kernel/src/role-names.ts:6-23`、`packages/kernel/src/role-catalog.ts:361-405`。旧 Instance 仍引用旧 Role/Revision；若给新 Tom 建实例，也会得到新 Instance ID，名称分配不会复用旧 `Tom-1`，而是选择如 `Tom-2`：`role-names.ts:25-40`、`role-naming.test.ts:119-160`。
+
+3. **恢复的名称冲突与 Revision 语义。**  
+   恢复要求 `displayName`，保留旧 Role ID、基于旧 Role 当前配置生成**新 Revision**：`packages/protocol/src/role-catalog.ts:87-90`、`packages/kernel/src/role-catalog.ts:173-193,227-274`。名称按 trim、NFKC、小写比较，且只与同 Control Room 的活动 Role 冲突：`role-names.ts:12-21`、`packages/protocol/src/message-mention.ts:120-123`。测试明确覆盖“同名恢复失败、改名恢复成功、替代 Role 仍存在、旧 Instance 引用不变”：`role-naming.test.ts:254-302`。  
+   删除未推进 Revision，所以原 `expectedRoleRevisionId` 仍可恢复；但须提供最新 `basedOnRoomSeq`，否则先报 stale。恢复成功后，旧 Revision 对新修改/删除及 adopt 均属过期，但快照仍保留供旧实例和幂等回读：`role-catalog.ts:235-243`、`role-catalog-schema.ts:12-26`。
+
+4. **现有实例不会被新 Role 接管。**  
+   调度使用 Instance 自身的当前 AgentDefinitionRevision，而非每轮读取最新 RoleRevision：`packages/kernel/src/placement-candidate-projection.ts:59-88`、`packages/kernel/src/run-agent-context.ts:50-107`。因此旧实例继续原实际配置；显式 adopt 也只会查它所属的旧 Role，不能借重启改挂到替代 Tom：`packages/kernel/src/instance-restart-config.ts:21-30`。
+
+5. **重启边界。**  
+   - 普通 daemon/Host 重启：恢复原 native Session；测试显示 runtime 进程 ID 可变，但 `native_session_id` 不变：`packages/daemon/test/instance-prewarm-composition.test.ts:96-108`。
+   - 显式 Session reset、省略 `adoptRoleRevisionId`：推进 generation、下轮新建 native Session，但保留**实际当前配置**（包括原生模型覆盖）、Instance 身份和历史：`role-catalog.ts:599-648`、`instance-restart-config.test.ts:228-258`。
+   - reset 加 `adoptRoleRevisionId`：必须等于其 Role 最新 Revision，且 Role 未删除；随后原子更新配置和冻结 Revision。它额外拒绝 leased/reserved 工作；两种 reset 都拒绝 live Run/runtime 和未决 cleanup：`instance-restart-config.ts:28-47`、`role-catalog.ts:599-614`。采用后可能按恢复后的 Role 名调整显示名，但 Instance ID 不变：`instance-restart-config.ts:49-90`、`instance-restart-config.test.ts:9-70`。
+
+6. **权限与幂等。**  
+   创建/删除/恢复要求已认证 Human 且为 Control Room owner/admin；reset 还要求 Channel owner/admin：`role-catalog.ts:125-127,205-211,365-366,563-576`、`collaboration-policy.ts:15-43,92-104`。相同 actor、事件类型和请求摘要的精确重放返回原结果，且先于状态/CAS/name 检查；同键不同请求冲突：`role-catalog.ts:128-138,212-226,331-351`。失败的同名恢复不落事件，因此测试可用同键改名后成功：`role-naming.test.ts:271-290`。
+
+## 推导与不确定性
+
+- `isCurrent` 仅比较 Revision：`role-catalog.ts:285-303`。据此推导：旧 Role 删除后仍可显示 `true`；成功恢复产生新 Revision 后才变 `false`，并非专门测试断言。
+- 未发现“恢复后立即 adopt”的单一组合测试；结论由恢复与 reset/adopt 实现及各自测试组合得出。本次仅静态阅读，未运行测试。

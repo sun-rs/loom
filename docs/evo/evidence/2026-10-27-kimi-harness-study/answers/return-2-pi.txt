@@ -1,0 +1,28 @@
+## 关键结论
+
+**不一定会自动交回 A。**“B 的最终正文没有 `@A`”只满足消息形状的一部分；Kernel 还必须从当前运行、唯一来源、实际送达及会话代际等持久化证据中唯一确定 A。即使生成 `replyReturn`，也可能被频道唤醒链上限阻止。因此应区分：**消息写入、派生回传、产生 Activation、A 实际开始执行**，前者不保证后者。
+
+## 实现事实与真实调用链
+
+- native-final 或 Worker `final:true` 最终汇入 Worker 发帖路径；只有 final 才传入 `replyReturnRunAttemptId`，progress 不会：`packages/kernel/src/worker-message-command.ts:148-155`。native-final 强制 `final:true`：`packages/kernel/src/worker-final-output.ts:21-38`。
+- `postActivationMessage` 调用 `peerReplyReturn`，成功后给 A 追加 `reason:"reply"`，事件记录 `{sourceEventId,participantId}`，正文和 `mentions` 不改写：`packages/kernel/src/collaboration-service.ts:2263-2287`。
+- 随后统一派生 Inbox、queued Activation 和 Outbox；已有 queued Activation 则扩展范围：`packages/kernel/src/room-event-writer.ts:180-214,216-275`。这不是第二套队列。
+
+## 至少这些边界决定成立与否
+
+1. **有效当前运行**：RunAttempt、Activation、B、Room 必须精确匹配，Room 为 Channel，Run 状态为 `starting/running`；否则不回传。`packages/kernel/src/peer-reply-return.ts:19-36`。
+2. **必须是普通顶层 final**：B 当前消息若是 Thread、带附件、带任何 canonical mention 或广播，均排除；显式点名/广播优先，不额外补 A。`peer-reply-return.ts:37-47`。
+3. **来源必须唯一**：只查询 B 在当前 Activation `from_seq..to_seq` 的 Inbox 来源，取最多两条，数量必须恰好一；多人请求、同一人多次请求或另有 Task 等来源均不猜请求者。`peer-reply-return.ts:48-57`。
+4. **来源类型与消息列受限**：唯一来源必须是 `message.posted`，且不能已有 `replyReturn`、属于 Thread、附件评论或带附件；Task 消息列、私有 box 不会被推断为频道回传来源。`peer-reply-return.ts:58-69`。
+5. **必须是唯一显式定向请求**：来源 canonical mentions 必须恰好一个且就是 B；请求者取认证事件 `actor_id`，不是正文语义。广播来源排除。`peer-reply-return.ts:60-75`。
+6. **实际交付证据不可借高水位替代**：来源序号必须位于当前 Activation＋RunAttempt 的 presented 窗口，且 `sent_at IS NOT NULL`。`peer-reply-return.ts:100-113`。这证明 Host 已送达呈现内容，**不证明模型已经阅读**。
+7. **A 的状态与会话代际**：A 不能是 B，且仍是该 Channel 的 enabled Role instance/member；原请求的认证写入代际必须等于 A 当前 generation，历史无证明或重启后的旧请求均失败关闭。`peer-reply-return.ts:76-100`；写入证明记录于 `packages/kernel/src/worker-run-message-writes.ts:28-43`。
+8. **已经回复则不重复**：同来源已有自动回传，或 B 在同一 Activation 已显式 `@A`，都会消耗资格；幂等重放也不重复唤醒。`peer-reply-return.ts:114-133`。
+9. **忙碌不等于并行或丢失**：获准回传复用 A 的串行 lane，忙碌时 durable 排队。
+10. **自动回传链有双重限制**：来源已有 `replyReturn` 不能再产生下一跳；同时与显式实例唤醒共用 Channel chain limit，超限可保留消息及 `replyReturn`，但没有 Inbox/Activation。`peer-reply-return.ts:60-63`；`packages/kernel/src/instance-wake-guard.ts:184-200,200-247`。
+
+## 测试证据与不确定性
+
+专项测试覆盖：三种 final 路径成功、幂等及无回传循环（`packages/kernel/test/peer-reply-return.test.ts:94-139`）；progress、A 被移除、代际变化、未 sent、多来源、显式点名均不回传（`:49-91`）；忙碌排队（`:141-175`）；先前显式回复（`:177-197`）；链上限阻止 Activation（`:199-221`）。另有 Host/ApplicationService/Kernel 的 FakeRuntime 集成测试：`packages/agent-host/test/native-final-reply-return.test.ts:12-123`。
+
+**本次仅静态阅读，未运行测试或真实 CLI。**附件、Thread、disabled、私有 box 等虽有明确实现条件，但专项测试未逐项直接覆盖，不能声称这些边界已分别实测。

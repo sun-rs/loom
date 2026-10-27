@@ -1,0 +1,46 @@
+[
+  {
+    "task": "return",
+    "arm": "pi",
+    "runs": 3,
+    "completed": 2,
+    "mean_input": 768529,
+    "mean_output": 11732,
+    "mean_seconds": 402.1,
+    "mean_requests": 16,
+    "all_usage_known": false
+  },
+  {
+    "task": "return",
+    "arm": "opencode",
+    "runs": 3,
+    "completed": 3,
+    "mean_input": 702479,
+    "mean_output": 13068,
+    "mean_seconds": 419.2,
+    "mean_requests": 14.7,
+    "all_usage_known": true
+  },
+  {
+    "task": "roles",
+    "arm": "pi",
+    "runs": 3,
+    "completed": 3,
+    "mean_input": 361181,
+    "mean_output": 7132,
+    "mean_seconds": 280.4,
+    "mean_requests": 9.3,
+    "all_usage_known": true
+  },
+  {
+    "task": "roles",
+    "arm": "opencode",
+    "runs": 3,
+    "completed": 2,
+    "mean_input": 1716290,
+    "mean_output": 20419,
+    "mean_seconds": 620.7,
+    "mean_requests": 22,
+    "all_usage_known": true
+  }
+]

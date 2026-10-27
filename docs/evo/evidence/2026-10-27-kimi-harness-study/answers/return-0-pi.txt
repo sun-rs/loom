@@ -1,0 +1,39 @@
+## 关键结论
+
+**不一定。“B 的普通最终回复不写 @A”只是必要条件，不是充分条件。**只有 `peerReplyReturn` 的全部数据库门槛通过，回复事件才带 `replyReturn` 并把 A 加为 `reply` 接收者；随后唤醒守卫仍可能拒绝。即使成功，也只能说明建立了 A 的持久 Inbox/Activation/Outbox，不等于 A 已实际运行、阅读或答复。
+
+## 实现事实与调用链
+
+原生最终回复路径为：
+
+`WorkerFinalOutput.submit()`  
+→ `POST /v1/worker/messages/final-output`（`packages/agent-host/src/worker-final-output.ts:52-83`）  
+→ `WorkerApplicationService` 调 Kernel（`packages/application-service/src/worker-application-service.ts:1032-1041`）  
+→ `RoomKernel.submitWorkerFinalOutput`（`packages/kernel/src/room-kernel.ts:1819-1835`）  
+→ 强制 `final:true`（`packages/kernel/src/worker-final-output.ts:21-37`）  
+→ `postWorkerMessageTransaction`，传入当前 `runAttemptId`（`packages/kernel/src/worker-message-command.ts:148-169`）  
+→ `postActivationMessage` 调 `peerReplyReturn`（`packages/kernel/src/collaboration-service.ts:2263-2288`）  
+→ `deriveAttention` 创建 Inbox、 queued Activation 和唤醒 Outbox（`packages/kernel/src/room-event-writer.ts:180-274`）。
+
+带 `channel` 的 Worker 目标路由也在 `final:true` 时传递 RunAttempt（`packages/kernel/src/worker-target-context.ts:481-509`）。
+
+## 成立／不成立边界
+
+1. **必须是最终回复且 Run 仍活跃**：无 RunAttempt 直接返回；RunAttempt、Activation、B、Channel 必须一致，且状态只能是 `starting/running`。普通 progress 不成立（`peer-reply-return.ts:19-36`）。
+2. **回复的消息列必须“普通”**：`messages.thread_id` 必须为空、`attachments_json` 必须为 `[]`、规范化 `mentions_json` 必须为空，正文不得广播；因此线程、附件、任何显式 @ 都不成立（`peer-reply-return.ts:37-47`）。
+3. **来源必须唯一**：只查 B 当前 Activation 的 `from_seq..to_seq` 内 Inbox；`LIMIT 2` 后要求恰好一条，零条或多条均放弃，不从 catch-up 或多个唤醒中猜 A（`peer-reply-return.ts:48-57`）。
+4. **原请求本身也受限**：必须是 `message.posted`，不得已有 `replyReturn`，不得是线程、附件评论或带附件，正文必须存在且非广播（`peer-reply-return.ts:58-69`）。
+5. **明确请求指规范化单播**：原事件 `payload.mentions` 必须恰好一项且为 B；正文看似 `@B` 但无规范 mention、或同时 @ 多人，均不成立（`peer-reply-return.ts:70-75`）。
+6. **A 必须仍是合格的另一个实例**：不能 `A===B`；A 必须仍是该 Channel 的 Role instance、member 且 enabled，否则不回传（`peer-reply-return.ts:89-100`）。
+7. **会话代际必须匹配**：原请求必须有 A 的 `worker_run_message_writes` 来源，其 `session_generation` 必须等于 A 当前代际；旧会话请求不会自动交回（`peer-reply-return.ts:76-88`；写来源见 `worker-run-message-writes.ts:26-43`）。
+8. **必须有本次实际传输证据**：原请求序号必须存在于 B 当前 Activation/RunAttempt 的 presented window，且 `sent_at IS NOT NULL`；通知或高水位不够（`peer-reply-return.ts:101-112`）。这证明 Host 接受/发送，不证明模型语义上已读。
+9. **已回复会消耗机会**：若 B 已有指向同一来源的自动回传，或在同一 Activation 中已显式 @A，则不再回传；幂等重试也不新增唤醒（`peer-reply-return.ts:114-133`）。这里“显式已回复”的数据库条件限定为同一 Activation。
+10. **自动回传不续链**：原事件已有 `replyReturn` 即被第 4 项拒绝，所以 A 对自动回传的普通最终回复不会再自动回 B。
+11. **链路上限仍可拦截**：即使事件已带 `replyReturn`，`decideInstanceWake` 超限仍不创建 Inbox/Activation（`instance-wake-guard.ts:187-237`；`room-event-writer.ts:205-216`）。
+12. **A 忙碌不是否决条件**：获准的回传会持久排队，待其串行 lane 后续执行，而非立即插入当前运行。
+
+## 测试证据与不确定性
+
+`packages/kernel/test/peer-reply-return.test.ts:51-88` 覆盖 progress、移除、代际、未 presented、显式 mention、多来源；`95-134` 覆盖三种发送路径、幂等及不续链；`141-169` 覆盖忙碌排队；`177-193` 覆盖显式先回复；`199-216` 覆盖链上限。`packages/agent-host/test/native-final-reply-return.test.ts:13-130` 用 FakeRuntime 验证 A→B→A 三次执行且停止。
+
+**本次仅静态阅读，未运行测试。**附件、线程等部分条件未见该测试组逐项参数化覆盖；FakeRuntime 结果也不能证明真实 CLI、进程故障或部署环境下一定完成交付。

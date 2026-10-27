@@ -1,0 +1,26 @@
+## 结论
+
+**不一定。**无 `@A` 的普通最终回复只可能获得一次 Kernel 派生的隐式回传；任一持久化条件不满足，消息仍正常发布，但不自动唤醒 A。即使写入 `replyReturn`，唤醒链限制仍可能阻止 Activation。
+
+## 实现事实与调用链
+
+`RoomKernel.submitWorkerFinalOutput`（`packages/kernel/src/room-kernel.ts:1819-1837`）或 `postWorkerMessage`（1840-1854）进入 `postWorkerMessageTransaction`；仅 final 才传入当前 `runAttemptId`（`worker-message-command.ts:148-157`；显式 target 路由见 `worker-target-context.ts:479-508`）。`postActivationMessage` 写入消息后调用 `peerReplyReturn`，追加 A 为 `reason:"reply"` 收件人（`collaboration-service.ts:2242-2279,2280-2308`），最后由 `deriveAttention` 创建/扩展 Inbox、Activation、Outbox（2321-2324；`room-event-writer.ts:180-279`）。
+
+核心数据库门槛均在 `packages/kernel/src/peer-reply-return.ts`：
+
+1. **执行边界**：Run 必须与 Activation、B、频道完全匹配，且状态为 `starting/running`（19-36）；progress 不进入此逻辑。
+2. **回复的消息列**：`messages.thread_id` 必须为空、`attachments_json="[]"`、规范化 `mentions_json` 为空，正文不得广播 @all（37-47）。线程、附件或任何显式提及均不回传。
+3. **唯一来源**：B 本次 Run 的 `from_seq..to_seq` 内，其 Inbox 来源必须恰好一个；零个或多个均拒绝（48-57）。
+4. **来源形态**：来源必须是顶层 `message.posted`，无 `replyReturn`、附件评论、附件、广播，且 canonical mentions 恰好只有 B（58-75）。仅“看起来像请求”不足。
+5. **会话代际**：A 的来源事件须有 `worker_run_message_writes` 实证，其写入代际等于 A 当前 `role_instance_sessions` 代际（76-88；写入记录见 `worker-run-message-writes.ts:26-44`）。
+6. **请求者资格**：A 不能是 B，且须仍是该频道 enabled Role instance/member（89-100）。
+7. **实际交付**：同一 Activation/Run 的 `activation_presented_windows` 必须 `sent_at IS NOT NULL`，且来源序号实际位于 `presented_seqs_json`；游标或通知不够（101-113）。
+8. **已经回复**：同来源已有自动回传，或 B 在同一 Activation 已显式 @A，均不再产生第二次回传（114-133）。
+9. **自动回传链**：来源若自身带 `replyReturn`，第 62 行即拒绝，因此 A 对自动回传的最终回复不会再自动交回 B。
+10. **投递不等于唤醒**：A 忙碌时 durable Inbox/Activation 排队或扩展（`room-event-writer.ts:216-275`）；超过频道链限时，事件仍可带 `replyReturn`，但不建 Inbox/Activation（205-215）。
+
+## 测试证据与不确定性
+
+`packages/kernel/test/peer-reply-return.test.ts:50-92` 覆盖 progress、移除、代际、未交付、显式提及、多来源；94-139 覆盖三种 final 路由、幂等重放及无循环；141-175 覆盖忙碌排队；177-197 覆盖先前显式回复；199-221 覆盖链限。`packages/agent-host/test/native-final-reply-return.test.ts:13-138` 用 **FakeRuntimeAdapter** 验证 A→B→A。
+
+本次仅静态阅读，未执行测试；附件/线程等部分条件未在上述专项测试中找到逐项用例，真实 CLI 行为仍属未验证范围。

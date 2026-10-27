@@ -1,0 +1,180 @@
+{
+  "runs": [
+    {
+      "run": "return-0-opencode",
+      "unique_tool_calls_seen": 109,
+      "tool_results_returned": 109,
+      "tools_with_results": {
+        "read": 66,
+        "task": 2,
+        "grep": 39,
+        "glob": 2
+      },
+      "wire_errors": [],
+      "context_errors": [],
+      "delegation_tool_errors": []
+    },
+    {
+      "run": "return-0-pi",
+      "unique_tool_calls_seen": 51,
+      "tool_results_returned": 51,
+      "tools_with_results": {
+        "read": 20,
+        "grep": 31
+      },
+      "wire_errors": [],
+      "context_errors": [],
+      "delegation_tool_errors": []
+    },
+    {
+      "run": "return-1-opencode",
+      "unique_tool_calls_seen": 24,
+      "tool_results_returned": 24,
+      "tools_with_results": {
+        "read": 14,
+        "glob": 2,
+        "grep": 8
+      },
+      "wire_errors": [],
+      "context_errors": [],
+      "delegation_tool_errors": []
+    },
+    {
+      "run": "return-1-pi",
+      "unique_tool_calls_seen": 3,
+      "tool_results_returned": 3,
+      "tools_with_results": {
+        "grep": 3
+      },
+      "wire_errors": [],
+      "context_errors": [],
+      "delegation_tool_errors": []
+    },
+    {
+      "run": "return-2-opencode",
+      "unique_tool_calls_seen": 31,
+      "tool_results_returned": 31,
+      "tools_with_results": {
+        "glob": 1,
+        "read": 14,
+        "grep": 13,
+        "todowrite": 3
+      },
+      "wire_errors": [],
+      "context_errors": [],
+      "delegation_tool_errors": []
+    },
+    {
+      "run": "return-2-pi",
+      "unique_tool_calls_seen": 120,
+      "tool_results_returned": 120,
+      "tools_with_results": {
+        "grep": 49,
+        "read": 59,
+        "find": 2,
+        "subagent": 4,
+        "bash": 4,
+        "ls": 2
+      },
+      "wire_errors": [],
+      "context_errors": [],
+      "delegation_tool_errors": [
+        {
+          "call_id": "tool_LKZ3KgSffK5N7EGXMyeFFWYA",
+          "tool": "subagent",
+          "error": "Agent failed: Unknown agent: \"default\". Available agents: \"reviewer\", \"scout\"."
+        },
+        {
+          "call_id": "tool_fTlKcMy6nhXFR72Qwq71ziqu",
+          "tool": "subagent",
+          "error": "Agent failed: Unknown agent: \"default\". Available agents: \"reviewer\", \"scout\"."
+        }
+      ]
+    },
+    {
+      "run": "roles-0-opencode",
+      "unique_tool_calls_seen": 137,
+      "tool_results_returned": 137,
+      "tools_with_results": {
+        "read": 77,
+        "grep": 55,
+        "glob": 5
+      },
+      "wire_errors": [],
+      "context_errors": [],
+      "delegation_tool_errors": []
+    },
+    {
+      "run": "roles-0-pi",
+      "unique_tool_calls_seen": 48,
+      "tool_results_returned": 48,
+      "tools_with_results": {
+        "read": 26,
+        "grep": 19,
+        "ls": 2,
+        "find": 1
+      },
+      "wire_errors": [],
+      "context_errors": [],
+      "delegation_tool_errors": []
+    },
+    {
+      "run": "roles-1-opencode",
+      "unique_tool_calls_seen": 19,
+      "tool_results_returned": 19,
+      "tools_with_results": {
+        "grep": 8,
+        "read": 11
+      },
+      "wire_errors": [],
+      "context_errors": [],
+      "delegation_tool_errors": []
+    },
+    {
+      "run": "roles-1-pi",
+      "unique_tool_calls_seen": 31,
+      "tool_results_returned": 31,
+      "tools_with_results": {
+        "read": 14,
+        "grep": 16,
+        "find": 1
+      },
+      "wire_errors": [],
+      "context_errors": [],
+      "delegation_tool_errors": []
+    },
+    {
+      "run": "roles-2-opencode",
+      "unique_tool_calls_seen": 167,
+      "tool_results_returned": 167,
+      "tools_with_results": {
+        "read": 98,
+        "todowrite": 3,
+        "grep": 58,
+        "glob": 6,
+        "task": 2
+      },
+      "wire_errors": [],
+      "context_errors": [],
+      "delegation_tool_errors": []
+    },
+    {
+      "run": "roles-2-pi",
+      "unique_tool_calls_seen": 40,
+      "tool_results_returned": 40,
+      "tools_with_results": {
+        "read": 13,
+        "grep": 25,
+        "find": 1,
+        "ls": 1
+      },
+      "wire_errors": [],
+      "context_errors": [],
+      "delegation_tool_errors": []
+    }
+  ],
+  "source_files": 1286,
+  "changed": [],
+  "extra": [],
+  "method": "Unique OpenAI tool_call IDs across captured request histories, paired with subsequent tool results; includes native child histories, not just parent stdout. Missing IDs are not fabricated."
+}

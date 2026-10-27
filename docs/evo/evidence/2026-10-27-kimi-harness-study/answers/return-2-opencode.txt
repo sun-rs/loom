@@ -1,0 +1,32 @@
+## 关键结论
+
+**不是“一定自动交回 A”。** 实现是在严格数据库条件全部满足时，为 B 的无显式收件人 **final** 派生一次面向 A 的 `reply` 投递；不会改写正文或补 `@A`，也不保证 A 已执行或阅读。链上限还会保留消息但拒绝唤醒。
+
+## 实现事实：真正调用链
+
+入口为 `/v1/worker/messages/final-output` 或 `/messages/post`，见 `packages/application-service/src/worker-application-service.ts:1032-1054`。随后：
+
+`RoomKernel.submitWorkerFinalOutput/postWorkerMessage`（`packages/kernel/src/room-kernel.ts:1819-1880`）→ `postWorkerMessageTransaction`；只有 final 才传 `replyReturnRunAttemptId`（`packages/kernel/src/worker-message-command.ts:148-180`）。显式 channel 目标路径同样仅 final 传入（`packages/kernel/src/worker-target-context.ts:479-508`）。
+
+`postActivationMessage` 调 `peerReplyReturn`，把结果追加为 `reason:"reply"` 收件人并记录 `payload.replyReturn`（`packages/kernel/src/collaboration-service.ts:2263-2308`），再统一 `deriveAttention`（`:2321-2323`）。后者创建 Inbox、创建或扩展 queued Activation、写唤醒 Outbox（`packages/kernel/src/room-event-writer.ts:216-275`），处于 Kernel 事务内。
+
+## 成立／不成立边界
+
+核心判定均在 `packages/kernel/src/peer-reply-return.ts`：
+
+1. **仅活跃 Run 的 final**：Run 必须匹配 Activation、B、Channel 且状态为 `starting/running`；普通进度帖不进入推导（`:19-36`；上述 command `:152-154`）。
+2. **B 的输出必须顶层、无附件、无任何 canonical mention、无广播**；显式 @其他人也不会再补 A（`:41-47`）。
+3. **唯一实际来源**：当前 Activation 的 `from_seq..to_seq` 内，B 的 Inbox 来源必须恰好一个；零个、多来源均拒绝（`:49-57`）。
+4. **来源形式**：必须是顶层 `message.posted`，不能已有 `replyReturn`、Thread、附件评论、附件或广播（`:60-69`）。非该类型的 Task 消息列事件不符合；私有 box 也被前面的 `room.kind='channel'` 排除。
+5. **唯一明确请求 B**：来源 mentions 必须恰好一个且 principalId 是 B，不从自然语言猜请求者（`:70-75`）。
+6. **A 的身份与状态有效**：A 不能是 B，且必须仍是同 Channel、enabled 的 Role 实例成员（`:76-100`）。
+7. **A 的会话代际未变**：请求事件的认证写入 `session_generation` 必须等于 A 当前代际；历史消息无证明不采用（`:77-88`）。
+8. **精确当前运行送达证据**：同一 Activation/Run 的 presented window 必须包含来源序号且 `sent_at` 非空；通知或高水位不够（`:101-113`）。
+9. **未回复过且非重放**：同来源已有自动 return，或 B 在同 Activation 已显式 @A，均不再补发（`:114-133`）；幂等重放在推导前直接返回、无新 Activation（`collaboration-service.ts:2021-2050`）。
+10. **忙碌与链上限不同**：A 忙碌时 durable 排队；超过实例链上限则无 Inbox/Activation，虽事件仍有 `replyReturn`（`room-event-writer.ts:212-275`；`instance-wake-guard.ts:200-247`）。自动回传来源又会触发第 4 条，故不产生下一跳。
+
+## 测试证据与不确定性
+
+`packages/kernel/test/peer-reply-return.test.ts:94-139` 覆盖 native-final、Worker final、worker-target 三种成功路径及无第二跳；`:50-91` 覆盖进度、移除、代际、未送达、显式收件人、多来源；`:141-175` 覆盖忙碌排队；`:177-197` 覆盖已显式回复；`:199-220` 覆盖链上限。
+
+本次仅静态阅读，**未运行测试**；Thread、附件、Task/私有 box 在上述专项测试中没有逐项用例，相关结论是代码事实而非测试实证。`sent_at` 也只证明 Host 送达凭据，不证明模型理解；真实 CLI 接收及后续调度执行仍待运行验证。

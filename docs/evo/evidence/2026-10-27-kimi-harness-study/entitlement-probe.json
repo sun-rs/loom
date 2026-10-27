@@ -1,0 +1,25 @@
+{
+  "id": "chatcmpl-UuuCT03zJPhg3ZJ5rhsMGUFR",
+  "object": "chat.completion",
+  "created": 1793087014,
+  "model": "k3.1-pro",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "READY",
+        "reasoning_content": "I need respond only READY. Should consider user request simple. I'll respond exactly READY no punctuation. I have done. Respond READY."
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 90,
+    "completion_tokens": 43,
+    "total_tokens": 133,
+    "completion_tokens_details": {
+      "reasoning_tokens": 27
+    }
+  }
+}

@@ -1,0 +1,139 @@
+{
+  "results": [
+    {
+      "arm": "pi",
+      "attempts": 6,
+      "complete_reports": 5,
+      "usage_complete": 5,
+      "mean_seconds_all_attempts": 341.3,
+      "mean_requests_all_attempts": 12.7,
+      "manual_score_n": 5,
+      "manual_score_mean": 98.6,
+      "observed_parent_subagent_calls": 4,
+      "all_attempts_known_input_lower_bound": 3389128,
+      "all_attempts_known_output_lower_bound": 56592
+    },
+    {
+      "arm": "opencode",
+      "attempts": 6,
+      "complete_reports": 5,
+      "usage_complete": 6,
+      "mean_seconds_all_attempts": 520.0,
+      "mean_requests_all_attempts": 18.3,
+      "manual_score_n": 5,
+      "manual_score_mean": 98.6,
+      "observed_parent_subagent_calls": 4,
+      "all_attempts_known_input_lower_bound": 7256308,
+      "all_attempts_known_output_lower_bound": 100461
+    }
+  ],
+  "accounting": [
+    {
+      "cohort": "runs",
+      "forwarded": 186,
+      "local_rejections": 0,
+      "unknown_usage": 1,
+      "unsealed_request_files": 0,
+      "known_input_lower_bound": 10645436,
+      "known_output_lower_bound": 157053,
+      "response_models": [
+        "k3.1-pro"
+      ]
+    },
+    {
+      "cohort": "latency-calibration",
+      "forwarded": 14,
+      "local_rejections": 0,
+      "unknown_usage": 0,
+      "unsealed_request_files": 1,
+      "known_input_lower_bound": 327274,
+      "known_output_lower_bound": 8656,
+      "response_models": [
+        "k3.1-pro"
+      ]
+    },
+    {
+      "cohort": "preflight",
+      "forwarded": 0,
+      "local_rejections": 3,
+      "unknown_usage": 0,
+      "unsealed_request_files": 0,
+      "known_input_lower_bound": 0,
+      "known_output_lower_bound": 0,
+      "response_models": []
+    }
+  ],
+  "billing": "Existing Kimi Code subscription, not Moonshot Open Platform PAYG. Token usage is not a monetary invoice or exact subscription-quota percentage.",
+  "model": "k3.1-pro / low, exact requested and returned model checked",
+  "review": "Manual source/test rubric, not independent blinded evaluation or population accuracy estimate.",
+  "limits": [
+    "Two read-only backend tasks, not code writing/repair or multimodal evaluation.",
+    "Three repeats planned per task/arm; unsuccessful attempts retained, not replaced.",
+    "Warm provider cache and runtime variability remain; sequential alternating order reduces but cannot remove them.",
+    "Different native prompts and actual delegation retained; both use official OpenAI Chat Completions directly with byte-observing relay, no protocol translation.",
+    "DeepSeek previous run used 300s cap, Kimi formal uses 900s after calibration; only completed samples support cross-model token comparison, not equal-deadline success rates.",
+    "Native subagent requests included in relay totals; parent-only tool events are not all descendant tool usage.",
+    "Pi retry disabled; OpenCode retains native retry behavior. Failure rates are not a clean controlled harness-reliability comparison.",
+    "Pi bundled subagent tool description did not enumerate installed scout/reviewer names. return-2 had two invalid default calls, then two successful children; no plugin ablation.",
+    "A timed-out CLI may leave an already-forwarded HTTP request draining; late usage counted, deadline failure not converted to success.",
+    "Input totals include cached tokens and cumulative context across requests, not unique document size or billable uncached input."
+  ],
+  "entitlement_probe": {
+    "input": 90,
+    "output": 43,
+    "model": "k3.1-pro",
+    "status": 200
+  },
+  "evidence": "audit.json has unique tool-call/result counts and source integrity; manifest.json freezes configuration and calibration history.",
+  "successful_report_groups": [
+    {
+      "task": "return",
+      "arm": "pi",
+      "n": 2,
+      "mean_input": 1146548,
+      "input_range": [
+        359395,
+        1933702
+      ],
+      "mean_output": 17410,
+      "mean_seconds": 544.1
+    },
+    {
+      "task": "return",
+      "arm": "opencode",
+      "n": 3,
+      "mean_input": 702479,
+      "input_range": [
+        285995,
+        1172127
+      ],
+      "mean_output": 13068,
+      "mean_seconds": 419.2
+    },
+    {
+      "task": "roles",
+      "arm": "pi",
+      "n": 3,
+      "mean_input": 361181,
+      "input_range": [
+        298995,
+        480451
+      ],
+      "mean_output": 7132,
+      "mean_seconds": 280.4
+    },
+    {
+      "task": "roles",
+      "arm": "opencode",
+      "n": 2,
+      "mean_input": 1255738,
+      "input_range": [
+        204550,
+        2306927
+      ],
+      "mean_output": 16358,
+      "mean_seconds": 480.9
+    }
+  ],
+  "recommendation": "OpenCode practical default for existing multi-provider workflow; Pi lightweight alternative. Neither demonstrated universal correctness/cost superiority; DSH deprioritized for this workload. Kimi Code key works with k3.1-pro/low; no PAYG conclusion from subscription usage."
+}

@@ -1,0 +1,720 @@
+[
+  {
+    "arm": "opencode",
+    "task": "return",
+    "rep": 0,
+    "exit": 0,
+    "timeout": false,
+    "seconds": 831.3,
+    "requests": 23,
+    "usage_known": true,
+    "input": 1172127,
+    "output": 27978,
+    "wire_rejections": [],
+    "complete": true,
+    "answer_chars": 2469,
+    "provider_requests": 23,
+    "local_guard_rejections": 0,
+    "usage_coverage_complete": true,
+    "cache_read": 1007372,
+    "billing": "Kimi Code subscription; token counts do not establish monetary invoice",
+    "tool_calls": 10,
+    "subagent_calls": 2,
+    "citations": [
+      {
+        "path": "packages/agent-host/test/native-final-reply-return.test.ts",
+        "line": 13,
+        "exists_in_snapshot": true
+      }
+    ],
+    "answer_file": "/tmp/loom-kimi-study-20261027/runs/return-0-opencode/answer.txt"
+  },
+  {
+    "arm": "pi",
+    "task": "return",
+    "rep": 0,
+    "exit": 0,
+    "timeout": false,
+    "seconds": 337.81,
+    "requests": 11,
+    "usage_known": true,
+    "input": 359395,
+    "output": 7607,
+    "wire_rejections": [],
+    "complete": true,
+    "answer_chars": 3033,
+    "provider_requests": 11,
+    "local_guard_rejections": 0,
+    "usage_coverage_complete": true,
+    "cache_read": 321225,
+    "billing": "Kimi Code subscription; token counts do not establish monetary invoice",
+    "tool_calls": 51,
+    "subagent_calls": 0,
+    "citations": [
+      {
+        "path": "packages/agent-host/src/worker-final-output.ts",
+        "line": 52,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/application-service/src/worker-application-service.ts",
+        "line": 1032,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/room-kernel.ts",
+        "line": 1819,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/worker-final-output.ts",
+        "line": 21,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/worker-message-command.ts",
+        "line": 148,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/collaboration-service.ts",
+        "line": 2263,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/room-event-writer.ts",
+        "line": 180,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/worker-target-context.ts",
+        "line": 481,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/test/peer-reply-return.test.ts",
+        "line": 51,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/agent-host/test/native-final-reply-return.test.ts",
+        "line": 13,
+        "exists_in_snapshot": true
+      }
+    ],
+    "answer_file": "/tmp/loom-kimi-study-20261027/runs/return-0-pi/answer.txt"
+  },
+  {
+    "arm": "opencode",
+    "task": "return",
+    "rep": 1,
+    "exit": 0,
+    "timeout": false,
+    "seconds": 188.87,
+    "requests": 8,
+    "usage_known": true,
+    "input": 285995,
+    "output": 5085,
+    "wire_rejections": [],
+    "complete": true,
+    "answer_chars": 2050,
+    "provider_requests": 8,
+    "local_guard_rejections": 0,
+    "usage_coverage_complete": true,
+    "cache_read": 245772,
+    "billing": "Kimi Code subscription; token counts do not establish monetary invoice",
+    "tool_calls": 24,
+    "subagent_calls": 0,
+    "citations": [
+      {
+        "path": "packages/kernel/src/room-kernel.ts",
+        "line": 1819,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/test/peer-reply-return.test.ts",
+        "line": 50,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/agent-host/test/native-final-reply-return.test.ts",
+        "line": 13,
+        "exists_in_snapshot": true
+      }
+    ],
+    "answer_file": "/tmp/loom-kimi-study-20261027/runs/return-1-opencode/answer.txt"
+  },
+  {
+    "arm": "pi",
+    "task": "return",
+    "rep": 1,
+    "exit": 0,
+    "timeout": false,
+    "seconds": 118.2,
+    "requests": 2,
+    "usage_known": false,
+    "input": 12489,
+    "output": 376,
+    "wire_rejections": [],
+    "complete": false,
+    "answer_chars": 0,
+    "provider_requests": 2,
+    "local_guard_rejections": 0,
+    "usage_coverage_complete": false,
+    "cache_read": 768,
+    "billing": "Kimi Code subscription; token counts do not establish monetary invoice",
+    "tool_calls": 3,
+    "subagent_calls": 0,
+    "citations": [],
+    "answer_file": null
+  },
+  {
+    "arm": "opencode",
+    "task": "return",
+    "rep": 2,
+    "exit": 0,
+    "timeout": false,
+    "seconds": 237.53,
+    "requests": 13,
+    "usage_known": true,
+    "input": 649315,
+    "output": 6140,
+    "wire_rejections": [],
+    "complete": true,
+    "answer_chars": 2383,
+    "provider_requests": 13,
+    "local_guard_rejections": 0,
+    "usage_coverage_complete": true,
+    "cache_read": 589068,
+    "billing": "Kimi Code subscription; token counts do not establish monetary invoice",
+    "tool_calls": 31,
+    "subagent_calls": 0,
+    "citations": [
+      {
+        "path": "packages/application-service/src/worker-application-service.ts",
+        "line": 1032,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/room-kernel.ts",
+        "line": 1819,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/worker-message-command.ts",
+        "line": 148,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/worker-target-context.ts",
+        "line": 479,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/collaboration-service.ts",
+        "line": 2263,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/room-event-writer.ts",
+        "line": 216,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/test/peer-reply-return.test.ts",
+        "line": 94,
+        "exists_in_snapshot": true
+      }
+    ],
+    "answer_file": "/tmp/loom-kimi-study-20261027/runs/return-2-opencode/answer.txt"
+  },
+  {
+    "arm": "pi",
+    "task": "return",
+    "rep": 2,
+    "exit": 0,
+    "timeout": false,
+    "seconds": 750.43,
+    "requests": 35,
+    "usage_known": true,
+    "input": 1933702,
+    "output": 27213,
+    "wire_rejections": [],
+    "complete": true,
+    "answer_chars": 2618,
+    "provider_requests": 35,
+    "local_guard_rejections": 0,
+    "usage_coverage_complete": true,
+    "cache_read": 1732608,
+    "billing": "Kimi Code subscription; token counts do not establish monetary invoice",
+    "tool_calls": 19,
+    "subagent_calls": 4,
+    "citations": [
+      {
+        "path": "packages/kernel/src/worker-message-command.ts",
+        "line": 148,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/worker-final-output.ts",
+        "line": 21,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/collaboration-service.ts",
+        "line": 2263,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/room-event-writer.ts",
+        "line": 180,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/peer-reply-return.ts",
+        "line": 19,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/worker-run-message-writes.ts",
+        "line": 28,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/instance-wake-guard.ts",
+        "line": 184,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/test/peer-reply-return.test.ts",
+        "line": 94,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/agent-host/test/native-final-reply-return.test.ts",
+        "line": 12,
+        "exists_in_snapshot": true
+      }
+    ],
+    "answer_file": "/tmp/loom-kimi-study-20261027/runs/return-2-pi/answer.txt"
+  },
+  {
+    "arm": "opencode",
+    "task": "roles",
+    "rep": 0,
+    "exit": -15,
+    "timeout": true,
+    "seconds": 900.29,
+    "requests": 25,
+    "usage_known": false,
+    "input": 2637394,
+    "output": 28542,
+    "wire_rejections": [],
+    "complete": false,
+    "answer_chars": 0,
+    "provider_requests": 25,
+    "local_guard_rejections": 0,
+    "usage_coverage_complete": true,
+    "cache_read": 2460672,
+    "billing": "Kimi Code subscription; token counts do not establish monetary invoice",
+    "tool_calls": 2,
+    "subagent_calls": 0,
+    "citations": [],
+    "answer_file": null
+  },
+  {
+    "arm": "pi",
+    "task": "roles",
+    "rep": 0,
+    "exit": 0,
+    "timeout": false,
+    "seconds": 312.59,
+    "requests": 11,
+    "usage_known": true,
+    "input": 480451,
+    "output": 7909,
+    "wire_rejections": [],
+    "complete": true,
+    "answer_chars": 2627,
+    "provider_requests": 11,
+    "local_guard_rejections": 0,
+    "usage_coverage_complete": true,
+    "cache_read": 413952,
+    "billing": "Kimi Code subscription; token counts do not establish monetary invoice",
+    "tool_calls": 48,
+    "subagent_calls": 0,
+    "citations": [
+      {
+        "path": "packages/kernel/src/role-catalog.ts",
+        "line": 121,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/collaboration-policy.ts",
+        "line": 11,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/test/role-naming.test.ts",
+        "line": 225,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/role-names.ts",
+        "line": 24,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/protocol/src/message-mention.ts",
+        "line": 120,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/agent-host/src/provider-session-store.ts",
+        "line": 390,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/agent-host/test/provider-session-store.test.ts",
+        "line": 222,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/test/instance-restart-config.test.ts",
+        "line": 121,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/instance-restart-config.ts",
+        "line": 23,
+        "exists_in_snapshot": true
+      }
+    ],
+    "answer_file": "/tmp/loom-kimi-study-20261027/runs/roles-0-pi/answer.txt"
+  },
+  {
+    "arm": "opencode",
+    "task": "roles",
+    "rep": 1,
+    "exit": 0,
+    "timeout": false,
+    "seconds": 183.23,
+    "requests": 6,
+    "usage_known": true,
+    "input": 204550,
+    "output": 4672,
+    "wire_rejections": [],
+    "complete": true,
+    "answer_chars": 2604,
+    "provider_requests": 6,
+    "local_guard_rejections": 0,
+    "usage_coverage_complete": true,
+    "cache_read": 163824,
+    "billing": "Kimi Code subscription; token counts do not establish monetary invoice",
+    "tool_calls": 19,
+    "subagent_calls": 0,
+    "citations": [
+      {
+        "path": "packages/kernel/src/role-catalog.ts",
+        "line": 121,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/test/role-naming.test.ts",
+        "line": 220,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/role-names.ts",
+        "line": 6,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/role-catalog-schema.ts",
+        "line": 1,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/instance-session.ts",
+        "line": 22,
+        "exists_in_snapshot": true
+      }
+    ],
+    "answer_file": "/tmp/loom-kimi-study-20261027/runs/roles-1-opencode/answer.txt"
+  },
+  {
+    "arm": "pi",
+    "task": "roles",
+    "rep": 1,
+    "exit": 0,
+    "timeout": false,
+    "seconds": 226.94,
+    "requests": 8,
+    "usage_known": true,
+    "input": 298995,
+    "output": 5790,
+    "wire_rejections": [],
+    "complete": true,
+    "answer_chars": 2790,
+    "provider_requests": 8,
+    "local_guard_rejections": 0,
+    "usage_coverage_complete": true,
+    "cache_read": 238336,
+    "billing": "Kimi Code subscription; token counts do not establish monetary invoice",
+    "tool_calls": 31,
+    "subagent_calls": 0,
+    "citations": [
+      {
+        "path": "packages/kernel/src/role-catalog.ts",
+        "line": 121,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/role-names.ts",
+        "line": 7,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/role-catalog.ts",
+        "line": 388,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/test/role-naming.test.ts",
+        "line": 119,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/role-names.ts",
+        "line": 25,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/test/role-naming.test.ts",
+        "line": 221,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/role-catalog.ts",
+        "line": 197,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/role-catalog.ts",
+        "line": 173,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/role-catalog.ts",
+        "line": 235,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/test/role-naming.test.ts",
+        "line": 254,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/role-catalog.ts",
+        "line": 246,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/role-catalog.ts",
+        "line": 285,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/role-catalog.ts",
+        "line": 332,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/test/role-naming.test.ts",
+        "line": 285,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/test/role-http-closeout.test.ts",
+        "line": 107,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/instance-restart-config.ts",
+        "line": 28,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/role-catalog.ts",
+        "line": 613,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/test/instance-restart-config.test.ts",
+        "line": 181,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/instance-restart-config.ts",
+        "line": 28,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/role-catalog.ts",
+        "line": 597,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/test/instance-restart-config.test.ts",
+        "line": 76,
+        "exists_in_snapshot": true
+      }
+    ],
+    "answer_file": "/tmp/loom-kimi-study-20261027/runs/roles-1-pi/answer.txt"
+  },
+  {
+    "arm": "opencode",
+    "task": "roles",
+    "rep": 2,
+    "exit": 0,
+    "timeout": false,
+    "seconds": 778.52,
+    "requests": 35,
+    "usage_known": true,
+    "input": 2306927,
+    "output": 28044,
+    "wire_rejections": [],
+    "complete": true,
+    "answer_chars": 2910,
+    "provider_requests": 35,
+    "local_guard_rejections": 0,
+    "usage_coverage_complete": true,
+    "cache_read": 2067952,
+    "billing": "Kimi Code subscription; token counts do not establish monetary invoice",
+    "tool_calls": 28,
+    "subagent_calls": 2,
+    "citations": [
+      {
+        "path": "packages/kernel/src/role-catalog.ts",
+        "line": 121,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/test/role-naming.test.ts",
+        "line": 220,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/role-names.ts",
+        "line": 6,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/role-catalog.ts",
+        "line": 361,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/protocol/src/role-catalog.ts",
+        "line": 87,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/role-catalog.ts",
+        "line": 173,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/protocol/src/message-mention.ts",
+        "line": 120,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/placement-candidate-projection.ts",
+        "line": 59,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/run-agent-context.ts",
+        "line": 50,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/instance-restart-config.ts",
+        "line": 21,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/daemon/test/instance-prewarm-composition.test.ts",
+        "line": 96,
+        "exists_in_snapshot": true
+      }
+    ],
+    "answer_file": "/tmp/loom-kimi-study-20261027/runs/roles-2-opencode/answer.txt"
+  },
+  {
+    "arm": "pi",
+    "task": "roles",
+    "rep": 2,
+    "exit": 0,
+    "timeout": false,
+    "seconds": 301.6,
+    "requests": 9,
+    "usage_known": true,
+    "input": 304096,
+    "output": 7697,
+    "wire_rejections": [],
+    "complete": true,
+    "answer_chars": 2544,
+    "provider_requests": 9,
+    "local_guard_rejections": 0,
+    "usage_coverage_complete": true,
+    "cache_read": 254720,
+    "billing": "Kimi Code subscription; token counts do not establish monetary invoice",
+    "tool_calls": 40,
+    "subagent_calls": 0,
+    "citations": [
+      {
+        "path": "packages/kernel/src/role-catalog.ts",
+        "line": 121,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/test/role-naming.test.ts",
+        "line": 221,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/role-names.ts",
+        "line": 6,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/protocol/src/message-mention.ts",
+        "line": 121,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/collaboration-policy.ts",
+        "line": 15,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/instance-session.ts",
+        "line": 19,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/test/instance-restart-config.test.ts",
+        "line": 121,
+        "exists_in_snapshot": true
+      },
+      {
+        "path": "packages/kernel/src/instance-restart-config.ts",
+        "line": 23,
+        "exists_in_snapshot": true
+      }
+    ],
+    "answer_file": "/tmp/loom-kimi-study-20261027/runs/roles-2-pi/answer.txt"
+  }
+]

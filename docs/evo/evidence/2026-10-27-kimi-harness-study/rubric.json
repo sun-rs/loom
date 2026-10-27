@@ -1,0 +1,49 @@
+{
+  "return": {
+    "checks": [
+      "Not unconditional: final publication + active matching instance RunAttempt in channel",
+      "Reply itself has no thread/attachment/canonical mention/broadcast",
+      "Exactly one inbox source within this activation range; not arbitrary catchup",
+      "Source message is top-level directed once to this recipient; excludes broadcast/attachments/comment",
+      "No return of a previous replyReturn",
+      "Requester provenance from worker_run_message_writes matches current session generation",
+      "Requester differs, enabled and still member of same channel",
+      "Exact activation/run presented window contains source seq and sent_at is nonnull",
+      "One return per request; explicit earlier reply consumes allowance",
+      "Uses existing inbox/lane chain guard; busy requester queues; no separate waiting loop"
+    ],
+    "sources": [
+      "packages/kernel/src/peer-reply-return.ts",
+      "packages/kernel/src/collaboration-service.ts",
+      "packages/kernel/test/peer-reply-return.test.ts"
+    ]
+  },
+  "roles": {
+    "checks": [
+      "Role ID config, immutable Revision, Instance principal, continuous native Session distinct",
+      "Delete soft marks Role only; running instances/session/snapshots remain",
+      "New same-name Role gets distinct ID, cannot merge old instances",
+      "Active names normalization uniqueness; old retained instance names not reused",
+      "Restoring occupied Tom rejects; choose available name or free it",
+      "Restore preserves old Role ID, creates new Revision; old instance Revision unchanged",
+      "Human management authority and control-room causal freshness required",
+      "Expected Revision prevents stale edits/deletes/restores",
+      "Exact successful idempotent replay returns prior result, not new mutation",
+      "Restart default keeps actual config; adopt explicit latest revision with membership/live-run/cleanup/leased/reserved fences; can change CLI only at explicit restart"
+    ],
+    "sources": [
+      "packages/kernel/src/role-catalog.ts",
+      "packages/kernel/src/role-names.ts",
+      "packages/kernel/src/instance-restart-config.ts",
+      "packages/kernel/test/role-naming.test.ts"
+    ]
+  },
+  "scoring": {
+    "correctness": "10 checks x 0/2.5/5; contradiction gets 0, partially correct 2.5, correct 5",
+    "evidence": "25: concrete source/test citations actually support statements; no requirement to cite every line",
+    "boundary": "15: causal boundaries connected to scenario, not merely listed",
+    "uncertainty": "10: separates read-code/test-existence from actual execution, no invented failures or claims tests were run",
+    "critical_errors": "Record separately: wrong identity merge, deletion kills instances, unconditional automatic return, claiming unrun tests passed",
+    "limitations": "Manual rubric-based judgement is not objective correctness proof; no significance claim with n=3. Final score paired with critical-error evidence."
+  }
+}

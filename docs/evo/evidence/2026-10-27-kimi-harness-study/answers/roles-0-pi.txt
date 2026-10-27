@@ -1,0 +1,27 @@
+## 关键结论（实现事实）
+
+设旧 Role 为 **R0/V0**，其实例为 **I0（Tom-1）**，正在运行。
+
+1. **删除只是停用 Role，不删除实例或中断执行。**  
+   删除要求已认证 Human 且为控制 Room 的 owner/admin，并校验 `expectedRoleRevisionId`、`basedOnRoomSeq`；随后仅设置 `deleted_at` 并追加 `role.deleted`（`packages/kernel/src/role-catalog.ts:121-157`，权限见 `packages/kernel/src/collaboration-policy.ts:11-36,75-87`）。运行中删除前后，`role_instances`、修订、Session、RunAttempt、runtime process、Inbox 和消息均不变，已有测试明确覆盖：`packages/kernel/test/role-naming.test.ts:225-252`。
+
+2. **新建同名 Tom 是全新身份，不会顶替或合并 R0。**  
+   新 Role 获得新的 Role ID 和 Revision ID（`role-catalog.ts:362-408`）。旧实例仍引用 R0/V0；已删除 R0 不能再实例化。若实例化新 Tom，则是新的 Instance/Principal/Agent，名称分配不会复用旧实例名，所以通常为 Tom-2（`role-catalog.ts:413-532`；`packages/kernel/src/role-names.ts:24-40`）。测试验证新旧 Role、Instance ID 均不同：`role-naming.test.ts:112-161`。
+
+3. **此时直接恢复旧 Tom，会因名称冲突失败。**  
+   在权限和 CAS 均有效时，活动 Role 名按 trim/NFKC/小写比较，新 Tom 已占用名称，恢复抛出 `ConflictError("Role name already exists...")`；不会自动合并或改名（`role-catalog.ts:227-245`；`role-names.ts:6-22`；规范化见 `packages/protocol/src/message-mention.ts:120-123`）。若沿用新建前的 `basedOnRoomSeq`，会更早得到 stale-context 错误（`role-catalog.ts:352-359`）。该冲突已有精确测试：`role-naming.test.ts:254-275`。
+
+4. **可换名恢复，或先释放新 Tom 的活动 Role 名。**  
+   换名恢复保留 **R0**，创建新的 **V2**，使用旧 Role 配置而非新 Tom 的配置，并清除 `deleted_at`；不会修改 I0 的 V0、成员身份或执行配置，I0 因而显示过期（`role-catalog.ts:173-188,247-273,284-301`）。测试验证恢复保留 Role/Instance 关联、生成新 Revision，且新替代 Role 仍独立存在：`role-naming.test.ts:275-299`。
+
+## Session、执行与重启边界
+
+- **普通 Host/服务重启**不采用 Role 最新修订；原生 Session 按 participant/instance 与 generation 定位，独立于配置修订（`packages/agent-host/src/provider-session-store.ts:390-425`）。配置键变化及 Host 重启仍恢复原 Session，测试见 `packages/agent-host/test/provider-session-store.test.ts:222-260`。
+- **显式 Session reset 且不传 `adoptRoleRevisionId`**：保留实例当前实际 Agent 配置，包括原生模型覆盖，甚至 Role 已删除也可；只推进 generation，下一次运行使用新原生 Session，Room 历史不删除（`role-catalog.ts:556-645`；测试 `packages/kernel/test/instance-restart-config.test.ts:121-218,228-292`）。
+- **传 `adoptRoleRevisionId`**：只能采用该实例所属 Role 的当前最新 Revision；旧 V0、新替代 Role 的 Revision、已删除 Role 均拒绝。共同 reset 栅栏拒绝 live run/运行进程及未清清理；采用配置还拒绝 leased/reserved work 和已移除成员（`role-catalog.ts:599-614`；`packages/kernel/src/instance-restart-config.ts:23-47`）。成功后原子更新 Agent 配置与 `role_instances.role_revision_id`，Instance/Agent 身份和历史不变（`instance-restart-config.ts:49-83`；`instance-restart-config.test.ts:9-74,76-118`）。
+
+## 幂等与不确定性
+
+删除、恢复、reset 的完全相同请求按 Room 内幂等键重放；同键不同 actor/类型/摘要则冲突（`role-catalog.ts:334-350,585-598`）。同名恢复失败不提交事件；测试随后用同键换名成功，成功后的精确重放返回 `deduplicated:true`（`role-naming.test.ts:254-293`）。
+
+以上是静态实现事实及代码直接推论；未运行测试。快照没有单一测试完整串联“运行中删除→同名新建→恢复”，运行中实例在换名恢复后继续执行是由恢复路径不触碰执行状态推得，删除阶段则由上述运行中测试直接证明。

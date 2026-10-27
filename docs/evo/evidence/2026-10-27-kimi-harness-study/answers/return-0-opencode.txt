@@ -1,0 +1,24 @@
+## 结论
+
+**不一定。**系统不猜测自然语言收件人；只有全部数据库条件满足，Kernel 才给 B 的无 `@A` final 追加一次 `reason="reply"` 投递。即使事件已带 `replyReturn`，也可能因唤醒链上限而没有 Inbox/Activation，更不等于 A 已运行或已读。
+
+路径简写：`K=packages/kernel/src/`，专项测试 `T=packages/kernel/test/peer-reply-return.test.ts`。
+
+## 实现事实：调用链与边界
+
+1. **仅 final 进入推导。**native final 经 `K/room-kernel.ts:1819-1880`，显式 Worker final 经 `K/worker-message-command.ts:148-182`；只有 `finalOutput || parsed.final` 才传 `replyReturnRunAttemptId`（`:151-157`）。显式 target 路径同样处理（`K/worker-target-context.ts:479-508`）。进度消息不成立。
+2. **先写消息，再推导。**`K/collaboration-service.ts:2242-2269` 插入消息并调用 `peerReplyReturn()`；成功后在 `:2270-2308` 追加 A 为 reply 收件人并记录来源，正文及 mentions 不改写；`:2321-2326` 才派生投递。
+3. **当前执行必须匹配。**`K/peer-reply-return.ts:20-36` 要求 Run 属当前 Activation/B/Room，状态为 starting/running，Room 是 channel，B 属该频道 Role 实例。
+4. **B 的回复必须无显式路由。**同文件 `:37-47` 排除 Thread、附件、任何 canonical mention、`@all/@所有人`。所以“不写 @A”还不够，写 @Human 等也不会补发 A。
+5. **来源必须唯一且明确。**`:49-75` 只查当前 Activation `from_seq..to_seq` 的 Inbox 事件，`LIMIT 2` 后要求恰好一条；多条即使同来自 A 也拒绝。唯一来源须为顶层 `message.posted`、无广播，且 mentions 恰好只有 B。该查询不筛 Inbox state，已 ACK 本身不排除。
+6. **消息列与附件均受限。**B 的 Thread/附件在 `:41-47` 拒绝；A 来源的 `threadId`、`attachmentComment`、非空 attachments 在 `:60-69` 拒绝。非消息事件及私有 box 不满足上述来源/频道条件；没有从 Task 正文或补读历史推断收件人的分支。
+7. **A 的身份与代际必须仍有效。**`:76-100` 要求来源事件存在 `worker_run_message_writes` 认证写入证明，其 `session_generation` 等于 A 当前代际；A 不得是 B，且仍是当前频道启用成员。旧历史无证明、reset 后旧代际、移除/禁用均不成立。
+8. **“实际交付”是精确的 Host-sent 证据。**`:101-113` 要求当前 Activation＋当前 Run 的 `activation_presented_windows.sent_at` 非空，且 `presented_seqs_json` 含来源 Room seq。通知、高水位或进程退出不能替代；该证据仍不证明模型已经阅读理解。
+9. **已回复与重放会抑制重复。**`:114-133` 排除 B 已对同一来源自动回传，或当前 Activation 已发表 canonical `@A`；显式回复是否真正唤醒 A 不是该查询条件。幂等重放在 `K/collaboration-service.ts:2021-2050` 直接返回，不再派生。
+10. **自动回传只有一跳，且仍受链上限。**来源已有 `replyReturn` 即拒绝（`K/peer-reply-return.ts:60-63`），故 A 随后的 plain final 不再自动回 B。另 `K/instance-wake-guard.ts:187-247` 对 reply 复用频道链上限；超限只保留事件，不创建投递。获准后才写 pending Inbox、queued Activation、Outbox（`K/room-event-writer.ts:200-275`）；A 忙碌时排队而非并行，也不因此 ACK/完成 Task。
+
+## 测试证据与不确定性
+
+专项测试覆盖：progress、移除、代际、未 sent、显式 @Human、多来源均不返回（`T:50-91`）；三种 final 路由成功、幂等重放及第二跳不返回（`T:94-139`）；忙碌排队（`:141-175`）；先显式回复后不再补发（`:177-197`）；链上限下事件有 `replyReturn` 但 Activation 为空（`:199-217`）。Host 集成测试以 **FakeRuntimeAdapter** 验证 A→B→A 恰好一次（`packages/agent-host/test/native-final-reply-return.test.ts:13-130`）。
+
+本次仅静态阅读，**未执行测试**。Thread/Task、附件、不同请求者、多 mention、disabled 等虽有实现条件，但专项测试未逐一覆盖；真实 CLI 行为亦未由此证明。这些是验证边界，不是已发现缺陷。

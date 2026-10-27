@@ -1,0 +1,242 @@
+{
+  "return-0-pi": {
+    "checks": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "material_errors": [],
+    "scores": {
+      "correctness": 50,
+      "evidence_accuracy": 24,
+      "boundary_coverage": 15,
+      "uncertainty_discipline": 10
+    },
+    "notes": "Full expected condition set, canonical mentions explicit; correct host/test references and clear static/fake limitations. sent != semantic reading or task completion."
+  },
+  "return-0-opencode": {
+    "checks": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "material_errors": [],
+    "scores": {
+      "correctness": 50,
+      "evidence_accuracy": 24,
+      "boundary_coverage": 15,
+      "uncertainty_discipline": 10
+    },
+    "notes": "Full conditions with canonical mentions, sent-vs-reading distinction and explicit static/fake boundaries. Adds correct Inbox-state and explicit-delivery subtleties. No clear major quality gain over Pi sample despite two children."
+  },
+  "return-1-opencode": {
+    "checks": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "material_errors": [],
+    "citation_errors": [
+      "native-final-reply-return.test.ts:13-138 exceeds 130-line file; named test and asserted three-turn chain are present."
+    ],
+    "scores": {
+      "correctness": 50,
+      "evidence_accuracy": 22,
+      "boundary_coverage": 15,
+      "uncertainty_discipline": 10
+    },
+    "notes": "All main conditions correct. Explicit static/FakeRuntime limitation. No material correctness gain from much longer first sample."
+  },
+  "return-1-pi": {
+    "graded": false,
+    "failure_class": "provider_engine_overloaded",
+    "http_status": 429,
+    "notes": "Second request returned engine_overloaded_error after 83s. No final report, not scored as model reasoning error. Native Pi exit0 does not establish task success."
+  },
+  "return-2-pi": {
+    "checks": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "material_errors": [],
+    "tool_errors": [
+      "Four delegation attempts: first two unknown default failures, then successful scout and reviewer. First failure partly discoverability gap in bundled example description, second repeats despite explicit error; eventual children and all routed usage counted."
+    ],
+    "scores": {
+      "correctness": 50,
+      "evidence_accuracy": 24,
+      "boundary_coverage": 15,
+      "uncertainty_discipline": 10
+    },
+    "notes": "Final report correct and properly scoped. No material quality advantage over first Pi report despite >5x input. Answer rubric does not measure tool-call efficiency; failures retained separately. Full trace includes two later successful children; prior mid-run observation of no children was superseded."
+  },
+  "return-2-opencode": {
+    "checks": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "material_errors": [],
+    "scores": {
+      "correctness": 50,
+      "evidence_accuracy": 24,
+      "boundary_coverage": 15,
+      "uncertainty_discipline": 10
+    },
+    "notes": "Correct boundaries and transactional call chain; clearly static-only, sent evidence not model understanding. No material issue found."
+  },
+  "roles-0-pi": {
+    "checks": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "material_errors": [],
+    "scores": {
+      "correctness": 50,
+      "evidence_accuracy": 24,
+      "boundary_coverage": 15,
+      "uncertainty_discipline": 10
+    },
+    "notes": "All expected identities/name normalization/CAS/replay/keep-adopt fences covered. Correctly explains stale room head can precede name conflict. Static and composed-test limitations explicit."
+  },
+  "roles-0-opencode": {
+    "graded": false,
+    "failure_class": "wall_time_budget",
+    "notes": "900s task deadline reached while 25th provider request remained in flight. No completed CLI report; do not score as a reasoning-fact error or silently discard spend. Late provider usage, if captured, must be included."
+  },
+  "roles-1-opencode": {
+    "checks": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "material_errors": [],
+    "scores": {
+      "correctness": 50,
+      "evidence_accuracy": 24,
+      "boundary_coverage": 15,
+      "uncertainty_discipline": 10
+    },
+    "notes": "Main identity, deletion/restoration, CAS/replay and keep/adopt boundaries agree with frozen source. Static-only and composed-test limits stated. Manual review, not blinded."
+  },
+  "roles-1-pi": {
+    "checks": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "material_errors": [],
+    "scores": {
+      "correctness": 50,
+      "evidence_accuracy": 22,
+      "boundary_coverage": 15,
+      "uncertainty_discipline": 10
+    },
+    "notes": "Main identity, deletion/restoration, CAS/replay and keep/adopt boundaries agree with frozen source. Static-only and composed-test limits stated. Manual review, not blinded.",
+    "citation_errors": [
+      "role-http-closeout.test.ts:107-114 does not include the cited create replay; actual assertion is at 119-122. Claim correct, range inaccurate."
+    ]
+  },
+  "roles-2-pi": {
+    "checks": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "material_errors": [],
+    "scores": {
+      "correctness": 50,
+      "evidence_accuracy": 24,
+      "boundary_coverage": 15,
+      "uncertainty_discipline": 10
+    },
+    "notes": "Main identity, deletion/restoration, CAS/replay and keep/adopt boundaries agree with frozen source. Static-only and composed-test limits stated. Manual review, not blinded."
+  },
+  "roles-2-opencode": {
+    "checks": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "material_errors": [],
+    "scores": {
+      "correctness": 50,
+      "evidence_accuracy": 24,
+      "boundary_coverage": 15,
+      "uncertainty_discipline": 10
+    },
+    "notes": "Main identity, deletion/restoration, CAS/replay and keep/adopt boundaries agree with frozen source. Static-only and composed-test limits stated. Manual review, not blinded. Correct additional source evidence for daemon restart continuity and explicit adopt renaming; no major quality improvement commensurate with high usage."
+  }
+}
