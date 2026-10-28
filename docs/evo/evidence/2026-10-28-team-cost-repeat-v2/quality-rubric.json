@@ -1,0 +1,16 @@
+{
+  "frozenAt": "2026-10-28T10:26:46.823373+00:00",
+  "policy": "Frozen before any model prompt for this six-arm cohort. Same previous required quality; no new subjective threshold or ratio target.",
+  "required": [
+    "Both named external members personally contribute to meaningful design before implementation",
+    "A implements; B reads actual artifact/source and personally runs tests or boundary checks",
+    "Any reported blocking finding is resolved and actually re-reviewed; B explicitly accepts or documents unresolved findings",
+    "A provides a final delivery account after review; no evaluator-supplied recovery, code or relay",
+    "All original external40 checks pass and participant-provided self-tests pass",
+    "Both members retain one continuous session, exact approved model/effort and verified automatic-memory policy",
+    "Complete native per-response accounting and product reconciliation; no unaccounted native child work",
+    "All owned test processes/panes are cleaned; formal product data and caller pane preserved"
+  ],
+  "qualityReviewMethod": "Lead reads actual public handoffs and native tool records; external40 oracle independent of agents; no blind review claimed",
+  "failureRule": "Preserve every attempt and all consumption. Equal-quality cohort multiplier is null unless all planned teams meet all requirements. Descriptive all-attempt totals remain available."
+}

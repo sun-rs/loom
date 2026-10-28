@@ -1,0 +1,19 @@
+{
+  "at": "2026-10-28T11:07:13.553024+00:00",
+  "analysisGuardTests": 12,
+  "analysisGuardTestsPassed": true,
+  "freeCodexNativeToolRead": true,
+  "freePreflightModelCalls": 0,
+  "realTuiStartupReady": true,
+  "completedTeams": 6,
+  "externalOracleChecksPerTeam": 40,
+  "allExternalChecksPassed": true,
+  "reviewAudit": "nonblind lead actual tool/handoff audit, same frozen rubric",
+  "rawLedgerAccountingComplete": true,
+  "kernelAutoReturnsNoRepeatedMention": 7,
+  "cleanKimiNativeExits": 10,
+  "privateRoot": "/Users/sun/.loom/reviews/2026-10-28-team-cost-repeat-v2",
+  "paidBudget": "observational limits in plan; all six teams and observed totals within limits",
+  "formalDeployment": "unchanged product source a425f76c, no restart or UI rebuild for test/document-only work",
+  "reportPreparationIncident": "First offline reporter referred to previous cohort split hash manifests; corrected to existing combined34file frozen manifest before generating report, no measurement/source/quality change or model retry."
+}

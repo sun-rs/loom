@@ -1,0 +1,13 @@
+{"event":"start","sample":"pair1-loom","at":"2026-10-28T10:28:52.314Z"}
+{"event":"finished","sample":"pair1-loom","status":"quiescent-quality-pending","usage":{"input":377806,"cached":320512,"output":9293,"generations":17,"complete":true},"checks":40,"totals":{"input":377806,"cached":320512,"output":9293,"generations":17}}
+{"event":"start","sample":"pair1-native","at":"2026-10-28T10:32:53.655Z"}
+{"event":"finished","sample":"pair1-native","status":"quiescent-quality-pending","usage":{"input":628725,"cached":572288,"output":11605,"generations":30,"complete":true},"checks":40,"totals":{"input":1006531,"cached":892800,"output":20898,"generations":47}}
+{"event":"start","sample":"pair2-native","at":"2026-10-28T10:36:27.850Z"}
+{"event":"finished","sample":"pair2-native","status":"quiescent-quality-pending","usage":{"input":1575433,"cached":1499264,"output":20779,"generations":57,"complete":true},"checks":40,"totals":{"input":2581964,"cached":2392064,"output":41677,"generations":104}}
+{"event":"start","sample":"pair2-loom","at":"2026-10-28T10:43:45.013Z"}
+{"event":"finished","sample":"pair2-loom","status":"quiescent-quality-pending","usage":{"input":688013,"cached":621184,"output":8377,"generations":31,"complete":true},"checks":40,"totals":{"input":3269977,"cached":3013248,"output":50054,"generations":135}}
+{"event":"start","sample":"pair3-loom","at":"2026-10-28T10:48:07.122Z"}
+{"event":"finished","sample":"pair3-loom","status":"quiescent-quality-pending","usage":{"input":663793,"cached":601856,"output":14744,"generations":25,"complete":true},"checks":40,"totals":{"input":3933770,"cached":3615104,"output":64798,"generations":160}}
+{"event":"start","sample":"pair3-native","at":"2026-10-28T10:54:33.912Z"}
+{"event":"finished","sample":"pair3-native","status":"quiescent-quality-pending","usage":{"input":1265777,"cached":1179392,"output":15388,"generations":49,"complete":true},"checks":40,"totals":{"input":5199547,"cached":4794496,"output":80186,"generations":209}}
+{"event":"batch-end","status":"all-attempts-measured-quality-review-pending","totals":{"input":5199547,"cached":4794496,"output":80186,"generations":209}}

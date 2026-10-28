@@ -1,0 +1,438 @@
+{
+  "at": "2026-10-28T11:14:48.162Z",
+  "verdict": "accepted-for-this-fixed-task-and-combination",
+  "pairs": 3,
+  "acceptedTeams": 6,
+  "wholeTaskInputRatioOfMeans": 0.4984565993311114,
+  "wholeTaskInputPlusOutputRatio": 0.5009018659029874,
+  "arms": {
+    "loom": {
+      "input": {
+        "n": 3,
+        "sum": 1729612,
+        "mean": 576537.3333333334,
+        "median": 663793,
+        "min": 377806,
+        "max": 688013,
+        "sampleSd": 172531.90787890027
+      },
+      "cached": {
+        "n": 3,
+        "sum": 1543552,
+        "mean": 514517.3333333333,
+        "median": 601856,
+        "min": 320512,
+        "max": 621184,
+        "sampleSd": 168291.25026968378
+      },
+      "output": {
+        "n": 3,
+        "sum": 32414,
+        "mean": 10804.666666666666,
+        "median": 9293,
+        "min": 8377,
+        "max": 14744,
+        "sampleSd": 3442.168550976743
+      },
+      "generations": {
+        "n": 3,
+        "sum": 73,
+        "mean": 24.333333333333332,
+        "median": 25,
+        "min": 17,
+        "max": 31,
+        "sampleSd": 7.023769168568492
+      },
+      "inputPlusOutput": {
+        "n": 3,
+        "sum": 1762026,
+        "mean": 587342,
+        "median": 678537,
+        "min": 387099,
+        "max": 696390,
+        "sampleSd": 173645.11708942466
+      },
+      "runnerWallSeconds": {
+        "n": 3,
+        "sum": 888.9770000000001,
+        "mean": 296.3256666666667,
+        "median": 261.71,
+        "min": 240.91,
+        "max": 386.357,
+        "sampleSd": 78.65996908423837
+      }
+    },
+    "native": {
+      "input": {
+        "n": 3,
+        "sum": 3469935,
+        "mean": 1156645,
+        "median": 1265777,
+        "min": 628725,
+        "max": 1575433,
+        "sampleSd": 482696.95916174987
+      },
+      "cached": {
+        "n": 3,
+        "sum": 3250944,
+        "mean": 1083648,
+        "median": 1179392,
+        "min": 572288,
+        "max": 1499264,
+        "sampleSd": 470846.3775967699
+      },
+      "output": {
+        "n": 3,
+        "sum": 47772,
+        "mean": 15924,
+        "median": 15388,
+        "min": 11605,
+        "max": 20779,
+        "sampleSd": 4610.427420532721
+      },
+      "generations": {
+        "n": 3,
+        "sum": 136,
+        "mean": 45.333333333333336,
+        "median": 49,
+        "min": 30,
+        "max": 57,
+        "sampleSd": 13.868429375143146
+      },
+      "inputPlusOutput": {
+        "n": 3,
+        "sum": 3517707,
+        "mean": 1172569,
+        "median": 1281165,
+        "min": 640330,
+        "max": 1596212,
+        "sampleSd": 487106.16696260375
+      },
+      "runnerWallSeconds": {
+        "n": 3,
+        "sum": 859.8199999999999,
+        "mean": 286.6066666666666,
+        "median": 213.772,
+        "min": 209.281,
+        "max": 436.767,
+        "sampleSd": 130.06204884720728
+      }
+    }
+  },
+  "byMember": {
+    "codex": {
+      "loom": {
+        "input": {
+          "n": 3,
+          "sum": 845152,
+          "mean": 281717.3333333333,
+          "median": 189805,
+          "min": 172498,
+          "max": 482849,
+          "sampleSd": 174399.95287938966
+        },
+        "cached": {
+          "n": 3,
+          "sum": 714880,
+          "mean": 238293.33333333334,
+          "median": 152576,
+          "min": 131328,
+          "max": 430976,
+          "sampleSd": 167205.94158502063
+        },
+        "output": {
+          "n": 3,
+          "sum": 14166,
+          "mean": 4722,
+          "median": 4670,
+          "min": 4462,
+          "max": 5034,
+          "sampleSd": 289.52374686716115
+        },
+        "generations": {
+          "n": 3,
+          "sum": 45,
+          "mean": 15,
+          "median": 11,
+          "min": 10,
+          "max": 24,
+          "sampleSd": 7.810249675906654
+        }
+      },
+      "native": {
+        "input": {
+          "n": 3,
+          "sum": 1679862,
+          "mean": 559954,
+          "median": 579147,
+          "min": 336898,
+          "max": 763817,
+          "sampleSd": 214105.66684933868
+        },
+        "cached": {
+          "n": 3,
+          "sum": 1527040,
+          "mean": 509013.3333333333,
+          "median": 517632,
+          "min": 296064,
+          "max": 713344,
+          "sampleSd": 208773.46733082086
+        },
+        "output": {
+          "n": 3,
+          "sum": 22433,
+          "mean": 7477.666666666667,
+          "median": 7250,
+          "min": 6413,
+          "max": 8770,
+          "sampleSd": 1194.879212863515
+        },
+        "generations": {
+          "n": 3,
+          "sum": 79,
+          "mean": 26.333333333333332,
+          "median": 27,
+          "min": 19,
+          "max": 33,
+          "sampleSd": 7.023769168568492
+        }
+      }
+    },
+    "kimi": {
+      "loom": {
+        "input": {
+          "n": 3,
+          "sum": 884460,
+          "mean": 294820,
+          "median": 205308,
+          "min": 205164,
+          "max": 473988,
+          "sampleSd": 155164.05625015093
+        },
+        "cached": {
+          "n": 3,
+          "sum": 828672,
+          "mean": 276224,
+          "median": 190208,
+          "min": 189184,
+          "max": 449280,
+          "sampleSd": 149871.76684085632
+        },
+        "output": {
+          "n": 3,
+          "sum": 18248,
+          "mean": 6082.666666666667,
+          "median": 4623,
+          "min": 3343,
+          "max": 10282,
+          "sampleSd": 3692.6142952295104
+        },
+        "generations": {
+          "n": 3,
+          "sum": 28,
+          "mean": 9.333333333333334,
+          "median": 7,
+          "min": 7,
+          "max": 14,
+          "sampleSd": 4.041451884327381
+        }
+      },
+      "native": {
+        "input": {
+          "n": 3,
+          "sum": 1790073,
+          "mean": 596691,
+          "median": 686630,
+          "min": 291827,
+          "max": 811616,
+          "sampleSd": 271315.16529858776
+        },
+        "cached": {
+          "n": 3,
+          "sum": 1723904,
+          "mean": 574634.6666666666,
+          "median": 661760,
+          "min": 276224,
+          "max": 785920,
+          "sampleSd": 265783.0334790642
+        },
+        "output": {
+          "n": 3,
+          "sum": 25339,
+          "mean": 8446.333333333334,
+          "median": 8975,
+          "min": 4355,
+          "max": 12009,
+          "sampleSd": 3854.2892124662017
+        },
+        "generations": {
+          "n": 3,
+          "sum": 57,
+          "mean": 19,
+          "median": 22,
+          "min": 11,
+          "max": 24,
+          "sampleSd": 7
+        }
+      }
+    }
+  },
+  "generationDecomposition": {
+    "generationRatio": 0.5367647058823529,
+    "averageInputPerGenerationRatio": 0.928631472726454,
+    "scope": "algebraic decomposition only, business behavior/model randomness and protocol all contribute; not causal isolation"
+  },
+  "returnProof": [
+    {
+      "sample": "pair1-loom",
+      "returnEventId": "event_859bcec7-98e3-4b45-8224-370202bbfceb",
+      "returnSeq": 19,
+      "sourceEventId": "event_340a08db-1f26-4ef9-a986-24eedf994d1a",
+      "sourceSeq": 11,
+      "returnActor": "principal_08eba66a-e26c-4df1-91bc-a68cc05ddd9a",
+      "recipient": "principal_fa96f98f-8b93-45bf-98b2-20d776b0f38d",
+      "noRepeatedMention": true,
+      "singleHop": true
+    },
+    {
+      "sample": "pair1-loom",
+      "returnEventId": "event_9d7f8a34-ce84-4453-9f0f-e8e60becb28e",
+      "returnSeq": 35,
+      "sourceEventId": "event_0866b78f-24c5-4ddf-9afe-8cc5046d0fa3",
+      "sourceSeq": 27,
+      "returnActor": "principal_08eba66a-e26c-4df1-91bc-a68cc05ddd9a",
+      "recipient": "principal_fa96f98f-8b93-45bf-98b2-20d776b0f38d",
+      "noRepeatedMention": true,
+      "singleHop": true
+    },
+    {
+      "sample": "pair2-loom",
+      "returnEventId": "event_b76d1cff-701e-4aae-8453-fb9cc9fca07e",
+      "returnSeq": 20,
+      "sourceEventId": "event_392b77b2-e00d-4df7-aaf9-0466fa8efc1c",
+      "sourceSeq": 11,
+      "returnActor": "principal_e5a666f7-98b6-4cd3-b4af-65728ee54640",
+      "recipient": "principal_6e00447d-5eb7-491d-a081-b230d4d2657e",
+      "noRepeatedMention": true,
+      "singleHop": true
+    },
+    {
+      "sample": "pair2-loom",
+      "returnEventId": "event_583294ee-eedd-4900-9e84-37ce2b68b2eb",
+      "returnSeq": 36,
+      "sourceEventId": "event_d3e7e128-4754-47ee-ad4c-68886c8897cc",
+      "sourceSeq": 28,
+      "returnActor": "principal_e5a666f7-98b6-4cd3-b4af-65728ee54640",
+      "recipient": "principal_6e00447d-5eb7-491d-a081-b230d4d2657e",
+      "noRepeatedMention": true,
+      "singleHop": true
+    },
+    {
+      "sample": "pair3-loom",
+      "returnEventId": "event_7f0ee14f-2fac-4609-a3db-f095e64bee5b",
+      "returnSeq": 19,
+      "sourceEventId": "event_4c974e3b-4997-44f9-8907-baa448e4e6c5",
+      "sourceSeq": 11,
+      "returnActor": "principal_def338d2-ebf7-4e55-8907-60fb5dd8d8fa",
+      "recipient": "principal_92ba8925-9fbd-4792-b267-4eed9710a903",
+      "noRepeatedMention": true,
+      "singleHop": true
+    },
+    {
+      "sample": "pair3-loom",
+      "returnEventId": "event_8eb39c82-4756-4a4d-9795-923608a1f889",
+      "returnSeq": 35,
+      "sourceEventId": "event_609887dc-65dc-469f-8eb6-ba621fc2dda4",
+      "sourceSeq": 27,
+      "returnActor": "principal_def338d2-ebf7-4e55-8907-60fb5dd8d8fa",
+      "recipient": "principal_92ba8925-9fbd-4792-b267-4eed9710a903",
+      "noRepeatedMention": true,
+      "singleHop": true
+    },
+    {
+      "sample": "pair3-loom",
+      "returnEventId": "event_02969341-6a8e-4667-b81a-2ba1b3f4155d",
+      "returnSeq": 51,
+      "sourceEventId": "event_1d6de7b9-8ead-4449-a551-bc7f1bfd9385",
+      "sourceSeq": 43,
+      "returnActor": "principal_def338d2-ebf7-4e55-8907-60fb5dd8d8fa",
+      "recipient": "principal_92ba8925-9fbd-4792-b267-4eed9710a903",
+      "noRepeatedMention": true,
+      "singleHop": true
+    }
+  ],
+  "kimiClosing": [
+    {
+      "sample": "pair1-loom",
+      "runAttemptId": "run_81b24592-8cad-483b-989f-0986da65c63e",
+      "exitCode": 0,
+      "promptCompleteToDurableRunFinishMs": 7977
+    },
+    {
+      "sample": "pair1-loom",
+      "runAttemptId": "run_73e83e4f-a888-42a7-beda-cde32a3fcb04",
+      "exitCode": 0,
+      "promptCompleteToDurableRunFinishMs": 4317
+    },
+    {
+      "sample": "pair1-loom",
+      "runAttemptId": "run_003e425a-7e7f-439e-838e-8e529e5b2300",
+      "exitCode": 0,
+      "promptCompleteToDurableRunFinishMs": 7801
+    },
+    {
+      "sample": "pair2-loom",
+      "runAttemptId": "run_2a89a924-f0ea-4634-98e7-80c68c5f1750",
+      "exitCode": 0,
+      "promptCompleteToDurableRunFinishMs": 10080
+    },
+    {
+      "sample": "pair2-loom",
+      "runAttemptId": "run_add8aecb-e768-41cd-9408-222d68e8c082",
+      "exitCode": 0,
+      "promptCompleteToDurableRunFinishMs": 7741
+    },
+    {
+      "sample": "pair2-loom",
+      "runAttemptId": "run_7bf0309d-b51e-4f8a-af9d-6a25cae14767",
+      "exitCode": 0,
+      "promptCompleteToDurableRunFinishMs": 9689
+    },
+    {
+      "sample": "pair3-loom",
+      "runAttemptId": "run_b6376b0f-1687-4cb7-93be-e7d3bdeff946",
+      "exitCode": 0,
+      "promptCompleteToDurableRunFinishMs": 5846
+    },
+    {
+      "sample": "pair3-loom",
+      "runAttemptId": "run_d1be68ba-7eff-4c51-a567-ee0d1910f95e",
+      "exitCode": 0,
+      "promptCompleteToDurableRunFinishMs": 10705
+    },
+    {
+      "sample": "pair3-loom",
+      "runAttemptId": "run_d8f96937-c3fd-4f08-b51e-5d4c5c775e9b",
+      "exitCode": 0,
+      "promptCompleteToDurableRunFinishMs": 6808
+    },
+    {
+      "sample": "pair3-loom",
+      "runAttemptId": "run_4b8685de-e538-47f1-b329-024220efaac3",
+      "exitCode": 0,
+      "promptCompleteToDurableRunFinishMs": 1938
+    }
+  ],
+  "kimiClosingScope": "Prompt-completed to durable Run finish includes native cleanup and Host settlement; not exact EOF or fsync latency",
+  "formal": {
+    "counts": {
+      "channels": 0,
+      "role_instances": 0,
+      "run_attempts": 0
+    },
+    "servicePidUnchanged": true,
+    "productSourceHashesUnchanged": true,
+    "restartedThisBatch": false
+  },
+  "scope": "fixed invoice task, Codex0.164.0 gpt-6-luna low plus pinned Kimi2.1.1 k3-256k low, same per-arm instructions, n3 teams each; no price, all-CLI, universal quality or latency gate claim"
+}

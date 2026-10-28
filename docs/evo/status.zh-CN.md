@@ -65,13 +65,15 @@ Codex warm/Kimi ACP 本机正式服务采用 native-final；最终三对输入�
 
 ### 协作与推广状态
 
-1. **三方协作已取得一次无需人工恢复的完整回归**：OpenCode／Claude CLI（实际 Kimi）／AGY 新 session 自行完成设计、实现、独立评审与交付，外部40/40、三家原流用量对齐；此前同组停顿和一次恢复仍完整保留。[最终三方报告](evidence/2026-10-28-three-cli-team/README.md)。AGY目录5秒截断修正为15秒，多人回复及状态点名规则已补入native-final说明；Kernel自动返回范围不扩大。此前[Herdr/Loom失败对照](evidence/2026-10-28-team-closeout/README.md)、[四运行时复验](evidence/2026-10-28-tool-preflight-team/README.md)不补判通过。尚无同质量重复原生/Herdr协作成本倍率，不把这次单任务成功外推为全场景稳定性或效率门禁通过。
+1. **三方协作已取得一次无需人工恢复的完整回归**：OpenCode／Claude CLI（实际 Kimi）／AGY 新 session 自行完成设计、实现、独立评审与交付，外部40/40、三家原流用量对齐；此前同组停顿和一次恢复仍完整保留。[最终三方报告](evidence/2026-10-28-three-cli-team/README.md)。AGY目录5秒截断修正为15秒，多人回复及状态点名规则已补入native-final说明；Kernel自动返回范围不扩大。此前[Herdr/Loom失败对照](evidence/2026-10-28-team-closeout/README.md)、[四运行时复验](evidence/2026-10-28-tool-preflight-team/README.md)不补判通过。此三方组合尚无同质量重复原生/Herdr成本倍率；后继Codex/Kimi双人重复对照见下，不外推为全场景稳定性或效率门禁通过。
 2. **源码部署默认选择已收口**：daemon 集中选择 warm Codex/Claude/OpenCode 与 cold Kimi/Pi 原生回复；AGY 保持原协议。未设变量的新安装、显式关闭/冷配置、旧结构化试验、基准隔离及会话围栏定向135项通过，类型检查通过。本机移除四个冗余 `=1` 后安全重启，账本与前端快照未变；无新付费调用。冷 Codex exec、底层适配器、SEA 与远端不扩展。[矩阵、升级和回滚](native-final-defaults.zh-CN.md)、[测试与部署](evidence/2026-10-28-native-final-defaults/README.md)。
 3. **已知平台限制**：AGY自动记忆禁用未证实，不做不公平成本对照；外部 Fork/Side 接口缺失仍明确不支持。子代理总账、极长历史、真机与远端限制保留 §3，不因本轮短任务成功消失。
 
-后继固定三对真实 Herdr/Loom 协作复验：Codex Luna low＋固定 Kimi 2.1.1/k3-256k low，完整协作 Loom 1/3、Herdr 2/3，整体同质量倍率仍为空。Loom 一组 Kimi EOF 超时、一组模型漏新请求 @；Herdr 最后一组反复轮询触及预算，有一次在途 usage 未返回。全部观察下界 4,328,317 输入、52,853 输出、181 次已计生成，不把低成本失败当节省。免费探针定位 Kimi 原生日志落盘清理可达 18.9 秒，现有界等待改为30秒，17项定向检查和类型检查通过、已部署；原付费失败不补判通过。统计/启动/会计另12项通过；未启动成员的零执行证明与真正缺失计费分开。见[完整结果与剩余项](evidence/2026-10-28-team-cost-repeat/README.md)。
+最新固定三对实际 Herdr/Loom 复验在 `a425f76c` 上完成：Codex0.164.0/Luna low＋固定 Kimi2.1.1/k3-256k low，六支团队全部完成设计、实现、独立审查与交付，外部40/40、原生用量完整且与Loom产品账一致。Loom总输入1,729,612、Herdr3,469,935，均值之比0.498457；含输出比0.500902，生成73/136。组内输入范围分别37.8–68.8万、62.9–157.5万，不以单次原生或最优样本代表总体。7次无重复@自动交回、10次Kimi真实exit0；12项分析/会计/启动规则检查通过。本批无产品修改、正式重启、样本替换或中途Human接力，正式测试数据仍为0。此固定任务/组合的成本与协作证明通过，n=3不外推长期分布、全CLI或逐回复时延；[完整结果与限制](evidence/2026-10-28-team-cost-repeat-v2/README.md)。
 
-此前失败、人工接手、修复顺序及全部费用链接见[历史经过](log/2026-10-28-repair-progression.zh-CN.md)与[付费台账](paid-runs.zh-CN.md)。本次兼容修复尚无修复后的付费协作复验；重复同质量协作成本及上述模型寻址可靠性不宣称通过。
+此前三对的 EOF 超时、模型漏新请求@、Herdr预算截断及未知计量保留，原失败不补判通过。Kimi清理15→30秒的修复已有免费19秒复现、17项定向检查及部署证据；新批10轮均在旧15秒内完成，不能把新批改善全部归因为延长期限，旧寻址随机风险也未被修改规则消除。[前批与兼容修复](evidence/2026-10-28-team-cost-repeat/README.md)。
+
+此前失败、人工接手、修复顺序及全部费用链接见[历史经过](log/2026-10-28-repair-progression.zh-CN.md)与[付费台账](paid-runs.zh-CN.md)。当前回复路径按已验收范围冻结维护；其他CLI/模型、全部效率指标与模型寻址永不遗漏不作通过宣称，不为正常随机波动继续重写编排。
 
 ## 5. phase 4 删除清单
 

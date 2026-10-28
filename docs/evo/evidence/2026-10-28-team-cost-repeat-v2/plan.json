@@ -1,0 +1,57 @@
+{
+  "schema": "team-cost-repeat/v2",
+  "ownerAuthorization": "Owner: 继续 after the disclosed previous cohort and Kimi EOF repair; same fixed three-pair repeated comparison",
+  "createdAt": "2026-10-28T10:26:46.823087+00:00",
+  "sourceRevision": "a425f76cb94a98d0c47531217d7674f4ecead633",
+  "order": [
+    "pair1-loom",
+    "pair1-native",
+    "pair2-native",
+    "pair2-loom",
+    "pair3-loom",
+    "pair3-native"
+  ],
+  "models": {
+    "codex": {
+      "model": "gpt-6-luna",
+      "effort": "low",
+      "version": "0.164.0"
+    },
+    "kimi": {
+      "model": "kimi-code/k3-256k",
+      "effort": "low",
+      "version": "2.1.1",
+      "source": "previously verified private pinned npm binary, global CLI untouched"
+    }
+  },
+  "task": "same original invoice 12 accumulated requirements and external 40-check evaluator",
+  "budget": {
+    "input": 10800000,
+    "output": 300000,
+    "generations": 600,
+    "minutes": 90
+  },
+  "sampleLimits": {
+    "input": 1800000,
+    "output": 50000,
+    "generations": 100,
+    "runs": 16,
+    "minutes": 15
+  },
+  "failurePolicy": "no replacement, no Human recovery, preserve all attempts; stop remaining batch on incomplete accounting, model/memory mismatch or unproved cleanup; completed but business-failed teams remain in fixed sequence",
+  "independentSample": "one whole team finishing the full task, never an individual message or generation",
+  "native": "actual Herdr interactive CLI sessions with native peer communications; all members measured; no model coordinator outside team",
+  "memory": "Codex explicit disable, exact Kimi 2.1.1 source audit, continuous conversation retained",
+  "subagents": "forbidden by identical batch instructions, actual transcript audited, unexpected descendants invalidate accounting pending reconciliation",
+  "scopeLimits": [
+    "not all CLIs or all models",
+    "not a new cost result until both arms meet same quality",
+    "AGY automatic-memory baseline remains unverified; OpenCode TUI admission is not inherited from run"
+  ],
+  "previousCohort": "docs/evo/evidence/2026-10-28-team-cost-repeat/README.md",
+  "changesFromPrevious": [
+    "Only product Kimi EOF grace15to30s; original task, common and per-arm communication instructions and model bindings unchanged",
+    "Known update-menu preparation handled before every business sample; no model retry",
+    "Apply positive durable nonstart proof to cost coverage from cohort start, not participation success"
+  ]
+}

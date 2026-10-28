@@ -1,0 +1,638 @@
+{
+  "rubricSha256": "5d37491eed6218f1f1e7c74fac1ff0226236390a92e0a2d0e3f9400f4e4d15fa",
+  "method": "nonblind source/tool/handoff audit; same requirements for all six teams",
+  "rows": [
+    {
+      "sample": "pair1-loom",
+      "qualityAccepted": true,
+      "reviewMethod": "lead nonblind actual public messages and native reviewer tool/result audit against frozen rubric",
+      "sourceResult": "pair1-loom/result.json",
+      "sourceSha256": "da81101ffff41d052f1774aabc45cedefdc959b22c0a506ff7bf38473d801052",
+      "externalPassed": 40,
+      "selfTestsPassed": true,
+      "designContributed": true,
+      "reviewerReadActualSource": true,
+      "reviewerExecutedChecks": true,
+      "reviewerExplicitAcceptance": true,
+      "finalDeliveryAfterReview": true,
+      "blockingFindingsUnresolved": false,
+      "reviewerToolEvidence": [
+        {
+          "id": "tool_UFQxVYUEIScxg6eomimaRowY",
+          "tool": "Read",
+          "input": {
+            "path": "invoice.py"
+          }
+        },
+        {
+          "id": "tool_tTYTGKSAvcoUQUEeKKKxryxZ",
+          "tool": "Read",
+          "input": {
+            "path": "README.md"
+          }
+        },
+        {
+          "id": "tool_1c5MrHpKctGNYE6JPpuBbPOd",
+          "tool": "Glob",
+          "input": {
+            "pattern": "tests/**/*.py"
+          }
+        },
+        {
+          "id": "tool_jar7HAu9knqgRlktnNQFmvaO",
+          "tool": "Read",
+          "input": {
+            "path": "tests/test_invoice.py"
+          }
+        },
+        {
+          "id": "tool_weVvO8fQ91RJ5fhTlNujaM5o",
+          "tool": "Bash",
+          "input": {
+            "command": "python3 -m unittest discover -s tests -v 2>&1 | tail -15",
+            "cwd": "/Users/sun/.loom/reviews/2026-10-28-team-cost-repeat-v2/pair1-loom/workspace"
+          }
+        },
+        {
+          "id": "tool_KyPTTpgkTdRh2rZCzGmyOVhx",
+          "tool": "Bash",
+          "inputSha256": "d608bb87715399266eece7cdf38a9211d88c6d05af167789ad0de914ee11d58b",
+          "inputSummary": "Original command retained privately; actual design/review/rereview or independent precision/validation/CLI probe. See row notes and source record SHA."
+        }
+      ],
+      "notes": "Both design and implementation-review requests explicitly addressed B. B read invoice.py, README and actual tests, ran8selftests and its own independent validation/precision/grouping/CLI assertions with successful output, explicitly accepted; A delivered. No Human recovery. Reviewer probe has an inaccurate rounding comment (0.045 rounds0.05, its assertion is correct); original retained, no claim that all commentary is fact-perfect. Native EOFs all exited0, usage/product ledgers match."
+    },
+    {
+      "sample": "pair1-native",
+      "qualityAccepted": true,
+      "reviewMethod": "lead nonblind actual native handoff/tool/result audit and external40 oracle against frozen rubric",
+      "sourceResult": "pair1-native/result.json",
+      "sourceSha256": "721d0b1810c42a47803a556b71a370599f626b3036c21c953729057433acf0d6",
+      "externalPassed": 40,
+      "selfTestsPassed": true,
+      "designContributed": true,
+      "reviewerReadActualSource": true,
+      "reviewerExecutedChecks": true,
+      "reviewerExplicitAcceptance": true,
+      "finalDeliveryAfterReview": true,
+      "blockingFindingsUnresolved": false,
+      "reviewerToolEvidence": [
+        {
+          "id": "tool_rEqYIaR5bdraVjIPW7vwE5yv",
+          "tool": "Read",
+          "input": {
+            "path": "invoice.py"
+          }
+        },
+        {
+          "id": "tool_5DRy138o9lB7uXdxcjwcFzdj",
+          "tool": "Read",
+          "input": {
+            "path": "README.md"
+          }
+        },
+        {
+          "id": "tool_9Kbl6EPokCsStNHKo1efCPcw",
+          "tool": "Bash",
+          "inputSha256": "7d7c9cb2295c3078b7653692e007febbba0bc04f91301b895cae22148c331a5d",
+          "inputSummary": "Original command retained privately; actual design/review/rereview or independent precision/validation/CLI probe. See row notes and source record SHA."
+        },
+        {
+          "id": "tool_OzpV5RPcHwbYuUJ3KB8501A1",
+          "tool": "Bash",
+          "input": {
+            "command": "herdr agent read cr2-pair1-a --source recent-unwrapped --lines 80"
+          }
+        },
+        {
+          "id": "tool_efK1y8xugu2ljquupJ0MCfKy",
+          "tool": "Bash",
+          "inputSha256": "fcfcb052297b6a3c63e7fb9161eddec577696eb056a5197348f1372c4df1660d",
+          "inputSummary": "Original command retained privately; actual design/review/rereview or independent precision/validation/CLI probe. See row notes and source record SHA."
+        },
+        {
+          "id": "tool_wM5FhwXSLaSGTTwPUO6GLIyN",
+          "tool": "Read",
+          "input": {
+            "path": "invoice.py"
+          }
+        },
+        {
+          "id": "tool_QWAcV6AtArgMIunxblRp0xjv",
+          "tool": "Read",
+          "input": {
+            "path": "tests/test_invoice.py"
+          }
+        },
+        {
+          "id": "tool_pqXrmVL1mOK3k7CLFV6K0tVz",
+          "tool": "Read",
+          "input": {
+            "path": "README.md"
+          }
+        },
+        {
+          "id": "tool_GziveTnNLg1ITCjsdJoWL1MF",
+          "tool": "Bash",
+          "input": {
+            "command": "python3 -m unittest discover -s tests -v 2>&1 | tail -5"
+          }
+        },
+        {
+          "id": "tool_X1qUqZysVHRy4lgwxR8VEqKt",
+          "tool": "Bash",
+          "inputSha256": "7a95d3e33251e30e053cff8669f14093f1eeeb55a8eb5c82c8fb640a4cfb41ae",
+          "inputSummary": "Original command retained privately; actual design/review/rereview or independent precision/validation/CLI probe. See row notes and source record SHA."
+        },
+        {
+          "id": "tool_r9tsEbG3jfIXbTWp9WEEXLcR",
+          "tool": "Bash",
+          "input": {
+            "command": "echo '{\"rows\":[]}' | python3 invoice.py; echo \"zero-args-with-stdin exit=$?\"; echo '{\"rows\":[]}' | python3 invoice.py -; echo \"stdin exit=$?\"; python3 invoice.py /dev/null; echo \"badfile exit=$?\""
+          }
+        },
+        {
+          "id": "tool_1U0DlyZ5zjniHSbQZ24bnzY8",
+          "tool": "Bash",
+          "inputSha256": "336a08458d33602d3b77e8f89bfbd9779ac95f796df49448e09a5fece1700389",
+          "inputSummary": "Original command retained privately; actual design/review/rereview or independent precision/validation/CLI probe. See row notes and source record SHA."
+        }
+      ],
+      "notes": "B read initial placeholder before detailed design feedback, then actual completed invoice/tests/README; ran10selftests plus independent precision/rounding/grouping/validation and CLI probes. B explicitly accepted via successful Herdr prompt and A delivered after receiving it. No Human recovery. Native team chose an extra design-confirmation exchange; A had a harmless not-a-git-directory command failure, retained. Reviewers theoretical Decimal row-count estimate and some CLI wording are not treated as fact-perfect claims; code passed fixed oracle."
+    },
+    {
+      "sample": "pair2-native",
+      "qualityAccepted": true,
+      "reviewMethod": "lead nonblind actual native design, blocking finding, source/test tools, repair/rereview and final delivery audit; fixed external40 oracle",
+      "sourceResult": "pair2-native/result.json",
+      "sourceSha256": "30de86524536537d0c440855bab97d005caa0670349642be1861b468e859fd65",
+      "externalPassed": 40,
+      "selfTestsPassed": true,
+      "designContributed": true,
+      "reviewerReadActualSource": true,
+      "reviewerExecutedChecks": true,
+      "reviewerExplicitAcceptance": true,
+      "finalDeliveryAfterReview": true,
+      "blockingFindingsUnresolved": false,
+      "reviewerToolEvidence": [
+        {
+          "id": "tool_OB391Ner42LsZyGq228i9peD",
+          "tool": "Read",
+          "input": {
+            "path": "invoice.py"
+          }
+        },
+        {
+          "id": "tool_hfIfuzXsjzfiVRV1HgHuyiML",
+          "tool": "Bash",
+          "inputSha256": "cd6505daac917eeee99e111e3bf168270f46cc86e49b78a00c94338898ddb897",
+          "inputSummary": "Original command retained privately; actual design/review/rereview or independent precision/validation/CLI probe. See row notes and source record SHA."
+        },
+        {
+          "id": "tool_LJf8tuHZxDN0w6W4IqqddYFG",
+          "tool": "Bash",
+          "input": {
+            "command": "herdr agent read cr2-pair2-a --source recent-unwrapped --lines 80"
+          }
+        },
+        {
+          "id": "tool_26tSE9K7qTr6nsCz9oDemvvt",
+          "tool": "Read",
+          "input": {
+            "path": "invoice.py"
+          }
+        },
+        {
+          "id": "tool_K3ht9G9zl54HNrJHybKDTe7E",
+          "tool": "Bash",
+          "input": {
+            "command": "ls tests/ 2>/dev/null; ls"
+          }
+        },
+        {
+          "id": "tool_pxFuuJDuNE3iGQI9rhPMAnyk",
+          "tool": "Read",
+          "input": {
+            "path": "tests/test_invoice.py"
+          }
+        },
+        {
+          "id": "tool_eklSPke46xraZeo4BJTVfApn",
+          "tool": "Read",
+          "input": {
+            "path": "README.md"
+          }
+        },
+        {
+          "id": "tool_9Al3HuIoZAbQ03MX4fm1d9vh",
+          "tool": "Bash",
+          "input": {
+            "command": "python3 -m unittest discover -s tests -v 2>&1 | tail -20"
+          }
+        },
+        {
+          "id": "tool_ORm9qryRX1AYYFSiPds94o3G",
+          "tool": "Bash",
+          "inputSha256": "6fb0fa0bbd3ea2ed8266d8ff17fc37ab4acdd90d1c37d34287d3afe9e7927f3d",
+          "inputSummary": "Original command retained privately; actual design/review/rereview or independent precision/validation/CLI probe. See row notes and source record SHA."
+        },
+        {
+          "id": "tool_mGRpaqYCCPx41bCRqUYZ7Rl1",
+          "tool": "Bash",
+          "inputSha256": "e510192b7c6415f6089b8377cfa8a8d5fbb7ac16beffe5d4a75f26a43261d56c",
+          "inputSummary": "Original command retained privately; actual design/review/rereview or independent precision/validation/CLI probe. See row notes and source record SHA."
+        },
+        {
+          "id": "tool_L5KMpvbQ3lcy67uHn8HIs8eH",
+          "tool": "Bash",
+          "inputSha256": "bdc444543b78dc6e24b8d888497496cdff16def1f42df47f06c0be4da25c4f45",
+          "inputSummary": "Original command retained privately; actual design/review/rereview or independent precision/validation/CLI probe. See row notes and source record SHA."
+        },
+        {
+          "id": "tool_mhflFvsi24sVSjOOpSwO51KM",
+          "tool": "Bash",
+          "inputSha256": "6166e04fdd7f20ed3a474e92f0e09293c5b903bab1bd54c289af79418ddf292a",
+          "inputSummary": "Original command retained privately; actual design/review/rereview or independent precision/validation/CLI probe. See row notes and source record SHA."
+        },
+        {
+          "id": "tool_Xw8Ue7SumjB4QDFCoXA3ox9Y",
+          "tool": "Bash",
+          "input": {
+            "command": "git diff 2>/dev/null | head -0; grep -n \"precision\\|prec\" invoice.py; wc -l invoice.py tests/test_invoice.py"
+          }
+        },
+        {
+          "id": "tool_M9Ytksb3YL0gsTkvaZiEyHVW",
+          "tool": "Bash",
+          "input": {
+            "command": "python3 -m unittest discover -s tests -v 2>&1 | tail -8"
+          }
+        },
+        {
+          "id": "tool_brHYxjNiaSdvUne9wwZUTiMn",
+          "tool": "Bash",
+          "inputSha256": "1847bc0271659e89869263f250531414dad9efde6b0d8bb8de4e028850b80cd3",
+          "inputSummary": "Original command retained privately; actual design/review/rereview or independent precision/validation/CLI probe. See row notes and source record SHA."
+        },
+        {
+          "id": "tool_nt9OMYjrdMPbkDWRGpKQ9Hdx",
+          "tool": "Bash",
+          "inputSha256": "09dc45e501b4395d5860e78981e72e62358e83c1006d0a66d5e77d7c9af6a485",
+          "inputSummary": "Original command retained privately; actual design/review/rereview or independent precision/validation/CLI probe. See row notes and source record SHA."
+        },
+        {
+          "id": "tool_8KElIg8aAQGm7xj5nFv6yZWf",
+          "tool": "Bash",
+          "inputSha256": "3b2deb99169212998b0ffc935603da46fb6fe38b17670a5b9b4ec55ff284a880",
+          "inputSummary": "Original command retained privately; actual design/review/rereview or independent precision/validation/CLI probe. See row notes and source record SHA."
+        },
+        {
+          "id": "tool_OyCmSioxWVgrVNW54TWqEfpi",
+          "tool": "Bash",
+          "inputSha256": "ee3beed9ec0d6824bc5a4203328befee12f62614bdc6cb3e98990492fa423f61",
+          "inputSummary": "Original command retained privately; actual design/review/rereview or independent precision/validation/CLI probe. See row notes and source record SHA."
+        },
+        {
+          "id": "tool_nFjjPqkD6A1iJiyYBRlUVHFX",
+          "tool": "Bash",
+          "input": {
+            "command": "herdr agent prompt cr2-pair2-a \"B 最终复测确认：接受，无 findings。刚实际重跑：python3 -m unittest discover -s tests → 11 tests OK；之前的精度缺陷复现用例（quantity=999999999999, unit_price='999999999999.995001', tax='3.33'）与 Fraction 精确参考完全一致（subtotal 正确下舍为 ...000000.00，total 随之正确）。加上此前已验证的 500 组随机 Fraction 对照、极值路径、分组 grand total 独立性、CLI 行为与 README 一致性，全部通过。审查关闭，请做最终总结收尾。\""
+          }
+        },
+        {
+          "id": "tool_Xm1wCeLjtBWXC3D7WKlxOeUz",
+          "tool": "Bash",
+          "input": {
+            "command": "md5 invoice.py tests/test_invoice.py; python3 -m unittest discover -s tests 2>&1 | tail -3"
+          }
+        },
+        {
+          "id": "tool_9bgsctbHoB0UwcemDkso5a4n",
+          "tool": "Bash",
+          "input": {
+            "command": "herdr agent prompt cr2-pair2-a \"B 再次确认（最终）：接受，无 findings。刚重跑 python3 -m unittest discover -s tests → 11 tests OK；invoice.py 与 tests 自上次复测以来无变化。此前 Fraction 精确对照（复现用例、极值路径、500 组随机、分组 grand total 独立性）与 CLI/README 审查均通过。审查关闭，请收尾做最终总结，无需再回复我。\""
+          }
+        }
+      ],
+      "resolvedFinding": {
+        "kind": "insufficient Decimal precision at a large-value half-cent boundary",
+        "case": {
+          "quantity": 999999999999,
+          "unit_price": "999999999999.995001",
+          "tax": "3.33"
+        },
+        "fix": "dynamic precision max(28,50+digits(row count)); regression test added",
+        "rereview": "B personally reran11tests, exact Fraction reproduction, maximum cases and500seeded random references; accepted; A final delivered"
+      },
+      "notes": "Includes real blocking defect discovery and repair, a reviewer random probe that initially generated invalid percentage>100 then corrected its test, and several redundant closing confirmation exchanges. All consumption retained; high total is not all protocol waste. B did actual rereview before its first acceptance; later confirmations did not change artifact. No Human rescue."
+    },
+    {
+      "sample": "pair2-loom",
+      "qualityAccepted": true,
+      "reviewMethod": "lead nonblind public handoff and actual native reviewer tool/result audit; frozen external40 oracle",
+      "sourceResult": "pair2-loom/result.json",
+      "sourceSha256": "c4ea51de48268854e6996b2c3ecb6e169ea7da8b9d233e52daff30f5f76e4033",
+      "externalPassed": 40,
+      "selfTestsPassed": true,
+      "designContributed": true,
+      "reviewerReadActualSource": true,
+      "reviewerExecutedChecks": true,
+      "reviewerExplicitAcceptance": true,
+      "finalDeliveryAfterReview": true,
+      "blockingFindingsUnresolved": false,
+      "reviewerToolEvidence": [
+        {
+          "id": "tool_5cGW3OpE8YU3VZQ0J0KNaRrD",
+          "tool": "Read",
+          "input": {
+            "path": "invoice.py"
+          }
+        },
+        {
+          "id": "tool_jqBqQmDIXf2QSkEOFh1aMDtj",
+          "tool": "Read",
+          "input": {
+            "path": "tests/test_invoice.py"
+          }
+        },
+        {
+          "id": "tool_GDjK02qYslZ7UqWxTbwPGBXW",
+          "tool": "Read",
+          "input": {
+            "path": "README.md"
+          }
+        },
+        {
+          "id": "tool_Xj2SAlrggebUidAAcQwhMyDe",
+          "tool": "Bash",
+          "input": {
+            "command": "python3 -m unittest discover -s tests -v 2>&1 | tail -15",
+            "cwd": "/Users/sun/.loom/reviews/2026-10-28-team-cost-repeat-v2/pair2-loom/workspace"
+          }
+        },
+        {
+          "id": "tool_PzKtkdqYP78TqLrf2ysbvU8Q",
+          "tool": "Bash",
+          "inputSha256": "050d51644ae4e353a2dff1b8357d7ff710eaa3073814dec2115aac91959801e8",
+          "inputSummary": "Original command retained privately; actual design/review/rereview or independent precision/validation/CLI probe. See row notes and source record SHA."
+        },
+        {
+          "id": "tool_b12Bo5M21e1m0n6xlQSInfiQ",
+          "tool": "Bash",
+          "input": {
+            "command": "cd /Users/sun/.loom/reviews/2026-10-28-team-cost-repeat-v2/pair2-loom/workspace\np() { python3 invoice.py \"$@\" > /tmp/o 2>/tmp/e; echo \"rc=$? out=[$(cat /tmp/o)] err=[$(cat /tmp/e)]\"; }\np /nonexistent.json\necho '[1,2]' | python3 invoice.py - > /tmp/o 2>/tmp/e; echo \"rc=$? out=[$(cat /tmp/o)] err=[$(cat /tmp/e)]\"\necho '{\"rows\":[{\"quantity\":1,\"unit_price\":2}],\"tax_percent\":\"5\"}' | python3 invoice.py -\npython3 invoice.py < /dev/null > /tmp/o 2>/tmp/e; echo \"rc=$? out=[$(cat /tmp/o)] err=[$(cat /tmp/e)]\""
+          }
+        }
+      ],
+      "notes": "Both new requests explicitly address B; B read actual implementation/tests/README, ran7selftests and independent rounding/grouping/validation/CLI checks, explicitly accepted with nonblocking suggestions. A raisedprecision50to60 and addedtests, reran8tests and delivered; external40pass. These optional changes after acceptance were not independently re-reviewed by B; frozen rubric requires actual rereview for blocking findings, none here. No claim that reviewer significant-digit/rounding commentary is mathematically complete or that all legal inputs were exhaustively verified. Some scratch CLI output used/tmp, retained under same prior cohort interpretation."
+    },
+    {
+      "sample": "pair3-loom",
+      "qualityAccepted": true,
+      "reviewMethod": "lead nonblind actual public design/review/rereview/final and native tool results audit; fixed external40 oracle",
+      "sourceResult": "pair3-loom/result.json",
+      "sourceSha256": "5e6916ac95874750c16ca766b558ddb7f72b49c13b1a36375ff7eb024ee7c617",
+      "externalPassed": 40,
+      "selfTestsPassed": true,
+      "designContributed": true,
+      "reviewerReadActualSource": true,
+      "reviewerExecutedChecks": true,
+      "reviewerExplicitAcceptance": true,
+      "finalDeliveryAfterReview": true,
+      "blockingFindingsUnresolved": false,
+      "reviewerToolEvidence": [
+        {
+          "id": "tool_0orYtlnnoKJuItoSIGaqXkpf",
+          "tool": "Read",
+          "input": {
+            "path": "invoice.py"
+          }
+        },
+        {
+          "id": "tool_4M6T9ElwZ6Umc3MplgQXm2jx",
+          "tool": "Read",
+          "input": {
+            "path": "COMMUNICATION.txt"
+          }
+        },
+        {
+          "id": "tool_g9I1FCMDSV3fOOouGMSAArqc",
+          "tool": "Read",
+          "input": {
+            "path": "invoice.py"
+          }
+        },
+        {
+          "id": "tool_4FdC7FpIrwQ9E1KgnvvFZtLp",
+          "tool": "Read",
+          "input": {
+            "path": "README.md"
+          }
+        },
+        {
+          "id": "tool_ZQJQes6se47ZcaISfplkzw1n",
+          "tool": "Bash",
+          "input": {
+            "command": "ls tests/ && python3 -m unittest discover -s tests -v 2>&1 | tail -20"
+          }
+        },
+        {
+          "id": "tool_5cD7WANtOMAhmH6PijhzxEjY",
+          "tool": "Bash",
+          "inputSha256": "249ed9ee4a9e2ee4da1d7e9a4b0b90480d2879776e3165d40e574d3e6821e2ba",
+          "inputSummary": "Original command retained privately; actual design/review/rereview or independent precision/validation/CLI probe. See row notes and source record SHA."
+        },
+        {
+          "id": "tool_WuosDdlWap6Hw0r0QBP6kLFn",
+          "tool": "Bash",
+          "inputSha256": "071924c5464a9774f729f2342daadb94c8dbd42f95d7320349c6eb62191fdf75",
+          "inputSummary": "Original command retained privately; actual design/review/rereview or independent precision/validation/CLI probe. See row notes and source record SHA."
+        },
+        {
+          "id": "tool_OQMhXL59nTMBmoOGiIeNZ6eN",
+          "tool": "Bash",
+          "inputSha256": "e9da742c8f92df6e25020dda95dd18398b3b9e5900b422c8ac4d103cf2cac920",
+          "inputSummary": "Original command retained privately; actual design/review/rereview or independent precision/validation/CLI probe. See row notes and source record SHA."
+        },
+        {
+          "id": "tool_UUhb1tC3RiRGUiMipxQtsDw0",
+          "tool": "Bash",
+          "inputSha256": "20d23940b53f519ced1f57f101c5c250342fbdf49fdd2a1f88a2da81bb4c9137",
+          "inputSummary": "Original command retained privately; actual design/review/rereview or independent precision/validation/CLI probe. See row notes and source record SHA."
+        },
+        {
+          "id": "tool_GBm9NxGpbNRMg3hY5zlyzxdb",
+          "tool": "Bash",
+          "inputSha256": "e65685c023e9664d8aee13bcede50f4b80b4eab38882ef438bc2467b4cabbd93",
+          "inputSummary": "Original command retained privately; actual design/review/rereview or independent precision/validation/CLI probe. See row notes and source record SHA."
+        },
+        {
+          "id": "tool_0WQbpCijrLi9SUy9XZclvwJn",
+          "tool": "Read",
+          "input": {
+            "path": "tests/test_invoice.py"
+          }
+        },
+        {
+          "id": "tool_17kL1rZx0K3hkV9RonZpfYh9",
+          "tool": "Bash",
+          "input": {
+            "command": "cd /Users/sun/.loom/reviews/2026-10-28-team-cost-repeat-v2/pair3-loom/workspace && sed -n '85,92p' invoice.py && grep -n \"invoice.py\" tests/test_invoice.py && python3 -m unittest discover -s tests 2>&1 | tail -3 && cd /tmp && python3 -m unittest discover -s /Users/sun/.loom/reviews/2026-10-28-team-cost-repeat-v2/pair3-loom/workspace/tests -t /Users/sun/.loom/reviews/2026-10-28-team-cost-repeat-v2/pair3-loom/workspace 2>&1 | tail -3"
+          }
+        },
+        {
+          "id": "tool_WayCSJWDeJTEtPdT4v5syLxW",
+          "tool": "Bash",
+          "input": {
+            "command": "cd /tmp && python3 /Users/sun/.loom/reviews/2026-10-28-team-cost-repeat-v2/pair3-loom/workspace/tests/test_invoice.py 2>&1 | tail -3"
+          }
+        }
+      ],
+      "notes": "B read actual files, ran6selftests, corrected two own probe mistakes (random percentage>100 and Python syntax), then executed large exact Fraction random/extreme/500-row checks plus validation/CLI checks. A accepted nonblocking suggestions, raised precision40+digits to60+digits and fixed CLI test script location; explicitly requested re-review. B reread/checked actual modification and reran6tests, then accepted; A delivered. Reviewer outside-root unittest/import probes still failed and were disclosed as nonrequired module invocation scope, not fixed or silently passed. This is fixed oracle/workflow acceptance, not proof all reviewer arithmetic commentary is correct or every legal input was exhaustively verified."
+    },
+    {
+      "sample": "pair3-native",
+      "qualityAccepted": true,
+      "reviewMethod": "lead nonblind native handoffs, source/test reads, actual tool results, optional repair/rereview and final delivery audit; fixed external40 oracle",
+      "sourceResult": "pair3-native/result.json",
+      "sourceSha256": "216d19a20e4a31e359172b64ca3936331af4ea888619fbd09aaffa265050452a",
+      "externalPassed": 40,
+      "selfTestsPassed": true,
+      "designContributed": true,
+      "reviewerReadActualSource": true,
+      "reviewerExecutedChecks": true,
+      "reviewerExplicitAcceptance": true,
+      "finalDeliveryAfterReview": true,
+      "blockingFindingsUnresolved": false,
+      "reviewerToolEvidence": [
+        {
+          "id": "tool_RGbZj88GrLxy7ppLR4EXopMa",
+          "tool": "Read",
+          "input": {
+            "path": "invoice.py"
+          }
+        },
+        {
+          "id": "tool_RgmLpb8zYq33SPFn4SK1WE6E",
+          "tool": "Read",
+          "input": {
+            "path": "README.md"
+          }
+        },
+        {
+          "id": "tool_EyAhZvRbXaUlRJYU8thkCK52",
+          "tool": "Bash",
+          "inputSha256": "5f6654081a9d4720ad9f56a3bda1f138144676fb523045431397af3a4e0b454c",
+          "inputSummary": "Original command retained privately; actual design/review/rereview or independent precision/validation/CLI probe. See row notes and source record SHA."
+        },
+        {
+          "id": "tool_MkgJDeMZNKLUxDy41TFRw1qs",
+          "tool": "Bash",
+          "inputSha256": "33916669dc5322e821bdf5ac0e3beb0d9adbf2f7f3a7c408e242e1c114194c60",
+          "inputSummary": "Original command retained privately; actual design/review/rereview or independent precision/validation/CLI probe. See row notes and source record SHA."
+        },
+        {
+          "id": "tool_8tm5QverufcEtshAJiRM1LUh",
+          "tool": "Bash",
+          "inputSha256": "1f4488f20d40b19eebb1320c86fd92d7abf5980de95b9a1caa6060358d18b2c8",
+          "inputSummary": "Original command retained privately; actual design/review/rereview or independent precision/validation/CLI probe. See row notes and source record SHA."
+        },
+        {
+          "id": "tool_I3IscmXV2EZvUKbBXRwyabBI",
+          "tool": "Bash",
+          "inputSha256": "56add4eea5af2abd602d12ba5fce545187537e3074bd62d2c7c9abdbf32971e5",
+          "inputSummary": "Original command retained privately; actual design/review/rereview or independent precision/validation/CLI probe. See row notes and source record SHA."
+        },
+        {
+          "id": "tool_HKIVdloRw18wihtUKRKtUxPp",
+          "tool": "Read",
+          "input": {
+            "path": "invoice.py"
+          }
+        },
+        {
+          "id": "tool_z9lVAog4QY4jqfpLbK1RZYOZ",
+          "tool": "Glob",
+          "input": {
+            "pattern": "tests/**"
+          }
+        },
+        {
+          "id": "tool_f4g8O0qr1oheiaOwUG1LHgWe",
+          "tool": "Read",
+          "input": {
+            "path": "tests/test_invoice.py"
+          }
+        },
+        {
+          "id": "tool_rjI8rDGIynMDoIQv4bOsiI2I",
+          "tool": "Read",
+          "input": {
+            "path": "README.md"
+          }
+        },
+        {
+          "id": "tool_ZFQyoY3QFMlvY3R6DQm8VLBv",
+          "tool": "Bash",
+          "input": {
+            "command": "python3 -m unittest discover -v 2>&1 | tail -20"
+          }
+        },
+        {
+          "id": "tool_6RxKy454LbGQHY96rOHBeTkZ",
+          "tool": "Bash",
+          "inputSha256": "fcf3d03368b8449869060d38c027385ffd0bdede7084d071821e59f18c6b8af6",
+          "inputSummary": "Original command retained privately; actual design/review/rereview or independent precision/validation/CLI probe. See row notes and source record SHA."
+        },
+        {
+          "id": "tool_I0coOMh7F2SaBsWL60H2XiGQ",
+          "tool": "Bash",
+          "input": {
+            "command": "python3 - <<'EOF'\nfrom decimal import Decimal, localcontext\nwith localcontext() as c:\n    c.prec = 60\n    p = Decimal(\"999999999999\") * Decimal(\"999999.999999\")\n    print(\"exact product:\", p)\n    net = Decimal(\"0.333333\")*2\n    tax = (net*Decimal(\"10\")/100).quantize(Decimal(\"0.01\"))\n    print(\"net:\", net, \"rounded net:\", net.quantize(Decimal(\"0.01\")), \"tax:\", tax, \"total:\", net.quantize(Decimal(\"0.01\"))+tax)\nEOF"
+          }
+        },
+        {
+          "id": "tool_gfTHkL5Olj85hIcjYHf06vtB",
+          "tool": "Bash",
+          "inputSha256": "742f07e872590d92bc50f9aba6436816a891f27089eaf475bd40aeccdfec874e",
+          "inputSummary": "Original command retained privately; actual design/review/rereview or independent precision/validation/CLI probe. See row notes and source record SHA."
+        },
+        {
+          "id": "tool_l9u66RAij0NdVwewaEnofNxA",
+          "tool": "Bash",
+          "inputSha256": "8e90ea4d449808d69162170f09825e047817e2ddf8fe35cbf7b01734e010c008",
+          "inputSummary": "Original command retained privately; actual design/review/rereview or independent precision/validation/CLI probe. See row notes and source record SHA."
+        },
+        {
+          "id": "tool_TEh7774c32YUEwUvmQka0tua",
+          "tool": "Read",
+          "input": {
+            "path": "invoice.py"
+          }
+        },
+        {
+          "id": "tool_smeNmW0uy8EprvVocDYLsyH2",
+          "tool": "Read",
+          "input": {
+            "path": "tests/test_invoice.py"
+          }
+        },
+        {
+          "id": "tool_tpo7MkhgKONvHl8siK5oCki2",
+          "tool": "Bash",
+          "input": {
+            "command": "python3 -m unittest discover -v 2>&1 | tail -6; echo '{\"rows\":[],\"extra\":1}' | python3 invoice.py -; echo \"rc=$?\"; python3 invoice.py 2>&1; echo \"rc=$?\""
+          }
+        },
+        {
+          "id": "tool_dKQ8zEXEHhbNwtQcl8vzmJG3",
+          "tool": "Bash",
+          "inputSha256": "036f0c6935e1a430394a6f0539cb2c3d76a9fbffb716ba6456318f7153113cf5",
+          "inputSummary": "Original command retained privately; actual design/review/rereview or independent precision/validation/CLI probe. See row notes and source record SHA."
+        }
+      ],
+      "notes": "B discussed design, read actual completed code/tests/README, ran9selftests and independent numeric/validation/CLI probes. Two expected values in its own probes were wrong and independently corrected with Decimal; tool command with invalid UTF8 argv was corrected and resent by model, all costs retained. B accepted, A made optional usage/unknown-key formatting changes and added a test, B reread/reran9tests and CLI probes then explicitly reaccepted, A delivered. Actual rereview verified final version; no Human recovery. Model arithmetic bound statements not treated as universal proofs."
+    }
+  ],
+  "omittedToolInputHashFormat": "SHA256 of UTF8 Python json.dumps(input,ensure_ascii=False,sort_keys=True); native wire/result SHA identifies original evidence separately."
+}

@@ -1,0 +1,30 @@
+{
+  "at": "2026-10-28T10:28:44.246Z",
+  "sourceRevision": "a425f76cb94a98d0c47531217d7674f4ecead633",
+  "promptAndCommunicationByteIdentical": true,
+  "freeToolReadPassed": true,
+  "preparationModelCalls": 0,
+  "exactVersions": {
+    "codex": "0.164.0",
+    "kimi": "2.1.1"
+  },
+  "pinnedKimiBundleSha256": "2563a338c94868a34e1bfd2e5579067d5a472acf4cb0bf350a3bfe1092bbe59d",
+  "toolReceiptSha256": "294929761bacb224ffc2a075c4e251028fd74bc8f75e3cd6dea8ecce6d14642a",
+  "freeResults": {
+    "loom": "4a0747ac9e5eead2c90aa42c50d6d1a19f573be7953fe124da641bee809b3ec1",
+    "native": "9cbc44701f3115695f0e2a09f0dd074bbb38b8dd4b7e6cf49c5a89951ed1bb32"
+  },
+  "budget": {
+    "input": 10800000,
+    "output": 300000,
+    "generations": 600,
+    "minutes": 90
+  },
+  "sampleLimits": {
+    "input": 1800000,
+    "output": 50000,
+    "generations": 100,
+    "runs": 16,
+    "minutes": 15
+  }
+}

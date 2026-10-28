@@ -1,0 +1,753 @@
+{
+  "schema": "team-cost-repeat-final/v2",
+  "at": "2026-10-28T11:01:48.174Z",
+  "sourceRevision": "a425f76cb94a98d0c47531217d7674f4ecead633",
+  "verdict": "accepted-for-this-fixed-task-and-combination",
+  "wholeCohortEqualQualityRatio": 0.4984565993311114,
+  "allAttemptsRetained": true,
+  "noBusinessReplacement": true,
+  "noHumanRecovery": true,
+  "observedUsage": {
+    "input": 5199547,
+    "cached": 4794496,
+    "output": 80186,
+    "generations": 209
+  },
+  "usageCoverage": "complete-for-all-observed-teams",
+  "plannedNotStarted": [],
+  "preparationIncidents": [],
+  "descriptive": {
+    "independentSample": "whole team / whole task",
+    "plannedAttempts": 6,
+    "observedAttempts": 6,
+    "arms": {
+      "native": {
+        "attempts": 3,
+        "accepted": 3,
+        "completeAccounting": true,
+        "knownTotals": {
+          "input": 3469935,
+          "cached": 3250944,
+          "output": 47772,
+          "generations": 136
+        },
+        "input": {
+          "n": 3,
+          "mean": 1156645,
+          "median": 1265777,
+          "min": 628725,
+          "max": 1575433,
+          "sampleSd": 482696.95916174987
+        },
+        "cached": {
+          "n": 3,
+          "mean": 1083648,
+          "median": 1179392,
+          "min": 572288,
+          "max": 1499264,
+          "sampleSd": 470846.3775967699
+        },
+        "output": {
+          "n": 3,
+          "mean": 15924,
+          "median": 15388,
+          "min": 11605,
+          "max": 20779,
+          "sampleSd": 4610.427420532721
+        },
+        "generations": {
+          "n": 3,
+          "mean": 45.333333333333336,
+          "median": 49,
+          "min": 30,
+          "max": 57,
+          "sampleSd": 13.868429375143146
+        }
+      },
+      "loom": {
+        "attempts": 3,
+        "accepted": 3,
+        "completeAccounting": true,
+        "knownTotals": {
+          "input": 1729612,
+          "cached": 1543552,
+          "output": 32414,
+          "generations": 73
+        },
+        "input": {
+          "n": 3,
+          "mean": 576537.3333333334,
+          "median": 663793,
+          "min": 377806,
+          "max": 688013,
+          "sampleSd": 172531.90787890027
+        },
+        "cached": {
+          "n": 3,
+          "mean": 514517.3333333333,
+          "median": 601856,
+          "min": 320512,
+          "max": 621184,
+          "sampleSd": 168291.25026968378
+        },
+        "output": {
+          "n": 3,
+          "mean": 10804.666666666666,
+          "median": 9293,
+          "min": 8377,
+          "max": 14744,
+          "sampleSd": 3442.168550976743
+        },
+        "generations": {
+          "n": 3,
+          "mean": 24.333333333333332,
+          "median": 25,
+          "min": 17,
+          "max": 31,
+          "sampleSd": 7.023769168568492
+        }
+      }
+    },
+    "pairedDirections": ["loom-lower", "loom-lower", "loom-lower"],
+    "equalQualityInputRatio": 0.4984565993311114,
+    "note": "All attempts remain in descriptive totals; no equivalence claim from three repeated teams."
+  },
+  "acceptedPairs": [
+    {
+      "pair": "pair1",
+      "inputRatio": 0.6009081872042626,
+      "n": 1,
+      "scope": "single conditional descriptive pair, not cohort acceptance or causal transport effect"
+    },
+    {
+      "pair": "pair2",
+      "inputRatio": 0.43671358921642495,
+      "n": 1,
+      "scope": "single conditional descriptive pair, not cohort acceptance or causal transport effect"
+    },
+    {
+      "pair": "pair3",
+      "inputRatio": 0.5244154381063963,
+      "n": 1,
+      "scope": "single conditional descriptive pair, not cohort acceptance or causal transport effect"
+    }
+  ],
+  "rows": [
+    {
+      "sample": "pair1-loom",
+      "arm": "loom",
+      "status": "quiescent-quality-pending",
+      "startedAt": "2026-10-28T10:28:52.727Z",
+      "finishedAt": "2026-10-28T10:32:53.637Z",
+      "error": null,
+      "measurementError": null,
+      "originalCoverageFlag": true,
+      "usage": {
+        "input": 377806,
+        "cached": 320512,
+        "output": 9293,
+        "generations": 17,
+        "complete": true
+      },
+      "memberReceipts": {
+        "codex": {
+          "rawSha256": "6fad7de191819d718f4e421420b897ddea0f133c8d869620d13ffdf8bef3890c",
+          "usage": {
+            "input": 172498,
+            "cached": 131328,
+            "output": 4670,
+            "generations": 10,
+            "complete": true
+          },
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "cliVersion": "codex-cli 0.164.0",
+          "memory": {
+            "provider": "codex",
+            "supported": true,
+            "status": "enforced",
+            "scope": "provider-native-auto-memory",
+            "mechanism": "cli-config",
+            "evidence": "spawn-configuration",
+            "config": {
+              "features.memories": false,
+              "memories.generate_memories": false,
+              "memories.use_memories": false
+            }
+          },
+          "terminals": {
+            "started": 3,
+            "completed": 3,
+            "aborted": 0
+          },
+          "herdrReads": 0,
+          "productLedgerMatched": true
+        },
+        "kimi": {
+          "rawSha256": "f6e8a4295460b48fe9e686fc98ab11f66477ddf5c473dae02279bdddd8197f8d",
+          "usage": {
+            "input": 205308,
+            "cached": 189184,
+            "output": 4623,
+            "generations": 7,
+            "requests": 7,
+            "complete": true
+          },
+          "actualModel": "kimi-code/k3-256k",
+          "actualEffort": "low",
+          "cliVersion": "2.1.1",
+          "memory": {
+            "provider": "kimi",
+            "supported": true,
+            "status": "not-applicable",
+            "scope": "provider-native-auto-memory",
+            "mechanism": "version-audit",
+            "version": "2.1.1",
+            "sourceRevision": "installed-bundle-sha256:2563a338c94868a34e1bfd2e5579067d5a472acf4cb0bf350a3bfe1092bbe59d",
+            "evidence": "audited-cli-version"
+          },
+          "allLoopRequests": 7,
+          "rawUsageRecords": 7,
+          "terminals": {
+            "started": 3,
+            "ended": 3,
+            "promptCompleted": 3
+          },
+          "productLedgerMatched": true
+        }
+      },
+      "qualityAccepted": true,
+      "cleanupVerified": true,
+      "cleanup": {
+        "ownedProcessesGone": true,
+        "ownedPanesGone": true,
+        "currentConversationPreserved": true
+      },
+      "externalPassed": 40,
+      "selfTestsPassed": true,
+      "artifactHashes": {
+        "AGENTS.md": "e7650b290c56a8794d11f96cccdb745e6a91240b485f58bf7bc68ca4337e9c7f",
+        "COMMUNICATION.txt": "ccd8d0c62d6d5129aad822912dcd6d835ac4b661749d47eebc4df4e9fed28ab5",
+        "README.md": "dc8cab024615ec3418f3cf8686e6d814b445725ba5d829d6bffd44cb53b65d2c",
+        "TASK.json": "b80ceafc1fca847f02c92d61924d4378c187fad53e6c74a986dc7a096d8d771c",
+        "__pycache__/invoice.cpython-313.pyc": "2682fb9c8a487503b9957fc1081711bf1f77233f3304a83cda2f8a8ae1f0fd0f",
+        "invoice.py": "6fb521940955d7882fb168891f70591c933c4fbe99378df08b670bfb2dacc779",
+        "tests/__pycache__/test_invoice.cpython-313.pyc": "3ffea72df900ba4c4e451c8e1143aa0064ca93ff520b15c3d9a26713041c1acc",
+        "tests/test_invoice.py": "9681d646d7e0016d796a5aa7b46d2cb560d101ae1ace8b0d8415f2b69153f740"
+      }
+    },
+    {
+      "sample": "pair1-native",
+      "arm": "native",
+      "status": "quiescent-quality-pending",
+      "startedAt": "2026-10-28T10:32:54.062Z",
+      "finishedAt": "2026-10-28T10:36:27.834Z",
+      "error": null,
+      "measurementError": null,
+      "originalCoverageFlag": true,
+      "usage": {
+        "input": 628725,
+        "cached": 572288,
+        "output": 11605,
+        "generations": 30,
+        "complete": true
+      },
+      "memberReceipts": {
+        "codex": {
+          "rawSha256": "2ffb41c9dfb22393b8033ac84ca4b45806f03aa919ebcdb58bffbe6bb30101cc",
+          "usage": {
+            "input": 336898,
+            "cached": 296064,
+            "output": 7250,
+            "generations": 19,
+            "complete": true
+          },
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "cliVersion": "codex-cli 0.164.0",
+          "memory": {
+            "provider": "codex",
+            "supported": true,
+            "status": "enforced",
+            "scope": "provider-native-auto-memory",
+            "mechanism": "cli-config",
+            "evidence": "spawn-configuration",
+            "config": {
+              "features.memories": false,
+              "memories.generate_memories": false,
+              "memories.use_memories": false
+            }
+          },
+          "terminals": {
+            "started": 3,
+            "completed": 3,
+            "aborted": 0
+          },
+          "herdrReads": 2
+        },
+        "kimi": {
+          "rawSha256": "4ae6dba42136216a14326cb681b09bd4acd0bb92954efa8184192a225a369961",
+          "usage": {
+            "input": 291827,
+            "cached": 276224,
+            "output": 4355,
+            "generations": 11,
+            "requests": 11,
+            "complete": true
+          },
+          "actualModel": "kimi-code/k3-256k",
+          "actualEffort": "low",
+          "cliVersion": "2.1.1",
+          "memory": {
+            "provider": "kimi",
+            "supported": true,
+            "status": "not-applicable",
+            "scope": "provider-native-auto-memory",
+            "mechanism": "version-audit",
+            "version": "2.1.1",
+            "sourceRevision": "installed-bundle-sha256:2563a338c94868a34e1bfd2e5579067d5a472acf4cb0bf350a3bfe1092bbe59d",
+            "evidence": "audited-cli-version"
+          },
+          "allLoopRequests": 11,
+          "rawUsageRecords": 11,
+          "terminals": {
+            "started": 4,
+            "ended": 4,
+            "promptCompleted": 4
+          }
+        }
+      },
+      "qualityAccepted": true,
+      "cleanupVerified": true,
+      "cleanup": {
+        "ownedProcessesGone": true,
+        "ownedPanesGone": true,
+        "currentConversationPreserved": true
+      },
+      "externalPassed": 40,
+      "selfTestsPassed": true,
+      "artifactHashes": {
+        "AGENTS.md": "e7650b290c56a8794d11f96cccdb745e6a91240b485f58bf7bc68ca4337e9c7f",
+        "COMMUNICATION.txt": "21106c28381e9c6046b8e1aef3aa6bfcc56eccc1d3cc62509410f90c5d3eaf49",
+        "README.md": "0a38ff85e9cc33c4adb2e0a38816e96051efaf6a713a2fbae0421e4fe6727499",
+        "TASK.json": "b80ceafc1fca847f02c92d61924d4378c187fad53e6c74a986dc7a096d8d771c",
+        "__pycache__/invoice.cpython-313.pyc": "ae31df5a395ea51087b1e96a602c61e470558c9f21a4a1e6bf73a5b7ddc1c2ea",
+        "invoice.py": "d845a1606b6a0d4d492720e8b8e65ef04e577e273c5665f403518e5d554cd37a",
+        "tests/__pycache__/test_invoice.cpython-313.pyc": "e3a9bbadb69d9c594976426654174a200a84e1e2cc27f7d5e58cd550df5df928",
+        "tests/test_invoice.py": "6429f02729648137776cf685edd9ccf4768a79432a629f671493121c22461b04"
+      }
+    },
+    {
+      "sample": "pair2-native",
+      "arm": "native",
+      "status": "quiescent-quality-pending",
+      "startedAt": "2026-10-28T10:36:28.229Z",
+      "finishedAt": "2026-10-28T10:43:44.996Z",
+      "error": null,
+      "measurementError": null,
+      "originalCoverageFlag": true,
+      "usage": {
+        "input": 1575433,
+        "cached": 1499264,
+        "output": 20779,
+        "generations": 57,
+        "complete": true
+      },
+      "memberReceipts": {
+        "codex": {
+          "rawSha256": "31e8677ff70d7a8a5f4e0556b378499286aa28cb04b486475424b2cff4c439fc",
+          "usage": {
+            "input": 763817,
+            "cached": 713344,
+            "output": 8770,
+            "generations": 33,
+            "complete": true
+          },
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "cliVersion": "codex-cli 0.164.0",
+          "memory": {
+            "provider": "codex",
+            "supported": true,
+            "status": "enforced",
+            "scope": "provider-native-auto-memory",
+            "mechanism": "cli-config",
+            "evidence": "spawn-configuration",
+            "config": {
+              "features.memories": false,
+              "memories.generate_memories": false,
+              "memories.use_memories": false
+            }
+          },
+          "terminals": {
+            "started": 6,
+            "completed": 6,
+            "aborted": 0
+          },
+          "herdrReads": 8
+        },
+        "kimi": {
+          "rawSha256": "bab45373981b05f3138d706ae80b668cfc1ec38421b3b93401782a3b5ac3fdb5",
+          "usage": {
+            "input": 811616,
+            "cached": 785920,
+            "output": 12009,
+            "generations": 24,
+            "requests": 24,
+            "complete": true
+          },
+          "actualModel": "kimi-code/k3-256k",
+          "actualEffort": "low",
+          "cliVersion": "2.1.1",
+          "memory": {
+            "provider": "kimi",
+            "supported": true,
+            "status": "not-applicable",
+            "scope": "provider-native-auto-memory",
+            "mechanism": "version-audit",
+            "version": "2.1.1",
+            "sourceRevision": "installed-bundle-sha256:2563a338c94868a34e1bfd2e5579067d5a472acf4cb0bf350a3bfe1092bbe59d",
+            "evidence": "audited-cli-version"
+          },
+          "allLoopRequests": 24,
+          "rawUsageRecords": 24,
+          "terminals": {
+            "started": 7,
+            "ended": 7,
+            "promptCompleted": 7
+          }
+        }
+      },
+      "qualityAccepted": true,
+      "cleanupVerified": true,
+      "cleanup": {
+        "ownedProcessesGone": true,
+        "ownedPanesGone": true,
+        "currentConversationPreserved": true
+      },
+      "externalPassed": 40,
+      "selfTestsPassed": true,
+      "artifactHashes": {
+        "AGENTS.md": "e7650b290c56a8794d11f96cccdb745e6a91240b485f58bf7bc68ca4337e9c7f",
+        "COMMUNICATION.txt": "713b24cca513ee97ce5825b19d25ef02fed7a068fd8a7b5d456ebef5d20bd5bb",
+        "README.md": "ffc39a2cc104bdddd7ef21d77eb24e7be00696cb8f904bc60a8cdb2b4a04ec3e",
+        "TASK.json": "b80ceafc1fca847f02c92d61924d4378c187fad53e6c74a986dc7a096d8d771c",
+        "__pycache__/invoice.cpython-313.pyc": "b577fe3086df9db3349effe4651ae5e26a12f887b009136f154d6e73e749ae60",
+        "invoice.py": "871bb4394f2fd034d7b5b46904840271c1f138ffd5dca4ae618d89e2b0b2ea3e",
+        "tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "tests/__pycache__/__init__.cpython-313.pyc": "d800f2877156cb99d1771ba30c530339880983b940c79fcf90a04cc4e757d3f5",
+        "tests/__pycache__/test_invoice.cpython-313.pyc": "42124721ca4d23321119c781e52d2087b38324e0584ef544e5a79169f1b818cc",
+        "tests/test_invoice.py": "dd38eae7f95dedb1ce155709ca3b107b2591d1c07c9b1589806d6b460d41b674"
+      }
+    },
+    {
+      "sample": "pair2-loom",
+      "arm": "loom",
+      "status": "quiescent-quality-pending",
+      "startedAt": "2026-10-28T10:43:45.397Z",
+      "finishedAt": "2026-10-28T10:48:07.107Z",
+      "error": null,
+      "measurementError": null,
+      "originalCoverageFlag": true,
+      "usage": {
+        "input": 688013,
+        "cached": 621184,
+        "output": 8377,
+        "generations": 31,
+        "complete": true
+      },
+      "memberReceipts": {
+        "codex": {
+          "rawSha256": "22c09608335ab367a833352a047edff4e76134e3b966886129d9ce670c57a222",
+          "usage": {
+            "input": 482849,
+            "cached": 430976,
+            "output": 5034,
+            "generations": 24,
+            "complete": true
+          },
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "cliVersion": "codex-cli 0.164.0",
+          "memory": {
+            "provider": "codex",
+            "supported": true,
+            "status": "enforced",
+            "scope": "provider-native-auto-memory",
+            "mechanism": "cli-config",
+            "evidence": "spawn-configuration",
+            "config": {
+              "features.memories": false,
+              "memories.generate_memories": false,
+              "memories.use_memories": false
+            }
+          },
+          "terminals": {
+            "started": 3,
+            "completed": 3,
+            "aborted": 0
+          },
+          "herdrReads": 0,
+          "productLedgerMatched": true
+        },
+        "kimi": {
+          "rawSha256": "4456f2b6ef440f4fd5af02512e2a73fe8a95829251c4dd80f4f138d0f78a8aeb",
+          "usage": {
+            "input": 205164,
+            "cached": 190208,
+            "output": 3343,
+            "generations": 7,
+            "requests": 7,
+            "complete": true
+          },
+          "actualModel": "kimi-code/k3-256k",
+          "actualEffort": "low",
+          "cliVersion": "2.1.1",
+          "memory": {
+            "provider": "kimi",
+            "supported": true,
+            "status": "not-applicable",
+            "scope": "provider-native-auto-memory",
+            "mechanism": "version-audit",
+            "version": "2.1.1",
+            "sourceRevision": "installed-bundle-sha256:2563a338c94868a34e1bfd2e5579067d5a472acf4cb0bf350a3bfe1092bbe59d",
+            "evidence": "audited-cli-version"
+          },
+          "allLoopRequests": 7,
+          "rawUsageRecords": 7,
+          "terminals": {
+            "started": 3,
+            "ended": 3,
+            "promptCompleted": 3
+          },
+          "productLedgerMatched": true
+        }
+      },
+      "qualityAccepted": true,
+      "cleanupVerified": true,
+      "cleanup": {
+        "ownedProcessesGone": true,
+        "ownedPanesGone": true,
+        "currentConversationPreserved": true
+      },
+      "externalPassed": 40,
+      "selfTestsPassed": true,
+      "artifactHashes": {
+        "AGENTS.md": "e7650b290c56a8794d11f96cccdb745e6a91240b485f58bf7bc68ca4337e9c7f",
+        "COMMUNICATION.txt": "ccd8d0c62d6d5129aad822912dcd6d835ac4b661749d47eebc4df4e9fed28ab5",
+        "README.md": "f1027a92705ef2380c3c7fd7feaf5ef87260f9558f59614636a2d21f60b3e8e2",
+        "TASK.json": "b80ceafc1fca847f02c92d61924d4378c187fad53e6c74a986dc7a096d8d771c",
+        "__pycache__/invoice.cpython-313.pyc": "e77259193e98f8cc6274577c30d282df94efe56439feb10166820f056d82b157",
+        "invoice.py": "7cefa02dce310826b03678cc20d956bf7c2d0816eebc8264f0795da8f0b158d7",
+        "tests/__pycache__/test_invoice.cpython-313.pyc": "43e84d6ab7821b05b2245301c88b92c2459a5e4630782a6d80452b6b40c9e1f4",
+        "tests/test_invoice.py": "6cbb7ea98754a1cc4936eae853ae1660c7fbadce3d2235b4ddb8bd34fca3d058"
+      }
+    },
+    {
+      "sample": "pair3-loom",
+      "arm": "loom",
+      "status": "quiescent-quality-pending",
+      "startedAt": "2026-10-28T10:48:07.539Z",
+      "finishedAt": "2026-10-28T10:54:33.896Z",
+      "error": null,
+      "measurementError": null,
+      "originalCoverageFlag": true,
+      "usage": {
+        "input": 663793,
+        "cached": 601856,
+        "output": 14744,
+        "generations": 25,
+        "complete": true
+      },
+      "memberReceipts": {
+        "codex": {
+          "rawSha256": "d1b3c55a8b5969b9475e51a7eb336614beadd834ee9af5eff34296d8cd498b73",
+          "usage": {
+            "input": 189805,
+            "cached": 152576,
+            "output": 4462,
+            "generations": 11,
+            "complete": true
+          },
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "cliVersion": "codex-cli 0.164.0",
+          "memory": {
+            "provider": "codex",
+            "supported": true,
+            "status": "enforced",
+            "scope": "provider-native-auto-memory",
+            "mechanism": "cli-config",
+            "evidence": "spawn-configuration",
+            "config": {
+              "features.memories": false,
+              "memories.generate_memories": false,
+              "memories.use_memories": false
+            }
+          },
+          "terminals": {
+            "started": 4,
+            "completed": 4,
+            "aborted": 0
+          },
+          "herdrReads": 0,
+          "productLedgerMatched": true
+        },
+        "kimi": {
+          "rawSha256": "da2bdddd3ef43e8eb734423e7e7688d01df44adb7d4c3398391278e3389ded8a",
+          "usage": {
+            "input": 473988,
+            "cached": 449280,
+            "output": 10282,
+            "generations": 14,
+            "requests": 14,
+            "complete": true
+          },
+          "actualModel": "kimi-code/k3-256k",
+          "actualEffort": "low",
+          "cliVersion": "2.1.1",
+          "memory": {
+            "provider": "kimi",
+            "supported": true,
+            "status": "not-applicable",
+            "scope": "provider-native-auto-memory",
+            "mechanism": "version-audit",
+            "version": "2.1.1",
+            "sourceRevision": "installed-bundle-sha256:2563a338c94868a34e1bfd2e5579067d5a472acf4cb0bf350a3bfe1092bbe59d",
+            "evidence": "audited-cli-version"
+          },
+          "allLoopRequests": 14,
+          "rawUsageRecords": 14,
+          "terminals": {
+            "started": 4,
+            "ended": 4,
+            "promptCompleted": 4
+          },
+          "productLedgerMatched": true
+        }
+      },
+      "qualityAccepted": true,
+      "cleanupVerified": true,
+      "cleanup": {
+        "ownedProcessesGone": true,
+        "ownedPanesGone": true,
+        "currentConversationPreserved": true
+      },
+      "externalPassed": 40,
+      "selfTestsPassed": true,
+      "artifactHashes": {
+        "AGENTS.md": "e7650b290c56a8794d11f96cccdb745e6a91240b485f58bf7bc68ca4337e9c7f",
+        "COMMUNICATION.txt": "ccd8d0c62d6d5129aad822912dcd6d835ac4b661749d47eebc4df4e9fed28ab5",
+        "README.md": "b5060273d5fe1cd7efd3a3e6dee778028093d1ea49315f4c1b73f42eb3d57fcf",
+        "TASK.json": "b80ceafc1fca847f02c92d61924d4378c187fad53e6c74a986dc7a096d8d771c",
+        "__pycache__/invoice.cpython-313.pyc": "efb4d5581ff3013501bc86843615d6353a6c66f6061e0a963dac824a12f1a5ce",
+        "invoice.py": "f965e57e57c8f9a822849850e0122ca576406668b99d374561ef16d591246bb9",
+        "tests/__pycache__/test_invoice.cpython-313.pyc": "1899b8d6048cac5f30dc94959aa38c4c4d28312981a594f835174666489e1793",
+        "tests/test_invoice.py": "0493f2638daa70ca2807b3d37bf5f08618fe9aa772d570788878ae21c682cdfe"
+      }
+    },
+    {
+      "sample": "pair3-native",
+      "arm": "native",
+      "status": "quiescent-quality-pending",
+      "startedAt": "2026-10-28T10:54:34.305Z",
+      "finishedAt": "2026-10-28T10:58:03.586Z",
+      "error": null,
+      "measurementError": null,
+      "originalCoverageFlag": true,
+      "usage": {
+        "input": 1265777,
+        "cached": 1179392,
+        "output": 15388,
+        "generations": 49,
+        "complete": true
+      },
+      "memberReceipts": {
+        "codex": {
+          "rawSha256": "cd685e8ab4427c9ad8b4e98453c7dc389f24cac301f3369cd1743986fced5f0c",
+          "usage": {
+            "input": 579147,
+            "cached": 517632,
+            "output": 6413,
+            "generations": 27,
+            "complete": true
+          },
+          "actualModel": "gpt-6-luna",
+          "actualEffort": "low",
+          "cliVersion": "codex-cli 0.164.0",
+          "memory": {
+            "provider": "codex",
+            "supported": true,
+            "status": "enforced",
+            "scope": "provider-native-auto-memory",
+            "mechanism": "cli-config",
+            "evidence": "spawn-configuration",
+            "config": {
+              "features.memories": false,
+              "memories.generate_memories": false,
+              "memories.use_memories": false
+            }
+          },
+          "terminals": {
+            "started": 4,
+            "completed": 4,
+            "aborted": 0
+          },
+          "herdrReads": 5
+        },
+        "kimi": {
+          "rawSha256": "1d2f2b508177c9f9b0b8fc7879548515c43055b4a108dd5804c501db1fac6bdf",
+          "usage": {
+            "input": 686630,
+            "cached": 661760,
+            "output": 8975,
+            "generations": 22,
+            "requests": 22,
+            "complete": true
+          },
+          "actualModel": "kimi-code/k3-256k",
+          "actualEffort": "low",
+          "cliVersion": "2.1.1",
+          "memory": {
+            "provider": "kimi",
+            "supported": true,
+            "status": "not-applicable",
+            "scope": "provider-native-auto-memory",
+            "mechanism": "version-audit",
+            "version": "2.1.1",
+            "sourceRevision": "installed-bundle-sha256:2563a338c94868a34e1bfd2e5579067d5a472acf4cb0bf350a3bfe1092bbe59d",
+            "evidence": "audited-cli-version"
+          },
+          "allLoopRequests": 22,
+          "rawUsageRecords": 22,
+          "terminals": {
+            "started": 7,
+            "ended": 7,
+            "promptCompleted": 7
+          }
+        }
+      },
+      "qualityAccepted": true,
+      "cleanupVerified": true,
+      "cleanup": {
+        "ownedProcessesGone": true,
+        "ownedPanesGone": true,
+        "currentConversationPreserved": true
+      },
+      "externalPassed": 40,
+      "selfTestsPassed": true,
+      "artifactHashes": {
+        "AGENTS.md": "e7650b290c56a8794d11f96cccdb745e6a91240b485f58bf7bc68ca4337e9c7f",
+        "COMMUNICATION.txt": "647163ab42d205cadcb86dc63131bfe51bbb3973da77c3deb61c42544fa6b78d",
+        "README.md": "b7ae06dfd582176d22b0cccf72026a5a0957953cfe11f76e817465b9c44533c0",
+        "TASK.json": "b80ceafc1fca847f02c92d61924d4378c187fad53e6c74a986dc7a096d8d771c",
+        "__pycache__/invoice.cpython-313.pyc": "400438774d9ef532cf428f5ba423389ef13415166c0b423f72ea6910e164503a",
+        "invoice.py": "19f7ba83fe91a3773ba078feb7a95bfd8062763f6f1536d0f81b16f4e6f51191",
+        "tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "tests/__pycache__/__init__.cpython-313.pyc": "fbafe5699c1cc71d84e9d3e491d2f1c60d554bdc30d8f74388f6f463641835a2",
+        "tests/__pycache__/test_invoice.cpython-313.pyc": "b5c91cc8f16a46c5b6543ee395cc5475fb6560adb390a86ecd41ba50af88477f",
+        "tests/test_invoice.py": "887374ee593aab4c97572ee2c1c4be29789bea9fd9150530dd5520162fd60585"
+      }
+    }
+  ]
+}

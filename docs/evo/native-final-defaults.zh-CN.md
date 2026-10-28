@@ -21,7 +21,7 @@
 
 native-final 仅替代普通回复的传输：模型输出普通最终正文，Host 用当前投递、原身份和原生正常终态证据提交到既有 Worker 服务。Kernel 的权限、新鲜度、幂等、ACK 和 Task 状态仍是原 owner。多目标、不完整投递及不适用的业务唤醒沿原资格判定回退 Worker；不能接收时不会从 stdout 猜测正文或自动重跑模型。Codex native 模式不暴露竞争回复 MCP。
 
-Kimi ACP 正常结束后仍等待真实原生退出；当前 EOF 清理上限为30秒。固定 Kimi2.1.1 免费探针证明日志持久清理本身可超过旧15秒，故作兼容修正；超时后被 TERM 杀掉再返回零不能视为成功，取消、工具终态和投递围栏不变。不保证所有原生关闭都在此期限内完成，重复协作成本门禁尚未通过。[复现、修复与验收边界](evidence/2026-10-28-team-cost-repeat/README.md)。
+Kimi ACP 正常结束后仍等待真实原生退出；当前 EOF 清理上限为30秒。固定 Kimi2.1.1 免费探针证明日志持久清理本身可超过旧15秒，故作兼容修正；超时后被 TERM 杀掉再返回零不能视为成功，取消、工具终态和投递围栏不变。不保证所有原生关闭都在此期限内完成。[复现与修复](evidence/2026-10-28-team-cost-repeat/README.md)。后继固定Codex/Kimi三对协作完整通过，当前任务总输入比Herdr为0.498；不是全CLI、所有场景或全部效率指标通过。[重复协作证据与限制](evidence/2026-10-28-team-cost-repeat-v2/README.md)。
 
 ## 显式配置、升级与回滚
 
@@ -36,4 +36,4 @@ Kimi ACP 正常结束后仍等待真实原生退出；当前 EOF 清理上限为
 
 产品默认与基准身份分开。效率 runner 仍默认 Worker，使用 `RAH_EFFICIENCY_REPLY_TRANSPORT=native-final` 才选择原生回复；`gateReplyTransport` 会明确写入全部相关 `0` / `1`，避免新产品默认污染旧对照。保留 baseline 哈希、自动记忆关闭、实际模型和完整原生用量要求，不把不同传输当同一次代码对照。
 
-本次以新安装无开关、已有显式关闭、旧实验选择、实际工厂接线、独立包隔离、同 session 续接、Worker 回退、失效凭据及 Human 新鲜度做免费定向回归；不增加付费批次，不发布新的成本倍率或全场景质量结论。[测试及部署证据](evidence/2026-10-28-native-final-defaults/README.md)。此前真实 CLI 证据和失败均保留：[Codex/Kimi](evidence/2026-10-28-native-repair/README.md)、[长任务](evidence/2026-10-28-long-closeout/README.md)、[Claude/OpenCode/Pi 当前模型](evidence/2026-10-28-postfix-cost/README.md)、[三方协作](evidence/2026-10-28-three-cli-team/README.md)。
+默认化当批以新安装无开关、已有显式关闭、旧实验选择、实际工厂接线、独立包隔离、同 session 续接、Worker 回退、失效凭据及 Human 新鲜度做免费定向回归；当批不增加付费测试或发布成本倍率。[测试及部署证据](evidence/2026-10-28-native-final-defaults/README.md)。此前真实 CLI 证据和失败均保留：[Codex/Kimi](evidence/2026-10-28-native-repair/README.md)、[长任务](evidence/2026-10-28-long-closeout/README.md)、[Claude/OpenCode/Pi 当前模型](evidence/2026-10-28-postfix-cost/README.md)、[三方协作](evidence/2026-10-28-three-cli-team/README.md)；后继付费协作复验见上文的固定三对记录。
