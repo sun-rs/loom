@@ -19,9 +19,6 @@ export function ChannelDeleteAction({
   disabled: boolean;
   onChanged: () => Promise<void>;
 }) {
-  const [eligibility, setEligibility] = useState<
-    "loading" | "clear" | "instances" | "error"
-  >("loading");
   const [confirm, setConfirm] = useState(false),
     [error, setError] = useState(""),
     [rejected, setRejected] = useState(false),
@@ -46,38 +43,11 @@ export function ChannelDeleteAction({
       alive = false;
     };
   }, [confirm, manager, room.roomId]);
-  useEffect(() => {
-    let alive = true;
-    setEligibility("loading");
-    const abort = new AbortController();
-    void manager.client
-      .request(
-        "role.list",
-        { controlRoomId: manager.controlRoomId },
-        { signal: abort.signal },
-      )
-      .then((result) => {
-        if (alive)
-          setEligibility(
-            result.instances.some((i) => i.channelId === room.roomId)
-              ? "instances"
-              : "clear",
-          );
-      })
-      .catch(() => {
-        if (alive) setEligibility("error");
-      });
-    return () => {
-      alive = false;
-      abort.abort();
-    };
-  }, [manager, room.roomId]);
   if (room.slug === "all" || room.kind !== "channel") return null;
   const remove = async () => {
     if (
       disabled ||
       basis === undefined ||
-      eligibility !== "clear" ||
       rejected ||
       deleted ||
       manager.writes.state !== "idle"
@@ -104,7 +74,7 @@ export function ChannelDeleteAction({
         } else if (outcome.kind === "rejected") {
           setRejected(true);
           setError(
-            "频道未删除：频道状态已变化或仍有受保护的实例／工作。请关闭并重新读取；含实例的频道请使用归档。",
+            "频道未删除：状态已变化或执行尚未确认停止。已发出的停止请求会继续处理；请稍后关闭并重新确认删除。",
           );
         }
       },
@@ -116,7 +86,7 @@ export function ChannelDeleteAction({
         {...uiActionProps.confirmDelete}
         className="w-full"
         data-testid="channel-delete-trigger"
-        disabled={disabled || deleted || eligibility !== "clear"}
+        disabled={disabled || deleted}
         onClick={() => {
           setError("");
           setRejected(false);
@@ -126,22 +96,15 @@ export function ChannelDeleteAction({
         <Trash2 size={16} />
         删除频道
       </Button>
-      {eligibility === "instances" && (
-        <p className="text-caption text-foreground-hint">
-          含实例的频道保留历史，请使用归档。
-        </p>
-      )}
-      {eligibility === "error" && (
-        <p role="alert" className="text-caption text-foreground-hint">
-          无法确认删除条件，请关闭后重试。
-        </p>
-      )}
       {confirm && (
         <ConfirmDialog
           title="删除频道"
           message={
             <>
-              <p>永久删除“{room.name}”及其消息、附件记录？此操作无法撤销。</p>
+              <p>
+                永久删除“{room.name}
+                ”及其所有实例、私密会话、消息和附件记录？将停止实例执行，保留可复用的角色配置。此操作无法撤销。
+              </p>
               <OperationStatus manager={manager} error={error} />
             </>
           }

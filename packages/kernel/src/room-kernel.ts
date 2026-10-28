@@ -1,3 +1,4 @@
+import { prepareChannelInstances } from "./prepare-channel-deletion.ts";
 import { requireWorkerExecution } from "./worker-execution-authorization.ts";
 import { migrateWorkerRunMessageWrites } from "./worker-run-message-writes.ts";
 import { submitWorkerFinalOutputTransaction } from "./worker-final-output.ts";
@@ -726,6 +727,8 @@ export class RoomKernel {
     });
 
     this.#roomDeletion = new RoomDeletionService({
+      prepareInstances: (actor, scope, key) =>
+        prepareChannelInstances(this, this.#database, actor, scope, key),
       createId: this.#createId,
       database: this.#database,
       files: this.files,

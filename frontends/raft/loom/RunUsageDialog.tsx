@@ -12,7 +12,7 @@ import {
   Button,
   Spinner,
 } from "raft-ui";
-import { diagnosticRows } from "./console-closeout.ts";
+import { diagnosticRows } from "./product-operations.ts";
 import { usageRows } from "./run-details.ts";
 export default function RunUsageDialog({
   client,

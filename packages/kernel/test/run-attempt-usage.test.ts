@@ -601,23 +601,7 @@ test("finished RunAttempts accept no new usage and Channel deletion erases it", 
     // Settle the Activation directly: deletion only requires inactive work.
     const database = new DatabaseSync(state.databasePath);
     database.exec("UPDATE activations SET state = 'completed'");
-    // Current instance channels are not deletable. The remaining check uses a
-    // historical, non-Role channel snapshot to preserve old usage-erasure coverage.
-    assert.throws(
-      () =>
-        kernel.deleteWorkspaceRoom(state.ownerActor, {
-          roomId: state.roomId,
-          basedOnRoomSeq: kernel.sync(state.ownerActor, {
-            roomId: state.roomId,
-            consumerId: "instance-delete",
-          }).latestRoomSeq,
-          idempotencyKey: "refused-instance-delete",
-        }),
-      /Role instances cannot be deleted/,
-    );
-    database
-      .prepare("DELETE FROM role_instances WHERE channel_id=?")
-      .run(state.roomId);
+    // Current channel deletion also erases stopped instance usage through the public command.
     database.close();
     kernel.deleteWorkspaceRoom(state.ownerActor, {
       basedOnRoomSeq: kernel.sync(state.ownerActor, {

@@ -14,7 +14,7 @@ import {
 } from "raft-ui";
 import type { RahClient } from "@rah-os/client-sdk";
 import type { UsageSummaryResponse } from "@rah-os/protocol";
-import { summaryCells } from "./console-closeout.ts";
+import { summaryCells } from "./product-operations.ts";
 const headings = [
   "实例",
   "运行数",

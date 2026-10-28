@@ -11,7 +11,15 @@ test("channel delete binds existing versioned intent and native confirmation, ne
   assert.match(source, /request\("room.delete"/);
   assert.match(source, /basedOnRoomSeq: basis/);
   assert.match(source, /syncUntilCurrent/);
-  assert.match(source, /eligibility !== "clear"/);
+  assert.doesNotMatch(source, /eligibility/);
+  assert.match(source, /私密会话/);
   assert.match(source, /room.slug === "all"/);
   assert.doesNotMatch(source, /fetch\(/);
+});
+test("only the channels section exposes the inline create-channel control", () => {
+  const source = readFileSync("frontends/raft/loom/ChannelSidebar.tsx", "utf8");
+  assert.match(
+    source,
+    /group\.id === "channels" && \(\s*<Tooltip content="新建频道">/,
+  );
 });

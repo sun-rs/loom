@@ -1,4 +1,4 @@
-// Presentation/transport only, ported from the retiring console's measured diagnostics.
+// Product presentation/transport helpers. Domain state remains in the existing SDK owners.
 import type { RahClient } from "@rah-os/client-sdk";
 import type {
   Room,

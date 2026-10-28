@@ -34,7 +34,7 @@
 保留限制（不算未完成接线）：
 
 - **真机及推送送达**：390×844 WebKit 是浏览器验收，不是实体 iOS／Android；模拟订阅及服务回执不证明真实系统通知送达。这两项仍需要设备层验收。
-- **频道公开与删除**：非成员公开频道／多 Human 不属当前产品范围，不展示无后端语义的公开切换；含当前或历史 Role 实例的频道受 Kernel 删除保护，应归档；不为菜单齐全绕过保护。
+- **频道公开与删除**：非成员公开频道／多 Human 不属当前产品范围，不展示无后端语义的公开切换；Owner 于 2026-10-28 授权频道级联删除，停止并清除实例和私密历史、保留 Role；必须取得执行终止证明，不能为菜单齐全绕过保护。
 - **官方复用边界**：Role／实例、私密 box、Fork／Side、全局记忆及 Loom 数据／权限适配保留。全站未经修改、最新版逐像素相同、无验收热替换均不在本次结论中。
 - **真实执行边界**：本批未发付费模型请求；浏览器的假运行时测试不扩写为五家 CLI 生命周期或成本重新验收。
 
@@ -351,13 +351,13 @@ Role 行采用 db5e399 `MemberAgentRow` 的原 JSX，计算机行采用 `Sidebar
 
 `generate-sortable-navigation.mjs` 对已锁发布包的七个声明逐一验证 SHA，然后原样写入运行依赖。仅替换导入依赖和数据 owner；`Navigation.tsx` 继续使用原生 RailTabButton，接入排序 props 和点击保护。新中文读屏提示是缺失 locale key 的本地翻译。Raft 账户排序改为本浏览器 `loom:device:rail-order`，不承诺跨设备同步；设置固定底部，手机导航保持既有原生组合。生成结果是原声明复用，不是整页不变。
 
-频道删除审查：`packages/kernel/src/room-deletion-service.ts` 拒绝含 Role 实例的频道；停止实例不解除该保护。`#all` 另有永久频道保护。后续删除 UI 只能准确表达现有范围，不能以 UI 对齐为由扩大数据销毁语义。侧栏折叠的原声明仍为证据，尚未挂载。
+历史实施记录（2026-10-28 级联删除合同已取代下述实例频道限制）：频道删除审查：`packages/kernel/src/room-deletion-service.ts` 拒绝含 Role 实例的频道；停止实例不解除该保护。`#all` 另有永久频道保护。后续删除 UI 只能准确表达现有范围，不能以 UI 对齐为由扩大数据销毁语义。侧栏折叠的原声明仍为证据，尚未挂载。
 
 ### 侧栏折叠与频道删除接线（2026-10-22）
 
 发布包 ZTt/QTt/$Tt/lEt 的声明由生成器逐 SHA 校验后原样复用；别名只连接已安装 raft-ui、官方 Tooltip、Lucide 和设备偏好。官方 AppShellRoot 负责宽度观察与位移。Channel/Computer/Settings 的正文增加官方所用 relative remaining-space 容器；Agent 页最外层只是页面组合容器，移除错误的 MainSlot 嵌套。仅桌面四个带侧栏大页启用折叠；隐藏侧栏 inert，快捷键关闭时焦点回 toggle，手机恢复正常列表。上述为 Loom 页面组合适配，未声称完整官方页面逐字节复用。
 
-频道删除复用原生 ConfirmDialog，开启确认时重新读取频道 seq；确认后新事实仍会触发 stale_context，绝不自动更新版本重发。未知响应通过既有 WriteIntentSlot 精确重放。role.list 仅用于界面预判（保留历史实例），最终由 Kernel 裁定；#all 隐藏删除入口，含实例频道禁用并提示归档。删除后刷新目录返回聊天列表，失败不假装刷新成功。没有新增或放宽后端销毁能力。频道底部居中依据 owner 的明确要求，是对固定源 OverflowActionRow 左对齐的已登记例外。
+历史实施记录（实例预判限制已于 2026-10-28 移除）：频道删除复用原生 ConfirmDialog，开启确认时重新读取频道 seq；确认后新事实仍会触发 stale_context，绝不自动更新版本重发。未知响应通过既有 WriteIntentSlot 精确重放。role.list 仅用于界面预判（保留历史实例），最终由 Kernel 裁定；#all 隐藏删除入口，含实例频道禁用并提示归档。删除后刷新目录返回聊天列表，失败不假装刷新成功。没有新增或放宽后端销毁能力。频道底部居中依据 owner 的明确要求，是对固定源 OverflowActionRow 左对齐的已登记例外。
 
 本批正式截图曾发现 Agent thread-layout-container 在位移层外裁切正文；已将包含层移入 native MainSlot 内，并以 elementFromPoint 命中检查＋重新部署截图复验，不能仅凭 bounding box 宣称可见。扩展 role-activity 测试在模型 combobox 查找处超时，改动前 2619cdc1 的固定产物也复现；保留未通过记录，未归因于本轮、也未宣称该测试通过。详见 2026-10-22-shell-closeout 证据。
 

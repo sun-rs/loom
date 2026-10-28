@@ -1,3 +1,7 @@
+import {
+  channelDeletionScope,
+  type ChannelDeletionScope,
+} from "./channel-deletion-scope.ts";
 import type { DatabaseSync } from "node:sqlite";
 
 import {
@@ -79,8 +83,7 @@ export const ROOM_DELETION_REFERENCED_TABLES = new Set([
   "room_agent_sos_operations",
   "room_agent_sos_targets",
   "room_events",
-  // Side Rooms are direct; their source Channels retain a Role instance.
-  // Both are refused by the existing kind/Role-instance deletion fences.
+  // Channel deletion explicitly includes its instance-owned private and Side rooms.
   "side_sessions",
   "role_instance_sessions",
   "role_instances",
@@ -125,6 +128,11 @@ const CONTROL_ROOM_ONLY_REFERENCES = [
 ] as const;
 
 export class RoomDeletionService {
+  readonly #prepareInstances: (
+    actor: AuthenticatedActorContext,
+    scope: ChannelDeletionScope,
+    key: string,
+  ) => void;
   readonly #createId: (prefix: string) => string;
   readonly #database: DatabaseSync;
   readonly #files: RoomFiles;
@@ -133,6 +141,11 @@ export class RoomDeletionService {
   readonly #transaction: <T>(operation: () => T) => T;
 
   constructor(options: {
+    prepareInstances: (
+      actor: AuthenticatedActorContext,
+      scope: ChannelDeletionScope,
+      key: string,
+    ) => void;
     createId: (prefix: string) => string;
     database: DatabaseSync;
     files: RoomFiles;
@@ -140,6 +153,7 @@ export class RoomDeletionService {
     requireActor: (actor: AuthenticatedActorContext) => string;
     transaction: <T>(operation: () => T) => T;
   }) {
+    this.#prepareInstances = options.prepareInstances;
     this.#createId = options.createId;
     this.#database = options.database;
     this.#files = options.files;
@@ -166,6 +180,39 @@ export class RoomDeletionService {
       return this.#response(replay, true);
     }
 
+    // Validate the original Human snapshot before durable instance-stop requests.
+    const initial = this.#database
+      .prepare("SELECT * FROM rooms WHERE room_id=?")
+      .get(input.roomId);
+    if (!initial) throw new NotFoundError(`Room ${input.roomId} was not found`);
+    if (text(initial, "kind") !== "channel")
+      throw new ConflictError(
+        "only regular Channels can be permanently deleted",
+      );
+    requireRoomManager(this.#database, input.roomId, actorId);
+    assertPermanentChannelChange(initial);
+    const initialSeq = integer(initial, "next_seq") - 1;
+    if (initialSeq !== input.basedOnRoomSeq)
+      throw new StaleContextError(input.basedOnRoomSeq, initialSeq);
+    if (
+      this.#database
+        .prepare("SELECT kind FROM principals WHERE principal_id=?")
+        .get(actorId)?.kind !== "human"
+    )
+      throw new ForbiddenError(
+        "only Human principals can permanently delete Channels",
+      );
+    const scope = channelDeletionScope(this.#database, input.roomId);
+    if (scope.instances.length)
+      this.#prepareInstances(actor, scope, input.idempotencyKey);
+    // Synchronous Kernel-owned preparation is the only intervening writer in this service.
+    const preparedSeq =
+      integer(
+        this.#database
+          .prepare("SELECT next_seq FROM rooms WHERE room_id=?")
+          .get(input.roomId)!,
+        "next_seq",
+      ) - 1;
     const receipt = this.#transaction(() => {
       this.#database.exec("PRAGMA defer_foreign_keys = ON");
       const principal = this.#database
@@ -189,29 +236,25 @@ export class RoomDeletionService {
       }
       requireRoomManager(this.#database, input.roomId, actorId);
       assertPermanentChannelChange(room);
-      if (
-        this.#database
-          .prepare("SELECT 1 FROM role_instances WHERE channel_id=? LIMIT 1")
-          .get(input.roomId)
-      ) {
-        throw new ConflictError(
-          "Channels with Role instances cannot be deleted in this MVP; archive the channel instead",
-        );
-      }
       const latestRoomSeq = integer(room, "next_seq") - 1;
-      if (input.basedOnRoomSeq !== latestRoomSeq) {
-        throw new StaleContextError(input.basedOnRoomSeq, latestRoomSeq);
-      }
-      assertNoActiveRoomWork(this.#database, input.roomId);
+      if (preparedSeq !== latestRoomSeq)
+        throw new StaleContextError(preparedSeq, latestRoomSeq);
+      if (
+        JSON.stringify(channelDeletionScope(this.#database, input.roomId)) !==
+        JSON.stringify(scope)
+      )
+        throw new ConflictError("Channel deletion scope changed");
+      for (const id of scope.roomIds)
+        assertNoActiveRoomWork(this.#database, id);
       this.#assertRegularChannelReferenceBoundary(input.roomId);
 
       const deletionId = this.#createId("room_deletion");
       const deletedAt = this.#now().toISOString();
       const attachments = this.#database
         .prepare(
-          "SELECT attachment_id FROM room_files WHERE room_id=? ORDER BY attachment_id",
+          `SELECT attachment_id FROM room_files WHERE room_id IN (${scope.roomIds.map(() => "?").join(",")}) ORDER BY attachment_id`,
         )
-        .all(input.roomId);
+        .all(...scope.roomIds);
       this.#database
         .prepare(
           `INSERT INTO room_deletion_receipts(
@@ -247,11 +290,28 @@ export class RoomDeletionService {
         );
       }
 
-      this.#removeSidebarReferences(text(room, "workspace_id"), input.roomId);
-      this.#eraseCanonicalGraph(input.roomId);
-      this.#database
-        .prepare("DELETE FROM rooms WHERE room_id=?")
-        .run(input.roomId);
+      for (const i of scope.instances) {
+        this.#database
+          .prepare(
+            "DELETE FROM side_sessions WHERE instance_id=? OR source_instance_id=?",
+          )
+          .run(i.instanceId, i.instanceId);
+        this.#database
+          .prepare("DELETE FROM role_instance_sessions WHERE instance_id=?")
+          .run(i.instanceId);
+      }
+      for (const i of scope.instances)
+        this.#database
+          .prepare("DELETE FROM role_instances WHERE instance_id=?")
+          .run(i.instanceId);
+      for (const id of scope.roomIds) {
+        this.#removeSidebarReferences(text(room, "workspace_id"), id);
+        this.#database
+          .prepare("DELETE FROM direct_room_pairs WHERE room_id=?")
+          .run(id);
+        this.#eraseCanonicalGraph(id);
+        this.#database.prepare("DELETE FROM rooms WHERE room_id=?").run(id);
+      }
       const violations = this.#database
         .prepare("PRAGMA foreign_key_check")
         .all();

@@ -174,6 +174,12 @@ never installs them or configures their accounts.
   restart never changes configuration.
   Removal stops delivery, safely
   ends execution and keeps history; re-adding creates a new instance.
+- **Permanent Channel deletion** (owner 2026-10-28) stops and removes its
+  instances, private conversations, Side rooms and canonical history, while
+  retaining reusable Role configurations. Reuse durable instance deletion and
+  require actual execution termination before erasure; pending stops do not prove
+  deletion. Keep protected `#all`, deletion receipts, backups and channel home
+  directories. This differs from removing an instance alone, which keeps history.
 - **Session** is the instance's native CLI session. Each instance has its own
   execution lane and one continuous session that is never silently replaced and
   never auto-rotated by task, turn count or tokens.

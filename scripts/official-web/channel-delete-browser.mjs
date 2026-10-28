@@ -65,7 +65,7 @@ export async function verifyChannelDelete({
       await page.getByTestId("channel-delete-confirm").click();
       await page
         .getByText(
-          "频道未删除：频道状态已变化或仍有受保护的实例／工作。请关闭并重新读取；含实例的频道请使用归档。",
+          "频道未删除：状态已变化或执行尚未确认停止。已发出的停止请求会继续处理；请稍后关闭并重新确认删除。",
           { exact: true },
         )
         .waitFor();
@@ -113,18 +113,15 @@ export async function verifyChannelDelete({
       );
       await page.goto(origin + "/?room=" + channels[2].roomId);
       await page.getByTestId("loom-channel-control-trigger").click();
-      await page
-        .getByText("含实例的频道保留历史，请使用归档。", { exact: true })
-        .waitFor();
-      assert.equal(
-        await page.getByTestId("channel-delete-trigger").isDisabled(),
-        true,
-      );
+      assert.equal(await page.getByTestId("channel-delete-trigger").isEnabled(),true);
+      await page.getByTestId("channel-delete-trigger").click();
+      await page.getByText(/所有实例、私密会话、消息和附件记录/).waitFor();
+      await page.getByRole("dialog").last().getByRole("button",{name:"取消",exact:true}).click();
       results.push({
         width,
         cancelPreserves: true,
         staleRejects: true,
-        instanceChannelDisabled: true,
+        instanceChannelEnabledWithCascadeWarning: true,
         deleted: true,
         unknownExactReplay: true,
       });

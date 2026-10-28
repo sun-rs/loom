@@ -4,7 +4,7 @@ import {
   saveTaskPermission,
   summaryCells,
   diagnosticRows,
-} from "../../frontends/raft/loom/console-closeout.ts";
+} from "../../frontends/raft/loom/product-operations.ts";
 import { WriteIntentSlot } from "@rah-os/client-core/write-intent";
 test("task permission preserves shown channel metadata and basis on exact replay", async () => {
   const calls: any[] = [];

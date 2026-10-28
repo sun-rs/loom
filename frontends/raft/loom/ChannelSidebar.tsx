@@ -431,7 +431,7 @@ export default function ChannelSidebar({
                     value={groupSortMode(prefs!, group.id)}
                     onChange={(mode) => patch(groupSortPatch(group.id, mode))}
                   />
-                  {group.id !== "dms" && (
+                  {group.id === "channels" && (
                     <Tooltip content="新建频道">
                       <SidebarSectionControl
                         type="button"

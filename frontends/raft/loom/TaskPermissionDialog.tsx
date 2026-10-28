@@ -13,7 +13,7 @@ import {
 } from "raft-ui";
 import type { LoomChannelClient } from "./channel-client.ts";
 import { useRouteIntentOwner } from "./useIntentRoute.ts";
-import { saveTaskPermission } from "./console-closeout.ts";
+import { saveTaskPermission } from "./product-operations.ts";
 export default function TaskPermissionDialog({
   bridge,
   onClose,
