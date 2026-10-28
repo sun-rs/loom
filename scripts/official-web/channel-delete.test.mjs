@@ -23,3 +23,7 @@ test("only the channels section exposes the inline create-channel control", () =
     /group\.id === "channels" && \(\s*<Tooltip content="新建频道">/,
   );
 });
+test("empty workspace keeps the channel creation section even on mobile", () => {
+  const source=readFileSync('frontends/raft/loom/ChannelSidebar.tsx','utf8');
+  assert.match(source,/g\.id === "channels" \|\|\s*!shouldHideEmptySidebarSection/);
+});

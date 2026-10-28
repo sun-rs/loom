@@ -887,7 +887,7 @@
       "scripts/official-web/notification-preferences.test.ts"
     ],
     "browser": "LOOM_BROWSER_SLICE=settings-sections: account/system/about/push at 1440 and 390",
-    "exact": "System channel form omitted by owner 2026-10-28: Loom has no reserved channel. Its pinned source remains reference-only. About version section with product rename/test marker. Account profile and notification subtrees retain native layout with explicit omissions and guards. Not untouched whole SettingsPanel.",
+    "exact": "Empty Channels section retains its native plus on mobile for workspace creation; other empty sections keep the official preference. System channel form omitted by owner 2026-10-28: Loom has no reserved channel. Its pinned source remains reference-only. About version section with product rename/test marker. Account profile and notification subtrees retain native layout with explicit omissions and guards. Not untouched whole SettingsPanel.",
     "localChanges": [
       "Omit cloud account email/identity/password/signout, omit avatar email absent from Loom identity",
       "Keep account editingDisabled fence and maxLength=120",

@@ -290,6 +290,7 @@ export default function ChannelSidebar({
   const mobile = useMediaQuery(layoutQueries.single);
   const visibleGroups = groups.filter(
     (g) =>
+      g.id === "channels" ||
       !shouldHideEmptySidebarSection({
         hideEmptySections: mobile || hideEmpty,
         loading: !data,
