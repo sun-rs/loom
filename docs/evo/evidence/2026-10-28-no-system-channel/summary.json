@@ -1,0 +1,36 @@
+{
+  "sourceRevision": "5ce14ec4cbc6d9fffa5b0701c7feb575e5ec45f6",
+  "webAssetHash": "307adca99882d3b31deea00d860f589e2aa82235ca76b1fd823a2161368510a5",
+  "noReservedChannel": true,
+  "rooms": [
+    {
+      "kind": "control",
+      "count": 1
+    }
+  ],
+  "instances": 0,
+  "foreignKeyErrors": 0,
+  "integrity": "ok",
+  "restartAfterDelete": true,
+  "defaultRoomIdAbsent": true,
+  "formalBrowser": [
+    {
+      "width": 1440,
+      "emptyChannelCreationReachable": true,
+      "submitted": false
+    },
+    {
+      "width": 390,
+      "emptyChannelCreationReachable": true,
+      "submitted": false
+    }
+  ],
+  "focusedTests": 71,
+  "emptyMobileRegressionTests": 3,
+  "typechecks": [
+    "root",
+    "frontend"
+  ],
+  "productBuild": true,
+  "paidRuns": 0
+}
