@@ -233,5 +233,11 @@
   ],
   "cleanup": "All four isolated daemon processes exited 0; queued work retained only in stopped test databases; formal workspace untouched",
   "productChanged": false,
-  "paidReplacements": 0
+  "paidReplacements": 0,
+  "ownerFollowup": {
+    "cause": "Owner confirms macOS downloaded-program approval for updated codex-code-mode-host was not clicked promptly",
+    "evidence": "Owner observation; exact approval timestamp not captured",
+    "paidResultsUnchanged": true,
+    "remedy": "Retain native host; require free actual tool execution after updates before paid calls; no quarantine removal or security bypass"
+  }
 }

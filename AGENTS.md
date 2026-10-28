@@ -695,6 +695,15 @@ fixture URLs and Fake CLI replies unmistakably and never hand one to the user as
 the product. Real-provider acceptance is opt-in, narrowly scoped and records
 actual model/effort/results. Never use GPT-5.6 Ultra for tests.
 
+After a Codex update, verify the exact installed executable's native tool host
+with a free localhost fake-model execution that actually reads a unique fixture
+through the intended launch path before starting paid work. macOS may require
+fresh approval to open the downloaded `codex-code-mode-host` (owner confirmed
+2026-10-28). A version/catalog probe, `--help`, or exit 0 is insufficient. If
+approval is pending, stop before paid calls and resolve that prompt; do not
+misdiagnose it as Loom scheduling failure, disable the host as a shell fallback,
+or remove quarantine/security protections. Preserve failed samples and costs.
+
 Before sending a Human opener in an automated collaboration run, use
 `scripts/cli-efficiency/human-wake-preflight.mjs` with the current enabled-member
 handles and the intended recipient set. It reuses canonical mention parsing:
