@@ -1,0 +1,51 @@
+{
+  "schema": "team-cost-repeat/v1",
+  "ownerAuthorization": "Owner: 开始下一项 after source-default closeout; bounded repeated collaboration acceptance, retain prior failed batch",
+  "createdAt": "2026-10-28T09:22:46.005688+00:00",
+  "sourceRevision": "d2e6cd4b7d03c120bf3e046a96c5920ba3d13021",
+  "order": [
+    "pair1-loom",
+    "pair1-native",
+    "pair2-native",
+    "pair2-loom",
+    "pair3-loom",
+    "pair3-native"
+  ],
+  "models": {
+    "codex": {
+      "model": "gpt-6-luna",
+      "effort": "low",
+      "version": "0.164.0"
+    },
+    "kimi": {
+      "model": "kimi-code/k3-256k",
+      "effort": "low",
+      "version": "2.1.1",
+      "source": "previously verified private pinned npm binary, global CLI untouched"
+    }
+  },
+  "task": "same original invoice 12 accumulated requirements and external 40-check evaluator",
+  "budget": {
+    "input": 10800000,
+    "output": 300000,
+    "generations": 600,
+    "minutes": 90
+  },
+  "sampleLimits": {
+    "input": 1800000,
+    "output": 50000,
+    "generations": 100,
+    "runs": 16,
+    "minutes": 15
+  },
+  "failurePolicy": "no replacement, no Human recovery, preserve all attempts; stop remaining batch on incomplete accounting, model/memory mismatch or unproved cleanup; completed but business-failed teams remain in fixed sequence",
+  "independentSample": "one whole team finishing the full task, never an individual message or generation",
+  "native": "actual Herdr interactive CLI sessions with native peer communications; all members measured; no model coordinator outside team",
+  "memory": "Codex explicit disable, exact Kimi 2.1.1 source audit, continuous conversation retained",
+  "subagents": "forbidden by identical batch instructions, actual transcript audited, unexpected descendants invalidate accounting pending reconciliation",
+  "scopeLimits": [
+    "not all CLIs or all models",
+    "not a new cost result until both arms meet same quality",
+    "AGY automatic-memory baseline remains unverified; OpenCode TUI admission is not inherited from run"
+  ]
+}

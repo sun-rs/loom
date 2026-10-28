@@ -1,0 +1,193 @@
+{
+  "modelPrompts": 0,
+  "nativeBundleVersion": "Kimi2.1.1",
+  "nativeBundleSha256": "2563a338c94868a34e1bfd2e5579067d5a472acf4cb0bf350a3bfe1092bbe59d",
+  "probes": [
+    {
+      "index": 1,
+      "mcp": false,
+      "asked": 0,
+      "exit": {
+        "code": 0,
+        "signal": null,
+        "ms": 9342
+      },
+      "close": {
+        "code": 0,
+        "signal": null,
+        "ms": 9342
+      },
+      "timedOut": false,
+      "method": "unmodified pinned bundle, EOF only"
+    },
+    {
+      "index": 2,
+      "mcp": true,
+      "asked": 0,
+      "exit": {
+        "code": 0,
+        "signal": null,
+        "ms": 6115
+      },
+      "close": {
+        "code": 0,
+        "signal": null,
+        "ms": 6115
+      },
+      "timedOut": false,
+      "method": "unmodified pinned bundle, EOF only"
+    },
+    {
+      "index": 3,
+      "mcp": true,
+      "asked": 0,
+      "exit": {
+        "code": 0,
+        "signal": null,
+        "ms": 13862
+      },
+      "close": {
+        "code": 0,
+        "signal": null,
+        "ms": 13862
+      },
+      "timedOut": false,
+      "method": "unmodified pinned bundle, EOF only"
+    },
+    {
+      "index": 4,
+      "mcp": false,
+      "asked": 0,
+      "exit": {
+        "code": 0,
+        "signal": null,
+        "ms": 14004
+      },
+      "close": {
+        "code": 0,
+        "signal": null,
+        "ms": 14004
+      },
+      "timedOut": false,
+      "method": "unmodified pinned bundle, EOF only"
+    },
+    {
+      "index": 5,
+      "mcp": true,
+      "asked": 0,
+      "sessionCloseMs": 87,
+      "exit": {
+        "code": 0,
+        "signal": null,
+        "ms": 13204
+      },
+      "close": {
+        "code": 0,
+        "signal": null,
+        "ms": 13204
+      },
+      "timedOut": false,
+      "method": "unmodified pinned bundle, explicit session/close then EOF"
+    },
+    {
+      "index": 6,
+      "mcp": false,
+      "asked": 0,
+      "sessionCloseMs": 89,
+      "exit": {
+        "code": 0,
+        "signal": null,
+        "ms": 10246
+      },
+      "close": {
+        "code": 0,
+        "signal": null,
+        "ms": 10246
+      },
+      "timedOut": false,
+      "method": "unmodified pinned bundle, explicit session/close then EOF"
+    },
+    {
+      "index": 7,
+      "mcp": true,
+      "asked": 0,
+      "sessionCloseMs": 88,
+      "exit": {
+        "code": 0,
+        "signal": null,
+        "ms": 12554
+      },
+      "close": {
+        "code": 0,
+        "signal": null,
+        "ms": 12554
+      },
+      "timedOut": false,
+      "method": "unmodified pinned bundle, explicit session/close then EOF"
+    },
+    {
+      "index": 8,
+      "mcp": true,
+      "asked": 0,
+      "exit": {
+        "code": 0,
+        "signal": null,
+        "ms": 10394
+      },
+      "close": {
+        "code": 0,
+        "signal": null,
+        "ms": 10394
+      },
+      "timedOut": false,
+      "method": "same pinned bundle via read-only load hook inserting diagnostic timestamps in ACP cleanup closure"
+    },
+    {
+      "index": 9,
+      "mcp": false,
+      "asked": 0,
+      "exit": {
+        "code": 0,
+        "signal": null,
+        "ms": 18936
+      },
+      "close": {
+        "code": 0,
+        "signal": null,
+        "ms": 18936
+      },
+      "timedOut": false,
+      "method": "same pinned bundle via read-only load hook inserting diagnostic timestamps in ACP cleanup closure"
+    }
+  ],
+  "slowProbe": {
+    "index": 9,
+    "eofToActualExitMs": 18936,
+    "appendLogRetirementMs": 18900,
+    "exitEqualsCloseTime": true,
+    "scope": "No session/prompt, no MCP; original bundle file immutable, timing hook only. Paid failure was not instrumented; this reproduces its too-short exit boundary, not every possible shutdown cause."
+  },
+  "sourceLocations": {
+    "ACP_cleanup": "installed main.mjs:313067-313109",
+    "nativeLogRetirement": "installed main.mjs:234000-234108",
+    "ACP_processExit": "installed main.mjs:313221-313235"
+  },
+  "probeFilesSha256": {
+    "probe.mjs": "69675a45baaf356c97b1949a7e737b63b5e54386ae06885dc0b3792a2295c6c6",
+    "timing-results.json": "9c50285f60ab016be57a0013981434aae3aff0cb11764b55d5cd86098ca4c847",
+    "probe-with-close.mjs": "d9ac1fffb8e3bb66294776422eb25bb18442d666ba9c220963c2576b97ec8eac",
+    "probe-1.wire.json": "76e7cd481c6cfcf34a2b7ae0ea9e69b9ebdc3dc50934eee3099ea8c325008b29",
+    "close-results.json": "4c50bf8d73633274e0b123a07056ec5f6572932807f7526d18f8edab86a6437a",
+    "probe-7.wire.json": "3356ae31231c2de2df3a20f02aea38a967ca7c3c47699de8fa59094ee6dc6f6f",
+    "results.json": "0dbac6ac30db2d58062a802fd5b748acb99bddeb1f122065099e84849f55c78e",
+    "probe-timing.mjs": "f2e3a416cbded2698b76c667ab59d4a72c61bd060dbc9b44e0c851baadff5919",
+    "probe-6.wire.json": "427efd611f7ce0d5f867755cb40ea6a76d22311e9925cf959d7c6baf4741da05",
+    "probe-3.wire.json": "c4a7494801f86a964cd9687ee934ea77af15014bc7c25c3e8558dac4221eb408",
+    "probe-8.wire.json": "e8a2fc7fbc4ef2e0ba8bb3ebbb3e990693e3acb733f0ee121f41058c1733471b",
+    "probe-5.wire.json": "9dcc6a4719575dcf0a5c683d8f11068dbbbd431ff79c8a239d6fc847f93e9d7e",
+    "probe-2.wire.json": "07c660e008aa65bb59c6445cfee777016a508798282496bcc6031745cd066ff8",
+    "probe-9.wire.json": "58a1bb578b30173e0e3070a6c70a52ddbff5229fe8024404fddb138c71412cf3",
+    "timing-loader.mjs": "3fadf5ffaf9f8596e3850255387a3ed03cfe1886771e00842b7eb25be9ee795b",
+    "probe-4.wire.json": "169bd51c0240d4155699a2ea7909a3fccfcab32313fe6041c4a46c55ceb52c04"
+  }
+}

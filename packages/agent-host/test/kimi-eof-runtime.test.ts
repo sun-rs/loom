@@ -7,10 +7,10 @@ import {
 } from "./kimi-native-final-test-harness.ts";
 
 for (const code of [0, 7]) {
-  test(`Kimi waits for delayed actual native exit ${code} after EOF`, async () => {
+  test(`Kimi waits for delayed actual native exit ${code} after EOF${code === 0 ? " beyond fifteen seconds" : ""}`, async () => {
     const s = await kimiNativeFinalHarness({
       env: {
-        FAKE_KIMI_EOF_DELAY_MS: "800",
+        FAKE_KIMI_EOF_DELAY_MS: code === 0 ? "19000" : "800",
         FAKE_KIMI_EXIT_CODE: String(code),
       },
     });

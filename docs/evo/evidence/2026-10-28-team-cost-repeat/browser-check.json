@@ -1,0 +1,24 @@
+{
+  "at": "2026-10-28T10:13:40Z",
+  "method": "CUA actual Chrome extension; fresh owned tab, visible AX page, click actual Computer navigation; own tab closed",
+  "url": "http://127.0.0.1:4176/",
+  "chat": {
+    "title": "聊天",
+    "empty": "没有打开的对话 从列表里选一个。"
+  },
+  "computer": {
+    "name": "Mac-Studio",
+    "online": true,
+    "instanceCount": 0,
+    "runtimes": [
+      "Codex CLI",
+      "Kimi Code",
+      "OpenCode",
+      "Claude Code",
+      "Pi",
+      "Antigravity"
+    ]
+  },
+  "scope": "backend-only restart real-page smoke, not physical mobile/Firefox/HTTPS or new paid workflow acceptance",
+  "firstNativeWindowAttempt": "No native Chrome window found; discovered and used existing Chrome extension, did not touch user tab"
+}

@@ -1,0 +1,60 @@
+{
+  "frozenGroups": {
+    "frozen-sources.json": {
+      "/Users/sun/.loom/reviews/2026-10-28-team-cost-repeat-v1/plan.json": "3bbb591a648b4e98a53fe0cf2ed4f4f07d61ff2d0a5479c1996b4401ecf9dcba",
+      "/Users/sun/.loom/reviews/2026-10-28-team-cost-repeat-v1/run.mjs": "86a5560e5c2eaaf0c6a2204fafe9a7befd784b54cf993125f9588270bc166df2",
+      "/Users/sun/.loom/reviews/2026-10-28-team-cost-repeat-v1/gate.mjs": "bcc5aebb0c4543737abe5cb7849a1ebd07a526de7d23d14d0482ff783e089825",
+      "/Users/sun/.loom/reviews/2026-10-28-team-cost-repeat-v1/support.mjs": "98116d1412ee17113836e79f46a24016c63ccdb2d0f89ba561102f5b8b444fb3",
+      "/Users/sun/.loom/reviews/2026-10-28-team-cost-repeat-v1/study-support.mjs": "c50448945c6d8dd076a1dadc31bb16e938fadda767d4731a96a96194fdce691b",
+      "/Users/sun/.loom/reviews/2026-10-28-team-cost-repeat-v1/study-support.test.mjs": "1976c1862216a75dc133fed76af59287c499c197d52ae8f92a0b60542b1679b3",
+      "/Users/sun/.loom/reviews/2026-10-28-team-cost-repeat-v1/support.test.mjs": "e26e8c86f7ec490853c41f5e82e8acdbf6844a5eff46f3b260cf1fc661780dcd",
+      "/Users/sun/.loom/reviews/2026-10-28-team-cost-repeat-v1/terminal.py": "721fa5ac7cba00a72163c4b748f8423647686b3b461b9e3106f9608ef6d175b1",
+      "/Users/sun/.loom/reviews/2026-10-28-team-cost-repeat-v1/orchestrate.mjs": "a492137b01747e9294e50d401c1ecb04dbc00c5d626b162bab16efe276db653f",
+      "/Users/sun/.loom/reviews/2026-10-28-team-cost-repeat-v1/bin/kimi": "0588289c4d095d9682a5b08deeb6da18979df551ffa5b716214b3f1ca28d2c86",
+      "/Users/sun/.loom/reviews/2026-10-12-herdr-team-plan/common-task.json": "3cf87a5a64073a69906846ae95038951b95d8f3b479611b7d27814267da3f170",
+      "/Users/sun/.loom/reviews/2026-10-11-cost-fixture-v7/capture.py": "940462ca04aad56d6ef8abef370f57bc8f4078fde826908165dda6903bf4e548",
+      "/Users/sun/.loom/reviews/2026-10-11-cost-fixture-v7/evaluator.py": "2025463cd47e75bf83f2cbad8dac21bff002ff37bbc0534bcbeba434c7bbb325",
+      "/Users/sun/.loom/reviews/2026-10-11-cost-fixture-v7/snapshot.py": "640dc6a617096b7a9676e7b06fd24d16166d19d1c9ea3d8585af287ad0f7dcc5",
+      "/Users/sun/.loom/reviews/2026-10-11-cost-fixture-v7/workspace/invoice.py": "d3caf3a244cf57ab6cce44dd7dd3b25dfcc93369d9da13d06658b52d0761c8c5",
+      "/Users/sun/.loom/reviews/2026-10-11-cost-fixture-v7/workspace/README.md": "0d93b31616379d7e64702617535798b8d586116271c436a5e4cd16ba7c8600b5",
+      "/Users/sun/Code/repos/rah_os/scripts/cli-efficiency/metrics.mjs": "aaa0bc299504eb56582599d7690858b2aca11564f29149436413b1531bdcff93",
+      "/Users/sun/Code/repos/rah_os/scripts/cli-efficiency/native-memory-policy.mjs": "4dd7ce594641c50eb59258fed38081b055a84699a8a79ec9528889f0ff94275e",
+      "/Users/sun/Code/repos/rah_os/scripts/cli-efficiency/native-memory-version.mjs": "c2892714ce0277be61c212c314e757d3b03706a83f22e51158067f63101a7738",
+      "/Users/sun/Code/repos/rah_os/scripts/cli-efficiency/approved-models.mjs": "2a714b6c02c970d9b687fdadf5aeca0fd9d2b0673f3884e53c5d3f6b82289e4f",
+      "/Users/sun/Code/repos/rah_os/scripts/cli-efficiency/collaboration-preflight.mjs": "0c0da18a1a0ca972d9458bf429fce22308ec9c41147df40a0a3db1e63ebbc55c",
+      "/Users/sun/Code/repos/rah_os/scripts/cli-efficiency/codex-tool-preflight.mjs": "4777d0c56ec97b2de6cecf24fe50b502ff9929fdfdf0daa66686ab4da8f0aa78",
+      "/Users/sun/Code/repos/rah_os/scripts/cli-efficiency/guarded-shim.mjs": "13b787c0eab1782279e12867e7a558e4f356f5bd525fd814598e369fe5872211",
+      "/Users/sun/Code/repos/rah_os/scripts/cli-efficiency/reply-transport.mjs": "3050d871663f5e1a929281265f75aa431b697071d5e913b792ed08d5acfa205d",
+      "/Users/sun/.loom/reviews/2026-10-28-team-closeout/bin/kimi": "0588289c4d095d9682a5b08deeb6da18979df551ffa5b716214b3f1ca28d2c86"
+    },
+    "frozen-startup-fix.json": {
+      "/Users/sun/.loom/reviews/2026-10-28-team-cost-repeat-v1/run-startup-fixed.mjs": "a96b3ac4ff030b2b2bb1180eeff82980f6b3f88b7d291d410c4166fd2ee1ff8a",
+      "/Users/sun/.loom/reviews/2026-10-28-team-cost-repeat-v1/startup-support.mjs": "2bc6bbacb623d6d879ee7aea6837612fdefe91e44d49cce64d5095685c9b91ad",
+      "/Users/sun/.loom/reviews/2026-10-28-team-cost-repeat-v1/startup-support.test.mjs": "7dde2d74c35a3415bef22b7cd896f995f86c0a919b59ab5af1a7281211e093e4",
+      "/Users/sun/.loom/reviews/2026-10-28-team-cost-repeat-v1/startup-amendment.json": "71b8b0e5895d9cd88dd53ce9a256d9f7638013381c5ccf8ddd0822f9aac732b6",
+      "/Users/sun/.loom/reviews/2026-10-28-team-cost-repeat-v1/quality-rubric.json": "2d5d34035be04e3095201332ea1142333efa4b76afb91aff0f0b6d7820060d21",
+      "/Users/sun/.loom/reviews/2026-10-28-team-cost-repeat-v1/resume-orchestrate.mjs": "b66a5c6166efe41def12c6c62bf3347b2839d9d0946cebfde9527a3ba5900163"
+    },
+    "frozen-accounting-fix.json": {
+      "/Users/sun/.loom/reviews/2026-10-28-team-cost-repeat-v1/final-cohort-orchestrate.mjs": "a2b503a40f8b434a015eb7aacb9dcb48ac73e553db74d7c11a1fbf9088818327",
+      "/Users/sun/.loom/reviews/2026-10-28-team-cost-repeat-v1/accounting-support.mjs": "008e95563168906513866704aeff44ce511a1b744805d4fd6ffa689514395905",
+      "/Users/sun/.loom/reviews/2026-10-28-team-cost-repeat-v1/accounting-support.test.mjs": "1e110c146f234843c003612ddba9637661f228c4b6dc30f673176d519c372363",
+      "/Users/sun/.loom/reviews/2026-10-28-team-cost-repeat-v1/accounting-amendment.json": "65e7e15c7a2db120dfcc794ec6fb41cef994ad0f7011626d04b4422b3302c232"
+    }
+  },
+  "additionalEvidenceSha256": {
+    "quality-rubric.json": "2d5d34035be04e3095201332ea1142333efa4b76afb91aff0f0b6d7820060d21",
+    "quality-progress.json": "4b6911778ef8fc82cff34614c58f8c5b106b4e80bc8742f38543e249c550bcd3",
+    "quality-final.json": "90bf719f615a961ce13eae553d4bb79f3f2fd514a6f578f0f6919b5a83f91984",
+    "finalize.mjs": "9325870a809fc5e5facedab2028ab82e4297f1477736c0638f5c7d925cbcb637",
+    "final-analysis.json": "b2c4935a4306c1ea826a46d622902c414ce32fa62985a6f2fcf6e8accebc3a34",
+    "startup-amendment.json": "71b8b0e5895d9cd88dd53ce9a256d9f7638013381c5ccf8ddd0822f9aac732b6",
+    "accounting-amendment.json": "65e7e15c7a2db120dfcc794ec6fb41cef994ad0f7011626d04b4422b3302c232",
+    "resume-orchestrate.mjs": "b66a5c6166efe41def12c6c62bf3347b2839d9d0946cebfde9527a3ba5900163",
+    "final-cohort-orchestrate.mjs": "a2b503a40f8b434a015eb7aacb9dcb48ac73e553db74d7c11a1fbf9088818327",
+    "continued-batch-result.json": "2765d87df252826771a2c0ac01861992425579924f5b8dbe8459565a0ddfb405",
+    "final-cohort-result.json": "95401ada61fc7abca9d96e12a31cf38fc2c08c68313c0ef7dfec101d3f8d8c03",
+    "continued-batch.prepare-error.log": "e1423968ca2c279dbf29b862403c0246922b5c23cd9be0ab1a9244a93ada12b8",
+    "deploy.mjs": "8b55561351b1508011a11c7fc23015c13636347a69c9e5cf26ef6c68fd8de04f"
+  }
+}

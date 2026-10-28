@@ -1,0 +1,203 @@
+{
+  "rubricSha256": "2d5d34035be04e3095201332ea1142333efa4b76afb91aff0f0b6d7820060d21",
+  "method": "nonblind source/tool/handoff audit; same requirements for all six teams",
+  "rows": [
+    {
+      "sample": "pair1-loom",
+      "qualityAccepted": true,
+      "reviewMethod": "lead manually inspected public handoffs, reviewer native tool calls/results, final delivery; nonblind; external oracle40 checks",
+      "sourceResult": "pair1-loom/result.json",
+      "sourceSha256": "c752a005b86682c6cc2840ea1aafd059de5507986f94046fc4c1cd4a1043415a",
+      "externalPassed": 40,
+      "selfTestsPassed": true,
+      "reviewerReadActualSource": true,
+      "reviewerExecutedChecks": true,
+      "reviewerToolEvidence": [
+        {
+          "id": "tool_f9o62CGMwqJDCY5JaLx5zPW4",
+          "tool": "Read",
+          "input": {
+            "path": "invoice.py"
+          }
+        },
+        {
+          "id": "tool_iSTagdCvXpQ9wViQ4X2qyPjk",
+          "tool": "Read",
+          "input": {
+            "path": "tests/test_invoice.py"
+          }
+        },
+        {
+          "id": "tool_0PIDneUT5bQaA5ew9xJWP99M",
+          "tool": "Bash",
+          "input": {
+            "command": "python3 -m unittest discover -s tests 2>&1 | tail -5"
+          }
+        },
+        {
+          "id": "tool_bMAKymhUkWGkiHlCG9DFBUQS",
+          "tool": "Bash",
+          "input": {
+            "command": "echo '{\"rows\": []}' > /tmp/inv_ok.json && python3 invoice.py /tmp/inv_ok.json && python3 invoice.py /tmp/nonexistent.json; echo \"exit=$?\"; python3 invoice.py /tmp/inv_ok.json extra; echo \"exit=$?\""
+          }
+        }
+      ],
+      "designContributed": true,
+      "finalDeliveryAfterReview": true,
+      "blockingFindingsUnresolved": false,
+      "notes": "B ran8selftests plus boundary/1000maxline checks; one reference helper failed under its own default Decimal context and was corrected to80precision, retained in raw. A applied nonblocking suggestions and delivered."
+    },
+    {
+      "sample": "pair1-native",
+      "qualityAccepted": true,
+      "reviewMethod": "lead manually inspected public handoffs, reviewer native tool calls/results, final delivery; nonblind; external oracle40 checks",
+      "sourceResult": "pair1-native/result-after-startup.json",
+      "sourceSha256": "9050bbbafb0cf503407c41fb85af1cf790b6ecb5e74540cab0f080fed4a23223",
+      "externalPassed": 40,
+      "selfTestsPassed": true,
+      "reviewerReadActualSource": true,
+      "reviewerExecutedChecks": true,
+      "reviewerToolEvidence": [
+        {
+          "id": "tool_wXqM3b76dRO2fFHMPB8M8UFe",
+          "tool": "Read",
+          "input": {
+            "path": "invoice.py"
+          }
+        },
+        {
+          "id": "tool_KBBrWZz1GMu60Ok33DjcG2Xi",
+          "tool": "Read",
+          "input": {
+            "path": "tests/test_invoice.py"
+          }
+        },
+        {
+          "id": "tool_1wJQTL8usTdSlKCdbTEepZJZ",
+          "tool": "Bash",
+          "input": {
+            "command": "python3 -m unittest discover -s tests -v 2>&1 | tail -15"
+          }
+        },
+        {
+          "id": "tool_ShRHY6qFxkbCEf5AZHx5mZYc",
+          "tool": "Bash",
+          "input": {
+            "command": "cd /tmp && python3 /Users/sun/.loom/reviews/2026-10-28-team-cost-repeat-v1/pair1-native/workspace/invoice.py /nonexistent 2>err.txt >out.txt; echo \"rc=$?\"; echo \"stdout:[$(cat out.txt)]\"; echo \"stderr:[$(cat err.txt)]\"; echo '{\"rows\":[{\"quantity\":1,\"unit_price\":\"2.005\"}]}' | python3 /Users/sun/.loom/reviews/2026-10-28-team-cost-repeat-v1/pair1-native/workspace/invoice.py -; rm -f err.txt out.txt"
+          }
+        },
+        {
+          "id": "tool_0ONBMytcYsFQBrIt7RiF8zII",
+          "tool": "Bash",
+          "input": {
+            "command": "grep -n \"60 digits\\|50 digits\" invoice.py; grep -n \"nonexistent\\|not_found\\|missing\" tests/test_invoice.py; python3 -m unittest discover -s tests 2>&1 | tail -3"
+          }
+        }
+      ],
+      "designContributed": true,
+      "finalDeliveryAfterReview": true,
+      "blockingFindingsUnresolved": false,
+      "notes": "B ran actual source/tests and separate numeric/CLI checks, accepted. A applied two nonblocking suggestions; B rechecked and confirmed before final delivery. Native team chose an extra design confirmation and final confirmation, so total difference is not solely transport."
+    },
+    {
+      "sample": "pair2-native",
+      "qualityAccepted": true,
+      "reviewMethod": "lead manually inspected native public handoffs, B actual tool calls/results, A final delivery; not blind",
+      "sourceResult": "pair2-native/result.json",
+      "sourceSha256": "ff913285a30fbecc4f452d01c8444e80855d4c69326f834ebec76f16ac650d1e",
+      "externalPassed": 40,
+      "selfTestsPassed": true,
+      "reviewerReadActualSource": true,
+      "reviewerExecutedChecks": true,
+      "reviewerToolEvidence": [
+        {
+          "id": "tool_jDats1H83YIYsnAKwlkkJzeb",
+          "tool": "Read",
+          "input": {
+            "path": "invoice.py"
+          }
+        },
+        {
+          "id": "tool_LqS0BH7hDusDEZojNYKF4uv1",
+          "tool": "Read",
+          "input": {
+            "path": "tests/test_invoice.py"
+          }
+        },
+        {
+          "id": "tool_gZZKzq3cLwsuyb2k2UvsdyIn",
+          "tool": "Bash",
+          "input": {
+            "command": "python3 -m unittest discover -s tests -v 2>&1 | tail -15"
+          }
+        },
+        {
+          "id": "tool_xPLPRJvMj2wDPVsXjqJDiG9q",
+          "tool": "Bash",
+          "inputSummary": "Original command retained privately; actual independent precision/validation/CLI checks, not only participant assertion",
+          "inputSha256": "594d72a82585257c40fdb59cd94aa6955ec5f0f7c18aed7623b1cb3551a4245a"
+        },
+        {
+          "id": "tool_i6xtKXRuWmgMNaGKiALDiOZp",
+          "tool": "Bash",
+          "inputSummary": "Original command retained privately; actual independent precision/validation/CLI checks, not only participant assertion",
+          "inputSha256": "006ec20205950a009350283c5e738f18e512a4b55c092d7f418ec9b5adaada47"
+        }
+      ],
+      "designContributed": true,
+      "finalDeliveryAfterReview": true,
+      "blockingFindingsUnresolved": false,
+      "notes": "B personally read source/tests/README, ran6selftests, exact Fraction comparison and500random cases plus numeric/CLI boundaries; accepted with only optional usage-text whitespace. A delivered without extra peer wake. A had fixed its own initial Decimal-revalidation error before review; all costs retained."
+    },
+    {
+      "sample": "pair2-loom",
+      "qualityAccepted": false,
+      "designContributed": false,
+      "reviewerReadActualSource": false,
+      "reviewerExecutedChecks": false,
+      "finalDeliveryAfterReview": false,
+      "reason": "Kimi initial briefing reached end_turn but native EOF drain timed out15s. No final published; Codex provably never started.",
+      "failureClass": "runtime-compatibility",
+      "reviewMethod": "lead nonblind audit of actual handoffs/tool records; fixed precompletion rubric",
+      "sourceResult": "pair2-loom/result.json",
+      "sourceSha256": "76ac28d4c18ba5db387abfbb4b3c207d46c01f17d4ea082581299f6f7f519ccd",
+      "externalPassed": 0,
+      "selfTestsPassed": false
+    },
+    {
+      "sample": "pair3-loom",
+      "qualityAccepted": false,
+      "designContributed": true,
+      "reviewerReadActualSource": false,
+      "reviewerExecutedChecks": false,
+      "finalDeliveryAfterReview": false,
+      "reason": "A asks B for implementation review in ordinary final text without a new explicit @instance. No reviewer wake; initial design return had succeeded.",
+      "failureClass": "model-addressing-omission",
+      "reviewMethod": "lead nonblind audit of actual handoffs/tool records; fixed precompletion rubric",
+      "sourceResult": "pair3-loom/result.json",
+      "sourceSha256": "d5de28107e38250cefe4a5e9fbe2f519f0b7eaf0c0f0ff84bc52a494a9c00aa4",
+      "externalPassed": 40,
+      "selfTestsPassed": true,
+      "lastRequest": {
+        "body": "已实现发票汇总 API、文件与 stdin CLI、测试和 README。实现使用整数定点数累计，金额聚合后按 ROUND_HALF_UP 舍入。\n\n我运行了 `python3 -m unittest discover -s tests`，8 项通过。请 B 独立审查当前代码并运行检查，反馈发现后我会修复。",
+        "actorId": "principal_ac5dbf3c-5ada-4920-b8cf-576995223212",
+        "newExplicitMentionPresent": false
+      }
+    },
+    {
+      "sample": "pair3-native",
+      "qualityAccepted": false,
+      "designContributed": true,
+      "reviewerReadActualSource": true,
+      "reviewerExecutedChecks": true,
+      "finalDeliveryAfterReview": false,
+      "reason": "Codex repeatedly polls Herdr and reaches per-team input budget while Kimi is still generating review acceptance. A prematurely claims no findings; no explicit B acceptance and one in-flight request lacks usage.",
+      "failureClass": "budget-and-incomplete-native-usage",
+      "reviewMethod": "lead nonblind audit of actual handoffs/tool records; fixed precompletion rubric",
+      "sourceResult": "pair3-native/result.json",
+      "sourceSha256": "fd45eaa92ea1c4b5e6b2ee7fceb1ab225bf78057bfefc9f2316397d3d47f2317",
+      "externalPassed": 40,
+      "selfTestsPassed": true
+    }
+  ]
+}

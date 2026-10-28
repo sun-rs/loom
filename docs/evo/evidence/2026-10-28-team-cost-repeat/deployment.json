@@ -1,0 +1,30 @@
+{
+  "at": "2026-10-28T10:12:58.105Z",
+  "sourceRevision": "d2e6cd4b7d03c120bf3e046a96c5920ba3d13021",
+  "sourceWorktreeDirty": true,
+  "backendFilesSha256": {
+    "packages/agent-host/src/kimi-eof-drain.mjs": "93b7920044bfcad042d1c9ea390f57831260c26537e342afcc191c14081652c4",
+    "packages/agent-host/src/kimi-acp-driver.mjs": "617b4332be858dd035a6d74443b19de3c5d9d0e96c9c94578dc4135019f05898"
+  },
+  "oldPid": 24094,
+  "newPid": 4381,
+  "backup": "/Users/sun/.loom/evo/backups/pre-kimi-eof-retirement-1793182360194",
+  "backupVerified": true,
+  "ledgerUnchanged": true,
+  "webAssets": "/Users/sun/Code/repos/rah_os/.workbench-web/1167c2ce6871e7bdfc06eced41cc4913b9bf6b02f4ee24cf97716a394bfefa60",
+  "webIndexSha256": "2e734ecf129d22f83b3caea8660fe568f59982fcde26d85e54a2b1d4cea43df2",
+  "webAssetsUnchanged": true,
+  "removedRedundantOnes": {},
+  "remainingReplyOverrides": {},
+  "effectiveEntries": {
+    "codex-app-server/v1": "native-final",
+    "claude-stream-json/v1": "native-final",
+    "opencode-server/v1": "native-final",
+    "kimi-acp/v1": "native-final",
+    "pi-print-json/v1": "native-final",
+    "agy-print-json/v1": "native-final",
+    "codex-exec/v1": "worker"
+  },
+  "scope": "Kimi ACP bounded EOF cleanup extended15to30seconds after zero-model native log-retirement proof; same publication fences, no paid revalidation or UI rebuild",
+  "plistSha256": "85506c187a80753977dea82daf62cc8c30dad8858bc065a93500b95388fc10c0"
+}

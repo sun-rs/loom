@@ -21,6 +21,8 @@
 
 native-final 仅替代普通回复的传输：模型输出普通最终正文，Host 用当前投递、原身份和原生正常终态证据提交到既有 Worker 服务。Kernel 的权限、新鲜度、幂等、ACK 和 Task 状态仍是原 owner。多目标、不完整投递及不适用的业务唤醒沿原资格判定回退 Worker；不能接收时不会从 stdout 猜测正文或自动重跑模型。Codex native 模式不暴露竞争回复 MCP。
 
+Kimi ACP 正常结束后仍等待真实原生退出；当前 EOF 清理上限为30秒。固定 Kimi2.1.1 免费探针证明日志持久清理本身可超过旧15秒，故作兼容修正；超时后被 TERM 杀掉再返回零不能视为成功，取消、工具终态和投递围栏不变。不保证所有原生关闭都在此期限内完成，重复协作成本门禁尚未通过。[复现、修复与验收边界](evidence/2026-10-28-team-cost-repeat/README.md)。
+
 ## 显式配置、升级与回滚
 
 - 保留既有 `LOOM_CODEX_NATIVE_FINAL_TRIAL`、`LOOM_CLAUDE_NATIVE_FINAL_TRIAL`、`LOOM_OPENCODE_NATIVE_FINAL_TRIAL`、`LOOM_KIMI_NATIVE_FINAL_TRIAL`、`LOOM_PI_NATIVE_FINAL_TRIAL`。未设置使用上表；准确的 `1` 开启；`0` 关闭。为兼容旧严格判断，空值、`true` 等其他已设置字符串也不启用。

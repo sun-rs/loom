@@ -9,7 +9,7 @@
 - `main` 是当前 Loom；`evo` 已晋升并移除；`chatbox` 独立承载 `rah/main` 导入，不参与 Loom 构建。见[分支记录](branch-promotion.zh-CN.md)。
 - 唯一产品前端为 `frontends/raft`。旧复刻 UI 和 `apps/console` 已退役，不恢复其路由、构建或测试入口。
 - 保留部署标签 `com.loom.evo`、数据目录 `~/.loom/evo`、日志目录及频道主目录 `~/.loom/channel-workspaces/`。这些名称不是旧分支残留任务，不能为整洁搬迁数据。
-- 本批已备份并重启正式服务，部署本轮 main 工作树（源码基线 `da03de57`，含本批默认选择修改；摘要见收据）。源码 / Node daemon 不再依赖本机四个 native-final `=1`；显式关闭与冷入口保留。账本未变，Web 快照 `1167c2ce…` 未重建；正式 Chrome 新页面确认聊天空态、在线计算机及六个运行时。[默认化与部署](evidence/2026-10-28-native-final-defaults/README.md)、[部署收据](evidence/2026-10-28-native-final-defaults/deployment.json)。前批 Raft UI 0.40.0 / Web 1.21.35 指定资源的[前端验收](evidence/2026-10-28-ui-refresh/README.md)及[三方协作证据](evidence/2026-10-28-three-cli-team/README.md)保留各自边界。
+- 正式服务最近一次已备份重启，部署 `d2e6cd4b` 基线加 Kimi EOF 清理 15→30 秒修复；源码哈希与备份见[本次部署收据](evidence/2026-10-28-team-cost-repeat/deployment.json)。账本与 Web 快照 `1167c2ce…` 未变；新 Chrome 页面确认聊天空态、本机在线、六个运行时和零实例。此前源码 / Node daemon 默认化已移除本机四个冗余 native-final `=1`，显式关闭与冷入口保留。[默认化](evidence/2026-10-28-native-final-defaults/README.md)、[最新复查范围](evidence/2026-10-28-team-cost-repeat/browser-check.json)。前批 Raft UI 0.40.0 / Web 1.21.35 指定资源的[前端验收](evidence/2026-10-28-ui-refresh/README.md)及[三方协作证据](evidence/2026-10-28-three-cli-team/README.md)保留各自边界。
 - HTTP 4176、LAN HTTPS 4178 和隔离预览的部署记录见[HTTPS接入](evidence/2026-10-22-https-trusted/summary.json)、[预览边界](evidence/2026-10-23-https-preview/summary.json)。本轮复查了 HTTP 4176 页面和既有 launchd 配置，HTTPS/Tailscale 真机链路未重新验收；部署前仍须读取实际状态，不沿用旧快照里的临时 loopback 配置。
 
 ## 2. 当前状态
@@ -69,7 +69,9 @@ Codex warm/Kimi ACP 本机正式服务采用 native-final；最终三对输入�
 2. **源码部署默认选择已收口**：daemon 集中选择 warm Codex/Claude/OpenCode 与 cold Kimi/Pi 原生回复；AGY 保持原协议。未设变量的新安装、显式关闭/冷配置、旧结构化试验、基准隔离及会话围栏定向135项通过，类型检查通过。本机移除四个冗余 `=1` 后安全重启，账本与前端快照未变；无新付费调用。冷 Codex exec、底层适配器、SEA 与远端不扩展。[矩阵、升级和回滚](native-final-defaults.zh-CN.md)、[测试与部署](evidence/2026-10-28-native-final-defaults/README.md)。
 3. **已知平台限制**：AGY自动记忆禁用未证实，不做不公平成本对照；外部 Fork/Side 接口缺失仍明确不支持。子代理总账、极长历史、真机与远端限制保留 §3，不因本轮短任务成功消失。
 
-此前失败、人工接手、修复顺序及全部费用链接见[历史经过](log/2026-10-28-repair-progression.zh-CN.md)与[付费台账](paid-runs.zh-CN.md)。当前没有从这些记录确认的新产品阻断；这不等于所有能力、所有模型和所有门禁全部通过。
+后继固定三对真实 Herdr/Loom 协作复验：Codex Luna low＋固定 Kimi 2.1.1/k3-256k low，完整协作 Loom 1/3、Herdr 2/3，整体同质量倍率仍为空。Loom 一组 Kimi EOF 超时、一组模型漏新请求 @；Herdr 最后一组反复轮询触及预算，有一次在途 usage 未返回。全部观察下界 4,328,317 输入、52,853 输出、181 次已计生成，不把低成本失败当节省。免费探针定位 Kimi 原生日志落盘清理可达 18.9 秒，现有界等待改为30秒，17项定向检查和类型检查通过、已部署；原付费失败不补判通过。统计/启动/会计另12项通过；未启动成员的零执行证明与真正缺失计费分开。见[完整结果与剩余项](evidence/2026-10-28-team-cost-repeat/README.md)。
+
+此前失败、人工接手、修复顺序及全部费用链接见[历史经过](log/2026-10-28-repair-progression.zh-CN.md)与[付费台账](paid-runs.zh-CN.md)。本次兼容修复尚无修复后的付费协作复验；重复同质量协作成本及上述模型寻址可靠性不宣称通过。
 
 ## 5. phase 4 删除清单
 

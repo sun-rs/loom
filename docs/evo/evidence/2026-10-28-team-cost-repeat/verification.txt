@@ -1,0 +1,54 @@
+Focused actual runtime and EOF checks
+✔ EOF drain allows observed nineteen-second log retirement and preserves actual exit 0 (1.585625ms)
+✔ EOF drain allows observed nineteen-second log retirement and preserves actual exit 7 (0.09975ms)
+✔ EOF drain has a thirty second bound and cannot turn later zero exit into success (0.344958ms)
+✔ Kimi waits for delayed actual native exit 0 after EOF beyond fifteen seconds (20001.409375ms)
+✔ Kimi waits for delayed actual native exit 7 after EOF (2302.231542ms)
+✔ Kimi EOF timeout refuses publication even when TERM exits zero (31522.507042ms)
+✔ Kimi EOF timeout refuses publication even when TERM is ignored (31673.642209ms)
+✔ Kimi cancellation during EOF drain never publishes a native final (1345.820917ms)
+✔ Kimi clean delayed exit cannot rescue a tool without terminal status (2279.863958ms)
+✔ Kimi native final: two cold processes retain one session and publish once with live original credentials (1104.684083ms)
+✔ Kimi native final: lost uncommitted receipt is never resent (480.579959ms)
+✔ Kimi native final: lost committed receipt is never resent (448.773625ms)
+✔ Kimi native final: stale Human correction holds rather than republishes (487.913208ms)
+✔ Kimi native final: cancellation before provider final leaves no publication (1324.823875ms)
+✔ Kimi native final: cancel after provider exit aborts settlement before HTTP publication (506.015917ms)
+✔ Kimi native final: disabled retains Worker-only completion authority (500.404ms)
+✔ Kimi native final: task retains Worker-only completion authority (483.78425ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 89526.859208
+
+Typecheck
+
+> rah-os@0.0.0 typecheck
+> tsc --noEmit
+
+
+Study accounting/statistics/startup guard checks
+✔ positive durable non-start proof gives known zero, distinct from member participation (1.11525ms)
+✔ any launch, work or missing proof keeps absent receipts unknown (0.079458ms)
+✔ only the pinned Codex update menu admits the documented skip key (0.597792ms)
+✔ only a known pre-model startup failure can resume without replacing a paid team (0.121667ms)
+✔ whole-team means preserve native variance; use ratio of means rather than mean paired ratios (1.392125ms)
+✔ missing or failed-quality teams retain consumed cost but cannot claim comparable savings (0.144167ms)
+✔ unknown accounting and cleanup block ratios independently from business success (0.114583ms)
+✔ attempts cannot be silently replaced or admitted outside the frozen sequence (0.463833ms)
+✔ cumulative Codex usage never summed again (1.260167ms)
+✔ Kimi cancellation missing receipts remains incomplete (0.203625ms)
+✔ quiescence is not inferred from one idle member or pending work (0.081167ms)
+✔ initial briefing accepts actual exited runs only after activation completion (0.131667ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 67.921917

@@ -1,5 +1,6 @@
-// Installed Kimi 2.1.1 with MCP took 6.3s to exit after EOF even without
-// a model request. Allow native resource cleanup a bounded 15s window.
+// Kimi 2.1.1 zero-model probes took up to 18.9s in native append-log
+// retirement after EOF. Allow that durable cleanup a bounded 30s window;
+// session/close alone does not remove this application-level drain.
 // EOF starts normal native shutdown, not cancellation. Never substitute a
 // signal-induced zero exit for clean shutdown once this deadline has expired.
 export async function waitForKimiEofExit(processExited) {
@@ -9,8 +10,8 @@ export async function waitForKimiEofExit(processExited) {
       processExited,
       new Promise((_, reject) => {
         timer = setTimeout(
-          () => reject(new Error("Kimi did not exit within 15000ms after EOF")),
-          15_000,
+          () => reject(new Error("Kimi did not exit within 30000ms after EOF")),
+          30_000,
         );
       }),
     ]);

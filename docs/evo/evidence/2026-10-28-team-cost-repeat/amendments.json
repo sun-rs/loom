@@ -1,0 +1,41 @@
+{
+  "startup": {
+    "at": "2026-10-28T09:38:28.923056+00:00",
+    "cause": "Codex0.164 interactive update menu appeared only on this startup; preserve pinned version by documented esc skip",
+    "originalIncident": "pair1-native/result.json",
+    "originalSha256": "3dbcd5ee5672d184615d3fdc8c4cb90e49a63b5de9cb213af33134b7d5626fc5",
+    "paidUsageBeforeFailure": {
+      "input": 0,
+      "cached": 0,
+      "output": 0,
+      "generations": 0,
+      "complete": false
+    },
+    "noTaskSubmitted": true,
+    "noBusinessSampleReplaced": true,
+    "remainingOrder": [
+      "pair1-native",
+      "pair2-native",
+      "pair2-loom",
+      "pair3-loom",
+      "pair3-native"
+    ],
+    "sameTaskModelsVersionsAndCaps": true,
+    "sameWorkspaceForUnstartedPair1Native": true,
+    "changes": "Only known-menu startup handling and separate result/archive filename. Original frozen runner, failed startup and completed Loom team preserved. Business failures are never restarted.",
+    "output": "pair1-native/result-after-startup.json",
+    "timeBudget": "same original90minute cohort clock; all consumed usage included"
+  },
+  "accounting": {
+    "at": "2026-10-28T09:58:17.952916+00:00",
+    "reason": "Existing team coverage flag marked never-started Codex as incomplete billing. Durable0Runs+0Activations+0UsageRows+nochannelopener+prewarmdisabled proves zero; Kimi1generation has full raw receipt matching product ledger.",
+    "failedSample": "pair2-loom/result.json",
+    "sourceUnchanged": true,
+    "remainingSamples": ["pair3-loom", "pair3-native"],
+    "original90MinuteClockAndBudgets": true,
+    "noBusinessRetry": true,
+    "failureRetained": "Kimi end_turn succeeded but native process failed15second EOF exit guard, so no final publication and business remains failed",
+    "newMeasurementRule": "Started members still require complete raw receipts; only positive nonstart proof admits zero. No estimate for unknown work."
+  },
+  "policy": "Original reports and failures untouched; no business-model retry. Final team censored at input limit, not replaced. Postcohort compatibility repair not backported to paid samples."
+}
