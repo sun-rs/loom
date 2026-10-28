@@ -1,0 +1,352 @@
+{
+  "schema": "loom-three-cli-acceptance/v1",
+  "verdict": "functional_complete_after_one_protocol_clarification",
+  "unassistedGatePassed": false,
+  "sourceRevisionAtStart": "201223f0595f0d77d835eee247ca19677be97b50",
+  "sourceScope": "AGY catalog timeout repair; native-final clarification subsequently added to standing guide, not claimed paid-verified for fresh sessions",
+  "members": {
+    "opencode": {
+      "model": "deepseek/deepseek-flash",
+      "effort": "low",
+      "actualModelRoute": null,
+      "version": "1.19.4",
+      "instanceId": "principal_34389b03-16f0-40dd-9a0b-500835d4c9ca",
+      "sessionId": "ses_e7ef20070ffeBbr410d5j4ULic"
+    },
+    "claude": {
+      "model": "sonnet",
+      "effort": "low",
+      "actualModelRoute": "kimi-code-cn/k3.1-pro[1m]",
+      "version": "2.1.311",
+      "instanceId": "principal_2fd755b6-0b57-43f4-a8a4-0585967eb7bf",
+      "sessionId": "ba9e3a3e-8c92-4cd6-8622-f7cb228430f5"
+    },
+    "agy": {
+      "model": "gemini-3.8-flash-low",
+      "effort": "low",
+      "actualModelRoute": null,
+      "version": "1.4.8",
+      "instanceId": "principal_d30db254-d3aa-46ff-a6ea-23b0143d10a3",
+      "sessionId": "3ecfc6f4-c1aa-4a4b-9340-22520897ead8"
+    }
+  },
+  "business": {
+    "allThreeDesigned": true,
+    "opencodeImplemented": true,
+    "bothReviewedActualFilesAndRanChecks": true,
+    "claudeFoundConcreteBug": true,
+    "opencodeFixedBug": true,
+    "claudeRetestedAndAccepted": true,
+    "coordinatorDeliveredFinal": true,
+    "selfTests": 37,
+    "agyIndependentTests": 12,
+    "agyFinalArtifactChecksRerunByLead": 12,
+    "externalChecks": {
+      "passed": 40,
+      "total": 40
+    },
+    "limitation": "AGY accepted initial implementation; Claude re-reviewed the final parser fix; lead reran AGY checks on final artifact"
+  },
+  "assistance": {
+    "humanMessages": 2,
+    "initialPhase": {
+      "status": "quiescent-quality-pending",
+      "usage": {
+        "members": {
+          "opencode": {
+            "input": 51629,
+            "output": 1417,
+            "cached": 39296,
+            "generations": 4
+          },
+          "claude": {
+            "input": 26696,
+            "output": 1216,
+            "cached": 13056,
+            "generations": 2
+          },
+          "agy": {
+            "input": 50753,
+            "output": 1230,
+            "cached": 0,
+            "generations": 4
+          }
+        },
+        "total": {
+          "input": 129078,
+          "cached": 52352,
+          "output": 3863,
+          "generations": 10,
+          "allMembersObserved": true
+        },
+        "gaps": []
+      },
+      "implementationPassed": false
+    },
+    "continuation": "one Human message clarified multi-recipient reply addressing; same instances, native session IDs, original task/workspace and cumulative accounting; no code findings supplied by Human",
+    "noReplacementSessions": true
+  },
+  "usage": {
+    "members": {
+      "opencode": {
+        "input": 648502,
+        "output": 17369,
+        "cached": 629376,
+        "generations": 24
+      },
+      "claude": {
+        "input": 236559,
+        "output": 5185,
+        "cached": 200448,
+        "generations": 10
+      },
+      "agy": {
+        "input": 278232,
+        "output": 4805,
+        "cached": 170746,
+        "generations": 13
+      }
+    },
+    "total": {
+      "input": 1163293,
+      "cached": 1000570,
+      "output": 27359,
+      "generations": 47,
+      "allMembersObserved": true
+    },
+    "gaps": []
+  },
+  "nativeReconciliation": {
+    "opencode": {
+      "available": true,
+      "matches": true
+    },
+    "claude": {
+      "available": true,
+      "matches": true
+    },
+    "agy": {
+      "available": true,
+      "matches": true
+    }
+  },
+  "nativeAuditError": null,
+  "runCount": 12,
+  "allRunsExitedWithoutError": true,
+  "routing": [
+    {
+      "seq": 8,
+      "eventId": "event_05de9577-81c1-42dd-af3f-dd07de342a69",
+      "actorId": "principal_7f6ebdb1-1ea7-4f5c-8436-d65f94389a1d",
+      "activationId": null,
+      "mentions": ["principal_34389b03-16f0-40dd-9a0b-500835d4c9ca"],
+      "replyReturn": null,
+      "actualInboxRecipients": [
+        "principal_34389b03-16f0-40dd-9a0b-500835d4c9ca"
+      ]
+    },
+    {
+      "seq": 13,
+      "eventId": "event_464d9286-c8e3-45c0-bb20-c4eaf9796527",
+      "actorId": "principal_34389b03-16f0-40dd-9a0b-500835d4c9ca",
+      "activationId": "activation_697d33b3-ff13-4eb6-9782-070d5c4fd66f",
+      "mentions": [
+        "principal_2fd755b6-0b57-43f4-a8a4-0585967eb7bf",
+        "principal_d30db254-d3aa-46ff-a6ea-23b0143d10a3"
+      ],
+      "replyReturn": null,
+      "actualInboxRecipients": [
+        "principal_2fd755b6-0b57-43f4-a8a4-0585967eb7bf",
+        "principal_d30db254-d3aa-46ff-a6ea-23b0143d10a3"
+      ]
+    },
+    {
+      "seq": 25,
+      "eventId": "event_871a38c5-d388-4099-be7a-97865c05f25d",
+      "actorId": "principal_d30db254-d3aa-46ff-a6ea-23b0143d10a3",
+      "activationId": "activation_72952683-35e2-4c95-8b0d-03ee62a25f39",
+      "mentions": [],
+      "replyReturn": null,
+      "actualInboxRecipients": []
+    },
+    {
+      "seq": 29,
+      "eventId": "event_9be0f579-6734-43ed-9be3-bef3d945d999",
+      "actorId": "principal_2fd755b6-0b57-43f4-a8a4-0585967eb7bf",
+      "activationId": "activation_0c45d787-4640-4363-bc13-9bc4857ed608",
+      "mentions": [],
+      "replyReturn": null,
+      "actualInboxRecipients": []
+    },
+    {
+      "seq": 33,
+      "eventId": "event_03f1e17d-fa2e-4b30-885d-1997f64f2fd8",
+      "actorId": "principal_7f6ebdb1-1ea7-4f5c-8436-d65f94389a1d",
+      "activationId": null,
+      "mentions": ["principal_34389b03-16f0-40dd-9a0b-500835d4c9ca"],
+      "replyReturn": null,
+      "actualInboxRecipients": [
+        "principal_34389b03-16f0-40dd-9a0b-500835d4c9ca"
+      ]
+    },
+    {
+      "seq": 38,
+      "eventId": "event_56f29e27-9224-4a1b-ad3e-2a1b81b435f9",
+      "actorId": "principal_34389b03-16f0-40dd-9a0b-500835d4c9ca",
+      "activationId": "activation_35c96ec8-2f11-40f2-b585-596621bfd921",
+      "mentions": [
+        "principal_2fd755b6-0b57-43f4-a8a4-0585967eb7bf",
+        "principal_d30db254-d3aa-46ff-a6ea-23b0143d10a3",
+        "principal_34389b03-16f0-40dd-9a0b-500835d4c9ca"
+      ],
+      "replyReturn": null,
+      "actualInboxRecipients": [
+        "principal_2fd755b6-0b57-43f4-a8a4-0585967eb7bf",
+        "principal_d30db254-d3aa-46ff-a6ea-23b0143d10a3"
+      ]
+    },
+    {
+      "seq": 50,
+      "eventId": "event_20a4da7d-2972-4409-8c5c-5bdbc91b54c1",
+      "actorId": "principal_d30db254-d3aa-46ff-a6ea-23b0143d10a3",
+      "activationId": "activation_8875055a-51a3-4466-b34c-d50528b93c91",
+      "mentions": ["principal_34389b03-16f0-40dd-9a0b-500835d4c9ca"],
+      "replyReturn": null,
+      "actualInboxRecipients": [
+        "principal_34389b03-16f0-40dd-9a0b-500835d4c9ca"
+      ]
+    },
+    {
+      "seq": 58,
+      "eventId": "event_f8cf7c00-53cf-4dbf-8c89-d07ea6b6f01f",
+      "actorId": "principal_34389b03-16f0-40dd-9a0b-500835d4c9ca",
+      "activationId": "activation_7d6a59df-8de0-4595-9b0b-89b350081e0e",
+      "mentions": [
+        "principal_d30db254-d3aa-46ff-a6ea-23b0143d10a3",
+        "principal_2fd755b6-0b57-43f4-a8a4-0585967eb7bf"
+      ],
+      "replyReturn": null,
+      "actualInboxRecipients": [
+        "principal_2fd755b6-0b57-43f4-a8a4-0585967eb7bf",
+        "principal_d30db254-d3aa-46ff-a6ea-23b0143d10a3"
+      ]
+    },
+    {
+      "seq": 66,
+      "eventId": "event_13d4fdb3-e24f-49b5-be18-57c5ef1143b8",
+      "actorId": "principal_d30db254-d3aa-46ff-a6ea-23b0143d10a3",
+      "activationId": "activation_b34e89ae-48ab-4346-a032-c3f17ce1be13",
+      "mentions": ["principal_2fd755b6-0b57-43f4-a8a4-0585967eb7bf"],
+      "replyReturn": null,
+      "actualInboxRecipients": [
+        "principal_2fd755b6-0b57-43f4-a8a4-0585967eb7bf"
+      ]
+    },
+    {
+      "seq": 70,
+      "eventId": "event_a48643d7-e250-4c80-aae3-27f05f18e3d3",
+      "actorId": "principal_2fd755b6-0b57-43f4-a8a4-0585967eb7bf",
+      "activationId": "activation_64e43036-0d86-4014-b7dd-ddf11da6a7a9",
+      "mentions": ["principal_34389b03-16f0-40dd-9a0b-500835d4c9ca"],
+      "replyReturn": null,
+      "actualInboxRecipients": [
+        "principal_34389b03-16f0-40dd-9a0b-500835d4c9ca"
+      ]
+    },
+    {
+      "seq": 82,
+      "eventId": "event_eac99db6-47b6-4c30-9234-f73768915a6d",
+      "actorId": "principal_34389b03-16f0-40dd-9a0b-500835d4c9ca",
+      "activationId": "activation_31075c31-d369-48c8-852b-86ebcf7ea2fb",
+      "mentions": ["principal_2fd755b6-0b57-43f4-a8a4-0585967eb7bf"],
+      "replyReturn": null,
+      "actualInboxRecipients": [
+        "principal_2fd755b6-0b57-43f4-a8a4-0585967eb7bf"
+      ]
+    },
+    {
+      "seq": 86,
+      "eventId": "event_d2e08aef-ca80-4b16-a939-921ff00af856",
+      "actorId": "principal_2fd755b6-0b57-43f4-a8a4-0585967eb7bf",
+      "activationId": "activation_82109b02-c3a4-4a44-ab8d-0f9f21751b2d",
+      "mentions": [],
+      "replyReturn": null,
+      "actualInboxRecipients": []
+    },
+    {
+      "seq": 94,
+      "eventId": "event_9acfb673-26c8-42d3-8c4c-9ca0a68adc16",
+      "actorId": "principal_2fd755b6-0b57-43f4-a8a4-0585967eb7bf",
+      "activationId": "activation_b0b14469-7a5a-464f-aec4-cfd832c2f368",
+      "mentions": [],
+      "replyReturn": {
+        "sourceEventId": "event_eac99db6-47b6-4c30-9234-f73768915a6d",
+        "participantId": "principal_34389b03-16f0-40dd-9a0b-500835d4c9ca"
+      },
+      "actualInboxRecipients": [
+        "principal_34389b03-16f0-40dd-9a0b-500835d4c9ca"
+      ]
+    },
+    {
+      "seq": 102,
+      "eventId": "event_b6bdbfb2-a8bf-426e-ad11-4f5359146a27",
+      "actorId": "principal_34389b03-16f0-40dd-9a0b-500835d4c9ca",
+      "activationId": "activation_712a19c5-71f2-4c2f-aa0b-2284b9b1c12c",
+      "mentions": [],
+      "replyReturn": null,
+      "actualInboxRecipients": []
+    }
+  ],
+  "processes": [
+    {
+      "pid": 42394,
+      "kind": "owned-isolated-daemon",
+      "startedAt": "2026-10-28T05:46:22.618Z",
+      "finishedAt": "2026-10-28T05:46:23.889Z",
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "aliveAtAudit": false
+    },
+    {
+      "pid": 48298,
+      "kind": "owned-isolated-daemon",
+      "startedAt": "2026-10-28T05:48:25.485Z",
+      "finishedAt": "2026-10-28T05:48:26.817Z",
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "aliveAtAudit": false
+    },
+    {
+      "pid": 49999,
+      "kind": "owned-isolated-daemon",
+      "startedAt": "2026-10-28T05:48:58.034Z",
+      "finishedAt": "2026-10-28T05:50:31.386Z",
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "aliveAtAudit": false
+    },
+    {
+      "pid": 65970,
+      "kind": "owned-isolated-daemon",
+      "startedAt": "2026-10-28T05:54:39.645Z",
+      "finishedAt": "2026-10-28T05:58:43.411Z",
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "aliveAtAudit": false
+    }
+  ],
+  "paidCostRatio": null,
+  "accountingScope": "three native main sessions; exact per-response tokens including cache, AGY results cumulative totals never summed. No money ratio, no native benchmark. AGY automatic memory and full child/compaction accounting unverified.",
+  "startedAt": "2026-10-28T05:48:48.931Z",
+  "finishedAt": "2026-10-28T05:58:45.759Z",
+  "resultSha256": "d5c830c3afc8612dcc3fffba2fff4a1e9a6051ca8f376d7549217a4c58d469ae",
+  "formalWorkspaceUsedForTests": false
+}

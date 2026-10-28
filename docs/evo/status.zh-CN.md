@@ -1,6 +1,6 @@
 # Loom 当前主线现状（原 evo）
 
-整理日期：2026-10-27。本页区分当前结论与历史试验，不改变目标合同或补判未通过的验收。文档整理基线为 `fe5d65fc`；后继离线任务报告基于 `937a9ac9`，没有产品部署或新真实模型实验。
+更新日期：2026-10-28。本页区分当前结论与历史试验，不改变目标合同或补判未通过的验收。文档整理基线为 `fe5d65fc`；当前部署及真实模型验收以下文和对应的 dated evidence 为准。
 
 完整原文保留在[截至本日的状态快照](status-history-through-2026-10-27.zh-CN.md)。其中过时的 main 冻结、控制台在用、临时监听地址和早期“下一步”均不再作为当前指令；历史失败及限制仍可追溯。第一至六十五节另见[九月日志](log/status-history-2026-09.zh-CN.md)。
 
@@ -9,8 +9,8 @@
 - `main` 是当前 Loom；`evo` 已晋升并移除；`chatbox` 独立承载 `rah/main` 导入，不参与 Loom 构建。见[分支记录](branch-promotion.zh-CN.md)。
 - 唯一产品前端为 `frontends/raft`。旧复刻 UI 和 `apps/console` 已退役，不恢复其路由、构建或测试入口。
 - 保留部署标签 `com.loom.evo`、数据目录 `~/.loom/evo`、日志目录及频道主目录 `~/.loom/channel-workspaces/`。这些名称不是旧分支残留任务，不能为整洁搬迁数据。
-- 最近正式后端部署为 `a3a49859`，Web 使用已验收的 `5ce14ec4` 构建（资源哈希 `307adca9…`）；全局频道退役及 Codex 终态排空修复后，服务重启、0频道空态已复查。保留本机 Codex warm / Kimi ACP native-final 与 Claude/OpenCode 既有选择；库默认仍 opt-in。[当前清理记录](../audits/2026-10-28-all-channel-retirement.zh-CN.md)，[此前传输验收](evidence/2026-10-28-native-repair/deployment.json)。
-- HTTP 4176、LAN HTTPS 4178 和隔离预览的部署记录见[HTTPS接入](evidence/2026-10-22-https-trusted/summary.json)、[预览边界](evidence/2026-10-23-https-preview/summary.json)。本次未重新探测监听地址、数据库版本或运行时设置；部署前仍须读取实际状态，不沿用旧快照里的临时 loopback 配置。
+- 最近正式后端部署为 `e4dcdda7`，Web 使用已验收的 `5ce14ec4` 构建（资源哈希 `307adca9…`）；AGY目录限时修正及native-final通信说明补全后，已备份重启、核对账本及真实Firefox空频道页面。[部署收据](evidence/2026-10-28-three-cli-team/deployment.json)。保留本机 Codex warm / Kimi ACP native-final 与 Claude/OpenCode 既有选择；库默认仍 opt-in。[当前清理记录](../audits/2026-10-28-all-channel-retirement.zh-CN.md)，[此前传输验收](evidence/2026-10-28-native-repair/deployment.json)。
+- HTTP 4176、LAN HTTPS 4178 和隔离预览的部署记录见[HTTPS接入](evidence/2026-10-22-https-trusted/summary.json)、[预览边界](evidence/2026-10-23-https-preview/summary.json)。本轮复查了 HTTP 4176 页面和既有 launchd 配置，HTTPS/Tailscale 真机链路未重新验收；部署前仍须读取实际状态，不沿用旧快照里的临时 loopback 配置。
 
 ## 2. 当前状态
 
@@ -64,7 +64,7 @@ Codex warm/Kimi ACP 本机正式服务采用 native-final；最终三对输入�
 
 ### 下一步优先级
 
-1. **新版本多实例协作对照已执行，未通过闭环**：真实 Herdr / Loom 固定三对已结束，第一对启动器失败保留；另外两对 Herdr 完成，原生输入相差2.09倍。两组Loom代码外部40项检查通过，但分别因旧Worker句柄误用/无新@交接，以及未收尾工具后的恢复草稿阻断而缺少独立评审闭环。四个业务样本账本完整，但没有同质量成功配对，不能发布协作成本倍率。后继定向复现已修复工具终态稍晚于turn/completed时过早终止的问题，64项warm/句柄检查通过；后继四运行时复验仍未通过：owner 后续确认 Codex 更新后宿主的 macOS 首次运行许可未及时点击；禁用宿主不能回退到 shell，另有常驻退出码测试器缺陷已修；AGY 设计请求自动返回仅局部通过。详见[复验](evidence/2026-10-28-team-retest/README.md)。后继已接入免费真实工具预检：Kimi组合完成代码/评审闭环但有临时文件范围瑕疵，OpenCode组合预算止损，AGY组合准备恢复干扰后仅完成讨论；仍无同质量成本倍率。[新批结果](evidence/2026-10-28-tool-preflight-team/README.md)。不把免费时序复现当作付费样本通过。[本批报告](evidence/2026-10-28-team-closeout/README.md)。Herdr确实可用，先前环境误判已撤回。
+1. **三方协作已取得一次无需人工恢复的完整回归**：OpenCode／Claude CLI（实际 Kimi）／AGY 新 session 自行完成设计、实现、独立评审与交付，外部40/40、三家原流用量对齐；此前同组停顿和一次恢复仍完整保留。[最终三方报告](evidence/2026-10-28-three-cli-team/README.md)。AGY目录5秒截断修正为15秒，多人回复及状态点名规则已补入native-final说明；Kernel自动返回范围不扩大。此前[Herdr/Loom失败对照](evidence/2026-10-28-team-closeout/README.md)、[四运行时复验](evidence/2026-10-28-tool-preflight-team/README.md)不补判通过。尚无同质量重复原生/Herdr协作成本倍率，不把这次单任务成功外推为全场景稳定性或效率门禁通过。
 2. **部署选择可移植性**：当前本机显式开关已验证，新的安装环境仍使用库默认；正式推广前须明确支持矩阵和默认选择迁移，不在清理时静默改变所有运行时。
 3. **已知平台限制**：AGY自动记忆禁用未证实，不做不公平成本对照；外部 Fork/Side 接口缺失仍明确不支持。子代理总账、极长历史、真机与远端限制保留 §3，不因本轮短任务成功消失。
 

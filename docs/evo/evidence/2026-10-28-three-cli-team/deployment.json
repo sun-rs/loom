@@ -1,0 +1,22 @@
+{
+  "sourceRevision": "e4dcdda70abd52298d2802f3835a1bfbc2a521db",
+  "oldPid": 53205,
+  "newPid": 348,
+  "backup": "/Users/sun/.loom/evo/backups/pre-agy-catalog-1793167553195",
+  "ledgerUnchanged": true,
+  "at": "2026-10-28T06:06:14.465Z",
+  "webAssets": "/Users/sun/Code/repos/rah_os/.workbench-web/307adca99882d3b31deea00d860f589e2aa82235ca76b1fd823a2161368510a5",
+  "selection": {
+    "codex": "warm app-server native-final",
+    "kimi": "ACP native-final"
+  },
+  "scope": "AGY catalog deadline repair and native-final communication clarification; existing data and web assets retained",
+  "plistSha256": "c756fb11e3989d175c6cf4ba0bac60a1bbd386dcefa09f9a3ca03a9225ee0797",
+  "realBrowser": {
+    "browser": "local Firefox",
+    "url": "http://127.0.0.1:4176",
+    "loadedProductNavigation": true,
+    "emptyChannelState": true,
+    "temporaryCheckTabClosed": true
+  }
+}

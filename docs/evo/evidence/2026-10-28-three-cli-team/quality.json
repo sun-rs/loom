@@ -1,0 +1,227 @@
+{
+  "clean": {
+    "externalChecksPassed": 40,
+    "externalChecksTotal": 40,
+    "implementationTests": 32,
+    "claudeIndependentTests": 6,
+    "claudeChecksInclude": "30 fixed-seed randomized comparisons with independent Fraction oracle and 2000-row precision case",
+    "agyIndependentTests": 15,
+    "bothReviewersReadFilesAndExecutedTests": true,
+    "bothExplicitlyAccepted": true,
+    "coordinatorReranAllThreeSuitesAndDeliveredFinal": true
+  },
+  "fixedExternalEvaluation": {
+    "round": 12,
+    "passed": true,
+    "checks": [
+      {
+        "id": "basic",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "many-and-zero",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "empty",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "cancelled-skips-validation",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "tax-half-up",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "aggregate-tax-once",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "discount-before-tax",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "fractional-discounts-aggregate",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "invalid-negative",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "invalid-nan",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "invalid-float",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "invalid-boolean",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "invalid-exponent",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "invalid-whitespace",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "invalid-too-many-decimals",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "missing-price",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "discount-over-100",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "bad-cancelled",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "tax-over-100",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "groups-grand-not-sum-rounded",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "missing-groups-sort",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "cli-file",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "cli-stdin",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "cli-error",
+        "passed": true,
+        "exitCode": 1
+      },
+      {
+        "id": "no-per-line-rounding",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "empty-grouped",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "large-decimal-precision",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "integer-over-range",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "negative-price",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "negative-discount",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "tax-float",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "tax-on-exact-unrounded-net",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "unsupported-grouping",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "cli-malformed-json",
+        "passed": true,
+        "exitCode": 1
+      },
+      {
+        "id": "cli-unknown-request-key",
+        "passed": true,
+        "exitCode": 1
+      },
+      {
+        "id": "cli-no-argument",
+        "passed": true,
+        "exitCode": 2
+      },
+      {
+        "id": "cli-missing-file",
+        "passed": true,
+        "exitCode": 1
+      },
+      {
+        "id": "cli-two-arguments",
+        "passed": true,
+        "exitCode": 2
+      },
+      {
+        "id": "unrelated-active-false-counted",
+        "passed": true,
+        "exitCode": 0
+      },
+      {
+        "id": "unrelated-active-false-still-validates",
+        "passed": true,
+        "exitCode": 0
+      }
+    ],
+    "functionalPassed": true,
+    "selfTestsPassed": true,
+    "selfTestsExitCode": 0,
+    "selfTestsFailureKind": null,
+    "selfTestsDiagnostic": "................................\n----------------------------------------------------------------------\nRan 32 tests in 0.468s\n\nOK\n"
+  },
+  "originalFinding": "assisted-quality.json",
+  "nativeAllMatch": true,
+  "finalMessage": "@owner 任务完成，两位评审均已独立完成并明确接受。\n\n交付内容：\n- `invoice.py`：实现 `summarize(rows, tax_percent=\"0\", group_by=None)`，覆盖需求 1–12：Decimal 高精度精确聚合、仅一次 `ROUND_HALF_UP` 舍入、多行/空行/零数量、cancelled 优先跳过、折扣后计税、独立舍入 total、严格数值/结构校验、category 分组排序与 uncategorized 归一、文件及 `-` stdin CLI、统一错误处理。\n- `tests/test_invoice.py`：32 个 unittest，覆盖 API、精度、舍入、校验、分组与 CLI 边界。\n- `README.md`：API、舍入/校验规则、分组行为及文件/stdin 示例。\n- `review_checks/claude/`（6 个检查，含 Fraction 参照与 2000 行精度）与 `review_checks/agy/`（15 个 CLI/API 检查）由评审独立添加。\n\n最终验证（我本人重跑）：\n- `python3 -m unittest discover -s tests` → 32 tests OK\n- `python3 -m unittest discover -s review_checks/claude` → 6 tests OK\n- `python3 -m unittest discover -s review_checks/agy` → 15 tests OK\n\n两位评审结论：Code Reviewer-1 与 API Reviewer-1 均明确接受，未发现实现或文档缺陷。开发过程中仅修正过一处我自己测试的预期值，未发现产品缺陷，当前无未解决问题。"
+}

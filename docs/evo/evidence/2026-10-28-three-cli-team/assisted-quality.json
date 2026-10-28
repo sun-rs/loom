@@ -1,0 +1,234 @@
+{
+  "reviewFinding": {
+    "author": "Claude CLI / Kimi K3.1 Pro",
+    "defect": "Global parse_float rejection rejected floats in cancelled rows or ignored extra row keys before business validation",
+    "examples": [
+      "{\"rows\":[{\"cancelled\":true,\"quantity\":1.5}]}",
+      "{\"rows\":[{\"quantity\":1,\"unit_price\":\"1\",\"note\":1.5}]}"
+    ],
+    "fix": "Parse JSON numbers as Decimal, reject them only when a validated business field is read; keep cancelled/ignored fields unread",
+    "regressionsAdded": true
+  },
+  "evidence": {
+    "designAndReviews": "canonical channel messages and raw CLI tool records",
+    "AGYChecks": "review_checks/agy/test_agy_checks.py; actual run_command DONE receipts show 35 and 12 tests; lead reran 12 after fix",
+    "ClaudeChecks": "transcript shows source reads, reproduced stdin cases and final 37-test rerun",
+    "finalChecks": {
+      "round": 12,
+      "passed": true,
+      "checks": [
+        {
+          "id": "basic",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "many-and-zero",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "empty",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "cancelled-skips-validation",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "tax-half-up",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "aggregate-tax-once",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "discount-before-tax",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "fractional-discounts-aggregate",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "invalid-negative",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "invalid-nan",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "invalid-float",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "invalid-boolean",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "invalid-exponent",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "invalid-whitespace",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "invalid-too-many-decimals",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "missing-price",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "discount-over-100",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "bad-cancelled",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "tax-over-100",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "groups-grand-not-sum-rounded",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "missing-groups-sort",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "cli-file",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "cli-stdin",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "cli-error",
+          "passed": true,
+          "exitCode": 1
+        },
+        {
+          "id": "no-per-line-rounding",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "empty-grouped",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "large-decimal-precision",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "integer-over-range",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "negative-price",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "negative-discount",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "tax-float",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "tax-on-exact-unrounded-net",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "unsupported-grouping",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "cli-malformed-json",
+          "passed": true,
+          "exitCode": 1
+        },
+        {
+          "id": "cli-unknown-request-key",
+          "passed": true,
+          "exitCode": 1
+        },
+        {
+          "id": "cli-no-argument",
+          "passed": true,
+          "exitCode": 1
+        },
+        {
+          "id": "cli-missing-file",
+          "passed": true,
+          "exitCode": 1
+        },
+        {
+          "id": "cli-two-arguments",
+          "passed": true,
+          "exitCode": 1
+        },
+        {
+          "id": "unrelated-active-false-counted",
+          "passed": true,
+          "exitCode": 0
+        },
+        {
+          "id": "unrelated-active-false-still-validates",
+          "passed": true,
+          "exitCode": 0
+        }
+      ],
+      "functionalPassed": true,
+      "selfTestsPassed": true,
+      "selfTestsExitCode": 0,
+      "selfTestsFailureKind": null,
+      "selfTestsDiagnostic": ".....................................\n----------------------------------------------------------------------\nRan 37 tests in 0.906s\n\nOK\n"
+    }
+  },
+  "limits": [
+    "Single task sample; no repeatability/model ranking claim",
+    "Initial autonomous workflow stalled at intentional multi-recipient return boundary; assisted continuation reported separately",
+    "AGY initial Decimal(str(Fraction)) suggestion is not generally valid; implemented integer rounding avoids it",
+    "Independent tests are not exhaustive; all-source/permission/long-history/Fork/Side coverage not claimed"
+  ]
+}

@@ -1,0 +1,341 @@
+{
+  "schema": "loom-three-cli-batch-acceptance/v2",
+  "verdict": "fresh_three_cli_workflow_completed_without_human_recovery",
+  "originalAssisted": "assisted-summary.json (retained; includes initial autonomous stall and one recovery)",
+  "cleanRegression": {
+    "verdict": "complete_without_human_recovery",
+    "sourceRevisionAtStart": "e4dcdda70abd52298d2802f3835a1bfbc2a521db",
+    "humanMessageCount": 1,
+    "runCount": 11,
+    "allRunsSucceeded": true,
+    "members": {
+      "opencode": {
+        "model": "deepseek/deepseek-flash",
+        "effort": "low",
+        "actualModelRoute": null,
+        "version": "1.19.4",
+        "instanceId": "principal_1fa885fd-9dae-4dce-b2b0-71f8604674a6",
+        "sessionId": "ses_e7ee2d4c3ffed8aSV5l24sUahJ"
+      },
+      "claude": {
+        "model": "sonnet",
+        "effort": "low",
+        "actualModelRoute": "kimi-code-cn/k3.1-pro[1m]",
+        "version": "2.1.311",
+        "instanceId": "principal_003d291b-3d03-4eb9-b34e-5cafafd14ee8",
+        "sessionId": "0153cef1-2249-40bf-bfd1-4cc0caca4bb2"
+      },
+      "agy": {
+        "model": "gemini-3.8-flash-low",
+        "effort": "low",
+        "actualModelRoute": null,
+        "version": "1.4.8",
+        "instanceId": "principal_8badb7bb-e779-40ea-a894-605f56345f30",
+        "sessionId": "ca2d5a00-a772-4937-ade4-b41744ed39ac"
+      }
+    },
+    "usage": {
+      "members": {
+        "opencode": {
+          "input": 594692,
+          "output": 19817,
+          "cached": 573440,
+          "generations": 22
+        },
+        "claude": {
+          "input": 423411,
+          "output": 6764,
+          "cached": 389888,
+          "generations": 16
+        },
+        "agy": {
+          "input": 228925,
+          "output": 4593,
+          "cached": 139108,
+          "generations": 12
+        }
+      },
+      "total": {
+        "input": 1247028,
+        "cached": 1102436,
+        "output": 31174,
+        "generations": 50,
+        "allMembersObserved": true
+      },
+      "gaps": []
+    },
+    "nativeUsage": {
+      "opencode": {
+        "input": 594692,
+        "cached": 573440,
+        "output": 19817,
+        "generations": 22,
+        "modelCheck": {
+          "assistants": 22,
+          "compactions": 0
+        },
+        "childSessions": 0
+      },
+      "claude": {
+        "input": 423411,
+        "cached": 389888,
+        "output": 6764,
+        "generations": 16,
+        "models": ["k3.1-pro"],
+        "efforts": ["low"]
+      },
+      "agy": {
+        "input": 228925,
+        "cached": 139108,
+        "output": 4593,
+        "generations": 12,
+        "sessionIds": ["ca2d5a00-a772-4937-ade4-b41744ed39ac"]
+      }
+    },
+    "nativeReconciliation": {
+      "opencode": {
+        "available": true,
+        "matches": true
+      },
+      "claude": {
+        "available": true,
+        "matches": true
+      },
+      "agy": {
+        "available": true,
+        "matches": true
+      }
+    },
+    "quality": {
+      "externalChecksPassed": 40,
+      "externalChecksTotal": 40,
+      "implementationTests": 32,
+      "claudeIndependentTests": 6,
+      "claudeChecksInclude": "30 fixed-seed randomized comparisons with independent Fraction oracle and 2000-row precision case",
+      "agyIndependentTests": 15,
+      "bothReviewersReadFilesAndExecutedTests": true,
+      "bothExplicitlyAccepted": true,
+      "coordinatorReranAllThreeSuitesAndDeliveredFinal": true
+    },
+    "routing": [
+      {
+        "seq": 8,
+        "eventId": "event_1069a689-a26a-479d-b4e5-7dc6d3dae6ea",
+        "actorId": "principal_1b0f3206-ba0b-4530-88b1-26c463e35d85",
+        "mentions": ["principal_1fa885fd-9dae-4dce-b2b0-71f8604674a6"],
+        "replyReturn": null,
+        "actualInboxRecipients": [
+          "principal_1fa885fd-9dae-4dce-b2b0-71f8604674a6"
+        ]
+      },
+      {
+        "seq": 13,
+        "eventId": "event_593d506c-1b51-46e8-afb1-6013b7c8a895",
+        "actorId": "principal_1fa885fd-9dae-4dce-b2b0-71f8604674a6",
+        "mentions": [
+          "principal_003d291b-3d03-4eb9-b34e-5cafafd14ee8",
+          "principal_8badb7bb-e779-40ea-a894-605f56345f30"
+        ],
+        "replyReturn": null,
+        "actualInboxRecipients": [
+          "principal_003d291b-3d03-4eb9-b34e-5cafafd14ee8",
+          "principal_8badb7bb-e779-40ea-a894-605f56345f30"
+        ]
+      },
+      {
+        "seq": 25,
+        "eventId": "event_da0dbfd9-aed3-40dd-acb3-7ae7a2826537",
+        "actorId": "principal_8badb7bb-e779-40ea-a894-605f56345f30",
+        "mentions": ["principal_1fa885fd-9dae-4dce-b2b0-71f8604674a6"],
+        "replyReturn": null,
+        "actualInboxRecipients": [
+          "principal_1fa885fd-9dae-4dce-b2b0-71f8604674a6"
+        ]
+      },
+      {
+        "seq": 33,
+        "eventId": "event_fb2c7639-3377-4446-b3c6-eaa447742f99",
+        "actorId": "principal_1fa885fd-9dae-4dce-b2b0-71f8604674a6",
+        "mentions": [],
+        "replyReturn": {
+          "sourceEventId": "event_da0dbfd9-aed3-40dd-acb3-7ae7a2826537",
+          "participantId": "principal_8badb7bb-e779-40ea-a894-605f56345f30"
+        },
+        "actualInboxRecipients": [
+          "principal_8badb7bb-e779-40ea-a894-605f56345f30"
+        ]
+      },
+      {
+        "seq": 41,
+        "eventId": "event_779140d1-687a-4e44-8177-e7aa777d1da4",
+        "actorId": "principal_8badb7bb-e779-40ea-a894-605f56345f30",
+        "mentions": [],
+        "replyReturn": null,
+        "actualInboxRecipients": []
+      },
+      {
+        "seq": 45,
+        "eventId": "event_2fd865b3-e55d-41b3-965b-21a26d119ab7",
+        "actorId": "principal_003d291b-3d03-4eb9-b34e-5cafafd14ee8",
+        "mentions": ["principal_1fa885fd-9dae-4dce-b2b0-71f8604674a6"],
+        "replyReturn": null,
+        "actualInboxRecipients": [
+          "principal_1fa885fd-9dae-4dce-b2b0-71f8604674a6"
+        ]
+      },
+      {
+        "seq": 53,
+        "eventId": "event_16105289-5a81-4943-bc96-0b04f92c1484",
+        "actorId": "principal_1fa885fd-9dae-4dce-b2b0-71f8604674a6",
+        "mentions": [
+          "principal_003d291b-3d03-4eb9-b34e-5cafafd14ee8",
+          "principal_8badb7bb-e779-40ea-a894-605f56345f30"
+        ],
+        "replyReturn": null,
+        "actualInboxRecipients": [
+          "principal_003d291b-3d03-4eb9-b34e-5cafafd14ee8",
+          "principal_8badb7bb-e779-40ea-a894-605f56345f30"
+        ]
+      },
+      {
+        "seq": 65,
+        "eventId": "event_3e87b652-696a-4ace-a24a-43214fa3f231",
+        "actorId": "principal_8badb7bb-e779-40ea-a894-605f56345f30",
+        "mentions": ["principal_1fa885fd-9dae-4dce-b2b0-71f8604674a6"],
+        "replyReturn": null,
+        "actualInboxRecipients": [
+          "principal_1fa885fd-9dae-4dce-b2b0-71f8604674a6"
+        ]
+      },
+      {
+        "seq": 73,
+        "eventId": "event_eb2fffa4-9855-46fa-8045-d3af69936354",
+        "actorId": "principal_1fa885fd-9dae-4dce-b2b0-71f8604674a6",
+        "mentions": [],
+        "replyReturn": {
+          "sourceEventId": "event_3e87b652-696a-4ace-a24a-43214fa3f231",
+          "participantId": "principal_8badb7bb-e779-40ea-a894-605f56345f30"
+        },
+        "actualInboxRecipients": [
+          "principal_8badb7bb-e779-40ea-a894-605f56345f30"
+        ]
+      },
+      {
+        "seq": 81,
+        "eventId": "event_0e06bc3a-fee8-40f3-a103-04b851118b18",
+        "actorId": "principal_8badb7bb-e779-40ea-a894-605f56345f30",
+        "mentions": [],
+        "replyReturn": null,
+        "actualInboxRecipients": []
+      },
+      {
+        "seq": 85,
+        "eventId": "event_cf69ec52-beda-4a1a-809e-1061370d80be",
+        "actorId": "principal_003d291b-3d03-4eb9-b34e-5cafafd14ee8",
+        "mentions": ["principal_1fa885fd-9dae-4dce-b2b0-71f8604674a6"],
+        "replyReturn": null,
+        "actualInboxRecipients": [
+          "principal_1fa885fd-9dae-4dce-b2b0-71f8604674a6"
+        ]
+      },
+      {
+        "seq": 93,
+        "eventId": "event_3883c029-5a5c-40e5-9c48-7a9ff97804f1",
+        "actorId": "principal_1fa885fd-9dae-4dce-b2b0-71f8604674a6",
+        "mentions": ["principal_1b0f3206-ba0b-4530-88b1-26c463e35d85"],
+        "replyReturn": null,
+        "actualInboxRecipients": []
+      }
+    ],
+    "tasksCreated": 0,
+    "startedAt": "2026-10-28T06:05:23.684Z",
+    "finishedAt": "2026-10-28T06:12:17.542Z",
+    "resultSha256": "3183ef6030d46e99fde3e8b1967f74afd6a8f4a8defb5379a083ef641f7193ad"
+  },
+  "aggregateUsageIncludingOriginalStall": {
+    "input": 2410321,
+    "cached": 2103006,
+    "output": 58533,
+    "generations": 97
+  },
+  "aggregateRuns": 23,
+  "elapsedBatchMinutes": 23.476850000000002,
+  "budget": {
+    "input": 6000000,
+    "output": 150000,
+    "generations": 180,
+    "runs": 45,
+    "minutes": 40
+  },
+  "processes": [
+    {
+      "pid": 42394,
+      "kind": "owned-isolated-daemon",
+      "startedAt": "2026-10-28T05:46:22.618Z",
+      "finishedAt": "2026-10-28T05:46:23.889Z",
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "aliveAtAudit": false,
+      "aliveAtFinalAudit": false
+    },
+    {
+      "pid": 48298,
+      "kind": "owned-isolated-daemon",
+      "startedAt": "2026-10-28T05:48:25.485Z",
+      "finishedAt": "2026-10-28T05:48:26.817Z",
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "aliveAtAudit": false,
+      "aliveAtFinalAudit": false
+    },
+    {
+      "pid": 49999,
+      "kind": "owned-isolated-daemon",
+      "startedAt": "2026-10-28T05:48:58.034Z",
+      "finishedAt": "2026-10-28T05:50:31.386Z",
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "aliveAtAudit": false,
+      "aliveAtFinalAudit": false
+    },
+    {
+      "pid": 65970,
+      "kind": "owned-isolated-daemon",
+      "startedAt": "2026-10-28T05:54:39.645Z",
+      "finishedAt": "2026-10-28T05:58:43.411Z",
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "aliveAtAudit": false,
+      "aliveAtFinalAudit": false
+    },
+    {
+      "pid": 98872,
+      "kind": "owned-isolated-daemon",
+      "startedAt": "2026-10-28T06:05:32.405Z",
+      "finishedAt": "2026-10-28T06:12:15.688Z",
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "aliveAtFinalAudit": false
+    }
+  ],
+  "formalWorkspaceUsedForTests": false,
+  "costRatio": null,
+  "limits": [
+    "One fresh completed task is functional evidence, not statistical reliability or CLI ranking",
+    "No native/Herdr comparison; no token or money efficiency ratio claimed",
+    "AGY automatic-memory isolation and full child/compaction accounting remain unverified",
+    "Clean regression used the clarified runtime guide plus matching task communication instructions; their individual causal effects were not isolated",
+    "Current multi-recipient request replies explicitly address the requester; automatic return scope was not expanded"
+  ],
+  "remainingMatchingRuntimeProcessesAtAudit": []
+}

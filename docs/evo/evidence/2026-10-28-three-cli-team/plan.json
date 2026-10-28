@@ -1,0 +1,39 @@
+{
+  "schema": "loom-three-cli-team/v1",
+  "authorizedBy": "Owner: 请你使用opencode claude agy进行完整协作测试。",
+  "kind": "one complete three-member functional workflow, not cost benchmark",
+  "members": {
+    "opencode": {
+      "model": "deepseek/deepseek-flash",
+      "effort": "low",
+      "role": "coordinator and implementer",
+      "version": "1.19.4"
+    },
+    "claude": {
+      "model": "sonnet",
+      "effort": "low",
+      "actualModelRoute": "kimi-code-cn/k3.1-pro[1m]",
+      "role": "independent code reviewer",
+      "version": "2.1.311"
+    },
+    "agy": {
+      "model": "gemini-3.8-flash-low",
+      "effort": "low",
+      "role": "independent API and CLI verifier",
+      "version": "1.4.8"
+    }
+  },
+  "task": "same accumulated invoice API/CLI requirements and original external 40-check evaluator",
+  "setup": "validate all catalogs before channel/members; freeze role instructions; no initial reviewer briefing, one Human opener to OpenCode; no SOS or human relay after launch",
+  "budget": {
+    "input": 6000000,
+    "output": 150000,
+    "generations": 180,
+    "runs": 45,
+    "minutes": 40
+  },
+  "budgetPolicy": "observational thresholds between polls; in-flight work can exceed headroom, record all usage; no replacement runs",
+  "automaticMemory": "Claude/OpenCode use product isolation; AGY isolation unverified; no native cost-ratio claim",
+  "subagents": "forbidden for this task",
+  "quality": "all three contribute design; OpenCode implements; both reviewers actually read files and run independent checks; findings resolved; final delivery; original external checks pass"
+}

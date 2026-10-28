@@ -1,0 +1,24 @@
+{
+  "ownerAuthorization": "Same explicit three-CLI complete collaboration request; bounded verification after reproduced guidance defect",
+  "purpose": "one fixed fresh-session regression; retain prior stalled/assisted workflow and costs",
+  "originalPlan": "plan.json",
+  "aggregateBudget": {
+    "input": 6000000,
+    "output": 150000,
+    "generations": 180,
+    "runs": 45,
+    "minutes": 40
+  },
+  "batchStartedAt": "2026-10-28T05:48:48.931Z",
+  "priorUsage": {
+    "input": 1163293,
+    "cached": 1000570,
+    "output": 27359,
+    "generations": 47,
+    "allMembersObserved": true
+  },
+  "priorRuns": 12,
+  "humanMessages": "one opener only; no Human recovery in this regression",
+  "noReplacements": true,
+  "freshIsolation": "new clean data directory, three new instances/sessions, same task and models"
+}
