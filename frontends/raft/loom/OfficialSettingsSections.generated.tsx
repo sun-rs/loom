@@ -16,7 +16,6 @@ import {PROFILE_AVATAR_ACCEPT} from '../packages/web/src/utils/avatarUpload';
 import type {MessageId} from '../packages/web/src/i18n/messages/en';
 import type {NotificationChannel,NotificationUnsupportedReason} from '../packages/web/src/utils/notificationChannel';
 import {useAccountSettings} from './AccountSettings';
-import {useSystemSettings} from './SystemSettings';
 const UNSUPPORTED_REASON_MESSAGE: Record<NotificationUnsupportedReason, MessageId> = {
   "no-window": "settings.notifications.unsupportedHint",
   "no-notification-api": "settings.notifications.unsupportedReason.noNotificationApi",
@@ -106,46 +105,6 @@ export function LoomAboutSection({appVersion}:{appVersion:string}){const {format
           <div className="font-mono text-mono-meta text-foreground-muted">{appVersion}</div>
         </SurfaceListItem>
       </section></div>);}
-export function SystemChannelsSection(){const {formatMessage}=useIntl();const {allChannelHidden,saving,saved,error,dirty,handleSave,handleAllChannelHiddenChange,ready}=useSystemSettings();if(!ready)return null;return (<div className="mb-6">
-      <SectionHeader
-        className="mb-3"
-        icon={<Eye size={16} />}
-        label={formatMessage({ id: "settings.systemChannels.sectionLabel" })}
-      />
-
-      <Card render={<form onSubmit={handleSave} />} className="block space-y-3 p-4">
-        <label className={`flex items-start gap-3 ${saving ? "cursor-not-allowed" : ""}`}>
-          <Checkbox
-            checked={allChannelHidden}
-            disabled={saving}
-            onCheckedChange={handleAllChannelHiddenChange}
-            className="mt-0.5"
-          />
-          <span className="min-w-0">
-            <span className={`block text-subhead font-semibold ${saving ? "text-foreground-disabled" : "text-foreground"}`}>{formatMessage({ id: "settings.systemChannels.hideAllTitle" })}</span>
-            <span className="block text-footnote text-foreground-muted mt-0.5">
-              {formatMessage({ id: "settings.systemChannels.hideAllDescription" })}
-            </span>
-          </span>
-        </label>
-
-        {error && (
-          <Banner intent="warning" density="sm">{error}</Banner>
-        )}
-
-        <Button
-
-          variant="accent" size="sm"
-          type="submit"
-          disabled={!dirty || saving}
-          className="flex items-center gap-1.5"
-        >
-          {saving ? formatMessage({ id: "settings.common.saving" }) : saved ? (
-            <><Check size={14} /> {formatMessage({ id: "settings.common.saved" })}</>
-          ) : formatMessage({ id: "settings.common.save" })}
-        </Button>
-      </Card>
-    </div>);}
 export function LoomWorkspaceMute({currentServer,loading,busy,testing,muting,serverPushMuted,savedServerPushMuted,handleSaveServerMute,handleServerPushMutedChange}:{currentServer:{name:string};loading:boolean;busy:boolean;testing:boolean;muting:boolean;serverPushMuted:boolean;savedServerPushMuted:boolean;handleSaveServerMute:(event:FormEvent)=>void;handleServerPushMutedChange:(checked:boolean)=>void}){const {formatMessage}=useIntl();return <>{currentServer && (
           <div>
             <Separator className="mb-3" />

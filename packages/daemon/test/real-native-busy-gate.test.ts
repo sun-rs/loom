@@ -1,3 +1,4 @@
+import { prepareLocalWorkbench } from "./workbench-channel-fixture.ts";
 import { RuntimeGuideSettings } from "../src/runtime-guide-settings.ts";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
@@ -24,7 +25,6 @@ import type {
 import {
   DaemonApplication,
   localCliRuntimeSpec,
-  prepareLocalWorkbench,
 } from "../src/index.ts";
 
 const cases = [

@@ -13,7 +13,7 @@ test("channel delete binds existing versioned intent and native confirmation, ne
   assert.match(source, /syncUntilCurrent/);
   assert.doesNotMatch(source, /eligibility/);
   assert.match(source, /私密会话/);
-  assert.match(source, /room.slug === "all"/);
+  assert.doesNotMatch(source, /room.slug === "all"/);
   assert.doesNotMatch(source, /fetch\(/);
 });
 test("only the channels section exposes the inline create-channel control", () => {

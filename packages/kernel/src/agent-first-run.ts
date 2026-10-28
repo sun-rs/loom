@@ -1,6 +1,5 @@
 import type { DatabaseSync } from "node:sqlite";
 import type { RoomEvent } from "@rah-os/protocol";
-import type { RoomEventWriter } from "./room-event-writer.ts";
 import { DeliveryProofError, ForbiddenError } from "./errors.ts";
 import { integer, text, type Row } from "./sqlite-row.ts";
 
@@ -23,51 +22,6 @@ export function agentGreetingEnabled(
 
 export function firstRunMessageKey(participantId: string): string {
   return `agent-first-greeting:${participantId}`;
-}
-
-/** Called only from successful new provisioning, inside the same transaction.
- * Never backfill existing Agents or derive work from a provider session. */
-export function requestAgentFirstRun(
-  database: DatabaseSync,
-  events: RoomEventWriter,
-  controlRoomId: string,
-  participantId: string,
-  now: Date,
-): void {
-  const all = database
-    .prepare(
-      `SELECT r.room_id FROM rooms r JOIN rooms c ON c.workspace_id=r.workspace_id
-    WHERE c.room_id=? AND r.kind='channel' AND r.slug='all' AND r.archived_at IS NULL`,
-    )
-    .get(controlRoomId);
-  // Headless workspaces may not expose the product #all channel yet.
-  // Do not redirect a public greeting into the private control Room.
-  if (!all) return;
-  const roomId = text(all, "room_id");
-  // New Agents always initialize and greet; legacy settings remain readable only.
-  const greetingEnabled = true;
-  const messageKey = firstRunMessageKey(participantId);
-  const event = events.append({
-    actorId: "principal_system",
-    aggregateId: participantId,
-    aggregateType: "agent",
-    roomId,
-    type: "agent.first_run_requested",
-    idempotencyKey: `agent-first-run:${participantId}`,
-    payload: {
-      participantId,
-      greetingEnabled,
-      messageKey,
-      body: greetingEnabled
-        ? `First-run request (system-triggered): Read your identity and MEMORY.md index. You have just joined #all, the Workspace-wide channel. Read the room, then post one short, natural self-introduction in your own voice, one or two sentences, so the team knows who you are and what you can help with. Do not paste a fixed template. This is a one-time greeting; afterward return to normal work. Do not create or claim a Task for onboarding. Use "$RAH_WORKER_CLI" worker message-post --top-level --idempotency-key ${messageKey} with your greeting on stdin. Keep this key on retry; a committed greeting is returned without posting again.`
-        : "First-run request (system-triggered): Read your identity and MEMORY.md index. Automatic #all greeting is disabled. Do not send a greeting or create a Task; acknowledge this delivery and return to normal work.",
-    },
-  });
-  events.deriveAttention(
-    event,
-    [{ participantId, reason: "manual" }],
-    now.toISOString(),
-  );
 }
 
 /** A reserved once-only send key binds the actual Room message to this request.

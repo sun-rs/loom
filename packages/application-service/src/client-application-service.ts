@@ -39,10 +39,6 @@ import {
 import { importLegacyChannelMemory } from "./legacy-memory-import.ts";
 import { canonicalAgentIdField } from "@rah-os/protocol";
 import {
-  SystemChannelVisibilityReadSchema,
-  SystemChannelVisibilityUpdateSchema,
-  SystemChannelVisibilityResponseSchema,
-  SystemChannelVisibilityMutationSchema,
 } from "@rah-os/protocol";
 import {
   RuntimeGuideReadSchema,
@@ -488,8 +484,6 @@ const CLIENT_V3_DATA_PATHS = new Set([
   "/principals/me",
   "/principals/update",
   "/rooms/agents/activity/list",
-  "/workspaces/system-channel/read",
-  "/workspaces/system-channel/update",
   "/rooms/archive",
   "/rooms/create",
   "/rooms/delete",
@@ -1556,32 +1550,6 @@ export class ClientApplicationService {
         200,
         ClientRoomMutationResponseSchema.parse(
           this.#human.createRoom(actor, command),
-        ),
-      );
-      return;
-    }
-    if (path === "/workspaces/system-channel/read") {
-      writeJson(
-        response,
-        200,
-        SystemChannelVisibilityResponseSchema.parse(
-          this.#human.getSystemChannelVisibility(
-            actor,
-            parseClientRequest(SystemChannelVisibilityReadSchema, body),
-          ),
-        ),
-      );
-      return;
-    }
-    if (path === "/workspaces/system-channel/update") {
-      writeJson(
-        response,
-        200,
-        SystemChannelVisibilityMutationSchema.parse(
-          this.#human.updateSystemChannelVisibility(
-            actor,
-            parseClientRequest(SystemChannelVisibilityUpdateSchema, body),
-          ),
         ),
       );
       return;

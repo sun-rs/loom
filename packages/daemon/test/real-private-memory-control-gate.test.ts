@@ -1,3 +1,4 @@
+import { prepareLocalWorkbench } from "./workbench-channel-fixture.ts";
 import assert from "node:assert/strict";
 import { existsSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -9,7 +10,6 @@ import type { LocalRuntimeInventoryResponse } from "@rah-os/protocol";
 import {
   DaemonApplication,
   localCliRuntimeSpec,
-  prepareLocalWorkbench,
 } from "../src/index.ts";
 
 // Explicit continuation only: the original gate FAILED at a contaminated

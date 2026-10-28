@@ -12,7 +12,6 @@ import { withInstancePrivateBox } from "./instance-worker-scope.ts";
 import { reconcileDeletedAgentTaskOwners } from "./task-agent-deletion.ts";
 import { editHumanTask } from "./human-task-edit.ts";
 import { requestAgentDeletion, finishAgentDeletion } from "./agent-deletion.ts";
-import { reconcileAllChannelMemberships } from "./all-channel-membership.ts";
 import { completeTaskTransaction } from "./task-completion.ts";
 import {
   releaseTaskTransaction,
@@ -138,8 +137,6 @@ import {
   RuntimeCertificationSchema,
   RuntimeOfferProjectionSchema,
   type AgentDeletionDiagnostics,
-  type SystemChannelVisibilityRead,
-  type SystemChannelVisibilityUpdate,
   type Activation,
   type ActivationCredentialScope,
   type ActivationReason,
@@ -922,15 +919,6 @@ export class RoomKernel {
       initializeDiscoverySchema(this.#database);
       this.humanNotifications.initialize();
     });
-    unit("all-channel-memberships", "external", () =>
-      this.#transaction(() =>
-        reconcileAllChannelMemberships(
-          this.#database,
-          this.#roomEvents,
-          this.#now(),
-        ),
-      ),
-    );
     unit("deleted-agent-task-owners", "transactional", () =>
       reconcileDeletedAgentTaskOwners({
         database: this.#database,
@@ -1449,26 +1437,6 @@ export class RoomKernel {
   ): RoomMutationResult {
     return this.#transaction(() =>
       this.#collaboration.updateWorkspaceRoom(
-        this.getAuthenticatedPrincipal(actor),
-        input,
-      ),
-    );
-  }
-  getSystemChannelVisibility(
-    actor: AuthenticatedActorContext,
-    input: SystemChannelVisibilityRead,
-  ) {
-    return this.#collaboration.getSystemChannelVisibility(
-      this.getAuthenticatedPrincipal(actor),
-      input,
-    );
-  }
-  updateSystemChannelVisibility(
-    actor: AuthenticatedActorContext,
-    input: SystemChannelVisibilityUpdate,
-  ) {
-    return this.#transaction(() =>
-      this.#collaboration.updateSystemChannelVisibility(
         this.getAuthenticatedPrincipal(actor),
         input,
       ),
@@ -3302,11 +3270,6 @@ export class RoomKernel {
         roomId: input.controlRoomId,
         type: "agent.created",
       });
-      reconcileAllChannelMemberships(
-        this.#database,
-        this.#roomEvents,
-        this.#now(),
-      );
       return { deduplicated: false, definition, event, revision };
     });
   }

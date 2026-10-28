@@ -52,7 +52,7 @@ export type LocalCoreRuntimeDescriptor = {
 
 export type LocalCoreLoopbackDescriptor = {
   https?: Awaited<ReturnType<typeof startAdditionalLanHttps>>["descriptor"];
-  defaultRoomId: string;
+  defaultRoomId: string | undefined;
   persistent: true;
   runtimes: LocalCoreRuntimeDescriptor[];
   stateDirectory: string;

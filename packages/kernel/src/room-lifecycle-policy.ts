@@ -74,19 +74,3 @@ export function assertNoActiveRoomWork(
     );
   }
 }
-
-/** The reserved, immutable slug is the identity; display-name changes cannot bypass it. */
-export function assertPermanentChannelChange(
-  room: Record<string, unknown>,
-  change?: { name: string; visibility: string },
-): void {
-  if (
-    room.kind === "channel" &&
-    room.slug === "all" &&
-    (!change || change.name !== "all" || change.visibility !== "public")
-  ) {
-    throw new ConflictError(
-      "permanent #all channel cannot be renamed, hidden, archived, left or deleted",
-    );
-  }
-}

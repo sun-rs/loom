@@ -4,8 +4,6 @@ export type HumanApplicationPort = Pick<
   RoomKernel,
   | "acknowledgeCursor"
   | "addRoomMember"
-  | "getSystemChannelVisibility"
-  | "updateSystemChannelVisibility"
   | "archiveWorkspaceRoom"
   | "assignTask"
   | "authenticateHumanAccessToken"
@@ -211,10 +209,6 @@ export function createHumanApplicationPort(
     downloadFile: (actor, id, range) => kernel.files.download(actor, id, range),
     acknowledgeCursor: (actor, input) => kernel.acknowledgeCursor(actor, input),
     addRoomMember: (actor, input) => kernel.addRoomMember(actor, input),
-    getSystemChannelVisibility: (actor, input) =>
-      kernel.getSystemChannelVisibility(actor, input),
-    updateSystemChannelVisibility: (actor, input) =>
-      kernel.updateSystemChannelVisibility(actor, input),
     archiveWorkspaceRoom: (actor, input) =>
       kernel.archiveWorkspaceRoom(actor, input),
     assignTask: (actor, input) => kernel.assignTask(actor, input),

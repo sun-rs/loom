@@ -1,5 +1,11 @@
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, rmSync, statSync } from "node:fs";
+import {
+  mkdirSync,
+  mkdtempSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir, hostname } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -70,11 +76,29 @@ test("local workbench bootstrap is persistent, owner-private, and restart-safe",
     kernel.initialize();
     const human = kernel.authenticateHumanAccessToken(first.humanAccessToken);
     assert.equal(kernel.listWorkspaces(human)[0]?.name, hostname());
+    assert.equal(first.metadata.defaultRoomId, undefined);
+    assert.equal(
+      kernel
+        .listRooms(human, { workspaceId: first.metadata.workspaceId })
+        .filter((r) => r.kind === "channel").length,
+      0,
+    );
+    const fixtureRoom = kernel.createWorkspaceRoom(human, {
+      workspaceId: first.metadata.workspaceId,
+      basedOnControlRoomSeq: kernel.sync(human, {
+        roomId: first.metadata.controlRoomId,
+        consumerId: "test",
+      }).latestRoomSeq,
+      name: "fixture",
+      slug: "fixture",
+      kind: "channel",
+      idempotencyKey: "fixture",
+    }).room.roomId;
     kernel.postMessage(human, {
       body: "persistent message",
       idempotencyKey: "restart-proof-message",
       recipients: [],
-      roomId: first.metadata.defaultRoomId,
+      roomId: fixtureRoom,
     });
     assert.deepEqual(
       kernel.listAgentCatalog(human, {
@@ -86,7 +110,7 @@ test("local workbench bootstrap is persistent, owner-private, and restart-safe",
     );
     assert.deepEqual(
       kernel
-        .listRoomMemberships(human, { roomId: first.metadata.defaultRoomId })
+        .listRoomMemberships(human, { roomId: fixtureRoom })
         .map(({ principalId }) => principalId),
       [human.principalId],
       "the default Channel holds only the Human",
@@ -111,7 +135,7 @@ test("local workbench bootstrap is persistent, owner-private, and restart-safe",
     );
     assert.equal(
       reopened.listMessages(reopenedHuman, {
-        roomId: second.metadata.defaultRoomId,
+        roomId: fixtureRoom,
       }).messages[0]?.body,
       "persistent message",
     );
@@ -465,8 +489,16 @@ test("profile upgrades rotate immutable Offers and migrate only managed policy r
       displayName: "Personal researcher",
       instructions: "Keep my role and memory across CLI upgrades.",
     }).revision;
+    const fixtureRoom = kernel.createWorkspaceRoom(human, {
+      workspaceId: first.metadata.workspaceId,
+      basedOnControlRoomSeq: seq(),
+      name: "history",
+      slug: "history",
+      kind: "channel",
+      idempotencyKey: "history",
+    }).room.roomId;
     kernel.postMessage(human, {
-      roomId: first.metadata.defaultRoomId,
+      roomId: fixtureRoom,
       body: "Keep my history",
       recipients: [],
       idempotencyKey: "upgrade-history",
@@ -530,8 +562,7 @@ test("profile upgrades rotate immutable Offers and migrate only managed policy r
       oldOffer,
     );
     assert.equal(
-      kernel.listMessages(actor, { roomId: second.metadata.defaultRoomId })
-        .messages[0]!.body,
+      kernel.listMessages(actor, { roomId: fixtureRoom }).messages[0]!.body,
       "Keep my history",
     );
     const afterMigrationSeq = kernel.sync(actor, {
@@ -596,5 +627,72 @@ test("profile upgrades rotate immutable Offers and migrate only managed policy r
     registry?.close();
     kernel?.close();
     rmSync(parent, { force: true, recursive: true });
+  }
+});
+
+test("deleting a legacy default all channel survives restart without recreating any channel", async () => {
+  const parent = mkdtempSync(join(tmpdir(), "loom-no-system-channel-"));
+  const stateDirectory = join(parent, "state"),
+    workspaceCwd = join(parent, "workspace");
+  mkdirSync(workspaceCwd);
+  const input = {
+    stateDirectory,
+    workspaceCwd,
+    runtimeSpecs: [fakeRuntimeSpec(workspaceCwd)],
+  };
+  try {
+    const first = await prepareLocalWorkbench(input);
+    const k = new RoomKernel({ databasePath: join(stateDirectory, "room.db") });
+    k.initialize();
+    const actor = k.authenticateHumanAccessToken(first.humanAccessToken);
+    const room = k.createWorkspaceRoom(actor, {
+      workspaceId: first.metadata.workspaceId,
+      basedOnControlRoomSeq: k.sync(actor, {
+        roomId: first.metadata.controlRoomId,
+        consumerId: "test",
+      }).latestRoomSeq,
+      name: "all",
+      slug: "all",
+      kind: "channel",
+      visibility: "public",
+      idempotencyKey: "legacy-all",
+    }).room;
+    // Simulate the old launcher navigation pointer, not a second business owner.
+    writeFileSync(
+      join(stateDirectory, "workbench.json"),
+      JSON.stringify({ ...first.metadata, defaultRoomId: room.roomId }),
+    );
+    k.deleteWorkspaceRoom(actor, {
+      roomId: room.roomId,
+      basedOnRoomSeq: k.sync(actor, { roomId: room.roomId, consumerId: "test" })
+        .latestRoomSeq,
+      idempotencyKey: "remove-all",
+    });
+    k.close();
+    const restarted = await prepareLocalWorkbench(input);
+    assert.equal(restarted.metadata.defaultRoomId, undefined);
+    const reopened = new RoomKernel({
+      databasePath: join(stateDirectory, "room.db"),
+    });
+    reopened.initialize();
+    try {
+      assert.equal(
+        reopened
+          .listRooms(
+            reopened.authenticateHumanAccessToken(first.humanAccessToken),
+            { workspaceId: first.metadata.workspaceId },
+          )
+          .filter((r) => r.kind === "channel").length,
+        0,
+      );
+    } finally {
+      reopened.close();
+    }
+    assert.equal(
+      (await prepareLocalWorkbench(input)).metadata.defaultRoomId,
+      undefined,
+    );
+  } finally {
+    rmSync(parent, { recursive: true, force: true });
   }
 });

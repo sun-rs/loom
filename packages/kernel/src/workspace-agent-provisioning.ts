@@ -1,6 +1,4 @@
 import { roleRuntimeOffer } from "./role-runtime-offer.ts";
-import { requestAgentFirstRun } from "./agent-first-run.ts";
-import { reconcileAllChannelMemberships } from "./all-channel-membership.ts";
 import { allocateRecreatedAgentHandle } from "./message-reference-identity.ts";
 import type { DatabaseSync } from "node:sqlite";
 
@@ -416,15 +414,6 @@ export function provisionWorkspaceAgentTransaction(
         owner.roleInstance.roleRevisionId,
         owner.roleInstance.channelId,
       );
-  reconcileAllChannelMemberships(owner.database, owner.events, owner.now());
-  if (!owner.roleInstance)
-    requestAgentFirstRun(
-      owner.database,
-      owner.events,
-      input.controlRoomId,
-      participantId,
-      owner.now(),
-    );
   return workspaceAgentProvisionResult(owner.database, event, false);
 }
 

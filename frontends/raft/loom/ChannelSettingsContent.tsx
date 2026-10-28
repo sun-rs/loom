@@ -278,9 +278,7 @@ export default function ChannelSettingsContent({
                     onChange={(event) => setName(event.target.value)}
                     className="w-full"
                     required
-                    disabled={
-                      busy || !!base.room.archivedAt || base.room.slug === "all"
-                    }
+                    disabled={busy || !!base.room.archivedAt}
                   />
                 </Field>
                 <Field>
@@ -362,7 +360,7 @@ export default function ChannelSettingsContent({
           <FormSection title="操作">
             <div className="flex flex-col gap-3">
               {children}
-              {base && base.room.slug !== "all" && (
+              {base && (
                 <Button
                   size="sm"
                   variant="outline"

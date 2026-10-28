@@ -22,7 +22,6 @@ import type { ToolAccessMode } from "@rah-os/protocol";
 import { z } from "zod";
 
 import { DaemonConfigSchema, type DaemonConfigV4 } from "./config.ts";
-import { ensureAllChannel } from "./ensure-all-channel.ts";
 import { reconcileLocalWorkbenchRuntimeBindings } from "./local-workbench-runtime-bindings.ts";
 import { protectKernelSchemaMigration } from "./state-backup.ts";
 
@@ -34,7 +33,7 @@ const LocalWorkbenchMetadataSchema = z
      */
     bootstrapParticipantIds: z.array(z.string().min(1)),
     controlRoomId: z.string().min(1),
-    defaultRoomId: z.string().min(1),
+    defaultRoomId: z.string().min(1).optional(),
     hostId: z.string().min(1),
     schemaVersion: z.literal(1),
     workspaceCwd: z.string().min(1),
@@ -199,14 +198,6 @@ async function initializeState(input: {
       name: hostname(),
       slug: "rah-local-workstation",
     });
-    const defaultRoom = kernel.createWorkspaceRoom(actor, {
-      basedOnControlRoomSeq: workspace.event.roomSeq,
-      idempotencyKey: "local-workbench-default-room-v1",
-      kind: "channel",
-      name: "Agent Council",
-      slug: "agent-council",
-      workspaceId: workspace.workspace.workspaceId,
-    });
     const hostId = `local-workbench-host-${randomUUID()}`;
     // Contract §2: no persona Agent is seeded. The Host scope starts empty
     // and each Role instance is granted when it is created.
@@ -217,7 +208,6 @@ async function initializeState(input: {
     const metadata = LocalWorkbenchMetadataSchema.parse({
       bootstrapParticipantIds: [],
       controlRoomId: workspace.controlRoom.roomId,
-      defaultRoomId: defaultRoom.room.roomId,
       hostId,
       schemaVersion: 1,
       workspaceCwd: input.workspaceCwd,
@@ -424,12 +414,19 @@ function verifyCanonicalState(input: {
     ) {
       throw new Error("local workbench canonical Workspace was not found");
     }
+    // A legacy default is only a navigation hint. Deleting its channel is valid.
     if (
+      input.metadata.defaultRoomId &&
       !kernel
         .listRooms(actor, { workspaceId: input.metadata.workspaceId })
         .some((room) => room.roomId === input.metadata.defaultRoomId)
     ) {
-      throw new Error("local workbench canonical default Room was not found");
+      delete input.metadata.defaultRoomId;
+      const pending = join(input.stateDirectory, "workbench.json.pending");
+      writeFileSync(pending, JSON.stringify(input.metadata, null, 2) + "\n", {
+        mode: 0o600,
+      });
+      renameSync(pending, join(input.stateDirectory, "workbench.json"));
     }
     const host = kernel.authenticateHostAccessToken(input.hostAccessToken);
     const deleted = new Set(
@@ -451,20 +448,6 @@ function verifyCanonicalState(input: {
       )
     ) {
       throw new Error("local workbench Host credential scope is inconsistent");
-    }
-    const all = ensureAllChannel(
-      kernel,
-      input.humanAccessToken,
-      input.metadata.workspaceId,
-      input.metadata.controlRoomId,
-    );
-    if (all && input.metadata.defaultRoomId !== all.roomId) {
-      input.metadata.defaultRoomId = all.roomId;
-      const pending = join(input.stateDirectory, "workbench.json.pending");
-      writeFileSync(pending, JSON.stringify(input.metadata, null, 2) + "\n", {
-        mode: 0o600,
-      });
-      renameSync(pending, join(input.stateDirectory, "workbench.json"));
     }
     return participantIds;
   } finally {

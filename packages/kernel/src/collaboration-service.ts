@@ -7,15 +7,6 @@ import {
   requireRoleInstanceMembershipEntry,
 } from "./instance-worker-scope.ts";
 import { agentGreetingEnabled, firstRunReplay } from "./agent-first-run.ts";
-import {
-  readSystemChannelVisibility,
-  changeSystemChannelVisibility,
-} from "./system-channel-visibility.ts";
-import type {
-  SystemChannelVisibilityRead,
-  SystemChannelVisibilityUpdate,
-} from "@rah-os/protocol";
-import { reconcileAllChannelMemberships } from "./all-channel-membership.ts";
 import { heldDraftRecoveryTarget } from "./held-draft-recovery.ts";
 import { recordWorkerTargetReadPosition } from "./worker-target-read-position.ts";
 import type { DatabaseSync } from "node:sqlite";
@@ -84,10 +75,7 @@ import {
   NOT_SYSTEM_NOTICE_SQL,
 } from "./freshness-hold-context.ts";
 import { integer, nullableText, text, type Row } from "./sqlite-row.ts";
-import {
-  assertPermanentChannelChange,
-  assertNoActiveRoomWork,
-} from "./room-lifecycle-policy.ts";
+import { assertNoActiveRoomWork } from "./room-lifecycle-policy.ts";
 import { workspaceRoomSlugIsAvailable } from "./message-reference-identity.ts";
 import type {
   MessageMutationResult,
@@ -440,18 +428,6 @@ export class CollaborationService {
     const visibility = RoomVisibilitySchema.parse(
       input.visibility ?? "private",
     );
-    if (
-      (slug === "all" || name === "all") &&
-      (slug !== "all" || name !== "all" || visibility !== "public")
-    ) {
-      throw new ConflictError(
-        "permanent #all must use its reserved name, slug and public visibility",
-      );
-    }
-    if (slug === "all" && input.initialAgentParticipantIds?.length)
-      throw new ConflictError(
-        "permanent #all membership is managed automatically",
-      );
     const initialAgentParticipantIds = [
       ...new Set(input.initialAgentParticipantIds ?? []),
     ].sort();
@@ -662,12 +638,6 @@ export class CollaborationService {
         type: "membership.added",
       });
     }
-    if (slug === "all")
-      reconcileAllChannelMemberships(
-        this.#database,
-        this.#events,
-        new Date(createdAt),
-      );
     const event = this.#events.append({
       actorId: actor.principalId,
       aggregateId: roomId,
@@ -704,7 +674,6 @@ export class CollaborationService {
       throw new ForbiddenError("only Human principals can update Rooms");
     }
     const existing = this.#requireRoom(input.roomId);
-    assertPermanentChannelChange(existing, input);
     if (text(existing, "kind") !== "channel") {
       throw new ConflictError("only managed Channels have editable settings");
     }
@@ -712,8 +681,6 @@ export class CollaborationService {
     const name = this.#requiredLabel(input.name, "room name");
     const description = input.description?.trim() || undefined;
     const visibility = RoomVisibilitySchema.parse(input.visibility);
-    if (name === "all" && text(existing, "slug") !== "all")
-      throw new ConflictError("permanent #all name is reserved");
     const idempotencyKey = this.#requiredLabel(
       input.idempotencyKey,
       "idempotencyKey",
@@ -845,24 +812,6 @@ export class CollaborationService {
     };
   }
 
-  getSystemChannelVisibility(
-    actor: Principal,
-    input: SystemChannelVisibilityRead,
-  ) {
-    return readSystemChannelVisibility(this.#database, actor, input);
-  }
-  updateSystemChannelVisibility(
-    actor: Principal,
-    input: SystemChannelVisibilityUpdate,
-  ) {
-    return changeSystemChannelVisibility(
-      this.#database,
-      this.#events,
-      actor,
-      input,
-      (roomId, seq) => this.#assertFreshContext(roomId, actor, seq),
-    );
-  }
   archiveWorkspaceRoom(
     actor: Principal,
     input: WorkspaceRoomLifecycleInput,
@@ -886,7 +835,6 @@ export class CollaborationService {
       throw new ForbiddenError("only Human principals can archive Rooms");
     }
     const existing = this.#requireRoom(input.roomId);
-    if (archive) assertPermanentChannelChange(existing);
     if (text(existing, "kind") !== "channel") {
       throw new ConflictError("only managed Channels can be archived");
     }
@@ -1423,7 +1371,6 @@ export class CollaborationService {
       throw new ForbiddenError("only Human principals can leave Channels");
     }
     const room = this.#requireRoom(input.roomId);
-    assertPermanentChannelChange(room);
     if (text(room, "kind") !== "channel") {
       throw new ConflictError("only regular Channels can be left");
     }
@@ -2582,11 +2529,6 @@ export class CollaborationService {
   }
 
   #assertMutableMembershipRoom(roomId: string): void {
-    const room = this.#requireRoom(roomId);
-    if (room.kind === "channel" && room.slug === "all")
-      throw new ConflictError(
-        "permanent #all membership is managed automatically",
-      );
     if (text(this.#requireRoom(roomId), "kind") === "direct") {
       throw new ConflictError("Direct Room membership is immutable");
     }

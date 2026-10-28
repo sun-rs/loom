@@ -89,14 +89,6 @@ import {
   InstanceSessionResetResponseSchema,
 } from "@rah-os/protocol";
 import {
-  SystemChannelVisibilityReadSchema,
-  SystemChannelVisibilityUpdateSchema,
-  SystemChannelVisibilityResponseSchema,
-  SystemChannelVisibilityMutationSchema,
-  type SystemChannelVisibilityRead,
-  type SystemChannelVisibilityUpdate,
-  type SystemChannelVisibilityResponse,
-  type SystemChannelVisibilityMutation,
 } from "@rah-os/protocol";
 import {
   RuntimeSettingsReadSchema,
@@ -638,14 +630,6 @@ export type RahClientOperationMap = ComposerOperationMap &
       input: ClientRoomDeleteRequest;
       output: ClientRoomDeleteResponse;
     };
-    "workspace.system-channel.read": {
-      input: SystemChannelVisibilityRead;
-      output: SystemChannelVisibilityResponse;
-    };
-    "workspace.system-channel.update": {
-      input: SystemChannelVisibilityUpdate;
-      output: SystemChannelVisibilityMutation;
-    };
     "room.archive": {
       input: ClientRoomArchiveRequest;
       output: ClientRoomMutationResponse;
@@ -824,20 +808,6 @@ type OperationDefinition = {
 };
 
 const operationDefinitions: Record<RahClientOperation, OperationDefinition> = {
-  "workspace.system-channel.read": {
-    authenticated: true,
-    input: SystemChannelVisibilityReadSchema,
-    output: SystemChannelVisibilityResponseSchema,
-    method: "POST",
-    path: "/v3/client/workspaces/system-channel/read",
-  },
-  "workspace.system-channel.update": {
-    authenticated: true,
-    input: SystemChannelVisibilityUpdateSchema,
-    output: SystemChannelVisibilityMutationSchema,
-    method: "POST",
-    path: "/v3/client/workspaces/system-channel/update",
-  },
   ...discoveryOperations,
   ...fileOperations,
   ...agentWorkspaceOperations,

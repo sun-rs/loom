@@ -45,8 +45,6 @@ export type {
   KernelSchemaChange,
   KernelSchemaState,
 } from "./kernel-schema-state.ts";
-export { readAllChannelCandidates } from "./all-channel-membership.ts";
-export type { AllChannelCandidateSnapshot } from "./all-channel-membership.ts";
 
 export { TaskReviewService } from "./task-review-service.ts";
 export { ReminderService } from "./reminder-service.ts";

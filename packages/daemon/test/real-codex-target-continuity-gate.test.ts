@@ -1,3 +1,4 @@
+import { prepareLocalWorkbench } from "./workbench-channel-fixture.ts";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { readFileSync, readdirSync, writeFileSync, rmSync } from "node:fs";
@@ -9,7 +10,6 @@ import type { LocalRuntimeInventoryResponse } from "@rah-os/protocol";
 import {
   DaemonApplication,
   localCliRuntimeSpec,
-  prepareLocalWorkbench,
 } from "../src/index.ts";
 
 // Explicitly resumes the preserved Codex session from the failed scenario;

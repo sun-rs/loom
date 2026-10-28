@@ -1,3 +1,4 @@
+import { prepareLocalWorkbench } from "./workbench-channel-fixture.ts";
 import assert from "node:assert/strict";
 import {
   existsSync,
@@ -19,7 +20,6 @@ import type {
 import {
   DaemonApplication,
   localCliRuntimeSpec,
-  prepareLocalWorkbench,
 } from "../src/index.ts";
 
 const ENABLED = process.env.RAH_REAL_DIALOGUE_GATE === "1";

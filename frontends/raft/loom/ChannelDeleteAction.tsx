@@ -43,7 +43,7 @@ export function ChannelDeleteAction({
       alive = false;
     };
   }, [confirm, manager, room.roomId]);
-  if (room.slug === "all" || room.kind !== "channel") return null;
+  if (room.kind !== "channel") return null;
   const remove = async () => {
     if (
       disabled ||

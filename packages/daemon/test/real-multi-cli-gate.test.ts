@@ -1,3 +1,4 @@
+import { prepareLocalWorkbench } from "./workbench-channel-fixture.ts";
 import assert from "node:assert/strict";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -14,7 +15,6 @@ import type {
 import {
   DaemonApplication,
   localCliRuntimeSpec,
-  prepareLocalWorkbench,
   type LocalWorkbenchRuntimeSpec,
 } from "../src/index.ts";
 

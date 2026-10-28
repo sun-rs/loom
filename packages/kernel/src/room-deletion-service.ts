@@ -21,10 +21,7 @@ import {
   StaleContextError,
 } from "./errors.ts";
 import type { RoomFiles } from "./room-files.ts";
-import {
-  assertPermanentChannelChange,
-  assertNoActiveRoomWork,
-} from "./room-lifecycle-policy.ts";
+import { assertNoActiveRoomWork } from "./room-lifecycle-policy.ts";
 import { integer, text, type Row } from "./sqlite-row.ts";
 
 /**
@@ -190,7 +187,6 @@ export class RoomDeletionService {
         "only regular Channels can be permanently deleted",
       );
     requireRoomManager(this.#database, input.roomId, actorId);
-    assertPermanentChannelChange(initial);
     const initialSeq = integer(initial, "next_seq") - 1;
     if (initialSeq !== input.basedOnRoomSeq)
       throw new StaleContextError(input.basedOnRoomSeq, initialSeq);
@@ -235,7 +231,6 @@ export class RoomDeletionService {
         );
       }
       requireRoomManager(this.#database, input.roomId, actorId);
-      assertPermanentChannelChange(room);
       const latestRoomSeq = integer(room, "next_seq") - 1;
       if (preparedSeq !== latestRoomSeq)
         throw new StaleContextError(preparedSeq, latestRoomSeq);

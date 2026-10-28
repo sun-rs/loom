@@ -545,17 +545,15 @@ export default function ChannelSidebar({
                                           ],
                                   }),
                               },
-                              ...(room.slug === "all"
-                                ? []
-                                : [
-                                    {
-                                      label: "归档",
-                                      run: () => {
-                                        setError("");
-                                        setArchiveTarget(room);
-                                      },
-                                    },
-                                  ]),
+                              ...[
+                                {
+                                  label: "归档",
+                                  run: () => {
+                                    setError("");
+                                    setArchiveTarget(room);
+                                  },
+                                },
+                              ],
                             ]),
                       ]}
                     >

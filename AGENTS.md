@@ -178,7 +178,8 @@ never installs them or configures their accounts.
   instances, private conversations, Side rooms and canonical history, while
   retaining reusable Role configurations. Reuse durable instance deletion and
   require actual execution termination before erasure; pending stops do not prove
-  deletion. Keep protected `#all`, deletion receipts, backups and channel home
+  deletion. There is no reserved/global `#all` or automatically seeded channel;
+  each instance belongs only to its chosen Channel. Keep deletion receipts, backups and channel home
   directories. This differs from removing an instance alone, which keeps history.
 - **Session** is the instance's native CLI session. Each instance has its own
   execution lane and one continuous session that is never silently replaced and
