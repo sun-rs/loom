@@ -1,0 +1,93 @@
+{
+  "sourceRevision": "c92e3eaf9ff00f823cc4765d19da93bc69dcbe49",
+  "before": {
+    "rooms": [
+      {
+        "kind": "channel",
+        "count": 46
+      },
+      {
+        "kind": "control",
+        "count": 1
+      },
+      {
+        "kind": "direct",
+        "count": 5
+      }
+    ],
+    "instances": 79,
+    "messages": 284,
+    "tasks": 9,
+    "runAttempts": 211,
+    "sideSessions": 0,
+    "foreignKeyErrors": 0,
+    "integrity": "ok"
+  },
+  "after": {
+    "rooms": [
+      {
+        "kind": "channel",
+        "count": 1
+      },
+      {
+        "kind": "control",
+        "count": 1
+      }
+    ],
+    "instances": 0,
+    "messages": 0,
+    "tasks": 0,
+    "runAttempts": 0,
+    "sideSessions": 0,
+    "foreignKeyErrors": 0,
+    "integrity": "ok"
+  },
+  "channelDeletesBeforeFix": 2,
+  "channelDeletesAfterFix": 43,
+  "remainingFailedDeletes": 0,
+  "successfulDeletesReplayed": 45,
+  "roles": {
+    "active": 0,
+    "deletedRestorable": 50
+  },
+  "customGroupsRemoved": 1,
+  "tests": {
+    "focused": 83,
+    "failed": 0,
+    "typecheck": true,
+    "productBuild": true,
+    "isolatedBrowserWidths": [
+      1440,
+      390
+    ],
+    "formalBrowserWidths": [
+      1440,
+      390
+    ],
+    "formalPageErrors": 0
+  },
+  "paidCliRuns": 0,
+  "deployment": {
+    "sourceRevision": "c92e3eaf9ff00f823cc4765d19da93bc69dcbe49",
+    "oldPid": 77376,
+    "newPid": 17930,
+    "backup": "private verified state backup",
+    "ledgerUnchanged": true,
+    "at": "2026-10-28T02:06:59.046Z",
+    "webAssets": "e5444380b4e6f7f1d0ab834848e7f59ba262a7d68851e0b4d5716a0c5750c33e",
+    "selection": {
+      "codex": "warm app-server native-final",
+      "kimi": "ACP native-final"
+    },
+    "scope": "local formal service source runtime; library defaults remain opt-in; existing CLI/model/Role revisions unchanged",
+    "plistSha256": "52e42ac8a428da67f5c4876a08719d8f2a0dde264bf5d15242a88493f035edeb"
+  },
+  "retained": [
+    "empty protected #all and its system events",
+    "workspace control audit",
+    "deleted Role revisions/restoration records",
+    "channel home directories",
+    "native CLI diagnostics and verified backups"
+  ],
+  "operatorEvidence": "/Users/sun/.loom/reviews/2026-10-28-product-cleanup"
+}
