@@ -1,0 +1,129 @@
+{
+  "recordedAt": "2026-10-28T13:18:53.638060+00:00",
+  "method": "Numeric digest transcribed from CUA Chrome getBoundingClientRect reads; content bounds unite the official icon/content slots. No screenshots used as geometry estimates.",
+  "measurements": [
+    {
+      "page": "mobile channels",
+      "viewport": [390, 844],
+      "before": {
+        "boxY": [135, 281],
+        "contentY": [159, 257]
+      },
+      "after": {
+        "boxY": [136, 728],
+        "contentY": [383, 481]
+      }
+    },
+    {
+      "page": "mobile roles",
+      "viewport": [390, 844],
+      "before": {
+        "boxY": [142, 288],
+        "contentY": [166, 264]
+      },
+      "after": {
+        "boxY": [176, 844],
+        "contentY": [461, 559]
+      }
+    },
+    {
+      "page": "mobile tasks",
+      "viewport": [390, 844],
+      "before": {
+        "boxY": [167, 728],
+        "contentY": [398.5, 496.5]
+      },
+      "after": {
+        "boxY": [167, 728],
+        "contentY": [398.5, 496.5]
+      }
+    },
+    {
+      "page": "mobile memory",
+      "viewport": [390, 844],
+      "before": {
+        "boxY": [108, 844],
+        "contentY": [427, 525]
+      },
+      "after": {
+        "boxY": [108, 844],
+        "contentY": [427, 525]
+      }
+    },
+    {
+      "page": "mobile activity",
+      "viewport": [390, 844],
+      "before": {
+        "boxY": [102, 728],
+        "contentY": [358, 472]
+      },
+      "after": {
+        "boxY": [102, 728],
+        "contentY": [358, 472]
+      }
+    },
+    {
+      "page": "desktop conversation",
+      "viewport": [1440, 900],
+      "before": {
+        "boxY": [104, 900],
+        "contentY": [449, 555]
+      },
+      "after": {
+        "boxY": [48, 900],
+        "contentY": [421, 527]
+      },
+      "beforeScope": "First candidate retained the unchanged production empty-header branch; capture preceded the header fix."
+    },
+    {
+      "page": "desktop roles",
+      "viewport": [1440, 900],
+      "after": {
+        "boxY": [48, 900],
+        "contentY": [421, 527]
+      }
+    },
+    {
+      "page": "mobile saved",
+      "viewport": [390, 844],
+      "after": {
+        "boxY": [52, 828],
+        "contentY": [391, 489]
+      }
+    }
+  ],
+  "postDeployment": {
+    "webBuildId": "b5ed5d925388cdb390b92329a71f3f437a069443c6d982d4649e6ce3c04b9420",
+    "entry": "http://100.101.107.87:4176/",
+    "mobileChannelsAndRoles": "Same rectangles as candidate",
+    "desktopConversationAndRoles": "Both box Y48..900; content center Y474",
+    "consoleErrors": []
+  },
+  "functional": {
+    "retiredRolesExpandedHidesFullEmpty": true,
+    "retiredListScroll": {
+      "clientHeight": 796,
+      "scrollHeight": 1879
+    },
+    "retiredCollapseRestoresEmpty": true,
+    "emptyBlankSpaceContextMenu": [
+      "New Channel",
+      "New Group",
+      "Archived Channels"
+    ],
+    "escapeClosesMenu": true,
+    "emptyChannelScroll": {
+      "clientHeight": 796,
+      "scrollHeight": 796
+    },
+    "desktopCompactSidebarDescriptionPreserved": true,
+    "desktopSpuriousChatHeadingCount": 0
+  },
+  "automationIncident": "Escape sent to a nonfocusable empty-state div failed in the automation locator; sent to the active native menu and verified closure, without product changes.",
+  "limits": [
+    "Fine-pointer Chrome viewport emulation, not physical phone or iOS acceptance",
+    "No messages/channels/roles created; zero-channel and zero-active-Role real data",
+    "Inline section empty hints remain native and need not be vertically centered",
+    "TLS homepage verified separately with original CA; actual visual route used HTTP because the automation Chrome profile does not trust the local CA."
+  ]
+}

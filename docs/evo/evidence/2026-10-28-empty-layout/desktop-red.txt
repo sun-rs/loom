@@ -1,0 +1,43 @@
+✔ empty sidebar body allocates remaining height while populated lists retain ordinary scrolling (32.402625ms)
+✔ empty context-menu surface fills remaining body without a full-height minimum that displaces headers (10.249125ms)
+✔ ordinary row and nonempty blank-space menus preserve their native layout (5.0805ms)
+✔ whole mobile list empty states do not position themselves with a fixed top-padding substitute (7.389333ms)
+✖ unselected desktop conversation has no extra header while mobile retains its back path (1.196625ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 4
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 244.945375
+
+✖ failing tests:
+
+test at scripts/official-web/empty-layout.test.mjs:119:1
+✖ unselected desktop conversation has no extra header while mobile retains its back path (1.196625ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /containerProps=\{\{ className: "md:hidden" \}\}/. Input:
+
+  '{!savedOpen && !selected && (\n' +
+    '                            <PanelHeader\n' +
+    '                              title="聊天"\n' +
+    '                              onMobileBack={showChatList}\n' +
+    '                              mobileBackProps={{ "aria-label": "聊天列表" }}\n' +
+    '                            />\n' +
+    '                          )}\n' +
+    '                          '
+
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/empty-layout.test.mjs:122:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '{!savedOpen && !selected && (\n                            <PanelHeader\n                              title="聊天"\n                              onMobileBack={showChatList}\n                              mobileBackProps={{ "aria-label": "聊天列表" }}\n                            />\n                          )}\n                          ',
+    expected: /containerProps=\{\{ className: "md:hidden" \}\}/,
+    operator: 'match',
+    diff: 'simple'
+  }

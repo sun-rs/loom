@@ -1,0 +1,10 @@
+{
+  "scopedTests": 47,
+  "typecheck": "passed",
+  "workbenchBuild": "passed",
+  "fullBuildLogSha256": "a407bd364f37f5adf5ad38109c95f3f3d84b80c4e680ee57fe4654bd775a0c59",
+  "sourceBaseline": "0474608a",
+  "codeCommit": "ab62714c955b84c9a2dff2ca43dbe833aec83d8d",
+  "backendOrPaidGateRun": false,
+  "sourceChanges": "Loom adapters only; official immutable source, generated UI, CSS recipes and package pins unchanged"
+}

@@ -1,0 +1,41 @@
+{
+  "at": "2026-10-28T13:15:17.812Z",
+  "sourceRevision": "ab62714c955b84c9a2dff2ca43dbe833aec83d8d",
+  "remoteMainBeforeRestart": "ab62714c955b84c9a2dff2ca43dbe833aec83d8d",
+  "pushVerifiedAt": "2026-10-28T13:14:57.060Z",
+  "pushedBeforeServiceRestart": true,
+  "sourceWorktreeDirty": false,
+  "sourceHashes": {
+    "frontends/raft/loom/ChannelApp.tsx": "6dc23636c71ce4b55941a6f4304443d1ab031cd97015faeb216c825382d16e6c",
+    "frontends/raft/loom/ChannelSidebar.tsx": "5847ff9cdd5d3c1957717c4f32f06ba329f5d2ee18249904bdf4da77f1f3953f",
+    "frontends/raft/loom/ChatSidebarFrame.tsx": "7d5a3a12b215253bd603e10d4e2122eac7428e450cc67e7f3cb6bd7bb5180ab6",
+    "frontends/raft/loom/RoleWorkspace.tsx": "dab07d220daf81eea5e0cbc7ac9e2bfdd142daf505681841c85732518dbdb3af",
+    "frontends/raft/loom/SidebarMenus.tsx": "491a4b0ff064a822c00eaccb076c22d90309b0ae57d0aeb426b51eede2dab6b4",
+    "frontends/raft/loom/ui-contract.json": "b40346017233ec788f0d18948a552e7eeab00570b874767afeb996ab42136512"
+  },
+  "oldPid": 70063,
+  "newPid": 55542,
+  "backup": "/Users/sun/.loom/evo/backups/pre-empty-layout-1793193297067",
+  "backupVerified": true,
+  "ledgerUnchanged": true,
+  "newWebSnapshot": "/Users/sun/Code/repos/rah_os/.workbench-web/8f52c3dabbd31de378a9b4f3c9e9ed01e0ac8fd78dc4818c0b365ac4c2c4a44d",
+  "webBuildId": "b5ed5d925388cdb390b92329a71f3f437a069443c6d982d4649e6ce3c04b9420",
+  "indexSha256": "c2337752ee66899c9802fff3657e8bdae5fd0acb537fa60e6a3096c02fa35bc2",
+  "allOriginalHttpEntries200": true,
+  "networkModeUnchanged": true,
+  "edges": [
+    {
+      "origin": "https://100.101.107.87:4178",
+      "status": 200,
+      "tlsVerifiedWithOriginalCA": true,
+      "webIndexMatches": true
+    },
+    {
+      "origin": "https://192.168.1.86:4178",
+      "status": 200,
+      "tlsVerifiedWithOriginalCA": true,
+      "webIndexMatches": true
+    }
+  ],
+  "scope": "Official EmptyState presentation retained; corrected parent fill layout and desktop no-selection header. No Core/CLI/network/CA/data changes; no paid calls"
+}

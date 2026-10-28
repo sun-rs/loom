@@ -1,0 +1,75 @@
+✖ empty sidebar body allocates remaining height while populated lists retain ordinary scrolling (32.634834ms)
+✖ empty context-menu surface fills remaining body without a full-height minimum that displaces headers (9.917833ms)
+✔ ordinary row and nonempty blank-space menus preserve their native layout (5.129125ms)
+✖ whole mobile list empty states do not position themselves with a fixed top-padding substitute (13.578709ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 1
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 239.804167
+
+✖ failing tests:
+
+test at scripts/official-web/empty-layout.test.mjs:27:1
+✖ empty sidebar body allocates remaining height while populated lists retain ordinary scrolling (32.634834ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  false !== true
+
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/empty-layout.test.mjs:33:12)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.start (node:internal/test_runner/test:1096:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/official-web/empty-layout.test.mjs:37:1
+✖ empty context-menu surface fills remaining body without a full-height minimum that displaces headers (9.917833ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /flex.*min-h-0.*flex-1.*flex-col/. Input:
+
+  'min-h-full min-w-0'
+
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/empty-layout.test.mjs:40:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'min-h-full min-w-0',
+    expected: /flex.*min-h-0.*flex-1.*flex-col/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/official-web/empty-layout.test.mjs:51:1
+✖ whole mobile list empty states do not position themselves with a fixed top-padding substitute (13.578709ms)
+  AssertionError [ERR_ASSERTION]: ChannelSidebar.tsx
+      at visit (file:///Users/sun/Code/repos/rah_os/scripts/official-web/empty-layout.test.mjs:60:20)
+      at visitNode2 (/Users/sun/Code/repos/rah_os/node_modules/typescript/lib/typescript.js:32449:18)
+      at forEachChildInParenthesizedExpression (/Users/sun/Code/repos/rah_os/node_modules/typescript/lib/typescript.js:32623:12)
+      at Object.forEachChild (/Users/sun/Code/repos/rah_os/node_modules/typescript/lib/typescript.js:32970:35)
+      at visit (file:///Users/sun/Code/repos/rah_os/scripts/official-web/empty-layout.test.mjs:62:10)
+      at visitNode2 (/Users/sun/Code/repos/rah_os/node_modules/typescript/lib/typescript.js:32449:18)
+      at forEachChildInBinaryExpression (/Users/sun/Code/repos/rah_os/node_modules/typescript/lib/typescript.js:32647:87)
+      at Object.forEachChild (/Users/sun/Code/repos/rah_os/node_modules/typescript/lib/typescript.js:32970:35)
+      at visit (file:///Users/sun/Code/repos/rah_os/scripts/official-web/empty-layout.test.mjs:62:10)
+      at visitNode2 (/Users/sun/Code/repos/rah_os/node_modules/typescript/lib/typescript.js:32449:18) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: '"py-16"',
+    expected: /\bpy-\d/,
+    operator: 'doesNotMatch',
+    diff: 'simple'
+  }
