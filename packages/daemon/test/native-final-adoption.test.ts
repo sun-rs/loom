@@ -5,6 +5,11 @@ import { warmRuntimeAdapterKinds } from "../src/daemon-process-hygiene.ts";
 test("native Claude adoption selects its required warm entry without overriding an explicit cold policy", () => {
   const before = process.env.LOOM_CLAUDE_NATIVE_FINAL_TRIAL;
   try {
+    delete process.env.LOOM_CLAUDE_NATIVE_FINAL_TRIAL;
+    assert.ok(
+      warmRuntimeAdapterKinds(undefined).has("claude-stream-json/v1"),
+      "a fresh source installation selects the verified native-final entry without launch flags",
+    );
     process.env.LOOM_CLAUDE_NATIVE_FINAL_TRIAL = "1";
     assert.ok(
       warmRuntimeAdapterKinds(undefined).has("claude-stream-json/v1"),

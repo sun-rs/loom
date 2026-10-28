@@ -73,8 +73,8 @@ const ProcessHygieneConfigSchema = z
 /**
  * S2-a warm instance runtimes, per CLI: Codex and OpenCode run warm unless
  * `enabled: false` (on by default since their real smoke gates); Claude runs
- * warm with `claude.enabled: true` or native-final adoption (explicit false
- * still selects cold); Kimi has no warm runtime (per-turn,
+ * warm by the source deployment's native-final default (explicit false
+ * still selects cold; standalone packaging remains opt-in); Kimi has no warm runtime (per-turn,
  * contract §6a exception). Instance prewarming is a separate Human runtime
  * setting (`prewarm`, off by default).
  *
@@ -106,9 +106,9 @@ const WarmRuntimesConfigSchema = z
       })
       .strict()
       .optional(),
-    // S2-c1: a separate opt-in (off unless `enabled: true`). It shares the
-    // pool's policy (and a `codex.idleTtlMs` override) because the pool is one
-    // per Host.
+    // Source deployments select warm Claude for the reviewed native-final
+    // default. An explicit false retains cold Worker; launch rollback remains
+    // available. The pool's policy (and Codex idle TTL) is shared per Host.
     claude: z.object({ enabled: z.boolean().optional() }).strict().optional(),
     // S2-c3: on unless `enabled: false`, sharing the pool's policy.
     opencode: z.object({ enabled: z.boolean().optional() }).strict().optional(),

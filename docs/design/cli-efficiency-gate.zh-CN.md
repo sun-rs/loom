@@ -23,6 +23,8 @@ P118–P120 的指定路径 profile 多次在产品首轮截断，不能作为�
 
 `RAH_EFFICIENCY_REPLY_TRANSPORT=worker|native-final` 是本入口的显式选择，省略为旧 Worker 发表。入口清除其他继承的 final-output 环境开关，并把模式和开关选择纳入 baselineId；不能把开了 native-final 的历史好结果与默认 Worker 路径直接比较为回归。CLI、模型、effort、自动记忆关闭和完整新原生分母仍独立核验。
 
+产品源码 daemon 的[默认原生回复](../evo/native-final-defaults.zh-CN.md)不改变本入口的默认臂。基准显式写入全部相关开关；Worker 臂不能因产品升级悄悄变成 native-final，另一 CLI 的开关也不能改变当前臂。
+
 Codex native-final 使用原来的常驻 app-server 与连续会话；Claude/OpenCode 同样要求 `role-warm`；Kimi 使用 `role` ACP。普通最终正文经过 Host 的原身份、唯一目标、当前投递及原生正常终态证明进入现有 Worker 服务，不把任意 stdout 当成回复。此时不再向 Codex 公开旧回复 MCP；多目标和不可自动接收的唤醒保留 Worker CLI 回退。源码开关支持、正式服务已启用、免费测试、真实短任务、长期质量与效率分别报告。
 
 ## 固定成本基线与官方记忆关闭（2026-10-04）

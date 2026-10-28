@@ -1,0 +1,32 @@
+✖ smoke identity pins the owner-approved native-subagent policy (2.217959ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 542.075417
+
+✖ failing tests:
+
+test at scripts/cli-efficiency/business-long-runner.test.mjs:84:1
+✖ smoke identity pins the owner-approved native-subagent policy (2.217959ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + '961da547becb34593139037ac720dabba6ad3ac7345225465fd37923575edb25'
+  - '79958d6bc7ecb4e7a875b0366d85b5f06d454256bd3c67f9b4e687097b0380d1'
+  
+      at TestContext.<anonymous> (file:///private/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/loom-parent-plan-55xeg68b/scripts/cli-efficiency/business-long-runner.test.mjs:85:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.start (node:internal/test_runner/test:1096:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '961da547becb34593139037ac720dabba6ad3ac7345225465fd37923575edb25',
+    expected: '79958d6bc7ecb4e7a875b0366d85b5f06d454256bd3c67f9b4e687097b0380d1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

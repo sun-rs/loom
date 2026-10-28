@@ -82,10 +82,18 @@ test("long entry refuses absent, unknown, duplicated or rearranged arguments", (
 });
 
 test("smoke identity pins the owner-approved native-subagent policy", () => {
+  const plan = businessSmokePlan(["--plan"], version);
+  // ead15510 added six explicit native-final=0 switches to each arm, but
+  // left this golden at its pre-isolation identity. Historical runs stay put.
   assert.equal(
-    businessSmokePlan(["--plan"], version).baselineIdentity,
-    "79958d6bc7ecb4e7a875b0366d85b5f06d454256bd3c67f9b4e687097b0380d1",
+    plan.baselineIdentity,
+    "961da547becb34593139037ac720dabba6ad3ac7345225465fd37923575edb25",
   );
+  assert.ok(
+    !plan.nativeInvocation.initial.includes("features.multi_agent=false"),
+  );
+  for (const environment of Object.values(plan.arms))
+    assert.ok(Object.values(environment).every((value) => value === "0"));
 });
 
 test("long executable plans one pair with only local CLI version access", () => {

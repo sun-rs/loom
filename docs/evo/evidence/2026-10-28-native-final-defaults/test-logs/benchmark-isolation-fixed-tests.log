@@ -1,0 +1,25 @@
+✔ one numbered long pair retains full workload and alternates frozen order (3.587542ms)
+✔ long entry refuses absent, unknown, duplicated or rearranged arguments (0.476625ms)
+✔ smoke identity pins the owner-approved native-subagent policy (0.227833ms)
+✔ long executable plans one pair with only local CLI version access (1371.812417ms)
+✔ fixed free plan rejects ambiguous modes and has distinct immutable workload identity (2.644208ms)
+✔ arm flags override inherited trials without changing account environment (0.094959ms)
+✔ normalization preserves failed cost and never fabricates complete memory/usage (0.135834ms)
+✔ executable --plan permits only version lookup and does not enter provider/catalog (687.704417ms)
+✔ identity failure invalidates a measured stage without dropping observed tokens (0.107292ms)
+✔ baseline hash covers declared launch and trial policy (0.310708ms)
+✔ product stage requires post-measurement success and matching complete product usage (0.208792ms)
+✔ failed identity forbids a summary ratio while preserving observed cost (0.521917ms)
+✔ explicit final-output-only plan selects a distinct two-arm identity without changing workload (0.698958ms)
+✔ two-arm summary keeps native pairing and failed final cost without requiring default (0.405417ms)
+✔ MCP inline profile is separately registered with candidate flags disabled (2.636875ms)
+✔ existing profiles pin exact identities under the approved native-subagent policy (0.462375ms)
+✔ MCP plan executable only requests local CLI version (999.319958ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1927.053

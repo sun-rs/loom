@@ -1,0 +1,59 @@
+{
+  "sourceBase": "da03de57d6781aa49ee9336cadec7f60e5eb9a52",
+  "tests": [
+    {
+      "log": "test-logs/default-selection-tests.log",
+      "tests": 9,
+      "pass": 9,
+      "fail": 0
+    },
+    {
+      "log": "test-logs/daemon-warm-config-tests.log",
+      "tests": 5,
+      "pass": 5,
+      "fail": 0
+    },
+    {
+      "log": "test-logs/host-native-tests.log",
+      "tests": 64,
+      "pass": 64,
+      "fail": 0
+    },
+    {
+      "log": "test-logs/warm-native-tests.log",
+      "tests": 28,
+      "pass": 28,
+      "fail": 0
+    },
+    {
+      "log": "test-logs/session-continuity-tests.log",
+      "tests": 10,
+      "pass": 10,
+      "fail": 0
+    },
+    {
+      "log": "test-logs/claude-resume-tests.log",
+      "tests": 2,
+      "pass": 2,
+      "fail": 0
+    },
+    {
+      "log": "test-logs/benchmark-isolation-fixed-tests.log",
+      "tests": 17,
+      "pass": 17,
+      "fail": 0
+    }
+  ],
+  "totalPassed": 135,
+  "typecheck": {
+    "command": "npm run typecheck",
+    "exitCode": 0,
+    "log": "typecheck.log"
+  },
+  "providers": "fake only; no new paid/model calls",
+  "priorFailureRetained": [
+    "test-logs/benchmark-isolation-tests.log",
+    "test-logs/parent-smoke-identity-red.log"
+  ],
+  "scope": "source/Node product default selection, explicit rollback and benchmark isolation; not new cost or all-platform acceptance"
+}

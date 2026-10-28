@@ -1,0 +1,13 @@
+✔ S2-a warm Codex runtimes are on by default (eighth review), with an explicit opt-out and a configurable idle TTL (4.117792ms)
+✔ S2-c3 warm OpenCode runtimes are on by default (eighth review), with a separate explicit opt-out (0.431042ms)
+✔ warm Claude defaults to the verified native entry and retains independent cold opt-out (0.208875ms)
+✔ the daemon composes the warm pool and leftover-process hygiene by default; switching all warm entries off keeps only the janitor pool (124.762292ms)
+✔ S2-b warm runtime policies are configurable; policies alone keep the warm defaults (0.885708ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 600.3005

@@ -6,7 +6,7 @@ const flags = {
   opencode: "LOOM_OPENCODE_NATIVE_FINAL_TRIAL",
 };
 // A benchmark arm must not silently inherit or omit a reply transport switch.
-// Product defaults are unchanged; this is explicit experimental admission.
+// Keep both arms explicit even when product-daemon defaults change.
 export function gateReplyTransport(provider, mode = "worker") {
   assert.ok(Object.hasOwn(flags, provider), "Unknown reply transport provider");
   assert.ok(

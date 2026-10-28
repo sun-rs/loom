@@ -19,7 +19,10 @@ import {
   type RuntimeCreationOptions,
 } from "@rah-os/agent-host";
 import { RoomKernel } from "@rah-os/kernel";
-import type { RuntimeProfileManifestV2 } from "@rah-os/protocol";
+import type {
+  RuntimeProfileManifestV2,
+  RuntimeProfileManifestV3,
+} from "@rah-os/protocol";
 
 import { createConfiguredRuntime } from "../src/runtime-profile-composition.ts";
 
@@ -259,267 +262,198 @@ for (const mode of ["direct", "gated", undefined] as const) {
       if (mode !== undefined) assert.notEqual(prompts[0], prompts[1]);
       assert.equal(prompts[0], prompts[2]);
       if (mode === undefined) {
-        await t.test(
-          "Pi native final is opt-in and cannot select another CLI",
-          () => {
-            const before = process.env.LOOM_PI_NATIVE_FINAL_TRIAL;
-            try {
-              for (const [flag, kind, expected] of [
-                [undefined, "pi-print-json/v1", false],
-                ["true", "pi-print-json/v1", false],
-                ["1", "pi-print-json/v1", true],
-                ["1", "generic-process/v1", false],
-              ] as const) {
-                if (flag === undefined)
-                  delete process.env.LOOM_PI_NATIVE_FINAL_TRIAL;
-                else process.env.LOOM_PI_NATIVE_FINAL_TRIAL = flag;
-                createConfiguredRuntime({
-                  ...runtimeInput,
-                  runtimeProfileRevision: {
-                    ...revision,
-                    manifest: {
-                      ...manifest,
-                      manifestVersion: 3,
-                      adapter: { ...manifest.adapter, kind },
-                      modelCatalogProbe: { kind: "pi-cli/v1" },
-                    },
-                  },
-                });
-                assert.equal(options?.nativeFinalText, expected);
-              }
-            } finally {
-              if (before === undefined)
-                delete process.env.LOOM_PI_NATIVE_FINAL_TRIAL;
-              else process.env.LOOM_PI_NATIVE_FINAL_TRIAL = before;
-            }
-          },
+        const flags = [
+          "LOOM_CODEX_FINAL_OUTPUT_TRIAL",
+          "LOOM_OPENCODE_FINAL_OUTPUT_TRIAL",
+          "LOOM_CLAUDE_NATIVE_FINAL_TRIAL",
+          "LOOM_OPENCODE_NATIVE_FINAL_TRIAL",
+          "LOOM_CODEX_NATIVE_FINAL_TRIAL",
+          "LOOM_CODEX_EXEC_NATIVE_FINAL_TRIAL",
+          "LOOM_KIMI_NATIVE_FINAL_TRIAL",
+          "LOOM_PI_NATIVE_FINAL_TRIAL",
+        ] as const;
+        const saved = Object.fromEntries(
+          flags.map((key) => [key, process.env[key]]),
         );
-      }
-      if (mode === undefined)
-        await t.test(
-          "final-output switches select only their own CLI and preserve the default",
-          () => {
-            const saved = [
-              process.env.LOOM_CODEX_FINAL_OUTPUT_TRIAL,
-              process.env.LOOM_OPENCODE_FINAL_OUTPUT_TRIAL,
-              process.env.LOOM_CLAUDE_NATIVE_FINAL_TRIAL,
-              process.env.LOOM_OPENCODE_NATIVE_FINAL_TRIAL,
-              process.env.LOOM_CODEX_NATIVE_FINAL_TRIAL,
-            ];
-            const pool = new InstanceRuntimePool({
-              control: createKernelAgentHostControlPort(kernel, host),
-              hostGeneration: host.instanceId,
-              hygiene: new RuntimeProcessHygiene({
-                sweeper: new LeftoverProcessSweeper({
-                  table: createSystemProcessTable(),
-                }),
-              }),
-              stateDirectory: join(directory, "warm"),
-            });
-            let selected: boolean | undefined;
-            let nativeSelected: boolean | undefined;
-            t.mock.method(
-              implementations,
-              "createWarmRuntime",
-              (
-                ...args: Parameters<
-                  RuntimeImplementationRegistry["createWarmRuntime"]
-                >
-              ) => {
-                const warm = args[3];
-                selected = warm.explicitFinalOutput;
-                nativeSelected = warm.nativeFinalText === true;
-                return adapter;
-              },
-            );
-            try {
-              for (const [
-                codexFlag,
-                openCodeFlag,
-                adapterKind,
-                expected,
-                nativeFlag,
-                nativeExpected = false,
-                openCodeNativeFlag,
-                codexNativeFlag,
-              ] of [
-                [
-                  undefined,
-                  undefined,
-                  "codex-app-server/v1",
-                  false,
-                  undefined,
-                  true,
-                  undefined,
-                  "1",
-                ],
-                [
-                  undefined,
-                  undefined,
-                  "codex-app-server/v1",
-                  false,
-                  undefined,
-                  false,
-                  undefined,
-                  "true",
-                ],
-                [
-                  undefined,
-                  undefined,
-                  "claude-stream-json/v1",
-                  false,
-                  undefined,
-                  false,
-                  undefined,
-                  "1",
-                ],
-                [undefined, undefined, "codex-app-server/v1", false],
-                ["1", undefined, "codex-app-server/v1", true],
-                [undefined, "1", "codex-app-server/v1", false],
-                ["1", undefined, "opencode-server/v1", false],
-                [undefined, "1", "opencode-server/v1", true],
-                ["1", "1", "claude-stream-json/v1", false],
-                ["true", undefined, "codex-app-server/v1", false],
-                [
-                  undefined,
-                  undefined,
-                  "claude-stream-json/v1",
-                  false,
-                  "1",
-                  true,
-                ],
-                [
-                  undefined,
-                  undefined,
-                  "codex-app-server/v1",
-                  false,
-                  "1",
-                  false,
-                ],
-                [undefined, undefined, "opencode-server/v1", false, "1", false],
-                [
-                  undefined,
-                  undefined,
-                  "claude-stream-json/v1",
-                  false,
-                  "true",
-                  false,
-                ],
-                [
-                  undefined,
-                  undefined,
-                  "opencode-server/v1",
-                  false,
-                  undefined,
-                  true,
-                  "1",
-                ],
-                [
-                  undefined,
-                  "1",
-                  "opencode-server/v1",
-                  false,
-                  undefined,
-                  true,
-                  "1",
-                ],
-                [
-                  undefined,
-                  undefined,
-                  "opencode-server/v1",
-                  false,
-                  undefined,
-                  false,
-                  "true",
-                ],
-                [
-                  undefined,
-                  undefined,
-                  "claude-stream-json/v1",
-                  false,
-                  undefined,
-                  false,
-                  "1",
-                ],
-                [
-                  undefined,
-                  undefined,
-                  "codex-app-server/v1",
-                  false,
-                  undefined,
-                  false,
-                  "1",
-                ],
+        function setFlags(environment: Record<string, string> = {}) {
+          for (const key of flags) {
+            if (environment[key] === undefined) delete process.env[key];
+            else process.env[key] = environment[key];
+          }
+        }
+        const probeKinds: Partial<
+          Record<
+            RuntimeProfileManifestV3["adapter"]["kind"],
+            RuntimeProfileManifestV3["modelCatalogProbe"]["kind"]
+          >
+        > = {
+          "codex-app-server/v1": "codex-cli/v1",
+          "codex-exec/v1": "codex-cli/v1",
+          "claude-stream-json/v1": "claude-cli/v1",
+          "opencode-server/v1": "opencode-cli/v1",
+          "kimi-acp/v1": "kimi-cli/v1",
+          "pi-print-json/v1": "pi-cli/v1",
+          "agy-print-json/v1": "agy-cli/v1",
+        };
+        const revisionFor = (
+          kind: RuntimeProfileManifestV3["adapter"]["kind"],
+        ) => ({
+          ...revision,
+          manifest: {
+            ...manifest,
+            manifestVersion: 3 as const,
+            adapter: { ...manifest.adapter, kind },
+            modelCatalogProbe: { kind: probeKinds[kind] ?? "pi-cli/v1" },
+          },
+        });
+        try {
+          await t.test(
+            "cold defaults, explicit rollback and unsupported entry fallback reach the actual factory",
+            () => {
+              for (const [kind, flag, defaultNative] of [
+                ["pi-print-json/v1", "LOOM_PI_NATIVE_FINAL_TRIAL", true],
+                ["kimi-acp/v1", "LOOM_KIMI_NATIVE_FINAL_TRIAL", true],
+                ["codex-exec/v1", "LOOM_CODEX_EXEC_NATIVE_FINAL_TRIAL", false],
               ] as const) {
-                if (codexFlag === undefined)
-                  delete process.env.LOOM_CODEX_FINAL_OUTPUT_TRIAL;
-                else process.env.LOOM_CODEX_FINAL_OUTPUT_TRIAL = codexFlag;
-                if (openCodeFlag === undefined)
-                  delete process.env.LOOM_OPENCODE_FINAL_OUTPUT_TRIAL;
-                else
-                  process.env.LOOM_OPENCODE_FINAL_OUTPUT_TRIAL = openCodeFlag;
-                if (nativeFlag === undefined)
-                  delete process.env.LOOM_CLAUDE_NATIVE_FINAL_TRIAL;
-                else process.env.LOOM_CLAUDE_NATIVE_FINAL_TRIAL = nativeFlag;
-                if (openCodeNativeFlag === undefined)
-                  delete process.env.LOOM_OPENCODE_NATIVE_FINAL_TRIAL;
-                else
-                  process.env.LOOM_OPENCODE_NATIVE_FINAL_TRIAL =
-                    openCodeNativeFlag;
-                if (codexNativeFlag === undefined)
-                  delete process.env.LOOM_CODEX_NATIVE_FINAL_TRIAL;
-                else
-                  process.env.LOOM_CODEX_NATIVE_FINAL_TRIAL = codexNativeFlag;
-                selected = undefined;
-                assert.equal(
+                for (const value of [
+                  undefined,
+                  "0",
+                  "1",
+                  "true",
+                  "",
+                ] as const) {
+                  setFlags(value === undefined ? {} : { [flag]: value });
                   createConfiguredRuntime({
                     ...runtimeInput,
-                    warmRuntimePool: pool,
-                    warmRuntimeKinds: new Set([adapterKind]),
-                    runtimeProfileRevision: {
-                      ...revision,
-                      manifest: {
-                        ...manifest,
-                        manifestVersion: 3,
-                        modelCatalogProbe: {
-                          kind:
-                            adapterKind === "codex-app-server/v1"
-                              ? "codex-cli/v1"
-                              : adapterKind === "opencode-server/v1"
-                                ? "opencode-cli/v1"
-                                : "claude-cli/v1",
-                        },
-                        adapter: { ...manifest.adapter, kind: adapterKind },
-                      },
-                    },
-                  }),
-                  adapter,
-                );
-                assert.equal(
-                  selected,
-                  expected,
-                  `${adapterKind}: codex=${codexFlag}, opencode=${openCodeFlag}`,
-                );
-                assert.equal(
-                  nativeSelected,
-                  nativeExpected,
-                  `native text ${adapterKind}: ${nativeFlag}`,
-                );
+                    runtimeProfileRevision: revisionFor(kind),
+                  });
+                  assert.equal(
+                    options?.nativeFinalText,
+                    value === "1" || (value === undefined && defaultNative),
+                    `${kind}: ${value}`,
+                  );
+                }
               }
-            } finally {
-              for (const [key, value] of [
-                ["LOOM_CODEX_FINAL_OUTPUT_TRIAL", saved[0]],
-                ["LOOM_OPENCODE_FINAL_OUTPUT_TRIAL", saved[1]],
-                ["LOOM_CLAUDE_NATIVE_FINAL_TRIAL", saved[2]],
-                ["LOOM_OPENCODE_NATIVE_FINAL_TRIAL", saved[3]],
-                ["LOOM_CODEX_NATIVE_FINAL_TRIAL", saved[4]],
+              // Unrelated switches never promote an unverified cold entry.
+              setFlags(Object.fromEntries(flags.map((key) => [key, "1"])));
+              for (const kind of [
+                "generic-process/v1",
+                "claude-stream-json/v1",
+                "codex-app-server/v1",
+                "opencode-server/v1",
+                "agy-print-json/v1",
               ] as const) {
-                if (value === undefined) delete process.env[key];
-                else process.env[key] = value;
+                createConfiguredRuntime({
+                  ...runtimeInput,
+                  runtimeProfileRevision: revisionFor(kind),
+                });
+                assert.equal(
+                  options?.nativeFinalText,
+                  kind === "agy-print-json/v1",
+                  kind,
+                );
               }
-            }
-          },
-        );
+            },
+          );
+          await t.test(
+            "warm defaults preserve explicit experiments, rollback and per-CLI selection at the actual factory",
+            () => {
+              const pool = new InstanceRuntimePool({
+                control: createKernelAgentHostControlPort(kernel, host),
+                hostGeneration: host.instanceId,
+                hygiene: new RuntimeProcessHygiene({
+                  sweeper: new LeftoverProcessSweeper({
+                    table: createSystemProcessTable(),
+                  }),
+                }),
+                stateDirectory: join(directory, "warm"),
+              });
+              let selected:
+                { native: boolean; structured: boolean } | undefined;
+              t.mock.method(
+                implementations,
+                "createWarmRuntime",
+                (
+                  ...args: Parameters<
+                    RuntimeImplementationRegistry["createWarmRuntime"]
+                  >
+                ) => {
+                  selected = {
+                    native: args[3].nativeFinalText === true,
+                    structured: args[3].explicitFinalOutput === true,
+                  };
+                  return adapter;
+                },
+              );
+              for (const [kind, nativeFlag, structuredFlag] of [
+                [
+                  "codex-app-server/v1",
+                  "LOOM_CODEX_NATIVE_FINAL_TRIAL",
+                  "LOOM_CODEX_FINAL_OUTPUT_TRIAL",
+                ],
+                [
+                  "claude-stream-json/v1",
+                  "LOOM_CLAUDE_NATIVE_FINAL_TRIAL",
+                  undefined,
+                ],
+                [
+                  "opencode-server/v1",
+                  "LOOM_OPENCODE_NATIVE_FINAL_TRIAL",
+                  "LOOM_OPENCODE_FINAL_OUTPUT_TRIAL",
+                ],
+              ] as const) {
+                const cases: [Record<string, string>, boolean, boolean][] = [
+                  [{}, true, false],
+                  [{ [nativeFlag]: "1" }, true, false],
+                  [{ [nativeFlag]: "0" }, false, false],
+                  [{ [nativeFlag]: "true" }, false, false],
+                  [{ [nativeFlag]: "" }, false, false],
+                  // Other CLIs' flags cannot override this CLI's explicit rollback.
+                  [
+                    Object.fromEntries(
+                      flags
+                        .map((key) => [key, key === nativeFlag ? "0" : "1"])
+                        .filter(([key]) => key !== structuredFlag),
+                    ),
+                    false,
+                    false,
+                  ],
+                ];
+                if (structuredFlag)
+                  cases.push(
+                    [{ [structuredFlag]: "1" }, false, true],
+                    [{ [structuredFlag]: "1", [nativeFlag]: "0" }, false, true],
+                    [{ [structuredFlag]: "1", [nativeFlag]: "1" }, true, false],
+                    [{ [structuredFlag]: "true" }, true, false],
+                  );
+                for (const [environment, native, structured] of cases) {
+                  setFlags(environment);
+                  selected = undefined;
+                  assert.equal(
+                    createConfiguredRuntime({
+                      ...runtimeInput,
+                      warmRuntimePool: pool,
+                      warmRuntimeKinds: new Set([kind]),
+                      runtimeProfileRevision: revisionFor(kind),
+                    }),
+                    adapter,
+                  );
+                  assert.deepEqual(
+                    selected,
+                    { native, structured },
+                    `${kind}: ${JSON.stringify(environment)}`,
+                  );
+                }
+              }
+            },
+          );
+        } finally {
+          for (const key of flags) {
+            if (saved[key] === undefined) delete process.env[key];
+            else process.env[key] = saved[key];
+          }
+        }
+      }
     } finally {
       registry.close();
       kernel.close();

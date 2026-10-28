@@ -1,0 +1,18 @@
+✔ Provider sessions are owner-private, durable, and keyed by immutable runtime locality (37.8925ms)
+✔ Provider session storage fails closed on an aliased root (9.701166ms)
+✔ Provider sessions can quarantine and roll back every continuity record for one Agent (73.527083ms)
+✔ Provider continuity quarantine replays the same durable operation after a process restart (63.540875ms)
+✔ the standing prompt digest is part of Provider session locality (19.704666ms)
+✔ native system memory digest is optional transport metadata and survives a store reload (19.963958ms)
+✔ instance session survives configuration key changes and Host restart without replacing identity (30.539458ms)
+✔ instance adoption refuses ambiguous histories and keeps participants separate (30.250709ms)
+✔ previously launched instance cannot silently restart after binding record loss (11.112083ms)
+✔ a Human session reset generation never resumes or adopts an older instance binding (18.959042ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 433.090375

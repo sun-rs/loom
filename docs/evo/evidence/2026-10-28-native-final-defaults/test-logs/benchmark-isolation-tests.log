@@ -1,0 +1,50 @@
+✔ one numbered long pair retains full workload and alternates frozen order (3.503042ms)
+✔ long entry refuses absent, unknown, duplicated or rearranged arguments (0.488375ms)
+✖ smoke identity pins the owner-approved native-subagent policy (0.622208ms)
+✔ long executable plans one pair with only local CLI version access (990.125291ms)
+✔ fixed free plan rejects ambiguous modes and has distinct immutable workload identity (2.656459ms)
+✔ arm flags override inherited trials without changing account environment (0.09325ms)
+✔ normalization preserves failed cost and never fabricates complete memory/usage (0.152083ms)
+✔ executable --plan permits only version lookup and does not enter provider/catalog (826.727583ms)
+✔ identity failure invalidates a measured stage without dropping observed tokens (0.124875ms)
+✔ baseline hash covers declared launch and trial policy (0.397958ms)
+✔ product stage requires post-measurement success and matching complete product usage (0.221042ms)
+✔ failed identity forbids a summary ratio while preserving observed cost (0.478583ms)
+✔ explicit final-output-only plan selects a distinct two-arm identity without changing workload (0.509625ms)
+✔ two-arm summary keeps native pairing and failed final cost without requiring default (0.295292ms)
+✔ MCP inline profile is separately registered with candidate flags disabled (2.670291ms)
+✔ existing profiles pin exact identities under the approved native-subagent policy (0.46ms)
+✔ MCP plan executable only requests local CLI version (1377.12475ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 16
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1972.476458
+
+✖ failing tests:
+
+test at scripts/cli-efficiency/business-long-runner.test.mjs:84:1
+✖ smoke identity pins the owner-approved native-subagent policy (0.622208ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + '961da547becb34593139037ac720dabba6ad3ac7345225465fd37923575edb25'
+  - '79958d6bc7ecb4e7a875b0366d85b5f06d454256bd3c67f9b4e687097b0380d1'
+  
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/cli-efficiency/business-long-runner.test.mjs:85:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '961da547becb34593139037ac720dabba6ad3ac7345225465fd37923575edb25',
+    expected: '79958d6bc7ecb4e7a875b0366d85b5f06d454256bd3c67f9b4e687097b0380d1',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

@@ -1,0 +1,10 @@
+✔ warm Claude: a crash while idle is recorded; the next message cold-starts and resumes the same session (2265.301333ms)
+✔ warm Claude: idle TTL evicts the idle process; the next turn resumes the recorded session (1745.1955ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4405.230417

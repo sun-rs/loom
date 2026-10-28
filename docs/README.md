@@ -26,6 +26,7 @@
 - [投递与激活](architecture/delivery-and-activation.zh-CN.md)、[运行时与观测](architecture/runtime-adapter-and-observation.zh-CN.md)。
 - [客户端、daemon 与部署](architecture/client-daemon-and-deployment.zh-CN.md)。
 - [Fork / Side 能力边界](evo/session-branches.zh-CN.md)；AGY 的后继限制见当前状态。
+- [原生最终回复默认、升级和回滚](evo/native-final-defaults.zh-CN.md)：源码部署的支持矩阵、显式覆盖与基准隔离。
 - [效率验收方法](design/cli-efficiency-gate.zh-CN.md)、[真实 CLI 与付费台账](evo/paid-runs.zh-CN.md)。失败、未知计量和人工介入不能删去。
 - [任务验收离线汇总](evo/task-outcome-report.zh-CN.md)：交付、人工介入、交接证据及失败用量；目前支持两种已归档格式。
 - [运行记录离线诊断](evo/runtime-diagnostics.zh-CN.md)：同次压缩观测、原生重试信号与缺失数据；不自动干预运行时。

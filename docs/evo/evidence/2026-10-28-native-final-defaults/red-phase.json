@@ -1,0 +1,18 @@
+{
+  "revision": "da03de57d6781aa49ee9336cadec7f60e5eb9a52",
+  "command": "node --test packages/daemon/test/native-final-adoption.test.ts packages/daemon/test/runtime-delivery-composition.test.ts",
+  "exitCode": 1,
+  "intendedFailures": [
+    {
+      "assertion": "a fresh source installation selects the verified native-final entry without launch flags",
+      "actual": false,
+      "expected": true
+    },
+    {
+      "assertion": "Pi unset native flag reaches factory nativeFinalText=true",
+      "actual": false,
+      "expected": true
+    }
+  ],
+  "note": "Two intended assertions failed; enclosing composition test also reports its failed Pi subtest. Captured from tool output before implementation."
+}

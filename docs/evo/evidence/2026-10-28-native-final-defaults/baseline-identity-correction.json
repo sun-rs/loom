@@ -1,0 +1,25 @@
+{
+  "previous": "79958d6bc7ecb4e7a875b0366d85b5f06d454256bd3c67f9b4e687097b0380d1",
+  "current": "961da547becb34593139037ac720dabba6ad3ac7345225465fd37923575edb25",
+  "causeCommit": "ead15510",
+  "difference": {
+    "native": {
+      "LOOM_CODEX_NATIVE_FINAL_TRIAL": "0",
+      "LOOM_KIMI_NATIVE_FINAL_TRIAL": "0",
+      "LOOM_CLAUDE_NATIVE_FINAL_TRIAL": "0",
+      "LOOM_OPENCODE_NATIVE_FINAL_TRIAL": "0",
+      "LOOM_CODEX_EXEC_NATIVE_FINAL_TRIAL": "0",
+      "LOOM_PI_NATIVE_FINAL_TRIAL": "0"
+    },
+    "worker-delivery": {
+      "LOOM_CODEX_NATIVE_FINAL_TRIAL": "0",
+      "LOOM_KIMI_NATIVE_FINAL_TRIAL": "0",
+      "LOOM_CLAUDE_NATIVE_FINAL_TRIAL": "0",
+      "LOOM_OPENCODE_NATIVE_FINAL_TRIAL": "0",
+      "LOOM_CODEX_EXEC_NATIVE_FINAL_TRIAL": "0",
+      "LOOM_PI_NATIVE_FINAL_TRIAL": "0"
+    }
+  },
+  "workloadAndNativePolicyOtherwiseUnchanged": true,
+  "historicalEvidenceRewritten": false
+}

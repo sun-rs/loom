@@ -33,6 +33,7 @@ import type {
 } from "@rah-os/protocol";
 
 import { deliveryAcceptanceRegistration } from "./delivery-acceptance-registration.ts";
+import { selectRuntimeReplyTransport } from "./reply-transport-policy.ts";
 import {
   startupMemorySystemLease,
   useSystemMemoryTransport,
@@ -363,17 +364,16 @@ export function createConfiguredRuntime(input: {
           ),
         }),
     nativeFinalText:
-      input.runtimeProfileRevision.manifest.adapter.kind ===
-        "agy-print-json/v1" ||
-      (input.runtimeProfileRevision.manifest.adapter.kind === "codex-exec/v1" &&
-        process.env.LOOM_CODEX_EXEC_NATIVE_FINAL_TRIAL === "1") ||
-      (input.runtimeProfileRevision.manifest.adapter.kind === "kimi-acp/v1" &&
-        process.env.LOOM_KIMI_NATIVE_FINAL_TRIAL === "1") ||
-      (input.runtimeProfileRevision.manifest.adapter.kind ===
-        "pi-print-json/v1" &&
-        process.env.LOOM_PI_NATIVE_FINAL_TRIAL === "1"),
+      selectRuntimeReplyTransport({
+        adapterKind: input.runtimeProfileRevision.manifest.adapter.kind,
+        entry: "cold",
+      }) === "native-final",
     supervisorDirectory: input.supervisorDirectory,
   } satisfies RuntimeCreationOptions;
+  const warmReplyTransport = selectRuntimeReplyTransport({
+    adapterKind: input.runtimeProfileRevision.manifest.adapter.kind,
+    entry: "warm",
+  });
   runtime =
     input.warmRuntimePool !== undefined &&
     (input.warmRuntimeKinds ?? new Set(["codex-app-server/v1"])).has(
@@ -384,24 +384,8 @@ export function createConfiguredRuntime(input: {
           input.probeReport,
           creationOptions,
           {
-            nativeFinalText:
-              (input.runtimeProfileRevision.manifest.adapter.kind ===
-                "codex-app-server/v1" &&
-                process.env.LOOM_CODEX_NATIVE_FINAL_TRIAL === "1") ||
-              (input.runtimeProfileRevision.manifest.adapter.kind ===
-                "claude-stream-json/v1" &&
-                process.env.LOOM_CLAUDE_NATIVE_FINAL_TRIAL === "1") ||
-              (input.runtimeProfileRevision.manifest.adapter.kind ===
-                "opencode-server/v1" &&
-                process.env.LOOM_OPENCODE_NATIVE_FINAL_TRIAL === "1"),
-            explicitFinalOutput:
-              (input.runtimeProfileRevision.manifest.adapter.kind ===
-                "opencode-server/v1" &&
-                process.env.LOOM_OPENCODE_FINAL_OUTPUT_TRIAL === "1" &&
-                process.env.LOOM_OPENCODE_NATIVE_FINAL_TRIAL !== "1") ||
-              (input.runtimeProfileRevision.manifest.adapter.kind ===
-                "codex-app-server/v1" &&
-                process.env.LOOM_CODEX_FINAL_OUTPUT_TRIAL === "1"),
+            nativeFinalText: warmReplyTransport === "native-final",
+            explicitFinalOutput: warmReplyTransport === "explicit-final",
             issueWorkerCredential,
             pool: input.warmRuntimePool,
             runtimeEnvironment: async (scope) =>

@@ -1,0 +1,18 @@
+✔ native Claude adoption selects its required warm entry without overriding an explicit cold policy (0.716667ms)
+✔ new source installations adopt reviewed entries without promoting standalone packaging (0.69775ms)
+✔ existing benchmark arms stay explicit when product defaults change (0.16925ms)
+✔ activation composition derives direct delivery and rereads Guide for every Run (339.010667ms)
+✔ activation composition derives gated delivery and rereads Guide for every Run (245.109833ms)
+▶ activation composition derives unknown delivery and rereads Guide for every Run
+  ✔ cold defaults, explicit rollback and unsupported entry fallback reach the actual factory (0.380125ms)
+  ✔ warm defaults preserve explicit experiments, rollback and per-CLI selection at the actual factory (0.759958ms)
+✔ activation composition derives unknown delivery and rereads Guide for every Run (239.610833ms)
+✔ reply transport is explicit and clears unrelated inherited experiment switches (1.634833ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1229.356167

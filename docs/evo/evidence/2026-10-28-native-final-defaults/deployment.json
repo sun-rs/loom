@@ -1,0 +1,37 @@
+{
+  "at": "2026-10-28T08:57:39.325Z",
+  "sourceRevision": "da03de57d6781aa49ee9336cadec7f60e5eb9a52",
+  "sourceWorktreeDirty": true,
+  "backendFilesSha256": {
+    "packages/daemon/src/reply-transport-policy.ts": "22b33eb8076fa93b91a2b6d6fc6bc598ec3653db00625c1413c1d55ebcfa0cea",
+    "packages/daemon/src/config.ts": "4f14c24ccdbfe79e74c525506f6eae0d2b6c14ae9df9b04be097cca5e83a97a3",
+    "packages/daemon/src/daemon-process-hygiene.ts": "c6c42e9dbdadf7c1e33446255c9f5622056f7d088600b11927bcac05f93650f0",
+    "packages/daemon/src/runtime-profile-composition.ts": "46d19db7479010d64e81e720d497dc30d236406deda3844f85c53aae41e0ca90"
+  },
+  "oldPid": 55401,
+  "newPid": 24094,
+  "backup": "/Users/sun/.loom/evo/backups/pre-native-final-defaults-1793177841059",
+  "backupVerified": true,
+  "ledgerUnchanged": true,
+  "webAssets": "/Users/sun/Code/repos/rah_os/.workbench-web/1167c2ce6871e7bdfc06eced41cc4913b9bf6b02f4ee24cf97716a394bfefa60",
+  "webIndexSha256": "2e734ecf129d22f83b3caea8660fe568f59982fcde26d85e54a2b1d4cea43df2",
+  "webAssetsUnchanged": true,
+  "removedRedundantOnes": {
+    "LOOM_CODEX_NATIVE_FINAL_TRIAL": "1",
+    "LOOM_CLAUDE_NATIVE_FINAL_TRIAL": "1",
+    "LOOM_OPENCODE_NATIVE_FINAL_TRIAL": "1",
+    "LOOM_KIMI_NATIVE_FINAL_TRIAL": "1"
+  },
+  "remainingReplyOverrides": {},
+  "effectiveEntries": {
+    "codex-app-server/v1": "native-final",
+    "claude-stream-json/v1": "native-final",
+    "opencode-server/v1": "native-final",
+    "kimi-acp/v1": "native-final",
+    "pi-print-json/v1": "native-final",
+    "agy-print-json/v1": "native-final",
+    "codex-exec/v1": "worker"
+  },
+  "scope": "Source/Node daemon native-final defaults; explicit cold/off and experiments retained; no paid calls or UI rebuild",
+  "plistSha256": "85506c187a80753977dea82daf62cc8c30dad8858bc065a93500b95388fc10c0"
+}

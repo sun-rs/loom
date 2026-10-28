@@ -10,6 +10,7 @@ import {
 import type { AuthenticatedHostContext, RoomKernel } from "@rah-os/kernel";
 
 import type { DaemonConfig } from "./config.ts";
+import { selectRuntimeReplyTransport } from "./reply-transport-policy.ts";
 
 /**
  * S2-0: leftover-process sweeps for the local Host. On by default where the
@@ -58,8 +59,8 @@ export function createDaemonRuntimeHygiene(
 /**
  * The runtime adapter kinds whose Role instances run warm. Codex and OpenCode
  * are on by default since the eighth review (`enabled: false` opts out);
- * Claude stays opt-in: explicit warm configuration or native-final adoption.
- * An explicit cold policy takes precedence over the adoption switch.
+ * Claude follows the reviewed native-final default in source deployments.
+ * Explicit cold policy or native-final rollback preserves its old cold entry.
  */
 export function warmRuntimeAdapterKinds(
   config: DaemonConfig["warmRuntimes"],
@@ -69,7 +70,10 @@ export function warmRuntimeAdapterKinds(
   if (
     config?.claude?.enabled === true ||
     (config?.claude?.enabled === undefined &&
-      process.env.LOOM_CLAUDE_NATIVE_FINAL_TRIAL === "1")
+      selectRuntimeReplyTransport({
+        adapterKind: "claude-stream-json/v1",
+        entry: "warm",
+      }) === "native-final")
   )
     kinds.add("claude-stream-json/v1");
   if (config?.opencode?.enabled !== false) kinds.add("opencode-server/v1");
@@ -77,8 +81,7 @@ export function warmRuntimeAdapterKinds(
 }
 
 /**
- * S2-a: the Host's warm instance runtimes (Codex and S2-c3 OpenCode by
- * default, S2-c1 Claude when enabled). Review batch 1 #7: with every warm
+ * S2-a: the Host's warm instance runtimes. Review batch 1 #7: with every warm
  * runtime switched off the pool still exists — no adapter runs warm — so
  * live runtime rows an earlier Host left (a crash while warm was on) still
  * get its Host-start janitor, and its start fence keeps a suspect row

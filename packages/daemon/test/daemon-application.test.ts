@@ -2400,7 +2400,7 @@ test("S2-c3 warm OpenCode runtimes are on by default (eighth review), with a sep
         warmRuntimes: { opencode: { enabled: false } },
       }).warmRuntimes,
     ),
-    new Set(["codex-app-server/v1"]),
+    new Set(["codex-app-server/v1", "claude-stream-json/v1"]),
     "opencode.enabled: false opts out of OpenCode only",
   );
   assert.deepEqual(
@@ -2410,8 +2410,8 @@ test("S2-c3 warm OpenCode runtimes are on by default (eighth review), with a sep
         warmRuntimes: { codex: { enabled: false } },
       }).warmRuntimes,
     ),
-    new Set(["opencode-server/v1"]),
-    "opting out of Codex never disables OpenCode",
+    new Set(["claude-stream-json/v1", "opencode-server/v1"]),
+    "opting out of Codex never disables Claude or OpenCode",
   );
   const parsed = DaemonConfigSchema.parse({
     ...base,
@@ -2420,7 +2420,11 @@ test("S2-c3 warm OpenCode runtimes are on by default (eighth review), with a sep
   assert.deepEqual(parsed.warmRuntimes, { opencode: { enabled: true } });
   assert.deepEqual(
     warmRuntimeAdapterKinds(parsed.warmRuntimes),
-    new Set(["codex-app-server/v1", "opencode-server/v1"]),
+    new Set([
+      "codex-app-server/v1",
+      "claude-stream-json/v1",
+      "opencode-server/v1",
+    ]),
   );
   assert.throws(() =>
     DaemonConfigSchema.parse({
@@ -2430,12 +2434,16 @@ test("S2-c3 warm OpenCode runtimes are on by default (eighth review), with a sep
   );
 });
 
-test("S2-c1 warm Claude runtimes stay a separate opt-in, off by default", () => {
+test("warm Claude defaults to the verified native entry and retains independent cold opt-out", () => {
   const base = validConfig("/tmp/rah-os-config-state", "/tmp/rah-os-secret");
   assert.deepEqual(
     warmRuntimeAdapterKinds(undefined),
-    new Set(["codex-app-server/v1", "opencode-server/v1"]),
-    "the defaults never run Claude warm",
+    new Set([
+      "codex-app-server/v1",
+      "claude-stream-json/v1",
+      "opencode-server/v1",
+    ]),
+    "source defaults select the supported Claude native-final entry",
   );
   assert.equal(
     warmRuntimeAdapterKinds(
@@ -2444,8 +2452,8 @@ test("S2-c1 warm Claude runtimes stay a separate opt-in, off by default", () => 
         warmRuntimes: { codex: { enabled: true } },
       }).warmRuntimes,
     ).has("claude-stream-json/v1"),
-    false,
-    "enabling Codex never enables Claude",
+    true,
+    "enabling Codex preserves the independent Claude default",
   );
   const parsed = DaemonConfigSchema.parse({
     ...base,
@@ -2476,7 +2484,7 @@ test("S2-c1 warm Claude runtimes stay a separate opt-in, off by default", () => 
   );
 });
 
-test("the daemon composes the warm pool and leftover-process hygiene by default; switching Codex and OpenCode off keeps only the janitor pool", () => {
+test("the daemon composes the warm pool and leftover-process hygiene by default; switching all warm entries off keeps only the janitor pool", () => {
   if (process.platform !== "darwin" && process.platform !== "linux") return;
   const directory = mkdtempSync(join(tmpdir(), "rah-os-warm-default-"));
   const kernel = new RoomKernel({ databasePath: join(directory, "room.db") });
@@ -2497,13 +2505,18 @@ test("the daemon composes the warm pool and leftover-process hygiene by default;
     assert.ok(composed.processHygiene !== undefined, "leftover sweeps stay on");
     assert.deepEqual(
       composed.warmRuntimeKinds,
-      new Set(["codex-app-server/v1", "opencode-server/v1"]),
+      new Set([
+        "codex-app-server/v1",
+        "claude-stream-json/v1",
+        "opencode-server/v1",
+      ]),
     );
     const off = createDaemonRuntimeHygiene(
       DaemonConfigSchema.parse({
         ...validConfig(directory, join(directory, "secret")),
         warmRuntimes: {
           codex: { enabled: false },
+          claude: { enabled: false },
           opencode: { enabled: false },
         },
       }),
@@ -2555,8 +2568,12 @@ test("S2-b warm runtime policies are configurable; policies alone keep the warm 
     warmRuntimeAdapterKinds(
       DaemonConfigSchema.parse({ ...base, warmRuntimes: policy }).warmRuntimes,
     ),
-    new Set(["codex-app-server/v1", "opencode-server/v1"]),
-    "policies alone neither disable Codex/OpenCode nor enable Claude",
+    new Set([
+      "codex-app-server/v1",
+      "claude-stream-json/v1",
+      "opencode-server/v1",
+    ]),
+    "pool policies preserve the reviewed default entries",
   );
   assert.doesNotThrow(
     () =>

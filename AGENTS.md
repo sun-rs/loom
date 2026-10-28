@@ -433,6 +433,17 @@ retain Worker CLI fallback for ineligible/multiple targets. Preserve original
 session identity and require successful current delivery registration plus
 verified native terminal evidence before Host publication.
 
+Owner 2026-10-28 promoted reviewed native-final entries to product-daemon
+defaults in source/Node deployments: warm Codex/Claude/OpenCode and cold
+Kimi/Pi; AGY keeps its existing native protocol. Selection belongs only to
+`packages/daemon/src/reply-transport-policy.ts`. Explicit cold configuration and
+exact launch switches retain rollback; older structured-final experiments stay
+explicit and mutually exclusive with native-final. Do not promote cold Codex
+exec, unknown entries, low-level adapter defaults, remote Computer wiring or SEA
+packaging implicitly. Provider session identity and all publication fences stay
+unchanged. Benchmark arms still write explicit switches, independently of these
+product defaults. See [defaults, upgrade and rollback](docs/evo/native-final-defaults.zh-CN.md).
+
 Raft source is reference only, not the default port source; keep the verified
 ledger, authentication, idempotency and execution-fence foundations. Rules code
 can enforce must not live in prompts; exception guidance appears only on error.

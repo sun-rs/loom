@@ -9,7 +9,7 @@
 - `main` 是当前 Loom；`evo` 已晋升并移除；`chatbox` 独立承载 `rah/main` 导入，不参与 Loom 构建。见[分支记录](branch-promotion.zh-CN.md)。
 - 唯一产品前端为 `frontends/raft`。旧复刻 UI 和 `apps/console` 已退役，不恢复其路由、构建或测试入口。
 - 保留部署标签 `com.loom.evo`、数据目录 `~/.loom/evo`、日志目录及频道主目录 `~/.loom/channel-workspaces/`。这些名称不是旧分支残留任务，不能为整洁搬迁数据。
-- 本批已备份并重启正式服务，部署本轮验证的 main 工作树（基线 `92d0735d`，构建时含本批修改），Web 资源哈希 `1167c2ce…`。Raft UI 0.40.0 与 Web 1.21.35 的指定资源移植已通过定向验证；正式 Chrome 新页面确认空聊天与主题页，账本未变。既有 Codex warm / Kimi ACP native-final 选择保留；库默认仍 opt-in。[部署收据](evidence/2026-10-28-ui-refresh/deployment.json)，[本批差异与证据](evidence/2026-10-28-ui-refresh/README.md)。此前[AGY/三方协作部署](evidence/2026-10-28-three-cli-team/deployment.json)及其验收边界仍保留。
+- 本批已备份并重启正式服务，部署本轮 main 工作树（源码基线 `da03de57`，含本批默认选择修改；摘要见收据）。源码 / Node daemon 不再依赖本机四个 native-final `=1`；显式关闭与冷入口保留。账本未变，Web 快照 `1167c2ce…` 未重建；正式 Chrome 新页面确认聊天空态、在线计算机及六个运行时。[默认化与部署](evidence/2026-10-28-native-final-defaults/README.md)、[部署收据](evidence/2026-10-28-native-final-defaults/deployment.json)。前批 Raft UI 0.40.0 / Web 1.21.35 指定资源的[前端验收](evidence/2026-10-28-ui-refresh/README.md)及[三方协作证据](evidence/2026-10-28-three-cli-team/README.md)保留各自边界。
 - HTTP 4176、LAN HTTPS 4178 和隔离预览的部署记录见[HTTPS接入](evidence/2026-10-22-https-trusted/summary.json)、[预览边界](evidence/2026-10-23-https-preview/summary.json)。本轮复查了 HTTP 4176 页面和既有 launchd 配置，HTTPS/Tailscale 真机链路未重新验收；部署前仍须读取实际状态，不沿用旧快照里的临时 loopback 配置。
 
 ## 2. 当前状态
@@ -55,7 +55,7 @@
 
 ### 回复传输缺陷已修复；证明范围有限
 
-Codex warm/Kimi ACP 本机正式服务采用 native-final；最终三对输入总和比分别1.241、1.088，完整原流核账，18轮 Loom 执行成功。Codex 已移除竞争回复 MCP，Kimi 此批无取消请求 usage 缺口。库默认仍 opt-in；多目标/不完整投递及业务操作保留 Worker。见[修复与部署](evidence/2026-10-28-native-repair/README.md)。
+Codex warm/Kimi ACP 本机正式服务采用 native-final；最终三对输入总和比分别1.241、1.088，完整原流核账，18轮 Loom 执行成功。Codex 已移除竞争回复 MCP，Kimi 此批无取消请求 usage 缺口。该批当时为本机显式选择；后继源码 daemon 默认已提升，底层构造器仍显式传入能力。多目标/不完整投递及业务操作保留 Worker。见[修复与部署](evidence/2026-10-28-native-repair/README.md)、[当前默认矩阵](native-final-defaults.zh-CN.md)。
 
 2026-10-28 后续清理修复旧长任务/跨频道 runner 的开关继承漏洞，统一清零及恢复键集；不删除可复现历史失败的入口。文章工具与相关实验入口140项定向免费测试通过；无新付费调用、产品修改或服务重启。见[清理记录](../audits/2026-10-28-reply-transport-cleanup.zh-CN.md)。
 
@@ -63,10 +63,10 @@ Codex warm/Kimi ACP 本机正式服务采用 native-final；最终三对输入�
 
 在 `ead15510` 上，Codex gpt-6-luna/low、Kimi k3-256k/low 各三对×每臂十二轮固定源码审查全部完成，144轮、12个连续session核账一致。全部输入总和比1.165/1.061，生成次数原生/Loom为60/62、60/60；没有缺失usage或替换样本。原生也有关键误诊，部分Loom修复建议含糊或中间错误，字数遵循未全通过；因此不发布同质量成本比，不称完整质量/时延门禁通过。无产品改动或重启。见[固定长任务报告](evidence/2026-10-28-long-closeout/README.md)。
 
-### 下一步优先级
+### 协作与推广状态
 
 1. **三方协作已取得一次无需人工恢复的完整回归**：OpenCode／Claude CLI（实际 Kimi）／AGY 新 session 自行完成设计、实现、独立评审与交付，外部40/40、三家原流用量对齐；此前同组停顿和一次恢复仍完整保留。[最终三方报告](evidence/2026-10-28-three-cli-team/README.md)。AGY目录5秒截断修正为15秒，多人回复及状态点名规则已补入native-final说明；Kernel自动返回范围不扩大。此前[Herdr/Loom失败对照](evidence/2026-10-28-team-closeout/README.md)、[四运行时复验](evidence/2026-10-28-tool-preflight-team/README.md)不补判通过。尚无同质量重复原生/Herdr协作成本倍率，不把这次单任务成功外推为全场景稳定性或效率门禁通过。
-2. **部署选择可移植性**：当前本机显式开关已验证，新的安装环境仍使用库默认；正式推广前须明确支持矩阵和默认选择迁移，不在清理时静默改变所有运行时。
+2. **源码部署默认选择已收口**：daemon 集中选择 warm Codex/Claude/OpenCode 与 cold Kimi/Pi 原生回复；AGY 保持原协议。未设变量的新安装、显式关闭/冷配置、旧结构化试验、基准隔离及会话围栏定向135项通过，类型检查通过。本机移除四个冗余 `=1` 后安全重启，账本与前端快照未变；无新付费调用。冷 Codex exec、底层适配器、SEA 与远端不扩展。[矩阵、升级和回滚](native-final-defaults.zh-CN.md)、[测试与部署](evidence/2026-10-28-native-final-defaults/README.md)。
 3. **已知平台限制**：AGY自动记忆禁用未证实，不做不公平成本对照；外部 Fork/Side 接口缺失仍明确不支持。子代理总账、极长历史、真机与远端限制保留 §3，不因本轮短任务成功消失。
 
 此前失败、人工接手、修复顺序及全部费用链接见[历史经过](log/2026-10-28-repair-progression.zh-CN.md)与[付费台账](paid-runs.zh-CN.md)。当前没有从这些记录确认的新产品阻断；这不等于所有能力、所有模型和所有门禁全部通过。
@@ -85,8 +85,8 @@ Codex warm/Kimi ACP 本机正式服务采用 native-final；最终三对输入�
 
 ### 全局频道代码退役与明确剩余项
 
-继续删除未使用的系统频道协议、全局欢迎开关、Workspace 投影及上游表单提取，旧首次运行模块只保留历史回执校验。AGY基础接入及文章/Cindy选定的报告、诊断工具已完成；不把AGY缺失的外部Fork接口或未采纳的自动熔断算成待补功能。真正优先未收口的是最新协作对照的评审闭环及新安装默认回复传输策略；详见[当前判断](../audits/2026-10-28-all-channel-retirement.zh-CN.md)。
+继续删除未使用的系统频道协议、全局欢迎开关、Workspace 投影及上游表单提取，旧首次运行模块只保留历史回执校验。AGY基础接入及文章/Cindy选定的报告、诊断工具已完成；不把AGY缺失的外部Fork接口或未采纳的自动熔断算成待补功能。该记录当时留下的协作闭环和新安装默认选择，已有上文的三方实测及源码默认化后继证据；重复同质量协作成本与平台限制仍保留。见[当时判断](../audits/2026-10-28-all-channel-retirement.zh-CN.md)，不把历史“剩余”重复当作新待办。
 
 ### 协作恢复定向修复
 
-核对原生日志发现未闭合工具在原生回合结束18ms后有终态；该记录不足以确定历史因果。假app-server稳定复现真实driver提前终止，现改为最多500ms等待匹配工具真实终态，缺失/外部终态继续失败关闭。旧Worker句柄拒绝和held草稿围栏保留。默认配置矩阵已核对；在协作闭环复验前不扩大新安装默认开关。[证据与限制](evidence/2026-10-28-team-recovery/README.md)。
+核对原生日志发现未闭合工具在原生回合结束18ms后有终态；该记录不足以确定历史因果。假app-server稳定复现真实driver提前终止，现改为最多500ms等待匹配工具真实终态，缺失/外部终态继续失败关闭。旧Worker句柄拒绝和held草稿围栏保留。该批默认配置矩阵已核对，当时未扩大默认开关；后继协作及本页默认化证据分别记录，历史失败不补判。[证据与限制](evidence/2026-10-28-team-recovery/README.md)。
