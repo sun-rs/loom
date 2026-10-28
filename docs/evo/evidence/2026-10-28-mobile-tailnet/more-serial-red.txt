@@ -1,0 +1,42 @@
+✔ mobile idle warming is bounded to the two primary page modules and cancellation prevents work (25.119083ms)
+✔ desktop, hidden and data-saving connections perform no speculative work (13.160583ms)
+✔ navigation intent warms only its destination and More warms only its four entries (1.868792ms)
+✖ More warms one module at a time and closing it cancels the remaining speculative work (3.103125ms)
+✔ hidden-after-scheduling and failed speculative loads do not publish or reject globally (2.221333ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 4
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 224.7085
+
+✖ failing tests:
+
+test at scripts/official-web/page-preload.test.mjs:120:1
+✖ More warms one module at a time and closing it cancels the remaining speculative work (3.103125ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+
+    [
+      'Agent',
+  +   'Computers',
+  +   'Settings',
+  +   'Memory'
+    ]
+
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/page-preload.test.mjs:128:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'Agent', 'Computers', 'Settings', 'Memory' ],
+    expected: [ 'Agent' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

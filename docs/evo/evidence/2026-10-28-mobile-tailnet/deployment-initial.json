@@ -1,0 +1,37 @@
+{
+  "at": "2026-10-28T12:31:59.839Z",
+  "sourceParent": "55fd64e578afd31eff79a0d85f15e962d9490db7",
+  "sourceWorktreeDirty": true,
+  "sourceHashes": {
+    "frontends/raft/loom/ChannelApp.tsx": "d55306251bb61089ac570215b9f217b91fae1fe287203c8ebcde39945114836d",
+    "frontends/raft/loom/LazyPages.tsx": "b3252e757abc4887b2541dde0263e5f342de81d87630903dcf35349efa93d041",
+    "frontends/raft/loom/page-preload.ts": "715d78096131bc21445b70f3fdb2ba3d85aaac2d2d09caf0646380da634ca97c",
+    "frontends/raft/loom/Navigation.tsx": "c85416ec383178e1fdc66ab1bd060919d30268c23410f14ca302c2dff4d7ba18",
+    "frontends/raft/loom/MobileWorkspaceMenu.tsx": "972187467d17a238a91fb65575733058a658f47cb88c88efc7be98b1f7d34059"
+  },
+  "oldPid": 35175,
+  "newPid": 41326,
+  "backup": "/Users/sun/.loom/evo/backups/pre-mobile-page-warmup-1793190702358",
+  "backupVerified": true,
+  "ledgerUnchanged": true,
+  "newWebSnapshot": "/Users/sun/Code/repos/rah_os/.workbench-web/b9973e89d48f8d6f8c36157285b0d596c42587a76d57a2fe01a5fca11d60fe51",
+  "webBuildId": "a45798702dffd47c603c77750f7127969de2b3f29f16643243e61ac8dc9770da",
+  "indexSha256": "10bfe1119e6b79b69e20855f35ba39df6409768c9cc2d4d27055da79d83731d8",
+  "allOriginalHttpEntries200": true,
+  "networkModeUnchanged": true,
+  "edges": [
+    {
+      "origin": "https://100.101.107.87:4178",
+      "status": 200,
+      "tlsVerifiedWithOriginalCA": true,
+      "webIndexMatches": true
+    },
+    {
+      "origin": "https://192.168.1.86:4178",
+      "status": 200,
+      "tlsVerifiedWithOriginalCA": true,
+      "webIndexMatches": true
+    }
+  ],
+  "scope": "Mobile page module lifetime only; no backend, CLI, network trust, CA, data or official UI geometry changes; no paid calls"
+}

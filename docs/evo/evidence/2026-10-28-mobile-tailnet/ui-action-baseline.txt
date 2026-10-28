@@ -1,0 +1,37 @@
+✖ all action bindings have upstream provenance and cannot be overridden locally (134.36175ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 241.236709
+
+✖ failing tests:
+
+test at scripts/official-web/ui-action-props.test.ts:65:1
+✖ all action bindings have upstream provenance and cannot be overridden locally (134.36175ms)
+  AssertionError [ERR_ASSERTION]: AddInstanceDialog.tsx
+  + actual - expected
+
+  + 'DialogCommit'
+  - 'Button'
+
+      at walk (file:///private/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/loom-ui-baseline-uzq11dj6/scripts/official-web/ui-action-props.test.ts:96:18)
+      at visitNode2 (/Users/sun/Code/repos/rah_os/node_modules/typescript/lib/typescript.js:32449:18)
+      at forEachChildInJsxElement (/Users/sun/Code/repos/rah_os/node_modules/typescript/lib/typescript.js:32816:12)
+      at Object.forEachChild (/Users/sun/Code/repos/rah_os/node_modules/typescript/lib/typescript.js:32970:35)
+      at walk (file:///private/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/loom-ui-baseline-uzq11dj6/scripts/official-web/ui-action-props.test.ts:112:10)
+      at visitNodes (/Users/sun/Code/repos/rah_os/node_modules/typescript/lib/typescript.js:32457:22)
+      at forEachChildInJsxElement (/Users/sun/Code/repos/rah_os/node_modules/typescript/lib/typescript.js:32816:55)
+      at Object.forEachChild (/Users/sun/Code/repos/rah_os/node_modules/typescript/lib/typescript.js:32970:35)
+      at walk (file:///private/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/loom-ui-baseline-uzq11dj6/scripts/official-web/ui-action-props.test.ts:112:10)
+      at visitNodes (/Users/sun/Code/repos/rah_os/node_modules/typescript/lib/typescript.js:32457:22) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'DialogCommit',
+    expected: 'Button',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

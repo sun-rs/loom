@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { preloadDestination, preloadMorePages } from "./page-preload.ts";
 import {
   MobileNavServerPopover,
   MobileNavServerItem,
@@ -30,6 +31,9 @@ export default function MobileWorkspaceMenu({
   onSelect: (id: Destination) => void;
 }) {
   const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (open) return preloadMorePages();
+  }, [open]);
   const select = (id: Destination) => {
     setOpen(false);
     onSelect(id);
@@ -69,6 +73,8 @@ export default function MobileWorkspaceMenu({
             <MobileNavServerPopoverDestination
               key={item.id}
               aria-current={active === item.id ? "page" : undefined}
+              onPointerDown={() => preloadDestination(item.id)}
+              onFocus={() => preloadDestination(item.id)}
               onClick={() => select(item.id)}
             >
               <item.icon />

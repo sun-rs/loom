@@ -85,6 +85,7 @@ import ChannelSidebar from "./ChannelSidebar.tsx";
 import ChatSidebarFrame from "./ChatSidebarFrame.tsx";
 import { LazyMemoryPage as MemoryPage } from "./LazyPages.tsx";
 import { LazyAgentPage as AgentPage } from "./LazyPages.tsx";
+import { scheduleMobilePageWarmup } from "./page-preload.ts";
 import PanelHeader from "../packages/web/src/components/ui/PanelHeader.tsx";
 import MessageInput from "./ComposerFiles.tsx";
 import { LoomChannelClient, loadChannelDirectory } from "./channel-client.ts";
@@ -1025,6 +1026,9 @@ export default function ChannelApp() {
     !error &&
     (!directory ||
       (Boolean(directory.workspace.controlRoomId) && !sidebarReady));
+  useEffect(() => {
+    if (!bootstrapping) return scheduleMobilePageWarmup();
+  }, [bootstrapping]);
   return createElement(
     ComposerDirectory,
     { directory },

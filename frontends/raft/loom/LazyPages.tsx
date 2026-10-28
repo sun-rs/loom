@@ -25,7 +25,19 @@ function nativePage<T extends ComponentType<any>>(
   // publish a resolved module directly instead of React's Suspense reveal delay.
   let loaded: T | undefined;
   let pending: Promise<T> | undefined;
-  return function DemandPage(props: ComponentProps<T>) {
+  const preload = () => {
+    if (pending) return pending;
+    const attempt = (pending = load().then(
+      (module) => (loaded = module.default),
+    ));
+    // A failed speculation must not pin a transient transport error forever.
+    // No automatic retry: a later explicit navigation/import may try again.
+    void attempt.catch(() => {
+      if (pending === attempt) pending = undefined;
+    });
+    return attempt;
+  };
+  function DemandPage(props: ComponentProps<T>) {
     const [result, setResult] = useState<{
       page?: T;
       failed?: boolean;
@@ -37,8 +49,7 @@ function nativePage<T extends ComponentType<any>>(
         return;
       }
       let active = true;
-      pending ??= load().then((module) => (loaded = module.default));
-      void pending.then(
+      void preload().then(
         (page) => {
           if (active) setResult({ page });
         },
@@ -62,7 +73,8 @@ function nativePage<T extends ComponentType<any>>(
     ) : (
       <PanelFallback />
     );
-  };
+  }
+  return Object.assign(DemandPage, { preload });
 }
 export const LazySettingsPage = nativePage(() => import("./SettingsPage.tsx"));
 export const LazyAgentPage = nativePage(() => import("./AgentPage.tsx"));

@@ -1,4 +1,5 @@
 import MobileWorkspaceMenu from "./MobileWorkspaceMenu";
+import { preloadDestination } from "./page-preload.ts";
 import { mobilePrimaryDestinations } from "./mobile-app-navigation";
 import { CurrentSidebarToggle } from "./CurrentSidebarToggle.generated.js";
 import {
@@ -74,6 +75,8 @@ export function DesktopNavigation({
       dotInactiveOnly
       active={active === entry.id}
       aria-current={active === entry.id ? "page" : undefined}
+      onPointerDownCapture={() => preloadDestination(entry.id)}
+      onFocus={() => preloadDestination(entry.id)}
       onDoubleClick={
         entry.id === "activity" ? () => onSelect(entry.id, true) : undefined
       }
@@ -135,6 +138,8 @@ export function MobileNavigation({
             selected={active === entry.id}
             aria-label={entry.id === "channels" ? "首页" : entry.label}
             aria-current={active === entry.id ? "page" : undefined}
+            onPointerDown={() => preloadDestination(entry.id)}
+            onFocus={() => preloadDestination(entry.id)}
             onClick={() => onSelect(entry.id)}
           >
             {entry.id === "channels" ? <Home /> : <entry.icon />}

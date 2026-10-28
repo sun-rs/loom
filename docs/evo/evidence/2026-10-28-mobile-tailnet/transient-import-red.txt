@@ -1,0 +1,36 @@
+✔ page module is demand-loaded once and rendered immediately on resolution without a timed Suspense fallback (34.924833ms)
+✔ departed page never publishes its late module completion (5.821958ms)
+✔ failed imports reach the existing error boundary instead of an endless loader (5.189167ms)
+✔ a module resolving between remount and effect still becomes visible (4.332791ms)
+✔ stale deployed imports render recovery without throwing away the mounted application (5.309125ms)
+✔ refresh confirmation is above the search overlay and retains native confirmation (0.150541ms)
+✔ warming page code shares one import with a later navigation without mounting the page (3.610375ms)
+✔ a failed background import remains visible through the existing recovery when navigated (4.713958ms)
+✖ a transient speculative failure cannot poison a later real navigation (5.988917ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 8
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 244.352167
+
+✖ failing tests:
+
+test at scripts/official-web/page-loading.test.mjs:212:1
+✖ a transient speculative failure cannot poison a later real navigation (5.988917ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  1 !== 2
+
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/page-loading.test.mjs:222:10)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

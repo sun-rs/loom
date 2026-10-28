@@ -165,3 +165,63 @@ test("refresh confirmation is above the search overlay and retains native confir
   );
   assert.match(source, /<ConfirmDialog\s+layer=\{1\}/);
 });
+
+test("warming page code shares one import with a later navigation without mounting the page", async () => {
+  const h = setup();
+  let resolve,
+    imports = 0,
+    mounts = 0;
+  const promise = new Promise((done) => (resolve = done));
+  const Page = () => {
+    mounts++;
+    return null;
+  };
+  const View = h.nativePage(() => {
+    imports++;
+    return promise;
+  });
+  assert.equal(imports, 0);
+  const warming = View.preload();
+  assert.equal(View.preload(), warming);
+  assert.equal(imports, 1);
+  View({ id: "current" });
+  h.runEffect();
+  assert.equal(imports, 1);
+  resolve({ default: Page });
+  await warming;
+  await Promise.resolve();
+  assert.equal(mounts, 0);
+  assert.equal(View({ id: "current" }).props.children.type, Page);
+  h.reset();
+  assert.equal(View({}).props.children.type, Page);
+});
+
+test("a failed background import remains visible through the existing recovery when navigated", async () => {
+  const h = setup();
+  const failure = new Error(
+    "Failed to fetch dynamically imported module: /assets/old.js",
+  );
+  const View = h.nativePage(() => Promise.reject(failure));
+  await assert.rejects(View.preload(), failure);
+  View({});
+  h.runEffect();
+  await new Promise((done) => setImmediate(done));
+  assert.equal(View({}).props.error, failure);
+});
+
+test("a transient speculative failure cannot poison a later real navigation", async () => {
+  const h = setup();
+  const Page = () => null;
+  let attempts = 0;
+  const View = h.nativePage(() =>
+    ++attempts === 1
+      ? Promise.reject(new Error("fixture transient transport failure"))
+      : Promise.resolve({ default: Page }),
+  );
+  await assert.rejects(View.preload(), /transient/);
+  View({});
+  h.runEffect();
+  await new Promise((done) => setImmediate(done));
+  assert.equal(attempts, 2);
+  assert.equal(View({}).props.children.type, Page);
+});

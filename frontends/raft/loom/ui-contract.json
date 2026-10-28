@@ -729,6 +729,22 @@
       "guard": "scripts/official-web/page-loading.test.mjs"
     },
     {
+      "id": "mobile-page-module-warmup",
+      "owner": "Loom module lifetime only; official navigation, page presentation and fallback remain unchanged",
+      "rule": "After the mobile/touch app shell is ready, idle-warm only the two primary destination modules. Opening More may serially warm its four destination modules; closing it cancels remaining speculative work. Pointer/focus may warm only the intended module, preserving official drag listeners. Reuse the same import promise, never mount a speculative page or prefetch/cache business data. Hidden, wide fine-pointer desktop and data-saving/2g contexts skip speculation. Wide coarse-pointer foldables follow the existing compact-density policy. Navigation preserves existing import recovery, route and draft owners.",
+      "sources": [
+        "frontends/raft/packages/web/src/components/layout/MainLayout.tsx"
+      ],
+      "bindings": [
+        "LazyPages.tsx",
+        "page-preload.ts",
+        "ChannelApp.tsx",
+        "Navigation.tsx",
+        "MobileWorkspaceMenu.tsx"
+      ],
+      "guard": "scripts/official-web/page-preload.test.mjs"
+    },
+    {
       "id": "web135-settings-filter-computer-empty",
       "owner": "Web 1.21.35 resource compositions + official EmptyState, DropdownMenu and list primitives",
       "rule": "Device mode lives in Themes. Browser permission and revisioned workspace mute have separate destinations. Activity menu/chip replaces segmented control without changing query semantics. Group Role IDs by verified runtime-offer Computer binding, never by name/opaque ID parsing; preserve retired Roles. No empty bordered list for zero instances. Full-page and conversation empty states reuse official icon/title/description composition; compact desktop sidebar descriptions stay native. Existing compact mobile exceptions remain explicit.",

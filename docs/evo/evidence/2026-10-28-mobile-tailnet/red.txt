@@ -1,0 +1,114 @@
+✔ page module is demand-loaded once and rendered immediately on resolution without a timed Suspense fallback (34.774292ms)
+✔ departed page never publishes its late module completion (5.711667ms)
+✔ failed imports reach the existing error boundary instead of an endless loader (5.0005ms)
+✔ a module resolving between remount and effect still becomes visible (4.192834ms)
+✔ stale deployed imports render recovery without throwing away the mounted application (5.338625ms)
+✔ refresh confirmation is above the search overlay and retains native confirmation (0.936416ms)
+✖ warming page code shares one import with a later navigation without mounting the page (3.812291ms)
+✖ a failed background import remains visible through the existing recovery when navigated (4.105167ms)
+✖ mobile idle warming is bounded to the two primary page modules and cancellation prevents work (0.747375ms)
+✖ desktop, hidden and data-saving connections perform no speculative work (0.076042ms)
+✖ navigation intent warms only its destination and More warms only its four entries (0.04975ms)
+✖ hidden-after-scheduling and failed speculative loads do not publish or reject globally (0.131375ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 6
+ℹ fail 6
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 253.164167
+
+✖ failing tests:
+
+test at scripts/official-web/page-loading.test.mjs:169:1
+✖ warming page code shares one import with a later navigation without mounting the page (3.812291ms)
+  TypeError: View.preload is not a function
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/page-loading.test.mjs:176:24)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7)
+
+test at scripts/official-web/page-loading.test.mjs:191:1
+✖ a failed background import remains visible through the existing recovery when navigated (4.105167ms)
+  TypeError: View.preload is not a function
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/page-loading.test.mjs:195:29)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7)
+
+test at scripts/official-web/page-preload.test.mjs:26:1
+✖ mobile idle warming is bounded to the two primary page modules and cancellation prevents work (0.747375ms)
+  Error: ENOENT: no such file or directory, open 'frontends/raft/loom/page-preload.ts'
+      at readFileSync (node:fs:436:20)
+      at setup (file:///Users/sun/Code/repos/rah_os/scripts/official-web/page-preload.test.mjs:21:33)
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/page-preload.test.mjs:27:13)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.start (node:internal/test_runner/test:1096:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: 'frontends/raft/loom/page-preload.ts'
+  }
+
+test at scripts/official-web/page-preload.test.mjs:36:1
+✖ desktop, hidden and data-saving connections perform no speculative work (0.076042ms)
+  Error: ENOENT: no such file or directory, open 'frontends/raft/loom/page-preload.ts'
+      at readFileSync (node:fs:436:20)
+      at setup (file:///Users/sun/Code/repos/rah_os/scripts/official-web/page-preload.test.mjs:21:33)
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/page-preload.test.mjs:38:15)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: 'frontends/raft/loom/page-preload.ts'
+  }
+
+test at scripts/official-web/page-preload.test.mjs:44:1
+✖ navigation intent warms only its destination and More warms only its four entries (0.04975ms)
+  Error: ENOENT: no such file or directory, open 'frontends/raft/loom/page-preload.ts'
+      at readFileSync (node:fs:436:20)
+      at setup (file:///Users/sun/Code/repos/rah_os/scripts/official-web/page-preload.test.mjs:21:33)
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/page-preload.test.mjs:45:13)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: 'frontends/raft/loom/page-preload.ts'
+  }
+
+test at scripts/official-web/page-preload.test.mjs:54:1
+✖ hidden-after-scheduling and failed speculative loads do not publish or reject globally (0.131375ms)
+  Error: ENOENT: no such file or directory, open 'frontends/raft/loom/page-preload.ts'
+      at readFileSync (node:fs:436:20)
+      at setup (file:///Users/sun/Code/repos/rah_os/scripts/official-web/page-preload.test.mjs:21:33)
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/page-preload.test.mjs:55:13)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: 'frontends/raft/loom/page-preload.ts'
+  }

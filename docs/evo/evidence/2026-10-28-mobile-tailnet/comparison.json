@@ -1,0 +1,189 @@
+{
+  "selectedJourneys": {
+    "before": ["release-before-1", "release-before-2", "release-cold-before-3"],
+    "after": ["release-after-1", "release-after-2", "release-cold-after-3"]
+  },
+  "results": {
+    "before": {
+      "click/动态": {
+        "n": 3,
+        "medianMs": 247.4,
+        "minMs": 241.4,
+        "maxMs": 270.2
+      },
+      "click/任务": {
+        "n": 3,
+        "medianMs": 244,
+        "minMs": 239.1,
+        "maxMs": 246.7
+      },
+      "click/搜索": {
+        "n": 3,
+        "medianMs": 33.6,
+        "minMs": 25.4,
+        "maxMs": 58.5
+      },
+      "click/Agent": {
+        "n": 3,
+        "medianMs": 269.2,
+        "minMs": 235.9,
+        "maxMs": 277.9
+      },
+      "click/计算机": {
+        "n": 3,
+        "medianMs": 237.5,
+        "minMs": 233.1,
+        "maxMs": 246.3
+      },
+      "click/设置": {
+        "n": 3,
+        "medianMs": 253.1,
+        "minMs": 245.5,
+        "maxMs": 261.7
+      },
+      "click/记忆": {
+        "n": 3,
+        "medianMs": 236.5,
+        "minMs": 235.6,
+        "maxMs": 244.1
+      },
+      "usable/任务": {
+        "n": 3,
+        "medianMs": 472.3,
+        "minMs": 470,
+        "maxMs": 515.3
+      },
+      "usable/Agent": {
+        "n": 3,
+        "medianMs": 522.1,
+        "minMs": 488.5,
+        "maxMs": 548
+      },
+      "usable/设置": {
+        "n": 3,
+        "medianMs": 252.4,
+        "minMs": 245.1,
+        "maxMs": 261.7
+      },
+      "usable/记忆": {
+        "n": 3,
+        "medianMs": 454.5,
+        "minMs": 443.3,
+        "maxMs": 460.4
+      }
+    },
+    "after": {
+      "click/动态": {
+        "n": 3,
+        "medianMs": 22,
+        "minMs": 21.6,
+        "maxMs": 22.6
+      },
+      "click/任务": {
+        "n": 3,
+        "medianMs": 21.2,
+        "minMs": 19.5,
+        "maxMs": 33.6
+      },
+      "click/搜索": {
+        "n": 3,
+        "medianMs": 27.2,
+        "minMs": 23.3,
+        "maxMs": 31.1
+      },
+      "click/Agent": {
+        "n": 3,
+        "medianMs": 102.3,
+        "minMs": 40.4,
+        "maxMs": 109
+      },
+      "click/计算机": {
+        "n": 3,
+        "medianMs": 93.2,
+        "minMs": 30.1,
+        "maxMs": 93.6
+      },
+      "click/设置": {
+        "n": 3,
+        "medianMs": 45.1,
+        "minMs": 18.6,
+        "maxMs": 85.5
+      },
+      "click/记忆": {
+        "n": 3,
+        "medianMs": 40.9,
+        "minMs": 18.7,
+        "maxMs": 71.4
+      },
+      "usable/任务": {
+        "n": 3,
+        "medianMs": 250.4,
+        "minMs": 244.3,
+        "maxMs": 279.1
+      },
+      "usable/Agent": {
+        "n": 3,
+        "medianMs": 342.2,
+        "minMs": 308.5,
+        "maxMs": 343
+      },
+      "usable/设置": {
+        "n": 3,
+        "medianMs": 45,
+        "minMs": 18.3,
+        "maxMs": 85.2
+      },
+      "usable/记忆": {
+        "n": 3,
+        "medianMs": 260.6,
+        "minMs": 233.9,
+        "maxMs": 311.9
+      }
+    }
+  },
+  "method": {
+    "viewport": "390x844 logical CSS pixels; desktop Chrome, not physical phone",
+    "latency": "200ms response delay on static and API requests; local proxy, no bandwidth/CPU throttle, not actual Tailnet RTT replay",
+    "cache": "Independent cold origins, no-store static responses; same live Core with empty Channels/active Roles and 50 retained deleted Roles",
+    "click": "Captured real click to page container visible plus two animation frames; no fixed Suspense timer",
+    "usable": "Separate DOM-ready checks. Published only for Tasks, Agent, Settings shell and Memory empty state; not a global all-data-ready metric",
+    "sampling": "Three cold-source pairs from final build, alternating before/after against PID41326 and identical live data; all seven destinations completed. Each Home waited for the same visible-shell plus400ms ready marker.",
+    "moreWarmup": "One speculative module at a time while More is open; closing cancels remaining queue, target intent may start its own module without waiting.",
+    "network": "Synthetic 200ms delay per static/API response. Shared HTTP live Core; mobile browser viewport on local Chrome, not remote phone or full mobile CPU/network emulation."
+  },
+  "measurementLimits": [
+    "Activity readiness probe did not reliably detect its header; Computer readiness probe incorrectly matched workspace chooser before the page. Both usable fields excluded from conclusions in both arms; raw records retained.",
+    "Settings usable is the mobile settings list shell, not every settings panel data. Memory has no Channel data in this deployment and includes existing 200ms empty-query debounce.",
+    "Some page-body data reads still require network round trips. Module warming cannot repair actual Tailnet stalls or physical mobile CPU/rendering.",
+    "A first load may not leave enough idle time to finish warming; constrained connections skip speculation.",
+    "The fixed 400ms dwell after the visible Home shell is identical in complete before/after journeys. More menu uses actual automation action pacing, not a prescribed human dwell.",
+    "Firefox fresh-page recheck after deployment was blocked by native cgWindowNotFound; certificate-verified Node HTTPS checks and fresh real Chrome HTTP pages are separate evidence."
+  ],
+  "measuredCandidate": {
+    "directory": "/Users/sun/Code/repos/rah_os/.workbench-web/212bf1752804dbd8fcb7725f93eafef9dcbef2fbc96ab0141dbe75622dad79c0",
+    "buildIdentity": {
+      "schemaVersion": 1,
+      "kind": "development",
+      "version": "0.0.0-dev+local",
+      "builtAt": "2026-10-28T12:38:39.687Z",
+      "buildId": "0eed874273e5ebd0"
+    },
+    "schemaVersion": 1,
+    "webBuildId": "7fd68493034424ec452dcb6b3d69e362c23e388325069810394e314e6b199892",
+    "indexSha256": "51e40bcdbf77aba56736a28f7579d6ba477adfbc7a97f8cf2a92e340b63ead20"
+  },
+  "corePidDuringFinalComparison": 41326,
+  "cacheMismatchRetained": {
+    "samples": ["release-before-3", "release-after-3"],
+    "reason": "Before used the pilot warm-cache origin: script transferSize=0 and duration~1ms. Kept separately as mixed-cache observation, not combined with cold-source pairs. Added independent localhost origin pair for the third cold-source cell."
+  },
+  "rawLocal": {
+    "directory": "/Users/sun/.loom/reviews/2026-10-28-mobile-tailnet",
+    "allResultsSha256": "25dc0b766ee363f441c44a421fbc6388aa834a7c90568fab1a948f642c9f8b60"
+  },
+  "priorIterations": {
+    "pilot": "before-1 incomplete journey; before-2 load probe matched hidden desktop navigation and never completed",
+    "v1": "after-1/2/3 parallel More warmup caused resource contention; replaced by serial cancellable queue",
+    "final": "All three final journeys retained, no replacement based on their measured time"
+  }
+}

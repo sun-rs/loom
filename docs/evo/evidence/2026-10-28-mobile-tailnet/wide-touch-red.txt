@@ -1,0 +1,123 @@
+✔ mobile idle warming is bounded to the two primary page modules and cancellation prevents work (26.626042ms)
+✖ wide touch foldables retain mobile warming without changing wide mouse desktops (5.490958ms)
+✖ wide touch rail intent does not replace the official drag pointer listener (0.346333ms)
+✔ desktop, hidden and data-saving connections perform no speculative work (11.298667ms)
+✔ navigation intent warms only its destination and More warms only its four entries (4.848458ms)
+✔ More warms one module at a time and closing it cancels the remaining speculative work (2.271625ms)
+✔ hidden-after-scheduling and failed speculative loads do not publish or reject globally (2.524375ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 5
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 234.27475
+
+✖ failing tests:
+
+test at scripts/official-web/page-preload.test.mjs:93:1
+✖ wide touch foldables retain mobile warming without changing wide mouse desktops (5.490958ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+
+  + []
+  - [
+  -   'Discovery',
+  -   'Tasks'
+  - ]
+
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/page-preload.test.mjs:96:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [],
+    expected: [ 'Discovery', 'Tasks' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/official-web/page-preload.test.mjs:99:1
+✖ wide touch rail intent does not replace the official drag pointer listener (0.346333ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /onPointerDownCapture=/. Input:
+
+  '<RailTabButton\n' +
+    '      {...binding?.dragProps}\n' +
+    '      key={entry.id}\n' +
+    '      icon={<entry.icon size={18} />}\n' +
+    '      label={entry.label}\n' +
+    '      testId={`left-rail-tab-${entry.id}`}\n' +
+    '      showDot={\n' +
+    '        entry.id === "channels"\n' +
+    '          ? unread?.channels\n' +
+    '          : entry.id === "activity"\n' +
+    '            ? unread?.activity\n' +
+    '            : false\n' +
+    '      }\n' +
+    '      dotInactiveOnly\n' +
+    '      active={active === entry.id}\n' +
+    '      aria-current={active === entry.id ? "page" : undefined}\n' +
+    '      onDoubleClick={\n' +
+    '        entry.id === "activity" ? () => onSelect(entry.id, true) : undefined\n' +
+    '      }\n' +
+    '      onClick={\n' +
+    '        binding\n' +
+    '          ? binding.guardClick(() => onSelect(entry.id))\n' +
+    '          : () => onSelect(entry.id)\n' +
+    '      }\n' +
+    '    />\n' +
+    '  );\n' +
+    '  return (\n' +
+    '    <AppShellRailSlot className="hidden md:flex">\n' +
+    '      <AppRailRoot className="pb-2" role="navigation" aria-label="主导航">\n' +
+    '        <AppRailNav className="relative w-full">\n' +
+    '          <OfficialSortableNavigation\n' +
+    '            tabs={destinations\n' +
+    '              .filter(\n' +
+    '                (entry) => entry.id !== "settings" && entry.id !== "search",\n' +
+    '              )\n' +
+    '              .map((entry) => ({\n' +
+    '                id: entry.id,\n' +
+    '                label: entry.label,\n' +
+    '                render: (binding: SortableRailBinding) => item(entry, binding),\n' +
+    '              }))}\n' +
+    '          />\n' +
+    '        </AppRailNav>\n' +
+    '        <AppRailFooter>\n' +
+    '          <CurrentSidebarToggle\n' +
+    '            column={active === "activity" ? "activityList" : "sidebar"}\n' +
+    '          />\n' +
+    '          {item(destinations.find((entry) => entry.id === "settings")!)}\n' +
+    '        </AppRailFooter>\n' +
+    '      </AppRailRoot>\n' +
+    '    </AppShellRailSlot>\n' +
+    '  );\n' +
+    '}\n' +
+    '\n' +
+    '/** Owner-confirmed app roots, rendered with the official Web navigation primitives. */\n' +
+    'export function MobileNavigation({\n' +
+    '  active,\n' +
+    '  onSelect,\n' +
+    '  workspaceName = "Loom",\n' +
+    '  unread,\n' +
+    '}: NavigationProps & { workspaceName?: string }) {\n'
+
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/page-preload.test.mjs:102:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '<RailTabButton\n      {...binding?.dragProps}\n      key={entry.id}\n      icon={<entry.icon size={18} />}\n      label={entry.label}\n      testId={`left-rail-tab-${entry.id}`}\n      showDot={\n        entry.id === "channels"\n          ? unread?.channels\n          : entry.id === "activity"\n            ? unread?.activity\n            : false\n      }\n      dotInactiveOnly\n      active={active === entry.id}\n      aria-current={active === entry.id ? "page" : undefined}\n      onDoubleClick={\n        entry.id === "activity" ? () => onSelect(entry.id, true) : undefined\n      }\n      onClick={\n        binding\n          ? binding.guardClick(() => onSelect(entry.id))\n          : () => onSelect(entry.id)\n      }\n    />\n  );\n  return (\n    <AppShellRailSlot className="hidden md:flex">\n      <AppRailRoot className="pb-2" role="navigation" aria-label="主导航">\n        <AppRailNav className="relative w-full">\n          <OfficialSortableNavigation\n            tabs={destinations\n              .filter(\n                (entry) => entry.id !== "settings" && entry.id !== "search",\n              )\n              .map((entry) => ({\n                id: entry.id,\n                label: entry.label,\n                render: (binding: SortableRailBinding) => item(entry, binding),\n              }))}\n          />\n        </AppRailNav>\n        <AppRailFooter>\n          <CurrentSidebarToggle\n            column={active === "activity" ? "activityList" : "sidebar"}\n          />\n          {item(destinations.find((entry) => entry.id === "settings")!)}\n        </AppRailFooter>\n      </AppRailRoot>\n    </AppShellRailSlot>\n  );\n}\n\n/** Owner-confirmed app roots, rendered with the official Web navigation primitives. */\nexport function MobileNavigation({\n  active,\n  onSelect,\n  workspaceName = "Loom",\n  unread,\n}: NavigationProps & { workspaceName?: string }) {\n',
+    expected: /onPointerDownCapture=/,
+    operator: 'match',
+    diff: 'simple'
+  }

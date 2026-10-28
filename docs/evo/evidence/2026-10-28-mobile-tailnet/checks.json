@@ -1,0 +1,45 @@
+{
+  "build": {
+    "directory": "/Users/sun/Code/repos/rah_os/.workbench-web/212bf1752804dbd8fcb7725f93eafef9dcbef2fbc96ab0141dbe75622dad79c0",
+    "buildIdentity": {
+      "schemaVersion": 1,
+      "kind": "development",
+      "version": "0.0.0-dev+local",
+      "builtAt": "2026-10-28T12:38:39.687Z",
+      "buildId": "0eed874273e5ebd0"
+    },
+    "schemaVersion": 1,
+    "webBuildId": "7fd68493034424ec452dcb6b3d69e362c23e388325069810394e314e6b199892",
+    "indexSha256": "51e40bcdbf77aba56736a28f7579d6ba477adfbc7a97f8cf2a92e340b63ead20"
+  },
+  "checks": {
+    "scopedTestsPassed": 44,
+    "frontendTypecheck": "passed",
+    "productionBuild": "passed",
+    "gitDiffCheck": "passed after final whitespace normalization",
+    "inheritedUIAudit": "HEAD55fd64e5 reproduces DialogCommit versus Button assertion in unchanged AddInstanceDialog.tsx; not counted as a pass"
+  },
+  "buildLogSha256": "81c216c41793f7235c88cd209895dbc6ba3c1ad364475249414190a09e6d63dc",
+  "browser": {
+    "freshProduct": "http://100.101.107.87:4176/",
+    "webBuildId": "7fd68493034424ec452dcb6b3d69e362c23e388325069810394e314e6b199892",
+    "phoneViewport": "390x844; Chrome fine-pointer emulation, not real phone",
+    "observed": [
+      "Home bottom navigation",
+      "Tasks empty state",
+      "More popup four entries",
+      "Role list",
+      "Secondary back returns to Tasks",
+      "Desktop1440x900 Computer detail, local Host online and six runtimes"
+    ],
+    "consoleErrors": [],
+    "physicalPhoneVerification": "pending owner refresh; no physical browser remotely controlled",
+    "firefoxHTTPS": "Native target cgWindowNotFound; no warning bypass, no trust change. Node verified both HTTPS origins with original CA.",
+    "originalCAUnchangedFromTailnetBackup": true
+  },
+  "limits": [
+    "Performance probe observes page container presentation, not INP or every network read.",
+    "No Channel history, model execution, real-CLI efficiency, native-app parity or all-device claim.",
+    "Original complete logs/probe/server remain private; repository digest normalizes trailing whitespace and omits navigation internals."
+  ]
+}
