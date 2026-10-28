@@ -1,0 +1,44 @@
+{
+  "schema": "loom-repair-retest/v1",
+  "status": "prepared-awaiting-batch-authorization",
+  "sourceRevision": "5d8edf384c95eb2472284ccb30e10caedc9811e7",
+  "order": [
+    "pair1-loom",
+    "pair2-loom",
+    "pair3-loom"
+  ],
+  "models": {
+    "codex": "gpt-6-luna/low",
+    "kimi": "kimi-code/k3-256k/low"
+  },
+  "versions": {
+    "codex": "0.164.0",
+    "kimi": "2.1.1"
+  },
+  "budget": {
+    "input": 5400000,
+    "output": 150000,
+    "generations": 300,
+    "minutes": 45,
+    "perSampleRuns": 16
+  },
+  "failurePolicy": "retain every attempt, no replacements, stop on missing accounting or unproven cleanup; per-sample limits checked between observations, in-flight provider response can exceed remaining headroom",
+  "automaticMemory": "disabled on every launch, exact pinned Kimi audited version",
+  "subagents": "disabled in both members",
+  "scope": "Loom-only functional repeatability; not a native cost comparison",
+  "taskHash": "b3b7e58b05dcb10de5daf3dafb6a42580ebbf50f751268ce162c70c8cdeb429f",
+  "commonHash": "a2cf5d1df9852ee8abf9ec1c938117a79e93ef156c5e009052e7dfc1098221f6",
+  "freePreflight": {
+    "tests": 4,
+    "loom": "free-ready",
+    "generations": 0,
+    "cleanup": "exited 0"
+  },
+  "nativeArm": "not run: tool subprocess does not carry HERDR_ENV=1; does not imply user Herdr unavailable",
+  "hashes": {
+    "run.mjs": "a039718ec55f59e111f6a4dfadf773895f2181c99d67d9ec5cbd7abd5e1b9141",
+    "gate.mjs": "b8f41552fe7d0540594c1a9403370460f5e0eae84b0d11e1554fcac18264e0a6",
+    "support.mjs": "98116d1412ee17113836e79f46a24016c63ccdb2d0f89ba561102f5b8b444fb3",
+    "terminal.py": "721fa5ac7cba00a72163c4b748f8423647686b3b461b9e3106f9608ef6d175b1"
+  }
+}
