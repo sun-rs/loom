@@ -1,0 +1,26 @@
+{
+  "sourceRevision": "a3a498593b93687bf29b15ae80a4b8061d3e9a17",
+  "oldPid": 1662,
+  "newPid": 87981,
+  "backup": "verified private state backup",
+  "ledgerUnchanged": true,
+  "at": "2026-10-28T03:01:39.671Z",
+  "webAssets": "307adca99882d3b31deea00d860f589e2aa82235ca76b1fd823a2161368510a5",
+  "selection": {
+    "codex": "warm app-server native-final",
+    "kimi": "ACP native-final"
+  },
+  "scope": "local formal service source runtime; library defaults remain opt-in; existing CLI/model/Role revisions unchanged",
+  "plistSha256": "c756fb11e3989d175c6cf4ba0bac60a1bbd386dcefa09f9a3ca03a9225ee0797",
+  "checks": {
+    "warmAndTurnHandles": 64,
+    "deploymentSelection": 7,
+    "typecheck": true,
+    "formal": {
+      "channelCount": 0,
+      "pageErrors": [],
+      "foreignKeys": true
+    },
+    "paidRuns": 0
+  }
+}

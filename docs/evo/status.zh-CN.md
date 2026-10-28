@@ -9,7 +9,7 @@
 - `main` 是当前 Loom；`evo` 已晋升并移除；`chatbox` 独立承载 `rah/main` 导入，不参与 Loom 构建。见[分支记录](branch-promotion.zh-CN.md)。
 - 唯一产品前端为 `frontends/raft`。旧复刻 UI 和 `apps/console` 已退役，不恢复其路由、构建或测试入口。
 - 保留部署标签 `com.loom.evo`、数据目录 `~/.loom/evo`、日志目录及频道主目录 `~/.loom/channel-workspaces/`。这些名称不是旧分支残留任务，不能为整洁搬迁数据。
-- 最近正式后端部署为 `9b506aa2`，Web 使用已验收的 `5ce14ec4` 构建（资源哈希 `307adca9…`）；移除全局频道后服务重启、0频道空态和 API 已复查。保留本机 Codex warm / Kimi ACP native-final 与 Claude/OpenCode 既有选择；库默认仍 opt-in。[当前清理记录](../audits/2026-10-28-all-channel-retirement.zh-CN.md)，[此前传输验收](evidence/2026-10-28-native-repair/deployment.json)。
+- 最近正式后端部署为 `a3a49859`，Web 使用已验收的 `5ce14ec4` 构建（资源哈希 `307adca9…`）；全局频道退役及 Codex 终态排空修复后，服务重启、0频道空态已复查。保留本机 Codex warm / Kimi ACP native-final 与 Claude/OpenCode 既有选择；库默认仍 opt-in。[当前清理记录](../audits/2026-10-28-all-channel-retirement.zh-CN.md)，[此前传输验收](evidence/2026-10-28-native-repair/deployment.json)。
 - HTTP 4176、LAN HTTPS 4178 和隔离预览的部署记录见[HTTPS接入](evidence/2026-10-22-https-trusted/summary.json)、[预览边界](evidence/2026-10-23-https-preview/summary.json)。本次未重新探测监听地址、数据库版本或运行时设置；部署前仍须读取实际状态，不沿用旧快照里的临时 loopback 配置。
 
 ## 2. 当前状态
