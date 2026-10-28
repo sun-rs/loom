@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { isIP } from "node:net";
+import { isPrivateLanIpv4, isTailnetIpv4 } from "./trusted-network-address.ts";
 import { join } from "node:path";
 import { provisionLanCertificate } from "./lan-certificate-provisioning.ts";
 import { LanWorkbenchGateway } from "./lan-workbench-gateway.ts";
@@ -18,15 +18,14 @@ export function additionalHttpsAddress(
     url.origin !== origin ||
     url.username ||
     url.password ||
-    isIP(url.hostname) !== 4 ||
-    !/^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(url.hostname) ||
+    !(isPrivateLanIpv4(url.hostname) || isTailnetIpv4(url.hostname)) ||
     !hosts.includes(url.hostname) ||
     port === httpPort ||
     port === (httpPort === 65535 ? 65534 : httpPort + 1) ||
     port < 1
   ) {
     throw new Error(
-      "Additional HTTPS must use an explicitly authorized LAN IPv4 origin and a port distinct from HTTP and its PDF listener",
+      "Additional HTTPS must use an explicitly authorized LAN/Tailnet IPv4 origin and a port distinct from HTTP and its PDF listener",
     );
   }
   return { hostname: url.hostname, port };

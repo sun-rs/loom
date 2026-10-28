@@ -202,3 +202,47 @@ test("supplemental LAN HTTPS keeps incumbent HTTP bindings and rejects implicit 
     /HTTPS/,
   );
 });
+
+test("Tailnet HTTPS explicitly joins the existing HTTP and LAN HTTPS entries", () => {
+  const env = {
+    RAH_TAILNET_HOST: "100.101.107.87",
+    RAH_TRUSTED_LAN_HOSTS: "192.168.1.86",
+    RAH_WEB_PORT: "4176",
+    RAH_ADDITIONAL_HTTPS_ORIGIN: "https://192.168.1.86:4178",
+    RAH_TAILNET_HTTPS_ORIGIN: "https://100.101.107.87:4178",
+  };
+  const mode = workbenchLaunchMode(env, "/tmp/rah");
+  assert.equal(mode.tailnetHttpsOrigin, env.RAH_TAILNET_HTTPS_ORIGIN);
+  assert.equal(mode.additionalHttpsOrigin, env.RAH_ADDITIONAL_HTTPS_ORIGIN);
+  assert.deepEqual(mode.additionalBindHosts, ["127.0.0.1", "192.168.1.86"]);
+  assert.equal(mode.bindHost, "100.101.107.87");
+  for (const origin of [
+    "https://100.101.107.88:4178",
+    "https://192.168.1.86:4178",
+    "http://100.101.107.87:4178",
+    "https://100.101.107.87:4176",
+    "https://100.101.107.87:4177",
+    "https://100.101.107.87:4178/path",
+  ])
+    assert.throws(
+      () =>
+        workbenchLaunchMode(
+          { ...env, RAH_TAILNET_HTTPS_ORIGIN: origin },
+          "/tmp/rah",
+        ),
+      /HTTPS/,
+    );
+  assert.throws(
+    () =>
+      workbenchLaunchMode(
+        { RAH_TAILNET_HTTPS_ORIGIN: env.RAH_TAILNET_HTTPS_ORIGIN },
+        "/tmp/rah",
+      ),
+    /HTTPS/,
+  );
+  assert.equal(
+    workbenchLaunchMode({ RAH_TAILNET_HOST: env.RAH_TAILNET_HOST }, "/tmp/rah")
+      .tailnetHttpsOrigin,
+    undefined,
+  );
+});

@@ -1,0 +1,26 @@
+{
+  "recordedAt": "2026-10-28T11:57:35.253664+00:00",
+  "browser": "Firefox on local Mac",
+  "entry": "https://100.101.107.87:4178/",
+  "freshAgentCreatedTab": true,
+  "siteInfoIssuer": "RAH OS Local CA",
+  "certificateWarning": false,
+  "pairingPage": false,
+  "observedProductPages": ["Chat empty state", "Computers detail"],
+  "computerName": "Mac-Studio",
+  "computerOnline": true,
+  "detectedRuntimes": [
+    "Codex CLI",
+    "Kimi Code",
+    "OpenCode",
+    "Claude Code",
+    "Pi",
+    "Antigravity"
+  ],
+  "ownedTabClosed": true,
+  "limits": [
+    "Local browser accessing its own Tailnet address, not a separate remote physical client",
+    "No notification test or CLI launch",
+    "No unrelated user tabs or browsing contents retained"
+  ]
+}

@@ -1,4 +1,5 @@
 import { pipeApiResponse } from "./api-response-compression.ts";
+import { isPrivateLanIpv4, isTailnetIpv4 } from "./trusted-network-address.ts";
 import { PdfPreviewGateway } from "./pdf-preview-gateway.ts";
 import { handleWorkbenchPreview } from "./workbench-preview-routes.ts";
 import { sendStaticFile } from "./static-file-response.ts";
@@ -108,7 +109,8 @@ export class LanWorkbenchGateway {
       (isIP(input.bindHost) !== 4 ||
         !(
           input.bindHost === "127.0.0.1" ||
-          /^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(input.bindHost)
+          isPrivateLanIpv4(input.bindHost) ||
+          isTailnetIpv4(input.bindHost)
         ) ||
         input.publicHostname !== input.bindHost)
     ) {

@@ -1,0 +1,42 @@
+✔ additional TLS edge explicitly selects trusted access and closes a failed startup (186.289625ms)
+✔ Core failure closes both edges even if one cleanup rejects (0.471083ms)
+✔ TLS exposure cannot silently extend beyond a named private interface (0.120208ms)
+✔ explicit Tailnet TLS uses the existing exact-interface gateway and refuses pairing (317.78575ms)
+✔ LAN certificate provisioning creates and reuses one private local CA (362.153084ms)
+✔ LAN certificate provisioning fails closed on an exposed private root (200.86125ms)
+▶ the formal LAN gateway requires TLS pairing and keeps Human authority server-side
+  ✔ explicit trusted HTTPS needs no cookie or pairing but retains host/origin fences (28.606375ms)
+  ✔ shutdown closes browser preconnects before TLS handshake (27.686542ms)
+✔ the formal LAN gateway requires TLS pairing and keeps Human authority server-side (174.645709ms)
+✔ default keeps local access (1.23675ms)
+✔ explicit LAN uses authenticated HTTPS edge configuration (0.1015ms)
+✔ explicit Tailnet HTTP binds only its address without pairing (0.331708ms)
+✔ Tailnet alone authorizes no ordinary LAN interface (0.062167ms)
+✔ a new or removed interface never changes the authorized set (0.13075ms)
+✔ explicit trusted LAN hosts bind exactly the configured addresses (0.054333ms)
+✔ duplicate, public, malformed or loopback trusted LAN hosts are refused (3.238167ms)
+✔ trusted LAN hosts are never derived outside an explicit Tailnet entry (0.073791ms)
+✔ the Tailnet variable never accepts an ordinary LAN, loopback or public address (0.144708ms)
+✔ the Tailnet variable accepts the CGNAT range it owns (0.10675ms)
+✔ supplemental LAN HTTPS keeps incumbent HTTP bindings and rejects implicit exposure (0.288416ms)
+✔ Tailnet HTTPS explicitly joins the existing HTTP and LAN HTTPS entries (0.198417ms)
+✔ a restart from a plain shell preserves the running Tailnet and LAN discovery mode (1.684625ms)
+✔ LAN HTTPS retains origin, binding and certificate paths without storing keys or credentials (0.107667ms)
+✔ missing, stale or invalid receipts fail before a restart can silently change access (0.73525ms)
+✔ explicit loopback receipt clears inherited remote launch variables (0.089833ms)
+✔ successful startup receipt is private, round-trips and is replaced with the new PID (5.775625ms)
+✔ a Tailnet receipt carries its trusted LAN entries into an empty shell restart (0.284417ms)
+✔ a Tailnet-only receipt does not reintroduce LAN entries on restart (0.078583ms)
+✔ a corrupted network entry list fails closed instead of narrowing or widening (1.875166ms)
+✔ writing a receipt refuses a network entry set the launcher could not reproduce (1.567125ms)
+✔ a receipt whose Tailnet entry left the CGNAT range fails closed (0.191833ms)
+✔ restart preserves explicit supplemental HTTPS and clears inherited additions (0.282042ms)
+✔ restart preserves both explicit HTTPS edges and clears unrecorded Tailnet TLS (0.125333ms)
+ℹ tests 33
+ℹ suites 0
+ℹ pass 33
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 954.171458

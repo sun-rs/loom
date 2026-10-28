@@ -409,3 +409,11 @@ Owner 要求自建内网 HTTPS 并保留现有 HTTP／Tailnet。仓库 launcher 
 此部署不申请外部证书：复用 data home 中的私有 CA 和按主机签发的证书。客户端只接收 CA 公共证书，私钥不离开 Core；只需在各设备信任 CA；该并行入口不要求设备配对。通知权限、真实推送送达、iOS 主屏幕安装是另行验收项，TLS握手或服务回执不证明送达。HTTPS gateway 复用现有工作区 HTML／PDF 和附件 PDF 预览 owner：HTML 保留 CSP 沙箱与官方评论 bridge，附件代理透传沙箱响应头；PDF 使用同一证书、同一明确绑定网卡上的独立 HTTPS 临时端口，签名限时链接逐次重查权限，不携带浏览器凭据、不开放应用路由。应用 CSP 仅额外允许该 PDF 来源，避免 HTTPS 嵌入 HTTP；预览 listener 随 gateway 一起关闭。客户端网络须允许该内网临时端口；不新增公网绑定。
 
 2026-10-22 后继纠正：首次并行HTTPS部署错误地携带了旧网关的配对要求，owner指出违背既定内网信任边界。新增显式 `browserAccess: trusted-network`，限制精确私网IPv4／回环与匹配主机名；不创建或读取配对存储，不生成配对码，历史配对URL重定向首页，设备／邀请码管理路由不开放。服务控制沿既有 generation／idle 检查，不改变 Kernel 权限或服务端 Human凭据所有权。
+
+### Tailnet HTTPS 精确入口修复（2026-10-28）
+
+LAN HTTPS 只监听其明确的 LAN IP，不会因 HTTP 同时监听 Tailnet 而自动开放 Tailnet 的同一端口。现在 launcher 另接受可选 `RAH_TAILNET_HTTPS_ORIGIN`；必须同时设置 `RAH_TAILNET_HOST`，且 HTTPS origin 的主机必须等于该精确的 100.64.0.0/10 IPv4。端口须避开 HTTP 和其 PDF listener，拒绝其他主机、HTTP、路径及隐式接口。未设置时不新增 TLS 监听；`RAH_ADDITIONAL_HTTPS_ORIGIN` 继续独立表示已授权的 LAN HTTPS。
+
+Tailnet TLS 复用既有额外 HTTPS gateway、同一个 Core/Human、原本地 CA 和逐主机证书，沿用 trusted-network 与精确 Host/Origin 检查。只向客户端提供 CA 公共证书；不要求配对、不绑定 wildcard、不改 CLI 账户。HTTP、LAN TLS、Tailnet TLS 统一停止，任一启动失败回收已启动入口。启动收据保存两个 HTTPS origin，重启时清除未记录的继承配置，避免修复在下一次重启后消失。
+
+本机 Firefox、原 CA 校验的 HTTP/API 与负向 Host/Origin 检查见[修复证据](../evo/evidence/2026-10-28-tailnet-https/README.md)。本机访问自己的 Tailnet 地址不等于远端实体设备、通知送达或网络 ACL 的完整验收。

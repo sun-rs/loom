@@ -1,0 +1,53 @@
+{
+  "at": "2026-10-28T11:56:20.182Z",
+  "sourceRevision": "1c5d8e335a2be419a41bcd51eda6b57fb0d75acb",
+  "sourceWorktreeDirty": true,
+  "sourceHashes": {
+    "packages/daemon/src/trusted-network-address.ts": "c1647ade68acc833f4765f5daf619e4efc4aa41bc2381818c6d1aa3ffce10363",
+    "packages/daemon/src/additional-lan-https.ts": "3f11703c8bc37eb6b3e5e47d4f3bf65029939bbd9ea1de85d86febaf14b7cf30",
+    "packages/daemon/src/lan-workbench-gateway.ts": "0d27db99a5334e6f395e25841f11497420149f1a0250d4ea3c917b35d34579db",
+    "packages/daemon/src/local-core-workbench.ts": "61fc57ec62f7fed7b8ba2549af238eed39248e4ed9712357faca68127303a0e7",
+    "scripts/workbench-launch-mode.mjs": "524e3b6194bcb74cd89d20e9b49e1dc220915f47c2fc5271ca7484f49704bb0e",
+    "scripts/workbench-launch-receipt.mjs": "7bb1c0e4df4424429992d7a79749621f792497b2168f8062cf6bdd3e1161a5dd"
+  },
+  "oldPid": 4381,
+  "newPid": 35175,
+  "backup": "/Users/sun/.loom/evo/backups/pre-tailnet-https-1793188186533",
+  "backupVerified": true,
+  "ledgerUnchanged": true,
+  "verificationIncident": "Initial verifier accessed released response socket after TLS response end; only verifier corrected, no second restart",
+  "webAssets": "/Users/sun/Code/repos/rah_os/.workbench-web/1167c2ce6871e7bdfc06eced41cc4913b9bf6b02f4ee24cf97716a394bfefa60",
+  "webIndexSha256": "2e734ecf129d22f83b3caea8660fe568f59982fcde26d85e54a2b1d4cea43df2",
+  "webAssetsUnchanged": true,
+  "originalCaUnchanged": true,
+  "addedEnvironment": {
+    "RAH_TAILNET_HTTPS_ORIGIN": "https://100.101.107.87:4178"
+  },
+  "edges": [
+    {
+      "origin": "https://192.168.1.86:4178",
+      "tlsVerifiedWithOriginalCA": true,
+      "home": 200,
+      "api": 200,
+      "foreignOrigin": 403,
+      "foreignHost": 421,
+      "serviceWorker": 200,
+      "noPairing": true,
+      "webIndexUnchanged": true
+    },
+    {
+      "origin": "https://100.101.107.87:4178",
+      "tlsVerifiedWithOriginalCA": true,
+      "home": 200,
+      "api": 200,
+      "foreignOrigin": 403,
+      "foreignHost": 421,
+      "serviceWorker": 200,
+      "noPairing": true,
+      "webIndexUnchanged": true
+    }
+  ],
+  "allOriginalHttpEntries200": true,
+  "restartReceiptPreservesBothHttps": true,
+  "scope": "Explicit local Tailnet HTTPS compatibility fix; same Core, original local CA, unchanged LAN edge/auth/CLI configuration; no public wildcard, pairing or paid model calls"
+}

@@ -15,6 +15,7 @@ import {
 // interfaces, so a restart can neither drop nor widen the incumbent entry set.
 const networkKeys = [
   "RAH_ADDITIONAL_HTTPS_ORIGIN",
+  "RAH_TAILNET_HTTPS_ORIGIN",
   "RAH_TAILNET_HOST",
   "RAH_TRUSTED_LAN_HOSTS",
   "RAH_LAN_ORIGIN",
@@ -57,11 +58,16 @@ function networkEnvironment(mode) {
   const trusted = receiptTrustedLanHosts(mode);
   if (mode.additionalHttpsOrigin !== undefined)
     additionalHttpsAddress(mode.additionalHttpsOrigin, trusted, mode.port);
+  if (mode.tailnetHttpsOrigin !== undefined)
+    additionalHttpsAddress(mode.tailnetHttpsOrigin, [mode.bindHost], mode.port);
   return {
     RAH_WEB_PORT: String(mode.port),
     RAH_TAILNET_HOST: mode.bindHost,
     ...(mode.additionalHttpsOrigin
       ? { RAH_ADDITIONAL_HTTPS_ORIGIN: mode.additionalHttpsOrigin }
+      : {}),
+    ...(mode.tailnetHttpsOrigin
+      ? { RAH_TAILNET_HTTPS_ORIGIN: mode.tailnetHttpsOrigin }
       : {}),
     ...(trusted.length === 0
       ? {}

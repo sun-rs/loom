@@ -9,8 +9,8 @@
 - `main` 是当前 Loom；`evo` 已晋升并移除；`chatbox` 独立承载 `rah/main` 导入，不参与 Loom 构建。见[分支记录](branch-promotion.zh-CN.md)。
 - 唯一产品前端为 `frontends/raft`。旧复刻 UI 和 `apps/console` 已退役，不恢复其路由、构建或测试入口。
 - 保留部署标签 `com.loom.evo`、数据目录 `~/.loom/evo`、日志目录及频道主目录 `~/.loom/channel-workspaces/`。这些名称不是旧分支残留任务，不能为整洁搬迁数据。
-- 正式服务最近一次已备份重启，部署 `d2e6cd4b` 基线加 Kimi EOF 清理 15→30 秒修复；源码哈希与备份见[本次部署收据](evidence/2026-10-28-team-cost-repeat/deployment.json)。账本与 Web 快照 `1167c2ce…` 未变；新 Chrome 页面确认聊天空态、本机在线、六个运行时和零实例。此前源码 / Node daemon 默认化已移除本机四个冗余 native-final `=1`，显式关闭与冷入口保留。[默认化](evidence/2026-10-28-native-final-defaults/README.md)、[最新复查范围](evidence/2026-10-28-team-cost-repeat/browser-check.json)。前批 Raft UI 0.40.0 / Web 1.21.35 指定资源的[前端验收](evidence/2026-10-28-ui-refresh/README.md)及[三方协作证据](evidence/2026-10-28-three-cli-team/README.md)保留各自边界。
-- HTTP 4176、LAN HTTPS 4178 和隔离预览的部署记录见[HTTPS接入](evidence/2026-10-22-https-trusted/summary.json)、[预览边界](evidence/2026-10-23-https-preview/summary.json)。本轮复查了 HTTP 4176 页面和既有 launchd 配置，HTTPS/Tailscale 真机链路未重新验收；部署前仍须读取实际状态，不沿用旧快照里的临时 loopback 配置。
+- 正式服务最近一次已备份重启，部署 `1c5d8e33` 基线加 Tailnet HTTPS 精确入口修复；源码哈希与备份见[本次部署收据](evidence/2026-10-28-tailnet-https/deployment.json)。账本与 Web 快照 `1167c2ce…` 未变；本机 Firefox 通过 Tailnet HTTPS 打开产品页面，确认本机在线与六个运行时。[部署与验证范围](evidence/2026-10-28-tailnet-https/README.md)。此前 Kimi EOF 清理 15→30 秒修复和源码 / Node daemon 默认化保持；本机四个冗余 native-final `=1` 已移除，显式关闭与冷入口保留。[Kimi 修复](evidence/2026-10-28-team-cost-repeat/README.md)、[默认化](evidence/2026-10-28-native-final-defaults/README.md)。前批 Raft UI 0.40.0 / Web 1.21.35 指定资源的[前端验收](evidence/2026-10-28-ui-refresh/README.md)及[三方协作证据](evidence/2026-10-28-three-cli-team/README.md)保留各自边界。
+- HTTP 4176、LAN HTTPS 4178 与 Tailnet HTTPS 4178 均在既有明确地址监听；同一 Core、原本地 CA、无配对、保留 Host/Origin 校验。最新本机验证两个 HTTPS 页面/API/Service Worker 与三个 HTTP 入口成功；远端实体设备及关闭页面后的推送未在本批重验。历史[HTTPS接入](evidence/2026-10-22-https-trusted/summary.json)、[预览边界](evidence/2026-10-23-https-preview/summary.json)保留；部署前仍须读取实际配置。
 
 ## 2. 当前状态
 

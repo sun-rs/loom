@@ -35,6 +35,7 @@ export type LocalCoreWorkbenchMode =
       bindHost: string;
       additionalBindHosts?: string[];
       additionalHttpsOrigin?: string;
+      tailnetHttpsOrigin?: string;
     }
   | {
       bindHost: string;
@@ -52,6 +53,9 @@ export type LocalCoreRuntimeDescriptor = {
 
 export type LocalCoreLoopbackDescriptor = {
   https?: Awaited<ReturnType<typeof startAdditionalLanHttps>>["descriptor"];
+  tailnetHttps?: Awaited<
+    ReturnType<typeof startAdditionalLanHttps>
+  >["descriptor"];
   defaultRoomId: string | undefined;
   persistent: true;
   runtimes: LocalCoreRuntimeDescriptor[];
@@ -175,6 +179,8 @@ export async function startLocalCoreWorkbench(input: {
   let gateway: LocalWorkbenchGateway | LanWorkbenchGateway | undefined;
   let additionalHttps:
     Awaited<ReturnType<typeof startAdditionalLanHttps>> | undefined;
+  let tailnetHttps:
+    Awaited<ReturnType<typeof startAdditionalLanHttps>> | undefined;
   try {
     await waitForDaemonOrigin({
       application,
@@ -217,12 +223,22 @@ export async function startLocalCoreWorkbench(input: {
           httpPort: input.mode.port,
         });
       }
+      if (input.mode.kind === "tailnet" && input.mode.tailnetHttpsOrigin) {
+        tailnetHttps = await startAdditionalLanHttps({
+          ...common,
+          workbenchHome,
+          origin: input.mode.tailnetHttpsOrigin,
+          hosts: [input.mode.bindHost],
+          httpPort: input.mode.port,
+        });
+      }
       return withCliExecutables(
         cliExecutables,
         runningWorkbench({
           applicationRun,
           descriptor: {
             ...(additionalHttps ? { https: additionalHttps.descriptor } : {}),
+            ...(tailnetHttps ? { tailnetHttps: tailnetHttps.descriptor } : {}),
             ...baseDescriptor({
               prepared,
               runtimeSpecs,
@@ -233,7 +249,11 @@ export async function startLocalCoreWorkbench(input: {
           },
           gateway: {
             stop: () =>
-              stopWorkbenchGateways([gateway, additionalHttps?.gateway]),
+              stopWorkbenchGateways([
+                gateway,
+                additionalHttps?.gateway,
+                tailnetHttps?.gateway,
+              ]),
           },
           shutdown,
         }),
@@ -286,9 +306,11 @@ export async function startLocalCoreWorkbench(input: {
       application,
     );
   } catch (error) {
-    await stopWorkbenchGateways([gateway, additionalHttps?.gateway]).catch(
-      () => undefined,
-    );
+    await stopWorkbenchGateways([
+      gateway,
+      additionalHttps?.gateway,
+      tailnetHttps?.gateway,
+    ]).catch(() => undefined);
     shutdown.abort("local-core-startup-failed");
     await applicationRun.catch(() => undefined);
     throw error;

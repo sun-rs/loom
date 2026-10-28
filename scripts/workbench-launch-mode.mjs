@@ -1,4 +1,5 @@
 import { additionalHttpsAddress } from "../packages/daemon/src/additional-lan-https.ts";
+import { isTailnetIpv4 } from "../packages/daemon/src/trusted-network-address.ts";
 import { isIP } from "node:net";
 import { join } from "node:path";
 // Mirror the supported service launcher configuration; Core validates TLS/origin.
@@ -10,16 +11,7 @@ const PRIVATE_IPV4 = /^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)/u;
 // unpaired HTTP entry through the Tailnet variable and bypass the explicit LAN
 // contract; the gateway rejects it too, but the launcher refuses it first.
 export function assertTailnetHost(host, source) {
-  const octets =
-    typeof host === "string" && isIP(host) === 4
-      ? host.split(".").map(Number)
-      : undefined;
-  if (
-    octets === undefined ||
-    octets[0] !== 100 ||
-    octets[1] < 64 ||
-    octets[1] > 127
-  ) {
+  if (typeof host !== "string" || !isTailnetIpv4(host)) {
     throw new Error(
       `${source} accepts only a 100.64.0.0/10 Tailnet IPv4 address; refused ${JSON.stringify(host)}. Ordinary LAN entries must be named explicitly in RAH_TRUSTED_LAN_HOSTS, or served by the authenticated RAH_LAN_ORIGIN gateway.`,
     );
@@ -70,9 +62,11 @@ function configuredTrustedLanHosts(value, tailnetHost) {
 export function workbenchLaunchMode(environment, workbenchHome) {
   const tailnetHost = environment.RAH_TAILNET_HOST?.trim();
   const additionalHttpsOrigin = environment.RAH_ADDITIONAL_HTTPS_ORIGIN?.trim();
-  if (additionalHttpsOrigin && !tailnetHost)
+  const tailnetHttpsOrigin = environment.RAH_TAILNET_HTTPS_ORIGIN?.trim();
+  if ((additionalHttpsOrigin || tailnetHttpsOrigin) && !tailnetHost)
     throw new Error("Additional HTTPS requires an explicit Tailnet/LAN entry");
   if (tailnetHost) {
+    assertTailnetHost(tailnetHost, "RAH_TAILNET_HOST");
     const hosts = configuredTrustedLanHosts(
       environment.RAH_TRUSTED_LAN_HOSTS,
       tailnetHost,
@@ -83,9 +77,16 @@ export function workbenchLaunchMode(environment, workbenchHome) {
         hosts,
         Number(environment.RAH_WEB_PORT ?? "4173"),
       );
+    if (tailnetHttpsOrigin)
+      additionalHttpsAddress(
+        tailnetHttpsOrigin,
+        [tailnetHost],
+        Number(environment.RAH_WEB_PORT ?? "4173"),
+      );
     return {
       kind: "tailnet",
       ...(additionalHttpsOrigin ? { additionalHttpsOrigin } : {}),
+      ...(tailnetHttpsOrigin ? { tailnetHttpsOrigin } : {}),
       bindHost: assertTailnetHost(tailnetHost, "RAH_TAILNET_HOST"),
       additionalBindHosts: ["127.0.0.1", ...hosts],
       port: Number(environment.RAH_WEB_PORT ?? "4173"),

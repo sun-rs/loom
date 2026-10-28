@@ -1,0 +1,96 @@
+✔ additional TLS edge explicitly selects trusted access and closes a failed startup (139.390667ms)
+✔ Core failure closes both edges even if one cleanup rejects (0.477709ms)
+✔ TLS exposure cannot silently extend beyond a named private interface (0.10275ms)
+✖ explicit Tailnet TLS uses the existing exact-interface gateway and refuses pairing (0.743875ms)
+✔ default keeps local access (1.228584ms)
+✔ explicit LAN uses authenticated HTTPS edge configuration (0.110792ms)
+✔ explicit Tailnet HTTP binds only its address without pairing (0.20325ms)
+✔ Tailnet alone authorizes no ordinary LAN interface (0.182ms)
+✔ a new or removed interface never changes the authorized set (0.130125ms)
+✔ explicit trusted LAN hosts bind exactly the configured addresses (0.051167ms)
+✔ duplicate, public, malformed or loopback trusted LAN hosts are refused (3.210916ms)
+✔ trusted LAN hosts are never derived outside an explicit Tailnet entry (0.088041ms)
+✔ the Tailnet variable never accepts an ordinary LAN, loopback or public address (0.142375ms)
+✔ the Tailnet variable accepts the CGNAT range it owns (0.102083ms)
+✔ supplemental LAN HTTPS keeps incumbent HTTP bindings and rejects implicit exposure (0.265083ms)
+✖ Tailnet HTTPS explicitly joins the existing HTTP and LAN HTTPS entries (0.705125ms)
+✔ a restart from a plain shell preserves the running Tailnet and LAN discovery mode (1.61175ms)
+✔ LAN HTTPS retains origin, binding and certificate paths without storing keys or credentials (0.107084ms)
+✔ missing, stale or invalid receipts fail before a restart can silently change access (0.740167ms)
+✔ explicit loopback receipt clears inherited remote launch variables (0.064125ms)
+✔ successful startup receipt is private, round-trips and is replaced with the new PID (6.04725ms)
+✔ a Tailnet receipt carries its trusted LAN entries into an empty shell restart (0.263917ms)
+✔ a Tailnet-only receipt does not reintroduce LAN entries on restart (0.08075ms)
+✔ a corrupted network entry list fails closed instead of narrowing or widening (1.898042ms)
+✔ writing a receipt refuses a network entry set the launcher could not reproduce (4.815042ms)
+✔ a receipt whose Tailnet entry left the CGNAT range fails closed (0.228125ms)
+✔ restart preserves explicit supplemental HTTPS and clears inherited additions (0.345875ms)
+✖ restart preserves both explicit HTTPS edges and clears unrecorded Tailnet TLS (0.370542ms)
+ℹ tests 28
+ℹ suites 0
+ℹ pass 25
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 568.604291
+
+✖ failing tests:
+
+test at packages/daemon/test/additional-lan-https.test.ts:111:1
+✖ explicit Tailnet TLS uses the existing exact-interface gateway and refuses pairing (0.743875ms)
+  Error: Additional HTTPS must use an explicitly authorized LAN IPv4 origin and a port distinct from HTTP and its PDF listener
+      at additionalHttpsAddress (file:///Users/sun/Code/repos/rah_os/packages/daemon/src/additional-lan-https.ts:28:11)
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/packages/daemon/test/additional-lan-https.test.ts:118:22)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7)
+
+test at scripts/workbench-launch-mode.test.mjs:206:1
+✖ Tailnet HTTPS explicitly joins the existing HTTP and LAN HTTPS entries (0.705125ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+
+  + undefined
+  - 'https://100.101.107.87:4178'
+
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/workbench-launch-mode.test.mjs:215:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: 'https://100.101.107.87:4178',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/workbench-launch-receipt.test.mjs:252:1
+✖ restart preserves both explicit HTTPS edges and clears unrecorded Tailnet TLS (0.370542ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+
+  + undefined
+  - 'https://100.101.107.87:4178'
+
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/workbench-launch-receipt.test.mjs:260:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: 'https://100.101.107.87:4178',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
