@@ -1,4 +1,6 @@
 import PageEmpty from "./PageEmpty";
+import { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives";
+import { layoutQueries } from "./adaptive-layout.ts";
 import {
   OfficialComputerGroup,
   OfficialSidebarDescription,
@@ -101,12 +103,17 @@ export default function RoleWorkspace({
 
   const [query, setQuery] = useState("");
   const panel = useSidebarColumn();
+  const mobile = useMediaQuery(layoutQueries.single);
   const visible = entries.filter((entry) =>
     entry.name
       .normalize("NFKC")
       .toLocaleLowerCase()
       .includes(query.trim().normalize("NFKC").toLocaleLowerCase()),
   );
+  const emptyList =
+    mobile &&
+    !visible.some((entry) => !entry.retired) &&
+    !(showDeleted && visible.some((entry) => entry.retired));
   return (
     <div
       className="relative flex min-h-0 min-w-0 flex-1"
@@ -118,6 +125,7 @@ export default function RoleWorkspace({
         style={{ "--agent-sidebar-width": `${panel.width}px` } as CSSProperties}
       >
         <Frame
+          fillContent={emptyList}
           hideDesktopHeader
           title="Agent"
           testIdPrefix="agent-sidebar"
@@ -157,10 +165,6 @@ export default function RoleWorkspace({
               <OfficialSidebarDescription className="hidden md:block">
                 {query ? "没有匹配的角色" : "还没有角色"}
               </OfficialSidebarDescription>
-              <PageEmpty
-                kind={query ? "search" : "roles"}
-                className="py-16 md:hidden"
-              />
             </>
           )}
           {groupRolesByComputer(visible).map((group) => (
@@ -222,6 +226,7 @@ export default function RoleWorkspace({
                   ))}
             </>
           )}
+          {emptyList && <PageEmpty kind={query ? "search" : "roles"} />}
         </Frame>
         <SidebarResize testId="agent-sidebar-resize" />
       </LoomSidebarSlot>

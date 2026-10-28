@@ -299,8 +299,14 @@ export default function ChannelSidebar({
         itemCount: g.rooms.length,
       }),
   );
+  const emptyList =
+    mobile &&
+    Boolean(data) &&
+    !readError &&
+    groups.every((group) => group.rooms.length === 0);
   return (
     <Frame
+      fillContent={emptyList}
       hideDesktopHeader
       bottomSlot={<LoomLiveActivity />}
       title="聊天"
@@ -309,6 +315,7 @@ export default function ChannelSidebar({
     >
       <SidebarContextMenu
         surface
+        fillContent={emptyList}
         label="频道列表操作"
         disabled={busy || !prefs}
         items={[
@@ -609,16 +616,7 @@ export default function ChannelSidebar({
             </DragSection>
           ))}
         </SidebarDrag>
-        {mobile &&
-          data &&
-          !readError &&
-          groups.every((group) => group.rooms.length === 0) && (
-            <PageEmpty
-              kind="channels"
-              testId="empty-channel-list"
-              className="py-16"
-            />
-          )}
+        {emptyList && <PageEmpty kind="channels" testId="empty-channel-list" />}
       </SidebarContextMenu>
       {archiveTarget && (
         <ChannelArchiveDialog

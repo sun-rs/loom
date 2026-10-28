@@ -12,6 +12,7 @@ import { OfficialSidebarHeader } from "./OfficialIdentityFrames.generated";
 export default function ChatSidebarFrame({
   title,
   hideDesktopHeader = false,
+  fillContent = false,
   bottomSlot,
   testIdPrefix,
   scrollTestId,
@@ -19,6 +20,7 @@ export default function ChatSidebarFrame({
 }: {
   title: string;
   hideDesktopHeader?: boolean;
+  fillContent?: boolean;
   bottomSlot?: ReactNode;
   testIdPrefix: string;
   scrollTestId: string;
@@ -56,7 +58,7 @@ export default function ChatSidebarFrame({
           />
         ))}
       <div
-        className={`scrollbar-quiet min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-2 pb-2 mobile-nav-clearance ${hideDesktopHeader ? "pt-2" : "pt-1"}`}
+        className={`scrollbar-quiet min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-2 pb-2 mobile-nav-clearance ${hideDesktopHeader ? "pt-2" : "pt-1"} ${fillContent ? "flex flex-col" : ""}`}
         data-testid={scrollTestId}
       >
         {children}

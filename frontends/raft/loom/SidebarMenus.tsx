@@ -59,6 +59,7 @@ export function SidebarContextMenu({
   disabled,
   label,
   surface = false,
+  fillContent = false,
   onOpenChange,
 }: {
   children: ReactNode;
@@ -66,6 +67,7 @@ export function SidebarContextMenu({
   disabled?: boolean;
   label: string;
   surface?: boolean;
+  fillContent?: boolean;
   onOpenChange?: (open: boolean) => void;
 }) {
   const trigger = useRef<HTMLDivElement>(null);
@@ -73,7 +75,13 @@ export function SidebarContextMenu({
     <ContextMenu onOpenChange={onOpenChange}>
       <ContextMenuTrigger
         ref={trigger}
-        className={surface ? "min-h-full min-w-0" : "min-w-0 flex-1"}
+        className={
+          surface
+            ? fillContent
+              ? "flex min-h-0 min-w-0 flex-1 flex-col"
+              : "min-h-full min-w-0"
+            : "min-w-0 flex-1"
+        }
         data-testid={surface ? "sidebar-surface" : undefined}
         onContextMenu={(event) => event.stopPropagation()}
         onPointerDown={(event) => {

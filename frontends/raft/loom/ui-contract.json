@@ -729,6 +729,26 @@
       "guard": "scripts/official-web/page-loading.test.mjs"
     },
     {
+      "id": "full-pane-empty-flow",
+      "owner": "Official EmptyState presentation; Loom sidebar height allocation",
+      "rule": "Full mobile list empties fill the space remaining below list controls through the existing Frame and blank-space context-menu surface. No fixed top-padding substitute or full-height minimum that displaces headers. Unselected desktop conversation has no extra header; mobile retains its back path. Desktop Sidebar section descriptions and inline section-empty hints retain native compact positioning. An expanded retired-Role list is visible content, not a full-pane empty state. Preserve native EmptyState typography, icon, spacing, menus and scrolling of nonempty lists.",
+      "sources": [
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/ui/EmptyState.tsx",
+        "frontends/raft/packages/web/src/components/message/ChatPanel.tsx",
+        "frontends/raft/packages/web/src/components/layout/Sidebar.tsx",
+        "frontends/raft/packages/web/src/components/task/TasksPanel.tsx"
+      ],
+      "bindings": [
+        "PageEmpty.tsx",
+        "ChannelApp.tsx",
+        "ChatSidebarFrame.tsx",
+        "SidebarMenus.tsx",
+        "ChannelSidebar.tsx",
+        "RoleWorkspace.tsx"
+      ],
+      "guard": "scripts/official-web/empty-layout.test.mjs"
+    },
+    {
       "id": "mobile-page-module-warmup",
       "owner": "Loom module lifetime only; official navigation, page presentation and fallback remain unchanged",
       "rule": "After the mobile/touch app shell is ready, idle-warm only the two primary destination modules. Opening More may serially warm its four destination modules; closing it cancels remaining speculative work. Pointer/focus may warm only the intended module, preserving official drag listeners. Reuse the same import promise, never mount a speculative page or prefetch/cache business data. Hidden, wide fine-pointer desktop and data-saving/2g contexts skip speculation. Wide coarse-pointer foldables follow the existing compact-density policy. Navigation preserves existing import recovery, route and draft owners.",

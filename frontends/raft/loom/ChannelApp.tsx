@@ -1221,6 +1221,7 @@ export default function ChannelApp() {
                         >
                           {!savedOpen && !selected && (
                             <PanelHeader
+                              containerProps={{ className: "md:hidden" }}
                               title="聊天"
                               onMobileBack={showChatList}
                               mobileBackProps={{ "aria-label": "聊天列表" }}
