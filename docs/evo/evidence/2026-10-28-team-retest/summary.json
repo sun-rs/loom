@@ -1,0 +1,237 @@
+{
+  "status": "not-accepted",
+  "paidSamples": [
+    {
+      "sample": "pair1-loom",
+      "models": {
+        "codex": {
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "version": "codex-cli 0.164.0"
+        },
+        "kimi": {
+          "model": "kimi-code/kimi-for-coding",
+          "effort": "low",
+          "version": "2.1.1"
+        }
+      },
+      "runnerStatus": "execution-failed",
+      "functionalPassed": false,
+      "knownUsage": {
+        "members": {
+          "codex": {
+            "input": 55401,
+            "cached": 27264,
+            "output": 267,
+            "generations": 4,
+            "complete": true
+          },
+          "kimi": {
+            "input": 23961,
+            "cached": 18944,
+            "output": 102,
+            "generations": 1,
+            "requests": 1,
+            "complete": true
+          }
+        },
+        "total": {
+          "input": 79362,
+          "cached": 46208,
+          "output": 369,
+          "generations": 5,
+          "complete": true
+        }
+      },
+      "runsAfterCleanup": [
+        {
+          "participant_id": "principal_7376b129-66ff-4582-bd0e-739375b1325b",
+          "state": "exited",
+          "error": null,
+          "exit_code": 0
+        },
+        {
+          "participant_id": "principal_a4c1114f-9c9a-4108-9d3a-1fc90713ff2a",
+          "state": "cancelled",
+          "error": "Room Agent SOS requested by a Human manager",
+          "exit_code": null
+        }
+      ],
+      "processes": [
+        {
+          "pid": 96497,
+          "startedAt": "2026-10-28T04:18:21.397Z",
+          "finishedAt": "2026-10-28T04:20:41.878Z",
+          "exit": {
+            "code": 0,
+            "signal": null
+          }
+        }
+      ],
+      "resultSha256": "ad31f88faa1186298b6fb3176f84c1f02f7145b1e13be365693bc8debde0d363",
+      "qualification": "Codex native host negotiation timeout; cancellation may leave unobserved in-flight provider work"
+    },
+    {
+      "sample": "pair2-loom",
+      "models": {
+        "codex": {
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "version": "codex-cli 0.164.0"
+        },
+        "opencode": {
+          "model": "deepseek/deepseek-flash",
+          "effort": "low",
+          "version": "1.19.4"
+        }
+      },
+      "runnerStatus": "execution-failed",
+      "functionalPassed": false,
+      "knownUsage": {
+        "members": {
+          "opencode": {
+            "input": 11687,
+            "output": 24,
+            "cached": 1664,
+            "generations": 1,
+            "complete": true,
+            "source": "product per-response usage, not independently reconciled native accounting"
+          }
+        },
+        "total": {
+          "input": 11687,
+          "cached": 1664,
+          "output": 24,
+          "generations": 1,
+          "complete": false
+        }
+      },
+      "runsAfterCleanup": [
+        {
+          "participant_id": "principal_f9faba17-3093-4fdd-afe0-ad5ef6d16b34",
+          "state": "exited",
+          "error": null,
+          "exit_code": null
+        }
+      ],
+      "processes": [
+        {
+          "pid": 5595,
+          "startedAt": "2026-10-28T04:21:17.421Z",
+          "finishedAt": "2026-10-28T04:22:34.770Z",
+          "exit": {
+            "code": 0,
+            "signal": null
+          }
+        },
+        {
+          "pid": 13648,
+          "startedAt": "2026-10-28T04:24:08.089Z",
+          "finishedAt": "2026-10-28T04:24:16.251Z",
+          "exit": {
+            "code": 0,
+            "signal": null
+          }
+        }
+      ],
+      "resultSha256": "0bf0308910e063a22b7ddb1de323a86bfdb3c3ae498614240770acf067ea1304",
+      "qualification": "Harness null exit-code bug; reviewer responded; continuation stopped before Codex run"
+    },
+    {
+      "sample": "pair3-loom",
+      "models": {
+        "codex": {
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "version": "codex-cli 0.164.0"
+        },
+        "agy": {
+          "model": "gemini-3.8-flash-low",
+          "effort": "low",
+          "version": "1.4.8"
+        }
+      },
+      "runnerStatus": "quiescent-quality-pending",
+      "functionalPassed": false,
+      "knownUsage": {
+        "members": {
+          "codex": {
+            "input": 57432,
+            "cached": 41856,
+            "output": 425,
+            "generations": 4,
+            "complete": true
+          },
+          "agy": {
+            "input": 25265,
+            "output": 1019,
+            "cached": 0,
+            "generations": 2,
+            "complete": true,
+            "source": "product per-response usage, not independently reconciled native accounting"
+          }
+        },
+        "total": {
+          "input": 82697,
+          "cached": 41856,
+          "output": 1444,
+          "generations": 6,
+          "complete": true
+        }
+      },
+      "runsAfterCleanup": [
+        {
+          "participant_id": "principal_0c7ed3ac-f427-468c-9b0b-1c34976d20a1",
+          "state": "exited",
+          "error": null,
+          "exit_code": 0
+        },
+        {
+          "participant_id": "principal_57f09a4a-f87a-4529-b9f7-7ec3debb6b03",
+          "state": "exited",
+          "error": null,
+          "exit_code": null
+        },
+        {
+          "participant_id": "principal_0c7ed3ac-f427-468c-9b0b-1c34976d20a1",
+          "state": "exited",
+          "error": null,
+          "exit_code": 0
+        },
+        {
+          "participant_id": "principal_57f09a4a-f87a-4529-b9f7-7ec3debb6b03",
+          "state": "exited",
+          "error": null,
+          "exit_code": null
+        }
+      ],
+      "processes": [
+        {
+          "pid": 10263,
+          "startedAt": "2026-10-28T04:22:49.224Z",
+          "finishedAt": "2026-10-28T04:24:09.006Z",
+          "exit": {
+            "code": 0,
+            "signal": null
+          }
+        }
+      ],
+      "resultSha256": "226ac33b86eb5e6cf574ae3289005d02e039d1c1a5a26a2003717edd8142320c",
+      "qualification": "Design handoff and automatic return passed; disabling host made actual shell execution unavailable"
+    }
+  ],
+  "knownTotals": {
+    "input": 173746,
+    "output": 1837,
+    "generations": 12
+  },
+  "costRatio": null,
+  "accountingLimits": [
+    "Observed receipts are not guaranteed final billing for cancelled in-flight requests",
+    "OpenCode/AGY counts here are product per-response usage, not independent native audit",
+    "Pair2 Codex never ran; missing member record is not proof of missing charge"
+  ],
+  "cleanup": "All four isolated daemon processes exited 0; queued work retained only in stopped test databases; formal workspace untouched",
+  "productChanged": false,
+  "paidReplacements": 0
+}

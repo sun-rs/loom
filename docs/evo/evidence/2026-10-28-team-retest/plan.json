@@ -1,15 +1,13 @@
 {
   "schema": "loom-repair-retest/v1",
-  "status": "prepared-awaiting-batch-authorization",
+  "status": "finished-not-accepted",
   "sourceRevision": "5d8edf384c95eb2472284ccb30e10caedc9811e7",
-  "order": [
-    "pair1-loom",
-    "pair2-loom",
-    "pair3-loom"
-  ],
+  "order": ["pair1-loom", "pair2-loom", "pair3-loom"],
   "models": {
     "codex": "gpt-6-luna/low",
-    "kimi": "kimi-code/k3-256k/low"
+    "kimi": "kimi-code/kimi-for-coding/low",
+    "opencode": "deepseek/deepseek-flash/low",
+    "agy": "gemini-3.8-flash-low/low"
   },
   "versions": {
     "codex": "0.164.0",
@@ -23,9 +21,9 @@
     "perSampleRuns": 16
   },
   "failurePolicy": "retain every attempt, no replacements, stop on missing accounting or unproven cleanup; per-sample limits checked between observations, in-flight provider response can exceed remaining headroom",
-  "automaticMemory": "disabled on every launch, exact pinned Kimi audited version",
+  "automaticMemory": "Codex and pinned Kimi disabled; AGY unverified; no fair cost-comparison claim",
   "subagents": "disabled in both members",
-  "scope": "Loom-only functional repeatability; not a native cost comparison",
+  "scope": "Three distinct two-member Loom functional samples; no repeatability or native cost ratio claim",
   "taskHash": "b3b7e58b05dcb10de5daf3dafb6a42580ebbf50f751268ce162c70c8cdeb429f",
   "commonHash": "a2cf5d1df9852ee8abf9ec1c938117a79e93ef156c5e009052e7dfc1098221f6",
   "freePreflight": {
@@ -36,9 +34,40 @@
   },
   "nativeArm": "not run: tool subprocess does not carry HERDR_ENV=1; does not imply user Herdr unavailable",
   "hashes": {
-    "run.mjs": "a039718ec55f59e111f6a4dfadf773895f2181c99d67d9ec5cbd7abd5e1b9141",
-    "gate.mjs": "b8f41552fe7d0540594c1a9403370460f5e0eae84b0d11e1554fcac18264e0a6",
-    "support.mjs": "98116d1412ee17113836e79f46a24016c63ccdb2d0f89ba561102f5b8b444fb3",
-    "terminal.py": "721fa5ac7cba00a72163c4b748f8423647686b3b461b9e3106f9608ef6d175b1"
+    "run.mjs": "42a28d8b87b2a0e1bc7bc4c05b5caca0f5a2f24501ed9b3fabae10fccda56b80",
+    "gate.mjs": "8996f125aa85e22b8312c95fb2cd25c4719ed5411c8a30a95a1c357aee5aa996",
+    "support.mjs": "c60d9c9b73944489224e23b348b03f19c65503d25202d9fd70fe8ff5cb698703",
+    "matrix.json": "452a11e5a4b9e00e454ea0f01b7fc12b45225ea669a554f8997836cb060d4499"
+  },
+  "matrix": {
+    "pair1": {
+      "provider": "kimi",
+      "model": "kimi-code/kimi-for-coding"
+    },
+    "pair2": {
+      "provider": "opencode",
+      "model": "deepseek/deepseek-flash"
+    },
+    "pair3": {
+      "provider": "agy",
+      "model": "gemini-3.8-flash-low"
+    }
+  },
+  "usageEvidence": "Codex/Kimi native receipts, OpenCode/AGY product per-response usage; latter not independently reconciled",
+  "approval": "Owner latest explicit start with four CLI choices, including K2.8 overrides K3",
+  "compatibilityAmendment": {
+    "appliesTo": ["pair2-loom", "pair3-loom"],
+    "change": "per-launch --disable code_mode_host; native shell tools retained",
+    "reason": "pair1 repeated code-mode host negotiation timeout",
+    "scope": "test-only compatibility investigation, not product fix or replacement of pair1",
+    "globalConfigChanged": false,
+    "outcome": "Rejected: disabling code_mode_host also disables native exec; no shell fallback. Test wrapper removed; no global/product change."
+  },
+  "harnessCorrection": "briefReady now permits error-free exited warm runs with null exitCode when activation is completed; 5 tests passed",
+  "hashesFinal": {
+    "run.mjs": "42a28d8b87b2a0e1bc7bc4c05b5caca0f5a2f24501ed9b3fabae10fccda56b80",
+    "gate.mjs": "8996f125aa85e22b8312c95fb2cd25c4719ed5411c8a30a95a1c357aee5aa996",
+    "support.mjs": "2526533f4d8372f48f9ee38c14856bd025a36638a9eb3570dcff5cca5074535c",
+    "continue-pair2.mjs": "1f54884f7dc7cf89f31c3d65fe3fceadf0c49d4552ea295e1fab0304a58d6ae0"
   }
 }

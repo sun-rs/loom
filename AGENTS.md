@@ -305,6 +305,7 @@ and only with owner approval.
 | OpenCode    | `deepseek/deepseek-v4-flash`   | `low`     | 2026-09-09 |
 | OpenCode    | `deepseek/deepseek-flash`      | `low`     | 2026-09-25 |
 | OpenCode    | `aihubmix/deepseek-v4.1-flash` | `low`     | 2026-09-30 |
+| Kimi CLI    | `kimi-code/kimi-for-coding`    | `low`     | 2026-10-28 |
 | Kimi CLI    | `kimi-code/k3`                 | `high`    | 2026-09-09 |
 | Kimi CLI    | `kimi-code/k3-256k`            | `low`     | 2026-09-25 |
 | Pi          | `aihubmix/deepseek-v4.1-flash` | `low`     | 2026-10-10 |
@@ -331,6 +332,12 @@ gate.
 This authorization covers the model matrix for gates only; each paid run batch
 still needs explicit owner authorization. Commit/push rules are in "Verification
 and evidence".
+
+Owner 2026-10-28 authorized a bounded collaboration revalidation using Codex
+`gpt-6-luna`/low, OpenCode `deepseek/deepseek-flash`/low (catalog: DeepSeek
+V4.1 Flash 1017), Kimi `kimi-code/kimi-for-coding`/low (K2.8 Preview), and
+AGY `gemini-3.8-flash-low`/low. AGY is admitted only to this functional batch,
+not the efficiency gate: automatic-memory isolation remains unverified.
 
 ## Antigravity runtime boundary
 

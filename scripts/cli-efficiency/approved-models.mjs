@@ -9,6 +9,13 @@ const row = (provider, model, effort, approvedOn, note) =>
 
 export const APPROVED_GATE_MODELS = Object.freeze([
   row(
+    "kimi",
+    "kimi-code/kimi-for-coding",
+    "low",
+    "2026-10-28",
+    "Owner requested K2.8; catalog display K2.8 Preview",
+  ),
+  row(
     "pi",
     "magpie/kimi-code-cn/k3.1-pro",
     "low",

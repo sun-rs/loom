@@ -1,0 +1,150 @@
+{
+  "paidCalls": 0,
+  "observations": [
+    {
+      "directory": "code-mode-free-1793161583244",
+      "sourceSha256": "86fd929904a3b14fd23166bdcb485d2205ab663a81809f2f39eef22d819191cf",
+      "cases": [
+        {
+          "status": "completed",
+          "toolSucceeded": true,
+          "handshakeTimeout": false,
+          "error": null
+        }
+      ]
+    },
+    {
+      "directory": "code-mode-free-1793161627399",
+      "sourceSha256": "acc0482dcad663fb2f17a483a29297102870579fd4934f334cb39eec4dce07ae",
+      "cases": [
+        {
+          "status": "completed",
+          "toolSucceeded": true,
+          "handshakeTimeout": false,
+          "error": null
+        }
+      ]
+    },
+    {
+      "directory": "code-mode-free-1793161661322",
+      "sourceSha256": "a4e8142426d9611825f890b0874708f0e5601188474f76a5fd9580e50e153a68",
+      "cases": [
+        {
+          "status": "failed",
+          "toolSucceeded": null,
+          "handshakeTimeout": null,
+          "error": "Error: RPC timeout initialize"
+        }
+      ]
+    },
+    {
+      "directory": "code-mode-free-1793161715878",
+      "sourceSha256": "704ef16a99a7c813c796b8f24a53bce1b67df3ef2f2046e1b9490668ef94cce9",
+      "cases": [
+        {
+          "status": "completed",
+          "toolSucceeded": true,
+          "handshakeTimeout": false,
+          "error": null
+        }
+      ]
+    },
+    {
+      "directory": "code-mode-free-1793161726841",
+      "sourceSha256": "7278af9e701b6d8fb304c7e61fb2fc78f3f5faa66bde7c2bd201c0b428d3f291",
+      "cases": [
+        {
+          "status": "running",
+          "toolSucceeded": null,
+          "handshakeTimeout": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "directory": "code-mode-free-1793161841643",
+      "sourceSha256": "a8a85e6b0c29a4ab3991378db87a04367fcb6dd3cd3f12abe23a27eab2755da3",
+      "cases": [
+        {
+          "status": "completed",
+          "toolSucceeded": true,
+          "handshakeTimeout": false,
+          "error": null
+        }
+      ]
+    },
+    {
+      "directory": "code-mode-free-1793161888330",
+      "sourceSha256": "d2fffcdd03648a5c37e53adaf529c7f92d84d6d5f854fc3bd7f598a623672239",
+      "cases": [
+        {
+          "status": "running",
+          "toolSucceeded": null,
+          "handshakeTimeout": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "directory": "code-mode-free-1793161963356",
+      "sourceSha256": "190b3bbee20af16e4760cd264c597ea0a89c7566f353b4b75acad41e4ede6190",
+      "cases": [
+        {
+          "status": "running",
+          "toolSucceeded": null,
+          "handshakeTimeout": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "directory": "exec-free-1793161534634",
+      "sourceSha256": "53914668295d13cf5157b0e59a2a3512513f278a3d654d9e775038a1f9adb862",
+      "cases": [
+        {
+          "round": 1,
+          "toolSucceededReconciled": true,
+          "sameSession": null,
+          "exit": {
+            "code": 0,
+            "signal": null
+          }
+        },
+        {
+          "round": 2,
+          "toolSucceededReconciled": true,
+          "sameSession": true,
+          "exit": {
+            "code": 0,
+            "signal": null
+          }
+        }
+      ]
+    },
+    {
+      "directory": "exec-free-1793161571276",
+      "sourceSha256": "30523ebe605ac40b031d1b03a83757f97b664e27085f2e3d7109dc83a4a3e85d",
+      "cases": [
+        {
+          "round": 1,
+          "toolSucceededReconciled": true,
+          "sameSession": null,
+          "exit": {
+            "code": 0,
+            "signal": null
+          }
+        },
+        {
+          "round": 2,
+          "toolSucceededReconciled": true,
+          "sameSession": true,
+          "exit": {
+            "code": 0,
+            "signal": null
+          }
+        }
+      ]
+    }
+  ],
+  "qualification": "Any stale running entry represents an interrupted diagnostic with a failed probe, not a passed or still-running model task. Guarded probe failed to complete thread/start and its close timer; it does not establish the cause of the paid tool-host negotiation failure. No matching test processes remain."
+}
