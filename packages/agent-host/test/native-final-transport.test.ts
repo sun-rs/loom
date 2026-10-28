@@ -106,3 +106,22 @@ test("native final distinguishes publishing from initiating a directed peer requ
   assert.match(guide, /end your turn.*peer/);
   assert.equal(nativeFinalTextInstructions("original", false), "original");
 });
+
+test("native final guide explains multi-recipient replies and bounded automatic returns", () => {
+  const guide = nativeFinalTextInstructions("original", true);
+  assert.match(guide, /request.*mentions only you/);
+  assert.match(guide, /addresses multiple members.*explicitly @.*requester/);
+  assert.match(
+    guide,
+    /automatic return.*does not start another automatic return/,
+  );
+  assert.equal(nativeFinalTextInstructions("original", false), "original");
+});
+
+test("native final guide reserves live mentions for intended deliveries", () => {
+  const guide = nativeFinalTextInstructions("original", true);
+  assert.match(
+    guide,
+    /plain names, without @, for acknowledgements and status-only references/,
+  );
+});

@@ -218,7 +218,10 @@ invisible to other instances. Only Human messages steer; other instances'
 replies are read when idle. A unique, actually delivered top-level peer request
 may receive one Kernel-derived final reply return without a repeated @ (contract
 §3, owner 2026-10-12). It uses the existing Inbox/lane/chain guard; automatic
-returns do not grant another automatic return. Ambiguous origins, threads,
+returns do not grant another automatic return. A request mentioning several
+instances is outside this automatic-return slice: its replies must explicitly
+address the requester. Native-final guidance must state that boundary, and use
+plain names for status-only references to avoid unintended wakes. Ambiguous origins, threads,
 private boxes and attachments retain explicit addressing. The legacy persona-Agent path is being removed from
 the evo backend; old data is not migrated. A new data home seeds no persona
 Agent, and every Kernel unconditionally creates no Inbox item or Activation
