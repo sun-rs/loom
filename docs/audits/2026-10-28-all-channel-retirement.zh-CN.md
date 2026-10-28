@@ -18,3 +18,5 @@
 | 历史平台限制 | 保留能力边界，不是本轮新施工计划 | 真机后台通知/键盘、AGY自动记忆关闭证明、完整子代理总账、极长历史和远端实例等，不扩大为已验收 |
 
 证据入口：[AGY](../evo/evidence/2026-10-27-agy-runtime/README.md)、[Fork可行性](../evo/evidence/2026-10-27-agy-fork-feasibility/README.md)、[任务汇总](../evo/task-outcome-report.zh-CN.md)、[诊断](../evo/runtime-diagnostics.zh-CN.md)、[长任务](../evo/evidence/2026-10-28-long-closeout/README.md)、[协作未通过](../evo/evidence/2026-10-28-team-closeout/README.md)。这是证据审阅结论，没有本轮重新跑全部验收。
+
+正式后端 `9b506aa2` 已经带完整状态备份、退出检查和账本一致性检查部署；本轮没有改变可见页面产物，继续使用上一轮验收的不可变静态资源。新页面无 `all`，工作区 API 不再返回全局欢迎配置，无脚本错误。私有部署与复查记录位于 `~/.loom/reviews/2026-10-28-all-code-cleanup/`。
