@@ -10,12 +10,13 @@ test("appearance theme shortcut stays inside private appearance content and rout
     /themeLink=\{\s*<WorkspaceThemeLink onOpen=\{\(\) => onTab\("theme"\)\}/,
   );
 });
-test("current activity toolbar uses official automatic icon overflow and named icons", () => {
+test("current activity toolbar uses official Filter menu and active chip", () => {
   const s = read("OfficialActivityFilters.generated.tsx");
-  assert.match(s, /iconsOnlyBelow="auto"/);
+  assert.match(s, /inbox-filter-button/);
+  assert.match(s, /inbox-filter-chip/);
   assert.match(s, /@container flex h-\[54px\]/);
   for (const icon of ["Inbox", "CircleDot", "AtSign", "Pin"])
-    assert.match(s, new RegExp("<" + icon + " "));
+    assert.ok(s.includes("icon:" + icon), icon);
   const a = read("OfficialActivityHeader.generated.tsx");
   assert.match(a, /<CheckCheck/);
   assert.match(a, /@max-\[30rem\]:sr-only/);

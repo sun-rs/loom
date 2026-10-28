@@ -2,19 +2,17 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 const read = (p) => readFileSync(`frontends/raft/${p}`, "utf8");
-test("activity uses the upstream compact segmented filter toolbar, not a form field", () => {
+test("activity uses the current published Filter toolbar, not a form field", () => {
   const local = read("loom/OfficialActivityFilters.generated.tsx");
-  const source = read("packages/web/src/components/thread/ThreadsInbox.tsx");
   for (const name of [
-    "SegmentedControl",
-    "SegmentedControlItem",
-    "SegmentedControlLabel",
+    "DropdownMenuRadioGroup",
+    "PickerTriggerButton",
+    "inbox-filter-button",
+    "inbox-filter-clear",
     "inbox-toolbar",
     "h-[54px]",
-  ]) {
-    assert.ok(source.includes(name));
-    assert.ok(local.includes(name));
-  }
+  ])
+    assert.ok(local.includes(name), name);
   assert.ok(!local.includes("SelectField"));
   assert.ok(read("loom/DiscoveryPage.tsx").includes("<ActivityFilters"));
 });
@@ -47,7 +45,10 @@ test("activity adopts the complete official list branch, without mixed card meta
     row,
     /conversation-card-metadata|line-clamp-2|conversation-card-title-icon/,
   );
-  assert.match(row, /<InboxItemActions\s+reveal="hover"/);
+  assert.match(
+    row,
+    /<InboxItemActions[\s\S]*reveal=\{swipe\?\.enabled \? undefined : "hover"\}/,
+  );
   assert.doesNotMatch(row, /hover:none.*hidden/);
 });
 test("bulk-read uses the native toolbar action slot and unread-only visibility", () => {

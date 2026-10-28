@@ -130,6 +130,7 @@ export async function verifyActivityReturn({
           r.url().endsWith("/v3/client/activity/list") &&
           r.request().postDataJSON()?.filter === "all",
       );
+      await page.getByTestId("inbox-filter-button").click();
       await page.getByTestId("inbox-filter-all").click();
       await filterLoaded;
       await page.waitForURL((u) => u.searchParams.get("af") === "all");
@@ -142,6 +143,7 @@ export async function verifyActivityReturn({
         undefined,
         { timeout: 3000 },
       );
+      await page.getByTestId("inbox-filter-button").click();
       await page.getByTestId("inbox-filter-unread").click();
       await list
         .locator('[data-slot="empty-state"]')

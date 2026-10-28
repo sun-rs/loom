@@ -1,0 +1,16 @@
+{
+  "sourceChecks": {
+    "passed": 41,
+    "failed": 0,
+    "log": "source-checks.txt"
+  },
+  "build": "npm run build:web:workbench passed",
+  "typecheck": "npm run typecheck:loom --prefix frontends/raft passed",
+  "viewportAssertions": "browser.json",
+  "settingsAndResize": "settings-sidebar.json",
+  "roleForm": "role-form.json",
+  "messageTypography": "message-metrics.json",
+  "realProductPage": "deployment.json",
+  "paidProviders": false,
+  "physicalDevices": false
+}

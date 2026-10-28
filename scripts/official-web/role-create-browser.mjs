@@ -92,8 +92,9 @@ export async function verifyRoleCreation({ browser, origin }) {
         .isChecked(),
       true,
     );
+    // Official DialogSheetContent uses the header close affordance on compact screens.
     await runtimeDialog
-      .getByRole("button", { name: "取消", exact: true })
+      .getByRole("button", { name: "关闭", exact: true })
       .click();
     await page.goto(`${origin}/?view=agents`);
     await page.getByRole("button", { name: "新建角色", exact: true }).click();
@@ -179,10 +180,19 @@ export async function verifyRoleCreation({ browser, origin }) {
       .locator("[data-role-id]")
       .filter({ hasText: `CreationChannelFixture${width}` })
       .click();
-    await page
+    const retainedRows = page
       .getByTestId("role-profile-instances")
-      .getByText("实例 1", { exact: true })
+      .locator('[data-slot="list-row-group"] > [data-slot="list-row"]');
+    await retainedRows
+      .getByRole("button", {
+        name: new RegExp("^查看实例 CreationChannelFixture" + width),
+      })
       .waitFor();
+    assert.equal(
+      await retainedRows.count(),
+      1,
+      "deleted Role preserves its frozen instance",
+    );
     await page.getByRole("button", { name: "恢复角色", exact: true }).click();
     const restore = page.getByRole("dialog");
     await restore
@@ -197,10 +207,17 @@ export async function verifyRoleCreation({ browser, origin }) {
       .getByText(`RestoredFixture${width}`, { exact: true })
       .first()
       .waitFor();
-    await page
-      .getByTestId("role-profile-instances")
-      .getByText("实例 1", { exact: true })
+
+    await retainedRows
+      .getByRole("button", {
+        name: new RegExp("^查看实例 CreationChannelFixture" + width),
+      })
       .waitFor();
+    assert.equal(
+      await retainedRows.count(),
+      1,
+      "deleted Role preserves its frozen instance",
+    );
     results.push({
       width,
       deletedSectionAndRestore: true,

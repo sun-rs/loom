@@ -1,3 +1,5 @@
+import PageEmpty from "./PageEmpty";
+import { OfficialSidebarDescription } from "./OfficialRefresh135.generated";
 import { layoutQueries } from "./adaptive-layout.ts";
 import { DialogCommit } from "raft-ui/wip";
 import {
@@ -598,12 +600,25 @@ export default function ChannelSidebar({
                 ))}
               {!collapsed.includes(group.id) &&
                 !group.rooms.length &&
-                group.id !== "dms" && (
-                  <p className="px-2 text-xs text-foreground-muted">暂无频道</p>
+                group.id === "channels" &&
+                !mobile && (
+                  <OfficialSidebarDescription>
+                    还没有频道
+                  </OfficialSidebarDescription>
                 )}
             </DragSection>
           ))}
         </SidebarDrag>
+        {mobile &&
+          data &&
+          !readError &&
+          groups.every((group) => group.rooms.length === 0) && (
+            <PageEmpty
+              kind="channels"
+              testId="empty-channel-list"
+              className="py-16"
+            />
+          )}
       </SidebarContextMenu>
       {archiveTarget && (
         <ChannelArchiveDialog

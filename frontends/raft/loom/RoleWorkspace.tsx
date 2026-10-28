@@ -1,3 +1,12 @@
+import PageEmpty from "./PageEmpty";
+import {
+  OfficialComputerGroup,
+  OfficialSidebarDescription,
+} from "./OfficialRefresh135.generated";
+import {
+  groupRolesByComputer,
+  readCollapsedComputers,
+} from "./role-computer-groups";
 import { SidebarResize, useSidebarColumn } from "./SidebarLayout";
 import { LoomSidebarSlot } from "./SidebarLayout.tsx";
 import { OfficialRoleTabs } from "./OfficialIdentityFrames.generated";
@@ -34,12 +43,14 @@ import PanelHeader, {
 export type RoleEntry = {
   id: string;
   name: string;
+  computer?: { id: string; name: string };
   retired?: boolean;
   avatarUrl?: string;
   presence?: ReturnType<typeof rolePresence>;
 };
 export default function RoleWorkspace({
   detail,
+  workspaceId,
   onBack,
   entries,
   selected,
@@ -54,6 +65,7 @@ export default function RoleWorkspace({
   inspector,
 }: {
   detail: boolean;
+  workspaceId: string;
   onBack: () => void;
   entries: RoleEntry[];
   selected?: RoleEntry;
@@ -68,6 +80,25 @@ export default function RoleWorkspace({
   inspector?: ReactNode;
 }) {
   const [showDeleted, setShowDeleted] = useState(false);
+  const collapseKey = "loom:role-computers:" + workspaceId;
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return new Set(readCollapsedComputers(localStorage, collapseKey));
+    } catch {
+      return new Set<string>();
+    }
+  });
+  const toggleComputer = (id: string) =>
+    setCollapsed((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      try {
+        localStorage.setItem(collapseKey, JSON.stringify([...next]));
+      } catch {}
+      return next;
+    });
+
   const [query, setQuery] = useState("");
   const panel = useSidebarColumn();
   const visible = entries.filter((entry) =>
@@ -121,23 +152,40 @@ export default function RoleWorkspace({
             onChange={(e) => setQuery(e.target.value)}
             className="mb-2"
           />
-          {!visible.length && (
-            <p className="px-2 text-sm">
-              {query ? "没有匹配的角色" : "暂无角色"}
-            </p>
-          )}
-          {visible
-            .filter((entry) => !entry.retired)
-            .map((entry) => (
-              <OfficialRoleRow
-                key={entry.id}
-                agent={entry}
-                selected={selected?.id === entry.id}
-                busy={busy}
-                onSelect={onSelect}
-                statusDot={<RolePresence state={entry.presence ?? "unknown"} />}
+          {!visible.some((entry) => !entry.retired) && (
+            <>
+              <OfficialSidebarDescription className="hidden md:block">
+                {query ? "没有匹配的角色" : "还没有角色"}
+              </OfficialSidebarDescription>
+              <PageEmpty
+                kind={query ? "search" : "roles"}
+                className="py-16 md:hidden"
               />
-            ))}
+            </>
+          )}
+          {groupRolesByComputer(visible).map((group) => (
+            <OfficialComputerGroup
+              key={group.id}
+              id={group.id}
+              name={group.name}
+              count={group.entries.length}
+              collapsed={collapsed.has(group.id)}
+              onToggle={() => toggleComputer(group.id)}
+            >
+              {group.entries.map((entry) => (
+                <OfficialRoleRow
+                  key={entry.id}
+                  agent={entry}
+                  selected={selected?.id === entry.id}
+                  busy={busy}
+                  onSelect={onSelect}
+                  statusDot={
+                    <RolePresence state={entry.presence ?? "unknown"} />
+                  }
+                />
+              ))}
+            </OfficialComputerGroup>
+          ))}
           {entries.some((entry) => entry.retired) && (
             <>
               <SidebarSectionHeader>
@@ -189,24 +237,26 @@ export default function RoleWorkspace({
               className="thread-main-column flex min-h-0 min-w-0 flex-1 flex-col"
               data-testid="loom-role-detail"
             >
-              <PanelHeader
-                title={selected?.name ?? "选择角色"}
-                iconSlot={
-                  <AvatarSlot
-                    context="panel-header"
-                    type="agent"
-                    agentAvatarUrl={selected?.avatarUrl}
-                  />
-                }
-                iconKind="avatar"
-                iconAlwaysVisible
-                onMobileBack={onBack}
-                mobileBackProps={{ "aria-label": "角色列表" }}
-                containerProps={{
-                  className: `agent-profile-header-container ${PROFILE_HEADER_SURFACE_CLASS}`,
-                }}
-                actions={actions}
-              />
+              {selected && (
+                <PanelHeader
+                  title={selected?.name ?? "选择角色"}
+                  iconSlot={
+                    <AvatarSlot
+                      context="panel-header"
+                      type="agent"
+                      agentAvatarUrl={selected?.avatarUrl}
+                    />
+                  }
+                  iconKind="avatar"
+                  iconAlwaysVisible
+                  onMobileBack={onBack}
+                  mobileBackProps={{ "aria-label": "角色列表" }}
+                  containerProps={{
+                    className: `agent-profile-header-container ${PROFILE_HEADER_SURFACE_CLASS}`,
+                  }}
+                  actions={actions}
+                />
+              )}
               {selected && (
                 <OfficialRoleTabs value={tab} onValueChange={onTab}>
                   <TabsList aria-label="角色详情">
@@ -230,7 +280,7 @@ export default function RoleWorkspace({
                 </OfficialRoleTabs>
               )}
               <div
-                className={`min-h-0 flex-1 overflow-y-auto ${selected ? "" : "px-5 py-5"}`}
+                className={`min-h-0 flex-1 overflow-y-auto ${selected ? "" : "flex flex-col"}`}
               >
                 {children}
               </div>

@@ -1,6 +1,6 @@
 {
   "upstreamRevision": "a98ae003246a0360872a77d76dec2fccd0347ef7",
-  "uiPackage": "@botiverse/raft-ui@0.35.1 (npm alias raft-ui)",
+  "uiPackage": "@botiverse/raft-ui@0.40.0 (npm alias raft-ui)",
   "reason": "Owner-authorized 0.6 migration: remove retired family styling and APIs; mode-only settings, native semantics. Not latest upstream page source.",
   "files": {
     "packages/web/public/app-theme-bootstrap.js": {
@@ -1091,5 +1091,16 @@
       "sourceRelease": "db5e399",
       "adoption": "Parameter-only bridge to unchanged official ConfirmDialog declarations; only legacy confirmColor maps to native variants."
     }
+  },
+  "web135Refresh": {
+    "manifest": "upstream/published-2026-10-28/manifest.json",
+    "generator": "scripts/official-web/generate-refresh135.mjs",
+    "scope": "Web 1.21.35 settings mode/notifications, activity Filter menu/chip, Computer grouping/zero instance and canonical empty states. Structural resource ports, not replacement TSX pin or full-site parity.",
+    "preserved": "Single-Human local-first notification delivery, Kernel preferences, Role/Instance IDs and immutable revisions; default/persisted/min/max column widths unchanged.",
+    "tests": [
+      "scripts/official-web/refresh135-source.test.mjs",
+      "scripts/official-web/ui-refresh135.test.mjs",
+      "scripts/official-web/ui-refresh135-browser.mjs"
+    ]
   }
 }

@@ -21,7 +21,8 @@ test("notification surface keeps native card recipes and separately exposes nati
   const mute = extractSettingsSections(settings).workspaceMute;
   assert.ok(mute.includes("handleSaveServerMute"));
   assert.ok(mute.includes("serverPushMuted === savedServerPushMuted"));
-  assert.ok(mute.includes('variant="accent" size="sm"'));
+  assert.ok(mute.includes('variant="accent" size="md"'));
+  assert.ok(!mute.includes("<Separator"));
   assert.ok(result.includes("loading || busy || testing"));
   assert.throws(() => extractSettingsSections("changed"), /boundary/);
 });

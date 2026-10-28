@@ -9,7 +9,7 @@ test("pinned filter is a real query mode, not filtering only the loaded browser 
       "frontends/raft/loom/OfficialActivityFilters.generated.tsx",
       "utf8",
     ),
-    /value="pinned"/,
+    /value:\s*"pinned"/,
   );
   assert.match(
     readFileSync(

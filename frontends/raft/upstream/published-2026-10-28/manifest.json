@@ -1,0 +1,116 @@
+{
+  "webVersion": "1.21.35",
+  "releaseCommit": "84b361ca834e47824c3f46144e1172f1a090d9a6",
+  "builtAt": "2026-10-27T04:28:46Z",
+  "retrievedAt": "2026-10-28T06:30:47.246Z",
+  "publicSourceRevision": "db5e399f017d584e49597e3a28757645d6807893",
+  "reuse": "Structural ports from published JavaScript, not new official TSX. Immutable source remains unchanged. Account/server stores replaced with Loom SDK and device preference bindings.",
+  "license": "Owner-authorized noncommercial source reuse; notices retained in frontends/raft/adoption.json",
+  "sourceExcerptsSha256": "3e8cd664f5283a9799ea9dc257257ca53444147e1df6b88ba6690d427223e1aa",
+  "assets": [
+    {
+      "url": "https://app.raft.build/assets/rolldown-runtime-hePW80VL.js",
+      "sha256": "580ad8c58061a4dde99bde0a56905e382f0568516ee2f5b84dbfb52085709021",
+      "bytes": 716
+    },
+    {
+      "url": "https://app.raft.build/assets/vendor-socketio-DWoewfxI.js",
+      "sha256": "b54ec4ad3aebd58dc61598d6e43329c18b6ddaa208db4b0236f338ac84bcbf19",
+      "bytes": 41155
+    },
+    {
+      "url": "https://app.raft.build/assets/app-shell-BjoA4U-L.css",
+      "sha256": "e49e9340bbce417d28b34b2899801c9a2111a5b6e9600dc93180b6dd822c7bde",
+      "bytes": 486886
+    },
+    {
+      "url": "https://app.raft.build/assets/vendor-raft-ui-BOh-M2dN.js",
+      "sha256": "7191b1bc77d83b5944405e76ec31fdfdb458082d7e95b6b22dc8349c9e9e5bf0",
+      "bytes": 632734
+    },
+    {
+      "url": "https://app.raft.build/assets/index-BxLqYFUc.js",
+      "sha256": "d08c62831cf8c3005ba6b32b2015659a9a3962bb6ee0cc7120737b17d781964b",
+      "bytes": 6025
+    },
+    {
+      "url": "https://app.raft.build/assets/vendor-markdown-Dtgq9UMh.js",
+      "sha256": "ffbf7f0c22a80b465448e8a23b2cb263eccc4d298eff554cd12c28475ebdb562",
+      "bytes": 158414
+    },
+    {
+      "url": "https://app.raft.build/assets/vendor-startup-BhVdm3ym.js",
+      "sha256": "1aa0446c56dce3207ab30110d1e2dc189fd9cd110911778d4715f00b4d8bd7b8",
+      "bytes": 678647
+    },
+    {
+      "url": "https://app.raft.build/assets/vendor-react-B99DtKrr.js",
+      "sha256": "129cead7ea5548fbe7b938c4e6f7af755e9e55a8cc0b936f0e6d345745fc6e47",
+      "bytes": 259413
+    },
+    {
+      "url": "https://app.raft.build/assets/app-shell-iYVitH-a.js",
+      "sha256": "b2199173f8e45d4e6657b100ae2ac671abad62c8f1bf4ced574a48cd3359f705",
+      "bytes": 2859969
+    },
+    {
+      "url": "https://app.raft.build/assets/SearchOverlay-DN2dWKFO.js",
+      "sha256": "83610bd89cfb6451adb51426964cd309faeabe93b9d8a7ad07658cd561f375a6",
+      "bytes": 1980
+    },
+    {
+      "url": "https://app.raft.build/assets/AddMachineDialog-Dj8OIXcz.js",
+      "sha256": "5c18ebd381441511b8a3bdff139f0404fd8a7dfcd9cad9f290edb41c965df063",
+      "bytes": 7904
+    },
+    {
+      "url": "https://app.raft.build/assets/ThreadsInbox-CF8rjO4X.js",
+      "sha256": "06b8868861219a04dbc3e0ca5a499611507ef3ba81983e678780582de5c83ff8",
+      "bytes": 41420
+    },
+    {
+      "url": "https://app.raft.build/assets/MessageSearchPage-Da638511.js",
+      "sha256": "540876319f89a14b906a7b05de7998561100fd3b7c1fc9001c251828d40fd8d4",
+      "bytes": 58907
+    },
+    {
+      "url": "https://app.raft.build/assets/SettingsPanel-Bg-DmO9x.js",
+      "sha256": "d0121a3d95787f6b3f923b1b2df90918995dec0a1e7366e9adc4d416c65c1536",
+      "bytes": 344106
+    },
+    {
+      "url": "https://app.raft.build/assets/MachineDetailPanel-Bsw3IOb5.js",
+      "sha256": "595778b9a5cd90352ddf53506f2f758eda43a1e58d28b7e276773967b90e86b8",
+      "bytes": 62898
+    },
+    {
+      "url": "https://app.raft.build/assets/SavedPanel-BBqoHuaT.js",
+      "sha256": "501228eee9283f644bc5da72f4a4c5cb78d34699c9b7c757fc82928ebbdd3d28",
+      "bytes": 6581
+    },
+    {
+      "url": "https://app.raft.build/assets/TasksPanel-AI81L4C2.js",
+      "sha256": "e527bef987e759e7b63a5b829ec6218c4474b60d37405b5dc3e86a79ca956295",
+      "bytes": 51119
+    },
+    {
+      "url": "https://app.raft.build/assets/zh-cn-4ocycjWr.js",
+      "sha256": "651cf97336e1373b7ccc0300e6aa7100a51793f1447d939fab92204e6fc5232a",
+      "bytes": 433381
+    },
+    {
+      "url": "https://app.raft.build/assets/AgentDetailPanel-C4G-tOSB.js",
+      "sha256": "b668e5d810af7b920d7bcb18806053a976d3bb4694c62562f77edc7a6125e05f",
+      "bytes": 206877
+    }
+  ],
+  "adopted": [
+    "Appearance mode relocation to Themes",
+    "Separate workspace-notifications settings link and mute card",
+    "Activity Filter menu plus removable chip",
+    "Computer-grouped Role sidebar",
+    "Computer zero-instance section without empty list border",
+    "Canonical EmptyState composition and page-specific labels"
+  ],
+  "generator": "scripts/official-web/generate-refresh135.mjs"
+}

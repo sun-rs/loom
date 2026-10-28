@@ -13,6 +13,7 @@
 
 - [官方 UI 升级工作流](design/official-ui-upgrade-workflow.zh-CN.md)：版本确认、上游 diff、影响范围、适配和验证。
 - [依赖边界与迁移合同](design/official-dependency-migration.zh-CN.md)：组件包、不可变选定源码、生成呈现、兼容移植与 Loom 接线分开记录。
+- [Web 1.21.35 指定页面刷新与空态核对](evo/evidence/2026-10-28-ui-refresh/README.md)：当前批次的发布资源、原始源码差距、变化与验证边界。
 - [Web 1.21.34 逐页核对清单](evo/raft-1.21.34-closeout.zh-CN.md)：固定版本覆盖；不是官网永远最新的承诺。
 - [通知设计](design/local-notifications.zh-CN.md)：页面内本地通知与关闭页面后的后台推送边界。
 - 移动端和触屏布局的最新证据从[当前状态](evo/status.zh-CN.md#2-当前状态)进入；Loom 授权例外不冒称官方原样源码。

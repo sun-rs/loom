@@ -1,3 +1,6 @@
+import PageEmpty from "./PageEmpty";
+import { roleComputer } from "./role-computer-groups";
+import type { LocalRuntimeInventoryResponse } from "@rah-os/protocol";
 import InstanceListRow from "./InstanceListRow.tsx";
 import InstancePresence, { useInstancePresence } from "./InstancePresence.tsx";
 import RoleBatchDialog, { type RoleBatchAction } from "./RoleBatchDialog.tsx";
@@ -86,6 +89,7 @@ export default function AgentPage({
   );
   const { state, error, setError } = useManagement(manager);
   const [catalog, setCatalog] = useState<Catalog>();
+  const [inventory, setInventory] = useState<LocalRuntimeInventoryResponse>();
   const [tab, setTab] = useState("roles");
   const [params, setParams] = useIntentRoute();
   const selectedId = params.get("role") ?? undefined;
@@ -139,6 +143,15 @@ export default function AgentPage({
     const ticket = ++request.current;
     setRefreshing(true);
     try {
+      // Group headings may arrive later than Roles. Native discovery must not block the list.
+      void client
+        .request("host.runtime.list", {})
+        .then((computer) => {
+          if (ticket === request.current) setInventory(computer);
+        })
+        .catch(() => {
+          if (ticket === request.current) setInventory(undefined);
+        });
       const next = await manager.catalog();
       if (ticket === request.current) setCatalog(next);
     } catch {
@@ -149,7 +162,7 @@ export default function AgentPage({
     } finally {
       if (ticket === request.current) setRefreshing(false);
     }
-  }, [manager, setError]);
+  }, [manager, setError, client]);
   useEffect(() => {
     if (!active) return;
     void refresh();
@@ -191,6 +204,7 @@ export default function AgentPage({
       catalog?.deletedRoles?.some((r) => r.roleId === role.roleId) ?? false,
     id: role.roleId,
     name: roleName(role),
+    computer: roleComputer(role.configuration.runtimeOfferId, inventory),
     avatarUrl: role.configuration.avatarKey,
     presence: rolePresence(
       (catalog?.instances ?? [])
@@ -215,7 +229,7 @@ export default function AgentPage({
   const selected =
     entries.find(
       (entry) => entry.id === (selectedId ?? lastSelectedId.current),
-    ) ?? entries[0];
+    ) ?? entries.find((entry) => !entry.retired);
   const role = catalog?.roles.find((role) => role.roleId === selected?.id);
   const deletedRole = catalog?.deletedRoles?.find(
     (r) => r.roleId === selected?.id,
@@ -310,6 +324,7 @@ export default function AgentPage({
         />
       )}
       <RoleWorkspace
+        workspaceId={workspaceId}
         inspector={(() => {
           const i = instances.find((i) => i.instanceId === inspecting);
           const a = catalog?.agents.find(
@@ -386,6 +401,8 @@ export default function AgentPage({
         {!edit && <OperationStatus manager={manager} error={error} />}
         {!catalog ? (
           !error && <Spinner aria-label="读取角色和实例" />
+        ) : !selected ? (
+          <PageEmpty kind="roles" />
         ) : (
           <>
             {selected && (
@@ -444,7 +461,7 @@ export default function AgentPage({
                   )}
                 </div>
               ) : (
-                <p>从左侧选择或创建角色。</p>
+                <PageEmpty kind="roles" />
               )}
               <Separator />
               <section
@@ -471,7 +488,9 @@ export default function AgentPage({
                   }
                 />
                 {!instances.length ? (
-                  <p>此角色暂无实例</p>
+                  <div className="text-footnote text-foreground-hint">
+                    此角色还没有实例
+                  </div>
                 ) : (
                   <OfficialListRowGroup>
                     {instances.map((instance) => {

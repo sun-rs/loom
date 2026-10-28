@@ -1,0 +1,28 @@
+{
+  "kind": "isolated UI fixture; no paid providers or formal workspace writes",
+  "screenshots": "/Users/sun/.loom/reviews/2026-10-28-ui-refresh/screenshots",
+  "results": [
+    {
+      "width": 1440,
+      "appearance": true,
+      "themeModePersistence": true,
+      "workspaceMutePersistence": true,
+      "filterMenuClearAndFocus": true,
+      "computerGroupsPersist": true,
+      "zeroInstanceNoBorder": true,
+      "emptyMessagesRolesMemoryTasksChats": true,
+      "errors": []
+    },
+    {
+      "width": 390,
+      "appearance": true,
+      "themeModePersistence": true,
+      "workspaceMutePersistence": true,
+      "filterMenuClearAndFocus": true,
+      "computerGroupsPersist": true,
+      "zeroInstanceNoBorder": true,
+      "emptyMessagesRolesMemoryTasksChats": true,
+      "errors": []
+    }
+  ]
+}

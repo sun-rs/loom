@@ -1,3 +1,4 @@
+import { OfficialThemeMode } from "./OfficialRefresh135.generated";
 import { useMemo, useState } from "react";
 import {
   RadioGroup,
@@ -104,6 +105,7 @@ export default function WorkspaceThemeSettings({
       <p className="mb-6 text-callout text-foreground-muted">
         你在当前工作区看到的样子。只有你看得到。
       </p>
+      <OfficialThemeMode />
       <fieldset
         disabled={busy}
         className="min-w-0 border-0 p-0 m-0"

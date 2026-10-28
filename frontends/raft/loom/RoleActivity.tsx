@@ -1,3 +1,4 @@
+import PageEmpty from "./PageEmpty";
 import { useEffect, useState } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
 import {
@@ -114,9 +115,10 @@ export default function RoleActivity({
             </p>
           )}
           {!data.rows.length && (
-            <p className="px-5 py-4 text-foreground-hint">
-              {data.failed.length ? "暂未取得动态。" : "暂无已记录动态。"}
-            </p>
+            <PageEmpty
+              kind={data.failed.length ? "unavailable" : "activity"}
+              className="py-16"
+            />
           )}
           <ul className="px-5 py-3">
             {data.rows.map((row) => (

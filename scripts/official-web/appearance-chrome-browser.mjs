@@ -12,7 +12,7 @@ export async function verifyAppearanceChrome({ browser, origin, channels }) {
         errors = [];
       page.setDefaultTimeout(5000);
       page.on("pageerror", (e) => errors.push(e.message));
-      await page.goto(origin + "/?view=settings&settings=appearance");
+      await page.goto(origin + "/?view=settings&settings=theme");
       const picker = page.getByTestId("appearance-theme-picker");
       await picker.waitFor();
       assert.equal(
@@ -53,7 +53,9 @@ export async function verifyAppearanceChrome({ browser, origin, channels }) {
         document.documentElement.classList.contains("dark"),
       );
       if (width === 1440) {
-        const card = page.getByTestId("appearance-theme-light").locator('[data-slot="card"]');
+        const card = page
+          .getByTestId("appearance-theme-light")
+          .locator('[data-slot="card"]');
         await page.mouse.move(0, 0);
         const before = await card.evaluate(
           (e) => getComputedStyle(e).backgroundImage,

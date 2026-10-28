@@ -1,0 +1,28 @@
+[
+  {
+    "viewport": {
+      "width": 1440,
+      "height": 1000
+    },
+    "nativeGroupedSidebar": true,
+    "resize": true,
+    "mobileMasterDetail": false,
+    "placeholder": true,
+    "draftAcrossTabs": true,
+    "urlReloadAndBack": true,
+    "keyboardSelection": true
+  },
+  {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "nativeGroupedSidebar": true,
+    "resize": false,
+    "mobileMasterDetail": true,
+    "placeholder": true,
+    "draftAcrossTabs": true,
+    "urlReloadAndBack": true,
+    "keyboardSelection": true
+  }
+]

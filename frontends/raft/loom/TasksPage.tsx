@@ -294,7 +294,23 @@ export default function TasksPage({
             <EmptyState
               className="flex h-full flex-col items-center justify-center"
               icon={<CheckSquare size={36} />}
-              title="暂无任务"
+              title={
+                params.has("taskRoom") ||
+                params.has("taskCreator") ||
+                params.has("taskAssignee")
+                  ? "没有符合此筛选的任务"
+                  : "还没有任务"
+              }
+              description={
+                params.has("taskRoom") ||
+                params.has("taskCreator") ||
+                params.has("taskAssignee")
+                  ? "换一个筛选组合，或清除当前选择。"
+                  : channelTasks
+                    ? "用「创建任务」按钮创建一个。"
+                    : "频道中的任务会显示在这里。"
+              }
+              data-testid="tasks-empty"
             />
           ) : (
             <TaskDndProvider {...drag.props}>

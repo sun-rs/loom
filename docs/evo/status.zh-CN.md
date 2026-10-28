@@ -9,7 +9,7 @@
 - `main` 是当前 Loom；`evo` 已晋升并移除；`chatbox` 独立承载 `rah/main` 导入，不参与 Loom 构建。见[分支记录](branch-promotion.zh-CN.md)。
 - 唯一产品前端为 `frontends/raft`。旧复刻 UI 和 `apps/console` 已退役，不恢复其路由、构建或测试入口。
 - 保留部署标签 `com.loom.evo`、数据目录 `~/.loom/evo`、日志目录及频道主目录 `~/.loom/channel-workspaces/`。这些名称不是旧分支残留任务，不能为整洁搬迁数据。
-- 最近正式后端部署为 `e4dcdda7`，Web 使用已验收的 `5ce14ec4` 构建（资源哈希 `307adca9…`）；AGY目录限时修正及native-final通信说明补全后，已备份重启、核对账本及真实Firefox空频道页面。[部署收据](evidence/2026-10-28-three-cli-team/deployment.json)。保留本机 Codex warm / Kimi ACP native-final 与 Claude/OpenCode 既有选择；库默认仍 opt-in。[当前清理记录](../audits/2026-10-28-all-channel-retirement.zh-CN.md)，[此前传输验收](evidence/2026-10-28-native-repair/deployment.json)。
+- 本批已备份并重启正式服务，部署本轮验证的 main 工作树（基线 `92d0735d`，构建时含本批修改），Web 资源哈希 `1167c2ce…`。Raft UI 0.40.0 与 Web 1.21.35 的指定资源移植已通过定向验证；正式 Chrome 新页面确认空聊天与主题页，账本未变。既有 Codex warm / Kimi ACP native-final 选择保留；库默认仍 opt-in。[部署收据](evidence/2026-10-28-ui-refresh/deployment.json)，[本批差异与证据](evidence/2026-10-28-ui-refresh/README.md)。此前[AGY/三方协作部署](evidence/2026-10-28-three-cli-team/deployment.json)及其验收边界仍保留。
 - HTTP 4176、LAN HTTPS 4178 和隔离预览的部署记录见[HTTPS接入](evidence/2026-10-22-https-trusted/summary.json)、[预览边界](evidence/2026-10-23-https-preview/summary.json)。本轮复查了 HTTP 4176 页面和既有 launchd 配置，HTTPS/Tailscale 真机链路未重新验收；部署前仍须读取实际状态，不沿用旧快照里的临时 loopback 配置。
 
 ## 2. 当前状态
@@ -26,8 +26,9 @@
 
 ### 前端与通知
 
-- `@botiverse/raft-ui@0.35.1` 提供组件；不可变选定源码为 `db5e399` / Web 1.21.23；后续资源移植分别记录来源。不是整套官网应用的未经修改依赖，也不能由构建成功推断最新版全站一致。
+- `@botiverse/raft-ui@0.40.0` 提供组件；不可变选定源码为 `db5e399` / Web 1.21.23；后续资源移植分别记录来源。不是整套官网应用的未经修改依赖，也不能由构建成功推断最新版全站一致。
 - 固定 Web 1.21.34 的页面、主题、分栏与菜单覆盖见[清单](raft-1.21.34-closeout.zh-CN.md)；升级按[正式工作流](../design/official-ui-upgrade-workflow.zh-CN.md)执行。
+- Web 1.21.35 本批：明暗模式移入主题，独立工作区通知，动态筛选菜单/条件，Role 按计算机分组，零实例和空页呈现；41项定向检查、构建、桌面/触屏与消息/表单/分栏复查通过。原始 TSX 仍是 db5e399，资源移植单独锁定，不等于全站永远最新。[证据](evidence/2026-10-28-ui-refresh/README.md)。
 - 手机首页/动态/任务/搜索/更多导航及触屏布局有 owner 授权适配。触屏分栏、紧凑输入区和横屏收起顶栏是明确的 Loom 例外，不改变横竖屏字体来换面积。见[自适应](evidence/2026-10-27-adaptive-runtime/README.md)、[折叠屏](evidence/2026-10-27-foldable-touch/README.md)、[横屏面积](evidence/2026-10-27-landscape-chrome/README.md)。虚拟视口不等于所有物理设备验收。
 - 本地通知与关闭页面后的 Web Push 是不同路径；浏览器/系统权限、HTTPS 与外部推送网络边界见[通知设计](../design/local-notifications.zh-CN.md)。后端接受请求不等于用户看见横幅，不把历史偶发失败抹去。
 

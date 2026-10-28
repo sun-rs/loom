@@ -44,14 +44,17 @@ export async function verifyAppearance({ browser, origin, channels }) {
     }
 
     try {
-      await page.goto(origin + "/?view=settings&settings=appearance");
+      await page.goto(origin + "/?view=settings&settings=theme");
       await page
         .getByTestId("appearance-theme-picker")
         .waitFor({ timeout: 3000 });
       if (width < 768) {
         const boxes = await Promise.all(
           ["light", "dark", "system"].map((mode) =>
-            page.getByTestId("appearance-theme-" + mode).locator('[data-slot="card"]').boundingBox(),
+            page
+              .getByTestId("appearance-theme-" + mode)
+              .locator('[data-slot="card"]')
+              .boundingBox(),
           ),
         );
         assert.ok(
@@ -66,13 +69,19 @@ export async function verifyAppearance({ browser, origin, channels }) {
           "theme preview must not consume half a phone screen",
         );
       }
-      await page.getByTestId("appearance-theme-light").locator('[data-slot="card"]').click();
+      await page
+        .getByTestId("appearance-theme-light")
+        .locator('[data-slot="card"]')
+        .click();
       await page.waitForFunction(
         () =>
           !document.documentElement.hasAttribute("data-theme") &&
           !document.documentElement.classList.contains("dark"),
       );
-      await page.getByTestId("appearance-theme-dark").locator('[data-slot="card"]').click();
+      await page
+        .getByTestId("appearance-theme-dark")
+        .locator('[data-slot="card"]')
+        .click();
       await page.waitForFunction(() =>
         document.documentElement.classList.contains("dark"),
       );
@@ -82,7 +91,10 @@ export async function verifyAppearance({ browser, origin, channels }) {
           !document.documentElement.hasAttribute("data-theme") &&
           document.documentElement.classList.contains("dark"),
       );
-      await page.getByTestId("appearance-theme-system").locator('[data-slot="card"]').click();
+      await page
+        .getByTestId("appearance-theme-system")
+        .locator('[data-slot="card"]')
+        .click();
       await page.emulateMedia({ colorScheme: "light" });
       await page.waitForFunction(
         () => !document.documentElement.classList.contains("dark"),
@@ -91,7 +103,10 @@ export async function verifyAppearance({ browser, origin, channels }) {
       await page.waitForFunction(() =>
         document.documentElement.classList.contains("dark"),
       );
-      await page.getByTestId("appearance-theme-light").locator('[data-slot="card"]').click();
+      await page
+        .getByTestId("appearance-theme-light")
+        .locator('[data-slot="card"]')
+        .click();
       await page.waitForFunction(
         () => !document.documentElement.hasAttribute("data-theme"),
       );
@@ -103,6 +118,7 @@ export async function verifyAppearance({ browser, origin, channels }) {
             width +
             ".png",
         });
+      await page.goto(origin + "/?view=settings&settings=appearance");
       await page.getByTestId("message-font-size-lg").click();
       const preview = page.locator(
         '[aria-label="消息字号预览"] [data-slot="message-item-body"]',

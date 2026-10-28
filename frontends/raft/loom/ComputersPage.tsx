@@ -1,3 +1,5 @@
+import PageEmpty from "./PageEmpty";
+import { OfficialComputerInstancesEmpty } from "./OfficialRefresh135.generated";
 import { layoutQueries } from "./adaptive-layout.ts";
 import { SidebarResize, useSidebarColumn } from "./SidebarLayout";
 import CreateInstanceDialog from "./CreateInstanceDialog.tsx";
@@ -463,76 +465,79 @@ export default function ComputersPage({
                         实例资料尚未读取
                       </p>
                     ) : (
-                      <OfficialListRowGroup>
-                        {visibleComputerInstances(
-                          rows,
-                          expanded || selectedInstances !== null,
-                        ).map((instance) => (
-                          <ComputerInstanceRow
-                            key={instance.instanceId}
-                            instance={instance}
-                            selectionMode={selectedInstances !== null}
-                            selected={
-                              selectedInstances?.includes(
-                                instance.instanceId,
-                              ) ?? false
-                            }
-                            onClick={() =>
-                              selectedInstances === null
-                                ? onOpenRole(instance.roleId)
-                                : setSelectedInstances(
-                                    selectedInstances.includes(
-                                      instance.instanceId,
+                      rows.length > 0 && (
+                        <OfficialListRowGroup>
+                          {visibleComputerInstances(
+                            rows,
+                            expanded || selectedInstances !== null,
+                          ).map((instance) => (
+                            <ComputerInstanceRow
+                              key={instance.instanceId}
+                              instance={instance}
+                              selectionMode={selectedInstances !== null}
+                              selected={
+                                selectedInstances?.includes(
+                                  instance.instanceId,
+                                ) ?? false
+                              }
+                              onClick={() =>
+                                selectedInstances === null
+                                  ? onOpenRole(instance.roleId)
+                                  : setSelectedInstances(
+                                      selectedInstances.includes(
+                                        instance.instanceId,
+                                      )
+                                        ? selectedInstances.filter(
+                                            (id) => id !== instance.instanceId,
+                                          )
+                                        : [
+                                            ...selectedInstances,
+                                            instance.instanceId,
+                                          ],
                                     )
-                                      ? selectedInstances.filter(
-                                          (id) => id !== instance.instanceId,
-                                        )
-                                      : [
-                                          ...selectedInstances,
-                                          instance.instanceId,
-                                        ],
-                                  )
-                            }
-                          />
-                        ))}
-                        {selectedInstances === null &&
-                          rows.length > COMPUTER_INSTANCE_PREVIEW_COUNT && (
-                            <div className="border-t border-line-hairline px-4 py-3 text-center">
-                              <ShowMoreToggle
-                                expanded={expanded}
-                                aria-expanded={expanded}
-                                onClick={() => setExpanded((v) => !v)}
-                                collapsedLabel={
-                                  <span className="inline-flex items-center gap-1">
-                                    <ChevronDown size={14} />
-                                    展开全部 {rows.length} 个实例
-                                  </span>
-                                }
-                                expandedLabel={
-                                  <span className="inline-flex items-center gap-1">
-                                    <ChevronUp size={14} />
-                                    收起
-                                  </span>
-                                }
-                              />
-                            </div>
-                          )}
-                      </OfficialListRowGroup>
+                              }
+                            />
+                          ))}
+                          {selectedInstances === null &&
+                            rows.length > COMPUTER_INSTANCE_PREVIEW_COUNT && (
+                              <div className="border-t border-line-hairline px-4 py-3 text-center">
+                                <ShowMoreToggle
+                                  expanded={expanded}
+                                  aria-expanded={expanded}
+                                  onClick={() => setExpanded((v) => !v)}
+                                  collapsedLabel={
+                                    <span className="inline-flex items-center gap-1">
+                                      <ChevronDown size={14} />
+                                      展开全部 {rows.length} 个实例
+                                    </span>
+                                  }
+                                  expandedLabel={
+                                    <span className="inline-flex items-center gap-1">
+                                      <ChevronUp size={14} />
+                                      收起
+                                    </span>
+                                  }
+                                />
+                              </div>
+                            )}
+                        </OfficialListRowGroup>
+                      )
                     )}
                     {instances && !rows.length && (
-                      <p className="text-callout text-foreground-hint">
-                        暂无绑定到这台计算机的实例
-                      </p>
+                      <OfficialComputerInstancesEmpty />
                     )}
                   </section>
                 </OfficialComputerSections>
               </div>
             ) : (
-              <div className="p-5 text-callout text-foreground-muted">
-                {selectedId
-                  ? (problem ?? "该计算机不可用。")
-                  : "选择一台计算机查看详情。"}
-              </div>
+              <PageEmpty
+                kind={error ? "unavailable" : "computers"}
+                description={
+                  error
+                    ? "无法取得计算机资料，请重新读取。"
+                    : "选择一台计算机查看详情。"
+                }
+              />
             )}
           </Panel>
         </AppShellMainSlot>

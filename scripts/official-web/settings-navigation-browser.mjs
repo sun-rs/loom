@@ -30,7 +30,11 @@ export async function verifySettingsNavigation({ browser, origin }) {
         await page.getByTestId("loom-settings-detail").isVisible(),
         false,
       );
-      assert.equal(await nav.isVisible(), true);
+      assert.equal(
+        await nav.count(),
+        0,
+        "Settings is a full-screen More destination",
+      );
     } else {
       await page
         .getByTestId("loom-settings-detail")
@@ -73,11 +77,22 @@ export async function verifySettingsNavigation({ browser, origin }) {
         );
         await page.mouse.down();
         await page.mouse.move(
-          Math.max(1, current.x + delta),
+          current.x +
+            current.width / 2 +
+            (expected === SIDEBAR_PANEL_BOUNDS.min
+              ? SIDEBAR_PANEL_BOUNDS.min - (await sidebar.boundingBox()).width
+              : delta),
           current.y + current.height / 2,
           { steps: 5 },
         );
         await page.mouse.up();
+        await page.waitForFunction(
+          ({ expected }) =>
+            document
+              .querySelector('[data-testid="loom-settings-sidebar"]')
+              .getBoundingClientRect().width === expected,
+          { expected },
+        );
         assert.equal((await sidebar.boundingBox()).width, expected);
       }
     }
@@ -95,7 +110,8 @@ export async function verifySettingsNavigation({ browser, origin }) {
       .getByTestId("loom-settings-detail")
       .getByRole("heading", { name: "外观", exact: true })
       .waitFor();
-    await page.getByTestId("appearance-theme-picker").waitFor();
+    await page.getByTestId("settings-server-theme-link").waitFor();
+    assert.equal(await page.getByTestId("appearance-theme-picker").count(), 0);
     assert.equal(
       new URL(page.url()).searchParams.get("settings"),
       "appearance",
@@ -106,7 +122,10 @@ export async function verifySettingsNavigation({ browser, origin }) {
     assert.equal(await input.inputValue(), "6");
     if (!desktop)
       await page.getByRole("button", { name: "设置列表", exact: true }).click();
-    await list.getByRole("button", { name: "通知", exact: true }).focus();
+    await list
+      .getByRole("button", { name: "通知", exact: true })
+      .first()
+      .focus();
     await page.keyboard.press("Enter");
     await page
       .getByTestId("loom-settings-detail")

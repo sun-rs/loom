@@ -4,7 +4,7 @@ Private local distribution of selected byte-exact Raft Web components, **not** a
 
 Product import chain: Loom data/events → compatibility entries in `packages/web/src/components/ui` → this dependency → official `@botiverse/raft-ui` recipes. `PanelHeader` preserves approved compact mobile placement using container data attributes; `SectionEyebrow` drops the retired `uppercase` parameter. Neither adapter renders a second copy of native presentation.
 
-The host installs `@botiverse/raft-ui@0.35.1` under the existing `raft-ui` npm alias. The canonical peer is optional only to prevent npm installing a duplicate; the host's Vite and TypeScript mappings bind canonical and legacy imports to the same mandatory pinned runtime. React is likewise supplied by the host. Tailwind scans this source explicitly.
+The host installs `@botiverse/raft-ui@0.40.0` under the existing `raft-ui` npm alias. The canonical peer is optional only to prevent npm installing a duplicate; the host's Vite and TypeScript mappings bind canonical and legacy imports to the same mandatory pinned runtime. React is likewise supplied by the host. Tailwind scans this source explicitly.
 
 ## Upgrade
 
@@ -17,7 +17,7 @@ Remaining `loom/` pages and other historical compatibility ports are **not** res
 
 ## Appearance page
 
-`node scripts/official-web/generate-appearance.mjs` extracts six named declarations from the pinned SettingsPanel using the TypeScript parser, preserving exact bodies. It emits `loom/OfficialAppearance.generated.tsx`; a source test rejects manual edits or changed declaration boundaries. The import prelude is explicit Loom glue, not upstream bytes: existing appearance store, native theme provider through `appearance-source-binding.ts`, MessageItem preview and font control. Only types reference agent/channel/message stores. No second preferences store is created. The picker is imported directly from this package. Approved mobile card density remains outer CSS. This is **exact source extraction plus local bindings**, not untouched whole-page-module reuse. Other settings tabs retain their previous paths.
+`node scripts/official-web/generate-appearance.mjs` extracts six named declarations from the pinned SettingsPanel using the TypeScript parser, preserving retained bodies. The separately recorded Web 1.21.35 compatibility patch removes the workspace mode card here and reuses its control in Themes. It emits `loom/OfficialAppearance.generated.tsx`; a source test rejects manual edits or changed declaration boundaries. The import prelude is explicit Loom glue, not upstream bytes: existing appearance store, native theme provider through `appearance-source-binding.ts`, MessageItem preview and font control. Only types reference agent/channel/message stores. No second preferences store is created. The picker is imported directly from this package. Approved mobile card density remains outer CSS. This is **exact source extraction plus local bindings**, not untouched whole-page-module reuse. Other settings tabs retain their previous paths.
 
 ## Role profile
 

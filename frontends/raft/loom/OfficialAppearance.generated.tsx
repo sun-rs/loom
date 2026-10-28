@@ -83,13 +83,7 @@ export function AppearanceSection({ publicSurface = false, themeLink }: { public
 
   return (
     <div className="mb-6">
-      <Card className="mb-6 p-4">
-        <div className="mb-3">
-          <div className="text-subhead font-semibold text-foreground">{formatMessage({ id: "settings.appearance.themeTitle" })}</div>
-          <p className="mt-1 text-footnote text-foreground-muted">{formatMessage({ id: "settings.appearance.themeDescription" })}</p>
-        </div>
-        <AppearanceThemeSettingsControl />
-      </Card>
+
       {!publicSurface && (
         <>
           {themeLink}

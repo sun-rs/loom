@@ -71,10 +71,18 @@ Read the target contract before changing behavior; this map is not a replacement
   Compare each retained page's empty/default/selected state and its sidebar/list
   width policy (default, persisted drag, min/max and narrow-screen transition).
   A component-package upgrade never closes these page-level checks.
-- **Current package:** `@botiverse/raft-ui@0.35.1` via alias `raft-ui`.
+- **Current package:** `@botiverse/raft-ui@0.40.0` via alias `raft-ui`.
   Selected page source remains `db5e399` (Web 1.21.23 source); resource ports retain
-  their original provenance. This does not claim full Web 1.21.34 parity or add
-  new themes/swipe workflows merely because the package supports them.
+  their original provenance. A package upgrade alone does not prove latest
+  whole-site parity; Theme/swipe bindings have separate source records.
+  Latest adopted resource changes: Web 1.21.35
+  settings mode belongs in Themes; workspace notification preferences have a
+  separate destination from browser permission; Activity uses a Filter menu and
+  clearable chip; Roles group by verified Computer runtime bindings. Never infer
+  a local Computer from an opaque offer ID or block the Role list on discovery.
+  Empty pages/conversations use the official EmptyState composition; zero-instance
+  Computer sections render a quiet caption without an empty bordered list.
+  See `docs/evo/evidence/2026-10-28-ui-refresh/README.md`.
 
 Executable upgrade practice and the current change matrix:
 `docs/design/official-ui-upgrade-workflow.zh-CN.md`. Commit/push active product
@@ -518,10 +526,11 @@ neither an old reference fixture nor a visible tab proves product completeness.
   never connect an enabled production button to fixture success.
 
 Current source upgrade (owner requested 2026-10-21): the official component package
-is now `@botiverse/raft-ui`, pinned at `0.35.1` through npm alias `raft-ui`.
+is now `@botiverse/raft-ui`, pinned at `0.40.0` through npm alias `raft-ui`.
 The obsolete unscoped package stopped at `0.6.0`; do not mistake that old
-package version for the current official release. The package was upgraded on 2026-10-26; retained resource ports are anchored to
-Raft Web v1.21.26, not relabeled as newer source. Prefer its exported primitives over local compatibility
+package version for the current official release. The package was upgraded on 2026-10-28; retained resource ports keep their individual provenance.
+The 1.21.35 resource refresh is locked under `upstream/published-2026-10-28`,
+not relabeled as newer original TSX. Prefer its exported primitives over local compatibility
 recipes; keep existing owner-approved compact mobile exceptions explicit.
 
 The selected official Web source dependency at

@@ -8,6 +8,9 @@ import {
   OfficialSettingsBody,
 } from "./OfficialComputerProfile.generated";
 import LanguageRegionSettings from "./LanguageRegionSettings.tsx";
+import WorkspaceNotificationSettings from "./WorkspaceNotificationSettings";
+import { OfficialWorkspaceNotificationsLink } from "./OfficialRefresh135.generated";
+import { useSidebarPreferences } from "./useSidebarPreferences";
 import NotificationSettings from "./NotificationSettings.tsx";
 import { LoomReleaseNotes } from "./OfficialReleaseNotes.generated.tsx";
 import { loomReleaseNotes } from "./release-notes.ts";
@@ -47,7 +50,10 @@ const categories = [
   },
   {
     label: "我在当前工作区",
-    items: [{ id: "theme", label: "主题", icon: Palette }],
+    items: [
+      { id: "theme", label: "主题", icon: Palette },
+      { id: "server-notifications", label: "通知", icon: Bell },
+    ],
   },
   {
     label: "工作空间",
@@ -81,6 +87,7 @@ export default function SettingsPage({
   onTab: (id: string | null) => void;
 }) {
   const panel = useSidebarColumn();
+  const notifications = useSidebarPreferences(client, workspaceId);
   const [desktop, setDesktop] = useState(
     () => window.matchMedia(layoutQueries.dual).matches,
   );
@@ -172,6 +179,18 @@ export default function SettingsPage({
               </div>
               {selectedId === "notifications" ? (
                 <NotificationSettings
+                  client={client}
+                  workspaceId={workspaceId}
+                  controlRoomId={controlRoomId}
+                  workspaceLink={
+                    <OfficialWorkspaceNotificationsLink
+                      muted={notifications.preferences?.mutedWorkspace}
+                      onOpen={() => onTab("server-notifications")}
+                    />
+                  }
+                />
+              ) : selectedId === "server-notifications" ? (
+                <WorkspaceNotificationSettings
                   client={client}
                   workspaceId={workspaceId}
                   controlRoomId={controlRoomId}

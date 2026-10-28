@@ -107,14 +107,12 @@ export function LoomAboutSection({appVersion}:{appVersion:string}){const {format
       </section></div>);}
 export function LoomWorkspaceMute({currentServer,loading,busy,testing,muting,serverPushMuted,savedServerPushMuted,handleSaveServerMute,handleServerPushMutedChange}:{currentServer:{name:string};loading:boolean;busy:boolean;testing:boolean;muting:boolean;serverPushMuted:boolean;savedServerPushMuted:boolean;handleSaveServerMute:(event:FormEvent)=>void;handleServerPushMutedChange:(checked:boolean)=>void}){const {formatMessage}=useIntl();return <>{currentServer && (
           <div>
-            <Separator className="mb-3" />
             <form onSubmit={handleSaveServerMute} className="space-y-3">
               <label className={`flex items-start gap-3 ${loading || busy || testing || muting ? "cursor-not-allowed" : ""}`}>
                 <Checkbox
                   checked={serverPushMuted}
                   disabled={loading || busy || testing || muting}
                   onCheckedChange={handleServerPushMutedChange}
-                  className="mt-0.5"
                 />
                 <span className="min-w-0">
                   <span className={`block text-subhead font-semibold ${loading || busy || testing || muting ? "text-foreground-disabled" : "text-foreground"}`}>{formatMessage({ id: "settings.notifications.muteServerTitle" })}</span>
@@ -125,7 +123,7 @@ export function LoomWorkspaceMute({currentServer,loading,busy,testing,muting,ser
               </label>
               <div className="flex justify-end">
                 <Button
-                  variant="accent" size="sm"
+                  variant="accent" size="md"
                   type="submit"
                   disabled={serverPushMuted === savedServerPushMuted || loading || busy || testing || muting}
                 >

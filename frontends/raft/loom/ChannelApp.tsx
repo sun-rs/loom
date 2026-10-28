@@ -1,3 +1,4 @@
+import PageEmpty from "./PageEmpty";
 import { compactConversationRoute, layoutQueries } from "./adaptive-layout.ts";
 import { MobilePageNavigation } from "./MobilePageNavigation";
 import {
@@ -548,9 +549,7 @@ function Channel({
                         </div>
                       </div>
                     ) : view.messages.length === 0 ? (
-                      <p className="p-6 text-sm">
-                        {isPrivate ? "还没有私聊消息" : "频道还没有消息"}
-                      </p>
+                      <PageEmpty kind="messages" />
                     ) : (
                       <ChannelTimeline
                         key={focusId ?? "latest"}
@@ -1326,11 +1325,9 @@ export default function ChannelApp() {
                               }
                             />
                           ) : (
-                            <p className="p-6">
-                              {requested
-                                ? "此频道不存在或没有访问权限"
-                                : "暂无频道，请从频道列表菜单创建"}
-                            </p>
+                            <PageEmpty
+                              kind={requested ? "unavailable" : "conversation"}
+                            />
                           )}
                         </AppShellMainSlot>
                       </div>

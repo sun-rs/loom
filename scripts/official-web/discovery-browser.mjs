@@ -197,6 +197,7 @@ export async function verifyDiscovery({
     const toolbar = page.getByTestId("inbox-toolbar");
     assert.equal(Math.round((await toolbar.boundingBox()).height), 54);
     assert.equal(await toolbar.getByRole("combobox").count(), 0);
+    await page.getByTestId("inbox-filter-button").click();
     await page.getByTestId("inbox-filter-mentions").click();
     await page.waitForURL((url) => url.searchParams.get("af") === "mentions");
     assert.equal(

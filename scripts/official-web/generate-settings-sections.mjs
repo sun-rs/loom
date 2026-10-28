@@ -158,7 +158,12 @@ export function extractSettingsSections(
     account: accountJsx,
     about: `<div className="space-y-6">${about}</div>`,
     notification: `<div>${notificationHeader.getText(file)}${notify}</div>`,
-    workspaceMute: stop.getText(file),
+    // 1.21.35 standalone workspace notification card owns its outer separator.
+    workspaceMute: stop
+      .getText(file)
+      .replace(/^[ \t]*<Separator className="mb-3" \/>\r?\n/m, "")
+      .replace('variant="accent" size="sm"', 'variant="accent" size="md"')
+      .replace(/^[ \t]*className="mt-0.5"\r?\n/m, ""),
     reasons: extractDeclarations(source, ["UNSUPPORTED_REASON_MESSAGE"])[0],
   };
 }

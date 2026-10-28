@@ -1,5 +1,5 @@
 {
-  "scope": "Raft single design system, pinned @botiverse/raft-ui 0.35.1 (import alias raft-ui); modes light/dark/system. Semantic recipes owned by official package.",
+  "scope": "Raft single design system, pinned @botiverse/raft-ui 0.40.0 (import alias raft-ui); modes light/dark/system. Semantic recipes owned by official package.",
   "sourceVersions": {
     "pageSource": "frontends/raft/adoption.json",
     "primitiveSource": "frontends/raft/node_modules/raft-ui/package.json",
@@ -727,6 +727,32 @@
       ],
       "bindings": ["LazyPages.tsx"],
       "guard": "scripts/official-web/page-loading.test.mjs"
+    },
+    {
+      "id": "web135-settings-filter-computer-empty",
+      "owner": "Web 1.21.35 resource compositions + official EmptyState, DropdownMenu and list primitives",
+      "rule": "Device mode lives in Themes. Browser permission and revisioned workspace mute have separate destinations. Activity menu/chip replaces segmented control without changing query semantics. Group Role IDs by verified runtime-offer Computer binding, never by name/opaque ID parsing; preserve retired Roles. No empty bordered list for zero instances. Full-page and conversation empty states reuse official icon/title/description composition; compact desktop sidebar descriptions stay native. Existing compact mobile exceptions remain explicit.",
+      "sources": [
+        "frontends/raft/upstream/published-2026-10-28/manifest.json",
+        "frontends/raft/upstream/published-2026-10-28/source-excerpts.json",
+        "frontends/raft/upstream/raft-web-source/packages/web/src/components/ui/EmptyState.tsx"
+      ],
+      "bindings": [
+        "OfficialRefresh135.generated.tsx",
+        "OfficialActivityFilters.generated.tsx",
+        "WorkspaceThemeSettings.tsx",
+        "WorkspaceNotificationSettings.tsx",
+        "NotificationSettings.tsx",
+        "RoleWorkspace.tsx",
+        "PageEmpty.tsx",
+        "ChannelSidebar.tsx"
+      ],
+      "evidence": [
+        "scripts/official-web/refresh135-source.test.mjs",
+        "scripts/official-web/ui-refresh135.test.mjs",
+        "scripts/official-web/role-computer-groups.test.ts",
+        "scripts/official-web/ui-refresh135-browser.mjs"
+      ]
     }
   ],
   "exceptions": [

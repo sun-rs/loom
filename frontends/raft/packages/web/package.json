@@ -44,7 +44,7 @@
     "html-to-image": "^1.11.13",
     "lucide-react": "^1.55.0",
     "mermaid": "11.17.2",
-    "raft-ui": "npm:@botiverse/raft-ui@0.35.1",
+    "raft-ui": "npm:@botiverse/raft-ui@0.40.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "react-intl": "^7.1.11",

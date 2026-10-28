@@ -1,6 +1,6 @@
 # 官方前端依赖化：现状与验收边界
 
-2026-10-26：组件包已进入 0.35.1 升级批，选取页面源码仍为 db5e399；历史段落的旧包尺寸不代表当前运行时。执行方法与范围见[官方 UI 升级流程](official-ui-upgrade-workflow.zh-CN.md)。
+2026-10-28：组件包已进入 0.40.0 升级批，选取页面源码仍为 db5e399；历史段落的旧包尺寸不代表当前运行时。执行方法与范围见[官方 UI 升级流程](official-ui-upgrade-workflow.zh-CN.md)。
 
 ## 当前结论（2026-10-22）
 
@@ -81,7 +81,7 @@
 
 | 层次                       | 已落地                                                                                                                                                                                                                                                                          | 边界                                                                                                                         |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| 基础设计系统               | `@botiverse/raft-ui@0.35.1`，canonical/legacy 导入共享运行时                                                                                                                                                                                                                    | 原生控件、recipe、字体和状态；不能据此认定每个页面组合原生                                                                   |
+| 基础设计系统               | `@botiverse/raft-ui@0.40.0`，canonical/legacy 导入共享运行时                                                                                                                                                                                                                    | 原生控件、recipe、字体和状态；不能据此认定每个页面组合原生                                                                   |
 | 直接源码依赖               | Tooltip、CloseButton、EmptyState、SectionHeader、SectionEyebrow、PanelHeader、AppearanceThemePicker、AvatarEditVeil、SettingsProfileCard、SurfaceListItem、SlugInput、panelBounds、AvatarListRow、KeyValueRow、ShowMoreToggle、VirtualizedTaskStack、searchOverlayAnchor、Modal | 私有本地分发包的原文件保留官方字节，不是官方发布的完整 Web npm 包                                                            |
 | 外观区块                   | 从官方 SettingsPanel 精确提取正文与预览声明                                                                                                                                                                                                                                     | 显式接入现有设备偏好和主题hook；消息预览和字号组件仍沿用原模块                                                               |
 | 日期与时间                 | 从官方 LanguageRegionSection 原样提取日期/时间 JSX 子树                                                                                                                                                                                                                         | 保存/错误绑定浏览器设备偏好；中文限定语言块仍为本地组合                                                                      |

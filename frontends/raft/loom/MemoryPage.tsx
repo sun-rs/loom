@@ -1,3 +1,4 @@
+import PageEmpty from "./PageEmpty";
 import { layoutQueries } from "./adaptive-layout.ts";
 import { useCurrentListPanel } from "./useCurrentListPanel";
 import { uiActionProps } from "./ui-action-props.ts";
@@ -268,8 +269,15 @@ export default function MemoryPage({
               <p role="status" className="px-2 text-sm">
                 正在读取记忆…
               </p>
-            ) : !result?.entries.length ? (
-              <p className="px-2 text-sm">没有匹配的记忆</p>
+            ) : !error && !result?.failed.length && !result?.entries.length ? (
+              <PageEmpty
+                kind={
+                  query.trim() || channel !== "all" || filter !== "active"
+                    ? "search"
+                    : "memory"
+                }
+                className="flex h-full flex-col items-center justify-center"
+              />
             ) : null}
             {!!result?.failed.length && (
               <p role="alert" className="px-2 text-sm">

@@ -1,0 +1,28 @@
+{
+  "sourceRevision": "92d0735da03963837b7ddaa6d3a4073cc1bef534",
+  "oldPid": 348,
+  "newPid": 55401,
+  "backup": "/Users/sun/.loom/evo/backups/pre-ui-refresh135-1793170997643",
+  "ledgerUnchanged": true,
+  "at": "2026-10-28T07:03:37.117Z",
+  "webAssets": "/Users/sun/Code/repos/rah_os/.workbench-web/1167c2ce6871e7bdfc06eced41cc4913b9bf6b02f4ee24cf97716a394bfefa60",
+  "selection": {
+    "codex": "warm app-server native-final",
+    "kimi": "ACP native-final"
+  },
+  "scope": "UI 1.21.35 resource refresh + Raft UI 0.40.0; backend ownership, CLI/model and notification transport selections retained",
+  "sourceWorktreeDirty": true,
+  "plistSha256": "40b9198dd745fa5a00fe6502f1de3a2a6e472e5e1599aa47419ba88930219607",
+  "formalPage": {
+    "browser": "Google Chrome native via CUA",
+    "httpStatus": 200,
+    "servedWebBuildId": "020de631692fda12d7016a3b3bf1f856fb662f9018096d5447304a16eb10e454",
+    "snapshotBuildIdMatches": true,
+    "readOnly": true,
+    "observed": [
+      "fresh empty chat: icon + 没有打开的对话 / 从列表里选一个",
+      "Themes: 浅色和深色 above 基础 and 头像系列; light/dark/system preview cards and selected check"
+    ],
+    "firefoxNativeWindow": "unavailable: cgWindowNotFound; no Firefox acceptance claimed"
+  }
+}

@@ -1,3 +1,5 @@
+import { verifyRoleCreation } from "./role-create-browser.mjs";
+import { verifyUIRefresh135 } from "./ui-refresh135-browser.mjs";
 import { verifyChannelDelete } from "./channel-delete-browser.mjs";
 import { verifySidebarCollapse } from "./sidebar-collapse-browser.mjs";
 import { verifyNavigationOrder } from "./navigation-order-browser.mjs";
@@ -202,7 +204,13 @@ try {
   browser = await (
     process.env.LOOM_BROWSER_ENGINE === "webkit" ? webkit : chromium
   ).launch({ headless: true });
-  if (process.env.LOOM_BROWSER_SLICE === "standalone") {
+  if (process.env.LOOM_BROWSER_SLICE === "ui-refresh135") {
+    console.log(
+      JSON.stringify(await verifyUIRefresh135({ browser, origin, channels })),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "role-form") {
+    console.log(JSON.stringify(await verifyRoleCreation({ browser, origin })));
+  } else if (process.env.LOOM_BROWSER_SLICE === "standalone") {
     const { verifyStandalone } = await import("./standalone-browser.mjs");
     console.log(
       JSON.stringify(
@@ -961,6 +969,13 @@ try {
       }),
     );
   } else {
+    if (
+      process.env.LOOM_BROWSER_SLICE &&
+      process.env.LOOM_BROWSER_SLICE !== "chat-core"
+    )
+      throw new Error(
+        "Unknown browser slice: " + process.env.LOOM_BROWSER_SLICE,
+      );
     const coreOnly = process.env.LOOM_BROWSER_SLICE === "chat-core";
     const settingsNavigationResults = coreOnly
       ? []
