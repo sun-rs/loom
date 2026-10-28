@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
-import { firstRunReplay, firstRunMessageKey } from "../src/agent-first-run.ts";
+import { firstRunReplay, firstRunMessageKey } from "../src/legacy-first-run-receipts.ts";
 import {
   roleInstanceFixture,
   startInstanceRun,

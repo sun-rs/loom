@@ -179,7 +179,10 @@ never installs them or configures their accounts.
   retaining reusable Role configurations. Reuse durable instance deletion and
   require actual execution termination before erasure; pending stops do not prove
   deletion. There is no reserved/global `#all` or automatically seeded channel;
-  each instance belongs only to its chosen Channel. Keep deletion receipts, backups and channel home
+  each instance belongs only to its chosen Channel. No system-channel settings,
+  greeting toggle or unused UI extraction may be reintroduced. Historical visibility
+  columns and receipt readers are compatibility fences, not feature entry points.
+  Keep deletion receipts, backups and channel home
   directories. This differs from removing an instance alone, which keeps history.
 - **Session** is the instance's native CLI session. Each instance has its own
   execution lane and one continuous session that is never silently replaced and

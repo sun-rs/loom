@@ -6,7 +6,7 @@ import {
   requireActiveInstancePrivateBox,
   requireRoleInstanceMembershipEntry,
 } from "./instance-worker-scope.ts";
-import { agentGreetingEnabled, firstRunReplay } from "./agent-first-run.ts";
+import { firstRunReplay } from "./legacy-first-run-receipts.ts";
 import { heldDraftRecoveryTarget } from "./held-draft-recovery.ts";
 import { recordWorkerTargetReadPosition } from "./worker-target-read-position.ts";
 import type { DatabaseSync } from "node:sqlite";
@@ -326,8 +326,9 @@ export class CollaborationService {
         event.aggregateId !== input.workspaceId ||
         event.payload.name !== input.name ||
         event.payload.avatarKey !== input.avatarKey ||
-        event.payload.agentAllChannelGreetingEnabled !==
-          input.agentAllChannelGreetingEnabled
+        Object.keys(event.payload).some(
+          (key) => !["name", "avatarKey"].includes(key),
+        )
       )
         throw this.#idempotencyConflict(input.idempotencyKey);
       return {
@@ -351,12 +352,6 @@ export class CollaborationService {
       payload: {
         name: input.name,
         avatarKey: input.avatarKey,
-        ...(input.agentAllChannelGreetingEnabled === undefined
-          ? {}
-          : {
-              agentAllChannelGreetingEnabled:
-                input.agentAllChannelGreetingEnabled,
-            }),
       },
       roomId,
       type: "workspace.updated",
@@ -1134,12 +1129,6 @@ export class CollaborationService {
       .all(actorId)
       .map((row) => ({
         ...workspaceProjectionFromRow(row),
-        agentAllChannelGreetingEnabled: agentGreetingEnabled(
-          this.#database,
-          typeof row.workspace_control_room_id === "string"
-            ? row.workspace_control_room_id
-            : undefined,
-        ),
       }));
   }
 
@@ -2394,12 +2383,6 @@ export class CollaborationService {
     }
     return WorkspaceSchema.parse({
       ...workspaceProjectionFromRow(row),
-      agentAllChannelGreetingEnabled: agentGreetingEnabled(
-        this.#database,
-        typeof row.workspace_control_room_id === "string"
-          ? row.workspace_control_room_id
-          : undefined,
-      ),
     });
   }
 

@@ -116,16 +116,6 @@ export function extractSettingsSections(
     '<section className="space-y-3" data-testid="loom-about-version">',
   );
   about = patch(about, '{formatMessage({ id: "brand.productName" })}', "Loom");
-  // System-channel form is byte-exact; existing controller remains authoritative.
-  const system = one(
-    elements(
-      fn("SystemChannelsSection"),
-      (n) =>
-        tag(n) === "div" &&
-        n.getText(file).includes("settings.systemChannels.sectionLabel"),
-    ),
-    "system form",
-  ).getText(file);
   // Notifications: native browser controls and separately bound workspace-mute form.
   const notification = fn("WebPushNotificationsCard");
   const notificationCard = one(
@@ -167,7 +157,6 @@ export function extractSettingsSections(
   return {
     account: accountJsx,
     about: `<div className="space-y-6">${about}</div>`,
-    system,
     notification: `<div>${notificationHeader.getText(file)}${notify}</div>`,
     workspaceMute: stop.getText(file),
     reasons: extractDeclarations(source, ["UNSUPPORTED_REASON_MESSAGE"])[0],

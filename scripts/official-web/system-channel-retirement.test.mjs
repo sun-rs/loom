@@ -30,3 +30,22 @@ test("product has no system-channel creator, settings, endpoint or first-run gre
     /SystemSettings/,
   );
 });
+test("removed system-channel configuration is not a published protocol or a generated UI dependency", async () => {
+  const protocol = await import("../../packages/protocol/src/index.ts");
+  assert.equal("SystemChannelVisibilityReadSchema" in protocol, false);
+  assert.equal(
+    protocol.ClientWorkspaceUpdateRequestSchema.safeParse({
+      workspaceId: "w",
+      name: "w",
+      avatarKey: null,
+      basedOnControlRoomSeq: 0,
+      idempotencyKey: "x",
+      agentAllChannelGreetingEnabled: true,
+    }).success,
+    false,
+  );
+  assert.doesNotMatch(
+    readFileSync("scripts/official-web/generate-settings-sections.mjs", "utf8"),
+    /SystemChannelsSection/,
+  );
+});

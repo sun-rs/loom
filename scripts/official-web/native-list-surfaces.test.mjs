@@ -54,16 +54,3 @@ test("account profile uses current native card, typography and keyboard-accessib
   assert.match(profile, /<AvatarEditVeil busy={avatarSaving}/);
   assert.doesNotMatch(profile, /size-16|className="hidden"|bg-black\/40/);
 });
-test("system channel settings retain native form Card and disabled typography", () => {
-  const s = read(
-    "upstream/raft-web-source/packages/web/src/components/settings/SettingsPanel.tsx",
-  );
-  const section = s.slice(
-    s.indexOf("function SystemChannelsSection()"),
-    s.indexOf("function ServerTranslationSection()"),
-  );
-  assert.match(section, /<Card render={<form onSubmit={handleSave} \/>}/);
-  assert.match(section, /text-subhead font-semibold/);
-  assert.match(section, /text-footnote text-foreground-muted/);
-  assert.doesNotMatch(section, /shadow-raft-sm|opacity-60/);
-});

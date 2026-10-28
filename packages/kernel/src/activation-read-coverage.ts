@@ -13,7 +13,7 @@ import type { ActivationCredentialScope, RoomEvent } from "@rah-os/protocol";
 import type { RoomEventWriter } from "./room-event-writer.ts";
 import type { ActivationObligationService } from "./activation-obligation-service.ts";
 import { instanceSessionState } from "./instance-session.ts";
-import { assertAgentFirstRunSatisfied } from "./agent-first-run.ts";
+import { assertAgentFirstRunSatisfied } from "./legacy-first-run-receipts.ts";
 import { activeInstancePrivateBoxPredicate } from "./instance-worker-scope.ts";
 import { integer, text } from "./sqlite-row.ts";
 

@@ -83,7 +83,6 @@ export type ClientWorkspaceCreateRequest = z.infer<
 
 export const ClientWorkspaceUpdateRequestSchema = z
   .object({
-    agentAllChannelGreetingEnabled: z.boolean().optional(),
     workspaceId: IdentifierSchema,
     name: z.string().trim().min(1).max(120),
     avatarKey: z

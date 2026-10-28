@@ -27,7 +27,6 @@ export type WorkspaceState = z.infer<typeof WorkspaceStateSchema>;
 
 export const WorkspaceSchema = z
   .object({
-    agentAllChannelGreetingEnabled: z.boolean().optional(),
     archivedAt: TimestampSchema.optional(),
     avatarKey: z
       .string()

@@ -881,7 +881,7 @@
       "scripts/official-web/settings-sections-source.test.mjs",
       "scripts/official-web/account-settings.test.ts",
       "scripts/official-web/about.test.ts",
-      "scripts/official-web/system-settings.test.ts",
+      "scripts/official-web/system-channel-retirement.test.mjs",
       "scripts/official-web/settings-resource-adaptation.test.ts",
       "scripts/official-web/local-notifications.test.ts",
       "scripts/official-web/notification-preferences.test.ts"

@@ -3,23 +3,8 @@ import type { RoomEvent } from "@rah-os/protocol";
 import { DeliveryProofError, ForbiddenError } from "./errors.ts";
 import { integer, text, type Row } from "./sqlite-row.ts";
 
-/** Workspace setting is projected from its authoritative control-Room events. */
-export function agentGreetingEnabled(
-  database: DatabaseSync,
-  controlRoomId: string | undefined,
-): boolean {
-  if (!controlRoomId) return true;
-  const row = database
-    .prepare(
-      `SELECT json_extract(payload_json,'$.agentAllChannelGreetingEnabled') enabled
-    FROM room_events WHERE room_id=? AND type='workspace.updated'
-    AND json_type(payload_json,'$.agentAllChannelGreetingEnabled') IN ('true','false')
-    ORDER BY room_seq DESC LIMIT 1`,
-    )
-    .get(controlRoomId);
-  return row?.enabled !== 0;
-}
-
+/** Read-only compatibility for historical first-run receipts. No creation,
+ * configuration, automatic membership or global greeting remains. */
 export function firstRunMessageKey(participantId: string): string {
   return `agent-first-greeting:${participantId}`;
 }

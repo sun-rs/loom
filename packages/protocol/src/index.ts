@@ -1696,7 +1696,6 @@ export * from "./worker-message-present.ts";
 export * from "./worker-task-batch.ts";
 export * from "./worker-task-update.ts";
 
-export * from "./system-channel-visibility.ts";
 export * from "./composer-controls.ts";
 export * from "./channel-memory.ts";
 
