@@ -30,10 +30,10 @@ test at scripts/cli-efficiency/business-long-runner.test.mjs:84:1
 ✖ smoke identity pins the owner-approved native-subagent policy (0.622208ms)
   AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
   + actual - expected
-  
+
   + '961da547becb34593139037ac720dabba6ad3ac7345225465fd37923575edb25'
   - '79958d6bc7ecb4e7a875b0366d85b5f06d454256bd3c67f9b4e687097b0380d1'
-  
+
       at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/cli-efficiency/business-long-runner.test.mjs:85:10)
       at Test.runInAsyncScope (node:async_hooks:226:14)
       at Test.run (node:internal/test_runner/test:1201:25)
