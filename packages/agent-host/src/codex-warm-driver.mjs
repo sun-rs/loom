@@ -627,7 +627,10 @@ function handleNotification(frame) {
   if (item && typeof item === "object" && TOOL_ITEM_TYPES.has(item.type)) {
     const itemId = typeof item.id === "string" ? item.id : JSON.stringify(item);
     if (frame.method === "item/started") turn.tools.add(itemId);
-    if (frame.method === "item/completed") turn.tools.delete(itemId);
+    if (frame.method === "item/completed") {
+      turn.tools.delete(itemId);
+      if (turn.tools.size === 0) turn.toolsDrained?.();
+    }
   }
   const framesBefore = turn.lastFrameSeq;
   turn.writer.emit(normalizeCodexTrajectoryNotification(frame));
@@ -659,6 +662,20 @@ async function closeTurn(turn, params) {
   // if Codex accepted it; wait for that answer so its receipt is a frame of
   // this turn (accepted: covered by the proof; refused: stays in the Inbox).
   await turn.busyInput.settled();
+  // Native command cleanup can arrive just after turn/completed (observed 18ms).
+  // Wait only for matching terminal items, never infer quiescence from elapsed
+  // time. Missing/foreign terminals still leave tools > 0 and force Host cleanup.
+  // This is a bounded event drain, not another model request or tool retry.
+  if (turn.tools.size > 0)
+    await new Promise((resolve) => {
+      const finish = () => {
+        clearTimeout(timer);
+        turn.toolsDrained = undefined;
+        resolve();
+      };
+      const timer = setTimeout(finish, 500);
+      turn.toolsDrained = finish;
+    });
   turn.writer.flush();
   const status =
     typeof params.turn?.status === "string" ? params.turn.status : "failed";

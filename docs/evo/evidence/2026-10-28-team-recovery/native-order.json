@@ -1,0 +1,22 @@
+{
+  "sourceSha256": "a7c5202f1dc5e1eca3f58fb352931224ac01f90f306f9540e1277ec145e1d466",
+  "matchesArchivedHash": true,
+  "facts": [
+    {
+      "line": 95,
+      "timestamp": "2026-10-27T18:57:27.513Z",
+      "event": "task_complete",
+      "toolStatus": null,
+      "exitCode": null
+    },
+    {
+      "line": 96,
+      "timestamp": "2026-10-27T18:57:27.531Z",
+      "event": "item_completed",
+      "toolStatus": "failed",
+      "exitCode": -1
+    }
+  ],
+  "terminalDelayMs": 18,
+  "limit": "Native rollout order, not a captured app-server notification stream. Late failure could reflect native cleanup or Host termination; historical causality not proved. Fake actual driver reproduces premature termination for the same notification order."
+}

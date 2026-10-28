@@ -2666,3 +2666,36 @@ test("warm Codex switches reply transport without replacing the native session",
     await s.cleanup();
   }
 });
+
+for (const mode of ["late-tool-end", "missing-tool-end", "foreign-tool-end"])
+  test(`warm native final drains matching tool terminal after turn completion: ${mode}`, async () => {
+    const s = await harness({ nativeFinalText: true });
+    try {
+      s.post(`[fake:envelope] [fake:plain-final] [fake:${mode}]`);
+      const r = await s.current.agentHost.reconcileOnce();
+      const replies = sql(
+        s,
+        "SELECT body FROM messages WHERE actor_id=?",
+        s.participantId,
+      );
+      if (mode === "late-tool-end") {
+        assert.equal(r.state, "completed", JSON.stringify(r));
+        assert.equal(replies.length, 1);
+        s.post("[fake:envelope] [fake:plain-final] next turn");
+        assert.equal(
+          (await s.current.agentHost.reconcileOnce()).state,
+          "completed",
+        );
+        assert.equal(
+          new Set(orderedRuns(s).map((r) => r.instanceRuntimeId)).size,
+          1,
+          "no unnecessary process restart",
+        );
+      } else {
+        assert.notEqual(r.state, "completed");
+        assert.equal(replies.length, 0);
+      }
+    } finally {
+      await s.cleanup();
+    }
+  });

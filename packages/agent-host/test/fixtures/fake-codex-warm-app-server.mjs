@@ -224,6 +224,13 @@ const server = createServer(async (socket) => {
       delta: "working",
     });
     if (has("envelope")) {
+      const lateItem = { id: `late-${turn.id}`, type: "commandExecution" };
+      if (
+        has("late-tool-end") ||
+        has("missing-tool-end") ||
+        has("foreign-tool-end")
+      )
+        notify("item/started", { threadId, turnId: turn.id, item: lateItem });
       notify("item/completed", {
         threadId,
         turnId: turn.id,
@@ -259,6 +266,16 @@ const server = createServer(async (socket) => {
               : "completed",
         },
       });
+      if (has("late-tool-end") || has("foreign-tool-end"))
+        setTimeout(
+          () =>
+            notify("item/completed", {
+              threadId: has("foreign-tool-end") ? "foreign-thread" : threadId,
+              turnId: turn.id,
+              item: { ...lateItem, status: "failed", exitCode: -1 },
+            }),
+          25,
+        );
       record({ event: "turn-completed", turnId: turn.id });
       activeTurn = undefined;
       turn.markCompleted();
