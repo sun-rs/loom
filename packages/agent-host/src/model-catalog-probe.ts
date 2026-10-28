@@ -307,7 +307,13 @@ async function executeCatalogProbe(
       env: { ...process.env, NO_COLOR: "1" },
       maxBuffer: 4 * 1_024 * 1_024,
       timeout:
-        input.timeoutMs ?? (input.kind === "opencode-cli/v1" ? 15_000 : 5_000),
+        input.timeoutMs ??
+        // AGY `models` refreshes its remote catalog, rather than reading only
+        // local configuration. The generic five-second deadline can cut off
+        // a valid catalog and hide every explicit model/effort binding.
+        (input.kind === "opencode-cli/v1" || input.kind === "agy-cli/v1"
+          ? 15_000
+          : 5_000),
       windowsHide: true,
     });
     return stdout;
