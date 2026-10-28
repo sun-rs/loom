@@ -1,0 +1,68 @@
+{
+  "tests": 15,
+  "nativeToolProbes": [
+    {
+      "cli": "/opt/homebrew/Caskroom/codex/0.164.0/bin/codex",
+      "sha256": "d8990e3ee7acfbc26f91265b12a1a83f0fee40d0e0f8f1f40a37d4ec21f499cf",
+      "hostSha256": "416721e33af8822041dc650793512b3e58d43e0be4f3a5c6187eb4dfaad3148a",
+      "model": "gpt-6-luna",
+      "effort": "low",
+      "transport": "warm",
+      "root": "/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/loom-tool-check-ssHznl",
+      "paidCalls": 0,
+      "startedAt": "2026-10-28T05:21:01.394Z",
+      "passed": true,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "requests": 2,
+      "finishedAt": "2026-10-28T05:21:05.319Z",
+      "receiptSha256": "8df1226d1997471baacb6258ca0ba30e26eabfc7716d7dab95d7b0843056646b"
+    },
+    {
+      "cli": "/opt/homebrew/Caskroom/codex/0.164.0/bin/codex",
+      "sha256": "d8990e3ee7acfbc26f91265b12a1a83f0fee40d0e0f8f1f40a37d4ec21f499cf",
+      "hostSha256": "416721e33af8822041dc650793512b3e58d43e0be4f3a5c6187eb4dfaad3148a",
+      "model": "gpt-6-luna",
+      "effort": "low",
+      "transport": "exec",
+      "root": "/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/loom-tool-check-5t6bYb",
+      "paidCalls": 0,
+      "startedAt": "2026-10-28T05:22:26.771Z",
+      "passed": true,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "requests": 2,
+      "finishedAt": "2026-10-28T05:22:37.691Z",
+      "receiptSha256": "0543280cd9579207aeb3b83741ca91d98ed835d8a3063f0370ff297b3aeb693e"
+    }
+  ],
+  "qualification": "Real installed CLI and native tool host; localhost fake model and fresh home; not paid model quality or all production config combinations",
+  "teamPreparation": {
+    "status": "free-ready",
+    "usage": {
+      "input": 0,
+      "cached": 0,
+      "output": 0,
+      "generations": 0,
+      "complete": false
+    },
+    "processes": [
+      {
+        "pid": 19491,
+        "startedAt": "2026-10-28T05:37:48.660Z",
+        "finishedAt": "2026-10-28T05:37:48.778Z",
+        "exit": {
+          "code": 0,
+          "signal": null
+        }
+      }
+    ],
+    "generations": 0,
+    "sourceSha256": "9ee4ad581157b76e03731ec5edb758802aa32d863a1739f1d6ac82b976e30ae7",
+    "allBindingsBeforeChannelCreation": true
+  }
+}

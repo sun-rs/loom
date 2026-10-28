@@ -1,0 +1,30 @@
+{
+  "date": "2026-10-28",
+  "approval": "Owner \u5f00\u59cb after remaining-items plan: free preflight -> real collaboration acceptance -> cost comparison only after quality",
+  "scope": "New fixed functional batch after native-host authorization and harness correction; retains prior failed batch, not replacements",
+  "matrix": {
+    "pair1": {
+      "provider": "kimi",
+      "model": "kimi-code/kimi-for-coding"
+    },
+    "pair2": {
+      "provider": "opencode",
+      "model": "deepseek/deepseek-flash"
+    },
+    "pair3": {
+      "provider": "agy",
+      "model": "gemini-3.8-flash-low"
+    }
+  },
+  "lead": "codex gpt-6-luna/low",
+  "budget": {
+    "input": 5400000,
+    "output": 150000,
+    "generations": 300,
+    "minutes": 45,
+    "perSampleRuns": 16
+  },
+  "failurePolicy": "no replacements; separate runtime failures from missing receipts; isolated data only",
+  "costRatio": null,
+  "nativeMemory": "Codex/Kimi enforced; AGY unverified, no fair native comparison"
+}

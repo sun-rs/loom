@@ -1057,3 +1057,7 @@ Codex原生1,316,768输入/17,920输出；Loom1,534,346/18,124，总输入比1.1
 Owner 明确指定 AGY Gemini 3.8 Flash、OpenCode DeepSeek 4.1 Flash 1017、Codex Luna low、Kimi K2.8；精确绑定全部 low，固定三组 Codex＋其他 CLI，隔离运行。Kimi/OpenCode 初始回复成功，AGY 的设计普通 final 自动返回成功；Codex 原生宿主协商超时，以及错误的禁用宿主实验阻断实际实现。OpenCode 组另有测试器将常驻成功 null exitCode 误判的缺陷，已复现修正；原实例续接中止于 Codex 执行前，原中断不删除。无一完整业务通过，不发布成本比。观察输入173,746、输出1,837、12生成，取消在途计费覆盖未证实，OpenCode/AGY 非独立原流核账。无正式产品改动，四隔离daemon退出0。免费实际CLI/假模型探针继续排查；见[结果及限制](evidence/2026-10-28-team-retest/README.md)。
 
 Owner 后续确认：本批 Codex 更新后的 code-mode-host 等待 macOS 打开互联网下载程序许可，点击不及时。按用户观察修正根因记录，不追认为 Loom 调度故障；原失败费用与验收结论不变。后续升级先通过免费实际工具执行预检，再开始付费。
+
+## 2026-10-28：工具预检接入后的三组合功能批
+
+Owner 要求开始完成剩余验收；沿用 Codex Luna low、Kimi K2.8 low、OpenCode DeepSeek 1017 low、AGY Gemini 3.8 Flash low。免费 warm/exec 真实工具预检通过后执行，三组隔离、没有原生对照。Kimi 组合完成设计/实现/独立评审/交付、外部40/40，但使用固定/tmp临时文件，严格工作区指令未完全满足；OpenCode 组合预算触发、代码40/40而闭环未完成；AGY 先遇空目录，零生成准备恢复沿原实例继续，但SOS恢复引入额外唤醒，交叉请求后停在讨论，不算干净协作样本。观察合计输入2,814,409、输出44,843、103生成，保留失败及在途计费不确定性，不发布倍率。仅测试入口/文档改动，正式服务与数据未改。[证据](evidence/2026-10-28-tool-preflight-team/README.md)。

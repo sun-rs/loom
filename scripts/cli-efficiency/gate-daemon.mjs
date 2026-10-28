@@ -1,3 +1,4 @@
+import { ensureCodexToolPreflight } from "./codex-tool-preflight.mjs";
 // Shared bootstrap of the isolated gate daemon for the paid efficiency
 // (rah.mjs) and drift (drift-runner.mjs) arms: the guarded CLI shim, the
 // prepared local workbench in the arm's own temporary state directory, the
@@ -88,6 +89,20 @@ export async function prepareGateDaemon({
   const realCli = execFileSync("which", [provider], {
     encoding: "utf8",
   }).trim();
+  if (provider === "codex") {
+    const receipt = await ensureCodexToolPreflight({
+      executable: realCli,
+      model,
+      effort,
+      transport:
+        shimOptions.execTransport === "codex-exec/v1" ? "exec" : "warm",
+    });
+    writeFileSync(
+      join(root, "codex-tool-preflight.json"),
+      JSON.stringify(receipt, null, 2),
+      { mode: 0o600 },
+    );
+  }
   // OpenCode: the compaction reasoning options are resolved here, once, for
   // both the efficiency and the drift arms.
   const options = resolveGateShimOptions({

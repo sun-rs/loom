@@ -1,3 +1,4 @@
+import { ensureCodexToolPreflight } from "./codex-tool-preflight.mjs";
 import { assertNativeMemoryPolicy } from "./native-memory-policy.mjs";
 import { isEffectiveAnswer } from "./metrics.mjs";
 import assert from "node:assert/strict";
@@ -53,6 +54,11 @@ export async function nativeRound({
   config,
   answerValidator = isEffectiveAnswer,
 }) {
+  round.toolPreflight = await ensureCodexToolPreflight({
+    model: config.model,
+    effort: config.effort,
+    transport: "exec",
+  });
   round.startedAt = new Date().toISOString();
   let buf = "",
     finalAt,

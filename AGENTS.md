@@ -703,6 +703,12 @@ fresh approval to open the downloaded `codex-code-mode-host` (owner confirmed
 approval is pending, stop before paid calls and resolve that prompt; do not
 misdiagnose it as Loom scheduling failure, disable the host as a shell fallback,
 or remove quarantine/security protections. Preserve failed samples and costs.
+The shared gate daemon and native Codex runner enforce this via
+`scripts/cli-efficiency/codex-tool-preflight.mjs` (localhost fake model, actual
+file-read receipt, executable hashes). Custom paid runners must use the same
+preflight; metadata-only checks are not substitutes. Validate all selected
+model bindings before creating collaboration members, so catalog failures
+remain preparation failures without SOS-resume wake pollution.
 
 Before sending a Human opener in an automated collaboration run, use
 `scripts/cli-efficiency/human-wake-preflight.mjs` with the current enabled-member

@@ -1,0 +1,532 @@
+{
+  "status": "partial-acceptance",
+  "paidSamples": [
+    {
+      "sample": "pair1-loom",
+      "runnerStatus": "quiescent-quality-pending",
+      "error": null,
+      "usage": {
+        "members": {
+          "codex": {
+            "input": 215708,
+            "cached": 193664,
+            "output": 4487,
+            "generations": 13,
+            "complete": true
+          },
+          "kimi": {
+            "input": 246338,
+            "cached": 227584,
+            "output": 4983,
+            "generations": 8,
+            "requests": 8,
+            "complete": true
+          }
+        },
+        "total": {
+          "input": 462046,
+          "cached": 421248,
+          "output": 9470,
+          "generations": 21,
+          "complete": true
+        }
+      },
+      "models": {
+        "codex": {
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "version": "codex-cli 0.164.0"
+        },
+        "kimi": {
+          "model": "kimi-code/kimi-for-coding",
+          "effort": "low",
+          "version": "2.1.1"
+        }
+      },
+      "businessVerdict": "functional-closure-passed-with-scope-caveat",
+      "externalChecksPassed": 40,
+      "nativeSubagents": "forbidden",
+      "processes": [
+        {
+          "pid": 71289,
+          "startedAt": "2026-10-28T05:22:11.312Z",
+          "finishedAt": "2026-10-28T05:26:09.778Z",
+          "exit": {
+            "code": 0,
+            "signal": null
+          }
+        }
+      ],
+      "runs": [
+        {
+          "participant_id": "principal_4c63e2ee-8043-4177-8ab5-403863bc04f7",
+          "state": "exited",
+          "error": null,
+          "exit_code": 0
+        },
+        {
+          "participant_id": "principal_2da1ba2e-d5bb-435d-8694-29a956c52e3a",
+          "state": "exited",
+          "error": null,
+          "exit_code": null
+        },
+        {
+          "participant_id": "principal_4c63e2ee-8043-4177-8ab5-403863bc04f7",
+          "state": "exited",
+          "error": null,
+          "exit_code": 0
+        },
+        {
+          "participant_id": "principal_2da1ba2e-d5bb-435d-8694-29a956c52e3a",
+          "state": "exited",
+          "error": null,
+          "exit_code": null
+        },
+        {
+          "participant_id": "principal_4c63e2ee-8043-4177-8ab5-403863bc04f7",
+          "state": "exited",
+          "error": null,
+          "exit_code": 0
+        },
+        {
+          "participant_id": "principal_2da1ba2e-d5bb-435d-8694-29a956c52e3a",
+          "state": "exited",
+          "error": null,
+          "exit_code": null
+        }
+      ],
+      "routing": [
+        {
+          "room_seq": 11,
+          "event_id": "event_6a63eb1e-df1f-418f-9c8f-e809184d5b12",
+          "actor_id": "principal_2da1ba2e-d5bb-435d-8694-29a956c52e3a",
+          "recipients": [
+            {
+              "participantId": "principal_4c63e2ee-8043-4177-8ab5-403863bc04f7",
+              "reason": "mention"
+            }
+          ],
+          "replyReturn": null,
+          "activationId": "activation_37caed15-1968-44c5-a2fc-e4c357ef49ab"
+        },
+        {
+          "room_seq": 19,
+          "event_id": "event_7863792d-0e70-4c8c-889d-5782a772b900",
+          "actor_id": "principal_4c63e2ee-8043-4177-8ab5-403863bc04f7",
+          "recipients": [
+            {
+              "participantId": "principal_2da1ba2e-d5bb-435d-8694-29a956c52e3a",
+              "reason": "reply"
+            }
+          ],
+          "replyReturn": {
+            "sourceEventId": "event_6a63eb1e-df1f-418f-9c8f-e809184d5b12",
+            "participantId": "principal_2da1ba2e-d5bb-435d-8694-29a956c52e3a"
+          },
+          "activationId": "activation_46dac100-d24e-4bbd-ad74-4486fc6ce10e"
+        },
+        {
+          "room_seq": 27,
+          "event_id": "event_c80daca8-f02c-47de-8c23-1586f88bfc7a",
+          "actor_id": "principal_2da1ba2e-d5bb-435d-8694-29a956c52e3a",
+          "recipients": [
+            {
+              "participantId": "principal_4c63e2ee-8043-4177-8ab5-403863bc04f7",
+              "reason": "mention"
+            }
+          ],
+          "replyReturn": null,
+          "activationId": "activation_9780471b-d76a-4f0f-9ae9-3a6d9c105592"
+        },
+        {
+          "room_seq": 35,
+          "event_id": "event_28f40615-6ef5-4c4f-aeb4-ad1f8b652c88",
+          "actor_id": "principal_4c63e2ee-8043-4177-8ab5-403863bc04f7",
+          "recipients": [
+            {
+              "participantId": "principal_2da1ba2e-d5bb-435d-8694-29a956c52e3a",
+              "reason": "reply"
+            }
+          ],
+          "replyReturn": {
+            "sourceEventId": "event_c80daca8-f02c-47de-8c23-1586f88bfc7a",
+            "participantId": "principal_2da1ba2e-d5bb-435d-8694-29a956c52e3a"
+          },
+          "activationId": "activation_5787cf2b-76af-4d5b-b9c2-b4c3f2ca2af5"
+        },
+        {
+          "room_seq": 43,
+          "event_id": "event_5f159659-e6fb-4a42-b0d9-26c39a585d3b",
+          "actor_id": "principal_2da1ba2e-d5bb-435d-8694-29a956c52e3a",
+          "recipients": [],
+          "replyReturn": null,
+          "activationId": "activation_676f9d3a-d5ea-4b17-9c86-41dc86d876f1"
+        }
+      ],
+      "sourceSha256": "4dbbeeb79c8dbf25c9cb370099bd676931718221b132edfc9272cbcc89d033f6",
+      "notes": [
+        "Kimi actually read code/tests, ran unittest and independent API/CLI checks",
+        "Kimi used fixed /tmp scratch paths contrary to work-only-in-workspace instruction; not strict workspace-conformance acceptance"
+      ]
+    },
+    {
+      "sample": "pair2-loom",
+      "runnerStatus": "execution-failed",
+      "error": "AssertionError [ERR_ASSERTION]: sample budget",
+      "usage": {
+        "members": {
+          "codex": {
+            "input": 1608084,
+            "cached": 1502464,
+            "output": 16161,
+            "generations": 48,
+            "complete": true
+          },
+          "opencode": {
+            "input": 477887,
+            "output": 16552,
+            "cached": 454400,
+            "generations": 18,
+            "complete": true,
+            "source": "product per-response usage, not independently reconciled native accounting"
+          }
+        },
+        "total": {
+          "input": 2085971,
+          "cached": 1956864,
+          "output": 32713,
+          "generations": 66,
+          "complete": true
+        }
+      },
+      "models": {
+        "codex": {
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "version": "codex-cli 0.164.0"
+        },
+        "opencode": {
+          "model": "deepseek/deepseek-flash",
+          "effort": "low",
+          "version": "1.19.4"
+        }
+      },
+      "businessVerdict": "budget-stopped-no-final-closure",
+      "externalChecksPassed": 40,
+      "nativeSubagents": "forbidden",
+      "processes": [
+        {
+          "pid": 76095,
+          "startedAt": "2026-10-28T05:23:39.187Z",
+          "finishedAt": "2026-10-28T05:27:15.655Z",
+          "exit": {
+            "code": 0,
+            "signal": null
+          }
+        }
+      ],
+      "runs": [
+        {
+          "participant_id": "principal_2f8acff9-c787-4aff-830f-05bcab110785",
+          "state": "exited",
+          "error": null,
+          "exit_code": null
+        },
+        {
+          "participant_id": "principal_e15cab7c-441e-422c-9318-b8f18f6da6dd",
+          "state": "exited",
+          "error": null,
+          "exit_code": null
+        },
+        {
+          "participant_id": "principal_2f8acff9-c787-4aff-830f-05bcab110785",
+          "state": "exited",
+          "error": null,
+          "exit_code": null
+        },
+        {
+          "participant_id": "principal_2f8acff9-c787-4aff-830f-05bcab110785",
+          "state": "exited",
+          "error": null,
+          "exit_code": null
+        },
+        {
+          "participant_id": "principal_e15cab7c-441e-422c-9318-b8f18f6da6dd",
+          "state": "cancelled",
+          "error": "Room Agent SOS requested by a Human manager",
+          "exit_code": null
+        },
+        {
+          "participant_id": "principal_2f8acff9-c787-4aff-830f-05bcab110785",
+          "state": "cancelled",
+          "error": "Room Agent SOS requested by a Human manager",
+          "exit_code": 0
+        }
+      ],
+      "routing": [
+        {
+          "room_seq": 11,
+          "event_id": "event_2120a0fa-af3c-4ddd-a4ac-0779c3840869",
+          "actor_id": "principal_e15cab7c-441e-422c-9318-b8f18f6da6dd",
+          "recipients": [
+            {
+              "participantId": "principal_2f8acff9-c787-4aff-830f-05bcab110785",
+              "reason": "mention"
+            }
+          ],
+          "replyReturn": null,
+          "activationId": "activation_9e748c54-338a-443d-ac92-a0f0aab478e4"
+        },
+        {
+          "room_seq": 16,
+          "event_id": "event_87d52d11-8f30-400d-aef7-6df169064f5f",
+          "actor_id": "principal_e15cab7c-441e-422c-9318-b8f18f6da6dd",
+          "recipients": [
+            {
+              "participantId": "principal_2f8acff9-c787-4aff-830f-05bcab110785",
+              "reason": "mention"
+            }
+          ],
+          "replyReturn": null,
+          "activationId": "activation_9e748c54-338a-443d-ac92-a0f0aab478e4"
+        },
+        {
+          "room_seq": 20,
+          "event_id": "event_cade997d-a24b-451d-b3c4-10dfa9714ba2",
+          "actor_id": "principal_2f8acff9-c787-4aff-830f-05bcab110785",
+          "recipients": [
+            {
+              "participantId": "principal_e15cab7c-441e-422c-9318-b8f18f6da6dd",
+              "reason": "reply"
+            }
+          ],
+          "replyReturn": {
+            "sourceEventId": "event_2120a0fa-af3c-4ddd-a4ac-0779c3840869",
+            "participantId": "principal_e15cab7c-441e-422c-9318-b8f18f6da6dd"
+          },
+          "activationId": "activation_8801f86a-f490-4aab-a6fb-0bdd181e1509"
+        },
+        {
+          "room_seq": 32,
+          "event_id": "event_4f98257a-7d0b-477c-89e2-261916dec6fc",
+          "actor_id": "principal_2f8acff9-c787-4aff-830f-05bcab110785",
+          "recipients": [
+            {
+              "participantId": "principal_e15cab7c-441e-422c-9318-b8f18f6da6dd",
+              "reason": "reply"
+            }
+          ],
+          "replyReturn": {
+            "sourceEventId": "event_87d52d11-8f30-400d-aef7-6df169064f5f",
+            "participantId": "principal_e15cab7c-441e-422c-9318-b8f18f6da6dd"
+          },
+          "activationId": "activation_ce8000ce-e6f4-49dc-a7e2-e95a02625ad4"
+        },
+        {
+          "room_seq": 36,
+          "event_id": "event_2cb6bf67-cab9-440d-986e-6df358ba2cd8",
+          "actor_id": "principal_e15cab7c-441e-422c-9318-b8f18f6da6dd",
+          "recipients": [
+            {
+              "participantId": "principal_2f8acff9-c787-4aff-830f-05bcab110785",
+              "reason": "mention"
+            }
+          ],
+          "replyReturn": null,
+          "activationId": "activation_3923c9fa-ee31-4e11-bcd0-dbf78b2e1b9f"
+        }
+      ],
+      "sourceSha256": "163d06e32d738852004e876cecca796e236503c759c48a7832980d4b42b5b66b",
+      "notes": [
+        "Codex 47 tool calls: 17 patch calls, 16 test-related calls, 6 worker-related calls (categories overlap)",
+        "Repeated scaling/math implementation fixes dominated tokens; no native control, no attribution of ratio to Loom"
+      ]
+    },
+    {
+      "sample": "pair3-loom",
+      "runnerStatus": "quiescent-quality-pending",
+      "error": null,
+      "usage": {
+        "members": {
+          "codex": {
+            "input": 133900,
+            "cached": 96000,
+            "output": 1316,
+            "generations": 8,
+            "complete": true
+          },
+          "agy": {
+            "input": 132492,
+            "output": 1344,
+            "cached": 77373,
+            "generations": 8,
+            "complete": true,
+            "source": "product per-response usage, not independently reconciled native accounting"
+          }
+        },
+        "total": {
+          "input": 266392,
+          "cached": 173373,
+          "output": 2660,
+          "generations": 16,
+          "complete": true
+        }
+      },
+      "models": {
+        "codex": {
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "version": "codex-cli 0.164.0"
+        },
+        "agy": {
+          "model": "gemini-3.8-flash-low",
+          "effort": "low",
+          "version": "1.4.8"
+        }
+      },
+      "businessVerdict": "setup-assisted-discussion-only",
+      "externalChecksPassed": 0,
+      "nativeSubagents": "forbidden",
+      "processes": [
+        {
+          "pid": 80376,
+          "startedAt": "2026-10-28T05:24:51.173Z",
+          "finishedAt": "2026-10-28T05:24:51.322Z",
+          "exit": {
+            "code": 0,
+            "signal": null
+          }
+        },
+        {
+          "pid": 88065,
+          "startedAt": "2026-10-28T05:27:03.678Z",
+          "finishedAt": "2026-10-28T05:31:06.723Z",
+          "exit": {
+            "code": 0,
+            "signal": null
+          }
+        }
+      ],
+      "runs": [
+        {
+          "participant_id": "principal_94796a71-641c-449f-a5aa-0c697c078bfe",
+          "state": "exited",
+          "error": null,
+          "exit_code": 0
+        },
+        {
+          "participant_id": "principal_a48ac681-e429-4fa1-a735-71ccb07dfe80",
+          "state": "exited",
+          "error": null,
+          "exit_code": null
+        },
+        {
+          "participant_id": "principal_94796a71-641c-449f-a5aa-0c697c078bfe",
+          "state": "exited",
+          "error": null,
+          "exit_code": 0
+        },
+        {
+          "participant_id": "principal_94796a71-641c-449f-a5aa-0c697c078bfe",
+          "state": "exited",
+          "error": null,
+          "exit_code": 0
+        },
+        {
+          "participant_id": "principal_a48ac681-e429-4fa1-a735-71ccb07dfe80",
+          "state": "exited",
+          "error": null,
+          "exit_code": null
+        },
+        {
+          "participant_id": "principal_94796a71-641c-449f-a5aa-0c697c078bfe",
+          "state": "exited",
+          "error": null,
+          "exit_code": 0
+        },
+        {
+          "participant_id": "principal_94796a71-641c-449f-a5aa-0c697c078bfe",
+          "state": "exited",
+          "error": null,
+          "exit_code": 0
+        }
+      ],
+      "routing": [
+        {
+          "room_seq": 26,
+          "event_id": "event_8dc8364d-ab67-4387-b544-47d87d60346f",
+          "actor_id": "principal_a48ac681-e429-4fa1-a735-71ccb07dfe80",
+          "recipients": [
+            {
+              "participantId": "principal_94796a71-641c-449f-a5aa-0c697c078bfe",
+              "reason": "mention"
+            }
+          ],
+          "replyReturn": null,
+          "activationId": "activation_4c5ea014-d47b-4f61-a333-145e293e094f"
+        },
+        {
+          "room_seq": 30,
+          "event_id": "event_6c054b9f-449a-4ba1-94f6-ec83fe290a02",
+          "actor_id": "principal_94796a71-641c-449f-a5aa-0c697c078bfe",
+          "recipients": [
+            {
+              "participantId": "principal_a48ac681-e429-4fa1-a735-71ccb07dfe80",
+              "reason": "mention"
+            }
+          ],
+          "replyReturn": null,
+          "activationId": "activation_3b3e3c31-d285-4401-8a2b-79a6bcd38c59"
+        },
+        {
+          "room_seq": 42,
+          "event_id": "event_90de0d74-09a8-4a4d-b883-1eb0c481ff84",
+          "actor_id": "principal_a48ac681-e429-4fa1-a735-71ccb07dfe80",
+          "recipients": [
+            {
+              "participantId": "principal_94796a71-641c-449f-a5aa-0c697c078bfe",
+              "reason": "reply"
+            }
+          ],
+          "replyReturn": {
+            "sourceEventId": "event_6c054b9f-449a-4ba1-94f6-ec83fe290a02",
+            "participantId": "principal_94796a71-641c-449f-a5aa-0c697c078bfe"
+          },
+          "activationId": "activation_895da9ed-eee7-4321-9566-8421b226630a"
+        },
+        {
+          "room_seq": 46,
+          "event_id": "event_84be1b38-f119-4a63-9aae-4fe2bceccccf",
+          "actor_id": "principal_94796a71-641c-449f-a5aa-0c697c078bfe",
+          "recipients": [],
+          "replyReturn": null,
+          "activationId": "activation_2acb0cbe-99ad-4a30-8e6c-4dc7cfc5cae4"
+        },
+        {
+          "room_seq": 54,
+          "event_id": "event_fbe3d056-a076-4457-aadb-c13d4a959b78",
+          "actor_id": "principal_94796a71-641c-449f-a5aa-0c697c078bfe",
+          "recipients": [],
+          "replyReturn": null,
+          "activationId": "activation_caebfa99-6259-4c49-8ba3-fbcc194beb2d"
+        }
+      ],
+      "sourceSha256": "3fa4c0e11cb627de7da3f671f0342721eaadb428021ba89013fbbd3a3165354f",
+      "notes": [
+        "Initial AGY available=true but modelBindings=[]; stopped before generation",
+        "Setup resumed existing channel/instances after free catalog recovery; explicit SOS-resume guidance introduced extra wakes",
+        "Last two AGY messages had no recipients/replyReturn; no completed implementation",
+        "Initial archive path reuse failed; final external audit captured separately, no paid rerun"
+      ]
+    }
+  ],
+  "observedTotals": {
+    "input": 2814409,
+    "output": 44843,
+    "generations": 103
+  },
+  "ratio": null,
+  "limits": "AGY automatic memory unverified; no native comparison; stopped in-flight billing unknown; OpenCode/AGY usage not independently reconciled",
+  "formalProductChanged": false,
+  "paidReplacements": 0
+}
