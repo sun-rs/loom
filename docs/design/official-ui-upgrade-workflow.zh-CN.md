@@ -132,3 +132,16 @@ Discovery 和 Memory 使用该计算，普通聊天／角色／计算机／设�
 ### 频道创建与详细头像接线（2026-10-29）
 
 频道表单的独立源码闭包在`upstream/channel-create-2026-10-29`，由`generate-channel-create.mjs`提取；升级时同时对比CreateChannelDialog和memberPickerClasses，核对名称／描述／成员与原生spacing，保留Loom文件树插槽和既有写入owner。来源、hash与故障回环见[验收记录](../evo/evidence/2026-10-29-channel-role-usability/README.md)。新增32×32头像是Loom数据扩展，PixelAvatar生成器的尺寸／同行合并是明确兼容例外，不能再称整个renderer仅替换import；原始8×8内容及输出规则不变。
+
+### 2026-10-30：生产 Web 与 npm 的切换窗口
+
+[1.21.39审计](../evo/evidence/2026-10-30-web139-audit/README.md)确认：官网从1.21.38
+旧侧栏切到与npm0.52相同的新配方，而Loom仍有旧局部几何和漏接的列表容器。
+升级批次必须固定一份HTML发布身份、实际app-shell/vendor/CSS与来源SHA，分别比较
+原生包、页面组合和Loom数据插槽。七项配方相同也不能覆盖Header/List/Row的嵌套、
+DND外壳margin、滚动容器padding或语义图标调用点。
+
+同一批不要追逐更新一半的新资源；完成固定目标后再将新发布列为候选。
+几何检查至少覆盖标题→首行、相邻行、最后一行→下一分组、hover色块边界、文字／头像边界，
+及空／默认／选中／折叠／滚动状态。每个原生语义图标须追到实际调用者与SVG路径。
+本批1.21.39只是对比候选，没有移动生产pin；下一批先替换完整三页侧栏组合再验收。

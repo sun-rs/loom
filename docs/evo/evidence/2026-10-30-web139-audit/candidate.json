@@ -1,0 +1,48 @@
+{
+  "status": "candidate-not-adopted",
+  "release": {
+    "releaseId": "5a4264c05bf9d8e166849d8b444a1d63f1a665e9",
+    "commitSha": "5a4264c05bf9d8e166849d8b444a1d63f1a665e9",
+    "builtAt": "2026-10-29T16:30:57Z",
+    "branch": "release/v1.21.39",
+    "deploymentEnvironment": "production"
+  },
+  "index": {
+    "url": "https://app.raft.build/index.html",
+    "sha256": "b6500ce6dda9b3856bbab235435bc424715a936d22d6ac8dfb07c39134713c3e",
+    "bytes": 224240
+  },
+  "assets": [
+    {
+      "url": "https://app.raft.build/assets/index-FTdAXYAJ.js",
+      "bytes": 6400,
+      "sha256": "e5d361ae5fcccb9cc0dd627d8957f84142bf2c2ceeecfb204f5e74ff7c6e1539"
+    },
+    {
+      "url": "https://app.raft.build/assets/vendor-startup-nzzTMCKK.js",
+      "bytes": 745069,
+      "sha256": "b6ab51519bf3e598ccd813c43087d1b67c2cd445670f7523c471b1ae683189c3"
+    },
+    {
+      "url": "https://app.raft.build/assets/vendor-raft-ui-BHAojVZQ.js",
+      "bytes": 621128,
+      "sha256": "2b2511c047310b4013432b173719b979f9be71421697e83b56a1288397006adc"
+    },
+    {
+      "url": "https://app.raft.build/assets/app-shell-CMYocQVA.js",
+      "bytes": 2566099,
+      "sha256": "7e03c8d64b9a9f0dd91ddc6c742357a5289632c30defd27483fee5b2f0004e89"
+    },
+    {
+      "url": "https://app.raft.build/assets/app-shell-DuvkFUT-.css",
+      "bytes": 507906,
+      "sha256": "2746cdd540841dfcb7a5d21e608a1266264e4f953e72fe76ee612209d52560ce"
+    }
+  ],
+  "previousWeb": "1.21.38",
+  "loomPackage": "0.52.0",
+  "commands": [
+    "node scripts/official-web/compare-sidebar-recipes.mjs OLD_VENDOR NEW_VENDOR OUTPUT_JSON",
+    "LOOM_BROWSER_SLICE=sidebar-pixel-audit LOOM_PIXEL_AUDIT_OUTPUT=OUTPUT_JSON node scripts/official-web/channel-browser.mjs"
+  ]
+}

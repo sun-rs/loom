@@ -1,0 +1,169 @@
+{
+  "sidebarItem": {
+    "old": [
+      "group/sidebar-item flex w-full items-center px-2 text-left",
+      "transition-colors",
+      "my-px h-9 gap-2 rounded-control border-[1.5px] border-transparent py-0 pr-2.5 pl-2",
+      "md:py-0 md:[@media(max-height:600px)]:py-0",
+      "max-md:h-auto max-md:min-h-11 max-md:py-[8.5px]",
+      "font-sans text-subhead font-medium text-foreground",
+      "max-md:text-body max-md:font-semibold",
+      "data-active:border-sticker-ink data-active:bg-selected data-active:font-bold data-active:text-sticker-ink data-active:ring-[1.5px] data-active:ring-sticker-edge",
+      "not-data-active:data-[tone=muted]:text-foreground-muted not-data-active:data-[tone=away]:text-foreground-hint",
+      "outline-none"
+    ],
+    "current": [
+      "group/sidebar-item flex w-full items-center text-left",
+      "list-cell relative isolate bg-transparent shadow-none outline-none",
+      "[--cell-inset-x:8px] [--cell-pad-x:12px] [--cell-radius:var(--radius-control)]",
+      "[--cell-inset-end:max(0px,calc(var(--cell-inset-x)-var(--scrollbar-size,0px)))]",
+      "pr-[calc(var(--cell-inset-end)+var(--cell-pad-x))] pl-[calc(var(--cell-inset-x)+var(--cell-pad-x))]",
+      "before:pointer-events-none before:absolute before:-z-1 before:block before:content-['']",
+      "before:inset-y-0 before:right-(--cell-inset-end) before:left-(--cell-inset-x)",
+      "before:rounded-(--cell-radius) before:border-0",
+      "before:transition-colors before:duration-150 before:ease-out",
+      "h-[38px] gap-2 rounded-none border-0 py-0",
+      "md:py-0 md:[@media(max-height:600px)]:py-0",
+      "max-md:h-auto max-md:min-h-11 max-md:py-2.5",
+      "font-sans text-subhead font-medium text-foreground",
+      "max-md:text-body max-md:font-semibold",
+      "data-active:font-bold data-active:text-sticker-ink",
+      "data-active:before:bg-selected data-active:before:inset-ring-[1.5px] data-active:before:inset-ring-sticker-ink data-active:before:ring-[1.5px] data-active:before:ring-sticker-edge",
+      "not-data-active:data-[tone=muted]:text-foreground-muted not-data-active:data-[tone=away]:text-foreground-hint"
+    ],
+    "npm": [
+      "group/sidebar-item flex w-full items-center text-left",
+      "list-cell relative isolate bg-transparent shadow-none outline-none",
+      "[--cell-inset-x:8px] [--cell-pad-x:12px] [--cell-radius:var(--radius-control)]",
+      "[--cell-inset-end:max(0px,calc(var(--cell-inset-x)-var(--scrollbar-size,0px)))]",
+      "pr-[calc(var(--cell-inset-end)+var(--cell-pad-x))] pl-[calc(var(--cell-inset-x)+var(--cell-pad-x))]",
+      "before:pointer-events-none before:absolute before:-z-1 before:block before:content-['']",
+      "before:inset-y-0 before:right-(--cell-inset-end) before:left-(--cell-inset-x)",
+      "before:rounded-(--cell-radius) before:border-0",
+      "before:transition-colors before:duration-150 before:ease-out",
+      "h-[38px] gap-2 rounded-none border-0 py-0",
+      "md:py-0 md:[@media(max-height:600px)]:py-0",
+      "max-md:h-auto max-md:min-h-11 max-md:py-2.5",
+      "font-sans text-subhead font-medium text-foreground",
+      "max-md:text-body max-md:font-semibold",
+      "data-active:font-bold data-active:text-sticker-ink",
+      "data-active:before:bg-selected data-active:before:inset-ring-[1.5px] data-active:before:inset-ring-sticker-ink data-active:before:ring-[1.5px] data-active:before:ring-sticker-edge",
+      "not-data-active:data-[tone=muted]:text-foreground-muted not-data-active:data-[tone=away]:text-foreground-hint"
+    ],
+    "npmEqualsCurrent": true
+  },
+  "sidebarSection": {
+    "old": [
+      "group/section",
+      "px-0"
+    ],
+    "current": [
+      "group/section",
+      "px-0"
+    ],
+    "npm": [
+      "group/section",
+      "px-0"
+    ],
+    "npmEqualsCurrent": true
+  },
+  "sidebarList": {
+    "old": [],
+    "current": [
+      "flex flex-col gap-0.5 py-2"
+    ],
+    "npm": [
+      "flex flex-col gap-0.5 py-2"
+    ],
+    "npmEqualsCurrent": true
+  },
+  "sidebarSectionHeader": {
+    "old": [
+      "flex items-center justify-between",
+      "group/section-header",
+      "mt-0 mb-0 h-auto gap-2 px-2 pt-4 pb-1.5"
+    ],
+    "current": [
+      "flex items-center justify-between",
+      "group/section-header",
+      "my-0  h-auto gap-2 px-5 pt-4 pb-0"
+    ],
+    "npm": [
+      "flex items-center justify-between",
+      "group/section-header",
+      "my-0  h-auto gap-2 px-5 pt-4 pb-0"
+    ],
+    "npmEqualsCurrent": true
+  },
+  "sidebarSectionDisclosure": {
+    "old": [
+      "flex min-w-0 flex-1 items-center",
+      "**:data-[slot=sidebar-section-chevron]:transition-transform",
+      "[&[data-panel-open]_[data-slot=sidebar-section-chevron]]:rotate-90",
+      "h-auto gap-1.5 rounded-sticker border-0",
+      "font-sans text-footnote font-bold normal-case tracking-normal text-foreground-hint",
+      "outline-none focus-visible:shadow-focus",
+      "**:data-[slot=sidebar-section-chevron]:size-3.5 **:data-[slot=sidebar-section-chevron]:stroke-2"
+    ],
+    "current": [
+      "flex min-w-0 flex-1 items-center",
+      "**:data-[slot=sidebar-section-chevron]:transition-transform",
+      "[&[data-panel-open]_[data-slot=sidebar-section-chevron]]:rotate-90",
+      "h-auto gap-1.5 rounded-sticker border-0",
+      "font-sans text-footnote font-bold normal-case tracking-normal text-foreground-hint",
+      "outline-none focus-visible:shadow-focus",
+      "**:data-[slot=sidebar-section-chevron]:size-3.5 **:data-[slot=sidebar-section-chevron]:stroke-2"
+    ],
+    "npm": [
+      "flex min-w-0 flex-1 items-center",
+      "**:data-[slot=sidebar-section-chevron]:transition-transform",
+      "[&[data-panel-open]_[data-slot=sidebar-section-chevron]]:rotate-90",
+      "h-auto gap-1.5 rounded-sticker border-0",
+      "font-sans text-footnote font-bold normal-case tracking-normal text-foreground-hint",
+      "outline-none focus-visible:shadow-focus",
+      "**:data-[slot=sidebar-section-chevron]:size-3.5 **:data-[slot=sidebar-section-chevron]:stroke-2"
+    ],
+    "npmEqualsCurrent": true
+  },
+  "sidebarSectionControl": {
+    "old": [
+      "flex h-7 w-auto min-w-7 shrink-0 items-center justify-center p-0 -my-1.5",
+      "[&>svg]:shrink-0 [&>svg:not([class*='size-'])]:size-4"
+    ],
+    "current": [
+      "flex h-7 w-auto min-w-7 shrink-0 items-center justify-center p-0 -my-1.5",
+      "[&>svg]:shrink-0 [&>svg:not([class*='size-'])]:size-4"
+    ],
+    "npm": [
+      "flex h-7 w-auto min-w-7 shrink-0 items-center justify-center p-0 -my-1.5",
+      "[&>svg]:shrink-0 [&>svg:not([class*='size-'])]:size-4"
+    ],
+    "npmEqualsCurrent": true
+  },
+  "sidebarRoot": {
+    "old": [
+      "relative flex size-full min-h-0  select-none flex-col",
+      "has-[>[data-slot=sidebar-live-activity]_[data-slot=live-agent-activity-bar]]:overflow-clip",
+      "bg-layer-sidebar text-foreground max-md:bg-layer-canvas",
+      "border-line-seam md:border-r",
+      "md:has-[>[data-slot=sidebar-live-activity]_[data-slot=live-agent-activity-bar]]:[--sidebar-content-bottom:52px]"
+    ],
+    "current": [
+      "relative flex size-full min-h-0  select-none flex-col",
+      "[--column-margin:20px]",
+      "has-[>[data-slot=sidebar-live-activity]_[data-slot=live-agent-activity-bar]]:overflow-clip",
+      "bg-layer-sidebar text-foreground max-md:bg-layer-canvas",
+      "border-line-seam md:border-r",
+      "md:has-[>[data-slot=sidebar-live-activity]_[data-slot=live-agent-activity-bar]]:[--sidebar-content-bottom:52px]"
+    ],
+    "npm": [
+      "relative flex size-full min-h-0  select-none flex-col",
+      "[--column-margin:20px]",
+      "has-[>[data-slot=sidebar-live-activity]_[data-slot=live-agent-activity-bar]]:overflow-clip",
+      "bg-layer-sidebar text-foreground max-md:bg-layer-canvas",
+      "border-line-seam md:border-r",
+      "md:has-[>[data-slot=sidebar-live-activity]_[data-slot=live-agent-activity-bar]]:[--sidebar-content-bottom:52px]"
+    ],
+    "npmEqualsCurrent": true
+  }
+}

@@ -108,6 +108,14 @@ Schema 91 adds `human_activity_manual_unread`; stale viewport acknowledgements
 must not clear a later deliberate mark. Room deletion erases these marks with
 the Room. Never synthesize a peer message/count merely to display the marker.
 
+Latest comparison candidate (2026-10-30): Web1.21.39 is **not adopted yet**.
+Its seven inspected sidebar base recipes match npm0.52; Loom page composition
+still misses list padding/gaps and retains the1.21.38 Role-only inset port.
+See `docs/evo/evidence/2026-10-30-web139-audit/README.md` for measured differences.
+Pin one Web release and its actual loaded vendor/CSS per batch; compare page
+wrappers and semantic icon callsites as well as package classes. If upstream
+changes during work, record it as a new candidate instead of mixing releases.
+
 Executable upgrade practice and the current change matrix:
 `docs/design/official-ui-upgrade-workflow.zh-CN.md`. Commit/push active product
 work to `main`; `docs/evo` and `com.loom.evo` are retained paths/labels, not active

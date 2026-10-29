@@ -1,0 +1,3 @@
+[loom instance-prewarm] prewarm of principal_bf8e63b5-9edf-49f4-b99c-aeffada398cd skipped: disabled
+[loom instance-prewarm] prewarm of principal_a2ecbf95-25ba-47a5-92a3-e7bb10c0c701 skipped: disabled
+{"fixtureOnly":true,"paidProviders":false,"viewport":{"width":1440,"height":1000,"dpr":1,"zoom":1},"roles":{"avatarInset":17.5,"headerInset":16,"headerBottomPadding":0,"rowHeight":38,"rowGap":0,"groupInset":16,"groupToFirstRow":2,"hoverInset":8},"channels":{"rowHeight":38,"rowGap":0,"headerBottomPadding":0,"headerToHover":0,"hoverInset":8,"lastPinnedRowToNextHeaderBox":12,"lastPinnedRowToNextHeaderContent":28,"sectionMarginBottom":12},"computers":{"iconInset":28,"headerInset":28,"headerBottomPadding":0,"headerToHover":0,"hoverInset":16,"rowHeight":60}}

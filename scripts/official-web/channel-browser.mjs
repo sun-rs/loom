@@ -1,5 +1,6 @@
 import { verifyRoleProfileAffordances } from "./role-profile-affordances-browser.mjs";
 import { verifyRuntimeSidebar } from "./runtime-sidebar-browser.mjs";
+import { auditSidebarPixels } from "./sidebar-pixel-audit.mjs";
 import { verifyRoleSidebarAlignment } from "./role-sidebar-alignment-browser.mjs";
 import { verifyChannelRoleUsability } from "./channel-role-usability-browser.mjs";
 import { verifyRemaining138 } from "./remaining138-browser.mjs";
@@ -223,7 +224,21 @@ try {
   browser = await (
     process.env.LOOM_BROWSER_ENGINE === "webkit" ? webkit : chromium
   ).launch({ headless: true });
-  if (process.env.LOOM_BROWSER_SLICE === "runtime-sidebar") {
+  if (process.env.LOOM_BROWSER_SLICE === "sidebar-pixel-audit") {
+    console.log(
+      JSON.stringify(
+        await auditSidebarPixels({
+          browser,
+          origin,
+          client,
+          workspace,
+          channels,
+          role,
+          head,
+        }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "runtime-sidebar") {
     console.log(
       JSON.stringify(
         await verifyRuntimeSidebar({

@@ -1,0 +1,38 @@
+{
+  "fixtureOnly": true,
+  "paidProviders": false,
+  "viewport": {
+    "width": 1440,
+    "height": 1000,
+    "dpr": 1,
+    "zoom": 1
+  },
+  "roles": {
+    "avatarInset": 17.5,
+    "headerInset": 16,
+    "headerBottomPadding": 0,
+    "rowHeight": 38,
+    "rowGap": 0,
+    "groupInset": 16,
+    "groupToFirstRow": 2,
+    "hoverInset": 8
+  },
+  "channels": {
+    "rowHeight": 38,
+    "rowGap": 0,
+    "headerBottomPadding": 0,
+    "headerToHover": 0,
+    "hoverInset": 8,
+    "lastPinnedRowToNextHeaderBox": 12,
+    "lastPinnedRowToNextHeaderContent": 28,
+    "sectionMarginBottom": 12
+  },
+  "computers": {
+    "iconInset": 28,
+    "headerInset": 28,
+    "headerBottomPadding": 0,
+    "headerToHover": 0,
+    "hoverInset": 16,
+    "rowHeight": 60
+  }
+}
