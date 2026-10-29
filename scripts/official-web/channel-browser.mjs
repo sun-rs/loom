@@ -1,3 +1,4 @@
+import { verifyRoleProfileAffordances } from "./role-profile-affordances-browser.mjs";
 import { verifyRoleSidebarAlignment } from "./role-sidebar-alignment-browser.mjs";
 import { verifyChannelRoleUsability } from "./channel-role-usability-browser.mjs";
 import { verifyRemaining138 } from "./remaining138-browser.mjs";
@@ -209,7 +210,19 @@ try {
   browser = await (
     process.env.LOOM_BROWSER_ENGINE === "webkit" ? webkit : chromium
   ).launch({ headless: true });
-  if (process.env.LOOM_BROWSER_SLICE === "role-sidebar-alignment") {
+  if (process.env.LOOM_BROWSER_SLICE === "role-profile-affordances") {
+    console.log(
+      JSON.stringify(
+        await verifyRoleProfileAffordances({
+          browser,
+          origin,
+          client,
+          workspace,
+          role,
+        }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "role-sidebar-alignment") {
     console.log(
       JSON.stringify(
         await verifyRoleSidebarAlignment({ browser, origin, role }),

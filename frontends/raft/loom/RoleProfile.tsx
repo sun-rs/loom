@@ -1,3 +1,4 @@
+import RuntimeInfoChip from "./RuntimeInfoChip";
 import MobileFormDialog from "./MobileFormDialog";
 import RoleEditor from "./RoleEditor.tsx";
 import ConfirmDialog from "../packages/web/src/components/ConfirmDialog.tsx";
@@ -42,6 +43,7 @@ export default function RoleProfile({
   onSave: (configuration: RoleCreateRequest["configuration"]) => void;
   onDirtyChange: (dirty: boolean) => void;
 }) {
+  const textFocus = useRef<HTMLTextAreaElement | null>(null);
   const runtimeContainer = useRef<HTMLDivElement | null>(null);
   const [runtimeDirty, setRuntimeDirty] = useState(false);
   const [discardRuntime, setDiscardRuntime] = useState(false);
@@ -104,11 +106,14 @@ export default function RoleProfile({
       disabled={disabled}
       onSave={onSave}
       onCancel={
-        current === "description" || current === "avatarKey"
+        current === "description" ||
+        current === "instructions" ||
+        current === "avatarKey"
           ? requestCloseField
           : cancel
       }
       onDiscard={cancel}
+      initialFocusRef={textFocus}
       descriptionPlaceholder={presentation.fallback}
       onDirtyChange={(value) => {
         setFieldDirty(value);
@@ -195,9 +200,10 @@ export default function RoleProfile({
         >
           {presentation.description}
         </p>
-        <SectionEyebrow as="div" className="mt-4 mb-1">
-          提示词
-        </SectionEyebrow>
+        <div className="mt-4 flex items-center gap-2 mb-1">
+          <SectionEyebrow as="div">提示词</SectionEyebrow>
+          {editAction("instructions", "提示词")}
+        </div>
         <p
           data-testid="role-instructions"
           className="text-subhead text-foreground whitespace-pre-wrap break-words"
@@ -207,15 +213,18 @@ export default function RoleProfile({
           )}
         </p>
       </section>
-      {(field === "description" || field === "avatarKey") && (
+      {(field === "description" ||
+        field === "instructions" ||
+        field === "avatarKey") && (
         <MobileFormDialog
-          title={field === "description" ? "编辑描述与提示词" : "更换头像"}
+          title={field !== "avatarKey" ? "编辑描述与提示词" : "更换头像"}
           testId={
-            field === "description"
+            field !== "avatarKey"
               ? "role-description-dialog"
               : "role-avatar-dialog"
           }
           busy={disabled}
+          initialFocus={textFocus}
           onClose={requestCloseField}
         >
           {editor(field)}
@@ -255,13 +264,12 @@ export default function RoleProfile({
         </div>
         <DescriptionList direction="horizontal">
           <InfoRow label="运行时">
-            <Badge
-              appearance="soft"
-              variant="information"
+            <RuntimeInfoChip
+              key={form.runtimeOfferId}
+              runtime={runtime}
+              loading={loading}
               className={RUNTIME_CHIP_CLASS}
-            >
-              {runtime?.displayName ?? (loading ? "读取中…" : "当前配置不可用")}
-            </Badge>
+            />
           </InfoRow>
           <InfoRow label="模型">
             <span className="min-w-0 break-all font-mono">

@@ -183,8 +183,9 @@ never installs them or configures their accounts.
 - **Role** is configuration, not an entity: CLI + model + effort + prompt +
   skills and optional launch environment, with a stable Role ID. Every save creates an immutable Revision.
   Owner 2026-10-29 separates `description` (display-only remarks) from the
-  executable `instructions` prompt. One description pencil edits both fields in
-  one revision; remarks never enter standing prompts. Empty remarks display the
+  executable `instructions` prompt. Description and prompt each have a pencil;
+  both open the same editor and use native Dialog initialFocus for the selected
+  input. Both fields still save in one revision; remarks never enter standing prompts. Empty remarks display the
   verified model/effort as a grey fallback/placeholder and never save that fallback.
   The Role sidebar retains official avatar/name/subtitle/runtime anatomy; CLI
   labels come from verified Host offers, never parsed opaque offer IDs.
@@ -200,6 +201,11 @@ never installs them or configures their accounts.
   compatibility seam, preserving original 8x8 SVG output and one cached image per avatar.
   Protocol owns preset identity keys, frontend owns grids/group labels; contract
   tests keep them synchronized. Reserved original art remains excluded.
+  Runtime info uses the independently pinned official badge/card/mobile-sheet
+  composition. Its status square reports Host CLI detection, not account health.
+  Version/path/model count/probe time come from inventory; quota remains unknown
+  until an actual account-usage owner publishes it. Never infer balance from
+  installation, authentication guesses, transcript totals or model catalogs.
   Runtime Fast uses the selected model's published service tier (including
   Codex priority and Claude supportsFastMode); never infer it from the CLI name
   or silently switch models. Default mode overrides inherited native Fast

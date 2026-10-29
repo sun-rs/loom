@@ -1,0 +1,17 @@
+✔ single description/prompt save preserves legacy prompt, metadata and identity (1.237709ms)
+✔ both text pencils use the same revision editor with native initial-focus ownership (0.824209ms)
+✔ runtime info binds observed facts, never treats installation as remaining quota (0.209916ms)
+✔ runtime frame regenerates from independently acquired immutable source (137.959833ms)
+✔ legacy controls regenerate; live runtime form adopts current official sheet (159.974459ms)
+✔ role instance section shares computer list frame and section header with explicit create-instance action (0.177208ms)
+✔ grouped instance row never enters official independent card action branch (0.195333ms)
+✔ computer exposes separate compact instance and role entry points (0.091667ms)
+✔ profile helpers are exact official declarations and Role composition separates identity, prompt and configuration (27.5705ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 256.904708

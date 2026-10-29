@@ -1,0 +1,9 @@
+{
+  "source": "https://github.com/botiverse/raft-source",
+  "revision": "db5e399f017d584e49597e3a28757645d6807893",
+  "path": "packages/web/src/components/machine/RuntimeAccountUsageChip.tsx",
+  "sha256": "dfe1aaf3f5529fdb182888cdd6ff4b3d2e1c60db5769cfa449914040c6d54979",
+  "license": "FSL-1.1-ALv2; ../../LICENSE retained; owner-authorized reuse",
+  "adopted": "Badge/frame/header JSX, status sizing, hover delays, mobile BottomSheet, viewport clamp and pinned dismiss semantics",
+  "local": "Metadata/status/content bindings; provider account reads/refresh/footer omitted because Loom has no account-quota owner; no quota inferred from CLI availability"
+}

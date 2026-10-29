@@ -1,0 +1,616 @@
+✖ both text pencils use the same revision editor with native initial-focus ownership (1.925792ms)
+✖ runtime info binds observed facts, never treats installation as remaining quota (0.763625ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 105.280833
+
+✖ failing tests:
+
+test at scripts/official-web/role-profile-affordances.test.ts:5:1
+✖ both text pencils use the same revision editor with native initial-focus ownership (1.925792ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /editAction\("instructions", "提示词"\)/. Input:
+
+  'import MobileFormDialog from "./MobileFormDialog";\n' +
+    'import RoleEditor from "./RoleEditor.tsx";\n' +
+    'import ConfirmDialog from "../packages/web/src/components/ConfirmDialog.tsx";\n' +
+    'import {\n' +
+    '  OfficialRoleHero,\n' +
+    '  OfficialRoleIdentity,\n' +
+    '} from "./OfficialComputerProfile.generated";\n' +
+    'import { useEffect, useState, useRef } from "react";\n' +
+    'import type { RahClient } from "@rah-os/client-sdk";\n' +
+    'import type {\n' +
+    '  RoleTemplate,\n' +
+    '  LocalRuntimeInventoryResponse,\n' +
+    '} from "@rah-os/protocol";\n' +
+    'import { DescriptionList, Separator, Badge } from "raft-ui";\n' +
+    'import { Pencil, Cpu } from "lucide-react";\n' +
+    'import { roleFormFrom } from "@rah-os/client-core/role-form";\n' +
+    'import RoleFieldEditor, { type RoleField } from "./RoleFieldEditor.tsx";\n' +
+    'import AvatarSlot from "../packages/web/src/components/ui/AvatarSlot.tsx";\n' +
+    'import Tooltip from "../packages/web/src/components/ui/Tooltip.tsx";\n' +
+    'import type { RoleCreateRequest } from "@rah-os/protocol";\n' +
+    'import { useTimeFormatter } from "../packages/web/src/hooks/useTimeFormatter.ts";\n' +
+    'import SectionEyebrow from "@loom/raft-web-source/SectionEyebrow";\n' +
+    'import AvatarEditVeil from "@loom/raft-web-source/AvatarEditVeil";\n' +
+    'import { rolePresentation } from "./role-profile-values";\n' +
+    'import {\n' +
+    '  InfoRow,\n' +
+    '  AgentHeaderName,\n' +
+    '  PROFILE_AVATAR_BUTTON_CLASS,\n' +
+    '  RUNTIME_CHIP_CLASS,\n' +
+    '  INFO_ICON_BUTTON_CLASS,\n' +
+    '} from "./OfficialProfile.generated";\n' +
+    'export default function RoleProfile({\n' +
+    '  client,\n' +
+    '  role,\n' +
+    '  disabled,\n' +
+    '  onSave,\n' +
+    '  onDirtyChange,\n' +
+    '}: {\n' +
+    '  client: RahClient;\n' +
+    '  role: RoleTemplate;\n' +
+    '  disabled: boolean;\n' +
+    '  onSave: (configuration: RoleCreateRequest["configuration"]) => void;\n' +
+    '  onDirtyChange: (dirty: boolean) => void;\n' +
+    '}) {\n' +
+    '  const runtimeContainer = useRef<HTMLDivElement | null>(null);\n' +
+    '  const [runtimeDirty, setRuntimeDirty] = useState(false);\n' +
+    '  const [discardRuntime, setDiscardRuntime] = useState(false);\n' +
+    '  const [field, setField] = useState<RoleField>();\n' +
+    '  const [fieldDirty, setFieldDirty] = useState(false),\n' +
+    '    [discardField, setDiscardField] = useState(false);\n' +
+    '  const nameAction = useRef<HTMLDivElement | null>(null);\n' +
+    '  const trigger = useRef<HTMLButtonElement | null>(null);\n' +
+    '  const edit = (next: RoleField, button: HTMLButtonElement) => {\n' +
+    '    trigger.current = button;\n' +
+    '    setField(next);\n' +
+    '  };\n' +
+    '  const cancel = () => {\n' +
+    '    setField(undefined);\n' +
+    '    setFieldDirty(false);\n' +
+    '    setDiscardField(false);\n' +
+    '    onDirtyChange(false);\n' +
+    '    requestAnimationFrame(() => {\n' +
+    '      if (trigger.current?.isConnected) trigger.current.focus();\n' +
+    '      else nameAction.current?.querySelector("button")?.focus();\n' +
+    '    });\n' +
+    '  };\n' +
+    '  const requestCloseField = () => {\n' +
+    '    if (disabled) return;\n' +
+    '    if (fieldDirty) setDiscardField(true);\n' +
+    '    else cancel();\n' +
+    '  };\n' +
+    '  const [loading, setLoading] = useState(true);\n' +
+    '  const [inventory, setInventory] = useState<LocalRuntimeInventoryResponse>();\n' +
+    '  useEffect(() => {\n' +
+    '    const abort = new AbortController();\n' +
+    '    void client\n' +
+    '      .request("host.runtime.list", {}, { signal: abort.signal })\n' +
+    '      .then((v) => {\n' +
+    '        if (!abort.signal.aborted) setInventory(v);\n' +
+    '      })\n' +
+    '      .catch(() => {\n' +
+    '        if (!abort.signal.aborted) setInventory(undefined);\n' +
+    '      })\n' +
+    '      .finally(() => {\n' +
+    '        if (!abort.signal.aborted) setLoading(false);\n' +
+    '      });\n' +
+    '    return () => abort.abort();\n' +
+    '  }, [client]);\n' +
+    '  const form = roleFormFrom(role.configuration);\n' +
+    '  const presentation = rolePresentation(role.configuration, inventory);\n' +
+    '  const runtime = inventory?.runtimes.find(\n' +
+    '    (r) => r.runtimeOfferId === form.runtimeOfferId,\n' +
+    '  );\n' +
+    '  const model = runtime?.modelBindingDescriptors.find(\n' +
+    '    (b) => b.modelBindingId === form.modelBindingId,\n' +
+    '  );\n' +
+    '  const { formatShortDateTime } = useTimeFormatter();\n' +
+    '  const editor = (current: RoleField) => (\n' +
+    '    <RoleFieldEditor\n' +
+    '      key={current}\n' +
+    '      field={current}\n' +
+    '      role={role}\n' +
+    '      client={client}\n' +
+    '      disabled={disabled}\n' +
+    '      onSave={onSave}\n' +
+    '      onCancel={\n' +
+    '        current === "description" || current === "avatarKey"\n' +
+    '          ? requestCloseField\n' +
+    '          : cancel\n' +
+    '      }\n' +
+    '      onDiscard={cancel}\n' +
+    '      descriptionPlaceholder={presentation.fallback}\n' +
+    '      onDirtyChange={(value) => {\n' +
+    '        setFieldDirty(value);\n' +
+    '        onDirtyChange(value);\n' +
+    '      }}\n' +
+    '    />\n' +
+    '  );\n' +
+    '  const editAction = (current: RoleField, label: string) => (\n' +
+    '    <Tooltip content={`编辑${label}`}>\n' +
+    '      <button\n' +
+    '        type="button"\n' +
+    '        aria-label={`编辑${label}`}\n' +
+    '        disabled={disabled || Boolean(field)}\n' +
+    '        onClick={(e) => edit(current, e.currentTarget)}\n' +
+    '        className={INFO_ICON_BUTTON_CLASS}\n' +
+    '      >\n' +
+    '        <Pencil size={14} />\n' +
+    '      </button>\n' +
+    '    </Tooltip>\n' +
+    '  );\n' +
+    '  // Composition port: AgentDetailPanel profile hero / description / info / runtime.\n' +
+    '  // Role configuration has no live presence or unique native session handle.\n' +
+    '  return (\n' +
+    '    <div data-testid="loom-role-profile" className="font-sans bg-layer-canvas">\n' +
+    '      <OfficialRoleHero data-testid="role-profile-hero">\n' +
+    '        <Tooltip content="更换头像">\n' +
+    '          <button\n' +
+    '            type="button"\n' +
+    '            aria-label="更换头像"\n' +
+    '            disabled={disabled || Boolean(field)}\n' +
+    '            onClick={(e) => edit("avatarKey", e.currentTarget)}\n' +
+    '            className={PROFILE_AVATAR_BUTTON_CLASS}\n' +
+    '          >\n' +
+    '            <AvatarSlot\n' +
+    '              context="profile-hero"\n' +
+    '              type="agent"\n' +
+    '              agentAvatarUrl={role.configuration.avatarKey}\n' +
+    '            />\n' +
+    '            <AvatarEditVeil icon={Pencil} />\n' +
+    '          </button>\n' +
+    '        </Tooltip>\n' +
+    '        <OfficialRoleIdentity data-testid="role-profile-identity">\n' +
+    '          <div ref={nameAction} className="flex min-w-0 items-center gap-2">\n' +
+    '            <AgentHeaderName\n' +
+    '              agent={{ name: role.configuration.displayName }}\n' +
+    '              onEdit={\n' +
+    '                !disabled && !field\n' +
+    '                  ? () => {\n' +
+    '                      const button =\n' +
+    '                        nameAction.current?.querySelector("button");\n' +
+    '                      if (button) edit("displayName", button);\n' +
+    '                    }\n' +
+    '                  : undefined\n' +
+    '              }\n' +
+    '            />\n' +
+    '          </div>\n' +
+    '          <div className="mt-2 flex min-w-0 flex-wrap items-center gap-1.5">\n' +
+    '            <Badge appearance="outline">角色</Badge>\n' +
+    '            <Badge\n' +
+    '              appearance="soft"\n' +
+    '              variant="information"\n' +
+    '              className={RUNTIME_CHIP_CLASS}\n' +
+    '            >\n' +
+    '              <Cpu size={14} aria-hidden="true" />\n' +
+    '              {runtime?.displayName ?? (loading ? "读取中…" : "当前配置不可用")}\n' +
+    '            </Badge>\n' +
+    '          </div>\n' +
+    '          <p className="mt-1.5 text-footnote text-foreground-hint">\n' +
+    '            修改保存为新的角色修订；已有实例保持原配置。\n' +
+    '          </p>\n' +
+    '        </OfficialRoleIdentity>\n' +
+    '      </OfficialRoleHero>\n' +
+    '      {field === "displayName" && (\n' +
+    '        <div className="px-5 pb-4">{editor(field)}</div>\n' +
+    '      )}\n' +
+    '      <section data-testid="role-profile-prompt" className="px-5 py-3">\n' +
+    '        <div className="flex items-center gap-2 mb-1">\n' +
+    '          <SectionEyebrow as="div">描述</SectionEyebrow>\n' +
+    '          {editAction("description", "描述")}\n' +
+    '        </div>\n' +
+    '        <p\n' +
+    '          data-testid="role-description"\n' +
+    '          className={`text-subhead whitespace-pre-wrap break-words ${role.configuration.description?.trim() ? "text-foreground" : "text-foreground-hint"}`}\n' +
+    '        >\n' +
+    '          {presentation.description}\n' +
+    '        </p>\n' +
+    '        <SectionEyebrow as="div" className="mt-4 mb-1">\n' +
+    '          提示词\n' +
+    '        </SectionEyebrow>\n' +
+    '        <p\n' +
+    '          data-testid="role-instructions"\n' +
+    '          className="text-subhead text-foreground whitespace-pre-wrap break-words"\n' +
+    '        >\n' +
+    '          {form.instructions || (\n' +
+    '            <span className="text-foreground-hint">未设置</span>\n' +
+    '          )}\n' +
+    '        </p>\n' +
+    '      </section>\n' +
+    '      {(field === "description" || field === "avatarKey") && (\n' +
+    '        <MobileFormDialog\n' +
+    '          title={field === "description" ? "编辑描述与提示词" : "更换头像"}\n' +
+    '          testId={\n' +
+    '            field === "description"\n' +
+    '              ? "role-description-dialog"\n' +
+    '              : "role-avatar-dialog"\n' +
+    '          }\n' +
+    '          busy={disabled}\n' +
+    '          onClose={requestCloseField}\n' +
+    '        >\n' +
+    '          {editor(field)}\n' +
+    '        </MobileFormDialog>\n' +
+    '      )}\n' +
+    '      {discardField && (\n' +
+    '        <ConfirmDialog\n' +
+    '          layer={2}\n' +
+    '          title="尚未保存的修改"\n' +
+    '          message="离开将放弃尚未保存的修改。"\n' +
+    '          confirmLabel="放弃修改"\n' +
+    '          cancelLabel="继续编辑"\n' +
+    '          confirmVariant="danger"\n' +
+    '          onClose={() => setDiscardField(false)}\n' +
+    '          onConfirm={cancel}\n' +
+    '        />\n' +
+    '      )}\n' +
+    '      <Separator />\n' +
+    '      <section className="px-5 py-4">\n' +
+    '        <SectionEyebrow as="div" className="mb-3">\n' +
+    '          信息\n' +
+    '        </SectionEyebrow>\n' +
+    '        <DescriptionList direction="horizontal">\n' +
+    '          <InfoRow label="创建时间">\n' +
+    '            {formatShortDateTime(role.createdAt)}\n' +
+    '          </InfoRow>\n' +
+    '          <InfoRow label="修改时间">\n' +
+    '            {role.updatedAt ? formatShortDateTime(role.updatedAt) : "未记录"}\n' +
+    '          </InfoRow>\n' +
+    '        </DescriptionList>\n' +
+    '      </section>\n' +
+    '      <Separator />\n' +
+    '      <section data-testid="role-profile-runtime" className="px-5 py-4">\n' +
+    '        <div className="flex items-center gap-2 mb-3">\n' +
+    '          <SectionEyebrow as="div">运行时配置</SectionEyebrow>\n' +
+    '          {editAction("runtimeOfferId", "运行时配置")}\n' +
+    '        </div>\n' +
+    '        <DescriptionList direction="horizontal">\n' +
+    '          <InfoRow label="运行时">\n' +
+    '            <Badge\n' +
+    '              appearance="soft"\n' +
+    '              variant="information"\n' +
+    '              className={RUNTIME_CHIP_CLASS}\n' +
+    '            >\n' +
+    '              {runtime?.displayName ?? (loading ? "读取中…" : "当前配置不可用")}\n' +
+    '            </Badge>\n' +
+    '          </InfoRow>\n' +
+    '          <InfoRow label="模型">\n' +
+    '            <span className="min-w-0 break-all font-mono">\n' +
+    '              {(model?.displayName ?? model?.modelId ?? form.modelBindingId) ||\n' +
+    '                "未指定"}\n' +
+    '            </span>\n' +
+    '          </InfoRow>\n' +
+    '          <InfoRow label="推理强度">{form.reasoning || "默认／不适用"}</InfoRow>\n' +
+    '          <InfoRow label="模式">\n' +
+    '            {["fast", "priority"].includes(form.serviceTier ?? "")\n' +
+    '              ? "快速模式"\n' +
+    '              : "默认"}\n' +
+    '          </InfoRow>\n' +
+    '        </DescriptionList>\n' +
+    '      </section>\n' +
+    '      {field === "runtimeOfferId" && (\n' +
+    '        <MobileFormDialog\n' +
+    '          title="编辑运行时配置"\n' +
+    ' '... 1260 more characters
+
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/role-profile-affordances.test.ts:7:9)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.start (node:internal/test_runner/test:1096:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'import MobileFormDialog from "./MobileFormDialog";\nimport RoleEditor from "./RoleEditor.tsx";\nimport ConfirmDialog from "../packages/web/src/components/ConfirmDialog.tsx";\nimport {\n  OfficialRoleHero,\n  OfficialRoleIdentity,\n} from "./OfficialComputerProfile.generated";\nimport { useEffect, useState, useRef } from "react";\nimport type { RahClient } from "@rah-os/client-sdk";\nimport type {\n  RoleTemplate,\n  LocalRuntimeInventoryResponse,\n} from "@rah-os/protocol";\nimport { DescriptionList, Separator, Badge } from "raft-ui";\nimport { Pencil, Cpu } from "lucide-react";\nimport { roleFormFrom } from "@rah-os/client-core/role-form";\nimport RoleFieldEditor, { type RoleField } from "./RoleFieldEditor.tsx";\nimport AvatarSlot from "../packages/web/src/components/ui/AvatarSlot.tsx";\nimport Tooltip from "../packages/web/src/components/ui/Tooltip.tsx";\nimport type { RoleCreateRequest } from "@rah-os/protocol";\nimport { useTimeFormatter } from "../packages/web/src/hooks/useTimeFormatter.ts";\nimport SectionEyebrow from "@loom/raft-web-source/SectionEyebrow";\nimport AvatarEditVeil from "@loom/raft-web-source/AvatarEditVeil";\nimport { rolePresentation } from "./role-profile-values";\nimport {\n  InfoRow,\n  AgentHeaderName,\n  PROFILE_AVATAR_BUTTON_CLASS,\n  RUNTIME_CHIP_CLASS,\n  INFO_ICON_BUTTON_CLASS,\n} from "./OfficialProfile.generated";\nexport default function RoleProfile({\n  client,\n  role,\n  disabled,\n  onSave,\n  onDirtyChange,\n}: {\n  client: RahClient;\n  role: RoleTemplate;\n  disabled: boolean;\n  onSave: (configuration: RoleCreateRequest["configuration"]) => void;\n  onDirtyChange: (dirty: boolean) => void;\n}) {\n  const runtimeContainer = useRef<HTMLDivElement | null>(null);\n  const [runtimeDirty, setRuntimeDirty] = useState(false);\n  const [discardRuntime, setDiscardRuntime] = useState(false);\n  const [field, setField] = useState<RoleField>();\n  const [fieldDirty, setFieldDirty] = useState(false),\n    [discardField, setDiscardField] = useState(false);\n  const nameAction = useRef<HTMLDivElement | null>(null);\n  const trigger = useRef<HTMLButtonElement | null>(null);\n  const edit = (next: RoleField, button: HTMLButtonElement) => {\n    trigger.current = button;\n    setField(next);\n  };\n  const cancel = () => {\n    setField(undefined);\n    setFieldDirty(false);\n    setDiscardField(false);\n    onDirtyChange(false);\n    requestAnimationFrame(() => {\n      if (trigger.current?.isConnected) trigger.current.focus();\n      else nameAction.current?.querySelector("button")?.focus();\n    });\n  };\n  const requestCloseField = () => {\n    if (disabled) return;\n    if (fieldDirty) setDiscardField(true);\n    else cancel();\n  };\n  const [loading, setLoading] = useState(true);\n  const [inventory, setInventory] = useState<LocalRuntimeInventoryResponse>();\n  useEffect(() => {\n    const abort = new AbortController();\n    void client\n      .request("host.runtime.list", {}, { signal: abort.signal })\n      .then((v) => {\n        if (!abort.signal.aborted) setInventory(v);\n      })\n      .catch(() => {\n        if (!abort.signal.aborted) setInventory(undefined);\n      })\n      .finally(() => {\n        if (!abort.signal.aborted) setLoading(false);\n      });\n    return () => abort.abort();\n  }, [client]);\n  const form = roleFormFrom(role.configuration);\n  const presentation = rolePresentation(role.configuration, inventory);\n  const runtime = inventory?.runtimes.find(\n    (r) => r.runtimeOfferId === form.runtimeOfferId,\n  );\n  const model = runtime?.modelBindingDescriptors.find(\n    (b) => b.modelBindingId === form.modelBindingId,\n  );\n  const { formatShortDateTime } = useTimeFormatter();\n  const editor = (current: RoleField) => (\n    <RoleFieldEditor\n      key={current}\n      field={current}\n      role={role}\n      client={client}\n      disabled={disabled}\n      onSave={onSave}\n      onCancel={\n        current === "description" || current === "avatarKey"\n          ? requestCloseField\n          : cancel\n      }\n      onDiscard={cancel}\n      descriptionPlaceholder={presentation.fallback}\n      onDirtyChange={(value) => {\n        setFieldDirty(value);\n        onDirtyChange(value);\n      }}\n    />\n  );\n  const editAction = (current: RoleField, label: string) => (\n    <Tooltip content={`编辑${label}`}>\n      <button\n        type="button"\n        aria-label={`编辑${label}`}\n        disabled={disabled || Boolean(field)}\n        onClick={(e) => edit(current, e.currentTarget)}\n        className={INFO_ICON_BUTTON_CLASS}\n      >\n        <Pencil size={14} />\n      </button>\n    </Tooltip>\n  );\n  // Composition port: AgentDetailPanel profile hero / description / info / runtime.\n  // Role configuration has no live presence or unique native session handle.\n  return (\n    <div data-testid="loom-role-profile" className="font-sans bg-layer-canvas">\n      <OfficialRoleHero data-testid="role-profile-hero">\n        <Tooltip content="更换头像">\n          <button\n            type="button"\n            aria-label="更换头像"\n            disabled={disabled || Boolean(field)}\n            onClick={(e) => edit("avatarKey", e.currentTarget)}\n            className={PROFILE_AVATAR_BUTTON_CLASS}\n          >\n            <AvatarSlot\n              context="profile-hero"\n              type="agent"\n              agentAvatarUrl={role.configuration.avatarKey}\n            />\n            <AvatarEditVeil icon={Pencil} />\n          </button>\n        </Tooltip>\n        <OfficialRoleIdentity data-testid="role-profile-identity">\n          <div ref={nameAction} className="flex min-w-0 items-center gap-2">\n            <AgentHeaderName\n              agent={{ name: role.configuration.displayName }}\n              onEdit={\n                !disabled && !field\n                  ? () => {\n                      const button =\n                        nameAction.current?.querySelector("button");\n                      if (button) edit("displayName", button);\n                    }\n                  : undefined\n              }\n            />\n          </div>\n          <div className="mt-2 flex min-w-0 flex-wrap items-center gap-1.5">\n            <Badge appearance="outline">角色</Badge>\n            <Badge\n              appearance="soft"\n              variant="information"\n              className={RUNTIME_CHIP_CLASS}\n            >\n              <Cpu size={14} aria-hidden="true" />\n              {runtime?.displayName ?? (loading ? "读取中…" : "当前配置不可用")}\n            </Badge>\n          </div>\n          <p className="mt-1.5 text-footnote text-foreground-hint">\n            修改保存为新的角色修订；已有实例保持原配置。\n          </p>\n        </OfficialRoleIdentity>\n      </OfficialRoleHero>\n      {field === "displayName" && (\n        <div className="px-5 pb-4">{editor(field)}</div>\n      )}\n      <section data-testid="role-profile-prompt" className="px-5 py-3">\n        <div className="flex items-center gap-2 mb-1">\n          <SectionEyebrow as="div">描述</SectionEyebrow>\n          {editAction("description", "描述")}\n        </div>\n        <p\n          data-testid="role-description"\n          className={`text-subhead whitespace-pre-wrap break-words ${role.configuration.description?.trim() ? "text-foreground" : "text-foreground-hint"}`}\n        >\n          {presentation.description}\n        </p>\n        <SectionEyebrow as="div" className="mt-4 mb-1">\n          提示词\n        </SectionEyebrow>\n        <p\n          data-testid="role-instructions"\n          className="text-subhead text-foreground whitespace-pre-wrap break-words"\n        >\n          {form.instructions || (\n            <span className="text-foreground-hint">未设置</span>\n          )}\n        </p>\n      </section>\n      {(field === "description" || field === "avatarKey") && (\n        <MobileFormDialog\n          title={field === "description" ? "编辑描述与提示词" : "更换头像"}\n          testId={\n            field === "description"\n              ? "role-description-dialog"\n              : "role-avatar-dialog"\n          }\n          busy={disabled}\n          onClose={requestCloseField}\n        >\n          {editor(field)}\n        </MobileFormDialog>\n      )}\n      {discardField && (\n        <ConfirmDialog\n          layer={2}\n          title="尚未保存的修改"\n          message="离开将放弃尚未保存的修改。"\n          confirmLabel="放弃修改"\n          cancelLabel="继续编辑"\n          confirmVariant="danger"\n          onClose={() => setDiscardField(false)}\n          onConfirm={cancel}\n        />\n      )}\n      <Separator />\n      <section className="px-5 py-4">\n        <SectionEyebrow as="div" className="mb-3">\n          信息\n        </SectionEyebrow>\n        <DescriptionList direction="horizontal">\n          <InfoRow label="创建时间">\n            {formatShortDateTime(role.createdAt)}\n          </InfoRow>\n          <InfoRow label="修改时间">\n            {role.updatedAt ? formatShortDateTime(role.updatedAt) : "未记录"}\n          </InfoRow>\n        </DescriptionList>\n      </section>\n      <Separator />\n      <section data-testid="role-profile-runtime" className="px-5 py-4">\n        <div className="flex items-center gap-2 mb-3">\n          <SectionEyebrow as="div">运行时配置</SectionEyebrow>\n          {editAction("runtimeOfferId", "运行时配置")}\n        </div>\n        <DescriptionList direction="horizontal">\n          <InfoRow label="运行时">\n            <Badge\n              appearance="soft"\n              variant="information"\n              className={RUNTIME_CHIP_CLASS}\n            >\n              {runtime?.displayName ?? (loading ? "读取中…" : "当前配置不可用")}\n            </Badge>\n          </InfoRow>\n          <InfoRow label="模型">\n            <span className="min-w-0 break-all font-mono">\n              {(model?.displayName ?? model?.modelId ?? form.modelBindingId) ||\n                "未指定"}\n            </span>\n          </InfoRow>\n          <InfoRow label="推理强度">{form.reasoning || "默认／不适用"}</InfoRow>\n          <InfoRow label="模式">\n            {["fast", "priority"].includes(form.serviceTier ?? "")\n              ? "快速模式"\n              : "默认"}\n          </InfoRow>\n        </DescriptionList>\n      </section>\n      {field === "runtimeOfferId" && (\n        <MobileFormDialog\n          title="编辑运行时配置"\n '... 1260 more characters,
+    expected: /editAction\("instructions", "提示词"\)/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/official-web/role-profile-affordances.test.ts:12:1
+✖ runtime info binds observed facts, never treats installation as remaining quota (0.763625ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /<RuntimeInfoChip/. Input:
+
+  'import MobileFormDialog from "./MobileFormDialog";\n' +
+    'import RoleEditor from "./RoleEditor.tsx";\n' +
+    'import ConfirmDialog from "../packages/web/src/components/ConfirmDialog.tsx";\n' +
+    'import {\n' +
+    '  OfficialRoleHero,\n' +
+    '  OfficialRoleIdentity,\n' +
+    '} from "./OfficialComputerProfile.generated";\n' +
+    'import { useEffect, useState, useRef } from "react";\n' +
+    'import type { RahClient } from "@rah-os/client-sdk";\n' +
+    'import type {\n' +
+    '  RoleTemplate,\n' +
+    '  LocalRuntimeInventoryResponse,\n' +
+    '} from "@rah-os/protocol";\n' +
+    'import { DescriptionList, Separator, Badge } from "raft-ui";\n' +
+    'import { Pencil, Cpu } from "lucide-react";\n' +
+    'import { roleFormFrom } from "@rah-os/client-core/role-form";\n' +
+    'import RoleFieldEditor, { type RoleField } from "./RoleFieldEditor.tsx";\n' +
+    'import AvatarSlot from "../packages/web/src/components/ui/AvatarSlot.tsx";\n' +
+    'import Tooltip from "../packages/web/src/components/ui/Tooltip.tsx";\n' +
+    'import type { RoleCreateRequest } from "@rah-os/protocol";\n' +
+    'import { useTimeFormatter } from "../packages/web/src/hooks/useTimeFormatter.ts";\n' +
+    'import SectionEyebrow from "@loom/raft-web-source/SectionEyebrow";\n' +
+    'import AvatarEditVeil from "@loom/raft-web-source/AvatarEditVeil";\n' +
+    'import { rolePresentation } from "./role-profile-values";\n' +
+    'import {\n' +
+    '  InfoRow,\n' +
+    '  AgentHeaderName,\n' +
+    '  PROFILE_AVATAR_BUTTON_CLASS,\n' +
+    '  RUNTIME_CHIP_CLASS,\n' +
+    '  INFO_ICON_BUTTON_CLASS,\n' +
+    '} from "./OfficialProfile.generated";\n' +
+    'export default function RoleProfile({\n' +
+    '  client,\n' +
+    '  role,\n' +
+    '  disabled,\n' +
+    '  onSave,\n' +
+    '  onDirtyChange,\n' +
+    '}: {\n' +
+    '  client: RahClient;\n' +
+    '  role: RoleTemplate;\n' +
+    '  disabled: boolean;\n' +
+    '  onSave: (configuration: RoleCreateRequest["configuration"]) => void;\n' +
+    '  onDirtyChange: (dirty: boolean) => void;\n' +
+    '}) {\n' +
+    '  const runtimeContainer = useRef<HTMLDivElement | null>(null);\n' +
+    '  const [runtimeDirty, setRuntimeDirty] = useState(false);\n' +
+    '  const [discardRuntime, setDiscardRuntime] = useState(false);\n' +
+    '  const [field, setField] = useState<RoleField>();\n' +
+    '  const [fieldDirty, setFieldDirty] = useState(false),\n' +
+    '    [discardField, setDiscardField] = useState(false);\n' +
+    '  const nameAction = useRef<HTMLDivElement | null>(null);\n' +
+    '  const trigger = useRef<HTMLButtonElement | null>(null);\n' +
+    '  const edit = (next: RoleField, button: HTMLButtonElement) => {\n' +
+    '    trigger.current = button;\n' +
+    '    setField(next);\n' +
+    '  };\n' +
+    '  const cancel = () => {\n' +
+    '    setField(undefined);\n' +
+    '    setFieldDirty(false);\n' +
+    '    setDiscardField(false);\n' +
+    '    onDirtyChange(false);\n' +
+    '    requestAnimationFrame(() => {\n' +
+    '      if (trigger.current?.isConnected) trigger.current.focus();\n' +
+    '      else nameAction.current?.querySelector("button")?.focus();\n' +
+    '    });\n' +
+    '  };\n' +
+    '  const requestCloseField = () => {\n' +
+    '    if (disabled) return;\n' +
+    '    if (fieldDirty) setDiscardField(true);\n' +
+    '    else cancel();\n' +
+    '  };\n' +
+    '  const [loading, setLoading] = useState(true);\n' +
+    '  const [inventory, setInventory] = useState<LocalRuntimeInventoryResponse>();\n' +
+    '  useEffect(() => {\n' +
+    '    const abort = new AbortController();\n' +
+    '    void client\n' +
+    '      .request("host.runtime.list", {}, { signal: abort.signal })\n' +
+    '      .then((v) => {\n' +
+    '        if (!abort.signal.aborted) setInventory(v);\n' +
+    '      })\n' +
+    '      .catch(() => {\n' +
+    '        if (!abort.signal.aborted) setInventory(undefined);\n' +
+    '      })\n' +
+    '      .finally(() => {\n' +
+    '        if (!abort.signal.aborted) setLoading(false);\n' +
+    '      });\n' +
+    '    return () => abort.abort();\n' +
+    '  }, [client]);\n' +
+    '  const form = roleFormFrom(role.configuration);\n' +
+    '  const presentation = rolePresentation(role.configuration, inventory);\n' +
+    '  const runtime = inventory?.runtimes.find(\n' +
+    '    (r) => r.runtimeOfferId === form.runtimeOfferId,\n' +
+    '  );\n' +
+    '  const model = runtime?.modelBindingDescriptors.find(\n' +
+    '    (b) => b.modelBindingId === form.modelBindingId,\n' +
+    '  );\n' +
+    '  const { formatShortDateTime } = useTimeFormatter();\n' +
+    '  const editor = (current: RoleField) => (\n' +
+    '    <RoleFieldEditor\n' +
+    '      key={current}\n' +
+    '      field={current}\n' +
+    '      role={role}\n' +
+    '      client={client}\n' +
+    '      disabled={disabled}\n' +
+    '      onSave={onSave}\n' +
+    '      onCancel={\n' +
+    '        current === "description" || current === "avatarKey"\n' +
+    '          ? requestCloseField\n' +
+    '          : cancel\n' +
+    '      }\n' +
+    '      onDiscard={cancel}\n' +
+    '      descriptionPlaceholder={presentation.fallback}\n' +
+    '      onDirtyChange={(value) => {\n' +
+    '        setFieldDirty(value);\n' +
+    '        onDirtyChange(value);\n' +
+    '      }}\n' +
+    '    />\n' +
+    '  );\n' +
+    '  const editAction = (current: RoleField, label: string) => (\n' +
+    '    <Tooltip content={`编辑${label}`}>\n' +
+    '      <button\n' +
+    '        type="button"\n' +
+    '        aria-label={`编辑${label}`}\n' +
+    '        disabled={disabled || Boolean(field)}\n' +
+    '        onClick={(e) => edit(current, e.currentTarget)}\n' +
+    '        className={INFO_ICON_BUTTON_CLASS}\n' +
+    '      >\n' +
+    '        <Pencil size={14} />\n' +
+    '      </button>\n' +
+    '    </Tooltip>\n' +
+    '  );\n' +
+    '  // Composition port: AgentDetailPanel profile hero / description / info / runtime.\n' +
+    '  // Role configuration has no live presence or unique native session handle.\n' +
+    '  return (\n' +
+    '    <div data-testid="loom-role-profile" className="font-sans bg-layer-canvas">\n' +
+    '      <OfficialRoleHero data-testid="role-profile-hero">\n' +
+    '        <Tooltip content="更换头像">\n' +
+    '          <button\n' +
+    '            type="button"\n' +
+    '            aria-label="更换头像"\n' +
+    '            disabled={disabled || Boolean(field)}\n' +
+    '            onClick={(e) => edit("avatarKey", e.currentTarget)}\n' +
+    '            className={PROFILE_AVATAR_BUTTON_CLASS}\n' +
+    '          >\n' +
+    '            <AvatarSlot\n' +
+    '              context="profile-hero"\n' +
+    '              type="agent"\n' +
+    '              agentAvatarUrl={role.configuration.avatarKey}\n' +
+    '            />\n' +
+    '            <AvatarEditVeil icon={Pencil} />\n' +
+    '          </button>\n' +
+    '        </Tooltip>\n' +
+    '        <OfficialRoleIdentity data-testid="role-profile-identity">\n' +
+    '          <div ref={nameAction} className="flex min-w-0 items-center gap-2">\n' +
+    '            <AgentHeaderName\n' +
+    '              agent={{ name: role.configuration.displayName }}\n' +
+    '              onEdit={\n' +
+    '                !disabled && !field\n' +
+    '                  ? () => {\n' +
+    '                      const button =\n' +
+    '                        nameAction.current?.querySelector("button");\n' +
+    '                      if (button) edit("displayName", button);\n' +
+    '                    }\n' +
+    '                  : undefined\n' +
+    '              }\n' +
+    '            />\n' +
+    '          </div>\n' +
+    '          <div className="mt-2 flex min-w-0 flex-wrap items-center gap-1.5">\n' +
+    '            <Badge appearance="outline">角色</Badge>\n' +
+    '            <Badge\n' +
+    '              appearance="soft"\n' +
+    '              variant="information"\n' +
+    '              className={RUNTIME_CHIP_CLASS}\n' +
+    '            >\n' +
+    '              <Cpu size={14} aria-hidden="true" />\n' +
+    '              {runtime?.displayName ?? (loading ? "读取中…" : "当前配置不可用")}\n' +
+    '            </Badge>\n' +
+    '          </div>\n' +
+    '          <p className="mt-1.5 text-footnote text-foreground-hint">\n' +
+    '            修改保存为新的角色修订；已有实例保持原配置。\n' +
+    '          </p>\n' +
+    '        </OfficialRoleIdentity>\n' +
+    '      </OfficialRoleHero>\n' +
+    '      {field === "displayName" && (\n' +
+    '        <div className="px-5 pb-4">{editor(field)}</div>\n' +
+    '      )}\n' +
+    '      <section data-testid="role-profile-prompt" className="px-5 py-3">\n' +
+    '        <div className="flex items-center gap-2 mb-1">\n' +
+    '          <SectionEyebrow as="div">描述</SectionEyebrow>\n' +
+    '          {editAction("description", "描述")}\n' +
+    '        </div>\n' +
+    '        <p\n' +
+    '          data-testid="role-description"\n' +
+    '          className={`text-subhead whitespace-pre-wrap break-words ${role.configuration.description?.trim() ? "text-foreground" : "text-foreground-hint"}`}\n' +
+    '        >\n' +
+    '          {presentation.description}\n' +
+    '        </p>\n' +
+    '        <SectionEyebrow as="div" className="mt-4 mb-1">\n' +
+    '          提示词\n' +
+    '        </SectionEyebrow>\n' +
+    '        <p\n' +
+    '          data-testid="role-instructions"\n' +
+    '          className="text-subhead text-foreground whitespace-pre-wrap break-words"\n' +
+    '        >\n' +
+    '          {form.instructions || (\n' +
+    '            <span className="text-foreground-hint">未设置</span>\n' +
+    '          )}\n' +
+    '        </p>\n' +
+    '      </section>\n' +
+    '      {(field === "description" || field === "avatarKey") && (\n' +
+    '        <MobileFormDialog\n' +
+    '          title={field === "description" ? "编辑描述与提示词" : "更换头像"}\n' +
+    '          testId={\n' +
+    '            field === "description"\n' +
+    '              ? "role-description-dialog"\n' +
+    '              : "role-avatar-dialog"\n' +
+    '          }\n' +
+    '          busy={disabled}\n' +
+    '          onClose={requestCloseField}\n' +
+    '        >\n' +
+    '          {editor(field)}\n' +
+    '        </MobileFormDialog>\n' +
+    '      )}\n' +
+    '      {discardField && (\n' +
+    '        <ConfirmDialog\n' +
+    '          layer={2}\n' +
+    '          title="尚未保存的修改"\n' +
+    '          message="离开将放弃尚未保存的修改。"\n' +
+    '          confirmLabel="放弃修改"\n' +
+    '          cancelLabel="继续编辑"\n' +
+    '          confirmVariant="danger"\n' +
+    '          onClose={() => setDiscardField(false)}\n' +
+    '          onConfirm={cancel}\n' +
+    '        />\n' +
+    '      )}\n' +
+    '      <Separator />\n' +
+    '      <section className="px-5 py-4">\n' +
+    '        <SectionEyebrow as="div" className="mb-3">\n' +
+    '          信息\n' +
+    '        </SectionEyebrow>\n' +
+    '        <DescriptionList direction="horizontal">\n' +
+    '          <InfoRow label="创建时间">\n' +
+    '            {formatShortDateTime(role.createdAt)}\n' +
+    '          </InfoRow>\n' +
+    '          <InfoRow label="修改时间">\n' +
+    '            {role.updatedAt ? formatShortDateTime(role.updatedAt) : "未记录"}\n' +
+    '          </InfoRow>\n' +
+    '        </DescriptionList>\n' +
+    '      </section>\n' +
+    '      <Separator />\n' +
+    '      <section data-testid="role-profile-runtime" className="px-5 py-4">\n' +
+    '        <div className="flex items-center gap-2 mb-3">\n' +
+    '          <SectionEyebrow as="div">运行时配置</SectionEyebrow>\n' +
+    '          {editAction("runtimeOfferId", "运行时配置")}\n' +
+    '        </div>\n' +
+    '        <DescriptionList direction="horizontal">\n' +
+    '          <InfoRow label="运行时">\n' +
+    '            <Badge\n' +
+    '              appearance="soft"\n' +
+    '              variant="information"\n' +
+    '              className={RUNTIME_CHIP_CLASS}\n' +
+    '            >\n' +
+    '              {runtime?.displayName ?? (loading ? "读取中…" : "当前配置不可用")}\n' +
+    '            </Badge>\n' +
+    '          </InfoRow>\n' +
+    '          <InfoRow label="模型">\n' +
+    '            <span className="min-w-0 break-all font-mono">\n' +
+    '              {(model?.displayName ?? model?.modelId ?? form.modelBindingId) ||\n' +
+    '                "未指定"}\n' +
+    '            </span>\n' +
+    '          </InfoRow>\n' +
+    '          <InfoRow label="推理强度">{form.reasoning || "默认／不适用"}</InfoRow>\n' +
+    '          <InfoRow label="模式">\n' +
+    '            {["fast", "priority"].includes(form.serviceTier ?? "")\n' +
+    '              ? "快速模式"\n' +
+    '              : "默认"}\n' +
+    '          </InfoRow>\n' +
+    '        </DescriptionList>\n' +
+    '      </section>\n' +
+    '      {field === "runtimeOfferId" && (\n' +
+    '        <MobileFormDialog\n' +
+    '          title="编辑运行时配置"\n' +
+    ' '... 1260 more characters
+
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/role-profile-affordances.test.ts:13:47)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'import MobileFormDialog from "./MobileFormDialog";\nimport RoleEditor from "./RoleEditor.tsx";\nimport ConfirmDialog from "../packages/web/src/components/ConfirmDialog.tsx";\nimport {\n  OfficialRoleHero,\n  OfficialRoleIdentity,\n} from "./OfficialComputerProfile.generated";\nimport { useEffect, useState, useRef } from "react";\nimport type { RahClient } from "@rah-os/client-sdk";\nimport type {\n  RoleTemplate,\n  LocalRuntimeInventoryResponse,\n} from "@rah-os/protocol";\nimport { DescriptionList, Separator, Badge } from "raft-ui";\nimport { Pencil, Cpu } from "lucide-react";\nimport { roleFormFrom } from "@rah-os/client-core/role-form";\nimport RoleFieldEditor, { type RoleField } from "./RoleFieldEditor.tsx";\nimport AvatarSlot from "../packages/web/src/components/ui/AvatarSlot.tsx";\nimport Tooltip from "../packages/web/src/components/ui/Tooltip.tsx";\nimport type { RoleCreateRequest } from "@rah-os/protocol";\nimport { useTimeFormatter } from "../packages/web/src/hooks/useTimeFormatter.ts";\nimport SectionEyebrow from "@loom/raft-web-source/SectionEyebrow";\nimport AvatarEditVeil from "@loom/raft-web-source/AvatarEditVeil";\nimport { rolePresentation } from "./role-profile-values";\nimport {\n  InfoRow,\n  AgentHeaderName,\n  PROFILE_AVATAR_BUTTON_CLASS,\n  RUNTIME_CHIP_CLASS,\n  INFO_ICON_BUTTON_CLASS,\n} from "./OfficialProfile.generated";\nexport default function RoleProfile({\n  client,\n  role,\n  disabled,\n  onSave,\n  onDirtyChange,\n}: {\n  client: RahClient;\n  role: RoleTemplate;\n  disabled: boolean;\n  onSave: (configuration: RoleCreateRequest["configuration"]) => void;\n  onDirtyChange: (dirty: boolean) => void;\n}) {\n  const runtimeContainer = useRef<HTMLDivElement | null>(null);\n  const [runtimeDirty, setRuntimeDirty] = useState(false);\n  const [discardRuntime, setDiscardRuntime] = useState(false);\n  const [field, setField] = useState<RoleField>();\n  const [fieldDirty, setFieldDirty] = useState(false),\n    [discardField, setDiscardField] = useState(false);\n  const nameAction = useRef<HTMLDivElement | null>(null);\n  const trigger = useRef<HTMLButtonElement | null>(null);\n  const edit = (next: RoleField, button: HTMLButtonElement) => {\n    trigger.current = button;\n    setField(next);\n  };\n  const cancel = () => {\n    setField(undefined);\n    setFieldDirty(false);\n    setDiscardField(false);\n    onDirtyChange(false);\n    requestAnimationFrame(() => {\n      if (trigger.current?.isConnected) trigger.current.focus();\n      else nameAction.current?.querySelector("button")?.focus();\n    });\n  };\n  const requestCloseField = () => {\n    if (disabled) return;\n    if (fieldDirty) setDiscardField(true);\n    else cancel();\n  };\n  const [loading, setLoading] = useState(true);\n  const [inventory, setInventory] = useState<LocalRuntimeInventoryResponse>();\n  useEffect(() => {\n    const abort = new AbortController();\n    void client\n      .request("host.runtime.list", {}, { signal: abort.signal })\n      .then((v) => {\n        if (!abort.signal.aborted) setInventory(v);\n      })\n      .catch(() => {\n        if (!abort.signal.aborted) setInventory(undefined);\n      })\n      .finally(() => {\n        if (!abort.signal.aborted) setLoading(false);\n      });\n    return () => abort.abort();\n  }, [client]);\n  const form = roleFormFrom(role.configuration);\n  const presentation = rolePresentation(role.configuration, inventory);\n  const runtime = inventory?.runtimes.find(\n    (r) => r.runtimeOfferId === form.runtimeOfferId,\n  );\n  const model = runtime?.modelBindingDescriptors.find(\n    (b) => b.modelBindingId === form.modelBindingId,\n  );\n  const { formatShortDateTime } = useTimeFormatter();\n  const editor = (current: RoleField) => (\n    <RoleFieldEditor\n      key={current}\n      field={current}\n      role={role}\n      client={client}\n      disabled={disabled}\n      onSave={onSave}\n      onCancel={\n        current === "description" || current === "avatarKey"\n          ? requestCloseField\n          : cancel\n      }\n      onDiscard={cancel}\n      descriptionPlaceholder={presentation.fallback}\n      onDirtyChange={(value) => {\n        setFieldDirty(value);\n        onDirtyChange(value);\n      }}\n    />\n  );\n  const editAction = (current: RoleField, label: string) => (\n    <Tooltip content={`编辑${label}`}>\n      <button\n        type="button"\n        aria-label={`编辑${label}`}\n        disabled={disabled || Boolean(field)}\n        onClick={(e) => edit(current, e.currentTarget)}\n        className={INFO_ICON_BUTTON_CLASS}\n      >\n        <Pencil size={14} />\n      </button>\n    </Tooltip>\n  );\n  // Composition port: AgentDetailPanel profile hero / description / info / runtime.\n  // Role configuration has no live presence or unique native session handle.\n  return (\n    <div data-testid="loom-role-profile" className="font-sans bg-layer-canvas">\n      <OfficialRoleHero data-testid="role-profile-hero">\n        <Tooltip content="更换头像">\n          <button\n            type="button"\n            aria-label="更换头像"\n            disabled={disabled || Boolean(field)}\n            onClick={(e) => edit("avatarKey", e.currentTarget)}\n            className={PROFILE_AVATAR_BUTTON_CLASS}\n          >\n            <AvatarSlot\n              context="profile-hero"\n              type="agent"\n              agentAvatarUrl={role.configuration.avatarKey}\n            />\n            <AvatarEditVeil icon={Pencil} />\n          </button>\n        </Tooltip>\n        <OfficialRoleIdentity data-testid="role-profile-identity">\n          <div ref={nameAction} className="flex min-w-0 items-center gap-2">\n            <AgentHeaderName\n              agent={{ name: role.configuration.displayName }}\n              onEdit={\n                !disabled && !field\n                  ? () => {\n                      const button =\n                        nameAction.current?.querySelector("button");\n                      if (button) edit("displayName", button);\n                    }\n                  : undefined\n              }\n            />\n          </div>\n          <div className="mt-2 flex min-w-0 flex-wrap items-center gap-1.5">\n            <Badge appearance="outline">角色</Badge>\n            <Badge\n              appearance="soft"\n              variant="information"\n              className={RUNTIME_CHIP_CLASS}\n            >\n              <Cpu size={14} aria-hidden="true" />\n              {runtime?.displayName ?? (loading ? "读取中…" : "当前配置不可用")}\n            </Badge>\n          </div>\n          <p className="mt-1.5 text-footnote text-foreground-hint">\n            修改保存为新的角色修订；已有实例保持原配置。\n          </p>\n        </OfficialRoleIdentity>\n      </OfficialRoleHero>\n      {field === "displayName" && (\n        <div className="px-5 pb-4">{editor(field)}</div>\n      )}\n      <section data-testid="role-profile-prompt" className="px-5 py-3">\n        <div className="flex items-center gap-2 mb-1">\n          <SectionEyebrow as="div">描述</SectionEyebrow>\n          {editAction("description", "描述")}\n        </div>\n        <p\n          data-testid="role-description"\n          className={`text-subhead whitespace-pre-wrap break-words ${role.configuration.description?.trim() ? "text-foreground" : "text-foreground-hint"}`}\n        >\n          {presentation.description}\n        </p>\n        <SectionEyebrow as="div" className="mt-4 mb-1">\n          提示词\n        </SectionEyebrow>\n        <p\n          data-testid="role-instructions"\n          className="text-subhead text-foreground whitespace-pre-wrap break-words"\n        >\n          {form.instructions || (\n            <span className="text-foreground-hint">未设置</span>\n          )}\n        </p>\n      </section>\n      {(field === "description" || field === "avatarKey") && (\n        <MobileFormDialog\n          title={field === "description" ? "编辑描述与提示词" : "更换头像"}\n          testId={\n            field === "description"\n              ? "role-description-dialog"\n              : "role-avatar-dialog"\n          }\n          busy={disabled}\n          onClose={requestCloseField}\n        >\n          {editor(field)}\n        </MobileFormDialog>\n      )}\n      {discardField && (\n        <ConfirmDialog\n          layer={2}\n          title="尚未保存的修改"\n          message="离开将放弃尚未保存的修改。"\n          confirmLabel="放弃修改"\n          cancelLabel="继续编辑"\n          confirmVariant="danger"\n          onClose={() => setDiscardField(false)}\n          onConfirm={cancel}\n        />\n      )}\n      <Separator />\n      <section className="px-5 py-4">\n        <SectionEyebrow as="div" className="mb-3">\n          信息\n        </SectionEyebrow>\n        <DescriptionList direction="horizontal">\n          <InfoRow label="创建时间">\n            {formatShortDateTime(role.createdAt)}\n          </InfoRow>\n          <InfoRow label="修改时间">\n            {role.updatedAt ? formatShortDateTime(role.updatedAt) : "未记录"}\n          </InfoRow>\n        </DescriptionList>\n      </section>\n      <Separator />\n      <section data-testid="role-profile-runtime" className="px-5 py-4">\n        <div className="flex items-center gap-2 mb-3">\n          <SectionEyebrow as="div">运行时配置</SectionEyebrow>\n          {editAction("runtimeOfferId", "运行时配置")}\n        </div>\n        <DescriptionList direction="horizontal">\n          <InfoRow label="运行时">\n            <Badge\n              appearance="soft"\n              variant="information"\n              className={RUNTIME_CHIP_CLASS}\n            >\n              {runtime?.displayName ?? (loading ? "读取中…" : "当前配置不可用")}\n            </Badge>\n          </InfoRow>\n          <InfoRow label="模型">\n            <span className="min-w-0 break-all font-mono">\n              {(model?.displayName ?? model?.modelId ?? form.modelBindingId) ||\n                "未指定"}\n            </span>\n          </InfoRow>\n          <InfoRow label="推理强度">{form.reasoning || "默认／不适用"}</InfoRow>\n          <InfoRow label="模式">\n            {["fast", "priority"].includes(form.serviceTier ?? "")\n              ? "快速模式"\n              : "默认"}\n          </InfoRow>\n        </DescriptionList>\n      </section>\n      {field === "runtimeOfferId" && (\n        <MobileFormDialog\n          title="编辑运行时配置"\n '... 1260 more characters,
+    expected: /<RuntimeInfoChip/,
+    operator: 'match',
+    diff: 'simple'
+  }

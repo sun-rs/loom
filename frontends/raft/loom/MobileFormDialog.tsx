@@ -16,6 +16,7 @@ export default function MobileFormDialog({
   testId,
   children,
   containerRef,
+  initialFocus,
 }: {
   title: string;
   busy?: boolean;
@@ -23,6 +24,7 @@ export default function MobileFormDialog({
   testId?: string;
   children: ReactNode;
   containerRef?: RefObject<HTMLDivElement | null>;
+  initialFocus?: RefObject<HTMLElement | null>;
 }) {
   return (
     <Dialog
@@ -32,7 +34,11 @@ export default function MobileFormDialog({
         if (!open && !busy) onClose();
       }}
     >
-      <DialogSheetContent ref={containerRef} data-testid={testId}>
+      <DialogSheetContent
+        ref={containerRef}
+        data-testid={testId}
+        initialFocus={initialFocus}
+      >
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogClose disabled={busy} aria-label="关闭" />

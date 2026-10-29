@@ -1,0 +1,16 @@
+[loom instance-prewarm] prewarm of principal_a1d4a86a-100e-4f99-8981-35868209c007 skipped: disabled
+[loom instance-prewarm] prewarm of principal_8ec19091-7ec8-4d63-990b-be1587a0742c skipped: disabled
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+locator.click: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByTestId('loom-role-profile').getByRole('button', { name: '编辑提示词', exact: true })[22m
+
+    at verifyRoleProfileAffordances (/Users/sun/Code/repos/rah_os/scripts/official-web/role-profile-affordances-browser.mjs:12:85)
+    at async file:///Users/sun/Code/repos/rah_os/scripts/official-web/channel-browser.mjs:214:32 {
+  name: 'TimeoutError'
+}
+
+Node.js v25.9.0

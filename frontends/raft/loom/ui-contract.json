@@ -809,6 +809,26 @@
         "scripts/official-web/channel-role-usability.test.ts",
         "scripts/official-web/channel-role-usability-browser.mjs"
       ]
+    },
+    {
+      "id": "role-runtime-info",
+      "owner": "pinned official RuntimeAccountUsageChip JSX / native Status / Dialog initialFocus",
+      "rule": "Description/prompt pencils share one revision dialog, focusing the selected input through native initialFocus. Runtime badge/card/header and mobile sheet retain upstream geometry, hover delays and pinned-dismiss behavior. Loom data slot shows Host detection facts; quota is explicitly unavailable, never inferred from installation.",
+      "sources": [
+        "frontends/raft/upstream/runtime-info-2026-10-29/RuntimeAccountUsageChip.tsx",
+        "frontends/raft/node_modules/raft-ui/dist/components/dialog/dialog-sheet.d.mts"
+      ],
+      "bindings": [
+        "RoleProfile.tsx",
+        "RoleFieldEditor.tsx",
+        "MobileFormDialog.tsx",
+        "RuntimeInfoChip.tsx",
+        "OfficialRuntimeInfo.generated.tsx"
+      ],
+      "evidence": [
+        "scripts/official-web/role-profile-affordances.test.ts",
+        "scripts/official-web/role-profile-affordances-browser.mjs"
+      ]
     }
   ],
   "exceptions": [

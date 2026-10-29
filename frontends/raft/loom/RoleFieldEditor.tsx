@@ -4,7 +4,7 @@ import {
   patchRoleDescription,
 } from "./role-profile-values.ts";
 // Loom Revision binding around official AgentProfileEditDialog field/preset composition.
-import { useState, useEffect, useId } from "react";
+import { useState, useEffect, useId, type RefObject } from "react";
 import { DialogCommit } from "raft-ui/wip";
 import { Button, Input, Textarea, DialogFooter } from "raft-ui";
 import type { RahClient } from "@rah-os/client-sdk";
@@ -34,6 +34,7 @@ export default function RoleFieldEditor({
   onDirtyChange,
   descriptionPlaceholder,
   onDiscard,
+  initialFocusRef,
 }: {
   field: RoleField;
   role: RoleTemplate;
@@ -44,6 +45,7 @@ export default function RoleFieldEditor({
   onDirtyChange: (dirty: boolean) => void;
   descriptionPlaceholder?: string;
   onDiscard?: () => void;
+  initialFocusRef?: RefObject<HTMLTextAreaElement | null>;
 }) {
   const textual =
     field === "displayName" ||
@@ -134,7 +136,7 @@ export default function RoleFieldEditor({
           <FormField label="描述" labelStyle="plain">
             <Textarea
               aria-label="描述"
-              autoFocus
+              ref={field === "description" ? initialFocusRef : undefined}
               rows={3}
               maxLength={2000}
               placeholder={descriptionPlaceholder}
@@ -146,6 +148,7 @@ export default function RoleFieldEditor({
           <FormField label="提示词" labelStyle="plain">
             <Textarea
               aria-label="提示词"
+              ref={field === "instructions" ? initialFocusRef : undefined}
               rows={8}
               maxLength={64 * 1024}
               value={value}
