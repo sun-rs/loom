@@ -3,13 +3,14 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 const read = (p) => readFileSync("frontends/raft/" + p, "utf8");
 test("settings sidebar adopts native group and item composition instead of hand-sized labels", () => {
-  const s = read("loom/OfficialSettingsSidebar.generated.tsx");
+  const s = read("loom/OfficialSidebar139.generated.js");
   for (const name of [
     "SidebarGroupLabel",
     "SidebarItemContent",
     "SidebarItemTitle",
   ])
-    assert.ok(s.includes("<" + name));
+    assert.ok(s.includes(name + " as "));
+  assert.match(s, /flex flex-col gap-0\.5 py-2/);
   assert.doesNotMatch(s, /tracking-widest|text-\[10px\]|space-y-3/);
 });
 test("settings detail retains native header and responsive body composition", () => {

@@ -1,5 +1,6 @@
 // Read-only UI measurement on a disposable Core; reports differences, never certifies parity.
 import { writeFile } from "node:fs/promises";
+import assert from "node:assert/strict";
 export async function auditSidebarPixels({
   browser,
   origin,
@@ -9,6 +10,7 @@ export async function auditSidebarPixels({
   role,
   head,
 }) {
+  const prefix = process.env.LOOM_PIXEL_AUDIT_PREFIX ?? "/tmp/loom-pixel-audit";
   const prefs = (
     await client.request("sidebar.get", { workspaceId: workspace.workspaceId })
   ).preferences;
@@ -70,7 +72,7 @@ export async function auditSidebarPixels({
           hoverInset: r.left - base.left + parseFloat(pseudo.left),
         };
       });
-    await page.screenshot({ path: "/tmp/loom-pixel-audit-roles.png" });
+    await page.screenshot({ path: `${prefix}-roles.png` });
     await page.goto(origin + "/?view=channels");
     await page
       .locator(`[data-public-channel-id="${channels[0].roomId}"]`)
@@ -103,7 +105,7 @@ export async function auditSidebarPixels({
           sectionMarginBottom: parseFloat(getComputedStyle(pin).marginBottom),
         };
       });
-    await page.screenshot({ path: "/tmp/loom-pixel-audit-channels.png" });
+    await page.screenshot({ path: `${prefix}-channels.png` });
     await page.goto(origin + "/?view=computers");
     await page.getByTestId("computer-desktop-row").waitFor();
     const computers = await page
@@ -130,20 +132,159 @@ export async function auditSidebarPixels({
           rowHeight: b.height,
         };
       });
-    await page.screenshot({ path: "/tmp/loom-pixel-audit-computers.png" });
+    await page.screenshot({ path: `${prefix}-computers.png` });
+    const interactions = {};
+    if (process.env.LOOM_PIXEL_AUDIT_EXPECT === "139") {
+      await page.goto(origin + "/?view=agents");
+      const roleRows = page.locator("[data-role-id]");
+      await roleRows.nth(1).hover();
+      await page.waitForFunction(() => {
+        const el = document.querySelectorAll("[data-role-id]")[1];
+        return (
+          getComputedStyle(el, "::before").backgroundColor !==
+          "rgba(0, 0, 0, 0)"
+        );
+      });
+      assert.equal(
+        await roleRows
+          .nth(1)
+          .evaluate((el) => getComputedStyle(el).backgroundColor),
+        "rgba(0, 0, 0, 0)",
+        "hover paints only the inset pseudo frame",
+      );
+      const group = page.locator(
+        '[data-testid^="sidebar-agent-machine-group-toggle-"]',
+      );
+      await group.click();
+      assert.equal(await roleRows.count(), 0);
+      await group.focus();
+      await page.keyboard.press("Enter");
+      await roleRows.nth(1).waitFor();
+      await page.goto(origin + "/?view=channels");
+      const beta = page.locator(
+        `[data-public-channel-id="${channels[1].roomId}"]`,
+      );
+      await beta.click({ button: "right" });
+      await page.getByRole("menuitem", { name: "置顶", exact: true }).waitFor();
+      assert.equal(
+        await beta.evaluate((el) => getComputedStyle(el).backgroundColor),
+        "rgba(0, 0, 0, 0)",
+        "open context menu retains the native inset frame",
+      );
+      assert.match(
+        await beta.getAttribute("class"),
+        /before:bg-fill-cell-hover/,
+      );
+      await page.keyboard.press("Escape");
+      const section = page.locator('[data-sidebar-section="channels"]');
+      const heading = section.locator("[data-section-handle]");
+      await heading.click();
+      assert.equal(await beta.isVisible(), false);
+      assert.equal(
+        await page
+          .locator(`[data-public-channel-id="${channels[0].roomId}"]`)
+          .isVisible(),
+        true,
+        "collapsing Channels retains Pinned",
+      );
+      await heading.click();
+      const ids = () =>
+        section
+          .locator("[data-public-channel-id]")
+          .evaluateAll((els) =>
+            els.map((el) => el.getAttribute("data-public-channel-id")),
+          );
+      const before = await ids();
+      const first = await beta.boundingBox(),
+        last = await section
+          .locator("[data-public-channel-id]")
+          .last()
+          .boundingBox();
+      await page.mouse.move(
+        first.x + first.width / 2,
+        first.y + first.height / 2,
+      );
+      await page.mouse.down();
+      const written = page.waitForResponse(
+        (r) => r.url().endsWith("/sidebar/patch") && r.status() === 200,
+      );
+      await page.mouse.move(last.x + last.width / 2, last.y + last.height - 2, {
+        steps: 12,
+      });
+      await page.mouse.up();
+      await written;
+      await page.waitForFunction(
+        ({ id, original }) =>
+          JSON.stringify(
+            [
+              ...document.querySelectorAll(
+                `[data-sidebar-section="${id}"] [data-public-channel-id]`,
+              ),
+            ].map((el) => el.getAttribute("data-public-channel-id")),
+          ) !== JSON.stringify(original),
+        { id: "channels", original: before },
+      );
+      const after = await ids();
+      assert.deepEqual(
+        after,
+        [...before].reverse(),
+        "native list wrapper keeps the existing sortable row contract",
+      );
+      await page.reload();
+      await beta.waitFor();
+      assert.deepEqual(await ids(), after, "dragged order remains durable");
+      interactions.insetHoverAndMenu = true;
+      interactions.collapseKeyboardAndIndependentSections = true;
+      interactions.dragPersists = true;
+      await page.goto(origin + "/?view=settings");
+      const settings = page.getByTestId("settings-sidebar-list");
+      await settings.waitFor();
+      const gap = await settings.evaluate((root) => {
+        const rows = root.querySelectorAll('[data-slot="sidebar-item"]');
+        return (
+          rows[1].getBoundingClientRect().top -
+          rows[0].getBoundingClientRect().bottom
+        );
+      });
+      assert.equal(gap, 2, "settings shares the acquired native list spacing");
+      await page.screenshot({ path: `${prefix}-settings.png` });
+      interactions.settingsNativeListGap = gap;
+    }
     const result = {
       fixtureOnly: true,
       paidProviders: false,
+      browser: browser.browserType().name(),
       viewport: { width: 1440, height: 1000, dpr: 1, zoom: 1 },
       roles,
       channels: channelsMetrics,
       computers,
+      interactions,
     };
     if (process.env.LOOM_PIXEL_AUDIT_OUTPUT)
       await writeFile(
         process.env.LOOM_PIXEL_AUDIT_OUTPUT,
         JSON.stringify(result, null, 2) + "\n",
       );
+    if (process.env.LOOM_PIXEL_AUDIT_EXPECT === "139") {
+      assert.equal(roles.avatarInset, 20, "native Web139 Role content inset");
+      assert.equal(roles.headerInset, 20);
+      assert.equal(roles.groupInset, 20);
+      assert.equal(roles.rowGap, 2);
+      assert.equal(roles.groupToFirstRow, 8);
+      assert.equal(roles.rowHeight, 38);
+      assert.equal(roles.hoverInset, 8);
+      assert.equal(channelsMetrics.rowGap, 2);
+      assert.equal(channelsMetrics.rowHeight, 38);
+      assert.equal(channelsMetrics.headerToHover, 8);
+      assert.equal(channelsMetrics.hoverInset, 8);
+      assert.equal(channelsMetrics.lastPinnedRowToNextHeaderBox, 8);
+      assert.equal(channelsMetrics.lastPinnedRowToNextHeaderContent, 24);
+      assert.equal(channelsMetrics.sectionMarginBottom, 0);
+      assert.equal(computers.iconInset, 20);
+      assert.equal(computers.headerInset, 20);
+      assert.equal(computers.hoverInset, 8);
+      assert.equal(computers.headerToHover, 8);
+    }
     return result;
   } finally {
     await context.close();

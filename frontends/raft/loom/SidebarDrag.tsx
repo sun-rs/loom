@@ -18,6 +18,7 @@ import {
   sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { SidebarSection } from "raft-ui";
 import type { SidebarPreferences, SidebarPatchRequest } from "@rah-os/protocol";
 import { sidebarDrop, type SidebarRoom } from "./sidebar-state.ts";
 type Group = { id: string; rooms: SidebarRoom[] };
@@ -120,10 +121,10 @@ export function DragSection({
     isDragging,
   } = useSortable({ id: `group:${id}`, disabled });
   return (
-    <section
+    <SidebarSection
+      render={<section />}
       ref={setNodeRef}
       data-sidebar-section={id}
-      className="mb-3"
       style={{
         transform: CSS.Transform.toString(
           transform ? { ...transform, x: 0 } : null,
@@ -148,7 +149,7 @@ export function DragSection({
       <SortableContext items={items} strategy={verticalListSortingStrategy}>
         {children}
       </SortableContext>
-    </section>
+    </SidebarSection>
   );
 }
 export function DragRow({

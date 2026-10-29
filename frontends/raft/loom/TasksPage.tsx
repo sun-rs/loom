@@ -30,7 +30,7 @@ import {
   Button,
   Card,
 } from "raft-ui";
-import { CheckSquare } from "lucide-react";
+import { ListTodo } from "lucide-react";
 import type { RahClient } from "@rah-os/client-sdk";
 import type {
   GlobalTasksResponse,
@@ -293,7 +293,7 @@ export default function TasksPage({
           ) : !error && !tasks.length ? (
             <EmptyState
               className="flex h-full flex-col items-center justify-center"
-              icon={<CheckSquare size={36} />}
+              icon={<ListTodo size={36} />}
               title={
                 params.has("taskRoom") ||
                 params.has("taskCreator") ||

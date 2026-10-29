@@ -26,7 +26,7 @@ test("settings sidebar, archive and form field are generated from locked officia
       "frontends/raft/packages/web/src/components/settings/SettingsSidebarList.tsx",
       "utf8",
     ),
-    /OfficialSettingsSidebar.generated/,
+    /OfficialSettingsSidebar139/,
   );
 });
 test("panel bounds resolve to pinned official dependency rather than a local copy", () => {

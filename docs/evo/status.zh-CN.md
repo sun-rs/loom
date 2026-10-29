@@ -27,15 +27,15 @@
 
 ### 前端与通知
 
-- 官网已到1.21.39，当前产品仍为1.21.38资源与npm0.52组合。新的只读审计确认Role旧几何、聊天缺少原生列表gap/py及DND额外margin、Computer重复水平padding、任务图标漏接；尚未施工，不能宣称最新像素一致。Kimi Highspeed的Fast展示映射也仅完成设计分析。[版本／像素差异和后续顺序](evidence/2026-10-30-web139-audit/README.md)。
+- 已对齐固定Web1.21.39的Role／频道／Computer侧栏，接回原生Section/List/Item，移除旧几何覆盖和重复包裹；设置列表绑定原始Q4e声明，任务入口统一ListTodo。Chromium／Firefox实测内容左距20px、hover左距8px、行间2px及标题到首行8px；手机保留既有紧凑例外。Kimi K3.1 Pro展示为模型＋effort＋快速开关，精确映射标准/Highspeed binding而不伪造serviceTier。83项定向检查、类型、构建与桌面／手机浏览器回归通过；不是全站最新或真机验收。[实现、像素与验证边界](evidence/2026-10-30-sidebar139-alignment/README.md)。
 
-- Role侧栏按官网1.21.38完整水平组合修正，角色／已删除可独立折叠并保持；Agy模型与effort分开选择，保存解析到精确原生binding。Kimi重登并安全重启后，正式目录及真实页面已出现K3.1 Pro及Highspeed。[源码、根因和定向验收](evidence/2026-10-30-runtime-sidebar/README.md)。
+- 角色／已删除可独立折叠并保持；Agy模型与effort分开选择，保存解析到精确原生binding。Kimi重登后原生目录已出现K3.1 Pro及Highspeed；旧1.21.38水平几何已被上述1.21.39组合替代。[源码、根因和定向验收](evidence/2026-10-30-runtime-sidebar/README.md)。
 
 - 全系统弹窗操作顺序核查：角色资料编辑、记忆编辑两处改为官方取消在左／保存在右；窄空间原生堆叠、手机Sheet左关闭／右提交均保留。加入递归源码防回归检查，桌面／手机定向浏览器通过；行内编辑保持官方自身顺序。[核查及高清头像来源调查](evidence/2026-10-29-dialog-actions/README.md)。高清动漫素材尚未替换产品图库。
 
 - Role描述／提示词各有铅笔，共用单修订弹窗并原生聚焦对应输入框；运行时增加官方结构的状态方块和悬浮／手机底部信息卡，接Host已有检测、版本、路径、目录数量及时间。绿色只表示CLI检测成功，**真实账户剩余额度未接入**，卡片明确显示未提供，不推算。[接线与定向验收](evidence/2026-10-29-role-profile-affordances/README.md)。
 
-- Role备注与提示词分离、新Role持久随机头像已实现；提示词允许为空，创建／修订／实例化与原生表单回环通过。保留原生16款头像，58款Loom自制图改为32×32，稳定ID及冻结实例规则不变。频道创建采用官方名称／描述／可选成员表单和文件树选目录，未知成员写入核实后不重复创建；移除Role筛选框和频道公开／私密标签。固定effort不再重复提供选择，模型标签隐藏内部传输前缀。Kimi本机目录缺K3.1 Pro已定位为CLI刷新授权失败，待用户重新登录，不伪造模型绑定。[本批证据](evidence/2026-10-29-channel-role-usability/README.md)；此前[头像及提示边界](evidence/2026-10-29-role-identity/README.md)保留。
+- Role备注与提示词分离、新Role持久随机头像已实现；提示词允许为空，创建／修订／实例化与原生表单回环通过。保留原生16款头像，58款Loom自制图改为32×32，稳定ID及冻结实例规则不变。频道创建采用官方名称／描述／可选成员表单和文件树选目录，未知成员写入核实后不重复创建；移除Role筛选框和频道公开／私密标签。固定effort不再重复提供选择，模型标签隐藏内部传输前缀。Kimi本机目录刷新授权问题已由重新登录及重扫解决，原失败记录保留，不伪造模型绑定。[本批证据](evidence/2026-10-29-channel-role-usability/README.md)；此前[头像及提示边界](evidence/2026-10-29-role-identity/README.md)保留。
 
 - `@botiverse/raft-ui@0.52.0` 提供组件；不可变选定源码为 `db5e399` / Web 1.21.23；后续资源移植分别记录来源。不是整套官网应用的未经修改依赖，也不能由构建成功推断最新版全站一致。
 - 固定 Web 1.21.34 的页面、主题、分栏与菜单覆盖见[清单](raft-1.21.34-closeout.zh-CN.md)；升级按[正式工作流](../design/official-ui-upgrade-workflow.zh-CN.md)执行。

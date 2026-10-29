@@ -8,6 +8,8 @@ export type RuntimeModelOption = {
   label: string;
   reasoning: string[];
   variants: BindingChoice[];
+  /** A verified native model pair, not a provider service-tier parameter. */
+  fastBindingIds?: string[];
 };
 /** UI grouping only. Role revisions and launch still use exact Host binding IDs.
  * AGY publishes each effort as a native model ID; unknown/inconsistent metadata
@@ -16,7 +18,23 @@ export function runtimeModelOptions(
   runtime: RuntimeChoice,
 ): RuntimeModelOption[] {
   const result = new Map<string, RuntimeModelOption>();
+  // Explicit official K3.1 Pro pair only. K2.8/K2.7 highspeed are different models.
+  const normal = runtime.bindings.find(
+    (b) => b.modelId === "kimi-code/k3.1-pro",
+  );
+  const fast = runtime.bindings.find(
+    (b) => b.modelId === "kimi-code/k3.1-pro-highspeed",
+  );
+  const kimiPair =
+    runtime.cliId === "kimi" &&
+    normal &&
+    fast &&
+    normal.serviceTiers?.includes("default") &&
+    fast.serviceTiers?.includes("default") &&
+    normal.reasoning.length === fast.reasoning.length &&
+    normal.reasoning.every((level) => fast.reasoning.includes(level));
   for (const binding of runtime.bindings) {
+    const paired = kimiPair && (binding === normal || binding === fast);
     const suffix =
       runtime.cliId === "agy" &&
       binding.modelId?.match(/-(low|medium|high|xhigh|max)$/);
@@ -24,10 +42,12 @@ export function runtimeModelOptions(
       suffix &&
       binding.reasoning.length === 1 &&
       binding.reasoning[0] === suffix[1];
-    const key = grouped
-      ? "model-group:" + binding.modelId!.slice(0, -suffix[0].length)
-      : binding.modelBindingId;
-    const label = roleModelLabel(binding, runtime.bindings);
+    const key = paired
+      ? "kimi-native-pair:k3.1-pro"
+      : grouped
+        ? "model-group:" + binding.modelId!.slice(0, -suffix[0].length)
+        : binding.modelBindingId;
+    const label = roleModelLabel(paired ? normal! : binding, runtime.bindings);
     const visibleLabel = grouped
       ? label.replace(/\s+\((?:low|medium|high|xhigh|max)\)$/i, "")
       : label;
@@ -41,6 +61,7 @@ export function runtimeModelOptions(
         label: visibleLabel,
         reasoning: [],
         variants: [],
+        ...(paired ? { fastBindingIds: [fast!.modelBindingId] } : {}),
       };
       result.set(key, group);
     }
@@ -59,10 +80,13 @@ export function resolveRuntimeModel(
   groups: RuntimeModelOption[],
   value: string,
   effort: string,
+  fast = false,
 ) {
-  return groups
-    .find((group) => group.value === value)
-    ?.variants.find((binding) =>
-      binding.reasoning.length ? binding.reasoning.includes(effort) : !effort,
-    );
+  const group = groups.find((group) => group.value === value);
+  return group?.variants.find(
+    (binding) =>
+      (!group.fastBindingIds ||
+        group.fastBindingIds.includes(binding.modelBindingId) === fast) &&
+      (binding.reasoning.length ? binding.reasoning.includes(effort) : !effort),
+  );
 }

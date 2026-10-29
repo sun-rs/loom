@@ -627,7 +627,7 @@
       "sources": [
         "frontends/raft/upstream/published-2026-10-22/runtime-form/provenance.json"
       ],
-      "rule": "Create and edit share official fields, popup and advanced environment editor. Loom translates published Host bindings; no provider/account management or guessed capability. Role environment is revisioned and frozen per instance. Fast uses the same official boolean field and only published model tiers (Codex priority/fast, Claude supportsFastMode). Explicit default disables inherited CLI Fast. Boolean accessible label is a documented nonvisual compatibility patch.",
+      "rule": "Create and edit share official fields, popup and advanced environment editor. Loom translates published Host bindings; no provider/account management or guessed capability. Role environment is revisioned and frozen per instance. Fast uses the same official boolean field and only published model tiers (Codex priority/fast, Claude supportsFastMode). Explicit default disables inherited CLI Fast. Boolean accessible label is a documented nonvisual compatibility patch. Kimi K3.1 Pro ordinary/Highspeed published binding pair appears as one model plus native Boolean Fast control. Mapping keeps serviceTier default and exact provider IDs; no generic suffix folding, missing counterpart or mismatched effort grouping. Opening a stored highspeed Role makes no dirty draft.",
       "evidence": [
         "scripts/official-web/runtime-fields-source.test.mjs",
         "scripts/official-web/role-create-browser.mjs",
@@ -828,6 +828,32 @@
       "evidence": [
         "scripts/official-web/role-profile-affordances.test.ts",
         "scripts/official-web/role-profile-affordances-browser.mjs"
+      ]
+    },
+    {
+      "id": "sidebar139-composition",
+      "owner": "Web1.21.39 selected published leaves + raft-ui0.52 native SidebarSection/List/Item",
+      "rule": "Header/List/Row composition owns 20px content inset, 8px frame/list padding and 2px row gap. No local Web138 inset override, duplicate Computer padding, DnD section margin or full-width menu-open background. Keep existing Role grouping, deletion restore, durable ordering and owner-approved compact mobile exceptions. Task navigation and empty state share ListTodo. SettingsSidebarList binds unchanged Web139 Q4e presentation; settings rows use native 2px gap / 8px list padding.",
+      "sources": [
+        "frontends/raft/upstream/published-2026-10-30-sidebar/manifest.json",
+        "frontends/raft/upstream/published-2026-10-30-sidebar/source-excerpts.json"
+      ],
+      "bindings": [
+        "RoleWorkspace.tsx",
+        "ComputersPage.tsx",
+        "ChannelSidebar.tsx",
+        "ChatSidebarFrame.tsx",
+        "SidebarDrag.tsx",
+        "SavedNav.tsx",
+        "ChannelListRow.tsx",
+        "DirectChatRow.tsx",
+        "OfficialSidebar139.generated.js",
+        "SettingsPage.tsx"
+      ],
+      "evidence": [
+        "scripts/official-web/sidebar139.test.mjs",
+        "scripts/official-web/sidebar-pixel-audit.mjs",
+        "scripts/official-web/runtime-sidebar-browser.mjs"
       ]
     }
   ],
@@ -1055,5 +1081,11 @@
       "scripts/official-web/ui-refresh138-browser.mjs"
     ],
     "wholeSiteParity": false
+  },
+  "sidebar139Slice": {
+    "manifest": "frontends/raft/upstream/published-2026-10-30-sidebar/manifest.json",
+    "generator": "scripts/official-web/generate-sidebar139.mjs",
+    "wholeSiteParity": false,
+    "supersedesActiveRoleGeometry": "Web138 Role-only horizontal compatibility is no longer imported; its historical source and reproducibility test remain."
   }
 }

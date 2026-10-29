@@ -1,0 +1,17 @@
+{
+  "webVersion": "1.21.39",
+  "releaseCommit": "5a4264c05bf9d8e166849d8b444a1d63f1a665e9",
+  "sourceUrl": "https://app.raft.build/assets/app-shell-CMYocQVA.js",
+  "sourceSha256": "7e03c8d64b9a9f0dd91ddc6c742357a5289632c30defd27483fee5b2f0004e89",
+  "sourceExcerptsSha256": "9b4b6cffb216fa531cef8bc5fbe5c216be2c924f2d195509a2449b7ad52d22d7",
+  "uiPackage": "@botiverse/raft-ui@0.52.0",
+  "license": "Owner-authorized noncommercial reuse; original Raft notices in adoption.json",
+  "kind": "Byte-exact published JSX-runtime button expression and sidebarItemClass declaration; source-derived frame/DnD classes; explicit import/data mapping, not whole-page TSX",
+  "adaptations": [
+    "Loom supplies Role group identity/count/collapse callback; native SidebarSection/SidebarList composition supplies layout.",
+    "DnD execution and persisted order remain owned by the existing Loom SidebarDrag adapter.",
+    "Selected original db5e399 source and previous resource provenance remain unchanged.",
+    "Owner-approved compact mobile geometry remains explicit; this is desktop Web alignment.",
+    "Settings Q4e declaration is unchanged, with native primitive aliases, existing localized labels and no cloud-feedback badge. Settings business/preferences remain in Loom."
+  ]
+}

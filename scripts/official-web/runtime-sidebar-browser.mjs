@@ -130,11 +130,70 @@ export async function verifyRuntimeSidebar({
         .click();
       await chooseOption(page, dialog, "运行时", "Kimi Code");
       await dialog.getByRole("combobox", { name: /^模型/ }).click();
+      assert.deepEqual(
+        await page.getByRole("listbox").getByRole("option").allTextContents(),
+        ["K3.1 Pro"],
+      );
+      await page.getByRole("option", { name: "K3.1 Pro", exact: true }).click();
+      const fast = dialog.getByRole("checkbox", {
+        name: "快速模式",
+        exact: true,
+      });
+      assert.equal(await fast.isChecked(), false);
+      await fast.check();
+      await chooseOption(page, dialog, "推理强度", "max");
+      let sent = page.waitForRequest((r) => r.url().endsWith("/roles/revise"));
+      await dialog
+        .getByRole("button", { name: "保存运行时配置", exact: true })
+        .click();
+      let intent = (await sent).postDataJSON().configuration.modelIntent;
+      assert.deepEqual(intent.exactBindingIds, [
+        "local:kimi-cli/v1:kimi-code/k3.1-pro-highspeed",
+      ]);
+      assert.equal(intent.reasoning, "max");
+      assert.equal(
+        intent.serviceTier,
+        "default",
+        "Kimi native model pair is not a fictitious Fast service-tier",
+      );
+      await dialog.waitFor({ state: "hidden" });
       await page
-        .getByRole("option", { name: "K3.1 Pro", exact: true })
-        .waitFor();
-      await page.keyboard.press("Escape");
+        .getByRole("button", { name: "编辑运行时配置", exact: true })
+        .click();
+      assert.equal(await fast.isChecked(), true);
+      assert.equal(
+        await dialog
+          .getByRole("button", { name: "保存运行时配置", exact: true })
+          .isDisabled(),
+        true,
+        "reopening an old highspeed configuration creates no draft mutation",
+      );
+      await fast.uncheck();
+      sent = page.waitForRequest((r) => r.url().endsWith("/roles/revise"));
+      await dialog
+        .getByRole("button", { name: "保存运行时配置", exact: true })
+        .click();
+      intent = (await sent).postDataJSON().configuration.modelIntent;
+      assert.deepEqual(intent.exactBindingIds, [
+        "local:kimi-cli/v1:kimi-code/k3.1-pro",
+      ]);
+      assert.equal(intent.reasoning, "max", "Fast toggle retains effort");
+      await dialog.waitFor({ state: "hidden" });
+      await page
+        .getByRole("button", { name: "编辑运行时配置", exact: true })
+        .click();
+      assert.equal(await fast.isChecked(), false);
       await page.screenshot({ path: `/tmp/loom-kimi-runtime-${width}.png` });
+      await page.goto(origin + "/?view=settings");
+      await page.getByTestId("settings-sidebar-list").waitFor();
+      assert.ok(
+        await page
+          .getByRole("button", { name: "外观", exact: true })
+          .isVisible(),
+      );
+      await page.screenshot({
+        path: `/tmp/loom-sidebar139-settings-${width}.png`,
+      });
       results.push({
         width,
         foldBothSections: true,
@@ -142,6 +201,7 @@ export async function verifyRuntimeSidebar({
         agyModelEffortSplit: true,
         exactBindingRoundTrip: true,
         kimiProVisible: true,
+        kimiFastExactRoundTrip: true,
       });
     } finally {
       await context.close();
@@ -153,7 +213,7 @@ export async function verifyRuntimeSidebar({
       browser,
       origin,
       role,
-      expectedRuntime: "Agy",
+      expectedRuntime: "Kimi",
     }),
   };
 }

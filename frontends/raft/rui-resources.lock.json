@@ -33,7 +33,7 @@
     "skills/raft-ui-guide/rules/conversation.md": "ac7be00578cd7d0fb1aabca764bb16ff427d49a78bee8c88e7a3919308f52645",
     "skills/raft-ui-guide/rules/lookup.md": "460932f40a688a958ccd922153397eeff7e9ed97aa08d32c447fa086b2e311c2"
   },
-  "pageSource": "Selected db5e399 source plus separately registered 1.21.35 resource ports; package upgrade is not whole-site latest Web parity",
+  "pageSource": "Selected db5e399 source plus separately registered Web1.21.35/1.21.38 and Web1.21.39 sidebar/settings resource slices; not whole-site latest Web parity",
   "fontSource": "loom/fonts/provenance.json",
   "importAlias": "raft-ui",
   "sourceRevision": "npm 0.52.0; official raft-design v0.52.0 / 690906e375f0676f43dd4ce8ba4d949738fc515b"

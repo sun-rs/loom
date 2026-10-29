@@ -1,4 +1,5 @@
 import { OfficialMarkedUnread } from "./OfficialContextMenu138.generated.js";
+import { sidebarItemClass139 } from "./OfficialSidebar139.generated.js";
 // Structural port of official Sidebar.tsx DmRow. Loom supplies identity/unread;
 // native AvatarSlot and SidebarItem own size, palette, hover and selected states.
 import { SidebarItem, SidebarItemCount } from "raft-ui";
@@ -31,7 +32,7 @@ export default function DirectChatRow({
       data-slot="sidebar-item"
       active={selected}
       onClick={onSelect}
-      className={`mx-0 w-full ${allowWrap ? "items-start whitespace-normal" : "items-center"} ${selected ? "  " : menuOpen ? "bg-fill-muted" : ""}`}
+      className={`${sidebarItemClass139(selected, menuOpen)} ${allowWrap ? "items-start whitespace-normal" : "items-center"}`}
     >
       <AvatarSlot context="sidebar-list" type="agent" agentAvatarUrl={null} />
       <div

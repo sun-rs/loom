@@ -1,7 +1,15 @@
 import { OfficialMarkedUnread } from "./OfficialContextMenu138.generated.js";
+import { sidebarItemClass139 } from "./OfficialSidebar139.generated.js";
 // Structural port of Sidebar.tsx ChannelRow; data and navigation belong to Loom.
 // Keep upstream SidebarItem recipes, slot nesting and unread/muted state rules.
-import { SidebarItem, SidebarItemCount, SidebarItemMetaIcon } from "raft-ui";
+import {
+  SidebarItem,
+  SidebarItemChannelIcon,
+  SidebarItemContent,
+  SidebarItemTitle,
+  SidebarItemCount,
+  SidebarItemMetaIcon,
+} from "raft-ui";
 import { BellOff } from "lucide-react";
 import { ChannelKindIcon } from "../packages/web/src/components/channel/channelKindIcon.tsx";
 import Tooltip from "../packages/web/src/components/ui/Tooltip.tsx";
@@ -34,20 +42,17 @@ export default function ChannelListRow({
   return (
     <SidebarItem
       active={selected}
+      tone={muted ? "muted" : showLoudUnreadBadge ? "unread" : "default"}
       onClick={() => onSelectChannel(channelId)}
       data-public-channel-id={channelId}
       data-slot="sidebar-item"
-      className={`mx-0 w-full items-center ${selected ? "  " : menuOpen ? "bg-fill-muted" : ""}`}
+      className={sidebarItemClass139(selected, menuOpen)}
     >
-      <div className="flex size-[18px] shrink-0 items-center justify-center">
-        <ChannelKindIcon type="channel" />
-      </div>
-      <span className="min-w-0 flex flex-1 items-center text-left">
-        <span
-          className={`min-w-0 text-sm truncate ${muted ? "text-foreground-muted " : ""} ${showLoudUnreadBadge ? "font-bold" : ""}`}
-        >
-          {name}
-        </span>
+      <SidebarItemChannelIcon>
+        <ChannelKindIcon type="channel" size={16} />
+      </SidebarItemChannelIcon>
+      <SidebarItemContent className="items-center">
+        <SidebarItemTitle>{name}</SidebarItemTitle>
         {muted && (
           <Tooltip content="已静音">
             <SidebarItemMetaIcon
@@ -55,11 +60,11 @@ export default function ChannelListRow({
               data-slot="sidebar-item-meta-icon"
               aria-label="已静音"
             >
-              <BellOff size={12} />
+              <BellOff size={14} />
             </SidebarItemMetaIcon>
           </Tooltip>
         )}
-      </span>
+      </SidebarItemContent>
       {showLoudUnreadBadge ? (
         <SidebarItemCount className="ml-auto" aria-label="有未读消息">
           {unread > 99 ? "99+" : unread}

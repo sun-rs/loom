@@ -59,18 +59,18 @@ export async function verifyRoleSidebarAlignment({
       );
       assert.equal(
         metrics.avatarInset,
-        17.5,
-        "published Web: 8px scroller + 8px row padding + 1.5px border",
+        20,
+        "Web139 native list cell: 8px inset + 12px content padding",
       );
       assert.equal(
         metrics.sectionInset,
-        16,
-        "published Web: 8px scroller + 8px section header",
+        20,
+        "Web139 native section header px-5",
       );
       assert.equal(
         metrics.groupInset,
-        16,
-        "published Web: 8px scroller + 8px computer-group padding",
+        20,
+        "Web139 computer group mx-2 plus px-3",
       );
       assert.equal(metrics.runtime, expectedRuntime);
     } finally {

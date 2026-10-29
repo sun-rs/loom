@@ -26,7 +26,9 @@ export async function verifySidebarActions({
     let dialog = page.getByRole("dialog");
     // Official CreateChannelDialog -> DialogCard -> Modal: backdrop stays,
     // Escape closes immediately (no dirty confirmation for this short form).
-    await dialog.getByLabel("名称", { exact: true }).fill("FIXTURE discard");
+    await dialog
+      .getByRole("textbox", { name: /^名称/ })
+      .fill("FIXTURE discard");
     await page.mouse.click(2, 2);
     assert.equal(
       await dialog.isVisible(),
@@ -38,11 +40,11 @@ export async function verifySidebarActions({
     await surface.click({ button: "right", position: { x: 3, y: 3 } });
     await page.getByRole("menuitem", { name: "新建频道", exact: true }).click();
     assert.equal(
-      await dialog.getByLabel("名称", { exact: true }).inputValue(),
+      await dialog.getByRole("textbox", { name: /^名称/ }).inputValue(),
       "",
     );
     const name = `ContextFlow${viewport.width}`;
-    await dialog.getByLabel("名称", { exact: true }).fill(name);
+    await dialog.getByRole("textbox", { name: /^名称/ }).fill(name);
     await dialog.getByRole("button", { name: "创建频道", exact: true }).click();
     await dialog.waitFor({ state: "hidden" });
     const room = (
@@ -78,7 +80,7 @@ export async function verifySidebarActions({
       .click();
     await page.getByRole("menuitem", { name: "新建分组", exact: true }).click();
     await dialog
-      .getByLabel("名称", { exact: true })
+      .getByRole("textbox", { name: /^名称/ })
       .fill(`ContextGroup${viewport.width}`);
     await dialog.getByRole("button", { name: "保存分组", exact: true }).click();
     await dialog.waitFor({ state: "hidden" });

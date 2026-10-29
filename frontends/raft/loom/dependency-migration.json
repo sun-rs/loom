@@ -5,7 +5,7 @@
   "versions": {
     "foundation": "@botiverse/raft-ui@0.52.0",
     "source": "db5e399f017d584e49597e3a28757645d6807893 / v1.21.23-source.1",
-    "productionResourceReference": "Selected Web1.21.26/34/35 ports plus Web1.21.38 messages/task-head/menu/marker/cover slices; not whole-site current-source parity"
+    "productionResourceReference": "Selected Web1.21.26/34/35 ports plus Web1.21.38 messages/task-head/menu/marker/cover slices; not whole-site current-source parity; Web1.21.39 sidebar/settings leaves and native list composition"
   },
   "completedBoundaries": {
     "directExports": "upstream/raft-web-source/package.json#exports",
@@ -385,12 +385,16 @@
   ],
   "plannedMigrationComplete": true,
   "currentUpgradeReview": {
-    "asOf": "2026-10-29",
+    "asOf": "2026-10-30",
     "evidence": "docs/evo/evidence/2026-10-29-ui-refresh138/README.md",
     "wholeSiteParity": false,
-    "candidateWeb": "1.21.38",
+    "candidateWeb": "1.21.39",
     "adoptedPackage": "0.52.0",
     "closeoutEvidence": "docs/evo/evidence/2026-10-29-ui-closeout/README.md",
-    "roleIdentityEvidence": "docs/evo/evidence/2026-10-29-role-identity/README.md"
+    "roleIdentityEvidence": "docs/evo/evidence/2026-10-29-role-identity/README.md",
+    "sidebar139Evidence": "docs/evo/evidence/2026-10-30-sidebar139-alignment/README.md",
+    "sidebar139Manifest": "frontends/raft/upstream/published-2026-10-30-sidebar/manifest.json",
+    "activeSettingsSidebar": "OfficialSidebar139.generated.js#OfficialSettingsSidebar139",
+    "superseded": "Web138 Role geometry and db5e399 generated settings list are historical reproducible artifacts, not active bindings."
   }
 }

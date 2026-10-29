@@ -1,0 +1,821 @@
+✖ Web139 Role sidebar uses native lists without the retired Web138 inset override (1.923958ms)
+✖ Web139 Computer sidebar delegates frame and list geometry to official recipes (0.1975ms)
+✖ Web139 channel DnD containers own list spacing, not section margins (0.29775ms)
+✖ Web139 task navigation and empty-state use the same semantic ListTodo icon (0.625417ms)
+✖ Web139 selection/menu state paints the official inset cell instead of a full-width background (0.142417ms)
+✖ Web139 published leaves are reproducible and locked independently of original TSX (0.642792ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 0
+ℹ fail 6
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 73.209459
+
+✖ failing tests:
+
+test at scripts/official-web/sidebar139.test.mjs:6:1
+✖ Web139 Role sidebar uses native lists without the retired Web138 inset override (1.923958ms)
+  AssertionError [ERR_ASSERTION]: The input was expected to not match the regular expression /OfficialRoleSidebarGeometry|roleSidebar(?:RowStyle|HeaderStyle|FrameClass)/. Input:
+
+  'import PageEmpty from "./PageEmpty";\n' +
+    'import {\n' +
+    '  roleSidebarFrameClass,\n' +
+    '  roleSidebarHeaderStyle,\n' +
+    '  roleSidebarRowStyle,\n' +
+    '} from "./OfficialRoleSidebarGeometry.generated";\n' +
+    'import { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives";\n' +
+    'import { layoutQueries } from "./adaptive-layout.ts";\n' +
+    'import {\n' +
+    '  OfficialComputerGroup,\n' +
+    '  OfficialSidebarDescription,\n' +
+    '} from "./OfficialRefresh135.generated";\n' +
+    'import {\n' +
+    '  groupRolesByComputer,\n' +
+    '  readCollapsedComputers,\n' +
+    '} from "./role-computer-groups";\n' +
+    'import { SidebarResize, useSidebarColumn } from "./SidebarLayout";\n' +
+    'import { LoomSidebarSlot } from "./SidebarLayout.tsx";\n' +
+    'import { OfficialRoleTabs } from "./OfficialIdentityFrames.generated";\n' +
+    'import { OfficialRoleRow } from "./OfficialIdentityRows.generated";\n' +
+    'import RolePresence from "./RolePresence.tsx";\n' +
+    'import type { rolePresence } from "./role-presence.ts";\n' +
+    '// Structural port: MainLayout member master/detail, MemberAgentRow and\n' +
+    '// AgentDetailPanel tab strip. Store-bound upstream components stay untouched.\n' +
+    'import { useState, type ReactNode, type CSSProperties } from "react";\n' +
+    'import {\n' +
+    '  AppShellMainSlot,\n' +
+    '  SidebarSectionHeader,\n' +
+    '  SidebarSectionDisclosure,\n' +
+    '  SidebarSectionCount,\n' +
+    '  SidebarSectionControl,\n' +
+    '  SidebarSectionTrailing,\n' +
+    '  TabsList,\n' +
+    '  TabsTab,\n' +
+    '  TabsLabel,\n' +
+    '} from "raft-ui";\n' +
+    'import { Plus, RefreshCw, Bot, Activity, ChevronRight } from "lucide-react";\n' +
+    'import Frame from "./ChatSidebarFrame.tsx";\n' +
+    'import AvatarSlot from "../packages/web/src/components/ui/AvatarSlot.tsx";\n' +
+    'import PanelHeader, {\n' +
+    '  PROFILE_HEADER_SURFACE_CLASS,\n' +
+    '} from "../packages/web/src/components/ui/PanelHeader.tsx";\n' +
+    'export type RoleEntry = {\n' +
+    '  id: string;\n' +
+    '  name: string;\n' +
+    '  description?: string;\n' +
+    '  runtimeLabel?: string;\n' +
+    '  computer?: { id: string; name: string };\n' +
+    '  retired?: boolean;\n' +
+    '  avatarUrl?: string;\n' +
+    '  presence?: ReturnType<typeof rolePresence>;\n' +
+    '};\n' +
+    'export default function RoleWorkspace({\n' +
+    '  detail,\n' +
+    '  workspaceId,\n' +
+    '  onBack,\n' +
+    '  entries,\n' +
+    '  selected,\n' +
+    '  onSelect,\n' +
+    '  tab,\n' +
+    '  onTab,\n' +
+    '  busy,\n' +
+    '  onCreate,\n' +
+    '  onRefresh,\n' +
+    '  actions,\n' +
+    '  children,\n' +
+    '  inspector,\n' +
+    '}: {\n' +
+    '  detail: boolean;\n' +
+    '  workspaceId: string;\n' +
+    '  onBack: () => void;\n' +
+    '  entries: RoleEntry[];\n' +
+    '  selected?: RoleEntry;\n' +
+    '  onSelect: (id: string) => void;\n' +
+    '  tab: string;\n' +
+    '  onTab: (tab: string) => void;\n' +
+    '  busy: boolean;\n' +
+    '  onCreate: () => void;\n' +
+    '  onRefresh: () => void;\n' +
+    '  actions?: ReactNode;\n' +
+    '  children: ReactNode;\n' +
+    '  inspector?: ReactNode;\n' +
+    '}) {\n' +
+    '  const sectionKey = "loom:role-sections:" + workspaceId;\n' +
+    '  const [closedSections, setClosedSections] = useState(() => {\n' +
+    '    try {\n' +
+    '      return new Set(\n' +
+    '        localStorage.getItem(sectionKey) === null\n' +
+    '          ? ["deleted"]\n' +
+    '          : readCollapsedComputers(localStorage, sectionKey),\n' +
+    '      );\n' +
+    '    } catch {\n' +
+    '      return new Set(["deleted"]);\n' +
+    '    }\n' +
+    '  });\n' +
+    '  const showDeleted = !closedSections.has("deleted");\n' +
+    '  const showRoles = !closedSections.has("roles");\n' +
+    '  const toggleSection = (id: "roles" | "deleted") =>\n' +
+    '    setClosedSections((current) => {\n' +
+    '      const next = new Set(current);\n' +
+    '      if (next.has(id)) next.delete(id);\n' +
+    '      else next.add(id);\n' +
+    '      try {\n' +
+    '        localStorage.setItem(sectionKey, JSON.stringify([...next]));\n' +
+    '      } catch {}\n' +
+    '      return next;\n' +
+    '    });\n' +
+    '  const collapseKey = "loom:role-computers:" + workspaceId;\n' +
+    '  const [collapsed, setCollapsed] = useState(() => {\n' +
+    '    try {\n' +
+    '      return new Set(readCollapsedComputers(localStorage, collapseKey));\n' +
+    '    } catch {\n' +
+    '      return new Set<string>();\n' +
+    '    }\n' +
+    '  });\n' +
+    '  const toggleComputer = (id: string) =>\n' +
+    '    setCollapsed((current) => {\n' +
+    '      const next = new Set(current);\n' +
+    '      if (next.has(id)) next.delete(id);\n' +
+    '      else next.add(id);\n' +
+    '      try {\n' +
+    '        localStorage.setItem(collapseKey, JSON.stringify([...next]));\n' +
+    '      } catch {}\n' +
+    '      return next;\n' +
+    '    });\n' +
+    '\n' +
+    '  const panel = useSidebarColumn();\n' +
+    '  const mobile = useMediaQuery(layoutQueries.single);\n' +
+    '  const visible = entries;\n' +
+    '  const emptyList =\n' +
+    '    mobile &&\n' +
+    '    !visible.some((entry) => !entry.retired) &&\n' +
+    '    !(showDeleted && visible.some((entry) => entry.retired));\n' +
+    '  return (\n' +
+    '    <div\n' +
+    '      className="relative flex min-h-0 min-w-0 flex-1"\n' +
+    '      data-testid="loom-role-layout"\n' +
+    '    >\n' +
+    '      <LoomSidebarSlot\n' +
+    '        page="agents"\n' +
+    '        className={`relative shrink-0 flex-col md:flex md:w-[var(--agent-sidebar-width)] ${detail ? "hidden" : "flex w-full"}`}\n' +
+    '        style={{ "--agent-sidebar-width": `${panel.width}px` } as CSSProperties}\n' +
+    '      >\n' +
+    '        <Frame\n' +
+    '          fillContent={emptyList}\n' +
+    '          hideDesktopHeader\n' +
+    '          title="Agent"\n' +
+    '          testIdPrefix="agent-sidebar"\n' +
+    '          scrollTestId="loom-role-list"\n' +
+    '        >\n' +
+    '          <div className={roleSidebarFrameClass}>\n' +
+    '            <SidebarSectionHeader style={roleSidebarHeaderStyle}>\n' +
+    '              <SidebarSectionDisclosure\n' +
+    '                render={<button type="button" />}\n' +
+    '                aria-expanded={showRoles}\n' +
+    '                data-testid="role-section-toggle"\n' +
+    '                className="cursor-default"\n' +
+    '                onClick={() => toggleSection("roles")}\n' +
+    '              >\n' +
+    '                <ChevronRight\n' +
+    '                  size={14}\n' +
+    '                  className={`shrink-0 transition-transform ${showRoles ? "rotate-90" : ""}`}\n' +
+    '                />\n' +
+    '                角色{" "}\n' +
+    '                <SidebarSectionCount>\n' +
+    '                  {entries.filter((e) => !e.retired).length}\n' +
+    '                </SidebarSectionCount>\n' +
+    '              </SidebarSectionDisclosure>\n' +
+    '              <SidebarSectionTrailing>\n' +
+    '                <div className="flex items-center gap-1">\n' +
+    '                  <SidebarSectionControl\n' +
+    '                    aria-label="刷新角色"\n' +
+    '                    disabled={busy}\n' +
+    '                    onClick={onRefresh}\n' +
+    '                  >\n' +
+    '                    <RefreshCw className="size-3.5" />\n' +
+    '                  </SidebarSectionControl>\n' +
+    '                  <SidebarSectionControl\n' +
+    '                    aria-label="新建角色"\n' +
+    '                    disabled={busy}\n' +
+    '                    onClick={onCreate}\n' +
+    '                  >\n' +
+    '                    <Plus className="size-4" />\n' +
+    '                  </SidebarSectionControl>\n' +
+    '                </div>\n' +
+    '              </SidebarSectionTrailing>\n' +
+    '            </SidebarSectionHeader>\n' +
+    '            {showRoles && !visible.some((entry) => !entry.retired) && (\n' +
+    '              <>\n' +
+    '                <OfficialSidebarDescription className="hidden md:block">\n' +
+    '                  还没有角色\n' +
+    '                </OfficialSidebarDescription>\n' +
+    '              </>\n' +
+    '            )}\n' +
+    '            {showRoles &&\n' +
+    '              groupRolesByComputer(visible).map((group) => (\n' +
+    '                <OfficialComputerGroup\n' +
+    '                  key={group.id}\n' +
+    '                  id={group.id}\n' +
+    '                  name={group.name}\n' +
+    '                  count={group.entries.length}\n' +
+    '                  collapsed={collapsed.has(group.id)}\n' +
+    '                  onToggle={() => toggleComputer(group.id)}\n' +
+    '                >\n' +
+    '                  {group.entries.map((entry) => (\n' +
+    '                    <OfficialRoleRow\n' +
+    '                      key={entry.id}\n' +
+    '                      style={roleSidebarRowStyle}\n' +
+    '                      agent={entry}\n' +
+    '                      selected={selected?.id === entry.id}\n' +
+    '                      busy={busy}\n' +
+    '                      onSelect={onSelect}\n' +
+    '                      statusDot={\n' +
+    '                        <RolePresence state={entry.presence ?? "unknown"} />\n' +
+    '                      }\n' +
+    '                    />\n' +
+    '                  ))}\n' +
+    '                </OfficialComputerGroup>\n' +
+    '              ))}\n' +
+    '            {entries.some((entry) => entry.retired) && (\n' +
+    '              <>\n' +
+    '                <SidebarSectionHeader style={roleSidebarHeaderStyle}>\n' +
+    '                  <SidebarSectionDisclosure\n' +
+    '                    render={<button type="button" />}\n' +
+    '                    aria-expanded={showDeleted}\n' +
+    '                    data-testid="deleted-role-section-toggle"\n' +
+    '                    className="cursor-default"\n' +
+    '                    onClick={() => toggleSection("deleted")}\n' +
+    '                  >\n' +
+    '                    <ChevronRight\n' +
+    '                      size={14}\n' +
+    '                      className={`shrink-0 transition-transform ${showDeleted ? "rotate-90" : ""}`}\n' +
+    '                    />\n' +
+    '                    已删除{" "}\n' +
+    '                    <SidebarSectionCount>\n' +
+    '                      {entries.filter((entry) => entry.retired).length}\n' +
+    '                    </SidebarSectionCount>\n' +
+    '                  </SidebarSectionDisclosure>\n' +
+    '                </SidebarSectionHeader>\n' +
+    '                {showDeleted &&\n' +
+    '                  visible\n' +
+    '                    .filter((entry) => entry.retired)\n' +
+    '                    .map((entry) => (\n' +
+    '                      <OfficialRoleRow\n' +
+    '                        key={entry.id}\n' +
+    '                        style={roleSidebarRowStyle}\n' +
+    '                        agent={entry}\n' +
+    '                        selected={selected?.id === entry.id}\n' +
+    '                        busy={busy}\n' +
+    '                        onSelect={onSelect}\n' +
+    '                        statusDot={\n' +
+    '                          <RolePresence state={entry.presence ?? "unknown"} />\n' +
+    '                        }\n' +
+    '                      />\n' +
+    '                    ))}\n' +
+    '              </>\n' +
+    '            )}\n' +
+    '          </div>\n' +
+    '          {emptyList && <PageEmpty kind={"roles"} />}\n' +
+    '        </Frame>\n' +
+    '        <SidebarResize testId="agent-sidebar-resize" />\n' +
+    '      </LoomSidebarSlot>\n' +
+    '      <div\n' +
+    '        className={`relative min-h-0 min-w-0 flex-1 ${detail ? "flex" : "hidden md:flex"}`}\n' +
+    '      >\n' +
+    '        <AppShellMainSlot\n' +
+    '          style={{ zIndex: 1 }}\n' +
+    '          className={`min-w-0 bg-layer-panel md:flex ${detail ? "flex" : "hidden"}`}\n' +
+    '        >\n' +
+    '          <div className="thread-layout-container flex min-h-0 min-w-0 flex-1">\n' +
+    '            <div\n' +
+    '              className="thread-main-column flex min-h-0 min-w-0 flex-1 flex-col"\n' +
+    '              data-testid="loom-role-detail"\n' +
+    '            >\n' +
+    '              {selected && (\n' +
+    '                <PanelHeader\n' +
+    '                  title={selected?.name ?? "选择角色"}\n' +
+    '                  iconSlot={\n' +
+    '                    <AvatarSlot\n' +
+    '                      context="panel-header"\n' +
+    '                      type="agent"\n' +
+    '                      agentAvatarUrl={selected?.avatarUrl}\n' +
+    '                    />\n' +
+    '                  }\n' +
+    '                  iconKind="avata'... 1726 more characters
+
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/sidebar139.test.mjs:8:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.start (node:internal/test_runner/test:1096:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'import PageEmpty from "./PageEmpty";\nimport {\n  roleSidebarFrameClass,\n  roleSidebarHeaderStyle,\n  roleSidebarRowStyle,\n} from "./OfficialRoleSidebarGeometry.generated";\nimport { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives";\nimport { layoutQueries } from "./adaptive-layout.ts";\nimport {\n  OfficialComputerGroup,\n  OfficialSidebarDescription,\n} from "./OfficialRefresh135.generated";\nimport {\n  groupRolesByComputer,\n  readCollapsedComputers,\n} from "./role-computer-groups";\nimport { SidebarResize, useSidebarColumn } from "./SidebarLayout";\nimport { LoomSidebarSlot } from "./SidebarLayout.tsx";\nimport { OfficialRoleTabs } from "./OfficialIdentityFrames.generated";\nimport { OfficialRoleRow } from "./OfficialIdentityRows.generated";\nimport RolePresence from "./RolePresence.tsx";\nimport type { rolePresence } from "./role-presence.ts";\n// Structural port: MainLayout member master/detail, MemberAgentRow and\n// AgentDetailPanel tab strip. Store-bound upstream components stay untouched.\nimport { useState, type ReactNode, type CSSProperties } from "react";\nimport {\n  AppShellMainSlot,\n  SidebarSectionHeader,\n  SidebarSectionDisclosure,\n  SidebarSectionCount,\n  SidebarSectionControl,\n  SidebarSectionTrailing,\n  TabsList,\n  TabsTab,\n  TabsLabel,\n} from "raft-ui";\nimport { Plus, RefreshCw, Bot, Activity, ChevronRight } from "lucide-react";\nimport Frame from "./ChatSidebarFrame.tsx";\nimport AvatarSlot from "../packages/web/src/components/ui/AvatarSlot.tsx";\nimport PanelHeader, {\n  PROFILE_HEADER_SURFACE_CLASS,\n} from "../packages/web/src/components/ui/PanelHeader.tsx";\nexport type RoleEntry = {\n  id: string;\n  name: string;\n  description?: string;\n  runtimeLabel?: string;\n  computer?: { id: string; name: string };\n  retired?: boolean;\n  avatarUrl?: string;\n  presence?: ReturnType<typeof rolePresence>;\n};\nexport default function RoleWorkspace({\n  detail,\n  workspaceId,\n  onBack,\n  entries,\n  selected,\n  onSelect,\n  tab,\n  onTab,\n  busy,\n  onCreate,\n  onRefresh,\n  actions,\n  children,\n  inspector,\n}: {\n  detail: boolean;\n  workspaceId: string;\n  onBack: () => void;\n  entries: RoleEntry[];\n  selected?: RoleEntry;\n  onSelect: (id: string) => void;\n  tab: string;\n  onTab: (tab: string) => void;\n  busy: boolean;\n  onCreate: () => void;\n  onRefresh: () => void;\n  actions?: ReactNode;\n  children: ReactNode;\n  inspector?: ReactNode;\n}) {\n  const sectionKey = "loom:role-sections:" + workspaceId;\n  const [closedSections, setClosedSections] = useState(() => {\n    try {\n      return new Set(\n        localStorage.getItem(sectionKey) === null\n          ? ["deleted"]\n          : readCollapsedComputers(localStorage, sectionKey),\n      );\n    } catch {\n      return new Set(["deleted"]);\n    }\n  });\n  const showDeleted = !closedSections.has("deleted");\n  const showRoles = !closedSections.has("roles");\n  const toggleSection = (id: "roles" | "deleted") =>\n    setClosedSections((current) => {\n      const next = new Set(current);\n      if (next.has(id)) next.delete(id);\n      else next.add(id);\n      try {\n        localStorage.setItem(sectionKey, JSON.stringify([...next]));\n      } catch {}\n      return next;\n    });\n  const collapseKey = "loom:role-computers:" + workspaceId;\n  const [collapsed, setCollapsed] = useState(() => {\n    try {\n      return new Set(readCollapsedComputers(localStorage, collapseKey));\n    } catch {\n      return new Set<string>();\n    }\n  });\n  const toggleComputer = (id: string) =>\n    setCollapsed((current) => {\n      const next = new Set(current);\n      if (next.has(id)) next.delete(id);\n      else next.add(id);\n      try {\n        localStorage.setItem(collapseKey, JSON.stringify([...next]));\n      } catch {}\n      return next;\n    });\n\n  const panel = useSidebarColumn();\n  const mobile = useMediaQuery(layoutQueries.single);\n  const visible = entries;\n  const emptyList =\n    mobile &&\n    !visible.some((entry) => !entry.retired) &&\n    !(showDeleted && visible.some((entry) => entry.retired));\n  return (\n    <div\n      className="relative flex min-h-0 min-w-0 flex-1"\n      data-testid="loom-role-layout"\n    >\n      <LoomSidebarSlot\n        page="agents"\n        className={`relative shrink-0 flex-col md:flex md:w-[var(--agent-sidebar-width)] ${detail ? "hidden" : "flex w-full"}`}\n        style={{ "--agent-sidebar-width": `${panel.width}px` } as CSSProperties}\n      >\n        <Frame\n          fillContent={emptyList}\n          hideDesktopHeader\n          title="Agent"\n          testIdPrefix="agent-sidebar"\n          scrollTestId="loom-role-list"\n        >\n          <div className={roleSidebarFrameClass}>\n            <SidebarSectionHeader style={roleSidebarHeaderStyle}>\n              <SidebarSectionDisclosure\n                render={<button type="button" />}\n                aria-expanded={showRoles}\n                data-testid="role-section-toggle"\n                className="cursor-default"\n                onClick={() => toggleSection("roles")}\n              >\n                <ChevronRight\n                  size={14}\n                  className={`shrink-0 transition-transform ${showRoles ? "rotate-90" : ""}`}\n                />\n                角色{" "}\n                <SidebarSectionCount>\n                  {entries.filter((e) => !e.retired).length}\n                </SidebarSectionCount>\n              </SidebarSectionDisclosure>\n              <SidebarSectionTrailing>\n                <div className="flex items-center gap-1">\n                  <SidebarSectionControl\n                    aria-label="刷新角色"\n                    disabled={busy}\n                    onClick={onRefresh}\n                  >\n                    <RefreshCw className="size-3.5" />\n                  </SidebarSectionControl>\n                  <SidebarSectionControl\n                    aria-label="新建角色"\n                    disabled={busy}\n                    onClick={onCreate}\n                  >\n                    <Plus className="size-4" />\n                  </SidebarSectionControl>\n                </div>\n              </SidebarSectionTrailing>\n            </SidebarSectionHeader>\n            {showRoles && !visible.some((entry) => !entry.retired) && (\n              <>\n                <OfficialSidebarDescription className="hidden md:block">\n                  还没有角色\n                </OfficialSidebarDescription>\n              </>\n            )}\n            {showRoles &&\n              groupRolesByComputer(visible).map((group) => (\n                <OfficialComputerGroup\n                  key={group.id}\n                  id={group.id}\n                  name={group.name}\n                  count={group.entries.length}\n                  collapsed={collapsed.has(group.id)}\n                  onToggle={() => toggleComputer(group.id)}\n                >\n                  {group.entries.map((entry) => (\n                    <OfficialRoleRow\n                      key={entry.id}\n                      style={roleSidebarRowStyle}\n                      agent={entry}\n                      selected={selected?.id === entry.id}\n                      busy={busy}\n                      onSelect={onSelect}\n                      statusDot={\n                        <RolePresence state={entry.presence ?? "unknown"} />\n                      }\n                    />\n                  ))}\n                </OfficialComputerGroup>\n              ))}\n            {entries.some((entry) => entry.retired) && (\n              <>\n                <SidebarSectionHeader style={roleSidebarHeaderStyle}>\n                  <SidebarSectionDisclosure\n                    render={<button type="button" />}\n                    aria-expanded={showDeleted}\n                    data-testid="deleted-role-section-toggle"\n                    className="cursor-default"\n                    onClick={() => toggleSection("deleted")}\n                  >\n                    <ChevronRight\n                      size={14}\n                      className={`shrink-0 transition-transform ${showDeleted ? "rotate-90" : ""}`}\n                    />\n                    已删除{" "}\n                    <SidebarSectionCount>\n                      {entries.filter((entry) => entry.retired).length}\n                    </SidebarSectionCount>\n                  </SidebarSectionDisclosure>\n                </SidebarSectionHeader>\n                {showDeleted &&\n                  visible\n                    .filter((entry) => entry.retired)\n                    .map((entry) => (\n                      <OfficialRoleRow\n                        key={entry.id}\n                        style={roleSidebarRowStyle}\n                        agent={entry}\n                        selected={selected?.id === entry.id}\n                        busy={busy}\n                        onSelect={onSelect}\n                        statusDot={\n                          <RolePresence state={entry.presence ?? "unknown"} />\n                        }\n                      />\n                    ))}\n              </>\n            )}\n          </div>\n          {emptyList && <PageEmpty kind={"roles"} />}\n        </Frame>\n        <SidebarResize testId="agent-sidebar-resize" />\n      </LoomSidebarSlot>\n      <div\n        className={`relative min-h-0 min-w-0 flex-1 ${detail ? "flex" : "hidden md:flex"}`}\n      >\n        <AppShellMainSlot\n          style={{ zIndex: 1 }}\n          className={`min-w-0 bg-layer-panel md:flex ${detail ? "flex" : "hidden"}`}\n        >\n          <div className="thread-layout-container flex min-h-0 min-w-0 flex-1">\n            <div\n              className="thread-main-column flex min-h-0 min-w-0 flex-1 flex-col"\n              data-testid="loom-role-detail"\n            >\n              {selected && (\n                <PanelHeader\n                  title={selected?.name ?? "选择角色"}\n                  iconSlot={\n                    <AvatarSlot\n                      context="panel-header"\n                      type="agent"\n                      agentAvatarUrl={selected?.avatarUrl}\n                    />\n                  }\n                  iconKind="avata'... 1726 more characters,
+    expected: /OfficialRoleSidebarGeometry|roleSidebar(?:RowStyle|HeaderStyle|FrameClass)/,
+    operator: 'doesNotMatch',
+    diff: 'simple'
+  }
+
+test at scripts/official-web/sidebar139.test.mjs:13:1
+✖ Web139 Computer sidebar delegates frame and list geometry to official recipes (0.1975ms)
+  AssertionError [ERR_ASSERTION]: The input was expected to not match the regular expression /\bpx-2\b|\bpt-2\b/. Input:
+
+  '<SidebarRoot className="hidden h-full flex-col md:flex">\n' +
+    '          <div className="min-h-0 flex-1 overflow-y-auto px-2 pt-2 pb-2">\n' +
+    '            <SidebarSectionHeader data-testid="computer-section-header">\n' +
+    '              <SidebarSectionDisclosure render={<div />} type={undefined}>\n' +
+    '                计算机{" "}\n' +
+    '                <SidebarSectionCount>{inventory ? 1 : 0}</SidebarSectionCount>\n' +
+    '              </SidebarSectionDisclosure>\n' +
+    '            </SidebarSectionHeader>\n' +
+    '            {problem}\n' +
+    '            {inventory && (\n' +
+    '              <OfficialComputerRow\n' +
+    '                machine={{\n' +
+    '                  id: inventory.hostId,\n' +
+    '                  name,\n' +
+    '                  description: computer?.description,\n' +
+    '                }}\n' +
+    '                selected={selected}\n' +
+    '                onClick={() => onSelect(inventory.hostId)}\n' +
+    '                statusDot={dot("absolute -right-1 -bottom-1")}\n' +
+    '                statusLabel={label}\n' +
+    '              />\n' +
+    '            )}\n' +
+    '          </div>\n' +
+    '        </SidebarRoot>\n' +
+    '        <div\n' +
+    '          className="flex min-h-0 flex-1 flex-col md:hidden"\n' +
+    '          '
+
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/sidebar139.test.mjs:16:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '<SidebarRoot className="hidden h-full flex-col md:flex">\n          <div className="min-h-0 flex-1 overflow-y-auto px-2 pt-2 pb-2">\n            <SidebarSectionHeader data-testid="computer-section-header">\n              <SidebarSectionDisclosure render={<div />} type={undefined}>\n                计算机{" "}\n                <SidebarSectionCount>{inventory ? 1 : 0}</SidebarSectionCount>\n              </SidebarSectionDisclosure>\n            </SidebarSectionHeader>\n            {problem}\n            {inventory && (\n              <OfficialComputerRow\n                machine={{\n                  id: inventory.hostId,\n                  name,\n                  description: computer?.description,\n                }}\n                selected={selected}\n                onClick={() => onSelect(inventory.hostId)}\n                statusDot={dot("absolute -right-1 -bottom-1")}\n                statusLabel={label}\n              />\n            )}\n          </div>\n        </SidebarRoot>\n        <div\n          className="flex min-h-0 flex-1 flex-col md:hidden"\n          ',
+    expected: /\bpx-2\b|\bpt-2\b/,
+    operator: 'doesNotMatch',
+    diff: 'simple'
+  }
+
+test at scripts/official-web/sidebar139.test.mjs:19:1
+✖ Web139 channel DnD containers own list spacing, not section margins (0.29775ms)
+  AssertionError [ERR_ASSERTION]: The input was expected to not match the regular expression /className="mb-3"/. Input:
+
+  '// Local contract adapter for the official Sidebar.tsx dnd-kit interaction.\n' +
+    '// Upstream source/revision and differences are recorded in adoption.json.\n' +
+    'import { useRef, type ReactNode } from "react";\n' +
+    'import {\n' +
+    '  DndContext,\n' +
+    '  PointerSensor,\n' +
+    '  TouchSensor,\n' +
+    '  KeyboardSensor,\n' +
+    '  useSensor,\n' +
+    '  useSensors,\n' +
+    '  pointerWithin,\n' +
+    '  closestCenter,\n' +
+    '} from "@dnd-kit/core";\n' +
+    'import {\n' +
+    '  SortableContext,\n' +
+    '  useSortable,\n' +
+    '  verticalListSortingStrategy,\n' +
+    '  sortableKeyboardCoordinates,\n' +
+    '} from "@dnd-kit/sortable";\n' +
+    'import { CSS } from "@dnd-kit/utilities";\n' +
+    'import type { SidebarPreferences, SidebarPatchRequest } from "@rah-os/protocol";\n' +
+    'import { sidebarDrop, type SidebarRoom } from "./sidebar-state.ts";\n' +
+    'type Group = { id: string; rooms: SidebarRoom[] };\n' +
+    'export function SidebarDrag({\n' +
+    '  children,\n' +
+    '  groups,\n' +
+    '  prefs,\n' +
+    '  disabled,\n' +
+    '  onDrop,\n' +
+    '}: {\n' +
+    '  children: ReactNode;\n' +
+    '  groups: Group[];\n' +
+    '  prefs?: SidebarPreferences;\n' +
+    '  disabled: boolean;\n' +
+    '  onDrop: (patch: SidebarPatchRequest["patch"], version: number) => void;\n' +
+    '}) {\n' +
+    '  const snapshot = useRef<{\n' +
+    '    groups: Group[];\n' +
+    '    prefs: SidebarPreferences;\n' +
+    '  } | null>(null);\n' +
+    '  const sensors = useSensors(\n' +
+    '    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),\n' +
+    '    useSensor(TouchSensor, {\n' +
+    '      activationConstraint: { delay: 500, tolerance: 10 },\n' +
+    '    }),\n' +
+    '    useSensor(KeyboardSensor, {\n' +
+    '      coordinateGetter: sortableKeyboardCoordinates,\n' +
+    '    }),\n' +
+    '  );\n' +
+    '  return (\n' +
+    '    <DndContext\n' +
+    '      sensors={sensors}\n' +
+    '      collisionDetection={(args) => {\n' +
+    '        const sections = String(args.active.id).startsWith("group:");\n' +
+    '        const droppableContainers = args.droppableContainers.filter(\n' +
+    '          (c) => !sections || String(c.id).startsWith("group:"),\n' +
+    '        );\n' +
+    '        const hits = pointerWithin({ ...args, droppableContainers });\n' +
+    '        return hits.length\n' +
+    '          ? [...hits].sort(\n' +
+    '              (a, b) =>\n' +
+    '                Number(String(a.id).startsWith("group:")) -\n' +
+    '                Number(String(b.id).startsWith("group:")),\n' +
+    '            )\n' +
+    '          : args.pointerCoordinates\n' +
+    '            ? []\n' +
+    '            : closestCenter({ ...args, droppableContainers });\n' +
+    '      }}\n' +
+    '      onDragStart={() => {\n' +
+    '        snapshot.current = !disabled && prefs ? { groups, prefs } : null;\n' +
+    '      }}\n' +
+    '      onDragCancel={() => {\n' +
+    '        snapshot.current = null;\n' +
+    '      }}\n' +
+    '      onDragEnd={({ active, over }) => {\n' +
+    '        const start = snapshot.current;\n' +
+    '        snapshot.current = null;\n' +
+    '        if (!start || !over) return;\n' +
+    '        const translated = active.rect.current.translated;\n' +
+    '        const after =\n' +
+    '          !!translated &&\n' +
+    '          translated.top + translated.height / 2 >\n' +
+    '            over.rect.top + over.rect.height / 2;\n' +
+    '        const patch = sidebarDrop(\n' +
+    '          start.prefs,\n' +
+    '          start.groups,\n' +
+    '          String(active.id),\n' +
+    '          String(over.id),\n' +
+    '          after,\n' +
+    '        );\n' +
+    '        if (Object.keys(patch).length) onDrop(patch, start.prefs.version);\n' +
+    '      }}\n' +
+    '    >\n' +
+    '      <SortableContext\n' +
+    '        items={groups.map((g) => `group:${g.id}`)}\n' +
+    '        strategy={verticalListSortingStrategy}\n' +
+    '      >\n' +
+    '        {children}\n' +
+    '      </SortableContext>\n' +
+    '    </DndContext>\n' +
+    '  );\n' +
+    '}\n' +
+    'export function DragSection({\n' +
+    '  id,\n' +
+    '  items,\n' +
+    '  disabled,\n' +
+    '  children,\n' +
+    '}: {\n' +
+    '  id: string;\n' +
+    '  items: string[];\n' +
+    '  disabled: boolean;\n' +
+    '  children: ReactNode;\n' +
+    '}) {\n' +
+    '  const {\n' +
+    '    setNodeRef,\n' +
+    '    attributes,\n' +
+    '    listeners,\n' +
+    '    transform,\n' +
+    '    transition,\n' +
+    '    isDragging,\n' +
+    '  } = useSortable({ id: `group:${id}`, disabled });\n' +
+    '  return (\n' +
+    '    <section\n' +
+    '      ref={setNodeRef}\n' +
+    '      data-sidebar-section={id}\n' +
+    '      className="mb-3"\n' +
+    '      style={{\n' +
+    '        transform: CSS.Transform.toString(\n' +
+    '          transform ? { ...transform, x: 0 } : null,\n' +
+    '        ),\n' +
+    '        transition,\n' +
+    '        opacity: isDragging ? 0.6 : 1,\n' +
+    '      }}\n' +
+    '      onPointerDownCapture={(e) => {\n' +
+    '        if ((e.target as HTMLElement).closest("[data-section-handle]"))\n' +
+    '          listeners?.onPointerDown?.(e);\n' +
+    '      }}\n' +
+    '      onTouchStartCapture={(e) => {\n' +
+    '        if ((e.target as HTMLElement).closest("[data-section-handle]"))\n' +
+    '          listeners?.onTouchStart?.(e);\n' +
+    '      }}\n' +
+    '      onKeyDownCapture={(e) => {\n' +
+    '        if ((e.target as HTMLElement).closest("[data-section-handle]"))\n' +
+    '          listeners?.onKeyDown?.(e);\n' +
+    '      }}\n' +
+    '      {...attributes}\n' +
+    '    >\n' +
+    '      <SortableContext items={items} strategy={verticalListSortingStrategy}>\n' +
+    '        {children}\n' +
+    '      </SortableContext>\n' +
+    '    </section>\n' +
+    '  );\n' +
+    '}\n' +
+    'export function DragRow({\n' +
+    '  id,\n' +
+    '  disabled,\n' +
+    '  children,\n' +
+    '}: {\n' +
+    '  id: string;\n' +
+    '  disabled: boolean;\n' +
+    '  children: ReactNode;\n' +
+    '}) {\n' +
+    '  const {\n' +
+    '    setNodeRef,\n' +
+    '    attributes,\n' +
+    '    listeners,\n' +
+    '    transform,\n' +
+    '    transition,\n' +
+    '    isDragging,\n' +
+    '  } = useSortable({ id, disabled });\n' +
+    '  return (\n' +
+    '    <div\n' +
+    '      ref={setNodeRef}\n' +
+    '      data-channel-row={id}\n' +
+    '      className="relative flex min-w-0 cursor-grab items-center active:cursor-grabbing"\n' +
+    '      style={{\n' +
+    '        transform: CSS.Transform.toString(transform),\n' +
+    '        transition,\n' +
+    '        opacity: isDragging ? 0.12 : 1,\n' +
+    '      }}\n' +
+    '      {...attributes}\n' +
+    '      onPointerDownCapture={(e) => listeners?.onPointerDown?.(e)}\n' +
+    '      onTouchStartCapture={(e) => listeners?.onTouchStart?.(e)}\n' +
+    '      onKeyDownCapture={(e) => listeners?.onKeyDown?.(e)}\n' +
+    '    >\n' +
+    '      {children}\n' +
+    '    </div>\n' +
+    '  );\n' +
+    '}\n'
+
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/sidebar139.test.mjs:20:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '// Local contract adapter for the official Sidebar.tsx dnd-kit interaction.\n// Upstream source/revision and differences are recorded in adoption.json.\nimport { useRef, type ReactNode } from "react";\nimport {\n  DndContext,\n  PointerSensor,\n  TouchSensor,\n  KeyboardSensor,\n  useSensor,\n  useSensors,\n  pointerWithin,\n  closestCenter,\n} from "@dnd-kit/core";\nimport {\n  SortableContext,\n  useSortable,\n  verticalListSortingStrategy,\n  sortableKeyboardCoordinates,\n} from "@dnd-kit/sortable";\nimport { CSS } from "@dnd-kit/utilities";\nimport type { SidebarPreferences, SidebarPatchRequest } from "@rah-os/protocol";\nimport { sidebarDrop, type SidebarRoom } from "./sidebar-state.ts";\ntype Group = { id: string; rooms: SidebarRoom[] };\nexport function SidebarDrag({\n  children,\n  groups,\n  prefs,\n  disabled,\n  onDrop,\n}: {\n  children: ReactNode;\n  groups: Group[];\n  prefs?: SidebarPreferences;\n  disabled: boolean;\n  onDrop: (patch: SidebarPatchRequest["patch"], version: number) => void;\n}) {\n  const snapshot = useRef<{\n    groups: Group[];\n    prefs: SidebarPreferences;\n  } | null>(null);\n  const sensors = useSensors(\n    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),\n    useSensor(TouchSensor, {\n      activationConstraint: { delay: 500, tolerance: 10 },\n    }),\n    useSensor(KeyboardSensor, {\n      coordinateGetter: sortableKeyboardCoordinates,\n    }),\n  );\n  return (\n    <DndContext\n      sensors={sensors}\n      collisionDetection={(args) => {\n        const sections = String(args.active.id).startsWith("group:");\n        const droppableContainers = args.droppableContainers.filter(\n          (c) => !sections || String(c.id).startsWith("group:"),\n        );\n        const hits = pointerWithin({ ...args, droppableContainers });\n        return hits.length\n          ? [...hits].sort(\n              (a, b) =>\n                Number(String(a.id).startsWith("group:")) -\n                Number(String(b.id).startsWith("group:")),\n            )\n          : args.pointerCoordinates\n            ? []\n            : closestCenter({ ...args, droppableContainers });\n      }}\n      onDragStart={() => {\n        snapshot.current = !disabled && prefs ? { groups, prefs } : null;\n      }}\n      onDragCancel={() => {\n        snapshot.current = null;\n      }}\n      onDragEnd={({ active, over }) => {\n        const start = snapshot.current;\n        snapshot.current = null;\n        if (!start || !over) return;\n        const translated = active.rect.current.translated;\n        const after =\n          !!translated &&\n          translated.top + translated.height / 2 >\n            over.rect.top + over.rect.height / 2;\n        const patch = sidebarDrop(\n          start.prefs,\n          start.groups,\n          String(active.id),\n          String(over.id),\n          after,\n        );\n        if (Object.keys(patch).length) onDrop(patch, start.prefs.version);\n      }}\n    >\n      <SortableContext\n        items={groups.map((g) => `group:${g.id}`)}\n        strategy={verticalListSortingStrategy}\n      >\n        {children}\n      </SortableContext>\n    </DndContext>\n  );\n}\nexport function DragSection({\n  id,\n  items,\n  disabled,\n  children,\n}: {\n  id: string;\n  items: string[];\n  disabled: boolean;\n  children: ReactNode;\n}) {\n  const {\n    setNodeRef,\n    attributes,\n    listeners,\n    transform,\n    transition,\n    isDragging,\n  } = useSortable({ id: `group:${id}`, disabled });\n  return (\n    <section\n      ref={setNodeRef}\n      data-sidebar-section={id}\n      className="mb-3"\n      style={{\n        transform: CSS.Transform.toString(\n          transform ? { ...transform, x: 0 } : null,\n        ),\n        transition,\n        opacity: isDragging ? 0.6 : 1,\n      }}\n      onPointerDownCapture={(e) => {\n        if ((e.target as HTMLElement).closest("[data-section-handle]"))\n          listeners?.onPointerDown?.(e);\n      }}\n      onTouchStartCapture={(e) => {\n        if ((e.target as HTMLElement).closest("[data-section-handle]"))\n          listeners?.onTouchStart?.(e);\n      }}\n      onKeyDownCapture={(e) => {\n        if ((e.target as HTMLElement).closest("[data-section-handle]"))\n          listeners?.onKeyDown?.(e);\n      }}\n      {...attributes}\n    >\n      <SortableContext items={items} strategy={verticalListSortingStrategy}>\n        {children}\n      </SortableContext>\n    </section>\n  );\n}\nexport function DragRow({\n  id,\n  disabled,\n  children,\n}: {\n  id: string;\n  disabled: boolean;\n  children: ReactNode;\n}) {\n  const {\n    setNodeRef,\n    attributes,\n    listeners,\n    transform,\n    transition,\n    isDragging,\n  } = useSortable({ id, disabled });\n  return (\n    <div\n      ref={setNodeRef}\n      data-channel-row={id}\n      className="relative flex min-w-0 cursor-grab items-center active:cursor-grabbing"\n      style={{\n        transform: CSS.Transform.toString(transform),\n        transition,\n        opacity: isDragging ? 0.12 : 1,\n      }}\n      {...attributes}\n      onPointerDownCapture={(e) => listeners?.onPointerDown?.(e)}\n      onTouchStartCapture={(e) => listeners?.onTouchStart?.(e)}\n      onKeyDownCapture={(e) => listeners?.onKeyDown?.(e)}\n    >\n      {children}\n    </div>\n  );\n}\n',
+    expected: /className="mb-3"/,
+    operator: 'doesNotMatch',
+    diff: 'simple'
+  }
+
+test at scripts/official-web/sidebar139.test.mjs:27:1
+✖ Web139 task navigation and empty-state use the same semantic ListTodo icon (0.625417ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /id: "tasks", label: "任务", icon: ListTodo/. Input:
+
+  'import MobileWorkspaceMenu from "./MobileWorkspaceMenu";\n' +
+    'import { preloadDestination } from "./page-preload.ts";\n' +
+    'import { mobilePrimaryDestinations } from "./mobile-app-navigation";\n' +
+    'import { CurrentSidebarToggle } from "./CurrentSidebarToggle.generated.js";\n' +
+    'import {\n' +
+    '  OfficialSortableNavigation,\n' +
+    '  type SortableRailBinding,\n' +
+    '} from "./OfficialSortableNavigation.generated.js";\n' +
+    'import type { NavigationUnread } from "./navigation-unread.ts";\n' +
+    'import {\n' +
+    '  Home,\n' +
+    '  Monitor,\n' +
+    '  Activity,\n' +
+    '  BookOpen,\n' +
+    '  CheckSquare,\n' +
+    '  Search,\n' +
+    '  Settings,\n' +
+    '  Users,\n' +
+    '} from "lucide-react";\n' +
+    'import {\n' +
+    '  AppShellRailSlot,\n' +
+    '  AppRailRoot,\n' +
+    '  AppRailNav,\n' +
+    '  AppRailFooter,\n' +
+    '  AppShellMainSlot,\n' +
+    '  MobileNavRoot,\n' +
+    '  MobileNavItem,\n' +
+    '  MobileNavLabel,\n' +
+    '  Status,\n' +
+    '  ChatIcon,\n' +
+    '} from "raft-ui";\n' +
+    'import { RailTabButton } from "./OfficialNavigationLeaves.generated";\n' +
+    'import PanelHeader from "../packages/web/src/components/ui/PanelHeader.tsx";\n' +
+    '\n' +
+    'export const destinations = [\n' +
+    '  { id: "search", label: "搜索", icon: Search },\n' +
+    '  { id: "channels", label: "聊天", icon: ChatIcon },\n' +
+    '  { id: "activity", label: "动态", icon: Activity },\n' +
+    '  { id: "tasks", label: "任务", icon: CheckSquare },\n' +
+    '  { id: "agents", label: "Agent", icon: Users },\n' +
+    '  { id: "computers", label: "计算机", icon: Monitor },\n' +
+    '  { id: "memory", label: "记忆", icon: BookOpen },\n' +
+    '  { id: "settings", label: "设置", icon: Settings },\n' +
+    '] as const;\n' +
+    'export type Destination = (typeof destinations)[number]["id"];\n' +
+    'type NavigationProps = {\n' +
+    '  active: string;\n' +
+    '  onSelect: (id: Destination, focusFirstUnread?: boolean) => void;\n' +
+    '  unread?: NavigationUnread;\n' +
+    '};\n' +
+    '\n' +
+    '/** Official LeftRail composition, without Raft account/server stores or fabricated unread state. */\n' +
+    'export function DesktopNavigation({\n' +
+    '  active,\n' +
+    '  onSelect,\n' +
+    '  unread,\n' +
+    '}: NavigationProps) {\n' +
+    '  const item = (\n' +
+    '    entry: (typeof destinations)[number],\n' +
+    '    binding?: SortableRailBinding,\n' +
+    '  ) => (\n' +
+    '    <RailTabButton\n' +
+    '      {...binding?.dragProps}\n' +
+    '      key={entry.id}\n' +
+    '      icon={<entry.icon width={18} height={18} />}\n' +
+    '      label={entry.label}\n' +
+    '      testId={`left-rail-tab-${entry.id}`}\n' +
+    '      showDot={\n' +
+    '        entry.id === "channels"\n' +
+    '          ? unread?.channels\n' +
+    '          : entry.id === "activity"\n' +
+    '            ? unread?.activity\n' +
+    '            : false\n' +
+    '      }\n' +
+    '      dotInactiveOnly\n' +
+    '      active={active === entry.id}\n' +
+    '      aria-current={active === entry.id ? "page" : undefined}\n' +
+    '      onPointerDownCapture={() => preloadDestination(entry.id)}\n' +
+    '      onFocus={() => preloadDestination(entry.id)}\n' +
+    '      onDoubleClick={\n' +
+    '        entry.id === "activity" ? () => onSelect(entry.id, true) : undefined\n' +
+    '      }\n' +
+    '      onClick={\n' +
+    '        binding\n' +
+    '          ? binding.guardClick(() => onSelect(entry.id))\n' +
+    '          : () => onSelect(entry.id)\n' +
+    '      }\n' +
+    '    />\n' +
+    '  );\n' +
+    '  return (\n' +
+    '    <AppShellRailSlot className="hidden md:flex">\n' +
+    '      <AppRailRoot className="pb-2" role="navigation" aria-label="主导航">\n' +
+    '        <AppRailNav className="relative w-full">\n' +
+    '          <OfficialSortableNavigation\n' +
+    '            tabs={destinations\n' +
+    '              .filter(\n' +
+    '                (entry) => entry.id !== "settings" && entry.id !== "search",\n' +
+    '              )\n' +
+    '              .map((entry) => ({\n' +
+    '                id: entry.id,\n' +
+    '                label: entry.label,\n' +
+    '                render: (binding: SortableRailBinding) => item(entry, binding),\n' +
+    '              }))}\n' +
+    '          />\n' +
+    '        </AppRailNav>\n' +
+    '        <AppRailFooter>\n' +
+    '          <CurrentSidebarToggle\n' +
+    '            column={active === "activity" ? "activityList" : "sidebar"}\n' +
+    '          />\n' +
+    '          {item(destinations.find((entry) => entry.id === "settings")!)}\n' +
+    '        </AppRailFooter>\n' +
+    '      </AppRailRoot>\n' +
+    '    </AppShellRailSlot>\n' +
+    '  );\n' +
+    '}\n' +
+    '\n' +
+    '/** Owner-confirmed app roots, rendered with the official Web navigation primitives. */\n' +
+    'export function MobileNavigation({\n' +
+    '  active,\n' +
+    '  onSelect,\n' +
+    '  workspaceName = "Loom",\n' +
+    '  unread,\n' +
+    '}: NavigationProps & { workspaceName?: string }) {\n' +
+    '  const tabs = mobilePrimaryDestinations.map((id) =>\n' +
+    '    destinations.find((entry) => entry.id === id)!,\n' +
+    '  );\n' +
+    '  return (\n' +
+    '    <div\n' +
+    '      className="loom-mobile-nav-group pointer-events-auto md:hidden"\n' +
+    '      role="navigation"\n' +
+    '      aria-label="主导航"\n' +
+    '    >\n' +
+    '      <MobileNavRoot className="loom-mobile-nav" role="presentation">\n' +
+    '        {tabs.map((entry) => (\n' +
+    '          <MobileNavItem\n' +
+    '            key={entry.id}\n' +
+    '            data-testid={`mobile-nav-${entry.id}`}\n' +
+    '            selected={active === entry.id}\n' +
+    '            aria-label={entry.id === "channels" ? "首页" : entry.label}\n' +
+    '            aria-current={active === entry.id ? "page" : undefined}\n' +
+    '            onPointerDown={() => preloadDestination(entry.id)}\n' +
+    '            onFocus={() => preloadDestination(entry.id)}\n' +
+    '            onClick={() => onSelect(entry.id)}\n' +
+    '          >\n' +
+    '            {entry.id === "channels" ? <Home /> : <entry.icon />}\n' +
+    '            {((entry.id === "channels" && unread?.channels) ||\n' +
+    '              (entry.id === "activity" && unread?.activity)) && (\n' +
+    '              <Status\n' +
+    '                variant="accent"\n' +
+    '                className="!absolute right-2 top-1"\n' +
+    '                aria-label="有未读消息"\n' +
+    '              />\n' +
+    '            )}\n' +
+    '            <MobileNavLabel className="sr-only">\n' +
+    '              {entry.id === "channels" ? "首页" : entry.label}\n' +
+    '            </MobileNavLabel>\n' +
+    '          </MobileNavItem>\n' +
+    '        ))}\n' +
+    '        <MobileWorkspaceMenu\n' +
+    '          name={workspaceName}\n' +
+    '          active={active}\n' +
+    '          onSelect={onSelect}\n' +
+    '        />\n' +
+    '      </MobileNavRoot>\n' +
+    '    </div>\n' +
+    '  );\n' +
+    '}\n' +
+    '\n' +
+    'export function DestinationPlaceholder({ active }: { active: string }) {\n' +
+    '  const destination = destinations.find((entry) => entry.id === active);\n' +
+    '  return (\n' +
+    '    <AppShellMainSlot\n' +
+    '      className="bg-layer-canvas "\n' +
+    '      data-testid="loom-destination-page"\n' +
+    '    >\n' +
+    '      <PanelHeader\n' +
+    '        title={destination?.label ?? "页面不存在"}\n' +
+    '        icon={\n' +
+    '          destination ? <destination.icon width={18} height={18} /> : undefined\n' +
+    '        }\n' +
+    '      />\n' +
+    '      <div className="p-6">\n' +
+    '        <p>\n' +
+    '          {destination\n' +
+    '            ? "此页面暂不可用，请从主导航选择。"\n' +
+    '            : "这个页面地址无效，请从主导航选择。"}\n' +
+    '        </p>\n' +
+    '      </div>\n' +
+    '    </AppShellMainSlot>\n' +
+    '  );\n' +
+    '}\n'
+
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/sidebar139.test.mjs:28:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'import MobileWorkspaceMenu from "./MobileWorkspaceMenu";\nimport { preloadDestination } from "./page-preload.ts";\nimport { mobilePrimaryDestinations } from "./mobile-app-navigation";\nimport { CurrentSidebarToggle } from "./CurrentSidebarToggle.generated.js";\nimport {\n  OfficialSortableNavigation,\n  type SortableRailBinding,\n} from "./OfficialSortableNavigation.generated.js";\nimport type { NavigationUnread } from "./navigation-unread.ts";\nimport {\n  Home,\n  Monitor,\n  Activity,\n  BookOpen,\n  CheckSquare,\n  Search,\n  Settings,\n  Users,\n} from "lucide-react";\nimport {\n  AppShellRailSlot,\n  AppRailRoot,\n  AppRailNav,\n  AppRailFooter,\n  AppShellMainSlot,\n  MobileNavRoot,\n  MobileNavItem,\n  MobileNavLabel,\n  Status,\n  ChatIcon,\n} from "raft-ui";\nimport { RailTabButton } from "./OfficialNavigationLeaves.generated";\nimport PanelHeader from "../packages/web/src/components/ui/PanelHeader.tsx";\n\nexport const destinations = [\n  { id: "search", label: "搜索", icon: Search },\n  { id: "channels", label: "聊天", icon: ChatIcon },\n  { id: "activity", label: "动态", icon: Activity },\n  { id: "tasks", label: "任务", icon: CheckSquare },\n  { id: "agents", label: "Agent", icon: Users },\n  { id: "computers", label: "计算机", icon: Monitor },\n  { id: "memory", label: "记忆", icon: BookOpen },\n  { id: "settings", label: "设置", icon: Settings },\n] as const;\nexport type Destination = (typeof destinations)[number]["id"];\ntype NavigationProps = {\n  active: string;\n  onSelect: (id: Destination, focusFirstUnread?: boolean) => void;\n  unread?: NavigationUnread;\n};\n\n/** Official LeftRail composition, without Raft account/server stores or fabricated unread state. */\nexport function DesktopNavigation({\n  active,\n  onSelect,\n  unread,\n}: NavigationProps) {\n  const item = (\n    entry: (typeof destinations)[number],\n    binding?: SortableRailBinding,\n  ) => (\n    <RailTabButton\n      {...binding?.dragProps}\n      key={entry.id}\n      icon={<entry.icon width={18} height={18} />}\n      label={entry.label}\n      testId={`left-rail-tab-${entry.id}`}\n      showDot={\n        entry.id === "channels"\n          ? unread?.channels\n          : entry.id === "activity"\n            ? unread?.activity\n            : false\n      }\n      dotInactiveOnly\n      active={active === entry.id}\n      aria-current={active === entry.id ? "page" : undefined}\n      onPointerDownCapture={() => preloadDestination(entry.id)}\n      onFocus={() => preloadDestination(entry.id)}\n      onDoubleClick={\n        entry.id === "activity" ? () => onSelect(entry.id, true) : undefined\n      }\n      onClick={\n        binding\n          ? binding.guardClick(() => onSelect(entry.id))\n          : () => onSelect(entry.id)\n      }\n    />\n  );\n  return (\n    <AppShellRailSlot className="hidden md:flex">\n      <AppRailRoot className="pb-2" role="navigation" aria-label="主导航">\n        <AppRailNav className="relative w-full">\n          <OfficialSortableNavigation\n            tabs={destinations\n              .filter(\n                (entry) => entry.id !== "settings" && entry.id !== "search",\n              )\n              .map((entry) => ({\n                id: entry.id,\n                label: entry.label,\n                render: (binding: SortableRailBinding) => item(entry, binding),\n              }))}\n          />\n        </AppRailNav>\n        <AppRailFooter>\n          <CurrentSidebarToggle\n            column={active === "activity" ? "activityList" : "sidebar"}\n          />\n          {item(destinations.find((entry) => entry.id === "settings")!)}\n        </AppRailFooter>\n      </AppRailRoot>\n    </AppShellRailSlot>\n  );\n}\n\n/** Owner-confirmed app roots, rendered with the official Web navigation primitives. */\nexport function MobileNavigation({\n  active,\n  onSelect,\n  workspaceName = "Loom",\n  unread,\n}: NavigationProps & { workspaceName?: string }) {\n  const tabs = mobilePrimaryDestinations.map((id) =>\n    destinations.find((entry) => entry.id === id)!,\n  );\n  return (\n    <div\n      className="loom-mobile-nav-group pointer-events-auto md:hidden"\n      role="navigation"\n      aria-label="主导航"\n    >\n      <MobileNavRoot className="loom-mobile-nav" role="presentation">\n        {tabs.map((entry) => (\n          <MobileNavItem\n            key={entry.id}\n            data-testid={`mobile-nav-${entry.id}`}\n            selected={active === entry.id}\n            aria-label={entry.id === "channels" ? "首页" : entry.label}\n            aria-current={active === entry.id ? "page" : undefined}\n            onPointerDown={() => preloadDestination(entry.id)}\n            onFocus={() => preloadDestination(entry.id)}\n            onClick={() => onSelect(entry.id)}\n          >\n            {entry.id === "channels" ? <Home /> : <entry.icon />}\n            {((entry.id === "channels" && unread?.channels) ||\n              (entry.id === "activity" && unread?.activity)) && (\n              <Status\n                variant="accent"\n                className="!absolute right-2 top-1"\n                aria-label="有未读消息"\n              />\n            )}\n            <MobileNavLabel className="sr-only">\n              {entry.id === "channels" ? "首页" : entry.label}\n            </MobileNavLabel>\n          </MobileNavItem>\n        ))}\n        <MobileWorkspaceMenu\n          name={workspaceName}\n          active={active}\n          onSelect={onSelect}\n        />\n      </MobileNavRoot>\n    </div>\n  );\n}\n\nexport function DestinationPlaceholder({ active }: { active: string }) {\n  const destination = destinations.find((entry) => entry.id === active);\n  return (\n    <AppShellMainSlot\n      className="bg-layer-canvas "\n      data-testid="loom-destination-page"\n    >\n      <PanelHeader\n        title={destination?.label ?? "页面不存在"}\n        icon={\n          destination ? <destination.icon width={18} height={18} /> : undefined\n        }\n      />\n      <div className="p-6">\n        <p>\n          {destination\n            ? "此页面暂不可用，请从主导航选择。"\n            : "这个页面地址无效，请从主导航选择。"}\n        </p>\n      </div>\n    </AppShellMainSlot>\n  );\n}\n',
+    expected: /id: "tasks", label: "任务", icon: ListTodo/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/official-web/sidebar139.test.mjs:31:1
+✖ Web139 selection/menu state paints the official inset cell instead of a full-width background (0.142417ms)
+  AssertionError [ERR_ASSERTION]: ChannelListRow.tsx
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/sidebar139.test.mjs:33:12)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'import { OfficialMarkedUnread } from "./OfficialContextMenu138.generated.js";\n// Structural port of Sidebar.tsx ChannelRow; data and navigation belong to Loom.\n// Keep upstream SidebarItem recipes, slot nesting and unread/muted state rules.\nimport { SidebarItem, SidebarItemCount, SidebarItemMetaIcon } from "raft-ui";\nimport { BellOff } from "lucide-react";\nimport { ChannelKindIcon } from "../packages/web/src/components/channel/channelKindIcon.tsx";\nimport Tooltip from "../packages/web/src/components/ui/Tooltip.tsx";\nimport { getChannelUnreadIndicatorState } from "../packages/web/src/utils/channelUnreadIndicator.ts";\nexport default function ChannelListRow({\n  channelId,\n  name,\n  selected,\n  menuOpen,\n  unread,\n  markedUnread,\n  muted,\n  onSelectChannel,\n}: {\n  channelId: string;\n  name: string;\n  selected: boolean;\n  menuOpen: boolean;\n  unread: number;\n  markedUnread?: boolean;\n  muted: boolean;\n  onSelectChannel: (id: string) => void;\n}) {\n  const { showLoudUnreadBadge, showQuietUnreadCount } =\n    getChannelUnreadIndicatorState({\n      unread,\n      joined: true,\n      showMutedIcon: muted,\n    });\n  return (\n    <SidebarItem\n      active={selected}\n      onClick={() => onSelectChannel(channelId)}\n      data-public-channel-id={channelId}\n      data-slot="sidebar-item"\n      className={`mx-0 w-full items-center ${selected ? "  " : menuOpen ? "bg-fill-muted" : ""}`}\n    >\n      <div className="flex size-[18px] shrink-0 items-center justify-center">\n        <ChannelKindIcon type="channel" />\n      </div>\n      <span className="min-w-0 flex flex-1 items-center text-left">\n        <span\n          className={`min-w-0 text-sm truncate ${muted ? "text-foreground-muted " : ""} ${showLoudUnreadBadge ? "font-bold" : ""}`}\n        >\n          {name}\n        </span>\n        {muted && (\n          <Tooltip content="已静音">\n            <SidebarItemMetaIcon\n              className="shrink-0"\n              data-slot="sidebar-item-meta-icon"\n              aria-label="已静音"\n            >\n              <BellOff size={12} />\n            </SidebarItemMetaIcon>\n          </Tooltip>\n        )}\n      </span>\n      {showLoudUnreadBadge ? (\n        <SidebarItemCount className="ml-auto" aria-label="有未读消息">\n          {unread > 99 ? "99+" : unread}\n        </SidebarItemCount>\n      ) : showQuietUnreadCount ? (\n        <span\n          aria-label="有未读消息"\n          className="ml-1 shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium leading-none text-foreground-muted font-mono "\n        >\n          {unread > 99 ? "99+" : unread}\n        </span>\n      ) : markedUnread ? (\n        <OfficialMarkedUnread className="ml-auto" aria-label="已标记未读" />\n      ) : null}\n    </SidebarItem>\n  );\n}\n',
+    expected: /sidebarItemClass139\(selected, menuOpen\)/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/official-web/sidebar139.test.mjs:35:1
+✖ Web139 published leaves are reproducible and locked independently of original TSX (0.642792ms)
+  Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/Users/sun/Code/repos/rah_os/scripts/official-web/generate-sidebar139.mjs' imported from /Users/sun/Code/repos/rah_os/scripts/official-web/sidebar139.test.mjs
+      at finalizeResolution (node:internal/modules/esm/resolve:271:11)
+      at moduleResolve (node:internal/modules/esm/resolve:861:10)
+      at defaultResolve (node:internal/modules/esm/resolve:988:11)
+      at #cachedDefaultResolve (node:internal/modules/esm/loader:697:20)
+      at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:714:38)
+      at ModuleLoader.resolveSync (node:internal/modules/esm/loader:746:52)
+      at #resolve (node:internal/modules/esm/loader:679:17)
+      at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:599:35)
+      at onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:628:32)
+      at TracingChannel.tracePromise (node:diagnostics_channel:362:14) {
+    code: 'ERR_MODULE_NOT_FOUND',
+    url: 'file:///Users/sun/Code/repos/rah_os/scripts/official-web/generate-sidebar139.mjs'
+  }

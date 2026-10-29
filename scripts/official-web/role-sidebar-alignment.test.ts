@@ -36,9 +36,11 @@ test("scroll frame delegates horizontal list geometry to native list cells and s
     "frontends/raft/loom/ChatSidebarFrame.tsx",
     "utf8",
   );
+  const start = frame.indexOf("className={`${SIDEBAR_SCROLL_139_CLASS}");
+  assert.ok(start >= 0, "the native scroll surface is actually bound");
   const scroll = frame.slice(
-    frame.indexOf("scrollbar-quiet"),
-    frame.indexOf("data-testid={scrollTestId}"),
+    start,
+    frame.indexOf("data-testid={scrollTestId}", start),
   );
   assert.doesNotMatch(scroll, /\bpx-\d+\b|paddingInline/);
   const recipe = readFileSync(
@@ -57,7 +59,7 @@ test("both Role sections use native disclosure semantics and matching action foo
   assert.doesNotMatch(text, /SidebarSectionDisclosure render=\{<div/);
   assert.match(text, /<RefreshCw[^>]+className="size-3\.5"/);
 });
-test("published Web sidebar geometry is independent from npm and regenerates from locked source", async () => {
+test("historical Web138 geometry remains reproducible but is absent from the active Role binding", async () => {
   const { generateRoleSidebarGeometry } =
     await import("./generate-role-sidebar-geometry.mjs");
   assert.equal(
@@ -70,4 +72,8 @@ test("published Web sidebar geometry is independent from npm and regenerates fro
   const source = generateRoleSidebarGeometry();
   assert.match(source, /paddingInlineStart:8\+1\.5/);
   assert.match(source, /paddingInline:8/);
+  assert.doesNotMatch(
+    readFileSync("frontends/raft/loom/RoleWorkspace.tsx", "utf8"),
+    /OfficialRoleSidebarGeometry/,
+  );
 });

@@ -1,4 +1,5 @@
 import PageEmpty from "./PageEmpty";
+import { SIDEBAR_SCROLL_139_CLASS } from "./OfficialSidebar139.generated.js";
 import { OfficialComputerInstancesEmpty } from "./OfficialRefresh135.generated";
 import { layoutQueries } from "./adaptive-layout.ts";
 import { SidebarResize, useSidebarColumn } from "./SidebarLayout";
@@ -36,6 +37,8 @@ import type { LocalRuntimeInventoryResponse } from "@rah-os/protocol";
 import {
   AppShellMainSlot,
   SidebarRoot,
+  SidebarSection,
+  SidebarList,
   SidebarSectionHeader,
   SidebarSectionDisclosure,
   SidebarSectionCount,
@@ -230,27 +233,31 @@ export default function ComputersPage({
         }
       >
         <SidebarRoot className="hidden h-full flex-col md:flex">
-          <div className="min-h-0 flex-1 overflow-y-auto px-2 pt-2 pb-2">
-            <SidebarSectionHeader data-testid="computer-section-header">
-              <SidebarSectionDisclosure render={<div />} type={undefined}>
-                计算机{" "}
-                <SidebarSectionCount>{inventory ? 1 : 0}</SidebarSectionCount>
-              </SidebarSectionDisclosure>
-            </SidebarSectionHeader>
-            {problem}
-            {inventory && (
-              <OfficialComputerRow
-                machine={{
-                  id: inventory.hostId,
-                  name,
-                  description: computer?.description,
-                }}
-                selected={selected}
-                onClick={() => onSelect(inventory.hostId)}
-                statusDot={dot("absolute -right-1 -bottom-1")}
-                statusLabel={label}
-              />
-            )}
+          <div className={`${SIDEBAR_SCROLL_139_CLASS} min-h-0`}>
+            <SidebarSection>
+              <SidebarSectionHeader data-testid="computer-section-header">
+                <SidebarSectionDisclosure render={<div />} type={undefined}>
+                  计算机{" "}
+                  <SidebarSectionCount>{inventory ? 1 : 0}</SidebarSectionCount>
+                </SidebarSectionDisclosure>
+              </SidebarSectionHeader>
+              {problem}
+              {inventory && (
+                <SidebarList>
+                  <OfficialComputerRow
+                    machine={{
+                      id: inventory.hostId,
+                      name,
+                      description: computer?.description,
+                    }}
+                    selected={selected}
+                    onClick={() => onSelect(inventory.hostId)}
+                    statusDot={dot("absolute -right-1 -bottom-1")}
+                    statusLabel={label}
+                  />
+                </SidebarList>
+              )}
+            </SidebarSection>
           </div>
         </SidebarRoot>
         <div

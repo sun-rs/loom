@@ -1,15 +1,8 @@
 import PageEmpty from "./PageEmpty";
-import {
-  roleSidebarFrameClass,
-  roleSidebarHeaderStyle,
-  roleSidebarRowStyle,
-} from "./OfficialRoleSidebarGeometry.generated";
+import { OfficialComputerGroup139 } from "./OfficialSidebar139.generated.js";
 import { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives";
 import { layoutQueries } from "./adaptive-layout.ts";
-import {
-  OfficialComputerGroup,
-  OfficialSidebarDescription,
-} from "./OfficialRefresh135.generated";
+import { OfficialSidebarDescription139 as OfficialSidebarDescription } from "./OfficialSidebar139.generated.js";
 import {
   groupRolesByComputer,
   readCollapsedComputers,
@@ -25,6 +18,8 @@ import type { rolePresence } from "./role-presence.ts";
 import { useState, type ReactNode, type CSSProperties } from "react";
 import {
   AppShellMainSlot,
+  SidebarSection,
+  SidebarList,
   SidebarSectionHeader,
   SidebarSectionDisclosure,
   SidebarSectionCount,
@@ -148,8 +143,8 @@ export default function RoleWorkspace({
           testIdPrefix="agent-sidebar"
           scrollTestId="loom-role-list"
         >
-          <div className={roleSidebarFrameClass}>
-            <SidebarSectionHeader style={roleSidebarHeaderStyle}>
+          <SidebarSection>
+            <SidebarSectionHeader>
               <SidebarSectionDisclosure
                 render={<button type="button" />}
                 aria-expanded={showRoles}
@@ -186,15 +181,15 @@ export default function RoleWorkspace({
               </SidebarSectionTrailing>
             </SidebarSectionHeader>
             {showRoles && !visible.some((entry) => !entry.retired) && (
-              <>
-                <OfficialSidebarDescription className="hidden md:block">
+              <SidebarList className="hidden md:flex">
+                <OfficialSidebarDescription>
                   还没有角色
                 </OfficialSidebarDescription>
-              </>
+              </SidebarList>
             )}
             {showRoles &&
               groupRolesByComputer(visible).map((group) => (
-                <OfficialComputerGroup
+                <OfficialComputerGroup139
                   key={group.id}
                   id={group.id}
                   name={group.name}
@@ -205,7 +200,6 @@ export default function RoleWorkspace({
                   {group.entries.map((entry) => (
                     <OfficialRoleRow
                       key={entry.id}
-                      style={roleSidebarRowStyle}
                       agent={entry}
                       selected={selected?.id === entry.id}
                       busy={busy}
@@ -215,11 +209,11 @@ export default function RoleWorkspace({
                       }
                     />
                   ))}
-                </OfficialComputerGroup>
+                </OfficialComputerGroup139>
               ))}
             {entries.some((entry) => entry.retired) && (
-              <>
-                <SidebarSectionHeader style={roleSidebarHeaderStyle}>
+              <SidebarSection>
+                <SidebarSectionHeader>
                   <SidebarSectionDisclosure
                     render={<button type="button" />}
                     aria-expanded={showDeleted}
@@ -237,25 +231,27 @@ export default function RoleWorkspace({
                     </SidebarSectionCount>
                   </SidebarSectionDisclosure>
                 </SidebarSectionHeader>
-                {showDeleted &&
-                  visible
-                    .filter((entry) => entry.retired)
-                    .map((entry) => (
-                      <OfficialRoleRow
-                        key={entry.id}
-                        style={roleSidebarRowStyle}
-                        agent={entry}
-                        selected={selected?.id === entry.id}
-                        busy={busy}
-                        onSelect={onSelect}
-                        statusDot={
-                          <RolePresence state={entry.presence ?? "unknown"} />
-                        }
-                      />
-                    ))}
-              </>
+                {showDeleted && (
+                  <SidebarList>
+                    {visible
+                      .filter((entry) => entry.retired)
+                      .map((entry) => (
+                        <OfficialRoleRow
+                          key={entry.id}
+                          agent={entry}
+                          selected={selected?.id === entry.id}
+                          busy={busy}
+                          onSelect={onSelect}
+                          statusDot={
+                            <RolePresence state={entry.presence ?? "unknown"} />
+                          }
+                        />
+                      ))}
+                  </SidebarList>
+                )}
+              </SidebarSection>
             )}
-          </div>
+          </SidebarSection>
           {emptyList && <PageEmpty kind={"roles"} />}
         </Frame>
         <SidebarResize testId="agent-sidebar-resize" />

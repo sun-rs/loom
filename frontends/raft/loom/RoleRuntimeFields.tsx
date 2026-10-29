@@ -50,6 +50,11 @@ export default function RoleRuntimeFields({
     : binding?.serviceTiers?.includes("priority")
       ? "priority"
       : undefined;
+  const pairedFast = Boolean(selectedModel?.fastBindingIds?.length);
+  const fastMode =
+    Boolean(selectedModel?.fastBindingIds?.includes(form.modelBindingId)) ||
+    form.serviceTier === "fast" ||
+    form.serviceTier === "priority";
   const schema: ParsedRuntimeFormV2 = {
     runtimeId: form.runtimeOfferId,
     schemaVersion: "loom-published-capabilities-v1",
@@ -89,7 +94,8 @@ export default function RoleRuntimeFields({
         advanced: false,
         visibleWhen: [],
       },
-      ...(fastTier ||
+      ...(pairedFast ||
+      fastTier ||
       form.serviceTier === "fast" ||
       form.serviceTier === "priority"
         ? [
@@ -97,7 +103,9 @@ export default function RoleRuntimeFields({
               key: "fastMode",
               kind: "boolean" as const,
               label: "快速模式",
-              hint: "以更高的单 token 成本换取更快的速度启动此运行时。",
+              hint: pairedFast
+                ? "K3.1 Pro Highspeed：能力相同，速度更快，约消耗两倍额度。"
+                : "以更高的单 token 成本换取更快的速度启动此运行时。",
               required: false,
               advanced: false,
               visibleWhen: [],
@@ -156,7 +164,7 @@ export default function RoleRuntimeFields({
     model: selectedModel?.value ?? form.modelBindingId,
     effort: form.reasoning,
     environment: form.environment ?? {},
-    fastMode: form.serviceTier === "fast" || form.serviceTier === "priority",
+    fastMode,
   };
   const change = (key: string, value: RuntimeFormV2Value) => {
     const next = applyRuntimeFormV2Change(schema, sources, values, key, value);
@@ -164,12 +172,19 @@ export default function RoleRuntimeFields({
       models,
       String(next.model ?? ""),
       String(next.effort ?? ""),
+      key === "model" ? false : next.fastMode === true,
     );
-    if ((key === "model" || key === "effort") && !resolved) return;
+    if (
+      (key === "model" ||
+        key === "effort" ||
+        (key === "fastMode" && pairedFast)) &&
+      !resolved
+    )
+      return;
     onChange({
       ...form,
       serviceTier:
-        key === "runtime" || key === "model"
+        pairedFast || key === "runtime" || key === "model"
           ? "default"
           : key === "fastMode"
             ? value === true

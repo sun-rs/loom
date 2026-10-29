@@ -14,7 +14,8 @@ import type {
 } from "@rah-os/protocol";
 import { DescriptionList, Separator, Badge } from "raft-ui";
 import { Pencil, Cpu } from "lucide-react";
-import { roleFormFrom } from "@rah-os/client-core/role-form";
+import { roleFormFrom, runtimeChoices } from "@rah-os/client-core/role-form";
+import { runtimeModelOptions } from "./runtime-model-options";
 import RoleFieldEditor, { type RoleField } from "./RoleFieldEditor.tsx";
 import AvatarSlot from "../packages/web/src/components/ui/AvatarSlot.tsx";
 import Tooltip from "../packages/web/src/components/ui/Tooltip.tsx";
@@ -96,6 +97,19 @@ export default function RoleProfile({
   const model = runtime?.modelBindingDescriptors.find(
     (b) => b.modelBindingId === form.modelBindingId,
   );
+  const choice =
+    inventory &&
+    runtimeChoices(inventory).find(
+      (r) => r.runtimeOfferId === form.runtimeOfferId,
+    );
+  const displayModel =
+    choice &&
+    runtimeModelOptions(choice).find((group) =>
+      group.variants.some((b) => b.modelBindingId === form.modelBindingId),
+    );
+  const fastMode =
+    displayModel?.fastBindingIds?.includes(form.modelBindingId) ||
+    ["fast", "priority"].includes(form.serviceTier ?? "");
   const { formatShortDateTime } = useTimeFormatter();
   const editor = (current: RoleField) => (
     <RoleFieldEditor
@@ -273,16 +287,15 @@ export default function RoleProfile({
           </InfoRow>
           <InfoRow label="模型">
             <span className="min-w-0 break-all font-mono">
-              {(model?.displayName ?? model?.modelId ?? form.modelBindingId) ||
+              {(displayModel?.label ??
+                model?.displayName ??
+                model?.modelId ??
+                form.modelBindingId) ||
                 "未指定"}
             </span>
           </InfoRow>
           <InfoRow label="推理强度">{form.reasoning || "默认／不适用"}</InfoRow>
-          <InfoRow label="模式">
-            {["fast", "priority"].includes(form.serviceTier ?? "")
-              ? "快速模式"
-              : "默认"}
-          </InfoRow>
+          <InfoRow label="模式">{fastMode ? "快速模式" : "默认"}</InfoRow>
         </DescriptionList>
       </section>
       {field === "runtimeOfferId" && (

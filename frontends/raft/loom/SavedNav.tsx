@@ -1,10 +1,13 @@
 import { Bookmark } from "lucide-react";
-import { SidebarItem } from "raft-ui";
-import { useIntl } from "react-intl";
 import {
-  SavedNavCount,
-  sidebarItemClass,
-} from "./OfficialNavigationLeaves.generated";
+  SidebarItem,
+  SidebarItemIcon,
+  SidebarSection,
+  SidebarList,
+} from "raft-ui";
+import { sidebarItemClass139 } from "./OfficialSidebar139.generated.js";
+import { useIntl } from "react-intl";
+import { SavedNavCount } from "./OfficialNavigationLeaves.generated";
 import type { RahClient } from "@rah-os/client-sdk";
 import { useEffect, useState } from "react";
 export default function SavedNav({
@@ -46,15 +49,21 @@ export default function SavedNav({
     };
   }, [client, workspaceId]);
   return (
-    <SidebarItem
-      active={active}
-      onClick={onOpen}
-      className={`${sidebarItemClass(active)} loom-mobile-home-action`}
-      data-testid="sidebar-saved-entry"
-    >
-      <Bookmark size={14} className="shrink-0 max-md:text-foreground-hint" />
-      {formatMessage({ id: "layout.sidebar.saved" })}
-      <SavedNavCount total={total} />
-    </SidebarItem>
+    <SidebarSection>
+      <SidebarList>
+        <SidebarItem
+          active={active}
+          onClick={onOpen}
+          className={`${sidebarItemClass139(active)} loom-mobile-home-action`}
+          data-testid="sidebar-saved-entry"
+        >
+          <SidebarItemIcon>
+            <Bookmark />
+          </SidebarItemIcon>
+          {formatMessage({ id: "layout.sidebar.saved" })}
+          <SavedNavCount total={total} />
+        </SidebarItem>
+      </SidebarList>
+    </SidebarSection>
   );
 }

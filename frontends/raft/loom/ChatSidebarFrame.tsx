@@ -9,6 +9,7 @@ import SystemNotifications from "./SystemNotifications.tsx";
 // with its single local Chat title; no unavailable account action is presented.
 import { useEffect, useState, type ReactNode } from "react";
 import { SidebarRoot } from "raft-ui";
+import { SIDEBAR_SCROLL_139_CLASS } from "./OfficialSidebar139.generated.js";
 import { OfficialSidebarHeader } from "./OfficialIdentityFrames.generated";
 export default function ChatSidebarFrame({
   title,
@@ -59,7 +60,7 @@ export default function ChatSidebarFrame({
           />
         ))}
       <div
-        className={`scrollbar-quiet min-h-0 flex-1 overflow-x-hidden overflow-y-auto pb-2 mobile-nav-clearance ${hideDesktopHeader ? "pt-2" : "pt-1"} ${fillContent ? "flex flex-col" : ""}`}
+        className={`${SIDEBAR_SCROLL_139_CLASS} min-h-0 ${fillContent ? "flex flex-col" : ""}`}
         data-testid={scrollTestId}
       >
         {children}

@@ -90,7 +90,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { chromium, webkit } from "playwright";
+import { chromium, firefox, webkit } from "playwright";
 import { HttpRahClient } from "@rah-os/client-sdk";
 import { startRestartableLocalCoreWorkbench } from "../../packages/daemon/src/restartable-local-workbench.ts";
 const directory = mkdtempSync(join(tmpdir(), "loom-official-channel-"));
@@ -112,7 +112,7 @@ if (process.env.LOOM_BROWSER_SLICE === "runtime-sidebar") {
   );
   writeFileSync(
     join(bin, "kimi"),
-    `#!${process.execPath}\nconst a=process.argv.slice(2).join(' ');if(a==='--version')console.log('2.4.0');else if(a==='provider list --json')console.log(JSON.stringify({models:{'kimi-code/k3.1-pro':{provider:'managed:kimi-code',model:'k3.1-pro',displayName:'K3.1 Pro',supportEfforts:['low','high','max']}}}));else process.exitCode=2;`,
+    `#!${process.execPath}\nconst a=process.argv.slice(2).join(' ');if(a==='--version')console.log('2.4.0');else if(a==='provider list --json')console.log(JSON.stringify({models:{'kimi-code/k3.1-pro':{provider:'managed:kimi-code',model:'k3.1-pro',displayName:'K3.1 Pro',supportEfforts:['low','high','max']},'kimi-code/k3.1-pro-highspeed':{provider:'managed:kimi-code',model:'k3.1-pro-highspeed',displayName:'K3.1 Pro Highspeed',supportEfforts:['low','high','max']}}}));else process.exitCode=2;`,
     { mode: 0o700 },
   );
 }
@@ -222,7 +222,11 @@ try {
     instances.push(result.instance);
   }
   browser = await (
-    process.env.LOOM_BROWSER_ENGINE === "webkit" ? webkit : chromium
+    process.env.LOOM_BROWSER_ENGINE === "webkit"
+      ? webkit
+      : process.env.LOOM_BROWSER_ENGINE === "firefox"
+        ? firefox
+        : chromium
   ).launch({ headless: true });
   if (process.env.LOOM_BROWSER_SLICE === "sidebar-pixel-audit") {
     console.log(

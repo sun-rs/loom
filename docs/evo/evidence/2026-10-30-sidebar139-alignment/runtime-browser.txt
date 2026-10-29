@@ -1,0 +1,5 @@
+[loom instance-prewarm] prewarm of principal_fded12eb-66f2-440d-b33f-5da678517724 skipped: disabled
+[loom instance-prewarm] prewarm of principal_4e5fa3d4-d0df-4a33-b68b-26afdb7e38d4 skipped: disabled
+{"width":1440,"scrollInset":0,"avatarInset":20,"sectionInset":20,"groupInset":20,"runtime":"Kimi"}
+{"width":390,"scrollInset":0,"avatarInset":20,"sectionInset":20,"groupInset":20,"runtime":"Kimi"}
+{"cases":[{"width":1440,"foldBothSections":true,"controls":[{"width":28,"height":28,"icon":14},{"width":28,"height":28,"icon":16}],"agyModelEffortSplit":true,"exactBindingRoundTrip":true,"kimiProVisible":true,"kimiFastExactRoundTrip":true},{"width":390,"foldBothSections":true,"controls":[{"width":28,"height":28,"icon":14},{"width":28,"height":28,"icon":16}],"agyModelEffortSplit":true,"exactBindingRoundTrip":true,"kimiProVisible":true,"kimiFastExactRoundTrip":true}],"geometry":[{"width":1440,"scrollInset":0,"avatarInset":20,"sectionInset":20,"groupInset":20,"runtime":"Kimi"},{"width":390,"scrollInset":0,"avatarInset":20,"sectionInset":20,"groupInset":20,"runtime":"Kimi"}]}
