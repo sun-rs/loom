@@ -1,0 +1,90 @@
+{
+  "at": "2026-10-29T12:34:04.066Z",
+  "sourceRevision": "f05b4d9d9e3af6432270433577faec19193e350e",
+  "remoteMainBeforeRestart": "f05b4d9d9e3af6432270433577faec19193e350e",
+  "pushedBeforeServiceRestart": true,
+  "sourceWorktreeDirty": false,
+  "oldPid": 50344,
+  "newPid": 99605,
+  "backup": "/Users/sun/.loom/evo/backups/pre-ui-closeout-1793277222777",
+  "backupVerified": true,
+  "migrationPreflight": true,
+  "fromSchema": 90,
+  "toSchema": 91,
+  "protectedTables": {
+    "room_events": {
+      "count": 838,
+      "sha256": "789ec3ecce5560331fc4138197b6d7ecfb9f562a8abb4ce3ead81d6fe4922415"
+    },
+    "messages": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "role_templates": {
+      "count": 53,
+      "sha256": "36b86f086bc280a734809885266a1c9f0a18d7dcb572afee010d6db6bc43aca1"
+    },
+    "role_revisions": {
+      "count": 56,
+      "sha256": "d9d7174a0fc1f4f57958f40a002f7e0d403408da4ebcf80280cdf79b8fa8f318"
+    },
+    "role_instances": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "human_sidebar_preferences": {
+      "count": 1,
+      "sha256": "ded264b510608bcc4506f0b7d57323f510e63c1cd9e06b5b7d5f5630067ac6f7"
+    },
+    "human_saved_messages": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "human_thread_follows": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "human_activity_frontiers": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    }
+  },
+  "ledgerRoleInstancesPreferencesUnchanged": true,
+  "protectedNotificationMemoryFilesChecked": 3,
+  "newWebSnapshot": "/Users/sun/Code/repos/rah_os/.workbench-web/31825b9c2892e4eec0cc9b17bf8c2a20182570ee3fd9669e4de5923ca1e218f4",
+  "webBuildId": "951e18d4b9197a2f32d9a81c33b11696ea0c5475a595e60e5ee4d2723546e245",
+  "indexSha256": "2700669a22ca00b4e4992ebf53f11270273f434d9027fcff34866a22ec7d800b",
+  "networkModeUnchanged": true,
+  "notificationTransportUnchanged": true,
+  "edges": [
+    {
+      "origin": "https://192.168.1.86:4178",
+      "status": 200,
+      "tlsVerifiedWithOriginalCA": true,
+      "webIndexMatches": true
+    },
+    {
+      "origin": "https://100.101.107.87:4178",
+      "status": 200,
+      "tlsVerifiedWithOriginalCA": true,
+      "webIndexMatches": true
+    }
+  ],
+  "scope": "Shared Web1.21.38 interactions and context menus; Human attention schema91. Runtime/session/delivery/network policy unchanged.",
+  "formalPage": {
+    "browser": "Firefox native via CUA",
+    "url": "https://192.168.1.86:4178/?view=activity",
+    "freshTab": true,
+    "readOnly": true,
+    "observed": [
+      "Local CA trusted without warning",
+      "Fresh channel list with enabled native create/sort controls",
+      "Blank-area right-click: native icons + new channel/group + archived channels",
+      "Escape dismisses menu and restores focus",
+      "Activity retains380px list and blank conversation pane",
+      "Native Filter menu opens: All/Unread/Mentions/Pinned; Escape dismisses"
+    ],
+    "productionTestMessagesCreated": 0,
+    "physicalMobile": false
+  }
+}
