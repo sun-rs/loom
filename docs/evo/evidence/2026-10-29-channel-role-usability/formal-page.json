@@ -1,0 +1,23 @@
+{
+  "at": "2026-10-29T14:18:38.101911+00:00",
+  "browser": "Native Google Chrome via CUA",
+  "formalOrigin": "http://127.0.0.1:4176/",
+  "deployedRevision": "439eced58f8df028d6906e315833706351e29d9e",
+  "webBuildId": "822b258f4a7d4e49e5315c50330d85c38543de8ac31c214b4036236c8b320457",
+  "newTabOpenedAfterRestart": true,
+  "checks": {
+    "channelNativeNameDescriptionWorkspaceMembers": true,
+    "folderPlusOpensRealHomeDirectoryTree": true,
+    "folderModeNoFileRowsOrUpload": true,
+    "roleFilterRemoved": true,
+    "rolePromptNotRequired": true,
+    "agyGemini38FlashLowSelectedInDraft": true,
+    "agyEffortNotDuplicated": true,
+    "avatarLibraryIncludesDetailedUnit01": true,
+    "draftCancelledViaDiscardConfirmation": true,
+    "noFormalRoleChannelOrInstanceCreated": true,
+    "sidebarCollapsedStateRestored": true,
+    "acceptanceTabClosed": true
+  },
+  "retainedLimit": "Kimi official model refresh returned invalid authorization grant; cache has four old models, awaiting user login. No paid provider calls or physical mobile acceptance."
+}
