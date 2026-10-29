@@ -1,0 +1,44 @@
+{
+  "at": "2026-10-29T10:08:51.658Z",
+  "sourceRevision": "88559f6af0e9369f506a423a25093202a58be25b",
+  "remoteMainBeforeRestart": "88559f6af0e9369f506a423a25093202a58be25b",
+  "pushedBeforeServiceRestart": true,
+  "sourceWorktreeDirty": false,
+  "oldPid": 55542,
+  "newPid": 50344,
+  "backup": "/Users/sun/.loom/evo/backups/pre-ui138-1793268510829",
+  "backupVerified": true,
+  "ledgerUnchanged": true,
+  "newWebSnapshot": "/Users/sun/Code/repos/rah_os/.workbench-web/68998fd33822b9763a1956a638069e2863626711b25129948735015d036a10b3",
+  "webBuildId": "5f2bd7cf48196a87f596ea9cd1d95ea1902c7bcf86731f82b88eaf8caa08279a",
+  "indexSha256": "4139b19383cfe6583fe483dd1d89b8e957e60aee68eefdbd840acc94eb3b19d4",
+  "networkModeUnchanged": true,
+  "notificationTransportUnchanged": true,
+  "scope": "UI0.52 + selected Web1.21.38 presentation; no backend/runtime/network policy changes",
+  "edges": [
+    {
+      "origin": "https://100.101.107.87:4178",
+      "status": 200,
+      "tlsVerifiedWithOriginalCA": true,
+      "webIndexMatches": true
+    },
+    {
+      "origin": "https://192.168.1.86:4178",
+      "status": 200,
+      "tlsVerifiedWithOriginalCA": true,
+      "webIndexMatches": true
+    }
+  ],
+  "formalPage": {
+    "browser": "Firefox native via CUA",
+    "url": "https://192.168.1.86:4178/?view=channels",
+    "readOnly": true,
+    "observed": [
+      "fresh formal page with new three-dot Chat icon",
+      "empty channel section and original create entry",
+      "没有打开的对话 / 从列表里选一个",
+      "top search, notifications and full page navigation present"
+    ],
+    "physicalMobile": false
+  }
+}

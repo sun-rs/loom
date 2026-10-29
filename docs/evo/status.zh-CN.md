@@ -9,7 +9,7 @@
 - `main` 是当前 Loom；`evo` 已晋升并移除；`chatbox` 独立承载 `rah/main` 导入，不参与 Loom 构建。见[分支记录](branch-promotion.zh-CN.md)。
 - 唯一产品前端为 `frontends/raft`。旧复刻 UI 和 `apps/console` 已退役，不恢复其路由、构建或测试入口。
 - 保留部署标签 `com.loom.evo`、数据目录 `~/.loom/evo`、日志目录及频道主目录 `~/.loom/channel-workspaces/`。这些名称不是旧分支残留任务，不能为整洁搬迁数据。
-- 正式服务最近一次已在代码 `ab62714c` 推送后备份、平滑重启；[部署收据](evidence/2026-10-28-empty-layout/deployment.json)记录远端提交确认、源码哈希、备份和新 Web 快照 `8f52c3da…`。账本、CLI 配置与既有网络入口未变；真实 Chrome 页面通过390×844空频道／成员／任务／记忆／动态／收藏及1440×900空正文复查。[本次范围](evidence/2026-10-28-empty-layout/README.md)。此前[触控页面预热](evidence/2026-10-28-mobile-tailnet/README.md)、[Tailnet HTTPS 修复](evidence/2026-10-28-tailnet-https/README.md)、[Kimi EOF 修复](evidence/2026-10-28-team-cost-repeat/README.md)、[原生回复默认化](evidence/2026-10-28-native-final-defaults/README.md)保持；前批[前端资源验收](evidence/2026-10-28-ui-refresh/README.md)与[三方协作证据](evidence/2026-10-28-three-cli-team/README.md)保留各自边界。
+- 正式服务已在代码 `88559f6a` 推送后备份、平滑重启到UI0.52/Web1.21.38选取切片；[部署收据](evidence/2026-10-29-ui-refresh138/deployment.json)记录远端提交、备份、新Web快照 `68998fd3…`、账本保持和LAN/Tailnet原CA验证。真实Firefox新页面确认聊天三点图标、导航与空态；手机新交互为390×844隔离浏览器验收，未冒称实体手机。此前[空态布局](evidence/2026-10-28-empty-layout/README.md)、[触控预热](evidence/2026-10-28-mobile-tailnet/README.md)、[Tailnet](evidence/2026-10-28-tailnet-https/README.md)及原生回复/三方协作证据保留各自边界。
 - HTTP 4176、LAN HTTPS 4178 与 Tailnet HTTPS 4178 在既有明确地址监听；同一 Core、原本地 CA、无配对、保留 Host/Origin 校验。本轮两个 HTTPS 首页经原 CA 校验，三个 HTTP 入口均200；页面/API/Service Worker及负向校验见此前[Tailnet入口证据](evidence/2026-10-28-tailnet-https/README.md)。远端实体手机与关闭页面后的推送未在本批重验；部署前仍须读取实际配置。
 
 ## 2. 当前状态
