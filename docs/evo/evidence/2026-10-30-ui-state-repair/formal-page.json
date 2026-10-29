@@ -1,0 +1,70 @@
+{
+  "at": "2026-10-29T18:52:10.145Z",
+  "sourceRevision": "64b0990c176670ab724789790f3564513fb0c1da",
+  "webBuildId": "6316be8d59f3214250528d0227cd6ef9a617d1067ba50ed596a13251e97b69d0",
+  "origin": "http://127.0.0.1:4176",
+  "httpsVerification": "LAN and Tailnet verified with original CA in deployment.json",
+  "browser": "Chromium",
+  "paidCalls": false,
+  "productionProtectedTablesUnchanged": true,
+  "results": [
+    {
+      "width": 1440,
+      "metrics": {
+        "avatarInset": 20,
+        "headerInset": 20,
+        "roleCount": 6
+      },
+      "kimi": {
+        "groupedPro": true,
+        "fastVisible": true,
+        "unchangedDraft": true,
+        "fastChecked": false,
+        "optionCount": 5
+      },
+      "settingsGap": 2,
+      "chatAndComputer": true,
+      "coldTasksHeaderRetained": true,
+      "chrome": {
+        "shellPreserved": true,
+        "documentPreserved": true,
+        "frame": "oklch(88.29% .1623 91.9)",
+        "meta": "oklch(88.29% .1623 91.9)",
+        "pwaMedia": false
+      },
+      "pageErrors": [],
+      "configurationMutations": [],
+      "readReceiptRequests": 1,
+      "readOnlyPostQueries": 103
+    },
+    {
+      "width": 390,
+      "metrics": {
+        "avatarInset": 20,
+        "headerInset": 20,
+        "roleCount": 6
+      },
+      "kimi": {
+        "groupedPro": true,
+        "fastVisible": true,
+        "unchangedDraft": true,
+        "fastChecked": false,
+        "optionCount": 5
+      },
+      "settingsGap": 2,
+      "chatAndComputer": true,
+      "coldTasksHeaderRetained": true,
+      "chrome": {
+        "shellPreserved": true,
+        "documentPreserved": true,
+        "frame": "oklch(88.29% .1623 91.9)",
+        "meta": "oklch(88.29% .1623 91.9)",
+        "pwaMedia": false
+      },
+      "pageErrors": [],
+      "configurationMutations": [],
+      "readReceiptRequests": 1,
+      "readOnlyPostQueries": 103
+    }
+  ]
+}

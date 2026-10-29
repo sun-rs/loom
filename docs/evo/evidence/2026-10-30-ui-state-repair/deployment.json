@@ -1,0 +1,78 @@
+{
+  "at": "2026-10-29T18:50:43.419Z",
+  "sourceRevision": "64b0990c176670ab724789790f3564513fb0c1da",
+  "remoteMainBeforeRestart": "64b0990c176670ab724789790f3564513fb0c1da",
+  "pushedBeforeServiceRestart": true,
+  "sourceWorktreeDirty": false,
+  "oldPid": 66799,
+  "newPid": 64872,
+  "backup": "/Users/sun/.loom/evo/backups/pre-ui-state-repair-1793299826579",
+  "backupVerified": true,
+  "migrationPreflight": true,
+  "fromSchema": 91,
+  "toSchema": 91,
+  "protectedTables": {
+    "room_events": {
+      "count": 854,
+      "sha256": "031aedd09e58c8ef48535f77e106c44c17c7bdffad8b93cb8e486f1e6c39fe01"
+    },
+    "messages": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "role_templates": {
+      "count": 56,
+      "sha256": "67d560a3e70faf99333fa5528846ad820960fe5ee7c16ef740e5d041aff92d6b"
+    },
+    "role_revisions": {
+      "count": 70,
+      "sha256": "a77a2791345bd842ce0c8fc521d353814aa7222c6d1c45d446ab5a4cbb653729"
+    },
+    "role_instances": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "human_sidebar_preferences": {
+      "count": 1,
+      "sha256": "ded264b510608bcc4506f0b7d57323f510e63c1cd9e06b5b7d5f5630067ac6f7"
+    },
+    "human_saved_messages": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "human_thread_follows": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "human_activity_frontiers": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "human_activity_manual_unread": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    }
+  },
+  "ledgerRoleInstancesPreferencesUnchanged": true,
+  "protectedNotificationMemoryFilesChecked": 3,
+  "newWebSnapshot": "/Users/sun/Code/repos/rah_os/.workbench-web/d0ca616f2ed53a16e7cc48a24635b804187bee867a9c9e5386ac4867ae69c1d5",
+  "webBuildId": "6316be8d59f3214250528d0227cd6ef9a617d1067ba50ed596a13251e97b69d0",
+  "indexSha256": "27840d13b857f703a6f4c6cffaadba0bcb0441368f1eacdcd1bf818a6b292136",
+  "networkModeUnchanged": true,
+  "notificationTransportUnchanged": true,
+  "edges": [
+    {
+      "origin": "https://192.168.1.86:4178",
+      "status": 200,
+      "tlsVerifiedWithOriginalCA": true,
+      "webIndexMatches": true
+    },
+    {
+      "origin": "https://100.101.107.87:4178",
+      "status": 200,
+      "tlsVerifiedWithOriginalCA": true,
+      "webIndexMatches": true
+    }
+  ],
+  "scope": "Repair frontend chrome ownership/PWA safe-area paint, cold Tasks header fallback and saved Role draft lifetime. Backend, notification transport and network unchanged. No formal Role writes or provider generation; schema91 and frozen instances retained."
+}

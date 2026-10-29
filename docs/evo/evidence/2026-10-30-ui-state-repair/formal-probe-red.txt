@@ -1,0 +1,25 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: no Role/configuration/execution or unreviewed POST operations
++ actual - expected
+
++ [
++   {
++     method: 'POST',
++     path: '/v3/client/search'
++   }
++ ]
+- []
+
+    at file:///private/tmp/loom-ui-state-formal.mjs:49:38 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: [ { method: 'POST', path: '/v3/client/search' } ],
+  expected: [],
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}
+
+Node.js v25.9.0

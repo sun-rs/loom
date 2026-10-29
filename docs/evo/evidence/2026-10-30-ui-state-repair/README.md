@@ -65,3 +65,19 @@ LOOM_BROWSER_SLICE=runtime-sidebar node scripts/official-web/channel-browser.mjs
 ```
 
 部署及正式页面复查另存本目录收据。终端文本只规范行尾空白，失败结果保留。
+
+## 正式部署与复查
+
+产品代码`64b0990c`先推送，再在干净工作区构建和冻结静态资源；运行围栏检查、
+备份校验与迁移预演后平滑重启。账本、Role/实例、未读/偏好与通知/记忆保护文件保持，
+schema91不变；LAN/Tailnet均用原CA验证新首页。详见deployment.json。
+
+正式页面1440及390视口：确认新buildId；挂起第一次Tasks模块下载，原生任务标题仍在，
+文档与Shell不更换，chrome值与frame相同；原有6个Role及Kimi编辑展示正常，打开无脏稿。
+无页面异常或配置保存，验收后保护表指纹仍相同。正式复查没有更改用户配置来测试保存，
+保存与拒绝保存路径由上文临时Core验证。该浏览器的standalone媒体查询为false，
+不宣称实体设备PWA系统栏已验收。详见formal-page.json。
+
+正式探针先因旧查询白名单未列出新增Tasks路径中的`/v3/client/search`而失败；
+核对SDK的查询定义后补入白名单，未知写入仍失败，并独立校验持久表。
+保留formal-probe-red.txt，该工具错误不算产品故障或配置写入。
