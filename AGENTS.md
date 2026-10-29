@@ -188,6 +188,9 @@ never installs them or configures their accounts.
   verified model/effort as a grey fallback/placeholder and never save that fallback.
   The Role sidebar retains official avatar/name/subtitle/runtime anatomy; CLI
   labels come from verified Host offers, never parsed opaque offer IDs.
+  Sidebar labels use Codex/Claude/Kimi/OpenCode/Agy/Pi; keep full runtime names
+  elsewhere. Raft UI 0.52 list cells and section headers own horizontal insets;
+  do not stack the old Sidebar scroller `px-2` on top of their native padding.
   Role `instructions` may be empty; create/revise/instantiate and the editor must
   preserve an empty prompt without manufacturing instructions.
   New Role avatars are sampled once and stored after idempotency replay; never

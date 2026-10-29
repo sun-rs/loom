@@ -4,6 +4,7 @@ import PanelHeader from "../packages/web/src/components/ui/PanelHeader";
 import SystemNotifications from "./SystemNotifications.tsx";
 // Locked db5e399 generated headers; retained v1.21.26 resource shell composition.
 // Native recipes own desktop/mobile header, typography and shell seams.
+// Raft UI 0.52 list cells/section headers own horizontal insets; do not add legacy px-2.
 // Upstream revision/license: ../adoption.json. Loom replaces the server switcher
 // with its single local Chat title; no unavailable account action is presented.
 import { useEffect, useState, type ReactNode } from "react";
@@ -58,7 +59,7 @@ export default function ChatSidebarFrame({
           />
         ))}
       <div
-        className={`scrollbar-quiet min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-2 pb-2 mobile-nav-clearance ${hideDesktopHeader ? "pt-2" : "pt-1"} ${fillContent ? "flex flex-col" : ""}`}
+        className={`scrollbar-quiet min-h-0 flex-1 overflow-x-hidden overflow-y-auto pb-2 mobile-nav-clearance ${hideDesktopHeader ? "pt-2" : "pt-1"} ${fillContent ? "flex flex-col" : ""}`}
         data-testid={scrollTestId}
       >
         {children}

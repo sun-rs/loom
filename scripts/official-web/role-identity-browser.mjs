@@ -71,7 +71,7 @@ export async function verifyRoleIdentity({
         .waitFor({ state: "attached" });
       assert.equal(
         await row.getByTestId("sidebar-agent-runtime").textContent(),
-        runtime.displayName,
+        "Codex",
       );
       assert.equal(
         await profile

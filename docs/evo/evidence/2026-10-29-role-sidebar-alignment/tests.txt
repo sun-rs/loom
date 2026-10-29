@@ -1,0 +1,20 @@
+✔ FormField delegates label density and spacing to native Field recipes (0.76625ms)
+✔ StableField preserves control authority and adopts native label and message composition (0.163125ms)
+✔ Role sidebar adopts shared section controls and row content without local font overrides (0.186334ms)
+✔ message toolbar delegates position and active color to native recipe with current 18px icons (0.10675ms)
+✔ single description/prompt save preserves legacy prompt, metadata and identity (1.190958ms)
+✔ sidebar uses short names from verified Host CLI identity without changing the runtime catalog (0.682875ms)
+✔ scroll frame delegates horizontal list geometry to native list cells and section recipes (0.200583ms)
+✔ local detail dismissals reuse official CloseButton including Side and loading/error branches (15.928041ms)
+✔ local official CloseButton calls carry an explicit semantic mobile target marker (112.975708ms)
+✔ header touch adaptation uses semantic controls rather than SVG/span nesting (0.120083ms)
+✔ adoption registry references existing source owners, bindings and checks (0.607375ms)
+✔ new local close affordances cannot silently bypass scenario owners (72.698ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 392.767167

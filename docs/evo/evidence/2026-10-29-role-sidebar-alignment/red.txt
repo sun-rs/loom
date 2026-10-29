@@ -1,0 +1,56 @@
+✖ sidebar uses short names from verified Host CLI identity without changing the runtime catalog (1.123209ms)
+✖ scroll frame delegates horizontal list geometry to native list cells and section recipes (0.609542ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 110.989708
+
+✖ failing tests:
+
+test at scripts/official-web/role-sidebar-alignment.test.ts:5:1
+✖ sidebar uses short names from verified Host CLI identity without changing the runtime catalog (1.123209ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+
+  + 'Codex CLI'
+  - 'Codex'
+          ^
+
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/role-sidebar-alignment.test.ts:9:9)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.start (node:internal/test_runner/test:1096:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'Codex CLI',
+    expected: 'Codex',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/official-web/role-sidebar-alignment.test.ts:14:1
+✖ scroll frame delegates horizontal list geometry to native list cells and section recipes (0.609542ms)
+  AssertionError [ERR_ASSERTION]: The input was expected to not match the regular expression /\bpx-\d+\b|paddingInline/. Input:
+
+  'scrollbar-quiet min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-2 pb-2 mobile-nav-clearance ${hideDesktopHeader ? "pt-2" : "pt-1"} ${fillContent ? "flex flex-col" : ""}`}\n' +
+    '        '
+
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/role-sidebar-alignment.test.ts:17:9)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'scrollbar-quiet min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-2 pb-2 mobile-nav-clearance ${hideDesktopHeader ? "pt-2" : "pt-1"} ${fillContent ? "flex flex-col" : ""}`}\n        ',
+    expected: /\bpx-\d+\b|paddingInline/,
+    operator: 'doesNotMatch',
+    diff: 'simple'
+  }

@@ -46,7 +46,7 @@ test("single description/prompt save preserves legacy prompt, metadata and ident
   assert.deepEqual(rolePresentation(config, inventory), {
     description: "Old note",
     fallback: "Model Name · low",
-    runtimeLabel: "Codex CLI",
+    runtimeLabel: "Codex",
   });
   assert.equal(
     rolePresentation({ ...config, description: "" }, inventory).description,

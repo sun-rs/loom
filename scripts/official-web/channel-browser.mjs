@@ -1,4 +1,5 @@
-import {verifyChannelRoleUsability} from "./channel-role-usability-browser.mjs";
+import { verifyRoleSidebarAlignment } from "./role-sidebar-alignment-browser.mjs";
+import { verifyChannelRoleUsability } from "./channel-role-usability-browser.mjs";
 import { verifyRemaining138 } from "./remaining138-browser.mjs";
 import { verifyRoleIdentity } from "./role-identity-browser.mjs";
 import { verifyRoleCreation } from "./role-create-browser.mjs";
@@ -208,8 +209,25 @@ try {
   browser = await (
     process.env.LOOM_BROWSER_ENGINE === "webkit" ? webkit : chromium
   ).launch({ headless: true });
-  if (process.env.LOOM_BROWSER_SLICE === "channel-role-usability") {
-    console.log(JSON.stringify(await verifyChannelRoleUsability({browser,origin,client,workspace,head,role})));
+  if (process.env.LOOM_BROWSER_SLICE === "role-sidebar-alignment") {
+    console.log(
+      JSON.stringify(
+        await verifyRoleSidebarAlignment({ browser, origin, role }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "channel-role-usability") {
+    console.log(
+      JSON.stringify(
+        await verifyChannelRoleUsability({
+          browser,
+          origin,
+          client,
+          workspace,
+          head,
+          role,
+        }),
+      ),
+    );
   } else if (process.env.LOOM_BROWSER_SLICE === "role-identity") {
     console.log(
       JSON.stringify(

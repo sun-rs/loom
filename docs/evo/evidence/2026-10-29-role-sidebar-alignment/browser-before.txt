@@ -1,0 +1,22 @@
+[loom instance-prewarm] prewarm of principal_9b17665b-a45d-48db-9f51-8df8146d99ee skipped: disabled
+[loom instance-prewarm] prewarm of principal_7138eaae-1d1f-492a-b272-84f9a545be13 skipped: disabled
+{"width":1440,"scrollInset":0,"avatarInset":28,"sectionInset":28,"groupInset":16,"runtime":"Codex CLI"}
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: 8px cell inset + 12px cell padding, without old wrapper padding
+
+28 !== 20
+
+    at verifyRoleSidebarAlignment (file:///Users/sun/Code/repos/rah_os/scripts/official-web/role-sidebar-alignment-browser.mjs:17:9)
+    at async file:///Users/sun/Code/repos/rah_os/scripts/official-web/channel-browser.mjs:213:32 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 28,
+  expected: 20,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v25.9.0
