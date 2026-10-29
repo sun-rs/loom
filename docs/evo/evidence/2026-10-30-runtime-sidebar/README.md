@@ -51,4 +51,8 @@ selected、字体和手机密度例外；不修改共享Frame、其他页面或�
 AGY模型不含effort后缀，low保存／重开／切medium得到对应精确ID；Kimi Pro选项可见。
 正式服务不创建测试Role、频道或实例；没有新一轮模型能力、成本或真机验收。
 
-正式目录、备份／重启与真实页面收据另见本目录JSON。模拟截图不冒充实体手机。
+`01987e8a`已推送并备份／平滑重启，schema91，保护账本／Role／实例／偏好校验保持，
+LAN与Tailnet原CA验证通过。正式API Kimi目录6项、AGY精确binding13项；
+Chrome真实页面确认Kimi Pro／Highspeed可见、AGY展示5模型且effort独立，打开原配置仍无脏稿。
+没有保存Role、创建测试对象或执行付费生成；恢复原侧栏状态、关闭临时标签。
+见deployment.json、formal-catalog.json和formal-page.json；模拟截图不冒充实体手机。

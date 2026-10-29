@@ -1,0 +1,78 @@
+{
+  "at": "2026-10-29T16:41:24.041Z",
+  "sourceRevision": "01987e8ace360108a8489895197b309f48857c8f",
+  "remoteMainBeforeRestart": "01987e8ace360108a8489895197b309f48857c8f",
+  "pushedBeforeServiceRestart": true,
+  "sourceWorktreeDirty": false,
+  "oldPid": 74391,
+  "newPid": 7105,
+  "backup": "/Users/sun/.loom/evo/backups/pre-runtime-sidebar-1793292063754",
+  "backupVerified": true,
+  "migrationPreflight": true,
+  "fromSchema": 91,
+  "toSchema": 91,
+  "protectedTables": {
+    "room_events": {
+      "count": 849,
+      "sha256": "e282f1908774b7840409c97da851f90850e01ba1ee44e0330cf74fb2145a37f1"
+    },
+    "messages": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "role_templates": {
+      "count": 56,
+      "sha256": "ed70a810a2a55510a7da87bcc9c228197cb8a78b302ef3b22cb23de147bd9afa"
+    },
+    "role_revisions": {
+      "count": 65,
+      "sha256": "66f5decffc96368495ac8a5715a7374f5afa9ee7921e32a7e3604bc1df9c75c1"
+    },
+    "role_instances": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "human_sidebar_preferences": {
+      "count": 1,
+      "sha256": "ded264b510608bcc4506f0b7d57323f510e63c1cd9e06b5b7d5f5630067ac6f7"
+    },
+    "human_saved_messages": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "human_thread_follows": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "human_activity_frontiers": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "human_activity_manual_unread": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    }
+  },
+  "ledgerRoleInstancesPreferencesUnchanged": true,
+  "protectedNotificationMemoryFilesChecked": 3,
+  "newWebSnapshot": "/Users/sun/Code/repos/rah_os/.workbench-web/f1b8dacbddc01346ff7543a975379dbc820b4a88730cfb500e8b139e88b1ae01",
+  "webBuildId": "bbe7402ea15c64b831a899868be5c9c1da9c9bb8c2ec9952995d0deba71b6d61",
+  "indexSha256": "6dfd7f8c371eb9145e31d4d02bbae8c2af2faa1bf541fb7d5a4caac8617458c6",
+  "networkModeUnchanged": true,
+  "notificationTransportUnchanged": true,
+  "edges": [
+    {
+      "origin": "https://192.168.1.86:4178",
+      "status": 200,
+      "tlsVerifiedWithOriginalCA": true,
+      "webIndexMatches": true
+    },
+    {
+      "origin": "https://100.101.107.87:4178",
+      "status": 200,
+      "tlsVerifiedWithOriginalCA": true,
+      "webIndexMatches": true
+    }
+  ],
+  "scope": "AGY UI model/effort resolves exact native bindings; Role sections collapse independently; published Web sidebar horizontal geometry port. Kimi native login completed by owner; startup inventory rescan expected. No Role writes or provider generation in formal acceptance; schema91 and frozen instances retained."
+}

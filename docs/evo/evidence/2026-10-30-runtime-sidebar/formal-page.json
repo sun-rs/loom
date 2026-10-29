@@ -1,0 +1,35 @@
+{
+  "at": "2026-10-29T16:43:51.898165+00:00",
+  "method": "Native Chrome via cua_repl, AX and screenshot",
+  "sourceRevision": "01987e8ace360108a8489895197b309f48857c8f",
+  "freshPageAfterRestart": true,
+  "kimiModelsVisible": [
+    "K2.8 Preview",
+    "K2.7 Code Highspeed",
+    "K3",
+    "K3-256k",
+    "K3.1 Pro",
+    "K3.1 Pro Highspeed 2x Usage Cost"
+  ],
+  "agyModelsVisible": [
+    "Gemini 4 Argon",
+    "Gemini 3.8 Flash",
+    "Claude Opus 5.5",
+    "Claude Sonnet 5.5",
+    "GPT-OSS 120B"
+  ],
+  "agySeparateEffortField": "high",
+  "originalConfigSaveDisabled": true,
+  "roleAndDeletedGroupVisible": true,
+  "sidebarVisualCheck": true,
+  "modelOrRoleWrites": false,
+  "createdTestObjects": false,
+  "paidProviderExecution": false,
+  "sidebarCollapsedRestored": true,
+  "temporaryTabsClosed": true,
+  "notes": [
+    "Existing user Roles were inspected without changing their selected models.",
+    "Original global sidebar collapsed value restored; its UI preference revision can advance through normal navigation.",
+    "Exact geometry measured in emulated 1440/390 browser cases, not via native Chrome AX."
+  ]
+}

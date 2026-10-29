@@ -9,7 +9,7 @@
 - `main` 是当前 Loom；`evo` 已晋升并移除；`chatbox` 独立承载 `rah/main` 导入，不参与 Loom 构建。见[分支记录](branch-promotion.zh-CN.md)。
 - 唯一产品前端为 `frontends/raft`。旧复刻 UI 和 `apps/console` 已退役，不恢复其路由、构建或测试入口。
 - 保留部署标签 `com.loom.evo`、数据目录 `~/.loom/evo`、日志目录及频道主目录 `~/.loom/channel-workspaces/`。这些名称不是旧分支残留任务，不能为整洁搬迁数据。
-- 正式服务已在`a488edf9`推送后备份并平滑重启到弹窗操作顺序修正版本，schema91；[部署收据](evidence/2026-10-29-dialog-actions/deployment.json)确认账本／Role／实例／偏好保持，LAN/Tailnet原CA验证通过。[正式Chrome](evidence/2026-10-29-dialog-actions/formal-page.json)确认取消在左、保存在右、取消关闭并回焦，无配置写入。此前[双编辑入口／运行时信息](evidence/2026-10-29-role-profile-affordances/README.md)及其他证据保留各自范围，真实账户额度仍未接入。
+- 正式服务已在`01987e8a`推送后备份并平滑重启，schema91；[部署收据](evidence/2026-10-30-runtime-sidebar/deployment.json)确认账本／Role／实例／偏好保持，LAN/Tailnet原CA验证通过。[正式Chrome](evidence/2026-10-30-runtime-sidebar/formal-page.json)确认Kimi Pro／Highspeed目录可见、Agy模型与effort分开、侧栏新几何及分组生效，没有保存Role配置。真实账户额度仍未接入；此前证据保留各自范围。
 - HTTP 4176、LAN HTTPS 4178 与 Tailnet HTTPS 4178 在既有明确地址监听；同一 Core、原本地 CA、无配对、保留 Host/Origin 校验。本轮两个 HTTPS 首页经原 CA 校验，三个 HTTP 入口均200；页面/API/Service Worker及负向校验见此前[Tailnet入口证据](evidence/2026-10-28-tailnet-https/README.md)。远端实体手机与关闭页面后的推送未在本批重验；部署前仍须读取实际配置。
 
 ## 2. 当前状态
@@ -27,7 +27,7 @@
 
 ### 前端与通知
 
-- Role侧栏按官网1.21.38完整水平组合修正，角色／已删除可独立折叠并保持；Agy模型与effort分开选择，保存解析到精确原生binding。Kimi重登后原生出现K3.1 Pro及Highspeed，正式目录按安全重启后收据为准。[源码、根因和定向验收](evidence/2026-10-30-runtime-sidebar/README.md)。
+- Role侧栏按官网1.21.38完整水平组合修正，角色／已删除可独立折叠并保持；Agy模型与effort分开选择，保存解析到精确原生binding。Kimi重登并安全重启后，正式目录及真实页面已出现K3.1 Pro及Highspeed。[源码、根因和定向验收](evidence/2026-10-30-runtime-sidebar/README.md)。
 
 - 全系统弹窗操作顺序核查：角色资料编辑、记忆编辑两处改为官方取消在左／保存在右；窄空间原生堆叠、手机Sheet左关闭／右提交均保留。加入递归源码防回归检查，桌面／手机定向浏览器通过；行内编辑保持官方自身顺序。[核查及高清头像来源调查](evidence/2026-10-29-dialog-actions/README.md)。高清动漫素材尚未替换产品图库。
 
