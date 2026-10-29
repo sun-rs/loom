@@ -184,6 +184,25 @@ export async function verifyRuntimeSidebar({
         .click();
       assert.equal(await fast.isChecked(), false);
       await page.screenshot({ path: `/tmp/loom-kimi-runtime-${width}.png` });
+      await dialog.getByRole("button", { name: "关闭", exact: true }).click();
+      await dialog.waitFor({ state: "hidden" });
+      if (width === 390) {
+        await page
+          .getByRole("button", { name: "角色列表", exact: true })
+          .click();
+      } else {
+        await page.getByTestId("deleted-role-section-toggle").click();
+        await removed.click();
+        assert.equal(
+          new URL(page.url()).searchParams.get("role"),
+          retired.roleId,
+        );
+      }
+      assert.equal(
+        await page.getByRole("alertdialog").isVisible(),
+        false,
+        "confirmed runtime revisions release navigation on mobile Back and desktop role selection",
+      );
       await page.goto(origin + "/?view=settings");
       await page.getByTestId("settings-sidebar-list").waitFor();
       assert.ok(
@@ -202,6 +221,7 @@ export async function verifyRuntimeSidebar({
         exactBindingRoundTrip: true,
         kimiProVisible: true,
         kimiFastExactRoundTrip: true,
+        savedNavigationReleased: true,
       });
     } finally {
       await context.close();

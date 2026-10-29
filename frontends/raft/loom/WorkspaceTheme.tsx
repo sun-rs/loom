@@ -22,11 +22,20 @@ export default function WorkspaceTheme({
     const meta = document.querySelector<HTMLMetaElement>(
       'meta[name="theme-color"]',
     );
-    if (meta)
-      meta.content = getComputedStyle(root)
+    const syncChrome = () => {
+      const color = getComputedStyle(root)
         .getPropertyValue("--layer-frame")
         .trim();
+      if (meta && color && meta.content !== color) meta.content = color;
+    };
+    syncChrome();
+    // Native ThemeProvider commits its mode class in a passive effect after
+    // this child layout effect. Follow that DOM commit without a timer or a
+    // second mode/theme state, so chrome cannot retain the previous mode color.
+    const observer = new MutationObserver(syncChrome);
+    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
     return () => {
+      observer.disconnect();
       root.removeAttribute("data-theme");
       root.removeAttribute("data-theme-decor");
     };

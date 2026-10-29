@@ -1,5 +1,5 @@
 // Loom port to the official raft-ui 0.6 mode-only provider. Original revision: adoption.json.
-import { useLayoutEffect, useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { ThemeProvider, useTheme } from "raft-ui";
 import { AppThemeContext } from "../hooks/useAppTheme";
 import {
@@ -17,15 +17,7 @@ function ModeContext({
   setMode: (mode: AppearanceMode) => void;
 }) {
   const { resolvedMode } = useTheme();
-  useLayoutEffect(() => {
-    const meta = document.querySelector<HTMLMetaElement>(
-      'meta[name="theme-color"]',
-    );
-    if (meta)
-      meta.content = getComputedStyle(document.documentElement)
-        .getPropertyValue("--layer-canvas")
-        .trim();
-  }, [resolvedMode]);
+  // WorkspaceTheme owns browser chrome; device mode only resolves light/dark.
   return (
     <AppThemeContext.Provider
       value={{ preferences: { mode }, resolvedMode, setMode }}

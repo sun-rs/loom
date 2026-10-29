@@ -42,7 +42,11 @@ test("task toolbar lets native segmented items own the state and avoids old page
     /<PickerTriggerButton/,
   );
   assert.match(s, /<OfficialTasksHeader/);
-  assert.match(read("loom/OfficialTaskSurfaces.generated.tsx"), /<PanelTitle/);
+  assert.match(
+    read("loom/OfficialTaskSurfaces.generated.tsx"),
+    /from "\.\/OfficialTasksHeader.generated"/,
+  );
+  assert.match(read("loom/OfficialTasksHeader.generated.tsx"), /<PanelTitle/);
   assert.doesNotMatch(s, /variant=\{mode === value/);
 });
 

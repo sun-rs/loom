@@ -1,0 +1,470 @@
+✖ device mode does not overwrite canonical frame chrome with canvas color (1.479125ms)
+✖ PWA underlay and safe top use the same frame token without changing page geometry (0.505292ms)
+✔ page module is demand-loaded once and rendered immediately on resolution without a timed Suspense fallback (34.0475ms)
+✔ departed page never publishes its late module completion (6.008375ms)
+✖ a demand-loaded page can retain its native header while its module is pending (5.774792ms)
+✔ failed imports reach the existing error boundary instead of an endless loader (5.308833ms)
+✔ a module resolving between remount and effect still becomes visible (4.322125ms)
+✔ stale deployed imports render recovery without throwing away the mounted application (3.814792ms)
+✔ refresh confirmation is above the search overlay and retains native confirmation (0.184875ms)
+✔ warming page code shares one import with a later navigation without mounting the page (5.825708ms)
+✔ a failed background import remains visible through the existing recovery when navigated (6.542292ms)
+✔ a transient speculative failure cannot poison a later real navigation (3.514042ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 9
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 250.884167
+
+✖ failing tests:
+
+test at scripts/official-web/chrome-draft-lifetime.test.mjs:4:1
+✖ device mode does not overwrite canonical frame chrome with canvas color (1.479125ms)
+  AssertionError [ERR_ASSERTION]: The input was expected to not match the regular expression /theme-color|--layer-canvas/. Input:
+
+  '// Loom port to the official raft-ui 0.6 mode-only provider. Original revision: adoption.json.\n' +
+    'import { useLayoutEffect, useEffect, useState, type ReactNode } from "react";\n' +
+    'import { ThemeProvider, useTheme } from "raft-ui";\n' +
+    'import { AppThemeContext } from "../hooks/useAppTheme";\n' +
+    'import {\n' +
+    '  readMode,\n' +
+    '  modeKey,\n' +
+    '  type AppearanceMode,\n' +
+    '} from "../../../../loom/theme-mode";\n' +
+    'function ModeContext({\n' +
+    '  children,\n' +
+    '  mode,\n' +
+    '  setMode,\n' +
+    '}: {\n' +
+    '  children: ReactNode;\n' +
+    '  mode: AppearanceMode;\n' +
+    '  setMode: (mode: AppearanceMode) => void;\n' +
+    '}) {\n' +
+    '  const { resolvedMode } = useTheme();\n' +
+    '  useLayoutEffect(() => {\n' +
+    '    const meta = document.querySelector<HTMLMetaElement>(\n' +
+    `      'meta[name="theme-color"]',\n` +
+    '    );\n' +
+    '    if (meta)\n' +
+    '      meta.content = getComputedStyle(document.documentElement)\n' +
+    '        .getPropertyValue("--layer-canvas")\n' +
+    '        .trim();\n' +
+    '  }, [resolvedMode]);\n' +
+    '  return (\n' +
+    '    <AppThemeContext.Provider\n' +
+    '      value={{ preferences: { mode }, resolvedMode, setMode }}\n' +
+    '    >\n' +
+    '      {children}\n' +
+    '    </AppThemeContext.Provider>\n' +
+    '  );\n' +
+    '}\n' +
+    'export function AppThemeProvider({ children }: { children: ReactNode }) {\n' +
+    '  const [mode, setState] = useState<AppearanceMode>(() =>\n' +
+    '    readMode(window.localStorage),\n' +
+    '  );\n' +
+    '  const setMode = (next: AppearanceMode) => {\n' +
+    '    setState(next);\n' +
+    '    try {\n' +
+    '      localStorage.setItem(modeKey, next);\n' +
+    '    } catch {\n' +
+    '      /* in-memory mode remains usable */\n' +
+    '    }\n' +
+    '  };\n' +
+    '  useEffect(() => {\n' +
+    '    const update = (e: StorageEvent) => {\n' +
+    '      if (e.key === modeKey || e.key === null) setState(readMode(localStorage));\n' +
+    '    };\n' +
+    '    window.addEventListener("storage", update);\n' +
+    '    return () => window.removeEventListener("storage", update);\n' +
+    '  }, []);\n' +
+    '  return (\n' +
+    '    <ThemeProvider mode={mode} onModeChange={setMode} storageKey={modeKey}>\n' +
+    '      <ModeContext mode={mode} setMode={setMode}>\n' +
+    '        {children}\n' +
+    '      </ModeContext>\n' +
+    '    </ThemeProvider>\n' +
+    '  );\n' +
+    '}\n' +
+    'export { useAppTheme } from "../hooks/useAppTheme";\n'
+
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/chrome-draft-lifetime.test.mjs:6:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.start (node:internal/test_runner/test:1096:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: `// Loom port to the official raft-ui 0.6 mode-only provider. Original revision: adoption.json.\nimport { useLayoutEffect, useEffect, useState, type ReactNode } from "react";\nimport { ThemeProvider, useTheme } from "raft-ui";\nimport { AppThemeContext } from "../hooks/useAppTheme";\nimport {\n  readMode,\n  modeKey,\n  type AppearanceMode,\n} from "../../../../loom/theme-mode";\nfunction ModeContext({\n  children,\n  mode,\n  setMode,\n}: {\n  children: ReactNode;\n  mode: AppearanceMode;\n  setMode: (mode: AppearanceMode) => void;\n}) {\n  const { resolvedMode } = useTheme();\n  useLayoutEffect(() => {\n    const meta = document.querySelector<HTMLMetaElement>(\n      'meta[name="theme-color"]',\n    );\n    if (meta)\n      meta.content = getComputedStyle(document.documentElement)\n        .getPropertyValue("--layer-canvas")\n        .trim();\n  }, [resolvedMode]);\n  return (\n    <AppThemeContext.Provider\n      value={{ preferences: { mode }, resolvedMode, setMode }}\n    >\n      {children}\n    </AppThemeContext.Provider>\n  );\n}\nexport function AppThemeProvider({ children }: { children: ReactNode }) {\n  const [mode, setState] = useState<AppearanceMode>(() =>\n    readMode(window.localStorage),\n  );\n  const setMode = (next: AppearanceMode) => {\n    setState(next);\n    try {\n      localStorage.setItem(modeKey, next);\n    } catch {\n      /* in-memory mode remains usable */\n    }\n  };\n  useEffect(() => {\n    const update = (e: StorageEvent) => {\n      if (e.key === modeKey || e.key === null) setState(readMode(localStorage));\n    };\n    window.addEventListener("storage", update);\n    return () => window.removeEventListener("storage", update);\n  }, []);\n  return (\n    <ThemeProvider mode={mode} onModeChange={setMode} storageKey={modeKey}>\n      <ModeContext mode={mode} setMode={setMode}>\n        {children}\n      </ModeContext>\n    </ThemeProvider>\n  );\n}\nexport { useAppTheme } from "../hooks/useAppTheme";\n`,
+    expected: /theme-color|--layer-canvas/,
+    operator: 'doesNotMatch',
+    diff: 'simple'
+  }
+
+test at scripts/official-web/chrome-draft-lifetime.test.mjs:10:1
+✖ PWA underlay and safe top use the same frame token without changing page geometry (0.505292ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /@media \(display-mode: standalone\)/. Input:
+
+  '/* Owner-approved mobile density adaptation (2026-10-17), not upstream parity.\n' +
+    ' * Raft retains typography, colors, disclosure, focus and message measurement.\n' +
+    ' * CSS reads the native textarea/draft; no second draft or keyboard state owner.\n' +
+    ' */\n' +
+    '/* File tools remain at the leading edge in both reading and editing layouts.\n' +
+    ' * Keep the task checkbox and submit group in normal flow, never overlaid. */\n' +
+    '.loom-composer [data-slot="composer-toolbar"] {\n' +
+    '  min-width: 0;\n' +
+    '}\n' +
+    '.loom-composer-file-tools {\n' +
+    '  flex-shrink: 0;\n' +
+    '}\n' +
+    '.loom-composer\n' +
+    '  [data-slot="composer-toolbar"]\n' +
+    '  > div:not(.loom-composer-file-tools) {\n' +
+    '  flex: 1;\n' +
+    '  justify-content: flex-end;\n' +
+    '  white-space: nowrap;\n' +
+    '}\n' +
+    '@media (max-width: 767px), (pointer: coarse) {\n' +
+    '  /* Native mobile 6559754: SlockHomeComponents + SlockSectionHeader.\n' +
+    '   * Structural CSS adaptation, not Compose reuse. Keep desktop recipes intact.\n' +
+    '   * List rows deliberately use the native 32dp row; page actions retain44px. */\n' +
+    '  .loom-mobile-home-action,\n' +
+    '  [data-testid="public-server-channel-list"] [data-slot="sidebar-item"] {\n' +
+    '    height: 32px;\n' +
+    '    min-height: 32px;\n' +
+    '    padding-block: 0;\n' +
+    '    gap: 6px;\n' +
+    '    font-size: 14px;\n' +
+    '    line-height: 18px;\n' +
+    '  }\n' +
+    '  .loom-mobile-home-action > svg,\n' +
+    '  [data-public-channel-id] svg {\n' +
+    '    width: 14px;\n' +
+    '    height: 14px;\n' +
+    '  }\n' +
+    '  [data-public-channel-id] .text-sm {\n' +
+    '    font-size: 14px;\n' +
+    '    line-height: 18px;\n' +
+    '  }\n' +
+    '  [data-slot="sidebar-section-header"] {\n' +
+    '    min-height: 30px;\n' +
+    '    padding-block: 0;\n' +
+    '    margin-top: 4px;\n' +
+    '  }\n' +
+    '  [data-slot="sidebar-section-disclosure"] {\n' +
+    '    min-height: 30px;\n' +
+    '  }\n' +
+    '\n' +
+    '  /* MembersPage: role list34dp, avatar18dp, name14/20; not message avatars. */\n' +
+    '  [data-role-id][data-slot="sidebar-item"] {\n' +
+    '    height: 34px;\n' +
+    '    min-height: 34px;\n' +
+    '    gap: 6px;\n' +
+    '  }\n' +
+    '  [data-role-id] [data-slot="sidebar-item-title"] {\n' +
+    '    font-size: 14px;\n' +
+    '    line-height: 20px;\n' +
+    '  }\n' +
+    '  [data-role-id] [data-slot="avatar"] {\n' +
+    '    width: 18px;\n' +
+    '    height: 18px;\n' +
+    '  }\n' +
+    '\n' +
+    '  /* SharedInboxPanel SharedActivityRow: native32 avatar,12px inset,\n' +
+    '   * primary14/18 and timestamp12/16. Keep the adopted latest Web list\n' +
+    "   * composition/menus; native's different content ordering is not ported. */\n" +
+    '  [data-testid="inbox-row"] {\n' +
+    '    padding-inline: 12px;\n' +
+    '  }\n' +
+    '  [data-testid="conversation-card-avatar"],\n' +
+    '  [data-testid="conversation-card-avatar"] > :first-child {\n' +
+    '    width: 32px;\n' +
+    '    height: 32px;\n' +
+    '  }\n' +
+    '  [data-testid="inbox-row"]::before {\n' +
+    '    left: 56px;\n' +
+    '  }\n' +
+    '  [data-testid="conversation-card-primary"],\n' +
+    '  [data-testid="conversation-card-body"] {\n' +
+    '    font-size: 14px;\n' +
+    '    line-height: 18px;\n' +
+    '  }\n' +
+    '  [data-testid="conversation-card-timestamp"] {\n' +
+    '    font-size: 12px;\n' +
+    '    line-height: 16px;\n' +
+    '  }\n' +
+    '\n' +
+    '  /* SharedTasksPage SharedTaskCard:12x10 padding, title14/20,\n' +
+    '   * description12/16. Retain Web card state, border and action handling. */\n' +
+    '  [data-slot="task-card"] {\n' +
+    '    padding: 10px 12px;\n' +
+    '  }\n' +
+    '  /* Safari inline-button baseline can retain the unclamped text height. */\n' +
+    '  [data-slot="task-card"] > button {\n' +
+    '    display: block;\n' +
+    '  }\n' +
+    '  [data-slot="task-card-title"] {\n' +
+    '    font-size: 14px;\n' +
+    '    line-height: 20px;\n' +
+    '  }\n' +
+    '  [data-slot="task-card-description"] {\n' +
+    '    font-size: 12px;\n' +
+    '    line-height: 16px;\n' +
+    '  }\n' +
+    '  [data-slot="task-card-number"] {\n' +
+    '    font-size: 11px;\n' +
+    '    line-height: 14px;\n' +
+    '  }\n' +
+    '  /* Native LazyRow retains a single horizontally scrollable filter row. */\n' +
+    '  [data-slot="tasks-panel-toolbar-filters"] {\n' +
+    '    flex-wrap: nowrap;\n' +
+    '    overflow-x: auto;\n' +
+    '    min-width: 0;\n' +
+    '  }\n' +
+    '  [data-slot="tasks-panel-toolbar-filters"] > * {\n' +
+    '    flex-shrink: 0;\n' +
+    '  }\n' +
+    '\n' +
+    '  /* Loom host-file picker: fixed outer size, one scroll owner for entries.\n' +
+    '   * The desktop256px tree must not force nested scrolling on short phones. */\n' +
+    '  [data-testid="computer-file-dialog"]:not([data-sheet]) {\n' +
+    '    height: min(512px, calc(100dvh - 32px));\n' +
+    '    min-height: 0;\n' +
+    '    max-height: calc(100dvh - 32px);\n' +
+    '  }\n' +
+    '  [data-testid="computer-file-dialog"] [data-slot="dialog-body"] {\n' +
+    '    display: flex;\n' +
+    '    flex: 1;\n' +
+    '    flex-direction: column;\n' +
+    '    /* Very short landscape windows retain access instead of clipping fields. */\n' +
+    '    overflow: auto;\n' +
+    '  }\n' +
+    '  [data-testid="computer-file-dialog"] [data-slot="dialog-body"] > * {\n' +
+    '    flex-shrink: 0;\n' +
+    '  }\n' +
+    '  [data-testid="computer-file-dialog"] [data-testid="computer-file-tree"] {\n' +
+    '    flex: 1;\n' +
+    '    height: auto;\n' +
+    '    min-height: 72px;\n' +
+    '  }\n' +
+    '\n' +
+    '  /* SettingsHomePage: native Button14/18, supporting Caption12/16.\n' +
+    '   * Keep inputs and message-size preview independent from settings labels. */\n' +
+    '  [data-testid="loom-settings-detail"] .text-subhead {\n' +
+    '    font-size: 14px;\n' +
+    '    line-height: 18px;\n' +
+    '  }\n' +
+    '  [data-testid="loom-settings-detail"] .text-footnote {\n' +
+    '    font-size: 12px;\n' +
+    '    line-height: 16px;\n' +
+    '  }\n' +
+    "  /* Reuse Web's three-choice layout and original80px preview artwork.\n" +
+    '   * Native App has no equivalent preview cards: this is Loom responsive glue. */\n' +
+    '  [data-testid="appearance-theme-picker"] {\n' +
+    '    grid-template-columns: repeat(3, minmax(0, 1fr));\n' +
+    '    gap: 8px;\n' +
+    '  }\n' +
+    '  [data-testid="appearance-theme-picker"]\n' +
+    '    [data-slot="card"]\n' +
+    '    > .flex:not([aria-hidden]) {\n' +
+    '    gap: 4px;\n' +
+    '    padding-inline: 0;\n' +
+    '  }\n' +
+    '  [data-testid="appearance-theme-picker"] .text-callout {\n' +
+    '    font-size: 14px;\n' +
+    '    line-height: 18px;\n' +
+    '  }\n' +
+    '  [data-testid="appearance-theme-picker"]\n' +
+    '    [data-slot="card"]\n' +
+    '    > .flex:not([aria-hidden])\n' +
+    '    > svg {\n' +
+    '    width: 12px;\n' +
+    '    height: 12px;\n' +
+    '  }\n' +
+    '\n' +
+    '  /* Native RaftTopPageHeader frame + seam (mobile eff0472). Retain the\n' +
+    '   * owner-approved 48px compact height; native source defaults to 56dp. */\n' +
+    '  :is([data-loom-root-header], [data-slot="panel-header"]) {\n' +
+    '    background: var(--layer-frame);\n' +
+    '    color: var(--foreground-on-frame);\n' +
+    '    border-bottom: 1px solid var(--line-seam);\n' +
+    '    box-shadow: none;\n' +
+    '    min-height: 48px;\n' +
+    '    height: 48px;\n' +
+    '    padding-block: 4px;\n' +
+    '  }\n' +
+    '\n' +
+    '  /* Retain the official empty-state composition and theme-specific title.\n' +
+    '   * Native content caps at 280dp; supporting copy is Caption 12sp/16sp. */\n' +
+    '  [data-slot="empty-state"] {\n' +
+    '    padding-block: 24px;\n' +
+    '  }\n' +
+    '  [data-slot="empty-state-content"] {\n' +
+    '    max-width: 280px;\n' +
+    '  }\n' +
+    '  [data-slot="empty-state-description"] {\n' +
+    '    font-size: 12px;\n' +
+    '    line-height: 16px;\n' +
+    '  }\n' +
+    '\n' +
+    '  /* Local form glue: SelectTrigger uses the Web Button md recipe (16/24).\n' +
+    '   * Native button type is 14/18. Keep a 44px target and native popup/focus. */\n' +
+    '  .loom-field-select[role="combobox"] {\n' +
+    '    font-size: 14px;\n' +
+    '    line-height: 18px;\n' +
+    '    min-height: 44px;\n' +
+    '    padding-block: 6px;\n' +
+    '  }\n' +
+    '\n' +
+    '  .loom-chat-header [data-slot="panel-meta"] {\n' +
+    '    display: none;\n' +
+    '  }\n' +
+    '\n' +
+    '  /* Compact adaptation: upstream main headers use the native 56px metric.\n' +
+    '   * Use its compact 48dp metric across Loom root and detail headers. */\n' +
+    '  [data-loom-root-header] {\n' +
+    '    height: 48px;\n' +
+    '    min-height: 48px;\n' +
+    '    padding-block: 4px;\n' +
+    '  }\n' +
+    '\n' +
+    '  :is([data-loom-root-header], [data-slot="panel-header"]) :is(h1, h2) {\n' +
+    '    font-size: 16px;\n' +
+    '    line-height: 20px;\n' +
+    '  }\n' +
+    '\n' +
+    '  /* Native main-tab title + subtitle stack (owner correction 2026-10-27). */\n' +
+    '  [data-testid="loom-tasks-page"]\n' +
+    '    [data-loom-root-header]\n' +
+    '    [data-slot="panel-header-content"] {\n' +
+    '    flex-direction: column;\n' +
+    '    justify-content: center;\n' +
+    '    align-items: flex-start;\n' +
+    '    gap: 0;\n' +
+    '  }\n' +
+    '  /* Text metadata uses the16px content edge, not the trailing icon overhang. */\n' +
+    '  [data-testid="loom-tasks-page"] [data-loom-root-header] {\n' +
+    '    padding-right: 16px;\n' +
+    '  }\n' +
+    '\n' +
+    '  /* rUI 0.6 owns 32px controls and their expanded pointer targets. */\n' +
+    '  [data-slot="panel-actions"] {\n' +
+    '    gap: 12px;\n' +
+    '  }\n' +
+    '\n' +
+    '  [data-testid="loom-message-timeline"] [data-slot="message-item"] {\n' +
+    '    column-gap: 6px;\n' +
+    '    padding-inline: 2px;\n' +
+    '  }\n' +
+    '}\n' +
+    '\n' +
+    '/* Loom exception: short windows reuse the existing empty-editor disclosure.\n' +
+    ' * 600px is the retained official short-header breakpoint. No font/nav changes. */\n' +
+    '@media (max-width: 767px), (pointer: coarse), (max-height: 600px) {\n' +
+    '  [data-loom-composer-shell] {\n' +
+    '    padding: 4px 8px calc(env(safe-area-inset-bottom, 0px) + 4px);\n' +
+    '  }\n' +
+    '\n' +
+    '  .loom-composer [data-slot="composer"] {\n' +
+    '    gap: 4px;\n' +
+    '    padding: 0 6px;\n' +
+    '  }\n' +
+    '\n' +
+    '  .loom-composer [data-slot="composer-input"] {\n' +
+    '    padding: 4px;\n' +
+    '    min-height: 28px;\n' +
+    '  }\n' +
+    '\n' +
+    '  .loom-composer [data-slot="composer-toolbar"] {\n' +
+    '    padding: 0;\n' +
+    '    gap: 8px;\n' +
+    '    transform: none;\n' +
+    '    translate: none;\n' +
+    '    --tw-translate-y: 0px;\n' +
+    '  }\n' +
+    '\n' +
+    '  /* Native rUI owns painted size, glyphs and pseudo hit targets.\n' +
+    '   * Reserve a 44px layout cell for its 32px button plus 6px each side. */\n' +
+    '  .loom-composer [data-slot="composer-toolbar"] button:not([role="checkbox"]) {\n' +
+    '    margin: 6px;\n' +
+    '    flex-shrink: 0;\n' +
+    '  }\n' +
+    '  .loom-composer [data-testid="composer-as-task-toggle"] {\n' +
+    '    min-height: 44px;\n' +
+    '  }\n' +
+    '\n' +
+    '  /* Only textarea focus means editing. Toolbar focus restored by file dialogs\n' +
+    '   * must not latch the empty editor open. Keep drafts/task mode/accessories. */\n' +
+    '  .loom-composer[data-has-accessories="false"]:not(:has(textarea:focus)):not(\n' +
+    '      :has([data-testid="composer-as-task-toggle"][aria-checked="true"])\n' +
+    '    ):has(textarea:placeholder-shown)\n' +
+    '    [data-slot="composer"] {\n' +
+    '    display: grid;\n' +
+    '    grid-template-columns: 44px minmax(0, 1fr) 44px;\n' +
+    '    grid-template-areas: "files input submit";\n' +
+    '    align-items: center;\n' +
+    '  }\n' +
+    '\n' +
+    '  .loom-composer[data-has-accessories="false"]:not(:has(textarea:focus)):not(\n' +
+    '      :has([data-testid="composer-as-task-toggle"][aria-checked="true"])\n' +
+    '    ):has(textarea:placeholder-shown)\n' +
+    '    [data-testid="composer-as-task-toggle"] {\n' +
+    '    display: none;\n' +
+    '  }\n' +
+    '\n' +
+    '  .loom-composer[data-has-accessories="false"]:not(:has(textarea:focus)):not(\n' +
+    '      :has([data-testid="composer-as-task-toggle"][aria-checked="true"])\n' +
+    '    ):has(textarea:placeholder-shown)\n' +
+    '    [data-slot="composer-toolbar"] {\n' +
+    '    display: contents;\n' +
+    '  }\n' +
+    '  .loom-composer[data-has-accessories="false"]:not(:has(textarea:focus)):not(\n' +
+    '      :has([data-testid="composer-as-task-toggle"][aria-checked="true"])\n' +
+    '    ):has(textarea:placeholder-shown)\n' +
+    '    .loom-composer-file-tools {\n' +
+    '    grid-area: files;\n' +
+    '  }\n' +
+    '  .loom-composer[data-has-accessories="false"]:not(:has(textarea:focus)):not(\n' +
+    '      :has([data-testid="composer-as-task-toggle"][aria-checked="true"])\n' +
+    '    ):has(textarea:placeholder-shown)\n' +
+    '    [data-slot="composer-toolbar"]\n' +
+    '   '... 7017 more characters
+
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/chrome-draft-lifetime.test.mjs:12:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: `/* Owner-approved mobile density adaptation (2026-10-17), not upstream parity.\n * Raft retains typography, colors, disclosure, focus and message measurement.\n * CSS reads the native textarea/draft; no second draft or keyboard state owner.\n */\n/* File tools remain at the leading edge in both reading and editing layouts.\n * Keep the task checkbox and submit group in normal flow, never overlaid. */\n.loom-composer [data-slot="composer-toolbar"] {\n  min-width: 0;\n}\n.loom-composer-file-tools {\n  flex-shrink: 0;\n}\n.loom-composer\n  [data-slot="composer-toolbar"]\n  > div:not(.loom-composer-file-tools) {\n  flex: 1;\n  justify-content: flex-end;\n  white-space: nowrap;\n}\n@media (max-width: 767px), (pointer: coarse) {\n  /* Native mobile 6559754: SlockHomeComponents + SlockSectionHeader.\n   * Structural CSS adaptation, not Compose reuse. Keep desktop recipes intact.\n   * List rows deliberately use the native 32dp row; page actions retain44px. */\n  .loom-mobile-home-action,\n  [data-testid="public-server-channel-list"] [data-slot="sidebar-item"] {\n    height: 32px;\n    min-height: 32px;\n    padding-block: 0;\n    gap: 6px;\n    font-size: 14px;\n    line-height: 18px;\n  }\n  .loom-mobile-home-action > svg,\n  [data-public-channel-id] svg {\n    width: 14px;\n    height: 14px;\n  }\n  [data-public-channel-id] .text-sm {\n    font-size: 14px;\n    line-height: 18px;\n  }\n  [data-slot="sidebar-section-header"] {\n    min-height: 30px;\n    padding-block: 0;\n    margin-top: 4px;\n  }\n  [data-slot="sidebar-section-disclosure"] {\n    min-height: 30px;\n  }\n\n  /* MembersPage: role list34dp, avatar18dp, name14/20; not message avatars. */\n  [data-role-id][data-slot="sidebar-item"] {\n    height: 34px;\n    min-height: 34px;\n    gap: 6px;\n  }\n  [data-role-id] [data-slot="sidebar-item-title"] {\n    font-size: 14px;\n    line-height: 20px;\n  }\n  [data-role-id] [data-slot="avatar"] {\n    width: 18px;\n    height: 18px;\n  }\n\n  /* SharedInboxPanel SharedActivityRow: native32 avatar,12px inset,\n   * primary14/18 and timestamp12/16. Keep the adopted latest Web list\n   * composition/menus; native's different content ordering is not ported. */\n  [data-testid="inbox-row"] {\n    padding-inline: 12px;\n  }\n  [data-testid="conversation-card-avatar"],\n  [data-testid="conversation-card-avatar"] > :first-child {\n    width: 32px;\n    height: 32px;\n  }\n  [data-testid="inbox-row"]::before {\n    left: 56px;\n  }\n  [data-testid="conversation-card-primary"],\n  [data-testid="conversation-card-body"] {\n    font-size: 14px;\n    line-height: 18px;\n  }\n  [data-testid="conversation-card-timestamp"] {\n    font-size: 12px;\n    line-height: 16px;\n  }\n\n  /* SharedTasksPage SharedTaskCard:12x10 padding, title14/20,\n   * description12/16. Retain Web card state, border and action handling. */\n  [data-slot="task-card"] {\n    padding: 10px 12px;\n  }\n  /* Safari inline-button baseline can retain the unclamped text height. */\n  [data-slot="task-card"] > button {\n    display: block;\n  }\n  [data-slot="task-card-title"] {\n    font-size: 14px;\n    line-height: 20px;\n  }\n  [data-slot="task-card-description"] {\n    font-size: 12px;\n    line-height: 16px;\n  }\n  [data-slot="task-card-number"] {\n    font-size: 11px;\n    line-height: 14px;\n  }\n  /* Native LazyRow retains a single horizontally scrollable filter row. */\n  [data-slot="tasks-panel-toolbar-filters"] {\n    flex-wrap: nowrap;\n    overflow-x: auto;\n    min-width: 0;\n  }\n  [data-slot="tasks-panel-toolbar-filters"] > * {\n    flex-shrink: 0;\n  }\n\n  /* Loom host-file picker: fixed outer size, one scroll owner for entries.\n   * The desktop256px tree must not force nested scrolling on short phones. */\n  [data-testid="computer-file-dialog"]:not([data-sheet]) {\n    height: min(512px, calc(100dvh - 32px));\n    min-height: 0;\n    max-height: calc(100dvh - 32px);\n  }\n  [data-testid="computer-file-dialog"] [data-slot="dialog-body"] {\n    display: flex;\n    flex: 1;\n    flex-direction: column;\n    /* Very short landscape windows retain access instead of clipping fields. */\n    overflow: auto;\n  }\n  [data-testid="computer-file-dialog"] [data-slot="dialog-body"] > * {\n    flex-shrink: 0;\n  }\n  [data-testid="computer-file-dialog"] [data-testid="computer-file-tree"] {\n    flex: 1;\n    height: auto;\n    min-height: 72px;\n  }\n\n  /* SettingsHomePage: native Button14/18, supporting Caption12/16.\n   * Keep inputs and message-size preview independent from settings labels. */\n  [data-testid="loom-settings-detail"] .text-subhead {\n    font-size: 14px;\n    line-height: 18px;\n  }\n  [data-testid="loom-settings-detail"] .text-footnote {\n    font-size: 12px;\n    line-height: 16px;\n  }\n  /* Reuse Web's three-choice layout and original80px preview artwork.\n   * Native App has no equivalent preview cards: this is Loom responsive glue. */\n  [data-testid="appearance-theme-picker"] {\n    grid-template-columns: repeat(3, minmax(0, 1fr));\n    gap: 8px;\n  }\n  [data-testid="appearance-theme-picker"]\n    [data-slot="card"]\n    > .flex:not([aria-hidden]) {\n    gap: 4px;\n    padding-inline: 0;\n  }\n  [data-testid="appearance-theme-picker"] .text-callout {\n    font-size: 14px;\n    line-height: 18px;\n  }\n  [data-testid="appearance-theme-picker"]\n    [data-slot="card"]\n    > .flex:not([aria-hidden])\n    > svg {\n    width: 12px;\n    height: 12px;\n  }\n\n  /* Native RaftTopPageHeader frame + seam (mobile eff0472). Retain the\n   * owner-approved 48px compact height; native source defaults to 56dp. */\n  :is([data-loom-root-header], [data-slot="panel-header"]) {\n    background: var(--layer-frame);\n    color: var(--foreground-on-frame);\n    border-bottom: 1px solid var(--line-seam);\n    box-shadow: none;\n    min-height: 48px;\n    height: 48px;\n    padding-block: 4px;\n  }\n\n  /* Retain the official empty-state composition and theme-specific title.\n   * Native content caps at 280dp; supporting copy is Caption 12sp/16sp. */\n  [data-slot="empty-state"] {\n    padding-block: 24px;\n  }\n  [data-slot="empty-state-content"] {\n    max-width: 280px;\n  }\n  [data-slot="empty-state-description"] {\n    font-size: 12px;\n    line-height: 16px;\n  }\n\n  /* Local form glue: SelectTrigger uses the Web Button md recipe (16/24).\n   * Native button type is 14/18. Keep a 44px target and native popup/focus. */\n  .loom-field-select[role="combobox"] {\n    font-size: 14px;\n    line-height: 18px;\n    min-height: 44px;\n    padding-block: 6px;\n  }\n\n  .loom-chat-header [data-slot="panel-meta"] {\n    display: none;\n  }\n\n  /* Compact adaptation: upstream main headers use the native 56px metric.\n   * Use its compact 48dp metric across Loom root and detail headers. */\n  [data-loom-root-header] {\n    height: 48px;\n    min-height: 48px;\n    padding-block: 4px;\n  }\n\n  :is([data-loom-root-header], [data-slot="panel-header"]) :is(h1, h2) {\n    font-size: 16px;\n    line-height: 20px;\n  }\n\n  /* Native main-tab title + subtitle stack (owner correction 2026-10-27). */\n  [data-testid="loom-tasks-page"]\n    [data-loom-root-header]\n    [data-slot="panel-header-content"] {\n    flex-direction: column;\n    justify-content: center;\n    align-items: flex-start;\n    gap: 0;\n  }\n  /* Text metadata uses the16px content edge, not the trailing icon overhang. */\n  [data-testid="loom-tasks-page"] [data-loom-root-header] {\n    padding-right: 16px;\n  }\n\n  /* rUI 0.6 owns 32px controls and their expanded pointer targets. */\n  [data-slot="panel-actions"] {\n    gap: 12px;\n  }\n\n  [data-testid="loom-message-timeline"] [data-slot="message-item"] {\n    column-gap: 6px;\n    padding-inline: 2px;\n  }\n}\n\n/* Loom exception: short windows reuse the existing empty-editor disclosure.\n * 600px is the retained official short-header breakpoint. No font/nav changes. */\n@media (max-width: 767px), (pointer: coarse), (max-height: 600px) {\n  [data-loom-composer-shell] {\n    padding: 4px 8px calc(env(safe-area-inset-bottom, 0px) + 4px);\n  }\n\n  .loom-composer [data-slot="composer"] {\n    gap: 4px;\n    padding: 0 6px;\n  }\n\n  .loom-composer [data-slot="composer-input"] {\n    padding: 4px;\n    min-height: 28px;\n  }\n\n  .loom-composer [data-slot="composer-toolbar"] {\n    padding: 0;\n    gap: 8px;\n    transform: none;\n    translate: none;\n    --tw-translate-y: 0px;\n  }\n\n  /* Native rUI owns painted size, glyphs and pseudo hit targets.\n   * Reserve a 44px layout cell for its 32px button plus 6px each side. */\n  .loom-composer [data-slot="composer-toolbar"] button:not([role="checkbox"]) {\n    margin: 6px;\n    flex-shrink: 0;\n  }\n  .loom-composer [data-testid="composer-as-task-toggle"] {\n    min-height: 44px;\n  }\n\n  /* Only textarea focus means editing. Toolbar focus restored by file dialogs\n   * must not latch the empty editor open. Keep drafts/task mode/accessories. */\n  .loom-composer[data-has-accessories="false"]:not(:has(textarea:focus)):not(\n      :has([data-testid="composer-as-task-toggle"][aria-checked="true"])\n    ):has(textarea:placeholder-shown)\n    [data-slot="composer"] {\n    display: grid;\n    grid-template-columns: 44px minmax(0, 1fr) 44px;\n    grid-template-areas: "files input submit";\n    align-items: center;\n  }\n\n  .loom-composer[data-has-accessories="false"]:not(:has(textarea:focus)):not(\n      :has([data-testid="composer-as-task-toggle"][aria-checked="true"])\n    ):has(textarea:placeholder-shown)\n    [data-testid="composer-as-task-toggle"] {\n    display: none;\n  }\n\n  .loom-composer[data-has-accessories="false"]:not(:has(textarea:focus)):not(\n      :has([data-testid="composer-as-task-toggle"][aria-checked="true"])\n    ):has(textarea:placeholder-shown)\n    [data-slot="composer-toolbar"] {\n    display: contents;\n  }\n  .loom-composer[data-has-accessories="false"]:not(:has(textarea:focus)):not(\n      :has([data-testid="composer-as-task-toggle"][aria-checked="true"])\n    ):has(textarea:placeholder-shown)\n    .loom-composer-file-tools {\n    grid-area: files;\n  }\n  .loom-composer[data-has-accessories="false"]:not(:has(textarea:focus)):not(\n      :has([data-testid="composer-as-task-toggle"][aria-checked="true"])\n    ):has(textarea:placeholder-shown)\n    [data-slot="composer-toolbar"]\n   `... 7017 more characters,
+    expected: /@media \(display-mode: standalone\)/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/official-web/page-loading.test.mjs:114:1
+✖ a demand-loaded page can retain its native header while its module is pending (5.774792ms)
+  AssertionError [ERR_ASSERTION]: Expected "actual" to be reference-equal to "expected":
+  + actual - expected
+
+  + [Function: PanelFallback]
+  - [Function: NativeHeaderFallback]
+               ^
+
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/page-loading.test.mjs:118:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

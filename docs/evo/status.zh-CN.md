@@ -27,6 +27,8 @@
 
 ### 前端与通知
 
+- 修复PWA顶部frame/canvas竞争及安全区底色、Tasks冷加载标题消失、Role保存后残留dirty三项缺陷。共享原生任务标题叶子，保留按需加载和拒绝保存的草稿保护；57项定向检查、Chromium/WebKit及桌面／手机运行时回环通过。非实体PWA系统栏验收。[复现、修复与边界](evidence/2026-10-30-ui-state-repair/README.md)。
+
 - 已对齐固定Web1.21.39的Role／频道／Computer侧栏，接回原生Section/List/Item，移除旧几何覆盖和重复包裹；设置列表绑定原始Q4e声明，任务入口统一ListTodo。Chromium／Firefox实测内容左距20px、hover左距8px、行间2px及标题到首行8px；手机保留既有紧凑例外。Kimi K3.1 Pro展示为模型＋effort＋快速开关，精确映射标准/Highspeed binding而不伪造serviceTier。83项定向检查、类型、构建与桌面／手机浏览器回归通过；不是全站最新或真机验收。[实现、像素与验证边界](evidence/2026-10-30-sidebar139-alignment/README.md)。
 
 - 角色／已删除可独立折叠并保持；Agy模型与effort分开选择，保存解析到精确原生binding。Kimi重登后原生目录已出现K3.1 Pro及Highspeed；旧1.21.38水平几何已被上述1.21.39组合替代。[源码、根因和定向验收](evidence/2026-10-30-runtime-sidebar/README.md)。

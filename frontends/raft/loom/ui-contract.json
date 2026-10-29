@@ -627,7 +627,7 @@
       "sources": [
         "frontends/raft/upstream/published-2026-10-22/runtime-form/provenance.json"
       ],
-      "rule": "Create and edit share official fields, popup and advanced environment editor. Loom translates published Host bindings; no provider/account management or guessed capability. Role environment is revisioned and frozen per instance. Fast uses the same official boolean field and only published model tiers (Codex priority/fast, Claude supportsFastMode). Explicit default disables inherited CLI Fast. Boolean accessible label is a documented nonvisual compatibility patch. Kimi K3.1 Pro ordinary/Highspeed published binding pair appears as one model plus native Boolean Fast control. Mapping keeps serviceTier default and exact provider IDs; no generic suffix folding, missing counterpart or mismatched effort grouping. Opening a stored highspeed Role makes no dirty draft.",
+      "rule": "Create and edit share official fields, popup and advanced environment editor. Loom translates published Host bindings; no provider/account management or guessed capability. Role environment is revisioned and frozen per instance. Fast uses the same official boolean field and only published model tiers (Codex priority/fast, Claude supportsFastMode). Explicit default disables inherited CLI Fast. Boolean accessible label is a documented nonvisual compatibility patch. Kimi K3.1 Pro ordinary/Highspeed published binding pair appears as one model plus native Boolean Fast control. Mapping keeps serviceTier default and exact provider IDs; no generic suffix folding, missing counterpart or mismatched effort grouping. Opening a stored highspeed Role makes no dirty draft. RoleProfile aggregates local editor dirty state and releases its parent mark on keyed revision unmount; confirmed saves permit Back/role switching, rejected saves retain draft confirmation.",
       "evidence": [
         "scripts/official-web/runtime-fields-source.test.mjs",
         "scripts/official-web/role-create-browser.mjs",
@@ -721,12 +721,13 @@
     {
       "id": "demand-page-loading",
       "owner": "Official MainLayout PanelFallback presentation; Loom module-loading lifetime",
-      "rule": "Keep the pinned PanelFallback JSX and native page UI. Loom demand-loads modules once, publishes resolved components immediately without Suspense reveal throttling, rejects late unmounted completions and preserves error propagation. No eager all-page preload or business data cache.",
+      "rule": "Keep the pinned PanelFallback JSX and native page UI. Loom demand-loads modules once, publishes resolved components immediately without Suspense reveal throttling, rejects late unmounted completions and preserves error propagation. No eager all-page preload or business data cache. Cold Tasks loading reuses its exact native header from OfficialTasksHeader.generated while the body module is pending; do not warm/mount all pages or replace the whole document.",
       "sources": [
         "frontends/raft/packages/web/src/components/layout/MainLayout.tsx"
       ],
-      "bindings": ["LazyPages.tsx"],
-      "guard": "scripts/official-web/page-loading.test.mjs"
+      "bindings": ["LazyPages.tsx", "OfficialTasksHeader.generated.tsx"],
+      "guard": "scripts/official-web/page-loading.test.mjs",
+      "evidence": ["scripts/official-web/ui-state-repair-browser.mjs"]
     },
     {
       "id": "full-pane-empty-flow",
@@ -854,6 +855,20 @@
         "scripts/official-web/sidebar139.test.mjs",
         "scripts/official-web/sidebar-pixel-audit.mjs",
         "scripts/official-web/runtime-sidebar-browser.mjs"
+      ]
+    },
+    {
+      "id": "pwa-frame-chrome",
+      "owner": "WorkspaceTheme frame token; native ThemeProvider mode classes; existing AppShell safe-area geometry",
+      "rule": "WorkspaceTheme alone writes theme-color. Follow the native mode class commit without a timer. Standalone underlay and existing top safe inset paint frame, not canvas; add no padding/overlay or alternate palette. Native OS status bar effects remain separately verified.",
+      "sources": [
+        "frontends/raft/node_modules/raft-ui/dist/lib/theme/theme-provider.mjs",
+        "frontends/raft/node_modules/raft-ui/dist/components/app-shell/app-shell.mjs"
+      ],
+      "bindings": ["WorkspaceTheme.tsx", "mobile.css"],
+      "evidence": [
+        "scripts/official-web/chrome-draft-lifetime.test.mjs",
+        "scripts/official-web/ui-state-repair-browser.mjs"
       ]
     }
   ],

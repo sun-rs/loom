@@ -192,9 +192,4 @@ export function OfficialTaskToolbar({filters,isChannelMode,canModifyTasks,openCr
           </SegmentedControl>
         </div>
       </TasksPanelToolbar>);}
-export function OfficialTasksHeader({meta}:{meta:ReactNode}){const {formatMessage}=useIntl();return (<PanelSectionHeader data-loom-root-header>
-          <PanelHeaderContent>
-            <PanelTitle render={<h2>{formatMessage({ id: "task.panel.heading" })}</h2>} />
-            <PanelMeta render={<p />}>{meta}</PanelMeta>
-          </PanelHeaderContent>
-        </PanelSectionHeader>);}
+export {OfficialTasksHeader} from "./OfficialTasksHeader.generated";

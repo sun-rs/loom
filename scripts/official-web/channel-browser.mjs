@@ -1,6 +1,7 @@
 import { verifyRoleProfileAffordances } from "./role-profile-affordances-browser.mjs";
 import { verifyRuntimeSidebar } from "./runtime-sidebar-browser.mjs";
 import { auditSidebarPixels } from "./sidebar-pixel-audit.mjs";
+import { verifyUiStateRepair } from "./ui-state-repair-browser.mjs";
 import { verifyRoleSidebarAlignment } from "./role-sidebar-alignment-browser.mjs";
 import { verifyChannelRoleUsability } from "./channel-role-usability-browser.mjs";
 import { verifyRemaining138 } from "./remaining138-browser.mjs";
@@ -228,7 +229,20 @@ try {
         ? firefox
         : chromium
   ).launch({ headless: true });
-  if (process.env.LOOM_BROWSER_SLICE === "sidebar-pixel-audit") {
+  if (process.env.LOOM_BROWSER_SLICE === "ui-state-repair") {
+    console.log(
+      JSON.stringify(
+        await verifyUiStateRepair({
+          browser,
+          origin,
+          role,
+          client,
+          workspace,
+          head,
+        }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "sidebar-pixel-audit") {
     console.log(
       JSON.stringify(
         await auditSidebarPixels({

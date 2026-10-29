@@ -111,6 +111,12 @@ test("departed page never publishes its late module completion", async () => {
   await Promise.resolve();
   assert.equal(h.published.length, 0);
 });
+test("a demand-loaded page can retain its native header while its module is pending", () => {
+  const h = setup();
+  const NativeHeaderFallback = () => null;
+  const View = h.nativePage(() => new Promise(() => {}), NativeHeaderFallback);
+  assert.equal(View({}).type, NativeHeaderFallback);
+});
 test("failed imports reach the existing error boundary instead of an endless loader", async () => {
   const h = setup();
   const failure = new Error("offline");

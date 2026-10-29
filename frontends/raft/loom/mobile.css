@@ -2,6 +2,21 @@
  * Raft retains typography, colors, disclosure, focus and message measurement.
  * CSS reads the native textarea/draft; no second draft or keyboard state owner.
  */
+/* Installed PWA chrome uses the actual frame, including while bootstrapping or
+ * loading a route. Paint the existing safe inset; do not add padding/overlays. */
+@media (display-mode: standalone) {
+  html,
+  body {
+    background-color: var(--layer-frame);
+  }
+  [data-testid="loom-channel-app"],
+  [data-testid="loom-bootstrap-loading"] {
+    background-image: linear-gradient(var(--layer-frame), var(--layer-frame));
+    background-size: 100% env(safe-area-inset-top, 0px);
+    background-position: top;
+    background-repeat: no-repeat;
+  }
+}
 /* File tools remain at the leading edge in both reading and editing layouts.
  * Keep the task checkbox and submit group in normal flow, never overlaid. */
 .loom-composer [data-slot="composer-toolbar"] {

@@ -1,0 +1,41 @@
+{
+  "coldTask": {
+    "visibleHeaders": [],
+    "shellSame": true,
+    "documentSame": true
+  },
+  "themeTrace": [
+    {
+      "at": 144.60000038146973,
+      "before": "#FFD440",
+      "after": "oklch(100% 0 0)",
+      "frame": "oklch(88.29% .1623 91.9)",
+      "canvas": "oklch(100% 0 0)"
+    },
+    {
+      "at": 144.60000038146973,
+      "before": "oklch(88.29% .1623 91.9)",
+      "after": "oklch(100% 0 0)",
+      "frame": "oklch(88.29% .1623 91.9)",
+      "canvas": "oklch(100% 0 0)"
+    }
+  ],
+  "themeCanvasWrites": [
+    {
+      "at": 144.60000038146973,
+      "before": "#FFD440",
+      "after": "oklch(100% 0 0)",
+      "frame": "oklch(88.29% .1623 91.9)",
+      "canvas": "oklch(100% 0 0)"
+    },
+    {
+      "at": 144.60000038146973,
+      "before": "oklch(88.29% .1623 91.9)",
+      "after": "oklch(100% 0 0)",
+      "frame": "oklch(88.29% .1623 91.9)",
+      "canvas": "oklch(100% 0 0)"
+    }
+  ],
+  "discardAfterConfirmedSave": true,
+  "errors": []
+}

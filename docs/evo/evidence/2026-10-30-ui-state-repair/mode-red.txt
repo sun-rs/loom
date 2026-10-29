@@ -1,0 +1,24 @@
+[loom instance-prewarm] prewarm of principal_8ca3c414-6a5e-4168-a385-cac4cf9f1efd skipped: disabled
+[loom instance-prewarm] prewarm of principal_99d76e2c-d7cd-48ba-885c-c57927624d04 skipped: disabled
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: chrome must follow the native provider's committed DOM mode
++ actual - expected
+
++ 'oklch(88.29% .1623 91.9)'
+- 'oklch(15.82% .0041 106.86)'
+         ^
+
+    at verifyUiStateRepair (file:///Users/sun/Code/repos/rah_os/scripts/official-web/ui-state-repair-browser.mjs:214:16)
+    at async file:///Users/sun/Code/repos/rah_os/scripts/official-web/channel-browser.mjs:235:9 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 'oklch(88.29% .1623 91.9)',
+  expected: 'oklch(15.82% .0041 106.86)',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v25.9.0

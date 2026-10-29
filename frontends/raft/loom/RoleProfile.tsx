@@ -6,7 +6,7 @@ import {
   OfficialRoleHero,
   OfficialRoleIdentity,
 } from "./OfficialComputerProfile.generated";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useLayoutEffect, useState, useRef } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
 import type {
   RoleTemplate,
@@ -51,6 +51,12 @@ export default function RoleProfile({
   const [field, setField] = useState<RoleField>();
   const [fieldDirty, setFieldDirty] = useState(false),
     [discardField, setDiscardField] = useState(false);
+  // This profile owns editor lifetime. A confirmed revision replaces its keyed
+  // profile; unmount must release its parent navigation mark as well as its draft.
+  useLayoutEffect(() => {
+    onDirtyChange(fieldDirty || runtimeDirty);
+    return () => onDirtyChange(false);
+  }, [fieldDirty, runtimeDirty, onDirtyChange]);
   const nameAction = useRef<HTMLDivElement | null>(null);
   const trigger = useRef<HTMLButtonElement | null>(null);
   const edit = (next: RoleField, button: HTMLButtonElement) => {
@@ -60,8 +66,9 @@ export default function RoleProfile({
   const cancel = () => {
     setField(undefined);
     setFieldDirty(false);
+    setRuntimeDirty(false);
     setDiscardField(false);
-    onDirtyChange(false);
+    setDiscardRuntime(false);
     requestAnimationFrame(() => {
       if (trigger.current?.isConnected) trigger.current.focus();
       else nameAction.current?.querySelector("button")?.focus();
@@ -129,10 +136,7 @@ export default function RoleProfile({
       onDiscard={cancel}
       initialFocusRef={textFocus}
       descriptionPlaceholder={presentation.fallback}
-      onDirtyChange={(value) => {
-        setFieldDirty(value);
-        onDirtyChange(value);
-      }}
+      onDirtyChange={setFieldDirty}
     />
   );
   const editAction = (current: RoleField, label: string) => (
@@ -318,10 +322,7 @@ export default function RoleProfile({
             portalContainer={runtimeContainer}
             disabled={disabled}
             onSave={onSave}
-            onDirtyChange={(value) => {
-              setRuntimeDirty(value);
-              onDirtyChange(value);
-            }}
+            onDirtyChange={setRuntimeDirty}
             onCancel={() => (runtimeDirty ? setDiscardRuntime(true) : cancel())}
             onNavigationDiscard={cancel}
           />

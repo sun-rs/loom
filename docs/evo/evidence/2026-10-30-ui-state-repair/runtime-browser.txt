@@ -1,0 +1,5 @@
+[loom instance-prewarm] prewarm of principal_a9e40de4-b332-4709-ab8d-8062c05a1ae5 skipped: disabled
+[loom instance-prewarm] prewarm of principal_38aecc22-8426-47b8-ba23-2e1218b3b558 skipped: disabled
+{"width":1440,"scrollInset":0,"avatarInset":20,"sectionInset":20,"groupInset":20,"runtime":"Kimi"}
+{"width":390,"scrollInset":0,"avatarInset":20,"sectionInset":20,"groupInset":20,"runtime":"Kimi"}
+{"cases":[{"width":1440,"foldBothSections":true,"controls":[{"width":28,"height":28,"icon":14},{"width":28,"height":28,"icon":16}],"agyModelEffortSplit":true,"exactBindingRoundTrip":true,"kimiProVisible":true,"kimiFastExactRoundTrip":true,"savedNavigationReleased":true},{"width":390,"foldBothSections":true,"controls":[{"width":28,"height":28,"icon":14},{"width":28,"height":28,"icon":16}],"agyModelEffortSplit":true,"exactBindingRoundTrip":true,"kimiProVisible":true,"kimiFastExactRoundTrip":true,"savedNavigationReleased":true}],"geometry":[{"width":1440,"scrollInset":0,"avatarInset":20,"sectionInset":20,"groupInset":20,"runtime":"Kimi"},{"width":390,"scrollInset":0,"avatarInset":20,"sectionInset":20,"groupInset":20,"runtime":"Kimi"}]}

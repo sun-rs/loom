@@ -40,8 +40,8 @@
     },
     "packages/web/src/theme/AppThemeProvider.tsx": {
       "upstreamSha256": "79f1783c40241ba09babc1eddb92c5b054681a0bca88e1191f662e4048296143",
-      "portedSha256": "c01fcd6780d9d119580f7eeed287ed90b8e89bde11ae60928565c1ee9cbeab16",
-      "adoption": "2026-10-26 workspace theme adoption: official themes.css; device mode no longer clears the separate workspace theme attribute. Original upstream hash retained."
+      "portedSha256": "b3431e3f9cb64156d69cbee0a22cad34b9f4bf752679d3c39969dda815e02b7a",
+      "adoption": "2026-10-26 workspace theme adoption: official themes.css; device mode no longer clears the separate workspace theme attribute. Original upstream hash retained. 2026-10-30: device-mode provider no longer writes canvas to theme-color; WorkspaceTheme is the sole frame-chrome owner. Original upstream hash retained."
     },
     "packages/web/src/hooks/useAppTheme.ts": {
       "upstreamSha256": "ec46d42bd283545b11dd9337d23531d33b2e15da6178929b2c700cc25fcacbf6",

@@ -300,6 +300,11 @@ export function OfficialTaskSurface({mobile,header,children,onClose}:{mobile:boo
 export function OfficialTaskReadBar({mobile,onClose,label}:{mobile:boolean;onClose:()=>void;label:string}){return <PanelHead>{mobile&&<PanelAction onClick={onClose} aria-label="关闭任务" data-testid="task-modal-mobile-back"><ArrowLeft/></PanelAction>}<div className="min-w-0 flex-1">{label}</div>{!mobile&&<PanelActions><PanelAction onClick={onClose} aria-label="关闭任务" data-testid="task-modal-close"><X/></PanelAction></PanelActions>}</PanelHead>;}
 export function OfficialTaskFilter({label,icon,selected,isOpen,handleOpenChange,search,setSearch,popoverOptions,clearSelection,disabled}:ReturnType<typeof import("./TaskFilterPicker").useTaskFilterController>){return ${picker};}
 export function OfficialTaskToolbar({filters,isChannelMode,canModifyTasks,openCreateDialog,viewMode,setView}:{filters:ReactNode;isChannelMode:boolean;canModifyTasks:boolean;openCreateDialog:()=>void;viewMode:string;setView:(value:string)=>void}){const {formatMessage}=useIntl();return (${toolbar});}
+export {OfficialTasksHeader} from "./OfficialTasksHeader.generated";
+`,
+    "OfficialTasksHeader.generated.tsx":
+      header +
+      `import type {ReactNode} from "react";import {useIntl} from "react-intl";import {PanelSectionHeader,PanelHeaderContent,PanelTitle,PanelMeta} from "raft-ui";
 export function OfficialTasksHeader({meta}:{meta:ReactNode}){const {formatMessage}=useIntl();return (${pageHeader});}
 `,
     "OfficialActivityHeader.generated.tsx":

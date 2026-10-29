@@ -1,0 +1,53 @@
+[loom instance-prewarm] prewarm of principal_f901302e-b25b-4fb6-ac81-421399ea5c3e skipped: disabled
+[loom instance-prewarm] prewarm of principal_b1425e96-6ddd-4713-8145-877dc0114668 skipped: disabled
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: only the frame owner may update browser chrome
++ actual - expected
+
++ [
++   {
++     after: 'oklch(100% 0 0)',
++     at: 144.60000038146973,
++     before: '#FFD440',
++     canvas: 'oklch(100% 0 0)',
++     frame: 'oklch(88.29% .1623 91.9)'
++   },
++   {
++     after: 'oklch(100% 0 0)',
++     at: 144.60000038146973,
++     before: 'oklch(88.29% .1623 91.9)',
++     canvas: 'oklch(100% 0 0)',
++     frame: 'oklch(88.29% .1623 91.9)'
++   }
++ ]
+- []
+
+    at verifyUiStateRepair (file:///Users/sun/Code/repos/rah_os/scripts/official-web/ui-state-repair-browser.mjs:56:14)
+    at async file:///Users/sun/Code/repos/rah_os/scripts/official-web/channel-browser.mjs:233:32 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: [
+    {
+      at: 144.60000038146973,
+      before: '#FFD440',
+      after: 'oklch(100% 0 0)',
+      frame: 'oklch(88.29% .1623 91.9)',
+      canvas: 'oklch(100% 0 0)'
+    },
+    {
+      at: 144.60000038146973,
+      before: 'oklch(88.29% .1623 91.9)',
+      after: 'oklch(100% 0 0)',
+      frame: 'oklch(88.29% .1623 91.9)',
+      canvas: 'oklch(100% 0 0)'
+    }
+  ],
+  expected: [],
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}
+
+Node.js v25.9.0
