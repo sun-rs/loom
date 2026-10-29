@@ -1,9 +1,15 @@
 import type { RefObject } from "react";
-import { RuntimeFormV2Fields } from "../packages/web/src/components/agent/RuntimeConfigFields.tsx";
+import {
+  RuntimeFormV2Fields,
+  RuntimeSelectControl,
+  Field,
+  type RuntimeOption,
+} from "../packages/web/src/components/agent/RuntimeConfigFields.tsx";
 import {
   applyRuntimeFormV2Change,
   type ParsedRuntimeFormV2,
   type RuntimeFormV2Sources,
+  type RuntimeFormV2Value,
 } from "@botiverse/raft-runtime-form";
 import {
   roleModelLabel,
@@ -19,7 +25,9 @@ export default function RoleRuntimeFields({
   onChange,
   portalContainer,
   hideRuntime = false,
+  pickerOptions,
 }: {
+  pickerOptions?: RuntimeOption[];
   form: RoleForm;
   choices: RuntimeChoice[];
   onChange: (next: RoleForm) => void;
@@ -150,40 +158,58 @@ export default function RoleRuntimeFields({
     environment: form.environment ?? {},
     fastMode: form.serviceTier === "fast" || form.serviceTier === "priority",
   };
+  const change = (key: string, value: RuntimeFormV2Value) => {
+    const next = applyRuntimeFormV2Change(schema, sources, values, key, value);
+    onChange({
+      ...form,
+      serviceTier:
+        key === "runtime" || key === "model"
+          ? "default"
+          : key === "fastMode"
+            ? value === true
+              ? (fastTier ?? form.serviceTier ?? "default")
+              : "default"
+            : (form.serviceTier ?? "default"),
+      environment:
+        typeof next.environment === "object" && next.environment !== null
+          ? next.environment
+          : {},
+      runtimeOfferId: String(next.runtime ?? form.runtimeOfferId),
+      modelBindingId: key === "runtime" ? "" : String(next.model ?? ""),
+      reasoning: key === "runtime" ? "" : String(next.effort ?? ""),
+    });
+  };
   return (
-    <RuntimeFormV2Fields
-      form={schema}
-      sources={sources}
-      values={values}
-      showValidationErrors={false}
-      portalContainer={portalContainer}
-      onChange={(key, value) => {
-        const next = applyRuntimeFormV2Change(
-          schema,
-          sources,
-          values,
-          key,
-          value,
-        );
-        onChange({
-          ...form,
-          serviceTier:
-            key === "runtime" || key === "model"
-              ? "default"
-              : key === "fastMode"
-                ? value === true
-                  ? (fastTier ?? form.serviceTier ?? "default")
-                  : "default"
-                : (form.serviceTier ?? "default"),
-          environment:
-            typeof next.environment === "object" && next.environment !== null
-              ? next.environment
-              : {},
-          runtimeOfferId: String(next.runtime ?? form.runtimeOfferId),
-          modelBindingId: key === "runtime" ? "" : String(next.model ?? ""),
-          reasoning: key === "runtime" ? "" : String(next.effort ?? ""),
-        });
-      }}
-    />
+    <>
+      {!hideRuntime && (
+        <Field label="运行时" required>
+          <RuntimeSelectControl
+            placeholder="选择运行时"
+            value={form.runtimeOfferId}
+            options={
+              pickerOptions ??
+              choices.map((r) => ({
+                value: r.runtimeOfferId,
+                label: r.label.split("（")[0]!,
+              }))
+            }
+            onValueChange={(value) => change("runtime", value)}
+            portalContainer={portalContainer}
+            testId="runtime-form-v2-runtime"
+          />
+        </Field>
+      )}
+      <RuntimeFormV2Fields
+        form={{
+          ...schema,
+          fields: schema.fields.filter((field) => field.key !== "runtime"),
+        }}
+        sources={sources}
+        values={values}
+        showValidationErrors={false}
+        portalContainer={portalContainer}
+        onChange={change}
+      />
+    </>
   );
 }

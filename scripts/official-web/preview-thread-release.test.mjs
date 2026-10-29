@@ -94,10 +94,14 @@ test("document panes retain current native Card, tabs and semantic typography", 
   );
 });
 test("action menu rows use official native button recipe without Button overrides", () => {
-  const s = read("packages/web/src/components/ui/MenuItem.tsx");
-  assert.match(s, /data-slot="menu-item"/);
+  assert.match(
+    read("packages/web/src/components/ui/MenuItem.tsx"),
+    /OfficialContextMenu138/,
+  );
+  const s = read("loom/OfficialContextMenu138.generated.js");
+  assert.match(s, /menu-item/);
   assert.match(s, /flex min-h-9 w-full items-center gap-2.5/);
-  assert.match(s, /enabled:focus-visible:bg-primary-soft/);
+  assert.match(s, /enabled:focus-visible:bg-brand-soft/);
   assert.doesNotMatch(s, /<Button|hover:!border|text-sm/);
   const file = read(
     "packages/web/src/components/message/ChannelFileOverflowMenu.tsx",

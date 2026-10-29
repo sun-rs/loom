@@ -1,9 +1,10 @@
-import { useRef, type ReactNode } from "react";
+import { Fragment, useRef, type ReactNode } from "react";
 import {
   ContextMenu,
   ContextMenuTrigger,
   ContextMenuContent,
   ContextMenuItem,
+  ContextMenuSeparator,
   ContextMenuSubmenu,
   ContextMenuSubmenuTrigger,
   SidebarSectionControl,
@@ -17,6 +18,8 @@ import Tooltip from "../packages/web/src/components/ui/Tooltip.tsx";
 
 export type SidebarMenuItem = {
   label: string;
+  icon?: ReactNode;
+  separatorBefore?: boolean;
   run?: () => void;
   disabled?: boolean;
   checked?: boolean;
@@ -29,27 +32,31 @@ function MenuItems({
   items: SidebarMenuItem[];
   disabled?: boolean;
 }) {
-  return items.map((item) =>
-    item.children ? (
-      <ContextMenuSubmenu key={item.label}>
-        <ContextMenuSubmenuTrigger disabled={disabled || item.disabled}>
+  return items.map((item) => (
+    <Fragment key={item.label}>
+      {item.separatorBefore && <ContextMenuSeparator />}
+      {item.children ? (
+        <ContextMenuSubmenu>
+          <ContextMenuSubmenuTrigger disabled={disabled || item.disabled}>
+            {item.icon}
+            {item.label}
+          </ContextMenuSubmenuTrigger>
+          <ContextMenuContent aria-label={item.label}>
+            <MenuItems items={item.children} disabled={disabled} />
+          </ContextMenuContent>
+        </ContextMenuSubmenu>
+      ) : (
+        <ContextMenuItem
+          disabled={disabled || item.disabled}
+          onClick={item.run}
+        >
+          {item.icon}
           {item.label}
-        </ContextMenuSubmenuTrigger>
-        <ContextMenuContent aria-label={item.label}>
-          <MenuItems items={item.children} disabled={disabled} />
-        </ContextMenuContent>
-      </ContextMenuSubmenu>
-    ) : (
-      <ContextMenuItem
-        key={item.label}
-        disabled={disabled || item.disabled}
-        onClick={item.run}
-      >
-        {item.label}
-        {item.checked && <Check size={14} className="ml-auto" />}
-      </ContextMenuItem>
-    ),
-  );
+          {item.checked && <Check size={14} className="ml-auto" />}
+        </ContextMenuItem>
+      )}
+    </Fragment>
+  ));
 }
 // Same Raft UI primitives as upstream; Base UI owns dismissal, focus,
 // viewport collision avoidance and touch long-press.

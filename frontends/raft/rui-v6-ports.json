@@ -127,9 +127,10 @@
     },
     "packages/web/src/components/ui/MenuItem.tsx": {
       "upstreamSha256": "8fa3cae7100a4455a0dd2e37cac473c128135ad5bcfdd57ad4e48e10091a5ab7",
-      "portedSha256": "ac68ee8655659511081bf515619985f12618c27e8e2b45211544b1d300b5addf",
+      "portedSha256": "bf459292bc0e36417b5d7eeb727d5e6700ca25633968f5774622ef343c89ec0e",
       "localRevision": "85ec9243fa2827838c80834f9d78d4186da7e40f",
-      "adoption": "Historical already-committed compatibility port; reconciled stale hash on 2026-10-21. See page-adoption.json and exact cited Git revision, not a v1.21.26 source change."
+      "adoption": "Bridge to unchanged HXe/l1 declarations in upstream/published-2026-10-29-closeout; generated output owns rendering, no local row recipe. Original intake SHA retained.",
+      "sourceRelease": "Web1.21.38 / app-shell-CKVQUGrN"
     },
     "packages/web/src/components/ui/PreviewShell.tsx": {
       "upstreamSha256": "bad4f5d78aa9ebc1df4de296c79370cf1cdb3d552be05ded992f16b433333b3e",

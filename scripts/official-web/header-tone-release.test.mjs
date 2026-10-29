@@ -3,7 +3,9 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 const read = (p) => readFileSync("frontends/raft/" + p, "utf8");
 test("shared header uses native semantic tones without retired theme overrides", () => {
-  const s = read("upstream/raft-web-source/packages/web/src/components/ui/PanelHeader.tsx");
+  const s = read(
+    "upstream/raft-web-source/packages/web/src/components/ui/PanelHeader.tsx",
+  );
   assert.match(s, /iconTone\?: "location" \| "neutral"/);
   assert.match(s, /iconTone = "neutral"/);
   assert.match(
@@ -27,7 +29,8 @@ test("product calls use location for conversation, neutral for computer and no s
 test("saved list ports the complete native flat-row composition", () => {
   const s = read("loom/SavedPanel.tsx");
   assert.match(s, /data-saved-row=""/);
-  assert.match(s, /before:left-4/);
+  assert.match(s, /<ListRow\s+variant="plain"\s+render=\{<div \/>\}/);
+  assert.doesNotMatch(s, /before:left-4/);
   assert.match(s, /bg-layer-panel py-1 safe-bottom/);
   assert.match(s, /line-clamp-3 text-callout text-foreground/);
   assert.doesNotMatch(s, /<Card|bg-layer-canvas-muted|flex flex-col gap-2/);

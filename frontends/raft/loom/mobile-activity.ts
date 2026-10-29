@@ -9,11 +9,12 @@ export function activityReadToggle(row: {
   activityKind?: string;
   isFollowing?: boolean;
   unread?: number;
+  markedUnread?: boolean;
 }): "read" | "unread" | undefined {
   if (
     !row.activityFrontier ||
     (row.activityKind === "thread" && row.isFollowing !== true)
   )
     return;
-  return (row.unread ?? 0) > 0 ? "read" : "unread";
+  return (row.unread ?? 0) > 0 || row.markedUnread ? "read" : "unread";
 }

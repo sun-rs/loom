@@ -91,7 +91,22 @@ not retain the old search wrapper hairline. These are scoped resource bindings,
 not a whole-site source upgrade. Generated JS **and** declaration surfaces are
 owned by `generate-refresh138.mjs`. Mobile audit must report host-field changes
 and Compose paths outside the selected lock, not only unchanged width numbers.
-Retained gaps are listed in `docs/evo/evidence/2026-10-29-ui-refresh138/README.md`.
+The follow-up `upstream/published-2026-10-29-closeout` intake and
+`generate-remaining138.mjs` own native menu rows, manual-unread marker and
+narrow merged-side cover tabs. Both panes must stay mounted, with independent
+drafts and inert hidden content. Clipboard is a generated leaf shared with the
+official selection drawer; never import a whole drawer just to copy text.
+Right-click Unfollow commits immediately; only swipe Unfollow stages a single
+deferred write with Undo. Context-menu mute has no swipe Undo toast.
+Runtime picker groups use verified Host offers/catalog facts, never inferred
+login/account status. Native OS Duo regions remain outside this Web binding.
+See `docs/evo/evidence/2026-10-29-ui-closeout/README.md` and its menu matrix.
+
+Manual unread is Human attention state owned by Kernel `HumanActivity`, separate
+from exact unread-message counts and provider/instance delivery positions.
+Schema 91 adds `human_activity_manual_unread`; stale viewport acknowledgements
+must not clear a later deliberate mark. Room deletion erases these marks with
+the Room. Never synthesize a peer message/count merely to display the marker.
 
 Executable upgrade practice and the current change matrix:
 `docs/design/official-ui-upgrade-workflow.zh-CN.md`. Commit/push active product

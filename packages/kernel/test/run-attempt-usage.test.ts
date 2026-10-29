@@ -387,7 +387,7 @@ test("an unsupported Provider (Kimi ACP) reports unavailable usage with its reas
 test("schema 61 adds run_attempt_usage keyed by RunAttempt and response", () => {
   const state = fixture();
   try {
-    assert.equal(KERNEL_SCHEMA_VERSION, 90);
+    assert.equal(KERNEL_SCHEMA_VERSION, 91);
     const database = new DatabaseSync(state.databasePath);
     try {
       const columns = database
@@ -655,7 +655,7 @@ test("a schema 60 database upgrades to the current schema without touching exist
     try {
       assert.equal(
         database.prepare("PRAGMA user_version").get()!.user_version,
-        90,
+        91,
       );
       assert.equal(
         database
@@ -710,7 +710,7 @@ function cleanup(
 test("S2-0 schema 64 records leftover cleanup per RunAttempt and exposes it on the usage read", () => {
   const state = fixture();
   try {
-    assert.equal(KERNEL_SCHEMA_VERSION, 90);
+    assert.equal(KERNEL_SCHEMA_VERSION, 91);
     const recorded = state.kernel.runtimeProcessCleanup.record(
       state.host,
       cleanup(state, "cleanup-1"),
@@ -1458,7 +1458,7 @@ test("schema 84 migration adds aggregate storage without changing generation fac
     upgraded = new RoomKernel({ databasePath: state.databasePath });
     upgraded.initialize();
     const audit = new DatabaseSync(state.databasePath);
-    assert.equal(audit.prepare("PRAGMA user_version").get()!.user_version, 90);
+    assert.equal(audit.prepare("PRAGMA user_version").get()!.user_version, 91);
     assert.equal(
       audit.prepare("SELECT COUNT(*) AS n FROM run_attempt_usage").get()!.n,
       1,

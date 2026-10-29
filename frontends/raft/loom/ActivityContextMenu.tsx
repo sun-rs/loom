@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState, useLayoutEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useIntl } from "react-intl";
+import MenuItem from "../packages/web/src/components/ui/MenuItem";
+import { FollowThreadIcon, UnfollowThreadIcon } from "raft-ui";
 import { ContextMenuPopup } from "raft-ui";
 import {
   Bell,
@@ -19,17 +21,19 @@ import type { ActivityAction } from "./activity-actions.ts";
 import type { RahClient } from "@rah-os/client-sdk";
 import { ThreadActivityClient } from "./thread-activity.ts";
 export type ActivityMenuTarget = { row: DiscoveryRow; x: number; y: number };
-const itemClass =
-  "flex min-h-9 w-full items-center gap-2.5 rounded-control px-2.5 py-1.5 text-left [@media(max-height:600px)]:min-h-8 [@media(max-height:600px)]:py-1 font-sans text-callout font-medium text-foreground outline-none transition-colors enabled:hover:bg-primary-soft enabled:focus-visible:bg-primary-soft [&>svg]:shrink-0 [&>svg:first-child]:text-foreground-icon disabled:cursor-not-allowed disabled:text-foreground-disabled disabled:[&>svg:first-child]:text-foreground-disabled";
 export default function ActivityContextMenu({
   client,
   target,
   pending,
+  muted = false,
+  onMute,
   onFollow,
   onAction,
   onClose,
 }: {
   client: RahClient;
+  muted?: boolean;
+  onMute?: (row: DiscoveryRow, muted: boolean) => void;
   onFollow: (
     row: DiscoveryRow,
     activity: ThreadActivityClient,
@@ -104,7 +108,8 @@ export default function ActivityContextMenu({
     window.addEventListener("resize", place);
     return () => window.removeEventListener("resize", place);
   }, [target, following, loadFailed]);
-  const unread = (target.row.unread ?? 0) > 0;
+  const unread =
+    (target.row.unread ?? 0) > 0 || target.row.markedUnread === true;
   const actions: ActivityAction[] =
     target.row.activityKind === "thread" && following !== true
       ? ["done"]
@@ -129,7 +134,8 @@ export default function ActivityContextMenu({
           onClick={(e) => e.stopPropagation()}
           onKeyDown={(e) => {
             e.stopPropagation();
-            if (!["ArrowDown", "ArrowUp"].includes(e.key)) return;
+            if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(e.key))
+              return;
             e.preventDefault();
             const buttons = Array.from(
               root.current?.querySelectorAll<HTMLButtonElement>(
@@ -140,78 +146,86 @@ export default function ActivityContextMenu({
               document.activeElement as HTMLButtonElement,
             );
             buttons[
-              (index + (e.key === "ArrowDown" ? 1 : buttons.length - 1)) %
-                buttons.length
+              e.key === "Home"
+                ? 0
+                : e.key === "End"
+                  ? buttons.length - 1
+                  : (index + (e.key === "ArrowDown" ? 1 : buttons.length - 1)) %
+                    buttons.length
             ]?.focus();
           }}
         >
           {actions.map((action) => (
-            <button
+            <MenuItem
               key={action}
-              type="button"
-              role="menuitem"
-              data-slot="menu-item"
-              className={itemClass}
               disabled={pending}
+              icon={
+                action === "done" ? (
+                  <Check size={14} />
+                ) : action === "read" ? (
+                  <MessageSquareCheck size={14} />
+                ) : (
+                  <MessageSquareDot size={14} />
+                )
+              }
               onClick={() => {
                 onAction(target.row, action);
                 onClose();
               }}
             >
-              {action === "done" ? (
-                <Check size={14} />
-              ) : action === "read" ? (
-                <MessageSquareCheck size={14} />
-              ) : (
-                <MessageSquareDot size={14} />
-              )}
-              <span className="min-w-0 flex-1 truncate">
-                {formatMessage({
-                  id:
-                    action === "done"
-                      ? "thread.contextMenu.done"
-                      : action === "read"
-                        ? "thread.contextMenu.markAsRead"
-                        : "thread.contextMenu.markAsUnread",
-                })}
-              </span>
-            </button>
+              {formatMessage({
+                id:
+                  action === "done"
+                    ? "thread.row.markAsDone"
+                    : action === "read"
+                      ? "thread.contextMenu.markAsRead"
+                      : "thread.contextMenu.markAsUnread",
+              })}
+            </MenuItem>
           ))}
           {activity && (
-            <button
-              type="button"
-              role="menuitem"
-              data-slot="menu-item"
-              className={itemClass}
+            <MenuItem
               disabled={pending || (following === undefined && !loadFailed)}
+              icon={
+                following === undefined ? (
+                  <RefreshCw size={14} />
+                ) : following ? (
+                  <UnfollowThreadIcon width={14} height={14} />
+                ) : (
+                  <FollowThreadIcon width={14} height={14} />
+                )
+              }
               onClick={() => {
                 if (following === undefined) {
-                  setRetry((value) => value + 1);
+                  setRetry((v) => v + 1);
                   return;
                 }
                 onFollow(target.row, activity, !following);
                 onClose();
               }}
             >
-              {following === undefined ? (
-                <RefreshCw size={14} />
-              ) : following ? (
-                <BellOff size={14} />
-              ) : (
-                <Bell size={14} />
-              )}
-              <span className="min-w-0 flex-1 truncate">
-                {following === undefined
-                  ? loadFailed
-                    ? "重新读取关注状态"
-                    : "读取关注状态…"
-                  : formatMessage({
-                      id: following
-                        ? "thread.contextMenu.unfollow"
-                        : "thread.contextMenu.follow",
-                    })}
-              </span>
-            </button>
+              {following === undefined
+                ? loadFailed
+                  ? "重新读取关注状态"
+                  : "读取关注状态…"
+                : formatMessage({
+                    id: following
+                      ? "thread.contextMenu.unfollow"
+                      : "thread.contextMenu.follow",
+                  })}
+            </MenuItem>
+          )}
+          {onMute && target.row.activityKind === "channel" && (
+            <MenuItem
+              disabled={pending}
+              icon={muted ? <Bell size={14} /> : <BellOff size={14} />}
+              onClick={() => {
+                onMute(target.row, !muted);
+                onClose();
+              }}
+            >
+              {muted ? "取消静音活动" : "静音活动"}
+            </MenuItem>
           )}
         </ContextMenuPopup>,
         document.body,

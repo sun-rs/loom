@@ -582,12 +582,6 @@ function Results({
       setRetry((value) => value + 1);
     }
   };
-  const swipeUndo = useActivitySwipeUndo(
-    activityRows.map((item) => item.row),
-    (row) => {
-      void markActivity(row, "done");
-    },
-  );
   const secondary = useActivitySecondary(
     client,
     workspaceId,
@@ -596,6 +590,13 @@ function Results({
       setRetry((value) => value + 1);
       entities.retry();
     },
+  );
+  const swipeUndo = useActivitySwipeUndo(
+    activityRows.map((item) => item.row),
+    (row) => {
+      void markActivity(row, "done");
+    },
+    (row) => secondary.unfollow(row),
   );
   const followActivity = async (
     row: DiscoveryRow,
@@ -946,10 +947,20 @@ function Results({
                           secondary.enabled &&
                           row.activityKind === "thread" &&
                           row.isFollowing === true
-                            ? secondary.unfollow
+                            ? swipeUndo.unfollow
                             : undefined
                         }
                         client={client}
+                        muted={
+                          entities.mutedActivity?.includes(
+                            `room:${row.message.roomId}`,
+                          ) ?? false
+                        }
+                        onMute={
+                          entities.mutedActivity
+                            ? (row, muted) => secondary.mute(row, muted, false)
+                            : undefined
+                        }
                         onFollow={(row, activity, following) => {
                           void followActivity(row, activity, following);
                         }}

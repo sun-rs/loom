@@ -19,6 +19,7 @@
 本地单 Human 后端 MVP 已冻结；维护现有 Room-first、独立实例执行 lane、连续原生 session、权限、幂等和因果围栏。冻结证据见[2026-10-14记录](evidence/2026-10-14-backend-freeze/summary.json)。冻结不等于所有 CLI、真实模型、故障时序和效率门禁全部通过。
 
 - Role 配置修订、实例、频道、独立单聊/频道私密消息、任务、记忆及文件能力沿既有合同运行；模型回复不自动证明 Task 完成。
+- UI兼容修复将Human手动未读注意标记与精确消息数量分离，Kernel schema90→91；刷新/重启保持，旧viewport确认不能覆盖后来的手动标记，不改实例投递或任务状态。[迁移与收尾证据](evidence/2026-10-29-ui-closeout/README.md)。
 - 唯一已送达顶层 peer 请求的单跳 final 可由 Kernel 自动交回，不要求回复者额外 @；自动返回不能继续产生自动返回。Claude/OpenCode 既有自主协作与运行维护证据见[业务](evidence/2026-10-13-backend-finish/team-v8.json)、[运行边界](evidence/2026-10-13-backend-finish/operational-mvp.json)。
 - Codex、Claude、OpenCode、Kimi、Pi 的 Fork/Side 统一接口和各家限制见[实施记录](session-branches.zh-CN.md)。不将其覆盖外推给新增运行时或 SEA。
 - Antigravity 1.4.8 已接入原有运行时体系：13 个精确模型/effort 绑定、连续会话、Host 最终回复和逐步骤用量。真实生成只验收 Gemini 3.8 Flash Low，含重启续接；启停/错误分支的假 CLI 测试不冒称全模型实测。[接入](evidence/2026-10-27-agy-runtime/README.md)、[日常页面](evidence/2026-10-27-agy-daily/README.md)。
@@ -26,9 +27,9 @@
 
 ### 前端与通知
 
-- `@botiverse/raft-ui@0.40.0` 提供组件；不可变选定源码为 `db5e399` / Web 1.21.23；后续资源移植分别记录来源。不是整套官网应用的未经修改依赖，也不能由构建成功推断最新版全站一致。
+- `@botiverse/raft-ui@0.52.0` 提供组件；不可变选定源码为 `db5e399` / Web 1.21.23；后续资源移植分别记录来源。不是整套官网应用的未经修改依赖，也不能由构建成功推断最新版全站一致。
 - 固定 Web 1.21.34 的页面、主题、分栏与菜单覆盖见[清单](raft-1.21.34-closeout.zh-CN.md)；升级按[正式工作流](../design/official-ui-upgrade-workflow.zh-CN.md)执行。
-- 前端组件已升级 `@botiverse/raft-ui@0.52.0`，迁入Web1.21.38聊天/私聊/关注图标、手机选择文本与局部引用、任务滚动摘要和下拉头；保留1.21.35设置/动态/分组切片及db5e399原始TSX闭包。522项定向源码检查、类型/构建与桌面/触屏重点浏览器检查通过；旧验收失败在HEAD快照先复现并按官方契约修正。窄列cover-tabs、运行时分组、动态撤销/强制未读及原生宿主字段仍有未迁入差异，不宣称全站最新一致。[范围、证据和限制](evidence/2026-10-29-ui-refresh138/README.md)。
+- 前端组件已升级 `@botiverse/raft-ui@0.52.0`，迁入Web1.21.38聊天/私聊/关注图标、手机选择文本与局部引用、任务滚动摘要和下拉头；保留1.21.35设置/动态/分组切片及db5e399原始TSX闭包。[首批范围](evidence/2026-10-29-ui-refresh138/README.md)之后已补窄列cover-tabs、按Host事实分组的运行时菜单、滑动取消关注撤销、持久手动未读，以及消息/收藏复制菜单和消息列引用目标修正。[收尾与全部菜单分类清单](evidence/2026-10-29-ui-closeout/README.md)。原生宿主字段和未提供事实的认证/远程能力不引入，不宣称全站最新一致或实体手机验收。
 - 手机首页/动态/任务/搜索/更多导航及触屏布局有 owner 授权适配。触屏分栏、紧凑输入区和横屏收起顶栏是明确的 Loom 例外，不改变横竖屏字体来换面积。见[自适应](evidence/2026-10-27-adaptive-runtime/README.md)、[折叠屏](evidence/2026-10-27-foldable-touch/README.md)、[横屏面积](evidence/2026-10-27-landscape-chrome/README.md)。虚拟视口不等于所有物理设备验收。
 - 手机／宽屏触控设备采用有界页面代码预热，保留官方页面、尺寸、交互和即时业务读取。最终三对390×844／每响应200ms模拟延迟对照：任务页面呈现中位数244→21ms、空态数据就绪472→250ms；不是实际手机Tailnet或大历史验收。44项定向检查、类型与构建通过；既有全站action审计失败单列保留。[设计、结果与限制](evidence/2026-10-28-mobile-tailnet/README.md)。
 - 整页空态沿用官方 EmptyState；修正手机频道／成员列表的剩余高度布局，移除桌面空正文多余标题。分区内紧凑说明保留原位置，展开已删除 Role 后正常显示列表。47项定向检查、类型与构建通过，已在正式服务桌面／手机尺寸页面核对位置、菜单与滚动；不宣称实体手机验收或最新版全站一致。[布局规则与证据](evidence/2026-10-28-empty-layout/README.md)。

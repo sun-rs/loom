@@ -120,7 +120,9 @@ export async function verifyActivityMenu({
       await row.getByText("FIXTURE menu newer", { exact: false }).waitFor();
       dropDone = true;
       await row.click({ button: "right" });
-      await menu.getByRole("menuitem").last().click();
+      await menu
+        .getByRole("menuitem", { name: "标记为完成", exact: true })
+        .click();
       await row.waitFor({ state: "hidden" });
       assert.equal(writes.filter((w) => w.request.action === "done").length, 1);
       assert.equal(writes.at(-1).status, 200);
@@ -267,7 +269,9 @@ export async function verifyActivityMenu({
       await menu
         .getByRole("menuitem", { name: "取消关注", exact: true })
         .waitFor();
-      await menu.getByRole("menuitem", { name: "完成", exact: true }).click();
+      await menu
+        .getByRole("menuitem", { name: "标记为完成", exact: true })
+        .click();
       await threadRow.waitFor({ state: "hidden" });
       assert.equal(writes.at(-1).request.threadId, thread.threadId);
       assert.equal(writes.at(-1).request.action, "done");

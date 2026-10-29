@@ -3,7 +3,84 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
+import { DatabaseSync } from "node:sqlite";
 import { RoomKernel } from "../src/index.ts";
+
+test("manual unread survives own-only content and restart without inventing unread messages", () => {
+  const f = fixture();
+  try {
+    f.post(f.channel.roomId, "only my message");
+    const item = f.kernel
+      .listHumanActivity(f.actor, { workspaceId: f.workspaceId })
+      .items.find((x) => x.roomId === f.channel.roomId)!;
+    f.kernel.markHumanActivity(f.actor, {
+      roomId: f.channel.roomId,
+      throughSeq: item.latestSeq,
+      action: "done",
+    });
+    f.kernel.markHumanActivity(f.actor, {
+      roomId: f.channel.roomId,
+      throughSeq: item.latestSeq,
+      action: "unread",
+    });
+    const verify = (kernel: RoomKernel) => {
+      const result = kernel.listHumanActivity(f.actor, {
+        workspaceId: f.workspaceId,
+        filter: "unread",
+      });
+      const marked = result.items.find((x) => x.roomId === f.channel.roomId);
+      assert.equal(
+        marked?.unreadCount,
+        0,
+        "manual attention is not a fabricated message count",
+      );
+      assert.equal(marked?.markedUnread, true);
+      assert.equal(result.summary?.unreadActivityCount, 1);
+      assert.equal(
+        result.summary?.rooms.find((x) => x.roomId === f.channel.roomId)
+          ?.markedUnread,
+        true,
+      );
+    };
+    verify(f.kernel);
+    const reloaded = new RoomKernel({ databasePath: f.databasePath });
+    try {
+      reloaded.initialize();
+      verify(reloaded);
+    } finally {
+      reloaded.close();
+    }
+    f.kernel.markHumanActivity(f.actor, {
+      roomId: f.channel.roomId,
+      throughSeq: 0,
+      action: "read",
+      source: "viewport",
+    });
+    verify(f.kernel);
+    f.kernel.markHumanActivity(f.actor, {
+      roomId: f.channel.roomId,
+      throughSeq: item.latestSeq,
+      action: "read",
+      source: "channel-list",
+    });
+    assert.equal(
+      f.kernel.listHumanActivity(f.actor, {
+        workspaceId: f.workspaceId,
+        filter: "unread",
+      }).items.length,
+      0,
+    );
+    assert.equal(
+      f.kernel
+        .listHumanActivity(f.peerActor, { workspaceId: f.workspaceId })
+        .items.find((x) => x.roomId === f.channel.roomId)?.unreadCount,
+      1,
+      "another Human's unread frontier is independent",
+    );
+  } finally {
+    f.close();
+  }
+});
 
 test("unarchive is durable unread activity even for its actor and an empty channel", () => {
   const f = fixture();
@@ -1660,6 +1737,45 @@ test("pinned conversation scope includes its eligible followed threads", () => {
         })
         .items.some((i) => i.threadId === task.threadId),
     );
+  } finally {
+    f.close();
+  }
+});
+
+test("schema90 upgrades manual attention without changing prior read/done state", () => {
+  const f = fixture();
+  try {
+    f.post(f.channel.roomId, "migration message");
+    const item = f.kernel
+      .listHumanActivity(f.actor, { workspaceId: f.workspaceId })
+      .items.find((x) => x.roomId === f.channel.roomId)!;
+    const before = f.kernel.markHumanActivity(f.actor, {
+      roomId: f.channel.roomId,
+      throughSeq: item.latestSeq,
+      action: "done",
+    });
+    const db = new DatabaseSync(f.databasePath);
+    db.exec("DROP TABLE human_activity_manual_unread; PRAGMA user_version=90");
+    db.close();
+    assert.ok(
+      RoomKernel.inspectSchemaState(f.databasePath).pending.some(
+        (x) => x.name === "table:human_activity_manual_unread",
+      ),
+    );
+    const migrated = new RoomKernel({ databasePath: f.databasePath });
+    try {
+      migrated.initialize();
+      assert.deepEqual(
+        migrated.markHumanActivity(f.actor, {
+          roomId: f.channel.roomId,
+          throughSeq: 0,
+          action: "read",
+        }),
+        before,
+      );
+    } finally {
+      migrated.close();
+    }
   } finally {
     f.close();
   }

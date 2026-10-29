@@ -1,0 +1,896 @@
+
+> rah-os@0.0.0 test:official-web:source
+> node --test scripts/official-web/*.test.mjs scripts/official-web/*.test.ts
+
+✔ About selects native version section and renames product without cloud controls (201.270208ms)
+✔ Local account adopts official profile card and omits unsupported account sections (236.775292ms)
+✔ activity actions preserve exact visible frontier and thread scope, without conflating read and done (1.163292ms)
+✔ all-read captures every page before mutation and keeps exact target frontiers (1.221584ms)
+✔ repeated cursors abort before any writes; incomplete pages are not advertised as all (0.199042ms)
+✔ activity uses the current published Filter toolbar, not a form field (0.809708ms)
+✔ chat initial loading follows the upstream top centered text surface (0.46325ms)
+✔ activity header exposes durable counts, all-read and icon refresh; rows use native leading context (0.32875ms)
+✔ activity adopts the complete official list branch, without mixed card metadata (0.186666ms)
+✔ bulk-read uses the native toolbar action slot and unread-only visibility (0.191458ms)
+✔ activity uses independent collapse, native sidebar slot and the current rail trigger (1.108666ms)
+✔ official collapse changes only the selected column and restores focus before hiding (46.897458ms)
+✔ first unread gesture uses presentation focus only and preserves official scroll/highlight rules (0.846ms)
+✔ activity reads the catalog suggestion payload and identifies the DM peer, not the latest author (0.609125ms)
+✔ official pin sections stably partition loaded conversations, never their threads (1.260459ms)
+✔ refresh restores bounded depth and offset, isolated by human/workspace/filter, no content (1.207167ms)
+✔ malformed data or denied storage falls back without blocking activity (0.128625ms)
+✔ mute reads current preferences and undo refuses changed versions (1.391667ms)
+✔ follow actions refresh first and retain the accepted frontier without retrying (0.169ms)
+✔ secondary actions use durable projection, original recipes and shared unresolved-write UI (1.285625ms)
+✔ failed unfollow is read back once and never resent (0.175416ms)
+✔ leaving the action owner during initial read prevents a later follow write (0.246834ms)
+✔ undo cancels before any durable action; stale toast cannot submit a replacement (1.248667ms)
+✔ new activity invalidates pending completion instead of completing the fresh row (0.086ms)
+✔ toast binding defers the request, undo restores the row, and close submits once (186.404083ms)
+✔ official mobile swipe arbitrates edge/scroll, distance and fling without a page-back gesture (40.540167ms)
+✔ row gesture uses the existing durable action and is limited to touch narrow screens (0.353666ms)
+✔ native touch handlers cancel safely, suppress post-swipe click and commit full swipe once (1.600084ms)
+✔ activity continuation retains stable rows, deduplicates overlapping pages and bounds the window (1.31ms)
+✔ return rebuilds the loaded window from fresh cursors, not stale stored cursors (0.112167ms)
+✔ continuation failure retains accepted rows and never retries in a loop (0.13025ms)
+✔ end-of-list, repeated cursor and page budget stop replay (0.803917ms)
+✔ built md rail utilities carry touch 840 boundary, not bare desktop 768 (33.18075ms)
+✔ native touch layout changes panes at 840, never density; fine-pointer desktop retains 768 (0.634667ms)
+✔ CSS media and JS queries share the same policy; unrelated breakpoints and pointer tests retained (0.153042ms)
+✔ layout changes do not alter explicit task or font choices (0.21725ms)
+✔ native source thresholds and CSS third-pane admission stay synchronized (3.424084ms)
+✔ every relative import of the official transport binds to the Loom facade (0.705708ms)
+✔ unrelated clients and the Loom facade remain untouched (0.079208ms)
+✔ model label uses authenticated Loom catalog while retaining the native preference gate (1.124709ms)
+✔ appearance page is generated from official declarations with only explicit Loom bindings (100.313667ms)
+✔ source extraction fails closed on changed or missing declaration boundaries (1.058542ms)
+✔ npm-hoisted official UI remains discoverable at the upstream Tailwind source path (27.929792ms)
+✔ a newer attachment click cancels the older preview across message components (0.603958ms)
+✔ UI abandonment adapter releases a real Kernel block once after a lost HTTP result, preserving session and finished run (294.3955ms)
+✔ fork and side retain exact instance, causal basis and key after lost response (3.806709ms)
+✔ branch capability must be explicit and match frozen runtime and channel home (0.101084ms)
+✔ unbound or multi-offer runtime never advertises a branch (0.05425ms)
+✔ HTTP trusted origin gets RFC4122 UUIDs from secure random bytes, preserving native implementation (1.288792ms)
+✔ chat header exposes shared search and settings-owned members; composer has no outer separator (1.300875ms)
+✔ computer details retain native edit/runtime affordances and automatic desktop selection (0.180458ms)
+✔ settings opens without forced input focus or a redundant corner close; drawer members are flat (0.317875ms)
+✔ role tabs retain the current official conversation wrapper without a conflicting width override (0.142042ms)
+✔ chat header actions retain official tooltip/PanelAction composition and 22px icons (1.577125ms)
+✔ official projection preserves message identity and separates same-role instances (0.697042ms)
+✔ channel read uses client-core bounded pages and rejects cross-channel projection (3.736708ms)
+✔ canonical attachments project stable IDs, names and sizes without placeholder text (0.659709ms)
+✔ mention projection preserves bound identity across rename and same-name recreation (0.092917ms)
+✔ historical unbound names never acquire a replacement principal (7.915875ms)
+✔ channel control retains official settings trigger and overflow dismissal parameters (0.906417ms)
+✔ channel SOS preserves exact room, guidance and causal basis on unknown response (10.260958ms)
+✔ settings writes only requested cap; unknown retry retains original revision, never overwrites newer settings (0.2185ms)
+✔ blocked work abandonment uses the instance home channel and freezes the exact target across unknown verification (0.292875ms)
+✔ channel delete binds existing versioned intent and native confirmation, never a second endpoint (0.817541ms)
+✔ only the channels section exposes the inline create-channel control (0.167541ms)
+✔ empty workspace keeps the channel creation section even on mobile (0.142125ms)
+✔ members show instance names and only this channel's authoritative execution state (1.259792ms)
+✔ queued is a flag, missing state is unknown, and blocked work stays explicit (0.133959ms)
+✔ native preference composition replaces upstream store with explicit pinned callback (10.209875ms)
+✔ metadata edit keeps captured basis and visibility, excludes task/execution policy (1.147583ms)
+✔ settings action rows use locked official B7 small button size (3.495625ms)
+✔ create shares the channel intent owner and replays the original task request (4.313875ms)
+✔ convert shares the channel intent owner and replays the original task request (0.215ms)
+✔ private rooms cannot expose channel task writes (0.227458ms)
+✔ native task toggle is delivered to the override and reset only after success (0.511625ms)
+✔ native message menu enables only connected read-only actions, preserves native popup and touch handlers (2.2315ms)
+✔ message affordances and follower views reproduce locked original source with explicit bindings (413.006458ms)
+✔ mention native pixel and preview recipes are retained without old width override (0.170042ms)
+✔ follower view cannot restore upstream socket, business stores or fabricate activity (0.149917ms)
+✔ composer native input and action composition are source-derived while Loom owns file and send callbacks (33.035875ms)
+✔ composer uses official toolbar label and send geometry without old font overrides (1.078042ms)
+✔ overflow uses native header body and panel actions instead of manually sized shell (0.177ms)
+✔ task toolbar lets native segmented items own the state and avoids old page icon (0.427166ms)
+✔ mobile composer does not override native button geometry and glyphs (3.904833ms)
+✔ history and snapshot thread are reproducible official-source bindings without a second transport (77.04375ms)
+✔ official keyboard pagination and bounded-window anchors coexist (15.942625ms)
+✔ message/input hosts are reproducible bindings over pinned originals, not Vite mutations (323.310125ms)
+✔ thread and side use current official measured resize instead of viewport fraction (0.839083ms)
+✔ thread focus is host-owned, reversible and does not close or replace conversation (0.975167ms)
+✔ native resize uses measured main space, keyboard boundaries and reversible focus threshold (4.412833ms)
+✔ published resize and layout are pinned; current thread split uses 720px and 360px main minimum (0.556292ms)
+✔ focus is withheld when the parent channel is not visible or a profile covers it (0.140417ms)
+✔ native collapse threshold restores the saved width and reverses before release (0.564667ms)
+✔ composer directory projects only supplied accessible channels, preserves archive state and never adds private boxes (1.199375ms)
+✔ directory binding changes only the composer read source and fails on upstream drift (6.923709ms)
+✔ composer projects its own room snapshot without relying on another mounted roster reader (1.152834ms)
+✔ native composer data import binds scoped projection while both hosts supply current members (0.554416ms)
+✔ mention badges and icons keep locked official native dimensions (1.589708ms)
+✔ autocomplete groups use explicit native separators and native accessory spacing (0.352208ms)
+✔ computer selection cancellation has an outline and detail retains native auto scrolling (1.117084ms)
+✔ both entry points use the same role creation flow without implicit DM creation (0.347459ms)
+✔ computer instance disclosure belongs to the bordered instance group (0.751625ms)
+✔ computer rows use instance model and identity, not the latest Role configuration (0.714959ms)
+✔ computer list defaults to six and expands without losing order or identity (0.633666ms)
+✔ computer status reflects observed presence, never enabled configuration (0.098375ms)
+✔ computer editor preserves native keyboard entry points, with IME and unresolved-write guards (0.966791ms)
+✔ computer description keeps official resize/counter and edit tooltip composition (0.166959ms)
+✔ late computer auto-selection cannot replace a newer destination (18.403583ms)
+✔ computer selection retains current route fields and the write-intent fence (0.657667ms)
+✔ computer connectivity requires a fresh host observation, independent of CLI discovery (4.380041ms)
+✔ confirmation uses unchanged official declarations and a parameter-only bridge (26.7705ms)
+✔ current membership replaces removed rows and resolves new identities without history replay or ACK (1.296209ms)
+✔ missing latest identity fails visibly instead of claiming a current roster (0.212709ms)
+✔ current official list width preserves the main column and caps activity with selection at half (73.793458ms)
+✔ desktop activity retains an empty detail while mobile remains a single list (2.003166ms)
+✔ memory adopts the same list sizing without replacing ordinary 240px navigation sidebars (3.46625ms)
+✔ appearance theme shortcut stays inside private appearance content and routes through settings owner (0.888583ms)
+✔ current activity toolbar uses official Filter menu and active chip (0.166417ms)
+✔ download path does not import any preview presentation (0.804875ms)
+✔ preview hosts mount lazy presentations only when native stores are open (0.213667ms)
+✔ both presence reads are gated by document visibility without replacing their authoritative endpoints (0.165208ms)
+✔ message attachment labels do not retain preview component module in startup graph (0.365792ms)
+✔ failed preview chunk keeps the page usable and offers native dismissal (0.078375ms)
+✔ migration inventory covers every navigation destination and only cites existing implementation owners (2.03575ms)
+✔ remaining presentation work is enumerated separately from permanent Loom bindings (0.231834ms)
+✔ fixed-source migration closure accounts for all reviewed composition groups (0.20775ms)
+✔ detail rows use the complete pinned official components rather than local recipes (1.066292ms)
+✔ message hits, activity toolbar and conversation identity use generated official boundaries (326.51875ms)
+✔ pure search grouping is a direct official dependency, not a second implementation (0.309834ms)
+✔ task and activity source views are reproducible with explicit Loom slots (351.955791ms)
+✔ creation preserves frozen batch, disabled form and unknown-write verification (0.138ms)
+✔ discovery failure keeps true local cause and uses native warning surface (0.146792ms)
+✔ activity counts never send unknown strings into ICU numeric plural formatting (62.700166ms)
+✔ search, activity and task presentation are reproducible pinned-source modules (273.017792ms)
+✔ product bridges consume generated boundaries and the official disclosure control (0.288875ms)
+✔ search rows preserve Loom's stable keyboard rail identity (0.084709ms)
+✔ empty sidebar body allocates remaining height while populated lists retain ordinary scrolling (62.35775ms)
+✔ empty context-menu surface fills remaining body without a full-height minimum that displaces headers (22.850708ms)
+✔ ordinary row and nonempty blank-space menus preserve their native layout (19.024792ms)
+✔ whole mobile list empty states do not position themselves with a fixed top-padding substitute (9.114167ms)
+✔ unselected desktop conversation has no extra header while mobile retains its back path (6.977667ms)
+✔ activity adopts native separator rows and semantic typography (0.943209ms)
+✔ task card uses official footer placement and keyboard focus treatment (0.0985ms)
+✔ navigation consumes separate canonical unread projections (0.148709ms)
+✔ located message retains native soft highlight on hover without old ring (0.422167ms)
+✔ file-device preference is exact and does not mistake LAN names or lookalikes for loopback (0.999458ms)
+✔ explicit device preference survives same-tab navigation and blocked storage falls back safely (0.113875ms)
+✔ upload owner survives composer navigation, but removed generation never reappears (5.071625ms)
+✔ ready attachment draft is consumed only by successful submit snapshot (0.261209ms)
+✔ Room and Thread composers reserve in one Room without sharing draft rows (0.205792ms)
+✔ FormField delegates label density and spacing to native Field recipes (0.874791ms)
+✔ StableField preserves control authority and adopts native label and message composition (0.192959ms)
+✔ Role sidebar adopts shared section controls and row content without local font overrides (0.174959ms)
+✔ message toolbar delegates position and active color to native recipe with current 18px icons (0.10225ms)
+✔ shared header uses native semantic tones without retired theme overrides (0.805666ms)
+✔ product calls use location for conversation, neutral for computer and no saved header icon (0.324666ms)
+✖ saved list ports the complete native flat-row composition (4.960458ms)
+✔ shared sidebar and role tabs consume reproducible official presentation (284.7675ms)
+✔ role and computer lists delegate row anatomy to generated official source (0.870208ms)
+✔ row source reproduces with only explicit identity/action/status slots (266.3005ms)
+✔ instance inspector adopts native tab wrapper and header dismissal action (0.94775ms)
+✔ runtime overflow uses native PanelAction without a local button size recipe (0.137542ms)
+✔ inspector resolves instance to agent, bounds and filters records to this member and Room (2.354333ms)
+✔ wrong channel instance never reads its activity; private box must belong to selected instance (0.286583ms)
+✔ native activity chronology displays oldest first inside a bounded page (1.249666ms)
+✔ inspector exposes only the selected member's authoritative block, including private-box origin (0.135708ms)
+✔ instance profile orders activity first and binds private messaging to the channel owner (0.894917ms)
+✔ adding an instance freezes Role, Channel, key and causal basis through unknown-result verification (12.695125ms)
+✔ official source intake preserves recorded upstream source bytes and license (2314.389708ms)
+✔ shared slot registrations retain each owner independently and limit blocking to owned actions (0.619167ms)
+✔ only a resolved primary conversation may consolidate touch landscape chrome (0.781375ms)
+✔ consolidation keeps notification and search, scopes touch landscape, never changes typography (0.429333ms)
+✔ list resizing uses current official keyboard/cancel lifecycle and preserves independent preferences (1.558083ms)
+✔ Loom-only column aliases supply a label instead of looking up an absent official message id (0.130084ms)
+✔ live activity imports presentation without upstream connected state (0.709167ms)
+✔ older official source matches original intake hash and generated port has no connected store (236.592833ms)
+✔ Loom-only detail dismissal uses native CloseButton glyph and recipe (0.780125ms)
+✔ memory master detail uses the same seam token as retained split surfaces (0.102167ms)
+✔ official font contract retains families, weights and ranges while removing network dependencies (2.281875ms)
+✔ local display registers only local worker and never calls PushManager or network fetch (133.666833ms)
+✔ member presentation is generated from locked official strip, page and picker source (80.687333ms)
+✔ native roster reads only the mounted Room owner and rejects other endpoints or writes (5.813583ms)
+✔ mention projection retains canonical handles and instance IDs without inventing execution state (0.124917ms)
+✔ disposing an older mounted reader cannot remove its replacement (0.234458ms)
+✔ policy patch preserves omitted former members and represents inherit as null (1.223167ms)
+✔ policy unknown result preserves exact request and revision (2.577584ms)
+✔ memory aggregation is bounded, preserves partial errors and searches through server (1.51725ms)
+✔ memory mutation retries frozen revision and key after unknown response (3.63575ms)
+✔ Human editor freezes content and revision on unknown-result replay (0.244917ms)
+✔ Human deleted-memory filter requests tombstones explicitly (0.092708ms)
+✔ local message links contain only their canonical room/message/thread target (0.962334ms)
+✔ message rendering is generated from immutable source with explicit parser dependencies (77.780708ms)
+✔ member navigation gains controlled callbacks; unrelated readonly guards stay unchanged (4.089333ms)
+✔ message status is conversation-scoped, unknown until authoritative reads and never infers liveness (0.619208ms)
+✔ native rubber band and start-action authority (0.701708ms)
+✔ selected native source remains byte exact to its recorded revision (7.408958ms)
+✔ native layout contract includes navigation, density-normalized split and actual detail minimum (1.909459ms)
+✔ semantic diff names changed layout rule and preserves local implementation limits (9.933917ms)
+✔ unknown native shape fails explicitly instead of silently retaining old constants (0.245333ms)
+✔ new host posture fields are reported even when all width thresholds are unchanged (0.677917ms)
+✔ all imported native originals retain upstream hashes and binding targets exist (8.104834ms)
+✔ mobile app roots are home, activity, tasks and search; secondary destinations stay available (1.443541ms)
+✔ home no longer duplicates tabs; completion button stays direct while swipe can undo (1.153833ms)
+✔ workspace popup uses dedicated official mobile scenario, not generic dialog styling (0.145833ms)
+✔ mobile unread remains sourced from server summary and workspace trigger keeps compact touch target (0.148375ms)
+✔ one bottom capsule includes More; four secondary destinations share native cells (0.125167ms)
+✔ touch rows wire native focus-only completion rather than a second visible action (0.35925ms)
+✔ More uses the same Lucide outline family with a full circular silhouette (0.130916ms)
+✔ More destinations are full-screen; nested details retain their own back (0.064833ms)
+✔ mobile page chrome shares frame color and one seam across header families (0.136917ms)
+✔ secondary root back never overrides a selected detail's back (0.233833ms)
+✔ file picker retains upload in sheet body and commits from header (0.123584ms)
+✔ phone home is Loom; task statistics stay below the title like native app (0.141792ms)
+✔ new and changed native files outside the selected closure remain in the upgrade report (1.239542ms)
+✔ mobile computer list uses official list recipe instead of a handwritten hit area (0.818084ms)
+✔ mobile default is 14px only when no explicit size exists; desktop and user choice retained (2.14325ms)
+✔ multi-member memory policy uses official sheet with linked submit and busy protection (0.794584ms)
+✔ usage ledger uses a scrollable official sheet without a fake save action (0.12ms)
+✔ single-switch task permission and discard confirmation remain dialogs (0.163084ms)
+✔ management sheets are opt-in only for long lists and multi-field forms (0.952708ms)
+✔ shared official list surface uses flat press overlay, without legacy border/shadow hover (3.755458ms)
+✔ official avatar row uses body typography, native spacing and focus geometry (0.343292ms)
+✔ avatar frame sizes and badge corners come from the current official recipe (0.143458ms)
+✔ account profile uses current native card, typography and keyboard-accessible avatar edit (0.590584ms)
+✔ native scopes preserve combined human/agent and mention semantics (2.70425ms)
+✔ time window uses native range boundaries and is supplied once per result window (0.948ms)
+✔ selected sender and channel map to authorized Kernel ID filters, including empty query (0.320708ms)
+✔ native sender and scope conflict resolution preserves mentions, clear keeps sort/query (0.841458ms)
+✔ native grouping keeps ordinary hits separate and collects replies under their root (0.384125ms)
+✔ navigation and follower badges do not import parent pages or their cloud state (1.175458ms)
+✔ pinned declarations regenerate exactly without page stores (231.647292ms)
+✔ upgrade rehearsal fails closed on missing or renamed source declarations (4.662334ms)
+✔ upgrade rehearsal exposes upstream presentation changes in the generated diff (114.613459ms)
+✔ top bar uses generated upstream composition with explicit Loom slots (0.172125ms)
+✔ topbar generated body is reproducible and has no cloud state imports (3.998583ms)
+✔ navigation derives independent flags from complete server summary, never page length (1.198792ms)
+✔ mobile saved entry shares official Home row sizing while desktop remains compact (0.854709ms)
+✔ mobile Home sizing follows the recorded native compact exception, not old Web row defaults (0.617125ms)
+✔ enabling system notifications enables local delivery without subscribing to background push (1.225458ms)
+✔ stopping system notifications stops background subscription before claiming local disabled (0.067875ms)
+✔ unconfirmed background stop must not report master notification switch disabled (0.256667ms)
+✔ denied permission never enables local delivery (0.070041ms)
+✔ controlled notification trigger preserves native markup and does not run cloud notification collectors (0.69775ms)
+✔ dismiss carries existing authenticated workspace contract and lost result is not resent (0.983792ms)
+✔ document gate blocks new JSON requests, preserves sent requests and restores on persisted pageshow (307.1945ms)
+✔ page module is demand-loaded once and rendered immediately on resolution without a timed Suspense fallback (143.893125ms)
+✔ departed page never publishes its late module completion (8.096083ms)
+✔ failed imports reach the existing error boundary instead of an endless loader (5.808541ms)
+✔ a module resolving between remount and effect still becomes visible (5.638041ms)
+✔ stale deployed imports render recovery without throwing away the mounted application (21.575375ms)
+✔ refresh confirmation is above the search overlay and retains native confirmation (0.186083ms)
+✔ warming page code shares one import with a later navigation without mounting the page (4.586666ms)
+✔ a failed background import remains visible through the existing recovery when navigated (29.217416ms)
+✔ a transient speculative failure cannot poison a later real navigation (13.421333ms)
+✔ mobile idle warming is bounded to the two primary page modules and cancellation prevents work (59.275958ms)
+✔ wide touch foldables retain mobile warming without changing wide mouse desktops (5.518083ms)
+✔ wide touch rail intent does not replace the official drag pointer listener (0.226625ms)
+✔ desktop, hidden and data-saving connections perform no speculative work (86.8715ms)
+✔ navigation intent warms only its destination and More warms only its four entries (9.403542ms)
+✔ More warms one module at a time and closing it cancels the remaining speculative work (16.137333ms)
+✔ hidden-after-scheduling and failed speculative loads do not publish or reject globally (128.761792ms)
+✔ recovery never reloads while an existing write owner is unresolved (0.602209ms)
+✔ desktop notification is hosted by the top bar, not duplicated in the rail (0.830584ms)
+✔ conversation and role tab strips retain official default selected recipe and wrapper (0.170708ms)
+✔ single workspace identity uses native subhead typography without a disabled switcher (0.118ms)
+✔ pagehide aborts reads; only persisted restoration requests a fresh lifetime (0.730459ms)
+✔ beforeunload stops reads early unless the write owner may cancel leaving (0.119583ms)
+✔ scope label uses authorized display title, never falls back to opaque room id (0.736292ms)
+✔ everywhere keeps query but removes filters and detail; does not mutate prior route (0.2695ms)
+✔ scope-only empty query displays prompt without history fetch; explicit filters still search (0.059ms)
+✔ task view placement follows task container, not viewport (1.001917ms)
+✔ computer lower detail uses a single native spacing owner (0.120916ms)
+✔ channel settings keeps drawer branch with native body and actions, not panel inline-save branch (0.089166ms)
+✔ scope UI participates in keyboard rail and suppresses unrelated global entity results (0.168875ms)
+✔ everywhere native row exposes rail identity and selected prop for keyboard focus (0.067167ms)
+✔ member strip cancels only its own inline padding inside native DrawerBody (0.108917ms)
+✔ channel search entry routes to current room scope through guarded navigation (0.213166ms)
+✔ scoped search Back retains the originating conversation and accurate accessible label (0.249792ms)
+✔ long message preference is bound to existing persistent sidebar data, not upstream channel store (1.0015ms)
+✔ workspace mute reuses native form and existing versioned mutation (0.141333ms)
+✔ pinned filter is a real query mode, not filtering only the loaded browser page (0.982125ms)
+✔ RolePresence.tsx suspends background polling, aborts stale reads and refreshes on return (102.209833ms)
+✔ InstancePresence.tsx suspends background polling, aborts stale reads and refreshes on return (16.350041ms)
+✔ thread overflow uses native PanelAction and composer has no added separator (0.864542ms)
+✔ preview header adopts native title and icon-lg ghost actions (0.285416ms)
+✔ shared close action delegates colors to native recipe (0.107709ms)
+✔ both reaction picker and menu rows retain current focus and selected colors (0.32175ms)
+✔ attachment badge uses native inline placement without forced legacy size (0.115208ms)
+✔ attachment comments use native card, typography and lightweight chrome (0.205042ms)
+✔ attachment comment drawers use the native seam border (1.413833ms)
+✔ document panes retain current native Card, tabs and semantic typography (0.254084ms)
+✔ action menu rows use official native button recipe without Button overrides (0.2035ms)
+✔ HTML preview overlays follow official popover, HUD and focus recipes (0.272167ms)
+✔ attachment reference quotes use the same official caption and seam as comments (0.097458ms)
+✔ opening an instance box verifies an unknown result with the exact original peer, key and control sequence (6.336833ms)
+✔ private box uses durable parent channel for both native back and close (0.775083ms)
+✔ unconnected official UI cannot silently become the installed Loom product (0.774959ms)
+✔ integration acceptance builds the same product entry and exposes no obsolete paid shortcuts (6.723167ms)
+✔ browser acceptance does not bypass the data router with synthetic empty-state POP (61.336416ms)
+✔ task permission preserves shown channel metadata and basis on exact replay (3.675542ms)
+✔ summary never treats an unreported run or cost as zero (0.097166ms)
+✔ diagnostics distinguish absent execution and incomplete cost (0.144334ms)
+✔ known zero remains zero, partial totals and unknown final status remain explicit (8.920917ms)
+✔ instance header opts into container-responsive native actions without changing other runtime menus (0.879584ms)
+✔ responsive source uses profile container at 480px, not viewport; preserves extra menu access (0.565375ms)
+✔ task board announces only confirmed writes, with native polite live region (0.23275ms)
+✔ computer selection and normal rows retain native container status disclosure (0.410083ms)
+✔ Native avatar accepts only Loom's root-scoped uploaded image endpoint (0.689042ms)
+✔ sidebar bounds come from the byte-exact current published official registry (1.935334ms)
+✔ current endpoint read does not infer registration from total count (0.720417ms)
+✔ lost subscribe and unsubscribe are verified, never resent (0.91225ms)
+✔ unknown unsubscribe retains browser endpoint for explicit recovery (0.193125ms)
+✔ test notification failure is not silently retried (0.333209ms)
+✔ test push aborts a stalled request at its deadline without retry (9.170709ms)
+✔ push failures distinguish server rejection from lost responses without leaking provider secrets (0.759917ms)
+✔ deadline explains unknown delivery rather than claiming a failed send (0.076084ms)
+✔ resolved message lands in its exact thread; tasks reuse existing task owner (13.972375ms)
+✔ thread without resolved root and unsupported targets never guess a destination (0.683083ms)
+✔ worker shows canonical target and ignores malformed or foreign URL input (27.666292ms)
+✔ notification click creates a same-origin route, never payload URL (1.88725ms)
+✔ native suppression respects room identity and test alwaysShow (0.671625ms)
+✔ same target reuses client with navigation message and focus (0.385333ms)
+✔ local and remote delivery share one receipt and one notification (0.560083ms)
+✔ local notification rejects foreign source without displaying (0.315083ms)
+✔ local source rejection returns a failure receipt instead of silently timing out (0.323791ms)
+✔ closed-page push survives worker restart and click reopens its target (0.818375ms)
+✔ failed background display does not save a false delivery receipt (0.674125ms)
+✔ product pins the single Raft design system (0.974208ms)
+✔ existing device mode survives removal of visual families (49.186208ms)
+✔ installed official resources match the reviewed immutable lock (8.231042ms)
+✔ first paint migrates mode without restoring a removed family (1.10425ms)
+✔ Loom and adopted pages resolve the same official component installation (4.607417ms)
+✔ reaction reads are bounded and writes preserve explicit active intent on exact verification (331.248541ms)
+✔ reaction adapter preserves native quick row and toolbar rules without exposing sharing; bookmarks bind to Loom (8.669583ms)
+✔ archived and inactive private conversations do not offer reaction writes (0.153875ms)
+✔ current resource ports regenerate exactly and retain published control recipes (15.96975ms)
+✔ 1.21.35 sidebar/list/panel registry is unchanged from the adopted 1.21.34 registry (1.48025ms)
+✔ region preferences preserve timezone/time format and reject invalid values (28.489209ms)
+✔ failed persistence is not reported as a saved preference; corrupt values fall back (0.167292ms)
+✔ date/time presentation equals pinned official JSX with explicit local persistence binding (91.202875ms)
+✔ release presentation matches official source and removes legacy runtime slicing (51.526ms)
+✔ shared manual menu rows and marked-unread marker come from the reviewed current official declarations (0.893583ms)
+✔ narrow thread cover uses official tabs and preserves the mounted main and thread surfaces (0.323542ms)
+✔ sidebar shared actions retain native leading icons and group separators (0.208042ms)
+✔ menu and cover declaration/type outputs reproduce from verified resource bodies (6.165958ms)
+✔ saved and message context menus expose native copy actions over Loom-local links (0.75875ms)
+✔ official source is the only tracked product UI; client owners survive console retirement (30.749458ms)
+✔ role activity is scoped to each member, merged by time and retains partial failures (7.68675ms)
+✔ model/effort have one editor and Role tabs default to profile with instances inside profile (0.317291ms)
+✔ timeline rows use exact official source extraction, without upstream stores (32.192791ms)
+✔ aggregate read concurrency and rendered history remain bounded (26.037916ms)
+✔ Role entry default matches official AgentDetailPanel regardless of tab order (0.815917ms)
+✔ computer grouping preserves role identity/order and does not mix retired configuration (1.262ms)
+✔ unknown binding is never assigned to the local Computer merely by ID prefix (0.331458ms)
+✔ collapsed UI preference tolerates invalid/unavailable browser storage (0.103958ms)
+✔ role badge aggregates execution, not stored sessions or installed CLIs (0.62475ms)
+✔ computer instances are bound role instances, deduplicated across runtime offers (0.653792ms)
+✔ legacy prompt preamble is editable and saved once; renaming preserves it (1.195375ms)
+✔ batch uses fixed snapshot once and stops after uncertain or rejected result (0.144667ms)
+✔ successful batch processes every selected instance serially (0.083833ms)
+✔ legacy controls regenerate; live runtime form adopts current official sheet (311.08875ms)
+✔ role instance section shares computer list frame and section header with explicit create-instance action (0.216209ms)
+✔ grouped instance row never enters official independent card action branch (0.217917ms)
+✔ computer exposes separate compact instance and role entry points (0.109458ms)
+✔ profile helpers are exact official declarations and Role composition separates identity, prompt and configuration (66.48025ms)
+✔ trajectory bounds reads, forwards opaque cursor and excludes another room and participant (1.288417ms)
+✔ usage keeps missing values unknown and partial generation counts distinct from aggregate totals (44.671ms)
+✔ runtime control preserves exact state, identity and basis after an unknown response; opposite action is blocked (2.755291ms)
+✔ built chunks cannot contain the original cloud transport or unused full pages (0.810958ms)
+✔ Loom adapters and pinned source inputs are not confused with runtime pages (0.088625ms)
+✔ Role create and edit delegate runtime fields to the official renderer (0.798417ms)
+✔ adopted runtime renderer functions remain exact upstream source (361.262292ms)
+✔ runtime picker groups only verified Host offers and keeps unavailable rows unselectable (1.302667ms)
+✔ configured capability suppresses the unbound discovery duplicate without guessing opaque IDs (0.068166ms)
+✔ settings emit only changed fields bound to the editor revision (7.3715ms)
+✔ invalid values never become a runtime patch (4.141667ms)
+✔ bookmark verification retains exact saved intent and idempotency key without Room mutation basis (4.071375ms)
+✖ saved panel retains locked v1.21.22 list recipe, scroll threshold and sidebar count owner (12.911917ms)
+✔ search field, all filter controls and empty states come from locked official JSX (316.302875ms)
+✔ search loading uses native result skeleton with one accessible loading region (0.22825ms)
+✔ message empty state does not deny a matching channel or identity result (0.20775ms)
+✔ entity catalog admits accessible channels and live instances, never role definitions or Side boxes (3.678584ms)
+✔ search field retains native leading addon, clear control and shared full-page composition (0.797583ms)
+✔ shared header uses native status slot and back icon size (0.127083ms)
+✔ hit metadata, not directory search matches, determines author avatar and conversation type (1.169ms)
+✔ overlay body comes from pinned official source with explicit search-content binding (213.043416ms)
+✔ search overlay uses official modal without legacy backdrop blur (0.193375ms)
+✔ append preserves identities, deduplicates overlap and adopts the server continuation (2.605833ms)
+✔ search accumulation is bounded without inventing a server end of results (0.136708ms)
+✔ recent visits exclude current, archived, hidden and absent destinations and keep visit order (1.311916ms)
+✔ recent UI does not invent visits from an unvisited directory (0.06825ms)
+✔ native recent list keeps visits first and fills only from authorized activity timestamps (0.096125ms)
+✔ recorded visits include the visible default desktop channel, never a hidden non-chat selection (1.000416ms)
+✔ search history, recent, frequent, grouped messages and footer use reproducible source sections (190.943833ms)
+✔ history text actions use the exact official TextLink dependency (0.126583ms)
+✔ search entity rows retain compact native identities, outline labels and native list-cell framing (0.822167ms)
+✔ search message result retains native avatar gutter and direct sibling result composition (0.199709ms)
+✔ empty overlay hides filters but search results retain them (0.136458ms)
+✔ settings rail has no desktop title or computer navigation entry (0.101042ms)
+✔ message size preferences follow v1.21.26 responsive typography (0.093292ms)
+✔ timeline supplies member mentions rather than empty map (0.086833ms)
+✔ release notes retain current native text hierarchy without highlighted card fill (0.076042ms)
+✔ readonly Loom timeline retains explicit channel navigation (0.10725ms)
+✔ thread search headers use the native compact metadata hierarchy (0.106208ms)
+✔ all search destination surfaces use current list composition and headings (0.206333ms)
+✔ search history uses current native heading, soft chips and shared text actions (0.11825ms)
+✔ member preview adopts current typography and native separator (0.084ms)
+✔ shared sidebars and channel sections use native recipes instead of local sizes (0.235125ms)
+✔ search pagination error uses the native warning banner (0.068959ms)
+✔ sender extension uses existing branch owner and private callback outside menu lifetime (1.176916ms)
+✔ message more button reuses the existing context-menu owner (0.442708ms)
+✔ navigation fallback cannot send users to the retired console (0.10225ms)
+✔ Archive adopts official rows, restore button and visibility rule with local authority (13.03775ms)
+✔ settings sidebar, archive and form field are generated from locked official boundaries (212.612917ms)
+✔ panel bounds resolve to pinned official dependency rather than a local copy (0.118041ms)
+✔ settings sidebar adopts native group and item composition instead of hand-sized labels (0.999125ms)
+✔ settings detail retains native header and responsive body composition (0.2435ms)
+✔ appearance uses official native type hierarchy and unified divided preference group (0.12175ms)
+✔ notification surface keeps native card recipes and separately exposes native workspace mute form (250.304083ms)
+✔ settings sections use checked generated boundaries rather than Vite runtime rewrites (404.064833ms)
+✔ settings shared card and input wrappers are dependency bridges, not duplicated JSX (0.23375ms)
+✔ shared content module bodies are reproducible import-only official bindings (29.972708ms)
+✔ role and instance diagnostics share one official-backed row, with independent data loaders (0.8845ms)
+✔ shell shared dependencies and computer profile use locked source boundaries (477.806ms)
+✔ short viewport reuses compact composer without changing message typography or navigation (6.365458ms)
+✔ unread finds the latest top-level message without sending thread frontier; lost mark is never replayed (2.906709ms)
+✔ read uses the canonical channel-list action without fetching or guessing the latest head (0.09525ms)
+✔ thread-only scan is bounded and refuses to mark an unproven frontier (0.141083ms)
+✔ sidebar toggle and focus transition declarations are unchanged upstream bodies (12.927584ms)
+✔ page shell uses native sidebar transition and child slots, not page-specific collapse CSS (0.518375ms)
+✔ all primary list pages use one official sidebar resize and existing collapse owner (1.085958ms)
+✔ sidebar placement is canonical, pinning does not erase group and unknown rooms never render (2.216375ms)
+✔ alphabetical and recent modes use actual names and server timestamps (9.48675ms)
+✔ moving a row changes one adjacent position even when saved manual order is empty (0.28825ms)
+✔ section reordering preserves unrelated DM placement and ignores hidden empty pinned section (0.100166ms)
+✔ dragging a row persists its displayed position and moving sections preserves hidden entries (0.255916ms)
+✔ dragging cannot silently replace alphabetical sorting (0.13025ms)
+✔ standalone chats use room identity, independent DM sorting, durable hiding and compatible drag targets (0.219375ms)
+✔ closed standalone conversation reappears on canonical unread without rewriting preferences (0.062542ms)
+✔ standalone channel placement uses stable room identity and keeps private boxes out of top-level list (0.122625ms)
+(node:66385) Warning: `--localstorage-file` was provided without a valid path
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ mounted sorting declarations remain byte-exact to locked published source (53.90125ms)
+✔ device order discards unknown destinations and duplicates while restoring newly available tabs (90.46325ms)
+✔ product has no system-channel creator, settings, endpoint or first-run greeting writer (1.861042ms)
+✔ removed system-channel configuration is not a published protocol or a generated UI dependency (276.083208ms)
+✔ Task board obeys creator/manager permissions and protocol transitions before sending (0.827666ms)
+✔ Embedded task edits reuse the channel slot and reject foreign tasks (0.07975ms)
+✔ task board and card use reproducible official source boundaries without runtime rewriting (311.694ms)
+✔ task virtualization is a direct official dependency, preserving one shared layout context (0.221792ms)
+✔ Loom permission and unknown-write guards survive source extraction (8.995542ms)
+✔ task projection uses canonical workflow, not execution phase (0.746084ms)
+✔ task update freezes task, room causal basis and workflow across lost response (3.60375ms)
+✔ task detail rejects a foreign task before a write (0.2805ms)
+✔ a rejected row stops the form batch; accepted rows are reported once (1.391666ms)
+✔ unknown result leaves the batch awaiting the same slot callback, without sending later rows (1.377ms)
+✔ drop data admits only known states and a currently editable authorized transition (0.655042ms)
+✔ page delegates all sensors to official TaskDndProvider and restores focus after confirmed projection (0.3305ms)
+✔ generated columns use native blocked/allowed placeholders and keep identity (0.146292ms)
+✔ drag accessibility uses Chinese display titles and never reports success on drop alone (0.095541ms)
+✔ task filter request keeps combined identities and unassigned on every page (1.351292ms)
+✔ filter routes deduplicate, preserve view and remove only their own selection (0.160708ms)
+✔ task assignment member-b freezes identity and exact retry after a lost response (4.238666ms)
+✔ task assignment null freezes identity and exact retry after a lost response (0.181209ms)
+✔ history pages preserve task identity and frozen query scope (0.305125ms)
+✔ history renders canonical workflow and readable names, not IDs or provider state (0.150958ms)
+✔ task sections and columns let current native recipes own width, surfaces and controls (1.161ms)
+✔ task viewport and loading preserve native panel composition without stale overrides (0.1875ms)
+✔ read frontier contains only visible replies of this exact thread (0.634791ms)
+✔ lost follow is verified through a read, never silently resent (0.799625ms)
+✔ unverifiable follow clears stale authority and blocks another write until a successful read (0.174708ms)
+✔ passive reads are thread scoped, bounded by observed frontier and never replay a lost result (0.097792ms)
+✔ activity unfollow carries the captured frontier; refollow carries no history frontier (0.581625ms)
+✔ controlled thread entry preserves all non-thread readonly guards and requires exact upstream boundaries (1.393917ms)
+✔ native readonly thread gains only a caller-owned footer slot (2.473625ms)
+✔ Loom composer preserves IME and Shift guards while applying Enter send to touch (0.565666ms)
+✔ controlled task thread uses the native parent slot without repeating its root message (7.597708ms)
+✔ controlled thread forwards native parent and reply profile actions to its host (1.584833ms)
+✔ thread host exposes native header actions without changing header geometry (18.266791ms)
+✔ opening is read-only, first reply verifies each exact intent without losing the original body (7.87575ms)
+✔ foreign parent context is rejected before any thread mutation (0.36825ms)
+✔ native follower presentation retained while stores and fabricated presence are removed (0.881334ms)
+✔ remove returns only server undo token; restore binds exact thread and participant (0.678541ms)
+✔ lost remove is never resent and cannot invent an undo token (0.161208ms)
+✔ bounded window shifts reuse the native anchor owner and fail closed on upstream drift (13.499ms)
+✔ scenario bindings use native parameters without a parallel geometry or component recipe (1.5775ms)
+✔ save and destructive actions opt into explicit native scenario bindings (1.220042ms)
+✔ all action bindings have upstream provenance and cannot be overridden locally (275.863667ms)
+✔ local detail dismissals reuse official CloseButton including Side and loading/error branches (17.487792ms)
+✔ local official CloseButton calls carry an explicit semantic mobile target marker (126.80225ms)
+✔ header touch adaptation uses semantic controls rather than SVG/span nesting (0.121917ms)
+✔ adoption registry references existing source owners, bindings and checks (0.600292ms)
+✔ new local close affordances cannot silently bypass scenario owners (76.908875ms)
+✔ reviewed official package upgrade has one exact runtime (0.732208ms)
+✔ workspace theme owns device mode; Appearance retains font and visibility preferences (0.182334ms)
+✔ activity uses the official menu and a clearable selected-filter chip (0.074292ms)
+✔ workspace mute is a separate settings destination, not mixed into browser permission (0.128917ms)
+✔ Role list groups by authenticated Computer inventory and preserves retired group (0.131375ms)
+✔ empty Computer has no empty list border; blank pages and conversations use official empty states (0.388125ms)
+✔ compact chat root has a real empty state after bootstrap; desktop sidebar keeps native compact descriptions (0.619542ms)
+✔ Role catalog render does not wait for CLI discovery to resolve Computer headings (0.089042ms)
+✔ a misspelled browser slice cannot silently launch the broad default acceptance run (0.116167ms)
+✔ a workspace with only retired Roles opens the empty active-role page until a retired Role is selected (0.131084ms)
+✔ the reviewed 1.21.38 intake uses the exact tree-shakable UI release (2.292834ms)
+✔ Chat, DM and follow controls use the official semantic icons (0.402834ms)
+✔ search list cells do not retain a competing wrapper divider (0.07275ms)
+✔ touch message text selection uses the acquired native Drawer, copy and quote composition (0.426625ms)
+✔ task header disclosure follows observed visibility and reuses the acquired overlay (0.137542ms)
+✔ official Chat icon retains its own geometry rather than a locally drawn replacement (481.848792ms)
+✔ acquired declarations and generated type surfaces reproduce exactly (1.706208ms)
+✔ touch text uses the new menu path while external links retain browser ownership (0.395958ms)
+✔ task channel reference adopts the new native mono metadata recipe (0.086458ms)
+✔ native context event and timeout share one shielded touch-menu opener (0.389542ms)
+✔ product UI alias binds JS and CSS to the same pinned package without intercepting other libraries (4.515959ms)
+✔ v1.21.26 desktop typography is scoped to fine-pointer desktop and imported centrally (0.923167ms)
+✔ message tiers follow upstream body tokens and retain explicit user preference (0.435458ms)
+✔ topbar measures both adjacent slots instead of fixing the trigger width (0.164125ms)
+✔ computer instance rows use one native group and sibling separators (0.210375ms)
+✔ Role profile exposes field actions, native avatar presets and immutable revision binding (0.183084ms)
+✔ message headers retain official spacing, badges and semantic full timestamps (1.031ms)
+✔ Activity row preview retains its source threshold; column sizing uses the newer shared policy (0.12075ms)
+✔ upstream comparison separates shared bytes, one-sided edits and overlapping edits (0.64ms)
+✔ dependency audit compares upstream directly and separately detects forbidden local edits (2.801292ms)
+✔ summary exposes upstream deltas, missing sources and local drift independently (1.751833ms)
+✔ candidate metadata distinguishes clean commits, dirty checkouts and directory snapshots (83.775167ms)
+✔ candidate discovery includes new source files outside the pinned inventory without treating them as adopted (1.630708ms)
+✔ official source dependency preserves exact upstream bytes and import paths (5.83025ms)
+✔ header adapter retains only approved mobile binding, not a second header recipe (0.154209ms)
+✔ workspace presentation is generated from locked source while authority stays local (246.411541ms)
+✔ workspace shell, split panes and mobile file header come from official source (29.781459ms)
+✔ theme option and preview retain recorded official bodies and one runtime (0.982042ms)
+✔ workspace theme uses canonical persisted preferences and official stylesheet, independently from device mode (0.220917ms)
+ℹ tests 530
+ℹ suites 0
+ℹ pass 528
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3826.889791
+
+✖ failing tests:
+
+test at scripts/official-web/header-tone-release.test.mjs:27:1
+✖ saved list ports the complete native flat-row composition (4.960458ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /before:left-4/. Input:
+  
+  'import { copyTextWithFeedback } from "./copy-text";\n' +
+    'import { localMessagePermalink } from "./message-links";\n' +
+    'import { uiActionProps } from "./ui-action-props.ts";\n' +
+    'import type { RahClient } from "@rah-os/client-sdk";\n' +
+    'import { useSavedMessages } from "./useSavedMessages.ts";\n' +
+    'import { savedEntry } from "./saved-entry.ts";\n' +
+    '// Structural port of official SavedPanel; native list/layout retained, Loom owns data/navigation.\n' +
+    'import { memo, useCallback, useEffect, useRef } from "react";\n' +
+    'import { useIntl } from "react-intl";\n' +
+    'import { Bookmark, MessageSquare, Copy, Link } from "lucide-react";\n' +
+    'import {\n' +
+    '  Button,\n' +
+    '  ContextMenu,\n' +
+    '  ContextMenuContent,\n' +
+    '  ContextMenuItem,\n' +
+    '  ContextMenuSeparator,\n' +
+    '  ContextMenuTrigger,\n' +
+    '  PanelToggleAction,\n' +
+    '  ListRow,\n' +
+    '} from "raft-ui";\n' +
+    'import type { SavedEntry } from "../packages/web/src/store/savedStore.ts";\n' +
+    'import { formatRelativeTime } from "../packages/web/src/utils/relativeTime.ts";\n' +
+    'import AvatarSlot from "../packages/web/src/components/ui/AvatarSlot";\n' +
+    'import PanelHeader from "../packages/web/src/components/ui/PanelHeader";\n' +
+    'import EmptyState from "../packages/web/src/components/ui/EmptyState";\n' +
+    'import { ConversationCardSkeleton } from "../packages/web/src/components/ui/Skeleton";\n' +
+    '\n' +
+    'function stopKeyPropagation(event: React.KeyboardEvent) {\n' +
+    '  event.stopPropagation();\n' +
+    '}\n' +
+    '\n' +
+    'const SavedItem = memo(function SavedItem({\n' +
+    '  entry,\n' +
+    '  onOpenEntry,\n' +
+    '  onRemoveMessage,\n' +
+    '  serverSlug,\n' +
+    '}: {\n' +
+    '  entry: SavedEntry;\n' +
+    '  onOpenEntry: (entry: SavedEntry) => void;\n' +
+    '  onRemoveMessage: (messageId: string) => void;\n' +
+    '  serverSlug: string | undefined;\n' +
+    '}) {\n' +
+    '  const { formatMessage, locale } = useIntl();\n' +
+    '\n' +
+    '  const isThread = entry.channelType === "thread";\n' +
+    '  const isDm = isThread\n' +
+    '    ? entry.parentChannelType === "dm"\n' +
+    '    : entry.channelType === "dm";\n' +
+    '  const sourceChannelName = isThread\n' +
+    '    ? entry.parentChannelName\n' +
+    '    : entry.channelName;\n' +
+    '  const channelLabel = isDm\n' +
+    '    ? `@${entry.senderName || entry.senderId}`\n' +
+    '    : `#${sourceChannelName}`;\n' +
+    '\n' +
+    '  const senderAgent =\n' +
+    '    entry.senderType === "agent" ? { avatarUrl: entry.senderAvatarUrl } : null;\n' +
+    '  const senderName = entry.senderName;\n' +
+    '\n' +
+    '  const handleRemove = useCallback(() => {\n' +
+    '    onRemoveMessage(entry.messageId);\n' +
+    '  }, [entry.messageId, onRemoveMessage]);\n' +
+    '\n' +
+    '  const handleRemoveButtonClick = useCallback(\n' +
+    '    (e: React.MouseEvent) => {\n' +
+    '      e.stopPropagation();\n' +
+    '      onRemoveMessage(entry.messageId);\n' +
+    '    },\n' +
+    '    [entry.messageId, onRemoveMessage],\n' +
+    '  );\n' +
+    '\n' +
+    '  const handleOpen = useCallback(() => {\n' +
+    '    onOpenEntry(entry);\n' +
+    '  }, [entry, onOpenEntry]);\n' +
+    '\n' +
+    '  const handleKeyDown = useCallback(\n' +
+    '    (event: React.KeyboardEvent) => {\n' +
+    '      if (event.key === "Enter" || event.key === " ") {\n' +
+    '        event.preventDefault();\n' +
+    '        handleOpen();\n' +
+    '      }\n' +
+    '    },\n' +
+    '    [handleOpen],\n' +
+    '  );\n' +
+    '\n' +
+    '  return (\n' +
+    '    <ContextMenu>\n' +
+    '      <ContextMenuTrigger\n' +
+    '        render={\n' +
+    '          <ListRow\n' +
+    '            variant="plain"\n' +
+    '            render={<div />}\n' +
+    '            role="button"\n' +
+    '            tabIndex={0}\n' +
+    '            data-saved-row=""\n' +
+    '            onClick={handleOpen}\n' +
+    '            onKeyDown={handleKeyDown}\n' +
+    '          />\n' +
+    '        }\n' +
+    '      >\n' +
+    '        <div className="min-w-0 flex-1">\n' +
+    '          <div className="mb-1 flex min-w-0 items-center gap-2 text-caption">\n' +
+    '            <span className="shrink-0 text-foreground-hint">\n' +
+    '              {channelLabel}\n' +
+    '            </span>\n' +
+    '            {isThread && (\n' +
+    '              <span className="inline-flex shrink-0 items-center gap-1 text-foreground-hint">\n' +
+    '                <MessageSquare size={12} />\n' +
+    '                {formatMessage({ id: "saved.threadLabel" })}\n' +
+    '              </span>\n' +
+    '            )}\n' +
+    '            {senderName && (\n' +
+    '              <span className="inline-flex min-w-0 items-center gap-1 font-semibold text-foreground">\n' +
+    '                {senderAgent ? (\n' +
+    '                  <AvatarSlot\n' +
+    '                    context="preview-mini"\n' +
+    '                    type="agent"\n' +
+    '                    agentAvatarUrl={senderAgent.avatarUrl ?? null}\n' +
+    '                  />\n' +
+    '                ) : entry.senderType === "external_projection" ? (\n' +
+    '                  <AvatarSlot\n' +
+    '                    context="preview-mini"\n' +
+    '                    type="app"\n' +
+    '                    appAvatarUrl={entry.senderAvatarUrl}\n' +
+    '                    appInitials={senderName}\n' +
+    '                  />\n' +
+    '                ) : (\n' +
+    '                  <AvatarSlot\n' +
+    '                    context="preview-mini"\n' +
+    '                    type="human"\n' +
+    '                    humanAvatarUrl={entry.senderAvatarUrl}\n' +
+    '                  />\n' +
+    '                )}\n' +
+    '                <span className="truncate">{senderName}</span>\n' +
+    '              </span>\n' +
+    '            )}\n' +
+    '            <span className="shrink-0 font-mono text-mono-meta text-foreground-hint">\n' +
+    '              {formatRelativeTime(entry.createdAt, locale) ?? ""}\n' +
+    '            </span>\n' +
+    '          </div>\n' +
+    '          <p className="line-clamp-3 text-callout text-foreground">\n' +
+    '            {entry.content}\n' +
+    '          </p>\n' +
+    '        </div>\n' +
+    '        <div className="ml-auto shrink-0 self-center">\n' +
+    '          <PanelToggleAction\n' +
+    '            pressed\n' +
+    '            onKeyDown={stopKeyPropagation}\n' +
+    '            onClick={handleRemoveButtonClick}\n' +
+    '            aria-label={formatMessage({ id: "saved.remove" })}\n' +
+    '            className="data-pressed:border-transparent data-pressed:bg-transparent data-pressed:text-foreground data-pressed:hover:bg-fill-medium"\n' +
+    '          >\n' +
+    '            <Bookmark size={14} fill="currentColor" aria-hidden />\n' +
+    '          </PanelToggleAction>\n' +
+    '        </div>\n' +
+    '      </ContextMenuTrigger>\n' +
+    '\n' +
+    '      <ContextMenuContent>\n' +
+    '        <ContextMenuItem\n' +
+    '          onClick={() =>\n' +
+    '            void copyTextWithFeedback(\n' +
+    '              localMessagePermalink(\n' +
+    '                location.origin,\n' +
+    '                entry.parentChannelId || entry.channelId,\n' +
+    '                entry.messageId,\n' +
+    '                entry.channelType === "thread"\n' +
+    '                  ? entry.parentMessageId\n' +
+    '                  : undefined,\n' +
+    '              ),\n' +
+    '            )\n' +
+    '          }\n' +
+    '        >\n' +
+    '          <Link size={14} />\n' +
+    '          <span>{formatMessage({ id: "saved.copyLink" })}</span>\n' +
+    '        </ContextMenuItem>\n' +
+    '        <ContextMenuItem\n' +
+    '          onClick={() => void copyTextWithFeedback(entry.content)}\n' +
+    '        >\n' +
+    '          <Copy size={14} />\n' +
+    '          <span>{formatMessage({ id: "saved.copyMarkdown" })}</span>\n' +
+    '        </ContextMenuItem>\n' +
+    '        <ContextMenuSeparator />\n' +
+    '        <ContextMenuItem onClick={handleRemove}>\n' +
+    '          <Bookmark size={14} />\n' +
+    '          <span>{formatMessage({ id: "saved.remove" })}</span>\n' +
+    '        </ContextMenuItem>\n' +
+    '      </ContextMenuContent>\n' +
+    '    </ContextMenu>\n' +
+    '  );\n' +
+    '});\n' +
+    '\n' +
+    'export default function SavedPanel({\n' +
+    '  client,\n' +
+    '  workspaceId,\n' +
+    '  onOpenEntry,\n' +
+    '  onMobileBack,\n' +
+    '}: {\n' +
+    '  client: RahClient;\n' +
+    '  workspaceId: string;\n' +
+    '  onOpenEntry: (entry: SavedEntry) => void;\n' +
+    '  onMobileBack: () => void;\n' +
+    '}) {\n' +
+    '  const { formatMessage } = useIntl();\n' +
+    '  const {\n' +
+    '    result,\n' +
+    '    loading,\n' +
+    '    error,\n' +
+    '    read,\n' +
+    '    remove: removeSavedMessage,\n' +
+    '    writes,\n' +
+    '    state,\n' +
+    '  } = useSavedMessages(client, workspaceId);\n' +
+    '  const saved = (result?.items ?? []).map(savedEntry);\n' +
+    '  const savedTotal = result?.globalTotal ?? 0;\n' +
+    '  const hasMore = !!result?.nextCursor;\n' +
+    '  const loadMore = useCallback(() => read(true), [read]);\n' +
+    '  const openSavedEntry = onOpenEntry;\n' +
+    '  const embedded = false,\n' +
+    '    serverSlug = undefined;\n' +
+    '  const scrollerRef = useRef<HTMLDivElement | null>(null),\n' +
+    '    loadMoreSentinelRef = useRef<HTMLDivElement | null>(null);\n' +
+    '  useEffect(() => {\n' +
+    '    if (!hasMore || loading || saved.length === 0) return;\n' +
+    '    if (typeof IntersectionObserver === "undefined") return;\n' +
+    '    const sentinel = loadMoreSentinelRef.current;\n' +
+    '    if (!sentinel) return;\n' +
+    '\n' +
+    '    const observer = new IntersectionObserver(\n' +
+    '      (entries) => {\n' +
+    '        if (entries.some((entry) => entry.isIntersecting)) {\n' +
+    '          void loadMore();\n' +
+    '        }\n' +
+    '      },\n' +
+    '      {\n' +
+    '        root: scrollerRef.current,\n' +
+    '        rootMargin: "240px 0px",\n' +
+    '        threshold: 0,\n' +
+    '      },\n' +
+    '    );\n' +
+    '\n' +
+    '    observer.observe(sentinel);\n' +
+    '    return () => observer.disconnect();\n' +
+    '  }, [hasMore, loadMore, loading, saved.length]);\n' +
+    '\n' +
+    '  return (\n' +
+    '    <div className="flex min-h-0 flex-1 flex-col bg-layer-panel">\n' +
+    '      {!embedded ? (\n' +
+    '        <PanelHeader\n' +
+    '          title={formatMessage({ id: "saved.header.title" })}\n' +
+    '          subtitle={formatMessage(\n' +
+    '            { id: "saved.header.subtitle" },\n' +
+    '            { count: savedTotal },\n' +
+    '          )}\n' +
+    '          onMobileBack={onMobileBack}\n' +
+    '        />\n' +
+    '      ) : null}\n' +
+    '\n' +
+    '      {(error || state === "unknown") && (\n' +
+    '        <div role="alert" className="p-3 text-sm">\n' +
+    '          {error || "收藏操作结果未知。"}\n' +
+    '          {state === "unknown" ? (\n' +
+    '            <>\n' +
+    '              <Button\n' +
+    '                {...uiActionProps.recovery}\n' +
+    '                onClick={() => void writes.retry()}\n' +
+    '              >\n' +
+    '                核实收藏结果\n' +
+    '              </Button>\n' +
+    '              <Button\n' +
+    '                {...uiActionProps.recovery}\n' +
+    '                onClick={() => {\n' +
+    '                  writes.abandon();\n' +
+    '                  void read();\n' +
+    '                }}\n' +
+    '              >\n' +
+    '                放弃核实并刷新\n' +
+    '              </Button>\n' +
+    '            </>\n' +
+    '          ) : (\n' +
+    '            <Button {...uiActionProps.recovery} onClick={() => void read()}>\n' +
+    '              重试\n' +
+    '            </Button>\n' +
+    '          )}\n' +
+    '        </div>\n' +
+    '      )}\n' +
+    '      {/* Saved list */}\n' +
+    '      <div\n' +
+    '        ref={scrollerRef}\n' +
+    '        data-testid="saved-list-scroller"\n' +
+    '        className="flex-1 overflow-y-auto bg-layer-panel py-1 safe-bottom"\n' +
+    '      >\n' +
+    '        {loading && saved.length === 0 ? (\n' +
+    '          <ConversationCardSkeleton />\n' +
+    '        ) : saved.length === 0 ? (\n' +
+    '          <EmptyState\n' +
+    '            className="flex h-full flex-col items-center justify-center"\n' +
+    '            icon={<Bookmark size={36} />}\n' +
+    '            title={formatMessage({ id: "emptyState.noSavedTitle" })}\n' +
+    '            description={formatMessage({ id: "saved.emptyDescription" })}\n' +
+    '          />\n' +
+    '        ) : (\n' +
+    '          <div className="flex flex-col">\n' +
+    '            {saved.map((entry) => (\n' +
+    '              <SavedItem\n' +
+    '                key={entry.messageId}\n' +
+    '                entry={entry}\n' +
+    '                serverSlug={serverSlug}\n' +
+    '                onOpenEntry={openSavedEntry}\n' +
+    '                onRemoveMessage={'... 793 more characters
+  
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/header-tone-release.test.mjs:30:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'import { copyTextWithFeedback } from "./copy-text";\nimport { localMessagePermalink } from "./message-links";\nimport { uiActionProps } from "./ui-action-props.ts";\nimport type { RahClient } from "@rah-os/client-sdk";\nimport { useSavedMessages } from "./useSavedMessages.ts";\nimport { savedEntry } from "./saved-entry.ts";\n// Structural port of official SavedPanel; native list/layout retained, Loom owns data/navigation.\nimport { memo, useCallback, useEffect, useRef } from "react";\nimport { useIntl } from "react-intl";\nimport { Bookmark, MessageSquare, Copy, Link } from "lucide-react";\nimport {\n  Button,\n  ContextMenu,\n  ContextMenuContent,\n  ContextMenuItem,\n  ContextMenuSeparator,\n  ContextMenuTrigger,\n  PanelToggleAction,\n  ListRow,\n} from "raft-ui";\nimport type { SavedEntry } from "../packages/web/src/store/savedStore.ts";\nimport { formatRelativeTime } from "../packages/web/src/utils/relativeTime.ts";\nimport AvatarSlot from "../packages/web/src/components/ui/AvatarSlot";\nimport PanelHeader from "../packages/web/src/components/ui/PanelHeader";\nimport EmptyState from "../packages/web/src/components/ui/EmptyState";\nimport { ConversationCardSkeleton } from "../packages/web/src/components/ui/Skeleton";\n\nfunction stopKeyPropagation(event: React.KeyboardEvent) {\n  event.stopPropagation();\n}\n\nconst SavedItem = memo(function SavedItem({\n  entry,\n  onOpenEntry,\n  onRemoveMessage,\n  serverSlug,\n}: {\n  entry: SavedEntry;\n  onOpenEntry: (entry: SavedEntry) => void;\n  onRemoveMessage: (messageId: string) => void;\n  serverSlug: string | undefined;\n}) {\n  const { formatMessage, locale } = useIntl();\n\n  const isThread = entry.channelType === "thread";\n  const isDm = isThread\n    ? entry.parentChannelType === "dm"\n    : entry.channelType === "dm";\n  const sourceChannelName = isThread\n    ? entry.parentChannelName\n    : entry.channelName;\n  const channelLabel = isDm\n    ? `@${entry.senderName || entry.senderId}`\n    : `#${sourceChannelName}`;\n\n  const senderAgent =\n    entry.senderType === "agent" ? { avatarUrl: entry.senderAvatarUrl } : null;\n  const senderName = entry.senderName;\n\n  const handleRemove = useCallback(() => {\n    onRemoveMessage(entry.messageId);\n  }, [entry.messageId, onRemoveMessage]);\n\n  const handleRemoveButtonClick = useCallback(\n    (e: React.MouseEvent) => {\n      e.stopPropagation();\n      onRemoveMessage(entry.messageId);\n    },\n    [entry.messageId, onRemoveMessage],\n  );\n\n  const handleOpen = useCallback(() => {\n    onOpenEntry(entry);\n  }, [entry, onOpenEntry]);\n\n  const handleKeyDown = useCallback(\n    (event: React.KeyboardEvent) => {\n      if (event.key === "Enter" || event.key === " ") {\n        event.preventDefault();\n        handleOpen();\n      }\n    },\n    [handleOpen],\n  );\n\n  return (\n    <ContextMenu>\n      <ContextMenuTrigger\n        render={\n          <ListRow\n            variant="plain"\n            render={<div />}\n            role="button"\n            tabIndex={0}\n            data-saved-row=""\n            onClick={handleOpen}\n            onKeyDown={handleKeyDown}\n          />\n        }\n      >\n        <div className="min-w-0 flex-1">\n          <div className="mb-1 flex min-w-0 items-center gap-2 text-caption">\n            <span className="shrink-0 text-foreground-hint">\n              {channelLabel}\n            </span>\n            {isThread && (\n              <span className="inline-flex shrink-0 items-center gap-1 text-foreground-hint">\n                <MessageSquare size={12} />\n                {formatMessage({ id: "saved.threadLabel" })}\n              </span>\n            )}\n            {senderName && (\n              <span className="inline-flex min-w-0 items-center gap-1 font-semibold text-foreground">\n                {senderAgent ? (\n                  <AvatarSlot\n                    context="preview-mini"\n                    type="agent"\n                    agentAvatarUrl={senderAgent.avatarUrl ?? null}\n                  />\n                ) : entry.senderType === "external_projection" ? (\n                  <AvatarSlot\n                    context="preview-mini"\n                    type="app"\n                    appAvatarUrl={entry.senderAvatarUrl}\n                    appInitials={senderName}\n                  />\n                ) : (\n                  <AvatarSlot\n                    context="preview-mini"\n                    type="human"\n                    humanAvatarUrl={entry.senderAvatarUrl}\n                  />\n                )}\n                <span className="truncate">{senderName}</span>\n              </span>\n            )}\n            <span className="shrink-0 font-mono text-mono-meta text-foreground-hint">\n              {formatRelativeTime(entry.createdAt, locale) ?? ""}\n            </span>\n          </div>\n          <p className="line-clamp-3 text-callout text-foreground">\n            {entry.content}\n          </p>\n        </div>\n        <div className="ml-auto shrink-0 self-center">\n          <PanelToggleAction\n            pressed\n            onKeyDown={stopKeyPropagation}\n            onClick={handleRemoveButtonClick}\n            aria-label={formatMessage({ id: "saved.remove" })}\n            className="data-pressed:border-transparent data-pressed:bg-transparent data-pressed:text-foreground data-pressed:hover:bg-fill-medium"\n          >\n            <Bookmark size={14} fill="currentColor" aria-hidden />\n          </PanelToggleAction>\n        </div>\n      </ContextMenuTrigger>\n\n      <ContextMenuContent>\n        <ContextMenuItem\n          onClick={() =>\n            void copyTextWithFeedback(\n              localMessagePermalink(\n                location.origin,\n                entry.parentChannelId || entry.channelId,\n                entry.messageId,\n                entry.channelType === "thread"\n                  ? entry.parentMessageId\n                  : undefined,\n              ),\n            )\n          }\n        >\n          <Link size={14} />\n          <span>{formatMessage({ id: "saved.copyLink" })}</span>\n        </ContextMenuItem>\n        <ContextMenuItem\n          onClick={() => void copyTextWithFeedback(entry.content)}\n        >\n          <Copy size={14} />\n          <span>{formatMessage({ id: "saved.copyMarkdown" })}</span>\n        </ContextMenuItem>\n        <ContextMenuSeparator />\n        <ContextMenuItem onClick={handleRemove}>\n          <Bookmark size={14} />\n          <span>{formatMessage({ id: "saved.remove" })}</span>\n        </ContextMenuItem>\n      </ContextMenuContent>\n    </ContextMenu>\n  );\n});\n\nexport default function SavedPanel({\n  client,\n  workspaceId,\n  onOpenEntry,\n  onMobileBack,\n}: {\n  client: RahClient;\n  workspaceId: string;\n  onOpenEntry: (entry: SavedEntry) => void;\n  onMobileBack: () => void;\n}) {\n  const { formatMessage } = useIntl();\n  const {\n    result,\n    loading,\n    error,\n    read,\n    remove: removeSavedMessage,\n    writes,\n    state,\n  } = useSavedMessages(client, workspaceId);\n  const saved = (result?.items ?? []).map(savedEntry);\n  const savedTotal = result?.globalTotal ?? 0;\n  const hasMore = !!result?.nextCursor;\n  const loadMore = useCallback(() => read(true), [read]);\n  const openSavedEntry = onOpenEntry;\n  const embedded = false,\n    serverSlug = undefined;\n  const scrollerRef = useRef<HTMLDivElement | null>(null),\n    loadMoreSentinelRef = useRef<HTMLDivElement | null>(null);\n  useEffect(() => {\n    if (!hasMore || loading || saved.length === 0) return;\n    if (typeof IntersectionObserver === "undefined") return;\n    const sentinel = loadMoreSentinelRef.current;\n    if (!sentinel) return;\n\n    const observer = new IntersectionObserver(\n      (entries) => {\n        if (entries.some((entry) => entry.isIntersecting)) {\n          void loadMore();\n        }\n      },\n      {\n        root: scrollerRef.current,\n        rootMargin: "240px 0px",\n        threshold: 0,\n      },\n    );\n\n    observer.observe(sentinel);\n    return () => observer.disconnect();\n  }, [hasMore, loadMore, loading, saved.length]);\n\n  return (\n    <div className="flex min-h-0 flex-1 flex-col bg-layer-panel">\n      {!embedded ? (\n        <PanelHeader\n          title={formatMessage({ id: "saved.header.title" })}\n          subtitle={formatMessage(\n            { id: "saved.header.subtitle" },\n            { count: savedTotal },\n          )}\n          onMobileBack={onMobileBack}\n        />\n      ) : null}\n\n      {(error || state === "unknown") && (\n        <div role="alert" className="p-3 text-sm">\n          {error || "收藏操作结果未知。"}\n          {state === "unknown" ? (\n            <>\n              <Button\n                {...uiActionProps.recovery}\n                onClick={() => void writes.retry()}\n              >\n                核实收藏结果\n              </Button>\n              <Button\n                {...uiActionProps.recovery}\n                onClick={() => {\n                  writes.abandon();\n                  void read();\n                }}\n              >\n                放弃核实并刷新\n              </Button>\n            </>\n          ) : (\n            <Button {...uiActionProps.recovery} onClick={() => void read()}>\n              重试\n            </Button>\n          )}\n        </div>\n      )}\n      {/* Saved list */}\n      <div\n        ref={scrollerRef}\n        data-testid="saved-list-scroller"\n        className="flex-1 overflow-y-auto bg-layer-panel py-1 safe-bottom"\n      >\n        {loading && saved.length === 0 ? (\n          <ConversationCardSkeleton />\n        ) : saved.length === 0 ? (\n          <EmptyState\n            className="flex h-full flex-col items-center justify-center"\n            icon={<Bookmark size={36} />}\n            title={formatMessage({ id: "emptyState.noSavedTitle" })}\n            description={formatMessage({ id: "saved.emptyDescription" })}\n          />\n        ) : (\n          <div className="flex flex-col">\n            {saved.map((entry) => (\n              <SavedItem\n                key={entry.messageId}\n                entry={entry}\n                serverSlug={serverSlug}\n                onOpenEntry={openSavedEntry}\n                onRemoveMessage={'... 793 more characters,
+    expected: /before:left-4/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/official-web/saved.test.ts:33:1
+✖ saved panel retains locked v1.21.22 list recipe, scroll threshold and sidebar count owner (12.911917ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert.ok(local.includes(token))
+  
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/saved.test.ts:44:12)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

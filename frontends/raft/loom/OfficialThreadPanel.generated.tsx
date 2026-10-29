@@ -111,6 +111,7 @@ function ReadOnlyThreadPanel({
         parentChannelId={readOnlyData.parentChannelId}
         parentMessageId={readOnlyData.parentMessage.id}
         readOnlyProjection
+        mentionComposerChannelId={`loom-thread:${readOnlyData.parentChannelId}:${readOnlyData.parentMessage.id}`}
         onOpenProfile={loomOnOpenProfile}
         threadSearchActive={message.id === loomFocusId}
         readOnlySender={readOnlyData.senderByMessageId.get(message.id)}
@@ -127,6 +128,7 @@ function ReadOnlyThreadPanel({
         channels={readOnlyData.channels}
         parentChannelId={readOnlyData.parentChannelId}
         readOnlyProjection
+        mentionComposerChannelId={`loom-thread:${readOnlyData.parentChannelId}:${readOnlyData.parentMessage.id}`}
         onOpenProfile={loomOnOpenProfile}
         readOnlySender={readOnlyData.senderByMessageId.get(readOnlyData.parentMessage.id)}
         canReact={false}

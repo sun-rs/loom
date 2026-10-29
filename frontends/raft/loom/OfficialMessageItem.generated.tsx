@@ -2,6 +2,7 @@
 import useRenderMessageMarkdown from "./OfficialMessageMarkdown.generated";
 import {boundMessageMentions} from "./MessageProfile";
 import LoomAttachments from "./Attachments";
+import LoomMessageCopyItems from "./MessageCopyItems";
 import OfficialMessageSelectText from "./OfficialMessageSelectText.generated.js";
 import {TextSelect} from "lucide-react";
 import {useLoomReactions} from "./MessageReactions";
@@ -2284,10 +2285,11 @@ const ConnectedMessageItem = memo(function ConnectedMessageItem({ message, menti
   // quotes into that thread, and a channel-timeline row quotes into the
   // channel composer.
   const quoteComposerChannelId = useMemo(() => {
+    if (mentionComposerChannelId) return mentionComposerChannelId;
     if (parentMessageId) return message.channelId; // thread reply → thread channel
     if (hideThreadActions && message.threadId) return message.threadId; // parent in ThreadPanel
     return parentChannelId || message.channelId; // channel timeline
-  }, [parentMessageId, hideThreadActions, message.threadId, parentChannelId, message.channelId]);
+  }, [mentionComposerChannelId, parentMessageId, hideThreadActions, message.threadId, parentChannelId, message.channelId]);
 
   const handleConvertToTask = useCallback(async () => {
     setCtxMenu(null);
@@ -3670,7 +3672,7 @@ const ConnectedMessageItem = memo(function ConnectedMessageItem({ message, menti
               <ContextMenuDivider />
             </>
           )}
-{loomReactions?.canSave && <MenuItem icon={loomReactions.saved ? <BookmarkMinus size={14} /> : <Bookmark size={14} />} onClick={() => {loomReactions.toggleSave(); handleCloseCtx();}}>{loomReactions.saved ? formatMessage({id:"message.messageItem.removeFromSaved"}) : formatMessage({id:"message.messageItem.saveMessage"})}</MenuItem>}<LoomTaskMenu actions={loomTaskActions} close={handleCloseCtx} />{ctxMenu.source === "touch" && message.content.trim() && <MenuItem icon={<TextSelect width={14} height={14}/>} onClick={() => { setLoomSelectText("open"); handleCloseCtx(); }}>选择文本</MenuItem>}</> : <>
+<LoomMessageCopyItems roomId={parentChannelId || message.channelId} messageId={message.id} rootMessageId={parentMessageId} markdown={message.content} close={handleCloseCtx}/><ContextMenuDivider/>{loomReactions?.canSave && <MenuItem icon={loomReactions.saved ? <BookmarkMinus size={14} /> : <Bookmark size={14} />} onClick={() => {loomReactions.toggleSave(); handleCloseCtx();}}>{loomReactions.saved ? formatMessage({id:"message.messageItem.removeFromSaved"}) : formatMessage({id:"message.messageItem.saveMessage"})}</MenuItem>}<LoomTaskMenu actions={loomTaskActions} close={handleCloseCtx} />{ctxMenu.source === "touch" && message.content.trim() && <MenuItem icon={<TextSelect width={14} height={14}/>} onClick={() => { setLoomSelectText("open"); handleCloseCtx(); }}>选择文本</MenuItem>}</> : <>
           {/* Reaction quick row — shown on both desktop right-click ("pointer")
               and mobile long-press ("touch") per stdrc 2026-05-14
               #proj-mobile:a8293493 msg=2cebeb18: "无论是移动端还是桌面端，其右

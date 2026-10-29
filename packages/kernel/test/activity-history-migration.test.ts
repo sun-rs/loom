@@ -24,7 +24,7 @@ test("schema 89 unfollows migrate without invented history and preserve canonica
     });
     try {
       upgraded.initialize();
-      assert.equal(f.db.prepare("PRAGMA user_version").get()!.user_version, 90);
+      assert.equal(f.db.prepare("PRAGMA user_version").get()!.user_version, 91);
       assert.equal(
         f.db.prepare("SELECT retained_seq FROM human_thread_follows").get()!
           .retained_seq,

@@ -1,0 +1,88 @@
+{
+  "anchor": {
+    "web": "1.21.38",
+    "component": "0.52.0",
+    "source": "db5e399"
+  },
+  "paidProviderRuns": 0,
+  "physicalMobile": false,
+  "isolatedState": true,
+  "source": {
+    "command": "npm run test:official-web:source",
+    "passed": 531,
+    "failed": 0
+  },
+  "kernel": {
+    "focusedTests": 51,
+    "migrationTests": 31,
+    "safetyTests": 15,
+    "note": "Overlapping suites; counts are not added as unique coverage"
+  },
+  "types": {
+    "root": true,
+    "loom": true
+  },
+  "build": true,
+  "browsers": {
+    "remaining": [
+      1440,
+      840,
+      768,
+      390
+    ],
+    "sidebar": [
+      1440,
+      390
+    ],
+    "activity": [
+      1440,
+      390
+    ],
+    "search": [
+      1440,
+      390
+    ],
+    "references": [
+      1440,
+      390
+    ],
+    "saved": [
+      1440,
+      390
+    ],
+    "roleForm": [
+      1440,
+      390
+    ]
+  },
+  "knownInitialFailures": [
+    "Missing archive leading icon reproduced by contract before fix",
+    "Saved1.21.22 local recipe expectations conflict with independently acquired1.21.38 native ListRow",
+    "Search menu placement assumed192px; native measured minimum240px clipped at edge",
+    "Old activity test used last menuitem/old Done text; retained exact action selector after native mute insertion"
+  ],
+  "boundaries": [
+    "Native Duo OS integration excluded",
+    "No Host-backed authentication proof; no inferred logged-in labels",
+    "Private-box mute not offered without corresponding preference binding",
+    "No whole-site untouched-source claim"
+  ],
+  "logs": {
+    "source-contracts.txt": "/tmp/loom-rest-source-final3.txt",
+    "kernel-discovery-deletion.txt": "/tmp/loom-rest-kernel2.txt",
+    "schema-migrations.txt": "/tmp/loom-rest-schema-final.txt",
+    "schema-safety.txt": "/tmp/loom-rest-safety-kernel.txt",
+    "browser-remaining.txt": "/tmp/loom-rest-browser-final.txt",
+    "browser-sidebar.txt": "/tmp/loom-rest-sidebar-final2.txt",
+    "browser-activity.txt": "/tmp/loom-rest-activity-menu-final2.txt",
+    "browser-search.txt": "/tmp/loom-rest-search-edge-green.txt",
+    "browser-references.txt": "/tmp/loom-rest-message-references-final.txt",
+    "browser-saved.txt": "/tmp/loom-rest-saved-final.txt",
+    "browser-role-form.txt": "/tmp/loom-rest-role-browser.txt",
+    "build.txt": "/tmp/loom-rest-build-final2.txt",
+    "typecheck-root.txt": "/tmp/loom-rest-root-type-final.txt",
+    "typecheck-loom.txt": "/tmp/loom-rest-loom-type-final2.txt",
+    "search-edge-before.txt": "/tmp/loom-rest-search-edge-red.txt",
+    "source-before-saved-update.txt": "/tmp/loom-rest-source-final.txt"
+  }
+}

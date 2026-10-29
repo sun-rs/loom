@@ -100,7 +100,7 @@ function fixture() {
 }
 
 test("schema 67 carries the final-reply marker table", () => {
-  assert.equal(KERNEL_SCHEMA_VERSION, 90);
+  assert.equal(KERNEL_SCHEMA_VERSION, 91);
   const context = fixture();
   try {
     const columns = context.database

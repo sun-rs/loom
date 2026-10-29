@@ -84,7 +84,12 @@ test("toast binding defers the request, undo restores the row, and close submits
   vm.createContext(scope);
   vm.runInContext(code + "\nthis.hook=useActivitySwipeUndo;", scope);
   const row = { id: "r", activityFrontier: { throughSeq: 10 } };
-  const hook = (scope as any).hook([row], (x: any) => sent.push(x));
+  const unfollowed: any[] = [];
+  const hook = (scope as any).hook(
+    [row],
+    (x: any) => sent.push(x),
+    (x: any) => unfollowed.push(x),
+  );
   hook.done(row);
   assert.equal(sent.length, 0);
   assert.equal(hidden.at(-1), "r");
@@ -101,4 +106,18 @@ test("toast binding defers the request, undo restores the row, and close submits
   listeners.get("visibilitychange")();
   notices[2].onClose();
   assert.equal(sent.length, 2);
+  scope.document.visibilityState = "visible";
+  hook.unfollow(row);
+  assert.equal(unfollowed.length, 0, "unfollow waits for the same undo window");
+  notices.at(-1).action.onClick();
+  notices.at(-1).onClose();
+  assert.equal(
+    unfollowed.length,
+    0,
+    "undo never unfollows/refollows or changes unread",
+  );
+  hook.unfollow(row);
+  notices.at(-1).onClose();
+  notices.at(-1).onClose();
+  assert.deepEqual(unfollowed, [row]);
 });

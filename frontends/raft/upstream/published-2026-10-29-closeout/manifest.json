@@ -1,0 +1,9 @@
+{
+  "webVersion": "1.21.38",
+  "releaseCommit": "a7b1309bcb7fa91654c9a6895ce73236190bd6b4",
+  "sourceUrl": "https://app.raft.build/assets/app-shell-CKVQUGrN.js",
+  "sourceSha256": "9a02285d93c15f0e7e901951d3bd25f4a8e2f1e3b9b2f677deda80e7ecd03572",
+  "sourceExcerptsSha256": "bf334c9766375d729883beb6e119fcb29dbd5ba3874b6f496dc388938809b821",
+  "license": "Owner-authorized reuse; original Raft notices in adoption.json",
+  "kind": "Selected original published declaration bodies; menu/marker are direct reuse, cover tabs use explicit data bindings"
+}

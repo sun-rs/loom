@@ -13,7 +13,7 @@ import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
 
-import { RoomKernel } from "../src/index.ts";
+import { KERNEL_SCHEMA_VERSION, RoomKernel } from "../src/index.ts";
 import { ROOM_DELETION_REFERENCED_TABLES } from "../src/room-deletion-service.ts";
 import {
   ROOM_FILE_GC_GLOBAL_CLAIM_SQL,
@@ -720,7 +720,7 @@ test("current schema preserves a schema v40 reclaimed file receipt while adding 
     const audit = new DatabaseSync(f.databasePath, { readOnly: true });
     assert.equal(
       Number(audit.prepare("PRAGMA user_version").get()?.user_version),
-      90,
+      KERNEL_SCHEMA_VERSION,
     );
     assert.deepEqual(audit.prepare("PRAGMA foreign_key_check").all(), []);
     assert.deepEqual(
@@ -793,7 +793,7 @@ test("current schema atomically replaces the schema v41 GC scan index", () => {
     const audit = new DatabaseSync(f.databasePath, { readOnly: true });
     assert.equal(
       Number(audit.prepare("PRAGMA user_version").get()?.user_version),
-      90,
+      KERNEL_SCHEMA_VERSION,
     );
     assert.deepEqual(
       audit

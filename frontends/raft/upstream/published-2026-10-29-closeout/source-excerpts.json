@@ -1,0 +1,30 @@
+{
+  "HXe": {
+    "code": "var HXe=[`flex min-h-9 w-full items-center gap-2.5 rounded-chip px-2.5 py-1.5 text-left [@media(max-height:600px)]:min-h-8 [@media(max-height:600px)]:py-1`,`font-sans text-callout font-medium text-foreground`,`outline-none transition-colors enabled:hover:bg-brand-soft enabled:focus-visible:bg-brand-soft`,`[&>svg]:shrink-0 [&>svg:first-child]:size-4 [&>svg:first-child]:text-foreground-muted`,`disabled:cursor-not-allowed disabled:text-foreground-disabled disabled:[&>svg:first-child]:text-foreground-disabled`].join(` `);",
+    "sha256": "84bb40ad6ccdadb54415483d876a1b4c8bce72f9bbfddd56711fd75f39160fd3"
+  },
+  "l1": {
+    "code": "function l1({icon:e,trailing:t,className:n=``,type:r=`button`,role:i=`menuitem`,children:a,...o}){return(0,Z.jsxs)(`button`,{type:r,role:i,\"data-slot\":`menu-item`,className:`${HXe} ${n}`.trim(),...o,children:[e,(0,Z.jsx)(`span`,{className:`min-w-0 flex-1 truncate`,children:a}),t]})}",
+    "sha256": "8f59f8e1de266be4cdaf0e47674b5cee9d14d3ed193f5650fe52d426ce30da56"
+  },
+  "Vst": {
+    "code": "var Vst=e=>e===`thread`?(0,Z.jsx)(Ml,{}):e===`tasks`?(0,Z.jsx)(Ce,{}):(0,Z.jsx)(kt,{});",
+    "sha256": "bb1deedbd6a5453853f38dfed5be3753b5878abe024e489ec19b9105036fc4fc"
+  },
+  "Hst": {
+    "code": "function Hst({side:e,onBack:t}){let{formatMessage:n}=V(),r=i8(e=>e.entries),i=Y6(e=>e.focusCard),a=(0,X.useCallback)(e=>{e!==`thread`&&(qK(e,`side_column_tabs`,!1),i(e)),i8.setState({coverTab:e})},[i]);if(e.tabs.length===0)return null;let o=e=>e===`thread`?n({id:`message.threadPanel.thread`}):r[e]?.title??e;return(0,Z.jsxs)(Yu,{\"data-testid\":`thread-cover-tabs`,children:[(0,Z.jsx)(_u,{\"aria-label\":n({id:`task.sideColumn.coverBack`}),onClick:t,activateOnTouchEnd:!0,\"data-testid\":`thread-cover-back`,children:(0,Z.jsx)(T,{})}),(0,Z.jsx)(bl,{value:e.activeTab,onValueChange:a,className:`w-auto min-w-0 flex-1`,children:(0,Z.jsx)(es,{\"aria-label\":n({id:`task.sideColumn.coverSwitch`}),children:e.tabs.map(e=>(0,Z.jsxs)(Ss,{value:e,\"data-testid\":`thread-cover-tab-${e}`,children:[Vst(e),(0,Z.jsx)(Ho,{children:o(e)})]},e))})})]})}",
+    "sha256": "bb29c195ba29ea5e0258fdf5098ba633af61415350248f874eaf060ca02994aa"
+  },
+  "Pdt": {
+    "code": "var Pdt=`size-1.5 shrink-0 rounded-[2px] bg-foreground-hint`;",
+    "sha256": "af773e951876fa99e8f23152dd600ffccd2bae985ff4b4b739d1ece99218696b"
+  },
+  "r5": {
+    "code": "function r5({className:e,...t}){return(0,Z.jsx)(`span`,{role:`img`,...t,className:e?`${Pdt} ${e}`:Pdt})}",
+    "sha256": "d9f100dc9739deda506f5c4fbd67c655ce1991ef3e0f9cc1a6868164974ddf77"
+  },
+  "Wst": {
+    "code": "function Wst(e){let[t,n]=(0,X.useState)(0);return(0,X.useLayoutEffect)(()=>{let t=e?.parentElement?.querySelector(`:scope > [data-testid=\"thread-cover-tabs\"]`);if(!t)return;let r=()=>n(t.offsetTop+t.offsetHeight);r();let i=typeof ResizeObserver<`u`?new ResizeObserver(r):null;return i?.observe(t),()=>i?.disconnect()},[e]),t}",
+    "sha256": "a0310dd219c689d48717140f21921e010ef24d7206763dda95192e58f9f37d34"
+  }
+}

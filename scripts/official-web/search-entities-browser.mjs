@@ -43,6 +43,30 @@ export async function verifySearchEntities({
         `search-channel-result-${channels[0].roomId}`,
       );
       await entity.waitFor({ timeout: 5000 });
+      await entity.click({
+        button: "right",
+        position: { x: (await entity.boundingBox()).width - 5, y: 12 },
+      });
+      const contextMenu = page.getByRole("menu").filter({ hasText: "打开" });
+      await contextMenu.waitFor();
+      await page.waitForFunction(() => {
+        const rect = document
+          .querySelector('[role="menu"]')
+          ?.getBoundingClientRect();
+        return rect && rect.x >= 0 && rect.right <= window.innerWidth;
+      });
+      const menuBounds = await contextMenu.boundingBox();
+      assert.ok(
+        menuBounds.x >= 0 && menuBounds.x + menuBounds.width <= width,
+        "search context menu uses its native measured width at the viewport edge",
+      );
+      await page.keyboard.press("Escape");
+      await contextMenu.waitFor({ state: "hidden" });
+      assert.equal(
+        new URL(page.url()).searchParams.has("room"),
+        false,
+        "dismissal must not navigate",
+      );
       await entity.click();
       await page.waitForURL(
         (u) => u.searchParams.get("room") === channels[0].roomId,

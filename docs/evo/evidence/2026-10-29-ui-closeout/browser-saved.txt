@@ -1,0 +1,3 @@
+[loom instance-prewarm] prewarm of principal_84bd88c2-0938-4b04-b03c-7594c70d0b1a skipped: disabled
+[loom instance-prewarm] prewarm of principal_f7f87e62-973a-4344-b3a2-b241d444604d skipped: disabled
+[{"width":1440,"thread":false,"save":true,"exactReplay":true,"refresh":true,"jump":true,"remove":true},{"width":390,"thread":false,"save":true,"exactReplay":true,"refresh":true,"jump":true,"remove":true}]

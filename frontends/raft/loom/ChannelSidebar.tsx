@@ -28,7 +28,23 @@ import {
   SidebarSectionControl,
   SidebarSectionCount,
 } from "raft-ui";
-import { Plus, ChevronRight } from "lucide-react";
+import {
+  Plus,
+  ChevronRight,
+  FolderInput,
+  FolderPlus,
+  Hash,
+  MessageSquareCheck,
+  MessageSquareDot,
+  Pin,
+  PinOff,
+  Bell,
+  BellOff,
+  Archive,
+  X,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 import { SidebarContextMenu, SidebarSortMenu } from "./SidebarMenus.tsx";
 import type { RahClient } from "@rah-os/client-sdk";
 import type {
@@ -107,6 +123,9 @@ export default function ChannelSidebar({
     recent: Record<string, string>;
   }>();
   const [activity, setActivity] = useState<Record<string, number>>();
+  const [manualUnread, setManualUnread] = useState<Set<string>>(new Set());
+  const hasUnread = (id: string) =>
+    (activity?.[id] ?? 0) > 0 || manualUnread.has(id);
   const [menuRoom, setMenuRoom] = useState<string>();
   const [marking, setMarking] = useState(false);
   const [archiveTarget, setArchiveTarget] = useState<Room | "list">();
@@ -146,6 +165,13 @@ export default function ChannelSidebar({
         );
         setData(next);
         setReadError("");
+        setManualUnread(
+          new Set(
+            (activity.summary?.rooms ?? [])
+              .filter((r) => r.markedUnread)
+              .map((r) => r.roomId),
+          ),
+        );
         setActivity(
           Object.fromEntries(
             (activity.summary?.rooms ?? []).map((r) => [
@@ -158,6 +184,7 @@ export default function ChannelSidebar({
     } catch {
       if (ticket === request.current) {
         setActivity(undefined);
+        setManualUnread(new Set());
         onUnreadChanged?.(undefined);
         setReadError("频道列表设置读取失败，请重试。");
       }
@@ -254,7 +281,7 @@ export default function ChannelSidebar({
       await markChannelActivity(
         client,
         room.roomId,
-        action ?? (activity[room.roomId] ? "read" : "unread"),
+        action ?? (hasUnread(room.roomId) ? "read" : "unread"),
       );
     } catch {
       setError("读状态未确认或已变化，未自动重发。请刷新检查当前状态。");
@@ -319,10 +346,19 @@ export default function ChannelSidebar({
         label="频道列表操作"
         disabled={busy || !prefs}
         items={[
-          { label: "新建频道", run: () => open({ kind: "channel" }) },
-          { label: "新建分组", run: () => open({ kind: "group" }) },
+          {
+            label: "新建频道",
+            icon: <Hash size={14} />,
+            run: () => open({ kind: "channel" }),
+          },
+          {
+            label: "新建分组",
+            icon: <FolderPlus size={14} />,
+            run: () => open({ kind: "group" }),
+          },
           {
             label: "已归档频道",
+            icon: <Archive size={14} />,
             run: () => {
               setError("");
               setArchiveTarget("list");
@@ -369,6 +405,7 @@ export default function ChannelSidebar({
                       : [
                           {
                             label: "新建频道",
+                            icon: <Hash size={14} />,
                             run: () => open({ kind: "channel" }),
                           },
                         ]),
@@ -383,11 +420,16 @@ export default function ChannelSidebar({
                       checked: groupSortMode(prefs!, group.id) === mode,
                       run: () => patch(groupSortPatch(group.id, mode)),
                     })),
-                    { label: "新建分组", run: () => open({ kind: "group" }) },
+                    {
+                      label: "新建分组",
+                      icon: <FolderPlus size={14} />,
+                      run: () => open({ kind: "group" }),
+                    },
                     ...(group.id.startsWith("custom:")
                       ? [
                           {
                             label: "重命名分组",
+                            icon: <Pencil size={14} />,
                             run: () =>
                               open(
                                 { kind: "group", id: group.id.slice(7) },
@@ -396,6 +438,7 @@ export default function ChannelSidebar({
                           },
                           {
                             label: "删除分组",
+                            icon: <Trash2 size={14} />,
                             run: () =>
                               open(
                                 { kind: "delete-group", id: group.id.slice(7) },
@@ -429,9 +472,9 @@ export default function ChannelSidebar({
                     </SidebarSectionCount>
                     {group.id === "dms" &&
                       collapsed.includes(group.id) &&
-                      group.rooms.some(
-                        (r) => (activity?.[r.roomId] ?? 0) > 0,
-                      ) && <AttentionDot size="lg" className="ml-1" />}
+                      group.rooms.some((r) => hasUnread(r.roomId)) && (
+                        <AttentionDot size="lg" className="ml-1" />
+                      )}
                   </SidebarSectionDisclosure>
                 </SidebarContextMenu>
                 <div className="flex shrink-0 items-center gap-1">
@@ -479,6 +522,7 @@ export default function ChannelSidebar({
                       items={[
                         {
                           label: "移动到分区",
+                          icon: <FolderInput size={14} />,
                           children: [
                             ...groups
                               .filter((g) =>
@@ -495,6 +539,7 @@ export default function ChannelSidebar({
                               })),
                             {
                               label: "新建分组",
+                              icon: <FolderPlus size={14} />,
                               run: () =>
                                 open({
                                   kind: "group",
@@ -504,13 +549,24 @@ export default function ChannelSidebar({
                           ],
                         },
                         {
-                          label: activity?.[room.roomId]
+                          separatorBefore: true,
+                          icon: hasUnread(room.roomId) ? (
+                            <MessageSquareCheck size={14} />
+                          ) : (
+                            <MessageSquareDot size={14} />
+                          ),
+                          label: hasUnread(room.roomId)
                             ? "标记已读"
                             : "标记未读",
                           disabled: !activity,
                           run: () => void mark(room),
                         },
                         {
+                          icon: prefs!.pinned.includes(sidebarKey(room)) ? (
+                            <PinOff size={14} />
+                          ) : (
+                            <Pin size={14} />
+                          ),
                           label: prefs!.pinned.includes(sidebarKey(room))
                             ? "取消置顶"
                             : "置顶",
@@ -529,12 +585,21 @@ export default function ChannelSidebar({
                           ? [
                               {
                                 label: "关闭会话",
+                                icon: <X size={14} />,
+                                separatorBefore: true,
                                 disabled: hasUnresolvedIntents(),
                                 run: () => closePrivate(room),
                               },
                             ]
                           : [
                               {
+                                icon: prefs!.mutedActivity.includes(
+                                  sidebarKey(room),
+                                ) ? (
+                                  <Bell size={14} />
+                                ) : (
+                                  <BellOff size={14} />
+                                ),
                                 label: prefs!.mutedActivity.includes(
                                   sidebarKey(room),
                                 )
@@ -558,6 +623,8 @@ export default function ChannelSidebar({
                               ...[
                                 {
                                   label: "归档",
+                                  icon: <Archive size={14} />,
+                                  separatorBefore: true,
                                   run: () => {
                                     setError("");
                                     setArchiveTarget(room);
@@ -577,12 +644,10 @@ export default function ChannelSidebar({
                           selected={selected === room.roomId}
                           menuOpen={menuRoom === room.roomId}
                           unread={activity?.[room.roomId] ?? 0}
+                          markedUnread={manualUnread.has(room.roomId)}
                           allowWrap={group.id === "pinned"}
                           onSelect={() => {
-                            if (
-                              onSelect(room.roomId) &&
-                              activity?.[room.roomId]
-                            )
+                            if (onSelect(room.roomId) && hasUnread(room.roomId))
                               void mark(room, "read");
                           }}
                         />
@@ -593,11 +658,12 @@ export default function ChannelSidebar({
                           selected={selected === room.roomId}
                           menuOpen={menuRoom === room.roomId}
                           unread={activity?.[room.roomId] ?? 0}
+                          markedUnread={manualUnread.has(room.roomId)}
                           muted={prefs!.mutedActivity.includes(
                             sidebarKey(room),
                           )}
                           onSelectChannel={(id) => {
-                            if (onSelect(id) && activity?.[id])
+                            if (onSelect(id) && hasUnread(id))
                               void mark(room, "read");
                           }}
                         />

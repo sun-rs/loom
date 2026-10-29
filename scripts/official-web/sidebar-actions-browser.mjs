@@ -69,7 +69,7 @@ export async function verifySidebarActions({
     assert.equal(
       await page
         .getByRole("menuitem", { name: "移动到分区", exact: true })
-        .locator("svg")
+        .locator("svg.lucide-folder-input")
         .count(),
       1,
     );
@@ -116,7 +116,7 @@ export async function verifySidebarActions({
       room.roomId,
     );
     assert.ok(!(await prefs()).mutedActivity.includes(`room:${room.roomId}`));
-    // Empty/own-only channels never fabricate unread. Verify the exact native mark operation.
+    // Manual attention toggles independently from an unread message count.
     const marks = [];
     page.on("request", (r) => {
       if (r.url().endsWith("/activity/mark")) marks.push(r.postDataJSON());
@@ -137,7 +137,7 @@ export async function verifySidebarActions({
     });
     await showChatList(page);
     await row.click({ button: "right" });
-    await page.getByRole("menuitem", { name: "标记未读", exact: true }).click();
+    await page.getByRole("menuitem", { name: "标记已读", exact: true }).click();
     await page
       .getByText("读状态未确认或已变化，未自动重发。请刷新检查当前状态。", {
         exact: true,

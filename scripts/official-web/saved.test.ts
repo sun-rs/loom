@@ -30,19 +30,20 @@ test("bookmark verification retains exact saved intent and idempotency key witho
   writes.discard();
 });
 import { readFileSync } from "node:fs";
-test("saved panel retains locked v1.21.22 list recipe, scroll threshold and sidebar count owner", () => {
-  // Locked production SavedPanel-hEhyusEt.js, lines 36–40 and 269–286;
-  // the initial-intake TSX still contains the superseded card layout.
+test("saved panel adopts Web1.21.38 ListRow recipe while retaining scroll threshold and sidebar count owner", () => {
+  // SavedPanel-B78TItCT.js now delegates row geometry/seams to native ListRow.
+  // The unchanged original TSX and earlier resource remain historical sources.
   const local = readFileSync("frontends/raft/loom/SavedPanel.tsx", "utf8");
   for (const token of [
-    "relative flex w-full flex-row items-center gap-3 px-4 py-3 text-left outline-none transition-colors",
+    "<ListRow",
+    'variant="plain"',
     "flex-1 overflow-y-auto bg-layer-panel py-1 safe-bottom",
-    "[[data-saved-row]+&]:before:block",
     "240px 0px",
     "saved-list-scroller",
   ]) {
     assert.ok(local.includes(token));
   }
+  assert.ok(!local.includes("[[data-saved-row]+&]:before:block"));
   assert.ok(!local.includes("useSavedStore("));
   const nav = readFileSync("frontends/raft/loom/SavedNav.tsx", "utf8");
   assert.ok(nav.includes("setTotal(result.globalTotal)"));

@@ -91,10 +91,13 @@ export class HumanActivity {
     ), eligible AS (
       SELECT m.*, r.name AS room_name, r.kind, COALESCE(m.thread_id,'') AS scope_id,
         COALESCE(f.read_seq,0) AS read_seq, COALESCE(f.done_seq,0) AS done_seq,
+        manual.through_seq AS marked_unread_seq,
         rah_has_mention(m.body, ?) AS mentioned
       FROM discovery_messages m JOIN rooms r ON r.room_id = m.room_id
       LEFT JOIN retained_threads retained ON retained.thread_id = m.thread_id
       LEFT JOIN human_activity_frontiers f ON f.room_id = m.room_id AND f.scope_id = COALESCE(m.thread_id,'') AND f.principal_id = ?
+      LEFT JOIN human_activity_manual_unread manual ON manual.room_id=m.room_id
+        AND manual.scope_id=COALESCE(m.thread_id,'') AND manual.principal_id=f.principal_id
       WHERE ${discoveryReadableRooms} AND m.message_order <= ? AND m.room_seq IS NOT NULL
         AND ((m.thread_id IS NULL AND EXISTS(SELECT 1 FROM memberships member WHERE member.room_id=r.room_id AND member.principal_id=?)) OR m.thread_id IN (SELECT thread_id FROM thread_access) OR m.room_seq <= retained.retained_seq)
     ), grouped AS (
@@ -102,11 +105,12 @@ export class HumanActivity {
         SUM(CASE WHEN actor_id <> ? AND room_seq > read_seq THEN 1 ELSE 0 END) AS unread_count,
         MAX(CASE WHEN actor_id <> ? AND room_seq > read_seq THEN mentioned ELSE 0 END) AS has_mention,
         MAX(done_seq) AS done_seq,
+        CASE WHEN MAX(marked_unread_seq) IS NOT NULL THEN 1 ELSE 0 END AS marked_unread,
         MAX(CASE WHEN room_id IN (SELECT room_id FROM muted_rooms) THEN 1 ELSE 0 END) AS muted
       FROM eligible GROUP BY room_id, scope_id
-    ), visible AS (SELECT * FROM grouped WHERE latest_seq > done_seq
+    ), visible AS (SELECT * FROM grouped WHERE (latest_seq > done_seq OR marked_unread = 1)
       AND (muted = 0 OR has_mention = 1)
-      ${input.filter === "unread" ? "AND unread_count > 0" : input.filter === "mentions" ? "AND has_mention = 1" : input.filter === "pinned" ? "AND room_id IN (SELECT room_id FROM pinned_rooms)" : ""})`;
+      ${input.filter === "unread" ? "AND (unread_count > 0 OR marked_unread = 1)" : input.filter === "mentions" ? "AND has_mention = 1" : input.filter === "pinned" ? "AND room_id IN (SELECT room_id FROM pinned_rooms)" : ""})`;
     const eligibilityArguments = (ceiling: number): SQLInputValue[] => [
       actorId,
       input.workspaceId,
@@ -162,18 +166,19 @@ export class HumanActivity {
         unreadActivityCount: Number(
           this.db
             .prepare(
-              `${cte} SELECT COUNT(*) AS n FROM grouped WHERE latest_seq > done_seq AND unread_count > 0 AND (muted = 0 OR has_mention = 1)`,
+              `${cte} SELECT COUNT(*) AS n FROM grouped WHERE (latest_seq > done_seq OR marked_unread=1) AND (unread_count > 0 OR marked_unread=1) AND (muted = 0 OR has_mention = 1)`,
             )
             .get(...summaryArgs)!.n,
         ),
         rooms: this.db
           .prepare(
-            `${cte} SELECT room_id, unread_count, has_mention FROM grouped WHERE scope_id = '' AND unread_count > 0 ORDER BY room_id`,
+            `${cte} SELECT room_id, unread_count, has_mention, marked_unread FROM grouped WHERE scope_id = '' AND (unread_count > 0 OR marked_unread=1) ORDER BY room_id`,
           )
           .all(...summaryArgs)
           .map((row) => ({
             roomId: row.room_id,
             unreadCount: Number(row.unread_count),
+            ...(row.marked_unread === 1 ? { markedUnread: true } : {}),
             hasMention: row.has_mention === 1,
           })),
       },
@@ -221,6 +226,7 @@ export class HumanActivity {
             row.sender_name,
           latestSeq: row.latest_seq,
           unreadCount: row.unread_count,
+          ...(row.marked_unread === 1 ? { markedUnread: true } : {}),
           hasMention: row.has_mention === 1,
           replyCount: thread?.reply_count ?? 0,
           target: task
@@ -271,6 +277,23 @@ export class HumanActivity {
         result.summary!.rooms.push({
           roomId,
           unreadCount: Number(notice.unread_count),
+          hasMention: false,
+        });
+    }
+    const manualRooms = this.db
+      .prepare(
+        `SELECT manual.room_id FROM human_activity_manual_unread manual JOIN rooms r ON r.room_id=manual.room_id WHERE manual.principal_id=? AND manual.scope_id='' AND ${discoveryReadableRooms} AND EXISTS(SELECT 1 FROM memberships member WHERE member.room_id=r.room_id AND member.principal_id=?)`,
+      )
+      .all(actorId, input.workspaceId, actorId, actorId);
+    for (const row of manualRooms) {
+      const roomId = text(row, "room_id"),
+        existing = result.summary!.rooms.find((r) => r.roomId === roomId);
+      if (existing) existing.markedUnread = true;
+      else
+        result.summary!.rooms.push({
+          roomId,
+          unreadCount: 0,
+          markedUnread: true,
           hasMention: false,
         });
     }
@@ -330,6 +353,11 @@ export class HumanActivity {
             input.threadId ?? null,
           )!.n,
       );
+      this.db
+        .prepare(
+          "INSERT INTO human_activity_manual_unread(principal_id,room_id,scope_id,through_seq) VALUES(?,?,?,?) ON CONFLICT(principal_id,room_id,scope_id) DO UPDATE SET through_seq=MAX(through_seq,excluded.through_seq)",
+        )
+        .run(actorId, input.roomId, scope, input.throughSeq);
       const before = Math.max(0, last - 1);
       this.db
         .prepare(
@@ -346,6 +374,12 @@ export class HumanActivity {
         doneThroughSeq: integer(row, "done_seq"),
       };
     }
+    // A stale viewport ACK cannot clear a later deliberate mark.
+    this.db
+      .prepare(
+        "DELETE FROM human_activity_manual_unread WHERE principal_id=? AND room_id=? AND scope_id=? AND through_seq<=?",
+      )
+      .run(actorId, input.roomId, scope, readThroughSeq);
     const restored = this.db
       .prepare(
         `INSERT INTO human_activity_frontiers(principal_id, room_id, scope_id, read_seq, done_seq) VALUES(?,?,?,?,?) ON CONFLICT(principal_id, room_id, scope_id) DO UPDATE SET read_seq = MAX(read_seq, excluded.read_seq), done_seq = MAX(done_seq, excluded.done_seq)`,

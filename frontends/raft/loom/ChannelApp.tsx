@@ -1,3 +1,5 @@
+import { useThreadCover } from "./useThreadCover";
+import "./thread-cover.css";
 import { DirectMessageIcon } from "raft-ui";
 import PageEmpty from "./PageEmpty";
 import { compactConversationRoute, layoutQueries } from "./adaptive-layout.ts";
@@ -166,6 +168,11 @@ function Channel({
   const [focusedThreadId, setFocusedThreadId] = useState<string>();
   const threadFocused =
     !!threadRootId && focusedThreadId === threadRootId && !profileId && !sideId;
+  const cover = useThreadCover(
+    threadRootId,
+    taskTab ? "tasks" : workspaceTab ? "files" : undefined,
+    !!profileId || !!sideId || threadFocused,
+  );
   const [profileSource, setProfileSource] = useState<"channel" | "thread">(
     "channel",
   );
@@ -330,6 +337,13 @@ function Channel({
       <MessageReactionsProvider bridge={bridge} messages={view.messages}>
         <ChannelTasksContext.Provider value={tasks.context}>
           <div
+            ref={cover.host}
+            data-cover-active={cover.covering ? cover.active : undefined}
+            style={
+              {
+                "--loom-cover-offset": `${cover.offset}px`,
+              } as import("react").CSSProperties
+            }
             data-thread-maximized={threadFocused ? "true" : undefined}
             className={`${channel.side ? "" : "thread-layout-container "}relative flex min-h-0 min-w-0 flex-1`}
           >
@@ -681,7 +695,13 @@ function Channel({
                 client={bridge.client}
                 room={channel}
                 rootMessageId={threadRootId}
-                covered={!!profileMember}
+                covered={
+                  !!profileMember ||
+                  (cover.covering && cover.active !== "thread")
+                }
+                coverHeader={cover.header}
+                onCoverOffset={cover.onOffset}
+                backCommandRef={cover.back}
                 focused={threadFocused}
                 canFocus={!profileMember && !sideId}
                 onFocusChange={(value) => {

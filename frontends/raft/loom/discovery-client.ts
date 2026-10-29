@@ -12,6 +12,7 @@ export type DiscoveryRow = {
   senderName: string;
   label: string;
   unread?: number;
+  markedUnread?: boolean;
   activityFrontier?: { throughSeq: number; threadId?: string };
   activityKind?: "channel" | "direct" | "thread";
   replyCount?: number;
@@ -73,6 +74,7 @@ export async function activityPage(
       senderName: item.senderName,
       label: item.title,
       unread: item.unreadCount,
+      markedUnread: item.markedUnread,
       activityFrontier: {
         throughSeq: item.latestSeq,
         ...(item.threadId ? { threadId: item.threadId } : {}),

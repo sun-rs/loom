@@ -1,3 +1,4 @@
+import { OfficialMarkedUnread } from "./OfficialContextMenu138.generated.js";
 // Structural port of official Sidebar.tsx DmRow. Loom supplies identity/unread;
 // native AvatarSlot and SidebarItem own size, palette, hover and selected states.
 import { SidebarItem, SidebarItemCount } from "raft-ui";
@@ -9,6 +10,7 @@ export default function DirectChatRow({
   selected,
   menuOpen,
   unread,
+  markedUnread,
   allowWrap,
   onSelect,
 }: {
@@ -18,6 +20,7 @@ export default function DirectChatRow({
   selected: boolean;
   menuOpen: boolean;
   unread: number;
+  markedUnread?: boolean;
   allowWrap: boolean;
   onSelect: () => void;
 }) {
@@ -35,7 +38,7 @@ export default function DirectChatRow({
         className={`flex min-w-0 flex-1 ${allowWrap ? "flex-col items-start gap-0.5" : "items-baseline gap-1"} text-left`}
       >
         <span
-          className={`${allowWrap ? "min-w-0 max-w-full whitespace-normal break-words leading-tight" : "min-w-0 truncate"} text-sm ${unread > 0 ? "font-bold" : ""}`}
+          className={`${allowWrap ? "min-w-0 max-w-full whitespace-normal break-words leading-tight" : "min-w-0 truncate"} text-sm ${unread > 0 || markedUnread ? "font-bold" : ""}`}
         >
           {name}
         </span>
@@ -48,11 +51,13 @@ export default function DirectChatRow({
         )}
       </div>
       <span className="flex shrink-0 self-center items-center gap-1.5">
-        {unread > 0 && (
+        {unread > 0 ? (
           <SidebarItemCount className="" aria-label="有未读消息">
             {unread > 99 ? "99+" : unread}
           </SidebarItemCount>
-        )}
+        ) : markedUnread ? (
+          <OfficialMarkedUnread aria-label="已标记未读" />
+        ) : null}
       </span>
     </SidebarItem>
   );

@@ -1,0 +1,22 @@
+
+> rah-os@0.0.0 test:official-web:channel
+> node scripts/official-web/channel-browser.mjs
+
+[loom instance-prewarm] prewarm of principal_225b660b-0999-4de7-9c06-a7d7d6dc8370 skipped: disabled
+[loom instance-prewarm] prewarm of principal_2809e1d4-bc95-407c-a54d-c47c1854587a skipped: disabled
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: search context menu uses its native measured width at the viewport edge
+    at verifySearchEntities (file:///Users/sun/Code/repos/rah_os/scripts/official-web/search-entities-browser.mjs:50:14)
+    at async file:///Users/sun/Code/repos/rah_os/scripts/official-web/channel-browser.mjs:713:9 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v25.9.0

@@ -1,3 +1,5 @@
+import { runtimePickerOptions } from "./runtime-picker";
+import type { LocalRuntimeInventoryEntry } from "@rah-os/protocol";
 import { DialogCommit } from "raft-ui/wip";
 import { uiActionProps } from "./ui-action-props.ts";
 import { useDraftNavigation } from "./DraftNavigation.tsx";
@@ -71,6 +73,9 @@ export default function RoleEditor({
   });
   const [computerName, setComputerName] = useState("");
   const [choices, setChoices] = useState<RuntimeChoice[]>();
+  const [runtimeInventory, setRuntimeInventory] = useState<
+    LocalRuntimeInventoryEntry[]
+  >([]);
   const [error, setError] = useState("");
   useEffect(() => {
     let alive = true;
@@ -79,6 +84,7 @@ export default function RoleEditor({
       .then((result) => {
         if (alive) {
           setChoices(runtimeChoices(result));
+          setRuntimeInventory(result.runtimes);
           setComputerName(result.computer?.displayName ?? result.hostId);
         }
       })
@@ -192,6 +198,11 @@ export default function RoleEditor({
           <RoleRuntimeFields
             form={form}
             choices={choices ?? []}
+            pickerOptions={runtimePickerOptions(
+              runtimeInventory,
+              choices ?? [],
+              role ? form.runtimeOfferId : undefined,
+            )}
             onChange={setForm}
             portalContainer={portalContainer}
             hideRuntime={Boolean(field && field !== "runtimeOfferId")}

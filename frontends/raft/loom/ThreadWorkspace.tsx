@@ -1,3 +1,4 @@
+import { useOfficialThreadCoverOffset } from "./OfficialThreadCover138.generated.js";
 import { uiActionProps } from "./ui-action-props.ts";
 import CloseButton from "../packages/web/src/components/ui/CloseButton.tsx";
 import { MessageReactionsProvider } from "./MessageReactions.tsx";
@@ -6,6 +7,8 @@ import ThreadFollowMenu from "./ThreadFollowMenu.tsx";
 import { useThreadActivity } from "./useThreadActivity.ts";
 import {
   useEffect,
+  useLayoutEffect,
+  type RefObject,
   useMemo,
   useState,
   useRef,
@@ -39,6 +42,9 @@ export default function ThreadWorkspace({
   contentSlot = false,
   covered = false,
   taskHead,
+  coverHeader,
+  onCoverOffset,
+  backCommandRef,
   readError,
   focused = false,
   canFocus = false,
@@ -51,6 +57,9 @@ export default function ThreadWorkspace({
   contentSlot?: boolean;
   covered?: boolean;
   taskHead?: ReactNode;
+  coverHeader?: ReactNode;
+  onCoverOffset?: (offset: number) => void;
+  backCommandRef?: RefObject<(() => void) | null>;
   readError?: string;
   client: RahClient;
   room: Room;
@@ -79,6 +88,23 @@ export default function ThreadWorkspace({
     host,
     !!data && !error && !covered,
   );
+  const coverOffset = useOfficialThreadCoverOffset(
+    coverHeader ? host.current : null,
+  );
+  useLayoutEffect(() => {
+    onCoverOffset?.(coverHeader ? coverOffset : 0);
+  }, [!!coverHeader, coverOffset, onCoverOffset]);
+  useLayoutEffect(() => {
+    const panel = host.current?.querySelector<HTMLElement>(
+      ':scope > [data-slot="thread-panel-root"]',
+    );
+    if (!panel) return;
+    const before = panel.inert;
+    panel.inert = !!coverHeader && covered;
+    return () => {
+      panel.inert = before;
+    };
+  }, [!!coverHeader, covered, data]);
   const width = useCurrentColumnWidth("thread");
   const canToggleFocus = () => {
     if (!canFocus || !data?.thread || covered) return false;
@@ -102,6 +128,13 @@ export default function ThreadWorkspace({
   const close = () => {
     if (bridge.writes.state === "idle" && !activity.busy) onClose();
   };
+  useLayoutEffect(() => {
+    if (!backCommandRef) return;
+    backCommandRef.current = close;
+    return () => {
+      backCommandRef.current = null;
+    };
+  }, [backCommandRef, close]);
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
       if (
@@ -218,6 +251,9 @@ export default function ThreadWorkspace({
         <MessageProfileMembers.Provider value={data?.members ?? []}>
           <div
             ref={host}
+            data-cover-tab={
+              coverHeader ? (covered ? "companion" : "thread") : undefined
+            }
             className={
               embedded || contentSlot
                 ? "relative flex min-h-0 flex-1 flex-col"
@@ -228,6 +264,7 @@ export default function ThreadWorkspace({
             }
             style={{ "--thread-panel-width": `${width}px` } as CSSProperties}
           >
+            {coverHeader}
             {!embedded && !contentSlot && (
               <CurrentColumnResize
                 column="thread"

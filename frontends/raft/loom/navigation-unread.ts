@@ -12,7 +12,9 @@ export function navigationUnread(
   if (!summary) return undefined;
   return {
     workspaceId,
-    channels: summary.rooms.some((room) => room.unreadCount > 0),
+    channels: summary.rooms.some(
+      (room) => room.unreadCount > 0 || room.markedUnread === true,
+    ),
     activity: summary.unreadActivityCount > 0,
   };
 }

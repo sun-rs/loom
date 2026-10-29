@@ -1,0 +1,23 @@
+✔ channel deletion removes instance/private history but preserves unrelated data: channel-first (143.907875ms)
+✔ channel deletion removes instance/private history but preserves unrelated data: role-first (61.239208ms)
+✔ channel deletion removes instance/private history but preserves unrelated data: instance-first (78.610542ms)
+✔ stale deletion cannot disable members and active deletion keeps data until terminal proof (80.958042ms)
+✔ deleting a source channel also erases its Side while keeping the Role reusable (78.97175ms)
+✔ schema inspection reports pending work before a migration and none after (138.915791ms)
+✔ schema inspection never writes to the database it inspects (69.24175ms)
+✔ a database written by a newer build is refused, not migrated (77.036792ms)
+✔ a failing migration unit leaves no half-applied schema (80.991125ms)
+✔ an interrupted migration converges and preserves committed history (146.46375ms)
+✔ the migration journal records units only while a migration is pending (85.894ms)
+✔ schema comparison is structural: ALTER-grown tables and reformatted indexes are not drift (0.370417ms)
+✔ structural differences are still reported, and a reformatted real index clears (101.040417ms)
+✔ permanent legacy constraint drift is reported separately and never pending (0.604583ms)
+✔ schema signatures preserve predicates, literal case, constraints and index collation (1.011834ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 981.530792

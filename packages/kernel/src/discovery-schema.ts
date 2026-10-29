@@ -54,6 +54,13 @@ export function initializeDiscoverySchema(db: DatabaseSync) {
       done_seq INTEGER NOT NULL DEFAULT 0 CHECK(done_seq >= 0),
       PRIMARY KEY(principal_id, room_id, scope_id)
     ) STRICT;
+    CREATE TABLE IF NOT EXISTS human_activity_manual_unread (
+      principal_id TEXT NOT NULL REFERENCES principals(principal_id) ON DELETE CASCADE,
+      room_id TEXT NOT NULL REFERENCES rooms(room_id) ON DELETE CASCADE,
+      scope_id TEXT NOT NULL,
+      through_seq INTEGER NOT NULL CHECK(through_seq >= 0),
+      PRIMARY KEY(principal_id, room_id, scope_id)
+    ) STRICT;
     CREATE TABLE IF NOT EXISTS human_thread_follows (
       principal_id TEXT NOT NULL REFERENCES principals(principal_id),
       thread_id TEXT NOT NULL REFERENCES threads(thread_id),

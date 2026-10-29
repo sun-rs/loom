@@ -1,0 +1,7 @@
+
+> rah-os@0.0.0 test:official-web:channel
+> node scripts/official-web/channel-browser.mjs
+
+[loom instance-prewarm] prewarm of principal_84854d72-b878-48c8-957c-28350205b468 skipped: disabled
+[loom instance-prewarm] prewarm of principal_848dbf7e-0936-4c19-aa19-558798903e98 skipped: disabled
+[{"width":1440,"readDoesNotComplete":true,"staleUnreadRejected":true,"unknownDoneNotResent":true,"officialMenuBounds":true,"keyboardAndDismiss":true,"noAccidentalNavigation":true,"threadDoneScope":true,"threadReadScope":true,"threadFollowReadbackWithoutResend":true,"retainedHistoryAfterReload":true,"ordinaryRepliesDoNotAdvanceRetainedRow":true,"unfollowedOmitsReadActions":true,"followReadFailureRetry":true},{"width":390,"readDoesNotComplete":true,"staleUnreadRejected":true,"unknownDoneNotResent":true,"officialMenuBounds":true,"keyboardAndDismiss":true,"noAccidentalNavigation":true,"threadDoneScope":true,"threadReadScope":true,"threadFollowReadbackWithoutResend":true,"retainedHistoryAfterReload":true,"ordinaryRepliesDoNotAdvanceRetainedRow":true,"unfollowedOmitsReadActions":true,"followReadFailureRetry":true}]

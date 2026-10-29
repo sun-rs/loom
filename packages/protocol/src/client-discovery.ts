@@ -117,6 +117,7 @@ export const HumanActivityItemSchema = z
     senderName: z.string(),
     latestSeq: z.number().int().positive(),
     unreadCount: z.number().int().nonnegative(),
+    markedUnread: z.boolean().optional(),
     hasMention: z.boolean(),
     replyCount: z.number().int().nonnegative(),
     isFollowing: z.boolean().optional(),
@@ -137,6 +138,7 @@ export const HumanActivityResponseSchema = z
             .object({
               roomId: IdentifierSchema,
               unreadCount: z.number().int().nonnegative(),
+              markedUnread: z.boolean().optional(),
               hasMention: z.boolean(),
             })
             .strict(),

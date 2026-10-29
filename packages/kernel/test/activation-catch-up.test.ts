@@ -424,7 +424,7 @@ test("schema 77 upgrades a schema 76 database: presented windows gain the frozen
     kernel.close();
     const read = new DatabaseSync(path, { readOnly: true });
     try {
-      assert.equal(read.prepare("PRAGMA user_version").get()!.user_version, 90);
+      assert.equal(read.prepare("PRAGMA user_version").get()!.user_version, 91);
       assert.ok(
         read
           .prepare("PRAGMA table_info(activation_presented_windows)")

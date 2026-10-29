@@ -1,0 +1,7 @@
+
+> rah-os@0.0.0 test:official-web:channel
+> node scripts/official-web/channel-browser.mjs
+
+[loom instance-prewarm] prewarm of principal_9cfab67e-841f-4d4c-b742-65b29d3e71ee skipped: disabled
+[loom instance-prewarm] prewarm of principal_fa73df8f-1006-434a-9a3f-9547a2da5d2b skipped: disabled
+[{"viewport":{"width":1440,"height":1000},"blankMenu":true,"moveSubmenuAndCreate":true,"mutePersists":true,"markUsesApi":true,"unreadReadPersists":true,"lostMarkNeverReplays":true,"activeWorkRefusesArchive":true,"archiveUnknownReplay":true,"archiveReadOnlyReloadAndRestore":true},{"viewport":{"width":390,"height":844},"blankMenu":true,"moveSubmenuAndCreate":true,"mutePersists":true,"markUsesApi":true,"unreadReadPersists":true,"lostMarkNeverReplays":true,"activeWorkRefusesArchive":true,"archiveUnknownReplay":true,"archiveReadOnlyReloadAndRestore":true}]

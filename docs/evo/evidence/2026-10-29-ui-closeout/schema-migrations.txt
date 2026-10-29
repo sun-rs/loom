@@ -1,0 +1,39 @@
+✔ schema 77 upgrades a schema 76 database: presented windows gain the frozen catch-up bound (492.652625ms)
+✔ schema 79 creates empty provenance instead of converting historical MAX reads into completion proof (496.967916ms)
+✔ schema 89 unfollows migrate without invented history and preserve canonical events (383.538541ms)
+✔ comments survive a fresh Kernel owner and schema 55 migration preserves Room facts (171.838583ms)
+✔ schema v7 migrates legacy Rooms into one Workspace with proven Human owners (183.786417ms)
+✔ schema v7 fails closed when a legacy Room has no provable Human owner (16.612125ms)
+✔ packages/kernel/test/conversation-catch-up.test.ts (296.819584ms)
+✔ Kernel schema owns anchored Tasks and immutable Placement projections (124.949875ms)
+✔ schema upgrade refuses to guess a memory home from conflicting historical Computers (109.133917ms)
+✔ schema v3 RunAttempts migrate to nullable placement provenance without data loss (129.029458ms)
+✔ schema v4 Offer head fails closed until republished as a v5 immutable observation (122.277375ms)
+✔ schema 43 removes only unreferenced RuntimeOffer history and preserves the current head (119.4235ms)
+✔ schema 82 final markers survive upgrade without gaining trusted final-output provenance (191.157125ms)
+✔ schema90 upgrades manual attention without changing prior read/done state (187.933084ms)
+✔ packages/kernel/test/held-read-coverage.test.ts (294.718458ms)
+✔ schema 65 owns one live instance runtime per participant (123.175ms)
+✔ current schema preserves a schema v40 reclaimed file receipt while adding retry fencing (185.670458ms)
+✔ current schema atomically replaces the schema v41 GC scan index (101.980334ms)
+✔ schema 67 carries the final-reply marker table (113.00575ms)
+✔ P2-1: a schema 67 database without the interrupt fact columns gains them on upgrade (109.65375ms)
+✔ schema 61 adds run_attempt_usage keyed by RunAttempt and response (131.6635ms)
+✔ a schema 60 database upgrades to the current schema without touching existing RunAttempts (141.983208ms)
+✔ S2-0 schema 64 records leftover cleanup per RunAttempt and exposes it on the usage read (65.467166ms)
+✔ S2-0 review: a schema 65 database backfills per-runtime cleanup state and accepted notices (130.620833ms)
+✔ schema 84 migration adds aggregate storage without changing generation facts (102.071042ms)
+✔ schema 79 migration defaults existing Channels off and preserves existing Tasks (165.387708ms)
+✔ schema 73 stores CLI-reported cost facts (0.643667ms)
+✔ schema 54 without exact Worker receipts upgrades without inventing presentation evidence (166.474833ms)
+✔ schema 57 without exact Worker receipts upgrades without inventing presentation evidence (94.30175ms)
+✔ schema 83 upgrade preserves events without backfilling write provenance (182.70225ms)
+✔ schema 85 write provenance keeps history but never invents session generation (106.973459ms)
+ℹ tests 31
+ℹ suites 0
+ℹ pass 31
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11093.42725

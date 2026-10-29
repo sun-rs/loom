@@ -1,0 +1,30 @@
+/* Loom data/DOM binding of the official merged-side cover. No new size or breakpoint policy. */
+.thread-layout-container[data-cover-active] > .thread-main-column {
+  position: absolute;
+  inset: var(--loom-cover-offset) 0 0;
+  z-index: 31;
+}
+.thread-layout-container[data-cover-active="thread"] > .thread-main-column {
+  display: none;
+}
+.thread-layout-container[data-cover-active]:not([data-cover-active="thread"])
+  > .thread-main-column {
+  display: flex;
+  min-width: 0;
+}
+.thread-layout-container[data-cover-active]
+  > .thread-main-column
+  > .loom-chat-header,
+.thread-layout-container[data-cover-active]
+  > .thread-main-column
+  > [data-slot="conversation-panel-tabs"] {
+  display: none;
+}
+/* The native cover keeps the original thread mounted and hides its old back control. */
+.thread-side-column[data-cover-tab]:not([data-cover-tab="thread"])
+  > [data-slot="thread-panel-root"] {
+  visibility: hidden;
+}
+.thread-side-column[data-cover-tab] [data-testid="thread-mobile-back"] {
+  display: none;
+}

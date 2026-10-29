@@ -1,3 +1,5 @@
+import { copyTextWithFeedback } from "./copy-text";
+import { localMessagePermalink } from "./message-links";
 import { uiActionProps } from "./ui-action-props.ts";
 import type { RahClient } from "@rah-os/client-sdk";
 import { useSavedMessages } from "./useSavedMessages.ts";
@@ -5,14 +7,17 @@ import { savedEntry } from "./saved-entry.ts";
 // Structural port of official SavedPanel; native list/layout retained, Loom owns data/navigation.
 import { memo, useCallback, useEffect, useRef } from "react";
 import { useIntl } from "react-intl";
-import { Bookmark, MessageSquare } from "lucide-react";
+import { Bookmark, Copy, Link } from "lucide-react";
 import {
   Button,
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
+  ContextMenuSeparator,
   ContextMenuTrigger,
   PanelToggleAction,
+  ListRow,
+  ThreadIcon,
 } from "raft-ui";
 import type { SavedEntry } from "../packages/web/src/store/savedStore.ts";
 import { formatRelativeTime } from "../packages/web/src/utils/relativeTime.ts";
@@ -83,24 +88,25 @@ const SavedItem = memo(function SavedItem({
     <ContextMenu>
       <ContextMenuTrigger
         render={
-          <div
+          <ListRow
+            variant="plain"
+            render={<div />}
             role="button"
             tabIndex={0}
             data-saved-row=""
             onClick={handleOpen}
             onKeyDown={handleKeyDown}
-            className="relative flex w-full flex-row items-center gap-3 px-4 py-3 text-left outline-none transition-colors hover:bg-fill-pressed data-[popup-open]:bg-fill-pressed focus-visible:shadow-[inset_0_0_0_2px_var(--foreground)] before:pointer-events-none before:absolute before:top-0 before:right-0 before:left-4 before:hidden before:border-t before:border-line-muted [[data-saved-row]+&]:before:block"
           />
         }
       >
         <div className="min-w-0 flex-1">
           <div className="mb-1 flex min-w-0 items-center gap-2 text-caption">
-            <span className="shrink-0 text-foreground-hint">
+            <span className="min-w-0 truncate text-foreground-hint">
               {channelLabel}
             </span>
             {isThread && (
               <span className="inline-flex shrink-0 items-center gap-1 text-foreground-hint">
-                <MessageSquare size={12} />
+                <ThreadIcon width={12} height={12} />
                 {formatMessage({ id: "saved.threadLabel" })}
               </span>
             )}
@@ -143,7 +149,7 @@ const SavedItem = memo(function SavedItem({
             onKeyDown={stopKeyPropagation}
             onClick={handleRemoveButtonClick}
             aria-label={formatMessage({ id: "saved.remove" })}
-            className="data-pressed:border-transparent data-pressed:bg-transparent data-pressed:text-foreground data-pressed:hover:bg-fill-pressed"
+            className="data-pressed:border-transparent data-pressed:bg-transparent data-pressed:text-foreground data-pressed:hover:bg-fill-medium"
           >
             <Bookmark size={14} fill="currentColor" aria-hidden />
           </PanelToggleAction>
@@ -151,6 +157,30 @@ const SavedItem = memo(function SavedItem({
       </ContextMenuTrigger>
 
       <ContextMenuContent>
+        <ContextMenuItem
+          onClick={() =>
+            void copyTextWithFeedback(
+              localMessagePermalink(
+                location.origin,
+                entry.parentChannelId || entry.channelId,
+                entry.messageId,
+                entry.channelType === "thread"
+                  ? entry.parentMessageId
+                  : undefined,
+              ),
+            )
+          }
+        >
+          <Link size={14} />
+          <span>{formatMessage({ id: "saved.copyLink" })}</span>
+        </ContextMenuItem>
+        <ContextMenuItem
+          onClick={() => void copyTextWithFeedback(entry.content)}
+        >
+          <Copy size={14} />
+          <span>{formatMessage({ id: "saved.copyMarkdown" })}</span>
+        </ContextMenuItem>
+        <ContextMenuSeparator />
         <ContextMenuItem onClick={handleRemove}>
           <Bookmark size={14} />
           <span>{formatMessage({ id: "saved.remove" })}</span>

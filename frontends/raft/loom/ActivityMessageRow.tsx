@@ -1,3 +1,4 @@
+import { OfficialMarkedUnread } from "./OfficialContextMenu138.generated.js";
 import { useMobileActivitySwipe } from "./MobileActivitySwipe.generated";
 import { activityReadToggle } from "./mobile-activity";
 import {
@@ -58,7 +59,11 @@ export default function ActivityMessageRow({
   onSwipeDone,
   onSwipeMute,
   onSwipeUnfollow,
+  muted,
+  onMute,
 }: {
+  muted?: boolean;
+  onMute?: ComponentProps<typeof ActivityContextMenu>["onMute"];
   swipe?: ActivitySwipeBinding;
   onSwipeMute?: (row: DiscoveryRow) => void;
   onSwipeUnfollow?: (row: DiscoveryRow) => void;
@@ -131,7 +136,7 @@ export default function ActivityMessageRow({
       <InboxItem
         density="compact"
         active={active}
-        data-unread={unreadCount > 0 || undefined}
+        data-unread={unreadCount > 0 || row.markedUnread || undefined}
         ref={rowRef}
         {...(swipeEnabled ? gesture.handlers : {})}
         className={
@@ -298,11 +303,16 @@ export default function ActivityMessageRow({
             {formatRelativeTime(row.message.createdAt, locale)}
           </InboxItemTimestamp>
           <InboxItemMarks data-testid="conversation-card-marks">
-            {unreadCount > 0 && (
+            {unreadCount > 0 ? (
               <SidebarItemCount data-testid="conversation-card-new-badge">
                 {unreadCount}
               </SidebarItemCount>
-            )}
+            ) : row.markedUnread ? (
+              <OfficialMarkedUnread
+                data-testid="conversation-card-marked-unread"
+                aria-label="已标记未读"
+              />
+            ) : null}
           </InboxItemMarks>
           {hasRowAction && (
             <InboxItemActions
@@ -343,6 +353,8 @@ export default function ActivityMessageRow({
           client={client}
           onFollow={onFollow}
           target={menu}
+          muted={muted}
+          onMute={onMute}
           pending={pending}
           onAction={onAction}
           onClose={closeMenu}

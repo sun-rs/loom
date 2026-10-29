@@ -260,7 +260,7 @@ test("schema 83 upgrade preserves events without backfilling write provenance", 
     });
     try {
       upgraded.initialize();
-      assert.equal(f.db.prepare("PRAGMA user_version").get()!.user_version, 90);
+      assert.equal(f.db.prepare("PRAGMA user_version").get()!.user_version, 91);
       assert.equal(
         f.db.prepare("SELECT count(*) n FROM worker_run_message_writes").get()!
           .n,
@@ -300,7 +300,7 @@ test("schema 85 write provenance keeps history but never invents session generat
     });
     try {
       upgraded.initialize();
-      assert.equal(f.db.prepare("PRAGMA user_version").get()!.user_version, 90);
+      assert.equal(f.db.prepare("PRAGMA user_version").get()!.user_version, 91);
       const row = f.db
         .prepare("SELECT * FROM worker_run_message_writes WHERE event_id=?")
         .get(post.event.eventId)!;

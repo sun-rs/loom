@@ -1,0 +1,31 @@
+{
+  "webVersion": "1.21.38",
+  "releaseCommit": "a7b1309bcb7fa91654c9a6895ce73236190bd6b4",
+  "license": "Owner-authorized reuse; original Raft notices in adoption.json",
+  "resources": [
+    {
+      "name": "saved",
+      "url": "https://app.raft.build/assets/SavedPanel-B78TItCT.js",
+      "resourceSha256": "003872301b88d0f4b641e17b30d4f0b093084e993eb5ddb5716e0746d66f58ab",
+      "byteRange": [
+        3470,
+        3778
+      ],
+      "excerptSha256": "ff9e1d08f4b40c4c4da2b7ddf3d58937d5f3f50aee8eddf6c0991d81c97e40bf",
+      "code": "(0,I.jsx)(`span`,{children:i({id:`saved.copyLink`})})]}),(0,I.jsxs)(A,{onClick:z,children:[(0,I.jsx)(C,{size:14}),(0,I.jsx)(`span`,{children:i({id:`saved.copyMarkdown`})})]}),(0,I.jsx)(j,{}),(0,I.jsxs)(A,{onClick:B,children:[(0,I.jsx)(E,{size:14}),(0,I.jsx)(`span`,{children:i({id:`saved.remove`})})]})]})]})",
+      "kind": "Menu structural port/audit; action callbacks and URL owner replaced by Loom"
+    },
+    {
+      "name": "search",
+      "url": "https://app.raft.build/assets/MessageSearchPage-C5ubHmou.js",
+      "resourceSha256": "724679af3f74ecf906795057fc70126b426393e4cc6661e43832bd3334675a36",
+      "byteRange": [
+        67667,
+        67999
+      ],
+      "excerptSha256": "2142acdc868eef7c680fd7c0552feac8c575ef3fbd115a69630c0439f8d2f933",
+      "code": "(0,V.jsx)(Ne,{onDismiss:Ts,trapContextMenu:!0}),(0,V.jsx)(Dt,{ref:Ei,role:`menu`,\"aria-label\":a({id:`search.channelMenuAria`},{title:G.result.title}),className:`fixed z-50 w-48 select-none`,style:Es,onMouseDown:Di,onKeyDown:Ds,children:(0,V.jsx)(Ae,{icon:(0,V.jsx)(ct,{size:14}),onClick:Os,children:a({id:`search.open`})})})]}),docu",
+      "kind": "Menu structural port/audit; action callbacks and URL owner replaced by Loom"
+    }
+  ]
+}

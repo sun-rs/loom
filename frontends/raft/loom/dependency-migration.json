@@ -5,7 +5,7 @@
   "versions": {
     "foundation": "@botiverse/raft-ui@0.52.0",
     "source": "db5e399f017d584e49597e3a28757645d6807893 / v1.21.23-source.1",
-    "productionResourceReference": "Selected Web1.21.26/34/35 ports plus Web1.21.38 message selection/task-head slices; not whole-site current-source parity"
+    "productionResourceReference": "Selected Web1.21.26/34/35 ports plus Web1.21.38 messages/task-head/menu/marker/cover slices; not whole-site current-source parity"
   },
   "completedBoundaries": {
     "directExports": "upstream/raft-web-source/package.json#exports",
@@ -71,7 +71,13 @@
       "loom/OfficialMessageSelectText.generated.js",
       "loom/OfficialMessageSelectText.generated.d.ts",
       "loom/OfficialTaskHead138.generated.js",
-      "loom/OfficialTaskHead138.generated.d.ts"
+      "loom/OfficialTaskHead138.generated.d.ts",
+      "loom/OfficialContextMenu138.generated.js",
+      "loom/OfficialContextMenu138.generated.d.ts",
+      "loom/OfficialThreadCover138.generated.js",
+      "loom/OfficialThreadCover138.generated.d.ts",
+      "loom/OfficialClipboard138.generated.js",
+      "loom/OfficialClipboard138.generated.d.ts"
     ],
     "foundation": "package.json#dependencies.raft-ui"
   },
@@ -380,6 +386,7 @@
     "evidence": "docs/evo/evidence/2026-10-29-ui-refresh138/README.md",
     "wholeSiteParity": false,
     "candidateWeb": "1.21.38",
-    "adoptedPackage": "0.52.0"
+    "adoptedPackage": "0.52.0",
+    "closeoutEvidence": "docs/evo/evidence/2026-10-29-ui-closeout/README.md"
   }
 }

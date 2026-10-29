@@ -87,6 +87,15 @@ export function adaptThreadFooter(source: string) {
     "          ) : undefined}",
     "          ) : undefined}</>}",
   );
+  // Both the thread parent and replies address the mounted Loom thread composer.
+  const readOnlyItem = "        readOnlyProjection\n";
+  if (code.split(readOnlyItem).length !== 3)
+    throw Error("Thread composer scope changed");
+  code = code.replaceAll(
+    readOnlyItem,
+    readOnlyItem +
+      "        mentionComposerChannelId={`loom-thread:${readOnlyData.parentChannelId}:${readOnlyData.parentMessage.id}`}\n",
+  );
   return replaceOnce(
     code,
     "      </ThreadPanelBody>\n      </ThreadPanelContent>\n    </ThreadPanelRoot>",

@@ -2,17 +2,21 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "raft-ui";
 import type { DiscoveryRow } from "./discovery-client";
 import { ActivitySwipeUndo } from "./activity-swipe-undo";
-/** Explicit local binding of upstream Gt's deferred done toast to the causal activity.mark owner. */
+/** One UI-only undo owner for done/unfollow, matching Web1.21.38 deferred actions. */
+type PendingActivityAction = { row: DiscoveryRow; kind: "done" | "unfollow" };
 export function useActivitySwipeUndo(
   rows: DiscoveryRow[],
   commit: (row: DiscoveryRow) => void,
+  unfollow?: (row: DiscoveryRow) => void,
 ) {
   const [hidden, setHidden] = useState<string>();
-  const latest = useRef({ rows, commit });
-  latest.current = { rows, commit };
+  const latest = useRef({ rows, commit, unfollow });
+  latest.current = { rows, commit, unfollow };
   const toastId = useRef<string | undefined>(undefined);
-  const controller = useRef<ActivitySwipeUndo<DiscoveryRow> | null>(null);
-  const current = (row: DiscoveryRow) => {
+  const controller = useRef<ActivitySwipeUndo<PendingActivityAction> | null>(
+    null,
+  );
+  const current = ({ row }: PendingActivityAction) => {
     const live = latest.current.rows.find((x) => x.id === row.id);
     // Absence during pagination is not evidence of new work. Existing newer facts invalidate the gesture.
     return (
@@ -22,31 +26,37 @@ export function useActivitySwipeUndo(
   };
   if (!controller.current)
     controller.current = new ActivitySwipeUndo(
-      (row) => {
-        if (current(row)) latest.current.commit(row);
+      (action) => {
+        if (current(action)) {
+          if (action.kind === "unfollow") latest.current.unfollow?.(action.row);
+          else latest.current.commit(action.row);
+        }
       },
-      (row) => setHidden(row?.id),
+      (action) => setHidden(action?.row.id),
     );
   useEffect(() => {
     controller.current!.reconcile(current);
   }, [rows]);
-  const done = useCallback((row: DiscoveryRow) => {
-    const token = controller.current!.stage(row);
+  const stage = useCallback((row: DiscoveryRow, kind: "done" | "unfollow") => {
+    const token = controller.current!.stage({ row, kind });
     if (toastId.current) toast.dismiss(toastId.current);
     if (document.visibilityState === "hidden") {
       controller.current!.finish(token, true);
       return;
     }
-    const id = toast.success("已标记为完成", {
-      action: {
-        label: "撤销",
-        onClick: () => {
-          controller.current!.finish(token, false);
-          toast.dismiss(id);
+    const id = toast.success(
+      kind === "done" ? "已标记为完成" : `已取消关注 ${row.label}`,
+      {
+        action: {
+          label: "撤销",
+          onClick: () => {
+            controller.current!.finish(token, false);
+            toast.dismiss(id);
+          },
         },
+        onClose: () => controller.current!.finish(token, true),
       },
-      onClose: () => controller.current!.finish(token, true),
-    });
+    );
     toastId.current = id;
   }, []);
   useEffect(() => {
@@ -63,5 +73,9 @@ export function useActivitySwipeUndo(
       if (toastId.current) toast.dismiss(toastId.current);
     };
   }, []);
-  return { hidden, done };
+  return {
+    hidden,
+    done: (row: DiscoveryRow) => stage(row, "done"),
+    unfollow: (row: DiscoveryRow) => stage(row, "unfollow"),
+  };
 }

@@ -1,3 +1,4 @@
+import { OfficialMarkedUnread } from "./OfficialContextMenu138.generated.js";
 // Structural port of Sidebar.tsx ChannelRow; data and navigation belong to Loom.
 // Keep upstream SidebarItem recipes, slot nesting and unread/muted state rules.
 import { SidebarItem, SidebarItemCount, SidebarItemMetaIcon } from "raft-ui";
@@ -11,6 +12,7 @@ export default function ChannelListRow({
   selected,
   menuOpen,
   unread,
+  markedUnread,
   muted,
   onSelectChannel,
 }: {
@@ -19,6 +21,7 @@ export default function ChannelListRow({
   selected: boolean;
   menuOpen: boolean;
   unread: number;
+  markedUnread?: boolean;
   muted: boolean;
   onSelectChannel: (id: string) => void;
 }) {
@@ -68,6 +71,8 @@ export default function ChannelListRow({
         >
           {unread > 99 ? "99+" : unread}
         </span>
+      ) : markedUnread ? (
+        <OfficialMarkedUnread className="ml-auto" aria-label="已标记未读" />
       ) : null}
     </SidebarItem>
   );

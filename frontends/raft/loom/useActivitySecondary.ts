@@ -47,6 +47,7 @@ export function useActivitySecondary(
     row: DiscoveryRow,
     muted = true,
     expectedVersion?: number,
+    undo = true,
   ) => {
     if (!ready() || row.activityKind !== "channel") return;
     lock.current = true;
@@ -67,7 +68,7 @@ export function useActivitySecondary(
         (outcome) => {
           if (outcome.kind === "ok") {
             changed();
-            if (muted && live.current) {
+            if (muted && undo && live.current) {
               const saved = SidebarResponseSchema.parse(outcome.result);
               toasts.current.add(
                 toast.success(`已静音 ${row.roomName} 的动态`, {
@@ -97,33 +98,34 @@ export function useActivitySecondary(
       setReading(false);
     }
   };
-  const follow = async (row: DiscoveryRow, following = false) => {
-    if (!ready() || !row.activityFrontier?.threadId) return;
+  const follow = async (
+    row: DiscoveryRow,
+    following = false,
+    committed = false,
+  ) => {
+    const acceptedAfterUnmount =
+      committed &&
+      !live.current &&
+      !!controlRoomId &&
+      !lock.current &&
+      manager.writes.state === "idle" &&
+      !hasUnresolvedIntents();
+    if (!(ready() || acceptedAfterUnmount) || !row.activityFrontier?.threadId)
+      return;
     lock.current = true;
     setReading(true);
     operation.setError("");
     try {
-      const didChange = await changeActivityFollow(
+      await changeActivityFollow(
         client,
         row.message.roomId,
         row.activityFrontier.threadId,
         following,
         row.activityFrontier.throughSeq,
-        () => live.current,
+        () => committed || live.current,
       );
       if (!live.current) return;
       refresh();
-      if (didChange && !following && live.current)
-        toasts.current.add(
-          toast.success(`已取消关注 ${row.label}`, {
-            action: {
-              label: "撤销",
-              onClick: () => {
-                void follow(row, true);
-              },
-            },
-          }),
-        );
     } catch (error) {
       operation.setError(
         error instanceof Error
@@ -141,7 +143,8 @@ export function useActivitySecondary(
     error: operation.error,
     busy: reading || operation.state !== "idle",
     enabled: !!controlRoomId,
-    mute: (row: DiscoveryRow) => void mute(row),
-    unfollow: (row: DiscoveryRow) => void follow(row),
+    mute: (row: DiscoveryRow, muted = true, undo = true) =>
+      void mute(row, muted, undefined, undo),
+    unfollow: (row: DiscoveryRow) => void follow(row, false, true),
   };
 }
