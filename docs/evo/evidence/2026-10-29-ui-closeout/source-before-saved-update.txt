@@ -548,7 +548,7 @@
 test at scripts/official-web/header-tone-release.test.mjs:27:1
 ✖ saved list ports the complete native flat-row composition (4.960458ms)
   AssertionError [ERR_ASSERTION]: The input did not match the regular expression /before:left-4/. Input:
-  
+
   'import { copyTextWithFeedback } from "./copy-text";\n' +
     'import { localMessagePermalink } from "./message-links";\n' +
     'import { uiActionProps } from "./ui-action-props.ts";\n' +
@@ -858,7 +858,7 @@ test at scripts/official-web/header-tone-release.test.mjs:27:1
     '                serverSlug={serverSlug}\n' +
     '                onOpenEntry={openSavedEntry}\n' +
     '                onRemoveMessage={'... 793 more characters
-  
+
       at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/header-tone-release.test.mjs:30:10)
       at Test.runInAsyncScope (node:async_hooks:226:14)
       at Test.run (node:internal/test_runner/test:1201:25)
@@ -877,9 +877,9 @@ test at scripts/official-web/header-tone-release.test.mjs:27:1
 test at scripts/official-web/saved.test.ts:33:1
 ✖ saved panel retains locked v1.21.22 list recipe, scroll threshold and sidebar count owner (12.911917ms)
   AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
-  
+
     assert.ok(local.includes(token))
-  
+
       at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/saved.test.ts:44:12)
       at Test.runInAsyncScope (node:async_hooks:226:14)
       at Test.run (node:internal/test_runner/test:1201:25)

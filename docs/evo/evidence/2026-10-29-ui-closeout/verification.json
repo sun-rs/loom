@@ -24,36 +24,13 @@
   },
   "build": true,
   "browsers": {
-    "remaining": [
-      1440,
-      840,
-      768,
-      390
-    ],
-    "sidebar": [
-      1440,
-      390
-    ],
-    "activity": [
-      1440,
-      390
-    ],
-    "search": [
-      1440,
-      390
-    ],
-    "references": [
-      1440,
-      390
-    ],
-    "saved": [
-      1440,
-      390
-    ],
-    "roleForm": [
-      1440,
-      390
-    ]
+    "remaining": [1440, 840, 768, 390],
+    "sidebar": [1440, 390],
+    "activity": [1440, 390],
+    "search": [1440, 390],
+    "references": [1440, 390],
+    "saved": [1440, 390],
+    "roleForm": [1440, 390]
   },
   "knownInitialFailures": [
     "Missing archive leading icon reproduced by contract before fix",
