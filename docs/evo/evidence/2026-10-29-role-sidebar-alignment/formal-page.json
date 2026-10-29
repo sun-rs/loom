@@ -1,0 +1,16 @@
+{
+  "at": "2026-10-29T14:37:03.920044+00:00",
+  "browser": "Native Google Chrome via CUA",
+  "origin": "http://127.0.0.1:4176/?view=agents",
+  "deployedRevision": "92bf70c31ea51862edbf07cbab8792e04b72d9cb",
+  "webBuildId": "3d1bce9a898d97819db4df8c9e47d42c292b124708dfa84b52b96b1aaeafd868",
+  "freshTabAfterRestart": true,
+  "visualChecks": [
+    "Role group and row left spacing reduced with native row shape retained",
+    "Visible runtime labels Claude/Codex/Kimi/Agy/OpenCode are compact; Pi covered by unit matrix",
+    "Runtime configuration in details retains full Claude Code name",
+    "No Role/Channel/Instance created or edited",
+    "Original collapsed sidebar restored and acceptance tab closed"
+  ],
+  "physicalMobileVerified": false
+}

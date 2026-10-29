@@ -1,0 +1,78 @@
+{
+  "at": "2026-10-29T14:35:14.345Z",
+  "sourceRevision": "92bf70c31ea51862edbf07cbab8792e04b72d9cb",
+  "remoteMainBeforeRestart": "92bf70c31ea51862edbf07cbab8792e04b72d9cb",
+  "pushedBeforeServiceRestart": true,
+  "sourceWorktreeDirty": false,
+  "oldPid": 86667,
+  "newPid": 47371,
+  "backup": "/Users/sun/.loom/evo/backups/pre-role-sidebar-alignment-1793284498065",
+  "backupVerified": true,
+  "migrationPreflight": true,
+  "fromSchema": 91,
+  "toSchema": 91,
+  "protectedTables": {
+    "room_events": {
+      "count": 845,
+      "sha256": "c13ddc82076f986b7a81475a56c611e5655e547f1e1b77ce1e999fd21ec090ea"
+    },
+    "messages": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "role_templates": {
+      "count": 56,
+      "sha256": "e2270c4fd30942a7f9a1926cacd22d53fa3f70e7f909c7e3c9cd19fdf7a483ab"
+    },
+    "role_revisions": {
+      "count": 61,
+      "sha256": "1c09b15734f8bd3656fc22b47a7f4bce206a9672e94d1f934f7b41f898252346"
+    },
+    "role_instances": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "human_sidebar_preferences": {
+      "count": 1,
+      "sha256": "ded264b510608bcc4506f0b7d57323f510e63c1cd9e06b5b7d5f5630067ac6f7"
+    },
+    "human_saved_messages": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "human_thread_follows": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "human_activity_frontiers": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "human_activity_manual_unread": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    }
+  },
+  "ledgerRoleInstancesPreferencesUnchanged": true,
+  "protectedNotificationMemoryFilesChecked": 3,
+  "newWebSnapshot": "/Users/sun/Code/repos/rah_os/.workbench-web/b0e02bd4ba94dd107c12f00252a1711be70de0e8b4902daccdb82db556edad11",
+  "webBuildId": "3d1bce9a898d97819db4df8c9e47d42c292b124708dfa84b52b96b1aaeafd868",
+  "indexSha256": "8d8350d84054526a63d4a080be39d0a59e15669f495df0ec27be0c3b2c1c83a8",
+  "networkModeUnchanged": true,
+  "notificationTransportUnchanged": true,
+  "edges": [
+    {
+      "origin": "https://192.168.1.86:4178",
+      "status": 200,
+      "tlsVerifiedWithOriginalCA": true,
+      "webIndexMatches": true
+    },
+    {
+      "origin": "https://100.101.107.87:4178",
+      "status": 200,
+      "tlsVerifiedWithOriginalCA": true,
+      "webIndexMatches": true
+    }
+  ],
+  "scope": "Remove duplicated legacy sidebar horizontal padding; use compact verified CLI labels in Role rows. Presentation only; schema91, runtime configuration and native sessions unchanged."
+}
