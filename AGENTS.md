@@ -573,6 +573,14 @@ neither an old reference fixture nor a visible tab proves product completeness.
   owner; reconciliation preserves message identity, anchors, drafts, disclosure.
 - Use shared tooltip/preview/popover/dialog/drawer primitives; verify hover,
   pointer exit, click, Escape, outside press, keyboard focus and focus return.
+- Dialog action DOM order is secondary Cancel, then primary Save/Confirm/Delete,
+  as in official ConfirmDialog/AgentProfileEditDialog. Native DialogFooter owns
+  horizontal order and overflow stacking (primary above Cancel); do not reverse
+  it with local CSS. Mobile DialogSheet forms keep native left Close/right
+  DialogCommit instead of adding another footer. Inline/full-page editors follow
+  their own upstream composition, not the modal rule. Run
+  `node --test scripts/official-web/dialog-action-order.test.mjs` after changing
+  dialog actions; the source inventory is a guard, not rendered-state parity.
 - Chat Agent name click inserts an `@` into the active composer; avatar hover
   shows a summary; avatar click opens the right inspector on Activity by default.
 - Room/DM/Thread Enter sends, Shift+Enter inserts a newline, IME confirmation

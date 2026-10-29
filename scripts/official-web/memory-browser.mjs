@@ -1,5 +1,6 @@
 // FIXTURE: real Kernel/application service, fake Worker identity; no paid CLI.
 import assert from "node:assert/strict";
+import { assertDialogActionOrder } from "./dialog-action-browser.mjs";
 import { resolve } from "node:path";
 import { chromium, webkit } from "playwright";
 import { createHumanApplicationPort } from "@rah-os/kernel";
@@ -80,6 +81,39 @@ for (const width of [1440, 390]) {
     await page.goto(gateway.origin + "/?view=memory");
     const toolbar = page.getByTestId("memory-toolbar");
     await toolbar.waitFor();
+    if (process.env.LOOM_MEMORY_DIALOG_ORDER_ONLY === "1") {
+      await page
+        .getByRole("button", { name: "fixture-memory", exact: true })
+        .click();
+      await memoryAction("编辑");
+      const dialog = page.getByRole("dialog", {
+        name: "编辑记忆",
+        exact: true,
+      });
+      await dialog.waitFor();
+      await assertDialogActionOrder({
+        page,
+        dialog,
+        width,
+        saveName: "保存记忆",
+        screenshot: `/tmp/loom-memory-dialog-order-${width}.png`,
+      });
+      await dialog
+        .getByRole("button", {
+          name: width === 390 ? "关闭" : "取消",
+          exact: true,
+        })
+        .click();
+      await dialog.waitFor({ state: "hidden" });
+      assert.deepEqual(errors, []);
+      results.push({
+        width,
+        modalActionOrder: true,
+        nativeAdaptiveLayout: true,
+        cancelCloses: true,
+      });
+      continue;
+    }
     const geometry = await Promise.all(
       [
         page.getByRole("textbox", { name: "搜索记忆" }),

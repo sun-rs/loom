@@ -1,0 +1,83 @@
+[
+  {
+    "name": "eva-shinji",
+    "url": "https://www.evangelion.jp/2_0/img/chara/img_chara_pilots_a_01.jpg",
+    "format": "JPEG",
+    "width": 133,
+    "height": 78,
+    "bytes": 12457,
+    "sha256": "64c6222046c035df046f184f026b07487444a1cf1886f82076f94fa20d1c91fa"
+  },
+  {
+    "name": "geass-lelouch",
+    "url": "https://geass.jp/R-geass/img/about/img23.jpg",
+    "format": "JPEG",
+    "width": 490,
+    "height": 600,
+    "bytes": 55829,
+    "sha256": "83dc2e281f215f26cf678e2133d63618bb9cc8b31199208908b9c57a91f4b778"
+  },
+  {
+    "name": "geass-cc",
+    "url": "https://geass.jp/R-geass/img/about/img12.jpg",
+    "format": "JPEG",
+    "width": 490,
+    "height": 600,
+    "bytes": 75581,
+    "sha256": "e14fdd44f8d17d656f2f28684604fa7a975215a6b80ffa9037864259dfecc13b"
+  },
+  {
+    "name": "doraemon",
+    "url": "https://dora-world.com/assets/images/characters/doraemon/doraemon/d_001_card.png",
+    "format": "PNG",
+    "width": 472,
+    "height": 691,
+    "bytes": 219470,
+    "sha256": "1ab9101385cab960341527ba3ffe8a799248a0c58bc040b15b8fcac7cb690552"
+  },
+  {
+    "name": "pikachu",
+    "url": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png",
+    "format": "PNG",
+    "width": 475,
+    "height": 475,
+    "bytes": 118057,
+    "sha256": "759ceafdb4b8d637dfcfe673cf672bc3c472354a3b2e7e0835d9cdcacd8d195d"
+  },
+  {
+    "name": "pikachu-home",
+    "url": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/25.png",
+    "format": "PNG",
+    "width": 512,
+    "height": 512,
+    "bytes": 79086,
+    "sha256": "6a9305fbd6f02345153567f4142faf019380b1a1c839cfa3f2349cc36d536a40"
+  },
+  {
+    "name": "doraemon-icon",
+    "url": "https://dora-world.com/assets/images/characters/doraemon/doraemon/ico.png",
+    "format": "PNG",
+    "width": 200,
+    "height": 200,
+    "bytes": 16086,
+    "sha256": "05c4d99c404d19a2e449c4cd808bec731cb2c054a318fb69675a4b6029abcf96"
+  },
+  {
+    "name": "doraemon-detail",
+    "url": "https://dora-world.com/assets/images/characters/doraemon/doraemon/d_001_ph001.png",
+    "format": "PNG",
+    "width": 490,
+    "height": 658,
+    "bytes": 130793,
+    "sha256": "54319a1847ad340bbab7f1153fd3ff3d014fb0ce97874f4e7549a9c2810c24c3"
+  },
+  {
+    "name": "eva-five-pilots",
+    "url": "https://30th.evangelion.jp/files/blobs/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MTA2LCJwdXIiOiJibG9iX2lkIn19--c5242a7c19f7505b48b9009388b4b380f3cebe87/1128_illust2.png",
+    "format": "PNG",
+    "width": 1020,
+    "height": 573,
+    "bytes": 961776,
+    "sha256": "8d02537ea8dca9f52223b42017a96696c1ebeb55a87f4f5212893d78b4694f70"
+  }
+]

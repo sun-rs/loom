@@ -1,0 +1,643 @@
+{
+  "scope": "Recursive scan of Loom adapters and retained Web TSX: native footers and recognizable direct sibling cancel/primary rows, including generated owners. Single-action/X-only forms are recorded without inventing another action. Native Computer inline editor is explicitly separate. This is a source-order guard, not proof of every rendered state.",
+  "filesScanned": 564,
+  "rows": [
+    {
+      "file": "loom/AddInstanceDialog.tsx",
+      "line": 134,
+      "container": "DialogFooter",
+      "kind": "dialog-actions",
+      "actions": [
+        {
+          "tag": "DialogCommit",
+          "label": "state === \"pending\" ? \"正在添加…\" : \"添加到频道\"",
+          "kind": "primary"
+        }
+      ],
+      "hasPair": false,
+      "valid": true
+    },
+    {
+      "file": "loom/ChannelControl.tsx",
+      "line": 359,
+      "container": "div",
+      "kind": "dialog-actions",
+      "actions": [
+        {
+          "tag": "Button",
+          "label": "取消",
+          "kind": "cancel"
+        },
+        {
+          "tag": "Button",
+          "label": "确认急停",
+          "kind": "primary"
+        }
+      ],
+      "hasPair": true,
+      "valid": true
+    },
+    {
+      "file": "loom/ChannelSettingsContent.tsx",
+      "line": 396,
+      "container": "DrawerActions",
+      "kind": "dialog-actions",
+      "actions": [
+        {
+          "tag": "Button",
+          "label": "取消",
+          "kind": "cancel"
+        },
+        {
+          "tag": "Button",
+          "label": "保存更改",
+          "kind": "primary"
+        }
+      ],
+      "hasPair": true,
+      "valid": true
+    },
+    {
+      "file": "loom/ComputerFiles.tsx",
+      "line": 226,
+      "container": "DialogFooter",
+      "kind": "dialog-actions",
+      "actions": [
+        {
+          "tag": "Button",
+          "label": "取消",
+          "kind": "cancel"
+        },
+        {
+          "tag": "DialogCommit",
+          "label": "foldersOnly ? \"选择此文件夹\" : \"引用所选\"",
+          "kind": "primary"
+        }
+      ],
+      "hasPair": true,
+      "valid": true
+    },
+    {
+      "file": "loom/ComputerProfile.tsx",
+      "line": 166,
+      "container": "div",
+      "kind": "native-inline-editor",
+      "actions": [
+        {
+          "tag": "Button",
+          "label": "保存",
+          "kind": "primary"
+        },
+        {
+          "tag": "Button",
+          "label": "取消",
+          "kind": "cancel"
+        }
+      ],
+      "hasPair": true,
+      "valid": true
+    },
+    {
+      "file": "loom/CreateInstanceDialog.tsx",
+      "line": 80,
+      "container": "DialogFooter",
+      "kind": "dialog-actions",
+      "actions": [
+        {
+          "tag": "Button",
+          "label": "取消",
+          "kind": "cancel"
+        },
+        {
+          "tag": "DialogCommit",
+          "label": "确认添加",
+          "kind": "primary"
+        }
+      ],
+      "hasPair": true,
+      "valid": true
+    },
+    {
+      "file": "loom/CreateRoleDialog.tsx",
+      "line": 108,
+      "container": "DialogFooter",
+      "kind": "dialog-actions",
+      "actions": [
+        {
+          "tag": "Button",
+          "label": "暂不添加",
+          "kind": "cancel"
+        },
+        {
+          "tag": "DialogCommit",
+          "label": "确认添加实例",
+          "kind": "primary"
+        }
+      ],
+      "hasPair": true,
+      "valid": true
+    },
+    {
+      "file": "loom/DiscardChangesDialog.tsx",
+      "line": 31,
+      "container": "AlertDialogFooter",
+      "kind": "dialog-actions",
+      "actions": [
+        {
+          "tag": "AlertDialogCancel",
+          "label": "继续编辑",
+          "kind": "cancel"
+        },
+        {
+          "tag": "AlertDialogAction",
+          "label": "放弃修改",
+          "kind": "primary"
+        }
+      ],
+      "hasPair": true,
+      "valid": true
+    },
+    {
+      "file": "loom/MemoryEditor.tsx",
+      "line": 95,
+      "container": "DialogFooter",
+      "kind": "dialog-actions",
+      "actions": [
+        {
+          "tag": "DialogCommit",
+          "label": "保存记忆",
+          "kind": "primary"
+        },
+        {
+          "tag": "Button",
+          "label": "取消",
+          "kind": "cancel"
+        }
+      ],
+      "hasPair": true,
+      "valid": false
+    },
+    {
+      "file": "loom/MemoryPolicyDialog.tsx",
+      "line": 198,
+      "container": "DialogFooter",
+      "kind": "dialog-actions",
+      "actions": [
+        {
+          "tag": "DialogCommit",
+          "label": "保存权限",
+          "kind": "primary"
+        }
+      ],
+      "hasPair": false,
+      "valid": true
+    },
+    {
+      "file": "loom/OfficialConfirmation.generated.tsx",
+      "line": 189,
+      "container": "DialogFooter",
+      "kind": "dialog-actions",
+      "actions": [
+        {
+          "tag": "Button",
+          "label": "cancelLabel ?? formatChromeMessage(\"common.confirm.cancel\")",
+          "kind": "cancel"
+        },
+        {
+          "tag": "Button",
+          "label": "loading && <Spinner size=\"xs\" aria-label={resolvedProcessing} /> !loading && confirmIcon loading ? resolvedProcessingEllipsis : resolvedConfirmLabel",
+          "kind": "primary"
+        }
+      ],
+      "hasPair": true,
+      "valid": true
+    },
+    {
+      "file": "loom/OfficialCustomProtocolLink.generated.tsx",
+      "line": 68,
+      "container": "AlertDialogFooter",
+      "kind": "dialog-actions",
+      "actions": [
+        {
+          "tag": "AlertDialogCancel",
+          "label": "formatMessage({ id: \"message.messageItem.customProtocolLink.cancel\" })",
+          "kind": "cancel"
+        },
+        {
+          "tag": "AlertDialogAction",
+          "label": "formatMessage({ id: \"message.messageItem.customProtocolLink.confirm\" })",
+          "kind": "primary"
+        }
+      ],
+      "hasPair": true,
+      "valid": true
+    },
+    {
+      "file": "loom/OfficialTaskCreate.generated.tsx",
+      "line": 36,
+      "container": "div",
+      "kind": "dialog-actions",
+      "actions": [
+        {
+          "tag": "Button",
+          "label": "formatMessage({ id: \"common.confirm.cancel\" })",
+          "kind": "cancel"
+        },
+        {
+          "tag": "Button",
+          "label": "submitting ? formatMessage({ id: \"task.create.submitting\" }) : formatMessage( { id: \"task.create.submit\" }, { count: isBatch ? titles.filter((t) => t.trim()).length : 1 }, )",
+          "kind": "primary"
+        }
+      ],
+      "hasPair": true,
+      "valid": true
+    },
+    {
+      "file": "loom/RestoreRoleDialog.tsx",
+      "line": 61,
+      "container": "div",
+      "kind": "dialog-actions",
+      "actions": [
+        {
+          "tag": "Button",
+          "label": "取消",
+          "kind": "cancel"
+        },
+        {
+          "tag": "Button",
+          "label": "确认恢复",
+          "kind": "primary"
+        }
+      ],
+      "hasPair": true,
+      "valid": true
+    },
+    {
+      "file": "loom/RoleEditor.tsx",
+      "line": 232,
+      "container": "DialogFooter",
+      "kind": "dialog-actions",
+      "actions": [
+        {
+          "tag": "Button",
+          "label": "取消",
+          "kind": "cancel"
+        },
+        {
+          "tag": "DialogCommit",
+          "label": "保存运行时配置",
+          "kind": "primary"
+        },
+        {
+          "tag": "DialogCommit",
+          "label": "保存角色",
+          "kind": "primary"
+        }
+      ],
+      "hasPair": true,
+      "valid": true
+    },
+    {
+      "file": "loom/RoleFieldEditor.tsx",
+      "line": 171,
+      "container": "DialogFooter",
+      "kind": "dialog-actions",
+      "actions": [
+        {
+          "tag": "Commit",
+          "label": "保存",
+          "kind": "primary"
+        },
+        {
+          "tag": "Button",
+          "label": "取消",
+          "kind": "cancel"
+        }
+      ],
+      "hasPair": true,
+      "valid": false
+    },
+    {
+      "file": "packages/web/src/components/agent/AgentDetailPanel.tsx",
+      "line": 2223,
+      "container": "div",
+      "kind": "dialog-actions",
+      "actions": [
+        {
+          "tag": "Button",
+          "label": "formatMessage({ id: \"common.confirm.cancel\" })",
+          "kind": "cancel"
+        },
+        {
+          "tag": "Button",
+          "label": "formatMessage({ id: \"agent.detail.saveRuntimeConfig\" })",
+          "kind": "primary"
+        },
+        {
+          "tag": "Button",
+          "label": "formatMessage({ id: \"agent.detail.saveRuntimeConfig\" })",
+          "kind": "primary"
+        }
+      ],
+      "hasPair": true,
+      "valid": true
+    },
+    {
+      "file": "packages/web/src/components/agent/AgentMcpTab.tsx",
+      "line": 604,
+      "container": "div",
+      "kind": "dialog-actions",
+      "actions": [
+        {
+          "tag": "Button",
+          "label": "formatMessage({ id: \"common.confirm.cancel\" })",
+          "kind": "cancel"
+        },
+        {
+          "tag": "Button",
+          "label": "formatMessage({ id: busyId === (draft.id ?? \"new\") ? \"agent.mcp.saving\" : \"agent.mcp.save\" })",
+          "kind": "primary"
+        }
+      ],
+      "hasPair": true,
+      "valid": true
+    },
+    {
+      "file": "packages/web/src/components/agent/AgentProfileEditDialog.tsx",
+      "line": 329,
+      "container": "DialogFooter",
+      "kind": "dialog-actions",
+      "actions": [
+        {
+          "tag": "Button",
+          "label": "formatMessage({ id: \"common.confirm.cancel\" })",
+          "kind": "cancel"
+        },
+        {
+          "tag": "Button",
+          "label": "formatMessage({ id: \"machine.detail.save\" })",
+          "kind": "other"
+        }
+      ],
+      "hasPair": false,
+      "valid": true
+    },
+    {
+      "file": "packages/web/src/components/agent/AgentProfileEditDialog.tsx",
+      "line": 354,
+      "container": "AlertDialogFooter",
+      "kind": "dialog-actions",
+      "actions": [
+        {
+          "tag": "AlertDialogCancel",
+          "label": "formatMessage({ id: \"message.chatPanel.overflow.keepEditing\" })",
+          "kind": "cancel"
+        },
+        {
+          "tag": "AlertDialogAction",
+          "label": "formatMessage({ id: \"message.chatPanel.overflow.discardChanges\" })",
+          "kind": "primary"
+        }
+      ],
+      "hasPair": true,
+      "valid": true
+    },
+    {
+      "file": "packages/web/src/components/agent/CreateAgentDialog.tsx",
+      "line": 2095,
+      "container": "div",
+      "kind": "dialog-actions",
+      "actions": [
+        {
+          "tag": "Button",
+          "label": "formatMessage({ id: \"common.confirm.cancel\" })",
+          "kind": "cancel"
+        },
+        {
+          "tag": "Button",
+          "label": "submitLabel",
+          "kind": "primary"
+        }
+      ],
+      "hasPair": true,
+      "valid": true
+    },
+    {
+      "file": "packages/web/src/components/agentMigration/AgentMigrationDialog.tsx",
+      "line": 175,
+      "container": "DialogFooter",
+      "kind": "dialog-actions",
+      "actions": [
+        {
+          "tag": "Button",
+          "label": "formatMessage({ id: \"agent.detail.cancel\" })",
+          "kind": "cancel"
+        },
+        {
+          "tag": "Button",
+          "label": "submitting ? formatMessage({ id: \"agent.detail.starting\" }) : error?.recovery === \"open_computers_and_retry\" ? formatMessage({ id: \"agent.migration.error.tryAgain\" }) : formatMessage({ id: \"agent.detail.startMigration\" })",
+          "kind": "primary"
+        }
+      ],
+      "hasPair": true,
+      "valid": true
+    },
+    {
+      "file": "packages/web/src/components/auth/ServerSelector.tsx",
+      "line": 237,
+      "container": "div",
+      "kind": "dialog-actions",
+      "actions": [
+        {
+          "tag": "Button",
+          "label": "formatMessage({ id: \"pages.serverSelector.cancel\" })",
+          "kind": "cancel"
+        },
+        {
+          "tag": "Button",
+          "label": "formatMessage({ id: \"pages.serverSelector.createServerAction\" })",
+          "kind": "primary"
+        }
+      ],
+      "hasPair": true,
+      "valid": true
+    },
+    {
+      "file": "packages/web/src/components/channel/CreateChannelDialog.tsx",
+      "line": 450,
+      "container": "div",
+      "kind": "dialog-actions",
+      "actions": [
+        {
+          "tag": "Button",
+          "label": "formatMessage({ id: \"settings.common.cancel\" })",
+          "kind": "cancel"
+        },
+        {
+          "tag": "Button",
+          "label": "submitting ? formatMessage({ id: \"channel.create.creating\" }) : formatMessage({ id: \"channel.create.title\" })",
+          "kind": "primary"
+        }
+      ],
+      "hasPair": true,
+      "valid": true
+    },
+    {
+      "file": "packages/web/src/components/channel/CreateJointChannelDialog.tsx",
+      "line": 480,
+      "container": "div",
+      "kind": "dialog-actions",
+      "actions": [
+        {
+          "tag": "Button",
+          "label": "formatMessage({ id: \"settings.common.cancel\" })",
+          "kind": "cancel"
+        },
+        {
+          "tag": "Button",
+          "label": "submitting ? formatMessage({ id: \"channel.create.creating\" }) : formatMessage({ id: \"channel.createJoint.title\" })",
+          "kind": "primary"
+        }
+      ],
+      "hasPair": true,
+      "valid": true
+    },
+    {
+      "file": "packages/web/src/components/channel/JointConversionSection.tsx",
+      "line": 344,
+      "container": "DialogFooter",
+      "kind": "dialog-actions",
+      "actions": [
+        {
+          "tag": "Button",
+          "label": "formatMessage({ id: \"channel.edit.convertAction\" })",
+          "kind": "primary"
+        }
+      ],
+      "hasPair": false,
+      "valid": true
+    },
+    {
+      "file": "packages/web/src/components/member/InviteHumanDialog.tsx",
+      "line": 614,
+      "container": "div",
+      "kind": "dialog-actions",
+      "actions": [
+        {
+          "tag": "Button",
+          "label": "formatMessage({ id: \"common.confirm.cancel\" })",
+          "kind": "cancel"
+        },
+        {
+          "tag": "Button",
+          "label": "sending ? formatMessage({ id: \"member.invite.sending\" }) : formatMessage({ id: \"member.invite.sendInvites\" })",
+          "kind": "primary"
+        }
+      ],
+      "hasPair": true,
+      "valid": true
+    },
+    {
+      "file": "packages/web/src/components/settings/EditProviderConnectionModal.tsx",
+      "line": 135,
+      "container": "div",
+      "kind": "dialog-actions",
+      "actions": [
+        {
+          "tag": "Button",
+          "label": "formatMessage({ id: \"settings.common.cancel\" })",
+          "kind": "cancel"
+        },
+        {
+          "tag": "Button",
+          "label": "submitting ? <Spinner size=\"sm\" aria-hidden=\"true\" /> : <Pencil size={16} /> formatMessage({ id: \"settings.providers.saveChanges\" })",
+          "kind": "primary"
+        }
+      ],
+      "hasPair": true,
+      "valid": true
+    },
+    {
+      "file": "packages/web/src/components/settings/ProviderConnectionsSettings.tsx",
+      "line": 616,
+      "container": "div",
+      "kind": "dialog-actions",
+      "actions": [
+        {
+          "tag": "Button",
+          "label": "formatMessage({ id: \"settings.common.cancel\" })",
+          "kind": "cancel"
+        },
+        {
+          "tag": "Button",
+          "label": "submitting ? <Spinner size=\"sm\" aria-hidden=\"true\" /> : <Send size={16} /> formatMessage({ id: \"settings.providers.sendTest\" })",
+          "kind": "primary"
+        }
+      ],
+      "hasPair": true,
+      "valid": true
+    },
+    {
+      "file": "packages/web/src/components/settings/ProviderConnectionsSettings.tsx",
+      "line": 727,
+      "container": "div",
+      "kind": "dialog-actions",
+      "actions": [
+        {
+          "tag": "Button",
+          "label": "formatMessage({ id: \"settings.common.cancel\" })",
+          "kind": "cancel"
+        },
+        {
+          "tag": "Button",
+          "label": "submitting ? <Spinner size=\"sm\" aria-hidden=\"true\" /> : <Plus size={16} /> formatMessage({ id: \"settings.providers.create\" })",
+          "kind": "primary"
+        }
+      ],
+      "hasPair": true,
+      "valid": true
+    }
+  ],
+  "violations": [
+    {
+      "file": "loom/MemoryEditor.tsx",
+      "line": 95,
+      "container": "DialogFooter",
+      "kind": "dialog-actions",
+      "actions": [
+        {
+          "tag": "DialogCommit",
+          "label": "保存记忆",
+          "kind": "primary"
+        },
+        {
+          "tag": "Button",
+          "label": "取消",
+          "kind": "cancel"
+        }
+      ],
+      "hasPair": true,
+      "valid": false
+    },
+    {
+      "file": "loom/RoleFieldEditor.tsx",
+      "line": 171,
+      "container": "DialogFooter",
+      "kind": "dialog-actions",
+      "actions": [
+        {
+          "tag": "Commit",
+          "label": "保存",
+          "kind": "primary"
+        },
+        {
+          "tag": "Button",
+          "label": "取消",
+          "kind": "cancel"
+        }
+      ],
+      "hasPair": true,
+      "valid": false
+    }
+  ]
+}

@@ -93,6 +93,14 @@ export default function MemoryEditor({
             </p>
           )}
           <DialogFooter>
+            <Button
+              {...uiActionProps.formCancel}
+              type="button"
+              disabled={busy}
+              onClick={requestClose}
+            >
+              取消
+            </Button>
             <DialogCommit
               form={formId}
               {...uiActionProps.formSave}
@@ -104,14 +112,6 @@ export default function MemoryEditor({
             >
               保存记忆
             </DialogCommit>
-            <Button
-              {...uiActionProps.formCancel}
-              type="button"
-              disabled={busy}
-              onClick={requestClose}
-            >
-              取消
-            </Button>
           </DialogFooter>
           {owner.writes.state === "unknown" && (
             <div className="mt-3 flex gap-2">

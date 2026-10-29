@@ -1,0 +1,1 @@
+[{"width":1440,"modalActionOrder":true,"nativeAdaptiveLayout":true,"cancelCloses":true},{"width":390,"modalActionOrder":true,"nativeAdaptiveLayout":true,"cancelCloses":true}]

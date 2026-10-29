@@ -169,15 +169,6 @@ export default function RoleFieldEditor({
       )}
       {error && <p role="alert">{error}</p>}
       <DialogFooter>
-        <Commit
-          form={formId}
-          type="submit"
-          variant="accent"
-          size={combined || field === "avatarKey" ? "lg" : "sm"}
-          disabled={disabled || !dirty}
-        >
-          保存
-        </Commit>
         <Button
           type="button"
           variant="ghost"
@@ -187,6 +178,15 @@ export default function RoleFieldEditor({
         >
           取消
         </Button>
+        <Commit
+          form={formId}
+          type="submit"
+          variant="accent"
+          size={combined || field === "avatarKey" ? "lg" : "sm"}
+          disabled={disabled || !dirty}
+        >
+          保存
+        </Commit>
       </DialogFooter>
     </form>
   );

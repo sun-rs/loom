@@ -1,0 +1,13 @@
+✔ local detail dismissals reuse official CloseButton including Side and loading/error branches (17.215084ms)
+✔ local official CloseButton calls carry an explicit semantic mobile target marker (116.366833ms)
+✔ header touch adaptation uses semantic controls rather than SVG/span nesting (0.140667ms)
+✔ adoption registry references existing source owners, bindings and checks (0.59825ms)
+✔ new local close affordances cannot silently bypass scenario owners (76.289084ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 408.439209

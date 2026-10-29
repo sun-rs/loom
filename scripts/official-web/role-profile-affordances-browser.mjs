@@ -1,5 +1,6 @@
 // Focused isolated Core, no provider runs or production data.
 import assert from "node:assert/strict";
+import { assertDialogActionOrder } from "./dialog-action-browser.mjs";
 export async function verifyRoleProfileAffordances({
   browser,
   origin,
@@ -45,6 +46,14 @@ export async function verifyRoleProfileAffordances({
             .evaluate((el) => el === document.activeElement),
           true,
         );
+        if (label === "描述")
+          await assertDialogActionOrder({
+            page,
+            dialog,
+            width,
+            saveName: "保存",
+            screenshot: `/tmp/loom-role-dialog-order-${width}.png`,
+          });
         await dialog.getByRole("button", { name: "关闭", exact: true }).click();
         await dialog.waitFor({ state: "hidden" });
         await page.waitForFunction(
