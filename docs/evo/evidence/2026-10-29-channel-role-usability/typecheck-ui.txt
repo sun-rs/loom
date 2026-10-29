@@ -1,4 +1,3 @@
 
 > typecheck:loom
 > tsc --noEmit --project loom/tsconfig.json
-

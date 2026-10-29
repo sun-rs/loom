@@ -20,9 +20,9 @@
 test at scripts/official-web/avatar-library.test.ts:41:1
 ✖ all requested avatar families use unique detailed 32x32 palette sprites (0.785583ms)
   AssertionError [ERR_ASSERTION]: loom-gemini
-  
+
   8 !== 32
-  
+
       at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/avatar-library.test.ts:55:12)
       at Test.runInAsyncScope (node:async_hooks:226:14)
       at Test.run (node:internal/test_runner/test:1201:25)
@@ -41,9 +41,9 @@ test at scripts/official-web/avatar-library.test.ts:41:1
 test at scripts/official-web/channel-role-usability.test.ts:7:1
 ✖ empty optional Role prompt survives form validation without manufactured instructions (2.766917ms)
   AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
-  
+
   false !== true
-  
+
       at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/channel-role-usability.test.ts:9:9)
       at Test.runInAsyncScope (node:async_hooks:226:14)
       at Test.run (node:internal/test_runner/test:1201:25)
@@ -61,10 +61,10 @@ test at scripts/official-web/channel-role-usability.test.ts:13:1
 ✖ model display removes transport prefix but preserves provider and opaque binding value (0.219959ms)
   AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
   + actual - expected
-  
+
   + 'local:opencode-cli/v1:deepseek/deepseek-flash'
   - 'deepseek/deepseek-flash'
-  
+
       at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/channel-role-usability.test.ts:15:9)
       at Test.runInAsyncScope (node:async_hooks:226:14)
       at Test.run (node:internal/test_runner/test:1201:25)
@@ -83,7 +83,7 @@ test at scripts/official-web/channel-role-usability.test.ts:13:1
 test at scripts/official-web/channel-role-usability.test.ts:18:1
 ✖ single-Human product omits Role filter and Channel visibility badges, retaining private-box boundaries (1.021041ms)
   AssertionError [ERR_ASSERTION]: The input was expected to not match the regular expression /筛选角色/. Input:
-  
+
   'import PageEmpty from "./PageEmpty";\n' +
     'import { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives";\n' +
     'import { layoutQueries } from "./adaptive-layout.ts";\n' +
@@ -384,7 +384,7 @@ test at scripts/official-web/channel-role-usability.test.ts:18:1
     '                data-collapse-channel="false"\n' +
     '                data-collapse-thread="false"\n' +
     '       '... 149 more characters
-  
+
       at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/channel-role-usability.test.ts:19:9)
       at Test.runInAsyncScope (node:async_hooks:226:14)
       at Test.run (node:internal/test_runner/test:1201:25)
@@ -421,7 +421,7 @@ test at scripts/official-web/channel-role-usability.test.ts:22:1
 test at scripts/official-web/channel-role-usability.test.ts:30:1
 ✖ fixed effort models retain published value without a redundant effort picker (0.424167ms)
   AssertionError [ERR_ASSERTION]: The input did not match the regular expression /binding\?\.reasoning\.length[^\n]*> 1/. Input:
-  
+
   'import type { RefObject } from "react";\n' +
     'import {\n' +
     '  RuntimeFormV2Fields,\n' +
@@ -637,7 +637,7 @@ test at scripts/official-web/channel-role-usability.test.ts:30:1
     '    </>\n' +
     '  );\n' +
     '}\n'
-  
+
       at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/channel-role-usability.test.ts:31:9)
       at Test.runInAsyncScope (node:async_hooks:226:14)
       at Test.run (node:internal/test_runner/test:1201:25)
