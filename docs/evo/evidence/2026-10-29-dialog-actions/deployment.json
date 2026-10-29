@@ -1,0 +1,78 @@
+{
+  "at": "2026-10-29T15:56:49.833Z",
+  "sourceRevision": "a488edf9615bd87720f464721eee2b7b70dd5d8f",
+  "remoteMainBeforeRestart": "a488edf9615bd87720f464721eee2b7b70dd5d8f",
+  "pushedBeforeServiceRestart": true,
+  "sourceWorktreeDirty": false,
+  "oldPid": 34714,
+  "newPid": 74391,
+  "backup": "/Users/sun/.loom/evo/backups/pre-dialog-actions-1793289392090",
+  "backupVerified": true,
+  "migrationPreflight": true,
+  "fromSchema": 91,
+  "toSchema": 91,
+  "protectedTables": {
+    "room_events": {
+      "count": 847,
+      "sha256": "8c764d758e3eaa8edd6dfb5239b6793dd6246f95a3c21e1d968783ce0bc0f049"
+    },
+    "messages": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "role_templates": {
+      "count": 56,
+      "sha256": "adf4fd179d1b9d8c53f9ecbafc3fa9f7c8106e4061a0a23474e3173511886901"
+    },
+    "role_revisions": {
+      "count": 63,
+      "sha256": "6c9baae22e70ce161fef7077ef7f33681c32da0e0192cdbe1ef8e2207694af0f"
+    },
+    "role_instances": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "human_sidebar_preferences": {
+      "count": 1,
+      "sha256": "ded264b510608bcc4506f0b7d57323f510e63c1cd9e06b5b7d5f5630067ac6f7"
+    },
+    "human_saved_messages": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "human_thread_follows": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "human_activity_frontiers": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "human_activity_manual_unread": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    }
+  },
+  "ledgerRoleInstancesPreferencesUnchanged": true,
+  "protectedNotificationMemoryFilesChecked": 3,
+  "newWebSnapshot": "/Users/sun/Code/repos/rah_os/.workbench-web/29bf32b51d922c06bf52a39dde3bac1803a120c617cda8eb3e6e8a4fe4229ffd",
+  "webBuildId": "45dd852a26befc10f0158fa04f28eb6094d251a01378467cc0943f66f82c9bfb",
+  "indexSha256": "0ec6fd25116dc2cb37834757324ba0f2d61cf8b207366f7b92740516625ec375",
+  "networkModeUnchanged": true,
+  "notificationTransportUnchanged": true,
+  "edges": [
+    {
+      "origin": "https://192.168.1.86:4178",
+      "status": 200,
+      "tlsVerifiedWithOriginalCA": true,
+      "webIndexMatches": true
+    },
+    {
+      "origin": "https://100.101.107.87:4178",
+      "status": 200,
+      "tlsVerifiedWithOriginalCA": true,
+      "webIndexMatches": true
+    }
+  ],
+  "scope": "Dialog action DOM order matches native Raft: cancel before primary. Role and Memory modals repaired; native stacked/sheet layouts preserved. Avatar work is source research only. Presentation only; schema91, runtime configuration and native sessions unchanged."
+}

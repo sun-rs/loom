@@ -29,7 +29,9 @@
 - 不启动付费 Provider，不创建正式环境测试 Role、实例或记忆；不跑全系统长验收。
 
 截图是模拟尺寸，不能当作实体手机验证；扫描与构建也不是全站最新 UI 对齐认证。
-部署与真实页面核验记录在后续 `deployment.json`、`formal-page.json`。
+`a488edf9`已推送后备份／平滑重启，schema91、账本／配置／偏好保持，LAN/Tailnet原CA验证通过。
+正式Chrome新页面核验取消在左、保存在右，取消可关闭并回焦；没有保存配置。
+见 `deployment.json`、`formal-page.json`；验收标签已关闭。
 
 ## 高清头像
 
