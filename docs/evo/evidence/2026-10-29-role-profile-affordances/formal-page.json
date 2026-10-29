@@ -1,0 +1,21 @@
+{
+  "at": "2026-10-29T15:08:14.201827+00:00",
+  "browser": "Native Google Chrome via CUA",
+  "origin": "http://127.0.0.1:4176/?view=agents",
+  "deployedRevision": "eed83c1d97ac33f5570c1a992b69ac907cc286a2",
+  "webBuildId": "449466c8a51f207bccecc71c31f2c55d777acbe578948608308107afc2d18986",
+  "freshTabAfterRestart": true,
+  "checks": {
+    "bothEditPencilsPresent": true,
+    "descriptionEntryFocusedDescriptionTextarea": true,
+    "promptEntryFocusedPromptTextarea": true,
+    "closeRestoredCorrespondingPencilFocus": true,
+    "runtimeChipOpensOfficialSurface": true,
+    "realCliVersionVisible": true,
+    "hostDetectionAndExecutableAndModelCountAndProbeTimeVisible": true,
+    "accountQuotaExplicitlyUnavailable": true,
+    "noRoleOrInstanceOrChannelEdited": true,
+    "acceptanceTabClosed": true
+  },
+  "limits": "No account-quota collector, paid CLI run, or physical mobile verification."
+}
