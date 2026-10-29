@@ -1,0 +1,105 @@
+{
+  "checkedAt": "2026-10-29T08:52:02.989831+00:00",
+  "scope": "Read-only comparison and analysis; no dependency pins, product code, deployment or global settings changed.",
+  "versions": {
+    "loomUi": "0.40.0",
+    "latestUi": "0.52.0",
+    "loomAdoptedWebResources": "1.21.35",
+    "latestWeb": {
+      "version": "1.21.38",
+      "releaseId": "a7b1309bcb7fa91654c9a6895ce73236190bd6b4",
+      "commitSha": "a7b1309bcb7fa91654c9a6895ce73236190bd6b4",
+      "builtAt": "2026-10-29T04:54:49Z",
+      "branch": "release/v1.21.38",
+      "deploymentEnvironment": "production"
+    },
+    "latestServer": {
+      "version": "1.21.38",
+      "sha": "a7b1309bcb7fa91654c9a6895ce73236190bd6b4",
+      "builtAt": "2026-10-28T20:30:36Z",
+      "branch": "release/v1.21.38"
+    },
+    "selectedWebSource": {
+      "revision": "db5e399f017d584e49597e3a28757645d6807893",
+      "release": "v1.21.23-source.1",
+      "candidateRevision": "db5e399f017d584e49597e3a28757645d6807893"
+    },
+    "latestComputerMacArm64": "1.0.56",
+    "mobileReference": {
+      "pinned": "eff04722b5904a0d001115d90d3ec49d59fb4f03",
+      "candidate": "3fa751191cb5f78caea4a2e7f89322078ee2637d"
+    }
+  },
+  "immutableWebClosure": {
+    "total": 90,
+    "byStatus": {
+      "identical": 90
+    },
+    "unexpectedLocalDrift": 0
+  },
+  "historicalIntakeAudit": {
+    "exit": 2,
+    "note": "Not a clean pass: historical compatibility records have two hash mismatches and 22 missing candidate paths; distinct from the intact selected source closure.",
+    "hashMismatches": [
+      "packages/web/src/index.css",
+      "packages/web/src/components/ui/PanelHeader.tsx"
+    ],
+    "missingCandidatePaths": 22,
+    "unclassifiedCandidateFiles": 83
+  },
+  "uiDiff": {
+    "changedRepositoryFiles": 279,
+    "changedUiSourceFiles": 144,
+    "fontsCssEqual": true,
+    "themesCssEqual": true,
+    "note": "Latest npm 0.52.0 and production Web 1.21.38 are independently published. Production CSS does not contain the new list-cell tokens; do not claim production already uses 0.52.0 list cells."
+  },
+  "panelPolicy": {
+    "publishedWebRegistryEqual": true,
+    "sidebar": {
+      "default": 240,
+      "min": 200,
+      "max": 400
+    },
+    "list": {
+      "default": 380,
+      "min": 240,
+      "max": 640
+    },
+    "thread": {
+      "default": 400,
+      "min": 360,
+      "max": 8192
+    },
+    "detail": {
+      "default": 400,
+      "min": 320,
+      "max": 8192
+    },
+    "sideCards": {
+      "default": 360,
+      "min": 280,
+      "max": 8192
+    },
+    "workspaceTree": {
+      "default": 256,
+      "min": 180,
+      "max": 480
+    },
+    "mainMinimum": 360
+  },
+  "mobileAudit": {
+    "selectedFiles": 20,
+    "changedSelectedFiles": 14,
+    "localDrift": 0,
+    "existingNumericAdaptiveRulesChanged": [],
+    "semanticGap": "Despite unchanged numeric rules, native bridge adds sideColumn, stripEdge, stripWidthPt, nativeTabBarHeightPt, reservedRegions and display; new SideColumnPage/DuoInnerRail and safe-area files are outside the selected closure. Selected-file and fixed-field equality cannot prove whole-native parity."
+  },
+  "evidenceLimits": [
+    "16/19 old adopted assets re-downloaded with exact hashes. Old SettingsPanel, TasksPanel and AddMachineDialog URLs now return 404; retained source excerpts/changelog still available.",
+    "New public Web/server TSX/backend source remains unavailable beyond db5e399; latest backend behavior is based on official release notes and production version, not a new backend source diff.",
+    "No whole-site visual parity, actual phone/native App release, performance reduction or functional acceptance claimed.",
+    "One real Firefox observation confirms the new Apps page and nav; no account/preferences/product data mutated."
+  ],
+  "candidateDownloadRoot": "/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/loom-raft-latest-20261029-4wal9vx_"
+}

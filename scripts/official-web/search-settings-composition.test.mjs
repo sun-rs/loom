@@ -2,11 +2,12 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 const read = (p) => readFileSync("frontends/raft/" + p, "utf8");
-test("search entity rows retain compact native identities, outline labels and sibling separators", () => {
+test("search entity rows retain compact native identities, outline labels and native list-cell framing", () => {
   const s = read("loom/OfficialSearchEntityRow.generated.tsx");
   assert.match(s, /context="compact-row"/);
   assert.doesNotMatch(s, /context="surface-list"/);
-  assert.match(s, /not-first:before:border-t/);
+  assert.doesNotMatch(s, /not-first:before:border-t/);
+  assert.match(s, /<SearchEntityResult/);
   assert.match(s, /<Badge appearance="outline">/);
   assert.match(read("loom/SearchEntityRows.tsx"), /rootRef=\{row\}/);
 });

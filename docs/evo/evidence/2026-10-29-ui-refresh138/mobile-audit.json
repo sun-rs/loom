@@ -1,0 +1,4801 @@
+{
+  "repository": "https://github.com/botiverse/mobile",
+  "baseline": "eff04722b5904a0d001115d90d3ec49d59fb4f03",
+  "candidate": "3fa751191cb5f78caea4a2e7f89322078ee2637d",
+  "candidateDirty": false,
+  "scope": "Selected immutable native source for mobile Web semantic ports; not executable Kotlin dependency or proof of installed App version",
+  "files": [
+    {
+      "path": "LICENSE",
+      "localDrift": false,
+      "candidateSha256": "7b0afda469123fdf2758d16941aa1a5a216e73ba5bc241165a36cac49c20b1b5",
+      "changed": false
+    },
+    {
+      "path": "NOTICE",
+      "localDrift": false,
+      "candidateSha256": "fa734d1ac45f90d6c83af7ee4a7906cf994f3e90647e483f93c561bc765d18f0",
+      "changed": false
+    },
+    {
+      "path": "compose/shared/src/commonMain/kotlin/build/raft/app/ActivityConversationSwipe.kt",
+      "localDrift": false,
+      "candidateSha256": "16b479afc5680f9c19fe8105743f2fffca911c3e8f2629b0c55be23108fa6060",
+      "changed": true
+    },
+    {
+      "path": "compose/shared/src/commonMain/kotlin/build/raft/app/SharedInboxPanel.kt",
+      "localDrift": false,
+      "candidateSha256": "d09dc58480d641f16829b053a867b86c6c843ebba5b0f5fd308f7e01204ced63",
+      "changed": true
+    },
+    {
+      "path": "compose/shared/src/commonMain/kotlin/build/raft/app/components/RaftPullToRefresh.kt",
+      "localDrift": false,
+      "candidateSha256": "aeff490a2f86ba673c8e8032b927aa18ebdc36d5a41888c7c9c458e4e5e37d0f",
+      "changed": true
+    },
+    {
+      "path": "compose/shared/src/commonMain/kotlin/build/raft/app/components/RaftPullToRefreshController.kt",
+      "localDrift": false,
+      "candidateSha256": "8d09a15fe3e12aff392b3f1f31dae3706629654c0e240b4c89d3cfc2ccf18f6c",
+      "changed": true
+    },
+    {
+      "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftSectionHeader.kt",
+      "localDrift": false,
+      "candidateSha256": "e48572e485fde2d645fab9cb589565f0d9997cc02aa2b0408349d454f57199a5",
+      "changed": true
+    },
+    {
+      "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftTopTabBar.kt",
+      "localDrift": false,
+      "candidateSha256": "c3dc900267343d7cb69628526f26dc27d0d178d54d91f14a0240d1ebc015f1fa",
+      "changed": false
+    },
+    {
+      "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftAppServerTab.kt",
+      "localDrift": false,
+      "candidateSha256": "0e10ff0ee8a5d6b88ce18214dd2ae2a8604ea832caed7b7e4103e6170984b825",
+      "changed": true
+    },
+    {
+      "path": "compose/shared/src/commonMain/kotlin/build/raft/app/components/SharedHomeSearchInput.kt",
+      "localDrift": false,
+      "candidateSha256": "92e43de09001c20ae7125961f5e7f8307ed30df633b91b04a864e2ae32c47806",
+      "changed": true
+    },
+    {
+      "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftTabs.kt",
+      "localDrift": false,
+      "candidateSha256": "20e8bec92bc17046cb602539a42b5b09bf12b6a0928f202208fc4188c77d2a04",
+      "changed": true
+    },
+    {
+      "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftMobileNavServer.kt",
+      "localDrift": false,
+      "candidateSha256": "6b57ed96083fd096005c066f5aae4019309fb9b3cf0fc72feb0235d5452c4ea5",
+      "changed": true
+    },
+    {
+      "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/theme/RaftTypography.kt",
+      "localDrift": false,
+      "candidateSha256": "95f63b166026aeb13314018a9a43da7c331014216b349090483607b5e7adc043",
+      "changed": false
+    },
+    {
+      "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftDialogSheet.kt",
+      "localDrift": false,
+      "candidateSha256": "2970a86d1f648b3c1a6fd26f11b0e17d18a25839e19cf631549633fe059f0340",
+      "changed": true
+    },
+    {
+      "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftAdaptivePane.kt",
+      "localDrift": false,
+      "candidateSha256": "2eef655062c10b245d6ef22a076be7276b2fbd1a10d8be1eaeeadfc2573a53dd",
+      "changed": true
+    },
+    {
+      "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftAdaptiveListDetailSplit.kt",
+      "localDrift": false,
+      "candidateSha256": "f39f3be690518ed134e808837ff40f121834c6a34212f3114ff4c9b9903bd1bb",
+      "changed": true
+    },
+    {
+      "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftAppShell.kt",
+      "localDrift": false,
+      "candidateSha256": "289472e836dfea17a30a8a83f486a42edbd5f2688d8dfd11c8da03c55fffc6ce",
+      "changed": true
+    },
+    {
+      "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/AdaptiveSideThread.kt",
+      "localDrift": false,
+      "candidateSha256": "d8428345da38b8a60644d861e0b2ed6bb18e895632a87aa5c237d7405deb3b37",
+      "changed": false
+    },
+    {
+      "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/LocalPreferences.kt",
+      "localDrift": false,
+      "candidateSha256": "616e234fa10d733ae5d7c68a1e178a08875b7fb253b4221875710a8591df0d92",
+      "changed": true
+    },
+    {
+      "path": "compose/core/src/commonMain/kotlin/build/raft/app/data/AdaptiveListPaneWidth.kt",
+      "localDrift": false,
+      "candidateSha256": "e159e377c549f9024f86dd27539b11db47ceea893a7a8e16a6098dfe1e8715e9",
+      "changed": false
+    }
+  ],
+  "adaptive": {
+    "baseline": {
+      "hostFields": [
+        "density",
+        "heightPx",
+        "layout",
+        "posture",
+        "widthPx"
+      ],
+      "dualPaneMinimum": 840,
+      "densityNormalized": true,
+      "defaultDesktopMode": true,
+      "railRequiresDualPane": true,
+      "sidebar": {
+        "default": 240,
+        "min": 200,
+        "max": 400
+      },
+      "list": {
+        "default": 380,
+        "min": 240,
+        "max": 640
+      },
+      "detailMinimum": 360,
+      "sideThread": {
+        "windowMinimum": 1200,
+        "mainMinimum": 440,
+        "column": 400,
+        "divider": 1,
+        "requiresMeasuredDetail": true
+      }
+    },
+    "candidate": {
+      "hostFields": [
+        "density",
+        "display",
+        "heightPt",
+        "heightPx",
+        "kind",
+        "layout",
+        "leftPt",
+        "nativeTabBarHeightPt",
+        "posture",
+        "reservedRegions",
+        "sideColumn",
+        "stripEdge",
+        "stripWidthPt",
+        "topPt",
+        "widthPt",
+        "widthPx"
+      ],
+      "dualPaneMinimum": 840,
+      "densityNormalized": true,
+      "defaultDesktopMode": true,
+      "railRequiresDualPane": true,
+      "sidebar": {
+        "default": 240,
+        "min": 200,
+        "max": 400
+      },
+      "list": {
+        "default": 380,
+        "min": 240,
+        "max": 640
+      },
+      "detailMinimum": 360,
+      "sideThread": {
+        "windowMinimum": 1200,
+        "mainMinimum": 440,
+        "column": 400,
+        "divider": 1,
+        "requiresMeasuredDetail": true
+      }
+    },
+    "changes": [
+      {
+        "rule": "hostFields",
+        "before": [
+          "density",
+          "heightPx",
+          "layout",
+          "posture",
+          "widthPx"
+        ],
+        "after": [
+          "density",
+          "display",
+          "heightPt",
+          "heightPx",
+          "kind",
+          "layout",
+          "leftPt",
+          "nativeTabBarHeightPt",
+          "posture",
+          "reservedRegions",
+          "sideColumn",
+          "stripEdge",
+          "stripWidthPt",
+          "topPt",
+          "widthPt",
+          "widthPx"
+        ]
+      }
+    ],
+    "bindings": {
+      "scope": "Loom-owned audit map; not upstream original. Source coverage is not runtime acceptance.",
+      "wholeProductParity": false,
+      "rules": [
+        {
+          "rule": "dualPaneMinimum",
+          "sourcePaths": [
+            "compose/shared/src/commonMain/kotlin/build/raft/app/RaftAdaptivePane.kt"
+          ],
+          "consumers": [
+            "frontends/raft/loom/ChannelApp.tsx",
+            "frontends/raft/loom/SidebarLayout.tsx",
+            "frontends/raft/loom/Navigation.tsx",
+            "frontends/raft/loom/adaptive-layout.ts",
+            "frontends/raft/loom/vite.config.ts"
+          ],
+          "status": "partial",
+          "runtimeEvidence": "docs/evo/evidence/2026-10-27-adaptive-runtime/README.md",
+          "acceptance": "pointer-fine browser and isolated DOM verified; real touch pending",
+          "implementation": "outer Web compatibility port; upstream originals unchanged"
+        },
+        {
+          "rule": "columnBounds",
+          "sourcePaths": [
+            "compose/shared/src/commonMain/kotlin/build/raft/app/RaftAdaptiveListDetailSplit.kt",
+            "compose/core/src/commonMain/kotlin/build/raft/app/data/AdaptiveListPaneWidth.kt"
+          ],
+          "consumers": [
+            "frontends/raft/loom/useCurrentListPanel.ts",
+            "frontends/raft/loom/SidebarLayout.tsx"
+          ],
+          "status": "partial",
+          "runtimeEvidence": "docs/evo/evidence/2026-10-27-adaptive-runtime/README.md",
+          "acceptance": "pointer-fine browser and isolated DOM verified; real touch pending",
+          "implementation": "outer Web compatibility port; upstream originals unchanged"
+        },
+        {
+          "rule": "sideThread",
+          "sourcePaths": [
+            "compose/shared/src/commonMain/kotlin/build/raft/app/data/AdaptiveSideThread.kt"
+          ],
+          "consumers": [
+            "frontends/raft/loom/ThreadWorkspace.tsx",
+            "frontends/raft/loom/mobile.css"
+          ],
+          "status": "partial",
+          "runtimeEvidence": "docs/evo/evidence/2026-10-27-adaptive-runtime/README.md",
+          "acceptance": "pointer-fine browser and isolated DOM verified; real touch pending",
+          "implementation": "outer Web compatibility port; upstream originals unchanged"
+        },
+        {
+          "rule": "navigation",
+          "sourcePaths": [
+            "compose/shared/src/commonMain/kotlin/build/raft/app/RaftAppShell.kt",
+            "compose/shared/src/commonMain/kotlin/build/raft/app/data/LocalPreferences.kt"
+          ],
+          "consumers": [
+            "frontends/raft/loom/Navigation.tsx",
+            "frontends/raft/loom/mobile-app-navigation.ts"
+          ],
+          "status": "partial",
+          "runtimeEvidence": "docs/evo/evidence/2026-10-27-adaptive-runtime/README.md",
+          "acceptance": "pointer-fine browser and isolated DOM verified; real touch pending",
+          "implementation": "outer Web compatibility port; upstream originals unchanged"
+        },
+        {
+          "rule": "density",
+          "sourcePaths": [
+            "compose/shared/src/commonMain/kotlin/build/raft/app/RaftAdaptivePane.kt"
+          ],
+          "consumers": [
+            "frontends/raft/loom/mobile.css",
+            "frontends/raft/loom/mobile-message-default.ts"
+          ],
+          "status": "partial",
+          "runtimeEvidence": "docs/evo/evidence/2026-10-27-adaptive-runtime/README.md",
+          "acceptance": "pointer-fine browser and isolated DOM verified; real touch pending",
+          "implementation": "outer Web compatibility port; upstream originals unchanged"
+        }
+      ]
+    }
+  },
+  "inventory": {
+    "selected": [
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftDialogSheet.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftMobileNavServer.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftTabs.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/ActivityConversationSwipe.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftAdaptiveListDetailSplit.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftAdaptivePane.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftAppServerTab.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftAppShell.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftSectionHeader.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/SharedInboxPanel.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/components/RaftPullToRefresh.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/components/RaftPullToRefreshController.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/components/SharedHomeSearchInput.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/LocalPreferences.kt"
+      }
+    ],
+    "outsideLock": [
+      {
+        "status": "D",
+        "path": "compose/androidApp/src/androidTest/java/build/raft/app/shared/RaftLocalImageSampledDecodeConnectedTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/androidApp/src/androidTest/java/build/raft/app/visual/KmpVisualScreenshotCaptureTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/androidApp/src/main/AndroidManifest.xml"
+      },
+      {
+        "status": "M",
+        "path": "compose/androidApp/src/main/java/build/raft/app/MainActivity.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/androidApp/src/main/java/build/raft/app/RaftApplication.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/androidApp/src/main/java/build/raft/app/core/data/auth/AndroidMMKVKeyValueStore.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/androidApp/src/main/java/build/raft/app/core/data/auth/QaCaptureBoundaryReceiver.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/androidApp/src/main/java/build/raft/app/core/data/diagnostics/NetworkDiagnosticsBridge.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/androidApp/src/main/java/build/raft/app/core/data/realtime/SocketIoRealtimeClient.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/androidApp/src/main/java/build/raft/app/push/RaftFirebaseMessagingService.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/androidApp/src/main/java/build/raft/app/shared/AndroidApiEnvironmentSessionReset.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/androidApp/src/main/java/build/raft/app/shared/AndroidAttachmentOpenContract.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/androidApp/src/main/java/build/raft/app/shared/AndroidPackageInstallPermission.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/androidApp/src/main/java/build/raft/app/shared/AndroidRealtimeSessionAvailability.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/androidApp/src/main/java/build/raft/app/shared/AndroidShellWindowContract.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/androidApp/src/main/java/build/raft/app/shared/AndroidUnreadNotificationGrouping.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/androidApp/src/main/java/build/raft/app/shared/AndroidUnreadNotificationPoster.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/androidApp/src/main/java/build/raft/app/shared/HandsUpdateDownloadCleanup.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/androidApp/src/main/java/build/raft/app/shared/RaftAndroidHostHooks.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/androidApp/src/main/java/build/raft/app/shared/RaftArrowKeyMovementMethod.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/androidApp/src/main/java/build/raft/app/shared/RaftBitmapDecodeSampling.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/androidApp/src/main/java/build/raft/app/shared/RaftCmpActivity.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/androidApp/src/main/java/build/raft/app/shared/RaftImageRequestSingleFlight.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/androidApp/src/main/res/anim/raft_page_pop_exit.xml"
+      },
+      {
+        "status": "A",
+        "path": "compose/androidApp/src/main/res/anim/raft_page_push_enter.xml"
+      },
+      {
+        "status": "A",
+        "path": "compose/androidApp/src/main/res/anim/raft_page_push_hold.xml"
+      },
+      {
+        "status": "A",
+        "path": "compose/androidApp/src/main/res/interpolator/raft_ease_slide.xml"
+      },
+      {
+        "status": "M",
+        "path": "compose/androidApp/src/main/res/values-ja/strings.xml"
+      },
+      {
+        "status": "M",
+        "path": "compose/androidApp/src/main/res/values-zh-rCN/strings.xml"
+      },
+      {
+        "status": "M",
+        "path": "compose/androidApp/src/main/res/values/strings.xml"
+      },
+      {
+        "status": "M",
+        "path": "compose/androidApp/src/main/res/values/themes.xml"
+      },
+      {
+        "status": "M",
+        "path": "compose/androidApp/src/main/res/xml/backup_rules.xml"
+      },
+      {
+        "status": "M",
+        "path": "compose/androidApp/src/main/res/xml/data_extraction_rules.xml"
+      },
+      {
+        "status": "M",
+        "path": "compose/androidApp/src/test/java/build/raft/app/core/data/auth/AndroidAppScopeSharedKeyValueNamespacesTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/androidApp/src/test/java/build/raft/app/core/data/auth/RaftBackupRulesTest.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/androidApp/src/test/java/build/raft/app/core/data/diagnostics/NetworkDiagnosticsBridgeTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/androidApp/src/test/java/build/raft/app/shared/AndroidApiEnvironmentSessionResetTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/androidApp/src/test/java/build/raft/app/shared/AndroidAppScopeRealtimeOwnerTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/androidApp/src/test/java/build/raft/app/shared/AndroidPackageInstallGateTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/androidApp/src/test/java/build/raft/app/shared/AndroidPackageInstallPermissionTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/androidApp/src/test/java/build/raft/app/shared/AndroidUnreadNotificationGroupingTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/androidApp/src/test/java/build/raft/app/shared/HandsUpdateDownloadCleanupTest.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/androidApp/src/test/java/build/raft/app/shared/RaftBitmapDecodeSamplingTest.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/androidApp/src/test/java/build/raft/app/shared/RaftImageRequestSingleFlightTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/androidApp/src/test/java/build/raft/app/shared/RaftPagePushTransitionTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/core/src/commonMain/kotlin/build/raft/app/data/RaftMessageDbDispatcher.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/core/src/commonMain/kotlin/build/raft/app/data/ReadReceiptVisibilityGate.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/core/src/commonMain/kotlin/build/raft/app/data/ServerUnreadSummaryDto.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/core/src/commonMain/kotlin/build/raft/app/data/realtime/GeneratedRealtimeContract.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/core/src/commonMain/kotlin/build/raft/app/data/realtime/RealtimeSocketEvents.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/core/src/commonMain/kotlin/build/raft/app/data/realtime/SharedSocketIoProtocol.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/core/src/commonMain/kotlin/build/raft/app/model/AgentRuntimeConfig.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/core/src/commonMain/kotlin/build/raft/app/network/KmpHttpResponse.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/core/src/commonMain/kotlin/build/raft/app/network/model/NetworkModels.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/core/src/commonMain/kotlin/build/raft/app/network/realtime/RealtimeConnectionReducer.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/core/src/commonMain/kotlin/build/raft/app/network/realtime/RealtimeRecoveryPolicy.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/core/src/commonMain/kotlin/build/raft/app/network/sync/CanonicalFactCodec.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/core/src/commonMain/kotlin/build/raft/app/network/sync/activity/contract/v1/ActivitySync.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/core/src/iosMain/kotlin/build/raft/app/data/RaftMessageDbDispatcher.ios.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/core/src/jvmCommonMain/kotlin/build/raft/app/data/RaftMessageDbDispatcher.jvm.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/README.md"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/screenshots/badge_dark.png"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/screenshots/badge_light.png"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/screenshots/badge_tags_dark.png"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/screenshots/badge_tags_light.png"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/screenshots/composer_attachment_light.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/description_list_inline_dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/description_list_inline_light.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/filter_chip_dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/filter_chip_light.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/frame_inset_tooltip_dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/frame_inset_tooltip_light.png"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/screenshots/message_image_gallery_dark.png"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/screenshots/message_image_gallery_light.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/pull_down_panel_dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/pull_down_panel_light.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/quiet_unread_dot_dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/quiet_unread_dot_light.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/read_only_composer_dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/read_only_composer_light.png"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/screenshots/select_dark.png"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/screenshots/select_light.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/sheet_close_row_actions_dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/sheet_close_row_actions_light.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/side_action_column_all_dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/side_action_column_all_light.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/side_action_column_attention_dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/side_action_column_attention_light.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/side_action_column_overflow_dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/side_action_column_overflow_light.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/side_action_column_rtl_dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/side_action_column_rtl_light.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/side_action_column_tab_bar_dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/side_action_column_tab_bar_light.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/side_action_column_tooltip_dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/side_action_column_tooltip_light.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/task_compact_list_dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/task_compact_list_light.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/task_status_badge_dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/task_status_badge_light.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/theme_decor_rail_dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/theme_decor_rail_light.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/theme_decor_top_actions_dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/theme_decor_top_actions_light.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/theme_decor_top_dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/theme_decor_top_light.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/theme_frames_dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/theme_frames_light.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/timeline_dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/timeline_light.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/top_bar_center_leading_dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/top_bar_center_leading_light.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/top_bar_tooltip_below_dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/screenshots/top_bar_tooltip_below_light.png"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/androidMain/kotlin/build/raft/designsystem/components/RaftWindowDialog.android.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/src/androidMain/kotlin/build/raft/designsystem/haptics/RaftHaptics.android.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/src/androidMain/kotlin/build/raft/designsystem/motion/RaftMotion.android.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftAppRail.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftBadge.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftBadgePresets.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftBanner.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftCombobox.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftComposerAttachment.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftCopyable.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftDescriptionList.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftDialog.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftFrameInsets.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftGlyphs.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftIconTile.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftListRow.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftMenu.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftMessageActionCard.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftMessageDelegatedAvatar.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftMessageForwardedBundle.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftMessageImageGallery.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftMessageListJump.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftPullDownPanel.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftReadOnlyComposer.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftReorderable.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftSafeArea.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftSelect.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftSelectionControls.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftSideActionColumn.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftSidebar.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftStatusBarBackdrop.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftStatusDot.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftTaskCompactList.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftTaskStatusBadge.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftTimeline.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftTooltip.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftTopBar.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftWindowDialog.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/components/RaftWorkspaceButton.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/gesture/RaftNestedHorizontalDrag.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/haptics/RaftHaptics.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/motion/RaftMotion.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/text/RaftText.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/theme/RaftStrings.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/theme/RaftTheme.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/theme/RaftThemeDecor.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/tokens/RaftDimensions.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/tokens/RaftPixelArt.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/tokens/RaftThemeDecorArt.g.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/commonMain/kotlin/build/raft/designsystem/tokens/RaftUiColorTokens.g.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/commonTest/kotlin/build/raft/designsystem/RaftDesignSystemTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/src/commonTest/kotlin/build/raft/designsystem/RaftFrameInsetsTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/commonTest/kotlin/build/raft/designsystem/RaftInteractiveTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/src/commonTest/kotlin/build/raft/designsystem/RaftMotionTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/src/commonTest/kotlin/build/raft/designsystem/RaftPullDownPanelTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/src/commonTest/kotlin/build/raft/designsystem/RaftSideActionColumnTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/commonTest/kotlin/build/raft/designsystem/RaftStatesTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/src/commonTest/kotlin/build/raft/designsystem/RaftThemeAxisTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/src/commonTest/kotlin/build/raft/designsystem/RaftThemeDecorTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/commonTest/kotlin/build/raft/designsystem/RaftWindowDialogTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/desktopMain/kotlin/build/raft/designsystem/components/RaftWindowDialog.desktop.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/src/desktopMain/kotlin/build/raft/designsystem/haptics/RaftHaptics.desktop.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/src/desktopMain/kotlin/build/raft/designsystem/motion/RaftMotion.desktop.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/desktopTest/kotlin/build/raft/designsystem/RaftTabStripPagerSelectionTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/src/desktopTest/kotlin/build/raft/designsystem/RaftTaskCompactRowSemanticsTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/src/desktopTest/kotlin/build/raft/designsystem/RaftThemeAxisUiTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/src/desktopTest/kotlin/build/raft/designsystem/gesture/RaftScrollHoldUiTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/desktopTest/kotlin/build/raft/designsystem/screenshot/AppIconsForScreenshots.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/desktopTest/kotlin/build/raft/designsystem/screenshot/AppRailScreenshotTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/desktopTest/kotlin/build/raft/designsystem/screenshot/DisplayComponentScreenshotTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/src/desktopTest/kotlin/build/raft/designsystem/screenshot/FrameInsetsScreenshotTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/desktopTest/kotlin/build/raft/designsystem/screenshot/InteractiveComponentScreenshotTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/desktopTest/kotlin/build/raft/designsystem/screenshot/MessageReactionScreenshotTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/desktopTest/kotlin/build/raft/designsystem/screenshot/MobileNavServerScreenshotTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/src/desktopTest/kotlin/build/raft/designsystem/screenshot/PullDownPanelScreenshotTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/src/desktopTest/kotlin/build/raft/designsystem/screenshot/SideActionColumnScreenshotTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/src/desktopTest/kotlin/build/raft/designsystem/screenshot/TaskCompactListScreenshotTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/src/desktopTest/kotlin/build/raft/designsystem/screenshot/TaskHeadComponentsScreenshotTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/src/desktopTest/kotlin/build/raft/designsystem/screenshot/ThemeDecorScreenshotTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/src/desktopTest/kotlin/build/raft/designsystem/screenshot/ThemeScreenshotTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/desktopTest/kotlin/build/raft/designsystem/screenshot/TopBarScreenshotTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/designsystem/src/iosMain/kotlin/build/raft/designsystem/components/RaftWindowDialog.ios.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/src/iosMain/kotlin/build/raft/designsystem/haptics/RaftHaptics.ios.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/designsystem/src/iosMain/kotlin/build/raft/designsystem/motion/RaftMotion.ios.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/desktopApp/README.md"
+      },
+      {
+        "status": "M",
+        "path": "compose/desktopApp/build.gradle.kts"
+      },
+      {
+        "status": "M",
+        "path": "compose/desktopApp/src/main/kotlin/build/raft/app/desktop/Main.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/desktopApp/src/main/kotlin/build/raft/app/desktop/RaftDesktopAdaptivePane.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/desktopApp/src/main/kotlin/build/raft/app/desktop/RaftDesktopHistoryInput.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/desktopApp/src/main/kotlin/build/raft/app/desktop/RaftDesktopHost.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/desktopApp/src/main/kotlin/build/raft/app/desktop/RaftDesktopLoginCallbacks.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/desktopApp/src/main/kotlin/build/raft/app/desktop/RaftDesktopNavigator.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/desktopApp/src/main/kotlin/build/raft/app/desktop/RaftDesktopSettingsCapability.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/desktopApp/src/main/kotlin/build/raft/app/desktop/realtime/SocketIoRealtimeClient.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/desktopApp/src/test/kotlin/build/raft/app/desktop/RaftDesktopAdaptivePanePublisherTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/desktopApp/src/test/kotlin/build/raft/app/desktop/RaftDesktopClipboardPasteTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/desktopApp/src/test/kotlin/build/raft/app/desktop/RaftDesktopHistoryInputTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/desktopApp/src/test/kotlin/build/raft/app/desktop/RaftDesktopLoginCallbacksTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/gradle/build-cache-epoch.settings.gradle.kts"
+      },
+      {
+        "status": "M",
+        "path": "compose/gradle/libs.versions.toml"
+      },
+      {
+        "status": "M",
+        "path": "compose/gradle/wrapper/gradle-wrapper.jar"
+      },
+      {
+        "status": "M",
+        "path": "compose/gradle/wrapper/gradle-wrapper.properties"
+      },
+      {
+        "status": "M",
+        "path": "compose/gradlew"
+      },
+      {
+        "status": "M",
+        "path": "compose/gradlew.bat"
+      },
+      {
+        "status": "M",
+        "path": "compose/iosApp/Podfile"
+      },
+      {
+        "status": "M",
+        "path": "compose/iosApp/iosApp.xcodeproj/project.pbxproj"
+      },
+      {
+        "status": "A",
+        "path": "compose/iosApp/iosApp/Assets.xcassets/lucide-list-filter.imageset/Contents.json"
+      },
+      {
+        "status": "A",
+        "path": "compose/iosApp/iosApp/Assets.xcassets/lucide-list-filter.imageset/list-filter.svg"
+      },
+      {
+        "status": "A",
+        "path": "compose/iosApp/iosApp/Assets.xcassets/lucide-palette.imageset/Contents.json"
+      },
+      {
+        "status": "A",
+        "path": "compose/iosApp/iosApp/Assets.xcassets/lucide-palette.imageset/palette.svg"
+      },
+      {
+        "status": "A",
+        "path": "compose/iosApp/iosApp/Assets.xcassets/lucide-text-quote.imageset/Contents.json"
+      },
+      {
+        "status": "A",
+        "path": "compose/iosApp/iosApp/Assets.xcassets/lucide-text-quote.imageset/text-quote.svg"
+      },
+      {
+        "status": "A",
+        "path": "compose/iosApp/iosApp/Cmp/RaftIosDuoGeometry.h"
+      },
+      {
+        "status": "A",
+        "path": "compose/iosApp/iosApp/Cmp/RaftIosDuoGeometry.m"
+      },
+      {
+        "status": "A",
+        "path": "compose/iosApp/iosApp/Cmp/RaftIosDuoRuntime.m"
+      },
+      {
+        "status": "M",
+        "path": "compose/iosApp/iosApp/Cmp/RaftPageControllerFactory.swift"
+      },
+      {
+        "status": "M",
+        "path": "compose/iosApp/iosApp/Cmp/RaftPageRouter.m"
+      },
+      {
+        "status": "M",
+        "path": "compose/iosApp/iosApp/Cmp/RaftPageViewController.h"
+      },
+      {
+        "status": "M",
+        "path": "compose/iosApp/iosApp/Cmp/RaftPageViewController.m"
+      },
+      {
+        "status": "M",
+        "path": "compose/iosApp/iosApp/GeneratedRealtimeContract.swift"
+      },
+      {
+        "status": "M",
+        "path": "compose/iosApp/iosApp/Host/HRBridgeModule.h"
+      },
+      {
+        "status": "M",
+        "path": "compose/iosApp/iosApp/Host/HRBridgeModule.m"
+      },
+      {
+        "status": "M",
+        "path": "compose/iosApp/iosApp/RaftIosAdaptivePanePublisher.swift"
+      },
+      {
+        "status": "M",
+        "path": "compose/iosApp/iosApp/RaftIosMobileOAuthHost.swift"
+      },
+      {
+        "status": "M",
+        "path": "compose/iosApp/iosApp/RaftIosRealtimeHost.swift"
+      },
+      {
+        "status": "M",
+        "path": "compose/iosApp/iosApp/RaftIosTabBarController.swift"
+      },
+      {
+        "status": "M",
+        "path": "compose/iosApp/iosApp/RaftIosTabBarItemMapping.swift"
+      },
+      {
+        "status": "M",
+        "path": "compose/iosApp/iosApp/iOSApp.swift"
+      },
+      {
+        "status": "M",
+        "path": "compose/iosApp/iosAppTests/RaftIosAdaptivePanePublisherTests.swift"
+      },
+      {
+        "status": "M",
+        "path": "compose/iosApp/iosAppTests/RaftIosOpenAttachmentTests.m"
+      },
+      {
+        "status": "M",
+        "path": "compose/iosApp/iosAppTests/RaftIosTabBarItemMappingTests.swift"
+      },
+      {
+        "status": "M",
+        "path": "compose/realtime-contract/generate_realtime_contract.py"
+      },
+      {
+        "status": "M",
+        "path": "compose/realtime-contract/realtime_contract.json"
+      },
+      {
+        "status": "M",
+        "path": "compose/settings.gradle.kts"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/build.gradle.kts"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidInstrumentedTest/kotlin/build/raft/app/data/DurablePartitionAndroidDriverMigrationTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidMain/kotlin/build/raft/app/RaftNativeSelectableText.android.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/androidMain/kotlin/build/raft/app/RaftNativeTiltedBadgeChrome.android.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidMain/kotlin/build/raft/app/RaftPlatformCapabilities.android.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidMain/kotlin/build/raft/app/RaftSandboxWebView.android.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidMain/kotlin/build/raft/app/RaftWebViewKeepAlive.android.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/androidMain/kotlin/build/raft/app/components/RaftActivitySwipeHaptic.android.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidMain/kotlin/build/raft/app/data/RelationalStoreFactory.android.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/ActionCardSpecFixtures.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/ActionCardStackRoleTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/ActivityExcerptBesideMarksTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/ActivityFilterBarScreenshotTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/ActivityHeaderRefreshIndicatorScreenshotTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/ActivityKeepTopIfParkedLayoutTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/ActivityNewActivityPillLayoutTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/ActivityObjectRowsScreenshotTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/ActivityTaskConversationRowsScreenshotTest.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/ActivityTerminologyResourceTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/AppBotSurfacesScreenshotTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/BottomTabBarJapaneseScreenshotTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/BottomTabBarLabelScreenshotTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/ComputerRuntimeUsageScreenshotTest.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/ComputerTerminologyResourceTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/DuoSideColumnScreenshotTest.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/ErrorPresentationResourceParityTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/ExternalLinkMarksScreenshotTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/HeadEpochCaptureDelegates.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/HomeChannelListScreenshotTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/InlineChipWrapScreenshotTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/LeaveChannelScreenshotTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/LikelyOnlinePresenceScreenshotTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/MarkedUnreadRowsScreenshotTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/MembersAgentComputerInfoScreenshotTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/MembersAgentControlsScreenshotTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/MembersAgentIssueReportScreenshotTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/MembersAgentProfileHeaderScreenshotTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/MembersAgentRuntimeFormV2DialogScreenshotTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/RaftActionCardScreenshotTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/RaftAndroidArtifactViewerWebViewRulesTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/RaftArtifactViewerScreenshotTest.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/RaftBoundedNativeLogTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/RaftNativeSelectableTextColorsTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/RaftRobolectricScreenshot.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/RaftSafeAreaFullBleedScreenshotTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/RaftSafeAreaPropagationTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/RaftStringDescResolutionTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/RaftWindowDialogSystemBarsTest.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/RelativeTimeSpacingResourceTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/SearchFilterRowScreenshotTest.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/SearchHomeResourceTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/SettingsThemePageScreenshotTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/SharedThreadAnchorContextDurableRoundTripTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/SharedThreadDurableOlderPagingRoundTripTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/SharedThreadReplyPrewarmDurableRoundTripTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/TaskConversationHeadScreenshotTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/TaskCreateFromMessageDialogScreenshotTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/TaskOpenSurfacesScreenshotTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/ThreadActionCardFeedbackTicketTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/ThreadAppBotScreenshotTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/ThreadArtifactLinkChipScreenshotTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/ThreadComposerDockFocusTest.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/ThreadInPlaceSelectionResourceTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/ThreadMarkThreadUnreadMenuScreenshotTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/ThreadMessageQuickReactionBarScreenshotTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/ThreadMessageSelectTextSheetScreenshotTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/ThreadMessageTaskListScreenshotTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/ThreadPendingSendStoreIntegrationTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/ThreadRefChipBusyScreenshotTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/ThreadShareCaptureModeTest.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/ThreadTerminologyResourceTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/ThreadUnreadJumpPillScreenshotTest.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/VoiceUnificationResourceTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/WebLoginContentScreenshotTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/WideTopBarHistoryScreenshotTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/contract/UnreadContractCasesTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/data/AccountLocalDataTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/data/ActionCardSpecVectorTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/data/CanonicalMessageV2AdjacentPageRoundTripTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/data/CanonicalMessageV2CanaryCorrectnessTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/data/CanonicalMessageV2CanaryExternalCommitRoundTripTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/data/CanonicalMessageV2ContextPageRoundTripTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/data/CanonicalMessageV2EnteredPageWriteThroughTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/data/CanonicalMessageV2EnteredScopeRoundTripTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/data/CanonicalMessageV2GapCatchUpRoundTripTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/data/CanonicalMessageV2RealtimeIngestRoundTripTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/data/CanonicalMessageV2ReplyThreadPrewarmRoundTripTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/data/CanonicalMessageV2ReplyThreadRoundTripTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/data/CanonicalMessageV2ResumeIngestRoundTripTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/data/DurablePartitionJdbcMigrationTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/data/SharedRaftNetworkClientTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/data/SharedRealtimeDomainEventOwnerShadowFoldLaneTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/data/SqlDelightRaftOfflineResourceRowsTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/data/SyncCoreMessagesV1RetirementTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/network/RaftOkHttpTransportTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/network/sync/CanonicalFactEnvelopeManifestGateTest.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/network/sync/CanonicalFactSoleApplyEligibilityTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/network/sync/CanonicalMessageV2ActionCardPresentationTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/network/sync/CanonicalMessageV2ContractRedTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/network/sync/CanonicalMessageV2GreenTestPort.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/network/sync/CanonicalMessageV2ManifestGateTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/network/sync/CanonicalMessageV2SegmentStoreTest.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/network/sync/MessageSoleApplyLaneTest.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/network/sync/OwnerCommitLinearizationTest.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/network/sync/SqlDelightStrictMessageScopeSnapshotReaderRedTest.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/androidUnitTest/kotlin/build/raft/app/network/sync/activity/ActivitySyncBehaviorVectorTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/resources/actioncard/actionCard.v1.vector.json"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/resources/actioncard/actionCard.v1.vector.sha256"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/androidUnitTest/resources/sync/activity-sync.behavior.jsonl"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/resources/sync/canonicalMessageManifest.v6.json"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/activity.app-bot.dm-rows.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/activity.app-bot.dm-rows.png"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/screenshots/activity.rw-stale-notice.dark.png"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/screenshots/activity.rw-stale-notice.png"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/screenshots/agent.migration.targets.many.dark.png"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/screenshots/agent.migration.targets.many.png"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/screenshots/agent.migration.targets.three.dark.png"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/screenshots/agent.migration.targets.three.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/artifact.viewer.unavailable.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/artifact.viewer.unavailable.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/auth.web-login.pending.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/auth.web-login.pending.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/auth.web-login.ready.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/composer.app-bot.mentions.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/composer.app-bot.mentions.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/duo.inner-landscape.channel.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/duo.inner-landscape.home-bell.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/duo.inner-landscape.home-server.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/duo.inner-landscape.home-server.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/duo.inner-landscape.home.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/duo.inner-upright.channel.before.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/duo.inner-upright.channel.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/duo.inner-upright.home.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/duo.outer.channel.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/duo.outer.home.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/forward.app-bot.targets.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/forward.app-bot.targets.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/home.app-bot.dm-rows.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/home.app-bot.dm-rows.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/home.leave-channel.dialog.joint.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/home.leave-channel.dialog.joint.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/home.leave-channel.dialog.last-member.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/home.leave-channel.dialog.last-member.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/home.leave-channel.dialog.private.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/home.leave-channel.dialog.private.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/home.leave-channel.dialog.public.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/home.leave-channel.dialog.public.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/home.leave-channel.menu.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/home.leave-channel.menu.png"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/screenshots/home.rw-stale-notice.dark.png"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/screenshots/home.rw-stale-notice.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/markdown.inline-chip-wrap.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/members.agent-computer-info.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/members.agent-computer-info.ja.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/members.agent-computer-info.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/members.agent-computer-info.zh.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/members.agent-profile-header.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/members.agent-profile-header.long.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/members.agent-profile-header.long.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/members.agent-profile-header.png"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/screenshots/members.agent-runtime-config.usage.dark.png"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/screenshots/members.agent-runtime-config.usage.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/members.app-bot.channel.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/members.app-bot.channel.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/members.likely-online.list.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/members.likely-online.list.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/members.likely-online.profile-header.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/members.likely-online.profile-header.png"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/screenshots/members.report-issue.dark.png"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/screenshots/members.report-issue.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/members.report-issue.submitted.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/members.report-issue.submitted.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/members.report-issue.ticket-failed.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/members.report-issue.ticket-failed.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/members.runtime_usage.card.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/safearea.landscape.left59.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/safearea.landscape.none.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/safearea.landscape.right59.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/safearea.sheet.top.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/screens.activity.filter.chip.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/screens.activity.filter.chip.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/screens.activity.filter.menu.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/screens.activity.filter.menu.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/screens.activity.filter.none.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/screens.activity.filter.none.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/screens.activity.header.refreshing.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/screens.activity.header.refreshing.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/screens.activity.object-rows.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/screens.activity.object-rows.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/screens.activity.panel-header.refreshing.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/screens.activity.panel-header.refreshing.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/screens.activity.rows.marked-unread.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/screens.activity.rows.marked-unread.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/screens.activity.task-rows.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/screens.activity.task-rows.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/screens.home.channel-list.bots.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/screens.home.channel-list.bots.png"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/screenshots/screens.home.channel-list.dark.png"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/screenshots/screens.home.channel-list.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/screens.home.marked-unread.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/screens.home.marked-unread.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/search.app-bot.results.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/search.app-bot.results.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/search.filter-row.360.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/search.filter-row.360.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/search.filter-row.412.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/search.filter-row.412.png"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/screenshots/settings.about.dark.png"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/screenshots/settings.about.png"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/screenshots/settings.computer.runtime_usage.sheet.dark.png"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/screenshots/settings.computer.runtime_usage.sheet.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/settings.theme.page.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/settings.theme.page.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/shell.bottom-tab-bar.ja.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/shell.bottom-tab-bar.labels.en.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/shell.bottom-tab-bar.labels.zh.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/shell.top-bar.history.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/shell.top-bar.history.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/task.conversation.head-float.closed.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/task.conversation.head-float.closed.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/task.conversation.head-float.closed.w412.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/task.conversation.head-float.open.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/task.conversation.head-float.open.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/task.conversation.head-float.open.w412.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/task.conversation.head.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/task.conversation.head.font-2x.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/task.conversation.head.keyboard.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/task.conversation.head.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/task.conversation.head.short.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/task.open.legacy.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/task.open.legacy.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/task.open.pending.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/task.open.pending.guest.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/task.open.pending.not-joined.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/task.open.pending.not-joined.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/task.open.pending.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/task.open.pending.refused.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/task.open.pending.refused.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/thread.action-card.stack-roles.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/thread.action-card.stack-roles.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/thread.app-bot.author-line.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/thread.app-bot.author-line.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/thread.app-bot.dm-header.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/thread.app-bot.dm-header.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/thread.app-bot.removed-dm.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/thread.app-bot.removed-dm.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/thread.artifact-link-chip.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/thread.artifact-link-chip.png"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/screenshots/thread.composer-attachments.dark.png"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/screenshots/thread.composer-attachments.png"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/screenshots/thread.composer-upload-states.dark.png"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/screenshots/thread.composer-upload-states.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/thread.create-task-from-message.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/thread.create-task-from-message.failed.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/thread.create-task-from-message.png"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/screenshots/thread.forwarded-bundle.dark.png"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/screenshots/thread.forwarded-bundle.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/thread.message-task-chip.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/thread.message-task-chip.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/thread.message-task-list.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/thread.message-task-list.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/thread.message.quick-reaction-bar.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/thread.message.quick-reaction-bar.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/thread.ref-chip-busy.channel.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/thread.ref-chip-busy.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/thread.ref-chip-busy.idle.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/thread.ref-chip-busy.png"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/screenshots/thread.refs-markdown.dark.png"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/androidUnitTest/screenshots/thread.refs-markdown.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/thread.reply-menu.mark-thread-unread.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/thread.reply-menu.mark-thread-unread.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/thread.select-text.sheet.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/thread.select-text.sheet.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/thread.share-capture.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/thread.share-capture.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/thread.unread-jump-pill.busy.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/thread.unread-jump-pill.busy.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/thread.unread-jump-pill.dark.png"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/androidUnitTest/screenshots/thread.unread-jump-pill.png"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/composeResources/values-ja/strings.xml"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/composeResources/values-zh-rCN/strings.xml"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/composeResources/values/strings.xml"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/ActivityConversationList.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/ActivityObjectUndo.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/ActivityRefreshTopAnchor.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/AgentMigrationSection.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/AgentMigrationTargetList.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/AgentToolStuckNotice.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/AuthChooseServerPage.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/AuthComponents.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/AuthPages.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/AuthenticatedProductRoute.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/BasicWidget.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/ChannelMembersCreateAgentDialog.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/ChannelMembersPage.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/ChannelSettingsPage.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/ChannelSettingsStore.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/ComputerRuntimeUsageChip.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/ConversationKindContract.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/ConversationOpenResolver.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/HomeSecondaryRouter.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/LeaveChannelConfirm.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/MembersAgentActivityOverview.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/MembersAgentAvatarDialog.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/MembersAgentIssueReportDialogs.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/MembersAgentRuntimeChip.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/MembersAgentRuntimeFormV2Dialog.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/MembersAgentRuntimeUsage.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/MembersPage.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/MessageBodyTypography.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/NotificationPermissionAfterSignIn.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftActionCardView.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftAgentStatusIndicator.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftAppBot.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftAppLinkCard.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftAppSafeArea.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftAppShellPage.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftAppTheme.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftAppTopBar.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftArtifactOpenTrace.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftArtifactViewer.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftArtifactViewerPage.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftBoundedNativeLog.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftCardElements.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftChildPage.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftDatabaseLaunchGate.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftDesignTokens.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftDuoInnerRail.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftEmptyState.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftEnvironmentIndicator.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftFilePreview.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftFloatingOverlay.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftForwardTargetPickerChrome.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftHomeComponents.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftHomeDmAgentLiveActivity.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftLucideIconCatalog.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftLucideIconPaths.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftMemberModelLabelResolver.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftMemberPicker.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftMessageLink.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftMessagePermalink.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftModalComponents.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftNativeSelectableText.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftNativeTabBar.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftNativeTiltedBadgeChrome.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftPlatformCapabilities.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftProductEntryEvents.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftProductPageRoutes.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftSandboxWebView.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftSearchResultParts.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftSettingsComputersPage.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftShellStoreLaunch.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftSideColumnPage.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftTabBar.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftWebView.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftWebViewKeepAlive.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RaftWideNavigationHistory.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/RuntimeFormV2Fields.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/SettingsAboutPage.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/SettingsAccountPage.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/SettingsAppearancePage.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/SettingsDeveloperPage.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/SettingsFeedbackWebViewPage.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/SettingsFormParts.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/SettingsHomePage.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/SettingsHubPage.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/SettingsLanguageRegionPage.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/SettingsMobilePage.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/SettingsNativeDetailContent.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/SettingsNativeDetailPage.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/SettingsNotificationsPage.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/SettingsServerProfilePage.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/SettingsServerThemeSection.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/SettingsServerThemeStore.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/SettingsStandaloneStore.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/SettingsStandaloneWebViewHost.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/SettingsThemePage.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/SettingsWebViewAccessTokenSync.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/SharedConversationHeaderProjection.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/SharedCreateAgentDialog.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/SharedCreateAgentRecovery.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/SharedInviteHumanDialog.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/SharedTasksPage.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/SharedThreadComposerDraftStore.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/SharedThreadStore.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/TaskConversationHead.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/TaskConversationHeaderBar.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/TaskConversationOpen.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/TaskCreateFromMessageDialog.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/TaskOpenSurfaces.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/ThreadActionCardSpec.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/ThreadActionCardSpecView.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/ThreadActivityOpenSeed.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/ThreadAgentTyping.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/ThreadAppLinkCardPopover.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/ThreadAppLinkPreviews.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/ThreadComposerPage.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/ThreadInPlaceTextSelection.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/ThreadJumpPills.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/ThreadLaunchConversationIdentity.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/ThreadLinkedTaskProjection.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/ThreadMarkdownReferencePending.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/ThreadMessageSelectTextSheet.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/ThreadMessageSourceTaskList.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/ThreadPage.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/ThreadRouteIdentity.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/ThreadRoutePayload.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/ThreadShareCaptureMode.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/ThreadSurfaceContract.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/WebLoginAttempt.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/WebLoginScreen.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/base/BasePager.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/base/RaftPageLayers.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/compat/pager/RaftPageRegistry.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/compat/pager/RaftProductPages.g.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/components/RaftActivitySwipeHaptic.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/components/RaftBrutalComponents.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/components/RaftCupertinoRefreshHaptic.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/components/RaftDelayedRefreshIndicator.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/components/RaftDesignSystemTheme.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/components/RaftUiMenuPrimitives.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/components/RaftUiPrimitives.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/AccountLocalData.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/ActionCardSpec.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/ActionCardSpecJson.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/ActivityFilterPreference.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/ActivityObjectsApi.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/AgentDetailOffline.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/AgentIssueReportRepository.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/AgentsApi.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/AppLinkPreviewsApi.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/AppLogin.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/AppLoginCallbacks.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/ArtifactLinks.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/ArtifactSummariesApi.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/AuthServerRepository.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/AuthSessionStore.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/BridgeAuth.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/CanonicalMessageV2ProductionBinding.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/CanonicalMessageV2RealtimeIngest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/CanonicalMessageV2ResumeIngest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/CardElements.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/ChannelMessageWindow.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/ComputersApi.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/ConversationRepositoryDataSource.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/DataSnapshots.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/HomeDataSource.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/HomeFollowedThreadUnread.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/HomeParser.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/InboxParser.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/InboxSavedSearchRepositoryDataSource.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/IntegrationsActionsPushApi.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/MarkUnreadOutcome.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/MemberAgentParser.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/MemberRepositoryDataSource.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/MessageParser.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/NotificationPermissionAutoPrompt.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/PerReceiverStateUpdates.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/PresenceTransportRosterRefetch.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/ProcessActivityUnreadStore.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/ProcessMemberPresenceRegistry.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/ProcessRealtimeIngressCoordinator.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/ProcessServerMembersCore.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/RaftAppScopeApiEnvironment.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/RaftAppearancePreferences.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/RaftChatLayoutPreferences.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/RaftClientConfigAppHosts.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/RaftDatabaseLaunchRecovery.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/RaftKeyedDurableSnapshotStore.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/RaftKeyedSnapshotCache.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/RaftLastCountsPersistStorage.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/RaftLongMessageCollapsePreferences.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/RaftMemberAvatarRefStore.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/RaftOfflineResources.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/RaftProductEventContract.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/RaftReconnectRefetchJitter.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/RaftRepositories.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/RaftServerMembersDurableStore.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/RaftServerThemeFollower.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/RaftSharedStoreProvider.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/RaftSqlDatabase.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/ReadReceiptCoordinator.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/ReadReceiptRepositoryDataSource.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/RelationalStoreFactory.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/SearchPersonalizationRepository.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/ServerAppearanceApi.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/ServerFeatureFlagChangeRefresher.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/ServerNotificationPreferencesRealtimeRefresher.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/SettingsRepositoryDataSource.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/SettingsServerNotificationLastKnownStore.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/SharedActivityPresentationStore.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/SharedActivityStore.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/SharedAgentDetailStore.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/SharedAppLinkPreviewStore.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/SharedArtifactSummaryStore.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/SharedChannelMembersOffline.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/SharedClientConfigStore.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/SharedComputersStore.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/SharedConversationDirectoryStore.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/SharedConversationForwardHistory.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/SharedCreateAgentCoordinator.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/SharedCreateAgentFormContract.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/SharedCreateAgentFormStore.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/SharedForegroundReconciler.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/SharedHomeIdentityPersistSlice.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/SharedHomeRowHintPersistSlice.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/SharedHomeSearchSavedStore.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/SharedHomeShellStore.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/SharedHomeStore.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/SharedRaftNetworkClient.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/SharedServerFeatureFlags.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/SharedServerMembersStore.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/SharedSettingsStore.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/SharedSettingsStoreContract.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/SharedTasksDataStore.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/SharedTasksOfflineLists.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/SharedTasksStore.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/SqlDelightRaftThreadReplyWindowStorage.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/SqliteUserVersionPreflight.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/StoredConversationDetails.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/SyncChangesApi.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/SyncChangesContract.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/SyncChangesCursorStore.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/SyncChangesEngine.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/SyncChangesStoreRouter.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/SystemNotifications.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/TaskConversationDetail.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/TaskConversationDetailsApi.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/TaskConversationDetailsStore.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/TaskConversationHeaderStore.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/TasksDataSource.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/ThreadActionCards.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/UnreadParser.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/generated/ReadStateDtos.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/realtime/RaftRealtimeAppScopeCoordinator.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/realtime/RealtimeEventMapper.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/runtimeform/v2/RuntimeFormV2Loader.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/data/runtimeform/v2/RuntimeFormV2Parser.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/designtokens/RaftUiColorTokens.g.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/markdown/RaftInlineBoxStyle.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/markdown/RaftMarkdown.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/markdown/RaftMarkdownAppLinkChips.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/markdown/RaftMarkdownRecomposeDiagnostics.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/markdown/RaftMarkdownTaskRefChip.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/markdown/RaftRichTextContract.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/model/GravatarSessionLoadCache.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/model/ModelExtensions.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/model/RaftModels.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/model/RaftServerTheme.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/network/KtorRaftHttpExecutor.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/network/realtime/RealtimeAuth.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/network/realtime/RealtimeSession.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/network/realtime/RealtimeTransport.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/network/sync/CanonicalMessageEnvelopeV2.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/network/sync/CanonicalMessageFoldInput.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/network/sync/CanonicalMessageV2Codec.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/network/sync/CanonicalMessageV2Generation.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/network/sync/CanonicalMessageV2Normalizer.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/network/sync/CanonicalMessageV2ProductionCanary.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/network/sync/CanonicalMessageV2ReactionEnvelope.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/network/sync/CanonicalMessageV2Segments.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/network/sync/CanonicalMessageV2ThreadProjection.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/network/sync/CanonicalReactionLimits.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/network/sync/CurrentGrantMessageShadowCommitLane.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/network/sync/DiagnosticFeatureFlagOverrideRegistry.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/network/sync/MessageSoleApplyEngine.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/network/sync/MessageSoleApplyLane.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/network/sync/OwnerCommitGate.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/network/sync/RaftThreadReplyWindowCache.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/network/sync/SqlDelightFoldPersistStore.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/network/sync/SyncCoreMessageShadowFoldLane.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/network/sync/SyncCoreMessagesV1Purge.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/network/sync/SyncRecovery.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/network/sync/ThreadDurableLastKnownReader.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/network/sync/ThreadEnteredScopeSnapshotLoader.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/network/sync/activity/ActivitySyncDomain.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/kotlin/build/raft/app/resources/RaftStringDesc.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/sqldelight/build/raft/app/shared/data/local/9.sqm"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonMain/sqldelight/build/raft/app/shared/data/local/RaftDatabase.sq"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonMain/sqldelight/databases/9.db"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/ActivityConversationSwipeTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/ActivityRefreshTopAnchorTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/AgentMigrationSectionStepsTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/AgentToolStuckTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/AppShellServerSwitchWindowTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/AttachmentOpenSemanticResultTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/AuthenticatedProductRouteTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/ChannelSettingsOfflineTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/ChannelSettingsPageTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/CreateAgentRuntimeFormV2FailureTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/ExternalAgentDetailIndicatorTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/HomeChannelRowMarksTest.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/KimiSdkReasoningEffortSelectorTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/KmmResourceI18nTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/LeaveChannelConfirmTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/MarkedUnreadRowDecisionTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/MembersAgentIssueReportReceiptTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/MembersAgentRuntimeUsageTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/MembersExternalAgentSetupVisibilityTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/MembersExternalSetupSectionTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/MembersRuntimeConfigTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/MembersRuntimeEditorSessionTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/MembersRuntimeSwitchEntryTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/RaftAdaptivePaneTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/RaftAppBotSurfacesTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/RaftAppBotTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/RaftAppShellTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/RaftAppThemeStateTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/RaftArtifactViewerCacheTest.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/RaftChildPageLifecycleTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/RaftDuoInnerRailTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/RaftEnvironmentIndicatorTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/RaftHomeComponentsTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/RaftHostWindowInsetsTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/RaftLongMessageCollapseTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/RaftMenuLayoutTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/RaftMessageLinkAppHostsTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/RaftNativeTabBarTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/RaftOutsideTapTrackerTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/RaftProductEntryEventsTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/RaftRelativeTimeResourceSelectionTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/RaftSideColumnPostureTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/RaftThreadImeLayoutTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/RaftWideNavigationHistoryTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/SettingsAboutSourceCodeTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/SettingsComputersRouteTest.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/SettingsMobilePayloadTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/SettingsNativeDetailPageTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/SettingsNotificationsUiContractTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/SettingsServerThemeStoreTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/SettingsThemePageTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/SettingsWebViewAccessTokenSyncTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/SharedCreateAgentDialogTest.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/SharedCreateAgentRecoveryTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/SharedInboxPanelTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/SharedMembersParserTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/SharedThreadAgentCreateActionCardTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/SharedThreadComposerDraftStoreTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/SharedThreadReplyCacheProvenanceTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/SharedThreadSecondaryTimelineProvenanceTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/SharedThreadStoreDurableLastKnownTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/SharedThreadStoreEnterBaselineAwaitTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/SharedThreadStoreEnteredScopeTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/SharedThreadStoreFailedSendTimelineTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/SharedThreadStoreGapCatchUpTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/SharedThreadStoreMarkThreadUnreadTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/SharedThreadStoreReplyOriginAndPagingTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/SharedThreadStoreReplyParentAccessTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/SharedThreadStoreReplyThreadDurableTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/SharedThreadStoreTaskConversationTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/SharedThreadStoreTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/SharedThreadStoreTestFakes.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/SharedThreadUnreadThreadJumpTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/TaskConversationHeadModelTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/TaskConversationOpenTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/TaskCreateFromMessageTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/TaskHeadFloatStateTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/TaskHeadFoldLimitTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/TaskOpenSurfacesTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/TaskPendingPageTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/ThreadActionCardSpecStoreTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/ThreadComposerPasteShortcutTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/ThreadComposerPayloadTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/ThreadComposerTaskV2Test.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/ThreadInPlaceTextSelectionTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/ThreadJumpPillsTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/ThreadMarkThreadUnreadMenuTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/ThreadMarkdownRefOpenStoreTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/ThreadMessageDoubleTapTrackerTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/ThreadMessageLongPressSurfaceTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/ThreadMessageMenuParityTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/ThreadMessageSelectTextSheetTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/ThreadMessageSourceTasksTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/ThreadPayloadTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/ThreadShareCaptureFramesTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/ThreadSplitDetailPaneTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/WebLoginAttemptTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/base/RaftPageLayersTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/components/RaftDelayedRefreshIndicatorTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/components/RaftPullToRefreshControllerTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/components/RaftSlugInputTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/components/SharedHomeSearchInputEditorTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/contract/UnreadContractCase.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/contract/UnreadContractCaseDecodingTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/contract/UnreadContractCaseDriverSelfTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/contract/UnreadContractCaseDrivers.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/ActionCardSpecExecuteApiTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/ActivityFilterPreferenceRepositoryTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/ActivityObjectRowsTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/AgentDetailOfflineTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/AgentIssueReportRepositoryTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/AgentsApiTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/AppLoginCallbacksTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/ArtifactLinksTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/AuthSessionStoreTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/CanonicalMessageV2ActionCardResultTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/CanonicalMessageV2AdjacentPageWriterTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/CanonicalMessageV2EnterForTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/CanonicalMessageV2EnteredScopeLoaderTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/CanonicalMessageV2ProductionBindingTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/CanonicalMessageV2ReplyThreadDurableTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/CanonicalMessageV2TaskConversationSnapshotTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/CanonicalMessageV2TestSupport.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/ComputersApiTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/ConversationRepositoryDataSourceTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/ConversationRepositoryTestSupport.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/ConversationSummaryDirectoryTestAdapters.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/CurrentMessageCommitAuthorityRedTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/DurablePartitionDriverMigrationChecks.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/FollowedThreadHistoryWindowParserTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/HomeDataSourceTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/LocalPreferencesTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/MarkedUnreadContractTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/MarkedUnreadStoreTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/MemberRepositoryDataSourceTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/MessageParserTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/MviFoundationTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/NotificationPermissionAutoPromptTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/PresenceTransportRosterRefetchTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/ProcessRealtimeIngressCoordinatorTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/RaftAppearancePreferencesTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/RaftChatLayoutPreferencesTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/RaftDatabaseLaunchRecoveryTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/RaftDatabaseLaunchTestFixtures.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/RaftOfflineResourcesOrderingTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/RaftOfflineResourcesTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/RaftProductEntryEventContractTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/RaftReconnectRefetchJitterTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/RaftServerThemeApplyTest.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/ReadReceiptVisibilityGateTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/ReadStateDtosQualificationTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/RealtimeCanonicalFinalOwnerGatewayTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/RealtimeCanonicalFinalProductionFactoryTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/RuntimeFormRequestLanguageTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/SearchPersonalizationRepositoryTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/ServerAppearanceTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/ServerFeatureFlagChangeRefresherTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/ServerNotificationPreferencesRealtimeRefresherTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/SettingsRepositoryDataSourceTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/SharedActivityStoreDeferredUnfollowTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/SharedActivityStoreHeaderRefreshTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/SharedActivityStoreProgressiveRefreshTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/SharedActivityStoreServerSwitchTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/SharedActivityStoreTaskConversationTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/SharedActivityStoreTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/SharedActivityStoreTestSupport.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/SharedAppLinkPreviewStoreTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/SharedArtifactSummaryStoreTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/SharedClientConfigStoreTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/SharedComputersStoreTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/SharedCreateAgentFormStoreTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/SharedForegroundReconcilerTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/SharedHomeSavedListOfflineTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/SharedHomeSearchSavedStoreTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/SharedHomeSearchServerScopeTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/SharedHomeSearchTestSupport.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/SharedHomeStoreConversationReadAllTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/SharedHomeStoreLeaveChannelTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/SharedHomeStoreTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/SharedServerChannelMembersOwnerTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/SharedServerFeatureFlagsTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/SharedServerMembersJointPeerAgentPresenceTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/SharedServerMembersLikelyOnlineTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/SharedServerMembersPresenceReconciliationTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/SharedServerMembersRebaselineCarryOverTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/SharedServerMembersStoreSyncTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/SharedSettingsStoreTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/SharedTasksOfflineTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/SqliteUserVersionPreflightTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/SyncChangesContractTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/SyncChangesCursorStoreTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/SyncChangesEngineTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/SyncChangesStoreRouterTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/SyncChangesTestSupport.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/TaskConversationContractTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/TaskConversationDetailsApiTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/TaskConversationHeaderStoreTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/TaskConversationReplyCountTest.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/TaskRepositoryDataSourceTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/realtime/RaftRealtimeAppScopePolicyTest.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/data/realtime/SharedSocketIoProtocolTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/markdown/RaftInlineLineFragmentsTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/markdown/RaftMarkdownArtifactLinkChipsTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/markdown/RaftMarkdownPlainCandidateCensusTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/markdown/RaftMarkdownTaskRefChipTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/markdown/RaftMarkdownTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/model/AgentRuntimeConfigTest.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/model/GravatarSessionLoadCacheTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/network/KtorRaftHttpExecutorTest.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/network/realtime/RealtimeConnectionReducerTest.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/network/sync/CanonicalMessageV2ReactionEnvelopeTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/network/sync/CanonicalMessageV2SegmentAlgebraTest.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/network/sync/CanonicalMessageV2TaskConversationTest.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/network/sync/CurrentGrantMessageShadowCommitLaneRedTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/network/sync/DiagnosticFeatureFlagOverrideRegistryTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/network/sync/MessageShadowCompareTest.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/network/sync/MessageSoleApplyEngineTest.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/network/sync/OwnerCommitGateTest.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/network/sync/RaftThreadReplyWindowCacheTest.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/network/sync/SyncCoreMessageShadowFoldLaneFrameLogTest.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/network/sync/activity/ActivitySyncDomainTest.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/network/sync/activity/contract/v1/ActivitySyncContractCanaryTest.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/commonTest/kotlin/build/raft/app/network/sync/activity/contract/v1/ActivitySyncContractFixtures.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/resources/contract-cases/unread/README.md"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/resources/contract-cases/unread/SOURCE_SHA"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/resources/contract-cases/unread/case.schema.json"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/resources/contract-cases/unread/cases/R1-202-pending.json"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/resources/contract-cases/unread/cases/R1-202-then-not-marked-after-leaving.json"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/resources/contract-cases/unread/cases/R1-202-then-not-marked-while-there.json"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/resources/contract-cases/unread/cases/R1-inferred-counted.json"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/resources/contract-cases/unread/cases/R1-inferred-marked.json"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/resources/contract-cases/unread/cases/R1-inferred-nothing.json"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/resources/contract-cases/unread/cases/R1-outcome-field-counted.json"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/resources/contract-cases/unread/cases/R1-outcome-field-marked.json"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/resources/contract-cases/unread/cases/R1-outcome-field-nothing.json"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/resources/contract-cases/unread/cases/R10-not-joined-has-new.json"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/resources/contract-cases/unread/cases/R11-count-wins-over-mark.json"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/resources/contract-cases/unread/cases/R11-dm-muted-mention.json"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/resources/contract-cases/unread/cases/R11-marked-unread-joined.json"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/resources/contract-cases/unread/cases/R11-marked-unread-muted.json"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/resources/contract-cases/unread/cases/R2-optimistic-badge.json"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/resources/contract-cases/unread/cases/R3-hold-until-leave.json"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/resources/contract-cases/unread/cases/R3-only-my-replies-in-thread.json"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/resources/contract-cases/unread/cases/R7-jump-lands-on-paywall.json"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/resources/contract-cases/unread/cases/R9-joined-loud-with-threads.json"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/resources/contract-cases/unread/cases/R9-muted-with-threads.json"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/commonTest/resources/contract-cases/unread/cases/S1-muted-grey-segments.json"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/desktopMain/kotlin/build/raft/app/RaftDesktopActuals.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/desktopMain/kotlin/build/raft/app/RaftDesktopPlatformCapabilities.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/desktopMain/kotlin/build/raft/app/RaftWebViewKeepAlive.desktop.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/desktopMain/kotlin/build/raft/app/components/RaftDesktopHaptics.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/desktopMain/kotlin/build/raft/app/data/RaftDesktopComposerTemporaryFiles.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/desktopMain/kotlin/build/raft/app/data/RaftDesktopDataActuals.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/desktopMain/kotlin/build/raft/app/data/RaftDesktopPlatformFiles.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/iosMain/kotlin/build/raft/app/RaftIosHostHooks.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/iosMain/kotlin/build/raft/app/RaftNativeSelectableText.ios.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/iosMain/kotlin/build/raft/app/RaftNativeTiltedBadgeChrome.ios.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/iosMain/kotlin/build/raft/app/RaftPlatformCapabilities.ios.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/iosMain/kotlin/build/raft/app/RaftSandboxWebView.ios.kt"
+      },
+      {
+        "status": "A",
+        "path": "compose/shared/src/iosMain/kotlin/build/raft/app/RaftWebViewKeepAlive.ios.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/iosMain/kotlin/build/raft/app/components/RaftActivitySwipeHaptic.ios.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/iosMain/kotlin/build/raft/app/components/RaftCupertinoRefreshHaptic.ios.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/iosMain/kotlin/build/raft/app/data/RelationalStoreFactory.ios.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/iosTest/kotlin/build/raft/app/ActivitySwipeTabPagerIosTest.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/jsMain/kotlin/build/raft/app/RaftNativeTiltedBadgeChrome.js.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/jsMain/kotlin/build/raft/app/data/RelationalStoreFactory.js.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/jvmCommonMain/kotlin/build/raft/app/components/RaftCupertinoRefreshHaptic.jvm.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/jvmCommonMain/kotlin/build/raft/app/network/RaftKtorHttpEngine.jvm.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/nativeMain/kotlin/build/raft/app/RaftNativeTiltedBadgeChrome.native.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/visualFixtures/kotlin/build/raft/app/CreateAgentStateVisualFixture.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/visualFixtures/kotlin/build/raft/app/HomeServerSwitcherBadgeVisualHost.kt"
+      },
+      {
+        "status": "D",
+        "path": "compose/shared/src/visualFixtures/kotlin/build/raft/app/KimiCreateCapabilityVisualPage.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/visualFixtures/kotlin/build/raft/app/ThreadMessageRowVisualHost.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/visualFixtures/kotlin/build/raft/app/VisualFixturePages.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/shared/src/visualFixtures/kotlin/build/raft/app/compat/pager/RaftVisualFixturePages.g.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/ui-cmp/src/commonMain/kotlin/build/raft/app/cmp/RaftCmpRoot.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/ui-cmp/src/commonMain/kotlin/build/raft/app/cmp/pages/CmpHelloPage.kt"
+      },
+      {
+        "status": "M",
+        "path": "compose/ui-cmp/src/iosMain/kotlin/build/raft/app/cmp/ios/RaftCmpIos.kt"
+      }
+    ]
+  }
+}

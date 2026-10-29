@@ -1,0 +1,19 @@
+{
+  "webVersion": "1.21.38",
+  "releaseCommit": "a7b1309bcb7fa91654c9a6895ce73236190bd6b4",
+  "builtAt": "2026-10-29T04:54:49Z",
+  "sourceUrl": "https://app.raft.build/assets/app-shell-CKVQUGrN.js",
+  "sourceSha256": "9a02285d93c15f0e7e901951d3bd25f4a8e2f1e3b9b2f677deda80e7ecd03572",
+  "license": "Owner-authorized reuse; original Raft notices in adoption.json",
+  "kind": "Byte-exact selected published declarations; external imports and quote/i18n bindings are Loom adapters, not new TSX",
+  "sourceExcerptsSha256": "fb99652d5d4a14ce837820d655dac322019e75c55381a26f4fffd04d4a726a5c",
+  "uiPackage": "@botiverse/raft-ui@0.52.0",
+  "limits": [
+    "Package and production Web are independent identities; list-cell style adoption is the new package design, not a claim that Web 1.21.38 bundles 0.52.0.",
+    "No Apps/MCP, billing, multi-Human, sharing or native OS bridge adoption."
+  ],
+  "adaptations": {
+    "selection": "E4e and selected clipboard/textarea helpers are byte-exact declaration bodies; imports, quote routing and i18n bind Loom. Mi touch gate/point capture are a structural port; existing Loom portal containment and keyboard anchor are preserved.",
+    "task": "ect/Ict/Mct/compact button declaration bodies are unchanged. Old TaskModalBar retains Loom data/actions, receives the compact summary slot and 1.21.38 mono metadata classes. Full task-header action parity not claimed."
+  }
+}

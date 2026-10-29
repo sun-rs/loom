@@ -1,3 +1,4 @@
+import { DirectMessageIcon } from "raft-ui";
 import PageEmpty from "./PageEmpty";
 import { compactConversationRoute, layoutQueries } from "./adaptive-layout.ts";
 import { MobilePageNavigation } from "./MobilePageNavigation";
@@ -77,7 +78,7 @@ import {
   Button,
   Spinner,
 } from "raft-ui";
-import { Search, Hash, MessageSquare } from "lucide-react";
+import { Search, Hash } from "lucide-react";
 import { HttpRahClient } from "@rah-os/client-sdk";
 import { hasUnresolvedIntents } from "@rah-os/client-core/write-intent";
 import { loadOrCreateConsumerId } from "@rah-os/client-core";
@@ -359,7 +360,7 @@ function Channel({
                 iconTone="location"
                 icon={
                   isPrivate || standalone ? (
-                    <MessageSquare size={18} />
+                    <DirectMessageIcon width={18} height={18} />
                   ) : (
                     <Hash size={18} />
                   )

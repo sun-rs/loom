@@ -6,9 +6,10 @@ import { ManagementClient } from "./management-client.ts";
 import { OperationStatus, useManagement } from "./ManagementUi.tsx";
 import { useRouteIntentOwner } from "./useIntentRoute.ts";
 import { useIntl } from "react-intl";
-import { MessageSquare, ListTodo, Folder } from "lucide-react";
+import { ListTodo, Folder } from "lucide-react";
 import {
   Button,
+  ChatIcon,
   useOrderedTabs,
   ConversationPanelTabs,
   Tabs,
@@ -91,11 +92,7 @@ export default function ChannelTabs({
         <SortableTabsList value={order} onReorder={reorder}>
           {order.map((id) => {
             const Icon =
-              id === "chat"
-                ? MessageSquare
-                : id === "tasks"
-                  ? ListTodo
-                  : Folder;
+              id === "chat" ? ChatIcon : id === "tasks" ? ListTodo : Folder;
             return (
               <SortableTabsTab
                 disabled={!preferences || state !== "idle"}

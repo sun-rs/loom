@@ -71,7 +71,7 @@ Read the target contract before changing behavior; this map is not a replacement
   Compare each retained page's empty/default/selected state and its sidebar/list
   width policy (default, persisted drag, min/max and narrow-screen transition).
   A component-package upgrade never closes these page-level checks.
-- **Current package:** `@botiverse/raft-ui@0.40.0` via alias `raft-ui`.
+- **Current package:** `@botiverse/raft-ui@0.52.0` via alias `raft-ui`.
   Selected page source remains `db5e399` (Web 1.21.23 source); resource ports retain
   their original provenance. A package upgrade alone does not prove latest
   whole-site parity; Theme/swipe bindings have separate source records.
@@ -83,6 +83,15 @@ Read the target contract before changing behavior; this map is not a replacement
   Empty pages/conversations use the official EmptyState composition; zero-instance
   Computer sections render a quiet caption without an empty bordered list.
   See `docs/evo/evidence/2026-10-28-ui-refresh/README.md`.
+
+Web 1.21.38 selected declaration intake lives in `upstream/published-2026-10-29`:
+message text-selection Drawer, mobile compact task-head observer/pull-down and
+semantic Chat/DM/follow icons. New package list-cell styling owns its frame; do
+not retain the old search wrapper hairline. These are scoped resource bindings,
+not a whole-site source upgrade. Generated JS **and** declaration surfaces are
+owned by `generate-refresh138.mjs`. Mobile audit must report host-field changes
+and Compose paths outside the selected lock, not only unchanged width numbers.
+Retained gaps are listed in `docs/evo/evidence/2026-10-29-ui-refresh138/README.md`.
 
 Executable upgrade practice and the current change matrix:
 `docs/design/official-ui-upgrade-workflow.zh-CN.md`. Commit/push active product
@@ -537,9 +546,9 @@ neither an old reference fixture nor a visible tab proves product completeness.
   never connect an enabled production button to fixture success.
 
 Current source upgrade (owner requested 2026-10-21): the official component package
-is now `@botiverse/raft-ui`, pinned at `0.40.0` through npm alias `raft-ui`.
+is now `@botiverse/raft-ui`, pinned at `0.52.0` through npm alias `raft-ui`.
 The obsolete unscoped package stopped at `0.6.0`; do not mistake that old
-package version for the current official release. The package was upgraded on 2026-10-28; retained resource ports keep their individual provenance.
+package version for the current official release. The package was upgraded on 2026-10-29; retained resource ports keep their individual provenance.
 The 1.21.35 resource refresh is locked under `upstream/published-2026-10-28`,
 not relabeled as newer original TSX. Prefer its exported primitives over local compatibility
 recipes; keep existing owner-approved compact mobile exceptions explicit.

@@ -1,5 +1,5 @@
 {
-  "scope": "Raft single design system, pinned @botiverse/raft-ui 0.40.0 (import alias raft-ui); modes light/dark/system. Semantic recipes owned by official package.",
+  "scope": "Raft single design system, pinned @botiverse/raft-ui 0.52.0 (import alias raft-ui); modes light/dark/system. Semantic recipes owned by official package.",
   "sourceVersions": {
     "pageSource": "frontends/raft/adoption.json",
     "primitiveSource": "frontends/raft/node_modules/raft-ui/package.json",
@@ -1000,5 +1000,20 @@
       "UsageDataSettings is analytics consent, not token usage",
       "HostedRuntimeSpendCard and agent hosted-runtime settings concern Raft cloud products; Loom usage and execution settings remain intentional local compositions of native primitives"
     ]
+  },
+  "web138Slices": {
+    "manifest": "frontends/raft/upstream/published-2026-10-29/manifest.json",
+    "generator": "scripts/official-web/generate-refresh138.mjs",
+    "bindings": [
+      "OfficialMessageItem.generated.tsx",
+      "TaskDetail.tsx",
+      "task-summary.tsx",
+      "message-select-text.ts"
+    ],
+    "evidence": [
+      "scripts/official-web/ui-refresh138.test.mjs",
+      "scripts/official-web/ui-refresh138-browser.mjs"
+    ],
+    "wholeSiteParity": false
   }
 }

@@ -25,7 +25,9 @@ test("search field, all filter controls and empty states come from locked offici
 test("search loading uses native result skeleton with one accessible loading region", () => {
   const s = read("loom/DiscoveryPage.tsx");
   assert.match(s, /<SearchLoading/);
-  assert.doesNotMatch(s, /<Spinner/);
+  const search = s.slice(s.indexOf("<SearchLoading"));
+  assert.doesNotMatch(search, /<Spinner/);
+  assert.match(s, /mode === "activity" && pull.distance > 0/);
   const g = read("loom/OfficialSearchControls.generated.tsx");
   assert.match(g, /function SearchSkeleton/);
   assert.match(g, /role="status" aria-label="正在读取结果"/);

@@ -2,6 +2,8 @@
 import useRenderMessageMarkdown from "./OfficialMessageMarkdown.generated";
 import {boundMessageMentions} from "./MessageProfile";
 import LoomAttachments from "./Attachments";
+import OfficialMessageSelectText from "./OfficialMessageSelectText.generated.js";
+import {TextSelect} from "lucide-react";
 import {useLoomReactions} from "./MessageReactions";
 import {useLoomTaskActions,LoomTaskMenu} from "./ChannelTasks";
 
@@ -1231,6 +1233,7 @@ const ConnectedMessageItem = memo(function ConnectedMessageItem({ message, menti
   // formatMessageRef.current so a locale switch never re-runs them.
   const formatMessageRef = useRef(formatMessage);
   formatMessageRef.current = formatMessage;
+  const [loomSelectText, setLoomSelectText] = useState<"open" | "closing" | null>(null);
   const time = formatMessageTime(message.createdAt);
   // Bare HH:MM clock for the continuation-row hover gutter (task #44); the
   // full `time` above ("Yesterday 3:04") is too wide for the narrow gutter.
@@ -2168,6 +2171,20 @@ const ConnectedMessageItem = memo(function ConnectedMessageItem({ message, menti
     });
   }, [message.id]);
 
+  const loomTouchPoint = useRef<{x:number;y:number} | null>(null);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressFired = useRef(false);
+  // Structural binding of Web1.21.38 Di: both native contextmenu and the timer
+  // enter the same touch placement/click-shield owner, exactly once.
+  const openTouchMessageMenu = useCallback((point: {x:number;y:number}) => {
+    if (longPressTimer.current) {clearTimeout(longPressTimer.current); longPressTimer.current=null;}
+    longPressFired.current=true;
+    setCtxMenu(placeTouchMessageContextMenu(point));
+    setReactionPicker(null);
+    setCtxMenuClickShielded(true);
+    if (ctxMenuShieldTimerRef.current) clearTimeout(ctxMenuShieldTimerRef.current);
+    ctxMenuShieldTimerRef.current=setTimeout(() => {setCtxMenuClickShielded(false);ctxMenuShieldTimerRef.current=null;},600);
+  }, []);
   const handleContextMenu = useCallback((e: MouseEvent) => {
     if (isSystem) return;
     // React portal events bubble through the component tree even though their
@@ -2195,6 +2212,7 @@ const ConnectedMessageItem = memo(function ConnectedMessageItem({ message, menti
       return;
     }
     e.preventDefault();
+    if (loomTouchPoint.current) { if (!longPressFired.current) openTouchMessageMenu(loomTouchPoint.current); return; }
     const keyboardAnchor = e.type === "click" && e.detail === 0 ? e.currentTarget.getBoundingClientRect() : null;
     const x = keyboardAnchor?.right ?? e.clientX, y = keyboardAnchor?.bottom ?? e.clientY;
     setCtxMenu({
@@ -2205,11 +2223,10 @@ const ConnectedMessageItem = memo(function ConnectedMessageItem({ message, menti
       source: "pointer",
     });
     setReactionPicker(null);
-  }, [isSystem, selectionActive]);
+  }, [isSystem, selectionActive, openTouchMessageMenu]);
 
   // Long-press to open context menu on mobile
-  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const longPressFired = useRef(false);
+
 
   const handleTouchStart = useCallback((e: TouchEvent) => {
     if (isSystem) return;
@@ -2219,7 +2236,7 @@ const ConnectedMessageItem = memo(function ConnectedMessageItem({ message, menti
     // message long-press timer.
     if (!(e.target instanceof Element) || !e.currentTarget.contains(e.target)) return;
     const target = e.target;
-    if (target.closest("[data-message-selectable='true']")) return;
+    if (target.closest('a[target="_blank"]')) return;
     // Parity with handleContextMenu: once select mode is active, long-press
     // should not re-open the context menu either. Mobile users toggle
     // selection by tapping rows in select mode; the popup menu here would
@@ -2229,18 +2246,9 @@ const ConnectedMessageItem = memo(function ConnectedMessageItem({ message, menti
     const touch = e.touches[0];
     const x = touch.clientX;
     const y = touch.clientY;
-    longPressTimer.current = setTimeout(() => {
-      longPressFired.current = true;
-      setCtxMenu(placeTouchMessageContextMenu({ x, y }));
-      setReactionPicker(null);
-      setCtxMenuClickShielded(true);
-      if (ctxMenuShieldTimerRef.current) clearTimeout(ctxMenuShieldTimerRef.current);
-      ctxMenuShieldTimerRef.current = setTimeout(() => {
-        setCtxMenuClickShielded(false);
-        ctxMenuShieldTimerRef.current = null;
-      }, 600);
-    }, 500);
-  }, [isSystem, selectionActive]);
+    loomTouchPoint.current = {x,y};
+    longPressTimer.current = setTimeout(() => openTouchMessageMenu({x,y}), 500);
+  }, [isSystem, selectionActive, openTouchMessageMenu]);
 
   useEffect(() => () => {
     if (ctxMenuShieldTimerRef.current) {
@@ -2250,6 +2258,7 @@ const ConnectedMessageItem = memo(function ConnectedMessageItem({ message, menti
   }, []);
 
   const handleTouchEnd = useCallback((e: TouchEvent) => {
+    loomTouchPoint.current = null;
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
       longPressTimer.current = null;
@@ -2261,6 +2270,7 @@ const ConnectedMessageItem = memo(function ConnectedMessageItem({ message, menti
   }, []);
 
   const handleTouchMove = useCallback(() => {
+    loomTouchPoint.current = null;
     // Cancel long press if finger moves (scrolling)
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
@@ -2924,6 +2934,7 @@ const ConnectedMessageItem = memo(function ConnectedMessageItem({ message, menti
       onClick={readOnlyProjection && !(onOpenThread && !hideThreadActions) ? undefined : handleMobileTap}
       onContextMenu={readOnlyProjection && !loomTaskActions && !loomReactions?.canReact && !loomReactions?.canSave ? undefined : handleContextMenu}
       onTouchStart={readOnlyProjection && !loomTaskActions && !loomReactions?.canReact && !loomReactions?.canSave ? undefined : handleTouchStart}
+      onTouchCancel={handleTouchMove}
       onTouchEnd={readOnlyProjection && !loomTaskActions && !loomReactions?.canReact && !loomReactions?.canSave ? undefined : handleTouchEnd}
       onTouchMove={readOnlyProjection && !loomTaskActions && !loomReactions?.canReact && !loomReactions?.canSave ? undefined : handleTouchMove}
       onMouseEnter={handleReactionPickerBoundaryEnter}
@@ -3659,7 +3670,7 @@ const ConnectedMessageItem = memo(function ConnectedMessageItem({ message, menti
               <ContextMenuDivider />
             </>
           )}
-{loomReactions?.canSave && <MenuItem icon={loomReactions.saved ? <BookmarkMinus size={14} /> : <Bookmark size={14} />} onClick={() => {loomReactions.toggleSave(); handleCloseCtx();}}>{loomReactions.saved ? formatMessage({id:"message.messageItem.removeFromSaved"}) : formatMessage({id:"message.messageItem.saveMessage"})}</MenuItem>}<LoomTaskMenu actions={loomTaskActions} close={handleCloseCtx} /></> : <>
+{loomReactions?.canSave && <MenuItem icon={loomReactions.saved ? <BookmarkMinus size={14} /> : <Bookmark size={14} />} onClick={() => {loomReactions.toggleSave(); handleCloseCtx();}}>{loomReactions.saved ? formatMessage({id:"message.messageItem.removeFromSaved"}) : formatMessage({id:"message.messageItem.saveMessage"})}</MenuItem>}<LoomTaskMenu actions={loomTaskActions} close={handleCloseCtx} />{ctxMenu.source === "touch" && message.content.trim() && <MenuItem icon={<TextSelect width={14} height={14}/>} onClick={() => { setLoomSelectText("open"); handleCloseCtx(); }}>选择文本</MenuItem>}</> : <>
           {/* Reaction quick row — shown on both desktop right-click ("pointer")
               and mobile long-press ("touch") per stdrc 2026-05-14
               #proj-mobile:a8293493 msg=2cebeb18: "无论是移动端还是桌面端，其右
@@ -3708,7 +3719,7 @@ const ConnectedMessageItem = memo(function ConnectedMessageItem({ message, menti
             onClick={handleCopyMarkdown}
           >
             {formatMessage({ id: "message.messageItem.copyMarkdown" })}
-          </MenuItem>
+          </MenuItem>{ctxMenu.source === "touch" && message.content.trim() && <MenuItem icon={<TextSelect width={14} height={14}/>} onClick={() => { setLoomSelectText("open"); handleCloseCtx(); }}>选择文本</MenuItem>}
           {showManualTranslationAction ? (
             <MenuItem
               icon={<Languages size={14} />}
@@ -3813,6 +3824,7 @@ const ConnectedMessageItem = memo(function ConnectedMessageItem({ message, menti
       </>,
       document.body
     )}
+    {loomSelectText && <OfficialMessageSelectText open={loomSelectText === "open"} onClose={() => setLoomSelectText("closing")} onClosed={() => setLoomSelectText(null)} senderName={senderDisplayName} time={time} markdown={message.content} quoteChannelId={quoteComposerChannelId}/>}
     {senderCtxMenu && createPortal(
       <>
         <DismissBackdrop onDismiss={closeSenderCtxMenu} trapContextMenu />

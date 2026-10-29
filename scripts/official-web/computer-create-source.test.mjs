@@ -14,7 +14,10 @@ test("both entry points use the same role creation flow without implicit DM crea
   for (const file of ["AgentPage.tsx", "ComputersPage.tsx"])
     assert.match(read(file), /<CreateRoleDialog/);
   const s = read("CreateRoleDialog.tsx");
-  assert.match(s, /@loom\/raft-web-source\/DialogCard/);
+  assert.match(s, /<MobileFormDialog/);
+  const frame = read("MobileFormDialog.tsx");
+  assert.match(frame, /DialogSheetContent.*raft-ui\/wip/s);
+  assert.doesNotMatch(frame, /className=|style=/);
   assert.doesNotMatch(s, /standalone\.create|private\.create/);
   assert.match(s, /savedRole/);
   assert.match(s, /保存后添加到频道/);

@@ -54,6 +54,22 @@ test("unknown native shape fails explicitly instead of silently retaining old co
   );
 });
 
+test("new host posture fields are reported even when all width thresholds are unchanged", () => {
+  const before = readAdaptiveContract(root);
+  const after = readAdaptiveContract(root, (p) => {
+    const source = readFileSync(root + "/" + p, "utf8");
+    return p.endsWith("RaftAdaptivePane.kt")
+      ? source +
+          "\ndata class NewHostPayload(val sideColumn: Boolean, val reservedRegions: List<Region>)"
+      : source;
+  });
+  assert.ok(
+    compareAdaptiveContracts(before, after).some(
+      ({ rule }) => rule === "hostFields",
+    ),
+  );
+});
+
 test("all imported native originals retain upstream hashes and binding targets exist", async () => {
   const { createHash } = await import("node:crypto");
   const { existsSync } = await import("node:fs");

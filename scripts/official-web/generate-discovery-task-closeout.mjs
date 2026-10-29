@@ -179,11 +179,36 @@ export function generateCloseout() {
     '<SectionEyebrow as="button"',
     '<SectionEyebrow data-testid="task-history-toggle" as="button"',
   );
-  const bar = extractDeclarations(main.source, [
+  let bar = extractDeclarations(main.source, [
     "channelSigil",
     "NON_INTERACTIVE_TOOLTIP_PROPS",
     "TaskModalBar",
   ]).join("\n");
+  // Web1.21.38 jct task reference uses the same native mono metadata family.
+  bar = replace(
+    bar,
+    'className="truncate text-xs font-bold text-foreground-muted"',
+    'className="truncate font-mono text-mono-meta text-foreground-muted" data-testid="task-modal-bar-ref"',
+  );
+  // Web1.21.38 compact summary is a slot in the existing source bar.
+  bar = replace(bar, "  mobile = false,\n", "  mobile = false,\n  summary,\n");
+  bar = replace(
+    bar,
+    "  mobile?: boolean;",
+    "  mobile?: boolean;\n  summary?: ReactNode;",
+  );
+  const label =
+    '<div className="truncate text-sm font-bold" data-testid="task-modal-bar-label">';
+  const labelStart = bar.indexOf(label),
+    labelEnd = bar.indexOf("</div>", labelStart) + 6;
+  if (labelStart < 0 || labelEnd < labelStart)
+    throw Error("Task bar label changed");
+  bar =
+    bar.slice(0, labelStart) +
+    "{summary ?? (" +
+    bar.slice(labelStart, labelEnd) +
+    ")}" +
+    bar.slice(labelEnd);
   function surface(mobile) {
     const node = one(
       main.file,

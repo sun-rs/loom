@@ -86,8 +86,8 @@ export async function verifyMessageReferences({
     const self = timeline.getByText("@Sun", { exact: true });
     await self.waitFor({ timeout: 5000 });
     assert.ok(
-      (await self.getAttribute("class")).includes("bg-brand"),
-      "self mention must use official yellow primary recipe",
+      (await self.getAttribute("class")).includes("bg-you"),
+      "self mention must use the official UI0.52 primary/you recipe",
     );
     assert.ok(
       (await channel.getAttribute("class")).includes("bg-attention-soft"),

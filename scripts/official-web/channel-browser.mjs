@@ -1,5 +1,6 @@
 import { verifyRoleCreation } from "./role-create-browser.mjs";
 import { verifyUIRefresh135 } from "./ui-refresh135-browser.mjs";
+import { verifyUIRefresh138 } from "./ui-refresh138-browser.mjs";
 import { verifyChannelDelete } from "./channel-delete-browser.mjs";
 import { verifySidebarCollapse } from "./sidebar-collapse-browser.mjs";
 import { verifyNavigationOrder } from "./navigation-order-browser.mjs";
@@ -204,7 +205,13 @@ try {
   browser = await (
     process.env.LOOM_BROWSER_ENGINE === "webkit" ? webkit : chromium
   ).launch({ headless: true });
-  if (process.env.LOOM_BROWSER_SLICE === "ui-refresh135") {
+  if (process.env.LOOM_BROWSER_SLICE === "ui-refresh138") {
+    console.log(
+      JSON.stringify(
+        await verifyUIRefresh138({ browser, origin, client, channels, head }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "ui-refresh135") {
     console.log(
       JSON.stringify(await verifyUIRefresh135({ browser, origin, channels })),
     );

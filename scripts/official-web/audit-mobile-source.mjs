@@ -1,3 +1,4 @@
+import { partitionNativeChanges } from "./mobile-candidate-inventory.mjs";
 import {
   readAdaptiveContract,
   compareAdaptiveContracts,
@@ -27,6 +28,31 @@ const rows = lock.files.map((f) => ({
   changed: hash(resolve(candidate, f.path)) !== f.sha256,
 }));
 const dirty = git("status", "--porcelain");
+let inventory, inventoryError;
+try {
+  const changes = git(
+    "diff",
+    "--no-renames",
+    "--name-status",
+    lock.commit,
+    "HEAD",
+    "--",
+    "compose",
+  )
+    .split("\n")
+    .filter(Boolean)
+    .map((line) => {
+      const [status, path] = line.split("\t");
+      return { status, path };
+    });
+  inventory = partitionNativeChanges(
+    lock.files.map((f) => f.path),
+    changes,
+  );
+} catch (error) {
+  inventoryError = String(error);
+}
+
 let adaptive;
 let adaptiveError;
 try {
@@ -55,6 +81,8 @@ console.log(
       files: rows,
       adaptive,
       adaptiveError,
+      inventory,
+      inventoryError,
     },
     null,
     2,
@@ -62,6 +90,7 @@ console.log(
 );
 if (
   adaptiveError ||
+  inventoryError ||
   dirty ||
   rows.some((r) => r.localDrift || !r.candidateSha256)
 )

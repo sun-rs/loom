@@ -8,7 +8,9 @@ const read = (p) =>
   );
 test("chat header exposes shared search and settings-owned members; composer has no outer separator", () => {
   const app = read("ChannelApp.tsx");
-  assert.match(app, /loom:open-search/);
+  assert.match(app, /testId="channel-topbar-search"/);
+  assert.match(app, /channelId: channel.roomId/);
+  assert.match(app, /presentation: "page"/);
   assert.doesNotMatch(
     app,
     /items-center border-t border-line-muted bg-layer-panel px-3/,
@@ -20,7 +22,7 @@ test("computer details retain native edit/runtime affordances and automatic desk
   const page = read("ComputersPage.tsx");
   assert.match(page, /ComputerProfile/);
   assert.match(page, /machine-detected-runtimes/);
-  assert.match(page, /min-width: 768px/);
+  assert.match(page, /window.matchMedia\(layoutQueries.dual\)/);
   assert.match(page, /iconTone="neutral"/);
 });
 

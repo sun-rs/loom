@@ -2,12 +2,35 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
-const source = readFileSync("frontends/raft/loom/ChannelApp.tsx", "utf8").split(
-  "<ComputersPage",
-)[1];
-const body = source.match(
-  /onSelect=\{\(id\) => \{([\s\S]*?)\n                      \}\}/,
-)?.[1];
+import ts from "typescript";
+const source = readFileSync("frontends/raft/loom/ChannelApp.tsx", "utf8");
+const ast = ts.createSourceFile(
+  "ChannelApp.tsx",
+  source,
+  ts.ScriptTarget.Latest,
+  true,
+  ts.ScriptKind.TSX,
+);
+let body;
+function walk(node) {
+  if (
+    ts.isJsxSelfClosingElement(node) &&
+    node.tagName.getText(ast) === "ComputersPage"
+  ) {
+    const select = node.attributes.properties.find(
+      (p) => ts.isJsxAttribute(p) && p.name.getText(ast) === "onSelect",
+    );
+    const expression = select?.initializer?.expression;
+    if (
+      expression &&
+      ts.isArrowFunction(expression) &&
+      ts.isBlock(expression.body)
+    )
+      body = expression.body.statements.map((s) => s.getText(ast)).join("\n");
+  }
+  ts.forEachChild(node, walk);
+}
+walk(ast);
 assert.ok(body, "Computer selection binding must remain inspectable");
 function select(actualSearch, blocked = false) {
   let navigated;

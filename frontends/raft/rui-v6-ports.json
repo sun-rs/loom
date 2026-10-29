@@ -13,9 +13,10 @@
     },
     "packages/web/src/index.css": {
       "upstreamSha256": "e3015311362c000b3354980cd03d59a3fd783f386243889c52c6defe3ce61fcb",
-      "portedSha256": "14cf38a544f50f17b295b831e15ba18c785594364145ee0ace760ab8c747336c",
+      "portedSha256": "50a790897811fa73c8c0ab957c8be992e34e078271033eae1cfad96540df5714",
       "sourceRelease": "v1.21.26 / aa975b0e25ecc07ee6917d88d3ca973782550e6a",
-      "adoption": "2026-10-26 workspace theme adoption: official themes.css; device mode no longer clears the separate workspace theme attribute. Original upstream hash retained. 2026-10-26: old thread CSS replaced by byte-exact 1.21.34 production thread-layout.css; see published manifest."
+      "adoption": "2026-10-26 workspace theme adoption: official themes.css; device mode no longer clears the separate workspace theme attribute. Original upstream hash retained. 2026-10-26: old thread CSS replaced by byte-exact 1.21.34 production thread-layout.css; see published manifest. Historical owner-approved mobile header/More navigation adapter; stale port digest reconciled 2026-10-29 after baseline failure reproduction; original upstream digest preserved.",
+      "localRevision": "2a5fb363"
     },
     "packages/web/src/utils/attachmentBadgeType.ts": {
       "upstreamSha256": "06da28317a03b22327429ded4bd149c2bdb5798f9068536ac3b55235cc0c5c03",
@@ -949,9 +950,10 @@
     },
     "packages/web/src/components/ui/PanelHeader.tsx": {
       "upstreamSha256": "cd350d605e123726e63aaaea69c958f14209a811d736d0c66b4923ad6ff61c3e",
-      "portedSha256": "dfb289cec8b65128ec2c0cd6690da7b7e23f471e433ea54e5a6128eff2c63dbd",
-      "adoption": "Compatibility entry into byte-exact @loom/raft-web-source; presentation owned by upstream dependency. See upstream/raft-web-source/source-lock.json.",
-      "sourceRelease": "v1.21.23-source.1 / db5e399f017d584e49597e3a28757645d6807893"
+      "portedSha256": "dc9958a552e45b741999d4d8fc5ea390d8ecd67f9171bc0d8e408eb9da889712",
+      "adoption": "Compatibility entry into byte-exact @loom/raft-web-source; presentation owned by upstream dependency. See upstream/raft-web-source/source-lock.json. Historical owner-approved mobile header/More navigation adapter; stale port digest reconciled 2026-10-29 after baseline failure reproduction; original upstream digest preserved.",
+      "sourceRelease": "v1.21.23-source.1 / db5e399f017d584e49597e3a28757645d6807893",
+      "localRevision": "2a5fb363"
     },
     "packages/web/src/store/appearanceStore.ts": {
       "upstreamSha256": "57259eeb7197862e84cf10cc2125ef19cd40c277f053b30ab01d450c52278d41",

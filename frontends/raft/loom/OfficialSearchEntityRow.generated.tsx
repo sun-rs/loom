@@ -54,11 +54,7 @@ export function EntityResultRow({
     : null;
   const isArchivedChannelResult = result.type === "channel" && !!result.archivedAt;
 
-  // The row frame, hover and selected states belong to rui's
-  // SearchEntityResult. The wrapper carries the row's test id, keyboard-active
-  // marker and context menu; because every row sits in its own wrapper, the
-  // DS ListRow hairline (drawn between sibling rows, from the text start)
-  // is drawn here instead of on the button.
+  // Official SearchEntityResult owns the list-cell frame and states; wrapper binds only identity and events.
   return (
     <div
       ref={rootRef}
@@ -66,7 +62,7 @@ export function EntityResultRow({
       data-testid={channelPinnedRef ? `search-channel-result-${channelPinnedRef.id}` : undefined}
       data-active={selected ? "true" : undefined}
       onContextMenu={channelPinnedRef && !result.archivedAt ? handleContextMenu : undefined}
-      className="relative flex w-full not-first:before:pointer-events-none not-first:before:absolute not-first:before:top-0 not-first:before:right-0 not-first:before:left-[55px] not-first:before:z-[1] not-first:before:border-t not-first:before:border-line-hairline"
+      className="relative flex w-full"
     >
       <SearchEntityResult
         type="button"

@@ -93,7 +93,13 @@ test("all action bindings have upstream provenance and cannot be overridden loca
           .filter((a) => a.expression.getText(sf).includes("uiActionProps."));
         if (bindings.length) {
           count++;
-          assert.equal(n.tagName.getText(sf), "Button", file);
+          const tag = n.tagName.getText(sf);
+          assert.ok(["Button", "DialogCommit"].includes(tag), file);
+          if (tag === "DialogCommit")
+            assert.match(
+              sf.text,
+              /import\s*\{[^}]*\bDialogCommit\b[^}]*\}\s*from "raft-ui\/wip"/,
+            );
           assert.ok(
             !attrs.some(
               (a) =>

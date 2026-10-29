@@ -1,0 +1,6 @@
+[loom instance-prewarm] prewarm of principal_856c4704-f7a2-4b4a-afb6-236b565631cf skipped: disabled
+[loom instance-prewarm] prewarm of principal_fdbe1169-e0cb-4744-be2e-cd8e011e26f6 skipped: disabled
+[loom warm-runtime] [instrt_3355a143-f2c9-4f1b-8b96-0bcf4e147b8e] fatal: Codex user MCP servers could not be resolved (/private/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/loom-official-channel-SMvMsV/bin/codex mcp list --json exited 2: ); a Loom instance does not start while a user MCP server might stay enabled
+[loom warm-runtime] [instrt_3355a143-f2c9-4f1b-8b96-0bcf4e147b8e] [loom codex-warm] Codex user MCP servers could not be resolved (/private/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/loom-official-channel-SMvMsV/bin/codex mcp list --json exited 2: ); a Loom instance does not start while a user MCP server might stay enabled
+[loom warm-runtime] [instrt_7c885028-8cb5-4084-91cd-1c6f9d4a1922] fatal: Codex user MCP servers could not be resolved (/private/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/loom-official-channel-SMvMsV/bin/codex mcp list --json exited 2: ); a Loom instance does not start while a user MCP server might stay enabled
+[{"width":1440,"mention":true,"channelNavigation":true,"senderMenu":true,"displayNameAndHandle":true},{"width":390,"mention":true,"channelNavigation":true,"senderMenu":true,"displayNameAndHandle":true}]

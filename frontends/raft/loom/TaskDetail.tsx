@@ -1,3 +1,8 @@
+import {
+  OfficialTaskHeadObserver,
+  OfficialTaskHeadPullDown,
+  OfficialCompactTaskSummary,
+} from "./OfficialTaskHead138.generated.js";
 import { layoutQueries } from "./adaptive-layout.ts";
 import {
   OfficialTaskSurface,
@@ -6,7 +11,14 @@ import {
 } from "./OfficialTaskSurfaces.generated";
 import { uiActionProps } from "./ui-action-props.ts";
 import TaskHistory from "./TaskHistory.tsx";
-import { useEffect, useMemo, useState, useRef } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  useRef,
+  useId,
+  useCallback,
+} from "react";
 import { Button } from "raft-ui";
 import type { RahClient } from "@rah-os/client-sdk";
 import type { TaskWorkflowStatus } from "@rah-os/protocol";
@@ -43,6 +55,14 @@ export default function TaskDetail({
     [state, setState] = useState(bridge.writes.state),
     [tick, setTick] = useState(0);
   const mobile = useMediaQuery(layoutQueries.single);
+  const [headInView, setHeadInView] = useState(true),
+    [headPanelOpen, setHeadPanelOpen] = useState(false);
+  const headId = useId(),
+    headBar = useRef<HTMLButtonElement>(null);
+  const closeHead = useCallback(() => setHeadPanelOpen(false), []);
+  useEffect(() => {
+    if (headInView || !mobile) setHeadPanelOpen(false);
+  }, [headInView, mobile]);
   const opener = useRef<HTMLElement | null>(null);
   useEffect(() => {
     opener.current =
@@ -123,7 +143,34 @@ export default function TaskDetail({
       onClose={close}
       header={
         !error && task ? (
-          <OfficialTaskModalBar task={task} onClose={close} mobile={mobile} />
+          <div className="relative z-30 shrink-0">
+            <OfficialTaskModalBar
+              task={task}
+              onClose={close}
+              mobile={mobile}
+              summary={
+                mobile && !headInView ? (
+                  <OfficialCompactTaskSummary
+                    task={task}
+                    id={headId}
+                    barRef={headBar}
+                    open={headPanelOpen}
+                    onOpenChange={setHeadPanelOpen}
+                  />
+                ) : undefined
+              }
+            />
+            {mobile && !headInView && headPanelOpen && (
+              <OfficialTaskHeadPullDown
+                id={headId}
+                label={`任务 #${task.taskNumber}`}
+                barRef={headBar}
+                onClose={closeHead}
+              >
+                <TaskModalHead task={task} />
+              </OfficialTaskHeadPullDown>
+            )}
+          </div>
         ) : (
           <OfficialTaskReadBar
             mobile={mobile}
@@ -154,39 +201,21 @@ export default function TaskDetail({
         </div>
       )}
       {data?.room && task ? (
-        <TaskActions.Provider
-          value={{
-            canManage,
-            disabled: state !== "idle" || !!error || !!data.room.archivedAt,
-            update,
-            assign,
-            canAssign:
-              canManage || data.task.creatorId === data.principal?.principalId,
-            members: data.members,
-            history: (
-              <TaskHistory
-                client={client}
-                roomId={roomId}
-                taskId={taskId}
-                taskNumber={data.task.taskNumber}
-                members={data.members}
-                revision={data.task.updatedAt}
-              />
-            ),
-          }}
-        >
-          <ThreadWorkspace
-            key={data.task.sourceMessageId}
-            client={client}
-            room={data.room}
-            rootMessageId={data.task.sourceMessageId}
-            embedded
-            taskHead={<TaskModalHead task={task} />}
-            readError={error}
-            onClose={close}
-            onChanged={onChanged}
-          />
-        </TaskActions.Provider>
+        <ThreadWorkspace
+          key={data.task.sourceMessageId}
+          client={client}
+          room={data.room}
+          rootMessageId={data.task.sourceMessageId}
+          embedded
+          taskHead={
+            <OfficialTaskHeadObserver onChange={setHeadInView}>
+              <TaskModalHead task={task} />
+            </OfficialTaskHeadObserver>
+          }
+          readError={error}
+          onClose={close}
+          onChanged={onChanged}
+        />
       ) : (
         <div className="p-4" role={error ? "alert" : "status"}>
           {error || "加载中…"}
@@ -194,5 +223,31 @@ export default function TaskDetail({
       )}
     </OfficialTaskSurface>
   );
-  return content;
+  return (
+    <TaskActions.Provider
+      value={{
+        canManage,
+        disabled:
+          !data || state !== "idle" || !!error || !!data.room?.archivedAt,
+        update,
+        assign,
+        canAssign:
+          canManage ||
+          Boolean(data && data.task.creatorId === data.principal?.principalId),
+        members: data?.members,
+        history: (
+          <TaskHistory
+            client={client}
+            roomId={roomId}
+            taskId={taskId}
+            taskNumber={data?.task.taskNumber ?? 0}
+            members={data?.members ?? []}
+            revision={data?.task.updatedAt ?? ""}
+          />
+        ),
+      }}
+    >
+      {content}
+    </TaskActions.Provider>
+  );
 }

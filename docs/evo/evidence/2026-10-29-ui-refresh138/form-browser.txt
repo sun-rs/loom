@@ -1,0 +1,5 @@
+[loom instance-prewarm] prewarm of principal_5e9d2e18-13ea-44b9-809c-97bfee1ccb7b skipped: disabled
+[loom instance-prewarm] prewarm of principal_ed1d645c-1f19-4851-bda2-13516579abf6 skipped: disabled
+[loom instance-prewarm] prewarm of principal_4e5e930a-91c3-4de4-b541-24ab6630fa42 skipped: disabled
+[loom instance-prewarm] prewarm of principal_ee41bc3e-bb90-4067-b8e4-df72c07f9033 skipped: disabled
+[{"width":1440,"deletedSectionAndRestore":true,"sharedDialog":true,"fastSavedAndReopened":true,"unsupportedModelClearsFast":true,"randomName":true,"defaultSaveOnly":true,"separateChannelCreation":true,"failedAddRetainsRole":true},{"width":390,"deletedSectionAndRestore":true,"sharedDialog":true,"fastSavedAndReopened":true,"unsupportedModelClearsFast":true,"randomName":true,"defaultSaveOnly":true,"separateChannelCreation":true,"failedAddRetainsRole":true}]

@@ -1,18 +1,18 @@
 {
   "package": "@botiverse/raft-ui",
-  "version": "0.40.0",
-  "resolved": "https://registry.npmjs.org/@botiverse/raft-ui/-/raft-ui-0.40.0.tgz",
-  "integrity": "sha512-nVd3hDJdEZEy3BBDvcju2ZkLKulak+R4zNpgFzLGnaadP8cdgKNXEpTGnERB7jkabCLqWtF6TY3KybS4BX9brA==",
+  "version": "0.52.0",
+  "resolved": "https://registry.npmjs.org/@botiverse/raft-ui/-/raft-ui-0.52.0.tgz",
+  "integrity": "sha512-cJiGA5j3Gvr3Y28HLM0sM0x+0N+m1V5eBVCKZ04GgKvMD41QtY2DhPuJwrgZ36zpTmFMSaG6zTQ7n3GvsRhEoQ==",
   "license": "MIT",
   "repository": "https://github.com/botiverse/raft-design",
-  "retrieved": "2026-10-28",
+  "retrieved": "2026-10-29",
   "files": {
-    "package.json": "3bcd84fbc0387415ba3b50fae35d741449219beaae38b803009c953f83944be8",
-    "CHANGELOG.md": "e2f65268c2df8919aa51f4798a860727f9262367df47ff1a4f637723db17eb10",
-    "dist/index.d.mts": "884a252279199596850f17c24ccee69e1c086e4a0f15abc9f72daa4382cab274",
-    "dist/index.mjs": "fe50c3b7ccdef018299db440ecf5baad8a7f9efbe9c9e7a2528e681766214cc9",
-    "dist/styles.css": "11aa2b5f719b65d9d194f297c002503482f90e62f3204a110dfc40bb36537987",
-    "dist/foundation.css": "c4bb801876e48174822347a7f013758bd67663a5df637623e2f0c0ede182a480",
+    "package.json": "1622437a8ad05a24feec9bcccd89a9e7a43310ba61e0e05322461e0208a66c28",
+    "CHANGELOG.md": "d51e6ff48fbaec545ac2e7cf40e8a8d5ef87920eb1e6f65eb8eb3a44a2da379a",
+    "dist/index.d.mts": "98b8a0842119736756cfb10a2ad0bf5b2807837da1eb61dac2c9aa2f90bbb354",
+    "dist/index.mjs": "19b018bb9b03423a2f38de13684442fba26a4d30b261bf26f5935c903c3a875f",
+    "dist/styles.css": "1dfba2b73642ba49a102dc3759f1fbbaafb2ba416be81e715d9522ef8a915298",
+    "dist/foundation.css": "b298725e92892e888b62af2325704e90c48af6ca3df6be34e1893554ad6a5256",
     "dist/fonts.css": "7c792b65befe09a1d3b64d1def23af4239e02d674886345f31397f001720736d",
     "dist/themes.css": "d676bb4b3ad783cfbe81a1428939d76783f2bee1b9ed1ec5d3913e661b65093d"
   },
@@ -36,5 +36,5 @@
   "pageSource": "Selected db5e399 source plus separately registered 1.21.35 resource ports; package upgrade is not whole-site latest Web parity",
   "fontSource": "loom/fonts/provenance.json",
   "importAlias": "raft-ui",
-  "sourceRevision": "npm 0.40.0; official raft-design v0.40.0"
+  "sourceRevision": "npm 0.52.0; official raft-design v0.52.0 / 690906e375f0676f43dd4ce8ba4d949738fc515b"
 }

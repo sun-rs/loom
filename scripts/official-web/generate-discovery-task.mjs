@@ -73,6 +73,16 @@ export function generateDiscoveryTask() {
     "    <div\n      data-testid=",
     "    <div\n      ref={rootRef}\n      data-entity-id={result.key}\n      data-testid=",
   );
+  // UI 0.49+ owns the inset list-cell background and spacing. The old source
+  // wrapper hairline must not survive outside the official component.
+  entity = entity.replace(
+    /className="relative flex w-full not-first:before:[^"]+"/,
+    'className="relative flex w-full"',
+  );
+  entity = entity.replace(
+    /  \/\/ The row frame,[\s\S]*?  return \(/,
+    "  // Official SearchEntityResult owns the list-cell frame and states; wrapper binds only identity and events.\n  return (",
+  );
   const { file } = parse("thread/ThreadsInbox");
   let empty;
   function walk(n) {

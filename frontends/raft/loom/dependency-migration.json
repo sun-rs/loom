@@ -1,11 +1,11 @@
 {
-  "asOf": "2026-10-26",
+  "asOf": "2026-10-29",
   "wholeSiteDependencyComplete": false,
   "meaning": "迁移单元清单，不是所有函数的验收清单；不按文件数或组件数计算完成率。",
   "versions": {
-    "foundation": "@botiverse/raft-ui@0.35.1",
+    "foundation": "@botiverse/raft-ui@0.52.0",
     "source": "db5e399f017d584e49597e3a28757645d6807893 / v1.21.23-source.1",
-    "productionResourceReference": "v1.21.26 retained ports plus explicitly adopted v1.21.34 resource slices; not whole-site current-source parity"
+    "productionResourceReference": "Selected Web1.21.26/34/35 ports plus Web1.21.38 message selection/task-head slices; not whole-site current-source parity"
   },
   "completedBoundaries": {
     "directExports": "upstream/raft-web-source/package.json#exports",
@@ -67,7 +67,11 @@
       "loom/OfficialLiveActivity.generated.tsx",
       "loom/OfficialRoleControls.generated.tsx",
       "loom/OfficialConfirmation.generated.tsx",
-      "loom/OfficialMemberFlow.generated.tsx"
+      "loom/OfficialMemberFlow.generated.tsx",
+      "loom/OfficialMessageSelectText.generated.js",
+      "loom/OfficialMessageSelectText.generated.d.ts",
+      "loom/OfficialTaskHead138.generated.js",
+      "loom/OfficialTaskHead138.generated.d.ts"
     ],
     "foundation": "package.json#dependencies.raft-ui"
   },
@@ -372,9 +376,10 @@
   ],
   "plannedMigrationComplete": true,
   "currentUpgradeReview": {
-    "baseline": "Web 1.21.34 / raft-ui 0.35.1",
-    "inventory": "docs/evo/raft-1.21.34-closeout.zh-CN.md",
-    "wholeSiteAccepted": false,
-    "note": "remainingBatchPlan describes the historical fixed-source migration, not acceptance of this upgrade."
+    "asOf": "2026-10-29",
+    "evidence": "docs/evo/evidence/2026-10-29-ui-refresh138/README.md",
+    "wholeSiteParity": false,
+    "candidateWeb": "1.21.38",
+    "adoptedPackage": "0.52.0"
   }
 }

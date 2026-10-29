@@ -1,5 +1,6 @@
+import { DirectMessageIcon } from "raft-ui";
 import InstanceProfile from "./InstanceProfile.tsx";
-import { User, MessageSquare } from "lucide-react";
+import { User } from "lucide-react";
 import BlockedWorkControl from "./BlockedWorkControl.tsx";
 import { useEffect, useRef, useState } from "react";
 import type { Principal, Room } from "@rah-os/protocol";
@@ -193,7 +194,7 @@ export default function InstanceInspector({
                           {
                             label: "私聊",
                             inline: true,
-                            icon: <MessageSquare size={14} />,
+                            icon: <DirectMessageIcon width={14} height={14} />,
                             run: () => onOpenPrivate(member.principalId),
                           },
                         ]

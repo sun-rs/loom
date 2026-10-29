@@ -1,3 +1,4 @@
+// Official retained thread-layout.css uses 720px measured detail; touch uses its separately tested native admission policy.
 import assert from "node:assert/strict";
 export async function verifyPanelPolicy({
   browser,
@@ -53,7 +54,7 @@ export async function verifyPanelPolicy({
           overflow: document.documentElement.scrollWidth > innerWidth,
         };
       });
-      const split = (width > height || width >= 1280) && state.available >= 680;
+      const split = (width > height || width >= 1280) && state.available >= 720;
       assert.equal(
         state.position,
         split ? "relative" : "absolute",
@@ -66,7 +67,7 @@ export async function verifyPanelPolicy({
     };
     const initial = await measure(1440, 600);
     assert.equal(Math.round(initial.thread), 400);
-    const threshold = Math.round(1440 - initial.available + 680);
+    const threshold = Math.round(1440 - initial.available + 720);
     for (const width of [threshold - 1, threshold, 767, 768, 1024])
       await measure(width, 600);
     await measure(1024, 1200);

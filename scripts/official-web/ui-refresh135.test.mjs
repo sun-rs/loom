@@ -5,7 +5,7 @@ const read = (name) => readFileSync("frontends/raft/" + name, "utf8");
 test("reviewed official package upgrade has one exact runtime", () => {
   assert.equal(
     JSON.parse(read("package.json")).dependencies["raft-ui"],
-    "npm:@botiverse/raft-ui@0.40.0",
+    "npm:@botiverse/raft-ui@0.52.0",
   );
 });
 test("workspace theme owns device mode; Appearance retains font and visibility preferences", () => {

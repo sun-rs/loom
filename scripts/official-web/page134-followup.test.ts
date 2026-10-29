@@ -105,7 +105,7 @@ test("channel search entry routes to current room scope through guarded navigati
 test("scoped search Back retains the originating conversation and accurate accessible label", () => {
   assert.match(
     read("loom/ChannelApp.tsx"),
-    /destination === "search" && params.get\("channelId"\)/,
+    /destination === "search" &&\s*params.get\("channelId"\)/,
   );
   assert.match(
     read("loom/SearchHeader.tsx"),

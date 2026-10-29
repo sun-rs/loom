@@ -37,6 +37,7 @@ function TaskModalBar({
   onClose,
   onViewInThread,
   mobile = false,
+  summary,
 }: {
   task: Task;
   onClose: () => void;
@@ -44,6 +45,7 @@ function TaskModalBar({
    *  whose anchor is itself a thread reply). */
   onViewInThread?: () => void;
   mobile?: boolean;
+  summary?: ReactNode;
 }) {
   const { formatMessage } = useIntl();
   return (
@@ -65,12 +67,12 @@ function TaskModalBar({
           Both are stable facts — the task's own title stays in the scrolling
           body, because a long one cannot be bounded by a fixed bar. */}
       <div className="min-w-0 flex-1">
-        <div className="truncate text-xs font-bold text-foreground-muted">
+        <div className="truncate font-mono text-mono-meta text-foreground-muted" data-testid="task-modal-bar-ref">
           {channelSigil(task.channelName || formatMessage({ id: "task.properties.unknownChannel" }))}
         </div>
-        <div className="truncate text-sm font-bold" data-testid="task-modal-bar-label">
+        {summary ?? (<div className="truncate text-sm font-bold" data-testid="task-modal-bar-label">
           {formatMessage({ id: "task.modal.taskWithNumber" }, { taskNumber: task.taskNumber })}
-        </div>
+        </div>)}
       </div>
       {(onViewInThread || !mobile) && (
         <PanelActions>

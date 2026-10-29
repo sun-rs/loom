@@ -1,3 +1,4 @@
+import { adaptMessageTextSelection } from "./message-selection-adaptation.mjs";
 import { adaptMessageModelLabel } from "../../frontends/raft/loom/appearance-adaptation.ts";
 import ts from "typescript";
 import { readFileSync, writeFileSync } from "node:fs";
@@ -38,6 +39,7 @@ function imports(s, name) {
     "loom-thread-toolbar": "./ThreadToolbar",
     "loom-composer-directory": "./ComposerDirectory",
     "loom-attachments": "./Attachments",
+    "loom-message-select-text": "./OfficialMessageSelectText.generated.js",
     "./ProfilePreviewCardContent": "./MessageProfile",
     "../../api/client": "./upstream-api",
     "./messageMarkdownSecurity":
@@ -133,6 +135,7 @@ function message(s) {
     s.slice(collapseEnd);
   s = adaptMessageModelLabel(s);
   s = adaptReactions(adaptTaskMessage(adaptThreadItem(s)));
+  s = adaptMessageTextSelection(s);
   // Preserve adopted accessible timestamp semantics while retaining native typography.
   s = replace(
     s,

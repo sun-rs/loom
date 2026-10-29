@@ -1,14 +1,9 @@
+import { FollowThreadIcon, UnfollowThreadIcon } from "raft-ui";
 /** Current native ThreadOverflowMenu composition, v1.21.22; see page-adoption.json.
  * Unsupported search/split/location commands omitted; controller belongs to Loom. */
 import { useState } from "react";
 import { useIntl } from "react-intl";
-import {
-  EllipsisVertical,
-  Minimize2,
-  Maximize2,
-  MessageCircleOff,
-  MessageCirclePlus,
-} from "lucide-react";
+import { EllipsisVertical, Minimize2, Maximize2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -79,7 +74,7 @@ export default function ThreadFollowMenu({
             disabled={followBusy}
             data-testid="thread-overflow-follow-action"
           >
-            {followed ? <MessageCircleOff /> : <MessageCirclePlus />}
+            {followed ? <UnfollowThreadIcon /> : <FollowThreadIcon />}
             {formatMessage({
               id: followed
                 ? "message.messageItem.unfollowThread"

@@ -11,7 +11,7 @@
     "typecheck:loom": "tsc --noEmit --project loom/tsconfig.json"
   },
   "dependencies": {
-    "raft-ui": "npm:@botiverse/raft-ui@0.40.0",
+    "raft-ui": "npm:@botiverse/raft-ui@0.52.0",
     "@loom/raft-web-source": "file:upstream/raft-web-source"
   }
 }

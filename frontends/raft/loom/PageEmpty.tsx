@@ -1,9 +1,9 @@
+import { MessageIcon } from "raft-ui";
 import type { ReactNode } from "react";
 import {
   Activity,
   AlertCircle,
   BookOpen,
-  MessageSquare,
   Monitor,
   Users,
   Search,
@@ -14,17 +14,17 @@ import EmptyState from "@loom/raft-web-source/EmptyState";
 // Role/Memory labels adapt the same scenarios to Loom's explicit product concepts.
 const scenarios = {
   channels: {
-    icon: MessageSquare,
+    icon: MessageIcon,
     title: "还没有频道",
     description: "创建频道，开始对话。",
   },
   conversation: {
-    icon: MessageSquare,
+    icon: MessageIcon,
     title: "没有打开的对话",
     description: "从列表里选一个。",
   },
   messages: {
-    icon: MessageSquare,
+    icon: MessageIcon,
     title: "还没有消息",
     description: "开始对话吧。",
   },
@@ -86,7 +86,7 @@ export default function PageEmpty({
     <EmptyState
       data-testid={testId ?? "empty-" + kind}
       className={className}
-      icon={<Icon size={36} />}
+      icon={<Icon width={36} height={36} />}
       title={title ?? scenario.title}
       description={description ?? scenario.description}
       action={action}

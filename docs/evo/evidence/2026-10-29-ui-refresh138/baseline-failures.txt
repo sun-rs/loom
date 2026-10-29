@@ -1,0 +1,1584 @@
+✔ official mobile swipe arbitrates edge/scroll, distance and fling without a page-back gesture (24.758125ms)
+✖ row gesture uses the existing durable action and is limited to touch narrow screens (1.352ms)
+✔ native touch handlers cancel safely, suppress post-swipe click and commit full swipe once (1.436792ms)
+✖ chat header exposes shared search and settings-owned members; composer has no outer separator (2.111ms)
+✖ computer details retain native edit/runtime affordances and automatic desktop selection (0.590667ms)
+✔ settings opens without forced input focus or a redundant corner close; drawer members are flat (1.132791ms)
+✔ role tabs retain the current official conversation wrapper without a conflicting width override (0.176375ms)
+✔ chat header actions retain official tooltip/PanelAction composition and 22px icons (0.282916ms)
+✔ computer selection cancellation has an outline and detail retains native auto scrolling (0.885041ms)
+✖ both entry points use the same role creation flow without implicit DM creation (1.415292ms)
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Computer selection binding must remain inspectable
+    at file:///private/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/loom-ui138-baseline-5xfo39n8/scripts/official-web/computer-route-freshness.test.mjs:11:8
+    at ModuleJob.run (node:internal/modules/esm/module_job:437:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:639:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: undefined,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v25.9.0
+✖ scripts/official-web/computer-route-freshness.test.mjs (60.789834ms)
+✖ official source intake preserves recorded upstream source bytes and license (120.649291ms)
+✔ scope label uses authorized display title, never falls back to opaque room id (0.714042ms)
+✔ everywhere keeps query but removes filters and detail; does not mutate prior route (0.62575ms)
+✔ scope-only empty query displays prompt without history fetch; explicit filters still search (0.067709ms)
+✔ task view placement follows task container, not viewport (0.184959ms)
+✔ computer lower detail uses a single native spacing owner (0.114333ms)
+✔ channel settings keeps drawer branch with native body and actions, not panel inline-save branch (0.097958ms)
+✔ scope UI participates in keyboard rail and suppresses unrelated global entity results (0.151833ms)
+✔ everywhere native row exposes rail identity and selected prop for keyboard focus (0.068625ms)
+✔ member strip cancels only its own inline padding inside native DrawerBody (0.11725ms)
+✔ channel search entry routes to current room scope through guarded navigation (0.239541ms)
+✖ scoped search Back retains the originating conversation and accurate accessible label (1.318291ms)
+✔ search field, all filter controls and empty states come from locked official JSX (172.732917ms)
+✖ search loading uses native result skeleton with one accessible loading region (1.366958ms)
+✔ message empty state does not deny a matching channel or identity result (0.177292ms)
+✔ search entity rows retain compact native identities, outline labels and sibling separators (0.869042ms)
+✔ search message result retains native avatar gutter and direct sibling result composition (0.178708ms)
+✔ empty overlay hides filters but search results retain them (0.13575ms)
+✔ settings rail has no desktop title or computer navigation entry (0.113875ms)
+✔ message size preferences follow v1.21.26 responsive typography (0.091792ms)
+✔ timeline supplies member mentions rather than empty map (0.073916ms)
+✔ release notes retain current native text hierarchy without highlighted card fill (0.465959ms)
+✔ readonly Loom timeline retains explicit channel navigation (0.146542ms)
+✔ thread search headers use the native compact metadata hierarchy (0.1265ms)
+✔ all search destination surfaces use current list composition and headings (0.212166ms)
+✔ search history uses current native heading, soft chips and shared text actions (0.114458ms)
+✔ member preview adopts current typography and native separator (0.115333ms)
+✔ shared sidebars and channel sections use native recipes instead of local sizes (0.295667ms)
+✔ search pagination error uses the native warning banner (0.077542ms)
+✔ scenario bindings use native parameters without a parallel geometry or component recipe (1.50975ms)
+✔ save and destructive actions opt into explicit native scenario bindings (0.805416ms)
+✖ all action bindings have upstream provenance and cannot be overridden locally (148.76925ms)
+ℹ tests 43
+ℹ suites 0
+ℹ pass 34
+ℹ fail 9
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 258.588166
+
+✖ failing tests:
+
+test at scripts/official-web/activity-swipe.test.mjs:40:1
+✖ row gesture uses the existing durable action and is limited to touch narrow screens (1.352ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /max-width: 767px/. Input:
+  
+  'import { layoutQueries } from "./adaptive-layout.ts";\n' +
+    'import { useCallback, useEffect, useState, type RefObject } from "react";\n' +
+    'import { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives";\n' +
+    'import { suppressNextSwipeClick } from "./OfficialActivitySwipe.generated";\n' +
+    '// UI-only single-open-row binding of official ThreadsInbox Ut/Ht/outside handler.\n' +
+    'export function useActivitySwipe(\n' +
+    '  enabled: boolean,\n' +
+    '  viewport: RefObject<HTMLElement | null>,\n' +
+    ') {\n' +
+    '  const narrow = useMediaQuery(layoutQueries.single);\n' +
+    '  const coarse = useMediaQuery("(pointer: coarse)");\n' +
+    '  const [selected, setSelected] = useState<string | null>(null);\n' +
+    '  const openId = enabled && narrow && coarse ? selected : null;\n' +
+    '  const onOpenChange = useCallback(\n' +
+    '    (id: string, open: boolean) =>\n' +
+    '      setSelected((previous) =>\n' +
+    '        open ? id : previous === id ? null : previous,\n' +
+    '      ),\n' +
+    '    [],\n' +
+    '  );\n' +
+    '  useEffect(() => {\n' +
+    '    if (openId === null) return;\n' +
+    '    const outside = (event: PointerEvent) => {\n' +
+    '      const target = event.target instanceof Element ? event.target : null;\n' +
+    '      if (\n' +
+    '        target?.closest("[data-inbox-key]")?.getAttribute("data-inbox-key") ===\n' +
+    '        openId\n' +
+    '      )\n' +
+    '        return;\n' +
+    '      setSelected(null);\n' +
+    '      if (target && viewport.current?.contains(target))\n' +
+    '        suppressNextSwipeClick(event);\n' +
+    '    };\n' +
+    '    document.addEventListener("pointerdown", outside, true);\n' +
+    '    return () => {\n' +
+    '      document.removeEventListener("pointerdown", outside, true);\n' +
+    '      setSelected((previous) => (previous === openId ? null : previous));\n' +
+    '    };\n' +
+    '  }, [openId, viewport]);\n' +
+    '  return { enabled: enabled && narrow && coarse, openId, onOpenChange };\n' +
+    '}\n' +
+    'export type ActivitySwipeBinding = ReturnType<typeof useActivitySwipe>;\n'
+  
+      at TestContext.<anonymous> (file:///private/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/loom-ui138-baseline-5xfo39n8/scripts/official-web/activity-swipe.test.mjs:45:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'import { layoutQueries } from "./adaptive-layout.ts";\nimport { useCallback, useEffect, useState, type RefObject } from "react";\nimport { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives";\nimport { suppressNextSwipeClick } from "./OfficialActivitySwipe.generated";\n// UI-only single-open-row binding of official ThreadsInbox Ut/Ht/outside handler.\nexport function useActivitySwipe(\n  enabled: boolean,\n  viewport: RefObject<HTMLElement | null>,\n) {\n  const narrow = useMediaQuery(layoutQueries.single);\n  const coarse = useMediaQuery("(pointer: coarse)");\n  const [selected, setSelected] = useState<string | null>(null);\n  const openId = enabled && narrow && coarse ? selected : null;\n  const onOpenChange = useCallback(\n    (id: string, open: boolean) =>\n      setSelected((previous) =>\n        open ? id : previous === id ? null : previous,\n      ),\n    [],\n  );\n  useEffect(() => {\n    if (openId === null) return;\n    const outside = (event: PointerEvent) => {\n      const target = event.target instanceof Element ? event.target : null;\n      if (\n        target?.closest("[data-inbox-key]")?.getAttribute("data-inbox-key") ===\n        openId\n      )\n        return;\n      setSelected(null);\n      if (target && viewport.current?.contains(target))\n        suppressNextSwipeClick(event);\n    };\n    document.addEventListener("pointerdown", outside, true);\n    return () => {\n      document.removeEventListener("pointerdown", outside, true);\n      setSelected((previous) => (previous === openId ? null : previous));\n    };\n  }, [openId, viewport]);\n  return { enabled: enabled && narrow && coarse, openId, onOpenChange };\n}\nexport type ActivitySwipeBinding = ReturnType<typeof useActivitySwipe>;\n',
+    expected: /max-width: 767px/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/official-web/channel-chrome-repair.test.mjs:9:1
+✖ chat header exposes shared search and settings-owned members; composer has no outer separator (2.111ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /loom:open-search/. Input:
+  
+  'import PageEmpty from "./PageEmpty";\n' +
+    'import { compactConversationRoute, layoutQueries } from "./adaptive-layout.ts";\n' +
+    'import { MobilePageNavigation } from "./MobilePageNavigation";\n' +
+    'import {\n' +
+    '  showMobileRootNavigation,\n' +
+    '  mobileSecondaryRoot,\n' +
+    '} from "./mobile-app-navigation";\n' +
+    'import { SidebarResize, useSidebarColumn } from "./SidebarLayout";\n' +
+    'import WorkspaceTheme from "./WorkspaceTheme";\n' +
+    'import LocalNotifications from "./LocalNotifications.tsx";\n' +
+    'import { LoomShellRoot, LoomSidebarSlot } from "./SidebarLayout.tsx";\n' +
+    'import { SenderActionsProvider } from "./SenderActions.tsx";\n' +
+    'import CloseButton from "../packages/web/src/components/ui/CloseButton.tsx";\n' +
+    'import { pageFetch } from "./page-fetch.ts";\n' +
+    'import PushNavigation from "./PushNavigation.tsx";\n' +
+    'import ChannelPrivateHistory from "./ChannelPrivateHistory.tsx";\n' +
+    'import { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives.ts";\n' +
+    'import { OverflowMenuTrigger } from "../packages/web/src/components/ui/OverflowSheet.tsx";\n' +
+    'import ComposerDirectory from "./ComposerDirectory.tsx";\n' +
+    'import type { NavigationUnread } from "./navigation-unread.ts";\n' +
+    'import { uiActionProps } from "./ui-action-props.ts";\n' +
+    'import MobileBottomBarStack from "../packages/web/src/components/layout/MobileBottomBarStack.tsx";\n' +
+    'import SideWorkspace from "./SideWorkspace.tsx";\n' +
+    'import { createElement, type ReactNode } from "react";\n' +
+    'import { showToast } from "../packages/web/src/components/toastBridge.ts";\n' +
+    'import { LazySavedPanel as SavedPanel } from "./LazyPages.tsx";\n' +
+    'import { MessageReactionsProvider } from "./MessageReactions.tsx";\n' +
+    'import SystemNotifications, {\n' +
+    '  SystemNotificationsProvider,\n' +
+    '} from "./SystemNotifications.tsx";\n' +
+    'import ChannelTabs from "./ChannelTabs.tsx";\n' +
+    'import { useRecordSearchVisit } from "./SearchRecent.tsx";\n' +
+    'import { useSearchDestination } from "./useSearchDestination.ts";\n' +
+    'import TopBarSearch from "./TopBarSearch.tsx";\n' +
+    'import { searchBackground } from "./useSearchPresentation.ts";\n' +
+    'import { useLocation, Routes, Route } from "react-router-dom";\n' +
+    'import {\n' +
+    '  AppearanceRuntimeProvider,\n' +
+    '  LoomLiveActivity,\n' +
+    '} from "./AppearanceRuntime.tsx";\n' +
+    'import { ChannelTasksContext, useChannelTasks } from "./ChannelTasks.tsx";\n' +
+    'import { LazyTasksPage as TasksPage } from "./LazyPages.tsx";\n' +
+    'import ThreadContentSlot from "./ThreadContentSlot.tsx";\n' +
+    'import ThreadWorkspace from "./ThreadWorkspace.tsx";\n' +
+    'import { LazyComputersPage as ComputersPage } from "./LazyPages.tsx";\n' +
+    'import { LazySettingsPage as SettingsPage } from "./LazyPages.tsx";\n' +
+    'import ChannelControl from "./ChannelControl.tsx";\n' +
+    'import InstanceInspector from "./InstanceInspector.tsx";\n' +
+    'import { bindMemberRoster } from "./member-roster.ts";\n' +
+    'import { notifyChannelMembersChanged } from "../packages/web/src/store/channelMemberEvents.ts";\n' +
+    'import ChannelTimeline from "./ChannelTimeline.tsx";\n' +
+    'import { LazyDiscoveryPage as DiscoveryPage } from "./LazyPages.tsx";\n' +
+    'import {\n' +
+    '  DesktopNavigation,\n' +
+    '  MobileNavigation,\n' +
+    '  DestinationPlaceholder,\n' +
+    '  type Destination,\n' +
+    '} from "./Navigation.tsx";\n' +
+    'import AddInstanceDialog from "./AddInstanceDialog.tsx";\n' +
+    'import { LoomPrivateBoxClient } from "./private-box.ts";\n' +
+    'import ChannelMembers from "./ChannelMembers.tsx";\n' +
+    'import {\n' +
+    '  lazy,\n' +
+    '  Suspense,\n' +
+    '  useCallback,\n' +
+    '  useEffect,\n' +
+    '  useLayoutEffect,\n' +
+    '  useMemo,\n' +
+    '  useState,\n' +
+    '  useRef,\n' +
+    '} from "react";\n' +
+    'import { useIntentRoute, hasRouteBoundIntent } from "./useIntentRoute.ts";\n' +
+    'import {\n' +
+    '  AppShellMainSlot,\n' +
+    '  ConversationPanelRoot,\n' +
+    '  ConversationPanelContent,\n' +
+    '  Button,\n' +
+    '  Spinner,\n' +
+    '} from "raft-ui";\n' +
+    'import { Search, Hash, MessageSquare } from "lucide-react";\n' +
+    'import { HttpRahClient } from "@rah-os/client-sdk";\n' +
+    'import { hasUnresolvedIntents } from "@rah-os/client-core/write-intent";\n' +
+    'import { loadOrCreateConsumerId } from "@rah-os/client-core";\n' +
+    'import ChannelSidebar from "./ChannelSidebar.tsx";\n' +
+    'import ChatSidebarFrame from "./ChatSidebarFrame.tsx";\n' +
+    'import { LazyMemoryPage as MemoryPage } from "./LazyPages.tsx";\n' +
+    'import { LazyAgentPage as AgentPage } from "./LazyPages.tsx";\n' +
+    'import { scheduleMobilePageWarmup } from "./page-preload.ts";\n' +
+    'import PanelHeader from "../packages/web/src/components/ui/PanelHeader.tsx";\n' +
+    'import MessageInput from "./ComposerFiles.tsx";\n' +
+    'import { LoomChannelClient, loadChannelDirectory } from "./channel-client.ts";\n' +
+    'import type { Principal, Room } from "@rah-os/protocol";\n' +
+    'const client = new HttpRahClient({\n' +
+    '  fetch: pageFetch,\n' +
+    '  baseUrl: "",\n' +
+    '  accessToken: () => "trusted-proxy-auth",\n' +
+    '});\n' +
+    'function consumer() {\n' +
+    '  let storage: Storage | undefined;\n' +
+    '  try {\n' +
+    '    storage = sessionStorage;\n' +
+    '  } catch {\n' +
+    '    /* Memory-only identity when storage is unavailable. */\n' +
+    '  }\n' +
+    '  return loadOrCreateConsumerId({\n' +
+    '    storage,\n' +
+    '    storageKey: "loom-official-consumer",\n' +
+    '    createId: () => `loom-web-${crypto.randomUUID()}`,\n' +
+    '  });\n' +
+    '}\n' +
+    'const consumerId = consumer();\n' +
+    '\n' +
+    'function Channel({\n' +
+    '  channel,\n' +
+    '  standalone = false,\n' +
+    '  controlRoomId,\n' +
+    '  bridge,\n' +
+    '  onOpenPrivate,\n' +
+    '  onAddInstance,\n' +
+    '  onBack,\n' +
+    '  threadRootId,\n' +
+    '  focusId,\n' +
+    '  onThread,\n' +
+    '  onProfileVisibilityChange,\n' +
+    '  headerActions,\n' +
+    '  unavailable = false,\n' +
+    '  onRoomChanged = async () => {},\n' +
+    '}: {\n' +
+    '  onRoomChanged?: () => Promise<void>;\n' +
+    '  headerActions?: ReactNode;\n' +
+    '  unavailable?: boolean;\n' +
+    '  onProfileVisibilityChange?: (open: boolean) => void;\n' +
+    '  threadRootId?: string;\n' +
+    '  focusId?: string;\n' +
+    '  onThread: (id?: string, focusedMessageId?: string) => void;\n' +
+    '  onBack: () => void;\n' +
+    '  onOpenPrivate: (id: string) => void;\n' +
+    '  onAddInstance: (() => void) | undefined;\n' +
+    '  standalone?: boolean;\n' +
+    '  channel: Room;\n' +
+    '  controlRoomId: string | undefined;\n' +
+    '  bridge: LoomChannelClient;\n' +
+    '}) {\n' +
+    '  const isPrivate = channel.instancePrivateBox !== undefined;\n' +
+    '  const [panelParams, setPanelParams] = useIntentRoute();\n' +
+    '  const sideId = !channel.side ? panelParams.get("side") : null;\n' +
+    '  const closeSide = () => {\n' +
+    '    if (!hasUnresolvedIntents())\n' +
+    '      setPanelParams((previous) => {\n' +
+    '        const next = new URLSearchParams(previous);\n' +
+    '        next.delete("side");\n' +
+    '        return next;\n' +
+    '      });\n' +
+    '  };\n' +
+    '  const [defaultTab, setDefaultTab] = useState("chat");\n' +
+    '  const queryTab = panelParams.get("chatTab");\n' +
+    '  const selectedTab =\n' +
+    '    queryTab === "chat" || queryTab === "tasks" || queryTab === "workspace"\n' +
+    '      ? queryTab\n' +
+    '      : defaultTab;\n' +
+    '  const taskTab = !isPrivate && selectedTab === "tasks";\n' +
+    '  const workspaceTab = !isPrivate && selectedTab === "workspace";\n' +
+    '  const profileSnapshot = useRef<Principal | undefined>(undefined);\n' +
+    '  const [profileId, setProfileId] = useState<string>();\n' +
+    '  const [focusedThreadId, setFocusedThreadId] = useState<string>();\n' +
+    '  const threadFocused =\n' +
+    '    !!threadRootId && focusedThreadId === threadRootId && !profileId && !sideId;\n' +
+    '  const [profileSource, setProfileSource] = useState<"channel" | "thread">(\n' +
+    '    "channel",\n' +
+    '  );\n' +
+    '  const opener = useRef<HTMLElement | null>(null);\n' +
+    '  const closeProfile = useCallback(() => {\n' +
+    '    if (hasUnresolvedIntents()) return;\n' +
+    '    setProfileId(undefined);\n' +
+    '    profileSnapshot.current = undefined;\n' +
+    '    requestAnimationFrame(() => {\n' +
+    '      if (opener.current?.isConnected)\n' +
+    '        opener.current.focus({ preventScroll: true });\n' +
+    '    });\n' +
+    '  }, []);\n' +
+    '\n' +
+    '  const [view, setView] = useState(() => bridge.view());\n' +
+    '  const [error, setError] = useState("");\n' +
+    '  const [loading, setLoading] = useState(true);\n' +
+    '  const [writeState, setWriteState] = useState(bridge.writes.state);\n' +
+    '  useEffect(() => bridge.writes.onChange(setWriteState), [bridge]);\n' +
+    '  useEffect(() => {\n' +
+    '    let disposed = false;\n' +
+    '    let timer: ReturnType<typeof setTimeout>;\n' +
+    '    async function poll() {\n' +
+    '      try {\n' +
+    '        const next = await bridge.refresh(threadRootId ? undefined : focusId);\n' +
+    '        if (!disposed) {\n' +
+    '          setView(next);\n' +
+    '          setError("");\n' +
+    '        }\n' +
+    '      } catch (failure) {\n' +
+    '        if (!disposed) setError(String(failure));\n' +
+    '      } finally {\n' +
+    '        if (!disposed) {\n' +
+    '          setLoading(false);\n' +
+    '          timer = setTimeout(poll, document.hidden ? 15000 : 3000);\n' +
+    '        }\n' +
+    '      }\n' +
+    '    }\n' +
+    '    void poll();\n' +
+    '    return () => {\n' +
+    '      disposed = true;\n' +
+    '      clearTimeout(timer);\n' +
+    '    };\n' +
+    '  }, [bridge, focusId, threadRootId]);\n' +
+    '  useLayoutEffect(() => {\n' +
+    '    const release =\n' +
+    '      !loading && !error\n' +
+    '        ? bindMemberRoster(channel.roomId, () => view.members)\n' +
+    '        : undefined;\n' +
+    '    notifyChannelMembersChanged(channel.roomId);\n' +
+    '    return () => {\n' +
+    '      release?.();\n' +
+    '    };\n' +
+    '  }, [channel.roomId, view.members, loading, error]);\n' +
+    '  const currentProfileMember =\n' +
+    '    !error && !loading\n' +
+    '      ? view.members.find(\n' +
+    '          (m) => m.kind === "agent" && m.principalId === profileId,\n' +
+    '        )\n' +
+    '      : undefined;\n' +
+    '  // Keep the write-intent owner mounted through transient conversation failure.\n' +
+    '  // This is only the selected identity; diagnostic reads still clear on denial.\n' +
+    '  const profileMember =\n' +
+    '    currentProfileMember ??\n' +
+    '    (hasUnresolvedIntents() ? profileSnapshot.current : undefined);\n' +
+    '  useEffect(() => {\n' +
+    '    if (profileId && !profileMember) closeProfile();\n' +
+    '  }, [profileId, profileMember, closeProfile]);\n' +
+    '  useEffect(() => {\n' +
+    '    onProfileVisibilityChange?.(!!profileMember || !!sideId);\n' +
+    '    return () => onProfileVisibilityChange?.(false);\n' +
+    '  }, [!!profileMember, !!sideId, onProfileVisibilityChange]);\n' +
+    '  const older = useCallback(async () => {\n' +
+    '    try {\n' +
+    '      setView(await bridge.older());\n' +
+    '    } catch (failure) {\n' +
+    '      setError(String(failure));\n' +
+    '    }\n' +
+    '  }, [bridge]);\n' +
+    '  const tasks = useChannelTasks(\n' +
+    '    bridge,\n' +
+    '    !isPrivate && !loading && !error && !channel.archivedAt,\n' +
+    '    () => {\n' +
+    '      void bridge\n' +
+    '        .refresh()\n' +
+    '        .then(setView)\n' +
+    '        .catch((failure) => setError(String(failure)));\n' +
+    '    },\n' +
+    '    (id) => {\n' +
+    '      if (!hasUnresolvedIntents()) {\n' +
+    '        closeProfile();\n' +
+    '        onThread(id);\n' +
+    '      }\n' +
+    '    },\n' +
+    '  );\n' +
+    '  const send = useCallback(\n' +
+    '    async (\n' +
+    '      body: string,\n' +
+    '      _mentions?: unknown,\n' +
+    '      asTask?: boolean,\n' +
+    '      attachmentIds: string[] = [],\n' +
+    '    ) => {\n' +
+    '      await new Promise<void>((resolve, reject) => {\n' +
+    "        // Keep the official composer's submission unresolved while the outcome is\n" +
+    '        // unknown. Explicit verification settles this same submission, so it never\n' +
+    '        // restores an already committed draft as a new sendable '... 58040 more characters
+  
+      at TestContext.<anonymous> (file:///private/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/loom-ui138-baseline-5xfo39n8/scripts/official-web/channel-chrome-repair.test.mjs:11:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.start (node:internal/test_runner/test:1096:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'import PageEmpty from "./PageEmpty";\nimport { compactConversationRoute, layoutQueries } from "./adaptive-layout.ts";\nimport { MobilePageNavigation } from "./MobilePageNavigation";\nimport {\n  showMobileRootNavigation,\n  mobileSecondaryRoot,\n} from "./mobile-app-navigation";\nimport { SidebarResize, useSidebarColumn } from "./SidebarLayout";\nimport WorkspaceTheme from "./WorkspaceTheme";\nimport LocalNotifications from "./LocalNotifications.tsx";\nimport { LoomShellRoot, LoomSidebarSlot } from "./SidebarLayout.tsx";\nimport { SenderActionsProvider } from "./SenderActions.tsx";\nimport CloseButton from "../packages/web/src/components/ui/CloseButton.tsx";\nimport { pageFetch } from "./page-fetch.ts";\nimport PushNavigation from "./PushNavigation.tsx";\nimport ChannelPrivateHistory from "./ChannelPrivateHistory.tsx";\nimport { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives.ts";\nimport { OverflowMenuTrigger } from "../packages/web/src/components/ui/OverflowSheet.tsx";\nimport ComposerDirectory from "./ComposerDirectory.tsx";\nimport type { NavigationUnread } from "./navigation-unread.ts";\nimport { uiActionProps } from "./ui-action-props.ts";\nimport MobileBottomBarStack from "../packages/web/src/components/layout/MobileBottomBarStack.tsx";\nimport SideWorkspace from "./SideWorkspace.tsx";\nimport { createElement, type ReactNode } from "react";\nimport { showToast } from "../packages/web/src/components/toastBridge.ts";\nimport { LazySavedPanel as SavedPanel } from "./LazyPages.tsx";\nimport { MessageReactionsProvider } from "./MessageReactions.tsx";\nimport SystemNotifications, {\n  SystemNotificationsProvider,\n} from "./SystemNotifications.tsx";\nimport ChannelTabs from "./ChannelTabs.tsx";\nimport { useRecordSearchVisit } from "./SearchRecent.tsx";\nimport { useSearchDestination } from "./useSearchDestination.ts";\nimport TopBarSearch from "./TopBarSearch.tsx";\nimport { searchBackground } from "./useSearchPresentation.ts";\nimport { useLocation, Routes, Route } from "react-router-dom";\nimport {\n  AppearanceRuntimeProvider,\n  LoomLiveActivity,\n} from "./AppearanceRuntime.tsx";\nimport { ChannelTasksContext, useChannelTasks } from "./ChannelTasks.tsx";\nimport { LazyTasksPage as TasksPage } from "./LazyPages.tsx";\nimport ThreadContentSlot from "./ThreadContentSlot.tsx";\nimport ThreadWorkspace from "./ThreadWorkspace.tsx";\nimport { LazyComputersPage as ComputersPage } from "./LazyPages.tsx";\nimport { LazySettingsPage as SettingsPage } from "./LazyPages.tsx";\nimport ChannelControl from "./ChannelControl.tsx";\nimport InstanceInspector from "./InstanceInspector.tsx";\nimport { bindMemberRoster } from "./member-roster.ts";\nimport { notifyChannelMembersChanged } from "../packages/web/src/store/channelMemberEvents.ts";\nimport ChannelTimeline from "./ChannelTimeline.tsx";\nimport { LazyDiscoveryPage as DiscoveryPage } from "./LazyPages.tsx";\nimport {\n  DesktopNavigation,\n  MobileNavigation,\n  DestinationPlaceholder,\n  type Destination,\n} from "./Navigation.tsx";\nimport AddInstanceDialog from "./AddInstanceDialog.tsx";\nimport { LoomPrivateBoxClient } from "./private-box.ts";\nimport ChannelMembers from "./ChannelMembers.tsx";\nimport {\n  lazy,\n  Suspense,\n  useCallback,\n  useEffect,\n  useLayoutEffect,\n  useMemo,\n  useState,\n  useRef,\n} from "react";\nimport { useIntentRoute, hasRouteBoundIntent } from "./useIntentRoute.ts";\nimport {\n  AppShellMainSlot,\n  ConversationPanelRoot,\n  ConversationPanelContent,\n  Button,\n  Spinner,\n} from "raft-ui";\nimport { Search, Hash, MessageSquare } from "lucide-react";\nimport { HttpRahClient } from "@rah-os/client-sdk";\nimport { hasUnresolvedIntents } from "@rah-os/client-core/write-intent";\nimport { loadOrCreateConsumerId } from "@rah-os/client-core";\nimport ChannelSidebar from "./ChannelSidebar.tsx";\nimport ChatSidebarFrame from "./ChatSidebarFrame.tsx";\nimport { LazyMemoryPage as MemoryPage } from "./LazyPages.tsx";\nimport { LazyAgentPage as AgentPage } from "./LazyPages.tsx";\nimport { scheduleMobilePageWarmup } from "./page-preload.ts";\nimport PanelHeader from "../packages/web/src/components/ui/PanelHeader.tsx";\nimport MessageInput from "./ComposerFiles.tsx";\nimport { LoomChannelClient, loadChannelDirectory } from "./channel-client.ts";\nimport type { Principal, Room } from "@rah-os/protocol";\nconst client = new HttpRahClient({\n  fetch: pageFetch,\n  baseUrl: "",\n  accessToken: () => "trusted-proxy-auth",\n});\nfunction consumer() {\n  let storage: Storage | undefined;\n  try {\n    storage = sessionStorage;\n  } catch {\n    /* Memory-only identity when storage is unavailable. */\n  }\n  return loadOrCreateConsumerId({\n    storage,\n    storageKey: "loom-official-consumer",\n    createId: () => `loom-web-${crypto.randomUUID()}`,\n  });\n}\nconst consumerId = consumer();\n\nfunction Channel({\n  channel,\n  standalone = false,\n  controlRoomId,\n  bridge,\n  onOpenPrivate,\n  onAddInstance,\n  onBack,\n  threadRootId,\n  focusId,\n  onThread,\n  onProfileVisibilityChange,\n  headerActions,\n  unavailable = false,\n  onRoomChanged = async () => {},\n}: {\n  onRoomChanged?: () => Promise<void>;\n  headerActions?: ReactNode;\n  unavailable?: boolean;\n  onProfileVisibilityChange?: (open: boolean) => void;\n  threadRootId?: string;\n  focusId?: string;\n  onThread: (id?: string, focusedMessageId?: string) => void;\n  onBack: () => void;\n  onOpenPrivate: (id: string) => void;\n  onAddInstance: (() => void) | undefined;\n  standalone?: boolean;\n  channel: Room;\n  controlRoomId: string | undefined;\n  bridge: LoomChannelClient;\n}) {\n  const isPrivate = channel.instancePrivateBox !== undefined;\n  const [panelParams, setPanelParams] = useIntentRoute();\n  const sideId = !channel.side ? panelParams.get("side") : null;\n  const closeSide = () => {\n    if (!hasUnresolvedIntents())\n      setPanelParams((previous) => {\n        const next = new URLSearchParams(previous);\n        next.delete("side");\n        return next;\n      });\n  };\n  const [defaultTab, setDefaultTab] = useState("chat");\n  const queryTab = panelParams.get("chatTab");\n  const selectedTab =\n    queryTab === "chat" || queryTab === "tasks" || queryTab === "workspace"\n      ? queryTab\n      : defaultTab;\n  const taskTab = !isPrivate && selectedTab === "tasks";\n  const workspaceTab = !isPrivate && selectedTab === "workspace";\n  const profileSnapshot = useRef<Principal | undefined>(undefined);\n  const [profileId, setProfileId] = useState<string>();\n  const [focusedThreadId, setFocusedThreadId] = useState<string>();\n  const threadFocused =\n    !!threadRootId && focusedThreadId === threadRootId && !profileId && !sideId;\n  const [profileSource, setProfileSource] = useState<"channel" | "thread">(\n    "channel",\n  );\n  const opener = useRef<HTMLElement | null>(null);\n  const closeProfile = useCallback(() => {\n    if (hasUnresolvedIntents()) return;\n    setProfileId(undefined);\n    profileSnapshot.current = undefined;\n    requestAnimationFrame(() => {\n      if (opener.current?.isConnected)\n        opener.current.focus({ preventScroll: true });\n    });\n  }, []);\n\n  const [view, setView] = useState(() => bridge.view());\n  const [error, setError] = useState("");\n  const [loading, setLoading] = useState(true);\n  const [writeState, setWriteState] = useState(bridge.writes.state);\n  useEffect(() => bridge.writes.onChange(setWriteState), [bridge]);\n  useEffect(() => {\n    let disposed = false;\n    let timer: ReturnType<typeof setTimeout>;\n    async function poll() {\n      try {\n        const next = await bridge.refresh(threadRootId ? undefined : focusId);\n        if (!disposed) {\n          setView(next);\n          setError("");\n        }\n      } catch (failure) {\n        if (!disposed) setError(String(failure));\n      } finally {\n        if (!disposed) {\n          setLoading(false);\n          timer = setTimeout(poll, document.hidden ? 15000 : 3000);\n        }\n      }\n    }\n    void poll();\n    return () => {\n      disposed = true;\n      clearTimeout(timer);\n    };\n  }, [bridge, focusId, threadRootId]);\n  useLayoutEffect(() => {\n    const release =\n      !loading && !error\n        ? bindMemberRoster(channel.roomId, () => view.members)\n        : undefined;\n    notifyChannelMembersChanged(channel.roomId);\n    return () => {\n      release?.();\n    };\n  }, [channel.roomId, view.members, loading, error]);\n  const currentProfileMember =\n    !error && !loading\n      ? view.members.find(\n          (m) => m.kind === "agent" && m.principalId === profileId,\n        )\n      : undefined;\n  // Keep the write-intent owner mounted through transient conversation failure.\n  // This is only the selected identity; diagnostic reads still clear on denial.\n  const profileMember =\n    currentProfileMember ??\n    (hasUnresolvedIntents() ? profileSnapshot.current : undefined);\n  useEffect(() => {\n    if (profileId && !profileMember) closeProfile();\n  }, [profileId, profileMember, closeProfile]);\n  useEffect(() => {\n    onProfileVisibilityChange?.(!!profileMember || !!sideId);\n    return () => onProfileVisibilityChange?.(false);\n  }, [!!profileMember, !!sideId, onProfileVisibilityChange]);\n  const older = useCallback(async () => {\n    try {\n      setView(await bridge.older());\n    } catch (failure) {\n      setError(String(failure));\n    }\n  }, [bridge]);\n  const tasks = useChannelTasks(\n    bridge,\n    !isPrivate && !loading && !error && !channel.archivedAt,\n    () => {\n      void bridge\n        .refresh()\n        .then(setView)\n        .catch((failure) => setError(String(failure)));\n    },\n    (id) => {\n      if (!hasUnresolvedIntents()) {\n        closeProfile();\n        onThread(id);\n      }\n    },\n  );\n  const send = useCallback(\n    async (\n      body: string,\n      _mentions?: unknown,\n      asTask?: boolean,\n      attachmentIds: string[] = [],\n    ) => {\n      await new Promise<void>((resolve, reject) => {\n        // Keep the official composer\'s submission unresolved while the outcome is\n        // unknown. Explicit verification settles this same submission, so it never\n        // restores an already committed draft as a new sendable '... 58040 more characters,
+    expected: /loom:open-search/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/official-web/channel-chrome-repair.test.mjs:19:1
+✖ computer details retain native edit/runtime affordances and automatic desktop selection (0.590667ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /min-width: 768px/. Input:
+  
+  'import PageEmpty from "./PageEmpty";\n' +
+    'import { OfficialComputerInstancesEmpty } from "./OfficialRefresh135.generated";\n' +
+    'import { layoutQueries } from "./adaptive-layout.ts";\n' +
+    'import { SidebarResize, useSidebarColumn } from "./SidebarLayout";\n' +
+    'import CreateInstanceDialog from "./CreateInstanceDialog.tsx";\n' +
+    'import { useInstancePresence } from "./InstancePresence.tsx";\n' +
+    'import { LoomSidebarSlot } from "./SidebarLayout.tsx";\n' +
+    'import { OfficialComputerRow } from "./OfficialIdentityRows.generated";\n' +
+    'import {\n' +
+    '  OfficialComputerProfile,\n' +
+    '  OfficialComputerSections,\n' +
+    '  OfficialComputerRuntimes,\n' +
+    '} from "./OfficialComputerProfile.generated";\n' +
+    'import KeyValueRow from "@loom/raft-web-source/KeyValueRow";\n' +
+    'import { OfficialListRowGroup } from "./OfficialListRows.tsx";\n' +
+    'import SectionHeader from "../packages/web/src/components/ui/SectionHeader.tsx";\n' +
+    'import {\n' +
+    '  computerInstanceRows,\n' +
+    '  visibleComputerInstances,\n' +
+    '  COMPUTER_INSTANCE_PREVIEW_COUNT,\n' +
+    '} from "./computer-instance-list.ts";\n' +
+    'import ShowMoreToggle from "@loom/raft-web-source/ShowMoreToggle";\n' +
+    'import ComputerInstanceRow from "./ComputerInstanceRow.tsx";\n' +
+    'import Tooltip from "../packages/web/src/components/ui/Tooltip.tsx";\n' +
+    'import CreateRoleDialog from "./CreateRoleDialog.tsx";\n' +
+    'import ComputerSelection from "./ComputerSelection.tsx";\n' +
+    'import RoleBatchDialog, { type RoleBatchAction } from "./RoleBatchDialog.tsx";\n' +
+    'import type { RoleListResponse, AgentCatalogEntry } from "@rah-os/protocol";\n' +
+    'import ComputerProfile from "./ComputerProfile.tsx";\n' +
+    '// Structural port: locked Raft v1.21.22 $yt / zCt / MachineDetailPanel.\n' +
+    '// Loom owns only the authenticated local inventory read; no upstream machine store.\n' +
+    'import { useEffect, useState, type CSSProperties } from "react";\n' +
+    'import { Monitor, ChevronDown, ChevronUp, Plus } from "lucide-react";\n' +
+    'import type { RahClient } from "@rah-os/client-sdk";\n' +
+    'import type { LocalRuntimeInventoryResponse } from "@rah-os/protocol";\n' +
+    'import {\n' +
+    '  AppShellMainSlot,\n' +
+    '  SidebarRoot,\n' +
+    '  SidebarSectionHeader,\n' +
+    '  SidebarSectionDisclosure,\n' +
+    '  SidebarSectionCount,\n' +
+    '  Panel,\n' +
+    '  PanelTitle,\n' +
+    '  Badge,\n' +
+    '  Status,\n' +
+    '  Separator,\n' +
+    '  IconTile,\n' +
+    '  ListRow,\n' +
+    '  ListRowBody,\n' +
+    '  ListRowTitle,\n' +
+    '  ListRowDescription,\n' +
+    '  ListRowGroup,\n' +
+    '  Button,\n' +
+    '} from "raft-ui";\n' +
+    'import PanelHeader from "../packages/web/src/components/ui/PanelHeader.tsx";\n' +
+    'import SectionEyebrow from "../packages/web/src/components/ui/SectionEyebrow.tsx";\n' +
+    'import { computerStatus, computerStatusLabels } from "./computers.ts";\n' +
+    'export default function ComputersPage({\n' +
+    '  client,\n' +
+    '  controlRoomId,\n' +
+    '  workspaceId,\n' +
+    '  onOpenRole,\n' +
+    '  selectedId,\n' +
+    '  onSelect,\n' +
+    '  onSettings,\n' +
+    '}: {\n' +
+    '  client: RahClient;\n' +
+    '  controlRoomId?: string;\n' +
+    '  workspaceId?: string;\n' +
+    '  onOpenRole: (id: string) => void;\n' +
+    '  selectedId: string | null;\n' +
+    '  onSelect: (id: string | null) => void;\n' +
+    '  onSettings: () => void;\n' +
+    '}) {\n' +
+    '  const presences = useInstancePresence(client, controlRoomId);\n' +
+    '  const [creatingInstance, setCreatingInstance] = useState(false);\n' +
+    '  const [creating, setCreating] = useState(false);\n' +
+    '  const [selectedInstances, setSelectedInstances] = useState<string[] | null>(\n' +
+    '    null,\n' +
+    '  );\n' +
+    '  const [batch, setBatch] = useState<{\n' +
+    '    action: RoleBatchAction;\n' +
+    '    instances: ReturnType<typeof computerInstanceRows>;\n' +
+    '  }>();\n' +
+    '  const [catalogReload, setCatalogReload] = useState(0);\n' +
+    '  const [expanded, setExpanded] = useState(false);\n' +
+    '  const [agents, setAgents] = useState<AgentCatalogEntry[]>([]);\n' +
+    '  const [instances, setInstances] = useState<RoleListResponse["instances"]>();\n' +
+    '  useEffect(() => {\n' +
+    '    if (!controlRoomId) return;\n' +
+    '    const abort = new AbortController();\n' +
+    '    void Promise.all([\n' +
+    '      client.request("role.list", { controlRoomId }, { signal: abort.signal }),\n' +
+    '      client.request("agent.list", { controlRoomId }, { signal: abort.signal }),\n' +
+    '    ])\n' +
+    '      .then(([roles, catalog]) => {\n' +
+    '        if (!abort.signal.aborted) {\n' +
+    '          setInstances(roles.instances);\n' +
+    '          setAgents(catalog.agents);\n' +
+    '        }\n' +
+    '      })\n' +
+    '      .catch(() => {\n' +
+    '        if (!abort.signal.aborted) setInstances(undefined);\n' +
+    '      });\n' +
+    '    return () => abort.abort();\n' +
+    '  }, [client, controlRoomId, catalogReload]);\n' +
+    '  useEffect(() => {\n' +
+    '    setExpanded(false);\n' +
+    '    setSelectedInstances(null);\n' +
+    '  }, [selectedId]);\n' +
+    '  const [inventory, setInventory] = useState<LocalRuntimeInventoryResponse>();\n' +
+    '  const [error, setError] = useState(false);\n' +
+    '  const [reload, setReload] = useState(0);\n' +
+    '  const [now, setNow] = useState(Date.now);\n' +
+    '  const panel = useSidebarColumn();\n' +
+    '  useEffect(() => {\n' +
+    '    const abort = new AbortController();\n' +
+    '    let timer: ReturnType<typeof setTimeout>;\n' +
+    '    const read = async () => {\n' +
+    '      try {\n' +
+    '        const value = await client.request(\n' +
+    '          "host.runtime.list",\n' +
+    '          {},\n' +
+    '          { signal: abort.signal },\n' +
+    '        );\n' +
+    '        if (!abort.signal.aborted) {\n' +
+    '          setInventory(value);\n' +
+    '          setError(false);\n' +
+    '          setNow(Date.now());\n' +
+    '        }\n' +
+    '      } catch {\n' +
+    '        if (!abort.signal.aborted) {\n' +
+    '          setError(true);\n' +
+    '        }\n' +
+    '      } finally {\n' +
+    '        if (!abort.signal.aborted) timer = setTimeout(read, 15000);\n' +
+    '      }\n' +
+    '    };\n' +
+    '    void read();\n' +
+    '    const clock = setInterval(() => setNow(Date.now()), 1000);\n' +
+    '    return () => {\n' +
+    '      abort.abort();\n' +
+    '      clearTimeout(timer);\n' +
+    '      clearInterval(clock);\n' +
+    '    };\n' +
+    '  }, [client, reload, controlRoomId]);\n' +
+    '  useEffect(() => {\n' +
+    '    if (\n' +
+    '      !selectedId &&\n' +
+    '      inventory &&\n' +
+    '      window.matchMedia(layoutQueries.dual).matches\n' +
+    '    )\n' +
+    '      onSelect(inventory.hostId);\n' +
+    '  }, [selectedId, inventory?.hostId, onSelect]);\n' +
+    '  const rows =\n' +
+    '    inventory && instances\n' +
+    '      ? computerInstanceRows(inventory.runtimes, instances, agents, presences)\n' +
+    '      : [];\n' +
+    '  const computer = inventory?.computer;\n' +
+    '  const name = computer?.displayName ?? "Loom 主机";\n' +
+    '  const status = computerStatus(error ? undefined : computer, now);\n' +
+    '  const label = computerStatusLabels[status];\n' +
+    '  const dot = (className: string) => (\n' +
+    '    <span\n' +
+    '      title={label}\n' +
+    '      className={`inline-block shrink-0 rounded-[2px] border-[1.5px] border-sticker-ink size-[9px] ${status === "online" ? "bg-presence-online" : status === "draining" ? "bg-presence-busy" : "bg-presence-offline"} ${className}`}\n' +
+    '    />\n' +
+    '  );\n' +
+    '  const problem = error ? (\n' +
+    '    <div role="alert" className="p-4 text-callout text-foreground-muted">\n' +
+    '      无法读取计算机状态。\n' +
+    '      <Button size="sm" variant="ghost" onClick={() => setReload((x) => x + 1)}>\n' +
+    '        重试\n' +
+    '      </Button>\n' +
+    '    </div>\n' +
+    '  ) : !inventory ? (\n' +
+    '    <div role="status" className="p-4 text-callout text-foreground-muted">\n' +
+    '      正在加载…\n' +
+    '    </div>\n' +
+    '  ) : null;\n' +
+    '  const selected = !!inventory && selectedId === inventory.hostId;\n' +
+    '  return (\n' +
+    '    <div\n' +
+    '      className="flex min-h-0 min-w-0 flex-1"\n' +
+    '      data-testid="loom-computers-page"\n' +
+    '    >\n' +
+    '      {creatingInstance && workspaceId && controlRoomId && (\n' +
+    '        <CreateInstanceDialog\n' +
+    '          client={client}\n' +
+    '          workspaceId={workspaceId}\n' +
+    '          controlRoomId={controlRoomId}\n' +
+    '          onClose={() => setCreatingInstance(false)}\n' +
+    '          onChanged={() => {\n' +
+    '            setCatalogReload((n) => n + 1);\n' +
+    '            setReload((n) => n + 1);\n' +
+    '          }}\n' +
+    '        />\n' +
+    '      )}\n' +
+    '      {creating && workspaceId && controlRoomId && (\n' +
+    '        <CreateRoleDialog\n' +
+    '          client={client}\n' +
+    '          workspaceId={workspaceId}\n' +
+    '          controlRoomId={controlRoomId}\n' +
+    '          onClose={() => setCreating(false)}\n' +
+    '          onChanged={() => {\n' +
+    '            setCatalogReload((n) => n + 1);\n' +
+    '            setReload((n) => n + 1);\n' +
+    '          }}\n' +
+    '        />\n' +
+    '      )}\n' +
+    '      {batch && workspaceId && controlRoomId && (\n' +
+    '        <RoleBatchDialog\n' +
+    '          client={client}\n' +
+    '          workspaceId={workspaceId}\n' +
+    '          controlRoomId={controlRoomId}\n' +
+    '          instances={batch.instances}\n' +
+    '          action={batch.action}\n' +
+    '          onClose={() => setBatch(undefined)}\n' +
+    '          onChanged={() => {\n' +
+    '            setCatalogReload((n) => n + 1);\n' +
+    '            setReload((n) => n + 1);\n' +
+    '          }}\n' +
+    '        />\n' +
+    '      )}\n' +
+    '      <LoomSidebarSlot\n' +
+    '        page="computers"\n' +
+    '        className={`relative min-w-0 shrink-0 flex-col md:flex md:w-[var(--computers-sidebar-width)] ${selectedId ? "hidden" : "flex w-full"}`}\n' +
+    '        style={\n' +
+    '          { "--computers-sidebar-width": `${panel.width}px` } as CSSProperties\n' +
+    '        }\n' +
+    '      >\n' +
+    '        <SidebarRoot className="hidden h-full flex-col md:flex">\n' +
+    '          <div className="min-h-0 flex-1 overflow-y-auto px-2 pt-2 pb-2">\n' +
+    '            <SidebarSectionHeader data-testid="computer-section-header">\n' +
+    '              <SidebarSectionDisclosure render={<div />} type={undefined}>\n' +
+    '                计算机{" "}\n' +
+    '                <SidebarSectionCount>{inventory ? 1 : 0}</SidebarSectionCount>\n' +
+    '              </SidebarSectionDisclosure>\n' +
+    '            </SidebarSectionHeader>\n' +
+    '            {problem}\n' +
+    '            {inventory && (\n' +
+    '              <OfficialComputerRow\n' +
+    '                machine={{\n' +
+    '                  id: inventory.hostId,\n' +
+    '                  name,\n' +
+    '                  description: computer?.description,\n' +
+    '                }}\n' +
+    '                selected={selected}\n' +
+    '                onClick={() => onSelect(inventory.hostId)}\n' +
+    '                statusDot={dot("absolute -right-1 -bottom-1")}\n' +
+    '                statusLabel={label}\n' +
+    '              />\n' +
+    '            )}\n' +
+    '          </div>\n' +
+    '        </SidebarRoot>\n' +
+    '        <div\n' +
+    '          className="flex min-h-0 flex-1 flex-col md:hidden"\n' +
+    '          data-testid="mobile-computers-panel"\n' +
+    '        >\n' +
+    '          <PanelHeader\n' +
+    '            title="计算机"\n' +
+    '            onMobileBack={onSettings}\n' +
+    '            mobileBackProps={{ "aria-label": "设置列表" }}\n' +
+    '          />\n' +
+    '          <div className="flex-1 overflow-y-auto bg-layer-panel p-4 safe-bottom mobile-nav-clearance">\n' +
+    '            <div className="flex flex-col gap-2.5">\n' +
+    '              {problem}\n' +
+    '              {inventory && (\n' +
+    '                <ListRowGroup>\n' +
+    '                  <ListRow\n' +
+    '                    data-testid="computer-mobile-row"\n' +
+    '                    onClick={() => onSelect(inventory.hostId)}\n' +
+    '                  >\n' +
+    '                    <span className="relative shrink-0">\n' +
+    '                      <IconTile>\n' +
+    '                        <Monitor aria-hidden="true" />\n' +
+    '                      </IconTile>\n' +
+    '         '... 11698 more characters
+  
+      at TestContext.<anonymous> (file:///private/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/loom-ui138-baseline-5xfo39n8/scripts/official-web/channel-chrome-repair.test.mjs:23:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'import PageEmpty from "./PageEmpty";\nimport { OfficialComputerInstancesEmpty } from "./OfficialRefresh135.generated";\nimport { layoutQueries } from "./adaptive-layout.ts";\nimport { SidebarResize, useSidebarColumn } from "./SidebarLayout";\nimport CreateInstanceDialog from "./CreateInstanceDialog.tsx";\nimport { useInstancePresence } from "./InstancePresence.tsx";\nimport { LoomSidebarSlot } from "./SidebarLayout.tsx";\nimport { OfficialComputerRow } from "./OfficialIdentityRows.generated";\nimport {\n  OfficialComputerProfile,\n  OfficialComputerSections,\n  OfficialComputerRuntimes,\n} from "./OfficialComputerProfile.generated";\nimport KeyValueRow from "@loom/raft-web-source/KeyValueRow";\nimport { OfficialListRowGroup } from "./OfficialListRows.tsx";\nimport SectionHeader from "../packages/web/src/components/ui/SectionHeader.tsx";\nimport {\n  computerInstanceRows,\n  visibleComputerInstances,\n  COMPUTER_INSTANCE_PREVIEW_COUNT,\n} from "./computer-instance-list.ts";\nimport ShowMoreToggle from "@loom/raft-web-source/ShowMoreToggle";\nimport ComputerInstanceRow from "./ComputerInstanceRow.tsx";\nimport Tooltip from "../packages/web/src/components/ui/Tooltip.tsx";\nimport CreateRoleDialog from "./CreateRoleDialog.tsx";\nimport ComputerSelection from "./ComputerSelection.tsx";\nimport RoleBatchDialog, { type RoleBatchAction } from "./RoleBatchDialog.tsx";\nimport type { RoleListResponse, AgentCatalogEntry } from "@rah-os/protocol";\nimport ComputerProfile from "./ComputerProfile.tsx";\n// Structural port: locked Raft v1.21.22 $yt / zCt / MachineDetailPanel.\n// Loom owns only the authenticated local inventory read; no upstream machine store.\nimport { useEffect, useState, type CSSProperties } from "react";\nimport { Monitor, ChevronDown, ChevronUp, Plus } from "lucide-react";\nimport type { RahClient } from "@rah-os/client-sdk";\nimport type { LocalRuntimeInventoryResponse } from "@rah-os/protocol";\nimport {\n  AppShellMainSlot,\n  SidebarRoot,\n  SidebarSectionHeader,\n  SidebarSectionDisclosure,\n  SidebarSectionCount,\n  Panel,\n  PanelTitle,\n  Badge,\n  Status,\n  Separator,\n  IconTile,\n  ListRow,\n  ListRowBody,\n  ListRowTitle,\n  ListRowDescription,\n  ListRowGroup,\n  Button,\n} from "raft-ui";\nimport PanelHeader from "../packages/web/src/components/ui/PanelHeader.tsx";\nimport SectionEyebrow from "../packages/web/src/components/ui/SectionEyebrow.tsx";\nimport { computerStatus, computerStatusLabels } from "./computers.ts";\nexport default function ComputersPage({\n  client,\n  controlRoomId,\n  workspaceId,\n  onOpenRole,\n  selectedId,\n  onSelect,\n  onSettings,\n}: {\n  client: RahClient;\n  controlRoomId?: string;\n  workspaceId?: string;\n  onOpenRole: (id: string) => void;\n  selectedId: string | null;\n  onSelect: (id: string | null) => void;\n  onSettings: () => void;\n}) {\n  const presences = useInstancePresence(client, controlRoomId);\n  const [creatingInstance, setCreatingInstance] = useState(false);\n  const [creating, setCreating] = useState(false);\n  const [selectedInstances, setSelectedInstances] = useState<string[] | null>(\n    null,\n  );\n  const [batch, setBatch] = useState<{\n    action: RoleBatchAction;\n    instances: ReturnType<typeof computerInstanceRows>;\n  }>();\n  const [catalogReload, setCatalogReload] = useState(0);\n  const [expanded, setExpanded] = useState(false);\n  const [agents, setAgents] = useState<AgentCatalogEntry[]>([]);\n  const [instances, setInstances] = useState<RoleListResponse["instances"]>();\n  useEffect(() => {\n    if (!controlRoomId) return;\n    const abort = new AbortController();\n    void Promise.all([\n      client.request("role.list", { controlRoomId }, { signal: abort.signal }),\n      client.request("agent.list", { controlRoomId }, { signal: abort.signal }),\n    ])\n      .then(([roles, catalog]) => {\n        if (!abort.signal.aborted) {\n          setInstances(roles.instances);\n          setAgents(catalog.agents);\n        }\n      })\n      .catch(() => {\n        if (!abort.signal.aborted) setInstances(undefined);\n      });\n    return () => abort.abort();\n  }, [client, controlRoomId, catalogReload]);\n  useEffect(() => {\n    setExpanded(false);\n    setSelectedInstances(null);\n  }, [selectedId]);\n  const [inventory, setInventory] = useState<LocalRuntimeInventoryResponse>();\n  const [error, setError] = useState(false);\n  const [reload, setReload] = useState(0);\n  const [now, setNow] = useState(Date.now);\n  const panel = useSidebarColumn();\n  useEffect(() => {\n    const abort = new AbortController();\n    let timer: ReturnType<typeof setTimeout>;\n    const read = async () => {\n      try {\n        const value = await client.request(\n          "host.runtime.list",\n          {},\n          { signal: abort.signal },\n        );\n        if (!abort.signal.aborted) {\n          setInventory(value);\n          setError(false);\n          setNow(Date.now());\n        }\n      } catch {\n        if (!abort.signal.aborted) {\n          setError(true);\n        }\n      } finally {\n        if (!abort.signal.aborted) timer = setTimeout(read, 15000);\n      }\n    };\n    void read();\n    const clock = setInterval(() => setNow(Date.now()), 1000);\n    return () => {\n      abort.abort();\n      clearTimeout(timer);\n      clearInterval(clock);\n    };\n  }, [client, reload, controlRoomId]);\n  useEffect(() => {\n    if (\n      !selectedId &&\n      inventory &&\n      window.matchMedia(layoutQueries.dual).matches\n    )\n      onSelect(inventory.hostId);\n  }, [selectedId, inventory?.hostId, onSelect]);\n  const rows =\n    inventory && instances\n      ? computerInstanceRows(inventory.runtimes, instances, agents, presences)\n      : [];\n  const computer = inventory?.computer;\n  const name = computer?.displayName ?? "Loom 主机";\n  const status = computerStatus(error ? undefined : computer, now);\n  const label = computerStatusLabels[status];\n  const dot = (className: string) => (\n    <span\n      title={label}\n      className={`inline-block shrink-0 rounded-[2px] border-[1.5px] border-sticker-ink size-[9px] ${status === "online" ? "bg-presence-online" : status === "draining" ? "bg-presence-busy" : "bg-presence-offline"} ${className}`}\n    />\n  );\n  const problem = error ? (\n    <div role="alert" className="p-4 text-callout text-foreground-muted">\n      无法读取计算机状态。\n      <Button size="sm" variant="ghost" onClick={() => setReload((x) => x + 1)}>\n        重试\n      </Button>\n    </div>\n  ) : !inventory ? (\n    <div role="status" className="p-4 text-callout text-foreground-muted">\n      正在加载…\n    </div>\n  ) : null;\n  const selected = !!inventory && selectedId === inventory.hostId;\n  return (\n    <div\n      className="flex min-h-0 min-w-0 flex-1"\n      data-testid="loom-computers-page"\n    >\n      {creatingInstance && workspaceId && controlRoomId && (\n        <CreateInstanceDialog\n          client={client}\n          workspaceId={workspaceId}\n          controlRoomId={controlRoomId}\n          onClose={() => setCreatingInstance(false)}\n          onChanged={() => {\n            setCatalogReload((n) => n + 1);\n            setReload((n) => n + 1);\n          }}\n        />\n      )}\n      {creating && workspaceId && controlRoomId && (\n        <CreateRoleDialog\n          client={client}\n          workspaceId={workspaceId}\n          controlRoomId={controlRoomId}\n          onClose={() => setCreating(false)}\n          onChanged={() => {\n            setCatalogReload((n) => n + 1);\n            setReload((n) => n + 1);\n          }}\n        />\n      )}\n      {batch && workspaceId && controlRoomId && (\n        <RoleBatchDialog\n          client={client}\n          workspaceId={workspaceId}\n          controlRoomId={controlRoomId}\n          instances={batch.instances}\n          action={batch.action}\n          onClose={() => setBatch(undefined)}\n          onChanged={() => {\n            setCatalogReload((n) => n + 1);\n            setReload((n) => n + 1);\n          }}\n        />\n      )}\n      <LoomSidebarSlot\n        page="computers"\n        className={`relative min-w-0 shrink-0 flex-col md:flex md:w-[var(--computers-sidebar-width)] ${selectedId ? "hidden" : "flex w-full"}`}\n        style={\n          { "--computers-sidebar-width": `${panel.width}px` } as CSSProperties\n        }\n      >\n        <SidebarRoot className="hidden h-full flex-col md:flex">\n          <div className="min-h-0 flex-1 overflow-y-auto px-2 pt-2 pb-2">\n            <SidebarSectionHeader data-testid="computer-section-header">\n              <SidebarSectionDisclosure render={<div />} type={undefined}>\n                计算机{" "}\n                <SidebarSectionCount>{inventory ? 1 : 0}</SidebarSectionCount>\n              </SidebarSectionDisclosure>\n            </SidebarSectionHeader>\n            {problem}\n            {inventory && (\n              <OfficialComputerRow\n                machine={{\n                  id: inventory.hostId,\n                  name,\n                  description: computer?.description,\n                }}\n                selected={selected}\n                onClick={() => onSelect(inventory.hostId)}\n                statusDot={dot("absolute -right-1 -bottom-1")}\n                statusLabel={label}\n              />\n            )}\n          </div>\n        </SidebarRoot>\n        <div\n          className="flex min-h-0 flex-1 flex-col md:hidden"\n          data-testid="mobile-computers-panel"\n        >\n          <PanelHeader\n            title="计算机"\n            onMobileBack={onSettings}\n            mobileBackProps={{ "aria-label": "设置列表" }}\n          />\n          <div className="flex-1 overflow-y-auto bg-layer-panel p-4 safe-bottom mobile-nav-clearance">\n            <div className="flex flex-col gap-2.5">\n              {problem}\n              {inventory && (\n                <ListRowGroup>\n                  <ListRow\n                    data-testid="computer-mobile-row"\n                    onClick={() => onSelect(inventory.hostId)}\n                  >\n                    <span className="relative shrink-0">\n                      <IconTile>\n                        <Monitor aria-hidden="true" />\n                      </IconTile>\n         '... 11698 more characters,
+    expected: /min-width: 768px/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/official-web/computer-create-source.test.mjs:13:1
+✖ both entry points use the same role creation flow without implicit DM creation (1.415292ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /@loom\/raft-web-source\/DialogCard/. Input:
+  
+  '// Official db5e399 CreateAgentDialog composition; Role save and optional instance\n' +
+    '// creation remain separate authenticated Loom writes. No automatic DM/session.\n' +
+    'import { useMemo, useRef, useState, useEffect } from "react";\n' +
+    'import type { RahClient } from "@rah-os/client-sdk";\n' +
+    'import { RoleCreateResponseSchema, type RoleTemplate } from "@rah-os/protocol";\n' +
+    'import { Button, Checkbox, DialogFooter } from "raft-ui";\n' +
+    'import MobileFormDialog from "./MobileFormDialog";\n' +
+    'import { DialogCommit } from "raft-ui/wip";\n' +
+    'import RoleEditor from "./RoleEditor.tsx";\n' +
+    'import { useDraftNavigation } from "./DraftNavigation.tsx";\n' +
+    'import DiscardChangesDialog from "./DiscardChangesDialog.tsx";\n' +
+    'import { ManagementClient, type Catalog } from "./management-client.ts";\n' +
+    'import {\n' +
+    '  useManagement,\n' +
+    '  OperationStatus,\n' +
+    '  SelectField,\n' +
+    '} from "./ManagementUi.tsx";\n' +
+    'export default function CreateRoleDialog({\n' +
+    '  client,\n' +
+    '  workspaceId,\n' +
+    '  controlRoomId,\n' +
+    '  onClose,\n' +
+    '  onChanged,\n' +
+    '}: {\n' +
+    '  client: RahClient;\n' +
+    '  workspaceId: string;\n' +
+    '  controlRoomId: string;\n' +
+    '  onClose: () => void;\n' +
+    '  onChanged: () => void;\n' +
+    '}) {\n' +
+    '  const manager = useMemo(\n' +
+    '    () => new ManagementClient(client, workspaceId, controlRoomId),\n' +
+    '    [client, workspaceId, controlRoomId],\n' +
+    '  );\n' +
+    '  const { state, error, setError } = useManagement(manager);\n' +
+    '  const [catalog, setCatalog] = useState<Catalog>();\n' +
+    '  const [dirty, setDirty] = useState(false),\n' +
+    '    [discard, setDiscard] = useState(false);\n' +
+    '  const [add, setAdd] = useState(false),\n' +
+    '    [channel, setChannel] = useState("");\n' +
+    '  const [savedRole, setSavedRole] = useState<RoleTemplate>();\n' +
+    '  const [adding, setAdding] = useState(false);\n' +
+    '  const container = useRef<HTMLDivElement>(null);\n' +
+    '  useEffect(() => {\n' +
+    '    let alive = true;\n' +
+    '    void manager\n' +
+    '      .catalog()\n' +
+    '      .then((c) => {\n' +
+    '        if (alive) setCatalog(c);\n' +
+    '      })\n' +
+    '      .catch(() => {\n' +
+    '        if (alive) setError("无法读取角色和频道目录，请关闭后重试。");\n' +
+    '      });\n' +
+    '    return () => {\n' +
+    '      alive = false;\n' +
+    '    };\n' +
+    '  }, [manager, setError]);\n' +
+    '  useDraftNavigation(add && !savedRole, onClose);\n' +
+    '  const busy = state !== "idle" || adding;\n' +
+    '  const close = () => {\n' +
+    '    if (busy) return;\n' +
+    '    if (!savedRole && (dirty || add)) setDiscard(true);\n' +
+    '    else onClose();\n' +
+    '  };\n' +
+    '  // Each completed save is retained even when the subsequent add is rejected.\n' +
+    '  // A separate explicit confirmation prevents recreating the Role on retry.\n' +
+    '  const attach = () => {\n' +
+    '    if (!savedRole || !channel || busy) return;\n' +
+    '    setAdding(true);\n' +
+    '    setError("");\n' +
+    '    void manager\n' +
+    '      .instance("add", channel, savedRole.roleId, (outcome) => {\n' +
+    '        setAdding(false);\n' +
+    '        if (outcome.kind === "ok") {\n' +
+    '          onChanged();\n' +
+    '          onClose();\n' +
+    '        } else if (outcome.kind === "rejected")\n' +
+    '          setError(`角色已保存，添加实例被拒绝：${String(outcome.error)}`);\n' +
+    '      })\n' +
+    '      .finally(() => setAdding(false));\n' +
+    '  };\n' +
+    '  return (\n' +
+    '    <>\n' +
+    '      <MobileFormDialog\n' +
+    '        busy={busy}\n' +
+    '        title="新建角色"\n' +
+    '        onClose={close}\n' +
+    '        testId="loom-create-role"\n' +
+    '      >\n' +
+    '        <div ref={container}>\n' +
+    '          {savedRole ? (\n' +
+    '            <div className="space-y-4">\n' +
+    '              <p role="status">\n' +
+    '                角色“{savedRole.configuration.displayName}\n' +
+    '                ”已保存。尚未创建实例。\n' +
+    '              </p>\n' +
+    '              <SelectField\n' +
+    '                stable\n' +
+    '                portalContainer={container}\n' +
+    '                label="频道"\n' +
+    '                value={channel}\n' +
+    '                disabled={busy}\n' +
+    '                onChange={setChannel}\n' +
+    '                options={(catalog?.rooms ?? [])\n' +
+    '                  .filter((r) => r.kind === "channel" && !r.archivedAt)\n' +
+    '                  .map((r) => ({ value: r.roomId, label: r.name }))}\n' +
+    '              />\n' +
+    '              <DialogFooter>\n' +
+    '                <Button\n' +
+    '                  variant="ghost"\n' +
+    '                  size="lg"\n' +
+    '                  disabled={busy}\n' +
+    '                  onClick={onClose}\n' +
+    '                >\n' +
+    '                  暂不添加\n' +
+    '                </Button>\n' +
+    '                <DialogCommit\n' +
+    '                  variant="accent"\n' +
+    '                  size="lg"\n' +
+    '                  disabled={busy || !channel}\n' +
+    '                  onClick={attach}\n' +
+    '                >\n' +
+    '                  确认添加实例\n' +
+    '                </DialogCommit>\n' +
+    '              </DialogFooter>\n' +
+    '            </div>\n' +
+    '          ) : (\n' +
+    '            <RoleEditor\n' +
+    '              creation\n' +
+    '              client={client}\n' +
+    '              disabled={busy || !catalog}\n' +
+    '              submitDisabled={add && !channel}\n' +
+    '              takenNames={catalog?.roles.map(\n' +
+    '                (r) => r.configuration.displayName,\n' +
+    '              )}\n' +
+    '              portalContainer={container}\n' +
+    '              onDirtyChange={setDirty}\n' +
+    '              onNavigationDiscard={onClose}\n' +
+    '              onCancel={close}\n' +
+    '              beforeSubmit={\n' +
+    '                <div className="space-y-1">\n' +
+    '                  <label className="flex items-center gap-2 text-callout">\n' +
+    '                    <Checkbox\n' +
+    '                      checked={add}\n' +
+    '                      disabled={busy}\n' +
+    '                      onCheckedChange={(v) => setAdd(v === true)}\n' +
+    '                    />\n' +
+    '                    保存后添加到频道\n' +
+    '                  </label>\n' +
+    '                  {add && (\n' +
+    '                    <SelectField\n' +
+    '                      stable\n' +
+    '                      portalContainer={container}\n' +
+    '                      label="频道"\n' +
+    '                      value={channel}\n' +
+    '                      disabled={busy}\n' +
+    '                      onChange={setChannel}\n' +
+    '                      options={(catalog?.rooms ?? [])\n' +
+    '                        .filter((r) => r.kind === "channel" && !r.archivedAt)\n' +
+    '                        .map((r) => ({ value: r.roomId, label: r.name }))}\n' +
+    '                    />\n' +
+    '                  )}\n' +
+    '                </div>\n' +
+    '              }\n' +
+    '              onSave={(configuration) => {\n' +
+    '                setError("");\n' +
+    '                void manager.save(configuration, undefined, (outcome) => {\n' +
+    '                  if (outcome.kind === "ok") {\n' +
+    '                    const result = RoleCreateResponseSchema.parse(\n' +
+    '                      outcome.result,\n' +
+    '                    );\n' +
+    '                    onChanged();\n' +
+    '                    if (add) setSavedRole(result.role);\n' +
+    '                    else onClose();\n' +
+    '                  } else if (outcome.kind === "rejected")\n' +
+    '                    setError(`保存被拒绝：${String(outcome.error)}`);\n' +
+    '                });\n' +
+    '              }}\n' +
+    '            />\n' +
+    '          )}\n' +
+    '          <OperationStatus manager={manager} error={error} />\n' +
+    '        </div>\n' +
+    '      </MobileFormDialog>\n' +
+    '      {discard && (\n' +
+    '        <DiscardChangesDialog\n' +
+    '          onCancel={() => setDiscard(false)}\n' +
+    '          onDiscard={onClose}\n' +
+    '        />\n' +
+    '      )}\n' +
+    '    </>\n' +
+    '  );\n' +
+    '}\n'
+  
+      at TestContext.<anonymous> (file:///private/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/loom-ui138-baseline-5xfo39n8/scripts/official-web/computer-create-source.test.mjs:17:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '// Official db5e399 CreateAgentDialog composition; Role save and optional instance\n// creation remain separate authenticated Loom writes. No automatic DM/session.\nimport { useMemo, useRef, useState, useEffect } from "react";\nimport type { RahClient } from "@rah-os/client-sdk";\nimport { RoleCreateResponseSchema, type RoleTemplate } from "@rah-os/protocol";\nimport { Button, Checkbox, DialogFooter } from "raft-ui";\nimport MobileFormDialog from "./MobileFormDialog";\nimport { DialogCommit } from "raft-ui/wip";\nimport RoleEditor from "./RoleEditor.tsx";\nimport { useDraftNavigation } from "./DraftNavigation.tsx";\nimport DiscardChangesDialog from "./DiscardChangesDialog.tsx";\nimport { ManagementClient, type Catalog } from "./management-client.ts";\nimport {\n  useManagement,\n  OperationStatus,\n  SelectField,\n} from "./ManagementUi.tsx";\nexport default function CreateRoleDialog({\n  client,\n  workspaceId,\n  controlRoomId,\n  onClose,\n  onChanged,\n}: {\n  client: RahClient;\n  workspaceId: string;\n  controlRoomId: string;\n  onClose: () => void;\n  onChanged: () => void;\n}) {\n  const manager = useMemo(\n    () => new ManagementClient(client, workspaceId, controlRoomId),\n    [client, workspaceId, controlRoomId],\n  );\n  const { state, error, setError } = useManagement(manager);\n  const [catalog, setCatalog] = useState<Catalog>();\n  const [dirty, setDirty] = useState(false),\n    [discard, setDiscard] = useState(false);\n  const [add, setAdd] = useState(false),\n    [channel, setChannel] = useState("");\n  const [savedRole, setSavedRole] = useState<RoleTemplate>();\n  const [adding, setAdding] = useState(false);\n  const container = useRef<HTMLDivElement>(null);\n  useEffect(() => {\n    let alive = true;\n    void manager\n      .catalog()\n      .then((c) => {\n        if (alive) setCatalog(c);\n      })\n      .catch(() => {\n        if (alive) setError("无法读取角色和频道目录，请关闭后重试。");\n      });\n    return () => {\n      alive = false;\n    };\n  }, [manager, setError]);\n  useDraftNavigation(add && !savedRole, onClose);\n  const busy = state !== "idle" || adding;\n  const close = () => {\n    if (busy) return;\n    if (!savedRole && (dirty || add)) setDiscard(true);\n    else onClose();\n  };\n  // Each completed save is retained even when the subsequent add is rejected.\n  // A separate explicit confirmation prevents recreating the Role on retry.\n  const attach = () => {\n    if (!savedRole || !channel || busy) return;\n    setAdding(true);\n    setError("");\n    void manager\n      .instance("add", channel, savedRole.roleId, (outcome) => {\n        setAdding(false);\n        if (outcome.kind === "ok") {\n          onChanged();\n          onClose();\n        } else if (outcome.kind === "rejected")\n          setError(`角色已保存，添加实例被拒绝：${String(outcome.error)}`);\n      })\n      .finally(() => setAdding(false));\n  };\n  return (\n    <>\n      <MobileFormDialog\n        busy={busy}\n        title="新建角色"\n        onClose={close}\n        testId="loom-create-role"\n      >\n        <div ref={container}>\n          {savedRole ? (\n            <div className="space-y-4">\n              <p role="status">\n                角色“{savedRole.configuration.displayName}\n                ”已保存。尚未创建实例。\n              </p>\n              <SelectField\n                stable\n                portalContainer={container}\n                label="频道"\n                value={channel}\n                disabled={busy}\n                onChange={setChannel}\n                options={(catalog?.rooms ?? [])\n                  .filter((r) => r.kind === "channel" && !r.archivedAt)\n                  .map((r) => ({ value: r.roomId, label: r.name }))}\n              />\n              <DialogFooter>\n                <Button\n                  variant="ghost"\n                  size="lg"\n                  disabled={busy}\n                  onClick={onClose}\n                >\n                  暂不添加\n                </Button>\n                <DialogCommit\n                  variant="accent"\n                  size="lg"\n                  disabled={busy || !channel}\n                  onClick={attach}\n                >\n                  确认添加实例\n                </DialogCommit>\n              </DialogFooter>\n            </div>\n          ) : (\n            <RoleEditor\n              creation\n              client={client}\n              disabled={busy || !catalog}\n              submitDisabled={add && !channel}\n              takenNames={catalog?.roles.map(\n                (r) => r.configuration.displayName,\n              )}\n              portalContainer={container}\n              onDirtyChange={setDirty}\n              onNavigationDiscard={onClose}\n              onCancel={close}\n              beforeSubmit={\n                <div className="space-y-1">\n                  <label className="flex items-center gap-2 text-callout">\n                    <Checkbox\n                      checked={add}\n                      disabled={busy}\n                      onCheckedChange={(v) => setAdd(v === true)}\n                    />\n                    保存后添加到频道\n                  </label>\n                  {add && (\n                    <SelectField\n                      stable\n                      portalContainer={container}\n                      label="频道"\n                      value={channel}\n                      disabled={busy}\n                      onChange={setChannel}\n                      options={(catalog?.rooms ?? [])\n                        .filter((r) => r.kind === "channel" && !r.archivedAt)\n                        .map((r) => ({ value: r.roomId, label: r.name }))}\n                    />\n                  )}\n                </div>\n              }\n              onSave={(configuration) => {\n                setError("");\n                void manager.save(configuration, undefined, (outcome) => {\n                  if (outcome.kind === "ok") {\n                    const result = RoleCreateResponseSchema.parse(\n                      outcome.result,\n                    );\n                    onChanged();\n                    if (add) setSavedRole(result.role);\n                    else onClose();\n                  } else if (outcome.kind === "rejected")\n                    setError(`保存被拒绝：${String(outcome.error)}`);\n                });\n              }}\n            />\n          )}\n          <OperationStatus manager={manager} error={error} />\n        </div>\n      </MobileFormDialog>\n      {discard && (\n        <DiscardChangesDialog\n          onCancel={() => setDiscard(false)}\n          onDiscard={onClose}\n        />\n      )}\n    </>\n  );\n}\n',
+    expected: /@loom\/raft-web-source\/DialogCard/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/official-web/computer-route-freshness.test.mjs:1:1
+✖ scripts/official-web/computer-route-freshness.test.mjs (60.789834ms)
+  'test failed'
+
+test at scripts/official-web/intake.test.mjs:7:1
+✖ official source intake preserves recorded upstream source bytes and license (120.649291ms)
+  AssertionError [ERR_ASSERTION]: packages/web/src/index.css
+  + actual - expected
+  
+  + '50a790897811fa73c8c0ab957c8be992e34e078271033eae1cfad96540df5714'
+  - '14cf38a544f50f17b295b831e15ba18c785594364145ee0ace760ab8c747336c'
+  
+      at TestContext.<anonymous> (file:///private/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/loom-ui138-baseline-5xfo39n8/scripts/official-web/intake.test.mjs:30:12)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: '50a790897811fa73c8c0ab957c8be992e34e078271033eae1cfad96540df5714',
+    expected: '14cf38a544f50f17b295b831e15ba18c785594364145ee0ace760ab8c747336c',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/official-web/page134-followup.test.ts:105:1
+✖ scoped search Back retains the originating conversation and accurate accessible label (1.318291ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /destination === "search" && params.get\("channelId"\)/. Input:
+  
+  'import PageEmpty from "./PageEmpty";\n' +
+    'import { compactConversationRoute, layoutQueries } from "./adaptive-layout.ts";\n' +
+    'import { MobilePageNavigation } from "./MobilePageNavigation";\n' +
+    'import {\n' +
+    '  showMobileRootNavigation,\n' +
+    '  mobileSecondaryRoot,\n' +
+    '} from "./mobile-app-navigation";\n' +
+    'import { SidebarResize, useSidebarColumn } from "./SidebarLayout";\n' +
+    'import WorkspaceTheme from "./WorkspaceTheme";\n' +
+    'import LocalNotifications from "./LocalNotifications.tsx";\n' +
+    'import { LoomShellRoot, LoomSidebarSlot } from "./SidebarLayout.tsx";\n' +
+    'import { SenderActionsProvider } from "./SenderActions.tsx";\n' +
+    'import CloseButton from "../packages/web/src/components/ui/CloseButton.tsx";\n' +
+    'import { pageFetch } from "./page-fetch.ts";\n' +
+    'import PushNavigation from "./PushNavigation.tsx";\n' +
+    'import ChannelPrivateHistory from "./ChannelPrivateHistory.tsx";\n' +
+    'import { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives.ts";\n' +
+    'import { OverflowMenuTrigger } from "../packages/web/src/components/ui/OverflowSheet.tsx";\n' +
+    'import ComposerDirectory from "./ComposerDirectory.tsx";\n' +
+    'import type { NavigationUnread } from "./navigation-unread.ts";\n' +
+    'import { uiActionProps } from "./ui-action-props.ts";\n' +
+    'import MobileBottomBarStack from "../packages/web/src/components/layout/MobileBottomBarStack.tsx";\n' +
+    'import SideWorkspace from "./SideWorkspace.tsx";\n' +
+    'import { createElement, type ReactNode } from "react";\n' +
+    'import { showToast } from "../packages/web/src/components/toastBridge.ts";\n' +
+    'import { LazySavedPanel as SavedPanel } from "./LazyPages.tsx";\n' +
+    'import { MessageReactionsProvider } from "./MessageReactions.tsx";\n' +
+    'import SystemNotifications, {\n' +
+    '  SystemNotificationsProvider,\n' +
+    '} from "./SystemNotifications.tsx";\n' +
+    'import ChannelTabs from "./ChannelTabs.tsx";\n' +
+    'import { useRecordSearchVisit } from "./SearchRecent.tsx";\n' +
+    'import { useSearchDestination } from "./useSearchDestination.ts";\n' +
+    'import TopBarSearch from "./TopBarSearch.tsx";\n' +
+    'import { searchBackground } from "./useSearchPresentation.ts";\n' +
+    'import { useLocation, Routes, Route } from "react-router-dom";\n' +
+    'import {\n' +
+    '  AppearanceRuntimeProvider,\n' +
+    '  LoomLiveActivity,\n' +
+    '} from "./AppearanceRuntime.tsx";\n' +
+    'import { ChannelTasksContext, useChannelTasks } from "./ChannelTasks.tsx";\n' +
+    'import { LazyTasksPage as TasksPage } from "./LazyPages.tsx";\n' +
+    'import ThreadContentSlot from "./ThreadContentSlot.tsx";\n' +
+    'import ThreadWorkspace from "./ThreadWorkspace.tsx";\n' +
+    'import { LazyComputersPage as ComputersPage } from "./LazyPages.tsx";\n' +
+    'import { LazySettingsPage as SettingsPage } from "./LazyPages.tsx";\n' +
+    'import ChannelControl from "./ChannelControl.tsx";\n' +
+    'import InstanceInspector from "./InstanceInspector.tsx";\n' +
+    'import { bindMemberRoster } from "./member-roster.ts";\n' +
+    'import { notifyChannelMembersChanged } from "../packages/web/src/store/channelMemberEvents.ts";\n' +
+    'import ChannelTimeline from "./ChannelTimeline.tsx";\n' +
+    'import { LazyDiscoveryPage as DiscoveryPage } from "./LazyPages.tsx";\n' +
+    'import {\n' +
+    '  DesktopNavigation,\n' +
+    '  MobileNavigation,\n' +
+    '  DestinationPlaceholder,\n' +
+    '  type Destination,\n' +
+    '} from "./Navigation.tsx";\n' +
+    'import AddInstanceDialog from "./AddInstanceDialog.tsx";\n' +
+    'import { LoomPrivateBoxClient } from "./private-box.ts";\n' +
+    'import ChannelMembers from "./ChannelMembers.tsx";\n' +
+    'import {\n' +
+    '  lazy,\n' +
+    '  Suspense,\n' +
+    '  useCallback,\n' +
+    '  useEffect,\n' +
+    '  useLayoutEffect,\n' +
+    '  useMemo,\n' +
+    '  useState,\n' +
+    '  useRef,\n' +
+    '} from "react";\n' +
+    'import { useIntentRoute, hasRouteBoundIntent } from "./useIntentRoute.ts";\n' +
+    'import {\n' +
+    '  AppShellMainSlot,\n' +
+    '  ConversationPanelRoot,\n' +
+    '  ConversationPanelContent,\n' +
+    '  Button,\n' +
+    '  Spinner,\n' +
+    '} from "raft-ui";\n' +
+    'import { Search, Hash, MessageSquare } from "lucide-react";\n' +
+    'import { HttpRahClient } from "@rah-os/client-sdk";\n' +
+    'import { hasUnresolvedIntents } from "@rah-os/client-core/write-intent";\n' +
+    'import { loadOrCreateConsumerId } from "@rah-os/client-core";\n' +
+    'import ChannelSidebar from "./ChannelSidebar.tsx";\n' +
+    'import ChatSidebarFrame from "./ChatSidebarFrame.tsx";\n' +
+    'import { LazyMemoryPage as MemoryPage } from "./LazyPages.tsx";\n' +
+    'import { LazyAgentPage as AgentPage } from "./LazyPages.tsx";\n' +
+    'import { scheduleMobilePageWarmup } from "./page-preload.ts";\n' +
+    'import PanelHeader from "../packages/web/src/components/ui/PanelHeader.tsx";\n' +
+    'import MessageInput from "./ComposerFiles.tsx";\n' +
+    'import { LoomChannelClient, loadChannelDirectory } from "./channel-client.ts";\n' +
+    'import type { Principal, Room } from "@rah-os/protocol";\n' +
+    'const client = new HttpRahClient({\n' +
+    '  fetch: pageFetch,\n' +
+    '  baseUrl: "",\n' +
+    '  accessToken: () => "trusted-proxy-auth",\n' +
+    '});\n' +
+    'function consumer() {\n' +
+    '  let storage: Storage | undefined;\n' +
+    '  try {\n' +
+    '    storage = sessionStorage;\n' +
+    '  } catch {\n' +
+    '    /* Memory-only identity when storage is unavailable. */\n' +
+    '  }\n' +
+    '  return loadOrCreateConsumerId({\n' +
+    '    storage,\n' +
+    '    storageKey: "loom-official-consumer",\n' +
+    '    createId: () => `loom-web-${crypto.randomUUID()}`,\n' +
+    '  });\n' +
+    '}\n' +
+    'const consumerId = consumer();\n' +
+    '\n' +
+    'function Channel({\n' +
+    '  channel,\n' +
+    '  standalone = false,\n' +
+    '  controlRoomId,\n' +
+    '  bridge,\n' +
+    '  onOpenPrivate,\n' +
+    '  onAddInstance,\n' +
+    '  onBack,\n' +
+    '  threadRootId,\n' +
+    '  focusId,\n' +
+    '  onThread,\n' +
+    '  onProfileVisibilityChange,\n' +
+    '  headerActions,\n' +
+    '  unavailable = false,\n' +
+    '  onRoomChanged = async () => {},\n' +
+    '}: {\n' +
+    '  onRoomChanged?: () => Promise<void>;\n' +
+    '  headerActions?: ReactNode;\n' +
+    '  unavailable?: boolean;\n' +
+    '  onProfileVisibilityChange?: (open: boolean) => void;\n' +
+    '  threadRootId?: string;\n' +
+    '  focusId?: string;\n' +
+    '  onThread: (id?: string, focusedMessageId?: string) => void;\n' +
+    '  onBack: () => void;\n' +
+    '  onOpenPrivate: (id: string) => void;\n' +
+    '  onAddInstance: (() => void) | undefined;\n' +
+    '  standalone?: boolean;\n' +
+    '  channel: Room;\n' +
+    '  controlRoomId: string | undefined;\n' +
+    '  bridge: LoomChannelClient;\n' +
+    '}) {\n' +
+    '  const isPrivate = channel.instancePrivateBox !== undefined;\n' +
+    '  const [panelParams, setPanelParams] = useIntentRoute();\n' +
+    '  const sideId = !channel.side ? panelParams.get("side") : null;\n' +
+    '  const closeSide = () => {\n' +
+    '    if (!hasUnresolvedIntents())\n' +
+    '      setPanelParams((previous) => {\n' +
+    '        const next = new URLSearchParams(previous);\n' +
+    '        next.delete("side");\n' +
+    '        return next;\n' +
+    '      });\n' +
+    '  };\n' +
+    '  const [defaultTab, setDefaultTab] = useState("chat");\n' +
+    '  const queryTab = panelParams.get("chatTab");\n' +
+    '  const selectedTab =\n' +
+    '    queryTab === "chat" || queryTab === "tasks" || queryTab === "workspace"\n' +
+    '      ? queryTab\n' +
+    '      : defaultTab;\n' +
+    '  const taskTab = !isPrivate && selectedTab === "tasks";\n' +
+    '  const workspaceTab = !isPrivate && selectedTab === "workspace";\n' +
+    '  const profileSnapshot = useRef<Principal | undefined>(undefined);\n' +
+    '  const [profileId, setProfileId] = useState<string>();\n' +
+    '  const [focusedThreadId, setFocusedThreadId] = useState<string>();\n' +
+    '  const threadFocused =\n' +
+    '    !!threadRootId && focusedThreadId === threadRootId && !profileId && !sideId;\n' +
+    '  const [profileSource, setProfileSource] = useState<"channel" | "thread">(\n' +
+    '    "channel",\n' +
+    '  );\n' +
+    '  const opener = useRef<HTMLElement | null>(null);\n' +
+    '  const closeProfile = useCallback(() => {\n' +
+    '    if (hasUnresolvedIntents()) return;\n' +
+    '    setProfileId(undefined);\n' +
+    '    profileSnapshot.current = undefined;\n' +
+    '    requestAnimationFrame(() => {\n' +
+    '      if (opener.current?.isConnected)\n' +
+    '        opener.current.focus({ preventScroll: true });\n' +
+    '    });\n' +
+    '  }, []);\n' +
+    '\n' +
+    '  const [view, setView] = useState(() => bridge.view());\n' +
+    '  const [error, setError] = useState("");\n' +
+    '  const [loading, setLoading] = useState(true);\n' +
+    '  const [writeState, setWriteState] = useState(bridge.writes.state);\n' +
+    '  useEffect(() => bridge.writes.onChange(setWriteState), [bridge]);\n' +
+    '  useEffect(() => {\n' +
+    '    let disposed = false;\n' +
+    '    let timer: ReturnType<typeof setTimeout>;\n' +
+    '    async function poll() {\n' +
+    '      try {\n' +
+    '        const next = await bridge.refresh(threadRootId ? undefined : focusId);\n' +
+    '        if (!disposed) {\n' +
+    '          setView(next);\n' +
+    '          setError("");\n' +
+    '        }\n' +
+    '      } catch (failure) {\n' +
+    '        if (!disposed) setError(String(failure));\n' +
+    '      } finally {\n' +
+    '        if (!disposed) {\n' +
+    '          setLoading(false);\n' +
+    '          timer = setTimeout(poll, document.hidden ? 15000 : 3000);\n' +
+    '        }\n' +
+    '      }\n' +
+    '    }\n' +
+    '    void poll();\n' +
+    '    return () => {\n' +
+    '      disposed = true;\n' +
+    '      clearTimeout(timer);\n' +
+    '    };\n' +
+    '  }, [bridge, focusId, threadRootId]);\n' +
+    '  useLayoutEffect(() => {\n' +
+    '    const release =\n' +
+    '      !loading && !error\n' +
+    '        ? bindMemberRoster(channel.roomId, () => view.members)\n' +
+    '        : undefined;\n' +
+    '    notifyChannelMembersChanged(channel.roomId);\n' +
+    '    return () => {\n' +
+    '      release?.();\n' +
+    '    };\n' +
+    '  }, [channel.roomId, view.members, loading, error]);\n' +
+    '  const currentProfileMember =\n' +
+    '    !error && !loading\n' +
+    '      ? view.members.find(\n' +
+    '          (m) => m.kind === "agent" && m.principalId === profileId,\n' +
+    '        )\n' +
+    '      : undefined;\n' +
+    '  // Keep the write-intent owner mounted through transient conversation failure.\n' +
+    '  // This is only the selected identity; diagnostic reads still clear on denial.\n' +
+    '  const profileMember =\n' +
+    '    currentProfileMember ??\n' +
+    '    (hasUnresolvedIntents() ? profileSnapshot.current : undefined);\n' +
+    '  useEffect(() => {\n' +
+    '    if (profileId && !profileMember) closeProfile();\n' +
+    '  }, [profileId, profileMember, closeProfile]);\n' +
+    '  useEffect(() => {\n' +
+    '    onProfileVisibilityChange?.(!!profileMember || !!sideId);\n' +
+    '    return () => onProfileVisibilityChange?.(false);\n' +
+    '  }, [!!profileMember, !!sideId, onProfileVisibilityChange]);\n' +
+    '  const older = useCallback(async () => {\n' +
+    '    try {\n' +
+    '      setView(await bridge.older());\n' +
+    '    } catch (failure) {\n' +
+    '      setError(String(failure));\n' +
+    '    }\n' +
+    '  }, [bridge]);\n' +
+    '  const tasks = useChannelTasks(\n' +
+    '    bridge,\n' +
+    '    !isPrivate && !loading && !error && !channel.archivedAt,\n' +
+    '    () => {\n' +
+    '      void bridge\n' +
+    '        .refresh()\n' +
+    '        .then(setView)\n' +
+    '        .catch((failure) => setError(String(failure)));\n' +
+    '    },\n' +
+    '    (id) => {\n' +
+    '      if (!hasUnresolvedIntents()) {\n' +
+    '        closeProfile();\n' +
+    '        onThread(id);\n' +
+    '      }\n' +
+    '    },\n' +
+    '  );\n' +
+    '  const send = useCallback(\n' +
+    '    async (\n' +
+    '      body: string,\n' +
+    '      _mentions?: unknown,\n' +
+    '      asTask?: boolean,\n' +
+    '      attachmentIds: string[] = [],\n' +
+    '    ) => {\n' +
+    '      await new Promise<void>((resolve, reject) => {\n' +
+    "        // Keep the official composer's submission unresolved while the outcome is\n" +
+    '        // unknown. Explicit verification settles this same submission, so it never\n' +
+    '        // restores an already committed draft as a new sendable '... 58040 more characters
+  
+      at TestContext.<anonymous> (file:///private/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/loom-ui138-baseline-5xfo39n8/scripts/official-web/page134-followup.test.ts:106:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'import PageEmpty from "./PageEmpty";\nimport { compactConversationRoute, layoutQueries } from "./adaptive-layout.ts";\nimport { MobilePageNavigation } from "./MobilePageNavigation";\nimport {\n  showMobileRootNavigation,\n  mobileSecondaryRoot,\n} from "./mobile-app-navigation";\nimport { SidebarResize, useSidebarColumn } from "./SidebarLayout";\nimport WorkspaceTheme from "./WorkspaceTheme";\nimport LocalNotifications from "./LocalNotifications.tsx";\nimport { LoomShellRoot, LoomSidebarSlot } from "./SidebarLayout.tsx";\nimport { SenderActionsProvider } from "./SenderActions.tsx";\nimport CloseButton from "../packages/web/src/components/ui/CloseButton.tsx";\nimport { pageFetch } from "./page-fetch.ts";\nimport PushNavigation from "./PushNavigation.tsx";\nimport ChannelPrivateHistory from "./ChannelPrivateHistory.tsx";\nimport { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives.ts";\nimport { OverflowMenuTrigger } from "../packages/web/src/components/ui/OverflowSheet.tsx";\nimport ComposerDirectory from "./ComposerDirectory.tsx";\nimport type { NavigationUnread } from "./navigation-unread.ts";\nimport { uiActionProps } from "./ui-action-props.ts";\nimport MobileBottomBarStack from "../packages/web/src/components/layout/MobileBottomBarStack.tsx";\nimport SideWorkspace from "./SideWorkspace.tsx";\nimport { createElement, type ReactNode } from "react";\nimport { showToast } from "../packages/web/src/components/toastBridge.ts";\nimport { LazySavedPanel as SavedPanel } from "./LazyPages.tsx";\nimport { MessageReactionsProvider } from "./MessageReactions.tsx";\nimport SystemNotifications, {\n  SystemNotificationsProvider,\n} from "./SystemNotifications.tsx";\nimport ChannelTabs from "./ChannelTabs.tsx";\nimport { useRecordSearchVisit } from "./SearchRecent.tsx";\nimport { useSearchDestination } from "./useSearchDestination.ts";\nimport TopBarSearch from "./TopBarSearch.tsx";\nimport { searchBackground } from "./useSearchPresentation.ts";\nimport { useLocation, Routes, Route } from "react-router-dom";\nimport {\n  AppearanceRuntimeProvider,\n  LoomLiveActivity,\n} from "./AppearanceRuntime.tsx";\nimport { ChannelTasksContext, useChannelTasks } from "./ChannelTasks.tsx";\nimport { LazyTasksPage as TasksPage } from "./LazyPages.tsx";\nimport ThreadContentSlot from "./ThreadContentSlot.tsx";\nimport ThreadWorkspace from "./ThreadWorkspace.tsx";\nimport { LazyComputersPage as ComputersPage } from "./LazyPages.tsx";\nimport { LazySettingsPage as SettingsPage } from "./LazyPages.tsx";\nimport ChannelControl from "./ChannelControl.tsx";\nimport InstanceInspector from "./InstanceInspector.tsx";\nimport { bindMemberRoster } from "./member-roster.ts";\nimport { notifyChannelMembersChanged } from "../packages/web/src/store/channelMemberEvents.ts";\nimport ChannelTimeline from "./ChannelTimeline.tsx";\nimport { LazyDiscoveryPage as DiscoveryPage } from "./LazyPages.tsx";\nimport {\n  DesktopNavigation,\n  MobileNavigation,\n  DestinationPlaceholder,\n  type Destination,\n} from "./Navigation.tsx";\nimport AddInstanceDialog from "./AddInstanceDialog.tsx";\nimport { LoomPrivateBoxClient } from "./private-box.ts";\nimport ChannelMembers from "./ChannelMembers.tsx";\nimport {\n  lazy,\n  Suspense,\n  useCallback,\n  useEffect,\n  useLayoutEffect,\n  useMemo,\n  useState,\n  useRef,\n} from "react";\nimport { useIntentRoute, hasRouteBoundIntent } from "./useIntentRoute.ts";\nimport {\n  AppShellMainSlot,\n  ConversationPanelRoot,\n  ConversationPanelContent,\n  Button,\n  Spinner,\n} from "raft-ui";\nimport { Search, Hash, MessageSquare } from "lucide-react";\nimport { HttpRahClient } from "@rah-os/client-sdk";\nimport { hasUnresolvedIntents } from "@rah-os/client-core/write-intent";\nimport { loadOrCreateConsumerId } from "@rah-os/client-core";\nimport ChannelSidebar from "./ChannelSidebar.tsx";\nimport ChatSidebarFrame from "./ChatSidebarFrame.tsx";\nimport { LazyMemoryPage as MemoryPage } from "./LazyPages.tsx";\nimport { LazyAgentPage as AgentPage } from "./LazyPages.tsx";\nimport { scheduleMobilePageWarmup } from "./page-preload.ts";\nimport PanelHeader from "../packages/web/src/components/ui/PanelHeader.tsx";\nimport MessageInput from "./ComposerFiles.tsx";\nimport { LoomChannelClient, loadChannelDirectory } from "./channel-client.ts";\nimport type { Principal, Room } from "@rah-os/protocol";\nconst client = new HttpRahClient({\n  fetch: pageFetch,\n  baseUrl: "",\n  accessToken: () => "trusted-proxy-auth",\n});\nfunction consumer() {\n  let storage: Storage | undefined;\n  try {\n    storage = sessionStorage;\n  } catch {\n    /* Memory-only identity when storage is unavailable. */\n  }\n  return loadOrCreateConsumerId({\n    storage,\n    storageKey: "loom-official-consumer",\n    createId: () => `loom-web-${crypto.randomUUID()}`,\n  });\n}\nconst consumerId = consumer();\n\nfunction Channel({\n  channel,\n  standalone = false,\n  controlRoomId,\n  bridge,\n  onOpenPrivate,\n  onAddInstance,\n  onBack,\n  threadRootId,\n  focusId,\n  onThread,\n  onProfileVisibilityChange,\n  headerActions,\n  unavailable = false,\n  onRoomChanged = async () => {},\n}: {\n  onRoomChanged?: () => Promise<void>;\n  headerActions?: ReactNode;\n  unavailable?: boolean;\n  onProfileVisibilityChange?: (open: boolean) => void;\n  threadRootId?: string;\n  focusId?: string;\n  onThread: (id?: string, focusedMessageId?: string) => void;\n  onBack: () => void;\n  onOpenPrivate: (id: string) => void;\n  onAddInstance: (() => void) | undefined;\n  standalone?: boolean;\n  channel: Room;\n  controlRoomId: string | undefined;\n  bridge: LoomChannelClient;\n}) {\n  const isPrivate = channel.instancePrivateBox !== undefined;\n  const [panelParams, setPanelParams] = useIntentRoute();\n  const sideId = !channel.side ? panelParams.get("side") : null;\n  const closeSide = () => {\n    if (!hasUnresolvedIntents())\n      setPanelParams((previous) => {\n        const next = new URLSearchParams(previous);\n        next.delete("side");\n        return next;\n      });\n  };\n  const [defaultTab, setDefaultTab] = useState("chat");\n  const queryTab = panelParams.get("chatTab");\n  const selectedTab =\n    queryTab === "chat" || queryTab === "tasks" || queryTab === "workspace"\n      ? queryTab\n      : defaultTab;\n  const taskTab = !isPrivate && selectedTab === "tasks";\n  const workspaceTab = !isPrivate && selectedTab === "workspace";\n  const profileSnapshot = useRef<Principal | undefined>(undefined);\n  const [profileId, setProfileId] = useState<string>();\n  const [focusedThreadId, setFocusedThreadId] = useState<string>();\n  const threadFocused =\n    !!threadRootId && focusedThreadId === threadRootId && !profileId && !sideId;\n  const [profileSource, setProfileSource] = useState<"channel" | "thread">(\n    "channel",\n  );\n  const opener = useRef<HTMLElement | null>(null);\n  const closeProfile = useCallback(() => {\n    if (hasUnresolvedIntents()) return;\n    setProfileId(undefined);\n    profileSnapshot.current = undefined;\n    requestAnimationFrame(() => {\n      if (opener.current?.isConnected)\n        opener.current.focus({ preventScroll: true });\n    });\n  }, []);\n\n  const [view, setView] = useState(() => bridge.view());\n  const [error, setError] = useState("");\n  const [loading, setLoading] = useState(true);\n  const [writeState, setWriteState] = useState(bridge.writes.state);\n  useEffect(() => bridge.writes.onChange(setWriteState), [bridge]);\n  useEffect(() => {\n    let disposed = false;\n    let timer: ReturnType<typeof setTimeout>;\n    async function poll() {\n      try {\n        const next = await bridge.refresh(threadRootId ? undefined : focusId);\n        if (!disposed) {\n          setView(next);\n          setError("");\n        }\n      } catch (failure) {\n        if (!disposed) setError(String(failure));\n      } finally {\n        if (!disposed) {\n          setLoading(false);\n          timer = setTimeout(poll, document.hidden ? 15000 : 3000);\n        }\n      }\n    }\n    void poll();\n    return () => {\n      disposed = true;\n      clearTimeout(timer);\n    };\n  }, [bridge, focusId, threadRootId]);\n  useLayoutEffect(() => {\n    const release =\n      !loading && !error\n        ? bindMemberRoster(channel.roomId, () => view.members)\n        : undefined;\n    notifyChannelMembersChanged(channel.roomId);\n    return () => {\n      release?.();\n    };\n  }, [channel.roomId, view.members, loading, error]);\n  const currentProfileMember =\n    !error && !loading\n      ? view.members.find(\n          (m) => m.kind === "agent" && m.principalId === profileId,\n        )\n      : undefined;\n  // Keep the write-intent owner mounted through transient conversation failure.\n  // This is only the selected identity; diagnostic reads still clear on denial.\n  const profileMember =\n    currentProfileMember ??\n    (hasUnresolvedIntents() ? profileSnapshot.current : undefined);\n  useEffect(() => {\n    if (profileId && !profileMember) closeProfile();\n  }, [profileId, profileMember, closeProfile]);\n  useEffect(() => {\n    onProfileVisibilityChange?.(!!profileMember || !!sideId);\n    return () => onProfileVisibilityChange?.(false);\n  }, [!!profileMember, !!sideId, onProfileVisibilityChange]);\n  const older = useCallback(async () => {\n    try {\n      setView(await bridge.older());\n    } catch (failure) {\n      setError(String(failure));\n    }\n  }, [bridge]);\n  const tasks = useChannelTasks(\n    bridge,\n    !isPrivate && !loading && !error && !channel.archivedAt,\n    () => {\n      void bridge\n        .refresh()\n        .then(setView)\n        .catch((failure) => setError(String(failure)));\n    },\n    (id) => {\n      if (!hasUnresolvedIntents()) {\n        closeProfile();\n        onThread(id);\n      }\n    },\n  );\n  const send = useCallback(\n    async (\n      body: string,\n      _mentions?: unknown,\n      asTask?: boolean,\n      attachmentIds: string[] = [],\n    ) => {\n      await new Promise<void>((resolve, reject) => {\n        // Keep the official composer\'s submission unresolved while the outcome is\n        // unknown. Explicit verification settles this same submission, so it never\n        // restores an already committed draft as a new sendable '... 58040 more characters,
+    expected: /destination === "search" && params.get\("channelId"\)/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/official-web/search-controls-source.test.mjs:25:1
+✖ search loading uses native result skeleton with one accessible loading region (1.366958ms)
+  AssertionError [ERR_ASSERTION]: The input was expected to not match the regular expression /<Spinner/. Input:
+  
+  'import { layoutQueries } from "./adaptive-layout.ts";\n' +
+    'import { useMobilePullRefresh } from "./useMobilePullRefresh";\n' +
+    'import { Spinner } from "raft-ui";\n' +
+    'import {\n' +
+    '  scopedSearchLabel,\n' +
+    '  searchEverywhereParams,\n' +
+    '  isScopedSearchIdle,\n' +
+    '} from "./scoped-search";\n' +
+    'import {\n' +
+    '  OfficialScopedSearchEntry,\n' +
+    '  OfficialScopedSearchEmpty,\n' +
+    '} from "./OfficialScopedSearch.generated";\n' +
+    'import { useActivitySecondary } from "./useActivitySecondary";\n' +
+    'import { OperationStatus } from "./ManagementUi";\n' +
+    'import { useActivitySwipeUndo } from "./useActivitySwipeUndo";\n' +
+    'import { useActivitySwipe } from "./useActivitySwipe";\n' +
+    'import { ActivityListSlot, useActivityCollapseSnap } from "./SidebarLayout";\n' +
+    'import ActivityNothingOpen from "./ActivityNothingOpen";\n' +
+    'import { useCurrentListPanel } from "./useCurrentListPanel";\n' +
+    'import DiscoveryNotice from "./DiscoveryNotice";\n' +
+    'import {\n' +
+    '  SearchLoading,\n' +
+    '  SearchHomeEmpty,\n' +
+    '  SearchNoResults,\n' +
+    '} from "./OfficialSearchControls.generated";\n' +
+    'import { Fragment } from "react";\n' +
+    'import { Pin } from "lucide-react";\n' +
+    'import SectionEyebrow from "../packages/web/src/components/ui/SectionEyebrow.tsx";\n' +
+    'import { activityPinnedRows } from "./activity-pinned.ts";\n' +
+    'import { useActivityPinned } from "./useActivityPinned.ts";\n' +
+    'import type { ThreadActivityClient } from "./thread-activity.ts";\n' +
+    'import { useFirstUnreadFocus } from "./useFirstUnreadFocus.ts";\n' +
+    'import { activityPeerType } from "./activity-peer.ts";\n' +
+    'import ActivityHeader from "./ActivityHeader.tsx";\n' +
+    'import {\n' +
+    '  activityMarkRequest,\n' +
+    '  type ActivityAction,\n' +
+    '} from "./activity-actions.ts";\n' +
+    'import { uiActionProps } from "./ui-action-props.ts";\n' +
+    'import ActivityEmpty from "./ActivityEmpty.tsx";\n' +
+    'import { ConversationCardSkeleton } from "../packages/web/src/components/ui/Skeleton.tsx";\n' +
+    'import { useActivityFeed } from "./useActivityFeed.ts";\n' +
+    'import { useIntl } from "react-intl";\n' +
+    'import SearchFrequent, {\n' +
+    '  useSearchFrequent,\n' +
+    '  rememberSearchDestination,\n' +
+    '} from "./SearchFrequent.tsx";\n' +
+    'import SearchHistory, { useSearchHistory } from "./SearchHistory.tsx";\n' +
+    'import { useActivityScroll } from "./useActivityScroll.ts";\n' +
+    'import SearchRecent, { useSearchRecent } from "./SearchRecent.tsx";\n' +
+    'import SearchEntityRows, { SearchEntityRow } from "./SearchEntityRows.tsx";\n' +
+    'import { useSearchEntities } from "./useSearchEntities.ts";\n' +
+    'import type { SearchEntity } from "./search-entities.ts";\n' +
+    'import SearchLoadMore from "./SearchLoadMore.tsx";\n' +
+    'import { appendSearchPage, MAX_SEARCH_RESULT_ROWS } from "./search-pages.ts";\n' +
+    'import { useSearchRail, type SearchRailHandler } from "./useSearchRail.ts";\n' +
+    'import type { RefObject } from "react";\n' +
+    'import OverlayAllResults from "./OverlayAllResults.tsx";\n' +
+    'import { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives.ts";\n' +
+    'import { ListColumnResize } from "./ListColumnResize";\n' +
+    'import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";\n' +
+    'import { useSearchPresentation as useSearchParams } from "./useSearchPresentation.ts";\n' +
+    'import {\n' +
+    '  AppShellMainSlot,\n' +
+    '  Button,\n' +
+    '  SearchShellRoot,\n' +
+    '  ActivityInboxPanel,\n' +
+    '  ActivityInboxViewport,\n' +
+    '  SearchShellViewport,\n' +
+    '  SearchResultsSummary,\n' +
+    '  SearchResultsList,\n' +
+    '} from "raft-ui";\n' +
+    'import type { RahClient } from "@rah-os/client-sdk";\n' +
+    'import type {\n' +
+    '  WorkspaceSearchRequest,\n' +
+    '  HumanActivityRequest,\n' +
+    '} from "@rah-os/protocol";\n' +
+    'import PanelHeader from "../packages/web/src/components/ui/PanelHeader.tsx";\n' +
+    'import SearchFilters from "./SearchFilters.tsx";\n' +
+    'import { nativeSearchFilters } from "./native-search.ts";\n' +
+    'import {\n' +
+    '  searchPage,\n' +
+    '  type DiscoveryPageResult,\n' +
+    '  type DiscoveryRow,\n' +
+    '} from "./discovery-client.ts";\n' +
+    'import ActivityFilters from "./ActivityFilters.tsx";\n' +
+    'import ActivityMessageRow from "./ActivityMessageRow.tsx";\n' +
+    'import SearchHeader from "./SearchHeader.tsx";\n' +
+    'import SearchMessageGroups from "./SearchMessageGroups.tsx";\n' +
+    'const noFocusRequest = () => {};\n' +
+    'export default function DiscoveryPage({\n' +
+    '  focusRequest = 0,\n' +
+    '  consumeFocus = noFocusRequest,\n' +
+    '  client,\n' +
+    '  workspaceId,\n' +
+    '  controlRoomId,\n' +
+    '  principalId,\n' +
+    '  backgroundRoomId,\n' +
+    '  onOpenEntity,\n' +
+    '  mode,\n' +
+    '  onOpenResult,\n' +
+    '  detail,\n' +
+    '  profileOpen = false,\n' +
+    '  notice,\n' +
+    '  onBack,\n' +
+    '  overlay = false,\n' +
+    '}: {\n' +
+    '  focusRequest?: number;\n' +
+    '  consumeFocus?: () => void;\n' +
+    '  onOpenResult: (row: DiscoveryRow, full: boolean) => Promise<void>;\n' +
+    '  overlay?: boolean;\n' +
+    '  notice?: ReactNode;\n' +
+    '  detail?: ReactNode;\n' +
+    '  profileOpen?: boolean;\n' +
+    '  onBack: () => void;\n' +
+    '  client: RahClient;\n' +
+    '  workspaceId: string;\n' +
+    '  controlRoomId?: string;\n' +
+    '  principalId?: string;\n' +
+    '  backgroundRoomId?: string;\n' +
+    '  onOpenEntity: (entity: SearchEntity, full: boolean) => Promise<void>;\n' +
+    '  mode: "search" | "activity";\n' +
+    '}) {\n' +
+    '  const [params, setParams] = useSearchParams();\n' +
+    '  const railHandler = useRef<SearchRailHandler>(null);\n' +
+    '  const searchInput = useRef<HTMLInputElement>(null);\n' +
+    '  const history = useSearchHistory(workspaceId, principalId);\n' +
+    '  const allResults = () => {\n' +
+    '    history.remember(params.get("q") ?? "");\n' +
+    '    setParams(\n' +
+    '      (previous) => {\n' +
+    '        const next = new URLSearchParams(previous);\n' +
+    '        next.set("presentation", "page");\n' +
+    '        return next;\n' +
+    '      },\n' +
+    '      { state: null },\n' +
+    '    );\n' +
+    '  };\n' +
+    '  const desktop = useMediaQuery(layoutQueries.dual);\n' +
+    '  const panel = useCurrentListPanel(\n' +
+    '    "list",\n' +
+    '    mode === "activity" && !!detail,\n' +
+    '    profileOpen || (params.has("thread") && params.get("detail") !== "thread")\n' +
+    '      ? 360\n' +
+    '      : 0,\n' +
+    '  );\n' +
+    '  const ListSlot = mode === "activity" ? ActivityListSlot : AppShellMainSlot;\n' +
+    '  const activityCollapseSnap = useActivityCollapseSnap(\n' +
+    '    mode === "activity" && desktop,\n' +
+    '  );\n' +
+    '  const showSplit = !!detail || (mode === "activity" && desktop);\n' +
+    '  const query = params.get("q") ?? "";\n' +
+    '  const entities = useSearchEntities(\n' +
+    '    client,\n' +
+    '    workspaceId,\n' +
+    '    controlRoomId,\n' +
+    '    query,\n' +
+    '    true,\n' +
+    '  );\n' +
+    '  const frequent = useSearchFrequent(entities, workspaceId, principalId);\n' +
+    '  const recent = useSearchRecent(\n' +
+    '    entities,\n' +
+    '    workspaceId,\n' +
+    '    principalId,\n' +
+    '    backgroundRoomId,\n' +
+    '    client,\n' +
+    '    overlay && !query.trim(),\n' +
+    '  );\n' +
+    '  const scope: WorkspaceSearchRequest["scope"] = [\n' +
+    '    "channel",\n' +
+    '    "direct",\n' +
+    '    "thread",\n' +
+    '  ].includes(params.get("scope") ?? "")\n' +
+    '    ? (params.get("scope") as WorkspaceSearchRequest["scope"])\n' +
+    '    : "all";\n' +
+    '  const filter: HumanActivityRequest["filter"] = [\n' +
+    '    "unread",\n' +
+    '    "mentions",\n' +
+    '    "pinned",\n' +
+    '  ].includes(params.get("af") ?? "")\n' +
+    '    ? (params.get("af") as HumanActivityRequest["filter"])\n' +
+    '    : "all";\n' +
+    '  const filterKey = [\n' +
+    '    params.get("senderId"),\n' +
+    '    params.get("channelId"),\n' +
+    '    params.get("scopes"),\n' +
+    '    params.get("range"),\n' +
+    '    params.get("sort"),\n' +
+    '  ].join("|");\n' +
+    '  const searchFilters = useMemo(\n' +
+    '    () => nativeSearchFilters(params, query),\n' +
+    '    [filterKey, query],\n' +
+    '  );\n' +
+    '  const scopedRoomId =\n' +
+    '    mode === "search" && !overlay\n' +
+    '      ? params.get("channelId") || undefined\n' +
+    '      : undefined;\n' +
+    '  const scopedConversation = scopedRoomId\n' +
+    '    ? scopedSearchLabel(\n' +
+    '        scopedRoomId,\n' +
+    '        entities.catalog.map((entry) => entry.suggestion),\n' +
+    '      )\n' +
+    '    : undefined;\n' +
+    '  const scopedIdle = isScopedSearchIdle(scopedRoomId, query, searchFilters);\n' +
+    '  const searchEverywhere = () => {\n' +
+    '    history.remember(query);\n' +
+    '    setParams(searchEverywhereParams(params), { state: null });\n' +
+    '  };\n' +
+    '  const hasSearchFilters = Boolean(\n' +
+    '    params.get("senderId") ||\n' +
+    '    params.get("channelId") ||\n' +
+    '    params.get("scopes") ||\n' +
+    '    (params.get("range") && params.get("range") !== "any"),\n' +
+    '  );\n' +
+    '  const [tick, setTick] = useState(0);\n' +
+    '  const [headerRevision, setHeaderRevision] = useState(0);\n' +
+    '  const [scrollTopRequest, setScrollTopRequest] = useState(0);\n' +
+    '  const [nextUnreadRequest, setNextUnreadRequest] = useState(0);\n' +
+    '  // Upstream double-click reloads the inbox before resolving its pending focus.\n' +
+    '  // Keep the refresh token after consumption so clearing intent never reloads it.\n' +
+    '  const [focusRefresh, setFocusRefresh] = useState(0);\n' +
+    '  useEffect(() => {\n' +
+    '    if (focusRequest) setFocusRefresh(focusRequest);\n' +
+    '  }, [focusRequest]);\n' +
+    '  const update = (key: string, value: string) =>\n' +
+    '    setParams((previous) => {\n' +
+    '      const next = new URLSearchParams(previous);\n' +
+    '      if (value) next.set(key, value);\n' +
+    '      else next.delete(key);\n' +
+    '      return next;\n' +
+    '    });\n' +
+    '  const Shell = mode === "search" ? SearchShellRoot : ActivityInboxPanel;\n' +
+    '  return (\n' +
+    '    <>\n' +
+    '      <ListSlot\n' +
+    '        ref={panel.ref}\n' +
+    '        onKeyDown={\n' +
+    '          mode === "search"\n' +
+    '            ? (event) => railHandler.current?.(event)\n' +
+    '            : undefined\n' +
+    '        }\n' +
+    '        className={`relative flex min-w-0 flex-1 bg-layer-canvas  ${showSplit && desktop ? `border-r border-line-muted  ${mode === "search" ? "" : ""}` : ""}`}\n' +
+    '        style={\n' +
+    '          showSplit\n' +
+    '            ? desktop\n' +
+    '              ? { flex: `0 0 ${panel.width}px`, width: panel.width }\n' +
+    '              : { display: "none" }\n' +
+    '            : undefined\n' +
+    '        }\n' +
+    '      >\n' +
+    '        {showSplit && desktop && (\n' +
+    '          <ListColumnResize\n' +
+    '            column="list"\n' +
+    '            snap={activityCollapseSnap}\n' +
+    '            edge="right"\n' +
+    '            maxWidth={panel.maxWidth}\n' +
+    '            visibleFrom="md"\n' +
+    '            data-testid="activity-detail-resize"\n' +
+    '          />\n' +
+    '        )}\n' +
+    '        {mode === "search" ? (\n' +
+    '          <SearchHeader\n' +
+    '            inputRef={searchInput}\n' +
+    '            overlay={overlay}\n' +
+    '            conversation={scopedConversation}\n' +
+    '            query={query}\n' +
+    '            onBack={onBack}\n' +
+    '            onQuery={(value) =>\n' +
+    '              setParams(\n' +
+    '                (previous) => {\n' +
+    '                  const next = new URLSearchParams(previous);\n' +
+    '                  if (value) next.set("q", value);\n' +
+    '                  else next.delete("q");\n' +
+    '                  return next;\n' +
+    '                },\n' +
+    '                // Commit the query and its clickable layout in the input event.\n' +
+    '                // A deferred router transition can remove the pressed result.\n' +
+    '                { replace: true, flushSync: true },\n' +
+    '              )\n' +
+    '            }\n' +
+    '            onEscape={() => {\n' +
+    '              if (!detail) {\n' +
+    '                onBack();\n' +
+    '                return;\n' +
+    '              }\n' +
+    '              setParams((previous) => {\n' +
+    '                const next = new URLSearchParams(previous);\n' +
+    '                for (const ke'... 23784 more characters
+  
+      at TestContext.<anonymous> (file:///private/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/loom-ui138-baseline-5xfo39n8/scripts/official-web/search-controls-source.test.mjs:28:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'import { layoutQueries } from "./adaptive-layout.ts";\nimport { useMobilePullRefresh } from "./useMobilePullRefresh";\nimport { Spinner } from "raft-ui";\nimport {\n  scopedSearchLabel,\n  searchEverywhereParams,\n  isScopedSearchIdle,\n} from "./scoped-search";\nimport {\n  OfficialScopedSearchEntry,\n  OfficialScopedSearchEmpty,\n} from "./OfficialScopedSearch.generated";\nimport { useActivitySecondary } from "./useActivitySecondary";\nimport { OperationStatus } from "./ManagementUi";\nimport { useActivitySwipeUndo } from "./useActivitySwipeUndo";\nimport { useActivitySwipe } from "./useActivitySwipe";\nimport { ActivityListSlot, useActivityCollapseSnap } from "./SidebarLayout";\nimport ActivityNothingOpen from "./ActivityNothingOpen";\nimport { useCurrentListPanel } from "./useCurrentListPanel";\nimport DiscoveryNotice from "./DiscoveryNotice";\nimport {\n  SearchLoading,\n  SearchHomeEmpty,\n  SearchNoResults,\n} from "./OfficialSearchControls.generated";\nimport { Fragment } from "react";\nimport { Pin } from "lucide-react";\nimport SectionEyebrow from "../packages/web/src/components/ui/SectionEyebrow.tsx";\nimport { activityPinnedRows } from "./activity-pinned.ts";\nimport { useActivityPinned } from "./useActivityPinned.ts";\nimport type { ThreadActivityClient } from "./thread-activity.ts";\nimport { useFirstUnreadFocus } from "./useFirstUnreadFocus.ts";\nimport { activityPeerType } from "./activity-peer.ts";\nimport ActivityHeader from "./ActivityHeader.tsx";\nimport {\n  activityMarkRequest,\n  type ActivityAction,\n} from "./activity-actions.ts";\nimport { uiActionProps } from "./ui-action-props.ts";\nimport ActivityEmpty from "./ActivityEmpty.tsx";\nimport { ConversationCardSkeleton } from "../packages/web/src/components/ui/Skeleton.tsx";\nimport { useActivityFeed } from "./useActivityFeed.ts";\nimport { useIntl } from "react-intl";\nimport SearchFrequent, {\n  useSearchFrequent,\n  rememberSearchDestination,\n} from "./SearchFrequent.tsx";\nimport SearchHistory, { useSearchHistory } from "./SearchHistory.tsx";\nimport { useActivityScroll } from "./useActivityScroll.ts";\nimport SearchRecent, { useSearchRecent } from "./SearchRecent.tsx";\nimport SearchEntityRows, { SearchEntityRow } from "./SearchEntityRows.tsx";\nimport { useSearchEntities } from "./useSearchEntities.ts";\nimport type { SearchEntity } from "./search-entities.ts";\nimport SearchLoadMore from "./SearchLoadMore.tsx";\nimport { appendSearchPage, MAX_SEARCH_RESULT_ROWS } from "./search-pages.ts";\nimport { useSearchRail, type SearchRailHandler } from "./useSearchRail.ts";\nimport type { RefObject } from "react";\nimport OverlayAllResults from "./OverlayAllResults.tsx";\nimport { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives.ts";\nimport { ListColumnResize } from "./ListColumnResize";\nimport { useEffect, useMemo, useRef, useState, type ReactNode } from "react";\nimport { useSearchPresentation as useSearchParams } from "./useSearchPresentation.ts";\nimport {\n  AppShellMainSlot,\n  Button,\n  SearchShellRoot,\n  ActivityInboxPanel,\n  ActivityInboxViewport,\n  SearchShellViewport,\n  SearchResultsSummary,\n  SearchResultsList,\n} from "raft-ui";\nimport type { RahClient } from "@rah-os/client-sdk";\nimport type {\n  WorkspaceSearchRequest,\n  HumanActivityRequest,\n} from "@rah-os/protocol";\nimport PanelHeader from "../packages/web/src/components/ui/PanelHeader.tsx";\nimport SearchFilters from "./SearchFilters.tsx";\nimport { nativeSearchFilters } from "./native-search.ts";\nimport {\n  searchPage,\n  type DiscoveryPageResult,\n  type DiscoveryRow,\n} from "./discovery-client.ts";\nimport ActivityFilters from "./ActivityFilters.tsx";\nimport ActivityMessageRow from "./ActivityMessageRow.tsx";\nimport SearchHeader from "./SearchHeader.tsx";\nimport SearchMessageGroups from "./SearchMessageGroups.tsx";\nconst noFocusRequest = () => {};\nexport default function DiscoveryPage({\n  focusRequest = 0,\n  consumeFocus = noFocusRequest,\n  client,\n  workspaceId,\n  controlRoomId,\n  principalId,\n  backgroundRoomId,\n  onOpenEntity,\n  mode,\n  onOpenResult,\n  detail,\n  profileOpen = false,\n  notice,\n  onBack,\n  overlay = false,\n}: {\n  focusRequest?: number;\n  consumeFocus?: () => void;\n  onOpenResult: (row: DiscoveryRow, full: boolean) => Promise<void>;\n  overlay?: boolean;\n  notice?: ReactNode;\n  detail?: ReactNode;\n  profileOpen?: boolean;\n  onBack: () => void;\n  client: RahClient;\n  workspaceId: string;\n  controlRoomId?: string;\n  principalId?: string;\n  backgroundRoomId?: string;\n  onOpenEntity: (entity: SearchEntity, full: boolean) => Promise<void>;\n  mode: "search" | "activity";\n}) {\n  const [params, setParams] = useSearchParams();\n  const railHandler = useRef<SearchRailHandler>(null);\n  const searchInput = useRef<HTMLInputElement>(null);\n  const history = useSearchHistory(workspaceId, principalId);\n  const allResults = () => {\n    history.remember(params.get("q") ?? "");\n    setParams(\n      (previous) => {\n        const next = new URLSearchParams(previous);\n        next.set("presentation", "page");\n        return next;\n      },\n      { state: null },\n    );\n  };\n  const desktop = useMediaQuery(layoutQueries.dual);\n  const panel = useCurrentListPanel(\n    "list",\n    mode === "activity" && !!detail,\n    profileOpen || (params.has("thread") && params.get("detail") !== "thread")\n      ? 360\n      : 0,\n  );\n  const ListSlot = mode === "activity" ? ActivityListSlot : AppShellMainSlot;\n  const activityCollapseSnap = useActivityCollapseSnap(\n    mode === "activity" && desktop,\n  );\n  const showSplit = !!detail || (mode === "activity" && desktop);\n  const query = params.get("q") ?? "";\n  const entities = useSearchEntities(\n    client,\n    workspaceId,\n    controlRoomId,\n    query,\n    true,\n  );\n  const frequent = useSearchFrequent(entities, workspaceId, principalId);\n  const recent = useSearchRecent(\n    entities,\n    workspaceId,\n    principalId,\n    backgroundRoomId,\n    client,\n    overlay && !query.trim(),\n  );\n  const scope: WorkspaceSearchRequest["scope"] = [\n    "channel",\n    "direct",\n    "thread",\n  ].includes(params.get("scope") ?? "")\n    ? (params.get("scope") as WorkspaceSearchRequest["scope"])\n    : "all";\n  const filter: HumanActivityRequest["filter"] = [\n    "unread",\n    "mentions",\n    "pinned",\n  ].includes(params.get("af") ?? "")\n    ? (params.get("af") as HumanActivityRequest["filter"])\n    : "all";\n  const filterKey = [\n    params.get("senderId"),\n    params.get("channelId"),\n    params.get("scopes"),\n    params.get("range"),\n    params.get("sort"),\n  ].join("|");\n  const searchFilters = useMemo(\n    () => nativeSearchFilters(params, query),\n    [filterKey, query],\n  );\n  const scopedRoomId =\n    mode === "search" && !overlay\n      ? params.get("channelId") || undefined\n      : undefined;\n  const scopedConversation = scopedRoomId\n    ? scopedSearchLabel(\n        scopedRoomId,\n        entities.catalog.map((entry) => entry.suggestion),\n      )\n    : undefined;\n  const scopedIdle = isScopedSearchIdle(scopedRoomId, query, searchFilters);\n  const searchEverywhere = () => {\n    history.remember(query);\n    setParams(searchEverywhereParams(params), { state: null });\n  };\n  const hasSearchFilters = Boolean(\n    params.get("senderId") ||\n    params.get("channelId") ||\n    params.get("scopes") ||\n    (params.get("range") && params.get("range") !== "any"),\n  );\n  const [tick, setTick] = useState(0);\n  const [headerRevision, setHeaderRevision] = useState(0);\n  const [scrollTopRequest, setScrollTopRequest] = useState(0);\n  const [nextUnreadRequest, setNextUnreadRequest] = useState(0);\n  // Upstream double-click reloads the inbox before resolving its pending focus.\n  // Keep the refresh token after consumption so clearing intent never reloads it.\n  const [focusRefresh, setFocusRefresh] = useState(0);\n  useEffect(() => {\n    if (focusRequest) setFocusRefresh(focusRequest);\n  }, [focusRequest]);\n  const update = (key: string, value: string) =>\n    setParams((previous) => {\n      const next = new URLSearchParams(previous);\n      if (value) next.set(key, value);\n      else next.delete(key);\n      return next;\n    });\n  const Shell = mode === "search" ? SearchShellRoot : ActivityInboxPanel;\n  return (\n    <>\n      <ListSlot\n        ref={panel.ref}\n        onKeyDown={\n          mode === "search"\n            ? (event) => railHandler.current?.(event)\n            : undefined\n        }\n        className={`relative flex min-w-0 flex-1 bg-layer-canvas  ${showSplit && desktop ? `border-r border-line-muted  ${mode === "search" ? "" : ""}` : ""}`}\n        style={\n          showSplit\n            ? desktop\n              ? { flex: `0 0 ${panel.width}px`, width: panel.width }\n              : { display: "none" }\n            : undefined\n        }\n      >\n        {showSplit && desktop && (\n          <ListColumnResize\n            column="list"\n            snap={activityCollapseSnap}\n            edge="right"\n            maxWidth={panel.maxWidth}\n            visibleFrom="md"\n            data-testid="activity-detail-resize"\n          />\n        )}\n        {mode === "search" ? (\n          <SearchHeader\n            inputRef={searchInput}\n            overlay={overlay}\n            conversation={scopedConversation}\n            query={query}\n            onBack={onBack}\n            onQuery={(value) =>\n              setParams(\n                (previous) => {\n                  const next = new URLSearchParams(previous);\n                  if (value) next.set("q", value);\n                  else next.delete("q");\n                  return next;\n                },\n                // Commit the query and its clickable layout in the input event.\n                // A deferred router transition can remove the pressed result.\n                { replace: true, flushSync: true },\n              )\n            }\n            onEscape={() => {\n              if (!detail) {\n                onBack();\n                return;\n              }\n              setParams((previous) => {\n                const next = new URLSearchParams(previous);\n                for (const ke'... 23784 more characters,
+    expected: /<Spinner/,
+    operator: 'doesNotMatch',
+    diff: 'simple'
+  }
+
+test at scripts/official-web/ui-action-props.test.ts:65:1
+✖ all action bindings have upstream provenance and cannot be overridden locally (148.76925ms)
+  AssertionError [ERR_ASSERTION]: AddInstanceDialog.tsx
+  + actual - expected
+  
+  + 'DialogCommit'
+  - 'Button'
+  
+      at walk (file:///private/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/loom-ui138-baseline-5xfo39n8/scripts/official-web/ui-action-props.test.ts:96:18)
+      at visitNode2 (/Users/sun/Code/repos/rah_os/node_modules/typescript/lib/typescript.js:32449:18)
+      at forEachChildInJsxElement (/Users/sun/Code/repos/rah_os/node_modules/typescript/lib/typescript.js:32816:12)
+      at Object.forEachChild (/Users/sun/Code/repos/rah_os/node_modules/typescript/lib/typescript.js:32970:35)
+      at walk (file:///private/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/loom-ui138-baseline-5xfo39n8/scripts/official-web/ui-action-props.test.ts:112:10)
+      at visitNodes (/Users/sun/Code/repos/rah_os/node_modules/typescript/lib/typescript.js:32457:22)
+      at forEachChildInJsxElement (/Users/sun/Code/repos/rah_os/node_modules/typescript/lib/typescript.js:32816:55)
+      at Object.forEachChild (/Users/sun/Code/repos/rah_os/node_modules/typescript/lib/typescript.js:32970:35)
+      at walk (file:///private/var/folders/ln/kr9m4x0d2bg353zcd3mzx_jr0000gn/T/loom-ui138-baseline-5xfo39n8/scripts/official-web/ui-action-props.test.ts:112:10)
+      at visitNodes (/Users/sun/Code/repos/rah_os/node_modules/typescript/lib/typescript.js:32457:22) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'DialogCommit',
+    expected: 'Button',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

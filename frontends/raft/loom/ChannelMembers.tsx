@@ -1,6 +1,7 @@
+import { DirectMessageIcon } from "raft-ui";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { MessageSquare } from "lucide-react";
+
 import { Button } from "raft-ui";
 import {
   MembersStrip,
@@ -193,7 +194,7 @@ export default function ChannelMembers({
                 disabled={busy}
                 onClick={() => onOpenPrivate(m.id)}
               >
-                <MessageSquare size={16} />
+                <DirectMessageIcon width={16} height={16} />
               </Button>
               {!busy && onAddInstance && (
                 <ChannelMemberHoverActions

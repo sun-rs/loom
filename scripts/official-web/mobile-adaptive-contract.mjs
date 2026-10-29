@@ -38,6 +38,10 @@ export function readAdaptiveContract(
     return { default: +m[1], min: +m[2], max: +m[3] };
   };
   return {
+    // Capture the host payload shape as well as fixed numeric policies.
+    hostFields: [
+      ...new Set([...pane.matchAll(/\bval\s+(\w+)\s*:/g)].map((m) => m[1])),
+    ].sort(),
     dualPaneMinimum: number(pane, "DualPaneMinimumWidthDp"),
     densityNormalized: requireShape(
       pane,
@@ -72,7 +76,7 @@ export function readAdaptiveContract(
   };
 }
 export function compareAdaptiveContracts(before, after) {
-  return Object.keys(before)
+  return [...new Set([...Object.keys(before), ...Object.keys(after)])]
     .filter((k) => JSON.stringify(before[k]) !== JSON.stringify(after[k]))
     .map((rule) => ({ rule, before: before[rule], after: after[rule] }));
 }

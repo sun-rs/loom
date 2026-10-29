@@ -1,3 +1,4 @@
+import { DirectMessageIcon } from "raft-ui";
 // Loom-only commands appended to the locked official sender menu. Presentation
 // state lives here; private/branch lifecycle remains in the existing owners.
 import {
@@ -9,7 +10,7 @@ import {
 } from "react";
 import type { RahClient } from "@rah-os/client-sdk";
 import type { Principal, Room, RoleListResponse } from "@rah-os/protocol";
-import { GitFork, MessageSquare, MessagesSquare } from "lucide-react";
+import { GitFork, MessagesSquare } from "lucide-react";
 import MenuItem from "../packages/web/src/components/ui/MenuItem";
 import ConfirmDialog from "../packages/web/src/components/ConfirmDialog";
 import { hasUnresolvedIntents } from "@rah-os/client-core/write-intent";
@@ -32,7 +33,11 @@ export function SenderActionItems({
     <>
       {(
         [
-          ["private", "频道内私聊", <MessageSquare size={14} />],
+          [
+            "private",
+            "频道内私聊",
+            <DirectMessageIcon width={14} height={14} />,
+          ],
           ["fork", "Fork · 分叉为新成员", <GitFork size={14} />],
           ["side", "Side · 打开独立侧聊", <MessagesSquare size={14} />],
         ] as const

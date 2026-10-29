@@ -42,7 +42,10 @@ test("row gesture uses the existing durable action and is limited to touch narro
   assert.match(read("ActivityMessageRow.tsx"), /onFullSwipe: swipeDone/);
   assert.match(read("ActivityMessageRow.tsx"), /swipeDoneClass/);
   assert.match(read("useActivitySwipe.ts"), /\(pointer: coarse\)/);
-  assert.match(read("useActivitySwipe.ts"), /max-width: 767px/);
+  assert.match(
+    read("useActivitySwipe.ts"),
+    /useMediaQuery\(layoutQueries.single\)/,
+  );
   assert.match(read("DiscoveryPage.tsx"), /useActivitySwipe/);
 });
 test("native touch handlers cancel safely, suppress post-swipe click and commit full swipe once", () => {

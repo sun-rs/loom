@@ -13,7 +13,6 @@ import {
   Activity,
   BookOpen,
   CheckSquare,
-  MessageSquare,
   Search,
   Settings,
   Users,
@@ -28,13 +27,14 @@ import {
   MobileNavItem,
   MobileNavLabel,
   Status,
+  ChatIcon,
 } from "raft-ui";
 import { RailTabButton } from "./OfficialNavigationLeaves.generated";
 import PanelHeader from "../packages/web/src/components/ui/PanelHeader.tsx";
 
 export const destinations = [
   { id: "search", label: "搜索", icon: Search },
-  { id: "channels", label: "频道", icon: MessageSquare },
+  { id: "channels", label: "聊天", icon: ChatIcon },
   { id: "activity", label: "动态", icon: Activity },
   { id: "tasks", label: "任务", icon: CheckSquare },
   { id: "agents", label: "Agent", icon: Users },
@@ -62,7 +62,7 @@ export function DesktopNavigation({
     <RailTabButton
       {...binding?.dragProps}
       key={entry.id}
-      icon={<entry.icon size={18} />}
+      icon={<entry.icon width={18} height={18} />}
       label={entry.label}
       testId={`left-rail-tab-${entry.id}`}
       showDot={
@@ -175,7 +175,9 @@ export function DestinationPlaceholder({ active }: { active: string }) {
     >
       <PanelHeader
         title={destination?.label ?? "页面不存在"}
-        icon={destination ? <destination.icon size={18} /> : undefined}
+        icon={
+          destination ? <destination.icon width={18} height={18} /> : undefined
+        }
       />
       <div className="p-6">
         <p>
