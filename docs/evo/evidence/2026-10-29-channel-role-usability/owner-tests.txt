@@ -1,0 +1,45 @@
+✔ Role creation chooses and persists an avatar once after idempotency replay; explicit avatars stay intact (128.436666ms)
+✔ Role remarks/prompt/avatar revisions preserve frozen instances and reach only new instances (63.920458ms)
+✔ blank Role prompt creates, revises and instantiates without manufacturing instructions (70.1505ms)
+✔ Role is inert configuration; two channel instances receive independent conversations (272.749167ms)
+✔ channel creation cannot add an existing Role instance to a second channel (124.641667ms)
+✔ a removed instance cannot rejoin with its old ID; re-adding the Role creates a new instance (62.631917ms)
+✔ a removed instance's private box rejects thread creation and thread replies (74.400375ms)
+✔ forwarding into a removed instance's private box is refused (58.632209ms)
+✔ an instance-owned scheduled reminder counts as active work at removal (57.396791ms)
+✔ a removed instance's reminder never fires into its private box (58.034875ms)
+✔ a first launch that fails before any session binding does not brick the instance (61.841917ms)
+✔ a recorded session binding keeps requiring that session even if Host files are lost (59.432542ms)
+✔ a Human session reset is the explicit, visible exit for a blocked instance (87.254958ms)
+✔ reset while an Activation is leased without a live Run: the launch reads the new generation (65.476083ms)
+✔ a late binding receipt from the previous generation cannot bind the new one (65.319791ms)
+✔ full review batch 2: a binding reported mid-run survives the run's failure (56.128167ms)
+✔ full review batch 2: a session reset requeues the session-continuity quarantine and the new generation runs (59.964ms)
+✔ full review batch 2: a session reset never lifts an unrelated quarantine (55.905459ms)
+✔ full review batch 2: unresolved runtime cleanup still refuses the reset and keeps the quarantine (62.497375ms)
+✔ a Role instance run without recorded usage reads as unavailable, not zero (59.49375ms)
+✔ contract §5: role.list shows each instance's observed compactions in its current session, unknown until a run is observed and again after a reset (82.071417ms)
+✔ instance session reset is Human-only and rejects non-instances (66.128167ms)
+✔ Agent memory and execution resets refuse Role instances instead of bricking them (54.566834ms)
+✔ schema 62 upgrade keeps a previously launched instance fail closed (138.343917ms)
+✔ library extends immutable originals; random creation picks a staged selectable preset and never reserved art (1.395667ms)
+✔ all requested avatar families use unique detailed 32x32 palette sprites (3.258458ms)
+✔ new presets survive instance presentation and the existing profile authority contract (1.873541ms)
+✔ empty optional Role prompt survives form validation without manufactured instructions (2.270791ms)
+✔ model display removes transport prefix but preserves provider and opaque binding value (0.107666ms)
+✔ single-Human product omits Role filter and Channel visibility badges, retaining private-box boundaries (0.114ms)
+✔ Channel creation uses folder tree, description and optional Role members (0.194666ms)
+✔ fixed effort models retain published value without a redundant effort picker (0.066708ms)
+✔ Channel form generation preserves acquired source and explicit unsupported slots (4.5225ms)
+✔ multi-member memory policy uses official sheet with linked submit and busy protection (0.791333ms)
+✔ usage ledger uses a scrollable official sheet without a fake save action (0.111125ms)
+✔ single-switch task permission and discard confirmation remain dialogs (0.130459ms)
+✔ management sheets are opt-in only for long lists and multi-field forms (0.935ms)
+ℹ tests 37
+ℹ suites 0
+ℹ pass 37
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1777.750417

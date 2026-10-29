@@ -3,6 +3,7 @@ import additions from "./avatars/presets.json" with { type: "json" };
 /** Official bytes stay immutable; this is the explicit Loom-owned data extension seam. */
 const pixelAvatars = {
   ...original,
+  palette: {...original.palette, ...additions.palette},
   avatars: {
     ...original.avatars,
     ...Object.fromEntries(

@@ -680,6 +680,7 @@ function normalizeWorkspaceAgentProvisionInput(
       input.instructions,
       "instructions",
       64 * 1_024,
+      true,
     ),
     modelIntent: input.modelIntent,
     role: requiredBoundedText(input.role, "role", 512),
@@ -699,9 +700,11 @@ function requiredBoundedText(
   value: string,
   field: string,
   maximumLength: number,
+  allowEmpty = false,
 ): string {
   const normalized = value.trim();
-  if (normalized.length === 0) throw new Error(`${field} is required`);
+  if (!allowEmpty && normalized.length === 0)
+    throw new Error(`${field} is required`);
   if (normalized.length > maximumLength) {
     throw new Error(
       `${field} must not exceed ${String(maximumLength)} characters`,

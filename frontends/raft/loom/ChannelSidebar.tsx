@@ -1,3 +1,4 @@
+import CreateChannelDialog from "./CreateChannelDialog.tsx";
 import PageEmpty from "./PageEmpty";
 import { OfficialSidebarDescription } from "./OfficialRefresh135.generated";
 import { layoutQueries } from "./adaptive-layout.ts";
@@ -22,7 +23,6 @@ import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import {
   Button,
   Input,
-  Textarea,
   SidebarSectionHeader,
   SidebarSectionDisclosure,
   SidebarSectionControl,
@@ -131,7 +131,6 @@ export default function ChannelSidebar({
   const [archiveTarget, setArchiveTarget] = useState<Room | "list">();
   const [edit, setEdit] = useState<Edit>();
   const [title, setTitle] = useState("");
-  const [directories, setDirectories] = useState("");
   const [collapsed, setCollapsed] = useState<string[]>([]);
   const request = useRef(0);
   const [refreshing, setRefreshing] = useState(false);
@@ -260,7 +259,6 @@ export default function ChannelSidebar({
   const open = (next: Edit, value = "") => {
     setError("");
     setTitle(value);
-    setDirectories("");
     setEdit(next);
   };
   const groups = data
@@ -696,17 +694,21 @@ export default function ChannelSidebar({
           onOpen={onSelect}
         />
       )}
-      {edit && (
+      {edit?.kind === "channel" && (
+        <CreateChannelDialog
+          manager={manager}
+          onClose={() => setEdit(undefined)}
+          onCreated={onCreated}
+        />
+      )}
+      {edit && edit.kind !== "channel" && (
         <ActionDialog
-          sheet={edit.kind === "channel"}
           title={
-            edit.kind === "channel"
-              ? "新建频道"
-              : edit.kind === "delete-group"
-                ? "删除分组"
-                : edit.id
-                  ? "重命名分组"
-                  : "新建分组"
+            edit.kind === "delete-group"
+              ? "删除分组"
+              : edit.id
+                ? "重命名分组"
+                : "新建分组"
           }
           manager={manager}
           error={error}
@@ -740,52 +742,34 @@ export default function ChannelSidebar({
               onSubmit={(event) => {
                 event.preventDefault();
                 if (busy || !title.trim()) return;
-                if (edit.kind === "channel")
-                  void manager.createChannel(
-                    title.trim(),
-                    directories
-                      .split("\n")
-                      .map((s) => s.trim())
-                      .filter(Boolean),
-                    (outcome) => {
-                      done(outcome);
-                      if (outcome.kind === "ok")
-                        void onCreated(outcome.result.room).catch(() =>
-                          setError("频道已创建，列表更新失败，请刷新页面。"),
-                        );
-                    },
-                  );
-                else
-                  patch({
-                    ...(edit.moveKey
-                      ? {
-                          pinned: prefs!.pinned.filter(
-                            (k) => k !== edit.moveKey,
-                          ),
-                        }
-                      : {}),
-                    customSections: edit.id
-                      ? prefs!.customSections.map((s) =>
-                          s.id === edit.id ? { ...s, name: title.trim() } : s,
-                        )
-                      : [
-                          ...prefs!.customSections.map((s) =>
-                            edit.moveKey
-                              ? {
-                                  ...s,
-                                  items: s.items.filter(
-                                    (k) => k !== edit.moveKey,
-                                  ),
-                                }
-                              : s,
-                          ),
-                          {
-                            id: crypto.randomUUID(),
-                            name: title.trim(),
-                            items: edit.moveKey ? [edit.moveKey] : [],
-                          },
-                        ],
-                  });
+                patch({
+                  ...(edit.moveKey
+                    ? {
+                        pinned: prefs!.pinned.filter((k) => k !== edit.moveKey),
+                      }
+                    : {}),
+                  customSections: edit.id
+                    ? prefs!.customSections.map((s) =>
+                        s.id === edit.id ? { ...s, name: title.trim() } : s,
+                      )
+                    : [
+                        ...prefs!.customSections.map((s) =>
+                          edit.moveKey
+                            ? {
+                                ...s,
+                                items: s.items.filter(
+                                  (k) => k !== edit.moveKey,
+                                ),
+                              }
+                            : s,
+                        ),
+                        {
+                          id: crypto.randomUUID(),
+                          name: title.trim(),
+                          items: edit.moveKey ? [edit.moveKey] : [],
+                        },
+                      ],
+                });
               }}
             >
               <FormField label="名称">
@@ -793,30 +777,11 @@ export default function ChannelSidebar({
                   aria-label="名称"
                   autoFocus
                   value={title}
-                  maxLength={edit.kind === "channel" ? 200 : 80}
+                  maxLength={80}
                   disabled={busy}
                   onChange={(e) => setTitle(e.target.value)}
                 />
               </FormField>
-              {edit.kind === "channel" && (
-                <>
-                  <p className="my-3 text-sm">Loom 自动创建频道工作目录。</p>
-                  <details className="mb-3">
-                    <summary className="cursor-pointer text-sm">
-                      附加本机目录（可选）
-                    </summary>
-                    <p className="my-2 text-xs">
-                      每行一个绝对路径，创建后固定。实例可访问这些目录。
-                    </p>
-                    <Textarea
-                      aria-label="附加本机目录"
-                      value={directories}
-                      onChange={(e) => setDirectories(e.target.value)}
-                      disabled={busy}
-                    />
-                  </details>
-                </>
-              )}
               <DialogCommit
                 form="loom-sidebar-edit-form"
                 {...uiActionProps.dialogSave}
@@ -824,7 +789,7 @@ export default function ChannelSidebar({
                 type="submit"
                 disabled={busy || !title.trim()}
               >
-                {edit.kind === "channel" ? "创建频道" : "保存分组"}
+                保存分组
               </DialogCommit>
             </form>
           )}

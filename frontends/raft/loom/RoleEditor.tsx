@@ -198,7 +198,6 @@ export default function RoleEditor({
           <Field label="提示词" className={creation ? undefined : "mb-3"}>
             <Textarea
               aria-label="提示词"
-              required
               rows={creation ? 3 : 5}
               value={form.instructions}
               onChange={(e) =>

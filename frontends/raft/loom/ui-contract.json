@@ -789,6 +789,26 @@
         "scripts/official-web/role-computer-groups.test.ts",
         "scripts/official-web/ui-refresh135-browser.mjs"
       ]
+    },
+    {
+      "id": "channel-create-role-usability",
+      "owner": "official db5e399 CreateChannelDialog JSX / native field and picker recipes; Loom command bindings",
+      "rule": "Retain native field spacing, member picker and CheckboxIndicator. Omit unsupported visibility/multi-Human/Slack; workspace folder slot reuses ComputerFiles folders-only mode. Existing Kernel operations own confirmed creation and idempotent instance addition. Detailed avatar grid support is an explicit Loom exception; original 8x8 frames/data/SVG output remain unchanged.",
+      "sources": [
+        "frontends/raft/upstream/channel-create-2026-10-29/CreateChannelDialog.tsx",
+        "frontends/raft/upstream/channel-create-2026-10-29/memberPickerClasses.ts",
+        "scripts/official-web/generate-shared-content.mjs"
+      ],
+      "bindings": [
+        "CreateChannelDialog.tsx",
+        "OfficialCreateChannelFields.generated.tsx",
+        "ComputerFiles.tsx",
+        "detailed-avatar-svg.ts"
+      ],
+      "evidence": [
+        "scripts/official-web/channel-role-usability.test.ts",
+        "scripts/official-web/channel-role-usability-browser.mjs"
+      ]
     }
   ],
   "exceptions": [

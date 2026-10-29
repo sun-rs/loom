@@ -1,0 +1,654 @@
+✔ library extends immutable originals; random creation picks a staged selectable preset and never reserved art (1.513791ms)
+✖ all requested avatar families use unique detailed 32x32 palette sprites (0.785583ms)
+✔ new presets survive instance presentation and the existing profile authority contract (1.844834ms)
+✖ empty optional Role prompt survives form validation without manufactured instructions (2.766917ms)
+✖ model display removes transport prefix but preserves provider and opaque binding value (0.219959ms)
+✖ single-Human product omits Role filter and Channel visibility badges, retaining private-box boundaries (1.021041ms)
+✖ Channel creation uses folder tree, description and optional Role members (0.096959ms)
+✖ fixed effort models retain published value without a redundant effort picker (0.424167ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 2
+ℹ fail 6
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 223.50025
+
+✖ failing tests:
+
+test at scripts/official-web/avatar-library.test.ts:41:1
+✖ all requested avatar families use unique detailed 32x32 palette sprites (0.785583ms)
+  AssertionError [ERR_ASSERTION]: loom-gemini
+  
+  8 !== 32
+  
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/avatar-library.test.ts:55:12)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 8,
+    expected: 32,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/official-web/channel-role-usability.test.ts:7:1
+✖ empty optional Role prompt survives form validation without manufactured instructions (2.766917ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/channel-role-usability.test.ts:9:9)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.start (node:internal/test_runner/test:1096:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/official-web/channel-role-usability.test.ts:13:1
+✖ model display removes transport prefix but preserves provider and opaque binding value (0.219959ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'local:opencode-cli/v1:deepseek/deepseek-flash'
+  - 'deepseek/deepseek-flash'
+  
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/channel-role-usability.test.ts:15:9)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'local:opencode-cli/v1:deepseek/deepseek-flash',
+    expected: 'deepseek/deepseek-flash',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/official-web/channel-role-usability.test.ts:18:1
+✖ single-Human product omits Role filter and Channel visibility badges, retaining private-box boundaries (1.021041ms)
+  AssertionError [ERR_ASSERTION]: The input was expected to not match the regular expression /筛选角色/. Input:
+  
+  'import PageEmpty from "./PageEmpty";\n' +
+    'import { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives";\n' +
+    'import { layoutQueries } from "./adaptive-layout.ts";\n' +
+    'import {\n' +
+    '  OfficialComputerGroup,\n' +
+    '  OfficialSidebarDescription,\n' +
+    '} from "./OfficialRefresh135.generated";\n' +
+    'import {\n' +
+    '  groupRolesByComputer,\n' +
+    '  readCollapsedComputers,\n' +
+    '} from "./role-computer-groups";\n' +
+    'import { SidebarResize, useSidebarColumn } from "./SidebarLayout";\n' +
+    'import { LoomSidebarSlot } from "./SidebarLayout.tsx";\n' +
+    'import { OfficialRoleTabs } from "./OfficialIdentityFrames.generated";\n' +
+    'import { OfficialRoleRow } from "./OfficialIdentityRows.generated";\n' +
+    'import RolePresence from "./RolePresence.tsx";\n' +
+    'import type { rolePresence } from "./role-presence.ts";\n' +
+    '// Structural port: MainLayout member master/detail, MemberAgentRow and\n' +
+    '// AgentDetailPanel tab strip. Store-bound upstream components stay untouched.\n' +
+    'import { useState, type ReactNode, type CSSProperties } from "react";\n' +
+    'import {\n' +
+    '  AppShellMainSlot,\n' +
+    '  SidebarSectionHeader,\n' +
+    '  SidebarSectionDisclosure,\n' +
+    '  SidebarSectionCount,\n' +
+    '  SidebarSectionControl,\n' +
+    '  Input,\n' +
+    '  TabsList,\n' +
+    '  TabsTab,\n' +
+    '  TabsLabel,\n' +
+    '} from "raft-ui";\n' +
+    'import {\n' +
+    '  Plus,\n' +
+    '  RefreshCw,\n' +
+    '  Bot,\n' +
+    '  Activity,\n' +
+    '  ChevronDown,\n' +
+    '  ChevronRight,\n' +
+    '} from "lucide-react";\n' +
+    'import Frame from "./ChatSidebarFrame.tsx";\n' +
+    'import AvatarSlot from "../packages/web/src/components/ui/AvatarSlot.tsx";\n' +
+    'import PanelHeader, {\n' +
+    '  PROFILE_HEADER_SURFACE_CLASS,\n' +
+    '} from "../packages/web/src/components/ui/PanelHeader.tsx";\n' +
+    'export type RoleEntry = {\n' +
+    '  id: string;\n' +
+    '  name: string;\n' +
+    '  description?: string;\n' +
+    '  runtimeLabel?: string;\n' +
+    '  computer?: { id: string; name: string };\n' +
+    '  retired?: boolean;\n' +
+    '  avatarUrl?: string;\n' +
+    '  presence?: ReturnType<typeof rolePresence>;\n' +
+    '};\n' +
+    'export default function RoleWorkspace({\n' +
+    '  detail,\n' +
+    '  workspaceId,\n' +
+    '  onBack,\n' +
+    '  entries,\n' +
+    '  selected,\n' +
+    '  onSelect,\n' +
+    '  tab,\n' +
+    '  onTab,\n' +
+    '  busy,\n' +
+    '  onCreate,\n' +
+    '  onRefresh,\n' +
+    '  actions,\n' +
+    '  children,\n' +
+    '  inspector,\n' +
+    '}: {\n' +
+    '  detail: boolean;\n' +
+    '  workspaceId: string;\n' +
+    '  onBack: () => void;\n' +
+    '  entries: RoleEntry[];\n' +
+    '  selected?: RoleEntry;\n' +
+    '  onSelect: (id: string) => void;\n' +
+    '  tab: string;\n' +
+    '  onTab: (tab: string) => void;\n' +
+    '  busy: boolean;\n' +
+    '  onCreate: () => void;\n' +
+    '  onRefresh: () => void;\n' +
+    '  actions?: ReactNode;\n' +
+    '  children: ReactNode;\n' +
+    '  inspector?: ReactNode;\n' +
+    '}) {\n' +
+    '  const [showDeleted, setShowDeleted] = useState(false);\n' +
+    '  const collapseKey = "loom:role-computers:" + workspaceId;\n' +
+    '  const [collapsed, setCollapsed] = useState(() => {\n' +
+    '    try {\n' +
+    '      return new Set(readCollapsedComputers(localStorage, collapseKey));\n' +
+    '    } catch {\n' +
+    '      return new Set<string>();\n' +
+    '    }\n' +
+    '  });\n' +
+    '  const toggleComputer = (id: string) =>\n' +
+    '    setCollapsed((current) => {\n' +
+    '      const next = new Set(current);\n' +
+    '      if (next.has(id)) next.delete(id);\n' +
+    '      else next.add(id);\n' +
+    '      try {\n' +
+    '        localStorage.setItem(collapseKey, JSON.stringify([...next]));\n' +
+    '      } catch {}\n' +
+    '      return next;\n' +
+    '    });\n' +
+    '\n' +
+    '  const [query, setQuery] = useState("");\n' +
+    '  const panel = useSidebarColumn();\n' +
+    '  const mobile = useMediaQuery(layoutQueries.single);\n' +
+    '  const visible = entries.filter((entry) =>\n' +
+    '    `${entry.name} ${entry.description ?? ""} ${entry.runtimeLabel ?? ""}`\n' +
+    '      .normalize("NFKC")\n' +
+    '      .toLocaleLowerCase()\n' +
+    '      .includes(query.trim().normalize("NFKC").toLocaleLowerCase()),\n' +
+    '  );\n' +
+    '  const emptyList =\n' +
+    '    mobile &&\n' +
+    '    !visible.some((entry) => !entry.retired) &&\n' +
+    '    !(showDeleted && visible.some((entry) => entry.retired));\n' +
+    '  return (\n' +
+    '    <div\n' +
+    '      className="relative flex min-h-0 min-w-0 flex-1"\n' +
+    '      data-testid="loom-role-layout"\n' +
+    '    >\n' +
+    '      <LoomSidebarSlot\n' +
+    '        page="agents"\n' +
+    '        className={`relative shrink-0 flex-col md:flex md:w-[var(--agent-sidebar-width)] ${detail ? "hidden" : "flex w-full"}`}\n' +
+    '        style={{ "--agent-sidebar-width": `${panel.width}px` } as CSSProperties}\n' +
+    '      >\n' +
+    '        <Frame\n' +
+    '          fillContent={emptyList}\n' +
+    '          hideDesktopHeader\n' +
+    '          title="Agent"\n' +
+    '          testIdPrefix="agent-sidebar"\n' +
+    '          scrollTestId="loom-role-list"\n' +
+    '        >\n' +
+    '          <SidebarSectionHeader>\n' +
+    '            <SidebarSectionDisclosure render={<div />} type={undefined}>\n' +
+    '              角色{" "}\n' +
+    '              <SidebarSectionCount>\n' +
+    '                {entries.filter((e) => !e.retired).length}\n' +
+    '              </SidebarSectionCount>\n' +
+    '            </SidebarSectionDisclosure>\n' +
+    '            <SidebarSectionControl\n' +
+    '              aria-label="刷新角色"\n' +
+    '              disabled={busy}\n' +
+    '              onClick={onRefresh}\n' +
+    '            >\n' +
+    '              <RefreshCw size={16} />\n' +
+    '            </SidebarSectionControl>\n' +
+    '            <SidebarSectionControl\n' +
+    '              aria-label="新建角色"\n' +
+    '              disabled={busy}\n' +
+    '              onClick={onCreate}\n' +
+    '            >\n' +
+    '              <Plus size={16} />\n' +
+    '            </SidebarSectionControl>\n' +
+    '          </SidebarSectionHeader>\n' +
+    '          <Input\n' +
+    '            aria-label="筛选角色"\n' +
+    '            placeholder="筛选角色"\n' +
+    '            value={query}\n' +
+    '            onChange={(e) => setQuery(e.target.value)}\n' +
+    '            className="mb-2"\n' +
+    '          />\n' +
+    '          {!visible.some((entry) => !entry.retired) && (\n' +
+    '            <>\n' +
+    '              <OfficialSidebarDescription className="hidden md:block">\n' +
+    '                {query ? "没有匹配的角色" : "还没有角色"}\n' +
+    '              </OfficialSidebarDescription>\n' +
+    '            </>\n' +
+    '          )}\n' +
+    '          {groupRolesByComputer(visible).map((group) => (\n' +
+    '            <OfficialComputerGroup\n' +
+    '              key={group.id}\n' +
+    '              id={group.id}\n' +
+    '              name={group.name}\n' +
+    '              count={group.entries.length}\n' +
+    '              collapsed={collapsed.has(group.id)}\n' +
+    '              onToggle={() => toggleComputer(group.id)}\n' +
+    '            >\n' +
+    '              {group.entries.map((entry) => (\n' +
+    '                <OfficialRoleRow\n' +
+    '                  key={entry.id}\n' +
+    '                  agent={entry}\n' +
+    '                  selected={selected?.id === entry.id}\n' +
+    '                  busy={busy}\n' +
+    '                  onSelect={onSelect}\n' +
+    '                  statusDot={\n' +
+    '                    <RolePresence state={entry.presence ?? "unknown"} />\n' +
+    '                  }\n' +
+    '                />\n' +
+    '              ))}\n' +
+    '            </OfficialComputerGroup>\n' +
+    '          ))}\n' +
+    '          {entries.some((entry) => entry.retired) && (\n' +
+    '            <>\n' +
+    '              <SidebarSectionHeader>\n' +
+    '                <SidebarSectionDisclosure\n' +
+    '                  render={<button type="button" />}\n' +
+    '                  aria-expanded={showDeleted}\n' +
+    '                  onClick={() => setShowDeleted((v) => !v)}\n' +
+    '                >\n' +
+    '                  {showDeleted ? (\n' +
+    '                    <ChevronDown size={12} />\n' +
+    '                  ) : (\n' +
+    '                    <ChevronRight size={12} />\n' +
+    '                  )}\n' +
+    '                  已删除{" "}\n' +
+    '                  <SidebarSectionCount>\n' +
+    '                    {entries.filter((entry) => entry.retired).length}\n' +
+    '                  </SidebarSectionCount>\n' +
+    '                </SidebarSectionDisclosure>\n' +
+    '              </SidebarSectionHeader>\n' +
+    '              {showDeleted &&\n' +
+    '                visible\n' +
+    '                  .filter((entry) => entry.retired)\n' +
+    '                  .map((entry) => (\n' +
+    '                    <OfficialRoleRow\n' +
+    '                      key={entry.id}\n' +
+    '                      agent={entry}\n' +
+    '                      selected={selected?.id === entry.id}\n' +
+    '                      busy={busy}\n' +
+    '                      onSelect={onSelect}\n' +
+    '                      statusDot={\n' +
+    '                        <RolePresence state={entry.presence ?? "unknown"} />\n' +
+    '                      }\n' +
+    '                    />\n' +
+    '                  ))}\n' +
+    '            </>\n' +
+    '          )}\n' +
+    '          {emptyList && <PageEmpty kind={query ? "search" : "roles"} />}\n' +
+    '        </Frame>\n' +
+    '        <SidebarResize testId="agent-sidebar-resize" />\n' +
+    '      </LoomSidebarSlot>\n' +
+    '      <div\n' +
+    '        className={`relative min-h-0 min-w-0 flex-1 ${detail ? "flex" : "hidden md:flex"}`}\n' +
+    '      >\n' +
+    '        <AppShellMainSlot\n' +
+    '          style={{ zIndex: 1 }}\n' +
+    '          className={`min-w-0 bg-layer-panel md:flex ${detail ? "flex" : "hidden"}`}\n' +
+    '        >\n' +
+    '          <div className="thread-layout-container flex min-h-0 min-w-0 flex-1">\n' +
+    '            <div\n' +
+    '              className="thread-main-column flex min-h-0 min-w-0 flex-1 flex-col"\n' +
+    '              data-testid="loom-role-detail"\n' +
+    '            >\n' +
+    '              {selected && (\n' +
+    '                <PanelHeader\n' +
+    '                  title={selected?.name ?? "选择角色"}\n' +
+    '                  iconSlot={\n' +
+    '                    <AvatarSlot\n' +
+    '                      context="panel-header"\n' +
+    '                      type="agent"\n' +
+    '                      agentAvatarUrl={selected?.avatarUrl}\n' +
+    '                    />\n' +
+    '                  }\n' +
+    '                  iconKind="avatar"\n' +
+    '                  iconAlwaysVisible\n' +
+    '                  onMobileBack={onBack}\n' +
+    '                  mobileBackProps={{ "aria-label": "角色列表" }}\n' +
+    '                  containerProps={{\n' +
+    '                    className: `agent-profile-header-container ${PROFILE_HEADER_SURFACE_CLASS}`,\n' +
+    '                  }}\n' +
+    '                  actions={actions}\n' +
+    '                />\n' +
+    '              )}\n' +
+    '              {selected && (\n' +
+    '                <OfficialRoleTabs value={tab} onValueChange={onTab}>\n' +
+    '                  <TabsList aria-label="角色详情">\n' +
+    '                    <TabsTab\n' +
+    '                      disabled={busy}\n' +
+    '                      value="activity"\n' +
+    '                      className="!cursor-default"\n' +
+    '                    >\n' +
+    '                      <Activity />\n' +
+    '                      <TabsLabel>动态</TabsLabel>\n' +
+    '                    </TabsTab>\n' +
+    '                    <TabsTab\n' +
+    '                      disabled={busy}\n' +
+    '                      value="roles"\n' +
+    '                      className="!cursor-default"\n' +
+    '                    >\n' +
+    '                      <Bot />\n' +
+    '                      <TabsLabel>资料</TabsLabel>\n' +
+    '                    </TabsTab>\n' +
+    '                  </TabsList>\n' +
+    '                </OfficialRoleTabs>\n' +
+    '              )}\n' +
+    '              <div\n' +
+    '                className={`min-h-0 flex-1 overflow-y-auto ${selected ? "" : "flex flex-col"}`}\n' +
+    '              >\n' +
+    '                {children}\n' +
+    '              </div>\n' +
+    '            </div>\n' +
+    '            {inspector && (\n' +
+    '              <div\n' +
+    '                className="thread-profile-side-column contents"\n' +
+    '                data-collapse-channel="false"\n' +
+    '                data-collapse-thread="false"\n' +
+    '       '... 149 more characters
+  
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/channel-role-usability.test.ts:19:9)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'import PageEmpty from "./PageEmpty";\nimport { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives";\nimport { layoutQueries } from "./adaptive-layout.ts";\nimport {\n  OfficialComputerGroup,\n  OfficialSidebarDescription,\n} from "./OfficialRefresh135.generated";\nimport {\n  groupRolesByComputer,\n  readCollapsedComputers,\n} from "./role-computer-groups";\nimport { SidebarResize, useSidebarColumn } from "./SidebarLayout";\nimport { LoomSidebarSlot } from "./SidebarLayout.tsx";\nimport { OfficialRoleTabs } from "./OfficialIdentityFrames.generated";\nimport { OfficialRoleRow } from "./OfficialIdentityRows.generated";\nimport RolePresence from "./RolePresence.tsx";\nimport type { rolePresence } from "./role-presence.ts";\n// Structural port: MainLayout member master/detail, MemberAgentRow and\n// AgentDetailPanel tab strip. Store-bound upstream components stay untouched.\nimport { useState, type ReactNode, type CSSProperties } from "react";\nimport {\n  AppShellMainSlot,\n  SidebarSectionHeader,\n  SidebarSectionDisclosure,\n  SidebarSectionCount,\n  SidebarSectionControl,\n  Input,\n  TabsList,\n  TabsTab,\n  TabsLabel,\n} from "raft-ui";\nimport {\n  Plus,\n  RefreshCw,\n  Bot,\n  Activity,\n  ChevronDown,\n  ChevronRight,\n} from "lucide-react";\nimport Frame from "./ChatSidebarFrame.tsx";\nimport AvatarSlot from "../packages/web/src/components/ui/AvatarSlot.tsx";\nimport PanelHeader, {\n  PROFILE_HEADER_SURFACE_CLASS,\n} from "../packages/web/src/components/ui/PanelHeader.tsx";\nexport type RoleEntry = {\n  id: string;\n  name: string;\n  description?: string;\n  runtimeLabel?: string;\n  computer?: { id: string; name: string };\n  retired?: boolean;\n  avatarUrl?: string;\n  presence?: ReturnType<typeof rolePresence>;\n};\nexport default function RoleWorkspace({\n  detail,\n  workspaceId,\n  onBack,\n  entries,\n  selected,\n  onSelect,\n  tab,\n  onTab,\n  busy,\n  onCreate,\n  onRefresh,\n  actions,\n  children,\n  inspector,\n}: {\n  detail: boolean;\n  workspaceId: string;\n  onBack: () => void;\n  entries: RoleEntry[];\n  selected?: RoleEntry;\n  onSelect: (id: string) => void;\n  tab: string;\n  onTab: (tab: string) => void;\n  busy: boolean;\n  onCreate: () => void;\n  onRefresh: () => void;\n  actions?: ReactNode;\n  children: ReactNode;\n  inspector?: ReactNode;\n}) {\n  const [showDeleted, setShowDeleted] = useState(false);\n  const collapseKey = "loom:role-computers:" + workspaceId;\n  const [collapsed, setCollapsed] = useState(() => {\n    try {\n      return new Set(readCollapsedComputers(localStorage, collapseKey));\n    } catch {\n      return new Set<string>();\n    }\n  });\n  const toggleComputer = (id: string) =>\n    setCollapsed((current) => {\n      const next = new Set(current);\n      if (next.has(id)) next.delete(id);\n      else next.add(id);\n      try {\n        localStorage.setItem(collapseKey, JSON.stringify([...next]));\n      } catch {}\n      return next;\n    });\n\n  const [query, setQuery] = useState("");\n  const panel = useSidebarColumn();\n  const mobile = useMediaQuery(layoutQueries.single);\n  const visible = entries.filter((entry) =>\n    `${entry.name} ${entry.description ?? ""} ${entry.runtimeLabel ?? ""}`\n      .normalize("NFKC")\n      .toLocaleLowerCase()\n      .includes(query.trim().normalize("NFKC").toLocaleLowerCase()),\n  );\n  const emptyList =\n    mobile &&\n    !visible.some((entry) => !entry.retired) &&\n    !(showDeleted && visible.some((entry) => entry.retired));\n  return (\n    <div\n      className="relative flex min-h-0 min-w-0 flex-1"\n      data-testid="loom-role-layout"\n    >\n      <LoomSidebarSlot\n        page="agents"\n        className={`relative shrink-0 flex-col md:flex md:w-[var(--agent-sidebar-width)] ${detail ? "hidden" : "flex w-full"}`}\n        style={{ "--agent-sidebar-width": `${panel.width}px` } as CSSProperties}\n      >\n        <Frame\n          fillContent={emptyList}\n          hideDesktopHeader\n          title="Agent"\n          testIdPrefix="agent-sidebar"\n          scrollTestId="loom-role-list"\n        >\n          <SidebarSectionHeader>\n            <SidebarSectionDisclosure render={<div />} type={undefined}>\n              角色{" "}\n              <SidebarSectionCount>\n                {entries.filter((e) => !e.retired).length}\n              </SidebarSectionCount>\n            </SidebarSectionDisclosure>\n            <SidebarSectionControl\n              aria-label="刷新角色"\n              disabled={busy}\n              onClick={onRefresh}\n            >\n              <RefreshCw size={16} />\n            </SidebarSectionControl>\n            <SidebarSectionControl\n              aria-label="新建角色"\n              disabled={busy}\n              onClick={onCreate}\n            >\n              <Plus size={16} />\n            </SidebarSectionControl>\n          </SidebarSectionHeader>\n          <Input\n            aria-label="筛选角色"\n            placeholder="筛选角色"\n            value={query}\n            onChange={(e) => setQuery(e.target.value)}\n            className="mb-2"\n          />\n          {!visible.some((entry) => !entry.retired) && (\n            <>\n              <OfficialSidebarDescription className="hidden md:block">\n                {query ? "没有匹配的角色" : "还没有角色"}\n              </OfficialSidebarDescription>\n            </>\n          )}\n          {groupRolesByComputer(visible).map((group) => (\n            <OfficialComputerGroup\n              key={group.id}\n              id={group.id}\n              name={group.name}\n              count={group.entries.length}\n              collapsed={collapsed.has(group.id)}\n              onToggle={() => toggleComputer(group.id)}\n            >\n              {group.entries.map((entry) => (\n                <OfficialRoleRow\n                  key={entry.id}\n                  agent={entry}\n                  selected={selected?.id === entry.id}\n                  busy={busy}\n                  onSelect={onSelect}\n                  statusDot={\n                    <RolePresence state={entry.presence ?? "unknown"} />\n                  }\n                />\n              ))}\n            </OfficialComputerGroup>\n          ))}\n          {entries.some((entry) => entry.retired) && (\n            <>\n              <SidebarSectionHeader>\n                <SidebarSectionDisclosure\n                  render={<button type="button" />}\n                  aria-expanded={showDeleted}\n                  onClick={() => setShowDeleted((v) => !v)}\n                >\n                  {showDeleted ? (\n                    <ChevronDown size={12} />\n                  ) : (\n                    <ChevronRight size={12} />\n                  )}\n                  已删除{" "}\n                  <SidebarSectionCount>\n                    {entries.filter((entry) => entry.retired).length}\n                  </SidebarSectionCount>\n                </SidebarSectionDisclosure>\n              </SidebarSectionHeader>\n              {showDeleted &&\n                visible\n                  .filter((entry) => entry.retired)\n                  .map((entry) => (\n                    <OfficialRoleRow\n                      key={entry.id}\n                      agent={entry}\n                      selected={selected?.id === entry.id}\n                      busy={busy}\n                      onSelect={onSelect}\n                      statusDot={\n                        <RolePresence state={entry.presence ?? "unknown"} />\n                      }\n                    />\n                  ))}\n            </>\n          )}\n          {emptyList && <PageEmpty kind={query ? "search" : "roles"} />}\n        </Frame>\n        <SidebarResize testId="agent-sidebar-resize" />\n      </LoomSidebarSlot>\n      <div\n        className={`relative min-h-0 min-w-0 flex-1 ${detail ? "flex" : "hidden md:flex"}`}\n      >\n        <AppShellMainSlot\n          style={{ zIndex: 1 }}\n          className={`min-w-0 bg-layer-panel md:flex ${detail ? "flex" : "hidden"}`}\n        >\n          <div className="thread-layout-container flex min-h-0 min-w-0 flex-1">\n            <div\n              className="thread-main-column flex min-h-0 min-w-0 flex-1 flex-col"\n              data-testid="loom-role-detail"\n            >\n              {selected && (\n                <PanelHeader\n                  title={selected?.name ?? "选择角色"}\n                  iconSlot={\n                    <AvatarSlot\n                      context="panel-header"\n                      type="agent"\n                      agentAvatarUrl={selected?.avatarUrl}\n                    />\n                  }\n                  iconKind="avatar"\n                  iconAlwaysVisible\n                  onMobileBack={onBack}\n                  mobileBackProps={{ "aria-label": "角色列表" }}\n                  containerProps={{\n                    className: `agent-profile-header-container ${PROFILE_HEADER_SURFACE_CLASS}`,\n                  }}\n                  actions={actions}\n                />\n              )}\n              {selected && (\n                <OfficialRoleTabs value={tab} onValueChange={onTab}>\n                  <TabsList aria-label="角色详情">\n                    <TabsTab\n                      disabled={busy}\n                      value="activity"\n                      className="!cursor-default"\n                    >\n                      <Activity />\n                      <TabsLabel>动态</TabsLabel>\n                    </TabsTab>\n                    <TabsTab\n                      disabled={busy}\n                      value="roles"\n                      className="!cursor-default"\n                    >\n                      <Bot />\n                      <TabsLabel>资料</TabsLabel>\n                    </TabsTab>\n                  </TabsList>\n                </OfficialRoleTabs>\n              )}\n              <div\n                className={`min-h-0 flex-1 overflow-y-auto ${selected ? "" : "flex flex-col"}`}\n              >\n                {children}\n              </div>\n            </div>\n            {inspector && (\n              <div\n                className="thread-profile-side-column contents"\n                data-collapse-channel="false"\n                data-collapse-thread="false"\n       '... 149 more characters,
+    expected: /筛选角色/,
+    operator: 'doesNotMatch',
+    diff: 'simple'
+  }
+
+test at scripts/official-web/channel-role-usability.test.ts:22:1
+✖ Channel creation uses folder tree, description and optional Role members (0.096959ms)
+  Error: ENOENT: no such file or directory, open 'frontends/raft/loom/CreateChannelDialog.tsx'
+      at readFileSync (node:fs:436:20)
+      at read (file:///Users/sun/Code/repos/rah_os/scripts/official-web/channel-role-usability.test.ts:6:27)
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/channel-role-usability.test.ts:23:15)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: 'frontends/raft/loom/CreateChannelDialog.tsx'
+  }
+
+test at scripts/official-web/channel-role-usability.test.ts:30:1
+✖ fixed effort models retain published value without a redundant effort picker (0.424167ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /binding\?\.reasoning\.length[^\n]*> 1/. Input:
+  
+  'import type { RefObject } from "react";\n' +
+    'import {\n' +
+    '  RuntimeFormV2Fields,\n' +
+    '  RuntimeSelectControl,\n' +
+    '  Field,\n' +
+    '  type RuntimeOption,\n' +
+    '} from "../packages/web/src/components/agent/RuntimeConfigFields.tsx";\n' +
+    'import {\n' +
+    '  applyRuntimeFormV2Change,\n' +
+    '  type ParsedRuntimeFormV2,\n' +
+    '  type RuntimeFormV2Sources,\n' +
+    '  type RuntimeFormV2Value,\n' +
+    '} from "@botiverse/raft-runtime-form";\n' +
+    'import {\n' +
+    '  roleModelLabel,\n' +
+    '  type RoleForm,\n' +
+    '  type RuntimeChoice,\n' +
+    '} from "@rah-os/client-core/role-form";\n' +
+    '\n' +
+    '// Presentation/state transitions are upstream. This module only translates the\n' +
+    "// Host's published capability catalog into that renderer's data contract.\n" +
+    'export default function RoleRuntimeFields({\n' +
+    '  form,\n' +
+    '  choices,\n' +
+    '  onChange,\n' +
+    '  portalContainer,\n' +
+    '  hideRuntime = false,\n' +
+    '  pickerOptions,\n' +
+    '}: {\n' +
+    '  pickerOptions?: RuntimeOption[];\n' +
+    '  form: RoleForm;\n' +
+    '  choices: RuntimeChoice[];\n' +
+    '  onChange: (next: RoleForm) => void;\n' +
+    '  portalContainer?: RefObject<HTMLElement | null>;\n' +
+    '  hideRuntime?: boolean;\n' +
+    '}) {\n' +
+    '  const runtime = choices.find((r) => r.runtimeOfferId === form.runtimeOfferId);\n' +
+    '  const binding = runtime?.bindings.find(\n' +
+    '    (b) => b.modelBindingId === form.modelBindingId,\n' +
+    '  );\n' +
+    '  const fastTier = binding?.serviceTiers?.includes("fast")\n' +
+    '    ? "fast"\n' +
+    '    : binding?.serviceTiers?.includes("priority")\n' +
+    '      ? "priority"\n' +
+    '      : undefined;\n' +
+    '  const schema: ParsedRuntimeFormV2 = {\n' +
+    '    runtimeId: form.runtimeOfferId,\n' +
+    '    schemaVersion: "loom-published-capabilities-v1",\n' +
+    '    blockingFieldKeys: [],\n' +
+    '    requiredClientCapabilities: [],\n' +
+    '    optionSources: {},\n' +
+    '    fields: [\n' +
+    '      ...(!hideRuntime\n' +
+    '        ? [\n' +
+    '            {\n' +
+    '              key: "runtime",\n' +
+    '              kind: "select" as const,\n' +
+    '              label: "运行时",\n' +
+    '              optionSourceId: "runtime",\n' +
+    '              required: true,\n' +
+    '              advanced: false,\n' +
+    '              visibleWhen: [],\n' +
+    '            },\n' +
+    '          ]\n' +
+    '        : []),\n' +
+    '      {\n' +
+    '        key: "model",\n' +
+    '        kind: "select",\n' +
+    '        label: "模型",\n' +
+    '        optionSourceId: "model",\n' +
+    '        required: true,\n' +
+    '        advanced: false,\n' +
+    '        visibleWhen: [],\n' +
+    '      },\n' +
+    '      {\n' +
+    '        key: "effort",\n' +
+    '        kind: "dependent_select",\n' +
+    '        label: "推理强度",\n' +
+    '        dependsOn: "model",\n' +
+    '        optionSourceId: "effort",\n' +
+    '        required: Boolean(\n' +
+    '          runtime?.bindings.find(\n' +
+    '            (b) => b.modelBindingId === form.modelBindingId,\n' +
+    '          )?.reasoning.length,\n' +
+    '        ),\n' +
+    '        advanced: false,\n' +
+    '        visibleWhen: [],\n' +
+    '      },\n' +
+    '      ...(fastTier ||\n' +
+    '      form.serviceTier === "fast" ||\n' +
+    '      form.serviceTier === "priority"\n' +
+    '        ? [\n' +
+    '            {\n' +
+    '              key: "fastMode",\n' +
+    '              kind: "boolean" as const,\n' +
+    '              label: "快速模式",\n' +
+    '              hint: "以更高的单 token 成本换取更快的速度启动此运行时。",\n' +
+    '              required: false,\n' +
+    '              advanced: false,\n' +
+    '              visibleWhen: [],\n' +
+    '            },\n' +
+    '          ]\n' +
+    '        : []),\n' +
+    '      {\n' +
+    '        key: "environment",\n' +
+    '        kind: "string_map",\n' +
+    '        label: "环境变量",\n' +
+    '        required: false,\n' +
+    '        advanced: true,\n' +
+    '        visibleWhen: [],\n' +
+    '      },\n' +
+    '    ],\n' +
+    '  };\n' +
+    '  const sources: RuntimeFormV2Sources = {\n' +
+    '    effort: {\n' +
+    '      sourceId: "effort",\n' +
+    '      kind: "dependent_select",\n' +
+    '      pointer: "/effort",\n' +
+    '      dependsOn: "model",\n' +
+    '      optionsByValue: Object.fromEntries(\n' +
+    '        (runtime?.bindings ?? []).map((b) => [\n' +
+    '          b.modelBindingId,\n' +
+    '          b.reasoning.map((value) => ({ value, label: value })),\n' +
+    '        ]),\n' +
+    '      ),\n' +
+    '      defaultValueByValue: Object.fromEntries(\n' +
+    '        (runtime?.bindings ?? []).map((b) => [\n' +
+    '          b.modelBindingId,\n' +
+    '          b.reasoning[0] ?? "",\n' +
+    '        ]),\n' +
+    '      ),\n' +
+    '    },\n' +
+    '    runtime: {\n' +
+    '      sourceId: "runtime",\n' +
+    '      kind: "select",\n' +
+    '      pointer: "/runtime",\n' +
+    '      options: choices.map((r) => ({\n' +
+    '        value: r.runtimeOfferId,\n' +
+    '        label: r.label.split("（")[0]!,\n' +
+    '      })),\n' +
+    '    },\n' +
+    '    model: {\n' +
+    '      sourceId: "model",\n' +
+    '      kind: "select",\n' +
+    '      pointer: "/model",\n' +
+    '      options: (runtime?.bindings ?? []).map((b) => ({\n' +
+    '        value: b.modelBindingId,\n' +
+    '        label: roleModelLabel(b, runtime?.bindings ?? []),\n' +
+    '        supportedReasoningEfforts: b.reasoning,\n' +
+    '        defaultReasoningEffort: b.reasoning[0],\n' +
+    '      })),\n' +
+    '    },\n' +
+    '  };\n' +
+    '  const values = {\n' +
+    '    runtime: form.runtimeOfferId,\n' +
+    '    model: form.modelBindingId,\n' +
+    '    effort: form.reasoning,\n' +
+    '    environment: form.environment ?? {},\n' +
+    '    fastMode: form.serviceTier === "fast" || form.serviceTier === "priority",\n' +
+    '  };\n' +
+    '  const change = (key: string, value: RuntimeFormV2Value) => {\n' +
+    '    const next = applyRuntimeFormV2Change(schema, sources, values, key, value);\n' +
+    '    onChange({\n' +
+    '      ...form,\n' +
+    '      serviceTier:\n' +
+    '        key === "runtime" || key === "model"\n' +
+    '          ? "default"\n' +
+    '          : key === "fastMode"\n' +
+    '            ? value === true\n' +
+    '              ? (fastTier ?? form.serviceTier ?? "default")\n' +
+    '              : "default"\n' +
+    '            : (form.serviceTier ?? "default"),\n' +
+    '      environment:\n' +
+    '        typeof next.environment === "object" && next.environment !== null\n' +
+    '          ? next.environment\n' +
+    '          : {},\n' +
+    '      runtimeOfferId: String(next.runtime ?? form.runtimeOfferId),\n' +
+    '      modelBindingId: key === "runtime" ? "" : String(next.model ?? ""),\n' +
+    '      reasoning: key === "runtime" ? "" : String(next.effort ?? ""),\n' +
+    '    });\n' +
+    '  };\n' +
+    '  return (\n' +
+    '    <>\n' +
+    '      {!hideRuntime && (\n' +
+    '        <Field label="运行时" required>\n' +
+    '          <RuntimeSelectControl\n' +
+    '            placeholder="选择运行时"\n' +
+    '            value={form.runtimeOfferId}\n' +
+    '            options={\n' +
+    '              pickerOptions ??\n' +
+    '              choices.map((r) => ({\n' +
+    '                value: r.runtimeOfferId,\n' +
+    '                label: r.label.split("（")[0]!,\n' +
+    '              }))\n' +
+    '            }\n' +
+    '            onValueChange={(value) => change("runtime", value)}\n' +
+    '            portalContainer={portalContainer}\n' +
+    '            testId="runtime-form-v2-runtime"\n' +
+    '          />\n' +
+    '        </Field>\n' +
+    '      )}\n' +
+    '      <RuntimeFormV2Fields\n' +
+    '        form={{\n' +
+    '          ...schema,\n' +
+    '          fields: schema.fields.filter((field) => field.key !== "runtime"),\n' +
+    '        }}\n' +
+    '        sources={sources}\n' +
+    '        values={values}\n' +
+    '        showValidationErrors={false}\n' +
+    '        portalContainer={portalContainer}\n' +
+    '        onChange={change}\n' +
+    '      />\n' +
+    '    </>\n' +
+    '  );\n' +
+    '}\n'
+  
+      at TestContext.<anonymous> (file:///Users/sun/Code/repos/rah_os/scripts/official-web/channel-role-usability.test.ts:31:9)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: `import type { RefObject } from "react";\nimport {\n  RuntimeFormV2Fields,\n  RuntimeSelectControl,\n  Field,\n  type RuntimeOption,\n} from "../packages/web/src/components/agent/RuntimeConfigFields.tsx";\nimport {\n  applyRuntimeFormV2Change,\n  type ParsedRuntimeFormV2,\n  type RuntimeFormV2Sources,\n  type RuntimeFormV2Value,\n} from "@botiverse/raft-runtime-form";\nimport {\n  roleModelLabel,\n  type RoleForm,\n  type RuntimeChoice,\n} from "@rah-os/client-core/role-form";\n\n// Presentation/state transitions are upstream. This module only translates the\n// Host's published capability catalog into that renderer's data contract.\nexport default function RoleRuntimeFields({\n  form,\n  choices,\n  onChange,\n  portalContainer,\n  hideRuntime = false,\n  pickerOptions,\n}: {\n  pickerOptions?: RuntimeOption[];\n  form: RoleForm;\n  choices: RuntimeChoice[];\n  onChange: (next: RoleForm) => void;\n  portalContainer?: RefObject<HTMLElement | null>;\n  hideRuntime?: boolean;\n}) {\n  const runtime = choices.find((r) => r.runtimeOfferId === form.runtimeOfferId);\n  const binding = runtime?.bindings.find(\n    (b) => b.modelBindingId === form.modelBindingId,\n  );\n  const fastTier = binding?.serviceTiers?.includes("fast")\n    ? "fast"\n    : binding?.serviceTiers?.includes("priority")\n      ? "priority"\n      : undefined;\n  const schema: ParsedRuntimeFormV2 = {\n    runtimeId: form.runtimeOfferId,\n    schemaVersion: "loom-published-capabilities-v1",\n    blockingFieldKeys: [],\n    requiredClientCapabilities: [],\n    optionSources: {},\n    fields: [\n      ...(!hideRuntime\n        ? [\n            {\n              key: "runtime",\n              kind: "select" as const,\n              label: "运行时",\n              optionSourceId: "runtime",\n              required: true,\n              advanced: false,\n              visibleWhen: [],\n            },\n          ]\n        : []),\n      {\n        key: "model",\n        kind: "select",\n        label: "模型",\n        optionSourceId: "model",\n        required: true,\n        advanced: false,\n        visibleWhen: [],\n      },\n      {\n        key: "effort",\n        kind: "dependent_select",\n        label: "推理强度",\n        dependsOn: "model",\n        optionSourceId: "effort",\n        required: Boolean(\n          runtime?.bindings.find(\n            (b) => b.modelBindingId === form.modelBindingId,\n          )?.reasoning.length,\n        ),\n        advanced: false,\n        visibleWhen: [],\n      },\n      ...(fastTier ||\n      form.serviceTier === "fast" ||\n      form.serviceTier === "priority"\n        ? [\n            {\n              key: "fastMode",\n              kind: "boolean" as const,\n              label: "快速模式",\n              hint: "以更高的单 token 成本换取更快的速度启动此运行时。",\n              required: false,\n              advanced: false,\n              visibleWhen: [],\n            },\n          ]\n        : []),\n      {\n        key: "environment",\n        kind: "string_map",\n        label: "环境变量",\n        required: false,\n        advanced: true,\n        visibleWhen: [],\n      },\n    ],\n  };\n  const sources: RuntimeFormV2Sources = {\n    effort: {\n      sourceId: "effort",\n      kind: "dependent_select",\n      pointer: "/effort",\n      dependsOn: "model",\n      optionsByValue: Object.fromEntries(\n        (runtime?.bindings ?? []).map((b) => [\n          b.modelBindingId,\n          b.reasoning.map((value) => ({ value, label: value })),\n        ]),\n      ),\n      defaultValueByValue: Object.fromEntries(\n        (runtime?.bindings ?? []).map((b) => [\n          b.modelBindingId,\n          b.reasoning[0] ?? "",\n        ]),\n      ),\n    },\n    runtime: {\n      sourceId: "runtime",\n      kind: "select",\n      pointer: "/runtime",\n      options: choices.map((r) => ({\n        value: r.runtimeOfferId,\n        label: r.label.split("（")[0]!,\n      })),\n    },\n    model: {\n      sourceId: "model",\n      kind: "select",\n      pointer: "/model",\n      options: (runtime?.bindings ?? []).map((b) => ({\n        value: b.modelBindingId,\n        label: roleModelLabel(b, runtime?.bindings ?? []),\n        supportedReasoningEfforts: b.reasoning,\n        defaultReasoningEffort: b.reasoning[0],\n      })),\n    },\n  };\n  const values = {\n    runtime: form.runtimeOfferId,\n    model: form.modelBindingId,\n    effort: form.reasoning,\n    environment: form.environment ?? {},\n    fastMode: form.serviceTier === "fast" || form.serviceTier === "priority",\n  };\n  const change = (key: string, value: RuntimeFormV2Value) => {\n    const next = applyRuntimeFormV2Change(schema, sources, values, key, value);\n    onChange({\n      ...form,\n      serviceTier:\n        key === "runtime" || key === "model"\n          ? "default"\n          : key === "fastMode"\n            ? value === true\n              ? (fastTier ?? form.serviceTier ?? "default")\n              : "default"\n            : (form.serviceTier ?? "default"),\n      environment:\n        typeof next.environment === "object" && next.environment !== null\n          ? next.environment\n          : {},\n      runtimeOfferId: String(next.runtime ?? form.runtimeOfferId),\n      modelBindingId: key === "runtime" ? "" : String(next.model ?? ""),\n      reasoning: key === "runtime" ? "" : String(next.effort ?? ""),\n    });\n  };\n  return (\n    <>\n      {!hideRuntime && (\n        <Field label="运行时" required>\n          <RuntimeSelectControl\n            placeholder="选择运行时"\n            value={form.runtimeOfferId}\n            options={\n              pickerOptions ??\n              choices.map((r) => ({\n                value: r.runtimeOfferId,\n                label: r.label.split("（")[0]!,\n              }))\n            }\n            onValueChange={(value) => change("runtime", value)}\n            portalContainer={portalContainer}\n            testId="runtime-form-v2-runtime"\n          />\n        </Field>\n      )}\n      <RuntimeFormV2Fields\n        form={{\n          ...schema,\n          fields: schema.fields.filter((field) => field.key !== "runtime"),\n        }}\n        sources={sources}\n        values={values}\n        showValidationErrors={false}\n        portalContainer={portalContainer}\n        onChange={change}\n      />\n    </>\n  );\n}\n`,
+    expected: /binding\?\.reasoning\.length[^\n]*> 1/,
+    operator: 'match',
+    diff: 'simple'
+  }

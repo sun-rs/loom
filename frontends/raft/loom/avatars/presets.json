@@ -1,6 +1,6 @@
 {
-  "version": 1,
-  "provenance": "Loom-authored 8x8 pixel interpretations; original Raft palette and renderer. Names identify subjects, not official brand assets or upstream Raft presets.",
+  "version": 2,
+  "provenance": "Loom-authored detailed 32x32 pixel interpretations; native Raft frames and original 8x8 presets unchanged. Stable IDs. Not official brand or franchise assets.",
   "groups": [
     {
       "id": "providers",
@@ -29,406 +29,434 @@
       "name": "Gemini",
       "group": "providers",
       "bg": "W",
-      "grid": "____B___/___BC___/__BBCC__/BBBCCPPP/_CCPPV__/__PPVV__/___VV___/____V___"
+      "grid": "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn/nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn/nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn/nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn/nnnnnnnnnnnnnnnndnnnnnnnnnnnnnnn/nnnnnnnnnnnnnnnndnnnnnnnnnnnnnnn/nnnnnnnnnnnnnnndddnnnnnnnnnnnnnn/nnnnnnnnnnnnnnnddgnnnnnnnnnnnnnn/nnnnnnnnnnnnnndddgdnnnnnnnnnnnnn/nnnnnnnnnnnnnndddggnnnnnnnnnnnnn/nnnnnnnnnnnnnddddggdnnnnnnnnnnnn/nnnnnnnnnnnnnddddgggnnnnnnnnnnnn/nnnnnnnnnnnndddddgggnnnnnnnnnnnn/nnnnnnnnnndddddddgggggdnnnnnnnnn/nnnnnnnndddddddddgggggggdnnnnnnn/nnnnnndddddddddddgggggggggdnnnnn/nnnddddddddddddddddddddddddddnnn/nnnnnndddddddddddeeeeeeeeeennnnn/nnnnnnnndddddddddeeeeeeeeennnnnn/nnnnnnnnnndddddddeeeeeeennnnnnnn/nnnnnnnnnnnndddddeeeeennnnnnnnnn/nnnnnnnnnnnnnddddeeennnnnnnnnnnn/nnnnnnnnnnnnnddddeeennnnnnnnnnnn/nnnnnnnnnnnnnndddeeennnnnnnnnnnn/nnnnnnnnnnnnnndddeennnnnnnnnnnnn/nnnnnnnnnnnnnnnddeennnnnnnnnnnnn/nnnnnnnnnnnnnnnddennnnnnnnnnnnnn/nnnnnnnnnnnnnnnndennnnnnnnnnnnnn/nnnnnnnnnnnnnnnndnnnnnnnnnnnnnnn/nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn/nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn/nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn"
     },
     {
       "id": "loom-kimi",
       "name": "Kimi",
       "group": "providers",
       "bg": "K",
-      "grid": "_WW__WW_/_WW_WW__/_WWWW___/_WWW____/_WWWW___/_WW_WW__/_WW__WW_/________"
+      "grid": "gggggggggggggggggggggggggggggggg/gggggggggggggggggggggggggggggggg/gggggggggggggggggggggggggggggggg/gggggggggggggggggggggggggggggggg/gggggggggggggggggggggggggggggggg/gggggggggggggggggggggggggggggggg/ggggggggWWWWWWgggWWWWWWggggggggg/ggggggggWWWWWWgggWWWWWWggggggggg/ggggggggWWWWWWgggWWWWWWggggggggg/ggggggggWWWWWWWWWWWWgggggggggggg/ggggggggWWWWWWWWWWWWgggggggggggg/ggggggggWWWWWWWWWWWWgggggggggggg/ggggggggWWWWWWWWWggggggggggggggg/ggggggggWWWWWWWWWggggggggggggggg/ggggggggWWWWWWWWWggggggggggggggg/ggggggggWWWWWWWWWggggggggggggggg/ggggggggWWWWWWWWWggggggggggggggg/ggggggggWWWWWWWWWggggggggggggggg/ggggggggWWWWWWWWWWWWgggggggggggg/ggggggggWWWWWWWWWWWWgggggggggggg/ggggggggWWWWWWWWWWWWgggggggggggg/ggggggggWWWWWWgggWWWWWWggggggggg/ggggggggWWWWWWgggWWWWWWggggggggg/ggggggggWWWWWWgggWWWWWWggggggggg/ggggggggWWWWWWgggWWWWWWggggggggg/ggggggggWWWWWWgggWWWWWWggggggggg/ggggggggWWWWWWgggWWWWWWggggggggg/gggggggggggggggggggggggggggggggg/gggggggggggggggggggggggggggggggg/gggggggggggggggggggggggggggggggg/gggggggggggggggggggggggggggggggg/gggggggggggggggggggggggggggggggg"
     },
     {
       "id": "loom-openai",
       "name": "OpenAI",
       "group": "providers",
       "bg": "G",
-      "grid": "__KKKK__/_KK__KK_/KK_KK_KK/K_K__K_K/K_K__K_K/KK_KK_KK/_KK__KK_/__KKKK__"
+      "grid": "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii/iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii/iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii/iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii/iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii/iiiiiiiiiiiiWWWiiiWWWiiiiiiiiiii/iiiiiiiiiiiWWWWWiWWWWWiiiiiiiiii/iiiiiiiiiiWWWiWWWWWiWWWiiiiiiiii/iiiiiiiiiWWiiiiWWiiiiiWWiiiiiiii/iiiiiiiiiWWiiiiWWiiiiiWWiiiiiiii/iiiiiiiiiWWiiiiWWiiiiiWWiiiiiiii/iiiiiiiiWWWiiiiWWiiiiiWWWiiiiiii/iiiiiiiWWWWiiiiWiiiiiiWWWWiiiiii/iiiiiiWWWWWiiiiiiiiiiiWWWWWiiiii/iiiiiiWWiWWWiiiiiiiiiWWWiWWiiiii/iiiiiiWWiiWWWiiiiiiiWWWiiWWiiiii/iiiiiWWiiiiWiiiiiiiiiWiiiiWWiiii/iiiiiiWWiiiiiiiiiiiiWWWiiWWiiiii/iiiiiiWWiiiiiiiiiiiiiWWWiWWiiiii/iiiiiiWWWiiiWWiiiiiiiiWWWWWiiiii/iiiiiiiWWWiWWWiiiWiiiiWWWWiiiiii/iiiiiiiiWWWWWiiiWWiiiiWWWiiiiiii/iiiiiiiiiWWiiiiiWWiiiiWWiiiiiiii/iiiiiiiiiWWiiiiiWWiiiiWWiiiiiiii/iiiiiiiiiWWiiiiiWWiiiiWWiiiiiiii/iiiiiiiiiiWWWiWWWWWiWWWiiiiiiiii/iiiiiiiiiiiWWWWWiWWWWWiiiiiiiiii/iiiiiiiiiiiiWWWiiiWWWiiiiiiiiiii/iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii/iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii/iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii/iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii"
     },
     {
       "id": "loom-codex",
       "name": "Codex",
       "group": "providers",
       "bg": "K",
-      "grid": "________/__C__C__/_CC__CC_/CCC__CCC/_CC__CC_/__C__C__/___CC___/________"
+      "grid": "qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqWWqqqqqqqqCCqqqqqqqqqq/qqqqqqqqqWWWWqqqqqqCCCCqqqqqqqqq/qqqqqqqqWWWWWWqqqqCCCCCCqqqqqqqq/qqqqqqqWWWWWWqqqqqqqCCCCCqqqqqqq/qqqqqqWWWWWWqqqqqqqqqCCCCCqqqqqq/qqqqqWWWWWWqqqqqqqqqqqCCCCCqqqqq/qqqqWWWWWWqqqqqqqqqqqqqCCCCCqqqq/qqqWWWWWqqqqqqqqqqqqqqqqCCCCCqqq/qqqqWWWWWWqqqqqqqqqqqqqCCCCCqqqq/qqqqqWWWWWWqqqqqqqqqqqCCCCCqqqqq/qqqqqqWWWWWWqqqqqqqqqCCCCCqqqqqq/qqqqqqqWWWWWWqqqqqqqCCCCCqqqqqqq/qqqqqqqqWWWWWWqqqqCCCCCCqqqqqqqq/qqqqqqqqqWWWWqqqqqqCCCCqqqqqqqqq/qqqqqqqqqqWWqqqqqqqqCCqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq"
     },
     {
       "id": "loom-claude",
       "name": "Claude",
       "group": "providers",
       "bg": "O",
-      "grid": "_K__K___/K_K_K_K_/__KKKK__/KKKKKKKK/__KKKK__/_K_K_K_K/___K__K_/________"
+      "grid": "pppppppppppppppppppppppppppppppp/pppppppppppppppppppppppppppppppp/pppppppppppppppppppppppppppppppp/pppppppppppppppppppppppppppppppp/ppppppppppppppppllpppppppppppppp/ppppppppppppppppllpppppppppppppp/ppppppppppllppppllppppllpppppppp/pppppppppplllpppllppppllpppppppp/pppppppppppllpppllppplllpppppppp/ppppppppppplllppllpppllppppppppp/ppppppllppppllppllpplllpppllpppp/ppppppllllpplllpllppllppllllpppp/pppppppllllppllpllpllllllllppppp/pppppppppllllllppppllllllppppppp/ppppppppppllllpppppplllppppppppp/ppppppppppppllpppppppppppppppppp/pppplllllllllpppppppplllllllllpp/pppplllllllllpppppppplllllllllpp/ppppppppppppllppppppllpppppppppp/ppppppppppllllppppppllllpppppppp/pppppppppllllpllpppllllllppppppp/pppppppllllpplllllplllpllllppppp/ppppppllllpppllpllppllppllllpppp/ppppppllpppplllpllpplllpppllpppp/ppppppppppplllppllpppllppppppppp/pppppppppppllpppllppplllpppppppp/pppppppppplllpppllppppllpppppppp/ppppppppppllppppllppppllpppppppp/ppppppppppppppppllpppppppppppppp/ppppppppppppppppllpppppppppppppp/pppppppppppppppppppppppppppppppp/pppppppppppppppppppppppppppppppp"
     },
     {
       "id": "loom-anthropic",
       "name": "Anthropic",
       "group": "providers",
       "bg": "O",
-      "grid": "__KK_K__/__KK_K__/_K_K_K__/_K_K_K__/KKKK_K__/K__K_K__/K__K_K__/________"
+      "grid": "llllllllllllllllllllllllllllllll/llllllllllllllllllllllllllllllll/llllllllllllllllllllllllllllllll/llllllllllllllllllllllllllllllll/llllllllllllllllllllllllllllllll/llllllllllllllllllllllllllllllll/lllllllllllKKKKKKKKKllllllllllll/lllllllllllKKKKKKKKKllllllllllll/lllllllllllKKKKKKKKKllllllllllll/llllllllKKKKKKlllKKKKKKlllllllll/llllllllKKKKKKlllKKKKKKlllllllll/llllllllKKKKKKlllKKKKKKlllllllll/llllllllKKKKKKlllKKKKKKlllllllll/llllllllKKKKKKlllKKKKKKlllllllll/llllllllKKKKKKlllKKKKKKlllllllll/llllllllKKKKKKKKKKKKKKKlllllllll/llllllllKKKKKKKKKKKKKKKlllllllll/llllllllKKKKKKKKKKKKKKKlllllllll/llllllllKKKKKKlllKKKKKKlllllllll/llllllllKKKKKKlllKKKKKKlllllllll/llllllllKKKKKKlllKKKKKKlllllllll/llllllllKKKKKKlllKKKKKKlllllllll/llllllllKKKKKKlllKKKKKKlllllllll/llllllllKKKKKKlllKKKKKKlllllllll/llllllllKKKKKKlllKKKKKKlllllllll/llllllllKKKKKKlllKKKKKKlllllllll/llllllllKKKKKKlllKKKKKKlllllllll/llllllllllllllllllllllllllllllll/llllllllllllllllllllllllllllllll/llllllllllllllllllllllllllllllll/llllllllllllllllllllllllllllllll/llllllllllllllllllllllllllllllll"
     },
     {
       "id": "loom-deepseek",
       "name": "DeepSeek",
       "group": "providers",
       "bg": "C",
-      "grid": "_____K_K/___KKKKK/_KKBBBK_/KBBBBBBK/KBWBBBBK/KBBBBBK_/_KKKKK__/___KK___"
+      "grid": "gggggggggggggggggggggggggggggggg/gggggggggggggggggggggggggggggggg/gggggggggggggggggggggggggggggggg/gggggggggggggggggggggggggggggggg/gggggggggggggggggggggggggggggggg/gggggggggggggggggggWWWgggggggggg/ggggggggggggggggggWWWWWWWggggggg/gggggggggggggggggWWWgWWWWggggggg/ggggggggggggggggWWWggggggggggggg/gggggggggggggggWWWgggggggggggggg/gggggggggggggggWWggggggggggggggg/ggWggggggggWWWWWWWWWWWgggggggggg/ggWWgggggWWWWWWWWWWWWWWWgggggggg/ggWWWWgWWWWWWWWWWWWWWWWWWWgggggg/gggWWWWWWWWWWWWWWWWWWWWWWWWggggg/gggWWWWWWWWWWWWWWWWWWWgWWWWWgggg/gggWWWWWWWWWWWWWWWWWWgggWWWWgggg/gggggWWWWWWWWWWWWWWWgggggWWWgggg/ggggWWWWWWWWWWWWWWWWWgggWWWWWggg/gggggWWWWWWWWWWWWWWWWWgWWWWWgggg/gggggWWWWWWWWWWWWWWWWWWWWWWWgggg/gggggWWWWWWWWWWWWWWWWWWWWWWWgggg/ggggggWWWWWWWWWWWWWWWWWWWWWggggg/gggggggWWWWWWWWWWWWWWWWWWWgggggg/gggggggggWWWWWWWWWWWWWWWgggggggg/gggggggggggWWWWWWWWWWWWWWggggggg/ggggggggggggggggWgggggWWWggggggg/ggggggggggggggggggggggWWgggggggg/gggggggggggggggggggggggWgggggggg/gggggggggggggggggggggggggggggggg/gggggggggggggggggggggggggggggggg/gggggggggggggggggggggggggggggggg"
     },
     {
       "id": "loom-grok",
       "name": "Grok",
       "group": "providers",
       "bg": "K",
-      "grid": "____WW__/___WWW__/__WW_WW_/_WW___WW/_WW_WWW_/__WWWW__/___WW___/__WW____"
+      "grid": "qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqWWWWWWqqqWWWWWWqqqqqqqqq/qqqqqqqqWWWWWWqqqWWWWWWqqqqqqqqq/qqqqqqqqWWWWWWqqqWWWWWWqqqqqqqqq/qqqqqqqqWWWWWWqqqWWWWWWqqqqqqqqq/qqqqqqqqWWWWWWqqqWWWWWWqqqqqqqqq/qqqqqqqqWWWWWWqqqWWWWWWqqqqqqqqq/qqqqqqqqqqqWWWWWWWWWqqqqqqqqqqqq/qqqqqqqqqqqWWWWWWWWWqqqqqqqqqqqq/qqqqqqqqqqqWWWWWWWWWqqqqqqqqqqqq/qqqqqqqqqqqqqqWWWqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqWWWqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqWWWqqqqqqqqqqqqqqq/qqqqqqqqqqqWWWWWWWWWqqqqqqqqqqqq/qqqqqqqqqqqWWWWWWWWWqqqqqqqqqqqq/qqqqqqqqqqqWWWWWWWWWqqqqqqqqqqqq/qqqqqqqqWWWWWWqqqWWWWWWqqqqqqqqq/qqqqqqqqWWWWWWqqqWWWWWWqqqqqqqqq/qqqqqqqqWWWWWWqqqWWWWWWqqqqqqqqq/qqqqqqqqWWWWWWqqqWWWWWWqqqqqqqqq/qqqqqqqqWWWWWWqqqWWWWWWqqqqqqqqq/qqqqqqqqWWWWWWqqqWWWWWWqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq"
     },
     {
       "id": "loom-muse",
       "name": "Muse",
       "group": "providers",
       "bg": "V",
-      "grid": "________/KK___KKK/K_K_K_KK/K_KKK_KK/K__K__KK/K_____KK/K_____KK/________"
+      "grid": "dddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddd/ddddddddWWWdddddddddWWWddddddddd/ddddddddWWWdddddddddWWWddddddddd/ddddddddWWWdddddddddWWWddddddddd/ddddddddWWWWWWdddWWWWWWddddddddd/ddddddddWWWWWWdddWWWWWWddddddddd/ddddddddWWWWWWdddWWWWWWddddddddd/ddddddddWWWWWWWWWWWWWWWddddddddd/ddddddddWWWWWWWWWWWWWWWddddddddd/ddddddddWWWWWWWWWWWWWWWddddddddd/ddddddddWWWdddWWWdddWWWddddddddd/ddddddddWWWdddWWWdddWWWddddddddd/ddddddddWWWdddWWWdddWWWddddddddd/ddddddddWWWdddddddddWWWddddddddd/ddddddddWWWdddddddddWWWddddddddd/ddddddddWWWdddddddddWWWddddddddd/ddddddddWWWdddddddddWWWddddddddd/ddddddddWWWdddddddddWWWddddddddd/ddddddddWWWdddddddddWWWddddddddd/ddddddddWWWdddddddddWWWddddddddd/ddddddddWWWdddddddddWWWddddddddd/ddddddddWWWdddddddddWWWddddddddd/dddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddd/dddddddddddddddddddddddddddddddd"
     },
     {
       "id": "loom-glm",
       "name": "GLM · 智谱",
       "group": "providers",
       "bg": "B",
-      "grid": "_CCCCCC_/_____CC_/____CC__/___CC___/__CC____/_CC_____/_CCCCCC_/________"
+      "grid": "cccccccccccccccccccccccccccccccc/cccccccccccccccccccccccccccccccc/cccccccccccccccccccccccccccccccc/cccccccccccccccccccccccccccccccc/cccccccccccccccccccccccccccccccc/cccccccccccccccccccccccccccccccc/cccccccccccWWWWWWWWWcccccccccccc/cccccccccccWWWWWWWWWcccccccccccc/cccccccccccWWWWWWWWWcccccccccccc/ccccccccWWWWWWccccccWWWccccccccc/ccccccccWWWWWWccccccWWWccccccccc/ccccccccWWWWWWccccccWWWccccccccc/ccccccccWWWWWWcccccccccccccccccc/ccccccccWWWWWWcccccccccccccccccc/ccccccccWWWWWWcccccccccccccccccc/ccccccccWWWWWWcccWWWWWWccccccccc/ccccccccWWWWWWcccWWWWWWccccccccc/ccccccccWWWWWWcccWWWWWWccccccccc/ccccccccWWWWWWccccccWWWccccccccc/ccccccccWWWWWWccccccWWWccccccccc/ccccccccWWWWWWccccccWWWccccccccc/ccccccccWWWWWWccccccWWWccccccccc/ccccccccWWWWWWccccccWWWccccccccc/ccccccccWWWWWWccccccWWWccccccccc/cccccccccccWWWWWWWWWcccccccccccc/cccccccccccWWWWWWWWWcccccccccccc/cccccccccccWWWWWWWWWcccccccccccc/cccccccccccccccccccccccccccccccc/cccccccccccccccccccccccccccccccc/cccccccccccccccccccccccccccccccc/cccccccccccccccccccccccccccccccc/cccccccccccccccccccccccccccccccc"
     },
     {
       "id": "loom-opencode",
       "name": "OpenCode",
       "group": "providers",
       "bg": "K",
-      "grid": "__WWWW__/_WW__WW_/_WW__WW_/_WW__WW_/_WW__WW_/_WW__WW_/__WWWW__/________"
+      "grid": "qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqWWqqqqqqqqWWqqqqqqqqqq/qqqqqqqqqWWWWqqqqqqWWWWqqqqqqqqq/qqqqqqqqWWWWWWqqqqWWWWWWqqqqqqqq/qqqqqqqWWWWWWqqqqqqqWWWWWqqqqqqq/qqqqqqWWWWWWqqqqqqqqqWWWWWqqqqqq/qqqqqWWWWWWqqqqqqqqqqqWWWWWqqqqq/qqqqWWWWWWqqqqqqqqqqqqqWWWWWqqqq/qqqWWWWWqqqqqqqqqqqqqqqqWWWWWqqq/qqqqWWWWWWqqqqqqqqqqqqqWWWWWqqqq/qqqqqWWWWWWqqqqqqqqqqqWWWWWqqqqq/qqqqqqWWWWWWqqqqqqqqqWWWWWqqqqqq/qqqqqqqWWWWWWqqqqqqqWWWWWqqqqqqq/qqqqqqqqWWWWWWqqqqWWWWWWqqqqqqqq/qqqqqqqqqWWWWqqqqqqWWWWqqqqqqqqq/qqqqqqqqqqWWqqqqqqqqWWqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq"
     },
     {
       "id": "loom-pi",
       "name": "Pi",
       "group": "providers",
       "bg": "P",
-      "grid": "________/_KKKKKK_/__K__K__/__K__K__/__K__K__/__K__KK_/__K___K_/________"
+      "grid": "pppppppppppppppppppppppppppppppp/pppppppppppppppppppppppppppppppp/pppppppppppppppppppppppppppppppp/pppppppppppppppppppppppppppppppp/pppppppppppppppppppppppppppppppp/pppppppppppppppppppppppppppppppp/ppppppppWWWWWWWWWWWWpppppppppppp/ppppppppWWWWWWWWWWWWpppppppppppp/ppppppppWWWWWWWWWWWWpppppppppppp/ppppppppWWWWWWpppWWWWWWppppppppp/ppppppppWWWWWWpppWWWWWWppppppppp/ppppppppWWWWWWpppWWWWWWppppppppp/ppppppppWWWWWWpppWWWWWWppppppppp/ppppppppWWWWWWpppWWWWWWppppppppp/ppppppppWWWWWWpppWWWWWWppppppppp/ppppppppWWWWWWWWWWWWpppppppppppp/ppppppppWWWWWWWWWWWWpppppppppppp/ppppppppWWWWWWWWWWWWpppppppppppp/ppppppppWWWWWWpppppppppppppppppp/ppppppppWWWWWWpppppppppppppppppp/ppppppppWWWWWWpppppppppppppppppp/ppppppppWWWWWWpppppppppppppppppp/ppppppppWWWWWWpppppppppppppppppp/ppppppppWWWWWWpppppppppppppppppp/ppppppppWWWWWWpppppppppppppppppp/ppppppppWWWWWWpppppppppppppppppp/ppppppppWWWWWWpppppppppppppppppp/pppppppppppppppppppppppppppppppp/pppppppppppppppppppppppppppppppp/pppppppppppppppppppppppppppppppp/pppppppppppppppppppppppppppppppp/pppppppppppppppppppppppppppppppp"
     },
     {
       "id": "loom-antigravity",
       "name": "Antigravity",
       "group": "providers",
       "bg": "V",
-      "grid": "___WW___/__WWWW__/__W__W__/_WW__WW_/_WWWWW__/WW____WW/WW____WW/________"
+      "grid": "qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqWqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqWqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqWWWqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqWWgqqqqqqqqqqqqqq/qqqqqqqqqqqqqqWWWgWqqqqqqqqqqqqq/qqqqqqqqqqqqqqWWWggqqqqqqqqqqqqq/qqqqqqqqqqqqqWWWWggWqqqqqqqqqqqq/qqqqqqqqqqqqqWWWWgggqqqqqqqqqqqq/qqqqqqqqqqqqWWWWWgggqqqqqqqqqqqq/qqqqqqqqqqWWWWWWWgggggWqqqqqqqqq/qqqqqqqqWWWWWWWWWgggggggWqqqqqqq/qqqqqqWWWWWWWWWWWgggggggggWqqqqq/qqqWWWWWWWWWWWWWWWWWWWWWWWWWWqqq/qqqqqqWWWWWWWWWWWeeeeeeeeeeqqqqq/qqqqqqqqWWWWWWWWWeeeeeeeeeqqqqqq/qqqqqqqqqqWWWWWWWeeeeeeeqqqqqqqq/qqqqqqqqqqqqWWWWWeeeeeqqqqqqqqqq/qqqqqqqqqqqqqWWWWeeeqqqqqqqqqqqq/qqqqqqqqqqqqqWWWWeeeqqqqqqqqqqqq/qqqqqqqqqqqqqqWWWeeeqqqqqqqqqqqq/qqqqqqqqqqqqqqWWWeeqqqqqqqqqqqqq/qqqqqqqqqqqqqqqWWeeqqqqqqqqqqqqq/qqqqqqqqqqqqqqqWWeqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqWeqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqWqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq"
     },
     {
       "id": "loom-eva-shinji",
       "name": "碇真嗣",
       "group": "eva",
       "bg": "C",
-      "grid": "__KKKK__/_KKKKKK_/KKKKKKKK/KOOKKOOK/_OKOOKO_/_OOOOOO_/__KOOK__/__WKKW__"
+      "grid": "________________________________/________________________________/________________q_______________/____________qqqqqqqqq___________/__________qqqqqqqqqqqqq_________/_________qqqqqqqqqqqqqqq________/________qqqqqqqqqqqqqqqqq_______/_______KqqqqqqqqqqqqqqqqqK______/______KqqqqqqqqqqqqqqqqqqqK_____/______KqqqqqqqqqqqqqqqqqqqK_____/_____KqqqqqqqqqqqqqqqqqqqqqK____/_____KqqqqqqqqqqqqqqqqqqqqqK____/_____KqqqqqqaqqqqaqqqqqqqqqK____/_____KqqqqqaaqqqaaaqqaaqqqqK____/_____qqqqqaaaaqaaaaqqaaaqqqq____/____KKqqqaaaaaaaaaaaqaaaaqqKK___/_____KqaaaaaKaaaaaaaaKaaaaqK____/_____KaaaaaWKKaaaaaaWKKaaaaK____/_____KaaaaaKcKaaaaaaKcKaaaaK____/_____aaaaaKKcKKaaaaKKcKKaaaa____/_____KaaaaaKKKaaaaaaKKKaaaaK____/______aaaaaKKKaaaaaaKKKaaaa_____/______KaaaaaKaaaaaaaaKaaaaK_____/_______KaaaaaaaaaaaaaaaaaK______/________KaaaaaaaaaaaaaaaK_______/_________KaaaaabbbbaaaaK________/__________aaaaaaaaaaaaa_________/___________aaaaaaaaaaa__________/______WWWWWWWaaaaaaaWWWWWWW_____/_____WWWWWWWWWaaaaaWWWWWWWWW____/____WWWWWWWWWWWaWaWWWWWWWWWWW___/___WWWWWWWWWWWWWWWWWWWWWWWWWWW__"
     },
     {
       "id": "loom-eva-rei",
       "name": "绫波丽",
       "group": "eva",
       "bg": "V",
-      "grid": "__CCCC__/CCCCCCC_/CCCOOCCC/COOKKOOC/COOROROC/_OOOOOO_/__WOOW__/__WKKW__"
+      "grid": "________________________________/________________________________/________________w_______________/____________wwwwwwwww___________/__________wwwwwwwwwwwww_________/_________wwwwwwwwwwwwwww________/________wwwwwwwwwwwwwwwww_______/_______KwwwwwwwwwwwwwwwwwK______/______KwwwwwwwwwwwwwwwwwwwK_____/______KwwwwwwwwwwwwwwwwwwwK_____/_____KwwwwwwwwwwwwwwwwwwwwwK____/_____KwwwwwwwwwwwwwwwwwwwwwK____/_____KwwwwwwawwwwawwwwwwwwwK____/_____KwwwwwaawwwaaawwaawwwwK____/_____wwwwwaaaawaaaawwaaawwww____/____KKwwwaaaaaaaaaaawaaaawwKK___/_____KwaaaaaKaaaaaaaaKaaaawK____/_____KaaaaaWKKaaaaaaWKKaaaaK____/_____KaaaaaKeKaaaaaaKeKaaaaK____/_____aaaaaKKeKKaaaaKKeKKaaaa____/_____KaaaaaKKKaaaaaaKKKaaaaK____/______aaaaaKKKaaaaaaKKKaaaa_____/______KaaaaaKaaaaaaaaKaaaaK_____/_______KaaaaaaaaaaaaaaaaaK______/________KaaaaaaaaaaaaaaaK_______/_________KaaaaabbbbaaaaK________/__________aaaaaaaaaaaaa_________/___________aaaaaaaaaaa__________/______WWWWWWWaaaaaaaWWWWWWW_____/_____WWWWWWWWWaaaaaWWWWWWWWW____/____WWWWWWWWWWWaWaWWWWWWWWWWW___/___WWWWWWWWWWWWWWWWWWWWWWWWWWW__"
     },
     {
       "id": "loom-eva-asuka",
       "name": "明日香",
       "group": "eva",
       "bg": "Y",
-      "grid": "_RDRRDR_/DRRRRRRD/DRROORRD/DOCKKCOD/DROOOORD/DROOOORD/_KROORK_/__RKKR__"
+      "grid": "________________________________/________________________________/________________p_______________/____________ppppppppp___________/__________ppppppppppppp_________/_________ppppppppppppppp________/________ppppppppppppppppp_______/_______KpppppppppppppppppK______/______Keeeeppppppppppppeeee_____/______Keeeeppppppppppppeeee_____/_____KpppppppppppppppppppppK____/_____KpppppppppppppppppppppK____/_____KppppppappppapppppppppK____/_____KpppppaapppaaappaappppK____/_____pppppaaaapaaaappaaapppp____/____KppppaaaaaaaaaaapaaaappKK___/_____ppaaaaaKaaaaaaaaKaaaapK____/_____paaaaaWKKaaaaaaWKKaaaaK____/_____paaaaaKgKaaaaaaKgKaaaaK____/_____aaaaaKKgKKaaaaKKgKKaaaa____/_____paaaaaKKKaaaaaaKKKaaaaK____/_____paaaaaKKKaaaaaaKKKaaaa_____/_____ppaaaaaKaaaaaaaaKaaaap_____/_____pppaaaaaaaaaaaaaaaaapp_____/_____ppppaaaaaaaaaaaaaaappp_____/_____pppppaaaaabbbbaaaapppp_____/_____pppppaaaaaaaaaaaaapppp_____/_____ppppppaaaaaaaaaaappppp_____/_____peeeeeeeaaaaaaaeeeeeee_____/_____eeeeeeeeeaaaaaeeeeeeeee____/____eeeeeeeeeeeaWaeeeeeeeeeee___/___eeeeeeeeeeeeeWeeeeeeeeeeeee__"
     },
     {
       "id": "loom-eva-misato",
       "name": "葛城美里",
       "group": "eva",
       "bg": "P",
-      "grid": "__VVVV__/_VVVVVV_/VVVOVVVV/VOOKKOOV/VOKOOKOV/VVOOOOVV/_RRWWRR_/__RKKR__"
+      "grid": "________________________________/________________________________/________________d_______________/____________ddddddddd___________/__________ddddddddddddd_________/_________ddddddddddddddd________/________ddddddddddddddddd_______/_______KdddddddddddddddddK______/______KdddddddddddddddddddK_____/______KdddddddddddddddddddK_____/_____KdddddddddddddddddddddK____/_____KdddddddddddddddddddddK____/_____KdddddddddddddddddddddK____/_____KddddddddddaddddaaddddK____/_____ddddddddadaaddddaaadddd____/____KddddaddaaaaaddddaaaaddKK___/_____ddaaaaaKaaaadddaKaaaadK____/_____daaaaaWKKaaaaddWKKaaaaK____/_____daaaaaKcKaaaadaKcKaaaaK____/_____aaaaaKKcKKaaadKKcKKaaaa____/_____daaaaaKKKaaaaaaKKKaaaaK____/_____daaaaaKKKaaaaaaKKKaaaa_____/_____ddaaaaaKaaaaaaaaKaaaad_____/_____dddaaaaaaaaaaaaaaaaadd_____/_____ddddaaaaaaaaaaaaaaaddd_____/_____dddddaaaaabbbbaaaadddd_____/_____dddddaaaaaaaaaaaaadddd_____/_____ddddddaaaaaaaaaaaddddd_____/_____deeeeeeeaaaaaaaeeeeeee_____/_____eeeeeeeeeaaaaaeeeeeeeee____/____eeeeeeeeeeeaWaeeeeeeeeeee___/___eeeeeeeeeeeeeWeeeeeeeeeeeee__"
     },
     {
       "id": "loom-eva-kaworu",
       "name": "渚薰",
       "group": "eva",
       "bg": "C",
-      "grid": "__WWWW__/_WWWWWW_/WWWOWWWW/WOOKKOOW/_OROORO_/_OOOOOO_/__KOOK__/__WKKW__"
+      "grid": "________________________________/________________________________/________________r_______________/____________rrrrrrrrr___________/__________rrrrrrrrrrrrr_________/_________rrrrrrrrrrrrrrr________/________rrrrrrrrrrrrrrrrr_______/_______KrrrrrrrrrrrrrrrrrK______/______KrrrrrrrrrrrrrrrrrrrK_____/______KrrrrrrrrrrrrrrrrrrrK_____/_____KrrrrrrrrrrrrrrrrrrrrrK____/_____KrrrrrrrrrrrrrrrrrrrrrK____/_____KrrrrrrarrrrarrrrrrrrrK____/_____KrrrrraarrraaarraarrrrK____/_____rrrrraaaaraaaarraaarrrr____/____KKrrraaaaaaaaaaaraaaarrKK___/_____KraaaaaKaaaaaaaaKaaaarK____/_____KaaaaaWKKaaaaaaWKKaaaaK____/_____KaaaaaKeKaaaaaaKeKaaaaK____/_____aaaaaKKeKKaaaaKKeKKaaaa____/_____KaaaaaKKKaaaaaaKKKaaaaK____/______aaaaaKKKaaaaaaKKKaaaa_____/______KaaaaaKaaaaaaaaKaaaaK_____/_______KaaaaaaaaaaaaaaaaaK______/________KaaaaaaaaaaaaaaaK_______/_________KaaaaabbbbaaaaK________/__________aaaaaaaaaaaaa_________/___________aaaaaaaaaaa__________/______kkkkkkkaaaaaaakkkkkkk_____/_____kkkkkkkkkaaaaakkkkkkkkk____/____kkkkkkkkkkkaWakkkkkkkkkkk___/___kkkkkkkkkkkkkWkkkkkkkkkkkkk__"
     },
     {
       "id": "loom-eva-mari",
       "name": "真希波",
       "group": "eva",
       "bg": "L",
-      "grid": "_DD__DD_/_DDDDDD_/DDDOODDD/DOKKKKOD/DRKRKRKD/DDOOOODD/_PPOOPP_/__PKKP__"
+      "grid": "________________________________/________________________________/________________j_______________/____________jjjjjjjjj___________/__________jjjjjjjjjjjjj_________/_________jjjjjjjjjjjjjjj________/________jjjjjjjjjjjjjjjjj_______/_______KjjjjjjjjjjjjjjjjjK______/______KjjjjjjjjjjjjjjjjjjjK_____/______KjjjjjjjjjjjjjjjjjjjK_____/_____KjjjjjjjjjjjjjjjjjjjjjK____/_____KjjjjjjjjjjjjjjjjjjjjjK____/_____KjjjjjjajjjjajjjjjjjjjK____/_____KjjjjjaajjjaaajjaajjjjK____/_____jjjjjaaaajaaaajjaaajjjj____/____KjjjjaaaaaaaaaaajaaaajjKK___/_____jjaKKKKKKKKaKKKKKKKKajK____/_____jaaKaaaaaaKaKaaaaaaKaaK____/_____jaaKaaaaaaKKKaaaaaaKaaK____/_____aaaKaaaKaaKaKaaaKaaKaaa____/_____jaaKaaaaaaKaKaaaaaaKaaK____/_____jaaKaaaaaaKaKaaaaaaKaa_____/_____jjaKKKKKKKKaKKKKKKKKaj_____/_____jjjaaaaaaaaaaaaaaaaajj_____/_____jjjjaaaaaaaaaaaaaaajjj_____/_____jjjjjaaaaabbbbaaaajjjj_____/_____jjjjjaaaaaaaaaaaaajjjj_____/_____jjjjjjaaaaaaaaaaajjjjj_____/_____jmmmmmmmaaaaaaammmmmmm_____/_____mmmmmmmmmaaaaammmmmmmmm____/____mmmmmmmmmmmaWammmmmmmmmmm___/___mmmmmmmmmmmmmWmmmmmmmmmmmmm__"
     },
     {
       "id": "loom-eva-ritsuko",
       "name": "赤木律子",
       "group": "eva",
       "bg": "V",
-      "grid": "__YYYY__/_YYYYYYY/YYYOOYYY/YOOKKOOY/YOKOOKOY/_OOOOOO_/__KOOK__/__WKKW__"
+      "grid": "________________________________/________________________________/________________f_______________/____________fffffffff___________/__________fffffffffffff_________/_________fffffffffffffff________/________fffffffffffffffff_______/_______KfffffffffffffffffK______/______KfffffffffffffffffffK_____/______KfffffffffffffffffffK_____/_____KfffffffffffffffffffffK____/_____KfffffffffffffffffffffK____/_____KfffffffffffffffffffffK____/_____KffffffffffaffffaaffffK____/_____ffffffffafaaffffaaaffff____/____KKfffaffaaaaaffffaaaaffKK___/_____KfaaaaaKaaaafffaKaaaafK____/_____KaaaaaWKKaaaaffWKKaaaaK____/_____KaaaaaKcKaaaafaKcKaaaaK____/_____aaaaaKKcKKaaafKKcKKaaaa____/_____KaaaaaKKKaaaaaaKKKaaaaK____/______aaaaaKKKaaaaaaKKKaaaa_____/______KaaaaaKaaaaaaaaKaaaaK_____/_______KaaaaaaaaaaaaaaaaaK______/________KaaaaaaaaaaaaaaaK_______/_________KaaaaabbbbaaaaK________/__________aaaaaaaaaaaaa_________/___________aaaaaaaaaaa__________/______WWWWWWWaaaaaaaWWWWWWW_____/_____WWWWWWWWWaaaaaWWWWWWWWW____/____WWWWWWWWWWWaWaWWWWWWWWWWW___/___WWWWWWWWWWWWWWWWWWWWWWWWWWW__"
     },
     {
       "id": "loom-eva-gendo",
       "name": "碇源堂",
       "group": "eva",
       "bg": "B",
-      "grid": "__KKKK__/_KKKKKK_/KKKOOKKK/KOKKKKOK/_OKKKKO_/_OOKKOO_/__KKKK__/__KKKK__"
+      "grid": "________________________________/________________________________/________________q_______________/____________qqqqqqqqq___________/__________qqqqqqqqqqqqq_________/_________qqqqqqqqqqqqqqq________/________qqqqqqqqqqqqqqqqq_______/_______KqqqqqqqqqqqqqqqqqK______/______KqqqqqqqqqqqqqqqqqqqK_____/______KqqqqqqqqqqqqqqqqqqqK_____/_____KqqqqqqqqqqqqqqqqqqqqqK____/_____KqqqqqqqqqqqqqqqqqqqqqK____/_____KqqqqqqaqqqqaqqqqqqqqqK____/_____KqqqqqaaqqqaaaqqaaqqqqK____/_____qqqqqaaaaqaaaaqqaaaqqqq____/____KKqqqaaaaaaaaaaaqaaaaqqKK___/_____KqaKKKKKKKKaKKKKKKKKaqK____/_____KaaKaaaaaaKaKaaaaaaKaaK____/_____KaaKaaaaaaKKKaaaaaaKaaK____/_____aaaKaaaKaaKaKaaaKaaKaaa____/_____KaaKaaaaaaKaKaaaaaaKaaK____/______aaKaaaaaaKaKaaaaaaKaa_____/______KaKKKKKKKKaKKKKKKKKaK_____/_______KaaaaaaaaaaaaaaaaaK______/________KaqqqqqqqqqqqqqaK_______/_________KqqqqqqqqqqqqqK________/__________qqqqqqqqqqqqq_________/__________qqqqqqqqqqqqq_________/______qqqqqqqaaaaaaaqqqqqqq_____/_____qqqqqqqqaaaaaaqqqqqqqqq____/____qqqqqqqqqqqaWaqqqqqqqqqqq___/___qqqqqqqqqqqqqWqqqqqqqqqqqqq__"
     },
     {
       "id": "loom-eva-unit00",
       "name": "零号机",
       "group": "eva",
       "bg": "C",
-      "grid": "__YYYY__/_YKYYKY_/YYKKKKYY/YKKCCKKY/YKKCCKKY/_YKKKKY_/_YYWWYY_/__KYYK__"
+      "grid": "________________f_______________/________________f_______________/___________K____f_______________/___________KK___f_______________/___________KK___f_______________/__________KKfK__f_______________/________KKKKffK__f___KKKKKK_____/______KKKKKffffKKfKKKKKKKKK_____/____KKKKffffffffKfKKKfffffK_____/____KfffffffffffffffffffffKK____/____KfffffffffffffffffffffKK____/____KfffffffffffffffffffffKK____/____KffffffffffffffffffffffK____/____KffqqqqqqqffffqqqqqqqffKK___/____KffffffqqqqffqqqqqqffffKK___/____KfffffffffqqqqqqfffffffKK___/____KfffqqffffqqqqqqfffffffKK___/___KKffffqqqqqqqqqqqqqqqfffKK___/____KKfffqqqqqqqqqqqqqqqfffKK___/____KKfffqqqqvvvvvvqqqqfffKK____/____KKKffffffqvvvvvfffffffKK____/_____KKfffffffvvvvvffffffKKK____/_____KKfffffffvvvvvffffffff_____/_____fffffffffvvvvvffffffff_____/_____fffffffffvvvvvffffffff_____/_____ffffffffffvvvvffffffff_____/_____fffKKfffffvvvvffffKfff_____/_____fffKKKKfffvvvfffKKKK_______/_________KKKKKfvvffKKKK_________/___________KKKKKKKKKK___________/______________KKKKK_____________/________________________________"
     },
     {
       "id": "loom-eva-unit01",
       "name": "初号机",
       "group": "eva",
       "bg": "K",
-      "grid": "___L____/__VLVV__/_VVLVVV_/LVKKKKVL/VKWLLWKV/_VKKKKV_/_VVLLVV_/__LVVL__"
+      "grid": "________________L_______________/________________L_______________/___________K____L_______________/___________KK___L_______________/___________KK___L_______________/__________KKtK__L_______________/________KKKKttK__L___KKKKKK_____/______KKKKKttttKKLKKKKKKKKK_____/____KKKKttttttttKLKKKtttttK_____/____KttttttttttttLttttttttKK____/____KttttttttttttLttttttttKK____/____KttttttttttttLttttttttKK____/____KttttttttttttttttttttttK____/____KttqqqqqqqttttqqqqqqqttKK___/____KtttLLLqqqqttqqqqqqLLLtKK___/____KtttLLLLLLqqqqqqLLLLLLtKK___/____KtttqqLLLLqqqqqqLLLLtttKK___/___KKttttqqqqqqqqqqqqqqqtttKK___/____KKtttqqqqqqqqqqqqqqqtttKK___/____KKtttqqqqvvvvvvqqqqtttKK____/____KKKttttttqvvvvvtttttttKK____/_____KKtttttttvvvvvttttttKKK____/_____KKtttttttvvvvvtttttLLL_____/_____LLLttttttvvvvvtttttLLL_____/_____LLLttttttvvvvvtttttLLL_____/_____LLLtttttttvvvvtttttLLL_____/_____LLLKKtttttvvvvttttKLLL_____/_____LLLKKKKtttvvvtttKKKK_______/_________KKKKKtvvttKKKK_________/___________KKKKKKKKKK___________/______________KKKKK_____________/________________________________"
     },
     {
       "id": "loom-eva-unit02",
       "name": "二号机",
       "group": "eva",
       "bg": "K",
-      "grid": "_Y____Y_/_RYRRYR_/RRKKKKRR/RKWWWWKR/RKKWWKKR/_RKKKKR_/_RRWWRR_/__KRRK__"
+      "grid": "________________f_______________/________________f_______________/___________K____f_______________/___________KK___f_______________/___________KK___f_______________/__________KKeK__f_______________/________KKKKeeK__f___KKKKKK_____/______KKKKKeeeeKKfKKKKKKKKK_____/____KKKKeeeeeeeeKfKKKeeeeeK_____/____KeeeeeeeeeeeefeeeeeeeeKK____/____KeeeeeeeeeeeefeeeeeeeeKK____/____KeeeeeeeeeeeefeeeeeeeeKK____/____KeeeeeeeeeeeeeeeeeeeeeeK____/____KeeqqqqqqqeeeeqqqqqqqeeKK___/____KeeefffqqqqeeqqqqqqfffeKK___/____KeeeffffffqqqqqqffffffeKK___/____KeeeqqffffqqqqqqffffeeeKK___/___KKeeeeqqqqqqqqqqqqqqqeeeKK___/____KKeeeqqqqqqqqqqqqqqqeeeKK___/____KKeeeqqqqvvvvvvqqqqeeeKK____/____KKKeeeeeeqvvvvveeeeeeeKK____/_____KKeeeeeeevvvvveeeeeeKKK____/_____KKeeeeeeevvvvveeeeefff_____/_____fffeeeeeevvvvveeeeefff_____/_____fffeeeeeevvvvveeeeefff_____/_____fffeeeeeeevvvveeeeefff_____/_____fffKKeeeeevvvveeeeKfff_____/_____fffKKKKeeevvveeeKKKK_______/_________KKKKKevveeKKKK_________/___________KKKKKKKKKK___________/______________KKKKK_____________/________________________________"
     },
     {
       "id": "loom-eva-unit08",
       "name": "八号机",
       "group": "eva",
       "bg": "V",
-      "grid": "___P____/__PPPP__/_PPKKPP_/PKCCCCKP/PKCCCCKP/_PKKKKP_/_PPWWPP_/__KPPK__"
+      "grid": "________________f_______________/________________f_______________/___________K____f_______________/___________KK___f_______________/___________KK___f_______________/__________KKmK__f_______________/________KKKKmmK__f___KKKKKK_____/______KKKKKmmmmKKfKKKKKKKKK_____/____KKKKmmmmmmmmKfKKKmmmmmK_____/____KmmmmmmmmmmmmfmmmmmmmmKK____/____KmmmmmmmmmmmmfmmmmmmmmKK____/____KmmmmmmmmmmmmfmmmmmmmmKK____/____KmmmmmmmmmmmmmmmmmmmmmmK____/____KmmqqqqqqqmmmmqqqqqqqmmKK___/____KmmmfffqqqqmmqqqqqqfffmKK___/____KmmmffffffqqqqqqffffffmKK___/____KmmmqqffffqqqqqqffffmmmKK___/___KKmmmmqqqqqqqqqqqqqqqmmmKK___/____KKmmmqqqqqqqqqqqqqqqmmmKK___/____KKmmmqqqqvvvvvvqqqqmmmKK____/____KKKmmmmmmqvvvvvmmmmmmmKK____/_____KKmmmmmmmvvvvvmmmmmmKKK____/_____KKmmmmmmmvvvvvmmmmmfff_____/_____fffmmmmmmvvvvvmmmmmfff_____/_____fffmmmmmmvvvvvmmmmmfff_____/_____fffmmmmmmmvvvvmmmmmfff_____/_____fffKKmmmmmvvvvmmmmKfff_____/_____fffKKKKmmmvvvmmmKKKK_______/_________KKKKKmvvmmKKKK_________/___________KKKKKKKKKK___________/______________KKKKK_____________/________________________________"
     },
     {
       "id": "loom-eva-mark06",
       "name": "Mark.06",
       "group": "eva",
       "bg": "Y",
-      "grid": "__YYYY__/_B_BB_B_/_BBYBBB_/BBKKKKBB/BKYYYYKB/_BKKKKB_/_BBYYBB_/__KBBK__"
+      "grid": "________________f_______________/________________f_______________/___________K____f_______________/___________KK___f_______________/___________KK___f_______________/__________KKcK__f_______________/________KKKKccK__f___KKKKKK_____/______KKKKKccccKKfKKKKKKKKK_____/____KKKKccccccccKfKKKcccccK_____/____KccccccccccccfccccccccKK____/____KccccccccccccfccccccccKK____/____KccccccccccccfccccccccKK____/____KccccccccccccccccccccccK____/____KccqqqqqqqccccqqqqqqqccKK___/____KcccfffqqqqccqqqqqqfffcKK___/____KcccffffffqqqqqqffffffcKK___/____KcccqqffffqqqqqqffffcccKK___/___KKccccqqqqqqqqqqqqqqqcccKK___/____KKcccqqqqqqqqqqqqqqqcccKK___/____KKcccqqqqvvvvvvqqqqcccKK____/____KKKccccccqvvvvvcccccccKK____/_____KKcccccccvvvvvccccccKKK____/_____KKcccccccvvvvvcccccfff_____/_____fffccccccvvvvvcccccfff_____/_____fffccccccvvvvvcccccfff_____/_____fffcccccccvvvvcccccfff_____/_____fffKKcccccvvvvccccKfff_____/_____fffKKKKcccvvvcccKKKK_______/_________KKKKKcvvccKKKK_________/___________KKKKKKKKKK___________/______________KKKKK_____________/________________________________"
     },
     {
       "id": "loom-geass-lelouch",
       "name": "鲁路修",
       "group": "geass",
       "bg": "V",
-      "grid": "__KKKK__/_KKKKKK_/KKKOKKKK/KOOKKOOK/_OVOOVO_/_OOOROO_/__KOOK__/_KKYYKK_"
+      "grid": "________________________________/________________________________/________________q_______________/____________qqqqqqqqq___________/__________qqqqqqqqqqqqq_________/_________qqqqqqqqqqqqqqq________/________qqqqqqqqqqqqqqqqq_______/_______KqqqqqqqqqqqqqqqqqK______/______KqqqqqqqqqqqqqqqqqqqK_____/______KqqqqqqqqqqqqqqqqqqqK_____/_____KqqqqqqqqqqqqqqqqqqqqqK____/_____KqqqqqqqqqqqqqqqqqqqqqK____/_____KqqqqqqqqqqqqqqqqqqqqqK____/_____KqqqqqqqqqqaqqqqaaqqqqK____/_____qqqqqqqqaqaaqqqqaaaqqqq____/____KKqqqaqqaaaaaqqqqaaaaqqKK___/_____KqaaaaaKaaaaqqqaKaaaaqK____/_____KaaaaaWKKaaaaqqWKKaaaaK____/_____KaaaaaKdKaaaaqaKdKaaaaK____/_____aaaaaKKdKKaaaqKKdKKaaaa____/_____KaaaaaKKKaaaaaaKKKaaaaK____/______aaaaaKKKaaaaaaKKKaaaa_____/______KaaaaaKaaaaaaaaKaaaaK_____/_______KaaaaaaaaaaaaaaaaaK______/________KaaaaaaaaaaaaaaaK_______/_________KaaaaabbbbaaaaK________/__________aaaaaaaaaaaaa_________/___________aaaaaaaaaaa__________/______qqqqqqqaaaaaaaqqqqqqq_____/_____qqqqqqqqfaaaaaffqqqqqqq____/____qqqqqqqqfffaWaffffqqqqqqq___/___qqqqqqqqffffffffffffqqqqqqq__"
     },
     {
       "id": "loom-geass-cc",
       "name": "C.C.",
       "group": "geass",
       "bg": "Y",
-      "grid": "__LLLL__/_LLLLLL_/LLLOOLLL/LOOKKOOL/LOYOOYOL/LLOOOOLL/LLWOOWLL/__WKKW__"
+      "grid": "________________________________/________________________________/________________o_______________/____________ooooooooo___________/__________ooooooooooooo_________/_________ooooooooooooooo________/________ooooooooooooooooo_______/_______KoooooooooooooooooK______/______KoooooooooooooooooooK_____/______KoooooooooooooooooooK_____/_____KoooooooooooooooooooooK____/_____KoooooooooooooooooooooK____/_____KooooooaooooaoooooooooK____/_____KoooooaaoooaaaooaaooooK____/_____oooooaaaaoaaaaooaaaoooo____/____KooooaaaaaaaaaaaoaaaaooKK___/_____ooaaaaaKaaaaaaaaKaaaaoK____/_____oaaaaaWKKaaaaaaWKKaaaaK____/_____oaaaaaKfKaaaaaaKfKaaaaK____/_____aaaaaKKfKKaaaaKKfKKaaaa____/_____oaaaaaKKKaaaaaaKKKaaaaK____/_____oaaaaaKKKaaaaaaKKKaaaa_____/_____ooaaaaaKaaaaaaaaKaaaao_____/_____oooaaaaaaaaaaaaaaaaaoo_____/_____ooooaaaaaaaaaaaaaaaooo_____/_____oooooaaaaabbbbaaaaoooo_____/_____oooooaaaaaaaaaaaaaoooo_____/_____ooooooaaaaaaaaaaaooooo_____/_____oWWWWWWWaaaaaaaWWWWWWW_____/_____WWWWWWWWWaaaaaWWWWWWWWW____/____WWWWWWWWWWWaWaWWWWWWWWWWW___/___WWWWWWWWWWWWWWWWWWWWWWWWWWW__"
     },
     {
       "id": "loom-geass-kallen",
       "name": "红月卡莲",
       "group": "geass",
       "bg": "C",
-      "grid": "__RRRR__/_RRRRRR_/RRRORRRR/ROOKKOOR/ROCOOCOR/_OOOOOO_/__KOOK__/_RRKKRR_"
+      "grid": "________________________________/________________________________/________________e_______________/____________eeeeeeeee___________/__________eeeeeeeeeeeee_________/_________eeeeeeeeeeeeeee________/________eeeeeeeeeeeeeeeee_______/_______KeeeeeeeeeeeeeeeeeK______/______KeeeeeeeeeeeeeeeeeeeK_____/______KeeeeeeeeeeeeeeeeeeeK_____/_____KeeeeeeeeeeeeeeeeeeeeeK____/_____KeeeeeeeeeeeeeeeeeeeeeK____/_____KeeeeeeeeeeeeeeeeeeeeeK____/_____KeeeeeeeeeeaeeeeaaeeeeK____/_____eeeeeeeeaeaaeeeeaaaeeee____/____KKeeeaeeaaaaaeeeeaaaaeeKK___/_____KeaaaaaKaaaaeeeaKaaaaeK____/_____KaaaaaWKKaaaaeeWKKaaaaK____/_____KaaaaaKcKaaaaeaKcKaaaaK____/_____aaaaaKKcKKaaaeKKcKKaaaa____/_____KaaaaaKKKaaaaaaKKKaaaaK____/______aaaaaKKKaaaaaaKKKaaaa_____/______KaaaaaKaaaaaaaaKaaaaK_____/_______KaaaaaaaaaaaaaaaaaK______/________KaaaaaaaaaaaaaaaK_______/_________KaaaaabbbbaaaaK________/__________aaaaaaaaaaaaa_________/___________aaaaaaaaaaa__________/______eeeeeeeaaaaaaaeeeeeee_____/_____eeeeeeeeeaaaaaeeeeeeeee____/____eeeeeeeeeeeaWaeeeeeeeeeee___/___eeeeeeeeeeeeeWeeeeeeeeeeeee__"
     },
     {
       "id": "loom-geass-suzaku",
       "name": "枢木朱雀",
       "group": "geass",
       "bg": "L",
-      "grid": "__DDDD__/_DDDDDD_/DDDODDDD/DOOKKOOD/_OLOOLO_/_OOOOOO_/__WOOW__/_WWYYWW_"
+      "grid": "________________________________/________________________________/________________j_______________/____________jjjjjjjjj___________/__________jjjjjjjjjjjjj_________/_________jjjjjjjjjjjjjjj________/________jjjjjjjjjjjjjjjjj_______/_______KjjjjjjjjjjjjjjjjjK______/______KjjjjjjjjjjjjjjjjjjjK_____/______KjjjjjjjjjjjjjjjjjjjK_____/_____KjjjjjjjjjjjjjjjjjjjjjK____/_____KjjjjjjjjjjjjjjjjjjjjjK____/_____KjjjjjjajjjjajjjjjjjjjK____/_____KjjjjjaajjjaaajjaajjjjK____/_____jjjjjaaaajaaaajjaaajjjj____/____KKjjjaaaaaaaaaaajaaaajjKK___/_____KjaaaaaKaaaaaaaaKaaaajK____/_____KaaaaaWKKaaaaaaWKKaaaaK____/_____KaaaaaKcKaaaaaaKcKaaaaK____/_____aaaaaKKcKKaaaaKKcKKaaaa____/_____KaaaaaKKKaaaaaaKKKaaaaK____/______aaaaaKKKaaaaaaKKKaaaa_____/______KaaaaaKaaaaaaaaKaaaaK_____/_______KaaaaaaaaaaaaaaaaaK______/________KaaaaaaaaaaaaaaaK_______/_________KaaaaabbbbaaaaK________/__________aaaaaaaaaaaaa_________/___________aaaaaaaaaaa__________/______WWWWWWWaaaaaaaWWWWWWW_____/_____WWWWWWWWWaaaaaWWWWWWWWW____/____WWWWWWWWWWWaWaWWWWWWWWWWW___/___WWWWWWWWWWWWWWWWWWWWWWWWWWW__"
     },
     {
       "id": "loom-doraemon",
       "name": "哆啦A梦",
       "group": "doraemon",
       "bg": "C",
-      "grid": "__KKKK__/_KWWWWK_/KCWKKWCK/KWWRRWWK/KWKWWKWK/KWWKKWWK/_KRRRRK_/__KYYK__"
+      "grid": "________________________________/________________________________/________________g_______________/___________ggggggggggg__________/_________ggggggggggggggg________/_______KgggggggggggggggggK______/______KgggggWgggggggWgggggK_____/_____KggggWWWWWgggWWWWWggggK____/____KggggWWWWWWWgWWWWWWWggggK___/____gggggWWWWWWWgWWWWWWWggggg___/___KgggggWWWWKKWWWKKWWWWgggggK__/___gggggWWWWWKKWWWKKWWWWWggggg__/__KggggggWWWWKKWWWKKWWWWggggggK_/__KgggggWWWWWKKWWWKKWWWWWgggggK_/__KggggWWWWWWWWWeWWWWWWWWWggggK_/__KgggWWWWWWWWeeeeeWWWWWWWWgggK_/__ggggWWWWWWWWeWeeeWWWWWWWWgggg_/_KKggWWWWWWWWeeeeeeeWWWWWWWWggKK/__KKKWWWWWWWWWeeeeeWWWWWWWWWKKK_/__KggKKWWWWWWWeeeeeWWWWWWWKKggK_/__KKgWWKKWWWWWWWKWWWWWWWKKWWgKK_/__KgKKKKWKKWWWWWKWWWWWKKWKKKKgK_/__KKgWWWKKKWWWWWKWWWWWKKKWWWgKK_/__KKKKKKKKKWWWWWKWWWWWKKKKKKKKK_/___KKWWWWWWWWWWWKWWWWWWWWWWWKK__/____KWWWKWWWWWWWKWWWWWWWKWWWK___/____KKWWWKWWWWWWKWWWWWWKWWWKK___/_____KWWWWKKWWWWfWWWWWKWWWWK____/______KWWWWWKKfffffKKKWWWWK_____/_______KWWWWWWfffffWWWWWWK______/_____eeeeeeeefffffffeeeeeee_____/_____eeeeeeeeefffffeeeeeeee_____"
     },
     {
       "id": "loom-nobita",
       "name": "野比大雄",
       "group": "doraemon",
       "bg": "Y",
-      "grid": "__KKKK__/_KKKKKK_/_KOOOOK_/KOKKKKOK/KOKOOKOK/_OOOOOO_/__WOOW__/_YYWWYY_"
+      "grid": "________________________________/________________________________/________________K_______________/____________KKKKKKKKK___________/__________KKKKKKKKKKKKK_________/_________KKKKKKKKKKKKKKK________/________KKKKKKKKKKKKKKKKK_______/_______KKKKKKKKKKKKKKKKKKK______/______KKKKKKKKKKKKKKKKKKKKK_____/______KKKKKKKKKKKKKKKKKKKKK_____/_____KKKKKKKKKKKKKKKKKKKKKKK____/_____KKKKKKKKKKKKKKKKKKKKKKK____/_____KKKKKKKaKKKKaKKKKKKKKKK____/_____KKKKKKaaKKKaaaKKaaKKKKK____/_____KKKKKaaaaKaaaaKKaaaKKKK____/____KKKKKaaaaaaaaaaaKaaaaKKKK___/_____KKaKKKKKKKKaKKKKKKKKaKK____/_____KaaKaaaaaaKaKaaaaaaKaaK____/_____KaaKaaaaaaKKKaaaaaaKaaK____/_____aaaKaaaKaaKaKaaaKaaKaaa____/_____KaaKaaaaaaKaKaaaaaaKaaK____/______aaKaaaaaaKaKaaaaaaKaa_____/______KaKKKKKKKKaKKKKKKKKaK_____/_______KaaaaaaaaaaaaaaaaaK______/________KaaaaaaaaaaaaaaaK_______/_________KaaaaabbbbaaaaK________/__________aaaaaaaaaaaaa_________/___________aaaaaaaaaaa__________/______fffffffaaaaaaafffffff_____/_____fffffffffaaaaafffffffff____/____fffffffffffaWafffffffffff___/___fffffffffffffWfffffffffffff__"
     },
     {
       "id": "loom-shizuka",
       "name": "源静香",
       "group": "doraemon",
       "bg": "P",
-      "grid": "__KKKK__/_KKKKKK_/KKKOOKKK/KOKOOKOK/KKOOOOKK/K_KOOK_K/__POOP__/_PPWWPP_"
+      "grid": "________________________________/________________________________/________________q_______________/____________qqqqqqqqq___________/__________qqqqqqqqqqqqq_________/_________qqqqqqqqqqqqqqq________/________qqqqqqqqqqqqqqqqq_______/_______KqqqqqqqqqqqqqqqqqK______/______KqqqqqqqqqqqqqqqqqqqK_____/______KqqqqqqqqqqqqqqqqqqqK_____/_____KqqqqqqqqqqqqqqqqqqqqqK____/_____KqqqqqqqqqqqqqqqqqqqqqK____/_____KqqqqqqaqqqqaqqqqqqqqqK____/_____KqqqqqaaqqqaaaqqaaqqqqK____/_____qqqqqaaaaqaaaaqqaaaqqqq____/____KqqqqaaaaaaaaaaaqaaaaqqKK___/_____qqaaaaaKaaaaaaaaKaaaaqK____/_____qaaaaaWKKaaaaaaWKKaaaaK____/_____qaaaaaKcKaaaaaaKcKaaaaK____/_____aaaaaKKcKKaaaaKKcKKaaaa____/_____qaaaaaKKKaaaaaaKKKaaaaK____/_____qaaaaaKKKaaaaaaKKKaaaa_____/_____qqaaaaaKaaaaaaaaKaaaaq_____/_____qqqaaaaaaaaaaaaaaaaaqq_____/_____qqqqaaaaaaaaaaaaaaaqqq_____/_____qqqqqaaaaabbbbaaaaqqqq_____/_____qqqqqaaaaaaaaaaaaaqqqq_____/_____qqqqqqaaaaaaaaaaaqqqqq_____/_____qmmmmmmmaaaaaaammmmmmm_____/_____mmmmmmmmmaaaaammmmmmmmm____/____mmmmmmmmmmmaWammmmmmmmmmm___/___mmmmmmmmmmmmmWmmmmmmmmmmmmm__"
     },
     {
       "id": "loom-gian",
       "name": "刚田武 · 胖虎",
       "group": "doraemon",
       "bg": "O",
-      "grid": "__KKKK__/_KKKKKK_/KOOOOOOK/KOKOOKOK/KOOOOOOK/_OOKKOO_/__OOOO__/_OOOOOO_"
+      "grid": "________________________________/________________________________/________________j_______________/____________jjjjjjjjj___________/__________jjjjjjjjjjjjj_________/_________jjjjjjjjjjjjjjj________/________jjjjjjjjjjjjjjjjj_______/_______KjjjjjjjjjjjjjjjjjK______/______KjjjjjjjjjjjjjjjjjjjK_____/______KjjjjjjjjjjjjjjjjjjjK_____/_____KjjjjjjjjjjjjjjjjjjjjjK____/_____KjjjjjjjjjjjjjjjjjjjjjK____/_____KjjjjjjajjjjajjjjjjjjjK____/_____KjjjjjaajjjaaajjaajjjjK____/_____jjjjjaaaajaaaajjaaajjjj____/____KKjjjaaaaaaaaaaajaaaajjKK___/_____KjaaaaaKaaaaaaaaKaaaajK____/_____KaaaaaWKKaaaaaaWKKaaaaK____/_____KaaaaaKcKaaaaaaKcKaaaaK____/_____aaaaaKKcKKaaaaKKcKKaaaa____/_____KaaaaaKKKaaaaaaKKKaaaaK____/______aaaaaKKKaaaaaaKKKaaaa_____/______KaaaaaKaaaaaaaaKaaaaK_____/_______KaaaaaaaaaaaaaaaaaK______/________KaaaaaaaaaaaaaaaK_______/_________KaaaaabbbbaaaaK________/__________aaaaaaaaaaaaa_________/___________aaaaaaaaaaa__________/______pppppppaaaaaaappppppp_____/_____pppppppppaaaaappppppppp____/____pppppppppppaWappppppppppp___/___pppppppppppppWppppppppppppp__"
     },
     {
       "id": "loom-suneo",
       "name": "骨川小夫",
       "group": "doraemon",
       "bg": "L",
-      "grid": "__KKKKK_/KKKKKK__/KKKOOOOK/_OKOOKOK/_OOOOOOK/__OOKKO_/__LOOL__/_LLWWLL_"
+      "grid": "________________________________/________________________________/________________q_______________/____________qqqqqqqqq___________/__________qqqqqqqqqqqqq_________/_________qqqqqqqqqqqqqqq________/________qqqqqqqqqqqqqqqqq_______/_______KqqqqqqqqqqqqqqqqqK______/______KqqqqqqqqqqqqqqqqqqqK_____/______KqqqqqqqqqqqqqqqqqqqK_____/_____KqqqqqqqqqqqqqqqqqqqqqK____/_____KqqqqqqqqqqqqqqqqqqqqqK____/_____KqqqqqqqqqqqqqqqqqqqqqK____/_____KqqqqqqqqqqaqqqqaaqqqqK____/_____qqqqqqqqaqaaqqqqaaaqqqq____/____KKqqqaqqaaaaaqqqqaaaaqqKK___/_____KqaaaaaKaaaaqqqaKaaaaqK____/_____KaaaaaWKKaaaaqqWKKaaaaK____/_____KaaaaaKcKaaaaqaKcKaaaaK____/_____aaaaaKKcKKaaaqKKcKKaaaa____/_____KaaaaaKKKaaaaaaKKKaaaaK____/______aaaaaKKKaaaaaaKKKaaaa_____/______KaaaaaKaaaaaaaaKaaaaK_____/_______KaaaaaaaaaaaaaaaaaK______/________KaaaaaaaaaaaaaaaK_______/_________KaaaaabbbbaaaaK________/__________aaaaaaaaaaaaa_________/___________aaaaaaaaaaa__________/______iiiiiiiaaaaaaaiiiiiii_____/_____iiiiiiiiiaaaaaiiiiiiiii____/____iiiiiiiiiiiaWaiiiiiiiiiii___/___iiiiiiiiiiiiiWiiiiiiiiiiiii__"
     },
     {
       "id": "loom-dorami",
       "name": "哆啦美",
       "group": "doraemon",
       "bg": "P",
-      "grid": "_RR__RR_/_RYYYYR_/_YWWWWY_/YWWKKWWY/YWWRRWWY/YWKKKKWY/_YWWWWY_/__YOOY__"
+      "grid": "________________________________/________________________________/________________f_______________/___________fffffffffff__________/_________fffffffffffffff________/_______KfffffffffffffffffK______/______KfffffWfffffffWfffffK_____/_____KffffWWWWWfffWWWWWffffK____/____KffffWWWWWWWfWWWWWWWffffK___/____fffffWWWWWWWfWWWWWWWfffff___/___KfffffWWWWKKWWWKKWWWWfffffK__/___fffffWWWWWKKWWWKKWWWWWfffff__/__KffffffWWWWKKWWWKKWWWWffffffK_/__KfffffWWWWWKKWWWKKWWWWWfffffK_/__KffffWWWWWWWWWeWWWWWWWWWffffK_/__KfffWWWWWWWWeeeeeWWWWWWWWfffK_/__ffffWWWWWWWWeWeeeWWWWWWWWffff_/_KKffWWWWWWWWeeeeeeeWWWWWWWWffKK/__KKKWWWWWWWWWeeeeeWWWWWWWWWKKK_/__KffKKWWWWWWWeeeeeWWWWWWWKKffK_/__KKfWWKKWWWWWWWKWWWWWWWKKWWfKK_/__KfKKKKWKKWWWWWKWWWWWKKWKKKKfK_/__KKfWWWKKKWWWWWKWWWWWKKKWWWfKK_/__KKKKKKKKKWWWWWKWWWWWKKKKKKKKK_/___KKWWWWWWWWWWWKWWWWWWWWWWWKK__/____KWWWKWWWWWWWKWWWWWWWKWWWK___/____KKWWWKWWWWWWKWWWWWWKWWWKK___/_____KWWWWKKWWWWfWWWWWKWWWWK____/______KWWWWWKKfffffKKKWWWWK_____/_______KWWWWWWfffffWWWWWWK______/_____eeeeeeeefffffffeeeeeee_____/_____eeeeeeeeefffffeeeeeeee_____"
     },
     {
       "id": "loom-pichu",
       "name": "皮丘",
       "group": "pokemon",
       "bg": "P",
-      "grid": "KK____KK/KYK__KYK/_KYYYYK_/KYYYYYYK/KYKYYKYK/KYRYYRYK/_KYYYYK_/__KKKK__"
+      "grid": "________________________________/___________________________KK___/___KK___________________KKKKK___/___KKKKK________________KKKKK___/___KKKKKK_______________KKKKK___/____KKKKK______________KKffKK___/____KKffKK_____________KKffKK___/____KKfffK_____________KKffK____/_____KfffK______K_____KKfffK____/_____KffffK_KKKKfKKKK_KKffKK____/_____KKfffKKfffffffffKKfffKK____/______KfKKfffffffffffffKKfKK____/______KKKfffffffffffffffKKKK____/______KKfffffffffffffffffKKK____/______KfffffffffffffffffffK_____/_____KfffffffffffffffffffffK____/_____KfffffffffffffffffffffK____/____KfffffffffffffffffffffffK___/____KfffffKfffffffffffKfffffK___/____KffffWKKfffffffffWKKffffK___/____KffffKKKfffffffffKKKffffK___/___KffefKKKKKfffffffKKKKKfeffK__/____eeeeeKKKfffffffffKKKeeeee___/____eeeeeKKKfffKKKfffKKKeeeee___/___eeeeeeeKfffffKfffffKeeeeeee__/____eeeeefffffffffffffffeeeee___/____eeeeefffffffffffffffeeeee___/_____KefffffffffffffffffffeK____/_____qqqffffKKqqqqqKfffffqqq____/_____qqqqqqqqqqqqqqqqqqqqqqq____/_____qqqqqqqqqqqqqqqqqqqqqqq____/_____qqqqqqqqqqqqqqqqqqqqqqq____"
     },
     {
       "id": "loom-pikachu",
       "name": "皮卡丘",
       "group": "pokemon",
       "bg": "C",
-      "grid": "KK____KK/KYK__KYK/KYYYYYYK/KYKYYKYK/KYRYYRYK/_KYYYYK_/__KYYK__/_KK__KK_"
+      "grid": "________________________________/___________________________KK___/___KK___________________KKKKK___/___KKKKK________________KKKKK___/___KKKKKK_______________KKKKK___/____KKKKK______________KKffKK___/____KKffKK_____________KKffKK___/____KKfffK_____________KKffK____/_____KfffK______K_____KKfffK____/_____KffffK_KKKKfKKKK_KKffKK____/_____KKfffKKfffffffffKKfffKK____/______KfKKfffffffffffffKKfKK____/______KKKfffffffffffffffKKKK____/______KKfffffffffffffffffKKK____/______KfffffffffffffffffffK_____/_____KfffffffffffffffffffffK____/_____KfffffffffffffffffffffK____/____KfffffffffffffffffffffffK___/____KfffffKfffffffffffKfffffK___/____KffffWKKfffffffffWKKffffK___/____KffffKKKfffffffffKKKffffK___/___KffefKKKKKfffffffKKKKKfeffK__/____eeeeeKKKfffffffffKKKeeeee___/____eeeeeKKKfffKKKfffKKKeeeee___/___eeeeeeeKfffffKfffffKeeeeeee__/____eeeeefffffffffffffffeeeee___/____eeeeefffffffffffffffeeeee___/_____KefffffffffffffffffffeK____/______KfffffKKffffKKffffffK_____/______KKffffffKKKKfffffffKK_____/_______KKfffffffffffffffKK______/________KKfffffffffffffKK_______"
     },
     {
       "id": "loom-raichu",
       "name": "雷丘",
       "group": "pokemon",
       "bg": "Y",
-      "grid": "_KK__KK_/KORKKROK/_KOOOOK_/KOKOOKOK/KORWWROK/_KWWWWK_/__KWWK__/_KK__KK_"
+      "grid": "________________________________/___________________________KK___/___KK___________________KKKKK___/___KKKKK________________KKKKK___/___KKKKKK_______________KKKKK___/____KKKKK______________KKffKK___/____jjffKK_____________KKffKK_jj/____jjfffK_____________KKffK_jjj/___jjjfffK______K_____KKfffjjjj_/___jjKffffK_KKKKfKKKK_KKffjjjj__/___jjKKfffKKfffffffffKKfffjj____/__jjj_KfKKfffffffffffffKKfKK____/__jj__KKKfffffffffffffffKKKK____/__jj__KKfffffffffffffffffKKK____/______KfffffffffffffffffffK_____/_____KfffffffffffffffffffffK____/_____KfffffffffffffffffffffK____/____KfffffffffffffffffffffffK___/____KfffffKfffffffffffKfffffK___/____KffffWKKfffffffffWKKffffK___/____KffffKKKfffffffffKKKffffK___/___KfflfKKKKKfffffffKKKKKflffK__/____lllllKKKfffffffffKKKlllll___/____lllllKKKfffKKKfffKKKlllll___/___lllllllKfffffKfffffKlllllll__/____lllllffffffffffffffflllll___/____lllllffffffffffffffflllll___/_____KlffffffffffffffffffflK____/______KfffffKKffffKKffffffK_____/______KKfffffflllllffffffKK_____/_______KKffffflllllfffffKK______/________KKfffflllllffffKK_______"
     },
     {
       "id": "loom-squirtle",
       "name": "杰尼龟",
       "group": "pokemon",
       "bg": "Y",
-      "grid": "__KKKK__/_KCCCCK_/KCKCCKCK/KCCCCCCK/_KCCCCK_/_KYYYYK_/KCKYYKCK/_KK__KK_"
+      "grid": "________________________________/________________________________/________________________________/________________________________/________________________________/________________________________/________________________________/________________________________/________________K_______________/____________KKKKhKKKK___________/__________KKhhhhhhhhhKK_________/________KKhhhhhhhhhhhhhKK_______/_______KKhhhhhhhhhhhhhhhKK______/______KKhhhhhhhhhhhhhhhhhKK_____/______KhhhhhhhhhhhhhhhhhhhK_____/_____KhhhhhhhhhhhhhhhhhhhhhK____/_____KhhhhhhhhhhhhhhhhhhhhhK____/____KhhhhhhhhhhhhhhhhhhhhhhhK___/____KhhhhhKhhhhhhhhhhhKhhhhhK___/____KhhhhWKKhhhhhhhhhWKKhhhhK___/____KhhhhKKKhhhhhhhhhKKKhhhhK___/___KhhhhKKKKKhhhhhhhKKKKKhhhhK__/____KhhhhKKKhhhhhhhhhKKKhhhhK___/____KhhhhKKKhhhKKKhhhKKKhhhhK___/____KhhhhhKhhhhhKhhhhhKhhhhhK___/____KhhhhhhhhhhhhhhhhhhhhhhhK___/_____KhhhhhhhhhhhhhhhhhhhhhK____/_____KhhhhhhhhhhhhhhhhhhhhhK____/______KhhhhhKKhhhhKKhhhhhhK_____/______KKhhhhhhKKKKhhhhhhhKK_____/_______KKhhhhhhhhhhhhhhhKK______/________KKhhhhhhhhhhhhhKK_______"
     },
     {
       "id": "loom-wartortle",
       "name": "卡咪龟",
       "group": "pokemon",
       "bg": "C",
-      "grid": "KW____WK/KWWKKWWK/_KBBBBK_/KBKBBKBK/KBBBBBBK/_KBWWBK_/KBKWWKBK/_KK__KK_"
+      "grid": "________________________________/________________________________/________________________________/________________________________/________________________________/________________________________/__rrr______________________rrrr_/__rrrrrr__________________rrrrr_/___rrrrrr_______K_________rrrrr_/___rrrrrr___KKKKhKKKK____rrrrr__/____rrrrrrKKhhhhhhhhhKK_rrrrrr__/__r_rrrrKKhhhhhhhhhhhhhKKrrrrrr_/__rrrrrKKhhhhhhhhhhhhhhhKKrrrrr_/__rrrrKKhhhhhhhhhhhhhhhhhKKrrrr_/__rrrrKhhhhhhhhhhhhhhhhhhhKrrrr_/__rrrrrhhhhhhhhhhhhhhhhhhrrrrrr_/__rrrrrhhhhhhhhhhhhhhhhhhhrrrrr_/__rrrrrhhhhhhhhhhhhhhhhhhhrrrrr_/__rrrrrhhhKhhhhhhhhhhhKhhhrrrrr_/__rrrrrhhWKKhhhhhhhhhWKKhhrrrrr_/__rrrrrhhKKKhhhhhhhhhKKKhhrrrrr_/__rrrrrhKKKKKhhhhhhhKKKKKhrrrrr_/__rrrrrhhKKKhhhhhhhhhKKKhhrrrr__/____rrrhhKKKhhhKKKhhhKKKhhrrK___/____KhhhhhKhhhhhKhhhhhKhhhhhK___/____KhhhhhhhhhhhhhhhhhhhhhhhK___/_____KhhhhhhhhhhhhhhhhhhhhhK____/_____KhrrhhhhhhhhhhhhhhhhhhK____/______rrrhhhKKhhhhKKhhhhhhK_____/_____rrrhhhhhhKKKKhhhhhhhKK_____/____rrrKKhhhhhhhhhhhhhhhKK______/___rrr__KKhhhhhhhhhhhhhKK_______"
     },
     {
       "id": "loom-blastoise",
       "name": "水箭龟",
       "group": "pokemon",
       "bg": "V",
-      "grid": "WW_KK_WW/KBKBBKBK/_KBBBBK_/KBKBBKBK/KBBBBBBK/_KYYYYK_/KBKYYKBK/_KK__KK_"
+      "grid": "________________________________/________________________________/________________________________/________________________________/________________________________/________________________________/__rrr______________________rrrr_/__rrrrrr__________________rrrrr_/___rrrrrr_______K_________rrrrr_/___rrrrrr___KKKKhKKKK____rrrrr__/____rrrrrrKKhhhhhhhhhKK_rrrrrr__/____rrrrKKhhhhhhhhhhhhhKKrrrrr__/____rrrKKhhhhhhhhhhhhhhhKKrrr___/_____rKKhhhhhhhhhhhhhhhhhKKrr___/_____rKhhhhhhhhhhhhhhhhhhhKrr___/_____KhhhhhhhhhhhhhhhhhhhhhK____/_____KhhhhhhhhhhhhhhhhhhhhhK____/_kkkKhhhhhhhhhhhhhhhhhhhhhhhKkk_/_kqqKhhhhhKhhhhhhhhhhhKhhhhhKqk_/_kqqKhhhhWKKhhhhhhhhhWKKhhhhKqk_/kkkkkhhhhKKKhhhhhhhhhKKKhhhkkkkk/kqqqkhhhKKKKKhhhhhhhKKKKKhhkqqqk/kqqqkhhhhKKKhhhhhhhhhKKKhhhkqqqk/kqqqkhhhhKKKhhhKKKhhhKKKhhhkqqqk/kkkkkhhhhhKhhhhhKhhhhhKhhhhkkkkk/kkkkkhhhhhhhhhhhhhhhhhhhhhhkkkkk/kkkkkKhhhhhhhhhhhhhhhhhhhhhkkkkk/kkkkkKhhhhhhhhhhhhhhhhhhhhhkkkkk/kkkkkkKhhhhhKKhhhhKKhhhhhhKkkkkk/kkkkk_KKhhhhhhKKKKhhhhhhhKKkkkkk/kkkkk__KKhhhhhhhhhhhhhhhKK_kkkkk/kkkkk___KKhhhhhhhhhhhhhKK__kkkkk"
     },
     {
       "id": "loom-bulbasaur",
       "name": "妙蛙种子",
       "group": "pokemon",
       "bg": "Y",
-      "grid": "__KLLK__/_KLLLLK_/KKGLLGKK/KGGGGGGK/KGRGGRGK/KGGKKGGK/_KGGGGK_/__KKKK__"
+      "grid": "________________________________/________________________________/________________i_______________/_______________iii______________/__i___________iiii______________/___ii_________iiiii_________ii__/___iiii______iiiiii______iiiii__/____iiiii___iiiiiiii___iiiiii___/____iiiiiiiiiiiiKiiiiiiiiiiii___/_____iiiiiiiKKKKoKKKKiiiiiiii___/_____iiiiiKKoooooooooKKiiiii____/________KKoooooooooooooKKiii____/_______KKoooooooooooooooKKii____/______KKoooooooooooooooooKK_____/______KoooooooooooooooooooK_____/_____KoooooooooooooooooooooK____/_____KoooiiooooooooooooooooK____/____KoiiiiioooooooooooooooooK___/____KoooiiKoooooooooooKoooooK___/____KooooWKKoooooooooWKKooooK___/____KooooKeKoooooooooKeKooooK___/___KooooKKeKKoooooooKKeKKoiioK__/____KooooKKKoooooooooKKKiiiiK___/____KooooKKKoooKKKoooKKKoiiiK___/____KoooooKoooooKoooooKoooiiK___/____KooooooooooooooooooooooiK___/_____KoooooooooooooooooooooK____/_____KoooooooooiiooooooooooK____/______KoooooKKiiioKKooooooK_____/______KKooooooKKKKoooooooKK_____/_______KKoooooooooooooooKK______/________KKoooooooooooooKK_______"
     },
     {
       "id": "loom-ivysaur",
       "name": "妙蛙草",
       "group": "pokemon",
       "bg": "C",
-      "grid": "___PP___/__PPPP__/_KLLLLK_/KGGLLGGK/KGRGGRGK/KGGKKGGK/_KGGGGK_/__KKKK__"
+      "grid": "________________________________/________________m_______________/_____________mmmmmmm____________/___________mmeeeeemmmm__________/__i_______mmmeeeeeemmmm_________/___ii_____mmeeeeeeeemmm_____ii__/___iiii___meeeeeeeeeemm__iiiii__/____iiiiimeeeeeeeeeeeemmiiiii___/____iiiiieeeeeeeeeeeeeeiiiiii___/_____iiiiieeeeeeeeeeeeeiiiiii___/_____iiiiiKeeeeeeeeeeeKiiiii____/________KKooeeeeeeeeeooKKiii____/_______KKoooooooooooooooKKii____/______KKoooooooooooooooooKK_____/______KoooooooooooooooooooK_____/_____KoooooooooooooooooooooK____/_____KoooiiooooooooooooooooK____/____KoiiiiioooooooooooooooooK___/____KoooiiKoooooooooooKoooooK___/____KooooWKKoooooooooWKKooooK___/____KooooKeKoooooooooKeKooooK___/___KooooKKeKKoooooooKKeKKoiioK__/____KooooKKKoooooooooKKKiiiiK___/____KooooKKKoooKKKoooKKKoiiiK___/____KoooooKoooooKoooooKoooiiK___/____KooooooooooooooooooooooiK___/_____KoooooooooooooooooooooK____/_____KoooooooooiiooooooooooK____/______KoooooKKiiioKKooooooK_____/______KKooooooKKKKoooooooKK_____/_______KKoooooooooooooooKK______/________KKoooooooooooooKK_______"
     },
     {
       "id": "loom-venusaur",
       "name": "妙蛙花",
       "group": "pokemon",
       "bg": "Y",
-      "grid": "_PPYYPP_/PPPPPPPP/_LLLLLL_/KGGLLGGK/KGRGGRGK/KGGWWGGK/_KGGGGK_/__KKKK__"
+      "grid": "________________________________/________________m_______________/__________mmmmmmmmmmmmm_________/________mmmmmmmmmmmmmmmmm_______/__i____mmmmmmmmmmmmmmmmmmm______/___ii_mmmmmmmmmmmmmmmmmmmmm_ii__/___iimmmmmmmmmmmfmmmmmmmmmmmii__/____immmmmmmmmfffffmmmmmmmmmi___/____mmmmWmmmmmfffffmmmmWmmmmm___/_____mmmmmmmmfffffffmmmmmmmmi___/_____mmmmmmmmmfffffmmmmmmmmm____/_______mmmmmmmfffffmmmmmmmii____/_______KKomooooofooooomoKKii____/______KKoooooooooooooooooKK_____/______KoooooooooooooooooooK_____/_____KoooooooooooooooooooooK____/_____KoooiiooooooooooooooooK____/____KoiiiiioooooooooooooooooK___/____KoooiiKoooooooooooKoooooK___/____KooooWKKoooooooooWKKooooK___/____KooooKeKoooooooooKeKooooK___/___KooooKKeKKoooooooKKeKKoiioK__/____KooooKKKoooooooooKKKiiiiK___/____KooooKKKoooKKKoooKKKoiiiK___/____KoooooKoooooKoooooKoooiiK___/____KooooooooooooooooooooooiK___/_____KoooooooooooooooooooooK____/_____KoooooooooiiooooooooooK____/______KoooooKKiiioKKooooooK_____/______KKooooooKKKKoooooooKK_____/_______KKoooooooooooooooKK______/________KKoooooooooooooKK_______"
     },
     {
       "id": "loom-charmander",
       "name": "小火龙",
       "group": "pokemon",
       "bg": "C",
-      "grid": "__KKKK__/_KOOOOK_/KOKOOKOK/KOOOOOOK/_KOOOOK_/_KYYOOKR/KOKYYKOR/_KK__KK_"
+      "grid": "________________________________/________________________________/________________________________/________________________________/________________________________/________________________________/________________________________/________________________________/________________K_______________/____________KKKKxKKKK___________/__________KKxxxxxxxxxKK_________/________KKxxxxxxxxxxxxxKK_______/_______KKxxxxxxxxxxxxxxxKK______/______KKxxxxxxxxxxxxxxxxxKK_____/______KxxxxxxxxxxxxxxxxxxxK_____/_____KxxxxxxxxxxxxxxxxxxxxxK____/_____KxxxxxxxxxxxxxxxxxxxxxK____/____KxxxxxxxxxxxxxxxxxxxxxxxK___/____KxxxxxKxxxxxxxxxxxKxxxxxK___/____KxxxxWKKxxxxxxxxxWKKxxxxK___/____KxxxxKgKxxxxxxxxxKgKxxxxK___/___KxxxxKKgKKxxxxxxxKKgKKxxxxK__/____KxxxxKKKxxxxxxxxxKKKxxxxK___/____KxxxxKKKxxxKKKxxxKKKxxxxK___/____KxxxxxKxxxxxKlxxxxKxxxxxK___/____KxxxxxxxxlllllllllxxxxxxK___/_____KxxxxxxlllllllllllxxxxK____/_____KxxxxxlllllllllllllxxxK____/______KxxxxlKKllllKKllllxxK_____/______KKxxllllKKKKlllllllKK_____/_______KKxxlllllllllllllKK______/________KKxlllllllllllllK_______"
     },
     {
       "id": "loom-charmeleon",
       "name": "火恐龙",
       "group": "pokemon",
       "bg": "Y",
-      "grid": "___K____/__KRRK__/_KRRRRK_/KRKRRKRK/KRRRRRRK/_KRYYRK_/KRKYYKRK/_KK__KK_"
+      "grid": "________________________________/________________________________/________________________________/________________________________/________________________________/________________________________/________________________________/________________________________/________________K_______________/____________KKKKeKKKK___________/__________KKeeeeeeeeeKK_________/________KKeeeeeeeeeeeeeKK_______/_______KKeeeeeeeeeeeeeeeKK______/______KKeeeeeeeeeeeeeeeeeKK_____/______KeeeeeeeeeeeeeeeeeeeK_____/_____KeeeeeeeeeeeeeeeeeeeeeK____/_____KeeeeeeeeeeeeeeeeeeeeeK____/____KeeeeeeeeeeeeeeeeeeeeeeeK___/____KeeeeeKeeeeeeeeeeeKeeeeeK___/____KeeeeWKKeeeeeeeeeWKKeeeeK___/____KeeeeKgKeeeeeeeeeKgKeeeeK___/___KeeeeKKgKKeeeeeeeKKgKKeeeeK__/____KeeeeKKKeeeeeeeeeKKKeeeeK___/____KeeeeKKKeeeKKKeeeKKKeeeeK___/____KeeeeeKeeeeeKleeeeKeeeeeK___/____KeeeeeeeellllllllleeeeeeK___/_____KeeeeeellllllllllleeeeK____/_____KeeeeellllllllllllleeeK____/______KeeeelKKllllKKlllleeK_____/______KKeellllKKKKlllllllKK_____/_______KKeelllllllllllllKK______/________KKelllllllllllllK_______"
     },
     {
       "id": "loom-charizard",
       "name": "喷火龙",
       "group": "pokemon",
       "bg": "V",
-      "grid": "_K____K_/_KOKKOK_/_KOOOOK_/KOKOOKOK/KOOOOOOK/_KOWWOK_/KCOWWOCK/KCK__KCK"
+      "grid": "________________________________/________________________________/________________________________/________________________________/___x_________________________x__/___xx_______________________xx__/___xxx_____________________xxx__/___xxxx___________________xxxx__/___xxgxx________K________xxxxx__/____xggxx___KKKKxKKKK___xxxgxx__/____xgggxxKKxxxxxxxxxKKxxxggxx__/__p_xgggKKxxxxxxxxxxxxxKKgggxpp_/__ppxggKKxxxxxxxxxxxxxxxKKggppp_/__ggpgKKxxxxxxxxxxxxxxxxxKKpggp_/__ggppKxxxxxxxxxxxxxxxxxxxppggp_/__gggppxxxxxxxxxxxxxxxxxxpppggp_/_ppggppxxxxxxxxxxxxxxxxxxppgggpp/_ppggppxxxxxxxxxxxxxxxxxxppggppp/_ppggppxxxKxxxxxxxxxxxKxxppggppp/_ppgggpxxWKKxxxxxxxxxWKKxppggppp/_pppggpxxKgKxxxxxxxxxKgKxppggppp/ppppggpxKKgKKxxxxxxxKKgKKppggppp/_pppggpxxKKKxxxxxxxxxKKKxpgggpp_/__ppgggxxKKKxxxKKKxxxKKKxpggpp__/___ppggxxxKxxxxxKlxxxxKxxpggp___/____pggxxxxxxlllllllllxxxpggK___/_____ppxxxxxlllllllllllxxppK____/_____KpxxxxlllllllllllllxpxK____/______KxxxxlKKllllKKllllxxK_____/______KKxxllllKKKKlllllllKK_____/_______KKxxlllllllllllllKK______/________KKxlllllllllllllK_______"
     },
     {
       "id": "loom-lapras",
       "name": "乘龙",
       "group": "pokemon",
       "bg": "Y",
-      "grid": "_K____K_/_KCKKCK_/_KCCCCK_/KCKCCKCK/KCCCCCCK/_KCWWCK_/__CWWC__/__KWWK__"
+      "grid": "________________________________/________________________________/________________________________/________________l_______________/________________l_______________/________________l_______________/__yy___________lll__________yy__/__yyy__________lll_________yyy__/__yyyy_________lKl________yyyy__/_yyyyyy_____KKKKyKKKK___yyyyyy__/__yyyyy___KKyyyyyyyyyKK__yyyyy__/___yyyy_KKyyyyyyyyyyyyyKKyyyy___/____yyyKKyyyyyyyyyyyyyyyKKyy____/____yyKKyyyyyyyyyyyyyyyyyKKy____/_____yKyyyyyyyyyyyyyyyyyyyK_____/_____KyyyyyyyyyyyyyyyyyyyyyK____/_____KyyyyyyyyyyyyyyyyyyyyyK____/____KyyyyyyyyyyyyyyyyyyyyyyyK___/____KyyyyyKyyyyyyyyyyyKyyyyyK___/____KyyyyWKKyyyyyyyyyWKKyyyyK___/____KyyyyKKKyyyyyyyyyKKKyyyyK___/___KyyyyKKKKKyyyyyyyKKKKKyyyyK__/____KyyyyKKKyyyyyyyyyKKKyyyyK___/____KyyyyKKKyyyKKKyyyKKKyyyyK___/____KyyyyyKyyyyyKyyyyyKyyyyyK___/____KyyyyyyyyyyyyyyyyyyyyyyyK___/_____KyyyyyyyyyyyyyyyyyyyyyK____/_____KyyyyyyyyyyyyyyyyyyyyyK____/______KyyyyyKKyyyyKKyyyyyyK_____/______KKyyyyyyKKKKyyyyyyyKK_____/_______KKyyyyyyyyyyyyyyyKK______/________KKyyyyyyyyyyyyyKK_______"
     },
     {
       "id": "loom-snorlax",
       "name": "卡比兽",
       "group": "pokemon",
       "bg": "L",
-      "grid": "KK____KK/KBKKKKBK/KBWWWWBK/KWWWWWWK/KWKWWKWK/KWWKKWWK/_KWWWWK_/__KKKK__"
+      "grid": "________________________________/________________________________/________________________________/________________________________/______c___________________c_____/______cc_________________cc_____/______ccc_______________ccc_____/______cccc_____________cccc_____/______ccccc_____K______cccc_____/______ccccccKKKKcKKKK_ccccc_____/______ccccKKcccccccccKKcccc_____/______ccKKcccccccccccccKKcc_____/______cKKcccccccccccccccKKc_____/______KKcccccccclccccccccKK_____/______KccccclllllllllcccccK_____/_____KcccclllllllllllllccccK____/_____KccclllllllllllllllcccK____/____KccclllllllllllllllllcccK___/____KccclllllllllllllllllcccK___/____KcclKKlllllllllllllKKlccK___/____KcclllKKKlllllllKKKlllccK___/___KccclllllllllllllllllllcccK__/____KcclllllllllllllllllllccK___/____KclllllllllllllllllllllcK___/____KcclllllllllllllllllllccK___/____KcclllllKKllllKKllllllccK___/_____KclllllllKKKKllllllllcK____/_____KclllllllllllllllllllcK____/______KclllllllllllllllllcK_____/______KKlllllllllllllllllKK_____/_______KKlllllllllllllllKK______/________KKlllllllllllllKK_______"
     },
     {
       "id": "loom-zapdos",
       "name": "闪电鸟",
       "group": "pokemon",
       "bg": "C",
-      "grid": "K__K__K_/KYYKYYK_/_KYYYYKK/KKYKYYKK/_KYYOOK_/KYYKKKKK/_KYK_YK_/__K___K_"
+      "grid": "________________________________/__________________f_____________/________________f_f_____________/________________f_f_____________/________________ffff____________/______f_f_______ffff____________/______ffff_____fffff________f___/______fffff____fffff______fff___/______fffffff__ffffff____ffff___/______ffffffffKKfffff__fffffff__/______fffffffffffffffKKfffffff__/______ffKffffffffffffffffffff___/fffffffffffffffffffffffffffff___/_fffffffffffffffffffffffffff____/__ffffffffffffffffffffffffff____/___ffffffffffffffffffffffffK____/____fffffffffffffffffffffffK____/____KffKKWKKfffffffffWKKKKffK___/____KffffKKKfffffffffKKKffffK___/____KfffKKKKKfffffffKKKKKfffK___/____KffffKKKfffffffffKKKffffK___/___KfffffKKKfffffffffKKKfffffK__/____KfffffKffppppppfffKfffffK___/____KfffffffffpppppfffffffffK___/____KfffffffffppppffffffffffK___/____KffffffffffpppffffffffffK___/_____KfffffffffppffffffffffK____/_____KffffffffffpffffffffffK____/______KfffffffffffffffffffK_____/______KKfffffffffffffffffKK_____/_______KKfffffffffffffffKK______/________KKfffffffffffffKK_______"
     },
     {
       "id": "loom-moltres",
       "name": "火焰鸟",
       "group": "pokemon",
       "bg": "V",
-      "grid": "R__Y__R_/RY_R_RY_/_RYOYR__/RYOYYOYR/_KYYYK__/__KOOOK_/___KYK__/___KK___"
+      "grid": "________________________________/___________________e____________/________________x__e____________/___________e____x_ee____________/___________ee___xxeee___________/______x___eeee__xxeef___________/______xx__eefeexxeeff______ex___/______xxxxefffeexeefff____eex___/______xxxeefffeeeeffff___eeex___/____e_xxxefffffeeeffff_xeeee____/____eeexxffffffeeffffffeeeee____/____eeeeefffffffeffffffeeeex____/____eeeeffffffffffffffffeee_____/____eeefffffffffffffffffeee_____/____eeeeeeeeeeeeeeeeeeeeeee_____/____eeeeeeeeeeeeeeeeeeeeeeeK____/_____KxxxxKxxxxxxxxxxxKxxxxK____/____KxxxxWKKxxxxxxxxxWKKxxxxK___/____KxxxxKKKxxxxxxxxxKKKxxxxK___/____KxxxKKKKKxxxxxxxKKKKKxxxK___/____KxxxxKKKxxxxxxxxxKKKxxxxK___/___KxxxxxKKKxxxxxxxxxKKKxxxxxK__/____KxxxxxKxxffffffxxxKxxxxxK___/____KxxxxxxxxxfffffxxxxxxxxxK___/____KxxxxxxxxxffffxxxxxxxxxxK___/____KxxxxxxxxxxfffxxxxxxxxxxK___/_____KxxxxxxxxxffxxxxxxxxxxK____/_____KxxxxxxxxxxfxxxxxxxxxxK____/______KxxxxxxxxxxxxxxxxxxxK_____/______KKxxxxxxxxxxxxxxxxxKK_____/_______KKxxxxxxxxxxxxxxxKK______/________KKxxxxxxxxxxxxxKK_______"
     },
     {
       "id": "loom-articuno",
       "name": "急冻鸟",
       "group": "pokemon",
       "bg": "Y",
-      "grid": "___CC___/CC_CW_CC/CWCCCCWC/_CKCCKC_/_CCCCCC_/__CWWC__/__CWWC__/___CC___"
+      "grid": "________________________________/________________________________/________________y_______________/________________y____g__________/___________gg___yy__gg__________/______y____ggg__yy_ggg__________/______yy___ggggyyygggg______y___/______yyyy_ggngggggngg____yyy___/______yyyyyggnngggnngg___yyyy___/______yyyyyggnnngnnngg_yyyyy____/______yyyyKggnnnnnnnggKyyyyy____/______yyKKyggnnnnnnnggyKKyyy____/______yKKyggnnnnnnnnggyyKKy_____/______KKyyyyyyyyyyyyyyyyyKK_____/______KyyyyyyyyyyyyyyyyyyyK_____/_____KyyyyyyyyyyyyyyyyyyyyyK____/_____KyyyyKyyyyyyyyyyyKyyyyK____/____KyyyyWKKyyyyyyyyyWKKyyyyK___/____KyyyyKKKyyyyyyyyyKKKyyyyK___/____KyyyKKKKKyyyyyyyKKKKKyyyK___/____KyyyyKKKyyyyyyyyyKKKyyyyK___/___KyyyyyKKKyyyyyyyyyKKKyyyyyK__/____KyyyyyKyyffffffyyyKyyyyyK___/____KyyyyyyyyyfffffyyyyyyyyyK___/____KyyyyyyyyyffffyyyyyyyyyyK___/____KyyyyyyyyyyfffyyyyyyyyyyK___/_____KyyyyyyyyyffyyyyyyyyyyK____/_____KyyyyyyyyyyfyyyyyyyyyyK____/______KyyyyyyyyyyyyyyyyyyyK_____/______KKyyyyyyyyyyyyyyyyyKK_____/_______KKyyyyyyyyyyyyyyyKK______/________KKyyyyyyyyyyyyyKK_______"
     },
     {
       "id": "loom-mewtwo",
       "name": "超梦",
       "group": "pokemon",
       "bg": "V",
-      "grid": "K______K/KWKKKKWK/_KWWWWK_/KWKWWKWK/KWWWWWWK/_KWPPWK_/__KPPK__/__K__K__"
+      "grid": "________________________________/________________________________/________________________________/________________________________/______r___________________r_____/______rrtt______________ttr_____/______rrtt______________ttr_____/______rttt_____________rttt_____/______rttrr_____K______rrtt_____/______tttrrrKKKKrKKKK_rrrtt_____/______ttrrKKrrrrrrrrrKKrrtt_____/_____tttKKrrrrrrrrrrrrrKKttt____/_____ttKKrrrrrrrrrrrrrrrKKtt____/_____ttKrrrrrrrrrrrrrrrrrKtt____/______KrrrrrrrrrrrrrrrrrrrK_____/_____KrrrrrrrrrrrrrrrrrrrrrK____/_____KrrrrrrrrrrrrrrrrrrrrrK____/____KrrrrrrrrrrrrrrrrrrrrrrrK___/____KrrrrrKrrrrrrrrrrrKrrrrrK___/____KrrqqqKKrrrrrrrrrWKqqqrrK___/____KrrrrKqqqqrrrrrqqqqKrrrrK___/___KrrrrKKKKKrrrrrrrKKKKKrrrrK__/____KrrrrKKKrrrrrrrrrKKKrrrrK___/____KrrrrKKKrrrKvKrrrKKKrrrrK___/____KrrrrrKrrvvvvvvvrrKrrrrrK___/____KrrrrrrrvvqvvvqvvrrrrrrrK___/_____KrrrrrvvvvvvvvvvvrrrrrK____/_____KrrrrrrvvvvvvvvvrrrrrrK____/______KrrrrrKvvvvvvvrrrrrrK_____/______KKrrrrrrKKvKrrrrrrrKK_____/_______KKrrrrrrrrrrrrrrrKK______/________KKrrrrrrrrrrrrrKK_______"
     },
     {
       "id": "loom-gastly",
       "name": "鬼斯",
       "group": "pokemon",
       "bg": "V",
-      "grid": "V__VV__V/_VKKKKV_/VKKKKKKV/KWKKKWKK/KKKWWKKK/VKKKKKKV/_VKKKKV_/V__VV__V"
+      "grid": "________________________________/________________t_______________/______________ttttt_____________/_________ttttttttttttttt________/________ttttttttttttttttt_______/_______ttttttttttttttttttt______/_______tttttttttqttttttttt______/_____tttttttqqqqqqqqqttttttt____/____ttttttqqqqqqqqqqqqqtttttt___/___ttttttqqqqqqqqqqqqqqqtttttt__/___tttttqqqqqqqqqqqqqqqqqttttt__/___ttttqqqqqqqqqqqqqqqqqqqtttt__/___ttttqqqqqqqqqqqqqqqqqqqtttt__/___tttqqqqqqqqqqqqqqqqqqqqqttt__/__ttttqWWqqqqqqqqqqqqqqqWWqtttt_/__ttttqWWWWqqqqqqqqqqqWWWWqtttt_/_tttttqWWWKWWqqqqqqWWWKWWWqttttt/__tttqqWWWWqqqqqqqqqqWWWWWqqttt_/__ttttqWWqqqqqqqqqqqqqqWWWqtttt_/___tttqqqqqqqqqqqqqqqqqqqqqttt__/___tttqqqqqqqqqqqqqqqqqqqqqttt__/___tttqqqqqqqqqqqqqqqqqqqqqttt__/___ttttqqqqqqqqqqqqqqqqqqqtttt__/___ttttqqqmmmmmmmmmmmmqqqqtttt__/____ttttqqqmmmmmmmmmmqqqqtttt___/_____ttttqqqmmmmmmmmqqqqtttt____/_______tttqqqqqqqqqqqqqttt______/_______tttttqqqqqqqqqttttt______/________ttttttttqtttttttt_______/_________ttttttttttttttt________/______________ttttt_____________/________________t_______________"
     },
     {
       "id": "loom-haunter",
       "name": "鬼斯通",
       "group": "pokemon",
       "bg": "P",
-      "grid": "K_V__V_K/VKVKKVKV/VVVVVVVV/VKWVVWKV/_VKWWKV_/V_VKKV_V/VV_VV_VV/V__VV__V"
+      "grid": "________________________________/________________________________/________________________________/________________________________/________________________________/_________qq___________qq________/_________qqqq_______qqqq________/_________qqqqqq___qqqqqq________/_________qqddqqqqqqqqddq_____q__/___q_____qqdddqqqqqddddq___qqq__/___qqq___qqddddqqqdddddq__qqqq__/___qqqqqqqqddddddddddddqqqqqq___/____qddqqqqddddddddddddqqqddq___/____qdddddddddddddddddddddddq___/____qqddWWdddddddddddddddWWqq___/____qqddWWWWdddddddddddWWWWq____/_____qqdeWWWWWdddddddWWWWWdq____/_____qqdddeWWWWdddddWWWWedqq____/_____qqdddddeWWdddddWWedddqq____/___ttqqdddddddddddddddddddq_tt__/__tttqqddddddddddddddddddqqqttt_/tttttqqtWWWWKWWWWWWWKWWWtdqqtttt/tttttqttdWWWKWWWWWWWKWWWttqqtttt/ttttttttddWWKWWWWWWWKWWdtttttttt/ttttttttdddWKWWWWWWWKWWdtttttttt/ttttttttqqqdKWWWWWWWKWqqtttttttt/ttttttttqqqqqdddddqqqq__tttttttt/ttttttttqqqqqqqddqqqq___tttttttt/_ttttttt___qqqqqqqqq____ttttttt_/__tttt________qqqqq________ttt__/________________________________/________________________________"
     },
     {
       "id": "loom-gengar",
       "name": "耿鬼",
       "group": "pokemon",
       "bg": "Y",
-      "grid": "KV____VK/KVVKKVVK/KVVVVVVK/KVRVVRVK/KVVVVVVK/_VWWWWV_/__VVVV__/__V__V__"
+      "grid": "________________________________/________________________________/________________________________/________________________________/________________________________/_________qq___________qq________/_________qqqq_______qqqq________/_________qqqqqq___qqqqqq________/_________qqddqqqqqqqqddq_____q__/___q_____qqdddqqqqqddddq___qqq__/___qqq___qqddddqqqdddddq__qqqq__/___qqqqqqqqddddddddddddqqqqqq___/____qddqqqqddddddddddddqqqddq___/____qdddddddddddddddddddddddq___/____qqdddddddddddddddddddddqq___/____qqddeeedddddddddddddeedq____/_____qqdeeeeedddddddddeeeedq____/_____qqdddeeeeedddddeeeeedqq____/_____qqdddddeeedddddeeedddqq____/_____qqdddddddddddddddddddq_____/_____qqddddddddddddddddddqqq____/_____qqdWWWWKWWWWWWWKWWWddqq____/____qqdddWWWKWWWWWWWKWWWddqqq___/____qqddddWWKWWWWWWWKWWddddqq___/____qqdddddWKWWWWWWWKWWddddqqq__/___qqqqqqqqdKWWWWWWWKWqqqqqqqq__/___qqqqqqqqqqdddddqqqq__________/___qqqqqqqqqqqqddqqqq___________/___________qqqqqqqqq____________/______________qqqqq_____________/________________________________/________________________________"
     },
     {
       "id": "loom-mew",
       "name": "梦幻",
       "group": "pokemon",
       "bg": "C",
-      "grid": "KP____PK/KPPKKPPK/_KPPPPK_/KPCPPCPK/KPPPPPPK/_KPPPPK_/__KPPK__/__P__P__"
+      "grid": "________________________________/________________________________/________________________________/________________________________/______m___________________m_____/______mm_________________mm_____/______mmm_______________mmm_____/______mmmm_____________mmmm_____/______mmmmm_____K______mmmm_____/______mmmmmmKKKKmKKKK_mmmmm_____/______mmmmKKmmmmmmmmmKKmmmm_____/______mmKKmmmmmmmmmmmmmKKmm_____/______mKKmmmmmmmmmmmmmmmKKm_____/______KKmmmmmmmmmmmmmmmmmKK_____/______KmmmmmmmmmmmmmmmmmmmK__m__/_____KmmmmmmmmmmmmmmmmmmmmmKmmm_/_____KmmmmmmmmmmmmmmmmmmmmmKmmm_/____Kmmmmmmmmmmmmmmmmmmmmmmmmmmm/____KmmmmmKmmmmmmmmmmmKmmmmmmmmm/____KmmmmWKKmmmmmmmmmWKKmmmmmmmm/____KmmmmKgKmmmmmmmmmKgKmmmmKmmm/___KmmmmKKgKKmmmmmmmKKgKKmmmmmmm/____KmmmmKKKmmmmmmmmmKKKmmmmKmm_/____KmmmmKKKmmmKKKmmmKKKmmmmKmm_/____KmmmmmKmmmmmKmmmmmKmmmmmKmm_/____KmmmmmmmmmmmmmmmmmmmmmmmKmm_/_____KmmmmmmmmmmmmmmmmmmmmmKmmm_/_____KmmmmmmmmmmmmmmmmmmmmmKmm__/______KmmmmmKKmmmmKKmmmmmmK_mm__/______KKmmmmmmKKKKmmmmmmmKK_mm__/_______KKmmmmmmmmmmmmmmmKK______/________KKmmmmmmmmmmmmmKK_______"
     }
-  ]
+  ],
+  "palette": {
+    "a": "#F9D8B7",
+    "b": "#D89A79",
+    "c": "#384F91",
+    "d": "#6E3E9C",
+    "e": "#D84250",
+    "f": "#FFC638",
+    "g": "#346BCA",
+    "h": "#72BDC5",
+    "i": "#448764",
+    "j": "#865132",
+    "k": "#62677C",
+    "l": "#FFF0D6",
+    "m": "#ECA1BA",
+    "n": "#B8DBED",
+    "o": "#9EB577",
+    "p": "#E27635",
+    "q": "#25273B",
+    "r": "#C9C3E8",
+    "s": "#A3DCE4",
+    "t": "#8D64BE",
+    "u": "#D4AD83",
+    "v": "#F6F4EC",
+    "w": "#8DAADE",
+    "x": "#F79744",
+    "y": "#7CADD5",
+    "z": "#B27570"
+  }
 }

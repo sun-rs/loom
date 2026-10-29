@@ -188,9 +188,13 @@ never installs them or configures their accounts.
   verified model/effort as a grey fallback/placeholder and never save that fallback.
   The Role sidebar retains official avatar/name/subtitle/runtime anatomy; CLI
   labels come from verified Host offers, never parsed opaque offer IDs.
+  Role `instructions` may be empty; create/revise/instantiate and the editor must
+  preserve an empty prompt without manufacturing instructions.
   New Role avatars are sampled once and stored after idempotency replay; never
-  randomize existing Roles on read/restart. The official 8x8 renderer/palette stay
-  immutable; `loom/pixel-avatar-library.ts` merges Loom-authored preset data.
+  randomize existing Roles on read/restart. Official source/original 8x8 presets
+  and palette remain immutable; `loom/pixel-avatar-library.ts` merges Loom-authored
+  detailed 32x32 data and extra colors. The generator records the dimension/run-length
+  compatibility seam, preserving original 8x8 SVG output and one cached image per avatar.
   Protocol owns preset identity keys, frontend owns grids/group labels; contract
   tests keep them synchronized. Reserved original art remains excluded.
   Runtime Fast uses the selected model's published service tier (including
@@ -234,7 +238,14 @@ never installs them or configures their accounts.
   instances, not Roles. A Channel owns one platform-created home directory (the
   CLI cwd and default artifact directory of its instances, private box
   included) plus optional Human-attached directories, both fixed at creation
-  (owner approved 2026-09-26). Platform memory is shared per Channel and never
+  (owner approved 2026-09-26). Owner 2026-10-29: creation uses official name/description/optional
+  member fields plus the existing folder-tree chooser; no manual path textarea.
+  Selected Roles create new instances after confirmed Channel creation, through
+  the existing causal/idempotent write owner. Unknown results must be verified
+  before continuing; partial member failure never recreates the Channel.
+  Channel public/private controls and badges are omitted for the single-Human UI;
+  historical visibility, authentication, membership and instance-private isolation stay.
+  Platform memory is shared per Channel and never
   materialized as instance or Channel files (contract §4, "Memory boundary").
   Channels created before the home directory keep their instances' private cwds.
 

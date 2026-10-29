@@ -20,6 +20,8 @@ test("library extends immutable originals; random creation picks a staged select
       "utf8",
     ),
   );
+  for (const [key, color] of Object.entries(native.palette))
+    assert.equal(library.palette[key], color);
   for (const [id, data] of Object.entries(native.avatars))
     assert.deepEqual(library.avatars[id], data);
   assert.equal(
@@ -38,7 +40,7 @@ test("library extends immutable originals; random creation picks a staged select
     assert.ok(!native.reservedKeys.includes(value.slice(6)));
   }
 });
-test("all requested avatar families use unique native 8x8 palette sprites", () => {
+test("all requested avatar families use unique detailed 32x32 palette sprites", () => {
   const native = JSON.parse(
     readFileSync(
       "frontends/raft/upstream/raft-web-source/packages/web/assets/avatars/pixelAvatars.json",
@@ -52,10 +54,10 @@ test("all requested avatar families use unique native 8x8 palette sprites", () =
   for (const a of extra.avatars) {
     assert.ok(!native.avatars[a.id]);
     const rows = a.grid.split("/");
-    assert.equal(rows.length, 8, a.id);
+    assert.equal(rows.length, 32, a.id);
     for (const r of rows) {
-      assert.equal(r.length, 8, a.id);
-      for (const c of r) assert.ok(c in native.palette, a.id + " " + c);
+      assert.equal(r.length, 32, a.id);
+      for (const c of r) assert.ok(c in library.palette, a.id + " " + c);
     }
     assert.ok(extra.groups.some((g) => g.id === a.group));
   }

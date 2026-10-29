@@ -25,7 +25,6 @@ export const ClientAgentProvisionRequestSchema = z
     instructions: z
       .string()
       .trim()
-      .min(1)
       .max(64 * 1_024),
     modelIntent: ModelIntentSchema,
     role: z.string().trim().min(1).max(512),

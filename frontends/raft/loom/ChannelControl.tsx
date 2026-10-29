@@ -182,11 +182,6 @@ export default function ChannelControl({
                     >
                       #{name}
                     </span>
-                    <Badge appearance="outline" className="shrink-0">
-                      {bridge.room.state.snapshot?.room.visibility === "public"
-                        ? "公开"
-                        : "私密"}
-                    </Badge>
                   </span>
                 </DrawerTitle>
                 <DrawerDescription className="truncate text-caption text-foreground-hint">

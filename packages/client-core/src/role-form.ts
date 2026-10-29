@@ -31,8 +31,10 @@ export function roleModelLabel(
   binding: BindingChoice,
   choices: readonly BindingChoice[],
 ) {
-  const display = binding.label.split("（")[0]!;
-  return choices.filter((b) => b.label.split("（")[0] === display).length > 1
+  const label = (value: string) =>
+    value.split("（")[0]!.replace(/^local:[^:]+:/, "");
+  const display = label(binding.label);
+  return choices.filter((b) => label(b.label) === display).length > 1
     ? `${display} · ${binding.modelBindingId.replace(/^local:[^:]+:/, "")}`
     : display;
 }

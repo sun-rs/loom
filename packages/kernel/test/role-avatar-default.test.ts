@@ -75,3 +75,40 @@ test("Role remarks/prompt/avatar revisions preserve frozen instances and reach o
     f.close();
   }
 });
+test("blank Role prompt creates, revises and instantiates without manufacturing instructions", () => {
+  const f = roleInstanceFixture();
+  try {
+    const role = f.kernel.roles.create(f.actor, {
+      controlRoomId: f.role.controlRoomId,
+      basedOnRoomSeq: f.head(f.role.controlRoomId),
+      idempotencyKey: "empty-prompt",
+      configuration: {
+        ...f.role.configuration,
+        displayName: "Empty prompt",
+        instructions: "",
+      },
+    }).role;
+    assert.equal(role.configuration.instructions, "");
+    const instance = f.kernel.roles.instantiate(f.actor, {
+      roleId: role.roleId,
+      channelId: f.home.roomId,
+      basedOnRoomSeq: f.head(f.home.roomId),
+      idempotencyKey: "empty-instance",
+    });
+    assert.equal(instance.agent.currentRevision.instructions, "");
+    const revised = f.kernel.roles.revise(f.actor, {
+      roleId: role.roleId,
+      expectedRoleRevisionId: role.roleRevisionId,
+      basedOnRoomSeq: f.head(f.role.controlRoomId),
+      idempotencyKey: "empty-revise",
+      configuration: {
+        ...role.configuration,
+        description: "Display note",
+        instructions: "",
+      },
+    }).role;
+    assert.equal(revised.configuration.instructions, "");
+  } finally {
+    f.close();
+  }
+});

@@ -148,7 +148,6 @@ export default function RoleFieldEditor({
               aria-label="提示词"
               rows={8}
               maxLength={64 * 1024}
-              required
               value={value}
               disabled={disabled}
               onChange={(e) => setValue(e.target.value)}

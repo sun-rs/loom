@@ -201,6 +201,7 @@ export class ManagementClient {
     name: string,
     additionalDirectories: string[],
     done: (result: IntentOutcome<ClientRoomMutationResponse>) => void,
+    description?: string,
   ) {
     return this.writes.submit({
       action: "channel-create",
@@ -211,6 +212,7 @@ export class ManagementClient {
         slug: `channel-${crypto.randomUUID()}`,
         kind: "channel" as const,
         additionalDirectories,
+        ...(description ? { description } : {}),
       },
       send: (p, basedOnControlRoomSeq, idempotencyKey) =>
         this.client.request("room.create", {

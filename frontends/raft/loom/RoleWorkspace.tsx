@@ -24,7 +24,6 @@ import {
   SidebarSectionDisclosure,
   SidebarSectionCount,
   SidebarSectionControl,
-  Input,
   TabsList,
   TabsTab,
   TabsLabel,
@@ -103,15 +102,9 @@ export default function RoleWorkspace({
       return next;
     });
 
-  const [query, setQuery] = useState("");
   const panel = useSidebarColumn();
   const mobile = useMediaQuery(layoutQueries.single);
-  const visible = entries.filter((entry) =>
-    `${entry.name} ${entry.description ?? ""} ${entry.runtimeLabel ?? ""}`
-      .normalize("NFKC")
-      .toLocaleLowerCase()
-      .includes(query.trim().normalize("NFKC").toLocaleLowerCase()),
-  );
+  const visible = entries;
   const emptyList =
     mobile &&
     !visible.some((entry) => !entry.retired) &&
@@ -155,17 +148,10 @@ export default function RoleWorkspace({
               <Plus size={16} />
             </SidebarSectionControl>
           </SidebarSectionHeader>
-          <Input
-            aria-label="筛选角色"
-            placeholder="筛选角色"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="mb-2"
-          />
           {!visible.some((entry) => !entry.retired) && (
             <>
               <OfficialSidebarDescription className="hidden md:block">
-                {query ? "没有匹配的角色" : "还没有角色"}
+                还没有角色
               </OfficialSidebarDescription>
             </>
           )}
@@ -228,7 +214,7 @@ export default function RoleWorkspace({
                   ))}
             </>
           )}
-          {emptyList && <PageEmpty kind={query ? "search" : "roles"} />}
+          {emptyList && <PageEmpty kind={"roles"} />}
         </Frame>
         <SidebarResize testId="agent-sidebar-resize" />
       </LoomSidebarSlot>

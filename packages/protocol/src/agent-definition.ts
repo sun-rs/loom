@@ -118,7 +118,6 @@ export const AgentDefinitionRevisionSchema = z
     instructions: z
       .string()
       .trim()
-      .min(1)
       .max(64 * 1_024)
       .optional(),
     instructionRefs: z.array(VersionedContentRefSchema),

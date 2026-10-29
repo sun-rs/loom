@@ -48,8 +48,29 @@ export function generateSharedContent() {
     }
     for (const [start, end, value] of edits.reverse())
       source = source.slice(0, start) + value + source.slice(end);
+    // Explicit compatibility seam: native 8x8 output is identical; detailed owned
+    // presets use their actual grid dimensions, still one cached image per avatar.
+    if (name === "agent/PixelAvatar") {
+      source = source.replace(
+        "const cells = data.grid.flatMap",
+        "const cells = data.grid.length > 8 ? detailedAvatarCells(data.grid, C) : data.grid.flatMap",
+      );
+      source =
+        'import {detailedAvatarCells} from "./detailed-avatar-svg";\n' + source;
+      source = source
+        .replace(
+          'viewBox="0 0 8 8"',
+          'viewBox="0 0 ${data.grid[0]!.length} ${data.grid.length}"',
+        )
+        .replace(
+          '<rect width="8" height="8" fill="${data.bg}"',
+          '<rect width="${data.grid[0]!.length}" height="${data.grid.length}" fill="${data.bg}"',
+        );
+    }
     output["Official" + posix.basename(name) + ".generated.tsx"] =
-      "// GENERATED from immutable Raft db5e399 module. Import-only bindings to the shared Loom presentation graph; do not edit.\n" +
+      (name === "agent/PixelAvatar"
+        ? "// GENERATED from immutable Raft db5e399. Import bindings and explicit Loom detailed-grid seam; do not edit.\n"
+        : "// GENERATED from immutable Raft db5e399 module. Import-only bindings to the shared Loom presentation graph; do not edit.\n") +
       source;
   }
   return output;

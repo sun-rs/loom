@@ -202,7 +202,11 @@ export default function RoleRuntimeFields({
       <RuntimeFormV2Fields
         form={{
           ...schema,
-          fields: schema.fields.filter((field) => field.key !== "runtime"),
+          fields: schema.fields.filter(
+            (field) =>
+              field.key !== "runtime" &&
+              (field.key !== "effort" || (binding?.reasoning.length ?? 0) > 1),
+          ),
         }}
         sources={sources}
         values={values}

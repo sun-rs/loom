@@ -28,10 +28,12 @@ export default function ComputerFiles({
   onSelect,
   uploadDisabled,
   onUpload,
+  foldersOnly = false,
 }: {
   client: RahClient;
-  uploadDisabled: boolean;
-  onUpload: (files: FileList) => void;
+  foldersOnly?: boolean;
+  uploadDisabled?: boolean;
+  onUpload?: (files: FileList) => void;
   onClose: () => void;
   onSelect: (paths: string[]) => void;
 }) {
@@ -87,11 +89,13 @@ export default function ComputerFiles({
     >
       <DialogSheetContent
         data-testid="computer-file-dialog"
-        aria-label="引用计算机文件或文件夹"
+        aria-label={foldersOnly ? "选择工作区文件夹" : "引用计算机文件或文件夹"}
         className="flex min-h-[min(512px,80dvh)] max-h-[80dvh] flex-col overflow-hidden"
       >
         <DialogHeader>
-          <DialogTitle>引用文件或文件夹</DialogTitle>
+          <DialogTitle>
+            {foldersOnly ? "选择工作区文件夹" : "引用文件或文件夹"}
+          </DialogTitle>
           <DialogClose aria-label="关闭文件选择" />
         </DialogHeader>
         <DialogBody className="min-h-0 flex-initial overflow-auto">
@@ -184,28 +188,30 @@ export default function ComputerFiles({
                     showHeader={false}
                     className="border-0 shadow-none   [&>div]:max-h-none [&>div]:overflow-visible"
                     emptyLabel="此目录为空"
-                    options={data.entries.map((e) => ({
-                      key: e.path,
-                      label: e.name,
-                      checked: selected.includes(e.absolutePath),
-                      leading: e.isDirectory ? (
-                        <Folder size={16} />
-                      ) : (
-                        <File size={16} />
-                      ),
-                      onClick: () =>
-                        e.isDirectory
-                          ? setLocation({
-                              hostId: data.hostId,
-                              rootId: data.rootId,
-                              path: e.path,
-                            })
-                          : setSelected((s) =>
-                              s.includes(e.absolutePath)
-                                ? s.filter((p) => p !== e.absolutePath)
-                                : [...s, e.absolutePath],
-                            ),
-                    }))}
+                    options={data.entries
+                      .filter((e) => !foldersOnly || e.isDirectory)
+                      .map((e) => ({
+                        key: e.path,
+                        label: e.name,
+                        checked: selected.includes(e.absolutePath),
+                        leading: e.isDirectory ? (
+                          <Folder size={16} />
+                        ) : (
+                          <File size={16} />
+                        ),
+                        onClick: () =>
+                          e.isDirectory
+                            ? setLocation({
+                                hostId: data.hostId,
+                                rootId: data.rootId,
+                                path: e.path,
+                              })
+                            : setSelected((s) =>
+                                s.includes(e.absolutePath)
+                                  ? s.filter((p) => p !== e.absolutePath)
+                                  : [...s, e.absolutePath],
+                              ),
+                      }))}
                   />
                 )
               )}
@@ -218,9 +224,14 @@ export default function ComputerFiles({
           {data?.truncated && <p role="status">目录过大，仅显示前1000项。</p>}
         </DialogBody>
         <DialogFooter className="flex-wrap gap-2">
-          <DialogFooterNote>
-            <DeviceFileUpload disabled={uploadDisabled} onFiles={onUpload} />
-          </DialogFooterNote>
+          {!foldersOnly && onUpload && (
+            <DialogFooterNote>
+              <DeviceFileUpload
+                disabled={!!uploadDisabled}
+                onFiles={onUpload}
+              />
+            </DialogFooterNote>
+          )}
           <Button {...uiActionProps.secondary} onClick={onClose}>
             取消
           </Button>
@@ -232,7 +243,7 @@ export default function ComputerFiles({
             }
           >
             <Check size={14} />
-            引用所选
+            {foldersOnly ? "选择此文件夹" : "引用所选"}
           </DialogCommit>
         </DialogFooter>
       </DialogSheetContent>

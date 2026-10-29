@@ -28,6 +28,8 @@ test("management sheets are opt-in only for long lists and multi-field forms", (
     /sheet \? DialogSheetContent : DialogContent/,
   );
   assert.match(read("ChannelArchiveDialog"), /sheet=\{target === "list"\}/);
-  assert.match(read("ChannelSidebar"), /sheet=\{edit.kind === "channel"\}/);
+  assert.match(read("ChannelSidebar"), /<CreateChannelDialog/);
+  assert.match(read("CreateChannelDialog"), /<MobileFormDialog/);
+  assert.match(read("CreateChannelDialog"), /busy=\{busy\}/);
   assert.match(read("AgentPage"), /sheet=\{edit.kind === "edit"\}/);
 });

@@ -1,0 +1,9 @@
+{
+  "source": "https://github.com/botiverse/raft-source",
+  "revision": "db5e399f017d584e49597e3a28757645d6807893",
+  "path": "packages/web/src/components/channel/CreateChannelDialog.tsx",
+  "sha256": "63ca5d6eb0050347255f9d637df2e0ce49cb5636279a254e4a9c52f79287348d",
+  "companionSha256": "bd095e7c89107c9ce5dde28aceae30bb96c0eb12d1dc6dad80f9702198d848b1",
+  "license": "FSL-1.1-ALv2; ../../LICENSE retained; owner-authorized reuse",
+  "adoption": "Byte-exact independently acquired source; extracted JSX sections with Loom data bindings and accessible labels; workspace folder slot; omitted visibility/multi-Human/Slack"
+}

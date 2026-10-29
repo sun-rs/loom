@@ -128,3 +128,7 @@ Discovery 和 Memory 使用该计算，普通聊天／角色／计算机／设�
 独立新版声明替代，而不是把旧 class 再加回产品。运行时认证/远程升级能力只有 Host 提供
 事实和操作时才显示；暂不支持的入口明确省略。手动未读涉及持久语义，本次以可复现缺陷
 修复进入 Kernel schema91，迁移先备份/预演，禁止只重置浏览器状态来伪造通过。
+
+### 频道创建与详细头像接线（2026-10-29）
+
+频道表单的独立源码闭包在`upstream/channel-create-2026-10-29`，由`generate-channel-create.mjs`提取；升级时同时对比CreateChannelDialog和memberPickerClasses，核对名称／描述／成员与原生spacing，保留Loom文件树插槽和既有写入owner。来源、hash与故障回环见[验收记录](../evo/evidence/2026-10-29-channel-role-usability/README.md)。新增32×32头像是Loom数据扩展，PixelAvatar生成器的尺寸／同行合并是明确兼容例外，不能再称整个renderer仅替换import；原始8×8内容及输出规则不变。

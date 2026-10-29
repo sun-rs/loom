@@ -1,4 +1,5 @@
-// GENERATED from immutable Raft db5e399 module. Import-only bindings to the shared Loom presentation graph; do not edit.
+// GENERATED from immutable Raft db5e399. Import bindings and explicit Loom detailed-grid seam; do not edit.
+import {detailedAvatarCells} from "./detailed-avatar-svg";
 import { memo, useContext, useMemo, useState } from "react";
 import type { Context } from "react";
 import { IntlContext } from "react-intl";
@@ -166,9 +167,9 @@ export function pixelAvatarDataUrl(avatarKey: string): string | null {
   const data = getPixelAvatarData(avatarKey);
   let url: string | null = null;
   if (data) {
-    const cells = data.grid.flatMap((row, y) => row.flatMap((colorKey, x) =>
+    const cells = data.grid.length > 8 ? detailedAvatarCells(data.grid, C) : data.grid.flatMap((row, y) => row.flatMap((colorKey, x) =>
       colorKey === "_" ? [] : [`<rect x="${x}" y="${y}" width="1" height="1" fill="${C[colorKey]}"/>`]));
-    url = svgDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8" shape-rendering="crispEdges"><rect width="8" height="8" fill="${data.bg}"/>${cells.join("")}</svg>`);
+    url = svgDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${data.grid[0]!.length} ${data.grid.length}" shape-rendering="crispEdges"><rect width="${data.grid[0]!.length}" height="${data.grid.length}" fill="${data.bg}"/>${cells.join("")}</svg>`);
   }
   dataUrlCache.set(avatarKey, url);
   return url;
