@@ -72,9 +72,6 @@ export function standingPromptLease(
       ? {}
       : { channelMemory: { section: memorySection } }),
     agent: {
-      ...(revision.description === undefined
-        ? {}
-        : { description: revision.description }),
       ...(revision.displayName === undefined
         ? {}
         : { displayName: revision.displayName }),

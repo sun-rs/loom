@@ -1,0 +1,69 @@
+{
+  "baseRevision": "8cfc4238",
+  "schemaChanged": false,
+  "paidModelCalls": 0,
+  "productionTestEntitiesCreated": 0,
+  "physicalMobile": false,
+  "presets": {
+    "officialSelectable": 16,
+    "reserved": 2,
+    "loomAuthored": 58,
+    "totalSelectable": 74,
+    "grid": "8x8",
+    "palette": "unchanged official"
+  },
+  "tests": {
+    "source": {
+      "passed": 535,
+      "failed": 0
+    },
+    "owners": {
+      "passed": 79,
+      "failed": 0
+    },
+    "types": {
+      "root": true,
+      "loom": true
+    },
+    "productBuild": true
+  },
+  "browser": [
+    {
+      "suite": "role-identity",
+      "widths": [1440, 390],
+      "independentFields": true,
+      "oneRevisionPerSave": true,
+      "placeholderNeverStored": true,
+      "discardGuard": true,
+      "providerEvaPokemonSelection": true,
+      "randomCreation": true,
+      "reload": true
+    },
+    {
+      "suite": "role-form",
+      "widths": [1440, 390],
+      "creationPayloadIncludesRandomAvatarAndRemarks": true,
+      "runtimeModelEffortFastEnvironmentRetained": true
+    },
+    {
+      "suite": "upstream-126",
+      "widths": [1440, 390],
+      "profileSave": true,
+      "avatarSave": true,
+      "frozenInstancesPreserved": true
+    }
+  ],
+  "sourceBoundary": {
+    "officialRendererBodyUnchanged": true,
+    "originalPaletteAndGridsUnchanged": true,
+    "generatorsOwnOutputs": true,
+    "loomDataExtension": "frontends/raft/loom/pixel-avatar-library.ts",
+    "roleRow": "Original MemberAgentRow with status/action/runtime-label bindings"
+  },
+  "notes": [
+    "New semantic invariants reproduced before fixes",
+    "Old MVP deletion assertion reproduced on isolated baseline owners and updated to owner2026-10-28 contract",
+    "Logs normalized for trailing whitespace",
+    "Existing session history is preserved; past injected remarks cannot be retroactively removed"
+  ]
+}

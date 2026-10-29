@@ -28,7 +28,7 @@ export function generateSharedContent() {
       const spec = node.moduleSpecifier.text;
       const bound =
         spec === "../../../assets/avatars/pixelAvatars.json"
-          ? "@loom/raft-web-source/pixelAvatars"
+          ? "./pixel-avatar-library"
           : spec === "@botiverse/raft-ui"
             ? "raft-ui"
             : spec === "../../utils/markdownAutolink"

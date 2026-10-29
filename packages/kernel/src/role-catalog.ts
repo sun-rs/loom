@@ -1,4 +1,5 @@
 import { discardSide, reconcileSideDiscards } from "./side-lifecycle.ts";
+import { randomInt } from "node:crypto";
 import { sideProjection } from "./side-session.ts";
 import { forkInstance, type CopyInstanceSession } from "./instance-fork.ts";
 import { adoptInstanceRoleRevision } from "./instance-restart-config.ts";
@@ -388,7 +389,12 @@ export class RoleCatalog {
         roleId: c.createId("role"),
         roleRevisionId: c.createId("role_revision"),
         controlRoomId: input.controlRoomId,
-        configuration: input.configuration,
+        configuration: {
+          ...input.configuration,
+          avatarKey:
+            input.configuration.avatarKey ??
+            `pixel:${P.AGENT_AVATAR_PRESET_KEYS[randomInt(P.AGENT_AVATAR_PRESET_KEYS.length)]}`,
+        },
         createdAt: c.now().toISOString(),
       });
       c.database

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { IdentifierSchema } from "./common.ts";
-import { OFFICIAL_AGENT_AVATAR_KEYS } from "./official-agent-avatars.ts";
+import { AGENT_AVATAR_PRESET_KEYS } from "./official-agent-avatars.ts";
 import { UploadedProfileImageKeySchema } from "./profile-image.ts";
 
 const Name = z
@@ -13,9 +13,9 @@ const Avatar = z
   .string()
   .refine(
     (value) =>
-      OFFICIAL_AGENT_AVATAR_KEYS.includes(value) ||
+      AGENT_AVATAR_PRESET_KEYS.includes(value) ||
       UploadedProfileImageKeySchema.safeParse(value).success,
-    "avatar must be an official key or a verified upload",
+    "avatar must be a built-in preset or a verified upload",
   );
 export const WorkerSelfProfileWriteContextSchema = z
   .object({

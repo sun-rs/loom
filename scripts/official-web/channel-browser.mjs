@@ -1,4 +1,5 @@
 import { verifyRemaining138 } from "./remaining138-browser.mjs";
+import { verifyRoleIdentity } from "./role-identity-browser.mjs";
 import { verifyRoleCreation } from "./role-create-browser.mjs";
 import { verifyUIRefresh135 } from "./ui-refresh135-browser.mjs";
 import { verifyUIRefresh138 } from "./ui-refresh138-browser.mjs";
@@ -206,7 +207,20 @@ try {
   browser = await (
     process.env.LOOM_BROWSER_ENGINE === "webkit" ? webkit : chromium
   ).launch({ headless: true });
-  if (process.env.LOOM_BROWSER_SLICE === "remaining138") {
+  if (process.env.LOOM_BROWSER_SLICE === "role-identity") {
+    console.log(
+      JSON.stringify(
+        await verifyRoleIdentity({
+          browser,
+          origin,
+          client,
+          workspace,
+          head,
+          role,
+        }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "remaining138") {
     console.log(
       JSON.stringify(
         await verifyRemaining138({

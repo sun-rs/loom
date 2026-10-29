@@ -58,7 +58,7 @@ export async function verifyUpstream126({ browser, origin, role, client }) {
         .getByRole("button", { name: "编辑显示名称", exact: true })
         .click();
       assert.equal(
-        await profile.getByLabel("角色 Prompt", { exact: true }).count(),
+        await profile.getByLabel("提示词", { exact: true }).count(),
         0,
       );
       const name = `FIXTURE field profile ${width}`;
@@ -77,32 +77,34 @@ export async function verifyUpstream126({ browser, origin, role, client }) {
       await profile
         .getByRole("button", { name: "编辑描述", exact: true })
         .click();
-      await profile
-        .getByLabel("角色 Prompt", { exact: true })
+      const descriptionDialog = page.getByTestId("role-description-dialog");
+      await descriptionDialog
+        .getByLabel("提示词", { exact: true })
         .fill(`FIXTURE prompt ${width}`);
-      await profile.getByRole("button", { name: "保存", exact: true }).click();
-      await profile
+      await descriptionDialog
         .getByRole("button", { name: "保存", exact: true })
-        .waitFor({ state: "hidden" });
+        .click();
+      await descriptionDialog.waitFor({ state: "hidden" });
       await profile
         .getByRole("button", { name: "编辑运行时配置", exact: true })
         .click();
       await page
         .getByTestId("agent-runtime-config-dialog")
-        .getByRole("button", { name: "取消", exact: true })
+        .getByRole("button", { name: "关闭", exact: true })
         .click();
       await profile
         .getByRole("button", { name: "更换头像", exact: true })
         .click();
-      const avatar = profile
+      const avatarDialog = page.getByTestId("role-avatar-dialog");
+      const avatar = avatarDialog
         .getByRole("button", { name: /^头像 / })
         .nth(width === 1440 ? 1 : 2);
       await avatar.click();
       const key = (await avatar.getAttribute("aria-label")).slice(3);
-      await profile.getByRole("button", { name: "保存", exact: true }).click();
-      await profile
+      await avatarDialog
         .getByRole("button", { name: "保存", exact: true })
-        .waitFor({ state: "hidden" });
+        .click();
+      await avatarDialog.waitFor({ state: "hidden" });
       await profile
         .getByRole("button", { name: "编辑显示名称", exact: true })
         .waitFor();

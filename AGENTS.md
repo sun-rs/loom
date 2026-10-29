@@ -182,6 +182,17 @@ never installs them or configures their accounts.
 
 - **Role** is configuration, not an entity: CLI + model + effort + prompt +
   skills and optional launch environment, with a stable Role ID. Every save creates an immutable Revision.
+  Owner 2026-10-29 separates `description` (display-only remarks) from the
+  executable `instructions` prompt. One description pencil edits both fields in
+  one revision; remarks never enter standing prompts. Empty remarks display the
+  verified model/effort as a grey fallback/placeholder and never save that fallback.
+  The Role sidebar retains official avatar/name/subtitle/runtime anatomy; CLI
+  labels come from verified Host offers, never parsed opaque offer IDs.
+  New Role avatars are sampled once and stored after idempotency replay; never
+  randomize existing Roles on read/restart. The official 8x8 renderer/palette stay
+  immutable; `loom/pixel-avatar-library.ts` merges Loom-authored preset data.
+  Protocol owns preset identity keys, frontend owns grids/group labels; contract
+  tests keep them synchronized. Reserved original art remains excluded.
   Runtime Fast uses the selected model's published service tier (including
   Codex priority and Claude supportsFastMode); never infer it from the CLI name
   or silently switch models. Default mode overrides inherited native Fast

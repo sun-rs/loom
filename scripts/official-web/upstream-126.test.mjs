@@ -49,7 +49,8 @@ test("Role profile exposes field actions, native avatar presets and immutable re
   assert.match(s, /RoleFieldEditor/);
   assert.doesNotMatch(s, /编辑配置/);
   assert.match(read("loom/RoleWorkspace.tsx"), /<TabsLabel>资料<\/TabsLabel>/);
-  assert.match(read("loom/RoleFieldEditor.tsx"), /AVATAR_KEYS/);
+  assert.match(read("loom/RoleFieldEditor.tsx"), /AvatarLibraryPicker/);
+  assert.match(read("loom/AvatarLibraryPicker.tsx"), /avatarGroups/);
 });
 
 test("message headers retain official spacing, badges and semantic full timestamps", () => {

@@ -45,6 +45,8 @@ import PanelHeader, {
 export type RoleEntry = {
   id: string;
   name: string;
+  description?: string;
+  runtimeLabel?: string;
   computer?: { id: string; name: string };
   retired?: boolean;
   avatarUrl?: string;
@@ -105,7 +107,7 @@ export default function RoleWorkspace({
   const panel = useSidebarColumn();
   const mobile = useMediaQuery(layoutQueries.single);
   const visible = entries.filter((entry) =>
-    entry.name
+    `${entry.name} ${entry.description ?? ""} ${entry.runtimeLabel ?? ""}`
       .normalize("NFKC")
       .toLocaleLowerCase()
       .includes(query.trim().normalize("NFKC").toLocaleLowerCase()),

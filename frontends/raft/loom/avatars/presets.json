@@ -1,0 +1,434 @@
+{
+  "version": 1,
+  "provenance": "Loom-authored 8x8 pixel interpretations; original Raft palette and renderer. Names identify subjects, not official brand assets or upstream Raft presets.",
+  "groups": [
+    {
+      "id": "providers",
+      "name": "AI 与运行时"
+    },
+    {
+      "id": "eva",
+      "name": "新世纪福音战士"
+    },
+    {
+      "id": "geass",
+      "name": "反叛的鲁路修"
+    },
+    {
+      "id": "doraemon",
+      "name": "哆啦A梦"
+    },
+    {
+      "id": "pokemon",
+      "name": "宝可梦"
+    }
+  ],
+  "avatars": [
+    {
+      "id": "loom-gemini",
+      "name": "Gemini",
+      "group": "providers",
+      "bg": "W",
+      "grid": "____B___/___BC___/__BBCC__/BBBCCPPP/_CCPPV__/__PPVV__/___VV___/____V___"
+    },
+    {
+      "id": "loom-kimi",
+      "name": "Kimi",
+      "group": "providers",
+      "bg": "K",
+      "grid": "_WW__WW_/_WW_WW__/_WWWW___/_WWW____/_WWWW___/_WW_WW__/_WW__WW_/________"
+    },
+    {
+      "id": "loom-openai",
+      "name": "OpenAI",
+      "group": "providers",
+      "bg": "G",
+      "grid": "__KKKK__/_KK__KK_/KK_KK_KK/K_K__K_K/K_K__K_K/KK_KK_KK/_KK__KK_/__KKKK__"
+    },
+    {
+      "id": "loom-codex",
+      "name": "Codex",
+      "group": "providers",
+      "bg": "K",
+      "grid": "________/__C__C__/_CC__CC_/CCC__CCC/_CC__CC_/__C__C__/___CC___/________"
+    },
+    {
+      "id": "loom-claude",
+      "name": "Claude",
+      "group": "providers",
+      "bg": "O",
+      "grid": "_K__K___/K_K_K_K_/__KKKK__/KKKKKKKK/__KKKK__/_K_K_K_K/___K__K_/________"
+    },
+    {
+      "id": "loom-anthropic",
+      "name": "Anthropic",
+      "group": "providers",
+      "bg": "O",
+      "grid": "__KK_K__/__KK_K__/_K_K_K__/_K_K_K__/KKKK_K__/K__K_K__/K__K_K__/________"
+    },
+    {
+      "id": "loom-deepseek",
+      "name": "DeepSeek",
+      "group": "providers",
+      "bg": "C",
+      "grid": "_____K_K/___KKKKK/_KKBBBK_/KBBBBBBK/KBWBBBBK/KBBBBBK_/_KKKKK__/___KK___"
+    },
+    {
+      "id": "loom-grok",
+      "name": "Grok",
+      "group": "providers",
+      "bg": "K",
+      "grid": "____WW__/___WWW__/__WW_WW_/_WW___WW/_WW_WWW_/__WWWW__/___WW___/__WW____"
+    },
+    {
+      "id": "loom-muse",
+      "name": "Muse",
+      "group": "providers",
+      "bg": "V",
+      "grid": "________/KK___KKK/K_K_K_KK/K_KKK_KK/K__K__KK/K_____KK/K_____KK/________"
+    },
+    {
+      "id": "loom-glm",
+      "name": "GLM · 智谱",
+      "group": "providers",
+      "bg": "B",
+      "grid": "_CCCCCC_/_____CC_/____CC__/___CC___/__CC____/_CC_____/_CCCCCC_/________"
+    },
+    {
+      "id": "loom-opencode",
+      "name": "OpenCode",
+      "group": "providers",
+      "bg": "K",
+      "grid": "__WWWW__/_WW__WW_/_WW__WW_/_WW__WW_/_WW__WW_/_WW__WW_/__WWWW__/________"
+    },
+    {
+      "id": "loom-pi",
+      "name": "Pi",
+      "group": "providers",
+      "bg": "P",
+      "grid": "________/_KKKKKK_/__K__K__/__K__K__/__K__K__/__K__KK_/__K___K_/________"
+    },
+    {
+      "id": "loom-antigravity",
+      "name": "Antigravity",
+      "group": "providers",
+      "bg": "V",
+      "grid": "___WW___/__WWWW__/__W__W__/_WW__WW_/_WWWWW__/WW____WW/WW____WW/________"
+    },
+    {
+      "id": "loom-eva-shinji",
+      "name": "碇真嗣",
+      "group": "eva",
+      "bg": "C",
+      "grid": "__KKKK__/_KKKKKK_/KKKKKKKK/KOOKKOOK/_OKOOKO_/_OOOOOO_/__KOOK__/__WKKW__"
+    },
+    {
+      "id": "loom-eva-rei",
+      "name": "绫波丽",
+      "group": "eva",
+      "bg": "V",
+      "grid": "__CCCC__/CCCCCCC_/CCCOOCCC/COOKKOOC/COOROROC/_OOOOOO_/__WOOW__/__WKKW__"
+    },
+    {
+      "id": "loom-eva-asuka",
+      "name": "明日香",
+      "group": "eva",
+      "bg": "Y",
+      "grid": "_RDRRDR_/DRRRRRRD/DRROORRD/DOCKKCOD/DROOOORD/DROOOORD/_KROORK_/__RKKR__"
+    },
+    {
+      "id": "loom-eva-misato",
+      "name": "葛城美里",
+      "group": "eva",
+      "bg": "P",
+      "grid": "__VVVV__/_VVVVVV_/VVVOVVVV/VOOKKOOV/VOKOOKOV/VVOOOOVV/_RRWWRR_/__RKKR__"
+    },
+    {
+      "id": "loom-eva-kaworu",
+      "name": "渚薰",
+      "group": "eva",
+      "bg": "C",
+      "grid": "__WWWW__/_WWWWWW_/WWWOWWWW/WOOKKOOW/_OROORO_/_OOOOOO_/__KOOK__/__WKKW__"
+    },
+    {
+      "id": "loom-eva-mari",
+      "name": "真希波",
+      "group": "eva",
+      "bg": "L",
+      "grid": "_DD__DD_/_DDDDDD_/DDDOODDD/DOKKKKOD/DRKRKRKD/DDOOOODD/_PPOOPP_/__PKKP__"
+    },
+    {
+      "id": "loom-eva-ritsuko",
+      "name": "赤木律子",
+      "group": "eva",
+      "bg": "V",
+      "grid": "__YYYY__/_YYYYYYY/YYYOOYYY/YOOKKOOY/YOKOOKOY/_OOOOOO_/__KOOK__/__WKKW__"
+    },
+    {
+      "id": "loom-eva-gendo",
+      "name": "碇源堂",
+      "group": "eva",
+      "bg": "B",
+      "grid": "__KKKK__/_KKKKKK_/KKKOOKKK/KOKKKKOK/_OKKKKO_/_OOKKOO_/__KKKK__/__KKKK__"
+    },
+    {
+      "id": "loom-eva-unit00",
+      "name": "零号机",
+      "group": "eva",
+      "bg": "C",
+      "grid": "__YYYY__/_YKYYKY_/YYKKKKYY/YKKCCKKY/YKKCCKKY/_YKKKKY_/_YYWWYY_/__KYYK__"
+    },
+    {
+      "id": "loom-eva-unit01",
+      "name": "初号机",
+      "group": "eva",
+      "bg": "K",
+      "grid": "___L____/__VLVV__/_VVLVVV_/LVKKKKVL/VKWLLWKV/_VKKKKV_/_VVLLVV_/__LVVL__"
+    },
+    {
+      "id": "loom-eva-unit02",
+      "name": "二号机",
+      "group": "eva",
+      "bg": "K",
+      "grid": "_Y____Y_/_RYRRYR_/RRKKKKRR/RKWWWWKR/RKKWWKKR/_RKKKKR_/_RRWWRR_/__KRRK__"
+    },
+    {
+      "id": "loom-eva-unit08",
+      "name": "八号机",
+      "group": "eva",
+      "bg": "V",
+      "grid": "___P____/__PPPP__/_PPKKPP_/PKCCCCKP/PKCCCCKP/_PKKKKP_/_PPWWPP_/__KPPK__"
+    },
+    {
+      "id": "loom-eva-mark06",
+      "name": "Mark.06",
+      "group": "eva",
+      "bg": "Y",
+      "grid": "__YYYY__/_B_BB_B_/_BBYBBB_/BBKKKKBB/BKYYYYKB/_BKKKKB_/_BBYYBB_/__KBBK__"
+    },
+    {
+      "id": "loom-geass-lelouch",
+      "name": "鲁路修",
+      "group": "geass",
+      "bg": "V",
+      "grid": "__KKKK__/_KKKKKK_/KKKOKKKK/KOOKKOOK/_OVOOVO_/_OOOROO_/__KOOK__/_KKYYKK_"
+    },
+    {
+      "id": "loom-geass-cc",
+      "name": "C.C.",
+      "group": "geass",
+      "bg": "Y",
+      "grid": "__LLLL__/_LLLLLL_/LLLOOLLL/LOOKKOOL/LOYOOYOL/LLOOOOLL/LLWOOWLL/__WKKW__"
+    },
+    {
+      "id": "loom-geass-kallen",
+      "name": "红月卡莲",
+      "group": "geass",
+      "bg": "C",
+      "grid": "__RRRR__/_RRRRRR_/RRRORRRR/ROOKKOOR/ROCOOCOR/_OOOOOO_/__KOOK__/_RRKKRR_"
+    },
+    {
+      "id": "loom-geass-suzaku",
+      "name": "枢木朱雀",
+      "group": "geass",
+      "bg": "L",
+      "grid": "__DDDD__/_DDDDDD_/DDDODDDD/DOOKKOOD/_OLOOLO_/_OOOOOO_/__WOOW__/_WWYYWW_"
+    },
+    {
+      "id": "loom-doraemon",
+      "name": "哆啦A梦",
+      "group": "doraemon",
+      "bg": "C",
+      "grid": "__KKKK__/_KWWWWK_/KCWKKWCK/KWWRRWWK/KWKWWKWK/KWWKKWWK/_KRRRRK_/__KYYK__"
+    },
+    {
+      "id": "loom-nobita",
+      "name": "野比大雄",
+      "group": "doraemon",
+      "bg": "Y",
+      "grid": "__KKKK__/_KKKKKK_/_KOOOOK_/KOKKKKOK/KOKOOKOK/_OOOOOO_/__WOOW__/_YYWWYY_"
+    },
+    {
+      "id": "loom-shizuka",
+      "name": "源静香",
+      "group": "doraemon",
+      "bg": "P",
+      "grid": "__KKKK__/_KKKKKK_/KKKOOKKK/KOKOOKOK/KKOOOOKK/K_KOOK_K/__POOP__/_PPWWPP_"
+    },
+    {
+      "id": "loom-gian",
+      "name": "刚田武 · 胖虎",
+      "group": "doraemon",
+      "bg": "O",
+      "grid": "__KKKK__/_KKKKKK_/KOOOOOOK/KOKOOKOK/KOOOOOOK/_OOKKOO_/__OOOO__/_OOOOOO_"
+    },
+    {
+      "id": "loom-suneo",
+      "name": "骨川小夫",
+      "group": "doraemon",
+      "bg": "L",
+      "grid": "__KKKKK_/KKKKKK__/KKKOOOOK/_OKOOKOK/_OOOOOOK/__OOKKO_/__LOOL__/_LLWWLL_"
+    },
+    {
+      "id": "loom-dorami",
+      "name": "哆啦美",
+      "group": "doraemon",
+      "bg": "P",
+      "grid": "_RR__RR_/_RYYYYR_/_YWWWWY_/YWWKKWWY/YWWRRWWY/YWKKKKWY/_YWWWWY_/__YOOY__"
+    },
+    {
+      "id": "loom-pichu",
+      "name": "皮丘",
+      "group": "pokemon",
+      "bg": "P",
+      "grid": "KK____KK/KYK__KYK/_KYYYYK_/KYYYYYYK/KYKYYKYK/KYRYYRYK/_KYYYYK_/__KKKK__"
+    },
+    {
+      "id": "loom-pikachu",
+      "name": "皮卡丘",
+      "group": "pokemon",
+      "bg": "C",
+      "grid": "KK____KK/KYK__KYK/KYYYYYYK/KYKYYKYK/KYRYYRYK/_KYYYYK_/__KYYK__/_KK__KK_"
+    },
+    {
+      "id": "loom-raichu",
+      "name": "雷丘",
+      "group": "pokemon",
+      "bg": "Y",
+      "grid": "_KK__KK_/KORKKROK/_KOOOOK_/KOKOOKOK/KORWWROK/_KWWWWK_/__KWWK__/_KK__KK_"
+    },
+    {
+      "id": "loom-squirtle",
+      "name": "杰尼龟",
+      "group": "pokemon",
+      "bg": "Y",
+      "grid": "__KKKK__/_KCCCCK_/KCKCCKCK/KCCCCCCK/_KCCCCK_/_KYYYYK_/KCKYYKCK/_KK__KK_"
+    },
+    {
+      "id": "loom-wartortle",
+      "name": "卡咪龟",
+      "group": "pokemon",
+      "bg": "C",
+      "grid": "KW____WK/KWWKKWWK/_KBBBBK_/KBKBBKBK/KBBBBBBK/_KBWWBK_/KBKWWKBK/_KK__KK_"
+    },
+    {
+      "id": "loom-blastoise",
+      "name": "水箭龟",
+      "group": "pokemon",
+      "bg": "V",
+      "grid": "WW_KK_WW/KBKBBKBK/_KBBBBK_/KBKBBKBK/KBBBBBBK/_KYYYYK_/KBKYYKBK/_KK__KK_"
+    },
+    {
+      "id": "loom-bulbasaur",
+      "name": "妙蛙种子",
+      "group": "pokemon",
+      "bg": "Y",
+      "grid": "__KLLK__/_KLLLLK_/KKGLLGKK/KGGGGGGK/KGRGGRGK/KGGKKGGK/_KGGGGK_/__KKKK__"
+    },
+    {
+      "id": "loom-ivysaur",
+      "name": "妙蛙草",
+      "group": "pokemon",
+      "bg": "C",
+      "grid": "___PP___/__PPPP__/_KLLLLK_/KGGLLGGK/KGRGGRGK/KGGKKGGK/_KGGGGK_/__KKKK__"
+    },
+    {
+      "id": "loom-venusaur",
+      "name": "妙蛙花",
+      "group": "pokemon",
+      "bg": "Y",
+      "grid": "_PPYYPP_/PPPPPPPP/_LLLLLL_/KGGLLGGK/KGRGGRGK/KGGWWGGK/_KGGGGK_/__KKKK__"
+    },
+    {
+      "id": "loom-charmander",
+      "name": "小火龙",
+      "group": "pokemon",
+      "bg": "C",
+      "grid": "__KKKK__/_KOOOOK_/KOKOOKOK/KOOOOOOK/_KOOOOK_/_KYYOOKR/KOKYYKOR/_KK__KK_"
+    },
+    {
+      "id": "loom-charmeleon",
+      "name": "火恐龙",
+      "group": "pokemon",
+      "bg": "Y",
+      "grid": "___K____/__KRRK__/_KRRRRK_/KRKRRKRK/KRRRRRRK/_KRYYRK_/KRKYYKRK/_KK__KK_"
+    },
+    {
+      "id": "loom-charizard",
+      "name": "喷火龙",
+      "group": "pokemon",
+      "bg": "V",
+      "grid": "_K____K_/_KOKKOK_/_KOOOOK_/KOKOOKOK/KOOOOOOK/_KOWWOK_/KCOWWOCK/KCK__KCK"
+    },
+    {
+      "id": "loom-lapras",
+      "name": "乘龙",
+      "group": "pokemon",
+      "bg": "Y",
+      "grid": "_K____K_/_KCKKCK_/_KCCCCK_/KCKCCKCK/KCCCCCCK/_KCWWCK_/__CWWC__/__KWWK__"
+    },
+    {
+      "id": "loom-snorlax",
+      "name": "卡比兽",
+      "group": "pokemon",
+      "bg": "L",
+      "grid": "KK____KK/KBKKKKBK/KBWWWWBK/KWWWWWWK/KWKWWKWK/KWWKKWWK/_KWWWWK_/__KKKK__"
+    },
+    {
+      "id": "loom-zapdos",
+      "name": "闪电鸟",
+      "group": "pokemon",
+      "bg": "C",
+      "grid": "K__K__K_/KYYKYYK_/_KYYYYKK/KKYKYYKK/_KYYOOK_/KYYKKKKK/_KYK_YK_/__K___K_"
+    },
+    {
+      "id": "loom-moltres",
+      "name": "火焰鸟",
+      "group": "pokemon",
+      "bg": "V",
+      "grid": "R__Y__R_/RY_R_RY_/_RYOYR__/RYOYYOYR/_KYYYK__/__KOOOK_/___KYK__/___KK___"
+    },
+    {
+      "id": "loom-articuno",
+      "name": "急冻鸟",
+      "group": "pokemon",
+      "bg": "Y",
+      "grid": "___CC___/CC_CW_CC/CWCCCCWC/_CKCCKC_/_CCCCCC_/__CWWC__/__CWWC__/___CC___"
+    },
+    {
+      "id": "loom-mewtwo",
+      "name": "超梦",
+      "group": "pokemon",
+      "bg": "V",
+      "grid": "K______K/KWKKKKWK/_KWWWWK_/KWKWWKWK/KWWWWWWK/_KWPPWK_/__KPPK__/__K__K__"
+    },
+    {
+      "id": "loom-gastly",
+      "name": "鬼斯",
+      "group": "pokemon",
+      "bg": "V",
+      "grid": "V__VV__V/_VKKKKV_/VKKKKKKV/KWKKKWKK/KKKWWKKK/VKKKKKKV/_VKKKKV_/V__VV__V"
+    },
+    {
+      "id": "loom-haunter",
+      "name": "鬼斯通",
+      "group": "pokemon",
+      "bg": "P",
+      "grid": "K_V__V_K/VKVKKVKV/VVVVVVVV/VKWVVWKV/_VKWWKV_/V_VKKV_V/VV_VV_VV/V__VV__V"
+    },
+    {
+      "id": "loom-gengar",
+      "name": "耿鬼",
+      "group": "pokemon",
+      "bg": "Y",
+      "grid": "KV____VK/KVVKKVVK/KVVVVVVK/KVRVVRVK/KVVVVVVK/_VWWWWV_/__VVVV__/__V__V__"
+    },
+    {
+      "id": "loom-mew",
+      "name": "梦幻",
+      "group": "pokemon",
+      "bg": "C",
+      "grid": "KP____PK/KPPKKPPK/_KPPPPK_/KPCPPCPK/KPPPPPPK/_KPPPPK_/__KPPK__/__P__P__"
+    }
+  ]
+}

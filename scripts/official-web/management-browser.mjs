@@ -53,7 +53,7 @@ export async function verifyManagement({
     assert.equal(labelStyle.margin, "0px");
     await dialog.getByRole("textbox", { name: /^名称/ }).fill(name);
     await dialog
-      .getByLabel("角色 Prompt", { exact: true })
+      .getByLabel("提示词", { exact: true })
       .fill("FIXTURE ONLY do not execute");
     await chooseOption(page, dialog, "运行时", 0);
     await chooseOption(page, dialog, "模型", 0);
@@ -194,7 +194,7 @@ export async function verifyManagement({
     await page.getByRole("tab", { name: "配置", exact: true }).click();
     await detail.getByRole("button", { name: "编辑配置", exact: true }).click();
     await detail
-      .getByLabel("角色 Prompt", { exact: true })
+      .getByLabel("提示词", { exact: true })
       .fill("FIXTURE revised prompt; never execute");
     const [adoptionResponse] = await Promise.all([
       page.waitForResponse((r) => r.url().endsWith("/roles/revise")),

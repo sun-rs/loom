@@ -66,6 +66,8 @@ export function runtimeChoices(
 }
 
 export type RoleForm = {
+  description?: string;
+  avatarKey?: string;
   serviceTier?: ServiceTier;
   environment?: Record<string, string>;
   displayName: string;
@@ -82,6 +84,10 @@ type RoleConfiguration = RoleCreateRequest["configuration"];
 /** The editable fields of an existing Role configuration (for role.revise). */
 export function roleFormFrom(configuration: RoleConfiguration): RoleForm {
   return {
+    description: configuration.description ?? "",
+    ...(configuration.avatarKey === undefined
+      ? {}
+      : { avatarKey: configuration.avatarKey }),
     serviceTier: configuration.modelIntent.serviceTier ?? "default",
     environment: configuration.environment ?? {},
     displayName: configuration.displayName,
@@ -133,6 +139,8 @@ export function buildRoleConfiguration(
     return { ok: false, error: "所选模型未发布该运行模式，请重新选择" };
   const parsed = RoleConfigurationSchema.safeParse({
     ...base,
+    description: form.description?.trim() ?? base?.description,
+    avatarKey: form.avatarKey ?? base?.avatarKey,
     environment: form.environment ?? base?.environment ?? {},
     displayName: form.displayName.trim(),
     handle: form.handle.trim(),

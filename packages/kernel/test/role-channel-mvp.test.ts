@@ -232,15 +232,8 @@ test("Role is inert configuration; two channel instances receive independent con
       }).roomId,
       privateBox.roomId,
     );
-    assert.throws(
-      () =>
-        kernel.deleteWorkspaceRoom(actor, {
-          roomId: channels[0]!.room.roomId,
-          basedOnRoomSeq: head(channels[0]!.room.roomId),
-          idempotencyKey: "delete-channel",
-        }),
-      /Role instances/i,
-    );
+    // Owner2026-10-28 permits permanent channel deletion with instances.
+    // Exercise it after the collaboration flow so it does not erase this fixture mid-run.
     // Exercise the same Worker box HTTP path as a CLI, without a paid provider.
     for (let round = 0; round < 2; round++) {
       for (let count = 0; count < 2; count++) {
@@ -630,6 +623,29 @@ test("Role is inert configuration; two channel instances receive independent con
       /private box.*inactive/i,
     );
     assert.equal(kernel.leaseNextActivation(host, { leaseMs: 600000 }), null);
+    kernel.deleteWorkspaceRoom(actor, {
+      roomId: channels[0]!.room.roomId,
+      basedOnRoomSeq: head(channels[0]!.room.roomId),
+      idempotencyKey: "delete-channel",
+    });
+    assert.equal(
+      db
+        .prepare("SELECT count(*) n FROM rooms WHERE room_id=?")
+        .get(channels[0]!.room.roomId)!.n,
+      0,
+    );
+    assert.equal(
+      db.prepare("SELECT count(*) n FROM role_templates").get()!.n,
+      1,
+      "reusable Role remains",
+    );
+    assert.equal(
+      db
+        .prepare("SELECT count(*) n FROM role_instances WHERE channel_id=?")
+        .get(channels[1]!.room.roomId)!.n,
+      1,
+      "other channel remains isolated",
+    );
     db.close();
   } finally {
     await workerService.close();

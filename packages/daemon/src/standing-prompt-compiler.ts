@@ -23,6 +23,7 @@ export type StandingPromptAgentLayer = {
   handle?: string;
   participantId?: string;
   role: string;
+  /** Display-only metadata accepted for historical callers; never an instruction layer. */
   description?: string;
   instructions?: string;
 };
@@ -158,9 +159,6 @@ function initialRoleLayer(
     return undefined;
   }
   const blocks: string[] = [`## Initial role`, agent.role];
-  if (agent.description) {
-    blocks.push(agent.description);
-  }
   if (agent.instructions) {
     blocks.push(`### Instructions`, agent.instructions);
   }

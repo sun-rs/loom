@@ -1,0 +1,9 @@
+
+> rah-os@0.0.0 test:official-web:channel
+> node scripts/official-web/channel-browser.mjs
+
+[loom instance-prewarm] prewarm of principal_3707308b-3269-4c7f-bde6-23758a6b2d78 skipped: disabled
+[loom instance-prewarm] prewarm of principal_c53777c4-80d1-4bb1-8d8a-6236deba3b56 skipped: disabled
+[loom instance-prewarm] prewarm of principal_6fb1016f-d96b-4d4a-a0c5-081110ad2ef5 skipped: disabled
+[loom instance-prewarm] prewarm of principal_5ada65bb-4830-441b-8089-349742bfc1c1 skipped: disabled
+[{"width":1440,"deletedSectionAndRestore":true,"sharedDialog":true,"fastSavedAndReopened":true,"unsupportedModelClearsFast":true,"randomName":true,"defaultSaveOnly":true,"separateChannelCreation":true,"failedAddRetainsRole":true},{"width":390,"deletedSectionAndRestore":true,"sharedDialog":true,"fastSavedAndReopened":true,"unsupportedModelClearsFast":true,"randomName":true,"defaultSaveOnly":true,"separateChannelCreation":true,"failedAddRetainsRole":true}]

@@ -41,6 +41,7 @@ import type { IntentOutcome } from "@rah-os/client-core/write-intent";
 import { OfficialListRowGroup } from "./OfficialListRows.tsx";
 import SectionHeader from "../packages/web/src/components/ui/SectionHeader.tsx";
 import AvatarSlot from "../packages/web/src/components/ui/AvatarSlot.tsx";
+import { rolePresentation } from "./role-profile-values";
 import {
   ManagementClient,
   type Catalog,
@@ -206,6 +207,7 @@ export default function AgentPage({
     name: roleName(role),
     computer: roleComputer(role.configuration.runtimeOfferId, inventory),
     avatarUrl: role.configuration.avatarKey,
+    ...rolePresentation(role.configuration, inventory),
     presence: rolePresence(
       (catalog?.instances ?? [])
         .filter((i) => i.roleId === role.roleId)

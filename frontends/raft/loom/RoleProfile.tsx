@@ -21,6 +21,7 @@ import type { RoleCreateRequest } from "@rah-os/protocol";
 import { useTimeFormatter } from "../packages/web/src/hooks/useTimeFormatter.ts";
 import SectionEyebrow from "@loom/raft-web-source/SectionEyebrow";
 import AvatarEditVeil from "@loom/raft-web-source/AvatarEditVeil";
+import { rolePresentation } from "./role-profile-values";
 import {
   InfoRow,
   AgentHeaderName,
@@ -45,6 +46,8 @@ export default function RoleProfile({
   const [runtimeDirty, setRuntimeDirty] = useState(false);
   const [discardRuntime, setDiscardRuntime] = useState(false);
   const [field, setField] = useState<RoleField>();
+  const [fieldDirty, setFieldDirty] = useState(false),
+    [discardField, setDiscardField] = useState(false);
   const nameAction = useRef<HTMLDivElement | null>(null);
   const trigger = useRef<HTMLButtonElement | null>(null);
   const edit = (next: RoleField, button: HTMLButtonElement) => {
@@ -53,11 +56,18 @@ export default function RoleProfile({
   };
   const cancel = () => {
     setField(undefined);
+    setFieldDirty(false);
+    setDiscardField(false);
     onDirtyChange(false);
     requestAnimationFrame(() => {
       if (trigger.current?.isConnected) trigger.current.focus();
       else nameAction.current?.querySelector("button")?.focus();
     });
+  };
+  const requestCloseField = () => {
+    if (disabled) return;
+    if (fieldDirty) setDiscardField(true);
+    else cancel();
   };
   const [loading, setLoading] = useState(true);
   const [inventory, setInventory] = useState<LocalRuntimeInventoryResponse>();
@@ -77,6 +87,7 @@ export default function RoleProfile({
     return () => abort.abort();
   }, [client]);
   const form = roleFormFrom(role.configuration);
+  const presentation = rolePresentation(role.configuration, inventory);
   const runtime = inventory?.runtimes.find(
     (r) => r.runtimeOfferId === form.runtimeOfferId,
   );
@@ -92,8 +103,17 @@ export default function RoleProfile({
       client={client}
       disabled={disabled}
       onSave={onSave}
-      onCancel={cancel}
-      onDirtyChange={onDirtyChange}
+      onCancel={
+        current === "description" || current === "avatarKey"
+          ? requestCloseField
+          : cancel
+      }
+      onDiscard={cancel}
+      descriptionPlaceholder={presentation.fallback}
+      onDirtyChange={(value) => {
+        setFieldDirty(value);
+        onDirtyChange(value);
+      }}
     />
   );
   const editAction = (current: RoleField, label: string) => (
@@ -161,24 +181,58 @@ export default function RoleProfile({
           </p>
         </OfficialRoleIdentity>
       </OfficialRoleHero>
-      {(field === "avatarKey" || field === "displayName") && (
+      {field === "displayName" && (
         <div className="px-5 pb-4">{editor(field)}</div>
       )}
       <section data-testid="role-profile-prompt" className="px-5 py-3">
         <div className="flex items-center gap-2 mb-1">
           <SectionEyebrow as="div">描述</SectionEyebrow>
-          {editAction("instructions", "描述")}
+          {editAction("description", "描述")}
         </div>
-        {field === "instructions" ? (
-          editor(field)
-        ) : (
-          <p className="text-subhead text-foreground whitespace-pre-wrap break-words">
-            {form.instructions || (
-              <span className="text-foreground-hint">未设置</span>
-            )}
-          </p>
-        )}
+        <p
+          data-testid="role-description"
+          className={`text-subhead whitespace-pre-wrap break-words ${role.configuration.description?.trim() ? "text-foreground" : "text-foreground-hint"}`}
+        >
+          {presentation.description}
+        </p>
+        <SectionEyebrow as="div" className="mt-4 mb-1">
+          提示词
+        </SectionEyebrow>
+        <p
+          data-testid="role-instructions"
+          className="text-subhead text-foreground whitespace-pre-wrap break-words"
+        >
+          {form.instructions || (
+            <span className="text-foreground-hint">未设置</span>
+          )}
+        </p>
       </section>
+      {(field === "description" || field === "avatarKey") && (
+        <MobileFormDialog
+          title={field === "description" ? "编辑描述与提示词" : "更换头像"}
+          testId={
+            field === "description"
+              ? "role-description-dialog"
+              : "role-avatar-dialog"
+          }
+          busy={disabled}
+          onClose={requestCloseField}
+        >
+          {editor(field)}
+        </MobileFormDialog>
+      )}
+      {discardField && (
+        <ConfirmDialog
+          layer={2}
+          title="尚未保存的修改"
+          message="离开将放弃尚未保存的修改。"
+          confirmLabel="放弃修改"
+          cancelLabel="继续编辑"
+          confirmVariant="danger"
+          onClose={() => setDiscardField(false)}
+          onConfirm={cancel}
+        />
+      )}
       <Separator />
       <section className="px-5 py-4">
         <SectionEyebrow as="div" className="mb-3">

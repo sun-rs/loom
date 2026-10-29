@@ -4,6 +4,8 @@
 
 ## 当前结论（2026-10-22）
 
+2026-10-29 Role资料扩展：按owner要求区分展示备注与可执行提示词，共用一个原生表单弹窗和编辑入口；恢复 `MemberAgentRow` 原始尾部 span、宽度规则及 `SidebarItemMeta`，只将运行时状态订阅替换为Role所选Host目录标签。像素渲染器正文不改，JSON导入显式绑定 `loom/pixel-avatar-library.ts` 合并额外数据；原生18款（含2款保留）原件保持原样，额外58款标明Loom自制，不标成官方预置。见[证据](../evo/evidence/2026-10-29-role-identity/README.md)。
+
 **已经建立“官方设计系统／锁定源码依赖 + 生成展示层 + Loom 适配”的架构，本次已登记迁移范围完成；不能宣称“整个官方 Web 已成为可原样升级的依赖库，Loom 全站只剩薄适配层”。**
 
 当前清单见 [dependency-migration.json](../../frontends/raft/loom/dependency-migration.json)：`plannedMigrationComplete=true`、`openMigrationWork=[]`，但 `wholeSiteDependencyComplete=false`。前者表示约定范围完成，后者保留整站仍有本地组合的事实，不应通过改名或修改布尔值消除这个区别。

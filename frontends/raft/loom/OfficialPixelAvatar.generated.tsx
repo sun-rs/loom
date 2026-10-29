@@ -3,7 +3,7 @@ import { memo, useContext, useMemo, useState } from "react";
 import type { Context } from "react";
 import { IntlContext } from "react-intl";
 
-import pixelAvatars from "@loom/raft-web-source/pixelAvatars";
+import pixelAvatars from "./pixel-avatar-library";
 import { en } from "../packages/web/src/i18n/messages/en";
 
 /**

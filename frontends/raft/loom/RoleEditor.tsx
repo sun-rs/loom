@@ -1,4 +1,5 @@
 import { runtimePickerOptions } from "./runtime-picker";
+import { randomAvatarKey } from "./pixel-avatar-library";
 import type { LocalRuntimeInventoryEntry } from "@rah-os/protocol";
 import { DialogCommit } from "raft-ui/wip";
 import { uiActionProps } from "./ui-action-props.ts";
@@ -53,6 +54,8 @@ export default function RoleEditor({
     role
       ? roleFormFrom(role.configuration)
       : {
+          avatarKey: randomAvatarKey(),
+          description: "",
           displayName: "",
           handle: `role-${crypto.randomUUID()}`,
           instructions: "",
@@ -180,9 +183,21 @@ export default function RoleEditor({
               }
             />
           </Field>
-          <Field label="角色 Prompt" className={creation ? undefined : "mb-3"}>
+          <Field label="描述" className={creation ? undefined : "mb-3"}>
             <Textarea
-              aria-label="角色 Prompt"
+              aria-label="描述"
+              rows={2}
+              maxLength={2000}
+              placeholder={`${binding?.label.split("（")[0] ?? "模型"} · ${form.reasoning || "默认"}`}
+              value={form.description ?? ""}
+              onChange={(e) =>
+                setForm({ ...form, description: e.target.value })
+              }
+            />
+          </Field>
+          <Field label="提示词" className={creation ? undefined : "mb-3"}>
+            <Textarea
+              aria-label="提示词"
               required
               rows={creation ? 3 : 5}
               value={form.instructions}

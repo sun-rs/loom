@@ -1,7 +1,12 @@
-import { editableRolePrompt, patchRoleText } from "./role-profile-values.ts";
+import {
+  editableRolePrompt,
+  patchRoleText,
+  patchRoleDescription,
+} from "./role-profile-values.ts";
 // Loom Revision binding around official AgentProfileEditDialog field/preset composition.
-import { useState, useEffect } from "react";
-import { Button, Input, Textarea } from "raft-ui";
+import { useState, useEffect, useId } from "react";
+import { DialogCommit } from "raft-ui/wip";
+import { Button, Input, Textarea, DialogFooter } from "raft-ui";
 import type { RahClient } from "@rah-os/client-sdk";
 import {
   RoleConfigurationSchema,
@@ -10,11 +15,12 @@ import {
 } from "@rah-os/protocol";
 import RoleEditor from "./RoleEditor.tsx";
 import { useDraftNavigation } from "./DraftNavigation.tsx";
-import AvatarSlot from "../packages/web/src/components/ui/AvatarSlot.tsx";
-import { AVATAR_KEYS } from "../packages/web/src/components/agent/PixelAvatar.tsx";
+import AvatarLibraryPicker from "./AvatarLibraryPicker";
+import FormField from "../packages/web/src/components/ui/FormField.tsx";
 export type RoleField =
   | "displayName"
   | "instructions"
+  | "description"
   | "runtimeOfferId"
   | "modelBindingId"
   | "avatarKey";
@@ -26,6 +32,8 @@ export default function RoleFieldEditor({
   onSave,
   onCancel,
   onDirtyChange,
+  descriptionPlaceholder,
+  onDiscard,
 }: {
   field: RoleField;
   role: RoleTemplate;
@@ -34,25 +42,37 @@ export default function RoleFieldEditor({
   onSave: (config: RoleCreateRequest["configuration"]) => void;
   onCancel: () => void;
   onDirtyChange: (dirty: boolean) => void;
+  descriptionPlaceholder?: string;
+  onDiscard?: () => void;
 }) {
   const textual =
     field === "displayName" ||
     field === "instructions" ||
+    field === "description" ||
     field === "avatarKey";
   const initial = textual
-    ? field === "instructions"
+    ? field === "instructions" || field === "description"
       ? editableRolePrompt(role.configuration)
       : (role.configuration[field] ?? "")
     : "";
   const [value, setValue] = useState(initial),
     [error, setError] = useState("");
-  const dirty = textual && value !== initial;
+  const [description, setDescription] = useState(
+    role.configuration.description ?? "",
+  );
+  const combined = field === "description" || field === "instructions";
+  const formId = useId();
+  const Commit = combined || field === "avatarKey" ? DialogCommit : Button;
+  const dirty =
+    textual &&
+    (value !== initial ||
+      (combined && description !== (role.configuration.description ?? "")));
   useEffect(() => {
     if (textual) onDirtyChange(dirty);
   }, [dirty, textual, onDirtyChange]);
   useDraftNavigation(dirty, () => {
     setValue(initial);
-    onCancel();
+    (onDiscard ?? onCancel)();
   });
   if (!textual)
     return (
@@ -77,17 +97,20 @@ export default function RoleFieldEditor({
     );
   const save = () => {
     if (disabled) return;
-    const config = patchRoleText(
-      role.configuration,
-      field as "displayName" | "instructions" | "avatarKey",
-      value,
-    );
+    const config = combined
+      ? patchRoleDescription(role.configuration, description, value)
+      : patchRoleText(
+          role.configuration,
+          field as "displayName" | "instructions" | "avatarKey",
+          value,
+        );
     const parsed = RoleConfigurationSchema.safeParse(config);
     if (parsed.success) onSave(parsed.data);
     else setError("请输入有效内容。");
   };
   return (
     <form
+      id={formId}
       onKeyDown={(e) => {
         if (e.key === "Escape" && !e.nativeEvent.isComposing && !disabled) {
           e.preventDefault();
@@ -101,34 +124,37 @@ export default function RoleFieldEditor({
       className="space-y-3"
     >
       {field === "avatarKey" ? (
-        <div className="grid grid-cols-[repeat(auto-fill,40px)] gap-2">
-          {AVATAR_KEYS.map((key) => (
-            <button
-              key={key}
-              type="button"
-              aria-label={`头像 ${key}`}
-              aria-pressed={value === `pixel:${key}`}
-              disabled={disabled}
-              onClick={() => setValue(`pixel:${key}`)}
-              className={`flex size-10 items-center justify-center overflow-hidden rounded-md border transition-colors ${value === `pixel:${key}` ? "border-accent bg-accent-soft" : "border-line-muted hover:border-line-strong"}`}
-            >
-              <AvatarSlot
-                context="panel-header"
-                type="agent"
-                agentAvatarUrl={`pixel:${key}`}
-              />
-            </button>
-          ))}
-        </div>
-      ) : field === "instructions" ? (
-        <Textarea
-          aria-label="角色 Prompt"
-          autoFocus
-          rows={5}
+        <AvatarLibraryPicker
           value={value}
           disabled={disabled}
-          onChange={(e) => setValue(e.target.value)}
+          onChange={setValue}
         />
+      ) : combined ? (
+        <>
+          <FormField label="描述" labelStyle="plain">
+            <Textarea
+              aria-label="描述"
+              autoFocus
+              rows={3}
+              maxLength={2000}
+              placeholder={descriptionPlaceholder}
+              value={description}
+              disabled={disabled}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          </FormField>
+          <FormField label="提示词" labelStyle="plain">
+            <Textarea
+              aria-label="提示词"
+              rows={8}
+              maxLength={64 * 1024}
+              required
+              value={value}
+              disabled={disabled}
+              onChange={(e) => setValue(e.target.value)}
+            />
+          </FormField>
+        </>
       ) : (
         <Input
           aria-label="名称"
@@ -140,25 +166,26 @@ export default function RoleFieldEditor({
         />
       )}
       {error && <p role="alert">{error}</p>}
-      <div className="flex gap-2">
-        <Button
+      <DialogFooter>
+        <Commit
+          form={formId}
           type="submit"
           variant="accent"
-          size="sm"
+          size={combined || field === "avatarKey" ? "lg" : "sm"}
           disabled={disabled || !dirty}
         >
           保存
-        </Button>
+        </Commit>
         <Button
           type="button"
           variant="ghost"
-          size="sm"
+          size={combined || field === "avatarKey" ? "lg" : "sm"}
           disabled={disabled}
           onClick={onCancel}
         >
           取消
         </Button>
-      </div>
+      </DialogFooter>
     </form>
   );
 }

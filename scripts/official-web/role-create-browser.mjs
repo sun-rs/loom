@@ -33,9 +33,10 @@ export async function verifyRoleCreation({ browser, origin }) {
     await dialog
       .getByRole("textbox", { name: /^名称/ })
       .fill(`CreationFixture${width}`);
+    await dialog.getByLabel("提示词", { exact: true }).fill("FIXTURE ONLY");
     await dialog
-      .getByLabel("角色 Prompt", { exact: true })
-      .fill("FIXTURE ONLY");
+      .getByLabel("描述", { exact: true })
+      .fill("FIXTURE remark only");
     await chooseOption(page, dialog, "运行时", 0);
     await chooseOption(page, dialog, "模型", 0);
     await dialog.getByRole("checkbox", { name: /快速模式/ }).check();
@@ -77,6 +78,16 @@ export async function verifyRoleCreation({ browser, origin }) {
       0,
     );
     assert.equal(writes.filter((w) => w.path.endsWith("/create")).length, 1);
+    assert.equal(
+      writes.find((w) => w.path.endsWith("/create")).body.configuration
+        .description,
+      "FIXTURE remark only",
+    );
+    assert.match(
+      writes.find((w) => w.path.endsWith("/create")).body.configuration
+        .avatarKey,
+      /^pixel:/,
+    );
     await page.goto(`${origin}/?view=agents`);
     await page
       .locator("[data-role-id]")
@@ -102,9 +113,7 @@ export async function verifyRoleCreation({ browser, origin }) {
     await dialog
       .getByRole("textbox", { name: /^名称/ })
       .fill(`CreationChannelFixture${width}`);
-    await dialog
-      .getByLabel("角色 Prompt", { exact: true })
-      .fill("FIXTURE ONLY");
+    await dialog.getByLabel("提示词", { exact: true }).fill("FIXTURE ONLY");
     await chooseOption(page, dialog, "运行时", 0);
     await chooseOption(page, dialog, "模型", 0);
     await dialog.getByRole("checkbox").last().check();

@@ -45,6 +45,18 @@ const fixtureRuntimeContext: StandingPromptRuntimeContext = {
   workspaceMode: "in_place",
   workspacePath: "/tmp/rah-workspace",
 };
+test("display-only Role remarks do not change executable standing instructions or their digest", () => {
+  const a = compileStandingPrompt({
+    agent: { ...fixtureAgent, description: "NOTE_A_ONLY_DISPLAY" },
+  });
+  const b = compileStandingPrompt({
+    agent: { ...fixtureAgent, description: "NOTE_B_ONLY_DISPLAY" },
+  });
+  assert.equal(a.prompt, b.prompt);
+  assert.equal(a.deterministicDigest, b.deterministicDigest);
+  assert.doesNotMatch(a.prompt, /NOTE_A_ONLY_DISPLAY/);
+  assert.ok(a.prompt.includes(fixtureAgent.instructions!));
+});
 
 test("layer order is stable for a fully populated agent", () => {
   assert.deepEqual(
@@ -126,7 +138,7 @@ test("agent identity, role and ported Raft sentences appear verbatim", () => {
   assert.match(prompt, /@claude/u);
   assert.match(prompt, /participant-42/u);
   assert.ok(prompt.includes(fixtureAgent.role));
-  assert.ok(prompt.includes(fixtureAgent.description!));
+  assert.ok(!prompt.includes(fixtureAgent.description!));
   assert.ok(prompt.includes(fixtureAgent.instructions!));
   assert.match(prompt, /Do not infer Computer identity from hostname or cwd/u);
   assert.match(
