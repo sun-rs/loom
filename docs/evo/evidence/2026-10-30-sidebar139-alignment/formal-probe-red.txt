@@ -1,0 +1,467 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: formal acceptance must not write Role, preferences, or business data
++ actual - expected
+
++ [
++   {
++     method: 'POST',
++     path: '/v3/client/principals/me'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/workspaces/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/rooms/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/sidebar/get'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/messages/saved'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/sidebar/get'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/activity/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/notifications/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/sidebar/get'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/agents/list'
++   },
++   {
++     method: 'POST',
++     path: '/v1/local/runtimes/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/rooms/agents/activity/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/rooms/members/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/rooms/agents/activity/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/rooms/members/list'
++   },
++   {
++     method: 'POST',
++     path: '/v1/local/runtimes/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/roles/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/agents/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/rooms/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/agents/presence/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/rooms/agents/activity/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/rooms/members/list'
++   },
++   {
++     method: 'POST',
++     path: '/v1/local/runtimes/list'
++   },
++   {
++     method: 'POST',
++     path: '/v1/local/runtimes/list'
++   },
++   {
++     method: 'POST',
++     path: '/v1/local/runtimes/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/principals/me'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/workspaces/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/rooms/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/sidebar/get'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/messages/saved'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/sidebar/get'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/activity/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/notifications/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/sidebar/get'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/agents/list'
++   },
++   {
++     method: 'POST',
++     path: '/v1/local/runtimes/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/rooms/agents/activity/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/rooms/members/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/rooms/agents/activity/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/rooms/members/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/rooms/agents/activity/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/rooms/members/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/principals/me'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/sidebar/get'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/principals/me'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/workspaces/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/rooms/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/sidebar/get'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/messages/saved'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/sidebar/get'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/activity/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/sidebar/get'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/notifications/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/sidebar/get'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/agents/list'
++   },
++   {
++     method: 'POST',
++     path: '/v1/local/runtimes/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/rooms/agents/activity/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/rooms/members/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/rooms/agents/activity/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/rooms/members/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/rooms/sync'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/rooms/acknowledge'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/rooms/agents/activity/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/rooms/members/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/rooms/timeline'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/threads/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/tasks/global'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/principals/me'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/workspaces/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/rooms/list'
++   },
++   {
++     method: 'POST',
++     path: '/v1/local/runtimes/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/sidebar/get'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/messages/saved'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/sidebar/get'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/activity/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/agents/presence/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/roles/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/agents/list'
++   },
++   {
++     method: 'POST',
++     path: '/v1/local/runtimes/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/notifications/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/sidebar/get'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/agents/list'
++   },
++   {
++     method: 'POST',
++     path: '/v1/local/runtimes/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/rooms/agents/activity/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/rooms/members/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/rooms/agents/activity/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/rooms/members/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/rooms/agents/activity/list'
++   },
++   {
++     method: 'POST',
++     path: '/v3/client/rooms/members/list'
++   }
++ ]
+- []
+
+    at file:///private/tmp/loom-sidebar139-formal.mjs:39:38 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: [
+    { method: 'POST', path: '/v3/client/principals/me' },
+    { method: 'POST', path: '/v3/client/workspaces/list' },
+    { method: 'POST', path: '/v3/client/rooms/list' },
+    { method: 'POST', path: '/v3/client/sidebar/get' },
+    { method: 'POST', path: '/v3/client/messages/saved' },
+    { method: 'POST', path: '/v3/client/sidebar/get' },
+    { method: 'POST', path: '/v3/client/activity/list' },
+    { method: 'POST', path: '/v3/client/notifications/list' },
+    { method: 'POST', path: '/v3/client/sidebar/get' },
+    { method: 'POST', path: '/v3/client/agents/list' },
+    { method: 'POST', path: '/v1/local/runtimes/list' },
+    { method: 'POST', path: '/v3/client/rooms/agents/activity/list' },
+    { method: 'POST', path: '/v3/client/rooms/members/list' },
+    { method: 'POST', path: '/v3/client/rooms/agents/activity/list' },
+    { method: 'POST', path: '/v3/client/rooms/members/list' },
+    { method: 'POST', path: '/v1/local/runtimes/list' },
+    { method: 'POST', path: '/v3/client/roles/list' },
+    { method: 'POST', path: '/v3/client/agents/list' },
+    { method: 'POST', path: '/v3/client/rooms/list' },
+    { method: 'POST', path: '/v3/client/agents/presence/list' },
+    { method: 'POST', path: '/v3/client/rooms/agents/activity/list' },
+    { method: 'POST', path: '/v3/client/rooms/members/list' },
+    { method: 'POST', path: '/v1/local/runtimes/list' },
+    { method: 'POST', path: '/v1/local/runtimes/list' },
+    { method: 'POST', path: '/v1/local/runtimes/list' },
+    { method: 'POST', path: '/v3/client/principals/me' },
+    { method: 'POST', path: '/v3/client/workspaces/list' },
+    { method: 'POST', path: '/v3/client/rooms/list' },
+    { method: 'POST', path: '/v3/client/sidebar/get' },
+    { method: 'POST', path: '/v3/client/messages/saved' },
+    { method: 'POST', path: '/v3/client/sidebar/get' },
+    { method: 'POST', path: '/v3/client/activity/list' },
+    { method: 'POST', path: '/v3/client/notifications/list' },
+    { method: 'POST', path: '/v3/client/sidebar/get' },
+    { method: 'POST', path: '/v3/client/agents/list' },
+    { method: 'POST', path: '/v1/local/runtimes/list' },
+    { method: 'POST', path: '/v3/client/rooms/agents/activity/list' },
+    { method: 'POST', path: '/v3/client/rooms/members/list' },
+    { method: 'POST', path: '/v3/client/rooms/agents/activity/list' },
+    { method: 'POST', path: '/v3/client/rooms/members/list' },
+    { method: 'POST', path: '/v3/client/rooms/agents/activity/list' },
+    { method: 'POST', path: '/v3/client/rooms/members/list' },
+    { method: 'POST', path: '/v3/client/principals/me' },
+    { method: 'POST', path: '/v3/client/sidebar/get' },
+    { method: 'POST', path: '/v3/client/principals/me' },
+    { method: 'POST', path: '/v3/client/workspaces/list' },
+    { method: 'POST', path: '/v3/client/rooms/list' },
+    { method: 'POST', path: '/v3/client/sidebar/get' },
+    { method: 'POST', path: '/v3/client/messages/saved' },
+    { method: 'POST', path: '/v3/client/sidebar/get' },
+    { method: 'POST', path: '/v3/client/activity/list' },
+    { method: 'POST', path: '/v3/client/sidebar/get' },
+    { method: 'POST', path: '/v3/client/notifications/list' },
+    { method: 'POST', path: '/v3/client/sidebar/get' },
+    { method: 'POST', path: '/v3/client/agents/list' },
+    { method: 'POST', path: '/v1/local/runtimes/list' },
+    { method: 'POST', path: '/v3/client/rooms/agents/activity/list' },
+    { method: 'POST', path: '/v3/client/rooms/members/list' },
+    { method: 'POST', path: '/v3/client/rooms/agents/activity/list' },
+    { method: 'POST', path: '/v3/client/rooms/members/list' },
+    { method: 'POST', path: '/v3/client/rooms/sync' },
+    { method: 'POST', path: '/v3/client/rooms/acknowledge' },
+    { method: 'POST', path: '/v3/client/rooms/agents/activity/list' },
+    { method: 'POST', path: '/v3/client/rooms/members/list' },
+    { method: 'POST', path: '/v3/client/rooms/timeline' },
+    { method: 'POST', path: '/v3/client/threads/list' },
+    { method: 'POST', path: '/v3/client/tasks/global' },
+    { method: 'POST', path: '/v3/client/principals/me' },
+    { method: 'POST', path: '/v3/client/workspaces/list' },
+    { method: 'POST', path: '/v3/client/rooms/list' },
+    { method: 'POST', path: '/v1/local/runtimes/list' },
+    { method: 'POST', path: '/v3/client/sidebar/get' },
+    { method: 'POST', path: '/v3/client/messages/saved' },
+    { method: 'POST', path: '/v3/client/sidebar/get' },
+    { method: 'POST', path: '/v3/client/activity/list' },
+    { method: 'POST', path: '/v3/client/agents/presence/list' },
+    { method: 'POST', path: '/v3/client/roles/list' },
+    { method: 'POST', path: '/v3/client/agents/list' },
+    { method: 'POST', path: '/v1/local/runtimes/list' },
+    { method: 'POST', path: '/v3/client/notifications/list' },
+    { method: 'POST', path: '/v3/client/sidebar/get' },
+    { method: 'POST', path: '/v3/client/agents/list' },
+    { method: 'POST', path: '/v1/local/runtimes/list' },
+    { method: 'POST', path: '/v3/client/rooms/agents/activity/list' },
+    { method: 'POST', path: '/v3/client/rooms/members/list' },
+    { method: 'POST', path: '/v3/client/rooms/agents/activity/list' },
+    { method: 'POST', path: '/v3/client/rooms/members/list' },
+    { method: 'POST', path: '/v3/client/rooms/agents/activity/list' },
+    { method: 'POST', path: '/v3/client/rooms/members/list' }
+  ],
+  expected: [],
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}
+
+Node.js v25.9.0

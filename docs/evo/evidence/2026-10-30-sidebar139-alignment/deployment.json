@@ -1,0 +1,78 @@
+{
+  "at": "2026-10-29T18:12:23.089Z",
+  "sourceRevision": "b31cd7eb764e090f1e3f05afb2518c5dffb039e3",
+  "remoteMainBeforeRestart": "b31cd7eb764e090f1e3f05afb2518c5dffb039e3",
+  "pushedBeforeServiceRestart": true,
+  "sourceWorktreeDirty": false,
+  "oldPid": 7105,
+  "newPid": 66799,
+  "backup": "/Users/sun/.loom/evo/backups/pre-sidebar139-1793297528238",
+  "backupVerified": true,
+  "migrationPreflight": true,
+  "fromSchema": 91,
+  "toSchema": 91,
+  "protectedTables": {
+    "room_events": {
+      "count": 850,
+      "sha256": "b380fa90e3a4bff171b495505215ca1ef9372b96ee4241d8c7731beb0348773e"
+    },
+    "messages": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "role_templates": {
+      "count": 56,
+      "sha256": "5214056cc7fd7da35e05b49921c8048cfb2e0d935f9ad49b56d6c67de93c4dc5"
+    },
+    "role_revisions": {
+      "count": 66,
+      "sha256": "93b96121e4b418f0d327094c73022e08826284b353bdcf5a4e34bca7e8e17ad1"
+    },
+    "role_instances": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "human_sidebar_preferences": {
+      "count": 1,
+      "sha256": "ded264b510608bcc4506f0b7d57323f510e63c1cd9e06b5b7d5f5630067ac6f7"
+    },
+    "human_saved_messages": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "human_thread_follows": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "human_activity_frontiers": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "human_activity_manual_unread": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    }
+  },
+  "ledgerRoleInstancesPreferencesUnchanged": true,
+  "protectedNotificationMemoryFilesChecked": 3,
+  "newWebSnapshot": "/Users/sun/Code/repos/rah_os/.workbench-web/bb82a7914045b6833ba652666c1e687383cedb47cbd0d68831d349e2401de8cf",
+  "webBuildId": "4a217d4ba98af258be9f8ea14b98eb9906ce8c0f587bf777500f63940dfe2262",
+  "indexSha256": "8a947eca2b4dfb4e3f60f7ca896f573283e5e6a253b3647bb54679596a2005a1",
+  "networkModeUnchanged": true,
+  "notificationTransportUnchanged": true,
+  "edges": [
+    {
+      "origin": "https://192.168.1.86:4178",
+      "status": 200,
+      "tlsVerifiedWithOriginalCA": true,
+      "webIndexMatches": true
+    },
+    {
+      "origin": "https://100.101.107.87:4178",
+      "status": 200,
+      "tlsVerifiedWithOriginalCA": true,
+      "webIndexMatches": true
+    }
+  ],
+  "scope": "Web1.21.39 native sidebar/list composition, settings Q4e and semantic task icon; Kimi Pro normal/Highspeed exact-binding UI Fast mapping. Backend, network and notification transport unchanged. No formal Role writes or provider generation; schema91 and frozen instances retained."
+}

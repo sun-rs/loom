@@ -1,0 +1,54 @@
+{
+  "at": "2026-10-29T18:14:35.146Z",
+  "sourceRevision": "b31cd7eb764e090f1e3f05afb2518c5dffb039e3",
+  "webBuildId": "4a217d4ba98af258be9f8ea14b98eb9906ce8c0f587bf777500f63940dfe2262",
+  "origin": "http://127.0.0.1:4176",
+  "httpsVerification": "LAN and Tailnet verified with original CA in deployment.json",
+  "browser": "Chromium",
+  "paidCalls": false,
+  "productionProtectedTablesUnchanged": true,
+  "results": [
+    {
+      "width": 1440,
+      "metrics": {
+        "avatarInset": 20,
+        "headerInset": 20,
+        "roleCount": 6
+      },
+      "kimi": {
+        "groupedPro": true,
+        "fastVisible": true,
+        "unchangedDraft": true,
+        "fastChecked": false,
+        "optionCount": 5
+      },
+      "settingsGap": 2,
+      "chatAndComputer": true,
+      "pageErrors": [],
+      "configurationMutations": [],
+      "readReceiptRequests": 1,
+      "readOnlyPostQueries": 88
+    },
+    {
+      "width": 390,
+      "metrics": {
+        "avatarInset": 20,
+        "headerInset": 20,
+        "roleCount": 6
+      },
+      "kimi": {
+        "groupedPro": true,
+        "fastVisible": true,
+        "unchangedDraft": true,
+        "fastChecked": false,
+        "optionCount": 5
+      },
+      "settingsGap": 2,
+      "chatAndComputer": true,
+      "pageErrors": [],
+      "configurationMutations": [],
+      "readReceiptRequests": 1,
+      "readOnlyPostQueries": 87
+    }
+  ]
+}
