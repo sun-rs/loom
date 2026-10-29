@@ -1,0 +1,36 @@
+✔ Role description and avatar round-trip separately from prompt (2.3845ms)
+✔ Role Fast round-trips and cannot be saved to an unsupported binding (2.679834ms)
+✔ role model choices disambiguate identical display names without changing exact bindings (0.726ms)
+✔ empty optional Role prompt survives form validation without manufactured instructions (2.655084ms)
+✔ model display removes transport prefix but preserves provider and opaque binding value (0.117542ms)
+✔ single-Human product omits Role filter and Channel visibility badges, retaining private-box boundaries (7.819ms)
+✔ Channel creation uses folder tree, description and optional Role members (0.39625ms)
+✔ fixed effort models retain published value without a redundant effort picker (0.092583ms)
+✔ Channel form generation preserves acquired source and explicit unsupported slots (8.9ms)
+✔ all product paired dialog actions put cancel before primary in DOM; native recipes own visual stacking (332.456375ms)
+✔ native Computer inline editor intentionally retains save before cancel (213.776708ms)
+✔ role and computer lists delegate row anatomy to generated official source (0.867708ms)
+✔ row source reproduces with only explicit identity/action/status slots (242.077916ms)
+✔ sidebar uses short names from verified Host CLI identity without changing the runtime catalog (0.712792ms)
+✔ scroll frame delegates horizontal list geometry to native list cells and section recipes (0.200417ms)
+✔ both Role sections use native disclosure semantics and matching action footprints (0.280167ms)
+✔ published Web sidebar geometry is independent from npm and regenerates from locked source (4.854292ms)
+✔ Role create and edit delegate runtime fields to the official renderer (0.756125ms)
+✔ adopted runtime renderer functions remain exact upstream source (235.715792ms)
+✔ AGY model/effort controls resolve only exact published bindings (2.925166ms)
+✔ ordinary CLI and inconsistent AGY metadata stay distinct (0.100875ms)
+✔ runtime picker groups only verified Host offers and keeps unavailable rows unselectable (1.285416ms)
+✔ configured capability suppresses the unbound discovery duplicate without guessing opaque IDs (0.066833ms)
+✔ local detail dismissals reuse official CloseButton including Side and loading/error branches (26.641834ms)
+✔ local official CloseButton calls carry an explicit semantic mobile target marker (140.360958ms)
+✔ header touch adaptation uses semantic controls rather than SVG/span nesting (0.120125ms)
+✔ adoption registry references existing source owners, bindings and checks (0.609167ms)
+✔ new local close affordances cannot silently bypass scenario owners (77.298709ms)
+ℹ tests 28
+ℹ suites 0
+ℹ pass 28
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 762.152166

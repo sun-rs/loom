@@ -48,3 +48,26 @@ test("scroll frame delegates horizontal list geometry to native list cells and s
   assert.match(recipe, /--cell-inset-x:8px/);
   assert.match(recipe, /--cell-pad-x:12px/);
 });
+test("both Role sections use native disclosure semantics and matching action footprints", () => {
+  const text = readFileSync("frontends/raft/loom/RoleWorkspace.tsx", "utf8");
+  assert.match(text, /aria-expanded=\{showRoles\}/);
+  assert.match(text, /aria-expanded=\{showDeleted\}/);
+  assert.match(text, /data-testid="role-section-toggle"/);
+  assert.match(text, /data-testid="deleted-role-section-toggle"/);
+  assert.doesNotMatch(text, /SidebarSectionDisclosure render=\{<div/);
+  assert.match(text, /<RefreshCw[^>]+className="size-3\.5"/);
+});
+test("published Web sidebar geometry is independent from npm and regenerates from locked source", async () => {
+  const { generateRoleSidebarGeometry } =
+    await import("./generate-role-sidebar-geometry.mjs");
+  assert.equal(
+    readFileSync(
+      "frontends/raft/loom/OfficialRoleSidebarGeometry.generated.ts",
+      "utf8",
+    ),
+    generateRoleSidebarGeometry(),
+  );
+  const source = generateRoleSidebarGeometry();
+  assert.match(source, /paddingInlineStart:8\+1\.5/);
+  assert.match(source, /paddingInline:8/);
+});

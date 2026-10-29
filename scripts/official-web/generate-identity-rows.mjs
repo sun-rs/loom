@@ -64,7 +64,7 @@ export function generateIdentityRows() {
   ).replace("{getRuntimeDisplayName(runtime)}", "{agent.runtimeLabel}");
   role = role.replace(
     "data-agent-id={agent.id}",
-    "data-role-id={agent.id} aria-label={agent.name} disabled={busy}",
+    "data-role-id={agent.id} aria-label={agent.name} disabled={busy} style={style}",
   );
   role = role.replace(
     "<SidebarAgentActivityBadge agentId={agent.id} />",
@@ -81,7 +81,7 @@ export function generateIdentityRows() {
   );
   return `// GENERATED from locked db5e399 MemberAgentRow and Sidebar.ComputerRowBody JSX.
 // Loom supplies identity, observed/aggregate presence and callbacks. Role has no instance runtime or DM/context actions.
-import type {ReactNode,ReactElement} from "react";
+import type {ReactNode,ReactElement,CSSProperties} from "react";
 import {SidebarItem,SidebarItemIcon,SidebarItemMeta,SidebarItemSubtitle,SidebarItemContent,SidebarItemTitle} from "raft-ui";
 import {Monitor} from "lucide-react";
 import AvatarSlot from "./OfficialAvatarSlot.generated";
@@ -89,7 +89,7 @@ import {sidebarItemClass} from "./OfficialNavigationLeaves.generated";
 ${extractDeclaration(sidebar, "SIDEBAR_ROW_PHONE_CLASS")}
 ${extractDeclaration(sidebar, "SIDEBAR_ROW_TRAILING_CLASS")}
 export function OfficialComputerRow({machine,selected,onClick:handleClick,statusDot,statusLabel}:{machine:{id:string;name:string;description?:string|null};selected:boolean;onClick:()=>void;statusDot:ReactNode;statusLabel:ReactNode}){return (${computer});}
-export function OfficialRoleRow({agent,selected,busy,onSelect,statusDot}:{agent:{id:string;name:string;displayName?:string;avatarUrl?:string;description?:string;runtimeLabel?:string};selected:boolean;busy:boolean;onSelect:(id:string)=>void;statusDot:ReactElement}){const menuOpen=false;const handleClick=()=>onSelect(agent.id);return (${role});}
+export function OfficialRoleRow({agent,selected,busy,onSelect,statusDot,style}:{agent:{id:string;name:string;displayName?:string;avatarUrl?:string;description?:string;runtimeLabel?:string};selected:boolean;busy:boolean;onSelect:(id:string)=>void;statusDot:ReactElement;style?:CSSProperties}){const menuOpen=false;const handleClick=()=>onSelect(agent.id);return (${role});}
 `;
 }
 if (

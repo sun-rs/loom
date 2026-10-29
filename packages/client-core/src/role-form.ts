@@ -20,6 +20,7 @@ function issues(error: SchemaIssues): string {
 }
 
 export type BindingChoice = {
+  modelId?: string;
   serviceTiers?: readonly string[];
   label: string;
   modelBindingId: string;
@@ -40,6 +41,7 @@ export function roleModelLabel(
 }
 
 export type RuntimeChoice = {
+  cliId?: string;
   bindings: BindingChoice[];
   label: string;
   runtimeOfferId: string;
@@ -53,7 +55,9 @@ export function runtimeChoices(
     runtime.available && runtime.runtimeOfferId !== undefined
       ? [
           {
+            ...(runtime.cliId ? { cliId: runtime.cliId } : {}),
             bindings: runtime.modelBindingDescriptors.map((binding) => ({
+              modelId: binding.modelId,
               label: `${binding.displayName ?? binding.modelId}（${binding.modelBindingId}）`,
               modelBindingId: binding.modelBindingId,
               reasoning: [...binding.supportedReasoning],

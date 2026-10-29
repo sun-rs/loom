@@ -1,4 +1,9 @@
 import PageEmpty from "./PageEmpty";
+import {
+  roleSidebarFrameClass,
+  roleSidebarHeaderStyle,
+  roleSidebarRowStyle,
+} from "./OfficialRoleSidebarGeometry.generated";
 import { useMediaQuery } from "../packages/web/src/hooks/effectPrimitives";
 import { layoutQueries } from "./adaptive-layout.ts";
 import {
@@ -24,18 +29,12 @@ import {
   SidebarSectionDisclosure,
   SidebarSectionCount,
   SidebarSectionControl,
+  SidebarSectionTrailing,
   TabsList,
   TabsTab,
   TabsLabel,
 } from "raft-ui";
-import {
-  Plus,
-  RefreshCw,
-  Bot,
-  Activity,
-  ChevronDown,
-  ChevronRight,
-} from "lucide-react";
+import { Plus, RefreshCw, Bot, Activity, ChevronRight } from "lucide-react";
 import Frame from "./ChatSidebarFrame.tsx";
 import AvatarSlot from "../packages/web/src/components/ui/AvatarSlot.tsx";
 import PanelHeader, {
@@ -82,7 +81,30 @@ export default function RoleWorkspace({
   children: ReactNode;
   inspector?: ReactNode;
 }) {
-  const [showDeleted, setShowDeleted] = useState(false);
+  const sectionKey = "loom:role-sections:" + workspaceId;
+  const [closedSections, setClosedSections] = useState(() => {
+    try {
+      return new Set(
+        localStorage.getItem(sectionKey) === null
+          ? ["deleted"]
+          : readCollapsedComputers(localStorage, sectionKey),
+      );
+    } catch {
+      return new Set(["deleted"]);
+    }
+  });
+  const showDeleted = !closedSections.has("deleted");
+  const showRoles = !closedSections.has("roles");
+  const toggleSection = (id: "roles" | "deleted") =>
+    setClosedSections((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      try {
+        localStorage.setItem(sectionKey, JSON.stringify([...next]));
+      } catch {}
+      return next;
+    });
   const collapseKey = "loom:role-computers:" + workspaceId;
   const [collapsed, setCollapsed] = useState(() => {
     try {
@@ -126,83 +148,64 @@ export default function RoleWorkspace({
           testIdPrefix="agent-sidebar"
           scrollTestId="loom-role-list"
         >
-          <SidebarSectionHeader>
-            <SidebarSectionDisclosure render={<div />} type={undefined}>
-              角色{" "}
-              <SidebarSectionCount>
-                {entries.filter((e) => !e.retired).length}
-              </SidebarSectionCount>
-            </SidebarSectionDisclosure>
-            <SidebarSectionControl
-              aria-label="刷新角色"
-              disabled={busy}
-              onClick={onRefresh}
-            >
-              <RefreshCw size={16} />
-            </SidebarSectionControl>
-            <SidebarSectionControl
-              aria-label="新建角色"
-              disabled={busy}
-              onClick={onCreate}
-            >
-              <Plus size={16} />
-            </SidebarSectionControl>
-          </SidebarSectionHeader>
-          {!visible.some((entry) => !entry.retired) && (
-            <>
-              <OfficialSidebarDescription className="hidden md:block">
-                还没有角色
-              </OfficialSidebarDescription>
-            </>
-          )}
-          {groupRolesByComputer(visible).map((group) => (
-            <OfficialComputerGroup
-              key={group.id}
-              id={group.id}
-              name={group.name}
-              count={group.entries.length}
-              collapsed={collapsed.has(group.id)}
-              onToggle={() => toggleComputer(group.id)}
-            >
-              {group.entries.map((entry) => (
-                <OfficialRoleRow
-                  key={entry.id}
-                  agent={entry}
-                  selected={selected?.id === entry.id}
-                  busy={busy}
-                  onSelect={onSelect}
-                  statusDot={
-                    <RolePresence state={entry.presence ?? "unknown"} />
-                  }
+          <div className={roleSidebarFrameClass}>
+            <SidebarSectionHeader style={roleSidebarHeaderStyle}>
+              <SidebarSectionDisclosure
+                render={<button type="button" />}
+                aria-expanded={showRoles}
+                data-testid="role-section-toggle"
+                className="cursor-default"
+                onClick={() => toggleSection("roles")}
+              >
+                <ChevronRight
+                  size={14}
+                  className={`shrink-0 transition-transform ${showRoles ? "rotate-90" : ""}`}
                 />
-              ))}
-            </OfficialComputerGroup>
-          ))}
-          {entries.some((entry) => entry.retired) && (
-            <>
-              <SidebarSectionHeader>
-                <SidebarSectionDisclosure
-                  render={<button type="button" />}
-                  aria-expanded={showDeleted}
-                  onClick={() => setShowDeleted((v) => !v)}
+                角色{" "}
+                <SidebarSectionCount>
+                  {entries.filter((e) => !e.retired).length}
+                </SidebarSectionCount>
+              </SidebarSectionDisclosure>
+              <SidebarSectionTrailing>
+                <div className="flex items-center gap-1">
+                  <SidebarSectionControl
+                    aria-label="刷新角色"
+                    disabled={busy}
+                    onClick={onRefresh}
+                  >
+                    <RefreshCw className="size-3.5" />
+                  </SidebarSectionControl>
+                  <SidebarSectionControl
+                    aria-label="新建角色"
+                    disabled={busy}
+                    onClick={onCreate}
+                  >
+                    <Plus className="size-4" />
+                  </SidebarSectionControl>
+                </div>
+              </SidebarSectionTrailing>
+            </SidebarSectionHeader>
+            {showRoles && !visible.some((entry) => !entry.retired) && (
+              <>
+                <OfficialSidebarDescription className="hidden md:block">
+                  还没有角色
+                </OfficialSidebarDescription>
+              </>
+            )}
+            {showRoles &&
+              groupRolesByComputer(visible).map((group) => (
+                <OfficialComputerGroup
+                  key={group.id}
+                  id={group.id}
+                  name={group.name}
+                  count={group.entries.length}
+                  collapsed={collapsed.has(group.id)}
+                  onToggle={() => toggleComputer(group.id)}
                 >
-                  {showDeleted ? (
-                    <ChevronDown size={12} />
-                  ) : (
-                    <ChevronRight size={12} />
-                  )}
-                  已删除{" "}
-                  <SidebarSectionCount>
-                    {entries.filter((entry) => entry.retired).length}
-                  </SidebarSectionCount>
-                </SidebarSectionDisclosure>
-              </SidebarSectionHeader>
-              {showDeleted &&
-                visible
-                  .filter((entry) => entry.retired)
-                  .map((entry) => (
+                  {group.entries.map((entry) => (
                     <OfficialRoleRow
                       key={entry.id}
+                      style={roleSidebarRowStyle}
                       agent={entry}
                       selected={selected?.id === entry.id}
                       busy={busy}
@@ -212,8 +215,47 @@ export default function RoleWorkspace({
                       }
                     />
                   ))}
-            </>
-          )}
+                </OfficialComputerGroup>
+              ))}
+            {entries.some((entry) => entry.retired) && (
+              <>
+                <SidebarSectionHeader style={roleSidebarHeaderStyle}>
+                  <SidebarSectionDisclosure
+                    render={<button type="button" />}
+                    aria-expanded={showDeleted}
+                    data-testid="deleted-role-section-toggle"
+                    className="cursor-default"
+                    onClick={() => toggleSection("deleted")}
+                  >
+                    <ChevronRight
+                      size={14}
+                      className={`shrink-0 transition-transform ${showDeleted ? "rotate-90" : ""}`}
+                    />
+                    已删除{" "}
+                    <SidebarSectionCount>
+                      {entries.filter((entry) => entry.retired).length}
+                    </SidebarSectionCount>
+                  </SidebarSectionDisclosure>
+                </SidebarSectionHeader>
+                {showDeleted &&
+                  visible
+                    .filter((entry) => entry.retired)
+                    .map((entry) => (
+                      <OfficialRoleRow
+                        key={entry.id}
+                        style={roleSidebarRowStyle}
+                        agent={entry}
+                        selected={selected?.id === entry.id}
+                        busy={busy}
+                        onSelect={onSelect}
+                        statusDot={
+                          <RolePresence state={entry.presence ?? "unknown"} />
+                        }
+                      />
+                    ))}
+              </>
+            )}
+          </div>
           {emptyList && <PageEmpty kind={"roles"} />}
         </Frame>
         <SidebarResize testId="agent-sidebar-resize" />

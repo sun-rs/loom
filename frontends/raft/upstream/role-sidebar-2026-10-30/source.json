@@ -1,0 +1,26 @@
+{
+  "webVersion": "1.21.38",
+  "releaseCommit": "a7b1309bcb7fa91654c9a6895ce73236190bd6b4",
+  "retrievedAt": "2026-10-30",
+  "license": "Owner-authorized reuse; original Raft notices in frontends/raft/adoption.json",
+  "scope": "Selected published sidebar geometry; not a package or whole-site upgrade",
+  "assets": [
+    {
+      "url": "https://app.raft.build/assets/vendor-raft-ui-Dpk9ZoCV.js",
+      "sha256": "e439e2be2f9e58b6bd33bf5e82257aa297a74e791894fd15d21ab64d6347296c",
+      "bytes": 660983,
+      "excerpts": {
+        "sidebarItem:[": "sidebarItem:[`group/sidebar-item flex w-full items-center px-2 text-left`,`transition-colors`,`my-px h-9 gap-2 rounded-control border-[1.5px] border-transparent py-0 pr-2.5 pl-2`,`md:py-0 md:[@media(max-height:600px)]:py-0`,`max-md:h-auto max-md:min-h-11 max-md:py-[8.5px]`,`font-sans text-subhead font-medium text-foreground`,`max-md:text-body max-md:font-semibold`,`data-active:border-sticker-ink data-active:bg-selected data-active:font-bold data-active:text-sticker-ink data-active:ring-[1.5px] data-active:ring-sticker-edge`,`not-data-active:data-[tone=muted]:text-foreground-muted not-data-active:data-[tone=away]:text-foreground-hint`,`outline-none`]",
+        "sidebarSectionHeader:[": "sidebarSectionHeader:[`flex items-center justify-between`,`group/section-header`,`mt-0 mb-0 h-auto gap-2 px-2 pt-4 pb-1.5`]"
+      }
+    },
+    {
+      "url": "https://app.raft.build/assets/app-shell-CKVQUGrN.js",
+      "sha256": "9a02285d93c15f0e7e901951d3bd25f4a8e2f1e3b9b2f677deda80e7ecd03572",
+      "bytes": 3315319,
+      "excerpts": {
+        "scrollbar-quiet min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-2": "scrollbar-quiet min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-2"
+      }
+    }
+  ]
+}

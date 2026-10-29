@@ -1,0 +1,5 @@
+[loom instance-prewarm] prewarm of principal_62d0f859-39a9-4ef4-a125-da4d64388257 skipped: disabled
+[loom instance-prewarm] prewarm of principal_cbffd0f8-16e2-4632-b5c1-b9cbb652881f skipped: disabled
+{"width":1440,"scrollInset":0,"avatarInset":17.5,"sectionInset":16,"groupInset":16,"runtime":"Agy"}
+{"width":390,"scrollInset":0,"avatarInset":17.5,"sectionInset":16,"groupInset":16,"runtime":"Agy"}
+{"cases":[{"width":1440,"foldBothSections":true,"controls":[{"width":28,"height":28,"icon":14},{"width":28,"height":28,"icon":16}],"agyModelEffortSplit":true,"exactBindingRoundTrip":true,"kimiProVisible":true},{"width":390,"foldBothSections":true,"controls":[{"width":28,"height":28,"icon":14},{"width":28,"height":28,"icon":16}],"agyModelEffortSplit":true,"exactBindingRoundTrip":true,"kimiProVisible":true}],"geometry":[{"width":1440,"scrollInset":0,"avatarInset":17.5,"sectionInset":16,"groupInset":16,"runtime":"Agy"},{"width":390,"scrollInset":0,"avatarInset":17.5,"sectionInset":16,"groupInset":16,"runtime":"Agy"}]}

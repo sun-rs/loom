@@ -1,0 +1,23 @@
+[loom instance-prewarm] prewarm of principal_51b9c041-f02d-400d-9519-33f9c710cf54 skipped: disabled
+[loom instance-prewarm] prewarm of principal_10ebb007-ddbf-4cc7-a69a-69a1005d78ee skipped: disabled
+{"width":1440,"scrollInset":0,"avatarInset":20,"sectionInset":20,"groupInset":8,"runtime":"Agy"}
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: published Web: 8px scroller + 8px row padding + 1.5px border
+
+20 !== 17.5
+
+    at verifyRoleSidebarAlignment (file:///Users/sun/Code/repos/rah_os/scripts/official-web/role-sidebar-alignment-browser.mjs:60:14)
+    at async verifyRuntimeSidebar (file:///Users/sun/Code/repos/rah_os/scripts/official-web/runtime-sidebar-browser.mjs:152:15)
+    at async file:///Users/sun/Code/repos/rah_os/scripts/official-web/channel-browser.mjs:229:9 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 20,
+  expected: 17.5,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v25.9.0

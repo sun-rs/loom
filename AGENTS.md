@@ -190,8 +190,13 @@ never installs them or configures their accounts.
   The Role sidebar retains official avatar/name/subtitle/runtime anatomy; CLI
   labels come from verified Host offers, never parsed opaque offer IDs.
   Sidebar labels use Codex/Claude/Kimi/OpenCode/Agy/Pi; keep full runtime names
-  elsewhere. Raft UI 0.52 list cells and section headers own horizontal insets;
-  do not stack the old Sidebar scroller `px-2` on top of their native padding.
+  elsewhere. New npm list-cell geometry differs from the live Web 1.21.38 sidebar.
+  Role sidebar alone uses the locked `role-sidebar-2026-10-30` horizontal port:
+  8px outer inset, row content at17.5px (8+8+1.5px original real border), section
+  and Computer group at16px. The generator owns the compatibility style slot;
+  never add a second shared Frame inset or change the npm recipes globally.
+  Active/deleted Role sections collapse independently and persist per workspace
+  in the existing device UI-preference layer; this is not business state.
   Role `instructions` may be empty; create/revise/instantiate and the editor must
   preserve an empty prompt without manufacturing instructions.
   New Role avatars are sampled once and stored after idempotency replay; never
@@ -406,6 +411,15 @@ AGY `gemini-3.8-flash-low`/low. AGY is admitted only to this functional batch,
 not the efficiency gate: automatic-memory isolation remains unverified.
 
 ## Antigravity runtime boundary
+
+AGY UI groups published effort variants into one model choice with a dependent
+effort control. Selection labels are transient form values; every Role write
+resolves back to the exact Host-published binding plus its matching effort.
+Never send a grouped base ID/label to the CLI or rewrite an existing snapshot.
+Unknown/inconsistent catalogs stay separate; native runtime-form rendering and
+state transitions remain upstream-owned. Kimi discovery reads its native local
+catalog: login/refresh first; the daemon's registered inventory requires a safe
+restart to rescan (`restartRequiredToRescan`), not just a Role-list refresh.
 
 Owner authorized AGY integration on 2026-10-27. AGY is a native runtime below
 Loom, not a replacement orchestrator: `agy-print-json/v1` uses the existing

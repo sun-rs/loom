@@ -1,6 +1,11 @@
 // Isolated temporary Core; no paid model, product changes or broad page suite.
 import assert from "node:assert/strict";
-export async function verifyRoleSidebarAlignment({ browser, origin, role }) {
+export async function verifyRoleSidebarAlignment({
+  browser,
+  origin,
+  role,
+  expectedRuntime = "Codex",
+}) {
   const results = [];
   for (const width of [1440, 390]) {
     const context = await browser.newContext({
@@ -54,20 +59,20 @@ export async function verifyRoleSidebarAlignment({ browser, origin, role }) {
       );
       assert.equal(
         metrics.avatarInset,
-        20,
-        "8px cell inset + 12px cell padding, without old wrapper padding",
+        17.5,
+        "published Web: 8px scroller + 8px row padding + 1.5px border",
       );
       assert.equal(
         metrics.sectionInset,
-        20,
-        "native section header owns its content margin",
+        16,
+        "published Web: 8px scroller + 8px section header",
       );
       assert.equal(
         metrics.groupInset,
-        8,
-        "retained official computer-group button has 8px own padding",
+        16,
+        "published Web: 8px scroller + 8px computer-group padding",
       );
-      assert.equal(metrics.runtime, "Codex");
+      assert.equal(metrics.runtime, expectedRuntime);
     } finally {
       await context.close();
     }

@@ -75,7 +75,7 @@ test("Channel creation uses folder tree, description and optional Role members",
 test("fixed effort models retain published value without a redundant effort picker", () => {
   assert.match(
     read("RoleRuntimeFields.tsx"),
-    /\(binding\?\.reasoning\.length \?\? 0\) > 1/,
+    /\(selectedModel\?\.reasoning\.length \?\? 0\) > 1/,
   );
 });
 test("Channel form generation preserves acquired source and explicit unsupported slots", async () => {

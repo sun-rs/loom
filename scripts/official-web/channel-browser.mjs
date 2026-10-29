@@ -1,4 +1,5 @@
 import { verifyRoleProfileAffordances } from "./role-profile-affordances-browser.mjs";
+import { verifyRuntimeSidebar } from "./runtime-sidebar-browser.mjs";
 import { verifyRoleSidebarAlignment } from "./role-sidebar-alignment-browser.mjs";
 import { verifyChannelRoleUsability } from "./channel-role-usability-browser.mjs";
 import { verifyRemaining138 } from "./remaining138-browser.mjs";
@@ -102,6 +103,18 @@ writeFileSync(
   { mode: 0o700 },
 );
 let running;
+if (process.env.LOOM_BROWSER_SLICE === "runtime-sidebar") {
+  writeFileSync(
+    join(bin, "agy"),
+    `#!${process.execPath}\nconst a=process.argv.slice(2).join(' ');if(a==='--version')console.log('1.4.10');else if(a==='models')console.log('gemini-3.8-flash-high\\tGemini 3.8 Flash (High)\\ngemini-3.8-flash-medium\\tGemini 3.8 Flash (Medium)\\ngemini-3.8-flash-low\\tGemini 3.8 Flash (Low)');else process.exitCode=2;`,
+    { mode: 0o700 },
+  );
+  writeFileSync(
+    join(bin, "kimi"),
+    `#!${process.execPath}\nconst a=process.argv.slice(2).join(' ');if(a==='--version')console.log('2.4.0');else if(a==='provider list --json')console.log(JSON.stringify({models:{'kimi-code/k3.1-pro':{provider:'managed:kimi-code',model:'k3.1-pro',displayName:'K3.1 Pro',supportEfforts:['low','high','max']}}}));else process.exitCode=2;`,
+    { mode: 0o700 },
+  );
+}
 let browser;
 const results = [];
 const workspaceFixtureRoots = [];
@@ -210,7 +223,20 @@ try {
   browser = await (
     process.env.LOOM_BROWSER_ENGINE === "webkit" ? webkit : chromium
   ).launch({ headless: true });
-  if (process.env.LOOM_BROWSER_SLICE === "role-profile-affordances") {
+  if (process.env.LOOM_BROWSER_SLICE === "runtime-sidebar") {
+    console.log(
+      JSON.stringify(
+        await verifyRuntimeSidebar({
+          browser,
+          origin,
+          client,
+          workspace,
+          head,
+          role,
+        }),
+      ),
+    );
+  } else if (process.env.LOOM_BROWSER_SLICE === "role-profile-affordances") {
     console.log(
       JSON.stringify(
         await verifyRoleProfileAffordances({

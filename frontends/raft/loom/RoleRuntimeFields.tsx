@@ -12,10 +12,13 @@ import {
   type RuntimeFormV2Value,
 } from "@botiverse/raft-runtime-form";
 import {
-  roleModelLabel,
   type RoleForm,
   type RuntimeChoice,
 } from "@rah-os/client-core/role-form";
+import {
+  runtimeModelOptions,
+  resolveRuntimeModel,
+} from "./runtime-model-options";
 
 // Presentation/state transitions are upstream. This module only translates the
 // Host's published capability catalog into that renderer's data contract.
@@ -37,6 +40,10 @@ export default function RoleRuntimeFields({
   const runtime = choices.find((r) => r.runtimeOfferId === form.runtimeOfferId);
   const binding = runtime?.bindings.find(
     (b) => b.modelBindingId === form.modelBindingId,
+  );
+  const models = runtime ? runtimeModelOptions(runtime) : [];
+  const selectedModel = models.find((model) =>
+    model.variants.some((b) => b.modelBindingId === form.modelBindingId),
   );
   const fastTier = binding?.serviceTiers?.includes("fast")
     ? "fast"
@@ -78,11 +85,7 @@ export default function RoleRuntimeFields({
         label: "推理强度",
         dependsOn: "model",
         optionSourceId: "effort",
-        required: Boolean(
-          runtime?.bindings.find(
-            (b) => b.modelBindingId === form.modelBindingId,
-          )?.reasoning.length,
-        ),
+        required: Boolean(selectedModel?.reasoning.length),
         advanced: false,
         visibleWhen: [],
       },
@@ -118,16 +121,13 @@ export default function RoleRuntimeFields({
       pointer: "/effort",
       dependsOn: "model",
       optionsByValue: Object.fromEntries(
-        (runtime?.bindings ?? []).map((b) => [
-          b.modelBindingId,
+        models.map((b) => [
+          b.value,
           b.reasoning.map((value) => ({ value, label: value })),
         ]),
       ),
       defaultValueByValue: Object.fromEntries(
-        (runtime?.bindings ?? []).map((b) => [
-          b.modelBindingId,
-          b.reasoning[0] ?? "",
-        ]),
+        models.map((b) => [b.value, b.reasoning[0] ?? ""]),
       ),
     },
     runtime: {
@@ -143,9 +143,9 @@ export default function RoleRuntimeFields({
       sourceId: "model",
       kind: "select",
       pointer: "/model",
-      options: (runtime?.bindings ?? []).map((b) => ({
-        value: b.modelBindingId,
-        label: roleModelLabel(b, runtime?.bindings ?? []),
+      options: models.map((b) => ({
+        value: b.value,
+        label: b.label,
         supportedReasoningEfforts: b.reasoning,
         defaultReasoningEffort: b.reasoning[0],
       })),
@@ -153,13 +153,19 @@ export default function RoleRuntimeFields({
   };
   const values = {
     runtime: form.runtimeOfferId,
-    model: form.modelBindingId,
+    model: selectedModel?.value ?? form.modelBindingId,
     effort: form.reasoning,
     environment: form.environment ?? {},
     fastMode: form.serviceTier === "fast" || form.serviceTier === "priority",
   };
   const change = (key: string, value: RuntimeFormV2Value) => {
     const next = applyRuntimeFormV2Change(schema, sources, values, key, value);
+    const resolved = resolveRuntimeModel(
+      models,
+      String(next.model ?? ""),
+      String(next.effort ?? ""),
+    );
+    if ((key === "model" || key === "effort") && !resolved) return;
     onChange({
       ...form,
       serviceTier:
@@ -175,7 +181,10 @@ export default function RoleRuntimeFields({
           ? next.environment
           : {},
       runtimeOfferId: String(next.runtime ?? form.runtimeOfferId),
-      modelBindingId: key === "runtime" ? "" : String(next.model ?? ""),
+      modelBindingId:
+        key === "runtime"
+          ? ""
+          : (resolved?.modelBindingId ?? form.modelBindingId),
       reasoning: key === "runtime" ? "" : String(next.effort ?? ""),
     });
   };
@@ -205,7 +214,8 @@ export default function RoleRuntimeFields({
           fields: schema.fields.filter(
             (field) =>
               field.key !== "runtime" &&
-              (field.key !== "effort" || (binding?.reasoning.length ?? 0) > 1),
+              (field.key !== "effort" ||
+                (selectedModel?.reasoning.length ?? 0) > 1),
           ),
         }}
         sources={sources}
