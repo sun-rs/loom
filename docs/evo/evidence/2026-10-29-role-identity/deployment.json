@@ -1,0 +1,95 @@
+{
+  "at": "2026-10-29T13:40:40.062Z",
+  "sourceRevision": "178baa8fbf8eda1302e430b81d4d2d01f321e877",
+  "remoteMainBeforeRestart": "178baa8fbf8eda1302e430b81d4d2d01f321e877",
+  "pushedBeforeServiceRestart": true,
+  "sourceWorktreeDirty": false,
+  "oldPid": 99605,
+  "newPid": 87591,
+  "backup": "/Users/sun/.loom/evo/backups/pre-role-identity-1793281223378",
+  "backupVerified": true,
+  "migrationPreflight": true,
+  "fromSchema": 91,
+  "toSchema": 91,
+  "protectedTables": {
+    "room_events": {
+      "count": 841,
+      "sha256": "925e037b68e12c3e1cde42db047cdce607403ea47f2c651fbfec9c17011b5a70"
+    },
+    "messages": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "role_templates": {
+      "count": 54,
+      "sha256": "b2c884f9db00daec9b8122cd172e29f5cc44905d6ee76f65ad915d0ba1e9b4b9"
+    },
+    "role_revisions": {
+      "count": 57,
+      "sha256": "b98d45a785d7b24f956845721021018ddf80926b800883ff8fb9a0d87c42c675"
+    },
+    "role_instances": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "human_sidebar_preferences": {
+      "count": 1,
+      "sha256": "ded264b510608bcc4506f0b7d57323f510e63c1cd9e06b5b7d5f5630067ac6f7"
+    },
+    "human_saved_messages": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "human_thread_follows": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "human_activity_frontiers": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "human_activity_manual_unread": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    }
+  },
+  "ledgerRoleInstancesPreferencesUnchanged": true,
+  "protectedNotificationMemoryFilesChecked": 3,
+  "newWebSnapshot": "/Users/sun/Code/repos/rah_os/.workbench-web/2912edbdd74634e65082a58b366e5ce0df132fa5a4b504ece87700b205865039",
+  "webBuildId": "8869175a9327f6c61ea8af6e3250f7c20824fd85efd561ff045002f8e9df74b5",
+  "indexSha256": "c682cca1cec331d0ddf75aabc46f4e867c8534a39662116f171ba4045f246f73",
+  "networkModeUnchanged": true,
+  "notificationTransportUnchanged": true,
+  "edges": [
+    {
+      "origin": "https://192.168.1.86:4178",
+      "status": 200,
+      "tlsVerifiedWithOriginalCA": true,
+      "webIndexMatches": true
+    },
+    {
+      "origin": "https://100.101.107.87:4178",
+      "status": 200,
+      "tlsVerifiedWithOriginalCA": true,
+      "webIndexMatches": true
+    }
+  ],
+  "scope": "Role avatars and separate display remarks/instructions; remarks excluded from standing prompt. Schema91 and session/delivery/network policy unchanged.",
+  "formalPage": {
+    "browser": "Google Chrome native via CUA",
+    "url": "http://127.0.0.1:4176/?view=agents",
+    "sameFormalCore": true,
+    "readOnly": true,
+    "observed": [
+      "Fresh formal Role profile separates description and instructions",
+      "Empty description displays Opus · medium",
+      "Combined edit dialog has empty description value and model/effort placeholder plus existing prompt",
+      "All six avatar categories and 74 selectable presets are present",
+      "Search 初号机 leaves the correct new pixel preset, which renders successfully",
+      "Closed both dialogs without saving; existing Role unchanged"
+    ],
+    "productionTestEntitiesCreated": 0,
+    "physicalMobile": false,
+    "firefoxNote": "Firefox was being changed by the user during attempted fresh-tab verification; switched to an independent native Chrome window. Firefox acceptance is not claimed for this batch."
+  }
+}
