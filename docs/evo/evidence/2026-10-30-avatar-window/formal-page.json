@@ -1,0 +1,56 @@
+{
+  "at": "2026-10-30T05:57:35.240Z",
+  "sourceRevision": "af18754560a3729c374754327a507d48d39dbac2",
+  "webBuildId": "db023d4df2da7aa608bb21b4d812d07992bd352bbd520e41072b7e0646a56c65",
+  "protectedTablesUnchanged": true,
+  "results": [
+    {
+      "width": 1440,
+      "officialSeries": 9,
+      "spritesVerifiedAgainstCanonicalData": 72,
+      "geometry": {
+        "width": 44,
+        "height": 44,
+        "columns": 8,
+        "containerWidth": 472
+      },
+      "frame": {
+        "width": 512,
+        "height": 688,
+        "top": 16,
+        "bodyHeight": 592,
+        "bodyScrollHeight": 815,
+        "bodyCount": 1,
+        "footerInBody": false,
+        "footerBottom": 704,
+        "footerVisible": true
+      },
+      "configurationWrites": 0,
+      "errors": []
+    },
+    {
+      "width": 390,
+      "officialSeries": 9,
+      "spritesVerifiedAgainstCanonicalData": 72,
+      "geometry": {
+        "width": 44,
+        "height": 44,
+        "columns": 4,
+        "containerWidth": 358
+      },
+      "frame": {
+        "width": 390,
+        "height": 759.59375,
+        "top": 84.40625,
+        "bodyHeight": 704,
+        "bodyScrollHeight": 1275,
+        "bodyCount": 1,
+        "footerInBody": false,
+        "footerBottom": 0,
+        "footerVisible": false
+      },
+      "configurationWrites": 0,
+      "errors": []
+    }
+  ]
+}

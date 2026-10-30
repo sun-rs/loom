@@ -17,6 +17,6 @@ Loom此前没有传调用点的宽度参数，继承npm原语的`md`默认448px�
 - [Chromium](browser.txt)、[WebKit](webkit.txt)和[Firefox](firefox.txt)：1440×720窄高度桌面确认512px宽、最大688px高、底部按钮独立且在视口内；390×844手机确认全宽、90%高，选择／保存／刷新及描述／prompt不串改。一个DialogBody，Footer不在Body内，无页面异常。
 - 同尺寸截图：[之前1440×720](before-1440x720.png)、[修复后1440×720](after-1440x720.png)、[手机](after-390.png)。均为真实临时Core的fixture页面，不是正式用户入口。
 
-正式部署与只读页面核验在安全重启后记录；不把临时检查当作已部署。
+已推送`ed73dc3e`及Firefox检查`af187545`，完成备份、空闲检查和平滑重启。[部署收据](deployment.json)核实schema91、12个保护表与通知／记忆文件保持；LAN／Tailnet原CA验证通过。[正式只读页面](formal-page.json)实测桌面512×688、正文高592／内容815，底部按钮位置704；手机390×759.59（844的90%）、正文高704／内容1275，提交在顶栏。72款SVG仍与原图数据一致，无配置写入或页面异常。[正式桌面](formal-1440.png)、[正式手机视口](formal-390.png)。
 
 Firefox首次运行因Playwright不支持isMobile模拟而[中止](firefox-harness-failure.txt)，并非产品失败；改用其支持的viewport／touch参数后同尺寸检查通过，不把它当作实体移动Firefox或iOS模拟。
