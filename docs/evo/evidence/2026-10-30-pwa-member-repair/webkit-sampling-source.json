@@ -1,0 +1,11 @@
+{
+  "source": "https://github.com/WebKit/WebKit/blob/main/Source/WebCore/page/LocalFrameView.cpp",
+  "sha256": "c5e76135e59bca197160e7b6b6022a1115db8a920e558adcd7995a1a6e71e817",
+  "asOf": "2026-10-30",
+  "function": "LocalFrameView::fixedContainerEdges",
+  "sampleRectMarginCssPx": 4,
+  "topMidpoint": "fixedRect.y after contracting the rect by sampleRectMargin",
+  "pointerEvents": "initial sample ignores CSS pointer-events; opaque fixed viewport-width edge can participate without taking user hit targets",
+  "identifiedGap": "1px fallback cannot cover sample point y=4 when safe-area-inset-top is0. Final fallback5px has matching compact-root reserved padding; known nonzero safe-top remains unchanged.",
+  "physicalDeviceClaim": false
+}

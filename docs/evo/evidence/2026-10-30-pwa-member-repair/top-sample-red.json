@@ -1,0 +1,576 @@
+{
+  "routes": [
+    {
+      "name": "home",
+      "token": 0.09414595778188184,
+      "meta": "#FFD440",
+      "frame": "oklch(88.29% .1623 91.9)",
+      "frameHex": "#ffd440",
+      "statusSurface": {
+        "same": true,
+        "height": 1,
+        "top": 0,
+        "position": "fixed",
+        "background": "#ffd440",
+        "pointerEvents": "none"
+      },
+      "headerColor": null,
+      "headerAncestors": [],
+      "shellSame": true,
+      "shellBox": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "navBox": {
+        "y": 786,
+        "h": 50
+      },
+      "bootstrap": false,
+      "bodyOverflow": "hidden",
+      "standalone": false,
+      "visibleHeaders": [
+        {
+          "text": "Loom",
+          "bg": "oklch(0.8829 0.1623 91.9)",
+          "h": 48
+        }
+      ]
+    },
+    {
+      "name": "search",
+      "token": 0.09414595778188184,
+      "meta": "#FFD440",
+      "frame": "oklch(88.29% .1623 91.9)",
+      "frameHex": "#ffd440",
+      "statusSurface": {
+        "same": true,
+        "height": 1,
+        "top": 0,
+        "position": "fixed",
+        "background": "#ffd440",
+        "pointerEvents": "none"
+      },
+      "headerColor": "#ffd440",
+      "headerAncestors": [
+        {
+          "tag": "INPUT",
+          "slot": "input-group-control",
+          "class": "min-w-0 flex-1 bg-transparent pl-3 outline-none pr-(--ig-control-pr,0.75rem) h-full py-0 font-heading text-field font-field text-foreground placeholder:text-foreground-hint disabled:cursor-not-allowed disabled:text-foreground-disabled disabled:placeholder:text-foreground-disabled",
+          "background": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "DIV",
+          "slot": "input-group",
+          "class": "group/input-group relative flex w-full items-center has-data-[input-group-trim=inline-end]:[--ig-control-pr:0] h-control overflow-hidden rounded-control border-[1.5px] border-line-field bg-layer-card text-foreground shadow-none transition-shadow duration-90 ease-out has-focus-visible:shadow-focus has-[[data-slot=input-group-control][data-invalid]]:border-danger-strong has-[[data-slot=input-group-control]:disabled]:cursor-not-allowed has-[[data-slot=input-group-control]:disabled]:border-line-hairline has-[[data-slot=input-group-control]:disabled]:bg-fill-muted has-[[data-slot=input-group-control]:disabled]:[--ig-addon-fg:var(--foreground-disabled)] has-[[data-slot=input-group-control]:disabled]:[--ig-text-fg:var(--foreground-disabled)] min-w-0 flex-1",
+          "background": "oklch(1 0 0)"
+        },
+        {
+          "tag": "DIV",
+          "slot": null,
+          "class": "flex min-w-0 flex-1 items-center",
+          "background": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "DIV",
+          "slot": "panel-header-content",
+          "class": "flex min-w-0 flex-1 flex-col justify-center",
+          "background": "rgba(0, 0, 0, 0)"
+        },
+        {
+          "tag": "DIV",
+          "slot": "panel-header",
+          "class": "[@media(max-height:600px)]:h-12 flex h-(--shell-header-height,56px) shrink-0 items-center gap-3 max-md:gap-2 px-(--column-margin) [&>[data-icon-inset]:first-child]:-ml-icon-inset [&>[data-icon-inset]:last-child]:-mr-icon-inset border-b border-line-seam bg-layer-canvas text-foreground max-md:sticky max-md:top-0 max-md:z-30",
+          "background": "oklch(0.8829 0.1623 91.9)"
+        },
+        {
+          "tag": "MAIN",
+          "slot": "app-shell-main-slot",
+          "class": "min-h-0 flex-col relative flex min-w-0 flex-1 bg-layer-canvas",
+          "background": "oklch(1 0 0)"
+        },
+        {
+          "tag": "DIV",
+          "slot": null,
+          "class": "relative flex min-h-0 min-w-0 flex-1",
+          "background": "rgba(0, 0, 0, 0)"
+        }
+      ],
+      "shellSame": true,
+      "shellBox": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "navBox": {
+        "y": 786,
+        "h": 50
+      },
+      "bootstrap": false,
+      "bodyOverflow": "hidden",
+      "standalone": false,
+      "visibleHeaders": [
+        {
+          "text": "Esc",
+          "bg": "oklch(0.8829 0.1623 91.9)",
+          "h": 48
+        }
+      ]
+    },
+    {
+      "name": "activity",
+      "token": 0.09414595778188184,
+      "meta": "#FFD440",
+      "frame": "oklch(88.29% .1623 91.9)",
+      "frameHex": "#ffd440",
+      "statusSurface": {
+        "same": true,
+        "height": 1,
+        "top": 0,
+        "position": "fixed",
+        "background": "#ffd440",
+        "pointerEvents": "none"
+      },
+      "headerColor": null,
+      "headerAncestors": [],
+      "shellSame": true,
+      "shellBox": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "navBox": {
+        "y": 786,
+        "h": 50
+      },
+      "bootstrap": false,
+      "bodyOverflow": "hidden",
+      "standalone": false,
+      "visibleHeaders": [
+        {
+          "text": "动态1 条进行中",
+          "bg": "oklch(0.8829 0.1623 91.9)",
+          "h": 48
+        }
+      ]
+    },
+    {
+      "name": "tasks-module-loading",
+      "token": 0.09414595778188184,
+      "meta": "#FFD440",
+      "frame": "oklch(88.29% .1623 91.9)",
+      "frameHex": "#ffd440",
+      "statusSurface": {
+        "same": true,
+        "height": 1,
+        "top": 0,
+        "position": "fixed",
+        "background": "#ffd440",
+        "pointerEvents": "none"
+      },
+      "headerColor": null,
+      "headerAncestors": [],
+      "shellSame": true,
+      "shellBox": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "navBox": {
+        "y": 786,
+        "h": 50
+      },
+      "bootstrap": false,
+      "bodyOverflow": "hidden",
+      "standalone": false,
+      "visibleHeaders": [
+        {
+          "text": "任务加载中…",
+          "bg": "oklch(0.8829 0.1623 91.9)",
+          "h": 48
+        }
+      ]
+    },
+    {
+      "name": "tasks-data-loading",
+      "token": 0.09414595778188184,
+      "meta": "#FFD440",
+      "frame": "oklch(88.29% .1623 91.9)",
+      "frameHex": "#ffd440",
+      "statusSurface": {
+        "same": true,
+        "height": 1,
+        "top": 0,
+        "position": "fixed",
+        "background": "#ffd440",
+        "pointerEvents": "none"
+      },
+      "headerColor": null,
+      "headerAncestors": [],
+      "shellSame": true,
+      "shellBox": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "navBox": {
+        "y": 786,
+        "h": 50
+      },
+      "bootstrap": false,
+      "bodyOverflow": "hidden",
+      "standalone": false,
+      "visibleHeaders": [
+        {
+          "text": "任务加载中…",
+          "bg": "oklch(0.8829 0.1623 91.9)",
+          "h": 48
+        }
+      ]
+    },
+    {
+      "name": "tasks-ready",
+      "token": 0.09414595778188184,
+      "meta": "#FFD440",
+      "frame": "oklch(88.29% .1623 91.9)",
+      "frameHex": "#ffd440",
+      "statusSurface": {
+        "same": true,
+        "height": 1,
+        "top": 0,
+        "position": "fixed",
+        "background": "#ffd440",
+        "pointerEvents": "none"
+      },
+      "headerColor": null,
+      "headerAncestors": [],
+      "shellSame": true,
+      "shellBox": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "navBox": {
+        "y": 786,
+        "h": 50
+      },
+      "bootstrap": false,
+      "bodyOverflow": "hidden",
+      "standalone": false,
+      "visibleHeaders": [
+        {
+          "text": "任务0 个频道任务",
+          "bg": "oklch(0.8829 0.1623 91.9)",
+          "h": 48
+        }
+      ]
+    },
+    {
+      "name": "tasks-refresh-pending",
+      "token": 0.09414595778188184,
+      "meta": "#FFD440",
+      "frame": "oklch(88.29% .1623 91.9)",
+      "frameHex": "#ffd440",
+      "statusSurface": {
+        "same": true,
+        "height": 1,
+        "top": 0,
+        "position": "fixed",
+        "background": "#ffd440",
+        "pointerEvents": "none"
+      },
+      "headerColor": null,
+      "headerAncestors": [],
+      "shellSame": true,
+      "shellBox": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "navBox": {
+        "y": 786,
+        "h": 50
+      },
+      "bootstrap": false,
+      "bodyOverflow": "hidden",
+      "standalone": false,
+      "visibleHeaders": [
+        {
+          "text": "任务加载中…",
+          "bg": "oklch(0.8829 0.1623 91.9)",
+          "h": 48
+        }
+      ]
+    },
+    {
+      "name": "tasks-warm",
+      "token": 0.09414595778188184,
+      "meta": "#FFD440",
+      "frame": "oklch(88.29% .1623 91.9)",
+      "frameHex": "#ffd440",
+      "statusSurface": {
+        "same": true,
+        "height": 1,
+        "top": 0,
+        "position": "fixed",
+        "background": "#ffd440",
+        "pointerEvents": "none"
+      },
+      "headerColor": null,
+      "headerAncestors": [],
+      "shellSame": true,
+      "shellBox": {
+        "x": 0,
+        "y": 0,
+        "w": 390,
+        "h": 844
+      },
+      "navBox": {
+        "y": 786,
+        "h": 50
+      },
+      "bootstrap": false,
+      "bodyOverflow": "hidden",
+      "standalone": false,
+      "visibleHeaders": [
+        {
+          "text": "任务加载中…",
+          "bg": "oklch(0.8829 0.1623 91.9)",
+          "h": 48
+        }
+      ]
+    }
+  ],
+  "requests": [
+    {
+      "type": "document",
+      "url": "http://127.0.0.1:62566/?chat=list"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/app-theme-bootstrap.js"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/index-Cd1-VlAf.js"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/rolldown-runtime-hePW80VL.js"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/vendor-react-DBoKU7U9.js"
+    },
+    {
+      "type": "stylesheet",
+      "url": "http://127.0.0.1:62566/assets/index-CHGUG9hf.css"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/app-entry-CU8bZ1wn.js"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/en-BBm7jYnG.js"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/Tooltip-C-yNLoco.js"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/channel-members-CObmqSF-.js"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/chevron-right-DlBXchRW.js"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/AvatarSlot-C00Gzcor.js"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/CloseButton-Dm1_6V-C.js"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/src-BHcp80rv.js"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/authStore-Cth0IdZT.js"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/clock-aWBdZ44U.js"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/serverStore-DEr8pcKO.js"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/vendor-socketio-CwPEc2Qn.js"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/SectionEyebrow-CvI77miQ.js"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/list-cell-Csr4-pDC.js"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/Banner-CIFRBbvz.js"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/separator-Cr5FLQZn.js"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/refresh-cw-BEaz0Ql8.js"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/toastBridge-BGI2yoFI.js"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/MobileFormDialog-dNL07t6-.js"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/column-resize-C_bIZwMF.js"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/PanelHeader-DwHNQump.js"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/composerHost-baiE0cBn.js"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/copy-CCbcTRGZ.js"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/AgentActivityDot-B_50B83-.js"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/channelStore-DOt-euFj.js"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/relativeTime-ClEIJrSr.js"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/vendor-markdown-Bkod87Ne.js"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/codeBlockLanguages-C4olgTgx.js"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/bell-DMoYJqy3.js"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/CreateRoleDialog-IAD_HYOT.js"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/SidebarLayout-DNLpWjv2.js"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/app-shell-ZUpPwggc.js"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/DraftNavigation-BSozX4cF.js"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/textarea-LEswFkEn.js"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/OfficialSidebar139.generated-Dk6k21qd.js"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/toast-CYT19CG6.js"
+    },
+    {
+      "type": "stylesheet",
+      "url": "http://127.0.0.1:62566/assets/app-entry-2M4mEElK.css"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/DiscoveryPage-DKmtiHX7.js"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/circle-user-round-8qfq2oBS.js"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/useCurrentListPanel-D2mvyde1.js"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/TasksPage-BzPQXr-V.js"
+    },
+    {
+      "type": "script",
+      "url": "http://127.0.0.1:62566/assets/EmptyState-DATVdRWu.js"
+    }
+  ],
+  "navigations": [
+    {
+      "url": "http://127.0.0.1:62566/?chat=list"
+    },
+    {
+      "url": "http://127.0.0.1:62566/?chat=list"
+    },
+    {
+      "url": "http://127.0.0.1:62566/?chat=list&view=search"
+    },
+    {
+      "url": "http://127.0.0.1:62566/?chat=list&view=activity"
+    },
+    {
+      "url": "http://127.0.0.1:62566/?chat=list&view=tasks"
+    },
+    {
+      "url": "http://127.0.0.1:62566/?chat=list"
+    },
+    {
+      "url": "http://127.0.0.1:62566/?chat=list&view=tasks"
+    }
+  ],
+  "errors": [],
+  "fullscreenMedia": true,
+  "hiddenTasksInert": true,
+  "retainedTasksOnReturn": true,
+  "returnHasInitialLoader": false,
+  "documentRequests": 1,
+  "sameDocumentAcrossRootSwitches": true,
+  "sameShellAcrossRootSwitches": true
+}

@@ -124,7 +124,8 @@ native browser-chrome hex resolver and avatar preset/grid classes, generated
 by `generate-pwa140.mjs` (JS and declarations). Do not write raw OKLCH/CSS vars
 to theme-color or restore locally styled preset buttons. WorkspaceTheme is
 the single chrome writer; the persistent PWA edge paints only the safe top
-(one-pixel minimum), consumes no layout/hit area and is a Loom browser adapter,
+(5px minimum when native inset is zero), with a matching compact root reserve;
+there is no pointer hit area. This is a Loom browser adapter,
 not native OS validation. Global Tasks retain their bounded UI projection while
 hidden/inert, stop inactive reads, and revalidate on return without replacing
 same-query content with initial skeletons. Other workspace/filter results must

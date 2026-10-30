@@ -16,8 +16,16 @@ WorkspaceTheme仍是唯一运行时writer；首屏bootstrap也先写官方light/
 
 官方这套resolver在1.21.39已经存在；我们之前仅保留CSS token，属于遗漏采用。
 新的真实DOM顶边层跨路由保持，Standalone/Fullscreen下仅绘制既有安全顶部，
-1px最小边缘，不占布局、接收指针或改变字体/标题高度；加载遮罩也不会使它换白。
+最低5px边缘；在原生安全区为0的紧凑PWA中预留同样5px，避免遮住输入框，
+不接收指针，不改字体/标题高度；加载遮罩也不会使它换白。
 这层是明确记录的Loom浏览器适配，不冒称原生iOS实现。
+
+正式复查后进一步读取[WebKit实际采样实现](https://github.com/WebKit/WebKit/blob/main/Source/WebCore/page/LocalFrameView.cpp)：
+fixedContainerEdges先将采样矩形向内收4px，随后在顶边中点取样，并先忽略CSS pointer-events。
+搜索框白底与黄色sticky header会形成多种背景；1px fallback在原生inset为0时无法覆盖y=4。
+因此保留[top-sample-red.json](top-sample-red.json)的1px失败，在最终版本改为5px并为内容匹配预留。
+正常大于等于5px的原生安全区不增加空间；非PWA浏览器几何不变。
+[源码身份和条件](webkit-sampling-source.json)单独记录，不将这一源码机制冒称用户OS实测。
 
 搜索实测：网页搜索顶栏**修前就已经黄色**，不是再改一次标题栏背景即可解决。
 [WebKit维护者说明](https://bugs.webkit.org/show_bug.cgi?id=301756#c2)确认浏览器会
@@ -88,9 +96,14 @@ chrome与avatar网格在139已经有，说明我们的既有消费链也有缺�
 - [91项定向检查](checks.txt)、[类型](types.txt)、[构建](build.txt)通过；无全仓/付费CLI测试。
 - Chromium/WebKit：手机root切换、模块与数据分别挂起、返回时Task投影保持、隐藏/inert、
   成员候选头像和真实点击点。手机频道控制按钮实际命中范围45px，点靠下区域可打开设置。
-- Chromium进入真实网页Fullscreen media后检查持续同一top surface、1px高度、frame颜色和不接收指针；
+- Chromium进入真实网页Fullscreen media后检查持续同一top surface、最低5px高度、frame颜色和不接收指针；
   WebKit此模式不可用，不把它记成Standalone通过。二者都是桌面引擎，不是鸿蒙/iOS实机。
 - [头像资料回环](avatar-browser.txt)：桌面/手机44px preset、容器query列数、选择/保存/刷新、旧Role修订保护。
 - [旧保存/拒绝保存与双模式回归](saved-draft-and-mode.json)继续通过。
 
-正式部署另附收据，按既有备份/空闲/平滑重启/只读页面复查要求执行。
+正式部署按既有备份/空闲/平滑重启/只读页面复查要求执行。
+首个部署/正式复查记录在deployment-before-sample-fix.json、formal-page-before-sample-fix.json，
+其1px网页方案并不覆盖WebKit y=4取样；最终5px方案另用deployment.json、formal-page.json记录。
+临时部署调用器最初还因省略当前BackupReceipt的omittedRuntimeCredentials元数据字段而在stop前失败；
+根据原API补齐完整比较后成功重试，未删除备份/执行检查，旧进程直到正确重启前一直正常运行。
+[探针失败摘要](deployment-probe-red.txt)保留，不将工具错误记成产品数据故障。

@@ -1,0 +1,18 @@
+[loom instance-prewarm] prewarm of principal_0e06a3c0-da4f-4b90-a770-acc183020308 skipped: disabled
+[loom instance-prewarm] prewarm of principal_83717b75-ffc6-4bef-9063-6fce0ed1d951 skipped: disabled
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: WebKit samples four CSS pixels inside the viewport; zero-inset PWA needs a covering safe edge
+    at verifyPwaRoutes (file:///Users/sun/Code/repos/rah_os/scripts/official-web/pwa-route-repair-browser.mjs:244:18)
+    at async file:///Users/sun/Code/repos/rah_os/scripts/official-web/channel-browser.mjs:307:9 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v25.9.0

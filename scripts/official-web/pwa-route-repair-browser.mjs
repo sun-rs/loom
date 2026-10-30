@@ -86,6 +86,7 @@ export async function verifyPwaRoutes({
         meta: document.querySelector('meta[name="theme-color"]').content,
         frame,
         frameHex: color(frame),
+        searchInputTop: input?.getBoundingClientRect().top,
         statusSurface: {
           same:
             !window.__pwaStatusSurface || window.__pwaStatusSurface === surface,
@@ -241,7 +242,10 @@ export async function verifyPwaRoutes({
         assert.equal(r.statusSurface.same, true);
         if (result.fullscreenMedia) {
           assert.equal(r.statusSurface.top, 0);
-          assert.ok(r.statusSurface.height >= 1);
+          assert.ok(
+            r.statusSurface.height >= 5,
+            "WebKit samples four CSS pixels inside the viewport; zero-inset PWA needs a covering safe edge",
+          );
           assert.equal(r.statusSurface.background, r.frameHex);
           assert.equal(r.statusSurface.position, "fixed");
           assert.equal(r.statusSurface.pointerEvents, "none");
@@ -249,6 +253,11 @@ export async function verifyPwaRoutes({
       }
       const s = result.routes.find((r) => r.name === "search");
       assert.equal(s.headerColor, s.frameHex);
+      if (result.fullscreenMedia)
+        assert.ok(
+          s.searchInputTop >= s.statusSurface.height,
+          "the status tint edge must not cover the search input",
+        );
       assert.equal(result.sameDocumentAcrossRootSwitches, true);
       assert.equal(result.sameShellAcrossRootSwitches, true);
       assert.equal(result.documentRequests, 1);

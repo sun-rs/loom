@@ -1,0 +1,78 @@
+{
+  "at": "2026-10-30T02:24:56.514Z",
+  "sourceRevision": "87415872a129bee2244a9a0fdf36c84ff19f3501",
+  "remoteMainBeforeRestart": "87415872a129bee2244a9a0fdf36c84ff19f3501",
+  "pushedBeforeServiceRestart": true,
+  "sourceWorktreeDirty": false,
+  "oldPid": 33145,
+  "newPid": 20692,
+  "backup": "/Users/sun/.loom/evo/backups/pre-pwa-member-repair-1793327077598",
+  "backupVerified": true,
+  "migrationPreflight": true,
+  "fromSchema": 91,
+  "toSchema": 91,
+  "protectedTables": {
+    "room_events": {
+      "count": 913,
+      "sha256": "16d03733c3062e47afd4ce60da63e76e094926779b4ca2de09036a807be1146e"
+    },
+    "messages": {
+      "count": 5,
+      "sha256": "65b123d4f0f459b644e24dac33448af6d4cfd6ee06ae7035764dfa2c976043fd"
+    },
+    "role_templates": {
+      "count": 56,
+      "sha256": "5824f33356358e7522845fd9237f829c3da7e9c50b8e8da65563e51fe58f30a7"
+    },
+    "role_revisions": {
+      "count": 74,
+      "sha256": "b2320328958bc6affade83e1a74ece8a1c5b9e330e6981728dbccb93897888e3"
+    },
+    "role_instances": {
+      "count": 3,
+      "sha256": "71fae78b886643d189797aa959511addbf0124c2f7f7ea70f4efcff283b99ecc"
+    },
+    "human_sidebar_preferences": {
+      "count": 1,
+      "sha256": "ded264b510608bcc4506f0b7d57323f510e63c1cd9e06b5b7d5f5630067ac6f7"
+    },
+    "human_saved_messages": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "human_thread_follows": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "human_activity_frontiers": {
+      "count": 1,
+      "sha256": "7e02ebdf4a46b3bc5a7ceb07fd63a678762edcf89d94f744bd7060ad03678598"
+    },
+    "human_activity_manual_unread": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    }
+  },
+  "ledgerRoleInstancesPreferencesUnchanged": true,
+  "protectedNotificationMemoryFilesChecked": 3,
+  "newWebSnapshot": "/Users/sun/Code/repos/rah_os/.workbench-web/f48d668827e97570daf94e233186cca09ed50d91ee431521b36cf2e1ec0d0ee7",
+  "webBuildId": "f56de7a9c1b685a33f998dadaa1d02bf070e01da94c69a0759b471a557c551b9",
+  "indexSha256": "acad37cfdb2ccce9c1aba01b80ee05ca1940662e7e49a50e4f96e3f31b23e279",
+  "networkModeUnchanged": true,
+  "notificationTransportUnchanged": true,
+  "edges": [
+    {
+      "origin": "https://192.168.1.86:4178",
+      "status": 200,
+      "tlsVerifiedWithOriginalCA": true,
+      "webIndexMatches": true
+    },
+    {
+      "origin": "https://100.101.107.87:4178",
+      "status": 200,
+      "tlsVerifiedWithOriginalCA": true,
+      "webIndexMatches": true
+    }
+  ],
+  "scope": "Adopt native hex browser chrome and avatar presentation, add stable PWA safe-top paint, retain global Tasks while hidden/inert, wire Role candidate avatars, and upgrade UI package0.52.2. No formal Role writes/provider generation. Schema91, ledger, frozen instances, notification transport and network unchanged."
+}

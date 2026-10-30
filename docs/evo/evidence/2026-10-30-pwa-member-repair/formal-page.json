@@ -1,0 +1,52 @@
+{
+  "at": "2026-10-30T02:25:11.628Z",
+  "sourceRevision": "87415872a129bee2244a9a0fdf36c84ff19f3501",
+  "webBuildId": "f56de7a9c1b685a33f998dadaa1d02bf070e01da94c69a0759b471a557c551b9",
+  "productionProtectedTablesUnchanged": true,
+  "browser": "Chromium",
+  "paidCalls": false,
+  "results": [
+    {
+      "width": 390,
+      "navigation": {
+        "chrome": {
+          "meta": "#FFD440",
+          "fullscreen": true,
+          "height": 1,
+          "top": 0,
+          "position": "fixed",
+          "pointerEvents": "none",
+          "background": "oklch(0.8829 0.1623 91.9)",
+          "frame": "oklch(88.29% .1623 91.9)"
+        },
+        "documentRequests": 1,
+        "sameDocument": true,
+        "sameShell": true,
+        "retainedTasks": true,
+        "returnInitialLoader": false,
+        "physicalPwa": false
+      },
+      "avatar": {
+        "width": 44,
+        "height": 44,
+        "columns": 4,
+        "containerWidth": 358
+      },
+      "originalPngLoaded": true,
+      "configurationMutations": [],
+      "errors": []
+    },
+    {
+      "width": 1440,
+      "avatar": {
+        "width": 44,
+        "height": 44,
+        "columns": 8,
+        "containerWidth": 408
+      },
+      "originalPngLoaded": true,
+      "configurationMutations": [],
+      "errors": []
+    }
+  ]
+}

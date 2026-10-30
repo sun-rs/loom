@@ -18,7 +18,7 @@
     display: block;
     position: fixed;
     inset: 0 0 auto;
-    height: max(1px, env(safe-area-inset-top, 0px));
+    height: max(5px, env(safe-area-inset-top, 0px));
     background-color: var(--layer-frame);
     pointer-events: none;
     z-index: 100;
@@ -26,9 +26,20 @@
   [data-testid="loom-channel-app"],
   [data-testid="loom-bootstrap-loading"] {
     background-image: linear-gradient(var(--layer-frame), var(--layer-frame));
-    background-size: 100% env(safe-area-inset-top, 0px);
+    background-size: 100% max(5px, env(safe-area-inset-top, 0px));
     background-position: top;
     background-repeat: no-repeat;
+  }
+}
+/* WebKit samples 4px inside the viewport. When native safe-top is zero,
+ * reserve that same tiny edge so the color surface cannot cover the search
+ * input. Real nonzero safe areas and ordinary browser geometry stay native. */
+@media (display-mode: standalone) and (max-width: 767px),
+  (display-mode: fullscreen) and (max-width: 767px),
+  (display-mode: standalone) and (pointer: coarse),
+  (display-mode: fullscreen) and (pointer: coarse) {
+  [data-testid="loom-channel-app"] {
+    padding-top: max(5px, env(safe-area-inset-top, 0px));
   }
 }
 /* File tools remain at the leading edge in both reading and editing layouts.
