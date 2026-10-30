@@ -50,8 +50,12 @@ npm run test:official-web:native123:pixel
 LOOM_BROWSER_SLICE=native123 LOOM_BROWSER_STATIC_DIRECTORY=frontends/raft/dist-native123 node scripts/official-web/channel-browser.mjs
 ```
 
+官方原始文件中已有的CRLF、尾随空格和文件尾空行逐字保留，不能为了格式检查而改动；维护代码的`git diff --check`排除这棵不可变来源树，来源仍由逐文件hash门禁检查。
+
 原版与候选产物分别位于官方源树的`packages/web/dist`和`frontends/raft/dist-native123`，均不入Git。不得边重建同一产物边截图。`LOOM_NATIVE_PIXEL_STATES=conversation`只跑指定对照；其证据目录与全量报告分开。正式产品builder保持原入口，完成替代后再一次性切换依赖/产物入口并安全备份、重启及核对。
 
 ## 验收中修正过的误判
 
 早期浏览器等待只看到Sidebar中的Role名，可能在资料仍加载时就通过；已改为等待真实资料控件并执行编辑。消息先在原生乐观UI出现并不证明持久成功，已加入Kernel读取确认。硬刷新未等异步读完成会制造导航中止日志，测试已等待该页稳定后继续。早期模拟正文夹具缺canonical mention的start/end，被真实schema测试拒绝后补齐；首批正文对照也确实报出非零像素，未提高容差或加遮罩。这些是测试边界修正，不是付费模型失败，也不把此前小范围通过提升成全站完成。
+
+样例：[桌面原版](reference-1440-conversation.png)／[桌面Loom候选](loom-1440-conversation.png)，[手机原版](reference-390-conversation.png)／[手机Loom候选](loom-390-conversation.png)。这些是明确标记的模拟内容，不是正式数据。
